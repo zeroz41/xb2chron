@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "id": "xenoblade-chronicles2-decomp-xc2-100",
+  "repositories": {
+    "decomp": {
+      "root": ".",
+      "role": "decomp",
+      "index_paths": [
+        "README.md",
+        "docs",
+        "include",
+        "src"
+      ],
+      "finish": [
+        "zkit progress --since session --check",
+        "zkit hygiene"
+      ],
+      "rules": [],
+      "quality": {
+        "gate": "error"
+      },
+      "hygiene": {}
+    }
+  },
+  "targets": {
+    "xc2_100": {
+      "repository": "decomp",
+      "platform": "switch",
+      "module": "main",
+      "original": "orig/XC2_100/main",
+      "sha1": "87b95d0f9d58fd673f4ef6fb8560af6c4bd4bafe",
+      "symbols": "config/XC2_100/symbols.txt",
+      "splits": "config/XC2_100/splits.txt",
+      "objdiff": "objdiff.json",
+      "report": "build/XC2_100/report.json",
+      "build": {
+        "compiler": "build/compilers/clang+llvm-3.9.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang++",
+        "cflags": [
+          "--target=aarch64-none-elf",
+          "-mcpu=cortex-a57+fp+simd+crypto+crc",
+          "-fPIC",
+          "-O3",
+          "-fno-exceptions",
+          "-fno-rtti",
+          "-fasynchronous-unwind-tables",
+          "-std=gnu++14"
+        ],
+        "includes": [
+          "include",
+          "src"
+        ],
+        "compiler_version": "clang version 3.9.1",
+        "compiler_download": {
+          "url": "https://releases.llvm.org/3.9.1/clang+llvm-3.9.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz",
+          "sha256": "99d1ffd4be8fd3331b4d2478ada7ee6ed352729bfe4a1070450cdb9a3ce8ef9b"
+        }
+      }
+    }
+  }
+}

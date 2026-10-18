@@ -1,0 +1,11 @@
+# The original game and everything derived from it stay local
+orig/
+build/
+objdiff.json
+*.iso
+*.gcm
+*.nsp
+*.xci
+*.nca
+*.keys
+rom/
