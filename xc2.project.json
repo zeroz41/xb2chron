@@ -13,6 +13,7 @@
       ],
       "finish": [
         "zkit progress --since session --check",
+        "zkit report --readme",
         "zkit hygiene"
       ],
       "rules": [],
