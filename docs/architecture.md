@@ -22,7 +22,8 @@ game itself; the others are Nintendo's and stay as they are.
 | `.bss` | `0x11C88E8`–`0x1BDB000` |
 
 It calls the SDK through 792 imports. It exports almost every symbol it defines, so 49,128 of its 49,907
-functions and 5,221 data objects (2,845 of them vtables) carry their original mangled names. It was built without
+functions and 5,221 data objects (2,845 of them vtables) carry their original mangled names, listed in
+[`config/XC2_100/symbols.txt`](../config/XC2_100/symbols.txt). It was built without
 RTTI and without exceptions, but with unwind tables for every function.
 
 ## Source layout
@@ -39,7 +40,7 @@ The sound driver (`ssd`) cites a separate tree; its unit is `sources/voice_handl
 
 ## Units
 
-`config/XC2_100/splits.txt` assigns every function and the data its code alone uses to one of 532 units. A unit
+[`config/XC2_100/splits.txt`](../config/XC2_100/splits.txt) assigns every function and the data its code alone uses to one of 532 units. A unit
 is named after the source file its code cites. Where no file is cited, the code stays with its neighbour, so a
 unit can still hold several original files. The largest, such as
 `libs/eflib/source/eflib/effect_update_manager.cpp` (7,306 functions), are certainly several.
