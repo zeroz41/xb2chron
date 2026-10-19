@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "id": "xenoblade-chronicles2-decomp-xc2-100",
+  "id": "xenoblade-chronicles2-decomp-xc2-301",
   "repositories": {
     "decomp": {
       "root": ".",
@@ -24,16 +24,16 @@
     }
   },
   "targets": {
-    "xc2_100": {
+    "xc2_301": {
       "repository": "decomp",
       "platform": "switch",
       "module": "main",
-      "original": "orig/XC2_100/main",
-      "sha1": "87b95d0f9d58fd673f4ef6fb8560af6c4bd4bafe",
-      "symbols": "config/XC2_100/symbols.txt",
-      "splits": "config/XC2_100/splits.txt",
+      "original": "orig/XC2_301/main",
+      "sha1": "55a82580cd6826cfb9ffbbb2da5fe9a4c5a4b4c8",
+      "symbols": "config/XC2_301/symbols.txt",
+      "splits": "config/XC2_301/splits.txt",
       "objdiff": "objdiff.json",
-      "report": "build/XC2_100/report.json",
+      "report": "build/XC2_301/report.json",
       "build": {
         "compiler": "build/compilers/clang+llvm-3.9.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang++",
         "cflags": [

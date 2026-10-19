@@ -2,7 +2,7 @@
 
 This is a matching decompilation: a function counts when the compiled code is byte-identical to the original,
 lives in the unit that owns its address, is a real member of its class and is named on evidence. objdiff's report
-(`build/XC2_100/report.json`) is the only measure of progress.
+(`build/XC2_301/report.json`) is the only measure of progress.
 
 ## Setup
 
@@ -27,9 +27,12 @@ The full rules are `zkit contract decomp`.
 
 ## Names
 
-`main` exports almost every function and data symbol, so most names are the original ones (Itanium-mangled). A
-placeholder (`fn_<address>`) stays until evidence replaces it: strings tied to the code, the vtable a
-constructor installs, `this` flowing from proven methods. A rename changes every file that spells the symbol.
+3.0.1's `main` exports almost nothing, but 1.0.0's exports almost every function and data symbol, and the two are
+the same code in the same order. The names in `config/XC2_301/symbols.txt` are 1.0.0's original ones
+(Itanium-mangled), carried over where the code proves them; [docs/architecture.md](docs/architecture.md#names-from-100)
+says how. A placeholder (`fn_<address>`) is code an update added or changed past what that proves. It stays until
+evidence replaces it: strings tied to the code, the vtable a constructor installs, `this` flowing from proven
+methods, the function 1.0.0 had in its place. A rename changes every file that spells the symbol.
 
 ## Commits
 
