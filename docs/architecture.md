@@ -41,18 +41,23 @@ one:
 
 - **its shape**, unique among 1.0.0's functions, or confirmed by what it refers to or by its neighbours;
 - **a reference**: a matched function's call or address names its target, and a matched constructor's vtable
-  names the virtual functions in its slots;
+  names the virtual functions in its slots. Slots pair with 1.0.0's by the code in them, not by index: the updates
+  added and removed virtuals, so `gf::DataObjEnemy`'s table kept its length while its slots moved;
 - **its place**: between two named functions, the functions in between are 1.0.0's functions in between, less
-  what the linker dropped. Copies of one shape pair in order; code that changed pairs one to one, or with the
-  function it shares by far the most callees, data and strings with;
+  what the linker dropped. Copies of one shape pair in order; code that changed pairs one to one, with the
+  function it shares by far the most callees, data and strings with, or, in order, with the function whose code
+  it is by far the most like (sixteen instructions or more: a short getter whose field moved reads exactly like
+  its neighbour did);
 - **a call**: a changed function's one unnamed callee is its 1.0.0 version's one unclaimed callee.
 
 The steps that pair changed code were checked against changed functions named independently (by their callers or
-their vtable slots) and kept only where they were never wrong. 28,478 of the 35,906 functions and 3,983 data
+their vtable slots) and kept only where they were never wrong. 29,360 of the 35,906 functions and 4,025 data
 objects take 1.0.0's names this way (395 more are import stubs and exports the module names itself);
 `build/XC2_301/analysis/analysis.json` lists the evidence for each, and
-[`config/XC2_301/symbols.txt`](../config/XC2_301/symbols.txt) holds them. The other 7,033 are code an update added,
-or changed past what the evidence settles. To redo the transfer, with 1.0.0's `main` at `orig/XC2_100/main`:
+[`config/XC2_301/symbols.txt`](../config/XC2_301/symbols.txt) holds them. The other 6,151 are code an update added,
+or changed past what the evidence settles. To redo the transfer, with 1.0.0's `main` at `orig/XC2_100/main`, build
+1.0.0's signatures and analyze 3.0.1 with `config/XC2_301/symbols.txt` moved aside, so the analysis starts from
+the module's own tables and inherits no name:
 
     zkit signatures build xc2_100 --image orig/XC2_100/main --symbols config/XC2_100/symbols.txt \
         --splits config/XC2_100/splits.txt
@@ -73,11 +78,11 @@ The sound driver (`ssd`) cites a separate tree; its unit is `sources/voice_handl
 ## Units
 
 [`config/XC2_301/splits.txt`](../config/XC2_301/splits.txt) assigns every function and the data its code alone
-uses to one of 534 units. A unit is named after the source file its code cites, or else the file 1.0.0's splits
+uses to one of 535 units. A unit is named after the source file its code cites, or else the file 1.0.0's splits
 put its functions in; a function's own citation wins, and so does a unit's run in the link over a lone function
 1.0.0 placed elsewhere. Inline functions and template instances take no unit from 1.0.0: the linker keeps one
 copy, from whichever unit it meets first, and that differs between the builds. Where nothing is cited, the code
-stays with its neighbour, so a unit can still hold several original files, and 28 files still come out in more
+stays with its neighbour, so a unit can still hold several original files, and 29 files still come out in more
 than one piece.
 
 Each translation unit with static initializers ends with its initializer function, and the module's `init_array`
