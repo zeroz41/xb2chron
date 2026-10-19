@@ -19,9 +19,13 @@ patches. The DLC packs hold data only, so their code is part of 3.0.1's `main` t
 | Section | Range |
 |---|---|
 | `.text` | `0x0000000`–`0x08B4180` |
-| `.rodata` | `0x08B5000`–`0x0B39F23` |
+| `.rodata` | `0x097BA60`–`0x09D93F0` (the game's), and `0x08B5000`–`0x097BA60`, `0x09D93F0`–`0x0B39F23` (the linker's) |
 | `.data` | `0x0B3A000`–`0x0B8FDF0` |
 | `.bss` | `0x0B8FDF0`–`0x15EE000` |
+
+The read-only segment is mostly the linker's: the dynamic relocations, hash tables, symbols and strings before
+the game's constants, and the unwind tables (`.eh_frame_hdr`, `.eh_frame`) after them. The symbols list each in a
+section of its own, as a section table would, and no unit owns them.
 
 It calls the SDK through 667 imports and exports only 21 symbols (`nnMain`, the allocator, `operator new` and
 `delete`, two `std::vector` instances). Its 35,906 functions come from the unwind table, which clang writes for
@@ -58,7 +62,12 @@ their vtable slots) and kept only where they were never wrong. 29,334 of the 35,
 objects take 1.0.0's names this way (395 more are import stubs and exports the module names itself);
 `build/XC2_301/analysis/analysis.json` lists the evidence for each, and
 [`config/XC2_301/symbols.txt`](../config/XC2_301/symbols.txt) holds them. The other 6,177 are code an update added,
-or changed past what the evidence settles. To redo the transfer, with 1.0.0's `main` at `orig/XC2_100/main`, build
+or changed past what the evidence settles.
+
+Every other address the code forms, loads or stores through, and every address a relocated pointer holds, starts
+a data object too, named `lbl_<address>` until evidence names it: 18,194 of them, sized by what they are (a
+string to its NUL, a scalar the code only reads at one width to that width, else up to the next object). To redo
+the transfer, with 1.0.0's `main` at `orig/XC2_100/main`, build
 1.0.0's signatures and analyze 3.0.1 with `config/XC2_301/symbols.txt` moved aside, so the analysis starts from
 the module's own tables and inherits no name:
 
@@ -69,7 +78,8 @@ the module's own tables and inherits no name:
 ## Source layout
 
 The game's assertions name their source files, as built on Monolith Soft's machines under
-`C:/MonolithSoft/BF2/prog/` (BF2 is the game's internal name). Units keep that layout, relative to `prog/`:
+`D:/Monolithsoft/BF2/prog/` for 3.0.1 (`C:/` for 1.0.0; BF2 is the game's internal name). `mm_lib` cites
+`C:/MonolithSoft/` in 3.0.1 too: it was linked prebuilt. Units keep that layout, relative to `prog/`:
 
 - `application/BF2/`: the game. `gf/` (game framework: objects, menus, fields, data), `ui/`, `framework/`,
   `battle/`, `execute/`, `minigame/`, `plugin/`.
@@ -80,16 +90,27 @@ The sound driver (`ssd`) cites a separate tree; its unit is `sources/voice_handl
 
 ## Units
 
-[`config/XC2_301/splits.txt`](../config/XC2_301/splits.txt) assigns every function and the data its code alone
-uses to one of 537 units. A unit is named after the source file its code cites, or else the file 1.0.0's splits
-put its functions in; a function's own citation wins, and so does a unit's run in the link over a lone function
-1.0.0 placed elsewhere. Inline functions and template instances take no unit from 1.0.0: the linker keeps one
-copy, from whichever unit it meets first, and that differs between the builds. Where nothing is cited, the code
-stays with its neighbour, so a unit can still hold several original files, and 30 files still come out in more
-than one piece.
+[`config/XC2_301/splits.txt`](../config/XC2_301/splits.txt) assigns every function, and the data only its code
+uses, to one of 575 units: 452 named after the source file their own code cites, 99 after the file 1.0.0's splits
+put their functions in, 16 after the class their functions belong to (no file cites them, and 1.0.0's file for them
+is the neighbouring unit's), and 8 by address. The evidence, strongest first:
 
-Each translation unit with static initializers ends with its initializer function, and the module's `init_array`
-lists 200 of them. These mark file boundaries that the splits do not use yet.
+- **citations**: a function's own `__FILE__` names its unit, and a change of cited file is a boundary;
+- **static initializers**: each unit with static initializers ends with its own initializer (one that tests no
+  guard; a guarded one initializes a template's static member and goes with whichever unit came first), so the
+  200 entries of `init_array` mark where those units end, and each entry is its unit's data;
+- **another build**: 1.0.0's splits, where the code says nothing; they yield to the two above, since they were
+  drawn with less evidence;
+- **data**: data only one run of code uses holds the run in one unit, unless what the code states separates it
+  (a template's table or an inline's static is shared, kept from whichever unit came first).
+
+The link order follows the source paths, sorted case-insensitively by their upper-case spelling within the game
+(`ik_lookat_solver.cpp` before `ik_look_solver.cpp`); 34 of the 501 named units step back in that order, which
+marks units still misnamed or holding several files. Inline functions and template instances take no unit from
+1.0.0. 33 files still come out in more than one piece.
+
+A unit owns one range per section, in link order like its code: 99.7% of `.bss`, 84% of `.data` and nearly all of
+the game's `.rodata` have a unit; the rest is data several units use, which the unit defining it has to claim.
 
 ## Toolchain
 
