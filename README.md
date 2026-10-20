@@ -11,10 +11,10 @@ repository contains no game code or assets; you need your own copy of the game.
 <!-- progress -->
 | | Matched | Linked |
 |:--|--:|--:|
-| Code | 0.11% | 0.00% |
-| Data | 0.00% | 0.00% |
+| Code | 0.11% | 0.01% |
+| Data | 0.01% | 0.00% |
 | Functions | 151 of 35,906 | |
-| Units | | 0 of 642 |
+| Units | | 4 of 642 |
 <!-- /progress -->
 
 ## Target
@@ -38,7 +38,11 @@ You need your own dump of the game with the 3.0.1 update, and Ninja.
        zkit build --download
        zkit build
 
-The first build fetches the compiler and tools into `build/`.
+The first build fetches the compiler and tools into `build/`. Every build then rebuilds `main` from the compiled
+units and the original (`build/XC2_301/link/main.nso`), places each matched unit where the original holds it,
+checks the result against the segment hashes in the original's header and marks the units it proves as linked.
+Code that is not decompiled yet still comes from your copy of the game, so a passing build does not mean the
+decompilation is complete.
 
 ## Objdiff and the progress page
 
