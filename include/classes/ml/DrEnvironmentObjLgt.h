@@ -3,8 +3,6 @@
 
 #include "classes/ml/DrEnvironmentObj.h"
 
-namespace ml { class DrLightObj; }
-
 namespace ml {
 // table 0x7100B7B270
 class DrEnvironmentObjLgt : public ::ml::DrEnvironmentObj {
@@ -17,7 +15,6 @@ public:
     virtual void debugRenderLgt2D();  // slot 6
     virtual void setFrame(float);  // slot 7
     virtual void changeMemCall(void const*);  // slot 8
-    virtual void callback_Relase_Non(ml::DrLightObj*);  // slot 9
 };
 }  // namespace ml
 

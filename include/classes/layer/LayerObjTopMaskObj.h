@@ -1,8 +1,7 @@
-// not proven yet: its table differs from the original's (word 4: _ZN5layer12LayerObjUtil7releaseEv where the original has _ZN5layer8LayerObj7releaseEv)
 #ifndef CLASSES_LAYER_LAYEROBJTOPMASKOBJ_H
 #define CLASSES_LAYER_LAYEROBJTOPMASKOBJ_H
 
-#include "classes/layer/LayerObjUtil.h"
+#include "classes/layer/LayerObj.h"
 
 namespace layer { class LayerRenderView; }
 namespace layer { class LayerResColor; }
@@ -11,7 +10,7 @@ namespace layer { class LayerSortMan; }
 
 namespace layer {
 // table 0x7100B800E8
-class LayerObjTopMaskObj : public ::layer::LayerObjUtil {
+class LayerObjTopMaskObj : public ::layer::LayerObj {
 public:
     virtual ~LayerObjTopMaskObj();  // slot 0
     virtual void resourceInit();  // slot 3

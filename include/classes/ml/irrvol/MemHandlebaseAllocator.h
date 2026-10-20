@@ -1,11 +1,11 @@
 #ifndef CLASSES_ML_IRRVOL_MEMHANDLEBASEALLOCATOR_H
 #define CLASSES_ML_IRRVOL_MEMHANDLEBASEALLOCATOR_H
 
-#include "classes/ml/DrIBLColiAcc.h"
+#include "classes/mm/mtl/IAllocator.h"
 
 namespace ml { namespace irrvol {
 // table 0x7100B7B5F8
-class MemHandlebaseAllocator : public ::ml::DrIBLColiAcc {
+class MemHandlebaseAllocator : public ::mm::mtl::IAllocator {
 public:
     virtual ~MemHandlebaseAllocator();  // slot 0
     virtual void allocate(unsigned long, unsigned long);  // slot 2

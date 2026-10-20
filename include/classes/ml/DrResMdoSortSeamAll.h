@@ -1,13 +1,13 @@
-// not proven yet: its table differs from the original's (word 4: _ZN2ml19DrResMdoSortSeamAll11SetupRenderEv where the original has _ZN2ml13DrMdoZSortObj11SetupRenderEv)
 #ifndef CLASSES_ML_DRRESMDOSORTSEAMALL_H
 #define CLASSES_ML_DRRESMDOSORTSEAMALL_H
 
+#include "classes/ml/DrMdoZSortObj.h"
+
 namespace ml {
 // table 0x7100B7E2E0
-class DrResMdoSortSeamAll {
+class DrResMdoSortSeamAll : public ::ml::DrMdoZSortObj {
 public:
     virtual ~DrResMdoSortSeamAll();  // slot 0
-    virtual void SetupRender();  // slot 2
     virtual void ZPrepassRender();  // slot 3
     virtual void ThicknessRenderFirst();  // slot 4
     virtual void ThicknessRenderSecond();  // slot 5

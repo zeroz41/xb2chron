@@ -11,7 +11,6 @@ class LayerShdManager : public ::ml::IWorkEvent {
 public:
     virtual ~LayerShdManager();  // slot 0
     virtual void OnFileEvent(ml::EventFileTh*);  // slot 7
-    virtual void initColor(unsigned int);  // slot 8
 };
 }  // namespace layer
 

@@ -1,4 +1,3 @@
-// not proven yet: its table differs from the original's (word 4: _ZN5layer11LayerActDef7releaseEv where the original has _ZN5layer8LayerObj7releaseEv)
 #ifndef CLASSES_LAYER_LAYEROBJTOPDEF_H
 #define CLASSES_LAYER_LAYEROBJTOPDEF_H
 

@@ -1,11 +1,9 @@
 #ifndef CLASSES_ML_DRMDOZSORTOBJ_H
 #define CLASSES_ML_DRMDOZSORTOBJ_H
 
-#include "classes/ml/DrMdoShdSetShadow.h"
-
 namespace ml {
 // table 0x7100B7C668
-class DrMdoZSortObj : public ::ml::DrMdoShdSetShadow {
+class DrMdoZSortObj {
 public:
     virtual ~DrMdoZSortObj();  // slot 0
     virtual void SetupRender();  // slot 2
