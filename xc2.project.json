@@ -1,6 +1,8 @@
 {
   "schema_version": 1,
   "id": "xenoblade-chronicles2-decomp-xc2-301",
+  "title": "Xenoblade Chronicles 2",
+  "subtitle": "Nintendo Switch · version 3.0.1 · main",
   "repositories": {
     "decomp": {
       "root": ".",

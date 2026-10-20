@@ -38,9 +38,20 @@ You need your own dump of the game with the 3.0.1 update, and Ninja.
        zkit build --download
        zkit build
 
-The first build fetches the compiler and tools into `build/`. Each build writes the match report to
-`build/XC2_301/report.json`; open the folder in [objdiff](https://github.com/encounter/objdiff) to compare
-functions.
+The first build fetches the compiler and tools into `build/`.
+
+## Objdiff and the progress page
+
+`zkit build` also writes `objdiff.json` in the repository folder, the match report `build/XC2_301/report.json`,
+and a page that browses it, `build/progress/index.html`.
+
+- **objdiff.** Download [objdiff](https://github.com/encounter/objdiff/releases) and open the repository folder
+  in it. It reads `objdiff.json`, rebuilds a unit when you save its source and shows each function next to the
+  original.
+- **Progress page.** Open `build/progress/index.html` in a browser. It shows code and data matched and linked for
+  the whole executable, each source folder and each unit, down to every function and data section, with search
+  and filters, and works offline. `zkit report` rewrites it from the last report; `zkit report --readme` also
+  refreshes the table above.
 
 ## Contributing
 
