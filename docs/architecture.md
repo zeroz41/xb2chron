@@ -103,8 +103,8 @@ The sound driver (`ssd`) cites a separate tree; its unit is `sources/voice_handl
 ## Units
 
 [`config/XC2_301/splits.txt`](../config/XC2_301/splits.txt) assigns every function, and the data only its code
-uses, to one of 642 units: 500 named after a source file (464 after the file their own code cites, 36 after the
-file 1.0.0's splits put their functions in), 114 after the class most of their functions belong to, and 28 by
+uses, to one of 638 units: 501 named after a source file (464 after the file their own code cites, 37 after the
+file 1.0.0's splits put their functions in), 112 after the class most of their functions belong to, and 25 by
 address. A unit named by class or address is code no file string reaches, such as the event system (`event::`,
 1,716 functions), monolib's renderer, or files that assert nothing; its name is a placeholder until evidence
 names the file. The first, `unit_7100000024.cpp`, is NintendoSDK's start-up object (`_init`, `_fini`), which ends
@@ -115,30 +115,49 @@ end bound the first and last files' reach like any other file's. The evidence, s
 - **static initializers**: each unit with static initializers ends with its own initializer (one that tests no
   guard; a guarded one initializes a template's static member and goes with whichever unit came first), so the
   200 entries of `init_array` mark where those units end, and each entry is its unit's data;
+- **first use**: clang compiles an inline function or a template instance (weak in 1.0.0's symbols, and so in
+  3.0.1's where the name came from 1.0.0) into every unit whose code still calls it or takes its address, or that
+  emits a weak table holding it, right after the code that first refers to it there, and the linker keeps the
+  copy of the unit it links first. So a weak function is in the unit of the earliest code referring to it: a
+  `PtrSingleton<T>`'s destructors, which only `T`'s constructor and destructor reach through the singleton's
+  table, end `T`'s file, not start the next one. A table with a key function is emitted with that function
+  alone, and so are the inline virtuals only it holds, so only weak tables count;
 - **classes**, in 1.0.0: its symbol table marks inlines and template instances weak, so a class's other
   functions are its own, compiled in one file (every one of the 636 classes with a citing function cites a single
   file); next to that file's citations they are that file's;
 - **another build**: 1.0.0's splits, where 3.0.1's code says nothing. Where 3.0.1's code states a boundary between
-  the same two files, 1.0.0's boundary there yields to it; where 1.0.0 puts a third file between them, it stands;
+  the same two files, 1.0.0's boundary there yields to it; where 1.0.0 puts a third file between them, it stands.
+  Where 3.0.1's code joins a function to another file's (data only that run uses, a weak function and its first
+  user), 1.0.0's unit for it yields too: the run is the file its own citations name, else the one 1.0.0 gives most
+  of it (`GfMenuObjPartyGauge::GaugeListener::reciveEvent` shares a static with `GfMenuObjPartyGauge::open`, so
+  it is `gf_menu_obj_party_gauge.cpp`'s, not `party_status`'s as 1.0.0's splits had it);
 - **data**: data only one run of code uses holds the run in one unit, unless what the code states separates it
-  (a template's table or an inline's static is shared, kept from whichever unit came first);
+  (a template's table or an inline's static is shared, kept from whichever unit came first; a class's static
+  member its subclasses' initializers refer to spans several units);
 - **reach**: a file's evidence reaches through the data its code shares, over the inlines and template
-  instances clang emits after the code that first uses them (weak in 1.0.0, and so in 3.0.1 where the name came
-  from 1.0.0), and at most 48 functions or 0x8000 bytes past that. A longer run tied to neither neighbouring file
-  is neither's, but a unit of its own.
+  instances clang emits after the code that first uses them, and at most 48 functions or 0x8000 bytes past
+  that. A longer run tied to neither neighbouring file is neither's, but a unit of its own.
 
 1.0.0's [splits](../config/XC2_100/splits.txt) are this same evidence applied to 1.0.0's `main` (`zkit units
---splits` on a project whose target is 1.0.0), not the original build's: no map of either build exists. Two
-checks measure them. Hiding half of each build's citations at random and proposing units again, 96% of 3.0.1's
-hidden functions that land in a file-named unit land in the file they cite (85% with the splits before the class,
-third-file and reach rules), and those rules moved none into a wrong file. A class's table and static members are
-its file's (the table goes with the class's first out-of-line virtual): of the 711 in 3.0.1 whose file 1.0.0's
-classes fix, 655 lie in that file's unit and 12 in another (599 and 69 before).
+--splits` on a project whose target is 1.0.0), not the original build's: no map of either build exists. With the
+first-use rule, every one of 1.0.0's 1,349 functions that cites a file stays in that file's unit, and the units
+that begin with a weak function (impossible for one compiled by clang, unless a global's constructor is its
+first user) fall from 119 to 8; in 3.0.1 from 108 to 15. Two checks measure 3.0.1's units:
+
+- hiding half of 3.0.1's own citations at random (three draws) and proposing units again, 95.7%, 96.6% and 97.5%
+  of the hidden functions that land in a cited file's unit land in the file they cite (96.5%, 95.4% and 95.4%
+  before the first-use rule). It moved none into a wrong file but in one place: the two eflib particle emitter
+  files, whose functions cite `particle_emitter.cpp` and `particle_emitter_manager.cpp` in turn, so that one
+  file includes the other and both are one unit, named after whichever the remaining citations favour;
+- a class's table and static members are its file's (the table goes with the class's first out-of-line
+  virtual): of the 760 in 3.0.1 whose file 1.0.0's classes fix, 702 lie in that file's unit, 14 in another and 44
+  in none (699, 15 and 46 before).
 
 The link order follows the source paths, sorted case-insensitively by their upper-case spelling within the game
-(`ik_lookat_solver.cpp` before `ik_look_solver.cpp`); 20 of the 500 file units step back in that order, which marks
-units still misnamed or holding several files (and the start of each library). Inline functions and template
-instances take no unit from 1.0.0. 12 files still come out in more than one piece.
+(`ik_lookat_solver.cpp` before `ik_look_solver.cpp`); 18 of the 501 file units step back in that order (20 before
+the first-use rule), which marks units still misnamed or holding several files (and the start of each library).
+Inline functions and template instances take no unit from 1.0.0. 8 files still come out in more than one piece
+(12 before).
 
 A unit owns one range per section, in link order like its code: 99.6% of `.bss`, 84% of `.data` and nearly all of
 the game's `.rodata` have a unit. Weak data (an inline's static, a template's member or table) is in every unit
