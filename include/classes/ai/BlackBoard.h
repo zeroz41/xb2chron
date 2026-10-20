@@ -1,0 +1,13 @@
+#ifndef CLASSES_AI_BLACKBOARD_H
+#define CLASSES_AI_BLACKBOARD_H
+
+namespace ai {
+// table 0x7100B80DF8
+class BlackBoard {
+public:
+    virtual void getRTTI() const;  // slot 0
+    virtual ~BlackBoard();  // slot 1
+};
+}  // namespace ai
+
+#endif

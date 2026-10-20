@@ -136,6 +136,25 @@ using it and the linker keeps the first unit's copy, so it is the first using un
 order of the other claims. The rest is data several units use, which the unit defining it has to claim, strings
 and constants the linker merged across units, and data no code refers to between two units' ranges.
 
+## Classes
+
+The module has no RTTI, but its virtual tables name nearly every slot (1.0.0's names carried over), and a class's
+table says its bases: a base's table is a prefix of its derived class's, every slot the class does not override
+holding the base's function, and each further base has a group of its own at the offset of its subobject.
+[`include/classes/`](../include/classes) holds one header per class with a table: 2,043 classes and 30 class
+templates (for 402 instances), plus 10 classes with no table that only enclose others. Each declares its bases
+in layout order and the virtuals it introduces or overrides in slot order, one destructor per destructor pair.
+
+Compiled with the project's compiler, 2,323 of the 2,377 tables the module has come out word for word as the
+original's (1,091 of them with a destructor the linker folded into its base's identical one, 152 with slots the
+names do not reach yet); the 45 headers that do not compile or differ say why at their top. What the tables do
+not say stays a placeholder: a base no evidence names (`TUnk_<address>`), a slot no function names
+(`vf<slot>`), return types (`void` until code proves one), fields (padding where a derived class's layout proves
+a base's size). 68 bases with no table of their own are rebuilt from the slots their derived classes inherit.
+
+The headers are where matching starts, not output to regenerate: fields, static members and return types are
+added by hand as functions need them.
+
 ## Toolchain
 
 The code was built with clang 3.9.1, the base of NintendoSDK 3.5.0's compiler. All four modules of 3.0.1 still

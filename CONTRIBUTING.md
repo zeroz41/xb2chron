@@ -16,9 +16,12 @@ ignored.
 2. Start from Ghidra's reading (`zkit decompile <function>`) and the disassembly (`zkit asm <function>`).
 3. Write the function as a member of its class, using the class's header and the shared declarations of what it
    calls. No `extern "C"` bodies on `void *`, raw pointer-plus-offset reads, hand-mangled names, private prototypes
-   or hand-written vtables.
+   or hand-written vtables. Every class with a virtual table has a header in `include/classes/`, written from the
+   tables and proven to compile to them (see [Classes](docs/architecture.md#classes)); add the fields, static
+   members and return types a function needs to it, named on evidence.
 4. Check the candidate with `zkit try <function> <file>`. It compiles with the unit's own command and shows the
-   differing words. Four attempts per function; past that, stop and leave a note.
+   differing words. A unit's first function needs its file at `src/<unit path>` first. Four attempts per
+   function; past that, stop and leave a note.
 5. Only a candidate that is identical and free of decompiler debt goes into `src/<unit path>`. Keep bodies in
    address order inside their unit.
 6. `zkit build`, then `zkit progress --since <revision>` shows what changed, by original address.
