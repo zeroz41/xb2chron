@@ -46,3 +46,8 @@ functions.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Source files go under `src/`, at the path of the original file they
 recover; [docs/architecture.md](docs/architecture.md) describes how the executable is laid out.
+
+## License
+
+The source in this repository is released under the [MIT License](LICENSE). It covers this project's own work
+only: Xenoblade Chronicles 2 and its code and data belong to their owners and are not part of it.
