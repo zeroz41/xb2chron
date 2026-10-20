@@ -6,7 +6,7 @@ namespace gf { namespace VoiceInfo {
 class PJOB_PLAY {
 public:
     virtual ~PJOB_PLAY();  // slot 0
-    virtual void vf2();  // slot 2
+    virtual void exec();  // slot 2
     virtual void getName();  // slot 3
     virtual void getVoiceHandle() const;  // slot 4
 };

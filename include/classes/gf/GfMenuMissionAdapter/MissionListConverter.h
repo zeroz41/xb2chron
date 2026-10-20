@@ -8,7 +8,7 @@ namespace gf {
 class GfMenuMissionAdapter::MissionListConverter {
 public:
     virtual ~MissionListConverter();  // slot 0
-    virtual void vf2();  // slot 2
+    virtual void getMissionId();  // slot 2
 };
 }  // namespace gf
 

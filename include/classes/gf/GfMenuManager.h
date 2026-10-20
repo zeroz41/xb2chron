@@ -10,6 +10,7 @@ namespace gf { class QuestChangeParam; }
 namespace gf { class QuestCompleteChildParam; }
 namespace gf { class QuestCompleteParam; }
 namespace gf { class QuestOrderParam; }
+namespace gf { class QuestStateParam; }
 namespace gf { class QuestTaskParam; }
 namespace gf { enum GEV : int; }
 namespace ui { class EventData; }
@@ -37,7 +38,7 @@ public:
     virtual void qevChangeTaskState(gf::QuestTaskParam const&) = 0;
     virtual void qevLoadTaskState(unsigned int) = 0;
     virtual void qevCompleteChildQuest(gf::QuestCompleteChildParam const&) = 0;
-    virtual void vf20();
+    virtual void qevChangeQuestState(gf::QuestStateParam const&) = 0;
     virtual void qevChangeCurrentQuest(gf::QuestChangeParam const&) = 0;
     virtual void beginUpdate(fw::UpdateInfo const&) = 0;
 };
@@ -135,7 +136,7 @@ public:
     virtual void qevChangeTaskState(gf::QuestTaskParam const&);  // slot 17
     virtual void qevLoadTaskState(unsigned int);  // slot 18
     virtual void qevCompleteChildQuest(gf::QuestCompleteChildParam const&);  // slot 19
-    virtual void vf20();  // slot 20
+    virtual void qevChangeQuestState(gf::QuestStateParam const&);  // slot 20
     virtual void qevChangeCurrentQuest(gf::QuestChangeParam const&);  // slot 21
     virtual void beginUpdate(fw::UpdateInfo const&);  // slot 22
 };

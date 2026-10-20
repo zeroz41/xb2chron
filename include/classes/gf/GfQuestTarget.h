@@ -4,6 +4,7 @@
 #include "classes/gf/IQuestEvent.h"
 
 namespace gf { class QuestChangeParam; }
+namespace gf { class QuestCompleteChildParam; }
 namespace gf { class QuestOrderParam; }
 namespace gf { class QuestStateParam; }
 namespace gf { class QuestTaskParam; }
@@ -16,7 +17,7 @@ public:
     virtual void qevChangeTaskState(gf::QuestTaskParam const&) = 0;
     virtual void qevChangeQuestState(gf::QuestStateParam const&) = 0;
     virtual void qevOrderQuest(gf::QuestOrderParam const&) = 0;
-    virtual void vf5();
+    virtual void qevCompleteChildQuest(gf::QuestCompleteChildParam const&) = 0;
     virtual void qevChangeCurrentQuest(gf::QuestChangeParam const&) = 0;
     virtual void qevChangeTaskCondition(gf::QuestTaskParam const&) = 0;
 };
@@ -27,7 +28,7 @@ public:
     virtual void qevChangeTaskState(gf::QuestTaskParam const&);  // slot 2
     virtual void qevChangeQuestState(gf::QuestStateParam const&);  // slot 3
     virtual void qevOrderQuest(gf::QuestOrderParam const&);  // slot 4
-    virtual void vf5();  // slot 5
+    virtual void qevCompleteChildQuest(gf::QuestCompleteChildParam const&);  // slot 5
     virtual void qevChangeCurrentQuest(gf::QuestChangeParam const&);  // slot 6
     virtual void qevChangeTaskCondition(gf::QuestTaskParam const&);  // slot 7
 };

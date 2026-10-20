@@ -3,12 +3,14 @@
 
 #include "classes/gf/GfMenuObjMinimap2.h"
 
+namespace ui { class EventData; }
+
 namespace gf {
 // table 0x7100B637F0
 class GfMenuObjMinimap2::MapListener {
 public:
     virtual ~MapListener();  // slot 0
-    virtual void vf2();  // slot 2
+    virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
 };
 }  // namespace gf
 

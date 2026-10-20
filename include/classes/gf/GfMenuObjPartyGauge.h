@@ -7,6 +7,7 @@ namespace gf {
 // table 0x7100B63F40
 class GfMenuObjPartyGauge : public ::gf::GfMenuObject {
 public:
+    class GaugeListener;
     virtual ~GfMenuObjPartyGauge();  // slot 0
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3

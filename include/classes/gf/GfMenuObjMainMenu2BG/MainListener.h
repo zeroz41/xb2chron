@@ -3,12 +3,14 @@
 
 #include "classes/gf/GfMenuObjMainMenu2BG.h"
 
+namespace ui { class EventData; }
+
 namespace gf {
 // table 0x7100B63220
 class GfMenuObjMainMenu2BG::MainListener {
 public:
     virtual ~MainListener();  // slot 0
-    virtual void vf2();  // slot 2
+    virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
 };
 }  // namespace gf
 
