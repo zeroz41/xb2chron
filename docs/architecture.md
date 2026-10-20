@@ -54,20 +54,26 @@ one:
   its neighbour did). Code that differs from a sibling only in immediates pairs in order too, never by its exact
   code: the updates added BDAT columns and struct fields, so 3.0.1's `GfBdatItem::getInfoName` reads exactly like
   1.0.0's `getEventName`;
-- **a call**: a changed function's one unnamed callee is its 1.0.0 version's one unclaimed callee.
+- **a call**: a changed function's one unnamed callee is its 1.0.0 version's one unclaimed callee, and its calls
+  pair with its 1.0.0 version's in order: between two calls both name the same function, as many calls on each
+  side pair one to one (an update that added a call leaves the counts unequal there). A caller one of whose
+  pairings more callers contradict had its calls moved by an update and names nothing in order. A callee whose
+  size changed past a third (an update grew it, or moved its constructor out of line) keeps the name only when it
+  still shares by far the most of what it refers to with that 1.0.0 function. Hiding half the callees named by
+  their code, the order named 1,475 of them again in each of three draws and 1 or 2 otherwise.
 
 3.0.1 was built from `D:/`, 1.0.0 from `C:/`, so the source paths that assertions cite compare without their
 drive letter. The steps that pair changed code were checked against changed functions named independently (by their callers or
-their vtable slots) and kept only where they were never wrong. 29,334 of the 35,906 functions and 4,020 data
+their vtable slots) and kept only where they were never wrong. 29,732 of the 35,906 functions and 4,023 data
 objects take 1.0.0's names this way (395 more are import stubs and exports the module names itself), each with
-1.0.0's binding: 7,753 functions are inlines or template instances and 1,275 data objects their statics, members
+1.0.0's binding: 7,758 functions are inlines or template instances and 1,275 data objects their statics, members
 and tables (`scope:weak`);
 `build/XC2_301/analysis/analysis.json` lists the evidence for each, and
-[`config/XC2_301/symbols.txt`](../config/XC2_301/symbols.txt) holds them. The other 6,177 are code an update added,
+[`config/XC2_301/symbols.txt`](../config/XC2_301/symbols.txt) holds them. The other 5,779 are code an update added,
 or changed past what the evidence settles.
 
 Every other address the code forms, loads or stores through, and every address a relocated pointer holds, starts
-a data object too, named `lbl_<address>` until evidence names it: 18,194 of them, sized by what they are (a
+a data object too, named `lbl_<address>` until evidence names it: 18,191 of them, sized by what they are (a
 string to its NUL, a scalar the code only reads at one width to that width, else up to the next object). To redo
 the transfer, with 1.0.0's `main` at `orig/XC2_100/main`, build
 1.0.0's signatures and analyze 3.0.1 with `config/XC2_301/symbols.txt` moved aside, so the analysis starts from
@@ -93,7 +99,7 @@ The sound driver (`ssd`) cites a separate tree; its unit is `sources/voice_handl
 ## Units
 
 [`config/XC2_301/splits.txt`](../config/XC2_301/splits.txt) assigns every function, and the data only its code
-uses, to one of 640 units: 498 named after a source file (464 after the file their own code cites, 34 after the
+uses, to one of 642 units: 500 named after a source file (464 after the file their own code cites, 36 after the
 file 1.0.0's splits put their functions in), 114 after the class most of their functions belong to, and 28 by
 address. A unit named by class or address is code no file string reaches, such as the event system (`event::`,
 1,716 functions), monolib's renderer, or files that assert nothing; its name is a placeholder until evidence
@@ -126,7 +132,7 @@ its file's (the table goes with the class's first out-of-line virtual): of the 7
 classes fix, 655 lie in that file's unit and 12 in another (599 and 69 before).
 
 The link order follows the source paths, sorted case-insensitively by their upper-case spelling within the game
-(`ik_lookat_solver.cpp` before `ik_look_solver.cpp`); 20 of the 498 file units step back in that order, which marks
+(`ik_lookat_solver.cpp` before `ik_look_solver.cpp`); 20 of the 500 file units step back in that order, which marks
 units still misnamed or holding several files (and the start of each library). Inline functions and template
 instances take no unit from 1.0.0. 12 files still come out in more than one piece.
 
@@ -141,19 +147,21 @@ and constants the linker merged across units, and data no code refers to between
 The module has no RTTI, but its virtual tables name nearly every slot (1.0.0's names carried over), and a class's
 table says its bases: a base's table is a prefix of its derived class's, every slot the class does not override
 holding the base's function, and each further base has a group of its own at the offset of its subobject.
-[`include/classes/`](../include/classes) holds one header per class with a table: 2,043 classes and 30 class
-templates (for 402 instances), plus 10 classes with no table that only enclose others. Each declares its bases
+[`include/classes/`](../include/classes) holds one header per class with a table: 2,046 classes and 30 class
+templates (for 402 instances), plus 11 classes with no table that only enclose others. Each declares its bases
 in layout order and the virtuals it introduces or overrides in slot order, one destructor per destructor pair.
 
-Compiled with the project's compiler, 2,323 of the 2,377 tables the module has come out word for word as the
-original's (1,091 of them with a destructor the linker folded into its base's identical one, 152 with slots the
-names do not reach yet); the 45 headers that do not compile or differ say why at their top. What the tables do
+Compiled with the project's compiler, 2,325 of the 2,380 tables the module has come out word for word as the
+original's (1,091 of them with a destructor the linker folded into its base's identical one, 153 with slots the
+names do not reach yet); the 46 headers that do not compile or differ say why at their top. What the tables do
 not say stays a placeholder: a base no evidence names (`TUnk_<address>`), a slot no function names
 (`vf<slot>`), return types (`void` until code proves one), fields (padding where a derived class's layout proves
 a base's size). 68 bases with no table of their own are rebuilt from the slots their derived classes inherit.
 
 The headers are where matching starts, not output to regenerate: fields, static members and return types are
-added by hand as functions need them.
+added by hand as functions need them, and a base the tables cannot tell apart is corrected from the constructor
+that calls it (`ui::UIObjectPosPlugin` and `UIObjectNumberPlugin` derive from `UIObjectDispPlugin`, whose slots
+they all override).
 
 ## Toolchain
 
