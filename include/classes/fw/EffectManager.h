@@ -4,30 +4,13 @@
 
 #include "classes/fw/ManagerObject.h"
 #include "classes/ml/IScnRender.h"
+#include "classes/mm/mtl/PtrSingleton.h"
 
+namespace fw { class EffectManager; }
 namespace fw { class UpdateInfo; }
 namespace ml { class IDrDrawWorkInfo; }
 
 namespace fw {
-// a base of fw::EffectManager no evidence names yet
-class TUnk_B41428 {
-public:
-    virtual ~TUnk_B41428();
-    virtual void initialize() = 0;
-    virtual void vf3();
-    virtual void update(fw::UpdateInfo const&) = 0;
-    virtual void updateLayer(fw::UpdateInfo const&, unsigned int) = 0;
-    virtual void updateLayerPost(fw::UpdateInfo const&, unsigned int) = 0;
-    virtual void tail(fw::UpdateInfo const&, bool) = 0;
-    virtual void begin() = 0;
-    virtual void end() = 0;
-    virtual void apply(ml::IDrDrawWorkInfo const*) = 0;
-    virtual void opacityRender(ml::IDrDrawWorkInfo const*) = 0;
-    virtual void alphaRender(ml::IDrDrawWorkInfo const*) = 0;
-    virtual void lastRender(ml::IDrDrawWorkInfo const*) = 0;
-    virtual void blurRender(ml::IDrDrawWorkInfo const*) = 0;
-    virtual void finalRender(ml::IDrDrawWorkInfo const*) = 0;
-};
 // a base of fw::EffectManager no evidence names yet
 class TUnk_B41508 {
 public:
@@ -41,8 +24,8 @@ public:
     virtual void blurRender(ml::IDrDrawWorkInfo const*) = 0;
     virtual void finalRender(ml::IDrDrawWorkInfo const*) = 0;
 };
-// table 0x7100B41428; base at 0x0 unknown (TUnk_B41428), base at 0x18 unknown (TUnk_B41508)
-class EffectManager : public TUnk_B41428, public ::fw::ManagerObject, public TUnk_B41508, public ::ml::IScnRender {
+// table 0x7100B41428; base at 0x18 unknown (TUnk_B41508)
+class EffectManager : public ::mm::mtl::PtrSingleton< ::fw::EffectManager>, public ::fw::ManagerObject, public TUnk_B41508, public ::ml::IScnRender {
 public:
     virtual ~EffectManager();  // slot 0
     virtual void initialize();  // slot 2

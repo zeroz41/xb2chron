@@ -1,9 +1,13 @@
 #ifndef CLASSES_GF_GFGAMEENV_H
 #define CLASSES_GF_GFGAMEENV_H
 
+#include "classes/mm/mtl/PtrSingleton.h"
+
+namespace gf { class GfGameEnv; }
+
 namespace gf {
 // table 0x7100B54838
-class GfGameEnv {
+class GfGameEnv : public ::mm::mtl::PtrSingleton< ::gf::GfGameEnv> {
 public:
     virtual ~GfGameEnv();  // slot 0
 };

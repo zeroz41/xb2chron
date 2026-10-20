@@ -9,7 +9,7 @@ namespace gmk { class GmkMapGimmickGob; }
 
 namespace gmk {
 // table 0x7100B6DF28
-class GmkMapGimmickList : public ::gmk::TGmkList<gmk::GmkMapGimmick, gmk::GmkMapGimmick::BdatInfo, 1196441933u, 2u, gmk::GmkMapGimmickGob> {
+class GmkMapGimmickList : public ::gmk::TGmkList< ::gmk::GmkMapGimmick, ::gmk::GmkMapGimmick::BdatInfo, 1196441933u, 2u, ::gmk::GmkMapGimmickGob> {
 public:
     virtual ~GmkMapGimmickList();  // slot 0
     virtual void getInst(unsigned int) const;  // slot 6

@@ -6,8 +6,8 @@ namespace fw {
 class ResourceObject {
 public:
     virtual ~ResourceObject();  // slot 0
-    virtual void vf2() = 0;  // slot 2
-    virtual void vf3() = 0;  // slot 3
+    virtual void update() = 0;  // slot 2
+    virtual void valid() const = 0;  // slot 3
 };
 }  // namespace fw
 

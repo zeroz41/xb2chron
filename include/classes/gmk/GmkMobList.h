@@ -9,7 +9,7 @@ namespace gmk { class GmkMobGob; }
 
 namespace gmk {
 // table 0x7100B6DDF0
-class GmkMobList : public ::gmk::TGmkList<gmk::GmkMob, gmk::GmkMob::BdatInfo, 4345677u, 2u, gmk::GmkMobGob> {
+class GmkMobList : public ::gmk::TGmkList< ::gmk::GmkMob, ::gmk::GmkMob::BdatInfo, 4345677u, 2u, ::gmk::GmkMobGob> {
 public:
     virtual ~GmkMobList();  // slot 0
     virtual void onResetUpdateGmkIndex();  // slot 18

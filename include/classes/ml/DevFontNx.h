@@ -1,4 +1,4 @@
-// not proven yet: its table differs from the original's (word 8: _ZN2ml11TUnk_B75AA03vf6Ev where the original has _ZN2ml9DevFontNx10createFontEv)
+// not proven yet: its table differs from the original's (word 29: =-440 where the original has =-448)
 #ifndef CLASSES_ML_DEVFONTNX_H
 #define CLASSES_ML_DEVFONTNX_H
 

@@ -10,7 +10,7 @@ namespace gmk { class GmkRoutedNpc; }
 
 namespace gmk {
 // table 0x7100B6DCB8
-class GmkRoutedNpcList : public ::gmk::TGmkList<gmk::GmkRoutedNpc, gmk::GmkNpc::BdatInfo, 1129336402u, 6u, gmk::GmkRouteGob> {
+class GmkRoutedNpcList : public ::gmk::TGmkList< ::gmk::GmkRoutedNpc, ::gmk::GmkNpc::BdatInfo, 1129336402u, 6u, ::gmk::GmkRouteGob> {
 public:
     virtual ~GmkRoutedNpcList();  // slot 0
     virtual void create(gmk::IGmkList::CreateInfo const&);  // slot 9

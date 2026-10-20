@@ -1,12 +1,15 @@
 #ifndef CLASSES_GF_GFMENUHUD_H
 #define CLASSES_GF_GFMENUHUD_H
 
+#include "classes/mm/mtl/PtrSingleton.h"
+
+namespace gf { class GfMenuHUD; }
+
 namespace gf {
 // table 0x7100B5E890
-class GfMenuHUD {
+class GfMenuHUD : public ::mm::mtl::PtrSingleton< ::gf::GfMenuHUD> {
 public:
-    virtual void vf0();  // slot 0
-    virtual void vf1();  // slot 1
+    virtual ~GfMenuHUD();  // slot 0
 };
 }  // namespace gf
 

@@ -2,15 +2,13 @@
 #define CLASSES_GF_GFFIELDZONESCRIPT_H
 
 #include "classes/gf/IEventZone.h"
+#include "classes/mm/mtl/PtrSingleton.h"
+
+namespace gf { class GfFieldZoneScript; }
 
 namespace gf {
-// a base of gf::GfFieldZoneScript no evidence names yet
-class TUnk_B527F0 {
-public:
-    virtual ~TUnk_B527F0();
-};
-// table 0x7100B527F0; base at 0x0 unknown (TUnk_B527F0)
-class GfFieldZoneScript : public TUnk_B527F0, public ::gf::IEventZone {
+// table 0x7100B527F0
+class GfFieldZoneScript : public ::mm::mtl::PtrSingleton< ::gf::GfFieldZoneScript>, public ::gf::IEventZone {
 public:
     virtual ~GfFieldZoneScript();  // slot 0
 };

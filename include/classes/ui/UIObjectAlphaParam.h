@@ -5,7 +5,7 @@
 
 namespace ui {
 // table 0x7100B750B8
-class UIObjectAlphaParam {
+class UIObjectAlphaParam : public ::ui::UIObjectParam {
 public:
     virtual ~UIObjectAlphaParam();  // slot 0
     virtual void apply(ui::UIObjectParam::AdditionalParam&) const;  // slot 2

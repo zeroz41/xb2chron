@@ -1,6 +1,7 @@
-// not proven yet: does not compile: redefinition of 'FixedVector'
 #ifndef CLASSES_FW_SOUNDSSDDRIVER_H
 #define CLASSES_FW_SOUNDSSDDRIVER_H
+
+#include "classes/fw/ISoundDriver.h"
 
 namespace fw { class SoundCategory; }
 namespace fw { class SoundCategoryDebugInfo; }
@@ -17,70 +18,12 @@ namespace mm { namespace mtl { template <typename, unsigned long> class FixedVec
 
 namespace fw {
 // a base of fw::SoundSsdDriver no evidence names yet
-class TUnk_B42EF0 {
-public:
-    virtual ~TUnk_B42EF0();
-    virtual void update(fw::UpdateInfo const&) = 0;
-    virtual void finalize() = 0;
-    virtual void updateDebugInfo(mm::mtl::FixedVector<fw::SoundHandleDebugInfo, 128ul>&, mm::mtl::FixedVector<fw::SoundCategoryDebugInfo, 18ul>&) = 0;
-    virtual void setListeningPoint(mm::Mat44 const&) = 0;
-    virtual void getListeningPoint() const = 0;
-    virtual void setMasterVolume(float) = 0;
-    virtual void setCategoryVolume(fw::SoundCategory, float, float) = 0;
-    virtual void getCategoryVolume(fw::SoundCategory) const = 0;
-    virtual void setCategoryMute(fw::SoundCategory, bool, float) = 0;
-    virtual void setCategoryPitch(fw::SoundCategory, float, float) = 0;
-    virtual void setOutputMode(fw::SoundOutputType) = 0;
-    virtual void addCategory(fw::SoundCategory, float, char const*) = 0;
-    virtual void removeCategory(fw::SoundCategory) = 0;
-    virtual void pauseCategory(fw::SoundCategory, bool, float) = 0;
-    virtual void isDeviceEnable() const = 0;
-    virtual void playBgm(char const*, float, bool, int, fw::SoundCategory) = 0;
-    virtual void startBgm(unsigned int) = 0;
-    virtual void stopBgm(unsigned int, float) = 0;
-    virtual void stopBgmAll() = 0;
-    virtual void playVoice(char const*, float, bool, fw::SoundCategory) = 0;
-    virtual void startVoice(unsigned int) = 0;
-    virtual void stopVoice(unsigned int, float) = 0;
-    virtual void playSe(char const*, fw::SoundPack*, float, fw::SoundCategory) = 0;
-    virtual void playSe(unsigned int, fw::SoundPack*, float, fw::SoundCategory) = 0;
-    virtual void playSeEx(fw::SoundPlayInfo const&, fw::SoundResult&) = 0;
-    virtual void stopSe(unsigned int, float) = 0;
-    virtual void isValid(unsigned int) const = 0;
-    virtual void isPlaying(unsigned int) const = 0;
-    virtual void isPreparing(unsigned int) const = 0;
-    virtual void isReady(unsigned int) const = 0;
-    virtual void isLoop(unsigned int) = 0;
-    virtual void isLoop(unsigned int, fw::SoundPack*) = 0;
-    virtual void isPause(unsigned int) const = 0;
-    virtual void setCategory(unsigned int, fw::SoundCategory) = 0;
-    virtual void getCategory(unsigned int) = 0;
-    virtual void setVolume(unsigned int, float, float) = 0;
-    virtual void getVolume(unsigned int, fw::SoundVolumeType) = 0;
-    virtual void setPitch(unsigned int, float, float) = 0;
-    virtual void setPan(unsigned int, float, float) = 0;
-    virtual void setPos(unsigned int, mm::Vec3 const&) = 0;
-    virtual void setPlayTime(unsigned int, float) = 0;
-    virtual void getPlayTime(unsigned int, float&) = 0;
-    virtual void getTotalTime(unsigned int, float&) = 0;
-    virtual void setRemainLoopCount(unsigned int, int) = 0;
-    virtual void getRemainLoopCount(unsigned int, int&) = 0;
-    virtual void pause(unsigned int, bool, float) = 0;
-    virtual void stopAll() = 0;
-    virtual void stopVoiceAll() = 0;
-    virtual void stopSeAll() = 0;
-    virtual void pauseAll(bool, float) = 0;
-    virtual void findSe(char const*) const = 0;
-    virtual void attachPoolMemory(void*, unsigned int) = 0;
-    virtual void detachPoolMemory(void*, unsigned int) = 0;
-};
-// a base of fw::SoundSsdDriver no evidence names yet
 class TUnk_B430B8 {
 public:
     virtual ~TUnk_B430B8();
 };
-// table 0x7100B42EF0; base at 0x0 unknown (TUnk_B42EF0), base at 0x8 unknown (TUnk_B430B8)
-class SoundSsdDriver : public TUnk_B42EF0, public TUnk_B430B8 {
+// table 0x7100B42EF0; base at 0x8 unknown (TUnk_B430B8)
+class SoundSsdDriver : public ::fw::ISoundDriver, public TUnk_B430B8 {
 public:
     class SoundAllocator;
     virtual ~SoundSsdDriver();  // slot 0

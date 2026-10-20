@@ -2,10 +2,12 @@
 #define CLASSES_GF_GFMENUMANAGER_H
 
 #include "classes/gf/IQuestEvent.h"
+#include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/ui/UIUpdateCallback.h"
 
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GfMenuManager; }
 namespace gf { class QuestChangeParam; }
 namespace gf { class QuestCompleteChildParam; }
 namespace gf { class QuestCompleteParam; }
@@ -16,32 +18,6 @@ namespace gf { enum GEV : int; }
 namespace ui { class EventData; }
 
 namespace gf {
-// a base of gf::GfMenuManager no evidence names yet
-class TUnk_B5E990 {
-public:
-    virtual ~TUnk_B5E990();
-    virtual void reciveEvent(ui::EventData const&, unsigned int) = 0;
-    virtual void vf3();
-    virtual void gevAccessTarget(gf::GF_OBJ_HANDLE*) = 0;
-    virtual void gevChangeTarget(gf::GF_OBJ_HANDLE*) = 0;
-    virtual void gevCameraControl(unsigned int) = 0;
-    virtual void gevBattleStart() = 0;
-    virtual void vf8();
-    virtual void gevPlayEvent(gf::GEV, unsigned int) = 0;
-    virtual void gevSalvageStateChange(unsigned int) = 0;
-    virtual void vf11();
-    virtual void vf12();
-    virtual void vf13();
-    virtual void vf14();
-    virtual void qevOrderQuest(gf::QuestOrderParam const&) = 0;
-    virtual void qevCompleteQuest(gf::QuestCompleteParam const&) = 0;
-    virtual void qevChangeTaskState(gf::QuestTaskParam const&) = 0;
-    virtual void qevLoadTaskState(unsigned int) = 0;
-    virtual void qevCompleteChildQuest(gf::QuestCompleteChildParam const&) = 0;
-    virtual void qevChangeQuestState(gf::QuestStateParam const&) = 0;
-    virtual void qevChangeCurrentQuest(gf::QuestChangeParam const&) = 0;
-    virtual void beginUpdate(fw::UpdateInfo const&) = 0;
-};
 // a base of gf::GfMenuManager no evidence names yet
 class TUnk_B5EA58 {
 public:
@@ -113,8 +89,8 @@ class TUnk_B5ECD0 {
 public:
     virtual void reciveEvent(ui::EventData const&, unsigned int) = 0;
 };
-// table 0x7100B5E990; base at 0x0 unknown (TUnk_B5E990), base at 0x8 unknown (TUnk_B5EA58), base at 0x18 unknown (TUnk_B5ECD0)
-class GfMenuManager : public TUnk_B5E990, public TUnk_B5EA58, public ::gf::IQuestEvent, public TUnk_B5ECD0, public ::ui::UIUpdateCallback {
+// table 0x7100B5E990; base at 0x8 unknown (TUnk_B5EA58), base at 0x18 unknown (TUnk_B5ECD0)
+class GfMenuManager : public ::mm::mtl::PtrSingleton< ::gf::GfMenuManager>, public TUnk_B5EA58, public ::gf::IQuestEvent, public TUnk_B5ECD0, public ::ui::UIUpdateCallback {
 public:
     enum OBJ : int;
     virtual ~GfMenuManager();  // slot 0

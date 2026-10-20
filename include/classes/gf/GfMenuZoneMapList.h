@@ -7,7 +7,7 @@ namespace gf { class MenuZoneMapInfo; }
 
 namespace gf {
 // table 0x7100B5F7D0
-class GfMenuZoneMapList : public ::ui::UIListInfo<gf::MenuZoneMapInfo> {
+class GfMenuZoneMapList : public ::ui::UIListInfo< ::gf::MenuZoneMapInfo> {
 public:
     virtual ~GfMenuZoneMapList();  // slot 0
 };

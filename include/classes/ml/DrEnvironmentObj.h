@@ -11,8 +11,8 @@ public:
     virtual void renderLgt();  // slot 4
     virtual void debugRenderLgt();  // slot 5
     virtual void debugRenderLgt2D();  // slot 6
-    virtual void vf7() = 0;  // slot 7
-    virtual void vf8() = 0;  // slot 8
+    virtual void setFrame(float) = 0;  // slot 7
+    virtual void changeMemCall(void const*) = 0;  // slot 8
 };
 }  // namespace ml
 

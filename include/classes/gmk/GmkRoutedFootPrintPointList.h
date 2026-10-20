@@ -9,7 +9,7 @@ namespace gmk { class GmkRoutedFootPrintPointGobCustom; }
 
 namespace gmk {
 // table 0x7100B6EBE8
-class GmkRoutedFootPrintPointList : public ::gmk::TGmkList<gmk::GmkRoutedFootPrintPoint, gmk::GmkRoutedFootPrintPoint::BdatInfo, 1347438162u, 1u, gmk::GmkRoutedFootPrintPointGobCustom> {
+class GmkRoutedFootPrintPointList : public ::gmk::TGmkList< ::gmk::GmkRoutedFootPrintPoint, ::gmk::GmkRoutedFootPrintPoint::BdatInfo, 1347438162u, 1u, ::gmk::GmkRoutedFootPrintPointGobCustom> {
 public:
     virtual ~GmkRoutedFootPrintPointList();  // slot 0
 };

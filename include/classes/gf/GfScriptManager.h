@@ -1,9 +1,13 @@
 #ifndef CLASSES_GF_GFSCRIPTMANAGER_H
 #define CLASSES_GF_GFSCRIPTMANAGER_H
 
+#include "classes/mm/mtl/PtrSingleton.h"
+
+namespace gf { class GfScriptManager; }
+
 namespace gf {
 // table 0x7100B6B900
-class GfScriptManager {
+class GfScriptManager : public ::mm::mtl::PtrSingleton< ::gf::GfScriptManager> {
 public:
     virtual ~GfScriptManager();  // slot 0
 };

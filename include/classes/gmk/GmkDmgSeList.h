@@ -9,7 +9,7 @@ namespace gmk { class GmkDmgSeGob; }
 
 namespace gmk {
 // table 0x7100B6EA98
-class GmkDmgSeList : public ::gmk::TGmkList<gmk::GmkDmgSe, gmk::GmkDmgSe::BdatInfo, 1163087172u, 2u, gmk::GmkDmgSeGob> {
+class GmkDmgSeList : public ::gmk::TGmkList< ::gmk::GmkDmgSe, ::gmk::GmkDmgSe::BdatInfo, 1163087172u, 2u, ::gmk::GmkDmgSeGob> {
 public:
     virtual ~GmkDmgSeList();  // slot 0
     virtual void getInst(unsigned int) const;  // slot 6

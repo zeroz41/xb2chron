@@ -1,17 +1,12 @@
 #ifndef CLASSES_ML_DEVFILETH_H
 #define CLASSES_ML_DEVFILETH_H
 
-#include "classes/ml/WorkObj.h"
+#include "classes/ml/DevBase.h"
 
 namespace ml { class CERR_STRUCT; }
 namespace ml { enum ERR_DECIDE : int; }
 
 namespace ml {
-// between ml::DevFileTh and ml::WorkObj: fields, no virtuals of its own
-class TUnk_B76CC0 : public ::ml::WorkObj {
-public:
-    unsigned char pad_1A8[0x8];  // fields: size from its derived classes
-};
 // a base of ml::DevFileTh no evidence names yet
 class TUnk_B76D68 {
 public:
@@ -24,8 +19,8 @@ public:
     virtual void icbError(ml::CERR_STRUCT*) = 0;
     virtual void icbDecide(ml::CERR_STRUCT*, ml::ERR_DECIDE) = 0;
 };
-// table 0x7100B76CC0; base at 0x0 unknown (TUnk_B76CC0), base at 0x1B0 unknown (TUnk_B76D68), base at 0x1B8 unknown (TUnk_B76D88)
-class DevFileTh : public TUnk_B76CC0, public TUnk_B76D68, public TUnk_B76D88 {
+// table 0x7100B76CC0; base at 0x1B0 unknown (TUnk_B76D68), base at 0x1B8 unknown (TUnk_B76D88)
+class DevFileTh : public ::ml::DevBase, public TUnk_B76D68, public TUnk_B76D88 {
 public:
     virtual ~DevFileTh();  // slot 0
     virtual void wkUpdate();  // slot 9

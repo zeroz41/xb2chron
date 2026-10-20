@@ -1,9 +1,11 @@
 #ifndef CLASSES_MM_THREADING_THREADNX_H
 #define CLASSES_MM_THREADING_THREADNX_H
 
+#include "classes/mm/threading/Thread.h"
+
 namespace mm { namespace threading {
 // table 0x7100B82570
-class ThreadNx {
+class ThreadNx : public ::mm::threading::Thread {
 public:
     virtual ~ThreadNx();  // slot 0
     virtual void isSuspended() const;  // slot 2

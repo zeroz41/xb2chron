@@ -2,9 +2,11 @@
 #define CLASSES_GF_GFGAMEMANAGER_H
 
 #include "classes/gf/IQuestEvent.h"
+#include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class ActivateType; }
 namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GfGameManager; }
 namespace gf { class MapjumpCallbackInfo; }
 namespace gf { class QuestCompleteChildParam; }
 namespace gf { class QuestCompleteParam; }
@@ -14,50 +16,6 @@ namespace gf { enum GF_STATE : int; }
 namespace gf { enum RELOAD_BDAT : int; }
 
 namespace gf {
-// a base of gf::GfGameManager no evidence names yet
-class TUnk_B54938 {
-public:
-    virtual ~TUnk_B54938();
-    virtual void vf2();
-    virtual void vf3();
-    virtual void vf4();
-    virtual void vf5();
-    virtual void vf6();
-    virtual void vf7();
-    virtual void gevGetArts(unsigned int, unsigned int, bool) = 0;
-    virtual void gevDriverLevel(unsigned int, unsigned int, unsigned int) = 0;
-    virtual void gevSelectHikari(bool) = 0;
-    virtual void vf11();
-    virtual void vf12();
-    virtual void gevPause(unsigned int, unsigned int) = 0;
-    virtual void gevChangeBlade(gf::GF_OBJ_HANDLE*, int, int) = 0;
-    virtual void gevMapjump(gf::GEV, gf::MapjumpCallbackInfo const&) = 0;
-    virtual void gevGameObjEnter(gf::GF_OBJ_HANDLE*) = 0;
-    virtual void gevGameObjLeave(gf::GF_OBJ_HANDLE*) = 0;
-    virtual void gevDriverActivate(unsigned int, gf::ActivateType, gf::ActivateType) = 0;
-    virtual void gevBladeActivate(unsigned int, gf::ActivateType, gf::ActivateType) = 0;
-    virtual void gevBladeUnselect(unsigned int, bool) = 0;
-    virtual void gevBladeEnable(unsigned int) = 0;
-    virtual void gevPlayEvent(gf::GEV, unsigned int) = 0;
-    virtual void gevPartyMemberOK(bool) = 0;
-    virtual void gevPartyIDMemberOK(bool, unsigned int) = 0;
-    virtual void gevItemAdd(unsigned int, int) = 0;
-    virtual void gevLayerPause(unsigned int, bool) = 0;
-    virtual void gevReloadBdat(gf::RELOAD_BDAT, unsigned int) = 0;
-    virtual void gevSalvageStateChange(unsigned int) = 0;
-    virtual void vf29();
-    virtual void vf30();
-    virtual void gevChangeWeather(unsigned int, unsigned int) = 0;
-    virtual void gevChangeTimeRange(unsigned int) = 0;
-    virtual void gevGameState(gf::GF_STATE, gf::GF_STATE) = 0;
-    virtual void gevControllFree(bool) = 0;
-    virtual void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int) = 0;
-    virtual void vf36();
-    virtual void vf37();
-    virtual void qevOrderQuest(gf::QuestOrderParam const&) = 0;
-    virtual void qevCompleteQuest(gf::QuestCompleteParam const&) = 0;
-    virtual void qevCompleteChildQuest(gf::QuestCompleteChildParam const&) = 0;
-};
 // a base of gf::GfGameManager no evidence names yet
 class TUnk_B54A90 {
 public:
@@ -124,8 +82,8 @@ public:
     virtual void vf61();
     virtual void vf62();
 };
-// table 0x7100B54938; base at 0x0 unknown (TUnk_B54938), base at 0x8 unknown (TUnk_B54A90)
-class GfGameManager : public TUnk_B54938, public TUnk_B54A90, public ::gf::IQuestEvent {
+// table 0x7100B54938; base at 0x8 unknown (TUnk_B54A90)
+class GfGameManager : public ::mm::mtl::PtrSingleton< ::gf::GfGameManager>, public TUnk_B54A90, public ::gf::IQuestEvent {
 public:
     virtual ~GfGameManager();  // slot 0
     virtual void vf2();  // slot 2

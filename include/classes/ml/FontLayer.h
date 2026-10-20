@@ -6,6 +6,7 @@ namespace ml {
 class FontLayer {
 public:
     virtual ~FontLayer();  // slot 0
+    unsigned char pad_8[0x8];  // fields: size from its derived classes
 };
 }  // namespace ml
 

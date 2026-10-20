@@ -7,7 +7,7 @@ namespace gf { class QuestID; }
 
 namespace gf {
 // table 0x7100B5F760
-class GfMenuQuestList : public ::ui::UIListInfo<gf::QuestID> {
+class GfMenuQuestList : public ::ui::UIListInfo< ::gf::QuestID> {
 public:
     virtual ~GfMenuQuestList();  // slot 0
 };

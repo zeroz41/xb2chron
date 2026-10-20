@@ -1,14 +1,14 @@
 #ifndef CLASSES_ML_SCNOBJIBLDR_H
 #define CLASSES_ML_SCNOBJIBLDR_H
 
-#include "classes/ml/ScnObj.h"
+#include "classes/ml/ScnObjIBL.h"
 
 namespace ml { class WinProc; }
 namespace mm { class Vec3; }
 
 namespace ml {
 // table 0x7100B7E6D8
-class ScnObjIBLDr : public ::ml::ScnObj {
+class ScnObjIBLDr : public ::ml::ScnObjIBL {
 public:
     virtual ~ScnObjIBLDr();  // slot 0
     virtual void apply();  // slot 4

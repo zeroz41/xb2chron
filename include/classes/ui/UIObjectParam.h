@@ -7,7 +7,7 @@ class UIObjectParam {
 public:
     class AdditionalParam;
     virtual ~UIObjectParam();  // slot 0
-    virtual void vf2() = 0;  // slot 2
+    virtual void apply(ui::UIObjectParam::AdditionalParam&) const = 0;  // slot 2
 };
 }  // namespace ui
 

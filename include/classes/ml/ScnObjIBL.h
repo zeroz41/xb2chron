@@ -4,17 +4,18 @@
 #include "classes/ml/ScnObj.h"
 
 namespace ml { class WinProc; }
+namespace mm { class Vec3; }
 
 namespace ml {
 // table 0x7100B78000
 class ScnObjIBL : public ::ml::ScnObj {
 public:
     virtual ~ScnObjIBL();  // slot 0
-    virtual void vf8() = 0;  // slot 8
-    virtual void vf9() = 0;  // slot 9
-    virtual void vf10() = 0;  // slot 10
+    virtual void setReferencePos(mm::Vec3 const&) = 0;  // slot 8
+    virtual void getReferencePos() const = 0;  // slot 9
+    virtual void setFromCaptureTool() = 0;  // slot 10
     virtual void dispDebugWindow(bool, char const*, ml::WinProc*);  // slot 11
-    virtual void vf12() = 0;  // slot 12
+    virtual void setName(char const*) = 0;  // slot 12
 };
 }  // namespace ml
 

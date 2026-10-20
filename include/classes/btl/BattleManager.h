@@ -1,18 +1,13 @@
 #ifndef CLASSES_BTL_BATTLEMANAGER_H
 #define CLASSES_BTL_BATTLEMANAGER_H
 
+#include "classes/mm/mtl/PtrSingleton.h"
+
+namespace btl { class BattleManager; }
 namespace gf { class MapjumpCallbackInfo; }
 namespace gf { enum GEV : int; }
 
 namespace btl {
-// a base of btl::BattleManager no evidence names yet
-class TUnk_B3A5A0 {
-public:
-    virtual ~TUnk_B3A5A0();
-    virtual void gevBattleStart() = 0;
-    virtual void gevBattleEnd() = 0;
-    virtual void gevMapjump(gf::GEV, gf::MapjumpCallbackInfo const&) = 0;
-};
 // a base of btl::BattleManager no evidence names yet
 class TUnk_B3A5D8 {
 public:
@@ -79,8 +74,8 @@ public:
     virtual void vf61();
     virtual void vf62();
 };
-// table 0x7100B3A5A0; base at 0x0 unknown (TUnk_B3A5A0), base at 0x8 unknown (TUnk_B3A5D8)
-class BattleManager : public TUnk_B3A5A0, public TUnk_B3A5D8 {
+// table 0x7100B3A5A0; base at 0x8 unknown (TUnk_B3A5D8)
+class BattleManager : public ::mm::mtl::PtrSingleton< ::btl::BattleManager>, public TUnk_B3A5D8 {
 public:
     virtual ~BattleManager();  // slot 0
     virtual void gevBattleStart();  // slot 2

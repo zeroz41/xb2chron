@@ -8,6 +8,7 @@ namespace ml {
 class DevBase : public ::ml::WorkObj {
 public:
     virtual ~DevBase();  // slot 0
+    unsigned char pad_1A8[0x8];  // fields: size from its derived classes
 };
 }  // namespace ml
 

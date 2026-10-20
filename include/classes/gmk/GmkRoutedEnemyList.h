@@ -10,7 +10,7 @@ namespace gmk { class GmkRoutedEnemyGobCustom; }
 
 namespace gmk {
 // table 0x7100B6C168
-class GmkRoutedEnemyList : public ::gmk::TGmkList<gmk::GmkRoutedEnemy, gmk::GmkEnemy::BdatInfo, 1296975186u, 8u, gmk::GmkRoutedEnemyGobCustom> {
+class GmkRoutedEnemyList : public ::gmk::TGmkList< ::gmk::GmkRoutedEnemy, ::gmk::GmkEnemy::BdatInfo, 1296975186u, 8u, ::gmk::GmkRoutedEnemyGobCustom> {
 public:
     virtual ~GmkRoutedEnemyList();  // slot 0
     virtual void setUpdateGmkNumPerFrame(unsigned int);  // slot 8

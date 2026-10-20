@@ -9,7 +9,7 @@ namespace gmk { class GmkSalvageGobCustom; }
 
 namespace gmk {
 // table 0x7100B6C9F8
-class GmkSalvageList : public ::gmk::TGmkList<gmk::GmkSalvage, gmk::GmkSalvage::BdatInfo, 1447838035u, 2u, gmk::GmkSalvageGobCustom> {
+class GmkSalvageList : public ::gmk::TGmkList< ::gmk::GmkSalvage, ::gmk::GmkSalvage::BdatInfo, 1447838035u, 2u, ::gmk::GmkSalvageGobCustom> {
 public:
     virtual ~GmkSalvageList();  // slot 0
     virtual void update(float);  // slot 11

@@ -1,9 +1,13 @@
 #ifndef CLASSES_BTL_TALKMANAGER_H
 #define CLASSES_BTL_TALKMANAGER_H
 
+#include "classes/mm/mtl/PtrSingleton.h"
+
+namespace btl { class TalkManager; }
+
 namespace btl {
 // table 0x7100B3BDE8
-class TalkManager {
+class TalkManager : public ::mm::mtl::PtrSingleton< ::btl::TalkManager> {
 public:
     virtual ~TalkManager();  // slot 0
 };

@@ -9,7 +9,7 @@ namespace gmk { class GmkNpcGob; }
 
 namespace gmk {
 // table 0x7100B6C230
-class GmkNpcList : public ::gmk::TGmkList<gmk::GmkNpc, gmk::GmkNpc::BdatInfo, 4411470u, 4u, gmk::GmkNpcGob> {
+class GmkNpcList : public ::gmk::TGmkList< ::gmk::GmkNpc, ::gmk::GmkNpc::BdatInfo, 4411470u, 4u, ::gmk::GmkNpcGob> {
 public:
     virtual ~GmkNpcList();  // slot 0
     virtual void createGmk(void*);  // slot 16

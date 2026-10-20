@@ -1,11 +1,13 @@
 #ifndef CLASSES_ML_DRENVIRONMENTOBJLGT_H
 #define CLASSES_ML_DRENVIRONMENTOBJLGT_H
 
+#include "classes/ml/DrEnvironmentObj.h"
+
 namespace ml { class DrLightObj; }
 
 namespace ml {
 // table 0x7100B7B270
-class DrEnvironmentObjLgt {
+class DrEnvironmentObjLgt : public ::ml::DrEnvironmentObj {
 public:
     virtual ~DrEnvironmentObjLgt();  // slot 0
     virtual void resourceInit();  // slot 2

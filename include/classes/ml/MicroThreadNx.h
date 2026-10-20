@@ -7,7 +7,7 @@ namespace nn { namespace os { class FiberType; }}
 
 namespace ml {
 // table 0x7100B78438
-class MicroThreadNx {
+class MicroThreadNx : public ::ml::MicroThread {
 public:
     virtual ~MicroThreadNx();  // slot 0
     virtual void destroyThread(ml::MicroThread::MTHREAD*);  // slot 2

@@ -1,13 +1,15 @@
 #ifndef CLASSES_GF_PC_FALLDISTANCEACHIEVPLUGIN_H
 #define CLASSES_GF_PC_FALLDISTANCEACHIEVPLUGIN_H
 
+#include "classes/gf/Plugin.h"
+
 namespace fw { class UpdateInfo; }
 namespace gf { class GfComBehavior; }
 namespace gf { class GfComBehaviorPc; }
 
 namespace gf { namespace pc {
 // table 0x7100B697C0
-class FallDistanceAchievPlugin {
+class FallDistanceAchievPlugin : public ::gf::Plugin {
 public:
     virtual void getRTTI() const;  // slot 0
     virtual ~FallDistanceAchievPlugin();  // slot 1

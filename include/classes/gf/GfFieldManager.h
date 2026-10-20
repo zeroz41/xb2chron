@@ -1,26 +1,16 @@
 #ifndef CLASSES_GF_GFFIELDMANAGER_H
 #define CLASSES_GF_GFFIELDMANAGER_H
 
+#include "classes/mm/mtl/PtrSingleton.h"
+
 namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GfFieldManager; }
 namespace gf { class MapjumpCallbackInfo; }
 namespace gf { enum GEV : int; }
 namespace gf { enum RELOAD_BDAT : int; }
 namespace gf { namespace IGfObjListener { enum OBJEVT : int; }}
 
 namespace gf {
-// a base of gf::GfFieldManager no evidence names yet
-class TUnk_B51F08 {
-public:
-    virtual ~TUnk_B51F08();
-    virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int) = 0;
-    virtual void gevMapjump(gf::GEV, gf::MapjumpCallbackInfo const&) = 0;
-    virtual void gevReloadBdat(gf::RELOAD_BDAT, unsigned int) = 0;
-    virtual void gevBattleStart() = 0;
-    virtual void gevBattleEnd() = 0;
-    virtual void gevGameMapModel(gf::GF_OBJ_HANDLE*, bool) = 0;
-    virtual void gevPause(unsigned int, unsigned int) = 0;
-    virtual void gevPlayEvent(gf::GEV, unsigned int) = 0;
-};
 // a base of gf::GfFieldManager no evidence names yet
 class TUnk_B51F68 {
 public:
@@ -92,8 +82,8 @@ public:
     virtual void vf61();
     virtual void vf62();
 };
-// table 0x7100B51F08; base at 0x0 unknown (TUnk_B51F08), base at 0x8 unknown (TUnk_B51F68), base at 0x10 unknown (TUnk_B51F80)
-class GfFieldManager : public TUnk_B51F08, public TUnk_B51F68, public TUnk_B51F80 {
+// table 0x7100B51F08; base at 0x8 unknown (TUnk_B51F68), base at 0x10 unknown (TUnk_B51F80)
+class GfFieldManager : public ::mm::mtl::PtrSingleton< ::gf::GfFieldManager>, public TUnk_B51F68, public TUnk_B51F80 {
 public:
     virtual ~GfFieldManager();  // slot 0
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 2

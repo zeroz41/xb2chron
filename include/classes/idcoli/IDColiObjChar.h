@@ -1,9 +1,11 @@
 #ifndef CLASSES_IDCOLI_IDCOLIOBJCHAR_H
 #define CLASSES_IDCOLI_IDCOLIOBJCHAR_H
 
+#include "classes/idcoli/IDColiObjBase.h"
+
 namespace idcoli {
 // table 0x7100B7F210
-class IDColiObjChar {
+class IDColiObjChar : public ::idcoli::IDColiObjBase {
 public:
     virtual ~IDColiObjChar();  // slot 0
     virtual void release();  // slot 2

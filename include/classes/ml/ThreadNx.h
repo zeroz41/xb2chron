@@ -1,9 +1,11 @@
 #ifndef CLASSES_ML_THREADNX_H
 #define CLASSES_ML_THREADNX_H
 
+#include "classes/ml/Thread.h"
+
 namespace ml {
 // table 0x7100B78528
-class ThreadNx {
+class ThreadNx : public ::ml::Thread {
 public:
     virtual ~ThreadNx();  // slot 0
     virtual void isSuspended() const;  // slot 2

@@ -10,7 +10,7 @@ namespace gmk { class GmkEnemyGob; }
 
 namespace gmk {
 // table 0x7100B6C050
-class GmkEnemyList : public ::gmk::TGmkList<gmk::GmkEnemy, gmk::GmkEnemy::BdatInfo, 1296387653u, 5u, gmk::GmkEnemyGob> {
+class GmkEnemyList : public ::gmk::TGmkList< ::gmk::GmkEnemy, ::gmk::GmkEnemy::BdatInfo, 1296387653u, 5u, ::gmk::GmkEnemyGob> {
 public:
     virtual ~GmkEnemyList();  // slot 0
     virtual void getInst(unsigned int) const;  // slot 6

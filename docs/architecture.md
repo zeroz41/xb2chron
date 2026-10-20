@@ -178,9 +178,14 @@ holding the base's function, and each further base has a group of its own at the
 templates (for 422 instances), plus 10 classes with no table that only enclose others. Each declares its bases
 in layout order and the virtuals it introduces or overrides in slot order, one destructor per destructor pair.
 
-Compiled with the project's compiler, 2,382 of the 2,439 tables the module has come out word for word as the
-original's (984 of them with a destructor the linker folded into its base's identical one, 269 with slots the
-names do not reach yet); the 47 headers that do not compile or differ say why at their top. What the tables do
+Constructors, destructors and new-expressions prove primary bases the tables cannot: they store the tables of
+a class's primary ancestors at the start of the object, in order. That is how every singleton derives from its
+`mm::mtl::PtrSingleton<T>`, whose own table holds only destructors, so no table prefix shows it; 576 classes'
+primary bases are proven this way (220 by the code alone).
+
+Compiled with the project's compiler, 2,389 of the 2,439 tables the module has come out word for word as the
+original's (984 of them with a destructor the linker folded into its base's identical one, 273 with slots the
+names do not reach yet); the 40 headers that do not compile or differ say why at their top. What the tables do
 not say stays a placeholder: a base no evidence names (`TUnk_<address>`), a slot no function names
 (`vf<slot>`), return types (`void` until code proves one), fields (padding where a derived class's layout proves
 a base's size). 68 bases with no table of their own are rebuilt from the slots their derived classes inherit.

@@ -1,7 +1,7 @@
 #ifndef CLASSES_ML_DEVGRAPH_H
 #define CLASSES_ML_DEVGRAPH_H
 
-#include "classes/ml/WorkObj.h"
+#include "classes/ml/DevBase.h"
 
 namespace ml { enum FONT_STYLE : int; }
 namespace mm { class Col4; }
@@ -9,18 +9,13 @@ namespace mm { class Mat44; }
 namespace mm { template <typename> class Rect; }
 
 namespace ml {
-// between ml::DevGraph and ml::WorkObj: fields, no virtuals of its own
-class TUnk_B75C48 : public ::ml::WorkObj {
-public:
-    unsigned char pad_1A8[0x8];  // fields: size from its derived classes
-};
 // a base of ml::DevGraph no evidence names yet
 class TUnk_B75DE0 {
 public:
     virtual ~TUnk_B75DE0();
 };
-// table 0x7100B75C48; base at 0x0 unknown (TUnk_B75C48), base at 0x1B0 unknown (TUnk_B75DE0)
-class DevGraph : public TUnk_B75C48, public TUnk_B75DE0 {
+// table 0x7100B75C48; base at 0x1B0 unknown (TUnk_B75DE0)
+class DevGraph : public ::ml::DevBase, public TUnk_B75DE0 {
 public:
     virtual ~DevGraph();  // slot 0
     virtual void wkStandby();  // slot 8

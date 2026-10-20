@@ -3,22 +3,16 @@
 
 #include "classes/fw/MessageObject.h"
 #include "classes/gf/IGfEvent.h"
+#include "classes/mm/mtl/PtrSingleton.h"
 
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
 namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GfGameTarget; }
 
 namespace gf {
-// a base of gf::GfGameTarget no evidence names yet
-class TUnk_B56700 {
-public:
-    virtual ~TUnk_B56700();
-    virtual void recieveMessage(fw::MessageObject*, fw::Message&) = 0;
-    virtual void gevChangeLeader(gf::GF_OBJ_HANDLE*) = 0;
-    virtual void gevSwapFormation(unsigned int, unsigned int) = 0;
-};
-// table 0x7100B56700; base at 0x0 unknown (TUnk_B56700)
-class GfGameTarget : public TUnk_B56700, public ::fw::MessageObject, public ::gf::IGfEvent {
+// table 0x7100B56700
+class GfGameTarget : public ::mm::mtl::PtrSingleton< ::gf::GfGameTarget>, public ::fw::MessageObject, public ::gf::IGfEvent {
 public:
     class StateAutoTarget;
     class StateBattleTarget;
