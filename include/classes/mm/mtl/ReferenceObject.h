@@ -5,7 +5,9 @@ namespace mm { namespace mtl {
 // table 0x7100B78250
 class ReferenceObject {
 public:
-    virtual ~ReferenceObject();  // slot 0
+    ReferenceObject() : m_RefCount(1) {}
+    virtual ~ReferenceObject() {}  // slot 0
+    int m_RefCount;  // reference_object.h asserts `m_RefCount > 0` as it releases one
 };
 }}  // namespace mm::mtl
 

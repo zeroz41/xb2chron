@@ -24,6 +24,16 @@ ignored.
    function; past that, stop and leave a note.
 5. Only a candidate that is identical and free of decompiler debt goes into `src/<unit path>`. Keep bodies in
    address order inside their unit.
+
+What the original's source did leaves marks the source has to reproduce:
+
+- `__FILE__` needs nothing: units compile as `D:/Monolithsoft/BF2/prog/<unit path>`, the name their citations
+  carry. A cited line number does: put `#line <n>` before the statement whose `__LINE__` the original cites.
+- A destructor whose code stores its class's table and returns had a statement the build compiles away; clang
+  skips the store for an empty body, so write a null statement (`;`) with a comment saying so.
+- Unknown fields keep the class's layout with `pad_<offset>` arrays; a field the code uses gets a name from what it
+  demonstrably does (a setter that writes it, an assertion that names it), never `m_<offset>`, which the debt
+  check counts.
 6. `zkit build`, then `zkit progress --since <revision>` shows what changed, by original address.
 
 The full rules are `zkit contract decomp`.

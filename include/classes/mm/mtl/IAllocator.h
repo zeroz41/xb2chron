@@ -12,4 +12,8 @@ public:
 };
 }}  // namespace mm::mtl
 
+// `new (allocator, alignment, __FILE__, __LINE__) T(...)`
+void* operator new(unsigned long size, mm::mtl::IAllocator* allocator, int alignment, const char* file,
+                   unsigned long line);
+
 #endif
