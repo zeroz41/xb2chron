@@ -60,7 +60,8 @@ one:
 drive letter. The steps that pair changed code were checked against changed functions named independently (by their callers or
 their vtable slots) and kept only where they were never wrong. 29,334 of the 35,906 functions and 4,020 data
 objects take 1.0.0's names this way (395 more are import stubs and exports the module names itself), each with
-1.0.0's binding: 7,753 are inline functions or template instances (`scope:weak`);
+1.0.0's binding: 7,753 functions are inlines or template instances and 1,275 data objects their statics, members
+and tables (`scope:weak`);
 `build/XC2_301/analysis/analysis.json` lists the evidence for each, and
 [`config/XC2_301/symbols.txt`](../config/XC2_301/symbols.txt) holds them. The other 6,177 are code an update added,
 or changed past what the evidence settles.
@@ -92,11 +93,13 @@ The sound driver (`ssd`) cites a separate tree; its unit is `sources/voice_handl
 ## Units
 
 [`config/XC2_301/splits.txt`](../config/XC2_301/splits.txt) assigns every function, and the data only its code
-uses, to one of 637 units: 498 named after a source file (464 after the file their own code cites, 34 after the
-file 1.0.0's splits put their functions in), 113 after the class most of their functions belong to, and 26 by
+uses, to one of 640 units: 498 named after a source file (464 after the file their own code cites, 34 after the
+file 1.0.0's splits put their functions in), 114 after the class most of their functions belong to, and 28 by
 address. A unit named by class or address is code no file string reaches, such as the event system (`event::`,
 1,716 functions), monolib's renderer, or files that assert nothing; its name is a placeholder until evidence
-names the file. The evidence, strongest first:
+names the file. The first, `unit_7100000024.cpp`, is NintendoSDK's start-up object (`_init`, `_fini`), which ends
+with the markers the SDK gives its objects (`__nnDetailNintendoSdkRuntimeObjectFile`); the module's start and
+end bound the first and last files' reach like any other file's. The evidence, strongest first:
 
 - **citations**: a function's own `__FILE__` names its unit, and a change of cited file is a boundary;
 - **static initializers**: each unit with static initializers ends with its own initializer (one that tests no
@@ -128,8 +131,10 @@ units still misnamed or holding several files (and the start of each library). I
 instances take no unit from 1.0.0. 12 files still come out in more than one piece.
 
 A unit owns one range per section, in link order like its code: 99.6% of `.bss`, 84% of `.data` and nearly all of
-the game's `.rodata` have a unit; the rest is data several units use, which the unit defining it has to claim,
-and data no code refers to between two units' ranges.
+the game's `.rodata` have a unit. Weak data (an inline's static, a template's member or table) is in every unit
+using it and the linker keeps the first unit's copy, so it is the first using unit's wherever that fits the link
+order of the other claims. The rest is data several units use, which the unit defining it has to claim, strings
+and constants the linker merged across units, and data no code refers to between two units' ranges.
 
 ## Toolchain
 

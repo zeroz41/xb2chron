@@ -1,21 +1,30 @@
+unit_7100000024.cpp:
+	.text        start:0x00000024 end:0x000001B8
+
+apps/FrameworkLauncher.cpp:
+	.text        start:0x000001B8 end:0x000028F0
+	.data        start:0x01171008 end:0x01171408
+	.bss         start:0x011C90C0 end:0x011C9180
+
 application/BF2/battle/ai/ai_manager.cpp:
-	.text        start:0x00000024 end:0x0000361C
-	.data        start:0x01171008 end:0x01171468
+	.text        start:0x000028F0 end:0x0000361C
+	.data        start:0x01171448 end:0x01171468
 	.bss         start:0x011C9180 end:0x011CC5B8
 
 application/BF2/battle/battle_global.cpp:
 	.text        start:0x0000361C end:0x0000A9C0
-	.data        start:0x01171468 end:0x011714A8
-	.bss         start:0x011CC5B8 end:0x011CC7C8
+	.data        start:0x01171468 end:0x01171510
+	.bss         start:0x011CC5B8 end:0x011CC7E8
 
 application/BF2/battle/battle_manager.cpp:
 	.text        start:0x0000A9C0 end:0x0000C0D4
 	.data        start:0x01171578 end:0x01171798
-	.bss         start:0x011CC8C0 end:0x011CC988
+	.bss         start:0x011CC808 end:0x011CD2B0
 
 btl/BitArray.cpp:
 	.text        start:0x0000C0D4 end:0x000109B8
 	.data        start:0x01171818 end:0x01171838
+	.bss         start:0x011CD2B0 end:0x011CD2B8
 
 application/BF2/battle/blade_arts_manager.cpp:
 	.text        start:0x000109B8 end:0x00011B14
@@ -32,11 +41,12 @@ application/BF2/battle/btl_system_balance_access.cpp:
 application/BF2/battle/chain_attack_manager.cpp:
 	.text        start:0x00017018 end:0x0001DEC8
 	.data        start:0x011718F8 end:0x01171970
-	.bss         start:0x011CD2E8 end:0x011CD3D8
+	.bss         start:0x011CD2B8 end:0x011CD3D8
 
 btl/BattleCharacter.cpp:
 	.text        start:0x0001DEC8 end:0x000612BC
 	.data        start:0x01171970 end:0x01171E88
+	.bss         start:0x011CD3D8 end:0x011CD408
 
 application/BF2/battle/character/character_manager_battle.cpp:
 	.text        start:0x000612BC end:0x00063AA4
@@ -98,7 +108,7 @@ dir/VwProcess.cpp:
 application/BF2/execute/title/title_main.cpp:
 	.text        start:0x001420A0 end:0x00147F08
 	.data        start:0x01176D08 end:0x01177520
-	.bss         start:0x0125C0B8 end:0x0125C0C0
+	.bss         start:0x0125C0B8 end:0x0125C0D8
 
 tl/TitleStatePlayGame.cpp:
 	.text        start:0x00147F08 end:0x00149F14
@@ -107,11 +117,12 @@ tl/TitleStatePlayGame.cpp:
 application/BF2/framework/anim/anim_manager.cpp:
 	.text        start:0x00149F14 end:0x0014B1D0
 	.data        start:0x011775E8 end:0x01177680
+	.bss         start:0x0125C0D8 end:0x0125C0E0
 
 fw/AssetManager.cpp:
 	.text        start:0x0014B1D0 end:0x00155AD0
 	.data        start:0x01177680 end:0x01177A80
-	.bss         start:0x0125C0E8 end:0x0125C190
+	.bss         start:0x0125C0E0 end:0x0125C198
 
 fw/CameraLayer.cpp:
 	.text        start:0x00155AD0 end:0x00157DAC
@@ -120,7 +131,7 @@ fw/CameraLayer.cpp:
 application/BF2/framework/coli/coli_manager.cpp:
 	.text        start:0x00157DAC end:0x0015C65C
 	.data        start:0x01177A98 end:0x01177B88
-	.bss         start:0x0125C1C8 end:0x0125C1CC
+	.bss         start:0x0125C1C8 end:0x0125C1D8
 
 application/BF2/framework/coli/coli_move_object.cpp:
 	.text        start:0x0015C65C end:0x0015CA5C
@@ -145,7 +156,7 @@ application/BF2/framework/dynamics/wind_force_calculator.cpp:
 application/BF2/framework/dynamics/dynamics_manager.cpp:
 	.text        start:0x00167070 end:0x00168C1C
 	.data        start:0x01177DB8 end:0x01177ED8
-	.bss         start:0x0125C308 end:0x0125CB10
+	.bss         start:0x0125C300 end:0x0125CB10
 
 application/BF2/framework/effect/effect_clip.cpp:
 	.text        start:0x00168C1C end:0x00169D30
@@ -158,19 +169,22 @@ application/BF2/framework/effect/effect_data.cpp:
 application/BF2/framework/effect/effect_lod_manager.cpp:
 	.text        start:0x0016A10C end:0x0016AADC
 	.data        start:0x01177F18 end:0x01177F58
+	.bss         start:0x0125CB10 end:0x0125CB18
 
 application/BF2/framework/effect/effect_manager.cpp:
 	.text        start:0x0016AADC end:0x00175E90
-	.data        start:0x01177F58 end:0x01178178
+	.data        start:0x01177F58 end:0x01178198
 	.bss         start:0x0125CB18 end:0x0125CB1A
 
 fw/EffectPoint.cpp:
 	.text        start:0x00175E90 end:0x0017ABC8
 	.data        start:0x01178198 end:0x011781F8
+	.bss         start:0x0125CB38 end:0x0125CB40
 
 application/BF2/framework/framework.cpp:
 	.text        start:0x0017ABC8 end:0x0017CEB0
-	.data        start:0x011781F8 end:0x011783E8
+	.data        start:0x011781F8 end:0x01178488
+	.bss         start:0x0125CB40 end:0x0125CB98
 
 application/BF2/framework/ik/ik_blow_rotate_solver.cpp:
 	.text        start:0x0017CEB0 end:0x0017ECC0
@@ -178,7 +192,7 @@ application/BF2/framework/ik/ik_blow_rotate_solver.cpp:
 
 application/BF2/framework/ik/ik_foot_placement_solver.cpp:
 	.text        start:0x0017ECC0 end:0x001808DC
-	.data        start:0x011784F8 end:0x01178528
+	.data        start:0x011784F8 end:0x011785D0
 	.bss         start:0x0125CBB0 end:0x0125CBC8
 
 application/BF2/framework/ik/ik_lookat_solver.cpp:
@@ -244,7 +258,8 @@ application/BF2/framework/message/message_manager.cpp:
 
 application/BF2/framework/movie/movie_manager.cpp:
 	.text        start:0x0018E530 end:0x0018F808
-	.data        start:0x01178EC8 end:0x01179048
+	.data        start:0x01178EC8 end:0x01179068
+	.bss         start:0x0125CFA0 end:0x0125CFA8
 
 application/BF2/framework/navi/navi_manager.cpp:
 	.text        start:0x0018F808 end:0x00190018
@@ -253,11 +268,13 @@ application/BF2/framework/navi/navi_manager.cpp:
 application/BF2/framework/object/updatable_manager.cpp:
 	.text        start:0x00190018 end:0x001915B4
 	.data        start:0x011790F8 end:0x01179288
+	.bss         start:0x0125CFC0 end:0x0125CFC8
 
 fw/PadManager.cpp:
 	.text        start:0x001915B4 end:0x00196844
+	.rodata      start:0x00F68EEC end:0x00F68F50
 	.data        start:0x01179288 end:0x01179600
-	.bss         start:0x0125D170 end:0x0125D2E0
+	.bss         start:0x0125D170 end:0x0125D2E8
 
 application/BF2/framework/param/param_builder.cpp:
 	.text        start:0x00196844 end:0x00196CA8
@@ -283,10 +300,11 @@ application/BF2/framework/sound/sound_pack.cpp:
 application/BF2/framework/sound/sound_ssd_drv.cpp:
 	.text        start:0x001A3138 end:0x001AABC4
 	.data        start:0x01179BB8 end:0x0117A158
+	.bss         start:0x0125D488 end:0x0125D4B8
 
 application/BF2/framework/wind/param/wind_param.cpp:
 	.text        start:0x001AABC4 end:0x001AEB14
-	.data        start:0x0117A158 end:0x0117A198
+	.data        start:0x0117A158 end:0x0117A1C8
 	.bss         start:0x0125D4B8 end:0x0125D588
 
 application/BF2/framework/wind/wind_factory.cpp:
@@ -313,6 +331,7 @@ application/BF2/gf/asset/gf_asset_log.cpp:
 application/BF2/gf/asset/gf_asset_manager.cpp:
 	.text        start:0x001B1B20 end:0x001B6890
 	.data        start:0x0117A320 end:0x0117A3D0
+	.bss         start:0x0125D590 end:0x0125D598
 
 application/BF2/gf/asset/gf_asset_pack.cpp:
 	.text        start:0x001B6890 end:0x001BBD18
@@ -329,6 +348,7 @@ application/BF2/gf/asset/gf_asset_setup.cpp:
 
 unit_71001CBBBC.cpp:
 	.text        start:0x001CBBBC end:0x001CC110
+	.bss         start:0x0125DE38 end:0x0125DE40
 
 application/BF2/gf/asset/gf_filesize_pool.cpp:
 	.text        start:0x001CC110 end:0x001CD25C
@@ -348,14 +368,15 @@ application/BF2/gf/camera/chain_attack/gf_camera_chain_attack.cpp:
 
 application/BF2/gf/camera/fusion_combo/gf_camera_fusion_combo.cpp:
 	.text        start:0x001D459C end:0x001D72B0
-	.data        start:0x0117CC48 end:0x0117CCA8
+	.data        start:0x0117CC48 end:0x0117CD28
 
 application/BF2/gf/camera/gf_camera_param_reflection.cpp:
 	.text        start:0x001D72B0 end:0x001D7360
 
 application/BF2/gf/camera/gf_camera_player.cpp:
 	.text        start:0x001D7360 end:0x001DEFD0
-	.data        start:0x0117CD28 end:0x0117CD88
+	.data        start:0x0117CD28 end:0x0117CDB0
+	.bss         start:0x0125DEA8 end:0x0125DEB0
 
 application/BF2/gf/camera/gf_camera_player_target.cpp:
 	.text        start:0x001DEFD0 end:0x001E03C8
@@ -381,6 +402,7 @@ application/BF2/gf/camera/script/gf_camera_script.cpp:
 application/BF2/gf/data/gf_bdat_bgm.cpp:
 	.text        start:0x001E640C end:0x001E75FC
 	.data        start:0x0117D1B8 end:0x0117D268
+	.bss         start:0x0125DF40 end:0x0125DF48
 
 unit_71001E75FC.cpp:
 	.text        start:0x001E75FC end:0x001EEFBC
@@ -388,6 +410,7 @@ unit_71001E75FC.cpp:
 application/BF2/gf/data/gf_bdat_blade.cpp:
 	.text        start:0x001EEFBC end:0x001F6834
 	.data        start:0x0117D450 end:0x0117D648
+	.bss         start:0x0125DFA0 end:0x0125DFA8
 
 unit_71001F6834.cpp:
 	.text        start:0x001F6834 end:0x0020CA2C
@@ -409,6 +432,7 @@ unit_710022A4B4.cpp:
 application/BF2/gf/data/gf_bdat_chrdr.cpp:
 	.text        start:0x0022CD68 end:0x0022F53C
 	.data        start:0x0117E278 end:0x0117E320
+	.bss         start:0x0125F860 end:0x0125F868
 
 unit_710022F53C.cpp:
 	.text        start:0x0022F53C end:0x00232740
@@ -430,33 +454,38 @@ unit_710023C850.cpp:
 application/BF2/gf/data/gf_bdat_cond.cpp:
 	.text        start:0x0023F270 end:0x00242150
 	.data        start:0x0117E4C0 end:0x0117E648
+	.bss         start:0x0125FF88 end:0x0125FF90
 
 unit_7100242150.cpp:
 	.text        start:0x00242150 end:0x0024DA9C
 
 application/BF2/gf/data/gf_bdat_item.cpp:
 	.text        start:0x0024DA9C end:0x00258FC8
-	.data        start:0x0117E648 end:0x0117E698
+	.data        start:0x0117E648 end:0x0117E7B8
+	.bss         start:0x01260170 end:0x01260178
 
 application/BF2/gf/data/gf_bdat_lookat.cpp:
 	.text        start:0x00258FC8 end:0x0025AA38
 	.data        start:0x0117E7B8 end:0x0117E880
+	.bss         start:0x01260AA0 end:0x01260AB0
 
 unit_710025AA38.cpp:
 	.text        start:0x0025AA38 end:0x0025D718
 
 application/BF2/gf/data/gf_bdat_maplist.cpp:
 	.text        start:0x0025D718 end:0x002604F0
-	.data        start:0x0117E880 end:0x0117E8D0
+	.data        start:0x0117E880 end:0x0117E9D0
+	.bss         start:0x01260AB0 end:0x01260AB8
 
 application/BF2/gf/data/gf_bdat_msg.cpp:
 	.text        start:0x002604F0 end:0x002624DC
-	.data        start:0x0117E9D0 end:0x0117EA28
-	.bss         start:0x01260CC0 end:0x01260E28
+	.data        start:0x0117E9D0 end:0x0117EA48
+	.bss         start:0x01260CC0 end:0x01260E30
 
 application/BF2/gf/data/gf_bdat_quest.cpp:
 	.text        start:0x002624DC end:0x00263714
 	.data        start:0x0117EA48 end:0x0117EAB8
+	.bss         start:0x01260E30 end:0x01260E38
 
 unit_7100263714.cpp:
 	.text        start:0x00263714 end:0x00271618
@@ -470,7 +499,8 @@ unit_710027E8A0.cpp:
 
 application/BF2/gf/data/gf_bdat_shop.cpp:
 	.text        start:0x00282510 end:0x00286190
-	.data        start:0x0117F1F0 end:0x0117F240
+	.data        start:0x0117F1F0 end:0x0117F460
+	.bss         start:0x012618A8 end:0x012618B0
 
 application/BF2/gf/data/gf_bdat_unique_motion.cpp:
 	.text        start:0x00286190 end:0x00287858
@@ -489,6 +519,7 @@ application/BF2/gf/data/gf_data_bdat.cpp:
 application/BF2/gf/data/gf_data_manager.cpp:
 	.text        start:0x0028BCB8 end:0x0028C068
 	.data        start:0x01184470 end:0x011844B0
+	.bss         start:0x01261BB0 end:0x01261BB8
 
 application/BF2/gf/data/gf_data_obj.cpp:
 	.text        start:0x0028C068 end:0x002908B4
@@ -529,21 +560,25 @@ gf/BgmTrack.cpp:
 application/BF2/gf/field/gf_field_collect.cpp:
 	.text        start:0x002D5B08 end:0x002D6CCC
 	.data        start:0x01187D68 end:0x01187DA8
+	.bss         start:0x01383DE8 end:0x01383DF0
 
 application/BF2/gf/field/gf_field_dmg.cpp:
 	.text        start:0x002D6CCC end:0x002D7E28
-	.data        start:0x01187DC8 end:0x01187FD8
+	.data        start:0x01187DA8 end:0x01187FD8
+	.bss         start:0x01383DF0 end:0x01383DF8
 
 application/BF2/gf/field/gf_field_gimmick.cpp:
 	.text        start:0x002D7E28 end:0x002DAA98
 	.data        start:0x01187FD8 end:0x01188300
+	.bss         start:0x01383DF8 end:0x01383E18
 
 gf/LocatorBat_EnemyID.cpp:
 	.text        start:0x002DAA98 end:0x002DB38C
 
 application/BF2/gf/field/gf_field_locator.cpp:
 	.text        start:0x002DB38C end:0x002E0FB4
-	.data        start:0x01188348 end:0x011884B0
+	.data        start:0x01188348 end:0x01188658
+	.bss         start:0x01383E18 end:0x01383E20
 
 gf/LocatorTbox.cpp:
 	.text        start:0x002E0FB4 end:0x002E1C3C
@@ -551,10 +586,12 @@ gf/LocatorTbox.cpp:
 application/BF2/gf/field/gf_field_lod.cpp:
 	.text        start:0x002E1C3C end:0x002E7224
 	.data        start:0x01188658 end:0x011886B0
+	.bss         start:0x01383E38 end:0x01383E40
 
 application/BF2/gf/field/gf_field_manager.cpp:
 	.text        start:0x002E7224 end:0x002E81A4
 	.data        start:0x011886B0 end:0x01188950
+	.bss         start:0x01383E40 end:0x01383E90
 
 application/BF2/gf/field/gf_field_mapse.cpp:
 	.text        start:0x002E81A4 end:0x002E9E20
@@ -576,7 +613,7 @@ application/BF2/gf/field/gf_field_tbox.cpp:
 
 application/BF2/gf/field/gf_field_time.cpp:
 	.text        start:0x002EDE8C end:0x002EF9D0
-	.data        start:0x01188D98 end:0x01188DB8
+	.data        start:0x01188D98 end:0x01188E20
 
 application/BF2/gf/field/gf_field_weather.cpp:
 	.text        start:0x002EF9D0 end:0x002F3BE4
@@ -603,7 +640,8 @@ application/BF2/gf/field/gf_field_zone_se.cpp:
 
 gf/GfFobjDropitem.cpp:
 	.text        start:0x002F55E4 end:0x002FA388
-	.data        start:0x01189050 end:0x01189090
+	.data        start:0x01189050 end:0x011890B8
+	.bss         start:0x01384008 end:0x01384018
 
 application/BF2/gf/field/gf_fobj_manager.cpp:
 	.text        start:0x002FA388 end:0x002FBCCC
@@ -612,10 +650,12 @@ application/BF2/gf/field/gf_fobj_manager.cpp:
 application/BF2/gf/game/achiev/gf_achiev_manager.cpp:
 	.text        start:0x002FBCCC end:0x002FD000
 	.data        start:0x01189310 end:0x01189350
+	.bss         start:0x01384018 end:0x01384020
 
 application/BF2/gf/game/auto_talk/gf_auto_talk.cpp:
 	.text        start:0x002FD000 end:0x00300F4C
 	.data        start:0x01189358 end:0x011895A8
+	.bss         start:0x01384020 end:0x01384028
 
 application/BF2/gf/game/blade/gf_blade_manager.cpp:
 	.text        start:0x00300F4C end:0x00306DB4
@@ -636,11 +676,13 @@ gf/GfEvtModelBlade/StateEndBattle.cpp:
 
 application/BF2/gf/game/event/gf_game_event.cpp:
 	.text        start:0x0030D6E8 end:0x0031014C
-	.data        start:0x01189F68 end:0x01189F88
+	.data        start:0x01189F68 end:0x01189FA8
+	.bss         start:0x013840F0 end:0x013840F8
 
 application/BF2/gf/game/gf_game_arts_movie.cpp:
 	.text        start:0x0031014C end:0x003105AC
 	.data        start:0x01189FA8 end:0x0118A1B8
+	.bss         start:0x013840F8 end:0x01384100
 
 application/BF2/gf/game/gf_game_camera.cpp:
 	.text        start:0x003105AC end:0x00310EB0
@@ -650,6 +692,7 @@ application/BF2/gf/game/gf_game_camera.cpp:
 application/BF2/gf/game/gf_game_chain_attack.cpp:
 	.text        start:0x00310EB0 end:0x003118A4
 	.data        start:0x0118A1F8 end:0x0118A238
+	.bss         start:0x01384108 end:0x01384110
 
 application/BF2/gf/game/gf_game_cond.cpp:
 	.text        start:0x003118A4 end:0x003142F4
@@ -663,15 +706,17 @@ application/BF2/gf/game/gf_game_dead_camera.cpp:
 application/BF2/gf/game/gf_game_env.cpp:
 	.text        start:0x00314648 end:0x00316E98
 	.data        start:0x0118A2D8 end:0x0118A398
-	.bss         start:0x01384128 end:0x01384140
+	.bss         start:0x01384120 end:0x01384140
 
 application/BF2/gf/game/gf_game_inside_battle_lock.cpp:
 	.text        start:0x00316E98 end:0x00317FF0
 	.data        start:0x0118A398 end:0x0118A3D8
+	.bss         start:0x01384140 end:0x01384148
 
 application/BF2/gf/game/gf_game_manager.cpp:
 	.text        start:0x00317FF0 end:0x0031BC28
-	.data        start:0x0118A3D8 end:0x0118A730
+	.data        start:0x0118A3D8 end:0x0118A750
+	.bss         start:0x01384148 end:0x01384168
 
 application/BF2/gf/game/gf_game_mount.cpp:
 	.text        start:0x0031BC28 end:0x0031E354
@@ -681,10 +726,12 @@ application/BF2/gf/game/gf_game_mount.cpp:
 application/BF2/gf/game/gf_game_mover_switcher.cpp:
 	.text        start:0x0031E354 end:0x0031EB00
 	.data        start:0x0118A850 end:0x0118AAA0
+	.bss         start:0x01384170 end:0x01384178
 
 application/BF2/gf/game/gf_game_obj.cpp:
 	.text        start:0x0031EB00 end:0x00325EE4
-	.data        start:0x0118AAA0 end:0x0118AB00
+	.data        start:0x0118AAA0 end:0x0118AB40
+	.bss         start:0x01384178 end:0x01384188
 
 application/BF2/gf/game/gf_game_pad.cpp:
 	.text        start:0x00325EE4 end:0x00326C88
@@ -693,7 +740,7 @@ application/BF2/gf/game/gf_game_pad.cpp:
 
 application/BF2/gf/game/gf_game_party.cpp:
 	.text        start:0x00326C88 end:0x0032CE98
-	.data        start:0x0118AD58 end:0x0118AD98
+	.data        start:0x0118AD58 end:0x0118ADD8
 	.bss         start:0x01384190 end:0x01384198
 
 application/BF2/gf/game/gf_game_player_camera.cpp:
@@ -718,11 +765,12 @@ application/BF2/gf/game/gf_game_player_unique_scheduler.cpp:
 application/BF2/gf/game/gf_game_ride.cpp:
 	.text        start:0x003321D8 end:0x0033483C
 	.data        start:0x0118B510 end:0x0118B7F8
-	.bss         start:0x013841C0 end:0x0149B8E8
+	.bss         start:0x013841B8 end:0x0149B8E8
 
 application/BF2/gf/game/gf_game_scene.cpp:
 	.text        start:0x0033483C end:0x0033B3D0
-	.data        start:0x0118B7F8 end:0x0118B818
+	.data        start:0x0118B7F8 end:0x0118B838
+	.bss         start:0x0149B8E8 end:0x0149B8F0
 
 application/BF2/gf/game/gf_game_search_obj.cpp:
 	.text        start:0x0033B3D0 end:0x0033D308
@@ -764,7 +812,7 @@ application/BF2/gf/game/gf_game_visible.cpp:
 
 application/BF2/gf/game/gf_game_voice.cpp:
 	.text        start:0x00358430 end:0x0035C6D8
-	.data        start:0x0118C3F8 end:0x0118C4D8
+	.data        start:0x0118C3F8 end:0x0118C4F8
 
 application/BF2/gf/game/item/gf_item_manager.cpp:
 	.text        start:0x0035C6D8 end:0x0035F70C
@@ -791,8 +839,8 @@ gf/GfQuestEvent.cpp:
 
 application/BF2/gf/game/quest/gf_quest_manager.cpp:
 	.text        start:0x003699FC end:0x00370128
-	.data        start:0x0118C710 end:0x0118C730
-	.bss         start:0x0149B9B0 end:0x0149B9D0
+	.data        start:0x0118C710 end:0x0118C758
+	.bss         start:0x0149B9B0 end:0x0149B9F0
 
 gf/GfQuestTarget.cpp:
 	.text        start:0x00370128 end:0x0037A5CC
@@ -801,7 +849,7 @@ gf/GfQuestTarget.cpp:
 application/BF2/gf/game/salvage/gf_game_salvage.cpp:
 	.text        start:0x0037A5CC end:0x0037D6CC
 	.data        start:0x0118C838 end:0x0118D170
-	.bss         start:0x0149B9F8 end:0x0149BA10
+	.bss         start:0x0149B9F0 end:0x0149BA10
 
 gf/StateSalvageDiveStart.cpp:
 	.text        start:0x0037D6CC end:0x0037F37C
@@ -809,14 +857,15 @@ gf/StateSalvageDiveStart.cpp:
 application/BF2/gf/game/sequential_play/gf_play_command.cpp:
 	.text        start:0x0037F37C end:0x003860AC
 	.data        start:0x0118D170 end:0x0118E608
-	.bss         start:0x0149BA10 end:0x0149C058
+	.bss         start:0x0149BA10 end:0x0149C090
 
 unit_71003860AC.cpp:
 	.text        start:0x003860AC end:0x00387944
+	.bss         start:0x0149C090 end:0x0149C098
 
 application/BF2/gf/game/sequential_play/gf_sequential_play.cpp:
 	.text        start:0x00387944 end:0x003898A4
-	.data        start:0x0118E608 end:0x0118E628
+	.data        start:0x0118E608 end:0x0118E648
 
 application/BF2/gf/game/smn_enemy/gf_smn_enemy.cpp:
 	.text        start:0x003898A4 end:0x0038CB18
@@ -839,7 +888,7 @@ application/BF2/gf/gf_info.cpp:
 application/BF2/gf/gf_manager.cpp:
 	.text        start:0x0038FF0C end:0x00391214
 	.data        start:0x0118E788 end:0x0118E9F0
-	.bss         start:0x0149C308 end:0x0149C320
+	.bss         start:0x0149C308 end:0x0149C340
 
 application/BF2/gf/gf_pause.cpp:
 	.text        start:0x00391214 end:0x003929B4
@@ -849,11 +898,12 @@ application/BF2/gf/gf_pause.cpp:
 application/BF2/gf/map/gf_map_manager.cpp:
 	.text        start:0x003929B4 end:0x003952D4
 	.data        start:0x0118EA50 end:0x0118ED38
-	.bss         start:0x0149D9F0 end:0x0149DDF4
+	.bss         start:0x0149D9F0 end:0x0149DE00
 
 application/BF2/gf/menu/adapter/gf_menu_achievement_adapter.cpp:
 	.text        start:0x003952D4 end:0x003973EC
 	.data        start:0x0118ED38 end:0x0118F138
+	.bss         start:0x0149DE00 end:0x0149DE08
 
 application/BF2/gf/menu/adapter/gf_menu_adapter_manager.cpp:
 	.text        start:0x003973EC end:0x003981EC
@@ -986,10 +1036,12 @@ application/BF2/gf/menu/adapter/gf_menu_zone_map_adapter.cpp:
 application/BF2/gf/menu/call/gf_menu_call_context.cpp:
 	.text        start:0x003B7AD0 end:0x003B7E0C
 	.data        start:0x01193610 end:0x01193630
+	.bss         start:0x0149DE08 end:0x0149DE10
 
 application/BF2/gf/menu/call/gf_menu_call_manager.cpp:
 	.text        start:0x003B7E0C end:0x003B885C
 	.data        start:0x01193638 end:0x01193678
+	.bss         start:0x0149DE10 end:0x0149DE18
 
 application/BF2/gf/menu/gf_menu_equip.cpp:
 	.text        start:0x003B885C end:0x003B9440
@@ -1009,6 +1061,7 @@ application/BF2/gf/menu/gf_menu_field_skill.cpp:
 application/BF2/gf/menu/gf_menu_fullscreen.cpp:
 	.text        start:0x003BA4DC end:0x003BD048
 	.data        start:0x011937D8 end:0x01193AA0
+	.bss         start:0x0149DE68 end:0x0149DE70
 
 application/BF2/gf/menu/gf_menu_hud.cpp:
 	.text        start:0x003BD048 end:0x003BD4EC
@@ -1028,14 +1081,17 @@ application/BF2/gf/menu/gf_menu_location.cpp:
 application/BF2/gf/menu/gf_menu_main.cpp:
 	.text        start:0x003C065C end:0x003C0874
 	.data        start:0x01193B60 end:0x01193BA0
+	.bss         start:0x0149DE88 end:0x0149DE90
 
 application/BF2/gf/menu/gf_menu_manager.cpp:
 	.text        start:0x003C0874 end:0x003C5C70
 	.data        start:0x01193BA0 end:0x01193F40
+	.bss         start:0x0149DE90 end:0x0149DEA8
 
 application/BF2/gf/menu/gf_menu_many_objects.cpp:
 	.text        start:0x003C5C70 end:0x003C5EE4
 	.data        start:0x01193F40 end:0x01193F80
+	.bss         start:0x0149DED0 end:0x0149DED8
 
 application/BF2/gf/menu/gf_menu_map_info.cpp:
 	.text        start:0x003C5EE4 end:0x003C902C
@@ -1049,6 +1105,7 @@ application/BF2/gf/menu/gf_menu_minimap.cpp:
 gf/GfMenuObject.cpp:
 	.text        start:0x003C9228 end:0x003CA7E4
 	.data        start:0x01194000 end:0x01194048
+	.bss         start:0x0149DEE0 end:0x0149DF00
 
 application/BF2/gf/menu/gf_menu_order_mgr.cpp:
 	.text        start:0x003CA7E4 end:0x003CB2A4
@@ -1068,6 +1125,7 @@ application/BF2/gf/menu/gf_menu_quest.cpp:
 application/BF2/gf/menu/gf_menu_reference.cpp:
 	.text        start:0x003CB6C4 end:0x003CFEC4
 	.data        start:0x01194108 end:0x01194188
+	.bss         start:0x0149DF28 end:0x0149DF30
 
 application/BF2/gf/menu/gf_menu_script_manager.cpp:
 	.text        start:0x003CFEC4 end:0x003D11A4
@@ -1157,11 +1215,11 @@ application/BF2/gf/menu/object/gf_menu_obj_arts_palette.cpp:
 
 application/BF2/gf/menu/object/gf_menu_obj_arts_palette2.cpp:
 	.text        start:0x003E94B8 end:0x003EAF88
-	.data        start:0x01194C58 end:0x01194CC8
+	.data        start:0x01194C58 end:0x01194CE8
 
 application/BF2/gf/menu/object/gf_menu_obj_balloon.cpp:
 	.text        start:0x003EAF88 end:0x003F04B4
-	.data        start:0x01194CE8 end:0x01194EB8
+	.data        start:0x01194CE8 end:0x01194EE0
 
 application/BF2/gf/menu/object/gf_menu_obj_battle_telop.cpp:
 	.text        start:0x003F04B4 end:0x003F0FF4
@@ -1239,7 +1297,7 @@ application/BF2/gf/menu/object/gf_menu_obj_button_challenge.cpp:
 
 application/BF2/gf/menu/object/gf_menu_obj_button_challenge2.cpp:
 	.text        start:0x0041FFD4 end:0x00425764
-	.data        start:0x01195F38 end:0x01195FD0
+	.data        start:0x01195F38 end:0x01195FE8
 
 application/BF2/gf/menu/object/gf_menu_obj_chain_attack.cpp:
 	.text        start:0x00425764 end:0x00427700
@@ -1251,7 +1309,7 @@ application/BF2/gf/menu/object/gf_menu_obj_chain_count.cpp:
 
 application/BF2/gf/menu/object/gf_menu_obj_chain_icon.cpp:
 	.text        start:0x00427B74 end:0x00428D68
-	.data        start:0x01196188 end:0x01196210
+	.data        start:0x01196188 end:0x01196228
 
 application/BF2/gf/menu/object/gf_menu_obj_chapter_telop.cpp:
 	.text        start:0x00428D68 end:0x00429E28
@@ -1483,11 +1541,12 @@ application/BF2/gf/menu/object/gf_menu_obj_mercenary_root.cpp:
 
 application/BF2/gf/menu/object/gf_menu_obj_mercenary_top.cpp:
 	.text        start:0x00499D80 end:0x0049DFA8
-	.data        start:0x01199208 end:0x011992C8
+	.data        start:0x01199208 end:0x011992F0
 
 application/BF2/gf/menu/object/gf_menu_obj_minimap2.cpp:
 	.text        start:0x0049DFA8 end:0x0049F3BC
 	.data        start:0x011992F0 end:0x011993D0
+	.bss         start:0x014A12C0 end:0x014A12C8
 
 application/BF2/gf/menu/object/gf_menu_obj_name_select.cpp:
 	.text        start:0x0049F3BC end:0x0049F814
@@ -1617,6 +1676,7 @@ application/BF2/gf/menu/object/gf_menu_obj_tutorial.cpp:
 
 unit_71004DF114.cpp:
 	.text        start:0x004DF114 end:0x004E5950
+	.bss         start:0x014A12D8 end:0x014A12E0
 
 application/BF2/gf/menu/object/gf_menu_obj_world_map.cpp:
 	.text        start:0x004E5950 end:0x004EE4D0
@@ -1641,7 +1701,7 @@ application/BF2/gf/movie/gf_movie_manager.cpp:
 gf/GfComAsm.cpp:
 	.text        start:0x004F7A48 end:0x004F8C78
 	.data        start:0x0119B4A8 end:0x0119B510
-	.bss         start:0x014A1558 end:0x014A1560
+	.bss         start:0x014A1508 end:0x014A1560
 
 gf/GfComEvtAnim.cpp:
 	.text        start:0x004F8C78 end:0x004FB27C
@@ -1704,6 +1764,7 @@ gf/Plugin.cpp:
 application/BF2/gf/object/component/effect/gf_com_effect_caster.cpp:
 	.text        start:0x0050111C end:0x0050B2D8
 	.data        start:0x0119B8B0 end:0x0119BA50
+	.bss         start:0x014A1679 end:0x014A1698
 
 gf/GfComBehaviorEnemy.cpp:
 	.text        start:0x0050B2D8 end:0x0051AAB4
@@ -2053,7 +2114,7 @@ application/BF2/gf/request/gf_req_manager.cpp:
 
 application/BF2/gf/request/gf_req_scom.cpp:
 	.text        start:0x005BFDF0 end:0x005D35C0
-	.data        start:0x011A0808 end:0x011A1AE0
+	.data        start:0x011A07D8 end:0x011A1B60
 	.bss         start:0x014A3F80 end:0x014A3F84
 
 gf/GfReqSmallCom.cpp:
@@ -2088,7 +2149,7 @@ RchaCam.cpp:
 application/BF2/main.cpp:
 	.text        start:0x0069FABC end:0x006A0FDC
 	.data        start:0x011A7908 end:0x011A79F8
-	.bss         start:0x014A509C end:0x014AE8C8
+	.bss         start:0x014A509C end:0x014AE8D0
 
 application/BF2/minigame/tora/minigame_tora.cpp:
 	.text        start:0x006A0FDC end:0x006B1A74
@@ -2168,6 +2229,7 @@ application/BF2/ui/event/ui_event_pos_condition.cpp:
 application/BF2/ui/factory/ui_obj_factory.cpp:
 	.text        start:0x006D2C60 end:0x006D68CC
 	.data        start:0x011A9D50 end:0x011AA0D0
+	.bss         start:0x014AEC98 end:0x014AECA0
 
 application/BF2/ui/font/ui_font_manager.cpp:
 	.text        start:0x006D68CC end:0x006D7A28
@@ -2228,6 +2290,7 @@ application/BF2/ui/particle/ui_particle_emitter.cpp:
 application/BF2/ui/particle/ui_particle_manager.cpp:
 	.text        start:0x006E3D10 end:0x006E4608
 	.data        start:0x011AA638 end:0x011AA678
+	.bss         start:0x014AED18 end:0x014AED20
 
 application/BF2/ui/plugin/ui_object_arrange_plugin.cpp:
 	.text        start:0x006E4608 end:0x006E5994
@@ -2314,6 +2377,7 @@ application/BF2/ui/stream/ui_stream_manager.cpp:
 application/BF2/ui/text/ui_text_file.cpp:
 	.text        start:0x006EC390 end:0x006ED474
 	.data        start:0x011AAB20 end:0x011AAC18
+	.bss         start:0x014AEF90 end:0x014AEF98
 
 application/BF2/ui/timer/ui_timer_manager.cpp:
 	.text        start:0x006ED474 end:0x006EE010
@@ -2330,6 +2394,7 @@ application/BF2/ui/ui_group.cpp:
 application/BF2/ui/ui_manager.cpp:
 	.text        start:0x006F09CC end:0x006F30AC
 	.data        start:0x011AACF8 end:0x011AAD98
+	.bss         start:0x014AEF98 end:0x014AEFA0
 
 ui/UIObjectAcc.cpp:
 	.text        start:0x006F30AC end:0x006F6098
@@ -2416,7 +2481,7 @@ ml/LibMain.cpp:
 
 mtl/AllocatorWrapper.cpp:
 	.text        start:0x0077AA84 end:0x0078300C
-	.data        start:0x011B0318 end:0x011B04E0
+	.data        start:0x011B0318 end:0x011B05A0
 	.bss         start:0x014BE450 end:0x014C1870
 
 libs/monolib_mm/source/mtl/mtl_mem_manager.cpp:
@@ -2702,7 +2767,7 @@ libs/wndlib/src/wndlib/composite/wnd_global_wind_manager.cpp:
 
 libs/wndlib/src/wndlib/wind/wnd_area_wind.cpp:
 	.text        start:0x00988D40 end:0x0098925C
-	.data        start:0x011B9D00 end:0x011B9D20
+	.data        start:0x011B9CE8 end:0x011B9D20
 
 libs/wndlib/src/wndlib/wind/wnd_blender.cpp:
 	.text        start:0x0098925C end:0x009898D0
@@ -2777,5 +2842,8 @@ libs/mcl/mm_lib/source/mm_thread/mm_thread.cpp:
 	.data        start:0x011BB0B0 end:0x011BB140
 
 libs/mcl/mm_lib/source/mm_thread/mm_thread_nx.cpp:
-	.text        start:0x009BB718 end:0x009BD3D0
+	.text        start:0x009BB718 end:0x009BBB5C
 	.data        start:0x011BB140 end:0x011BB1B0
+
+movie/Buffer.cpp:
+	.text        start:0x009BBB80 end:0x009BD3D0
