@@ -176,9 +176,10 @@ function. Seed functions compiled from known source identify the compiler:
 The flags are:
 
     --target=aarch64-none-elf -mcpu=cortex-a57+fp+simd+crypto+crc -fPIC -O3 -fno-exceptions -fno-rtti
-    -fno-strict-aliasing -fasynchronous-unwind-tables -std=gnu++14
+    -fno-strict-aliasing -fasynchronous-unwind-tables -std=gnu++14 -nostdlibinc
 
-`-O2` and `-O3` produced the same code on every seed so far. `-fno-strict-aliasing` shows in constructors: the
+`-O2` and `-O3` produced the same code on every seed so far. `-nostdlibinc` keeps the host's headers out: the
+C library the game calls is the SDK's, declared in `include/`. `-fno-strict-aliasing` shows in constructors: the
 `ui::UIEvent*Condition` ones store a member's initial value, read the plugin they watch and store the member
 again, and only without type-based alias analysis does clang keep the first store.
 

@@ -28,7 +28,12 @@ ignored.
 What the original's source did leaves marks the source has to reproduce:
 
 - `__FILE__` needs nothing: units compile as `D:/Monolithsoft/BF2/prog/<unit path>`, the name their citations
-  carry. A cited line number does: put `#line <n>` before the statement whose `__LINE__` the original cites.
+  carry. A cited line number does: put `#line <n>` before the statement whose `__LINE__` the original cites. A
+  header's citations name it the way the original's include path did (mm_lib's singleton.h is
+  `D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\mm_mtl/singleton.h`, the backslash
+  Windows put between the folder and the include), so there the directive gives both: `#line <n> "<that path>"`.
+- The C library is the SDK's: `include/string.h` declares what the module imports, and the build never reads
+  the host's headers (`-nostdlibinc`). Add a function there when code needs it.
 - A destructor whose code stores its class's table and returns had a statement the build compiles away; clang
   skips the store for an empty body, so write a null statement (`;`) with a comment saying so.
 - Unknown fields keep the class's layout with `pad_<offset>` arrays; a field the code uses gets a name from what it

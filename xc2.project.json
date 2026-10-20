@@ -45,7 +45,8 @@
           "-fno-rtti",
           "-fno-strict-aliasing",
           "-fasynchronous-unwind-tables",
-          "-std=gnu++14"
+          "-std=gnu++14",
+          "-nostdlibinc"
         ],
         "includes": [
           "include",

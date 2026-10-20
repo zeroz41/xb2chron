@@ -10,6 +10,13 @@ public:
     virtual void deallocate(void*);  // slot 3
     virtual void getName() const;  // slot 4
 };
+
+// which allocator: the code passes 0 (the battle managers) and 1 (the menus); the names are unknown
+enum ALLOCATOR : int {};
+GfAllocator* getAllocator(ALLOCATOR allocator);
 }  // namespace gf
+
+// `new (allocator, __FILE__, __LINE__, alignment) T(...)`
+void* operator new(unsigned long size, gf::GfAllocator* allocator, const char* file, unsigned long line, int alignment);
 
 #endif
