@@ -7,6 +7,7 @@ namespace gf {
 // table 0x7100B612C8
 class GfMenuObjCmnStatus : public ::gf::GfMenuObject {
 public:
+    class CharStatusListener;
     class MainListener;
     virtual ~GfMenuObjCmnStatus();  // slot 0
     virtual void initialize();  // slot 2

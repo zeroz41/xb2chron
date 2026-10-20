@@ -683,6 +683,7 @@ application/BF2/gf/data/gf_data_manager.cpp:
 	.text        start:0x00223650 end:0x00224A98
 	.rodata      start:0x009887B7 end:0x009887FC
 	.data        start:0x00B4DA08 end:0x00B4DC58
+	.bss         start:0x00C294D0 end:0x00C294D8
 
 application/BF2/gf/data/gf_data_obj.cpp:
 	.text        start:0x00224A98 end:0x00229510

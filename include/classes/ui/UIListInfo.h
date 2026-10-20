@@ -6,7 +6,7 @@
 namespace mm { namespace mtl { class IAllocator; }}
 
 namespace ui {
-// a template: 10 instances in the module
+// a template: 11 instances in the module
 template <typename T0>
 class UIListInfo : public ::ui::UIListInfoBase {
 public:

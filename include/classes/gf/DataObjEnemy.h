@@ -36,10 +36,15 @@ public:
     virtual void getAttribute(bool, int) const;  // slot 40
     virtual void isDispInitExtraParts(unsigned int) const;  // slot 41
     virtual void vf42();  // slot 42
+    virtual void isScenarioMask() const;  // slot 43
     virtual void getVoiceStr() const;  // slot 45
+    virtual void vf46();  // slot 46
     virtual void setVirtualEquipWpn(unsigned int, int);  // slot 47
+    virtual void setVirtualEquipAcc(unsigned int, unsigned int);  // slot 48
+    virtual void vf49();  // slot 49
     virtual void setVirtualEquipWpnChip(unsigned int);  // slot 50
     virtual void setVirtualEquipOrb(unsigned int, unsigned int);  // slot 51
+    virtual void vf52();  // slot 52
     virtual void isEnbaleTarget() const;  // slot 54
     virtual void getMenuOffset() const;  // slot 55
     virtual void isNoCameraFade() const;  // slot 56

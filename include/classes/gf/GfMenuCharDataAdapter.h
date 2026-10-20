@@ -51,6 +51,7 @@ public:
     class PartyBladeConverter;
     class PartyDriverConverter;
     class ReferenceBladeConverter;
+    class ReferenceBladeOwnerDriverConverter;
     class ReferenceDriverConverter;
     virtual ~GfMenuCharDataAdapter();  // slot 0
     virtual void update(fw::UpdateInfo const&);  // slot 2

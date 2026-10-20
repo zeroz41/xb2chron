@@ -1,4 +1,4 @@
-// not proven yet: its table differs from the original's (word 18: _ZN2gf11TUnk_B4625030getCmnBl_CapacitySkillNum1ProbERK12CBdatWrapperj where the original has _ZN2gf6_gfbdb30getCmnBl_CapacitySkillNum1ProbERK12CBdatWrapperj)
+// not proven yet: its table differs from the original's (word 11: _ZN2gf11TUnk_B4625023getBladeModelListParts2ERK12CBdatWrapperj where the original has _ZN2gf6_gfbdb23getBladeModelListParts2ERK12CBdatWrapperj)
 #ifndef CLASSES_GF_GFBDATBLADE_H
 #define CLASSES_GF_GFBDATBLADE_H
 
@@ -17,7 +17,7 @@ public:
     virtual ~TUnk_B46250();
     virtual void bdatRefresh() = 0;
     virtual void vf3();
-    virtual void vf4();
+    virtual void getBladeModelListParts2(CBdatWrapper const&, unsigned int);
     virtual void vf5();
     virtual void vf6();
     virtual void vf7();

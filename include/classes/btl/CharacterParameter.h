@@ -1,6 +1,7 @@
 #ifndef CLASSES_BTL_CHARACTERPARAMETER_H
 #define CLASSES_BTL_CHARACTERPARAMETER_H
 
+namespace btl { class GROUP_DATA; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 
@@ -27,7 +28,7 @@ public:
     virtual void vf16() = 0;  // slot 16
     virtual void GetArtsPaletteNum() const;  // slot 17
     virtual void ResetRecast();  // slot 18
-    virtual void vf19();  // slot 19
+    virtual void WritebackRecast(btl::GROUP_DATA*);  // slot 19
     virtual void GetWeakAttributeFlag() const;  // slot 20
     virtual void InitializeEnhance() const;  // slot 21
     virtual void vf22();  // slot 22
