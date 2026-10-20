@@ -44,6 +44,8 @@
           "-fno-exceptions",
           "-fno-rtti",
           "-fno-strict-aliasing",
+          "-ffunction-sections",
+          "-fdata-sections",
           "-fasynchronous-unwind-tables",
           "-std=gnu++14",
           "-nostdlibinc"

@@ -176,12 +176,16 @@ function. Seed functions compiled from known source identify the compiler:
 The flags are:
 
     --target=aarch64-none-elf -mcpu=cortex-a57+fp+simd+crypto+crc -fPIC -O3 -fno-exceptions -fno-rtti
-    -fno-strict-aliasing -fasynchronous-unwind-tables -std=gnu++14 -nostdlibinc
+    -fno-strict-aliasing -ffunction-sections -fdata-sections -fasynchronous-unwind-tables -std=gnu++14
+    -nostdlibinc
 
-`-O2` and `-O3` produced the same code on every seed so far. `-nostdlibinc` keeps the host's headers out: the
-C library the game calls is the SDK's, declared in `include/`. `-fno-strict-aliasing` shows in constructors: the
+`-O2` and `-O3` produced the same code on every seed so far. `-fno-strict-aliasing` shows in constructors: the
 `ui::UIEvent*Condition` ones store a member's initial value, read the plugin they watch and store the member
-again, and only without type-based alias analysis does clang keep the first store.
+again, and only without type-based alias analysis does clang keep the first store. Each function and object had
+a section of its own: the linker dropped single unused functions from files it kept (1.0.0's
+`gf::GfMenuStatus::initialize` is gone from 3.0.1, its `build` is not), and a call to a function of the same
+file is relocated like any other. `-nostdlibinc` keeps the host's headers out: the C library the game calls is
+the SDK's, declared in `include/`.
 
 The game's units were compiled from `D:/Monolithsoft/BF2/prog/`, and the paths their assertions and allocations
 cite (`__FILE__`) are that folder plus the unit's path. The build compiles each unit under that name
