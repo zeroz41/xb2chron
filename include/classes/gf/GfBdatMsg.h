@@ -1,27 +1,24 @@
 #ifndef CLASSES_GF_GFBDATMSG_H
 #define CLASSES_GF_GFBDATMSG_H
 
+#include "classes/mm/mtl/PtrSingleton.h"
+
 namespace gf {
-// a base of gf::GfBdatMsg no evidence names yet
-class TUnk_B471A8 {
-public:
-    virtual ~TUnk_B471A8();
-    virtual void bdatRefresh() = 0;
-};
-// a base of gf::GfBdatMsg no evidence names yet
+// a base of gf::GfBdatMsg no evidence names yet: what BDAT reloads notify
 class TUnk_B471D0 {
 public:
-    virtual ~TUnk_B471D0();
+    virtual ~TUnk_B471D0() {}
     virtual void bdatRefresh() = 0;
 };
-// table 0x7100B471A8; base at 0x0 unknown (TUnk_B471A8), base at 0x8 unknown (TUnk_B471D0)
-class GfBdatMsg : public TUnk_B471A8, public TUnk_B471D0 {
+// table 0x7100B471A8; its singleton is the primary base, so the table's third slot is the listener's override
+class GfBdatMsg : public ::mm::mtl::PtrSingleton<GfBdatMsg>, public TUnk_B471D0 {
 public:
     virtual ~GfBdatMsg();  // slot 0
     virtual void bdatRefresh();  // slot 2
     static void destroyFP();
     static void createFP();
     static unsigned char* getFpEnemy();
+    static unsigned char* getFpQuest(unsigned int id);
     static unsigned char* getFpMapInfo();
     static unsigned char* getFpCollection();
     static unsigned char* getFpCrystal();

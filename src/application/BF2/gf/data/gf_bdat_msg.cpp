@@ -49,6 +49,10 @@ unsigned char** GfBdatMsg::m_fpBtlHanaAssist;
 unsigned char** GfBdatMsg::m_fpBtlSkillDr;
 unsigned char** GfBdatMsg::m_fpBtlEnGenus;
 
+GfBdatMsg::~GfBdatMsg() {
+    destroyFP();
+}
+
 // a message file's block, released
 #define DELETE_FP(fp) \
     if (fp != nullptr) { \
@@ -163,6 +167,25 @@ void GfBdatMsg::bdatRefresh() {
 
 unsigned char* GfBdatMsg::getFpEnemy() {
     return *m_fpFldEnemyName;
+}
+
+unsigned char* GfBdatMsg::getFpQuest(unsigned int id) {
+    if (id < 1000) {
+        return *m_fpFldQuest;
+    }
+    if (id < 2000) {
+        return *m_fpFldQuestMini;
+    }
+    if (id < 4000) {
+        return *m_fpFldQuestNormal;
+    }
+    if (id < 6000) {
+        return *m_fpFldQuestBlade;
+    }
+    if (id < 7000) {
+        return *m_fpFldQuestMercenaries;
+    }
+    return *m_fpFldQuest;
 }
 
 unsigned char* GfBdatMsg::getFpMapInfo() {
