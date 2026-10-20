@@ -103,8 +103,8 @@ The sound driver (`ssd`) cites a separate tree; its unit is `sources/voice_handl
 ## Units
 
 [`config/XC2_301/splits.txt`](../config/XC2_301/splits.txt) assigns every function, and the data only its code
-uses, to one of 641 units: 507 named after a source file (470 after the file their own code cites, 37 after the
-file 1.0.0's splits put their functions in), 112 after the class most of their functions belong to, and 22 by
+uses, to one of 640 units: 507 named after a source file (469 after the file their own code cites, 38 after the
+file 1.0.0's splits put their functions in), 112 after the class most of their functions belong to, and 21 by
 address. A unit named by class or address is code no file string reaches, such as the event system (`event::`,
 1,716 functions), monolib's renderer, or files that assert nothing; its name is a placeholder until evidence
 names the file. The first, `unit_7100000024.cpp`, is NintendoSDK's start-up object (`_init`, `_fini`), which ends
@@ -120,15 +120,19 @@ end bound the first and last files' reach like any other file's. The evidence, s
   alone, and so are the inline virtuals only it holds, so only weak tables count;
 - **citations**: a function's own `__FILE__` names its unit, and two functions citing different files are in
   different units, whatever data joins them (a class's static member another file's code reads) and whatever
-  1.0.0's units say between them. Not where the two files' citations interleave, nor across a weak function and
-  its first user: there one file includes the other and both are one unit (eflib's `particle_emitter.cpp` and
-  `particle_emitter_manager.cpp`, `particle_system.cpp` and `particle_hash.cpp`, monolib's device files);
+  1.0.0's units say between them. Where two files' citations interleave (`a.cpp`, `b.cpp`, `a.cpp` again), one
+  file includes the other: they are one unit, named after the file citing most, in both builds (eflib's
+  `particle_emitter.cpp` and `particle_emitter_manager.cpp`, `particle_system.cpp` and `particle_hash.cpp`,
+  monolib's `dev_setting_nx.cpp` and `th_dev_file_nx.cpp`);
 - **static initializers**: each unit with static initializers ends with its own initializer (one that tests no
   guard; a guarded one initializes a template's static member and goes with whichever unit came first), so the
   200 entries of `init_array` mark where those units end, and each entry is its unit's data;
-- **classes**, in 1.0.0: its symbol table marks inlines and template instances weak, so a class's other
-  functions are its own, compiled in one file (every one of the 636 classes with a citing function cites a single
-  file); next to that file's citations they are that file's;
+- **classes**: 1.0.0's symbol table marks inlines and template instances weak (and so do 3.0.1's names that came
+  from it), so a class's other functions are its own, compiled in one file (every one of the 636 classes with a
+  citing function cites a single file); within 48 functions of that file's citations, with no function of a class
+  citing another file between, they are that file's. A class whose constructor every caller inlined counts too:
+  1.0.0's splits put each `gf::GfMove*Controler::update` in the next file (`GfMoveBrakeControler::update` in
+  `gf_move_fall.cpp`), since only its `createReflection` cites one;
 - **another build**: 1.0.0's splits, where 3.0.1's code says nothing. Where 3.0.1's code states a boundary between
   the same two files, 1.0.0's boundary there yields to it; where 1.0.0 puts a third file between them, it stands.
   Where 3.0.1's code joins a function to another file's (data only that run uses, a weak function and its first
@@ -137,7 +141,9 @@ end bound the first and last files' reach like any other file's. The evidence, s
   it is `gf_menu_obj_party_gauge.cpp`'s, not `party_status`'s as 1.0.0's splits had it);
 - **data**: data only one run of code uses holds the run in one unit, unless what the code states separates it
   (a template's table or an inline's static is shared, kept from whichever unit came first; a class's static
-  member its subclasses' initializers refer to spans several units);
+  member its subclasses' initializers refer to spans several units). A static no symbol names holds its users
+  together however far apart they are, where no other file's evidence lies between them (the update added
+  functions to the BDAT files that only their tables' cache ties to them);
 - **reach**: a file's evidence reaches through the data its code shares, over the inlines and template
   instances clang emits after the code that first uses them, and at most 48 functions or 0x8000 bytes past
   that. A longer run tied to neither neighbouring file is neither's, but a unit of its own.
@@ -146,15 +152,15 @@ end bound the first and last files' reach like any other file's. The evidence, s
 --splits` on a project whose target is 1.0.0), not the original build's: no map of either build exists. In
 1.0.0, 1,346 of the 1,349 functions that cite a file lie in that file's unit; the other three are in files
 another includes. The units that begin with a weak function (which clang only compiles where a global's
-constructor is its first user) are 6 of 681 there (119 of 694 before the first-use rule) and 15 of 641 in 3.0.1
+constructor is its first user) are 6 of 678 there (119 of 694 before the first-use rule) and 15 of 640 in 3.0.1
 (108 of 642). Two checks measure 3.0.1's units:
 
-- hiding half of 3.0.1's own citations at random (three draws) and proposing units again, 95.7%, 97.2% and 97.7%
+- hiding half of 3.0.1's own citations at random (three draws) and proposing units again, 95.1%, 96.6% and 97.5%
   of the hidden functions that land in a cited file's unit land in the file they cite (96.5%, 95.4% and 95.4%
-  before the first-use and citation rules). They moved none out of the file it cites but in one place: the two
-  emitter files, one including the other, are one unit named after whichever the remaining citations favour;
+  before the first-use, citation and class rules). They moved none out of the file it cites but where one file
+  includes another: the unit takes one of the two names, and a hidden citation of the other counts against it;
 - a class's table and static members are its file's (the table goes with the class's first out-of-line
-  virtual): of the 760 in 3.0.1 whose file 1.0.0's classes fix, 703 lie in that file's unit, 13 in another and 44
+  virtual): of the 760 in 3.0.1 whose file 1.0.0's classes fix, 704 lie in that file's unit, 10 in another and 46
   in none (699, 15 and 46 before).
 
 The link order follows the source paths, sorted case-insensitively by their upper-case spelling within the game

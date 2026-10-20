@@ -569,18 +569,16 @@ application/BF2/gf/camera/gf_camera_player.cpp:
 	.bss         start:0x00C24E50 end:0x00C24EA0
 
 application/BF2/gf/camera/gf_camera_player_target.cpp:
-	.text        start:0x001D2BD4 end:0x001D404C
+	.text        start:0x001D2BD4 end:0x001D3FE8
 	.rodata      start:0x00982EB5 end:0x00982F5B
 	.data        start:0x00B45B48 end:0x00B45E08
-	.init_array  start:0x00B8F918 end:0x00B8F920
-	.bss         start:0x00C24EA0 end:0x00C24EE0
 
 application/BF2/gf/camera/gf_camera_subview.cpp:
-	.text        start:0x001D404C end:0x001D4184
+	.text        start:0x001D3FE8 end:0x001D4184
 	.rodata      start:0x00982F5B end:0x00982FB2
 	.data        start:0x00B45E08 end:0x00B45E68
-	.init_array  start:0x00B8F920 end:0x00B8F928
-	.bss         start:0x00C24EE0 end:0x00C24F00
+	.init_array  start:0x00B8F918 end:0x00B8F928
+	.bss         start:0x00C24EA0 end:0x00C24F00
 
 application/BF2/gf/camera/gimmick/gf_camera_gimmick.cpp:
 	.text        start:0x001D4184 end:0x001D8264
@@ -771,16 +769,13 @@ application/BF2/gf/data/gf_game_flag.cpp:
 	.data        start:0x00B50FA0 end:0x00B50FE0
 	.bss         start:0x00C34678 end:0x00C34680
 
-unit_710025655C.cpp:
-	.text        start:0x0025655C end:0x002583A4
-
 gf/QuestListAcc.cpp:
-	.text        start:0x002583A4 end:0x00261220
+	.text        start:0x0025655C end:0x00261220
 	.rodata      start:0x00988E50 end:0x00989471
 	.rodata      start:0x009BA690 end:0x009BA6A8
 	.data        start:0x00B50FE0 end:0x00B511A8
 	.init_array  start:0x00B8F950 end:0x00B8F958
-	.bss         start:0x00C34D00 end:0x00D6C000
+	.bss         start:0x00C34680 end:0x00D6C000
 
 application/BF2/gf/field/gf_field_bgm.cpp:
 	.text        start:0x00261220 end:0x00267578
@@ -2365,30 +2360,33 @@ gf/GfComBehavior.cpp:
 	.init_array  start:0x00B8F9F8 end:0x00B8FA00
 	.bss         start:0x00EABC60 end:0x00EABC80
 
-application/BF2/gf/object/component/behavior/movement/gf_move_fall.cpp:
+application/BF2/gf/object/component/behavior/movement/gf_move_brake.cpp:
 	.text        start:0x004A81A0 end:0x004A82FC
 
-application/BF2/gf/object/component/behavior/movement/gf_move_jump.cpp:
+application/BF2/gf/object/component/behavior/movement/gf_move_fall.cpp:
 	.text        start:0x004A82FC end:0x004A832C
 
-application/BF2/gf/object/component/behavior/movement/gf_move_jump_back.cpp:
+application/BF2/gf/object/component/behavior/movement/gf_move_jump.cpp:
 	.text        start:0x004A832C end:0x004A85CC
 
-application/BF2/gf/object/component/behavior/movement/gf_move_run.cpp:
+application/BF2/gf/object/component/behavior/movement/gf_move_jump_back.cpp:
 	.text        start:0x004A85CC end:0x004A8630
 
-application/BF2/gf/object/component/behavior/movement/gf_move_slide.cpp:
+application/BF2/gf/object/component/behavior/movement/gf_move_run.cpp:
 	.text        start:0x004A8630 end:0x004A89B8
 
-application/BF2/gf/object/component/behavior/movement/gf_move_turn.cpp:
+application/BF2/gf/object/component/behavior/movement/gf_move_slide.cpp:
 	.text        start:0x004A89B8 end:0x004A8D8C
 
-application/BF2/gf/object/component/behavior/movement/gf_move_walk.cpp:
+application/BF2/gf/object/component/behavior/movement/gf_move_turn.cpp:
 	.text        start:0x004A8D8C end:0x004A8F14
 	.rodata      start:0x009B5510 end:0x009B5514
 
+application/BF2/gf/object/component/behavior/movement/gf_move_water_rise.cpp:
+	.text        start:0x004A8F14 end:0x004A8F80
+
 application/BF2/gf/object/component/behavior/movement/gf_move_water_sink.cpp:
-	.text        start:0x004A8F14 end:0x004A967C
+	.text        start:0x004A8F80 end:0x004A967C
 	.rodata      start:0x009A05FE end:0x009A060D
 	.rodata      start:0x009C5214 end:0x009C5228
 	.data        start:0x00B65648 end:0x00B656B0
@@ -2894,17 +2892,17 @@ application/BF2/gf/request/gf_req_manager.cpp:
 	.data        start:0x00B6A8A8 end:0x00B6A8E8
 
 application/BF2/gf/request/gf_req_scom.cpp:
-	.text        start:0x00558A18 end:0x0056D99C
+	.text        start:0x00558A18 end:0x0056D910
 	.rodata      start:0x009A466E end:0x009A4DD3
 	.rodata      start:0x009C60F4 end:0x009C61A4
 	.data        start:0x00B6A8E8 end:0x00B6B900
-	.init_array  start:0x00B8FC10 end:0x00B8FC18
-	.bss         start:0x00EB6B30 end:0x00EB6D18
+	.bss         start:0x00EB6CE8 end:0x00EB6D18
 
 application/BF2/gf/script/gf_script_manager.cpp:
-	.text        start:0x0056D99C end:0x0056DF8C
+	.text        start:0x0056D910 end:0x0056DF8C
 	.rodata      start:0x009A4DD3 end:0x009A4E1C
 	.data        start:0x00B6B900 end:0x00B6B940
+	.init_array  start:0x00B8FC10 end:0x00B8FC18
 
 application/BF2/gf/sound/gf_sound.cpp:
 	.text        start:0x0056DF8C end:0x00570ED0
@@ -2960,14 +2958,14 @@ unit_7100655310.cpp:
 	.bss         start:0x00EC1670 end:0x00EC1710
 
 application/BF2/plugin/bdat.cpp:
-	.text        start:0x006554E0 end:0x006567EC
-	.rodata      start:0x009A6D54 end:0x009A6E9D
+	.text        start:0x006554E0 end:0x00656888
+	.rodata      start:0x009A6D54 end:0x009A6EA3
 	.rodata      start:0x009C7104 end:0x009C723C
 	.bss         start:0x00EC1710 end:0x00EC1790
 
 event/ScriptCamMotion.cpp:
-	.text        start:0x006567EC end:0x00661A54
-	.rodata      start:0x009A6E9D end:0x009A74E3
+	.text        start:0x00656888 end:0x00661A54
+	.rodata      start:0x009A6EA3 end:0x009A74E3
 	.rodata      start:0x009B5564 end:0x009B5568
 	.rodata      start:0x009C723C end:0x009C727C
 	.data        start:0x00B72968 end:0x00B73498
@@ -3354,7 +3352,7 @@ ml/CacheDraw.cpp:
 	.rodata      start:0x009B5580 end:0x009B5588
 	.data        start:0x00B75998 end:0x00B77240
 
-libs/monolib_mm/source/device/nx/dev_setting_nx.cpp:
+libs/monolib_mm/source/device/nx/th_dev_file_nx.cpp:
 	.text        start:0x0069FEDC end:0x006C05DC
 	.rodata      start:0x009A9495 end:0x009A9C13
 	.rodata      start:0x009B558C end:0x009B5598
@@ -3459,17 +3457,11 @@ libs/eflib/source/eflib/effect_update_manager.cpp:
 	.data        start:0x00B80770 end:0x00B80790
 	.bss         start:0x015E9D28 end:0x015E9D30
 
-libs/eflib/source/ptlib/emitter/particle_emitter.cpp:
-	.text        start:0x0084336C end:0x008461E4
-	.rodata      start:0x009ADA63 end:0x009ADAF1
-	.rodata      start:0x009B576C end:0x009B5774
-	.rodata      start:0x009D52EC end:0x009D532C
-
 libs/eflib/source/ptlib/emitter/particle_emitter_manager.cpp:
-	.text        start:0x008461E4 end:0x0085254C
-	.rodata      start:0x009ADAF1 end:0x009ADF0F
-	.rodata      start:0x009B5774 end:0x009B5780
-	.rodata      start:0x009D532C end:0x009D547C
+	.text        start:0x0084336C end:0x0085254C
+	.rodata      start:0x009ADA63 end:0x009ADF0F
+	.rodata      start:0x009B576C end:0x009B5780
+	.rodata      start:0x009D52EC end:0x009D547C
 	.data        start:0x00B80790 end:0x00B807D0
 	.bss         start:0x015E9D30 end:0x015E9D48
 
@@ -3491,13 +3483,13 @@ libs/eflib/source/ptlib/memory/particle_stack_allocater.cpp:
 	.rodata      start:0x009AE159 end:0x009AE1CD
 
 libs/eflib/source/ptlib/particle_system.cpp:
-	.text        start:0x008542B8 end:0x00859054
+	.text        start:0x008542B8 end:0x00858FDC
 	.rodata      start:0x009AE1CD end:0x009AE339
 	.rodata      start:0x009B5780 end:0x009B5784
 	.bss         start:0x015E9D70 end:0x015EA008
 
 libs/eflib/source/ptlib/particle_intrusive_list.cpp:
-	.text        start:0x00859054 end:0x00859104
+	.text        start:0x00858FDC end:0x00859104
 	.rodata      start:0x009AE339 end:0x009AE3A2
 
 libs/eflib/source/ptlib/forcefield/particle_force_field.cpp:
@@ -3510,15 +3502,15 @@ libs/eflib/source/ptlib/forcefield/particle_force_field.cpp:
 	.bss         start:0x015EAE38 end:0x015EB000
 
 libs/eflib/source/ptlib/renderer/screen_render_manager.cpp:
-	.text        start:0x0085A2DC end:0x0085A5AC
-	.rodata      start:0x009AE413 end:0x009AE486
+	.text        start:0x0085A2DC end:0x0085AD3C
+	.rodata      start:0x009AE413 end:0x009AE4A0
 	.rodata      start:0x009D54AC end:0x009D54B4
 	.data        start:0x00B80C40 end:0x00B80C90
 	.bss         start:0x015EB758 end:0x015EB760
 
 libs/eflib/source/ptlib/renderer/particle_renderer_manager.cpp:
-	.text        start:0x0085A5AC end:0x0085AFF8
-	.rodata      start:0x009AE486 end:0x009AE525
+	.text        start:0x0085AD3C end:0x0085AFF8
+	.rodata      start:0x009AE4A0 end:0x009AE525
 	.bss         start:0x015EB760 end:0x015EB768
 
 libs/eflib/source/ptlib/renderer/particle_renderer_obj.cpp:
@@ -3604,13 +3596,13 @@ libs/aiLib/src/ailib/state/ai_state_hfsm.cpp:
 	.rodata      start:0x009AEC8C end:0x009AED5A
 
 libs/anmlib/src/anmlib/anm_factory.cpp:
-	.text        start:0x008666F8 end:0x00866D50
-	.rodata      start:0x009AED5A end:0x009AEDB4
+	.text        start:0x008666F8 end:0x00866FAC
+	.rodata      start:0x009AED5A end:0x009AEDEC
 	.bss         start:0x015EB850 end:0x015EB868
 
 libs/anmlib/src/anmlib/anm_util.cpp:
-	.text        start:0x00866D50 end:0x008692BC
-	.rodata      start:0x009AEDB4 end:0x009AEFA5
+	.text        start:0x00866FAC end:0x008692BC
+	.rodata      start:0x009AEDEC end:0x009AEFA5
 	.rodata      start:0x009D58CC end:0x009D58D0
 	.init_array  start:0x00B8FDC0 end:0x00B8FDC8
 	.bss         start:0x015EB868 end:0x015EB8A0
@@ -3748,18 +3740,19 @@ libs/skdlib/src/skdlib/skd_dynamics.cpp:
 	.data        start:0x00B81648 end:0x00B81688
 
 libs/skdlib/src/skdlib/composite/skd_solver.cpp:
-	.text        start:0x0088B628 end:0x0088D668
+	.text        start:0x0088B628 end:0x0088C648
 	.rodata      start:0x009B0449 end:0x009B05A1
 	.data        start:0x00B81688 end:0x00B816C0
 
 libs/skdlib/src/skdlib/composite/skd_calc_util.cpp:
-	.text        start:0x0088D668 end:0x0088D84C
-	.rodata      start:0x009B05A1 end:0x009B0615
+	.text        start:0x0088C648 end:0x00890F80
+	.rodata      start:0x009B05A1 end:0x009B066F
+	.data        start:0x00B816C0 end:0x00B816D0
 
 skt/CommandManager.cpp:
-	.text        start:0x0088D84C end:0x00891AE4
-	.rodata      start:0x009B0615 end:0x009B06C4
-	.data        start:0x00B816C0 end:0x00B816D8
+	.text        start:0x00890F80 end:0x00891AE4
+	.rodata      start:0x009B066F end:0x009B06C4
+	.data        start:0x00B816D0 end:0x00B816D8
 	.bss         start:0x015EC450 end:0x015EC460
 
 libs/wndlib/src/wndlib/broadphaze/wnd_broad_phaze_octree.cpp:
@@ -3768,23 +3761,24 @@ libs/wndlib/src/wndlib/broadphaze/wnd_broad_phaze_octree.cpp:
 	.data        start:0x00B816D8 end:0x00B81768
 
 libs/wndlib/src/wndlib/composite/wnd_area.cpp:
-	.text        start:0x00892E20 end:0x008932C8
+	.text        start:0x00892E20 end:0x00893560
 	.rodata      start:0x009B0857 end:0x009B0914
 	.data        start:0x00B81768 end:0x00B817E0
 
 libs/wndlib/src/wndlib/composite/wnd_global_wind_manager.cpp:
-	.text        start:0x008932C8 end:0x00893D6C
+	.text        start:0x00893560 end:0x00893D6C
 	.rodata      start:0x009B0914 end:0x009B099B
 	.data        start:0x00B817E0 end:0x00B81830
 
 libs/wndlib/src/wndlib/wind/wnd_area_wind.cpp:
-	.text        start:0x00893D6C end:0x00894100
+	.text        start:0x00893D6C end:0x0089405C
 	.rodata      start:0x009B099B end:0x009B09F2
-	.data        start:0x00B81830 end:0x00B81868
+	.data        start:0x00B81830 end:0x00B81850
 
 libs/wndlib/src/wndlib/wind/wnd_blender.cpp:
-	.text        start:0x00894100 end:0x008943A4
+	.text        start:0x0089405C end:0x008943A4
 	.rodata      start:0x009B09F2 end:0x009B0A5B
+	.data        start:0x00B81850 end:0x00B81868
 
 libs/wndlib/src/wndlib/wind/wnd_local_wind.cpp:
 	.text        start:0x008943A4 end:0x00894898

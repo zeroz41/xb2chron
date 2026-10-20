@@ -766,10 +766,13 @@ application/BF2/gf/game/gf_game_slow_attack.cpp:
 	.text        start:0x0033D310 end:0x0033D7F4
 	.data        start:0x0118B8B8 end:0x0118B8F8
 
-application/BF2/gf/game/gf_game_state.cpp:
-	.text        start:0x0033D7F4 end:0x0033F318
-	.data        start:0x0118B8F8 end:0x0118BF68
+gf/StateGfInitialize.cpp:
+	.text        start:0x0033D7F4 end:0x0033D8F4
 	.bss         start:0x0149B8F8 end:0x0149B900
+
+application/BF2/gf/game/gf_game_state.cpp:
+	.text        start:0x0033D8F4 end:0x0033F318
+	.data        start:0x0118B8F8 end:0x0118BF68
 
 application/BF2/gf/game/gf_game_stuck_meter.cpp:
 	.text        start:0x0033F318 end:0x003435D0
@@ -1697,34 +1700,34 @@ gf/GfComBehavior.cpp:
 	.text        start:0x004FBB24 end:0x004FC1A4
 
 application/BF2/gf/object/component/behavior/movement/gf_move_brake.cpp:
-	.text        start:0x004FC1A4 end:0x004FC370
+	.text        start:0x004FC1A4 end:0x004FC4CC
 
 application/BF2/gf/object/component/behavior/movement/gf_move_fall.cpp:
-	.text        start:0x004FC370 end:0x004FC750
+	.text        start:0x004FC4CC end:0x004FC780
 
 application/BF2/gf/object/component/behavior/movement/gf_move_jump.cpp:
-	.text        start:0x004FC750 end:0x004FCB70
+	.text        start:0x004FC780 end:0x004FCE9C
 
 application/BF2/gf/object/component/behavior/movement/gf_move_jump_back.cpp:
-	.text        start:0x004FCB70 end:0x004FD128
+	.text        start:0x004FCE9C end:0x004FD18C
 
 application/BF2/gf/object/component/behavior/movement/gf_move_run.cpp:
-	.text        start:0x004FD128 end:0x004FD6F8
+	.text        start:0x004FD18C end:0x004FDB60
 
 application/BF2/gf/object/component/behavior/movement/gf_move_slide.cpp:
-	.text        start:0x004FD6F8 end:0x004FDF58
+	.text        start:0x004FDB60 end:0x004FE32C
 
 application/BF2/gf/object/component/behavior/movement/gf_move_turn.cpp:
-	.text        start:0x004FDF58 end:0x004FE5B8
+	.text        start:0x004FE32C end:0x004FE73C
 
 application/BF2/gf/object/component/behavior/movement/gf_move_walk.cpp:
-	.text        start:0x004FE5B8 end:0x004FEA88
+	.text        start:0x004FE73C end:0x004FEC70
 
 application/BF2/gf/object/component/behavior/movement/gf_move_water_rise.cpp:
-	.text        start:0x004FEA88 end:0x004FF058
+	.text        start:0x004FEC70 end:0x004FF0C4
 
 application/BF2/gf/object/component/behavior/movement/gf_move_water_sink.cpp:
-	.text        start:0x004FF058 end:0x004FFC34
+	.text        start:0x004FF0C4 end:0x004FFC34
 	.data        start:0x0119B5B0 end:0x0119B618
 
 gf/FootIkControllerPlugin.cpp:
@@ -2090,10 +2093,10 @@ application/BF2/gf/param/unique_motion/gf_param_unique_motion_reflection.cpp:
 	.text        start:0x005BC058 end:0x005BC0F4
 
 application/BF2/gf/request/gf_req_command.cpp:
-	.text        start:0x005BC0F4 end:0x005BEFF4
+	.text        start:0x005BC0F4 end:0x005BF04C
 
 application/BF2/gf/request/gf_req_manager.cpp:
-	.text        start:0x005BEFF4 end:0x005BFDF0
+	.text        start:0x005BF04C end:0x005BFDF0
 	.data        start:0x011A0798 end:0x011A07D8
 
 application/BF2/gf/request/gf_req_scom.cpp:
@@ -2138,11 +2141,11 @@ unit_71006B1A74.cpp:
 	.bss         start:0x014AE930 end:0x014AE950
 
 application/BF2/plugin/bdat.cpp:
-	.text        start:0x006B4518 end:0x006B64C8
+	.text        start:0x006B4518 end:0x006B6654
 	.bss         start:0x014AE950 end:0x014AE9D0
 
 event/ScriptCamMotion.cpp:
-	.text        start:0x006B64C8 end:0x006C18AC
+	.text        start:0x006B6654 end:0x006C18AC
 	.data        start:0x011A84F8 end:0x011A86F8
 
 unit_71006C18AC.cpp:
@@ -2406,10 +2409,10 @@ libs/mcl/mm_lib/source/mm_thread/mm_thread_csection.cpp:
 	.text        start:0x006FD824 end:0x006FDDC8
 
 libs/mcl/mm_lib/source/mm_thread/mm_thread_util.cpp:
-	.text        start:0x006FDDC8 end:0x006FDF10
+	.text        start:0x006FDDC8 end:0x006FDF14
 
 ml/CacheDraw.cpp:
-	.text        start:0x006FDF10 end:0x0070B8A4
+	.text        start:0x006FDF14 end:0x0070B8A4
 	.data        start:0x011AB280 end:0x011AD890
 
 libs/monolib_mm/source/device/nx/th_dev_file_nx.cpp:
@@ -2478,14 +2481,8 @@ libs/eflib/source/eflib/effect_update_manager.cpp:
 	.text        start:0x00916CB0 end:0x0091D1B4
 	.data        start:0x011B8A98 end:0x011B8AB8
 
-libs/eflib/source/ptlib/emitter/particle_emitter.cpp:
-	.text        start:0x0091D1B4 end:0x00920294
-
 libs/eflib/source/ptlib/emitter/particle_emitter_manager.cpp:
-	.text        start:0x00920294 end:0x00920CD0
-
-libs/eflib/source/ptlib/emitter/particle_emitter_manager_7100920CD0.cpp:
-	.text        start:0x00920CD0 end:0x0092DED0
+	.text        start:0x0091D1B4 end:0x0092DED0
 	.data        start:0x011B8AB8 end:0x011B8AF8
 	.bss         start:0x01BD75B0 end:0x01BD75B4
 
@@ -2499,40 +2496,34 @@ libs/eflib/source/ptlib/memory/particle_heap_allocater.cpp:
 	.bss         start:0x01BD75C8 end:0x01BD75D0
 
 libs/eflib/source/ptlib/memory/particle_stack_allocater.cpp:
-	.text        start:0x00930DC4 end:0x00930EC0
+	.text        start:0x00930DC4 end:0x00930EC4
 
 libs/eflib/source/ptlib/particle_system.cpp:
-	.text        start:0x00930EC0 end:0x009352E8
+	.text        start:0x00930EC4 end:0x00936370
 	.bss         start:0x01BD75E0 end:0x01BD76A0
 
-libs/eflib/source/ptlib/particle_hash.cpp:
-	.text        start:0x009352E8 end:0x00935B8C
-
-libs/eflib/source/ptlib/particle_system_7100935B8C.cpp:
-	.text        start:0x00935B8C end:0x00935E38
-
 libs/eflib/source/ptlib/particle_intrusive_list.cpp:
-	.text        start:0x00935E38 end:0x00936584
+	.text        start:0x00936370 end:0x00936584
 
 libs/eflib/source/ptlib/forcefield/particle_force_field.cpp:
 	.text        start:0x00936584 end:0x00937858
 	.bss         start:0x01BD87C0 end:0x01BD8FC4
 
 libs/eflib/source/ptlib/renderer/screen_render_manager.cpp:
-	.text        start:0x00937858 end:0x00937B84
+	.text        start:0x00937858 end:0x00938C80
 
 libs/eflib/source/ptlib/renderer/particle_renderer_manager.cpp:
-	.text        start:0x00937B84 end:0x00938EB4
+	.text        start:0x00938C80 end:0x00938EC4
 
 libs/eflib/source/ptlib/renderer/particle_renderer_obj.cpp:
-	.text        start:0x00938EB4 end:0x0093E1F4
+	.text        start:0x00938EC4 end:0x0093E1F4
 	.data        start:0x011B8FF8 end:0x011B9038
 
 libs/eflib/source/ptlib/renderer/particle_renderer_stream.cpp:
-	.text        start:0x0093E1F4 end:0x0093FB34
+	.text        start:0x0093E1F4 end:0x0093FC24
 
 libs/eflib/source/ptlib/renderer/particle_renderer_stream_kizuna.cpp:
-	.text        start:0x0093FB34 end:0x00940304
+	.text        start:0x0093FC24 end:0x00940304
 
 libs/eflib/source/ptlib/emitter/compute/particle_emitter_compute_uniform.cpp:
 	.text        start:0x00940304 end:0x00941B2C
@@ -2582,10 +2573,10 @@ libs/aiLib/src/ailib/state/ai_state_hfsm.cpp:
 	.text        start:0x0094506C end:0x00946418
 
 libs/anmlib/src/anmlib/anm_factory.cpp:
-	.text        start:0x00946418 end:0x00946B38
+	.text        start:0x00946418 end:0x00946D94
 
 libs/anmlib/src/anmlib/anm_util.cpp:
-	.text        start:0x00946B38 end:0x0094A904
+	.text        start:0x00946D94 end:0x0094A904
 	.bss         start:0x01BD90D8 end:0x01BD9108
 
 libs/anmlib/src/anmlib/base/anm_thread_pool.cpp:
@@ -2693,15 +2684,16 @@ libs/skdlib/src/skdlib/skd_dynamics.cpp:
 	.data        start:0x011B9AD8 end:0x011B9B18
 
 libs/skdlib/src/skdlib/composite/skd_solver.cpp:
-	.text        start:0x0097D378 end:0x0097F3E0
+	.text        start:0x0097D378 end:0x0097E3C0
 	.data        start:0x011B9B18 end:0x011B9B50
 
 libs/skdlib/src/skdlib/composite/skd_calc_util.cpp:
-	.text        start:0x0097F3E0 end:0x0097F5C4
+	.text        start:0x0097E3C0 end:0x00982D78
+	.data        start:0x011B9B50 end:0x011B9B60
 
 skt/CommandManager.cpp:
-	.text        start:0x0097F5C4 end:0x009866D0
-	.data        start:0x011B9B50 end:0x011B9BA8
+	.text        start:0x00982D78 end:0x009866D0
+	.data        start:0x011B9B60 end:0x011B9BA8
 	.bss         start:0x01BD9CC0 end:0x01BD9CC8
 
 libs/wndlib/src/wndlib/broadphaze/wnd_broad_phaze_octree.cpp:
@@ -2786,10 +2778,10 @@ libs/mcl/mm_lib/source/mm_math/mm_obb.cpp:
 	.text        start:0x009B5B54 end:0x009B88EC
 
 libs/mcl/mm_lib/source/mm_mtl/internal/heap.cpp:
-	.text        start:0x009B88EC end:0x009BAF8C
+	.text        start:0x009B88EC end:0x009BAFE0
 
 libs/mcl/mm_lib/source/mm_mtl/internal/heap_allocator.cpp:
-	.text        start:0x009BAF8C end:0x009BB574
+	.text        start:0x009BAFE0 end:0x009BB574
 	.data        start:0x011BB068 end:0x011BB0B0
 
 libs/mcl/mm_lib/source/mm_thread/mm_thread.cpp:
