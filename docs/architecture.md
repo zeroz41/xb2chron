@@ -163,11 +163,18 @@ before), which marks units still misnamed or holding several files (and the star
 functions and template instances take no unit from 1.0.0. 6 files still come out in more than one piece (11
 before).
 
-A unit owns one range per section, in link order like its code: 99.6% of `.bss`, 84% of `.data` and nearly all of
-the game's `.rodata` have a unit. Weak data (an inline's static, a template's member or table) is in every unit
-using it and the linker keeps the first unit's copy, so it is the first using unit's wherever that fits the link
-order of the other claims. The rest is data several units use, which the unit defining it has to claim, strings
-and constants the linker merged across units, and data no code refers to between two units' ranges.
+A unit owns one range per section, in link order like its code, and in the game's `.rodata` one per block: the
+linker kept one copy of each string and each 4- and 8-byte constant for the whole module, each kind in one block
+(the strings at `0x97BA60`, the 4-byte constants at `0x9B50F0`, the 8-byte ones at `0x9B57AC`), each literal the
+first unit's that has it, so the units come in link order again in each block, and each unit's other read-only
+data (tables) follows from `0x9B5884`, in link order too. A literal is its first user's; a block starts where
+the claims' units start over and a cut lets at least half the claims of the smaller side stand in order. 99.6% of
+`.bss`, 84% of `.data` and 97% of the game's `.rodata` have a unit (59% before the blocks). Of the 11,700
+unnamed literals a unit owns and code uses, 20 are used by an earlier unit (a constant some file defines and
+another reads, its name not carried from 1.0.0). Weak data (an inline's static, a template's member or table) is
+in every unit using it and the linker keeps the first unit's copy, so it is the first using unit's wherever that
+fits the link order of the other claims. The rest is data several units use, which the unit defining it has to
+claim, and data no code refers to between two units' ranges.
 
 ## Classes
 

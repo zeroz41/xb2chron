@@ -98,6 +98,7 @@ application/BF2/battle/ui_manager_battle.cpp:
 event/CharaObj.cpp:
 	.text        start:0x0008FD30 end:0x00141110
 	.rodata      start:0x00F68994 end:0x00F68A94
+	.rodata      start:0x00F75F50 end:0x00F75F60
 	.data        start:0x01172790 end:0x01176B18
 	.bss         start:0x011CD56C end:0x0125BFA0
 
@@ -267,7 +268,6 @@ application/BF2/framework/object/updatable_manager.cpp:
 
 fw/PadManager.cpp:
 	.text        start:0x001915B4 end:0x00196844
-	.rodata      start:0x00F68EEC end:0x00F68F50
 	.data        start:0x01179288 end:0x01179600
 	.bss         start:0x0125D170 end:0x0125D2E8
 
@@ -554,6 +554,7 @@ application/BF2/gf/field/gf_field_collect.cpp:
 
 application/BF2/gf/field/gf_field_dmg.cpp:
 	.text        start:0x002D6CCC end:0x002D7E28
+	.rodata      start:0x00F68B08 end:0x00F68B0C
 	.data        start:0x01187DA8 end:0x01187FD8
 	.bss         start:0x01383DF0 end:0x01383DF8
 
@@ -1992,6 +1993,7 @@ gf/GfExtendPacking.cpp:
 
 application/BF2/gf/object/gf_obj_factory.cpp:
 	.text        start:0x005849CC end:0x005A3318
+	.rodata      start:0x00F746C0 end:0x00F746D8
 	.data        start:0x0119FE08 end:0x0119FEF8
 
 application/BF2/gf/object/gf_obj_info.cpp:
@@ -2109,6 +2111,7 @@ application/BF2/gf/sound/gf_sound.cpp:
 
 gmk/GmkElevator.cpp:
 	.text        start:0x005D812C end:0x00695304
+	.rodata      start:0x00F76270 end:0x00F7627C
 	.data        start:0x011A1DD8 end:0x011A73E8
 	.bss         start:0x014A4FD0 end:0x014A5070
 

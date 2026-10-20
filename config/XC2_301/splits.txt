@@ -5,7 +5,7 @@ unit_7100000024.cpp:
 
 apps/FrameworkLauncher.cpp:
 	.text        start:0x000001B4 end:0x000026B8
-	.rodata      start:0x0097BA60 end:0x0097BA7B
+	.rodata      start:0x0097BA60 end:0x0097BBBF
 	.data        start:0x00B3A008 end:0x00B3A360
 	.bss         start:0x00B900C0 end:0x00B90188
 
@@ -17,176 +17,220 @@ application/BF2/battle/ai/ai_manager.cpp:
 
 application/BF2/battle/battle_global.cpp:
 	.text        start:0x000033E4 end:0x0000E2A0
-	.rodata      start:0x0097BCD3 end:0x0097BF9D
+	.rodata      start:0x0097BCC9 end:0x0097C129
+	.rodata      start:0x009B50F0 end:0x009B5184
+	.rodata      start:0x009B57AC end:0x009B57BC
+	.rodata      start:0x009B5884 end:0x009B5A84
 	.data        start:0x00B3A3C0 end:0x00B3A5A0
 	.init_array  start:0x00B8F7B0 end:0x00B8F7C0
 	.bss         start:0x00B935C0 end:0x00B93A20
 
 application/BF2/battle/battle_manager.cpp:
 	.text        start:0x0000E2A0 end:0x0000FB3C
-	.rodata      start:0x0097C129 end:0x0097C16C
+	.rodata      start:0x0097C129 end:0x0097C19A
+	.rodata      start:0x009B5184 end:0x009B5188
 	.data        start:0x00B3A5A0 end:0x00B3A800
 	.bss         start:0x00B93A20 end:0x00B94308
 
 btl/BitArray.cpp:
 	.text        start:0x0000FB3C end:0x000152D0
-	.rodata      start:0x0097C1A5 end:0x0097C1FE
+	.rodata      start:0x0097C19A end:0x0097C214
+	.rodata      start:0x009B5A84 end:0x009B5C08
 	.data        start:0x00B3A800 end:0x00B3A880
 	.bss         start:0x00B94308 end:0x00B94310
 
 application/BF2/battle/blade_arts_manager.cpp:
 	.text        start:0x000152D0 end:0x000163A4
 	.rodata      start:0x0097C214 end:0x0097C25B
+	.rodata      start:0x009B5188 end:0x009B518C
+	.rodata      start:0x009B5C08 end:0x009B5C28
 	.data        start:0x00B3A880 end:0x00B3A8C0
 
 application/BF2/battle/blade_change_manager.cpp:
 	.text        start:0x000163A4 end:0x00019258
-	.rodata      start:0x0097C25B end:0x0097C2B0
+	.rodata      start:0x0097C25B end:0x0097C31E
+	.rodata      start:0x009B518C end:0x009B51A0
+	.rodata      start:0x009B5C28 end:0x009B5CB8
 	.data        start:0x00B3A8C0 end:0x00B3A900
 
 application/BF2/battle/btl_system_balance_access.cpp:
 	.text        start:0x00019258 end:0x0001C4C8
 	.rodata      start:0x0097C31E end:0x0097C37A
+	.rodata      start:0x009B51A0 end:0x009B51A8
 	.data        start:0x00B3A900 end:0x00B3A940
 
 application/BF2/battle/chain_attack_manager.cpp:
 	.text        start:0x0001C4C8 end:0x000254E4
-	.rodata      start:0x0097C37A end:0x0097C475
+	.rodata      start:0x0097C37A end:0x0097C5B5
+	.rodata      start:0x009B51A8 end:0x009B51F8
+	.rodata      start:0x009B5CB8 end:0x009B5DDC
 	.data        start:0x00B3A940 end:0x00B3A9C8
 	.init_array  start:0x00B8F7C0 end:0x00B8F7D0
 	.bss         start:0x00B94310 end:0x00B94428
 
 application/BF2/battle/challenge_battle_manager.cpp:
 	.text        start:0x000254E4 end:0x00026F70
-	.rodata      start:0x0097C5B5 end:0x0097C602
+	.rodata      start:0x0097C5B5 end:0x0097C613
+	.rodata      start:0x009B51F8 end:0x009B5204
+	.rodata      start:0x009B5DDC end:0x009B6064
 	.data        start:0x00B3A9C8 end:0x00B3AA08
 
 btl/BattleCharacter.cpp:
 	.text        start:0x00026F70 end:0x0007ABD4
-	.rodata      start:0x0097C627 end:0x0097CFD7
+	.rodata      start:0x0097C613 end:0x0097D0F8
+	.rodata      start:0x009B5204 end:0x009B5358
+	.rodata      start:0x009B57BC end:0x009B581C
+	.rodata      start:0x009B6064 end:0x009B7418
 	.data        start:0x00B3AA08 end:0x00B3B280
 	.bss         start:0x00B94430 end:0x00B94460
 
 application/BF2/battle/character/character_manager_battle.cpp:
 	.text        start:0x0007ABD4 end:0x0007D674
-	.rodata      start:0x0097D0F8 end:0x0097D165
+	.rodata      start:0x0097D0F8 end:0x0097D17C
 	.data        start:0x00B3B280 end:0x00B3B2F0
 
 btl/CharacterParameter.cpp:
 	.text        start:0x0007D674 end:0x00083130
-	.rodata      start:0x0097D19E end:0x0097D21F
+	.rodata      start:0x0097D17C end:0x0097D21F
+	.rodata      start:0x009B5358 end:0x009B5368
+	.rodata      start:0x009B7418 end:0x009B7530
 
 application/BF2/battle/character/character_parameter_battle.cpp:
 	.text        start:0x00083130 end:0x00084E34
-	.rodata      start:0x0097D22B end:0x0097D284
+	.rodata      start:0x0097D21F end:0x0097D2B2
 	.data        start:0x00B3B588 end:0x00B3B830
 
 btl/EnemyParameter.cpp:
 	.text        start:0x00084E34 end:0x0008DBDC
-	.rodata      start:0x0097D2CA end:0x0097D448
+	.rodata      start:0x0097D2B2 end:0x0097D448
+	.rodata      start:0x009B5368 end:0x009B5384
+	.rodata      start:0x009B7530 end:0x009B7568
 	.data        start:0x00B3B830 end:0x00B3BAF8
 
 application/BF2/battle/data_manager_battle.cpp:
 	.text        start:0x0008DBDC end:0x00096F74
 	.rodata      start:0x0097D448 end:0x0097D801
+	.rodata      start:0x009B5384 end:0x009B5388
+	.rodata      start:0x009B7568 end:0x009B79E8
 	.data        start:0x00B3BAF8 end:0x00B3BB38
 	.bss         start:0x00B94500 end:0x00B94518
 
 application/BF2/battle/effect/effect_manager_battle.cpp:
 	.text        start:0x00096F74 end:0x00099D74
 	.rodata      start:0x0097D801 end:0x0097D905
+	.rodata      start:0x009B5388 end:0x009B538C
+	.rodata      start:0x009B581C end:0x009B5824
 	.data        start:0x00B3BB38 end:0x00B3BBC0
 
 btl/EffectObject.cpp:
 	.text        start:0x00099D74 end:0x0009D5F0
 	.rodata      start:0x0097D905 end:0x0097D93F
+	.rodata      start:0x009B538C end:0x009B5398
+	.rodata      start:0x009B5824 end:0x009B582C
+	.rodata      start:0x009B7AC8 end:0x009B7AE0
 	.data        start:0x00B3BBC0 end:0x00B3BC20
 
 application/BF2/battle/formation_change_manager.cpp:
 	.text        start:0x0009D5F0 end:0x0009EE10
 	.rodata      start:0x0097D93F end:0x0097D98C
+	.rodata      start:0x009B7AE0 end:0x009B7B08
 	.data        start:0x00B3BC20 end:0x00B3BC60
 
 btl/EffectObject_710009EE10.cpp:
 	.text        start:0x0009EE10 end:0x000A12CC
 	.rodata      start:0x0097D98C end:0x0097D9C6
+	.rodata      start:0x009B5398 end:0x009B53A4
+	.rodata      start:0x009B7B08 end:0x009B7B28
 
 application/BF2/battle/hate_ring_manager.cpp:
 	.text        start:0x000A12CC end:0x000A27FC
 	.rodata      start:0x0097D9C6 end:0x0097DA0C
+	.rodata      start:0x009B53A4 end:0x009B53A8
 	.data        start:0x00B3BC60 end:0x00B3BCA0
 
 btl/ShakeCameraManager.cpp:
 	.text        start:0x000A27FC end:0x000A51A0
 	.rodata      start:0x0097DA0C end:0x0097DA20
+	.rodata      start:0x009B53B0 end:0x009B53B4
 	.data        start:0x00B3BCA0 end:0x00B3BD30
 
 application/BF2/battle/siren_battle_manager.cpp:
 	.text        start:0x000A51A0 end:0x000A714C
 	.rodata      start:0x0097DA20 end:0x0097DB0B
+	.rodata      start:0x009B53B4 end:0x009B53B8
+	.rodata      start:0x009B7BE8 end:0x009B7C3C
 	.data        start:0x00B3BD68 end:0x00B3BDA8
 	.bss         start:0x00B94518 end:0x00B94520
 
 application/BF2/battle/sp_attack_manager.cpp:
 	.text        start:0x000A714C end:0x000A9E04
 	.rodata      start:0x0097DB0B end:0x0097DBAB
+	.rodata      start:0x009B7C3C end:0x009B7C88
 	.data        start:0x00B3BDA8 end:0x00B3BDE8
 
 application/BF2/battle/talk_manager_battle.cpp:
 	.text        start:0x000A9E04 end:0x000AF854
 	.rodata      start:0x0097DBAB end:0x0097DCF8
+	.rodata      start:0x009B7C88 end:0x009B83C0
 	.data        start:0x00B3BDE8 end:0x00B3BE28
 
 application/BF2/battle/ui_manager_battle.cpp:
 	.text        start:0x000AF854 end:0x000B2FB4
-	.rodata      start:0x0097DCF8 end:0x0097DD3E
+	.rodata      start:0x0097DCF8 end:0x0097DD4C
+	.rodata      start:0x009B53B8 end:0x009B53C0
+	.rodata      start:0x009B83C0 end:0x009B83E8
 	.data        start:0x00B3BE28 end:0x00B3BE68
 	.bss         start:0x00B94520 end:0x00B94530
 
 event/CharaObj.cpp:
 	.text        start:0x000B2FB4 end:0x0014D7A0
-	.rodata      start:0x0097DD62 end:0x0097FF15
+	.rodata      start:0x0097DD62 end:0x0097FF42
+	.rodata      start:0x009B53C0 end:0x009B5410
+	.rodata      start:0x009B582C end:0x009B5834
+	.rodata      start:0x009B83E8 end:0x009B94EC
 	.data        start:0x00B3BE68 end:0x00B3FE68
 	.init_array  start:0x00B8F7D0 end:0x00B8F7E0
 	.bss         start:0x00B94530 end:0x00C231B4
 
 application/BF2/execute/title/title_main.cpp:
 	.text        start:0x0014D7A0 end:0x0015791C
-	.rodata      start:0x0097FF48 end:0x00980258
+	.rodata      start:0x0097FF42 end:0x00980258
+	.rodata      start:0x009B94EC end:0x009B9548
 	.data        start:0x00B3FE68 end:0x00B40B20
 	.bss         start:0x00C232C0 end:0x00C23320
 
 application/BF2/execute/title/title_theater.cpp:
 	.text        start:0x0015791C end:0x00157C60
 	.rodata      start:0x00980258 end:0x009802A1
+	.rodata      start:0x009B9548 end:0x009B95BC
 
 tl/TitleStatePlayGame.cpp:
 	.text        start:0x00157C60 end:0x00159104
-	.rodata      start:0x009802A1 end:0x009802AD
+	.rodata      start:0x009802A1 end:0x0098031D
 	.data        start:0x00B40B20 end:0x00B40BE8
 
 application/BF2/framework/anim/anim_manager.cpp:
 	.text        start:0x00159104 end:0x0015A3C0
-	.rodata      start:0x0098031D end:0x0098044D
+	.rodata      start:0x0098031D end:0x009804BF
 	.data        start:0x00B40BE8 end:0x00B40C80
 	.bss         start:0x00C23320 end:0x00C23328
 
 fw/AssetManager.cpp:
 	.text        start:0x0015A3C0 end:0x00162484
-	.rodata      start:0x00980539 end:0x00980636
+	.rodata      start:0x009804BF end:0x00980661
 	.data        start:0x00B40C80 end:0x00B41038
 	.init_array  start:0x00B8F7E0 end:0x00B8F7F0
 	.bss         start:0x00C23328 end:0x00C233E0
 
 fw/CameraLayer.cpp:
 	.text        start:0x00162484 end:0x001646FC
-	.rodata      start:0x009806E2 end:0x009806EF
+	.rodata      start:0x00980661 end:0x009806EF
 	.data        start:0x00B41038 end:0x00B41050
 	.init_array  start:0x00B8F7F0 end:0x00B8F7F8
 
 application/BF2/framework/coli/coli_manager.cpp:
 	.text        start:0x001646FC end:0x00167A98
-	.rodata      start:0x009806EF end:0x00980742
+	.rodata      start:0x009806EF end:0x009807F2
 	.data        start:0x00B41050 end:0x00B41140
 	.bss         start:0x00C23410 end:0x00C23420
 
@@ -199,6 +243,7 @@ application/BF2/framework/coli/coli_move_object.cpp:
 application/BF2/framework/coli/coli_object.cpp:
 	.text        start:0x00167D5C end:0x0016A378
 	.rodata      start:0x0098084E end:0x009808B1
+	.rodata      start:0x009B95BC end:0x009B95D4
 	.data        start:0x00B41180 end:0x00B411D8
 	.init_array  start:0x00B8F800 end:0x00B8F808
 
@@ -209,7 +254,9 @@ unit_710016A378.cpp:
 
 fw/debug/DebugCommander.cpp:
 	.text        start:0x0016A394 end:0x0016EB34
-	.rodata      start:0x0098090F end:0x0098091F
+	.rodata      start:0x009808D0 end:0x0098091F
+	.rodata      start:0x009B5410 end:0x009B5414
+	.rodata      start:0x009B95D8 end:0x009B95F4
 	.init_array  start:0x00B8F810 end:0x00B8F818
 
 application/BF2/framework/dynamics/wind_force_calculator.cpp:
@@ -220,7 +267,7 @@ application/BF2/framework/dynamics/wind_force_calculator.cpp:
 
 application/BF2/framework/dynamics/dynamics_manager.cpp:
 	.text        start:0x0016F54C end:0x00170F5C
-	.rodata      start:0x009809B0 end:0x00980A11
+	.rodata      start:0x009809B0 end:0x00980A6A
 	.data        start:0x00B41230 end:0x00B41350
 	.init_array  start:0x00B8F820 end:0x00B8F828
 	.bss         start:0x00C234B0 end:0x00C23CC0
@@ -228,6 +275,8 @@ application/BF2/framework/dynamics/dynamics_manager.cpp:
 application/BF2/framework/effect/effect_clip.cpp:
 	.text        start:0x00170F5C end:0x00172040
 	.rodata      start:0x00980A6A end:0x00980B0E
+	.rodata      start:0x009B5414 end:0x009B5418
+	.rodata      start:0x009B95F4 end:0x009B9610
 	.data        start:0x00B41350 end:0x00B41370
 
 application/BF2/framework/effect/effect_data.cpp:
@@ -237,19 +286,21 @@ application/BF2/framework/effect/effect_data.cpp:
 
 application/BF2/framework/effect/effect_lod_manager.cpp:
 	.text        start:0x00172358 end:0x00172D28
-	.rodata      start:0x00980B58 end:0x00980BA9
+	.rodata      start:0x00980B58 end:0x00980BB5
 	.data        start:0x00B41390 end:0x00B413D0
 	.bss         start:0x00C23CC0 end:0x00C23CC8
 
 application/BF2/framework/effect/effect_manager.cpp:
 	.text        start:0x00172D28 end:0x0017F404
 	.rodata      start:0x00980BB5 end:0x00980E66
+	.rodata      start:0x009B5418 end:0x009B5444
+	.rodata      start:0x009B9610 end:0x009B964D
 	.data        start:0x00B413D0 end:0x00B41648
 	.bss         start:0x00C23CC8 end:0x00C23CE8
 
 application/BF2/framework/framework.cpp:
 	.text        start:0x0017F404 end:0x001859F8
-	.rodata      start:0x00980E72 end:0x00980F15
+	.rodata      start:0x00980E66 end:0x00980F15
 	.data        start:0x00B41648 end:0x00B41918
 	.bss         start:0x00C23CE8 end:0x00C23D48
 
@@ -269,6 +320,7 @@ application/BF2/framework/ik/ik_foot_placement_solver.cpp:
 application/BF2/framework/ik/ik_lookat_solver.cpp:
 	.text        start:0x00187014 end:0x00187B40
 	.rodata      start:0x00981015 end:0x009810AA
+	.rodata      start:0x009B5444 end:0x009B5448
 	.data        start:0x00B419F0 end:0x00B41A40
 	.init_array  start:0x00B8F838 end:0x00B8F840
 
@@ -280,7 +332,8 @@ application/BF2/framework/ik/ik_look_solver.cpp:
 
 application/BF2/framework/ik/ik_placement_ground_solver.cpp:
 	.text        start:0x0018825C end:0x00188E20
-	.rodata      start:0x00981100 end:0x0098116B
+	.rodata      start:0x00981100 end:0x00981182
+	.rodata      start:0x009B5448 end:0x009B544C
 	.data        start:0x00B41A78 end:0x00B41AA8
 	.init_array  start:0x00B8F848 end:0x00B8F850
 
@@ -376,6 +429,7 @@ application/BF2/framework/object/updatable_manager.cpp:
 fw/PadManager.cpp:
 	.text        start:0x00193F08 end:0x00198234
 	.rodata      start:0x00981822 end:0x00981AA9
+	.rodata      start:0x009B9650 end:0x009B9988
 	.data        start:0x00B42630 end:0x00B42940
 	.init_array  start:0x00B8F8B8 end:0x00B8F8C8
 	.bss         start:0x00C24190 end:0x00C24290
@@ -388,6 +442,7 @@ application/BF2/framework/param/param_builder.cpp:
 fw/ScriptInfo.cpp:
 	.text        start:0x00198694 end:0x0019E128
 	.rodata      start:0x00981AF4 end:0x00981B47
+	.rodata      start:0x009B544C end:0x009B5450
 	.data        start:0x00B42980 end:0x00B42CB0
 	.init_array  start:0x00B8F8C8 end:0x00B8F8D0
 	.bss         start:0x00C24298 end:0x00C243A0
@@ -409,7 +464,8 @@ application/BF2/framework/sound/sound_pack.cpp:
 
 application/BF2/framework/sound/sound_ssd_drv.cpp:
 	.text        start:0x001A1A8C end:0x001A90B0
-	.rodata      start:0x00981D88 end:0x00981F31
+	.rodata      start:0x00981D88 end:0x00981F52
+	.rodata      start:0x009B9988 end:0x009B9998
 	.data        start:0x00B42EA0 end:0x00B43440
 	.init_array  start:0x00B8F8D0 end:0x00B8F8D8
 	.bss         start:0x00C243A0 end:0x00C243D8
@@ -461,6 +517,7 @@ application/BF2/gf/asset/gf_asset_resource.cpp:
 application/BF2/gf/asset/gf_asset_setup.cpp:
 	.text        start:0x001B535C end:0x001C4B04
 	.rodata      start:0x00982220 end:0x00982764
+	.rodata      start:0x009B9998 end:0x009B99A4
 	.data        start:0x00B43688 end:0x00B45938
 	.init_array  start:0x00B8F8E8 end:0x00B8F8F0
 	.bss         start:0x00C24520 end:0x00C247D0
@@ -478,7 +535,7 @@ application/BF2/gf/asset/gf_filesize_pool.cpp:
 
 application/BF2/gf/asset/gf_slot.cpp:
 	.text        start:0x001C5ABC end:0x001C7B0C
-	.rodata      start:0x009827CD end:0x0098280B
+	.rodata      start:0x009827C8 end:0x0098280B
 	.data        start:0x00B45978 end:0x00B459B0
 	.init_array  start:0x00B8F8F8 end:0x00B8F900
 	.bss         start:0x00C24DF8 end:0x00C24E20
@@ -486,11 +543,13 @@ application/BF2/gf/asset/gf_slot.cpp:
 application/BF2/gf/asset/gf_slot_mapping.cpp:
 	.text        start:0x001C7B0C end:0x001CA530
 	.rodata      start:0x0098280B end:0x009828E2
+	.rodata      start:0x009B99A4 end:0x009B99D4
 	.data        start:0x00B459B0 end:0x00B45A08
 
 application/BF2/gf/camera/chain_attack/gf_camera_chain_attack.cpp:
 	.text        start:0x001CA530 end:0x001CC4D0
 	.rodata      start:0x009828E2 end:0x009829E5
+	.rodata      start:0x009B99D4 end:0x009B99F4
 	.data        start:0x00B45A08 end:0x00B45A88
 	.init_array  start:0x00B8F900 end:0x00B8F908
 	.bss         start:0x00C24E20 end:0x00C24E38
@@ -504,6 +563,7 @@ application/BF2/gf/camera/fusion_combo/gf_camera_fusion_combo.cpp:
 application/BF2/gf/camera/gf_camera_player.cpp:
 	.text        start:0x001CDA7C end:0x001D2BD4
 	.rodata      start:0x00982B62 end:0x00982EB5
+	.rodata      start:0x009B5834 end:0x009B583C
 	.data        start:0x00B45AE8 end:0x00B45B48
 	.init_array  start:0x00B8F910 end:0x00B8F918
 	.bss         start:0x00C24E50 end:0x00C24EA0
@@ -524,7 +584,9 @@ application/BF2/gf/camera/gf_camera_subview.cpp:
 
 application/BF2/gf/camera/gimmick/gf_camera_gimmick.cpp:
 	.text        start:0x001D4184 end:0x001D8264
-	.rodata      start:0x00982FB2 end:0x00983011
+	.rodata      start:0x00982FB2 end:0x0098303B
+	.rodata      start:0x009B5450 end:0x009B5464
+	.rodata      start:0x009B99F4 end:0x009B9A24
 	.data        start:0x00B45E68 end:0x00B45EC8
 	.init_array  start:0x00B8F928 end:0x00B8F930
 	.bss         start:0x00C24F20 end:0x00C24F40
@@ -532,6 +594,7 @@ application/BF2/gf/camera/gimmick/gf_camera_gimmick.cpp:
 application/BF2/gf/camera/plugin/gf_camera_plugin_ship_roll.cpp:
 	.text        start:0x001D8264 end:0x001D8884
 	.rodata      start:0x0098303B end:0x00983094
+	.rodata      start:0x009B9A24 end:0x009B9A50
 	.data        start:0x00B45EC8 end:0x00B45F10
 	.init_array  start:0x00B8F930 end:0x00B8F938
 	.bss         start:0x00C24F58 end:0x00C24F60
@@ -566,30 +629,30 @@ unit_71001E1028.cpp:
 
 application/BF2/gf/data/gf_bdat_btl.cpp:
 	.text        start:0x001E10AC end:0x001EA364
-	.rodata      start:0x00983805 end:0x009841A7
+	.rodata      start:0x009837FB end:0x009841A7
 	.data        start:0x00B462F8 end:0x00B46750
 
 application/BF2/gf/data/gf_bdat_chrbl.cpp:
 	.text        start:0x001EA364 end:0x001EE770
-	.rodata      start:0x00984242 end:0x009845AF
+	.rodata      start:0x009841A7 end:0x009845AF
 	.data        start:0x00B46750 end:0x00B468F8
 	.bss         start:0x00C268A0 end:0x00C26C30
 
 application/BF2/gf/data/gf_bdat_chrdr.cpp:
 	.text        start:0x001EE770 end:0x001F1C78
-	.rodata      start:0x009845B4 end:0x009847CA
+	.rodata      start:0x009845AF end:0x009847CA
 	.data        start:0x00B468F8 end:0x00B469E8
 	.bss         start:0x00C26C30 end:0x00C26ED0
 
 application/BF2/gf/data/gf_bdat_chrenarrange.cpp:
 	.text        start:0x001F1C78 end:0x001F4F80
-	.rodata      start:0x009847D2 end:0x00984A92
+	.rodata      start:0x009847CA end:0x00984A92
 	.data        start:0x00B469E8 end:0x00B46A58
 	.bss         start:0x00C26ED0 end:0x00C27000
 
 application/BF2/gf/data/gf_bdat_chrenparam.cpp:
 	.text        start:0x001F4F80 end:0x001F85B4
-	.rodata      start:0x00984A9D end:0x00984D03
+	.rodata      start:0x00984A92 end:0x00984D03
 	.data        start:0x00B46A58 end:0x00B46BA8
 	.bss         start:0x00C271E0 end:0x00C271E8
 
@@ -601,31 +664,33 @@ application/BF2/gf/data/gf_bdat_cond.cpp:
 
 application/BF2/gf/data/gf_bdat_item.cpp:
 	.text        start:0x001FB374 end:0x00206D14
-	.rodata      start:0x00984FE5 end:0x009854A1
+	.rodata      start:0x00984FD8 end:0x009854A1
 	.data        start:0x00B46D30 end:0x00B46FA8
 	.bss         start:0x00C276C0 end:0x00C276C8
 
 application/BF2/gf/data/gf_bdat_lookat.cpp:
 	.text        start:0x00206D14 end:0x002085D0
 	.rodata      start:0x009854A1 end:0x0098551B
+	.rodata      start:0x009B9A50 end:0x009B9A90
 	.data        start:0x00B46FA8 end:0x00B47070
 	.bss         start:0x00C28148 end:0x00C28180
 
 application/BF2/gf/data/gf_bdat_maplist.cpp:
 	.text        start:0x002085D0 end:0x0020A47C
-	.rodata      start:0x00985522 end:0x009857FB
+	.rodata      start:0x0098551B end:0x009857FB
 	.data        start:0x00B47070 end:0x00B471A0
 	.bss         start:0x00C28180 end:0x00C28198
 
 application/BF2/gf/data/gf_bdat_msg.cpp:
 	.text        start:0x0020A47C end:0x0020BD14
 	.rodata      start:0x009857FB end:0x0098583C
+	.rodata      start:0x009B9A90 end:0x009B9AC0
 	.data        start:0x00B471A0 end:0x00B47218
 	.bss         start:0x00C28398 end:0x00C28508
 
 application/BF2/gf/data/gf_bdat_quest.cpp:
 	.text        start:0x0020BD14 end:0x0020D188
-	.rodata      start:0x0098583C end:0x0098587F
+	.rodata      start:0x0098583C end:0x00985889
 	.data        start:0x00B47218 end:0x00B47288
 
 application/BF2/gf/data/gf_bdat_rsc.cpp:
@@ -636,7 +701,7 @@ application/BF2/gf/data/gf_bdat_rsc.cpp:
 
 application/BF2/gf/data/gf_bdat_shop.cpp:
 	.text        start:0x0021B58C end:0x0021E894
-	.rodata      start:0x0098647D end:0x00986833
+	.rodata      start:0x00986463 end:0x00986833
 	.data        start:0x00B47D20 end:0x00B47F28
 	.bss         start:0x00C29178 end:0x00C29188
 
@@ -649,11 +714,13 @@ application/BF2/gf/data/gf_bdat_unique_motion.cpp:
 
 gf/DataParamAcc.cpp:
 	.text        start:0x0021FDD8 end:0x002226F0
+	.rodata      start:0x009B9AC0 end:0x009B9B30
 	.data        start:0x00B47FC8 end:0x00B4C840
 
 application/BF2/gf/data/gf_data_aoc.cpp:
 	.text        start:0x002226F0 end:0x00222A24
 	.rodata      start:0x00986943 end:0x00986993
+	.rodata      start:0x009B9B30 end:0x009B9BCC
 	.data        start:0x00B4C840 end:0x00B4C8B0
 
 application/BF2/gf/data/gf_data_bdat.cpp:
@@ -665,28 +732,34 @@ application/BF2/gf/data/gf_data_bdat.cpp:
 application/BF2/gf/data/gf_data_manager.cpp:
 	.text        start:0x00223650 end:0x00224A98
 	.rodata      start:0x009887B7 end:0x009887FC
+	.rodata      start:0x009B9BCC end:0x009B9C1C
 	.data        start:0x00B4DA08 end:0x00B4DC58
 	.bss         start:0x00C294D0 end:0x00C294D8
 
 application/BF2/gf/data/gf_data_obj.cpp:
 	.text        start:0x00224A98 end:0x00229510
 	.rodata      start:0x009887FC end:0x00988844
+	.rodata      start:0x009B9C1C end:0x009B9C2C
 	.data        start:0x00B4DC58 end:0x00B4E098
 
 gf/IDataObj.cpp:
 	.text        start:0x00229510 end:0x0022CB44
 	.rodata      start:0x00988844 end:0x009888A5
+	.rodata      start:0x009B546C end:0x009B5470
 	.data        start:0x00B4E4D8 end:0x00B50B18
 
 application/BF2/gf/data/gf_data_store.cpp:
 	.text        start:0x0022CB44 end:0x0023174C
 	.rodata      start:0x009888A5 end:0x009888F1
+	.rodata      start:0x009B9C2C end:0x009B9C84
 	.data        start:0x00B50B18 end:0x00B50BA0
 	.bss         start:0x00C294D8 end:0x00C294E0
 
 unit_710023174C.cpp:
 	.text        start:0x0023174C end:0x00255EF4
 	.rodata      start:0x009888F1 end:0x00988E0E
+	.rodata      start:0x009B5470 end:0x009B5474
+	.rodata      start:0x009B9C84 end:0x009BA48C
 	.data        start:0x00B50BA0 end:0x00B50FA0
 	.init_array  start:0x00B8F948 end:0x00B8F950
 	.bss         start:0x00C294E0 end:0x00C339E8
@@ -694,6 +767,7 @@ unit_710023174C.cpp:
 application/BF2/gf/data/gf_game_flag.cpp:
 	.text        start:0x00255EF4 end:0x0025655C
 	.rodata      start:0x00988E0E end:0x00988E50
+	.rodata      start:0x009BA48C end:0x009BA690
 	.data        start:0x00B50FA0 end:0x00B50FE0
 	.bss         start:0x00C34678 end:0x00C34680
 
@@ -703,6 +777,7 @@ unit_710025655C.cpp:
 gf/QuestListAcc.cpp:
 	.text        start:0x002583A4 end:0x00261220
 	.rodata      start:0x00988E50 end:0x00989471
+	.rodata      start:0x009BA690 end:0x009BA6A8
 	.data        start:0x00B50FE0 end:0x00B511A8
 	.init_array  start:0x00B8F950 end:0x00B8F958
 	.bss         start:0x00C34D00 end:0x00D6C000
@@ -710,12 +785,13 @@ gf/QuestListAcc.cpp:
 application/BF2/gf/field/gf_field_bgm.cpp:
 	.text        start:0x00261220 end:0x00267578
 	.rodata      start:0x00989471 end:0x009894FA
+	.rodata      start:0x009BA6A8 end:0x009BA81C
 	.data        start:0x00B511A8 end:0x00B51488
 	.bss         start:0x00D6C830 end:0x00D6C878
 
 application/BF2/gf/field/gf_field_collect.cpp:
 	.text        start:0x00267578 end:0x002686FC
-	.rodata      start:0x009894FA end:0x00989541
+	.rodata      start:0x009894FA end:0x0098957C
 	.data        start:0x00B51488 end:0x00B514C8
 	.bss         start:0x00D6C878 end:0x00D6C880
 
@@ -727,7 +803,9 @@ application/BF2/gf/field/gf_field_dmg.cpp:
 
 application/BF2/gf/field/gf_field_gimmick.cpp:
 	.text        start:0x00269684 end:0x0026C2FC
-	.rodata      start:0x009895EC end:0x00989657
+	.rodata      start:0x009895EC end:0x00989669
+	.rodata      start:0x009B5474 end:0x009B5478
+	.rodata      start:0x009BA81C end:0x009BA838
 	.data        start:0x00B51738 end:0x00B51AA8
 	.bss         start:0x00D6C888 end:0x00D6C8A8
 
@@ -736,7 +814,8 @@ gf/LocatorBat_EnemyID.cpp:
 
 application/BF2/gf/field/gf_field_locator.cpp:
 	.text        start:0x0026CAB8 end:0x00272BC4
-	.rodata      start:0x00989669 end:0x009896CC
+	.rodata      start:0x00989669 end:0x009896ED
+	.rodata      start:0x009BA838 end:0x009BABB8
 	.data        start:0x00B51AA8 end:0x00B51E90
 	.bss         start:0x00D6C8A8 end:0x00D6C8B0
 
@@ -748,19 +827,21 @@ application/BF2/gf/field/gf_field_lod.cpp:
 
 application/BF2/gf/field/gf_field_manager.cpp:
 	.text        start:0x00277164 end:0x00278024
-	.rodata      start:0x009898DF end:0x00989979
+	.rodata      start:0x009898DF end:0x0098997F
 	.data        start:0x00B51F08 end:0x00B521E8
 	.bss         start:0x00D6C8C8 end:0x00D6C910
 
 application/BF2/gf/field/gf_field_mapse.cpp:
 	.text        start:0x00278024 end:0x00279B20
 	.rodata      start:0x0098997F end:0x009899C4
+	.rodata      start:0x009BABB8 end:0x009BABE8
 	.data        start:0x00B521E8 end:0x00B52248
 	.bss         start:0x00D6C910 end:0x00D6C918
 
 application/BF2/gf/field/gf_field_map_gimmick.cpp:
 	.text        start:0x00279B20 end:0x0027C31C
-	.rodata      start:0x009899D5 end:0x00989B22
+	.rodata      start:0x009899C4 end:0x00989B22
+	.rodata      start:0x009BABE8 end:0x009BAC3B
 	.data        start:0x00B52248 end:0x00B525A8
 
 application/BF2/gf/field/gf_field_sound.cpp:
@@ -771,17 +852,19 @@ application/BF2/gf/field/gf_field_sound.cpp:
 
 application/BF2/gf/field/gf_field_tbox.cpp:
 	.text        start:0x0027D244 end:0x0027DFA8
-	.rodata      start:0x00989C51 end:0x00989CEE
+	.rodata      start:0x00989C4A end:0x00989CF8
 	.data        start:0x00B525F8 end:0x00B52638
 
 application/BF2/gf/field/gf_field_time.cpp:
 	.text        start:0x0027DFA8 end:0x0027EE94
 	.rodata      start:0x00989CF8 end:0x00989D3C
+	.rodata      start:0x009B5478 end:0x009B547C
 	.data        start:0x00B52638 end:0x00B526C0
 
 application/BF2/gf/field/gf_field_weather.cpp:
 	.text        start:0x0027EE94 end:0x002816D0
 	.rodata      start:0x00989D3C end:0x00989D8B
+	.rodata      start:0x009B547C end:0x009B5484
 	.data        start:0x00B526C0 end:0x00B52700
 	.init_array  start:0x00B8F960 end:0x00B8F968
 	.bss         start:0x00D6C920 end:0x00D6CA78
@@ -811,6 +894,8 @@ application/BF2/gf/field/gf_field_zone_se.cpp:
 gf/GfFobjDropitem.cpp:
 	.text        start:0x00282B94 end:0x00288C78
 	.rodata      start:0x00989EB3 end:0x0098A117
+	.rodata      start:0x009B5484 end:0x009B548C
+	.rodata      start:0x009BAC3C end:0x009BACEC
 	.data        start:0x00B528F0 end:0x00B52978
 	.bss         start:0x00D6CA88 end:0x00D6CA90
 
@@ -822,17 +907,20 @@ application/BF2/gf/field/gf_fobj_manager.cpp:
 application/BF2/gf/game/achiev/gf_achiev_manager.cpp:
 	.text        start:0x00289F64 end:0x0028B318
 	.rodata      start:0x0098A15D end:0x0098A24B
+	.rodata      start:0x009BACEC end:0x009BB048
 	.data        start:0x00B52BF0 end:0x00B52C38
 	.bss         start:0x00D6CA90 end:0x00D6CA98
 
 application/BF2/gf/game/auto_talk/gf_auto_talk.cpp:
 	.text        start:0x0028B318 end:0x0028E5BC
-	.rodata      start:0x0098A252 end:0x0098A25A
+	.rodata      start:0x0098A24B end:0x0098A25A
+	.rodata      start:0x009B548C end:0x009B5490
+	.rodata      start:0x009BB048 end:0x009BB0A0
 	.data        start:0x00B52C38 end:0x00B52C68
 
 unit_710028E5BC.cpp:
 	.text        start:0x0028E5BC end:0x002906D0
-	.rodata      start:0x0098A268 end:0x0098A2AE
+	.rodata      start:0x0098A25A end:0x0098A2AE
 
 unit_71002906D0.cpp:
 	.text        start:0x002906D0 end:0x00290CC4
@@ -840,6 +928,7 @@ unit_71002906D0.cpp:
 application/BF2/gf/game/arena/gf_game_arena.cpp:
 	.text        start:0x00290CC4 end:0x00292208
 	.rodata      start:0x0098A2AE end:0x0098A3AD
+	.rodata      start:0x009BB0A0 end:0x009BB0F0
 	.data        start:0x00B52C68 end:0x00B536D8
 
 application/BF2/gf/game/auto_talk/gf_auto_talk_7100292208.cpp:
@@ -851,6 +940,8 @@ application/BF2/gf/game/auto_talk/gf_auto_talk_7100292208.cpp:
 application/BF2/gf/game/blade/gf_blade_manager.cpp:
 	.text        start:0x00294470 end:0x0029A20C
 	.rodata      start:0x0098A47D end:0x0098A500
+	.rodata      start:0x009B5490 end:0x009B5498
+	.rodata      start:0x009BB0F0 end:0x009BB168
 	.data        start:0x00B53A88 end:0x00B53AD0
 	.bss         start:0x00D6CAA8 end:0x00D6CAB0
 
@@ -869,6 +960,7 @@ application/BF2/gf/game/event/gf_evt_model.cpp:
 application/BF2/gf/game/event/gf_game_event.cpp:
 	.text        start:0x002A0184 end:0x002A2738
 	.rodata      start:0x0098A651 end:0x0098A6C3
+	.rodata      start:0x009BB168 end:0x009BB19C
 	.data        start:0x00B54448 end:0x00B54488
 	.bss         start:0x00D6CB90 end:0x00D6CB98
 
@@ -893,6 +985,7 @@ application/BF2/gf/game/gf_game_chain_attack.cpp:
 application/BF2/gf/game/gf_game_cond.cpp:
 	.text        start:0x002A3898 end:0x002A4F4C
 	.rodata      start:0x0098A7BA end:0x0098A7FC
+	.rodata      start:0x009BB19C end:0x009BB280
 	.data        start:0x00B54758 end:0x00B54798
 	.bss         start:0x00D6CBB0 end:0x00D6CBC0
 
@@ -903,7 +996,8 @@ application/BF2/gf/game/gf_game_dead_camera.cpp:
 
 application/BF2/gf/game/gf_game_env.cpp:
 	.text        start:0x002A5250 end:0x002A7868
-	.rodata      start:0x0098A845 end:0x0098A886
+	.rodata      start:0x0098A845 end:0x0098A89D
+	.rodata      start:0x009BB280 end:0x009BB35C
 	.data        start:0x00B547F8 end:0x00B548F8
 	.bss         start:0x00D6CBC0 end:0x00D6CBE0
 
@@ -916,12 +1010,14 @@ application/BF2/gf/game/gf_game_inside_battle_lock.cpp:
 application/BF2/gf/game/gf_game_manager.cpp:
 	.text        start:0x002A89C0 end:0x002ACBE0
 	.rodata      start:0x0098A8ED end:0x0098A932
+	.rodata      start:0x009BB35C end:0x009BB374
 	.data        start:0x00B54938 end:0x00B54D28
 	.bss         start:0x00D6CBE8 end:0x00D6CC30
 
 application/BF2/gf/game/gf_game_mount.cpp:
 	.text        start:0x002ACBE0 end:0x002AEB54
 	.rodata      start:0x0098A932 end:0x0098A975
+	.rodata      start:0x009BB374 end:0x009BB388
 	.data        start:0x00B54D28 end:0x00B54E28
 	.bss         start:0x00D6CC30 end:0x00D6CC38
 
@@ -933,7 +1029,9 @@ application/BF2/gf/game/gf_game_mover_switcher.cpp:
 
 application/BF2/gf/game/gf_game_obj.cpp:
 	.text        start:0x002AF5C8 end:0x002B5C38
-	.rodata      start:0x0098A9C1 end:0x0098AA8A
+	.rodata      start:0x0098A9C1 end:0x0098AA9A
+	.rodata      start:0x009B5498 end:0x009B54A0
+	.rodata      start:0x009BB388 end:0x009BB52C
 	.data        start:0x00B550B8 end:0x00B55158
 	.bss         start:0x00D6CC40 end:0x00D6CC50
 
@@ -946,6 +1044,7 @@ application/BF2/gf/game/gf_game_pad.cpp:
 application/BF2/gf/game/gf_game_party.cpp:
 	.text        start:0x002B6568 end:0x002BD180
 	.rodata      start:0x0098AB1C end:0x0098AB5F
+	.rodata      start:0x009BB52C end:0x009BB570
 	.data        start:0x00B553B0 end:0x00B55430
 	.bss         start:0x00D6CC58 end:0x00D6CC60
 
@@ -973,13 +1072,16 @@ application/BF2/gf/game/gf_game_player_unique_scheduler.cpp:
 application/BF2/gf/game/gf_game_ride.cpp:
 	.text        start:0x002BFE84 end:0x002C26A0
 	.rodata      start:0x0098AC4D end:0x0098ACC3
+	.rodata      start:0x009BB570 end:0x009BB590
 	.data        start:0x00B55BC0 end:0x00B55EF0
 	.init_array  start:0x00B8F970 end:0x00B8F978
 	.bss         start:0x00D6CC78 end:0x00EA4838
 
 application/BF2/gf/game/gf_game_scene.cpp:
 	.text        start:0x002C26A0 end:0x002CC97C
-	.rodata      start:0x0098ACC6 end:0x0098ADBC
+	.rodata      start:0x0098ACC6 end:0x0098ADC7
+	.rodata      start:0x009B54A0 end:0x009B54D0
+	.rodata      start:0x009BB590 end:0x009BB654
 	.data        start:0x00B55EF0 end:0x00B55F30
 	.bss         start:0x00EA4838 end:0x00EA4878
 
@@ -1002,7 +1104,9 @@ application/BF2/gf/game/gf_game_state.cpp:
 
 application/BF2/gf/game/gf_game_stuck_meter.cpp:
 	.text        start:0x002D0178 end:0x002D4014
-	.rodata      start:0x0098AFD9 end:0x0098B064
+	.rodata      start:0x0098AFCD end:0x0098B064
+	.rodata      start:0x009B54D0 end:0x009B54D4
+	.rodata      start:0x009BB654 end:0x009BB660
 	.data        start:0x00B56660 end:0x00B56700
 	.bss         start:0x00EA4888 end:0x00EA4890
 
@@ -1019,6 +1123,7 @@ application/BF2/gf/game/gf_game_trinity_attack.cpp:
 gf/GfWeapon.cpp:
 	.text        start:0x002D7AA8 end:0x002EEFC0
 	.rodata      start:0x0098B1FF end:0x0098B3B2
+	.rodata      start:0x009BB660 end:0x009BBE9C
 	.bss         start:0x00EA4890 end:0x00EA4898
 
 application/BF2/gf/game/gf_game_visible.cpp:
@@ -1031,17 +1136,21 @@ application/BF2/gf/game/gf_game_visible.cpp:
 application/BF2/gf/game/gf_game_voice.cpp:
 	.text        start:0x002F05B8 end:0x002F3C30
 	.rodata      start:0x0098B44B end:0x0098B4CD
+	.rodata      start:0x009BBE9C end:0x009BBFA0
 	.data        start:0x00B56B30 end:0x00B56C28
 	.bss         start:0x00EA48E0 end:0x00EA4908
 
 application/BF2/gf/game/item/gf_item_manager.cpp:
 	.text        start:0x002F3C30 end:0x002FA67C
 	.rodata      start:0x0098B4CD end:0x0098B517
+	.rodata      start:0x009BBFA0 end:0x009BBFF0
 	.data        start:0x00B56C28 end:0x00B56CE8
 	.bss         start:0x00EA4908 end:0x00EA4918
 
 unit_71002FA67C.cpp:
 	.text        start:0x002FA67C end:0x002FECC4
+	.rodata      start:0x009B54D8 end:0x009B54DC
+	.rodata      start:0x009BBFF0 end:0x009BC0FC
 	.data        start:0x00B56CE8 end:0x00B56CF0
 
 application/BF2/gf/game/kizunaring/gf_kizunaring_manager.cpp:
@@ -1052,28 +1161,33 @@ application/BF2/gf/game/kizunaring/gf_kizunaring_manager.cpp:
 application/BF2/gf/game/mercenaries/gf_game_mercenaries.cpp:
 	.text        start:0x002FF3F4 end:0x00301D50
 	.rodata      start:0x0098B56D end:0x0098B5EF
+	.rodata      start:0x009BC0FC end:0x009BC108
 	.data        start:0x00B56D30 end:0x00B56D70
 	.bss         start:0x00EA4918 end:0x00EA4920
 
 gf/GfQuestEvent.cpp:
 	.text        start:0x00301D50 end:0x00303520
+	.rodata      start:0x009BC108 end:0x009BC128
 	.data        start:0x00B56D70 end:0x00B56DB0
 	.bss         start:0x00EA4920 end:0x00EA4928
 
 application/BF2/gf/game/quest/gf_quest_manager.cpp:
 	.text        start:0x00303520 end:0x00309788
 	.rodata      start:0x0098B5EF end:0x0098B63B
+	.rodata      start:0x009BC128 end:0x009BC1AC
 	.data        start:0x00B56DB0 end:0x00B56DF8
 	.bss         start:0x00EA4928 end:0x00EA4968
 
 gf/GfQuestTarget.cpp:
 	.text        start:0x00309788 end:0x00313330
 	.rodata      start:0x0098B63B end:0x0098B709
+	.rodata      start:0x009BC1AC end:0x009BC47C
 	.data        start:0x00B56DF8 end:0x00B56ED8
 
 application/BF2/gf/game/salvage/gf_game_salvage.cpp:
 	.text        start:0x00313330 end:0x003166C8
 	.rodata      start:0x0098B709 end:0x0098BA89
+	.rodata      start:0x009BC47C end:0x009BC498
 	.data        start:0x00B56ED8 end:0x00B577B0
 	.init_array  start:0x00B8F980 end:0x00B8F988
 	.bss         start:0x00EA4968 end:0x00EA4990
@@ -1081,10 +1195,12 @@ application/BF2/gf/game/salvage/gf_game_salvage.cpp:
 gf/StateSalvageDiveStart.cpp:
 	.text        start:0x003166C8 end:0x003183B0
 	.rodata      start:0x0098BA89 end:0x0098BAB3
+	.rodata      start:0x009BC498 end:0x009BC4C8
 
 application/BF2/gf/game/sequential_play/gf_play_command.cpp:
 	.text        start:0x003183B0 end:0x0031F7B0
 	.rodata      start:0x0098BAB3 end:0x0098C386
+	.rodata      start:0x009BC4C8 end:0x009BC4D8
 	.data        start:0x00B577B0 end:0x00B590E8
 	.init_array  start:0x00B8F988 end:0x00B8F990
 	.bss         start:0x00EA4990 end:0x00EA5130
@@ -1095,7 +1211,7 @@ unit_710031F7B0.cpp:
 
 application/BF2/gf/game/sequential_play/gf_sequential_play.cpp:
 	.text        start:0x00321258 end:0x003236FC
-	.rodata      start:0x0098C38B end:0x0098C3E3
+	.rodata      start:0x0098C386 end:0x0098C3F4
 	.data        start:0x00B590E8 end:0x00B59128
 
 application/BF2/gf/game/smn_enemy/gf_smn_enemy.cpp:
@@ -1123,13 +1239,14 @@ application/BF2/gf/gf_info.cpp:
 application/BF2/gf/gf_manager.cpp:
 	.text        start:0x003297A4 end:0x0032AC90
 	.rodata      start:0x0098C52B end:0x0098C566
+	.rodata      start:0x009BC4D8 end:0x009BC4E4
 	.data        start:0x00B59268 end:0x00B59510
 	.init_array  start:0x00B8F990 end:0x00B8F998
 	.bss         start:0x00EA53A0 end:0x00EA53F8
 
 application/BF2/gf/gf_pause.cpp:
 	.text        start:0x0032AC90 end:0x0032C280
-	.rodata      start:0x0098C566 end:0x0098C5A8
+	.rodata      start:0x0098C566 end:0x0098C61C
 	.data        start:0x00B59510 end:0x00B59580
 	.init_array  start:0x00B8F998 end:0x00B8F9A0
 	.bss         start:0x00EA53F8 end:0x00EA6AA8
@@ -1137,29 +1254,33 @@ application/BF2/gf/gf_pause.cpp:
 application/BF2/gf/map/gf_map_manager.cpp:
 	.text        start:0x0032C280 end:0x0032E058
 	.rodata      start:0x0098C61C end:0x0098C6BC
+	.rodata      start:0x009BC4E4 end:0x009BC524
 	.data        start:0x00B59580 end:0x00B598A8
 	.init_array  start:0x00B8F9A0 end:0x00B8F9A8
 	.bss         start:0x00EA6AA8 end:0x00EA6EB8
 
 application/BF2/gf/menu/adapter/gf_menu_achievement_adapter.cpp:
 	.text        start:0x0032E058 end:0x0032EFC4
-	.rodata      start:0x0098C6BC end:0x0098C715
+	.rodata      start:0x0098C6BC end:0x0098C721
+	.rodata      start:0x009BC524 end:0x009BC530
 	.data        start:0x00B598A8 end:0x00B59C80
 
 application/BF2/gf/menu/adapter/gf_menu_adapter_manager.cpp:
 	.text        start:0x0032EFC4 end:0x00331140
 	.rodata      start:0x0098C721 end:0x0098C776
+	.rodata      start:0x009BC530 end:0x009BC558
 	.data        start:0x00B59C80 end:0x00B59CE8
 	.bss         start:0x00EA6EB8 end:0x00EA6EC0
 
 application/BF2/gf/menu/adapter/gf_menu_arts_adapter.cpp:
 	.text        start:0x00331140 end:0x00332AAC
 	.rodata      start:0x0098C776 end:0x0098C7C8
+	.rodata      start:0x009BC558 end:0x009BC584
 	.data        start:0x00B59CE8 end:0x00B5A0A0
 
 application/BF2/gf/menu/adapter/gf_menu_battle_adapter.cpp:
 	.text        start:0x00332AAC end:0x00333B5C
-	.rodata      start:0x0098C7C8 end:0x0098C81C
+	.rodata      start:0x0098C7C8 end:0x0098C82F
 	.data        start:0x00B5A0A0 end:0x00B5A648
 
 application/BF2/gf/menu/adapter/gf_menu_btlch_adapter.cpp:
@@ -1169,7 +1290,8 @@ application/BF2/gf/menu/adapter/gf_menu_btlch_adapter.cpp:
 
 application/BF2/gf/menu/adapter/gf_menu_char_data_adapter.cpp:
 	.text        start:0x0033500C end:0x0033BDD0
-	.rodata      start:0x0098C882 end:0x0098C8D9
+	.rodata      start:0x0098C882 end:0x0098C8DF
+	.rodata      start:0x009BC584 end:0x009BC590
 	.data        start:0x00B5A8A0 end:0x00B5BA28
 
 application/BF2/gf/menu/adapter/gf_menu_diff_adapter.cpp:
@@ -1179,7 +1301,8 @@ application/BF2/gf/menu/adapter/gf_menu_diff_adapter.cpp:
 
 application/BF2/gf/menu/adapter/gf_menu_element_combo_adapter.cpp:
 	.text        start:0x0033C0C0 end:0x0033C770
-	.rodata      start:0x0098C944 end:0x0098C99F
+	.rodata      start:0x0098C944 end:0x0098CA00
+	.rodata      start:0x009BC590 end:0x009BC5B0
 	.data        start:0x00B5BAF0 end:0x00B5BC28
 
 application/BF2/gf/menu/adapter/gf_menu_enhance_adapter.cpp:
@@ -1213,11 +1336,13 @@ application/BF2/gf/menu/adapter/gf_menu_game_adapter.cpp:
 application/BF2/gf/menu/adapter/gf_menu_gfobj_adapter.cpp:
 	.text        start:0x0033E90C end:0x003406A4
 	.rodata      start:0x0098CBBC end:0x0098CC0F
+	.rodata      start:0x009BC5B0 end:0x009BC5C0
 	.data        start:0x00B5C0D8 end:0x00B5C778
 
 application/BF2/gf/menu/adapter/gf_menu_hana_adapter.cpp:
 	.text        start:0x003406A4 end:0x003413DC
 	.rodata      start:0x0098CC0F end:0x0098CC8E
+	.rodata      start:0x009BC5C0 end:0x009BC6F4
 	.data        start:0x00B5C778 end:0x00B5C948
 
 application/BF2/gf/menu/adapter/gf_menu_hana_parts_adapter.cpp:
@@ -1228,16 +1353,18 @@ application/BF2/gf/menu/adapter/gf_menu_hana_parts_adapter.cpp:
 application/BF2/gf/menu/adapter/gf_menu_item_adapter.cpp:
 	.text        start:0x00341DA0 end:0x00343B78
 	.rodata      start:0x0098CCE6 end:0x0098CD4F
+	.rodata      start:0x009BC6F4 end:0x009BC768
 	.data        start:0x00B5CA20 end:0x00B5CEC8
 
 application/BF2/gf/menu/adapter/gf_menu_mercenaries_adapter.cpp:
 	.text        start:0x00343B78 end:0x00345290
-	.rodata      start:0x0098CD4F end:0x0098CDA8
+	.rodata      start:0x0098CD4F end:0x0098CDC7
 	.data        start:0x00B5CEC8 end:0x00B5D200
 
 application/BF2/gf/menu/adapter/gf_menu_mission_adapter.cpp:
 	.text        start:0x00345290 end:0x003472A4
-	.rodata      start:0x0098CDC7 end:0x0098CE2E
+	.rodata      start:0x0098CDC7 end:0x0098CE37
+	.rodata      start:0x009BC768 end:0x009BC784
 	.data        start:0x00B5D200 end:0x00B5D7E0
 
 application/BF2/gf/menu/adapter/gf_menu_pos_adapter.cpp:
@@ -1253,6 +1380,7 @@ application/BF2/gf/menu/adapter/gf_menu_pouch_adapter.cpp:
 application/BF2/gf/menu/adapter/gf_menu_quest_adapter.cpp:
 	.text        start:0x00348038 end:0x003496B0
 	.rodata      start:0x0098CEDB end:0x0098CF3E
+	.rodata      start:0x009BC784 end:0x009BCA58
 	.data        start:0x00B5D880 end:0x00B5D8F8
 
 application/BF2/gf/menu/adapter/gf_menu_reference_adapter.cpp:
@@ -1262,7 +1390,7 @@ application/BF2/gf/menu/adapter/gf_menu_reference_adapter.cpp:
 
 application/BF2/gf/menu/adapter/gf_menu_shop_adapter.cpp:
 	.text        start:0x00349C3C end:0x0034A6EC
-	.rodata      start:0x0098CF9A end:0x0098CFEC
+	.rodata      start:0x0098CF9A end:0x0098CFF4
 	.data        start:0x00B5D920 end:0x00B5DA38
 
 application/BF2/gf/menu/adapter/gf_menu_skill_adapter.cpp:
@@ -1283,6 +1411,7 @@ application/BF2/gf/menu/adapter/gf_menu_weapon_type_adapter.cpp:
 application/BF2/gf/menu/adapter/gf_menu_world_map_adapter.cpp:
 	.text        start:0x0034CC94 end:0x0034D73C
 	.rodata      start:0x0098D0F4 end:0x0098D14B
+	.rodata      start:0x009BCA58 end:0x009BCA90
 	.data        start:0x00B5E0D8 end:0x00B5E1F8
 
 application/BF2/gf/menu/adapter/gf_menu_zone_adapter.cpp:
@@ -1310,6 +1439,7 @@ application/BF2/gf/menu/call/gf_menu_call_manager.cpp:
 application/BF2/gf/menu/gf_menu_equip.cpp:
 	.text        start:0x0034F68C end:0x00350058
 	.rodata      start:0x0098D2A0 end:0x0098D35E
+	.rodata      start:0x009BCA90 end:0x009BCB30
 	.data        start:0x00B5E458 end:0x00B5E548
 	.bss         start:0x00EA6F08 end:0x00EA6F10
 
@@ -1328,24 +1458,27 @@ application/BF2/gf/menu/gf_menu_field_skill.cpp:
 application/BF2/gf/menu/gf_menu_fullscreen.cpp:
 	.text        start:0x00352068 end:0x00353630
 	.rodata      start:0x0098D458 end:0x0098D4A0
+	.rodata      start:0x009BCB30 end:0x009BCB60
 	.data        start:0x00B5E850 end:0x00B5E890
 	.bss         start:0x00EA6F20 end:0x00EA6F28
 
 application/BF2/gf/menu/gf_menu_hud.cpp:
 	.text        start:0x00353630 end:0x00353FE4
-	.rodata      start:0x0098D4A0 end:0x0098D4E1
+	.rodata      start:0x0098D4A0 end:0x0098D4F1
 	.data        start:0x00B5E890 end:0x00B5E8D0
 	.bss         start:0x00EA6F28 end:0x00EA6F30
 
 application/BF2/gf/menu/gf_menu_kizunaring.cpp:
 	.text        start:0x00353FE4 end:0x003552A4
 	.rodata      start:0x0098D4F1 end:0x0098D539
+	.rodata      start:0x009BCB60 end:0x009BCC9C
 	.data        start:0x00B5E8D0 end:0x00B5E910
 	.bss         start:0x00EA6F30 end:0x00EA6F38
 
 application/BF2/gf/menu/gf_menu_location.cpp:
 	.text        start:0x003552A4 end:0x00357514
 	.rodata      start:0x0098D539 end:0x0098D57F
+	.rodata      start:0x009BCC9C end:0x009BCE70
 	.data        start:0x00B5E910 end:0x00B5E950
 	.bss         start:0x00EA6F38 end:0x00EA6F40
 
@@ -1358,6 +1491,8 @@ application/BF2/gf/menu/gf_menu_main.cpp:
 application/BF2/gf/menu/gf_menu_manager.cpp:
 	.text        start:0x00357680 end:0x0035E274
 	.rodata      start:0x0098D5C1 end:0x0098DF4E
+	.rodata      start:0x009B54DC end:0x009B54E0
+	.rodata      start:0x009BCE70 end:0x009BCF6C
 	.data        start:0x00B5E990 end:0x00B5ED80
 	.bss         start:0x00EA6F48 end:0x00EA6F90
 
@@ -1370,6 +1505,8 @@ application/BF2/gf/menu/gf_menu_many_objects.cpp:
 application/BF2/gf/menu/gf_menu_map_info.cpp:
 	.text        start:0x0035E3EC end:0x00362434
 	.rodata      start:0x0098DF98 end:0x0098E0AD
+	.rodata      start:0x009B54E0 end:0x009B54F4
+	.rodata      start:0x009BCF6C end:0x009BD05C
 	.data        start:0x00B5EDC0 end:0x00B5EE00
 
 application/BF2/gf/menu/gf_menu_minimap.cpp:
@@ -1441,6 +1578,7 @@ application/BF2/gf/menu/list/gf_menu_arts_list.cpp:
 application/BF2/gf/menu/list/gf_menu_blade_list.cpp:
 	.text        start:0x0036B2EC end:0x0036FDE8
 	.rodata      start:0x0098E396 end:0x0098E3E3
+	.rodata      start:0x009BD05C end:0x009BD128
 	.data        start:0x00B5F180 end:0x00B5F280
 
 application/BF2/gf/menu/list/gf_menu_driver_list.cpp:
@@ -1460,18 +1598,21 @@ application/BF2/gf/menu/list/gf_menu_field_skill_list.cpp:
 
 application/BF2/gf/menu/list/gf_menu_id_list.cpp:
 	.text        start:0x00371474 end:0x003731C4
-	.rodata      start:0x0098E4D1 end:0x0098E523
+	.rodata      start:0x0098E4D1 end:0x0098E54C
+	.rodata      start:0x009BD128 end:0x009BD190
 	.data        start:0x00B5F3D0 end:0x00B5F488
 
 application/BF2/gf/menu/list/gf_menu_item_list.cpp:
 	.text        start:0x003731C4 end:0x00379CA0
 	.rodata      start:0x0098E54C end:0x0098E5C1
+	.rodata      start:0x009BD190 end:0x009BD26C
 	.data        start:0x00B5F488 end:0x00B5F6A8
 	.bss         start:0x00EA70B8 end:0x00EA70C8
 
 application/BF2/gf/menu/list/gf_menu_msg_list.cpp:
 	.text        start:0x00379CA0 end:0x0037B610
 	.rodata      start:0x0098E5C1 end:0x0098E60C
+	.rodata      start:0x009BD26C end:0x009BD29C
 	.data        start:0x00B5F6A8 end:0x00B5F760
 
 application/BF2/gf/menu/list/gf_menu_quest_list.cpp:
@@ -1482,6 +1623,7 @@ application/BF2/gf/menu/list/gf_menu_quest_list.cpp:
 application/BF2/gf/menu/list/gf_menu_zone_map_list.cpp:
 	.text        start:0x0037BD08 end:0x0037DC88
 	.rodata      start:0x0098E659 end:0x0098E6A9
+	.rodata      start:0x009BD29C end:0x009BD2CC
 	.data        start:0x00B5F7D0 end:0x00B5F888
 
 application/BF2/gf/menu/model_view/gf_menu_dynamics_calculator.cpp:
@@ -1500,61 +1642,69 @@ application/BF2/gf/menu/model_view/gf_menu_model_view.cpp:
 
 application/BF2/gf/menu/object/gf_menu_obj_action_window.cpp:
 	.text        start:0x003820A4 end:0x0038268C
-	.rodata      start:0x0098E7DF end:0x0098E856
+	.rodata      start:0x0098E7D6 end:0x0098E856
 	.data        start:0x00B5F978 end:0x00B5F9E8
 
 application/BF2/gf/menu/object/gf_menu_obj_announce.cpp:
 	.text        start:0x0038268C end:0x003831E8
-	.rodata      start:0x0098E856 end:0x0098E932
+	.rodata      start:0x0098E856 end:0x0098E969
 	.data        start:0x00B5F9E8 end:0x00B5FAF8
 
 application/BF2/gf/menu/object/gf_menu_obj_arts_palette.cpp:
 	.text        start:0x003831E8 end:0x00387AE8
 	.rodata      start:0x0098E969 end:0x0098EE4F
+	.rodata      start:0x009BD2CC end:0x009BD614
 	.data        start:0x00B5FAF8 end:0x00B5FB90
 
 application/BF2/gf/menu/object/gf_menu_obj_balloon.cpp:
 	.text        start:0x00387AE8 end:0x0038CDD8
 	.rodata      start:0x0098EE4F end:0x0098F647
+	.rodata      start:0x009BD614 end:0x009BD7A0
 	.data        start:0x00B5FBB0 end:0x00B5FD10
 
 application/BF2/gf/menu/object/gf_menu_obj_battle_telop.cpp:
 	.text        start:0x0038CDD8 end:0x0038D830
-	.rodata      start:0x0098F651 end:0x0098F6E4
+	.rodata      start:0x0098F647 end:0x0098F6E4
 	.data        start:0x00B5FD10 end:0x00B5FDB8
 
 application/BF2/gf/menu/object/gf_menu_obj_blade_book.cpp:
 	.text        start:0x0038D830 end:0x003902AC
 	.rodata      start:0x0098F6E4 end:0x0098FB37
+	.rodata      start:0x009BD7A0 end:0x009BD9B0
 	.data        start:0x00B5FDB8 end:0x00B5FE78
 
 application/BF2/gf/menu/object/gf_menu_obj_blade_change.cpp:
 	.text        start:0x003902AC end:0x003926CC
-	.rodata      start:0x0098FB37 end:0x0098FDA6
+	.rodata      start:0x0098FB37 end:0x0098FDAF
+	.rodata      start:0x009BD9B0 end:0x009BDA4C
 	.data        start:0x00B5FE78 end:0x00B5FF10
 	.bss         start:0x00EA7170 end:0x00EA7180
 
 application/BF2/gf/menu/object/gf_menu_obj_blade_create.cpp:
 	.text        start:0x003926CC end:0x0039B05C
 	.rodata      start:0x0098FDAF end:0x009903A7
+	.rodata      start:0x009B54F4 end:0x009B54FC
+	.rodata      start:0x009BDA4C end:0x009BDE84
 	.data        start:0x00B5FF10 end:0x00B601E0
 	.init_array  start:0x00B8F9B8 end:0x00B8F9C0
 	.bss         start:0x00EA7180 end:0x00EA71B8
 
 application/BF2/gf/menu/object/gf_menu_obj_blade_name.cpp:
 	.text        start:0x0039B05C end:0x0039BC60
-	.rodata      start:0x009903A7 end:0x0099042F
+	.rodata      start:0x009903A7 end:0x00990444
 	.data        start:0x00B601E0 end:0x00B60250
 
 application/BF2/gf/menu/object/gf_menu_obj_blade_release.cpp:
 	.text        start:0x0039BC60 end:0x0039F3F0
-	.rodata      start:0x00990444 end:0x00990526
+	.rodata      start:0x00990444 end:0x0099053F
+	.rodata      start:0x009BDE84 end:0x009BDF64
 	.data        start:0x00B60250 end:0x00B602E8
 	.bss         start:0x00EA71B8 end:0x00EAA1C8
 
 application/BF2/gf/menu/object/gf_menu_obj_blade_set2.cpp:
 	.text        start:0x0039F3F0 end:0x003A3D34
 	.rodata      start:0x0099053F end:0x0099084D
+	.rodata      start:0x009BDF64 end:0x009BE0B8
 	.data        start:0x00B602E8 end:0x00B603C0
 
 application/BF2/gf/menu/object/gf_menu_obj_blade_switch.cpp:
@@ -1564,46 +1714,53 @@ application/BF2/gf/menu/object/gf_menu_obj_blade_switch.cpp:
 
 application/BF2/gf/menu/object/gf_menu_obj_bl_custom_top.cpp:
 	.text        start:0x003A40FC end:0x003A441C
+	.rodata      start:0x009908A2 end:0x009908C0
+	.rodata      start:0x009BE0B8 end:0x009BE140
 
 application/BF2/gf/menu/object/gf_menu_obj_bl_equip.cpp:
 	.text        start:0x003A441C end:0x003A72B4
 	.rodata      start:0x009908C0 end:0x00990AF6
+	.rodata      start:0x009BE140 end:0x009BE258
 	.data        start:0x00B60430 end:0x00B604F0
 
 application/BF2/gf/menu/object/gf_menu_obj_bl_kizuna_ring.cpp:
 	.text        start:0x003A72B4 end:0x003AA7D0
 	.rodata      start:0x00990AF6 end:0x00990E64
+	.rodata      start:0x009BE258 end:0x009BE394
 	.data        start:0x00B604F0 end:0x00B60608
 
 application/BF2/gf/menu/object/gf_menu_obj_bl_weapon2.cpp:
 	.text        start:0x003AA7D0 end:0x003ADE30
-	.rodata      start:0x00990E64 end:0x00991195
+	.rodata      start:0x00990E64 end:0x009911A4
+	.rodata      start:0x009BE394 end:0x009BE60C
 	.data        start:0x00B60608 end:0x00B60738
 
 application/BF2/gf/menu/object/gf_menu_obj_btlch_order.cpp:
 	.text        start:0x003ADE30 end:0x003AF8F4
-	.rodata      start:0x009911B8 end:0x00991714
+	.rodata      start:0x009911A4 end:0x00991714
 	.data        start:0x00B60738 end:0x00B607D8
 
 application/BF2/gf/menu/object/gf_menu_obj_btlch_telop.cpp:
 	.text        start:0x003AF8F4 end:0x003B2B40
-	.rodata      start:0x00991714 end:0x009918C0
+	.rodata      start:0x00991714 end:0x0099190F
+	.rodata      start:0x009BE60C end:0x009BE770
 	.data        start:0x00B607D8 end:0x00B60890
 	.bss         start:0x00EAA1C8 end:0x00EAA1CC
 
 application/BF2/gf/menu/object/gf_menu_obj_btlch_tutorial.cpp:
 	.text        start:0x003B2B40 end:0x003B2E94
-	.rodata      start:0x0099190F end:0x00991966
+	.rodata      start:0x0099190F end:0x00991972
 	.data        start:0x00B60890 end:0x00B608E0
 
 application/BF2/gf/menu/object/gf_menu_obj_button_challenge.cpp:
 	.text        start:0x003B2E94 end:0x003B4210
-	.rodata      start:0x009919DE end:0x00991A16
+	.rodata      start:0x00991972 end:0x00991A4D
+	.rodata      start:0x009BE770 end:0x009BE8A0
 	.data        start:0x00B608E0 end:0x00B60928
 
 application/BF2/gf/menu/object/gf_menu_obj_btl_time.cpp:
 	.text        start:0x003B4210 end:0x003B49D4
-	.rodata      start:0x00991A56 end:0x00991B39
+	.rodata      start:0x00991A4D end:0x00991B39
 	.data        start:0x00B60928 end:0x00B609E8
 
 application/BF2/gf/menu/object/gf_menu_obj_button_challenge_71003B49D4.cpp:
@@ -1611,19 +1768,22 @@ application/BF2/gf/menu/object/gf_menu_obj_button_challenge_71003B49D4.cpp:
 
 application/BF2/gf/menu/object/gf_menu_obj_button_challenge2.cpp:
 	.text        start:0x003B4D80 end:0x003BB890
-	.rodata      start:0x00991B4D end:0x009920ED
+	.rodata      start:0x00991B39 end:0x009920ED
+	.rodata      start:0x009BE8A0 end:0x009BEB7C
 	.data        start:0x00B609E8 end:0x00B60A98
 	.bss         start:0x00EAA1CC end:0x00EAA1D0
 
 application/BF2/gf/menu/object/gf_menu_obj_camp_menu.cpp:
 	.text        start:0x003BB890 end:0x003BEBB8
 	.rodata      start:0x009920ED end:0x009924A4
+	.rodata      start:0x009BEB7C end:0x009BED9C
 	.data        start:0x00B60A98 end:0x00B60BC0
 	.bss         start:0x00EAA1D0 end:0x00EAA1D8
 
 application/BF2/gf/menu/object/gf_menu_obj_chain_attack.cpp:
 	.text        start:0x003BEBB8 end:0x003C0BF4
-	.rodata      start:0x009924A4 end:0x0099281B
+	.rodata      start:0x009924A4 end:0x0099283C
+	.rodata      start:0x009BED9C end:0x009BF0F4
 	.data        start:0x00B60BC0 end:0x00B60D18
 
 application/BF2/gf/menu/object/gf_menu_obj_chain_count.cpp:
@@ -1632,40 +1792,48 @@ application/BF2/gf/menu/object/gf_menu_obj_chain_count.cpp:
 
 application/BF2/gf/menu/object/gf_menu_obj_chain_icon.cpp:
 	.text        start:0x003C0E10 end:0x003C1F54
-	.rodata      start:0x0099285D end:0x009928DC
+	.rodata      start:0x0099285D end:0x0099292E
+	.rodata      start:0x009BF0F4 end:0x009BF17C
 	.data        start:0x00B60D18 end:0x00B60DB8
 
 application/BF2/gf/menu/object/gf_menu_obj_chapter_telop.cpp:
 	.text        start:0x003C1F54 end:0x003C30E4
-	.rodata      start:0x0099292E end:0x00992A2A
+	.rodata      start:0x0099292E end:0x00992A36
+	.rodata      start:0x009BF17C end:0x009BF204
 	.data        start:0x00B60DB8 end:0x00B60E28
 
 application/BF2/gf/menu/object/gf_menu_obj_char_change.cpp:
 	.text        start:0x003C30E4 end:0x003C662C
 	.rodata      start:0x00992A36 end:0x00992F37
+	.rodata      start:0x009B583C end:0x009B5844
+	.rodata      start:0x009BF204 end:0x009BF2DC
 	.data        start:0x00B60E28 end:0x00B60F20
 
 application/BF2/gf/menu/object/gf_menu_obj_char_select.cpp:
 	.text        start:0x003C662C end:0x003D12F0
 	.rodata      start:0x00992F37 end:0x009935AB
+	.rodata      start:0x009BF2DC end:0x009BF600
 	.data        start:0x00B60F20 end:0x00B61178
 	.bss         start:0x00EAA1D8 end:0x00EAA1DC
 
 application/BF2/gf/menu/object/gf_menu_obj_char_select_ira.cpp:
 	.text        start:0x003D12F0 end:0x003D6EE0
-	.rodata      start:0x009935BD end:0x009939C2
+	.rodata      start:0x009935B4 end:0x009939C9
+	.rodata      start:0x009BF600 end:0x009BF900
 	.data        start:0x00B61178 end:0x00B612C8
 	.bss         start:0x00EAA1DC end:0x00EAA1E0
 
 application/BF2/gf/menu/object/gf_menu_obj_cmn_status.cpp:
 	.text        start:0x003D6EE0 end:0x003DB878
 	.rodata      start:0x009939C9 end:0x00994D27
+	.rodata      start:0x009BF900 end:0x009BF988
 	.data        start:0x00B612C8 end:0x00B61360
 	.bss         start:0x00EAA1E0 end:0x00EAA1E8
 
 application/BF2/gf/menu/object/gf_menu_obj_combo_route.cpp:
 	.text        start:0x003DB878 end:0x003DC56C
-	.rodata      start:0x00994D27 end:0x00994F57
+	.rodata      start:0x00994D27 end:0x00994F60
+	.rodata      start:0x009BF988 end:0x009BFA10
 	.data        start:0x00B61360 end:0x00B61450
 
 application/BF2/gf/menu/object/gf_menu_obj_combo_route_simple.cpp:
@@ -1680,12 +1848,13 @@ application/BF2/gf/menu/object/gf_menu_obj_common_list.cpp:
 application/BF2/gf/menu/object/gf_menu_obj_common_text.cpp:
 	.text        start:0x003DCE30 end:0x003E2C1C
 	.rodata      start:0x00995055 end:0x00995883
+	.rodata      start:0x009BFA10 end:0x009BFF20
 	.data        start:0x00B61478 end:0x00B61680
 	.bss         start:0x00EAA1E8 end:0x00EAA210
 
 application/BF2/gf/menu/object/gf_menu_obj_compass.cpp:
 	.text        start:0x003E2C1C end:0x003E3B68
-	.rodata      start:0x00995883 end:0x00995942
+	.rodata      start:0x00995883 end:0x00995955
 	.data        start:0x00B61680 end:0x00B616F0
 	.init_array  start:0x00B8F9C0 end:0x00B8F9C8
 	.bss         start:0x00EAA210 end:0x00EAA440
@@ -1698,34 +1867,40 @@ application/BF2/gf/menu/object/gf_menu_obj_cylinderselect.cpp:
 application/BF2/gf/menu/object/gf_menu_obj_damage_buff.cpp:
 	.text        start:0x003E412C end:0x003E5F98
 	.rodata      start:0x00995A5F end:0x00995B6D
+	.rodata      start:0x009BFF20 end:0x009C002C
 	.data        start:0x00B61760 end:0x00B61808
 	.bss         start:0x00EAA440 end:0x00EAAA50
 
 application/BF2/gf/menu/object/gf_menu_obj_damage_value.cpp:
 	.text        start:0x003E5F98 end:0x003E7CA4
-	.rodata      start:0x00995B6D end:0x00995C6E
+	.rodata      start:0x00995B6D end:0x00995C81
+	.rodata      start:0x009C002C end:0x009C00E0
 	.data        start:0x00B61808 end:0x00B61890
 	.bss         start:0x00EAAA50 end:0x00EAB060
 
 application/BF2/gf/menu/object/gf_menu_obj_drop_item.cpp:
 	.text        start:0x003E7CA4 end:0x003E9110
 	.rodata      start:0x00995C81 end:0x00995E18
+	.rodata      start:0x009C00E0 end:0x009C0190
 	.data        start:0x00B61890 end:0x00B61978
 
 application/BF2/gf/menu/object/gf_menu_obj_dr_arts_set2.cpp:
 	.text        start:0x003E9110 end:0x003F04C4
 	.rodata      start:0x00995E18 end:0x0099681D
+	.rodata      start:0x009C0190 end:0x009C0574
 	.data        start:0x00B61978 end:0x00B61A60
 	.bss         start:0x00EAB060 end:0x00EAB068
 
 application/BF2/gf/menu/object/gf_menu_obj_dr_equip2.cpp:
 	.text        start:0x003F04C4 end:0x003F34BC
-	.rodata      start:0x0099681D end:0x009969E7
+	.rodata      start:0x0099681D end:0x00996A31
+	.rodata      start:0x009C0574 end:0x009C0794
 	.data        start:0x00B61A60 end:0x00B61B48
 
 application/BF2/gf/menu/object/gf_menu_obj_dr_kizuna_ring.cpp:
 	.text        start:0x003F34BC end:0x003F6E94
 	.rodata      start:0x00996A31 end:0x00996CCA
+	.rodata      start:0x009C0794 end:0x009C0850
 	.data        start:0x00B61B48 end:0x00B61C60
 
 application/BF2/gf/menu/object/gf_menu_obj_dummy_tutorial.cpp:
@@ -1739,36 +1914,42 @@ application/BF2/gf/menu/object/gf_menu_obj_element_eff.cpp:
 application/BF2/gf/menu/object/gf_menu_obj_enemy_status.cpp:
 	.text        start:0x003F7C04 end:0x003F9E68
 	.rodata      start:0x00996DA5 end:0x0099705E
+	.rodata      start:0x009C0850 end:0x009C08C0
 	.data        start:0x00B61CD0 end:0x00B61D68
 
 application/BF2/gf/menu/object/gf_menu_obj_environment_info.cpp:
 	.text        start:0x003F9E68 end:0x003FA6C4
 	.rodata      start:0x0099705E end:0x009970EC
+	.rodata      start:0x009C08C0 end:0x009C0948
 	.data        start:0x00B61D68 end:0x00B61DD8
 
 application/BF2/gf/menu/object/gf_menu_obj_en_book.cpp:
 	.text        start:0x003FA6C4 end:0x003FD9BC
-	.rodata      start:0x009970EC end:0x009974E6
+	.rodata      start:0x009970EC end:0x0099750A
+	.rodata      start:0x009C0948 end:0x009C0C78
 	.data        start:0x00B61DD8 end:0x00B61F60
 
 application/BF2/gf/menu/object/gf_menu_obj_event_skip.cpp:
 	.text        start:0x003FD9BC end:0x003FDFDC
 	.rodata      start:0x0099750A end:0x0099758B
+	.rodata      start:0x009C0C78 end:0x009C0D00
 	.data        start:0x00B61F60 end:0x00B61FD0
 
 application/BF2/gf/menu/object/gf_menu_obj_event_subtitle.cpp:
 	.text        start:0x003FDFDC end:0x003FE67C
-	.rodata      start:0x0099758B end:0x0099760A
+	.rodata      start:0x0099758B end:0x00997616
 	.data        start:0x00B61FD0 end:0x00B62040
 
 application/BF2/gf/menu/object/gf_menu_obj_ev_theater.cpp:
 	.text        start:0x003FE67C end:0x00405518
-	.rodata      start:0x00997616 end:0x00997B30
+	.rodata      start:0x00997616 end:0x00997BD4
+	.rodata      start:0x009C0D00 end:0x009C1114
 	.data        start:0x00B62040 end:0x00B621C8
 
 application/BF2/gf/menu/object/gf_menu_obj_exp_get.cpp:
 	.text        start:0x00405518 end:0x00407448
 	.rodata      start:0x00997BD4 end:0x00997D30
+	.rodata      start:0x009C1114 end:0x009C11AC
 	.data        start:0x00B621C8 end:0x00B62298
 	.bss         start:0x00EAB068 end:0x00EAB878
 
@@ -1780,32 +1961,38 @@ application/BF2/gf/menu/object/gf_menu_obj_fade.cpp:
 application/BF2/gf/menu/object/gf_menu_obj_field_skill.cpp:
 	.text        start:0x00408040 end:0x0040BF88
 	.rodata      start:0x00997DB8 end:0x00998166
+	.rodata      start:0x009C11AC end:0x009C1488
 	.data        start:0x00B62330 end:0x00B625E8
 
 application/BF2/gf/menu/object/gf_menu_obj_gift_box.cpp:
 	.text        start:0x0040BF88 end:0x00410D94
 	.rodata      start:0x00998166 end:0x009985D9
+	.rodata      start:0x009C1488 end:0x009C1640
 	.data        start:0x00B625E8 end:0x00B62688
 
 application/BF2/gf/menu/object/gf_menu_obj_hana_custom.cpp:
 	.text        start:0x00410D94 end:0x00415EE4
 	.rodata      start:0x009985D9 end:0x00998B98
+	.rodata      start:0x009C1640 end:0x009C1914
 	.data        start:0x00B62688 end:0x00B627C8
 
 application/BF2/gf/menu/object/gf_menu_obj_hana_parts_crystal.cpp:
 	.text        start:0x00415EE4 end:0x00417DAC
 	.rodata      start:0x00998B98 end:0x00998D43
+	.rodata      start:0x009C1914 end:0x009C19E8
 	.data        start:0x00B627C8 end:0x00B628B0
 
 application/BF2/gf/menu/object/gf_menu_obj_hana_parts_make.cpp:
 	.text        start:0x00417DAC end:0x0041B39C
 	.rodata      start:0x00998D43 end:0x00998F22
+	.rodata      start:0x009C19E8 end:0x009C1AD4
 	.data        start:0x00B628B0 end:0x00B62998
 	.bss         start:0x00EAB878 end:0x00EAB87C
 
 application/BF2/gf/menu/object/gf_menu_obj_hana_submenu.cpp:
 	.text        start:0x0041B39C end:0x0041BED4
 	.rodata      start:0x00998F22 end:0x00998FDB
+	.rodata      start:0x009C1AD4 end:0x009C1B74
 	.data        start:0x00B62998 end:0x00B62A30
 
 application/BF2/gf/menu/object/gf_menu_obj_help_hud.cpp:
@@ -1816,17 +2003,21 @@ application/BF2/gf/menu/object/gf_menu_obj_help_hud.cpp:
 application/BF2/gf/menu/object/gf_menu_obj_hitonowa.cpp:
 	.text        start:0x0041D2C8 end:0x00427DE4
 	.rodata      start:0x0099903E end:0x0099945F
+	.rodata      start:0x009B54FC end:0x009B5504
+	.rodata      start:0x009C1B74 end:0x009C1D7C
 	.data        start:0x00B62AE8 end:0x00B62BB0
 	.bss         start:0x00EAB87C end:0x00EAB880
 
 application/BF2/gf/menu/object/gf_menu_obj_item_list2.cpp:
 	.text        start:0x00427DE4 end:0x00429928
 	.rodata      start:0x0099945F end:0x00999598
+	.rodata      start:0x009C1D7C end:0x009C1E84
 	.data        start:0x00B62BB0 end:0x00B62C70
 
 application/BF2/gf/menu/object/gf_menu_obj_link_jump.cpp:
 	.text        start:0x00429928 end:0x0042AAC8
 	.rodata      start:0x00999598 end:0x0099963C
+	.rodata      start:0x009C1E84 end:0x009C1F08
 	.data        start:0x00B62C70 end:0x00B62D58
 
 application/BF2/gf/menu/object/gf_menu_obj_loading_ira.cpp:
@@ -1842,22 +2033,26 @@ application/BF2/gf/menu/object/gf_menu_obj_location_telop.cpp:
 application/BF2/gf/menu/object/gf_menu_obj_lvup_main.cpp:
 	.text        start:0x0042B7B0 end:0x0042D640
 	.rodata      start:0x00999755 end:0x009999C1
+	.rodata      start:0x009C1F08 end:0x009C2018
 	.data        start:0x00B62E38 end:0x00B62EF8
 
 application/BF2/gf/menu/object/gf_menu_obj_lvup_select.cpp:
 	.text        start:0x0042D640 end:0x0042EC74
 	.rodata      start:0x009999C1 end:0x00999AD4
+	.rodata      start:0x009C2018 end:0x009C20A0
 	.data        start:0x00B62EF8 end:0x00B62FB8
 
 application/BF2/gf/menu/object/gf_menu_obj_mainmenu2.cpp:
 	.text        start:0x0042EC74 end:0x00433BC4
 	.rodata      start:0x00999AD4 end:0x00999E3C
+	.rodata      start:0x009C20A0 end:0x009C2210
 	.data        start:0x00B62FB8 end:0x00B630E0
 	.bss         start:0x00EAB880 end:0x00EAB894
 
 application/BF2/gf/menu/object/gf_menu_obj_mainmenu2bg.cpp:
 	.text        start:0x00433BC4 end:0x004346E4
 	.rodata      start:0x00999E3C end:0x00999FA9
+	.rodata      start:0x009C2210 end:0x009C2298
 	.data        start:0x00B630E0 end:0x00B63248
 
 application/BF2/gf/menu/object/gf_menu_obj_main_root.cpp:
@@ -1868,31 +2063,38 @@ application/BF2/gf/menu/object/gf_menu_obj_main_root.cpp:
 application/BF2/gf/menu/object/gf_menu_obj_main_submenu.cpp:
 	.text        start:0x004348F8 end:0x004359C0
 	.rodata      start:0x0099A008 end:0x0099A0AA
+	.rodata      start:0x009C2298 end:0x009C244C
 	.data        start:0x00B632B8 end:0x00B63350
 
 application/BF2/gf/menu/object/gf_menu_obj_mercenary_form.cpp:
 	.text        start:0x004359C0 end:0x0043D130
-	.rodata      start:0x0099A0AA end:0x0099A7AE
+	.rodata      start:0x0099A0AA end:0x0099A7C0
+	.rodata      start:0x009C244C end:0x009C27B4
 	.data        start:0x00B63350 end:0x00B63500
 
 application/BF2/gf/menu/object/gf_menu_obj_mercenary_report.cpp:
 	.text        start:0x0043D130 end:0x0043ED44
 	.rodata      start:0x0099A7C0 end:0x0099A8FF
+	.rodata      start:0x009C27B4 end:0x009C2838
 	.data        start:0x00B63500 end:0x00B63598
 
 application/BF2/gf/menu/object/gf_menu_obj_mercenary_root.cpp:
 	.text        start:0x0043ED44 end:0x0043F468
 	.rodata      start:0x0099A8FF end:0x0099A963
+	.rodata      start:0x009C2838 end:0x009C28C0
 	.data        start:0x00B63598 end:0x00B63608
 
 application/BF2/gf/menu/object/gf_menu_obj_mercenary_top.cpp:
 	.text        start:0x0043F468 end:0x00443500
-	.rodata      start:0x0099A963 end:0x0099AECB
+	.rodata      start:0x0099A963 end:0x0099AF16
+	.rodata      start:0x009B5504 end:0x009B5508
+	.rodata      start:0x009C28C0 end:0x009C2A58
 	.data        start:0x00B63608 end:0x00B636F0
 
 application/BF2/gf/menu/object/gf_menu_obj_minimap2.cpp:
 	.text        start:0x00443500 end:0x00444E7C
 	.rodata      start:0x0099AF16 end:0x0099B052
+	.rodata      start:0x009C2A58 end:0x009C2B14
 	.data        start:0x00B636F0 end:0x00B63818
 	.bss         start:0x00EAB898 end:0x00EAB8A0
 
@@ -1905,26 +2107,31 @@ application/BF2/gf/menu/object/gf_menu_obj_name_select.cpp:
 application/BF2/gf/menu/object/gf_menu_obj_named_dialog.cpp:
 	.text        start:0x0044508C end:0x00445830
 	.rodata      start:0x0099B060 end:0x0099B10D
+	.rodata      start:0x009C2B14 end:0x009C2B9C
 	.data        start:0x00B63860 end:0x00B63940
 
 application/BF2/gf/menu/object/gf_menu_obj_named_list.cpp:
 	.text        start:0x00445830 end:0x00445F58
-	.rodata      start:0x0099B10D end:0x0099B1E9
+	.rodata      start:0x0099B10D end:0x0099B1F9
 	.data        start:0x00B63940 end:0x00B63990
 
 application/BF2/gf/menu/object/gf_menu_obj_name_select_7100445F58.cpp:
 	.text        start:0x00445F58 end:0x00446EFC
 	.rodata      start:0x0099B1F9 end:0x0099B289
+	.rodata      start:0x009C2B9C end:0x009C2CAC
 	.data        start:0x00B63990 end:0x00B63A00
 
 application/BF2/gf/menu/object/gf_menu_obj_opening_telop.cpp:
 	.text        start:0x00446EFC end:0x00447644
 	.rodata      start:0x0099B289 end:0x0099B321
+	.rodata      start:0x009C2CE4 end:0x009C2DEC
 	.data        start:0x00B63A00 end:0x00B63A90
 
 application/BF2/gf/menu/object/gf_menu_obj_npc_telop.cpp:
 	.text        start:0x00447644 end:0x00448AA0
 	.rodata      start:0x0099B321 end:0x0099B429
+	.rodata      start:0x009B5508 end:0x009B550C
+	.rodata      start:0x009C2DEC end:0x009C2E74
 	.data        start:0x00B63A90 end:0x00B63AE0
 	.init_array  start:0x00B8F9C8 end:0x00B8F9D0
 	.bss         start:0x00EAB8B0 end:0x00EAB929
@@ -1932,21 +2139,25 @@ application/BF2/gf/menu/object/gf_menu_obj_npc_telop.cpp:
 application/BF2/gf/menu/object/gf_menu_obj_ocg.cpp:
 	.text        start:0x00448AA0 end:0x0044A5DC
 	.rodata      start:0x0099B429 end:0x0099B62E
+	.rodata      start:0x009C2E74 end:0x009C2EFC
 	.data        start:0x00B63AE0 end:0x00B63B78
 
 application/BF2/gf/menu/object/gf_menu_obj_opening_telop_710044A5DC.cpp:
 	.text        start:0x0044A5DC end:0x0044B174
 	.rodata      start:0x0099B62E end:0x0099B713
+	.rodata      start:0x009C2EFC end:0x009C2F80
 	.data        start:0x00B63B78 end:0x00B63C38
 
 application/BF2/gf/menu/object/gf_menu_obj_operation_info.cpp:
 	.text        start:0x0044B174 end:0x0044D01C
 	.rodata      start:0x0099B713 end:0x0099B7DD
+	.rodata      start:0x009C2F80 end:0x009C2FAC
 	.data        start:0x00B63C38 end:0x00B63CA8
 
 application/BF2/gf/menu/object/gf_menu_obj_option.cpp:
 	.text        start:0x0044D01C end:0x00452F08
 	.rodata      start:0x0099B7DD end:0x0099BBA5
+	.rodata      start:0x009C2FAC end:0x009C320C
 	.data        start:0x00B63CA8 end:0x00B63DD8
 
 application/BF2/gf/menu/object/gf_menu_obj_other_cursor.cpp:
@@ -1957,69 +2168,83 @@ application/BF2/gf/menu/object/gf_menu_obj_other_cursor.cpp:
 application/BF2/gf/menu/object/gf_menu_obj_party_form3.cpp:
 	.text        start:0x004533D4 end:0x004563C0
 	.rodata      start:0x0099C05E end:0x0099C376
+	.rodata      start:0x009C320C end:0x009C32DC
 	.data        start:0x00B63E48 end:0x00B63F40
 
 application/BF2/gf/menu/object/gf_menu_obj_party_gauge.cpp:
 	.text        start:0x004563C0 end:0x00457794
 	.rodata      start:0x0099C376 end:0x0099C4C4
+	.rodata      start:0x009C32DC end:0x009C33FC
 	.data        start:0x00B63F40 end:0x00B63FF0
 	.bss         start:0x00EAB929 end:0x00EAB92A
 
 application/BF2/gf/menu/object/gf_menu_obj_party_status.cpp:
 	.text        start:0x00457794 end:0x00459348
 	.rodata      start:0x0099C4C4 end:0x0099C733
+	.rodata      start:0x009C33FC end:0x009C3550
 	.data        start:0x00B63FF0 end:0x00B64088
 
 application/BF2/gf/menu/object/gf_menu_obj_party_status2.cpp:
 	.text        start:0x00459348 end:0x0045A6C0
 	.rodata      start:0x0099C733 end:0x0099C91C
+	.rodata      start:0x009C3550 end:0x009C3608
 	.data        start:0x00B64088 end:0x00B64118
 
 application/BF2/gf/menu/object/gf_menu_obj_popup.cpp:
 	.text        start:0x0045A6C0 end:0x0045E178
 	.rodata      start:0x0099C91C end:0x0099CB50
+	.rodata      start:0x009C3608 end:0x009C374C
 	.data        start:0x00B64118 end:0x00B641A0
 	.bss         start:0x00EAB92A end:0x00EAB92B
 
 application/BF2/gf/menu/object/gf_menu_obj_pouch2.cpp:
 	.text        start:0x0045E178 end:0x00463F10
 	.rodata      start:0x0099CB50 end:0x0099D290
+	.rodata      start:0x009C374C end:0x009C3A40
 	.data        start:0x00B641A0 end:0x00B64318
 
 application/BF2/gf/menu/object/gf_menu_obj_quest_list.cpp:
 	.text        start:0x00463F10 end:0x0046918C
 	.rodata      start:0x0099D290 end:0x0099D787
+	.rodata      start:0x009C3A40 end:0x009C3EA4
 	.data        start:0x00B64318 end:0x00B644A0
 
 application/BF2/gf/menu/object/gf_menu_obj_quest_log.cpp:
 	.text        start:0x0046918C end:0x0046E3C8
 	.rodata      start:0x0099D787 end:0x0099DA6E
+	.rodata      start:0x009C3EA4 end:0x009C3FB0
 	.data        start:0x00B644A0 end:0x00B64588
 
 application/BF2/gf/menu/object/gf_menu_obj_quest_reward.cpp:
 	.text        start:0x0046E3C8 end:0x0046F324
 	.rodata      start:0x0099DA6E end:0x0099DBC4
+	.rodata      start:0x009C3FB0 end:0x009C4038
 	.data        start:0x00B64588 end:0x00B645F8
 
 application/BF2/gf/menu/object/gf_menu_obj_salvage.cpp:
 	.text        start:0x0046F324 end:0x0047149C
 	.rodata      start:0x0099DBC4 end:0x0099DD7E
+	.rodata      start:0x009C4038 end:0x009C40BC
 	.data        start:0x00B645F8 end:0x00B646C8
 	.bss         start:0x00EAB92B end:0x00EAB92C
 
 application/BF2/gf/menu/object/gf_menu_obj_save_load2.cpp:
 	.text        start:0x0047149C end:0x00473330
 	.rodata      start:0x0099DD7E end:0x0099DEDD
+	.rodata      start:0x009C40BC end:0x009C4144
 	.data        start:0x00B646C8 end:0x00B64738
 
 application/BF2/gf/menu/object/gf_menu_obj_shop.cpp:
 	.text        start:0x00473330 end:0x00480A68
 	.rodata      start:0x0099DEDD end:0x0099EFBC
+	.rodata      start:0x009C4144 end:0x009C47BC
 	.data        start:0x00B64738 end:0x00B64960
 
 application/BF2/gf/menu/object/gf_menu_obj_skip_time.cpp:
 	.text        start:0x00480A68 end:0x00481514
 	.rodata      start:0x0099EFBC end:0x0099F0D1
+	.rodata      start:0x009B550C end:0x009B5510
+	.rodata      start:0x009C47BC end:0x009C4844
 	.data        start:0x00B64960 end:0x00B649F8
 
 application/BF2/gf/menu/object/gf_menu_obj_opening_telop_7100481514.cpp:
@@ -2029,12 +2254,14 @@ application/BF2/gf/menu/object/gf_menu_obj_opening_telop_7100481514.cpp:
 application/BF2/gf/menu/object/gf_menu_obj_sort.cpp:
 	.text        start:0x00481660 end:0x00482A14
 	.rodata      start:0x0099F0D1 end:0x0099F198
+	.rodata      start:0x009C4844 end:0x009C48CC
 	.data        start:0x00B64A40 end:0x00B64A68
 	.bss         start:0x00EAB92C end:0x00EAB930
 
 application/BF2/gf/menu/object/gf_menu_obj_special_gauge.cpp:
 	.text        start:0x00482A14 end:0x00483130
 	.rodata      start:0x0099F198 end:0x0099F226
+	.rodata      start:0x009C48CC end:0x009C48FC
 	.data        start:0x00B64A68 end:0x00B64AD8
 
 application/BF2/gf/menu/object/gf_menu_obj_staffroll.cpp:
@@ -2045,33 +2272,39 @@ application/BF2/gf/menu/object/gf_menu_obj_staffroll.cpp:
 application/BF2/gf/menu/object/gf_menu_obj_target_cursor.cpp:
 	.text        start:0x00484894 end:0x00485CCC
 	.rodata      start:0x0099F31F end:0x0099F424
+	.rodata      start:0x009C48FC end:0x009C4980
 	.data        start:0x00B64B68 end:0x00B64BD8
 
 application/BF2/gf/menu/object/gf_menu_obj_target_info.cpp:
 	.text        start:0x00485CCC end:0x0048781C
 	.rodata      start:0x0099F424 end:0x0099F6AE
+	.rodata      start:0x009C4980 end:0x009C49A8
 	.data        start:0x00B64BD8 end:0x00B64C98
 
 application/BF2/gf/menu/object/gf_menu_obj_tips.cpp:
 	.text        start:0x0048781C end:0x0048938C
 	.rodata      start:0x0099F6AE end:0x0099F7B4
+	.rodata      start:0x009C49A8 end:0x009C4AC0
 	.data        start:0x00B64C98 end:0x00B64D30
 	.bss         start:0x00EAB930 end:0x00EAB938
 
 application/BF2/gf/menu/object/gf_menu_obj_title.cpp:
 	.text        start:0x0048938C end:0x0048BFE8
 	.rodata      start:0x0099F7B4 end:0x0099F96A
+	.rodata      start:0x009C4AC0 end:0x009C4BF8
 	.data        start:0x00B64D30 end:0x00B64E48
 
 application/BF2/gf/menu/object/gf_menu_obj_tutorial.cpp:
 	.text        start:0x0048BFE8 end:0x0048D554
 	.rodata      start:0x0099F96A end:0x0099FA24
+	.rodata      start:0x009C4BF8 end:0x009C4CA4
 	.data        start:0x00B64E48 end:0x00B64EB8
 	.bss         start:0x00EAB938 end:0x00EAB940
 
 unit_710048D554.cpp:
 	.text        start:0x0048D554 end:0x004944B8
-	.rodata      start:0x0099FA32 end:0x0099FAA4
+	.rodata      start:0x0099FA24 end:0x0099FAA4
+	.rodata      start:0x009C4CA4 end:0x009C4E80
 	.data        start:0x00B64EB8 end:0x00B64F08
 	.bss         start:0x00EAB940 end:0x00EAB968
 
@@ -2083,17 +2316,20 @@ application/BF2/gf/menu/object/gf_menu_obj_vision.cpp:
 application/BF2/gf/menu/object/gf_menu_obj_world_map.cpp:
 	.text        start:0x004958B4 end:0x0049FF1C
 	.rodata      start:0x0099FB2C end:0x009A0141
+	.rodata      start:0x009C4E80 end:0x009C50B0
 	.data        start:0x00B64F78 end:0x00B65198
 	.bss         start:0x00EAB968 end:0x00EAB9A0
 
 application/BF2/gf/menu/object/gf_menu_obj_zone_telop.cpp:
 	.text        start:0x0049FF1C end:0x004A091C
 	.rodata      start:0x009A0141 end:0x009A0194
+	.rodata      start:0x009C50B0 end:0x009C5138
 	.data        start:0x00B65198 end:0x00B65208
 
 application/BF2/gf/model/gf_opt_model.cpp:
 	.text        start:0x004A091C end:0x004A3F70
 	.rodata      start:0x009A0194 end:0x009A02B2
+	.rodata      start:0x009C5138 end:0x009C5214
 	.data        start:0x00B654A8 end:0x00B654C8
 	.bss         start:0x00EAB9A0 end:0x00EABB30
 
@@ -2125,7 +2361,7 @@ application/BF2/gf/object/component/animation/gf_com_pack_anim.cpp:
 
 gf/GfComBehavior.cpp:
 	.text        start:0x004A7C28 end:0x004A81A0
-	.rodata      start:0x009A038F end:0x009A0407
+	.rodata      start:0x009A038F end:0x009A05FE
 	.init_array  start:0x00B8F9F8 end:0x00B8FA00
 	.bss         start:0x00EABC60 end:0x00EABC80
 
@@ -2149,10 +2385,12 @@ application/BF2/gf/object/component/behavior/movement/gf_move_turn.cpp:
 
 application/BF2/gf/object/component/behavior/movement/gf_move_walk.cpp:
 	.text        start:0x004A8D8C end:0x004A8F14
+	.rodata      start:0x009B5510 end:0x009B5514
 
 application/BF2/gf/object/component/behavior/movement/gf_move_water_sink.cpp:
 	.text        start:0x004A8F14 end:0x004A967C
 	.rodata      start:0x009A05FE end:0x009A060D
+	.rodata      start:0x009C5214 end:0x009C5228
 	.data        start:0x00B65648 end:0x00B656B0
 	.init_array  start:0x00B8FA00 end:0x00B8FA08
 
@@ -2165,6 +2403,7 @@ gf/FootIkControllerPlugin.cpp:
 gf/FootStepPlugin.cpp:
 	.text        start:0x004A9E64 end:0x004AA674
 	.rodata      start:0x009A0624 end:0x009A0992
+	.rodata      start:0x009B5514 end:0x009B5518
 	.data        start:0x00B65718 end:0x00B658D0
 	.init_array  start:0x00B8FA10 end:0x00B8FA18
 
@@ -2184,6 +2423,7 @@ gf/Plugin.cpp:
 application/BF2/gf/object/component/effect/gf_com_effect_caster.cpp:
 	.text        start:0x004AAA94 end:0x004B4D44
 	.rodata      start:0x009A09A7 end:0x009A0C07
+	.rodata      start:0x009C5228 end:0x009C5388
 	.data        start:0x00B65988 end:0x00B65B28
 	.init_array  start:0x00B8FA28 end:0x00B8FA30
 	.bss         start:0x00EABD30 end:0x00EABD90
@@ -2191,6 +2431,9 @@ application/BF2/gf/object/component/effect/gf_com_effect_caster.cpp:
 gf/GfComBehaviorEnemy.cpp:
 	.text        start:0x004B4D44 end:0x004C3778
 	.rodata      start:0x009A0C07 end:0x009A0F42
+	.rodata      start:0x009B5518 end:0x009B5524
+	.rodata      start:0x009B5844 end:0x009B5854
+	.rodata      start:0x009C5388 end:0x009C547C
 	.data        start:0x00B65B28 end:0x00B660D0
 	.init_array  start:0x00B8FA30 end:0x00B8FA38
 	.bss         start:0x00EABD90 end:0x00EABDB0
@@ -2198,6 +2441,7 @@ gf/GfComBehaviorEnemy.cpp:
 gf/GfComPropertyEnemy.cpp:
 	.text        start:0x004C3778 end:0x004C3E34
 	.rodata      start:0x009A0F42 end:0x009A0F55
+	.rodata      start:0x009C547C end:0x009C548C
 	.data        start:0x00B660D0 end:0x00B66108
 	.init_array  start:0x00B8FA38 end:0x00B8FA40
 	.bss         start:0x00EABDD0 end:0x00EABDF0
@@ -2205,12 +2449,14 @@ gf/GfComPropertyEnemy.cpp:
 application/BF2/gf/object/component/env_sensor/gf_com_env_sensor.cpp:
 	.text        start:0x004C3E34 end:0x004C59FC
 	.rodata      start:0x009A0F55 end:0x009A10EE
+	.rodata      start:0x009C548C end:0x009C54A4
 	.data        start:0x00B66108 end:0x00B66158
 	.init_array  start:0x00B8FA40 end:0x00B8FA48
 
 application/BF2/gf/object/component/env_sensor/gf_environment_sensor.cpp:
 	.text        start:0x004C59FC end:0x004CC398
 	.rodata      start:0x009A10EE end:0x009A116D
+	.rodata      start:0x009C54A4 end:0x009C54D4
 	.data        start:0x00B66158 end:0x00B661A0
 	.init_array  start:0x00B8FA48 end:0x00B8FA50
 	.bss         start:0x00EABE20 end:0x00EABE40
@@ -2236,6 +2482,7 @@ gf/GfComCollider.cpp:
 gf/GfComDynamics.cpp:
 	.text        start:0x004CDB54 end:0x004CE424
 	.rodata      start:0x009A11CA end:0x009A11D8
+	.rodata      start:0x009B5854 end:0x009B585C
 	.data        start:0x00B662B0 end:0x00B66300
 	.init_array  start:0x00B8FA68 end:0x00B8FA70
 
@@ -2264,7 +2511,8 @@ gf/GfComWind.cpp:
 
 application/BF2/gf/object/component/gimmick/gf_com_behavior_gmk.cpp:
 	.text        start:0x004D1C54 end:0x004D2E20
-	.rodata      start:0x009A12BA end:0x009A1339
+	.rodata      start:0x009A12BA end:0x009A1347
+	.rodata      start:0x009C54D4 end:0x009C5788
 	.data        start:0x00B66470 end:0x00B664B8
 	.init_array  start:0x00B8FA90 end:0x00B8FA98
 	.bss         start:0x00EABF30 end:0x00EABF50
@@ -2276,7 +2524,9 @@ gf/GfComBehaviorMapLodAnim.cpp:
 
 gf/GfComBehaviorMob.cpp:
 	.text        start:0x004D2F00 end:0x004D70EC
-	.rodata      start:0x009A13AD end:0x009A144A
+	.rodata      start:0x009A135F end:0x009A1483
+	.rodata      start:0x009B5524 end:0x009B5528
+	.rodata      start:0x009C5788 end:0x009C57A4
 	.data        start:0x00B66500 end:0x00B667B8
 	.init_array  start:0x00B8FAA0 end:0x00B8FAA8
 	.bss         start:0x00EABF80 end:0x00EABFA0
@@ -2284,6 +2534,7 @@ gf/GfComBehaviorMob.cpp:
 application/BF2/gf/object/component/model/gf_com_model.cpp:
 	.text        start:0x004D70EC end:0x004DB20C
 	.rodata      start:0x009A1483 end:0x009A1504
+	.rodata      start:0x009B5528 end:0x009B552C
 	.data        start:0x00B667B8 end:0x00B66808
 	.init_array  start:0x00B8FAA8 end:0x00B8FAB0
 
@@ -2296,6 +2547,7 @@ gf/GfComVisible.cpp:
 gf/GfComBehaviorNpc.cpp:
 	.text        start:0x004DB3DC end:0x004E0178
 	.rodata      start:0x009A1511 end:0x009A15E0
+	.rodata      start:0x009C57A4 end:0x009C58DC
 	.data        start:0x00B66840 end:0x00B66AE0
 	.init_array  start:0x00B8FAB8 end:0x00B8FAC0
 	.bss         start:0x00EABFF0 end:0x00EAC008
@@ -2303,11 +2555,13 @@ gf/GfComBehaviorNpc.cpp:
 gf/pc/PadBattle.cpp:
 	.text        start:0x004E0178 end:0x004E8140
 	.rodata      start:0x009A15E0 end:0x009A1926
+	.rodata      start:0x009C58DC end:0x009C59CC
 	.data        start:0x00B66AE0 end:0x00B67908
 
 gf/pc/AIAgentField.cpp:
 	.text        start:0x004E8140 end:0x004ECEA8
 	.rodata      start:0x009A1926 end:0x009A1CE9
+	.rodata      start:0x009C59CC end:0x009C5A24
 	.data        start:0x00B67908 end:0x00B67CD8
 	.init_array  start:0x00B8FAC0 end:0x00B8FAC8
 	.bss         start:0x00EAC030 end:0x00EAC068
@@ -2357,17 +2611,21 @@ application/BF2/gf/object/component/pc/field/ai/gf_pc_ai_warp_task_field.cpp:
 
 gf/pc/PadField.cpp:
 	.text        start:0x004EF7DC end:0x004F2B90
-	.rodata      start:0x009A20E3 end:0x009A2106
+	.rodata      start:0x009A20DE end:0x009A2106
+	.rodata      start:0x009C5A24 end:0x009C5A44
 
 gf/pc/GfPropertyField.cpp:
 	.text        start:0x004F2B90 end:0x00507984
-	.rodata      start:0x009A2106 end:0x009A29BF
+	.rodata      start:0x009A2106 end:0x009A29CB
+	.rodata      start:0x009B552C end:0x009B5534
+	.rodata      start:0x009C5A44 end:0x009C5B2C
 	.data        start:0x00B67EB0 end:0x00B693E8
 	.bss         start:0x00EAC310 end:0x00EAC330
 
 application/BF2/gf/object/component/pc/gf_com_behavior_pc.cpp:
 	.text        start:0x00507984 end:0x00511F94
 	.rodata      start:0x009A29CB end:0x009A30A0
+	.rodata      start:0x009C5B2C end:0x009C5C78
 	.data        start:0x00B693E8 end:0x00B69448
 	.init_array  start:0x00B8FB00 end:0x00B8FB08
 	.bss         start:0x00EAC330 end:0x00EAC348
@@ -2375,6 +2633,7 @@ application/BF2/gf/object/component/pc/gf_com_behavior_pc.cpp:
 gf/GfComPropertyPc.cpp:
 	.text        start:0x00511F94 end:0x005144B4
 	.rodata      start:0x009A3101 end:0x009A3111
+	.rodata      start:0x009B5534 end:0x009B5538
 	.data        start:0x00B69448 end:0x00B69480
 	.init_array  start:0x00B8FB08 end:0x00B8FB10
 	.bss         start:0x00EAC370 end:0x00EAC3D8
@@ -2400,6 +2659,8 @@ gf/pc/PadAgent.cpp:
 
 unit_7100514B50.cpp:
 	.text        start:0x00514B50 end:0x00516B2C
+	.rodata      start:0x009B5538 end:0x009B553C
+	.rodata      start:0x009B585C end:0x009B5864
 
 application/BF2/gf/object/component/pc/param/gf_pc_param_reflection.cpp:
 	.text        start:0x00516B2C end:0x005173C4
@@ -2520,6 +2781,7 @@ gf/pc/WaterInPlugin.cpp:
 gf/GfComProperty.cpp:
 	.text        start:0x0051E1E4 end:0x0051F290
 	.rodata      start:0x009A36C9 end:0x009A36D7
+	.rodata      start:0x009C5C78 end:0x009C5D00
 	.data        start:0x00B69C30 end:0x00B69C68
 	.init_array  start:0x00B8FBB8 end:0x00B8FBC0
 	.bss         start:0x00EACC70 end:0x00EACC90
@@ -2532,7 +2794,8 @@ gf/GfComBehaviorSalvage.cpp:
 
 gf/GfComSound.cpp:
 	.text        start:0x0051F594 end:0x00520F70
-	.rodata      start:0x009A3702 end:0x009A370D
+	.rodata      start:0x009A3702 end:0x009A3713
+	.rodata      start:0x009C5D00 end:0x009C5D2C
 	.data        start:0x00B69CC0 end:0x00B69D50
 	.init_array  start:0x00B8FBC8 end:0x00B8FBD0
 	.bss         start:0x00EACCC0 end:0x00EACCE0
@@ -2573,6 +2836,8 @@ gf/GfExtendPacking.cpp:
 application/BF2/gf/object/gf_obj_factory.cpp:
 	.text        start:0x00524D14 end:0x00544354
 	.rodata      start:0x009A3967 end:0x009A3B7C
+	.rodata      start:0x009B553C end:0x009B5540
+	.rodata      start:0x009C5D2C end:0x009C5F48
 	.data        start:0x00B69F08 end:0x00B69FF8
 
 application/BF2/gf/object/gf_obj_info.cpp:
@@ -2582,6 +2847,7 @@ application/BF2/gf/object/gf_obj_info.cpp:
 application/BF2/gf/object/gf_obj_manager.cpp:
 	.text        start:0x00544EB8 end:0x0054A2EC
 	.rodata      start:0x009A3BBF end:0x009A3C05
+	.rodata      start:0x009C5F48 end:0x009C5F88
 	.data        start:0x00B69FF8 end:0x00B6A268
 	.init_array  start:0x00B8FBF8 end:0x00B8FC00
 	.bss         start:0x00EACEE8 end:0x00EAE920
@@ -2589,11 +2855,13 @@ application/BF2/gf/object/gf_obj_manager.cpp:
 application/BF2/gf/object/gf_obj_property.cpp:
 	.text        start:0x0054A2EC end:0x0054B450
 	.rodata      start:0x009A3C05 end:0x009A3C4C
+	.rodata      start:0x009C5F88 end:0x009C5FC4
 	.data        start:0x00B6A268 end:0x00B6A448
 
 application/BF2/gf/object/gf_obj_setup.cpp:
 	.text        start:0x0054B450 end:0x0054E5A0
 	.rodata      start:0x009A3C4C end:0x009A3DE4
+	.rodata      start:0x009C5FC4 end:0x009C5FE0
 	.data        start:0x00B6A448 end:0x00B6A848
 	.init_array  start:0x00B8FC00 end:0x00B8FC08
 	.bss         start:0x00EAE920 end:0x00EAEA30
@@ -2601,6 +2869,7 @@ application/BF2/gf/object/gf_obj_setup.cpp:
 unit_710054E5A0.cpp:
 	.text        start:0x0054E5A0 end:0x005530E0
 	.rodata      start:0x009A3DE4 end:0x009A3F38
+	.rodata      start:0x009C5FE0 end:0x009C60F4
 
 application/BF2/gf/param/enemy/gf_param_enemy_reflection.cpp:
 	.text        start:0x005530E0 end:0x00553158
@@ -2627,6 +2896,7 @@ application/BF2/gf/request/gf_req_manager.cpp:
 application/BF2/gf/request/gf_req_scom.cpp:
 	.text        start:0x00558A18 end:0x0056D99C
 	.rodata      start:0x009A466E end:0x009A4DD3
+	.rodata      start:0x009C60F4 end:0x009C61A4
 	.data        start:0x00B6A8E8 end:0x00B6B900
 	.init_array  start:0x00B8FC10 end:0x00B8FC18
 	.bss         start:0x00EB6B30 end:0x00EB6D18
@@ -2639,24 +2909,29 @@ application/BF2/gf/script/gf_script_manager.cpp:
 application/BF2/gf/sound/gf_sound.cpp:
 	.text        start:0x0056DF8C end:0x00570ED0
 	.rodata      start:0x009A4E1C end:0x009A4E5B
+	.rodata      start:0x009C61A4 end:0x009C61B4
 	.data        start:0x00B6B940 end:0x00B6BBB8
 
 gmk/GmkElevator.cpp:
 	.text        start:0x00570ED0 end:0x006397C4
 	.rodata      start:0x009A4E5B end:0x009A5B1A
+	.rodata      start:0x009C61B4 end:0x009C6608
 	.data        start:0x00B6BBB8 end:0x00B71B18
 	.init_array  start:0x00B8FC18 end:0x00B8FC20
 	.bss         start:0x00EB6D18 end:0x00EB7E10
 
 application/BF2/libs/movie/cmovie_nx.cpp:
 	.text        start:0x006397C4 end:0x0063EB64
-	.rodata      start:0x009A5B1A end:0x009A5D32
+	.rodata      start:0x009A5B1A end:0x009A5D36
+	.rodata      start:0x009B5540 end:0x009B5554
+	.rodata      start:0x009C6608 end:0x009C6618
 	.data        start:0x00B71B18 end:0x00B71B58
 	.bss         start:0x00EB7E10 end:0x00EB7E15
 
 RchaCam.cpp:
 	.text        start:0x0063EB64 end:0x006416DC
 	.rodata      start:0x009A5D36 end:0x009A64D7
+	.rodata      start:0x009B5554 end:0x009B5558
 	.data        start:0x00B71B58 end:0x00B71FB0
 	.bss         start:0x00EB7E18 end:0x00EB7E24
 
@@ -2670,9 +2945,12 @@ application/BF2/main.cpp:
 application/BF2/minigame/tora/minigame_tora.cpp:
 	.text        start:0x00642CFC end:0x00652854
 	.rodata      start:0x009A6696 end:0x009A6840
+	.rodata      start:0x009B5558 end:0x009B5564
+	.rodata      start:0x009C6698 end:0x009C70F4
 
 unit_7100652854.cpp:
 	.text        start:0x00652854 end:0x00655310
+	.rodata      start:0x009C70F4 end:0x009C7104
 
 unit_7100655310.cpp:
 	.text        start:0x00655310 end:0x006554E0
@@ -2684,11 +2962,14 @@ unit_7100655310.cpp:
 application/BF2/plugin/bdat.cpp:
 	.text        start:0x006554E0 end:0x006567EC
 	.rodata      start:0x009A6D54 end:0x009A6E9D
+	.rodata      start:0x009C7104 end:0x009C723C
 	.bss         start:0x00EC1710 end:0x00EC1790
 
 event/ScriptCamMotion.cpp:
 	.text        start:0x006567EC end:0x00661A54
 	.rodata      start:0x009A6E9D end:0x009A74E3
+	.rodata      start:0x009B5564 end:0x009B5568
+	.rodata      start:0x009C723C end:0x009C727C
 	.data        start:0x00B72968 end:0x00B73498
 	.init_array  start:0x00B8FC30 end:0x00B8FC38
 	.bss         start:0x00EC1790 end:0x00EC18C0
@@ -2710,6 +2991,7 @@ unit_710066232C.cpp:
 event/ScriptPlayText.cpp:
 	.text        start:0x00663318 end:0x0066ABB0
 	.rodata      start:0x009A7577 end:0x009A7DCC
+	.rodata      start:0x009C727C end:0x009C731C
 	.data        start:0x00B73698 end:0x00B74320
 	.bss         start:0x00EC1A98 end:0x00EC1AB8
 
@@ -2721,6 +3003,7 @@ application/BF2/ui/animation/ui_animation_manager.cpp:
 application/BF2/ui/build_info/ui_build_info_uio.cpp:
 	.text        start:0x0066B218 end:0x0066C678
 	.rodata      start:0x009A7E1B end:0x009A805B
+	.rodata      start:0x009C731C end:0x009C7340
 	.data        start:0x00B74360 end:0x00B74400
 
 application/BF2/ui/ctrl/ui_ctrl_cursor_color.cpp:
@@ -2780,12 +3063,14 @@ application/BF2/ui/event/ui_event_pos_condition.cpp:
 application/BF2/ui/factory/ui_obj_factory.cpp:
 	.text        start:0x006739EC end:0x00677364
 	.rodata      start:0x009A833C end:0x009A8512
+	.rodata      start:0x009C7340 end:0x009C7354
 	.data        start:0x00B74708 end:0x00B74A90
 	.bss         start:0x00EC1AB8 end:0x00EC1B88
 
 application/BF2/ui/font/ui_font_manager.cpp:
 	.text        start:0x00677364 end:0x00678434
 	.rodata      start:0x009A8512 end:0x009A856B
+	.rodata      start:0x009C7354 end:0x009C7370
 	.data        start:0x00B74A90 end:0x00B74AD0
 
 application/BF2/ui/input/ui_input_manager.cpp:
@@ -2796,6 +3081,7 @@ application/BF2/ui/input/ui_input_manager.cpp:
 application/BF2/ui/input/ui_input_pad.cpp:
 	.text        start:0x00679CB8 end:0x0067A654
 	.rodata      start:0x009A85B2 end:0x009A85F5
+	.rodata      start:0x009C7370 end:0x009C7484
 	.data        start:0x00B74B70 end:0x00B74BD0
 
 application/BF2/ui/input/ui_input_pointer.cpp:
@@ -2821,11 +3107,13 @@ application/BF2/ui/list/ui_select_obj_list.cpp:
 application/BF2/ui/motion/ui_motion_library.cpp:
 	.text        start:0x0067CB50 end:0x0067F734
 	.rodata      start:0x009A870F end:0x009A8758
+	.rodata      start:0x009C7484 end:0x009C74A0
 	.data        start:0x00B74D70 end:0x00B74DD0
 
 application/BF2/ui/object/ui_image_object.cpp:
 	.text        start:0x0067F734 end:0x00680338
 	.rodata      start:0x009A8758 end:0x009A87AD
+	.rodata      start:0x009C74A0 end:0x009C74B0
 	.data        start:0x00B74DD0 end:0x00B74E38
 	.init_array  start:0x00B8FC48 end:0x00B8FC50
 
@@ -2850,12 +3138,15 @@ application/BF2/ui/object/ui_screen_object.cpp:
 application/BF2/ui/object/ui_text_object.cpp:
 	.text        start:0x00681AEC end:0x006824B0
 	.rodata      start:0x009A88B4 end:0x009A8907
+	.rodata      start:0x009B5568 end:0x009B5570
 	.data        start:0x00B74F58 end:0x00B74FB8
 	.init_array  start:0x00B8FC68 end:0x00B8FC70
 
 application/BF2/ui/particle/ui_particle_emitter.cpp:
 	.text        start:0x006824B0 end:0x00683750
 	.rodata      start:0x009A8907 end:0x009A8954
+	.rodata      start:0x009B5570 end:0x009B557C
+	.rodata      start:0x009C74B0 end:0x009C750C
 	.data        start:0x00B74FB8 end:0x00B74FF8
 
 application/BF2/ui/particle/ui_particle_manager.cpp:
@@ -2880,6 +3171,7 @@ application/BF2/ui/plugin/ui_object_disp_plugin.cpp:
 application/BF2/ui/plugin/ui_object_dock.plugin.cpp:
 	.text        start:0x00684998 end:0x00684E1C
 	.rodata      start:0x009A8AC9 end:0x009A8B29
+	.rodata      start:0x009C750C end:0x009C7540
 	.data        start:0x00B750E0 end:0x00B75120
 	.init_array  start:0x00B8FC88 end:0x00B8FC90
 	.bss         start:0x00EC1C50 end:0x00EC1C68
@@ -2894,6 +3186,7 @@ application/BF2/ui/plugin/ui_object_fit_plugin.cpp:
 application/BF2/ui/plugin/ui_object_number_plugin.cpp:
 	.text        start:0x00685168 end:0x00685A70
 	.rodata      start:0x009A8B87 end:0x009A8BEF
+	.rodata      start:0x009C7540 end:0x009C7550
 	.data        start:0x00B75160 end:0x00B751A0
 	.init_array  start:0x00B8FC98 end:0x00B8FCA0
 	.bss         start:0x00EC1C98 end:0x00EC1D50
@@ -2913,6 +3206,7 @@ application/BF2/ui/plugin/ui_object_pattern_plugin.cpp:
 application/BF2/ui/plugin/ui_object_pos_plugin.cpp:
 	.text        start:0x00685F44 end:0x00686360
 	.rodata      start:0x009A8CB9 end:0x009A8D17
+	.rodata      start:0x009C7550 end:0x009C7560
 	.data        start:0x00B75220 end:0x00B75260
 	.init_array  start:0x00B8FCB0 end:0x00B8FCB8
 
@@ -2939,6 +3233,7 @@ application/BF2/ui/plugin/ui_object_text_plugin.cpp:
 application/BF2/ui/plugin/ui_object_time_plugin.cpp:
 	.text        start:0x00686C38 end:0x00687240
 	.rodata      start:0x009A8E42 end:0x009A8EA2
+	.rodata      start:0x009C7560 end:0x009C757C
 	.data        start:0x00B75320 end:0x00B75360
 	.init_array  start:0x00B8FCD0 end:0x00B8FCD8
 
@@ -3002,6 +3297,7 @@ application/BF2/ui/ui_group.cpp:
 application/BF2/ui/ui_manager.cpp:
 	.text        start:0x0068E444 end:0x006909C8
 	.rodata      start:0x009A90B6 end:0x009A9103
+	.rodata      start:0x009B5864 end:0x009B5874
 	.data        start:0x00B75678 end:0x00B75718
 	.init_array  start:0x00B8FD00 end:0x00B8FD08
 	.bss         start:0x00EC1E78 end:0x00EC1E80
@@ -3015,12 +3311,14 @@ ui/UIObjectAcc.cpp:
 application/BF2/ui/ui_resource.cpp:
 	.text        start:0x00693158 end:0x00694F48
 	.rodata      start:0x009A9118 end:0x009A9154
+	.rodata      start:0x009C757C end:0x009C75A0
 	.data        start:0x00B757F8 end:0x00B75818
 	.bss         start:0x00EC1EB0 end:0x00EC52E8
 
 ui/UIStr.cpp:
 	.text        start:0x00694F48 end:0x00698234
 	.rodata      start:0x009A9154 end:0x009A931C
+	.rodata      start:0x009C75A0 end:0x009C7670
 	.data        start:0x00B75818 end:0x00B75950
 	.init_array  start:0x00B8FD10 end:0x00B8FD18
 	.bss         start:0x00EC52E8 end:0x00EC5460
@@ -3038,7 +3336,8 @@ libs/mcl/mm_lib/source/mm_base/mm_base.cpp:
 
 libs/mcl/mm_lib/source/mm_mtl/intrusive_list.cpp:
 	.text        start:0x006984D4 end:0x00698670
-	.rodata      start:0x009A93E0 end:0x009A942A
+	.rodata      start:0x009A93CE end:0x009A943B
+	.rodata      start:0x009C78F0 end:0x009C7CF0
 
 libs/mcl/mm_lib/source/mm_mtl/reserved_bitflag.cpp:
 	.text        start:0x00698670 end:0x00698B04
@@ -3052,24 +3351,30 @@ libs/mcl/mm_lib/source/mm_thread/mm_thread_util.cpp:
 
 ml/CacheDraw.cpp:
 	.text        start:0x00698B98 end:0x0069FEDC
+	.rodata      start:0x009B5580 end:0x009B5588
 	.data        start:0x00B75998 end:0x00B77240
 
 libs/monolib_mm/source/device/nx/dev_setting_nx.cpp:
 	.text        start:0x0069FEDC end:0x006C05DC
-	.rodata      start:0x009A9495 end:0x009A9B37
+	.rodata      start:0x009A9495 end:0x009A9C13
+	.rodata      start:0x009B558C end:0x009B5598
+	.rodata      start:0x009C7CF0 end:0x009C7D5C
 	.data        start:0x00B77240 end:0x00B77A30
 	.init_array  start:0x00B8FD20 end:0x00B8FD28
 	.bss         start:0x00EC54F0 end:0x00ECE000
 
 ml/ErrViewer.cpp:
 	.text        start:0x006C05DC end:0x006C1708
+	.rodata      start:0x009C7D5C end:0x009C7D64
 	.data        start:0x00B77A30 end:0x00B77AC8
 	.init_array  start:0x00B8FD28 end:0x00B8FD30
 	.bss         start:0x00ECE420 end:0x00ECE9C0
 
 ml/Scn.cpp:
 	.text        start:0x006C1708 end:0x006D2C68
-	.rodata      start:0x009A9CD8 end:0x009A9D60
+	.rodata      start:0x009A9CD8 end:0x009A9DF2
+	.rodata      start:0x009B5598 end:0x009B559C
+	.rodata      start:0x009C7D64 end:0x009C7F34
 	.data        start:0x00B77AC8 end:0x00B785F8
 	.bss         start:0x00ECEE08 end:0x00ECEE10
 
@@ -3080,6 +3385,8 @@ libs/monolib_mm/source/util/ml_misc.cpp:
 ml/WinView.cpp:
 	.text        start:0x006D2E58 end:0x006DA880
 	.rodata      start:0x009A9F9D end:0x009AA0CB
+	.rodata      start:0x009B55A8 end:0x009B55B4
+	.rodata      start:0x009C7F34 end:0x009CEAD4
 	.data        start:0x00B785F8 end:0x00B78CB8
 	.init_array  start:0x00B8FD30 end:0x00B8FD40
 	.bss         start:0x00ECEE10 end:0x00ECFC88
@@ -3087,6 +3394,7 @@ ml/WinView.cpp:
 libs/monolib_mm/source/work/work_cpu.cpp:
 	.text        start:0x006DA880 end:0x006E4D80
 	.rodata      start:0x009AA0CB end:0x009AA1BE
+	.rodata      start:0x009CEAD4 end:0x009CEB84
 	.data        start:0x00B78CB8 end:0x00B79248
 	.init_array  start:0x00B8FD40 end:0x00B8FD48
 	.bss         start:0x00ECFC88 end:0x00ED0A10
@@ -3101,6 +3409,7 @@ ml/LibMain.cpp:
 libs/monolib_mm/source/mtl/mtl_mem_manager.cpp:
 	.text        start:0x006E5290 end:0x006ED39C
 	.rodata      start:0x009AA1C6 end:0x009AA54C
+	.rodata      start:0x009CEB84 end:0x009CEBA4
 	.data        start:0x00B79320 end:0x00B795A8
 	.init_array  start:0x00B8FD50 end:0x00B8FD58
 	.bss         start:0x00ED0C80 end:0x015DA200
@@ -3108,6 +3417,7 @@ libs/monolib_mm/source/mtl/mtl_mem_manager.cpp:
 libs/monolib_mm/source/vm/yvm2.c:
 	.text        start:0x006ED39C end:0x006F1914
 	.rodata      start:0x009AA54C end:0x009AABFA
+	.rodata      start:0x009CEBA4 end:0x009CEE0C
 	.data        start:0x00B795A8 end:0x00B79AB0
 	.init_array  start:0x00B8FD58 end:0x00B8FD60
 	.bss         start:0x015DA308 end:0x015E7CB8
@@ -3125,7 +3435,10 @@ libs/monolib_mm/source/device/font/font.cpp:
 
 ml/ScnRenderDrSysParmAcc.cpp:
 	.text        start:0x006F3D4C end:0x007AA778
-	.rodata      start:0x009AACC1 end:0x009ACBAE
+	.rodata      start:0x009AACC1 end:0x009ACC0F
+	.rodata      start:0x009B55B4 end:0x009B56E8
+	.rodata      start:0x009B5874 end:0x009B5884
+	.rodata      start:0x009CEE0C end:0x009D4BB0
 	.data        start:0x00B79B48 end:0x00B7CF78
 	.init_array  start:0x00B8FD68 end:0x00B8FD70
 	.bss         start:0x015E9180 end:0x015E9810
@@ -3133,22 +3446,30 @@ ml/ScnRenderDrSysParmAcc.cpp:
 ml/DrResFetch.cpp:
 	.text        start:0x007AA778 end:0x0083DEB8
 	.rodata      start:0x009ACC0F end:0x009AD862
+	.rodata      start:0x009B56E8 end:0x009B5764
+	.rodata      start:0x009D4BB0 end:0x009D5284
 	.data        start:0x00B7CF78 end:0x00B80770
 	.bss         start:0x015E9810 end:0x015E9D28
 
 libs/eflib/source/eflib/effect_update_manager.cpp:
 	.text        start:0x0083DEB8 end:0x0084336C
-	.rodata      start:0x009AD86B end:0x009AD97F
+	.rodata      start:0x009AD862 end:0x009ADA63
+	.rodata      start:0x009B5764 end:0x009B576C
+	.rodata      start:0x009D5284 end:0x009D52EC
 	.data        start:0x00B80770 end:0x00B80790
 	.bss         start:0x015E9D28 end:0x015E9D30
 
 libs/eflib/source/ptlib/emitter/particle_emitter.cpp:
 	.text        start:0x0084336C end:0x008461E4
-	.rodata      start:0x009ADADF end:0x009ADAF1
+	.rodata      start:0x009ADA63 end:0x009ADAF1
+	.rodata      start:0x009B576C end:0x009B5774
+	.rodata      start:0x009D52EC end:0x009D532C
 
 libs/eflib/source/ptlib/emitter/particle_emitter_manager.cpp:
 	.text        start:0x008461E4 end:0x0085254C
-	.rodata      start:0x009ADAF1 end:0x009ADEA8
+	.rodata      start:0x009ADAF1 end:0x009ADF0F
+	.rodata      start:0x009B5774 end:0x009B5780
+	.rodata      start:0x009D532C end:0x009D547C
 	.data        start:0x00B80790 end:0x00B807D0
 	.bss         start:0x015E9D30 end:0x015E9D48
 
@@ -3161,16 +3482,18 @@ libs/eflib/source/ptlib/material/particle_material_manager.cpp:
 libs/eflib/source/ptlib/memory/particle_heap_allocater.cpp:
 	.text        start:0x00853144 end:0x008541BC
 	.rodata      start:0x009ADFC8 end:0x009AE159
+	.rodata      start:0x009D547C end:0x009D5498
 	.data        start:0x00B807F0 end:0x00B80840
 	.bss         start:0x015E9D50 end:0x015E9D60
 
 libs/eflib/source/ptlib/memory/particle_stack_allocater.cpp:
 	.text        start:0x008541BC end:0x008542B8
-	.rodata      start:0x009AE159 end:0x009AE1C0
+	.rodata      start:0x009AE159 end:0x009AE1CD
 
 libs/eflib/source/ptlib/particle_system.cpp:
 	.text        start:0x008542B8 end:0x00859054
-	.rodata      start:0x009AE22E end:0x009AE339
+	.rodata      start:0x009AE1CD end:0x009AE339
+	.rodata      start:0x009B5780 end:0x009B5784
 	.bss         start:0x015E9D70 end:0x015EA008
 
 libs/eflib/source/ptlib/particle_intrusive_list.cpp:
@@ -3180,6 +3503,8 @@ libs/eflib/source/ptlib/particle_intrusive_list.cpp:
 libs/eflib/source/ptlib/forcefield/particle_force_field.cpp:
 	.text        start:0x00859104 end:0x0085A2DC
 	.rodata      start:0x009AE3A2 end:0x009AE413
+	.rodata      start:0x009B5784 end:0x009B578C
+	.rodata      start:0x009D5498 end:0x009D54AC
 	.data        start:0x00B80840 end:0x00B80C40
 	.init_array  start:0x00B8FD70 end:0x00B8FD78
 	.bss         start:0x015EAE38 end:0x015EB000
@@ -3187,6 +3512,7 @@ libs/eflib/source/ptlib/forcefield/particle_force_field.cpp:
 libs/eflib/source/ptlib/renderer/screen_render_manager.cpp:
 	.text        start:0x0085A2DC end:0x0085A5AC
 	.rodata      start:0x009AE413 end:0x009AE486
+	.rodata      start:0x009D54AC end:0x009D54B4
 	.data        start:0x00B80C40 end:0x00B80C90
 	.bss         start:0x015EB758 end:0x015EB760
 
@@ -3198,11 +3524,14 @@ libs/eflib/source/ptlib/renderer/particle_renderer_manager.cpp:
 libs/eflib/source/ptlib/renderer/particle_renderer_obj.cpp:
 	.text        start:0x0085AFF8 end:0x0085F7B4
 	.rodata      start:0x009AE525 end:0x009AE6E8
+	.rodata      start:0x009B578C end:0x009B579C
+	.rodata      start:0x009D54B4 end:0x009D57FC
 	.data        start:0x00B80C90 end:0x00B80D10
 
 libs/eflib/source/ptlib/renderer/particle_renderer_stream.cpp:
 	.text        start:0x0085F7B4 end:0x00861030
 	.rodata      start:0x009AE6E8 end:0x009AE73F
+	.rodata      start:0x009D57FC end:0x009D58B8
 	.data        start:0x00B80D10 end:0x00B80DE0
 	.bss         start:0x015EB768 end:0x015EB770
 
@@ -3213,6 +3542,8 @@ libs/eflib/source/ptlib/renderer/particle_renderer_stream_kizuna.cpp:
 libs/eflib/source/ptlib/emitter/compute/particle_emitter_compute_uniform.cpp:
 	.text        start:0x008613B0 end:0x00862BC8
 	.rodata      start:0x009AE7A5 end:0x009AE816
+	.rodata      start:0x009B579C end:0x009B57A0
+	.rodata      start:0x009D58B8 end:0x009D58CC
 	.data        start:0x00B80DF8 end:0x00B80E20
 	.init_array  start:0x00B8FD78 end:0x00B8FD80
 
@@ -3236,7 +3567,7 @@ libs/aiLib/src/ailib/behavior/node/ai_behavior_root_node.cpp:
 
 libs/aiLib/src/ailib/behavior/node/composite/ai_behavior_composite_node.cpp:
 	.text        start:0x00863C20 end:0x00864430
-	.rodata      start:0x009AEAD6 end:0x009AEB68
+	.rodata      start:0x009AEAD6 end:0x009AEB96
 	.data        start:0x00B80EB0 end:0x00B80EF8
 	.init_array  start:0x00B8FD98 end:0x00B8FDA0
 
@@ -3266,20 +3597,21 @@ ai/TaskNode.cpp:
 
 libs/aiLib/src/ailib/state/ai_state_fsm.cpp:
 	.text        start:0x008649A8 end:0x0086534C
-	.rodata      start:0x009AEBDA end:0x009AEC40
+	.rodata      start:0x009AEBC6 end:0x009AEC8C
 
 libs/aiLib/src/ailib/state/ai_state_hfsm.cpp:
 	.text        start:0x0086534C end:0x008666F8
-	.rodata      start:0x009AEC8C end:0x009AED30
+	.rodata      start:0x009AEC8C end:0x009AED5A
 
 libs/anmlib/src/anmlib/anm_factory.cpp:
 	.text        start:0x008666F8 end:0x00866D50
-	.rodata      start:0x009AED65 end:0x009AEDB4
+	.rodata      start:0x009AED5A end:0x009AEDB4
 	.bss         start:0x015EB850 end:0x015EB868
 
 libs/anmlib/src/anmlib/anm_util.cpp:
 	.text        start:0x00866D50 end:0x008692BC
-	.rodata      start:0x009AEDB4 end:0x009AEF34
+	.rodata      start:0x009AEDB4 end:0x009AEFA5
+	.rodata      start:0x009D58CC end:0x009D58D0
 	.init_array  start:0x00B8FDC0 end:0x00B8FDC8
 	.bss         start:0x015EB868 end:0x015EB8A0
 
@@ -3290,12 +3622,12 @@ libs/anmlib/src/anmlib/base/anm_thread_pool.cpp:
 
 libs/anmlib/src/anmlib/ik/footplacement/anm_foot_placement_ik_solver.cpp:
 	.text        start:0x00869ABC end:0x0086C0AC
-	.rodata      start:0x009AF0D5 end:0x009AF64E
+	.rodata      start:0x009AF0A8 end:0x009AF64E
 	.data        start:0x00B81058 end:0x00B810B8
 
 libs/anmlib/src/anmlib/ik/lookat/anm_look_at_ik_solver.cpp:
 	.text        start:0x0086C0AC end:0x0086D1B0
-	.rodata      start:0x009AF664 end:0x009AF834
+	.rodata      start:0x009AF64E end:0x009AF834
 
 libs/anmlib/src/anmlib/ik/sphericalcoordinates/anm_spherical_coordinates_ik_solver.cpp:
 	.text        start:0x0086D1B0 end:0x0086D808
@@ -3312,7 +3644,7 @@ anm/MirrorMapper.cpp:
 
 libs/anmlib/src/anmlib/playback/anm_blender.cpp:
 	.text        start:0x008723C4 end:0x00874A80
-	.rodata      start:0x009AF931 end:0x009AF983
+	.rodata      start:0x009AF925 end:0x009AF983
 	.data        start:0x00B81118 end:0x00B81138
 
 libs/anmlib/src/anmlib/playback/anm_control.cpp:
@@ -3327,7 +3659,7 @@ libs/anmlib/src/anmlib/rig/anm_pose.cpp:
 
 libs/anmlib/src/anmlib/statemachine/playback/anm_asm_blender.cpp:
 	.text        start:0x0087701C end:0x00877DB4
-	.rodata      start:0x009AFC40 end:0x009AFCA5
+	.rodata      start:0x009AFC40 end:0x009AFCD8
 
 libs/anmlib/src/anmlib/statemachine/playback/anm_asm_variable.cpp:
 	.text        start:0x00877DB4 end:0x00878E68
@@ -3337,21 +3669,24 @@ libs/anmlib/src/anmlib/statemachine/playback/anm_asm_variable.cpp:
 libs/anmlib/src/anmlib/statemachine/playback/anm_state_machine.cpp:
 	.text        start:0x00878E68 end:0x0087C5A8
 	.rodata      start:0x009AFD42 end:0x009AFE02
+	.rodata      start:0x009D58D0 end:0x009D58F4
 	.init_array  start:0x00B8FDC8 end:0x00B8FDD0
 	.bss         start:0x015EBA38 end:0x015EC450
 
 libs/anmlib/src/anmlib/statemachine/resource/anm_res_clip_data.cpp:
 	.text        start:0x0087C5A8 end:0x0087FAE8
 	.rodata      start:0x009AFE02 end:0x009AFE74
+	.rodata      start:0x009D58F4 end:0x009D5924
 	.data        start:0x00B81198 end:0x00B811B8
 
 libs/anmlib/src/anmlib/statemachine/resource/anm_res_state_data.cpp:
 	.text        start:0x0087FAE8 end:0x00880DAC
 	.rodata      start:0x009AFE74 end:0x009AFEE8
+	.rodata      start:0x009D5924 end:0x009D5938
 
 libs/anmlib/src/anmlib/animation/anm_cubic_animation.cpp:
 	.text        start:0x00880DAC end:0x008818EC
-	.rodata      start:0x009AFEF6 end:0x009AFF48
+	.rodata      start:0x009AFEE8 end:0x009AFF48
 	.data        start:0x00B811B8 end:0x00B81218
 
 libs/anmlib/src/anmlib/animation/anm_locomotion.cpp:
@@ -3389,7 +3724,7 @@ libs/anmlib/src/anmlib/statemachine/playback/anm_asm_callback_detector.cpp:
 
 libs/anmlib/src/anmlib/statemachine/playback/anm_asm_lerp_add_blend.cpp:
 	.text        start:0x00885F78 end:0x00886A08
-	.rodata      start:0x009B0244 end:0x009B02A5
+	.rodata      start:0x009B021D end:0x009B02A5
 	.data        start:0x00B813F8 end:0x00B814D8
 
 libs/anmlib/src/anmlib/statemachine/playback/anm_asm_lerp_blend.cpp:
@@ -3404,11 +3739,12 @@ libs/anmlib/src/anmlib/statemachine/playback/anm_asm_speed_lerp_blend.cpp:
 
 libs/skdlib/src/skdlib/importer/skd_importer.cpp:
 	.text        start:0x00887F3C end:0x008880F8
+	.rodata      start:0x009D5938 end:0x009D593B
 	.data        start:0x00B81628 end:0x00B81648
 
 libs/skdlib/src/skdlib/skd_dynamics.cpp:
 	.text        start:0x008880F8 end:0x0088B628
-	.rodata      start:0x009B03A8 end:0x009B0419
+	.rodata      start:0x009B0371 end:0x009B0449
 	.data        start:0x00B81648 end:0x00B81688
 
 libs/skdlib/src/skdlib/composite/skd_solver.cpp:
@@ -3468,7 +3804,7 @@ libs/wndlib/src/wndlib/wnd_world.cpp:
 
 libs/wndlib/src/wndlib/collision/wnd_sphere_box_agent.cpp:
 	.text        start:0x00895378 end:0x00895728
-	.rodata      start:0x009B0BA5 end:0x009B0BF8
+	.rodata      start:0x009B0B9D end:0x009B0C00
 
 libs/wndlib/src/wndlib/collision/wnd_sphere_sphere_agent.cpp:
 	.text        start:0x00895728 end:0x008958DC
@@ -3481,6 +3817,7 @@ libs/wndlib/src/wndlib/object/wnd_object.cpp:
 
 csvb/CCsvbData.cpp:
 	.text        start:0x00895AFC end:0x00897AE8
+	.rodata      start:0x009D593C end:0x009D5C0A
 	.data        start:0x00B818E0 end:0x00B81960
 	.init_array  start:0x00B8FDD8 end:0x00B8FDE0
 	.bss         start:0x015EC4D8 end:0x015EC580
@@ -3488,17 +3825,22 @@ csvb/CCsvbData.cpp:
 ssd/SystemCore.cpp:
 	.text        start:0x00897AE8 end:0x0089F9F0
 	.rodata      start:0x009B0CE0 end:0x009B0CED
+	.rodata      start:0x009B57A0 end:0x009B57A4
+	.rodata      start:0x009D5C0A end:0x009D5E30
 	.data        start:0x00B81960 end:0x00B820C0
 	.bss         start:0x015EC590 end:0x015EC5A0
 
 sources/voice_handle_api.cpp:
 	.text        start:0x0089F9F0 end:0x008A1D60
+	.rodata      start:0x009B57A4 end:0x009B57AC
+	.rodata      start:0x009D5E30 end:0x009D603A
 	.data        start:0x00B820C0 end:0x00B82100
 	.bss         start:0x015EC5A0 end:0x015EC5A8
 
 ssd/StreamController.cpp:
 	.text        start:0x008A1D60 end:0x008A9628
 	.rodata      start:0x009B0CED end:0x009B0D45
+	.rodata      start:0x009D603A end:0x009D69CC
 	.data        start:0x00B82100 end:0x00B82450
 	.init_array  start:0x00B8FDE0 end:0x00B8FDE8
 	.bss         start:0x015EC5C0 end:0x015EC5C8
@@ -3506,6 +3848,7 @@ ssd/StreamController.cpp:
 ssd/AudioFileAiff.cpp:
 	.text        start:0x008A9628 end:0x008B0C38
 	.rodata      start:0x009B0D45 end:0x009B458A
+	.rodata      start:0x009D69CC end:0x009D7400
 	.rodata      start:0x00B39EF4 end:0x00B39F23
 	.data        start:0x00B82450 end:0x00B82498
 	.init_array  start:0x00B8FDE8 end:0x00B8FDF0
