@@ -59,7 +59,8 @@ one:
 3.0.1 was built from `D:/`, 1.0.0 from `C:/`, so the source paths that assertions cite compare without their
 drive letter. The steps that pair changed code were checked against changed functions named independently (by their callers or
 their vtable slots) and kept only where they were never wrong. 29,334 of the 35,906 functions and 4,020 data
-objects take 1.0.0's names this way (395 more are import stubs and exports the module names itself);
+objects take 1.0.0's names this way (395 more are import stubs and exports the module names itself), each with
+1.0.0's binding: 7,753 are inline functions or template instances (`scope:weak`);
 `build/XC2_301/analysis/analysis.json` lists the evidence for each, and
 [`config/XC2_301/symbols.txt`](../config/XC2_301/symbols.txt) holds them. The other 6,177 are code an update added,
 or changed past what the evidence settles.
@@ -91,26 +92,44 @@ The sound driver (`ssd`) cites a separate tree; its unit is `sources/voice_handl
 ## Units
 
 [`config/XC2_301/splits.txt`](../config/XC2_301/splits.txt) assigns every function, and the data only its code
-uses, to one of 575 units: 452 named after the source file their own code cites, 99 after the file 1.0.0's splits
-put their functions in, 16 after the class their functions belong to (no file cites them, and 1.0.0's file for them
-is the neighbouring unit's), and 8 by address. The evidence, strongest first:
+uses, to one of 637 units: 498 named after a source file (464 after the file their own code cites, 34 after the
+file 1.0.0's splits put their functions in), 113 after the class most of their functions belong to, and 26 by
+address. A unit named by class or address is code no file string reaches, such as the event system (`event::`,
+1,716 functions), monolib's renderer, or files that assert nothing; its name is a placeholder until evidence
+names the file. The evidence, strongest first:
 
 - **citations**: a function's own `__FILE__` names its unit, and a change of cited file is a boundary;
 - **static initializers**: each unit with static initializers ends with its own initializer (one that tests no
   guard; a guarded one initializes a template's static member and goes with whichever unit came first), so the
   200 entries of `init_array` mark where those units end, and each entry is its unit's data;
-- **another build**: 1.0.0's splits, where the code says nothing; they yield to the two above, since they were
-  drawn with less evidence;
+- **classes**, in 1.0.0: its symbol table marks inlines and template instances weak, so a class's other
+  functions are its own, compiled in one file (every one of the 636 classes with a citing function cites a single
+  file); next to that file's citations they are that file's;
+- **another build**: 1.0.0's splits, where 3.0.1's code says nothing. Where 3.0.1's code states a boundary between
+  the same two files, 1.0.0's boundary there yields to it; where 1.0.0 puts a third file between them, it stands;
 - **data**: data only one run of code uses holds the run in one unit, unless what the code states separates it
-  (a template's table or an inline's static is shared, kept from whichever unit came first).
+  (a template's table or an inline's static is shared, kept from whichever unit came first);
+- **reach**: a file's evidence reaches through the data its code shares, over the inlines and template
+  instances clang emits after the code that first uses them (weak in 1.0.0, and so in 3.0.1 where the name came
+  from 1.0.0), and at most 48 functions or 0x8000 bytes past that. A longer run tied to neither neighbouring file
+  is neither's, but a unit of its own.
+
+1.0.0's [splits](../config/XC2_100/splits.txt) are this same evidence applied to 1.0.0's `main` (`zkit units
+--splits` on a project whose target is 1.0.0), not the original build's: no map of either build exists. Two
+checks measure them. Hiding half of each build's citations at random and proposing units again, 96% of 3.0.1's
+hidden functions that land in a file-named unit land in the file they cite (85% with the splits before the class,
+third-file and reach rules), and those rules moved none into a wrong file. A class's table and static members are
+its file's (the table goes with the class's first out-of-line virtual): of the 711 in 3.0.1 whose file 1.0.0's
+classes fix, 655 lie in that file's unit and 12 in another (599 and 69 before).
 
 The link order follows the source paths, sorted case-insensitively by their upper-case spelling within the game
-(`ik_lookat_solver.cpp` before `ik_look_solver.cpp`); 34 of the 501 named units step back in that order, which
-marks units still misnamed or holding several files. Inline functions and template instances take no unit from
-1.0.0. 33 files still come out in more than one piece.
+(`ik_lookat_solver.cpp` before `ik_look_solver.cpp`); 20 of the 498 file units step back in that order, which marks
+units still misnamed or holding several files (and the start of each library). Inline functions and template
+instances take no unit from 1.0.0. 12 files still come out in more than one piece.
 
-A unit owns one range per section, in link order like its code: 99.7% of `.bss`, 84% of `.data` and nearly all of
-the game's `.rodata` have a unit; the rest is data several units use, which the unit defining it has to claim.
+A unit owns one range per section, in link order like its code: 99.6% of `.bss`, 84% of `.data` and nearly all of
+the game's `.rodata` have a unit; the rest is data several units use, which the unit defining it has to claim,
+and data no code refers to between two units' ranges.
 
 ## Toolchain
 

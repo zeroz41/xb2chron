@@ -14,7 +14,7 @@ repository contains no game code or assets; you need your own copy of the game.
 | Code | 0.00% | 0.00% |
 | Data | 0.00% | 0.00% |
 | Functions | 0 of 35,906 | |
-| Units | | 0 of 575 |
+| Units | | 0 of 637 |
 <!-- /progress -->
 
 ## Target
