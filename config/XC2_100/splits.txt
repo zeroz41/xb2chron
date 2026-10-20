@@ -2409,14 +2409,10 @@ ml/CacheDraw.cpp:
 	.text        start:0x006FDF10 end:0x0070B8A4
 	.data        start:0x011AB280 end:0x011AD890
 
-libs/monolib_mm/source/device/nx/dev_setting_nx.cpp:
-	.text        start:0x0070B8A4 end:0x007289B8
-	.bss         start:0x014B424C end:0x014B7000
-
 libs/monolib_mm/source/device/nx/th_dev_file_nx.cpp:
-	.text        start:0x007289B8 end:0x0073DCD4
+	.text        start:0x0070B8A4 end:0x0073DCD4
 	.data        start:0x011ADA28 end:0x011AE460
-	.bss         start:0x014B7008 end:0x014B9E28
+	.bss         start:0x014B2600 end:0x014B9E28
 
 ml/ErrViewer.cpp:
 	.text        start:0x0073DCD4 end:0x0073FC4C
@@ -2485,11 +2481,8 @@ libs/eflib/source/ptlib/emitter/particle_emitter.cpp:
 libs/eflib/source/ptlib/emitter/particle_emitter_manager.cpp:
 	.text        start:0x00920294 end:0x00920CD0
 
-libs/eflib/source/ptlib/emitter/particle_emitter_7100920CD0.cpp:
-	.text        start:0x00920CD0 end:0x009221B0
-
-libs/eflib/source/ptlib/emitter/particle_emitter_manager_71009221B0.cpp:
-	.text        start:0x009221B0 end:0x0092DED0
+libs/eflib/source/ptlib/emitter/particle_emitter_manager_7100920CD0.cpp:
+	.text        start:0x00920CD0 end:0x0092DED0
 	.data        start:0x011B8AB8 end:0x011B8AF8
 	.bss         start:0x01BD75B0 end:0x01BD75B4
 
@@ -2709,11 +2702,11 @@ skt/CommandManager.cpp:
 	.bss         start:0x01BD9CC0 end:0x01BD9CC8
 
 libs/wndlib/src/wndlib/broadphaze/wnd_broad_phaze_octree.cpp:
-	.text        start:0x009866D0 end:0x00987BF0
+	.text        start:0x009866D0 end:0x00987BFC
 	.data        start:0x011B9BA8 end:0x011B9C38
 
 libs/wndlib/src/wndlib/composite/wnd_area.cpp:
-	.text        start:0x00987BF0 end:0x0098833C
+	.text        start:0x00987BFC end:0x0098833C
 	.data        start:0x011B9C38 end:0x011B9CB0
 
 libs/wndlib/src/wndlib/composite/wnd_dispatcher.cpp:
@@ -2721,12 +2714,12 @@ libs/wndlib/src/wndlib/composite/wnd_dispatcher.cpp:
 	.data        start:0x011B9CB0 end:0x011B9CD0
 
 libs/wndlib/src/wndlib/composite/wnd_global_wind_manager.cpp:
-	.text        start:0x009887B8 end:0x00988D40
-	.data        start:0x011B9CD0 end:0x011B9CE8
+	.text        start:0x009887B8 end:0x00988F64
+	.data        start:0x011B9CD0 end:0x011B9D00
 
 libs/wndlib/src/wndlib/wind/wnd_area_wind.cpp:
-	.text        start:0x00988D40 end:0x0098925C
-	.data        start:0x011B9CE8 end:0x011B9D20
+	.text        start:0x00988F64 end:0x0098925C
+	.data        start:0x011B9D00 end:0x011B9D20
 
 libs/wndlib/src/wndlib/wind/wnd_blender.cpp:
 	.text        start:0x0098925C end:0x009898D0

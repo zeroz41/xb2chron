@@ -599,13 +599,11 @@ application/BF2/gf/data/gf_bdat_cond.cpp:
 	.data        start:0x00B46BA8 end:0x00B46D30
 	.bss         start:0x00C274A8 end:0x00C274B8
 
-unit_71001FB374.cpp:
-	.text        start:0x001FB374 end:0x001FCF14
-
 application/BF2/gf/data/gf_bdat_item.cpp:
-	.text        start:0x001FCF14 end:0x00206D14
+	.text        start:0x001FB374 end:0x00206D14
 	.rodata      start:0x00984FE5 end:0x009854A1
 	.data        start:0x00B46D30 end:0x00B46FA8
+	.bss         start:0x00C276C0 end:0x00C276C8
 
 application/BF2/gf/data/gf_bdat_lookat.cpp:
 	.text        start:0x00206D14 end:0x002085D0
@@ -630,22 +628,17 @@ application/BF2/gf/data/gf_bdat_quest.cpp:
 	.rodata      start:0x0098583C end:0x0098587F
 	.data        start:0x00B47218 end:0x00B47288
 
-unit_710020D188.cpp:
-	.text        start:0x0020D188 end:0x00214C18
-
 application/BF2/gf/data/gf_bdat_rsc.cpp:
-	.text        start:0x00214C18 end:0x0021B58C
+	.text        start:0x0020D188 end:0x0021B58C
 	.rodata      start:0x00985889 end:0x00986463
 	.data        start:0x00B47288 end:0x00B47D20
-
-unit_710021B58C.cpp:
-	.text        start:0x0021B58C end:0x0021D0A4
+	.bss         start:0x00C28510 end:0x00C28518
 
 application/BF2/gf/data/gf_bdat_shop.cpp:
-	.text        start:0x0021D0A4 end:0x0021E894
+	.text        start:0x0021B58C end:0x0021E894
 	.rodata      start:0x0098647D end:0x00986833
 	.data        start:0x00B47D20 end:0x00B47F28
-	.bss         start:0x00C29178 end:0x00C29180
+	.bss         start:0x00C29178 end:0x00C29188
 
 application/BF2/gf/data/gf_bdat_unique_motion.cpp:
 	.text        start:0x0021E894 end:0x0021FDD8
@@ -3154,13 +3147,10 @@ libs/eflib/source/ptlib/emitter/particle_emitter.cpp:
 	.rodata      start:0x009ADADF end:0x009ADAF1
 
 libs/eflib/source/ptlib/emitter/particle_emitter_manager.cpp:
-	.text        start:0x008461E4 end:0x008469E0
-
-libs/eflib/source/ptlib/emitter/particle_emitter_manager_71008469E0.cpp:
-	.text        start:0x008469E0 end:0x0085254C
+	.text        start:0x008461E4 end:0x0085254C
 	.rodata      start:0x009ADAF1 end:0x009ADEA8
 	.data        start:0x00B80790 end:0x00B807D0
-	.bss         start:0x015E9D38 end:0x015E9D48
+	.bss         start:0x015E9D30 end:0x015E9D48
 
 libs/eflib/source/ptlib/material/particle_material_manager.cpp:
 	.text        start:0x0085254C end:0x00853144
@@ -3179,9 +3169,13 @@ libs/eflib/source/ptlib/memory/particle_stack_allocater.cpp:
 	.rodata      start:0x009AE159 end:0x009AE1C0
 
 libs/eflib/source/ptlib/particle_system.cpp:
-	.text        start:0x008542B8 end:0x00859104
-	.rodata      start:0x009AE22E end:0x009AE3A2
+	.text        start:0x008542B8 end:0x00859054
+	.rodata      start:0x009AE22E end:0x009AE339
 	.bss         start:0x015E9D70 end:0x015EA008
+
+libs/eflib/source/ptlib/particle_intrusive_list.cpp:
+	.text        start:0x00859054 end:0x00859104
+	.rodata      start:0x009AE339 end:0x009AE3A2
 
 libs/eflib/source/ptlib/forcefield/particle_force_field.cpp:
 	.text        start:0x00859104 end:0x0085A2DC
@@ -3433,11 +3427,39 @@ skt/CommandManager.cpp:
 	.bss         start:0x015EC450 end:0x015EC460
 
 libs/wndlib/src/wndlib/broadphaze/wnd_broad_phaze_octree.cpp:
-	.text        start:0x00891AE4 end:0x00894C08
-	.rodata      start:0x009B06C4 end:0x009B0B51
-	.data        start:0x00B816D8 end:0x00B818A0
+	.text        start:0x00891AE4 end:0x00892E20
+	.rodata      start:0x009B06C4 end:0x009B0857
+	.data        start:0x00B816D8 end:0x00B81768
+
+libs/wndlib/src/wndlib/composite/wnd_area.cpp:
+	.text        start:0x00892E20 end:0x008932C8
+	.rodata      start:0x009B0857 end:0x009B0914
+	.data        start:0x00B81768 end:0x00B817E0
+
+libs/wndlib/src/wndlib/composite/wnd_global_wind_manager.cpp:
+	.text        start:0x008932C8 end:0x00893D6C
+	.rodata      start:0x009B0914 end:0x009B099B
+	.data        start:0x00B817E0 end:0x00B81830
+
+libs/wndlib/src/wndlib/wind/wnd_area_wind.cpp:
+	.text        start:0x00893D6C end:0x00894100
+	.rodata      start:0x009B099B end:0x009B09F2
+	.data        start:0x00B81830 end:0x00B81868
+
+libs/wndlib/src/wndlib/wind/wnd_blender.cpp:
+	.text        start:0x00894100 end:0x008943A4
+	.rodata      start:0x009B09F2 end:0x009B0A5B
+
+libs/wndlib/src/wndlib/wind/wnd_local_wind.cpp:
+	.text        start:0x008943A4 end:0x00894898
+	.rodata      start:0x009B0A5B end:0x009B0ABC
+
+libs/wndlib/src/wndlib/wnd_probe.cpp:
+	.text        start:0x00894898 end:0x00894C08
+	.rodata      start:0x009B0ABC end:0x009B0B51
+	.data        start:0x00B81880 end:0x00B818A0
 	.init_array  start:0x00B8FDD0 end:0x00B8FDD8
-	.bss         start:0x015EC460 end:0x015EC4D8
+	.bss         start:0x015EC460 end:0x015EC4C0
 
 libs/wndlib/src/wndlib/wnd_world.cpp:
 	.text        start:0x00894C08 end:0x00895378
