@@ -59,21 +59,25 @@ one:
   side pair one to one (an update that added a call leaves the counts unequal there). A caller one of whose
   pairings more callers contradict had its calls moved by an update and names nothing in order. A callee whose
   size changed past a third (an update grew it, or moved its constructor out of line) keeps the name only when it
-  still shares by far the most of what it refers to with that 1.0.0 function. Hiding half the callees named by
-  their code, the order named 1,475 of them again in each of three draws and 1 or 2 otherwise.
+  still shares by far the most of what it refers to with that 1.0.0 function (so does a callee a same-code caller
+  or a vtable slot names). Hiding half the callees named by their code, the order named 1,475 of them again in
+  each of three draws and 1 or 2 otherwise;
+- **a use**: a changed function's other references (data, tables, the functions whose address it takes) pair
+  with its 1.0.0 version's the same way, between two that name the same thing. Hiding half the data named by
+  same-code references, this named 416 to 433 of them again in each of three draws and one otherwise.
 
 3.0.1 was built from `D:/`, 1.0.0 from `C:/`, so the source paths that assertions cite compare without their
 drive letter. The steps that pair changed code were checked against changed functions named independently (by their callers or
-their vtable slots) and kept only where they were never wrong. 29,732 of the 35,906 functions and 4,023 data
+their vtable slots) and kept only where they were never wrong. 30,013 of the 35,906 functions and 4,221 data
 objects take 1.0.0's names this way (395 more are import stubs and exports the module names itself), each with
-1.0.0's binding: 7,758 functions are inlines or template instances and 1,275 data objects their statics, members
+1.0.0's binding: 7,815 functions are inlines or template instances and 1,360 data objects their statics, members
 and tables (`scope:weak`);
 `build/XC2_301/analysis/analysis.json` lists the evidence for each, and
-[`config/XC2_301/symbols.txt`](../config/XC2_301/symbols.txt) holds them. The other 5,779 are code an update added,
+[`config/XC2_301/symbols.txt`](../config/XC2_301/symbols.txt) holds them. The other 5,498 are code an update added,
 or changed past what the evidence settles.
 
 Every other address the code forms, loads or stores through, and every address a relocated pointer holds, starts
-a data object too, named `lbl_<address>` until evidence names it: 18,191 of them, sized by what they are (a
+a data object too, named `lbl_<address>` until evidence names it: 17,993 of them, sized by what they are (a
 string to its NUL, a scalar the code only reads at one width to that width, else up to the next object). To redo
 the transfer, with 1.0.0's `main` at `orig/XC2_100/main`, build
 1.0.0's signatures and analyze 3.0.1 with `config/XC2_301/symbols.txt` moved aside, so the analysis starts from
@@ -147,13 +151,13 @@ and constants the linker merged across units, and data no code refers to between
 The module has no RTTI, but its virtual tables name nearly every slot (1.0.0's names carried over), and a class's
 table says its bases: a base's table is a prefix of its derived class's, every slot the class does not override
 holding the base's function, and each further base has a group of its own at the offset of its subobject.
-[`include/classes/`](../include/classes) holds one header per class with a table: 2,046 classes and 30 class
-templates (for 402 instances), plus 11 classes with no table that only enclose others. Each declares its bases
+[`include/classes/`](../include/classes) holds one header per class with a table: 2,086 classes and 30 class
+templates (for 422 instances), plus 10 classes with no table that only enclose others. Each declares its bases
 in layout order and the virtuals it introduces or overrides in slot order, one destructor per destructor pair.
 
-Compiled with the project's compiler, 2,325 of the 2,380 tables the module has come out word for word as the
-original's (1,091 of them with a destructor the linker folded into its base's identical one, 153 with slots the
-names do not reach yet); the 46 headers that do not compile or differ say why at their top. What the tables do
+Compiled with the project's compiler, 2,382 of the 2,439 tables the module has come out word for word as the
+original's (984 of them with a destructor the linker folded into its base's identical one, 269 with slots the
+names do not reach yet); the 47 headers that do not compile or differ say why at their top. What the tables do
 not say stays a placeholder: a base no evidence names (`TUnk_<address>`), a slot no function names
 (`vf<slot>`), return types (`void` until code proves one), fields (padding where a derived class's layout proves
 a base's size). 68 bases with no table of their own are rebuilt from the slots their derived classes inherit.
