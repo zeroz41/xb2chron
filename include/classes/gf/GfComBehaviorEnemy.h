@@ -1,6 +1,7 @@
 #ifndef CLASSES_GF_GFCOMBEHAVIORENEMY_H
 #define CLASSES_GF_GFCOMBEHAVIORENEMY_H
 
+#include "mm/mtl/RTTI.h"
 #include "classes/gf/GfComBehavior.h"
 
 namespace fw { class Message; }
@@ -22,7 +23,7 @@ public:
 class GfComBehaviorEnemy : public ::gf::GfComBehavior, public TUnk_B65E98 {
 public:
     class Listener;
-    virtual void getRTTI() const;  // slot 0
+    virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfComBehaviorEnemy();  // slot 1
     virtual void recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     virtual void update(fw::UpdateInfo const&);  // slot 5
@@ -31,6 +32,7 @@ public:
     virtual void getTransform() const;  // slot 8
     virtual void getBdatId_CHR_EnArrange() const;  // slot 9
     virtual void getGmkBattleLockInfo(int&, int&) const;  // slot 10
+    static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gf
 

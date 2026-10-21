@@ -1,6 +1,7 @@
 #ifndef CLASSES_GF_GFCOMCOLLIDER_H
 #define CLASSES_GF_GFCOMCOLLIDER_H
 
+#include "mm/mtl/RTTI.h"
 #include "classes/fw/IColiEventListener.h"
 #include "classes/gf/GfComponent.h"
 
@@ -16,12 +17,13 @@ public:
 class GfComCollider : public ::gf::GfComponent, public TUnk_B66270 {
 public:
     class UserData;
-    virtual void getRTTI() const;  // slot 0
+    virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfComCollider();  // slot 1
     virtual void changeLayer(unsigned int, unsigned int);  // slot 3
     virtual void enter(fw::IColiEventListener::EnterInfo const&);  // slot 5
     virtual void leave(fw::IColiEventListener::LeaveInfo const&);  // slot 6
     virtual void contact(fw::IColiEventListener::EnterInfo const&);  // slot 7
+    static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gf
 

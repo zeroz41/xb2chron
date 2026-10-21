@@ -1,6 +1,7 @@
 #ifndef CLASSES_AI_TASKNODE_H
 #define CLASSES_AI_TASKNODE_H
 
+#include "mm/mtl/RTTI.h"
 #include "classes/ai/BehaviorNode.h"
 
 namespace ai {
@@ -8,7 +9,8 @@ namespace ai {
 class TaskNode : public ::ai::BehaviorNode {
 public:
     virtual ~TaskNode();  // slot 0
-    virtual void getRTTI() const;  // slot 2
+    virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
+    static mm::mtl::RTTI m_rtti;
 };
 }  // namespace ai
 

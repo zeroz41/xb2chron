@@ -1,6 +1,7 @@
 #ifndef CLASSES_GF_GFASSETSETUPMAPSEAMLESS_H
 #define CLASSES_GF_GFASSETSETUPMAPSEAMLESS_H
 
+#include "mm/mtl/RTTI.h"
 #include "classes/gf/GfAssetSetup.h"
 
 namespace gf { class GF_ASSET_HANDLE; }
@@ -11,7 +12,7 @@ namespace gf {
 // table 0x7100B44978
 class GfAssetSetupMapSeamless : public ::gf::GfAssetSetup {
 public:
-    virtual void getRTTI() const;  // slot 0
+    virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfAssetSetupMapSeamless();  // slot 1
     virtual void getMdlFile(gf::GfAssetType);  // slot 4
     virtual void getEfbFile(gf::GfAssetType);  // slot 13
@@ -28,6 +29,7 @@ public:
     virtual void getEpkSlot() const;  // slot 46
     virtual void getGIblSlot() const;  // slot 47
     virtual void getLIblSlot() const;  // slot 48
+    static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gf
 

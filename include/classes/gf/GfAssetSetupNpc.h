@@ -1,6 +1,7 @@
 #ifndef CLASSES_GF_GFASSETSETUPNPC_H
 #define CLASSES_GF_GFASSETSETUPNPC_H
 
+#include "mm/mtl/RTTI.h"
 #include "classes/gf/GfAssetSetup.h"
 
 namespace gf { class GF_ASSET_HANDLE; }
@@ -11,7 +12,7 @@ namespace gf {
 // table 0x7100B43D88
 class GfAssetSetupNpc : public ::gf::GfAssetSetup {
 public:
-    virtual void getRTTI() const;  // slot 0
+    virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfAssetSetupNpc();  // slot 1
     virtual void getMdlFile(gf::GfAssetType);  // slot 4
     virtual void getArcFile(gf::GfAssetType);  // slot 5
@@ -37,6 +38,7 @@ public:
     virtual void setup(gf::GF_ASSET_HANDLE*, gf::GfInitParamNpc const&);  // slot 40
     virtual void getAssetTypeMot() const;  // slot 41
     virtual void getAssetTypeArc() const;  // slot 42
+    static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gf
 

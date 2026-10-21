@@ -1,6 +1,7 @@
 #ifndef CLASSES_GF_GFEVTMODELSALVAGE_H
 #define CLASSES_GF_GFEVTMODELSALVAGE_H
 
+#include "mm/mtl/RTTI.h"
 #include "classes/gf/GfEvtModelDriver.h"
 
 namespace gf {
@@ -8,7 +9,8 @@ namespace gf {
 class GfEvtModelSalvage : public ::gf::GfEvtModelDriver {
 public:
     virtual ~GfEvtModelSalvage();  // slot 0
-    virtual void getRTTI() const;  // slot 2
+    virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
+    static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gf
 

@@ -1,6 +1,7 @@
 #ifndef CLASSES_GF_GFASSETSETUPBLADEFORUI_H
 #define CLASSES_GF_GFASSETSETUPBLADEFORUI_H
 
+#include "mm/mtl/RTTI.h"
 #include "classes/gf/GfAssetSetupBlade.h"
 
 namespace gf { class GfAssetType; }
@@ -9,7 +10,7 @@ namespace gf {
 // table 0x7100B45350
 class GfAssetSetupBladeForUi : public ::gf::GfAssetSetupBlade {
 public:
-    virtual void getRTTI() const;  // slot 0
+    virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfAssetSetupBladeForUi();  // slot 1
     virtual void getUiMotFile(gf::GfAssetType);  // slot 10
     virtual void getUiStpFile(gf::GfAssetType);  // slot 17
@@ -19,6 +20,7 @@ public:
     virtual void getAssetTypeMot() const;  // slot 40
     virtual void getAssetTypeEventMot() const;  // slot 41
     virtual void getAssetTypeEfb() const;  // slot 42
+    static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gf
 

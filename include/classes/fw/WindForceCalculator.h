@@ -1,6 +1,7 @@
 #ifndef CLASSES_FW_WINDFORCECALCULATOR_H
 #define CLASSES_FW_WINDFORCECALCULATOR_H
 
+#include "mm/mtl/RTTI.h"
 namespace mm { class Vec3; }
 namespace mm { namespace mtl { template <typename> class Vector; }}
 namespace skd { class DynamicsSolver; }
@@ -10,7 +11,7 @@ namespace fw {
 class TUnk_B411E8 {
 public:
     virtual ~TUnk_B411E8();
-    virtual void getRTTI() const = 0;
+    virtual const mm::mtl::RTTI* getRTTI() const = 0;
     virtual void calcForce(float, skd::DynamicsSolver const&, mm::mtl::Vector<mm::Vec3>*) = 0;
     unsigned char pad_8[0x8];  // fields: size from where the next base starts
 };
@@ -23,8 +24,9 @@ public:
 class WindForceCalculator : public TUnk_B411E8, public TUnk_B41218 {
 public:
     virtual ~WindForceCalculator();  // slot 0
-    virtual void getRTTI() const;  // slot 2
+    virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     virtual void calcForce(float, skd::DynamicsSolver const&, mm::mtl::Vector<mm::Vec3>*);  // slot 3
+    static mm::mtl::RTTI m_rtti;
 };
 }  // namespace fw
 

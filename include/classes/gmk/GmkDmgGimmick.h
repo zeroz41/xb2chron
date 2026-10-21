@@ -1,13 +1,14 @@
 #ifndef CLASSES_GMK_GMKDMGGIMMICK_H
 #define CLASSES_GMK_GMKDMGGIMMICK_H
 
+#include "mm/mtl/RTTI.h"
 #include "classes/gmk/AGmkBase.h"
 
 namespace gmk {
 // a base of gmk::GmkDmgGimmick no evidence names yet
 class TUnk_B6CF80 {
 public:
-    virtual void getRTTI() const = 0;
+    virtual const mm::mtl::RTTI* getRTTI() const = 0;
 };
 // table 0x7100B6CF10; base at 0x48 unknown (TUnk_B6CF80)
 class GmkDmgGimmick : public ::gmk::AGmkBase, public TUnk_B6CF80 {
@@ -19,7 +20,8 @@ public:
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
     virtual void debugDraw() const;  // slot 7
-    virtual void getRTTI() const;  // slot 11
+    virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 11
+    static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gmk
 

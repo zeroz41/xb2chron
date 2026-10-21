@@ -1,6 +1,7 @@
 #ifndef CLASSES_GF_GFASSETSETUPEVENTOBJ_H
 #define CLASSES_GF_GFASSETSETUPEVENTOBJ_H
 
+#include "mm/mtl/RTTI.h"
 #include "classes/gf/GfAssetSetup.h"
 
 namespace gf { class GfAssetType; }
@@ -9,7 +10,7 @@ namespace gf {
 // table 0x7100B44B10
 class GfAssetSetupEventObj : public ::gf::GfAssetSetup {
 public:
-    virtual void getRTTI() const;  // slot 0
+    virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfAssetSetupEventObj();  // slot 1
     virtual void getAssetCategoryName() const;  // slot 3
     virtual void getMdlFile(gf::GfAssetType);  // slot 4
@@ -23,6 +24,7 @@ public:
     virtual void getEabSlot() const;  // slot 27
     virtual void getEfbSlot() const;  // slot 28
     virtual void getAssetType() const;  // slot 39
+    static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gf
 

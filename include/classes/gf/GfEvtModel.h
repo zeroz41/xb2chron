@@ -1,6 +1,7 @@
 #ifndef CLASSES_GF_GFEVTMODEL_H
 #define CLASSES_GF_GFEVTMODEL_H
 
+#include "mm/mtl/RTTI.h"
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { namespace IGfObjListener { enum OBJEVT : int; }}
@@ -10,7 +11,7 @@ namespace gf {
 class TUnk_B53BE8 {
 public:
     virtual ~TUnk_B53BE8();
-    virtual void getRTTI() const = 0;
+    virtual const mm::mtl::RTTI* getRTTI() const = 0;
     virtual void update(fw::UpdateInfo const&) = 0;
     virtual void setDispWeapon(bool) = 0;
     virtual void setDispWeapon(bool, bool) = 0;
@@ -34,7 +35,7 @@ public:
 class GfEvtModel : public TUnk_B53BE8, public TUnk_B53C70 {
 public:
     virtual ~GfEvtModel();  // slot 0
-    virtual void getRTTI() const;  // slot 2
+    virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     virtual void update(fw::UpdateInfo const&);  // slot 3
     virtual void setDispWeapon(bool);  // slot 4
     virtual void setDispWeapon(bool, bool);  // slot 5
@@ -47,6 +48,7 @@ public:
     virtual void setWeaponBattleMount();  // slot 12
     virtual void setWeaponFieldMount();  // slot 13
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 14
+    static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gf
 

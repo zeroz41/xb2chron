@@ -1,6 +1,7 @@
 #ifndef CLASSES_AI_SELECTORNODE_H
 #define CLASSES_AI_SELECTORNODE_H
 
+#include "mm/mtl/RTTI.h"
 #include "classes/ai/CompositeNode.h"
 
 namespace ai { class BlackBoard; }
@@ -10,7 +11,7 @@ namespace ai {
 class SelectorNode : public ::ai::CompositeNode {
 public:
     virtual ~SelectorNode();  // slot 0
-    virtual void getRTTI() const;  // slot 2
+    virtual const mm::mtl::RTTI* getRTTI() const;  // slot 2
     virtual bool checkCondition(ai::BlackBoard const&) { return true; }  // slot 3
     virtual bool execute(ai::BlackBoard&);  // slot 4
 };

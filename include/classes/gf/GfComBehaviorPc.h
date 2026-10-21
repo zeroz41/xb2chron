@@ -1,6 +1,7 @@
 #ifndef CLASSES_GF_GFCOMBEHAVIORPC_H
 #define CLASSES_GF_GFCOMBEHAVIORPC_H
 
+#include "mm/mtl/RTTI.h"
 #include "classes/gf/GfComBehavior.h"
 
 namespace fw { class Message; }
@@ -14,11 +15,12 @@ namespace gf {
 class GfComBehaviorPc : public ::gf::GfComBehavior {
 public:
     class Listener;
-    virtual void getRTTI() const;  // slot 0
+    virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfComBehaviorPc();  // slot 1
     virtual void recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     virtual void update(fw::UpdateInfo const&);  // slot 5
     virtual void procAnimCallback(gf::GfComAsm*, gf::CallBackCache const&);  // slot 6
+    static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gf
 

@@ -1,6 +1,7 @@
 #ifndef CLASSES_UI_UIOBJECTDOCKPLUGIN_H
 #define CLASSES_UI_UIOBJECTDOCKPLUGIN_H
 
+#include "mm/mtl/RTTI.h"
 #include "classes/ui/UIObjectPlugin.h"
 
 namespace ui { class UIObjectAcc; }
@@ -10,9 +11,10 @@ namespace ui {
 class UIObjectDockPlugin : public ::ui::UIObjectPlugin {
 public:
     virtual ~UIObjectDockPlugin();  // slot 0
-    virtual void getRTTI() const;  // slot 2
+    virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     virtual void execute(ui::UIObjectAcc&);  // slot 4
     virtual bool isNeedUpdate(ui::UIObjectAcc&);  // slot 5
+    static mm::mtl::RTTI m_rtti;
 };
 }  // namespace ui
 

@@ -1,6 +1,7 @@
 #ifndef CLASSES_UI_UIIMAGEOBJECT_H
 #define CLASSES_UI_UIIMAGEOBJECT_H
 
+#include "mm/mtl/RTTI.h"
 #include "classes/ui/UIObject.h"
 
 namespace ui {
@@ -8,9 +9,10 @@ namespace ui {
 class UIImageObject : public ::ui::UIObject {
 public:
     virtual ~UIImageObject();  // slot 0
-    virtual void getRTTI() const;  // slot 5
+    virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 5
     virtual void duplicateImpl(unsigned int);  // slot 9
     virtual void changeBin(void const*);  // slot 10
+    static mm::mtl::RTTI m_rtti;
 };
 }  // namespace ui
 
