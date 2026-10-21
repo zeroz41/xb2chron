@@ -13,7 +13,6 @@ public:
     virtual ~WeatherSnd();  // slot 0
     virtual void create(gf::WEATYPE);  // slot 2
     virtual void destroy();  // slot 3
-    virtual void fadeout();  // slot 4
     virtual void update(fw::UpdateInfo const&, float, bool);  // slot 5
     virtual void isPlay() const;  // slot 6
     virtual void setPause(bool);  // slot 8
