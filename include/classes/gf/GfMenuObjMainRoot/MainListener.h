@@ -12,7 +12,7 @@ class GfMenuObjMainRoot::MainListener : public ::ui::UIObjectListener {
 public:
     // its code zeroes 0xC-0x1B after storing its table: its own fields, as other menus' listeners use theirs
     MainListener(GfMenuObjMainRoot* owner) : pad_0C(), m_owner(owner) {}
-    virtual ~MainListener();  // slot 0
+    virtual ~MainListener() {}  // slot 0: weak in the original, and its D1 slot is the base's destructor
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
     unsigned char pad_0C[0x10];
     GfMenuObjMainRoot* m_owner;  // what initialize makes it for

@@ -72,6 +72,4 @@ void GfMenuObjMainRoot::MainListener::reciveEvent(const ui::EventData& event, un
     }
 }
 
-GfMenuObjMainRoot::MainListener::~MainListener() {}
-
 }  // namespace gf
