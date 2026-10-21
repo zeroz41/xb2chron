@@ -58,6 +58,11 @@
           "src"
         ],
         "source_root": "D:/Monolithsoft/BF2/prog",
+        "units": {
+          "libs/mcl/mm_lib/source/*": {
+            "source_root": "C:/MonolithSoft/BF2/prog"
+          }
+        },
         "compiler_version": "clang version 3.9.1",
         "compiler_download": {
           "url": "https://releases.llvm.org/3.9.1/clang+llvm-3.9.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz",
