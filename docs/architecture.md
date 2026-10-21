@@ -68,13 +68,21 @@ one:
 
 3.0.1 was built from `D:/`, 1.0.0 from `C:/`, so the source paths that assertions cite compare without their
 drive letter. The steps that pair changed code were checked against changed functions named independently (by their callers or
-their vtable slots) and kept only where they were never wrong. 30,013 of the 35,906 functions and 4,221 data
-objects take 1.0.0's names this way (395 more are import stubs and exports the module names itself), each with
-1.0.0's binding: 7,815 functions are inlines or template instances and 1,360 data objects their statics, members
-and tables (`scope:weak`);
+their vtable slots) and kept only where they were never wrong. A function's own `__FILE__` names the file it was
+compiled in, so no name is taken from a 1.0.0 function that cites only other files, nor a class table's from a
+1.0.0 class whose function in some slot cites another file than the function in that slot here (nor that class's
+names in its other slots); and a one-call wrapper between two matched functions is not named for its call alone
+where the code around it is other code. That withdrew 17 names 1.0.0 gave code an update added in new files: the
+classes citing `gf_menu_obj_btl_time.cpp`, `gf_menu_obj_combo_route_simple.cpp` and `gf_menu_btlch_adapter.cpp`
+had taken the names of `GfMenuObjButtonChallenge`, `GfMenuObjCommonJog`/`GfMenuObjCommonList` and
+`GfMenuBladeDataAdapter`, whose files 3.0.1 no longer cites anywhere (a class renamed with its file has another
+name too), and `GfMenuObjSort`'s destructors and a `SaveLoad` listener's had taken `GfMenuObjOpeningTelop`'s and
+another listener's. Re-derived from a symbols list of placeholders, 30,358 of the 35,906 functions and 4,218 data
+objects take 1.0.0's names this way, each with 1.0.0's binding: 7,824 functions are inlines or template instances
+and 1,360 data objects their statics, members and tables (`scope:weak`);
 `build/XC2_301/analysis/analysis.json` lists the evidence for each, and
-[`config/XC2_301/symbols.txt`](../config/XC2_301/symbols.txt) holds them. The other 5,498 are code an update added,
-or changed past what the evidence settles.
+[`config/XC2_301/symbols.txt`](../config/XC2_301/symbols.txt) holds them, with the import stubs and exports the
+module names itself. The other 5,406 functions are code an update added, or changed past what the evidence settles.
 
 Every other address the code forms, loads or stores through, and every address a relocated pointer holds, starts
 a data object too, named `lbl_<address>` until evidence names it: 17,993 of them, sized by what they are (a
@@ -103,7 +111,7 @@ The sound driver (`ssd`) cites a separate tree; its unit is `sources/voice_handl
 ## Units
 
 [`config/XC2_301/splits.txt`](../config/XC2_301/splits.txt) assigns every function, and the data only its code
-uses, to one of 640 units: 507 named after a source file (469 after the file their own code cites, 38 after the
+uses, to one of 637 units: 504 named after a source file (469 after the file their own code cites, 35 after the
 file 1.0.0's splits put their functions in), 112 after the class most of their functions belong to, and 21 by
 address. A unit named by class or address is code no file string reaches, such as the event system (`event::`,
 1,716 functions), monolib's renderer, or files that assert nothing; its name is a placeholder until evidence
@@ -152,7 +160,7 @@ end bound the first and last files' reach like any other file's. The evidence, s
 --splits` on a project whose target is 1.0.0), not the original build's: no map of either build exists. In
 1.0.0, 1,346 of the 1,349 functions that cite a file lie in that file's unit; the other three are in files
 another includes. The units that begin with a weak function (which clang only compiles where a global's
-constructor is its first user) are 6 of 678 there (119 of 694 before the first-use rule) and 15 of 640 in 3.0.1
+constructor is its first user) are 6 of 678 there (119 of 694 before the first-use rule) and 15 of 637 in 3.0.1
 (108 of 642). Two checks measure 3.0.1's units:
 
 - hiding half of 3.0.1's own citations at random (three draws) and proposing units again, 95.1%, 96.6% and 97.5%
@@ -160,7 +168,7 @@ constructor is its first user) are 6 of 678 there (119 of 694 before the first-u
   before the first-use, citation and class rules). They moved none out of the file it cites but where one file
   includes another: the unit takes one of the two names, and a hidden citation of the other counts against it;
 - a class's table and static members are its file's (the table goes with the class's first out-of-line
-  virtual): of the 760 in 3.0.1 whose file 1.0.0's classes fix, 704 lie in that file's unit, 10 in another and 46
+  virtual): of the 758 in 3.0.1 whose file 1.0.0's classes fix, 704 lie in that file's unit, 8 in another and 46
   in none (699, 15 and 46 before).
 
 The link order follows the source paths, sorted case-insensitively by their upper-case spelling within the game
@@ -187,13 +195,13 @@ claim, and data no code refers to between two units' ranges.
 The module has no RTTI, but its virtual tables name nearly every slot (1.0.0's names carried over), and a class's
 table says its bases: a base's table is a prefix of its derived class's, every slot the class does not override
 holding the base's function, and each further base has a group of its own at the offset of its subobject.
-[`include/classes/`](../include/classes) holds one header per class with a table: 2,074 classes and 30 class
+[`include/classes/`](../include/classes) holds one header per class with a table: 2,069 classes and 30 class
 templates (for 422 instances), plus 10 classes with no table that only enclose others. Each declares its bases
 in layout order and the virtuals it introduces or overrides in slot order, one destructor per destructor pair.
 
 Constructors, destructors and new-expressions prove primary bases the tables cannot: they store the tables of
 a class's primary ancestors at the start of the object, in order. That is how every singleton derives from its
-`mm::mtl::PtrSingleton<T>`, whose own table holds only destructors, so no table prefix shows it; 594 classes'
+`mm::mtl::PtrSingleton<T>`, whose own table holds only destructors, so no table prefix shows it; 593 classes'
 primary bases are proven this way (226 by the code alone).
 
 A table's symbol (named from 1.0.0) gives its size, but a size can stop short where an address inside the table
@@ -206,15 +214,19 @@ wrong function (`GfAssetSetupWeapon::getArcFile` and `getEfpFile`), the table de
 says is one: a class keeps its virtual destructor in the two slots where its primary base has it (and a template's
 instances where any one has it), and the function only that class's slot holds is its destructor when its code
 agrees (it stores the class's table, the deleting one calls the complete one, or the base's own is another
-function): 38 of the update's destructors are named so. Checked against 1.0.0, which names every destructor, the
-rule named all 3,133 it reaches right.
+function): 36 of the update's destructors are named so. Checked against 1.0.0, which names every destructor, the
+rule named all 3,133 it reaches right. An override no name says is one is the method every named function in its
+slot is (a slot keeps one method from the class that declares it down), spelled for its own class where that
+spelling demangles to the same method: 68 of the update's functions are named so. 1.0.0's names agree with all
+5,502 the rule reaches, and hiding half of the update's named overrides (three draws) it named 1,311, 1,275 and
+1,271 of them again and none otherwise.
 
-Compiled with the project's compiler, 2,418 of the 2,439 tables the module has come out word for word as the
-original's (1,001 of them with a destructor the linker folded into its base's identical one, 253 with slots the
-names do not reach yet); the 15 headers that do not compile or differ say why at their top. What the tables do
+Compiled with the project's compiler, 2,415 of the 2,435 named tables come out word for word as the original's
+(1,000 of them with a destructor the linker folded into its base's identical one, 237 with slots the names do not
+reach yet); the 14 headers that do not compile or differ say why at their top. What the tables do
 not say stays a placeholder: a base no evidence names (`TUnk_<address>`), a slot no function names
 (`vf<slot>`), return types (`void` until code proves one), fields (padding where a derived class's layout proves
-a base's size). 56 bases with no table of their own are rebuilt from the slots their derived classes inherit.
+a base's size). 55 bases with no table of their own are rebuilt from the slots their derived classes inherit.
 
 The headers are where matching starts, not output to regenerate: fields, static members and return types are
 added by hand as functions need them, and a base the tables cannot tell apart is corrected from the constructor
