@@ -2,6 +2,8 @@
 
 namespace gf {
 
+FusionComboCamera::~FusionComboCamera() {}
+
 void FusionComboCamera::onActivate() {}
 
 }  // namespace gf

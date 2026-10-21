@@ -2,6 +2,8 @@
 
 namespace gf {
 
+SubViewCamera::~SubViewCamera() {}
+
 void SubViewCamera::onActivate() {}
 
 }  // namespace gf

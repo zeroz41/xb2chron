@@ -1,3 +1,4 @@
+#include "classes/event/AttachActorGf.h"
 #include "classes/event/BlurManager.h"
 #include "classes/event/BouRect.h"
 #include "classes/event/CamField.h"
@@ -16,12 +17,15 @@
 #include "classes/event/ParamVariable.h"
 #include "classes/event/ScriptCharaMotion.h"
 #include "classes/event/ScriptCharaMotionABC.h"
+#include "classes/event/SkipManager.h"
 
 namespace event {
 
 CmdVariable::~CmdVariable() {}
 
 ParamVariable::~ParamVariable() {}
+
+AttachActorGf::~AttachActorGf() {}
 
 void CamFree::update(const event::FrameInfo&) {}
 
@@ -58,5 +62,7 @@ void CopydataManager::OnEventProc(event::MSG_TYPE) {}
 void ScriptCharaMotion::undo(const event::Param&) {}
 
 void ScriptCharaMotionABC::undo(const event::Param&) {}
+
+SkipManager::~SkipManager() {}
 
 }  // namespace event
