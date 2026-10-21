@@ -202,11 +202,16 @@ symbol names or code refers to (a label nothing refers to stops nothing): `layer
 by `LayerActBase::s_pCallActEnd`, member function pointers that read like slots and once made `LayerObj` too long
 to be the base of the classes deriving from it, and `gf::GfBdatBlade`'s by a table of its column accessors. A
 slot also names the function in it: an override has its base slot's name, so where 1.0.0's names put one on the
-wrong function (`GfAssetSetupWeapon::getArcFile` and `getEfpFile`), the table decides.
+wrong function (`GfAssetSetupWeapon::getArcFile` and `getEfpFile`), the table decides. So does a destructor no name
+says is one: a class keeps its virtual destructor in the two slots where its primary base has it (and a template's
+instances where any one has it), and the function only that class's slot holds is its destructor when its code
+agrees (it stores the class's table, the deleting one calls the complete one, or the base's own is another
+function): 38 of the update's destructors are named so. Checked against 1.0.0, which names every destructor, the
+rule named all 3,133 it reaches right.
 
-Compiled with the project's compiler, 2,417 of the 2,439 tables the module has come out word for word as the
-original's (997 of them with a destructor the linker folded into its base's identical one, 264 with slots the
-names do not reach yet); the 16 headers that do not compile or differ say why at their top. What the tables do
+Compiled with the project's compiler, 2,418 of the 2,439 tables the module has come out word for word as the
+original's (1,001 of them with a destructor the linker folded into its base's identical one, 253 with slots the
+names do not reach yet); the 15 headers that do not compile or differ say why at their top. What the tables do
 not say stays a placeholder: a base no evidence names (`TUnk_<address>`), a slot no function names
 (`vf<slot>`), return types (`void` until code proves one), fields (padding where a derived class's layout proves
 a base's size). 56 bases with no table of their own are rebuilt from the slots their derived classes inherit.
