@@ -8,7 +8,9 @@ namespace ui {
 class UIEventCondition : public ::mm::mtl::ReferenceObject {
 public:
     UIEventCondition(unsigned int userValue0, unsigned int userValue1)
-        : m_userValue0(userValue0), m_userValue1(userValue1) {}
+        : m_userValue0(userValue0), m_userValue1(userValue1) {
+        m_RefCount = 1;  // its creator holds the first reference
+    }
     virtual ~UIEventCondition() {}  // slot 0
     virtual int update() = 0;  // slot 2: the event the condition raises, 0 for none
     virtual int getArg() const { return 0; }  // slot 3

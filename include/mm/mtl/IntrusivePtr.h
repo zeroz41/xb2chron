@@ -3,19 +3,41 @@
 
 #include "mm/MMStdBase.h"
 
+// mm_lib's intrusive_ptr.h, as the including file's include path named it: the game's own files reach it from
+// application/BF2, the libraries under libs/ (MM_LIB_FROM_LIBS) from their own build folder
+#ifdef MM_LIB_FROM_LIBS
+#define MM_MTL_INTRUSIVE_PTR_PATH "../../../mcl/mm_lib/source\\mm_mtl/intrusive_ptr.h"
+#else
+#define MM_MTL_INTRUSIVE_PTR_PATH \
+    "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/intrusive_ptr.h"
+#endif
+
 namespace mm { namespace mtl {
 
-// a counted reference to an object that counts its own; only the access is declared yet. The real one is not
-// trivially copyable (WindFactory::createProbe takes one by value through a pointer) and releases what it holds.
+// a counted reference to an object that counts its own (an mm::mtl::ReferenceObject): a copy adds a reference,
+// the holder's end releases it. WindFactory::createProbe takes one by value through a pointer.
 template <typename T>
 class IntrusivePtr {
 public:
+    IntrusivePtr() : _ptr(nullptr) {}
+    IntrusivePtr(const IntrusivePtr& other) : _ptr(other._ptr) {
+        if (_ptr != nullptr) {
+            _ptr->addRef();
+        }
+    }
+    ~IntrusivePtr() {
+        if (_ptr != nullptr) {
+            _ptr->release();
+        }
+    }
+
+    T* get() const { return _ptr; }
     T* operator->() const {
-        // the original's mm_mtl/intrusive_ptr.h, as its include path named it
-#line 112 "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/intrusive_ptr.h"
+#line 112 MM_MTL_INTRUSIVE_PTR_PATH
         MM_ASSERT(_ptr != 0);
         return _ptr;
     }
+    explicit operator bool() const { return _ptr != nullptr; }
 
     T* _ptr;
 };

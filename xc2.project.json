@@ -65,6 +65,16 @@
             "extra_cflags": [
               "-DMM_LIB_PROJECT"
             ]
+          },
+          "libs/aiLib/*": {
+            "extra_cflags": [
+              "-DMM_LIB_FROM_LIBS"
+            ]
+          },
+          "ai/*": {
+            "extra_cflags": [
+              "-DMM_LIB_FROM_LIBS"
+            ]
           }
         },
         "compiler_version": "clang version 3.9.1",

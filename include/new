@@ -1,11 +1,14 @@
 #ifndef NEW_H
 #define NEW_H
 
-// The C++ library's <new>, as far as the module uses it (NintendoSDK's libc++).
+// The C++ library's placement forms, as the SDK's <new> defines them.
+#include <stddef.h>
 
-// placement new: constructs in memory obtained elsewhere
-inline void* operator new(unsigned long size, void* memory) noexcept {
-    return memory;
+inline void* operator new(size_t, void* place) noexcept {
+    return place;
+}
+inline void* operator new[](size_t, void* place) noexcept {
+    return place;
 }
 
 #endif

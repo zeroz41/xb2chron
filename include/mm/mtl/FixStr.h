@@ -4,9 +4,12 @@
 #include <string.h>
 #include "mm/MMStdBase.h"
 
-// mm_mtl/fixstr.h as its includer's project named it: mm_lib's own (MM_LIB_PROJECT) or the game's
-#ifdef MM_LIB_PROJECT
+// mm_mtl/fixstr.h as its includer's project named it: mm_lib's own (MM_LIB_PROJECT), a library under libs/ that
+// reaches it from its own build folder (MM_LIB_FROM_LIBS), or the game's
+#if defined(MM_LIB_PROJECT)
 #define MM_MTL_FIXSTR_H_FILE "C:/MonolithSoft/BF2/prog/libs/mcl/mm_lib/project/win/../../source\\mm_mtl/fixstr.h"
+#elif defined(MM_LIB_FROM_LIBS)
+#define MM_MTL_FIXSTR_H_FILE "../../../mcl/mm_lib/source\\mm_mtl/fixstr.h"
 #else
 #define MM_MTL_FIXSTR_H_FILE "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/fixstr.h"
 #endif
@@ -25,6 +28,7 @@ public:
 #line 219 MM_MTL_FIXSTR_H_FILE
         MM_ASSERT(pszName != 0);
         m_nLen = strlen(pszName);
+#line 221 MM_MTL_FIXSTR_H_FILE
         MM_ASSERT(m_nLen < LEN);
         strcpy(m_str, pszName);
         return *this;

@@ -2,6 +2,7 @@
 #define CLASSES_GF_PC_AGENT_H
 
 #include "mm/mtl/RTTI.h"
+
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
 namespace fw { class UpdateInfo; }
@@ -20,7 +21,8 @@ public:
     virtual void setFieldAI(gf::GfComPropertyPc&, bool) {}  // slot 7
     virtual bool testBattleAI() const { return false; }  // slot 8
     virtual void setBattleAI(gf::GfComPropertyPc&, bool) {}  // slot 9
-    virtual void recieveMessage(gf::GfComPropertyPc&, fw::MessageObject*, fw::Message&);  // slot 10
+    virtual bool recieveMessage(gf::GfComPropertyPc&, fw::MessageObject*, fw::Message&) { return false; }  // slot 10
+    static mm::mtl::RTTI m_rtti;
 };
 }}  // namespace gf::pc
 
