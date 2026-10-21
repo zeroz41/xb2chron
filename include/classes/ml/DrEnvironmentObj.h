@@ -5,7 +5,7 @@ namespace ml {
 // table 0x7100B7B1F8
 class DrEnvironmentObj {
 public:
-    virtual ~DrEnvironmentObj();  // slot 0
+    virtual ~DrEnvironmentObj() {}  // slot 0
     virtual void resourceInit() {}  // slot 2
     virtual void update() {}  // slot 3
     virtual void renderLgt() {}  // slot 4

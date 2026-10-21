@@ -18,7 +18,7 @@ public:
 // table 0x7100B3CE08; base at 0x0 unknown (TUnk_B3CE08), base at 0x8 unknown (TUnk_B3CE30)
 class BlurManager : public TUnk_B3CE08, public TUnk_B3CE30 {
 public:
-    virtual ~BlurManager();  // slot 0
+    virtual ~BlurManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event

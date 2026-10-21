@@ -18,7 +18,7 @@ public:
 // table 0x7100B3CF60; base at 0x0 unknown (TUnk_B3CF60), base at 0x8 unknown (TUnk_B3CF88)
 class FadeManager : public TUnk_B3CF60, public TUnk_B3CF88 {
 public:
-    virtual ~FadeManager();  // slot 0
+    virtual ~FadeManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event

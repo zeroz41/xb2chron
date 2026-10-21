@@ -7,7 +7,7 @@ namespace event {
 // table 0x7100B3F978
 class ScriptEffectMove {
 public:
-    virtual ~ScriptEffectMove();  // slot 0
+    virtual ~ScriptEffectMove() {}  // slot 0
     virtual void cmdName() const;  // slot 2
     virtual void doit(event::Param const&);  // slot 3
     virtual void undo(event::Param const&);  // slot 4

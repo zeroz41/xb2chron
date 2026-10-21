@@ -11,7 +11,7 @@ namespace tl {
 // table 0x7100B403B8
 class TitleStateMainScreen : public ::ai::State, public ::gf::IGfEvent {
 public:
-    virtual ~TitleStateMainScreen();  // slot 0
+    virtual ~TitleStateMainScreen() {}  // slot 0
     virtual void getName() const;  // slot 2
     virtual void onEnter(void*, ai::State*);  // slot 3
     virtual void onLeave(void*, ai::State*);  // slot 4

@@ -5,7 +5,7 @@ namespace ml {
 // table 0x7100B7E430
 class DrResMdoSeamMemObj {
 public:
-    virtual ~DrResMdoSeamMemObj();  // slot 0
+    virtual ~DrResMdoSeamMemObj() {}  // slot 0
 };
 }  // namespace ml
 

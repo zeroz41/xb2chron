@@ -5,7 +5,7 @@ namespace event {
 // table 0x7100B3FCE8
 class CmdItem {
 public:
-    virtual ~CmdItem();  // slot 0
+    virtual ~CmdItem() {}  // slot 0
 };
 }  // namespace event
 

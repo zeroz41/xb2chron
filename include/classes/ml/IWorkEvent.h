@@ -8,7 +8,7 @@ namespace ml {
 // table 0x7100B78200
 class IWorkEvent {
 public:
-    virtual ~IWorkEvent();  // slot 0
+    virtual ~IWorkEvent() {}  // slot 0
     virtual void OnSystemPause(unsigned int) {}  // slot 2
     virtual void OnShutdownForce() {}  // slot 3
     virtual bool IsShutdownForce() { return true; }  // slot 4

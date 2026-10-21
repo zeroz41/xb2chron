@@ -27,7 +27,7 @@ public:
     virtual void filterARX(float, float);  // slot 3
     virtual void filterARY(float, float);  // slot 4
     virtual void getFilterName() const;  // slot 5
-    virtual ~PadFilterStd();  // slot 6
+    virtual ~PadFilterStd() {}  // slot 6
 };
 }  // namespace fw
 

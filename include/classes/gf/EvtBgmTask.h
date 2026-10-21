@@ -5,7 +5,7 @@ namespace gf {
 // table none (its derived classes')
 class EvtBgmTask {
 public:
-    virtual ~EvtBgmTask();  // slot 0
+    virtual ~EvtBgmTask() {}  // slot 0
     virtual bool isVolumeTask() const { return false; }  // slot 2
     virtual bool isPlayTask() const { return false; }  // slot 3
 };

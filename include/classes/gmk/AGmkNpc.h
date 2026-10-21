@@ -8,7 +8,7 @@ namespace gmk {
 // table 0x7100B719F8
 class AGmkNpc {
 public:
-    virtual ~AGmkNpc();  // slot 0
+    virtual ~AGmkNpc() {}  // slot 0
     virtual bool isPopCondMatched() const = 0;  // slot 2
     virtual void isDepopCondMatched() const = 0;  // slot 3
     virtual void vf4() = 0;  // slot 4

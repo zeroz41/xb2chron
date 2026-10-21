@@ -5,7 +5,7 @@ namespace gf {
 // table 0x7100B52910
 class GfFobjDropitem {
 public:
-    virtual ~GfFobjDropitem();  // slot 0
+    virtual ~GfFobjDropitem() {}  // slot 0
 };
 }  // namespace gf
 

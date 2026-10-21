@@ -7,7 +7,7 @@ namespace ml {
 // table 0x7100B7D7F8
 class DrResMdoInstPartsObj {
 public:
-    virtual ~DrResMdoInstPartsObj();  // slot 0
+    virtual ~DrResMdoInstPartsObj() {}  // slot 0
     virtual void setPosFrame(float) {}  // slot 2
     virtual void getPosFrame() const;  // slot 3
     virtual void getPosMaxFrame() const;  // slot 4

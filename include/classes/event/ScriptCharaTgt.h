@@ -7,7 +7,7 @@ namespace event {
 // table 0x7100B3F1F8
 class ScriptCharaTgt {
 public:
-    virtual ~ScriptCharaTgt();  // slot 0
+    virtual ~ScriptCharaTgt() {}  // slot 0
     virtual void cmdName() const;  // slot 2
     virtual void doit(event::Param const&);  // slot 3
     virtual void undo(event::Param const&);  // slot 4

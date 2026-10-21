@@ -5,7 +5,7 @@ namespace layer {
 // table none (its derived classes')
 class LayerSortObj {
 public:
-    virtual ~LayerSortObj();  // slot 0
+    virtual ~LayerSortObj() {}  // slot 0
     virtual void alphaRender() {}  // slot 2
     virtual void lastRender() {}  // slot 3
 };

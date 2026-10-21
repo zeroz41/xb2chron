@@ -18,7 +18,7 @@ public:
 // table 0x7100B3CFA8; base at 0x0 unknown (TUnk_B3CFA8), base at 0x8 unknown (TUnk_B3CFD0)
 class FormManager : public TUnk_B3CFA8, public TUnk_B3CFD0 {
 public:
-    virtual ~FormManager();  // slot 0
+    virtual ~FormManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event

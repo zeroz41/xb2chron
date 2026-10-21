@@ -5,7 +5,7 @@ namespace event {
 // table 0x7100B3BF90
 class RotAxis {
 public:
-    virtual ~RotAxis();  // slot 0
+    virtual ~RotAxis() {}  // slot 0
 };
 }  // namespace event
 

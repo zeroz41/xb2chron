@@ -5,7 +5,7 @@ namespace event {
 // table 0x7100B3C9F0
 class CharaIKUpdater {
 public:
-    virtual ~CharaIKUpdater();  // slot 0
+    virtual ~CharaIKUpdater() {}  // slot 0
 };
 }  // namespace event
 

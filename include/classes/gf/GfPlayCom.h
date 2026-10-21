@@ -9,7 +9,7 @@ namespace gf {
 class GfPlayCom {
 public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfPlayCom();  // slot 1
+    virtual ~GfPlayCom() {}  // slot 1
     virtual void getFuncName() const = 0;  // slot 3
     virtual void start() {}  // slot 4
     virtual void end() {}  // slot 5

@@ -9,7 +9,7 @@ namespace gf {
 // table none (its derived classes')
 class GfMenuItemAdapter::IConverter {
 public:
-    virtual ~IConverter();  // slot 0
+    virtual ~IConverter() {}  // slot 0
     virtual void getItemInfo(gf::MenuItemInfo&) = 0;  // slot 2
     virtual void fromList();  // slot 3
     virtual void fromPouch();  // slot 4

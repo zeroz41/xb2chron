@@ -7,7 +7,7 @@ namespace ml {
 // table 0x7100B7F968
 class IDrDrawCallback {
 public:
-    virtual ~IDrDrawCallback();  // slot 0
+    virtual ~IDrDrawCallback() {}  // slot 0
     virtual void begin() {}  // slot 2
     virtual void end() {}  // slot 3
     virtual void apply(ml::IDrDrawWorkInfo const*) {}  // slot 4

@@ -8,7 +8,7 @@ namespace event {
 // table none (its derived classes')
 class CamBase {
 public:
-    virtual ~CamBase();  // slot 0
+    virtual ~CamBase() {}  // slot 0
     virtual void update(event::FrameInfo const&) = 0;  // slot 2
     virtual void render(mm::Col4 const&) {}  // slot 3
     virtual void tail() {}  // slot 4

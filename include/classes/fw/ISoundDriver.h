@@ -18,7 +18,7 @@ namespace fw {
 // table 0x7100B43168
 class ISoundDriver {
 public:
-    virtual ~ISoundDriver();  // slot 0
+    virtual ~ISoundDriver() {}  // slot 0
     virtual void update(fw::UpdateInfo const&) = 0;  // slot 2
     virtual void finalize() = 0;  // slot 3
     virtual void updateDebugInfo(mm::mtl::FixedVector<fw::SoundHandleDebugInfo, 128ul>&, mm::mtl::FixedVector<fw::SoundCategoryDebugInfo, 18ul>&) = 0;  // slot 4

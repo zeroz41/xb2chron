@@ -18,7 +18,7 @@ public:
 // table 0x7100B3C660; base at 0x0 unknown (TUnk_B3C660), base at 0x8 unknown (TUnk_B3C688)
 class BgmManager : public TUnk_B3C660, public TUnk_B3C688 {
 public:
-    virtual ~BgmManager();  // slot 0
+    virtual ~BgmManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event

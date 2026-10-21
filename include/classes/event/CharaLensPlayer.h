@@ -5,7 +5,7 @@ namespace event {
 // table 0x7100B3CA58
 class CharaLensPlayer {
 public:
-    virtual ~CharaLensPlayer();  // slot 0
+    virtual ~CharaLensPlayer() {}  // slot 0
 };
 }  // namespace event
 

@@ -5,7 +5,7 @@ namespace event {
 // table 0x7100B3D8F0
 class VolumeSkip {
 public:
-    virtual ~VolumeSkip();  // slot 0
+    virtual ~VolumeSkip() {}  // slot 0
 };
 }  // namespace event
 

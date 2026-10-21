@@ -5,7 +5,7 @@ namespace gmk {
 // table 0x7100B6F398
 class GameFlagCond {
 public:
-    virtual ~GameFlagCond();  // slot 0
+    virtual ~GameFlagCond() {}  // slot 0
 };
 }  // namespace gmk
 

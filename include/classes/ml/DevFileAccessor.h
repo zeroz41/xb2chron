@@ -11,7 +11,7 @@ namespace ml {
 // table none (its derived classes')
 class DevFileAccessor {
 public:
-    virtual ~DevFileAccessor();  // slot 0
+    virtual ~DevFileAccessor() {}  // slot 0
     virtual void initialize() = 0;  // slot 2
     virtual void finalize() = 0;  // slot 3
     virtual void tail() = 0;  // slot 4

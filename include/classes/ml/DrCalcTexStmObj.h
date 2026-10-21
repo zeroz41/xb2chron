@@ -5,7 +5,7 @@ namespace ml {
 // table 0x7100B7EDC8
 class DrCalcTexStmObj {
 public:
-    virtual ~DrCalcTexStmObj();  // slot 0
+    virtual ~DrCalcTexStmObj() {}  // slot 0
 };
 }  // namespace ml
 

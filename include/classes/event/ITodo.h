@@ -7,7 +7,7 @@ namespace event {
 // table none (its derived classes')
 class ITodo {
 public:
-    virtual ~ITodo();  // slot 0
+    virtual ~ITodo() {}  // slot 0
     virtual void cmdName() const = 0;  // slot 2
     virtual void doit(event::Param const&) = 0;  // slot 3
     virtual void undo(event::Param const&) {}  // slot 4

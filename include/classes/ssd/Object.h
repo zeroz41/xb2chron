@@ -5,7 +5,7 @@ namespace ssd {
 // table 0x7100B81C30
 class Object {
 public:
-    virtual ~Object();  // slot 0
+    virtual ~Object() {}  // slot 0
 };
 }  // namespace ssd
 

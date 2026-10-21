@@ -18,7 +18,7 @@ public:
 // table 0x7100B3C730; base at 0x0 unknown (TUnk_B3C730), base at 0x8 unknown (TUnk_B3C758)
 class EnvManager : public TUnk_B3C730, public TUnk_B3C758 {
 public:
-    virtual ~EnvManager();  // slot 0
+    virtual ~EnvManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event

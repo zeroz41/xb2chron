@@ -8,7 +8,7 @@ namespace event {
 class LipsyncRes {
 public:
     virtual void OnResEvent(event::IResEvent::PARAM const&);  // slot 0
-    virtual ~LipsyncRes();  // slot 1
+    virtual ~LipsyncRes() {}  // slot 1
 };
 }  // namespace event
 

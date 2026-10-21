@@ -9,7 +9,7 @@ namespace ml {
 // table none (its derived classes')
 class DrMdlBase {
 public:
-    virtual ~DrMdlBase();  // slot 0
+    virtual ~DrMdlBase() {}  // slot 0
     virtual void update() = 0;  // slot 2
     virtual void dispOffUpdate() {}  // slot 3
     virtual void noOffScreenUpdate() {}  // slot 4

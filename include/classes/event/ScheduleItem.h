@@ -5,7 +5,7 @@ namespace event {
 // table 0x7100B3D540
 class ScheduleItem {
 public:
-    virtual ~ScheduleItem();  // slot 0
+    virtual ~ScheduleItem() {}  // slot 0
 };
 }  // namespace event
 

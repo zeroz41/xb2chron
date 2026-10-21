@@ -18,7 +18,7 @@ public:
 // table 0x7100B3D748; base at 0x0 unknown (TUnk_B3D748), base at 0x8 unknown (TUnk_B3D770)
 class SelectManager : public TUnk_B3D748, public TUnk_B3D770 {
 public:
-    virtual ~SelectManager();  // slot 0
+    virtual ~SelectManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event

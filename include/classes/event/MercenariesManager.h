@@ -18,7 +18,7 @@ public:
 // table 0x7100B3D6E0; base at 0x0 unknown (TUnk_B3D6E0), base at 0x8 unknown (TUnk_B3D708)
 class MercenariesManager : public TUnk_B3D6E0, public TUnk_B3D708 {
 public:
-    virtual ~MercenariesManager();  // slot 0
+    virtual ~MercenariesManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event

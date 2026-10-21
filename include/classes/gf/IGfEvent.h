@@ -12,7 +12,7 @@ namespace gf {
 // table 0x7100B55698
 class IGfEvent {
 public:
-    virtual ~IGfEvent();  // slot 0
+    virtual ~IGfEvent() {}  // slot 0
     virtual void vf2();  // slot 2
     virtual void vf3();  // slot 3
     virtual void vf4();  // slot 4

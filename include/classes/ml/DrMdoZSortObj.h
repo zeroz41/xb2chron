@@ -5,7 +5,7 @@ namespace ml {
 // table 0x7100B7C668
 class DrMdoZSortObj {
 public:
-    virtual ~DrMdoZSortObj();  // slot 0
+    virtual ~DrMdoZSortObj() {}  // slot 0
     virtual void SetupRender() {}  // slot 2
     virtual void ZPrepassRender() {}  // slot 3
     virtual void ThicknessRenderFirst() {}  // slot 4

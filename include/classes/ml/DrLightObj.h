@@ -7,7 +7,7 @@ namespace ml {
 // table 0x7100B7B530
 class DrLightObj {
 public:
-    virtual ~DrLightObj();  // slot 0
+    virtual ~DrLightObj() {}  // slot 0
     virtual void update(ml::DrLightMan*) {}  // slot 2
 };
 }  // namespace ml

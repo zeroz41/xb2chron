@@ -5,7 +5,7 @@ namespace gf {
 // table 0x7100B6A288
 class GfObjProperty {
 public:
-    virtual ~GfObjProperty();  // slot 0
+    virtual ~GfObjProperty() {}  // slot 0
 };
 }  // namespace gf
 

@@ -5,7 +5,7 @@ namespace event {
 // table 0x7100B3D868
 class VoiceMaker {
 public:
-    virtual ~VoiceMaker();  // slot 0
+    virtual ~VoiceMaker() {}  // slot 0
 };
 }  // namespace event
 

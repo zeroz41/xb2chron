@@ -5,7 +5,7 @@ namespace gf {
 // table 0x7100B566A0
 class GfSpeedTween {
 public:
-    virtual ~GfSpeedTween();  // slot 0
+    virtual ~GfSpeedTween() {}  // slot 0
 };
 }  // namespace gf
 

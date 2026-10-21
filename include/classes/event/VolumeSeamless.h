@@ -5,7 +5,7 @@ namespace event {
 // table 0x7100B3D910
 class VolumeSeamless {
 public:
-    virtual ~VolumeSeamless();  // slot 0
+    virtual ~VolumeSeamless() {}  // slot 0
 };
 }  // namespace event
 

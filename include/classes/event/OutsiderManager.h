@@ -18,7 +18,7 @@ public:
 // table 0x7100B3D350; base at 0x0 unknown (TUnk_B3D350), base at 0x8 unknown (TUnk_B3D378)
 class OutsiderManager : public TUnk_B3D350, public TUnk_B3D378 {
 public:
-    virtual ~OutsiderManager();  // slot 0
+    virtual ~OutsiderManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event

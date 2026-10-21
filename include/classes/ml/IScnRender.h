@@ -8,7 +8,7 @@ namespace ml {
 // table 0x7100B3A1A0
 class IScnRender {
 public:
-    virtual ~IScnRender();  // slot 0
+    virtual ~IScnRender() {}  // slot 0
     virtual void cbPreUpdate(ml::Scn*, ml::SCNPRIO_CB) {}  // slot 2
     virtual void cbManipuPickOn(ml::Scn*, ml::SCNPRIO_CB) {}  // slot 3
     virtual void cbManipuPickOff(ml::Scn*, ml::SCNPRIO_CB) {}  // slot 4

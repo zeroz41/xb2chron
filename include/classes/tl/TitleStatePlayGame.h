@@ -11,7 +11,7 @@ namespace tl {
 // table 0x7100B40610
 class TitleStatePlayGame : public ::ai::State, public ::gf::IGfEvent {
 public:
-    virtual ~TitleStatePlayGame();  // slot 0
+    virtual ~TitleStatePlayGame() {}  // slot 0
     virtual void getName() const;  // slot 2
     virtual void onEnter(void*, ai::State*);  // slot 3
     virtual void onLeave(void*, ai::State*);  // slot 4

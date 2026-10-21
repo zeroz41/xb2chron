@@ -8,7 +8,7 @@ namespace gf {
 // table none (its derived classes')
 class WeatherObj {
 public:
-    virtual ~WeatherObj();  // slot 0
+    virtual ~WeatherObj() {}  // slot 0
     virtual void create(gf::WEATYPE) = 0;  // slot 2
     virtual void destroy() = 0;  // slot 3
     virtual void vf4();  // slot 4

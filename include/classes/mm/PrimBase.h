@@ -8,7 +8,7 @@ namespace mm {
 // table none (its derived classes')
 class PrimBase {
 public:
-    virtual ~PrimBase();  // slot 0
+    virtual ~PrimBase() {}  // slot 0
     virtual void getOBB(mm::Obb&) const = 0;  // slot 2
     virtual void getAABB(mm::Aabb&) const = 0;  // slot 3
     virtual void getPos() const;  // slot 4

@@ -8,7 +8,7 @@ namespace ui {
 // table none (its derived classes')
 class UITagConv {
 public:
-    virtual ~UITagConv();  // slot 0
+    virtual ~UITagConv() {}  // slot 0
     virtual void getTagName() = 0;  // slot 2
     virtual void convBegin(mm::mtl::FixedVector<mm::mtl::MapPair<char const*, char const*>, 8ul> const&, unsigned short) = 0;  // slot 3
     virtual void convEnd();  // slot 4

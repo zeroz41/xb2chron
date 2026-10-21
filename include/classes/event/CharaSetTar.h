@@ -7,7 +7,7 @@ namespace event {
 // table 0x7100B3E4F8
 class CharaSetTar : public ::event::ICmd {
 public:
-    virtual ~CharaSetTar();  // slot 0
+    virtual ~CharaSetTar() {}  // slot 0
     virtual void update(event::ICmd::Param const&);  // slot 3
     virtual void term();  // slot 4
 };

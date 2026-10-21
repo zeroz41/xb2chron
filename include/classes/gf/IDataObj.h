@@ -8,7 +8,7 @@ namespace gf {
 // table none (its derived classes')
 class IDataObj {
 public:
-    virtual ~IDataObj();  // slot 0
+    virtual ~IDataObj() {}  // slot 0
     virtual void setMenuParam() {}  // slot 2
     virtual bool isValid() const = 0;  // slot 3
     virtual void getModelResourceName() const;  // slot 4

@@ -5,7 +5,7 @@ namespace event {
 // table 0x7100B3BF70
 class PosAxis {
 public:
-    virtual ~PosAxis();  // slot 0
+    virtual ~PosAxis() {}  // slot 0
 };
 }  // namespace event
 

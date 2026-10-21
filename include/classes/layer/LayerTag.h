@@ -7,7 +7,7 @@ namespace layer {
 // table none (its derived classes')
 class LayerTag {
 public:
-    virtual ~LayerTag();  // slot 0
+    virtual ~LayerTag() {}  // slot 0
     virtual void beginParseString() = 0;  // slot 2
     virtual void endParseString() = 0;  // slot 3
     virtual void parseNotTag(unsigned char const*, unsigned int&) = 0;  // slot 4

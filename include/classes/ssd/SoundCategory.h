@@ -5,7 +5,7 @@ namespace ssd {
 // table 0x7100B43330
 class SoundCategory {
 public:
-    virtual ~SoundCategory();  // slot 0
+    virtual ~SoundCategory() {}  // slot 0
 };
 }  // namespace ssd
 

@@ -18,7 +18,7 @@ public:
 // table 0x7100B3D698; base at 0x0 unknown (TUnk_B3D698), base at 0x8 unknown (TUnk_B3D6C0)
 class QuestManager : public TUnk_B3D698, public TUnk_B3D6C0 {
 public:
-    virtual ~QuestManager();  // slot 0
+    virtual ~QuestManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event

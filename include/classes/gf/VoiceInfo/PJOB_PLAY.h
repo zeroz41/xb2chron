@@ -5,7 +5,7 @@ namespace gf { namespace VoiceInfo {
 // table 0x7100B56B60
 class PJOB_PLAY {
 public:
-    virtual ~PJOB_PLAY();  // slot 0
+    virtual ~PJOB_PLAY() {}  // slot 0
     virtual void exec();  // slot 2
     virtual void getName();  // slot 3
     virtual void getVoiceHandle() const;  // slot 4

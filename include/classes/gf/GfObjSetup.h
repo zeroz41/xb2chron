@@ -7,7 +7,7 @@ namespace gf {
 class GfObjSetup {
 public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfObjSetup();  // slot 1
+    virtual ~GfObjSetup() {}  // slot 1
     virtual void getFootStep() const;  // slot 3
     virtual void getFootStepEffect() const;  // slot 4
     virtual void getEnArrangeID() const;  // slot 5

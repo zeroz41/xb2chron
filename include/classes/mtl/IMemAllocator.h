@@ -7,7 +7,7 @@ namespace mtl {
 // table none (its derived classes')
 class IMemAllocator {
 public:
-    virtual ~IMemAllocator();  // slot 0
+    virtual ~IMemAllocator() {}  // slot 0
     virtual void create(void*, unsigned long, char const*) = 0;  // slot 2
     virtual void destroy() = 0;  // slot 3
     virtual void getType() const = 0;  // slot 4

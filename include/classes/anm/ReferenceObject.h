@@ -5,7 +5,7 @@ namespace anm {
 // table 0x7100B81078
 class ReferenceObject {
 public:
-    virtual ~ReferenceObject();  // slot 0
+    virtual ~ReferenceObject() {}  // slot 0
 };
 }  // namespace anm
 
