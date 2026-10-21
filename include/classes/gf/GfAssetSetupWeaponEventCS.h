@@ -1,4 +1,3 @@
-// not proven yet: its table differs from the original's (word 5: _ZNK2gf18GfAssetSetupWeapon20getAssetCategoryNameEv where the original has _ZNK2gf12GfAssetSetup20getAssetCategoryNameEv)
 #ifndef CLASSES_GF_GFASSETSETUPWEAPONEVENTCS_H
 #define CLASSES_GF_GFASSETSETUPWEAPONEVENTCS_H
 

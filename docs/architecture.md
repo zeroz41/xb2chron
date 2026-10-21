@@ -201,9 +201,9 @@ started another object, so its slots are read on while they hold functions, neve
 names: `layer::LayerObj`'s table is followed by `LayerActBase::s_pCallActEnd`, member function pointers that
 read like slots and once made `LayerObj` too long to be the base of the classes deriving from it.
 
-Compiled with the project's compiler, 2,409 of the 2,439 tables the module has come out word for word as the
-original's (994 of them with a destructor the linker folded into its base's identical one, 273 with slots the
-names do not reach yet); the 23 headers that do not compile or differ say why at their top. What the tables do
+Compiled with the project's compiler, 2,411 of the 2,439 tables the module has come out word for word as the
+original's (995 of them with a destructor the linker folded into its base's identical one, 273 with slots the
+names do not reach yet); the 21 headers that do not compile or differ say why at their top. What the tables do
 not say stays a placeholder: a base no evidence names (`TUnk_<address>`), a slot no function names
 (`vf<slot>`), return types (`void` until code proves one), fields (padding where a derived class's layout proves
 a base's size). 58 bases with no table of their own are rebuilt from the slots their derived classes inherit.
