@@ -14,7 +14,7 @@ public:
     virtual void findPosRot(mm::Vec3&, mm::Vec3&, gf::GF_OBJ_HANDLE*, gmk::GmkEnemyInsts::PopInfo::PopEnemyInfo const&) const;  // slot 0
     virtual void isYSnap() const;  // slot 1
     virtual void onPopGob(gf::GF_OBJ_HANDLE*) const;  // slot 2
-    virtual void onCreateGobInsts(unsigned int) const;  // slot 3
+    virtual void onCreateGobInsts(unsigned int) const {}  // slot 3
 };
 }  // namespace gmk
 

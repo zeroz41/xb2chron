@@ -13,7 +13,7 @@ public:
     virtual void isValid() const;  // slot 3
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
     virtual void dispose();  // slot 5
-    virtual void debugUpdateMmf();  // slot 10
+    virtual void debugUpdateMmf() {}  // slot 10
 };
 }  // namespace gmk
 

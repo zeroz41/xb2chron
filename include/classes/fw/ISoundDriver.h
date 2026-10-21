@@ -33,7 +33,7 @@ public:
     virtual void addCategory(fw::SoundCategory, float, char const*) = 0;  // slot 13
     virtual void removeCategory(fw::SoundCategory) = 0;  // slot 14
     virtual void pauseCategory(fw::SoundCategory, bool, float) = 0;  // slot 15
-    virtual void isDeviceEnable() const;  // slot 16
+    virtual bool isDeviceEnable() const { return false; }  // slot 16
     virtual void playBgm(char const*, float, bool, int, fw::SoundCategory) = 0;  // slot 17
     virtual void startBgm(unsigned int) = 0;  // slot 18
     virtual void stopBgm(unsigned int, float) = 0;  // slot 19

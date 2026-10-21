@@ -13,7 +13,7 @@ public:
 class WinProcRoot : public ::ml::WorkObj, public TUnk_B78808 {
 public:
     virtual ~WinProcRoot();  // slot 0
-    virtual void wkStandbyLogin();  // slot 14
+    virtual bool wkStandbyLogin();  // slot 14
     virtual void wkStandbyLogout();  // slot 15
 };
 }  // namespace ml

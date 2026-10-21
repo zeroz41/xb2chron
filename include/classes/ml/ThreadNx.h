@@ -8,8 +8,8 @@ namespace ml {
 class ThreadNx : public ::ml::Thread {
 public:
     virtual ~ThreadNx();  // slot 0
-    virtual void isSuspended() const;  // slot 2
-    virtual void isTerminated();  // slot 3
+    virtual bool isSuspended() const;  // slot 2
+    virtual bool isTerminated();  // slot 3
     virtual void exitThread();  // slot 4
     virtual void getHandle() const;  // slot 5
     virtual void getID() const;  // slot 6

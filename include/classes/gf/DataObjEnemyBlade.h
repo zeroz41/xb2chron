@@ -27,8 +27,8 @@ public:
     virtual void getQuestRace() const;  // slot 38
     virtual void getGender() const;  // slot 39
     virtual void getAttribute(bool, int) const;  // slot 40
-    virtual void isDispInitExtraParts(unsigned int) const;  // slot 41
-    virtual void isEnbaleTarget() const;  // slot 54
+    virtual bool isDispInitExtraParts(unsigned int) const;  // slot 41
+    virtual bool isEnbaleTarget() const { return false; }  // slot 54
     virtual void getEyeRotControl() const;  // slot 59
     virtual void getEquipWeapon(bool, int) const;  // slot 82
     virtual void getBladeArts(bool, unsigned int) const;  // slot 83

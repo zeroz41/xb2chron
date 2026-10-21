@@ -8,7 +8,7 @@ namespace gf {
 class DataObjEnemy : public ::gf::IDataObj {
 public:
     virtual ~DataObjEnemy();  // slot 0
-    virtual void isValid() const;  // slot 3
+    virtual bool isValid() const;  // slot 3
     virtual void getModelResourceName() const;  // slot 4
     virtual void getMotionResourceName() const;  // slot 5
     virtual void getEffectResourceName() const;  // slot 6
@@ -34,9 +34,9 @@ public:
     virtual void getFootStep() const;  // slot 34
     virtual void getFootStepEffect() const;  // slot 35
     virtual void getAttribute(bool, int) const;  // slot 40
-    virtual void isDispInitExtraParts(unsigned int) const;  // slot 41
+    virtual bool isDispInitExtraParts(unsigned int) const;  // slot 41
     virtual void vf42();  // slot 42
-    virtual void isScenarioMask() const;  // slot 43
+    virtual bool isScenarioMask() const;  // slot 43
     virtual void getVoiceStr() const;  // slot 45
     virtual void vf46();  // slot 46
     virtual void setVirtualEquipWpn(unsigned int, int);  // slot 47
@@ -45,23 +45,23 @@ public:
     virtual void setVirtualEquipWpnChip(unsigned int);  // slot 50
     virtual void setVirtualEquipOrb(unsigned int, unsigned int);  // slot 51
     virtual void vf52();  // slot 52
-    virtual void isEnbaleTarget() const;  // slot 54
+    virtual bool isEnbaleTarget() const;  // slot 54
     virtual void getMenuOffset() const;  // slot 55
-    virtual void isNoCameraFade() const;  // slot 56
+    virtual bool isNoCameraFade() const;  // slot 56
     virtual void getCamBone() const;  // slot 57
     virtual void getCenterBone() const;  // slot 58
     virtual void getEyeRotControl() const;  // slot 59
     virtual void getBlade(bool, int) const;  // slot 66
     virtual void getEquipWeapon(bool, int) const;  // slot 82
-    virtual void isWeaponDrawDisp() const;  // slot 110
+    virtual bool isWeaponDrawDisp() const;  // slot 110
     virtual void getBdatIdEnRsc() const;  // slot 111
     virtual void getBdatIdEnParam() const;  // slot 112
     virtual void getBdatIdEnArrange() const;  // slot 113
-    virtual void isGuardFront() const;  // slot 114
-    virtual void isGuardLeft() const;  // slot 115
-    virtual void isGuardRight() const;  // slot 116
-    virtual void isGuardBack() const;  // slot 117
-    virtual void isFieldDamage() const;  // slot 118
+    virtual bool isGuardFront() const;  // slot 114
+    virtual bool isGuardLeft() const;  // slot 115
+    virtual bool isGuardRight() const;  // slot 116
+    virtual bool isGuardBack() const;  // slot 117
+    virtual bool isFieldDamage() const;  // slot 118
     virtual void getResistancePower() const;  // slot 119
     virtual void getResistanceEther() const;  // slot 120
     virtual void getResistanceCombo() const;  // slot 121
@@ -71,7 +71,7 @@ public:
     virtual void getLevelWp() const;  // slot 125
     virtual void getLevelSp() const;  // slot 126
     virtual void getGenus() const;  // slot 127
-    virtual void isLinkGenus() const;  // slot 128
+    virtual bool isLinkGenus() const;  // slot 128
     virtual void getLinkRadius() const;  // slot 129
     virtual void getGoldDivide() const;  // slot 130
     virtual void getGoldDivideRev() const;  // slot 131

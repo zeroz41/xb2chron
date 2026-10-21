@@ -19,7 +19,7 @@ public:
     enum RENDER_INFO : int;
     virtual ~WinView();  // slot 0
     virtual void wkTail();  // slot 12
-    virtual void wkStandbyLogin();  // slot 14
+    virtual bool wkStandbyLogin();  // slot 14
     virtual void wkStandbyLogout();  // slot 15
     virtual void evtFocusOn();  // slot 17
     virtual void evtFocusOff();  // slot 18

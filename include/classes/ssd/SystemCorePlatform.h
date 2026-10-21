@@ -20,7 +20,7 @@ public:
     virtual void GetSoundEffectList(int, ssd::SoundEffecter**, int*) = 0;  // slot 8
     virtual void AddSoundEffecter(unsigned char, ssd::SoundEffecter*) = 0;  // slot 9
     virtual void RemoveSoundEffecter(ssd::SoundEffecter*) = 0;  // slot 10
-    virtual void IsActiveEffect(unsigned char) = 0;  // slot 11
+    virtual bool IsActiveEffect(unsigned char) = 0;  // slot 11
     virtual void GetNumPlaySound() const = 0;  // slot 12
     virtual void GetSpeedOfSound() const = 0;  // slot 13
     virtual void SetSpeedOfSound(float) = 0;  // slot 14

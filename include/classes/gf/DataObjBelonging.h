@@ -8,7 +8,7 @@ namespace gf {
 class DataObjBelonging : public ::gf::IDataObj {
 public:
     virtual ~DataObjBelonging();  // slot 0
-    virtual void isValid() const;  // slot 3
+    virtual bool isValid() const;  // slot 3
     virtual void getModelResourceName() const;  // slot 4
     virtual void getMotionResourceName() const;  // slot 5
     virtual void getName() const;  // slot 8
@@ -16,7 +16,7 @@ public:
     virtual void getBdatId() const;  // slot 11
     virtual void getObjType() const;  // slot 12
     virtual void vf42();  // slot 42
-    virtual void isScenarioMask() const;  // slot 43
+    virtual bool isScenarioMask() const;  // slot 43
     virtual void vf46();  // slot 46
     virtual void setVirtualEquipWpn(unsigned int, int);  // slot 47
     virtual void setVirtualEquipAcc(unsigned int, unsigned int);  // slot 48

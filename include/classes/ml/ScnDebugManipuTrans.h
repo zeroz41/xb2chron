@@ -10,7 +10,7 @@ class ScnDebugManipuTrans {
 public:
     virtual ~ScnDebugManipuTrans();  // slot 0
     virtual void checkMouseButtonDown(ml::EventView*);  // slot 2
-    virtual void checkMouseButtonUp(ml::EventView*);  // slot 3
+    virtual bool checkMouseButtonUp(ml::EventView*);  // slot 3
     virtual void checkMouseMove(ml::EventView*);  // slot 4
     virtual void setRadius(float);  // slot 5
     virtual void update();  // slot 6

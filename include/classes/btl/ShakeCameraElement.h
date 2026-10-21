@@ -6,7 +6,7 @@ namespace btl {
 class ShakeCameraElement {
 public:
     virtual ~ShakeCameraElement();  // slot 0
-    virtual void StopEternalShake();  // slot 2
+    virtual void StopEternalShake() {}  // slot 2
 };
 }  // namespace btl
 

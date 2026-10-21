@@ -11,9 +11,9 @@ namespace gf {
 class EvtBgmTaskVolume : public ::gf::EvtBgmTask {
 public:
     virtual ~EvtBgmTaskVolume();  // slot 0
-    virtual void isVolumeTask() const;  // slot 2
+    virtual bool isVolumeTask() const { return true; }  // slot 2
     virtual void start(gf::GfEvtBgm*);  // slot 4
-    virtual void update(gf::GfEvtBgm*, fw::UpdateInfo const&);  // slot 5
+    virtual bool update(gf::GfEvtBgm*, fw::UpdateInfo const&);  // slot 5
     virtual void cancel(gf::GfEvtBgm*);  // slot 6
 };
 }  // namespace gf

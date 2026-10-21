@@ -14,7 +14,7 @@ class LayerObjTopMaskObj : public ::layer::LayerObj {
 public:
     virtual ~LayerObjTopMaskObj();  // slot 0
     virtual void resourceInit();  // slot 3
-    virtual void setDrawList(layer::LayerSortMan*, bool);  // slot 7
+    virtual void setDrawList(layer::LayerSortMan*, bool) {}  // slot 7
     virtual void applyParams(layer::LayerRenderView const*, layer::LayerResMatrix const&, layer::LayerResColor const&);  // slot 9
 };
 }  // namespace layer

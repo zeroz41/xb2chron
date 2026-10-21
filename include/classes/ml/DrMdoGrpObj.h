@@ -12,7 +12,7 @@ public:
     virtual ~DrMdoGrpObj();  // slot 0
     virtual void update();  // slot 2
     virtual void dispOffUpdate();  // slot 3
-    virtual void resourceInit();  // slot 5
+    virtual void resourceInit() {}  // slot 5
     virtual void shadowRender();  // slot 6
     virtual void shadowCacheRender(ml::DrPixlShadowCacheObj&);  // slot 7
     virtual void shadowCacheOnlyRender();  // slot 9

@@ -8,7 +8,7 @@ public:
     virtual ~CloudObj();  // slot 0
     virtual void update() = 0;  // slot 2
     virtual void alphaRender() = 0;  // slot 3
-    virtual void alphaRenderSec();  // slot 4
+    virtual void alphaRenderSec() {}  // slot 4
 };
 }  // namespace cloud
 

@@ -14,7 +14,7 @@ public:
     virtual void fadeout() = 0;  // slot 4
     virtual void update(fw::UpdateInfo const&, float, bool) = 0;  // slot 5
     virtual void isPlay() const = 0;  // slot 6
-    virtual void setForceName(char const*);  // slot 7
+    virtual void setForceName(char const*) {}  // slot 7
 };
 }  // namespace gf
 

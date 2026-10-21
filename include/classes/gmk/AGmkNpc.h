@@ -9,7 +9,7 @@ namespace gmk {
 class AGmkNpc {
 public:
     virtual ~AGmkNpc();  // slot 0
-    virtual void isPopCondMatched() const = 0;  // slot 2
+    virtual bool isPopCondMatched() const = 0;  // slot 2
     virtual void isDepopCondMatched() const = 0;  // slot 3
     virtual void vf4() = 0;  // slot 4
     virtual void vf5() = 0;  // slot 5
@@ -19,7 +19,7 @@ public:
     virtual void bindToGameObj(gf::GF_OBJ_HANDLE*) const = 0;  // slot 9
     virtual void unbindToGameObj(gf::GF_OBJ_HANDLE*) const = 0;  // slot 10
     virtual void validateDisp() const = 0;  // slot 11
-    virtual void debugUpdate(float);  // slot 12
+    virtual void debugUpdate(float) {}  // slot 12
 };
 }  // namespace gmk
 

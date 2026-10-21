@@ -6,7 +6,7 @@ namespace ml {
 class DevFileJobTh {
 public:
     virtual ~DevFileJobTh();  // slot 0
-    virtual void asyncUpdate();  // slot 2
+    virtual bool asyncUpdate() { return true; }  // slot 2
     virtual void getJobType() const;  // slot 3
     virtual void getReader();  // slot 4
 };

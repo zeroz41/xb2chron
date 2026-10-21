@@ -6,8 +6,8 @@ namespace layer {
 class LayerSortObj {
 public:
     virtual ~LayerSortObj();  // slot 0
-    virtual void alphaRender();  // slot 2
-    virtual void lastRender();  // slot 3
+    virtual void alphaRender() {}  // slot 2
+    virtual void lastRender() {}  // slot 3
 };
 }  // namespace layer
 

@@ -10,7 +10,7 @@ public:
     virtual ~LookIkSolver();  // slot 0
     virtual void getRTTI() const;  // slot 2
     virtual void solve(fw::UpdateInfo const&);  // slot 3
-    virtual void isEnable() const;  // slot 4
+    virtual bool isEnable() const;  // slot 4
 };
 }  // namespace fw
 

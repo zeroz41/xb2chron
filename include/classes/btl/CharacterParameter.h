@@ -39,7 +39,7 @@ public:
     virtual void vf27();  // slot 27
     virtual void vf28();  // slot 28
     virtual void vf29();  // slot 29
-    virtual void IsFallDeadDrop() const;  // slot 30
+    virtual bool IsFallDeadDrop() const { return true; }  // slot 30
     virtual void SetAngry(bool, float);  // slot 31
     virtual void vf32();  // slot 32
     virtual void vf33();  // slot 33
@@ -75,13 +75,13 @@ public:
     virtual void vf63();  // slot 63
     virtual void vf64();  // slot 64
     virtual void vf65();  // slot 65
-    virtual void IsBoss() const;  // slot 66
-    virtual void IsNamed() const;  // slot 67
-    virtual void IsBossOrNamed() const;  // slot 68
-    virtual void IsEatTarget() const;  // slot 69
-    virtual void IsChild() const;  // slot 70
-    virtual void IsInvalidHikariSp() const;  // slot 71
-    virtual void IsAlwaysKakusei() const;  // slot 72
+    virtual bool IsBoss() const;  // slot 66
+    virtual bool IsNamed() const;  // slot 67
+    virtual bool IsBossOrNamed() const;  // slot 68
+    virtual bool IsEatTarget() const;  // slot 69
+    virtual bool IsChild() const;  // slot 70
+    virtual bool IsInvalidHikariSp() const;  // slot 71
+    virtual bool IsAlwaysKakusei() const;  // slot 72
     virtual void vf73();  // slot 73
     virtual void vf74();  // slot 74
     virtual void vf75();  // slot 75

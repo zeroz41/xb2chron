@@ -21,7 +21,7 @@ public:
     virtual void BeforeUpdate(btl::BattleCharacter*, gf::GfComBehaviorPc*, fw::UpdateInfo const&);  // slot 10
     virtual void Update(btl::BattleCharacter*, gf::GfComBehaviorPc*, fw::UpdateInfo const&) = 0;  // slot 11
     virtual void AfterUpdate(btl::BattleCharacter*, gf::GfComBehaviorPc*, fw::UpdateInfo const&);  // slot 12
-    virtual void IsBattleActionState() const;  // slot 13
+    virtual bool IsBattleActionState() const { return true; }  // slot 13
 };
 }}  // namespace gf::pc
 

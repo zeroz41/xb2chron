@@ -6,8 +6,8 @@ namespace ml {
 class IWorkBackground {
 public:
     virtual ~IWorkBackground();  // slot 0
-    virtual void bkgHomeMenu(bool);  // slot 2
-    virtual void bkgHomeMenuDenied();  // slot 3
+    virtual void bkgHomeMenu(bool) {}  // slot 2
+    virtual void bkgHomeMenuDenied() {}  // slot 3
 };
 }  // namespace ml
 

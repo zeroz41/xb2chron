@@ -18,7 +18,7 @@ public:
     virtual void BeforeUpdate(btl::BattleCharacter*, gf::GfComBehaviorEnemy*, fw::UpdateInfo const&);  // slot 10
     virtual void Update(btl::BattleCharacter*, gf::GfComBehaviorEnemy*, fw::UpdateInfo const&);  // slot 11
     virtual void AfterUpdate(btl::BattleCharacter*, gf::GfComBehaviorEnemy*, fw::UpdateInfo const&);  // slot 12
-    virtual void IsBattleActionState() const;  // slot 13
+    virtual bool IsBattleActionState() const { return false; }  // slot 13
 };
 }}  // namespace gf::enemy
 

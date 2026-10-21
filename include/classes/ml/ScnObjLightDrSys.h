@@ -12,7 +12,7 @@ public:
     virtual ~ScnObjLightDrSys();  // slot 0
     virtual void apply();  // slot 4
     virtual void tail();  // slot 5
-    virtual void isEnv() const;  // slot 8
+    virtual bool isEnv() const;  // slot 8
     virtual void getFrame() const;  // slot 9
     virtual void setFrame(float);  // slot 10
     virtual void getMaxFrame() const;  // slot 11

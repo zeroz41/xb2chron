@@ -14,7 +14,7 @@ public:
     virtual void render(mm::Rect<int> const&, float);  // slot 3
     virtual void adr(char const*, unsigned long*);  // slot 5
     virtual void free(void*, int);  // slot 6
-    virtual void isLoadingPrio(float) const;  // slot 7
+    virtual bool isLoadingPrio(float) const;  // slot 7
     virtual void isFailure() const;  // slot 8
 };
 }  // namespace event

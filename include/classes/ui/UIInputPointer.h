@@ -9,7 +9,7 @@ class UIInputPointer : public ::ui::UIInputLayer {
 public:
     virtual ~UIInputPointer();  // slot 0
     virtual void getInputEventExt();  // slot 2
-    virtual void hasEventExt() const;  // slot 3
+    virtual bool hasEventExt() const;  // slot 3
     virtual void clearExt();  // slot 5
     virtual void castUIInputPointer();  // slot 8
     virtual void updateImpl();  // slot 9

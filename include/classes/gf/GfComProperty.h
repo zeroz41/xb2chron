@@ -10,7 +10,7 @@ class GfComProperty {
 public:
     virtual void getRTTI() const;  // slot 0
     virtual ~GfComProperty();  // slot 1
-    virtual void changeLayer(unsigned int, unsigned int);  // slot 3
+    virtual void changeLayer(unsigned int, unsigned int) {}  // slot 3
     virtual void recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
 };
 }  // namespace gf

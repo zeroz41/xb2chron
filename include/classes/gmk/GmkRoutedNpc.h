@@ -20,7 +20,7 @@ public:
     virtual void debugDraw() const;  // slot 7
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual void getBindedRoutePointList() const;  // slot 11
-    virtual void isPopCondMatched() const;  // slot 12
+    virtual bool isPopCondMatched() const;  // slot 12
     virtual void isDepopCondMatched() const;  // slot 13
     virtual void vf14();  // slot 14
     virtual void vf15();  // slot 15

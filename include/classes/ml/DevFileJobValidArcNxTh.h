@@ -8,7 +8,7 @@ namespace ml {
 class DevFileJobValidArcNxTh : public ::ml::DevFileJobTh {
 public:
     virtual ~DevFileJobValidArcNxTh();  // slot 0
-    virtual void asyncUpdate();  // slot 2
+    virtual bool asyncUpdate();  // slot 2
 };
 }  // namespace ml
 

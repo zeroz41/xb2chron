@@ -6,8 +6,8 @@ namespace gf {
 class EvtBgmTask {
 public:
     virtual ~EvtBgmTask();  // slot 0
-    virtual void isVolumeTask() const;  // slot 2
-    virtual void isPlayTask() const;  // slot 3
+    virtual bool isVolumeTask() const { return false; }  // slot 2
+    virtual bool isPlayTask() const { return false; }  // slot 3
 };
 }  // namespace gf
 

@@ -41,7 +41,7 @@ public:
     virtual void getLength() const = 0;  // slot 26
     virtual void setGroups(int) = 0;  // slot 27
     virtual void getGroups() = 0;  // slot 28
-    virtual void dispDebugWindow(bool, char const*, ml::WinProc*);  // slot 29
+    virtual void dispDebugWindow(bool, char const*, ml::WinProc*) {}  // slot 29
 };
 }  // namespace ml
 

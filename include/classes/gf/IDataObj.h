@@ -9,8 +9,8 @@ namespace gf {
 class IDataObj {
 public:
     virtual ~IDataObj();  // slot 0
-    virtual void setMenuParam();  // slot 2
-    virtual void isValid() const = 0;  // slot 3
+    virtual void setMenuParam() {}  // slot 2
+    virtual bool isValid() const = 0;  // slot 3
     virtual void getModelResourceName() const;  // slot 4
     virtual void getMotionResourceName() const;  // slot 5
     virtual void getEffectResourceName() const;  // slot 6
@@ -48,9 +48,9 @@ public:
     virtual void getQuestRace() const;  // slot 38
     virtual void getGender() const;  // slot 39
     virtual void getAttribute(bool, int) const;  // slot 40
-    virtual void isDispInitExtraParts(unsigned int) const;  // slot 41
+    virtual bool isDispInitExtraParts(unsigned int) const { return false; }  // slot 41
     virtual void vf42() = 0;  // slot 42
-    virtual void isScenarioMask() const = 0;  // slot 43
+    virtual bool isScenarioMask() const = 0;  // slot 43
     virtual void getRole() const;  // slot 44
     virtual void getVoiceStr() const;  // slot 45
     virtual void vf46() = 0;  // slot 46
@@ -60,10 +60,10 @@ public:
     virtual void setVirtualEquipWpnChip(unsigned int) = 0;  // slot 50
     virtual void setVirtualEquipOrb(unsigned int, unsigned int) = 0;  // slot 51
     virtual void vf52() = 0;  // slot 52
-    virtual void isVirtualSetting() const;  // slot 53
-    virtual void isEnbaleTarget() const;  // slot 54
+    virtual bool isVirtualSetting() const { return false; }  // slot 53
+    virtual bool isEnbaleTarget() const { return true; }  // slot 54
     virtual void getMenuOffset() const;  // slot 55
-    virtual void isNoCameraFade() const;  // slot 56
+    virtual bool isNoCameraFade() const { return false; }  // slot 56
     virtual void getCamBone() const;  // slot 57
     virtual void getCenterBone() const;  // slot 58
     virtual void getEyeRotControl() const;  // slot 59
@@ -74,19 +74,19 @@ public:
     virtual void getEquipOrb(mm::mtl::FixedArray<unsigned short, 3ul>&, bool) const;  // slot 64
     virtual void getBladeSet(bool) const;  // slot 65
     virtual void getBlade(bool, int) const;  // slot 66
-    virtual void setBladeSet(int);  // slot 67
+    virtual void setBladeSet(int) {}  // slot 67
     virtual void getExp() const;  // slot 68
     virtual void getBattleExp() const;  // slot 69
     virtual void getExpNext(bool) const;  // slot 70
     virtual void getBattleExpNext(bool) const;  // slot 71
     virtual void getWeaponPoint(unsigned int) const;  // slot 72
-    virtual void addWeaponPoint(unsigned int, int);  // slot 73
+    virtual void addWeaponPoint(unsigned int, int) {}  // slot 73
     virtual void getSkillPoint() const;  // slot 74
-    virtual void addSkillPoint(int);  // slot 75
+    virtual void addSkillPoint(int) {}  // slot 75
     virtual void getDriverArts(unsigned int, unsigned int) const;  // slot 76
     virtual void setDriverArts(unsigned int, int, unsigned int);  // slot 77
     virtual void getDriverArtsLevel(unsigned int) const;  // slot 78
-    virtual void setDriverArtsLevel(unsigned int, unsigned int);  // slot 79
+    virtual void setDriverArtsLevel(unsigned int, unsigned int) {}  // slot 79
     virtual void getClass(bool) const;  // slot 80
     virtual void getBladePower(bool) const;  // slot 81
     virtual void getEquipWeapon(bool, int) const;  // slot 82
@@ -117,15 +117,15 @@ public:
     virtual void getDeadNum() const;  // slot 107
     virtual void getAppStNum() const;  // slot 108
     virtual void getAppEndNum() const;  // slot 109
-    virtual void isWeaponDrawDisp() const;  // slot 110
+    virtual bool isWeaponDrawDisp() const { return false; }  // slot 110
     virtual void getBdatIdEnRsc() const;  // slot 111
     virtual void getBdatIdEnParam() const;  // slot 112
     virtual void getBdatIdEnArrange() const;  // slot 113
-    virtual void isGuardFront() const;  // slot 114
-    virtual void isGuardLeft() const;  // slot 115
-    virtual void isGuardRight() const;  // slot 116
-    virtual void isGuardBack() const;  // slot 117
-    virtual void isFieldDamage() const;  // slot 118
+    virtual bool isGuardFront() const { return false; }  // slot 114
+    virtual bool isGuardLeft() const { return false; }  // slot 115
+    virtual bool isGuardRight() const { return false; }  // slot 116
+    virtual bool isGuardBack() const { return false; }  // slot 117
+    virtual bool isFieldDamage() const { return true; }  // slot 118
     virtual void getResistancePower() const;  // slot 119
     virtual void getResistanceEther() const;  // slot 120
     virtual void getResistanceCombo() const;  // slot 121
@@ -135,7 +135,7 @@ public:
     virtual void getLevelWp() const;  // slot 125
     virtual void getLevelSp() const;  // slot 126
     virtual void getGenus() const;  // slot 127
-    virtual void isLinkGenus() const;  // slot 128
+    virtual bool isLinkGenus() const { return false; }  // slot 128
     virtual void getLinkRadius() const;  // slot 129
     virtual void getGoldDivide() const;  // slot 130
     virtual void getGoldDivideRev() const;  // slot 131

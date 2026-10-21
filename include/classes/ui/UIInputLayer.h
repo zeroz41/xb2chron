@@ -7,7 +7,7 @@ class UIInputLayer {
 public:
     virtual ~UIInputLayer();  // slot 0
     virtual void getInputEventExt() = 0;  // slot 2
-    virtual void hasEventExt() const;  // slot 3
+    virtual bool hasEventExt() const { return false; }  // slot 3
     virtual void clear();  // slot 4
     virtual void clearExt();  // slot 5
     virtual void castUIInputPad();  // slot 6

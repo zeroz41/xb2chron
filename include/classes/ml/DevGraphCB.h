@@ -6,7 +6,7 @@ namespace ml {
 class DevGraphCB {
 public:
     virtual ~DevGraphCB();  // slot 0
-    virtual void viBeginFrame();  // slot 2
+    virtual void viBeginFrame() {}  // slot 2
     virtual void viBeforeDrawDone();  // slot 3
     virtual void viAfterDrawDone();  // slot 4
     virtual void viAfterSync();  // slot 5

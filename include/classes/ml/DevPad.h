@@ -17,7 +17,7 @@ class DevPad : public ::ml::WorkObj, public TUnk_B75F70, public ::ml::DevGraphCB
 public:
     virtual ~DevPad();  // slot 0
     virtual void wkUpdate();  // slot 9
-    virtual void wkStandbyLogin();  // slot 14
+    virtual bool wkStandbyLogin();  // slot 14
     virtual void wkStandbyLogout();  // slot 15
     virtual void isLocalConnect(int) const = 0;  // slot 17
     virtual void getLocalStyle(int) const = 0;  // slot 18
@@ -30,12 +30,12 @@ public:
     virtual void updateDevice(float) = 0;  // slot 25
     virtual void createDevice() = 0;  // slot 26
     virtual void releaseDevice() = 0;  // slot 27
-    virtual void setCaptureName(char const*);  // slot 28
-    virtual void setCapture(bool);  // slot 29
-    virtual void isCapture() const;  // slot 30
-    virtual void playLocalVibration(int, ml::PadVibrationInfo const&);  // slot 31
-    virtual void stopLocalVibration(int);  // slot 32
-    virtual void loadLocalVibration(unsigned int, void*, unsigned long);  // slot 33
+    virtual void setCaptureName(char const*) {}  // slot 28
+    virtual void setCapture(bool) {}  // slot 29
+    virtual bool isCapture() const { return false; }  // slot 30
+    virtual void playLocalVibration(int, ml::PadVibrationInfo const&) {}  // slot 31
+    virtual void stopLocalVibration(int) {}  // slot 32
+    virtual void loadLocalVibration(unsigned int, void*, unsigned long) {}  // slot 33
     virtual void viBeginFrame();  // slot 34
 };
 }  // namespace ml

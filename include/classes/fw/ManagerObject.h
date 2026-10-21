@@ -10,7 +10,7 @@ public:
     virtual void finalize();  // slot 3
     virtual void enterFinalizeApplet();  // slot 4
     virtual void getName() const;  // slot 5
-    virtual void isInitialized() const;  // slot 6
+    virtual bool isInitialized() const;  // slot 6
     virtual void isFinalized() const;  // slot 7
     unsigned char pad_8[0x8];  // fields: size from its derived classes
 };

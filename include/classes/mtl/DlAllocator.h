@@ -23,14 +23,14 @@ public:
     virtual void log_callSTack(void*) const;  // slot 11
     virtual void checkLeakMemory();  // slot 12
     virtual void getName() const;  // slot 13
-    virtual void hasMemory(void const*) const;  // slot 14
+    virtual bool hasMemory(void const*) const;  // slot 14
     virtual void getAllocSize(void const*) const;  // slot 15
     virtual void memoryInfo(mtl::MemoryInfo*) const;  // slot 16
     virtual void getMemImage(mtl::MEMIMAGE_HEAD*) const;  // slot 17
     virtual void getMemInfo1(mtl::MemoryInfo1*, unsigned int) const;  // slot 18
     virtual void empty() const;  // slot 19
     virtual void valid() const;  // slot 20
-    virtual void dummy() const;  // slot 21
+    virtual bool dummy() const;  // slot 21
 };
 }  // namespace mtl
 

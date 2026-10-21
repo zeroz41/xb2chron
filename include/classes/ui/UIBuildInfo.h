@@ -8,8 +8,8 @@ public:
     class ObjectData;
     virtual ~UIBuildInfo();  // slot 0
     virtual void update();  // slot 2
-    virtual void isReady() const;  // slot 3
-    virtual void isValid() const;  // slot 4
+    virtual bool isReady() const { return true; }  // slot 3
+    virtual bool isValid() const { return true; }  // slot 4
 };
 }  // namespace ui
 

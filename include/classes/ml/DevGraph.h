@@ -21,9 +21,9 @@ public:
     virtual void wkStandby();  // slot 8
     virtual void wkUpdate();  // slot 9
     virtual void wkTail();  // slot 12
-    virtual void wkStandbyLogin();  // slot 14
+    virtual bool wkStandbyLogin();  // slot 14
     virtual void wkStandbyLogout();  // slot 15
-    virtual void cmdAddDisplayListFast(void*, unsigned int, unsigned int);  // slot 17
+    virtual void cmdAddDisplayListFast(void*, unsigned int, unsigned int) {}  // slot 17
     virtual void grSetViewportSys(mm::Rect<int> const&, int) = 0;  // slot 18
     virtual void grSetScissorSys(mm::Rect<int> const&) = 0;  // slot 19
     virtual void grInitContextSys();  // slot 20
@@ -41,14 +41,14 @@ public:
     virtual void fontGetWidthSys(char const*, ml::FONT_STYLE, float) = 0;  // slot 32
     virtual void fontGetHeightSys(ml::FONT_STYLE, float) = 0;  // slot 33
     virtual void getCostSys() const = 0;  // slot 34
-    virtual void cmdExecDisplayListSys();  // slot 35
-    virtual void cmdAddDisplayListSys(void*, unsigned int, unsigned int);  // slot 36
-    virtual void cmdSetupDisplayListSys();  // slot 37
-    virtual void cmdTermDisplayListSys();  // slot 38
+    virtual void cmdExecDisplayListSys() {}  // slot 35
+    virtual void cmdAddDisplayListSys(void*, unsigned int, unsigned int) {}  // slot 36
+    virtual void cmdSetupDisplayListSys() {}  // slot 37
+    virtual void cmdTermDisplayListSys() {}  // slot 38
     virtual void cmdOpenDisplayListSys(unsigned int, bool, bool);  // slot 39
     virtual void cmdCloseDisplayListSys(bool);  // slot 40
-    virtual void cmdAddCreatedListSys(void*, unsigned int);  // slot 41
-    virtual void cmdSuspendDisplayListSys(bool, bool);  // slot 42
+    virtual void cmdAddCreatedListSys(void*, unsigned int) {}  // slot 41
+    virtual void cmdSuspendDisplayListSys(bool, bool) {}  // slot 42
     virtual void cmdGetCurrentAdrSys();  // slot 43
     virtual void cmdGetRemainSizeSys() const;  // slot 44
     virtual void cmdAllocSys(unsigned int, unsigned int);  // slot 45

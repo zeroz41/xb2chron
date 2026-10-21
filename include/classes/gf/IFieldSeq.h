@@ -11,7 +11,7 @@ public:
     virtual void create(gf::GF_OBJ_HANDLE*) = 0;  // slot 1
     virtual void dispose() = 0;  // slot 2
     virtual void isEnd() const = 0;  // slot 3
-    virtual void cancel() = 0;  // slot 4
+    virtual bool cancel() = 0;  // slot 4
 };
 }  // namespace gf
 

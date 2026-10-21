@@ -11,8 +11,8 @@ public:
     virtual void clipLineTest(mm::Vec3 const&, mm::Vec3 const&, float) const;  // slot 1
     virtual void clipTest(float const*, float const*) const;  // slot 2
     virtual void clipTest(mm::Vec3 const*, int) const;  // slot 3
-    virtual void clipTypeTest(mm::Vec3 const&, float) const;  // slot 4
-    virtual void debugDraw();  // slot 5
+    virtual bool clipTypeTest(mm::Vec3 const&, float) const { return false; }  // slot 4
+    virtual void debugDraw() {}  // slot 5
 };
 }  // namespace ml
 

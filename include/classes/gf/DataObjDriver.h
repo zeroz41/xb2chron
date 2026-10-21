@@ -11,7 +11,7 @@ class DataObjDriver : public ::gf::IDataObj {
 public:
     virtual ~DataObjDriver();  // slot 0
     virtual void setMenuParam();  // slot 2
-    virtual void isValid() const;  // slot 3
+    virtual bool isValid() const;  // slot 3
     virtual void getModelResourceName() const;  // slot 4
     virtual void getMotionResourceName() const;  // slot 5
     virtual void getEffectResourceName() const;  // slot 6
@@ -47,7 +47,7 @@ public:
     virtual void getGender() const;  // slot 39
     virtual void getAttribute(bool, int) const;  // slot 40
     virtual void vf42();  // slot 42
-    virtual void isScenarioMask() const;  // slot 43
+    virtual bool isScenarioMask() const;  // slot 43
     virtual void getRole() const;  // slot 44
     virtual void getVoiceStr() const;  // slot 45
     virtual void vf46();  // slot 46
@@ -57,7 +57,7 @@ public:
     virtual void setVirtualEquipWpnChip(unsigned int);  // slot 50
     virtual void setVirtualEquipOrb(unsigned int, unsigned int);  // slot 51
     virtual void vf52();  // slot 52
-    virtual void isVirtualSetting() const;  // slot 53
+    virtual bool isVirtualSetting() const;  // slot 53
     virtual void getMenuOffset() const;  // slot 55
     virtual void getCamBone() const;  // slot 57
     virtual void getCenterBone() const;  // slot 58

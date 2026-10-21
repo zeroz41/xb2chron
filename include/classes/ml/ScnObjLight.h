@@ -13,7 +13,7 @@ public:
     enum RENDER_INFO : int;
     virtual ~ScnObjLight();  // slot 0
     virtual void getName() const;  // slot 6
-    virtual void isEnv() const;  // slot 8
+    virtual bool isEnv() const { return false; }  // slot 8
     virtual void getFrame() const = 0;  // slot 9
     virtual void setFrame(float) = 0;  // slot 10
     virtual void getMaxFrame() const = 0;  // slot 11
@@ -27,7 +27,7 @@ public:
     virtual void setRot(mm::Vec3 const&);  // slot 19
     virtual void setScl(mm::Vec3 const&);  // slot 20
     virtual void setMat(mm::Mat44 const&);  // slot 21
-    virtual void setDeugDisp2D(bool);  // slot 22
+    virtual void setDeugDisp2D(bool) {}  // slot 22
     virtual void setFromCaptureTool() = 0;  // slot 23
     virtual void setLocalIBLName(char const*) = 0;  // slot 24
 };

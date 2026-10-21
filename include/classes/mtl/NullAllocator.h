@@ -22,7 +22,7 @@ public:
     virtual void reallocate(void*, unsigned long);  // slot 9
     virtual void log(mtl::MemoryInfo*, bool) const;  // slot 10
     virtual void getName() const;  // slot 13
-    virtual void hasMemory(void const*) const;  // slot 14
+    virtual bool hasMemory(void const*) const { return false; }  // slot 14
     virtual void getAllocSize(void const*) const;  // slot 15
     virtual void memoryInfo(mtl::MemoryInfo*) const;  // slot 16
     virtual void getMemImage(mtl::MEMIMAGE_HEAD*) const;  // slot 17

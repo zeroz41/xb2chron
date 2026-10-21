@@ -10,7 +10,7 @@ namespace layer {
 class LayerActBase : public ::layer::LayerObj {
 public:
     virtual ~LayerActBase();  // slot 0
-    virtual void updatePartsAction(layer::LyrActionData const*);  // slot 10
+    virtual void updatePartsAction(layer::LyrActionData const*) {}  // slot 10
 };
 }  // namespace layer
 

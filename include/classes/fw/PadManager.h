@@ -19,7 +19,7 @@ public:
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void getName() const;  // slot 5
-    virtual void isInitialized() const;  // slot 6
+    virtual bool isInitialized() const;  // slot 6
     virtual void debugDraw(int, int);  // slot 8
     virtual void update(fw::UpdateInfo const&);  // slot 9
     virtual void viBeginFrame();  // slot 10

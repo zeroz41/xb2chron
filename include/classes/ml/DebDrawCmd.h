@@ -15,7 +15,7 @@ class DebDrawCmd : public ::ml::DebDraw {
 public:
     virtual ~DebDrawCmd();  // slot 0
     virtual void fastSetup();  // slot 7
-    virtual void restoreShader();  // slot 8
+    virtual void restoreShader() {}  // slot 8
     virtual void begin(unsigned int, unsigned int);  // slot 9
     virtual void end();  // slot 10
     virtual void add(mm::Vec3 const&, mm::Vec3 const&);  // slot 11

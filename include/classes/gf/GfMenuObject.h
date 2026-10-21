@@ -10,7 +10,7 @@ public:
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
     virtual void reloadParam();  // slot 5
-    virtual void eventHudSceneChange(unsigned int);  // slot 6
+    virtual void eventHudSceneChange(unsigned int) {}  // slot 6
     unsigned char pad_8[0x20];  // fields: size from its derived classes
 };
 }  // namespace gf

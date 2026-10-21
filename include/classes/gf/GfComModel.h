@@ -12,7 +12,7 @@ public:
     virtual void getRTTI() const;  // slot 0
     virtual ~GfComModel();  // slot 1
     virtual void changeLayer(unsigned int, unsigned int);  // slot 3
-    virtual void recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
+    virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
 };
 }  // namespace gf
 

@@ -41,7 +41,7 @@ public:
     virtual void addCategory(fw::SoundCategory, float, char const*);  // slot 13
     virtual void removeCategory(fw::SoundCategory);  // slot 14
     virtual void pauseCategory(fw::SoundCategory, bool, float);  // slot 15
-    virtual void isDeviceEnable() const;  // slot 16
+    virtual bool isDeviceEnable() const;  // slot 16
     virtual void playBgm(char const*, float, bool, int, fw::SoundCategory);  // slot 17
     virtual void startBgm(unsigned int);  // slot 18
     virtual void stopBgm(unsigned int, float);  // slot 19

@@ -17,7 +17,7 @@ public:
     virtual void getIdStr() const;  // slot 0
     virtual void create(gf::GF_OBJ_HANDLE*);  // slot 1
     virtual void dispose();  // slot 2
-    virtual void isEnd() const;  // slot 3
+    virtual bool isEnd() const;  // slot 3
     virtual ~GfFieldMapGimmick();  // slot 5
     virtual void onFsSucceeded();  // slot 7
     virtual void onFsFailed();  // slot 8

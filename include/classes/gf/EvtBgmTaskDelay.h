@@ -11,7 +11,7 @@ namespace gf {
 class EvtBgmTaskDelay : public ::gf::EvtBgmTask {
 public:
     virtual ~EvtBgmTaskDelay();  // slot 0
-    virtual void isPlayTask() const;  // slot 3
+    virtual bool isPlayTask() const { return true; }  // slot 3
     virtual void start(gf::GfEvtBgm*);  // slot 4
     virtual void update(gf::GfEvtBgm*, fw::UpdateInfo const&);  // slot 5
     virtual void cancel(gf::GfEvtBgm*);  // slot 6

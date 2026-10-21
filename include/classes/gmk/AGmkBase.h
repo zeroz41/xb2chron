@@ -17,8 +17,8 @@ public:
     virtual void update(float);  // slot 6
     virtual void debugDraw() const;  // slot 7
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
-    virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9
-    virtual void debugUpdateMmf();  // slot 10
+    virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*) {}  // slot 9
+    virtual void debugUpdateMmf() {}  // slot 10
     unsigned char pad_8[0x40];  // fields: size from its derived classes
 };
 }  // namespace gmk

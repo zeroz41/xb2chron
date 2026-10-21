@@ -13,7 +13,7 @@ public:
 class WorkFlowSetup : public ::ml::WorkObj, public TUnk_B78FF0 {
 public:
     virtual ~WorkFlowSetup();  // slot 0
-    virtual void wkStandbyLogin();  // slot 14
+    virtual bool wkStandbyLogin();  // slot 14
     virtual void wkStandbyLogout();  // slot 15
 };
 }  // namespace ml

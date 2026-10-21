@@ -14,16 +14,16 @@ namespace gf {
 class IQuestEvent {
 public:
     virtual ~IQuestEvent();  // slot 0
-    virtual void qevAchievementCount(gf::QuestOrderParam const&);  // slot 2
+    virtual void qevAchievementCount(gf::QuestOrderParam const&) {}  // slot 2
     virtual void qevOrderQuest(gf::QuestOrderParam const&) = 0;  // slot 3
     virtual void qevCompleteQuest(gf::QuestCompleteParam const&);  // slot 4
-    virtual void qevPreCompleteQuest(gf::QuestPreCompleteParam const&);  // slot 5
-    virtual void qevChangeTaskState(gf::QuestTaskParam const&);  // slot 6
-    virtual void qevLoadTaskState(unsigned int);  // slot 7
+    virtual void qevPreCompleteQuest(gf::QuestPreCompleteParam const&) {}  // slot 5
+    virtual void qevChangeTaskState(gf::QuestTaskParam const&) {}  // slot 6
+    virtual void qevLoadTaskState(unsigned int) {}  // slot 7
     virtual void qevCompleteChildQuest(gf::QuestCompleteChildParam const&) = 0;  // slot 8
-    virtual void qevChangeQuestState(gf::QuestStateParam const&);  // slot 9
-    virtual void qevChangeCurrentQuest(gf::QuestChangeParam const&);  // slot 10
-    virtual void qevChangeTaskCondition(gf::QuestTaskParam const&);  // slot 11
+    virtual void qevChangeQuestState(gf::QuestStateParam const&) {}  // slot 9
+    virtual void qevChangeCurrentQuest(gf::QuestChangeParam const&) {}  // slot 10
+    virtual void qevChangeTaskCondition(gf::QuestTaskParam const&) {}  // slot 11
 };
 }  // namespace gf
 

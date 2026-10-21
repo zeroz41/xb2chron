@@ -28,7 +28,7 @@ public:
     virtual ~FrameworkLauncher();  // slot 0
     virtual void wkUpdate();  // slot 9
     virtual void wkTail();  // slot 12
-    virtual void wkStandbyLogin();  // slot 14
+    virtual bool wkStandbyLogin();  // slot 14
     virtual void wkStandbyLogout();  // slot 15
     virtual void setDebugPause(bool);  // slot 17
     virtual void stepDebugPause();  // slot 18

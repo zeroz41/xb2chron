@@ -8,8 +8,8 @@ namespace mm { namespace threading {
 class Thread : public ::mm::threading::ReferenceObject {
 public:
     virtual ~Thread();  // slot 0
-    virtual void isSuspended() const = 0;  // slot 2
-    virtual void isTerminated() = 0;  // slot 3
+    virtual bool isSuspended() const = 0;  // slot 2
+    virtual bool isTerminated() = 0;  // slot 3
     virtual void exitThread() = 0;  // slot 4
     virtual void getHandle() const = 0;  // slot 5
     virtual void getID() const = 0;  // slot 6

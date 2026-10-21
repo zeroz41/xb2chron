@@ -9,7 +9,7 @@ class TUnk_B51288 {
 public:
     virtual ~TUnk_B51288();
     virtual void getTrackName() const = 0;
-    virtual void isPlaying() const = 0;
+    virtual bool isPlaying() const = 0;
     virtual void update(fw::UpdateInfo const&) = 0;
     unsigned char pad_8[0x628];  // fields: size from where the next base starts
 };
@@ -23,7 +23,7 @@ class BgmEvent : public TUnk_B51288, public TUnk_B512C0 {
 public:
     virtual ~BgmEvent();  // slot 0
     virtual void getTrackName() const;  // slot 2
-    virtual void isPlaying() const;  // slot 3
+    virtual bool isPlaying() const;  // slot 3
     virtual void update(fw::UpdateInfo const&);  // slot 4
 };
 }  // namespace gf

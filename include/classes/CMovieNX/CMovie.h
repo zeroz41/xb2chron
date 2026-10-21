@@ -17,9 +17,9 @@ public:
     virtual void play();  // slot 8
     virtual void pause();  // slot 9
     virtual void stop();  // slot 10
-    virtual void isstandby();  // slot 11
+    virtual bool isstandby();  // slot 11
     virtual void ispause();  // slot 12
-    virtual void isplaying();  // slot 13
+    virtual bool isplaying();  // slot 13
     virtual void doHomeMenu(bool);  // slot 14
 };
 }  // namespace CMovieNX

@@ -23,7 +23,7 @@ public:
     virtual void finalize();  // slot 3
     virtual void tail();  // slot 4
     virtual void addressAlignment();  // slot 5
-    virtual void readBlock(ml::FileHandleTh*, char const*);  // slot 7
+    virtual bool readBlock(ml::FileHandleTh*, char const*);  // slot 7
     virtual void readBlockSlice(ml::FileHandleTh*, char const*, void*, unsigned int);  // slot 8
     virtual void getFileSize(char const*, mm::VAL64*, char const*);  // slot 9
     virtual void writeBlock(ml::FileHandleTh*, ml::DevFileResult&);  // slot 10
@@ -36,7 +36,7 @@ public:
     virtual void rfClose(ml::FileHandleTh*);  // slot 17
     virtual void rfIsUsedChannel(unsigned int);  // slot 18
     virtual void getFilesBlock(char*&, int&, mtl::ALLOC_HANDLE, char const*, char const*);  // slot 19
-    virtual void deleteFileBlock(char const*);  // slot 20
+    virtual bool deleteFileBlock(char const*);  // slot 20
     virtual void getMediaRootPath() const;  // slot 21
 };
 }  // namespace ml

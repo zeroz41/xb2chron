@@ -10,7 +10,7 @@ public:
     virtual ~IStmMemory();  // slot 0
     virtual void update() = 0;  // slot 2
     virtual void render(mm::Rect<int> const&, float) = 0;  // slot 3
-    virtual void tail();  // slot 4
+    virtual void tail() {}  // slot 4
 };
 }  // namespace event
 

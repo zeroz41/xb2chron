@@ -8,7 +8,7 @@ namespace gf { namespace VoiceInfo {
 class PJOB_WAIT_STOP : public ::gf::VoiceInfo::PJOB {
 public:
     virtual ~PJOB_WAIT_STOP();  // slot 0
-    virtual void exec();  // slot 2
+    virtual bool exec();  // slot 2
 };
 }}  // namespace gf::VoiceInfo
 

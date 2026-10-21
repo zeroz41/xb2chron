@@ -15,7 +15,7 @@ public:
 class LightManager : public ::fw::ManagerObject, public TUnk_B41838 {
 public:
     virtual ~LightManager();  // slot 0
-    virtual void update(fw::UpdateInfo const&, unsigned int);  // slot 8
+    virtual void update(fw::UpdateInfo const&, unsigned int) {}  // slot 8
 };
 }  // namespace fw
 

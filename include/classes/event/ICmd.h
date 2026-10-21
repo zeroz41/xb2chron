@@ -7,9 +7,9 @@ class ICmd {
 public:
     class Param;
     virtual ~ICmd();  // slot 0
-    virtual void init();  // slot 2
+    virtual void init() {}  // slot 2
     virtual void update(event::ICmd::Param const&) = 0;  // slot 3
-    virtual void term();  // slot 4
+    virtual void term() {}  // slot 4
 };
 }  // namespace event
 

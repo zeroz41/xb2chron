@@ -11,7 +11,7 @@ public:
     virtual void getRTTI() const;  // slot 2
     virtual void reload(ui::UIObjectAcc&);  // slot 3
     virtual void execute(ui::UIObjectAcc&);  // slot 4
-    virtual void isNeedUpdate(ui::UIObjectAcc&);  // slot 5
+    virtual bool isNeedUpdate(ui::UIObjectAcc&);  // slot 5
     unsigned char pad_08[0x14];  // derived plugins' fields start at 0x1C, in this class's tail padding
 };
 }  // namespace ui

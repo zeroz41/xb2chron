@@ -10,7 +10,7 @@ namespace ml {
 class DrCalcClipWorkPlane : public ::ml::DrCalcClipWork {
 public:
     virtual void clipTest(mm::Vec3 const&, float) const;  // slot 0
-    virtual void clipTypeTest(mm::Vec3 const&, float) const;  // slot 4
+    virtual bool clipTypeTest(mm::Vec3 const&, float) const;  // slot 4
 };
 }  // namespace ml
 

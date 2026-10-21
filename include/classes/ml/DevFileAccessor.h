@@ -16,8 +16,8 @@ public:
     virtual void finalize() = 0;  // slot 3
     virtual void tail() = 0;  // slot 4
     virtual void addressAlignment() = 0;  // slot 5
-    virtual void isValid() const;  // slot 6
-    virtual void readBlock(ml::FileHandleTh*, char const*);  // slot 7
+    virtual bool isValid() const { return true; }  // slot 6
+    virtual bool readBlock(ml::FileHandleTh*, char const*) { return false; }  // slot 7
     virtual void readBlockSlice(ml::FileHandleTh*, char const*, void*, unsigned int) = 0;  // slot 8
     virtual void getFileSize(char const*, mm::VAL64*, char const*) = 0;  // slot 9
     virtual void writeBlock(ml::FileHandleTh*, ml::DevFileResult&);  // slot 10
@@ -30,7 +30,7 @@ public:
     virtual void rfClose(ml::FileHandleTh*) = 0;  // slot 17
     virtual void rfIsUsedChannel(unsigned int) = 0;  // slot 18
     virtual void getFilesBlock(char*&, int&, mtl::ALLOC_HANDLE, char const*, char const*) = 0;  // slot 19
-    virtual void deleteFileBlock(char const*);  // slot 20
+    virtual bool deleteFileBlock(char const*) { return false; }  // slot 20
 };
 }  // namespace ml
 

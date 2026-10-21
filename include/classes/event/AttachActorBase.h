@@ -25,7 +25,7 @@ public:
     virtual void hasBone(char const*) const;  // slot 14
     virtual void getMultipleMatGlobal(mm::Mat44&, char const*) const;  // slot 15
     virtual void getMultipleMat(mm::Mat44&, char const*) const;  // slot 16
-    virtual void hasMultiple(char const*) const;  // slot 17
+    virtual bool hasMultiple(char const*) const;  // slot 17
 };
 }  // namespace event
 

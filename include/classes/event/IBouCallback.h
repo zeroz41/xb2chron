@@ -9,7 +9,7 @@ public:
     class SelectParam;
     virtual ~IBouCallback();  // slot 0
     virtual void OnBouRectSelect(event::IBouCallback::SelectParam const&);  // slot 2
-    virtual void OnBouRender(event::IBouCallback::RenderParam const&);  // slot 3
+    virtual void OnBouRender(event::IBouCallback::RenderParam const&) {}  // slot 3
 };
 }  // namespace event
 

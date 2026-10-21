@@ -8,7 +8,7 @@ namespace ml {
 class DrLightObj {
 public:
     virtual ~DrLightObj();  // slot 0
-    virtual void update(ml::DrLightMan*);  // slot 2
+    virtual void update(ml::DrLightMan*) {}  // slot 2
 };
 }  // namespace ml
 

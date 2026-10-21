@@ -23,7 +23,7 @@ public:
     virtual void wkRender();  // slot 10
     virtual void wkRenderAfter();  // slot 11
     virtual void wkTail();  // slot 12
-    virtual void wkStandbyLogin();  // slot 14
+    virtual bool wkStandbyLogin();  // slot 14
     virtual void wkStandbyLogout();  // slot 15
 };
 }  // namespace ml

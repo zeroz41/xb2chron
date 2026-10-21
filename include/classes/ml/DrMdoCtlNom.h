@@ -19,7 +19,7 @@ public:
     virtual void shadowCacheOnlyRender();  // slot 9
     virtual void callShadowCacheUpdate(unsigned long);  // slot 11
     virtual void occRender();  // slot 12
-    virtual void cloneMdlObj(ml::DrMdlObj*);  // slot 13
+    virtual bool cloneMdlObj(ml::DrMdlObj*);  // slot 13
     virtual void setDisp(bool);  // slot 15
     virtual void setDeleteCall(int);  // slot 16
 };

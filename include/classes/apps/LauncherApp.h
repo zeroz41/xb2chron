@@ -33,7 +33,7 @@ public:
     virtual void wkUpdate();  // slot 9
     virtual void wkRender();  // slot 10
     virtual void wkTail();  // slot 12
-    virtual void wkStandbyLogin() = 0;  // slot 14
+    virtual bool wkStandbyLogin() = 0;  // slot 14
     virtual void wkStandbyLogout();  // slot 15
     virtual void OnMouseButtonDown(ml::EventView*);  // slot 17
     virtual void OnKeyDown(ml::EventView*);  // slot 18
