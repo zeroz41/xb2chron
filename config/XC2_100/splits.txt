@@ -1054,7 +1054,7 @@ application/BF2/gf/menu/call/gf_menu_call_manager.cpp:
 application/BF2/gf/menu/gf_menu_equip.cpp:
 	.text        start:0x003B885C end:0x003B9440
 	.data        start:0x01193678 end:0x01193758
-	.bss         start:0x0149DE50 end:0x0149DE58
+	.bss         start:0x0149DE18 end:0x0149DE58
 
 application/BF2/gf/menu/gf_menu_fade.cpp:
 	.text        start:0x003B9440 end:0x003B97D8

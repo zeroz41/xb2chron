@@ -82,7 +82,7 @@ btl/BattleCharacter.cpp:
 	.rodata      start:0x009B57BC end:0x009B581C
 	.rodata      start:0x009B6064 end:0x009B7418
 	.data        start:0x00B3AA08 end:0x00B3B280
-	.bss         start:0x00B94430 end:0x00B94460
+	.bss         start:0x00B94430 end:0x00B94500
 
 application/BF2/battle/character/character_manager_battle.cpp:
 	.text        start:0x0007ABD4 end:0x0007D674
@@ -540,7 +540,7 @@ application/BF2/gf/asset/gf_asset_setup.cpp:
 	.rodata      start:0x009B9998 end:0x009B99A4
 	.data        start:0x00B43688 end:0x00B45938
 	.init_array  start:0x00B8F8E8 end:0x00B8F8F0
-	.bss         start:0x00C24520 end:0x00C247D0
+	.bss         start:0x00C24520 end:0x00C24DD8
 
 unit_71001C4B04.cpp:
 	.text        start:0x001C4B04 end:0x001C4C54
@@ -632,10 +632,10 @@ application/BF2/gf/data/gf_bdat_bgm.cpp:
 	.bss         start:0x00C24F78 end:0x00C24FD8
 
 unit_71001D9BD0.cpp:
-	.text        start:0x001D9BD0 end:0x001DB908
+	.text        start:0x001D9BD0 end:0x001DB7F8
 
 application/BF2/gf/data/gf_bdat_blade.cpp:
-	.text        start:0x001DB908 end:0x001DF274
+	.text        start:0x001DB7F8 end:0x001DF274
 	.rodata      start:0x00983137 end:0x009837FB
 	.data        start:0x00B46040 end:0x00B462F8
 	.bss         start:0x00C24FD8 end:0x00C24FE0
@@ -1458,7 +1458,7 @@ application/BF2/gf/menu/gf_menu_equip.cpp:
 	.rodata      start:0x0098D2A0 end:0x0098D35E
 	.rodata      start:0x009BCA90 end:0x009BCB30
 	.data        start:0x00B5E458 end:0x00B5E548
-	.bss         start:0x00EA6F08 end:0x00EA6F10
+	.bss         start:0x00EA6ED0 end:0x00EA6F10
 
 application/BF2/gf/menu/gf_menu_fade.cpp:
 	.text        start:0x00350058 end:0x0035034C
@@ -3539,7 +3539,7 @@ libs/eflib/source/ptlib/particle_system.cpp:
 	.text        start:0x008542B8 end:0x00858FDC
 	.rodata      start:0x009AE1CD end:0x009AE339
 	.rodata      start:0x009B5780 end:0x009B5784
-	.bss         start:0x015E9D70 end:0x015EA008
+	.bss         start:0x015E9D70 end:0x015EAE50
 
 libs/eflib/source/ptlib/particle_intrusive_list.cpp:
 	.text        start:0x00858FDC end:0x00859104
@@ -3552,7 +3552,7 @@ libs/eflib/source/ptlib/forcefield/particle_force_field.cpp:
 	.rodata      start:0x009D5498 end:0x009D54AC
 	.data        start:0x00B80840 end:0x00B80C40
 	.init_array  start:0x00B8FD70 end:0x00B8FD78
-	.bss         start:0x015EAE38 end:0x015EB000
+	.bss         start:0x015EAE50 end:0x015EB000
 
 libs/eflib/source/ptlib/renderer/screen_render_manager.cpp:
 	.text        start:0x0085A2DC end:0x0085AD3C

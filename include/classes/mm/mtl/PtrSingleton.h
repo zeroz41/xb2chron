@@ -4,7 +4,7 @@
 #include "mm/MMStdBase.h"
 
 namespace mm { namespace mtl {
-// a template: 247 instances in the module; the one instance a class derives from holds that class's object
+// a template: 248 instances in the module; the one instance a class derives from holds that class's object
 template <typename T0>
 class PtrSingleton {
 public:
