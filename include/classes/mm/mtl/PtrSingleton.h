@@ -1,4 +1,3 @@
-// not proven yet: its table differs from the original's (word 4: None where the original has fn_71001DA560)
 #ifndef CLASSES_MM_MTL_PTRSINGLETON_H
 #define CLASSES_MM_MTL_PTRSINGLETON_H
 

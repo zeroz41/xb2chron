@@ -11,22 +11,6 @@ class TUnk_B46920 {
 public:
     virtual ~TUnk_B46920();
     virtual void bdatRefresh() = 0;
-    virtual void vf3();
-    virtual void vf4();
-    virtual void vf5();
-    virtual void vf6();
-    virtual void vf7();
-    virtual void vf8();
-    virtual void vf9();
-    virtual void vf10();
-    virtual void vf11();
-    virtual void vf12();
-    virtual void vf13();
-    virtual void vf14();
-    virtual void vf15();
-    virtual void vf16();
-    virtual void vf17();
-    virtual void vf18();
 };
 // table 0x7100B468F8; base at 0x8 unknown (TUnk_B46920)
 class GfBdatChrDr : public ::mm::mtl::PtrSingleton< ::gf::GfBdatChrDr>, public TUnk_B46920 {

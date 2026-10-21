@@ -10,7 +10,6 @@ public:
     virtual void vf0();  // slot 0
     virtual void vf1();  // slot 1
     virtual void update(fw::UpdateInfo const&);  // slot 2
-    virtual void vf3();  // slot 3
 };
 }  // namespace gf
 

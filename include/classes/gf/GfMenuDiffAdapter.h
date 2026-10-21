@@ -9,7 +9,6 @@ class GfMenuDiffAdapter {
 public:
     virtual ~GfMenuDiffAdapter();  // slot 0
     virtual void update(fw::UpdateInfo const&);  // slot 2
-    virtual void update_Icon(int);  // slot 3
 };
 }  // namespace gf
 

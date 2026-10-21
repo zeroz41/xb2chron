@@ -11,7 +11,6 @@ public:
     class ReferenceNumberConverter;
     virtual ~GfMenuHanaPartsAdapter();  // slot 0
     virtual void update(fw::UpdateInfo const&);  // slot 2
-    virtual void update_partsText();  // slot 3
 };
 }  // namespace gf
 

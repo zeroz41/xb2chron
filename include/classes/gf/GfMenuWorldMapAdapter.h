@@ -11,7 +11,6 @@ public:
     class ReferenceConverter;
     virtual ~GfMenuWorldMapAdapter();  // slot 0
     virtual void update(fw::UpdateInfo const&);  // slot 2
-    virtual void update_WorldMapName();  // slot 3
 };
 }  // namespace gf
 

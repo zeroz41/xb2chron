@@ -13,7 +13,6 @@ public:
     class ReferenceMissionConverter;
     virtual ~GfMenuMissionAdapter();  // slot 0
     virtual void update(fw::UpdateInfo const&);  // slot 2
-    virtual void update_MissionName();  // slot 3
 };
 }  // namespace gf
 

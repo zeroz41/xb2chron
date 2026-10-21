@@ -10,7 +10,6 @@ public:
     class ReferenceIndexConverter;
     virtual ~GfMenuHanaAdapter();  // slot 0
     virtual void update(fw::UpdateInfo const&);  // slot 2
-    virtual void update_ether();  // slot 3
 };
 }  // namespace gf
 

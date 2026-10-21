@@ -1,9 +1,7 @@
-// not proven yet: its table differs from the original's (word 21: _ZN2gf11TUnk_B5A93012update_HpMaxERKNS_12DataParamAccE where the original has _ZN2gf21GfMenuCharDataAdapter12update_HpMaxERKNS_12DataParamAccE)
 #ifndef CLASSES_GF_GFMENUCHARDATAADAPTER_H
 #define CLASSES_GF_GFMENUCHARDATAADAPTER_H
 
 namespace fw { class UpdateInfo; }
-namespace gf { class DataParamAcc; }
 namespace gf { class GF_OBJ_HANDLE; }
 
 namespace gf {
@@ -37,7 +35,6 @@ public:
 class TUnk_B5A930 {
 public:
     virtual void changePartyBlade(unsigned char, unsigned char) = 0;
-    virtual void update_HpMax(gf::DataParamAcc const&);
 };
 // table 0x7100B5A8A0; base at 0x0 unknown (TUnk_B5A8A0), base at 0x30 unknown (TUnk_B5A8E8), base at 0x38 unknown (TUnk_B5A900), base at 0x40 unknown (TUnk_B5A918), base at 0x48 unknown (TUnk_B5A930)
 class GfMenuCharDataAdapter : public TUnk_B5A8A0, public TUnk_B5A8E8, public TUnk_B5A900, public TUnk_B5A918, public TUnk_B5A930 {

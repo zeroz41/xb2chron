@@ -187,26 +187,29 @@ claim, and data no code refers to between two units' ranges.
 The module has no RTTI, but its virtual tables name nearly every slot (1.0.0's names carried over), and a class's
 table says its bases: a base's table is a prefix of its derived class's, every slot the class does not override
 holding the base's function, and each further base has a group of its own at the offset of its subobject.
-[`include/classes/`](../include/classes) holds one header per class with a table: 2,076 classes and 30 class
+[`include/classes/`](../include/classes) holds one header per class with a table: 2,074 classes and 30 class
 templates (for 422 instances), plus 10 classes with no table that only enclose others. Each declares its bases
 in layout order and the virtuals it introduces or overrides in slot order, one destructor per destructor pair.
 
 Constructors, destructors and new-expressions prove primary bases the tables cannot: they store the tables of
 a class's primary ancestors at the start of the object, in order. That is how every singleton derives from its
-`mm::mtl::PtrSingleton<T>`, whose own table holds only destructors, so no table prefix shows it; 591 classes'
-primary bases are proven this way (224 by the code alone).
+`mm::mtl::PtrSingleton<T>`, whose own table holds only destructors, so no table prefix shows it; 594 classes'
+primary bases are proven this way (226 by the code alone).
 
 A table's symbol (named from 1.0.0) gives its size, but a size can stop short where an address inside the table
-started another object, so its slots are read on while they hold functions, never into an object a symbol
-names: `layer::LayerObj`'s table is followed by `LayerActBase::s_pCallActEnd`, member function pointers that
-read like slots and once made `LayerObj` too long to be the base of the classes deriving from it.
+started another object, so its slots are read on while they hold functions, never into another object a
+symbol names or code refers to (a label nothing refers to stops nothing): `layer::LayerObj`'s table is followed
+by `LayerActBase::s_pCallActEnd`, member function pointers that read like slots and once made `LayerObj` too long
+to be the base of the classes deriving from it, and `gf::GfBdatBlade`'s by a table of its column accessors. A
+slot also names the function in it: an override has its base slot's name, so where 1.0.0's names put one on the
+wrong function (`GfAssetSetupWeapon::getArcFile` and `getEfpFile`), the table decides.
 
-Compiled with the project's compiler, 2,411 of the 2,439 tables the module has come out word for word as the
-original's (995 of them with a destructor the linker folded into its base's identical one, 273 with slots the
-names do not reach yet); the 21 headers that do not compile or differ say why at their top. What the tables do
+Compiled with the project's compiler, 2,417 of the 2,439 tables the module has come out word for word as the
+original's (997 of them with a destructor the linker folded into its base's identical one, 264 with slots the
+names do not reach yet); the 16 headers that do not compile or differ say why at their top. What the tables do
 not say stays a placeholder: a base no evidence names (`TUnk_<address>`), a slot no function names
 (`vf<slot>`), return types (`void` until code proves one), fields (padding where a derived class's layout proves
-a base's size). 58 bases with no table of their own are rebuilt from the slots their derived classes inherit.
+a base's size). 56 bases with no table of their own are rebuilt from the slots their derived classes inherit.
 
 The headers are where matching starts, not output to regenerate: fields, static members and return types are
 added by hand as functions need them, and a base the tables cannot tell apart is corrected from the constructor

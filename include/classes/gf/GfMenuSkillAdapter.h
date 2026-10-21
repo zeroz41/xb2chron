@@ -11,7 +11,6 @@ public:
     class ReferenceDriverLineLevelConverter;
     virtual ~GfMenuSkillAdapter();  // slot 0
     virtual void update(fw::UpdateInfo const&);  // slot 2
-    virtual void update_SkillName();  // slot 3
 };
 }  // namespace gf
 

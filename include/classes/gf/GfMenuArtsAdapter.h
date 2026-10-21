@@ -12,7 +12,6 @@ public:
     class ListReferenceDriverConverterReferenceIndex;
     virtual ~GfMenuArtsAdapter();  // slot 0
     virtual void update(fw::UpdateInfo const&);  // slot 2
-    virtual void update_ArtsName();  // slot 3
 };
 }  // namespace gf
 
