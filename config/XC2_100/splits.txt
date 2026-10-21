@@ -72,19 +72,19 @@ application/BF2/battle/effect/effect_manager_battle.cpp:
 	.data        start:0x011724A8 end:0x01172530
 
 btl/EffectObject.cpp:
-	.text        start:0x0007C58C end:0x00081A5C
+	.text        start:0x0007C58C end:0x000819C0
 	.data        start:0x01172530 end:0x01172590
 
 application/BF2/battle/hate_ring_manager.cpp:
-	.text        start:0x00081A5C end:0x0008363C
+	.text        start:0x000819C0 end:0x0008363C
 	.data        start:0x01172590 end:0x011725D0
 
 btl/ShakeCameraManager.cpp:
-	.text        start:0x0008363C end:0x000862FC
+	.text        start:0x0008363C end:0x00086230
 	.data        start:0x011725D0 end:0x01172698
 
 application/BF2/battle/sp_attack_manager.cpp:
-	.text        start:0x000862FC end:0x00088E4C
+	.text        start:0x00086230 end:0x00088E4C
 	.data        start:0x011726D0 end:0x01172710
 
 application/BF2/battle/talk_manager_battle.cpp:
@@ -1230,11 +1230,11 @@ application/BF2/gf/menu/object/gf_menu_obj_balloon.cpp:
 	.data        start:0x01194CE8 end:0x01194EE0
 
 application/BF2/gf/menu/object/gf_menu_obj_battle_telop.cpp:
-	.text        start:0x003F04E8 end:0x003F0FF4
+	.text        start:0x003F04E8 end:0x003F1EB0
 	.data        start:0x01194EE0 end:0x01194F88
 
 application/BF2/gf/menu/object/gf_menu_obj_blade_book.cpp:
-	.text        start:0x003F0FF4 end:0x003F4424
+	.text        start:0x003F1EB0 end:0x003F4424
 	.data        start:0x01194F88 end:0x01195048
 
 application/BF2/gf/menu/object/gf_menu_obj_blade_change.cpp:
@@ -1267,11 +1267,11 @@ application/BF2/gf/menu/object/gf_menu_obj_blade_set2.cpp:
 	.data        start:0x011957C8 end:0x011958A0
 
 application/BF2/gf/menu/object/gf_menu_obj_blade_switch.cpp:
-	.text        start:0x0040E5D4 end:0x0040EA54
+	.text        start:0x0040E5D4 end:0x0040ED6C
 	.data        start:0x011958A0 end:0x01195910
 
 application/BF2/gf/menu/object/gf_menu_obj_bl_custom_top.cpp:
-	.text        start:0x0040EA54 end:0x00410440
+	.text        start:0x0040ED6C end:0x00410440
 	.data        start:0x01195910 end:0x011959A8
 
 application/BF2/gf/menu/object/gf_menu_obj_bl_detail.cpp:
@@ -1367,11 +1367,11 @@ application/BF2/gf/menu/object/gf_menu_obj_compass.cpp:
 	.bss         start:0x014A10A8 end:0x014A12B0
 
 application/BF2/gf/menu/object/gf_menu_obj_cylinderselect.cpp:
-	.text        start:0x00442280 end:0x004428BC
+	.text        start:0x00442280 end:0x00442D04
 	.data        start:0x01196CD8 end:0x01196D48
 
 application/BF2/gf/menu/object/gf_menu_obj_damage_buff.cpp:
-	.text        start:0x004428BC end:0x00444648
+	.text        start:0x00442D04 end:0x00444648
 	.data        start:0x01196D48 end:0x01196DD0
 
 application/BF2/gf/menu/object/gf_menu_obj_damage_value.cpp:
@@ -1411,11 +1411,11 @@ application/BF2/gf/menu/object/gf_menu_obj_dr_kizuna_ring.cpp:
 	.data        start:0x011973E8 end:0x01197500
 
 application/BF2/gf/menu/object/gf_menu_obj_dummy_tutorial.cpp:
-	.text        start:0x0045A570 end:0x0045A970
+	.text        start:0x0045A570 end:0x0045AB80
 	.data        start:0x01197500 end:0x01197570
 
 application/BF2/gf/menu/object/gf_menu_obj_element_eff.cpp:
-	.text        start:0x0045A970 end:0x0045B868
+	.text        start:0x0045AB80 end:0x0045B868
 	.data        start:0x01197570 end:0x011975E0
 
 application/BF2/gf/menu/object/gf_menu_obj_enemy_status.cpp:
@@ -1524,11 +1524,11 @@ application/BF2/gf/menu/object/gf_menu_obj_mainmenu2bg.cpp:
 	.data        start:0x01198B50 end:0x01198C98
 
 application/BF2/gf/menu/object/gf_menu_obj_main_root.cpp:
-	.text        start:0x00489700 end:0x00489914
+	.text        start:0x00489700 end:0x004899BC
 	.data        start:0x01198C98 end:0x01198D08
 
 application/BF2/gf/menu/object/gf_menu_obj_main_submenu.cpp:
-	.text        start:0x00489914 end:0x0048A900
+	.text        start:0x004899BC end:0x0048A900
 	.data        start:0x01198D08 end:0x01198DA0
 
 application/BF2/gf/menu/object/gf_menu_obj_mercenaries.cpp:
@@ -1557,12 +1557,12 @@ application/BF2/gf/menu/object/gf_menu_obj_minimap2.cpp:
 	.bss         start:0x014A12C0 end:0x014A12C8
 
 application/BF2/gf/menu/object/gf_menu_obj_name_select.cpp:
-	.text        start:0x0049F3BC end:0x0049F814
+	.text        start:0x0049F3BC end:0x0049FD24
 	.data        start:0x011993D0 end:0x011994A8
 	.bss         start:0x014A12C8 end:0x014A12CC
 
 application/BF2/gf/menu/object/gf_menu_obj_opening_telop.cpp:
-	.text        start:0x0049F814 end:0x004A05EC
+	.text        start:0x0049FD24 end:0x004A05EC
 	.data        start:0x011994A8 end:0x01199548
 
 application/BF2/gf/menu/object/gf_menu_obj_operation_info.cpp:
@@ -1590,11 +1590,11 @@ application/BF2/gf/menu/object/gf_menu_obj_party_form3.cpp:
 	.data        start:0x01199960 end:0x01199A58
 
 application/BF2/gf/menu/object/gf_menu_obj_party_gauge.cpp:
-	.text        start:0x004AD9F0 end:0x004ADEEC
+	.text        start:0x004AD9F0 end:0x004AE198
 	.data        start:0x01199A58 end:0x01199AC8
 
 application/BF2/gf/menu/object/gf_menu_obj_party_status.cpp:
-	.text        start:0x004ADEEC end:0x004AFD60
+	.text        start:0x004AE198 end:0x004AFD60
 	.data        start:0x01199AC8 end:0x01199B60
 
 application/BF2/gf/menu/object/gf_menu_obj_party_status2.cpp:
@@ -1639,11 +1639,11 @@ application/BF2/gf/menu/object/gf_menu_obj_salvage.cpp:
 	.data        start:0x0119A518 end:0x0119A5A8
 
 application/BF2/gf/menu/object/gf_menu_obj_save_load.cpp:
-	.text        start:0x004C7BD0 end:0x004C7E1C
+	.text        start:0x004C7BD0 end:0x004C80E0
 	.data        start:0x0119A5A8 end:0x0119A618
 
 application/BF2/gf/menu/object/gf_menu_obj_save_load2.cpp:
-	.text        start:0x004C7E1C end:0x004C9CFC
+	.text        start:0x004C80E0 end:0x004C9CFC
 	.data        start:0x0119A618 end:0x0119A688
 
 application/BF2/gf/menu/object/gf_menu_obj_shop.cpp:
