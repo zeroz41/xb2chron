@@ -4,12 +4,14 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace ui { class UIEventManager; }
+namespace ui { class UIObjectListener; }
 
 namespace ui {
 // table 0x7100B74668
 class UIEventManager : public ::mm::mtl::PtrSingleton< ::ui::UIEventManager> {
 public:
     virtual ~UIEventManager();  // slot 0
+    void registObjectListener(unsigned int handle, UIObjectListener* listener);  // it takes a reference
 };
 }  // namespace ui
 

@@ -1,12 +1,13 @@
 #ifndef CLASSES_UI_UIOBJECTPLUGIN_H
 #define CLASSES_UI_UIOBJECTPLUGIN_H
 
+#include "classes/mm/mtl/ReferenceObject.h"
 #include "mm/mtl/RTTI.h"
 namespace ui { class UIObjectAcc; }
 
 namespace ui {
-// table 0x7100B757B8
-class UIObjectPlugin {
+// table 0x7100B757B8; GfMenuAdapter takes a reference to its plugin and its creators release theirs
+class UIObjectPlugin : public ::mm::mtl::ReferenceObject {
 public:
     virtual ~UIObjectPlugin();  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
@@ -14,7 +15,7 @@ public:
     virtual void execute(ui::UIObjectAcc&);  // slot 4
     virtual bool isNeedUpdate(ui::UIObjectAcc&);  // slot 5
     static mm::mtl::RTTI m_rtti;
-    unsigned char pad_08[0x14];  // derived plugins' fields start at 0x1C, in this class's tail padding
+    unsigned char pad_0C[0x10];  // derived plugins' fields start at 0x1C, in this class's tail padding
 };
 }  // namespace ui
 

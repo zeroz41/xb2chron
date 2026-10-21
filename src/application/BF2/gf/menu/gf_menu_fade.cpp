@@ -1,5 +1,7 @@
 #include "classes/gf/GfMenuFade.h"
+#include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfMenuObjFade.h"
+#include "classes/ui/UIManager.h"
 #include "mm/Col4.h"
 #include "ui/EventData.h"
 
@@ -68,11 +70,9 @@ void GfMenuFade::setLoading(unsigned int id, bool disp) {
 }
 
 bool GfMenuFade::isFading(unsigned int channel) {
-    if (channel <= 2) {
-        GfMenuFade* menu = get();
-        if (menu != nullptr) {
-            return menu->m_fading[channel];
-        }
+    GfMenuFade* menu = get();
+    if (channel <= 2 && menu != nullptr) {
+        return menu->m_fading[channel];
     }
     return false;
 }

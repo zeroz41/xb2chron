@@ -10,6 +10,7 @@ namespace gf {
 class GfMovieManager : public ::mm::mtl::PtrSingleton< ::gf::GfMovieManager> {
 public:
     virtual ~GfMovieManager();  // slot 0
+    void close();  // fw::MovieManager's close
 };
 }  // namespace gf
 
