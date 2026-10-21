@@ -8,9 +8,9 @@ namespace gf {
 class DataObjEnemyBlade : public ::gf::DataObjEnemy {
 public:
     virtual ~DataObjEnemyBlade();  // slot 0
-    virtual void getModelResourceName() const;  // slot 4
-    virtual void getMotionResourceName() const;  // slot 5
-    virtual void getEffectResourceName() const;  // slot 6
+    virtual const char* getModelResourceName() const;  // slot 4
+    virtual const char* getMotionResourceName() const;  // slot 5
+    virtual const char* getEffectResourceName() const;  // slot 6
     virtual void getName() const;  // slot 8
     virtual void getName(unsigned char*&, unsigned int&) const;  // slot 10
     virtual void getPArmor(bool) const;  // slot 23

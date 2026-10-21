@@ -11,10 +11,10 @@ public:
     virtual ~IDataObj() {}  // slot 0
     virtual void setMenuParam() {}  // slot 2
     virtual bool isValid() const = 0;  // slot 3
-    virtual void getModelResourceName() const;  // slot 4
-    virtual void getMotionResourceName() const;  // slot 5
-    virtual void getEffectResourceName() const;  // slot 6
-    virtual void getSeResourceName() const;  // slot 7
+    virtual const char* getModelResourceName() const { return nullptr; }  // slot 4
+    virtual const char* getMotionResourceName() const { return nullptr; }  // slot 5
+    virtual const char* getEffectResourceName() const { return nullptr; }  // slot 6
+    virtual const char* getSeResourceName() const { return nullptr; }  // slot 7
     virtual void getName() const = 0;  // slot 8
     virtual void getRotateBone() const;  // slot 9
     virtual void getName(unsigned char*&, unsigned int&) const;  // slot 10

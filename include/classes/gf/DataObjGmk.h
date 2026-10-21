@@ -9,8 +9,8 @@ class DataObjGmk : public ::gf::IDataObj {
 public:
     virtual ~DataObjGmk();  // slot 0
     virtual bool isValid() const;  // slot 3
-    virtual void getModelResourceName() const;  // slot 4
-    virtual void getMotionResourceName() const;  // slot 5
+    virtual const char* getModelResourceName() const;  // slot 4
+    virtual const char* getMotionResourceName() const;  // slot 5
     virtual void getName() const;  // slot 8
     virtual void getName(unsigned char*&, unsigned int&) const;  // slot 10
     virtual void getBdatId() const;  // slot 11
