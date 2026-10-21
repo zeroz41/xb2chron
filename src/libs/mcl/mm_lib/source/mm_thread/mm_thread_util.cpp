@@ -1,4 +1,5 @@
 #include "mm/threading/ReadWriteLock.h"
+#include "mm/threading/ThreadUtil.h"
 
 namespace mm { namespace threading {
 
@@ -16,6 +17,10 @@ WriteLockGuard::WriteLockGuard(const ReadWriteLock& lock) : m_lock(&lock) {
 
 WriteLockGuard::~WriteLockGuard() {
     nn::os::ReleaseWriteLock(&m_lock->m_lock);
+}
+
+void ThreadUtil::resumeThread(MMTHREAD* thread) {
+    nn::os::StartThread(thread);
 }
 
 }}  // namespace mm::threading

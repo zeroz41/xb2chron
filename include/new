@@ -1,0 +1,11 @@
+#ifndef NEW_H
+#define NEW_H
+
+// The C++ library's <new>, as far as the module uses it (NintendoSDK's libc++).
+
+// placement new: constructs in memory obtained elsewhere
+inline void* operator new(unsigned long size, void* memory) noexcept {
+    return memory;
+}
+
+#endif

@@ -8,7 +8,7 @@ namespace ml { namespace irrvol {
 class MemHandlebaseAllocator : public ::mm::mtl::IAllocator {
 public:
     virtual ~MemHandlebaseAllocator();  // slot 0
-    virtual void allocate(unsigned long, unsigned long);  // slot 2
+    virtual void* allocate(unsigned long, unsigned long);  // slot 2
     virtual void deallocate(void*);  // slot 3
 };
 }}  // namespace ml::irrvol

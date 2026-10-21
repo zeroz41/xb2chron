@@ -47,6 +47,7 @@
           "-fno-rtti",
           "-fno-strict-aliasing",
           "-fno-slp-vectorize",
+          "-mno-implicit-float",
           "-ffunction-sections",
           "-fdata-sections",
           "-fasynchronous-unwind-tables",
@@ -60,7 +61,10 @@
         "source_root": "D:/Monolithsoft/BF2/prog",
         "units": {
           "libs/mcl/mm_lib/source/*": {
-            "source_root": "C:/MonolithSoft/BF2/prog"
+            "source_root": "C:/MonolithSoft/BF2/prog",
+            "extra_cflags": [
+              "-DMM_LIB_PROJECT"
+            ]
           }
         },
         "compiler_version": "clang version 3.9.1",

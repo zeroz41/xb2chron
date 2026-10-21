@@ -2,13 +2,15 @@
 #define CLASSES_MM_MTL_IALLOCATOR_H
 
 namespace mm { namespace mtl {
-// table none (its derived classes')
+// table none (its derived classes'): its destructor and getName are inline (weak in the module)
 class IAllocator {
 public:
     virtual ~IAllocator() {}  // slot 0
-    virtual void allocate(unsigned long, unsigned long) = 0;  // slot 2
-    virtual void deallocate(void*) = 0;  // slot 3
-    virtual void getName() const;  // slot 4
+    virtual void* allocate(unsigned long size, unsigned long alignment) = 0;  // slot 2
+    virtual void deallocate(void* memory) = 0;  // slot 3
+    virtual const char* getName() const {  // slot 4
+        return "IAllocator";
+    }
 };
 }}  // namespace mm::mtl
 

@@ -8,7 +8,7 @@ namespace layer {
 class LayerHandleAllocator : public ::mm::mtl::IAllocator {
 public:
     virtual ~LayerHandleAllocator();  // slot 0
-    virtual void allocate(unsigned long, unsigned long);  // slot 2
+    virtual void* allocate(unsigned long, unsigned long);  // slot 2
     virtual void deallocate(void*);  // slot 3
 };
 }  // namespace layer
