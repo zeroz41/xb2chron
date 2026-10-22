@@ -39,6 +39,12 @@ inline float asin(float r) {
     return ::asinf(r);
 }
 
+// a value's magnitude in its own type: a short's comes back as a short (UIObjectOffsetPlugin::execute)
+template <typename T>
+inline T abs(T x) {
+    return x < 0 ? -x : x;
+}
+
 // by reference: a bound read from memory is read again after the assertion's call
 template <typename T>
 inline T clamp(const T& x, const T& mi, const T& ma) {

@@ -10,6 +10,7 @@ namespace ui {
 class UIFontManager : public ::mm::mtl::PtrSingleton< ::ui::UIFontManager> {
 public:
     virtual ~UIFontManager();  // slot 0
+    bool findFacePattern(const char* name, unsigned int& index);  // false when no pattern has that name
 };
 }  // namespace ui
 
