@@ -1,0 +1,22 @@
+#ifndef GRLIB_CGLIBVTXVERTEX_H
+#define GRLIB_CGLIBVTXVERTEX_H
+
+namespace grlib {
+
+// a vertex buffer in GPU memory: its size, its stride and the vertex count, the memory and its GPU address
+class CGLibVtxVertex {
+public:
+    CGLibVtxVertex();
+    ~CGLibVtxVertex();
+    // frees the memory once the GPU is done with it
+    void delayRelease();
+    void createVertexBuff(unsigned int size, unsigned int stride);
+    void lock(void** ppBuffer, unsigned int* pSize);
+    void unlock();
+
+    unsigned char pad_0[0x28];
+};
+
+}  // namespace grlib
+
+#endif

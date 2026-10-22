@@ -6,6 +6,7 @@
 #include "classes/gf/GfComProperty.h"
 #include "mm/Vec3.h"
 #include "mm/mtl/IntrusivePtr.h"
+#include "classes/gf/pc/GfPropertyField.h"
 
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
@@ -23,7 +24,10 @@ public:
 
     static mm::mtl::RTTI m_rtti;
 
-    unsigned char pad_38[0x30];
+    // setup copies it from its SetupInfo's first word (0 and nonzero pick different state flags); the constructor
+    // and cleanup set -1, and AIAgent runs its field AI only while it is not -1
+    int m_setupKind;
+    unsigned char pad_3c[0x2C];
     unsigned int m_inputFlags;  // after setInputDirPow's input; bit 2: TaskFieldJump::update sets it
     unsigned char pad_6c[0x14];
     mm::Vec3 m_velocity;        // TaskFieldJump::update keeps its speed, turned along m_moveDir
@@ -40,6 +44,8 @@ public:
     mm::Vec3 m_moveDir;         // TaskFieldJump::update sets m_velocity along it
     unsigned char pad_1f0[0x110];
     mm::mtl::IntrusivePtr<fw::ParamList> m_paramList;  // the PC's parameters
+    unsigned char pad_308[0x8];
+    pc::GfPropertyField m_field;  // setup, cleanup and flush pass it this property
 };
 }  // namespace gf
 

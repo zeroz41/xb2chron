@@ -5,12 +5,15 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class GfAssetManager; }
+namespace gf { class AssetPackInfo; }
+namespace gf { class GF_ASSET_HANDLE; }
 
 namespace gf {
 // table 0x7100B43558
 class GfAssetManager : public ::mm::mtl::PtrSingleton< ::gf::GfAssetManager>, public ::ml::IWorkEvent {
 public:
     virtual ~GfAssetManager();  // slot 0
+    static AssetPackInfo* getAssetPackInfo(GF_ASSET_HANDLE* handle);
 };
 }  // namespace gf
 

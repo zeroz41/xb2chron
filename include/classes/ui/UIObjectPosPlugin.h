@@ -10,6 +10,7 @@ namespace ui {
 // table 0x7100B75220; its constructor and execute call UIObjectDispPlugin's
 class UIObjectPosPlugin : public ::ui::UIObjectDispPlugin {
 public:
+    UIObjectPosPlugin();
     virtual ~UIObjectPosPlugin();  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     virtual void execute(ui::UIObjectAcc&);  // slot 4

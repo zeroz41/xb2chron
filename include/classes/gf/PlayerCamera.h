@@ -12,7 +12,7 @@ class PlayerCamera : public ::fw::Camera {
 public:
     virtual ~PlayerCamera();  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
-    virtual void getName() const;  // slot 3
+    virtual const char* getName() const;  // slot 3
     virtual void onActivate();  // slot 6
     virtual void update(fw::UpdateInfo const&);  // slot 8
     virtual void updateViewMatrix();  // slot 9

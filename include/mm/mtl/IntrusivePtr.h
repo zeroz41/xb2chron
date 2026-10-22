@@ -20,6 +20,11 @@ template <typename T>
 class IntrusivePtr {
 public:
     IntrusivePtr() : _ptr(nullptr) {}
+    IntrusivePtr(T* ptr) : _ptr(ptr) {
+        if (_ptr != nullptr) {
+            _ptr->addRef();
+        }
+    }
     IntrusivePtr(const IntrusivePtr& other) : _ptr(other._ptr) {
         if (_ptr != nullptr) {
             _ptr->addRef();

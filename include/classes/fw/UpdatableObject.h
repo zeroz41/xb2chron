@@ -20,11 +20,10 @@ public:
     template <typename T>
     T* getComponent(unsigned int slot) const {
         fw::ComponentObject* component = m_components[slot];
-        T* result = static_cast<T*>(component);
-        if (component != nullptr && !component->getRTTI()->isKindOf(&T::m_rtti)) {
-            result = nullptr;
+        if (component == nullptr) {
+            return nullptr;
         }
-        return result;
+        return component->getRTTI()->isKindOf(&T::m_rtti) ? static_cast<T*>(component) : nullptr;
     }
 
     // the same for a slot known to hold a component (inline: the name is not the original's)

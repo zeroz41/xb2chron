@@ -11,6 +11,8 @@ class SCOM_ACHIEV_INC : public ::gf::SCOM {
 public:
     virtual ~SCOM_ACHIEV_INC();  // slot 0
     virtual void exec(fw::UpdateInfo const&);  // slot 2
+    // queues a request that adds value to achievement counter type (type 0x22 also counts salvage-shop requests)
+    static void create(unsigned int type, int value, unsigned int);
 };
 }  // namespace gf
 

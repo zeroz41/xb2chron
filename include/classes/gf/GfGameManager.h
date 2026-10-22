@@ -86,6 +86,7 @@ public:
 class GfGameManager : public ::mm::mtl::PtrSingleton< ::gf::GfGameManager>, public TUnk_B54A90, public ::gf::IQuestEvent {
 public:
     virtual ~GfGameManager();  // slot 0
+    static gf::GF_OBJ_HANDLE* getPartyLeader();
     virtual void vf2();  // slot 2
     virtual void vf3();  // slot 3
     virtual void vf4();  // slot 4

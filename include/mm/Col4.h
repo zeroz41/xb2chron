@@ -9,6 +9,9 @@ struct Col4 {
     float g;
     float b;
     float a;
+
+    static const Col4 zero;
+    static const Col4 black;
 };
 
 }  // namespace mm

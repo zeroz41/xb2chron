@@ -3,6 +3,7 @@
 
 #include "classes/gf/GfComBehaviorPc.h"
 #include "classes/gf/Plugin.h"
+#include "fw/ParamAdapter.h"
 
 namespace fw { class UpdateInfo; }
 
@@ -10,6 +11,13 @@ namespace gf { namespace pc {
 // table 0x7100B696F0
 class FadePlugin : public ::gf::Plugin {
 public:
+    // its parameter entry (the PC's field parameter list's 18); the name is not the original's
+    struct Param {
+        float m_fadeOutWait;  // update waits this long after the fade to black starts
+        float m_blackWait;    // then this long before fading back in
+        float m_fadeTime;     // each fade's length (create takes it at 30 frames a second); the fade in ends the plugin
+    };
+
     FadePlugin();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~FadePlugin();  // slot 1
@@ -32,7 +40,8 @@ public:
 
     int m_state;   // the fade's step: onActivate starts it at 3, update moves it on as m_time passes each step's time
     float m_time;  // the time spent in the current step
-    unsigned char pad_14[0xC];  // +0x18: the fade's parameter entry setup finds (its type has no name yet)
+    unsigned char pad_14[0x4];
+    fw::ParamAdapter m_param;  // setup finds it
 };
 }}  // namespace gf::pc
 
