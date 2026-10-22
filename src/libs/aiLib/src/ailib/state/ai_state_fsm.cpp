@@ -66,8 +66,8 @@ void Fsm::update(const void* arg) {
     m_inside = true;
     if (m_pState != nullptr) {
         m_pState->onStep(m_owner, arg);
-        if (m_pState->m_nextStateID != static_cast<unsigned int>(-1)) {
-            setStateImpl(m_pState->m_nextStateID);
+        if (m_pState->m_reqState != static_cast<unsigned int>(-1)) {
+            setStateImpl(m_pState->m_reqState);
         }
     }
     m_inside = false;

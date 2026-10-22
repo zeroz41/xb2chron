@@ -3,6 +3,8 @@
 
 #include "gf/QuestID.h"
 
+namespace gf { class QuestTaskParam; }
+
 namespace gf {
 // a quest's state, by its ID
 class GfQuestInfo {
@@ -11,6 +13,10 @@ public:
     static bool isQuestFin(QuestID id);
     static bool isQuestNotOrder(QuestID id);
     static bool isParent(QuestID id);
+    // the quest's state (0 for an empty id)
+    static int getState(QuestID id);
+    // whether a quest's task is complete (GfQuestEvent::getQuestComp)
+    static bool isCompleteTask(const QuestTaskParam& param);
 };
 }  // namespace gf
 

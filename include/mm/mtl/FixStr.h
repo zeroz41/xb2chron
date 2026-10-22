@@ -39,6 +39,11 @@ public:
         return *this;
     }
     FixStr& format(const char* format, ...);
+    // empties it: the text's end at the start, then the length (GfEvtSe::destroySe; the name is not the original's)
+    void clear() {
+        m_str[0] = '\0';
+        m_nLen = 0;
+    }
     // pszName appended (WaterInPlugin::onEvent inlines it; the name is not the original's)
     FixStr& operator+=(const char* pszName) {
         int nBackLen = strlen(pszName);

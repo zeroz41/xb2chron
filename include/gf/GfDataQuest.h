@@ -17,6 +17,8 @@ public:
     static unsigned int getListQuestCategory(QuestID id);
     // the affinity chart quest of a quest, none for another quest
     static const AchievQuest* getAchievQuest(QuestID id);
+    // whether a quest shows in the quest list (GfQuestEvent::setQuestEntry keeps it as its entry UI's flag)
+    static bool getListVisible(QuestID id);
 };
 
 }  // namespace gf

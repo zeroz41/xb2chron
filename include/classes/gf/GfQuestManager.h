@@ -12,7 +12,8 @@ class GfQuestManager : public ::mm::mtl::PtrSingleton< ::gf::GfQuestManager> {
 public:
     virtual ~GfQuestManager();  // slot 0
     static void entryOrderAchievQuest(gf::QuestID id);
-    static void openOrder(gf::QuestID id, bool notify);
+    // whether the quest's order opened (GfQuestEvent::setQuestEntry tests it)
+    static bool openOrder(gf::QuestID id, bool notify);
 };
 }  // namespace gf
 

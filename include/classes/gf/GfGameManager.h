@@ -95,6 +95,8 @@ public:
     // whether the player is in a talk (a forced one, or the game state's talk flag)
     static bool isTalking();
     static int getMapID();
+    // the map a jump goes to (GfGameEnv's int at 0x10; GfFieldZoneScript::execScript names its script from it)
+    static unsigned int getMapJumpID();
     static int getScenarioId();  // the chapter GfMenuGameAdapter::update_Chapter shows
     static bool isPlaySequenceClear();
     static bool isPlayerCameraPause();

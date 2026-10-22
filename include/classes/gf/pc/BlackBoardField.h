@@ -4,6 +4,7 @@
 #include "mm/mtl/RTTI.h"
 #include "classes/ai/BlackBoard.h"
 #include "mm/Vec3.h"
+#include "mm/Plane.h"
 
 namespace gf { class GfComPropertyPc; }
 namespace navi { class NvmshAcObj; }
@@ -53,7 +54,11 @@ public:
     float m_targetDist;      // the PC's distance from m_targetPos across the ground (x and z)
     mm::Vec3 m_followPos;    // the position of the formation's transform the PC follows
     float m_followDist;      // the PC's distance from m_followPos across the ground
-    unsigned char pad_54[0x3C];
+    unsigned char pad_54[0xC];
+    // the wall the PC climbs: a point on it and its plane (the wall states hand both to
+    // StateUtilField::calcWallPreparePosition; the names are not the original's)
+    mm::Vec3 m_wallPos;
+    mm::Plane m_wallPlane;
     // where the PC climbs off a wall (TaskFieldWallFollow::update hands it to AgentUtilField::setFollowWallEndInput;
     // the name is not the original's)
     mm::Vec3 m_wallEndPos;

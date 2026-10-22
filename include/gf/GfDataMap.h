@@ -13,6 +13,8 @@ public:
     static const char* getWeatherSndBeginName(WEATYPE type);  // the sound it starts with, null or empty for none
     // the times of day (GfFieldTime::getTimeRangeBits's bits) a map's weather may come in
     static unsigned int getWeatherTimeBonus(unsigned int mapId, WEATHERID id);
+    // a map's resource name, null or empty for none (GfFieldZoneScript::execScript runs fld_<it>)
+    static const char* getMapResourceName(unsigned int mapId);
 };
 }  // namespace gf
 

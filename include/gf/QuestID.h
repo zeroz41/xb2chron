@@ -8,6 +8,9 @@ public:
     // zeroes both halves: 1.0.0's qlist_iterator::getQuestID starts from one, and UIListInfo<QuestID>'s constructor
     // stores them separately (its zero stores merge into one memset of 0x58-0x64)
     QuestID() : m_id(0), m_achieveId(0) {}
+    // from an int holding both halves: GfQuestEvent's functions take unsigned ints and pass their 32 bits on as the
+    // QuestID unchanged
+    QuestID(unsigned int id) : m_id(id), m_achieveId(id >> 16) {}
     bool empty() const;
     unsigned short m_id;  // what empty() tests; the name is not the original's
     // the achievement an affinity chart quest belongs to (GfDataQuest::getAchievementBlade maps it to its blade;
