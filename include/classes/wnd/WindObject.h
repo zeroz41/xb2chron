@@ -51,8 +51,10 @@ public:
     void setTransform(const Transform& transform) {
 #ifdef WND_OBJECT_PATH
 #line 69 WND_OBJECT_PATH
-#endif
         MM_ASSERT(m_filter == FILTER_DYNAMIC);
+#else
+        MM_ASSERT(m_filter == FILTER_DYNAMIC);
+#endif
         m_transform = transform;
         m_flags |= 1;
     }
