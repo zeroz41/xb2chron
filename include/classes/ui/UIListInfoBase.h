@@ -9,6 +9,9 @@ public:
     virtual ~UIListInfoBase();  // slot 0
     virtual void clear();  // slot 2
     virtual void update();  // slot 3
+    unsigned int getRowSize() const;
+    unsigned int getPageRowSize() const;  // the rows a page shows
+    unsigned int getRowOffset() const;    // the first row shown
 };
 }  // namespace ui
 

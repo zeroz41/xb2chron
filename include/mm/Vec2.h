@@ -3,10 +3,18 @@
 
 namespace mm {
 
-// two floats in 16 bytes on a 16-byte boundary, like Vec3: UIObjectSyncPlugin::execute's frame gives its scale
-// (UIObjectAcc::getScale/setScale) a 16-byte slot that the 4-byte locals there share
+// two floats in 16 bytes on a 16-byte boundary, as Vec3: UIObjectScrollBarPlugin's scale sits at 0x40 after a field
+// ending at 0x34, and UIObjectFitPlugin's execute gives its scale a 16-byte slot. Its copies copy x and y.
 class Vec2 {
 public:
+    Vec2() {}
+    Vec2(float x, float y) : x(x), y(y) {}
+    Vec2(const Vec2& v) : x(v.x), y(v.y) {}
+    Vec2& operator=(const Vec2& v) {
+        x = v.x;
+        y = v.y;
+        return *this;
+    }
     float x;
     float y;
 } __attribute__((aligned(16)));

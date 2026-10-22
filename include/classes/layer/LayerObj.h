@@ -1,6 +1,8 @@
 #ifndef CLASSES_LAYER_LAYEROBJ_H
 #define CLASSES_LAYER_LAYEROBJ_H
 
+#include "layer/LayerBase.h"
+
 namespace layer { class LayerRenderView; }
 namespace layer { class LayerResColor; }
 namespace layer { class LayerResMatrix; }
@@ -9,7 +11,7 @@ namespace layer { class LayerSortMan; }
 
 namespace layer {
 // table 0x7100B7F9E8
-class LayerObj {
+class LayerObj : public ::layer::LayerBase {
 public:
     virtual ~LayerObj();  // slot 0
     virtual void release();  // slot 2

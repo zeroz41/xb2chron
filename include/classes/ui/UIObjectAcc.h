@@ -25,6 +25,7 @@ public:
     bool isDisp() const;
     bool isDebugDraw() const;
     void getPosCenter(mm::Pnt<short>& pos) const;
+    void getSize(bool scaled, short& width, short& height) const;
     void setPos(const mm::Pnt<short>& pos);
     void setPosCenter(const mm::Pnt<short>& pos);
     void getScale(mm::Vec2& scale);
@@ -36,6 +37,8 @@ public:
     void setText(const UIStr& text);
     void setTextFacePattern(unsigned int index);
     unsigned int getTextFacePatternIndex();
+    unsigned int searchSibiling(const char* name);
+    void setScreenAdjusting(bool adjusting);
     UIObject* m_object;      // UIUtil::getObject(m_handle): isTerm reads its flags, setTerm calls its setTerm
     unsigned int m_handle;   // what the constructor is given (or its named child's)
 };

@@ -1,11 +1,22 @@
 #ifndef CLASSES_UI_UITRANSFORM_H
 #define CLASSES_UI_UITRANSFORM_H
 
+#include "mm/Pnt.h"
+
 namespace ui {
-// table 0x7100B75818
+// table 0x7100B75818; an object's position and scale (UIObjectBase keeps one at +0x20)
 class UITransform {
 public:
+    UITransform();
     virtual ~UITransform();  // slot 0
+    void setPos(short x, short y);
+    void setScale(float x, float y);
+    mm::Pnt<short> m_pos;        // setPos's
+    unsigned char pad_0C[0x4];
+    float m_scaleX;              // setScale's
+    float m_scaleY;
+    unsigned char pad_18[0xC];
+    bool m_changed;              // setPos and setScale set it when they change something
 };
 }  // namespace ui
 
