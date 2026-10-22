@@ -13,7 +13,7 @@ public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfComEnvSensor();  // slot 1
     virtual void changeLayer(unsigned int, unsigned int);  // slot 3
-    virtual void recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
+    virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gf

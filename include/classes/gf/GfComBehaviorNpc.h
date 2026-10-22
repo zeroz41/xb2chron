@@ -16,7 +16,7 @@ public:
     class LocalSteerIsTargetNotPlayer;
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfComBehaviorNpc();  // slot 1
-    virtual void recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
+    virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     virtual void update(fw::UpdateInfo const&);  // slot 5
     virtual void getComAsm() const;  // slot 7
     static mm::mtl::RTTI m_rtti;

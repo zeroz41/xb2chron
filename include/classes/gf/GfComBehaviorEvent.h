@@ -14,7 +14,7 @@ class GfComBehaviorEvent : public ::gf::GfComBehavior {
 public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfComBehaviorEvent();  // slot 1
-    virtual void recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
+    virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     virtual void update(fw::UpdateInfo const&);  // slot 5
     static mm::mtl::RTTI m_rtti;
 };

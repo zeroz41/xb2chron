@@ -17,7 +17,7 @@ public:
     class Listener;
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfComBehaviorPc();  // slot 1
-    virtual void recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
+    virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     virtual void update(fw::UpdateInfo const&);  // slot 5
     virtual void procAnimCallback(gf::GfComAsm*, gf::CallBackCache const&);  // slot 6
     static mm::mtl::RTTI m_rtti;

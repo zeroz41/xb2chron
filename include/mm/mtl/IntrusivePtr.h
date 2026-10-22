@@ -48,6 +48,16 @@ public:
         }
         return *this;
     }
+    // the other's object, referenced, replaces this one's, released
+    IntrusivePtr& operator=(const IntrusivePtr& other) {
+        IntrusivePtr(other).swap(*this);
+        return *this;
+    }
+    void swap(IntrusivePtr& other) {
+        T* ptr = _ptr;
+        _ptr = other._ptr;
+        other._ptr = ptr;
+    }
 
     T* get() const { return _ptr; }
     T* operator->() const {

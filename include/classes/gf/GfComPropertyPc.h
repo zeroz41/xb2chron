@@ -18,7 +18,7 @@ class GfComPropertyPc : public ::gf::GfComProperty {
 public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfComPropertyPc();  // slot 1
-    virtual void recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
+    virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     const gf::EnviromentSensor* getEnvSensor() const;
     void setInputDirPow(const mm::Vec3& dir, float pow);
 

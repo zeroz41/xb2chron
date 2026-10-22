@@ -13,7 +13,7 @@ public:
     virtual const mm::mtl::RTTI* getRTTI() const = 0;  // slot 0
     virtual ~GfComponent() {}  // slot 1: inline (no symbol; a derived destructor calls none)
     virtual void changeLayer(unsigned int, unsigned int) = 0;  // slot 3
-    virtual void recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
+    virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
 };
 }  // namespace gf
 

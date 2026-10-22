@@ -11,6 +11,7 @@ namespace gf {
 class FootStepPlugin : public ::gf::Plugin {
 public:
     FootStepPlugin();
+    static Plugin* create();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~FootStepPlugin() {}  // slot 1
     virtual void onActivate();  // slot 3

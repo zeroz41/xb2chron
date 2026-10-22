@@ -19,6 +19,16 @@ public:
                ::fabsf(zero.w - w) <= 1e-6f;
     }
 
+    // v turned by this rotation: this * v * this's conjugate, v a quaternion with no real part
+    Vec3 rotate(const Vec3& v) const {
+        float tx = (y * v.z - z * v.y) + w * v.x;
+        float ty = (z * v.x - x * v.z) + w * v.y;
+        float tz = (x * v.y - y * v.x) + w * v.z;
+        float tw = -x * v.x - y * v.y - z * v.z;
+        return Vec3(((y * tz - z * ty) - x * tw) + w * tx, ((z * tx - x * tz) - y * tw) + w * ty,
+                    ((x * ty - y * tx) - z * tw) + w * tz);
+    }
+
     float x;
     float y;
     float z;

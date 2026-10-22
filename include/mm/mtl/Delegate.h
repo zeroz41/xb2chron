@@ -16,8 +16,8 @@ public:
 
     template <typename T>
     void set(T* object, R (T::*func)(Args...)) {
-        m_func = reinterpret_cast<R (Delegate::*)(Args...)>(func);
         m_object = object;
+        m_func = reinterpret_cast<R (Delegate::*)(Args...)>(func);
         m_invoker = &memberFuncInvoker<T>;
     }
     bool isValid() const {

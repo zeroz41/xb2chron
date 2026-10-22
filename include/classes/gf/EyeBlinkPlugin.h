@@ -10,6 +10,7 @@ namespace gf {
 // table 0x7100B65648
 class EyeBlinkPlugin : public ::gf::Plugin {
 public:
+    static Plugin* create();
     virtual const mm::mtl::RTTI* getRTTI() const;  // slot 0
     virtual ~EyeBlinkPlugin();  // slot 1
     virtual void onActivate();  // slot 3
