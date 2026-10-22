@@ -17,7 +17,9 @@ public:
     virtual void update(fw::UpdateInfo const&);  // slot 8
 
     unsigned char pad_18[0x8];
-    CameraLayer m_layer;  // the first of the four layers the destructor cleans up; GfDeadCamera pushes onto it
+    // the four layers the destructor cleans up: GfDeadCamera pushes onto the first, GfGameCamera a sub view camera
+    // onto each of the others (the one its gf::VIEWCAM names)
+    CameraLayer m_layers[4];
 };
 }  // namespace fw
 

@@ -4,6 +4,7 @@
 #include "mm/mtl/IntrusivePtr.h"
 
 namespace fw { class Camera; }
+namespace fw { class CameraPlugin; }
 namespace fw { class UpdateInfo; }
 
 namespace fw {
@@ -14,6 +15,10 @@ public:
     void push(mm::mtl::IntrusivePtr<Camera>& camera, float time);
     void pop(mm::mtl::IntrusivePtr<Camera>& camera, float time);
     void cleanup();
+    void pushPlugin(mm::mtl::IntrusivePtr<CameraPlugin>& plugin);
+    void popPlugin(mm::mtl::IntrusivePtr<CameraPlugin>& plugin);
+
+    unsigned char pad_8[0xc8];  // 0xd0 bytes: fw::CameraManager's layers are that far apart
 };
 }  // namespace fw
 

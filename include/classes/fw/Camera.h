@@ -30,7 +30,16 @@ public:
 
     unsigned char pad_c[0x20];
     float m_fov;  // GfGameFallDeadCamera::onActivate sets it from GfInfo::m_camFov
-    unsigned char pad_30[0x78];
+    float m_nearClip;  // 0.4 and 80000 from gf::ScriptCameraEntity's constructor: gf::PlayerCamera::getNearClip and
+    float m_farClip;   // getFarClip return the same
+    unsigned char pad_38[0x8];
+    // setLookAt(eye, target, roll) stores its arguments here (the names are its parameters')
+    mm::Vec3 m_eye;
+    mm::Vec3 m_target;
+    unsigned char pad_60[0x40];
+    bool m_pushed;  // CameraLayer::pop and cleanup clear it; gf::ScriptCamera::end pops the camera only while it is set
+    unsigned char pad_a1[0x3];
+    float m_roll;  // radians (gf::ShipRollPlugin rolls the player camera through it)
 };
 }  // namespace fw
 

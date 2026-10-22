@@ -10,6 +10,7 @@ namespace gf {
 class GfEvent : public ::mm::mtl::PtrSingleton< ::gf::GfEvent> {
 public:
     virtual ~GfEvent();  // slot 0
+    static void callCameraControl(int type);
 };
 }  // namespace gf
 

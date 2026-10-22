@@ -8,6 +8,7 @@ namespace gf {
 // table 0x7100B65508
 class GfComAnimation : public ::gf::GfComponent {
 public:
+    GfComAnimation();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfComAnimation();  // slot 1
     static mm::mtl::RTTI m_rtti;

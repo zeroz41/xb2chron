@@ -5,6 +5,7 @@
 #include "classes/fw/ManagerObject.h"
 #include "classes/ml/IScnRender.h"
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "fw/VolumeFadeParams.h"
 
 namespace fw { class EffectData; }
 namespace fw { class EffectManager; }
@@ -46,6 +47,18 @@ public:
     virtual void finalize();  // overrides a secondary base's
     void addData(EffectData* data);
     void removeData(EffectData* data);
+    // a volume fade effect's parameters, none past the 32 (inline: the name is not the original's)
+    const VolumeFadeParams* getVolumeFadeParams(unsigned int type) const {
+        if (type >= 32) {
+            return nullptr;
+        }
+        return m_volumeFadeParams[type];
+    }
+
+    unsigned char pad_28[0x2fb8];
+    // the volume fade (vanish) parameters by gf::VFEFF, each from its effect/common/vanish/<VolumeName>.dprm
+    // (BTL_VolumeFade's rows; gf::GfVolumeFade reads them)
+    VolumeFadeParams* m_volumeFadeParams[32];
 };
 }  // namespace fw
 

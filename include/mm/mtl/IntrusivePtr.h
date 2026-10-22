@@ -30,6 +30,13 @@ public:
             _ptr->addRef();
         }
     }
+    // from a pointer to a derived class's object (GfGameCamera::createSubViewCamera keeps SubViewCamera::create's)
+    template <typename U>
+    IntrusivePtr(const IntrusivePtr<U>& other) : _ptr(other.get()) {
+        if (_ptr != nullptr) {
+            _ptr->addRef();
+        }
+    }
     ~IntrusivePtr() {
         if (_ptr != nullptr) {
             _ptr->release();
@@ -50,6 +57,11 @@ public:
     }
     // the other's object, referenced, replaces this one's, released
     IntrusivePtr& operator=(const IntrusivePtr& other) {
+        IntrusivePtr(other).swap(*this);
+        return *this;
+    }
+    template <typename U>
+    IntrusivePtr& operator=(const IntrusivePtr<U>& other) {
         IntrusivePtr(other).swap(*this);
         return *this;
     }

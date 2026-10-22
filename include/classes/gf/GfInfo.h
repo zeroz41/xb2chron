@@ -19,6 +19,7 @@ public:
     static mm::Vec3 m_camPos;
     static mm::Vec3 m_camTgt;
     static float m_camFov;
+    static float m_fSecPerFrame;  // seconds a frame lasts (GfVolumeFade::setupKeyFrame turns frame counts into time)
 };
 
 int GfScreenW();  // GfInfo::m_nScreenW

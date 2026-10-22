@@ -17,7 +17,7 @@ GfDeadCamera::GfDeadCamera(GfPlayerDead dead) {
         m_camera = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfGameFallDeadCamera();
         if (m_camera) {
             if (fw::CameraManager* manager = fw::CameraManager::get()) {
-                manager->m_layer.push(m_camera, 0.0f);
+                manager->m_layers[0].push(m_camera, 0.0f);
             }
         }
     }
@@ -26,7 +26,7 @@ GfDeadCamera::GfDeadCamera(GfPlayerDead dead) {
 GfDeadCamera::~GfDeadCamera() {
     if (m_camera) {
         if (fw::CameraManager* manager = fw::CameraManager::get()) {
-            manager->m_layer.pop(m_camera, 0.0f);
+            manager->m_layers[0].pop(m_camera, 0.0f);
         }
         m_camera = nullptr;
     }

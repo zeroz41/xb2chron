@@ -12,6 +12,7 @@ class GfObjUtil {
 public:
     // the object behind a handle, none for an invalid handle or one with no object
     static gf::GfObj* getObj(gf::GF_OBJ_HANDLE* handle);
+    static bool isValid(gf::GF_OBJ_HANDLE* handle);
     static bool isTalking(gf::GF_OBJ_HANDLE* handle);
     // the setup of the object behind a handle (its object info's), none without an info
     static gf::GfObjSetup* getObjSetup(gf::GF_OBJ_HANDLE* handle);

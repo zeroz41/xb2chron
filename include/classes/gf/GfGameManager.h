@@ -94,6 +94,7 @@ public:
     static int getMapID();
     static int getScenarioId();  // the chapter GfMenuGameAdapter::update_Chapter shows
     static bool isPlaySequenceClear();
+    static bool isPlayerCameraPause();
     virtual void vf2();  // slot 2
     virtual void vf3();  // slot 3
     virtual void vf4();  // slot 4
