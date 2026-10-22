@@ -53,6 +53,18 @@ public:
         return m_element[index];
     }
     size_t size() const { return m_size; }
+    // the elements' range (GfObjPropertyCharacter's reset walks it: array.h asserts the elements exist at its lines
+    // 43 and 45)
+    T* begin() {
+#line 43 MM_MTL_ARRAY_PATH
+        MM_ASSERT(m_element);
+        return m_element;
+    }
+    T* end() {
+#line 45 MM_MTL_ARRAY_PATH
+        MM_ASSERT(m_element);
+        return m_element + m_size;
+    }
 
     T* m_element;
     size_t m_size;
