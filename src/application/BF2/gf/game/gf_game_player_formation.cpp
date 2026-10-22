@@ -25,8 +25,48 @@ void GfGamePlayerFormation::destroy() {
     delete get();
 }
 
-// update (0x71002BE08C) and updateImpl (0x71002BE09C) are not here yet: nearmiss/updateImpl.cpp has them,
-// updateImpl identical but for one store pair the original leaves unpaired
+void GfGamePlayerFormation::update(const fw::UpdateInfo& info) {
+    get()->updateImpl(info);
+}
+
+void GfGamePlayerFormation::updateImpl(const fw::UpdateInfo& info) {
+    m_formation = GfGameParty::isBtlLeaderDirver();
+    for (unsigned int i = 0; i < 9; i++) {
+        if (GfObj* obj = GfObjUtil::getObj(m_players[i].m_handle)) {
+            GfObjAcc acc(obj);
+            m_followTransforms[i] = acc.getWorldTransform();
+        }
+    }
+    float sign = m_flip ? -1.0f : 1.0f;
+    for (unsigned int i = 0; i < 9; i++) {
+        if (m_players[i].m_handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            continue;
+        }
+        unsigned int follow = m_players[i].m_followIndex;
+        if (i == 0 || follow == static_cast<unsigned int>(-1)) {
+            m_targetPos[i] = m_followTransforms[i].position;
+            continue;
+        }
+        const FormationParam* param = getFormationParam(m_formation);
+        unsigned int slot = i - 1;
+        if (slot > 4) {
+            slot = 4;
+        }
+        const fw::Transform& transform = m_followTransforms[follow];
+        mm::Vec3 offset(sign * param->playerOffset[slot].x, 0.0f, param->playerOffset[slot].z);
+        mm::Vec3 pos = transform.position + transform.rotation.rotate(offset);
+        m_formationPos[i] = pos;
+        mm::Vec3 hit;
+        if (fw::NaviUtil::testNaviStraightLine(hit, transform.position, pos, 3.0f, 20.0f) != 2) {
+            m_targetPos[i] = transform.position;
+            if (stopPlayer(i, m_targetPos[i], 1.5f)) {
+                m_targetPos[i] = m_followTransforms[i].position;
+            }
+        } else {
+            m_targetPos[i] = pos;
+        }
+    }
+}
 
 GfGamePlayerFormation::~GfGamePlayerFormation() {}
 

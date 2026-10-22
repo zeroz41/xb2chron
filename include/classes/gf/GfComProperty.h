@@ -20,6 +20,8 @@ public:
     virtual ~GfComProperty();  // slot 1
     virtual void changeLayer(unsigned int, unsigned int) {}  // slot 3
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
+    // GfObj::onEvent calls it for its object's event 0
+    void flush();
     static mm::mtl::RTTI m_rtti;
     // fields: its constructor zeroes 0x10-0x38, its destructor releases and deletes them last to first
     mm::mtl::IntrusivePtr<gf::GfStatusProperty> m_status;  // the object's hit points (none: it takes no damage)

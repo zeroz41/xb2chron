@@ -5,11 +5,14 @@
 #include "classes/fw/ComponentObject.h"
 namespace fw { class ObjectEvent; }
 namespace fw { class UpdateInfo; }
+#include "fw/HandlePtr.h"
 
 namespace fw {
 // table 0x7100B425F0
 class UpdatableObject {
 public:
+    // type is m_type; the handle and the last argument are kept at 0x18-0x2C
+    UpdatableObject(unsigned int type, const fw::HandlePtr<fw::UpdatableObject>& handle, unsigned int arg);
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~UpdatableObject();  // slot 1
     virtual void initialize();  // slot 3

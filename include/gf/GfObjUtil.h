@@ -25,6 +25,8 @@ class GfObjUtil {
 public:
     // the object behind a handle, none for an invalid handle or one with no object
     static gf::GfObj* getObj(gf::GF_OBJ_HANDLE* handle);
+    // sets obj's m_execUpdate: whether its components are to be updated
+    static void applyExecUpdate(gf::GfObj* obj);
     static bool isValid(gf::GF_OBJ_HANDLE* handle);
     // what the object behind handle has mounted at a point (its info's mount's), -1 without
     static gf::GF_MOUNT_HANDLE* getMountHandle(gf::GF_OBJ_HANDLE* handle, gf::GFATTACH attach);

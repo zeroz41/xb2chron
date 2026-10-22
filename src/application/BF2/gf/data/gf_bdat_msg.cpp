@@ -1,3 +1,4 @@
+#include "gf/GfDataQuest.h"
 #include "classes/gf/GfBdatMsg.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfDataBdat.h"
@@ -223,6 +224,32 @@ void GfBdatMsg::bdatRefresh() {
 unsigned char* GfBdatMsg::getFpEnemy() {
     return *m_fpFldEnemyName;
 }
+
+const char* GfBdatMsg::getNameQuest(QuestID quest, unsigned int id) {
+    switch (GfDataQuest::getListQuestCategory(quest)) {
+    case 1:
+        return Bdat::getMSText(*m_fpFldQuest, id);
+    case 2:
+        return Bdat::getMSText(*m_fpFldQuestBlade, id);
+    case 3:
+        if (quest.m_id < 2000) {
+            return Bdat::getMSText(*m_fpFldQuestMini, id);
+        }
+        return Bdat::getMSText(*m_fpFldQuestNormal, id);
+    case 4:
+        return Bdat::getMSText(*m_fpFldQuest, id);
+    case 5:
+        return Bdat::getMSText(*m_fpFldQuestMercenaries, id);
+    case 6:
+        return Bdat::getMSText(*m_fpFldQuestAchievement, id);
+    default:
+        return Bdat::getMSText(*m_fpFldQuest, id);
+    }
+}
+
+// getFpQuest(QuestID) (0x710020B838) and getFpQuest(unsigned int) (0x710020B8D4) are not here yet: written as
+// getNameQuest's switch and as an if chain on the id's ranges (1000, 2000, 4000, 6000, 7000), clang folds the
+// statics' addresses into selects (csel) where the original keeps a branch per range and tests 'id > n - 1'
 
 const char* GfBdatMsg::getNameMapInfo(unsigned int id) {
     if (Bdat::getIdTop(*m_fpFldMapInfo) <= id &&

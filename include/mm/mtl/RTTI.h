@@ -14,8 +14,12 @@ public:
         for (int i = 0; i < 2; i++) {
             m_bases[i] = nullptr;
         }
-        m_bases[1] = base2;
-        m_bases[0] = base;
+        if (base != nullptr) {
+            m_bases[0] = base;
+        }
+        if (base2 != nullptr) {
+            m_bases[1] = base2;
+        }
     }
     bool isKindOf(const RTTI* rtti) const;
 

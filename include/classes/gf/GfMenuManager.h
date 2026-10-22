@@ -118,6 +118,10 @@ public:
     static bool isBattleState(unsigned int);
     static bool isOpenFullScreen();
     static bool isFieldHudInputEnable();  // not while GfMenuObjTutorial waits
+    // the battle model view (GfChainAttack's setup opens it and waits for it, destroy closes it)
+    static void openBtlModelView();
+    static void closeBtlModelView();
+    static bool isOpenBtlModelView();
 };
 }  // namespace gf
 
