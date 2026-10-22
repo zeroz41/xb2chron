@@ -26,6 +26,9 @@ public:
     unsigned int regist(const void* ptr);  // its handle, 0 when the map is full
     void remove(unsigned int handle);
     void* getPtr(unsigned int handle) const;  // null for an unknown handle
+    // the handles' range (UpdatableObjectManager's Impl gives 1, 0x7FFFFFF, 0x7FFFFFF; the parameter names are not
+    // the original's)
+    void setRange(unsigned int first, unsigned int last, unsigned int mask);
     mm::mtl::Array<ptr_detail::PtrParam> m_params;
     unsigned int m_count;  // reserve's count
     unsigned char pad_24[0x4];

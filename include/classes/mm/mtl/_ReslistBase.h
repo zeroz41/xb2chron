@@ -33,13 +33,21 @@ public:
         m_head->m_next = m_head;
         m_head->m_prev = m_head;
     }
+    // the same with its allocator set (fw::MessageManager::Impl's constructor stores it with the alignment, no
+    // clear between)
+    explicit _ReslistBase(IAllocator* allocator) : m_capacity(0), m_size(0), m_alignment(8), m_allocator(allocator) {
+        m_head = &m_end;
+        m_head->m_next = m_head;
+        m_head->m_prev = m_head;
+    }
     virtual ~_ReslistBase() { clear(); }  // slot 0
 
-    // frees every node
+    // destroys every element and frees its node (fw::MessageManager::Impl's list releases each message's holder)
     void clear() {
         Node* node = first();
         while (node != last()) {
             Node* next = static_cast<Node*>(node->m_next);
+            node->m_value.~T0();
             freeNode(node);
             node = next;
         }

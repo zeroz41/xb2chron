@@ -3,6 +3,7 @@
 
 #include "classes/ml/IWorkEvent.h"
 
+namespace ml { class ScnObjCam; }
 namespace ml { class ScnRenderDrSys; }
 
 namespace ml {
@@ -21,6 +22,8 @@ public:
 class Scn : public ::ml::IWorkEvent, public TUnk_B77B18, public TUnk_B77B38 {
 public:
     virtual ~Scn();  // slot 0
+    // a camera by index; -1 the current view's (fw::NaviManager::update's)
+    ScnObjCam* getCam(int index);
     unsigned char pad_20[0x18];
     ScnRenderDrSys* m_renderDrSys;  // what UIScreenObject gives ScnRenderDrSysParmAcc (the name is not the original's)
 };

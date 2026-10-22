@@ -24,6 +24,8 @@ template <typename T, typename D = UniquePtrDefaultDeleter<T> >
 class UniquePtr {
 public:
     UniquePtr() : _ptr(nullptr) {}
+    // owns ptr (fw::UpdatableObjectManager's constructor makes its Impl so)
+    explicit UniquePtr(T* ptr) : _ptr(ptr) {}
     ~UniquePtr() { reset(); }
 
     T* get() const { return _ptr; }

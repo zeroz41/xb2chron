@@ -11,6 +11,10 @@ public:
     // a copy of its own, so calls pass one through memory: fw::FrameworkMemory::getMem returns one to its caller's
     // stack and fw::LayerSetManager::initialize hands layer::LayerManager's constructor that slot's address
     ALLOC_HANDLE(const ALLOC_HANDLE& other) : m_handle(other.m_handle) {}
+    ALLOC_HANDLE& operator=(const ALLOC_HANDLE& other) {
+        m_handle = other.m_handle;
+        return *this;
+    }
 
     unsigned int m_handle;
 };

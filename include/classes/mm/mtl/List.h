@@ -2,6 +2,7 @@
 #define CLASSES_MM_MTL_LIST_H
 
 #include "classes/mm/mtl/_ReslistBase.h"
+#include <new>
 
 namespace fw { class SoundPack; }
 namespace fw { class SoundSsdBank; }
@@ -34,6 +35,8 @@ public:
         Node* m_node;
     };
 
+    List() {}
+    explicit List(IAllocator* allocator) : _ReslistBase<T0>(allocator) {}
     virtual ~List() {}  // slot 0
     iterator begin() { return iterator(this->first()); }
     iterator end() { return iterator(this->last()); }
@@ -41,7 +44,8 @@ public:
     void push_back(const T0& value) {
         NodeBase* pos = this->m_head;
         Node* node = this->allocNode();
-        node->m_value = value;
+        // a copy of value made in the node (fw::MessageManager::Impl::push's holder gains a reference)
+        new (&node->m_value) T0(value);
         node->m_next = pos;
         node->m_prev = pos->m_prev;
         pos->m_prev->m_next = node;
@@ -62,6 +66,7 @@ public:
         NodeBase* prev = node->m_prev;
         prev->m_next = next;
         next->m_prev = prev;
+        node->m_value.~T0();
         this->freeNode(node);
         --this->m_size;
         return iterator(static_cast<Node*>(next));
