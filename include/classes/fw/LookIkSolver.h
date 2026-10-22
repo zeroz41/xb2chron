@@ -45,6 +45,17 @@ public:
     void setFrontMS(const mm::Vec3& front);
     void setTargetUpRatio(float ratio);
     void setTargetDownRatio(float ratio);
+    // the fade its look-at solver (else its spine solver) is in, none with neither (inline: the name is not the
+    // original's; TargetIKPlugin::update fades in or out only against a fade the other way)
+    IkFadeSolver::FadeType getFadeType() const {
+        if (m_lookAt.get() != nullptr) {
+            return m_lookAt.get()->m_fadeType;
+        }
+        if (m_spine.get() != nullptr) {
+            return m_spine.get()->m_fadeType;
+        }
+        return IkFadeSolver::FADE_NONE;
+    }
     static mm::mtl::RTTI m_rtti;
 
     mm::mtl::IntrusivePtr<SpineIkSolver> m_spine;    // createSpineIK's

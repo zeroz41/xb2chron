@@ -15,9 +15,10 @@ public:
     virtual ~MessageObject();  // slot 1
     // whether the message was handled (the base's returns false; GfGamePlayerCamera's true for the one it takes)
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 3
-    // hands msg to another object, from this one (inline: the name is not the original's)
-    void sendMessage(fw::MessageObject* to, fw::Message& msg) {
-        to->recieveMessage(this, msg);
+    // hands msg to another object, from this one: whether it was handled (inline: the name is not the original's;
+    // TargetIKPlugin::update uses the answer)
+    bool sendMessage(fw::MessageObject* to, fw::Message& msg) {
+        return to->recieveMessage(this, msg);
     }
     static mm::mtl::RTTI m_rtti;
     // the constructor registers the object with MessageManager: its PointerMap's id for it, and that map (the

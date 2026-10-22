@@ -68,14 +68,27 @@ public:
     unsigned char pad_118[0x4];
     float m_waterDepth;         // flush's: the water surface's height above the ground under the PC (the name is not
                                 // the original's)
-    unsigned char pad_120[0x40];
+    unsigned char pad_120[0x10];
+    // a warp the field AI's warp tasks ask for (setting m_stateFlags bit 26, which 1.0.0's procMsgPcFieldWarpCancel
+    // clears): where to, facing which way, and how (0 to the formation, 1 to the wall follow transform, 3 1.0.0's
+    // TaskFieldCheckWarpFallDead's). The names are not the original's.
+    mm::Vec3 m_warpPos;
+    mm::Quat m_warpRot;
+    int m_warpType;
+    unsigned char pad_154[0xC];
     mm::Vec3 m_pos;             // TaskFieldRetreat::update routes the PC from it
     mm::Quat m_rot;             // the PC's facing: isActiveRange and isActiveRangeLure turn their reach's offset by it
                                 // (the name is not the original's)
     mm::Vec3 m_prevPos;         // DeadColCheckPlugin::testDead: falling from above a dead plane's height to it
     unsigned char pad_190[0x50];
     mm::Vec3 m_moveDir;         // TaskFieldJump::update sets m_velocity along it
-    unsigned char pad_1f0[0x100];
+    unsigned char pad_1f0[0xA0];
+    // two of updateWorldDirs' world directions: the ones the stick's y and x move the PC along
+    // (TaskFieldWallEscape::update picks the stick's signs by them; the names are not the original's)
+    mm::Vec3 m_stickFrontDir;
+    unsigned char pad_2a0[0x30];
+    mm::Vec3 m_stickSideDir;
+    unsigned char pad_2e0[0x10];
     float m_chestHeight;        // setup's: the character data's chest height in metres (the name is not the original's)
     unsigned char pad_2f4[0xC];
     mm::mtl::IntrusivePtr<fw::ParamList> m_paramList;  // the PC's parameters

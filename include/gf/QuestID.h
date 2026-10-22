@@ -7,10 +7,12 @@ class QuestID {
 public:
     // zeroes both halves: 1.0.0's qlist_iterator::getQuestID starts from one, and UIListInfo<QuestID>'s constructor
     // stores them separately (its zero stores merge into one memset of 0x58-0x64)
-    QuestID() : m_id(0), pad_2(0) {}
+    QuestID() : m_id(0), m_achieveId(0) {}
     bool empty() const;
     unsigned short m_id;  // what empty() tests; the name is not the original's
-    unsigned short pad_2;
+    // the achievement an affinity chart quest belongs to (GfDataQuest::getAchievementBlade maps it to its blade;
+    // GfKizunaringBlade::qevCompleteQuest looks only at quests with one). The name is not the original's.
+    unsigned short m_achieveId;
 };
 }  // namespace gf
 

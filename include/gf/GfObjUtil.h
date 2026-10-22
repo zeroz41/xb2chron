@@ -4,6 +4,8 @@
 #include "mm/mtl/FixedVector.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GF_MOUNT_HANDLE; }
+#include "gf/GFATTACH.h"
 namespace gf { class GfComProperty; }
 namespace gf { class GfObj; }
 namespace gf { class GfObjSetup; }
@@ -24,6 +26,12 @@ public:
     // the object behind a handle, none for an invalid handle or one with no object
     static gf::GfObj* getObj(gf::GF_OBJ_HANDLE* handle);
     static bool isValid(gf::GF_OBJ_HANDLE* handle);
+    // what the object behind handle has mounted at a point (its info's mount's), -1 without
+    static gf::GF_MOUNT_HANDLE* getMountHandle(gf::GF_OBJ_HANDLE* handle, gf::GFATTACH attach);
+    static void destroy(gf::GF_OBJ_HANDLE* handle);
+    // attaches the object behind child to the one behind parent, and detaches it again
+    static void attachGfObj(gf::GF_OBJ_HANDLE* parent, gf::GF_OBJ_HANDLE* child);
+    static void dettachGfObject(gf::GF_OBJ_HANDLE* parent, gf::GF_OBJ_HANDLE* child);
     // the kind of the object behind a handle (its info's setup's), 0 without one; 5 is what isActiveRangeLure lures
     static int getObjType(gf::GF_OBJ_HANDLE* handle);
     // the property of the object behind a handle (its object info's), none without an info

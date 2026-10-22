@@ -2,8 +2,12 @@
 #define GF_PC_AGENTUTILFIELD_H
 
 #include "fw/ParamAdapter.h"
+#include "mm/Vec2.h"
 
 namespace gf { class GfComPropertyPc; }
+namespace gf { namespace pc { class BlackBoardField; } }
+namespace fw { class Transform; }
+namespace mm { class Vec3; }
 namespace navi { class NvmshAcObj; }
 
 namespace gf { namespace pc {
@@ -20,6 +24,26 @@ struct SensorAIParam {        // entry 3 of the PC's parameter list (TaskFieldSe
     float obstacleAngle;      // degrees from level past which a face is an obstacle
     float enableJumpOffset;   // the PC may jump onto an obstacle its target is this far above
     float enableJumpCeil;     // and not while what is above it is this close
+};
+struct WarpParam {            // entry 2 of the PC's parameter list (TaskFieldCheckWarp::update)
+    float distanceHorz;       // the PC is not left behind while this close to its warp position across the ground
+    float distanceVert;       // and this close in height (and stuck no longer than stackTime)
+    float stackTime;
+    float naviSearchUp;
+    float naviSearchDown;
+    float fadeTime;
+    float wallSearchDist;
+    float distanceHorzWall;   // the same two distances on a wall
+    float distanceVertWall;
+};
+struct WallAiParam {          // entry 5 of the field AI's (getAIParamAdapter)
+    float prepareRange;
+    float minDist;
+    float fallDelay;
+    float climbEndSafeRange;
+    float escapeRange;
+    float nearRange;
+    int delay;
 };
 struct FollowMainPcParam {    // entries 0 and 1 (in water)
     float followDist;
@@ -43,6 +67,17 @@ public:
     static void setIdleInput(gf::GfComPropertyPc& property);
     static float setFollowInput(float distance, navi::NvmshAcObj* nvmshAcObj, gf::GfComPropertyPc& property);
     static fw::ParamAdapter getAIParamAdapter(gf::GfComPropertyPc& property, PARAM_ID_FIELD_AI id);
+    // the transform a PC on a wall follows; false without one
+    static bool getWallFollowTransform(const BlackBoardField& bb, fw::Transform* transform);
+    static bool calcParentPlayerPush(gf::GfComPropertyPc& property, const mm::Vec3& pos, float range, mm::Vec3* push);
+    // the stick input that follows a wall toward pos
+    static mm::Vec2 calcFollowWallInput(const mm::Vec3& pos, gf::GfComPropertyPc& property);
+    static bool isEnableWallMove(gf::GfComPropertyPc& property, const mm::Vec2& input);
+    static bool isWallEndMove(const BlackBoardField& bb);
+    static void setFollowWallEndInput(const mm::Vec3& pos, gf::GfComPropertyPc& property);
+    // whether another player climbs near pos
+    static bool existNearChimbPlayer(gf::GfComPropertyPc& property, const mm::Vec3& pos);
+    static bool isWallJumpAnyPlayer();
 };
 
 }}  // namespace gf::pc

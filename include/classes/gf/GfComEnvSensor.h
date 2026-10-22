@@ -4,6 +4,7 @@
 #include "mm/mtl/RTTI.h"
 #include "classes/gf/GfComponent.h"
 #include "gf/EnviromentSensor.h"
+#include "fw/ParamAdapter.h"
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
 
@@ -21,6 +22,10 @@ public:
     static mm::mtl::RTTI m_rtti;
 
     gf::EnviromentSensor m_sensor;  // the constructor builds it, flushEnv checks around the object with it
+    unsigned char pad_200[0xE0];
+    // its parameter entry (1.0.0's setup takes it from a parameter list by its setup info's index); its first two
+    // values reach below and above (TaskFieldCheckWarpBattleWaterDead::update searches that far for water)
+    fw::ParamAdapter m_param;
 };
 }  // namespace gf
 

@@ -14,6 +14,9 @@ public:
     unsigned char pad_4[0x7B];
     // the PC's flush: any of its motion is not zero (velocity, m_moveVec2, locomotion, m_moveSpeed)
     bool m_isMoving;
+    // the PC's flush: set while the PC's word at 0x120 is 1; TaskFieldCheckWarp::update warps no PC that follows a
+    // player with it (nor one in state 1 or 5)
+    bool m_blocksFollowWarp;
 };
 
 }  // namespace gf

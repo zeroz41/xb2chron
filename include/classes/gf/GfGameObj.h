@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFGAMEOBJ_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "mm/mtl/FixStr.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfGameObj; }
@@ -18,6 +19,9 @@ class GfGameObj : public ::mm::mtl::PtrSingleton< ::gf::GfGameObj>, public TUnk_
 public:
     virtual ~GfGameObj();  // slot 0
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 2
+    // whether the object behind handle exists (with checkLoad, also loaded); error takes a reason when given
+    static bool isValidGameObj(gf::GF_OBJ_HANDLE* handle, bool checkLoad, mm::mtl::FixStr<128>* error);
+    static void destroyGameObj(gf::GF_OBJ_HANDLE* handle, float fadeTime);
 };
 }  // namespace gf
 

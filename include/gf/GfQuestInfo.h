@@ -9,6 +9,7 @@ class GfQuestInfo {
 public:
     static bool isQuestOrder(QuestID id);
     static bool isQuestFin(QuestID id);
+    static bool isQuestNotOrder(QuestID id);
     static bool isParent(QuestID id);
 };
 }  // namespace gf

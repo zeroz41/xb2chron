@@ -89,6 +89,7 @@ public:
     virtual ~GfGameManager();  // slot 0
     static gf::GF_OBJ_HANDLE* getPartyLeader();
     static gf::GF_OBJ_HANDLE* getControlMover();  // the object the player controls
+    static gf::GF_OBJ_HANDLE* getPartyLeaderDriver();
     // whether an event is playing; with sequential, a sequential play's inner event state counts too
     static bool isEvent(bool sequential);
     // whether the player is in a talk (a forced one, or the game state's talk flag)
@@ -105,6 +106,7 @@ public:
     static bool isFadeout();
     static bool isStartGame();
     static bool isLeaveGameForDebug();
+    static bool isBattle();
     virtual void vf2();  // slot 2
     virtual void vf3();  // slot 3
     virtual void vf4();  // slot 4

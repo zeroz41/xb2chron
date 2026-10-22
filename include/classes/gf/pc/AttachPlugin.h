@@ -3,8 +3,8 @@
 
 #include "classes/gf/GfComBehaviorPc.h"
 #include "classes/gf/Plugin.h"
+#include "fw/Transform.h"
 
-namespace fw { class Transform; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 
@@ -29,6 +29,9 @@ public:
     virtual bool setup(gf::GfComBehaviorPc&);  // slot 8
     virtual void cleanup(gf::GfComBehaviorPc&);  // slot 9
     virtual void update(gf::GfComBehaviorPc&, fw::UpdateInfo const&);  // slot 10
+    // 1.0.0's: detaches the PC from what it is attached to and clears its dynamics' movement (inline in 3.0.1,
+    // which has no copy of it)
+    void dettachObj();
     void attachObj(gf::GF_OBJ_HANDLE* obj);
     void notifyMovement();
     void notifyExcludeMovementRider(const fw::Transform& transform);
@@ -47,6 +50,9 @@ public:
     unsigned int m_flags;
     gf::GF_OBJ_HANDLE* m_attachObj;   // what the PC is attached to (-1: nothing); onDeactivate detaches it
     gf::GfComBehaviorPc* m_behavior;  // the behavior setup was given, cleared by cleanup
+    // the world transform of what the PC is attached to, as attachObj and notifyMovement last took it (the
+    // constructor's: zero and identity; the name is not the original's)
+    fw::Transform m_attachTransform;
 };
 }}  // namespace gf::pc
 

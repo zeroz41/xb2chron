@@ -33,6 +33,8 @@ public:
     // a bone's world transform; false when the object has no such bone
     bool getBoneTransform(fw::Transform& transform, const char* bone);
     float getModelScale() const;
+    // the object's attribute bits (bit 1: TargetIKPlugin::update looks at it)
+    unsigned int getAttribute() const;
 
     GFOBJ_INFO* m_info;  // GfObjManager::getObjInfo's for the handle
     GfObj* m_obj;  // the GfObj constructor's argument

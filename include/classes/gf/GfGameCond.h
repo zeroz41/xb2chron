@@ -10,6 +10,8 @@ namespace gf {
 class GfGameCond : public ::mm::mtl::PtrSingleton< ::gf::GfGameCond> {
 public:
     virtual ~GfGameCond();  // slot 0
+    // whether the game condition (an FLD_ConditionList row) holds
+    static bool isGameCond(unsigned int condition);
 };
 }  // namespace gf
 

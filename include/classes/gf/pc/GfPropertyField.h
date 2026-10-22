@@ -3,6 +3,7 @@
 
 #include "classes/fw/ParamList.h"
 #include "mm/mtl/IntrusivePtr.h"
+#include "mm/Vec3.h"
 
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
@@ -18,6 +19,13 @@ public:
     virtual void flush(gf::GfComPropertyPc const&);  // slot 2
     virtual void flushOwner(gf::GfComPropertyPc&);  // slot 3
     virtual void recieveMessage(gf::GfComPropertyPc const&, fw::MessageObject*, fw::Message&);  // slot 4
+
+    // the wall jump the PC prepares (the name is not the original's)
+    struct WallJumpInfo {
+        unsigned char pad_0[0x10];
+        mm::Vec3 m_pos;  // where it lands (TaskFieldWallJumpWait::update waits while another player is near it)
+    };
+    const WallJumpInfo* getWallJumpInfo() const;
 
     mm::mtl::IntrusivePtr<fw::ParamList> m_paramList;  // the PC's field parameters (FadePlugin::setup takes entry 18)
     // resetStatus and flush set its bits; bit 2: TaskFieldIdle::update clears the field AI blackboard's bit 3

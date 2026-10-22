@@ -53,7 +53,11 @@ public:
     float m_targetDist;      // the PC's distance from m_targetPos across the ground (x and z)
     mm::Vec3 m_followPos;    // the position of the formation's transform the PC follows
     float m_followDist;      // the PC's distance from m_followPos across the ground
-    unsigned char pad_54[0x19C];
+    unsigned char pad_54[0x3C];
+    // where the PC climbs off a wall (TaskFieldWallFollow::update hands it to AgentUtilField::setFollowWallEndInput;
+    // the name is not the original's)
+    mm::Vec3 m_wallEndPos;
+    unsigned char pad_a0[0x150];
     mm::Vec3 m_retreatPos;            // TaskFieldRetreat routes the PC to it while farther than 1 from it
     // bits 0-2: TaskFieldSensor::update (0 the PC is stuck, 1 an obstacle is in its way, 2 it can jump onto it);
     // bit 3: set by TaskFieldRetreat::update and the follow tasks' update, cleared by TaskFieldIdle::update;

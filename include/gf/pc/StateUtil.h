@@ -14,6 +14,7 @@ class StateUtil {
 public:
     // the handle of the object the PC's property targets
     static gf::GF_OBJ_HANDLE* getTarget(const gf::GfComBehaviorPc& behavior);
+    static gf::GF_OBJ_HANDLE* getBuddyHandle(gf::GfComBehaviorPc& behavior);
     static const gf::EnviromentSensor::GroundInfo* getGroundInfo(gf::GfComBehaviorPc& behavior);
     static const gf::EnviromentSensor::WaterInfo* getWaterInfo(gf::GfComBehaviorPc& behavior);
     static const gf::EnviromentSensor::DeadPlaneInfo* getDeadPlaneInfo(gf::GfComBehaviorPc& behavior);

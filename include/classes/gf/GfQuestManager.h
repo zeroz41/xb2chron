@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFQUESTMANAGER_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "gf/QuestID.h"
 
 namespace gf { class GfQuestManager; }
 
@@ -10,6 +11,8 @@ namespace gf {
 class GfQuestManager : public ::mm::mtl::PtrSingleton< ::gf::GfQuestManager> {
 public:
     virtual ~GfQuestManager();  // slot 0
+    static void entryOrderAchievQuest(gf::QuestID id);
+    static void openOrder(gf::QuestID id, bool notify);
 };
 }  // namespace gf
 

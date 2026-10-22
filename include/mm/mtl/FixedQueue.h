@@ -4,9 +4,14 @@
 #include "mm/MMStdBase.h"
 #include <new>
 
-// mm_lib's fixed_queue.h, as the game's files' include path named it
+// mm_lib's fixed_queue.h, as the including file's include path named it (see mm/Math.h; aiLib's ai_state_fsm
+// cites the libs/ form)
+#ifdef MM_LIB_FROM_LIBS
+#define MM_MTL_FIXED_QUEUE_PATH "../../../mcl/mm_lib/source\\mm_mtl/fixed_queue.h"
+#else
 #define MM_MTL_FIXED_QUEUE_PATH \
     "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/fixed_queue.h"
+#endif
 
 namespace mm { namespace mtl {
 
@@ -106,17 +111,20 @@ public:
     T& at(unsigned long index) {
 #line 110 MM_MTL_FIXED_QUEUE_PATH
         MM_ASSERT(index < N);
-        return data()[index];
+        // by the element's own storage, as push_back (ai::Fsm::setStateImpl's pop_front reads the slot from the owner)
+        return *reinterpret_cast<T*>(&m_buffer[index]);
     }
     // the first element, in place (GfReqManager::reqUpdate and GfEvtBgm::updateBgmTask read it with no check; the
     // name is not the original's)
     T& front() {
         return data()[m_head];
     }
-    // takes the first element off and returns it (inline:
-    // GfMenuScriptManager::checkEvent stores the new first and count before it reads the element; the name is
-    // not the original's)
+    // takes the first element off and returns it, asserting there is one like pop (inline:
+    // GfMenuScriptManager::checkEvent stores the new first and count before it reads the element, and tests the
+    // count first; ai::Fsm::setStateImpl takes its next state buffer by it; the name is not the original's)
     T pop_front() {
+#line 470 MM_MTL_FIXED_QUEUE_PATH
+        MM_ASSERT(!empty());
         unsigned long index = m_head;
         m_head = (m_head + 1) % N;
         --m_size;

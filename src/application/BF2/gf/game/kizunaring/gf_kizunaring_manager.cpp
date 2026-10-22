@@ -1,16 +1,21 @@
-#include "classes/gf/GfAllocator.h"
-#include "classes/gf/GfKizunaringManager.h"
+#include "gf/QuestID.h"
+#include "gf/AchievQuest.h"
+#include "gf/GfQuestInfo.h"
+#include "gf/QuestListAcc.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfDataDriver.h"
+#include "gf/GfDataQuest.h"
+#include "gf/QuestTaskParam.h"
+#include "gf/QuestCompleteParam.h"
 #include "gf/GfKizunaringBlade.h"
+#include "classes/gf/GfKizunaringManager.h"
+#include "classes/gf/GfQuestManager.h"
+#include "classes/gf/GfGameCond.h"
+#include "classes/gf/SCOM_POPUP.h"
+#include "classes/gf/GfAllocator.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace gf {
-
-GfKizunaringManager::GfKizunaringManager(const GfSetupParam& param) {
-    initialize(param);
-}
-
-void GfKizunaringManager::initialize(const GfSetupParam& param) {
-    m_initialized = true;
-}
 
 GfKizunaringManager::~GfKizunaringManager() {}
 
@@ -23,10 +28,6 @@ void GfKizunaringManager::destroy() {
     GfKizunaringManager* manager = get();
     manager->finalize();
     delete manager;
-}
-
-void GfKizunaringManager::finalize() {
-    m_initialized = false;
 }
 
 void GfKizunaringManager::orderAchievement(unsigned int id) {
