@@ -108,6 +108,16 @@ public:
     // an elemental combo's attribute and name, from its BDAT row (attribute 0 for an invalid one)
     static unsigned char getElementComboAtr(unsigned int combo);
     static ui::UIStr getElementComboName(unsigned int combo);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in this
+    // file, which holds only GfMenuObjUtil's functions (1.0.0: 159 of 159). What it does: whether the add-on menu
+    // layer `layer` is usable. False unless bit `layer` of UIStr.cpp's layer mask (lbl_7100B75878; fn_7100696950
+    // sets a bit, fn_7100696970 tests one, fn_7100696A28 opens a set layer's "MNU_Layer_Dlc%02d" BDAT) is set;
+    // then layer 3 is GfGameManager::fn_71002A9E68, layer 2 is always usable, layer 1 is fn_71002AC598 (add-on
+    // content 0x01010003, checked by gf_game_env.cpp's fn_71002A75DC), any other layer is not. GfMenuManager's
+    // constructor sets bit 1 when fn_71002AC598 holds, and bit 3 when "menu_ira/font/bf2.wisty" is present (it then
+    // gives UIStr the font folder "menu_ira") or add-on content 0x101 is owned. 344 functions call it: 3 at 427 call sites
+    // and 1 at 46.
+    static bool fn_710048FD30(unsigned int layer);
 };
 }  // namespace gf
 

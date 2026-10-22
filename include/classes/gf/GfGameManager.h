@@ -107,6 +107,17 @@ public:
     static bool isStartGame();
     static bool isLeaveGameForDebug();
     static bool isBattle();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in this
+    // file among GfGameManager's functions (every named function of the unit is GfGameManager's or IQuestEvent's
+    // inline virtuals). What it does: whether the game runs in the mode the title screen switches on: true when
+    // gf_game_env.cpp's 3.0.1 singleton (lbl_7100C23300: 0x10 bytes, class tables lbl_7100B54858/lbl_7100B54878,
+    // created by fn_71002A752C from initialize) exists and its int at 0x8 is 1. Only fn_71002AC558(flag & 1)
+    // writes that int; it is reached from title_main.cpp's fn_7100156288 through fn_710014FDB8 and gf_manager.cpp's
+    // fn_710032A1FC, which hands the same flag to fw::Framework (byte 0x459), fw::EffectManager (0x2FD8),
+    // fw::SoundManager (0x44C8), the render DrSys parameters and GfDataGame (bit 0 of 0xFD6D0). GfMenuManager's
+    // constructor tests it right after registering menu layer 3 for "menu_ira" (see GfMenuObjUtil::fn_710048FD30).
+    // "Ira" in those paths suggests the Torna expansion's mode; that is inferred, not a name. 269 callers.
+    static bool fn_71002A9E68();
     virtual void vf2();  // slot 2
     virtual void vf3();  // slot 3
     virtual void vf4();  // slot 4
