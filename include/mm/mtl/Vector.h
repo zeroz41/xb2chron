@@ -58,10 +58,29 @@ public:
         return m_buffer[index];
     }
 
+    // the alignment allocations ask for unless told otherwise: the element's, 8 at least (GfFieldDmgManager's
+    // 4-aligned BdatInfo rows ask for 8, wnd::ConpoundWind's 16)
+    static size_t defaultAlignment() { return __alignof__(T) > 8 ? __alignof__(T) : 8; }
+
+    // the last element (inline: GfFieldDmgManager::gevMapjump fills the row it pushes through it; its index access
+    // is a third accessor of vector.h's, past operator[]'s lines; the names are not the original's)
+    T& back() {
+#line 333 MM_MTL_VECTOR_PATH
+        MM_ASSERT(0 < m_size);
+        return at(m_size - 1);
+    }
+    T& at(size_t index) {
+#line 352 MM_MTL_VECTOR_PATH
+        MM_ASSERT(m_buffer != 0);
+#line 353 MM_MTL_VECTOR_PATH
+        MM_ASSERT(index < size());
+        return m_buffer[index];
+    }
+
     void expand(size_t capacity, size_t alignment);
     // room for capacity elements, allocated at the given alignment (the name is not the original's: wnd::WindProbe's
     // constructor and ui::UIListInfo::setup inline it)
-    void reserve(size_t capacity, size_t alignment = __alignof__(T)) {
+    void reserve(size_t capacity, size_t alignment = defaultAlignment()) {
 #line 483 MM_MTL_VECTOR_PATH
         MM_ASSERT(m_allocator && "yet setAllocator");
         if (capacity > m_capacity) {
@@ -158,9 +177,15 @@ template <typename T>
 void Vector<T>::extend(size_t size, size_t alignment) {
     size_t oldSize = m_size;
     T* ptr = static_cast<T*>(m_allocator->allocate(size * sizeof(T), alignment));
-    T* source = begin();
-    for (size_t i = 0; i < oldSize; ++i) {
-        new (&ptr[i]) T(source[i]);
+    if (__has_trivial_copy(T)) {
+        // a block copy (GfFieldDmgManager's BdatInfo rows)
+        uninitialized_copy_n(begin(), oldSize, ptr);
+    } else {
+        // by index (wnd::ConpoundWind's)
+        T* source = begin();
+        for (size_t i = 0; i < oldSize; ++i) {
+            new (&ptr[i]) T(source[i]);
+        }
     }
     if (oldSize < size) {
         T* element = ptr + oldSize;
@@ -185,13 +210,13 @@ void Vector<T>::resize(size_t size) {
     if (m_size == size) {
         return;
     }
-    m_alignment = __alignof__(T);
+    m_alignment = defaultAlignment();
     if (m_buffer == nullptr) {
         m_buffer = static_cast<T*>(m_allocator->allocate(size * sizeof(T), m_alignment));
         m_capacity = size;
         T* element = begin();
-        for (size_t count = size; count != 0; --count, ++element) {
-            new (element) T();
+        for (size_t i = 0; i < size; ++i) {
+            new (&element[i]) T();
         }
         m_size += size;
         return;

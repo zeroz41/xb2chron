@@ -10,6 +10,8 @@ class GfGameUtil {
 public:
     // whether the object behind a handle is playing a voice
     static bool isPlayVoice(gf::GF_OBJ_HANDLE* handle);
+    // the object takes field damage (GfGameScene::setDamageCharacter)
+    static void requestFieldDamage(gf::GF_OBJ_HANDLE* handle);
 
     // the text the action window shows for an object (the names are not the original's)
     struct UiActionWindowInfo {

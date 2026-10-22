@@ -16,6 +16,8 @@ public:
     virtual ~DataParamAcc();  // slot 0
     bool isValid() const;
     unsigned int getChestHeight() const;
+    unsigned int getHp() const;
+    unsigned int getHpMax(bool flag) const;
     const SDataEnemy* getSDataEnemy() const;
     unsigned int getFieldSkill(unsigned int index, bool flag) const;
     unsigned char getFieldSkillLevel(unsigned int index, bool flag) const;
