@@ -122,7 +122,51 @@ bool GfMenuShopAdapter::update_Icon(unsigned int shopId) {
     return true;
 }
 
-// update_CategoryIcon: not written yet (its candidate tests shop type 0 on the 16-bit value)
+bool GfMenuShopAdapter::update_CategoryIcon(unsigned int shopId) {
+    unsigned char* shop = GfDataBdat::getFP(0xED);
+    if (shop == nullptr) {
+        return false;
+    }
+    unsigned short icon = (unsigned short)(unsigned long)Bdat::getVal(shop, "ShopIcon", shopId);
+    unsigned short shopType = (unsigned short)(unsigned long)Bdat::getVal(shop, "ShopType", shopId);
+    // the image index per ShopType (0 shows only the 0x1A4 icon's, 3 nothing; the name is not the original's)
+    static const int s_numbers[] = {0, 2, 3, 1};
+    if (shopType >= sizeof(s_numbers) / sizeof(s_numbers[0])) {
+        return false;
+    }
+    int number = s_numbers[shopType];
+    if (number == 0) {
+        if (icon != 0x1A4) {
+            return false;
+        }
+        number = 5;
+    } else if (shopType == 3) {
+        return false;
+    } else if (shopType == 1) {
+        unsigned char* quest = GfDataBdat::getFP(0xF0);
+        if (quest == nullptr) {
+            return false;
+        }
+        unsigned short tableId = (unsigned short)(unsigned long)Bdat::getVal(shop, "TableID", shopId);
+        if (tableId == 0) {
+            return false;
+        }
+        if ((unsigned short)(unsigned long)Bdat::getVal(quest, "LinkQuestTask", tableId) != 0) {
+            number = 4;
+        } else {
+            unsigned short shopIcon = (unsigned short)(unsigned long)Bdat::getVal(shop, "ShopIcon", shopId);
+            if (shopIcon == 0x1AA) {
+                number = 6;
+            } else if (shopIcon == 0x1AB) {
+                number = 7;
+            } else if (shopIcon == 0x1A4) {
+                number = 5;
+            }
+        }
+    }
+    setNumber(number);
+    return true;
+}
 
 bool GfMenuShopAdapter::update_Owner(unsigned int shopId) {
     unsigned char* shop = GfDataBdat::getFP(0xED);

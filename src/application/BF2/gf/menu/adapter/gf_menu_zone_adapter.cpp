@@ -129,7 +129,43 @@ bool GfMenuZoneAdapter::update_ZoneNoticeDisp() {
     return false;
 }
 
-// update_ZoneNotice: not written yet (its candidate leaves two zeroing moves in the other order)
+bool GfMenuZoneAdapter::update_ZoneNotice() {
+    mm::mtl::FixedVector<unsigned short, 500> missions;
+    GfGameMercenaries::getZoneMission(missions, m_zoneId);
+    bool hasCategory3 = false;
+    int category3Count = 0;
+    int newCount = 0;
+    if (missions.size() != 0) {
+        mm::mtl::FixedVector<unsigned short, 500>::iterator it = missions.begin();
+        do {
+            if (GfDataMercenaries::getMissionCategory(*it) == 3) {
+                category3Count++;
+            }
+            newCount += GfDataMercenaries::isNewMission(*it++);
+        } while (it != missions.end());
+        hasCategory3 = category3Count > 0;
+    }
+    unsigned char* message = GfDataBdat::getFP(0xF5);
+    unsigned char* notice = GfDataBdat::getFP(0x13D);
+    int row;
+    if (m_teamId == 1) {
+        if (hasCategory3) {
+            row = 0x11;
+        } else if (newCount > 0) {
+            row = 0x12;
+        } else {
+            return false;
+        }
+    } else {
+        if (!((newCount > 0) & hasCategory3)) {
+            return false;
+        }
+        row = 0x12;
+    }
+    ui::UIStr text(message, (unsigned short)(unsigned long)Bdat::getVal(notice, "name", row));
+    setText(text);
+    return true;
+}
 
 GfMenuZoneAdapter* GfMenuZoneAdapter::createFromCoverter(unsigned int handle, unsigned int type,
                                                          IConverter* converter, bool changed) {
