@@ -23,7 +23,9 @@ private:
 
 namespace nn { namespace os {
 
-struct MutexType {
+// 8-aligned (the SDK's holds the owner thread's pointer): ssd::Mutex, the type and two flags, is 0x28 bytes
+// (OutStreamLock's .bss, MemoryManager's flag at 0x30 after its lock at 0x8)
+struct alignas(8) MutexType {
     unsigned char pad_0[0x20];  // mm::threading::CriticalSection's flag follows it at 0x20
 };
 struct ReaderWriterLockType {
@@ -56,6 +58,7 @@ void InitializeMutex(MutexType* mutex, bool recursive, int lockLevel);
 void FinalizeMutex(MutexType* mutex);
 void LockMutex(MutexType* mutex);
 void UnlockMutex(MutexType* mutex);
+bool IsMutexLockedByCurrentThread(const MutexType* mutex);
 
 void InitializeReaderWriterLock(ReaderWriterLockType* lock);
 void FinalizeReaderWriterLock(ReaderWriterLockType* lock);

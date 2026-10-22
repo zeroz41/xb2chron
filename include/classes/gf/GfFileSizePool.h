@@ -58,8 +58,7 @@ public:
     unsigned int m_nextIndex;  // 0x1E038 where a full pool looks for an entry to reuse
     ml::Thread* m_thread;      // 0x1E040
     mm::threading::EventWait m_event;  // 0x1E048 set to wake the thread
-    mm::threading::CriticalSection m_cs;  // 0x1E0A8
-    unsigned char pad_1E0C9[7];
+    mm::threading::CriticalSection m_cs;  // 0x1E0A8 (0x28: its mutex is 8-aligned)
     bool m_busy;     // 0x1E0D0 set while the thread works
     float m_jobTime;  // 0x1E0D4 the seconds the thread has spent on jobs
 };

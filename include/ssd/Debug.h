@@ -66,4 +66,14 @@ void log_error(Result result, Debug::LogFlag::Type flag, const char16_t* format,
         ::ssd::abort();                                                                                       \
     }
 
+// logs and aborts when condition fails, citing the condition, the file, the line and a message (the macro's
+// name is not the original's; its format is "Assert : "%s", %s:%d, %s": MemoryManager::Quit's
+// "memoryManager_.numInstance_ == 0")
+#define SSD_ASSERT_MSG(condition, message)                                                                    \
+    if (!(condition)) {                                                                                       \
+        ::ssd::log_message(u"Assert : \"%s\", %s:%d, %s", u"" #condition, ::ssd::get_logfilename(u"" __FILE__), \
+                           __LINE__, message);                                                                \
+        ::ssd::abort();                                                                                       \
+    }
+
 #endif

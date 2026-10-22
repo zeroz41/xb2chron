@@ -8,13 +8,14 @@ namespace ssd {
 // destructor). The sound library's memory source: MemoryManager calls slot 2 for an instance block's memory.
 class Allocator {
 public:
-    // a block MemoryManager hands out (AcquireBlock fills it; the names are not the original's): the
+    // a block MemoryManager hands out (AcquireBlock fills it; the names are not the original's except
+    // allocAdrs_, which MemoryManager::AllocInstance's assertion cites as "block->allocAdrs_"): the
     // allocator it came from, the aligned address, the allocator's own pointer, the element size times the
     // count, that size rounded up to the alignment, the element size and the count
     struct Block {
         Allocator* allocator;
         void* data;
-        void* rawData;
+        void* allocAdrs_;
         unsigned int size;
         unsigned int alignedSize;
         unsigned int elementSize;
@@ -34,6 +35,8 @@ public:
     Block* GetMemoryBlock(void* address);
     Block* NewBufferImpl(unsigned long count, unsigned long elementSize, unsigned long alignment);
     void DeleteBufferImpl(Block* block);
+    Block* NewStreamImpl(unsigned long size, unsigned long alignment);
+    void DeleteStreamImpl(Block* block);
 
     // count instances of T constructed in one instance block, or null
     template <typename T>

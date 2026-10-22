@@ -6,9 +6,16 @@
 namespace mm { namespace mtl { class IAllocator; }}
 
 // a csvb file's rows and cells as stored (CCsvbUtility::GetCsvbInfo points at them; CreateCsvbRows and
-// CreateCsvbData read them, swapping their bytes when asked). The contents are not known here.
-struct stCsvbRowInfo;
-struct stCsvbDataInfo;
+// CreateCsvbData read them, swapping their bytes when asked). The field names are not the original's.
+// a row: how many cells it has (GetCsvbInfo steps over rowCount of them, 2 bytes each)
+struct stCsvbRowInfo {
+    unsigned short columnCount;
+};
+// a cell: its type code, how its value is stored (0xFFFC a signed byte, 0xFFFD a signed short, 0xFFFE a word,
+// 0xFFFF a float, ...)
+struct stCsvbDataInfo {
+    unsigned short type;
+};
 
 // what CCsvbUtility::GetCsvbInfo reads of a csvb file (CCsvbData::Load zeroes one first). The names are not the
 // original's.
@@ -16,7 +23,7 @@ struct stCsvbInfo {
     unsigned int pad_0;
     unsigned short rowCount;   // CCsvbData::Load builds as many rows
     unsigned short dataCount;  // and as many cells
-    unsigned int pad_8;
+    unsigned int valueSize;  // the bytes of the cells' values, which the strings follow (the name is not the original's)
     unsigned int stringSize;  // the bytes of the file's strings, which CCsvbData::Load copies
     const stCsvbRowInfo* pRowInfo;
     const stCsvbDataInfo* pDataInfo;
@@ -52,6 +59,22 @@ struct stCsvbData {
 // csvb's reading of a csvb file (csvb_utility.cpp's functions, by their symbols)
 class CCsvbUtility {
 public:
+    // a value's bytes reversed in place (1.0.0 has both out of line; 3.0.1 keeps no copy)
+    static void EndianSwap4(void* pValue) {
+        unsigned char* p = static_cast<unsigned char*>(pValue);
+        unsigned char t0 = p[0];
+        unsigned char t1 = p[1];
+        p[0] = p[3];
+        p[1] = p[2];
+        p[2] = t1;
+        p[3] = t0;
+    }
+    static void EndianSwap2(void* pValue) {
+        unsigned char* p = static_cast<unsigned char*>(pValue);
+        unsigned char t = p[0];
+        p[0] = p[1];
+        p[1] = t;
+    }
     // the file's bytes from the file system and their size; the buffer is the caller's to give back
     static bool LoadFile(const char* path, void** ppData, unsigned int* pSize);
     // 0 for a csvb file this reads (CCsvbData::Load stops on anything else)
