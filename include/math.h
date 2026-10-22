@@ -17,6 +17,11 @@ float fabsf(float x);
 
 #ifdef __cplusplus
 }
+
+// the C++ library's overload for a float (an assertion in WindBlender::changeNode cites `abs(time)`)
+inline float abs(float x) {
+    return ::fabsf(x);
+}
 #endif
 
 #endif

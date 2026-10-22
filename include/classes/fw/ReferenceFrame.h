@@ -1,11 +1,19 @@
 #ifndef CLASSES_FW_REFERENCEFRAME_H
 #define CLASSES_FW_REFERENCEFRAME_H
 
+#include "classes/mm/mtl/ReferenceObject.h"
+#include "fw/Transform.h"
+
 namespace fw {
-// table 0x7100B418F8
-class ReferenceFrame {
+// table 0x7100B418F8; counted (its constructor clears the count at 8; WindProbe holds one by IntrusivePtr)
+class ReferenceFrame : public mm::mtl::ReferenceObject {
 public:
     virtual ~ReferenceFrame();  // slot 0
+
+    unsigned char pad_10[0x10];
+    Transform m_localTransform;  // getSyncedWorldTransform copies it to m_worldTransform without a parent
+    // getSyncedWorldTransform's result: the parent's world transform times m_localTransform
+    Transform m_worldTransform;
 };
 }  // namespace fw
 

@@ -3,10 +3,11 @@
 
 namespace mm { namespace mtl {
 
-// the links an element of an intrusive list carries; unlinked, both point at the node itself
+// the links an element of an intrusive list carries; unlinked, both point at the node itself (the constructor
+// sets m_prev first: AreaWind's constructor stores its node's that way round)
 class IntrusiveListNodeBase {
 public:
-    IntrusiveListNodeBase() : m_next(this), m_prev(this) {}
+    IntrusiveListNodeBase() { m_next = m_prev = this; }
     bool intoNode() const {
         return m_next != this;
     }

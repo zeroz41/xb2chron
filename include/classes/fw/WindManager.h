@@ -4,6 +4,7 @@
 #include "classes/fw/ManagerObject.h"
 
 namespace fw { class UpdateInfo; }
+namespace fw { class WindProbe; }
 
 namespace fw {
 // a base of fw::WindManager no evidence names yet
@@ -18,6 +19,8 @@ public:
     virtual void initialize();  // slot 2
     virtual void getName() const;  // slot 5
     virtual void update(fw::UpdateInfo const&);  // slot 8
+    void addProbe(WindProbe* pProbe);
+    void removeProbe(WindProbe* pProbe);
 };
 }  // namespace fw
 
