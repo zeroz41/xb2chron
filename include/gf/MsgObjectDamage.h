@@ -14,7 +14,7 @@ class MsgObjectDamage : public ::fw::Message {
 public:
     MsgObjectDamage(unsigned int damage, int type)
         : fw::Message(0x1000035, 0x20), m_damage(damage), m_dispDamage(damage), m_type(type), m_pos(nullptr),
-          m_attacker(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), pad_28(), pad_2c(), m_showDamage(true), pad_30(),
+          m_attacker(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), pad_28(), pad_2c(), m_showDamage(true), pad_30(), pad_31(),
           m_fallHeight(0.0f), m_isProcessed(false) {}
 
     unsigned int m_damage;      // taken from the hit points
@@ -26,7 +26,10 @@ public:
     unsigned char pad_28[0x4];  // attack flags (0x28) and the dead message (0x29), read by procMsgObjectDamage
     unsigned char pad_2c[0x3];
     bool m_showDamage;          // procMsgObjectDamage pops the number up while it is set
-    unsigned char pad_30[0x2];  // procMsgObjectDamage's switches: no hit-point loss (0x30), no death notice (0x31)
+    // procMsgObjectDamage's switches, two separate bytes (DeadColCheckPlugin::update clears them apart): no hit-point
+    // loss (0x30), no death notice (0x31)
+    unsigned char pad_30[0x1];
+    unsigned char pad_31[0x1];
     float m_fallHeight;         // FallDamagePlugin::onDeactivate's: the height of the fall that dealt it
     bool m_isProcessed;         // procMsgObjectDamage sets it once it has taken the damage
 };

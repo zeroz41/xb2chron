@@ -24,10 +24,9 @@ void FallDistancePlugin::onActivate() {
 }
 
 void FallDistancePlugin::cacheMaxHeight(bool reset) {
-    if (reset) {
-        m_maxHeight = m_property->m_pos.y;
-    } else if (m_property->m_pos.y > m_maxHeight) {
-        m_maxHeight = m_property->m_pos.y;
+    GfComPropertyPc* property = m_property;
+    if (reset || property->m_pos.y > m_maxHeight) {
+        m_maxHeight = property->m_pos.y;
     }
 }
 

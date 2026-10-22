@@ -10,7 +10,7 @@ public:
     // the root of a dynamics binary: its kind and the resource
     struct Root {
         int m_version;               // 2
-        unsigned int m_magic;        // "SKDY" as its bytes read
+        char m_magic[4];             // "SKDY"
         ResDynamics* m_dynamics;
     };
 

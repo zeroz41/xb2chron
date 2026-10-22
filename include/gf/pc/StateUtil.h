@@ -4,6 +4,7 @@
 #include "gf/EnviromentSensor.h"
 
 namespace gf { class GfComBehaviorPc; }
+namespace gf { class MsgObjectNotifyDead; }
 
 namespace gf { namespace pc {
 
@@ -15,6 +16,7 @@ public:
     static const gf::EnviromentSensor::DeadPlaneInfo* getDeadPlaneInfo(gf::GfComBehaviorPc& behavior);
     static bool isOnSlideGround(gf::GfComBehaviorPc& behavior);
     static void applyDamage(gf::GfComBehaviorPc& behavior, unsigned int damage, bool percent);
+    static void notifyDead(gf::GfComBehaviorPc& behavior, gf::MsgObjectNotifyDead& msg, bool force);
 };
 
 }}  // namespace gf::pc

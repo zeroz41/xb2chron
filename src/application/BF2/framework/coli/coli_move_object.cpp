@@ -13,6 +13,8 @@
 
 namespace fw {
 
+mm::mtl::RTTI ColiMoveObject::m_rtti("ColiMoveObject", &ColiObject::m_rtti, nullptr);
+
 ColiMoveObject* ColiMoveObject::createColiCharacter(ColiCharacterInfo const& info,
                                                     mm::mtl::IntrusivePtr<ReferenceFrame> const& frame) {
     idcoli::IDColiAccMan accMan;

@@ -1,5 +1,7 @@
 #include "ptlib/IntrusiveList.h"
 #include "mm/MMStdBase.h"
+#include "mm/Vec3.h"
+#include "ptlib/Utility.h"
 
 namespace ptlib {
 
@@ -22,6 +24,29 @@ void IntrusiveListBase::unlinkNode(IntrusiveListNode* node) {
     node->m_next->m_prev = node->m_prev;
     node->m_next = node;
     node->m_prev = node;
+}
+
+unsigned int Utility::conv_rgba(mm::Vec3* color, float alpha) {
+    float r = color->x;
+    float g = color->y;
+    float b = color->z;
+    r = r < 0.0f ? 0.0f : r;
+    g = g < 0.0f ? 0.0f : g;
+    b = b < 0.0f ? 0.0f : b;
+    r = r > 1.0f ? 1.0f : r;
+    g = g > 1.0f ? 1.0f : g;
+    b = b > 1.0f ? 1.0f : b;
+    r *= 255.0f;
+    g *= 255.0f;
+    float a = alpha * 255.0f;
+    a = a < 0.0f ? 0.0f : a;
+    a = a > 255.0f ? 255.0f : a;
+    b *= 255.0f;
+    unsigned char ir = (int)r;
+    unsigned char ig = (int)g;
+    unsigned char ib = (int)b;
+    unsigned char ia = (int)a;
+    return ir | (ig << 8) | (ib << 16) | (ia << 24);
 }
 
 }  // namespace ptlib
