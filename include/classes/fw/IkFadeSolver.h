@@ -19,8 +19,23 @@ public:
     virtual void calcIK(fw::UpdateInfo const&) = 0;  // slot 7
     static mm::mtl::RTTI m_rtti;
 
-    float m_weight;  // solve fades it to 1 or to 0; isEnable while above 0; calcIK scales its effect by it
-    unsigned char pad_24[0x10];
+    // how solve is moving m_weight; the names are not the original's
+    enum FadeType {
+        FADE_NONE = 0,
+        FADE_IN = 1,   // fadeIn: towards 1
+        FADE_OUT = 2,  // fadeOut: towards 0
+    };
+
+    // fadeIn's and fadeOut's: m_weight goes from `from` (t 0) to `to` (t 1) along a cubic Bezier curve
+    static float calcBezier(float t, float from, float to);
+    void fadeIn(float time);
+    void fadeOut(float time);
+
+    float m_weight;         // solve fades it to 1 or to 0; isEnable while above 0; calcIK scales its effect by it
+    FadeType m_fadeType;    // the names of the fields below are not the original's
+    float m_fadeTime;       // fadeIn's/fadeOut's time: how long the fade takes
+    float m_fadeElapsed;    // solve adds each frame's time step
+    float m_fadeFromWeight; // m_weight when the fade started
 };
 }  // namespace fw
 

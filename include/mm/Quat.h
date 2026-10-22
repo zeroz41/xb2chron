@@ -5,6 +5,14 @@
 #include "mm/MMStdBase.h"
 #include "mm/Vec3.h"
 
+// mm_lib's mm_math/mm_quat_impl_nx.h, as the including file's include path named it (see mm/Math.h)
+#ifdef MM_LIB_FROM_LIBS
+#define MM_QUAT_IMPL_PATH "../../../mcl/mm_lib/source\\mm_math/mm_quat_impl_nx.h"
+#else
+#define MM_QUAT_IMPL_PATH \
+    "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_math/mm_quat_impl_nx.h"
+#endif
+
 namespace mm {
 
 // a rotation as a quaternion: four floats in 16 bytes (Quat::zero is 0x10 long). The operations are inline, so
@@ -29,6 +37,14 @@ public:
         // the second product's terms in the original's order (GfComPropertyEvent::procMsgObjectGetVelocity)
         return Vec3((-(z * ty) + y * tz - x * tw) + w * tx, (-(x * tz) + z * tx - y * tw) + w * ty,
                     (-(y * tx) + x * ty - z * tw) + w * tz);
+    }
+
+    // the opposite rotation: qa's conjugate over its squared length (mm_quat_impl_nx.h asserts `!qa.isZero()`)
+    static __attribute__((always_inline)) Quat inverse(const Quat& qa) {
+#line 86 MM_QUAT_IMPL_PATH
+        MM_ASSERT(!qa.isZero());
+        float scale = 1.0f / (qa.x * qa.x + qa.y * qa.y + qa.z * qa.z + qa.w * qa.w);
+        return Quat(-qa.x * scale, -qa.y * scale, -qa.z * scale, qa.w * scale);
     }
 
     // every component a number: none infinite or NaN, none the 0xCCCCCCCC of uninitialized memory

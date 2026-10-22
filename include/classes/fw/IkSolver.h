@@ -13,6 +13,7 @@ namespace fw {
 // table 0x7100B41B78; counted (the solvers' create adds the first reference)
 class IkSolver : public mm::mtl::ReferenceObject {
 public:
+    IkSolver();
     virtual ~IkSolver();  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     virtual void solve(fw::UpdateInfo const&) = 0;  // slot 3

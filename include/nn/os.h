@@ -4,6 +4,23 @@
 #include "nn/result.h"
 
 // NintendoSDK 3.5.0's nn::os, as far as the module imports it. Sizes are the ones the game's own layouts show.
+namespace nn {
+
+// a length of time in nanoseconds, passed by value in one register (nn::os::SleepThread)
+class TimeSpan {
+public:
+    static TimeSpan FromMilliSeconds(long milliSeconds) {
+        TimeSpan span;
+        span.m_nanoSeconds = milliSeconds * 1000000;
+        return span;
+    }
+
+private:
+    long m_nanoSeconds;
+};
+
+}  // namespace nn
+
 namespace nn { namespace os {
 
 struct MutexType {
@@ -55,6 +72,7 @@ void DestroyThread(ThreadType* thread);
 void StartThread(ThreadType* thread);
 void SetThreadName(ThreadType* thread, const char* name);
 const char* GetThreadNamePointer(const ThreadType* thread);
+void SleepThread(TimeSpan time);
 
 }}  // namespace nn::os
 
