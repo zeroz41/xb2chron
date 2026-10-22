@@ -52,4 +52,6 @@ bool UIObjectTextPlugin::isNeedUpdate(UIObjectAcc& acc) {
     return m_followObjHandle != 0;
 }
 
+mm::mtl::RTTI UIObjectTextPlugin::m_rtti("UIObjectTextPlugin", &UIObjectDispPlugin::m_rtti, nullptr);
+
 }  // namespace ui

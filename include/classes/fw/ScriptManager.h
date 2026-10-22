@@ -3,6 +3,7 @@
 
 #include "classes/fw/ManagerObject.h"
 #include "classes/ml/IWorkEvent.h"
+#include "mm/mtl/FixStr.h"
 
 namespace fw { class UpdateInfo; }
 
@@ -19,6 +20,7 @@ public:
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void update(fw::UpdateInfo const&);  // slot 8
+    static mm::mtl::FixStr<256> m_rootPath;  // setScriptPath stores it, makeFullPath reads it
 };
 }  // namespace fw
 

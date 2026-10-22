@@ -18,6 +18,19 @@ struct alignas(8) ThreadType {
 
 typedef void (*ThreadFunction)(void* argument);
 
+// the system tick count, returned by value in one register
+class Tick {
+public:
+    long GetInt64Value() const {
+        return m_value;
+    }
+
+private:
+    long m_value;
+};
+
+Tick GetSystemTick();
+
 const int HighestThreadPriority = 0;
 const int DefaultThreadPriority = 16;
 const int LowestThreadPriority = 31;

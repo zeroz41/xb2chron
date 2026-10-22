@@ -4,4 +4,6 @@ namespace ai {
 
 BlackBoard::~BlackBoard() {}
 
+mm::mtl::RTTI BlackBoard::m_rtti("BlackBoard", nullptr, nullptr);
+
 }  // namespace ai

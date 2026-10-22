@@ -56,4 +56,6 @@ bool UIObjectPatternPlugin::isNeedUpdate(UIObjectAcc& acc) {
     return m_followObjHandle != 0;
 }
 
+mm::mtl::RTTI UIObjectPatternPlugin::m_rtti("UIObjectPatternPlugin", &UIObjectDispPlugin::m_rtti, nullptr);
+
 }  // namespace ui

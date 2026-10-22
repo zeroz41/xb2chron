@@ -1,4 +1,5 @@
 #include "classes/gf/GfComponent.h"
+#include "classes/gf/GfComponent.h"
 #include "mm/mtl/IntrusivePtr.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/fw/VisibleObject.h"
@@ -43,5 +44,7 @@ bool GfComVisible::isRender() const {
 }
 
 GfComVisible::~GfComVisible() {}
+
+mm::mtl::RTTI GfComVisible::m_rtti("GfComVisible", &GfComponent::m_rtti, nullptr);
 
 }  // namespace gf

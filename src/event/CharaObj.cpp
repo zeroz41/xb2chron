@@ -1,3 +1,14 @@
+#include "gf/FileStaticVec3.h"
+#include "mm/mtl/FixStr.h"
+#include "mm/Vec2.h"
+#include "mm/Col4.h"
+#include "classes/event/ParamVariable.h"
+#include "classes/event/Param.h"
+#include "classes/event/CharaSetTar.h"
+#include "classes/event/ShakeManager.h"
+#include "classes/event/TodoManager.h"
+#include "classes/event/ObjectPartyList.h"
+#include "event/AgelogUtil.h"
 #include "classes/event/AttachActorGf.h"
 #include "classes/event/BlurManager.h"
 #include "classes/event/BouRect.h"
@@ -24,6 +35,8 @@ namespace event {
 CmdVariable::~CmdVariable() {}
 
 ParamVariable::~ParamVariable() {}
+
+Param::Param() {}
 
 AttachActorGf::~AttachActorGf() {}
 
@@ -64,5 +77,21 @@ void ScriptCharaMotion::undo(const event::Param&) {}
 void ScriptCharaMotionABC::undo(const event::Param&) {}
 
 SkipManager::~SkipManager() {}
+
+mm::mtl::FixStr<256> AgelogUtil::s_path;
+
+const mm::Vec2 CharaSetTar::LENS_LIMIT(10.0f * (3.14f / 180.0f), 30.0f * (3.14f / 180.0f));
+const mm::Vec2 CharaSetTar::JOY_LIMIT(10.0f * (3.14f / 180.0f), 15.0f * (3.14f / 180.0f));
+
+// the colour FadeManager::playEventSkip and FadeCtrl::fadeoutEventSkip/fadeinEventSkip fade through
+static const mm::Col4 s_skipFadeColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+const mm::mtl::FixStr<32> ShakeManager::s_names[4] = {mm::mtl::FixStr<32>("TYPE_SS"), mm::mtl::FixStr<32>("TYPE_S"), mm::mtl::FixStr<32>("TYPE_M"),
+                                                 mm::mtl::FixStr<32>("TYPE_L")};
+
+Param TodoManager::s_zero;
+
+mm::mtl::FixedVector<gf::GF_OBJ_HANDLE*, 3> ObjectPartyList::s_drlist;
+mm::mtl::FixedVector<gf::GF_OBJ_HANDLE*, 3> ObjectPartyList::s_bllist;
 
 }  // namespace event

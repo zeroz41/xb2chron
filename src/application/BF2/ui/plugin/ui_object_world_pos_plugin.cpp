@@ -30,4 +30,6 @@ UIObjectWorldPosPlugin* UIObjectWorldPosPlugin::create(unsigned int handle) {
 
 // execute (0x710068737C) is not matched yet
 
+mm::mtl::RTTI UIObjectWorldPosPlugin::m_rtti("UIObjectWorldPosPlugin", &UIObjectPosPlugin::m_rtti, nullptr);
+
 }  // namespace ui

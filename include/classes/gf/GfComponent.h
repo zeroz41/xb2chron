@@ -14,6 +14,7 @@ public:
     virtual ~GfComponent() {}  // slot 1: inline (no symbol; a derived destructor calls none)
     virtual void changeLayer(unsigned int, unsigned int) = 0;  // slot 3
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
+    static mm::mtl::RTTI m_rtti;  // the base every component's m_rtti names (defined by GfObjAcc's unit)
 };
 }  // namespace gf
 

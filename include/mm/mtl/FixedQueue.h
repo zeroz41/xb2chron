@@ -53,10 +53,10 @@ public:
     FixedQueue() : m_size(0), m_head(0) {}
 
     iterator begin() {
-        return iterator(m_buffer, m_head);
+        return iterator(data(), m_head);
     }
     iterator end() {
-        return iterator(m_buffer, m_head + m_size);
+        return iterator(data(), m_head + m_size);
     }
     unsigned long size() const {
         return m_size;
@@ -68,7 +68,7 @@ public:
     void push_back(const T& value) {
 #line 633 MM_MTL_FIXED_QUEUE_PATH
         MM_ASSERT(!full());
-        m_buffer[(m_head + m_size) % N] = value;
+        data()[(m_head + m_size) % N] = value;
         ++m_size;
     }
     void erase(iterator it) {
@@ -76,11 +76,16 @@ public:
         MM_ASSERT(size() != 0);
         --m_size;
         for (unsigned long index = it._index; index < m_head + m_size; ++index) {
-            m_buffer[index % N] = m_buffer[(index + 1) % N];
+            data()[index % N] = data()[(index + 1) % N];
         }
     }
 
-    T m_buffer[N];
+    // the ring's elements: storage only, so a queue of a class constructs none of them (work_cpu's
+    // FixedQueue<PAUSEQ, 16> statics construct nothing per element)
+    T* data() {
+        return reinterpret_cast<T*>(m_buffer);
+    }
+    alignas(T) unsigned char m_buffer[sizeof(T) * N];
     unsigned long m_size;  // size()
     unsigned long m_head;  // the first element's index
 };

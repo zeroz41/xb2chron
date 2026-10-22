@@ -57,4 +57,6 @@ void UIObjectOffsetPlugin::execute(UIObjectAcc& acc) {
     }
 }
 
+mm::mtl::RTTI UIObjectOffsetPlugin::m_rtti("UIObjectOffsetPlugin", &UIObjectDispPlugin::m_rtti, nullptr);
+
 }  // namespace ui

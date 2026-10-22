@@ -21,4 +21,6 @@ void GfComBehaviorMapLodAnim::update(fw::UpdateInfo const& info) {
 
 GfComBehaviorMapLodAnim::~GfComBehaviorMapLodAnim() {}
 
+mm::mtl::RTTI GfComBehaviorMapLodAnim::m_rtti("GfComBehaviorMapLodAnim", &GfComBehavior::m_rtti, nullptr);
+
 }  // namespace gf

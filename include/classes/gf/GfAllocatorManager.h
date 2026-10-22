@@ -9,6 +9,7 @@ namespace gf {
 // table 0x7100B597F0
 class GfAllocatorManager : public ::mm::mtl::PtrSingleton< ::gf::GfAllocatorManager> {
 public:
+    GfAllocatorManager();
     virtual ~GfAllocatorManager();  // slot 0
 };
 }  // namespace gf

@@ -67,4 +67,6 @@ void UIShapeRing::update(unsigned int) {
     }
 }
 
+mm::mtl::RTTI UIShapeRing::m_rtti("UIShapeRing", &UIShape::m_rtti, nullptr);
+
 }  // namespace ui

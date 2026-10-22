@@ -74,4 +74,6 @@ bool UIObjectFitPlugin::isNeedUpdate(UIObjectAcc& acc) {
     return acc.isDisp();
 }
 
+mm::mtl::RTTI UIObjectFitPlugin::m_rtti("UIObjectFitPlugin", &UIObjectPlugin::m_rtti, nullptr);
+
 }  // namespace ui

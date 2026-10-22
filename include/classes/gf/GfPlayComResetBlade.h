@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFPLAYCOMRESETBLADE_H
 
 #include "mm/mtl/RTTI.h"
+#include "mm/mtl/FixedVector.h"
 namespace fw { class UpdateInfo; }
 
 namespace gf {
@@ -16,6 +17,7 @@ public:
     virtual void end();  // slot 5
     virtual void update(fw::UpdateInfo const&, bool);  // slot 6
     static mm::mtl::RTTI m_rtti;
+    static mm::mtl::FixedVector<signed char, 3> s_execFlag;
 };
 }  // namespace gf
 

@@ -72,4 +72,6 @@ void UIObjectSyncPlugin::execute(UIObjectAcc& acc) {
     UIObjectPlugin::execute(acc);
 }
 
+mm::mtl::RTTI UIObjectSyncPlugin::m_rtti("UIObjectSyncPlugin", &UIObjectPlugin::m_rtti, nullptr);
+
 }  // namespace ui

@@ -1,3 +1,4 @@
+#include "classes/gf/GfExtendResource.h"
 #include "classes/gf/GfAssetManager.h"
 #include "classes/gf/GfObjManager.h"
 #include "gf/AssetPackInfo.h"
@@ -44,5 +45,7 @@ void GfAssetUtil::setRetargetLoad(GF_ASSET_HANDLE* handle, bool retargetLoad) {
         info->m_retargetLoad = retargetLoad;
     }
 }
+
+mm::mtl::RTTI GfExtendResource::m_rtti("GfExtendResource", nullptr, nullptr);
 
 }  // namespace gf

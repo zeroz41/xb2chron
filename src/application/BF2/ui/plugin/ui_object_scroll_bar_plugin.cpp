@@ -82,4 +82,6 @@ void UIObjectScrollBarPlugin::execute(UIObjectAcc& acc) {
     UIObjectPlugin::execute(acc);
 }
 
+mm::mtl::RTTI UIObjectScrollBarPlugin::m_rtti("UIObjectScrollBarPlugin", &UIObjectPlugin::m_rtti, nullptr);
+
 }  // namespace ui

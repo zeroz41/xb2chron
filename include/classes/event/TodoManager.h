@@ -1,6 +1,8 @@
 #ifndef CLASSES_EVENT_TODOMANAGER_H
 #define CLASSES_EVENT_TODOMANAGER_H
 
+#include "classes/event/Param.h"
+
 namespace event { enum MSG_TYPE : int; }
 
 namespace event {
@@ -20,6 +22,7 @@ class TodoManager : public TUnk_B3DBA8, public TUnk_B3DBD0 {
 public:
     virtual ~TodoManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    static Param s_zero;
 };
 }  // namespace event
 

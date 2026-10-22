@@ -58,4 +58,6 @@ void TransLocalIkSolver::calcIK(UpdateInfo const&) {
     m_pose->setBoneLocalSpace(m_bone, transform);
 }
 
+mm::mtl::RTTI TransLocalIkSolver::m_rtti("TransLocalIkSolver", &IkSolver::m_rtti, nullptr);
+
 }  // namespace fw

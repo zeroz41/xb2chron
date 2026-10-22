@@ -35,4 +35,6 @@ void BlowRotateIkSolver::calcIK(UpdateInfo const&) {
     m_pose->setBoneModelSpace(m_bone, transform, anm::Pose::PROPAGATE_TYPE(1));
 }
 
+mm::mtl::RTTI BlowRotateIkSolver::m_rtti("BlowRotateIkSolver", &IkFadeSolver::m_rtti, nullptr);
+
 }  // namespace fw

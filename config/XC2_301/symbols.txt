@@ -1,7 +1,7 @@
 _init = .text:0x00000024; // type:function size:0x13C scope:global
 _fini = .text:0x00000160; // type:function size:0x34 scope:global
 fn_7100000194 = .text:0x00000194; // type:function size:0x8 scope:global
-fn_710000019C = .text:0x0000019C; // type:function size:0x8 scope:global
+__cxa_atexit = .text:0x0000019C; // type:function size:0x8 scope:global
 fn_71000001A4 = .text:0x000001A4; // type:function size:0x8 scope:global
 __nnDetailNintendoSdkRuntimeObjectFileRefer = .text:0x000001AC; // type:function size:0x4 scope:global
 __nnDetailNintendoSdkRuntimeObjectFile = .text:0x000001B0; // type:function size:0x4 scope:global
@@ -49905,7 +49905,7 @@ lbl_71009D7C00 = .rodata:0x009D7C00; // type:object size:0x17F0 scope:global
 _eh_frame_hdr = .eh_frame_hdr:0x009D93F0; // type:object size:0x45664 scope:global
 _eh_frame = .eh_frame:0x00A1EA60; // type:object size:0x11B46C scope:global
 lbl_7100B39EF4 = .rodata:0x00B39EF4; // type:object size:0x2F scope:global
-lbl_7100B3A000 = .data:0x00B3A000; // type:object size:0x8 scope:global
+__dso_handle = .data:0x00B3A000; // type:object size:0x8 scope:global
 _ZTVN4apps17FrameworkLauncherE = .data:0x00B3A008; // type:object size:0x198 scope:global
 _ZTVN2ml10IScnRenderE = .data:0x00B3A1A0; // type:object size:0x48 scope:weak
 _ZTVN2ml15IWorkBackgroundE = .data:0x00B3A1E8; // type:object size:0x30 scope:weak

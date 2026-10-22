@@ -84,4 +84,6 @@ void UIObjectPosPlugin::execute(UIObjectAcc& acc) {
     acc.setPosCenter(pos);
 }
 
+mm::mtl::RTTI UIObjectPosPlugin::m_rtti("UIObjectPosPlugin", &UIObjectDispPlugin::m_rtti, nullptr);
+
 }  // namespace ui

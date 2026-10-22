@@ -1,6 +1,8 @@
 #ifndef CLASSES_EVENT_SHAKEMANAGER_H
 #define CLASSES_EVENT_SHAKEMANAGER_H
 
+#include "mm/mtl/FixStr.h"
+
 namespace event { enum MSG_TYPE : int; }
 
 namespace event {
@@ -20,6 +22,7 @@ class ShakeManager : public TUnk_B3D4F8, public TUnk_B3D520 {
 public:
     virtual ~ShakeManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    static const mm::mtl::FixStr<32> s_names[4];  // the shake types' names
 };
 }  // namespace event
 

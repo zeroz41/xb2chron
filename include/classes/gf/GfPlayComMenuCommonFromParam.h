@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFPLAYCOMMENUCOMMONFROMPARAM_H
 
 #include "mm/mtl/RTTI.h"
+#include "mm/mtl/FixedQueue.h"
 namespace fw { class UpdateInfo; }
 
 namespace gf {
@@ -15,6 +16,7 @@ public:
     virtual void end();  // slot 5
     virtual void update(fw::UpdateInfo const&, bool);  // slot 6
     static mm::mtl::RTTI m_rtti;
+    static mm::mtl::FixedQueue<unsigned int, 32> s_list;  // handles of the open windows; create() pushes
 };
 }  // namespace gf
 
