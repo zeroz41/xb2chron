@@ -28,6 +28,8 @@ public:
     }
     // path's file name without its folders and extension (fw::SoundPack's constructor keeps it)
     static mm::mtl::FixStr<64> getNoPathExtName(const char* path);
+    // where path's file name starts (after its last folder), none (fw::ScriptInfo::load keeps the path whole then)
+    static const char* getFilePtrFromPath(const char* path);
 };
 }  // namespace ml
 

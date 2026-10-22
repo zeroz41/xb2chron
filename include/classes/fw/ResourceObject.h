@@ -34,7 +34,7 @@ public:
     unsigned char pad_10[0x8];
     mm::mtl::IAllocator* m_allocator;  // the constructor's
     unsigned int m_hash;  // ResourceManager::getHash of the path (the requests set it)
-    unsigned char pad_24[0x4];
+    int m_arg;  // the constructor's last (SoundResource's 0x1000, which it hands AssetLoader::Create)
     LOAD_PRIO m_prio;  // the constructor's
     mm::mtl::FixStr<128> m_path;  // the requested path (the requests set it)
 };

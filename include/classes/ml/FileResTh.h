@@ -21,6 +21,15 @@ public:
     virtual void load(mm::mtl::IAllocator*, char const*, unsigned int, ml::FILE_PRIO);  // slot 9
     virtual void release();  // slot 10
     virtual bool OnFileEvent(ml::EventFileTh*);  // slot 11
+    // whether its file's data is there (the data pointer is set)
+    bool isExist() const;
+
+    // the names are not the original's
+    void* m_handle;  // set while the file is being read (fw::SoundResource::update waits for it to clear)
+    void* m_data;  // the file's data (isExist tests it)
+    int m_size;  // the data's size; -2 when there is no file (fw::SoundResource::update skips the data then)
+    unsigned char pad_d4[0x1C];
+    bool m_ownsData;  // cleared when fw::AssetData::AssignFromMemory takes the data over
 };
 }  // namespace ml
 

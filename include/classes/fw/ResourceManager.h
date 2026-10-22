@@ -8,6 +8,13 @@ namespace fw { class ResourceObject; }
 namespace mm { namespace mtl { class IAllocator; } }
 
 namespace fw { class UpdateInfo; }
+namespace mm { namespace mtl { class ReferenceObject; } }
+
+namespace fw {
+// a resource's type (fw::SoundResource's are 5: it asks searchResource for them and hands its asset to addSafeObject
+// as one)
+enum eResourceType : int;
+}  // namespace fw
 
 namespace fw {
 // a base of fw::ResourceManager no evidence names yet
@@ -27,6 +34,9 @@ public:
     // the loaded resource of a type and path, none (RenderResource::request asks for type 1)
     ResourceObject* searchResource(unsigned int type, mtl::ALLOC_HANDLE handle, const char* path);
     ResourceObject* searchResource(unsigned int type, mm::mtl::IAllocator* allocator, const char* path);
+    // keeps a reference to an object a resource loaded until removeSafeObject (fw::SoundResource's asset)
+    void addSafeObject(mm::mtl::ReferenceObject* object, eResourceType type);
+    void removeSafeObject(mm::mtl::ReferenceObject* object);
 };
 }  // namespace fw
 

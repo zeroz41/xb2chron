@@ -27,6 +27,7 @@ public:
     void setMatrix(const mm::Mat44& matrix);
     void getMatrix(mm::Mat44& matrix);
     bool isText() const;
+    bool isStreamImage() const;  // bit 6 of its object's flags at 0x98 (false without an object)
     bool isStreaming() const;
     void getRect(mm::Rect<short>& rect, unsigned short mode) const;
     void getPos(mm::Pnt<short>& pos) const;
@@ -62,6 +63,7 @@ public:
     void getRot(float& rot);
     void setRot(float rot);
     void setSlopeRot(float rot);
+    void setTextAlignH(unsigned char align);  // its text object's horizontal alignment
     void startAnimation(const char* name, bool);
     void getAlpha(float& alpha);
     void setAlpha(float alpha);

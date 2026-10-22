@@ -1,7 +1,7 @@
 #ifndef CLASSES_FW_SOUNDPACK_H
 #define CLASSES_FW_SOUNDPACK_H
 
-#include "classes/fw/SoundReferenceObject.h"
+#include "classes/mm/mtl/ReferenceObject.h"
 #include "classes/fw/SoundSsdBank.h"
 #include "classes/fw/SoundSsdSource.h"
 #include "mm/mtl/FixStr.h"
@@ -13,15 +13,23 @@ namespace fw { enum SoundPriority : int; }
 namespace mm { namespace mtl { class IAllocator; }}
 
 namespace fw {
-// table 0x7100B42E80: a pack of sound effects, its waves registered in a SoundSsdBank of its own
-class SoundPack : public ::fw::SoundReferenceObject {
+// table 0x7100B42E80: a pack of sound effects, its waves registered in a SoundSsdBank of its own; counted as an
+// mm::mtl::ReferenceObject (fw::SoundResource's destructor releases its pack with reference_object.h's inline
+// release: its assertion, then the deleting destructor through the table)
+class SoundPack : public ::mm::mtl::ReferenceObject {
 public:
-    // what create and createFromStream make a pack from (the names are not the original's; pad_8c is not read)
+    // what create and createFromStream make a pack from (the names are not the original's; pad_8c and assetName
+    // are not read). Inline constructor: fw::SoundResource::update holds its stores.
     struct SetupInfo {
+        SetupInfo()
+            : category(static_cast<SoundCategory>(3)), priority(static_cast<SoundPriority>(0)), assetName(nullptr),
+              data(nullptr), size(0), maxSound(0x80) {}
+
         mm::mtl::FixStr<128> name;
         SoundCategory category;
         SoundPriority priority;
-        unsigned char pad_8c[0xC];
+        unsigned char pad_8c[0x4];
+        const char* assetName;  // fw::SoundResource::update's: its asset's name
         void* data;
         unsigned int size;
         unsigned int maxSound;  // the bank's (SoundSsdBank::create and setMaxSound)

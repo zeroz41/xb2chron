@@ -7,6 +7,9 @@ namespace mm { class VAL64; }
 namespace ml { class CERR_STRUCT; }
 namespace ml { class IWorkEvent; }
 namespace ml { enum ERR_DECIDE : int; }
+namespace ml { class DevFileParamTh; }
+namespace ml { class FileHandleTh; }
+namespace mm { namespace mtl { template <int LEN> class FixStr; } }
 
 namespace ml {
 // a base of ml::DevFileTh no evidence names yet
@@ -39,6 +42,12 @@ public:
     static void* checkValidFile(const char* path, ml::IWorkEvent* listener);
     // a file's size, negative when it has none (GfFileSizePool::execFileSizeJob passes no VAL64)
     static int getFileSize(const char* path, mm::VAL64*);
+    // starts reading the file a parameter names; the handle the answer to its listener's OnFileEvent carries, none
+    static FileHandleTh* readFile(const DevFileParamTh& param);
+    // stops a read readFile started (the parameter names are not the original's)
+    static void cancel(FileHandleTh* handle, bool flag);
+    // path as the file system takes it (fw::SoundResource::update; the parameter names are not the original's)
+    static void normalizeDvdFileName(mm::mtl::FixStr<256>& out, const char* path);
 };
 }  // namespace ml
 
