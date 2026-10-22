@@ -20,6 +20,7 @@ public:
         z = v.z;
         return *this;
     }
+    Vec3 operator-(const Vec3& v) const { return Vec3(x - v.x, y - v.y, z - v.z); }
     Vec3 operator*(float s) const { return Vec3(x * s, y * s, z * s); }
     friend Vec3 operator*(float s, const Vec3& v) { return Vec3(s * v.x, s * v.y, s * v.z); }
 

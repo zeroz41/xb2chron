@@ -1,6 +1,21 @@
+#include "mm/Aabb.h"
 #include "mm/mtl/Hash.h"
 #include "mm/mtl/IntrusiveList.h"
 #include "mm/MMStdBase.h"
+
+namespace mm {
+
+// the box spanning two corners, whichever way round they are given
+void Aabb::set(const Vec3& a, const Vec3& b) {
+    m_min.x = a.x < b.x ? a.x : b.x;
+    m_min.y = a.y < b.y ? a.y : b.y;
+    m_min.z = a.z < b.z ? a.z : b.z;
+    m_max.x = a.x > b.x ? a.x : b.x;
+    m_max.y = a.y > b.y ? a.y : b.y;
+    m_max.z = a.z > b.z ? a.z : b.z;
+}
+
+}  // namespace mm
 
 namespace mm { namespace mtl {
 

@@ -11,6 +11,8 @@ float sqrtf(float x);
 float sinf(float x);
 float cosf(float x);
 float acosf(float x);
+float asinf(float x);
+float atan2f(float y, float x);
 float fabsf(float x);
 
 #ifdef __cplusplus

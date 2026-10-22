@@ -4,6 +4,7 @@
 #include "mm/mtl/RTTI.h"
 #include "classes/ui/UIObjectBase.h"
 
+namespace layer { class LayerBase; }
 namespace mm { class Vec2; }
 namespace mm { template <typename> class Pnt; }
 
@@ -18,7 +19,9 @@ public:
     virtual void getDisplayOffset(unsigned short, mm::Pnt<short>&) const;  // slot 7
     virtual void getTransformPosOffs(mm::Vec2&);  // slot 8
     virtual void duplicateImpl(unsigned int) = 0;  // slot 9
+    static void importDisplayInfo(UIDisplayInfo& info, layer::LayerBase* layer);
     static mm::mtl::RTTI m_rtti;
+    layer::LayerBase* m_layer;  // the constructor's; its display information comes from it
 };
 }  // namespace ui
 

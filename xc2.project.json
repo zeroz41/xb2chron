@@ -75,6 +75,16 @@
             "extra_cflags": [
               "-DMM_LIB_FROM_LIBS"
             ]
+          },
+          "libs/anmlib/*": {
+            "extra_cflags": [
+              "-DMM_LIB_FROM_LIBS"
+            ]
+          },
+          "libs/wndlib/*": {
+            "extra_cflags": [
+              "-DMM_LIB_FROM_LIBS"
+            ]
           }
         },
         "compiler_version": "clang version 3.9.1",
