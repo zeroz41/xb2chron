@@ -50,13 +50,18 @@ public:
     // bit 4: ColVelCalculatorPlugin::update takes the ground's movement; bit 10: DeadColCheckPlugin::testDead asks
     // the first collision object instead of the dead plane
     unsigned int m_stateFlags;
-    unsigned char pad_114[0x4C];
+    unsigned char pad_114[0x8];
+    float m_waterDepth;         // flush's: the water surface's height above the ground under the PC (the name is not
+                                // the original's)
+    unsigned char pad_120[0x40];
     mm::Vec3 m_pos;             // TaskFieldRetreat::update routes the PC from it
     unsigned char pad_170[0x10];
     mm::Vec3 m_prevPos;         // DeadColCheckPlugin::testDead: falling from above a dead plane's height to it
     unsigned char pad_190[0x50];
     mm::Vec3 m_moveDir;         // TaskFieldJump::update sets m_velocity along it
-    unsigned char pad_1f0[0x110];
+    unsigned char pad_1f0[0x100];
+    float m_chestHeight;        // setup's: the character data's chest height in metres (the name is not the original's)
+    unsigned char pad_2f4[0xC];
     mm::mtl::IntrusivePtr<fw::ParamList> m_paramList;  // the PC's parameters
     unsigned char pad_308[0x8];
     pc::GfPropertyField m_field;  // setup, cleanup and flush pass it this property

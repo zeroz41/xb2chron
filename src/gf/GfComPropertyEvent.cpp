@@ -28,6 +28,13 @@ bool GfComPropertyEvent::recieveMessage(fw::MessageObject* sender, fw::Message& 
     return GfComProperty::recieveMessage(sender, msg);
 }
 
-// procMsgObjectGetVelocity (0x71004CC40C) is not matched yet
+void GfComPropertyEvent::procMsgObjectGetVelocity(fw::MessageObject* sender, MsgObjectGetVelocity& msg) {
+    GfComTransform* transform = m_owner->getComponent<GfComTransform>(0);
+    if (transform != nullptr) {
+        msg.m_velocity = transform->getRotation().rotate(mm::Vec3::unitZ) * m_moveSpeed;
+    }
+}
+
+mm::mtl::RTTI GfComPropertyEvent::m_rtti("GfComPropertyEvent", &GfComProperty::m_rtti, nullptr);
 
 }  // namespace gf

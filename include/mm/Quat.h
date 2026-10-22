@@ -26,8 +26,9 @@ public:
         float ty = (z * v.x - x * v.z) + w * v.y;
         float tz = (x * v.y - y * v.x) + w * v.z;
         float tw = -x * v.x - y * v.y - z * v.z;
-        return Vec3(((y * tz - z * ty) - x * tw) + w * tx, ((z * tx - x * tz) - y * tw) + w * ty,
-                    ((x * ty - y * tx) - z * tw) + w * tz);
+        // the second product's terms in the original's order (GfComPropertyEvent::procMsgObjectGetVelocity)
+        return Vec3((-(z * ty) + y * tz - x * tw) + w * tx, (-(x * tz) + z * tx - y * tw) + w * ty,
+                    (-(y * tx) + x * ty - z * tw) + w * tz);
     }
 
     // every component a number: none infinite or NaN, none the 0xCCCCCCCC of uninitialized memory

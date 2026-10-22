@@ -35,6 +35,15 @@ public:
         return *this;
     }
     FixStr& format(const char* format, ...);
+    // pszName appended (WaterInPlugin::onEvent inlines it; the name is not the original's)
+    FixStr& operator+=(const char* pszName) {
+        int nBackLen = strlen(pszName);
+#line 487 MM_MTL_FIXSTR_H_FILE
+        MM_ASSERT(m_nLen + nBackLen < LEN);
+        strcat(m_str, pszName);
+        m_nLen += nBackLen;
+        return *this;
+    }
     // the index of the last `c`, -1 when there is none (inline: ml::PathUtil::getFsaPath inlines it; the name is
     // not the original's)
     int findLast(char c) const {

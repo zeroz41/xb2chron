@@ -40,6 +40,18 @@ void GfComBehaviorSalvage::update(const fw::UpdateInfo& info) {
     m_pluginManager.update(info);
 }
 
-// procAnimCallback (0x710051F4E8) is not matched yet
+void GfComBehaviorSalvage::procAnimCallback(GfComAsm* asmCom, const CallBackCache& cache) {
+    if (!m_stepCallback.isValid()) {
+        return;
+    }
+    const char* name = cache.m_event->name;
+    if (strcmp(name, "salvageStep") == 0) {
+        m_stepCallback();
+    } else if (strcmp(name, "vibration") == 0) {
+        m_stepCallback();
+    }
+}
+
+mm::mtl::RTTI GfComBehaviorSalvage::m_rtti("GfComBehaviorSalvage", &GfComBehavior::m_rtti, nullptr);
 
 }  // namespace gf

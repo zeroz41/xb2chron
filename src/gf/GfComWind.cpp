@@ -32,4 +32,6 @@ void GfComWind::cleanup() {
 
 void GfComWind::changeLayer(unsigned int, unsigned int) {}
 
+mm::mtl::RTTI GfComWind::m_rtti("GfComWind", &GfComponent::m_rtti, nullptr);
+
 }  // namespace gf

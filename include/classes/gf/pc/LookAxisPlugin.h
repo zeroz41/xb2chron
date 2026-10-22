@@ -3,6 +3,7 @@
 
 #include "classes/gf/GfComBehaviorPc.h"
 #include "classes/gf/Plugin.h"
+#include "fw/ParamAdapter.h"
 
 namespace fw { class UpdateInfo; }
 
@@ -10,6 +11,12 @@ namespace gf { namespace pc {
 // table 0x7100B69958
 class LookAxisPlugin : public ::gf::Plugin {
 public:
+    // its parameter block: entry 4 of the param manager's list 5 (the names are not the original's)
+    struct Param {
+        unsigned char pad_0[0x14];
+        float m_changeDuration;  // the time a changeAxisYaw change takes
+    };
+
     LookAxisPlugin();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~LookAxisPlugin() {}  // slot 1
@@ -38,7 +45,7 @@ public:
     float m_targetYaw;                // changeAxisYaw's: the yaw a change ends at
     float m_changeTime;               // the time a change has run; update blends the yaws by it
     bool m_changing;                  // changeAxisYaw sets it, update clears it when the change is over
-    unsigned char pad_29[0xF];        // +0x30: the parameter entry setup finds (its type has no name yet)
+    fw::ParamAdapter m_param;         // setup finds it in the param manager's list 5
 };
 }}  // namespace gf::pc
 
