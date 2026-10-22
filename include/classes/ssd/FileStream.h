@@ -2,24 +2,37 @@
 #define CLASSES_SSD_FILESTREAM_H
 
 #include "classes/ssd/IoStreamBase.h"
+#include "nn/fs.h"
 
 namespace ssd { class TextRef; }
 
 namespace ssd {
-// table 0x7100B82120
+// table 0x7100B82120: a stream over an nn::fs file (D:/ssd/ssd51/ssd/sources/io/file_stream.cpp)
 class FileStream : public ::ssd::IoStreamBase {
 public:
+    FileStream();
+
+    static void Initialize();
+    static void Finalize();
+
     virtual ~FileStream();  // slot 0
-    virtual void IsOpen() const;  // slot 2
-    virtual void Open(ssd::TextRef const&, ssd::IoStreamBase::OpenMode);  // slot 3
-    virtual void Close();  // slot 5
-    virtual void GetSize(unsigned long*) const;  // slot 6
-    virtual void Read(unsigned long, void*, unsigned long*);  // slot 7
-    virtual void Write(unsigned long, void const*, unsigned long*);  // slot 8
-    virtual void Seek(ssd::IoStreamBase::SeekMode, unsigned long, unsigned long*);  // slot 9
-    virtual void GetPosition(unsigned long*) const;  // slot 10
-    virtual void Tell(unsigned long*);  // slot 11
-    virtual void CheckAccessSize(unsigned long);  // slot 12
+    virtual bool IsOpen() const;  // slot 2
+    virtual Result Open(const TextRef& path, OpenMode mode);  // slot 3
+    virtual Result Close();  // slot 5
+    virtual Result GetSize(unsigned long* fileSize) const;  // slot 6
+    virtual Result Read(unsigned long size, void* buffer, unsigned long* readSize);  // slot 7
+    virtual Result Write(unsigned long size, const void* buffer, unsigned long* writeSize);  // slot 8
+    virtual Result Seek(SeekMode mode, unsigned long offset, unsigned long* position);  // slot 9
+    virtual Result GetPosition(unsigned long* position) const;  // slot 10
+    virtual Result Tell(unsigned long* position);  // slot 11
+    virtual unsigned long CheckAccessSize(unsigned long size);  // slot 12
+
+    void Clear();
+
+    // the read position, the file's size (Open) and its handle (the names are not the original's)
+    unsigned long position_;
+    unsigned long size_;
+    nn::fs::FileHandle handle_;
 };
 }  // namespace ssd
 

@@ -1,13 +1,15 @@
 #ifndef CLASSES_SSD_SYSTEMCOREPLATFORM_H
 #define CLASSES_SSD_SYSTEMCOREPLATFORM_H
 
+#include "classes/ssd/SoundCore.h"
+
 namespace ssd { class SoundEffecter; }
 namespace ssd { class SoundListener; }
 namespace ssd { namespace OutputMode { class Type; }}
 
 namespace ssd {
-// table 0x7100B81FD0
-class SystemCorePlatform {
+// table 0x7100B81FD0 (its constructor, inline in SystemCore's, calls SoundCore's)
+class SystemCorePlatform : public ::ssd::SoundCore {
 public:
     virtual void GetOutputMode() const = 0;  // slot 0
     virtual void SetOutputMode(ssd::OutputMode::Type) = 0;  // slot 1

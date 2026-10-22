@@ -11,6 +11,7 @@ namespace ssd {
 // table 0x7100B81D10
 class SystemCore : public ::ssd::SystemCorePlatform {
 public:
+    SystemCore();
     virtual void GetOutputMode() const;  // slot 0
     virtual void SetOutputMode(ssd::OutputMode::Type);  // slot 1
     virtual void GetMasterVolume() const;  // slot 2
@@ -31,6 +32,17 @@ public:
     virtual void UnlockAudio() const;  // slot 17
     virtual ~SystemCore();  // slot 19
     virtual void GetDebugInfo() const;  // slot 21
+
+    Result Init(const SoundCore::InitParam& param);
+    Result Quit();
+    Result SetCategory(const SoundCategory& category);
+    Result ResetCategory(int categoryId);
+    void UpdateGameFrame(float frameTime);
+    void StopSound(float fadeTime);
+
+    // SoundCore::NewInstance allocates 0xA28 bytes for the instance; which of them are SystemCorePlatform's is
+    // not settled yet
+    unsigned char pad_11[0xA17];
 };
 }  // namespace ssd
 
