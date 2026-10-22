@@ -16,8 +16,9 @@ namespace wnd { class BroadPhazeProxy; }
 namespace wnd { class Shape; }
 
 namespace wnd {
-// what an object is: wnd::WindProbe's constructor gives WindObject's 1, AreaWind's 2
+// what an object is: wnd::WindProbe's constructor gives WindObject's 1, AreaWind's 2, LocalWind's 0
 enum ObjectType {
+    OBJECT_TYPE_LOCAL_WIND = 0,  // 1.0.0's LocalWind constructor's (the name is not the original's)
     OBJECT_TYPE_PROBE = 1,
     OBJECT_TYPE_AREA_WIND = 2,
 };

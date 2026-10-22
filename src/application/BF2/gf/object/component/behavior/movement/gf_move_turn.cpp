@@ -1,8 +1,26 @@
+#include "mm/mtl/IntrusiveList.h"
+#include "fw/Reflection.h"
 #include "classes/gf/GfMoveTurnControler.h"
+#include "fw/Allocator.h"
 #include "fw/UpdateInfo.h"
 #include "mm/Math.h"
 
 namespace gf {
+
+// 1.0.0's (name from its symbols); 3.0.1's linker dropped it as unused, leaving its file string in this file's
+// .rodata.
+void GfMoveTurnControler::createReflection(fw::Reflection* reflection, const char* name, unsigned int index) {
+#line 14
+    fw::ReflectionValueStruct* value = new (fw::Allocator::getDebAllocator(), 16, __FILE__, __LINE__)
+        fw::ReflectionValueStruct(name, sizeof(Param), __alignof__(Param));
+#line 15
+    value->addValue(new (fw::Allocator::getDebAllocator(), 16, __FILE__, __LINE__)
+                        fw::ReflectionValueF32("angularVelMin", 0, 0.0f, 10000.0f, 10.0f));
+#line 16
+    value->addValue(new (fw::Allocator::getDebAllocator(), 16, __FILE__, __LINE__)
+                        fw::ReflectionValueF32("angularVelMax", 4, 0.0f, 10000.0f, 10.0f));
+    reflection->setReflectionStruct(index, value);
+}
 
 void GfMoveTurnControler::update(const fw::UpdateInfo& info, Packet& packet) {
     const Param* param = packet.m_param.get<Param>();
