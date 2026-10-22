@@ -5,6 +5,8 @@
 namespace Bdat {
 // the loaded table of that name
 unsigned char* getFP(const char* name);
+// the table's name, stored in the table (ui::UITextManager::registTextFile hashes it)
+const char* getSheetName(unsigned char* fp);
 // its first and last row ids, and how many rows there are from the first
 int getIdTop(unsigned char* fp);
 int getIdEnd(unsigned char* fp);

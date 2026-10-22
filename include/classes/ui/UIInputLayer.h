@@ -33,20 +33,28 @@ public:
     UIInputLayer(unsigned int id, unsigned int handle, const InputSetup& setup);
     virtual ~UIInputLayer();  // slot 0
     virtual EventData* getInputEventExt() = 0;  // slot 2
-    virtual bool hasEventExt() const { return false; }  // slot 3
+    virtual bool hasEventExt() const;  // slot 3
     virtual void clear();  // slot 4
     virtual void clearExt();  // slot 5
     virtual UIInputPad* castUIInputPad();  // slot 6
     virtual UIInputWheel* castUIInputWheel();  // slot 7
     virtual UIInputPointer* castUIInputPointer();  // slot 8
     virtual bool updateImpl() = 0;  // slot 9
+    // raises an event for the first enabled action whose button is pressed (or repeats, for a repeating one):
+    // m_event 4 for UI pad button 1, 5 for 2, else 7 with the button, then m_actionEvent (8) with its m_action; true
+    // then, else what updateImpl says
+    bool update();
+    void setupSelection(int select, unsigned int max);  // select (0 past max) and a selection event (6)
+    void resetSelection();
     bool changeSelect(int select, unsigned char param);  // raises a selection event (6) when it changes
     bool isEnableSelect(int select);  // what m_checker says, true without one
+    void setActionEnable(unsigned short action, bool enable);  // of the action whose m_action is action
 
-    unsigned char pad_0C[0x4];
+    unsigned int m_handle;  // the constructor's handle (the name is not the original's)
     EventData m_event;  // the event update raised (6: the selection changed, m_select's new and old values)
-    unsigned char pad_28[0x18];
-    unsigned char pad_40[0x4];
+    // update's second event (8: an action's, m_select and the action's m_action); the name is not the original's
+    EventData m_actionEvent;
+    unsigned int m_id;  // the constructor's id, which isEnableSelect hands m_checker (the name is not the original's)
     unsigned int m_selectMax;  // setupSelection's count
     int m_select;              // the selected index, -1 for none (resetSelection)
     bool m_selectEnable;       // changeSelect changes nothing while it is clear; the name is not the original's
