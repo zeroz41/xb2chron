@@ -82,6 +82,19 @@ public:
         return front;
     }
     bool empty() const { return m_root.m_next == &m_root; }
+    // it unlinked; the element after it (the name is not known to be the original's)
+    iterator erase(iterator it) {
+#line 268 MM_MTL_INTRUSIVE_LIST_PATH
+        MM_ASSERT(!empty());
+#line 269 MM_MTL_INTRUSIVE_LIST_PATH
+        MM_ASSERT(it != end());
+        iterator next(static_cast<T*>(static_cast<IntrusiveListNodeBase*>(it.m_node)->m_next));
+        unlinkNode(it.m_node);
+        --m_size;
+#line 170 MM_MTL_INTRUSIVE_LIST_PATH
+        MM_ASSERT(m_size >= 0);
+        return next;
+    }
 
     iterator begin() const { return iterator(static_cast<T*>(m_root.m_next)); }
     iterator end() const { return iterator(static_cast<T*>(const_cast<IntrusiveListNodeBase*>(&m_root))); }

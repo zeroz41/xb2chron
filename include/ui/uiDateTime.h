@@ -12,7 +12,8 @@ struct uiDateTime {
     unsigned long long hour : 7;
     unsigned long long minute : 7;
     unsigned long long sec : 6;
-    unsigned long long msec : 13;  // setTime clamps it to 99
+    unsigned long long msec : 10;  // UIObjectTimePlugin::setMSec clamps it to 99 and keeps the 3 bits above it
+    unsigned long long pad_61 : 3;
 };
 
 }  // namespace ui

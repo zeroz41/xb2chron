@@ -12,6 +12,7 @@ class LayerAccObjBase {
 public:
     LayerAccObjBase(LayerBase* layer);
     void setSpace(LAYER_SPACE_TYPE space);
+    const void* getResData() const;  // the resource it was made from (a polygon object's texture)
 
     LayerBase* m_layer;  // the constructor's
 };

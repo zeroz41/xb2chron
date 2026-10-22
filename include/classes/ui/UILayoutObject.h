@@ -17,7 +17,8 @@ public:
     virtual void apply();  // slot 6
     virtual void getDisplayOffset(unsigned short, mm::Pnt<short>&) const;  // slot 7
     virtual unsigned int duplicateImpl(unsigned int);  // slot 9
-    bool addChild(unsigned int handle, UIObject* child);  // its list's regist result; on success sets the parent
+    // the child's handle in its list (0 when it does not take it); on success sets the child's parent
+    unsigned int addChild(unsigned int handle, UIObject* child);
     static mm::mtl::RTTI m_rtti;
 };
 }  // namespace ui

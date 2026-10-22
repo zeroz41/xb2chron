@@ -1,6 +1,7 @@
 #ifndef MM_MTL_ARRAY_H
 #define MM_MTL_ARRAY_H
 
+#include <new>
 #include <stddef.h>
 
 #include "classes/mm/mtl/IAllocator.h"
@@ -21,6 +22,26 @@ namespace mm { namespace mtl {
 template <typename T>
 class Array {
 public:
+    Array() : m_element(nullptr), m_size(0), m_allocator(nullptr) {}
+    ~Array() { clear(); }
+    // gives the elements back to the allocator (the name is not the original's)
+    void clear() {
+        if (m_element != nullptr) {
+            m_allocator->deallocate(m_element);
+            m_size = 0;
+            m_allocator = nullptr;
+            m_element = nullptr;
+        }
+    }
+    // the allocator reserve takes the elements from; an array holding another one's elements gives them back
+    // first (the name is not the original's)
+    void setAllocator(IAllocator* allocator) {
+        if (m_allocator != allocator) {
+            clear();
+            m_allocator = allocator;
+        }
+    }
+    void reserve(size_t size);
     T& operator[](size_t index) {
 #line 90 MM_MTL_ARRAY_PATH
         MM_ASSERT(m_element);
@@ -37,6 +58,28 @@ public:
     size_t m_size;
     IAllocator* m_allocator;
 };
+
+template <typename T>
+void Array<T>::reserve(size_t size) {
+#line 161 MM_MTL_ARRAY_PATH
+    MM_ASSERT(size != 0);
+#line 162 MM_MTL_ARRAY_PATH
+    MM_ASSERT(m_element == 0);
+#line 163 MM_MTL_ARRAY_PATH
+    MM_ASSERT(m_allocator != 0);
+    m_element = static_cast<T*>(m_allocator->allocate(size * sizeof(T), 8));
+#line 167 MM_MTL_ARRAY_PATH
+    MM_ASSERT(m_element != 0);
+    m_size = size;
+    // a trivially constructed element is left as it is (UIShape::setupBuffer sets its vertices itself)
+    if (!__has_trivial_constructor(T)) {
+        for (size_t i = 0; i < m_size; i++) {
+            if (T* element = &m_element[i]) {
+                new (element) T();
+            }
+        }
+    }
+}
 
 }}  // namespace mm::mtl
 

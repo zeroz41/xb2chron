@@ -2,6 +2,7 @@
 #define CLASSES_UI_UIOBJECTACC_H
 
 namespace ui { class UIObject; }
+namespace ui { class UIShape; }
 namespace mm { class Mat44; }
 namespace mm { class Vec2; }
 namespace mm { template <typename> class Pnt; }
@@ -29,6 +30,22 @@ public:
     void getPos(mm::Pnt<short>& pos) const;
     void setDisp(bool disp);
     bool isDisp() const;
+    void setSuspend(bool suspend);
+    const char* getTextPtr() const;  // its text object's text, null when it is not a text
+    bool isImage() const;
+    bool isLayout() const;
+    unsigned int getImageMax() const;  // its image object's number of images, 0 when it is not an image
+    unsigned int getExtType();  // its image object's, 0 when it is not an image
+    void setExtParam(float param);
+    bool hasAnimation();
+    void startAnimationFromIndex(unsigned int index, bool loop);
+    float getAnimationPlaybackLength();
+    void setAnimationPlaybackTime(float time);
+    bool isPlayingAnimation();
+    bool isPlaybackControl() const;
+    void applyText(const char* text);
+    bool isShapeSimpleFace();
+    UIShape* getShape();  // its polygon object's shape
     bool isDebugDraw() const;
     void getPosCenter(mm::Pnt<short>& pos) const;
     void getSize(bool scaled, short& width, short& height) const;

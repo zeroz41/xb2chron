@@ -26,7 +26,7 @@ void UIShapeRing::buildVertex() {
     float angle = 1.57079637f;
     layer::LayerPolyVertex vertex;
     vertex.u = 0.0f;
-    vertex.color = 0xFFFFFFFF;
+    vertex.r = vertex.g = vertex.b = vertex.a = 0xFF;
     vertex.v = 0.0f;
     for (unsigned int i = 0; i < m_division; i++) {
         float c = cosf(angle);

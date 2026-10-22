@@ -81,7 +81,7 @@ void UIObjectColorPlugin::execute(UIObjectAcc& acc) {
 }
 
 bool UIObjectColorPlugin::isNeedUpdate(UIObjectAcc& acc) {
-    return (m_updateFlags & 1) || acc.isDisp() != m_disp || m_fadeCtrl != nullptr || m_followObjHandle != 0;
+    return (m_updateFlags & 1) || acc.isDisp() != m_disp || m_fadeUpdater.m_ctrl != nullptr || m_followObjHandle != 0;
 }
 
 mm::mtl::RTTI UIObjectColorPlugin::m_rtti("UIObjectColorPlugin", &UIObjectDispPlugin::m_rtti, nullptr);

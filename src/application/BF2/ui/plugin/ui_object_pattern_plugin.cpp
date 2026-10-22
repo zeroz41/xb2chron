@@ -50,7 +50,7 @@ bool UIObjectPatternPlugin::isNeedUpdate(UIObjectAcc& acc) {
     if (acc.isDisp() != m_disp) {
         return true;
     }
-    if (m_fadeCtrl != nullptr) {
+    if (m_fadeUpdater.m_ctrl != nullptr) {
         return true;
     }
     return m_followObjHandle != 0;

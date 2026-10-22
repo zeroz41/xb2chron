@@ -17,7 +17,8 @@ public:
     virtual void execute(ui::UIObjectAcc&);  // slot 4
     virtual bool isNeedUpdate(ui::UIObjectAcc&);  // slot 5
     static mm::mtl::RTTI m_rtti;
-    unsigned char pad_0C[0xC];
+    unsigned char pad_0C[0x4];
+    UIObjectPlugin* m_next;  // the plugin its object had before UIObject::attachPlugin gave it this one
     // bit 0 asks for an update: the constructor sets it, the setters set it when they change something, and
     // isNeedUpdate answers true while it is set
     unsigned int m_updateFlags;

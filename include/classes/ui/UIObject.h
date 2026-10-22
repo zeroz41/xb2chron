@@ -33,7 +33,10 @@ public:
     layer::LayerBase* m_layer;  // the constructor's; its display information comes from it
     layer::LayerAccObjBase m_layerAcc;  // the constructor's, on m_layer
     unsigned short m_type;      // the constructor's (3: placed from a layout's position, without a layer object)
-    unsigned char pad_DA[0x2E];  // the constructor's fields up to 0x108
+    unsigned char pad_DA[0x6];
+    UIObjectPlugin* m_plugins;  // the last plugin attachPlugin gave it, each linking the one before (m_next)
+    unsigned int m_handle;  // its handle (UIPolygonObject::apply hands it to its shape's update)
+    unsigned char pad_EC[0x1C];  // the constructor's fields up to 0x108
 };
 }  // namespace ui
 
