@@ -138,10 +138,14 @@ void Vector<T>::resize(size_t size, const T& value) {
         m_buffer = ptr;
         m_capacity = size;
         m_size = size;
-        for (size_t i = 0; i < size; ++i) {
-            if (T* element = &begin()[i]) {
-                new (element) T(value);
-            }
+        if (size != 0) {
+            size_t i = 0;
+            do {
+                if (T* element = &begin()[i]) {
+                    new (element) T(value);
+                }
+                ++i;
+            } while (i != size);
         }
         return;
     }
@@ -164,7 +168,8 @@ void Vector<T>::resize(size_t size, const T& value) {
 template <typename T>
 void Vector<T>::push_back(const T& value) {
     if (m_size == m_capacity) {
-        expand(m_capacity == 0 ? 16 : m_capacity * 2, m_alignment);
+        size_t capacity = m_capacity * 2;
+        expand(m_capacity != 0 ? capacity : 16, m_alignment);
     }
 #line 385 MM_MTL_VECTOR_PATH
     MM_ASSERT(m_buffer);
