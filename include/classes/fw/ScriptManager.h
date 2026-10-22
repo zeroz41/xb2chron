@@ -21,8 +21,8 @@ class ScriptManager : public ::fw::ManagerObject,
                       public ::ml::IWorkEvent {
 public:
     virtual ~ScriptManager();  // slot 0
-    virtual void initialize();  // slot 2
-    virtual void finalize();  // slot 3
+    virtual bool initialize();  // slot 2
+    virtual bool finalize();  // slot 3
     virtual void update(fw::UpdateInfo const&);  // slot 8
     void createScript(int id, mm::mtl::IAllocator* allocator, unsigned long size);
     void destroyScript(int id, bool);

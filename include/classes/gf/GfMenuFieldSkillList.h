@@ -18,6 +18,10 @@ public:
 class GfMenuFieldSkillList : public ::ui::UIListInfo< ::gf::MenuFieldSkill> {
 public:
     virtual ~GfMenuFieldSkillList();  // slot 0
+    static GfMenuFieldSkillList* create();
+    // adds a skill, or its level to the same skill's (at most 99)
+    void addFieldSkill(const MenuFieldSkill& skill);
+    void addFieldSkillFromBlade(unsigned int blade);  // a valid blade's three field skills
 };
 }  // namespace gf
 

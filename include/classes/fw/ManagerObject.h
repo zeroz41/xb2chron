@@ -6,13 +6,17 @@ namespace fw {
 class ManagerObject {
 public:
     virtual ~ManagerObject();  // slot 0
-    virtual void initialize();  // slot 2
-    virtual void finalize();  // slot 3
+    virtual bool initialize();  // slot 2
+    virtual bool finalize();  // slot 3
     virtual void enterFinalizeApplet();  // slot 4
     virtual void getName() const;  // slot 5
     virtual bool isInitialized() const;  // slot 6
-    virtual void isFinalized() const;  // slot 7
-    unsigned char pad_8[0x8];  // fields: size from its derived classes
+    virtual bool isFinalized() const;  // slot 7
+    ManagerObject();  // registers it with ManagerRegister
+    // bit 0: initialize succeeded, bit 1: finalize succeeded (ManagerRegister's initialize and finalize set them);
+    // the name is not the original's
+    unsigned int m_flags;
+    unsigned char pad_c[0x4];
 };
 }  // namespace fw
 

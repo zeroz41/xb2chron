@@ -63,10 +63,23 @@ public:
         }
         return it;
     }
+    // destroys the elements from the last (GfMenuStrLinker's destructor, for ui::UIStr); for elements with nothing
+    // to destroy it compiles to storing 0 when the vector is not empty
     void clear() {
-        if (!empty()) {
-            m_size = 0;
+        while (!empty()) {
+            --m_size;
+            at(m_size)->~T();
         }
+    }
+    T& operator[](unsigned long index) {
+#line 170 "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/fixed_vector.h"
+        MM_ASSERT(index < size());
+        return *at(index);
+    }
+    // an element's address from the room's bytes (GfMenuStrLinker's destructors and fw::ManagerRegister::finalize
+    // add the room's offset to the element's last); the name is not the original's
+    T* at(unsigned long index) {
+        return reinterpret_cast<T*>(m_buffer + index * sizeof(T));
     }
 
     alignas(T) unsigned char m_buffer[sizeof(T) * N];

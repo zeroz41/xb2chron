@@ -15,8 +15,8 @@ public:
 class UpdatableObjectManager : public ::fw::ManagerObject, public TUnk_B42570 {
 public:
     virtual ~UpdatableObjectManager();  // slot 0
-    virtual void initialize();  // slot 2
-    virtual void finalize();  // slot 3
+    virtual bool initialize();  // slot 2
+    virtual bool finalize();  // slot 3
     virtual void getName() const;  // slot 5
     virtual void update(fw::UpdateInfo const&, unsigned int);  // slot 8
     virtual void tail(fw::UpdateInfo const&);  // slot 9

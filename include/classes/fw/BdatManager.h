@@ -15,8 +15,8 @@ public:
 class BdatManager : public ::fw::ManagerObject, public TUnk_B40F98 {
 public:
     virtual ~BdatManager();  // slot 0
-    virtual void initialize();  // slot 2
-    virtual void finalize();  // slot 3
+    virtual bool initialize();  // slot 2
+    virtual bool finalize();  // slot 3
     virtual void getName() const;  // slot 5
     virtual void update(fw::UpdateInfo const&);  // slot 8
 };

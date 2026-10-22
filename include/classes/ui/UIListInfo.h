@@ -15,6 +15,7 @@ public:
     virtual ~UIListInfo();  // slot 0
     virtual void clear();  // slot 2
     virtual void setup(mm::mtl::IAllocator* allocator, const ui::UIListInfoBase::SetupParam& param);  // slot 4
+    void addContents(const T0& contents);
     // the content at an index, m_dummy past the end; the name is not the original's (1.0.0 has addContents)
     T0& getContents(unsigned int index) {
         T0* contents = &m_dummy;
@@ -57,6 +58,13 @@ void UIListInfo<T0>::setup(mm::mtl::IAllocator* allocator, const ui::UIListInfoB
     }
     m_list.setAllocator(allocator);
     m_list.reserve(count, 8);  // setup's allocation asks for 8
+}
+
+template <typename T0>
+void UIListInfo<T0>::addContents(const T0& contents) {
+    m_list.push_back(contents);
+    addSize(1);
+    m_changed = true;
 }
 }  // namespace ui
 

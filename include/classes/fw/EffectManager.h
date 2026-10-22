@@ -30,7 +30,7 @@ public:
 class EffectManager : public ::mm::mtl::PtrSingleton< ::fw::EffectManager>, public ::fw::ManagerObject, public TUnk_B41508, public ::ml::IScnRender {
 public:
     virtual ~EffectManager();  // slot 0
-    virtual void initialize();  // slot 2
+    virtual bool initialize();  // slot 2
     virtual void vf3();  // slot 3
     virtual void update(fw::UpdateInfo const&);  // slot 4
     virtual void updateLayer(fw::UpdateInfo const&, unsigned int);  // slot 5
@@ -44,7 +44,7 @@ public:
     virtual void lastRender(ml::IDrDrawWorkInfo const*);  // slot 13
     virtual void blurRender(ml::IDrDrawWorkInfo const*);  // slot 14
     virtual void finalRender(ml::IDrDrawWorkInfo const*);  // slot 15
-    virtual void finalize();  // overrides a secondary base's
+    virtual bool finalize();  // overrides a secondary base's (ManagerObject's)
     void addData(EffectData* data);
     void removeData(EffectData* data);
     // a volume fade effect's parameters, none past the 32 (inline: the name is not the original's)

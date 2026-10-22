@@ -116,6 +116,7 @@ public:
     virtual void qevChangeCurrentQuest(gf::QuestChangeParam const&);  // slot 21
     virtual void beginUpdate(fw::UpdateInfo const&);  // slot 22
     static bool isBattleState(unsigned int);
+    static bool isOpenFullScreen();
 };
 }  // namespace gf
 

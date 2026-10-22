@@ -9,10 +9,12 @@ public:
     UIStr();
     UIStr(unsigned char* bdat, unsigned int id);  // the text a message table has at that id
     UIStr(const char* text, bool);  // a text as it is (GfMenuGameAdapter passes false)
+    UIStr(const UIStr& other);  // out of line: GfMenuStrLinker::addSelectString calls it
     ~UIStr();
     bool isValid() const;
     bool compare(const UIStr& other);  // true when they are the same text
     void copy(const UIStr& other);
+    void release();  // frees the text (GfMenuStrLinker::delString)
     const char* c_str() const;
     unsigned char pad_00[0x12];
     // what the text belongs to: GfMenuEnhanceAdapter::getEnhanceCaption stores the enhancement's id, copy copies it;

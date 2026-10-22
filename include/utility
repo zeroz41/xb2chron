@@ -1,0 +1,19 @@
+#ifndef UTILITY_H
+#define UTILITY_H
+
+// The C++ library's std::pair, as the SDK's libc++ names it (std::__1, as fw::LangUtil::getLangList's mangled name
+// spells it).
+namespace std { inline namespace __1 {
+
+template <class T1, class T2>
+struct pair {
+    pair() : first(), second() {}
+    pair(const T1& a, const T2& b) : first(a), second(b) {}
+
+    T1 first;
+    T2 second;
+};
+
+}}  // namespace std::__1
+
+#endif

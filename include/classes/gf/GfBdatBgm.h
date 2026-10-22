@@ -17,6 +17,7 @@ class GfBdatBgm : public ::mm::mtl::PtrSingleton< ::gf::GfBdatBgm>, public TUnk_
 public:
     virtual ~GfBdatBgm();  // slot 0
     virtual void bdatRefresh();  // slot 2
+    const char* getBgmListfilename(unsigned int id) const;  // a BGM list row's file name
 };
 }  // namespace gf
 

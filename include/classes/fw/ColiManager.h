@@ -16,8 +16,8 @@ class ColiManager : public ::fw::ManagerObject, public TUnk_B410C0 {
 public:
     class Impl;
     virtual ~ColiManager();  // slot 0
-    virtual void initialize();  // slot 2
-    virtual void finalize();  // slot 3
+    virtual bool initialize();  // slot 2
+    virtual bool finalize();  // slot 3
     void registObject(ColiObject* object);
 };
 }  // namespace fw

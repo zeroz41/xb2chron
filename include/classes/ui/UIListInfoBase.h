@@ -8,7 +8,12 @@ namespace ui {
 // reference_object.h's `m_RefCount > 0` assertion on the count at 0x8
 class UIListInfoBase : public ::mm::mtl::ReferenceObject {
 public:
-    class SetupParam;
+    // what setup copies into the list (0x14 bytes: setup copies 0x0-0xF as two words and the byte at 0x10)
+    class SetupParam {
+    public:
+        unsigned int m_index;  // setup passes it to setIndex
+        unsigned char pad_04[0xD];
+    };
     UIListInfoBase();
     virtual ~UIListInfoBase();  // slot 0
     virtual void clear();  // slot 2
@@ -16,6 +21,7 @@ public:
     void setup(const SetupParam& param);
     bool isValid() const;
     int getSize() const;  // the contents' count
+    void addSize(unsigned int count);  // UIListInfo::addContents adds 1
     unsigned int getIndex(bool page) const;  // the selected content's (on the page, when asked)
     unsigned int getPageIndex(unsigned int index) const;  // the content at that place on the page shown
     unsigned int getRowSize() const;

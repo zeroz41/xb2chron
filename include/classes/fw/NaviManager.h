@@ -13,8 +13,8 @@ public:
 class NaviManager : public ::fw::ManagerObject, public TUnk_B42460 {
 public:
     virtual ~NaviManager();  // slot 0
-    virtual void initialize();  // slot 2
-    virtual void finalize();  // slot 3
+    virtual bool initialize();  // slot 2
+    virtual bool finalize();  // slot 3
 };
 }  // namespace fw
 

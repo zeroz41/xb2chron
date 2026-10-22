@@ -16,8 +16,8 @@ public:
 class PadManager : public ::fw::ManagerObject, public TUnk_B426E0, public ::ml::DevGraphCB {
 public:
     virtual ~PadManager();  // slot 0
-    virtual void initialize();  // slot 2
-    virtual void finalize();  // slot 3
+    virtual bool initialize();  // slot 2
+    virtual bool finalize();  // slot 3
     virtual void getName() const;  // slot 5
     virtual bool isInitialized() const;  // slot 6
     virtual void debugDraw(int, int);  // slot 8

@@ -69,6 +69,9 @@ public:
     }
     void extend(size_t size, size_t alignment, const T& value);
     void resize(size_t size, const T& value);
+    // the same, default-constructing the new elements (wnd::GlobalWindManager::setup's Vector<ConpoundWind>)
+    void extend(size_t size, size_t alignment);
+    void resize(size_t size);
     void push_back(const T& value);
     void pop_back() {
         if (m_size != 0) {
@@ -140,6 +143,66 @@ void Vector<T>::extend(size_t size, size_t alignment, const T& value) {
     m_buffer = ptr;
     m_capacity = size;
     m_size = size;
+}
+
+template <typename T>
+void Vector<T>::extend(size_t size, size_t alignment) {
+    size_t oldSize = m_size;
+    T* ptr = static_cast<T*>(m_allocator->allocate(size * sizeof(T), alignment));
+    T* source = begin();
+    for (size_t i = 0; i < oldSize; ++i) {
+        new (&ptr[i]) T(source[i]);
+    }
+    if (oldSize < size) {
+        T* element = ptr + oldSize;
+        for (size_t i = 0; i < size - oldSize; ++i) {
+            new (&element[i]) T();
+        }
+    }
+    clear();
+    if (m_buffer != nullptr) {
+#line 154 MM_MTL_VECTOR_PATH
+        MM_ASSERT(m_allocator);
+        m_allocator->deallocate(m_buffer);
+        m_buffer = nullptr;
+    }
+    m_buffer = ptr;
+    m_capacity = size;
+    m_size = size;
+}
+
+template <typename T>
+void Vector<T>::resize(size_t size) {
+    if (m_size == size) {
+        return;
+    }
+    m_alignment = __alignof__(T);
+    if (m_buffer == nullptr) {
+        m_buffer = static_cast<T*>(m_allocator->allocate(size * sizeof(T), m_alignment));
+        m_capacity = size;
+        T* element = begin();
+        for (size_t count = size; count != 0; --count, ++element) {
+            new (element) T();
+        }
+        m_size += size;
+        return;
+    }
+    if (static_cast<long>(size - m_capacity) > 0) {
+        extend(size, m_alignment);
+        return;
+    }
+    long count = static_cast<long>(size - m_size);
+    if (count < 0) {
+        for (count = -count; count > 0; --count) {
+            pop_back();
+        }
+    } else if (count != 0) {
+        T* element = m_buffer + m_size;
+        for (size_t i = 0; i < static_cast<size_t>(count); ++i) {
+            new (&element[i]) T();
+        }
+        m_size += count;
+    }
 }
 
 template <typename T>
