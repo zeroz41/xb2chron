@@ -13,7 +13,7 @@ public:
     class BdatInfo;
     virtual ~GmkSalvageLocator();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
-    virtual void isValid() const;  // slot 3
+    virtual bool isValid() const;  // slot 3
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
     virtual void debugDraw() const;  // slot 7

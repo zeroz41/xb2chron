@@ -10,7 +10,7 @@ public:
     class BdatInfo;
     virtual ~GmkEffectLocator();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
-    virtual void isValid() const;  // slot 3
+    virtual bool isValid() const;  // slot 3
 };
 }  // namespace gmk
 

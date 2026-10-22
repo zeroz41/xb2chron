@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKENEMY_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/GmkEnemyInsts.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
@@ -14,12 +15,16 @@ public:
     class PopXformFinder;
     virtual ~GmkEnemy();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
-    virtual void isValid() const;  // slot 3
+    virtual bool isValid() const;  // slot 3
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
     virtual void debugDraw() const;  // slot 7
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
+    // its kind (getGmkType's; GmkManager::traverseGmkInst walks the enemies by it; the name is not the original's)
+    static const gmk::GmkType TYPE = gmk::GmkType(0);
+
+    GmkEnemyInsts m_insts;  // (the name is not the original's)
 };
 }  // namespace gmk
 

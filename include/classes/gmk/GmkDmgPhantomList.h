@@ -12,7 +12,7 @@ namespace gmk {
 class GmkDmgPhantomList : public ::gmk::TGmkList< ::gmk::GmkDmgPhantom, ::gmk::GmkDmgPhantom::BdatInfo, 1213222212u, 2u, ::gmk::GmkDmgPhantomGob> {
 public:
     virtual ~GmkDmgPhantomList();  // slot 0
-    virtual void getInst(unsigned int) const;  // slot 6
+    virtual gmk::AGmkBase* getInst(unsigned int) const;  // slot 6
 };
 }  // namespace gmk
 

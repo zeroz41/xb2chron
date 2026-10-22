@@ -12,7 +12,7 @@ namespace gmk {
 class GmkSalvageLocatorList : public ::gmk::TGmkList< ::gmk::GmkSalvageLocator, ::gmk::GmkSalvageLocator::BdatInfo, 1129073747u, 1u, ::gmk::GmkSalvageLocatorGob> {
 public:
     virtual ~GmkSalvageLocatorList();  // slot 0
-    virtual void getInst(unsigned int) const;  // slot 6
+    virtual gmk::AGmkBase* getInst(unsigned int) const;  // slot 6
 };
 }  // namespace gmk
 

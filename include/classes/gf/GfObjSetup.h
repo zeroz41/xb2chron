@@ -14,7 +14,10 @@ public:
     virtual void getEnArrangeID() const;  // slot 5
     static mm::mtl::RTTI m_rtti;
 
-    unsigned char pad_8[0x38];
+    unsigned char pad_8[0x18];
+    // the object's initial position: setInitialTransform's (the name is not the original's)
+    mm::Vec3 m_initialPos;
+    unsigned char pad_30[0x10];
     // the object's scale: 1.0.0's setInitialScale(float) and setInitialScale(const mm::Vec3&) set it (the name is
     // not the original's)
     mm::Vec3 m_initialScale;

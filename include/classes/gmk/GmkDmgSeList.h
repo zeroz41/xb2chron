@@ -12,7 +12,7 @@ namespace gmk {
 class GmkDmgSeList : public ::gmk::TGmkList< ::gmk::GmkDmgSe, ::gmk::GmkDmgSe::BdatInfo, 1163087172u, 2u, ::gmk::GmkDmgSeGob> {
 public:
     virtual ~GmkDmgSeList();  // slot 0
-    virtual void getInst(unsigned int) const;  // slot 6
+    virtual gmk::AGmkBase* getInst(unsigned int) const;  // slot 6
 };
 }  // namespace gmk
 

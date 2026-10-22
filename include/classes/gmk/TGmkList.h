@@ -11,10 +11,10 @@ class TGmkList : public ::gmk::IGmkList {
 public:
     virtual ~TGmkList();  // slot 0
     virtual void getGmkType() const;  // slot 2
-    virtual void isValid() const;  // slot 3
+    virtual bool isValid() const;  // slot 3
     virtual void getCreateInfo() const;  // slot 4
-    virtual void getInstNum() const;  // slot 5
-    virtual void getInst(unsigned int) const;  // slot 6
+    virtual unsigned int getInstNum() const;  // slot 5
+    virtual gmk::AGmkBase* getInst(unsigned int) const;  // slot 6
     virtual void getBindedBdatFp() const;  // slot 7
     virtual void setUpdateGmkNumPerFrame(unsigned int);  // slot 8
     virtual void create(gmk::IGmkList::CreateInfo const&);  // slot 9

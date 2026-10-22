@@ -2,6 +2,7 @@
 #define CLASSES_GMK_AGMKBASE_H
 
 namespace gf { class GF_OBJ_HANDLE; }
+namespace mm { class Vec3; }
 #include "classes/gf/IGfObjListener.h"
 
 namespace gmk {
@@ -16,7 +17,7 @@ public:
     class CreateInfo;
     virtual ~AGmkBase();  // slot 0
     virtual gmk::GmkType getGmkType() const = 0;  // slot 2
-    virtual void isValid() const;  // slot 3
+    virtual bool isValid() const;  // slot 3
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
@@ -24,7 +25,9 @@ public:
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*) {}  // slot 9
     virtual void debugUpdateMmf() {}  // slot 10
-    unsigned char* getBindedBdatFp() const;  // the BDAT table of the gimmick's kind
+    unsigned char* getBindedBdatFp() const;
+    // whether pos lies inside the gimmick's shape (GfGameInsideBattleLock::isInside asks a battle lock's with 0)
+    bool isInsideShape(const mm::Vec3& pos, float margin) const;  // the BDAT table of the gimmick's kind
     unsigned char pad_8[0x30];
     // the gimmick's row in that table (GfFieldTbox reads its RSC_ID by it, and passes it as the quest gimmick id; the
     // name is not the original's)

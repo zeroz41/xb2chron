@@ -13,7 +13,7 @@ namespace gmk {
 class GmkEnemyList : public ::gmk::TGmkList< ::gmk::GmkEnemy, ::gmk::GmkEnemy::BdatInfo, 1296387653u, 5u, ::gmk::GmkEnemyGob> {
 public:
     virtual ~GmkEnemyList();  // slot 0
-    virtual void getInst(unsigned int) const;  // slot 6
+    virtual gmk::AGmkBase* getInst(unsigned int) const;  // slot 6
     virtual void setUpdateGmkNumPerFrame(unsigned int);  // slot 8
     virtual void create(gmk::IGmkList::CreateInfo const&);  // slot 9
     virtual void dispose();  // slot 10

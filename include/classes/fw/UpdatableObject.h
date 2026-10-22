@@ -34,7 +34,11 @@ public:
     }
 
     static mm::mtl::RTTI m_rtti;
-    unsigned char pad_8[0x30];
+    unsigned char pad_8[0x20];
+    // its kind, the constructor's first argument (GfObj::getTypeName names a GfObj's; 5 an enemy's, by
+    // GfGameInsideBattleLock::isInsideBattleLock; the name is not the original's)
+    unsigned int m_type;
+    unsigned char pad_2c[0xc];
     fw::ComponentObject* m_components[16];  // by kind: registComponentLocal sets one, the constructor clears them
     unsigned char pad_b8[0x28];  // fields: size from its derived classes
 };

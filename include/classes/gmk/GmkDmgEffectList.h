@@ -12,7 +12,7 @@ namespace gmk {
 class GmkDmgEffectList : public ::gmk::TGmkList< ::gmk::GmkDmgEffect, ::gmk::GmkDmgEffect::BdatInfo, 1178946884u, 1u, ::gmk::GmkDmgEffectGob> {
 public:
     virtual ~GmkDmgEffectList();  // slot 0
-    virtual void getInst(unsigned int) const;  // slot 6
+    virtual gmk::AGmkBase* getInst(unsigned int) const;  // slot 6
 };
 }  // namespace gmk
 

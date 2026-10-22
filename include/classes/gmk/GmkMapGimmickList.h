@@ -12,7 +12,7 @@ namespace gmk {
 class GmkMapGimmickList : public ::gmk::TGmkList< ::gmk::GmkMapGimmick, ::gmk::GmkMapGimmick::BdatInfo, 1196441933u, 2u, ::gmk::GmkMapGimmickGob> {
 public:
     virtual ~GmkMapGimmickList();  // slot 0
-    virtual void getInst(unsigned int) const;  // slot 6
+    virtual gmk::AGmkBase* getInst(unsigned int) const;  // slot 6
     virtual void setUpdateGmkNumPerFrame(unsigned int);  // slot 8
     virtual void dispose();  // slot 10
     virtual void update(float);  // slot 11
