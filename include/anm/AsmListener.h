@@ -24,6 +24,17 @@ struct AsmKeyframeAnnotation {
     AsmAnnotetion m_annotation;
 };
 
+// the keyframe annotations before a frame (std::lower_bound's comparator in CallBackDetector::executeStartFrame; the
+// name is not the original's)
+struct CompKeyframeAnnotation {
+    bool operator()(const AsmKeyframeAnnotation& annotation, float frame) const { return annotation.m_frame < frame; }
+};
+// the keyframe annotations up to a frame, the frame included (std::lower_bound's comparator in
+// CallBackDetector::executeFrame; the name is not the original's)
+struct CompKeyframeAnnotationUpTo {
+    bool operator()(const AsmKeyframeAnnotation& annotation, float frame) const { return annotation.m_frame <= frame; }
+};
+
 // tells a listener the annotations due (anm_asm_callback_detector.cpp)
 class CallBackDetector {
 public:

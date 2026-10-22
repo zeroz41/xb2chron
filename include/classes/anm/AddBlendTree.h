@@ -34,7 +34,7 @@ public:
     const ResAddTree* m_pTree;
     AsmClip* m_pClips;          // one per clip of the state, from the allocator
     unsigned int m_clipCount;
-    mm::mtl::Vector<Variable>* m_pVariables;  // the state machine's
+    const mm::mtl::Vector<Variable>* m_pVariables;  // the state machine's (adjustWeight reads them through the const index)
 };
 }  // namespace anm
 

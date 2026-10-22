@@ -16,6 +16,12 @@ public:
     // advances the local time by dt at the speed, wrapped (or clamped) to the animation's length
     void update(float dt);
     float calcLocalTimeInternal(float time);
+    // the local time set to time, wrapped (or clamped) like update's, and flagged (inline: AsmClip::setLocalTime and
+    // AsmClip::update; the name is not the original's)
+    void setLocalTime(float time) {
+        m_localTime = calcLocalTimeInternal(time);
+        m_flags |= 1;
+    }
     // the binding's animation sampled at the local time: one transform per entry of its index table
     void sampleTrucks(unsigned int count, QsTransform* pOut) const;
     // the extra-track slot's values at the local time: false when it has none, or not count of them
@@ -29,7 +35,7 @@ public:
     float m_weight;     // the constructor's 1
     float m_speed;      // update scales its time step by it; the constructor's 1
     float m_length;     // the animation's: its frame interval times its frame count less one
-    unsigned int pad_58;
+    unsigned int m_flags;  // bit 0: the local time was set (setLocalTime); the constructor's 0. The name is not the original's
     void* pad_60;
 };
 }  // namespace anm

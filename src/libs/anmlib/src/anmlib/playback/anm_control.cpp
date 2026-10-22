@@ -12,7 +12,7 @@ namespace anm {
 
 Control::Control(const Binding* pBinding, mm::mtl::IAllocator* pAllocator)
     : ReferenceObject(pAllocator), m_pBinding(pBinding), m_trackWeights(pAllocator), m_localTime(0.0f),
-      m_weight(1.0f), m_speed(1.0f), pad_58(0), pad_60(nullptr) {
+      m_weight(1.0f), m_speed(1.0f), m_flags(0), pad_60(nullptr) {
 #line 32
     MM_ASSERT(pBinding);
     pBinding->addRef();
