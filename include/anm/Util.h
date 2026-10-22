@@ -13,6 +13,14 @@ enum PlayMode {
     PLAY_MODE_ONCE = 1,
 };
 
+// x within lo..hi, the bounds taken by reference like mm::clamp but without its assertion: an animation's frame
+// clamped to its length compiles to the original's selects only through this shape (UncompressExtraTruck::sampleTrucks).
+// The name is not the original's
+template <typename T>
+inline T clamp(const T& x, const T& lo, const T& hi) {
+    return x < lo ? lo : (x > hi ? hi : x);
+}
+
 // a random number in [0, 1) (anm_state_machine.cpp; AsmState::initLoopCount draws a loop count with it)
 float rand();
 
