@@ -85,8 +85,11 @@ and 1,360 data objects their statics, members and tables (`scope:weak`);
 module names itself. The other 5,406 functions are code an update added, or changed past what the evidence settles.
 
 Every other address the code forms, loads or stores through, and every address a relocated pointer holds, starts
-a data object too, named `lbl_<address>` until evidence names it: 17,993 of them, sized by what they are (a
-string to its NUL, a scalar the code only reads at one width to that width, else up to the next object). To redo
+a data object too, named `lbl_<address>` until evidence names it (19,140 still are), sized by what they are (a
+string to its NUL, a scalar the code only reads at one width to that width, else up to the next object). Strings
+no code or data refers to after a string are objects of their own (1,221 of them): literals of code the linker
+dropped (`--gc-sections`), which it kept. `.bss` ends where the module's MOD0 header says (`0x15ED4E0`), not at the
+NSO's page-rounded size. To redo
 the transfer, with 1.0.0's `main` at `orig/XC2_100/main`, build
 1.0.0's signatures and analyze 3.0.1 with `config/XC2_301/symbols.txt` moved aside, so the analysis starts from
 the module's own tables and inherits no name:
@@ -188,7 +191,11 @@ unnamed literals a unit owns and code uses, 20 are used by an earlier unit (a co
 another reads, its name not carried from 1.0.0). Weak data (an inline's static, a template's member or table) is
 in every unit using it and the linker keeps the first unit's copy, so it is the first using unit's wherever that
 fits the link order of the other claims. The rest is data several units use, which the unit defining it has to
-claim, and data no code refers to between two units' ranges.
+claim, and data no code refers to between two units' ranges. A file whose code the linker dropped keeps its
+literals in link order, among them its own path (`__FILE__`) that no code refers to any more: that path is its
+file's, which gives 11 files their `.rodata` (`ai_behavior_decorator.cpp`'s strings had sat in
+`ai_behavior_root_node.cpp`'s range). Their units link once their source writes the dropped functions back, as
+1.0.0 has them.
 
 ## Classes
 
