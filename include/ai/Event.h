@@ -16,6 +16,7 @@ public:
 // TaskFieldFollowMainPc::onCreate name them): type 1 a change of the node's active state, type 2 its creation
 class ActivateEvent : public Event {};
 class CreateEvent : public Event {};
+class DestroyEvent : public Event {};
 
 }  // namespace ai
 
