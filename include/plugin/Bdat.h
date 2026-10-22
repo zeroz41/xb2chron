@@ -21,6 +21,8 @@ char* getVal(unsigned char* fp, const char* column, int id);
 char* getValCheck(unsigned char* fp, const char* column, int id, int type);
 // a row's text in a message table
 const char* getMSText(unsigned char* fp, int id);
+// a row's style in a message table (its 16 bits: the code masks them into the int it returns)
+int getMSStyle(unsigned char* fp, int id);
 // a row's value of a member getMember found, read as the given value type (2: 16 bits, 1: 8 bits, 7: a string), in
 // 64 bits (a string column's text address); 0 when the member is null
 unsigned long getValCheck(unsigned char* fp, unsigned char* member, int id, int type);

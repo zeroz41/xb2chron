@@ -11,8 +11,8 @@ namespace gf {
 class GfMenuTagHomuriName : public ::ui::UITagConv {
 public:
     virtual ~GfMenuTagHomuriName();  // slot 0
-    virtual void getTagName();  // slot 2
-    virtual void convBegin(mm::mtl::FixedVector<mm::mtl::MapPair<char const*, char const*>, 8ul> const&, unsigned short);  // slot 3
+    virtual const char* getTagName();  // slot 2
+    virtual const char* convBegin(mm::mtl::FixedVector<mm::mtl::MapPair<char const*, char const*>, 8ul> const&, unsigned short);  // slot 3
 };
 }  // namespace gf
 

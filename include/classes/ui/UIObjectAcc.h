@@ -55,6 +55,7 @@ public:
     UIShape* getShape();  // its polygon object's shape
     bool isDebugDraw() const;
     void getPosCenter(mm::Pnt<short>& pos) const;
+    void getDisplayOffs(mm::Pnt<short>& offs) const;  // its object's display offset (0, 0 without one)
     void getSize(bool scaled, short& width, short& height) const;
     void setPos(const mm::Pnt<short>& pos);
     void setPosCenter(const mm::Pnt<short>& pos);
@@ -82,6 +83,7 @@ public:
     void setMulColor(const char* name);
     void setAddColor(const char* name);
     void setDispPriority(unsigned short priority);
+    void setLayoutViewport(mm::Rect<short> rect);
     UIObject* m_object;      // UIUtil::getObject(m_handle): isTerm reads its flags, setTerm calls its setTerm
     unsigned int m_handle;   // what the constructor is given (or its named child's)
 };

@@ -11,7 +11,7 @@ public:
     virtual void parseNotTag(unsigned char const*, unsigned int&);  // slot 4
     virtual void parseNotTag(wchar_t const*, unsigned int&);  // slot 5
     virtual void vf6();  // slot 6
-    virtual void callTagEnd(char const*);  // slot 7
+    virtual bool callTagEnd(char const*);  // slot 7 (LayerTag's returns bool)
 };
 }  // namespace layer
 

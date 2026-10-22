@@ -9,9 +9,11 @@ namespace ui {
 class UITagConv {
 public:
     virtual ~UITagConv() {}  // slot 0
-    virtual void getTagName() = 0;  // slot 2
-    virtual void convBegin(mm::mtl::FixedVector<mm::mtl::MapPair<char const*, char const*>, 8ul> const&, unsigned short) = 0;  // slot 3
-    virtual void convEnd();  // slot 4
+    // the tag's name (UITagParser::callTagStart and callTagEnd compare it with the tag's)
+    virtual const char* getTagName() = 0;  // slot 2
+    // the text the tag starts (null: none), from its parameters and the text's owner id
+    virtual const char* convBegin(mm::mtl::FixedVector<mm::mtl::MapPair<char const*, char const*>, 8ul> const&, unsigned short) = 0;  // slot 3
+    virtual const char* convEnd();  // slot 4: the text the tag ends with (null: none)
 };
 }  // namespace ui
 
