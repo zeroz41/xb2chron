@@ -8,10 +8,6 @@
 
 namespace fw {
 
-DynamicWindResource::DynamicWindResource() {}
-
-DynamicWindResource::~DynamicWindResource() {}
-
 WindProbe* WindFactory::createProbe(unsigned int capacity, float radius, mm::mtl::IntrusivePtr<ReferenceFrame> frame,
                                     bool isMain) {
 #line 28
@@ -21,7 +17,12 @@ WindProbe* WindFactory::createProbe(unsigned int capacity, float radius, mm::mtl
     return probe;
 }
 
-// createWindResource (0x71001AAB24) is not matched yet: this file's constructor gets inlined into it, where the
-// original calls it
+mm::mtl::IntrusivePtr<DynamicWindResource> WindFactory::createWindResource(const mm::Vec3& min, const mm::Vec3& max) {
+#line 60
+    DynamicWindResource* resource = new (FrameworkMemory::getAllocator(5), 16, __FILE__, __LINE__) DynamicWindResource();
+    resource->m_resWind.aabb.min = min;
+    resource->m_resWind.aabb.max = max;
+    return resource;
+}
 
 }  // namespace fw
