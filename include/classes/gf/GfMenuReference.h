@@ -4,6 +4,8 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class GfMenuReference; }
+namespace gf { class GfMenuEnemyList; }
+namespace gf { class GfMenuItemList; }
 
 namespace gf {
 // table 0x7100B5EF48
@@ -26,7 +28,12 @@ public:
     static int getReferenceNumberMin(unsigned int index);
     static int getReferenceNumberMax(unsigned int index);
     static const ElementComboRoot* getElementComboRootInfo(unsigned int route);  // a dummy past the 7th
-    static int getElementComboRootCurrent();  // the route the combo is on (GfMenuElementComboAdapter compares)
+    static int getElementComboRootCurrent();
+    // the lists the link-jump menu shows (null without the singleton): its enemies and its items; clearLinkList
+    // clears both (their slot 2)
+    static void clearLinkList();
+    static GfMenuEnemyList* getEnemyLinkList();
+    static GfMenuItemList* getItemLinkList();  // the route the combo is on (GfMenuElementComboAdapter compares)
 };
 }  // namespace gf
 

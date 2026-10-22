@@ -3,6 +3,7 @@
 
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GfMenuEnemyList; }
 
 namespace gf {
 // a base of gf::GfMenuCharDataAdapter no evidence names yet
@@ -57,6 +58,9 @@ public:
     virtual void changePartyDriver(unsigned char);  // slot 5
     virtual void changePartyBlade(unsigned char, unsigned char);  // slot 6
     // an adapter on the handle for the blade GfMenuReference holds at an index
+    // an adapter on the handle for an enemy list's entry at an index
+    static void createFromEnemyList(unsigned int handle, unsigned int kind, const GfMenuEnemyList* list, int index,
+                                    bool);
     static void createFromReferenceBlade(unsigned int handle, unsigned int, unsigned int index, bool);
 };
 }  // namespace gf

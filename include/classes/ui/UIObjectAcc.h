@@ -19,6 +19,8 @@ public:
     virtual ~UIObjectAcc();  // slot 0
     void setDispChild(bool disp, const char* child);
     unsigned int searchChild(const char* name);
+    // a copy of its child of that name, added to the same parent (the copy's handle)
+    unsigned int duplicateChild(const char* name);
     unsigned int getParentHandle();  // the handle of its child of that name
     // how many children match a name with a number (a format such as "LAY_x@%02d", numbered from `first`)
     int countChild(const char* format, unsigned int first);

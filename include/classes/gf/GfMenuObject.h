@@ -39,6 +39,8 @@ public:
                                         float);
     static void returnFSSubLayer(GfMenuObject* object);
     static void enableInput(unsigned int handle);
+    // UIInputManager's input on the handle moves its selection to that object (marked as one); false without it
+    static bool migrateInput(unsigned int handle, unsigned int object);
     // GfMenuCallManager's, for the call context running on a handle: end it, hand it a result
     static void termCallContext(unsigned int handle);
     static void addResultCallContext(unsigned int handle, unsigned int result, int);
