@@ -44,6 +44,18 @@ void GfGameFallDeadCamera::onActivate() {
     setLookAt(m_eye, m_target, 0.0f);
 }
 
-// GfGameFallDeadCamera::update (0x71002A5204) is not matched yet
+void GfGameFallDeadCamera::update(const fw::UpdateInfo&) {
+    // the look-at point is picked per branch (the original passes it from each): the player's position plus the
+    // offset taken on activation while there is a player, else the last one
+    const mm::Vec3* lookAt;
+    if (PlayerCameraTarget* target = PlayerCameraTarget::get()) {
+        mm::Vec3 position = target->m_position + m_offset;
+        m_target = position;
+        lookAt = &m_target;
+    } else {
+        lookAt = &m_target;
+    }
+    setLookAt(m_eye, *lookAt, 0.0f);
+}
 
 }  // namespace gf
