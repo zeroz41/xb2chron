@@ -1,3 +1,4 @@
+#include "classes/ui/UIManager.h"
 #include "classes/gf/GfMenuFade.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfMenuObjFade.h"
@@ -8,8 +9,12 @@ namespace gf {
 
 GfMenuFade::~GfMenuFade() {}
 
-// build (0x7100350098) is not matched yet: it calls fn_710068F188, which 1.0.0's callers call as
-// UIManager::createLayer, but 3.0.1 moved that body into fn_710068F208 behind it
+void GfMenuFade::build(const GfSetupParam& param) {
+#line 51
+    GfMenuFade* menu = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfMenuFade();
+    ui::UIManager::get()->createLayer(1);
+    menu->m_initialized = false;
+}
 
 void GfMenuFade::destroy() {
     GfMenuFade* menu = get();

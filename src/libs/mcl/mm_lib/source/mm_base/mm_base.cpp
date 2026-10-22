@@ -4,10 +4,9 @@
 
 namespace mm {
 
-// the output the library starts with
-static MMStd s_std;
+MMStd s_mm_std;
 
-MMStdBase* MMStdBase::s_pCurrentStd = &s_std;
+MMStdBase* MMStdBase::s_pCurrentStd = &s_mm_std;
 
 void MMStdBase::mmPrint(const char* format, ...) {
     char text[0x400];
@@ -38,7 +37,7 @@ void MMStd::customAssertMsg(const char* expression, const char* file, unsigned i
     mmPrint("Failed assertion at %s:%d\n  ", file, line);
     mmPrint(expression);
     mmPrint("\n");
-    mmPrint("%s", message);
+    mmPrint("%s\n", message);
     asm volatile(".inst 0xe7ffdefe");  // stops here: an undefined instruction
 }
 

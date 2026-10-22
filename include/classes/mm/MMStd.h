@@ -12,6 +12,9 @@ public:
     virtual void customAssertMsg(const char* expression, const char* file, unsigned int line,
                                  const char* message);  // slot 4
 };
+
+// the output the library starts with (MMStdBase::s_pCurrentStd's first value)
+extern MMStd s_mm_std;
 }  // namespace mm
 
 #endif
