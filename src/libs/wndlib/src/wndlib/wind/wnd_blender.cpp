@@ -3,6 +3,7 @@
 #include "classes/wnd/WindBlender.h"
 #include "mm/MMStdBase.h"
 #include "mm/Vec3.h"
+#include "wnd/ResConpoundWind.h"
 #include "wnd/UpdateInfo.h"
 
 namespace wnd {
@@ -62,5 +63,31 @@ void WindBlender::setNode(const WindNode* pNode) {
 }
 
 ConpoundWind::ConpoundWind() : m_pRes(nullptr), m_powers() {}
+
+void ConpoundWind::update(const UpdateInfo& info) {
+    for (unsigned int i = 0; i < 12; i++) {
+        calcWind(info.time, i, &m_winds[i]);
+    }
+}
+
+// each wind's time is 0.07 past the one before's; its five waves blow along -z, +z, +x, -x and -y
+void ConpoundWind::calcWind(float time, unsigned int index, mm::Vec3* pWind) {
+    time += index * 0.07f;
+    float power = m_pRes->waves[0].getPower(time);
+    m_powers[index][0] = power;
+    *pWind = mm::Vec3(0.0f, 0.0f, -1.0f) * power;
+    power = m_pRes->waves[1].getPower(time);
+    m_powers[index][1] = power;
+    *pWind += mm::Vec3(0.0f, 0.0f, 1.0f) * power;
+    power = m_pRes->waves[2].getPower(time);
+    m_powers[index][2] = power;
+    *pWind += mm::Vec3(1.0f, 0.0f, 0.0f) * power;
+    power = m_pRes->waves[3].getPower(time);
+    m_powers[index][3] = power;
+    *pWind += mm::Vec3(-1.0f, 0.0f, 0.0f) * power;
+    power = m_pRes->waves[4].getPower(time);
+    m_powers[index][4] = power;
+    *pWind += mm::Vec3(0.0f, -1.0f, 0.0f) * power;
+}
 
 }  // namespace wnd

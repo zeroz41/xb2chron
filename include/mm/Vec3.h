@@ -20,6 +20,13 @@ public:
         z = v.z;
         return *this;
     }
+    // each sum loads its own component first (ConpoundWind::calcWind's order), which `x += v.x` would not
+    Vec3& operator+=(const Vec3& v) {
+        x = x + v.x;
+        y = y + v.y;
+        z = z + v.z;
+        return *this;
+    }
     Vec3 operator+(const Vec3& v) const { return Vec3(x + v.x, y + v.y, z + v.z); }
     Vec3 operator-(const Vec3& v) const { return Vec3(x - v.x, y - v.y, z - v.z); }
     Vec3 operator*(float s) const { return Vec3(x * s, y * s, z * s); }
