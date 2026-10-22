@@ -11,7 +11,7 @@ namespace anm {
 class ReferencePoseAnimation : public ::anm::Animation {
 public:
     virtual ~ReferencePoseAnimation();  // slot 0
-    virtual void getImplType() const;  // slot 2
+    virtual int getImplType() const;  // slot 2
     virtual void sampleTrucks(float, anm::Binding const&, anm::QsTransform*) const;  // slot 3
 };
 }  // namespace anm

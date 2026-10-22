@@ -1,8 +1,14 @@
-#include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfBdatMsg.h"
+#include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfDataBdat.h"
+#include "plugin/Bdat.h"
 
 namespace gf {
+namespace _gfbms {
+// what the name getters return for an id outside their table
+const char* szEmpty = "";
+}  // namespace _gfbms
+
 unsigned char** GfBdatMsg::m_fpBldBladeName;
 unsigned char** GfBdatMsg::m_fpBldMerceName;
 unsigned char** GfBdatMsg::m_fpFldEnemyName;
@@ -48,6 +54,55 @@ unsigned char** GfBdatMsg::m_fpBtlHanaAtr;
 unsigned char** GfBdatMsg::m_fpBtlHanaAssist;
 unsigned char** GfBdatMsg::m_fpBtlSkillDr;
 unsigned char** GfBdatMsg::m_fpBtlEnGenus;
+
+GfBdatMsg::GfBdatMsg() {
+    m_fpBldBladeName = nullptr;
+    m_fpBldMerceName = nullptr;
+    m_fpFldEnemyName = nullptr;
+    m_fpFldNpcName = nullptr;
+    m_fpFldQuest = nullptr;
+    m_fpFldMapInfo = nullptr;
+    m_fpFldLandmark = nullptr;
+    m_fpFldFieldSkill = nullptr;
+    m_fpFldAchievement = nullptr;
+    m_fpItmCollection = nullptr;
+    m_fpItmCrystal = nullptr;
+    m_fpItmPrecious = nullptr;
+    m_fpItmInfo = nullptr;
+    m_fpItmEvent = nullptr;
+    m_fpItmPcWpn = nullptr;
+    m_fpItmPcWpnChip = nullptr;
+    m_fpItmPcWpnType = nullptr;
+    m_fpItmSalvage = nullptr;
+    m_fpItmTresure = nullptr;
+    m_fpItmFavorite = nullptr;
+    m_fpItmBooster = nullptr;
+    m_fpItmOrb = nullptr;
+    m_fpItmPcEquip = nullptr;
+    m_fpChrDr = nullptr;
+    m_fpChrBl = nullptr;
+    m_fpBtlClass = nullptr;
+    m_fpBlArtsMs = nullptr;
+    m_fpBlSpArtsMs = nullptr;
+    m_fpBlSkill = nullptr;
+    m_fpDrArtsMs = nullptr;
+    m_fpBtlEnhanceCap = nullptr;
+    m_fpFldQuestNormal = nullptr;
+    m_fpFldQuestMini = nullptr;
+    m_fpFldQuestBlade = nullptr;
+    m_fpFldQuestAchievement = nullptr;
+    m_fpFldQuestMercenaries = nullptr;
+    m_fpBtlBuffMs = nullptr;
+    m_fpBtlBuffCap = nullptr;
+    m_fpBtlHanaRole = nullptr;
+    m_fpBtlHanaNArts = nullptr;
+    m_fpBtlHanaArts = nullptr;
+    m_fpBtlHanaAtr = nullptr;
+    m_fpBtlHanaAssist = nullptr;
+    m_fpBtlSkillDr = nullptr;
+    m_fpBtlEnGenus = nullptr;
+    bdatRefresh();
+}
 
 GfBdatMsg::~GfBdatMsg() {
     destroyFP();
@@ -169,23 +224,12 @@ unsigned char* GfBdatMsg::getFpEnemy() {
     return *m_fpFldEnemyName;
 }
 
-unsigned char* GfBdatMsg::getFpQuest(unsigned int id) {
-    if (id < 1000) {
-        return *m_fpFldQuest;
+const char* GfBdatMsg::getNameMapInfo(unsigned int id) {
+    if (Bdat::getIdTop(*m_fpFldMapInfo) <= id &&
+        id < Bdat::getIdTop(*m_fpFldMapInfo) + Bdat::getIdCount(*m_fpFldMapInfo)) {
+        return Bdat::getMSText(*m_fpFldMapInfo, id);
     }
-    if (id < 2000) {
-        return *m_fpFldQuestMini;
-    }
-    if (id < 4000) {
-        return *m_fpFldQuestNormal;
-    }
-    if (id < 6000) {
-        return *m_fpFldQuestBlade;
-    }
-    if (id < 7000) {
-        return *m_fpFldQuestMercenaries;
-    }
-    return *m_fpFldQuest;
+    return _gfbms::szEmpty;
 }
 
 unsigned char* GfBdatMsg::getFpMapInfo() {
@@ -254,6 +298,14 @@ unsigned char* GfBdatMsg::getFpCommonBladeName() {
 
 unsigned char* GfBdatMsg::getFpMerceName() {
     return *m_fpBldMerceName;
+}
+
+const char* GfBdatMsg::getNameFieldSkill(unsigned int id) {
+    if (Bdat::getIdTop(*m_fpFldFieldSkill) <= id &&
+        id < Bdat::getIdTop(*m_fpFldFieldSkill) + Bdat::getIdCount(*m_fpFldFieldSkill)) {
+        return Bdat::getMSText(*m_fpFldFieldSkill, id);
+    }
+    return _gfbms::szEmpty;
 }
 
 unsigned char* GfBdatMsg::getFpFieldSkill() {

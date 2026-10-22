@@ -5,14 +5,17 @@
 namespace Bdat {
 // the loaded table of that name
 unsigned char* getFP(const char* name);
-// its first and last row ids
+// its first and last row ids, and how many rows there are from the first
 int getIdTop(unsigned char* fp);
 int getIdEnd(unsigned char* fp);
+int getIdCount(unsigned char* fp);
 // the named member (column) of a table; null when the table has none
 unsigned char* getMember(unsigned char* fp, const char* name);
 // a row's value of the named column, in 64 bits: a string column's text, a number column's value (0 when there is no
 // such member; 1.0.0's ui::UIManager::createLayer tests bits of it above 16)
 char* getVal(unsigned char* fp, const char* column, int id);
+// a row's text in a message table
+const char* getMSText(unsigned char* fp, int id);
 }  // namespace Bdat
 
 #endif

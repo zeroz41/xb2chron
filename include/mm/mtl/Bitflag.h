@@ -1,0 +1,34 @@
+#ifndef MM_MTL_BITFLAG_H
+#define MM_MTL_BITFLAG_H
+
+#include "mm/MMStdBase.h"
+
+// mm_lib's bitflag.h, as the including file's include path named it (see mm/mtl/FixStr.h)
+#ifdef MM_LIB_FROM_LIBS
+#define MM_MTL_BITFLAG_PATH "../../../mcl/mm_lib/source\\mm_mtl/bitflag.h"
+#else
+#define MM_MTL_BITFLAG_PATH "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/bitflag.h"
+#endif
+
+namespace mm { namespace mtl {
+
+// Size flags in words of 32 (mm_mtl/bitflag.h; its assertions name the parameter `Size` and the index `index`).
+// The class's and its members' names are not the original's; setting a flag asserts at line 89 (see
+// GfGameFlag::setLocal), which is not written yet.
+template <unsigned int Size>
+class Bitflag {
+public:
+    bool operator[](unsigned int index) const {
+#line 119 MM_MTL_BITFLAG_PATH
+        MM_ASSERT(index < Size);
+        unsigned int word = index >> 5;
+        unsigned int mask = 1UL << (index & 31UL);
+        return (m_flags[word] & mask) != 0;
+    }
+
+    unsigned int m_flags[Size / 32];
+};
+
+}}  // namespace mm::mtl
+
+#endif

@@ -1,15 +1,10 @@
+#include <string.h>
 #include "classes/gf/GfAllocator.h"
+#include "classes/gf/GfDataManager.h"
 #include "classes/gf/GfGameFlag.h"
+#include "gf/SDataGame.h"
 
 namespace gf {
-
-GfGameFlag::GfGameFlag(const GfSetupParam& param) {
-    initialize(param);
-}
-
-void GfGameFlag::initialize(const GfSetupParam& param) {
-    m_initialized = true;
-}
 
 GfGameFlag::~GfGameFlag() {}
 
@@ -24,16 +19,34 @@ void GfGameFlag::destroy() {
     delete flag;
 }
 
-void GfGameFlag::finalize() {
-    m_initialized = false;
+unsigned int GfGameFlag::getLocal(const GameFlag& flag, unsigned int type, int index) {
+    switch (type) {
+    case 1:
+        return flag.m_flag1[index];
+    case 2: {
+        unsigned int bit = index * 2;
+        unsigned int word = bit >> 5;
+        unsigned int shift = bit & 31;
+        return (flag.m_flag2[word] & (3 << shift)) >> shift;
+    }
+    case 4: {
+        unsigned int bit = index * 4;
+        unsigned int word = bit >> 5;
+        unsigned int shift = bit & 31;
+        return (flag.m_flag4[word] & (15 << shift)) >> shift;
+    }
+    case 8:
+        return flag.m_flag8[index];
+    case 16:
+        return flag.m_flag16[index];
+    case 32:
+        return flag.m_flag32[index];
+    }
+    return 0;
 }
 
-bool GfGameFlag::isInitialized() {
-    GfGameFlag* flag = get();
-    if (flag != nullptr) {
-        return flag->m_initialized;
-    }
-    return false;
+void GfGameFlag::clear() {
+    memset(&GfDataManager::getDataGame()->m_gameFlag, 0, sizeof(GameFlag));
 }
 
 }  // namespace gf

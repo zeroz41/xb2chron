@@ -28,6 +28,12 @@ struct LogMetaData {
     unsigned long additionalDataBytes;
 };
 
+// fills `pOutArray` with up to `arrayCountMax` return addresses of the calling thread, innermost first;
+// the count written
+int GetBacktrace(unsigned long* pOutArray, int arrayCountMax);
+// the name of the symbol holding `address`, written to `pOutName`; the symbol's start, 0 when none is found
+unsigned long GetSymbolName(char* pOutName, unsigned long nameSize, unsigned long address);
+
 namespace detail {
 void LogImpl(const LogMetaData& metaData, const char* format, ...);
 }  // namespace detail

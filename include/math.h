@@ -16,6 +16,8 @@ float atan2f(float y, float x);
 float fabsf(float x);
 float fmaxf(float x, float y);
 float floorf(float x);
+float fmodf(float x, float y);
+float modff(float x, float* integral);
 
 #ifdef __cplusplus
 }

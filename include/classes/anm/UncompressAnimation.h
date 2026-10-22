@@ -11,7 +11,7 @@ namespace anm {
 class UncompressAnimation : public ::anm::Animation {
 public:
     virtual ~UncompressAnimation();  // slot 0
-    virtual void getImplType() const;  // slot 2
+    virtual int getImplType() const;  // slot 2
     virtual void sampleTrucks(float, anm::Binding const&, anm::QsTransform*) const;  // slot 3
 };
 }  // namespace anm

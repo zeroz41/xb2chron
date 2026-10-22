@@ -24,6 +24,8 @@ public:
     float y;
     float z;
     float w;
+
+    static const Vec4 unit;  // (1, 1, 1, 1): anm's samplers give a QsTransform it as its scale
 } __attribute__((aligned(16)));
 
 }  // namespace mm

@@ -3,6 +3,8 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 
+namespace gf { class QuestID; }
+
 namespace gf {
 // a base of gf::GfBdatMsg no evidence names yet: what BDAT reloads notify
 class TUnk_B471D0 {
@@ -13,13 +15,17 @@ public:
 // table 0x7100B471A8; its singleton is the primary base, so the table's third slot is the listener's override
 class GfBdatMsg : public ::mm::mtl::PtrSingleton<GfBdatMsg>, public TUnk_B471D0 {
 public:
+    GfBdatMsg();
     virtual ~GfBdatMsg();  // slot 0
     virtual void bdatRefresh();  // slot 2
     static void destroyFP();
     static void createFP();
     static unsigned char* getFpEnemy();
+    static const char* getNameQuest(QuestID quest, unsigned int id);
+    static unsigned char* getFpQuest(QuestID quest);
     static unsigned char* getFpQuest(unsigned int id);
     static unsigned char* getFpMapInfo();
+    static const char* getNameMapInfo(unsigned int id);
     static unsigned char* getFpCollection();
     static unsigned char* getFpCrystal();
     static unsigned char* getFpPrecious();
@@ -37,6 +43,7 @@ public:
     static unsigned char* getFpCommonBladeName();
     static unsigned char* getFpMerceName();
     static unsigned char* getFpFieldSkill();
+    static const char* getNameFieldSkill(unsigned int id);
     static unsigned char* getFpAchievement();
     static unsigned char* getFpChrDr();
     static unsigned char* getFpBtlClass();
