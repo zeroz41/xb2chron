@@ -10,6 +10,8 @@ namespace gf {
 class GfGameScene : public ::mm::mtl::PtrSingleton< ::gf::GfGameScene> {
 public:
     virtual ~GfGameScene();  // slot 0
+    bool isEnableFieldBladeChange() const;
+    void requestFieldBladeChange();
 };
 }  // namespace gf
 

@@ -10,6 +10,8 @@ namespace gf {
 class GfMenuSoundManager : public ::mm::mtl::PtrSingleton< ::gf::GfMenuSoundManager> {
 public:
     virtual ~GfMenuSoundManager();  // slot 0
+    static void fadeOutFieldBgm(float time);
+    static void fadeFieldBgm(float volume, float time);
 };
 }  // namespace gf
 

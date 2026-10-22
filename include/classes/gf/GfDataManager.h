@@ -6,6 +6,7 @@
 
 namespace gf { class GfDataManager; }
 namespace gf { class SDataGame; }
+namespace gf { class SDataOption; }
 
 namespace gf {
 // table 0x7100B4DA08
@@ -14,6 +15,7 @@ public:
     virtual ~GfDataManager();  // slot 0
     virtual void vf2();  // slot 2
     static SDataGame* getDataGame();  // GfDataStore's
+    static SDataOption* getDataOption();  // GfDataStore's
 };
 }  // namespace gf
 

@@ -12,6 +12,9 @@ public:
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
+    static void open(unsigned int handle, unsigned int, unsigned int, unsigned int);
+    static void close();
+    static void setGuideDisp(bool disp);
 };
 }  // namespace gf
 

@@ -13,6 +13,7 @@ public:
     bool isValid() const;
     bool compare(const UIStr& other);  // true when they are the same text
     void copy(const UIStr& other);
+    const char* c_str() const;
     unsigned char pad_00[0x12];
     // what the text belongs to: GfMenuEnhanceAdapter::getEnhanceCaption stores the enhancement's id, copy copies it;
     // the name is not the original's

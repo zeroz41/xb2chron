@@ -18,6 +18,8 @@ public:
     GfObj* getObj() const;
     bool isDestroy() const;
     void* getUserData(GfObjUserData kind) const;
+    int getType() const;  // the object's type (3: a driver)
+    unsigned int getBdatId() const;
 
     GFOBJ_INFO* m_info;  // GfObjManager::getObjInfo's for the handle
     GfObj* m_obj;  // the GfObj constructor's argument

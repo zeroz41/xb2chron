@@ -18,6 +18,7 @@ class GfGameParty : public ::mm::mtl::PtrSingleton< ::gf::GfGameParty>, public T
 public:
     virtual ~GfGameParty();  // slot 0
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 2
+    static gf::GF_OBJ_HANDLE* getLeader();  // the party's leader, -1 for none
 };
 }  // namespace gf
 

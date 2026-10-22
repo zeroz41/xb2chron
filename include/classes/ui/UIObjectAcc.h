@@ -17,10 +17,14 @@ public:
     UIObjectAcc(unsigned int handle, const char* child);  // the child UIUtil::searchChild finds, if one is named
     virtual ~UIObjectAcc();  // slot 0
     void setDispChild(bool disp, const char* child);
+    unsigned int searchChild(const char* name);
+    unsigned int getParentHandle();  // the handle of its child of that name
+    void setTerm();
     bool isTerm() const;
     void setMatrix(const mm::Mat44& matrix);
     void getMatrix(mm::Mat44& matrix);
     bool isText() const;
+    bool isStreaming() const;
     void getRect(mm::Rect<short>& rect, unsigned short mode) const;
     void getPos(mm::Pnt<short>& pos) const;
     void setDisp(bool disp);
@@ -34,10 +38,13 @@ public:
     void setScale(const mm::Vec2& scale);
     void getRot(float& rot);
     void setRot(float rot);
+    void setSlopeRot(float rot);
+    void startAnimation(const char* name, bool);
     void getAlpha(float& alpha);
     void setAlpha(float alpha);
     void setText(const UIStr& text);
     void setTextFacePattern(unsigned int index);
+    void setImageIndex(unsigned int index);
     unsigned int getTextFacePatternIndex();
     unsigned int searchSibiling(const char* name);
     const char* getName() const;

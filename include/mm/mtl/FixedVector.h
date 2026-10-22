@@ -3,6 +3,7 @@
 
 #include "mm/MMStdBase.h"
 #include "string.h"
+#include <new>
 
 namespace mm { namespace mtl {
 
@@ -47,7 +48,10 @@ public:
     void push_back(const T& value) {
 #line 227 "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/fixed_vector.h"
         MM_ASSERT(size() < capacity());
-        begin()[m_size] = value;
+        // constructed in place at the buffer's byte offset: the original addresses the new element from the
+        // container (GfMenuObjMercenaryRoot::MainListener::reciveEvent), and keeps placement new's null check where
+        // the container can be null (3.0.1's GfMenuSequence<...>::addAnimJob in gf_menu_obj_enemy_status)
+        new (static_cast<void*>(m_buffer + m_size * sizeof(T))) T(value);
         ++m_size;
     }
     iterator erase(iterator it) {
