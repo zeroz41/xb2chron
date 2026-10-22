@@ -3,7 +3,7 @@
 
 #include "classes/fw/ISoundDriver.h"
 
-namespace fw { class SoundCategory; }
+namespace fw { enum SoundCategory : int; }
 namespace fw { class SoundCategoryDebugInfo; }
 namespace fw { class SoundHandleDebugInfo; }
 namespace fw { class SoundOutputType; }

@@ -18,6 +18,8 @@ public:
     void finalize();
     static bool isInitialized();
     void update(const fw::UpdateInfo& info);
+    static bool isPlaying();
+    static void end();
     bool m_initialized;  // set by initialize, cleared by finalize
 };
 }  // namespace gf

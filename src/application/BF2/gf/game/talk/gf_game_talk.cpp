@@ -1,3 +1,5 @@
+#include "classes/event/Manager.h"
+#include "classes/gf/GfGameTalk.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfGameTalk.h"
 
@@ -37,5 +39,13 @@ bool GfGameTalk::isInitialized() {
 }
 
 void GfGameTalk::update(const fw::UpdateInfo& info) {}
+
+bool GfGameTalk::isPlaying() {
+    return event::Manager::get()->isPlaying();
+}
+
+void GfGameTalk::end() {
+    event::Manager::get()->end();
+}
 
 }  // namespace gf

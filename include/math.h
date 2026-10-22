@@ -14,6 +14,7 @@ float acosf(float x);
 float asinf(float x);
 float atan2f(float y, float x);
 float fabsf(float x);
+float fmaxf(float x, float y);
 
 #ifdef __cplusplus
 }

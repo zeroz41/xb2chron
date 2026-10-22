@@ -28,7 +28,9 @@ public:
     void setLookAt(const mm::Vec3& eye, const mm::Vec3& target, float roll);
     static mm::mtl::RTTI m_rtti;
 
-    unsigned char pad_c[0x9C];
+    unsigned char pad_c[0x20];
+    float m_fov;  // GfGameFallDeadCamera::onActivate sets it from GfInfo::m_camFov
+    unsigned char pad_30[0x78];
 };
 }  // namespace fw
 

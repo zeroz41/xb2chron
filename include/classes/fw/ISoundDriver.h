@@ -1,7 +1,7 @@
 #ifndef CLASSES_FW_ISOUNDDRIVER_H
 #define CLASSES_FW_ISOUNDDRIVER_H
 
-namespace fw { class SoundCategory; }
+namespace fw { enum SoundCategory : int; }
 namespace fw { class SoundCategoryDebugInfo; }
 namespace fw { class SoundHandleDebugInfo; }
 namespace fw { class SoundOutputType; }

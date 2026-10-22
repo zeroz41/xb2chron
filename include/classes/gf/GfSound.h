@@ -4,6 +4,7 @@
 #include "classes/gf/IGfEvent.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 
+namespace fw { enum SoundCategory : int; }
 namespace gf { class GfSound; }
 
 namespace gf {
@@ -14,6 +15,7 @@ public:
     virtual ~GfSound();  // slot 0
     virtual void gevPause(unsigned int, unsigned int);  // slot 2
     virtual void gevLayerPause(unsigned int, bool);  // slot 3
+    void setCategoryPitch(fw::SoundCategory category, float pitch, float time);  // fw::SoundManager's, if there is one
 };
 }  // namespace gf
 

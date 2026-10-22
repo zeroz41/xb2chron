@@ -10,6 +10,7 @@ namespace gf {
 class GfGameSpeed : public ::mm::mtl::PtrSingleton< ::gf::GfGameSpeed> {
 public:
     virtual ~GfGameSpeed();  // slot 0
+    static float getPlaySpeed();  // 0 without the singleton
 };
 }  // namespace gf
 

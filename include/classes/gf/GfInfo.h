@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFINFO_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "mm/Vec3.h"
 
 namespace gf { class GfSetupParam; }
 
@@ -15,6 +16,9 @@ public:
     static bool isInitialized();
     bool m_initialized;  // cleared by the constructor and finalize
     static int m_nScreenW;
+    static mm::Vec3 m_camPos;
+    static mm::Vec3 m_camTgt;
+    static float m_camFov;
 };
 
 int GfScreenW();  // GfInfo::m_nScreenW

@@ -36,6 +36,19 @@ public:
         }
     }
 
+    // holds ptr instead: the new reference is taken before the old one is released
+    IntrusivePtr& operator=(T* ptr) {
+        if (ptr != nullptr) {
+            ptr->addRef();
+        }
+        T* old = _ptr;
+        _ptr = ptr;
+        if (old != nullptr) {
+            old->release();
+        }
+        return *this;
+    }
+
     T* get() const { return _ptr; }
     T* operator->() const {
 #line 112 MM_MTL_INTRUSIVE_PTR_PATH
