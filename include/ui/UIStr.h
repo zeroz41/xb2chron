@@ -7,11 +7,16 @@ namespace ui {
 class UIStr {
 public:
     UIStr();
+    UIStr(unsigned char* bdat, unsigned int id);  // the text a message table has at that id
     ~UIStr();
     bool isValid() const;
     bool compare(const UIStr& other);  // true when they are the same text
     void copy(const UIStr& other);
-    unsigned char pad_00[0x18];
+    unsigned char pad_00[0x12];
+    // what the text belongs to: GfMenuEnhanceAdapter::getEnhanceCaption stores the enhancement's id, copy copies it;
+    // the name is not the original's
+    unsigned short m_ownerId;
+    unsigned char pad_14[4];
 };
 
 }  // namespace ui

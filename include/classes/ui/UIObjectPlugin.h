@@ -12,7 +12,8 @@ public:
     UIObjectPlugin();
     virtual ~UIObjectPlugin() {}  // slot 0; inline: a derived destructor calls no base one (its D1 folds into ReferenceObject's)
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
-    virtual void reload(ui::UIObjectAcc&);  // slot 3
+    // slot 3; inline: 1.0.0 emits it among UIObjectArrangePlugin's inline virtuals, in table order
+    virtual void reload(ui::UIObjectAcc&) {}
     virtual void execute(ui::UIObjectAcc&);  // slot 4
     virtual bool isNeedUpdate(ui::UIObjectAcc&);  // slot 5
     static mm::mtl::RTTI m_rtti;

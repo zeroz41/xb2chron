@@ -37,13 +37,18 @@ struct control_t {
     block_header_t* blocks[FL_INDEX_COUNT][SL_INDEX_COUNT];
 };
 
+// what heap_walk_pool calls for each block: its memory, size, whether it is used, the caller's data and its index
+// (the type's name is not the original's: TLSF's tlsf_walker)
+typedef void (*heap_walker)(void* ptr, unsigned long size, bool used, void* user, unsigned long index);
+
+void buildChecker();
 unsigned long block_size(const block_header_t* block);
 void block_set_size(block_header_t* block, unsigned long size);
 int block_is_last(const block_header_t* block);
 int block_is_free(const block_header_t* block);
 void block_set_free(block_header_t* block);
 void block_set_used(block_header_t* block);
-int block_is_prev_free(const block_header_t* block);
+bool block_is_prev_free(const block_header_t* block);
 void block_set_prev_free(block_header_t* block);
 void block_set_prev_used(block_header_t* block);
 block_header_t* block_from_ptr(const void* ptr);
@@ -71,13 +76,24 @@ block_header_t* block_absorb(block_header_t* prev, block_header_t* block);
 block_header_t* block_merge_prev(control_t* control, block_header_t* block);
 block_header_t* block_merge_next(control_t* control, block_header_t* block);
 void block_trim_free(control_t* control, block_header_t* block, unsigned long size);
+void block_trim_used(control_t* control, block_header_t* block, unsigned long size);
 block_header_t* block_trim_free_leading(control_t* control, block_header_t* block, unsigned long size);
 block_header_t* block_locate_free(control_t* control, unsigned long size);
 void* block_prepare_used(control_t* control, block_header_t* block, unsigned long size);
 void control_construct(control_t* control);
+void integrity_walker(void* ptr, unsigned long size, bool used, void* user, unsigned long index);
+int heap_check(void* heap);
+void default_walker(void* ptr, unsigned long size, bool used, void* user, unsigned long index);
+unsigned long heap_walk_pool(void* pool, heap_walker walker, void* user);
+unsigned long heap_block_size(const void* ptr);
+int heap_check_pool(void* pool);
+unsigned long heap_size();
+unsigned long heap_align_size();
 unsigned long heap_block_size_min();
 unsigned long heap_block_size_max();
 unsigned long heap_pool_overhead();
+unsigned long heap_alloc_overhead();
+unsigned long heap_alloc_max();
 
 void* heap_create(void* memory);
 void heap_destroy(void* heap);
@@ -86,6 +102,8 @@ void heap_remove_pool(void* heap, void* pool);
 void* heap_malloc(void* heap, unsigned long size);
 void* heap_memalign(void* heap, unsigned long alignment, unsigned long size);
 void heap_free(void* heap, void* memory);
+void* heap_realloc(void* heap, void* memory, unsigned long size);
+bool valid_ptr(void* pool, const void* memory);
 
 }  // namespace HeapAllocUtil
 

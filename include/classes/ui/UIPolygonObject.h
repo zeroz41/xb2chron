@@ -11,7 +11,7 @@ public:
     virtual ~UIPolygonObject();  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 5
     virtual void apply();  // slot 6
-    virtual void duplicateImpl(unsigned int);  // slot 9
+    virtual unsigned int duplicateImpl(unsigned int);  // slot 9
     static mm::mtl::RTTI m_rtti;
 };
 }  // namespace ui

@@ -16,7 +16,7 @@ public:
     virtual void apply();  // slot 6
     virtual void getDisplayOffset(unsigned short, mm::Pnt<short>&) const;  // slot 7
     virtual void getTransformPosOffs(mm::Vec2&);  // slot 8
-    virtual void duplicateImpl(unsigned int);  // slot 9
+    virtual unsigned int duplicateImpl(unsigned int);  // slot 9
     static mm::mtl::RTTI m_rtti;
 };
 }  // namespace ui

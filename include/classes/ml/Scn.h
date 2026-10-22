@@ -3,6 +3,8 @@
 
 #include "classes/ml/IWorkEvent.h"
 
+namespace ml { class ScnRenderDrSys; }
+
 namespace ml {
 // a base of ml::Scn no evidence names yet
 class TUnk_B77B18 {
@@ -19,6 +21,8 @@ public:
 class Scn : public ::ml::IWorkEvent, public TUnk_B77B18, public TUnk_B77B38 {
 public:
     virtual ~Scn();  // slot 0
+    unsigned char pad_20[0x18];
+    ScnRenderDrSys* m_renderDrSys;  // what UIScreenObject gives ScnRenderDrSysParmAcc (the name is not the original's)
 };
 }  // namespace ml
 

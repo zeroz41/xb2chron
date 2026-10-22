@@ -11,6 +11,7 @@ class GfMenuReference : public ::mm::mtl::PtrSingleton< ::gf::GfMenuReference> {
 public:
     class REFLIST;
     virtual ~GfMenuReference();  // slot 0
+    static unsigned int getReferenceDriverID(unsigned int index);
 };
 }  // namespace gf
 

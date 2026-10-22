@@ -3,6 +3,7 @@
 
 namespace fw { class UpdateInfo; }
 namespace ui { class UIObjectPlugin; }
+namespace ui { struct uiDateTime; }
 
 namespace gf {
 // table 0x7100B59C80
@@ -24,6 +25,8 @@ public:
     static int compare(GfMenuAdapter* lhs, GfMenuAdapter* rhs);  // their numbers or texts: 0 same, 1 less, 2 more
     int getNumber() const;
     void setNumber(int number);
+    void setChange();  // sets m_flags bit 0
+    void setTime(const ui::uiDateTime& time);  // a time plugin's
     void setDisp(bool disp);
     void setMulColor(const char* color);
     unsigned char pad_8[0x10];

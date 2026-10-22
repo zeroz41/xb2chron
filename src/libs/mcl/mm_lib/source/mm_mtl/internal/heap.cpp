@@ -1,4 +1,5 @@
 #include "mm/mtl/HeapAllocUtil.h"
+#include <string.h>
 #include <stddef.h>
 #include "mm/MMStdBase.h"
 
@@ -44,6 +45,10 @@ static const size_t block_start_offset = offsetof(block_header_t, size) + sizeof
 static const size_t block_size_min = sizeof(block_header_t) - sizeof(block_header_t*);
 static const size_t block_size_max = static_cast<size_t>(1) << FL_INDEX_MAX;
 
+// 1.0.0 keeps it as an empty function ahead of the helpers; whatever it held compiles to nothing
+void buildChecker() {
+}
+
 size_t block_size(const block_header_t* block) {
     return block->size & ~(block_header_free_bit | block_header_prev_free_bit);
 }
@@ -69,8 +74,9 @@ void block_set_used(block_header_t* block) {
     block->size &= ~block_header_free_bit;
 }
 
-int block_is_prev_free(const block_header_t* block) {
-    return static_cast<int>(block->size & block_header_prev_free_bit);
+// bool, unlike its neighbours: 1.0.0's copy loads the byte and extracts the bit
+bool block_is_prev_free(const block_header_t* block) {
+    return (block->size & block_header_prev_free_bit) != 0;
 }
 
 void block_set_prev_free(block_header_t* block) {
@@ -145,7 +151,8 @@ size_t adjust_request_size(size_t size, size_t align) {
     size_t adjust = 0;
     if (size && size < block_size_max) {
         const size_t aligned = align_up(size, align);
-        adjust = aligned > block_size_min ? aligned : block_size_min;
+        // the call (not the constant): 1.0.0 emits heap_block_size_min right after this function, where its first use puts it
+        adjust = aligned > heap_block_size_min() ? aligned : heap_block_size_min();
     }
     return adjust;
 }
@@ -315,6 +322,19 @@ void block_trim_free(control_t* control, block_header_t* block, size_t size) {
     }
 }
 
+void block_trim_used(control_t* control, block_header_t* block, size_t size) {
+#line 403
+    MM_ASSERT(!block_is_free(block) && "block must be used");
+    if (block_can_split(block, size)) {
+        // if the next block is free, it must coalesce
+        block_header_t* remaining_block = block_split(block, size);
+        block_set_prev_used(remaining_block);
+
+        remaining_block = block_merge_next(control, remaining_block);
+        block_insert(control, remaining_block);
+    }
+}
+
 block_header_t* block_trim_free_leading(control_t* control, block_header_t* block, size_t size) {
     block_header_t* remaining_block = block;
     if (block_can_split(block, size)) {
@@ -371,6 +391,129 @@ void control_construct(control_t* control) {
     }
 }
 
+// what the pool walk carries from block to block
+struct integrity_t {
+    int prev_status;
+    int status;
+};
+
+// TLSF's tlsf_insist: report a failed check and count it
+#define heap_insist(x) { MM_ASSERT(x); if (!(x)) { status--; } }
+
+void integrity_walker(void* ptr, size_t size, bool used, void* user, size_t index) {
+    block_header_t* block = block_from_ptr(ptr);
+    integrity_t* integ = (integrity_t*)user;
+    const int this_prev_status = block_is_prev_free(block) ? 1 : 0;
+    const int this_status = block_is_free(block) ? 1 : 0;
+    const size_t this_block_size = block_size(block);
+
+    int status = 0;
+#line 499
+    heap_insist(integ->prev_status == this_prev_status && "prev status incorrect");
+    heap_insist(size == this_block_size && "block size incorrect");
+
+    integ->prev_status = this_status;
+    integ->status += status;
+}
+
+int heap_check(void* heap) {
+    int i, j;
+
+    control_t* control = (control_t*)heap;
+    int status = 0;
+
+    // the free lists and bitmaps agree
+    for (i = 0; i < FL_INDEX_COUNT; ++i) {
+        for (j = 0; j < SL_INDEX_COUNT; ++j) {
+            const int fl_map = control->fl_bitmap & (1 << i);
+            const int sl_list = control->sl_bitmap[i];
+            const int sl_map = sl_list & (1 << j);
+            const block_header_t* block = control->blocks[i][j];
+
+            // the first- and second-level lists agree
+            if (!fl_map) {
+#line 525
+                heap_insist(!sl_map && "second-level map must be null");
+            }
+
+            if (!sl_map) {
+#line 530
+                heap_insist(block == &control->block_null && "block list must be null");
+                continue;
+            }
+
+            // there is at least one free block
+#line 534
+            heap_insist(sl_list && "no free blocks in second-level map");
+            heap_insist(block != &control->block_null && "block should not be null");
+
+            while (block != &control->block_null) {
+                int fli, sli;
+#line 540
+                heap_insist(block_is_free(block) && "block should be free");
+                heap_insist(!block_is_prev_free(block) && "blocks should have coalesced");
+                heap_insist(!block_is_free(block_next(block)) && "blocks should have coalesced");
+                heap_insist(block_is_prev_free(block_next(block)) && "block should be free");
+                heap_insist(block_size(block) >= heap_block_size_min() && "block not minimum size");
+
+                mapping_insert(block_size(block), &fli, &sli);
+#line 547
+                heap_insist(fli == i && sli == j && "block size indexed in wrong list");
+                block = block->next_free;
+            }
+        }
+    }
+
+    return status;
+}
+
+#undef heap_insist
+
+void default_walker(void* ptr, size_t size, bool used, void* user, size_t index) {
+    (void)user;
+    MMStdBase::mmPrint("\tblk:%d %p %s size: %x (%p)\n", index, ptr, used ? "used" : "free", (unsigned int)size,
+                       block_from_ptr(ptr));
+}
+
+size_t heap_walk_pool(void* pool, heap_walker walker, void* user) {
+    heap_walker pool_walker = walker ? walker : default_walker;
+    block_header_t* block = offset_to_block(pool, -(int)block_header_overhead);
+    size_t index = 0;
+
+    while (block && !block_is_last(block)) {
+        pool_walker(block_to_ptr(block), block_size(block), !block_is_free(block), user, index);
+        block = block_next(block);
+        ++index;
+    }
+
+    return index;
+}
+
+size_t heap_block_size(const void* ptr) {
+    size_t size = 0;
+    if (ptr) {
+        const block_header_t* block = block_from_ptr(ptr);
+        size = block_size(block);
+    }
+    return size;
+}
+
+int heap_check_pool(void* pool) {
+    // the blocks are physically correct
+    integrity_t integ = {0, 0};
+    heap_walk_pool(pool, integrity_walker, &integ);
+
+    return integ.status;
+}
+
+size_t heap_size() {
+    return sizeof(control_t);
+}
+
+size_t heap_align_size() {
+    return ALIGN_SIZE;
+}
+
 size_t heap_block_size_min() {
     return block_size_min;
 }
@@ -381,6 +524,15 @@ size_t heap_block_size_max() {
 
 size_t heap_pool_overhead() {
     return 2 * block_header_overhead;
+}
+
+size_t heap_alloc_overhead() {
+    return block_header_overhead;
+}
+
+// 800, as 1.0.0 returns it (FL_INDEX_COUNT * SL_INDEX_COUNT is 800 too: the number of free lists)
+size_t heap_alloc_max() {
+    return 800;
 }
 
 void* heap_add_pool(void* heap, void* mem, size_t bytes) {
@@ -499,6 +651,63 @@ void heap_free(void* heap, void* ptr) {
         block = block_merge_next(control, block);
         block_insert(control, block);
     }
+}
+
+void* heap_realloc(void* heap, void* ptr, size_t size) {
+    control_t* control = (control_t*)heap;
+    void* p = 0;
+
+    // a zero-size request frees
+    if (ptr && size == 0) {
+        heap_free(heap, ptr);
+    }
+    // a null pointer allocates
+    else if (!ptr) {
+        p = heap_malloc(heap, size);
+    } else {
+        block_header_t* block = block_from_ptr(ptr);
+        block_header_t* next = block_next(block);
+
+        const size_t cursize = block_size(block);
+        const size_t combined = cursize + block_size(next) + block_header_overhead;
+        const size_t adjust = adjust_request_size(size, ALIGN_SIZE);
+
+#line 848
+        MM_ASSERT(!block_is_free(block) && "block already marked as free");
+
+        // the next block is used, or both together are too small: reallocate and copy
+        if (adjust > cursize && (!block_is_free(next) || adjust > combined)) {
+            p = heap_malloc(heap, size);
+            if (p) {
+                const size_t minsize = cursize < size ? cursize : size;
+                memcpy(p, ptr, minsize);
+                heap_free(heap, ptr);
+            }
+        } else {
+            // expand into the next block
+            if (adjust > cursize) {
+                block_merge_next(control, block);
+                block_mark_as_used(block);
+            }
+
+            // trim what is left and keep the pointer
+            block_trim_used(control, block, adjust);
+            p = ptr;
+        }
+    }
+
+    return p;
+}
+
+// whether ptr is a used block of the pool
+bool valid_ptr(void* pool, const void* ptr) {
+    for (block_header_t* block = offset_to_block(pool, -(int)block_header_overhead); block && !block_is_last(block);
+         block = block_next(block)) {
+        if (block_to_ptr(block) == ptr) {
+            return !block_is_free(block);
+        }
+    }
+    return false;
 }
 
 }}}  // namespace mm::mtl::HeapAllocUtil

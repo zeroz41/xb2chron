@@ -10,7 +10,7 @@ class UIImageObject : public ::ui::UIObject {
 public:
     virtual ~UIImageObject();  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 5
-    virtual void duplicateImpl(unsigned int);  // slot 9
+    virtual unsigned int duplicateImpl(unsigned int);  // slot 9
     virtual void changeBin(void const*);  // slot 10
     static mm::mtl::RTTI m_rtti;
 };

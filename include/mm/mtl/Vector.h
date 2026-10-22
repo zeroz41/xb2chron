@@ -52,6 +52,21 @@ public:
     }
 
     void expand(size_t capacity, size_t alignment);
+    // room for capacity elements, allocated at the given alignment (the name is not the original's: wnd::WindProbe's
+    // constructor and ui::UIListInfo::setup inline it)
+    void reserve(size_t capacity, size_t alignment = __alignof__(T)) {
+#line 483 MM_MTL_VECTOR_PATH
+        MM_ASSERT(m_allocator && "yet setAllocator");
+        if (capacity > m_capacity) {
+            m_alignment = alignment;
+            if (m_buffer == nullptr) {
+                m_buffer = static_cast<T*>(m_allocator->allocate(capacity * sizeof(T), m_alignment));
+                m_capacity = capacity;
+            } else if (static_cast<long>(capacity - m_capacity) > 0) {
+                expand(capacity, m_alignment);
+            }
+        }
+    }
     void extend(size_t size, size_t alignment, const T& value);
     void resize(size_t size, const T& value);
     void push_back(const T& value);
