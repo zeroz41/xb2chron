@@ -67,9 +67,8 @@ public:
     BroadPhazeProxy* m_pProxy;  // BroadPhazeOctree::createProxy's; the destructor asserts it is gone
     unsigned int m_flags;  // bit 0: setTransform sets it; calculateOverlapping recomputes the proxy's box, clears it
     // WindWorld links it into the list of objects it releases on its next update, which finds the object
-    // through m_pReleaseOwner
-    mm::mtl::IntrusiveListNodeBase m_releaseNode;
-    WindObject* m_pReleaseOwner;  // the constructor's: this object
+    // through its owner (the constructor's: this object)
+    mm::mtl::IntrusiveListNode<WindObject> m_releaseNode;
 };
 }  // namespace wnd
 

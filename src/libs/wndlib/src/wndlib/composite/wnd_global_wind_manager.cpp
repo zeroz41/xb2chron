@@ -40,17 +40,4 @@ bool GlobalWindManager::setCurrentWind(int index) {
     return true;
 }
 
-void GlobalWind::update(const UpdateInfo& info) {
-    if (m_pPrevWind != nullptr) {
-        m_pPrevWind->update(info);
-    }
-    if (m_pWind != nullptr) {
-        m_pWind->update(info);
-    }
-    WindBlender::update(info);
-    if (m_pPrevWind == nullptr) {
-        m_pPrevWind = nullptr;
-    }
-}
-
 }  // namespace wnd

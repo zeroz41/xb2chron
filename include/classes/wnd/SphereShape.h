@@ -11,7 +11,7 @@ namespace wnd {
 class SphereShape : public Shape {
 public:
     SphereShape(float radius);
-    virtual ~SphereShape();  // slot 0
+    virtual ~SphereShape() {}  // slot 0 (inline: the table holds Shape's)
     virtual void calcAABB(wnd::Transform const&, wnd::AABB*);  // slot 2
 
     float m_radius;  // the constructor's; calcAABB spans the position plus and minus it

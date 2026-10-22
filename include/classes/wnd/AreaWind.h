@@ -26,9 +26,9 @@ public:
 
     ConpoundWind m_wind;  // its resource is the create-info's m_pResWind
     float m_blendTime;  // the create-info's; WindProbe::setAreaWind blends its winds to or from this one's over it
-    // WindWorld's list of its area winds links it; the list finds the wind through m_pWorldOwner
-    mm::mtl::IntrusiveListNodeBase m_worldNode;
-    AreaWind* m_pWorldOwner;  // the constructor's: this wind
+    // WindWorld's list of its area winds links it; the list finds the wind through its owner (the constructor's:
+    // this wind)
+    mm::mtl::IntrusiveListNode<AreaWind> m_worldNode;
 };
 }  // namespace wnd
 

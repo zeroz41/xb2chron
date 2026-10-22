@@ -23,13 +23,20 @@ class Queue {
 public:
     explicit Queue(IAllocator* allocator)
         : m_buffer(nullptr), m_size(0), m_head(0), m_capacity(0), m_alignment(8), m_allocator(allocator) {}
+    // emptied, the buffer back to the allocator and every member cleared (skd::Packet's destructor keeps the
+    // stores; a deleted queue's are dead)
     ~Queue() {
         clear();
         if (m_buffer != nullptr) {
 #line 835 MM_MTL_QUEUE_PATH
             MM_ASSERT(m_allocator);
             m_allocator->deallocate(m_buffer);
+            m_buffer = nullptr;
         }
+        m_allocator = nullptr;
+        m_head = 0;
+        m_capacity = 0;
+        m_size = 0;
     }
     // room for capacity elements from the allocator (anm::JobQueue's constructor inlines it)
     void reserve(size_t capacity) {

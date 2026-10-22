@@ -23,7 +23,7 @@ AreaWind::AreaWind(const AreaWindCreateInfo& info)
 #line 22
     MM_ASSERT(info.m_pResWind);
     m_wind.m_pRes = info.m_pResWind;
-    m_pWorldOwner = this;
+    m_worldNode.m_pOwner = this;
 }
 
 }  // namespace wnd

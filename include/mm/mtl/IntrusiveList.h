@@ -26,6 +26,15 @@ public:
     IntrusiveListNodeBase* m_prev;
 };
 
+// a node that knows the element it belongs to, for an element in several lists (a member per list, not a base):
+// a list of these finds each element through m_pOwner (wnd::WindWorld's lists of its winds and of the objects it
+// releases). The names are not the original's.
+template <typename T>
+class IntrusiveListNode : public IntrusiveListNodeBase {
+public:
+    T* m_pOwner;  // the element's constructor sets it to the element
+};
+
 // a circular list through its elements' nodes, closed by its own
 class IntrusiveListBase {
 public:

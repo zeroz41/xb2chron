@@ -46,9 +46,9 @@ public:
     float m_power;  // the create-info's; fw::WindImpluse::update fades it out over the impulse's time
     float m_dampingNear;  // the create-info's; full power within it
     float m_dampingFar;  // the create-info's; none past it
-    // WindWorld's list of its local winds links it (1.0.0's constructor; as AreaWind's m_worldNode)
-    mm::mtl::IntrusiveListNodeBase m_worldNode;
-    LocalWind* m_pWorldOwner;  // 1.0.0's constructor's: this wind
+    // WindWorld's list of its local winds links it (1.0.0's constructor, which sets its owner to this wind; as
+    // AreaWind's m_worldNode)
+    mm::mtl::IntrusiveListNode<LocalWind> m_worldNode;
 };
 }  // namespace wnd
 

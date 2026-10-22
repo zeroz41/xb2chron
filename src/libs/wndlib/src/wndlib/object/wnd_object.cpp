@@ -12,7 +12,7 @@ WindObject::WindObject(ObjectType type, const WindObjectCreateInfo& info)
     m_transform = *info.pTransform;
     m_shape = info.pShape;
     m_shape->addRef();
-    m_pReleaseOwner = this;
+    m_releaseNode.m_pOwner = this;
 }
 
 WindObject::~WindObject() {

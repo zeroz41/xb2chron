@@ -12,7 +12,7 @@ namespace wnd {
 class BoxShape : public Shape {
 public:
     BoxShape(mm::Vec3 const& halfExtents);
-    virtual ~BoxShape();  // slot 0
+    virtual ~BoxShape() {}  // slot 0 (inline: the table holds Shape's)
     virtual void calcAABB(wnd::Transform const&, wnd::AABB*);  // slot 2
 
     // the constructor's; SphereBoxAgent takes the box as reaching this far each way along its own axes

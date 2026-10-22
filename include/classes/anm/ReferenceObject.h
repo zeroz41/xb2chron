@@ -5,8 +5,11 @@
 #include "classes/mm/mtl/IAllocator.h"
 
 // anmlib's anm_reference_object.h, as the including file's include path named it: the game's own files reach it
-// from application/BF2, anmlib's own (MM_LIB_FROM_LIBS) from their build folder
-#ifdef MM_LIB_FROM_LIBS
+// from application/BF2, anmlib's own (MM_LIB_FROM_LIBS) from their build folder, skdlib's (SKD_LIB_PROJECT) from
+// theirs (skd::Packet's destructor cites it so)
+#if defined(SKD_LIB_PROJECT)
+#define ANM_REFERENCE_OBJECT_PATH "../../../anmlib/src\\anmlib/base/anm_reference_object.h"
+#elif defined(MM_LIB_FROM_LIBS)
 #define ANM_REFERENCE_OBJECT_PATH "../../src\\anmlib/base/anm_reference_object.h"
 #else
 #define ANM_REFERENCE_OBJECT_PATH \

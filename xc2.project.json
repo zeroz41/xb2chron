@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "xenoblade-chronicles2-decomp-xc2-301",
   "title": "Xenoblade Chronicles 2",
-  "subtitle": "Nintendo Switch · version 3.0.1 · main",
+  "subtitle": "Nintendo Switch \u00b7 version 3.0.1 \u00b7 main",
   "repositories": {
     "decomp": {
       "root": ".",
@@ -84,6 +84,12 @@
           "libs/wndlib/*": {
             "extra_cflags": [
               "-DMM_LIB_FROM_LIBS"
+            ]
+          },
+          "libs/skdlib/*": {
+            "extra_cflags": [
+              "-DMM_LIB_FROM_LIBS",
+              "-DSKD_LIB_PROJECT"
             ]
           }
         },
