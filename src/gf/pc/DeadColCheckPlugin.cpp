@@ -1,3 +1,4 @@
+#include "gf/FileStaticVec3.h"
 #include "classes/gf/pc/DeadColCheckPlugin.h"
 
 namespace gf { namespace pc {

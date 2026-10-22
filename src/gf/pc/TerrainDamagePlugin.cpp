@@ -1,3 +1,4 @@
+#include "gf/FileStaticVec3.h"
 #include "classes/fw/ComponentObject.h"
 #include "classes/fw/UpdatableObject.h"
 #include "classes/fw/MessageObject.h"

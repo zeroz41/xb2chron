@@ -1,3 +1,4 @@
+#include "gf/FileStaticVec3.h"
 #include "classes/fw/UpdatableObject.h"
 #include "classes/gf/pc/GfPropertyField.h"
 #include "classes/gf/GfComPropertyPc.h"
