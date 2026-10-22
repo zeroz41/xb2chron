@@ -32,8 +32,10 @@ public:
 
     static mm::mtl::RTTI m_rtti;
 
-    unsigned char pad_9[0xF];        // +0xC, +0x10: two times update counts (not named yet)
+    float m_activeTime;  // update's count of the time since onActivate: it looks only past 10 seconds
+    float m_stillTime;   // update's count of the time the PC's height has stayed within 1 of m_height
     gf::GF_SEARCH_OBJ* m_searchObj;  // setup's search object, destroyed by cleanup (-1: none)
+    float m_height;      // getHeight's, taken when the search starts and whenever the height moves more than 1
 };
 }}  // namespace gf::pc
 

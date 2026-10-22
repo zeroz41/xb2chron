@@ -9,10 +9,13 @@ namespace fw { class MessageObject; }
 namespace gf { class CallBackCache; }
 
 namespace gf {
-// which animation layer (the names are unknown; the code passes 0)
-enum AnimLayer : int {};
+// which animation layer of an object's state machines (GfComAsm's functions ignore one past 6); LipSyncPlugin
+// plays its lip animation on 4 (the name is not the original's); the code otherwise passes 0
+enum AnimLayer : int {
+    ANIM_LAYER_LIP = 4,
+};
 
-// table 0x7100B65540
+// table 0x7100B65540; its constructor builds a GfComAnimation first
 class GfComAsm : public ::gf::GfComAnimation {
 public:
     class AsmLisener;
@@ -27,6 +30,11 @@ public:
     virtual void changeLayer(unsigned int, unsigned int);  // slot 3
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     const char* getStateName(AnimLayer layer) const;
+    bool easeIn(const char* state, float time, gf::AnimLayer layer);
+    bool easeOut(const char* state, float time, gf::AnimLayer layer);
+    bool isActiveAdditiveState(const char* state, gf::AnimLayer layer);
+    bool setWeightAdditiveState(const char* state, float weight, gf::AnimLayer layer);
+    bool setSpeedAdditiveState(const char* state, float speed, gf::AnimLayer layer);
     static mm::mtl::RTTI m_rtti;
 
     unsigned char pad_10[0x60];

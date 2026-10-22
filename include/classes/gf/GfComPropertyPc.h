@@ -27,9 +27,23 @@ public:
     // setup copies it from its SetupInfo's first word (0 and nonzero pick different state flags); the constructor
     // and cleanup set -1, and AIAgent runs its field AI only while it is not -1
     int m_setupKind;
-    unsigned char pad_3c[0x2C];
-    unsigned int m_inputFlags;  // after setInputDirPow's input; bit 2: TaskFieldJump::update sets it
-    unsigned char pad_6c[0x14];
+    // the stick: the pad's axes write x and y, setInputDirPow the direction it is given times its power
+    struct InputDir {
+        float x;
+        float y;
+    };
+    // the actions asked for this frame: the pad's action handlers set bits in m_actions (bit 0, 3 and 4 from
+    // PadField's), TaskFieldJump::update bit 2; PadAgent::update clears the whole word pair each frame
+    struct InputFlags {
+        unsigned int m_actions;
+        unsigned char pad_4[0x4];
+    };
+
+    unsigned char pad_3c[0x24];
+    InputDir m_inputDir;
+    InputFlags m_inputFlags;
+    InputDir m_prevInputDir;      // PadAgent::update's copy of last frame's m_inputDir
+    InputFlags m_prevInputFlags;  // and of m_inputFlags
     mm::Vec3 m_velocity;        // TaskFieldJump::update keeps its speed, turned along m_moveDir
     unsigned char pad_90[0x70];
     mm::Vec3 m_colVel;          // ColVelCalculatorPlugin::update's: the ground's movement it carries the PC with

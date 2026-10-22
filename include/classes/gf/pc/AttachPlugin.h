@@ -34,6 +34,9 @@ public:
     void notifyExcludeMovementRider(const fw::Transform& transform);
     void changeWallMode(bool wall);
 
+    // its slot in a PluginManager (getPlugin<AttachPlugin> reads slot 12)
+    enum { PLUGIN_ID = 12 };
+
     enum {
         FLAG_ATTACH = 1 << 0,     // update sets it once attachObj has attached the PC, cleanup clears it
         FLAG_WALL_MODE = 1 << 1,  // changeWallMode's

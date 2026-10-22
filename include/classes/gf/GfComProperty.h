@@ -3,6 +3,10 @@
 
 #include "mm/mtl/RTTI.h"
 #include "classes/gf/GfComponent.h"
+#include "classes/gf/GfStatusProperty.h"
+#include "gf/GfDebugStatusProperty.h"  // the tree: "gf/GfDebugStatusProperty.h"
+#include "mm/mtl/IntrusivePtr.h"
+#include "mm/mtl/UniquePtr.h"
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
 
@@ -16,7 +20,10 @@ public:
     virtual void changeLayer(unsigned int, unsigned int) {}  // slot 3
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     static mm::mtl::RTTI m_rtti;
-    unsigned char pad_10[0x28];  // fields: its constructor zeroes 0x10-0x38
+    // fields: its constructor zeroes 0x10-0x38, its destructor releases and deletes them last to first
+    mm::mtl::IntrusivePtr<gf::GfStatusProperty> m_status;  // the object's hit points (none: it takes no damage)
+    unsigned char pad_18[0x18];  // three UniquePtrs: a GfTargetProperty (flush) and two more
+    mm::mtl::UniquePtr<gf::GfDebugStatusProperty> m_debugStatus;  // debug switches (procMsgObjectDamage's)
 };
 }  // namespace gf
 

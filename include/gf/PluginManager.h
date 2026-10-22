@@ -1,9 +1,9 @@
 #ifndef GF_PLUGINMANAGER_H
 #define GF_PLUGINMANAGER_H
 
-#include "mm/mtl/Vector.h"
-#include "mm/mtl/RTTI.h"
 #include "classes/gf/Plugin.h"
+#include "mm/mtl/RTTI.h"
+#include "mm/mtl/Vector.h"
 
 namespace fw { class UpdateInfo; }
 namespace mm { namespace mtl { class IAllocator; } }
@@ -24,6 +24,20 @@ public:
     void endSetup();
     void cleanup();
     void update(const fw::UpdateInfo& info);
+
+    // the plugin with an id, none past the table (inline: the name is not the original's)
+    Plugin* getPlugin(unsigned int id) const {
+        if (id < m_plugins.size()) {
+            return m_plugins[id];
+        }
+        return nullptr;
+    }
+    // T's plugin, by T's id: none when it is none or another kind (inline: the name is not the original's)
+    template <typename T>
+    T* getPlugin() const {
+        Plugin* plugin = getPlugin(T::PLUGIN_ID);
+        return plugin != nullptr && plugin->getRTTI()->isKindOf(&T::m_rtti) ? static_cast<T*>(plugin) : nullptr;
+    }
 
     // between beginSetup and endSetup: the plugin endSetup makes at index, and whether it does (inline: the name
     // is not the original's)

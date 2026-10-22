@@ -9,6 +9,14 @@ namespace fw {
 class ReferenceFrame : public mm::mtl::ReferenceObject {
 public:
     virtual ~ReferenceFrame();  // slot 0
+    void syncLocalTransform();
+    void syncWorldTransform();
+    // m_worldTransform, synced first (inline: the name is not the original's; its callers read the transform
+    // through the frame pointer they synced, with no second null check)
+    const Transform& getWorldTransform() {
+        syncWorldTransform();
+        return m_worldTransform;
+    }
 
     unsigned char pad_10[0x10];
     Transform m_localTransform;  // getSyncedWorldTransform copies it to m_worldTransform without a parent
