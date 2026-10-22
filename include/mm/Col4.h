@@ -14,6 +14,7 @@ struct Col4 {
     float a;
 
     static const Col4 zero;
+    static const Col4 white;
     static const Col4 black;
 };
 
