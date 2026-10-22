@@ -590,16 +590,18 @@ application/BF2/gf/camera/gf_camera_player.cpp:
 	.bss         start:0x00C24E50 end:0x00C24EA0
 
 application/BF2/gf/camera/gf_camera_player_target.cpp:
-	.text        start:0x001D2BD4 end:0x001D3FE8
+	.text        start:0x001D2BD4 end:0x001D404C
 	.rodata      start:0x00982EB5 end:0x00982F5B
 	.data        start:0x00B45B48 end:0x00B45E08
+	.init_array  start:0x00B8F918 end:0x00B8F920
+	.bss         start:0x00C24EA0 end:0x00C24EE0
 
 application/BF2/gf/camera/gf_camera_subview.cpp:
-	.text        start:0x001D3FE8 end:0x001D4184
+	.text        start:0x001D404C end:0x001D4184
 	.rodata      start:0x00982F5B end:0x00982FB2
 	.data        start:0x00B45E08 end:0x00B45E68
-	.init_array  start:0x00B8F918 end:0x00B8F928
-	.bss         start:0x00C24EA0 end:0x00C24F20
+	.init_array  start:0x00B8F920 end:0x00B8F928
+	.bss         start:0x00C24EE0 end:0x00C24F20
 
 application/BF2/gf/camera/gimmick/gf_camera_gimmick.cpp:
 	.text        start:0x001D4184 end:0x001D8264
@@ -2920,17 +2922,17 @@ application/BF2/gf/request/gf_req_manager.cpp:
 	.data        start:0x00B6A8A8 end:0x00B6A8E8
 
 application/BF2/gf/request/gf_req_scom.cpp:
-	.text        start:0x00558A18 end:0x0056D910
+	.text        start:0x00558A18 end:0x0056D99C
 	.rodata      start:0x009A466E end:0x009A4DD3
 	.rodata      start:0x009C60F4 end:0x009C61A4
 	.data        start:0x00B6A8E8 end:0x00B6B900
-	.bss         start:0x00EB6CE8 end:0x00EB6D18
+	.init_array  start:0x00B8FC10 end:0x00B8FC18
+	.bss         start:0x00EB6B30 end:0x00EB6D18
 
 application/BF2/gf/script/gf_script_manager.cpp:
-	.text        start:0x0056D910 end:0x0056DF8C
+	.text        start:0x0056D99C end:0x0056DF8C
 	.rodata      start:0x009A4DD3 end:0x009A4E1C
 	.data        start:0x00B6B900 end:0x00B6B940
-	.init_array  start:0x00B8FC10 end:0x00B8FC18
 
 application/BF2/gf/sound/gf_sound.cpp:
 	.text        start:0x0056DF8C end:0x00570ED0
