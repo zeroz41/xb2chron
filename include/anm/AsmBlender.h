@@ -6,7 +6,7 @@
 #include "classes/anm/ReferenceObject.h"
 
 namespace anm { class AsmListener; class Blender; class Control; class QsTransform; class ResASM; }
-namespace anm { struct ResClipData; }
+namespace anm { struct ResClipData; struct ResStateData; }
 namespace mm { namespace mtl { class IAllocator; } }
 
 namespace anm {
@@ -17,10 +17,16 @@ enum InterpolateType : int {};
 enum InterpolateCurve : int {};
 
 class AsmBlender;
+struct AsmClip;
 
 // a state of an animation state machine (SimplexState, FrozenState and the blend trees derive from it); counted
 class AsmState : public ReferenceObject {
 public:
+    // (inline: the blend trees' constructors inline it; the names of the fields are not the original's)
+    AsmState(const ResStateData* pRes, mm::mtl::IAllocator& allocator)
+        : ReferenceObject(&allocator), m_pRes(pRes), m_speed(1.0f), m_weight(1.0f), m_loopCount(0),
+          m_loop(0) {}
+
     virtual void attach(AsmBlender* blender) = 0;     // slot 2
     virtual void dettach(AsmBlender* blender) = 0;    // slot 3
     virtual void onEnter(AsmListener* listener) = 0;  // slot 4
@@ -30,6 +36,7 @@ public:
     virtual float getLocalTime() const = 0;     // slot 8
     virtual void onSetSpeed() = 0;              // slot 9
     virtual void onSetWeight() = 0;             // slot 10: m_weight changed
+    virtual AsmClip* getBaseClip() const = 0;   // slot 11: the first clip (the type is not proven)
 
     // m_weight, told to the state (inline: the name is not the original's)
     void setWeight(float weight) {
@@ -37,12 +44,38 @@ public:
         onSetWeight();
     }
 
-    unsigned char pad_18[0xC];
+    // the loop counting the listener sees (anm_asm_callback_detector.cpp)
+    void initLoopCount();
+    // the state's enter and leave callbacks told to the listener (anm_asm_callback_detector.cpp)
+    void notifyEnter(AsmListener* listener);
+    void notifyLeave(AsmListener* listener);
+    // one more loop when the base clip looped: always with a loop count, once without (the name is not the original's)
+    void countLoop(bool looped) {
+        if (m_loopCount <= 0 ? (m_loopCount == 0 && m_loop == 0 && looped) : looped) {
+            m_loop++;
+        }
+    }
+
+    const ResStateData* m_pRes;
+    float m_speed;   // onEnter resets it to 1, then calls onSetSpeed (the name is not the original's)
     float m_weight;  // AdditiveInfo sets it, then calls onSetWeight (the name is not the original's)
+    int m_loopCount;  // initLoopCount's (the name is not the original's)
+    int m_loop;       // the loops counted (the name is not the original's)
 };
 
 // one clip AsmBlender blends: its control and its resource (the names are not the original's)
 struct AsmClip : public mm::mtl::IntrusiveListNodeBase {
+    AsmClip();
+    ~AsmClip();
+    void destroyControl();
+    void createControl(const ResClipData& res, mm::mtl::IAllocator& allocator);
+    // true when the clip looped
+    bool update(float dt, AsmListener* listener);
+    void setLocalTime(float time);
+    float getLocalTime() const;
+    void setSpeed(float speed);
+    void setWeight(float weight);
+
     Control* m_pControl;
     const ResClipData* m_pRes;
 };

@@ -1,0 +1,106 @@
+#ifndef ALGORITHM_H
+#define ALGORITHM_H
+
+// The C++ library's binary search, as the SDK's libc++ writes it (std::__1; anmlib's units carry their own copies of
+// __upper_bound<Compare&, ...>, the instantiation upper_bound forwards to with the comparator by reference).
+// Only what the game's code instantiates; iterators state their category and difference type as members.
+namespace std { inline namespace __1 {
+
+struct input_iterator_tag {};
+struct forward_iterator_tag : public input_iterator_tag {};
+struct bidirectional_iterator_tag : public forward_iterator_tag {};
+struct random_access_iterator_tag : public bidirectional_iterator_tag {};
+
+template <class _Iter>
+struct iterator_traits {
+    typedef typename _Iter::difference_type difference_type;
+    typedef typename _Iter::iterator_category iterator_category;
+};
+
+template <class _Tp>
+struct iterator_traits<_Tp*> {
+    typedef long difference_type;
+    typedef random_access_iterator_tag iterator_category;
+};
+
+template <class _Tp>
+struct add_lvalue_reference {
+    typedef _Tp& type;
+};
+
+template <class _RandIter>
+inline typename iterator_traits<_RandIter>::difference_type __distance(_RandIter __first, _RandIter __last,
+                                                                       random_access_iterator_tag) {
+    return __last - __first;
+}
+
+template <class _InputIter>
+inline typename iterator_traits<_InputIter>::difference_type distance(_InputIter __first, _InputIter __last) {
+    return __distance(__first, __last, typename iterator_traits<_InputIter>::iterator_category());
+}
+
+template <class _RandIter>
+inline void __advance(_RandIter& __i, typename iterator_traits<_RandIter>::difference_type __n,
+                      random_access_iterator_tag) {
+    __i += __n;
+}
+
+template <class _InputIter>
+inline void advance(_InputIter& __i, typename iterator_traits<_InputIter>::difference_type __n) {
+    __advance(__i, __n, typename iterator_traits<_InputIter>::iterator_category());
+}
+
+template <class _Compare, class _ForwardIterator, class _Tp>
+_ForwardIterator __upper_bound(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __value_,
+                               _Compare __comp) {
+    typedef typename iterator_traits<_ForwardIterator>::difference_type difference_type;
+    difference_type __len = distance(__first, __last);
+    while (__len != 0) {
+        difference_type __l2 = __len / 2;
+        _ForwardIterator __m = __first;
+        advance(__m, __l2);
+        if (__comp(__value_, *__m))
+            __len = __l2;
+        else {
+            __first = ++__m;
+            __len -= __l2 + 1;
+        }
+    }
+    return __first;
+}
+
+template <class _Compare, class _ForwardIterator, class _Tp>
+_ForwardIterator __lower_bound(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __value_,
+                               _Compare __comp) {
+    typedef typename iterator_traits<_ForwardIterator>::difference_type difference_type;
+    difference_type __len = distance(__first, __last);
+    while (__len != 0) {
+        difference_type __l2 = __len / 2;
+        _ForwardIterator __m = __first;
+        advance(__m, __l2);
+        if (__comp(*__m, __value_)) {
+            __first = ++__m;
+            __len -= __l2 + 1;
+        } else
+            __len = __l2;
+    }
+    return __first;
+}
+
+template <class _ForwardIterator, class _Tp, class _Compare>
+inline _ForwardIterator lower_bound(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __value_,
+                                    _Compare __comp) {
+    typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
+    return __lower_bound<_Comp_ref>(__first, __last, __value_, __comp);
+}
+
+template <class _ForwardIterator, class _Tp, class _Compare>
+inline _ForwardIterator upper_bound(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __value_,
+                                    _Compare __comp) {
+    typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
+    return __upper_bound<_Comp_ref>(__first, __last, __value_, __comp);
+}
+
+}}  // namespace std::__1
+
+#endif

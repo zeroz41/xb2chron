@@ -12,19 +12,31 @@
 #endif
 
 // anmlib's anm_array.h, the same way: ArrayIterartor's dereference asserts `m_pData` at line 58, its increment at
-// line 69 (1.0.0's std::__lower_bound<..., anm::ArrayIterartor<...>> instances and GfExtendPacking::registerSoundTrigger)
+// line 69 (1.0.0's std::__lower_bound<..., anm::ArrayIterartor<...>> instances and GfExtendPacking::registerSoundTrigger),
+// stepping back at 83, forward at 97, and the distance between two asserts both at 123 and 124 (3.0.1's
+// std::__upper_bound<..., anm::ArrayIterartor<...>> instances and their callers)
 #ifdef MM_LIB_FROM_LIBS
 #define ANM_ARRAY_H_PATH "../../src\\anmlib/base/anm_array.h"
 #else
 #define ANM_ARRAY_H_PATH "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/anmlib/src\\anmlib/base/anm_array.h"
 #endif
 
+namespace std { inline namespace __1 { struct random_access_iterator_tag; } }
+
 namespace anm {
 // an iterator over an Array's elements (the name is the original's, 1.0.0 spells it ArrayIterartor)
 template <typename T>
 class ArrayIterartor {
 public:
+    typedef std::random_access_iterator_tag iterator_category;
+    typedef long difference_type;
+
     explicit ArrayIterartor(T* pData) : m_pData(pData) {}
+    // user-provided (std::__upper_bound's `__first = ++__m` compiles the original's way only so); copies stay trivial
+    ArrayIterartor& operator=(const ArrayIterartor& rhs) {
+        m_pData = rhs.m_pData;
+        return *this;
+    }
     T& operator*() const {
 #line 58 ANM_ARRAY_H_PATH
         MM_ASSERT(m_pData);
@@ -36,6 +48,25 @@ public:
         ++m_pData;
         return *this;
     }
+    ArrayIterartor operator-(difference_type n) const {
+#line 83 ANM_ARRAY_H_PATH
+        MM_ASSERT(m_pData);
+        return ArrayIterartor(m_pData - n);
+    }
+    ArrayIterartor& operator+=(difference_type n) {
+#line 97 ANM_ARRAY_H_PATH
+        MM_ASSERT(m_pData);
+        m_pData += n;
+        return *this;
+    }
+    difference_type operator-(const ArrayIterartor& rhs) const {
+#line 123 ANM_ARRAY_H_PATH
+        MM_ASSERT(m_pData);
+#line 124 ANM_ARRAY_H_PATH
+        MM_ASSERT(rhs.m_pData);
+        return m_pData - rhs.m_pData;
+    }
+    bool operator==(const ArrayIterartor& other) const { return m_pData == other.m_pData; }
     bool operator!=(const ArrayIterartor& other) const { return m_pData != other.m_pData; }
 
     T* m_pData;  // anm_array.h asserts `m_pData`
