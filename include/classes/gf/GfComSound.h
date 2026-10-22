@@ -3,6 +3,10 @@
 
 #include "mm/mtl/RTTI.h"
 namespace gf {
+// the event name of the sound annotations GfComSound::setup and GfExtendPacking::registerSoundTrigger register
+// (lbl_71009A370D, "sound")
+extern const char* SOUND_CALLBACK_EVENT_NAME;
+
 // table 0x7100B69CC0
 class GfComSound {
 public:

@@ -5,6 +5,7 @@
 #include "classes/anm/ReferenceObject.h"
 #include "mm/mtl/Vector.h"
 
+namespace anm { class AsmAnnotetion; }
 namespace anm { class Binding; }
 namespace anm { class ResResolver; }
 namespace anm { class ResStateArray; }
@@ -39,6 +40,11 @@ class ResASM : public ::anm::ReferenceObject {
 public:
     ResASM(const ResStateArray& states, const ResResolver& resolver, mm::mtl::IAllocator& allocator);
     virtual ~ResASM();  // slot 0
+
+    void setEnterAnnotation(unsigned int kind, const char* stateName, const AsmAnnotetion& annotation);
+    void setLeaveAnnotation(unsigned int kind, const char* stateName, const AsmAnnotetion& annotation);
+    void setFrameAnnotation(unsigned int kind, const char* stateName, float frame, const AsmAnnotetion& annotation);
+    void sortAnnotation(unsigned int kind);
 
     const Skeleton* m_pSkeleton;  // the names of the fields are not the original's
     unsigned char pad_20[0x8];

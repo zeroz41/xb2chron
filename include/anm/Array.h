@@ -11,13 +11,45 @@
 #define ANM_ARRAY_PATH "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/anmlib/src\\anmlib/base/anm_array-inl.h"
 #endif
 
+// anmlib's anm_array.h, the same way: ArrayIterartor's dereference asserts `m_pData` at line 58, its increment at
+// line 69 (1.0.0's std::__lower_bound<..., anm::ArrayIterartor<...>> instances and GfExtendPacking::registerSoundTrigger)
+#ifdef MM_LIB_FROM_LIBS
+#define ANM_ARRAY_H_PATH "../../src\\anmlib/base/anm_array.h"
+#else
+#define ANM_ARRAY_H_PATH "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/anmlib/src\\anmlib/base/anm_array.h"
+#endif
+
 namespace anm {
+// an iterator over an Array's elements (the name is the original's, 1.0.0 spells it ArrayIterartor)
+template <typename T>
+class ArrayIterartor {
+public:
+    explicit ArrayIterartor(T* pData) : m_pData(pData) {}
+    T& operator*() const {
+#line 58 ANM_ARRAY_H_PATH
+        MM_ASSERT(m_pData);
+        return *m_pData;
+    }
+    ArrayIterartor& operator++() {
+#line 69 ANM_ARRAY_H_PATH
+        MM_ASSERT(m_pData);
+        ++m_pData;
+        return *this;
+    }
+    bool operator!=(const ArrayIterartor& other) const { return m_pData != other.m_pData; }
+
+    T* m_pData;  // anm_array.h asserts `m_pData`
+};
+
 // anmlib's view of elements kept elsewhere (a resource's): indexing one asserts `m_pElements` and
 // `index < m_size` (anm_array-inl.h lines 231 and 232)
 template <typename T>
 class Array {
 public:
     unsigned int size() const { return m_size; }
+    bool empty() const { return m_size == 0; }
+    ArrayIterartor<const T> begin() const { return ArrayIterartor<const T>(m_pElements); }
+    ArrayIterartor<const T> end() const { return ArrayIterartor<const T>(m_pElements + m_size); }
     const T& operator[](unsigned int index) const {
 #line 231 ANM_ARRAY_PATH
         MM_ASSERT(m_pElements);
