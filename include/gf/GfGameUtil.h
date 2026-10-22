@@ -12,6 +12,8 @@ public:
     static bool isPlayVoice(gf::GF_OBJ_HANDLE* handle);
     // the object takes field damage (GfGameScene::setDamageCharacter)
     static void requestFieldDamage(gf::GF_OBJ_HANDLE* handle);
+    // the object's menu offset id, for GfMenuBdat::getMenuOffset
+    static int getUiOffsetId(gf::GF_OBJ_HANDLE* handle);
 
     // the text the action window shows for an object (the names are not the original's)
     struct UiActionWindowInfo {

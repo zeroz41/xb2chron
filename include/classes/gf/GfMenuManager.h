@@ -117,6 +117,8 @@ public:
     virtual void beginUpdate(fw::UpdateInfo const&);  // slot 22
     static bool isBattleState(unsigned int);
     static bool isOpenFullScreen();
+    // the object the player can access now, (GF_OBJ_HANDLE*)-1 for none
+    static gf::GF_OBJ_HANDLE* getAccessObjHandle();
     static bool isFieldHudInputEnable();  // not while GfMenuObjTutorial waits
     // the battle model view (GfChainAttack's setup opens it and waits for it, destroy closes it)
     static void openBtlModelView();

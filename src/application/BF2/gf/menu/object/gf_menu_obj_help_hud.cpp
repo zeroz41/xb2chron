@@ -19,6 +19,33 @@ GfMenuObjHelpHud::GfMenuObjHelpHud(unsigned int handle)
 
 GfMenuObjHelpHud::~GfMenuObjHelpHud() {}
 
+// sends the help HUD (external call 0x84) event 0x101 (its listener enables input and shows LAY_help), unless
+// add-on menu layer 3 is usable
+void GfMenuObjHelpHud::enable() {
+    if (GfMenuObjUtil::fn_710048FD30(3)) {
+        return;
+    }
+    ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x84));
+    if (acc.m_object != nullptr) {
+        ui::EventData event;
+        event.m_type = 0x101;
+        GfMenuObject::sendEvent(acc.m_handle, event, 0.0f);
+    }
+}
+
+// sends it event 0x102 (its listener disables input and drops the page shown)
+void GfMenuObjHelpHud::disable() {
+    if (GfMenuObjUtil::fn_710048FD30(3)) {
+        return;
+    }
+    ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x84));
+    if (acc.m_object != nullptr) {
+        ui::EventData event;
+        event.m_type = 0x102;
+        GfMenuObject::sendEvent(acc.m_handle, event, 0.0f);
+    }
+}
+
 void GfMenuObjHelpHud::initialize() {
     ui::UIObjectAcc acc(m_handle, "LAY_main");
 #line 117

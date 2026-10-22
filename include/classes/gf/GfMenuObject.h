@@ -33,6 +33,10 @@ public:
     // that index, with the last argument)
     static void addDispEventCondition(unsigned int handle, const char* child, unsigned int event, unsigned int value,
                                       bool duplicated);
+    // a number condition on the handle's child of that name (the parameters as addDispEventCondition's; the names
+    // are not the original's)
+    static void addNumberEventCondition(unsigned int handle, const char* child, unsigned int event, unsigned int value,
+                                        float);
     static void returnFSSubLayer(GfMenuObject* object);
     static void enableInput(unsigned int handle);
     // GfMenuCallManager's, for the call context running on a handle: end it, hand it a result

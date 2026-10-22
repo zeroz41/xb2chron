@@ -31,6 +31,7 @@ public:
     void setNumber(int number);
     void setNumberMin(int min);  // the number plugin's
     void setNumberMax(int max);  // the number plugin's
+    void setNumberInterpolateMode(float interpolate);  // the number plugin's setInterpolate, when it is one
     void setChange();  // sets m_flags bit 0
     void setTime(const ui::uiDateTime& time);  // a time plugin's
     void setElapseTime(const ElapseTime& time);  // a time plugin's
@@ -46,6 +47,7 @@ public:
     void setPosWorld(const mm::Vec3& pos);
     bool isPosScreenAdjust() const;
     void setOffsetLimit(unsigned short x, unsigned short y);  // an offset plugin's
+    void setPosOffsMode(unsigned int mode);  // a position plugin's
     unsigned char pad_8[0x10];
     ui::UIObjectPlugin* m_plugin;  // the constructor's, referenced
     unsigned int m_flags;          // bit 0: setChange sets it, update clears it; the constructor sets 1 or 3

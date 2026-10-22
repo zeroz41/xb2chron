@@ -35,6 +35,7 @@ public:
     float getModelScale() const;
     // the object's attribute bits (bit 1: TargetIKPlugin::update looks at it)
     unsigned int getAttribute() const;
+    GF_OBJ_HANDLE* getHandle() const;
 
     GFOBJ_INFO* m_info;  // GfObjManager::getObjInfo's for the handle
     GfObj* m_obj;  // the GfObj constructor's argument
