@@ -3,6 +3,8 @@
 
 #include <string.h>
 
+#include "mm/mtl/FixStr.h"
+
 namespace ml {
 // file path helpers
 class PathUtil {
@@ -24,6 +26,8 @@ public:
         }
         return true;
     }
+    // path's file name without its folders and extension (fw::SoundPack's constructor keeps it)
+    static mm::mtl::FixStr<64> getNoPathExtName(const char* path);
 };
 }  // namespace ml
 

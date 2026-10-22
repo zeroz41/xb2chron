@@ -49,6 +49,14 @@ typedef struct LMS_ProjectBinary {
     int cti1;  // content infos
 } LMS_ProjectBinary;
 
+// a color of the project's color block (ms::MsWrapper::getColor hands one to LMS_GetColor)
+typedef struct LMSColor {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+    unsigned char a;
+} LMSColor;
+
 typedef void* (*LMS_MallocFunc)(size_t size);
 typedef void (*LMS_FreeFunc)(void* memory);
 
@@ -59,7 +67,7 @@ int LMSi_MemCmp(const void* a, const void* b, int count);
 LMS_ProjectBinary* LMS_InitProject(const void* data);
 void LMS_CloseProject(LMS_ProjectBinary* project);
 int LMS_GetColorNum(LMS_ProjectBinary* project);
-int LMS_GetColor(LMS_ProjectBinary* project, int index, unsigned char* rgba);
+int LMS_GetColor(LMS_ProjectBinary* project, int index, LMSColor* color);
 const char* LMS_GetTagName(LMS_ProjectBinary* project, unsigned short groupId, unsigned short tagIndex);
 const char* LMS_GetTagListItemName(LMS_ProjectBinary* project, unsigned short groupId, unsigned short tagIndex,
                                    unsigned short paramIndex, unsigned short itemIndex);

@@ -138,6 +138,15 @@ public:
         MM_ASSERT(index < size());
         return *at(index);
     }
+    // fw::SoundPack::findSource (const) asserts at fixed_vector.h's line 181
+    const T& operator[](unsigned long index) const {
+#line 181 MM_MTL_FIXED_VECTOR_PATH
+        MM_ASSERT(index < size());
+        return *at(index);
+    }
+    const T* at(unsigned long index) const {
+        return reinterpret_cast<const T*>(m_buffer + index * sizeof(T));
+    }
     // an element's address from the room's bytes (GfMenuStrLinker's destructors and fw::ManagerRegister::finalize
     // add the room's offset to the element's last); the name is not the original's
     T* at(unsigned long index) {

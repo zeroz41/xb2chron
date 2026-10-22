@@ -4,6 +4,8 @@
 #include "classes/fw/ManagerObject.h"
 
 namespace fw { class UpdateInfo; }
+namespace fw { class SoundPack; }
+namespace mm { namespace mtl { class IAllocator; }}
 
 namespace fw {
 // a base of fw::SoundManager no evidence names yet
@@ -20,6 +22,11 @@ public:
     virtual const char* getName() const;  // slot 5
     virtual void update(fw::UpdateInfo const&);  // slot 8
     virtual void tail(fw::UpdateInfo const&);  // slot 9
+
+    // the registered pack of a name and allocator, or null
+    SoundPack* findPack(const char* name, mm::mtl::IAllocator* allocator);
+    void registPack(SoundPack* pack);
+    void removePack(SoundPack* pack);
 };
 }  // namespace fw
 
