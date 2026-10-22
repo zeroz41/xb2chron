@@ -1,0 +1,65 @@
+#ifndef GF_GFAPPEND_H
+#define GF_GFAPPEND_H
+
+#include "mm/mtl/FixStr.h"
+#include "mm/mtl/FixedVector.h"
+
+namespace gf { enum OPTMNT : int; }
+
+namespace gf {
+// no table: a model attached to an object (a weapon, a belonging): its model and motion files and where it mounts
+class GfAppend {
+public:
+    // a bone the model mounts on (FixedVector<MOUNT_INFO, 4>::assign copies the name as a FixStr, then the mount)
+    struct MOUNT_INFO {
+        mm::mtl::FixStr<16> m_name;
+        OPTMNT m_mount;
+    };
+
+    GfAppend();
+    GfAppend(const char* modelName, const char* motionName, unsigned short mountIndex, unsigned short rscID, float scale,
+             bool flag);
+    // the name of the bone the mount is on, "" when none is
+    const char* getBone(OPTMNT mount) const;
+    void addMount(MOUNT_INFO& info);
+    const char* getModelName() const;
+    const char* getMotionName() const;
+    const char* getResourceName() const;
+    const char* getAsmFileName() const;
+    unsigned short getMountIndex() const;
+    unsigned short getRscID() const;
+
+    mm::mtl::FixedVector<MOUNT_INFO, 4> m_mounts;
+    const char* m_modelName;      // getModelName
+    const char* m_motionName;     // getMotionName
+    unsigned short m_mountIndex;  // getMountIndex
+    unsigned short m_rscID;       // getRscID
+    unsigned char pad_7c[0xC];    // the constructor's float (1 by default) and bool
+};
+
+// no table: an object's appends, in two lists (GfAppendUtil::setupWeapon adds to the one m_list names, then sets it
+// back to 0); the appends are its own, deleted when it is cleared
+class GfAppendInfo {
+public:
+    GfAppendInfo() : m_list(0) {}
+    ~GfAppendInfo() { clear(); }
+    // inline: 1.0.0's GfAppendUtil::setupWeapon inlines it (the name is not the original's)
+    void clear() {
+        for (int i = 0; i < 2; i++) {
+            for (GfAppend **it = m_appends[i].begin(), **end = m_appends[i].end(); it != end; ++it) {
+                if (*it != nullptr) {
+                    delete *it;
+                    *it = nullptr;
+                }
+            }
+            m_appends[i].clear();
+            m_list = 0;
+        }
+    }
+
+    mm::mtl::FixedVector<GfAppend*, 10> m_appends[2];
+    int m_list;  // the list appends are added to (the name is not the original's)
+};
+}  // namespace gf
+
+#endif

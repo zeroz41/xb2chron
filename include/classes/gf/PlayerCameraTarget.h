@@ -21,6 +21,7 @@ public:
     virtual void requestResetCamera();  // slot 4
     virtual void gevPartyMemberOK(bool);  // slot 5
     static mm::mtl::RTTI m_rtti;
+    static PlayerCameraTarget* create();
 
     mm::Vec3 m_position;  // writeTargetInfo copies the controlled object's position here
 };

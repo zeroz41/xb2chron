@@ -15,7 +15,7 @@ class GmkDmgGimmick : public ::gmk::AGmkBase, public TUnk_B6CF80 {
 public:
     class BdatInfo;
     virtual ~GmkDmgGimmick();  // slot 0
-    virtual void getGmkType() const;  // slot 2
+    virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6

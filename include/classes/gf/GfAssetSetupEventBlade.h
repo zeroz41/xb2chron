@@ -11,7 +11,7 @@ namespace gf {
 class GfAssetSetupEventBlade : public ::gf::GfAssetSetupBlade {
 public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfAssetSetupEventBlade();  // slot 1
+    virtual ~GfAssetSetupEventBlade() {}  // slot 1
     virtual void getAssetCategoryName() const;  // slot 3
     virtual void getMdlFile(gf::GfAssetType);  // slot 4
     virtual void getArcFile(gf::GfAssetType);  // slot 5

@@ -4,14 +4,17 @@
 #include "mm/mtl/RTTI.h"
 #include "classes/gf/GfAssetSetup.h"
 
+namespace gf { class GF_ASSET_HANDLE; }
 namespace gf { class GfAssetType; }
+namespace gf { class GfInitParamEventObj; }
 
 namespace gf {
 // table 0x7100B44B10
 class GfAssetSetupEventObj : public ::gf::GfAssetSetup {
 public:
+    GfAssetSetupEventObj();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfAssetSetupEventObj();  // slot 1
+    virtual ~GfAssetSetupEventObj() {}  // slot 1
     virtual void getAssetCategoryName() const;  // slot 3
     virtual void getMdlFile(gf::GfAssetType);  // slot 4
     virtual void getArcFile(gf::GfAssetType);  // slot 5
@@ -24,6 +27,7 @@ public:
     virtual void getEabSlot() const;  // slot 27
     virtual void getEfbSlot() const;  // slot 28
     virtual void getAssetType() const;  // slot 39
+    void setup(GF_ASSET_HANDLE* handle, const GfInitParamEventObj& param);
     static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gf

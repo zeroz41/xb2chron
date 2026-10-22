@@ -2,6 +2,7 @@
 #define MM_MTL_FIXEDQUEUE_H
 
 #include "mm/MMStdBase.h"
+#include <new>
 
 // mm_lib's fixed_queue.h, as the game's files' include path named it
 #define MM_MTL_FIXED_QUEUE_PATH \
@@ -49,6 +50,7 @@ public:
         unsigned long _index;
     };
     typedef fixed_queue_iterator<T, N> iterator;
+    typedef fixed_queue_iterator<const T, N> const_iterator;
 
     FixedQueue() : m_size(0), m_head(0) {}
 
@@ -58,17 +60,46 @@ public:
     iterator end() {
         return iterator(data(), m_head + m_size);
     }
+    const_iterator begin() const {
+        return const_iterator(data(), m_head);
+    }
+    const_iterator end() const {
+        return const_iterator(data(), m_head + m_size);
+    }
     unsigned long size() const {
         return m_size;
     }
     bool full() const {
         return m_size == N;
     }
+    bool empty() const {
+        return m_size == 0;
+    }
+    T& back() {
+#line 400 MM_MTL_FIXED_QUEUE_PATH
+        MM_ASSERT(!empty());
+        return data()[(m_head + m_size - 1) % N];
+    }
+    // takes every element off (GfEvtBgm::clear inlines it; the name is not the original's)
+    void clear() {
+        while (!empty()) {
+            pop_back();
+        }
+        m_size = 0;
+        m_head = 0;
+    }
+    void pop_back() {
+#line 485 MM_MTL_FIXED_QUEUE_PATH
+        MM_ASSERT(!empty());
+        --m_size;
+    }
 
     void push_back(const T& value) {
 #line 633 MM_MTL_FIXED_QUEUE_PATH
         MM_ASSERT(!full());
-        data()[(m_head + m_size) % N] = value;
+        // by the element's own storage: GfEvtBgm's pushes address the slot from the owner (its index times the
+        // element size plus the queue's offset), where data()[i] keeps the ring's start in a register
+        new (static_cast<void*>(&m_buffer[(m_head + m_size) % N])) T(value);
         ++m_size;
     }
     // the element at a place of the ring (inline: the name is not the original's)
@@ -76,6 +107,11 @@ public:
 #line 110 MM_MTL_FIXED_QUEUE_PATH
         MM_ASSERT(index < N);
         return data()[index];
+    }
+    // the first element, in place (GfReqManager::reqUpdate and GfEvtBgm::updateBgmTask read it with no check; the
+    // name is not the original's)
+    T& front() {
+        return data()[m_head];
     }
     // takes the first element off and returns it (inline:
     // GfMenuScriptManager::checkEvent stores the new first and count before it reads the element; the name is
@@ -85,6 +121,17 @@ public:
         m_head = (m_head + 1) % N;
         --m_size;
         return at(index);
+    }
+    // takes the first element off, asserting there is one (GfEvtBgm::updateBgmTask and GfReqManager::reqUpdate
+    // inline it; 1.0.0's FixedQueue<FixStr<32>, 8>::pop_front asserts the same at line 470; the name is not the
+    // original's)
+    void pop() {
+#line 470 MM_MTL_FIXED_QUEUE_PATH
+        MM_ASSERT(!empty());
+        unsigned long index = m_head;
+        m_head = (m_head + 1) % N;
+        --m_size;
+        at(index);
     }
     void erase(iterator it) {
 #line 683 MM_MTL_FIXED_QUEUE_PATH
@@ -100,7 +147,14 @@ public:
     T* data() {
         return reinterpret_cast<T*>(m_buffer);
     }
-    alignas(T) unsigned char m_buffer[sizeof(T) * N];
+    const T* data() const {
+        return reinterpret_cast<const T*>(m_buffer);
+    }
+    // one element's storage (see push_back)
+    struct Storage {
+        alignas(T) unsigned char m_bytes[sizeof(T)];
+    };
+    Storage m_buffer[N];
     unsigned long m_size;  // size()
     unsigned long m_head;  // the first element's index
 };

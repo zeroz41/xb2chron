@@ -13,7 +13,7 @@ namespace gf {
 class GfAssetSetupDriverForUi : public ::gf::GfAssetSetupDriver {
 public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfAssetSetupDriverForUi();  // slot 1
+    virtual ~GfAssetSetupDriverForUi() {}  // slot 1
     virtual void getUiMotFile(gf::GfAssetType);  // slot 10
     virtual void getUiStpFile(gf::GfAssetType);  // slot 17
     virtual void getUiMotSlot() const;  // slot 25

@@ -12,8 +12,9 @@ namespace gf {
 // table 0x7100B43EF0
 class GfAssetSetupMob : public ::gf::GfAssetSetup {
 public:
+    GfAssetSetupMob();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfAssetSetupMob();  // slot 1
+    virtual ~GfAssetSetupMob() {}  // slot 1
     virtual void getMdlFile(gf::GfAssetType);  // slot 4
     virtual void getArcFile(gf::GfAssetType);  // slot 5
     virtual void getMotFile(gf::GfAssetType);  // slot 6

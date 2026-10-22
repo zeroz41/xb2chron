@@ -4,7 +4,7 @@
 #include "classes/gmk/AGmkBase.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
-namespace gf { namespace IGfObjListener { enum OBJEVT : int; }}
+#include "classes/gf/IGfObjListener.h"
 namespace mm { class Vec3; }
 
 namespace gmk {
@@ -29,7 +29,7 @@ class GmkNpc : public ::gmk::AGmkBase, public TUnk_B6DB08 {
 public:
     class BdatInfo;
     virtual ~GmkNpc();  // slot 0
-    virtual void getGmkType() const;  // slot 2
+    virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void debugDraw() const;  // slot 7
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual bool isPopCondMatched() const;  // slot 11

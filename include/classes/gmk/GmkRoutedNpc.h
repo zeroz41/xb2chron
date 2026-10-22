@@ -6,7 +6,7 @@
 #include "classes/gmk/GmkRoute.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
-namespace gf { namespace IGfObjListener { enum OBJEVT : int; }}
+#include "classes/gf/IGfObjListener.h"
 namespace mm { class Vec3; }
 
 namespace gmk {
@@ -14,7 +14,7 @@ namespace gmk {
 class GmkRoutedNpc : public ::gmk::GmkRoute, public ::gmk::AGmkNpc {
 public:
     virtual ~GmkRoutedNpc();  // slot 0
-    virtual void getGmkType() const;  // slot 2
+    virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
     virtual void dispose();  // slot 5
     virtual void debugDraw() const;  // slot 7

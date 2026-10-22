@@ -12,8 +12,9 @@ namespace gf {
 // table 0x7100B437D8
 class GfAssetSetupDriver : public ::gf::GfAssetSetup {
 public:
+    GfAssetSetupDriver();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfAssetSetupDriver();  // slot 1
+    virtual ~GfAssetSetupDriver() {}  // slot 1
     virtual void getMdlFile(gf::GfAssetType);  // slot 4
     virtual void getArcFile(gf::GfAssetType);  // slot 5
     virtual void getMotFile(gf::GfAssetType);  // slot 6

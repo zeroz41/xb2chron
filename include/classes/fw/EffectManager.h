@@ -7,7 +7,9 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "fw/VolumeFadeParams.h"
 
+namespace effect { class SendParam; }
 namespace fw { class EffectData; }
+namespace fw { class EffectPack; }
 namespace fw { class EffectManager; }
 namespace fw { class UpdateInfo; }
 namespace ml { class IDrDrawWorkInfo; }
@@ -47,6 +49,13 @@ public:
     virtual bool finalize();  // overrides a secondary base's (ManagerObject's)
     void addData(EffectData* data);
     void removeData(EffectData* data);
+    // an effect by name, its handle (0 for none)
+    unsigned int create(const char* name, EffectPack* pack, const effect::SendParam* param, bool flag);
+    void remove(unsigned int handle);
+    void dead(unsigned int handle);
+    void setAlpha(unsigned int handle, float alpha);
+    void setSpeed(unsigned int handle, float speed);
+    bool isExist(unsigned int handle);
     // a volume fade effect's parameters, none past the 32 (inline: the name is not the original's)
     const VolumeFadeParams* getVolumeFadeParams(unsigned int type) const {
         if (type >= 32) {

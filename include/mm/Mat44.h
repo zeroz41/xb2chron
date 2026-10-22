@@ -31,6 +31,8 @@ public:
     Mat44& operator=(const Mat44& ma) = default;
 
     float m[4][4];
+
+    static const Mat44 identity;
 } __attribute__((aligned(16)));
 
 }  // namespace mm

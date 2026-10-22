@@ -19,7 +19,7 @@ public:
     class StateDriverNotActive;
     class StateEnemyTarget;
     virtual ~GfGameTarget();  // slot 0
-    virtual void recieveMessage(fw::MessageObject*, fw::Message&);  // slot 2
+    virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 2
     virtual void gevChangeLeader(gf::GF_OBJ_HANDLE*);  // slot 3
     virtual void gevSwapFormation(unsigned int, unsigned int);  // slot 4
 };

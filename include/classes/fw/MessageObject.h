@@ -4,20 +4,26 @@
 #include "mm/mtl/RTTI.h"
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
+namespace fw { class PointerMap; }
 
 namespace fw {
 // table none (its derived classes')
 class MessageObject {
 public:
+    MessageObject();  // out of line (GfGamePlayerFormation::build and GfGamePlayerCamera::build call it)
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~MessageObject();  // slot 1
-    virtual void recieveMessage(fw::MessageObject*, fw::Message&);  // slot 3
+    // whether the message was handled (the base's returns false; GfGamePlayerCamera's true for the one it takes)
+    virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 3
     // hands msg to another object, from this one (inline: the name is not the original's)
     void sendMessage(fw::MessageObject* to, fw::Message& msg) {
         to->recieveMessage(this, msg);
     }
     static mm::mtl::RTTI m_rtti;
-    unsigned char pad_8[0x10];  // fields: size from its derived classes
+    // the constructor registers the object with MessageManager: its PointerMap's id for it, and that map (the
+    // destructor removes it; the names are not the original's)
+    unsigned int m_registId;
+    fw::PointerMap* m_pointerMap;
 };
 }  // namespace fw
 

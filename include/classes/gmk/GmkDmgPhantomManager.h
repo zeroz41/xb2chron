@@ -4,7 +4,7 @@
 #include "classes/gf/IGfEvent.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
-namespace gf { namespace IGfObjListener { enum OBJEVT : int; }}
+#include "classes/gf/IGfObjListener.h"
 
 namespace gmk {
 // a base of gmk::GmkDmgPhantomManager no evidence names yet

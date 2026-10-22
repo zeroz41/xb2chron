@@ -56,6 +56,7 @@ public:
     float z;
 
     static const Vec3 zero;
+    static const Vec3 unit;  // (1, 1, 1)
     static const Vec3 unitY;
     static const Vec3 unitZ;
 } __attribute__((aligned(16)));

@@ -1,19 +1,14 @@
 #ifndef CLASSES_GF_GFBDATMSG_H
 #define CLASSES_GF_GFBDATMSG_H
 
+#include "classes/gf/IDataBdat.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class QuestID; }
 
 namespace gf {
-// a base of gf::GfBdatMsg no evidence names yet: what BDAT reloads notify
-class TUnk_B471D0 {
-public:
-    virtual ~TUnk_B471D0() {}
-    virtual void bdatRefresh() = 0;
-};
-// table 0x7100B471A8; its singleton is the primary base, so the table's third slot is the listener's override
-class GfBdatMsg : public ::mm::mtl::PtrSingleton<GfBdatMsg>, public TUnk_B471D0 {
+// table 0x7100B471A8; its singleton is the primary base, so the table's third slot is IDataBdat's override
+class GfBdatMsg : public ::mm::mtl::PtrSingleton<GfBdatMsg>, public ::gf::IDataBdat {
 public:
     GfBdatMsg();
     virtual ~GfBdatMsg();  // slot 0

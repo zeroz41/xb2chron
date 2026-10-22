@@ -8,7 +8,7 @@ namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfMapManager; }
 namespace gf { class MapjumpCallbackInfo; }
 namespace gf { enum GEV : int; }
-namespace gf { namespace IGfObjListener { enum OBJEVT : int; }}
+#include "classes/gf/IGfObjListener.h"
 
 namespace gf {
 // a base of gf::GfMapManager no evidence names yet

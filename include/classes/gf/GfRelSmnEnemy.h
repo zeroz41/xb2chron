@@ -2,7 +2,7 @@
 #define CLASSES_GF_GFRELSMNENEMY_H
 
 namespace gf { class GF_OBJ_HANDLE; }
-namespace gf { namespace IGfObjListener { enum OBJEVT : int; }}
+#include "classes/gf/IGfObjListener.h"
 
 namespace gf {
 // table 0x7100B59128

@@ -11,7 +11,7 @@ namespace gf {
 class GfAssetSetupBladeForUi : public ::gf::GfAssetSetupBlade {
 public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfAssetSetupBladeForUi();  // slot 1
+    virtual ~GfAssetSetupBladeForUi() {}  // slot 1
     virtual void getUiMotFile(gf::GfAssetType);  // slot 10
     virtual void getUiStpFile(gf::GfAssetType);  // slot 17
     virtual void getUiMotSlot() const;  // slot 25

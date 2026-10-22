@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFOBJMANAGER_H
 
 #include "classes/gf/IGfEvent.h"
+#include "classes/gf/IGfObjListener.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class GfObjManager; }
@@ -18,6 +19,9 @@ public:
     virtual void gevMapjump(gf::GEV, gf::MapjumpCallbackInfo const&);  // slot 2
     void addDestroyObj(GF_OBJ_HANDLE* handle, bool flag);
     static GFOBJ_INFO* getObjInfo(GF_OBJ_HANDLE* handle);
+    // a listener called for the objects' events, and its removal
+    static void addListener(IGfObjListener* listener, IGfObjListener::OBJEVT evt);
+    static void removeListener(IGfObjListener* listener);
 };
 }  // namespace gf
 

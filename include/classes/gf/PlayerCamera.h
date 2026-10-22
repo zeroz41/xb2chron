@@ -4,10 +4,16 @@
 #include "fw/ParamAdapter.h"
 #include "mm/mtl/RTTI.h"
 #include "classes/fw/Camera.h"
+#include "mm/mtl/IntrusivePtr.h"
 
 namespace fw { class UpdateInfo; }
 
+namespace gf { class GF_OBJ_HANDLE; }
+
 namespace gf {
+// when a climb resets the player camera (GfGamePlayerCamera::resetCameraClimb passes it on); no values are known
+enum ResetCameraWallTiming : int {};
+
 // table 0x7100B45AE8
 class PlayerCamera : public ::fw::Camera {
 public:
@@ -39,6 +45,19 @@ public:
     virtual void update(fw::UpdateInfo const&);  // slot 8
     virtual void updateViewMatrix();  // slot 9
     static mm::mtl::RTTI m_rtti;
+    static mm::mtl::IntrusivePtr<PlayerCamera> create();
+    void reset();
+    void resetClimb(ResetCameraWallTiming timing);
+    void resetLoad();
+    void resetBattleWarp();
+    void setTarget(GF_OBJ_HANDLE* handle);
+    bool isManual();
+    float getSaveYaw() const;
+    float getSavePitch() const;
+    float getSaveDistance() const;
+    float getSaveHeight() const;
+    bool getSaveSide() const;
+    bool isSaveFreeMode() const;
 
     unsigned char pad_a8[0x8];
     fw::ParamAdapter m_param;  // the constructor's (PlayerCamera(fw::ParamAdapter&) in 1.0.0): a Param

@@ -1,22 +1,19 @@
 #ifndef CLASSES_GF_GFBDATCOND_H
 #define CLASSES_GF_GFBDATCOND_H
 
+#include "classes/gf/IDataBdat.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class GfBdatCond; }
 
 namespace gf {
-// a base of gf::GfBdatCond no evidence names yet
-class TUnk_B46BD0 {
+// table 0x7100B46BA8; IDataBdat at 0x8 (GfDataBdat::initialize keeps it in its list)
+class GfBdatCond : public ::mm::mtl::PtrSingleton< ::gf::GfBdatCond>, public ::gf::IDataBdat {
 public:
-    virtual ~TUnk_B46BD0();
-    virtual void bdatRefresh() = 0;
-};
-// table 0x7100B46BA8; base at 0x8 unknown (TUnk_B46BD0)
-class GfBdatCond : public ::mm::mtl::PtrSingleton< ::gf::GfBdatCond>, public TUnk_B46BD0 {
-public:
+    GfBdatCond();
     virtual ~GfBdatCond();  // slot 0
     virtual void bdatRefresh();  // slot 2
+    unsigned char pad_10[0x68];  // fields: size from GfDataBdat::initialize's allocation
 };
 }  // namespace gf
 

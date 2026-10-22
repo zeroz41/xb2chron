@@ -1,26 +1,40 @@
 #ifndef CLASSES_AI_AIMANAGER_H
 #define CLASSES_AI_AIMANAGER_H
 
-namespace gf { class GF_OBJ_HANDLE; }
-namespace gf { namespace IGfObjListener { enum OBJEVT : int; }}
+#include "classes/gf/IGfObjListener.h"
+#include "classes/mm/mtl/Singleton.h"
+#include "mm/mtl/FixedList.h"
+
+namespace fw { class UpdateInfo; }
+namespace ai { class AiData; }
 
 namespace ai {
-// a base of ai::AiManager no evidence names yet
-class TUnk_B3A360 {
+// table 0x7100B3A360; the AI of the objects in battle, one ai::AiData each (regist/unregist), told by
+// gf::GfObjManager when an object goes (listenerGfObj)
+class AiManager : public ::mm::mtl::Singleton< ::ai::AiManager>, public ::gf::IGfObjListener {
 public:
-    virtual ~TUnk_B3A360();
-    virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int) = 0;
-};
-// a base of ai::AiManager no evidence names yet
-class TUnk_B3A388 {
-public:
-    virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int) = 0;
-};
-// table 0x7100B3A360; base at 0x0 unknown (TUnk_B3A360), base at 0x8 unknown (TUnk_B3A388)
-class AiManager : public TUnk_B3A360, public TUnk_B3A388 {
-public:
+    // the list type 1.0.0's FixedList<ai::AiData*, 128>::erase names (the typedef's name is not the original's)
+    typedef mm::mtl::FixedList<AiData*, 128> DataList;
+
+    // btl::BattleManager::Initialize constructs it inline in Singleton::getPtr's static
+    AiManager() {}
     virtual ~AiManager();  // slot 0
-    virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 2
+    virtual void listenerGfObj(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle, unsigned int);  // slot 2
+
+    void init();
+    void destroy();
+    void update(const fw::UpdateInfo& info);
+    void regist(gf::GF_OBJ_HANDLE* handle, int id);
+    void unregist(gf::GF_OBJ_HANDLE* handle);
+    AiData* getDataFromHandle(gf::GF_OBJ_HANDLE* handle);
+    AiData* getDataFromId(int id, int index);  // the index-th of the data of that id
+    int getNumFromId(int id);
+
+private:
+    void _clear();
+
+public:
+    DataList m_dataList;  // the name is not the original's
 };
 }  // namespace ai
 

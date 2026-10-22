@@ -19,6 +19,7 @@ public:
     class StateTotalNext;
     class StateWait;
     virtual ~GfMenuFieldSkill();  // slot 0
+    static bool isRunning();  // whether the field skill menu is up
 };
 }  // namespace gf
 

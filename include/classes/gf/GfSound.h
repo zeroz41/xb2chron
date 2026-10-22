@@ -9,6 +9,7 @@
 namespace fw { enum SoundCategory : int; }
 namespace gf { class GF_SE_CATEGORY_HANDLE; }
 namespace gf { class GfSound; }
+namespace gf { class SoundParam; }
 
 namespace gf {
 // table 0x7100B6B940
@@ -27,6 +28,9 @@ public:
     SoundHandle playVoice(const char* path, float volume, bool loop, fw::SoundCategory category);
     bool getPlayTime(SoundHandle handle, float& time) const;
     bool isPlaying(SoundHandle handle) const;
+    SoundHandle playSe(const SoundParam& param);
+    void stopSe(SoundHandle handle, float time);
+    void setVolume(SoundHandle handle, float volume, float time);
 };
 }  // namespace gf
 

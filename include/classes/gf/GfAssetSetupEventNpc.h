@@ -13,7 +13,7 @@ namespace gf {
 class GfAssetSetupEventNpc : public ::gf::GfAssetSetupNpc {
 public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfAssetSetupEventNpc();  // slot 1
+    virtual ~GfAssetSetupEventNpc() {}  // slot 1
     virtual void getAssetCategoryName() const;  // slot 3
     virtual void getMotFile(gf::GfAssetType);  // slot 6
     virtual void getEvtMotFile(gf::GfAssetType);  // slot 8

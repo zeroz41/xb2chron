@@ -7,13 +7,15 @@
 namespace gf { class GF_ASSET_HANDLE; }
 namespace gf { class GfAssetPack; }
 namespace gf { class GfAssetType; }
+namespace gf { class GfInitParamMapSeamless; }
 
 namespace gf {
 // table 0x7100B44978
 class GfAssetSetupMapSeamless : public ::gf::GfAssetSetup {
 public:
+    GfAssetSetupMapSeamless();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfAssetSetupMapSeamless();  // slot 1
+    virtual ~GfAssetSetupMapSeamless() {}  // slot 1
     virtual void getMdlFile(gf::GfAssetType);  // slot 4
     virtual void getEfbFile(gf::GfAssetType);  // slot 13
     virtual void getMdlSlot() const;  // slot 19
@@ -29,7 +31,10 @@ public:
     virtual void getEpkSlot() const;  // slot 46
     virtual void getGIblSlot() const;  // slot 47
     virtual void getLIblSlot() const;  // slot 48
+    void setup(GF_ASSET_HANDLE* handle, const GfInitParamMapSeamless& param);
     static mm::mtl::RTTI m_rtti;
+
+    unsigned char pad_1fc[0x308 - 0x1FC];
 };
 }  // namespace gf
 

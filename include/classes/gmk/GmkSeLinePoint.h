@@ -9,7 +9,7 @@ class GmkSeLinePoint : public ::gmk::AGmkBase {
 public:
     class BdatInfo;
     virtual ~GmkSeLinePoint();  // slot 0
-    virtual void getGmkType() const;  // slot 2
+    virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void isValid() const;  // slot 3
 };
 }  // namespace gmk

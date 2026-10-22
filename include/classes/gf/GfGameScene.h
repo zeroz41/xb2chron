@@ -12,6 +12,7 @@ public:
     virtual ~GfGameScene();  // slot 0
     bool isEnableFieldBladeChange() const;
     void requestFieldBladeChange();
+    void setForceEventBgm(float time);
 };
 }  // namespace gf
 

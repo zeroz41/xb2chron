@@ -14,8 +14,9 @@ namespace gf {
 class GfGameRide : public ::mm::mtl::PtrSingleton< ::gf::GfGameRide>, public ::gf::IGfEvent, public ::fw::MessageObject {
 public:
     virtual ~GfGameRide();  // slot 0
-    virtual void recieveMessage(fw::MessageObject*, fw::Message&);  // slot 2
+    virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 2
     virtual void gevPartyReturnFieldState(unsigned int);  // slot 3
+    static bool isRideOnPair();
 };
 }  // namespace gf
 

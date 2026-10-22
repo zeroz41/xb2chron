@@ -11,6 +11,8 @@ public:
     virtual void getTrackName() const = 0;  // slot 2
     virtual bool isPlaying() const;  // slot 3
     virtual void update(fw::UpdateInfo const&);  // slot 4
+    float getPlayTime() const;
+    float getTotalTime() const;
     unsigned char pad_8[0x628];  // fields: size from its derived classes
 };
 }  // namespace gf

@@ -8,6 +8,7 @@
 namespace anm { class ExtraTruckBuffer; }
 namespace anm { class Pose; }
 namespace fw { class Message; }
+namespace fw { class ModelObject; }
 namespace fw { class MessageObject; }
 
 namespace gf {
@@ -21,7 +22,9 @@ public:
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     static mm::mtl::RTTI m_rtti;
 
-    unsigned char pad_10[0x10];
+    unsigned char pad_10[0x8];
+    // the model's object: GFOBJ_INFO::createVolumeFade fades its interface (the name is not the original's)
+    fw::ModelObject* m_model;
     // the model's frame (GfComDynamics binds its dynamics to it) (the name is not the original's)
     mm::mtl::IntrusivePtr<fw::ReferenceFrame> m_frame;
     unsigned char pad_28[0x8];

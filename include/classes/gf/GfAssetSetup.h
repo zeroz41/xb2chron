@@ -50,6 +50,12 @@ public:
     virtual void requestCoreResource(gf::GfAssetPack*, gf::GF_ASSET_HANDLE*);  // slot 38
     virtual void getAssetType() const;  // slot 39
     static mm::mtl::RTTI m_rtti;
+
+    unsigned char pad_8[0x8];
+    // the handle being set up: setupParam stores the one it is given, the destructor hands it to
+    // GfAssetManager::lockEnterRersource (the name is not the original's)
+    GF_ASSET_HANDLE* m_handle;
+    unsigned char pad_18[0x1FC - 0x18];  // the derived classes' first fields go in the tail (0x1FC)
 };
 }  // namespace gf
 

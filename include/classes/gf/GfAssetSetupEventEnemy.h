@@ -13,7 +13,7 @@ namespace gf {
 class GfAssetSetupEventEnemy : public ::gf::GfAssetSetupEnemy {
 public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfAssetSetupEventEnemy();  // slot 1
+    virtual ~GfAssetSetupEventEnemy() {}  // slot 1
     virtual void getAssetCategoryName() const;  // slot 3
     virtual void getEvtMotFile(gf::GfAssetType);  // slot 8
     virtual void getEvtStpFile(gf::GfAssetType);  // slot 16

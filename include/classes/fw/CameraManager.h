@@ -2,6 +2,8 @@
 #define CLASSES_FW_CAMERAMANAGER_H
 
 #include "classes/fw/CameraLayer.h"
+#include "classes/fw/CameraTarget.h"
+#include "mm/mtl/IntrusivePtr.h"
 #include "classes/fw/ManagerObject.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 
@@ -20,6 +22,9 @@ public:
     // the four layers the destructor cleans up: GfDeadCamera pushes onto the first, GfGameCamera a sub view camera
     // onto each of the others (the one its gf::VIEWCAM names)
     CameraLayer m_layers[4];
+    // what the cameras follow: GfGamePlayerCamera hands it its PlayerCameraTarget and clears it again; the name is
+    // not the original's
+    mm::mtl::IntrusivePtr<CameraTarget> m_target;
 };
 }  // namespace fw
 

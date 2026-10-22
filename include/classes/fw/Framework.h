@@ -13,6 +13,7 @@ class Framework : public ::mm::mtl::PtrSingleton< ::fw::Framework> {
 public:
     virtual ~Framework();  // slot 0
     static mm::mtl::IAllocator* getAllocator();
+    static unsigned int getFrameCount();
     unsigned char pad_8[0x50];
     ml::Scn* m_scn;  // what LayerSetManager gives layer::LayerManager; the name is not the original's
 };

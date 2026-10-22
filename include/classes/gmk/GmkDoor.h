@@ -6,7 +6,7 @@
 #include "classes/gmk/IGmkPhantomEventListener.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
-namespace gf { namespace IGfObjListener { enum OBJEVT : int; }}
+#include "classes/gf/IGfObjListener.h"
 
 namespace gmk {
 // a base of gmk::GmkDoor no evidence names yet
@@ -25,7 +25,7 @@ class GmkDoor : public ::gmk::AGmkBase, public TUnk_B6CDB0, public TUnk_B6CDD0 {
 public:
     class BdatInfo;
     virtual ~GmkDoor();  // slot 0
-    virtual void getGmkType() const;  // slot 2
+    virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6

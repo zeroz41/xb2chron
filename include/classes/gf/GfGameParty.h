@@ -5,7 +5,7 @@
 
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfGameParty; }
-namespace gf { namespace IGfObjListener { enum OBJEVT : int; }}
+#include "classes/gf/IGfObjListener.h"
 
 namespace gf {
 // a base of gf::GfGameParty no evidence names yet
@@ -20,6 +20,7 @@ public:
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 2
     static gf::GF_OBJ_HANDLE* getLeader();  // the party's leader, -1 for none
     static bool isBtlLeaderDirver();
+    static gf::GF_OBJ_HANDLE* getLeaderDriver();
 };
 }  // namespace gf
 

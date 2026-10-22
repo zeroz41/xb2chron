@@ -34,6 +34,7 @@ public:
     int getTimeRange() const;  // the time of day's range (an icon index)
     bool getTimeRangeName(unsigned char*& bdat, unsigned int& id) const;  // its name in a message table
     void getRealTime(RealTime& time) const;
+    unsigned int getTimeRangeBits() const;  // the time of day's range as a bit (WeatherInfo::isTimeRangeOK tests it)
 };
 }  // namespace gf
 

@@ -19,7 +19,7 @@ public:
     virtual ~GfObj();  // slot 1
     virtual void update(fw::UpdateInfo const&);  // slot 4
     virtual void onEvent(fw::ObjectEvent const&);  // slot 5
-    virtual void recieveMessage(fw::MessageObject*, fw::Message&);  // slot 6
+    virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 6
     static mm::mtl::RTTI m_rtti;
     GF_OBJ_HANDLE* m_handle;  // its handle: GfObjAcc(GfObj*) looks the object's info up by it
 };

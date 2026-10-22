@@ -25,6 +25,10 @@ public:
         m_nLen = 0;
     }
     explicit FixStr(const char* pszName) { *this = pszName; }
+    // a copy copies the text and its length only (GfEvtBgm's EventBgmSetup copies run strlen and strcpy on the
+    // name, then copy the fields after it)
+    FixStr(const FixStr& s) { *this = s.m_str; }
+    FixStr& operator=(const FixStr& s) { return *this = s.m_str; }
     FixStr& operator=(const char* pszName) {
 #line 219 MM_MTL_FIXSTR_H_FILE
         MM_ASSERT(pszName != 0);

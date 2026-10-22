@@ -12,8 +12,9 @@ namespace gf {
 // table 0x7100B43AA8
 class GfAssetSetupEnemy : public ::gf::GfAssetSetup {
 public:
+    GfAssetSetupEnemy();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfAssetSetupEnemy();  // slot 1
+    virtual ~GfAssetSetupEnemy() {}  // slot 1
     virtual void getMdlFile(gf::GfAssetType);  // slot 4
     virtual void getArcFile(gf::GfAssetType);  // slot 5
     virtual void getMotFile(gf::GfAssetType);  // slot 6
@@ -37,6 +38,8 @@ public:
     virtual void getAssetTypeMot() const;  // slot 42
     virtual void getAssetTypeArc() const;  // slot 43
     static mm::mtl::RTTI m_rtti;
+
+    unsigned char pad_200[0x8];
 };
 }  // namespace gf
 

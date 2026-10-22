@@ -9,7 +9,7 @@ class GmkDmgSe : public ::gmk::AGmkBase {
 public:
     class BdatInfo;
     virtual ~GmkDmgSe();  // slot 0
-    virtual void getGmkType() const;  // slot 2
+    virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void isValid() const;  // slot 3
     virtual void dispose();  // slot 5
 };

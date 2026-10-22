@@ -5,7 +5,7 @@
 
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfGameObj; }
-namespace gf { namespace IGfObjListener { enum OBJEVT : int; }}
+#include "classes/gf/IGfObjListener.h"
 
 namespace gf {
 // a base of gf::GfGameObj no evidence names yet

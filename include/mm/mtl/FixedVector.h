@@ -2,6 +2,7 @@
 #define MM_MTL_FIXEDVECTOR_H
 
 #include "mm/MMStdBase.h"
+#include "mm/mtl/Algorithm.h"
 #include "string.h"
 #include <new>
 
@@ -18,6 +19,14 @@ public:
     FixedVector() : m_size(0) {}
     ~FixedVector() {
         clear();
+    }
+    // GfAppendInfo's copy (gf_obj_info) clears before assign's assertion and again after it
+    FixedVector& operator=(const FixedVector& other) {
+        if (this != &other) {
+            clear();
+            assign(other.begin(), other.end());
+        }
+        return *this;
     }
 
     iterator begin() {
@@ -45,6 +54,19 @@ public:
         return begin() <= it && it <= end();
     }
 
+    // the elements from first to last (3.0.1's FixedVector<GfAppend::MOUNT_INFO, 4>::assign in gf_asset_setup)
+    void assign(const_iterator first, const_iterator last) {
+#line 270 "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/fixed_vector.h"
+        MM_ASSERT(first <= last);
+        clear();
+        if (first != last) {
+            unsigned long newSize = last - first;
+#line 275 "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/fixed_vector.h"
+            MM_ASSERT(newSize <= N);
+            uninitialized_copy_n(first, newSize, begin());
+            m_size = newSize;
+        }
+    }
     void push_back(const T& value) {
 #line 227 "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/fixed_vector.h"
         MM_ASSERT(size() < capacity());

@@ -4,7 +4,7 @@
 #include "classes/gmk/AGmkBase.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
-namespace gf { namespace IGfObjListener { enum OBJEVT : int; }}
+#include "classes/gf/IGfObjListener.h"
 
 namespace gmk {
 // table 0x7100B6DD88
@@ -13,7 +13,7 @@ public:
     class BdatInfo;
     class PopXformFinder;
     virtual ~GmkMob();  // slot 0
-    virtual void getGmkType() const;  // slot 2
+    virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void isValid() const;  // slot 3
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
     virtual void dispose();  // slot 5

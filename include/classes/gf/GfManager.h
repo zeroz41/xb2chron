@@ -13,6 +13,7 @@ namespace gf {
 class GfManager : public ::mm::mtl::PtrSingleton< ::gf::GfManager>, public ::fw::IPauseTrigger, public ::gf::IGfEvent {
 public:
     virtual ~GfManager();  // slot 0
+    static bool isDestroyNow();
     virtual void updatePauseCallback();  // slot 2
     virtual void gevGameState(gf::GF_STATE, gf::GF_STATE);  // slot 3
     virtual void activate();  // slot 4

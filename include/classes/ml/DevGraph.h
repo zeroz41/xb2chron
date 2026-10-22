@@ -18,6 +18,9 @@ public:
 class DevGraph : public ::ml::DevBase, public TUnk_B75DE0 {
 public:
     virtual ~DevGraph();  // slot 0
+    static int getRootWidth();
+    static int getRootHeight();
+    static float getFrameSyncSec();
     virtual void wkStandby();  // slot 8
     virtual void wkUpdate();  // slot 9
     virtual void wkTail();  // slot 12

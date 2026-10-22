@@ -13,7 +13,7 @@ namespace gf {
 class GfAssetSetupSalvage : public ::gf::GfAssetSetupDriver {
 public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfAssetSetupSalvage();  // slot 1
+    virtual ~GfAssetSetupSalvage() {}  // slot 1
     virtual void getAssetCategoryName() const;  // slot 3
     virtual void getMdlFile(gf::GfAssetType);  // slot 4
     virtual void getArcFile(gf::GfAssetType);  // slot 5

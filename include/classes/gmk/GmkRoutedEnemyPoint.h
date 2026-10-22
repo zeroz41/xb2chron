@@ -9,7 +9,7 @@ class GmkRoutedEnemyPoint : public ::gmk::GmkRoutePoint {
 public:
     class BdatInfo;
     virtual ~GmkRoutedEnemyPoint();  // slot 0
-    virtual void getGmkType() const;  // slot 2
+    virtual gmk::GmkType getGmkType() const;  // slot 2
 };
 }  // namespace gmk
 

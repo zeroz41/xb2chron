@@ -16,6 +16,7 @@ public:
     virtual ~GfComBehaviorGmk();  // slot 1
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     virtual void update(fw::UpdateInfo const&);  // slot 5
+    void createMenuObj();
     static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gf

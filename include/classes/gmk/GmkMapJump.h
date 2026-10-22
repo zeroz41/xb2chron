@@ -9,7 +9,7 @@ class GmkMapJump : public ::gmk::AGmkBase {
 public:
     class BdatInfo;
     virtual ~GmkMapJump();  // slot 0
-    virtual void getGmkType() const;  // slot 2
+    virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
     virtual void debugDraw() const;  // slot 7

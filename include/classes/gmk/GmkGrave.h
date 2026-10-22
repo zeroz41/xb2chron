@@ -4,7 +4,7 @@
 #include "classes/gmk/AGmkBase.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
-namespace gf { namespace IGfObjListener { enum OBJEVT : int; }}
+#include "classes/gf/IGfObjListener.h"
 
 namespace gmk {
 // table 0x7100B6CBD8
@@ -12,7 +12,7 @@ class GmkGrave : public ::gmk::AGmkBase {
 public:
     class BdatInfo;
     virtual ~GmkGrave();  // slot 0
-    virtual void getGmkType() const;  // slot 2
+    virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
     virtual void debugDraw() const;  // slot 7

@@ -6,7 +6,10 @@ namespace gf {
 // jingle)
 class SoundHandle {
 public:
+    SoundHandle();  // no sound: 0, then 0xFFFF
     SoundHandle(unsigned int id);  // stores id, then 0xFFFF
+    bool isValid() const;  // whether it holds a sound (a nonzero id)
+    void clear();  // back to no sound
     unsigned int m_id;  // the constructor's; the name is not the original's
     unsigned int pad_4;
 };

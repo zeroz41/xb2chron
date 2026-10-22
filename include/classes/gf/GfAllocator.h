@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFALLOCATOR_H
 
 #include "classes/mm/mtl/IAllocator.h"
+#include "mtl/AllocHandle.h"
 
 namespace gf {
 // table 0x7100B59810; an mm::mtl::IAllocator (GfComTransform::setup gives a vector getAllocator's result)
@@ -11,6 +12,7 @@ public:
     virtual void* allocate(unsigned long, unsigned long);  // slot 2
     virtual void deallocate(void*);  // slot 3
     virtual const char* getName() const;  // slot 4
+    mtl::ALLOC_HANDLE getMemHandle() const;  // its memory's handle
 };
 
 // which allocator: the code passes 0 (the battle managers) and 1 (the menus); the names are unknown

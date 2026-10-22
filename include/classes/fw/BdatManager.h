@@ -2,6 +2,7 @@
 #define CLASSES_FW_BDATMANAGER_H
 
 #include "classes/fw/ManagerObject.h"
+#include "mtl/AllocHandle.h"
 
 namespace fw { class UpdateInfo; }
 
@@ -19,6 +20,12 @@ public:
     virtual bool finalize();  // slot 3
     virtual void getName() const;  // slot 5
     virtual void update(fw::UpdateInfo const&);  // slot 8
+    // the BDAT files, by the slot each is loaded into: loading one from the named file into the handle's memory (true
+    // when the load started), whether a slot's file is loaded, a slot's release, and a loaded table by name
+    static bool loadBdat(int slot, mtl::ALLOC_HANDLE handle, const char* name);
+    static bool isEnableBdat(int slot);
+    static void unregistBdat(int slot);
+    static unsigned char* getFp(const char* name);
 };
 }  // namespace fw
 

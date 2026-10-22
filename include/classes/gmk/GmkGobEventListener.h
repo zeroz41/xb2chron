@@ -2,7 +2,7 @@
 #define CLASSES_GMK_GMKGOBEVENTLISTENER_H
 
 namespace gf { class GF_OBJ_HANDLE; }
-namespace gf { namespace IGfObjListener { enum OBJEVT : int; }}
+#include "classes/gf/IGfObjListener.h"
 
 namespace gmk {
 // table 0x7100B6BE80

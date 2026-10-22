@@ -4,7 +4,7 @@
 #include "classes/gf/IQuestEvent.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 
-namespace gf { class ActivateType; }
+namespace gf { enum ActivateType : int; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfGameManager; }
 namespace gf { struct OwnerBonus; }
@@ -88,6 +88,7 @@ class GfGameManager : public ::mm::mtl::PtrSingleton< ::gf::GfGameManager>, publ
 public:
     virtual ~GfGameManager();  // slot 0
     static gf::GF_OBJ_HANDLE* getPartyLeader();
+    static gf::GF_OBJ_HANDLE* getControlMover();  // the object the player controls
     // whether an event is playing; with sequential, a sequential play's inner event state counts too
     static bool isEvent(bool sequential);
     // whether the player is in a talk (a forced one, or the game state's talk flag)
@@ -100,6 +101,10 @@ public:
     static const gf::OwnerBonus* getOwnerBonus();
     // whether the PC may access objects on the field now
     static bool isEnableFieldAccess();
+    static bool isRoom();
+    static bool isFadeout();
+    static bool isStartGame();
+    static bool isLeaveGameForDebug();
     virtual void vf2();  // slot 2
     virtual void vf3();  // slot 3
     virtual void vf4();  // slot 4

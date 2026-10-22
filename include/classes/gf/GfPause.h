@@ -10,6 +10,7 @@ namespace gf {
 class GfPause : public ::mm::mtl::PtrSingleton< ::gf::GfPause> {
 public:
     virtual ~GfPause();  // slot 0
+    static bool isPause(unsigned int kind);
 };
 }  // namespace gf
 
