@@ -28,7 +28,29 @@ UIObjectWorldPosPlugin* UIObjectWorldPosPlugin::create(unsigned int handle) {
     return plugin;
 }
 
-// execute (0x710068737C) is not matched yet
+void UIObjectWorldPosPlugin::execute(UIObjectAcc& acc) {
+    UIObjectPosPlugin::execute(acc);
+    UIUtil::getObject(acc.m_handle);
+    mm::Vec3 pos = m_worldPos;
+    mm::Mat44 matrix;
+    matrix.m[0][0] = 1.0f;
+    matrix.m[0][1] = 0.0f;
+    matrix.m[0][2] = 0.0f;
+    matrix.m[0][3] = 0.0f;
+    matrix.m[1][0] = 0.0f;
+    matrix.m[1][1] = 1.0f;
+    matrix.m[1][2] = 0.0f;
+    matrix.m[1][3] = 0.0f;
+    matrix.m[2][0] = 0.0f;
+    matrix.m[2][1] = 0.0f;
+    matrix.m[2][2] = 1.0f;
+    matrix.m[2][3] = 0.0f;
+    matrix.m[3][0] = pos.x;
+    matrix.m[3][1] = pos.y;
+    matrix.m[3][2] = pos.z;
+    matrix.m[3][3] = 1.0f;
+    acc.setMatrix(matrix);
+}
 
 mm::mtl::RTTI UIObjectWorldPosPlugin::m_rtti("UIObjectWorldPosPlugin", &UIObjectPosPlugin::m_rtti, nullptr);
 
