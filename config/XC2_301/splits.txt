@@ -396,7 +396,7 @@ application/BF2/framework/ik/ik_trans_solver.cpp:
 	.init_array  start:0x00B8F880 end:0x00B8F888
 	.bss         start:0x00C23E88 end:0x00C23EA0
 
-unit_710018D804.cpp:
+application/BF2/framework/ik/ik_twojoint_solver.cpp:
 	.text        start:0x0018D804 end:0x0018D828
 	.rodata      start:0x00981474 end:0x009814D2
 	.init_array  start:0x00B8F888 end:0x00B8F890
@@ -2580,16 +2580,10 @@ gf/GfComBehaviorNpc.cpp:
 	.bss         start:0x00EABFF0 end:0x00EAC018
 
 gf/pc/PadBattle.cpp:
-	.text        start:0x004E0178 end:0x004E8140
-	.rodata      start:0x009A15E0 end:0x009A1926
-	.rodata      start:0x009C58DC end:0x009C59CC
-	.data        start:0x00B66AE0 end:0x00B67908
-
-gf/pc/AIAgentField.cpp:
-	.text        start:0x004E8140 end:0x004ECEA8
-	.rodata      start:0x009A1926 end:0x009A1CE9
-	.rodata      start:0x009C59CC end:0x009C5A24
-	.data        start:0x00B67908 end:0x00B67BB8
+	.text        start:0x004E0178 end:0x004ECEA8
+	.rodata      start:0x009A15E0 end:0x009A1CE9
+	.rodata      start:0x009C58DC end:0x009C5A24
+	.data        start:0x00B66AE0 end:0x00B67BB8
 	.init_array  start:0x00B8FAC0 end:0x00B8FAC8
 	.bss         start:0x00EAC030 end:0x00EAC080
 
@@ -3193,11 +3187,16 @@ application/BF2/ui/particle/ui_particle_emitter.cpp:
 	.data        start:0x00B74FB8 end:0x00B74FF8
 
 application/BF2/ui/particle/ui_particle_manager.cpp:
-	.text        start:0x00683750 end:0x00683DE4
-	.rodata      start:0x009A8954 end:0x009A8A07
+	.text        start:0x00683750 end:0x00683DBC
+	.rodata      start:0x009A8954 end:0x009A89A1
 	.data        start:0x00B74FF8 end:0x00B75038
+	.bss         start:0x00EC1C00 end:0x00EC1C08
+
+application/BF2/ui/plugin/ui_object_arrange_plugin.cpp:
+	.text        start:0x00683DBC end:0x00683DE4
+	.rodata      start:0x009A89A1 end:0x009A8A07
 	.init_array  start:0x00B8FC70 end:0x00B8FC78
-	.bss         start:0x00EC1C00 end:0x00EC1C20
+	.bss         start:0x00EC1C08 end:0x00EC1C20
 
 application/BF2/ui/plugin/ui_object_color_plugin.cpp:
 	.text        start:0x00683DE4 end:0x006842D0
@@ -3378,7 +3377,7 @@ ui/UIStr.cpp:
 	.init_array  start:0x00B8FD10 end:0x00B8FD18
 	.bss         start:0x00EC52E8 end:0x00EC5460
 
-unit_7100698234.cpp:
+users/MessageTestApplet.cpp:
 	.text        start:0x00698234 end:0x006982D8
 	.rodata      start:0x009A931C end:0x009A935E
 	.init_array  start:0x00B8FD18 end:0x00B8FD20
@@ -3598,8 +3597,12 @@ libs/eflib/source/ptlib/emitter/compute/particle_emitter_compute_uniform.cpp:
 	.bss         start:0x015EB770 end:0x015EB788
 
 libs/aiLib/src/ailib/behavior/ai_behavior_tree.cpp:
-	.text        start:0x00862BC8 end:0x00863910
-	.rodata      start:0x009AE816 end:0x009AE958
+	.text        start:0x00862BC8 end:0x008638E4
+	.rodata      start:0x009AE816 end:0x009AE94A
+
+libs/aiLib/src/ailib/behavior/node/ai_behavior_decorator.cpp:
+	.text        start:0x008638E4 end:0x00863910
+	.rodata      start:0x009AE94A end:0x009AE958
 	.init_array  start:0x00B8FD80 end:0x00B8FD88
 	.bss         start:0x015EB788 end:0x015EB7A0
 
@@ -3830,10 +3833,14 @@ libs/wndlib/src/wndlib/composite/wnd_area.cpp:
 	.rodata      start:0x009B0857 end:0x009B0914
 	.data        start:0x00B81768 end:0x00B817E0
 
+libs/wndlib/src/wndlib/composite/wnd_dispatcher.cpp:
+	.text        start:0x00893560 end:0x008935AC
+	.data        start:0x00B817E0 end:0x00B81800
+
 libs/wndlib/src/wndlib/composite/wnd_global_wind_manager.cpp:
-	.text        start:0x00893560 end:0x00893D6C
+	.text        start:0x008935AC end:0x00893D6C
 	.rodata      start:0x009B0914 end:0x009B099B
-	.data        start:0x00B817E0 end:0x00B81830
+	.data        start:0x00B81800 end:0x00B81830
 
 libs/wndlib/src/wndlib/wind/wnd_area_wind.cpp:
 	.text        start:0x00893D6C end:0x0089405C
@@ -3841,14 +3848,13 @@ libs/wndlib/src/wndlib/wind/wnd_area_wind.cpp:
 	.data        start:0x00B81830 end:0x00B81850
 
 libs/wndlib/src/wndlib/wind/wnd_blender.cpp:
-	.text        start:0x0089405C end:0x008943A4
+	.text        start:0x0089405C end:0x008946D0
 	.rodata      start:0x009B09F2 end:0x009B0A5B
-	.data        start:0x00B81850 end:0x00B81868
+	.data        start:0x00B81850 end:0x00B81880
 
 libs/wndlib/src/wndlib/wind/wnd_local_wind.cpp:
-	.text        start:0x008943A4 end:0x00894898
+	.text        start:0x008946D0 end:0x00894898
 	.rodata      start:0x009B0A5B end:0x009B0ABC
-	.data        start:0x00B81868 end:0x00B81880
 
 libs/wndlib/src/wndlib/wnd_probe.cpp:
 	.text        start:0x00894898 end:0x00894C08
@@ -3906,13 +3912,17 @@ ssd/StreamController.cpp:
 	.bss         start:0x015EC5C0 end:0x015EC5F0
 
 ssd/AudioFileAiff.cpp:
-	.text        start:0x008A9628 end:0x008B0C38
+	.text        start:0x008A9628 end:0x008B0BD8
 	.rodata      start:0x009B0D45 end:0x009B458A
 	.rodata      start:0x009D69CC end:0x009D7400
 	.rodata      start:0x00B39EF4 end:0x00B39F23
 	.data        start:0x00B823C8 end:0x00B82498
+	.bss         start:0x015EC5F0 end:0x015ED4B0
+
+libs/mcl/mm_lib/source/mm_math/mm_cylinder.cpp:
+	.text        start:0x008B0BD8 end:0x008B0C38
 	.init_array  start:0x00B8FDE8 end:0x00B8FDF0
-	.bss         start:0x015EC5F0 end:0x015EE000
+	.bss         start:0x015ED4B0 end:0x015EE000
 
 libs/mcl/mm_lib/source/mm_math/mm_obb.cpp:
 	.text        start:0x008B0C38 end:0x008B0C78

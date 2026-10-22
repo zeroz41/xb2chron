@@ -21,6 +21,7 @@ public:
     void cleanup();
     void attachRoot(unsigned int index);
     void attachComposite(unsigned int compositeIndex, unsigned int childIndex, unsigned int slot);
+    void attachDecorator(unsigned int decoratorIndex, unsigned int childIndex);
     void execute();
 
     BehaviorNode* getNode(unsigned int index) const { return m_nodes[index].get(); }

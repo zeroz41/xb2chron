@@ -1,5 +1,5 @@
 #include "ai/BehaviorTree.h"
-#include "ai/DecoratorNode.h"
+#include "classes/ai/DecoratorNode.h"
 #include "classes/ai/CompositeNode.h"
 
 namespace ai {
@@ -53,6 +53,19 @@ void BehaviorTree::attachComposite(unsigned int compositeIndex, unsigned int chi
     pComposite->attachChild(slot, pChildNode);
 }
 
+void BehaviorTree::attachDecorator(unsigned int decoratorIndex, unsigned int childIndex) {
+    BehaviorNode* node = getNode(decoratorIndex);
+    DecoratorNode* pDecorator = node != nullptr && node->getRTTI()->isKindOf(&DecoratorNode::m_rtti)
+                                    ? static_cast<DecoratorNode*>(node)
+                                    : nullptr;
+#line 121
+    MM_ASSERT(pDecorator);
+    BehaviorNode* pChildNode = getNode(childIndex);
+#line 124
+    MM_ASSERT(pChildNode);
+    pDecorator->attachChild(pChildNode);
+}
+
 void BehaviorTree::execute() {
     BlackBoard* pBB = m_blackBoard.get();
 #line 157
@@ -60,7 +73,5 @@ void BehaviorTree::execute() {
     bool result = m_root.execute(*pBB);
     m_root.BehaviorNode::setActiveNotiryChildren(*pBB, result);
 }
-
-mm::mtl::RTTI DecoratorNode::m_rtti("DecoratorNode", &BehaviorNode::m_rtti, nullptr);
 
 }  // namespace ai

@@ -1876,12 +1876,8 @@ gf/GfComBehaviorNpc.cpp:
 	.bss         start:0x014A1848 end:0x014A1860
 
 gf/pc/PadBattle.cpp:
-	.text        start:0x00538420 end:0x0053E698
-	.data        start:0x0119CA38 end:0x0119D5E0
-
-gf/pc/AIAgentField.cpp:
-	.text        start:0x0053E698 end:0x005438AC
-	.data        start:0x0119D5E0 end:0x0119D8D8
+	.text        start:0x00538420 end:0x005438AC
+	.data        start:0x0119CA38 end:0x0119D8D8
 	.bss         start:0x014A1898 end:0x014A18B0
 
 application/BF2/gf/object/component/pc/field/ai/gf_pc_ai_follow_task_field.cpp:
