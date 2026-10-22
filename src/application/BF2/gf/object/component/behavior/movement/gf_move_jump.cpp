@@ -1,9 +1,26 @@
 #include "classes/gf/GfMoveJumpControler.h"
+#include "fw/UpdateInfo.h"
 #include "mm/Math.h"
 
 namespace gf {
 
-// update (0x71004A832C) is not matched yet
+void GfMoveJumpControler::update(const fw::UpdateInfo& info, Packet& packet) {
+    float deltaTime = info.m_deltaTime;
+    const Param* param = packet.m_param.get<Param>();
+    float target = param->m_maxSpeed * packet.m_inputRate;
+    // the speed along the facing, and the facing, copied before the branches
+    float speed = packet.m_velocity.dot(packet.m_direction);
+    mm::Vec3 direction = packet.m_direction;
+    if (target > speed) {
+        speed = speed + deltaTime * param->m_acceleration;
+        speed = speed < target ? speed : target;
+    } else if (target < speed) {
+        speed = speed - deltaTime * param->m_acceleration;
+        speed = speed > target ? speed : target;
+    }
+    packet.m_velocity = direction * speed;
+    calcAngularVelocity(info.m_deltaTime, packet);
+}
 
 void GfMoveJumpControler::calcAngularVelocity(float deltaTime, Packet& packet) {
     const Param* param = packet.m_param.get<Param>();

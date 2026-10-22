@@ -10,6 +10,9 @@ namespace gf {
 class GfGameInsideBattleLock : public ::mm::mtl::PtrSingleton< ::gf::GfGameInsideBattleLock> {
 public:
     virtual ~GfGameInsideBattleLock();  // slot 0
+
+    unsigned char pad_8[0x18];
+    bool m_hasLock;  // update sets it while any of the gimmick sets' battle-lock gimmicks holds something
 };
 }  // namespace gf
 

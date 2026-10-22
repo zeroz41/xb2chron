@@ -3,7 +3,18 @@
 
 namespace gf {
 
-// enter (0x71004A8630) and update (0x71004A868C) are not matched yet
+void GfMoveRunControler::enter(Packet& packet, bool accelerate) {
+    const Param* param = packet.m_param.get<Param>();
+    const mm::Vec3& direction = packet.m_direction;
+    if (accelerate) {
+        float speed = param->m_minSpeed + (param->m_maxSpeed * packet.m_speedRate - param->m_minSpeed) * packet.m_inputRate;
+        packet.m_velocity = mm::Vec3(speed * direction.x, speed * direction.y, speed * direction.z);
+    } else {
+        packet.m_velocity = direction * param->m_minSpeed;
+    }
+}
+
+// update (0x71004A868C) is not matched yet
 
 void GfMoveRunControler::calcAngularVelocity(float deltaTime, Packet& packet) {
     const Param* param = packet.m_param.get<Param>();

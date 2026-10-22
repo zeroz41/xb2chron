@@ -12,6 +12,10 @@ public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~MessageObject();  // slot 1
     virtual void recieveMessage(fw::MessageObject*, fw::Message&);  // slot 3
+    // hands msg to another object, from this one (inline: the name is not the original's)
+    void sendMessage(fw::MessageObject* to, fw::Message& msg) {
+        to->recieveMessage(this, msg);
+    }
     static mm::mtl::RTTI m_rtti;
     unsigned char pad_8[0x10];  // fields: size from its derived classes
 };

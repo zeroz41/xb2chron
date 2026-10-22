@@ -4,6 +4,9 @@
 #include "mm/mtl/RTTI.h"
 #include "classes/fw/IColiEventListener.h"
 #include "classes/gf/GfComponent.h"
+#include "mm/mtl/Vector.h"
+
+namespace fw { class ColiObject; }
 
 namespace gf {
 // a base of gf::GfComCollider no evidence names yet
@@ -24,6 +27,8 @@ public:
     virtual void leave(fw::IColiEventListener::LeaveInfo const&);  // slot 6
     virtual void contact(fw::IColiEventListener::EnterInfo const&);  // slot 7
     static mm::mtl::RTTI m_rtti;
+
+    mm::mtl::Vector<fw::ColiObject*> m_coliObjects;  // its collision objects
 };
 }  // namespace gf
 

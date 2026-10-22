@@ -8,7 +8,7 @@ namespace navi {
 class NvmshAcObjBase {
 public:
     virtual ~NvmshAcObjBase();  // slot 0
-    virtual void getMoveVec() const;  // slot 2
+    virtual const mm::Vec3& getMoveVec() const;  // slot 2
     virtual void setBeginPos(mm::Vec3 const&);  // slot 3
     virtual void setEndPos(mm::Vec3 const&);  // slot 4
     virtual void setBeginRadius(float);  // slot 5

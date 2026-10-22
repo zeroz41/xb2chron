@@ -10,6 +10,13 @@ namespace gf { namespace pc {
 // table 0x7100B69620
 class ColVelCalculatorPlugin : public ::gf::Plugin {
 public:
+    // the PC's parameter entry update reads (the property's list's 1); the name is not the original's
+    struct Param {
+        unsigned char pad_0[0x10];
+        float m_brake;     // how fast the carried movement dies down off the ground, per second
+        float m_maxSpeed;  // the carried movement's top speed
+    };
+
     ColVelCalculatorPlugin();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~ColVelCalculatorPlugin() {}  // slot 1
