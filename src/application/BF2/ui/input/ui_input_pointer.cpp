@@ -21,23 +21,6 @@
 
 namespace ui {
 
-// UIInputPad's: ui_input_pad.cpp's code ends before them in the original's order
-EventData* UIInputPad::getInputEventExt() {
-    return &m_eventExt;
-}
-
-bool UIInputPad::hasEventExt() const {
-    return m_eventExt.m_type != 0;
-}
-
-void UIInputPad::clearExt() {
-    m_eventExt = EventData(0);
-}
-
-UIInputPad* UIInputPad::castUIInputPad() {
-    return this;
-}
-
 UIInputPointer::~UIInputPointer() {
     if (m_selection.m_list != nullptr) {
         m_selection.m_list->release();

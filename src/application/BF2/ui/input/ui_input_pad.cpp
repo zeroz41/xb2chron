@@ -217,4 +217,20 @@ int UIInputPad::moveSelect(const fw::PadData& pad, unsigned int step, int select
 // fixSelectNo (0x710067A41C): not identical yet (wip/ui_input_pad.cpp: the wrapping return of a line move from
 // the first line and the blocks that set the event are laid out apart from the original)
 
+EventData* UIInputPad::getInputEventExt() {
+    return &m_eventExt;
+}
+
+bool UIInputPad::hasEventExt() const {
+    return m_eventExt.m_type != 0;
+}
+
+void UIInputPad::clearExt() {
+    m_eventExt = EventData(0);
+}
+
+UIInputPad* UIInputPad::castUIInputPad() {
+    return this;
+}
+
 }  // namespace ui
