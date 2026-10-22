@@ -99,7 +99,12 @@ public:
         MM_ASSERT(m_size > size_type(0U));
         if (m_size > 0) {
             --m_size;
-            at(m_size)->~T();
+            // destroyed at the buffer's byte offset, checked for null (as push_back constructs it:
+            // FixedVector<IntrusivePtr<FootPlacementIKSolver>, 6>::resize in ik_two_chara_ground_solver keeps it)
+            T* element = static_cast<T*>(static_cast<void*>(m_buffer + m_size * sizeof(T)));
+            if (element != nullptr) {
+                element->~T();
+            }
         }
     }
     // to n elements: copies of value pushed at the end, or the last ones dropped
