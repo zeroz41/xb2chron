@@ -7,14 +7,14 @@ namespace fw { class MessageObject; }
 namespace fw { class PointerMap; }
 
 namespace fw {
-// table none (its derived classes')
+// table 0x7100B421C8 (unnamed in the symbols: lbl_7100B421C8)
 class MessageObject {
 public:
     MessageObject();  // out of line (GfGamePlayerFormation::build and GfGamePlayerCamera::build call it)
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~MessageObject();  // slot 1
     // whether the message was handled (the base's returns false; GfGamePlayerCamera's true for the one it takes)
-    virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 3
+    virtual bool recieveMessage(fw::MessageObject*, fw::Message&) { return false; }  // slot 3
     // hands msg to another object, from this one: whether it was handled (inline: the name is not the original's;
     // TargetIKPlugin::update uses the answer)
     bool sendMessage(fw::MessageObject* to, fw::Message& msg) {

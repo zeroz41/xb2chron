@@ -4,6 +4,7 @@
 #include "classes/fw/ManagerObject.h"
 
 namespace fw { class UpdateInfo; }
+namespace fw { class MessageObject; }
 
 namespace fw {
 // a base of fw::MessageManager no evidence names yet
@@ -21,6 +22,8 @@ public:
     virtual const char* getName() const;  // slot 5
     virtual void update(fw::UpdateInfo const&);  // slot 8
     virtual void tail(fw::UpdateInfo const&);  // slot 9
+    void registObject(fw::MessageObject* object);  // MessageObject's constructor
+    void removeObject(fw::MessageObject* object);  // MessageObject's destructor
 };
 }  // namespace fw
 

@@ -36,12 +36,22 @@ public:
         return component->getRTTI()->isKindOf(&T::m_rtti) ? static_cast<T*>(component) : nullptr;
     }
 
+    // set once the object is to be deleted: UpdatableGroup's update and execEvent skip it, its tail deletes it
+    bool isTerminate() const;
     static mm::mtl::RTTI m_rtti;
-    unsigned char pad_8[0x20];
+    unsigned char pad_8[0x10];
+    // the constructor's handle: UpdatableGroup hands its index back to its map once it deletes the object (the
+    // name is not the original's)
+    fw::HandlePtr<fw::UpdatableObject> m_handle;
     // its kind, the constructor's first argument (GfObj::getTypeName names a GfObj's; 5 an enemy's, by
     // GfGameInsideBattleLock::isInsideBattleLock; the name is not the original's)
     unsigned int m_type;
-    unsigned char pad_2c[0xc];
+    // the constructor's last argument: a bit UpdatableGroup::update and execEvent test against their mask (the
+    // name is not the original's)
+    unsigned int m_updateBit;
+    // bit 0 is isTerminate's (the name is not the original's)
+    unsigned short m_flags;
+    unsigned char pad_32[0x6];
     fw::ComponentObject* m_components[16];  // by kind: registComponentLocal sets one, the constructor clears them
     unsigned char pad_b8[0x28];  // fields: size from its derived classes
 };

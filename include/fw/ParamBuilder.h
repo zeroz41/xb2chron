@@ -10,6 +10,8 @@ class ParamBuilder {
 public:
     // the list built from binary, which ParamManager keeps as index's (the xml's path names it)
     static mm::mtl::IntrusivePtr<ParamList> create(void* binary, unsigned int index, const char* name);
+    // a list built from binary, holding reflection when one is given
+    static mm::mtl::IntrusivePtr<ParamList> importBinary(void* binary, Reflection* reflection);
     // index's list released
     static void destroy(unsigned int index);
 };
