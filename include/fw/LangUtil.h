@@ -27,7 +27,8 @@ public:
     static void setVoiceType(LangType type);
     // the device's languages with a voice folder no language before them has, each with that folder
     static LangList& getVoiceList(LangList& list);
-    static const char* getLangFolder();   // the selected language's text folder ("jp", "gb", ...)
+    // the selected language's text folder ("jp", "gb", ...): its FixStr, which fw::LocalizeResource hands on as it is
+    static const mm::mtl::FixStr<16>& getLangFolder();
     static const char* getVoiceFolder();  // the selected voice language's folder ("jp" or "us")
 
     static LangType m_selectLang;

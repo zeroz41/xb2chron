@@ -10,7 +10,7 @@ namespace event {
 class StmPackData : public ::ml::IWorkEvent {
 public:
     virtual ~StmPackData();  // slot 0
-    virtual void OnFileEvent(ml::EventFileTh*);  // slot 7
+    virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
 };
 }  // namespace event
 

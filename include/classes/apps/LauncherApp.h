@@ -29,7 +29,7 @@ public:
     virtual void OnShutdownForce();  // slot 3
     virtual void OnPauseTrigger(bool, char const*);  // slot 5
     virtual void OnViewResize(ml::EventView*);  // slot 6
-    virtual void OnFileEvent(ml::EventFileTh*);  // slot 7
+    virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
     virtual void wkUpdate();  // slot 9
     virtual void wkRender();  // slot 10
     virtual void wkTail();  // slot 12

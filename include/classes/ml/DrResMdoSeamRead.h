@@ -10,7 +10,7 @@ namespace ml {
 class DrResMdoSeamRead : public ::ml::IWorkEvent {
 public:
     virtual ~DrResMdoSeamRead();  // slot 0
-    virtual void OnFileEvent(ml::EventFileTh*);  // slot 7
+    virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
 };
 }  // namespace ml
 

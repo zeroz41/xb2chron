@@ -67,6 +67,34 @@ public:
         return -1;
     }
 
+    // the len characters from s (all the rest for -1), none from an empty one (fw::LocalizeResource::
+    // makeLocalizeFilePath; fixstr.h asserts `s < m_nLen && s+len <= m_nLen`; the name is not the original's)
+    FixStr substr(int s, int len = -1) const {
+        FixStr result;
+        if (m_nLen != 0) {
+            if (len == -1) {
+                len = m_nLen - s;
+            }
+#line 462 MM_MTL_FIXSTR_H_FILE
+            MM_ASSERT(s < m_nLen && s+len <= m_nLen);
+            strncpy(result.m_str, m_str + s, len);
+            result.m_str[len] = '\0';
+            result.m_nLen = strlen(result.m_str);
+        }
+        return result;
+    }
+    // the last n characters dropped, at most all of them (fw::LocalizeResource::makeLocalizeFilePath; the name is
+    // not the original's)
+    void cutBack(int n) {
+        if (m_nLen < n) {
+            n = m_nLen;
+        }
+        if (n > 0) {
+            m_nLen -= n;
+            m_str[m_nLen] = '\0';
+        }
+    }
+
     char m_str[LEN];  // the text: format() copies what it formats here
     int m_nLen;  // fixstr.h asserts `m_nLen < LEN` as it stores a new text's length
 };

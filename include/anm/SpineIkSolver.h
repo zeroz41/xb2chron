@@ -42,8 +42,13 @@ public:
     };
     // which bones solve turned
     struct Output {
+        // clears both (fw::SpineIkSolver::calcIK's: the values as one word)
+        Output() : flags(0), values() {}
+
         unsigned int flags;  // bit 0: the first bone's, bit 1: the second's
-        unsigned char pad_4[0x8];
+        // a value per bone solve sets with its flag (fw::SpineIkSolver::calcIK keeps them; what they are is not
+        // known yet, and the name is not the original's)
+        float values[2];
     };
 
     static void solve(const Description& desc, const Input& input, QsTransform* pTransform0, QsTransform* pTransform1,

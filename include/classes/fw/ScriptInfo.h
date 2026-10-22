@@ -10,7 +10,7 @@ namespace fw {
 class ScriptInfo : public ::ml::IWorkEvent {
 public:
     virtual ~ScriptInfo();  // slot 0
-    virtual void OnFileEvent(ml::EventFileTh*);  // slot 7
+    virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
     void start();
     bool isLoadErr() const;
     bool isFinish() const;

@@ -10,7 +10,7 @@ namespace gf {
 class GfGameSave : public ::ml::IWorkEvent {
 public:
     virtual ~GfGameSave();  // slot 0
-    virtual void OnFileEvent(ml::EventFileTh*);  // slot 7
+    virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
 };
 }  // namespace gf
 

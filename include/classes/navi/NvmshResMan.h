@@ -10,7 +10,7 @@ namespace navi {
 class NvmshResMan : public ::ml::IWorkEvent {
 public:
     virtual ~NvmshResMan();  // slot 0
-    virtual void OnFileEvent(ml::EventFileTh*);  // slot 7
+    virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
 };
 }  // namespace navi
 

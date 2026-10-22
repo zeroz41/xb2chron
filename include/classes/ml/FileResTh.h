@@ -20,7 +20,7 @@ public:
     virtual void load(mtl::ALLOC_HANDLE, char const*, unsigned int, ml::FILE_PRIO);  // slot 8
     virtual void load(mm::mtl::IAllocator*, char const*, unsigned int, ml::FILE_PRIO);  // slot 9
     virtual void release();  // slot 10
-    virtual void OnFileEvent(ml::EventFileTh*);  // slot 11
+    virtual bool OnFileEvent(ml::EventFileTh*);  // slot 11
 };
 }  // namespace ml
 

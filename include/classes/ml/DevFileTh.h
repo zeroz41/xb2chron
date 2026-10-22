@@ -4,6 +4,7 @@
 #include "classes/ml/DevBase.h"
 
 namespace ml { class CERR_STRUCT; }
+namespace ml { class IWorkEvent; }
 namespace ml { enum ERR_DECIDE : int; }
 
 namespace ml {
@@ -29,6 +30,9 @@ public:
     virtual void wkStandbyLogout();  // slot 15
     virtual void icbError(ml::CERR_STRUCT*);  // slot 17
     virtual void icbDecide(ml::CERR_STRUCT*, ml::ERR_DECIDE);  // slot 18
+    // asks whether a file exists; the answer comes to listener's OnFileEvent (fw::LocalizeResource's update). What
+    // it returns is a pointer or none (unused by its callers seen so far); the parameter names are not the original's
+    static void* checkValidFile(const char* path, ml::IWorkEvent* listener);
 };
 }  // namespace ml
 

@@ -1,4 +1,5 @@
 #include "fw/LangUtil.h"
+#include "fw/LangUtil.h"
 #include "classes/ml/DevSetting.h"
 
 namespace fw {
@@ -105,8 +106,8 @@ LangUtil::LangList& LangUtil::getVoiceList(LangList& list) {
     return list;
 }
 
-const char* LangUtil::getLangFolder() {
-    return s_folders[0][m_selectLang].m_str;
+const mm::mtl::FixStr<16>& LangUtil::getLangFolder() {
+    return s_folders[0][m_selectLang];
 }
 
 const char* LangUtil::getVoiceFolder() {

@@ -14,7 +14,8 @@ public:
     virtual bool IsShutdownForce() { return true; }  // slot 4
     virtual void OnPauseTrigger(bool, char const*) {}  // slot 5
     virtual void OnViewResize(ml::EventView*) {}  // slot 6
-    virtual void OnFileEvent(ml::EventFileTh*);  // slot 7
+    // whether it took the event (the base takes none: FrameworkLauncher's copy returns false)
+    virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
 };
 }  // namespace ml
 

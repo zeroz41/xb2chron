@@ -32,7 +32,7 @@ public:
     SpineIkSolver()
         : m_target(mm::Vec3::zero), m_localTarget(mm::Vec3::zero), m_frontMS(mm::Vec3::unitZ), m_targetFade(false),
           m_targetFadeRotation0(mm::Quat::identity), m_targetFadeRotation1(mm::Quat::identity),
-          m_targetFadeElapsed(0.0f), m_targetFadeTime(0.0f), pad_b8() {}
+          m_targetFadeElapsed(0.0f), m_targetFadeTime(0.0f), m_solveValues() {}
     virtual ~SpineIkSolver();  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     virtual void onDisable();  // slot 6
@@ -68,7 +68,8 @@ public:
     mm::Quat m_targetFadeRotation1;
     float m_targetFadeElapsed;
     float m_targetFadeTime;
-    float pad_b8[2];  // unknown: the constructor zeroes them
+    // the last solve's Output::values (calcIK copies them; the constructor zeroes them)
+    float m_solveValues[2];
 };
 }  // namespace fw
 

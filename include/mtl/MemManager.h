@@ -26,4 +26,9 @@ public:
 
 }  // namespace mtl
 
+// `new (handle, file, line, alignment, flag) T(...)` from a monolib memory handle (fw::LocalizeResource::request and
+// RenderResource::request pass none, 0, 4, false); the parameter names are not the original's
+void* operator new(unsigned long size, mtl::ALLOC_HANDLE handle, const char* file, unsigned long line, int alignment,
+                   bool flag);
+
 #endif
