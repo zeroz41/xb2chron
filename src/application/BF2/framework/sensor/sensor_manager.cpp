@@ -49,11 +49,65 @@ void SensorManager::removeUpdaterAfterAnimation(unsigned int group, SensorUpdate
 }
 
 
+void SensorManager::flushBeforeGame(const UpdateInfo&, unsigned int groupMask) {
+    anm::ThreadPool* pool = mm::mtl::PtrSingleton<AnimationManager>::get()->m_threadPool;
+    for (unsigned int i = 0; i < 32; i++) {
+        if (((1 << i) & groupMask) != 0) {
+            mm::mtl::IntrusiveList<SensorUpdater>& list = m_groups[i].m_beforeGame;
+            unsigned int count = list.m_size;
+            mm::mtl::IntrusiveList<SensorUpdater>::iterator it = list.begin();
+            unsigned int rest = count & 1;
+            for (unsigned int k = 0; k < count / 2; k++) {
+                SensorUpdateJob job(2);
+                job.m_updaters[0] = &*it;
+                ++it;
+                job.m_updaters[1] = &*it;
+                ++it;
+                m_jobQueue->push(job);
+            }
+            if (rest != 0) {
+                SensorUpdateJob job(rest);
+                for (unsigned int j = 0; j < rest; j++) {
+                    job.m_updaters[j] = &*it;
+                    ++it;
+                }
+                m_jobQueue->push(job);
+            }
+        }
+    }
+    pool->processAllJob(*m_jobQueue);
+    pool->waitForCompletion();
+}
 
-// flushBeforeGame (0x710019E7B4) and flushAfterAnimation (0x710019E97C) are not here: the original calls
-// SensorUpdateJob's constructor where this file inlines it, as if the job were another file's (its constructor and
-// exec, 0x710019E128..0x710019E1A0, with _TYPE_NAME and its string); split that way they are identical (see the
-// worker's split/ files)
+void SensorManager::flushAfterAnimation(const UpdateInfo&, unsigned int groupMask) {
+    anm::ThreadPool* pool = mm::mtl::PtrSingleton<AnimationManager>::get()->m_threadPool;
+    for (unsigned int i = 0; i < 32; i++) {
+        if (((1 << i) & groupMask) != 0) {
+            mm::mtl::IntrusiveList<SensorUpdater>& list = m_groups[i].m_afterAnimation;
+            unsigned int count = list.m_size;
+            mm::mtl::IntrusiveList<SensorUpdater>::iterator it = list.begin();
+            unsigned int rest = count & 1;
+            for (unsigned int k = 0; k < count / 2; k++) {
+                SensorUpdateJob job(2);
+                job.m_updaters[0] = &*it;
+                ++it;
+                job.m_updaters[1] = &*it;
+                ++it;
+                m_jobQueue->push(job);
+            }
+            if (rest != 0) {
+                SensorUpdateJob job(rest);
+                for (unsigned int j = 0; j < rest; j++) {
+                    job.m_updaters[j] = &*it;
+                    ++it;
+                }
+                m_jobQueue->push(job);
+            }
+        }
+    }
+    pool->processAllJob(*m_jobQueue);
+    pool->waitForCompletion();
+}
 
 const char* SensorManager::getName() const {
     return "SensorManager";
