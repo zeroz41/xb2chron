@@ -13,7 +13,7 @@ application/BF2/battle/ai/ai_manager.cpp:
 	.text        start:0x000028F0 end:0x00003080
 	.data        start:0x01171408 end:0x01171448
 
-ai/AiScriptDataManager.cpp:
+application/BF2/battle/AiScriptDataManager.cpp:
 	.text        start:0x00003080 end:0x0000361C
 	.data        start:0x01171448 end:0x01171468
 	.bss         start:0x011C9180 end:0x011CC5B8
@@ -54,10 +54,10 @@ application/BF2/battle/chain_attack_manager.cpp:
 	.data        start:0x01171918 end:0x01171970
 	.bss         start:0x011CD2B8 end:0x011CD3D8
 
-btl/ActionCommand.cpp:
+application/BF2/battle/ActionCommand.cpp:
 	.text        start:0x0001DEC8 end:0x0001DF18
 
-btl/BattleCharacter.cpp:
+application/BF2/battle/BattleCharacter.cpp:
 	.text        start:0x0001DF18 end:0x000612BC
 	.data        start:0x01171970 end:0x01171E88
 	.bss         start:0x011CD3D8 end:0x011CD408
@@ -74,7 +74,7 @@ application/BF2/battle/character/character_parameter_battle.cpp:
 	.text        start:0x00068B9C end:0x00069E88
 	.data        start:0x011720D8 end:0x01172290
 
-btl/EnemyParameter.cpp:
+application/BF2/battle/EnemyParameter.cpp:
 	.text        start:0x00069E88 end:0x00071160
 	.data        start:0x01172290 end:0x01172468
 
@@ -86,11 +86,11 @@ application/BF2/battle/effect/effect_manager_battle.cpp:
 	.text        start:0x00079548 end:0x0007C58C
 	.data        start:0x011724A8 end:0x01172530
 
-btl/EffectMoveComponent.cpp:
+application/BF2/battle/EffectMoveComponent.cpp:
 	.text        start:0x0007C58C end:0x0007D984
 	.data        start:0x01172530 end:0x01172590
 
-btl/EffectObject.cpp:
+application/BF2/battle/EffectObject.cpp:
 	.text        start:0x0007D984 end:0x000819C0
 
 application/BF2/battle/hate_ring_manager.cpp:
@@ -116,34 +116,34 @@ application/BF2/battle/ui_manager_battle.cpp:
 	.text        start:0x0008D8B0 end:0x0008FD30
 	.data        start:0x01172750 end:0x01172790
 
-event/CharaObj.cpp:
+application/BF2/CharaObj.cpp:
 	.text        start:0x0008FD30 end:0x00141110
 	.rodata      start:0x00F68994 end:0x00F68A94
 	.rodata      start:0x00F75F50 end:0x00F75F60
 	.data        start:0x01172790 end:0x01176B18
-	.bss         start:0x011CD56C end:0x0125BFA0
+	.bss         start:0x011CD468 end:0x0125BFA0
 
-dir/ChildListNode.cpp:
+application/BF2/ChildListNode.cpp:
 	.text        start:0x00141110 end:0x00141198
 	.data        start:0x01176B90 end:0x01176BD8
 
-dir/SingleListNode.cpp:
+application/BF2/SingleListNode.cpp:
 	.text        start:0x00141198 end:0x001415E4
 	.data        start:0x01176BD8 end:0x01176C28
 
-dir/VwProcess.cpp:
+application/BF2/VwProcess.cpp:
 	.text        start:0x001415E4 end:0x00141DB0
 	.data        start:0x01176C28 end:0x01176CB8
 
-dir/VwTaskRoot.cpp:
+application/BF2/VwTaskRoot.cpp:
 	.text        start:0x00141DB0 end:0x001420A0
 
-tl/TitleApp.cpp:
+application/BF2/TitleApp.cpp:
 	.text        start:0x001420A0 end:0x00142C18
 	.data        start:0x01176D08 end:0x01176E50
 	.bss         start:0x0125C0B8 end:0x0125C0D0
 
-tl/TitleApplet.cpp:
+application/BF2/TitleApplet.cpp:
 	.text        start:0x00142C18 end:0x00142D38
 	.data        start:0x01176E50 end:0x01176EE8
 
@@ -152,30 +152,26 @@ application/BF2/execute/title/title_main.cpp:
 	.data        start:0x01176EE8 end:0x011770D8
 	.bss         start:0x0125C0D0 end:0x0125C0D8
 
-tl/TitleStateMainScreen.cpp:
-	.text        start:0x00146FA0 end:0x00147F08
-	.data        start:0x011770F0 end:0x01177308
-
-tl/TitleStatePlayGame.cpp:
-	.text        start:0x00147F08 end:0x00149F14
-	.data        start:0x01177308 end:0x011775E8
+application/BF2/TitleStateMainScreen.cpp:
+	.text        start:0x00146FA0 end:0x00149F14
+	.data        start:0x011770F0 end:0x011775E8
 
 application/BF2/framework/anim/anim_manager.cpp:
 	.text        start:0x00149F14 end:0x0014B1D0
 	.data        start:0x011775E8 end:0x01177680
 	.bss         start:0x0125C0D8 end:0x0125C0E0
 
-fw/AssetData.cpp:
+application/BF2/framework/AssetData.cpp:
 	.text        start:0x0014B1D0 end:0x00150F34
 	.data        start:0x01177680 end:0x011778F0
 	.bss         start:0x0125C0E0 end:0x0125C0E8
 
-fw/AssetManager.cpp:
+application/BF2/framework/AssetManager.cpp:
 	.text        start:0x00150F34 end:0x00155AD0
 	.data        start:0x011778F0 end:0x01177A80
 	.bss         start:0x0125C0E8 end:0x0125C1B0
 
-fw/CameraLayer.cpp:
+application/BF2/framework/CameraLayer.cpp:
 	.text        start:0x00155AD0 end:0x00157DAC
 	.data        start:0x01177A80 end:0x01177A98
 	.bss         start:0x0125C1B0 end:0x0125C1C8
@@ -195,16 +191,16 @@ application/BF2/framework/coli/coli_object.cpp:
 	.data        start:0x01177BC8 end:0x01177C20
 	.bss         start:0x0125C1F0 end:0x0125C220
 
-unit_710015F488.cpp:
+application/BF2/framework/unit_710015F488.cpp:
 	.text        start:0x0015F488 end:0x0015F4A4
 	.bss         start:0x0125C220 end:0x0125C238
 
-fw/debug/DebugCommander.cpp:
+application/BF2/framework/DebugCommander.cpp:
 	.text        start:0x0015F4A4 end:0x00160254
 	.data        start:0x01177C20 end:0x01177D28
 	.bss         start:0x0125C238 end:0x0125C240
 
-fw/debug/DebugInputKeyboard.cpp:
+application/BF2/framework/DebugInputKeyboard.cpp:
 	.text        start:0x00160254 end:0x00166630
 	.data        start:0x01177D28 end:0x01177D60
 	.bss         start:0x0125C2D0 end:0x0125C2E8
@@ -237,11 +233,11 @@ application/BF2/framework/effect/effect_manager.cpp:
 	.data        start:0x01177F58 end:0x011781B8
 	.bss         start:0x0125CB18 end:0x0125CB1A
 
-fw/EffectPoint.cpp:
+application/BF2/framework/EffectPoint.cpp:
 	.text        start:0x00178128 end:0x0017A91C
 	.data        start:0x011781B8 end:0x011781D8
 
-fw/LightObject.cpp:
+application/BF2/framework/LightObject.cpp:
 	.text        start:0x0017A91C end:0x0017ABC8
 	.data        start:0x011781D8 end:0x011781F8
 	.bss         start:0x0125CB38 end:0x0125CB40
@@ -321,7 +317,7 @@ application/BF2/framework/ik/ik_two_chara_ground_solver.cpp:
 	.data        start:0x01178978 end:0x011789A8
 	.bss         start:0x0125CD08 end:0x0125CD20
 
-fw/LangUtil.cpp:
+application/BF2/framework/LangUtil.cpp:
 	.text        start:0x0018BB8C end:0x0018C288
 	.bss         start:0x0125CD20 end:0x0125CD30
 
@@ -329,22 +325,22 @@ application/BF2/framework/layer/layerset_manager.cpp:
 	.text        start:0x0018C288 end:0x0018C530
 	.data        start:0x011789A8 end:0x01178A38
 
-fw/ManagerRegister.cpp:
+application/BF2/framework/ManagerRegister.cpp:
 	.text        start:0x0018C530 end:0x0018CA20
 	.data        start:0x01178A38 end:0x01178AC8
 
-fw/MemHandlebaseAllocator.cpp:
+application/BF2/framework/MemHandlebaseAllocator.cpp:
 	.text        start:0x0018CA20 end:0x0018CB5C
 	.data        start:0x01178AC8 end:0x01178D20
 
-fw/FrameworkMemory.cpp:
+application/BF2/framework/FrameworkMemory.cpp:
 	.text        start:0x0018CB5C end:0x0018D6AC
 
 application/BF2/framework/message/message_manager.cpp:
 	.text        start:0x0018D6AC end:0x0018E478
 	.data        start:0x01178D20 end:0x01178E20
 
-fw/MessageObject.cpp:
+application/BF2/framework/MessageObject.cpp:
 	.text        start:0x0018E478 end:0x0018E530
 	.data        start:0x01178E20 end:0x01178E50
 	.bss         start:0x0125CF88 end:0x0125CFA0
@@ -359,7 +355,7 @@ application/BF2/framework/navi/navi_manager.cpp:
 	.data        start:0x01179068 end:0x011790F8
 	.bss         start:0x0125CFA8 end:0x0125CFC0
 
-fw/UpdatableGroup.cpp:
+application/BF2/framework/UpdatableGroup.cpp:
 	.text        start:0x00190018 end:0x001907A8
 	.data        start:0x011790F8 end:0x01179168
 
@@ -368,12 +364,12 @@ application/BF2/framework/object/updatable_manager.cpp:
 	.data        start:0x01179168 end:0x01179288
 	.bss         start:0x0125CFC0 end:0x0125CFE0
 
-fw/PadManager.cpp:
+application/BF2/framework/PadManager.cpp:
 	.text        start:0x001915B4 end:0x00194FD8
 	.data        start:0x01179288 end:0x011795A0
 	.bss         start:0x0125D170 end:0x0125D188
 
-fw/PadRelay.cpp:
+application/BF2/framework/PadRelay.cpp:
 	.text        start:0x00194FD8 end:0x00196844
 	.data        start:0x011795A0 end:0x01179600
 	.bss         start:0x0125D200 end:0x0125D2E8
@@ -382,33 +378,33 @@ application/BF2/framework/param/param_builder.cpp:
 	.text        start:0x00196844 end:0x00196CA8
 	.data        start:0x01179600 end:0x01179620
 
-fw/PointerMap.cpp:
+application/BF2/framework/PointerMap.cpp:
 	.text        start:0x00196CA8 end:0x0019936C
 	.data        start:0x01179620 end:0x01179670
 
-fw/CommonResource.cpp:
+application/BF2/framework/CommonResource.cpp:
 	.text        start:0x0019936C end:0x00199D1C
 	.data        start:0x01179670 end:0x011796A8
 
-fw/LocalizeResource.cpp:
+application/BF2/framework/LocalizeResource.cpp:
 	.text        start:0x00199D1C end:0x0019A9AC
 	.data        start:0x011796A8 end:0x01179770
 
-fw/ResourceManager.cpp:
+application/BF2/framework/ResourceManager.cpp:
 	.text        start:0x0019A9AC end:0x0019C80C
 	.data        start:0x01179770 end:0x01179838
 	.bss         start:0x0125D2E8 end:0x0125D2EC
 
-fw/ScriptInfo.cpp:
+application/BF2/framework/ScriptInfo.cpp:
 	.text        start:0x0019C80C end:0x0019D744
 	.data        start:0x01179838 end:0x011798B8
 
-fw/ScriptManager.cpp:
+application/BF2/framework/ScriptManager.cpp:
 	.text        start:0x0019D744 end:0x0019ED1C
 	.data        start:0x011798B8 end:0x011799C8
 	.bss         start:0x0125D2EC end:0x0125D3F0
 
-fw/SensorUpdateJob.cpp:
+application/BF2/framework/SensorUpdateJob.cpp:
 	.text        start:0x0019ED1C end:0x0019ED94
 	.data        start:0x011799C8 end:0x011799D0
 
@@ -416,7 +412,7 @@ application/BF2/framework/sensor/sensor_manager.cpp:
 	.text        start:0x0019ED94 end:0x0019F788
 	.data        start:0x011799D0 end:0x01179A68
 
-fw/SoundManager.cpp:
+application/BF2/framework/SoundManager.cpp:
 	.text        start:0x0019F788 end:0x001A27B4
 	.data        start:0x01179A68 end:0x01179B98
 
@@ -434,7 +430,7 @@ application/BF2/framework/wind/param/wind_param.cpp:
 	.data        start:0x0117A158 end:0x0117A1C8
 	.bss         start:0x0125D4D8 end:0x0125D588
 
-fw/DynamicWindResource.cpp:
+application/BF2/framework/wind/DynamicWindResource.cpp:
 	.text        start:0x001AEB14 end:0x001AEB3C
 	.data        start:0x0117A1C8 end:0x0117A1E8
 
@@ -681,7 +677,7 @@ application/BF2/gf/data/gf_game_flag.cpp:
 	.data        start:0x01187808 end:0x01187848
 	.bss         start:0x0126C0A0 end:0x0126C0A8
 
-gf/QuestListAcc.cpp:
+application/BF2/gf/QuestListAcc.cpp:
 	.text        start:0x002B8D58 end:0x002CF75C
 	.bss         start:0x0126C700 end:0x01383DA0
 
@@ -707,12 +703,11 @@ application/BF2/gf/field/gf_field_gimmick.cpp:
 	.bss         start:0x01383DF8 end:0x01383E18
 
 application/BF2/gf/field/LocatorBat_EnemyID.cpp:
-	.text        start:0x002DAA98 end:0x002DB38C
-	.data        start:0x01188300 end:0x01188348
+	.text        start:0x002DAA98 end:0x002DAD74
 
 application/BF2/gf/field/gf_field_locator.cpp:
-	.text        start:0x002DB38C end:0x002E1C3C
-	.data        start:0x01188348 end:0x01188658
+	.text        start:0x002DAD74 end:0x002E1C3C
+	.data        start:0x01188300 end:0x01188658
 	.bss         start:0x01383E18 end:0x01383E20
 
 application/BF2/gf/field/gf_field_lod.cpp:
@@ -951,11 +946,11 @@ application/BF2/gf/game/item/gf_item_manager.cpp:
 	.data        start:0x0118C4F8 end:0x0118C618
 	.bss         start:0x0149B978 end:0x0149B9A0
 
-gf/GfItemUtil.cpp:
+application/BF2/gf/game/GfItemUtil.cpp:
 	.text        start:0x0035F70C end:0x00364370
 	.data        start:0x0118C618 end:0x0118C620
 
-gf/GfKizunaringBlade.cpp:
+application/BF2/gf/game/GfKizunaringBlade.cpp:
 	.text        start:0x00364370 end:0x003649A0
 
 application/BF2/gf/game/kizunaring/gf_kizunaring_manager.cpp:
@@ -967,12 +962,12 @@ application/BF2/gf/game/mercenaries/gf_game_mercenaries.cpp:
 	.data        start:0x0118C660 end:0x0118C6A0
 	.bss         start:0x0149B9A0 end:0x0149B9A8
 
-gf/GfQuestEvent.cpp:
+application/BF2/gf/game/GfQuestEvent.cpp:
 	.text        start:0x00367F70 end:0x00368208
 	.data        start:0x0118C6A0 end:0x0118C6E0
 	.bss         start:0x0149B9A8 end:0x0149B9B0
 
-gf/GfQuestInfo.cpp:
+application/BF2/gf/game/GfQuestInfo.cpp:
 	.text        start:0x00368208 end:0x003699FC
 
 application/BF2/gf/game/quest/gf_quest_manager.cpp:
@@ -980,14 +975,14 @@ application/BF2/gf/game/quest/gf_quest_manager.cpp:
 	.data        start:0x0118C710 end:0x0118C758
 	.bss         start:0x0149B9B0 end:0x0149B9F0
 
-gf/GfQuestTarget.cpp:
+application/BF2/gf/game/GfQuestTarget.cpp:
 	.text        start:0x00370170 end:0x00372AD8
 	.data        start:0x0118C758 end:0x0118C838
 
-gf/GfQuestTask.cpp:
+application/BF2/gf/game/GfQuestTask.cpp:
 	.text        start:0x00372AD8 end:0x003766B0
 
-gf/QuestTaskParam.cpp:
+application/BF2/gf/game/QuestTaskParam.cpp:
 	.text        start:0x003766B0 end:0x0037A5CC
 
 application/BF2/gf/game/salvage/gf_game_salvage.cpp:
@@ -995,7 +990,7 @@ application/BF2/gf/game/salvage/gf_game_salvage.cpp:
 	.data        start:0x0118C838 end:0x0118D170
 	.bss         start:0x0149B9F0 end:0x0149BA10
 
-gf/StateSalvageDiveStart.cpp:
+application/BF2/gf/game/StateSalvageDiveStart.cpp:
 	.text        start:0x0037D6CC end:0x0037F37C
 
 application/BF2/gf/game/sequential_play/gf_play_command.cpp:
@@ -1030,7 +1025,7 @@ application/BF2/gf/gf_event.cpp:
 application/BF2/gf/gf_info.cpp:
 	.text        start:0x0038F3EC end:0x0038FF0C
 	.data        start:0x0118E748 end:0x0118E788
-	.bss         start:0x0149C1A0 end:0x0149C308
+	.bss         start:0x0149C0A0 end:0x0149C308
 
 application/BF2/gf/gf_manager.cpp:
 	.text        start:0x0038FF0C end:0x00391214
@@ -1042,7 +1037,7 @@ application/BF2/gf/gf_pause.cpp:
 	.data        start:0x0118E9F0 end:0x0118EA50
 	.bss         start:0x0149C340 end:0x0149D9F0
 
-gf/MapEff.cpp:
+application/BF2/gf/MapEff.cpp:
 	.text        start:0x003929B4 end:0x00392E70
 
 application/BF2/gf/map/gf_map_manager.cpp:
@@ -1050,7 +1045,7 @@ application/BF2/gf/map/gf_map_manager.cpp:
 	.data        start:0x0118EA50 end:0x0118ECF8
 	.bss         start:0x0149D9F0 end:0x0149D9F8
 
-gf/GfMemManager.cpp:
+application/BF2/gf/GfMemManager.cpp:
 	.text        start:0x003947A8 end:0x003952D4
 	.data        start:0x0118ECF8 end:0x0118ED38
 	.bss         start:0x0149D9F8 end:0x0149DE00
@@ -1364,7 +1359,7 @@ application/BF2/gf/menu/model_view/gf_menu_model_view.cpp:
 	.data        start:0x01194AA8 end:0x01194AF0
 	.bss         start:0x0149DFC0 end:0x0149DFE0
 
-gf/GfMenuModelViewCamera.cpp:
+application/BF2/gf/menu/GfMenuModelViewCamera.cpp:
 	.text        start:0x003E68B8 end:0x003E6CF8
 	.data        start:0x01194AF0 end:0x01194B50
 	.bss         start:0x0149E038 end:0x0149E050
@@ -1864,12 +1859,12 @@ application/BF2/gf/movie/gf_movie_manager.cpp:
 	.data        start:0x0119B430 end:0x0119B4A8
 	.bss         start:0x014A14A0 end:0x014A14B8
 
-gf/GfComAsm.cpp:
+application/BF2/gf/GfComAsm.cpp:
 	.text        start:0x004F7A48 end:0x004F8C78
 	.data        start:0x0119B4A8 end:0x0119B510
 	.bss         start:0x014A14B8 end:0x014A1560
 
-gf/GfComEvtAnim.cpp:
+application/BF2/gf/GfComEvtAnim.cpp:
 	.text        start:0x004F8C78 end:0x004FB27C
 	.data        start:0x0119B510 end:0x0119B578
 	.bss         start:0x014A1560 end:0x014A1578
@@ -1879,7 +1874,7 @@ application/BF2/gf/object/component/animation/gf_com_pack_anim.cpp:
 	.data        start:0x0119B578 end:0x0119B5B0
 	.bss         start:0x014A15B8 end:0x014A15D0
 
-gf/GfComBehavior.cpp:
+application/BF2/gf/object/component/GfComBehavior.cpp:
 	.text        start:0x004FBB24 end:0x004FC1A4
 	.bss         start:0x014A15D0 end:0x014A15E8
 
@@ -1915,27 +1910,27 @@ application/BF2/gf/object/component/behavior/movement/gf_move_water_sink.cpp:
 	.data        start:0x0119B5B0 end:0x0119B618
 	.bss         start:0x014A15E8 end:0x014A1600
 
-gf/FootIkControllerPlugin.cpp:
+application/BF2/gf/object/component/FootIkControllerPlugin.cpp:
 	.text        start:0x004FFC34 end:0x0050047C
 	.data        start:0x0119B618 end:0x0119B680
 	.bss         start:0x014A1600 end:0x014A1618
 
-gf/FootStepPlugin.cpp:
+application/BF2/gf/object/component/FootStepPlugin.cpp:
 	.text        start:0x0050047C end:0x00500CE0
 	.data        start:0x0119B680 end:0x0119B6E8
 	.bss         start:0x014A1618 end:0x014A1630
 
-gf/LipSyncPlugin.cpp:
+application/BF2/gf/object/component/LipSyncPlugin.cpp:
 	.text        start:0x00500CE0 end:0x0050109C
 	.data        start:0x0119B7F8 end:0x0119B860
 	.bss         start:0x014A1630 end:0x014A1648
 
-gf/Plugin.cpp:
+application/BF2/gf/object/component/Plugin.cpp:
 	.text        start:0x0050109C end:0x0050111C
 	.data        start:0x0119B860 end:0x0119B8B0
 	.bss         start:0x014A1648 end:0x014A1660
 
-gf/PluginManager.cpp:
+application/BF2/gf/object/component/PluginManager.cpp:
 	.text        start:0x0050111C end:0x00503300
 
 application/BF2/gf/object/component/effect/gf_com_effect_caster.cpp:
@@ -1943,19 +1938,19 @@ application/BF2/gf/object/component/effect/gf_com_effect_caster.cpp:
 	.data        start:0x0119B8B0 end:0x0119BA50
 	.bss         start:0x014A1660 end:0x014A1698
 
-gf/enemy/GfEnemyBattleProperty.cpp:
+application/BF2/gf/object/component/GfEnemyBattleProperty.cpp:
 	.text        start:0x0050B2D8 end:0x0050BD78
 
-gf/enemy/StateFieldWalk.cpp:
+application/BF2/gf/object/component/StateFieldWalk.cpp:
 	.text        start:0x0050BD78 end:0x00511068
 	.data        start:0x0119BA58 end:0x0119BD20
 
-gf/GfComBehaviorEnemy.cpp:
+application/BF2/gf/object/component/GfComBehaviorEnemy.cpp:
 	.text        start:0x00511068 end:0x0051AAB4
 	.data        start:0x0119BD90 end:0x0119C078
 	.bss         start:0x014A1698 end:0x014A16B0
 
-gf/GfComPropertyEnemy.cpp:
+application/BF2/gf/object/component/GfComPropertyEnemy.cpp:
 	.text        start:0x0051AAB4 end:0x0051B130
 	.data        start:0x0119C078 end:0x0119C0B0
 	.bss         start:0x014A16B0 end:0x014A16C8
@@ -1970,27 +1965,27 @@ application/BF2/gf/object/component/env_sensor/gf_environment_sensor.cpp:
 	.data        start:0x0119C100 end:0x0119C148
 	.bss         start:0x014A16E0 end:0x014A16F8
 
-gf/GfComPropertyEvent.cpp:
+application/BF2/gf/object/component/GfComPropertyEvent.cpp:
 	.text        start:0x00523E38 end:0x00524038
 	.data        start:0x0119C148 end:0x0119C180
 	.bss         start:0x014A16F8 end:0x014A1710
 
-gf/GfComBehaviorExtra.cpp:
+application/BF2/gf/object/component/GfComBehaviorExtra.cpp:
 	.text        start:0x00524038 end:0x00524600
 	.data        start:0x0119C180 end:0x0119C1C8
 	.bss         start:0x014A1710 end:0x014A1728
 
-gf/GfComCollider.cpp:
+application/BF2/gf/object/component/GfComCollider.cpp:
 	.text        start:0x00524600 end:0x005259DC
 	.data        start:0x0119C1C8 end:0x0119C258
 	.bss         start:0x014A1728 end:0x014A1758
 
-gf/GfComDynamics.cpp:
+application/BF2/gf/object/component/GfComDynamics.cpp:
 	.text        start:0x005259DC end:0x0052637C
 	.data        start:0x0119C258 end:0x0119C2A8
 	.bss         start:0x014A1758 end:0x014A1770
 
-unit_710052637C.cpp:
+application/BF2/gf/object/component/unit_710052637C.cpp:
 	.text        start:0x0052637C end:0x005263A0
 	.bss         start:0x014A1770 end:0x014A1788
 
@@ -2004,7 +1999,7 @@ application/BF2/gf/object/component/gf_com_transform.cpp:
 	.data        start:0x0119C390 end:0x0119C3E0
 	.bss         start:0x014A17A0 end:0x014A17B8
 
-gf/GfComWind.cpp:
+application/BF2/gf/object/component/GfComWind.cpp:
 	.text        start:0x00529DD4 end:0x00529FF0
 	.data        start:0x0119C3E0 end:0x0119C418
 	.bss         start:0x014A17B8 end:0x014A17D0
@@ -2014,12 +2009,12 @@ application/BF2/gf/object/component/gimmick/gf_com_behavior_gmk.cpp:
 	.data        start:0x0119C418 end:0x0119C460
 	.bss         start:0x014A17D0 end:0x014A17E8
 
-gf/GfComBehaviorMapLodAnim.cpp:
+application/BF2/gf/object/component/GfComBehaviorMapLodAnim.cpp:
 	.text        start:0x0052B230 end:0x0052B384
 	.data        start:0x0119C460 end:0x0119C4A8
 	.bss         start:0x014A17E8 end:0x014A1800
 
-gf/GfComBehaviorMob.cpp:
+application/BF2/gf/object/component/GfComBehaviorMob.cpp:
 	.text        start:0x0052B384 end:0x0052F37C
 	.data        start:0x0119C4A8 end:0x0119C710
 	.bss         start:0x014A1800 end:0x014A1818
@@ -2029,25 +2024,25 @@ application/BF2/gf/object/component/model/gf_com_model.cpp:
 	.data        start:0x0119C710 end:0x0119C760
 	.bss         start:0x014A1818 end:0x014A1830
 
-gf/GfComVisible.cpp:
+application/BF2/gf/object/component/GfComVisible.cpp:
 	.text        start:0x00532F94 end:0x00533164
 	.data        start:0x0119C760 end:0x0119C798
 	.bss         start:0x014A1830 end:0x014A1848
 
-gf/GfComBehaviorNpc.cpp:
+application/BF2/gf/object/component/GfComBehaviorNpc.cpp:
 	.text        start:0x00533164 end:0x00538420
 	.data        start:0x0119C798 end:0x0119CA38
 	.bss         start:0x014A1848 end:0x014A1860
 
-gf/pc/PadBattle.cpp:
+application/BF2/gf/object/component/PadBattle.cpp:
 	.text        start:0x00538420 end:0x0053C614
 	.data        start:0x0119CA38 end:0x0119CC60
 
-gf/pc/StateBattleBase.cpp:
+application/BF2/gf/object/component/StateBattleBase.cpp:
 	.text        start:0x0053C614 end:0x0053DDA8
 	.data        start:0x0119CC60 end:0x0119CD60
 
-gf/pc/AIAgentField.cpp:
+application/BF2/gf/object/component/AIAgentField.cpp:
 	.text        start:0x0053DDA8 end:0x005438AC
 	.data        start:0x0119CD60 end:0x0119D8D8
 	.bss         start:0x014A1898 end:0x014A18B0
@@ -2084,22 +2079,22 @@ application/BF2/gf/object/component/pc/field/ai/gf_pc_ai_warp_task_field.cpp:
 	.data        start:0x0119DAE8 end:0x0119DB78
 	.bss         start:0x014A19E8 end:0x014A1A30
 
-gf/pc/StateFieldWallAiAdsorption.cpp:
+application/BF2/gf/object/component/pc/field/StateFieldWallAiAdsorption.cpp:
 	.text        start:0x00546800 end:0x00546C60
 
-gf/pc/PadField.cpp:
+application/BF2/gf/object/component/pc/field/PadField.cpp:
 	.text        start:0x00546C60 end:0x00549EE8
 	.data        start:0x0119DB80 end:0x0119DB98
 
 application/BF2/gf/object/component/pc/field/gf_pc_param_field.cpp:
 	.text        start:0x00549EE8 end:0x0054DD5C
 
-gf/pc/GfPropertyField.cpp:
+application/BF2/gf/object/component/pc/GfPropertyField.cpp:
 	.text        start:0x0054DD5C end:0x0055309C
 	.rodata      start:0x00F75F70 end:0x00F75F80
 	.data        start:0x0119DB98 end:0x0119DD68
 
-gf/pc/StateField.cpp:
+application/BF2/gf/object/component/pc/StateField.cpp:
 	.text        start:0x0055309C end:0x00564508
 	.data        start:0x0119DDA8 end:0x0119F108
 
@@ -2108,27 +2103,27 @@ application/BF2/gf/object/component/pc/gf_com_behavior_pc.cpp:
 	.data        start:0x0119F108 end:0x0119F168
 	.bss         start:0x014A1A50 end:0x014A1A68
 
-gf/GfComPropertyPc.cpp:
+application/BF2/gf/object/component/pc/GfComPropertyPc.cpp:
 	.text        start:0x0056EEC8 end:0x00571464
 	.data        start:0x0119F168 end:0x0119F1A0
 	.bss         start:0x014A1A68 end:0x014A1A80
 
-gf/pc/Agent.cpp:
+application/BF2/gf/object/component/pc/Agent.cpp:
 	.text        start:0x00571464 end:0x005714BC
 	.data        start:0x0119F1A0 end:0x0119F208
 	.bss         start:0x014A1AA8 end:0x014A1AC0
 
-gf/pc/AIAgent.cpp:
+application/BF2/gf/object/component/pc/AIAgent.cpp:
 	.text        start:0x005714BC end:0x00571858
 	.data        start:0x0119F208 end:0x0119F270
 	.bss         start:0x014A1AC0 end:0x014A1AD8
 
-gf/pc/PadAgent.cpp:
+application/BF2/gf/object/component/pc/PadAgent.cpp:
 	.text        start:0x00571858 end:0x00571AA0
 	.data        start:0x0119F270 end:0x0119F2D8
 	.bss         start:0x014A1AD8 end:0x014A1AF0
 
-gf/pc/StateUtil.cpp:
+application/BF2/gf/object/component/pc/StateUtil.cpp:
 	.text        start:0x00571AA0 end:0x00573CA0
 
 application/BF2/gf/object/component/pc/param/gf_pc_param.cpp:
@@ -2139,121 +2134,121 @@ application/BF2/gf/object/component/pc/param/gf_pc_param_reflection.cpp:
 	.data        start:0x0119F2D8 end:0x0119F340
 	.bss         start:0x014A1AF0 end:0x014A1B08
 
-gf/pc/AttachPlugin.cpp:
+application/BF2/gf/object/AttachPlugin.cpp:
 	.text        start:0x005766C4 end:0x00577430
 	.data        start:0x0119F340 end:0x0119F3A8
 	.bss         start:0x014A1B08 end:0x014A1B20
 
-gf/pc/ColVelCalculatorPlugin.cpp:
+application/BF2/gf/object/ColVelCalculatorPlugin.cpp:
 	.text        start:0x00577430 end:0x005778AC
 	.data        start:0x0119F3A8 end:0x0119F410
 	.bss         start:0x014A1B20 end:0x014A1B38
 
-gf/pc/DeadColCheckPlugin.cpp:
+application/BF2/gf/object/DeadColCheckPlugin.cpp:
 	.text        start:0x005778AC end:0x00577BEC
 	.data        start:0x0119F410 end:0x0119F478
 	.bss         start:0x014A1B38 end:0x014A1B50
 
-gf/pc/FadePlugin.cpp:
+application/BF2/gf/object/FadePlugin.cpp:
 	.text        start:0x00577BEC end:0x00577EA4
 	.data        start:0x0119F478 end:0x0119F4E0
 	.bss         start:0x014A1B50 end:0x014A1B68
 
-gf/pc/FallDamagePlugin.cpp:
+application/BF2/gf/object/FallDamagePlugin.cpp:
 	.text        start:0x00577EA4 end:0x005782CC
 	.data        start:0x0119F4E0 end:0x0119F548
 	.bss         start:0x014A1B68 end:0x014A1B80
 
-gf/pc/FallDistanceAchievPlugin.cpp:
+application/BF2/gf/object/FallDistanceAchievPlugin.cpp:
 	.text        start:0x005782CC end:0x0057847C
 	.data        start:0x0119F548 end:0x0119F5A8
 	.bss         start:0x014A1B80 end:0x014A1B98
 
-gf/pc/FallDistancePlugin.cpp:
+application/BF2/gf/object/FallDistancePlugin.cpp:
 	.text        start:0x0057847C end:0x00578610
 	.data        start:0x0119F5A8 end:0x0119F610
 	.bss         start:0x014A1B98 end:0x014A1BB0
 
-gf/pc/FallIntoColiPlugin.cpp:
+application/BF2/gf/object/FallIntoColiPlugin.cpp:
 	.text        start:0x00578610 end:0x00578B10
 	.data        start:0x0119F610 end:0x0119F678
 	.bss         start:0x014A1BB0 end:0x014A1BC8
 
-gf/pc/LookAtPlugin.cpp:
+application/BF2/gf/object/LookAtPlugin.cpp:
 	.text        start:0x00578B10 end:0x0057A968
 	.data        start:0x0119F678 end:0x0119F6E0
 	.bss         start:0x014A1BC8 end:0x014A1C30
 
-gf/pc/LookAxisPlugin.cpp:
+application/BF2/gf/object/LookAxisPlugin.cpp:
 	.text        start:0x0057A968 end:0x0057AF38
 	.data        start:0x0119F6E0 end:0x0119F748
 	.bss         start:0x014A1C30 end:0x014A1C48
 
-gf/pc/LurePlugin.cpp:
+application/BF2/gf/object/LurePlugin.cpp:
 	.text        start:0x0057AF38 end:0x0057B6FC
 	.data        start:0x0119F748 end:0x0119F7B0
 	.bss         start:0x014A1C48 end:0x014A1C60
 
-gf/pc/SlidePlugin.cpp:
+application/BF2/gf/object/SlidePlugin.cpp:
 	.text        start:0x0057B6FC end:0x0057BE5C
 	.data        start:0x0119F7B0 end:0x0119F818
 	.bss         start:0x014A1C60 end:0x014A1C78
 
-gf/pc/TargetIKPlugin.cpp:
+application/BF2/gf/object/TargetIKPlugin.cpp:
 	.text        start:0x0057BE5C end:0x0057C9A0
 	.data        start:0x0119F818 end:0x0119F880
 	.bss         start:0x014A1C78 end:0x014A1C90
 
-gf/pc/TerrainDamagePlugin.cpp:
+application/BF2/gf/object/TerrainDamagePlugin.cpp:
 	.text        start:0x0057C9A0 end:0x0057CCBC
 	.data        start:0x0119F880 end:0x0119F8E8
 	.bss         start:0x014A1C90 end:0x014A1CA8
 
-gf/pc/TimerPlugin.cpp:
+application/BF2/gf/object/TimerPlugin.cpp:
 	.text        start:0x0057CCBC end:0x0057CDBC
 	.data        start:0x0119F8E8 end:0x0119F950
 	.bss         start:0x014A1CA8 end:0x014A1CC0
 
-gf/pc/WaterInPlugin.cpp:
+application/BF2/gf/object/WaterInPlugin.cpp:
 	.text        start:0x0057CDBC end:0x0057D440
 	.data        start:0x0119F950 end:0x0119F9B8
 	.bss         start:0x014A1CC0 end:0x014A1CD8
 
-gf/GfComProperty.cpp:
+application/BF2/gf/object/GfComProperty.cpp:
 	.text        start:0x0057D440 end:0x0057E7D0
 	.data        start:0x0119F9B8 end:0x0119F9F0
 	.bss         start:0x014A1FE8 end:0x014A2000
 
-gf/GfComBehaviorSalvage.cpp:
+application/BF2/gf/object/GfComBehaviorSalvage.cpp:
 	.text        start:0x0057E7D0 end:0x0057EAD4
 	.data        start:0x0119F9F0 end:0x0119FA38
 	.bss         start:0x014A2000 end:0x014A2018
 
-gf/GfComSound.cpp:
+application/BF2/gf/object/GfComSound.cpp:
 	.text        start:0x0057EAD4 end:0x005803CC
 	.data        start:0x0119FA48 end:0x0119FAD8
 	.bss         start:0x014A2018 end:0x014A2030
 
-gf/GfComBehaviorUI.cpp:
+application/BF2/gf/object/GfComBehaviorUI.cpp:
 	.text        start:0x005803CC end:0x00580CCC
 	.data        start:0x0119FC28 end:0x0119FC70
 	.bss         start:0x014A2030 end:0x014A2048
 
-gf/GfComBehaviorWeapon.cpp:
+application/BF2/gf/object/GfComBehaviorWeapon.cpp:
 	.text        start:0x00580CCC end:0x00581390
 	.data        start:0x0119FC70 end:0x0119FCB8
 	.bss         start:0x014A2048 end:0x014A2060
 
-gf/GfObj.cpp:
+application/BF2/gf/object/GfObj.cpp:
 	.text        start:0x00581390 end:0x005819E0
 	.data        start:0x0119FCB8 end:0x0119FD30
 	.bss         start:0x014A2060 end:0x014A2178
 
-gf/GfObjAcc.cpp:
+application/BF2/gf/object/GfObjAcc.cpp:
 	.text        start:0x005819E0 end:0x00584628
 	.bss         start:0x014A21D8 end:0x014A21F0
 
-gf/GfExtendPacking.cpp:
+application/BF2/gf/object/GfExtendPacking.cpp:
 	.text        start:0x00584628 end:0x005849CC
 	.data        start:0x0119FDE0 end:0x0119FE08
 	.bss         start:0x014A21F0 end:0x014A2208
@@ -2280,7 +2275,7 @@ application/BF2/gf/object/gf_obj_setup.cpp:
 	.data        start:0x011A0308 end:0x011A0748
 	.bss         start:0x014A3C38 end:0x014A3DD0
 
-gf/GfObjUtil.cpp:
+application/BF2/gf/GfObjUtil.cpp:
 	.text        start:0x005AED78 end:0x005B4D4C
 
 application/BF2/gf/param/access/gf_param_access.cpp:
@@ -2376,7 +2371,7 @@ application/BF2/gf/sound/gf_sound.cpp:
 	.text        start:0x005D4C10 end:0x005D812C
 	.data        start:0x011A1BA0 end:0x011A1DD8
 
-gmk/GmkElevator.cpp:
+application/BF2/GmkElevator.cpp:
 	.text        start:0x005D812C end:0x00695304
 	.rodata      start:0x00F76270 end:0x00F7627C
 	.data        start:0x011A1DD8 end:0x011A73E8
@@ -2386,30 +2381,31 @@ application/BF2/libs/movie/cmovie_nx.cpp:
 	.text        start:0x00695304 end:0x0069C71C
 	.data        start:0x011A73E8 end:0x011A74B0
 
-ms/MsWrapper.cpp:
+application/BF2/MsWrapper.cpp:
 	.text        start:0x0069C71C end:0x0069CD38
 	.bss         start:0x014A5078 end:0x014A5084
 
-RchaCam.cpp:
+application/BF2/RchaCam.cpp:
 	.text        start:0x0069CD38 end:0x0069F5E0
 	.data        start:0x011A74B0 end:0x011A77F0
 
-RchaNode.cpp:
+application/BF2/RchaNode.cpp:
 	.text        start:0x0069F5E0 end:0x0069FABC
 	.data        start:0x011A78D8 end:0x011A7908
+	.bss         start:0x014A5088 end:0x014A5099
 
 application/BF2/main.cpp:
 	.text        start:0x0069FABC end:0x006A0FDC
 	.data        start:0x011A7908 end:0x011A79F8
 	.bss         start:0x014A509C end:0x014AE8D0
 
-minigame/tora/mytask.cpp:
+application/BF2/mytask.cpp:
 	.text        start:0x006A0FDC end:0x006A136C
 
 application/BF2/minigame/tora/minigame_tora.cpp:
 	.text        start:0x006A136C end:0x006B1A74
 
-unit_71006B1A74.cpp:
+application/BF2/unit_71006B1A74.cpp:
 	.text        start:0x006B1A74 end:0x006B4518
 	.data        start:0x011A79F8 end:0x011A8228
 	.bss         start:0x014AE930 end:0x014AE950
@@ -2418,20 +2414,20 @@ application/BF2/plugin/bdat.cpp:
 	.text        start:0x006B4518 end:0x006B6654
 	.bss         start:0x014AE950 end:0x014AE9D0
 
-unit_71006B6654.cpp:
+application/BF2/unit_71006B6654.cpp:
 	.text        start:0x006B6654 end:0x006B6CA0
 
-unit_71006B6CA0.cpp:
+application/BF2/unit_71006B6CA0.cpp:
 	.text        start:0x006B6CA0 end:0x006B74A8
 
-event/ScriptCamMotion.cpp:
+application/BF2/ScriptCamMotion.cpp:
 	.text        start:0x006B74A8 end:0x006C18AC
 	.data        start:0x011A84F8 end:0x011A86F8
 
-unit_71006C18AC.cpp:
+application/BF2/unit_71006C18AC.cpp:
 	.text        start:0x006C18AC end:0x006C28F0
 
-event/ScriptPlayText.cpp:
+application/BF2/ScriptPlayText.cpp:
 	.text        start:0x006C28F0 end:0x006C96E8
 	.bss         start:0x014AEBC0 end:0x014AEBD8
 
@@ -2491,7 +2487,7 @@ application/BF2/ui/event/ui_event_pos_condition.cpp:
 	.text        start:0x006D2B70 end:0x006D2C60
 	.data        start:0x011A9D20 end:0x011A9D50
 
-ui/UIObjBuildData.cpp:
+application/BF2/ui/UIObjBuildData.cpp:
 	.text        start:0x006D2C60 end:0x006D4188
 	.data        start:0x011A9D50 end:0x011A9D70
 
@@ -2504,7 +2500,7 @@ application/BF2/ui/font/ui_font_manager.cpp:
 	.text        start:0x006D68CC end:0x006D7A28
 	.data        start:0x011AA0D0 end:0x011AA110
 
-ui/UIInputLayer.cpp:
+application/BF2/ui/UIInputLayer.cpp:
 	.text        start:0x006D7A28 end:0x006D7E44
 	.data        start:0x011AA110 end:0x011AA170
 
@@ -2528,7 +2524,7 @@ application/BF2/ui/layout/ui_layout_data.cpp:
 	.text        start:0x006DB3A0 end:0x006DB6B0
 	.data        start:0x011AA2F0 end:0x011AA310
 
-ui/UIListInfoBase.cpp:
+application/BF2/ui/UIListInfoBase.cpp:
 	.text        start:0x006DB6B0 end:0x006DBBD0
 	.data        start:0x011AA310 end:0x011AA340
 
@@ -2536,7 +2532,7 @@ application/BF2/ui/list/ui_select_obj_list.cpp:
 	.text        start:0x006DBBD0 end:0x006DC8A0
 	.data        start:0x011AA340 end:0x011AA3B0
 
-ui/UIMotionData.cpp:
+application/BF2/ui/UIMotionData.cpp:
 	.text        start:0x006DC8A0 end:0x006DEAE4
 	.data        start:0x011AA3B0 end:0x011AA3D0
 
@@ -2651,22 +2647,22 @@ application/BF2/ui/plugin/ui_object_world_pos_plugin.cpp:
 	.data        start:0x011AA9E0 end:0x011AAA20
 	.bss         start:0x014AEF18 end:0x014AEF30
 
-ui/UIShape.cpp:
+application/BF2/ui/UIShape.cpp:
 	.text        start:0x006E9574 end:0x006E9C30
 	.data        start:0x011AAA20 end:0x011AAA50
 	.bss         start:0x014AEF30 end:0x014AEF48
 
-ui/UIShapeParticle.cpp:
+application/BF2/ui/UIShapeParticle.cpp:
 	.text        start:0x006E9C30 end:0x006EA32C
 	.data        start:0x011AAA50 end:0x011AAA80
 	.bss         start:0x014AEF48 end:0x014AEF60
 
-ui/UIShapeRing.cpp:
+application/BF2/ui/UIShapeRing.cpp:
 	.text        start:0x006EA32C end:0x006EA664
 	.data        start:0x011AAA80 end:0x011AAAB0
 	.bss         start:0x014AEF60 end:0x014AEF78
 
-ui/UIShapeSimpleFace.cpp:
+application/BF2/ui/UIShapeSimpleFace.cpp:
 	.text        start:0x006EA664 end:0x006EAFD0
 	.data        start:0x011AAAB0 end:0x011AAAE0
 	.bss         start:0x014AEF78 end:0x014AEF90
@@ -2679,12 +2675,12 @@ application/BF2/ui/text/ui_text_file.cpp:
 	.text        start:0x006EC390 end:0x006ECEC0
 	.data        start:0x011AAB20 end:0x011AABD8
 
-ui/UITextManager.cpp:
+application/BF2/ui/UITextManager.cpp:
 	.text        start:0x006ECEC0 end:0x006ED474
 	.data        start:0x011AABD8 end:0x011AAC18
 	.bss         start:0x014AEF90 end:0x014AEF98
 
-ui/UITimer.cpp:
+application/BF2/ui/UITimer.cpp:
 	.text        start:0x006ED474 end:0x006ED538
 	.data        start:0x011AAC18 end:0x011AAC38
 
@@ -2753,12 +2749,12 @@ libs/monolib_mm/source/device/nx/th_dev_file_nx.cpp:
 	.data        start:0x011AB2C0 end:0x011AE460
 	.bss         start:0x014B2600 end:0x014B9E28
 
-ml/ErrViewer.cpp:
+libs/monolib_mm/source/ErrViewer.cpp:
 	.text        start:0x0073DCD4 end:0x0073FC4C
 	.data        start:0x011AE460 end:0x011AE4F8
 	.bss         start:0x014BA310 end:0x014BA320
 
-ml/Scn.cpp:
+libs/monolib_mm/source/Scn.cpp:
 	.text        start:0x0073FC4C end:0x0075D698
 	.data        start:0x011AE4F8 end:0x011AF138
 	.bss         start:0x014BACF8 end:0x014BAD00
@@ -2766,9 +2762,9 @@ ml/Scn.cpp:
 libs/monolib_mm/source/util/ml_misc.cpp:
 	.text        start:0x0075D698 end:0x0075D818
 
-ml/WinView.cpp:
+libs/monolib_mm/source/WinView.cpp:
 	.text        start:0x0075D818 end:0x0076C7DC
-	.data        start:0x011AF240 end:0x011AFAE0
+	.data        start:0x011AF138 end:0x011AFAE0
 	.bss         start:0x014BD140 end:0x014BD2E8
 
 libs/monolib_mm/source/work/work_cpu.cpp:
@@ -2776,7 +2772,7 @@ libs/monolib_mm/source/work/work_cpu.cpp:
 	.data        start:0x011AFAE0 end:0x011B0240
 	.bss         start:0x014BD3A8 end:0x014BE188
 
-ml/LibMain.cpp:
+libs/monolib_mm/source/LibMain.cpp:
 	.text        start:0x0077A004 end:0x0077AA84
 	.data        start:0x011B0240 end:0x011B0318
 
@@ -2790,9 +2786,9 @@ libs/monolib_mm/source/vm/yvm2.c:
 	.data        start:0x011B0A78 end:0x011B0AC0
 	.bss         start:0x01BD5340 end:0x01BD5458
 
-ml/_wrootst/WorkRoot.cpp:
+libs/monolib_mm/source/WorkRoot.cpp:
 	.text        start:0x0078BC1C end:0x0078DE38
-	.data        start:0x011B0AC8 end:0x011B0B60
+	.data        start:0x011B0AC0 end:0x011B0B60
 	.bss         start:0x01BD5458 end:0x01BD6920
 
 libs/monolib_mm/source/device/font/font.cpp:
@@ -2811,11 +2807,12 @@ grlib/CGLibUniBaseUtility.cpp:
 	.text        start:0x0079044C end:0x007A6F4C
 	.rodata      start:0x00F7E16C end:0x00F7E50C
 	.data        start:0x011B0B60 end:0x011B1010
-	.bss         start:0x01BD6A28 end:0x01BD6A38
+	.bss         start:0x01BD6A24 end:0x01BD6A38
 
 grlib/context/CGLibSystemContext.cpp:
 	.text        start:0x007A6F4C end:0x007AC120
 	.data        start:0x011B1010 end:0x011B1050
+	.bss         start:0x01BD6A38 end:0x01BD6A50
 
 grlib/CGLibVtxIndex.cpp:
 	.text        start:0x007AC120 end:0x007AE394
@@ -2829,7 +2826,7 @@ ml/ScnRenderDrSysParmAcc.cpp:
 cloud/CloudUniform.cpp:
 	.text        start:0x007B68B4 end:0x007C1694
 	.rodata      start:0x00F835AC end:0x00F835B4
-	.data        start:0x011B1308 end:0x011B1438
+	.data        start:0x011B1300 end:0x011B1438
 	.bss         start:0x01BD6B18 end:0x01BD6B38
 
 ml/DrMan.cpp:
@@ -2840,7 +2837,7 @@ ml/DrMan.cpp:
 ml/DrMdoSetup.cpp:
 	.text        start:0x007D718C end:0x00839034
 	.rodata      start:0x00F83E0C end:0x00F83E84
-	.data        start:0x011B2290 end:0x011B4968
+	.data        start:0x011B2290 end:0x011B4998
 
 ml/DrPixlMan.cpp:
 	.text        start:0x00839034 end:0x00868340
@@ -2863,7 +2860,7 @@ layer/LayerObj.cpp:
 	.text        start:0x008E88F8 end:0x0090F284
 	.rodata      start:0x00F847F8 end:0x00F84A60
 	.data        start:0x011B74D0 end:0x011B85D0
-	.bss         start:0x01BD7564 end:0x01BD7568
+	.bss         start:0x01BD7560 end:0x01BD7568
 
 layer/LayerShdManager.cpp:
 	.text        start:0x0090F284 end:0x00916CB0
@@ -2892,7 +2889,7 @@ libs/eflib/source/ptlib/memory/particle_stack_allocater.cpp:
 
 libs/eflib/source/ptlib/particle_system.cpp:
 	.text        start:0x00930EC4 end:0x00936370
-	.bss         start:0x01BD75E0 end:0x01BD76A0
+	.bss         start:0x01BD75D0 end:0x01BD76A0
 
 libs/eflib/source/ptlib/particle_intrusive_list.cpp:
 	.text        start:0x00936370 end:0x00936584
@@ -2922,7 +2919,7 @@ libs/eflib/source/ptlib/renderer/particle_renderer_stream_kizuna.cpp:
 
 libs/eflib/source/ptlib/emitter/compute/particle_emitter_compute_uniform.cpp:
 	.text        start:0x00940304 end:0x00941B2C
-	.data        start:0x011B9128 end:0x011B9150
+	.data        start:0x011B9110 end:0x011B9150
 	.bss         start:0x01BD8FE8 end:0x01BD9000
 
 libs/aiLib/src/ailib/behavior/ai_behavior_tree.cpp:
@@ -2949,22 +2946,22 @@ libs/aiLib/src/ailib/behavior/node/composite/ai_behavior_composite_node.cpp:
 	.data        start:0x011B9248 end:0x011B9290
 	.bss         start:0x01BD9048 end:0x01BD9060
 
-ai/ParallelNode.cpp:
+libs/aiLib/src/ailib/ParallelNode.cpp:
 	.text        start:0x00944050 end:0x009441E4
 	.data        start:0x011B9290 end:0x011B92D8
 	.bss         start:0x01BD9060 end:0x01BD9078
 
-ai/SelectorNode.cpp:
+libs/aiLib/src/ailib/SelectorNode.cpp:
 	.text        start:0x009441E4 end:0x00944394
 	.data        start:0x011B92D8 end:0x011B9320
 	.bss         start:0x01BD9078 end:0x01BD9090
 
-ai/SequenceNode.cpp:
+libs/aiLib/src/ailib/SequenceNode.cpp:
 	.text        start:0x00944394 end:0x00944540
 	.data        start:0x011B9320 end:0x011B9368
 	.bss         start:0x01BD9090 end:0x01BD90A8
 
-ai/TaskNode.cpp:
+libs/aiLib/src/ailib/TaskNode.cpp:
 	.text        start:0x00944540 end:0x009445C8
 	.data        start:0x011B9368 end:0x011B93B0
 	.bss         start:0x01BD90A8 end:0x01BD90C0
@@ -2999,7 +2996,7 @@ libs/anmlib/src/anmlib/ik/sphericalcoordinates/anm_spherical_coordinates_ik_solv
 libs/anmlib/src/anmlib/ik/twojoint/anm_two_joint_ik_solver.cpp:
 	.text        start:0x0094EE78 end:0x00950E94
 
-anm/MirrorMapper.cpp:
+libs/anmlib/src/anmlib/MirrorMapper.cpp:
 	.text        start:0x00950E94 end:0x0095CDA8
 	.data        start:0x011B9488 end:0x011B9568
 
@@ -3123,11 +3120,11 @@ libs/wndlib/src/wndlib/broadphaze/wnd_broad_phaze_octree.cpp:
 	.text        start:0x009866D0 end:0x00987BFC
 	.data        start:0x011B9BA8 end:0x011B9C38
 
-wnd/BoxShape.cpp:
+libs/wndlib/src/wndlib/BoxShape.cpp:
 	.text        start:0x00987BFC end:0x00987F48
 	.data        start:0x011B9C38 end:0x011B9C60
 
-wnd/Shape.cpp:
+libs/wndlib/src/wndlib/Shape.cpp:
 	.text        start:0x00987F48 end:0x00987F6C
 	.data        start:0x011B9C60 end:0x011B9C88
 
@@ -3191,7 +3188,8 @@ ssd/SoundBank.cpp:
 
 ssd/SoundCore.cpp:
 	.text        start:0x0098F72C end:0x0098FBBC
-	.data        start:0x011BA060 end:0x011BA140
+	.data        start:0x011BA058 end:0x011BA140
+	.bss         start:0x01BD9E00 end:0x01BD9E08
 
 ssd/SystemCore.cpp:
 	.text        start:0x0098FBBC end:0x00996778
@@ -3204,7 +3202,7 @@ ssd/SystemCorePlatform.cpp:
 
 ssd/TextRef.cpp:
 	.text        start:0x00997C84 end:0x00998388
-	.data        start:0x011BA630 end:0x011BA680
+	.data        start:0x011BA628 end:0x011BA680
 
 sources/voice_handle_api.cpp:
 	.text        start:0x00998388 end:0x0099B084
@@ -3217,7 +3215,8 @@ ssd/WaveSource.cpp:
 
 ssd/FileStream.cpp:
 	.text        start:0x0099C6FC end:0x0099D0DC
-	.data        start:0x011BA708 end:0x011BA870
+	.data        start:0x011BA6E0 end:0x011BA870
+	.bss         start:0x01BD9E20 end:0x01BD9E38
 
 ssd/AudioFileBase.cpp:
 	.text        start:0x0099D0DC end:0x0099F0EC
@@ -3250,11 +3249,11 @@ unit_71009AD8B8.cpp:
 	.text        start:0x009AD8B8 end:0x009AD920
 
 libs/mcl/mm_lib/source/mm_math/mm_cube.cpp:
-	.text        start:0x009AD920 end:0x009B0BF0
+	.text        start:0x009AD920 end:0x009B0BF4
 	.data        start:0x011BB018 end:0x011BB068
 
 libs/mcl/mm_lib/source/mm_math/mm_cylinder.cpp:
-	.text        start:0x009B0BF0 end:0x009B5B54
+	.text        start:0x009B0BF4 end:0x009B5B54
 
 libs/mcl/mm_lib/source/mm_math/mm_obb.cpp:
 	.text        start:0x009B5B54 end:0x009B88EC

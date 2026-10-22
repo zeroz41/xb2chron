@@ -71,11 +71,6 @@
               "-DMM_LIB_FROM_LIBS"
             ]
           },
-          "ai/*": {
-            "extra_cflags": [
-              "-DMM_LIB_FROM_LIBS"
-            ]
-          },
           "libs/anmlib/*": {
             "extra_cflags": [
               "-DMM_LIB_FROM_LIBS"
