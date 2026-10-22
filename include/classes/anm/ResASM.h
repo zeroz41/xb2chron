@@ -41,8 +41,16 @@ struct ResClipData {
     const Binding* m_pBinding;  // Factory::createASMResource checks its bone count against the skeleton's
     float m_start;  // the part of the animation it plays (AsmBlender::getDeltaExtractMotion)
     float m_end;
+    // (anm_res_clip_data.cpp, out of line)
+    void cleanup();
+    // the kind's frame annotations sorted by frame
+    void sortAnnotation(unsigned int kind);
+
     mm::mtl::Vector<AsmKeyframeAnnotation> m_frameAnnotations[5];  // per kind (AsmClip::update)
-    unsigned char pad_e0[0x8];
+    // set by ResStateData::setFrameAnnotation: ResStateData::sortAnnotation sorts only a clip that has it (the name
+    // is not the original's)
+    bool m_unsorted;
+    unsigned char pad_e1[0x7];
 };
 
 // one point of a lerp blend tree: from its position on the variable's value blends its clip towards the next one's
@@ -133,6 +141,12 @@ public:
 
 // one state of an animation state machine: 0x1E0 bytes
 struct ResStateData {
+    ResStateData();
+    // every clip's frame annotations of the kind sorted by frame, for the clips given new ones
+    void sortAnnotation(unsigned int kind);
+    // the clips and the annotations given up
+    void cleanup();
+
     const ResStateInfo* m_pInfo;
     mm::mtl::Vector<ResClipData> m_clips;
     unsigned char pad_30[0x20];

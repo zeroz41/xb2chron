@@ -103,6 +103,15 @@ public:
         --m_size;
     }
 
+    // value before the first (fixed_queue.h asserts `!full()`; ai::Hfsm::update and setStateImpl inline it, gathering a
+    // state chain from its leaf; the name is not the original's)
+    void push_front(const T& value) {
+#line 625 MM_MTL_FIXED_QUEUE_PATH
+        MM_ASSERT(!full());
+        m_head = (m_head + N - 1) % N;
+        new (static_cast<void*>(&m_buffer[m_head])) T(value);
+        ++m_size;
+    }
     void push_back(const T& value) {
 #line 633 MM_MTL_FIXED_QUEUE_PATH
         MM_ASSERT(!full());
@@ -114,7 +123,7 @@ public:
     // the element index places after the first (fixed_queue.h asserts `index < N` at line 376: ml::LibMain::
     // isInitialized inlines it)
     T& operator[](unsigned long index) {
-#line 376 MM_MTL_FIXED_QUEUE_PATH
+#line 368 MM_MTL_FIXED_QUEUE_PATH
         MM_ASSERT(index < N);
         return data()[(m_head + index) % N];
     }
@@ -129,6 +138,13 @@ public:
         MM_ASSERT(index < N);
         // by the element's own storage, as push_back (ai::Fsm::setStateImpl's pop_front reads the slot from the owner)
         return *reinterpret_cast<T*>(&m_buffer[index]);
+    }
+    // the first element, asserting there is one (fixed_queue.h line 354: ai::Hfsm::setStateImpl inlines it; the name
+    // is not the original's)
+    T& first() {
+#line 354 MM_MTL_FIXED_QUEUE_PATH
+        MM_ASSERT(!empty());
+        return data()[m_head];
     }
     // the first element, in place (GfReqManager::reqUpdate and GfEvtBgm::updateBgmTask read it with no check; the
     // name is not the original's)

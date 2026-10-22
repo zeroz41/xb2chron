@@ -15,7 +15,7 @@ public:
     virtual void onEnter(void*, ai::State*) = 0;  // slot 3
     virtual void onLeave(void*, ai::State*) = 0;  // slot 4
     virtual void onStep(void*, void const*) = 0;  // slot 5
-    virtual void onEvent(void*, void*);  // slot 6
+    virtual bool onEvent(void*, void*);  // slot 6 (bool as ai::State's: its code tail-calls recieveMessage, so that returns bool too, not yet declared so)
     virtual void recieveMessage(void*, fw::MessageObject*, fw::Message&);  // slot 7
 };
 }  // namespace gf
