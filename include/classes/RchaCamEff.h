@@ -9,7 +9,7 @@ namespace mtl { class ALLOC_HANDLE; }
 class RchaCamEff : public ::RchaNode {
 public:
     virtual ~RchaCamEff();  // slot 0
-    virtual void setup(mtl::ALLOC_HANDLE, void const*);  // slot 2
+    virtual bool setup(mtl::ALLOC_HANDLE, void const*);  // slot 2
 };
 
 #endif

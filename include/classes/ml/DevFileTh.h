@@ -3,6 +3,7 @@
 
 #include "classes/ml/DevBase.h"
 
+namespace mm { class VAL64; }
 namespace ml { class CERR_STRUCT; }
 namespace ml { class IWorkEvent; }
 namespace ml { enum ERR_DECIDE : int; }
@@ -36,6 +37,8 @@ public:
     // asks whether a file exists; the answer comes to listener's OnFileEvent (fw::LocalizeResource's update). What
     // it returns is a pointer or none (unused by its callers seen so far); the parameter names are not the original's
     static void* checkValidFile(const char* path, ml::IWorkEvent* listener);
+    // a file's size, negative when it has none (GfFileSizePool::execFileSizeJob passes no VAL64)
+    static int getFileSize(const char* path, mm::VAL64*);
 };
 }  // namespace ml
 
