@@ -26,6 +26,17 @@ public:
     explicit Vector(IAllocator* allocator = nullptr)
         : m_buffer(nullptr), m_size(0), m_capacity(0), m_alignment(16), m_allocator(allocator) {}
     ~Vector() { destroy(); }
+    // a copy of other's elements from its allocator (ui::UIObjBuildData's ObjData copies its parameters so)
+    Vector(const Vector& other)
+        : m_buffer(nullptr), m_size(0), m_capacity(0), m_alignment(16), m_allocator(other.m_allocator) {
+        *this = other;
+    }
+    Vector& operator=(const Vector& other) {
+        if (this != &other) {
+            assign(other);
+        }
+        return *this;
+    }
 
     iterator begin() {
 #line 68 MM_MTL_VECTOR_PATH
@@ -78,6 +89,9 @@ public:
     }
 
     void expand(size_t capacity, size_t alignment);
+    // other's allocator, alignment and room, and a copy of its elements (3.0.1 has
+    // Vector<ui::UIObjBuildData::Parameter>'s out of line)
+    void assign(const Vector& other);
     // room for capacity elements, allocated at the given alignment (the name is not the original's: wnd::WindProbe's
     // constructor and ui::UIListInfo::setup inline it)
     void reserve(size_t capacity, size_t alignment = defaultAlignment()) {
@@ -151,6 +165,21 @@ void Vector<T>::expand(size_t capacity, size_t alignment) {
     m_buffer = ptr;
     m_capacity = capacity;
     m_size = size;
+}
+
+template <typename T>
+void Vector<T>::assign(const Vector& other) {
+    m_allocator = other.m_allocator;
+    m_alignment = other.m_alignment;
+    m_capacity = other.m_capacity;
+    if (m_capacity != 0 && m_allocator != nullptr) {
+        m_buffer = static_cast<T*>(m_allocator->allocate(other.m_capacity * sizeof(T), m_alignment));
+        const T* first = other.begin();
+        if (first != other.end()) {
+            uninitialized_copy_n(first, other.m_capacity, begin());
+            m_size = other.m_size;
+        }
+    }
 }
 
 template <typename T>
