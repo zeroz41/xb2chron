@@ -46,6 +46,38 @@ void GfMenuObjActionWindow::finalize() {
     GfMenuObject::finalize();
 }
 
+void GfMenuObjActionWindow::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+    case 0x101:
+        acc.setDisp(false);
+        break;
+    case 0x100: {
+        {
+            ui::UIObjectAcc text(acc.searchChild("TXT_content"));
+            if (text.m_object != nullptr) {
+                GfMenuObject::setText(text.m_handle, event.m_param0);
+            }
+        }
+        if (event.m_param1 != -1) {
+            ui::UIObjectAcc icon(handle, "IMG_btn");
+            if (icon.m_object != nullptr) {
+                icon.setImageIndex(event.m_param1);
+                icon.setDisp(true);
+            } else {
+                icon.setDisp(false);
+            }
+        }
+        acc.setDisp(true);
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjActionWindow::update() {
     GfMenuObject::update();
 }

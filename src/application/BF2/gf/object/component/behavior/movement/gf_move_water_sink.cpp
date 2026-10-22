@@ -1,3 +1,4 @@
+#include "classes/gf/GfMoveWaterSinkControler.h"
 #include "classes/gf/EyeBlinkPlugin.h"
 #include "ml/MTRand.h"
 #include "classes/fw/ParamManager.h"
@@ -9,9 +10,16 @@
 
 namespace gf {
 
-// GfMoveWaterSinkControler::update (0x71004A8F80) is not matched yet: the best candidate, GfMoveWaterRiseControler's
-// decelerating branch (sign = speed >= 0 ? 1 : -1; speed = sign * max(speed * sign - dt * param->m_deceleration,
-// param->m_minSpeed)), schedules the two multiplies the other way round (6 lines)
+void GfMoveWaterSinkControler::update(const fw::UpdateInfo& info, Packet& packet) {
+    const Param* param = packet.m_param.get<Param>();
+    float speed = packet.m_speed;
+    float sign = speed >= 0.0f ? 1.0f : -1.0f;
+    float dt = info.m_deltaTime;
+    float size = speed * sign;
+    float minSpeed = param->m_minSpeed;
+    size = size - dt * param->m_deceleration;
+    packet.m_speed = sign * (size > minSpeed ? size : minSpeed);
+}
 
 EyeBlinkPlugin::EyeBlinkPlugin() : m_behavior(nullptr), m_timer(0.0f), m_mode(MODE_WAIT) {}
 
