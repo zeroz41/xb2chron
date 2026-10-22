@@ -26,6 +26,4 @@ AreaWind::AreaWind(const AreaWindCreateInfo& info)
     m_pWorldOwner = this;
 }
 
-AreaWind::~AreaWind() {}
-
 }  // namespace wnd

@@ -30,6 +30,4 @@ bool GfComPropertyEvent::recieveMessage(fw::MessageObject* sender, fw::Message& 
 
 // procMsgObjectGetVelocity (0x71004CC40C) is not matched yet
 
-GfComPropertyEvent::~GfComPropertyEvent() {}
-
 }  // namespace gf

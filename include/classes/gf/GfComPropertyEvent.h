@@ -15,7 +15,7 @@ public:
     struct SetupInfo {};
     GfComPropertyEvent();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfComPropertyEvent();  // slot 1
+    virtual ~GfComPropertyEvent() {}  // slot 1: inline, so its D1 slot is the base's destructor
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     void setup(const SetupInfo& info);
     void cleanup();

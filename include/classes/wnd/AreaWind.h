@@ -22,7 +22,7 @@ public:
 class AreaWind : public WindObject {
 public:
     AreaWind(const AreaWindCreateInfo& info);
-    virtual ~AreaWind();  // slot 0
+    virtual ~AreaWind() {}  // slot 0: inline, so its D1 slot is the base's destructor
 
     ConpoundWind m_wind;  // its resource is the create-info's m_pResWind
     float m_blendTime;  // the create-info's; WindProbe::setAreaWind blends its winds to or from this one's over it
