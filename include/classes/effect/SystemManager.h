@@ -6,6 +6,10 @@ namespace effect {
 class SystemManager {
 public:
     virtual ~SystemManager();  // slot 0
+    static SystemManager*& getPtr();  // the system's manager, null while there is none
+    // registers effect resource `data` (`size` bytes); null when it cannot
+    void* es_regist(void* data, unsigned int size);
+    void es_free(void* handle);
 };
 }  // namespace effect
 

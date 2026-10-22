@@ -3,6 +3,7 @@
 
 #include "classes/mm/mtl/ReferenceObject.h"
 #include "fw/Transform.h"
+#include "mm/Mat44.h"
 
 namespace fw {
 // table 0x7100B418F8; counted (its constructor clears the count at 8; WindProbe holds one by IntrusivePtr)
@@ -22,6 +23,11 @@ public:
     Transform m_localTransform;  // getSyncedWorldTransform copies it to m_worldTransform without a parent
     // getSyncedWorldTransform's result: the parent's world transform times m_localTransform
     Transform m_worldTransform;
+    mm::Mat44 m_worldMatrix;  // the constructor's is Mat44::identity
+    // which of the three is current: bit 0 the local transform (syncLocalTransform sets it), bit 1 the world
+    // transform (getSyncedWorldTransform sets it and clears bit 2), bit 2 the world matrix; the constructor
+    // sets all three
+    unsigned int m_syncFlags;
 };
 }  // namespace fw
 

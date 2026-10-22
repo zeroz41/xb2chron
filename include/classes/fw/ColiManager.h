@@ -3,6 +3,8 @@
 
 #include "classes/fw/ManagerObject.h"
 
+namespace fw { class ColiObject; }
+
 namespace fw {
 // a base of fw::ColiManager no evidence names yet
 class TUnk_B410C0 {
@@ -16,6 +18,7 @@ public:
     virtual ~ColiManager();  // slot 0
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
+    void registObject(ColiObject* object);
 };
 }  // namespace fw
 

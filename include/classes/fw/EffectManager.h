@@ -6,6 +6,7 @@
 #include "classes/ml/IScnRender.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 
+namespace fw { class EffectData; }
 namespace fw { class EffectManager; }
 namespace fw { class UpdateInfo; }
 namespace ml { class IDrDrawWorkInfo; }
@@ -43,6 +44,8 @@ public:
     virtual void blurRender(ml::IDrDrawWorkInfo const*);  // slot 14
     virtual void finalRender(ml::IDrDrawWorkInfo const*);  // slot 15
     virtual void finalize();  // overrides a secondary base's
+    void addData(EffectData* data);
+    void removeData(EffectData* data);
 };
 }  // namespace fw
 

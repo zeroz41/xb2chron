@@ -24,6 +24,7 @@ public:
         m_str[0] = '\0';
         m_nLen = 0;
     }
+    explicit FixStr(const char* pszName) { *this = pszName; }
     FixStr& operator=(const char* pszName) {
 #line 219 MM_MTL_FIXSTR_H_FILE
         MM_ASSERT(pszName != 0);
@@ -34,6 +35,19 @@ public:
         return *this;
     }
     FixStr& format(const char* format, ...);
+    // the index of the last `c`, -1 when there is none (inline: ml::PathUtil::getFsaPath inlines it; the name is
+    // not the original's)
+    int findLast(char c) const {
+        if (m_nLen != 0) {
+            const char* p = m_str + m_nLen - 1;
+            do {
+                if (*p == c) {
+                    return p - m_str;
+                }
+            } while (p-- != m_str);
+        }
+        return -1;
+    }
 
     char m_str[LEN];  // the text: format() copies what it formats here
     int m_nLen;  // fixstr.h asserts `m_nLen < LEN` as it stores a new text's length
