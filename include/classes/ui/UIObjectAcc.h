@@ -40,6 +40,7 @@ public:
     void setTextFacePattern(unsigned int index);
     unsigned int getTextFacePatternIndex();
     unsigned int searchSibiling(const char* name);
+    const char* getName() const;
     void setScreenAdjusting(bool adjusting);
     void getMulColor(mm::Col3& color);
     void setMulColor(const mm::Col3& color);

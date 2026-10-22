@@ -13,6 +13,8 @@ public:
     virtual ~ComponentObject() {}  // slot 1
     unsigned int getLayer() const;
 
+    static mm::mtl::RTTI m_rtti;  // "ComponentObject" (1.0.0's name)
+
     fw::UpdatableObject* m_owner;  // the object holding it (UpdatableObject::registComponentLocal sets it)
 };
 }  // namespace fw

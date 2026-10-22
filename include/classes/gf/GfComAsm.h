@@ -30,6 +30,7 @@ public:
     virtual void changeLayer(unsigned int, unsigned int);  // slot 3
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     const char* getStateName(AnimLayer layer) const;
+    bool execCmd(const char* cmd, gf::AnimLayer layer);
     bool easeIn(const char* state, float time, gf::AnimLayer layer);
     bool easeOut(const char* state, float time, gf::AnimLayer layer);
     bool isActiveAdditiveState(const char* state, gf::AnimLayer layer);

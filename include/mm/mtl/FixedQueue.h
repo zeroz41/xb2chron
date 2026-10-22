@@ -71,6 +71,21 @@ public:
         data()[(m_head + m_size) % N] = value;
         ++m_size;
     }
+    // the element at a place of the ring (inline: the name is not the original's)
+    T& at(unsigned long index) {
+#line 110 MM_MTL_FIXED_QUEUE_PATH
+        MM_ASSERT(index < N);
+        return data()[index];
+    }
+    // takes the first element off and returns it (inline:
+    // GfMenuScriptManager::checkEvent stores the new first and count before it reads the element; the name is
+    // not the original's)
+    T pop_front() {
+        unsigned long index = m_head;
+        m_head = (m_head + 1) % N;
+        --m_size;
+        return at(index);
+    }
     void erase(iterator it) {
 #line 683 MM_MTL_FIXED_QUEUE_PATH
         MM_ASSERT(size() != 0);
