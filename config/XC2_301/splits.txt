@@ -3082,12 +3082,12 @@ application/BF2/ui/ctrl/ui_ctrl_roll.cpp:
 	.data        start:0x00B74610 end:0x00B74638
 
 application/BF2/ui/event/ui_event_disp_condition.cpp:
-	.text        start:0x00672868 end:0x00672934
+	.text        start:0x00672868 end:0x0067293C
 	.rodata      start:0x009A820A end:0x009A8258
 	.data        start:0x00B74638 end:0x00B74668
 
 application/BF2/ui/event/ui_event_manager.cpp:
-	.text        start:0x00672934 end:0x00673730
+	.text        start:0x0067293C end:0x00673730
 	.rodata      start:0x009A8258 end:0x009A829F
 	.data        start:0x00B74668 end:0x00B746A8
 

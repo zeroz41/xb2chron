@@ -2277,11 +2277,11 @@ application/BF2/ui/ctrl/ui_ctrl_slide_select.cpp:
 	.data        start:0x011A9C30 end:0x011A9C58
 
 application/BF2/ui/event/ui_event_disp_condition.cpp:
-	.text        start:0x006D1968 end:0x006D1A58
+	.text        start:0x006D1968 end:0x006D1A60
 	.data        start:0x011A9C58 end:0x011A9C88
 
 application/BF2/ui/event/ui_event_manager.cpp:
-	.text        start:0x006D1A58 end:0x006D2884
+	.text        start:0x006D1A60 end:0x006D2884
 	.data        start:0x011A9C88 end:0x011A9CF0
 
 application/BF2/ui/event/ui_event_number_condition.cpp:
