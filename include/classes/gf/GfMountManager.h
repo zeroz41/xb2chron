@@ -6,6 +6,9 @@
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GF_MOUNT_HANDLE; }
 namespace gf { class GfWeapon; }
+namespace gf { enum OPTMNT : int; }
+namespace fw { class Message; }
+namespace fw { class MessageObject; }
 #include "gf/GFATTACH.h"
 namespace gf { class GfMountManager; }
 #include "classes/gf/IGfObjListener.h"
@@ -25,6 +28,15 @@ public:
     static gf::GfWeapon* getGfWeapon(gf::GF_OBJ_HANDLE* handle, gf::GFATTACH attach);
     static void addMountHandle(gf::GF_MOUNT_HANDLE* mount, gf::GF_OBJ_HANDLE* handle);
     static void removeMountHandle(gf::GF_OBJ_HANDLE* handle, gf::GFATTACH attach);
+    // msg handed to what an object has mounted at a point, from sender
+    static void sendMessage(gf::GF_OBJ_HANDLE* handle, gf::GFATTACH attach, fw::MessageObject* sender,
+                            fw::Message& msg);
+    // the mount of an object's point set to a mount option (GfComBehavior's "weaponAttach" passes 1,
+    // "weaponDetach" 2)
+    static void execMount(gf::GF_OBJ_HANDLE* handle, gf::GFATTACH attach, gf::OPTMNT option);
+    // the objects mounted at a point's right and left options, (GF_OBJ_HANDLE*)-1 without
+    static gf::GF_OBJ_HANDLE* getOptionRight(gf::GF_OBJ_HANDLE* handle, gf::GFATTACH attach);
+    static gf::GF_OBJ_HANDLE* getOptionLeft(gf::GF_OBJ_HANDLE* handle, gf::GFATTACH attach);
 };
 }  // namespace gf
 

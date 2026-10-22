@@ -13,7 +13,7 @@ public:
 class ProcDesktopBackGround : public ::ml::WinProc, public TUnk_B78AC8 {
 public:
     virtual ~ProcDesktopBackGround();  // slot 0
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogout();  // slot 15
 };
 }}  // namespace ml::_dsk
 

@@ -31,6 +31,17 @@ struct CmpCubic {
         return frame < curve.frame;
     }
 };
+
+template <typename T>
+class Array;
+// a cubic track of three values' value at a frame, into pValue[0] to pValue[2] (anm_cubic_animation.cpp)
+void calcVec3(const Array<Cubic3Curve>& curves, float time, float* pValue);
+}  // namespace anm
+
+namespace mm { class Quat; }
+namespace anm {
+// a cubic track of a rotation's value at a frame, normalized (anm_cubic_animation.cpp)
+void calcQuat(const Array<Cubic4Curve>& curves, float time, mm::Quat* pValue);
 }  // namespace anm
 
 #endif

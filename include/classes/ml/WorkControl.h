@@ -15,7 +15,7 @@ public:
     virtual ~WorkControl();  // slot 0
     virtual void wkTail();  // slot 12
     virtual bool wkStandbyLogin();  // slot 14
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogout();  // slot 15
 };
 }  // namespace ml
 

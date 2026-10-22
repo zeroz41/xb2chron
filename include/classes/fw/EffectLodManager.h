@@ -43,7 +43,8 @@ public:
 
     EffectLodManager();
     virtual ~EffectLodManager();  // slot 0
-    // the model's seam parts' effects, made anew
+    // the model's seam parts' effects, made anew; set up for a map's model and its effect pack (gf::MapEff::create),
+    // undone by term
     void init(ModelObject* model, EffectPack* pack);
     void term();
     void update(const UpdateInfo& info);

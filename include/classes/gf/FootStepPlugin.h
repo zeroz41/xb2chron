@@ -10,6 +10,8 @@ namespace gf {
 // table 0x7100B65718
 class FootStepPlugin : public ::gf::Plugin {
 public:
+    // its index in a behavior's plugins (GfComBehavior::procAsmCallbackCommon reads it from index 0)
+    enum { PLUGIN_ID = 0 };
     FootStepPlugin();
     static Plugin* create();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0

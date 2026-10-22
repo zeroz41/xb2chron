@@ -33,6 +33,8 @@ public:
     // gives `object` the character's shape and attributes and the frame it follows (a null object is skipped)
     static void setupColiCharacter(ColiObject* object, ColiCharacterInfo const& info,
                                    mm::mtl::IntrusivePtr<fw::ReferenceFrame> const& frame);
+    // the collision of a map's ground from its resource (gf::MapColi::create keeps it, counted)
+    static ColiObject* createColiGrand(const void* resource);
     static mm::mtl::RTTI m_rtti;
 
     unsigned char pad_10[0x10];

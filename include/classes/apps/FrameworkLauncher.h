@@ -29,7 +29,7 @@ public:
     virtual void wkUpdate();  // slot 9
     virtual void wkTail();  // slot 12
     virtual bool wkStandbyLogin();  // slot 14
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogout();  // slot 15
     virtual void setDebugPause(bool);  // slot 17
     virtual void stepDebugPause();  // slot 18
     virtual void isDebugPause() const;  // slot 19

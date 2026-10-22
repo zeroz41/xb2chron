@@ -8,7 +8,7 @@ namespace ml { namespace _wrootst {
 class WorkRoot : public ::ml::WorkObj {
 public:
     virtual ~WorkRoot();  // slot 0
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogout();  // slot 15
 };
 }}  // namespace ml::_wrootst
 

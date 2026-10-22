@@ -6,6 +6,7 @@
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GF_MOUNT_HANDLE; }
 #include "gf/GFATTACH.h"
+namespace gf { class GfAppendHandles; }
 namespace gf { class GfComProperty; }
 namespace gf { class GfObj; }
 namespace gf { class GfObjSetup; }
@@ -30,6 +31,8 @@ public:
     static bool isValid(gf::GF_OBJ_HANDLE* handle);
     // what the object behind handle has mounted at a point (its info's mount's), -1 without
     static gf::GF_MOUNT_HANDLE* getMountHandle(gf::GF_OBJ_HANDLE* handle, gf::GFATTACH attach);
+    // the objects appended to an object's mount point 1 (GfMountManager::getAppendHandles)
+    static gf::GfAppendHandles* getExtraMountObject(gf::GF_OBJ_HANDLE* handle);
     static void destroy(gf::GF_OBJ_HANDLE* handle);
     // attaches the object behind child to the one behind parent, and detaches it again
     static void attachGfObj(gf::GF_OBJ_HANDLE* parent, gf::GF_OBJ_HANDLE* child);

@@ -1,6 +1,8 @@
 #ifndef GRLIB_CGLIBTEXTURE_H
 #define GRLIB_CGLIBTEXTURE_H
 
+#include "grlib/GrlTypes.h"
+
 namespace grlib { class CGLibTextureBuffer; }
 
 namespace grlib {
@@ -19,6 +21,9 @@ public:
     // buffer made from an image file's size bytes
     static void createTextureImagePtrs(CGLibTextureBuffer& buffer, const void* image, unsigned int size, bool flag,
                                        const CGLibTexSwizzle* swizzle, bool flag2);
+    // buffer made empty, width by height texels of the format
+    static void createTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
+                                  GrlSurfaceFormat format);
 };
 
 }  // namespace grlib

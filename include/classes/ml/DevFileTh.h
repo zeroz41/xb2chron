@@ -27,7 +27,10 @@ public:
     virtual void wkUpdate();  // slot 9
     virtual void wkTail();  // slot 12
     virtual bool wkStandbyLogin();  // slot 14
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogout();  // slot 15
+
+    // its object logged in
+    static bool isInitialized();
     virtual void icbError(ml::CERR_STRUCT*);  // slot 17
     virtual void icbDecide(ml::CERR_STRUCT*, ml::ERR_DECIDE);  // slot 18
     // asks whether a file exists; the answer comes to listener's OnFileEvent (fw::LocalizeResource's update). What

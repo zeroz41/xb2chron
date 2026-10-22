@@ -9,7 +9,7 @@ class WinProc : public ::ml::WorkObj {
 public:
     virtual ~WinProc();  // slot 0
     virtual bool wkStandbyLogin();  // slot 14
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogout();  // slot 15
     unsigned char pad_1A8[0x48];  // fields: size from its derived classes
 };
 }  // namespace ml

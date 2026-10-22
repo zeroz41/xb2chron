@@ -3,6 +3,7 @@
 #include "classes/gf/GfAllocator.h"
 #include "fw/Allocator.h"
 #include "gf/CallBackCache.h"
+#include "anm/AsmAnnotetion.h"
 #include "gf/PluginManager.h"
 #include "classes/gf/GfComBehavior.h"
 #include "classes/gf/GfComAnimation.h"
@@ -44,7 +45,7 @@ void GfComBehaviorSalvage::procAnimCallback(GfComAsm* asmCom, const CallBackCach
     if (!m_stepCallback.isValid()) {
         return;
     }
-    const char* name = cache.m_event->name;
+    const char* name = cache.m_event->m_name;
     if (strcmp(name, "salvageStep") == 0) {
         m_stepCallback();
     } else if (strcmp(name, "vibration") == 0) {

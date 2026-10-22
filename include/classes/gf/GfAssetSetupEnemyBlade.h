@@ -4,7 +4,7 @@
 #include "mm/mtl/RTTI.h"
 #include "classes/gf/GfAssetSetupEnemy.h"
 
-namespace gf { class GfAssetType; }
+namespace gf { enum GfAssetType : int; }
 
 namespace gf {
 // table 0x7100B43C18

@@ -13,7 +13,7 @@ public:
 class ProcDesktopException : public ::ml::WinProc, public TUnk_B78BA0 {
 public:
     virtual ~ProcDesktopException();  // slot 0
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogout();  // slot 15
 };
 }}  // namespace ml::_dsk
 

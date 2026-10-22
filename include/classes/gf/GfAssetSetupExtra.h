@@ -6,7 +6,7 @@
 #include "gf/GfAppend.h"
 
 namespace gf { class GF_ASSET_HANDLE; }
-namespace gf { class GfAssetType; }
+namespace gf { enum GfAssetType : int; }
 namespace gf { class GfInitParamExtra; }
 
 namespace gf {

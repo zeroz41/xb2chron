@@ -14,7 +14,7 @@ class TitleApp : public ::apps::LauncherApp, public TUnk_B3FF78 {
 public:
     virtual ~TitleApp();  // slot 0
     virtual bool wkStandbyLogin();  // slot 14
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogout();  // slot 15
 };
 }  // namespace tl
 

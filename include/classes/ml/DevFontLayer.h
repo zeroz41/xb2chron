@@ -10,7 +10,7 @@ public:
     virtual ~DevFontLayer();  // slot 0
     virtual void wkUpdate();  // slot 9
     virtual void wkTail();  // slot 12
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogout();  // slot 15
 };
 }  // namespace ml
 

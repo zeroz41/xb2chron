@@ -5,7 +5,7 @@
 #include "classes/gf/GfAssetSetupDriver.h"
 
 namespace gf { class GF_ASSET_HANDLE; }
-namespace gf { class GfAssetType; }
+namespace gf { enum GfAssetType : int; }
 namespace gf { class GfInitParamDriver; }
 
 namespace gf {

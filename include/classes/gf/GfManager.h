@@ -6,6 +6,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class GfManager; }
+namespace gf { class GfSetupParam; }
 namespace gf { enum GF_STATE : int; }
 
 namespace gf {
@@ -14,6 +15,8 @@ class GfManager : public ::mm::mtl::PtrSingleton< ::gf::GfManager>, public ::fw:
 public:
     virtual ~GfManager();  // slot 0
     static bool isDestroyNow();
+    // the setup parameters the manager keeps (at 0x18 of its object)
+    static GfSetupParam& getSetupParam();
     virtual void updatePauseCallback();  // slot 2
     virtual void gevGameState(gf::GF_STATE, gf::GF_STATE);  // slot 3
     virtual void activate();  // slot 4

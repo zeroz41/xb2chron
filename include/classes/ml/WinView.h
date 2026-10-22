@@ -20,7 +20,7 @@ public:
     virtual ~WinView();  // slot 0
     virtual void wkTail();  // slot 12
     virtual bool wkStandbyLogin();  // slot 14
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogout();  // slot 15
     virtual void evtFocusOn();  // slot 17
     virtual void evtFocusOff();  // slot 18
     virtual void detachRenderWork(ml::WorkObj const*);  // slot 19

@@ -6,7 +6,7 @@
 
 namespace gf { class GF_ASSET_HANDLE; }
 namespace gf { class GfAssetPack; }
-namespace gf { class GfAssetType; }
+namespace gf { enum GfAssetType : int; }
 namespace gf { class GfInitParamMapSeamless; }
 
 namespace gf {

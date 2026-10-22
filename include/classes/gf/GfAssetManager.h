@@ -8,6 +8,15 @@ namespace gf { class GfAssetManager; }
 namespace gf { class AssetPackInfo; }
 namespace gf { class GF_ASSET_HANDLE; }
 namespace gf { class GfInitParam; }
+namespace gf { class GfAssetResource; }
+
+namespace gf {
+// which of an asset's files (gf::MapColi takes 1, MapNavi 2, MapEff 6, MapGIBL 7, MapLIBL 8); no value has a
+// name yet
+enum GfFileIdx : int {};
+// an asset file's kind (the map parts pass 0); no value has a name yet
+enum GfAssetType : int {};
+}  // namespace gf
 
 namespace gf {
 // table 0x7100B43558
@@ -16,6 +25,8 @@ public:
     virtual ~GfAssetManager();  // slot 0
     static GF_ASSET_HANDLE* createAssetHandle(const GfInitParam& param);
     static AssetPackInfo* getAssetPackInfo(GF_ASSET_HANDLE* handle);
+    // an asset's loaded file, none while it is not loaded
+    static GfAssetResource* getResource(GF_ASSET_HANDLE* handle, GfFileIdx file, GfAssetType type);
 };
 }  // namespace gf
 

@@ -16,7 +16,7 @@ public:
     virtual void wkUpdate();  // slot 9
     virtual void wkRender();  // slot 10
     virtual bool wkStandbyLogin();  // slot 14
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogout();  // slot 15
     virtual void grSetViewportSys(mm::Rect<int> const&, int);  // slot 18
     virtual void grSetScissorSys(mm::Rect<int> const&);  // slot 19
     virtual void getPersSys(mm::Mat44&, float, float, float);  // slot 21

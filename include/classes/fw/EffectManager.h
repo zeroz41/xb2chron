@@ -68,6 +68,10 @@ public:
     // the volume fade (vanish) parameters by gf::VFEFF, each from its effect/common/vanish/<VolumeName>.dprm
     // (BTL_VolumeFade's rows; gf::GfVolumeFade reads them)
     VolumeFadeParams* m_volumeFadeParams[32];
+    unsigned char pad_30e0[0x34878];
+    // an effect speed per category: apply hands each to effect::SystemManager::setCategorySpd, gf::MapEff::update
+    // sets category 1's from the frame's update speed (the name is not the original's)
+    float m_categorySpeed[8];
 };
 }  // namespace fw
 

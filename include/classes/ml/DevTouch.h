@@ -23,7 +23,7 @@ public:
     virtual ~DevTouch();  // slot 0
     virtual void wkUpdate();  // slot 9
     virtual bool wkStandbyLogin();  // slot 14
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogout();  // slot 15
     virtual void itDown(unsigned int, float, float);  // slot 17
     virtual void itUp(unsigned int, float, float);  // slot 18
     virtual void itMove(unsigned int, float, float);  // slot 19

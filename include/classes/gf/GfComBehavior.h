@@ -9,6 +9,7 @@
 namespace fw { class UpdateInfo; }
 namespace gf { class CallBackCache; }
 namespace gf { class GfComAsm; }
+namespace gf { class GfComEvtAnim; }
 
 namespace gf {
 // table 0x7100B65EE0
@@ -22,6 +23,10 @@ public:
     virtual void procAnimCallback(gf::GfComAsm*, gf::CallBackCache const&);  // slot 6
     // what the asm component calls back with its animation events
     void callbackAnim(gf::GfComAsm* com, const gf::CallBackCache& cache);
+    // the events every behavior handles ("footStep", "attachmentTrans"): whether it was one
+    bool procAsmCallbackCommon(const gf::CallBackCache& cache);
+    // what an event animation calls back with: only the common events
+    void callbackAnimForEvent(gf::GfComEvtAnim* com, const gf::CallBackCache& cache);
     // the plugin at index as a T, none when there is none or it is another kind (inline: the name is not the
     // original's)
     template <typename T>

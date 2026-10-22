@@ -11,6 +11,10 @@ enum AllocatorType : int;
 // monolib's memory manager (its functions, by its symbols)
 class MemManager {
 public:
+    // (inline and empty: ml::MlMem's static of one is guarded and constructs nothing)
+    MemManager() {}
+    static void initialize();
+    static void terminate();
     // size bytes at the alignment from the handle's allocator, under a name and line (csvb's pass "no name", 0);
     // the parameter names are not the original's
     static void* allocate(ALLOC_HANDLE handle, unsigned long size, unsigned long alignment, bool flag, const char* name,

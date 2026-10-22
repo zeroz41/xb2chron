@@ -16,8 +16,8 @@ public:
     virtual ~SimpleRetargetAnimation();  // slot 0
     virtual int getImplType() const;  // slot 2
     virtual void sampleTrucks(float, anm::Binding const&, anm::QsTransform*) const;  // slot 3
-    virtual void getExtractMotion(float, anm::QsTransform*) const;  // slot 4
-    virtual void getDeltaExtractMotion(float, float, bool, anm::QsTransform*) const;  // slot 5
+    virtual bool getExtractMotion(float, anm::QsTransform*) const;  // slot 4
+    virtual bool getDeltaExtractMotion(float, float, bool, anm::QsTransform*) const;  // slot 5
     // the binding of the carried-over animation to the mapper's other skeleton
     Binding* createBinding();
 

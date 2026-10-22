@@ -6,7 +6,11 @@
 
 // mm_lib's fixed_queue.h, as the including file's include path named it (see mm/Math.h; aiLib's ai_state_fsm
 // cites the libs/ form)
-#ifdef MM_LIB_FROM_LIBS
+#if defined(MM_LIB_FROM_MONOLIB_MM)
+// monolib_mm's own files (ml::LibMain::isInitialized cites it so)
+#define MM_MTL_FIXED_QUEUE_PATH \
+    "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../../MCL/mm_lib/source\\mm_mtl/fixed_queue.h"
+#elif defined(MM_LIB_FROM_LIBS)
 #define MM_MTL_FIXED_QUEUE_PATH "../../../mcl/mm_lib/source\\mm_mtl/fixed_queue.h"
 #else
 #define MM_MTL_FIXED_QUEUE_PATH \
@@ -106,6 +110,18 @@ public:
         // element size plus the queue's offset), where data()[i] keeps the ring's start in a register
         new (static_cast<void*>(&m_buffer[(m_head + m_size) % N])) T(value);
         ++m_size;
+    }
+    // the element index places after the first (fixed_queue.h asserts `index < N` at line 376: ml::LibMain::
+    // isInitialized inlines it)
+    T& operator[](unsigned long index) {
+#line 376 MM_MTL_FIXED_QUEUE_PATH
+        MM_ASSERT(index < N);
+        return data()[(m_head + index) % N];
+    }
+    const T& operator[](unsigned long index) const {
+#line 376 MM_MTL_FIXED_QUEUE_PATH
+        MM_ASSERT(index < N);
+        return data()[(m_head + index) % N];
     }
     // the element at a place of the ring (inline: the name is not the original's)
     T& at(unsigned long index) {

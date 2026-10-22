@@ -15,7 +15,7 @@ public:
     virtual ~DevPerf();  // slot 0
     virtual void wkUpdate();  // slot 9
     virtual bool wkStandbyLogin();  // slot 14
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogout();  // slot 15
 };
 }  // namespace ml
 

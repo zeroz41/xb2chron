@@ -4,6 +4,8 @@
 #include "classes/ml/IWorkEvent.h"
 
 namespace ml { class ScnObjCam; }
+namespace ml { class ScnObj; }
+namespace ml { class ScnObjIBL; }
 namespace ml { class ScnRenderDrSys; }
 
 namespace ml {
@@ -24,6 +26,11 @@ public:
     virtual ~Scn();  // slot 0
     // a camera by index; -1 the current view's (fw::NaviManager::update's)
     ScnObjCam* getCam(int index);
+    // a light or image-based light made from a resource, by the scene's renderer (gf::MapLIBL and MapGIBL keep
+    // them), and an item given back
+    ScnObj* createLgt(const void* resource, int arg);
+    ScnObjIBL* createIBL(const void* resource, int arg);
+    void releaseItem(ScnObj* item);
     unsigned char pad_20[0x18];
     ScnRenderDrSys* m_renderDrSys;  // what UIScreenObject gives ScnRenderDrSysParmAcc (the name is not the original's)
 };

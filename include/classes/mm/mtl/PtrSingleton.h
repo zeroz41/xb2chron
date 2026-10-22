@@ -3,6 +3,17 @@
 
 #include "mm/MMStdBase.h"
 
+// mm_lib's mm_mtl/singleton.h, as the including file's include path named it: monolib_mm's own files
+// (MM_LIB_FROM_MONOLIB_MM: ml::LibMain::create cites it so) reach it from monolib_mm's build folder, the game's from
+// application/BF2
+#if defined(MM_LIB_FROM_MONOLIB_MM)
+#define MM_MTL_SINGLETON_PATH \
+    "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../../MCL/mm_lib/source\\mm_mtl/singleton.h"
+#else
+#define MM_MTL_SINGLETON_PATH \
+    "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/singleton.h"
+#endif
+
 namespace mm { namespace mtl {
 // a template: 248 instances in the module; the one instance a class derives from holds that class's object
 template <typename T0>
@@ -10,7 +21,7 @@ class PtrSingleton {
 public:
     PtrSingleton() {
         // the original's mm_mtl/singleton.h, as its include path named it
-#line 82 "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/singleton.h"
+#line 82 MM_MTL_SINGLETON_PATH
         MM_ASSERT(get()==0);
         sys() = static_cast<T0*>(this);
     }

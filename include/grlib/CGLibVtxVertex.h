@@ -16,6 +16,8 @@ public:
     void release();
     void lock(void** ppBuffer, unsigned int* pSize);
     void unlock();
+    // unlocked, size bytes from offset written (the parameter names are not the original's)
+    void unlock(unsigned int offset, unsigned int size);
 
     unsigned char pad_0[0x28];
 };

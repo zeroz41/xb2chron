@@ -3,6 +3,8 @@
 
 #include "classes/ml/DevBase.h"
 
+#include "mtl/AllocHandle.h"
+
 namespace ml { enum FONT_STYLE : int; }
 namespace mm { class Col4; }
 namespace mm { class Mat44; }
@@ -21,11 +23,15 @@ public:
     static int getRootWidth();
     static int getRootHeight();
     static float getFrameSyncSec();
+    // the memory the graphics memory pools come from (gf::GfMemManager::initializeCore hands it the asset memory,
+    // finalizeCore takes it back)
+    static void setMemPoolMemHandle(mtl::ALLOC_HANDLE handle);
+    static void releaseMemPoolMemHandle(mtl::ALLOC_HANDLE handle);
     virtual void wkStandby();  // slot 8
     virtual void wkUpdate();  // slot 9
     virtual void wkTail();  // slot 12
     virtual bool wkStandbyLogin();  // slot 14
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogout();  // slot 15
     virtual void cmdAddDisplayListFast(void*, unsigned int, unsigned int) {}  // slot 17
     virtual void grSetViewportSys(mm::Rect<int> const&, int) = 0;  // slot 18
     virtual void grSetScissorSys(mm::Rect<int> const&) = 0;  // slot 19

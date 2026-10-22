@@ -14,8 +14,8 @@ class WorkSystem : public ::ml::WorkObj, public TUnk_B790A8 {
 public:
     virtual ~WorkSystem();  // slot 0
     virtual void wkUpdate();  // slot 9
-    virtual void wkStandbyLogin();  // slot 14
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogin();  // slot 14
+    virtual bool wkStandbyLogout();  // slot 15
 };
 }  // namespace ml
 

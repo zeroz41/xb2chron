@@ -14,8 +14,8 @@ public:
     virtual void wkRenderAfter();  // slot 11
     virtual void wkTail();  // slot 12
     virtual void wkFrameEnd();  // slot 13
-    virtual void wkStandbyLogin();  // slot 14
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogin();  // slot 14
+    virtual bool wkStandbyLogout();  // slot 15
     unsigned char pad_8[0x1A8];  // fields: size from its derived classes
 };
 }  // namespace ml

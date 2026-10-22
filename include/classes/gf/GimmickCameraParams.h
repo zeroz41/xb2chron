@@ -7,7 +7,11 @@ class GimmickCameraParams {
 public:
     // one entry (0x2c bytes; 1.0.0's GfMenuModelViewCamera(Param const&) copies its first six floats)
     struct Param {
-        unsigned char pad_0[0x2c];
+        // where the camera stands and its Euler angles (GfMenuModelViewCamera's constructor takes them as its
+        // position and rotation; the names are not the original's)
+        float m_pos[3];
+        float m_rot[3];
+        unsigned char pad_18[0x14];
     };
     // the header setup checks (the names are not the original's)
     struct Header {

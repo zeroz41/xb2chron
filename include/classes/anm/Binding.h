@@ -6,6 +6,7 @@
 #include "classes/anm/ReferenceObject.h"
 
 namespace anm { class Animation; }
+namespace anm { class SerialiseArg; }
 namespace mm { namespace mtl { class IAllocator; } }
 
 namespace anm {
@@ -13,9 +14,11 @@ namespace anm {
 class Binding : public ::anm::ReferenceObject {
 public:
     explicit Binding(mm::mtl::IAllocator* pAllocator);
+    // a binding in place in its binary: its extra bindings installed over the loaded data
+    Binding(const SerialiseArg& arg);
     virtual ~Binding();  // slot 0
 
-    const Animation* m_pAnimation;  // anm_util.cpp asserts `binding.m_pAnimation`
+    const Animation* m_pAnimation;  // anm_util.cpp asserts `binding.m_pAnimation`; the destructor releases it
     Array<short> m_indexTable;      // anm_control.cpp asserts `count == m_pBinding->m_indexTable.size()`
     Array<ExtraBinding> m_extraBindings;  // per extra-track slot (the name is not the original's)
 };

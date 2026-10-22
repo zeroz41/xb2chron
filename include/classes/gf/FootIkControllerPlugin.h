@@ -19,6 +19,8 @@ public:
         MODE_SLOPE = 2,      // fw::SlopeGroundSolver
         MODE_TWO_CHARA = 3,  // fw::TwoCharaGroundSolver
     };
+    // its index in a behavior's plugins (GfComBehavior::callbackAnim reads it from index 3)
+    enum { PLUGIN_ID = 3 };
 
     FootIkControllerPlugin();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0

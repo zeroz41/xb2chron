@@ -15,7 +15,10 @@ public:
     virtual ~WorkCpu();  // slot 0
     virtual void wkTail();  // slot 12
     virtual bool wkStandbyLogin();  // slot 14
-    virtual void wkStandbyLogout();  // slot 15
+    virtual bool wkStandbyLogout();  // slot 15
+
+    // its object made and every CPU thread logged in
+    static bool isInitialized();
 };
 }  // namespace ml
 
