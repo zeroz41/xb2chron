@@ -9,7 +9,7 @@ public:
     virtual bool initialize();  // slot 2
     virtual bool finalize();  // slot 3
     virtual void enterFinalizeApplet();  // slot 4
-    virtual void getName() const;  // slot 5
+    virtual const char* getName() const;  // slot 5: the manager's name (SensorManager's returns "SensorManager")
     virtual bool isInitialized() const;  // slot 6
     virtual bool isFinalized() const;  // slot 7
     ManagerObject();  // registers it with ManagerRegister

@@ -25,7 +25,9 @@ public:
     unsigned char m_noMirror;
     bool m_clampTime;  // anm::Control clamps its local time to the length while set, wraps it when not (the name
                        // is not the original's)
-    unsigned char pad_23[0x5];
+    unsigned char pad_23;
+    float m_frameRate;  // frames per second: a time's frame is it times the time (UncompressAnimation::sampleTrucks; the
+                        // name is not the original's)
     float m_interval;           // the time between two frames (1.0.0's getDeltaExtractMotion; the name is not the
                                 // original's)
     unsigned int m_frameCount;  // the length is m_interval times one less than it

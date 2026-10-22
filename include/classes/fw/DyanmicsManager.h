@@ -14,7 +14,7 @@ namespace fw {
 class DyanmicsManager : public ::fw::ManagerObject, public ::mm::mtl::PtrSingleton< ::fw::DyanmicsManager> {
 public:
     virtual ~DyanmicsManager();  // slot 0
-    virtual void getName() const;  // slot 5
+    virtual const char* getName() const;  // slot 5
     virtual void update(fw::UpdateInfo const&);  // slot 8
     void addUpdater(unsigned int layer, DynamicsUpdaterInterface& updater);
     void removeUpdater(unsigned int layer, DynamicsUpdaterInterface& updater);

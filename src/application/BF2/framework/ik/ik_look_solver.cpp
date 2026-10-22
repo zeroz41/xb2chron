@@ -1,5 +1,5 @@
-#include "classes/fw/LookIkSolver.h"
 #include "classes/fw/LookAtIkSolver.h"
+#include "classes/fw/LookIkSolver.h"
 #include "classes/fw/SpineIkSolver.h"
 #include "classes/fw/IkFadeSolver.h"
 #include "classes/fw/IkSolver.h"
@@ -102,7 +102,7 @@ void LookIkSolver::setFrontMS(const mm::Vec3& front) {
         m_spine->m_frontMS = front;
     }
     if (m_lookAt) {
-        m_lookAt->m_frontMS = front;
+        m_lookAt->m_limit.limitAxisMS = front;
     }
 }
 

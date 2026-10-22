@@ -16,7 +16,7 @@ class MovieManager : public ::fw::ManagerObject,
                      public ::ml::IWorkBackground {
 public:
     virtual ~MovieManager();  // slot 0
-    virtual void getName() const;  // slot 5
+    virtual const char* getName() const;  // slot 5
     virtual void bkgHomeMenu(bool);  // slot 8
     void open(mm::mtl::IAllocator* allocator, unsigned int layer);
     void close();

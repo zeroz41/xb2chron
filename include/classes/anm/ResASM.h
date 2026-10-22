@@ -12,11 +12,19 @@ namespace anm { class Skeleton; }
 namespace mm { namespace mtl { class IAllocator; }}
 
 namespace anm {
+// a clip's settings (the names are not the original's)
+struct ResClipInfo {
+    unsigned char pad_0[0xC];
+    unsigned int m_flags;  // bit 2: AsmBlender skips sampling while every clip has it
+};
+
 // one clip of a state: 0xE8 bytes (the fields' names are not the original's)
 struct ResClipData {
-    unsigned char pad_0[0x8];
+    const ResClipInfo* m_pInfo;
     const Binding* m_pBinding;  // Factory::createASMResource checks its bone count against the skeleton's
-    unsigned char pad_10[0xD8];
+    float m_start;  // the part of the animation it plays (AsmBlender::getDeltaExtractMotion)
+    float m_end;
+    unsigned char pad_18[0xD0];
 };
 
 // one state of an animation state machine: 0x1E0 bytes

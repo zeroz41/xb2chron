@@ -18,7 +18,7 @@ public:
     virtual ~PadManager();  // slot 0
     virtual bool initialize();  // slot 2
     virtual bool finalize();  // slot 3
-    virtual void getName() const;  // slot 5
+    virtual const char* getName() const;  // slot 5
     virtual bool isInitialized() const;  // slot 6
     virtual void debugDraw(int, int);  // slot 8
     virtual void update(fw::UpdateInfo const&);  // slot 9

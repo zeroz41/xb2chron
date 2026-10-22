@@ -72,6 +72,11 @@ public:
                     qb.w * qa.w - qb.x * qa.x - qb.y * qa.y - qb.z * qa.z);
     }
 
+    // anm::BlendUtil's blends: each component scaled, and summed (not rotations)
+    Quat operator+(const Quat& q) const { return Quat(x + q.x, y + q.y, z + q.z, w + q.w); }
+    Quat operator*(float s) const { return Quat(x * s, y * s, z * s, w * s); }
+    friend Quat operator*(float s, const Quat& q) { return Quat(s * q.x, s * q.y, s * q.z, s * q.w); }
+
     float x;
     float y;
     float z;

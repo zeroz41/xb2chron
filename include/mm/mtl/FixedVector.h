@@ -6,6 +6,15 @@
 #include "string.h"
 #include <new>
 
+// mm_lib's fixed_vector.h as its includer's project named it: eflib's (MM_LIB_FROM_EFLIB) or the game's
+#if defined(MM_LIB_FROM_EFLIB)
+#define MM_MTL_FIXED_VECTOR_PATH \
+    "D:/Monolithsoft/BF2/prog/libs/eflib/proj/windows/../../../mcl/mm_lib/source\\mm_mtl/fixed_vector.h"
+#else
+#define MM_MTL_FIXED_VECTOR_PATH \
+    "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/fixed_vector.h"
+#endif
+
 namespace mm { namespace mtl {
 
 // mm_lib's fixed_vector.h: room for N elements in place, then their count (its iterators are pointers into the room,
@@ -15,6 +24,7 @@ class FixedVector {
 public:
     typedef T* iterator;
     typedef const T* const_iterator;
+    typedef unsigned long size_type;
 
     FixedVector() : m_size(0) {}
     ~FixedVector() {
@@ -60,28 +70,54 @@ public:
 
     // the elements from first to last (3.0.1's FixedVector<GfAppend::MOUNT_INFO, 4>::assign in gf_asset_setup)
     void assign(const_iterator first, const_iterator last) {
-#line 270 "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/fixed_vector.h"
+#line 270 MM_MTL_FIXED_VECTOR_PATH
         MM_ASSERT(first <= last);
         clear();
         if (first != last) {
             unsigned long newSize = last - first;
-#line 275 "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/fixed_vector.h"
+#line 275 MM_MTL_FIXED_VECTOR_PATH
             MM_ASSERT(newSize <= N);
             uninitialized_copy_n(first, newSize, begin());
             m_size = newSize;
         }
     }
     void push_back(const T& value) {
-#line 227 "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/fixed_vector.h"
+#line 227 MM_MTL_FIXED_VECTOR_PATH
         MM_ASSERT(size() < capacity());
         // constructed in place at the buffer's byte offset: the original addresses the new element from the
-        // container (GfMenuObjMercenaryRoot::MainListener::reciveEvent), and keeps placement new's null check where
-        // the container can be null (3.0.1's GfMenuSequence<...>::addAnimJob in gf_menu_obj_enemy_status)
-        new (static_cast<void*>(m_buffer + m_size * sizeof(T))) T(value);
+        // container (GfMenuObjMercenaryRoot::MainListener::reciveEvent), and checks it for null (folded away where
+        // the container is not at the start of its object; ptlib's MaterialManager::initSub keeps it)
+        T* element = static_cast<T*>(static_cast<void*>(m_buffer + m_size * sizeof(T)));
+        if (element != nullptr) {
+            new (element) T(value);
+        }
         ++m_size;
     }
+    // drops the last element (fixed_vector.h asserts `m_size > size_type(0U)`)
+    void pop_back() {
+#line 253 MM_MTL_FIXED_VECTOR_PATH
+        MM_ASSERT(m_size > size_type(0U));
+        if (m_size > 0) {
+            --m_size;
+            at(m_size)->~T();
+        }
+    }
+    // to n elements: copies of value pushed at the end, or the last ones dropped
+    // (fw::PlacementGroundSolver::createImpl)
+    void resize(size_type n, const T& value = T()) {
+        long count = n - m_size;
+        if (count >= 0) {
+            for (; count > 0; --count) {
+                push_back(value);
+            }
+        } else {
+            for (count = -count; count > 0; --count) {
+                pop_back();
+            }
+        }
+    }
     iterator erase(iterator it) {
-#line 345 "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/fixed_vector.h"
+#line 345 MM_MTL_FIXED_VECTOR_PATH
         MM_ASSERT(validate_iterator(it));
         if (it != end()) {
             memcpy(it, it + 1, (end() - (it + 1)) * sizeof(T));
@@ -98,7 +134,7 @@ public:
         }
     }
     T& operator[](unsigned long index) {
-#line 170 "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/fixed_vector.h"
+#line 170 MM_MTL_FIXED_VECTOR_PATH
         MM_ASSERT(index < size());
         return *at(index);
     }

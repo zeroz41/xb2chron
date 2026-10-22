@@ -1,3 +1,5 @@
+#include "mm/mtl/Queue.h"
+#include "anm/JobQueue.h"
 #include "classes/anm/ThreadPool.h"
 #include "anm/JobQueue.h"
 #include "classes/mm/threading/EventWait.h"
@@ -56,7 +58,7 @@ unsigned int ThreadPool::threadFunc(void* argument) {
     ThreadArgument* threadArgument = static_cast<ThreadArgument*>(argument);
     ThreadPool* pool = threadArgument->m_pPool;
     unsigned int index = threadArgument->m_index;
-    Job jobs[0x200];
+    JobEntry jobs[0x200];
     mm::threading::EventWait& doneEvent = pool->m_doneEvents[index];
     doneEvent.setSignal(true);
     while (pool->m_state == STATE_SETUP) {

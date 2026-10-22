@@ -17,7 +17,7 @@ class WindManager : public ::fw::ManagerObject, public TUnk_B434F8 {
 public:
     virtual ~WindManager();  // slot 0
     virtual bool initialize();  // slot 2
-    virtual void getName() const;  // slot 5
+    virtual const char* getName() const;  // slot 5
     virtual void update(fw::UpdateInfo const&);  // slot 8
     void addProbe(WindProbe* pProbe);
     void removeProbe(WindProbe* pProbe);

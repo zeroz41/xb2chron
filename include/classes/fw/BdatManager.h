@@ -18,7 +18,7 @@ public:
     virtual ~BdatManager();  // slot 0
     virtual bool initialize();  // slot 2
     virtual bool finalize();  // slot 3
-    virtual void getName() const;  // slot 5
+    virtual const char* getName() const;  // slot 5
     virtual void update(fw::UpdateInfo const&);  // slot 8
     // the BDAT files, by the slot each is loaded into: loading one from the named file into the handle's memory (true
     // when the load started), whether a slot's file is loaded, a slot's release, and a loaded table by name

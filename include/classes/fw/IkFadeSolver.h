@@ -27,7 +27,8 @@ public:
     };
 
     // fadeIn's and fadeOut's: m_weight goes from `from` (t 0) to `to` (t 1) along a cubic Bezier curve
-    static float calcBezier(float t, float from, float to);
+    // not static: its callers pass `this` (LookAtIkSolver::calcIK, SpineIkSolver::calcIK)
+    float calcBezier(float t, float from, float to);
     void fadeIn(float time);
     void fadeOut(float time);
 

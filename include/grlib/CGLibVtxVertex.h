@@ -11,6 +11,9 @@ public:
     // frees the memory once the GPU is done with it
     void delayRelease();
     void createVertexBuff(unsigned int size, unsigned int stride);
+    // a copy of size bytes of vertices of the stride
+    void createCopyVertexBuff(const void* vertices, unsigned int size, unsigned int stride);
+    void release();
     void lock(void** ppBuffer, unsigned int* pSize);
     void unlock();
 

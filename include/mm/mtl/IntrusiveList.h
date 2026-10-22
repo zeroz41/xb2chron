@@ -81,6 +81,13 @@ public:
         MM_ASSERT(m_size >= 0);
         return front;
     }
+    // ptr unlinked (fw::SensorManager's remove functions; the name is not known to be the original's)
+    void remove(T* ptr) {
+        unlinkNode(ptr);
+        --m_size;
+#line 170 MM_MTL_INTRUSIVE_LIST_PATH
+        MM_ASSERT(m_size >= 0);
+    }
     bool empty() const { return m_root.m_next == &m_root; }
     // it unlinked; the element after it (the name is not known to be the original's)
     iterator erase(iterator it) {

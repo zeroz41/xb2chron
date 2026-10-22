@@ -15,7 +15,7 @@ public:
 class AssetManager : public ::fw::ManagerObject, public TUnk_B40F00 {
 public:
     virtual ~AssetManager();  // slot 0
-    virtual void getName() const;  // slot 5
+    virtual const char* getName() const;  // slot 5
     virtual void update(fw::UpdateInfo const&);  // slot 8
 };
 }  // namespace fw

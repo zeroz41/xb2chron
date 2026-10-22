@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include "anm/Array.h"
+#include "anm/QsTransform.h"
 
 namespace anm {
 // one of a skeleton's bones (getBoneFromLabel returns one): 16 bytes, its name first
@@ -41,9 +42,11 @@ public:
 
     unsigned char pad_8[0x10];
     const char* m_name;  // Factory::createASMResource prints it (the name is not the original's)
-    unsigned char pad_20[0x10];
+    // per bone, its parent's index, -1 for a root (BlendUtil::normalizePoseMS; the name is not the original's)
+    Array<short> m_parents;
     Array<Bone> m_bones;  // getBoneFromLabel indexes it; its size is the pose's transform count
-    unsigned char pad_40[0x10];
+    // per bone, its transform in the reference pose (BlendUtil::normalizePoseMS; the name is not the original's)
+    Array<QsTransform> m_referencePose;
     Array<ExtraTruckSlot> m_extraTruckSlots;  // getExtraTruckSlotID's (the name is not the original's)
 };
 }  // namespace anm
