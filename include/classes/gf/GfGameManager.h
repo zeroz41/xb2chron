@@ -7,6 +7,7 @@
 namespace gf { class ActivateType; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfGameManager; }
+namespace gf { struct OwnerBonus; }
 namespace gf { class MapjumpCallbackInfo; }
 namespace gf { class QuestCompleteChildParam; }
 namespace gf { class QuestCompleteParam; }
@@ -95,6 +96,10 @@ public:
     static int getScenarioId();  // the chapter GfMenuGameAdapter::update_Chapter shows
     static bool isPlaySequenceClear();
     static bool isPlayerCameraPause();
+    // the owner bonuses the party's precious items add up to (GfGameScene's)
+    static const gf::OwnerBonus* getOwnerBonus();
+    // whether the PC may access objects on the field now
+    static bool isEnableFieldAccess();
     virtual void vf2();  // slot 2
     virtual void vf3();  // slot 3
     virtual void vf4();  // slot 4

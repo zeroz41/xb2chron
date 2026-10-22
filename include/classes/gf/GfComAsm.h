@@ -15,6 +15,10 @@ enum AnimLayer : int {
     ANIM_LAYER_LIP = 4,
 };
 
+// which of an object's animation attributes GfComAsm::getAttribute reads; GfComDynamics::applyAttribute and
+// FootIkControllerPlugin ask for 0 (no value has a name yet)
+enum AsmCategory : int {};
+
 // table 0x7100B65540; its constructor builds a GfComAnimation first
 class GfComAsm : public ::gf::GfComAnimation {
 public:
@@ -33,6 +37,12 @@ public:
     bool execCmd(const char* cmd, gf::AnimLayer layer);
     bool easeIn(const char* state, float time, gf::AnimLayer layer);
     bool easeOut(const char* state, float time, gf::AnimLayer layer);
+    // the attribute bits of a category on a layer: GfComDynamics::applyAttribute tests 0x4 and 0x40,
+    // FootIkControllerPlugin 0x1, 0x2 and 0x8
+    unsigned long getAttribute(AsmCategory category, AnimLayer layer) const;  // 64 bits (it returns xzr)
+    bool setState(const char* state, gf::AnimLayer layer);
+    // the inverse frame rate of a state's clip (into invFps)
+    bool getClipInvFps(const char* state, unsigned int index, float* invFps) const;
     bool isActiveAdditiveState(const char* state, gf::AnimLayer layer);
     bool setWeightAdditiveState(const char* state, float weight, gf::AnimLayer layer);
     bool setSpeedAdditiveState(const char* state, float speed, gf::AnimLayer layer);

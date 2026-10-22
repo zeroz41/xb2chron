@@ -7,6 +7,7 @@
 #include "gf/GfDebugStatusProperty.h"  // the tree: "gf/GfDebugStatusProperty.h"
 #include "mm/mtl/IntrusivePtr.h"
 #include "mm/mtl/UniquePtr.h"
+namespace gf { class GfTargetProperty; }  // gf/GfTargetProperty.h
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
 
@@ -22,7 +23,9 @@ public:
     static mm::mtl::RTTI m_rtti;
     // fields: its constructor zeroes 0x10-0x38, its destructor releases and deletes them last to first
     mm::mtl::IntrusivePtr<gf::GfStatusProperty> m_status;  // the object's hit points (none: it takes no damage)
-    unsigned char pad_18[0x18];  // three UniquePtrs: a GfTargetProperty (flush) and two more
+    // what those targeting or following the object read (the PC's flush fills it; the name is not the original's)
+    mm::mtl::UniquePtr<gf::GfTargetProperty> m_target;
+    unsigned char pad_20[0x10];  // two more UniquePtrs
     mm::mtl::UniquePtr<gf::GfDebugStatusProperty> m_debugStatus;  // debug switches (procMsgObjectDamage's)
 };
 }  // namespace gf

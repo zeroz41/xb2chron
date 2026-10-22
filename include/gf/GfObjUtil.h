@@ -1,11 +1,22 @@
 #ifndef GF_GFOBJUTIL_H
 #define GF_GFOBJUTIL_H
 
+#include "mm/mtl/FixedVector.h"
+
 namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GfComProperty; }
 namespace gf { class GfObj; }
 namespace gf { class GfObjSetup; }
 
 namespace gf {
+
+// a fade an animation annotation describes ("fadein_<frames>" or "fadeout_<frames>[_<numbers>]"), as
+// GfObjUtil::parseFadeParam reads it (the field names are not the original's)
+struct GfFadeInfo {
+    int m_type;              // 1 "fadeout", 0 "fadein"
+    unsigned int m_frames;   // the fade's length in frames
+    mm::mtl::FixedVector<int, 6> m_values;  // the numbers after the length
+};
 
 // helpers for the objects behind handles (functions, by its symbols)
 class GfObjUtil {
@@ -13,6 +24,10 @@ public:
     // the object behind a handle, none for an invalid handle or one with no object
     static gf::GfObj* getObj(gf::GF_OBJ_HANDLE* handle);
     static bool isValid(gf::GF_OBJ_HANDLE* handle);
+    // the kind of the object behind a handle (its info's setup's), 0 without one; 5 is what isActiveRangeLure lures
+    static int getObjType(gf::GF_OBJ_HANDLE* handle);
+    // the property of the object behind a handle (its object info's), none without an info
+    static gf::GfComProperty* getProperty(gf::GF_OBJ_HANDLE* handle);
     static bool isTalking(gf::GF_OBJ_HANDLE* handle);
     // the setup of the object behind a handle (its object info's), none without an info
     static gf::GfObjSetup* getObjSetup(gf::GF_OBJ_HANDLE* handle);
@@ -20,6 +35,10 @@ public:
     // "dlc_"): a blade-type object (DataParamAcc's type 3) whose bdat id GfDataBlade's fn_710023F9A8 accepts.
     // The name is not the original's (the symbols call it fn_7100552DF4).
     static bool isDlcSound(gf::GF_OBJ_HANDLE* handle);
+    // the object's motion resource name (its data's), none without one
+    static const char* getMotionResourceName(gf::GF_OBJ_HANDLE* handle);
+    // reads a fade annotation's text into info: false when it is not one
+    static bool parseFadeParam(const char* text, gf::GfFadeInfo* info);
 };
 
 }  // namespace gf

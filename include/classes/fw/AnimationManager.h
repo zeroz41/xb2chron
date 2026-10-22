@@ -3,6 +3,8 @@
 
 #include "classes/fw/ManagerObject.h"
 
+namespace fw { class AnimControlUpdaterInterface; }
+namespace fw { class AnimPoseSamplerInterface; }
 namespace fw { class UpdateInfo; }
 
 namespace fw {
@@ -17,6 +19,11 @@ public:
     virtual ~AnimationManager();  // slot 0
     virtual void getName() const;  // slot 5
     virtual void update(fw::UpdateInfo const&);  // slot 8
+    // the updaters and samplers it runs, by layer
+    void addControlUpdater(unsigned int layer, fw::AnimControlUpdaterInterface& updater);
+    void removeControlUpdater(unsigned int layer, fw::AnimControlUpdaterInterface& updater);
+    void addPoseSampler(unsigned int layer, fw::AnimPoseSamplerInterface& sampler);
+    void removePoseSampler(unsigned int layer, fw::AnimPoseSamplerInterface& sampler);
 };
 }  // namespace fw
 

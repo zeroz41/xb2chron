@@ -12,6 +12,11 @@ public:
     bool m_active;  // with type 1: the new state
 };
 
+// the events by type, as the nodes' handlers take them (1.0.0's TaskFieldSensor::onChangeActivate and
+// TaskFieldFollowMainPc::onCreate name them): type 1 a change of the node's active state, type 2 its creation
+class ActivateEvent : public Event {};
+class CreateEvent : public Event {};
+
 }  // namespace ai
 
 #endif

@@ -1,6 +1,7 @@
 #ifndef GF_GFOBJACC_H
 #define GF_GFOBJACC_H
 
+namespace fw { class Transform; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GFOBJ_INFO; }
 namespace gf { class GfObj; }
@@ -16,6 +17,10 @@ public:
     GfObjAcc(GF_OBJ_HANDLE* handle);
     bool testFlag(unsigned int flag) const;
     GfObj* getObj() const;
+    // the object's world transform (its frame's, synced first)
+    const fw::Transform& getWorldTransform() const;
+    // the same without syncing the frame first
+    const fw::Transform& getWorldTransformNoSync() const;
     bool isDestroy() const;
     void* getUserData(GfObjUserData kind) const;
     int getType() const;  // the object's type (3: a driver)

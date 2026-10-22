@@ -2,21 +2,24 @@
 #define CLASSES_FW_DYANMICSMANAGER_H
 
 #include "classes/fw/ManagerObject.h"
+#include "classes/mm/mtl/PtrSingleton.h"
 
+namespace fw { class DynamicsColObjUpdaterInterface; }
+namespace fw { class DynamicsUpdaterInterface; }
 namespace fw { class UpdateInfo; }
 
 namespace fw {
-// a base of fw::DyanmicsManager no evidence names yet
-class TUnk_B41288 {
-public:
-    virtual ~TUnk_B41288();
-};
-// table 0x7100B41230; base at 0x10 unknown (TUnk_B41288)
-class DyanmicsManager : public ::fw::ManagerObject, public TUnk_B41288 {
+// table 0x7100B41230; its base at 0x10 is its singleton (1.0.0 names PtrSingleton<fw::DyanmicsManager>'s
+// destructors)
+class DyanmicsManager : public ::fw::ManagerObject, public ::mm::mtl::PtrSingleton< ::fw::DyanmicsManager> {
 public:
     virtual ~DyanmicsManager();  // slot 0
     virtual void getName() const;  // slot 5
     virtual void update(fw::UpdateInfo const&);  // slot 8
+    void addUpdater(unsigned int layer, DynamicsUpdaterInterface& updater);
+    void removeUpdater(unsigned int layer, DynamicsUpdaterInterface& updater);
+    void addColUpdater(unsigned int layer, DynamicsColObjUpdaterInterface& updater);
+    void removeColUpdater(unsigned int layer, DynamicsColObjUpdaterInterface& updater);
 };
 }  // namespace fw
 

@@ -13,6 +13,30 @@ namespace gf { namespace pc {
 // TaskFieldJump::update 4)
 enum PARAM_ID_FIELD_AI {};
 
+// the field AI's parameter blocks: their names and their fields' names are 1.0.0's (each one's createReflection
+// registers the fields by name and offset)
+struct SensorAIParam {        // entry 3 of the PC's parameter list (TaskFieldSensor::update)
+    float stackThreashold;    // the PC is stuck when it moved this much less than its velocity would carry it
+    float obstacleAngle;      // degrees from level past which a face is an obstacle
+    float enableJumpOffset;   // the PC may jump onto an obstacle its target is this far above
+    float enableJumpCeil;     // and not while what is above it is this close
+};
+struct FollowMainPcParam {    // entries 0 and 1 (in water)
+    float followDist;
+    float stopDist;
+    float powMinDist;
+    float powMaxDist;
+    float adjustTime;
+    float adjustDist;
+    float walkDistStopFollower;
+};
+struct FollowBuddyPcParam {   // entries 2 and 3 (in water)
+    float stopDist;
+    float powMinDist;
+    float powMaxDist;
+    float walkDistStopFollower;
+};
+
 // what the field AI's tasks share (functions, by its symbols)
 class AgentUtilField {
 public:

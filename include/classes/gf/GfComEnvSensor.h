@@ -16,6 +16,8 @@ public:
     virtual ~GfComEnvSensor();  // slot 1
     virtual void changeLayer(unsigned int, unsigned int);  // slot 3
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
+    // m_sensor (inline: the name is not the original's)
+    const gf::EnviromentSensor& getSensor() const { return m_sensor; }
     static mm::mtl::RTTI m_rtti;
 
     gf::EnviromentSensor m_sensor;  // the constructor builds it, flushEnv checks around the object with it

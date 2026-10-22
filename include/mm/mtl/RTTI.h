@@ -23,6 +23,14 @@ public:
     const RTTI* m_bases[2];  // isKindOf follows each one that is set
 };
 
+// p as a T when its runtime type is T or derives from it, none otherwise (inline: the name is not the original's).
+// It takes a pointer: a cast of a reference's address through it keeps the test of its result for none, which the
+// field AI's tasks show (their blackboard casts test the cast pointer, not isKindOf's answer)
+template <typename T, typename U>
+inline T* rttiCast(U* p) {
+    return p->getRTTI()->isKindOf(&T::m_rtti) ? static_cast<T*>(p) : nullptr;
+}
+
 }}  // namespace mm::mtl
 
 #endif

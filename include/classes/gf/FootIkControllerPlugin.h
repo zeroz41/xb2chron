@@ -7,10 +7,18 @@ namespace fw { class UpdateInfo; }
 namespace gf { class GfComBehavior; }
 
 namespace gf {
-// table 0x7100B656B0
+// table 0x7100B656B0: drives the ground solvers of its object's IK component from the asm state's attributes
 class FootIkControllerPlugin : public ::gf::Plugin {
 public:
-    enum Mode {};  // setup picks 1 to 3 from the ground solvers the IK has; values not named yet
+    // which ground solver it drives: setup picks it from the solvers the IK component has, switchMode changes it
+    // (StateUtil::switchPlacementIK picks the slope for true); 1.0.0's type name, the value names are not the
+    // original's
+    enum Mode {
+        MODE_NONE = 0,
+        MODE_PLACEMENT = 1,  // fw::PlacementGroundSolver
+        MODE_SLOPE = 2,      // fw::SlopeGroundSolver
+        MODE_TWO_CHARA = 3,  // fw::TwoCharaGroundSolver
+    };
 
     FootIkControllerPlugin();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
@@ -25,6 +33,8 @@ public:
     virtual bool setup(gf::GfComBehavior&);  // slot 8
     virtual void cleanup(gf::GfComBehavior&);  // slot 9
     virtual void update(gf::GfComBehavior&, fw::UpdateInfo const&);  // slot 10
+    // the asm component's attribute bits (category 0, layer 0), none without one
+    unsigned long getASMStateAttribute(gf::GfComBehavior& behavior) const;
     void setGroundPlacement(bool enable);
     void switchMode(Mode mode);
 
@@ -32,6 +42,14 @@ public:
 
     gf::GfComBehavior* m_behavior;  // the behavior setup was given, cleared by cleanup
     Mode m_mode;                    // switchMode's
+    // the names below are not the original's
+    bool m_switcher;               // setup's: the IK has both a slope and a placement solver, so switchMode may
+                                   // change the mode (StateUtil::setEnableHeadDetectForSwitcher tests it too)
+    bool m_groundPlacement;        // setGroundPlacement's
+    bool m_enableDownIK;           // StateUtil::setEnableDownIK and GfComBehaviorEvent::setFootIK set it,
+                                   // switchMode clears it
+    bool m_enableGroundPlacement;  // ground placement follows the attribute 0x1 only while set (from the start)
+    bool m_syncDown;               // the "ikEvent" animation callbacks "syncDownOn" and "syncDownOff" set it
 };
 }  // namespace gf
 
