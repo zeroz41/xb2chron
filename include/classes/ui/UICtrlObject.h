@@ -8,10 +8,13 @@ namespace fw { class UpdateInfo; }
 namespace ui { struct EventData; }
 
 namespace ui {
-// a parameter of an event a control sends (sendEvent copies its 4 bytes); the name of its field is not the
-// original's
-struct uiEventParam {
+// a parameter of an event a control sends (sendEvent copies its 4 bytes): UICtrlCursorSelect::update fills its
+// halves apart (the new index, the old one), UICtrlRevolveSelect sends times and angles; the names of its fields are
+// not the original's
+union uiEventParam {
     int m_value;
+    short m_half[2];
+    float m_float;
 };
 
 // table 0x7100B74598; a control UICtrlManager runs (the constructor hands it to the manager) on an object: the

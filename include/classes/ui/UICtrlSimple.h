@@ -2,6 +2,7 @@
 #define CLASSES_UI_UICTRLSIMPLE_H
 
 #include "ui/UIUtil.h"
+#include <string.h>
 
 #include "classes/ui/UICtrlCurve.h"
 
@@ -18,8 +19,10 @@ public:
         float m_start;
         float m_end;
     };
+    // the ranges and values are zeroed as one block, the values again one by one (1.0.0's
+    // mm::mtl::Array<UICtrlSimple<4>>::reserve, UICtrlCursorSelect's and UICtrlRevolveSelect's constructors)
     UICtrlSimple()
-        : m_range(), m_curve(nullptr), m_time(0.0f), m_duration(0.0f), m_speed(1.0f), m_loop(false), m_pause(false) {
+        : m_range(), m_value(), m_curve(nullptr), m_time(0.0f), m_duration(0.0f), m_speed(1.0f), m_loop(false), m_pause(false) {
         for (int i = 0; i < N; i++) {
             m_value[i] = 0.0f;
         }
@@ -31,8 +34,9 @@ public:
         m_duration = duration;
         m_speed = 1.0f;
         m_curve = UIUtil::getCurve(type);
+        // the ranges are copied as one block: UICtrlCursorSelect::setSelIndex stores each end from its own register
+        memcpy(m_range, range, sizeof(m_range));
         for (int i = 0; i < N; i++) {
-            m_range[i] = range[i];
             m_value[i] = m_range[i].m_start;
         }
         m_loop = false;

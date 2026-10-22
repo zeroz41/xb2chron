@@ -10,6 +10,10 @@ namespace layer {
 class LayerAccManager {
 public:
     LayerAccManager();
+    LayerBase* createObj(const void* resource);  // the objects made, or null
+    LayerBase* createMaskObj(const void* resource);
+    LayerBase* createLayoutObj();
+    LayerBase* createTexObj(const grlib::CGLibTextureBuffer& texture);
     LayerBase* createPolyObj(unsigned int width, unsigned int height, unsigned short vertexCount,
                              unsigned short indexCount, LayerPrimitiveType type);  // the object made, or null
 };

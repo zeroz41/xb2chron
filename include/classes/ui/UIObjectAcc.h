@@ -32,6 +32,9 @@ public:
     void getPos(mm::Pnt<short>& pos) const;
     void setDisp(bool disp);
     bool isDisp() const;
+    bool isIgnoreSize() const;  // left out of its layout's size (UILayoutObject::updateSize)
+    bool isAlwaysInLayout() const;  // counted in its layout's size even while hidden (UILayoutObject::updateSize)
+    bool isNotInputTarget() const;  // ui::UIInputPointer skips such an object
     void setSuspend(bool suspend);
     const char* getTextPtr() const;  // its text object's text, null when it is not a text
     bool isImage() const;
@@ -76,6 +79,7 @@ public:
     // a color UIColorLibrary has under that name (nothing for null or a name it does not have)
     void setMulColor(const char* name);
     void setAddColor(const char* name);
+    void setDispPriority(unsigned short priority);
     UIObject* m_object;      // UIUtil::getObject(m_handle): isTerm reads its flags, setTerm calls its setTerm
     unsigned int m_handle;   // what the constructor is given (or its named child's)
 };

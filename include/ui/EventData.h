@@ -12,6 +12,12 @@ struct EventData {
         m_param0 = 0;
         m_param1 = 0;
     }
+    // one of a type, its parameters zeroed as above (the input layers' own events start so: UIInputPointer's
+    // constructor stores the type before the parameters)
+    explicit EventData(unsigned short type) : m_type(type), m_param2(0), m_param3(0) {
+        m_param0 = 0;
+        m_param1 = 0;
+    }
     unsigned short m_type;  // what happened: 0xD, an event a UIEventCondition raised
     unsigned char pad_2[6];
     // the parameters share their bytes with 8-byte and 16-bit views. The 8-byte member makes the event 8-aligned:
@@ -29,10 +35,14 @@ struct EventData {
                 };
                 unsigned long m_param01;  // the two as one (the name is not the original's; no code reads it)
             };
-            int m_param2;  // per type
+            union {
+                int m_param2;      // per type
+                float m_param2Float;  // the same as a float: for ui::UIInputPointer's move (0xA), its region's scale
+            };
             int m_param3;  // per type
         };
-        // the parameters as 16-bit values: GfMenuObjFade's fade (0x100) passes its frames, colour, alpha and channel
+        // the parameters as 16-bit values: GfMenuObjFade's fade (0x100) passes its frames, colour, alpha and channel;
+        // ui::UIInputPointer's move (0xA) where the pointer went (0 and 1) and whether onto a selection (2)
         // (the name is not the original's)
         unsigned short m_paramShort[8];
     };

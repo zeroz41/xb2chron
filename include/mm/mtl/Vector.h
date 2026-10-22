@@ -33,6 +33,13 @@ public:
         return m_buffer;
     }
     iterator end() { return begin() + m_size; }
+    const T* begin() const {
+#line 60 MM_MTL_VECTOR_PATH
+        MM_ASSERT(m_buffer != 0);
+        return m_buffer;
+    }
+    const T* end() const { return begin() + m_size; }
+    bool valid_iterator(const T* it) const { return begin() <= it && it <= end(); }
     size_t size() const { return m_size; }
     size_t capacity() const { return m_capacity; }
     IAllocator* getAllocator() const { return m_allocator; }
@@ -73,6 +80,8 @@ public:
     void extend(size_t size, size_t alignment);
     void resize(size_t size);
     void push_back(const T& value);
+    // removes the element at it, moving the ones after it down (vector.h's assertion `valid_iterator(it)`)
+    iterator erase(iterator it);
     void pop_back() {
         if (m_size != 0) {
             --m_size;
@@ -255,6 +264,19 @@ void Vector<T>::push_back(const T& value) {
         new (element) T(value);
     }
     ++m_size;
+}
+
+template <typename T>
+typename Vector<T>::iterator Vector<T>::erase(iterator it) {
+#line 674 MM_MTL_VECTOR_PATH
+    MM_ASSERT(valid_iterator(it));
+    iterator last = end();
+    if (it != last) {
+        memcpy(it, it + 1, (last - (it + 1)) * sizeof(T));
+        --m_size;
+        end()->~T();  // the last element's old place: a call of begin() with nothing to destroy
+    }
+    return it;
 }
 
 template <typename T>

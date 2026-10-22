@@ -5,6 +5,7 @@
 
 namespace mm { namespace mtl { class IAllocator; } }
 
+namespace fw { struct PadData; }
 namespace ui { class UIObject; }
 namespace ui { class UICtrlCurve; }
 namespace ui { class UILayoutObject; }
@@ -38,6 +39,12 @@ bool adjustScreen(mm::Rect<short>& rect);  // true when it had to move the recta
 // true when it had to move rect into area (UIObjectDockPlugin's execute keeps its object inside its area)
 bool adjustRect(mm::Rect<short>& rect, mm::Rect<short>& area);
 unsigned int registObject(UIObject* object);  // the handle its object map gives it
+// puts the object handle against a side of the object target (0: on its center, 1: left, 2: right, 3: above,
+// 4: below), target's rectangle taken by getRect mode 3 when outer, 2 otherwise (the parameter names are not the
+// original's)
+void setDockPos(unsigned int handle, unsigned int target, unsigned char side, bool outer);
+const fw::PadData* getPadData();  // the pad the UI reads this frame (UIManager's, else the control pad's)
+unsigned int convUIPadToFWPad(int pad, bool);  // a UI pad button's fw::PadData bits
 }}  // namespace ui::UIUtil
 
 #endif

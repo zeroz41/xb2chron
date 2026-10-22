@@ -9,11 +9,21 @@ namespace layer {
 enum LayerMemType {};
 // the primitives a polygon object draws (UIPolygonObject makes its objects with 0)
 enum LayerPrimitiveType {};
+// how a layout anchors its objects (UILayoutObject::create sets 2)
+enum LAYER_ANCHOR {};
 
 // access to a layout layer object: makes the objects under it (UIScreenObject::create and createOnMemory)
 class LayerAccLayoutObj {
 public:
     LayerAccLayoutObj(LayerBase* layer);
+    void setViewPortMode(bool enable);
+    void setViewPort(float x, float y, float width, float height);
+    void createPriorityTbl(unsigned int count);
+    void setAutoAnchorMode(LAYER_ANCHOR anchor);
+    LayerBase* createObj(const void* resource);  // the objects made under it, or null
+    LayerBase* createMaskObj(const void* resource);
+    LayerBase* createFontObj();
+    LayerBase* createLayoutObj();
     LayerBase* createTexObj(const grlib::CGLibTextureBuffer& texture);  // the object made, or null
     LayerBase* createMemObj(unsigned int width, unsigned int height, LayerMemType type);  // the object made, or null
     // a polygon object of vertexCount vertices and indexCount indices under it; null when it makes none

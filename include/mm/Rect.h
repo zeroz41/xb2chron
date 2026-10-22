@@ -3,20 +3,14 @@
 
 namespace mm {
 
-// a rectangle as its corner and its size: UIObjectPosPlugin centers on x + w / 2, y + h / 2. Its copies copy the
-// four one by one (UIObjectPosPlugin's execute stores each half of the words it loads).
+// a rectangle as its corner and its size: UIObjectPosPlugin centers on x + w / 2, y + h / 2. A copy made copies the
+// four one by one (UIObjectPosPlugin's execute stores each half of the words it loads); an assignment copies the
+// whole (ui::UIInputPointer::updateImpl copies its region as one doubleword).
 template <typename T>
 class Rect {
 public:
     Rect() {}
     Rect(const Rect& r) : x(r.x), y(r.y), w(r.w), h(r.h) {}
-    Rect& operator=(const Rect& r) {
-        x = r.x;
-        y = r.y;
-        w = r.w;
-        h = r.h;
-        return *this;
-    }
     T x;
     T y;
     T w;

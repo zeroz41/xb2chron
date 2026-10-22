@@ -16,6 +16,12 @@ public:
     virtual void callTagStart(char const*, layer::LayerTagTbl const*, unsigned int);  // slot 6
     virtual void callTagEnd(char const*);  // slot 7
     bool parseTag(const char* text, const char* tag);  // whether the text carries the tag
+    void parse(const char* text);
+    const char* getResult();  // the text parse made
+    unsigned char pad_20[0x98];
+    // the owner id of the text it parses (UITextObject::setText gives it the text's UIStr::m_ownerId; the name is
+    // not the original's)
+    unsigned short m_ownerId;
 };
 }  // namespace ui
 

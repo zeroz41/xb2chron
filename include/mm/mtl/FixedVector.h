@@ -20,6 +20,10 @@ public:
     ~FixedVector() {
         clear();
     }
+    // a copy of another's elements (ui::UIInputLayer's and ui::UIInputPad's constructors copy their setup's)
+    FixedVector(const FixedVector& other) : m_size(0) {
+        *this = other;
+    }
     // GfAppendInfo's copy (gf_obj_info) clears before assign's assertion and again after it
     FixedVector& operator=(const FixedVector& other) {
         if (this != &other) {

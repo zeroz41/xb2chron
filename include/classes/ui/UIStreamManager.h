@@ -10,6 +10,9 @@ namespace ui {
 class UIStreamManager : public ::mm::mtl::PtrSingleton< ::ui::UIStreamManager> {
 public:
     virtual ~UIStreamManager();  // slot 0
+    // streams the contents' image at index into the object of that handle (UIImageObject::setImageIndex)
+    void start(unsigned int contents, unsigned int handle, unsigned int index);
+    unsigned int getContentsNum(unsigned int contents);  // the contents' number of images
 };
 }  // namespace ui
 
