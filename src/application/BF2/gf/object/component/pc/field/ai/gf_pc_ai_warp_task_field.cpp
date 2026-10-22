@@ -1,6 +1,9 @@
+#include "classes/gf/GfObjProperty.h"
+#include "gf/GfObjUtil.h"
 #include "gf/FileStaticVec3.h"
 #include "gf/EnviromentSensor.h"
 #include "gf/GfTargetProperty.h"
+#include "classes/gf/GfObjProperty.h"
 #include "classes/gf/pc/TaskFieldCheckWarp.h"
 #include "classes/gf/pc/TaskFieldCheckWarpBattleWaterDead.h"
 #include "classes/gf/pc/TaskFieldCheckWarpFallDead.h"
@@ -58,9 +61,9 @@ void TaskFieldCheckWarp::update(BlackBoardField& bb) {
 
     if (!(bb.m_flags & 0x10)) {
         GfGamePlayerFormation* formation = GfGamePlayerFormation::get();
-        GfComProperty* followed =
+        GfObjProperty* followed =
             GfObjUtil::getProperty(formation->m_players[formation->m_players[property->m_setupKind].m_followIndex].m_handle);
-        const GfTargetProperty* target = followed->m_target.get();
+        const GfTargetProperty* target = followed->m_target;
         if (target != nullptr && ((target->m_state | 4) == 5 || target->m_blocksFollowWarp)) {
             return;
         }

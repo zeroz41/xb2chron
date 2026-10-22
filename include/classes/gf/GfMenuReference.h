@@ -10,6 +10,11 @@ namespace gf {
 class GfMenuReference : public ::mm::mtl::PtrSingleton< ::gf::GfMenuReference> {
 public:
     class REFLIST;
+    // a route of the elemental combo the menu shows (8 bytes each, 7 of them; the names are not the original's)
+    struct ElementComboRoot {
+        unsigned int m_comboId;  // GfMenuElementComboAdapter::ReferenceRouteConverter's combo
+        unsigned char pad_4[0x4];
+    };
     virtual ~GfMenuReference();  // slot 0
     static unsigned int getReferenceDriverID(unsigned int index);
     static unsigned int getReferenceBladeID(unsigned int index);
@@ -20,6 +25,8 @@ public:
     static int getReferenceNumber(unsigned int index);
     static int getReferenceNumberMin(unsigned int index);
     static int getReferenceNumberMax(unsigned int index);
+    static const ElementComboRoot* getElementComboRootInfo(unsigned int route);  // a dummy past the 7th
+    static int getElementComboRootCurrent();  // the route the combo is on (GfMenuElementComboAdapter compares)
 };
 }  // namespace gf
 

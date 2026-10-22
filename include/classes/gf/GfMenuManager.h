@@ -116,6 +116,8 @@ public:
     virtual void qevChangeCurrentQuest(gf::QuestChangeParam const&);  // slot 21
     virtual void beginUpdate(fw::UpdateInfo const&);  // slot 22
     static bool isBattleState(unsigned int);
+    // the object the menu targets, -1 without a manager or a target
+    static GF_OBJ_HANDLE* getTargetObjHandle();
     static bool isOpenFullScreen();
     // the object the player can access now, (GF_OBJ_HANDLE*)-1 for none
     static gf::GF_OBJ_HANDLE* getAccessObjHandle();

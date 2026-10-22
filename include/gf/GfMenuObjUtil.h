@@ -108,6 +108,9 @@ public:
     // an elemental combo's attribute and name, from its BDAT row (attribute 0 for an invalid one)
     static unsigned char getElementComboAtr(unsigned int combo);
     static ui::UIStr getElementComboName(unsigned int combo);
+    // a combo's effect text, and its effect (3.0.1's always 1) (GfMenuElementComboAdapter's update_*)
+    static ui::UIStr getElementComboEffectName(unsigned int combo);
+    static unsigned char getElementComboEffect(unsigned int combo);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in this
     // file, which holds only GfMenuObjUtil's functions (1.0.0: 159 of 159). What it does: whether the add-on menu
     // layer `layer` is usable. False unless bit `layer` of UIStr.cpp's layer mask (lbl_7100B75878; fn_7100696950

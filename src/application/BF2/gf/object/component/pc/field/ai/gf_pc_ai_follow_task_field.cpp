@@ -1,8 +1,10 @@
+#include "classes/gf/GfObjProperty.h"
+#include "gf/GfObjUtil.h"
 #include "mm/mtl/RTTI.h"
 #include "ai/Event.h"
 #include "gf/GfTargetProperty.h"
 #include "gf/EnviromentSensor.h"
-#include "classes/gf/GfComProperty.h"
+#include "classes/gf/GfObjProperty.h"
 #include "classes/gf/GfComPropertyPc.h"
 #include "classes/gf/GfGameParty.h"
 #include "classes/gf/GfGamePlayerFormation.h"
@@ -87,9 +89,9 @@ bool isFollowMainPc(const BlackBoardField& bb) {
         }
         unsigned int followIndex = formation->m_players[property->m_setupKind].m_followIndex;
         if (followIndex != 0xFFFFFFFF) {
-            GfComProperty* followed = GfObjUtil::getProperty(formation->m_players[followIndex].m_handle);
-            if (followed->m_target.get() != nullptr) {
-                return followed->m_target.get()->m_isMoving;
+            GfObjProperty* followed = GfObjUtil::getProperty(formation->m_players[followIndex].m_handle);
+            if (followed->m_target != nullptr) {
+                return followed->m_target->m_isMoving;
             }
         }
     }
@@ -133,9 +135,9 @@ inline void TaskFieldFollowMainPc::update(BlackBoardField& bb) {
 bool isFollowBuddyPc(const BlackBoardField& bb) {
     GfComPropertyPc* property = bb.m_property;
     GfGamePlayerFormation* formation = GfGamePlayerFormation::get();
-    GfComProperty* followed =
+    GfObjProperty* followed =
         GfObjUtil::getProperty(formation->m_players[formation->m_players[property->m_setupKind].m_followIndex].m_handle);
-    if (followed->m_target.get()->m_state == 3) {
+    if (followed->m_target->m_state == 3) {
         return false;
     }
     const FollowBuddyPcParam* param = AgentUtilField::getAIParamAdapter(
@@ -157,9 +159,9 @@ bool isFollowBuddyPc(const BlackBoardField& bb) {
     }
     unsigned int followIndex = formation->m_players[property->m_setupKind].m_followIndex;
     if (followIndex != 0xFFFFFFFF) {
-        GfComProperty* followedNow = GfObjUtil::getProperty(formation->m_players[followIndex].m_handle);
-        if (followedNow->m_target.get() != nullptr) {
-            return followedNow->m_target.get()->m_isMoving;
+        GfObjProperty* followedNow = GfObjUtil::getProperty(formation->m_players[followIndex].m_handle);
+        if (followedNow->m_target != nullptr) {
+            return followedNow->m_target->m_isMoving;
         }
     }
     return false;

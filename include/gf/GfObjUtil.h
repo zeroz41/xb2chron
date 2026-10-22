@@ -8,6 +8,7 @@ namespace gf { class GF_MOUNT_HANDLE; }
 #include "gf/GFATTACH.h"
 namespace gf { class GfAppendHandles; }
 namespace gf { class GfComProperty; }
+namespace gf { class GfObjProperty; }
 namespace gf { class GfObj; }
 namespace gf { class GfObjSetup; }
 
@@ -39,8 +40,9 @@ public:
     static void dettachGfObject(gf::GF_OBJ_HANDLE* parent, gf::GF_OBJ_HANDLE* child);
     // the kind of the object behind a handle (its info's setup's), 0 without one; 5 is what isActiveRangeLure lures
     static int getObjType(gf::GF_OBJ_HANDLE* handle);
-    // the property of the object behind a handle (its object info's), none without an info
-    static gf::GfComProperty* getProperty(gf::GF_OBJ_HANDLE* handle);
+    // the property of the object behind a handle (its object info's, GfObjManager::createGfObjProperty's), none
+    // without an info
+    static gf::GfObjProperty* getProperty(gf::GF_OBJ_HANDLE* handle);
     static bool isTalking(gf::GF_OBJ_HANDLE* handle);
     // the setup of the object behind a handle (its object info's), none without an info
     static gf::GfObjSetup* getObjSetup(gf::GF_OBJ_HANDLE* handle);

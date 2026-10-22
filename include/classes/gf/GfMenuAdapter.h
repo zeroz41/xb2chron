@@ -41,6 +41,7 @@ public:
     void setAddColor(const char* color);  // a colour plugin's
     void setColorMode(unsigned int mode);  // a colour plugin's
     void setColor(const char* color);  // a colour plugin's
+    void setTextFacePattern(const char* pattern);  // a pattern plugin's (GfMenuElementComboAdapter: "element%02d")
     // a position plugin's: the screen position, the target an offset plugin moves to, the world position
     void setPos(const mm::Pnt<short>& pos);
     void setOffsetTargetPos(const mm::Pnt<short>& pos);
