@@ -6,6 +6,8 @@ namespace ui { class UIObjectPlugin; }
 namespace ui { struct uiDateTime; }
 namespace ui { class UIStr; }
 namespace gf { struct ElapseTime; }
+namespace mm { class Vec3; }
+namespace mm { template <typename T> class Pnt; }
 
 namespace gf {
 // table 0x7100B59C80
@@ -35,6 +37,15 @@ public:
     void setDisp(bool disp);
     void setText(const ui::UIStr& text);  // a text plugin's
     void setMulColor(const char* color);
+    void setAddColor(const char* color);  // a colour plugin's
+    void setColorMode(unsigned int mode);  // a colour plugin's
+    void setColor(const char* color);  // a colour plugin's
+    // a position plugin's: the screen position, the target an offset plugin moves to, the world position
+    void setPos(const mm::Pnt<short>& pos);
+    void setOffsetTargetPos(const mm::Pnt<short>& pos);
+    void setPosWorld(const mm::Vec3& pos);
+    bool isPosScreenAdjust() const;
+    void setOffsetLimit(unsigned short x, unsigned short y);  // an offset plugin's
     unsigned char pad_8[0x10];
     ui::UIObjectPlugin* m_plugin;  // the constructor's, referenced
     unsigned int m_flags;          // bit 0: setChange sets it, update clears it; the constructor sets 1 or 3

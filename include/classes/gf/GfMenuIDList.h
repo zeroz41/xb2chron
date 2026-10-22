@@ -8,7 +8,8 @@ namespace gf {
 class MenuID {
 public:
     unsigned int m_id;
-    unsigned char pad_4[4];
+    // a second id: GfMenuWorldMapAdapter::MissionListConverter's map; the name is not the original's
+    unsigned int m_subId;
 };
 
 // table 0x7100B5F3D0

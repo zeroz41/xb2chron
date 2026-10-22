@@ -13,6 +13,7 @@ public:
     GfBdatRsc();
     virtual ~GfBdatRsc();  // slot 0
     virtual void bdatRefresh();  // slot 2
+    int getRSC_PcWpnMenuImageID(unsigned int rsc) const;  // a weapon resource's menu image
     unsigned char pad_10[0x98];  // fields: size from GfDataBdat::initialize's allocation
 };
 }  // namespace gf

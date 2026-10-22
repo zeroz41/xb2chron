@@ -1,6 +1,8 @@
 #ifndef GF_GFDATAMERCENARIES_H
 #define GF_GFDATAMERCENARIES_H
 
+namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
+
 namespace gf {
 // the mercenary team's data (functions, by its symbols)
 class GfDataMercenaries {
@@ -17,6 +19,12 @@ public:
     static unsigned int getTeamNum();
     static Team* getTeamByIndex(unsigned int index);
     static bool isTeamStateReward(unsigned int teamId);  // the team is back with a reward to collect
+    // the teams on a zone's missions, working on them or done with them
+    static void getTeamByZoneMissionWorking(mm::mtl::FixedVector<unsigned short, 3>& teams, unsigned int zone);
+    static void getTeamByZoneMissionComplete(mm::mtl::FixedVector<unsigned short, 3>& teams, unsigned int zone);
+    static bool isTeamStateExpedition(unsigned int teamId);  // the team is away on a mission
+    static int getMissionCategory(unsigned int mission);
+    static bool isNewMission(unsigned int mission);
 };
 }  // namespace gf
 

@@ -13,6 +13,7 @@ public:
     GfBdatItem();
     virtual ~GfBdatItem();  // slot 0
     virtual void bdatRefresh();  // slot 2
+    unsigned short getPcWpnRscR(unsigned int weapon) const;  // a driver weapon's resource (GfBdatRsc's row)
     unsigned char pad_10[0xD0];  // fields: size from GfDataBdat::initialize's allocation
 };
 }  // namespace gf

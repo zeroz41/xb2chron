@@ -7,6 +7,9 @@ namespace gf { class GFOBJ_INFO; }
 namespace gf { class GfObj; }
 
 namespace gf {
+// what GfObjAcc::isDisp asks about an object's display (GfMenuPosAdapter::update asks 0)
+enum OBJDISP {};
+
 // which of an object's user data pointers (GfObjAcc::getUserData reads the info's at 0x70 + 8 * it)
 enum GfObjUserData {};
 
@@ -25,6 +28,11 @@ public:
     void* getUserData(GfObjUserData kind) const;
     int getType() const;  // the object's type (3: a driver)
     unsigned int getBdatId() const;
+    bool isDisp(OBJDISP disp) const;
+    bool isValidTransform() const;  // its world transform can be read
+    // a bone's world transform; false when the object has no such bone
+    bool getBoneTransform(fw::Transform& transform, const char* bone);
+    float getModelScale() const;
 
     GFOBJ_INFO* m_info;  // GfObjManager::getObjInfo's for the handle
     GfObj* m_obj;  // the GfObj constructor's argument
