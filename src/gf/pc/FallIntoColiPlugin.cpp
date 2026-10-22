@@ -1,3 +1,4 @@
+#include "gf/GfSearchParam.h"
 #include "classes/fw/ReferenceFrame.h"
 #include "classes/gf/GfComTransform.h"
 #include "classes/gf/pc/FallIntoColiPlugin.h"
@@ -15,8 +16,21 @@ FallIntoColiPlugin::FallIntoColiPlugin() : m_activeTime(0.0f), m_stillTime(0.0f)
 
 FallIntoColiPlugin::~FallIntoColiPlugin() {}
 
-// setup (0x71005193D8) is not matched yet: its GfSearchParam's stack initialization schedules differently (the
-// candidate is in the worker's notes)
+// searches below the PC for a collision it may have fallen into (update looks at what it finds)
+bool FallIntoColiPlugin::setup(gf::GfComBehaviorPc& behavior) {
+    gf::GfSearchParam param;
+    param.m_radius = 1.0f;
+    param.m_checks = gf::GfSearchParam::CHECK_RADIUS | gf::GfSearchParam::CHECK_HEIGHT;
+    param.m_heightUp = 0.0f;
+    param.m_heightDown = 30.0f;
+    param.m_baseObj = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    GfComTransform* transform = behavior.m_owner->getComponent<GfComTransform>(0);
+    mm::mtl::IntrusivePtr<fw::ReferenceFrame> frame = transform->getFrame();
+    param.m_frame = frame;
+    m_searchObj = gf::GfGameSearchObj::createObj(param);
+    gf::GfGameSearchObj::setEnable(m_searchObj, false);
+    return true;
+}
 
 void FallIntoColiPlugin::cleanup(gf::GfComBehaviorPc&) {
     if (m_searchObj != reinterpret_cast<gf::GF_SEARCH_OBJ*>(-1)) {

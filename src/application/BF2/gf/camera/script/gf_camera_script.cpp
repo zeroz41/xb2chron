@@ -1,27 +1,47 @@
+#include "classes/gf/ScriptCameraEntity.h"
 #include "classes/fw/Camera.h"
 #include "classes/fw/CameraLayer.h"
 #include "classes/fw/CameraManager.h"
 #include "classes/fw/Framework.h"
 #include "classes/gf/ScriptCamera.h"
-#include "classes/gf/ScriptCameraEntity.h"
 #include "classes/mm/mtl/IAllocator.h"
 #include "fw/UpdateInfo.h"
 
 namespace gf {
 
-// the constructor (0x71001D8884) and update (0x71001D8B1C) are not here yet: candidates/gf_camera_script.near.cpp's
-// differ only in the operand order of the three additions that make the look-at target
+// the constructor (0x71001D8884) is not here yet: the body in ctor_candidate.cpp differs only in the operand order
+// of the first of the three additions that make the look-at target (the direction's x plus m_pos.x)
 
 ScriptCameraEntity::~ScriptCameraEntity() {}
 
 void ScriptCameraEntity::onActivate() {}
 
+void ScriptCameraEntity::update(const fw::UpdateInfo& info) {
+    if (m_frames > 0.0f) {
+        calcSpeedTypeLinearSpacing();
+        m_frame += info.m_deltaTime / (1.0f / 30.0f);
+        if (m_frames < m_frame) {
+            m_frame = m_frames;
+        }
+    }
+    mm::Vec3 target;
+    target = getDirection();
+    target += m_pos;
+    setLookAt(m_pos, target, m_rot.z);
+}
+
 ScriptCamera::ScriptCamera() {}
 
 ScriptCamera::~ScriptCamera() {}
 
-// start (0x71001D8EB0) is not here yet: candidates/gf_camera_script.near.cpp's tests the new entity for null again
-// where the original keeps the first test in a flag
+void ScriptCamera::start(const mm::Vec3& pos, const mm::Vec3& rot, float frames) {
+    if (m_camera) {
+        return;
+    }
+    m_camera = ScriptCameraEntity::create(pos, rot);
+    float time = frames / 30.0f;
+    fw::CameraManager::get()->m_layers[0].push(m_camera, time);
+}
 
 void ScriptCamera::end(float frames) {
     if (!m_camera) {

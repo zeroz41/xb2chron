@@ -9,8 +9,11 @@ namespace gf {
 class GfMenuCallContext : public ::mm::mtl::ReferenceObject {
 public:
     // what a menu reports back: GfMenuCallManager copies it from a UI event's parameters
+    // (the field names are not the original's: GfMenuCallManager::reciveUIEvent fills m_value from the event's
+    // second parameter and m_id from its first, and passes them on to the handler in that order's reverse)
     struct GfMenuResult {
-        unsigned char pad_0[8];
+        int m_value;
+        int m_id;
     };
     GfMenuCallContext() : m_objectId(0), m_handle(0), m_terminated(false) {}
     virtual ~GfMenuCallContext();  // slot 0

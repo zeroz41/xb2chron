@@ -56,6 +56,48 @@ void GfMenuCallManager::postUpdate(const fw::UpdateInfo& info) {
     }
 }
 
+void GfMenuCallManager::reciveUIEvent(const ui::EventData& event, unsigned int handle) {
+    mm::mtl::FixedVector<CallInfo, 256>& calls = get()->m_calls;
+    if (event.m_type == 9) {
+        for (CallInfo* it = calls.begin(); it != calls.end(); ++it) {
+            if (it->m_context->m_handle == handle) {
+                if (it->m_eventHandler != 0) {
+                    ui::EventData data;
+                    data.m_type = 0x42;
+                    data.m_param0 = it->m_context->m_id;
+                    data.m_param1 = it->m_context->m_objectId;
+                    ui::UIManager::get()->requestObjectEvent(it->m_eventHandler, data, 0.0f);
+                }
+                it->m_context->terminate();
+                if (it->m_context != nullptr) {
+                    it->m_context->release();
+                    it->m_context = nullptr;
+                }
+                calls.erase(it);
+                return;
+            }
+        }
+    } else if (event.m_type == 8) {
+        for (CallInfo* it = calls.begin(); it != calls.end(); ++it) {
+            if (it->m_context->m_handle == handle) {
+                GfMenuCallContext::GfMenuResult result;
+                result.m_id = event.m_param0;
+                result.m_value = event.m_param1;
+                it->m_context->addResult(result);
+                if (it->m_eventHandler != 0) {
+                    ui::EventData data;
+                    data.m_type = 0x41;
+                    data.m_param0 = it->m_context->m_id;
+                    data.m_param1 = it->m_context->m_objectId;
+                    data.m_param2 = result.m_id;
+                    data.m_param3 = result.m_value;
+                    ui::UIManager::get()->requestObjectEvent(it->m_eventHandler, data, 0.0f);
+                }
+            }
+        }
+    }
+}
+
 void GfMenuCallManager::attachCall(unsigned int id, unsigned int handle) {
     m_handles[id] = handle;
 }

@@ -9,7 +9,6 @@
 namespace anm { class AsmAnnotetion; }
 namespace anm { class Binding; }
 namespace anm { class ResResolver; }
-namespace anm { class ResStateArray; }
 namespace anm { class Skeleton; }
 namespace mm { namespace mtl { class IAllocator; }}
 
@@ -97,6 +96,41 @@ struct CompLerpNode {
     }
 };
 
+// one point of a lerp add blend tree: the added clip it weights (0x28 bytes; the names are not the original's)
+struct ResLerpAddNode {
+    float m_position;
+    unsigned char pad_4[0x24];
+};
+
+// a lerp add blend tree's resource: the variable it follows, its base clips first, then one added clip per point
+// (the names are not the original's)
+struct ResLerpAddTree {
+    unsigned char pad_0[0x4];
+    unsigned int m_variableIndex;  // in the state machine's variables
+    unsigned char pad_8[0x8];
+    unsigned int m_baseCount;
+    unsigned char pad_14[0x4];
+    Array<ResLerpAddNode> m_nodes;
+};
+
+// orders a lerp add blend tree's points against a variable's value by their positions (std::lower_bound's
+// comparator in LerpAddBlendTree::adjustWeight)
+struct CompLerpAddNode {
+    bool operator()(const ResLerpAddNode& node, float value) const {
+        return node.m_position < value;
+    }
+};
+
+struct ResVariable;
+
+// an animation state machine's states and variables as loaded (ResASM's constructor counts the states; the names
+// are not the original's)
+class ResStateArray {
+public:
+    unsigned char pad_0[0x28];
+    Array<ResVariable> m_variables;  // ASMControl makes a Variable of each
+};
+
 // one state of an animation state machine: 0x1E0 bytes
 struct ResStateData {
     const ResStateInfo* m_pInfo;
@@ -118,7 +152,7 @@ public:
     void sortAnnotation(unsigned int kind);
 
     const Skeleton* m_pSkeleton;  // the names of the fields are not the original's
-    unsigned char pad_20[0x8];
+    const ResStateArray* m_pStates;  // the constructor's
     Array<ResStateData> m_states;
     unsigned char pad_38[0x8];  // Factory::createASMResource allocates 0x40 bytes
 };

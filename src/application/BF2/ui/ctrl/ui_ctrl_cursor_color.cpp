@@ -1,3 +1,7 @@
+#include "classes/ui/UICtrl.h"
+#include "classes/ui/UICtrlCurve.h"
+#include "classes/ui/UICtrlMethod.h"
+#include "classes/ui/UIObject.h"
 #include "classes/ui/UIListInfoBase.h"
 #include "classes/ui/UISelectObjList.h"
 #include "classes/ui/UIObjectAcc.h"
@@ -8,6 +12,94 @@
 #include "ui/UIUtil.h"
 
 namespace ui {
+
+UICtrl::UICtrl()
+    : m_object(nullptr), m_time(0.0f), m_unused(0.0f), m_duration(0.0f), m_loop(false), m_loopCount(0), m_methods(),
+      m_speed(1.0f) {}
+
+UICtrl::~UICtrl() {
+    if (m_object != nullptr) {
+        m_object->release();
+        m_object = nullptr;
+    }
+}
+
+void UICtrl::update(float step) {
+    if (step == 0.0f || m_object == nullptr) {
+        return;
+    }
+    UICtrlMethod::TimeInfo info;
+    info.m_time = m_time;
+    info.m_step = m_speed * step;
+    info.m_duration = m_duration;
+    if (m_duration == 0.0f && m_time == 0.0f) {
+        // no time to run: every method at its end at once
+        for (Method* it = m_methods.begin(); it != m_methods.end(); ++it) {
+            if (it->m_method != nullptr) {
+                it->m_method->execute(m_object, 1.0f, info);
+            }
+        }
+        m_time = 1.0f;
+    }
+    if (!m_loop && m_duration <= m_time) {
+        return;
+    }
+    m_time += info.m_step;
+    bool finished = false;
+    if (m_time >= m_duration) {
+        if (!m_loop) {
+            m_time = m_duration;
+            finished = true;
+        } else {
+            m_time -= m_duration;
+            m_loopCount++;
+        }
+    }
+    for (Method* it = m_methods.begin(); it != m_methods.end(); ++it) {
+        float rate;
+        if (it->m_curve != nullptr) {
+            rate = it->m_curve->calc(m_time, 0.0f, 1.0f, m_duration);
+        } else {
+            rate = m_time / m_duration;
+        }
+        if (it->m_method != nullptr) {
+            it->m_method->execute(m_object, rate, info);
+        }
+    }
+    if (finished) {
+        stop();
+    }
+}
+
+void UICtrl::stop() {
+    if (m_object != nullptr) {
+        m_object->release();
+        m_object = nullptr;
+    }
+    m_time = 0.0f;
+    m_duration = 0.0f;
+    m_loop = false;
+    m_loopCount = 0;
+    m_methods.clear();
+    m_speed = 1.0f;
+    m_unused = 0.0f;
+}
+
+void UICtrl::start(UIObject* object, float duration, const mm::mtl::FixedVector<Method, 5>& methods, bool loop) {
+    if (m_object != nullptr) {
+        m_object->release();
+        m_object = nullptr;
+    }
+    m_object = object;
+    m_object->addRef();
+    m_time = 0.0f;
+    m_duration = duration;
+    m_loop = loop;
+    m_loopCount = 0;
+    m_methods = methods;
+    m_speed = 1.0f;
+    m_unused = 0.0f;
+}
 
 UICtrlCursorColor::~UICtrlCursorColor() {
     if (m_list != nullptr) {
