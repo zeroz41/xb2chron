@@ -4,6 +4,8 @@
 namespace fw { class UpdateInfo; }
 namespace ui { class UIObjectPlugin; }
 namespace ui { struct uiDateTime; }
+namespace ui { class UIStr; }
+namespace gf { struct ElapseTime; }
 
 namespace gf {
 // table 0x7100B59C80
@@ -25,9 +27,13 @@ public:
     static int compare(GfMenuAdapter* lhs, GfMenuAdapter* rhs);  // their numbers or texts: 0 same, 1 less, 2 more
     int getNumber() const;
     void setNumber(int number);
+    void setNumberMin(int min);  // the number plugin's
+    void setNumberMax(int max);  // the number plugin's
     void setChange();  // sets m_flags bit 0
     void setTime(const ui::uiDateTime& time);  // a time plugin's
+    void setElapseTime(const ElapseTime& time);  // a time plugin's
     void setDisp(bool disp);
+    void setText(const ui::UIStr& text);  // a text plugin's
     void setMulColor(const char* color);
     unsigned char pad_8[0x10];
     ui::UIObjectPlugin* m_plugin;  // the constructor's, referenced

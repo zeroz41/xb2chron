@@ -15,6 +15,14 @@ public:
     virtual ~UIListInfo();  // slot 0
     virtual void clear();  // slot 2
     virtual void setup(mm::mtl::IAllocator* allocator, const ui::UIListInfoBase::SetupParam& param);  // slot 4
+    // the content at an index, m_dummy past the end; the name is not the original's (1.0.0 has addContents)
+    T0& getContents(unsigned int index) {
+        T0* contents = &m_dummy;
+        if (index < m_list.size()) {
+            contents = &m_list[index];
+        }
+        return *contents;
+    }
     mm::mtl::Vector<T0> m_list;
     // what a read past the end gets (GfMenuCharDataAdapter::createFromEnemyList); the name is not the original's
     T0 m_dummy;

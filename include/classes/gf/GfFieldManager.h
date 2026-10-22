@@ -86,6 +86,8 @@ public:
 class GfFieldManager : public ::mm::mtl::PtrSingleton< ::gf::GfFieldManager>, public TUnk_B51F68, public TUnk_B51F80 {
 public:
     virtual ~GfFieldManager();  // slot 0
+    static const char* getMapName();  // the current map's name, none when there is none
+    static bool getLandmarkNameId(unsigned char*& bdat, int& id);  // the current location's name in a message table
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 2
     virtual void gevMapjump(gf::GEV, gf::MapjumpCallbackInfo const&);  // slot 3
     virtual void gevReloadBdat(gf::RELOAD_BDAT, unsigned int);  // slot 4

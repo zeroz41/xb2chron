@@ -3,9 +3,14 @@
 
 #include "classes/ui/UIListInfo.h"
 
-namespace gf { class MenuID; }
-
 namespace gf {
+// a GfMenuIDList's content: an id (GfMenuIDList::sortMissionComplete orders by it)
+class MenuID {
+public:
+    unsigned int m_id;
+    unsigned char pad_4[4];
+};
+
 // table 0x7100B5F3D0
 class GfMenuIDList : public ::ui::UIListInfo< ::gf::MenuID> {
 public:

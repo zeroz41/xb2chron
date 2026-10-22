@@ -91,6 +91,9 @@ public:
     static bool isEvent(bool sequential);
     // whether the player is in a talk (a forced one, or the game state's talk flag)
     static bool isTalking();
+    static int getMapID();
+    static int getScenarioId();  // the chapter GfMenuGameAdapter::update_Chapter shows
+    static bool isPlaySequenceClear();
     virtual void vf2();  // slot 2
     virtual void vf3();  // slot 3
     virtual void vf4();  // slot 4

@@ -15,6 +15,9 @@ public:
     virtual void update();  // slot 3
     void setup(const SetupParam& param);
     bool isValid() const;
+    int getSize() const;  // the contents' count
+    unsigned int getIndex(bool page) const;  // the selected content's (on the page, when asked)
+    unsigned int getPageIndex(unsigned int index) const;  // the content at that place on the page shown
     unsigned int getRowSize() const;
     unsigned int getPageRowSize() const;  // the rows a page shows
     unsigned int getPageColumnSize() const;

@@ -10,6 +10,7 @@ namespace gf {
 class GfFieldWeather : public ::mm::mtl::PtrSingleton< ::gf::GfFieldWeather> {
 public:
     virtual ~GfFieldWeather();  // slot 0
+    static unsigned int getCurrentWtrType(bool);  // the weather now (GfMenuBdat::getIconIDFromWeatherType takes it)
 };
 }  // namespace gf
 

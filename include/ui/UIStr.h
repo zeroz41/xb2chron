@@ -8,6 +8,7 @@ class UIStr {
 public:
     UIStr();
     UIStr(unsigned char* bdat, unsigned int id);  // the text a message table has at that id
+    UIStr(const char* text, bool);  // a text as it is (GfMenuGameAdapter passes false)
     ~UIStr();
     bool isValid() const;
     bool compare(const UIStr& other);  // true when they are the same text
