@@ -11,6 +11,8 @@ namespace fw { class ObjectEvent; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GFOBJ_INFO; }
+namespace gf { class MsgDebugActivateObjectWindow; }
+namespace gf { class MsgDebugDeactivateObjectWindow; }
 
 namespace gf {
 // table 0x7100B69E08; its fw::MessageObject at 0xE0 (that table: getRTTI, the destructors, recieveMessage)
@@ -22,6 +24,9 @@ public:
     virtual void update(fw::UpdateInfo const&);  // slot 4
     virtual void onEvent(fw::ObjectEvent const&);  // slot 5
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 6
+    // 1.0.0's (names from its symbols): empty, so recieveMessage inlines them; 3.0.1's linker dropped them
+    void procMsgActivateObjectDebugWindow(fw::MessageObject* sender, MsgDebugActivateObjectWindow& msg);
+    void procMsgDeactivateObjectDebugWindow(fw::MessageObject* sender, MsgDebugDeactivateObjectWindow& msg);
     // sets or clears m_updateFlags bit 1 and has GfObjUtil::applyExecUpdate decide m_execUpdate again
     void setUpdateComponent(bool on);
     static mm::mtl::RTTI m_rtti;

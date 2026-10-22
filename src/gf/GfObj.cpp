@@ -1,10 +1,13 @@
 #include "mm/mtl/RTTI.h"
 #include "classes/gf/GfObj.h"
+#include "classes/gf/GfComponent.h"
 #include "classes/gf/GfComProperty.h"
 #include "gf/GfObjUpdate.h"
 #include "gf/GfObjUtil.h"
 #include "fw/Message.h"
 #include "fw/ObjectEvent.h"
+#include "gf/MsgDebugActivateObjectWindow.h"
+#include "gf/MsgDebugDeactivateObjectWindow.h"
 
 namespace gf {
 
@@ -32,10 +35,30 @@ void GfObj::onEvent(const fw::ObjectEvent& event) {
     }
 }
 
-// recieveMessage (0x7100521BE0, and its thunk) is not here yet: written as the loop over the 12 component slots
-// (the message's category bits) handing the message to the first GfComponent, then
-// 'return msg.m_id == 0x1000002 || msg.m_id == 0x1000001', the loop is identical but clang folds the two tests into
-// one range check where the original tests 0x1000002, then 0x1000001
+bool GfObj::recieveMessage(fw::MessageObject* sender, fw::Message& msg) {
+    for (unsigned long i = 0; i < 12; i++) {
+        if (msg.m_category & (1 << i)) {
+            if (GfComponent* component = getComponent<GfComponent>(i)) {
+                return component->recieveMessage(sender, msg);
+            }
+        }
+    }
+    // the original tests 0x1000002 first: clang lowers the chain to a switch, testing in reverse source order
+    if (msg.m_id == MsgDebugActivateObjectWindow::ID) {
+        procMsgActivateObjectDebugWindow(sender, static_cast<MsgDebugActivateObjectWindow&>(msg));
+        return true;
+    }
+    if (msg.m_id == MsgDebugDeactivateObjectWindow::ID) {
+        procMsgDeactivateObjectDebugWindow(sender, static_cast<MsgDebugDeactivateObjectWindow&>(msg));
+        return true;
+    }
+    return false;
+}
+
+// 1.0.0's (names from its symbols); empty there, and dropped by 3.0.1's linker once inlined
+void GfObj::procMsgActivateObjectDebugWindow(fw::MessageObject* sender, MsgDebugActivateObjectWindow& msg) {}
+
+void GfObj::procMsgDeactivateObjectDebugWindow(fw::MessageObject* sender, MsgDebugDeactivateObjectWindow& msg) {}
 
 void GfObj::setUpdateComponent(bool on) {
     if (on) {
