@@ -16,6 +16,10 @@ public:
     static void close();
     static void setGuideDisp(bool disp);
     static void setDisp(bool disp);
+    // a handle's operation guide, kept until remove (GfMenuObjSkipTime's while it is open)
+    static void add(unsigned int handle, unsigned int, unsigned int, unsigned int);
+    static void remove(unsigned int handle, unsigned int, unsigned int, unsigned int);
+    static void setGuideText(unsigned int text, unsigned int);
 };
 }  // namespace gf
 

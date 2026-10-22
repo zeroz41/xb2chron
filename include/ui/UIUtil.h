@@ -7,6 +7,7 @@ namespace mm { namespace mtl { class IAllocator; } }
 
 namespace fw { struct PadData; }
 namespace ui { class UIObject; }
+namespace fw { struct PadData; }
 namespace ui { class UICtrlCurve; }
 namespace ui { class UILayoutObject; }
 namespace mm { template <typename> class Rect; }
@@ -31,6 +32,7 @@ bool checkNumberTextFormat(const char* text, unsigned int count);
 char getMoneySeparetor(fw::LangType lang);  // the thousands separator of lang's money, 0 for none
 mm::mtl::IAllocator* getProgAllocator();
 UIObject* getObject(unsigned int handle);
+const fw::PadData* getPadData();  // the UI's pad (the UI manager's input's, else fw::PadManager's control pad)
 bool isValid(unsigned int handle);
 bool isTerm(unsigned int handle);
 UILayoutObject* getLayoutObject(unsigned int handle);  // null when the handle is no layout object's

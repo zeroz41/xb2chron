@@ -16,6 +16,7 @@ public:
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
     static void setCloseKeyEnable(bool enable);
+    static void setSubIndexText(unsigned int text);
 };
 }  // namespace gf
 

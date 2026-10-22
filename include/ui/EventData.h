@@ -30,8 +30,14 @@ struct EventData {
                     union {
                         int m_param0;  // per type: the condition's event; for a fade's start (0xA) and end (0xB), its channel
                         unsigned short m_param0Short;  // the same, where a type passes 16 bits: 0x21 (a menu object's open), its index
+                        // the same, where a type passes a float: GfMenuObjZoneTelop's close (0x22), its fade time
+                        float m_param0Float;
                     };
-                    int m_param1;  // per type: the condition's first user value; for 5, 1 when the menu's layer is ready
+                    union {
+                        int m_param1;  // per type: the condition's first user value; for 5, 1 when the menu's layer is ready
+                        // the same, where a type passes a float: GfMenuObjMainMenu2BG's move (0x101), its time
+                        float m_param1Float;
+                    };
                 };
                 unsigned long m_param01;  // the two as one (the name is not the original's; no code reads it)
             };

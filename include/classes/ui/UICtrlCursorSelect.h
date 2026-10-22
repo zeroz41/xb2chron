@@ -11,6 +11,7 @@
 #include "ui/UIUtil.h"
 
 namespace fw { class UpdateInfo; }
+namespace ui { class UISelectObjList; }
 
 namespace ui {
 // table 0x7100B74448; a cursor object that follows the selected object of a list, moving to it over a time (the

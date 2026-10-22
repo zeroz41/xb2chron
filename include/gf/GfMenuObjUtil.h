@@ -1,7 +1,10 @@
 #ifndef GF_GFMENUOBJUTIL_H
 #define GF_GFMENUOBJUTIL_H
 
+#include "classes/ui/UICtrlCursorSelect.h"
+
 namespace gf { class GfMenuCallContext; }
+namespace ui { class UIListInfoBase; }
 namespace fw { enum SoundCategory : int; }
 namespace ui { class UIStr; }
 
@@ -45,7 +48,7 @@ public:
     struct PresetCtrlParam {
         // m_startFlag4 is the callers' (GfMenuObjEnvironmentInfo's and GfMenuObjSpecialGauge's set it), and the
         // order of the stores is the original's
-        PresetCtrlParam() : m_slot(-1), m_startFlag1(false), m_eventId(0), m_delay(0.0f), m_child(nullptr) {
+        PresetCtrlParam() : m_slot(-1), m_startFlag1(false), m_startFlag4(false), m_eventId(0), m_delay(0.0f), m_child(nullptr) {
             m_preset = 0;
             m_out = 0;
         }
@@ -58,6 +61,20 @@ public:
         float m_delay;          // CtrlParam::m_delay
         const char* m_child;    // what startCtrl is given for the child
     };
+    // what createCursor makes a cursor from: the objects it selects (picked up by name from m_parent's children, or
+    // m_names' m_nameCount children) and the cursor object (the names are not the original's)
+    struct CursorParam {
+        CursorParam() : m_parent(0), m_cursor(0), m_pickup(nullptr), m_names(nullptr), m_nameCount(0), m_type(0) {}
+        unsigned int m_parent;
+        unsigned int m_cursor;   // UICtrlCursorSelect::create's object
+        const char* m_pickup;    // UISelectObjList::pickupObject's name, when not null
+        const char** m_names;    // otherwise these children's
+        unsigned short m_nameCount;
+        unsigned short m_type;   // CursorSetting::setType's
+        ui::UICtrlCursorSelect::CursorSetting m_setting;
+    };
+    static ui::UICtrlCursorSelect* createCursor(CursorParam& param);
+    static bool getMenuCondition(unsigned int condition);  // whether a menu's condition is met
     static bool checkCCStart(GfMenuCallContext* context);  // a context that is not running yet
     static bool checkCCNext(GfMenuCallContext* context, unsigned int id);  // a context running on that id
     static void setDockPos(unsigned int handle, unsigned int target, unsigned char pos, bool);
@@ -75,6 +92,17 @@ public:
     static bool isValidBlade(unsigned int blade);
     static void playSECommonFromInput(unsigned int input);  // the common sound for a menu input
     static void playSECommonCursor();  // the common sound of a cursor move
+    static void playSECommon(unsigned int se);  // one of the common menu sounds
+    static void playSECommonDecide();
+    static void playSECommonCancel();
+    static void setChildDisp(unsigned int handle, const char* child, bool disp);  // its child of that name
+    static void setChildIcon(unsigned int handle, const char* child, unsigned short icon);
+    static void playJingle(unsigned int jingle);
+    // the common fades, in and out: startCtrl's slot (the second argument is the end event's CtrlParam::m_eventId)
+    static int setCommonFadeIn(unsigned int handle, unsigned int eventId, unsigned char);
+    static int setCommonFadeOut(unsigned int handle, unsigned int eventId, unsigned char);
+    // a scroll bar on the handle for the list, its base the child of that name
+    static void createVScrollBarPlugin(unsigned int handle, ui::UIListInfoBase* list, const char* base, bool);
     static void setColDefault(unsigned int handle);  // the object's default colours back
     static void setColMulandAdd(unsigned int handle, const char* name);  // the colours of a named preset
     // an elemental combo's attribute and name, from its BDAT row (attribute 0 for an invalid one)

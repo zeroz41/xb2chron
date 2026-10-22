@@ -24,6 +24,14 @@ struct RealTime {
     unsigned long long year : 13;
 };
 
+// the time of day in 32 bits, as GfMenuObjSkipTime reads and sets it
+struct GameTime {
+    unsigned int sec : 6;
+    unsigned int min : 6;
+    unsigned int hour : 5;
+    unsigned int pad_17 : 15;
+};
+
 // table 0x7100B52638
 class GfFieldTime : public ::mm::mtl::PtrSingleton< ::gf::GfFieldTime> {
 public:
@@ -32,6 +40,9 @@ public:
     int getHour() const;
     int getMin() const;
     int getTimeRange() const;  // the time of day's range (an icon index)
+    int getTimeRange(unsigned int hour, unsigned int min) const;  // the same for that time
+    const GameTime& getGameTime() const;
+    void setGameTime(const GameTime& time);
     bool getTimeRangeName(unsigned char*& bdat, unsigned int& id) const;  // its name in a message table
     void getRealTime(RealTime& time) const;
     unsigned int getTimeRangeBits() const;  // the time of day's range as a bit (WeatherInfo::isTimeRangeOK tests it)

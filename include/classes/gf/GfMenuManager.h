@@ -117,6 +117,7 @@ public:
     virtual void beginUpdate(fw::UpdateInfo const&);  // slot 22
     static bool isBattleState(unsigned int);
     static bool isOpenFullScreen();
+    static bool isFieldHudInputEnable();  // not while GfMenuObjTutorial waits
 };
 }  // namespace gf
 

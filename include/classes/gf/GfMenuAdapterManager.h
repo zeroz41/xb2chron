@@ -10,6 +10,10 @@ namespace gf {
 class GfMenuAdapterManager : public ::mm::mtl::PtrSingleton< ::gf::GfMenuAdapterManager> {
 public:
     virtual ~GfMenuAdapterManager();  // slot 0
+    // the category adapters made from now on belong to (0 after endCategory), and the categories that update
+    static void beginCategory(unsigned int category);
+    static void endCategory();
+    static void addActiveCategory(unsigned int category);
 };
 }  // namespace gf
 

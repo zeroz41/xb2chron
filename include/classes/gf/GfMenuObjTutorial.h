@@ -12,6 +12,7 @@ public:
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
+    static bool isWaiting();
 };
 }  // namespace gf
 
