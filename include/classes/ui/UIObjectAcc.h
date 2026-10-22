@@ -20,6 +20,8 @@ public:
     void setDispChild(bool disp, const char* child);
     unsigned int searchChild(const char* name);
     unsigned int getParentHandle();  // the handle of its child of that name
+    // how many children match a name with a number (a format such as "LAY_x@%02d", numbered from `first`)
+    int countChild(const char* format, unsigned int first);
     void setTerm();
     bool isTerm() const;
     void setMatrix(const mm::Mat44& matrix);
@@ -42,6 +44,7 @@ public:
     float getAnimationPlaybackLength();
     void setAnimationPlaybackTime(float time);
     bool isPlayingAnimation();
+    void stopAnimation();
     bool isPlaybackControl() const;
     void applyText(const char* text);
     bool isShapeSimpleFace();
@@ -69,6 +72,10 @@ public:
     void getMulColor(mm::Col3& color);
     void setMulColor(const mm::Col3& color);
     void setAddColor(const mm::Col3& color);
+    void getAddColor(mm::Col3& color);
+    // a color UIColorLibrary has under that name (nothing for null or a name it does not have)
+    void setMulColor(const char* name);
+    void setAddColor(const char* name);
     UIObject* m_object;      // UIUtil::getObject(m_handle): isTerm reads its flags, setTerm calls its setTerm
     unsigned int m_handle;   // what the constructor is given (or its named child's)
 };

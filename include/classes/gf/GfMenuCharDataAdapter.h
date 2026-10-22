@@ -56,6 +56,8 @@ public:
     virtual void changeGfObj(gf::GF_OBJ_HANDLE*);  // slot 4
     virtual void changePartyDriver(unsigned char);  // slot 5
     virtual void changePartyBlade(unsigned char, unsigned char);  // slot 6
+    // an adapter on the handle for the blade GfMenuReference holds at an index
+    static void createFromReferenceBlade(unsigned int handle, unsigned int, unsigned int index, bool);
 };
 }  // namespace gf
 

@@ -15,6 +15,7 @@ public:
     static void open(unsigned int handle, unsigned int, unsigned int, unsigned int);
     static void close();
     static void setGuideDisp(bool disp);
+    static void setDisp(bool disp);
 };
 }  // namespace gf
 

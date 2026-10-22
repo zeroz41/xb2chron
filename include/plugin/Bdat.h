@@ -9,6 +9,7 @@ unsigned char* getFP(const char* name);
 int getIdTop(unsigned char* fp);
 int getIdEnd(unsigned char* fp);
 int getIdCount(unsigned char* fp);
+unsigned short getMemberSize(unsigned char* fp);  // the table's number of columns
 // the named member (column) of a table; null when the table has none
 unsigned char* getMember(unsigned char* fp, const char* name);
 // a row's value of the named column, in 64 bits: a string column's text, a number column's value (0 when there is no

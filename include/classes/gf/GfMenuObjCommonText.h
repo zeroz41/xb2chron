@@ -21,6 +21,8 @@ public:
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
+    // opens text `text` for a call context
+    static void open(GfMenuCallContext* context, unsigned int text, unsigned int);
 };
 }  // namespace gf
 

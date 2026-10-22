@@ -3,6 +3,7 @@
 
 namespace gf { class GfMenuCallContext; }
 namespace fw { enum SoundCategory : int; }
+namespace ui { class UIStr; }
 
 namespace gf {
 // the menu objects' shared helpers; its functions take no object
@@ -58,10 +59,14 @@ public:
         const char* m_child;    // what startCtrl is given for the child
     };
     static bool checkCCStart(GfMenuCallContext* context);  // a context that is not running yet
+    static bool checkCCNext(GfMenuCallContext* context, unsigned int id);  // a context running on that id
     static void setDockPos(unsigned int handle, unsigned int target, unsigned char pos, bool);
     static void addPos(unsigned int handle, short x, short y);
     // the slot of the control it starts on the handle (or its child of that name), -1 for none
     static int startCtrl(unsigned int handle, const CtrlParam& param, const char* child);
+    static int getCtrlID(unsigned int handle);  // the slot of the control running on the handle, -1 for none
+    static void stopCtrl(int slot);  // nothing for -1
+    static bool isBusyCtrl(int slot);
     static void playSE(unsigned int se);
     static int startPresetCtrl(unsigned int handle, const PresetCtrlParam& param);  // startCtrl's slot
     static short getBtnIconNumber(unsigned int button);  // the icon number of a button
@@ -69,6 +74,12 @@ public:
     static void stopBGM(unsigned int handle, float time);
     static bool isValidBlade(unsigned int blade);
     static void playSECommonFromInput(unsigned int input);  // the common sound for a menu input
+    static void playSECommonCursor();  // the common sound of a cursor move
+    static void setColDefault(unsigned int handle);  // the object's default colours back
+    static void setColMulandAdd(unsigned int handle, const char* name);  // the colours of a named preset
+    // an elemental combo's attribute and name, from its BDAT row (attribute 0 for an invalid one)
+    static unsigned char getElementComboAtr(unsigned int combo);
+    static ui::UIStr getElementComboName(unsigned int combo);
 };
 }  // namespace gf
 

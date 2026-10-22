@@ -15,6 +15,7 @@ public:
 class GfMenuIDList : public ::ui::UIListInfo< ::gf::MenuID> {
 public:
     virtual ~GfMenuIDList();  // slot 0
+    static GfMenuIDList* create();
 };
 }  // namespace gf
 
