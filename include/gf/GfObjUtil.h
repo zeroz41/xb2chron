@@ -3,6 +3,7 @@
 
 #include "mm/mtl/FixedVector.h"
 
+namespace fw { class Transform; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GF_MOUNT_HANDLE; }
 #include "gf/GFATTACH.h"
@@ -28,6 +29,9 @@ struct GfFadeInfo {
 // helpers for the objects behind handles (functions, by its symbols)
 class GfObjUtil {
 public:
+    // SCOM_OBJ_WARP_POS and SCOM_OBJ_VFADE_OFF pass their request's object
+    static void setWarpTransform(GF_OBJ_HANDLE* handle, const fw::Transform& transform, bool);
+    static void setVolumeFadeUserFlag(GF_OBJ_HANDLE* handle, bool);
     static unsigned int getPartyID(GF_OBJ_HANDLE*);
     // the object behind a handle, none for an invalid handle or one with no object
     static gf::GfObj* getObj(gf::GF_OBJ_HANDLE* handle);

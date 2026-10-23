@@ -105,6 +105,8 @@ public:
     static bool isRoom();
     static bool isFadeout();
     static bool isStartGame();
+    // SCOM_POPUP::exec holds popup kind 7 back while this is true
+    static bool isBusyBladeCreateEvent();
     static bool isLeaveGameForDebug();
     static bool isControlFree();
     static bool isScenarioGame();

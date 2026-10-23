@@ -35,6 +35,30 @@
 #include "classes/gf/SCOM_FIELD_SKILL.h"
 #include "classes/gf/SCOM_ZONE.h"
 #include "classes/gf/SCOM_SOLO_REX.h"
+#include "classes/gf/GfMenuFade.h"
+#include "classes/gf/GfMountManager.h"
+#include "gf/GfObjUtil.h"
+#include "classes/gf/GfGameObj.h"
+#include "gf/GfDataEnBook.h"
+#include "classes/gf/GfQuestManager.h"
+#include "gf/GfPlayFactory.h"
+#include "classes/gf/SCOM_POPUP.h"
+#include "gf/GfDataMercenaries.h"
+#include "classes/gf/GfGameCond.h"
+#include "classes/gf/GfBdatBtl.h"
+#include "gf/GfMenuObjUtil.h"
+#include "classes/gf/SCOM_ADD_DEVELOP.h"
+#include "classes/gf/SCOM_OBJ_WARP_POS.h"
+#include "classes/gf/SCOM_DESTROY_GAME_OBJ.h"
+#include "classes/gf/SCOM_EXEC_MOUNT.h"
+#include "classes/gf/SCOM_OBJ_VFADE_OFF.h"
+#include "classes/gf/SCOM_QUEST_GIMMICK.h"
+#include "classes/gf/SCOM_BATTLE_BGM.h"
+#include "classes/gf/SCOM_ENBOOK_IN_BATTLE.h"
+#include "classes/gf/SCOM_ENBOOK_DEFEAT_ENEMY.h"
+#include "classes/gf/SCOM_ENBOOK_DEAD_PLAYER.h"
+#include "classes/gf/SCOM_REFRESH_COMPASS.h"
+#include "classes/gf/SCOM_BATTLE_TASK_RESET.h"
 #include "classes/gf/GfAllocator.h"
 
 namespace gf {
@@ -96,6 +120,79 @@ bool SCOM_SET_CAMTYPE::exec(fw::UpdateInfo const&) {
     return true;
 }
 
+
+bool SCOM_ADD_DEVELOP::exec(fw::UpdateInfo const&) {
+    GfGameUtil::addDevelopPoint(m_value2, m_value);
+    return true;
+}
+
+bool SCOM_OBJ_WARP_POS::exec(fw::UpdateInfo const&) {
+    GfObjUtil::setWarpTransform(m_value, m_value2, m_value3);
+    return true;
+}
+
+bool SCOM_DESTROY_GAME_OBJ::exec(fw::UpdateInfo const&) {
+    GfGameObj::destroyGameObjWithAttribute(m_value, m_value2, m_value3);
+    return true;
+}
+
+bool SCOM_LOADING::exec(fw::UpdateInfo const&) {
+    if (!GfMenuFade::isInitialized()) {
+        return false;
+    }
+    GfMenuFade::setLoading(m_value, m_value2);
+    return true;
+}
+
+bool SCOM_EXEC_MOUNT::exec(fw::UpdateInfo const&) {
+    GfMountManager::execMount(m_value, GFATTACH(0), m_value2);
+    return true;
+}
+
+bool SCOM_OBJ_VFADE_OFF::exec(fw::UpdateInfo const&) {
+    GfObjUtil::setVolumeFadeUserFlag(m_value, false);
+    return true;
+}
+
+bool SCOM_QUEST_GIMMICK::exec(fw::UpdateInfo const&) {
+    GfQuestTask::completeGimmickTask(m_value, m_value2);
+    return true;
+}
+
+bool SCOM_BATTLE_BGM::exec(fw::UpdateInfo const&) {
+    return true;
+}
+
+bool SCOM_ENBOOK_IN_BATTLE::exec(fw::UpdateInfo const&) {
+    GfDataEnBook::setAttackFlag(m_value);
+    return true;
+}
+
+bool SCOM_ENBOOK_DEFEAT_ENEMY::exec(fw::UpdateInfo const&) {
+    GfDataEnBook::incDefeatNum(m_value);
+    return true;
+}
+
+bool SCOM_ENBOOK_DEAD_PLAYER::exec(fw::UpdateInfo const&) {
+    GfDataEnBook::incDeadNum(m_value);
+    return true;
+}
+
+bool SCOM_REFRESH_COMPASS::exec(fw::UpdateInfo const&) {
+    if (--m_wait > 0) {
+        return false;
+    }
+    GfQuestManager::requestRefreshQuestTaskState();
+    return true;
+}
+
+bool SCOM_BATTLE_TASK_RESET::exec(fw::UpdateInfo const&) {
+    if (--m_wait > 0) {
+        return false;
+    }
+    GfQuestManager::resetBattleTaskForBattleEnd();
+    return true;
+}
 
 unsigned long SCOM_ADD_MONEY::create(int a0) {
     if (!a0) {
@@ -366,5 +463,266 @@ unsigned long SCOM_SOLO_REX::create(bool a0) {
     request->m_value = a0;
     return GfReqSmallCom::addRequest(request);
 }
+
+unsigned long SCOM_REFRESH_COMPASS::create() {
+    if (get()) {
+        return -1;
+    }
+#line 6121
+    SCOM_REFRESH_COMPASS* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_REFRESH_COMPASS(SCOM_TYPE(78));
+    request->m_wait = 3;
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_BATTLE_TASK_RESET::create() {
+    if (get()) {
+        return -1;
+    }
+#line 6145
+    SCOM_BATTLE_TASK_RESET* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_BATTLE_TASK_RESET(SCOM_TYPE(78));
+    request->m_wait = 3;
+    return GfReqSmallCom::addRequest(request);
+}
+
+unsigned long SCOM_QUEST_GIMMICK::createDoor(unsigned int id, float time) {
+    if (time > 0.0f) {
+        GfPlayFactory::createGimmickTaskComplete(gmk::GmkType(41), id, time);
+        return -1;
+    }
+#line 2001
+    SCOM_QUEST_GIMMICK* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_QUEST_GIMMICK(SCOM_TYPE(43));
+    request->m_value = gmk::GmkType(41);
+    request->m_value2 = id;
+    request->m_value3 = time;
+    return GfReqSmallCom::addRequest(request);
+}
+
+unsigned long SCOM_QUEST_GIMMICK::createElevator(unsigned int id, float time) {
+    if (time > 0.0f) {
+        GfPlayFactory::createGimmickTaskComplete(gmk::GmkType(42), id, time);
+        return -1;
+    }
+#line 2020
+    SCOM_QUEST_GIMMICK* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_QUEST_GIMMICK(SCOM_TYPE(43));
+    request->m_value = gmk::GmkType(42);
+    request->m_value2 = id;
+    request->m_value3 = time;
+    return GfReqSmallCom::addRequest(request);
+}
+
+unsigned long SCOM_QUEST_GIMMICK::createJump(unsigned int id, float time) {
+    if (time > 0.0f) {
+        GfPlayFactory::createGimmickTaskComplete(gmk::GmkType(37), id, time);
+        return -1;
+    }
+#line 2039
+    SCOM_QUEST_GIMMICK* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_QUEST_GIMMICK(SCOM_TYPE(43));
+    request->m_value = gmk::GmkType(37);
+    request->m_value2 = id;
+    request->m_value3 = time;
+    return GfReqSmallCom::addRequest(request);
+}
+
+unsigned long SCOM_QUEST_GIMMICK::createMapGimmick(unsigned int id, float time) {
+    if (time > 0.0f) {
+        GfPlayFactory::createGimmickTaskComplete(gmk::GmkType(33), id, time);
+        return -1;
+    }
+#line 2058
+    SCOM_QUEST_GIMMICK* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_QUEST_GIMMICK(SCOM_TYPE(43));
+    request->m_value = gmk::GmkType(33);
+    request->m_value2 = id;
+    request->m_value3 = time;
+    return GfReqSmallCom::addRequest(request);
+}
+
+unsigned long SCOM_QUEST_GIMMICK::createWarp(unsigned int id, float time) {
+    if (time > 0.0f) {
+        GfPlayFactory::createGimmickTaskComplete(gmk::GmkType(38), id, time);
+        return -1;
+    }
+#line 2076
+    SCOM_QUEST_GIMMICK* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_QUEST_GIMMICK(SCOM_TYPE(43));
+    request->m_value = gmk::GmkType(38);
+    request->m_value2 = id;
+    request->m_value3 = time;
+    return GfReqSmallCom::addRequest(request);
+}
+
+unsigned long SCOM_QUEST_GIMMICK::createSalvage(unsigned int id, float time) {
+    if (time > 0.0f) {
+        GfPlayFactory::createGimmickTaskComplete(gmk::GmkType(31), id, time);
+        return -1;
+    }
+#line 2095
+    SCOM_QUEST_GIMMICK* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_QUEST_GIMMICK(SCOM_TYPE(43));
+    request->m_value = gmk::GmkType(31);
+    request->m_value2 = id;
+    request->m_value3 = time;
+    return GfReqSmallCom::addRequest(request);
+}
+
+unsigned long SCOM_QUEST_GIMMICK::createTresure(unsigned int id, float time) {
+    if (time > 0.0f) {
+        GfPlayFactory::createGimmickTaskComplete(gmk::GmkType(9), id, time);
+        return -1;
+    }
+#line 2114
+    SCOM_QUEST_GIMMICK* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_QUEST_GIMMICK(SCOM_TYPE(43));
+    request->m_value = gmk::GmkType(9);
+    request->m_value2 = id;
+    request->m_value3 = time;
+    return GfReqSmallCom::addRequest(request);
+}
+
+unsigned long SCOM_ENBOOK_IN_BATTLE::create(GF_OBJ_HANDLE* handle) {
+    DataParamAcc acc(handle);
+#line 5464
+    return GfReqSmallCom::addRequestParallel(new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ENBOOK_IN_BATTLE(SCOM_TYPE(69), GfReqSmallCom::sys()->newHandle(), acc.isValid() ? acc.getBdatId() : 0));
+}
+
+unsigned long SCOM_ENBOOK_DEFEAT_ENEMY::create(GF_OBJ_HANDLE* handle) {
+    DataParamAcc acc(handle);
+#line 5495
+    return GfReqSmallCom::addRequestParallel(new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ENBOOK_DEFEAT_ENEMY(SCOM_TYPE(72), GfReqSmallCom::sys()->newHandle(), acc.isValid() ? acc.getBdatId() : 0));
+}
+
+unsigned long SCOM_ENBOOK_DEAD_PLAYER::create(GF_OBJ_HANDLE* handle) {
+    DataParamAcc acc(handle);
+#line 5510
+    return GfReqSmallCom::addRequestParallel(new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ENBOOK_DEAD_PLAYER(SCOM_TYPE(73), GfReqSmallCom::sys()->newHandle(), acc.isValid() ? acc.getBdatId() : 0));
+}
+
+bool SCOM_POPUP::exec(fw::UpdateInfo const&) {
+    if (--m_wait > 0) {
+        return false;
+    }
+    if (m_param.m_type == 7 && GfGameManager::isBusyBladeCreateEvent()) {
+        return false;
+    }
+    GfMenuObjPopup::open(m_param);
+    return true;
+}
+
+unsigned long SCOM_POPUP::createAffinity(unsigned int a0, unsigned int a1, unsigned int a2) {
+    if (GfGameManager::isStartGame()) {
+        return -1;
+    }
+#line 5674
+    SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
+    request->m_param.m_type = 5;
+    request->m_param.m_value[0] = a0;
+    request->m_param.m_value[1] = a1;
+    request->m_param.m_value[2] = a2;
+    request->m_wait = 20;
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_POPUP::createIdea(unsigned int a0, unsigned int a1, unsigned int a2) {
+    if (GfGameManager::isStartGame()) {
+        return -1;
+    }
+#line 5705
+    SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
+    request->m_param.m_type = 3;
+    request->m_param.m_value[0] = a0;
+    request->m_param.m_value[1] = a1;
+    request->m_param.m_value[2] = a2;
+    request->m_wait = 20;
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_POPUP::createPouch(unsigned int a0, unsigned int a1, unsigned int a2) {
+    if (GfGameManager::isStartGame() || a0 == 0) {
+        return -1;
+    }
+#line 5719
+    SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
+    request->m_param.m_type = 2;
+    request->m_param.m_value[0] = a0;
+    request->m_param.m_value[1] = a1;
+    request->m_param.m_value[2] = a2;
+    request->m_wait = 20;
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_POPUP::createDevelop(unsigned int a0, unsigned int a1) {
+    if (GfGameManager::isStartGame()) {
+        return -1;
+    }
+#line 5661
+    SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
+    request->m_param.m_type = 6;
+    request->m_param.m_value[0] = a0;
+    request->m_param.m_value[1] = a1;
+    request->m_param.m_value[2] = 0;
+    request->m_wait = 20;
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_POPUP::createCrystalOK(unsigned int a0) {
+    if (GfGameManager::isStartGame()) {
+        return -1;
+    }
+#line 5745
+    SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
+    request->m_param.m_type = 10;
+    request->m_param.m_value[0] = a0;
+    request->m_param.m_value[1] = 0;
+    request->m_param.m_value[2] = 0;
+    request->m_wait = 20;
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_POPUP::createMercenaryReturn(unsigned int a0, unsigned int a1) {
+    if (GfGameManager::isStartGame()) {
+        return -1;
+    }
+    unsigned int leader = GfDataMercenaries::getTeamLeader(a1);
+#line 5620
+    SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
+    request->m_param.m_type = 8;
+    request->m_param.m_value[0] = a0;
+    request->m_param.m_value[1] = a1;
+    request->m_param.m_value[2] = leader;
+    request->m_wait = 20;
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_POPUP::createAchievement(unsigned int blade, unsigned int line, unsigned int level) {
+    if (GfGameManager::isStartGame()) {
+        return -1;
+    }
+    if (!GfGameManager::fn_71002A9E68() && !GfMenuObjUtil::getMenuCondition(15)) {
+        return -1;
+    }
+    if (GfGameUtil::setupSaveAchievementPopup(blade, line, level)) {
+        return -1;
+    }
+#line 5692
+    SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
+    request->m_param.m_type = 4;
+    request->m_param.m_value[0] = blade;
+    request->m_param.m_value[1] = line;
+    request->m_param.m_value[2] = level;
+    request->m_wait = 20;
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_POPUP::createArts(unsigned int a0, unsigned int a1) {
+    if (GfGameManager::isStartGame()) {
+        return -1;
+    }
+    unsigned int type = GfBdatBtl::get()->getArtsDrWpnType(a1);
+#line 5732
+    SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
+    request->m_param.m_type = 1;
+    request->m_param.m_value[0] = a0;
+    request->m_param.m_value[1] = type;
+    request->m_param.m_value[2] = a1;
+    request->m_wait = 20;
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
 
 }  // namespace gf

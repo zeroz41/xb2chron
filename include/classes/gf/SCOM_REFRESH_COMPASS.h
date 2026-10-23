@@ -2,20 +2,21 @@
 #define CLASSES_GF_SCOM_REFRESH_COMPASS_H
 
 #include "classes/gf/SCOM.h"
+#include "classes/mm/mtl/PtrSingleton.h"
 
 namespace fw { class UpdateInfo; }
 
 namespace gf {
-// a base of gf::SCOM_REFRESH_COMPASS no evidence names yet
-class TUnk_B6AC88 {
+// table 0x7100B6AC58; the PtrSingleton base at 0x20: the destructors store its table there and clear its instance,
+// create asserts get()==0 (only one such request at a time)
+class SCOM_REFRESH_COMPASS : public ::gf::SCOM, public ::mm::mtl::PtrSingleton< ::gf::SCOM_REFRESH_COMPASS> {
 public:
-    virtual ~TUnk_B6AC88();
-};
-// table 0x7100B6AC58; base at 0x20 unknown (TUnk_B6AC88)
-class SCOM_REFRESH_COMPASS : public ::gf::SCOM, public TUnk_B6AC88 {
-public:
-    virtual ~SCOM_REFRESH_COMPASS();  // slot 0
+    explicit SCOM_REFRESH_COMPASS(SCOM_TYPE type) : SCOM(type) {}
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
+    static unsigned long create();
+
+    // the name is not the original's: create sets it to 3, exec counts it down and acts at 0
+    int m_wait;
 };
 }  // namespace gf
 

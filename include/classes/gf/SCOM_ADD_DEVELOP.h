@@ -9,8 +9,12 @@ namespace gf {
 // table 0x7100B6B0F0
 class SCOM_ADD_DEVELOP : public ::gf::SCOM {
 public:
-    virtual ~SCOM_ADD_DEVELOP();  // slot 0
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
+
+    // the names are not the original's: what the create functions store (their arguments, in order)
+    unsigned int m_value;
+    unsigned int m_value2;
+    unsigned char pad_24[0x4];
 };
 }  // namespace gf
 

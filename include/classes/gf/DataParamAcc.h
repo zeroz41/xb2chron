@@ -15,6 +15,7 @@ public:
     DataParamAcc(unsigned int type, unsigned int id, GimmickType gimmick);
     virtual ~DataParamAcc();  // slot 0
     bool isValid() const;
+    unsigned int getBdatId() const;  // the SCOM_ENBOOK_* creates store it (0 for an invalid object)
     int getWeaponType(int index, bool flag) const;
     unsigned int getChestHeight() const;
     unsigned int getHp() const;

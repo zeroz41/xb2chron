@@ -18,6 +18,8 @@ public:
 // table 0x7100B550B8; base at 0x8 unknown (TUnk_B550E0)
 class GfGameObj : public ::mm::mtl::PtrSingleton< ::gf::GfGameObj>, public TUnk_B550E0 {
 public:
+    // SCOM_DESTROY_GAME_OBJ passes its request's object, time and attribute
+    static void destroyGameObjWithAttribute(gf::GF_OBJ_HANDLE* handle, float fadeTime, unsigned int);
     static void postUpdate(const fw::UpdateInfo& info);
     static void bdatReload();
     virtual ~GfGameObj();  // slot 0

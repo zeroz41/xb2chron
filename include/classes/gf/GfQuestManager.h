@@ -15,6 +15,9 @@ namespace gf {
 // table 0x7100B56DB0
 class GfQuestManager : public ::mm::mtl::PtrSingleton< ::gf::GfQuestManager> {
 public:
+    // SCOM_REFRESH_COMPASS's and SCOM_BATTLE_TASK_RESET's requests, three frames after they are made
+    static void requestRefreshQuestTaskState();
+    static void resetBattleTaskForBattleEnd();
     static void gevReloadBdat(RELOAD_BDAT, unsigned int);
     static void gevChangeWeather(unsigned int, unsigned int);
     static void gevChangeTimeRange(unsigned int);

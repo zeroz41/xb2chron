@@ -10,6 +10,10 @@ namespace gf {
 // game-wide helpers (functions, by its symbols)
 class GfGameUtil {
 public:
+    // SCOM_ADD_DEVELOP's request passes its second value, then its first
+    static void addDevelopPoint(unsigned int, unsigned int);
+    // SCOM_POPUP::createAchievement passes its blade, line and level; when it returns true no popup is queued
+    static bool setupSaveAchievementPopup(unsigned int, unsigned int, unsigned int);
     static bool isCondDriverModel(unsigned int);
     // the player party enters a battle (GfPlayComBattleStart retries it up to 3 seconds); handle -1 for none
     static bool enterPlayerBattle(bool flag, GF_OBJ_HANDLE* handle, bool flag2);

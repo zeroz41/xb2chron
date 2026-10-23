@@ -17,6 +17,8 @@ struct GfRequestBladeData {
 // the mercenary team's data (functions, by its symbols)
 class GfDataMercenaries {
 public:
+    // SCOM_POPUP::createMercenaryAdd puts it in its popup
+    static unsigned int getMissionMapID(unsigned int mission);
     // a team, as the game data keeps them (0x28 bytes); the name is not the original's
     struct Team {
         unsigned char pad_0[0x10];
