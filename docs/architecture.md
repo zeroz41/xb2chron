@@ -174,6 +174,13 @@ constructor is its first user) are 6 of 678 there (119 of 694 before the first-u
   virtual): of the 758 in 3.0.1 whose file 1.0.0's classes fix, 704 lie in that file's unit, 8 in another and 46
   in none (699, 15 and 46 before).
 
+Compilation also tests suspected boundaries. `AddBlendTree` and the first emitted `AsmState` helpers occupy
+`0x7100884D5C`–`0x71008858C4`, before `anm_asm_callback_detector.cpp`. Compiling them together inlines
+`CallBackDetector::execute` and `executeStartFrame` into the state notifications, unlike the original's calls.
+Compiling them separately reproduces all 20 functions. The blend tree owns its table at `0x7100B81388`; the
+callback detector owns the assertion strings at `0x71009B01A1`. `AddBlendTree.cpp` is a class-based placeholder
+filename until evidence names the original file.
+
 The link order follows the source paths, sorted case-insensitively by their upper-case spelling within the game
 (`ik_lookat_solver.cpp` before `ik_look_solver.cpp`); 19 of the 507 file units step back in that order (20
 before), which marks units still misnamed or holding several files (and the start of each library). Inline

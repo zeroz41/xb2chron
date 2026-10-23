@@ -44,9 +44,9 @@ public:
         onSetWeight();
     }
 
-    // the loop counting the listener sees (anm_asm_callback_detector.cpp)
+    // the loop counting the listener sees (emitted with AddBlendTree)
     void initLoopCount();
-    // the state's enter and leave callbacks told to the listener (anm_asm_callback_detector.cpp)
+    // the state's enter and leave callbacks told to the listener (emitted with AddBlendTree)
     void notifyEnter(AsmListener* listener);
     void notifyLeave(AsmListener* listener);
     // one more loop when the base clip looped: always with a loop count, once without (the name is not the original's)

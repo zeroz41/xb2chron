@@ -4096,10 +4096,13 @@ libs/anmlib/src/anmlib/extra/anm_uncompress_extra_truck.cpp:
 	.rodata      start:0x009B014C end:0x009B01A1
 	.data        start:0x00B81370 end:0x00B81388
 
-libs/anmlib/src/anmlib/statemachine/playback/anm_asm_callback_detector.cpp:
-	.text        start:0x00884D5C end:0x00885F78
-	.rodata      start:0x009B01A1 end:0x009B021D
+libs/anmlib/src/anmlib/statemachine/playback/AddBlendTree.cpp:
+	.text        start:0x00884D5C end:0x008858C4
 	.data        start:0x00B81388 end:0x00B813F8
+
+libs/anmlib/src/anmlib/statemachine/playback/anm_asm_callback_detector.cpp:
+	.text        start:0x008858C4 end:0x00885F78
+	.rodata      start:0x009B01A1 end:0x009B021D
 
 libs/anmlib/src/anmlib/statemachine/playback/anm_asm_lerp_add_blend.cpp:
 	.text        start:0x00885F78 end:0x00886A08
