@@ -129,6 +129,15 @@ public:
     static bool isEnableQuestOpen();
     static void openFullScreen(unsigned int screen, bool flag0, bool flag1);
     static void closeFullScreen(bool flag0, bool flag1);
+    static void openMenu(unsigned int menu);
+    static void openChapterTelop(unsigned char chapter);
+    static void openChapterEndTelop(unsigned char chapter);
+    static bool isOpenChapterTelop();  // the chapter end telop waits on it too
+    static void openZoneTelop(unsigned short zone);
+    static bool isOpenZoneTelop();
+    static void openDummyTutorial(unsigned char tutorial);
+    static bool isOpenDummyTutorial();
+    static bool isOpenPreciousWindow();
     static bool isSwitchingFullScreen();  // the full screen is switching its layers
     // the object the player can access now, (GF_OBJ_HANDLE*)-1 for none
     static gf::GF_OBJ_HANDLE* getAccessObjHandle();

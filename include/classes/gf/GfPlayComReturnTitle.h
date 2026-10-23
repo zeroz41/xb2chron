@@ -1,36 +1,30 @@
 #ifndef CLASSES_GF_GFPLAYCOMRETURNTITLE_H
 #define CLASSES_GF_GFPLAYCOMRETURNTITLE_H
 
-#include "mm/mtl/RTTI.h"
-namespace fw { class UpdateInfo; }
+#include "classes/gf/GfPlayCom.h"
+#include "classes/mm/mtl/PtrSingleton.h"
+#include "gf/ParamReturnTitle.h"
+#include "classes/gf/GfMenuObjPopup.h"
+namespace gf { class GF_OBJ_HANDLE; }
 
 namespace gf {
-// a base of gf::GfPlayComReturnTitle no evidence names yet
-class TUnk_B589A0 {
+// table 0x7100B589A0; GfSequentialPlay::addReturnTitle makes it
+class GfPlayComReturnTitle : public GfPlayCom, public mm::mtl::PtrSingleton<GfPlayComReturnTitle> {
 public:
-    virtual const mm::mtl::RTTI* getRTTI() const = 0;
-    virtual ~TUnk_B589A0();
-    virtual void getFuncName() const = 0;
-    virtual void start() = 0;
-    virtual void end() = 0;
-    virtual void update(fw::UpdateInfo const&, bool) = 0;
-    unsigned char pad_8[0x8];  // fields: size from where the next base starts
-};
-// a base of gf::GfPlayComReturnTitle no evidence names yet
-class TUnk_B589E8 {
-public:
-    virtual ~TUnk_B589E8();
-};
-// table 0x7100B589A0; base at 0x0 unknown (TUnk_B589A0), base at 0x10 unknown (TUnk_B589E8)
-class GfPlayComReturnTitle : public TUnk_B589A0, public TUnk_B589E8 {
-public:
+    explicit GfPlayComReturnTitle(const ParamReturnTitle& param) : GfPlayCom(36, false), m_param(param), pad_1c(0) {}
+    static GfPlayComReturnTitle* create(const ParamReturnTitle& param);
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfPlayComReturnTitle();  // slot 1
-    virtual void getFuncName() const;  // slot 3
+    virtual const char* getFuncName() const {  // slot 3
+        static const char* func = "PlayComReturnTitle";
+        return func;
+    }
     virtual void start();  // slot 4
     virtual void end() {}  // slot 5
-    virtual void update(fw::UpdateInfo const&, bool);  // slot 6
+    virtual bool update(const fw::UpdateInfo& info, bool flag);  // slot 6
     static mm::mtl::RTTI m_rtti;
+
+    ParamReturnTitle m_param;
+    int pad_1c;
 };
 }  // namespace gf
 

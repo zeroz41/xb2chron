@@ -44,6 +44,7 @@ public:
     void setPlayerStopFlag(PLSTOP, bool);
     bool isPlayerTalkForce();
     // GfPlayComSalvage's player pause: made when the command is, destroyed when it ends
+    void setAutoBattle(bool flag);  // GfPlayComBattleStart sets it while it starts the battle
     unsigned int createPlayerPause();
     void destroyPlayerPause(unsigned int pause);
     // how the player died (0 alive; GfPlayFactory::createGameOver sets 1 unless one is set)

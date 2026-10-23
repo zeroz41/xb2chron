@@ -1,36 +1,29 @@
 #ifndef CLASSES_GF_GFPLAYCOMCOLLECT_H
 #define CLASSES_GF_GFPLAYCOMCOLLECT_H
 
-#include "mm/mtl/RTTI.h"
-namespace fw { class UpdateInfo; }
+#include "classes/gf/GfPlayCom.h"
+#include "classes/mm/mtl/PtrSingleton.h"
+#include "classes/gf/GfGameScene.h"
+namespace gf { class GF_OBJ_HANDLE; }
 
 namespace gf {
-// a base of gf::GfPlayComCollect no evidence names yet
-class TUnk_B57DF8 {
+// table 0x7100B57DF8; GfSequentialPlay::addCollect makes it
+class GfPlayComCollect : public GfPlayCom, public mm::mtl::PtrSingleton<GfPlayComCollect> {
 public:
-    virtual const mm::mtl::RTTI* getRTTI() const = 0;
-    virtual ~TUnk_B57DF8();
-    virtual void getFuncName() const = 0;
-    virtual void start() = 0;
-    virtual void end() = 0;
-    virtual void update(fw::UpdateInfo const&, bool) = 0;
-    unsigned char pad_8[0x8];  // fields: size from where the next base starts
-};
-// a base of gf::GfPlayComCollect no evidence names yet
-class TUnk_B57E40 {
-public:
-    virtual ~TUnk_B57E40();
-};
-// table 0x7100B57DF8; base at 0x0 unknown (TUnk_B57DF8), base at 0x10 unknown (TUnk_B57E40)
-class GfPlayComCollect : public TUnk_B57DF8, public TUnk_B57E40 {
-public:
+    explicit GfPlayComCollect(GF_OBJ_HANDLE* handle) : GfPlayCom(26, false), m_handle(handle) {}
+    static GfPlayComCollect* create(GF_OBJ_HANDLE* handle);
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfPlayComCollect();  // slot 1
-    virtual void getFuncName() const;  // slot 3
+    virtual const char* getFuncName() const {  // slot 3
+        static const char* func = "PlayComCollect";
+        return func;
+    }
     virtual void start();  // slot 4
     virtual void end();  // slot 5
-    virtual void update(fw::UpdateInfo const&, bool);  // slot 6
+    virtual bool update(const fw::UpdateInfo& info, bool flag);  // slot 6
     static mm::mtl::RTTI m_rtti;
+
+    unsigned int m_pause;  // from GfGameScene::createPlayerPause
+    GF_OBJ_HANDLE* m_handle;
 };
 }  // namespace gf
 

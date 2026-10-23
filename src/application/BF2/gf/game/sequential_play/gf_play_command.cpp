@@ -1,4 +1,28 @@
+#include "classes/gf/GfGameScene.h"
+#include "gf/GfGameUtil.h"
+#include "classes/gf/GfPlayComOpenMenu2.h"
+#include "classes/gf/GfPlayComBattleStart.h"
+#include "classes/gf/GfMenuObjPopup.h"
+#include "classes/gf/GfFieldTbox.h"
+#include "classes/gf/GfFieldCollect.h"
+#include "classes/gf/SCOM_FIELD_VOICE.h"
+#include "classes/gf/GfPlayComFieldSeq.h"
+#include "classes/gf/GfPlayComFieldTbox.h"
+#include "classes/gf/GfPlayComCollect.h"
+#include "classes/gf/GfPlayComHoodHomuraBattou.h"
+#include "classes/gf/GfPlayComReturnTitle.h"
+#include "classes/gf/GfPlayComOpenMenu.h"
+#include "classes/gf/GfPlayComMenuDummyTutorial.h"
+#include "classes/gf/GfPlayComMenuZone.h"
+#include "classes/gf/GfPlayComMenuChapterEnd.h"
+#include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfPlayComMenuChapter.h"
 #include "gf/FileStaticVec3.h"
+#include "classes/gf/IFieldSeq.h"
+#include "gf/GfGameUtil.h"
+#include "classes/gf/GfMenuObjPopup.h"
+#include "classes/gf/GfFieldCollect.h"
+#include "classes/gf/SCOM_FIELD_VOICE.h"
 #include "classes/gf/GfPlayCom.h"
 #include "classes/gf/GfPlayComPause.h"
 #include "classes/gf/GfSequentialPlay.h"
@@ -152,24 +176,124 @@ GfPlayComCallbackEventSequence* GfPlayComCallbackEventSequence::create(int id, b
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComCallbackEventSequence(id, begin);
 }
 
+GfPlayComOpenMenu::~GfPlayComOpenMenu() { s_active--; }
+
+void GfPlayComOpenMenu::start() {
+    GfMenuManager::openMenu(m_menu);
+}
+
 void GfPlayComOpenMenu::end() {}
+
+bool GfPlayComOpenMenu::update(const fw::UpdateInfo& info, bool flag) {
+    bool result = true;
+    if (GfMenuManager::isOpenFullScreen()) {
+        result = false;
+    }
+    if (flag && !result) {
+        GfMenuManager::closeFullScreen(true, true);
+        result = false;
+    }
+    return result;
+}
+
+GfPlayComOpenMenu* GfPlayComOpenMenu::create(unsigned int menu) {
+#line 1064
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComOpenMenu(menu);
+}
 
 void GfPlayComMiniGame::start() { GfMenuManager::openFullScreen(4, true, true); }
 
 void GfPlayComMiniGame::end() {}
+
+bool GfPlayComMiniGame::update(const fw::UpdateInfo& info, bool flag) {
+    bool result = true;
+    if (GfMenuManager::isOpenFullScreen()) {
+        result = false;
+    }
+    if (flag && !result) {
+        GfMenuManager::closeFullScreen(true, true);
+        result = false;
+    }
+    return result;
+}
 
 GfPlayComMiniGame* GfPlayComMiniGame::create() {
 #line 1321
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComMiniGame();
 }
 
+GfPlayComMenuChapter::~GfPlayComMenuChapter() { s_activate--; }
+
+void GfPlayComMenuChapter::start() {
+    GfMenuManager::openChapterTelop(m_id);
+}
+
 void GfPlayComMenuChapter::end() {}
+
+bool GfPlayComMenuChapter::update(const fw::UpdateInfo& info, bool flag) {
+    return !GfMenuManager::isOpenChapterTelop();
+}
+
+GfPlayComMenuChapter* GfPlayComMenuChapter::create(unsigned int id) {
+#line 1454
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComMenuChapter(id);
+}
+
+GfPlayComMenuChapterEnd::~GfPlayComMenuChapterEnd() { s_activate--; }
+
+void GfPlayComMenuChapterEnd::start() {
+    GfMenuManager::openChapterEndTelop(m_id);
+}
 
 void GfPlayComMenuChapterEnd::end() {}
 
+bool GfPlayComMenuChapterEnd::update(const fw::UpdateInfo& info, bool flag) {
+    return !GfMenuManager::isOpenChapterTelop();
+}
+
+GfPlayComMenuChapterEnd* GfPlayComMenuChapterEnd::create(unsigned int id) {
+#line 1502
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComMenuChapterEnd(id);
+}
+
+GfPlayComMenuZone::~GfPlayComMenuZone() { s_activate--; }
+
+void GfPlayComMenuZone::start() {
+    GfMenuManager::openZoneTelop(m_id);
+    m_time = 10.0f;
+}
+
 void GfPlayComMenuZone::end() {}
 
+bool GfPlayComMenuZone::update(const fw::UpdateInfo& info, bool flag) {
+    m_time -= info.m_deltaTime;
+    if (m_time <= 0.0f) {
+        return true;
+    }
+    return !GfMenuManager::isOpenZoneTelop();
+}
+
+GfPlayComMenuZone* GfPlayComMenuZone::create(unsigned int id) {
+#line 1558
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComMenuZone(id);
+}
+
+GfPlayComMenuDummyTutorial::~GfPlayComMenuDummyTutorial() { s_activate--; }
+
+void GfPlayComMenuDummyTutorial::start() {
+    GfMenuManager::openDummyTutorial(m_id);
+}
+
 void GfPlayComMenuDummyTutorial::end() {}
+
+bool GfPlayComMenuDummyTutorial::update(const fw::UpdateInfo& info, bool flag) {
+    return !GfMenuManager::isOpenDummyTutorial();
+}
+
+GfPlayComMenuDummyTutorial* GfPlayComMenuDummyTutorial::create(unsigned int id) {
+#line 1602
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComMenuDummyTutorial(id);
+}
 
 void GfPlayComMenuCommon::end() {}
 
@@ -234,6 +358,131 @@ GfPlayComExecuteSignal* GfPlayComExecuteSignal::create(bool start, GfSequentialP
     return com;
 }
 
+// generated: GfPlayComReturnTitle
+void GfPlayComReturnTitle::start() {
+    GfMenuObjPopup::closeAll();
+}
+
+GfPlayComReturnTitle* GfPlayComReturnTitle::create(const ParamReturnTitle& param) {
+#line 3058
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComReturnTitle(param);
+}
+// end generated: GfPlayComReturnTitle
+
+// generated: GfPlayComHoodHomuraBattou
+GfPlayComHoodHomuraBattou* GfPlayComHoodHomuraBattou::create() {
+#line 3519
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComHoodHomuraBattou();
+}
+// end generated: GfPlayComHoodHomuraBattou
+
+// generated: GfPlayComCollect
+void GfPlayComCollect::start() {
+    GfFieldCollect::get()->start(m_handle);
+    SCOM_FIELD_VOICE::create(CV_FIELD(4), CV_PRIO(1));
+}
+
+void GfPlayComCollect::end() {
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        scene->destroyPlayerPause(m_pause);
+    }
+}
+
+GfPlayComCollect* GfPlayComCollect::create(GF_OBJ_HANDLE* handle) {
+#line 2117
+    GfPlayComCollect* com = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComCollect(handle);
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        com->m_pause = scene->createPlayerPause();
+    }
+    return com;
+}
+// end generated: GfPlayComCollect
+
+// generated: GfPlayComFieldTbox
+void GfPlayComFieldTbox::start() {
+    GfFieldTbox::get()->start(m_handle);
+    SCOM_FIELD_VOICE::create(CV_FIELD(3), CV_PRIO(1));
+}
+
+void GfPlayComFieldTbox::end() {
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        scene->destroyPlayerPause(m_pause);
+    }
+}
+
+GfPlayComFieldTbox* GfPlayComFieldTbox::create(GF_OBJ_HANDLE* handle) {
+#line 2258
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComFieldTbox(handle);
+}
+// end generated: GfPlayComFieldTbox
+
+// generated: GfPlayComFieldSeq
+void GfPlayComFieldSeq::start() {
+    m_seq->create(m_handle);
+}
+
+void GfPlayComFieldSeq::end() {
+    m_seq->dispose();
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        scene->destroyPlayerPause(m_pause);
+    }
+}
+
+GfPlayComFieldSeq* GfPlayComFieldSeq::create(IFieldSeq* seq, GF_OBJ_HANDLE* handle) {
+    if (get() != nullptr) {
+        return nullptr;
+    }
+#line 2322
+    GfPlayComFieldSeq* com = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComFieldSeq(seq, handle);
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        com->m_pause = scene->createPlayerPause();
+    }
+    return com;
+}
+// end generated: GfPlayComFieldSeq
+
+// generated: GfPlayComBattleStart
+bool GfPlayComBattleStart::update(const fw::UpdateInfo& info, bool flag) {
+    switch (m_state) {
+    case 0:
+        if (!GfGameUtil::enterPlayerBattle(m_flag, reinterpret_cast<GF_OBJ_HANDLE*>(-1), false)) {
+            m_time += info.m_deltaTime;
+            if (m_time < 3.0f) {
+                return false;
+            }
+        }
+        m_time = 0.0f;
+        m_state = 1;
+        return false;
+    case 1:
+        m_time += info.m_deltaTime;
+        if (m_time < 1.0f) {
+            return false;
+        }
+        break;
+    }
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        scene->setAutoBattle(false);
+    }
+    return true;
+}
+
+GfPlayComBattleStart* GfPlayComBattleStart::create(bool flag) {
+#line 3097
+    GfPlayComBattleStart* com = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComBattleStart(flag);
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        scene->setAutoBattle(true);
+    }
+    return com;
+}
+// end generated: GfPlayComBattleStart
+
+// generated: GfPlayComOpenMenu2
+void GfPlayComOpenMenu2::start() {
+    m_state = 3;
+}
+// end generated: GfPlayComOpenMenu2
+
 mm::mtl::RTTI GfPlayCom::m_rtti("GfPlayCom", nullptr, nullptr);
 mm::mtl::RTTI GfPlayComEventFade::m_rtti("GfPlayComEventFade", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComEventWeather::m_rtti("GfPlayComEventWeather", &GfPlayCom::m_rtti, nullptr);
@@ -249,6 +498,7 @@ mm::mtl::RTTI GfPlayComAfterEventScript::m_rtti("GfPlayComAfterEventScript", &Gf
 mm::mtl::RTTI GfPlayComEvent::m_rtti("GfPlayComEvent", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComCallbackEventSequence::m_rtti("GfPlayComCallbackEventSequence", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComIraCampSave::m_rtti("GfPlayComIraCampSave", &GfPlayCom::m_rtti, nullptr);
+int GfPlayComOpenMenu::s_active;
 mm::mtl::RTTI GfPlayComOpenMenu::m_rtti("GfPlayComOpenMenu", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComOpenMenu2::m_rtti("GfPlayComOpenMenu2", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComStartTutorial::m_rtti("GfPlayComStartTutorial", &GfPlayCom::m_rtti, nullptr);
@@ -256,9 +506,13 @@ mm::mtl::RTTI GfPlayComOpenNpcEntry::m_rtti("GfPlayComOpenNpcEntry", &GfPlayCom:
 mm::mtl::RTTI GfPlayComMiniGame::m_rtti("GfPlayComMiniGame", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComMenuChapterSave::m_rtti("GfPlayComMenuChapterSave", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComMenuChapter::m_rtti("GfPlayComMenuChapter", &GfPlayCom::m_rtti, nullptr);
+int GfPlayComMenuChapter::s_activate;
 mm::mtl::RTTI GfPlayComMenuChapterEnd::m_rtti("GfPlayComMenuChapterEnd", &GfPlayCom::m_rtti, nullptr);
+int GfPlayComMenuChapterEnd::s_activate;
 mm::mtl::RTTI GfPlayComMenuZone::m_rtti("GfPlayComMenuZone", &GfPlayCom::m_rtti, nullptr);
+int GfPlayComMenuZone::s_activate;
 mm::mtl::RTTI GfPlayComMenuDummyTutorial::m_rtti("GfPlayComMenuDummyTutorial", &GfPlayCom::m_rtti, nullptr);
+int GfPlayComMenuDummyTutorial::s_activate;
 mm::mtl::RTTI GfPlayComMenuQuestList::m_rtti("GfPlayComMenuQuestList", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComMenuKizunaring::m_rtti("GfPlayComMenuKizunaring", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComMenuPrecious::m_rtti("GfPlayComMenuPrecious", &GfPlayCom::m_rtti, nullptr);

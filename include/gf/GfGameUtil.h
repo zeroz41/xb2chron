@@ -11,6 +11,8 @@ namespace gf {
 class GfGameUtil {
 public:
     static bool isCondDriverModel(unsigned int);
+    // the player party enters a battle (GfPlayComBattleStart retries it up to 3 seconds); handle -1 for none
+    static bool enterPlayerBattle(bool flag, GF_OBJ_HANDLE* handle, bool flag2);
     static void execDevelopLevelUp();
     // add to the party's money and coins (SCOM_ADD_MONEY, SCOM_ADD_COIN)
     static void addMoney(int money);

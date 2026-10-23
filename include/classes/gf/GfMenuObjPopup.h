@@ -10,6 +10,7 @@ public:
     class MainListener;
     class PopupInfo;
     virtual ~GfMenuObjPopup();  // slot 0
+    static void closeAll();  // closes every popup (GfMenuManyObjects::closeAll with close)
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
