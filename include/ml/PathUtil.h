@@ -30,6 +30,9 @@ public:
     static mm::mtl::FixStr<64> getNoPathExtName(const char* path);
     // where path's file name starts (after its last folder), none (fw::ScriptInfo::load keeps the path whole then)
     static const char* getFilePtrFromPath(const char* path);
+    // where path's extension starts, none (fw::ResourceManager::isDelayReleaseExtention; the parameter name is not
+    // the original's)
+    static const char* getFileExtPtr(const char* path);
 };
 }  // namespace ml
 

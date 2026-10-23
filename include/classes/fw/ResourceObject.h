@@ -18,7 +18,7 @@ enum LOAD_PRIO : int;
 class ResourceObject : public ::mm::mtl::ReferenceObject {
 public:
     // registers it with ResourceManager (addResource); the parameter names are not the original's
-    ResourceObject(unsigned int type, mtl::ALLOC_HANDLE handle, LOAD_PRIO prio, int arg);
+    ResourceObject(unsigned int type, mtl::ALLOC_HANDLE handle, LOAD_PRIO prio, int arg);  // the same
     ResourceObject(unsigned int type, mm::mtl::IAllocator* allocator, LOAD_PRIO prio, int arg);
     virtual ~ResourceObject();  // slot 0
     virtual void update() = 0;  // slot 2

@@ -9,7 +9,8 @@ namespace anm { class Pose; }
 
 namespace fw {
 // what AnimationManager::addPoseSampler/removePoseSampler keep (AnimSinglePoseSamper is one, at its start)
-class AnimPoseSamplerInterface {
+// (its links in a group's list follow its table, as AnimControlUpdaterInterface's)
+class AnimPoseSamplerInterface : public mm::mtl::IntrusiveListNodeBase {
 public:
     virtual ~AnimPoseSamplerInterface() {}
     virtual void samplePose() = 0;
@@ -27,7 +28,6 @@ public:
     // whether a control and a pose are bound (inline: the name is not the original's)
     bool isBind() const { return m_control != nullptr && m_pose != nullptr; }
 
-    mm::mtl::IntrusiveListNodeBase m_node;  // the constructor links it to itself
     anm::Control* m_control;
     anm::Pose* m_pose;
     anm::ExtraTruckBuffer* m_extra;

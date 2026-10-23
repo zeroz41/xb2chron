@@ -115,6 +115,9 @@ public:
     void push_back(const T& value);
     // removes the element at it, moving the ones after it down (vector.h's assertion `valid_iterator(it)`)
     iterator erase(iterator it);
+    // value placed before it, moving it and the ones after it up (vector.h's assertions at lines 639 to 653;
+    // 3.0.1 has Vector<fw::ResourceObject*>'s out of line, in ResourceManager.cpp; its body is not written yet)
+    iterator insert(iterator it, const T& value);
     void pop_back() {
         if (m_size != 0) {
             --m_size;

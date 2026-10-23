@@ -6,12 +6,13 @@ namespace fw {
 class ManagerObject {
 public:
     virtual ~ManagerObject();  // slot 0
-    virtual bool initialize();  // slot 2
-    virtual bool finalize();  // slot 3
-    virtual void enterFinalizeApplet();  // slot 4
+    // inline: 3.0.1 keeps anim_manager.cpp's copies (0x710015A06C on)
+    virtual bool initialize() { return true; }  // slot 2
+    virtual bool finalize() { return true; }  // slot 3
+    virtual void enterFinalizeApplet() {}  // slot 4
     virtual const char* getName() const;  // slot 5: the manager's name (SensorManager's returns "SensorManager")
-    virtual bool isInitialized() const;  // slot 6
-    virtual bool isFinalized() const;  // slot 7
+    virtual bool isInitialized() const { return m_flags & 1; }  // slot 6
+    virtual bool isFinalized() const { return (m_flags >> 1) & 1; }  // slot 7
     ManagerObject();  // registers it with ManagerRegister
     // bit 0: initialize succeeded, bit 1: finalize succeeded (ManagerRegister's initialize and finalize set them);
     // the name is not the original's
