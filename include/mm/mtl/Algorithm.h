@@ -25,8 +25,8 @@ inline void uninitialized_copy_n(const T* first, size_t n, T* result) {
         MM_ASSERT((first + n <= result) || result < first);
         memcpy(result, first, n * sizeof(T));
     } else {
-        for (; n != 0; --n, ++first, ++result) {
-            new (result) T(*first);
+        for (size_t i = 0; i < n; ++i) {
+            new (&result[i]) T(first[i]);
         }
     }
 }

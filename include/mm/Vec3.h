@@ -13,7 +13,11 @@ class Vec3 {
 public:
     Vec3() {}
     Vec3(float x, float y, float z) : x(x), y(y), z(z) {}
-    Vec3(const Vec3& v) : x(v.x), y(v.y), z(v.z) {}
+    Vec3(const Vec3& v) {
+        x = v.x;
+        y = v.y;
+        z = v.z;
+    }
     Vec3& operator=(const Vec3& v) {
         x = v.x;
         y = v.y;

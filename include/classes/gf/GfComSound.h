@@ -63,7 +63,7 @@ public:
     void cleanup();
     void playSe(const char* name, float volume, const mm::Vec3& offset, bool follow);
     void playSeBone(const char* name, const char* bone, float volume, const mm::Vec3& offset, bool follow);
-    void playSe2D(const char* name, float volume, bool, bool);  // not written yet: the flags are unread
+    void playSe2D(const char* name, float volume, bool, bool);  // not written yet: what the two flags do is not read
     bool stopSe(const char* name);
     CacheIterator eraseCache(CacheIterator it);
     void setAttributeVariable(int value);
