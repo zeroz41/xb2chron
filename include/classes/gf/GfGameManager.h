@@ -148,6 +148,14 @@ public:
     // "Ira" in those paths suggests the Torna expansion's mode; that is inferred, not a name. 269 callers.
     static bool isClearGame();  // the game has been cleared once (the story's end reached)
     static bool fn_71002A9E68();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's
+    // GfGamePlayerUniqueScheduler::update calls isBattle() where 3.0.1 calls this). A static of GfGameManager because
+    // gf_game_manager.cpp's functions fill its unit. What it does: true while an event of type 2 or more plays
+    // (GfGameEvent::getPlayEventId through GfDataEvent::getEventType), while the fade is not clear
+    // (GfGameManager::isFadeClear), or while GfGameScene's battle bit (0x148 bit 1, GfGameScene::isBattle) is set;
+    // false when there is no GfGameScene. Its only caller is GfGamePlayerUniqueScheduler::update, which skips the
+    // scheduler while it is true.
+    static bool fn_71002AC70C();
     static void clear();
     // takes fn_71002A9E68()'s answer in 3.0.1 (every caller passes it; the symbols still spell 1.0.0's setupGame())
     static void setupGame(bool flag);
