@@ -4,6 +4,7 @@
 #include "classes/fw/ManagerObject.h"
 #include "classes/ml/DevGraphCB.h"
 #include "ml/PadVibrationInfo.h"
+#include "fw/PadData.h"
 
 namespace fw { class UpdateInfo; }
 
@@ -25,6 +26,8 @@ public:
     virtual void update(fw::UpdateInfo const&);  // slot 9
     virtual void viBeginFrame();  // slot 10
     static void playVibration(const ml::PadVibrationInfo& info);
+    // the control pad's data of pad padNo for this frame (m_nullPad's without a manager)
+    static const PadData& getControlPadData(int padNo);
 };
 }  // namespace fw
 

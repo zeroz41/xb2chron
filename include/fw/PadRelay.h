@@ -6,8 +6,30 @@
 #include "mm/mtl/Map.h"
 
 namespace mm { namespace mtl { class IAllocator; } }
+namespace fw { class PadResEvent; struct ResAction; struct ResActionInfo; struct ResAxisInfo; }
 
 namespace fw {
+
+// a pad action key (PadResEvent's ResKey::m_key): the name is the original's (getPadKey's static's symbol); the
+// keys' own names are not known
+enum PadActKey : unsigned int {};
+
+// the fw::PadData bit of a pad action key
+inline unsigned int getPadKey(PadActKey key) {
+    static const unsigned int PAD_RAW_KEY[] = {
+        0x1000,    0x2000,    0x4000,    0x8000,     0x8,        0x4,        0x2,        0x1,        0x20,
+        0x80,      0x800,     0x10,      0x40,       0x400,      0x200,      0x100,      0x40000,    0x1000000,
+        0x2000000, 0x4000000, 0x8000000, 0x10000000, 0x20000000, 0x40000000, 0x80000000,
+    };
+    return PAD_RAW_KEY[key];
+}
+
+// (functions, by its symbols)
+class PadEventImporter {
+public:
+    // the pad event resource of a "PADD" binary of version 1 (only its table installed), none for another
+    static PadResEvent* create(void* binary, const char* name);
+};
 
 // (functions, by its symbols)
 class PadRelayUtil {
@@ -25,9 +47,12 @@ public:
 
     PadRelay();
     ~PadRelay();
-    void bind(int padNo, int, mm::mtl::IAllocator* allocator);  // the middle argument's role is not known
+    void bind(int padNo, int eventNo, mm::mtl::IAllocator* allocator);
     void unbind();
     void update();
+    bool checkAction(const ResAction& action);
+    void invokeAction(const ResActionInfo& info);
+    void invokeAxis(const ResAxisInfo& info);
 
     // the action named name calls object's func (the instances are the binding classes' units': CameraPadData's,
     // GfGamePad's, GfGameTarget's, PadField's, PadBattle's). The key is made, an empty handler inserted under it,
@@ -53,8 +78,10 @@ public:
     typedef mm::mtl::Map<mm::mtl::FixStr<32>, ActionDelegate> ActionMap;
     typedef mm::mtl::Map<mm::mtl::FixStr<32>, AxisDelegate> AxisMap;
 
-    int pad_0;  // the constructor stores -1
-    int pad_4;  // the constructor stores -1
+    int m_padNo;    // bind's first argument: the control pad checkAction and invokeAxis read; the constructor stores
+                    // -1 (the name is not the original's)
+    int m_eventNo;  // bind's second argument: the PadResEventManager resource update runs; the constructor stores -1
+                    // (the name is not the original's)
     ActionMap m_actions;  // bindAction's handlers by name (the name is not the original's)
     AxisMap m_axes;  // bindAxis's handlers by name (the name is not the original's)
 };
