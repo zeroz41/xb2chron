@@ -3,7 +3,7 @@
 
 #include "classes/ml/WorkObj.h"
 namespace ml {
-class IWorkInfomation; class IWorkBackground; }
+class IWorkInfomation; class IWorkBackground; class IThreadValue; }
 
 namespace ml {
 // a base of ml::WorkCpu no evidence names yet
@@ -25,6 +25,8 @@ public:
     static void removeBackgroundListener(IWorkBackground* listener);
     // a listener of system information (operation and performance mode) no more (ml::DevPerfNx's destructor)
     static void removeSystemInfoListener(IWorkInfomation* listener);
+    // a value swapped every frame no more (threadval's destructor)
+    static void removeSwap(IThreadValue* value);
 };
 }  // namespace ml
 

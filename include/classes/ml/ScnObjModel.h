@@ -2,6 +2,7 @@
 #define CLASSES_ML_SCNOBJMODEL_H
 
 #include "classes/ml/ScnObj.h"
+#include "classes/ml/threadval.h"
 
 namespace ml { class DebDraw; }
 namespace ml { class WinProc; }
@@ -13,11 +14,20 @@ namespace ml {
 // table 0x7100B77F00
 class ScnObjModel : public ::ml::ScnObj {
 public:
-    enum RENDER_INFO : int;
-    enum RENDER_OFFSET_INFO : int;
+    // what a model keeps per thread (0x140 bytes: threadval's tvSwap copies that much)
+    struct alignas(16) RENDER_INFO {
+        unsigned char pad_0[0x140];
+    };
+    // the offset its render applies, kept per thread (0x10 bytes)
+    struct alignas(16) RENDER_OFFSET_INFO {
+        unsigned char pad_0[0x10];
+    };
     // the offset its render applies (fw::ModelObject::update copies its added offset there; the return type is
     // not in the symbol)
     mm::Vec3& getOffsetInfo(bool);
+    void setFrameSpd(float spd);
+    bool isDisp() const;
+    bool isClip() const;
     virtual ~ScnObjModel();  // slot 0
     virtual void renderDebug(ml::DebDraw*);  // slot 3
     virtual void tail();  // slot 5
@@ -45,6 +55,16 @@ public:
     virtual void setGroups(int) = 0;  // slot 27
     virtual int getGroups() = 0;  // slot 28
     virtual void dispDebugWindow(bool, char const*, ml::WinProc*) {}  // slot 29
+
+    unsigned char pad_14[0xC];
+    threadval<RENDER_INFO> m_info;  // its destructor's (the name is not the original's)
+    threadval<RENDER_OFFSET_INFO> m_offsetInfo;  // getOffsetInfo returns one of its banks (the name is not the original's)
+    unsigned char pad_320[0x24];  // getName returns its address
+    float m_frameSpd;             // setFrameSpd (the name is not the original's)
+    unsigned char pad_348[0x4];
+    unsigned int m_disp : 1;      // isDisp (the name is not the original's)
+    unsigned int m_clip : 1;      // isClip (the name is not the original's)
+    unsigned int pad_bits : 30;  // unknown flags: isDisp loads the whole 32-bit unit
 };
 }  // namespace ml
 

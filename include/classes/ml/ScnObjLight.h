@@ -2,6 +2,7 @@
 #define CLASSES_ML_SCNOBJLIGHT_H
 
 #include "classes/ml/ScnObj.h"
+#include "classes/ml/threadval.h"
 
 namespace mm { class Mat44; }
 namespace mm { class Vec3; }
@@ -10,7 +11,12 @@ namespace ml {
 // table 0x7100B77D88
 class ScnObjLight : public ::ml::ScnObj {
 public:
-    enum RENDER_INFO : int;
+    // what a light keeps per thread (0x140 bytes: threadval's tvSwap copies that much)
+    struct alignas(16) RENDER_INFO {
+        unsigned char pad_0[0x140];
+    };
+    bool isDisp() const;
+    bool isOfsMatrix() const;
     virtual ~ScnObjLight();  // slot 0
     virtual void getName() const;  // slot 6
     virtual bool isEnv() const { return false; }  // slot 8
@@ -30,6 +36,12 @@ public:
     virtual void setDeugDisp2D(bool) {}  // slot 22
     virtual void setFromCaptureTool() = 0;  // slot 23
     virtual void setLocalIBLName(char const*) = 0;  // slot 24
+
+    unsigned char pad_14[0x4C];  // getName returns its address
+    threadval<RENDER_INFO> m_info;  // its destructor's (the name is not the original's)
+    unsigned int m_disp : 1;       // isDisp (the name is not the original's)
+    unsigned int m_ofsMatrix : 1;  // isOfsMatrix (the name is not the original's)
+    unsigned int pad_bits : 30;  // unknown flags: isDisp loads the whole 32-bit unit
 };
 }  // namespace ml
 

@@ -21,7 +21,7 @@ public:
     virtual void apply();  // slot 4
     virtual void getName() const;  // slot 6
 
-    unsigned char pad_8[0x68];
+    unsigned char pad_14[0x5C];
     threadval<RENDER_INFO> m_info;  // apply and setLookAt read its banks (the name is not the original's)
 };
 }  // namespace ml

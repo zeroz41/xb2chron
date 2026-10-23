@@ -24,8 +24,7 @@ public:
     virtual void setGroups(int);  // slot 27
     virtual int getGroups();  // slot 28
 
-    // ScnObjModel's own fields are not declared yet: pad_8 covers them and this class's up to 0x3D8
-    unsigned char pad_8[0x3D0];
+    unsigned char pad_350[0x88];
     DrMdlObj* m_pMdlObj;  // the name is not the original's
 };
 }  // namespace ml
