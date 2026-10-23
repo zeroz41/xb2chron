@@ -2,6 +2,8 @@
 #define UI_UIUTIL_H
 
 #include "fw/LangUtil.h"
+#include "classes/fw/MemHandlebaseAllocator.h"
+#include "classes/fw/PointerMap.h"
 
 namespace mm { namespace mtl { class IAllocator; } }
 
@@ -11,6 +13,7 @@ namespace fw { struct PadData; }
 namespace ui { class UICtrlCurve; }
 namespace ui { class UILayoutObject; }
 namespace mm { template <typename> class Rect; }
+namespace mm { namespace mtl { template <int> class FixStr; } }
 
 namespace ui {
 // which curve UIUtil::getCurve hands out; the enumerators' names are not the original's, they follow the curve
@@ -25,12 +28,34 @@ enum CURVE_TYPE {
 };
 }  // namespace ui
 
+namespace ui { class UIImageObject; }
+
 namespace ui { namespace UIUtil {
+extern fw::PointerMap s_ObjPtrMap;                 // the UI objects by handle (registObject)
+extern unsigned int s_ObjPtrMax;                   // initObjectMap's count
+extern fw::MemHandlebaseAllocator s_ProgAllocator; // getProgAllocator's ("MenuProgram")
+extern fw::MemHandlebaseAllocator s_ResAllocator;  // getResourceAllocator's ("MenuResource")
+extern unsigned char* s_BdatFPs[17];          // the menu's BDAT tables (initBdatFP), by index
+extern unsigned int s_SafeMarginW;                 // setSafeMergin's
+extern unsigned int s_SafeMarginH;
+void initLayerLib();
+void termLayerLib();
+void initObjectMap(unsigned int count);
+void termObjectMap();
+UIImageObject* getImageObject(unsigned int handle);  // null when the handle is no image object's
+unsigned int getGroupPriority(unsigned int group);  // a group's priority bits: (group << 5) | 1
+void setSafeMergin(unsigned int width, unsigned int height);
+unsigned char* getBdatFP(unsigned char index);  // null past the last table
 const UICtrlCurve* getCurve(CURVE_TYPE type);  // null for an unknown type
 // true when text is a format for count numbers (UIObjectNumberPlugin and UIObjectTimePlugin take the text's own)
 bool checkNumberTextFormat(const char* text, unsigned int count);
 char getMoneySeparetor(fw::LangType lang);  // the thousands separator of lang's money, 0 for none
 mm::mtl::IAllocator* getProgAllocator();
+mm::mtl::IAllocator* getResourceAllocator();  // the allocator UI resources are requested from
+// the path of a menu motion file (UIMotionLibrary::add requests the resource of its name so)
+void makeMenuUIMFileName(mm::mtl::FixStr<128>& path, const char* name);
+// the path of a menu UIO file (UIUioLibrary::add requests the resource of its name so)
+void makeMenuUIOFileName(mm::mtl::FixStr<128>& path, const char* name);
 UIObject* getObject(unsigned int handle);
 unsigned int searchChild(unsigned int handle, const char* name);
 void setDispChild(unsigned int handle, bool disp, const char* child);

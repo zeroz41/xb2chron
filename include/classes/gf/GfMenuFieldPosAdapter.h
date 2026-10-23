@@ -18,11 +18,11 @@ public:
           m_adjusted(false) {}
     virtual ~GfMenuFieldPosAdapter();  // slot 0
     virtual void update(fw::UpdateInfo const&);  // slot 2
-    // 3.0.1 added the flag; the symbols give this one 1.0.0's two-parameter name (_ZN2gf21GfMenuFieldPosAdapter6createEjRKN2mm4Vec3E)
+    // 3.0.1 added the flag (the two-parameter create below passes false to it)
     static GfMenuFieldPosAdapter* create(unsigned int handle, const mm::Vec3& pos, bool keepAdjusted);
     // 1.0.0's create: 1.0.0's GfMenuObjChainIcon::open, GfMenuObjDamageBuff::openUniteCombo and
-    // GfMenuObjDropItem::open call create(unsigned int, mm::Vec3 const&) where 3.0.1's call fn_710033D504, which
-    // passes false as the flag (the symbols call it fn_710033D504)
+    // GfMenuObjDropItem::open call create(unsigned int, mm::Vec3 const&) where 3.0.1's call 0x710033D504, which
+    // passes false as the flag
     static GfMenuFieldPosAdapter* create(unsigned int handle, const mm::Vec3& pos);
     // inline: 3.0.1 has no copy (create's stores)
     void setup(unsigned int handle, const mm::Vec3& pos, bool keepAdjusted) {

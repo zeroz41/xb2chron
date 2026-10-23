@@ -11,6 +11,7 @@ public:
     virtual ~UITransform();  // slot 0
     void setPos(short x, short y);
     void setScale(float x, float y);
+    void syncParent();  // nothing (1.0.0's setParent did nothing either)
     mm::Pnt<short> m_pos;        // setPos's
     unsigned char pad_0C[0x4];
     float m_scaleX;              // setScale's
