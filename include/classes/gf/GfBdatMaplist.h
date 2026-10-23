@@ -4,6 +4,7 @@
 #include "classes/gf/IDataBdat.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 
+class CBdatWrapper;
 namespace gf { class GfBdatMaplist; }
 
 namespace gf {
@@ -13,7 +14,11 @@ public:
     GfBdatMaplist();
     virtual ~GfBdatMaplist();  // slot 0
     virtual void bdatRefresh();  // slot 2
-    unsigned char pad_10[0x18];  // fields: size from GfDataBdat::initialize's allocation
+    unsigned int getMaplistStart() const;
+    unsigned int getMaplistEnd() const;
+    // Table wrappers exposed by the range queries; names follow their accessors.
+    CBdatWrapper* m_fpMaplist;  // 0x10
+    unsigned char pad_18[0x10];
 };
 }  // namespace gf
 

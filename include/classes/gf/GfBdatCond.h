@@ -13,6 +13,7 @@ public:
     GfBdatCond();
     virtual ~GfBdatCond();  // slot 0
     virtual void bdatRefresh();  // slot 2
+    void destroyFP();
     unsigned char pad_10[0x68];  // fields: size from GfDataBdat::initialize's allocation
 };
 }  // namespace gf

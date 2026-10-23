@@ -4,6 +4,7 @@
 #include "classes/gf/IDataBdat.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 
+class CBdatWrapper;
 namespace gf { class GfBdatChrBl; }
 
 namespace gf {
@@ -13,7 +14,10 @@ public:
     GfBdatChrBl();
     virtual ~GfBdatChrBl();  // slot 0
     virtual void bdatRefresh();  // slot 2
-    unsigned char pad_10[0x8];  // fields: size from GfDataBdat::initialize's allocation
+    unsigned int getChrBlStart() const;
+    unsigned int getChrBlEnd() const;
+    // Table wrappers exposed by the range queries; names follow their accessors.
+    CBdatWrapper* m_fpChrBl;  // 0x10
 };
 }  // namespace gf
 
