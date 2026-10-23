@@ -1,3 +1,4 @@
+#include "classes/wnd/LocalWind.h"
 #include "mm/mtl/Vector.h"
 #include "wnd/Array.h"
 #include "classes/wnd/GlobalWind.h"
@@ -41,3 +42,5 @@ bool GlobalWindManager::setCurrentWind(int index) {
 }
 
 }  // namespace wnd
+
+template void mm::mtl::Vector<wnd::LocalWindHitCache>::expand(size_t, size_t);
