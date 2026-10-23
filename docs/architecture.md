@@ -111,6 +111,22 @@ The game's assertions name their source files, as built on Monolith Soft's machi
 
 The sound driver (`ssd`) cites a separate tree; its unit is `sources/voice_handle_api.cpp`.
 
+The progress categories (`categories` in [`xc2.project.json`](../xc2.project.json)) follow the libraries, which
+the link lays out one after another: NintendoSDK's start-up object, the game, five of `mm_lib`'s files, monolib,
+eflib, aiLib, anmlib, skdlib, LibMessageStudio, wndlib, csvb, the sound driver, NintendoSDK's zlib and
+`nn::init`, the rest of `mm_lib`, and the PLT. The game also has a category for each of its four largest folders. Units no file names are
+assigned by link position and namespace:
+
+- the game: `apps/FrameworkLauncher.cpp` (the first object linked, `apps::` and `ai::AiData`), `ui/` and
+  `users/` (`ui::`, after the game's last file `ui/ui_resource.cpp`), `gf/_gfbdb.cpp` and the `unit_` runs
+  between the game's own files;
+- monolib: `ml/` (monolib's namespace), and `grlib/`, `cloud/`, `layer/`, `Stream.cpp`, `WriteChar.cpp` and
+  `WriteStr.cpp`, which link between monolib's `font.cpp` and eflib's first file;
+- skdlib: `skt/CommandManager.cpp` (`skd::`, after skdlib's last file);
+- NintendoSDK and middleware: `unit_7100000024.cpp` and `unit_71000001B0.cpp` (start-up), the three
+  `LMS_*` units (LibMessageStudio), and `unit_71008AC858.cpp` with `nn/gfx/detail/GlslcDll.cpp` (zlib's
+  `adler32`, `crc32`, then `nn::init`).
+
 ## Units
 
 [`config/XC2_301/splits.txt`](../config/XC2_301/splits.txt) assigns every function, and the data only its code

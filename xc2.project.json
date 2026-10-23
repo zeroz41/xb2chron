@@ -35,6 +35,145 @@
       "symbols": "config/XC2_301/symbols.txt",
       "splits": "config/XC2_301/splits.txt",
       "objdiff": "objdiff.json",
+      "categories": [
+        {
+          "id": "game",
+          "name": "Game (application/BF2)",
+          "paths": [
+            "application/",
+            "apps/",
+            "ui/",
+            "users/",
+            "gf/",
+            "unit_71001DF274.cpp",
+            "unit_710028E5BC.cpp",
+            "unit_710028EBB0.cpp",
+            "unit_7100290CC4.cpp",
+            "unit_71003214F4.cpp",
+            "unit_7100652854.cpp"
+          ]
+        },
+        {
+          "id": "game_gf",
+          "name": "Game: gf (objects, menus, fields, data)",
+          "paths": [
+            "application/BF2/gf/",
+            "gf/",
+            "unit_71001DF274.cpp",
+            "unit_710028E5BC.cpp",
+            "unit_710028EBB0.cpp",
+            "unit_7100290CC4.cpp",
+            "unit_71003214F4.cpp"
+          ]
+        },
+        {
+          "id": "game_battle",
+          "name": "Game: battle",
+          "paths": [
+            "application/BF2/battle/"
+          ]
+        },
+        {
+          "id": "game_framework",
+          "name": "Game: framework",
+          "paths": [
+            "application/BF2/framework/"
+          ]
+        },
+        {
+          "id": "game_ui",
+          "name": "Game: ui",
+          "paths": [
+            "application/BF2/ui/",
+            "ui/"
+          ]
+        },
+        {
+          "id": "mm_lib",
+          "name": "mm_lib (mcl)",
+          "paths": [
+            "libs/mcl/"
+          ]
+        },
+        {
+          "id": "monolib",
+          "name": "monolib (ml)",
+          "paths": [
+            "libs/monolib_mm/",
+            "ml/",
+            "grlib/",
+            "cloud/",
+            "layer/",
+            "Stream.cpp",
+            "WriteChar.cpp",
+            "WriteStr.cpp"
+          ]
+        },
+        {
+          "id": "anmlib",
+          "name": "anmlib (animation)",
+          "paths": [
+            "libs/anmlib/"
+          ]
+        },
+        {
+          "id": "eflib",
+          "name": "eflib (effects)",
+          "paths": [
+            "libs/eflib/"
+          ]
+        },
+        {
+          "id": "wndlib",
+          "name": "wndlib (wind)",
+          "paths": [
+            "libs/wndlib/"
+          ]
+        },
+        {
+          "id": "ailib",
+          "name": "aiLib",
+          "paths": [
+            "libs/aiLib/"
+          ]
+        },
+        {
+          "id": "skdlib",
+          "name": "skdlib",
+          "paths": [
+            "libs/skdlib/",
+            "skt/"
+          ]
+        },
+        {
+          "id": "csvb",
+          "name": "csvb",
+          "paths": [
+            "csvb/"
+          ]
+        },
+        {
+          "id": "ssd",
+          "name": "Sound driver (ssd)",
+          "paths": [
+            "ssd/",
+            "sources/"
+          ]
+        },
+        {
+          "id": "sdk",
+          "name": "NintendoSDK and middleware",
+          "paths": [
+            "unit_7100000024.cpp",
+            "unit_71000001B0.cpp",
+            "nn/",
+            "unit_71008AC858.cpp",
+            "unit_71008912C0.cpp",
+            "unit_7100891460.cpp",
+            "unit_710089194C.cpp"
+          ]
+        }
+      ],
       "report": "build/XC2_301/report.json",
       "build": {
         "compiler": "build/compilers/clang+llvm-3.9.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang++",
