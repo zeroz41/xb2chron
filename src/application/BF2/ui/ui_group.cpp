@@ -46,7 +46,7 @@ void UIGroup::clean() {
     m_flags = 0;
 }
 
-// UIGroup::setup: not identical yet, see /home/td/.local/share/xc2-session-tools/session14/uigroup/wip/ui_group_full.cpp and NOTES.md
+// UIGroup::setup: not written yet (not identical)
 
 void UIGroup::releaseInput(unsigned int handle) {
     for (InputInfo* it = m_inputs.begin(); it != m_inputs.end();) {
@@ -73,7 +73,7 @@ void UIGroup::disp(bool disp) {
     }
 }
 
-// UIGroup::updateObject: not identical yet, see /home/td/.local/share/xc2-session-tools/session14/uigroup/wip/ui_group_full.cpp and NOTES.md
+// UIGroup::updateObject: not written yet (not identical)
 
 void UIGroup::applyObject() {
     if (m_objList == nullptr || (m_flags & 2) != 0) {

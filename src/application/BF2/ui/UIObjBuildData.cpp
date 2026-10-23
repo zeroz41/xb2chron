@@ -53,8 +53,7 @@ void UIObjBuildData::initialize() {
     }
 }
 
-// deserialize (0x7100673EA4) is not here: its candidate, register allocation and one spill apart, is
-// session12/w11/wip/UIObjBuildData.cpp
+// deserialize (0x7100673EA4) is not here yet: the best candidate differs in register allocation and one spill
 
 unsigned int UIObjBuildData::getObjectNum() const {
     return m_objects.size();

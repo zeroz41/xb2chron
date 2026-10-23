@@ -49,7 +49,6 @@ void GfSizeAlloc::resize(unsigned long bufferSize) {
     m_blocks[0] = m_blockNum;
 }
 
-// alloc and free (and the FixedList<unsigned int, 64>::erase they instantiate) are in progress in
-// session14/gfslot/wip/gf_slot_wip.cpp: not identical yet, so not here
+// alloc and free (and the FixedList<unsigned int, 64>::erase they instantiate): not written yet (not identical)
 
 }  // namespace gf

@@ -114,7 +114,6 @@ void UICtrlFrame::movePoint(mm::Pnt<short> pos, bool anim) {
     }
 }
 
-// update (0x710066E0B0) is not here: its candidate, 4 words off (two registers swapped), is
-// session12/w11/wip/ui_ctrl_frame.cpp
+// update (0x710066E0B0) is not here yet: the best candidate is 4 words off (two registers swapped)
 
 }  // namespace ui
