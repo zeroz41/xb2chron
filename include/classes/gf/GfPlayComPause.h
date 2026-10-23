@@ -1,20 +1,25 @@
 #ifndef CLASSES_GF_GFPLAYCOMPAUSE_H
 #define CLASSES_GF_GFPLAYCOMPAUSE_H
 
-#include "mm/mtl/RTTI.h"
-namespace fw { class UpdateInfo; }
+#include "classes/gf/GfPlayCom.h"
 
 namespace gf {
-// table 0x7100B583A8
-class GfPlayComPause {
+// table 0x7100B583A8; GfSequentialPlay::pushPause and popPause make it (0 pops)
+class GfPlayComPause : public GfPlayCom {
 public:
+    explicit GfPlayComPause(unsigned int pause) : GfPlayCom(1, true), m_pause(pause) {}
+    static GfPlayComPause* create(unsigned int pause);
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfPlayComPause();  // slot 1
-    virtual void getFuncName() const;  // slot 3
+    virtual const char* getFuncName() const {  // slot 3
+        static const char* func = "PlayComPause";
+        return func;
+    }
     virtual void start();  // slot 4
     virtual void end();  // slot 5
-    virtual void update(fw::UpdateInfo const&, bool);  // slot 6
+    virtual bool update(const fw::UpdateInfo& info, bool flag);  // slot 6
     static mm::mtl::RTTI m_rtti;
+
+    unsigned int m_pause;
 };
 }  // namespace gf
 

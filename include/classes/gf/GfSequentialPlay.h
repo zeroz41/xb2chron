@@ -7,7 +7,14 @@
 
 namespace gf { class GfSequentialPlay; }
 namespace gf { class ParamReturnTitle; }
-namespace gf { class GfSequentialPlaySignal; }
+namespace gf {
+// a flag a caller holds while its command list runs: GfPlayComExecuteSignal sets it when the startSignal command
+// is made and clears it when the endSignal command starts (the field name is not the original's)
+class GfSequentialPlaySignal {
+public:
+    bool m_active;
+};
+}  // namespace gf
 namespace gf { class GfMapjumpInfo; }
 namespace fw { class Camera; }
 #include "mm/mtl/IntrusivePtr.h"
@@ -90,6 +97,11 @@ public:
     // add functions (GfPlayFactory::createTalk, createOneEvent, createQuestUIComplete). What it does: when
     // GfGameManager::fn_71002A9E68() holds, makes a command (fn_710031988C) and adds it (addCommand).
     static void fn_71003227E4();
+    // what GfPlayComPause and GfPlayComState run when they start
+    static void pauseOn(unsigned int pause);
+    static void pauseOff();
+    static void execPushState(GF_STATE state);
+    static void execPopState();
 };
 }  // namespace gf
 

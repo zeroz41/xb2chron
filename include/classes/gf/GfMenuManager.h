@@ -126,6 +126,8 @@ public:
     // the object the menu targets, -1 without a manager or a target
     static GF_OBJ_HANDLE* getTargetObjHandle();
     static bool isOpenFullScreen();
+    static void openFullScreen(unsigned int screen, bool flag0, bool flag1);
+    static void closeFullScreen(bool flag0, bool flag1);
     static bool isSwitchingFullScreen();  // the full screen is switching its layers
     // the object the player can access now, (GF_OBJ_HANDLE*)-1 for none
     static gf::GF_OBJ_HANDLE* getAccessObjHandle();

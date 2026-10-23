@@ -3,6 +3,7 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 
+namespace gf { enum GEV : int; }  // as IGfEvent.h declares it
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfSetupParam; }
 namespace gf { class GfEvent; }
@@ -18,6 +19,8 @@ public:
     static void callBladeChange(GF_OBJ_HANDLE* handle, int from, int to);
     static void build(const GfSetupParam& param);
     static void destroy();
+    // GfPlayComCallbackEventSequence::start passes 12 (begin) or 13 and its id
+    static void callEventPlay(GEV gev, unsigned int id);
     virtual ~GfEvent();  // slot 0
     static void callCameraControl(int type);
     // listener joins (leaves) the ones GfEvent's calls reach
