@@ -9,7 +9,12 @@ class AudioContents {
 public:
     AudioContents();
 
-    unsigned char pad_0[0x80];
+    unsigned char pad_0[0x34];
+    // the size of the audio data and each channel's data offset from it (WaveSource::GetDataSize and
+    // GetDataAddress read them for format 3; the names are not the original's)
+    unsigned int dataSize;
+    unsigned char pad_38[0x28];
+    unsigned int channelDataOffset[8];
 };
 
 }  // namespace ssd

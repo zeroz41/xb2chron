@@ -36,6 +36,10 @@ unsigned long GetSymbolName(char* pOutName, unsigned long nameSize, unsigned lon
 
 namespace detail {
 void LogImpl(const LogMetaData& metaData, const char* format, ...);
+// stops the program, citing the failed condition, the function, the file and the line (ssd::abort passes
+// empty strings and 0)
+__attribute__((noreturn)) void AbortImpl(const char* condition, const char* functionName, const char* fileName,
+                                        int lineNumber);
 }  // namespace detail
 
 }}  // namespace nn::diag

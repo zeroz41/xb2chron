@@ -32,6 +32,10 @@ public:
     virtual void GetPlatformDataImpl(char const*);  // slot 18
     virtual ~SystemCorePlatform();  // slot 19
     virtual void GetDebugInfo() const = 0;  // slot 21
+
+    // audio data memory from the platform's allocator (nn::mem::StandardAllocator::Allocate / Free)
+    void* AllocAudioDataBuffer(unsigned long size);
+    void FreeAudioDataBuffer(void* buffer);
 };
 }  // namespace ssd
 

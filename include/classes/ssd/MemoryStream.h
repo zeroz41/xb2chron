@@ -8,6 +8,8 @@ namespace ssd {
 // trivial: the table's complete-object slot holds Object's.
 class MemoryStream : public ::ssd::IoStreamBase {
 public:
+    // 1.0.0 has it out of line; 3.0.1 keeps no copy (WaveSource::Init constructs one inline, type 12)
+    MemoryStream() : IoStreamBase(ObjectType::Id(12)), data_(nullptr), size_(0) {}
     virtual ~MemoryStream() {}  // slot 0
     virtual bool IsOpen() const;  // slot 2
     virtual Result Open(void* data, unsigned long size, OpenMode mode);  // slot 4
