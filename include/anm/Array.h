@@ -4,8 +4,11 @@
 #include "mm/MMStdBase.h"
 
 // anmlib's anm_array-inl.h, as the including file's include path named it: the game's own files reach it from
-// application/BF2, anmlib's own (MM_LIB_FROM_LIBS) from their build folder
-#ifdef MM_LIB_FROM_LIBS
+// application/BF2, anmlib's own (MM_LIB_FROM_LIBS) from their build folder, skdlib's (SKD_LIB_PROJECT) from theirs
+// (skd::addDetectSphereJob cites it so)
+#if defined(SKD_LIB_PROJECT)
+#define ANM_ARRAY_PATH "../../../anmlib/src\\anmlib/base/anm_array-inl.h"
+#elif defined(MM_LIB_FROM_LIBS)
 #define ANM_ARRAY_PATH "../../src\\anmlib/base/anm_array-inl.h"
 #else
 #define ANM_ARRAY_PATH "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/anmlib/src\\anmlib/base/anm_array-inl.h"

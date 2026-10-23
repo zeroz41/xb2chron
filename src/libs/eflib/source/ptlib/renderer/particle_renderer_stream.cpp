@@ -1,7 +1,7 @@
 #define MM_LIB_FROM_EFLIB
 #include "grlib/CGLibVtxVertex.h"
-#include "grlib/CGLibVtxInstans.h"
 #include "classes/effect/SystemManager.h"
+#include "grlib/CGLibVtxInstans.h"
 #include "ptlib/renderer/RendererStream.h"
 #include "mm/MMStdBase.h"
 
@@ -36,34 +36,34 @@ void StreamObj::releaseSub() {
 
 void StreamObj::initFetchVertex() {
     if (m_type == 1) {
-        m_pInstanceFetch = &EffStateManager::get()->m_fetch[0];
-        m_pFetch = &EffStateManager::get()->m_fetch[0];
+        m_pInstanceFetch = &EffStateManager::get()->m_fetch[1];
+        m_pFetch = &EffStateManager::get()->m_fetch[1];
         return;
     }
     switch (m_size) {
     case 20:
-        m_pInstanceFetch = &EffStateManager::get()->m_instanceFetch[0];
-        m_pFetch = &EffStateManager::get()->m_fetch[0];
-        break;
-    case 24:
         m_pInstanceFetch = &EffStateManager::get()->m_instanceFetch[1];
         m_pFetch = &EffStateManager::get()->m_fetch[1];
         break;
-    case 28:
+    case 24:
         m_pInstanceFetch = &EffStateManager::get()->m_instanceFetch[2];
         m_pFetch = &EffStateManager::get()->m_fetch[2];
         break;
-    case 32:
+    case 28:
         m_pInstanceFetch = &EffStateManager::get()->m_instanceFetch[3];
         m_pFetch = &EffStateManager::get()->m_fetch[3];
         break;
-    case 36:
+    case 32:
         m_pInstanceFetch = &EffStateManager::get()->m_instanceFetch[4];
         m_pFetch = &EffStateManager::get()->m_fetch[4];
         break;
-    case 40:
+    case 36:
         m_pInstanceFetch = &EffStateManager::get()->m_instanceFetch[5];
         m_pFetch = &EffStateManager::get()->m_fetch[5];
+        break;
+    case 40:
+        m_pInstanceFetch = &EffStateManager::get()->m_instanceFetch[6];
+        m_pFetch = &EffStateManager::get()->m_fetch[6];
         break;
     default:
 #line 172

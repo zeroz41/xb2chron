@@ -6,10 +6,13 @@
 #include "string.h"
 #include <new>
 
-// mm_lib's fixed_vector.h as its includer's project named it: eflib's (MM_LIB_FROM_EFLIB) or the game's
+// mm_lib's fixed_vector.h as its includer's project named it: eflib's (MM_LIB_FROM_EFLIB), the other libraries'
+// under libs/ (MM_LIB_FROM_LIBS: skd::addApplyDetectJobs cites it so) or the game's
 #if defined(MM_LIB_FROM_EFLIB)
 #define MM_MTL_FIXED_VECTOR_PATH \
     "D:/Monolithsoft/BF2/prog/libs/eflib/proj/windows/../../../mcl/mm_lib/source\\mm_mtl/fixed_vector.h"
+#elif defined(MM_LIB_FROM_LIBS)
+#define MM_MTL_FIXED_VECTOR_PATH "../../../mcl/mm_lib/source\\mm_mtl/fixed_vector.h"
 #else
 #define MM_MTL_FIXED_VECTOR_PATH \
     "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/fixed_vector.h"

@@ -4,6 +4,8 @@
 #include "grlib/CGLibVtxVertex.h"
 #include "grlib/CGLibVtxInstans.h"
 #include "grlib/CGLibVtxFetch.h"
+#include "grlib/CGLibSampler.h"
+#include "grlib/CGLibVtxIndex.h"
 
 namespace ptlib { class StaticAllocObj; }
 namespace ptlib { class DrDrawWorkInfoEF; }
@@ -16,21 +18,33 @@ enum FxVertexType : int {};
 
 namespace ptlib { namespace renderer {
 
-// the renderer's shared sampler, vertex fetch and index state (particle_renderer_stream.cpp)
+// the renderer's shared sampler, vertex fetch and index state (particle_renderer_stream.cpp). The names of the
+// members other than the functions' are not the original's.
 class EffStateManager {
 public:
     EffStateManager();
     ~EffStateManager();
     static EffStateManager* get();
     void init(StaticAllocObj* pAlloc);
+    void initSampler();
+    void initVtxFetch();
+    void initVtxIndex();
+    // the frame's instances start again
+    void begin();
 
-    unsigned char pad_0[0x410];
-    // the vertex fetch objects of the streams' sizes 20, 24, ... 40 (the names are not the original's)
+    static EffStateManager* s_instance;  // the constructor sets it, the destructor clears it
+
+    grlib::CGLibSampler m_samplers[32];
+    // the vertex fetch objects of the streams' sizes 16?, 20, 24, ... 40 (StreamObj::initFetchVertex takes
+    // [1] to [6]); the destructor releases each with its instanced counterpart
     grlib::CGLibVtxFetch m_fetch[7];
-    grlib::CGLibVtxFetch m_instanceFetch[6];
-    unsigned char pad_4e0[0x20];
+    grlib::CGLibVtxFetch m_instanceFetch[7];
+    grlib::CGLibVtxFetch m_otherFetch[2];
     grlib::CGLibVtxVertex m_vertex;  // the vertices the instanced streams share
-    unsigned char pad_528[0xF0];
+    grlib::CGLibVtxVertex m_otherVertex;
+    // an index buffer the destructor leaves alone, and the ones it releases
+    grlib::CGLibVtxIndex m_keptIndex;
+    grlib::CGLibVtxIndex m_index[4];
     grlib::CGLibVtxInstans m_instans;  // the instanced streams' per-instance data
 };
 

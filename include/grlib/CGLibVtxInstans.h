@@ -6,6 +6,10 @@ namespace grlib {
 // a ring of per-instance vertex data: each user takes the next part of it (the name is the original's spelling)
 class CGLibVtxInstans {
 public:
+    CGLibVtxInstans();
+    ~CGLibVtxInstans();
+    // the frame's first instances go at the start again (ptlib's EffStateManager::begin)
+    void beginInstansBuff();
     // where the next instances go
     void* getNextInstansBuff();
     // the instances written up to the offset handed to the GPU

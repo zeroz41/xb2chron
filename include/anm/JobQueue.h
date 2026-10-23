@@ -5,8 +5,11 @@
 #include "string.h"
 #include "mm/mtl/Queue.h"
 
-// anmlib's anm_job_queue.h, as the including file's include path named it (see anm/Array.h)
-#ifdef MM_LIB_FROM_LIBS
+// anmlib's anm_job_queue.h, as the including file's include path named it (see anm/Array.h; skdlib's,
+// SKD_LIB_PROJECT, as skd::registerDetectSphereJobExecuter cites it)
+#if defined(SKD_LIB_PROJECT)
+#define ANM_JOB_QUEUE_PATH "../../../anmlib/src\\anmlib/base/anm_job_queue.h"
+#elif defined(MM_LIB_FROM_LIBS)
 #define ANM_JOB_QUEUE_PATH "../../src\\anmlib/base/anm_job_queue.h"
 #else
 #define ANM_JOB_QUEUE_PATH \
