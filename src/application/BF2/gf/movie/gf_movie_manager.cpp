@@ -46,8 +46,22 @@ bool GfVolumeFade::setupVolumeFadeParamForDead(ml::VolumeFadeParams& params, VFE
     return false;
 }
 
-// setFadeRatio (0x71004A412C) is not here yet: candidates/gf_movie_manager.near.cpp's clamps in floating point where
-// the original selects both bounds as integers (an mm::clamp variant not identified)
+// the clamp is the original's integer selects only when written in place and the whole row stored through
+// FixedArray::assign (which reads the ratio by reference); mm::clamp or a plain loop give fmin/fcsel
+void GfVolumeFade::setFadeRatio(VFACC acc, VFPARTS parts, float ratio) {
+    if (ratio < 0.0f) {
+        ratio = 0.0f;
+    } else if (ratio > 1.0f) {
+        ratio = 1.0f;
+    }
+    if (parts == VFPARTS(-1)) {
+        m_ratio[acc].assign(ratio);
+    } else {
+        m_ratio[acc][parts] = ratio;
+    }
+    m_dirty = true;
+    applyFadeRatio();
+}
 
 void GfVolumeFade::applyFadeRatio() {
     if (!GfObjUtil::isValid(m_handle)) {
