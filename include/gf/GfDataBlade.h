@@ -62,6 +62,10 @@ public:
     static const BladeArtsSlot* getNArts(unsigned int blade, unsigned int index);
     static unsigned int getFavorite(unsigned int blade, FAVORITE favorite);
     static int getOffsetID(unsigned int blade);  // its menu offset id
+    static unsigned int getBladePower(unsigned int blade);
+    static bool isMale(unsigned int blade);
+    static bool isFemale(unsigned int blade);
+    static bool isAnimal(unsigned int blade);
 };
 
 }  // namespace gf

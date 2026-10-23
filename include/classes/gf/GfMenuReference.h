@@ -38,6 +38,7 @@ public:
     static void setReferenceString(ui::UIStr& text, unsigned short index);
     static unsigned int getReferenceDriverID(unsigned int index);
     static unsigned int getReferenceBladeID(unsigned int index);
+    static unsigned int getReferenceTeamID();  // GfMenuMercenariesAdapter::ReferenceTeamConverter's team
     static unsigned int getReferenceZoneID();  // GfMenuZoneAdapter::ReferenceZoneConverter's zone
     static unsigned int getReferenceShopID();  // the shop the menu was opened for (GfMenuShopAdapter::ReferenceConverter)
     static unsigned int getReferenceWorldMapID();  // GfMenuWorldMapAdapter::ReferenceConverter's map
@@ -71,6 +72,12 @@ public:
     static float getElementComboPartyTimeLeft(unsigned int index);
     static bool isWeaponJustRange();
     static bool isReversePaletteBtnState(unsigned int slot, unsigned int state);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfMenuObjItemList2::refreshItemList
+    // has no call where 3.0.1's calls it). A member because its unit is gf_menu_reference and it reads this class's
+    // singleton. What it does: the item type the menu references (an ItemType::Type, valid from 1 to 20: the
+    // singleton's word at 0x4CCB8), 0 without the singleton; GfMenuGameAdapter's types 18 to 20, GfMenuObjItemList2's
+    // and GfMenuObjHanaPartsMake's refreshItemList read it.
+    static unsigned int fn_710036934C();
 };
 }  // namespace gf
 

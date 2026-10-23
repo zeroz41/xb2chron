@@ -32,6 +32,7 @@ public:
     unsigned int getBTL_Bl_PersonalityEnd() const;
     unsigned int getVo_Field_FilterStart() const;
     unsigned int getVo_Field_FilterEnd() const;
+    int getArtsDrActNo(unsigned int arts) const;
     // Table wrappers exposed by the range queries; names follow their accessors.
     CBdatWrapper* m_fpArtsDr;  // 0x10
     CBdatWrapper* m_fpArtsBl;  // 0x18

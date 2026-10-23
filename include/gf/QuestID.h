@@ -12,6 +12,7 @@ public:
     // QuestID unchanged
     QuestID(unsigned int id) : m_id(id), m_achieveId(id >> 16) {}
     bool empty() const;
+    bool operator==(const QuestID& o) const { return m_id == o.m_id && m_achieveId == o.m_achieveId; }
     unsigned short m_id;  // what empty() tests; the name is not the original's
     // the achievement an affinity chart quest belongs to (GfDataQuest::getAchievementBlade maps it to its blade;
     // GfKizunaringBlade::qevCompleteQuest looks only at quests with one). The name is not the original's.

@@ -7,7 +7,9 @@ namespace gf {
 // an arts list's element (8 bytes: UIListInfo<MenuArtsInfo>'s buffer grows by 8)
 class MenuArtsInfo {
 public:
-    unsigned char pad_00[8];
+    // the names are not the original's: GfMenuArtsAdapter's converters give them as its arts and level
+    unsigned int m_artsId;
+    unsigned int m_level;
 };
 
 // table 0x7100B5F110

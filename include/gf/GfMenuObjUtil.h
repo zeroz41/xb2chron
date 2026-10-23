@@ -2,8 +2,10 @@
 #define GF_GFMENUOBJUTIL_H
 
 #include "classes/ui/UICtrlCursorSelect.h"
+#include "mm/mtl/FixedArray.h"
 
 namespace gf { class GfMenuCallContext; }
+namespace gf { class DataParamAcc; }
 namespace ui { class UIListInfoBase; }
 namespace fw { enum SoundCategory : int; }
 namespace ui { class UIStr; }
@@ -74,6 +76,8 @@ public:
         ui::UICtrlCursorSelect::CursorSetting m_setting;
     };
     static ui::UICtrlCursorSelect* createCursor(CursorParam& param);
+    static const char* getMenuMS(unsigned int id);  // a menu message
+    static int getFaceIconID(const DataParamAcc& acc);  // an object's face icon, 0 for none
     static bool getMenuCondition(unsigned int condition);  // whether a menu's condition is met
     static bool checkCCStart(GfMenuCallContext* context);  // a context that is not running yet
     static bool checkCCNext(GfMenuCallContext* context, unsigned int id);  // a context running on that id
@@ -90,6 +94,8 @@ public:
     static unsigned int playBGM(unsigned int bgm, bool, fw::SoundCategory category);  // the handle stopBGM takes
     static void stopBGM(unsigned int handle, float time);
     static bool isValidBlade(unsigned int blade);
+    static bool getBladeTeamName(unsigned int blade, ui::UIStr& name);  // false when it has none
+    static ui::UIStr getName(const DataParamAcc& acc);
     static void playSECommonFromInput(unsigned int input);  // the common sound for a menu input
     static void playSECommonCursor();  // the common sound of a cursor move
     static void playSECommon(unsigned int se);  // one of the common menu sounds
@@ -121,6 +127,25 @@ public:
     // gives UIStr the font folder "menu_ira") or add-on content 0x101 is owned. 344 functions call it: 3 at 427 call sites
     // and 1 at 46.
     static bool fn_710048FD30(unsigned int layer);
+    // the icons of a driver's arts at a level (getArtsIconInfo zeroes it first); the names are not the original's
+    struct ArtsIconInfo {
+        unsigned int m_type;     // 0xC, 0xD, 0xE for the special kinds
+        unsigned int m_enhance;  // the level's enhance effect's icon (4 and up), 0 for none
+        unsigned int m_react;    // the reaction's icon, 0 for none
+        unsigned int pad_C;
+        unsigned int m_range;
+    };
+    // false for arts 0
+    static bool getArtsIconInfo(unsigned int arts, unsigned int level, ArtsIconInfo& info);
+    // a message id from a list table (by the list's table and an index)
+    static unsigned short getMsgIDFromList(unsigned int list, unsigned short index);
+    // (appended by wpntype) the arts the driver can use with the weapon type, and how many (0 for none). 1.0.0's name
+    // (getEnableArts(mm::mtl::FixedArray<unsigned int, 4>&, unsigned int, unsigned int)): the symbols call it
+    // fn_7100493438 (1.0.0's GfMenuWeaponTypeAdapter::update_Arts* call getEnableArts at the same sites); 3.0.1
+    // added the last two arguments (with add-on menu layer 3 usable, mode 0 with the flag set, or mode 1, also take
+    // fn_7100249238's arts of mode 3 or 2); GfMenuWeaponTypeAdapter passes 0 and false
+    static unsigned int getEnableArts(mm::mtl::FixedArray<unsigned int, 4>& arts, unsigned int driver,
+                                      unsigned int wpnType, int mode, bool flag);
 };
 }  // namespace gf
 

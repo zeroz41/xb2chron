@@ -20,6 +20,9 @@ public:
     static void getItemName(unsigned char type, unsigned int id, ui::UIStr& name);
     static int canEquipAcc(unsigned int item, unsigned int, unsigned int);  // 0 when the accessory can be equipped
     static bool getIconNumber(ItemType::Type type, unsigned int id, unsigned int& number, bool);
+    // whether an item (GfMenuItemAdapter::update_canStack) or an item type (GfMenuGameAdapter's type 19) counts its
+    // stack
+    static bool canCountStack(unsigned int id);
 };
 
 }  // namespace gf

@@ -17,6 +17,12 @@ public:
     static int getState(QuestID id);
     // whether a quest's task is complete (GfQuestEvent::getQuestComp)
     static bool isCompleteTask(const QuestTaskParam& param);
+    static bool getQuestNeedTaskCond(QuestID id);
+    static QuestID getProgressQuest(QuestID id);  // the quest of id's in progress
+    static QuestID getParentQuest(QuestID id);
+    // a task's weather and time conditions, -1 for none
+    static int getQuestTaskWeatherInfo(const QuestTaskParam& param);
+    static int getQuestTaskTimeInfo(const QuestTaskParam& param);
 };
 }  // namespace gf
 

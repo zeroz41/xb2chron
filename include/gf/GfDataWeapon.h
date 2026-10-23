@@ -16,6 +16,8 @@ public:
     static unsigned int getEnhance(unsigned int weapon);
     // its weapon type's name message; false when it has none
     static bool getWeaponTypeNameByItem(unsigned char*& bdat, unsigned int& id, unsigned int weapon);
+    // a weapon type's name message; false when it has none
+    static bool getWeaponTypeName(unsigned char*& bdat, unsigned int& id, unsigned int wpnType);
 };
 
 }  // namespace gf

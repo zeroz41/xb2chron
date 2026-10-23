@@ -2,6 +2,7 @@
 #define GF_GFDATAMERCENARIES_H
 
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
+namespace gf { struct ElapseTime; }
 
 namespace gf {
 // a mission's blade condition (GfDataMercenaries::getRequestCondition fills it; the field names are not the
@@ -46,6 +47,17 @@ public:
     static bool getFieldSkillInfo(unsigned char*& bdat, unsigned int& id, unsigned int mission, unsigned int slot);
     static unsigned int getFieldSkill(unsigned int mission, unsigned int slot);
     static bool getRequestCondition(GfRequestBladeData& data, unsigned int mission, unsigned int slot);
+    static bool isValidTeamID(unsigned int teamId);
+    static unsigned int getTeamLeader(unsigned int teamId);  // the team's leader blade, 0 for none
+    static unsigned int getTeamMission(unsigned int teamId);  // the mission the team is on, 0 for none
+    static unsigned int getMissionZoneID(unsigned int mission);
+    static ElapseTime getTeamMissionTime(unsigned int teamId);  // the time the team's mission still takes
+    static unsigned int getTeamPower(unsigned int teamId);
+    static int getTeamMaleNum(unsigned int teamId);
+    static int getTeamFemaleNum(unsigned int teamId);
+    static int getTeamAnimalNum(unsigned int teamId);
+    static unsigned short* getTeamMember(unsigned int teamId);  // the team's six blades
+    static unsigned int getTeamID(unsigned int blade);  // the team the blade is in, 0 for none
 };
 }  // namespace gf
 

@@ -19,6 +19,11 @@ public:
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it is the first function
+    // of gf_menu_obj_world_map's .text, which GfMenuObjWorldMap's functions fill. What it does: true when the
+    // 1-bit local game flag 51161 + id is 1; GfMenuZoneMapAdapter::update_ZonePointName passes its map id and shows
+    // the point's name only then (else GfDataBdat 0xF5's row 0x67C).
+    static bool fn_7100495A98(unsigned int id);
 };
 }  // namespace gf
 

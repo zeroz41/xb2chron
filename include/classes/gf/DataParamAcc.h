@@ -21,7 +21,9 @@ public:
     const SDataEnemy* getSDataEnemy() const;
     unsigned int getFieldSkill(unsigned int index, bool flag) const;
     unsigned char getFieldSkillLevel(unsigned int index, bool flag) const;
+    int getIconData() const;
     unsigned int getEquipWeapon(int index, bool flag) const;  // GfMenuWeaponAdapter asks (-1, false)
+    unsigned int getLevel(bool flag) const;
 
     // fields: the object's IDataObj at 0x8 (setupObjHandle finds it; getChestHeight asks it); size 0x18, the
     // stack slot its users give it

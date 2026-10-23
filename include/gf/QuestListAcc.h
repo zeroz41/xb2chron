@@ -31,6 +31,7 @@ public:
     qlist_iterator end(QTYPE type) const;
     int getListQuestCategory(QuestID id) const;
     int getListVisible(QuestID id) const;
+    int getListQuestIcon(QuestID id) const;  // 0 for none
     // the first condition of the tasks of a purpose (GfKizunaringBlade::isNetabareOK asks GfGameCond about it)
     unsigned int getTaskTaskCondition1(unsigned int purposeId) const;
 };

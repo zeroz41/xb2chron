@@ -6,6 +6,7 @@ namespace gf {
 class GfDataUtil {
 public:
     static int getMoney();
+    static int getObjTypeByCharaId(unsigned int chara);  // the object type of a character
 };
 }  // namespace gf
 

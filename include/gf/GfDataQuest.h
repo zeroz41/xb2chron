@@ -19,6 +19,8 @@ public:
     static const AchievQuest* getAchievQuest(QuestID id);
     // whether a quest shows in the quest list (GfQuestEvent::setQuestEntry keeps it as its entry UI's flag)
     static bool getListVisible(QuestID id);
+    // a quest's message (GfQuestUtil's message ids), none for none
+    static const char* getTaskLog(QuestID id, unsigned int msg);
 };
 
 }  // namespace gf
