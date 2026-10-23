@@ -14,6 +14,8 @@ public:
     void update();
     unsigned int regist(UIObject* object, const char* name);  // the object's handle; 0 when it is null or listed
     void release(UIObject* object);
+    void release(const char* name);  // the object listed under the name (UIGroup::updateObject's)
+    void apply();
     unsigned int count(const char* name, unsigned int);
     unsigned int search(const char* name);
     unsigned int searchDuplicate(const char* name, unsigned short);
