@@ -30,6 +30,9 @@ public:
     virtual void drawDebug();  // slot 3
     void bind(skd::Dynamics* dynamics, mm::mtl::IntrusivePtr<ReferenceFrame> frame);
     void unbind();
+    // takes the frame's world transform into m_transform when there is a frame (inline in the .cpp: bind's code
+    // is the inlined copy of a separately optimized function; the name is not the original's)
+    void copyFrameTransform();
     void setEnableMovement(bool enable);
 
     skd::Dynamics* m_pDynamics;  // bind's, referenced; unbind releases it (the name is not the original's)

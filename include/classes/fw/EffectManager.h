@@ -64,6 +64,9 @@ public:
     // an effect by name, its handle (0 for none)
     unsigned int create(const char* name, EffectPack* pack, const effect::SendParam* param, bool flag);
     void remove(unsigned int handle);
+    // EffectCasterBase's destructor drops the caster with these
+    void remove(EffectCasterBase* caster);
+    void removeCaster(EffectCasterBase* caster);
     void dead(unsigned int handle);
     void setAlpha(unsigned int handle, float alpha);
     void setSpeed(unsigned int handle, float speed);
