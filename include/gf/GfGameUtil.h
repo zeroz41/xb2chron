@@ -32,6 +32,8 @@ public:
         unsigned char* m_bdat;  // the message table and its id, as ui::UIStr takes them
         unsigned int m_id;
     };
+    static void makeCommandBattle(mm::mtl::FixStr<32>& out, bool battle);
+    static void makeStateBattle(mm::mtl::FixStr<32>& out, gf::GF_OBJ_HANDLE* handle, bool battle);
 };
 
 }  // namespace gf

@@ -36,6 +36,7 @@ public:
     unsigned int getBladeArtsEx2H(bool flag) const;
     unsigned int getBladeSkill(unsigned int index, bool flag) const;
     unsigned int getBladeSkillLevel(unsigned int index, bool flag) const;
+    unsigned int getBlade(int index, bool flag) const;  // GfEvtModelDriver's constructor passes (-1, false)
 
     // fields: the object's IDataObj at 0x8 (setupObjHandle finds it; getChestHeight asks it); size 0x18, the
     // stack slot its users give it

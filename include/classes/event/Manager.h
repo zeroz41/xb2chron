@@ -20,6 +20,9 @@ public:
 
     unsigned int m_playing : 1;  // end and stop act only while it is set; GfGameTalk::isPlaying returns it
     unsigned int pad_18_1 : 31;  // the rest of the word, which isPlaying loads whole
+    unsigned char pad_1c[0x294 - 0x1C];
+    // nonzero: GfEvtModelDriver's constructor then moves its init parameter in the theater; not known yet
+    unsigned int pad_294;
 };
 }  // namespace event
 

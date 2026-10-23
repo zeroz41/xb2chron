@@ -105,6 +105,7 @@ public:
     static bool isPlayerPause();
     static void destroyBattleEnemy();
     static bool isField();
+    static bool isInnerState(GF_STATE state);
     static void enterBattle(bool flag);
     static bool isStopBattleSequence();
     void update(const fw::UpdateInfo& info);
