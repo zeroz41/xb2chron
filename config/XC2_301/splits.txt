@@ -4346,7 +4346,3 @@ libs/mcl/mm_lib/source/mm_thread/mm_thread_nx.cpp:
 	.text        start:0x008B25B0 end:0x008B29EC
 	.rodata      start:0x009B5006 end:0x009B50EE
 	.data        start:0x00B82570 end:0x00B825E0
-
-movie/Buffer.cpp:
-	.text        start:0x008B2A10 end:0x008B4180
-	.data        start:0x00B827A8 end:0x00B83370

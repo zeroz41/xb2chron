@@ -3272,6 +3272,3 @@ libs/mcl/mm_lib/source/mm_thread/mm_thread.cpp:
 libs/mcl/mm_lib/source/mm_thread/mm_thread_nx.cpp:
 	.text        start:0x009BB720 end:0x009BBB5C
 	.data        start:0x011BB140 end:0x011BB1B0
-
-movie/Buffer.cpp:
-	.text        start:0x009BBB80 end:0x009BD3D0
