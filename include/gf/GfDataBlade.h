@@ -17,6 +17,12 @@ struct AchievInfo {
 // the blades' game data (functions, by its symbols)
 class GfDataBlade {
 public:
+    static bool getTaskSkillMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line);
+    static bool getTaskResultMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line,
+                                     unsigned int level);
+    static unsigned int getSkillLineId(unsigned int blade, unsigned int line);
+    static unsigned int getKizunaringCompleteNum(unsigned int blade);
+    static unsigned int getKizunaringMax(unsigned int blade);
     static bool isRareBlade(unsigned int blade);
     // a game flag: Pyra's name shown as Mythra's (GfMenuObjNameSelect sets it from the name picked)
     static void setHomuriNameHikari(bool hikari);

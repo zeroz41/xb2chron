@@ -11,6 +11,7 @@ public:
     UIStr(const char* text, bool);  // a text as it is (GfMenuGameAdapter passes false)
     UIStr(const UIStr& other);  // out of line: GfMenuStrLinker::addSelectString calls it
     ~UIStr();
+    unsigned int size() const;
     bool isValid() const;
     bool compare(const UIStr& other);  // true when they are the same text
     void copy(const UIStr& other);

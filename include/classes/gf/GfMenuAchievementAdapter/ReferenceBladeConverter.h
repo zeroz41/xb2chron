@@ -2,15 +2,21 @@
 #define CLASSES_GF_GFMENUACHIEVEMENTADAPTER_REFERENCEBLADECONVERTER_H
 
 #include "classes/gf/GfMenuAchievementAdapter.h"
+#include "classes/gf/GfMenuAchievementAdapter/IConverter.h"
+#include "classes/gf/GfMenuReference.h"
 
 namespace gf {
-// table 0x7100B59C10
-class GfMenuAchievementAdapter::ReferenceBladeConverter {
+// table 0x7100B59C10; the blade GfMenuReference has at a reference index, a fixed line and level
+class GfMenuAchievementAdapter::ReferenceBladeConverter : public ::gf::GfMenuAchievementAdapter::IConverter {
 public:
-    virtual ~ReferenceBladeConverter();  // slot 0
-    virtual void getBladeId();  // slot 2
-    virtual void getKizunaLine();  // slot 3
-    virtual void getKizunaLevel();  // slot 4
+    ReferenceBladeConverter(unsigned int reference, unsigned short kizunaLine, unsigned short kizunaLevel);
+    virtual ~ReferenceBladeConverter() {}  // slot 0; its D2 folds into IConverter's
+    virtual unsigned int getBladeId();  // slot 2
+    virtual unsigned int getKizunaLine();  // slot 3
+    virtual unsigned int getKizunaLevel();  // slot 4
+    unsigned int m_reference;  // GfMenuReference::getReferenceBladeID's index
+    unsigned int m_kizunaLine;
+    unsigned int m_kizunaLevel;
 };
 }  // namespace gf
 

@@ -8,6 +8,15 @@ namespace gf {
 // the affinity charts' achievements; its functions take no object
 class GfKizunaringBlade {
 public:
+    static unsigned int getReleaseAchievement(unsigned int blade, unsigned int line, unsigned int level);
+    static unsigned int getAchievementCategory(unsigned int blade, unsigned int line, unsigned int level);
+    static unsigned int getAchievementIcon(unsigned int blade, unsigned int line, unsigned int level);
+    static unsigned int getAchievementVoiceCategory(unsigned int blade, unsigned int line, unsigned int level);
+    static unsigned int getAchievementAfterVoice(unsigned int blade, unsigned int line, unsigned int level);
+    static unsigned int getAchievementDifficulty(unsigned int blade, unsigned int line, unsigned int level);
+    static unsigned int getAchievementQuest(unsigned int blade, unsigned int line, unsigned int level);
+    static unsigned int getAchievementSetCategory(unsigned int blade, unsigned int line);
+    static unsigned int getAchievementSetAbilityLevel(unsigned int blade, unsigned int line);
     // orders the quests of every chart line the player can take next
     static void refreshOrderQuestList();
     // whether a blade's chart line has reached a level: the blade is active and its line's earlier quests are done

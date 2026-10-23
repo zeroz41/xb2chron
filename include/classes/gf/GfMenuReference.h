@@ -3,6 +3,7 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 
+namespace ui { class UIStr; }
 namespace gf { class GfMenuReference; }
 namespace gf { class GfMenuEnemyList; }
 namespace gf { class GfMenuItemList; }
@@ -18,6 +19,7 @@ public:
         unsigned char pad_4[0x4];
     };
     virtual ~GfMenuReference();  // slot 0
+    static void setReferenceString(ui::UIStr& text, unsigned short index);
     static unsigned int getReferenceDriverID(unsigned int index);
     static unsigned int getReferenceBladeID(unsigned int index);
     static unsigned int getReferenceZoneID();  // GfMenuZoneAdapter::ReferenceZoneConverter's zone
