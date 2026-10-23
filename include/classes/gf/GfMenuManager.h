@@ -126,6 +126,11 @@ public:
     static void openBtlModelView();
     static void closeBtlModelView();
     static bool isOpenBtlModelView();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads the manager's
+    // own singleton (GfMenuManager::get()) and lives in its unit. What it does: the byte at 0x4102 of the manager as
+    // a bool, false without a manager; GfMenuObjOpeningTelop's open/close calls send nothing while it holds, and
+    // GfMenuObjStaffroll::update tests it.
+    static bool fn_710035A738();
 };
 }  // namespace gf
 
