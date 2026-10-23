@@ -13,6 +13,9 @@ public:
     virtual bool isValid() const;  // slot 3
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
+    // its kind (TGmkList::getGmkType returns it; the name is not the original's)
+    static const gmk::GmkType TYPE = gmk::GmkType(0x32);
+    unsigned char pad_48[0x8];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

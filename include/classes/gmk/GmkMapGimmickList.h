@@ -2,9 +2,11 @@
 #define CLASSES_GMK_GMKMAPGIMMICKLIST_H
 
 #include "classes/gmk/GmkMapGimmick.h"
+#include "classes/gmk/GmkTrigger.h"
 #include "classes/gmk/TGmkList.h"
 
 namespace gmk { class GmkMapGimmick; }
+namespace gmk { class GmkTriggerGob; }
 namespace gmk { class GmkMapGimmickGob; }
 
 namespace gmk {
@@ -16,10 +18,12 @@ public:
     virtual void setUpdateGmkNumPerFrame(unsigned int);  // slot 8
     virtual void dispose();  // slot 10
     virtual void update(float);  // slot 11
-    virtual void updateImmediate();  // slot 12
+    virtual bool updateImmediate();  // slot 12
     virtual void debugUpdateMmf();  // slot 13
     virtual void debugDraw() const;  // slot 14
     virtual void createGmk(void*);  // slot 16
+    // the triggers of the map gimmicks, disposed and updated with them (the name is not the original's)
+    TGmkList<GmkTrigger, GmkTrigger::BdatInfo, 1380405844u, 2u, GmkTriggerGob> m_triggerList;  // 0x230
 };
 }  // namespace gmk
 

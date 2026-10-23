@@ -15,6 +15,9 @@ public:
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
     virtual void debugDraw() const;  // slot 7
+    // its kind (TGmkList::getGmkType returns it; the name is not the original's)
+    static const gmk::GmkType TYPE = gmk::GmkType(0x39);
+    unsigned char pad_48[0xb8];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

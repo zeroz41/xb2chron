@@ -10,6 +10,9 @@ class GmkGobEventListener {
 public:
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 0
     virtual ~GmkGobEventListener();  // slot 1
+    // how many gimmick lists share it: each list's constructor adds one, TGmkList's destructor releases one and
+    // deletes it at none (the name is not the original's)
+    int m_refCount;
 };
 }  // namespace gmk
 

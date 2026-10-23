@@ -10,6 +10,8 @@ public:
     class BdatInfo;
     virtual ~GmkRoutedEnemyPoint();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
+    // its kind (TGmkList::getGmkType returns it; the name is not the original's)
+    static const gmk::GmkType TYPE = gmk::GmkType(0x2);
 };
 }  // namespace gmk
 

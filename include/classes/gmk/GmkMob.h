@@ -20,6 +20,9 @@ public:
     virtual void update(float);  // slot 6
     virtual void debugDraw() const;  // slot 7
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
+    // its kind (TGmkList::getGmkType returns it; the name is not the original's)
+    static const gmk::GmkType TYPE = gmk::GmkType(0x12);
+    unsigned char pad_48[0xd0];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

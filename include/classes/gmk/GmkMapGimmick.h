@@ -19,6 +19,9 @@ public:
     virtual void debugDraw() const;  // slot 7
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9
+    // its kind (TGmkList::getGmkType returns it; the name is not the original's)
+    static const gmk::GmkType TYPE = gmk::GmkType(0x21);
+    unsigned char pad_48[0x68];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 
