@@ -14,12 +14,12 @@ class GfAssetSetupDriverForUi : public ::gf::GfAssetSetupDriver {
 public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfAssetSetupDriverForUi() {}  // slot 1
-    virtual void getUiMotFile(gf::GfAssetType);  // slot 10
-    virtual void getUiStpFile(gf::GfAssetType);  // slot 17
-    virtual void getUiMotSlot() const;  // slot 25
-    virtual void getUiStpSlot() const;  // slot 31
+    virtual const char* getUiMotFile(gf::GfAssetType type);  // slot 10
+    virtual const char* getUiStpFile(gf::GfAssetType type);  // slot 17
+    virtual int getUiMotSlot() const;  // slot 25
+    virtual int getUiStpSlot() const;  // slot 31
     virtual void setup(gf::GF_ASSET_HANDLE*, gf::GfInitParamDriver const&);  // slot 40
-    virtual void getAssetTypeEvtMot() const;  // slot 42
+    virtual GfAssetType getAssetTypeEvtMot() const;  // slot 42
     static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gf

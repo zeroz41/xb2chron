@@ -15,9 +15,9 @@ public:
     GfAssetSetupWeaponEventCS();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfAssetSetupWeaponEventCS() {}  // slot 1
-    virtual void getEvtMotFile(gf::GfAssetType);  // slot 8
-    virtual void getEvtMotSlot() const;  // slot 23
-    virtual void getEvtPath() const;  // slot 34
+    virtual const char* getEvtMotFile(gf::GfAssetType type);  // slot 8
+    virtual int getEvtMotSlot() const;  // slot 23
+    virtual const char* getEvtPath() const;  // slot 34
     void setup(GF_ASSET_HANDLE* handle, const GfInitParamWeapon& param);
     static mm::mtl::RTTI m_rtti;
 };

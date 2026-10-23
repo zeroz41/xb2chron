@@ -15,18 +15,18 @@ public:
     GfAssetSetupEventObj();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfAssetSetupEventObj() {}  // slot 1
-    virtual void getAssetCategoryName() const;  // slot 3
-    virtual void getMdlFile(gf::GfAssetType);  // slot 4
-    virtual void getArcFile(gf::GfAssetType);  // slot 5
-    virtual void getEfpFile(gf::GfAssetType);  // slot 11
-    virtual void getEabFile(gf::GfAssetType);  // slot 12
-    virtual void getEfbFile(gf::GfAssetType);  // slot 13
-    virtual void getMdlSlot() const;  // slot 19
-    virtual void getArcSlot() const;  // slot 20
-    virtual void getEfpSlot() const;  // slot 26
-    virtual void getEabSlot() const;  // slot 27
-    virtual void getEfbSlot() const;  // slot 28
-    virtual void getAssetType() const;  // slot 39
+    virtual const char* getAssetCategoryName() const;  // slot 3
+    virtual const char* getMdlFile(gf::GfAssetType type);  // slot 4
+    virtual const char* getArcFile(gf::GfAssetType type);  // slot 5
+    virtual const char* getEfpFile(gf::GfAssetType type);  // slot 11
+    virtual const char* getEabFile(gf::GfAssetType type);  // slot 12
+    virtual const char* getEfbFile(gf::GfAssetType type);  // slot 13
+    virtual int getMdlSlot() const;  // slot 19
+    virtual int getArcSlot() const;  // slot 20
+    virtual int getEfpSlot() const;  // slot 26
+    virtual int getEabSlot() const;  // slot 27
+    virtual int getEfbSlot() const;  // slot 28
+    virtual GfAssetType getAssetType() const;  // slot 39
     void setup(GF_ASSET_HANDLE* handle, const GfInitParamEventObj& param);
     static mm::mtl::RTTI m_rtti;
 };

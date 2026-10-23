@@ -14,14 +14,14 @@ class GfAssetSetupEventNpc : public ::gf::GfAssetSetupNpc {
 public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfAssetSetupEventNpc() {}  // slot 1
-    virtual void getAssetCategoryName() const;  // slot 3
-    virtual void getMotFile(gf::GfAssetType);  // slot 6
-    virtual void getEvtMotFile(gf::GfAssetType);  // slot 8
-    virtual void getEvtStpFile(gf::GfAssetType);  // slot 16
-    virtual void getEvtStpSlot() const;  // slot 30
-    virtual void getAssetType() const;  // slot 39
+    virtual const char* getAssetCategoryName() const;  // slot 3
+    virtual const char* getMotFile(gf::GfAssetType type);  // slot 6
+    virtual const char* getEvtMotFile(gf::GfAssetType type);  // slot 8
+    virtual const char* getEvtStpFile(gf::GfAssetType type);  // slot 16
+    virtual int getEvtStpSlot() const;  // slot 30
+    virtual GfAssetType getAssetType() const;  // slot 39
     virtual void setup(gf::GF_ASSET_HANDLE*, gf::GfInitParamNpc const&);  // slot 40
-    virtual void getAssetTypeMot() const;  // slot 41
+    virtual GfAssetType getAssetTypeMot() const;  // slot 41
     static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gf

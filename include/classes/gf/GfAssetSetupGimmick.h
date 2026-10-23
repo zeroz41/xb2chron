@@ -15,24 +15,26 @@ public:
     GfAssetSetupGimmick();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfAssetSetupGimmick() {}  // slot 1
-    virtual void getMdlFile(gf::GfAssetType);  // slot 4
-    virtual void getArcFile(gf::GfAssetType);  // slot 5
-    virtual void getMotFile(gf::GfAssetType);  // slot 6
-    virtual void getEfpFile(gf::GfAssetType);  // slot 11
-    virtual void getEabFile(gf::GfAssetType);  // slot 12
-    virtual void getEfbFile(gf::GfAssetType);  // slot 13
-    virtual void getStpFile(gf::GfAssetType);  // slot 15
-    virtual void getMdlSlot() const;  // slot 19
-    virtual void getArcSlot() const;  // slot 20
-    virtual void getMotSlot() const;  // slot 21
-    virtual void getEfpSlot() const;  // slot 26
-    virtual void getEabSlot() const;  // slot 27
-    virtual void getEfbSlot() const;  // slot 28
-    virtual void getStpSlot() const;  // slot 29
-    virtual void getPath() const;  // slot 33
-    virtual void getAssetType() const;  // slot 39
+    virtual const char* getMdlFile(gf::GfAssetType type);  // slot 4
+    virtual const char* getArcFile(gf::GfAssetType type);  // slot 5
+    virtual const char* getMotFile(gf::GfAssetType type);  // slot 6
+    virtual const char* getEfpFile(gf::GfAssetType type);  // slot 11
+    virtual const char* getEabFile(gf::GfAssetType type);  // slot 12
+    virtual const char* getEfbFile(gf::GfAssetType type);  // slot 13
+    virtual const char* getStpFile(gf::GfAssetType type);  // slot 15
+    virtual int getMdlSlot() const;  // slot 19
+    virtual int getArcSlot() const;  // slot 20
+    virtual int getMotSlot() const;  // slot 21
+    virtual int getEfpSlot() const;  // slot 26
+    virtual int getEabSlot() const;  // slot 27
+    virtual int getEfbSlot() const;  // slot 28
+    virtual int getStpSlot() const;  // slot 29
+    virtual const char* getPath() const;  // slot 33
+    virtual GfAssetType getAssetType() const;  // slot 39
     void setup(GF_ASSET_HANDLE* handle, const GfInitParamGimmick& param);
     static mm::mtl::RTTI m_rtti;
+
+    int pad_1fc;  // the constructor clears it
 };
 }  // namespace gf
 

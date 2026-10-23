@@ -16,25 +16,28 @@ public:
     GfAssetSetupMapSeamless();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfAssetSetupMapSeamless() {}  // slot 1
-    virtual void getMdlFile(gf::GfAssetType);  // slot 4
-    virtual void getEfbFile(gf::GfAssetType);  // slot 13
-    virtual void getMdlSlot() const;  // slot 19
-    virtual void getPath() const;  // slot 33
+    virtual const char* getMdlFile(gf::GfAssetType type);  // slot 4
+    virtual const char* getEfbFile(gf::GfAssetType type);  // slot 13
+    virtual int getMdlSlot() const;  // slot 19
+    virtual const char* getPath() const;  // slot 33
     virtual void requestCoreResource(gf::GfAssetPack*, gf::GF_ASSET_HANDLE*);  // slot 38
-    virtual void getAssetType() const;  // slot 39
-    virtual void getColFile(gf::GfAssetType);  // slot 40
-    virtual void getNaviFile(gf::GfAssetType);  // slot 41
-    virtual void getGIblFile(gf::GfAssetType);  // slot 42
-    virtual void getLIblFile(gf::GfAssetType);  // slot 43
-    virtual void getColSlot() const;  // slot 44
-    virtual void getNaviSlot() const;  // slot 45
-    virtual void getEpkSlot() const;  // slot 46
-    virtual void getGIblSlot() const;  // slot 47
-    virtual void getLIblSlot() const;  // slot 48
+    virtual GfAssetType getAssetType() const;  // slot 39
+    virtual const char* getColFile(gf::GfAssetType type);  // slot 40
+    virtual const char* getNaviFile(gf::GfAssetType type);  // slot 41
+    virtual const char* getGIblFile(gf::GfAssetType type);  // slot 42
+    virtual const char* getLIblFile(gf::GfAssetType type);  // slot 43
+    virtual int getColSlot() const;  // slot 44
+    virtual int getNaviSlot() const;  // slot 45
+    virtual int getEpkSlot() const;  // slot 46
+    virtual int getGIblSlot() const;  // slot 47
+    virtual int getLIblSlot() const;  // slot 48
     void setup(GF_ASSET_HANDLE* handle, const GfInitParamMapSeamless& param);
     static mm::mtl::RTTI m_rtti;
 
-    unsigned char pad_1fc[0x308 - 0x1FC];
+    // the constructor clears these; what they hold is not known yet
+    unsigned char pad_1fc;
+    mm::mtl::FixStr<128> pad_200;
+    mm::mtl::FixStr<128> pad_284;
 };
 }  // namespace gf
 

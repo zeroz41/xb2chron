@@ -13,10 +13,10 @@ public:
     GfAssetSetupEnemyBlade();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfAssetSetupEnemyBlade() {}  // slot 1
-    virtual void getMdlFile(gf::GfAssetType);  // slot 4
-    virtual void getMotFile(gf::GfAssetType);  // slot 6
-    virtual void getRetargetMotFile(gf::GfAssetType);  // slot 7
-    virtual void getPath() const;  // slot 33
+    virtual const char* getMdlFile(gf::GfAssetType type);  // slot 4
+    virtual const char* getMotFile(gf::GfAssetType type);  // slot 6
+    virtual const char* getRetargetMotFile(gf::GfAssetType type);  // slot 7
+    virtual const char* getPath() const;  // slot 33
     static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gf
