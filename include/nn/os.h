@@ -15,6 +15,12 @@ public:
         return span;
     }
 
+    static TimeSpan FromSeconds(long seconds) {
+        TimeSpan span;
+        span.m_nanoSeconds = seconds * 1000000000;
+        return span;
+    }
+
     static TimeSpan FromMicroSeconds(long microSeconds) {
         TimeSpan span;
         span.m_nanoSeconds = microSeconds * 1000;
@@ -49,6 +55,8 @@ typedef void (*ThreadFunction)(void* argument);
 // the system tick count, returned by value in one register
 class Tick {
 public:
+    Tick() {}
+    explicit Tick(long value) : m_value(value) {}
     long GetInt64Value() const {
         return m_value;
     }
@@ -61,6 +69,7 @@ Tick GetSystemTick();
 // ticks per second
 long GetSystemTickFrequency();
 TimeSpan ConvertToTimeSpan(Tick tick);
+Tick ConvertToTick(TimeSpan span);
 
 // 0x28 bytes: ssd::Thread holds one at 0x20, its ThreadType follows at 0x48
 struct alignas(8) EventType {

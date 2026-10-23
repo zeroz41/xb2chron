@@ -2,7 +2,8 @@
 #define CLASSES_ML_WORKCPU_H
 
 #include "classes/ml/WorkObj.h"
-namespace ml { class IWorkBackground; }
+namespace ml {
+class IWorkInfomation; class IWorkBackground; }
 
 namespace ml {
 // a base of ml::WorkCpu no evidence names yet
@@ -22,6 +23,8 @@ public:
     static bool isInitialized();
     // a listener told of the HOME menu no more (fw::MovieManager's destructor)
     static void removeBackgroundListener(IWorkBackground* listener);
+    // a listener of system information (operation and performance mode) no more (ml::DevPerfNx's destructor)
+    static void removeSystemInfoListener(IWorkInfomation* listener);
 };
 }  // namespace ml
 

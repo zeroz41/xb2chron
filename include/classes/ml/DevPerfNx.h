@@ -1,46 +1,37 @@
 #ifndef CLASSES_ML_DEVPERFNX_H
 #define CLASSES_ML_DEVPERFNX_H
 
-namespace ml { class DevPerfConfig; }
-namespace ml { class DevPerfMode; }
-namespace ml { class DevPerfOperationMode; }
+#include "classes/ml/DevPerf.h"
 
 namespace ml {
-// a base of ml::DevPerfNx no evidence names yet
-class TUnk_B76808 {
+// the base at 0x8: ml::DevPerfNx's destructor passes it to WorkCpu::removeSystemInfoListener(IWorkInfomation*)
+class IWorkInfomation {
 public:
-    virtual ~TUnk_B76808();
-    virtual void update() = 0;
-    virtual void getOperationMode() const = 0;
-    virtual void getPerformanceMode() const = 0;
-    virtual void getFocusState() const = 0;
-    virtual void setPerfConfig(ml::DevPerfMode, ml::DevPerfConfig) = 0;
-    virtual void getPerfConfig(ml::DevPerfMode) const = 0;
-    virtual void changeOperationMode(ml::DevPerfOperationMode) = 0;
-    virtual void changePerformanceMode(ml::DevPerfMode) = 0;
+    virtual ~IWorkInfomation() {}
+    virtual void changeOperationMode(DevPerfOperationMode mode) = 0;
+    virtual void changePerformanceMode(DevPerfMode mode) = 0;
     virtual void resumeApplication() = 0;
 };
-// a base of ml::DevPerfNx no evidence names yet
-class TUnk_B76870 {
-public:
-    virtual ~TUnk_B76870();
-    virtual void changeOperationMode(ml::DevPerfOperationMode) = 0;
-    virtual void changePerformanceMode(ml::DevPerfMode) = 0;
-    virtual void resumeApplication() = 0;
-};
-// table 0x7100B76808; base at 0x0 unknown (TUnk_B76808), base at 0x8 unknown (TUnk_B76870)
-class DevPerfNx : public TUnk_B76808, public TUnk_B76870 {
+
+// table 0x7100B76808
+class DevPerfNx : public TUnk_B76808, public IWorkInfomation {
 public:
     virtual ~DevPerfNx();  // slot 0
     virtual void update();  // slot 2
-    virtual void getOperationMode() const;  // slot 3
-    virtual void getPerformanceMode() const;  // slot 4
-    virtual void getFocusState() const;  // slot 5
-    virtual void setPerfConfig(ml::DevPerfMode, ml::DevPerfConfig);  // slot 6
-    virtual void getPerfConfig(ml::DevPerfMode) const;  // slot 7
-    virtual void changeOperationMode(ml::DevPerfOperationMode);  // slot 8
-    virtual void changePerformanceMode(ml::DevPerfMode);  // slot 9
+    virtual DevPerfOperationMode getOperationMode() const;  // slot 3
+    virtual DevPerfMode getPerformanceMode() const;  // slot 4
+    virtual int getFocusState() const;  // slot 5
+    virtual void setPerfConfig(DevPerfMode mode, DevPerfConfig config);  // slot 6
+    virtual DevPerfConfig getPerfConfig(DevPerfMode mode) const;  // slot 7
+    virtual void changeOperationMode(DevPerfOperationMode mode);  // slot 8
+    virtual void changePerformanceMode(DevPerfMode mode);  // slot 9
     virtual void resumeApplication();  // slot 10
+
+    // the member names are not the original's
+    DevPerfConfig m_perfConfig[3];        // 0x10 setPerfConfig stores the config by mode
+    DevPerfOperationMode m_operationMode;  // 0x1C changeOperationMode
+    DevPerfMode m_performanceMode;        // 0x20 changePerformanceMode
+    int m_focusState;                     // 0x24 update: the SDK's focus state, 0 when out of range
 };
 }  // namespace ml
 
