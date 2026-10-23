@@ -30,6 +30,7 @@ class GfObjUtil {
 public:
     // the object behind a handle, none for an invalid handle or one with no object
     static gf::GfObj* getObj(gf::GF_OBJ_HANDLE* handle);
+    static void setEnableEyeBlink(gf::GF_OBJ_HANDLE* handle, bool enable);
     // sets obj's m_execUpdate: whether its components are to be updated
     static void applyExecUpdate(gf::GfObj* obj);
     static bool isValid(gf::GF_OBJ_HANDLE* handle);

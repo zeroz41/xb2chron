@@ -12,12 +12,13 @@ namespace gf { class GfComBehaviorPc; }
 
 namespace gf { namespace pc {
 // table none (its derived classes')
-// a StateBattleBase: its states' create functions construct one through StateBattleBase's constructor
+// a StateBattleBase: its states' onEnter slots call StateBattleBase::enter on themselves, and it overrides
+// StateBattleBase's slots 7-13
 class StateBattleActionBase : public ::gf::pc::StateBattleBase {
 public:
-    virtual ~StateBattleActionBase() {}  // slot 0: inline (the states' deleting destructors only free them)
+    virtual ~StateBattleActionBase() {}  // slot 0: inline (its states' deleting destructors only free them)
     virtual void recieveMessage(void*, fw::MessageObject*, fw::Message&);  // slot 7
-    virtual void Enter(gf::GfComBehaviorPc*, ai::State*);  // slot 8: out of line (0x71004E66FC)
+    virtual bool Enter(gf::GfComBehaviorPc*, ai::State*);  // slot 8: out of line (0x71004E66FC)
     virtual void Leave(gf::GfComBehaviorPc*, ai::State*) = 0;  // slot 9
     virtual void BeforeUpdate(btl::BattleCharacter*, gf::GfComBehaviorPc*, fw::UpdateInfo const&);  // slot 10
     virtual void Update(btl::BattleCharacter*, gf::GfComBehaviorPc*, fw::UpdateInfo const&);  // slot 11: out of line (0x71004E6894)

@@ -30,6 +30,8 @@ public:
     };
     CharacterParameter* GetCharacterParameterConst(bool) const;
     bool IsDead(unsigned int) const;
+    bool IsControlCharacter() const;
+    void SetWeaponType(int type);
     void NotifyDirectDamage(const DIRECT_DAMAGE_DATA& data);
     void AddBladeArtsRecast(int, float);
     void FluctuateKizuna(int, float);

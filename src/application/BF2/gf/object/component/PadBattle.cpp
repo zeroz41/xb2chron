@@ -140,9 +140,9 @@ void StateBattleArts::onLeave(void* owner, ai::State* next) {
 void StateBattleArts::onStep(void* owner, const void* arg) {
     update(static_cast<GfComBehaviorPc*>(owner), *static_cast<const fw::UpdateInfo*>(arg));
 }
-void StateBattleArts::Enter(GfComBehaviorPc* behavior, ai::State* prev) {
+bool StateBattleArts::Enter(GfComBehaviorPc* behavior, ai::State* prev) {
     StateUtil::setFallDamageDisable(*behavior, false);
-    StateBattleActionBase::Enter(behavior, prev);
+    return StateBattleActionBase::Enter(behavior, prev);
 }
 void StateBattleArts::Leave(GfComBehaviorPc*, ai::State*) {}
 void StateBattleArts::Update(btl::BattleCharacter* chr, GfComBehaviorPc* behavior, const fw::UpdateInfo& info) {
@@ -161,9 +161,9 @@ void StateBattleAttack::onLeave(void* owner, ai::State* next) {
 void StateBattleAttack::onStep(void* owner, const void* arg) {
     update(static_cast<GfComBehaviorPc*>(owner), *static_cast<const fw::UpdateInfo*>(arg));
 }
-void StateBattleAttack::Enter(GfComBehaviorPc* behavior, ai::State* prev) {
+bool StateBattleAttack::Enter(GfComBehaviorPc* behavior, ai::State* prev) {
     StateUtil::setFallDamageDisable(*behavior, false);
-    StateBattleActionBase::Enter(behavior, prev);
+    return StateBattleActionBase::Enter(behavior, prev);
 }
 void StateBattleAttack::Leave(GfComBehaviorPc*, ai::State*) {}
 void StateBattleAttack::Update(btl::BattleCharacter* chr, GfComBehaviorPc* behavior, const fw::UpdateInfo& info) {

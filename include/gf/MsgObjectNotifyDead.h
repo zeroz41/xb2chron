@@ -13,6 +13,10 @@ public:
     MsgObjectNotifyDead()
         : fw::Message(0x100003B, 0x40), m_deadType(0), m_cause(nullptr),
           m_killer(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), pad_20(), pad_24(90), pad_28() {}
+    // one of a given type (StateBattleDead::Update's 1: its store pairs with the message's own)
+    explicit MsgObjectNotifyDead(int deadType)
+        : fw::Message(0x100003B, 0x40), m_deadType(deadType), m_cause(nullptr),
+          m_killer(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), pad_20(), pad_24(90), pad_28() {}
 
     // how it died: 3 from damage, 4 killed outright (StateUtil::notifyDead lets 4 through a death already
     // under way), 7 a fall into a collision (FallIntoColiPlugin)

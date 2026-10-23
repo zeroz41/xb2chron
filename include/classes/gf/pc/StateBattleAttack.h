@@ -20,7 +20,7 @@ public:
     virtual void onEnter(void*, ai::State*);  // slot 3
     virtual void onLeave(void*, ai::State*);  // slot 4
     virtual void onStep(void*, void const*);  // slot 5
-    virtual void Enter(gf::GfComBehaviorPc*, ai::State*);  // slot 8
+    virtual bool Enter(gf::GfComBehaviorPc*, ai::State*);  // slot 8
     virtual void Leave(gf::GfComBehaviorPc*, ai::State*);  // slot 9
     virtual void Update(btl::BattleCharacter*, gf::GfComBehaviorPc*, fw::UpdateInfo const&);  // slot 11
 };

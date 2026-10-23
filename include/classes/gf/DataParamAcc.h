@@ -15,6 +15,7 @@ public:
     DataParamAcc(unsigned int type, unsigned int id, GimmickType gimmick);
     virtual ~DataParamAcc();  // slot 0
     bool isValid() const;
+    int getWeaponType(int index, bool flag) const;
     unsigned int getChestHeight() const;
     unsigned int getHp() const;
     unsigned int getHpMax(bool flag) const;
