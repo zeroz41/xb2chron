@@ -137,6 +137,9 @@ public:
     static bool isEnablePlayerDeadSequence();
     static void setGmkTutorialSequenceOK(bool ok);
     static bool isBattle();
+    // the game's state (GfGameState::getState's: this only forwards to it; GfGameSalvage::startSalvage starts only in
+    // state 11)
+    static GF_STATE getState();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in this
     // file among GfGameManager's functions (every named function of the unit is GfGameManager's or IQuestEvent's
     // inline virtuals). What it does: whether the game runs in the mode the title screen switches on: true when

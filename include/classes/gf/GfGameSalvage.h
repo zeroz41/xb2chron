@@ -2,8 +2,11 @@
 #define CLASSES_GF_GFGAMESALVAGE_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "ai/Fsm.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GfSetupParam; }
+namespace fw { class UpdateInfo; }
 namespace gf { class GfComBehaviorSalvage; }
 namespace gf { class GfGameSalvage; }
 namespace mm { class Mat44; }
@@ -37,6 +40,19 @@ public:
     };
 
     virtual ~GfGameSalvage();  // slot 0
+    // registers the 21 salvage states (StateSalvage*) with its state machine and starts in StateSalvageWait
+    void initialize(const GfSetupParam& param);
+    // 1.0.0's: frees the machine's state buffers (inline in 3.0.1: destroy has it)
+    void finalize() {
+        m_fsm.cleanup();
+        m_initialized = false;
+    }
+    static void destroy();
+    static void update(const fw::UpdateInfo& info);
+    // starts the salvage at the salvage point (from StateSalvageWait, in the field only)
+    static void startSalvage(GF_OBJ_HANDLE* handle);
+    static bool isStateWait();
+    static void cancelSalvage();
     bool isTboxExist() const;
     unsigned char* getBindedBdatFp() const;
     unsigned int getBindedBdatId() const;
@@ -95,7 +111,12 @@ public:
     void setLogButtonChallengeResult(int result);
     void setLogLapsedTime(int time);
 
-    unsigned char pad_8[0xA0];
+    // the states' machine: the states get the game as their owner (the name is not the original's)
+    ai::Fsm m_fsm;
+    unsigned char pad_80[0x20];
+    // set once initialize has set the machine up (the name is not the original's)
+    bool m_initialized;
+    unsigned char pad_A1[0x7];
     GF_OBJ_HANDLE* m_pHandle;  // the salvage point's (StateSalvageResultUi hands its gimmick to SCOM_QUEST_GIMMICK)
     // the names below are not the original's
     int m_challengePoint;  // the button challenges' points (StateSalvageDiveStart adds them)
