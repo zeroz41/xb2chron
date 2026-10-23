@@ -11,10 +11,14 @@ public:
     virtual ~GfObjSetup() {}  // slot 1
     virtual void getFootStep() const;  // slot 3
     virtual void getFootStepEffect() const;  // slot 4
-    virtual void getEnArrangeID() const;  // slot 5
+    virtual unsigned int getEnArrangeID() const;  // slot 5
     static mm::mtl::RTTI m_rtti;
 
-    unsigned char pad_8[0x18];
+    unsigned char pad_8[0x8];
+    // the object's bdat row: the data objects' constructors read it (DataObjNpc, DataObjMap, DataObjMob,
+    // DataObjGmk; the name is not the original's)
+    unsigned int m_bdatId;
+    unsigned char pad_14[0xC];
     // the object's initial position: setInitialTransform's (the name is not the original's)
     mm::Vec3 m_initialPos;
     unsigned char pad_30[0x10];

@@ -16,6 +16,7 @@ public:
     virtual void bdatRefresh();  // slot 2
     unsigned int getChrEnArrangeStart() const;
     unsigned int getChrEnArrangeEnd() const;
+    unsigned int getChrEnArrangeParamID(unsigned int arrange) const;  // the arrangement's GfBdatChrEnParam row
     // Table wrappers exposed by the range queries; names follow their accessors.
     CBdatWrapper* m_fpChrEnArrange;  // 0x10
     unsigned char pad_18[0x18];

@@ -4,6 +4,8 @@
 #include "classes/gf/IDataObj.h"
 
 namespace gf { enum FAVORITE : int; }
+namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class SDataBlade; }
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedArray; }}
 
 namespace gf {
@@ -11,94 +13,96 @@ namespace gf {
 class DataObjBlade : public ::gf::IDataObj {
 public:
     virtual ~DataObjBlade();  // slot 0
-    virtual void setMenuParam();  // slot 2
+    virtual void setMenuParam() { m_menuParam = true; }  // slot 2
     virtual bool isValid() const;  // slot 3
     virtual const char* getModelResourceName() const;  // slot 4
     virtual const char* getMotionResourceName() const;  // slot 5
     virtual const char* getEffectResourceName() const;  // slot 6
     virtual const char* getSeResourceName() const;  // slot 7
-    virtual void getName() const;  // slot 8
-    virtual void getName(unsigned char*&, unsigned int&) const;  // slot 10
-    virtual void getBdatId() const;  // slot 11
-    virtual void getObjType() const;  // slot 12
-    virtual void getIdea() const;  // slot 13
-    virtual void getDataType() const;  // slot 14
-    virtual void getHpMax(bool) const;  // slot 17
-    virtual void getStrength(bool) const;  // slot 18
-    virtual void getPowerEther(bool) const;  // slot 19
-    virtual void getDex(bool) const;  // slot 20
-    virtual void getAgility(bool) const;  // slot 21
-    virtual void getLuck(bool) const;  // slot 22
-    virtual void getPArmor(bool) const;  // slot 23
-    virtual void getEArmor(bool) const;  // slot 24
-    virtual void getCriticalRate(bool) const;  // slot 25
-    virtual void getGuardRate(bool) const;  // slot 26
-    virtual void getAutoHate(bool) const;  // slot 27
-    virtual void getArtsHate(bool) const;  // slot 28
-    virtual void getWeaponDamage(bool) const;  // slot 29
-    virtual void getWeaponStability(bool) const;  // slot 30
-    virtual void getWeaponType(bool, int) const;  // slot 31
-    virtual void getChestHeight() const;  // slot 32
-    virtual void getLandingHeight() const;  // slot 33
-    virtual void getFootStep() const;  // slot 34
-    virtual void getFootStepEffect() const;  // slot 35
-    virtual void getIconData() const;  // slot 36
-    virtual void getRace() const;  // slot 37
-    virtual void getQuestRace() const;  // slot 38
-    virtual void getGender() const;  // slot 39
-    virtual void getAttribute(bool, int) const;  // slot 40
+    virtual const char* getName() const;  // slot 8
+    virtual bool getName(unsigned char*&, unsigned int&) const;  // slot 10
+    virtual unsigned int getBdatId() const;  // slot 11
+    virtual int getObjType() const { return 4; }  // slot 12
+    virtual const SDataIdea* getIdea() const;  // slot 13
+    virtual unsigned short getDataType() const;  // slot 14
+    virtual unsigned int getHpMax(bool) const;  // slot 17
+    virtual unsigned int getStrength(bool) const;  // slot 18
+    virtual unsigned int getPowerEther(bool) const;  // slot 19
+    virtual unsigned int getDex(bool) const;  // slot 20
+    virtual unsigned int getAgility(bool) const;  // slot 21
+    virtual unsigned int getLuck(bool) const;  // slot 22
+    virtual unsigned int getPArmor(bool) const;  // slot 23
+    virtual unsigned int getEArmor(bool) const;  // slot 24
+    virtual unsigned int getCriticalRate(bool) const;  // slot 25
+    virtual unsigned int getGuardRate(bool) const;  // slot 26
+    virtual unsigned int getAutoHate(bool) const;  // slot 27
+    virtual unsigned int getArtsHate(bool) const;  // slot 28
+    virtual unsigned int getWeaponDamage(bool) const;  // slot 29
+    virtual unsigned int getWeaponStability(bool) const;  // slot 30
+    virtual unsigned int getWeaponType(bool, int) const;  // slot 31
+    virtual unsigned int getChestHeight() const;  // slot 32
+    virtual unsigned int getLandingHeight() const;  // slot 33
+    virtual unsigned int getFootStep() const;  // slot 34
+    virtual unsigned int getFootStepEffect() const;  // slot 35
+    virtual unsigned int getIconData() const;  // slot 36
+    virtual unsigned int getRace() const;  // slot 37
+    virtual unsigned int getQuestRace() const;  // slot 38
+    virtual unsigned int getGender() const;  // slot 39
+    virtual unsigned int getAttribute(bool, int) const;  // slot 40
     virtual bool isDispInitExtraParts(unsigned int) const;  // slot 41
-    virtual void vf42();  // slot 42
-    virtual bool isScenarioMask() const;  // slot 43
-    virtual void getRole() const;  // slot 44
-    virtual void getVoiceStr() const;  // slot 45
-    virtual void vf46();  // slot 46
+    virtual unsigned int getRole() const;  // slot 44
+    virtual const char* getVoiceStr() const;  // slot 45
     virtual void setVirtualEquipWpn(unsigned int, int);  // slot 47
-    virtual void setVirtualEquipAcc(unsigned int, unsigned int);  // slot 48
-    virtual void vf49();  // slot 49
     virtual void setVirtualEquipWpnChip(unsigned int);  // slot 50
     virtual void setVirtualEquipOrb(unsigned int, unsigned int);  // slot 51
-    virtual void vf52();  // slot 52
     virtual bool isVirtualSetting() const;  // slot 53
     virtual bool isEnbaleTarget() const;  // slot 54
-    virtual void getMenuOffset() const;  // slot 55
-    virtual void getCamBone() const;  // slot 57
-    virtual void getCenterBone() const;  // slot 58
-    virtual void getEyeRotControl() const;  // slot 59
-    virtual void getNorAtkDmgMin(bool) const;  // slot 60
-    virtual void getNorAtkDmgMax(bool) const;  // slot 61
-    virtual void getEquipOrb(mm::mtl::FixedArray<unsigned short, 3ul>&, bool) const;  // slot 64
-    virtual void getBladeSet(bool) const;  // slot 65
-    virtual void getBlade(bool, int) const;  // slot 66
-    virtual void getBladePower(bool) const;  // slot 81
-    virtual void getEquipWeapon(bool, int) const;  // slot 82
-    virtual void getBladeArts(bool, unsigned int) const;  // slot 83
-    virtual void getBladeArtsEnhance(bool, unsigned int) const;  // slot 84
-    virtual void getBladeArtsLevel(bool, unsigned int) const;  // slot 85
-    virtual void getBladeArtsH(bool, unsigned int) const;  // slot 86
-    virtual void getBladeArtsN(bool, unsigned int) const;  // slot 87
-    virtual void getBladeArtsNH(bool, unsigned int) const;  // slot 88
-    virtual void getBladeArtsEx(bool) const;  // slot 89
-    virtual void getBladeArtsExH(bool) const;  // slot 90
-    virtual void getBladeArtsEx2(bool) const;  // slot 91
-    virtual void getBladeArtsEx2H(bool) const;  // slot 92
-    virtual void getBladeSkill(bool, unsigned int) const;  // slot 93
-    virtual void getBladeSkillLevel(bool, unsigned int) const;  // slot 94
-    virtual void getFieldSkill(bool, unsigned int) const;  // slot 95
-    virtual void getFieldSkillLevel(bool, unsigned int) const;  // slot 96
-    virtual void getKeyLevel() const;  // slot 97
-    virtual void getPersonality() const;  // slot 98
-    virtual void getCoolTime() const;  // slot 99
-    virtual void getFavoriteCategory(gf::FAVORITE) const;  // slot 100
-    virtual void getFavoriteItem(gf::FAVORITE) const;  // slot 101
-    virtual void getArtsAchievement(unsigned int) const;  // slot 102
-    virtual void getSkillAchievement(unsigned int) const;  // slot 103
-    virtual void getFieldSkillAchievement(unsigned int) const;  // slot 104
-    virtual void getKeyAchievement() const;  // slot 105
-    virtual void getLinkNum() const;  // slot 106
-    virtual void getDeadNum() const;  // slot 107
-    virtual void getAppStNum() const;  // slot 108
-    virtual void getAppEndNum() const;  // slot 109
+    virtual int getMenuOffset() const;  // slot 55
+    virtual const char* getCamBone() const;  // slot 57
+    virtual const char* getCenterBone() const;  // slot 58
+    virtual unsigned int getEyeRotControl() const;  // slot 59
+    virtual unsigned int getNorAtkDmgMin(bool) const;  // slot 60
+    virtual unsigned int getNorAtkDmgMax(bool) const;  // slot 61
+    virtual bool getEquipOrb(mm::mtl::FixedArray<unsigned short, 3ul>&, bool) const;  // slot 64
+    virtual int getBladeSet(bool) const;  // slot 65
+    virtual unsigned int getBlade(bool, int) const;  // slot 66
+    virtual unsigned int getBladePower(bool) const;  // slot 81
+    virtual unsigned int getEquipWeapon(bool, int) const;  // slot 82
+    virtual unsigned int getBladeArts(bool, unsigned int) const;  // slot 83
+    virtual unsigned int getBladeArtsEnhance(bool, unsigned int) const;  // slot 84
+    virtual unsigned int getBladeArtsLevel(bool, unsigned int) const;  // slot 85
+    virtual unsigned int getBladeArtsH(bool, unsigned int) const;  // slot 86
+    virtual unsigned int getBladeArtsN(bool, unsigned int) const;  // slot 87
+    virtual unsigned int getBladeArtsNH(bool, unsigned int) const;  // slot 88
+    virtual unsigned int getBladeArtsEx(bool) const;  // slot 89
+    virtual unsigned int getBladeArtsExH(bool) const;  // slot 90
+    virtual unsigned int getBladeArtsEx2(bool) const;  // slot 91
+    virtual unsigned int getBladeArtsEx2H(bool) const;  // slot 92
+    virtual unsigned int getBladeSkill(bool, unsigned int) const;  // slot 93
+    virtual unsigned int getBladeSkillLevel(bool, unsigned int) const;  // slot 94
+    virtual unsigned int getFieldSkill(bool, unsigned int) const;  // slot 95
+    virtual unsigned int getFieldSkillLevel(bool, unsigned int) const;  // slot 96
+    virtual unsigned int getKeyLevel() const;  // slot 97
+    virtual unsigned int getPersonality() const;  // slot 98
+    virtual unsigned int getCoolTime() const;  // slot 99
+    virtual unsigned int getFavoriteCategory(gf::FAVORITE) const;  // slot 100
+    virtual unsigned int getFavoriteItem(gf::FAVORITE) const;  // slot 101
+    virtual unsigned int getArtsAchievement(unsigned int) const;  // slot 102
+    virtual unsigned int getSkillAchievement(unsigned int) const;  // slot 103
+    virtual unsigned int getFieldSkillAchievement(unsigned int) const;  // slot 104
+    virtual unsigned int getKeyAchievement() const;  // slot 105
+    virtual unsigned int getLinkNum() const;  // slot 106
+    virtual unsigned int getDeadNum() const;  // slot 107
+    virtual unsigned int getAppStNum() const;  // slot 108
+    virtual unsigned int getAppEndNum() const;  // slot 109
+
+    SDataBlade* m_sdata;  // GfDataBlade::getSDataBlade's for the blade (the name is not the original's)
+    GF_OBJ_HANDLE* m_handle;  // the object's, -1 for data read by row id alone (the name is not the original's)
+    // a copy of the blade's data the virtual settings change; none without (isVirtualSetting; the destructor
+    // deletes it; the name is not the original's)
+    SDataBlade* m_virtual;
+    unsigned int m_bdatId;  // the blade's row (getBdatId; the name is not the original's)
+    bool m_menuParam;  // setMenuParam sets it (the name is not the original's)
 };
 }  // namespace gf
 

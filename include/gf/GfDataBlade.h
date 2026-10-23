@@ -4,6 +4,11 @@
 #include "gf/AchievQuest.h"
 #include "mm/mtl/FixedVector.h"
 
+namespace gf { class SDataBlade; }
+namespace gf { struct BladeArtsSlot; }
+namespace gf { enum FAVORITE : int; }
+namespace mm { namespace mtl { template <typename, unsigned long> class FixedArray; }}
+
 namespace gf {
 
 // a blade's affinity chart line: its quests by level (0x90 bytes; 1.0.0's GfDataBlade::setupAchievInfo names the
@@ -35,6 +40,28 @@ public:
     static void getListForAchievement(mm::mtl::FixedVector<unsigned short, 422>& list);
     static unsigned int getKeyReleaseLevel(unsigned int blade);
     static void setSkillLineLevel(unsigned int blade, unsigned int line, unsigned int level);
+    static unsigned int getBladeWpnType(unsigned int blade);
+    static const char* getName(unsigned int blade, unsigned int kind);
+    // the message table and row of the blade's name
+    static bool getName(unsigned char*& bdat, unsigned int& id, unsigned int blade);
+    static unsigned int getQuestRace(unsigned int blade);
+    static SDataBlade* getSDataBlade(unsigned int blade);
+    static unsigned int getHpMaxRev(unsigned int blade);
+    static unsigned int getStrengthRev(unsigned int blade);
+    static unsigned int getPowerEtherRev(unsigned int blade);
+    static unsigned int getDexRev(unsigned int blade);
+    static unsigned int getAgilityRev(unsigned int blade);
+    static unsigned int getLuckRev(unsigned int blade);
+    static bool getEquipOrb(mm::mtl::FixedArray<unsigned short, 3ul>& orbs, unsigned int blade);
+    static unsigned int getFootStep(unsigned int blade);
+    static unsigned int getFootStepEffect(unsigned int blade);
+    static unsigned int getRole(unsigned int blade);
+    static const char* getVoiceStr(unsigned int blade);
+    static const BladeArtsSlot* getArts(unsigned int blade, unsigned int index);
+    static unsigned int getArtsEnhance(unsigned int blade, unsigned int index);
+    static const BladeArtsSlot* getNArts(unsigned int blade, unsigned int index);
+    static unsigned int getFavorite(unsigned int blade, FAVORITE favorite);
+    static int getOffsetID(unsigned int blade);  // its menu offset id
 };
 
 }  // namespace gf

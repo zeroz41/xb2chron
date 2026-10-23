@@ -23,6 +23,7 @@ public:
     unsigned int getArtsBlSpEnd() const;
     unsigned int getGrowStart() const;
     unsigned int getGrowEnd() const;
+    unsigned int getGrowGoldDivide(unsigned int level) const;
     unsigned int getBTL_ClassStart() const;
     unsigned int getBTL_ClassEnd() const;
     unsigned int getBTL_Skill_BlStart() const;

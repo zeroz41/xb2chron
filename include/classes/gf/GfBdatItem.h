@@ -53,7 +53,14 @@ public:
     unsigned int getITM_HanaNArtsSetEnd() const;
     unsigned int getITM_HanaAssistStart() const;
     unsigned int getITM_HanaAssistEnd() const;
-    unsigned short getPcWpnRscR(unsigned int weapon) const;  // a driver weapon's resource (GfBdatRsc's row)
+    unsigned short getPcWpnRscR(unsigned int weapon) const;
+    unsigned int getPcWpnWpnType(unsigned int weapon) const;
+    unsigned int getPcWpnDamage(unsigned int weapon) const;
+    unsigned int getPcWpnStability(unsigned int weapon) const;
+    unsigned int getPcWpnPArmor(unsigned int weapon) const;
+    unsigned int getPcWpnEArmor(unsigned int weapon) const;
+    unsigned int getPcWpnCriRate(unsigned int weapon) const;
+    unsigned int getPcWpnGuardRate(unsigned int weapon) const;  // a driver weapon's resource (GfBdatRsc's row)
     // Table wrappers exposed by the range queries; names follow their accessors.
     CBdatWrapper* m_fpCrystalList;  // 0x10
     CBdatWrapper* m_fpCollectionList;  // 0x18

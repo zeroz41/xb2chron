@@ -16,6 +16,7 @@ public:
     virtual void bdatRefresh();  // slot 2
     unsigned int getMaplistStart() const;
     unsigned int getMaplistEnd() const;
+    const char* getMaplistresource(unsigned int map) const;
     // Table wrappers exposed by the range queries; names follow their accessors.
     CBdatWrapper* m_fpMaplist;  // 0x10
     unsigned char pad_18[0x10];

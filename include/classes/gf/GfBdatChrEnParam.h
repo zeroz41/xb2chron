@@ -15,6 +15,13 @@ public:
     virtual ~GfBdatChrEnParam();  // slot 0
     virtual void bdatRefresh();  // slot 2
     unsigned int getChrEnParamTableEnd() const;
+    unsigned int getChrEnParamResourceID(unsigned int param) const;  // the param's GfBdatRsc enemy row
+    unsigned int getChrEnParamRevHpMaxRev(unsigned int param) const;
+    unsigned int getChrEnParamRevStrengthRev(unsigned int param) const;
+    unsigned int getChrEnParamRevPowEtherRev(unsigned int param) const;
+    unsigned int getChrEnParamRevDexRev(unsigned int param) const;
+    unsigned int getChrEnParamRevAgilityRev(unsigned int param) const;
+    unsigned int getChrEnParamRevLuckRev(unsigned int param) const;
     // Table wrappers exposed by the range queries; names follow their accessors.
     unsigned char pad_10[0x8];
     CBdatWrapper* m_fpChrEnParamTable;  // 0x18

@@ -2,14 +2,56 @@
 #define GF_SDATAENEMY_H
 
 namespace gf {
-// no table: an enemy's data, as GfDataEnemy::setupSDataEnemy fills it in from the enemy's bdat rows
+// no table: an enemy's data, as GfDataEnemy::setupSDataEnemy fills it in from the enemy's bdat rows. The field
+// names are not the original's: each says what the DataObjEnemy accessor that reads it returns.
 class SDataEnemy {
 public:
     SDataEnemy(unsigned int, unsigned int);
 
-    unsigned char pad_0[0x9A];
+    unsigned short m_id;  // the enemy's GfBdatChrEnArrange row (DataObjEnemy::getBdatId)
+    unsigned char pad_2[0x2];
+    unsigned char m_flags4 : 4;  // unknown
+    bool m_linkGenus : 1;
+    bool m_guardFront : 1;
+    bool m_guardLeft : 1;
+    bool m_guardRight : 1;
+    bool m_guardBack : 1;
+    bool m_fieldDamage : 1;
+    bool m_flags5bit2 : 1;  // unknown
+    bool m_noCameraFade : 1;
+    bool m_weaponDrawDisp : 1;
+    unsigned char m_flags5 : 3;  // unknown
+    unsigned char pad_6[0x19];
+    unsigned char m_linkRadius;  // getLinkRadius
+    unsigned char pad_20[0x14];
+    unsigned short m_paramId;  // its GfBdatChrEnParam row (the stat getters' revisions)
+    unsigned char pad_36[0xC];
+    unsigned char m_extraPartsMask;  // bits of the extra parts shown at first (isDispInitExtraParts)
+    unsigned char pad_43[0x1];
+    unsigned short m_rscId;  // its GfBdatRsc enemy row
+    unsigned char pad_46[0x16];
+    unsigned short m_pArmor;
+    unsigned short m_eArmor;
+    unsigned char m_resistancePower;
+    unsigned char m_resistanceEther;
+    unsigned char pad_62[0x1];
+    unsigned char m_criticalRate;
+    unsigned char m_guardRate;
+    unsigned char pad_65[0x1];
+    unsigned short m_resistanceCombo;
+    unsigned short m_invincibleCombo;
+    unsigned char pad_6a[0x2F];
+    unsigned char m_genus;
     // GfBdatRsc::getRscEnActType's for the enemy (setupSDataEnemy; the name is not the original's)
     unsigned char m_actType;
+    unsigned char pad_9b[0x3];
+    unsigned short m_equipWeapons[5];  // getEquipWeapon, by index; the count is not known
+    unsigned short m_level;  // 0: level 1; capped at 999 (getLevel)
+    unsigned char pad_aa[0x2];
+    unsigned int m_hpMax;
+    unsigned short m_strength;
+    unsigned short m_powerEther;
+    unsigned char pad_b4[0xC];
 };
 }  // namespace gf
 

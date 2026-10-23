@@ -6,7 +6,7 @@ namespace gf { class SDataEnemy; }
 
 namespace gf {
 // what kind of object a DataParamAcc reads (its constructor's third argument)
-enum GimmickType {};
+enum GimmickType : int {};  // 1: a treasure box (DataObjGmk reads its GfBdatRsc TboxList rows)
 
 // table 0x7100B4C800; 0x18 bytes on GfMenuFieldSkillList::addFieldSkillFromBlade's stack
 class DataParamAcc {
