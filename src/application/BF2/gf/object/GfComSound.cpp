@@ -26,8 +26,8 @@ void GfComSound::setup() {
         asmCom->m_callbacks[4].name = SOUND_CALLBACK_EVENT_NAME;
         asmCom->m_callbacks[4].delegate.set(this, &GfComSound::callbackAnim);
     } else if (GfComEvtAnim* evtAnim = m_owner->getComponent<GfComEvtAnim>(2)) {
-        evtAnim->m_callback.name = SOUND_CALLBACK_EVENT_NAME;
-        evtAnim->m_callback.delegate.set(this, &GfComSound::callbackAnimForEvent);
+        evtAnim->m_asm.m_callbacks[4].name = SOUND_CALLBACK_EVENT_NAME;
+        evtAnim->m_asm.m_callbacks[4].delegate.set(this, &GfComSound::callbackAnimForEvent);
     }
     m_flushDelegate.set(this, &GfComSound::flush);
     m_variables.setVariable(getSoundVariableName(SoundVariable(0)), 0);

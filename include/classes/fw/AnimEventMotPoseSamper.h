@@ -7,7 +7,9 @@ namespace fw {
 // table 0x7100B40D20
 class AnimEventMotPoseSamper : public ::fw::AnimPoseSamper {
 public:
+    AnimEventMotPoseSamper();
     virtual ~AnimEventMotPoseSamper();  // slot 0
+    void resetPose();
 };
 }  // namespace fw
 

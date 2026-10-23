@@ -11,6 +11,8 @@ namespace fw { class Message; }
 namespace fw { class ModelObject; }
 namespace fw { class MessageObject; }
 
+namespace anm { class Skeleton; }
+
 namespace gf {
 // table 0x7100B667B8
 class GfComModel : public ::gf::GfComponent {
@@ -29,7 +31,9 @@ public:
     fw::ModelObject* m_model;
     // the model's frame (GfComDynamics binds its dynamics to it) (the name is not the original's)
     mm::mtl::IntrusivePtr<fw::ReferenceFrame> m_frame;
-    unsigned char pad_28[0x8];
+    // the model's skeleton: GfComEvtAnim::updateSetup builds its blender on it (anm::Factory::createBlender's
+    // argument; the name is not the original's)
+    const anm::Skeleton* m_skeleton;
     // the model's pose and extra truck buffer: GfComDynamics binds its dynamics to the pose, GfComPackAnim::Mot::play
     // its sampler to both (the names are not the original's)
     anm::Pose* m_pose;
