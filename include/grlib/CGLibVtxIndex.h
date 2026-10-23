@@ -14,6 +14,7 @@ public:
     void createCopyIndexBuff(const void* indices, unsigned int count, GrlPrimitiveType type, GrlIndexFormat format);
     void release();
     void drawIndex();
+    void drawInsIndex(int instances);
 
     unsigned char pad_0[0x28];
 };

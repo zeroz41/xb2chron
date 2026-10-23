@@ -12,6 +12,9 @@ namespace grlib {
 class CGLibCtlVertex {
 public:
     static void setVertex(CGLibVtxVertex& vertex);
+    // draws count vertices of the bound vertex buffer as the primitive type (once per instance)
+    static void renderVertex(GrlPrimitiveType type, int count);
+    static void renderInstanceVertex(GrlPrimitiveType type, int count, int instances);
 };
 
 class CGLibCtlShader {
@@ -27,9 +30,19 @@ public:
 
 class CGLibColorCtl {
 public:
+    static void setColorBufferOn();
+    static void setColorBufferOff();
+    static void setColorChannelMask(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
     static void setMrtBlend(unsigned char mask, GrlLogicType logic);
     static void setMrtBlendControl(GrlMrtType mrt, GrlBlendFunc src, GrlBlendFunc dst, GrlBlendCombine combine);
     static void setBlendOffControl(GrlLogicType logic);
+};
+
+class CGLibPolygon {
+public:
+    static void setCullingOff();
+    static void setCullingFront();
+    static void setCullingBack();
 };
 
 }  // namespace grlib

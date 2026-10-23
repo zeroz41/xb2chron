@@ -14,6 +14,9 @@ public:
     static int getVolTexCalcUniformBlockSize();
     static int getRimBloomCalcUniformBlockSize();
     static int getMpfMaterialUniformBlockSize();
+
+    // Per uniform variable: the number of floats its stock function writes (the stock functions return it).
+    static const short s_nVarSizeTbl[];
 };
 }  // namespace ml
 
