@@ -30,6 +30,12 @@
 #include "classes/event/ScriptCharaMotionABC.h"
 #include "classes/event/SkipManager.h"
 
+#include "classes/event/EvtxtManager.h"
+#include "classes/event/LipsyncManager.h"
+#include "classes/event/MdlstmManager.h"
+#include "classes/event/MstxtManager.h"
+#include "classes/event/OffscrManager.h"
+
 namespace event {
 
 CmdVariable::~CmdVariable() {}
@@ -93,5 +99,45 @@ Param TodoManager::s_zero;
 
 mm::mtl::FixedVector<gf::GF_OBJ_HANDLE*, 3> ObjectPartyList::s_drlist;
 mm::mtl::FixedVector<gf::GF_OBJ_HANDLE*, 3> ObjectPartyList::s_bllist;
+
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void OffscrManager::OnEventProc(event::MSG_TYPE msg) {
+    if (msg == 12) {
+        clear();
+    }
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void MdlstmManager::OnEventProc(event::MSG_TYPE msg) {
+    if (msg == 14) {
+        update();
+    } else if (msg == 12) {
+        clear();
+    }
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void MstxtManager::OnEventProc(event::MSG_TYPE msg) {
+    if (msg == 12) {
+        clear();
+    }
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void LipsyncManager::OnEventProc(event::MSG_TYPE msg) {
+    if (msg == 4) {
+        clear();
+    } else if (msg == 12) {
+        clear();
+    }
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void EvtxtManager::OnEventProc(event::MSG_TYPE msg) {
+    if (msg == 17) {
+        render();
+    }
+}
 
 }  // namespace event
