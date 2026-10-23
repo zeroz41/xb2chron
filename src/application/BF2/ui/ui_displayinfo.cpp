@@ -44,7 +44,7 @@ bool UIColorLibrary::find(const char* name, mm::Col4& color) {
 }
 
 UIDisplayInfo::UIDisplayInfo()
-    : m_disp(true), m_center(0), pad_0A(0), m_priority(0), m_mulColor(1.0f, 1.0f, 1.0f, 1.0f),
+    : m_disp(true), m_center(0), m_blendType(0), m_priority(0), m_mulColor(1.0f, 1.0f, 1.0f, 1.0f),
       m_addColor(0.0f, 0.0f, 0.0f), m_pixelWidth(0), m_pixelHeight(0), m_changed(false), m_defColor(nullptr),
       m_linkColor(nullptr) {}
 

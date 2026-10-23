@@ -15,6 +15,8 @@ namespace ui {
 class UIObjectAcc {
 public:
     UIObjectAcc(unsigned int handle);
+    // inline: UIObject::updatePlugin builds one on itself (3.0.1 has no out-of-line copy)
+    explicit UIObjectAcc(UIObject* object);  // defined after UIObject (classes/ui/UIObject.h)
     UIObjectAcc(unsigned int handle, const char* child);  // the child UIUtil::searchChild finds, if one is named
     virtual ~UIObjectAcc();  // slot 0
     void setDispChild(bool disp, const char* child);

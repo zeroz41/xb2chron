@@ -13,6 +13,7 @@ namespace ui {
 // UIObjectList::regist links it in)
 class UIObjectBase : public ::mm::mtl::ReferenceObject, public ::mm::mtl::IntrusiveListNodeBase {
 public:
+    UIObjectBase(const mm::mtl::FixStr<32>& name);
     virtual ~UIObjectBase();  // slot 0
     virtual void update();  // slot 2
     virtual void setInitialize();  // slot 3

@@ -5,6 +5,8 @@
 #include "classes/ui/UIObjectBase.h"
 #include "layer/LayerAccObjBase.h"
 #include "mm/Vec2.h"
+#include "mm/mtl/IntrusiveList.h"
+#include "classes/ui/UIObjectParam.h"
 
 namespace layer { class LayerBase; }
 namespace ui { class UIObjectPlugin; }
@@ -26,6 +28,10 @@ public:
     // slot 9; a handle: UIPolygonObject's returns one, UIScreenObject's 0
     virtual unsigned int duplicateImpl(unsigned int) = 0;
     void attachPlugin(UIObjectPlugin* plugin);
+    void updatePlugin();
+    void registAdditionalParam(UIObjectParam* param);
+    void switchDisplayMode(unsigned short mode);
+    void setBlendType(unsigned short type);
     void getPos(mm::Pnt<short>& pos) const;
     void getPosCenter(mm::Pnt<short>& pos) const;
     bool isDebugDraw() const;
@@ -46,12 +52,19 @@ public:
     // the constructor's (3: placed from a layout's position, without a layer object); the derived constructors pass
     // their kind: 1 UITextObject, 2 UIImageObject, 3 UILayoutObject, 4 UIScreenObject, 5 UIPolygonObject
     unsigned short m_type;
-    unsigned char pad_DA[0x2];
+    unsigned short pad_DA;  // the constructor zeroes it
     unsigned int m_parent;      // its parent's handle (setParent's; 0: none)
     UIObjectPlugin* m_plugins;  // the last plugin attachPlugin gave it, each linking the one before (m_next)
     unsigned int m_handle;  // its handle (UIPolygonObject::apply hands it to its shape's update)
-    unsigned char pad_EC[0x1C];  // the constructor's fields up to 0x108
+    unsigned int m_nameHash;  // mm::mtl::hashStrCrc of m_name (the constructor's; the name is not the original's)
+    // its parameters (registAdditionalParam links them; the destructor clears each one's handle; the name is not
+    // the original's)
+    mm::mtl::IntrusiveList<UIObjectParam> m_params;
 };
 }  // namespace ui
+
+#include "classes/ui/UIObjectAcc.h"
+
+inline ui::UIObjectAcc::UIObjectAcc(UIObject* object) : m_object(object), m_handle(object->m_handle) {}
 
 #endif

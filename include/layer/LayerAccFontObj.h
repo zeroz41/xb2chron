@@ -17,6 +17,8 @@ enum LayerFontVertical {};
 class LayerAccFontObj {
 public:
     LayerAccFontObj(LayerBase* layer);
+    unsigned short getFontPixelWidth() const;
+    unsigned short getFontPixelHeight() const;
     void setDispSetting(LayerFontSetting setting);
     void setHorizontal(LayerFontHorizontal horizontal);
     void setVertical(LayerFontVertical vertical);

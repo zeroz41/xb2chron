@@ -10,6 +10,10 @@ public:
     // its owner's end of it: UIFontManager's destructor calls slot 2 of the font objects LayerAccManager made, as
     // LayerObj's slot 2 (release)
     virtual void release() = 0;  // slot 2
+    unsigned char pad_08[0x10];
+    // its kind: UIObject::importDisplaySize reads a memory object's size (5) and a font object's (2) through their
+    // accessors (the name is not the original's)
+    int m_objType;
 };
 }  // namespace layer
 

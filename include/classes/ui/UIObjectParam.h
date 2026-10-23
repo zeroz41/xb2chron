@@ -5,7 +5,7 @@
 
 namespace ui {
 // table 0x7100B75790; the constructor links it into its object's list of parameters (UIObject's list at 0xF0)
-class UIObjectParam {
+class UIObjectParam : public ::mm::mtl::IntrusiveListNodeBase {
 public:
     // what an object's parameters adjust as each one applies; the name of its field is not the original's
     class AdditionalParam {
@@ -15,7 +15,6 @@ public:
     UIObjectParam(unsigned int handle);
     virtual ~UIObjectParam();  // slot 0
     virtual void apply(ui::UIObjectParam::AdditionalParam&) const = 0;  // slot 2
-    mm::mtl::IntrusiveListNodeBase m_node;  // its link in its object's list
     unsigned int m_handle;                  // the object's handle
 };
 }  // namespace ui

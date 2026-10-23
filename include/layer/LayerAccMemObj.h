@@ -10,6 +10,8 @@ namespace layer {
 class LayerAccMemObj {
 public:
     LayerAccMemObj(LayerBase* layer);
+    unsigned short getMemWidth() const;
+    unsigned short getMemHeight() const;
     void* getMemBufer();     // its buffer (LayerObjTopMemObj::getBuffer)
     void updateMemBufer();
     void setRender(bool render);
