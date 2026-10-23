@@ -10,6 +10,7 @@ public:
     static unsigned int getRole(unsigned int hana);  // her role's message (GfDataBdat 0x115), 0 for none
     static int getAttribute(unsigned int hana);
     static int getEther();
+    static int getPartsPower(unsigned int parts);  // the energy a part uses (GfMenuItemAdapter::update_useEnergy)
     static int getPowerCapacity(unsigned int hana);
     static int getEquipPower(unsigned int hana);
 };

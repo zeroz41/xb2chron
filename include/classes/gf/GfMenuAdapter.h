@@ -1,7 +1,11 @@
 #ifndef CLASSES_GF_GFMENUADAPTER_H
 #define CLASSES_GF_GFMENUADAPTER_H
 
+#include "mm/mtl/IntrusiveList.h"
+#include "mm/mtl/RTTI.h"
+
 namespace fw { class UpdateInfo; }
+namespace gf { class GfMenuRewriteNumber; }
 namespace ui { class UIObjectPlugin; }
 namespace ui { struct uiDateTime; }
 namespace ui { class UIStr; }
@@ -10,8 +14,8 @@ namespace mm { class Vec3; }
 namespace mm { template <typename T> class Pnt; }
 
 namespace gf {
-// table 0x7100B59C80
-class GfMenuAdapter {
+// table 0x7100B59C80; GfMenuAdapterManager keeps its adapters in intrusive lists through the node base
+class GfMenuAdapter : public ::mm::mtl::IntrusiveListNodeBase {
 public:
     // what createPlugin makes for a UI object
     struct PluginSetup {
@@ -25,6 +29,20 @@ public:
     GfMenuAdapter(ui::UIObjectPlugin* plugin, bool managerFlag, bool changed);
     virtual ~GfMenuAdapter();  // slot 0
     virtual void update(fw::UpdateInfo const&);  // slot 2
+    void setUpdateAfter();  // GfMenuAdapterManager::setAfterUpdate of this adapter
+    // the display plugin's modes (setDispSuspendMode passes its argument on too)
+    void setDispAlphaMode(bool on);
+    void setDispReverseMode(bool on);
+    void setDispFadeMode(float time);
+    void setDispSuspendMode(bool on);
+    void setNumberReverseMode(bool on);  // the number plugin's m_reverse
+    // the position plugin's screen adjustment: on, the area kept on screen and its margins
+    void setPosAdjustScreen(bool on);
+    void setPosAdjustSize(unsigned int width, unsigned int height);
+    void setPosAdjustSizeOffs(short width, short height);
+    int getNumberMax() const;  // the number plugin's
+    // a rewrite: while it is enabled, setNumber shows its number instead (referenced)
+    void setRewriteNumber(GfMenuRewriteNumber* rewrite);
     static ui::UIObjectPlugin* createPlugin(unsigned int handle, const PluginSetup& setup);
     static int compare(GfMenuAdapter* lhs, GfMenuAdapter* rhs);  // their numbers or texts: 0 same, 1 less, 2 more
     int getNumber() const;
@@ -49,10 +67,16 @@ public:
     bool isPosScreenAdjust() const;
     void setOffsetLimit(unsigned short x, unsigned short y);  // an offset plugin's
     void setPosOffsMode(unsigned int mode);  // a position plugin's
-    unsigned char pad_8[0x10];
+    // the plugin as a T when it is one, none otherwise (inline; the name is not the original's)
+    template <typename T>
+    T* getPlugin() const {
+        return m_plugin != nullptr ? mm::mtl::rttiCast<T>(m_plugin) : nullptr;
+    }
     ui::UIObjectPlugin* m_plugin;  // the constructor's, referenced
     unsigned int m_flags;          // bit 0: setChange sets it, update clears it; the constructor sets 1 or 3
-    unsigned char pad_24[0xC];
+    // an object setDisp shows or hides along with the plugin (0: none; the name is not the original's)
+    unsigned int m_rowHandle;
+    GfMenuRewriteNumber* m_rewriteNumber;  // setRewriteNumber's, referenced; the destructor releases it
 };
 }  // namespace gf
 
