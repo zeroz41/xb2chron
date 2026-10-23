@@ -52,6 +52,10 @@ public:
     static void hookAnimationEvent(unsigned int handle, unsigned int target, unsigned int param);
     // UIManager::requestObjectEvent for a handle that is not 0
     static void sendEvent(unsigned int handle, const ui::EventData& event, float delay);
+    // sendEvent of an open (0x21) or close (0x22) event with that first parameter (the parameter names are not the
+    // original's)
+    static void sendOpenEvent(unsigned int handle, int param, float delay);
+    static void sendCloseEvent(unsigned int handle, int param, float delay);
     static void closeFSLayer(unsigned int handle, bool, bool);
     static unsigned short getMenuLayerID(unsigned int menuId);  // the menu's layer (1 for none)
     static void changeFSSubLayer(unsigned int handle, unsigned short, unsigned short layer, bool);

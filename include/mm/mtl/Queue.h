@@ -22,6 +22,27 @@ namespace mm { namespace mtl {
 template <typename T>
 class Queue {
 public:
+    // a place in the queue: the buffer, the element's running index (m_head + n) and the capacity it wraps at
+    // (queue.h asserts `a._pArray == b._pArray` as it compares two; the other names are not the original's)
+    template <typename U>
+    class queue_iterator {
+    public:
+        queue_iterator(U* array, size_t index, size_t capacity) : _pArray(array), _index(index), _capacity(capacity) {}
+        U& operator*() const { return _pArray[_index % _capacity]; }
+        queue_iterator& operator++() {
+            ++_index;
+            return *this;
+        }
+        friend bool operator!=(const queue_iterator& a, const queue_iterator& b) {
+#line 411 MM_MTL_QUEUE_PATH
+            MM_ASSERT(a._pArray == b._pArray);
+            return a._index != b._index;
+        }
+        U* _pArray;
+        size_t _index;
+        size_t _capacity;
+    };
+    typedef queue_iterator<T> iterator;
     explicit Queue(IAllocator* allocator)
         : m_buffer(nullptr), m_size(0), m_head(0), m_capacity(0), m_alignment(16), m_allocator(allocator) {}
     // emptied, the buffer back to the allocator and every member cleared (skd::Packet's destructor keeps the
@@ -97,6 +118,20 @@ public:
         m_head = 0;
     }
     void push_back(const T& value);  // out of line (Queue<anm::JobEntry>'s in anim_manager.cpp)
+    iterator begin() { return iterator(&at(0), m_head, m_capacity); }
+    iterator end() { return iterator(&at(0), m_head + m_size, m_capacity); }
+    // removes the element at it, moving the later ones down (out of line)
+    iterator erase(iterator it);
+    // takes the first element off and returns it (queue.h asserts `!empty()` at line 769, not pop's 781: the
+    // GfMenuObj*::open functions drop their oldest object so; the name is not the original's)
+    T dequeue() {
+#line 769 MM_MTL_QUEUE_PATH
+        MM_ASSERT(!empty());
+        T value = at(m_head);
+        m_head = (m_head + 1) % m_capacity;
+        --m_size;
+        return value;
+    }
     size_t size() const { return m_size; }
     bool empty() const { return m_size == 0; }
     T& at(size_t index) {
@@ -122,6 +157,52 @@ private:
     size_t m_alignment;        // the buffer's: 8
     IAllocator* m_allocator;  // queue.h asserts `m_allocator` before giving the buffer back
 };
+
+// room for capacity elements at the given alignment: the elements are copied to a new buffer, keeping their places
+template <typename T>
+void Queue<T>::expand(size_t capacity, size_t alignment) {
+    size_t size = m_size;
+    size_t head = m_head;
+#line 136 MM_MTL_QUEUE_PATH
+    MM_ASSERT(m_allocator != 0);
+    T* ptr = static_cast<T*>(m_allocator->allocate(capacity * sizeof(T), alignment));
+#line 138 MM_MTL_QUEUE_PATH
+    MM_ASSERT(ptr != 0);
+    if (m_buffer != nullptr) {
+        iterator it = begin();
+        for (size_t i = 0; i < size; ++i, ++it) {
+            new (static_cast<void*>(&ptr[(m_head + i) % capacity])) T(*it);
+        }
+        clear();
+#line 154 MM_MTL_QUEUE_PATH
+        MM_ASSERT(m_allocator);
+        m_allocator->deallocate(m_buffer);
+    }
+    m_head = head;
+    m_capacity = capacity;
+    m_buffer = ptr;
+    m_size = size;
+}
+
+#ifndef MM_MTL_QUEUE_ERASE_ELSEWHERE
+template <typename T>
+typename Queue<T>::iterator Queue<T>::erase(iterator it) {
+    if (it != end()) {
+#line 1067 MM_MTL_QUEUE_PATH
+        MM_ASSERT(size() != 0);
+        --m_size;
+        for (size_t i = it._index; i < m_head + m_size;) {
+            size_t index = i % m_capacity;
+            size_t next = ++i % m_capacity;
+            at(index) = at(next);
+        }
+        at((m_head + m_size) % m_capacity).~T();
+        (*end()).~T();
+    }
+    return it;
+}
+
+#endif
 
 template <typename T>
 void Queue<T>::push_back(const T& value) {

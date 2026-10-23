@@ -5,9 +5,10 @@
 #include "classes/gf/GfMenuObjDropItem.h"
 
 namespace gf {
-// table 0x7100B61960
+// table 0x7100B61960: an open drop item screen in GfMenuManyObjects' queue 3
 class GfMenuObjDropItem::DropItemInfo : public ::gf::GfMenuManyObjects::InfoType {
 public:
+    DropItemInfo(unsigned int handle) : InfoType(handle) {}
 };
 }  // namespace gf
 

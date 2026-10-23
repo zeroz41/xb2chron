@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFMENUCHARDATAADAPTER_H
 
 namespace fw { class UpdateInfo; }
+namespace gf { class GfMenuDriverList; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfMenuEnemyList; }
 
@@ -61,6 +62,9 @@ public:
     // an adapter on the handle for an enemy list's entry at an index
     static void createFromEnemyList(unsigned int handle, unsigned int kind, const GfMenuEnemyList* list, int index,
                                     bool);
+    // an adapter on the handle for a driver list's entry at an index
+    static void createFromDriverList(unsigned int handle, unsigned int kind, const GfMenuDriverList* list, int index,
+                                     bool);
     static void createFromReferenceBlade(unsigned int handle, unsigned int, unsigned int index, bool);
 };
 }  // namespace gf

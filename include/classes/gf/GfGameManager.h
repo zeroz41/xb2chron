@@ -146,6 +146,7 @@ public:
     // fw::SoundManager (0x44C8), the render DrSys parameters and GfDataGame (bit 0 of 0xFD6D0). GfMenuManager's
     // constructor tests it right after registering menu layer 3 for "menu_ira" (see GfMenuObjUtil::fn_710048FD30).
     // "Ira" in those paths suggests the Torna expansion's mode; that is inferred, not a name. 269 callers.
+    static bool isClearGame();  // the game has been cleared once (the story's end reached)
     static bool fn_71002A9E68();
     static void clear();
     // takes fn_71002A9E68()'s answer in 3.0.1 (every caller passes it; the symbols still spell 1.0.0's setupGame())

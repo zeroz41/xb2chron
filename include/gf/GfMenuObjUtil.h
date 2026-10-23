@@ -85,10 +85,31 @@ public:
     static void addPos(unsigned int handle, short x, short y);
     // the slot of the control it starts on the handle (or its child of that name), -1 for none
     static int startCtrl(unsigned int handle, const CtrlParam& param, const char* child);
+    // how createFitPlugin's UIObjectFitPlugin fits: its flags and sizes (the names are UIObjectFitPlugin's fields')
+    struct FitOption {
+        FitOption()
+            : m_addHalfSize(false), m_keepScaleX(false), m_keepScaleY(false), m_offsetWidth(0), m_offsetHeight(0),
+              m_minWidth(0), m_minHeight(0) {}
+        bool m_addHalfSize;
+        bool m_keepScaleX;
+        bool m_keepScaleY;
+        short m_offsetWidth;
+        short m_offsetHeight;
+        unsigned short m_minWidth;
+        unsigned short m_minHeight;
+    };
+    // a UIObjectFitPlugin on the handle's object over target, with those margins and options
+    static void createFitPlugin(unsigned int handle, unsigned int target, int marginWidth, int marginHeight,
+                                const FitOption& option);
+    static void setChildText(unsigned int handle, const char* child, unsigned short text);  // a registered text
+    static void createNumberPlugin(unsigned int handle, int number);
+    // the menu objects' UI objects are at their limit: the GfMenuObj*::open functions open nothing then
+    static bool isMenuObjectFull();
     static int getCtrlID(unsigned int handle);  // the slot of the control running on the handle, -1 for none
     static void stopCtrl(int slot);  // nothing for -1
     static bool isBusyCtrl(int slot);
     static void playSE(unsigned int se);
+    static void playSE(const char* se);  // a sound by its name
     static int startPresetCtrl(unsigned int handle, const PresetCtrlParam& param);  // startCtrl's slot
     static short getBtnIconNumber(unsigned int button);  // the icon number of a button
     static unsigned int playBGM(unsigned int bgm, bool, fw::SoundCategory category);  // the handle stopBGM takes

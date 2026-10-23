@@ -16,6 +16,7 @@ public:
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
+    static bool attach(GfMenuCallContext* context);  // opens the ring on that call context (false: it did not)
 };
 }  // namespace gf
 
