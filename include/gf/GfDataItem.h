@@ -10,6 +10,9 @@ public:
     // the message table and row of the item's name
     static bool getName(unsigned char*& bdat, unsigned int& id, unsigned int item);
     static unsigned int getItemType(unsigned int item);  // 2: an accessory (DataObjDriver::setVirtualEquipAcc)
+    static bool isFavoriteCategoryFood(unsigned int category);
+    static bool isMayItem(unsigned int item);
+    static bool isTukiItem(unsigned int item);
 };
 }  // namespace gf
 

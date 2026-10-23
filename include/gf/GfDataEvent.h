@@ -7,6 +7,7 @@ class GfDataEvent {
 public:
     // the event's type (GfFobjManager::gevPlayEvent tests it for 1)
     static int getEventType(unsigned int eventId);
+    static bool isBladeCreateEvent(unsigned int event);
 };
 }  // namespace gf
 

@@ -20,6 +20,12 @@ public:
     // Table wrappers exposed by the range queries; names follow their accessors.
     CBdatWrapper* m_fpChrEnArrange;  // 0x10
     unsigned char pad_18[0x18];
+    unsigned int getChrEnArrangeBladeID(unsigned int) const;
+    unsigned int getChrEnArrangeEnemyBladeID(unsigned int) const;
+    bool isChrEnArrangeFlagNamed(unsigned int) const;
+    bool isChrEnArrangeFlagmBoss(unsigned int) const;
+    unsigned int getChrEnArrangeHpOver(unsigned int) const;
+    unsigned int getChrEnArrangeBookID(unsigned int) const;
 };
 }  // namespace gf
 

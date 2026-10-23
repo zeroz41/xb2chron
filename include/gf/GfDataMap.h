@@ -16,6 +16,13 @@ public:
     static unsigned int getWeatherTimeBonus(unsigned int mapId, WEATHERID id);
     // a map's resource name, null or empty for none (GfFieldZoneScript::execScript runs fld_<it>)
     static const char* getMapResourceName(unsigned int mapId);
+    static const char* getMapResourceNameByMapID(unsigned int mapId);
+    static unsigned int getWeatherForceConditionOn(unsigned int mapId, WEATHERID weather);
+    static unsigned int getWeatherForceConditionOff(unsigned int mapId, WEATHERID weather);
+    static unsigned int getWeatherTimeEnd(unsigned int mapId, WEATHERID weather);
+    static unsigned int getWeatherPopRate(unsigned int mapId, WEATHERID weather);
+    static bool isMapCompleteFlag(unsigned int mapId);
+    static void setMapCompleteFlag(unsigned int mapId);
 };
 }  // namespace gf
 

@@ -31,6 +31,8 @@ public:
     static bool getListVisible(QuestID id);
     // a quest's message (GfQuestUtil's message ids), none for none
     static const char* getTaskLog(QuestID id, unsigned int msg);
+    static unsigned int getScenario();
+    static unsigned int getSelect();
 };
 
 }  // namespace gf

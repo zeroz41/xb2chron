@@ -18,6 +18,12 @@ public:
     // GfDataEnemy's functions and, like getExtraParts, it takes an enemy's GfBdatRsc row. What it does: true when
     // GfBdatRsc::getRscEnExtraParts(rsc, part) is 2. DataObjEnemy's new table slot 42 returns it for its part.
     static bool fn_7100235424(unsigned int rsc, unsigned int part);
+    static const char* getSePack(unsigned int arrange);
+    static unsigned int getBladeID(unsigned int arrange);
+    static unsigned int getEquipBladeEnArrangeID(unsigned int arrange);
+    static bool isNamed(unsigned int arrange);
+    static bool isBoss(unsigned int arrange);
+    static unsigned int getSavedHpType(unsigned int arrange);
 };
 }  // namespace gf
 

@@ -43,6 +43,13 @@ public:
     unsigned char pad_10[0x80];
     CBdatWrapper* m_fpFLD_actorSE;  // 0x90
     unsigned char pad_98[0x10];
+    const char* getRscEnSePack(unsigned int) const;
+    unsigned int getDriverParamExtMountNpc(unsigned int) const;
+    const char* getDriverParamExtMountBone(unsigned int) const;
+    unsigned int getRscMobListRace(unsigned int) const;
+    unsigned int getRscMobListFootStep(unsigned int) const;
+    unsigned int getRscMobListFootStepEffect(unsigned int) const;
+    const char* getRSC_PcWpnModel(unsigned int) const;
 };
 }  // namespace gf
 

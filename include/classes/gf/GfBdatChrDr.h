@@ -19,6 +19,21 @@ public:
     // Table wrappers exposed by the range queries; names follow their accessors.
     CBdatWrapper* m_fpChrDr;  // 0x10
     unsigned char pad_18[0x10];
+    unsigned int getChrDrChestHeight(unsigned int) const;
+    unsigned int getChrDrLandingHeight(unsigned int) const;
+    unsigned int getChrDrStill(unsigned int) const;
+    unsigned int getChrDrRace(unsigned int) const;
+    unsigned int getChrDrFootStep(unsigned int) const;
+    unsigned int getChrDrFootStepEffect(unsigned int) const;
+    unsigned int getChrDrGender(unsigned int) const;
+    unsigned int getChrDrOffsetID(unsigned int) const;
+    const char* getChrDrCenterBone(unsigned int) const;
+    const char* getChrDrCamBone(unsigned int) const;
+    const char* getChrDrModel(unsigned int) const;
+    const char* getChrDrMotion(unsigned int) const;
+    const char* getChrDrDebugName(unsigned int) const;
+    unsigned int getChrDrAiID(unsigned int) const;
+    unsigned int getChrDrEyeRot(unsigned int) const;
 };
 }  // namespace gf
 

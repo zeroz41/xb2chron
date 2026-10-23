@@ -86,6 +86,14 @@ public:
     CBdatWrapper* m_fpITM_HanaNArtsSet;  // 0xC8
     CBdatWrapper* m_fpITM_HanaAssist;  // 0xD0
     unsigned char pad_d8[0x8];
+    unsigned int getPcWpnTypeRole(unsigned int) const;
+    unsigned int getPcWpnEnhance1(unsigned int) const;
+    unsigned int getPcWpnTypeMotion(unsigned int) const;
+    unsigned int getITM_HanaRoleNeedEther(unsigned int) const;
+    unsigned int getITM_HanaAtrNeedEther(unsigned int) const;
+    unsigned int getITM_HanaArtsEnhNeedEther(unsigned int) const;
+    unsigned int getITM_HanaNArtsSetNeedEther(unsigned int) const;
+    unsigned int getITM_HanaAssistNeedEther(unsigned int) const;
 };
 }  // namespace gf
 

@@ -22,6 +22,11 @@ public:
     // Table wrappers exposed by the range queries; names follow their accessors.
     CBdatWrapper* m_fpMaplist;  // 0x10
     unsigned char pad_18[0x10];
+    unsigned int getMaplistw_ON_cndID(unsigned int, unsigned int) const;
+    unsigned int getMaplistw_OFF_cndID(unsigned int, unsigned int) const;
+    unsigned int getMaplistw_time_BNS(unsigned int, unsigned int) const;
+    unsigned int getMaplistw_end_time(unsigned int, unsigned int) const;
+    unsigned int getMaplistw_pop_rate(unsigned int, unsigned int) const;
 };
 }  // namespace gf
 

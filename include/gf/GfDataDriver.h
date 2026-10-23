@@ -89,6 +89,17 @@ public:
     // items (the game data's driver rows, 0x5A0 apart; drivers 0x11-0x19 from another table, 0xDAC apart);
     // GfFobjManager::fn_7100289504 passes its party leader's driver id and sums the "EnhanceEffect" 0xFB rows.
     static bool fn_7100247580(mm::mtl::FixedVector<unsigned short, 64>& enhances, int driver);
+    static unsigned int getAiID(unsigned int driver);
+    static unsigned int getExtraMountNpcRsc(unsigned int driver);
+    static const char* getExtraMountBone(unsigned int driver);
+    static bool isDriver(unsigned int driver);
+    static bool isDummyDriver(unsigned int driver);
+    static unsigned int getDebugAppendDeathBlowEfbFileIdx(unsigned int index);
+    static unsigned int getDebugAppendDeathBlowEabFileIdx(unsigned int index);
+    static unsigned int getWeaponEfbFileIdx(int index);
+    static unsigned int getWeaponEabFileIdx(int index);
+    static unsigned int getWeaponSwtFileIdx(int index);
+    static unsigned int getWeaponAnmFileIdx(int index);
 };
 }  // namespace gf
 

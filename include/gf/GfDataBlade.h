@@ -77,6 +77,18 @@ public:
     static unsigned int getAttribute(unsigned int blade);
     static bool getExtraParts(const SDataBlade& data, unsigned int part);
     static unsigned int getBladePower(SDataBlade& data);
+    static unsigned int getRoleByWpnType(unsigned int wpnType);
+    static bool isHikariCurrent();
+    static void setHikariCurrent(bool value);
+    static unsigned int getStartCommonBlade();
+    static unsigned int getEndCommonBlade();
+    static unsigned int getStartUiCommonBlade();
+    static bool isCommonBlade(unsigned int blade);
+    static bool isRegularBlade(unsigned int blade);
+    static bool isValid(unsigned int blade);
+    static bool isBladeID(unsigned int blade);
+    static bool isNeedChangeWeapon(unsigned int blade);
+    static unsigned int getActBlade2CommonBlade(unsigned int blade);
 };
 
 }  // namespace gf

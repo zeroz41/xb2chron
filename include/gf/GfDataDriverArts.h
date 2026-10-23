@@ -30,6 +30,7 @@ public:
     // (1.0.0's update_WpnTypeWP calls getWp at the same site); 3.0.1 added the mode (0, 1 or 2: which weapon point
     // table it reads; update_WpnTypeWP passes 0)
     static int getWp(unsigned int driver, unsigned int wpnType, int mode);
+    static unsigned int getWpnType(unsigned int arts);
 };
 
 }  // namespace gf

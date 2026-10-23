@@ -47,6 +47,22 @@ public:
     unsigned char pad_78[0x38];
     CBdatWrapper* m_fpVo_Field_Filter;  // 0xB0
     unsigned char pad_b8[0x30];
+    unsigned int getBTL_HanaBaseNCondNum(unsigned int) const;
+    unsigned int getArtsDrReleaseLv(unsigned int, unsigned int) const;
+    unsigned int getArtsDrName(unsigned int) const;
+    unsigned short getArtsDrUI(unsigned int) const;
+    unsigned short getArtsDrDebugName(unsigned int) const;
+    unsigned int getArtsDrWpnType(unsigned int) const;
+    unsigned int getArtsDrArtsType(unsigned int) const;
+    unsigned int getArtsBlEnhance(unsigned int, unsigned int) const;
+    unsigned int getBTL_Skill_BlEnhance(unsigned int, unsigned int) const;
+    unsigned int getWildcardDatavalueU2(unsigned int) const;
+    unsigned int getBTL_HanaBaseNArtsNum(unsigned int) const;
+    unsigned int getBTL_HanaChipsetRoleParts(unsigned int) const;
+    unsigned int getBTL_HanaChipsetAtrParts(unsigned int) const;
+    unsigned int getBTL_HanaChipsetNArtsParts(unsigned int, unsigned int) const;
+    unsigned int getBTL_HanaChipsetNCondParts(unsigned int, unsigned int) const;
+    unsigned int getBTL_HanaBaseCircuitNum(unsigned int, unsigned int) const;
 };
 }  // namespace gf
 

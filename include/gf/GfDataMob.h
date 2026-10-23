@@ -10,6 +10,8 @@ public:
     static bool getName(unsigned char*& bdat, unsigned int& id, unsigned int mob);
     static unsigned int getFootStep(unsigned int mob);
     static unsigned int getFootStepEffect(unsigned int mob);
+    static unsigned int getRace(unsigned int mob);
+    static const char* getMotionName(unsigned int mob);
 };
 }  // namespace gf
 

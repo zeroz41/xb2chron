@@ -58,6 +58,13 @@ public:
     static int getTeamAnimalNum(unsigned int teamId);
     static unsigned short* getTeamMember(unsigned int teamId);  // the team's six blades
     static unsigned int getTeamID(unsigned int blade);  // the team the blade is in, 0 for none
+    static unsigned int getPointLimit();
+    static void setLevel(unsigned int level);
+    static void setPoint(unsigned int point);
+    static unsigned int getMissionFlag(unsigned int mission);
+    static void setMissionCompleteFlag(unsigned int mission);
+    static void clearNewMission(unsigned int mission);
+    static unsigned int getLevelMax();
 };
 }  // namespace gf
 

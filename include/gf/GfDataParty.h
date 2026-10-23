@@ -13,6 +13,7 @@ public:
     // the member at an index of a party: 0 is the game data's (1.0.0's one-argument function), 1 and 2 two other
     // parties' kept elsewhere (3.0.1 added the second parameter; its name is not the original's)
     static PartyMember* getPartyMember(unsigned int index, unsigned int party);
+    static bool isRideChar(unsigned int chara);
 };
 }  // namespace gf
 
