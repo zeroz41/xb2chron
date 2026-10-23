@@ -13,8 +13,8 @@ enum TextEncodeType : unsigned char {
 
 void Utf8ToUTF16(const char* text, char16_t* buffer, unsigned long size);
 void Utf16ToUTF8(const char16_t* text, char* buffer, unsigned long size);
-void Utf8ToUTF16(const char* text, MemoryBlock* block);
-void Utf16ToUTF8(const char16_t* text, MemoryBlock* block);
+bool Utf8ToUTF16(const char* text, MemoryBlock* block);
+bool Utf16ToUTF8(const char16_t* text, MemoryBlock* block);
 
 // the characters before text's terminator (the name is not the original's)
 template <typename T>

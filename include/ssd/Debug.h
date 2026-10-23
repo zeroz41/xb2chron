@@ -66,6 +66,16 @@ void log_error(Result result, Debug::LogFlag::Type flag, const char16_t* format,
         ::ssd::abort();                                                                                       \
     }
 
+// logs and aborts when condition fails, citing the condition, the file and the line (the macro's name is not
+// the original's; its format is "Assert : "%s", %s:%d": Thread::CreateThreadImpl's
+// "CheckAlign( stackBuffer, STACK_ALIGNMENT_SIZE )")
+#define SSD_ASSERT(condition)                                                                                 \
+    if (!(condition)) {                                                                                       \
+        ::ssd::log_message(u"Assert : \"%s\", %s:%d", u"" #condition, ::ssd::get_logfilename(u"" __FILE__),     \
+                           __LINE__);                                                                         \
+        ::ssd::abort();                                                                                       \
+    }
+
 // logs and aborts when condition fails, citing the condition, the file, the line and a message (the macro's
 // name is not the original's; its format is "Assert : "%s", %s:%d, %s": MemoryManager::Quit's
 // "memoryManager_.numInstance_ == 0")

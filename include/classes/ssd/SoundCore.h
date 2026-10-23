@@ -62,7 +62,7 @@ public:
     virtual void GetAudioCpuLoad() const = 0;  // slot 15
     virtual void LockAudio() const = 0;  // slot 16
     virtual void UnlockAudio() const = 0;  // slot 17
-    virtual void GetPlatformDataImpl(char const*) = 0;  // slot 18
+    virtual void* GetPlatformDataImpl(char const* name) = 0;  // slot 18
     virtual ~SoundCore();  // slot 19
     virtual void GetDebugInfo() const = 0;  // slot 21
 

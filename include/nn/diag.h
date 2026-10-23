@@ -34,12 +34,20 @@ int GetBacktrace(unsigned long* pOutArray, int arrayCountMax);
 // the name of the symbol holding `address`, written to `pOutName`; the symbol's start, 0 when none is found
 unsigned long GetSymbolName(char* pOutName, unsigned long nameSize, unsigned long address);
 
+enum AssertionType {
+    AssertionType_SdkAssert,
+    AssertionType_SdkRequires,
+    AssertionType_UserAssert,
+};
+
 namespace detail {
+void OnAssertionFailure(AssertionType type, const char* condition, const char* functionName, const char* fileName,
+                        int lineNumber);
 void LogImpl(const LogMetaData& metaData, const char* format, ...);
-// stops the program, citing the failed condition, the function, the file and the line (ssd::abort passes
-// empty strings and 0)
-__attribute__((noreturn)) void AbortImpl(const char* condition, const char* functionName, const char* fileName,
-                                        int lineNumber);
+// what NN_ABORT_UNLESS calls (the release build passes empty texts and line 0)
+[[noreturn]] void AbortImpl(const char* condition, const char* functionName, const char* fileName, int lineNumber);
+// whether pointer (as an integer) is not null: NN_ABORT_UNLESS_NOT_NULL's test
+bool NotNullImpl(unsigned long pointer);
 }  // namespace detail
 
 }}  // namespace nn::diag
@@ -59,5 +67,21 @@ __attribute__((noreturn)) void AbortImpl(const char* condition, const char* func
         logMetaData.additionalDataBytes = 0;                              \
         ::nn::diag::detail::LogImpl(logMetaData, __VA_ARGS__);            \
     } while (0)
+
+// the release build's abort checks: empty texts, line 0
+#define NN_ABORT_UNLESS(condition)                         \
+    if (!(condition)) {                                    \
+        ::nn::diag::detail::AbortImpl("", "", "", 0);      \
+    }
+#define NN_ABORT_UNLESS_NOT_NULL(pointer)                                                              \
+    if (!::nn::diag::detail::NotNullImpl(reinterpret_cast<unsigned long>(pointer))) {                \
+        ::nn::diag::detail::AbortImpl("", "", "", 0);                                                \
+    }
+#define NN_ABORT_UNLESS_RESULT_SUCCESS(result) NN_ABORT_UNLESS((result).IsSuccess())
+// the user assertion the release build keeps: empty texts, line 0
+#define NN_ASSERT(condition)                                                                           \
+    if (!(condition)) {                                                                                \
+        ::nn::diag::detail::OnAssertionFailure(::nn::diag::AssertionType_UserAssert, "", "", "", 0);   \
+    }
 
 #endif

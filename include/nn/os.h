@@ -15,6 +15,15 @@ public:
         return span;
     }
 
+    static TimeSpan FromMicroSeconds(long microSeconds) {
+        TimeSpan span;
+        span.m_nanoSeconds = microSeconds * 1000;
+        return span;
+    }
+    long GetNanoSeconds() const {
+        return m_nanoSeconds;
+    }
+
 private:
     long m_nanoSeconds;
 };
@@ -49,6 +58,47 @@ private:
 };
 
 Tick GetSystemTick();
+// ticks per second
+long GetSystemTickFrequency();
+TimeSpan ConvertToTimeSpan(Tick tick);
+
+// 0x28 bytes: ssd::Thread holds one at 0x20, its ThreadType follows at 0x48
+struct alignas(8) EventType {
+    unsigned char pad_0[0x28];
+};
+enum EventClearMode {
+    EventClearMode_ManualClear,
+    EventClearMode_AutoClear,
+};
+void InitializeEvent(EventType* event, bool initiallySignaled, EventClearMode clearMode);
+void FinalizeEvent(EventType* event);
+void WaitEvent(EventType* event);
+bool TimedWaitEvent(EventType* event, TimeSpan timeout);
+
+// 0x30 bytes; its state byte at 0x28 (0: not initialized) is what SystemEvent's destructor tests
+// (ssd::SystemCorePlatform's destructor reads it at 0x160 of the event at 0x138)
+struct alignas(8) SystemEventType {
+    unsigned char pad_0[0x28];
+    unsigned char _state;
+    unsigned char pad_29[0x7];
+};
+void DestroySystemEvent(SystemEventType* event);
+
+class SystemEvent {
+public:
+    ~SystemEvent() {
+        if (m_SystemEvent._state == 0) {
+            return;
+        }
+        DestroySystemEvent(&m_SystemEvent);
+    }
+    SystemEventType* GetBase() {
+        return &m_SystemEvent;
+    }
+
+private:
+    SystemEventType m_SystemEvent;
+};
 
 const int HighestThreadPriority = 0;
 const int DefaultThreadPriority = 16;
@@ -72,6 +122,8 @@ Result CreateThread(ThreadType* thread, ThreadFunction function, void* argument,
 Result CreateThread(ThreadType* thread, ThreadFunction function, void* argument, void* stack, unsigned long stackSize,
                     int priority);
 void DestroyThread(ThreadType* thread);
+void WaitThread(ThreadType* thread);
+void SetThreadCoreMask(ThreadType* thread, int idealCore, unsigned long affinityMask);
 void StartThread(ThreadType* thread);
 void SetThreadName(ThreadType* thread, const char* name);
 const char* GetThreadNamePointer(const ThreadType* thread);

@@ -4,6 +4,9 @@
 #include "classes/ssd/Allocator.h"
 
 namespace ssd {
+// clears size bytes at address (AudioFileBase.cpp's; the converted texts' buffers are cleared so)
+void ClearMemory16(void* address, unsigned long size);
+
 
 // a buffer the library allocated for a caller (TextRef::GetText fills one: the text and its length); the
 // names are not the original's

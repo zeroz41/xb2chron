@@ -40,9 +40,8 @@ public:
     void UpdateGameFrame(float frameTime);
     void StopSound(float fadeTime);
 
-    // SoundCore::NewInstance allocates 0xA28 bytes for the instance; which of them are SystemCorePlatform's is
-    // not settled yet
-    unsigned char pad_11[0xA17];
+    // SoundCore::NewInstance allocates 0xA28 bytes for the instance; SystemCorePlatform's fields end at 0x270
+    unsigned char pad_270[0x7B8];
 };
 }  // namespace ssd
 
