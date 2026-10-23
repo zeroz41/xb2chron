@@ -106,20 +106,6 @@ void GfComSound::changeLayer(unsigned int prevLayer, unsigned int layer) {
     }
 }
 
-bool GfComSound::recieveMessage(fw::MessageObject* sender, fw::Message& msg) {
-    if (msg.m_id == 0x100004B) {
-        if (fw::SoundLayerManager* manager = mm::mtl::PtrSingleton<fw::SoundLayerManager>::get()) {
-            if (!m_inLayer) {
-                unsigned int layer = getLayer();
-                manager->m_layers[layer].push_back(&m_layerNode);
-                m_inLayer = true;
-            }
-        }
-        return true;
-    }
-    return msg.m_id == 0x1000003;
-}
-
 mm::mtl::RTTI GfComSound::m_rtti("GfComSound", &GfComponent::m_rtti, nullptr);
 
 }  // namespace gf
