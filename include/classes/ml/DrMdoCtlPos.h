@@ -19,6 +19,15 @@ public:
     virtual void callShadowCacheUpdate(unsigned long);  // slot 11
     virtual void occRender();  // slot 12
     virtual void setDeleteCall(int);  // slot 16
+    void callZpreePassRenderPosAll();
+    void callThicknessRenderFirstPosAll();
+    void callThicknessRenderSecondPosAll();
+    void callRenderPosAll();
+    void callGBuffRenderPosAll();
+    void callAlphaRenderPosAll();
+    void callSpAlphaRenderPosAll();
+    void callLightPrePassRenderPosAll();
+    void callRefractionRenderPosAll();
 };
 }  // namespace ml
 

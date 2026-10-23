@@ -18,6 +18,16 @@ public:
     virtual void shadowCacheOnlyRender();  // slot 9
     virtual void callShadowCacheUpdate(unsigned long);  // slot 11
     virtual void occRender();  // slot 12
+    void callNomSetupRender();
+    void callZSortNomZpreePassRender();
+    void callZSortThicknessRenderFirst();
+    void callZSortThicknessRenderSecond();
+    void callZSortNomRender();
+    void callZSortGBuffRender();
+    void callZSortLightPrePassRender();
+    void callZSortNomAlphaRender();
+    void callZSortNomSpAlphaRender();
+    void callZSortNomRefractionRender();
 };
 }  // namespace ml
 

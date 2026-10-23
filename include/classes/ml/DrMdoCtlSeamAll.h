@@ -21,6 +21,21 @@ public:
     virtual void occRender();  // slot 12
     virtual void setDeleteCall(int);  // slot 16
     virtual void debugRender();  // slot 17
+    void callZPrePassSeamAll();
+    void callThicknessFirstSeamAll();
+    void callThicknessSecondSeamAll();
+    void callRenderSeamAll();
+    void callGBuffRenderSeamAll();
+    void callLightPrePassRenderSeamAll();
+    void callAlphaRenderSeamAll();
+    void callSpAlphaRenderSeamAll();
+    void callRefractionRenderSeamAll();
+    void callRenderSeamEnvMap();
+    void callGBuffRenderSeamEnvMap();
+    void callLightPrePassRenderSeamEnvMap();
+    void callAlphaRenderSeamEnvMap();
+    void callSpAlphaRenderSeamEnvMap();
+    void callRefractionRenderSeamEnvMap();
 };
 }  // namespace ml
 

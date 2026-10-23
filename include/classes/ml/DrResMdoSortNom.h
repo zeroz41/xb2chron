@@ -1,11 +1,15 @@
 #ifndef CLASSES_ML_DRRESMDOSORTNOM_H
 #define CLASSES_ML_DRRESMDOSORTNOM_H
 
+#include "classes/ml/DrMdoZSortObj.h"
+#include "classes/ml/DrMdoCtlNom.h"
+
 namespace ml {
 // table 0x7100B7DFD0
-class DrResMdoSortNom {
+class DrResMdoSortNom : public ::ml::DrMdoZSortObj {
 public:
-    virtual ~DrResMdoSortNom();  // slot 0
+    DrResMdoSortNom(DrMdoCtlNom* owner);
+    virtual ~DrResMdoSortNom() {}  // slot 0
     virtual void SetupRender();  // slot 2
     virtual void ZPrepassRender();  // slot 3
     virtual void ThicknessRenderFirst();  // slot 4

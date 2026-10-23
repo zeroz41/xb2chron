@@ -22,6 +22,19 @@ public:
     virtual bool cloneMdlObj(ml::DrMdlObj*);  // slot 13
     virtual void setDisp(bool);  // slot 15
     virtual void setDeleteCall(int);  // slot 16
+    void callNomSetupRender();
+    void callZSortNomZpreePassRender();
+    void callZSortThicknessRenderFirst();
+    void callZSortThicknessRenderSecond();
+    void callZSortNomRender();
+    void callZSortGBuffRender();
+    void callZSortLightPrePassRender();
+    void callZSortNomAlphaRender();
+    void callZSortNomSpAlphaRender();
+    void callZSortNomRefractionRender();
+    void callLastAlphaNomRender();
+    void callFastAlphaNomRender();
+    void callCldBackAlphaNomRender();
 };
 }  // namespace ml
 

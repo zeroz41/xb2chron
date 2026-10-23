@@ -2,11 +2,13 @@
 #define CLASSES_ML_DRRESMDOSORTPOS_H
 
 #include "classes/ml/DrMdoZSortObj.h"
+#include "classes/ml/DrMdoCtlPos.h"
 
 namespace ml {
 // table 0x7100B7E190
 class DrResMdoSortPos : public ::ml::DrMdoZSortObj {
 public:
+    DrResMdoSortPos(DrMdoCtlPos* owner);
     virtual ~DrResMdoSortPos();  // slot 0
     virtual void ZPrepassRender();  // slot 3
     virtual void ThicknessRenderFirst();  // slot 4

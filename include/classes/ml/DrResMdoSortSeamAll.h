@@ -2,11 +2,13 @@
 #define CLASSES_ML_DRRESMDOSORTSEAMALL_H
 
 #include "classes/ml/DrMdoZSortObj.h"
+#include "classes/ml/DrMdoCtlSeamAll.h"
 
 namespace ml {
 // table 0x7100B7E2E0
 class DrResMdoSortSeamAll : public ::ml::DrMdoZSortObj {
 public:
+    DrResMdoSortSeamAll(void* owner);
     virtual ~DrResMdoSortSeamAll();  // slot 0
     virtual void ZPrepassRender();  // slot 3
     virtual void ThicknessRenderFirst();  // slot 4
