@@ -9,6 +9,8 @@ namespace btl {
 // table 0x7100B3BDE8
 class TalkManager : public ::mm::mtl::PtrSingleton< ::btl::TalkManager> {
 public:
+    enum NARRATION_TYPE : int;
+    void PlayNarrationVoice(NARRATION_TYPE type, int, int);
     virtual ~TalkManager();  // slot 0
 };
 }  // namespace btl

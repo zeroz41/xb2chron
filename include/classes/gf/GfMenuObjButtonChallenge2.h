@@ -27,7 +27,11 @@ public:
         float m_speed;
     };
     static void open(GfMenuCallContext* context, unsigned int id, const OptionParam& param);
+    static void open(GfMenuCallContext* context, unsigned int id, bool, bool);
+    static void openSequence(GfMenuCallContext* context, unsigned int id, bool, bool);
     static void close(GfMenuCallContext* context);
+    static void resume(GfMenuCallContext* context);
+    static void setSpeedFactor(GfMenuCallContext* context, float factor);
 };
 }  // namespace gf
 

@@ -90,6 +90,13 @@ public:
     virtual void ApplyStatusEnhance(int, int, int) const;  // slot 78
     virtual void InitializeAttackParam();  // slot 79
     virtual void CalcDamageArmorEx(unsigned int);  // slot 80
+    int GetSTR() const;
+    int GetEtherPower() const;
+
+    unsigned char pad_8[0x8];
+    // a blade's driver: ButtonChallenge gives a blade's challenge to the character it names (the name is not the
+    // original's)
+    gf::GF_OBJ_HANDLE* m_driverHandle;
 };
 }  // namespace btl
 
