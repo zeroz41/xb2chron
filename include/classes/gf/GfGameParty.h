@@ -26,6 +26,7 @@ public:
     static unsigned int getBladeBdatId(unsigned int index, int slot);
     static unsigned int getPartyId(gf::GF_OBJ_HANDLE* handle);
     static gf::GF_OBJ_HANDLE* getLeaderDriver();
+    static unsigned short getPartyGauge();  // GfMenuBattleAdapter shows it in hundreds (300 full)
 };
 }  // namespace gf
 
