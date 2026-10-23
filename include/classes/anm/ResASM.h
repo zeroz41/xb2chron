@@ -164,6 +164,8 @@ public:
     void setLeaveAnnotation(unsigned int kind, const char* stateName, const AsmAnnotetion& annotation);
     void setFrameAnnotation(unsigned int kind, const char* stateName, float frame, const AsmAnnotetion& annotation);
     void sortAnnotation(unsigned int kind);
+    // the state of the name, none without one
+    const ResStateData* findResStateData(const char* name) const;
 
     const Skeleton* m_pSkeleton;  // the names of the fields are not the original's
     const ResStateArray* m_pStates;  // the constructor's

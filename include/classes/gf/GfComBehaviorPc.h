@@ -20,6 +20,9 @@ public:
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     virtual void update(fw::UpdateInfo const&);  // slot 5
     virtual void procAnimCallback(gf::GfComAsm*, gf::CallBackCache const&);  // slot 6
+    // switch the PC's agent's field and battle AI (StateUtil hands them on)
+    void setEnableAgentField(bool enable);
+    void setEnableAgentBattle(bool enable);
     static mm::mtl::RTTI m_rtti;
 };
 }  // namespace gf

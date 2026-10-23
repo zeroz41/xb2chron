@@ -3,6 +3,8 @@
 
 #include "classes/gf/GfMenuObject.h"
 
+namespace gf { class GfMenuCallContext; }
+
 namespace gf {
 // table 0x7100B64BD8
 class GfMenuObjTargetInfo : public ::gf::GfMenuObject {
@@ -14,6 +16,8 @@ public:
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
+    // closes the menu a context opened
+    static void close(GfMenuCallContext* context);
 };
 }  // namespace gf
 

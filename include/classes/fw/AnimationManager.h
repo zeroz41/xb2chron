@@ -8,6 +8,8 @@
 #include "mm/mtl/FixedArray.h"
 #include "mm/mtl/IntrusiveList.h"
 #include "anm/JobQueue.h"
+#include "classes/fw/AnimAfterModifierInterface.h"
+#include "fw/IkResolver.h"
 
 namespace fw { class AnimControlUpdaterInterface; }
 namespace fw { class AnimPoseSamplerInterface; }
@@ -15,18 +17,12 @@ namespace fw { class UpdateInfo; }
 namespace anm { class ThreadPool; }
 
 namespace fw {
-// what AnimationManager::addPoseModifier, addAfterModifier and addIkResolver keep: their links in a group's list
-// (a modifier's after its table, as AnimControlUpdaterInterface's; a resolver's at its start). Their virtual
-// functions are not known yet.
+// what AnimationManager::addPoseModifier keeps: its links in a group's list follow its table, as
+// AnimControlUpdaterInterface's. Its virtual functions are not known yet.
 class AnimPoseModifierInterface : public mm::mtl::IntrusiveListNodeBase {
 public:
     virtual ~AnimPoseModifierInterface() {}
 };
-class AnimAfterModifierInterface : public mm::mtl::IntrusiveListNodeBase {
-public:
-    virtual ~AnimAfterModifierInterface() {}
-};
-class IkResolver : public mm::mtl::IntrusiveListNodeBase {};
 
 // the jobs AnimationManager queues on its thread pool, up to four samplers (modifiers) or one resolver each
 // (JobQueue functions 0 to 3; the field names are not the original's)

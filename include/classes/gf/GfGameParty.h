@@ -26,6 +26,11 @@ public:
     static unsigned int getBladeBdatId(unsigned int index, int slot);
     static unsigned int getPartyId(gf::GF_OBJ_HANDLE* handle);
     static gf::GF_OBJ_HANDLE* getLeaderDriver();
+    // the handle of the party member driver at an index, and of the blade in a slot of the driver at an index
+    // (3.0.1's getHandleDriver reads a second argument too, as getDriverBdatId does: StateUtil passes 0; its symbol
+    // still spells one argument)
+    static gf::GF_OBJ_HANDLE* getHandleDriver(unsigned int index, unsigned int party);
+    static gf::GF_OBJ_HANDLE* getHandleBlade(unsigned int index, int slot);
     static unsigned short getPartyGauge();  // GfMenuBattleAdapter shows it in hundreds (300 full)
 };
 }  // namespace gf

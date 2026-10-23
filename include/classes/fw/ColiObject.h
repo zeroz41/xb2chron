@@ -9,6 +9,8 @@
 namespace mm { class Vec3; }
 namespace idcoli { class IDColiObj; }
 namespace fw { class ColiCharacterInfo; }
+namespace fw { class ColiUserData; }
+namespace fw { class IColiEventListener; }
 
 namespace fw {
 // a collision attribute (idcoli::IDColiParmsBase::isAttr tests it); no value has a name yet
@@ -35,6 +37,11 @@ public:
                                    mm::mtl::IntrusivePtr<fw::ReferenceFrame> const& frame);
     // the collision of a map's ground from its resource (gf::MapColi::create keeps it, counted)
     static ColiObject* createColiGrand(const void* resource);
+    // a character's collision object, registered with the ColiManager, that follows `frame`
+    static ColiObject* createColiCharacter(ColiCharacterInfo const& info,
+                                           mm::mtl::IntrusivePtr<fw::ReferenceFrame> const& frame);
+    // (inline: the name is not the original's; GfComCollider::createColi sets its own)
+    void setUserData(fw::ColiUserData* userData) { m_userData = userData; }
     static mm::mtl::RTTI m_rtti;
 
     unsigned char pad_10[0x10];
@@ -44,7 +51,14 @@ public:
     // ColiMoveObject::postUpdate moves only while it is not 0
     int m_followType;
     unsigned short m_flags;
-    unsigned char pad_36[0x6A];
+    unsigned char pad_36[0x12];
+    // setupColiCharacter's, from ColiCharacterInfo: which events reach m_listener (enter needs bit 0; the names
+    // of these three are not the original's)
+    unsigned int m_eventMask;
+    unsigned char pad_4c[0x4];
+    fw::IColiEventListener* m_listener;  // enter, leave and contact hand their events to it
+    fw::ColiUserData* m_userData;        // its owner's: GfComCollider::enter tests the other object's
+    unsigned char pad_60[0x40];
     mm::Mat44 m_matrix;  // getMatrix's
     unsigned char pad_e0[0x20];
 };

@@ -1,15 +1,7 @@
 #ifndef CLASSES_GF_GFCOMCOLLIDER_USERDATA_H
 #define CLASSES_GF_GFCOMCOLLIDER_USERDATA_H
 
-#include "mm/mtl/RTTI.h"
+// GfComCollider::UserData is defined in its class (GfComCollider holds one at 0x40)
 #include "classes/gf/GfComCollider.h"
-
-namespace gf {
-// table 0x7100B66298
-class GfComCollider::UserData {
-public:
-    virtual const mm::mtl::RTTI* getRTTI() const;  // slot 0
-};
-}  // namespace gf
 
 #endif

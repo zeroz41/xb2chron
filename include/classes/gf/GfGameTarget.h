@@ -22,6 +22,7 @@ public:
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 2
     virtual void gevChangeLeader(gf::GF_OBJ_HANDLE*);  // slot 3
     virtual void gevSwapFormation(unsigned int, unsigned int);  // slot 4
+    static void lockTarget(bool lock);
 };
 }  // namespace gf
 

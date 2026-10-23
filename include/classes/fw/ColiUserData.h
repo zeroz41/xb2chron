@@ -9,6 +9,9 @@ namespace fw {
 // gimmick types' m_rtti name. Its table and members are not identified yet.
 class ColiUserData {
 public:
+    // what a holder tests a collision's user data with (GfComCollider::enter calls it through ColiObject::m_userData;
+    // no table of its own survives)
+    virtual const mm::mtl::RTTI* getRTTI() const = 0;
     static mm::mtl::RTTI m_rtti;
 };
 }  // namespace fw

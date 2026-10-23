@@ -4,6 +4,7 @@
 namespace anm { class Binding; }
 namespace anm { class QsTransform; }
 namespace anm { struct ExtraTruckSlot; }
+namespace anm { class ResASM; }
 
 namespace anm {
 // how a binding's animation plays (Util::getPlayMode; 1 plays once: AsmState::initLoopCount counts it as one loop and
@@ -24,6 +25,13 @@ inline T clamp(const T& x, const T& lo, const T& hi) {
 // a random number in [0, 1) (anm_state_machine.cpp; AsmState::initLoopCount draws a loop count with it)
 float rand();
 
+// a named appendix of an animation state machine resource: its data follows its name (gf::GfComAsm::getAppendix
+// hands out the data; the names are not the original's)
+struct ResAppendix {
+    const char* m_name;
+    const void* m_data;
+};
+
 class Util {
 public:
     // how long the binding's animation plays
@@ -38,6 +46,15 @@ public:
                                        QsTransform* pOut);
     // count values of the slot, each clamped to its limits
     static void clampLimitExtraTruck(const ExtraTruckSlot& slot, unsigned int count, float* pValues);
+    // a state's clip's playback time, locomotion, binding and appendix (gf::GfComAsm's getters)
+    static bool getAsmPlaybackTime(const ResASM& res, const char* state, unsigned int index, float* pTime);
+    static bool getAsmLocomotionReference(const ResASM& res, const char* state, float time, unsigned int index,
+                                          QsTransform* pOut);
+    static bool getAsmLocomotionDeltaReference(const ResASM& res, const char* state, float time, float dt,
+                                               unsigned int index, QsTransform* pOut);
+    static const Binding* getAsmBinding(const ResASM& res, const char* state, unsigned int index);
+    static float getInvFps(const Binding& binding);
+    static const ResAppendix* findAppendix(const ResASM& res, const char* name);
 };
 }  // namespace anm
 

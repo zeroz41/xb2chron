@@ -3,6 +3,14 @@
 
 namespace fw {
 
+// (functions, by its symbols)
+class PadRelayUtil {
+public:
+    // the framework pad key a named input is bound to on a pad: whether it is bound (StateUtil asks pads 0-4; it
+    // passes 0 for the two middle arguments, whose roles are not known)
+    static bool getFwPadKey(unsigned int pad, const char* name, unsigned int, unsigned int, unsigned int* pKey);
+};
+
 // a pad's named actions and axes, bound to handlers (no table): PadBattle holds two, PadField one
 class PadRelay {
 public:
