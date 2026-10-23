@@ -103,6 +103,7 @@ public:
     static void leaveGameForDebug();
     static void destroyBattleEnemy();
     static bool isField();
+    static void enterBattle(bool flag);
     static bool isStopBattleSequence();
     void update(const fw::UpdateInfo& info);
     void postUpdate(const fw::UpdateInfo& info);

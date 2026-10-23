@@ -5,6 +5,7 @@
 
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfGameParty; }
+namespace gf { class GfComTransform; }
 #include "classes/gf/IGfObjListener.h"
 
 namespace gf {
@@ -19,6 +20,7 @@ public:
     static void refreshPartyMemberPosition();
     virtual ~GfGameParty();  // slot 0
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 2
+    static gf::GfComTransform* getLeaderTransform();  // the leader's transform, null for none
     static gf::GF_OBJ_HANDLE* getLeader();  // the party's leader, -1 for none
     static bool isBtlLeaderDirver();
     // the bdat ID of the party member driver at an index, and of the blade in a slot of its driver

@@ -22,6 +22,7 @@ public:
     const mm::Quat& getRotation() const;
     // the frame that places the object: m_childFrame while it is set, else m_frame (inline: the name is not
     // the original's)
+    const mm::Vec3& getPosition() const;
     const mm::mtl::IntrusivePtr<fw::ReferenceFrame>& getFrame() const {
         return m_childFrame.get() == nullptr ? m_frame : m_childFrame;
     }

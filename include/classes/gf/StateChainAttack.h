@@ -2,6 +2,7 @@
 #define CLASSES_GF_STATECHAINATTACK_H
 
 #include "classes/ai/State.h"
+#include <new>
 
 namespace ai { class State; }
 
@@ -9,7 +10,10 @@ namespace gf {
 // table 0x7100B56588
 class StateChainAttack : public ::ai::State {
 public:
-    virtual ~StateChainAttack();  // slot 0
+    // what GfGameState::build registers with its Fsm: the state made in a state buffer
+    static ai::State* create(void* buffer) { return new (buffer) StateChainAttack(); }
+    // inline: the deleting destructor only frees it
+    virtual ~StateChainAttack() {}  // slot 0
     virtual const char* getName() const;  // slot 2
     virtual void onEnter(void*, ai::State*);  // slot 3
     virtual void onLeave(void*, ai::State*);  // slot 4

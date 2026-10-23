@@ -8,6 +8,7 @@ namespace gf { class GfSetupParam; }
 namespace gf { class GfEvent; }
 namespace gf { class IGfEvent; }
 namespace gf { enum EXEC_STATE : int; }
+namespace gf { enum GF_STATE : int; }
 
 namespace gf {
 // table 0x7100B591E8
@@ -22,6 +23,7 @@ public:
     // listener joins (leaves) the ones GfEvent's calls reach
     static void addEventCallback(IGfEvent* listener);
     static void removeEventCallback(IGfEvent* listener);
+    static void callGameState(GF_STATE prev, GF_STATE next);  // each listener's gevGameState
     static void callExecState(EXEC_STATE state);  // each listener's gevExecState
     static void callLoadGameTime(float time);  // each listener's gevLoadGameTime
     static void callSwapFormation(unsigned int index0, unsigned int index1);  // each listener's gevSwapFormation
