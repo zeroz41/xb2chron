@@ -3,11 +3,67 @@
 
 #include "classes/ml/DrMdlBase.h"
 
+namespace ml { class DrMan; }
+namespace ml { struct MdoWrkMatRes; }
+namespace ml { struct MdsMatInfoHeader; }
+
 namespace ml {
 // table 0x7100B7BD30
 class DrMdoMat : public ::ml::DrMdlBase {
 public:
     virtual ~DrMdoMat();  // slot 0
+
+    void updateMatCallBack(const unsigned int* dispBits);
+
+    // Material value callbacks: s_pCallMatVal[id] is called with the material's header, the uniform slot (from
+    // info->m_uniformOfs) the callback fills and the material's index.
+    void matCall_MatxView(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_EmissiveTime(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_RgbTime(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_RTime(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_AccRgb1(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_AccRgb2(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_AccRgb3(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_AccRgb4(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_AccMulRgb1(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_AccMulRgb2(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_AccMulRgb3(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_AccMulRgb4(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_AccVal1(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_AccVal2(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_AccVal3(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_AccVal4(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_AccMulVal1(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_AccMulVal2(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_AccMulVal3(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_AccMulVal4(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_WaterFog(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_MatxInvView(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_FurShader(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_CalcBloom(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_CalcColor(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_OutLineVal(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_ToonId(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_VolumeTest(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_BaseColor(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_BaseVal(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void matCall_TransVal(const MdsMatInfoHeader* info, int slot, int matIdx);
+    // Placeholder names: new in 3.0.1 (s_pCallMatVal slots 31-34; 1.0.0's table has 31 entries), nothing in
+    // 1.0.0's place names them. Members because s_pCallMatVal holds them as DrMdoMat member pointers, called by
+    // updateMatCallBack like the named matCall_ callbacks. What they do: large material-value callbacks (0xEB4,
+    // 0x10A0, 0x5B38 and 0xF8 bytes) not yet read.
+    void fn_71007701FC(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void fn_71007710B0(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void fn_7100772150(const MdsMatInfoHeader* info, int slot, int matIdx);
+    void fn_7100777C88(const MdsMatInfoHeader* info, int slot, int matIdx);
+
+    static void (DrMdoMat::*s_pCallMatVal[35])(const MdsMatInfoHeader*, int, int);
+
+    unsigned char pad_8[0x20];
+    DrMan* m_pDrMan;  // 0x28, set by 1.0.0's setDrMan(DrMan*) (the field name is not the original's)
+    MdoWrkMatRes* m_pWrkMatRes;  // 0x30 (the field name is not the original's)
+    unsigned char pad_38[0xA0];
+    float m_colorScale;  // 0xD8, 1.0f from the constructor; scales CalcBloom/CalcColor (name inferred)
 };
 }  // namespace ml
 

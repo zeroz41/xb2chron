@@ -1,10 +1,13 @@
 #include "classes/ml/DrFogObjGbl.h"
 #include "classes/ml/DrMdoCtlDammy.h"
 #include "classes/ml/DrMdoCtlSeamAll.h"
+#include "classes/ml/DrMdoMat.h"
 #include "math.h"
 #include "ml/DrEnvironmentAnim.h"
 #include "ml/DrMdoAnim.h"
 #include "ml/DrResMdoMat.h"
+#include "ml/MdoWrkMatRes.h"
+#include "ml/MdsMatInfoHeader.h"
 
 namespace ml {
 
@@ -344,6 +347,254 @@ void (DrEnvironmentAnim::*DrEnvironmentAnim::s_pFogAnim[13])(DrFogObjGbl*, const
     &DrEnvironmentAnim::envfog_parm_color_sunR,
     &DrEnvironmentAnim::envfog_parm_color_sunG,
     &DrEnvironmentAnim::envfog_parm_color_sunB,
+};
+
+void DrMdoMat::updateMatCallBack(const unsigned int* dispBits) {
+    const MdsMatCallBackTbl* tbl = m_pWrkMatRes->m_pCallBackTbl;
+    if (tbl == nullptr || tbl->m_matListNum == 0) {
+        return;
+    }
+    int num = tbl->m_matListNum;
+    const unsigned char* calls = m_pWrkMatRes->m_pMatData + tbl->m_callOfs;
+    const unsigned short* list = reinterpret_cast<const unsigned short*>(m_pWrkMatRes->m_pMatData + tbl->m_matListOfs);
+    for (int i = 0; i < num; i++) {
+        unsigned short mat = list[i];
+        if (dispBits[mat >> 5] & (1 << (mat & 0x1F))) {
+            const MdsMatInfoHeader* info = &m_pWrkMatRes->m_pMatInfo[mat];
+            const unsigned short* call = reinterpret_cast<const unsigned short*>(calls + info->m_callBackIdx * 4);
+            int cnt = info->m_callBackNum;
+            for (int j = 0; j < cnt; j++) {
+                (this->*s_pCallMatVal[call[0]])(info, call[1], list[i]);
+                call += 2;
+            }
+        }
+    }
+}
+
+void DrMdoMat::matCall_EmissiveTime(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* uni = m_pWrkMatRes->m_pUniformVal;
+    float* mat = m_pWrkMatRes->m_pMatVal;
+    unsigned int idx = info->m_uniformOfs + slot;
+    unsigned int time = info->m_timeSlot + info->m_uniformOfs;
+    uni[idx] = mat[idx] * uni[time];
+}
+
+void DrMdoMat::matCall_RgbTime(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* uni = m_pWrkMatRes->m_pUniformVal;
+    float* mat = m_pWrkMatRes->m_pMatVal;
+    unsigned int idx = info->m_uniformOfs + slot;
+    float* dst = &uni[idx];
+    float* src = &mat[idx];
+    unsigned int time = info->m_timeSlot + info->m_uniformOfs;
+    dst[0] = src[0] * uni[time];
+    dst[1] = src[1] * uni[time];
+    dst[2] = src[2] * uni[time];
+}
+
+void DrMdoMat::matCall_RTime(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* uni = m_pWrkMatRes->m_pUniformVal;
+    float* mat = m_pWrkMatRes->m_pMatVal;
+    unsigned int idx = info->m_uniformOfs + slot;
+    unsigned int time = info->m_timeSlot + info->m_uniformOfs;
+    uni[idx] = mat[idx] * uni[time];
+}
+
+void DrMdoMat::matCall_AccRgb1(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = m_pWrkMatRes->m_pAce->m_color[0].r;
+    dst[1] = m_pWrkMatRes->m_pAce->m_color[0].g;
+    dst[2] = m_pWrkMatRes->m_pAce->m_color[0].b;
+}
+
+void DrMdoMat::matCall_AccRgb2(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = m_pWrkMatRes->m_pAce->m_color[1].r;
+    dst[1] = m_pWrkMatRes->m_pAce->m_color[1].g;
+    dst[2] = m_pWrkMatRes->m_pAce->m_color[1].b;
+}
+
+void DrMdoMat::matCall_AccRgb3(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = m_pWrkMatRes->m_pAce->m_color[2].r;
+    dst[1] = m_pWrkMatRes->m_pAce->m_color[2].g;
+    dst[2] = m_pWrkMatRes->m_pAce->m_color[2].b;
+}
+
+void DrMdoMat::matCall_AccRgb4(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = m_pWrkMatRes->m_pAce->m_color[3].r;
+    dst[1] = m_pWrkMatRes->m_pAce->m_color[3].g;
+    dst[2] = m_pWrkMatRes->m_pAce->m_color[3].b;
+}
+
+void DrMdoMat::matCall_AccMulRgb1(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = m_pWrkMatRes->m_pAce->m_color[0].r * dst[0];
+    dst[1] = m_pWrkMatRes->m_pAce->m_color[0].g * dst[1];
+    dst[2] = m_pWrkMatRes->m_pAce->m_color[0].b * dst[2];
+}
+
+void DrMdoMat::matCall_AccMulRgb2(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = m_pWrkMatRes->m_pAce->m_color[1].r * dst[0];
+    dst[1] = m_pWrkMatRes->m_pAce->m_color[1].g * dst[1];
+    dst[2] = m_pWrkMatRes->m_pAce->m_color[1].b * dst[2];
+}
+
+void DrMdoMat::matCall_AccMulRgb3(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = m_pWrkMatRes->m_pAce->m_color[2].r * dst[0];
+    dst[1] = m_pWrkMatRes->m_pAce->m_color[2].g * dst[1];
+    dst[2] = m_pWrkMatRes->m_pAce->m_color[2].b * dst[2];
+}
+
+void DrMdoMat::matCall_AccMulRgb4(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = m_pWrkMatRes->m_pAce->m_color[3].r * dst[0];
+    dst[1] = m_pWrkMatRes->m_pAce->m_color[3].g * dst[1];
+    dst[2] = m_pWrkMatRes->m_pAce->m_color[3].b * dst[2];
+}
+
+void DrMdoMat::matCall_AccVal1(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = m_pWrkMatRes->m_pAce->m_val[0];
+}
+
+void DrMdoMat::matCall_AccVal2(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = m_pWrkMatRes->m_pAce->m_val[1];
+}
+
+void DrMdoMat::matCall_AccVal3(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = m_pWrkMatRes->m_pAce->m_val[2];
+}
+
+void DrMdoMat::matCall_AccVal4(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = m_pWrkMatRes->m_pAce->m_val[3];
+}
+
+void DrMdoMat::matCall_AccMulVal1(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = m_pWrkMatRes->m_pAce->m_val[0] * dst[0];
+    dst[1] = m_pWrkMatRes->m_pAce->m_val[0] * dst[1];
+    dst[2] = m_pWrkMatRes->m_pAce->m_val[0] * dst[2];
+}
+
+void DrMdoMat::matCall_AccMulVal2(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = m_pWrkMatRes->m_pAce->m_val[1] * dst[0];
+    dst[1] = m_pWrkMatRes->m_pAce->m_val[1] * dst[1];
+    dst[2] = m_pWrkMatRes->m_pAce->m_val[1] * dst[2];
+}
+
+void DrMdoMat::matCall_AccMulVal3(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = m_pWrkMatRes->m_pAce->m_val[2] * dst[0];
+    dst[1] = m_pWrkMatRes->m_pAce->m_val[2] * dst[1];
+    dst[2] = m_pWrkMatRes->m_pAce->m_val[2] * dst[2];
+}
+
+void DrMdoMat::matCall_AccMulVal4(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = m_pWrkMatRes->m_pAce->m_val[3] * dst[0];
+    dst[1] = m_pWrkMatRes->m_pAce->m_val[3] * dst[1];
+    dst[2] = m_pWrkMatRes->m_pAce->m_val[3] * dst[2];
+}
+
+void DrMdoMat::matCall_CalcBloom(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    float* src = m_pWrkMatRes->m_pMatVal;
+    unsigned int idx = info->m_uniformOfs + slot;
+    dst[idx] = src[idx] * m_colorScale;
+}
+
+void DrMdoMat::matCall_CalcColor(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    m_pWrkMatRes->m_pResMat[matIdx].setColor(info->m_color[0] * m_colorScale, m_colorScale * info->m_color[1],
+                                             m_colorScale * info->m_color[2], info->m_color[3]);
+}
+
+void DrMdoMat::matCall_ToonId(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    dst[0] = dst[1] / 255.0f;
+}
+
+void DrMdoMat::matCall_VolumeTest(const MdsMatInfoHeader* info, int slot, int matIdx) {
+
+}
+
+void DrMdoMat::matCall_BaseColor(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    DrResMdoMat* mat = &m_pWrkMatRes->m_pResMat[matIdx];
+    mat->m_color[0] = m_pWrkMatRes->m_pAce->m_color[slot].r;
+    mat->m_color[1] = m_pWrkMatRes->m_pAce->m_color[slot].g;
+    mat->m_color[2] = m_pWrkMatRes->m_pAce->m_color[slot].b;
+}
+
+void DrMdoMat::matCall_BaseVal(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    DrResMdoMat* mat = &m_pWrkMatRes->m_pResMat[matIdx];
+    mat->m_color[0] = m_pWrkMatRes->m_pAce->m_val[slot];
+    mat->m_color[1] = m_pWrkMatRes->m_pAce->m_val[slot];
+    mat->m_color[2] = m_pWrkMatRes->m_pAce->m_val[slot];
+}
+
+void DrMdoMat::matCall_TransVal(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    m_pWrkMatRes->m_pResMat[matIdx].setAlpha(m_pWrkMatRes->m_pAce->m_val[slot]);
+}
+
+void (DrMdoMat::*DrMdoMat::s_pCallMatVal[35])(const MdsMatInfoHeader*, int, int) = {
+    &DrMdoMat::matCall_MatxView,
+    &DrMdoMat::matCall_EmissiveTime,
+    &DrMdoMat::matCall_RgbTime,
+    &DrMdoMat::matCall_RTime,
+    &DrMdoMat::matCall_AccRgb1,
+    &DrMdoMat::matCall_AccRgb2,
+    &DrMdoMat::matCall_AccRgb3,
+    &DrMdoMat::matCall_AccRgb4,
+    &DrMdoMat::matCall_AccMulRgb1,
+    &DrMdoMat::matCall_AccMulRgb2,
+    &DrMdoMat::matCall_AccMulRgb3,
+    &DrMdoMat::matCall_AccMulRgb4,
+    &DrMdoMat::matCall_AccVal1,
+    &DrMdoMat::matCall_AccVal2,
+    &DrMdoMat::matCall_AccVal3,
+    &DrMdoMat::matCall_AccVal4,
+    &DrMdoMat::matCall_AccMulVal1,
+    &DrMdoMat::matCall_AccMulVal2,
+    &DrMdoMat::matCall_AccMulVal3,
+    &DrMdoMat::matCall_AccMulVal4,
+    &DrMdoMat::matCall_WaterFog,
+    &DrMdoMat::matCall_MatxInvView,
+    &DrMdoMat::matCall_FurShader,
+    &DrMdoMat::matCall_CalcBloom,
+    &DrMdoMat::matCall_CalcColor,
+    &DrMdoMat::matCall_OutLineVal,
+    &DrMdoMat::matCall_ToonId,
+    &DrMdoMat::matCall_VolumeTest,
+    &DrMdoMat::matCall_BaseColor,
+    &DrMdoMat::matCall_BaseVal,
+    &DrMdoMat::matCall_TransVal,
+    &DrMdoMat::fn_71007701FC,
+    &DrMdoMat::fn_71007710B0,
+    &DrMdoMat::fn_7100772150,
+    &DrMdoMat::fn_7100777C88,
 };
 
 void DrMdoAnim::animcall_UV_Scr_U(DrResMdoMat* mat, float* work, float value) {
