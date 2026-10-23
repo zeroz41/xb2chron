@@ -1,16 +1,17 @@
 #ifndef CLASSES_FW_DYNAMICSCOLOBJUPDATER_H
 #define CLASSES_FW_DYNAMICSCOLOBJUPDATER_H
 
+#include "mm/mtl/IntrusiveList.h"
+
 namespace skd { class CollisionObject; }
 
 namespace fw {
-// what DyanmicsManager's per-layer collision lists hold (addColUpdater/removeColUpdater take one)
-class DynamicsColObjUpdaterInterface {
+// what DyanmicsManager's per-layer collision lists hold (addColUpdater/removeColUpdater take one): it carries the
+// list's links as its IntrusiveListNodeBase base (DyanmicsManager::updateColObjects finds it 8 bytes before its node)
+class DynamicsColObjUpdaterInterface : public mm::mtl::IntrusiveListNodeBase {
 public:
     virtual ~DynamicsColObjUpdaterInterface() {}
     virtual void update() = 0;
-
-    unsigned char pad_8[0x10];  // a list node: addColUpdater links it into the layer's list
 };
 
 // table 0x7100B412F8; updates a collision object

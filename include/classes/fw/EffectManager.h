@@ -10,7 +10,9 @@
 namespace effect { class SendParam; }
 namespace fw { class EffectData; }
 namespace fw { class EffectPack; }
+namespace fw { class EffectCasterBase; }
 namespace fw { class EffectManager; }
+namespace mm { class Mat44; }
 namespace fw { class UpdateInfo; }
 namespace ml { class IDrDrawWorkInfo; }
 
@@ -51,6 +53,13 @@ public:
     virtual void finalRender(ml::IDrDrawWorkInfo const*);  // slot 15
     virtual bool finalize();  // overrides a secondary base's (ManagerObject's)
     void addData(EffectData* data);
+    // EffectCasterBase's setters hand their values on to these
+    void addCaster(EffectCasterBase* caster);
+    void changeLayerCaster(EffectCasterBase* caster, unsigned int index, unsigned int layer);
+    void sendCaster(EffectCasterBase* caster, mm::Mat44& mtx, const char* name, int index);
+    void sendCaster(EffectCasterBase* caster, float scl);
+    void sendCasterFrame(EffectCasterBase* caster, float frame);
+    void sendCasterStateName(EffectCasterBase* caster, const char* name);
     void removeData(EffectData* data);
     // an effect by name, its handle (0 for none)
     unsigned int create(const char* name, EffectPack* pack, const effect::SendParam* param, bool flag);

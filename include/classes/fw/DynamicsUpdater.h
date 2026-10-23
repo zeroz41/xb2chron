@@ -3,21 +3,22 @@
 
 #include "fw/Transform.h"
 #include "mm/mtl/Delegate.h"
+#include "mm/mtl/IntrusiveList.h"
 #include "mm/mtl/IntrusivePtr.h"
 
+namespace fw { class DynamicsDrawer; }
 namespace fw { class ReferenceFrame; }
 namespace fw { class UpdateInfo; }
 namespace skd { class Dynamics; }
 
 namespace fw {
-// what DyanmicsManager's per-layer lists hold (addUpdater/removeUpdater take one)
-class DynamicsUpdaterInterface {
+// what DyanmicsManager's per-layer lists hold (addUpdater/removeUpdater take one): it carries the list's links as
+// its IntrusiveListNodeBase base (DyanmicsManager::updateDynamics finds it 8 bytes before its node)
+class DynamicsUpdaterInterface : public mm::mtl::IntrusiveListNodeBase {
 public:
     virtual ~DynamicsUpdaterInterface() {}
     virtual void update(fw::UpdateInfo const&) = 0;
     virtual void drawDebug() = 0;
-
-    unsigned char pad_8[0x10];  // a list node: addUpdater links it into the layer's list
 };
 
 // table 0x7100B412C8; steps a dynamics (skd::Dynamics) with a reference frame's movement
@@ -40,10 +41,14 @@ public:
     Transform m_prevTransform;
     bool m_enable;  // the constructor's is true (the name is not the original's)
     bool m_enableMovement;  // setEnableMovement's (the name is not the original's)
-    bool pad_72;
+    // update resets the dynamics and clears it while it is set (the name is not the original's)
+    bool m_resetRequest;
     // GfComDynamics::setup sets it to its applyAttribute, cleanup clears it (the name is not the original's)
     mm::mtl::Delegate<void()> m_callback;
-    unsigned char pad_98[0x18];
+    float m_timeScale;  // update scales the frame's time step by it; the constructor's is 1 (the name is not the original's)
+    unsigned char pad_9c[0x4];
+    DynamicsDrawer* m_pDrawer;  // drawDebug draws with it when set (the name is not the original's)
+    unsigned char pad_a8[0x8];
 };
 }  // namespace fw
 

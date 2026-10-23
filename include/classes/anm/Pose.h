@@ -20,6 +20,8 @@ public:
     const QsTransform& getBoneModelSpace(unsigned short bone);
     void setBoneLocalSpace(unsigned short bone, QsTransform const& transform);
     void setBoneModelSpace(unsigned short bone, QsTransform const& transform, PROPAGATE_TYPE propagate);
+    void syncLocalSpace();
+    void syncModelSpace();
 
     const Skeleton* m_pSkeleton;  // the constructor's; anm_pose.cpp asserts `m_pSkeleton`
     unsigned char pad_20[0x70];   // Factory::createPose allocates 0x90 bytes

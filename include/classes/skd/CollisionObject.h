@@ -8,6 +8,7 @@ namespace skd {
 class CollisionObject : public anm::ReferenceObject {
 public:
     virtual ~CollisionObject();  // slot 0
+    void update();
 };
 }  // namespace skd
 
