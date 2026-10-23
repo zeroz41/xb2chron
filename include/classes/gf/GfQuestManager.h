@@ -10,10 +10,15 @@
 
 namespace gf { class GfQuestManager; }
 
+namespace gf { enum RELOAD_BDAT : int; }
 namespace gf {
 // table 0x7100B56DB0
 class GfQuestManager : public ::mm::mtl::PtrSingleton< ::gf::GfQuestManager> {
 public:
+    static void gevReloadBdat(RELOAD_BDAT, unsigned int);
+    static void gevChangeWeather(unsigned int, unsigned int);
+    static void gevChangeTimeRange(unsigned int);
+    static void gevItemAdd(unsigned int, int);
     virtual ~GfQuestManager();  // slot 0
     static void entryOrderAchievQuest(gf::QuestID id);
     // whether the quest's order opened (GfQuestEvent::setQuestEntry tests it)

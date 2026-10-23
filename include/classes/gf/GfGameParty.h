@@ -17,7 +17,12 @@ public:
 // table 0x7100B553B0; base at 0x8 unknown (TUnk_B553D8)
 class GfGameParty : public ::mm::mtl::PtrSingleton< ::gf::GfGameParty>, public TUnk_B553D8 {
 public:
+    static void gevGameObjEnter(gf::GF_OBJ_HANDLE*);
+    static void gevGameObjLeave(gf::GF_OBJ_HANDLE*);
     static void refreshPartyMemberPosition();
+    static gf::GF_OBJ_HANDLE* getHandleMover(unsigned int id);
+    static void gevChangeBlade(gf::GF_OBJ_HANDLE*, int, int);
+    static void gevPartyIDMemberOK(bool, unsigned int);
     virtual ~GfGameParty();  // slot 0
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 2
     static gf::GfComTransform* getLeaderTransform();  // the leader's transform, null for none

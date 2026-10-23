@@ -13,7 +13,7 @@ namespace gf {
 // table none (its derived classes')
 class IQuestEvent {
 public:
-    virtual ~IQuestEvent();  // slot 0
+    virtual ~IQuestEvent() {}  // slot 0 (inline: no unit has an out-of-line copy; GfGameManager's destructor calls none)
     virtual void qevAchievementCount(gf::QuestOrderParam const&) {}  // slot 2
     virtual void qevOrderQuest(gf::QuestOrderParam const&) = 0;  // slot 3
     virtual void qevCompleteQuest(gf::QuestCompleteParam const&);  // slot 4

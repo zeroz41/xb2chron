@@ -10,6 +10,8 @@ namespace gf {
 class GfGameVoice : public ::mm::mtl::PtrSingleton< ::gf::GfGameVoice> {
 public:
     virtual ~GfGameVoice();  // slot 0
+    static void gevLayerPause(unsigned int, bool);
+    bool isPlayEnemyVoice() const;
 };
 }  // namespace gf
 

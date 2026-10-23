@@ -4,6 +4,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class GfGameMercenaries; }
+namespace gf { class QuestOrderParam; }
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
 
 namespace gf {
@@ -14,6 +15,7 @@ public:
     static void addPoint(unsigned int point);
     static void setLevel(unsigned int level);
     virtual ~GfGameMercenaries();  // slot 0
+    static void qevOrderQuest(const gf::QuestOrderParam&);
     // a mission's rewards (team: GfDataMercenaries::isMissionOrderTeam), the bonus parts ("Hosei") on their own
     static int getRewardGold(unsigned int mission, bool team);
     static int getRewardGoldHosei(unsigned int mission, bool team);

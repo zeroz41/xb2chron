@@ -7,6 +7,7 @@
 
 namespace gf { class GfSequentialPlay; }
 namespace gf { class ParamReturnTitle; }
+namespace fw { class UpdateInfo; }
 namespace gf {
 // a flag a caller holds while its command list runs: GfPlayComExecuteSignal sets it when the startSignal command
 // is made and clears it when the endSignal command starts (the field name is not the original's)
@@ -30,6 +31,7 @@ namespace gf {
 // table 0x7100B590E8
 class GfSequentialPlay : public ::mm::mtl::PtrSingleton< ::gf::GfSequentialPlay> {
 public:
+    static void postUpdate(const fw::UpdateInfo& info);
     // how beginCommand starts a command list (GfPlayFactory passes 0 or 1); no value has a name yet
     enum TYPE {};
     virtual ~GfSequentialPlay();  // slot 0

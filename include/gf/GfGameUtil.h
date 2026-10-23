@@ -10,6 +10,7 @@ namespace gf {
 // game-wide helpers (functions, by its symbols)
 class GfGameUtil {
 public:
+    static bool isCondDriverModel(unsigned int);
     static void execDevelopLevelUp();
     // add to the party's money and coins (SCOM_ADD_MONEY, SCOM_ADD_COIN)
     static void addMoney(int money);

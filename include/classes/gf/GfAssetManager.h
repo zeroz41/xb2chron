@@ -24,6 +24,7 @@ namespace gf {
 // table 0x7100B43558
 class GfAssetManager : public ::mm::mtl::PtrSingleton< ::gf::GfAssetManager>, public ::ml::IWorkEvent {
 public:
+    static unsigned int getUsedAssetPackInfo();
     static void build(const GfSetupParam& param);
     static void destroy();
     void update(const fw::UpdateInfo& info);

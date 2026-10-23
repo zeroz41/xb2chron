@@ -28,6 +28,7 @@ struct GfFadeInfo {
 // helpers for the objects behind handles (functions, by its symbols)
 class GfObjUtil {
 public:
+    static unsigned int getPartyID(GF_OBJ_HANDLE*);
     // the object behind a handle, none for an invalid handle or one with no object
     static gf::GfObj* getObj(gf::GF_OBJ_HANDLE* handle);
     static void setEnableEyeBlink(gf::GF_OBJ_HANDLE* handle, bool enable);

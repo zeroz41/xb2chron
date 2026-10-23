@@ -19,6 +19,8 @@ public:
     static void callBladeChange(GF_OBJ_HANDLE* handle, int from, int to);
     static void build(const GfSetupParam& param);
     static void destroy();
+    static void callTargetAccess(GF_OBJ_HANDLE*);
+    static void callTargetChange(GF_OBJ_HANDLE*);
     // GfPlayComCallbackEventSequence::start passes 12 (begin) or 13 and its id
     static void callEventPlay(GEV gev, unsigned int id);
     virtual ~GfEvent();  // slot 0

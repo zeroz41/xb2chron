@@ -35,6 +35,7 @@ struct GameTime {
 // table 0x7100B52638
 class GfFieldTime : public ::mm::mtl::PtrSingleton< ::gf::GfFieldTime> {
 public:
+    int getTimeRangeDN() const;
     virtual ~GfFieldTime();  // slot 0
     const ElapseTime& getElapseTime() const;  // the play time
     int getHour() const;

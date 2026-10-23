@@ -29,6 +29,7 @@ public:
 // table 0x7100B58728; base at 0x0 unknown (TUnk_B58728), base at 0x10 unknown (TUnk_B58778)
 class GfPlayComPlayerDead : public TUnk_B58728, public TUnk_B58778, public ::gf::IGfEvent {
 public:
+    static bool isDead();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfPlayComPlayerDead();  // slot 1
     virtual void getFuncName() const;  // slot 3
