@@ -1,3 +1,4 @@
+#include "classes/wnd/WindObject.h"
 #include "mm/Vec3.h"
 #include "wnd/SphereSphereAgent.h"
 #include "wnd/HitCache.h"
@@ -18,12 +19,12 @@ bool SphereSphereAgent::processCollision(const WindObject& obj0, const WindObjec
     mm::Vec3 diff = obj0.m_transform.position - obj1.m_transform.position;
     float distance = diff.length();
 
-    const Shape* shape0 = obj0.m_shape;
+    const Shape* shape0 = obj0.m_pShape;
     const SphereShape* pShape0 =
         shape0 != nullptr && shape0->m_type == SHAPE_TYPE_SPHERE ? static_cast<const SphereShape*>(shape0) : nullptr;
 #line 47
     MM_ASSERT(pShape0);
-    const Shape* shape1 = obj1.m_shape;
+    const Shape* shape1 = obj1.m_pShape;
     const SphereShape* pShape1 =
         shape1 != nullptr && shape1->m_type == SHAPE_TYPE_SPHERE ? static_cast<const SphereShape*>(shape1) : nullptr;
 #line 49

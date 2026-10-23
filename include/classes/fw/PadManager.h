@@ -3,6 +3,7 @@
 
 #include "classes/fw/ManagerObject.h"
 #include "classes/ml/DevGraphCB.h"
+#include "ml/PadVibrationInfo.h"
 
 namespace fw { class UpdateInfo; }
 
@@ -23,6 +24,7 @@ public:
     virtual void debugDraw(int, int);  // slot 8
     virtual void update(fw::UpdateInfo const&);  // slot 9
     virtual void viBeginFrame();  // slot 10
+    static void playVibration(const ml::PadVibrationInfo& info);
 };
 }  // namespace fw
 

@@ -17,6 +17,7 @@ enum ResetCameraWallTiming : int {};
 // table 0x7100B45AE8
 class PlayerCamera : public ::fw::Camera {
 public:
+    static void setOnceOff();
     // its parameter block; the names are 1.0.0's createReflection's (snake_case there), at the offsets it registers
     struct Param {
         unsigned char pad_0[0x64];

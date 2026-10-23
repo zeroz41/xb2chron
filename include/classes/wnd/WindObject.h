@@ -61,7 +61,9 @@ public:
 
     ObjectType m_type;  // the constructor's
     Transform m_transform;  // the constructor copies its create-info's info.pTransform
-    Shape* m_shape;  // the constructor's info.pShape, referenced; the destructor releases it
+    // the constructor's info.pShape, referenced; the destructor releases it (wnd_broad_phaze_interface.h asserts
+    // `wind.m_pShape`)
+    Shape* m_pShape;
     // the create-info's; BroadPhazeOctree::calculateOverlapping recomputes the proxy's box of a dynamic object
     Filter m_filter;
     BroadPhazeProxy* m_pProxy;  // BroadPhazeOctree::createProxy's; the destructor asserts it is gone

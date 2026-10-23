@@ -13,6 +13,7 @@ public:
     virtual void exec(fw::UpdateInfo const&);  // slot 2
     // queues a request that adds value to achievement counter type (type 0x22 also counts salvage-shop requests)
     static void create(unsigned int type, int value, unsigned int);
+    static void addTotalCount(unsigned int type, unsigned int value);
 };
 }  // namespace gf
 

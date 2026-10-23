@@ -1,3 +1,4 @@
+#include "classes/wnd/WindObject.h"
 #include "mm/mtl/IntrusiveList.h"
 #include "wnd/UpdateInfo.h"
 #include "classes/wnd/WindObject.h"
@@ -30,7 +31,7 @@ void Dispatcher::dispatchAll(mm::mtl::IntrusiveList<WindProbe>& probes, const Up
     HitCache caches[64];
     for (mm::mtl::IntrusiveList<WindProbe>::iterator it = probes.begin(); it != probes.end(); ++it) {
         WindProbe& probe = *it;
-        const Shape* pProbeShape = probe.m_shape;
+        const Shape* pProbeShape = probe.m_pShape;
 #line 73
         MM_ASSERT(pProbeShape);
         OverlappingCache* pCache = probe.m_pOverlappingCache;
@@ -42,7 +43,7 @@ void Dispatcher::dispatchAll(mm::mtl::IntrusiveList<WindProbe>& probes, const Up
             WindObject* pWind = *wi;
 #line 85
             MM_ASSERT(pWind);
-            const Shape* pShape = pWind->m_shape;
+            const Shape* pShape = pWind->m_pShape;
 #line 87
             MM_ASSERT(pShape);
             ProcessCollisionFunc func = m_agents[pProbeShape->m_type][pShape->m_type];

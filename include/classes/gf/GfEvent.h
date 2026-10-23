@@ -25,6 +25,8 @@ public:
     static void callExecState(EXEC_STATE state);  // each listener's gevExecState
     static void callLoadGameTime(float time);  // each listener's gevLoadGameTime
     static void callSwapFormation(unsigned int index0, unsigned int index1);  // each listener's gevSwapFormation
+    // each listener told the salvage game's state (1.0.0's name: 3.0.1's symbols spell it fn_7100326DF8)
+    static void callSalvageStateChange(unsigned int state);
 };
 }  // namespace gf
 

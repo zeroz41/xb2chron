@@ -4,10 +4,14 @@
 #include <string.h>
 #include "mm/MMStdBase.h"
 
-// mm_mtl/fixstr.h as its includer's project named it: mm_lib's own (MM_LIB_PROJECT), a library under libs/ that
+// mm_mtl/fixstr.h as its includer's project named it: mm_lib's own (MM_LIB_PROJECT), eflib's (MM_LIB_FROM_EFLIB:
+// ptlib::HeapAllocator::create cites it so), a library under libs/ that
 // reaches it from its own build folder (MM_LIB_FROM_LIBS), or the game's
 #if defined(MM_LIB_PROJECT)
 #define MM_MTL_FIXSTR_H_FILE "C:/MonolithSoft/BF2/prog/libs/mcl/mm_lib/project/win/../../source\\mm_mtl/fixstr.h"
+#elif defined(MM_LIB_FROM_EFLIB)
+#define MM_MTL_FIXSTR_H_FILE \
+    "D:/Monolithsoft/BF2/prog/libs/eflib/proj/windows/../../../mcl/mm_lib/source\\mm_mtl/fixstr.h"
 #elif defined(MM_LIB_FROM_LIBS)
 #define MM_MTL_FIXSTR_H_FILE "../../../mcl/mm_lib/source\\mm_mtl/fixstr.h"
 #else

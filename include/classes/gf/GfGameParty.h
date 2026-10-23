@@ -16,6 +16,7 @@ public:
 // table 0x7100B553B0; base at 0x8 unknown (TUnk_B553D8)
 class GfGameParty : public ::mm::mtl::PtrSingleton< ::gf::GfGameParty>, public TUnk_B553D8 {
 public:
+    static void refreshPartyMemberPosition();
     virtual ~GfGameParty();  // slot 0
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 2
     static gf::GF_OBJ_HANDLE* getLeader();  // the party's leader, -1 for none

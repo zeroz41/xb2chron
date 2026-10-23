@@ -16,6 +16,10 @@ public:
     virtual void wkFrameEnd();  // slot 13
     virtual bool wkStandbyLogin();  // slot 14
     virtual bool wkStandbyLogout();  // slot 15
+    // the clock now, and the seconds from a clock to now (static: the states of the salvage game time themselves)
+    static void getClockNow(long& clock);
+    static void getTimeNow(float& time, const long& clock);
+
     unsigned char pad_8[0x1A8];  // fields: size from its derived classes
 };
 }  // namespace ml

@@ -39,6 +39,8 @@ public:
     const ElapseTime& getElapseTime() const;  // the play time
     int getHour() const;
     int getMin() const;
+    void setHour(unsigned int hour);
+    void setMin(unsigned int min);
     int getTimeRange() const;  // the time of day's range (an icon index)
     int getTimeRange(unsigned int hour, unsigned int min) const;  // the same for that time
     const GameTime& getGameTime() const;

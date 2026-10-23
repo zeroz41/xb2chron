@@ -3,6 +3,8 @@
 
 #include "mm/mtl/RTTI.h"
 
+namespace wnd { class AreaBlock; }
+
 namespace wnd {
 // what BroadPhazeOctree::query answers: it asks the query's type through slot 0 and fills an AreaQuery. The
 // classes' tables are not in the update; their m_rtti are wnd_probe.cpp's.
@@ -40,6 +42,8 @@ public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
 
     static mm::mtl::RTTI m_rtti;
+
+    AreaBlock* m_pArea;  // the octree's root cell (the name is not the original's)
 };
 }  // namespace wnd
 

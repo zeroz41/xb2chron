@@ -5,6 +5,8 @@ namespace ptlib {
 
 // reports a failed check of the effect library with a printf-style message; the expression comes first
 void efAstMsg(const char* expression, const char* format, ...);
+// prints a printf-style message of the effect library
+void efMsg(const char* format, ...);
 
 // the effect library's manager (particle_system.cpp)
 class ParticleManager {

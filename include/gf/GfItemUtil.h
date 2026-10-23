@@ -35,6 +35,8 @@ struct ItemProperty {
 class GfItemUtil {
 public:
     static unsigned int getItemBoxCount(unsigned int item);  // how many of the item the party has
+    // count of the item into the party's box (1.0.0's name: 3.0.1's symbols spell it fn_71002FA93C)
+    static void addItemBox(unsigned int item, int count);
     static void getProperty(ItemProperty& property, unsigned int item, unsigned int);
     static void getPrice(ItemPrice& price, unsigned int item, unsigned int shop);
 };

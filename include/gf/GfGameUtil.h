@@ -3,6 +3,7 @@
 
 namespace gf { class GF_OBJ_HANDLE; }
 namespace mm { namespace mtl { template <int LEN> class FixStr; } }
+namespace gmk { enum GmkType : int; }
 
 namespace gf {
 
@@ -19,6 +20,8 @@ public:
     static gf::GF_OBJ_HANDLE* getWeaponOwner(gf::GF_OBJ_HANDLE* handle);
     // the name of a weapon's idle state for its owner, in battle or not
     static void makeWeaponStateIdle(mm::mtl::FixStr<32>& out, gf::GF_OBJ_HANDLE* owner, bool battle);
+    // shows or hides the gimmicks of a type
+    static void setDispByGmkType(gmk::GmkType type, bool disp);
 
     // the text the action window shows for an object (the names are not the original's)
     struct UiActionWindowInfo {
