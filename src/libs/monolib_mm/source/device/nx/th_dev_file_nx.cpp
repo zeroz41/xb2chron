@@ -5,7 +5,9 @@
 #include "classes/ml/DevClockNx.h"
 #include "classes/ml/DevFileTh.h"
 #include "classes/ml/DevGraphNx.h"
+#include "classes/ml/DevGraphQue.h"
 #include "classes/ml/DevPad.h"
+#include "classes/ml/DevPadNx.h"
 #include "classes/ml/DevPerf.h"
 #include "classes/ml/DevPerfNx.h"
 #include "classes/ml/DevSetting.h"
@@ -236,5 +238,235 @@ void DeviceNx::createDevicePort(const char*) {}
 void DevFileTh::wkUpdate() {}
 
 void DevFileTh::icbDecide(ml::CERR_STRUCT*, ml::ERR_DECIDE) {}
+
+int DevPad::getPadMax() {
+    return 11;
+}
+
+bool DevPad::isConnectPad(int pad) {
+    DevPad* dev = get();
+    if (dev != nullptr) {
+        return dev->isLocalConnect(pad);
+    }
+    return false;
+}
+
+int DevPad::getStylePad(int pad) {
+    DevPad* dev = get();
+    if (dev != nullptr) {
+        return dev->getLocalStyle(pad);
+    }
+    return 0;
+}
+
+int DevPad::getUserSelectPadID() {
+    DevPad* dev = get();
+    if (dev != nullptr) {
+        return dev->getLocalUserSelectPadID();
+    }
+    return 0;
+}
+
+unsigned int DevPad::getBtn(int pad) {
+    DevPad* dev = get();
+    if (dev != nullptr) {
+        return dev->m_btn[pad];
+    }
+    return 0;
+}
+
+unsigned int DevPad::getDown(int pad) {
+    DevPad* dev = get();
+    if (dev != nullptr) {
+        return dev->m_down[pad];
+    }
+    return 0;
+}
+
+unsigned int DevPad::getUp(int pad) {
+    DevPad* dev = get();
+    if (dev != nullptr) {
+        return dev->m_up[pad];
+    }
+    return 0;
+}
+
+unsigned int DevPad::getDbl(int pad) {
+    DevPad* dev = get();
+    if (dev != nullptr) {
+        return dev->m_dbl[pad];
+    }
+    return 0;
+}
+
+float DevPad::getALX(int pad, bool deadZone) {
+    DevPad* dev = get();
+    if (dev == nullptr) {
+        return 0.0f;
+    }
+    float value = dev->getLocalALX(pad);
+    float zone = get() != nullptr ? get()->m_deadZone : 0.0f;
+    if (deadZone && value < zone && value > -zone) {
+        return 0.0f;
+    }
+    return value;
+}
+
+float DevPad::getALY(int pad, bool deadZone) {
+    DevPad* dev = get();
+    if (dev == nullptr) {
+        return 0.0f;
+    }
+    float value = dev->getLocalALY(pad);
+    float zone = get() != nullptr ? get()->m_deadZone : 0.0f;
+    if (deadZone && value < zone && value > -zone) {
+        return 0.0f;
+    }
+    return value;
+}
+
+float DevPad::getARX(int pad, bool deadZone) {
+    DevPad* dev = get();
+    if (dev == nullptr) {
+        return 0.0f;
+    }
+    float value = dev->getLocalARX(pad);
+    float zone = get() != nullptr ? get()->m_deadZone : 0.0f;
+    if (deadZone && value < zone && value > -zone) {
+        return 0.0f;
+    }
+    return value;
+}
+
+float DevPad::getARY(int pad, bool deadZone) {
+    DevPad* dev = get();
+    if (dev == nullptr) {
+        return 0.0f;
+    }
+    float value = dev->getLocalARY(pad);
+    float zone = get() != nullptr ? get()->m_deadZone : 0.0f;
+    if (deadZone && value < zone && value > -zone) {
+        return 0.0f;
+    }
+    return value;
+}
+
+void DevPad::playVibration(int pad, const PadVibrationInfo& info) {
+    DevPad* dev = get();
+    if (dev != nullptr) {
+        dev->playLocalVibration(pad, info);
+    }
+}
+
+void DevPad::stopVibration(int pad) {
+    DevPad* dev = get();
+    if (dev != nullptr) {
+        dev->stopLocalVibration(pad);
+    }
+}
+
+void DevPad::loadVibration(unsigned int id, void* data, unsigned long size) {
+    DevPad* dev = get();
+    if (dev != nullptr) {
+        dev->loadLocalVibration(id, data, size);
+    }
+}
+
+namespace dg {
+int s_nVSync = -1;
+int s_nVSyncOld = -1;
+bool s_bIgnore;
+}  // namespace dg
+
+int DevGraph::fontGetWidth(const char* text, FONT_STYLE style, float scale) {
+    DevGraph* dev = get();
+    if (dev != nullptr) {
+        return dev->fontGetWidthSys(text, style, scale);
+    }
+    return 0;
+}
+
+bool DevGraph::isIgnore() {
+    return dg::s_bIgnore;
+}
+
+void DevGraph::grSetClearCol(const mm::Col4& col) {
+    DevGraph* dev = get();
+    if (dev != nullptr) {
+        dev->m_clearCol = col;
+        dev->m_clearDepth = 1.0f;
+    }
+}
+
+int DevGraph::getRootWidth() {
+    DevGraph* dev = get();
+    if (dev != nullptr) {
+        return dev->getRootWidthSys();
+    }
+    return 0;
+}
+
+int DevGraph::getRootHeight() {
+    DevGraph* dev = get();
+    if (dev != nullptr) {
+        return dev->getRootHeightSys();
+    }
+    return 0;
+}
+
+void* DevGraph::cmdOpenDisplayList(unsigned int size) {
+    return get()->cmdOpenDisplayListSys(size, false, false);
+}
+
+bool DevGraph::cmdCloseDisplayList() {
+    return get()->cmdCloseDisplayListSys(false);
+}
+
+void DevGraph::cmdExecDisplayList() {
+    DevGraph* dev = get();
+    if (dev != nullptr) {
+        dev->cmdExecDisplayListSys();
+    }
+}
+
+void DevGraph::pushRect(const mm::Rect<int>& a, const mm::Rect<int>& b, const mm::Rect<int>& c, bool flag) {
+    get()->m_que->pushRect(a, b, c, flag);
+}
+
+void DevGraph::popRect() {
+    get()->m_que->popRect();
+}
+
+void DevGraph::getPers(mm::Mat44& mtx, float fovy, float nearZ, float farZ) {
+    get()->getPersSys(mtx, fovy, nearZ, farZ);
+}
+
+mm::Rect<int>& DevGraph::getViewport() {
+    return get()->m_viewport;
+}
+
+float DevGraph::getScreenScaleW() {
+    return get()->getScreenScaleWSys();
+}
+
+float DevGraph::getCost() {
+    DevGraph* dev = get();
+    if (dev != nullptr) {
+        return dev->getCostSys();
+    }
+    return 0.0f;
+}
+
+void DevGraph::setVSync(int vsync) {
+    dg::s_nVSyncOld = dg::s_nVSync;
+    dg::s_nVSync = vsync;
+}
+
+void DevGraph::setFrameSpd(float spd) {
+    DevGraph* dev = get();
+    if (dev != nullptr) {
+        dev->m_frameSpd = spd;
+    }
+}
 
 }  // namespace ml

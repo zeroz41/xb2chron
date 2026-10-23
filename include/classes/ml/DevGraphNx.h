@@ -21,18 +21,18 @@ public:
     virtual void grSetScissorSys(mm::Rect<int> const&);  // slot 19
     virtual void getPersSys(mm::Mat44&, float, float, float);  // slot 21
     virtual void getOrthoSys(mm::Mat44&);  // slot 22
-    virtual void getRootWidthSys();  // slot 23
-    virtual void getRootHeightSys();  // slot 24
-    virtual void getScreenScaleWSys();  // slot 25
-    virtual void getVSyncSecSys() const;  // slot 26
+    virtual int getRootWidthSys();  // slot 23
+    virtual int getRootHeightSys();  // slot 24
+    virtual float getScreenScaleWSys() { return 1.0f; }  // slot 25
+    virtual float getVSyncSecSys() const { return 1.0f / 60.0f; }  // slot 26
     virtual void renderBeginSys();  // slot 27
     virtual void renderEndSys();  // slot 28
     virtual void renderSyncSys();  // slot 29
     virtual void resetSizeSys(short, short);  // slot 30
     virtual void fontDrawSys(short, short, float, float, char const*, mm::Col4 const*, bool);  // slot 31
-    virtual void fontGetWidthSys(char const*, ml::FONT_STYLE, float);  // slot 32
+    virtual int fontGetWidthSys(char const*, ml::FONT_STYLE, float);  // slot 32
     virtual void fontGetHeightSys(ml::FONT_STYLE, float);  // slot 33
-    virtual void getCostSys() const;  // slot 34
+    virtual float getCostSys() const;  // slot 34
 };
 }  // namespace ml
 
