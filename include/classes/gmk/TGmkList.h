@@ -4,6 +4,7 @@
 #include "classes/fw/CommonResource.h"
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkAccManager.h"
+#include "classes/gmk/GmkGobEventListener.h"
 #include "classes/gmk/IGmkList.h"
 #include "mm/mtl/Vector.h"
 
@@ -14,6 +15,12 @@ template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T
 class TGmkList : public ::gmk::IGmkList {
 public:
     typedef void (TGmkList::*SeqFunc)(float);
+    // every list shares the gimmick object listener (GmkGobEventListener::addRef); the destructor releases it
+    TGmkList()
+        : m_resource(nullptr), m_assetData(nullptr), pad_180(), m_gmkSection(nullptr), pad_1a8(), m_bdatFp(nullptr),
+          m_seq(nullptr), m_updateGmkNumPerFrame(0), m_updateGmkIndex(0) {
+        GmkGobEventListener::addRef();
+    }
     virtual ~TGmkList();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3

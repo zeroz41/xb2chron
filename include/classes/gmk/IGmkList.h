@@ -15,15 +15,38 @@ public:
     // how a list loads its gimmicks (TGmkList::create copies it; dispose resets it to a default one)
     class CreateInfo {
     public:
-        CreateInfo() : m_param(nullptr), m_pos(0.0f, 0.0f, 0.0f), m_flags(0) {}
-        // out of line in the original (TGmkList::dispose calls it); its body is not written yet
-        CreateInfo& operator=(CreateInfo&& other);
+        // the gimmicks' position: its copy assignment checks for self-assignment (CreateInfo's out-of-line move
+        // assignment 0x71005C8D90 copies its three words under `this != &other`), so it is not mm::Vec3 (the name
+        // is not the original's)
+        class Pos {
+        public:
+            Pos() : x(0.0f), y(0.0f), z(0.0f) {}
+            Pos& operator=(const Pos& v) {
+                if (this != &v) {
+                    x = v.x;
+                    y = v.y;
+                    z = v.z;
+                }
+                return *this;
+            }
+            Pos& operator=(const mm::Vec3& v) {
+                x = v.x;
+                y = v.y;
+                z = v.z;
+                return *this;
+            }
+            float x;
+            float y;
+            float z;
+        } __attribute__((aligned(16)));
+
+        CreateInfo() : m_param(nullptr), m_rotY(0.0f) {}
         mtl::ALLOC_HANDLE m_allocHandle;  // the resource's memory (CommonResource::request takes it)
         void* m_param;  // copied as 8 bytes (the name is not the original's)
         mm::mtl::FixStr<256> m_path;  // the gimmick resource's path (CommonResource::request takes it)
         mm::mtl::FixStr<32> m_bdatName;  // the BDAT table's name (Bdat::getFP takes it), empty for none
-        mm::Vec3 m_pos;  // copied as three words (the name is not the original's)
-        unsigned int m_flags;  // copied (the name is not the original's)
+        Pos m_pos;  // where the list places its gimmicks (the name is not the original's)
+        float m_rotY;  // their rotation: TGmkList::createGmk takes its sine and cosine (the name is not the original's)
     };
     virtual ~IGmkList() {}  // slot 0
     virtual gmk::GmkType getGmkType() const = 0;  // slot 2

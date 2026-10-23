@@ -10,7 +10,8 @@ namespace gmk {
 // table 0x7100B6CAA0
 class GmkSalvageLocator : public ::gmk::AGmkBase {
 public:
-    class BdatInfo;
+    // its row of the list's BDAT table: nothing of it is kept (Vector<BdatInfo>::resize allocates a byte an element)
+    class BdatInfo {};
     virtual ~GmkSalvageLocator();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3

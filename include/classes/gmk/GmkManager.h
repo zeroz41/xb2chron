@@ -40,7 +40,11 @@ public:
         return true;
     }
 
-    unsigned char pad_8[0xf350];
+    unsigned char pad_8[0x188];
+    // the BDAT table of the map's gimmick sets: a row per set, a column per gimmick kind naming its resource and
+    // one ("<kind>_bdat") naming its BDAT table (GmkSet::createGmkLists reads it; the name is not the original's)
+    unsigned char* m_gmkSetBdatFp;  // 0x190
+    unsigned char pad_198[0xf1c0];
     mm::mtl::Vector<GmkSet*> m_gmkSets;  // the gimmick sets (the name is not the original's)
 };
 }  // namespace gmk

@@ -6,6 +6,7 @@ namespace gmk {
 class GmkNpcManager {
 public:
     virtual ~GmkNpcManager();  // slot 0
+    void dispose();
 };
 }  // namespace gmk
 
