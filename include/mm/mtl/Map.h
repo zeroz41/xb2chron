@@ -62,6 +62,14 @@ public:
         m_sentinel.parent = &m_sentinel;
         m_root = &m_sentinel;
     }
+    // the empty tree, its nodes from allocator (fw::SoundVariableTable's constructor)
+    explicit RedBlackTreeBase(IAllocator* allocator) : m_size(0), m_allocator(allocator) {
+        m_sentinel.color = black;
+        m_sentinel.left = &m_sentinel;
+        m_sentinel.right = &m_sentinel;
+        m_sentinel.parent = &m_sentinel;
+        m_root = &m_sentinel;
+    }
     ~RedBlackTreeBase() {
         clear();
         m_allocator = nullptr;
@@ -399,6 +407,10 @@ public:
     };
     typedef RedBlackTreeBase<MapTraits<K, V> > tree_type;
     typedef typename tree_type::node node;
+
+    Map() {}
+    // an empty map, its nodes from allocator (fw::SoundVariableTable's constructor)
+    explicit Map(IAllocator* allocator) : m_tree(allocator) {}
 
     // a node of the map, none for the end (map.h asserts `m_node != 0` as one is read: GfGameVisible::updateImpl;
     // the names are not the original's)

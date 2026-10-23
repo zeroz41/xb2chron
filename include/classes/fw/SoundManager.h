@@ -5,6 +5,7 @@
 
 namespace fw { class UpdateInfo; }
 namespace fw { class SoundPack; }
+namespace fw { enum SoundCategory : int; }
 namespace mm { namespace mtl { class IAllocator; }}
 
 namespace fw {
@@ -29,6 +30,10 @@ public:
     // the registered pack of a name and allocator, or null
     SoundPack* findPack(const char* name, mm::mtl::IAllocator* allocator);
     void registPack(SoundPack* pack);
+    // plays sound id of pack in category, at volume: the sound's handle, 0 when nothing plays
+    unsigned int playSe(unsigned int id, SoundPack* pack, float volume, SoundCategory category);
+    // stops the sound of handle, fading over fade (the driver's stopSe)
+    void stopSe(unsigned int handle, float fade);
     void removePack(SoundPack* pack);
 };
 }  // namespace fw

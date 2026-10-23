@@ -3,21 +3,12 @@
 
 #include <string.h>
 #include "anm/AsmBlender.h"
+#include "anm/StringPtr.h"
 #include "mm/mtl/Map.h"
 
 namespace anm { class ResASM; }
 
 namespace anm {
-// a state name as a map key, ordered by strcmp (the RedBlackTreeBase<Map<StringPtr, ...>> instances are 1.0.0's
-// names; the field's name is not the original's)
-class StringPtr {
-public:
-    StringPtr() : m_str(nullptr) {}
-    StringPtr(const char* str) : m_str(str) {}
-    bool operator<(const StringPtr& other) const { return strcmp(m_str, other.m_str) < 0; }
-
-    const char* m_str;
-};
 
 // where setState starts the new state (no value has a name yet; gf::GfComAsm passes 0 and its setup info's byte)
 enum StartFrameType : int {};
