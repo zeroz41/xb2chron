@@ -34,6 +34,8 @@ public:
     virtual void createClip(ml::Scn*, void const*, int) = 0;  // slot 25
     virtual void createIBL(ml::Scn*, void const*, int) = 0;  // slot 26
     virtual void createEnvColi(ml::Scn*, void const*, int) = 0;  // slot 27
+
+    Scn* m_scn;  // ScnRender::ScnRender(Scn*) stores it
 };
 }  // namespace ml
 

@@ -3,6 +3,8 @@
 
 #include "classes/ml/ScnRender.h"
 
+namespace ml { class DrMan; }
+namespace ml { class IDrDrawCallback; }
 namespace ml { class Scn; }
 namespace ml { class ScnObjCam; }
 namespace ml { class ScnSetup; }
@@ -32,6 +34,11 @@ public:
     virtual void createClip(ml::Scn*, void const*, int);  // slot 25
     virtual void createIBL(ml::Scn*, void const*, int);  // slot 26
     virtual void createEnvColi(ml::Scn*, void const*, int);  // slot 27
+
+    void setCallBack(IDrDrawCallback* callback);
+    void releaseCallBack(IDrDrawCallback* callback);
+
+    DrMan* m_drMan;  // ScnRenderDrSys::thDrSysInitialize makes it; the renderer's calls go to it
 };
 }  // namespace ml
 

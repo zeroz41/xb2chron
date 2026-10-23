@@ -10,6 +10,8 @@ namespace cloud {
 class CloudMan : public ::mm::mtl::PtrSingleton< ::cloud::CloudMan> {
 public:
     virtual ~CloudMan();  // slot 0
+
+    void setCldNum(unsigned int num);
 };
 }  // namespace cloud
 
