@@ -30,6 +30,8 @@ unsigned long getValCheck(unsigned char* fp, unsigned char* member, int id, int 
 unsigned char* isExistFP(const char* name);
 // a row's value of the member at that index, as the given value type (8: a float's 32 bits)
 unsigned int getValCheck(unsigned char* fp, int member, int id, int type);
+// a row's flag: the flag word member's bit that the bit member names (nonzero when set)
+int getFlagVal(unsigned char* fp, unsigned char* member, int id, unsigned char* bitMember);
 }  // namespace Bdat
 
 // a loaded BDAT table, as the generated column accessors take it (1.0.0's gf::_gfbbg and gf::_gfbdb functions take a
@@ -43,6 +45,9 @@ public:
     int getIdCount() const { return Bdat::getIdCount(m_fp); }
     unsigned long getValCheck(unsigned char* member, int id, int type) const {
         return Bdat::getValCheck(m_fp, member, id, type);
+    }
+    int getFlagVal(unsigned char* member, int id, unsigned char* bitMember) const {
+        return Bdat::getFlagVal(m_fp, member, id, bitMember);
     }
     unsigned char* m_fp;  // the name is not the original's
 };
