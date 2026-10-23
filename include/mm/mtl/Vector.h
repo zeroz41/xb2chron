@@ -333,10 +333,12 @@ typename Vector<T>::iterator Vector<T>::erase(iterator it) {
             memcpy(it, it + 1, (last - (it + 1)) * sizeof(T));
         } else {
             // the ones after it assigned down one by one (Vector<ui::UIGroup::RootObjInfo>'s: a FixStr's copy)
-            const T* first = it + 1;
-            T* result = it;
-            for (size_t n = last - it - 1; n != 0; --n, ++first, ++result) {
-                *result = *first;
+            if (it + 1 != last) {
+                iterator p = it;
+                do {
+                    *p = p[1];
+                    ++p;
+                } while (p != last - 1);
             }
         }
         --m_size;

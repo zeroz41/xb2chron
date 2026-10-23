@@ -46,7 +46,21 @@ void UIGroup::clean() {
     m_flags = 0;
 }
 
-// UIGroup::setup: not written yet (not identical)
+void UIGroup::setup(unsigned int count) {
+    if (count == 0) {
+        return;
+    }
+    if (m_objList != nullptr) {
+        delete m_objList;
+        m_objList = nullptr;
+    }
+#line 60
+    m_objList = new (UIUtil::getProgAllocator(), 16, __FILE__, __LINE__) UIObjectList();
+    m_rootObjs.setAllocator(UIUtil::getProgAllocator());
+    m_rootObjs.reserve(count, 8);
+    m_inputs.setAllocator(UIUtil::getProgAllocator());
+    m_inputs.reserve(count, 8);
+}
 
 void UIGroup::releaseInput(unsigned int handle) {
     for (InputInfo* it = m_inputs.begin(); it != m_inputs.end();) {
@@ -72,8 +86,6 @@ void UIGroup::disp(bool disp) {
         m_flags |= 4;
     }
 }
-
-// UIGroup::updateObject: not written yet (not identical)
 
 void UIGroup::applyObject() {
     if (m_objList == nullptr || (m_flags & 2) != 0) {
