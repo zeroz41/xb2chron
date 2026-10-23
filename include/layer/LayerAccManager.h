@@ -25,6 +25,8 @@ public:
     LayerBase* createTexObj(const grlib::CGLibTextureBuffer& texture);
     LayerBase* createPolyObj(unsigned int width, unsigned int height, unsigned short vertexCount,
                              unsigned short indexCount, LayerPrimitiveType type);  // the object made, or null
+    // a memory object of that size (fw::MovieManager::open draws its movie into one)
+    LayerBase* createMemObj(unsigned int width, unsigned int height, LayerMemType type);
 };
 }  // namespace layer
 

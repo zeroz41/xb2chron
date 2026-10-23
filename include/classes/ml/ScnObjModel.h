@@ -15,6 +15,9 @@ class ScnObjModel : public ::ml::ScnObj {
 public:
     enum RENDER_INFO : int;
     enum RENDER_OFFSET_INFO : int;
+    // the offset its render applies (fw::ModelObject::update copies its added offset there; the return type is
+    // not in the symbol)
+    mm::Vec3& getOffsetInfo(bool);
     virtual ~ScnObjModel();  // slot 0
     virtual void renderDebug(ml::DebDraw*);  // slot 3
     virtual void tail();  // slot 5

@@ -6,7 +6,7 @@
 // table 0x7100B42368
 class CMovie : public ::CMovieNX::CMovie {
 public:
-    virtual ~CMovie();  // slot 0
+    virtual ~CMovie() {}  // slot 0: inline (its table and D0 are emitted where fw::MovieManager makes it)
 };
 
 #endif

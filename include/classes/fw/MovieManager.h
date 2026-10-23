@@ -5,7 +5,9 @@
 #include "classes/ml/IWorkBackground.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 
+class ICMovie;
 namespace fw { class MovieManager; }
+namespace layer { class LayerBase; }
 namespace mm { namespace mtl { class IAllocator; } }
 
 namespace fw {
@@ -22,13 +24,25 @@ public:
     void close();
     void open(mm::mtl::IAllocator* allocator, int width, int height, unsigned int layer);
     void stop();
-    void set_file(const char* file);
+    void update();
+    bool set_file(const char* file);  // true when the movie takes the file
     float get_length();
     void play();
     void pause();
     bool isstandby();
     bool ispause();
     bool isplaying();
+    // the UI object the movie is drawn into (its on-memory buffer); 0: a memory layer object of its own
+    unsigned int m_layer;
+    unsigned char pad_24[0x4];
+    // the memory layer object the movie is drawn into (made by the second open, or the UI object's)
+    layer::LayerBase* m_layerObj;
+    ICMovie* m_movie;  // open makes it, close finalizes and deletes it
+    bool m_playing;  // play sets it once the movie plays, stop clears it; update shows the UI object by it
+    unsigned char pad_39[0x3];
+    unsigned int m_pixelSize;  // update's last argument to the movie (the buffer's pixel size; 1 for its own)
+    unsigned int m_frame;  // update counts its calls (the name is not the original's)
+    unsigned char pad_44[0x4];
 };
 }  // namespace fw
 

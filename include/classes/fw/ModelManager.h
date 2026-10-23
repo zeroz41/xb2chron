@@ -2,20 +2,44 @@
 #define CLASSES_FW_MODELMANAGER_H
 
 #include "classes/fw/ManagerObject.h"
+#include "classes/mm/mtl/PtrSingleton.h"
+#include "classes/mm/mtl/ReferenceObject.h"
+#include "mm/mtl/FixedArray.h"
+#include "mm/mtl/IntrusiveList.h"
 
 namespace fw { class UpdateInfo; }
 
 namespace fw {
-// a base of fw::ModelManager no evidence names yet
-class TUnk_B42250 {
+// table 0x7100B421F8; the base at 0x10 is mm::mtl::PtrSingleton<fw::ModelManager> (the destructor stores its table
+// there and clears its instance)
+class ModelManager : public ::fw::ManagerObject, public ::mm::mtl::PtrSingleton< ::fw::ModelManager> {
 public:
-    virtual ~TUnk_B42250();
-};
-// table 0x7100B421F8; base at 0x10 unknown (TUnk_B42250)
-class ModelManager : public ::fw::ManagerObject, public TUnk_B42250 {
-public:
+    // what a group lists: ModelObject and VisibleObject, counted, linked at 0x10, updated through slot 2 (its table
+    // is not in the module; the name is not the original's)
+    class Element : public ::mm::mtl::ReferenceObject, public ::mm::mtl::IntrusiveListNodeBase {
+    public:
+        virtual void update() = 0;  // slot 2
+    };
+    // the objects of one layer (1.0.0 names mm::mtl::FixedArray<fw::ModelManager::Group, 32>)
+    class Group : public ::mm::mtl::IntrusiveList<Element> {
+    public:
+        // obj linked last unless it is listed already (ModelObject's and VisibleObject's create and changeLayer
+        // inline it; the name is not the original's)
+        void add(Element* obj) {
+            iterator it = begin();
+            for (; it != end(); ++it) {
+                if (it.m_node == obj) {
+                    break;
+                }
+            }
+            if (it == end()) {
+                push_back(obj);
+            }
+        }
+    };
     virtual ~ModelManager();  // slot 0
     virtual void update(fw::UpdateInfo const&, unsigned int);  // slot 8
+    mm::mtl::FixedArray<Group, 32> m_groups;  // by layer; update updates the layers whose bits it is given
 };
 }  // namespace fw
 

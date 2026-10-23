@@ -10,10 +10,10 @@ namespace layer {
 class LayerAccMemObj {
 public:
     LayerAccMemObj(LayerBase* layer);
-    unsigned short getMemWidth() const;
-    unsigned short getMemHeight() const;
     void* getMemBufer();     // its buffer (LayerObjTopMemObj::getBuffer)
     void updateMemBufer();
+    unsigned int getMemWidth() const;
+    unsigned int getMemHeight() const;
     void setRender(bool render);
     // the texture it draws into: the pointer at the object's 0x2E8 (the type is not in the symbol)
     grlib::CGLibTextureBuffer* getTexture();

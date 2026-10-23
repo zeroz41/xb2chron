@@ -5,6 +5,7 @@
 
 namespace ml { class ScnObjCam; }
 namespace ml { class ScnObj; }
+namespace ml { class ScnObjModel; }
 namespace ml { class ScnObjIBL; }
 namespace ml { class ScnRenderDrSys; }
 
@@ -31,6 +32,8 @@ public:
     ScnObj* createLgt(const void* resource, int arg);
     ScnObjIBL* createIBL(const void* resource, int arg);
     void releaseItem(ScnObj* item);
+    // a model made from a resource (fw::ModelObject::create's)
+    ScnObjModel* createMdl(const void* resource, const char* name, int arg);
     unsigned char pad_20[0x18];
     ScnRenderDrSys* m_renderDrSys;  // what UIScreenObject gives ScnRenderDrSysParmAcc (the name is not the original's)
 };

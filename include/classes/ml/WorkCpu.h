@@ -2,6 +2,7 @@
 #define CLASSES_ML_WORKCPU_H
 
 #include "classes/ml/WorkObj.h"
+namespace ml { class IWorkBackground; }
 
 namespace ml {
 // a base of ml::WorkCpu no evidence names yet
@@ -19,6 +20,8 @@ public:
 
     // its object made and every CPU thread logged in
     static bool isInitialized();
+    // a listener told of the HOME menu no more (fw::MovieManager's destructor)
+    static void removeBackgroundListener(IWorkBackground* listener);
 };
 }  // namespace ml
 

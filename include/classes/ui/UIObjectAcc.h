@@ -106,6 +106,10 @@ public:
     void setExtType(unsigned int type);
     void startAnimationFromID(unsigned int id, bool loop);
     void updateLayoutSize();
+    // its object's on-memory buffer (a UIScreenObject's: fw::MovieManager draws its movie there)
+    unsigned int getOnMemoryPixelSize();
+    void* getOnMemoryBuffer();
+    void swapOnMemoryBuffer();
     UIObject* m_object;      // UIUtil::getObject(m_handle): isTerm reads its flags, setTerm calls its setTerm
     unsigned int m_handle;   // what the constructor is given (or its named child's)
 };
