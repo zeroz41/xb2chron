@@ -20,6 +20,8 @@ public:
     virtual ~GfComModel();  // slot 1
     virtual void changeLayer(unsigned int, unsigned int);  // slot 3
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
+    mm::mtl::IntrusivePtr<fw::ReferenceFrame> createBoneReferenceFrame(const char* bone);
+    void destroyBoneReferenceFrame(const char* bone);
     static mm::mtl::RTTI m_rtti;
 
     unsigned char pad_10[0x8];

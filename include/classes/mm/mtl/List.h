@@ -21,22 +21,12 @@ class List : public ::mm::mtl::_ReslistBase< T0> {
 public:
     // an iterator is its node (its copy is user-provided: 3.0.1's UpdatableGroup::tail keeps it a pointer, not an
     // integer, which drops the null test of erase's node)
-    class iterator {
-    public:
-        iterator(Node* node) : m_node(node) {}
-        iterator(const iterator& other) : m_node(other.m_node) {}
-        T0& operator*() const { return m_node->m_value; }
-        iterator& operator++() {
-            m_node = static_cast<Node*>(m_node->m_next);
-            return *this;
-        }
-        bool operator==(const iterator& other) const { return m_node == other.m_node; }
-        bool operator!=(const iterator& other) const { return m_node != other.m_node; }
-        Node* m_node;
-    };
+    // mm_lib's list iterator (GfComSound::eraseCache's parameter)
+    typedef _reslist_iterator<T0, T0&, T0*> iterator;
 
     List() {}
     explicit List(IAllocator* allocator) : _ReslistBase<T0>(allocator) {}
+    List(IAllocator* allocator, unsigned long alignment) : _ReslistBase<T0>(allocator, alignment) {}
     virtual ~List() {}  // slot 0
     iterator begin() { return iterator(this->first()); }
     iterator end() { return iterator(this->last()); }

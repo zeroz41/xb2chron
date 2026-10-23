@@ -17,6 +17,26 @@ namespace mm { namespace mtl {
 // node of its own (gf::GfComSound's list destroys that node's value last). fw::UpdatableGroup's code shows every
 // member; the names are not the original's but m_allocator, which the assertion names.
 template <typename T0>
+class _ReslistBase;
+// a list's iterator, its node (GfComSound::eraseCache's mangled parameter names the template: the value, its
+// reference and pointer types)
+template <typename T0, typename Ref, typename Ptr>
+class _reslist_iterator {
+public:
+    typedef typename _ReslistBase<T0>::Node Node;
+    _reslist_iterator(Node* node) : m_node(node) {}
+    _reslist_iterator(const _reslist_iterator& other) : m_node(other.m_node) {}
+    Ref operator*() const { return m_node->m_value; }
+    Ptr operator->() const { return &m_node->m_value; }
+    _reslist_iterator& operator++() {
+        m_node = static_cast<Node*>(m_node->m_next);
+        return *this;
+    }
+    bool operator==(const _reslist_iterator& other) const { return m_node == other.m_node; }
+    bool operator!=(const _reslist_iterator& other) const { return m_node != other.m_node; }
+    Node* m_node;
+};
+template <typename T0>
 class _ReslistBase {
 public:
     // the links (the end is reached as one)
@@ -36,6 +56,13 @@ public:
     // the same with its allocator set (fw::MessageManager::Impl's constructor stores it with the alignment, no
     // clear between)
     explicit _ReslistBase(IAllocator* allocator) : m_capacity(0), m_size(0), m_alignment(8), m_allocator(allocator) {
+        m_head = &m_end;
+        m_head->m_next = m_head;
+        m_head->m_prev = m_head;
+    }
+    // with its allocator and node alignment set (GfComSound's constructor stores 16, no reserve: no assertion)
+    _ReslistBase(IAllocator* allocator, unsigned long alignment)
+        : m_capacity(0), m_size(0), m_alignment(alignment), m_allocator(allocator) {
         m_head = &m_end;
         m_head->m_next = m_head;
         m_head->m_prev = m_head;

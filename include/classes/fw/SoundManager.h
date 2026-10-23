@@ -4,6 +4,7 @@
 #include "classes/fw/ManagerObject.h"
 
 namespace fw { class UpdateInfo; }
+namespace mm { class Vec3; }
 namespace fw { class SoundPack; }
 namespace fw { enum SoundCategory : int; }
 namespace mm { namespace mtl { class IAllocator; }}
@@ -35,6 +36,10 @@ public:
     // stops the sound of handle, fading over fade (the driver's stopSe)
     void stopSe(unsigned int handle, float fade);
     void removePack(SoundPack* pack);
+    // whether handle's sound still plays (GfComSound::flush drops its cache entry otherwise)
+    bool isValid(unsigned int handle) const;
+    void setPos(unsigned int handle, const mm::Vec3& pos);
+    bool isLoop(unsigned int handle);
 };
 }  // namespace fw
 
