@@ -21,6 +21,7 @@ public:
     unsigned int getHp() const;
     unsigned int getHpMax(bool flag) const;
     const SDataEnemy* getSDataEnemy() const;
+    int getAttribute(int index, bool flag) const;  // EnemyParameter::GetAttribute asks (-1, false)
     unsigned int getFieldSkill(unsigned int index, bool flag) const;
     unsigned char getFieldSkillLevel(unsigned int index, bool flag) const;
     int getIconData() const;

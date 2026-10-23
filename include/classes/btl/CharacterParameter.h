@@ -20,7 +20,7 @@ public:
     virtual void Update(fw::UpdateInfo const&, bool);  // slot 8
     virtual void PostUpdate(fw::UpdateInfo const&);  // slot 9
     virtual void vf10() = 0;  // slot 10
-    virtual void GetAttribute() const;  // slot 11
+    virtual int GetAttribute() const;  // slot 11
     virtual void GetBladeIndex() const;  // slot 12
     virtual void GetWeaponID(int) const = 0;  // slot 13
     virtual void GetEquipAccessory() const;  // slot 14
@@ -42,10 +42,12 @@ public:
     virtual bool IsFallDeadDrop() const { return true; }  // slot 30
     virtual void SetAngry(bool, float);  // slot 31
     virtual void vf32();  // slot 32
-    virtual void vf33();  // slot 33
+    // 1.0.0 had GetAngryAttr here; 3.0.1's GetAttribute calls this slot where 1.0.0's read the angry attribute
+    virtual int GetAngryAttr() const;  // slot 33
     virtual void vf34();  // slot 34
     virtual void vf35();  // slot 35
-    virtual void vf36();  // slot 36
+    // 1.0.0 had IsAngry here; 3.0.1's GetAttribute calls this slot where 1.0.0's called IsAngry
+    virtual bool IsAngry() const;  // slot 36
     virtual void vf37();  // slot 37
     virtual void vf38();  // slot 38
     virtual void vf39();  // slot 39
@@ -93,10 +95,15 @@ public:
     int GetSTR() const;
     int GetEtherPower() const;
 
-    unsigned char pad_8[0x8];
+    gf::GF_OBJ_HANDLE* m_handle;  // the character's own object (DataParamAcc reads it; the name is not the original's)
     // a blade's driver: ButtonChallenge gives a blade's challenge to the character it names (the name is not the
     // original's)
     gf::GF_OBJ_HANDLE* m_driverHandle;
+    unsigned char pad_18[0x60A];
+    unsigned short m_flags622_0 : 1;  // unknown
+    // GetHateTarget answers -1 while it is clear (the name is not the original's)
+    bool m_hasHateTarget : 1;
+    unsigned short m_flags622_2 : 14;  // unknown
 };
 }  // namespace btl
 

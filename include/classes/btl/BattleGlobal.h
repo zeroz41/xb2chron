@@ -38,7 +38,9 @@ public:
     // the rest of the unit: fn_710000A724 reads bits 35, 49 and 50, fn_71000068F8 bits 49 and 50
     unsigned char : 4;
     unsigned char : 8;
-    unsigned char : 8;
+    unsigned char : 1;
+    bool pad_bit17 : 1;  // EnemyParameter::MulHate changes no hate while it is set
+    unsigned char : 6;
     unsigned char : 8;
     unsigned char : 8;
     unsigned char : 8;

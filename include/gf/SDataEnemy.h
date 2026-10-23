@@ -10,7 +10,9 @@ public:
 
     unsigned short m_id;  // the enemy's GfBdatChrEnArrange row (DataObjEnemy::getBdatId)
     unsigned char pad_2[0x2];
-    unsigned char m_flags4 : 4;  // unknown
+    bool m_named : 1;  // btl::EnemyParameter::IsNamed reads it
+    bool m_boss : 1;   // btl::EnemyParameter::IsBoss reads it
+    unsigned char m_flags4 : 2;  // unknown
     bool m_linkGenus : 1;
     bool m_guardFront : 1;
     bool m_guardLeft : 1;
