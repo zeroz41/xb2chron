@@ -12,6 +12,11 @@ namespace gf {
 // table 0x7100B4E098
 class DataObjBlade : public ::gf::IDataObj {
 public:
+    DataObjBlade(unsigned int id);
+    DataObjBlade(GF_OBJ_HANDLE* handle);
+    // 1.0.0 has both out of line (names from its symbols); 3.0.1 inlines them and keeps no copy
+    void setup(unsigned int id);
+    void setupVirtualParam();
     virtual ~DataObjBlade();  // slot 0
     virtual void setMenuParam() { m_menuParam = true; }  // slot 2
     virtual bool isValid() const;  // slot 3

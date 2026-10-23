@@ -9,6 +9,8 @@ public:
     static bool isValid(unsigned int blade);  // the blade is Hana (one of her forms)
     static unsigned int getRole(unsigned int hana);  // her role's message (GfDataBdat 0x115), 0 for none
     static int getAttribute(unsigned int hana);
+    static unsigned int getAutoHate(unsigned int hana);
+    static unsigned int getArtsHate(unsigned int hana);
     static int getEther();
     static int getPartsPower(unsigned int parts);  // the energy a part uses (GfMenuItemAdapter::update_useEnergy)
     static int getPowerCapacity(unsigned int hana);

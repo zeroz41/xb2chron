@@ -66,6 +66,9 @@ public:
     static bool isMale(unsigned int blade);
     static bool isFemale(unsigned int blade);
     static bool isAnimal(unsigned int blade);
+    static unsigned int getAttribute(unsigned int blade);
+    static bool getExtraParts(const SDataBlade& data, unsigned int part);
+    static unsigned int getBladePower(SDataBlade& data);
 };
 
 }  // namespace gf

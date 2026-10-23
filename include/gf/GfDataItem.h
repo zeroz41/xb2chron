@@ -9,6 +9,7 @@ public:
     static int getRarity(unsigned int item);  // GfMenuItemAdapter::update_RareIcon's icon
     // the message table and row of the item's name
     static bool getName(unsigned char*& bdat, unsigned int& id, unsigned int item);
+    static unsigned int getItemType(unsigned int item);  // 2: an accessory (DataObjDriver::setVirtualEquipAcc)
 };
 }  // namespace gf
 

@@ -24,6 +24,18 @@ public:
     int getIconData() const;
     unsigned int getEquipWeapon(int index, bool flag) const;  // GfMenuWeaponAdapter asks (-1, false)
     unsigned int getLevel(bool flag) const;
+    unsigned int getBladeArts(unsigned int index, bool flag) const;
+    unsigned int getBladeArtsEnhance(unsigned int index, bool flag) const;
+    unsigned int getBladeArtsLevel(unsigned int index, bool flag) const;
+    unsigned int getBladeArtsH(unsigned int index, bool flag) const;
+    unsigned int getBladeArtsN(unsigned int index, bool flag) const;
+    unsigned int getBladeArtsNH(unsigned int index, bool flag) const;
+    unsigned int getBladeArtsEx(bool flag) const;
+    unsigned int getBladeArtsExH(bool flag) const;
+    unsigned int getBladeArtsEx2(bool flag) const;
+    unsigned int getBladeArtsEx2H(bool flag) const;
+    unsigned int getBladeSkill(unsigned int index, bool flag) const;
+    unsigned int getBladeSkillLevel(unsigned int index, bool flag) const;
 
     // fields: the object's IDataObj at 0x8 (setupObjHandle finds it; getChestHeight asks it); size 0x18, the
     // stack slot its users give it

@@ -6,11 +6,17 @@
 namespace gf { enum FAVORITE : int; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class SDataDriver; }
+namespace gf { struct SDataDriverDlc; }
 
 namespace gf {
 // table 0x7100B4DC58
 class DataObjDriver : public ::gf::IDataObj {
 public:
+    DataObjDriver(unsigned int id);
+    DataObjDriver(GF_OBJ_HANDLE* handle);
+    // 1.0.0 has it out of line (its name from its symbols); 3.0.1 inlines it and keeps no copy
+    void setup(unsigned int id);
+    void setupVirtualParam();
     virtual ~DataObjDriver();  // slot 0
     virtual void setMenuParam() { m_menuParam = true; }  // slot 2
     virtual bool isValid() const;  // slot 3
@@ -102,9 +108,15 @@ public:
 
     unsigned int m_bdatId;  // the driver's row (getBdatId; the name is not the original's)
     SDataDriver* m_sdata;  // the driver's data (the name is not the original's)
-    unsigned char pad_18[0x8];
+    SDataDriverDlc* m_dlc;  // the DLC driver's record, none for others (the name is not the original's)
     GF_OBJ_HANDLE* m_handle;  // the object's, -1 for data read by row id alone (the name is not the original's)
-    unsigned char pad_28[0x24];
+    // a copy of the driver's data the virtual settings change; none without (setupVirtualParam allocates it,
+    // isVirtualSetting tests it, the destructor deletes it; the name is not the original's)
+    SDataDriver* m_virtual;
+    SDataDriverDlc* m_virtualDlc;  // the same for a DLC driver's record (the name is not the original's)
+    // the weapon each blade slot has under the virtual settings (setVirtualEquipWpn; the name is not the original's)
+    unsigned int m_virtualWeapons[3];
+    unsigned char pad_44[0x8];  // unknown; the constructors clear it
     bool m_menuParam;  // setMenuParam sets it (the name is not the original's)
 };
 }  // namespace gf
