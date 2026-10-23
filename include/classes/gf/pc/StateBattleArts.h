@@ -2,6 +2,7 @@
 #define CLASSES_GF_PC_STATEBATTLEARTS_H
 
 #include "classes/gf/pc/StateBattleActionBase.h"
+#include <new>
 
 namespace ai { class State; }
 namespace btl { class BattleCharacter; }
@@ -12,7 +13,9 @@ namespace gf { namespace pc {
 // table 0x7100B66C08
 class StateBattleArts : public ::gf::pc::StateBattleActionBase {
 public:
-    virtual ~StateBattleArts();  // slot 0
+    // what registerBattleStates registers with the player's Hfsm: the state made in a state buffer
+    static ai::State* create(void* buffer) { return new (buffer) StateBattleArts; }
+    virtual ~StateBattleArts() {}  // slot 0: inline (the deleting destructor only frees the state)
     virtual const char* getName() const;  // slot 2
     virtual void onEnter(void*, ai::State*);  // slot 3
     virtual void onLeave(void*, ai::State*);  // slot 4

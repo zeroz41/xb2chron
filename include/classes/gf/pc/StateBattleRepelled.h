@@ -2,6 +2,7 @@
 #define CLASSES_GF_PC_STATEBATTLEREPELLED_H
 
 #include "classes/gf/pc/StateBattleActionBase.h"
+#include <new>
 
 namespace ai { class State; }
 namespace btl { class BattleCharacter; }
@@ -12,6 +13,8 @@ namespace gf { namespace pc {
 // table 0x7100B67688
 class StateBattleRepelled : public ::gf::pc::StateBattleActionBase {
 public:
+    // what registerBattleStates registers with the player's Hfsm: the state made in a state buffer
+    static ai::State* create(void* buffer) { return new (buffer) StateBattleRepelled; }
     virtual ~StateBattleRepelled();  // slot 0
     virtual const char* getName() const;  // slot 2
     virtual void onEnter(void*, ai::State*);  // slot 3

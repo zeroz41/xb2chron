@@ -3,6 +3,7 @@
 
 namespace fw { class UpdateInfo; }
 namespace gf { class GfComPropertyPc; }
+namespace navi { class NvmshAcObj; }
 
 namespace gf { namespace pc {
 
@@ -15,7 +16,8 @@ public:
     void cleanup(gf::GfComPropertyPc& property);
     void update(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
 
-    alignas(8) unsigned char pad_0[0x8];  // fields: its constructor clears a pointer at 0
+    // setup's: the navigation object fw::NaviManager makes for it, released by cleanup (the name is not the original's)
+    navi::NvmshAcObj* m_naviObject;
 };
 
 }}  // namespace gf::pc
