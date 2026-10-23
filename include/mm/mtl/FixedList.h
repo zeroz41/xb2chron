@@ -61,6 +61,11 @@ public:
             m_node = m_list->node(m_node->m_next);
             return *this;
         }
+        // GfSizeAlloc::alloc's walk from the tail
+        node_iterator& operator--() {
+            m_node = m_list->node(m_node->m_prev);
+            return *this;
+        }
         bool operator==(const node_iterator& other) const { return m_node == other.m_node; }
         bool operator!=(const node_iterator& other) const { return m_node != other.m_node; }
         NodePtr node() const { return m_node; }
@@ -119,6 +124,23 @@ public:
         node(added->m_prev)->m_next = added->m_index;
         pos->m_prev = added->m_index;
         added->m_next = pos->m_index;
+    }
+
+    // value linked before it, in a node off the free stack (GfSizeAlloc::free: the assertion's line 263)
+    iterator insert(iterator it, const T& value) {
+#line 263 MM_MTL_FIXED_LIST_PATH
+        MM_ASSERT(m_free_index_top > 0);
+        index_type index = m_free_index[m_free_index_top--];
+        ListNode* added = node(index);
+        new (added->m_value) T(value);
+        added->m_index = index;
+        ListNode* pos = it.node();
+        added->m_prev = pos->m_prev;
+        node(added->m_prev)->m_next = added->m_index;
+        pos->m_prev = added->m_index;
+        added->m_next = pos->m_index;
+        ++m_num_nodes;
+        return iterator(added, this);
     }
 
     // it unlinked and its node back on the free stack; the iterator after it
