@@ -36,7 +36,7 @@ public:
     unsigned char m_center;          // 1: the object is placed by its center (UIObject::importDisplayInfo, from the
                                      //   layer's center type 2; 0 for type 0)
     unsigned char pad_0A;
-    unsigned short pad_0C;           // operator= copies it
+    unsigned short m_priority;       // UIObjectAcc::getDispPriority and UIObject::setPriority
     mm::Col4 m_mulColor;             // UIObject::importDisplayInfo's: the layer's multiply colour
     mm::Col3 m_addColor;             // UIObject::setAddColor's
     unsigned short m_pixelWidth;     // setPixelWidth's

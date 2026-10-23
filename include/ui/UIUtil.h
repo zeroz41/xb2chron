@@ -32,6 +32,8 @@ bool checkNumberTextFormat(const char* text, unsigned int count);
 char getMoneySeparetor(fw::LangType lang);  // the thousands separator of lang's money, 0 for none
 mm::mtl::IAllocator* getProgAllocator();
 UIObject* getObject(unsigned int handle);
+unsigned int searchChild(unsigned int handle, const char* name);
+void setDispChild(unsigned int handle, bool disp, const char* child);
 const fw::PadData* getPadData();  // the UI's pad (the UI manager's input's, else fw::PadManager's control pad)
 bool isValid(unsigned int handle);
 bool isTerm(unsigned int handle);

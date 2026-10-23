@@ -26,6 +26,11 @@ public:
     // slot 9; a handle: UIPolygonObject's returns one, UIScreenObject's 0
     virtual unsigned int duplicateImpl(unsigned int) = 0;
     void attachPlugin(UIObjectPlugin* plugin);
+    void getPos(mm::Pnt<short>& pos) const;
+    void getPosCenter(mm::Pnt<short>& pos) const;
+    bool isDebugDraw() const;
+    void setAddColor(const mm::Col3& color);
+    void setPriority(unsigned short priority);
     void setPos(const mm::Pnt<short>& pos);
     void setPosCenter(const mm::Pnt<short>& pos);
     void setParent(unsigned int handle);

@@ -44,7 +44,7 @@ bool UIColorLibrary::find(const char* name, mm::Col4& color) {
 }
 
 UIDisplayInfo::UIDisplayInfo()
-    : m_disp(true), m_center(0), pad_0A(0), pad_0C(0), m_mulColor(1.0f, 1.0f, 1.0f, 1.0f),
+    : m_disp(true), m_center(0), pad_0A(0), m_priority(0), m_mulColor(1.0f, 1.0f, 1.0f, 1.0f),
       m_addColor(0.0f, 0.0f, 0.0f), m_pixelWidth(0), m_pixelHeight(0), m_changed(false), m_defColor(nullptr),
       m_linkColor(nullptr) {}
 
@@ -103,7 +103,7 @@ void UIDisplayInfo::setPixelHeight(unsigned short height) {
 void UIDisplayInfo::operator=(const UIDisplayInfo& other) {
     m_disp = other.m_disp;
     m_center = other.m_center;
-    pad_0C = other.pad_0C;
+    m_priority = other.m_priority;
     m_mulColor = other.m_mulColor;
     m_addColor = other.m_addColor;
     m_pixelWidth = other.m_pixelWidth;

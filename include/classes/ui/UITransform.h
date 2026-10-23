@@ -15,7 +15,8 @@ public:
     unsigned char pad_0C[0x4];
     float m_scaleX;              // setScale's
     float m_scaleY;
-    unsigned char pad_18[0xC];
+    unsigned char pad_18[0x8];
+    float m_rotation;  // UIObjectAcc::getRot/setRot
     bool m_changed;              // setPos and setScale set it when they change something
 };
 }  // namespace ui

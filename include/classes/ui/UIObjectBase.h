@@ -17,11 +17,13 @@ public:
     virtual void update();  // slot 2
     virtual void setInitialize();  // slot 3
     virtual void setTerm();  // slot 4
+    void setSuspend(bool suspend);
     UITransform m_transform;  // the constructor builds it; UIObject::importTransform fills it from the layer
     unsigned char pad_48[0x8];
     UIDisplayInfo m_displayInfo;  // what UIObject::importDisplayInfo fills from the object's layer
     unsigned int m_flags;         // bit 3: terminated (UIObjectAcc::isTerm reads it)
-    unsigned char pad_9C[0x4];
+    unsigned short m_duplicateIndex;  // UIObjectAcc::getDuplicateIndex
+    unsigned char pad_9E[0x2];
     mm::mtl::FixStr<32> m_name;  // UILayoutObject::addChild registers the child under it
     unsigned char pad_C4[0x4];
 };

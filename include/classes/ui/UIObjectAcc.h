@@ -86,6 +86,24 @@ public:
     void setAddColor(const char* name);
     void setDispPriority(unsigned short priority);
     void setLayoutViewport(mm::Rect<short> rect);
+    UIObjectAcc(const UIObjectAcc& other);
+    void getDisplayOffsCenter(mm::Pnt<short>& offs) const;
+    bool isControl() const;
+    bool isDuplicate() const;
+    bool isStreamImage2nd() const;
+    unsigned short getDuplicateIndex() const;
+    void saveDefColor();
+    void loadDefColor();
+    unsigned short getDispPriority() const;
+    unsigned int searchDuplicatedChild(const char* name, unsigned short index);
+    unsigned int duplicate(unsigned int parent);
+    void setIgnoreSize(bool ignore);
+    void getText(UIStr& text) const;
+    void setBorderWeight(float weight);
+    unsigned int getImageIndex() const;
+    void setExtType(unsigned int type);
+    void startAnimationFromID(unsigned int id, bool loop);
+    void updateLayoutSize();
     UIObject* m_object;      // UIUtil::getObject(m_handle): isTerm reads its flags, setTerm calls its setTerm
     unsigned int m_handle;   // what the constructor is given (or its named child's)
 };
