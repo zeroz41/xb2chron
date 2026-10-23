@@ -10,6 +10,7 @@
 namespace fw { class UpdatableObject; }
 namespace gf { class GF_ASSET_HANDLE; }
 namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GF_MOUNT_HANDLE; }
 namespace gf { class GfComModel; }
 namespace gf { class GfObj; }
 namespace gf { class GfObjProperty; }
@@ -22,10 +23,11 @@ namespace gf {
 class GFOBJ_MOUNT {
 public:
     // out of line in 1.0.0; 3.0.1 keeps no copy
-    GFOBJ_MOUNT() : m_handle(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), m_appendIndex(-1) {}
+    GFOBJ_MOUNT() : m_handle(reinterpret_cast<GF_MOUNT_HANDLE*>(-1)), m_appendIndex(-1) {}
     ~GFOBJ_MOUNT();
 
-    GF_OBJ_HANDLE* m_handle;  // GfObjUtil::getMountHandle
+    // GfObjUtil::getMountHandle's GF_MOUNT_HANDLE; GfMountManager::addMountHandle stores it
+    GF_MOUNT_HANDLE* m_handle;
     // which of the current list's appends GfObjUtil::getAppend returns, -1 for none (the name is not the original's)
     int m_appendIndex;
     GfAppendInfo m_appendInfo;  // GfObjUtil::getAppendInfo

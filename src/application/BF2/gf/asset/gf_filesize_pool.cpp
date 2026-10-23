@@ -141,8 +141,7 @@ void GfFileSizePool::update() {
 
 void GfFileSizePool::execFileSizeJob(unsigned int count) {
     mm::threading::CS lock(m_cs);
-    ml::TimeCount timer;
-    timer.start();
+    ml::TimeCount timer;  // its constructor starts it
     unsigned int done = 0;
     for (mm::mtl::FixedQueue<FileSizeInfo, 0x200>::iterator it = m_jobQueue.begin(), end = m_jobQueue.end();
          it != end; ++it) {

@@ -15,6 +15,8 @@ public:
     virtual void vf5();  // slot 5
     virtual void update(fw::UpdateInfo const&, bool);  // slot 6
     static mm::mtl::RTTI m_rtti;
+    // how many are running (GfPlayFactory::createMenuPrecious queues its command list in mode 1 only while none is)
+    static int s_activate;
 };
 }  // namespace gf
 

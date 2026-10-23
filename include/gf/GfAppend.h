@@ -34,7 +34,8 @@ public:
     const char* m_motionName;     // getMotionName
     unsigned short m_mountIndex;  // getMountIndex
     unsigned short m_rscID;       // getRscID
-    unsigned char pad_7c[0xC];    // the constructor's float (1 by default) and bool
+    float m_scale;                // the constructor's scale (1 by default): GfGameMount::detach scales the model by it
+    unsigned char pad_80[0x8];    // the constructor's bool
 };
 
 // no table: an object's appends, in two lists (GfAppendUtil::setupWeapon adds to the one m_list names, then sets it

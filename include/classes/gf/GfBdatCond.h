@@ -14,6 +14,12 @@ public:
     virtual ~GfBdatCond();  // slot 0
     virtual void bdatRefresh();  // slot 2
     void destroyFP();
+    // a condition list's entry (0-7): its type (3 an environment condition) and the condition
+    unsigned int getConditionListConditionType(unsigned int id, unsigned int index) const;
+    unsigned int getConditionListCondition(unsigned int id, unsigned int index) const;
+    // an environment condition's weathers and time ranges, a bit each
+    unsigned int getConditionEnvWeather(unsigned int id) const;
+    unsigned int getConditionEnvTimeRange(unsigned int id) const;
     unsigned char pad_10[0x68];  // fields: size from GfDataBdat::initialize's allocation
 };
 }  // namespace gf

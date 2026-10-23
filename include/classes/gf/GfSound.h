@@ -6,6 +6,8 @@
 
 #include "gf/SoundHandle.h"
 
+namespace gf { class GfSetupParam; }
+namespace fw { class UpdateInfo; }
 namespace fw { enum SoundCategory : int; }
 namespace gf { class GF_SE_CATEGORY_HANDLE; }
 namespace gf { class GfSound; }
@@ -15,8 +17,12 @@ namespace gf {
 // table 0x7100B6B940
 class GfSound : public ::mm::mtl::PtrSingleton< ::gf::GfSound>, public ::gf::IGfEvent {
 public:
+    static void build(const GfSetupParam& param);
+    static void destroy();
+    void update(const fw::UpdateInfo& info);
     class SeParam;
     virtual ~GfSound();  // slot 0
+    void setupGame();
     virtual void gevPause(unsigned int, unsigned int);  // slot 2
     virtual void gevLayerPause(unsigned int, bool);  // slot 3
     void setCategoryPitch(fw::SoundCategory category, float pitch, float time);  // fw::SoundManager's, if there is one

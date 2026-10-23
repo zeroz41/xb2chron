@@ -2,6 +2,7 @@
 #define GF_GFGAMEUTIL_H
 
 namespace gf { class GF_OBJ_HANDLE; }
+namespace mm { namespace mtl { template <int LEN> class FixStr; } }
 
 namespace gf {
 
@@ -14,6 +15,10 @@ public:
     static void requestFieldDamage(gf::GF_OBJ_HANDLE* handle);
     // the object's menu offset id, for GfMenuBdat::getMenuOffset
     static int getUiOffsetId(gf::GF_OBJ_HANDLE* handle);
+    // the object a weapon object belongs to
+    static gf::GF_OBJ_HANDLE* getWeaponOwner(gf::GF_OBJ_HANDLE* handle);
+    // the name of a weapon's idle state for its owner, in battle or not
+    static void makeWeaponStateIdle(mm::mtl::FixStr<32>& out, gf::GF_OBJ_HANDLE* owner, bool battle);
 
     // the text the action window shows for an object (the names are not the original's)
     struct UiActionWindowInfo {

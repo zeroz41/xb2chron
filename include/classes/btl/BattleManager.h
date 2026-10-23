@@ -3,6 +3,8 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 
+namespace gf { class GfSetupParam; }
+namespace fw { class UpdateInfo; }
 namespace btl { class BattleManager; }
 namespace gf { class MapjumpCallbackInfo; }
 namespace gf { enum GEV : int; }
@@ -77,6 +79,10 @@ public:
 // table 0x7100B3A5A0; base at 0x8 unknown (TUnk_B3A5D8)
 class BattleManager : public ::mm::mtl::PtrSingleton< ::btl::BattleManager>, public TUnk_B3A5D8 {
 public:
+    static void build(const gf::GfSetupParam& param);
+    static void destroy();
+    static void update(const fw::UpdateInfo& info);
+    void postUpdate(const fw::UpdateInfo& info);
     virtual ~BattleManager();  // slot 0
     virtual void gevBattleStart();  // slot 2
     virtual void gevBattleEnd();  // slot 3

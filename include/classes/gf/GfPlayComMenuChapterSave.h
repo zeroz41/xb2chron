@@ -15,6 +15,7 @@ public:
     virtual void end();  // slot 5
     virtual void update(fw::UpdateInfo const&, bool);  // slot 6
     static mm::mtl::RTTI m_rtti;
+    static bool isDisp();
 };
 }  // namespace gf
 

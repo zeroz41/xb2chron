@@ -17,7 +17,9 @@ public:
     QuestID m_questId;
     unsigned int m_purposeId;  // the constructor's GfDataQuest::getListPurposeID
     unsigned int m_task;
-    unsigned char pad_10[0x10];
+    unsigned int m_taskType;  // the constructor's QuestListAcc::getTaskTaskType (3 collect, 4 use, 8 gimmick, 10 condition)
+    unsigned int m_taskId;    // the constructor's QuestListAcc::getTaskTaskID: the row in the type's table
+    unsigned char pad_18[0x8];
 };
 
 }  // namespace gf

@@ -52,7 +52,11 @@ public:
     unsigned char pad_55[0x10B];
     bool m_fromSaveData;
     bool m_startChapter;
-    unsigned char pad_162[0x6];
+    unsigned char pad_162[0x2];
+    // the jump stops the player (GfPlayFactory::createMapjump wraps it in addEventPlayerStop and state 9 instead of
+    // 8); the name is not the original's
+    bool m_stopPlayer;
+    unsigned char pad_165[0x3];
     unsigned int m_kind;  // setupForSaveData's 1
 };
 

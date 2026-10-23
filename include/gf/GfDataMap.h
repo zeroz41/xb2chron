@@ -8,6 +8,7 @@ namespace gf {
 // the map data's helpers (functions, by their symbols)
 class GfDataMap {
 public:
+    static unsigned int getDevelopMapId(unsigned int zone);
     static const char* getWeatherEffName(WEATYPE type);  // the weather's effect, null or empty for none
     static const char* getWeatherSndName(WEATYPE type);  // the weather's loop sound, null or empty for none
     static const char* getWeatherSndBeginName(WEATYPE type);  // the sound it starts with, null or empty for none

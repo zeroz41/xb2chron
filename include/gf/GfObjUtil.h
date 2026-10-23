@@ -11,6 +11,9 @@ namespace gf { class GfComProperty; }
 namespace gf { class GfObjProperty; }
 namespace gf { class GfObj; }
 namespace gf { class GfObjSetup; }
+namespace gf { class GfAppend; }
+namespace gf { class GfAppendInfo; }
+namespace gf { enum OPTMNT : int; }
 
 namespace gf {
 
@@ -55,6 +58,14 @@ public:
     static const char* getMotionResourceName(gf::GF_OBJ_HANDLE* handle);
     // reads a fade annotation's text into info: false when it is not one
     static bool parseFadeParam(const char* text, gf::GfFadeInfo* info);
+    static void unmountFromBone(gf::GF_OBJ_HANDLE* handle);
+    static void mountToBone(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* parent, const char* bone);
+    // the append at an object's point (its mount's current one), none without
+    static gf::GfAppend* getAppend(gf::GF_OBJ_HANDLE* handle, gf::GFATTACH attach);
+    static gf::GfAppendInfo* getAppendInfo(gf::GF_OBJ_HANDLE* handle, gf::GFATTACH attach);
+    static void setOwner(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* owner);
+    static gf::GF_OBJ_HANDLE* getParentHandle(gf::GF_OBJ_HANDLE* handle);
+    static bool isUpdate(gf::GF_OBJ_HANDLE* handle);
 };
 
 }  // namespace gf

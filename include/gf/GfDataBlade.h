@@ -26,8 +26,12 @@ public:
     static bool getTaskResultMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line,
                                      unsigned int level);
     static unsigned int getSkillLineId(unsigned int blade, unsigned int line);
+    // whether the blade is in the battle party (1.0.0's GfQuestInfo::incSuppressCount calls it on the quest's blade)
+    static bool isBattleMember(unsigned int blade);
     static unsigned int getKizunaringCompleteNum(unsigned int blade);
     static unsigned int getKizunaringMax(unsigned int blade);
+    // the scale of a blade's weapon (GfGameMount::attach scales the weapon's models by it at option 3)
+    static float getWpnScale(unsigned int blade);
     static bool isRareBlade(unsigned int blade);
     // a game flag: Pyra's name shown as Mythra's (GfMenuObjNameSelect sets it from the name picked)
     static void setHomuriNameHikari(bool hikari);

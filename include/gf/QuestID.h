@@ -11,6 +11,13 @@ public:
     // from an int holding both halves: GfQuestEvent's functions take unsigned ints and pass their 32 bits on as the
     // QuestID unchanged
     QuestID(unsigned int id) : m_id(id), m_achieveId(id >> 16) {}
+    // copies the halves one by one: GfQuestInfo's assignments (getParentQuest, getProgressQuest,
+    // getQuestNeedTaskCond) store them as two halfwords
+    QuestID& operator=(const QuestID& other) {
+        m_id = other.m_id;
+        m_achieveId = other.m_achieveId;
+        return *this;
+    }
     bool empty() const;
     bool operator==(const QuestID& o) const { return m_id == o.m_id && m_achieveId == o.m_achieveId; }
     unsigned short m_id;  // what empty() tests; the name is not the original's

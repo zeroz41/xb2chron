@@ -10,7 +10,9 @@ namespace gf {
 class AchievQuest {
 public:
     QuestID m_questId;
-    unsigned char pad_4[0x8];   // the count and the count to reach (30 bits each: 1.0.0's isCountComplete)
+    // the count and the count to reach, 30 bits each (1.0.0's isCountComplete; GfQuestInfo masks them)
+    unsigned int m_count;
+    unsigned int m_countMax;
     // bit 0: GfKizunaringBlade's checks count the quest as done; bits 2 and 3: 1.0.0's setTaskComplete
     unsigned short m_flags;
     unsigned char pad_e[0x4];
@@ -18,6 +20,12 @@ public:
     unsigned short m_level;     // the line's level (getSkillLevel counts one done at 1 even without its quest)
     unsigned short m_blade;
     unsigned char pad_18[0x4];
+
+    // whether the count changed (GfQuestInfo::incCollectUseCount and decCollectUseCount answer it)
+    bool incleseCount(unsigned int count);
+    bool decleseCount(unsigned int count);
+    void setCount(unsigned int count);
+    bool isCountComplete() const;
 };
 
 }  // namespace gf

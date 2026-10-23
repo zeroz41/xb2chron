@@ -55,6 +55,8 @@ public:
             MM_ASSERT(m_node != 0);
             return *reinterpret_cast<V*>(m_node->m_value);
         }
+        // no assertion: GfMountManager::getMount's walk reads its elements' fields with no `m_node != 0` check
+        V* operator->() const { return reinterpret_cast<V*>(m_node->m_value); }
         node_iterator& operator++() {
             m_node = m_list->node(m_node->m_next);
             return *this;

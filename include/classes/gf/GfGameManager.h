@@ -4,6 +4,9 @@
 #include "classes/gf/IQuestEvent.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 
+namespace gf { class GfSetupParam; }
+namespace fw { class UpdateInfo; }
+namespace gf { enum GF_STATE : int; }
 namespace gf { enum ActivateType : int; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfGameManager; }
@@ -86,6 +89,24 @@ public:
 // table 0x7100B54938; base at 0x8 unknown (TUnk_B54A90)
 class GfGameManager : public ::mm::mtl::PtrSingleton< ::gf::GfGameManager>, public TUnk_B54A90, public ::gf::IQuestEvent {
 public:
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in gf_game_manager's unit
+    // and GfManager::fn_710032A958 calls it on GfGameManager's instance. What it does: when PtrSingleton<gf::GfGameScene>'s
+    // instance exists, calls fn_71002CC060 on it (the update info passed on unused); the info is TitleApplet's per-frame one
+    void fn_71002AC9C0(const fw::UpdateInfo& info);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in gf_game_manager's unit
+    // among GfGameManager's functions. What it does: when the instance at lbl_7100C23300 exists, passes it and its bool to
+    // fn_71002A7430 (as GfGameManager::setupGame does); GfManager::fn_710032A1FC calls it
+    static void fn_71002AC558(bool flag);
+    static void build(const GfSetupParam& param);
+    static void destroy();
+    static void setState(GF_STATE state, bool flag);
+    static void leaveGameForDebug();
+    static void destroyBattleEnemy();
+    static bool isField();
+    static bool isStopBattleSequence();
+    void update(const fw::UpdateInfo& info);
+    void postUpdate(const fw::UpdateInfo& info);
+    void updateParam(const fw::UpdateInfo& info);
     virtual ~GfGameManager();  // slot 0
     static gf::GF_OBJ_HANDLE* getPartyLeader();
     static gf::GF_OBJ_HANDLE* getControlMover();  // the object the player controls
@@ -108,6 +129,12 @@ public:
     static bool isFadeout();
     static bool isStartGame();
     static bool isLeaveGameForDebug();
+    static bool isControlFree();
+    static bool isScenarioGame();
+    static bool isGmkTutorialOK();
+    static bool isTalkOK();
+    static bool isEnablePlayerDeadSequence();
+    static void setGmkTutorialSequenceOK(bool ok);
     static bool isBattle();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in this
     // file among GfGameManager's functions (every named function of the unit is GfGameManager's or IQuestEvent's
@@ -120,6 +147,9 @@ public:
     // constructor tests it right after registering menu layer 3 for "menu_ira" (see GfMenuObjUtil::fn_710048FD30).
     // "Ira" in those paths suggests the Torna expansion's mode; that is inferred, not a name. 269 callers.
     static bool fn_71002A9E68();
+    static void clear();
+    // takes fn_71002A9E68()'s answer in 3.0.1 (every caller passes it; the symbols still spell 1.0.0's setupGame())
+    static void setupGame(bool flag);
     virtual void vf2();  // slot 2
     virtual void vf3();  // slot 3
     virtual void vf4();  // slot 4

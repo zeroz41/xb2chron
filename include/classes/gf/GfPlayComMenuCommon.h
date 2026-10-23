@@ -16,6 +16,9 @@ public:
     virtual void end();  // slot 5
     virtual void update(fw::UpdateInfo const&, bool);  // slot 6
     static mm::mtl::RTTI m_rtti;
+    // whether a common window is open, and its result
+    static bool isDisp(unsigned int id);
+    static int getResult(unsigned int id);
     static mm::mtl::FixedQueue<unsigned int, 32> s_list;  // handles of the open windows; create() pushes
 };
 }  // namespace gf

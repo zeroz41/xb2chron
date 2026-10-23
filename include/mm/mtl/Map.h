@@ -13,6 +13,13 @@
     "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/internal/red_black_tree.h"
 #endif
 
+// mm_lib's map.h, as the including file's include path named it
+#ifdef MM_LIB_FROM_LIBS
+#define MM_MTL_MAP_PATH "../../../mcl/mm_lib/source\\mm_mtl/map.h"
+#else
+#define MM_MTL_MAP_PATH "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/map.h"
+#endif
+
 namespace mm { namespace mtl {
 
 // a key and its value, as a Map keeps them (1.0.0's RedBlackTreeBase<...>::insert takes one)
@@ -114,10 +121,13 @@ public:
 #line 639 MM_MTL_RED_BLACK_TREE_PATH
         MM_ASSERT(mem != 0);
         node* new_node = static_cast<node*>(mem);
-        // (the element's second, then its first: the original's store order)
+        // the element is constructed in place before it is copied in (a FixStr key shows it: the FixStr<32>-keyed
+        // instances clear the text and the length first), behind a test of the node as mm_lib's containers test theirs
+        if (new_node != nullptr) {
+            new (&new_node->value) value_type();
+        }
         new_node->color = red;
-        new_node->value.second = value.second;
-        new_node->value.first = value.first;
+        new_node->value = value;
         new_node->right = &m_sentinel;
         new_node->left = &m_sentinel;
         new_node->parent = parent;
@@ -233,8 +243,132 @@ public:
         m_root->color = black;
     }
 
-    // (1.0.0's erase and rebalance_after_erase, GfGameVisible's instances at 0x71002EFD80 and 0x71002EFEC0, are not
-    // written yet: a CLRS erase compiles close but not identical)
+    // 1.0.0's erase and rebalance_after_erase (GfGameVisible's instances at 0x71002EFD80 and 0x71002EFEC0): CLRS's
+    // delete and fixup; erase picks x by address (`*(cond ? &y->right : &y->left)`) and frees y as free_node does
+    // z's element taken out: z's node, or its successor's after the successor's element moves into z, unlinked and
+    // freed
+    void erase(node* z) {
+#line 231 MM_MTL_RED_BLACK_TREE_PATH
+        MM_ASSERT(m_size > 0);
+        node* y;
+        if (z->left == &m_sentinel || z->right == &m_sentinel) {
+            y = z;
+        } else {
+            y = z->right;
+            while (y->left != &m_sentinel) {
+                y = y->left;
+            }
+        }
+        node* x = *(y->left == &m_sentinel ? &y->right : &y->left);
+        x->parent = y->parent;
+        if (y->parent == &m_sentinel) {
+            m_root = x;
+        } else if (y == y->parent->left) {
+            y->parent->left = x;
+        } else {
+            y->parent->right = x;
+        }
+        z->value.second = y->value.second;
+        z->value.first = y->value.first;
+        if (y->color == black) {
+            rebalance_after_erase(x);
+        }
+        free_node(y, false);
+        --m_size;
+    }
+    void rebalance_after_erase(node* x) {
+        while (x != m_root && x->color == black) {
+            if (x == x->parent->left) {
+                node* w = x->parent->right;
+                if (w->color == red) {
+                    w->color = black;
+                    x->parent->color = red;
+                    rotate_left(x->parent);
+                    w = x->parent->right;
+                }
+                if (w->left->color == black && w->right->color == black) {
+                    w->color = red;
+                    x = x->parent;
+                } else {
+                    if (w->right->color == black) {
+                        w->left->color = black;
+                        w->color = red;
+                        rotate_right(w);
+                        w = x->parent->right;
+                    }
+                    w->color = x->parent->color;
+                    x->parent->color = black;
+                    w->right->color = black;
+                    rotate_left(x->parent);
+                    x = m_root;
+                }
+            } else {
+                node* w = x->parent->left;
+                if (w->color == red) {
+                    w->color = black;
+                    x->parent->color = red;
+                    rotate_right(x->parent);
+                    w = x->parent->left;
+                }
+                if (w->left->color == black && w->right->color == black) {
+                    w->color = red;
+                    x = x->parent;
+                } else {
+                    if (w->left->color == black) {
+                        w->right->color = black;
+                        w->color = red;
+                        rotate_left(w);
+                        w = x->parent->left;
+                    }
+                    w->color = x->parent->color;
+                    x->parent->color = black;
+                    w->left->color = black;
+                    rotate_right(x->parent);
+                    x = m_root;
+                }
+            }
+        }
+        x->color = black;
+    }
+
+    // the first node in key order, none for an empty tree (GfGameVisible::updateImpl walks its map so)
+    node* first() const {
+        if (m_size == 0 || m_root == &m_sentinel) {
+            return nullptr;
+        }
+        node* n = m_root;
+        while (n->left != &m_sentinel) {
+            n = n->left;
+        }
+        return n;
+    }
+    // the node after nodePtr in key order, none after the last (red_black_tree.h asserts `nodePtr == m_root` when it
+    // climbs past the root; the name is not the original's)
+    node* next(node* nodePtr) const {
+        node* n = nodePtr->right;
+        if (n != &m_sentinel) {
+            while (n->left != &m_sentinel) {
+                n = n->left;
+            }
+            return n;
+        }
+        node* parent = nodePtr->parent;
+        if (parent == &m_sentinel) {
+#line 363 MM_MTL_RED_BLACK_TREE_PATH
+            MM_ASSERT(nodePtr == m_root);
+            return nullptr;
+        }
+        if (parent->left != nodePtr) {
+            while (nodePtr == parent->right) {
+                nodePtr = parent;
+                parent = parent->parent;
+                if (parent == &m_sentinel) {
+                    return nullptr;
+                }
+            }
+        }
+        return parent;
+    }
 
     static void init_sentinel() {
         m_sentinel.color = black;
@@ -266,6 +400,28 @@ public:
     typedef RedBlackTreeBase<MapTraits<K, V> > tree_type;
     typedef typename tree_type::node node;
 
+    // a node of the map, none for the end (map.h asserts `m_node != 0` as one is read: GfGameVisible::updateImpl;
+    // the names are not the original's)
+    class iterator {
+    public:
+        iterator(node* n) : m_node(n) {}
+        MapPair<K, V>* operator->() const {
+#line 159 MM_MTL_MAP_PATH
+            MM_ASSERT(m_node != 0);
+            return &m_node->value;
+        }
+        node* m_node;
+    };
+    iterator lookup(const K& key) const {
+        return iterator(m_tree.find(key));
+    }
+    // takes key's element out, if there is one
+    void erase(const K& key) {
+        if (node* n = m_tree.find(key)) {
+            m_tree.erase(n);
+        }
+    }
+
     void setAllocator(IAllocator* allocator) {
         m_tree.setAllocator(allocator);
     }
@@ -274,6 +430,10 @@ public:
     }
     node* find(const K& key) const {
         return m_tree.find(key);
+    }
+    // value under key, unless key has one already (PadRelay::bindAction inserts an empty handler, then finds it)
+    node* insert(const MapPair<K, V>& pair) {
+        return m_tree.insert(pair);
     }
     // the value of key, made (V()) when there is none
     V& operator[](const K& key) {

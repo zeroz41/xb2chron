@@ -67,7 +67,7 @@ public:
         return iterator(data(), m_head);
     }
     iterator end() {
-        return iterator(data(), m_head + m_size);
+        return iterator(data(), m_size + m_head);
     }
     const_iterator begin() const {
         return const_iterator(data(), m_head);

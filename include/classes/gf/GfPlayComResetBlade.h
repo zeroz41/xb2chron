@@ -17,6 +17,8 @@ public:
     virtual void end();  // slot 5
     virtual void update(fw::UpdateInfo const&, bool);  // slot 6
     static mm::mtl::RTTI m_rtti;
+    // whether the reset of a party slot's blade (0-2) is running
+    static bool isPlaying(unsigned int slot);
     static mm::mtl::FixedVector<signed char, 3> s_execFlag;
 };
 }  // namespace gf

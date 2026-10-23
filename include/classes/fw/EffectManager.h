@@ -31,6 +31,9 @@ public:
 // table 0x7100B41428; base at 0x18 unknown (TUnk_B41508)
 class EffectManager : public ::mm::mtl::PtrSingleton< ::fw::EffectManager>, public ::fw::ManagerObject, public TUnk_B41508, public ::ml::IScnRender {
 public:
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in effect_manager's unit and
+    // GfManager::fn_710032A1FC calls it on PtrSingleton<fw::EffectManager>'s instance. What it does: stores its bool at 0x2FD8
+    void fn_710017CB08(bool flag);
     virtual ~EffectManager();  // slot 0
     virtual bool initialize();  // slot 2
     virtual void vf3();  // slot 3

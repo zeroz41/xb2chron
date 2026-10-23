@@ -5,6 +5,8 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/ui/UIUpdateCallback.h"
 
+namespace gf { class GfSetupParam; }
+namespace fw { class UpdateInfo; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfMenuManager; }
@@ -92,6 +94,11 @@ public:
 // table 0x7100B5E990; base at 0x8 unknown (TUnk_B5EA58), base at 0x18 unknown (TUnk_B5ECD0)
 class GfMenuManager : public ::mm::mtl::PtrSingleton< ::gf::GfMenuManager>, public TUnk_B5EA58, public ::gf::IQuestEvent, public TUnk_B5ECD0, public ::ui::UIUpdateCallback {
 public:
+    static void build(const GfSetupParam& param);
+    static void destroy();
+    static bool isInitialized();
+    static void update(const fw::UpdateInfo& info);
+    void postUpdate(const fw::UpdateInfo& info);
     enum OBJ : int;
     virtual ~GfMenuManager();  // slot 0
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2

@@ -7,6 +7,8 @@ namespace gf {
 // table 0x7100B61478
 class GfMenuObjCommonText : public ::gf::GfMenuObject {
 public:
+    // what GfPlayFactory::createMenuObjCommonText hands GfSequentialPlay::addMenuObjCommonText
+    class OpenKizunaParam;
     class DialogListener;
     class DrChangeListener;
     class ErrorListener;

@@ -15,6 +15,8 @@ public:
     virtual void end();  // slot 5
     virtual void update(fw::UpdateInfo const&, bool);  // slot 6
     static mm::mtl::RTTI m_rtti;
+    // how many are running (GfPlayFactory's blade resets request the change directly while one is)
+    static int s_activate;
 };
 }  // namespace gf
 

@@ -38,6 +38,10 @@ public:
         strcpy(m_str, pszName);
         return *this;
     }
+    // ordered by strcmp (a Map keyed by it compares so: PadRelay's maps; the name is the operator's)
+    bool operator<(const FixStr& s) const {
+        return strcmp(m_str, s.m_str) < 0;
+    }
     FixStr& format(const char* format, ...);
     // empties it: the text's end at the start, then the length (GfEvtSe::destroySe; the name is not the original's)
     void clear() {
@@ -45,11 +49,14 @@ public:
         m_nLen = 0;
     }
     // pszName appended (WaterInPlugin::onEvent inlines it; the name is not the original's)
-    FixStr& operator+=(const char* pszName) {
-        int nBackLen = strlen(pszName);
+    FixStr& operator+=(const char* pszBack) {
+        // fixstr.h asserts `pszBack != 0` first (GfGameLoad::getGameFileNameBin appends a returned name)
+#line 485 MM_MTL_FIXSTR_H_FILE
+        MM_ASSERT(pszBack != 0);
+        int nBackLen = strlen(pszBack);
 #line 487 MM_MTL_FIXSTR_H_FILE
         MM_ASSERT(m_nLen + nBackLen < LEN);
-        strcat(m_str, pszName);
+        strcat(m_str, pszBack);
         m_nLen += nBackLen;
         return *this;
     }

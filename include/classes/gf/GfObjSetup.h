@@ -18,7 +18,10 @@ public:
     // the object's bdat row: the data objects' constructors read it (DataObjNpc, DataObjMap, DataObjMob,
     // DataObjGmk; the name is not the original's)
     unsigned int m_bdatId;
-    unsigned char pad_14[0xC];
+    // the id GfGameScene::isRideParty takes for the object (GfGameRide::isRideOnPair passes the leader driver's)
+    // (the name is not the original's)
+    unsigned int m_partyId;
+    unsigned char pad_18[0x8];
     // the object's initial position: setInitialTransform's (the name is not the original's)
     mm::Vec3 m_initialPos;
     unsigned char pad_30[0x10];

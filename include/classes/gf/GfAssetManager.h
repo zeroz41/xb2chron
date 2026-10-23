@@ -4,6 +4,8 @@
 #include "classes/ml/IWorkEvent.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 
+namespace gf { class GfSetupParam; }
+namespace fw { class UpdateInfo; }
 namespace gf { class GfAssetManager; }
 namespace gf { class AssetPackInfo; }
 namespace gf { class GF_ASSET_HANDLE; }
@@ -22,7 +24,11 @@ namespace gf {
 // table 0x7100B43558
 class GfAssetManager : public ::mm::mtl::PtrSingleton< ::gf::GfAssetManager>, public ::ml::IWorkEvent {
 public:
+    static void build(const GfSetupParam& param);
+    static void destroy();
+    void update(const fw::UpdateInfo& info);
     virtual ~GfAssetManager();  // slot 0
+    static void clear();
     static GF_ASSET_HANDLE* createAssetHandle(const GfInitParam& param);
     static AssetPackInfo* getAssetPackInfo(GF_ASSET_HANDLE* handle);
     // an asset's loaded file, none while it is not loaded

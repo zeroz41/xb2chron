@@ -3,6 +3,8 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 
+namespace gf { class GfSetupParam; }
+namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfFieldManager; }
 namespace gf { class MapjumpCallbackInfo; }
@@ -85,7 +87,14 @@ public:
 // table 0x7100B51F08; base at 0x8 unknown (TUnk_B51F68), base at 0x10 unknown (TUnk_B51F80)
 class GfFieldManager : public ::mm::mtl::PtrSingleton< ::gf::GfFieldManager>, public TUnk_B51F68, public TUnk_B51F80 {
 public:
+    static void build(const GfSetupParam& param);
+    static void destroy();
+    void update(const fw::UpdateInfo& info);
+    void postUpdate(const fw::UpdateInfo& info);
     virtual ~GfFieldManager();  // slot 0
+    static void clear();
+    static void setupGame();
+    void setSuspendGame(bool suspend);
     static const char* getMapName();  // the current map's name, none when there is none
     static bool getLandmarkNameId(unsigned char*& bdat, int& id);  // the current location's name in a message table
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 2

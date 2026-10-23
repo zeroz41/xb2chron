@@ -1,21 +1,19 @@
 #ifndef CLASSES_GF_GFWEAPON_H
 #define CLASSES_GF_GFWEAPON_H
 
-namespace gf { class GF_OBJ_HANDLE; }
+#include "classes/gf/GfAppendHandles.h"
 
 namespace gf {
-// table 0x7100B54DE8
-class GfWeapon {
+// table 0x7100B54DE8: its slot 0 is GfAppendHandles's destructor, so the destructor is inline
+class GfWeapon : public ::gf::GfAppendHandles {
 public:
-    virtual ~GfWeapon();  // slot 0
-    // the objects of the weapon: one of its two sets of ten, by m_useSecond (inline: the name is not the original's;
-    // GfTrinityAttack::isLoading waits for each that is set)
-    gf::GF_OBJ_HANDLE* const* getObjHandles() const { return m_useSecond ? m_secondHandles : m_handles; }
-
-    // (the field names are not the original's)
-    gf::GF_OBJ_HANDLE* m_handles[10];
-    gf::GF_OBJ_HANDLE* m_secondHandles[10];
-    bool m_useSecond;
+    virtual ~GfWeapon() {}  // slot 0
+    // Placeholder name: nothing names it in either version (1.0.0's copy at 0x710031E054 is unnamed too). A member
+    // because GfGameMount::attach calls it on its m_weapon (x0) twice, once per set. What it does: for each of the
+    // ten objects of the set in use whose GfObj has a GfComAsm (obj+0x48, isKindOf GfComAsm::m_rtti), it makes the
+    // idle state name GfGameUtil::makeWeaponStateIdle gives for the weapon's owner (GfGameUtil::getWeaponOwner of the
+    // object's handle) and whether that owner is in battle, and sets it on layer 0 (GfComAsm::setState).
+    void fn_71002AE854();
 };
 }  // namespace gf
 

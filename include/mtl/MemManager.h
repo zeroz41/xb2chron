@@ -24,6 +24,9 @@ public:
     // section's name and type, "no name", 0 for the last two); the parameter names are not the original's
     static ALLOC_HANDLE create(ALLOC_HANDLE parent, unsigned long size, const char* name, bool flag, AllocatorType type,
                                unsigned long alignment, const char* file, int line);
+    // the same, with no type and alignment (GfStaticRes::initialize passes "GfStatic", false, "no name", 0)
+    static ALLOC_HANDLE create(ALLOC_HANDLE parent, unsigned long size, const char* name, bool flag, const char* file,
+                               int line);
     // gives back an allocator create made (fw::FrameworkMemory::removeSection)
     static void erase(ALLOC_HANDLE handle);
 };

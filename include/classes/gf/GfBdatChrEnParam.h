@@ -22,6 +22,8 @@ public:
     unsigned int getChrEnParamRevDexRev(unsigned int param) const;
     unsigned int getChrEnParamRevAgilityRev(unsigned int param) const;
     unsigned int getChrEnParamRevLuckRev(unsigned int param) const;
+    // an enemy group's enemy (0-11)
+    unsigned int getEnemyGroupEnemyID(unsigned int group, unsigned int index) const;
     // Table wrappers exposed by the range queries; names follow their accessors.
     unsigned char pad_10[0x8];
     CBdatWrapper* m_fpChrEnParamTable;  // 0x18

@@ -26,6 +26,9 @@ public:
         }
         return true;
     }
+    // path without its extension (GfGameLoad::getGameFileNameBin calls the FixStr<256> instance out of line)
+    template <typename STR>
+    static bool getNoExtName(STR& out, const char* path);
     // path's file name without its folders and extension (fw::SoundPack's constructor keeps it)
     static mm::mtl::FixStr<64> getNoPathExtName(const char* path);
     // where path's file name starts (after its last folder), none (fw::ScriptInfo::load keeps the path whole then)

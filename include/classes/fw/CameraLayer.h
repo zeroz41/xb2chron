@@ -2,6 +2,7 @@
 #define CLASSES_FW_CAMERALAYER_H
 
 #include "mm/mtl/IntrusivePtr.h"
+#include "mm/Vec3.h"
 
 namespace fw { class Camera; }
 namespace fw { class CameraPlugin; }
@@ -12,6 +13,8 @@ namespace fw {
 class CameraLayer {
 public:
     virtual void update(fw::UpdateInfo const&);  // slot 0
+    // where the layer's camera is (GfGameVisible::updateImpl asks the first layer)
+    mm::Vec3 getCameraPosition() const;
     void push(mm::mtl::IntrusivePtr<Camera>& camera, float time);
     void pop(mm::mtl::IntrusivePtr<Camera>& camera, float time);
     void cleanup();

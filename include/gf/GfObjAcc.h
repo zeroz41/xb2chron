@@ -25,6 +25,7 @@ public:
     // the same without syncing the frame first
     const fw::Transform& getWorldTransformNoSync() const;
     bool isDestroy() const;
+    bool isBattle() const;
     void* getUserData(GfObjUserData kind) const;
     int getType() const;  // the object's type (3: a driver)
     unsigned int getBdatId() const;
@@ -33,12 +34,15 @@ public:
     // a bone's world transform; false when the object has no such bone
     bool getBoneTransform(fw::Transform& transform, const char* bone);
     float getModelScale() const;
+    void setModelScale(float scale);
+    void setAlphaNormal(float alpha);
+    bool isValidModel() const;
     // the object's attribute bits (bit 1: TargetIKPlugin::update looks at it)
     unsigned int getAttribute() const;
     GF_OBJ_HANDLE* getHandle() const;
-    unsigned int getPcWeaponId() const;
+    unsigned int getPcWeaponId() const;  // the driver weapon object's weapon row (DataObjPcWpn)
     unsigned int getDriverId() const;  // the driver object's row (DataObjDriver)
-    unsigned int getBladeId() const;  // the blade object's row (DataObjBlade)  // the driver weapon object's weapon row (DataObjPcWpn)
+    unsigned int getBladeId() const;  // the blade object's row (DataObjBlade)
 
     GFOBJ_INFO* m_info;  // GfObjManager::getObjInfo's for the handle
     GfObj* m_obj;  // the GfObj constructor's argument
