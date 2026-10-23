@@ -24,6 +24,8 @@ public:
     void sleep(unsigned int frames, bool wait);
     void update(MLTHG* group);
     void exit();
+    // the arg the running thread was created with (MicroUpdater::fnMicroUpdate reads its updater through it)
+    void* getCurrentUserData();
     unsigned char pad_8[0x2B8];
     MLTHG* m_currentGroup;  // the group running now (getCurrentThreadID reads its thread); the name is not the original's
 };

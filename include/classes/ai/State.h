@@ -26,7 +26,9 @@ public:
     virtual void onStep(void*, void const*) = 0;  // slot 5
     // false when it does not handle the event (1.0.0's base returns false; ai::Hfsm::execEvent asks each state of
     // the chain from the leaf until one does)
-    virtual bool onEvent(void*, void*);  // slot 6
+    // inline: the one copy the linker kept lies among the title states' slots in title_main.cpp's text, where the
+    // first table using it was emitted
+    virtual bool onEvent(void*, void*) { return false; }  // slot 6
     // asks its machine to change to state id after this step; one request per step (inline: the PC's wall states
     // inline it with ai_state.h's assertion; the name is not the original's)
     void requestState(unsigned int id) {

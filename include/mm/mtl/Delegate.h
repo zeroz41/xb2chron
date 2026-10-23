@@ -20,6 +20,12 @@ public:
         m_func = reinterpret_cast<R (Delegate::*)(Args...)>(func);
         m_invoker = &memberFuncInvoker<T>;
     }
+    // a plain function in place of a member function (MicroUpdater's: tl::TitleMain::initialize stores
+    // staticFuncInvoker and the function, the function in the member function's first word)
+    void set(R (*func)(Args...)) {
+        m_staticFunc = func;
+        m_invoker = &staticFuncInvoker;
+    }
     bool isValid() const {
         return m_invoker != nullptr;
     }
@@ -33,9 +39,17 @@ public:
         return (object->*reinterpret_cast<R (T::*)(Args...)>(delegate->m_func))(args...);
     }
 
+    // a plain function's invoker (1.0.0's symbol names it)
+    static R staticFuncInvoker(const Delegate* delegate, Args... args) {
+        return delegate->m_staticFunc(args...);
+    }
+
     void* m_object;
     Invoker m_invoker;
-    R (Delegate::*m_func)(Args...);  // the member function, of the object's class
+    union {
+        R (Delegate::*m_func)(Args...);  // the member function, of the object's class
+        R (*m_staticFunc)(Args...);      // or a plain function (the name is not the original's)
+    };
 };
 
 }}  // namespace mm::mtl
