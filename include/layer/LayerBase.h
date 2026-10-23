@@ -7,6 +7,9 @@ namespace layer {
 class LayerBase {
 public:
     virtual ~LayerBase() {}  // slot 0
+    // its owner's end of it: UIFontManager's destructor calls slot 2 of the font objects LayerAccManager made, as
+    // LayerObj's slot 2 (release)
+    virtual void release() = 0;  // slot 2
 };
 }  // namespace layer
 

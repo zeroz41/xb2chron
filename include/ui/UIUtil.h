@@ -56,6 +56,12 @@ mm::mtl::IAllocator* getResourceAllocator();  // the allocator UI resources are 
 void makeMenuUIMFileName(mm::mtl::FixStr<128>& path, const char* name);
 // the path of a menu UIO file (UIUioLibrary::add requests the resource of its name so)
 void makeMenuUIOFileName(mm::mtl::FixStr<128>& path, const char* name);
+// the paths of the menu's image, font data, font style and MessageStudio project files (UIFontManager::update requests
+// the resources of their names so)
+void makeMenuImageFileName(mm::mtl::FixStr<128>& path, const char* name);
+void makeMenuFontDataFileName(mm::mtl::FixStr<128>& path, const char* name);
+void makeMenuFontStyleFileName(mm::mtl::FixStr<128>& path, const char* name);
+void makeMSProjFileName(mm::mtl::FixStr<128>& path, const char* name);
 UIObject* getObject(unsigned int handle);
 unsigned int searchChild(unsigned int handle, const char* name);
 void setDispChild(unsigned int handle, bool disp, const char* child);

@@ -21,8 +21,8 @@ public:
     // the label of a color index, copied into buffer when it fits (false: the index has no color, or no label is
     // found)
     static bool getColorName(unsigned int index, char* buffer, unsigned int size);
-    static unsigned short getTagNum(int group);
-    static unsigned short getTagParamListItemNum(int group, int tag, int param);
+    static int getTagNum(int group);  // int: UIFontManager::importMSBP compares it signed, unmasked
+    static int getTagParamListItemNum(int group, int tag, int param);  // int, as getTagNum
     static const char* getTagName(int group, int tag);
     static const char* getTagParamListItemName(int group, int tag, int param, int item);
 

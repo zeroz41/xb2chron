@@ -71,9 +71,9 @@ int LMS_GetColor(LMS_ProjectBinary* project, int index, LMSColor* color);
 const char* LMS_GetTagName(LMS_ProjectBinary* project, unsigned short groupId, unsigned short tagIndex);
 const char* LMS_GetTagListItemName(LMS_ProjectBinary* project, unsigned short groupId, unsigned short tagIndex,
                                    unsigned short paramIndex, unsigned short itemIndex);
-unsigned short LMS_GetTagNum(LMS_ProjectBinary* project, unsigned short groupId);
-unsigned short LMS_GetTagListItemNum(LMS_ProjectBinary* project, unsigned short groupId, unsigned short tagIndex,
-                                     unsigned short paramIndex);
+int LMS_GetTagNum(LMS_ProjectBinary* project, unsigned short groupId);
+int LMS_GetTagListItemNum(LMS_ProjectBinary* project, unsigned short groupId, unsigned short tagIndex,
+                          unsigned short paramIndex);
 void LMSi_AnalyzeMessageBinary(LMSiBinary* binary, const char* signature, int version);
 int LMSi_SearchBlockByName(LMSiBinary* binary, const char* type);
 

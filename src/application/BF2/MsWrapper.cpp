@@ -64,11 +64,11 @@ bool MsWrapper::getColorName(unsigned int index, char* buffer, unsigned int size
     return false;
 }
 
-unsigned short MsWrapper::getTagNum(int group) {
+int MsWrapper::getTagNum(int group) {
     return LMS_GetTagNum(m_pProj, group);
 }
 
-unsigned short MsWrapper::getTagParamListItemNum(int group, int tag, int param) {
+int MsWrapper::getTagParamListItemNum(int group, int tag, int param) {
     return LMS_GetTagListItemNum(m_pProj, group, tag, param);
 }
 
