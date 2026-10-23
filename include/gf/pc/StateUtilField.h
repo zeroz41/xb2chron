@@ -4,6 +4,7 @@
 #include "mm/Vec3.h"
 
 namespace gf { class GfComPropertyPc; }
+namespace gf { class GfComBehaviorPc; }
 namespace mm { class Plane; }
 
 namespace gf { namespace pc {
@@ -18,6 +19,8 @@ public:
                                             const mm::Vec3& preparePos);
     static bool isEnableWallPrepare(gf::GfComPropertyPc& property);
     static bool isWallPreparePosition(gf::GfComPropertyPc& property, const mm::Vec3& preparePos);
+    static void setAccessFlag(gf::GfComBehaviorPc& behavior, bool flag);
+    static void setSpecialActStatus(gf::GfComBehaviorPc& behavior, bool status);
 };
 
 }}  // namespace gf::pc

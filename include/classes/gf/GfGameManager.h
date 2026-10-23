@@ -101,6 +101,8 @@ public:
     static void destroy();
     static void setState(GF_STATE state, bool flag);
     static void leaveGameForDebug();
+    // whether the player is paused (StateFieldPrepareBigJump waits while it is)
+    static bool isPlayerPause();
     static void destroyBattleEnemy();
     static bool isField();
     static void enterBattle(bool flag);

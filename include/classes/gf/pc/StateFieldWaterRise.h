@@ -2,18 +2,28 @@
 #define CLASSES_GF_PC_STATEFIELDWATERRISE_H
 
 #include "classes/gf/GfStateBase.h"
+#include <new>
 
 namespace ai { class State; }
+
+namespace fw { class UpdateInfo; }
+namespace gf { class GfComBehaviorPc; }
 
 namespace gf { namespace pc {
 // table 0x7100B68B78
 class StateFieldWaterRise : public ::gf::GfStateBase {
 public:
-    virtual ~StateFieldWaterRise();  // slot 0
+    // what registerFieldStates registers with the player's Hfsm: the state made in a state buffer
+    static ai::State* create(void* buffer) { return new (buffer) StateFieldWaterRise; }
+    virtual ~StateFieldWaterRise() {}  // slot 0: inline (the deleting destructor only frees the state)
     virtual const char* getName() const;  // slot 2
     virtual void onEnter(void*, ai::State*);  // slot 3
     virtual void onLeave(void*, ai::State*);  // slot 4
     virtual void onStep(void*, void const*);  // slot 5
+    // the state's own functions; the slots above hand them the owner
+    void enter(GfComBehaviorPc* behavior, ai::State* prev);
+    void leave(GfComBehaviorPc* behavior, ai::State* next);
+    void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
 };
 }}  // namespace gf::pc
 
