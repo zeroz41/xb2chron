@@ -7,7 +7,7 @@ namespace layer {
 // table 0x7100B80320
 class LayerObjSortPolyObj : public ::layer::LayerSortObj {
 public:
-    virtual ~LayerObjSortPolyObj();  // slot 0
+    virtual ~LayerObjSortPolyObj() {}  // slot 0: the table holds LayerSortObj's
     virtual void finalRender();  // slot 4
 };
 }  // namespace layer

@@ -13,6 +13,7 @@ namespace layer {
 class LayerObjTopFont : public ::layer::LayerObj {
 public:
     virtual ~LayerObjTopFont();  // slot 0
+    void finalRender();
     virtual void setDrawList(layer::LayerSortMan*, bool);  // slot 7
     virtual void applyPartsSetup();  // slot 8
     virtual void applyParams(layer::LayerRenderView const*, layer::LayerResMatrix const&, layer::LayerResColor const&);  // slot 9

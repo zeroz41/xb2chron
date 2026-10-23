@@ -3,6 +3,8 @@
 
 #include "classes/layer/LayerObj.h"
 
+namespace grlib { class CGLibTextureBuffer; }
+namespace layer { struct LayerPolyVertex; }
 namespace layer { class LayerRenderView; }
 namespace layer { class LayerResColor; }
 namespace layer { class LayerResMatrix; }
@@ -13,6 +15,16 @@ namespace layer {
 class LayerObjTopPolyObj : public ::layer::LayerObj {
 public:
     virtual ~LayerObjTopPolyObj();  // slot 0
+    void finalRender();
+    void LockVertex();
+    void setVertex(unsigned int index, const LayerPolyVertex& vertex);
+    void UnlockVertex();
+    void LockIndex();
+    void setIndex(unsigned int index, unsigned short value);
+    void UnlockIndex();
+    void setIndexInfo(unsigned short start, unsigned short count);
+    void setTexutre(const void* texture);
+    void setTexutre(grlib::CGLibTextureBuffer& texture);
     virtual void setDrawList(layer::LayerSortMan*, bool);  // slot 7
     virtual void applyPartsSetup();  // slot 8
     virtual void applyParams(layer::LayerRenderView const*, layer::LayerResMatrix const&, layer::LayerResColor const&);  // slot 9

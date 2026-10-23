@@ -27,6 +27,7 @@ public:
     void setSlopeRot(float rot);
     LayerFontHorizontal getHorizontal() const;
     LayerFontVertical getVertical() const;
+    LayerFontDisplayArea getDisplayArea() const;
     float getBorderWeight() const;
     float getSlopeRot() const;
     short getFontPixelX() const;  // the text's offset in its object

@@ -7,7 +7,7 @@ namespace layer {
 // table 0x7100B80278
 class LayerObjSortFont : public ::layer::LayerSortObj {
 public:
-    virtual ~LayerObjSortFont();  // slot 0
+    virtual ~LayerObjSortFont() {}  // slot 0: the table holds LayerSortObj's
     virtual void finalRender();  // slot 4
 };
 }  // namespace layer

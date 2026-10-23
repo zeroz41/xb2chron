@@ -2,6 +2,7 @@
 #define LAYER_LAYERACCPOLYOBJ_H
 
 namespace layer { class LayerBase; }
+namespace layer { class LayerObjTopPolyObj; }
 namespace layer { struct LayerPolyVertex; }
 namespace grlib { class CGLibTextureBuffer; }
 
@@ -21,7 +22,7 @@ public:
     void setTexutre(grlib::CGLibTextureBuffer& texture);
 
     LayerBase* m_layer;  // the constructor's
-    unsigned char pad_08[0x8];  // 0x10 long: its users' frames keep 0x10 for it
+    LayerObjTopPolyObj* m_polyObj;  // the constructor's layer again, as the polygon object it is
 };
 }  // namespace layer
 

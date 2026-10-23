@@ -8,6 +8,7 @@ namespace layer {
 class LayerObjWork : public ::layer::LayerActBase {
 public:
     virtual ~LayerObjWork();  // slot 0
+    void setAddTexture(const void* texture, unsigned int index);
 };
 }  // namespace layer
 

@@ -7,6 +7,9 @@
 
 namespace ml { class IDrDrawWorkInfo; }
 namespace ml { class Scn; }
+namespace layer { class LayerObjManager; }
+namespace layer { class LayerFontManager; }
+#include "layer/LayerAccManager.h"
 
 namespace layer {
 // a base of layer::LayerManager no evidence names yet
@@ -20,7 +23,13 @@ public:
     LayerManager(ml::Scn* scn, mtl::ALLOC_HANDLE handle, unsigned int size);
     virtual ~LayerManager();  // slot 0
     void tail();  // the end of a frame
-    unsigned char pad_10[0xA0];  // 0xB0 bytes: fw::LayerSetManager::initialize allocates that
+    unsigned char pad_10[0x50];  // 0xB0 bytes: fw::LayerSetManager::initialize allocates that
+    // The names follow LayerAccManager's functions that use them (not the original's).
+    LayerObjManager* m_objManager;  // LayerAccManager's create functions
+    LayerFontManager* m_fontManager;  // LayerAccManager's font create functions
+    unsigned char pad_70[0x2C];
+    LayerCoordinate m_coordinate;  // LayerAccManager::set/getCoordinate
+    unsigned char pad_A0[0x10];
     virtual void begin();  // slot 2
     virtual void end();  // slot 3
     virtual void apply(ml::IDrDrawWorkInfo const*);  // slot 4

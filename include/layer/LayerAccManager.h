@@ -14,6 +14,7 @@ class LayerAccManager {
 public:
     LayerAccManager();
     void setCoordinate(LayerCoordinate coordinate);
+    LayerCoordinate getCoordinate() const;
     LayerBase* createObj(const void* resource);  // the objects made, or null
     LayerBase* createMaskObj(const void* resource);
     LayerBase* createLayoutObj();

@@ -12,6 +12,7 @@ namespace layer {
 class LayerObjTopDef : public ::layer::LayerActDef {
 public:
     virtual ~LayerObjTopDef();  // slot 0
+    void finalRender();
     virtual void resourceInit();  // slot 3
     virtual void apply(layer::LayerSortMan*, layer::LayerRenderView const*);  // slot 4
     virtual void applyBegin(layer::LayerResUpdateInfo&, layer::LayerRenderView const*);  // slot 5

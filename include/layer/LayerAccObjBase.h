@@ -2,6 +2,9 @@
 #define LAYER_LAYERACCOBJBASE_H
 #include "mm/Col4.h"
 
+#include "mm/Col3.h"
+#include "mm/Mat44.h"
+
 namespace layer { class LayerBase; }
 
 namespace layer {
@@ -14,6 +17,8 @@ enum LayerFlipType {};
 enum LayerBlendType {};
 // where an object is anchored (UIObject::apply maps its display mode through a table)
 enum LayerCenterType {};
+// how an object's texture is filtered (the name is LayerAccObjBase::setTexFilterType's parameter type)
+enum LayerTexFilterType {};
 // access to one layer object's display settings
 class LayerAccObjBase {
 public:
@@ -27,7 +32,20 @@ public:
     const mm::Col4& getMulCol() const;
     void setFlip(LayerFlipType type, bool flip);
     void setMaskObj(const LayerBase* mask);  // the mask object that masks it
-    const void* getResData() const;  // the resource it was made from (a polygon object's texture)
+    const void* getResData() const;
+    void setPos(float x, float y);
+    void setRot(float rot);
+    void setScale(float x, float y);
+    void setMulCol(const mm::Col4& col);
+    void setAddCol(const mm::Col3& col);
+    void setMatrix(const mm::Mat44& mtx);
+    void getPos(float& x, float& y) const;
+    void getRot(float& rot) const;
+    void getScale(float& x, float& y) const;
+    const mm::Mat44& getMatrix() const;
+    void setTexFilterType(LayerTexFilterType type);
+    void setPriority(unsigned short priority);
+    void setDisp(bool disp);  // the resource it was made from (a polygon object's texture)
 
     LayerBase* m_layer;  // the constructor's
 };

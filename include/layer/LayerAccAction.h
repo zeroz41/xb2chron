@@ -14,8 +14,8 @@ public:
     void setRunningActSec(float sec);
     unsigned int getActionMax() const;
     float getActionSec(unsigned int index) const;  // the action's length in seconds
-    void actionIdx(unsigned int index);  // starts the action
-    void actionID(unsigned int id);
+    bool actionIdx(unsigned int index);  // starts the action; false when there is no such action
+    bool actionID(unsigned int id);
     void actionName(const char* name);
     void actionEnd();
 
