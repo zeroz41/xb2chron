@@ -3,6 +3,7 @@
 
 #include "classes/ml/IWorkEvent.h"
 #include "classes/ml/MsgParam.h"
+#include "classes/ml/reslist.h"
 
 namespace ml {
 // table 0x7100B78CB8
@@ -27,6 +28,11 @@ public:
 
     // reports message unless done within timeout (the parameter names are not the original's)
     void wkCheckTimeout(unsigned int timeout, bool done, const char* message);
+    // the children list (WorkRootState's walks call it for begin and end alike)
+    reslist<WorkObj*>* wkGetChild();
+    // child entered under this, removed from this (the parameter names are not the original's)
+    void wkEntryChild(WorkObj* child, bool flag);
+    void wkRemoveChild(WorkObj* child);
 
     // the index of the first queued event of kind evt, -1 for none (inline: LibMain::isInitialized and
     // WorkCpu::isInitialized inline it; the name is not the original's)
@@ -53,13 +59,18 @@ public:
     char m_name[64];     // 0x08 the constructor copies the name in and asserts it is shorter than 64
     int m_nameLength;    // 0x48 (the name is not the original's)
     int m_state;         // 0x4C wkStandbyLogin sets 2, wkStandbyLogout 4 (the name is not the original's)
-    unsigned char pad_50[0x44];
+    unsigned int m_wid;  // 0x50 WorkRootState::allocWID's id: the slot in its low 16 bits (the name is not the original's)
+    unsigned char pad_54[0x4];
+    WorkObj* m_parent;   // 0x58 procParent removes the work from this one's children (the name is not the original's)
+    unsigned char pad_60[0x34];
     int m_childNum;      // 0x94 the children entered: LibMain logs out with none left (the name is not the original's)
     unsigned char pad_98[0x8];
     unsigned int m_flags;  // 0xA0 0x10: no more running (the name is not the original's)
     unsigned char pad_a4[0x4];
     MsgParam<8> m_event;   // 0xA8 the queued events (the name is not the original's)
-    unsigned char pad_180[0x28];
+    unsigned char pad_180[0x1C];
+    bool m_updateStop;   // 0x19C WorkRootState::updateWork skips wkUpdate while it is set, unless m_flags 0x800 (the name is not the original's)
+    unsigned char pad_19d[0xB];
 };
 }  // namespace ml
 
