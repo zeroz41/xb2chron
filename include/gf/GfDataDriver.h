@@ -5,6 +5,8 @@ namespace gf { class SDataDriver; }
 namespace gf { struct SDataDriverDlc; }
 namespace gf { enum FAVORITE : int; }
 
+namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
+
 namespace gf {
 // the drivers' data (functions, by its symbols)
 class GfDataDriver {
@@ -81,6 +83,12 @@ public:
     // member because its address lies among GfDataDriver's functions and it takes a driver's row like them. What it
     // does: GfBdatChrDr::getChrDrGender for the row (DataObjDriver::getGender returns it).
     static unsigned int fn_7100241C94(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member because its address follows
+    // GfDataDriver::getWeaponEfbFileIdx in the GfDataBlade unit and it takes a driver id, no object. What it does:
+    // pushes onto enhances the equipment enhance ids (GfBdatItem::getPcEquipEnhance1) of the driver's equipped
+    // items (the game data's driver rows, 0x5A0 apart; drivers 0x11-0x19 from another table, 0xDAC apart);
+    // GfFobjManager::fn_7100289504 passes its party leader's driver id and sums the "EnhanceEffect" 0xFB rows.
+    static bool fn_7100247580(mm::mtl::FixedVector<unsigned short, 64>& enhances, int driver);
 };
 }  // namespace gf
 

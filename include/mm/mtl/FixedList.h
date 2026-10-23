@@ -89,6 +89,10 @@ public:
     iterator begin() { return iterator(node(node(0)->m_next), this); }
     iterator end() { return iterator(node(0), this); }
     bool empty() const { return m_num_nodes == 0; }
+    unsigned long size() const { return m_num_nodes; }
+    // the first element, read without the iterator's assertion (GfFobjManager::registFiledObj reads its full
+    // list's oldest item so) (the name is not the original's)
+    T& front() { return *reinterpret_cast<T*>(node(node(0)->m_next)->m_value); }
 
     void clear() {
         for (unsigned long i = node(0)->m_next; node(i) != node(0); i = node(i)->m_next) {

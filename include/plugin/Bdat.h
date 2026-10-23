@@ -26,6 +26,10 @@ int getMSStyle(unsigned char* fp, int id);
 // a row's value of a member getMember found, read as the given value type (2: 16 bits, 1: 8 bits, 7: a string), in
 // 64 bits (a string column's text address); 0 when the member is null
 unsigned long getValCheck(unsigned char* fp, unsigned char* member, int id, int type);
+// the named table when it is loaded, else null (GfFobjManager::update polls for RSC_dropitemList so)
+unsigned char* isExistFP(const char* name);
+// a row's value of the member at that index, as the given value type (8: a float's 32 bits)
+unsigned int getValCheck(unsigned char* fp, int member, int id, int type);
 }  // namespace Bdat
 
 // a loaded BDAT table, as the generated column accessors take it (1.0.0's gf::_gfbbg and gf::_gfbdb functions take a

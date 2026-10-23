@@ -3,25 +3,66 @@
 
 #include "classes/gf/IGfEvent.h"
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "mm/mtl/FixedList.h"
+#include "gf/GfFobjGottenEffectManager.h"
+#include "gf/GfFobjSeManager.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfFobjManager; }
+namespace gf { class GfFobjDropitem; }
+namespace gf { class GfDropitemParams; }
+namespace gf { class GfSetupParam; }
+namespace fw { class UpdateInfo; }
 namespace gf { enum GEV : int; }
 #include "classes/gf/IGfObjListener.h"
 
 namespace gf {
-// a base of gf::GfFobjManager no evidence names yet
-class TUnk_B529B0 {
+// table 0x7100B52978; the object listener at 0x8 is what the constructor registers (GfObjManager::addListener(this +
+// 8)) and the destructor removes
+class GfFobjManager : public ::mm::mtl::PtrSingleton< ::gf::GfFobjManager>, public ::gf::IGfObjListener, public ::gf::IGfEvent {
 public:
-    virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int) = 0;
-};
-// table 0x7100B52978; base at 0x8 unknown (TUnk_B529B0)
-class GfFobjManager : public ::mm::mtl::PtrSingleton< ::gf::GfFobjManager>, public TUnk_B529B0, public ::gf::IGfEvent {
-public:
+    typedef mm::mtl::FixedList<GfFobjDropitem*, 1024> DropitemList;  // by its symbols (the typedef's name is not the original's)
+
+    GfFobjManager(const GfSetupParam& param);
+    void initialize(const GfSetupParam& param);
     virtual ~GfFobjManager();  // slot 0
+    static void build(const GfSetupParam& param);
+    static void destroy();
+    void finalize();
+    static void update(const fw::UpdateInfo& info);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's update has no such call). A member
+    // because update calls it on the instance. What it does: sets m_leaderBonus from the party leader's driver: 0 for
+    // none; driver 12: the table 0x7B member 0 row 0x5D float; else the sum of "Param1" over the driver's equipment
+    // enhances (GfDataDriver::fn_7100247580) whose "EnhanceEffect" (table 0x2C) is 0xFB, times 0.01.
+    void fn_7100289504();
+    static GfDropitemParams* getDropitemParams();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this + 0x90D0 (its
+    // m_seManager). What it does: m_seManager.fn_7100282EA8() (looks the sound pack up again); GfFieldManager's
+    // fn_7100277784 calls it.
+    void fn_7100289668();
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 2
+    void leaveGameField(GF_OBJ_HANDLE* handle);
+    static void registFiledObj(GfFobjDropitem* item);
+    static bool isExistObj();
+    static void destroyObj();
     virtual void gevPlayEvent(gf::GEV, unsigned int);  // slot 3
     virtual void gevGameObjLeave(gf::GF_OBJ_HANDLE*);  // slot 4
+
+    // the items registFiledObj takes, until their objects enter the field (the name is not the original's)
+    DropitemList m_registList;
+    // the items whose objects entered the field (listenerGfObj's event 2) (the name is not the original's)
+    DropitemList m_fieldList;
+    bool m_initialized;  // 1.0.0's isInitialized reads it
+    GfDropitemParams* m_dropitemParams;  // getDropitemParams'
+    unsigned char* m_dropitemListFP;   // RSC_dropitemList(Ira), once loaded (the name is not the original's)
+    unsigned char* m_dropitemParamFP;  // RSC_dropitemParam, once loaded (the name is not the original's)
+    bool m_eventDisp;  // what setEventDisp gets (the name is not the original's)
+    int m_unusedInt;     // zeroed by the constructor, read nowhere in the unit (the name is not the original's)
+    bool m_unusedFlag;   // zeroed by the constructor, read nowhere in the unit (the name is not the original's)
+    GfFobjGottenEffectManager m_gottenEffect;  // the name is not the original's
+    GfFobjSeManager m_seManager;                // the name is not the original's
+    float m_leaderBonus;  // fn_7100289504's (the name is not the original's)
+    float m_settingValue;  // the table 0x7B member 0 row 0x49 float (the name is not the original's)
 };
 }  // namespace gf
 
