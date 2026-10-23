@@ -10,7 +10,7 @@ namespace gf {
 class SCOM_DEAD_PARTICLE : public ::gf::SCOM {
 public:
     virtual ~SCOM_DEAD_PARTICLE();  // slot 0
-    virtual void exec(fw::UpdateInfo const&);  // slot 2
+    virtual bool exec(fw::UpdateInfo const&);  // slot 2
 };
 }  // namespace gf
 

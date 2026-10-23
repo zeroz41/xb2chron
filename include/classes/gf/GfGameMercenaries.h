@@ -10,6 +10,9 @@ namespace gf {
 // table 0x7100B56D30
 class GfGameMercenaries : public ::mm::mtl::PtrSingleton< ::gf::GfGameMercenaries> {
 public:
+    // SCOM_ADD_MERCENARIES_POINT and SCOM_SET_MERCENARIES_LEVEL pass their request's value
+    static void addPoint(unsigned int point);
+    static void setLevel(unsigned int level);
     virtual ~GfGameMercenaries();  // slot 0
     // a mission's rewards (team: GfDataMercenaries::isMissionOrderTeam), the bonus parts ("Hosei") on their own
     static int getRewardGold(unsigned int mission, bool team);

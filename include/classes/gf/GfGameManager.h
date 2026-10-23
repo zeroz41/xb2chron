@@ -89,6 +89,9 @@ public:
 // table 0x7100B54938; base at 0x8 unknown (TUnk_B54A90)
 class GfGameManager : public ::mm::mtl::PtrSingleton< ::gf::GfGameManager>, public TUnk_B54A90, public ::gf::IQuestEvent {
 public:
+    // SCOM_ACCESS_TARGET and SCOM_TARGET_UI pass their request's object
+    static void setAccessTarget(gf::GF_OBJ_HANDLE* handle);
+    static void setTargetUI(gf::GF_OBJ_HANDLE* handle);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in gf_game_manager's unit
     // and GfManager::fn_710032A958 calls it on GfGameManager's instance. What it does: when PtrSingleton<gf::GfGameScene>'s
     // instance exists, calls fn_71002CC060 on it (the update info passed on unused); the info is TitleApplet's per-frame one

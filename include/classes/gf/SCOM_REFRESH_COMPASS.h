@@ -15,7 +15,7 @@ public:
 class SCOM_REFRESH_COMPASS : public ::gf::SCOM, public TUnk_B6AC88 {
 public:
     virtual ~SCOM_REFRESH_COMPASS();  // slot 0
-    virtual void exec(fw::UpdateInfo const&);  // slot 2
+    virtual bool exec(fw::UpdateInfo const&);  // slot 2
 };
 }  // namespace gf
 

@@ -8,7 +8,7 @@ namespace gf {
 class SCOM_OBJ_VFADE {
 public:
     virtual ~SCOM_OBJ_VFADE();  // slot 0
-    virtual void exec(fw::UpdateInfo const&);  // slot 2
+    virtual bool exec(fw::UpdateInfo const&);  // slot 2
     virtual void getObjHandle() const;  // slot 3
 };
 }  // namespace gf

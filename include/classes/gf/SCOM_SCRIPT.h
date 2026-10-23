@@ -10,7 +10,7 @@ namespace gf {
 class SCOM_SCRIPT : public ::gf::SCOM {
 public:
     virtual ~SCOM_SCRIPT();  // slot 0
-    virtual void exec(fw::UpdateInfo const&);  // slot 2
+    virtual bool exec(fw::UpdateInfo const&);  // slot 2
     // queues a script command: GfFieldZoneScript::execScript runs a script with it (id 1), destroyScript passes
     // a null name
     static void create(unsigned int id, const char* name, bool flag);

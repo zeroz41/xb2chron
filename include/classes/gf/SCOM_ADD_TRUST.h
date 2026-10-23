@@ -9,8 +9,13 @@ namespace gf {
 // table 0x7100B6B1E0
 class SCOM_ADD_TRUST : public ::gf::SCOM {
 public:
-    virtual ~SCOM_ADD_TRUST();  // slot 0
-    virtual void exec(fw::UpdateInfo const&);  // slot 2
+    explicit SCOM_ADD_TRUST(SCOM_TYPE type) : SCOM(type) {}
+    virtual bool exec(fw::UpdateInfo const&);  // slot 2
+    static unsigned long create(unsigned int, unsigned int);
+
+    // the names are not the original's: what the create functions store (their arguments, in order)
+    unsigned int m_value;
+    unsigned int m_value2;
 };
 }  // namespace gf
 

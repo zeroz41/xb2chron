@@ -11,7 +11,7 @@ namespace gf {
 class SCOM_OBJ_ALPHA : public ::gf::SCOM {
 public:
     virtual ~SCOM_OBJ_ALPHA();  // slot 0
-    virtual void exec(fw::UpdateInfo const&);  // slot 2
+    virtual bool exec(fw::UpdateInfo const&);  // slot 2
     // requests an alpha change of the object behind handle over time to alpha
     static void create(gf::GF_OBJ_HANDLE* handle, float time, float alpha);
 };

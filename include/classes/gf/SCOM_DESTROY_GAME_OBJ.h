@@ -10,7 +10,7 @@ namespace gf {
 class SCOM_DESTROY_GAME_OBJ : public ::gf::SCOM {
 public:
     virtual ~SCOM_DESTROY_GAME_OBJ();  // slot 0
-    virtual void exec(fw::UpdateInfo const&);  // slot 2
+    virtual bool exec(fw::UpdateInfo const&);  // slot 2
 };
 }  // namespace gf
 

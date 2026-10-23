@@ -10,7 +10,7 @@ namespace gf {
 class SCOM_OBJ_WARP_POS : public ::gf::SCOM {
 public:
     virtual ~SCOM_OBJ_WARP_POS();  // slot 0
-    virtual void exec(fw::UpdateInfo const&);  // slot 2
+    virtual bool exec(fw::UpdateInfo const&);  // slot 2
 };
 }  // namespace gf
 

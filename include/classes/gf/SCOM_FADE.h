@@ -11,7 +11,7 @@ namespace gf {
 class SCOM_FADE : public ::gf::SCOM {
 public:
     virtual ~SCOM_FADE();  // slot 0
-    virtual void exec(fw::UpdateInfo const&);  // slot 2
+    virtual bool exec(fw::UpdateInfo const&);  // slot 2
     // fades the screen in slot (its s_fades entry) to color over frames frames
     static void create(unsigned int slot, unsigned int frames, const mm::Col4& color);
 };

@@ -87,6 +87,8 @@ public:
 // table 0x7100B51F08; base at 0x8 unknown (TUnk_B51F68), base at 0x10 unknown (TUnk_B51F80)
 class GfFieldManager : public ::mm::mtl::PtrSingleton< ::gf::GfFieldManager>, public TUnk_B51F68, public TUnk_B51F80 {
 public:
+    // SCOM_DESTROY_FIELD_OBJ's request
+    static void destroyObj();
     static void build(const GfSetupParam& param);
     static void destroy();
     void update(const fw::UpdateInfo& info);

@@ -9,8 +9,12 @@ namespace gf {
 // table 0x7100B6B450
 class SCOM_DESTROY_GMK_SET : public ::gf::SCOM {
 public:
-    virtual ~SCOM_DESTROY_GMK_SET();  // slot 0
-    virtual void exec(fw::UpdateInfo const&);  // slot 2
+    explicit SCOM_DESTROY_GMK_SET(SCOM_TYPE type) : SCOM(type) {}
+    virtual bool exec(fw::UpdateInfo const&);  // slot 2
+    static unsigned long create(unsigned int);
+
+    // the names are not the original's: what the create functions store (their arguments, in order)
+    unsigned int m_value;
 };
 }  // namespace gf
 

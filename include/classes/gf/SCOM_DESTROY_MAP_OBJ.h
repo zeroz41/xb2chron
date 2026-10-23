@@ -9,8 +9,9 @@ namespace gf {
 // table 0x7100B6B330
 class SCOM_DESTROY_MAP_OBJ : public ::gf::SCOM {
 public:
-    virtual ~SCOM_DESTROY_MAP_OBJ();  // slot 0
-    virtual void exec(fw::UpdateInfo const&);  // slot 2
+    explicit SCOM_DESTROY_MAP_OBJ(SCOM_TYPE type) : SCOM(type) {}
+    virtual bool exec(fw::UpdateInfo const&);  // slot 2
+    static unsigned long create();
 };
 }  // namespace gf
 

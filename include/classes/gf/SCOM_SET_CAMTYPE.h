@@ -9,8 +9,12 @@ namespace gf {
 // table 0x7100B6B5D0
 class SCOM_SET_CAMTYPE : public ::gf::SCOM {
 public:
-    virtual ~SCOM_SET_CAMTYPE();  // slot 0
-    virtual void exec(fw::UpdateInfo const&);  // slot 2
+    explicit SCOM_SET_CAMTYPE(SCOM_TYPE type) : SCOM(type) {}
+    virtual bool exec(fw::UpdateInfo const&);  // slot 2
+    static unsigned long create(int);
+
+    // the names are not the original's: what the create functions store (their arguments, in order)
+    int m_cameraType;
 };
 }  // namespace gf
 

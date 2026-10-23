@@ -11,6 +11,9 @@ namespace gf {
 class GfGameUtil {
 public:
     static void execDevelopLevelUp();
+    // add to the party's money and coins (SCOM_ADD_MONEY, SCOM_ADD_COIN)
+    static void addMoney(int money);
+    static void addCoin(int coin);
     // whether the object behind a handle is playing a voice
     static bool isPlayVoice(gf::GF_OBJ_HANDLE* handle);
     static int getObjAttribute(gf::GF_OBJ_HANDLE* handle);

@@ -10,7 +10,7 @@ namespace gf {
 class SCOM_CURRENT_BLADE : public ::gf::SCOM {
 public:
     virtual ~SCOM_CURRENT_BLADE();  // slot 0
-    virtual void exec(fw::UpdateInfo const&);  // slot 2
+    virtual bool exec(fw::UpdateInfo const&);  // slot 2
 };
 }  // namespace gf
 

@@ -21,6 +21,8 @@ public:
 // table 0x7100B59580; base at 0x8 unknown (TUnk_B595B0)
 class GfMapManager : public ::mm::mtl::PtrSingleton< ::gf::GfMapManager>, public TUnk_B595B0, public ::gf::IGfEvent {
 public:
+    // SCOM_DESTROY_MAP_OBJ's request
+    static void destroyObj();
     static void build(const GfSetupParam& param);
     static void destroy();
     void update(const fw::UpdateInfo& info);
