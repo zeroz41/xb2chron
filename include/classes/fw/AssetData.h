@@ -3,6 +3,7 @@
 
 #include "classes/mm/mtl/ReferenceObject.h"
 #include "mm/mtl/FixStr.h"
+#include "mtl/AllocHandle.h"
 
 namespace mm { namespace mtl { class IAllocator; } }
 
@@ -13,8 +14,11 @@ class AssetData : public ::mm::mtl::ReferenceObject {
 public:
     virtual ~AssetData();  // slot 0
     // the cached asset of a path, none
+    static AssetData* CreateFromCache(mtl::ALLOC_HANDLE handle, const char* path);
     static AssetData* CreateFromCache(mm::mtl::IAllocator* allocator, const char* path);
     // an asset over data already read (fw::SoundResource::update hands it an AssetLoader's data and name)
+    static AssetData* AssignFromMemory(mtl::ALLOC_HANDLE handle, const void* data, unsigned int size, const char* name,
+                                       unsigned long arg);
     static AssetData* AssignFromMemory(mm::mtl::IAllocator* allocator, const void* data, unsigned int size,
                                        const char* name, unsigned long arg);
 

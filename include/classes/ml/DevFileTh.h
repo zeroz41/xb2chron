@@ -44,6 +44,9 @@ public:
     static int getFileSize(const char* path, mm::VAL64*);
     // starts reading the file a parameter names; the handle the answer to its listener's OnFileEvent carries, none
     static FileHandleTh* readFile(const DevFileParamTh& param);
+    // reads the file a parameter names at once: its data, none; its size and VAL64 through the pointers
+    // (fw::CommonResource::updateBlock; the parameter names are not the original's)
+    static void* readFileBlock(const DevFileParamTh& param, int* size, mm::VAL64* value);
     // stops a read readFile started (the parameter names are not the original's)
     static void cancel(FileHandleTh* handle, bool flag);
     // path as the file system takes it (fw::SoundResource::update; the parameter names are not the original's)

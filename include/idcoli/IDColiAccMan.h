@@ -9,6 +9,8 @@ class IDColiAccMan {
 public:
     IDColiAccMan();
     IDColiObj* createColiCharacter();  // an IDColiObjCharCheck
+    // fw::RenderParam::setCloudSea hands it the cloud sea's number (the parameter name is not the original's)
+    void setSubNum(unsigned int num);
 };
 }  // namespace idcoli
 

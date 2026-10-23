@@ -4,6 +4,7 @@
 #include "classes/mm/mtl/ReferenceObject.h"
 #include "mm/mtl/FixStr.h"
 #include "classes/fw/ResourceManager.h"
+#include "mtl/AllocHandle.h"
 
 namespace mm { namespace mtl { class IAllocator; } }
 
@@ -17,6 +18,7 @@ enum LOAD_PRIO : int;
 class ResourceObject : public ::mm::mtl::ReferenceObject {
 public:
     // registers it with ResourceManager (addResource); the parameter names are not the original's
+    ResourceObject(unsigned int type, mtl::ALLOC_HANDLE handle, LOAD_PRIO prio, int arg);
     ResourceObject(unsigned int type, mm::mtl::IAllocator* allocator, LOAD_PRIO prio, int arg);
     virtual ~ResourceObject();  // slot 0
     virtual void update() = 0;  // slot 2
@@ -31,7 +33,8 @@ public:
 
     // the field names are not the original's
     unsigned int m_type;  // the constructor's: ResourceManager::searchResource's first (1: a RenderResource)
-    unsigned char pad_10[0x8];
+    mtl::ALLOC_HANDLE m_handle;  // the constructor's (none when it was given an allocator)
+    unsigned char pad_14[0x4];
     mm::mtl::IAllocator* m_allocator;  // the constructor's
     unsigned int m_hash;  // ResourceManager::getHash of the path (the requests set it)
     int m_arg;  // the constructor's last (SoundResource's 0x1000, which it hands AssetLoader::Create)

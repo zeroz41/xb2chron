@@ -5,6 +5,8 @@
 #include "mtl/AllocHandle.h"
 
 namespace mm { namespace mtl { class IAllocator; } }
+namespace fw { class AssetData; }
+namespace fw { class AssetLoader; }
 
 namespace fw {
 // table 0x7100B42980 (0xC8 bytes); its constructors construct a ResourceObject (counted: its destructor hands
@@ -19,18 +21,41 @@ public:
     virtual void update();  // slot 2
     virtual bool valid() const;  // slot 3: whether it has loaded (GfAssetResource::isFinishLoad returns it)
     virtual const char* getAssetName() const;  // slot 4: the loaded asset's name, none before
+    // the resource of a path, referenced: the loaded one ResourceManager finds, else a new one (type 0) that keeps
+    // its asset safe when delayRelease is set or the path's extension asks for it, then loads (updateBlock: at
+    // once, else update); the parameter names are not the original's
+    static CommonResource* request_detail(mtl::ALLOC_HANDLE handle, const char* path, int prio, bool delayRelease,
+                                          bool block);
+    static CommonResource* request_detail(mm::mtl::IAllocator* allocator, const char* path, int prio,
+                                          bool delayRelease, bool block);
+    static CommonResource* request(mtl::ALLOC_HANDLE handle, const char* path, int prio, bool delayRelease);
     static CommonResource* request(mm::mtl::IAllocator* allocator, const char* path, int arg, bool flag);
+    // request_detail at priority 10, loaded at once
+    static CommonResource* blockRequest(mtl::ALLOC_HANDLE handle, const char* path, bool delayRelease);
+    // reads the asset at once (the cached one, else the file)
+    void updateBlock();
     // the loaded resource of a path, none (LocalizeResource::request adds a reference to it)
     static CommonResource* search(mtl::ALLOC_HANDLE handle, const char* path);
     static CommonResource* search(mm::mtl::IAllocator* allocator, const char* path);
     void* getAssetData();
     unsigned int getAssetSize() const;
 
-    unsigned char pad_b0[0x4];
-    // set by RenderResource's constructor, cleared by CommonResource's (the name is not the original's)
+    // the names are not the original's
+    int m_state;  // 0: find or start reading the asset, 1: reading, 2: loaded (valid)
+    // set by RenderResource's constructor, cleared by CommonResource's; while set ResourceManager keeps the asset
+    // safe (addSafeObject; request_detail sets it from its flag or ResourceManager::isDelayReleaseExtention)
     bool m_isRender;
-    unsigned char pad_b5[0x13];
+    unsigned char pad_b5[0x3];
+    AssetLoader* m_loader;  // the asset being read
+    AssetData* m_asset;  // the asset
 };
+
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function of the unit's namespace: it
+// takes no object, and it sits at the start of CommonResource.cpp's split (1.0.0's CommonResource.o starts at
+// search; its code is RenderParam's pattern, so it likely ends the unit before). What it does: builds an
+// ml::ScnRenderDrSysParmAcc for view 0 of the Framework's scene renderer and hands the flag to its
+// fn_710070A2F4 (DrMan's word at 0x1D50). Called by gf::GfManager::initialize and fn_710032A1FC.
+void fn_71001996F0(bool flag);
 }  // namespace fw
 
 #endif

@@ -28,7 +28,12 @@ public:
     void* m_handle;  // set while the file is being read (fw::SoundResource::update waits for it to clear)
     void* m_data;  // the file's data (isExist tests it)
     int m_size;  // the data's size; -2 when there is no file (fw::SoundResource::update skips the data then)
-    unsigned char pad_d4[0x1C];
+    unsigned char pad_d4[0xC];
+    // handed to fw::AssetData::AssignFromMemory's last parameter with the data (fw::CommonResource::update), where
+    // CommonResource::updateBlock hands it what DevFileTh::readFileBlock returned through its VAL64 (the name is
+    // not the original's; 1.0.0's CommonResource has a getAssetTimeStamp)
+    unsigned long m_timeStamp;
+    unsigned char pad_e8[0x8];
     bool m_ownsData;  // cleared when fw::AssetData::AssignFromMemory takes the data over
 };
 }  // namespace ml

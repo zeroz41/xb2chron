@@ -31,6 +31,8 @@ public:
     // the memory resources are made in (Framework::getMemHandle's)
     static mtl::ALLOC_HANDLE getMemSYS();
     static unsigned int getHash(const char* path);  // a path's hash (the resources' m_hash)
+    // whether a path's extension asks ResourceManager to keep its asset safe (CommonResource::request_detail)
+    static bool isDelayReleaseExtention(const char* path);
     // the loaded resource of a type and path, none (RenderResource::request asks for type 1)
     ResourceObject* searchResource(unsigned int type, mtl::ALLOC_HANDLE handle, const char* path);
     ResourceObject* searchResource(unsigned int type, mm::mtl::IAllocator* allocator, const char* path);

@@ -65,6 +65,17 @@ public:
         MM_ASSERT(m_element);
         return m_element + m_size;
     }
+    // the same of a const array (fw::PointerMap::begin and end; array.h's lines 44 and 46)
+    const T* begin() const {
+#line 44 MM_MTL_ARRAY_PATH
+        MM_ASSERT(m_element);
+        return m_element;
+    }
+    const T* end() const {
+#line 46 MM_MTL_ARRAY_PATH
+        MM_ASSERT(m_element);
+        return m_element + m_size;
+    }
 
     T* m_element;
     size_t m_size;
