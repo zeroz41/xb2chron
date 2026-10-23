@@ -10,6 +10,8 @@ namespace btl {
 class BladeChangeManager : public ::mm::mtl::PtrSingleton< ::btl::BladeChangeManager> {
 public:
     virtual ~BladeChangeManager();  // slot 0
+    static void Create();
+    static void Destroy();
 };
 }  // namespace btl
 

@@ -12,6 +12,8 @@ public:
     enum TURN_BTN_RESULT_TYPE : int;
     void TurnButtonChllengeResultProc(TURN_BTN_RESULT_TYPE type);
     virtual ~ChainAttackManager();  // slot 0
+    static void Create();
+    static void Destroy();
 };
 }  // namespace btl
 

@@ -10,6 +10,8 @@ namespace btl {
 class SpAttackManager : public ::mm::mtl::PtrSingleton< ::btl::SpAttackManager> {
 public:
     virtual ~SpAttackManager();  // slot 0
+    static void Create();
+    static void Destroy();
 };
 }  // namespace btl
 

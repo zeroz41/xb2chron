@@ -10,6 +10,10 @@ namespace btl {
 class EffectManager : public ::mm::mtl::PtrSingleton< ::btl::EffectManager> {
 public:
     virtual ~EffectManager();  // slot 0
+    // Create: 1.0.0's name (fn_710009733C in 3.0.1): 1.0.0's BattleManager::Initialize calls it after
+    // HateRingManager::Create, as 3.0.1's does
+    static void Create();
+    static void Destroy();
 };
 }  // namespace btl
 

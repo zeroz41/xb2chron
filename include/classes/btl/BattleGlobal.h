@@ -4,12 +4,16 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace btl { class BattleGlobal; }
+namespace fw { class UpdateInfo; }
 
 namespace btl {
 // table 0x7100B3A3E0
 class BattleGlobal : public ::mm::mtl::PtrSingleton< ::btl::BattleGlobal> {
 public:
     virtual ~BattleGlobal();  // slot 0
+    static void Create();
+    static void Destroy();
+    static void PostUpdate(const fw::UpdateInfo& info);
     void SetPause(int kind, bool pause);
     void DeleteSlow(unsigned int id);
     bool IsGameOver() const;

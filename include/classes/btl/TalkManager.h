@@ -12,6 +12,8 @@ public:
     enum NARRATION_TYPE : int;
     void PlayNarrationVoice(NARRATION_TYPE type, int, int);
     virtual ~TalkManager();  // slot 0
+    static void Create();
+    static void Destroy();
 };
 }  // namespace btl
 

@@ -10,6 +10,8 @@ namespace btl {
 class BladeArtsManager : public ::mm::mtl::PtrSingleton< ::btl::BladeArtsManager> {
 public:
     virtual ~BladeArtsManager();  // slot 0
+    static void Create();
+    static void Destroy();
 };
 }  // namespace btl
 

@@ -10,6 +10,8 @@ namespace btl {
 class UIManager : public ::mm::mtl::PtrSingleton< ::btl::UIManager> {
 public:
     virtual ~UIManager();  // slot 0
+    static void Create();
+    static void Destroy();
 };
 }  // namespace btl
 

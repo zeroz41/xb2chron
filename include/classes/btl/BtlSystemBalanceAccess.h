@@ -10,6 +10,8 @@ namespace btl {
 class BtlSystemBalanceAccess : public ::mm::mtl::PtrSingleton< ::btl::BtlSystemBalanceAccess> {
 public:
     virtual ~BtlSystemBalanceAccess();  // slot 0
+    static void Create();
+    static void Destroy();
 
     unsigned char pad_8[0x54];
     // ButtonChallenge's damage rates, in percent, for results 1, 2 and 3 (the names are not the original's)

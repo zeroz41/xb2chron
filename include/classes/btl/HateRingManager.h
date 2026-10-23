@@ -10,6 +10,8 @@ namespace btl {
 class HateRingManager : public ::mm::mtl::PtrSingleton< ::btl::HateRingManager> {
 public:
     virtual ~HateRingManager();  // slot 0
+    static void Create();
+    static void Destroy();
 };
 }  // namespace btl
 
