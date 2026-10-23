@@ -1,7 +1,7 @@
 #ifndef CLASSES_APPS_LAUNCHERAPP_H
 #define CLASSES_APPS_LAUNCHERAPP_H
 
-#include "classes/ml/WorkObj.h"
+#include "classes/ml/WinProc.h"
 
 namespace ml { class EventButton; }
 namespace ml { class EventFileTh; }
@@ -10,20 +10,16 @@ namespace ml { class EventView; }
 namespace ml { enum CPUID : int; }
 
 namespace apps {
-// between apps::LauncherApp and ml::WorkObj: fields, no virtuals of its own
-class TUnk_B3A258 : public ::ml::WorkObj {
-public:
-    unsigned char pad_1A8[0x48];  // fields: size from its derived classes
-};
 // a base of apps::LauncherApp no evidence names yet
 class TUnk_B3A318 {
 public:
     virtual ~TUnk_B3A318();
     virtual void vf2();
 };
-// table 0x7100B3A258; base at 0x0 unknown (TUnk_B3A258), base at 0x1F0 unknown (TUnk_B3A318)
-class LauncherApp : public TUnk_B3A258, public TUnk_B3A318 {
+// table 0x7100B3A258; base at 0x0 ml::WinProc (its destructor stores WinProc's table), base at 0x1F0 unknown (TUnk_B3A318)
+class LauncherApp : public ::ml::WinProc, public TUnk_B3A318 {
 public:
+    LauncherApp(const char* name, ml::WorkObj* parent, int childCapacity);
     virtual ~LauncherApp();  // slot 0
     virtual void OnSystemPause(unsigned int);  // slot 2
     virtual void OnShutdownForce();  // slot 3

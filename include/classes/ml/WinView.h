@@ -6,6 +6,7 @@
 namespace ml { class IWorkEvent; }
 namespace ml { class WorkObj; }
 namespace mm { template <typename> class Rect; }
+namespace mm { struct Col4; }
 
 namespace ml {
 // a base of ml::WinView no evidence names yet
@@ -17,6 +18,7 @@ public:
 class WinView : public ::ml::WorkObj, public TUnk_B788F8 {
 public:
     enum RENDER_INFO : int;
+    static void setInitialBackCol(const mm::Col4& col);
     virtual ~WinView();  // slot 0
     virtual void wkTail();  // slot 12
     virtual bool wkStandbyLogin();  // slot 14

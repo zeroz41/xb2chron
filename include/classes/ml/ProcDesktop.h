@@ -1,22 +1,19 @@
 #ifndef CLASSES_ML_PROCDESKTOP_H
 #define CLASSES_ML_PROCDESKTOP_H
 
-#include "classes/ml/WorkObj.h"
+#include "classes/ml/WinProc.h"
 
 namespace ml {
-// between ml::ProcDesktop and ml::WorkObj: fields, no virtuals of its own
-class TUnk_B78600 : public ::ml::WorkObj {
-public:
-    unsigned char pad_1A8[0x48];  // fields: size from its derived classes
-};
 // a base of ml::ProcDesktop no evidence names yet
 class TUnk_B78698 {
 public:
     virtual ~TUnk_B78698();
 };
-// table 0x7100B78600; base at 0x0 unknown (TUnk_B78600), base at 0x1F0 unknown (TUnk_B78698)
-class ProcDesktop : public TUnk_B78600, public TUnk_B78698 {
+// table 0x7100B78600; base at 0x0 ml::WinProc (tl::TitleApp::execute calls WinProc::pssGetApplicationView on the desktop), base at 0x1F0 unknown (TUnk_B78698)
+class ProcDesktop : public ::ml::WinProc, public TUnk_B78698 {
 public:
+    // the desktop's own view (WinView.cpp)
+    static WinView* getView();
     virtual ~ProcDesktop();  // slot 0
     virtual void OnPauseTrigger(bool, char const*);  // slot 5
     virtual void wkStandby();  // slot 8
