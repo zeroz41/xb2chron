@@ -33,17 +33,17 @@ public:
     virtual void addScl(mm::Vec3 const&);  // slot 15
     virtual void setMat(mm::Mat44 const&);  // slot 16
     virtual void setAlpha(float) = 0;  // slot 17
-    virtual void getAlpha() const = 0;  // slot 18
+    virtual float getAlpha() const = 0;  // slot 18
     virtual void setWriteStencil(bool) = 0;  // slot 19
     virtual void setAlwaysTexStm(bool) = 0;  // slot 20
-    virtual void isMdlTexStm() const = 0;  // slot 21
-    virtual void isMemTexStm() const = 0;  // slot 22
-    virtual void getAABBMax() const = 0;  // slot 23
-    virtual void getAABBMin() const = 0;  // slot 24
-    virtual void getCenter() const = 0;  // slot 25
-    virtual void getLength() const = 0;  // slot 26
+    virtual bool isMdlTexStm() const = 0;  // slot 21
+    virtual bool isMemTexStm() const = 0;  // slot 22
+    virtual const mm::Vec3& getAABBMax() const = 0;  // slot 23
+    virtual const mm::Vec3& getAABBMin() const = 0;  // slot 24
+    virtual const mm::Vec3& getCenter() const = 0;  // slot 25
+    virtual float getLength() const = 0;  // slot 26
     virtual void setGroups(int) = 0;  // slot 27
-    virtual void getGroups() = 0;  // slot 28
+    virtual int getGroups() = 0;  // slot 28
     virtual void dispDebugWindow(bool, char const*, ml::WinProc*) {}  // slot 29
 };
 }  // namespace ml

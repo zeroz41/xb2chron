@@ -11,6 +11,8 @@ class NvmshResMan : public ::ml::IWorkEvent {
 public:
     virtual ~NvmshResMan();  // slot 0
     virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
+    void setupResource(const unsigned char* resource, const char* name);
+    void releaseResource();
 };
 }  // namespace navi
 
