@@ -10,6 +10,8 @@ class GfFieldGimmick : public ::mm::mtl::PtrSingleton< ::gf::GfFieldGimmick> {
 public:
     // the FLD_maplist id of the map an RSC_GmkSetList row belongs to
     static int getBdatIdFrom_RSC_GmkSetList_To_FLD_maplist(int gmkSetId);
+    // whether the map's gimmick sets are ready (GfAutoTalkManager::seqInit waits for it)
+    static bool isGmkSetReady();
     unsigned char pad_8[0xF4A4];
     // an event fade is running: GfPlayComEventFade's update sets it as it starts the fade, its end() clears it
     // (the name is not the original's)

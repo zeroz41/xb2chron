@@ -25,6 +25,13 @@ public:
         unsigned int pad_8;
         unsigned char pad_c;
     };
+    // a gimmick named by its type and BDAT row (GfAutoTalk::create reaches its MOBID's mob so: type 0x12; the
+    // names are not the original's)
+    struct CreateInfoByBdatId {
+        GmkType m_type;
+        int m_bdatId;
+        bool m_flag;  // GfAutoTalk::create passes true
+    };
     GmkAcc();
     GmkAcc(const CreateInfo& info);
     GmkAcc(const GmkAcc& other);
@@ -36,6 +43,7 @@ public:
     void dispose();
     bool isValid() const;
     void create(const CreateInfo& info);
+    void create(const CreateInfoByBdatId& info);
 
     unsigned char pad_8[0x10];
     CreateInfo m_info;  // what the locators test before creating it again; the name is not the original's

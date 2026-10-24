@@ -21,7 +21,8 @@ public:
     static const int GMK_LIST_NUM = 64;
     unsigned char pad_8[0x8];
     mtl::ALLOC_HANDLE m_allocHandle;  // 0x10: its lists' memory (createGmkLists passes it on; the name is not the original's)
-    unsigned char pad_14[0xc];
+    int m_bdatId;  // 0x14: its RSC_GmkSetList row (GfAutoTalkManager::seqInit reads its autoTalk columns by it; the name is not the original's)
+    unsigned char pad_18[0x8];
     mm::Vec3 m_pos;  // 0x20: passed to its lists (the name is not the original's)
     float m_rotY;  // 0x30: its lists' rotation (the name is not the original's)
     unsigned char pad_34[0x144];
