@@ -28,11 +28,17 @@ public:
     unsigned char* getBindedBdatFp() const;
     // whether pos lies inside the gimmick's shape (GfGameInsideBattleLock::isInside asks a battle lock's with 0)
     bool isInsideShape(const mm::Vec3& pos, float margin) const;  // the BDAT table of the gimmick's kind
-    unsigned char pad_8[0x20];
+    unsigned char pad_8[0x8];
+    // the gimmick's position: gf_field_locator's locators copy its x, y, z (LocatorTbox::update and its kin); the
+    // name is not the original's
+    const mm::Vec3* m_pos;
+    unsigned char pad_18[0x10];
     // data the gimmick keeps; GfComBehaviorGmk tests a salvage locator's (kind 0x20) first byte against 2 to
     // answer the PC's access query (the name is not the original's)
     const unsigned char* m_data;
-    unsigned char pad_30[0x8];
+    // its row's BdatInfo, of the derived class's type: GmkTbox::BdatInfo::isPopCondMatchedExceptDist and
+    // GmkPrecious::BdatInfo::isPopCondMatched are called on it (gf_field_locator); the name is not the original's
+    const void* m_bdatInfo;
     // the gimmick's row in that table (GfFieldTbox reads its RSC_ID by it, and passes it as the quest gimmick id; the
     // name is not the original's)
     unsigned int m_bdatId;

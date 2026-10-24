@@ -2,6 +2,8 @@
 #define CLASSES_GF_LOCATORPRECIOUS_H
 
 #include "classes/gf/AFieldLocator.h"
+#include "mm/mtl/FixedVector.h"
+#include "classes/gmk/GmkAcc.h"
 
 namespace gmk { class AGmkBase; }
 
@@ -14,11 +16,28 @@ public:
 // table 0x7100B51CA0; base at 0x18 unknown (TUnk_B51CF0)
 class LocatorPrecious : public ::gf::AFieldLocator, public TUnk_B51CF0 {
 public:
-    virtual ~LocatorPrecious();  // slot 0
-    virtual void getPosNum() const;  // slot 3
-    virtual void getPos(unsigned int) const;  // slot 4
+    virtual ~LocatorPrecious() {  // slot 0
+        reset();
+    }
+    virtual unsigned int getPosNum() const {  // slot 3
+        return m_posList.size();
+    }
+    virtual const mm::Vec3* getPos(unsigned int index) const {  // slot 4
+        return &m_posList[index];
+    }
     virtual void update();  // slot 6
     virtual void onTraverse(gmk::AGmkBase const&);  // slot 7
+    void create(QuestID questId, unsigned short preciousId);
+    // the name is not the original's
+    void reset() {
+        m_posList.clear();
+        m_accs.clear();
+        m_preciousId = 0;
+    }
+
+    unsigned short m_preciousId;
+    mm::mtl::FixedVector<gmk::GmkAcc, 16> m_accs;
+    mm::mtl::FixedVector<mm::Vec3, 16> m_posList;
 };
 }  // namespace gf
 

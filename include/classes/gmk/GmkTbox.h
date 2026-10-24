@@ -14,6 +14,7 @@ public:
     // its size: the element size of Vector<BdatInfo>::resize 0x71005DFFBC (zero-filled)
     class BdatInfo {
     public:
+        bool isPopCondMatchedExceptDist() const;
         unsigned char pad_0[0x10];
     };
     virtual ~GmkTbox();  // slot 0
@@ -25,6 +26,11 @@ public:
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9
     void setTargetable(bool targetable) const;
+    int getProgress() const;
+    // AGmkBase's row as this kind's BdatInfo; the name is not the original's
+    const BdatInfo* getBdatInfo() const {
+        return static_cast<const BdatInfo*>(m_bdatInfo);
+    }
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(9);
     unsigned char pad_48[0x18];  // fields: size from TGmkList::getInst's stride

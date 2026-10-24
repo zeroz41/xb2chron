@@ -14,6 +14,7 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
+        bool isPopCondMatched() const;
         unsigned char pad_0[0x30];
     };
     virtual ~GmkPrecious();  // slot 0
@@ -24,6 +25,11 @@ public:
     virtual void debugDraw() const;  // slot 7
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
+    bool isObtained() const;
+    // AGmkBase's row as this kind's BdatInfo; the name is not the original's
+    const BdatInfo* getBdatInfo() const {
+        return static_cast<const BdatInfo*>(m_bdatInfo);
+    }
     static const gmk::GmkType TYPE = gmk::GmkType(34);
     unsigned char pad_48[0x30];  // fields: size from TGmkList::getInst's stride
 };

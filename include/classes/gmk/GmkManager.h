@@ -15,6 +15,7 @@ class GmkManager : public ::mm::mtl::PtrSingleton< ::gmk::GmkManager> {
 public:
     virtual ~GmkManager();  // slot 0
     bool isGmkSetsReady() const;
+    AGmkBase* findFirstGmkInstByBdatId(GmkType type, int bdatId) const;
     // calls f with every gimmick of a kind in every gimmick set; false while the sets are not ready
     template <typename F>
     bool traverseGmkInst(GmkType type, F& f) const {
