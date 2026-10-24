@@ -10,6 +10,8 @@ public:
     static bool getName(unsigned char*& bdat, unsigned int& id, unsigned int npc);
     static const char* getModelName(unsigned int npc);
     static const char* getMotionName(unsigned int npc);
+    static const char* getEffectName(unsigned int npc);
+    static bool isNeedResourceEvent(unsigned int npc);
     static int getOffsetID(unsigned int npc);  // its menu offset id
     static bool getExtraParts(unsigned int npc, unsigned int part);
     static unsigned int getFootStep(unsigned int npc);

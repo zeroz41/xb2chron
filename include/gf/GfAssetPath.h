@@ -23,6 +23,10 @@ public:
         static const char* s_szStp = "/sound/tag/trigger/";
         return s_szStp;
     }
+    static const char* getMdoMap() {
+        static const char* s_szMdo = "/map/";
+        return s_szMdo;
+    }
     static const char* getSePack() {
         static const char* s_szSe = "/sound/se/";
         return s_szSe;

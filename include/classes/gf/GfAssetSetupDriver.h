@@ -33,7 +33,7 @@ public:
     virtual const char* getPath() const;  // slot 33
     virtual GfAssetType getAssetType() const;  // slot 39
     virtual void setup(gf::GF_ASSET_HANDLE*, gf::GfInitParamDriver const&);  // slot 40
-    virtual void vf41();  // slot 41
+    virtual GfAssetType getAssetTypeMot() const;  // slot 41 (1.0.0's symbols name it)
     virtual GfAssetType getAssetTypeEvtMot() const;  // slot 42
     static mm::mtl::RTTI m_rtti;
 

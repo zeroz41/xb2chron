@@ -15,6 +15,9 @@ public:
     // SCOM_POPUP::createAchievement passes its blade, line and level; when it returns true no popup is queued
     static bool setupSaveAchievementPopup(unsigned int, unsigned int, unsigned int);
     static bool isCondDriverModel(unsigned int);
+    static const char* getBladeModel(unsigned int blade, bool flag);
+    static const char* getBladeMotion(unsigned int blade, bool flag);
+    static const char* getSalvageDriverModel(unsigned int driver);  // the salvage setup passes its object id
     // the player party enters a battle (GfPlayComBattleStart retries it up to 3 seconds); handle -1 for none
     static bool enterPlayerBattle(bool flag, GF_OBJ_HANDLE* handle, bool flag2);
     static void execDevelopLevelUp();

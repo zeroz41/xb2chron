@@ -100,9 +100,10 @@ public:
     // the handle being set up: setupParam stores the one it is given, the destructor hands it to
     // GfAssetManager::lockEnterRersource (the name is not the original's)
     GF_ASSET_HANDLE* m_handle;
-    // setupParam's copy of the 8 bytes its parameter's 0x18 points at, when it points anywhere; the destructor
+    // setupParam's copy of the BDAT table pointer its parameter's 0x18 points at (the file getters read their
+    // names from that table), when it points anywhere; the destructor
     // frees it (the name is not the original's)
-    unsigned long* m_paramCopy;
+    unsigned char** m_paramCopy;
     // the files setRefResource gives the setup: setupReference finds one by its file index and makes a
     // GfAssetResource of its data; the destructor frees each (the name is not the original's)
     mm::mtl::FixedVector<RefResource*, 24> m_refResources;

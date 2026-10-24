@@ -25,6 +25,8 @@ public:
     unsigned int getFieldSkill(unsigned int index, bool flag) const;
     unsigned char getFieldSkillLevel(unsigned int index, bool flag) const;
     int getIconData() const;
+    const char* getMotionResourceName() const;
+    const char* getEffectResourceName() const;
     unsigned int getEquipWeapon(int index, bool flag) const;  // GfMenuWeaponAdapter asks (-1, false)
     unsigned int getLevel(bool flag) const;
     unsigned int getBladeArts(unsigned int index, bool flag) const;

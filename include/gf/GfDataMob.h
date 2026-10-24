@@ -12,6 +12,7 @@ public:
     static unsigned int getFootStepEffect(unsigned int mob);
     static unsigned int getRace(unsigned int mob);
     static const char* getMotionName(unsigned int mob);
+    static const char* getEffectName(unsigned int mob);
 };
 }  // namespace gf
 

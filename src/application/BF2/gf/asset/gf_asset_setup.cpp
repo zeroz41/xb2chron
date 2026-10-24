@@ -27,6 +27,13 @@
 #include "classes/gf/GfAssetSetupSalvage.h"
 #include "classes/gf/GfAssetSetupWeaponEventCS.h"
 #include "gf/GfAssetPath.h"
+#include "classes/gf/DataParamAcc.h"
+#include "classes/gf/GfGameManager.h"
+#include "gf/GfDataMob.h"
+#include "gf/GfDataNpc.h"
+#include "gf/GfGameUtil.h"
+#include "plugin/Bdat.h"
+#include "classes/gf/GfDataBdat.h"
 
 namespace gf {
 
@@ -46,16 +53,79 @@ GfAssetSetup::~GfAssetSetup() {
 
 GfAssetSetupDriver::GfAssetSetupDriver() : pad_1fc(-1) {}
 
+const char* GfAssetSetupDriver::getMotFile(GfAssetType type) {
+    if (getAssetTypeMot() == type) {
+        RefResource* resource = findRefResource(getMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            DataParamAcc acc(3, m_objId, static_cast<GimmickType>(0));
+            const char* name = acc.getMotionResourceName();
+            if (name == nullptr || *name == '\0') {
+                return nullptr;
+            }
+            return name;
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
+}
+
 const char* GfAssetSetupDriver::getEfpFile(GfAssetType type) {
     return getMdlFile(type);
+}
+
+const char* GfAssetSetupDriver::getEabFile(GfAssetType type) {
+    DataParamAcc acc(3, m_objId, static_cast<GimmickType>(0));
+    return acc.getEffectResourceName();
+}
+
+const char* GfAssetSetupDriver::getEfbFile(GfAssetType type) {
+    if (getAssetTypeMot() == type) {
+        return getEabFile(type);
+    }
+    return nullptr;
+}
+
+const char* GfAssetSetupDriver::getEfTailFile(GfAssetType type) {
+    if (type == 16) {
+        return getEabFile(type);
+    }
+    return nullptr;
+}
+
+const char* GfAssetSetupDriver::getStpFile(GfAssetType type) {
+    if (getAssetType() == type) {
+        DataParamAcc acc(3, m_objId, static_cast<GimmickType>(0));
+        return validName(acc.getMotionResourceName());
+    }
+    return nullptr;
 }
 
 const char* GfAssetSetupDriver::getPath() const {
     return GfAssetPath::getMdoModel();
 }
 
+const char* GfAssetSetupEventDriver::getEvtMotFile(GfAssetType type) {
+    if (getAssetTypeEvtMot() == type) {
+        RefResource* resource = findRefResource(getEvtMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            DataParamAcc acc(3, m_objId, static_cast<GimmickType>(0));
+            const char* name = acc.getMotionResourceName();
+            if (name == nullptr || *name == '\0') {
+                return nullptr;
+            }
+            return name;
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
+}
+
 const char* GfAssetSetupEventDriver::getEvtPath() const {
     return GfAssetPath::getEvt();
+}
+
+const char* GfAssetSetupSalvage::getMdlFile(GfAssetType type) {
+    return GfGameUtil::getSalvageDriverModel(m_objId);
 }
 
 const char* GfAssetSetupSalvage::getArcFile(GfAssetType type) {
@@ -63,6 +133,45 @@ const char* GfAssetSetupSalvage::getArcFile(GfAssetType type) {
 }
 
 GfAssetSetupBlade::GfAssetSetupBlade() : pad_1fc(0) {}
+
+const char* GfAssetSetupBlade::getMdlFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getMdlSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        const char* name = GfGameUtil::getBladeModel(m_objId, false);
+        if (name == nullptr || *name == '\0') {
+            return nullptr;
+        }
+        return name;
+    }
+    return resource->m_name.m_str;
+}
+
+const char* GfAssetSetupBlade::getArcFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getArcSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        const char* name = GfGameUtil::getBladeModel(m_objId, false);
+        if (name == nullptr || *name == '\0') {
+            return nullptr;
+        }
+        return name;
+    }
+    return resource->m_name.m_str;
+}
+
+const char* GfAssetSetupBlade::getRetargetMotFile(GfAssetType type) {
+    if (getAssetTypeMot() == type) {
+        RefResource* resource = findRefResource(getMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            const char* name = GfGameUtil::getBladeMotion(m_objId, false);
+            if (name == nullptr || *name == '\0') {
+                return nullptr;
+            }
+            return name;
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
+}
 
 const char* GfAssetSetupBlade::getEfpFile(GfAssetType type) {
     return getMdlFile(type);
@@ -72,14 +181,75 @@ const char* GfAssetSetupBlade::getPath() const {
     return GfAssetPath::getMdoModel();
 }
 
+const char* GfAssetSetupEventBlade::getEvtMotFile(GfAssetType type) {
+    if (getAssetTypeEventMot() == type) {
+        RefResource* resource = findRefResource(getEvtMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            const char* name = GfGameUtil::getBladeMotion(m_objId, pad_1fc == 0);
+            if (name == nullptr || *name == '\0') {
+                return nullptr;
+            }
+            return name;
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
+}
+
 const char* GfAssetSetupEventBlade::getEvtPath() const {
     return GfAssetPath::getEvt();
+}
+
+const char* GfAssetSetupEventBlade::getMdlFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getMdlSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        const char* name = GfGameUtil::getBladeModel(m_objId, pad_1fc == 0);
+        if (name == nullptr || *name == '\0') {
+            return nullptr;
+        }
+        return name;
+    }
+    return resource->m_name.m_str;
+}
+
+const char* GfAssetSetupEventBlade::getArcFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getArcSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        const char* name = GfGameUtil::getBladeModel(m_objId, pad_1fc == 0);
+        if (name == nullptr || *name == '\0') {
+            return nullptr;
+        }
+        return name;
+    }
+    return resource->m_name.m_str;
+}
+
+const char* GfAssetSetupEventBlade::getRetargetMotFile(GfAssetType type) {
+    if (getAssetTypeMot() == type) {
+        RefResource* resource = findRefResource(getMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            const char* name = GfGameUtil::getBladeMotion(m_objId, pad_1fc == 0);
+            if (name == nullptr || *name == '\0') {
+                return nullptr;
+            }
+            return name;
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
 }
 
 GfAssetSetupEnemy::GfAssetSetupEnemy() : pad_200(0) {}
 
 const char* GfAssetSetupEnemy::getEfpFile(GfAssetType type) {
     return getMdlFile(type);
+}
+
+const char* GfAssetSetupEnemy::getEfbFile(GfAssetType type) {
+    if (type == 13) {
+        return getEabFile(type);
+    }
+    return nullptr;
 }
 
 const char* GfAssetSetupEnemy::getPath() const {
@@ -92,18 +262,88 @@ const char* GfAssetSetupEnemyBlade::getPath() const {
     return GfAssetPath::getMdoModel();
 }
 
+const char* GfAssetSetupEventEnemy::getEvtMotFile(GfAssetType type) {
+    if (type == 0) {
+        RefResource* resource = findRefResource(getEvtMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            unsigned char* fp = GfDataBdat::getFP(165);
+            unsigned char** table = m_paramCopy != nullptr ? m_paramCopy : &fp;
+            unsigned int id = m_objId;
+            const char* name = Bdat::getValCheck(*table, "Motion", id, 7);
+            if (name == nullptr || *name == '\0') {
+                return nullptr;
+            }
+            return name;
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
+}
+
 const char* GfAssetSetupEventEnemy::getEvtPath() const {
     return GfAssetPath::getEvt();
 }
 
 GfAssetSetupNpc::GfAssetSetupNpc() {}
 
+const char* GfAssetSetupNpc::getMotFile(GfAssetType type) {
+    if (getAssetTypeMot() == type) {
+        RefResource* resource = findRefResource(getMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            const char* name = GfDataNpc::getMotionName(m_objId);
+            if (name == nullptr || *name == '\0') {
+                return nullptr;
+            }
+            return name;
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
+}
+
 const char* GfAssetSetupNpc::getEfpFile(GfAssetType type) {
     return getMdlFile(type);
 }
 
+const char* GfAssetSetupNpc::getRetargetMotFile(GfAssetType type) {
+    if (getAssetTypeMot() == type) {
+        RefResource* resource = findRefResource(getMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            const char* name = GfDataNpc::getMotionName(m_objId);
+            if (name == nullptr || *name == '\0') {
+                return nullptr;
+            }
+            return name;
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
+}
+
 const char* GfAssetSetupNpc::getPath() const {
     return "/model/";
+}
+
+const char* GfAssetSetupNpc::getEvtMotFile(GfAssetType type) {
+    if (type == 0 && GfDataNpc::isNeedResourceEvent(m_objId)) {
+        RefResource* resource = findRefResource(getEvtMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            const char* name = GfDataNpc::getMotionName(m_objId);
+            if (name == nullptr || *name == '\0') {
+                return nullptr;
+            }
+            return name;
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
+}
+
+const char* GfAssetSetupNpc::getEabFile(GfAssetType type) {
+    if (type == 13) {
+        return GfDataNpc::getEffectName(m_objId);
+    }
+    return nullptr;
 }
 
 const char* GfAssetSetupNpc::getEfbFile(GfAssetType type) {
@@ -114,10 +354,88 @@ const char* GfAssetSetupNpc::getEvtPath() const {
     return GfAssetPath::getEvt();
 }
 
+const char* GfAssetSetupEventNpc::getMotFile(GfAssetType type) {
+    if (type == 0) {
+        RefResource* resource = findRefResource(getMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            const char* name = GfDataNpc::getMotionName(m_objId);
+            if (name == nullptr || *name == '\0') {
+                return nullptr;
+            }
+            return name;
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
+}
+
+const char* GfAssetSetupEventNpc::getEvtMotFile(GfAssetType type) {
+    if (type == 0) {
+        RefResource* resource = findRefResource(getEvtMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            const char* name = GfDataNpc::getMotionName(m_objId);
+            if (name == nullptr || *name == '\0') {
+                return nullptr;
+            }
+            return name;
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
+}
+
 GfAssetSetupMob::GfAssetSetupMob() {}
+
+const char* GfAssetSetupMob::getMdlFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getMdlSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        unsigned char* fp = GfDataBdat::getFP(170);
+        unsigned char** table = m_paramCopy != nullptr ? m_paramCopy : &fp;
+        unsigned int id = m_objId;
+        const char* name = Bdat::getValCheck(*table, "Model", id, 7);
+        if (name == nullptr || *name == '\0') {
+            return nullptr;
+        }
+        return name;
+    }
+    return resource->m_name.m_str;
+}
 
 const char* GfAssetSetupMob::getArcFile(GfAssetType type) {
     return getMdlFile(type);
+}
+
+const char* GfAssetSetupMob::getMotFile(GfAssetType type) {
+    if (type == 0) {
+        RefResource* resource = findRefResource(getMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            unsigned char* fp = GfDataBdat::getFP(170);
+            unsigned char** table = m_paramCopy != nullptr ? m_paramCopy : &fp;
+            unsigned int id = m_objId;
+            const char* name = Bdat::getValCheck(*table, "Motion", id, 7);
+            if (name == nullptr || *name == '\0') {
+                return nullptr;
+            }
+            return name;
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
+}
+
+const char* GfAssetSetupMob::getRetargetMotFile(GfAssetType type) {
+    if (type == 0) {
+        RefResource* resource = findRefResource(getMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            const char* name = GfDataMob::getMotionName(m_objId);
+            if (name == nullptr || *name == '\0') {
+                return nullptr;
+            }
+            return name;
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
 }
 
 const char* GfAssetSetupMob::getStpFile(GfAssetType type) {
@@ -132,6 +450,13 @@ const char* GfAssetSetupMob::getEfpFile(GfAssetType type) {
     return getMdlFile(type);
 }
 
+const char* GfAssetSetupMob::getEabFile(GfAssetType type) {
+    if (getAssetType() == type) {
+        return GfDataMob::getEffectName(m_objId);
+    }
+    return nullptr;
+}
+
 const char* GfAssetSetupMob::getEfbFile(GfAssetType type) {
     return getEabFile(type);
 }
@@ -142,12 +467,50 @@ const char* GfAssetSetupEventMob::getEvtPath() const {
 
 GfAssetSetupGimmick::GfAssetSetupGimmick() : pad_1fc(0) {}
 
+const char* GfAssetSetupGimmick::getMdlFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getMdlSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        unsigned char** table = m_paramCopy;
+        unsigned int id = m_objId;
+        const char* name = Bdat::getValCheck(*table, "Model", id, 7);
+        if (name == nullptr || *name == '\0') {
+            return nullptr;
+        }
+        return name;
+    }
+    return resource->m_name.m_str;
+}
+
 const char* GfAssetSetupGimmick::getArcFile(GfAssetType type) {
     return getMdlFile(type);
 }
 
+const char* GfAssetSetupGimmick::getMotFile(GfAssetType type) {
+    if (type == 17) {
+        RefResource* resource = findRefResource(getMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            unsigned char** table = m_paramCopy;
+            unsigned int id = m_objId;
+            const char* name = Bdat::getValCheck(*table, "Motion", id, 7);
+            if (name == nullptr || *name == '\0') {
+                return nullptr;
+            }
+            return name;
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
+}
+
 const char* GfAssetSetupGimmick::getEfpFile(GfAssetType type) {
     return getMdlFile(type);
+}
+
+const char* GfAssetSetupGimmick::getEfbFile(GfAssetType type) {
+    if (type == 17) {
+        return getEabFile(type);
+    }
+    return nullptr;
 }
 
 const char* GfAssetSetupGimmick::getPath() const {
@@ -155,6 +518,20 @@ const char* GfAssetSetupGimmick::getPath() const {
 }
 
 GfAssetSetupFobj::GfAssetSetupFobj() {}
+
+const char* GfAssetSetupFobj::getMdlFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getMdlSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        unsigned char** table = m_paramCopy;
+        unsigned int id = m_objId;
+        const char* name = Bdat::getValCheck(*table, "mdo", id, 7);
+        if (name == nullptr || *name == '\0') {
+            return nullptr;
+        }
+        return name;
+    }
+    return resource->m_name.m_str;
+}
 
 const char* GfAssetSetupFobj::getEabFile(GfAssetType type) {
     return getMdlFile(type);
@@ -166,11 +543,22 @@ const char* GfAssetSetupFobj::getPath() const {
 
 GfAssetSetupWeapon::GfAssetSetupWeapon() {}
 
+const char* GfAssetSetupWeapon::getStpFile(GfAssetType type) {
+    return validName(m_append.getModelName());
+}
+
 const char* GfAssetSetupWeapon::getPath() const {
     return GfAssetPath::getMdoModel();
 }
 
 GfAssetSetupWeaponEventCS::GfAssetSetupWeaponEventCS() {}
+
+const char* GfAssetSetupWeaponEventCS::getEvtMotFile(GfAssetType type) {
+    if (type == 18) {
+        return getMotFile(type);
+    }
+    return nullptr;
+}
 
 const char* GfAssetSetupWeaponEventCS::getEvtPath() const {
     return "/event/mot/";
@@ -178,12 +566,40 @@ const char* GfAssetSetupWeaponEventCS::getEvtPath() const {
 
 GfAssetSetupEnWeapon::GfAssetSetupEnWeapon() {}
 
+const char* GfAssetSetupEnWeapon::getMdlFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getMdlSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        const char* name = m_append.getModelName();
+        if (name == nullptr || *name == '\0') {
+            return nullptr;
+        }
+        return name;
+    }
+    return resource->m_name.m_str;
+}
+
 const char* GfAssetSetupEnWeapon::getArcFile(GfAssetType type) {
     return getMdlFile(type);
 }
 
+const char* GfAssetSetupEnWeapon::getMotFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getMotSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        const char* name = m_append.getMotionName();
+        if (name == nullptr || *name == '\0') {
+            return nullptr;
+        }
+        return name;
+    }
+    return resource->m_name.m_str;
+}
+
 const char* GfAssetSetupEnWeapon::getEfpFile(GfAssetType type) {
     return getMdlFile(type);
+}
+
+const char* GfAssetSetupEnWeapon::getStpFile(GfAssetType type) {
+    return validName(m_append.getModelName());
 }
 
 const char* GfAssetSetupEnWeapon::getPath() const {
@@ -191,6 +607,18 @@ const char* GfAssetSetupEnWeapon::getPath() const {
 }
 
 GfAssetSetupBelonging::GfAssetSetupBelonging() {}
+
+const char* GfAssetSetupBelonging::getMdlFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getMdlSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        const char* name = m_append.getModelName();
+        if (name == nullptr || *name == '\0') {
+            return nullptr;
+        }
+        return name;
+    }
+    return resource->m_name.m_str;
+}
 
 const char* GfAssetSetupBelonging::getArcFile(GfAssetType type) {
     return getMdlFile(type);
@@ -202,8 +630,36 @@ const char* GfAssetSetupBelonging::getPath() const {
 
 GfAssetSetupExtra::GfAssetSetupExtra() {}
 
+const char* GfAssetSetupExtra::getMdlFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getMdlSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        const char* name = m_append.getModelName();
+        if (name == nullptr || *name == '\0') {
+            return nullptr;
+        }
+        return name;
+    }
+    return resource->m_name.m_str;
+}
+
 const char* GfAssetSetupExtra::getArcFile(GfAssetType type) {
     return getMdlFile(type);
+}
+
+const char* GfAssetSetupExtra::getMotFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getMotSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        const char* name = m_append.getMotionName();
+        if (name == nullptr || *name == '\0') {
+            return nullptr;
+        }
+        return name;
+    }
+    return resource->m_name.m_str;
+}
+
+const char* GfAssetSetupExtra::getStpFile(GfAssetType type) {
+    return validName(m_append.getModelName());
 }
 
 const char* GfAssetSetupExtra::getPath() const {
@@ -228,7 +684,31 @@ const char* GfAssetSetupMapSeamless::getLIblFile(GfAssetType type) {
     return getMdlFile(type);
 }
 
+const char* GfAssetSetupMapSeamless::getPath() const {
+    return pad_200.m_nLen == 0 ? GfAssetPath::getMdoMap() : "";
+}
+
 GfAssetSetupEventObj::GfAssetSetupEventObj() {}
+
+const char* GfAssetSetupEventObj::getMdlFile(GfAssetType type) {
+    return getRefFile(getMdlSlot());
+}
+
+const char* GfAssetSetupEventObj::getArcFile(GfAssetType type) {
+    return getRefFile(getArcSlot());
+}
+
+const char* GfAssetSetupEventObj::getEfpFile(GfAssetType type) {
+    return getRefFile(getEfpSlot());
+}
+
+const char* GfAssetSetupEventObj::getEabFile(GfAssetType type) {
+    return getRefFile(getEabSlot());
+}
+
+const char* GfAssetSetupEventObj::getEfbFile(GfAssetType type) {
+    return getRefFile(getEfbSlot());
+}
 
 GfAssetSetupUiObj::GfAssetSetupUiObj() {}
 
