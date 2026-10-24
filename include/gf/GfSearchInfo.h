@@ -12,7 +12,7 @@ public:
     unsigned char pad_8[0x1C];
     float m_height;  // GfGameTarget::setTargetNearest skips one whose magnitude passes its parameter's
     unsigned char pad_28[0x4];
-    bool m_visible;  // GfGameTarget::setTargetNearest takes only one with it set
+    bool m_visible : 1;  // GfGameTarget::setTargetNearest takes only one with it set (bit 0: it tests the bit)
 };
 
 }  // namespace gf

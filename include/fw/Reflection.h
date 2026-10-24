@@ -135,6 +135,8 @@ public:
 // table _ZTVN2fw10ReflectionE (1.0.0): the parameter blocks of a param list, one per index
 class Reflection : public mm::mtl::ReferenceObject {
 public:
+    // 1.0.0's GfGameTarget::createReflection builds one so (inline: the original has no copy)
+    explicit Reflection(mm::mtl::IAllocator* allocator) : m_structs(allocator) {}
     virtual ~Reflection();  // slot 0
 
     // value referenced at index, the one there before released (1.0.0's out-of-line copy is this)

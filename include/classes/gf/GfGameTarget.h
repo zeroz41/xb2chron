@@ -17,6 +17,7 @@ namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GF_SEARCH_OBJ; }
 namespace gf { class GfGameTarget; }
 namespace gf { class GfSearchInfo; }
+namespace fw { class Reflection; }
 namespace gf { class GfSetupParam; }
 namespace gf { class MsgGameDebugTarget; }
 
@@ -29,14 +30,19 @@ public:
     class StateBattleTarget;
     class StateDriverNotActive;
     class StateEnemyTarget;
-    // its parameter list's first entry (1.0.0's GfGameTarget::Param::createReflection names the type; the field
-    // names are not the original's)
+    // its parameter list's first entry (1.0.0's GfGameTarget::Param::createReflection names the type and, as
+    // reflection names, the fields)
     struct Param {
-        float m_searchRadius;  // createSearchObj: the target search's radius
-        float m_heightRange;   // setTargetNearest: the greatest height difference of an auto target
-        float m_fadeTime;      // updateImpl: how long a fading target stays
-        float m_nearTime;      // updateImpl/judgeNearTarget: the near-target hold's time
+        // 1.0.0's reflection of the parameters "target" (3.0.1's linker dropped it, leaving its strings)
+        static void createReflection(fw::Reflection* reflection, const char* name, unsigned int index);
+
+        float m_nearRadius;    // "nearRadius"; createSearchObj: the target search's radius
+        float m_nearAngle;     // "nearAngle"; setTargetNearest: the greatest height difference of an auto target
+        float m_fadeTime;      // "fadeTime"; updateImpl: how long a fading target stays
+        float m_resetKeyTime;  // "resetKeyTime"; updateImpl/judgeNearTarget: the near-target hold's time
     };
+    // 1.0.0's: the parameter list's reflection (3.0.1's linker dropped it)
+    static fw::Reflection* createReflection();
 
     GfGameTarget();
     virtual ~GfGameTarget();  // slot 0
