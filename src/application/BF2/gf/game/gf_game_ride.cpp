@@ -112,7 +112,7 @@ bool GfGameLoad::OnFileEvent(ml::EventFileTh* event) {
         m_fileHandle = nullptr;
     }
     if (m_state == 1 && m_fileHandle == nullptr) {
-        fn_71002C1A50();
+        phaseBinData();
         m_state = 0;
     }
     return true;

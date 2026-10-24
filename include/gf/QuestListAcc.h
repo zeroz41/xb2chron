@@ -249,30 +249,18 @@ public:
     unsigned int getFLD_FieldSkillListEnd() const;
     unsigned int getFLD_FieldSkillListName(unsigned int id) const;
     unsigned int getFLD_FieldSkillListCaption(unsigned int id) const;
-    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
-    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
-    // has their shape. What it does: reads a row of GfBdatQuest's column FLD_FieldSkillListMinLevel (1.0.0 accessor prefix +
-    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
-    unsigned int fn_710025E554(unsigned int id) const;
+    // named by 1.0.0: column-text (its slot is looked up by its column name; 1.0.0's accessor reads that column)
+    unsigned int getFLD_FieldSkillListMinLevel(unsigned int id) const;
     unsigned int getFLD_FieldSkillListMaxLevel(unsigned int id) const;
-    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
-    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
-    // has their shape. What it does: reads a row of GfBdatQuest's column FLD_FieldSkillListCategory (1.0.0 accessor prefix +
-    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
-    unsigned int fn_710025E67C(unsigned int id) const;
+    // named by 1.0.0: column-text (its slot is looked up by its column name; 1.0.0's accessor reads that column)
+    unsigned int getFLD_FieldSkillListCategory(unsigned int id) const;
     unsigned int getFLD_FieldSkillListVoiceCategory(unsigned int id) const;
     unsigned int getFLD_FieldSkillListAttirbute(unsigned int id) const;
     unsigned int getFLD_FieldSkillSettingStart() const;
-    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
-    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
-    // has their shape. What it does: reads a row of GfBdatQuest's column FLD_FieldSkillSettingSuccessVoiceCategory (1.0.0 accessor prefix +
-    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
-    unsigned int fn_710025E850(unsigned int id) const;
-    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
-    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
-    // has their shape. What it does: reads a row of GfBdatQuest's column FLD_FieldSkillSettingMissVoiceCategory (1.0.0 accessor prefix +
-    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
-    unsigned int fn_710025E8E4(unsigned int id) const;
+    // named by 1.0.0: column-text (its slot is looked up by its column name; 1.0.0's accessor reads that column)
+    unsigned int getFLD_FieldSkillSettingSuccessVoiceCategory(unsigned int id) const;
+    // named by 1.0.0: column-text (its slot is looked up by its column name; 1.0.0's accessor reads that column)
+    unsigned int getFLD_FieldSkillSettingMissVoiceCategory(unsigned int id) const;
     unsigned int getFLD_DevelopmentLevelValue(unsigned int id) const;
     // (layout from the constructor, clear, the getters and makeQuestTaskInfo; the names are not the original's)
     QuestCategory<8096> m_list[6];         // the quest list categories (category k is m_list[k - 1])

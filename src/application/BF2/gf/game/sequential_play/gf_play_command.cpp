@@ -365,7 +365,7 @@ GfPlayComEventPlayerStop* GfPlayComEventPlayerStop::create(bool stop) {
 void GfPlayComResetBladePlayerStop::start() {
     if (!m_stop) {
         if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
-            scene->fn_71002C3450(false);
+            scene->setResetBladePlayerStop(false);
         }
     }
 }
@@ -375,7 +375,7 @@ GfPlayComResetBladePlayerStop* GfPlayComResetBladePlayerStop::create(bool stop) 
     GfPlayComResetBladePlayerStop* com = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComResetBladePlayerStop(stop);
     if (stop) {
         if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
-            scene->fn_71002C3450(true);
+            scene->setResetBladePlayerStop(true);
         }
     }
     return com;

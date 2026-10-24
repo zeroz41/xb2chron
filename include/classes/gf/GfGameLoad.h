@@ -16,11 +16,8 @@ public:
     virtual bool OnFileEvent(ml::EventFileTh* event);  // slot 7
     void getGameFileNameBin(mm::mtl::FixStr<256>& out);
     void getOptionFileNameBin(mm::mtl::FixStr<256>& out);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's createGameLoadDataBin and
-    // phaseBinData are the nearest). A member because OnFileEvent calls it on this once the read is over (m_state 1).
-    // What it does: takes the read file into the save data (it writes lbl_7100D6CCA0, 1.0.0's gf::_gfgsv::
-    // s_SDataSave).
-    void fn_71002C1A50();
+    // named by 1.0.0: call-site (1.0.0's OnFileEvent calls phaseBinData where 3.0.1's calls this)
+    void phaseBinData();
 
     // (the field names are not the original's)
     bool m_ira;            // GfGameManager::fn_71002A9E68 as it was made: the Torna ("ira") files' names are used

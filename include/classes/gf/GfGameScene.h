@@ -74,11 +74,9 @@ public:
     // whether the party member with that id rides (GfGameRide asks it for the leader driver's setup's m_partyId)
     bool isRideParty(unsigned int id) const;
     void setEventPlayerStop(bool stop);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits right after
-    // setEventPlayerStop and GfPlayComResetBladePlayerStop calls it on the GfGameScene singleton. What it does:
-    // EvtPlayerStop::setPlayerStop(stop) on the EvtPlayerStop at +0x648 (setEventPlayerStop's is at +0x638).
-    void fn_71002C3450(bool stop);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it follows fn_71002C3450 in
+    // named by 1.0.0: reference (1.0.0's GfPlayComResetBladePlayerStop::start calls setResetBladePlayerStop)
+    void setResetBladePlayerStop(bool stop);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it follows setResetBladePlayerStop in
     // gf_game_scene and GfFieldMapGimmick::update calls it on the GfGameScene singleton. What it does:
     // EvtPlayerStop::setPlayerStop(stop) on the EvtPlayerStop at +0x658; GfFieldMapGimmick::update passes true while
     // the gimmick's field skill runs (solve state 1) and false once it is solved (state 2).
@@ -177,7 +175,7 @@ public:
     bool m_playEvent;  // isPlayEvent's
     unsigned char pad_422[0x216];
     EvtPlayerStop m_eventPlayerStop;  // setEventPlayerStop's
-    EvtPlayerStop m_resetBladePlayerStop;  // fn_71002C3450's (GfPlayComResetBladePlayerStop calls it)
+    EvtPlayerStop m_resetBladePlayerStop;  // setResetBladePlayerStop's
     EvtPlayerStop m_gimmickPlayerStop;  // fn_71002C345C's (GfFieldMapGimmick::update calls it)
     // gf::_gffsn::bgmvolFadeBattleEvent fades its track out while it is set (+0x648 in 1.0.0; the name is not the
     // original's)

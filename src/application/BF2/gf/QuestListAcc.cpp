@@ -3644,7 +3644,7 @@ unsigned int QuestListAcc::getFLD_FieldSkillListCaption(unsigned int id) const {
     return _gfbqa::getFLD_FieldSkillListCaption(*GfBdatQuest::get()->m_fpFLD_FieldSkillList, id);
 }
 
-unsigned int QuestListAcc::fn_710025E554(unsigned int id) const {
+unsigned int QuestListAcc::getFLD_FieldSkillListMinLevel(unsigned int id) const {
     return _gfbqa::getFLD_FieldSkillListMinLevel(*GfBdatQuest::get()->m_fpFLD_FieldSkillList, id);
 }
 
@@ -3652,7 +3652,7 @@ unsigned int QuestListAcc::getFLD_FieldSkillListMaxLevel(unsigned int id) const 
     return _gfbqa::getFLD_FieldSkillListMaxLevel(*GfBdatQuest::get()->m_fpFLD_FieldSkillList, id);
 }
 
-unsigned int QuestListAcc::fn_710025E67C(unsigned int id) const {
+unsigned int QuestListAcc::getFLD_FieldSkillListCategory(unsigned int id) const {
     return _gfbqa::getFLD_FieldSkillListCategory(*GfBdatQuest::get()->m_fpFLD_FieldSkillList, id);
 }
 
@@ -3668,11 +3668,11 @@ unsigned int QuestListAcc::getFLD_FieldSkillSettingStart() const {
     return GfBdatQuest::get()->m_fpFLD_FieldSkillSetting->getIdTop();
 }
 
-unsigned int QuestListAcc::fn_710025E850(unsigned int id) const {
+unsigned int QuestListAcc::getFLD_FieldSkillSettingSuccessVoiceCategory(unsigned int id) const {
     return _gfbqa::getFLD_FieldSkillSettingSuccessVoiceCategory(*GfBdatQuest::get()->m_fpFLD_FieldSkillSetting, id);
 }
 
-unsigned int QuestListAcc::fn_710025E8E4(unsigned int id) const {
+unsigned int QuestListAcc::getFLD_FieldSkillSettingMissVoiceCategory(unsigned int id) const {
     return _gfbqa::getFLD_FieldSkillSettingMissVoiceCategory(*GfBdatQuest::get()->m_fpFLD_FieldSkillSetting, id);
 }
 

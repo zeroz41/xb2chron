@@ -88,7 +88,7 @@ void GfGameScene::setEventPlayerStop(bool stop) {
     m_eventPlayerStop.setPlayerStop(stop);
 }
 
-void GfGameScene::fn_71002C3450(bool stop) {
+void GfGameScene::setResetBladePlayerStop(bool stop) {
     m_resetBladePlayerStop.setPlayerStop(stop);
 }
 
