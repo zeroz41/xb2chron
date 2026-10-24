@@ -17,6 +17,11 @@ public:
     void setRefractionRender();
     void endRefractionRender();
     void setTexture(const grlib::CGLibTextureBuffer& texture, const grlib::CGLibSampler& sampler, unsigned int location);
+    void beginTexSampling(int, int);
+    void beginCubeTextureSampling(bool);
+    void begin3DTextureWarpSampling();
+    void setMipMapOn(const grlib::CGLibTextureBuffer& texture);
+    void setTexture(const grlib::CGLibTextureBuffer& texture, unsigned int location);
 };
 }  // namespace ml
 

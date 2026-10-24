@@ -1,10 +1,19 @@
+#include "classes/ml/DrAPCache.h"
 #include "classes/ml/DrFogObjGbl.h"
+#include "classes/ml/DrMan.h"
 #include "classes/ml/DrMdoCtlDammy.h"
 #include "classes/ml/DrMdoCtlSeamAll.h"
 #include "classes/ml/DrMdoMat.h"
+#include "grlib/CGLibCtl.h"
 #include "math.h"
 #include "ml/DrEnvironmentAnim.h"
+#include "ml/DrIniSys.h"
 #include "ml/DrMdoAnim.h"
+#include "ml/DrMdoSetup.h"
+#include "ml/DrPixlDeferred.h"
+#include "ml/DrPixlMan.h"
+#include "ml/DrPixlPostMan.h"
+#include "ml/DrPixlPostObjCubeMapIBL.h"
 #include "ml/DrResMdoMat.h"
 #include "ml/MdoWrkMatRes.h"
 #include "ml/MdsMatInfoHeader.h"
@@ -706,6 +715,422 @@ void (*DrMdoAnim::s_pCallAnmNode[9])(mm::Vec3*, float) = {
     &DrMdoAnim::anmNodeParm_SclX,
     &DrMdoAnim::anmNodeParm_SclY,
     &DrMdoAnim::anmNodeParm_SclZ,
+};
+
+void DrMdoSetup::varStTex_ColorTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 0);
+    ap->setTexture(*m_pDrMan->m_pixlMan->getPixlObj(0)->m_pTexture, location);
+}
+
+void DrMdoSetup::varStTex_NormalTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 0);
+    ap->setTexture(*m_pDrMan->m_pixlMan->getPixlObj(2)->m_pTexture, location);
+}
+
+void DrMdoSetup::varStTex_LightTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    grlib::CGLibCtlShader::setMemoryBarrierBit(4);
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 0);
+    ap->setTexture(*m_pDrMan->m_pixlMan->getPixlObj(15)->m_pTexture, location);
+}
+
+void DrMdoSetup::varStTex_DepthTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 0);
+    ap->setTexture(*m_pDrMan->m_pixlMan->getPixlObj(4)->m_pTexture, location);
+}
+
+void DrMdoSetup::varStTex_RefTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+}
+
+void DrMdoSetup::varStTex_ShadowMap(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    grlib::CGLibTextureBuffer* tex = m_pDrMan->m_pixlMan->m_objTbl->m_deferred->getShadowMapTexture();
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 1);
+    ap->setTexture(*tex, location);
+}
+
+void DrMdoSetup::varStTex_AvatarFaceMap1(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    m_pDrMan->m_pixlMan->m_objTbl->m_deferred->getShadowMapTexture();
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 1);
+    ap->setTexture(*m_pWrkMatRes->m_pAvatarTbl->m_faceTex[0], location);
+}
+
+void DrMdoSetup::varStTex_Capture1(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrPixlMan* pixl = m_pDrMan->m_pixlMan;
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    bool valid = pixl->m_capture1 != nullptr;
+    ap->beginTexSampling(2, 1);
+    if (valid) {
+        ap->setTexture(*pixl->m_capture1->m_pTexture, location);
+    } else {
+        ap->setTexture(*pixl->getDammyTexObj(), location);
+    }
+}
+
+void DrMdoSetup::varStTex_Capture2(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    DrPixlMan* pixl = m_pDrMan->m_pixlMan;
+    ap->beginTexSampling(2, 1);
+    if (pixl->m_capture2 != nullptr) {
+        ap->setTexture(*pixl->m_capture2->m_pTexture, location);
+    } else {
+        ap->setTexture(*pixl->getDammyTexObj(), location);
+    }
+}
+
+void DrMdoSetup::varStTex_Capture3(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    DrPixlMan* pixl = m_pDrMan->m_pixlMan;
+    ap->beginTexSampling(2, 1);
+    if (pixl->m_capture3 != nullptr) {
+        ap->setTexture(*pixl->m_capture3->m_pTexture, location);
+    } else {
+        ap->setTexture(*pixl->getDammyTexObj(), location);
+    }
+}
+
+void DrMdoSetup::varStTex_Capture4(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    DrPixlMan* pixl = m_pDrMan->m_pixlMan;
+    ap->beginTexSampling(2, 1);
+    if (pixl->m_capture4 != nullptr) {
+        ap->setTexture(*pixl->m_capture4->m_pTexture, location);
+    } else {
+        ap->setTexture(*pixl->getDammyTexObj(), location);
+    }
+}
+
+void DrMdoSetup::varStTex_RefractionMap(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrPixlMan* pixl = m_pDrMan->m_pixlMan;
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    grlib::CGLibRenderTarget* obj = pixl->m_objTbl->m_postMan->m_refraction;
+    ap->beginTexSampling(2, 1);
+    if (obj != nullptr) {
+        ap->setTexture(*obj->m_pTexture, location);
+    } else {
+        ap->setTexture(*pixl->getDammyTexObj(), location);
+    }
+}
+
+void DrMdoSetup::varStTex_ColorDepTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 0);
+    ap->setTexture(*m_pDrMan->m_pixlMan->getPixlObj(0)->m_pTexture, location);
+}
+
+void DrMdoSetup::varStTex_AvatarFaceMap2(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 1);
+    ap->setTexture(*m_pWrkMatRes->m_pAvatarTbl->m_faceTex[1], location);
+}
+
+void DrMdoSetup::varStTex_AvatarEyeTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 1);
+    ap->beginTexSampling(2, 1);
+    ap->setMipMapOn(*m_pWrkMatRes->m_pAvatarTbl->m_eyeTex);
+    ap->setTexture(*m_pWrkMatRes->m_pAvatarTbl->m_eyeTex, location);
+}
+
+void DrMdoSetup::varStTex_CaptureMain(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrPixlMan* pixl = m_pDrMan->m_pixlMan;
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    bool valid = pixl->m_captureMain != nullptr;
+    ap->beginTexSampling(2, 1);
+    if (valid) {
+        ap->setTexture(*pixl->m_captureMain->m_pTexture, location);
+    } else {
+        ap->setTexture(*pixl->getDammyTexObj(), location);
+    }
+}
+
+void DrMdoSetup::varStTex_BaseColorTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 0);
+    ap->setTexture(*m_pDrMan->m_pixlMan->getPixlObj(0)->m_pTexture, location);
+}
+
+void DrMdoSetup::varStTex_SpecularIBLTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    const grlib::CGLibTextureBuffer* tex;
+    if (m_pDrMan->isIBLSkip()) {
+        ap->beginCubeTextureSampling(true);
+        tex = &m_pDrMan->m_iniSys->m_texture[12];
+    } else {
+        DrPixlPostObjCubeMapIBL* ibl = m_pDrMan->m_pixlMan->m_objTbl->m_postMan->m_cubeMapIBL;
+        ap->beginCubeTextureSampling(true);
+        tex = ibl->getPremTexture();
+    }
+    ap->setTexture(*tex, location);
+}
+
+void DrMdoSetup::varStTex_AmbBRDFTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 1);
+    ap->setTexture(m_pDrMan->m_iniSys->m_texture[3], location);
+}
+
+void DrMdoSetup::varStTex_ScreenCapTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    grlib::CGLibRenderTarget* obj = m_pDrMan->m_pixlMan->getPixlObj(5);
+    if (obj != nullptr) {
+        DrAPCache* ap = m_pDrMan->m_apCache;
+        ap->beginTexSampling(2, 1);
+        ap->setTexture(*obj->m_pTexture, location);
+    }
+}
+
+void DrMdoSetup::varStTex_ToonGradTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 1);
+    grlib::CGLibTextureBuffer* tex = m_pDrMan->m_pixlMan->m_objTbl->m_postMan->getToonGradTex();
+    if (tex != nullptr) {
+        ap->setTexture(*tex, location);
+    }
+}
+
+void DrMdoSetup::varStTex_ToonRimTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 1);
+    ap->setTexture(m_pDrMan->m_iniSys->m_texture[6], location);
+}
+
+void DrMdoSetup::varStTex_DitherTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    if (info->m_flags & 4) {
+        ap->beginTexSampling(0, 1);
+        ap->setTexture(*m_pDrMan->m_pixlMan->getDammyWhiteTexObj(), location);
+    } else {
+        ap->beginTexSampling(2, 0);
+        ap->setTexture(m_pDrMan->m_iniSys->m_texture[1], location);
+    }
+}
+
+void DrMdoSetup::varStTex_RefLightTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+}
+
+void DrMdoSetup::varStTex_VolumeTex01(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->begin3DTextureWarpSampling();
+    ap->setTexture(m_pDrMan->m_iniSys->m_texture[7], location);
+}
+
+void DrMdoSetup::varStTex_GlobalIBLIndexTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+}
+
+void DrMdoSetup::varStTex_BackFaceDepthTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 0);
+    ap->setTexture(*m_pDrMan->m_pixlMan->getBackFaceDepthTexture()->m_pTexture, location);
+}
+
+void DrMdoSetup::varStTex_DownDepthTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 1);
+    ap->setTexture(*m_pDrMan->m_pixlMan->m_objTbl->m_postMan->getDownDepth()->m_pTexture, location);
+}
+
+void DrMdoSetup::varStTex_ClusterIdxListTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+}
+
+void DrMdoSetup::varStTex_VelocityTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 0);
+    ap->setTexture(*m_pDrMan->m_pixlMan->getPixlObj(3)->m_pTexture, location);
+}
+
+void DrMdoSetup::varStTex_RefractionAfterTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrPixlMan* pixl = m_pDrMan->m_pixlMan;
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    grlib::CGLibRenderTarget* obj = pixl->m_objTbl->m_postMan->m_refraction;
+    ap->beginTexSampling(2, 1);
+    if (obj != nullptr) {
+        ap->setTexture(*obj->m_pTexture, location);
+    } else {
+        ap->setTexture(*pixl->getDammyTexObj(), location);
+    }
+}
+
+void DrMdoSetup::varStTex_Movie0(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrPixlMan* pixl = m_pDrMan->m_pixlMan;
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    grlib::CGLibTextureBuffer* tex = pixl->m_movieTex[0];
+    if (pixl->m_movieFilter[0]) {
+        ap->beginTexSampling(2, 1);
+    } else {
+        ap->beginTexSampling(2, 0);
+    }
+    if (tex != nullptr) {
+        ap->setMipMapOn(*tex);
+        ap->setTexture(*tex, location);
+    } else {
+        ap->setMipMapOn(*pixl->getDammyTexObj());
+        ap->setTexture(*pixl->getDammyTexObj(), location);
+    }
+}
+
+void DrMdoSetup::varStTex_Movie1(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrPixlMan* pixl = m_pDrMan->m_pixlMan;
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    grlib::CGLibTextureBuffer* tex = pixl->m_movieTex[1];
+    if (pixl->m_movieFilter[1]) {
+        ap->beginTexSampling(2, 1);
+    } else {
+        ap->beginTexSampling(2, 0);
+    }
+    if (tex != nullptr) {
+        ap->setMipMapOn(*tex);
+        ap->setTexture(*tex, location);
+    } else {
+        ap->setMipMapOn(*pixl->getDammyTexObj());
+        ap->setTexture(*pixl->getDammyTexObj(), location);
+    }
+}
+
+void DrMdoSetup::varStTex_Movie2(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrPixlMan* pixl = m_pDrMan->m_pixlMan;
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    grlib::CGLibTextureBuffer* tex = pixl->m_movieTex[2];
+    if (pixl->m_movieFilter[2]) {
+        ap->beginTexSampling(2, 1);
+    } else {
+        ap->beginTexSampling(2, 0);
+    }
+    if (tex != nullptr) {
+        ap->setMipMapOn(*tex);
+        ap->setTexture(*tex, location);
+    } else {
+        ap->setMipMapOn(*pixl->getDammyTexObj());
+        ap->setTexture(*pixl->getDammyTexObj(), location);
+    }
+}
+
+void DrMdoSetup::varStTex_Movie3(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrPixlMan* pixl = m_pDrMan->m_pixlMan;
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    grlib::CGLibTextureBuffer* tex = pixl->m_movieTex[3];
+    if (pixl->m_movieFilter[3]) {
+        ap->beginTexSampling(2, 1);
+    } else {
+        ap->beginTexSampling(2, 0);
+    }
+    if (tex != nullptr) {
+        ap->setMipMapOn(*tex);
+        ap->setTexture(*tex, location);
+    } else {
+        ap->setMipMapOn(*pixl->getDammyTexObj());
+        ap->setTexture(*pixl->getDammyTexObj(), location);
+    }
+}
+
+void DrMdoSetup::varStTex_DiffuseIBL(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 1);
+    ap->setTexture(*m_pDrMan->m_pixlMan->getDiffIBLObj()->m_pTexture, location);
+}
+
+void DrMdoSetup::varStTex_DownBaseColorTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 1);
+    DrPixlMan* pixl = m_pDrMan->m_pixlMan;
+    grlib::CGLibTextureBuffer* tex;
+    if (pixl->m_objTbl->m_postMan->m_waterFog >= 0.05f) {
+        tex = pixl->getPixlObj(16)->m_pTexture;
+    } else {
+        tex = pixl->getDammyTexObj();
+    }
+    ap->setTexture(*tex, location);
+}
+
+void DrMdoSetup::varStTex_AOTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 0);
+    ap->setTexture(*m_pDrMan->m_pixlMan->getPixlObj(2)->m_pTexture, location);
+}
+
+void DrMdoSetup::varStTex_OrientationTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(0, 0);
+    ap->setTexture(m_pDrMan->m_iniSys->m_texture[15], location);
+}
+
+void DrMdoSetup::varStTex_FlagWaveTex0(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(0, 1);
+    ap->setTexture(m_pDrMan->m_iniSys->m_texture[16], location);
+}
+
+void DrMdoSetup::varStTex_FlagWaveTex1(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(0, 1);
+    ap->setTexture(m_pDrMan->m_iniSys->m_texture[17], location);
+}
+
+void DrMdoSetup::varStTex_EtcTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 0);
+    ap->setTexture(*m_pDrMan->m_pixlMan->getPixlObj(1)->m_pTexture, location);
+}
+
+void DrMdoSetup::varStTex_ToonDarkGradTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 1);
+    grlib::CGLibTextureBuffer* tex = m_pDrMan->m_pixlMan->m_objTbl->m_postMan->getToonDarkGradTex();
+    if (tex != nullptr) {
+        ap->setTexture(*tex, location);
+    }
+}
+
+void (DrMdoSetup::*DrMdoSetup::s_pStaticTexture[46])(const MdsMatInfoHeader*, unsigned int, unsigned int) = {
+    &DrMdoSetup::varStTex_ColorTex,
+    &DrMdoSetup::varStTex_NormalTex,
+    &DrMdoSetup::varStTex_LightTex,
+    &DrMdoSetup::varStTex_DepthTex,
+    &DrMdoSetup::varStTex_RefTex,
+    &DrMdoSetup::varStTex_ShadowMap,
+    &DrMdoSetup::varStTex_AvatarFaceMap1,
+    &DrMdoSetup::varStTex_Capture1,
+    &DrMdoSetup::varStTex_Capture2,
+    &DrMdoSetup::varStTex_Capture3,
+    &DrMdoSetup::varStTex_Capture4,
+    &DrMdoSetup::varStTex_RefractionMap,
+    &DrMdoSetup::varStTex_ColorDepTex,
+    &DrMdoSetup::varStTex_AvatarFaceMap2,
+    &DrMdoSetup::varStTex_AvatarEyeTex,
+    &DrMdoSetup::varStTex_CaptureMain,
+    &DrMdoSetup::varStTex_BaseColorTex,
+    &DrMdoSetup::varStTex_SpecularIBLTex,
+    &DrMdoSetup::varStTex_AmbBRDFTex,
+    &DrMdoSetup::varStTex_ScreenCapTex,
+    &DrMdoSetup::varStTex_ToonGradTex,
+    &DrMdoSetup::varStTex_ToonRimTex,
+    &DrMdoSetup::varStTex_DitherTex,
+    &DrMdoSetup::varStTex_RefLightTex,
+    &DrMdoSetup::varStTex_VolumeTex00,
+    &DrMdoSetup::varStTex_VolumeTex01,
+    &DrMdoSetup::varStTex_GlobalIBLIndexTex,
+    &DrMdoSetup::varStTex_BackFaceDepthTex,
+    &DrMdoSetup::varStTex_DownDepthTex,
+    &DrMdoSetup::varStTex_ClusterIdxListTex,
+    &DrMdoSetup::varStTex_VelocityTex,
+    &DrMdoSetup::varStTex_RefractionAfterTex,
+    &DrMdoSetup::varStTex_Movie0,
+    &DrMdoSetup::varStTex_Movie1,
+    &DrMdoSetup::varStTex_Movie2,
+    &DrMdoSetup::varStTex_Movie3,
+    &DrMdoSetup::varStTex_DiffuseIBL,
+    &DrMdoSetup::varStTex_DownBaseColorTex,
+    &DrMdoSetup::varStTex_AOTex,
+    &DrMdoSetup::varStTex_OrientationTex,
+    &DrMdoSetup::varStTex_FlagWaveTex0,
+    &DrMdoSetup::varStTex_FlagWaveTex1,
+    &DrMdoSetup::varStTex_EtcTex,
+    &DrMdoSetup::varStTex_ToonDarkGradTex,
+    &DrMdoSetup::fn_710077C23C,
+    &DrMdoSetup::fn_710077C294,
 };
 
 }  // namespace ml

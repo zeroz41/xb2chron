@@ -6,7 +6,9 @@
 
 namespace cloud { class CloudMan; }
 namespace grlib { class CGLibTextureBuffer; }
+namespace ml { class DrAPCache; }
 namespace ml { class DrIniSys; }
+namespace ml { class DrPixlMan; }
 namespace ml { class DrPixlPostParm; }
 namespace ml { class IDrDrawCallback; }
 namespace ml { class WinProc; }
@@ -49,6 +51,7 @@ public:
     void offGblIdx(int index);
     bool isAllMiddelTexStmChk() const;
     bool isSeamMapStmOk() const;
+    bool isIBLSkip() const;
     void createAddRenderSystem(DR_VIEW_PARAM* param);
     void deleteAddRenderSystem(unsigned int index);
     void setModelTexture(DR_MODEL_TEXTURE* texture, unsigned int slot);
@@ -58,9 +61,12 @@ public:
 
     unsigned char pad_8[0x68];
     DrIniSys* m_iniSys;                 // the constructor makes it (0x1BA0 bytes)
-    unsigned char pad_78[0xA8];
+    DrPixlMan* m_pixlMan;               // 0x78, DrMdoSetup::varStTex_* call DrPixlMan methods on it (the name is not the original's)
+    unsigned char pad_80[0xA0];
     DrPixlPostParm* m_postParm[4];      // the constructor makes them; ScnRenderDrSysParmAcc takes one per view
-    unsigned char pad_140[0x1B30];
+    unsigned char pad_140[0x480];
+    DrAPCache* m_apCache;               // 0x5C0, DrMdoSetup::varStTex_* bind textures through it (the name is not the original's)
+    unsigned char pad_5C8[0x16A8];
     // the field names below are not the original's: each is named after the ScnRenderDrSys/ScnRenderDrSysParmAcc
     // setter that writes it
     mm::Vec3 m_seamMapReadPos;

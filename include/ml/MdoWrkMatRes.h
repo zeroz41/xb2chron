@@ -3,6 +3,8 @@
 
 #include "mm/Col3.h"
 
+namespace grlib { class CGLibTextureBuffer; }
+
 namespace ml {
 class DrResMdoMat;
 struct MdsMatInfoHeader;
@@ -25,6 +27,16 @@ struct MdoWrkMatAce {
 
 // ml::MdoWrkMatRes is 1.0.0's name (DrMdoCtlSeamInstMap::beginResAll(MdoWrkMatRes*) stores its argument at
 // DrMdoMat+0x30). Only the fields DrMdoMat's material callbacks use are known; their names are not the original's.
+// A model's avatar textures (1.0.0's ScnObjAccResAvatar::resetAvatarTexture(i) puts the dummy texture in
+// m_faceTex[i] and clears bit 16+i of the first word). The type and field names are not the original's.
+struct MdoWrkAvatarTbl {
+    unsigned int m_flags;  // 0x0
+    unsigned char pad_4[0x4];
+    grlib::CGLibTextureBuffer* m_faceTex[2];  // 0x8, varStTex_AvatarFaceMap1/2
+    unsigned char pad_18[0x10];
+    grlib::CGLibTextureBuffer* m_eyeTex;  // 0x28, varStTex_AvatarEyeTex
+};
+
 struct MdoWrkMatRes {
     unsigned char pad_0[0x10];
     const unsigned char* m_pMatData;  // 0x10, base of the offsets in m_pCallBackTbl
@@ -38,7 +50,8 @@ struct MdoWrkMatRes {
     DrResMdoMat* m_pResMat;  // 0xC0, DrMdlObj::getMaterialRes(int) returns &m_pResMat[i]
     unsigned char pad_C8[0x30];
     float* m_pUniformVal;  // 0xF8, the uniform values the callbacks write
-    unsigned char pad_100[0x18];
+    unsigned char pad_100[0x10];
+    MdoWrkAvatarTbl* m_pAvatarTbl;  // 0x110, DrMdoSetup::varStTex_Avatar* bind its textures
     MdoWrkMatAce* m_pAce;  // 0x118
 };
 }  // namespace ml

@@ -5,7 +5,9 @@ namespace ml {
 // One material's header in a model resource (0x74 bytes: DrMdoMat::updateMatCallBack steps through an array of
 // them). Only the fields DrMdoMat's material callbacks read are known; the field names are not the original's.
 struct MdsMatInfoHeader {
-    unsigned char pad_0[0xC];
+    unsigned char pad_0[0x9];
+    unsigned char m_flags;  // 0x09, DrMdoSetup::varStTex_DitherTex tests bit 2
+    unsigned char pad_A[0x2];
     float m_color[4];  // 0x0C, scaled by DrMdoMat::matCall_CalcColor
     unsigned char pad_1C[0x24];
     unsigned int m_uniformOfs;  // 0x40, this material's first slot in MdoWrkMatRes::m_pUniformVal
