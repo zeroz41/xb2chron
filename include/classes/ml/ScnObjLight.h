@@ -20,15 +20,15 @@ public:
     virtual ~ScnObjLight();  // slot 0
     virtual void getName() const;  // slot 6
     virtual bool isEnv() const { return false; }  // slot 8
-    virtual void getFrame() const = 0;  // slot 9
+    virtual float getFrame() const = 0;  // slot 9
     virtual void setFrame(float) = 0;  // slot 10
-    virtual void getMaxFrame() const = 0;  // slot 11
+    virtual float getMaxFrame() const = 0;  // slot 11
     virtual void setFrameSpd(float) = 0;  // slot 12
-    virtual void getFrameSpd() const = 0;  // slot 13
+    virtual float getFrameSpd() const = 0;  // slot 13
     virtual void setGroup(int) = 0;  // slot 14
-    virtual void getGroup() const = 0;  // slot 15
+    virtual int getGroup() const = 0;  // slot 15
     virtual void setOffsetPos(mm::Vec3 const&) = 0;  // slot 16
-    virtual void getOffsetPos() const = 0;  // slot 17
+    virtual const mm::Vec3& getOffsetPos() const = 0;  // slot 17
     virtual void setPos(mm::Vec3 const&);  // slot 18
     virtual void setRot(mm::Vec3 const&);  // slot 19
     virtual void setScl(mm::Vec3 const&);  // slot 20

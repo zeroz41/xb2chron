@@ -5,6 +5,8 @@ namespace ml { class DrLightMan; }
 namespace ml { class DrLightObjPnt; }
 namespace ml { class DrLightObjSpt; }
 namespace ml { class DrShdLgtMan; }
+namespace ml { class DrShdLgtClustered; }
+namespace ml { class DrShdLgtTileBasedDr; }
 
 namespace ml {
 // table 0x7100B7EEB8
@@ -21,6 +23,11 @@ public:
     virtual void stockSptList(ml::DrLightObjSpt*);  // slot 9
     virtual void render(ml::DrShdLgtMan*, ml::DrLightMan*);  // slot 10
     virtual void debugRender();  // slot 11
+
+    // the constructor stores these; stockBegin/stockEnd forward to both (the names are not the original's)
+    unsigned char pad_8[0x10];
+    DrShdLgtClustered* m_pClustered;  // 0x18
+    DrShdLgtTileBasedDr* m_pTileBasedDr;  // 0x20
 };
 }  // namespace ml
 

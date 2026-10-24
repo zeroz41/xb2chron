@@ -16,6 +16,9 @@ public:
     typedef int (DrCalcViewWork::*StockStaticFunc)(float*, bool);
     typedef int (DrCalcViewWork::*StockFunc)(float*);
 
+    void begin(int);
+    void end();
+
     int unistatic_view(float* pDst, bool bJitter);
     int unistatic_proj(float* pDst, bool bJitter);
     int unistatic_viewproj(float* pDst, bool bJitter);

@@ -2,8 +2,8 @@
 #define CLASSES_ML_SCNOBJLIGHTDRSYS_H
 
 #include "classes/ml/ScnObjLight.h"
+#include "classes/ml/DrEnvironmentObj.h"
 
-namespace mm { class Vec3; }
 
 namespace ml {
 // table 0x7100B7E750
@@ -13,18 +13,21 @@ public:
     virtual void apply();  // slot 4
     virtual void tail();  // slot 5
     virtual bool isEnv() const;  // slot 8
-    virtual void getFrame() const;  // slot 9
+    virtual float getFrame() const;  // slot 9
     virtual void setFrame(float);  // slot 10
-    virtual void getMaxFrame() const;  // slot 11
+    virtual float getMaxFrame() const;  // slot 11
     virtual void setFrameSpd(float);  // slot 12
-    virtual void getFrameSpd() const;  // slot 13
+    virtual float getFrameSpd() const;  // slot 13
     virtual void setGroup(int);  // slot 14
-    virtual void getGroup() const;  // slot 15
+    virtual int getGroup() const;  // slot 15
     virtual void setOffsetPos(mm::Vec3 const&);  // slot 16
-    virtual void getOffsetPos() const;  // slot 17
+    virtual const mm::Vec3& getOffsetPos() const;  // slot 17
     virtual void setDeugDisp2D(bool);  // slot 22
     virtual void setFromCaptureTool();  // slot 23
     virtual void setLocalIBLName(char const*);  // slot 24
+
+    unsigned char pad_318[0x8];
+    DrEnvironmentObj* m_pEnvObj;  // 0x320, the getters forward to it (the name is not the original's)
 };
 }  // namespace ml
 

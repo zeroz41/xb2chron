@@ -3,6 +3,8 @@
 #include "classes/ml/DrCalcClipWorkPlane.h"
 #include "classes/ml/DrCalcClipWorkShadowPlane.h"
 #include "classes/ml/DrLightObjLocalIBL.h"
+#include "classes/ml/DrShdLgtClustered.h"
+#include "classes/ml/DrShdLgtHybrid.h"
 #include "classes/ml/DrShdLgtTileBasedDr.h"
 #include "classes/ml/ScnObjIBLDr.h"
 #include "classes/ml/ScnObjLightDrSys.h"
@@ -19,13 +21,17 @@
 #include "idcoli/IDColiUtilColi.h"
 #include "ml/CriticalSection.h"
 #include "ml/DrAPGxType.h"
+#include "ml/DrCalcClipMan.h"
 #include "ml/DrCalcGpuCost.h"
+#include "ml/DrCalcMan.h"
 #include "ml/DrCalcViewWork.h"
 #include "ml/DrPixlPostObjExpStencil.h"
 #include "ml/DrPixlPostObjUnbranchToDepth.h"
 #include "ml/DrResMdoUniformBlock.h"
 #include "ml/DrShdCubeCapFilter.h"
 #include "ml/DrShdDataList.h"
+#include "ml/DrShdDataObj.h"
+#include "ml/DrShdLgtMan.h"
 #include "navi/NvmshAcMan.h"
 
 namespace ml {
@@ -409,5 +415,154 @@ IDColiTreeTop::~IDColiTreeTop() {}
 }  // namespace idcoli
 
 namespace ml {
+
+// DrCalcClipWork's own virtuals: the base tests nothing (its derived classes' tables share these slots)
+bool DrCalcClipWork::clipLineTest(mm::Vec3 const&, mm::Vec3 const&, float) const { return false; }
+bool DrCalcClipWork::clipTest(float const*, float const*) const { return false; }
+bool DrCalcClipWork::clipTest(mm::Vec3 const*, int) const { return false; }
+void DrCalcClipWork::debugDraw() {}
+bool DrCalcClipWork::clipTest(mm::Vec3 const&, float) const { return false; }
+bool DrCalcClipWork::clipTypeTest(mm::Vec3 const&, float) const { return false; }
+
+float ScnObjLightDrSys::getFrame() const {
+    if (m_pEnvObj == nullptr) {
+        return 0.0f;
+    }
+    return m_pEnvObj->getFrame();
+}
+
+float ScnObjLightDrSys::getMaxFrame() const {
+    if (m_pEnvObj == nullptr) {
+        return 0.0f;
+    }
+    return m_pEnvObj->getMaxFrame();
+}
+
+float ScnObjLightDrSys::getFrameSpd() const {
+    if (m_pEnvObj == nullptr) {
+        return 0.0f;
+    }
+    return m_pEnvObj->getFrameSpd();
+}
+
+int ScnObjLightDrSys::getGroup() const { return m_pEnvObj->m_group; }
+
+const mm::Vec3& ScnObjLightDrSys::getOffsetPos() const { return m_pEnvObj->m_offsetPos; }
+
+DrPixlPostObjExpStencil::DrPixlPostObjExpStencil(DrMan* drMan) : m_pDrMan(drMan) {}
+
+DrShdCubeCapFilter::DrShdCubeCapFilter(DrMan* drMan) : m_pDrMan(drMan) {}
+
+DrShdDataObj* DrShdDataList::getDebugShdObj(int i) { return &m_pDebugShdObj[i]; }
+DrShdDataObj* DrShdDataList::getSelectShdObj(int i) { return &m_pSelectShdObj[i]; }
+DrShdDataObj* DrShdDataList::getShadowShdObj(int i) { return &m_pShadowShdObj[i]; }
+DrShdDataObj* DrShdDataList::getPostShdObj(int i) { return &m_pPostShdObj[i]; }
+DrShdDataObj* DrShdDataList::getComputeObj(int i) { return &m_pComputeObj[i]; }
+DrResFetch* DrShdDataList::getFetchShader(int i) { return &m_fetchShader[i]; }
+
+void DrShdDataObj::setupShader(unsigned int fetch) { grlib::CGLibCtlShader::setShader(*this, *m_pFetch[fetch]); }
+void DrShdDataObj::setupShader(DrResFetch* fetch) { grlib::CGLibCtlShader::setShader(*this, *fetch); }
+void DrShdDataObj::setupComputeShader() { grlib::CGLibCtlShader::setComputeShader(*this); }
+
+void DrAPCache::beginTexSampling(int sampling, int wrap) {
+    m_specialSampler = 0;
+    m_specialSamplerKind = 0;
+    m_texSampling[0] = sampling;
+    m_texSampling[1] = sampling;
+    m_texWrap = wrap;
+    m_mipMap = 0;
+}
+
+void DrAPCache::begin3DTextureSampling() {
+    m_specialSampler = 0x41;
+    m_specialSamplerKind = 1;
+}
+
+void DrAPCache::begin3DTexturePointSampling() {
+    m_specialSampler = 0x42;
+    m_specialSamplerKind = 1;
+}
+
+void DrAPCache::begin3DTextureWarpSampling() {
+    m_specialSampler = 0x43;
+    m_specialSamplerKind = 1;
+}
+
+void DrAPCache::beginCubeTextureSampling(bool b) {
+    m_specialSampler = b ? 0x47 : 0x45;
+    m_specialSamplerKind = 2;
+}
+
+void DrAPCache::beginCubeTexturePointSampling(bool b) {
+    m_specialSampler = b ? 0x48 : 0x46;
+    m_specialSamplerKind = 2;
+}
+
+void DrAPCache::beginDepthCompare() {
+    m_specialSampler = 0x49;
+    m_specialSamplerKind = 0;
+}
+
+void DrAPCache::beginBorderWhite() {
+    m_specialSampler = 0x4A;
+    m_specialSamplerKind = 0;
+}
+
+void DrAPCache::beginBorderBlack() {
+    m_specialSampler = 0x4B;
+    m_specialSamplerKind = 0;
+}
+
+void DrAPCache::beginBorderDepthMax() {
+    m_specialSampler = 0x4C;
+    m_specialSamplerKind = 0;
+}
+
+void DrAPCache::beginBorderDepthMinusMax() {
+    m_specialSampler = 0x4D;
+    m_specialSamplerKind = 0;
+}
+
+void DrAPCache::setGBuffRender(unsigned int render) {
+    if (m_gBuffRender == render) {
+        return;
+    }
+    m_gBuffRender = render;
+    switch (render) {
+    case 0x77777777:
+        grlib::CGLibColorCtl::setColorChannelMask(1, 1, 1, 1);
+        break;
+    case 0xFFFFFFFF:
+        grlib::CGLibColorCtl::setColorChannelMask(1, 1, 1, 0);
+        break;
+    }
+}
+
+void DrShdLgtMan::stockBegin() {
+    m_pHybrid->stockBegin();
+    m_pClustered->stockBegin();
+}
+
+void DrShdLgtMan::stockEnd() {
+    m_pHybrid->stockEnd();
+    m_pClustered->stockEnd();
+}
+
+void DrShdLgtHybrid::stockBegin() {
+    m_pClustered->stockBegin();
+    m_pTileBasedDr->stockBegin();
+}
+
+void DrShdLgtHybrid::stockEnd() {
+    m_pClustered->stockEnd();
+    m_pTileBasedDr->stockEnd();
+}
+
+void DrCalcMan::begin() {
+    m_pViewWork->begin(m_viewIdx);
+    m_pClipMan->update();
+}
+
+void DrCalcMan::end() { m_pViewWork->end(); }
 
 }  // namespace ml

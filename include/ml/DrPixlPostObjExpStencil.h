@@ -2,12 +2,15 @@
 #define ML_DRPIXLPOSTOBJEXPSTENCIL_H
 
 namespace ml {
+class DrMan;
 
-// only the destructor is declared so far (its owners' destructors call it; its body is empty). Fields and other
-// members are not declared yet.
+// The constructor only stores the renderer; other fields and members are not declared yet.
 class DrPixlPostObjExpStencil {
 public:
-    ~DrPixlPostObjExpStencil();
+    DrPixlPostObjExpStencil(DrMan* drMan);
+    ~DrPixlPostObjExpStencil();  // empty; its owners' destructors call it
+
+    DrMan* m_pDrMan;  // 0x0 (the name is not the original's)
 };
 
 }  // namespace ml

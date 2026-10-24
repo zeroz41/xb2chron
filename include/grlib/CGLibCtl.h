@@ -20,6 +20,7 @@ public:
 class CGLibCtlShader {
 public:
     static void setShader(CGLibDecShader& shader, CGLibVtxFetch& fetch);
+    static void setComputeShader(CGLibDecShader& shader);
     static void setMemoryBarrierBit(unsigned int bits);
 };
 

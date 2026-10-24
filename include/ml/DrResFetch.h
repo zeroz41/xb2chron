@@ -4,8 +4,10 @@
 #include "grlib/CGLibVtxFetch.h"
 
 namespace ml {
-// The vertex fetch resource. Only the static vertex attribute setters are declared so far; the layout is not.
-class DrResFetch {
+// The vertex fetch resource: a grlib::CGLibVtxFetch (DrShdDataObj::setupShader passes a DrResFetch* on as the
+// CGLibVtxFetch& unchanged; DrShdDataList holds 0x5B of them 0x10 bytes apart, CGLibVtxFetch's size).
+// Only the static vertex attribute setters are declared so far.
+class DrResFetch : public grlib::CGLibVtxFetch {
 public:
     // fills one vertex attribute: format, shader location, offset in the vertex, stream
     typedef void (*SetVertFunc)(int offset, unsigned int location, grlib::CGLibVtxAttr& attr);

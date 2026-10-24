@@ -2,12 +2,15 @@
 #define ML_DRSHDCUBECAPFILTER_H
 
 namespace ml {
+class DrMan;
 
-// only the destructor is declared so far (its owners' destructors call it; its body is empty). Fields and other
-// members are not declared yet.
+// The constructor only stores the renderer; other fields and members are not declared yet.
 class DrShdCubeCapFilter {
 public:
-    ~DrShdCubeCapFilter();
+    DrShdCubeCapFilter(DrMan* drMan);
+    ~DrShdCubeCapFilter();  // empty; its owners' destructors call it
+
+    DrMan* m_pDrMan;  // 0x0 (the name is not the original's)
 };
 
 }  // namespace ml
