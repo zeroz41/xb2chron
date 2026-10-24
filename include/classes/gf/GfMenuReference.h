@@ -2,12 +2,14 @@
 #define CLASSES_GF_GFMENUREFERENCE_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "ui/UIStr.h"
 
 namespace ui { class UIStr; }
 namespace gf { class GfMenuReference; }
 namespace gf { class GfMenuEnemyList; }
 namespace gf { class GfMenuItemList; }
 namespace gf { class MenuItemInfo; }
+namespace gf { class GfSetupParam; }
 
 namespace gf {
 // table 0x7100B5EF48
@@ -94,6 +96,132 @@ public:
     // singleton's word at 0x4CCB8), 0 without the singleton; GfMenuGameAdapter's types 18 to 20, GfMenuObjItemList2's
     // and GfMenuObjHanaPartsMake's refreshItemList read it.
     static unsigned int fn_710036934C();
+    // the battle's Homura/Hikari mode the menu shows (1.0.0's enum; its values are not known)
+    enum HOMURA_MODE {};
+    // a party member's elemental combo (8 bytes each, 2 of them; the names are not the original's)
+    struct ElementComboParty {
+        unsigned int m_party;
+        float m_timeLeft;
+    };
+    // a number the menu references and its range (12 bytes each, 8 of them; the names follow 1.0.0's accessors)
+    struct ReferenceNumber {
+        int m_min;
+        int m_max;
+        int m_number;
+    };
+    // an arts palette slot's record (0x28 bytes; the name is not the original's)
+    struct ArtsPaletteSlot {
+        ArtsPaletteInfo m_info;
+        ArtsPaletteIconInfo m_iconInfo;
+        int m_elementType;  // getArtsPaletteElementType
+        bool m_enable;      // isArtsPaletteEnable; setArtsPaletteEnable sets it with the disable bits
+        unsigned char pad_21[0x3];
+        unsigned int m_disable;  // getArtsPaletteDisable
+    };
+    GfMenuReference(const GfSetupParam& param);
+    void finalize();
+    static void setArtsPaletteEnable(unsigned char slot, bool enable, unsigned int disable);
+    static void build(const GfSetupParam& param);
+    static void destroy();
+    static bool isInitialized();
+    static void resetDriverVirtual();
+    static void resetBladeVirtual();
+    static void setPaletteModeReverse(bool reverse);
+    static void setWeaponJustRange(bool range);
+    static void setAwakeningRestTimeRatio(float ratio);
+    static void setChainAttackActionPartyID(int party);
+    static int getChainAttackActionPartyID();
+    static void setChainAttackDamageRatio(float ratio);
+    static void setChainAttackTotalDamage(unsigned int damage);
+    static void setChainAttackBurstCount(unsigned int count);
+    static void setElementComboParty(unsigned int index, unsigned int party, float timeLeft);
+    static void setHomuraModeInBattle(HOMURA_MODE mode);
+    static HOMURA_MODE getHomuraModeInBattle();
+    static void setReferenceDriverID(unsigned int index, unsigned int driver);
+    static void setReferenceNumber(unsigned int index, int number);
+    static void setReferenceTeamID(unsigned int team);
+    static void setReferenceZoneID(unsigned int zone);
+    static void setReferenceMissionID(unsigned int mission);
+    static unsigned int getReferenceMissionID();
+    static void setReferenceShopID(unsigned int shop);
+    static void setReferenceWorldMapID(unsigned int map);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits between this
+    // class's accessors and writes the word fn_710036934C reads. What it does: stores the item type (0x4CCB8).
+    static void fn_710036932C(unsigned int type);
+    static void setDriverVirtualLevel(unsigned int level);
+    static unsigned int getDriverVirtualLevel();
+    static void setDriverVirtualBladeID(unsigned int blade);
+    static unsigned int getDriverVirtualBladeID();
+    // 1.0.0 symbols (3.0.1's copies still carry placeholder names: fn_7100369404, fn_7100369424, fn_710036944C,
+    // fn_710036946C; same place among the accessors, same fields, moved 0x10 like their neighbours)
+    static void setDriverVirtualBladeSlot(unsigned int slot);
+    static unsigned int getDriverVirtualBladeSlot();
+    static void setDriverVirtualEquipAcc(unsigned int acc);
+    static unsigned int getDriverVirtualEquipAcc();
+    static void setDriverVirtualEquipAccSlot(unsigned int slot);
+    static unsigned int getDriverVirtualEquipAccSlot();
+    static void resetDriverAddIdeaLv();
+    static void setDriverAddIdeaLv(unsigned int index, int level);
+    static int getDriverAddIdeaLv(unsigned int index);
+    static void setBladeVirtualEquipWpnChip(unsigned int chip);
+    static unsigned int getBladeVirtualEquipWpnChip();
+    static void setBladeVirtualEquipOrb(unsigned int orb);
+    static unsigned int getBladeVirtualEquipOrb();
+    static void setBladeVirtualEquipOrbSlot(unsigned int slot);
+    static unsigned int getBladeVirtualEquipOrbSlot();
+    static void clearPartyStatusLock();
+
+    unsigned char pad_8[0x4CA38];
+    bool m_initialized;  // isInitialized
+    unsigned char pad_4CA41[0x7F];
+    ArtsPaletteSlot m_artsPalette[3];  // slots 0..2
+    unsigned char pad_4CB38[0x4];
+    bool m_weaponJustRange;
+    unsigned char pad_4CB3D[0x3];
+    float m_awakeningRestTimeRatio;
+    float m_chainAttackActionRecast;
+    unsigned int m_chainAttackActionCount;
+    int m_chainAttackActionPartyID;
+    float m_chainAttackDamageRatio;
+    float m_chainAttackExpRatio;
+    unsigned int m_chainAttackTotalDamage;
+    unsigned int m_chainAttackBurstCount;
+    unsigned char pad_4CB60[0x10];
+    unsigned short m_chainNum;
+    unsigned char pad_4CB72[0xE];
+    HOMURA_MODE m_homuraModeInBattle;
+    unsigned char pad_4CB84[0x4];
+    bool m_paletteModeReverse;  // 1.0.0's isPaletteModeReverse reads it
+    unsigned char pad_4CB89[0x17];
+    GfMenuEnemyList* m_enemyLinkList;
+    GfMenuItemList* m_itemLinkList;
+    unsigned char pad_4CBB0[0x38];
+    ElementComboParty m_elementComboParty[2];
+    unsigned char pad_4CBF8[0x8];
+    unsigned int m_referenceDriverID[8];
+    unsigned int m_referenceBladeID[8];
+    ReferenceNumber m_referenceNumber[8];
+    unsigned int m_referenceTeamID;
+    unsigned int m_referenceZoneID;
+    unsigned int m_referenceMissionID;
+    unsigned int m_referenceShopID;
+    unsigned int m_referenceWorldMapID;
+    unsigned char pad_4CCB4[0x4];
+    unsigned int m_referenceItemType;  // fn_710036934C's item type (the name is not the original's)
+    unsigned int m_driverVirtualLevel;
+    unsigned int m_driverVirtualBladeID;
+    unsigned int m_driverVirtualBladeSlot;
+    unsigned int m_driverVirtualEquipAcc;
+    unsigned int m_driverVirtualEquipAccSlot;
+    int m_driverAddIdeaLv[4];
+    unsigned int m_bladeVirtualEquipWpnChip;
+    unsigned int m_bladeVirtualEquipOrb;
+    unsigned int m_bladeVirtualEquipOrbSlot;
+    unsigned char pad_4CCEC[0x4];
+    ui::UIStr m_referenceString[13];  // getReferenceString/setReferenceString
+    ArtsPaletteSlot m_artsPaletteEx[6];  // slots 3..8
+    unsigned int m_partyStatusLock;  // setPartyStatusLock's locks; clearPartyStatusLock clears them
+    unsigned char pad_4CF1C[0xDC];
 };
 }  // namespace gf
 

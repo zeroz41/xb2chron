@@ -7,7 +7,9 @@ namespace gf {
 // an enemy list's element (8 bytes: UIListInfo<MenuEnemyInfo>'s buffer grows by 8)
 class MenuEnemyInfo {
 public:
-    unsigned char pad_00[8];
+    // the enemy (a CHR_EnArrange row: GfMenuReference::addEnemyLink fills it; the name is not the original's)
+    unsigned int m_enemyId;
+    unsigned char pad_04[4];
 };
 
 // table 0x7100B5F2F0
