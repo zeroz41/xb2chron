@@ -11,6 +11,7 @@
 namespace fw { class IPauseTrigger; }
 namespace fw { class UpdateInfo; }
 namespace fw { class Framework; }
+namespace fw { class Applet; }
 namespace ml { class Scn; }
 namespace ml { class Thread; }
 namespace fw { class UpdateState; }
@@ -52,6 +53,8 @@ public:
     static void destroyManager();
     static mm::mtl::IAllocator* getAllocator();
     void enterFinalizeApplet();
+    // the applet the framework runs (its object at 0x8), none before one is created
+    Applet* getApplet() const;
     static mtl::ALLOC_HANDLE getMemHandle();  // the memory resources are made in (ResourceManager::getMemSYS)
     static void setUpdateSpeed(float speed);
     static void setLayerUpdateSpeed(unsigned int layer, float speed);

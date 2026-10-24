@@ -36,6 +36,10 @@ public:
     // fn_710000A724. What it does: ButtonChallenge::ResultProc passes it the challenge id and whether the result was
     // -1 (failed), for challenges of kind 3.
     void fn_710000BAE0(int id, bool failed);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's ai::AiData::isValid makes no call
+    // there). A member: ai::AiData::isValid passes PtrSingleton<BattleGlobal>::sys(). What it does: returns bit 1 of
+    // the byte at 0x83D0; while it is clear, isValid refuses the party's leader driver (GfGameParty::isLeaderDriver).
+    bool fn_710000A6CC();
 
     unsigned char pad_8[0x5C44];
     // EnemyParameter::ApplyStatusEnhance scales every enhanced value by it (the name is not the original's)

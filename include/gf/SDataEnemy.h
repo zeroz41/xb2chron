@@ -23,7 +23,11 @@ public:
     bool m_noCameraFade : 1;
     bool m_weaponDrawDisp : 1;
     unsigned char m_flags5 : 3;  // unknown
-    unsigned char pad_6[0x19];
+    unsigned char pad_6[0x2];
+    // a GfBdatChrEnParam row: ai::AiData::getScoutStartHp passes it to getChrEnParamScoutStartHp (the name is not the
+    // original's)
+    unsigned short m_scoutParamId;
+    unsigned char pad_a[0x15];
     unsigned char m_linkRadius;  // getLinkRadius
     unsigned char pad_20[0x14];
     unsigned short m_paramId;  // its GfBdatChrEnParam row (the stat getters' revisions)

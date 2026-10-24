@@ -28,6 +28,7 @@ public:
     static gf::GfComTransform* getLeaderTransform();  // the leader's transform, null for none
     static gf::GF_OBJ_HANDLE* getLeader();  // the party's leader, -1 for none
     static bool isBtlLeaderDirver();
+    static bool isLeaderDriver(gf::GF_OBJ_HANDLE* handle);
     // the bdat ID of the party member driver at an index, and of the blade in a slot of its driver
     // (3.0.1 passes a second argument, 0 here, through to the party data; 1.0.0 has only the first)
     static unsigned int getDriverBdatId(unsigned int index, unsigned int party);

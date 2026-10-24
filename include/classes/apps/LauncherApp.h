@@ -31,10 +31,10 @@ public:
     virtual void wkTail();  // slot 12
     virtual bool wkStandbyLogin() = 0;  // slot 14
     virtual bool wkStandbyLogout();  // slot 15
-    virtual void OnMouseButtonDown(ml::EventView*);  // slot 17
-    virtual void OnKeyDown(ml::EventView*);  // slot 18
-    virtual void OnFMenuSelect(ml::EventFloatingMenu*);  // slot 19
-    virtual void OnCButtonSelect(ml::EventButton*);  // slot 20
+    virtual bool OnMouseButtonDown(ml::EventView*);  // slot 17
+    virtual bool OnKeyDown(ml::EventView*);  // slot 18
+    virtual bool OnFMenuSelect(ml::EventFloatingMenu*);  // slot 19
+    virtual bool OnCButtonSelect(ml::EventButton*);  // slot 20
     virtual void errcbCallback(ml::CPUID, unsigned long);  // slot 21
     unsigned char pad_1F8[0x568];  // fields: size from its derived classes
 };
