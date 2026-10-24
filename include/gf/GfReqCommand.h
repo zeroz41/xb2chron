@@ -7,6 +7,7 @@ namespace gf {
 // called so far are declared
 class GfReqCommand {
 public:
+    static void reqRebuildPartyWeapon(unsigned int blade);  // after a blade's weapon changes
     static void reqChangeBladeWithSetId(unsigned int slot, int setId, bool flag);
     // a wait-event request (GfPlayComWaitEvent::start keeps the handle and waits on GfReqManager::isValid)
     static unsigned int reqWaitEvent(float time, GF_OBJ_HANDLE* handle);

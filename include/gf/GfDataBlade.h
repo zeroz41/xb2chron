@@ -126,6 +126,8 @@ public:
     static float getScale(unsigned int blade);
     static unsigned int getSize(unsigned int blade);
     static unsigned int getEquipOrbMax(unsigned int blade);
+    // the orb in a blade's slot (GfEquipUtil::getEquipBladeOrb returns it, zero-extended)
+    static unsigned short getEquipOrb(unsigned int blade, unsigned int slot);
     static unsigned int getCreateEvent(unsigned int blade);
     static unsigned int getNormalTalk(unsigned int blade);
     static unsigned int getTrustPoint(unsigned int blade);
@@ -135,6 +137,8 @@ public:
     static void setKizunaringComplete(unsigned int blade);
     static bool setActivateMercenaryTeam(unsigned int blade);
     static void setBladeWeapon(unsigned int blade, unsigned int weapon);
+    // the weapon a blade gets from a weapon chip (GfEquipUtil::equipBladeChip sets it)
+    static unsigned int getBladeWeaponByRank(unsigned int blade, unsigned int chip);
     static void setUnselect(unsigned int blade, bool unselect);
     static void setTrustPoint(unsigned int blade, unsigned int point);
     static bool getExtraParts(unsigned int blade, unsigned int part);

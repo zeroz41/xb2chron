@@ -20,6 +20,7 @@ public:
     static void build(const GfSetupParam& param);
     static void destroy();
     static void callTargetAccess(GF_OBJ_HANDLE*);
+    static void callItemAdd(unsigned int item, int count);  // count of the item gained (or lost)
     static void callTargetChange(GF_OBJ_HANDLE*);
     // GfPlayComCallbackEventSequence::start passes 12 (begin) or 13 and its id
     static void callEventPlay(GEV gev, unsigned int id);

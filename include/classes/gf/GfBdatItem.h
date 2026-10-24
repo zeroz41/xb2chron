@@ -18,6 +18,7 @@ public:
     void destroyFP();
     unsigned int getCrystalListStart() const;
     unsigned int getCrystalListEnd() const;
+    unsigned int getCrystalListCondition(unsigned int item) const;  // a GfGameCond condition, 0 for none
     unsigned int getBoosterStart() const;
     unsigned int getBoosterEnd() const;
     unsigned int getCollectionListStart() const;
