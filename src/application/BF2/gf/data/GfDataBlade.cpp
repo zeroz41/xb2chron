@@ -30,6 +30,7 @@
 #include "classes/gf/GfDataManager.h"
 #include "classes/gf/GfGameFlag.h"
 #include "ml/MtRand.h"
+#include "classes/gf/GfEvent.h"
 
 namespace gf {
 
@@ -689,5 +690,235 @@ bool GfDataAchievement::isWaitControllFreeStats(unsigned int stats) {
     return false;
 }
 
+
+
+unsigned int GfDataBlade::getBladeWpnType(unsigned int blade) {
+    if (blade == 0) {
+        return 0;
+    }
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_weaponType;
+}
+
+bool GfDataBlade::isEnableEngageRex(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_enableEngageRex != 0;
+}
+
+unsigned int GfDataBlade::getBornTime(unsigned int blade) {
+    if (blade == 0) {
+        return 0;
+    }
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_bornTime;
+}
+
+SDataIdea* GfDataBlade::getSDataIdea(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return &data.m_idea;
+}
+
+bool GfDataBlade::isAttachedParty(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_attachedParty != 0;
+}
+
+bool GfDataBlade::isUnselect(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_unselect != 0;
+}
+
+bool GfDataBlade::isActivateDriver(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_setDriver != 0;
+}
+
+unsigned int GfDataBlade::getSetDriver(unsigned int blade) {
+    if (blade == 0) {
+        return 0;
+    }
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_setDriver;
+}
+
+bool GfDataBlade::isActivateUnuse(unsigned int blade) {
+    if (blade == 0) {
+        return true;
+    }
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_dataType == 0;
+}
+
+const char* GfDataBlade::getResourceNameModel(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_modelName;
+}
+
+bool GfDataBlade::isKizunaringComplete(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_kizunaringComplete == 1;
+}
+
+bool GfDataBlade::isReleasedRareBlade(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_attachedParty == 2;
+}
+
+unsigned int GfDataBlade::getTrustRank(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_trustRank;
+}
+
+unsigned int GfDataBlade::getKeyReleaseLevel(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_keyLevel;
+}
+
+bool GfDataBlade::isSetBlade(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_setDriver != 0;
+}
+
+unsigned int GfDataBlade::getBladeWeapon(unsigned int blade) {
+    if (blade == 0) {
+        return 0;
+    }
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_equipWeapon;
+}
+
+const char* GfDataBlade::getResourceNameMotion(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_motionName;
+}
+
+const char* GfDataBlade::getResourceNameAddMotion(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_addMotionName;
+}
+
+unsigned int GfDataBlade::getRace(unsigned int blade) {
+    if (blade == 0) {
+        return 0;
+    }
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_race;
+}
+
+unsigned int GfDataBlade::getQuestRace(unsigned int blade) {
+    if (blade == 0) {
+        return 1;
+    }
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_questRace;
+}
+
+bool GfDataBlade::isAnimal(unsigned int blade) {
+    if (blade == 0) {
+        return false;
+    }
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_questRace == 2;
+}
+
+float GfDataBlade::getWpnScale(unsigned int blade) {
+    if (blade == 0) {
+        return 1.0f;
+    }
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_wpnScale * 0.01f;
+}
+
+float GfDataBlade::getScale(unsigned int blade) {
+    if (blade == 0) {
+        return 1.0f;
+    }
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_scale * 0.01f;
+}
+
+int GfDataBlade::getOffsetID(unsigned int blade) {
+    if (blade == 0) {
+        return 0;
+    }
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_offsetId;
+}
+
+unsigned int GfDataBlade::getSize(unsigned int blade) {
+    if (blade == 0) {
+        return 0;
+    }
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_size;
+}
+
+unsigned int GfDataBlade::getEquipOrbMax(unsigned int blade) {
+    if (blade == 0) {
+        return 0;
+    }
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_equipOrbMax;
+}
+
+unsigned int GfDataBlade::getCreateEvent(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_createEvent;
+}
+
+unsigned int GfDataBlade::getNormalTalk(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_normalTalk;
+}
+
+unsigned int GfDataBlade::getTrustPoint(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_trustPoint;
+}
+
+unsigned int GfDataBlade::getFootStep(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_footStep;
+}
+
+unsigned int GfDataBlade::getFootStepEffect(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_footStepEffect;
+}
+
+bool GfDataBlade::isReleaseLock(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_releaseLock != 0;
+}
+
+const char* GfDataBlade::getVoiceStr(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_voiceStr;
+}
+
+const char* GfDataBlade::getSePack(unsigned int blade) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_seName;
+}
+
+void GfDataBlade::setKizunaringComplete(unsigned int blade) {
+    GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_kizunaringComplete = 1;
+}
+
+bool GfDataBlade::setActivateMercenaryTeam(unsigned int blade) {
+    GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_dataType = 2;
+    return true;
+}
+
+void GfDataBlade::setBladeWeapon(unsigned int blade, unsigned int weapon) {
+    if (blade != 0) {
+        GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_equipWeapon = weapon;
+    }
+}
+
+void GfDataBlade::setTrustPoint(unsigned int blade, unsigned int point) {
+    GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_trustPoint = point;
+    GfEvent::callDebugChangeIdea(4, blade, 0, 0);
+}
 
 }  // namespace gf

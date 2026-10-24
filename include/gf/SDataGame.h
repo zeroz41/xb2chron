@@ -2,6 +2,7 @@
 #define GF_SDATAGAME_H
 
 #include "gf/GameFlag.h"
+#include "gf/SDataBlade.h"
 
 namespace gf {
 // the game's data, as GfDataManager::getDataGame hands it out (1.0.0's GfGameUtil::setupNewGameParam takes one;
@@ -11,7 +12,10 @@ public:
     unsigned int m_money;  // 0x0 (named after its accessors; the name is not the original's)
     unsigned char pad_4[0x24];
     unsigned short m_eventChapterSave;  // 0x28 (named after its accessors; the name is not the original's)
-    unsigned char pad_2A[0xFBB9A];
+    unsigned char pad_2A[0x5A02];
+    // by GfDataBlade::getBladeIndex (the name is not the original's; the count is the indexes it hands out)
+    SDataBlade m_blades[422];
+    unsigned char pad_E9884[0x12340];  // GfDataParty::getSDataParty points at its start
     GameFlag m_gameFlag;  // GfGameFlag's (the name is not the original's)
     unsigned int m_scenario;  // 0x1097E4 (named after its accessors; the name is not the original's)
     unsigned int m_select;  // 0x1097E8 (named after its accessors; the name is not the original's)

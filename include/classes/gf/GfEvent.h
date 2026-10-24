@@ -34,6 +34,9 @@ public:
     static void callSwapFormation(unsigned int index0, unsigned int index1);  // each listener's gevSwapFormation
     // each listener told the salvage game's state (1.0.0's name: 3.0.1's symbols spell it fn_7100326DF8)
     static void callSalvageStateChange(unsigned int state);
+    static void callBladeUnselect(unsigned int blade, bool unselect);  // GfDataBlade::setUnselect
+    // GfDataBlade::setTrustPoint passes 4, the blade, 0, 0
+    static void callDebugChangeIdea(unsigned int, unsigned int, unsigned int, unsigned int);
 };
 }  // namespace gf
 

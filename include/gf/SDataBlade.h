@@ -36,11 +36,14 @@ public:
     SDataBlade& operator=(const SDataBlade& other);
 
     unsigned short m_dataType;  // DataObjBlade::getDataType
-    unsigned char pad_2[0x4];
+    unsigned char pad_2[0x2];
+    unsigned short m_setDriver;  // the driver it is set to, 0 for none (GfDataBlade::getSetDriver)
     unsigned short m_bladeId;  // its blade row (GfDataBlade::getQuestRace takes it)
-    unsigned char pad_8[0x4];
+    unsigned int m_bornTime;  // (named after its accessor; the name is not the original's)
     SDataIdea m_idea;  // DataObjBlade::getIdea points at it
-    unsigned char pad_2c[0x10];
+    unsigned char pad_2c[0x8];
+    unsigned int m_trustPoint;  // (named after its accessor; the name is not the original's)
+    unsigned int m_trustRank;  // (named after its accessor; the name is not the original's)
     BladeArtsSlot m_arts[3];  // getBladeArts...
     BladeArtsSlot m_nArts[3];  // getBladeArtsN...
     BladeArtsSlot m_artsEx;  // getBladeArtsEx
@@ -56,18 +59,25 @@ public:
     unsigned short m_keyLevel;  // DataObjDriver::getKeyLevel
     unsigned char pad_666[0x12];
     unsigned short m_equipOrbs[3];  // DataObjBlade::setVirtualEquipOrb sets one, by slot; the count is not known
-    unsigned char pad_67e[0x8A];
+    unsigned char pad_67e[0xE];
+    unsigned short m_hanaRoleParts;  // Hana's role part (GfDataBlade::getHpMaxRev reads its row; the name is not the original's)
+    unsigned char pad_68e[0x7A];
     unsigned char m_race;
     unsigned char m_gender;
     unsigned short m_iconData;
     char m_modelName[0x28];  // getModelResourceName; the length is the distance to the next
-    char m_motionName[0x78];  // getMotionResourceName; the length is the distance to the next
+    char m_motionName[0x28];  // getMotionResourceName; the length is the distance to the next
+    char m_addMotionName[0x14];  // GfDataBlade::getResourceNameAddMotion; the length is the distance to the next
+    char m_voiceStr[0x1C];  // GfDataBlade::getVoiceStr; the length is the distance to the next
+    unsigned char pad_78c[0x20];
     char m_effectName[0x28];  // getEffectResourceName; the length is not known
     char m_centerBone[0x14];  // getCenterBone; the length is the distance to the next
     char m_camBone[0x14];  // getCamBone; the length is the distance to the next
-    char m_seName[0x25];  // getSeResourceName; the length is not known
+    char m_seName[0x24];  // getSeResourceName, GfDataBlade::getSePack; the length is the distance to the next
+    unsigned char m_size;  // (named after its accessor; the name is not the original's)
     unsigned char m_weaponType;
-    unsigned char pad_822[0x2];
+    unsigned char m_equipOrbMax;  // (named after its accessor; the name is not the original's)
+    unsigned char pad_823[0x1];
     unsigned char m_personality;
     unsigned char pad_825[0x1];
     unsigned char m_eyeRotControl;
@@ -77,10 +87,35 @@ public:
     unsigned short m_equipWeapon;  // its weapon (DataObjPcWpn::getBladeSet compares it with the weapon's row)
     unsigned short m_chestHeight;
     unsigned short m_landingHeight;
-    unsigned char pad_832[0xC];
+    unsigned char pad_832[0x4];
+    unsigned short m_scale;  // percent (GfDataBlade::getScale; the name is not the original's)
+    unsigned short m_wpnScale;  // percent (GfDataBlade::getWpnScale; the name is not the original's)
+    unsigned short m_offsetId;  // (named after its accessor; the name is not the original's)
+    unsigned char pad_83c[0x2];
     unsigned char m_pArmor;  // added to its weapon's (DataObjEnemyBlade::getPArmor)
     unsigned char m_eArmor;  // added to its weapon's (DataObjEnemyBlade::getEArmor)
-    unsigned char pad_840[0x64];
+    unsigned char m_hpMaxRev;  // (named after GfDataBlade::getHpMaxRev; the name is not the original's)
+    unsigned char m_strengthRev;  // (named after GfDataBlade::getStrengthRev; the name is not the original's)
+    unsigned char m_powerEtherRev;  // (named after GfDataBlade::getPowerEtherRev; the name is not the original's)
+    unsigned char m_dexRev;  // (named after GfDataBlade::getDexRev; the name is not the original's)
+    unsigned char m_agilityRev;  // (named after GfDataBlade::getAgilityRev; the name is not the original's)
+    unsigned char m_luckRev;  // (named after GfDataBlade::getLuckRev; the name is not the original's)
+    unsigned char m_questRace;  // GfDataBlade::getQuestRace; 2 for an animal (isAnimal; the name is not the original's)
+    unsigned char m_releaseLock;  // (named after its accessor; the name is not the original's)
+    unsigned char m_footStep;  // (named after its accessor; the name is not the original's)
+    unsigned char m_footStepEffect;  // (named after its accessor; the name is not the original's)
+    unsigned char pad_84a[0x2];
+    unsigned short m_normalTalk;  // (named after its accessor; the name is not the original's)
+    unsigned char pad_84e[0x2];
+    unsigned int m_createEvent;  // (named after its accessor; the name is not the original's)
+    unsigned char pad_854[0x4A];
+    unsigned char m_enableEngageRex;  // (named after its accessor; the name is not the original's)
+    // non-zero when attached to the party (isAttachedParty), 2 for a released rare blade (isReleasedRareBlade);
+    // the name is not the original's
+    unsigned char m_attachedParty;
+    unsigned char m_unselect;  // (named after its accessor; the name is not the original's)
+    unsigned char m_kizunaringComplete;  // 1 when complete (GfDataBlade::isKizunaringComplete; the name is not the original's)
+    unsigned char pad_8a2[0x2];
 };
 }  // namespace gf
 

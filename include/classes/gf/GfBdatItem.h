@@ -53,6 +53,12 @@ public:
     unsigned int getITM_HanaNArtsSetEnd() const;
     unsigned int getITM_HanaAssistStart() const;
     unsigned int getITM_HanaAssistEnd() const;
+    unsigned int getITM_HanaRoleHpMaxRev(unsigned int parts) const;
+    unsigned int getITM_HanaRoleStrengthRev(unsigned int parts) const;
+    unsigned int getITM_HanaRolePowEtherRev(unsigned int parts) const;
+    unsigned int getITM_HanaRoleDexRev(unsigned int parts) const;
+    unsigned int getITM_HanaRoleAgilityRev(unsigned int parts) const;
+    unsigned int getITM_HanaRoleLuckRev(unsigned int parts) const;
     unsigned short getPcWpnRscR(unsigned int weapon) const;
     unsigned int getPcWpnWpnType(unsigned int weapon) const;
     unsigned int getPcWpnDamage(unsigned int weapon) const;

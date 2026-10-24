@@ -6,6 +6,8 @@
 
 namespace gf { class SDataBlade; }
 namespace gf { struct BladeArtsSlot; }
+namespace gf { struct BladeSkillSlot; }
+namespace gf { struct SDataIdea; }
 namespace gf { enum FAVORITE : int; }
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedArray; }}
 
@@ -22,6 +24,21 @@ struct AchievInfo {
 // the blades' game data (functions, by its symbols)
 class GfDataBlade {
 public:
+    // the blade's slot in the game data's blades (SDataGame::m_blades): the regular blades, then the rare ones,
+    // then the common ones; 0 for any other id. Inline: every accessor carries its code (1.0.0's too), so the name
+    // is not the original's.
+    static unsigned int getBladeIndex(unsigned int blade) {
+        if (blade - 1001 < 13) {
+            return blade - 1001;
+        }
+        if (blade - 1014 < 176) {
+            return blade - 994;
+        }
+        if (blade - 1197 < 226) {
+            return blade - 1001;
+        }
+        return 0;
+    }
     // fills list with the party's blades (SCOM_ACHIEV_INC::createParty and createCrystal)
     static void getListPartyAll(mm::mtl::FixedVector<unsigned short, 422>& list);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
@@ -92,6 +109,36 @@ public:
     static bool isBladeID(unsigned int blade);
     static bool isNeedChangeWeapon(unsigned int blade);
     static unsigned int getActBlade2CommonBlade(unsigned int blade);
+    static bool isEnableEngageRex(unsigned int blade);
+    static unsigned int getBornTime(unsigned int blade);
+    static SDataIdea* getSDataIdea(unsigned int blade);
+    static bool isAttachedParty(unsigned int blade);
+    static bool isActivateDriver(unsigned int blade);
+    static const char* getResourceNameModel(unsigned int blade);
+    static bool isKizunaringComplete(unsigned int blade);
+    static bool isReleasedRareBlade(unsigned int blade);
+    static unsigned int getTrustRank(unsigned int blade);
+    static bool isSetBlade(unsigned int blade);
+    static unsigned int getBladeWeapon(unsigned int blade);
+    static const char* getResourceNameMotion(unsigned int blade);
+    static const char* getResourceNameAddMotion(unsigned int blade);
+    static unsigned int getRace(unsigned int blade);
+    static float getScale(unsigned int blade);
+    static unsigned int getSize(unsigned int blade);
+    static unsigned int getEquipOrbMax(unsigned int blade);
+    static unsigned int getCreateEvent(unsigned int blade);
+    static unsigned int getNormalTalk(unsigned int blade);
+    static unsigned int getTrustPoint(unsigned int blade);
+    static bool isReleaseLock(unsigned int blade);
+    static const char* getSePack(unsigned int blade);
+    static void setEnableEngageRex(unsigned int blade, bool enable);
+    static void setKizunaringComplete(unsigned int blade);
+    static bool setActivateMercenaryTeam(unsigned int blade);
+    static void setBladeWeapon(unsigned int blade, unsigned int weapon);
+    static void setUnselect(unsigned int blade, bool unselect);
+    static void setTrustPoint(unsigned int blade, unsigned int point);
+    static bool getExtraParts(unsigned int blade, unsigned int part);
+    static const BladeSkillSlot* getSkill(unsigned int blade, unsigned int index);
 };
 
 }  // namespace gf
