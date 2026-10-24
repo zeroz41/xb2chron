@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKWARP_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "mm/Vec3NA.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
@@ -26,8 +27,19 @@ public:
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*) {}  // slot 9
     virtual void debugUpdateMmf();  // slot 10
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
+    // one end of the warp in AGmkBase::m_data (GfFieldWarp::onFsSucceeded reads two of them; the names are not the
+    // original's)
+    struct Point {
+        mm::Vec3NA m_pos;
+        float m_param;  // passed on in MsgUnk_1000014 (meaning not known)
+    };
+    const Point* getPoints() const { return reinterpret_cast<const Point*>(m_data); }
     static const gmk::GmkType TYPE = gmk::GmkType(38);
-    unsigned char pad_48[0x28];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_48[0x8];  // fields: size from TGmkList::getInst's stride
+    // the object at the first point (inferred): GfFieldWarp::onFsSucceeded sends the player to the second point when
+    // the access came from it, to the first from any other (the name is not the original's)
+    gf::GF_OBJ_HANDLE* m_firstHandle;
+    unsigned char pad_58[0x18];
 };
 }  // namespace gmk
 

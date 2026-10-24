@@ -10,6 +10,7 @@ namespace gf {
 class GfFieldLod : public ::mm::mtl::PtrSingleton< ::gf::GfFieldLod> {
 public:
     virtual ~GfFieldLod();  // slot 0
+    bool isPlayAnimEnd(int anim) const;
     int findBdatIdByLodId(unsigned short lodId) const;
     void setAnimReverse(int bdatId, bool flag0, bool flag1);
 };

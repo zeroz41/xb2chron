@@ -1,3 +1,18 @@
+#include "classes/gmk/TimeCond.h"
+#include "classes/gmk/WeatherCond.h"
+#include "classes/gmk/BootedGmkCond.h"
+#include "classes/gmk/ScenarioFlagCond.h"
+#include "classes/gmk/QuestFlagCond.h"
+#include "classes/gmk/GmkCamera.h"
+#include "classes/gmk/GmkCtrlVolSe.h"
+#include "classes/gmk/GmkMapGimmick.h"
+#include "classes/gf/GfFieldLod.h"
+#include "classes/gf/GfFieldMapGimmick.h"
+#include "classes/gmk/GmkJump.h"
+#include "classes/gmk/GmkWarp.h"
+#include "gf/MsgUnk_1000010.h"
+#include "gf/MsgUnk_1000011.h"
+#include "gf/MsgUnk_1000014.h"
 #include "classes/gf/IFieldSeq.h"
 #include "classes/gf/AFieldSeq.h"
 #include "classes/gf/GfFieldGrave.h"
@@ -13,6 +28,15 @@
 #include "classes/fw/ScriptInfo.h"
 #include "classes/gmk/AGmkBase.h"
 #include "gf/GfObjAcc.h"
+#include "classes/gf/GfFieldJump.h"
+#include "classes/gf/GfFieldWarp.h"
+#include "classes/gf/GfGameManager.h"
+#include "gf/GfObjUtil.h"
+#include "plugin/Bdat.h"
+#include "classes/fw/SoundManager.h"
+#include "classes/gf/GfFieldMapGimmick.h"
+#include "classes/gf/GfFieldLod.h"
+#include "classes/gf/SCOM_QUEST_GIMMICK.h"
 
 namespace gf {
 
@@ -42,6 +66,29 @@ void AFieldSeq::update(float dt) {
     if (m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) && m_seq) {
         (this->*m_seq)(dt);
     }
+}
+
+void AFieldSeq::seqCheckFs(float) {
+    gmk::AGmkBase* gmk = gmk::getBindedGmkInst(m_handle);
+    if (gmk == nullptr) {
+        dispose();
+        return;
+    }
+    unsigned short fsId = static_cast<unsigned short>(
+        reinterpret_cast<unsigned long>(Bdat::getValCheck(gmk->getBindedBdatFp(), "FSID", gmk->m_bdatId, 2)));
+    unsigned int nameMsId = 0;
+    GfGameUtil::getNameMsId(nameMsId, m_handle);
+    if (fsId) {
+        m_isFsSucceeded = GfGameUtil::evalSumFs(fsId, nameMsId);
+    } else {
+        m_isFsSucceeded = true;
+    }
+    if (m_isFsSucceeded) {
+        if (GfObj* obj = GfObjUtil::getObj(m_handle)) {
+            obj->pad_110 &= ~7;
+        }
+    }
+    m_seq = &AFieldSeq::seqWaitUIEnd;
 }
 
 void AFieldSeq::seqWaitUIEnd(float) {
@@ -159,5 +206,175 @@ bool AFieldSeq::cancel() {
 }
 
 void AFieldSeq::onFsFailed() {}
+
+GfFieldMapGimmick::GfFieldMapGimmick(const GfSetupParam& param)
+    : AFieldSeq(param), m_camera(nullptr), m_seqCamera(nullptr), m_seqLod(nullptr), m_lodStep(0), m_lodAnim(0),
+      m_seqMapObj(nullptr), m_seqOther(nullptr), m_waitTime(0.0f), m_elapsedTime(0.0f), m_seHandle(0),
+      m_solveState(0) {}
+
+void GfFieldMapGimmick::seqCamera_waitToLoaded(float) {
+    if (m_camera.isLoaded()) {
+        m_seqCamera = &GfFieldMapGimmick::seqCamera_waitToEnd;
+    }
+}
+
+void GfFieldMapGimmick::dispose() {
+    clearSe();
+    m_seqCamera = nullptr;
+    m_seqLod = nullptr;
+    m_lodStep = 0;
+    m_lodAnim = 0;
+    m_seqMapObj = nullptr;
+    m_seqOther = nullptr;
+    m_camera.dispose();
+    AFieldSeq::dispose();
+}
+
+void GfFieldMapGimmick::clearSe() {
+    for (int i = 0; i < 5; i++) {
+        m_se[i].dispose();
+    }
+    if (m_seHandle != 0) {
+        if (mm::mtl::PtrSingleton<fw::SoundManager>::get()->isLoop(m_seHandle)) {
+            mm::mtl::PtrSingleton<fw::SoundManager>::get()->stopSe(m_seHandle, 0.0f);
+        }
+        m_seHandle = 0;
+    }
+}
+
+bool GfFieldMapGimmick::isEnd() const {
+    if (!AFieldSeq::isEnd()) {
+        return false;
+    }
+    return !m_seqCamera && !m_seqLod && !m_seqMapObj && !m_seqOther;
+}
+
+void GfFieldMapGimmick::onFsFailed() {
+    m_seqCamera = nullptr;
+}
+
+void GfFieldMapGimmick::seqCamera_waitToEnd(float) {
+    if (m_camera.isEnd()) {
+        m_seqCamera = nullptr;
+    }
+}
+
+void GfFieldMapGimmick::seqLod_waitToElapseTime(float dt) {
+    m_elapsedTime += dt;
+    if (m_elapsedTime < m_waitTime) {
+        return;
+    }
+    if (m_lodStep <= 4) {
+        m_lodStep++;
+        m_seqLod = &GfFieldMapGimmick::seqLod_init;
+        return;
+    }
+    m_seqLod = nullptr;
+    if (m_bdatInfo.m_nowaitGmkCam && m_isFsSucceeded) {
+        if (gmk::GmkMapGimmick* gmk = static_cast<gmk::GmkMapGimmick*>(m_gmkAcc.m_gmk)) {
+            SCOM_QUEST_GIMMICK::createMapGimmick(gmk->m_bdatId, 0.0f);
+            gmk->setSolved();
+            m_solveState = 2;
+        }
+    }
+}
+
+void GfFieldMapGimmick::seqLod_waitToEndAnim(float) {
+    if (mm::mtl::PtrSingleton<GfFieldLod>::get()->isPlayAnimEnd(m_lodAnim)) {
+        m_seqLod = &GfFieldMapGimmick::seqLod_waitToElapseTime;
+    }
+}
+
+void GfFieldMapGimmick::seqMapObj_nextwait(float dt) {
+    m_elapsedTime += dt;
+    if (m_elapsedTime < m_waitTime) {
+        return;
+    }
+    m_seqMapObj = nullptr;
+    if (m_bdatInfo.m_nowaitGmkCam && m_isFsSucceeded) {
+        if (gmk::GmkMapGimmick* gmk = static_cast<gmk::GmkMapGimmick*>(m_gmkAcc.m_gmk)) {
+            SCOM_QUEST_GIMMICK::createMapGimmick(gmk->m_bdatId, 0.0f);
+            gmk->setSolved();
+            m_solveState = 2;
+        }
+    }
+}
+
+void GfFieldJump::onFsSucceeded() {
+    gmk::GmkJump* gmk = static_cast<gmk::GmkJump*>(gmk::getBindedGmkInst(m_handle));
+    if (gmk) {
+        if (GfObj* obj = GfObjUtil::getObj(m_handle)) {
+            obj->pad_110 |= 7;
+        }
+        GfObj* mover = GfObjUtil::getObj(GfGameManager::getControlMover());
+        if (mover) {
+            GfObj* obj = GfObjUtil::getObj(m_handle);
+            if (obj) {
+                switch (gmk->getBdatInfo()->m_type) {
+                case 0: {
+                    MsgUnk_1000010 msg;
+                    const gmk::GmkJump::Data* data = gmk->getData();
+                    msg.m_pos.x = data->m_pos.x;
+                    msg.m_pos.y = data->m_pos.y;
+                    msg.m_pos.z = data->m_pos.z;
+                    msg.m_bdat = gmk->getBindedBdatFp();
+                    msg.m_bdatId = gmk->m_bdatId;
+                    msg.m_gmkId = gmk->m_bdatId;
+                    static_cast<fw::MessageObject*>(mover)->recieveMessage(obj, msg);
+                    return;
+                }
+                case 1: {
+                    MsgUnk_1000011 msg;
+                    const gmk::GmkJump::Data* data = gmk->getData();
+                    msg.m_pos.x = data->m_pos.x;
+                    msg.m_pos.y = data->m_pos.y;
+                    msg.m_pos.z = data->m_pos.z;
+                    msg.m_param0 = data->m_param[0];
+                    msg.m_param1 = data->m_param[1];
+                    msg.m_param2 = data->m_param[2];
+                    msg.m_bdat = gmk->getBindedBdatFp();
+                    msg.m_bdatId = gmk->m_bdatId;
+                    msg.m_gmkId = gmk->m_bdatId;
+                    static_cast<fw::MessageObject*>(mover)->recieveMessage(obj, msg);
+                    if (GfGameManager::fn_71002A9E68()) {
+                        gmk->fn_71005A7770();
+                    }
+                    return;
+                }
+                }
+            }
+        }
+    }
+    dispose();
+}
+
+void GfFieldWarp::onFsSucceeded() {
+    gmk::GmkWarp* gmk = static_cast<gmk::GmkWarp*>(gmk::getBindedGmkInst(m_handle));
+    if (gmk) {
+        if (GfObj* obj = GfObjUtil::getObj(m_handle)) {
+            obj->pad_110 |= 7;
+        }
+        GfObj* mover = GfObjUtil::getObj(GfGameManager::getControlMover());
+        if (mover) {
+            GfObj* obj = GfObjUtil::getObj(m_handle);
+            if (obj) {
+                MsgUnk_1000014 msg;
+                const gmk::GmkWarp::Point* points = gmk->getPoints();
+                bool second = m_handle == gmk->m_firstHandle;
+                const mm::Vec3NA& pos = second ? points[1].m_pos : points[0].m_pos;
+                msg.m_pos.x = pos.x;
+                msg.m_pos.y = pos.y;
+                msg.m_pos.z = pos.z;
+                msg.m_param = second ? points[1].m_param : points[0].m_param;
+                msg.m_bdat = gmk->getBindedBdatFp();
+                msg.m_bdatId = gmk->m_bdatId;
+                msg.m_gmkId = gmk->m_bdatId;
+                static_cast<fw::MessageObject*>(mover)->recieveMessage(obj, msg);
+                return;
+            }
+        }
+    }
+    dispose();
+}
 
 }  // namespace gf

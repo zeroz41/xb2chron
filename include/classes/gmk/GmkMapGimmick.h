@@ -16,6 +16,7 @@ public:
         unsigned char pad_0[0x38];
     };
     virtual ~GmkMapGimmick();  // slot 0
+    void setSolved() const;
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
     virtual void dispose();  // slot 5
