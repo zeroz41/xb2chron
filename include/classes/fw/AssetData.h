@@ -31,6 +31,13 @@ public:
     unsigned char pad_28[0x8];
     mm::mtl::FixStr<128> m_name;  // the asset's name (AssignFromMemory's; a SoundPack's)
 };
+
+// 1.0.0's table 0x71011777F0 (in AssetData.cpp's .data: two slots, its destructors); 3.0.1's linker dropped it.
+// counted: fw::AssetManager keeps them beside its AssetData and releases them as reference_object.h does
+class AssetCsvb : public ::mm::mtl::ReferenceObject {
+public:
+    virtual ~AssetCsvb();  // slot 0
+};
 }  // namespace fw
 
 #endif
