@@ -41,7 +41,7 @@ public:
 
     RchaAnm() : m_value(0), m_count(0), m_data(nullptr), m_compressed(false), m_id(0) {}
 
-    unsigned int getValue(float frame) const;
+    float getValue(float frame) const;
     int getValueInt(float frame) const;
 
     void clear() {
