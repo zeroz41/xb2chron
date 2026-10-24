@@ -4,7 +4,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/mtl/FixedList.h"
 
-namespace gf { class GfReqSmallCom; class SCOM; }
+namespace gf { class GfReqSmallCom; class SCOM; class GF_SCOM_HANDLE; }
 namespace fw { class UpdateInfo; }
 
 namespace gf {
@@ -17,6 +17,7 @@ public:
     virtual ~GfReqSmallCom();  // slot 0
     void update(const fw::UpdateInfo& info);
     static bool isExistCommand();
+    bool isValid(GF_SCOM_HANDLE* handle);  // the request is still queued or running
 
     // inline: the create functions queue their request in place, then return its handle
     static unsigned long addRequest(SCOM* request);

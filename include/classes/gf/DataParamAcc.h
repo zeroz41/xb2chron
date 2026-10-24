@@ -45,7 +45,8 @@ public:
 
     // fields: the object's IDataObj at 0x8 (setupObjHandle finds it; getChestHeight asks it); size 0x18, the
     // stack slot its users give it
-    unsigned char pad_8[0x10];
+    unsigned char pad_8[0x8];
+    GF_OBJ_HANDLE* m_handle;  // the object setupObjHandle was given (the name is not the original's)
 };
 }  // namespace gf
 

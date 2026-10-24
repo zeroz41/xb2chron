@@ -11,6 +11,8 @@ public:
     static void setRandomInn();  // picks one of 16 inns at random (the comment is not the original's)
     static void setMoney(unsigned int value);
     static unsigned int getEventChapterSave();
+    // GfPlayComMenuChapterSave::start passes its id and GfDataBlade::fn_7100231884()
+    static void setChapterSave(unsigned int id, unsigned short value);
     static unsigned int getSkipTravelID();
     static float getPlayerCameraDistance();
     static void setPlayerCameraDistance(float value);

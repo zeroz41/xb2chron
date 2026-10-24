@@ -12,6 +12,8 @@ class GfGameUtil {
 public:
     // SCOM_ADD_DEVELOP's request passes its second value, then its first
     static void addDevelopPoint(unsigned int, unsigned int);
+    static void setHp(GF_OBJ_HANDLE* handle, unsigned int hp);
+    static void incGameClearCount();
     // SCOM_POPUP::createAchievement passes its blade, line and level; when it returns true no popup is queued
     static bool setupSaveAchievementPopup(unsigned int, unsigned int, unsigned int);
     static bool isCondDriverModel(unsigned int);

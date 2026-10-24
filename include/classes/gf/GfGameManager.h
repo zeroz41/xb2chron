@@ -71,6 +71,7 @@ public:
     static bool isDisableJumpForRide();
     static void setHomuriWeaponExtraMesh(bool, float);
     static bool isPlayEnemyVoice();
+    static bool isPartyMemberPlayVoice();
     static bool isEventWait();
     static bool isFieldLockMsgOK();
     static unsigned int getMapZoneID();

@@ -11,7 +11,7 @@ namespace gf {
 // table 0x7100B589A0; GfSequentialPlay::addReturnTitle makes it
 class GfPlayComReturnTitle : public GfPlayCom, public mm::mtl::PtrSingleton<GfPlayComReturnTitle> {
 public:
-    explicit GfPlayComReturnTitle(const ParamReturnTitle& param) : GfPlayCom(36, false), m_param(param), pad_1c(0) {}
+    explicit GfPlayComReturnTitle(const ParamReturnTitle& param) : GfPlayCom(36, false), m_param(param), m_wait(0) {}
     static GfPlayComReturnTitle* create(const ParamReturnTitle& param);
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual const char* getFuncName() const {  // slot 3
@@ -24,7 +24,7 @@ public:
     static mm::mtl::RTTI m_rtti;
 
     ParamReturnTitle m_param;
-    int pad_1c;
+    int m_wait;  // frames left once no voice plays; the name is not the original's
 };
 }  // namespace gf
 

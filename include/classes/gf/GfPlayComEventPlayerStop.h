@@ -18,6 +18,9 @@ public:
     virtual void end() {}  // slot 5
     virtual bool update(const fw::UpdateInfo& info, bool flag) { return true; }  // slot 6
     static mm::mtl::RTTI m_rtti;
+    // how many stopping commands are alive (create counts up when it stops the player, start of a releasing one
+    // counts down and releases at zero). The name is not the original's: 3.0.1 leaves it unnamed (lbl_7100EA4AB8)
+    static int s_stop;
 
     bool m_stop;  // GfSequentialPlay::addEventPlayerStop's name
 };

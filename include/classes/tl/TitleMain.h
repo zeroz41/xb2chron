@@ -6,6 +6,7 @@
 #include "fw/UpdateInfo.h"
 
 namespace gf { class SDataOption; }
+namespace gf { enum SAVESLOT : int; }
 
 template <typename T> class MicroUpdater;
 
@@ -24,6 +25,7 @@ public:
     static void sleep(unsigned int frames);
     // whether the title's state is TitleStateToTitle (8); false while there is no title
     static bool isReturnTitle();
+    static void returnTitle(gf::SAVESLOT slot);  // GfPlayComReturnTitle passes -1
     bool isStateReturnTitle() const;
     gf::SDataOption* getOptionBuffer();
     void setupTitleOptionToGameOption();

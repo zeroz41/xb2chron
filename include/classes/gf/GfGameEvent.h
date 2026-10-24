@@ -13,6 +13,7 @@ public:
     static void postUpdate(const fw::UpdateInfo& info);
     static void gevPause(unsigned int, unsigned int);
     virtual ~GfGameEvent();  // slot 0
+    static void setAfterEventStartID(int id);
 };
 }  // namespace gf
 

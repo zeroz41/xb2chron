@@ -138,6 +138,8 @@ public:
     static void openDummyTutorial(unsigned char tutorial);
     static bool isOpenDummyTutorial();
     static bool isOpenPreciousWindow();
+    static void openPreciousWindow(unsigned short id);
+    static void openSave();
     static bool isSwitchingFullScreen();  // the full screen is switching its layers
     // the object the player can access now, (GF_OBJ_HANDLE*)-1 for none
     static gf::GF_OBJ_HANDLE* getAccessObjHandle();
