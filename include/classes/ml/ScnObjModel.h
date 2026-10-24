@@ -3,6 +3,7 @@
 
 #include "classes/ml/ScnObj.h"
 #include "classes/ml/threadval.h"
+#include "mm/mtl/FixStr.h"
 
 namespace ml { class DebDraw; }
 namespace ml { class WinProc; }
@@ -31,7 +32,7 @@ public:
     virtual ~ScnObjModel();  // slot 0
     virtual void renderDebug(ml::DebDraw*);  // slot 3
     virtual void tail();  // slot 5
-    virtual void getName() const;  // slot 6
+    virtual const char* getName() const;  // slot 6
     virtual void setDelete();  // slot 7
     virtual void setPos(mm::Vec3 const&);  // slot 8
     virtual void setPosWarp(mm::Vec3 const&);  // slot 9
@@ -59,7 +60,7 @@ public:
     unsigned char pad_14[0xC];
     threadval<RENDER_INFO> m_info;  // its destructor's (the name is not the original's)
     threadval<RENDER_OFFSET_INFO> m_offsetInfo;  // getOffsetInfo returns one of its banks (the name is not the original's)
-    unsigned char pad_320[0x24];  // getName returns its address
+    mm::mtl::FixStr<32> m_name;  // 0x320 getName's, empty from the constructor (the name is not the original's)
     float m_frameSpd;             // setFrameSpd (the name is not the original's)
     unsigned char pad_348[0x4];
     unsigned int m_disp : 1;      // isDisp (the name is not the original's)

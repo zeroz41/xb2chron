@@ -8,6 +8,9 @@ namespace ml { class ScnObj; }
 namespace ml { class ScnObjModel; }
 namespace ml { class ScnObjIBL; }
 namespace ml { class ScnRenderDrSys; }
+namespace ml { class ScnPoolObj; }
+namespace ml { class ScnCamMan; }
+namespace ml { class WinView; }
 
 namespace ml {
 // a base of ml::Scn no evidence names yet
@@ -32,10 +35,16 @@ public:
     ScnObj* createLgt(const void* resource, int arg);
     ScnObjIBL* createIBL(const void* resource, int arg);
     void releaseItem(ScnObj* item);
+    void setView(WinView* view, int index);
     // a model made from a resource (fw::ModelObject::create's)
     ScnObjModel* createMdl(const void* resource, const char* name, int arg);
-    unsigned char pad_20[0x18];
+    ScnPoolObj* m_pool;  // 0x20 releaseItem gives items back to it (the name is not the original's)
+    ScnCamMan* m_camMan;  // 0x28 setView's (the name is not the original's)
+    unsigned char pad_30[0x8];
     ScnRenderDrSys* m_renderDrSys;  // what UIScreenObject gives ScnRenderDrSysParmAcc (the name is not the original's)
+    unsigned char pad_40[0x6C];
+    // 0xAC createMdl passes its negation to each new model's setAlwaysTexStm (the name is not the original's)
+    bool m_noAlwaysTexStm;
 };
 }  // namespace ml
 

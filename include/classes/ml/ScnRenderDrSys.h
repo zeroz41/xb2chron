@@ -6,6 +6,9 @@
 namespace ml { class DrMan; }
 namespace ml { class IDrDrawCallback; }
 namespace ml { class Scn; }
+namespace ml { class ScnObj; }
+namespace ml { class ScnObjIBL; }
+namespace ml { class ScnObjModel; }
 namespace ml { class ScnObjCam; }
 namespace ml { class ScnSetup; }
 namespace ml { class WinProc; }
@@ -29,10 +32,10 @@ public:
     virtual void setup(ml::ScnSetup const*);  // slot 20
     virtual void openPixelDebugWindow(ml::WinProc*);  // slot 21
     virtual void openHisgtramDebugWindow(ml::WinProc*);  // slot 22
-    virtual void createMdl(ml::Scn*, void const*, char const*, int);  // slot 23
-    virtual void createLgt(ml::Scn*, void const*, int);  // slot 24
+    virtual ml::ScnObjModel* createMdl(ml::Scn*, void const*, char const*, int);  // slot 23
+    virtual ml::ScnObj* createLgt(ml::Scn*, void const*, int);  // slot 24
     virtual void createClip(ml::Scn*, void const*, int);  // slot 25
-    virtual void createIBL(ml::Scn*, void const*, int);  // slot 26
+    virtual ml::ScnObjIBL* createIBL(ml::Scn*, void const*, int);  // slot 26
     virtual void createEnvColi(ml::Scn*, void const*, int);  // slot 27
 
     void setCallBack(IDrDrawCallback* callback);

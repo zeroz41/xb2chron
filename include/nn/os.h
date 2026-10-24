@@ -141,6 +141,8 @@ void SetThreadName(ThreadType* thread, const char* name);
 const char* GetThreadNamePointer(const ThreadType* thread);
 void SleepThread(TimeSpan time);
 unsigned long GetThreadAvailableCoreMask();
+ThreadType* GetCurrentThread();
+int GetCurrentCoreNumber();
 
 }}  // namespace nn::os
 

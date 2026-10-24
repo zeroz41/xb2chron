@@ -12,7 +12,7 @@ class ScnObjIBLDr : public ::ml::ScnObjIBL {
 public:
     virtual ~ScnObjIBLDr();  // slot 0
     virtual void apply();  // slot 4
-    virtual void getName() const;  // slot 6
+    virtual const char* getName() const;  // slot 6
     virtual void setReferencePos(mm::Vec3 const&);  // slot 8
     virtual void getReferencePos() const;  // slot 9
     virtual void setFromCaptureTool();  // slot 10

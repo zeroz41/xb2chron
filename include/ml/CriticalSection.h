@@ -11,6 +11,8 @@ class CriticalSection {
 public:
     CriticalSection();
     ~CriticalSection();
+    void setCostIgnore(bool ignore);  // empty in the release build
+    bool isLocked() const;
     void lock() const {
         if (m_enabled) {
             nn::os::LockMutex(&m_mutex);
@@ -38,7 +40,19 @@ class CriticalSectionNC {
 public:
     CriticalSectionNC();
     ~CriticalSectionNC();
-    unsigned char pad_0[0x28];
+    void setCostIgnore(bool ignore);  // empty in the release build
+    void lock() const {
+        if (m_enabled) {
+            nn::os::LockMutex(&m_mutex);
+        }
+    }
+    void unlock() const {
+        if (m_enabled) {
+            nn::os::UnlockMutex(&m_mutex);
+        }
+    }
+    mutable nn::os::MutexType m_mutex;
+    bool m_enabled;  // 0x20, set by the constructor as CriticalSection's (the name is not the original's)
 };
 
 // locks a CriticalSectionNC for its lifetime (out of line)

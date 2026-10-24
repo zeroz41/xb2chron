@@ -3,6 +3,7 @@
 
 #include "classes/ml/ScnObj.h"
 #include "classes/ml/threadval.h"
+#include "mm/mtl/FixStr.h"
 #include "ml/AttrTransform.h"  // tree: ml/AttrTransform.h (new)
 
 namespace ml { class DebDraw; }
@@ -19,9 +20,11 @@ public:
     virtual void update();  // slot 2
     virtual void renderDebug(ml::DebDraw*);  // slot 3
     virtual void apply();  // slot 4
-    virtual void getName() const;  // slot 6
+    virtual const char* getName() const;  // slot 6
 
-    unsigned char pad_14[0x5C];
+    unsigned char pad_14[0x4];
+    mm::mtl::FixStr<64> m_name;  // 0x18 getName's (the name is not the original's)
+    unsigned char pad_5C[0x14];
     threadval<RENDER_INFO> m_info;  // apply and setLookAt read its banks (the name is not the original's)
 };
 }  // namespace ml

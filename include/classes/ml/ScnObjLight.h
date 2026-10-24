@@ -3,6 +3,7 @@
 
 #include "classes/ml/ScnObj.h"
 #include "classes/ml/threadval.h"
+#include "mm/mtl/FixStr.h"
 
 namespace mm { class Mat44; }
 namespace mm { class Vec3; }
@@ -18,7 +19,7 @@ public:
     bool isDisp() const;
     bool isOfsMatrix() const;
     virtual ~ScnObjLight();  // slot 0
-    virtual void getName() const;  // slot 6
+    virtual const char* getName() const;  // slot 6
     virtual bool isEnv() const { return false; }  // slot 8
     virtual float getFrame() const = 0;  // slot 9
     virtual void setFrame(float) = 0;  // slot 10
@@ -37,7 +38,8 @@ public:
     virtual void setFromCaptureTool() = 0;  // slot 23
     virtual void setLocalIBLName(char const*) = 0;  // slot 24
 
-    unsigned char pad_14[0x4C];  // getName returns its address
+    mm::mtl::FixStr<64> m_name;  // 0x14 empty from the constructor (the name is not the original's)
+    unsigned char pad_58[0x8];
     threadval<RENDER_INFO> m_info;  // its destructor's (the name is not the original's)
     unsigned int m_disp : 1;       // isDisp (the name is not the original's)
     unsigned int m_ofsMatrix : 1;  // isOfsMatrix (the name is not the original's)
