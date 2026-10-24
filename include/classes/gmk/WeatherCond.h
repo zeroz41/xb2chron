@@ -6,6 +6,7 @@ namespace gmk {
 class WeatherCond {
 public:
     WeatherCond() : m_weather(0xff) {}
+    bool isMatch() const;
     virtual ~WeatherCond() {}  // slot 0
     unsigned char m_weather;  // the row's OP_weather, 0xFF for none (the name is not the original's)
 };

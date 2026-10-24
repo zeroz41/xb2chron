@@ -1,4 +1,15 @@
 #include "classes/gmk/TimeCond.h"
+#include "classes/gf/GfGameScene.h"
+#include "classes/gf/MenuCommonWindowParam.h"
+#include "classes/gmk/WeatherCond.h"
+#include "plugin/Bdat.h"
+#include "classes/gmk/BootedGmkCond.h"
+#include "classes/gmk/ScenarioFlagCond.h"
+#include "classes/gmk/QuestFlagCond.h"
+#include "classes/gmk/GmkCamera.h"
+#include "classes/gmk/GmkMapGimmick.h"
+#include "classes/gf/GfFieldMapGimmick.h"
+#include "classes/gmk/TimeCond.h"
 #include "classes/gmk/WeatherCond.h"
 #include "classes/gmk/BootedGmkCond.h"
 #include "classes/gmk/ScenarioFlagCond.h"
@@ -37,6 +48,9 @@
 #include "classes/gf/GfFieldMapGimmick.h"
 #include "classes/gf/GfFieldLod.h"
 #include "classes/gf/SCOM_QUEST_GIMMICK.h"
+#include "classes/gf/GfGameCond.h"
+#include "classes/gf/GfDataBdat.h"
+#include "gf/GfPlayFactory.h"
 
 namespace gf {
 
@@ -298,6 +312,146 @@ void GfFieldMapGimmick::seqMapObj_nextwait(float dt) {
             m_solveState = 2;
         }
     }
+}
+
+void GfFieldMapGimmick::BdatInfo::create(CBdatWrapper bdat, int row) {
+    m_opCondition = (unsigned short)(unsigned long)Bdat::getValCheck(bdat.m_fp, "OP_Condition", row, 2);
+    m_bootedGmk = gmk::BootedGmkCond(bdat, row, "OP_");
+    m_scenarioFlag = gmk::ScenarioFlagCond(bdat, row, "OP_");
+    m_questFlag = gmk::QuestFlagCond(bdat, row, "OP_");
+    m_time.m_time = (unsigned short)(unsigned long)Bdat::getValCheck(bdat.m_fp, "OP_Time", row, 2);
+    m_weather.m_weather = (unsigned char)(unsigned long)Bdat::getValCheck(bdat.m_fp, "OP_weather", row, 1);
+    m_camGimAtr = (unsigned char)(unsigned long)Bdat::getValCheck(bdat.m_fp, "camGim_ATR", row, 1);
+    m_gmkCamPos = Bdat::getFlagVal(bdat.m_fp, "flag", row, "gmkCamPos") != 0;
+    m_nowaitGmkCam = Bdat::getFlagVal(bdat.m_fp, "flag", row, "nowaitGmkCam") != 0;
+}
+
+bool GfFieldMapGimmick::BdatInfo::isCondMatched() const {
+    if (m_opCondition != 0 && !GfGameCond::isGameCond(m_opCondition)) {
+        return false;
+    }
+    if (m_bootedGmk.m_gimmickType != 0 && m_bootedGmk.m_gimmickId != 0 && !m_bootedGmk.isMatch()) {
+        return false;
+    }
+    if (m_scenarioFlag.m_scenarioFlagMax != 0 && !m_scenarioFlag.isMatch()) {
+        return false;
+    }
+    if (m_questFlag.m_questFlag != 0 && m_questFlag.m_questFlagMin <= m_questFlag.m_questFlagMax &&
+        !m_questFlag.isMatch()) {
+        return false;
+    }
+    if (m_time.m_time != 0 && !m_time.isMatch()) {
+        return false;
+    }
+    if (m_weather.m_weather != 0 && !m_weather.isMatch()) {
+        return false;
+    }
+    return true;
+}
+
+void GfFieldMapGimmick::create(GF_OBJ_HANDLE* handle) {
+    AFieldSeq::create(handle);
+    if (gmk::AGmkBase* gmk = gmk::getBindedGmkInst(handle)) {
+        unsigned char* fp = gmk->getBindedBdatFp();
+        int row = gmk->m_bdatId;
+        m_bdatInfo.create(fp, row);
+        GfObj* obj = GfObjUtil::getObj(m_handle);
+        if (obj == nullptr || (obj->pad_110 & 4) == 0 || m_bdatInfo.isCondMatched()) {
+            {
+                gmk::GmkAcc::CreateInfo accInfo;
+                accInfo.validate(*gmk);
+                m_gmkAcc.create(accInfo);
+            }
+            const char* name = Bdat::getValCheck(fp, "gmkCamName", row, 7);
+            if (name == nullptr || name[0] == '\0') {
+                return;
+            }
+            gmk::GmkCamera::CreateInfo camInfo;
+            camInfo.m_name = name;
+            if (m_bdatInfo.m_camGimAtr != 0) {
+                camInfo.m_attr = m_bdatInfo.m_camGimAtr;
+            }
+            camInfo.pad_105 = 0;
+            if (m_bdatInfo.m_gmkCamPos) {
+                if (m_lodAnim > 0) {
+                    camInfo.validateTransform(m_lodAnim);
+                } else {
+                    camInfo.validateTransform(m_handle);
+                }
+            }
+            m_camera.create(camInfo);
+            m_seqCamera = &GfFieldMapGimmick::seqCamera_waitToLoaded;
+            return;
+        }
+        MenuCommonWindowParam param;
+        param.m_bdat = GfDataBdat::getFP(0x1b1);
+        param.m_msgId = (unsigned short)(unsigned long)Bdat::getValCheck(fp, "missMSG_ID", row, 2);
+        GfPlayFactory::createCommonMessage(param);
+    }
+    dispose();
+    m_isEnd = true;
+}
+
+void GfFieldMapGimmick::update(float dt) {
+    if (m_solveState == 1) {
+        if (GfGameManager::fn_71002A9E68()) {
+            if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::get()) {
+                scene->fn_71002C345C(true);
+            }
+        }
+    } else if (m_solveState == 2) {
+        if (GfGameManager::fn_71002A9E68()) {
+            if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::get()) {
+                scene->fn_71002C345C(false);
+            }
+        }
+    }
+    m_solveState = 0;
+    if (m_handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    bool wasEnd = isEnd();
+    if (m_camera.m_name.m_nLen > 0) {
+        m_camera.update(dt);
+        if (m_seqCamera) {
+            (this->*m_seqCamera)(dt);
+        }
+        if (m_seqCamera == &GfFieldMapGimmick::seqCamera_waitToLoaded) {
+            return;
+        }
+    }
+    AFieldSeq::update(dt);
+    if (m_seqLod) {
+        (this->*m_seqLod)(dt);
+    }
+    if (m_seqMapObj) {
+        (this->*m_seqMapObj)(dt);
+    }
+    if (m_seqOther) {
+        (this->*m_seqOther)(dt);
+    }
+    if (!wasEnd && isEnd() && m_isFsSucceeded) {
+        if (gmk::GmkMapGimmick* gmk = static_cast<gmk::GmkMapGimmick*>(m_gmkAcc.m_gmk)) {
+            SCOM_QUEST_GIMMICK::createMapGimmick(gmk->m_bdatId, 0.0f);
+            gmk->setSolved();
+            m_solveState = 2;
+        }
+    }
+}
+
+void GfFieldMapGimmick::onFsSucceeded() {
+    if (m_camera.m_name.m_nLen > 0) {
+        m_camera.play();
+    }
+    m_lodStep = 1;
+    m_seqLod = &GfFieldMapGimmick::seqLod_init;
+    if (GfGameManager::fn_71002A9E68() && m_gmkAcc.isValid() &&
+        static_cast<gmk::GmkMapGimmick*>(m_gmkAcc.m_gmk)->getBdatInfo()->m_effectId != 0) {
+        m_seqOther = &GfFieldMapGimmick::fn_710027AA68;
+    } else {
+        m_seqMapObj = &GfFieldMapGimmick::seqMapObj_init;
+    }
+    m_solveState = 1;
 }
 
 void GfFieldJump::onFsSucceeded() {

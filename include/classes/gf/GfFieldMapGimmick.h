@@ -69,6 +69,16 @@ public:
     void seqLod_waitToElapseTime(float dt);
     void seqMapObj_init(float dt);
     void seqMapObj_nextwait(float dt);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because onFsSucceeded stores it in
+    // m_seqOther (a pointer to member of this class). What it does: m_seqOther's first step (onFsSucceeded picks it over
+    // seqMapObj_init when GfGameManager::fn_71002A9E68, the GmkAcc is valid and the GmkMapGimmick row's effectID is set):
+    // reads the row's effectID, finds that gimmick (GmkManager::findFirstGmkInstByBdatId, type 0xD; dispose() when
+    // none), plays its "mapobjeffect" effect and "mapobjSE" sound at it, then waits "mapobj_nextwait" in fn_710027B500.
+    void fn_710027AA68(float dt);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because fn_710027AA68 stores it in
+    // m_seqOther. What it does: seqMapObj_nextwait's wait on m_seqOther: adds dt to m_elapsedTime and, once it reaches
+    // m_waitTime, clears m_seqOther and (nowaitGmkCam, field skill succeeded) solves the gimmick as the others do.
+    void fn_710027B500(float dt);
 
     // (the field names below are not the original's)
     BdatInfo m_bdatInfo;

@@ -11,9 +11,11 @@ public:
     BootedGmkCond(unsigned char type, unsigned short id);
     BootedGmkCond(const CBdatWrapper& bdat, int row, const char* prefix);
     bool isMatch() const;
-    unsigned char pad_0;
+    // the row's <prefix>gimmickType and gimmickID, kept when both are nonzero (the constructor reads those columns;
+    // the names are not the original's)
+    unsigned char m_gimmickType;
     unsigned char pad_1;
-    unsigned short pad_2;
+    unsigned short m_gimmickId;
 };
 }  // namespace gmk
 

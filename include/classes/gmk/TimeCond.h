@@ -6,6 +6,7 @@ namespace gmk {
 class TimeCond {
 public:
     TimeCond() : m_time(0xffff) {}
+    bool isMatch() const;
     virtual ~TimeCond() {}  // slot 0
     int m_time;  // the row's OP_Time, 0xFFFF for none (the name is not the original's)
 };

@@ -8,12 +8,14 @@ namespace gmk {
 // "OP_" columns by the (CBdatWrapper, row, prefix) constructor
 class QuestFlagCond {
 public:
-    QuestFlagCond() : pad_0(0), pad_2(0), pad_3(0) {}
+    QuestFlagCond() : m_questFlag(0), m_questFlagMin(0), m_questFlagMax(0) {}
     QuestFlagCond(const CBdatWrapper& bdat, int row, const char* prefix);
     bool isMatch() const;
-    unsigned short pad_0;
-    unsigned char pad_2;
-    unsigned char pad_3;
+    // the row's <prefix>QuestFlag, QuestFlagMin and QuestFlagMax (the constructor reads those columns; the names
+    // are not the original's)
+    unsigned short m_questFlag;
+    unsigned char m_questFlagMin;
+    unsigned char m_questFlagMax;
 };
 }  // namespace gmk
 

@@ -8,11 +8,13 @@ namespace gmk {
 // "OP_" columns by the (CBdatWrapper, row, prefix) constructor
 class ScenarioFlagCond {
 public:
-    ScenarioFlagCond() : pad_0(0), pad_2(0) {}
+    ScenarioFlagCond() : m_scenarioFlagMin(0), m_scenarioFlagMax(0) {}
     ScenarioFlagCond(const CBdatWrapper& bdat, int row, const char* prefix);
     bool isMatch() const;
-    unsigned short pad_0;
-    unsigned short pad_2;
+    // the row's <prefix>ScenarioFlagMin and ScenarioFlagMax, kept when min <= max (the constructor reads those
+    // columns; the names are not the original's)
+    unsigned short m_scenarioFlagMin;
+    unsigned short m_scenarioFlagMax;
 };
 }  // namespace gmk
 

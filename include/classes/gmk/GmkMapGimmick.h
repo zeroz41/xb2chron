@@ -13,10 +13,15 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize (0x7100632548 allocates count * 0x38; TGmkList<GmkMapGimmick>::~TGmkList (0x71005C74F4) frees the buffer with no destructor loop); the fields are not read yet
     class BdatInfo {
     public:
-        unsigned char pad_0[0x38];
+        unsigned char pad_0[0x6];
+        // nonzero when the row has an effect gimmick: GfFieldMapGimmick::onFsSucceeded runs fn_710027AA68 then, which
+        // reads the row's "effectID" (the name is inferred, not the original's)
+        unsigned short m_effectId;
+        unsigned char pad_8[0x30];
     };
     virtual ~GmkMapGimmick();  // slot 0
     void setSolved() const;
+    const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_bdatInfo); }
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
     virtual void dispose();  // slot 5

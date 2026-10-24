@@ -67,6 +67,11 @@ public:
     // setEventPlayerStop and GfPlayComResetBladePlayerStop calls it on the GfGameScene singleton. What it does:
     // EvtPlayerStop::setPlayerStop(stop) on the EvtPlayerStop at +0x648 (setEventPlayerStop's is at +0x638).
     void fn_71002C3450(bool stop);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it follows fn_71002C3450 in
+    // gf_game_scene and GfFieldMapGimmick::update calls it on the GfGameScene singleton. What it does:
+    // EvtPlayerStop::setPlayerStop(stop) on the EvtPlayerStop at +0x658; GfFieldMapGimmick::update passes true while
+    // the gimmick's field skill runs (solve state 1) and false once it is solved (state 2).
+    void fn_71002C345C(bool stop);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because
     // GfPlayComAfterEventScript::start calls it on the GfGameScene singleton. What it does: sets the bool at +0x8B9
     // when the script name contains "aoc_tut24", "aoc_tut04" or "aoc_tut10" (it never clears it).

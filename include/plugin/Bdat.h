@@ -38,6 +38,9 @@ unsigned char* isExistFP(const char* name);
 unsigned int getValCheck(unsigned char* fp, int member, int id, int type);
 // a row's flag: the flag word member's bit that the bit member names (nonzero when set)
 int getFlagVal(unsigned char* fp, unsigned char* member, int id, unsigned char* bitMember);
+// getFlagVal by the columns' names (gf::GfFieldMapGimmick::BdatInfo::create reads its row's "flag" bits so; the
+// symbols spell this overload, 0x7100655F2C)
+int getFlagVal(unsigned char* fp, const char* member, int id, const char* bitMember);
 // getValCheck for an array member: element index of the row's value (1.0.0's gf::_gfbcd::getChrDrWpnType reads the
 // WpnType array so, type 1, keeping the low 8 bits)
 unsigned long getArrayValCheck(unsigned char* fp, unsigned char* member, int id, int index, int type);
