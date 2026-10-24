@@ -17,6 +17,7 @@ class GfQuestManager : public ::mm::mtl::PtrSingleton< ::gf::GfQuestManager> {
 public:
     // SCOM_REFRESH_COMPASS's and SCOM_BATTLE_TASK_RESET's requests, three frames after they are made
     static void requestRefreshQuestTaskState();
+    static void setCompleteQuest(QuestID id, QuestID next, QSTATE state);
     static void resetBattleTaskForBattleEnd();
     static void gevReloadBdat(RELOAD_BDAT, unsigned int);
     static void gevChangeWeather(unsigned int, unsigned int);

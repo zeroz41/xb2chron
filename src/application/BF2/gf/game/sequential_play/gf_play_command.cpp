@@ -1,3 +1,15 @@
+#include "classes/gf/GfMenuManager.h"
+#include "classes/gf/MenuCommonWindowParam.h"
+#include "classes/gf/GfPlayComMenuCommon.h"
+#include "classes/gf/GfPlayComMenuCommonFromParam.h"
+#include "classes/gf/GfPlayComQuestOrderUI.h"
+#include "classes/gf/GfPlayComQuestCompleteUI.h"
+#include "classes/gf/GfMenuObjQuestLog.h"
+#include "classes/gf/GfQuestManager.h"
+#include "classes/gf/GfGameScene.h"
+#include "classes/gf/GfGameEvent.h"
+#include "classes/gf/GfFieldGimmick.h"
+#include "classes/gf/GfPlayComEventFade.h"
 #include "classes/gf/GfGameScene.h"
 #include "classes/gf/GfMenuManager.h"
 #include "gf/GfDataUtil.h"
@@ -85,6 +97,15 @@
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfGameState.h"
 #include "classes/gf/GfChainAttack.h"
+// hand4: begin #include "fw/UpdateInfo.h"
+#include "gf/GfQuestTask.h"
+#include "classes/gf/SCOM_FADE.h"
+#include "classes/gf/GfMenuCallContext.h"
+#include "classes/gf/GfQuestEvent.h"
+#include "gf/GfQuestInfo.h"
+#include "classes/gf/GfFieldGimmick.h"
+
+// hand4: end
 #include "fw/UpdateInfo.h"
 #include "classes/gf/GfGameScene.h"
 #include "classes/gf/GfArtsMovie.h"
@@ -223,6 +244,31 @@ GfPlayComCallbackEventSequence* GfPlayComCallbackEventSequence::create(int id, b
 }
 
 // hand: begin GfPlayComOpenMenu::~GfPlayComOpenMenu
+// hand4: begin GfPlayComWaitEvent::~GfPlayComWaitEvent
+void GfPlayComEventFade::start() {
+    s_start++;
+    m_wait = GfGameEvent::getFadeInWaitSec();
+    m_fadeTime = GfGameEvent::getFadeInSec();
+    m_timeout = 10.0f;
+    m_mapId = GfGameManager::getMapID();
+}
+
+void GfPlayComEventFade::end() {
+    if (m_state >= 1) {
+        if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+            scene->setPlayerTalkForce(false);
+        }
+        mm::mtl::PtrSingleton<GfFieldGimmick>::sys()->m_eventFade = false;
+    }
+    s_start--;
+}
+
+GfPlayComEventFade* GfPlayComEventFade::create() {
+#line 254
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComEventFade();
+}
+
+// hand4: end
 GfPlayComWaitEvent::~GfPlayComWaitEvent() { s_activate--; }
 
 void GfPlayComWaitEvent::start() { m_req = GfReqCommand::reqWaitEvent(m_time, m_handle); }
@@ -514,12 +560,110 @@ GfPlayComMenuPrecious* GfPlayComMenuPrecious::create(unsigned int id) {
 }
 
 // hand: end
+// hand4: begin void GfPlayComMenuCommon::end
+void GfPlayComMenuCommon::start() {
+    if (!GfGameManager::isAdvertize()) {
+        SCOM_FADE::create(1, 15, mm::Col4::zero);
+    }
+    GfMenuManager::openCommonWindow(m_id);
+}
+
+// hand4: end
 void GfPlayComMenuCommon::end() {}
 
+// hand4: begin void GfPlayComMenuCommonFromParam::end
+bool GfPlayComMenuCommon::update(const fw::UpdateInfo& info, bool flag) {
+    if (!flag && GfMenuManager::isOpenCommonWindow()) {
+        if (!GfGameManager::isLeaveGameForDebug()) {
+            return false;
+        }
+        GfMenuManager::closeCommonWindow();
+    }
+    return true;
+}
+
+GfPlayComMenuCommon::~GfPlayComMenuCommon() {
+    for (mm::mtl::FixedQueue<unsigned int, 32>::iterator it = s_list.begin(); it != s_list.end(); ++it) {
+        if ((*it & 0xFFFFFF) == m_handle) {
+            *it = ((GfMenuManager::getCommonWindowResult() + 1) << 24) | m_handle;
+            break;
+        }
+    }
+}
+
+bool GfPlayComMenuCommon::isDisp(unsigned int id) {
+    for (mm::mtl::FixedQueue<unsigned int, 32>::iterator it = s_list.begin(); it != s_list.end(); ++it) {
+        if ((*it >> 24) == 0 && (*it & 0xFFFFFF) == id) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int GfPlayComMenuCommon::getResult(unsigned int id) {
+    for (mm::mtl::FixedQueue<unsigned int, 32>::iterator it = s_list.begin(); it != s_list.end(); ++it) {
+        if ((*it & 0xFFFFFF) == id) {
+            return *it >> 24;
+        }
+    }
+    return 0;
+}
+
+GfPlayComMenuCommon* GfPlayComMenuCommon::create(unsigned int id) {
+    unsigned int handle = s_gblHandle++;
+#line 1837
+    GfPlayComMenuCommon* com = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComMenuCommon(id, handle);
+    if (s_list.size() >= 32) {
+        s_list.pop_front();
+    }
+    s_list.push_back(com->m_handle);
+    return com;
+}
+
+void GfPlayComMenuCommonFromParam::start() {
+    if (!GfGameManager::isAdvertize()) {
+        SCOM_FADE::create(1, 15, mm::Col4::zero);
+    }
+    GfMenuManager::openCommonWindow(m_param);
+}
+
+// hand4: end
 void GfPlayComMenuCommonFromParam::end() {}
 
 void GfPlayComSalvage::start() {}
 
+// hand4: begin void GfPlayComSalvage::end
+bool GfPlayComMenuCommonFromParam::update(const fw::UpdateInfo& info, bool flag) {
+    if (!flag && GfMenuManager::isOpenCommonWindow()) {
+        if (!GfGameManager::isLeaveGameForDebug()) {
+            return false;
+        }
+        GfMenuManager::closeCommonWindow();
+    }
+    return true;
+}
+
+GfPlayComMenuCommonFromParam::~GfPlayComMenuCommonFromParam() {
+    for (mm::mtl::FixedQueue<unsigned int, 32>::iterator it = s_list.begin(); it != s_list.end(); ++it) {
+        if ((*it & 0xFFFFFF) == m_handle) {
+            *it = ((GfMenuManager::getCommonWindowResult() + 1) << 24) | m_handle;
+            break;
+        }
+    }
+}
+
+GfPlayComMenuCommonFromParam* GfPlayComMenuCommonFromParam::create(const MenuCommonWindowParam& param) {
+    unsigned int handle = s_gblHandle++;
+#line 1935
+    GfPlayComMenuCommonFromParam* com = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComMenuCommonFromParam(param, handle);
+    if (s_list.size() >= 32) {
+        s_list.pop_front();
+    }
+    s_list.push_back(com->m_handle);
+    return com;
+}
+
+// hand4: end
 void GfPlayComSalvage::end() {
     if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
         scene->destroyPlayerPause(m_pause);
@@ -582,6 +726,97 @@ void GfPlayComReturnTitle::start() {
     GfMenuObjPopup::closeAll();
 }
 
+// hand4: begin GfPlayComReturnTitle* GfPlayComReturnTitle::create
+bool GfPlayComGimmickTaskComplete::update(const fw::UpdateInfo& info, bool flag) {
+    m_time -= info.m_deltaTime;
+    if (m_time > 0.0f) {
+        return false;
+    }
+    GfQuestTask::completeGimmickTask(m_type, m_id);
+    return true;
+}
+
+GfPlayComGimmickTaskComplete* GfPlayComGimmickTaskComplete::create(gmk::GmkType type, unsigned int id, float time) {
+#line 3004
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComGimmickTaskComplete(type, id, time);
+}
+
+// hand4: end
+// hand4: begin GfPlayComReturnTitle* GfPlayComReturnTitle::create
+GfPlayComQuestOrderUI::~GfPlayComQuestOrderUI() {
+    if (m_context != nullptr) {
+        m_context->release();
+        m_context = nullptr;
+    }
+}
+
+void GfPlayComQuestOrderUI::start() {
+    if (GfQuestInfo::isDispUI(m_id)) {
+        m_context = GfMenuCallContext::create();
+        GfMenuObjQuestLog::order(m_context, m_id);
+    }
+}
+
+void GfPlayComQuestOrderUI::end() {
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        scene->setPlayerTalkForce(false);
+    }
+}
+
+bool GfPlayComQuestOrderUI::update(const fw::UpdateInfo& info, bool flag) {
+    if (m_context != nullptr) {
+        if (!m_context->isTerm()) {
+            return false;
+        }
+        GfQuestEvent::clearDispUI();
+    }
+    return true;
+}
+
+GfPlayComQuestOrderUI* GfPlayComQuestOrderUI::create(QuestID id, bool flag) {
+#line 2905
+    GfPlayComQuestOrderUI* com = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComQuestOrderUI(id, flag);
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        scene->setPlayerTalkForce(true);
+    }
+    return com;
+}
+
+GfPlayComQuestCompleteUI::~GfPlayComQuestCompleteUI() {
+    if (m_context != nullptr) {
+        m_context->release();
+        m_context = nullptr;
+    }
+    s_active--;
+}
+
+void GfPlayComQuestCompleteUI::start() {
+    m_context = GfMenuCallContext::create();
+    GfMenuObjQuestLog::complete(m_context, m_id);
+    s_start++;
+}
+
+void GfPlayComQuestCompleteUI::end() {
+    s_start--;
+    GfQuestManager::requestRefreshQuestTaskState();
+}
+
+bool GfPlayComQuestCompleteUI::update(const fw::UpdateInfo& info, bool flag) {
+    if (!m_context->isTerm()) {
+        return false;
+    }
+    GfQuestEvent::clearDispUI();
+    return true;
+}
+
+GfPlayComQuestCompleteUI* GfPlayComQuestCompleteUI::create(QuestID id, QuestID next, QSTATE state) {
+#line 2969
+    GfPlayComQuestCompleteUI* com = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComQuestCompleteUI(id, next, state);
+    GfQuestManager::setCompleteQuest(id, next, state);
+    return com;
+}
+
+// hand4: end
 GfPlayComReturnTitle* GfPlayComReturnTitle::create(const ParamReturnTitle& param) {
 #line 3058
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComReturnTitle(param);
@@ -730,6 +965,10 @@ mm::mtl::RTTI GfPlayComEventWeather::m_rtti("GfPlayComEventWeather", &GfPlayCom:
 mm::mtl::RTTI GfPlayComPause::m_rtti("GfPlayComPause", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComState::m_rtti("GfPlayComState", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComWait::m_rtti("GfPlayComWait", &GfPlayCom::m_rtti, nullptr);
+// hand4: begin mm::mtl::RTTI GfPlayComWaitEvent::m_rtti
+int GfPlayComEventFade::s_start;
+
+// hand4: end
 mm::mtl::RTTI GfPlayComWaitEvent::m_rtti("GfPlayComWaitEvent", &GfPlayCom::m_rtti, nullptr);
 int GfPlayComWaitEvent::s_activate;
 mm::mtl::RTTI GfPlayComMapjump::m_rtti("GfPlayComMapjump", &GfPlayCom::m_rtti, nullptr);
@@ -765,8 +1004,16 @@ mm::mtl::RTTI GfPlayComMenuPrecious::m_rtti("GfPlayComMenuPrecious", &GfPlayCom:
 int GfPlayComMenuPrecious::s_activate;
 int GfPlayComMenuPrecious::s_start;
 mm::mtl::RTTI GfPlayComMenuCommon::m_rtti("GfPlayComMenuCommon", &GfPlayCom::m_rtti, nullptr);
+// hand4: begin mm::mtl::FixedQueue<unsigned int, 32> GfPlayComMenuCommon::s_list;
+unsigned int GfPlayComMenuCommon::s_gblHandle;
+
+// hand4: end
 mm::mtl::FixedQueue<unsigned int, 32> GfPlayComMenuCommon::s_list;
 mm::mtl::RTTI GfPlayComMenuCommonFromParam::m_rtti("GfPlayComMenuCommonFromParam", &GfPlayCom::m_rtti, nullptr);
+// hand4: begin mm::mtl::FixedQueue<unsigned int, 32> GfPlayComMenuCommonFromParam::s_list;
+unsigned int GfPlayComMenuCommonFromParam::s_gblHandle;
+
+// hand4: end
 mm::mtl::FixedQueue<unsigned int, 32> GfPlayComMenuCommonFromParam::s_list;
 mm::mtl::RTTI GfPlayComSalvage::m_rtti("GfPlayComSalvage", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComCollect::m_rtti("GfPlayComCollect", &GfPlayCom::m_rtti, nullptr);
@@ -779,6 +1026,11 @@ mm::mtl::RTTI GfPlayComPlayerDead::m_rtti("GfPlayComPlayerDead", &GfPlayCom::m_r
 mm::mtl::RTTI GfPlayComTalk::m_rtti("GfPlayComTalk", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComQuestOrderUI::m_rtti("GfPlayComQuestOrderUI", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComQuestCompleteUI::m_rtti("GfPlayComQuestCompleteUI", &GfPlayCom::m_rtti, nullptr);
+// hand4: begin mm::mtl::RTTI GfPlayComGimmickTaskComplete::m_rtti
+int GfPlayComQuestCompleteUI::s_active;
+int GfPlayComQuestCompleteUI::s_start;
+
+// hand4: end
 mm::mtl::RTTI GfPlayComGimmickTaskComplete::m_rtti("GfPlayComGimmickTaskComplete", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComReturnTitle::m_rtti("GfPlayComReturnTitle", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComBattleStart::m_rtti("GfPlayComBattleStart", &GfPlayCom::m_rtti, nullptr);

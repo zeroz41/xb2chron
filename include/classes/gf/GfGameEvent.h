@@ -17,6 +17,9 @@ public:
     // GfEvtModel::destroy hands it the model first
     // the event playing now (GfEvtModelBlade::create asks)
     static int getPlayEventId();
+    // the event's fade-in: the wait before it and its length, in seconds
+    static float getFadeInWaitSec();
+    static float getFadeInSec();
     static void destroyEvtModel(class GfEvtModel* model);
 };
 }  // namespace gf

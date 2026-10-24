@@ -6,6 +6,7 @@
 #include "classes/ui/UIUpdateCallback.h"
 
 namespace gf { class GfSetupParam; }
+namespace gf { class MenuCommonWindowParam; }
 namespace fw { class UpdateInfo; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
@@ -140,6 +141,12 @@ public:
     static bool isOpenPreciousWindow();
     static void openPreciousWindow(unsigned short id);
     static void openSave();
+    // the common (message) window: open by message id or from a full parameter set; its result once closed
+    static void openCommonWindow(unsigned short id);
+    static void openCommonWindow(const MenuCommonWindowParam& param);
+    static bool isOpenCommonWindow();
+    static void closeCommonWindow();
+    static int getCommonWindowResult();
     static bool isSwitchingFullScreen();  // the full screen is switching its layers
     // the object the player can access now, (GF_OBJ_HANDLE*)-1 for none
     static gf::GF_OBJ_HANDLE* getAccessObjHandle();
