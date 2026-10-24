@@ -15,6 +15,8 @@ public:
     virtual void Quit();  // slot 3
     virtual void Play(ssd::SoundHandle*, ssd::SoundEntry const*, float, float);  // slot 4
     virtual void UpdateGameFrame(float);  // slot 7
+
+    unsigned char pad_20[0x58];  // SoundActor's and SoundActor3D's fields, not recovered (fw::SoundSsdPlayer's start at 0x78)
 };
 }  // namespace ssd
 

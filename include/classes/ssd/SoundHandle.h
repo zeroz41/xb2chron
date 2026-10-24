@@ -1,6 +1,7 @@
 #ifndef CLASSES_SSD_SOUNDHANDLE_H
 #define CLASSES_SSD_SOUNDHANDLE_H
 
+namespace ssd { class SoundActor; }
 namespace ssd {
 // a base of ssd::SoundHandle no evidence names yet
 class TUnk_B81C50 {
@@ -18,6 +19,17 @@ class SoundHandle : public TUnk_B81C50, public TUnk_B81C70 {
 public:
     class Notify;
     virtual ~SoundHandle();  // slot 0
+    bool IsValidHandle() const;
+    bool IsPlay() const;
+    int GetState() const;  // 8 once ready to start; 5, 6 and 7 while preparing
+    long Start(SoundActor* actor, float volume, float pitch);  // negative on failure
+    void Stop(float fadeTime);
+    void SetCategoryId(int id);
+    long GetPlayTime(float* time) const;
+    long SetPlayTime(float time);
+    long GetDataTime(float* time) const;
+    long SetRemainLoopCount(int count);
+    long GetRemainLoopCount(int* count) const;
 };
 }  // namespace ssd
 

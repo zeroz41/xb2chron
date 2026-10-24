@@ -2,6 +2,7 @@
 #define CLASSES_FW_SOUNDSSDBANK_H
 
 #include "classes/fw/SoundReferenceObject.h"
+#include "classes/ssd/SoundBank.h"
 #include "mm/mtl/IntrusivePtr.h"
 
 namespace fw { enum SoundCategory : int; }
@@ -42,6 +43,8 @@ public:
     void setMaxSound(int maxSound);
     void stopAll();
     mm::mtl::IntrusivePtr<SoundSsdSource> addWave(const WaveInfo& info);
+
+    ssd::SoundBank m_bank;  // 0x10 (stopAll stops it; the name is not the original's)
 };
 }  // namespace fw
 

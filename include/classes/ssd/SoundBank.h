@@ -19,6 +19,7 @@ class SoundBank : public TUnk_B81AA0, public TUnk_B81AC0 {
 public:
     virtual ~SoundBank();  // slot 0
     virtual void vf1();  // slot 1
+    void Stop(float fadeTime);
 };
 }  // namespace ssd
 
