@@ -29,7 +29,9 @@ public:
     virtual void gevPlayEvent(gf::GEV gev, unsigned int arg);  // slot 7
 
     bool m_openBtlModelView;  // onLeave closes the battle model view when set (the name is not the original's)
-    unsigned char pad_21[0x7];
+    // gevPlayEvent sets it for GEV 0xD with a non-zero argument (the name is not the original's)
+    bool m_endArg;
+    unsigned char pad_22[0x6];
 };
 }  // namespace tl
 

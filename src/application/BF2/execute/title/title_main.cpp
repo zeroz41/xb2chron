@@ -2,6 +2,11 @@
 // registrations in TitleMain::initialize, or with the state's own out-of-line virtual)
 
 #include "classes/tl/TitleMain.h"
+#include "classes/tl/TitleStatePlayEvent.h"
+#include "classes/gf/GfFieldLod.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfMenuObjEvTheater.h"
+#include "classes/tl/TitleMain.h"
 #include "classes/gf/GfSound.h"
 #include "classes/ai/State.h"
 #include "mm/mtl/Delegate.h"
@@ -29,6 +34,8 @@
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfInfo.h"
+#include "classes/gf/GfFieldLod.h"
+#include "classes/gf/GfGameManager.h"
 
 namespace tl {
 
@@ -70,6 +77,47 @@ void TitleMain::fnUpdate(TitleMain* self) {
 
 TitleMain::~TitleMain() {}
 
+void TitleMain::fn_710014F5FC(float volume, float time) {
+    gf::GfSound* sound = gf::GfSound::sys();
+    if (sound == nullptr) {
+        return;
+    }
+    if (m_seCategory == reinterpret_cast<gf::GF_SE_CATEGORY_HANDLE*>(-1)) {
+        m_seCategory = sound->createCategoryHandle();
+        if (m_seCategory == reinterpret_cast<gf::GF_SE_CATEGORY_HANDLE*>(-1)) {
+            return;
+        }
+    }
+    sound->setCategoryVolume(m_seCategory, static_cast<fw::SoundCategory>(1), volume, time);
+    sound->setCategoryVolume(m_seCategory, static_cast<fw::SoundCategory>(0xD), volume, time);
+    sound->setCategoryVolume(m_seCategory, static_cast<fw::SoundCategory>(0xE), volume, time);
+    sound->setCategoryVolume(m_seCategory, static_cast<fw::SoundCategory>(5), volume, time);
+    sound->setCategoryVolume(m_seCategory, static_cast<fw::SoundCategory>(7), volume, time);
+    sound->setCategoryVolume(m_seCategory, static_cast<fw::SoundCategory>(6), volume, time);
+    sound->setCategoryVolume(m_seCategory, static_cast<fw::SoundCategory>(8), volume, time);
+}
+
+void TitleMain::fn_710014F70C(float volume) {
+    gf::GfSound* sound = gf::GfSound::sys();
+    if (sound == nullptr) {
+        return;
+    }
+    if (m_seCategorySub == reinterpret_cast<gf::GF_SE_CATEGORY_HANDLE*>(-1)) {
+        m_seCategorySub = sound->createCategoryHandle();
+        if (m_seCategorySub == reinterpret_cast<gf::GF_SE_CATEGORY_HANDLE*>(-1)) {
+            return;
+        }
+    }
+    sound->setCategoryVolume(m_seCategorySub, static_cast<fw::SoundCategory>(0xD), volume, 0.0f);
+    sound->setCategoryVolume(m_seCategorySub, static_cast<fw::SoundCategory>(0xE), volume, 0.0f);
+    sound->setCategoryVolume(m_seCategorySub, static_cast<fw::SoundCategory>(0), volume, 0.0f);
+    sound->setCategoryVolume(m_seCategorySub, static_cast<fw::SoundCategory>(0), volume, 0.0f);
+    sound->setCategoryVolume(m_seCategorySub, static_cast<fw::SoundCategory>(0), volume, 0.0f);
+    sound->setCategoryVolume(m_seCategorySub, static_cast<fw::SoundCategory>(0), volume, 0.0f);
+    sound->setCategoryVolume(m_seCategorySub, static_cast<fw::SoundCategory>(0), volume, 0.0f);
+    sound->setCategoryVolume(m_seCategorySub, static_cast<fw::SoundCategory>(0), volume, 0.0f);
+}
+
 void TitleMain::destroy() {
     TitleMain* title = sys();
     title->finalize();
@@ -85,6 +133,14 @@ void TitleMain::stopTitleBGM(float time) {
         m_titleBgm.clear();
     }
     m_isTitleBgm = false;
+}
+
+// starts nothing in 3.0.1: with no title BGM it stops it (an inline stopTitleBGM(2.0f)) and marks the title BGM set
+void TitleMain::playTitleBGM() {
+    if (!m_titleBgm.isValid()) {
+        stopTitleBGM(2.0f);
+        m_isTitleBgm = true;
+    }
 }
 
 bool TitleMain::isReturnTitle() {
@@ -135,6 +191,38 @@ void TitleStatePlayGame::gevPlayEvent(gf::GEV gev, unsigned int arg) {
         m_playEvent = 2;
     } else if (gev == static_cast<gf::GEV>(0xD)) {
         m_playEvent = 0;
+    }
+}
+
+namespace {
+// reverses the animation of the field LOD object the id names, when it has one (the name is not the original's)
+inline void setLodAnimReverse(unsigned short lodId) {
+    gf::GfFieldLod* lod = gf::GfFieldLod::sys();
+    if (lod != nullptr) {
+        int bdatId = lod->findBdatIdByLodId(lodId);
+        if (bdatId != 0) {
+            lod->setAnimReverse(bdatId, false, true);
+        }
+    }
+}
+}  // namespace
+
+void TitleStatePlayEvent::gevPlayEvent(gf::GEV gev, unsigned int arg) {
+    if (gev == static_cast<gf::GEV>(0xE)) {
+        TitleMain::sys()->fn_710014F5FC(1.0f, 0.0f);
+        TitleMain::sys()->fn_710014F70C(1.0f);
+        gf::GfGameManager::fn_71002AB894(gf::GfInfo::m_camPos);
+        if (arg == 0x272A) {
+            setLodAnimReverse(0x193);
+            setLodAnimReverse(0x19A);
+            setLodAnimReverse(0x199);
+            setLodAnimReverse(0x19B);
+        }
+    } else if (gev == static_cast<gf::GEV>(0xD)) {
+        if (arg != 0) {
+            m_endArg = true;
+        }
+        gf::GfGameManager::fn_71002AB894(mm::Vec3::zero);
     }
 }
 
@@ -190,6 +278,23 @@ inline void TitleStatePlayGame::onStep(void* owner, const void* arg) {
     }
     title->m_reqReturnTitle = false;
     requestState(8);
+}
+
+inline const char* TitleStatePlayEvent::getName() const {
+    return "TitleStatePlayEvent";
+}
+inline void TitleStatePlayEvent::onEnter(void* owner, ai::State* prev) {
+    enter(static_cast<TitleMain*>(owner), prev);
+}
+inline void TitleStatePlayEvent::onLeave(void* owner, ai::State* next) {
+    if (m_openBtlModelView) {
+        gf::GfMenuObjEvTheater::fn_71003FEE10(false);
+        gf::GfMenuManager::closeBtlModelView();
+    }
+    gf::GfEvent::removeEventCallback(this);
+}
+inline void TitleStatePlayEvent::onStep(void* owner, const void* arg) {
+    update(static_cast<TitleMain*>(owner), *static_cast<const fw::UpdateInfo*>(arg));
 }
 
 inline const char* TitleStateToTitle::getName() const {
