@@ -16,6 +16,8 @@ namespace gf { namespace pc {
 // blackboard-typed checkCondition and execute
 class TaskFieldCheckWarp : public ::ai::TaskNode {
 public:
+    // what BehaviorTree::createTask makes (flags from its instance)
+    explicit TaskFieldCheckWarp(const char* name) : TaskNode(name, 1) {}
     virtual ~TaskFieldCheckWarp() {}  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     virtual bool checkCondition(ai::BlackBoard const& bb) {  // slot 3

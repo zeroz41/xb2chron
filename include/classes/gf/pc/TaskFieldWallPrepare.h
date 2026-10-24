@@ -20,6 +20,8 @@ namespace gf { namespace pc {
 // (gf_pc_ai_wall_task_field.h, which its citations name) defines the blackboard-typed checkCondition and execute
 class TaskFieldWallPrepare : public ::ai::TaskNode {
 public:
+    // what BehaviorTree::createTask makes (flags from its instance)
+    explicit TaskFieldWallPrepare(const char* name) : TaskNode(name, 7), m_context() {}
     virtual ~TaskFieldWallPrepare() {}  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     virtual bool checkCondition(ai::BlackBoard const& bb) {  // slot 3

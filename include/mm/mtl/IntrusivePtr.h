@@ -82,6 +82,12 @@ public:
     T* _ptr;
 };
 
+// whether p holds no object (ai::BehaviorTree's createTask asserts `m_pNodes[nodeID] == nullptr`)
+template <typename T>
+inline bool operator==(const IntrusivePtr<T>& p, decltype(nullptr)) {
+    return p.get() == nullptr;
+}
+
 }}  // namespace mm::mtl
 
 #endif

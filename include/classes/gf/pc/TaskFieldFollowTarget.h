@@ -14,6 +14,8 @@ namespace gf { namespace pc {
 // execute
 class TaskFieldFollowTarget : public ::ai::TaskNode {
 public:
+    // what BehaviorTree::createTask makes (flags from its instance)
+    explicit TaskFieldFollowTarget(const char* name) : TaskNode(name, 0) {}
     virtual ~TaskFieldFollowTarget() {}  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     virtual bool checkCondition(ai::BlackBoard const& bb) {  // slot 3

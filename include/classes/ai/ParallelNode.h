@@ -9,6 +9,9 @@ namespace ai {
 // table 0x7100B80EF8
 class ParallelNode : public ::ai::CompositeNode {
 public:
+    // what BehaviorTree::createComposite makes
+    ParallelNode(const char* name, unsigned int childCount, mm::mtl::IAllocator* allocator)
+        : CompositeNode(name, childCount, allocator) {}
     virtual ~ParallelNode();  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     virtual bool checkCondition(ai::BlackBoard const&) { return true; }  // slot 3

@@ -15,6 +15,8 @@ namespace gf { namespace pc {
 // checkCondition and execute
 class TaskFieldWallFall : public ::ai::TaskNode {
 public:
+    // what BehaviorTree::createTask makes (flags from its instance)
+    explicit TaskFieldWallFall(const char* name) : TaskNode(name, 3) {}
     virtual ~TaskFieldWallFall() {}  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     virtual bool checkCondition(ai::BlackBoard const& bb) {  // slot 3

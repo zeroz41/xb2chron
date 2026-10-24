@@ -22,6 +22,20 @@ public:
         d = -this->normal.dot(pos);
     }
 
+    // facing normal (made length 1; one too short becomes zero) at distance d (BlackBoardField's wall plane)
+    Plane(const Vec3& normal, float d) : normal(normal) {
+        float length = this->normal.length();
+        if (length <= 1e-6f) {
+            this->normal = Vec3::zero;
+        } else {
+            float scale = 1.0f / length;
+            this->normal.x = scale * this->normal.x;
+            this->normal.y = scale * this->normal.y;
+            this->normal.z = scale * this->normal.z;
+        }
+        this->d = d;
+    }
+
     Vec3 normal;
     float d;
 };

@@ -14,6 +14,7 @@ namespace gf { namespace pc {
 // table 0x7100B67908
 class BlackBoardField : public ::ai::BlackBoard {
 public:
+    BlackBoardField();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~BlackBoardField();  // slot 1
     static mm::mtl::RTTI m_rtti;
@@ -62,7 +63,8 @@ public:
     // where the PC climbs off a wall (TaskFieldWallFollow::update hands it to AgentUtilField::setFollowWallEndInput;
     // the name is not the original's)
     mm::Vec3 m_wallEndPos;
-    unsigned char pad_a0[0x150];
+    unsigned char pad_a0[0x140];
+    void* pad_1e0[2];  // two words the constructor clears
     mm::Vec3 m_retreatPos;            // TaskFieldRetreat routes the PC to it while farther than 1 from it
     // bits 0-2: TaskFieldSensor::update (0 the PC is stuck, 1 an obstacle is in its way, 2 it can jump onto it);
     // bit 3: set by TaskFieldRetreat::update and the follow tasks' update, cleared by TaskFieldIdle::update;

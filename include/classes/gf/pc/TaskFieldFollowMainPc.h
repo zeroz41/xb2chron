@@ -16,6 +16,8 @@ namespace gf { namespace pc {
 // adjustTime after the test stops passing. Its unit's header defines the blackboard-typed checkCondition and execute
 class TaskFieldFollowMainPc : public ::ai::TaskNode {
 public:
+    // what BehaviorTree::createTask makes (flags from its instance)
+    explicit TaskFieldFollowMainPc(const char* name) : TaskNode(name, 3) {}
     virtual ~TaskFieldFollowMainPc() {}  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     virtual bool checkCondition(ai::BlackBoard const& bb) {  // slot 3

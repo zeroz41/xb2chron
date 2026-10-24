@@ -18,6 +18,8 @@ namespace gf { namespace pc {
 // checkCondition and execute
 class TaskFieldCheckWarpBattleWaterDead : public ::ai::TaskNode {
 public:
+    // what BehaviorTree::createTask makes (flags from its instance)
+    explicit TaskFieldCheckWarpBattleWaterDead(const char* name) : TaskNode(name, 3) {}
     virtual ~TaskFieldCheckWarpBattleWaterDead() {}  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     virtual bool checkCondition(ai::BlackBoard const& bb) {  // slot 3

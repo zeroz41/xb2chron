@@ -15,6 +15,8 @@ namespace gf { namespace pc {
 // Its unit's header defines the blackboard-typed checkCondition and execute (its citations name it)
 class TaskFieldSensor : public ::ai::TaskNode {
 public:
+    // what BehaviorTree::createTask makes (flags from its instance)
+    explicit TaskFieldSensor(const char* name) : TaskNode(name, 1) {}
     virtual ~TaskFieldSensor() {}  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     virtual bool checkCondition(ai::BlackBoard const& bb) {  // slot 3
@@ -36,6 +38,10 @@ public:
     bool testCondition(gf::pc::BlackBoardField const&) { return true; }
     void update(gf::pc::BlackBoardField& bb);
     static mm::mtl::RTTI m_rtti;
+
+    // createTask<TaskFieldSensor> allocates 0x50 bytes aligned to 16: a 16-aligned member (a vector) at 0x40,
+    // which the constructor leaves alone
+    alignas(16) unsigned char pad_40[0x10];
 };
 }}  // namespace gf::pc
 

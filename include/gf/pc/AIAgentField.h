@@ -1,7 +1,12 @@
 #ifndef GF_PC_AIAGENTFIELD_H
 #define GF_PC_AIAGENTFIELD_H
 
+#include "ai/BehaviorTree.h"
+#include "mm/mtl/IntrusivePtr.h"
+
 namespace fw { class Message; }
+namespace fw { class ParamList; }
+namespace navi { class NvmshAcObj; }
 namespace fw { class MessageObject; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GfComPropertyPc; }
@@ -20,7 +25,11 @@ public:
     void onDeactivate(gf::GfComPropertyPc& property);
     bool recieveMessage(gf::GfComPropertyPc& property, fw::MessageObject* sender, fw::Message& message);
 
-    alignas(8) unsigned char pad_0[0x90];  // fields: AIAgent's layout gives the size, the pointer at 0 the alignment
+    // the field names are not the original's
+    navi::NvmshAcObj* m_nvmshAcObj;  // setup's, from fw::NaviManager::createObject
+    ai::BehaviorTree m_tree;           // the field AI's behavior tree, built by setup
+    // the field AI's parameter list (fw::ParamManager's 16th), held while the AI is set up
+    mm::mtl::IntrusivePtr<fw::ParamList> m_paramList;
 };
 
 }}  // namespace gf::pc

@@ -13,6 +13,8 @@ namespace gf { namespace pc {
 // (isFollowBuddyPc). Its unit's header defines the blackboard-typed checkCondition and execute
 class TaskFieldFollowBuddyPc : public ::ai::TaskNode {
 public:
+    // what BehaviorTree::createTask makes (flags from its instance)
+    explicit TaskFieldFollowBuddyPc(const char* name) : TaskNode(name, 0) {}
     virtual ~TaskFieldFollowBuddyPc() {}  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     virtual bool checkCondition(ai::BlackBoard const& bb) {  // slot 3

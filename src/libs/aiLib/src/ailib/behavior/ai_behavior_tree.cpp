@@ -1,36 +1,37 @@
+#include "mm/mtl/IntrusivePtr.h"
 #include "ai/BehaviorTree.h"
 #include "classes/ai/DecoratorNode.h"
 #include "classes/ai/CompositeNode.h"
 
 namespace ai {
 
-BehaviorTree::BehaviorTree() : m_allocator(nullptr), m_settingUp(false) {}
+BehaviorTree::BehaviorTree() : m_pAllocator(nullptr), m_setup(false) {}
 
 BehaviorTree::~BehaviorTree() {}
 
 void BehaviorTree::beginSetup(unsigned int nodeCount, mm::mtl::IAllocator* allocator) {
-    m_allocator = allocator;
-    m_nodes.setAllocator(allocator);
-    m_nodes.resize(nodeCount, mm::mtl::IntrusivePtr<BehaviorNode>());
-    m_settingUp = true;
+    m_pAllocator = allocator;
+    m_pNodes.setAllocator(allocator);
+    m_pNodes.resize(nodeCount, mm::mtl::IntrusivePtr<BehaviorNode>());
+    m_setup = true;
 }
 
 void BehaviorTree::endSetup() {
-    m_settingUp = false;
+    m_setup = false;
 }
 
 void BehaviorTree::cleanup() {
-    for (unsigned int i = 0; i < m_nodes.size(); i++) {
-        if (m_nodes[i] && (m_nodes[i]->m_flags & 4)) {
+    for (unsigned int i = 0; i < m_pNodes.size(); i++) {
+        if (m_pNodes[i] && (m_pNodes[i]->m_flags & 4)) {
             Event event;
             event.m_type = 4;
-            m_nodes[i]->onEvent(*m_blackBoard, event);
+            m_pNodes[i]->onEvent(*m_blackBoard, event);
         }
     }
-    m_nodes.clear();
+    m_pNodes.clear();
     m_blackBoard.reset();
-    m_nodes.setAllocator(nullptr);
-    m_allocator = nullptr;
+    m_pNodes.setAllocator(nullptr);
+    m_pAllocator = nullptr;
 }
 
 void BehaviorTree::attachRoot(unsigned int index) {
