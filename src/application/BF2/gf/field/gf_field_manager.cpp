@@ -38,6 +38,26 @@
 
 namespace gf {
 
+void GfFieldManager::initialize(const GfSetupParam& param) {
+    GfEvent::addEventCallback(this);
+    GfFieldTime::build(param);
+    GfFieldWeather::build(param);
+    GfFieldSound::build(param);
+    GfFieldZone::build(param);
+    GfFieldGimmick::build(param);
+    GfFieldCollect::build(param);
+    GfFieldTbox::build(param);
+    GfFieldMapGimmick::build(param);
+    GfFieldGrave::build(param);
+    GfFieldJump::build(param);
+    GfFieldWarp::build(param);
+    GfFieldGmkTutorial::build(param);
+    GfFieldLod::build(param);
+    GfFobjManager::build(param);
+    GfFieldDmgManager::build(param);
+    m_initialized = true;
+}
+
 GfFieldManager::~GfFieldManager() {
     GfObjManager::removeListener(this);
 }
