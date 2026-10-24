@@ -14,6 +14,9 @@ public:
     // one more gimmick list shares the listener: the first one creates and registers it (every TGmkList
     // constructor inlines it; the name is not the original's)
     static void addRef();
+    // one list less shares the listener: the last one deletes it (every TGmkList destructor inlines it; the name is
+    // not the original's)
+    static void release();
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 0
     virtual ~GmkGobEventListener();  // slot 1
     // how many gimmick lists share it: each list's constructor adds one, TGmkList's destructor releases one and
@@ -31,6 +34,12 @@ inline void GmkGobEventListener::addRef() {
         s_gobEventListener = listener;
     }
     s_gobEventListener->m_refCount++;
+}
+inline void GmkGobEventListener::release() {
+    if (--s_gobEventListener->m_refCount <= 0 && s_gobEventListener != nullptr) {
+        delete s_gobEventListener;
+        s_gobEventListener = nullptr;
+    }
 }
 }  // namespace gmk
 

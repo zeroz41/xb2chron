@@ -10,7 +10,11 @@ namespace gmk {
 // table 0x7100B6CB08
 class GmkMapGimmick : public ::gmk::AGmkBase {
 public:
-    class BdatInfo;
+    // its size: the element size of its Vector<BdatInfo>::resize (0x7100632548 allocates count * 0x38; TGmkList<GmkMapGimmick>::~TGmkList (0x71005C74F4) frees the buffer with no destructor loop); the fields are not read yet
+    class BdatInfo {
+    public:
+        unsigned char pad_0[0x38];
+    };
     virtual ~GmkMapGimmick();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4

@@ -7,6 +7,10 @@
 #include "classes/gmk/GmkGobEventListener.h"
 #include "classes/gmk/IGmkList.h"
 #include "mm/mtl/Vector.h"
+#include "classes/ml/Scn.h"
+#include "plugin/Bdat.h"
+#include "classes/ml/ScnObjCam.h"
+#include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gmk {
 // the gimmicks of one kind (T0), read from a resource whose gimmick section carries the magic T2, with their rows
@@ -18,7 +22,8 @@ public:
     // the count of gimmicks seqUpdate updates a frame comes from the creator (GmkSet::createGmkLists)
     // every list shares the gimmick object listener (GmkGobEventListener::addRef); the destructor releases it
     explicit TGmkList(unsigned int updateGmkNumPerFrame)
-        : m_resource(nullptr), m_assetData(nullptr), pad_180(), m_gmkSection(nullptr), pad_1a8(), m_bdatFp(nullptr),
+        : m_resource(nullptr), m_assetData(nullptr), pad_180(nullptr), pad_188(nullptr), pad_190(nullptr), pad_198(nullptr), m_gmkSection(nullptr),
+          pad_1a8(nullptr), pad_1b0(nullptr), m_bdatFp(nullptr),
           m_seq(nullptr), m_updateGmkNumPerFrame(updateGmkNumPerFrame), m_updateGmkIndex(0) {
         GmkGobEventListener::addRef();
     }
@@ -41,15 +46,21 @@ public:
     virtual void onResetUpdateGmkIndex();  // slot 18
     // the sequences update runs: wait for the resource, then update a share of the gimmicks each frame
     void seqWaitResourceLoaded(float dt);
+    // (seqUpdate has no body here yet: its last candidate is two instructions off, kept outside the tree)
     void seqUpdate(float dt);
 
     unsigned char pad_8[0x8];
     CreateInfo m_createInfo;  // 0x10
     fw::CommonResource* m_resource;  // 0x170: the gimmick resource create requests
     void* m_assetData;  // 0x178: its data, createGmk's (the name is not the original's)
-    unsigned char pad_180[0x20];
+    // 0x180..0x1a0 and 0x1a8: four and two words disposeGmk clears (not read yet)
+    void* pad_180;
+    void* pad_188;
+    void* pad_190;
+    void* pad_198;
     const unsigned int* m_gmkSection;  // 0x1a0: the section whose first word is T2 (the name is not the original's)
-    unsigned char pad_1a8[0x10];
+    void* pad_1a8;
+    void* pad_1b0;
     unsigned char* m_bdatFp;  // 0x1b8: the BDAT table of m_createInfo.m_bdatName
     SeqFunc m_seq;  // 0x1c0: what update runs, none when disposed
     mm::mtl::Vector<T1> m_bdatInfos;  // 0x1d0
@@ -96,6 +107,84 @@ gmk::AGmkBase* TGmkList<T0, T1, T2, T3, T4>::getInst(unsigned int index) const {
 template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
 unsigned char* TGmkList<T0, T1, T2, T3, T4>::getBindedBdatFp() const {
     return m_bdatFp;
+}
+
+template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
+TGmkList<T0, T1, T2, T3, T4>::~TGmkList() {
+    dispose();
+    GmkGobEventListener::release();
+}
+
+template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
+void TGmkList<T0, T1, T2, T3, T4>::create(const IGmkList::CreateInfo& info) {
+    dispose();
+    // field by field (the copy of the position has no self-assignment test)
+    m_createInfo.m_allocHandle = info.m_allocHandle;
+    m_createInfo.m_param = info.m_param;
+    m_createInfo.m_path = info.m_path;
+    m_createInfo.m_bdatName = info.m_bdatName;
+    m_createInfo.m_pos.x = info.m_pos.x;
+    m_createInfo.m_pos.y = info.m_pos.y;
+    m_createInfo.m_pos.z = info.m_pos.z;
+    m_createInfo.m_rotY = info.m_rotY;
+    m_resource = fw::CommonResource::request(info.m_allocHandle, m_createInfo.m_path.m_str, 9, false);
+    m_seq = &TGmkList::seqWaitResourceLoaded;
+    if (m_createInfo.m_bdatName.m_nLen != 0) {
+        m_bdatFp = Bdat::getFP(m_createInfo.m_bdatName.m_str);
+        if (m_bdatFp == nullptr) {
+            dispose();
+        }
+    }
+}
+
+// the gimmicks near the camera (within 100 on the ground plane) update their debug menus
+template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
+void TGmkList<T0, T1, T2, T3, T4>::debugUpdateMmf() {
+    if (isValid() && mm::mtl::PtrSingleton<ml::Scn>::get() != nullptr &&
+        mm::mtl::PtrSingleton<ml::Scn>::get()->getCam(-1) != nullptr) {
+        const mm::Vec3& camPos = mm::mtl::PtrSingleton<ml::Scn>::get()->getCam(-1)->m_info.m_render->m_transform.m_posGbl;
+        for (T0* it = m_gmks.begin(); it != m_gmks.end(); ++it) {
+            if (it->m_pos != nullptr) {
+                float dx = camPos.x - it->m_pos->x;
+                float dz = camPos.z - it->m_pos->z;
+                if (!(dx * dx + dz * dz > 10000.0f)) {
+                    it->debugUpdateMmf();
+                }
+            }
+        }
+    }
+}
+
+// the gimmicks near the camera (within 100 on the ground plane) draw their debug shapes
+template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
+void TGmkList<T0, T1, T2, T3, T4>::debugDraw() const {
+    if (isValid() && mm::mtl::PtrSingleton<ml::Scn>::get() != nullptr &&
+        mm::mtl::PtrSingleton<ml::Scn>::get()->getCam(-1) != nullptr) {
+        const mm::Vec3& camPos = mm::mtl::PtrSingleton<ml::Scn>::get()->getCam(-1)->m_info.m_render->m_transform.m_posGbl;
+        for (const T0* it = m_gmks.begin(); it != m_gmks.end(); ++it) {
+            if (it->m_pos != nullptr) {
+                float dx = camPos.x - it->m_pos->x;
+                float dz = camPos.z - it->m_pos->z;
+                if (!(dx * dx + dz * dz > 10000.0f)) {
+                    it->debugDraw();
+                }
+            }
+        }
+    }
+}
+
+template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
+void TGmkList<T0, T1, T2, T3, T4>::disposeGmk() {
+    m_gmks.destroy();
+    m_bdatInfos.destroy();
+    m_assetData = nullptr;
+    pad_180 = nullptr;
+    pad_188 = nullptr;
+    pad_190 = nullptr;
+    pad_198 = nullptr;
+    m_gmkSection = nullptr;
+    pad_1a8 = nullptr;
+    pad_1b0 = nullptr;
 }
 
 template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
@@ -153,38 +242,6 @@ void TGmkList<T0, T1, T2, T3, T4>::seqWaitResourceLoaded(float dt) {
     }
 }
 
-template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
-void TGmkList<T0, T1, T2, T3, T4>::seqUpdate(float dt) {
-    if (!isValid()) {
-        return;
-    }
-    unsigned int num = m_updateGmkNumPerFrame;
-    if (num == 0) {
-        return;
-    }
-    unsigned int count = m_gmks.size();
-    if (count == 0) {
-        return;
-    }
-    if (m_updateGmkIndex >= count) {
-        m_updateGmkIndex = 0;
-        onResetUpdateGmkIndex();
-        num = m_updateGmkNumPerFrame;
-    }
-    if (num > count) {
-        num = count;
-    }
-    unsigned int frames = (count + num - 1) / num;
-    for (unsigned int i = 0; i < num; i++) {
-        if (m_updateGmkIndex >= count) {
-            m_updateGmkIndex = 0;
-            onResetUpdateGmkIndex();
-            return;
-        }
-        m_gmks[m_updateGmkIndex].update(frames * dt);
-        m_updateGmkIndex++;
-    }
-}
 }  // namespace gmk
 
 #endif

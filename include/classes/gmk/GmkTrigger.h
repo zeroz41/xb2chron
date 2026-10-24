@@ -7,7 +7,11 @@ namespace gmk {
 // table 0x7100B6D1D0
 class GmkTrigger : public ::gmk::AGmkBase {
 public:
-    class BdatInfo;
+    // its size: the element size of its Vector<BdatInfo>::resize (0x71005D9608 allocates count bytes); the fields are not read yet
+    class BdatInfo {
+    public:
+        unsigned char pad_0[0x1];
+    };
     virtual ~GmkTrigger();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3

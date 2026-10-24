@@ -25259,7 +25259,7 @@ _ZN3gmk8TGmkListINS_11GmkPreciousENS1_8BdatInfoELj1396920912ELj2ENS_14GmkPreciou
 fn_7100605FB0 = .text:0x00605FB0; // type:function size:0x110 scope:global
 _ZN3gmk8TGmkListINS_11GmkPreciousENS1_8BdatInfoELj1396920912ELj2ENS_14GmkPreciousGobEE21onResetUpdateGmkIndexEv = .text:0x006060C0; // type:function size:0x4 scope:weak
 _ZN3gmk8TGmkListINS_11GmkPreciousENS1_8BdatInfoELj1396920912ELj2ENS_14GmkPreciousGobEE21seqWaitResourceLoadedEf = .text:0x006060C4; // type:function size:0x78 scope:weak
-fn_710060613C = .text:0x0060613C; // type:function size:0x178 scope:global
+_ZN3gmk8TGmkListINS_11GmkPreciousENS1_8BdatInfoELj1396920912ELj2ENS_14GmkPreciousGobEE9seqUpdateEf = .text:0x0060613C; // type:function size:0x178 scope:global
 _ZN2mm3mtl6VectorIN3gmk11GmkPrecious8BdatInfoEE6resizeEm = .text:0x006062B4; // type:function size:0x1D8 scope:weak
 _ZN2mm3mtl6VectorIN3gmk11GmkPreciousEE6resizeEm = .text:0x0060648C; // type:function size:0x248 scope:weak
 _ZN3gmk8TGmkListINS_11GmkPreciousENS1_8BdatInfoELj1396920912ELj2ENS_14GmkPreciousGobEE15initGmkBdatInfoERS2_RiRKNS_8AGmkBaseE = .text:0x006066D4; // type:function size:0x108 scope:weak
@@ -25341,7 +25341,7 @@ _ZN3gmk8TGmkListINS_7GmkJumpENS1_8BdatInfoELj1347245386ELj3ENS_16GmkJumpGobCusto
 fn_710060C560 = .text:0x0060C560; // type:function size:0x110 scope:global
 _ZN3gmk8TGmkListINS_7GmkJumpENS1_8BdatInfoELj1347245386ELj3ENS_16GmkJumpGobCustomEE21onResetUpdateGmkIndexEv = .text:0x0060C670; // type:function size:0x4 scope:weak
 _ZN3gmk8TGmkListINS_7GmkJumpENS1_8BdatInfoELj1347245386ELj3ENS_16GmkJumpGobCustomEE21seqWaitResourceLoadedEf = .text:0x0060C674; // type:function size:0x78 scope:weak
-fn_710060C6EC = .text:0x0060C6EC; // type:function size:0x174 scope:global
+_ZN3gmk8TGmkListINS_7GmkJumpENS1_8BdatInfoELj1347245386ELj3ENS_16GmkJumpGobCustomEE9seqUpdateEf = .text:0x0060C6EC; // type:function size:0x174 scope:global
 _ZN2mm3mtl6VectorIN3gmk7GmkJump8BdatInfoEE6resizeEm = .text:0x0060C860; // type:function size:0x228 scope:weak
 _ZN2mm3mtl6VectorIN3gmk7GmkJumpEE6resizeEm = .text:0x0060CA88; // type:function size:0x230 scope:weak
 _ZN3gmk8TGmkListINS_7GmkJumpENS1_8BdatInfoELj1347245386ELj3ENS_16GmkJumpGobCustomEE15initGmkBdatInfoERS2_RiRKNS_8AGmkBaseE = .text:0x0060CCB8; // type:function size:0x150 scope:weak
