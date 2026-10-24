@@ -5,6 +5,8 @@
 
 namespace ssd { class SoundEntry; }
 namespace ssd { class SoundHandle; }
+namespace ssd { class SoundListener; }
+namespace ssd { struct Vec3; }
 
 namespace ssd {
 // table 0x7100B819D0
@@ -15,6 +17,8 @@ public:
     virtual void Quit();  // slot 3
     virtual void Play(ssd::SoundHandle*, ssd::SoundEntry const*, float, float);  // slot 4
     virtual void UpdateGameFrame(float);  // slot 7
+    void SetListener(const SoundListener* listener);
+    void SetPosition(const Vec3& position);
 
     unsigned char pad_20[0x58];  // SoundActor's and SoundActor3D's fields, not recovered (fw::SoundSsdPlayer's start at 0x78)
 };

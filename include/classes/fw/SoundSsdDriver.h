@@ -16,7 +16,8 @@ namespace fw { class SoundOutputType; }
 namespace fw { class SoundPack; }
 namespace fw { class SoundPlayInfo; }
 namespace fw { class SoundResult; }
-namespace fw { class SoundVolumeType; }
+// what getVolume reads (0: the handle's volume, 1: its distance volume, 2: a third volume; the names are not known)
+namespace fw { enum SoundVolumeType : int; }
 namespace fw { class UpdateInfo; }
 namespace mm { class Vec3; }
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
@@ -76,13 +77,13 @@ public:
     virtual bool isPlaying(unsigned int) const;  // slot 29
     virtual bool isPreparing(unsigned int) const;  // slot 30
     virtual bool isReady(unsigned int) const;  // slot 31
-    virtual void isLoop(unsigned int);  // slot 32
-    virtual void isLoop(unsigned int, fw::SoundPack*);  // slot 33
+    virtual bool isLoop(unsigned int);  // slot 32
+    virtual bool isLoop(unsigned int, fw::SoundPack*);  // slot 33
     virtual bool isPause(unsigned int) const;  // slot 34
     virtual void setCategory(unsigned int, fw::SoundCategory);  // slot 35
     virtual fw::SoundCategory getCategory(unsigned int);  // slot 36
     virtual void setVolume(unsigned int, float, float);  // slot 37
-    virtual void getVolume(unsigned int, fw::SoundVolumeType);  // slot 38
+    virtual float getVolume(unsigned int, fw::SoundVolumeType);  // slot 38
     virtual void setPitch(unsigned int, float, float);  // slot 39
     virtual void setPan(unsigned int, float, float);  // slot 40
     virtual void setPos(unsigned int, mm::Vec3 const&);  // slot 41

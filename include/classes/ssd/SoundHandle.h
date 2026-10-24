@@ -30,6 +30,29 @@ public:
     long GetDataTime(float* time) const;
     long SetRemainLoopCount(int count);
     long GetRemainLoopCount(int* count) const;
+    // set a value now (fadeTime 0) or over fadeTime: 1.0.0's SetPitch, SetVolume and SetPan (0x7100990D48,
+    // 0x7100990D74, 0x7100990DA0, in that order) write the same fields as these
+    void SetPitch(float pitch, float fadeTime);
+    void SetVolume(float volume, float fadeTime);
+    void SetPan(float pan, float fadeTime);
+    float GetDistanceVolume() const;
+    void Pause(bool pause, float fadeTime);
+
+    // a value Set* moves to its target over a fade time (the type's and the field names are not the original's)
+    struct FadeValue {
+        float current;
+        int elapsed;  // Set* resets it
+        float fadeTime;
+        float delta;  // target - start
+        float start;
+        float target;
+    };
+    unsigned char pad_20[0x4c];
+    FadeValue pitch_;  // 0x6C
+    FadeValue volume_;  // 0x84 (fw::SoundSsdDriver::getVolume type 0 reads its current value)
+    FadeValue pan_;  // 0x9C
+    unsigned char pad_b4[0x4];
+    float volume2_;  // 0xB8: fw::SoundSsdDriver::getVolume type 2 reads it (the name is not the original's)
 };
 }  // namespace ssd
 

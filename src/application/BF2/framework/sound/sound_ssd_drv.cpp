@@ -1,3 +1,10 @@
+#include "classes/fw/PointerMap.h"
+#include "classes/ssd/SoundHandle.h"
+#include "classes/ssd/SoundActor3D.h"
+#include "classes/fw/SoundSsdSource.h"
+#include "classes/fw/ISoundDriver.h"
+#include "classes/fw/SoundSsdDriver.h"
+#include "classes/fw/SoundSsdPlayer.h"
 #include "classes/ssd/SoundHandle.h"
 #include "classes/ssd/SoundActor3D.h"
 #include "classes/fw/ISoundDriver.h"
@@ -7,6 +14,7 @@
 #include "classes/ssd/SoundBank.h"
 #include "classes/fw/SoundSsdBank.h"
 #include "classes/fw/SoundReferenceObject.h"
+#include "classes/fw/SoundPack.h"
 #include "mm/MMStdBase.h"
 #include "mtl/MemManager.h"
 
@@ -79,6 +87,18 @@ bool SoundSsdDriver::stopSound(unsigned int handle, float fadeTime) {
     }
     player->stop(fadeTime);
     return true;
+}
+
+void SoundSsdDriver::stopSoundAll(SoundType type, float fadeTime) {
+    for (PtrMapIterator it = m_players.begin(); it != m_players.end(); ++it) {
+        const SoundSsdPlayer* player = static_cast<const SoundSsdPlayer*>(it.m_param->m_ptr);
+        if (player != nullptr) {
+            unsigned int handle = player->m_soundHandle;
+            if ((handle >> 24) == static_cast<unsigned int>(type)) {
+                stopSound(handle, fadeTime);
+            }
+        }
+    }
 }
 
 bool SoundSsdDriver::stopBgm(unsigned int handle, float fadeTime) {
@@ -219,6 +239,105 @@ bool SoundSsdDriver::getRemainLoopCount(unsigned int handle, int& count) {
         }
     }
     return false;
+}
+
+bool SoundSsdDriver::isLoop(unsigned int id, SoundPack* pack) {
+    if (pack == nullptr) {
+        return false;
+    }
+    ml::CS lock(m_cs);
+    mm::mtl::IntrusivePtr<SoundSsdSource> source = pack->findSourceFromID(id);
+    if (!source) {
+        return false;
+    }
+    return source->isLoop();
+}
+
+bool SoundSsdDriver::isLoop(unsigned int handle) {
+    ml::CS lock(m_cs);
+    if (m_players.isValid(handle)) {
+        if (SoundSsdPlayer* player = getPlayer(handle)) {
+            return player->isLoop();
+        }
+    }
+    return false;
+}
+
+void SoundSsdDriver::setVolume(unsigned int handle, float volume, float fadeTime) {
+    ml::CS lock(m_cs);
+    if (m_players.isValid(handle)) {
+        if (SoundSsdPlayer* player = getPlayer(handle)) {
+            player->setVolume(volume, fadeTime);
+        }
+    }
+}
+
+float SoundSsdDriver::getVolume(unsigned int handle, SoundVolumeType type) {
+    ml::CS lock(m_cs);
+    if (m_players.isValid(handle)) {
+        if (SoundSsdPlayer* player = getPlayer(handle)) {
+            return player->getVolume(type);
+        }
+    }
+    return 0.0f;
+}
+
+void SoundSsdDriver::setPitch(unsigned int handle, float pitch, float fadeTime) {
+    ml::CS lock(m_cs);
+    if (m_players.isValid(handle)) {
+        if (SoundSsdPlayer* player = getPlayer(handle)) {
+            player->setPitch(pitch, fadeTime);
+        }
+    }
+}
+
+void SoundSsdDriver::setPan(unsigned int handle, float pan, float fadeTime) {
+    ml::CS lock(m_cs);
+    if (m_players.isValid(handle)) {
+        if (SoundSsdPlayer* player = getPlayer(handle)) {
+            player->setPan(pan, fadeTime);
+        }
+    }
+}
+
+void SoundSsdDriver::setPos(unsigned int handle, const mm::Vec3& pos) {
+    ml::CS lock(m_cs);
+    if (m_players.isValid(handle)) {
+        if (SoundSsdPlayer* player = getPlayer(handle)) {
+            if (player->is3DSource()) {
+                player->setListener(m_listener);
+                player->setPos(pos);
+            }
+        }
+    }
+}
+
+void SoundSsdDriver::pause(unsigned int handle, bool pause, float fadeTime) {
+    ml::CS lock(m_cs);
+    if (m_players.isValid(handle)) {
+        if (SoundSsdPlayer* player = getPlayer(handle)) {
+            player->pause(pause, fadeTime);
+        }
+    }
+}
+
+void SoundSsdDriver::pauseCategory(SoundCategory category, bool pause, float fadeTime) {
+    ml::CS lock(m_cs);
+    for (PtrMapIterator it = m_players.begin(); it != m_players.end(); ++it) {
+        SoundSsdPlayer* player = static_cast<SoundSsdPlayer*>(const_cast<void*>(it.m_param->m_ptr));
+        if (player != nullptr && player->m_category == category) {
+            player->pause(pause, fadeTime);
+        }
+    }
+}
+
+void SoundSsdDriver::pauseAll(bool pause, float fadeTime) {
+    ml::CS lock(m_cs);
+    for (PtrMapIterator it = m_players.begin(); it != m_players.end(); ++it) {
+        if (SoundSsdPlayer* player = static_cast<SoundSsdPlayer*>(const_cast<void*>(it.m_param->m_ptr))) {
+            player->pause(pause, fadeTime);
+        }
+    }
 }
 
 void ISoundDriver::attachPoolMemory(void*, unsigned int) {}

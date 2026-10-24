@@ -23,6 +23,8 @@ public:
         : m_params(params), m_param(param) {}
     // the next registered entry, the end when there is none (a copy of the iterator back)
     PtrMapIterator operator++();
+    // by reference: SoundSsdDriver::pauseAll reads the entry after it calls end()
+    bool operator!=(const PtrMapIterator& other) const { return m_param != other.m_param; }
 
     const mm::mtl::Array<ptr_detail::PtrParam>* m_params;
     const ptr_detail::PtrParam* m_param;  // the entry it is at

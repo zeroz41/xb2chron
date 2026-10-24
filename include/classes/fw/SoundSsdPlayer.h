@@ -3,10 +3,15 @@
 
 #include "classes/ssd/SoundActor3D.h"
 #include "classes/ssd/SoundHandle.h"
+#include "classes/fw/SoundSsdSource.h"
+#include "mm/Vec3.h"
+#include "mm/mtl/IntrusivePtr.h"
+#include "ssd/Math.h"
 
 namespace fw { enum SoundCategory : int; }
 namespace fw { class SoundPack; }
-namespace fw { class SoundSsdSource; }
+namespace fw { enum SoundVolumeType : int; }
+namespace ssd { class SoundListener; }
 
 namespace fw {
 // one playing sound of fw::SoundSsdDriver (its handle functions reach it through the driver's PointerMap).
@@ -72,6 +77,84 @@ public:
         }
         return false;
     }
+    bool is3DSource() const {
+        if (!isValid()) {
+            return false;
+        }
+        return m_source->is3D();
+    }
+    bool isLoop() const {
+        if (!isValid()) {
+            return false;
+        }
+        return m_source->isLoop();
+    }
+    void pause(bool pause, float fadeTime) {
+        if (isValid()) {
+            if (pause) {
+                if (m_pauseCount == 0) {
+                    m_handle->Pause(true, fadeTime);
+                }
+                m_pauseCount++;
+            } else if (m_pauseCount > 0) {
+                m_pauseCount--;
+                if (m_pauseCount == 0) {
+                    m_handle->Pause(false, fadeTime);
+                }
+            }
+        }
+    }
+    void setListener(const ssd::SoundListener* listener) {
+        if (listener != nullptr && m_handle != nullptr && !is3DSource()) {
+            return;
+        }
+        if (listener != nullptr) {
+            m_flags |= 0x8;
+        } else {
+            m_flags &= ~0x8;
+        }
+        m_listener = listener;
+        SetListener(listener);
+    }
+    void setVolume(float volume, float fadeTime) {
+        if (isValid()) {
+            m_volume = volume;
+            m_handle->SetCategoryId(m_category);
+            m_handle->SetVolume(volume, fadeTime);
+        }
+    }
+    float getVolume(SoundVolumeType type) const {
+        float volume = 0.0f;
+        if (isValid()) {
+            if (type == 0) {
+                volume = m_handle->volume_.current;
+            } else if (type == 1) {
+                return m_handle->GetDistanceVolume();
+            } else if (type == 2) {
+                volume = m_handle->volume2_;
+            }
+        }
+        return volume;
+    }
+    void setPitch(float pitch, float fadeTime) {
+        pitch = pitch < 0.0f ? 0.0f : (pitch > 8.0f ? 8.0f : pitch);
+        if (isValid()) {
+            m_pitchRate = pitch;
+            m_handle->SetPitch(pitch, fadeTime);
+        }
+    }
+    void setPan(float pan, float fadeTime) {
+        pan = pan < -1.0f ? -1.0f : (pan > 1.0f ? 1.0f : pan);
+        if (isValid()) {
+            m_pan = pan;
+            m_handle->SetPan(pan, fadeTime);
+        }
+    }
+    void setPos(const mm::Vec3& pos) { setPos(pos.x, pos.y, pos.z); }
+    void setPos(float x, float y, float z) {
+        ssd::Vec3 position = {x, y, z};
+        SetPosition(position);
+    }
     void setCategory(fw::SoundCategory category) {
         m_category = category;
         if (isValid()) {
@@ -80,13 +163,19 @@ public:
     }
 
     SoundPack* m_pack;  // 0x78
-    SoundSsdSource* m_source;  // 0x80 (an IntrusivePtr<SoundSsdSource>: the constructor adds a reference)
+    mm::mtl::IntrusivePtr<SoundSsdSource> m_source;  // 0x80 (the constructor adds a reference)
     ssd::SoundHandle* m_handle;  // 0x88
-    unsigned char pad_90[0x8];
+    const ssd::SoundListener* m_listener;  // 0x90 (setListener)
     fw::SoundCategory m_category;  // 0x98
     float m_volume;  // 0x9C
     float m_pitch;  // 0xA0
-    unsigned char pad_a4[0x20];
+    float m_pitchRate;  // 0xA4 (setPitch)
+    float m_pan;  // 0xA8 (setPan)
+    unsigned char pad_ac[0xc];
+    // the handle the driver's PointerMap gave it, its top byte the SoundType (1.0.0's setHandle stores it; the
+    // name is not the original's)
+    unsigned int m_soundHandle;  // 0xB8
+    unsigned char pad_bc[0x8];
     unsigned int m_flags;  // 0xC4 (bit 2: a stream source, bit 3: has a listener)
     int m_pauseCount;  // 0xC8
 };
