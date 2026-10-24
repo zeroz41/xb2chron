@@ -21,6 +21,14 @@ public:
     // also cover the DLC drivers)
     static SDataDriver* getSDataDriver(unsigned int driver);  // fn_7100231C64
     static unsigned int getLevel(const SDataDriver& data);  // fn_710024572C
+    // 1.0.0's name: its getLevel(unsigned int) has the same callers (GfMenuObjDrArtsSet2::ArtsListListener,
+    // GfMenuObjLvupSelect's listeners) and reads getLevel(*getSDataDriver(driver)); the symbols spell fn_7100234674
+    static unsigned int getLevel(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // GfDataDriver's functions and every caller passes it a driver row (getLevel, getExp, DataObjDriver). What it
+    // does: for a DLC driver row (0x11-0x19) whose CHR_Ir "Type" is set, finds the first CHR_Ir row of the same
+    // "GroupID" whose Type is 0 and returns its "driverID" (0x11 when there is none); any other row comes back as is.
+    static unsigned int fn_71002417DC(unsigned int driver);
     static unsigned int getExp(const SDataDriver& data);  // fn_7100245AB4
     static unsigned int getBattleExp(const SDataDriver& data);  // fn_7100245B7C
     static unsigned int getExpNextLevel(const SDataDriver& data);  // fn_710024618C
@@ -49,6 +57,7 @@ public:
     static unsigned int getSkillPoint(const SDataDriver& data);
     static unsigned int getClass(const SDataDriver& data);
     static int getBladeSet(const SDataDriver& data);
+    static int getMaxSetBladeNum(const SDataDriver& data);
     static unsigned int getRace(unsigned int driver);
     static unsigned int getFootStep(unsigned int driver);
     static unsigned int getFootStepEffect(unsigned int driver);

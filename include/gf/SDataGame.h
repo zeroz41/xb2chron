@@ -3,6 +3,7 @@
 
 #include "gf/GameFlag.h"
 #include "gf/SDataBlade.h"
+#include "gf/SDataDriver.h"
 #include "gf/GfDataMercenaries.h"
 #include "mm/mtl/FixedVector.h"
 #include "mm/Vec3.h"
@@ -21,7 +22,9 @@ public:
     float m_landmarkRotY;
     unsigned char pad_24[0x4];
     unsigned short m_eventChapterSave;  // 0x28 (named after its accessors; the name is not the original's)
-    unsigned char pad_2A[0x5A02];
+    unsigned char pad_2A[0x2];
+    // by GfDataDriver::getSDataDriver (rows 1-16; the name is not the original's)
+    SDataDriver m_drivers[16];
     // by GfDataBlade::getBladeIndex (the name is not the original's; the count is the indexes it hands out)
     SDataBlade m_blades[422];
     unsigned char pad_E9884[0x12340];  // GfDataParty::getSDataParty points at its start

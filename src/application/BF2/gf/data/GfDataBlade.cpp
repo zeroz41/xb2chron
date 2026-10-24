@@ -1433,4 +1433,164 @@ const char* GfDataQuest::getTaskLog(QuestID id, unsigned int msg) {
     return s != nullptr ? s : "";
 }
 
+
+bool GfDataBlade::getExtraParts(unsigned int blade, unsigned int part) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return data.m_extraParts[part] != 0;
+}
+
+const BladeArtsSlot* GfDataBlade::getArts(unsigned int blade, unsigned int index) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return &data.m_arts[index];
+}
+
+const BladeSkillSlot* GfDataBlade::getSkill(unsigned int blade, unsigned int index) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    return &data.m_skills[index];
+}
+
+void GfDataBlade::setEnableEngageRex(unsigned int blade, bool enable) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    data.m_enableEngageRex = enable;
+}
+
+void GfDataBlade::setUnselect(unsigned int blade, bool unselect) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    data.m_unselect = unselect;
+    GfEvent::callBladeUnselect(blade, unselect);
+}
+
+SDataDriver* GfDataDriver::getSDataDriver(unsigned int driver) {
+    if (driver - 0x11 < 9) {
+        return &GfDataManager::fn_7100224A10()[driver - 0x11].m_driver;
+    }
+    unsigned int index = driver - 1;
+    SDataGame* game = GfDataManager::getDataGame();
+    return &game->m_drivers[index < 0x10 ? index : 1];
+}
+
+unsigned int GfDataDriver::getLevel(const SDataDriver& data) {
+    unsigned int driver = data.m_id;
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
+            return getLevel(fn_71002417DC(data.m_id));
+        }
+    }
+    return data.m_level;
+}
+
+unsigned int GfDataDriver::getExp(const SDataDriver& data) {
+    unsigned int driver = data.m_id;
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
+            return getExp(*getSDataDriver(fn_71002417DC(data.m_id)));
+        }
+    }
+    return data.m_exp;
+}
+
+unsigned int GfDataDriver::getBattleExp(const SDataDriver& data) {
+    unsigned int driver = data.m_id;
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
+            return getBattleExp(*getSDataDriver(fn_71002417DC(data.m_id)));
+        }
+    }
+    return data.m_battleExp;
+}
+
+unsigned int GfDataDriver::getSkillPoint(const SDataDriver& data) {
+    return data.m_skillPoint;
+}
+
+int GfDataDriver::getBladeSet(const SDataDriver& data) {
+    return data.m_bladeSet;
+}
+
+int GfDataDriver::getMaxSetBladeNum(const SDataDriver& data) {
+    if (data.m_id == 0) {
+        return 0;
+    }
+    return data.m_id == 1 ? 5 : 3;
+}
+
+const char* GfDataDriver::getVoiceStr(const SDataDriver& data) {
+    return GfBdatChrDr::get()->getChrDrVoice(data.m_id);
+}
+
+unsigned int GfDataDriver::getEquipAcce(const SDataDriver& data, unsigned int slot) {
+    if (slot < 2) {
+        return data.m_equipAcce[slot].m_item;
+    }
+    return data.m_equipAcceEx & 0xFFFF;
+}
+
+void GfDataDriver::setEquipAcce(SDataDriver& data, unsigned int slot, unsigned int accessory) {
+    if (slot < 2) {
+        data.m_equipAcce[slot].m_item = accessory;
+        return;
+    }
+    data.m_equipAcceEx = (data.m_equipAcceEx & 0xFFFF0000) | accessory;
+}
+
+void GfDataDriver::addSkillPoint(SDataDriver& data, int point) {
+    int skillPoint = data.m_skillPoint + point;
+    if (skillPoint < 0) {
+        skillPoint = 0;
+    } else if (skillPoint > 9999999) {
+        skillPoint = 9999999;
+    }
+    data.m_skillPoint = skillPoint;
+    if (point > 0) {
+        int total = data.m_totalSkillPoint + point;
+        if (total < 0) {
+            total = 0x7FFFFFFF;
+        }
+        data.m_totalSkillPoint = total;
+    }
+}
+
+int GfDataMercenaries::getTeamMaleNum(unsigned int teamId) {
+    Team* team = getTeamByTeamID(teamId);
+    if (team == nullptr) {
+        return 0;
+    }
+    int num = 0;
+    for (int i = 0; i < 6; i++) {
+        unsigned int blade = team->m_members[i];
+        if (blade != 0) {
+            unsigned int index = GfDataBlade::getBladeIndex(blade);
+            SDataGame* game = GfDataManager::getDataGame();
+            SDataBlade& data = game->m_blades[index];
+            if (data.m_gender == 1 && data.m_questRace == 1) {
+                num++;
+            }
+        }
+    }
+    return num;
+}
+
+int GfDataMercenaries::getTeamFemaleNum(unsigned int teamId) {
+    Team* team = getTeamByTeamID(teamId);
+    if (team == nullptr) {
+        return 0;
+    }
+    int num = 0;
+    for (int i = 0; i < 6; i++) {
+        unsigned int blade = team->m_members[i];
+        if (blade != 0) {
+            unsigned int index = GfDataBlade::getBladeIndex(blade);
+            SDataGame* game = GfDataManager::getDataGame();
+            SDataBlade& data = game->m_blades[index];
+            if (data.m_gender == 2 && data.m_questRace == 1) {
+                num++;
+            }
+        }
+    }
+    return num;
+}
+
 }  // namespace gf
