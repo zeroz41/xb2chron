@@ -3,6 +3,8 @@
 
 #include "gf/GameFlag.h"
 #include "gf/SDataBlade.h"
+#include "gf/GfDataMercenaries.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace gf {
 // the game's data, as GfDataManager::getDataGame hands it out (1.0.0's GfGameUtil::setupNewGameParam takes one;
@@ -21,9 +23,11 @@ public:
     unsigned int m_select;  // 0x1097E8 (named after its accessors; the name is not the original's)
     unsigned char pad_1097EC[0xC4];
     unsigned int m_skipTravelID;  // 0x1098B0 (named after its accessors; the name is not the original's)
-    unsigned char pad_1098B4[0x8C];
-    unsigned int m_teamNum;  // 0x109940 (named after its accessors; the name is not the original's)
-    unsigned char pad_109944[0x1E4];
+    unsigned char pad_1098B4[0x14];
+    // 0x1098C8: the mercenary teams (GfDataMercenaries' team functions search them; getTeamByIndex asserts in
+    // fixed_vector.h's operator[]; the capacity is the room before the count at 0x109940; the name is not the original's)
+    mm::mtl::FixedVector<GfDataMercenaries::Team, 3> m_teams;
+    unsigned char pad_109948[0x1E0];
     float m_playerCameraDistance;  // 0x109B28 (named after its accessors; the name is not the original's)
     unsigned char pad_109B2C[0x1210];
     unsigned int m_ether;  // 0x10AD3C (named after its accessors; the name is not the original's)

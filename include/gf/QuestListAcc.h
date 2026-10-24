@@ -34,6 +34,22 @@ public:
     int getListQuestCategory(QuestID id) const;
     int getListVisible(QuestID id) const;
     int getListQuestIcon(QuestID id) const;  // 0 for none
+    unsigned int getFLD_MercenariesMissionStart() const;
+    unsigned int getFLD_MercenariesMissionQuestID(unsigned int mission) const;
+    unsigned int getFLD_MercenariesMissionRequestPerformance(unsigned int mission) const;
+    unsigned int getFLD_MercenariesMissionRepeatable(unsigned int mission) const;
+    unsigned int getListTalker(QuestID id) const;
+    unsigned int getListRewardSetA(QuestID id) const;
+    unsigned int getListRewardSetB(QuestID id) const;
+    unsigned int getListResultA(QuestID id) const;
+    unsigned int getListResultB(QuestID id) const;
+    unsigned int getListSummary(QuestID id) const;
+    unsigned int getListFlagPRT(QuestID id) const;
+    unsigned int getListFlagCLD(QuestID id) const;
+    unsigned int getListCallEventA(QuestID id) const;
+    unsigned int getListCallEventB(QuestID id) const;
+    unsigned int getListHintsID(QuestID id) const;
+    unsigned int getListPurposeID(QuestID id) const;
     // the first condition of the tasks of a purpose (GfKizunaringBlade::isNetabareOK asks GfGameCond about it)
     unsigned int getTaskTaskCondition1(unsigned int purposeId) const;
     unsigned int getTaskTaskUI(unsigned int purposeId, unsigned int task) const;

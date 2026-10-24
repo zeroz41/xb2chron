@@ -11,6 +11,14 @@ class GfDataQuest {
 public:
     // the blade an achievement belongs to (m_achieve2blade's entry)
     static unsigned int getAchievementBlade(unsigned int achieveId);
+    static void registAchievementBlade(unsigned int achieveId, unsigned short blade);
+    static unsigned int getListTalker(QuestID id);
+    static unsigned int getListRewardSetA(QuestID id);
+    static unsigned int getListRewardSetB(QuestID id);
+    static unsigned int getListResultA(QuestID id);
+    static unsigned int getListResultB(QuestID id);
+    static unsigned int getListSummary(QuestID id);
+    static unsigned int getListPurposeID(QuestID id);
     static QuestID getListNextQuestA(QuestID id);
     static QuestID getListNextQuestB(QuestID id);
     // the quest's parent quest (empty for a quest without one)
@@ -33,6 +41,9 @@ public:
     static const char* getTaskLog(QuestID id, unsigned int msg);
     static unsigned int getScenario();
     static unsigned int getSelect();
+
+    // indexed by achievement id (0x4D80 entries: the .bss object's size)
+    static unsigned short m_achieve2blade[0x4D80];
 };
 
 }  // namespace gf

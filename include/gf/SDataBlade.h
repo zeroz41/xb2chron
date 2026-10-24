@@ -91,7 +91,7 @@ public:
     unsigned short m_scale;  // percent (GfDataBlade::getScale; the name is not the original's)
     unsigned short m_wpnScale;  // percent (GfDataBlade::getWpnScale; the name is not the original's)
     unsigned short m_offsetId;  // (named after its accessor; the name is not the original's)
-    unsigned char pad_83c[0x2];
+    unsigned short m_collisionId;  // (named after GfDataNpc::getCollisionId; the name is not the original's)
     unsigned char m_pArmor;  // added to its weapon's (DataObjEnemyBlade::getPArmor)
     unsigned char m_eArmor;  // added to its weapon's (DataObjEnemyBlade::getEArmor)
     unsigned char m_hpMaxRev;  // (named after GfDataBlade::getHpMaxRev; the name is not the original's)

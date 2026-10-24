@@ -2,7 +2,8 @@
 #define GF_GFDATAMERCENARIES_H
 
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
-namespace gf { struct ElapseTime; }
+#include "classes/gf/GfFieldTime.h"
+#include "gf/QuestID.h"
 
 namespace gf {
 // a mission's blade condition (GfDataMercenaries::getRequestCondition fills it; the field names are not the
@@ -21,15 +22,22 @@ public:
     static unsigned int getMissionMapID(unsigned int mission);
     // a team, as the game data keeps them (0x28 bytes); the name is not the original's
     struct Team {
-        unsigned char pad_0[0x10];
+        unsigned short m_members[6];  // its blades (getTeamMember; getTeamLeader reads the first)
+        unsigned char pad_c[0x4];
         unsigned int m_teamId;  // what the functions that take a team id are given for it
-        unsigned char pad_14[0x14];
+        unsigned int m_mission;  // the mission it is on, 0 for none (getTeamMission; the name is not the original's)
+        unsigned char pad_18[0x4];
+        ElapseTime m_missionTime;  // getTeamMissionTime(teamId) (the name is not the original's)
+        unsigned char pad_20[0x8];
     };
     static int getLevel();  // up to 5 (GfMenuGameAdapter::update_MercenariesPoint shows no points at 5)
     static int getPoint();
     static int getPointMax();
     static unsigned int getTeamNum();
     static Team* getTeamByIndex(unsigned int index);
+    static Team* getTeamByTeamID(unsigned int teamId);
+    static Team* getTeamByMissionID(unsigned int mission);
+    static bool isTeamStateEmpty(unsigned int teamId);
     static bool isTeamStateReward(unsigned int teamId);  // the team is back with a reward to collect
     // the teams on a zone's missions, working on them or done with them
     static void getTeamByZoneMissionWorking(mm::mtl::FixedVector<unsigned short, 3>& teams, unsigned int zone);
@@ -48,6 +56,12 @@ public:
     static bool getMsgZoneName(unsigned char*& bdat, unsigned int& id, unsigned int mission);
     static bool getFieldSkillInfo(unsigned char*& bdat, unsigned int& id, unsigned int mission, unsigned int slot);
     static unsigned int getFieldSkill(unsigned int mission, unsigned int slot);
+    static unsigned int getFieldSkill1(unsigned int mission);
+    static unsigned int getFieldSkill2(unsigned int mission);
+    static unsigned int getFieldSkill3(unsigned int mission);
+    static unsigned int getStartMissionID();
+    static QuestID getMissionQuestID(unsigned int mission);
+    static unsigned int getMissionTime(unsigned int mission);
     static bool getRequestCondition(GfRequestBladeData& data, unsigned int mission, unsigned int slot);
     static bool isValidTeamID(unsigned int teamId);
     static unsigned int getTeamLeader(unsigned int teamId);  // the team's leader blade, 0 for none

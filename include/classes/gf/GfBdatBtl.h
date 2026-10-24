@@ -11,6 +11,14 @@ namespace gf {
 // table 0x7100B462F8; IDataBdat at 0x8 (GfDataBdat::initialize keeps it in its list)
 class GfBdatBtl : public ::mm::mtl::PtrSingleton< ::gf::GfBdatBtl>, public ::gf::IDataBdat {
 public:
+    unsigned int getArtsBlName(unsigned int id) const;
+    unsigned int getBTL_Skill_BlName(unsigned int id) const;
+    unsigned int getArtsBlCaption(unsigned int id) const;
+    unsigned int getArtsBlSpName(unsigned int id) const;
+    unsigned int getArtsBlSpCaption(unsigned int id) const;
+    unsigned int getBTL_BuffName(unsigned int id) const;
+    unsigned int getBTL_BuffCaption(unsigned int id) const;
+    unsigned int getBTL_Skill_DrName(unsigned int id) const;
     GfBdatBtl();
     virtual ~GfBdatBtl();  // slot 0
     virtual void bdatRefresh();  // slot 2

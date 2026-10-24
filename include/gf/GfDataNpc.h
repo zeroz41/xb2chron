@@ -17,6 +17,11 @@ public:
     static unsigned int getFootStep(unsigned int npc);
     static unsigned int getFootStepEffect(unsigned int npc);
     static unsigned int getEyeRotControl(unsigned int npc);
+    static unsigned int getRace(unsigned int npc);
+    static unsigned int getGender(unsigned int npc);
+    static float getScale(unsigned int npc);
+    static unsigned int getCollisionId(unsigned int npc);
+    static const char* getAddMotionName(unsigned int npc);
 };
 }  // namespace gf
 

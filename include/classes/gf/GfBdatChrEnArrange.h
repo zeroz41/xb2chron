@@ -11,6 +11,7 @@ namespace gf {
 // table 0x7100B469E8; IDataBdat at 0x8 (GfDataBdat::initialize keeps it in its list)
 class GfBdatChrEnArrange : public ::mm::mtl::PtrSingleton< ::gf::GfBdatChrEnArrange>, public ::gf::IDataBdat {
 public:
+    unsigned int getChrEnArrangeName(unsigned int id) const;
     GfBdatChrEnArrange();
     virtual ~GfBdatChrEnArrange();  // slot 0
     virtual void bdatRefresh();  // slot 2

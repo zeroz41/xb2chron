@@ -31,6 +31,12 @@
 #include "classes/gf/GfGameFlag.h"
 #include "ml/MtRand.h"
 #include "classes/gf/GfEvent.h"
+#include "classes/gf/GfBdatMsg.h"
+#include "gf/QuestListAcc.h"
+#include "gf/GfDataNpc.h"
+#include "gf/GfDataBladeArtsN.h"
+#include "gf/GfDataDriverSkill.h"
+#include "plugin/Bdat.h"
 
 namespace gf {
 
@@ -452,7 +458,7 @@ unsigned int GfDataUtil::getSkipTravelID() {
 }
 
 unsigned int GfDataMercenaries::getTeamNum() {
-    return GfDataManager::getDataGame()->m_teamNum;
+    return GfDataManager::getDataGame()->m_teams.size();
 }
 
 float GfDataUtil::getPlayerCameraDistance() {
@@ -919,6 +925,512 @@ void GfDataBlade::setBladeWeapon(unsigned int blade, unsigned int weapon) {
 void GfDataBlade::setTrustPoint(unsigned int blade, unsigned int point) {
     GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_trustPoint = point;
     GfEvent::callDebugChangeIdea(4, blade, 0, 0);
+}
+
+
+unsigned int GfDataMercenaries::getFieldSkill(unsigned int mission, unsigned int slot) {
+    switch (slot) {
+    case 0:
+        return getFieldSkill1(mission);
+    case 1:
+        return getFieldSkill2(mission);
+    case 2:
+        return getFieldSkill3(mission);
+    }
+    return 0;
+}
+
+unsigned int GfDataMercenaries::getStartMissionID() {
+    return QuestListAcc::get()->getFLD_MercenariesMissionStart();
+}
+
+QuestID GfDataMercenaries::getMissionQuestID(unsigned int mission) {
+    return QuestID(QuestListAcc::get()->getFLD_MercenariesMissionQuestID(mission));
+}
+
+bool GfDataMercenaries::isOrderOnlyOne(unsigned int mission) {
+    return QuestListAcc::get()->getFLD_MercenariesMissionRepeatable(mission) == 0;
+}
+
+unsigned int GfDataMercenaries::getMissionTime(unsigned int mission) {
+    return QuestListAcc::get()->getFLD_MercenariesMissionRequestPerformance(mission);
+}
+
+GfDataMercenaries::Team* GfDataMercenaries::getTeamByTeamID(unsigned int teamId) {
+    SDataGame* game = GfDataManager::getDataGame();
+    for (Team* team = game->m_teams.begin(); team != game->m_teams.end(); ++team) {
+        if (team->m_teamId == teamId) {
+            return team;
+        }
+    }
+    return nullptr;
+}
+
+bool GfDataMercenaries::isValidTeamID(unsigned int teamId) {
+    return getTeamByTeamID(teamId) != nullptr;
+}
+
+GfDataMercenaries::Team* GfDataMercenaries::getTeamByIndex(unsigned int index) {
+    return &GfDataManager::getDataGame()->m_teams[index];
+}
+
+GfDataMercenaries::Team* GfDataMercenaries::getTeamByMissionID(unsigned int mission) {
+    if (mission == 0) {
+        return nullptr;
+    }
+    SDataGame* game = GfDataManager::getDataGame();
+    for (Team* team = game->m_teams.begin(); team != game->m_teams.end(); ++team) {
+        if (team->m_mission == mission) {
+            return team;
+        }
+    }
+    return nullptr;
+}
+
+unsigned int GfDataMercenaries::getTeamIDByMissionID(unsigned int mission) {
+    if (mission == 0) {
+        return 0;
+    }
+    Team* team = getTeamByMissionID(mission);
+    if (team == nullptr) {
+        return 0;
+    }
+    return team->m_teamId;
+}
+
+unsigned short* GfDataMercenaries::getTeamMember(unsigned int teamId) {
+    Team* team = getTeamByTeamID(teamId);
+    if (team == nullptr) {
+        return nullptr;
+    }
+    return team->m_members;
+}
+
+unsigned int GfDataMercenaries::getTeamMission(unsigned int teamId) {
+    Team* team = getTeamByTeamID(teamId);
+    if (team == nullptr) {
+        return 0;
+    }
+    return team->m_mission;
+}
+
+ElapseTime GfDataMercenaries::getTeamMissionTime(unsigned int teamId) {
+    Team* team = getTeamByTeamID(teamId);
+    if (team == nullptr) {
+        ElapseTime none = {0, 0, 0};
+        return none;
+    }
+    return team->m_missionTime;
+}
+
+bool GfDataMercenaries::isTeamStateEmpty(unsigned int teamId) {
+    Team* team = getTeamByTeamID(teamId);
+    if (team == nullptr) {
+        return true;
+    }
+    return team->m_mission == 0;
+}
+
+bool GfDataMercenaries::isTeamStateExpedition(unsigned int teamId) {
+    Team* team = getTeamByTeamID(teamId);
+    if (team == nullptr || team->m_mission == 0) {
+        return false;
+    }
+    return GfGameFlag::getLocal(4, team->m_mission + 5) == 2;
+}
+
+unsigned int GfDataMercenaries::getTeamLeader(unsigned int teamId) {
+    if (teamId == 0) {
+        return 0;
+    }
+    Team* team = getTeamByTeamID(teamId);
+    if (team == nullptr) {
+        return 0;
+    }
+    return team->m_members[0];
+}
+
+bool GfDataMercenaries::isTeamStateReward(unsigned int teamId) {
+    Team* team = getTeamByTeamID(teamId);
+    if (team == nullptr || team->m_mission == 0) {
+        return false;
+    }
+    return GfGameFlag::getLocal(4, team->m_mission + 5) == 3;
+}
+
+unsigned int GfDataMercenaries::getTeamID(unsigned int blade) {
+    SDataGame* game = GfDataManager::getDataGame();
+    for (Team* team = game->m_teams.begin(); team != game->m_teams.end(); ++team) {
+        for (int i = 0; i < 6; i++) {
+            if (team->m_members[i] == blade) {
+                return team->m_teamId;
+            }
+        }
+    }
+    return 0;
+}
+
+bool GfDataEnemy::getName(unsigned char*& bdat, unsigned int& id, unsigned int row) {
+    id = GfBdatChrEnArrange::get()->getChrEnArrangeName(row);
+    bdat = GfBdatMsg::getFpEnemy();
+    return id != 0;
+}
+
+bool GfDataBladeArts::getName(unsigned char*& bdat, unsigned int& id, unsigned int row) {
+    id = GfBdatBtl::get()->getArtsBlName(row);
+    bdat = GfBdatMsg::getFpBlArtsMs();
+    return id != 0;
+}
+
+bool GfDataBladeSkill::getName(unsigned char*& bdat, unsigned int& id, unsigned int row) {
+    id = GfBdatBtl::get()->getBTL_Skill_BlName(row);
+    bdat = GfBdatMsg::getFpBlSkill();
+    return id != 0;
+}
+
+bool GfDataDriver::getName(unsigned char*& bdat, unsigned int& id, unsigned int row) {
+    id = GfBdatChrDr::get()->getChrDrName(row);
+    bdat = GfBdatMsg::getFpChrDr();
+    return id != 0;
+}
+
+bool GfDataBladeArts::getCaption(unsigned char*& bdat, unsigned int& id, unsigned int row) {
+    id = GfBdatBtl::get()->getArtsBlCaption(row);
+    bdat = GfBdatMsg::getFpBlArtsMs();
+    return id != 0;
+}
+
+bool GfDataBladeArts::getExName(unsigned char*& bdat, unsigned int& id, unsigned int row) {
+    id = GfBdatBtl::get()->getArtsBlSpName(row);
+    bdat = GfBdatMsg::getFpBlSpArtsMs();
+    return id != 0;
+}
+
+bool GfDataBladeArts::getExCaption(unsigned char*& bdat, unsigned int& id, unsigned int row) {
+    id = GfBdatBtl::get()->getArtsBlSpCaption(row);
+    bdat = GfBdatMsg::getFpBlSpArtsMs();
+    return id != 0;
+}
+
+bool GfDataBladeArtsN::getName(unsigned char*& bdat, unsigned int& id, unsigned int row) {
+    id = GfBdatBtl::get()->getBTL_BuffName(row);
+    bdat = GfBdatMsg::getFpBlBuffMs();
+    return id != 0;
+}
+
+bool GfDataBladeArtsN::getCaption(unsigned char*& bdat, unsigned int& id, unsigned int row) {
+    id = GfBdatBtl::get()->getBTL_BuffCaption(row);
+    bdat = GfBdatMsg::getFpBlBuffCap();
+    return id != 0;
+}
+
+bool GfDataDriverSkill::getName(unsigned char*& bdat, unsigned int& id, unsigned int row) {
+    id = GfBdatBtl::get()->getBTL_Skill_DrName(row);
+    bdat = GfBdatMsg::getFpBtlSkillDr();
+    return id != 0;
+}
+
+bool GfDataWeapon::getWeaponTypeName(unsigned char*& bdat, unsigned int& id, unsigned int row) {
+    id = GfBdatItem::get()->getPcWpnTypeName(row);
+    bdat = GfBdatMsg::getFpPcWpnType();
+    return id != 0;
+}
+
+const char* GfDataNpc::getName(unsigned int npc) {
+    unsigned char* bdat;
+    unsigned int id;
+    if (getName(bdat, id, npc)) {
+        return Bdat::getMSText(bdat, id);
+    }
+    return nullptr;
+}
+
+const char* GfDataItem::getName(unsigned int item) {
+    unsigned char* bdat;
+    unsigned int id;
+    const char* name = getName(bdat, id, item) ? Bdat::getMSText(bdat, id) : nullptr;
+    return name == nullptr ? "" : name;
+}
+
+const char* GfDataEnemy::getName(unsigned int arrange) {
+    unsigned char* bdat;
+    unsigned int id;
+    const char* name = getName(bdat, id, arrange) ? Bdat::getMSText(bdat, id) : nullptr;
+    return name == nullptr ? "" : name;
+}
+
+const char* GfDataDriver::getName(unsigned int driver) {
+    unsigned char* bdat;
+    unsigned int id;
+    if (getName(bdat, id, driver)) {
+        return Bdat::getMSText(bdat, id);
+    }
+    return nullptr;
+}
+
+const char* GfDataBladeSkill::getName(unsigned int skill) {
+    unsigned char* bdat;
+    unsigned int id;
+    const char* name = getName(bdat, id, skill) ? Bdat::getMSText(bdat, id) : nullptr;
+    return name == nullptr ? "" : name;
+}
+
+unsigned int GfDataNpc::getRace(unsigned int npc) {
+    if (npc <= 25) {
+        return GfBdatChrDr::get()->getChrDrRace(npc);
+    }
+    if (npc <= 2000) {
+        SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(npc)];
+        return data.m_race;
+    }
+    return GfBdatRsc::get()->getRscNpcListRace(npc);
+}
+
+unsigned int GfDataNpc::getGender(unsigned int npc) {
+    if (npc <= 25) {
+        return GfBdatChrDr::get()->getChrDrGender(npc);
+    }
+    if (npc <= 2000) {
+        SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(npc)];
+        return data.m_gender;
+    }
+    return GfBdatRsc::get()->getRscNpcListGender(npc);
+}
+
+const char* GfDataNpc::getModelName(unsigned int npc) {
+    if (npc <= 25) {
+        return GfBdatChrDr::get()->getChrDrModel(npc);
+    }
+    if (npc <= 2000) {
+        SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(npc)];
+        return data.m_modelName;
+    }
+    return GfBdatRsc::get()->getRscNpcListModel(npc);
+}
+
+const char* GfDataNpc::getMotionName(unsigned int npc) {
+    if (npc <= 25) {
+        return GfBdatChrDr::get()->getChrDrMotion(npc);
+    }
+    if (npc <= 2000) {
+        SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(npc)];
+        return data.m_motionName;
+    }
+    return GfBdatRsc::get()->getRscNpcListMotion(npc);
+}
+
+unsigned int GfDataNpc::getCollisionId(unsigned int npc) {
+    if (npc <= 25) {
+        return GfBdatChrDr::get()->getChrDrCollisionId(npc);
+    }
+    if (npc <= 2000) {
+        SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(npc)];
+        return data.m_collisionId;
+    }
+    return GfBdatRsc::get()->getRscNpcListCollisionId(npc);
+}
+
+int GfDataNpc::getOffsetID(unsigned int npc) {
+    if (npc <= 25) {
+        return GfBdatChrDr::get()->getChrDrOffsetID(npc);
+    }
+    if (npc <= 2000) {
+        SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(npc)];
+        return data.m_offsetId;
+    }
+    return GfBdatRsc::get()->getRscNpcListOffsetID(npc);
+}
+
+unsigned int GfDataNpc::getFootStep(unsigned int npc) {
+    if (npc <= 1000) {
+        return GfBdatChrDr::get()->getChrDrFootStep(npc);
+    }
+    if (npc <= 2000) {
+        SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(npc)];
+        return data.m_footStep;
+    }
+    return GfBdatRsc::get()->getRscNpcListFootStep(npc);
+}
+
+unsigned int GfDataNpc::getFootStepEffect(unsigned int npc) {
+    if (npc <= 1000) {
+        return GfBdatChrDr::get()->getChrDrFootStepEffect(npc);
+    }
+    if (npc <= 2000) {
+        SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(npc)];
+        return data.m_footStepEffect;
+    }
+    return GfBdatRsc::get()->getRscNpcListFootStepEffect(npc);
+}
+
+unsigned int GfDataNpc::getEyeRotControl(unsigned int npc) {
+    if (npc <= 1000) {
+        if (npc == 0) {
+            return 0;
+        }
+        return GfBdatChrDr::get()->getChrDrEyeRot(npc);
+    }
+    if (npc <= 2000) {
+        SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(npc)];
+        return data.m_eyeRotControl;
+    }
+    return GfBdatRsc::get()->getRscNpcListEyeRot(npc);
+}
+
+float GfDataNpc::getScale(unsigned int npc) {
+    if (npc < 26) {
+        return 1.0f;
+    }
+    if (npc <= 2000) {
+        SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(npc)];
+        return data.m_scale * 0.01f;
+    }
+    return GfBdatRsc::get()->getRscNpcListScale(npc) / 100.0f;
+}
+
+bool GfDataNpc::getExtraParts(unsigned int npc, unsigned int part) {
+    if (npc < 26) {
+        return true;
+    }
+    if (npc <= 2000) {
+        SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(npc)];
+        return data.m_extraParts[part] != 0;
+    }
+    return GfBdatRsc::get()->getRscNpcListExtraParts(npc, part) != 0;
+}
+
+const char* GfDataNpc::getAddMotionName(unsigned int npc) {
+    if (npc > 2000) {
+        const char* name = GfBdatRsc::get()->getRscNpcListAddMotion(npc);
+        if (name != nullptr && name[0] != '\0') {
+            return name;
+        }
+    }
+    return nullptr;
+}
+
+const char* GfDataNpc::getEffectName(unsigned int npc) {
+    if (npc > 2000) {
+        const char* name = GfBdatRsc::get()->getRscNpcListComp_Eff(npc);
+        if (name != nullptr && name[0] != '\0') {
+            return name;
+        }
+    }
+    return nullptr;
+}
+
+bool GfDataNpc::isNeedResourceEvent(unsigned int npc) {
+    if (npc <= 2000) {
+        return false;
+    }
+    const char* name = GfBdatRsc::get()->getRscNpcListAddMotion(npc);
+    return name != nullptr && name[0] != '\0';
+}
+
+unsigned int GfDataQuest::getListTalker(QuestID id) {
+    if (id.empty()) {
+        return 0;
+    }
+    return QuestListAcc::get()->getListTalker(id);
+}
+
+unsigned int GfDataQuest::getListRewardSetA(QuestID id) {
+    if (id.empty()) {
+        return 0;
+    }
+    return QuestListAcc::get()->getListRewardSetA(id);
+}
+
+unsigned int GfDataQuest::getListRewardSetB(QuestID id) {
+    if (id.empty()) {
+        return 0;
+    }
+    return QuestListAcc::get()->getListRewardSetB(id);
+}
+
+unsigned int GfDataQuest::getListResultA(QuestID id) {
+    if (id.empty()) {
+        return 0;
+    }
+    return QuestListAcc::get()->getListResultA(id);
+}
+
+unsigned int GfDataQuest::getListResultB(QuestID id) {
+    if (id.empty()) {
+        return 0;
+    }
+    return QuestListAcc::get()->getListResultB(id);
+}
+
+unsigned int GfDataQuest::getListSummary(QuestID id) {
+    if (id.empty()) {
+        return 0;
+    }
+    return QuestListAcc::get()->getListSummary(id);
+}
+
+int GfDataQuest::getListFlagPRT(QuestID id) {
+    if (id.empty()) {
+        return 0;
+    }
+    return QuestListAcc::get()->getListFlagPRT(id);
+}
+
+int GfDataQuest::getListFlagCLD(QuestID id) {
+    if (id.empty()) {
+        return 0;
+    }
+    return QuestListAcc::get()->getListFlagCLD(id);
+}
+
+unsigned int GfDataQuest::getListCallEventA(QuestID id) {
+    if (id.empty()) {
+        return 0;
+    }
+    return QuestListAcc::get()->getListCallEventA(id);
+}
+
+unsigned int GfDataQuest::getListCallEventB(QuestID id) {
+    if (id.empty()) {
+        return 0;
+    }
+    return QuestListAcc::get()->getListCallEventB(id);
+}
+
+unsigned int GfDataQuest::getListHintsID(QuestID id) {
+    if (id.empty()) {
+        return 0;
+    }
+    return QuestListAcc::get()->getListHintsID(id);
+}
+
+unsigned int GfDataQuest::getListPurposeID(QuestID id) {
+    if (id.empty()) {
+        return 0;
+    }
+    return QuestListAcc::get()->getListPurposeID(id);
+}
+
+bool GfDataQuest::getListVisible(QuestID id) {
+    if (id.empty()) {
+        return false;
+    }
+    return QuestListAcc::get()->getListVisible(id) != 0;
+}
+
+unsigned short GfDataQuest::m_achieve2blade[0x4D80];
+
+unsigned int GfDataQuest::getAchievementBlade(unsigned int achieveId) {
+    return m_achieve2blade[achieveId];
+}
+
+void GfDataQuest::registAchievementBlade(unsigned int achieveId, unsigned short blade) {
+    m_achieve2blade[achieveId] = blade;
+}
+
+const char* GfDataQuest::getTaskLog(QuestID id, unsigned int msg) {
+    const char* s = GfBdatMsg::getNameQuest(id, msg);
+    return s != nullptr ? s : "";
 }
 
 }  // namespace gf
