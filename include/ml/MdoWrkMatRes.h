@@ -40,8 +40,11 @@ struct MdoWrkAvatarTbl {
 // The model data MdoWrkMatRes+0x20 points to: ScnObjAccResSubMesh's constructor adds m_subMeshOfs to its address.
 // The type and field names are not the original's.
 struct MdoMdlData {
-    unsigned char pad_0[0x64];
+    unsigned int m_flags;  // 0x0, 0x2000: DrMdoMat::getVanishEffectMax reads m_vanishEffectMax
+    unsigned char pad_4[0x60];
     unsigned int m_subMeshOfs;  // 0x64
+    unsigned char pad_68[0x2C];
+    unsigned char m_vanishEffectMax;  // 0x94, DrMdoMat::getVanishEffectMax returns at least 1
 };
 
 // One volume fade (vanish effect) work entry, 0xE0 bytes: DrMdoMat::getVanishEffectWrk(index, bank) returns entry
@@ -50,7 +53,8 @@ struct MdoMdlData {
 struct MdoVanishEffectWrk {
     unsigned char pad_0[0xA4];
     float m_ratio;  // 0xA4, ScnObjAccVolumeFade::setRatio/getRatio
-    unsigned char pad_A8[0x2C];
+    int m_volumeTexIdx;  // 0xA8, DrMdoSetup::varStTex_VolumeTex00 binds DrIniSys::m_texture[7 + this] (bank 2)
+    unsigned char pad_AC[0x28];
     unsigned int m_flags;  // 0xD4, 0x100: m_ratio was set
     unsigned char pad_D8[0x8];
 };
@@ -83,6 +87,8 @@ struct MdoWrkMatRes {
     unsigned char pad_100[0x10];
     MdoWrkAvatarTbl* m_pAvatarTbl;  // 0x110, DrMdoSetup::varStTex_Avatar* bind its textures
     MdoWrkMatAce* m_pAce;  // 0x118
+    unsigned char pad_120[0x38];
+    MdoVanishEffectWrk* m_pVanishEffectWrk;  // 0x158, three banks per material (DrMdoMat::getVanishEffectWrk)
 };
 }  // namespace ml
 

@@ -71,6 +71,10 @@ public:
     DrMdoSmlShadowObj* m_pSmlShadowObj;  // 0x58
     unsigned char pad_60[0x78];
     float m_colorScale;  // 0xD8, 1.0f from the constructor; scales CalcBloom/CalcColor (name inferred)
+    unsigned char pad_DC[0x8];
+    // 0xE4, matCall_OutLineVal fades the outline between DrPixlPostParm::m_outLineNear and m_outLineFar by it
+    // (1.0.0's DrMdoMat reads the same offset there; the name is not the original's)
+    float m_outLineDist;
 };
 }  // namespace ml
 

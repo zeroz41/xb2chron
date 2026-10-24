@@ -26,6 +26,7 @@ public:
 class CGLibCtlTexture {
 public:
     static void setTexture(const CGLibTextureBuffer& texture, const CGLibSampler& sampler, unsigned int location);
+    static void setUAVTexture(const CGLibTextureBuffer& texture, unsigned int location, unsigned int, unsigned int);
 };
 
 class CGLibColorCtl {

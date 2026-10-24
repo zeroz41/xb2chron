@@ -96,7 +96,8 @@ public:
     float m_glbSpd;
     unsigned char pad_1C88[0x8];
     float m_gamma;
-    unsigned char pad_1C94[0x8];
+    unsigned char pad_1C94[0x4];
+    int m_postParmIdx;                  // 0x1C98, DrMdoMat::matCall_OutLineVal reads m_postParm[this] (name inferred)
     unsigned int m_viewRenderSkip;      // a bit per view
     unsigned char pad_1CA0[0x22];
     bool m_homeMenu;                    // 0x1CC2, bkgHomeMenu(true) sets it

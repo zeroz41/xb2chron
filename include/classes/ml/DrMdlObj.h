@@ -62,7 +62,7 @@ public:
     MdoRimBloomWrk* getRimBloomWrk(unsigned int bank);
 
     // the names are not the original's
-    unsigned char pad_DC[0x14];
+    unsigned char pad_E8[0x8];
     bool m_gpuRender;  // 0xF0, isGpuRender
     unsigned char pad_F1[0x7];
     unsigned int m_stateFlags;  // 0xF8: DrMdoGrpObj's render passes skip an object without bit 7

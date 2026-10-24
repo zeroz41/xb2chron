@@ -50,7 +50,13 @@ public:
     int m_dofFocusNum;
     unsigned char pad_240[0x4];
     float m_dofFocusMin;
-    unsigned char pad_248[0x170];
+    unsigned char pad_248[0x7C];
+    // 0x2C4-0x2D0: DrMdoMat::matCall_OutLineVal's outline width and fade distances (names inferred)
+    float m_outLineScale;
+    unsigned char pad_2C8[0x4];
+    float m_outLineFar;
+    float m_outLineNear;
+    unsigned char pad_2D4[0xE4];
     bool m_rainDrop;
     unsigned char pad_3B9[0x117];
     bool m_glassBr;

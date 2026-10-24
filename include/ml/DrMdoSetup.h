@@ -62,7 +62,15 @@ public:
     void fn_710077C23C(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
     void fn_710077C294(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
 
+    // Static image callbacks: s_pStaticImage[id] binds DrPixlMan pixl object id's texture as a UAV image.
+    void varStImg_BaseColor(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
+    void varStImg_Etc(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
+    void varStImg_Normal(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
+    void varStImg_Velocity(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
+    void varStImg_ZBuff(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
+
     static void (DrMdoSetup::*s_pStaticTexture[46])(const MdsMatInfoHeader*, unsigned int, unsigned int);
+    static void (DrMdoSetup::*s_pStaticImage[5])(const MdsMatInfoHeader*, unsigned int, unsigned int);
 };
 }  // namespace ml
 

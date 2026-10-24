@@ -4,8 +4,10 @@
 #include "classes/ml/DrMdoCtlDammy.h"
 #include "classes/ml/DrMdoCtlSeamAll.h"
 #include "classes/ml/DrMdoMat.h"
+#include "classes/ml/DrMdoZSortObj.h"
 #include "grlib/CGLibCtl.h"
 #include "math.h"
+#include "mm/Math.h"
 #include "ml/DrEnvironmentAnim.h"
 #include "ml/DrIniSys.h"
 #include "ml/DrMdoAnim.h"
@@ -14,6 +16,7 @@
 #include "ml/DrPixlMan.h"
 #include "ml/DrPixlPostMan.h"
 #include "ml/DrPixlPostObjCubeMapIBL.h"
+#include "ml/DrPixlPostParm.h"
 #include "ml/DrResMdoMat.h"
 #include "ml/MdoWrkMatRes.h"
 #include "ml/MdsMatInfoHeader.h"
@@ -358,6 +361,33 @@ void (DrEnvironmentAnim::*DrEnvironmentAnim::s_pFogAnim[13])(DrFogObjGbl*, const
     &DrEnvironmentAnim::envfog_parm_color_sunB,
 };
 
+int DrMdoMat::getVanishEffectMax() const {
+    if (m_pWrkMatRes == nullptr) {
+        return 0;
+    }
+    const MdoMdlData* mdl = m_pWrkMatRes->m_pMdlData;
+    if (mdl == nullptr) {
+        return 0;
+    }
+    if ((mdl->m_flags & 0x2000) == 0) {
+        return 0;
+    }
+    return mdl->m_vanishEffectMax > 1 ? mdl->m_vanishEffectMax : 1;
+}
+
+MdoVanishEffectWrk* DrMdoMat::getVanishEffectWrk(unsigned int index, unsigned int bank) {
+    if (m_pWrkMatRes == nullptr) {
+        return nullptr;
+    }
+    if (m_pWrkMatRes->m_pMdlData == nullptr) {
+        return nullptr;
+    }
+    if (m_pWrkMatRes->m_pVanishEffectWrk == nullptr) {
+        return nullptr;
+    }
+    return &m_pWrkMatRes->m_pVanishEffectWrk[index * 3 + bank];
+}
+
 void DrMdoMat::updateMatCallBack(const unsigned int* dispBits) {
     const MdsMatCallBackTbl* tbl = m_pWrkMatRes->m_pCallBackTbl;
     if (tbl == nullptr || tbl->m_matListNum == 0) {
@@ -378,6 +408,36 @@ void DrMdoMat::updateMatCallBack(const unsigned int* dispBits) {
             }
         }
     }
+}
+
+void DrMdoMat::matCall_OutLineVal(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* dst = m_pWrkMatRes->m_pUniformVal;
+    dst += info->m_uniformOfs + slot;
+    DrPixlPostParm* parm = m_pDrMan->m_postParm[m_pDrMan->m_postParmIdx];
+    float far = parm->m_outLineFar;
+    float near = parm->m_outLineNear;
+    far = far > near ? far : near;
+    float range = far - near;
+    range = range > 0.01f ? range : 0.01f;
+    float t = mm::clamp((m_outLineDist - near) / range, 0.0f, 1.0f);
+    *dst = parm->m_outLineScale * t;
+}
+
+void DrMdoMat::matCall_WaterFog(const MdsMatInfoHeader* info, int slot, int matIdx) {
+    float* uni = m_pWrkMatRes->m_pUniformVal;
+    float* mat = m_pWrkMatRes->m_pMatVal;
+    unsigned int idx = info->m_uniformOfs + slot;
+    float* dst = &uni[idx];
+    float* src = &mat[idx];
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
+    dst[4] = src[4];
+    dst[5] = src[5];
+    dst[6] = src[6];
+    float fog = m_pDrMan->m_pixlMan->m_objTbl->m_postMan->m_waterFog - 0.05f;
+    fog = fog > 0.0f ? fog : 0.0f;
+    dst[9] = mm::clamp(fog / 0.95f, 0.0f, 1.0f);
 }
 
 void DrMdoMat::matCall_EmissiveTime(const MdsMatInfoHeader* info, int slot, int matIdx) {
@@ -912,6 +972,17 @@ void DrMdoSetup::varStTex_DitherTex(const MdsMatInfoHeader* info, unsigned int l
 void DrMdoSetup::varStTex_RefLightTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
 }
 
+void DrMdoSetup::varStTex_VolumeTex00(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->begin3DTextureWarpSampling();
+    int idx = 0;
+    MdoVanishEffectWrk* wrk = getVanishEffectWrk(matIdx, 2);
+    if (wrk != nullptr) {
+        idx = wrk->m_volumeTexIdx;
+    }
+    ap->setTexture(m_pDrMan->m_iniSys->m_texture[idx + 7], location);
+}
+
 void DrMdoSetup::varStTex_VolumeTex01(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
     DrAPCache* ap = m_pDrMan->m_apCache;
     ap->begin3DTextureWarpSampling();
@@ -1084,6 +1155,28 @@ void DrMdoSetup::varStTex_ToonDarkGradTex(const MdsMatInfoHeader* info, unsigned
     }
 }
 
+void DrMdoSetup::varStImg_BaseColor(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    grlib::CGLibCtlTexture::setUAVTexture(*m_pDrMan->m_pixlMan->getPixlObj(0)->m_pTexture, location, 0, 0);
+}
+
+void DrMdoSetup::varStImg_Etc(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    grlib::CGLibCtlTexture::setUAVTexture(*m_pDrMan->m_pixlMan->getPixlObj(1)->m_pTexture, location, 0, 0);
+}
+
+void DrMdoSetup::varStImg_Normal(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    grlib::CGLibCtlTexture::setUAVTexture(*m_pDrMan->m_pixlMan->getPixlObj(2)->m_pTexture, location, 0, 0);
+}
+
+void DrMdoSetup::varStImg_Velocity(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    grlib::CGLibCtlTexture::setUAVTexture(*m_pDrMan->m_pixlMan->getPixlObj(3)->m_pTexture, location, 0, 0);
+}
+
+void DrMdoSetup::varStImg_ZBuff(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    grlib::CGLibCtlTexture::setUAVTexture(*m_pDrMan->m_pixlMan->getPixlObj(4)->m_pTexture, location, 0, 0);
+}
+
+DrMdoZSortObj::DrMdoZSortObj(void* owner) : m_next(nullptr), m_parent(nullptr), m_owner(owner) {}
+
 void (DrMdoSetup::*DrMdoSetup::s_pStaticTexture[46])(const MdsMatInfoHeader*, unsigned int, unsigned int) = {
     &DrMdoSetup::varStTex_ColorTex,
     &DrMdoSetup::varStTex_NormalTex,
@@ -1131,6 +1224,14 @@ void (DrMdoSetup::*DrMdoSetup::s_pStaticTexture[46])(const MdsMatInfoHeader*, un
     &DrMdoSetup::varStTex_ToonDarkGradTex,
     &DrMdoSetup::fn_710077C23C,
     &DrMdoSetup::fn_710077C294,
+};
+
+void (DrMdoSetup::*DrMdoSetup::s_pStaticImage[5])(const MdsMatInfoHeader*, unsigned int, unsigned int) = {
+    &DrMdoSetup::varStImg_BaseColor,
+    &DrMdoSetup::varStImg_Etc,
+    &DrMdoSetup::varStImg_Normal,
+    &DrMdoSetup::varStImg_Velocity,
+    &DrMdoSetup::varStImg_ZBuff,
 };
 
 }  // namespace ml
