@@ -19,6 +19,7 @@ public:
     bool IsGameOver() const;
     // whether the battle is paused for kind (GfGameTarget's selectRight/selectLeft pass -1: any)
     bool IsPause(int kind) const;
+    int GetElementalComboStage(int) const;
     // GfGameTarget::updateImpl calls it once its near-target hold outlasts its parameter's time
     void NotifyShiftTimeOver();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfGameTarget::judgeNearTarget makes

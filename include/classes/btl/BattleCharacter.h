@@ -44,6 +44,29 @@ public:
     void AddBladeArtsRecast(int, float);
     void FluctuateKizuna(int, float);
     void AddPartyGauge(float);
+    bool IsAngry() const;
+    bool IsBlade() const;
+    bool IsBattle() const;
+    gf::GF_OBJ_HANDLE* GetRescueTarget() const;
+    // the id the AI scripts know the character by: its index for a player character, 100 more for an enemy (the
+    // Utility::AI_ getters compute it so; the name is not the original's)
+    int GetAiChrID() const {
+        int id = m_index + 100;
+        if (m_isPlayer) {
+            id = m_index;
+        }
+        return id;
+    }
+    void SetAngry(bool, float);
+    int GetKizunaStage(float*) const;
+    void StartBackHome();
+    void MoveStop(bool);
+    void AddKizuna(float);
+    void SetScout(bool);
+    void SetSuperArmorTime(float);
+    bool IsInAttackRange(int, float*) const;
+    bool IsEnableTurnAI() const;
+    void TurnTarget(bool, bool, bool);
     // Placeholder name: 1.0.0's ButtonChallenge::ResultProc calls IsBlade() const in its place, with no argument.
     // A member: called on CharacterManager::GetCharacterConst's character. What it does: ButtonChallenge asks it
     // with true; when it holds, the challenge's character is a blade and its driver (the parameter's handle) acts.
@@ -63,6 +86,26 @@ public:
     unsigned char pad_8[0x8];
     // where the character stands: EnemyParameter::AngryInfection measures from it (the name is not the original's)
     mm::Vec3 m_pos;
+    unsigned char pad_20[0xF8];
+    // the character's object: Utility::AI_GetCharacterHandle returns it (the name is not the original's)
+    gf::GF_OBJ_HANDLE* m_handle;
+    // the object the character targets, (GF_OBJ_HANDLE*)-1 for none: Utility::AI_GetTargetCharacterID reads it
+    // (the name is not the original's)
+    gf::GF_OBJ_HANDLE* m_targetHandle;
+    unsigned char pad_128[0xDC8];
+    // the character's index on its side (GetAiChrID; the name is not the original's)
+    signed char m_index;
+    unsigned char pad_EF1[0xB];
+    unsigned int pad_EFC : 31;
+    // a player-side character (GetAiChrID; the name is not the original's)
+    unsigned int m_isPlayer : 1;
+    unsigned int pad_F00 : 23;
+    // Utility::AI_IsFly returns it (the name is not the original's)
+    unsigned int m_isFly : 1;
+    unsigned int pad_F00_24 : 8;
+    unsigned char pad_F04[0x2A4];
+    // Utility::AI_GetStamp returns it while the character lives (the name is not the original's)
+    int m_stamp;
 };
 }  // namespace btl
 

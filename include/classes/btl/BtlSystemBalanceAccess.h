@@ -24,6 +24,10 @@ public:
     // not the original's)
     unsigned char m_waterDeadRate0;
     unsigned char m_waterDeadRate2;
+    unsigned char pad_B5[0x37];
+    // the HP rate below which a character counts as dying: Utility::GetDyingHpRate reads it (the name is not
+    // the original's)
+    float m_dyingHpRate;
 };
 }  // namespace btl
 

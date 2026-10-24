@@ -2,7 +2,7 @@
 #define GF_GFGAMEUTIL_H
 
 namespace gf { class GF_OBJ_HANDLE; }
-namespace mm { namespace mtl { template <int LEN> class FixStr; } }
+namespace mm { class Vec3; namespace mtl { template <int LEN> class FixStr; } }
 namespace gmk { enum GmkType : int; }
 
 namespace gf {
@@ -10,6 +10,8 @@ namespace gf {
 // game-wide helpers (functions, by its symbols)
 class GfGameUtil {
 public:
+    static bool getGmkTargetPointPos(mm::Vec3& pos, gf::GF_OBJ_HANDLE* handle);
+    static bool getGmkTargetPointPos(mm::Vec3& pos, unsigned int id);
     // SCOM_ADD_DEVELOP's request passes its second value, then its first
     static void addDevelopPoint(unsigned int, unsigned int);
     static void setHp(GF_OBJ_HANDLE* handle, unsigned int hp);

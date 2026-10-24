@@ -12,6 +12,10 @@ public:
     virtual ~SpAttackManager();  // slot 0
     static void Create();
     static void Destroy();
+
+    unsigned char pad_8[0x200];
+    // above zero while a special attack runs: Utility::AI_IsProcSpAttack tests it (the name is not the original's)
+    int m_procCount;
 };
 }  // namespace btl
 

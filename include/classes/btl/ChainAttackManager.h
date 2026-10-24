@@ -14,6 +14,8 @@ public:
     virtual ~ChainAttackManager();  // slot 0
     static void Create();
     static void Destroy();
+    bool IsProc(bool) const;
+    int GetGroupIndex() const;
 };
 }  // namespace btl
 

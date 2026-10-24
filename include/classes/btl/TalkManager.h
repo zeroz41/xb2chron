@@ -11,6 +11,9 @@ class TalkManager : public ::mm::mtl::PtrSingleton< ::btl::TalkManager> {
 public:
     enum NARRATION_TYPE : int;
     void PlayNarrationVoice(NARRATION_TYPE type, int, int);
+    void PlayVoice(int, int);
+    int GetPlayVoiceID(int) const;
+    bool IsPlayingEnemyWinVoice() const;
     virtual ~TalkManager();  // slot 0
     static void Create();
     static void Destroy();

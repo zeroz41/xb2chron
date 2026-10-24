@@ -8,6 +8,11 @@ namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 
 namespace btl {
+// an art's data as DataManager::GetArtsData fills it (layout not recovered yet)
+struct ARTS_DATA {
+    enum DATA_TYPE : int;
+};
+
 // table 0x7100B3BAF8
 class DataManager : public ::mm::mtl::PtrSingleton< ::btl::DataManager> {
 public:
@@ -17,6 +22,12 @@ public:
     static void Destroy();
     static void PostUpdate(const fw::UpdateInfo& info);
     void ReleaseEnemyGroup(gf::GF_OBJ_HANDLE* handle);
+    void GetArtsData(ARTS_DATA::DATA_TYPE type, int id, ARTS_DATA& data) const;
+    bool IsSpecialEffects(int effect) const;
+
+    unsigned char pad_8[0x15D0B];
+    // Utility::GetElementalEffectID returns it (the name is not the original's)
+    unsigned char m_elementalEffectID;
 };
 }  // namespace btl
 

@@ -29,6 +29,7 @@ struct GfFadeInfo {
 // helpers for the objects behind handles (functions, by its symbols)
 class GfObjUtil {
 public:
+    static bool isTrinityBlade(gf::GF_OBJ_HANDLE* handle);
     // SCOM_OBJ_WARP_POS and SCOM_OBJ_VFADE_OFF pass their request's object
     static void setWarpTransform(GF_OBJ_HANDLE* handle, const fw::Transform& transform, bool);
     static void setVolumeFadeUserFlag(GF_OBJ_HANDLE* handle, bool);
