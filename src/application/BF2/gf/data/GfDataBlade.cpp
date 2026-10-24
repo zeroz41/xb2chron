@@ -132,7 +132,7 @@ const char* GfDataDriver::getMotionResourceName(unsigned int driver) {
 }
 
 const char* GfDataDriver::getDebugName(unsigned int driver) {
-    return GfBdatChrDr::get()->getChrDrDebugName(driver);
+    return GfBdatChrDr::get()->getChrDrCom_Eff(driver);
 }
 
 unsigned int GfDataDriver::getAiID(unsigned int driver) {

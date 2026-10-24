@@ -32,6 +32,9 @@ unsigned char* isExistFP(const char* name);
 unsigned int getValCheck(unsigned char* fp, int member, int id, int type);
 // a row's flag: the flag word member's bit that the bit member names (nonzero when set)
 int getFlagVal(unsigned char* fp, unsigned char* member, int id, unsigned char* bitMember);
+// getValCheck for an array member: element index of the row's value (1.0.0's gf::_gfbcd::getChrDrWpnType reads the
+// WpnType array so, type 1, keeping the low 8 bits)
+unsigned long getArrayValCheck(unsigned char* fp, unsigned char* member, int id, int index, int type);
 }  // namespace Bdat
 
 // a loaded BDAT table, as the generated column accessors take it (1.0.0's gf::_gfbbg and gf::_gfbdb functions take a
@@ -48,6 +51,9 @@ public:
     }
     int getFlagVal(unsigned char* member, int id, unsigned char* bitMember) const {
         return Bdat::getFlagVal(m_fp, member, id, bitMember);
+    }
+    unsigned long getArrayValCheck(unsigned char* member, int id, int index, int type) const {
+        return Bdat::getArrayValCheck(m_fp, member, id, index, type);
     }
     unsigned char* m_fp;  // the name is not the original's
 };
