@@ -10,7 +10,7 @@ namespace gf {
 // table 0x7100B65438
 class GfMenuTagTownFlag : public ::ui::UITagConv {
 public:
-    virtual ~GfMenuTagTownFlag();  // slot 0
+    virtual ~GfMenuTagTownFlag() {}  // slot 0
     virtual const char* getTagName();  // slot 2
     virtual const char* convBegin(mm::mtl::FixedVector<mm::mtl::MapPair<char const*, char const*>, 8ul> const&, unsigned short);  // slot 3
 };

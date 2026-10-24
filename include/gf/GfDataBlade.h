@@ -41,6 +41,7 @@ public:
     static bool isRareBlade(unsigned int blade);
     // a game flag: Pyra's name shown as Mythra's (GfMenuObjNameSelect sets it from the name picked)
     static void setHomuriNameHikari(bool hikari);
+    static bool isHomuriNameHikari();  // the flag setHomuriNameHikari sets (local flag 0x89FB, 1 bit)
     static bool isActivateUnuse(unsigned int blade);
     static bool isUnselect(unsigned int blade);
     // the driver the blade is set to, 0 for none

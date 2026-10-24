@@ -10,6 +10,7 @@ extern "C" {
 
 void* malloc(size_t size);
 void free(void* pointer);
+int atoi(const char* text);
 
 #ifdef __cplusplus
 }

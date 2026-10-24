@@ -13,7 +13,7 @@ public:
     virtual const char* getTagName() = 0;  // slot 2
     // the text the tag starts (null: none), from its parameters and the text's owner id
     virtual const char* convBegin(mm::mtl::FixedVector<mm::mtl::MapPair<char const*, char const*>, 8ul> const&, unsigned short) = 0;  // slot 3
-    virtual const char* convEnd();  // slot 4: the text the tag ends with (null: none)
+    virtual const char* convEnd() { return nullptr; }  // slot 4: the text the tag ends with (null: none)
 };
 }  // namespace ui
 

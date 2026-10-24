@@ -7,6 +7,7 @@ namespace ui { class UIStr; }
 namespace gf { class GfMenuReference; }
 namespace gf { class GfMenuEnemyList; }
 namespace gf { class GfMenuItemList; }
+namespace gf { class MenuItemInfo; }
 
 namespace gf {
 // table 0x7100B5EF48
@@ -36,6 +37,8 @@ public:
     };
     virtual ~GfMenuReference();  // slot 0
     static void setReferenceString(ui::UIStr& text, unsigned short index);
+    // the text of the reference at that index (GfMenuTagAchievement::convBegin tests it valid before using it)
+    static const ui::UIStr& getReferenceString(unsigned short index);
     static unsigned int getReferenceDriverID(unsigned int index);
     static unsigned int getReferenceBladeID(unsigned int index);
     static unsigned int getReferenceTeamID();  // GfMenuMercenariesAdapter::ReferenceTeamConverter's team
@@ -51,6 +54,9 @@ public:
     // the lists the link-jump menu shows (null without the singleton): its enemies and its items; clearLinkList
     // clears both (their slot 2)
     static void clearLinkList();
+    // add an enemy (a CHR_EnArrange row) or an item to the link-jump lists (GfMenuTagLink::convBegin)
+    static void addEnemyLink(unsigned int enemy);
+    static void addItemLink(const MenuItemInfo& item);
     static GfMenuEnemyList* getEnemyLinkList();
     static GfMenuItemList* getItemLinkList();  // the route the combo is on (GfMenuElementComboAdapter compares)
     // the arts palette's slots (0..8; a static dummy past them or without the singleton)
