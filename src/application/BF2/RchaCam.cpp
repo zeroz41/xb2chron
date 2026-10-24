@@ -43,7 +43,7 @@ static void findFirstAnms(RchaNode& node, const char** names, unsigned long coun
 }
 
 // the anm names setup looks for, by RchaNode::hashStr of each; an anm found gets the name and its index goes in
-// m_anmIndex (the table name is not the original's)
+// m_anmIndex (proposed name, not the original's: the symbols leave this table unnamed, lbl_7100B71B88)
 static const char* s_camAnmNames[RchaCam::ANM_NUM] = {
     "cam/translate_x",
     "cam/translate_y",
@@ -294,7 +294,7 @@ bool RchaCam::setup(mtl::ALLOC_HANDLE handle, void const* data) {
 }
 
 // the anm names setup looks for, by RchaNode::hashStr of each; an anm found gets the name and its index goes in
-// m_anmIndex (the table name is not the original's)
+// m_anmIndex (proposed name, not the original's: the symbols leave this table unnamed, lbl_7100B71CA8)
 static const char* s_camEffAnmNames[RchaCamEff::ANM_NUM] = {
     "camAtr/ColFilter",
     "camAtr/ColFilterNear",
@@ -350,7 +350,7 @@ bool RchaCamEff::setup(mtl::ALLOC_HANDLE handle, void const* data) {
 }
 
 // the anm names setup looks for, by RchaNode::hashStr of each; an anm found gets the name and its index goes in
-// m_anmIndex (the table name is not the original's)
+// m_anmIndex (proposed name, not the original's: the symbols leave this table unnamed, lbl_7100B71CF8)
 static const char* s_chrEffAnmNames[RchaChrEff::ANM_NUM] = {
     "chrEff/VolumeFade",
     "chrEff/VolumeFadeId",
@@ -538,7 +538,7 @@ bool RchaChrEff::setup(mtl::ALLOC_HANDLE handle, void const* data) {
 }
 
 // the anm names setup looks for, by RchaNode::hashStr of each; an anm found gets the name and its index goes in
-// m_anmIndex (the table name is not the original's)
+// m_anmIndex (proposed name, not the original's: the symbols leave this table unnamed, lbl_7100B71DC8)
 static const char* s_effAnmNames[RchaEff::ANM_NUM] = {
     "eff/translate_x",
     "eff/translate_y",
@@ -661,7 +661,7 @@ bool RchaEff::setup(mtl::ALLOC_HANDLE handle, void const* data) {
 }
 
 // the anm names setup looks for, by RchaNode::hashStr of each; an anm found gets the name and its index goes in
-// m_anmIndex (the table name is not the original's)
+// m_anmIndex (proposed name, not the original's: the symbols leave this table unnamed, lbl_7100B71E98)
 static const char* s_exAnmNames[CRchaEx::ANM_NUM] = {
     "dmy",
     "ptExAnm/DynamicsBlend",
