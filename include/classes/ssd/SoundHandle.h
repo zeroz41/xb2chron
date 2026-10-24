@@ -23,7 +23,7 @@ public:
     bool IsPlay() const;
     int GetState() const;  // 8 once ready to start; 5, 6 and 7 while preparing
     long Start(SoundActor* actor, float volume, float pitch);  // negative on failure
-    void Stop(float fadeTime);
+    long Stop(float fadeTime);
     void SetCategoryId(int id);
     long GetPlayTime(float* time) const;
     long SetPlayTime(float time);
@@ -36,23 +36,53 @@ public:
     void SetVolume(float volume, float fadeTime);
     void SetPan(float pan, float fadeTime);
     float GetDistanceVolume() const;
-    void Pause(bool pause, float fadeTime);
+    long Pause(bool pause, float fadeTime);
+    void UpdateAudioFrame(float frameTime);
 
     // a value Set* moves to its target over a fade time (the type's and the field names are not the original's)
     struct FadeValue {
+        // starts a move to target over fadeTime (at once when it is 0)
+        void Set(float value, float time) {
+            fadeTime = time;
+            if (time == 0.0f) {
+                target = value;
+                start = value;
+                current = value;
+            } else {
+                start = current;
+                target = value;
+            }
+            delta = target - start;
+            elapsed = 0.0f;
+        }
+        // moves on by frameTime
+        void Update(float frameTime) {
+            if (elapsed < fadeTime) {
+                elapsed += frameTime;
+                if (elapsed >= fadeTime) {
+                    elapsed = fadeTime;
+                }
+                current = start + elapsed * delta / fadeTime;
+            }
+        }
+
         float current;
-        int elapsed;  // Set* resets it
+        float elapsed;  // Set* resets it
         float fadeTime;
         float delta;  // target - start
         float start;
         float target;
     };
-    unsigned char pad_20[0x4c];
+    unsigned char pad_20[0x38];
+    bool valid_;  // 0x58: IsValidHandle asks the voice only while it is set (the name is not the original's)
+    unsigned char pad_59[0x13];
     FadeValue pitch_;  // 0x6C
     FadeValue volume_;  // 0x84 (fw::SoundSsdDriver::getVolume type 0 reads its current value)
     FadeValue pan_;  // 0x9C
     unsigned char pad_b4[0x4];
     float volume2_;  // 0xB8: fw::SoundSsdDriver::getVolume type 2 reads it (the name is not the original's)
+    unsigned char pad_bc[0x3c];
+    unsigned int voiceId_;  // 0xF8: SystemCore::GetVoiceHandle's id (the name is not the original's)
 };
 }  // namespace ssd
 

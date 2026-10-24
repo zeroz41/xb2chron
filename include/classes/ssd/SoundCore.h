@@ -8,7 +8,7 @@ namespace ssd { class Allocator; }
 namespace ssd { class SoundCategory; }
 namespace ssd { class SoundEffecter; }
 namespace ssd { class SoundListener; }
-namespace ssd { namespace OutputMode { class Type; }}
+namespace ssd { namespace OutputMode { enum Type : int; }}  // the values are not known yet
 
 namespace ssd {
 // table 0x7100B81B70: the sound library's interface; its one instance is a SystemCore (NewInstance), whose
@@ -42,13 +42,19 @@ public:
         unsigned int memoryPoolSize;
     };
 
+    // what GetDebugInfo hands out (SystemCore::debugInfo_): 0x10 bytes SystemCore::UpdateGameFrame and
+    // AudioFrameProcess fill. The type's name is not the original's.
+    struct DebugInfo {
+        unsigned char pad_0[0x10];
+    };
+
     SoundCore();
 
-    virtual void GetOutputMode() const = 0;  // slot 0
-    virtual void SetOutputMode(ssd::OutputMode::Type) = 0;  // slot 1
-    virtual void GetMasterVolume() const = 0;  // slot 2
+    virtual OutputMode::Type GetOutputMode() const = 0;  // slot 0
+    virtual void SetOutputMode(OutputMode::Type) = 0;  // slot 1
+    virtual float GetMasterVolume() const = 0;  // slot 2
     virtual void SetMasterVolume(float, float) = 0;  // slot 3
-    virtual void GetMasterPitch() const = 0;  // slot 4
+    virtual float GetMasterPitch() const = 0;  // slot 4
     virtual void SetMasterPitch(float, float) = 0;  // slot 5
     virtual void AddSoundListener(ssd::SoundListener*) = 0;  // slot 6
     virtual void RemoveSoundListener(ssd::SoundListener*) = 0;  // slot 7
@@ -56,15 +62,15 @@ public:
     virtual void AddSoundEffecter(unsigned char, ssd::SoundEffecter*) = 0;  // slot 9
     virtual void RemoveSoundEffecter(ssd::SoundEffecter*) = 0;  // slot 10
     virtual bool IsActiveEffect(unsigned char) = 0;  // slot 11
-    virtual void GetNumPlaySound() const = 0;  // slot 12
-    virtual void GetSpeedOfSound() const = 0;  // slot 13
+    virtual int GetNumPlaySound() const = 0;  // slot 12
+    virtual float GetSpeedOfSound() const = 0;  // slot 13
     virtual void SetSpeedOfSound(float) = 0;  // slot 14
-    virtual void GetAudioCpuLoad() const = 0;  // slot 15
+    virtual double GetAudioCpuLoad() const = 0;  // slot 15
     virtual void LockAudio() const = 0;  // slot 16
     virtual void UnlockAudio() const = 0;  // slot 17
     virtual void* GetPlatformDataImpl(char const* name) = 0;  // slot 18
     virtual ~SoundCore();  // slot 19
-    virtual void GetDebugInfo() const = 0;  // slot 21
+    virtual const DebugInfo* GetDebugInfo() const = 0;  // slot 21
 
     static SoundCore* NewInstance(Allocator* allocator);
     static void DeleteInstance();
