@@ -14,7 +14,7 @@ public:
 // table 0x7100B522A0; base at 0x28 unknown (TUnk_B522F8)
 class GfFieldMapGimmick : public ::gf::AFieldSeq, public TUnk_B522F8 {
 public:
-    virtual void getIdStr() const;  // slot 0
+    virtual const char* getIdStr() const;  // slot 0
     virtual void create(gf::GF_OBJ_HANDLE*);  // slot 1
     virtual void dispose();  // slot 2
     virtual bool isEnd() const;  // slot 3

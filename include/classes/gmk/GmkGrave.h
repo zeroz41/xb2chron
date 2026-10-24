@@ -14,13 +14,19 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
-        unsigned char pad_0[0x14];
+        unsigned char pad_0[0x2];
+        // what gf::GfFieldGrave::create passes the common window (fn_7100359CD8) with message 51; the name is not
+        // the original's
+        unsigned short m_windowArg;
+        unsigned char pad_4[0x10];
     };
     virtual ~GmkGrave();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
     virtual void debugDraw() const;  // slot 7
+    // pops the grave's enemy (gf::GfFieldGrave::seqWaitToSelect calls it on the common window's first choice)
+    bool reqPopEnemy() const;
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*) {}  // slot 9
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)

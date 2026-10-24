@@ -159,6 +159,12 @@ public:
     // the common (message) window: open by message id or from a full parameter set; its result once closed
     static void openCommonWindow(unsigned short id);
     static void openCommonWindow(const MenuCommonWindowParam& param);
+    // Placeholder name: new in 3.0.1 (1.0.0's GfFieldGrave::create calls openCommonWindow(unsigned short) in its
+    // place, with one argument). A static member: its unit is gf_menu_manager and it reads the singleton.
+    // What it does: when the manager exists, its byte at 0x4090 is set and m_callContext is there, it resets the
+    // call context, passes it id and arg (fn_71003E1F60) and keeps id at 0x4164. gf::GfFieldGrave::create passes
+    // 51 and the grave row's GmkGrave::BdatInfo::m_windowArg.
+    static void fn_7100359CD8(unsigned short id, unsigned short arg);
     static bool isOpenCommonWindow();
     static void closeCommonWindow();
     static int getCommonWindowResult();

@@ -45,6 +45,11 @@ public:
     static void addWpForObject(unsigned int driver, unsigned int id, int wp);
     static void addWpForReserve(int wp);
     // whether the object behind a handle is playing a voice
+    // the field skill check of an FSID row for an object of name message nameMsId: whether the party passes it
+    // (AFieldSeq::seqCheckFs, GfFieldTbox::seqCheckFs)
+    static bool evalSumFs(int fsId, unsigned int nameMsId);
+    // the name message id of the object behind handle, into out
+    static void getNameMsId(unsigned int& out, gf::GF_OBJ_HANDLE* handle);
     static bool isPlayVoice(gf::GF_OBJ_HANDLE* handle);
     static int getObjAttribute(gf::GF_OBJ_HANDLE* handle);
     // the object takes field damage (GfGameScene::setDamageCharacter)
