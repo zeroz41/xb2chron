@@ -32,6 +32,8 @@ public:
     static void clear();
     // GfAssetSetup's destructor hands it the setup's handle
     static void lockEnterRersource(GF_ASSET_HANDLE* handle);
+    // whether the asset is being loaded again (GfObjAcc::isReload asks it for the object's)
+    static bool isReload(GF_ASSET_HANDLE* handle);
     static GF_ASSET_HANDLE* createAssetHandle(const GfInitParam& param);
     static AssetPackInfo* getAssetPackInfo(GF_ASSET_HANDLE* handle);
     // an asset's loaded file, none while it is not loaded

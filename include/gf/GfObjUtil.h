@@ -11,6 +11,7 @@ namespace gf { class GfAppendHandles; }
 namespace gf { class GfComProperty; }
 namespace gf { class GfObjProperty; }
 namespace gf { class GfObj; }
+namespace gf { class GFOBJ_INFO; }
 namespace gf { class GfObjSetup; }
 namespace gf { class GfAppend; }
 namespace gf { class GfAppendInfo; }
@@ -30,6 +31,11 @@ struct GfFadeInfo {
 class GfObjUtil {
 public:
     static bool isTrinityBlade(gf::GF_OBJ_HANDLE* handle);
+    // an info's flag bits (GfObjAcc's setFlag / testFlag forward to them)
+    static void setFlag(gf::GFOBJ_INFO* info, unsigned int flag, bool on);
+    static bool testFlag(const gf::GFOBJ_INFO* info, unsigned int flag);
+    // the object this one is attached to, none without one
+    static gf::GfObj* getParentObj(gf::GfObj* obj);
     // SCOM_OBJ_WARP_POS and SCOM_OBJ_VFADE_OFF pass their request's object
     static void setWarpTransform(GF_OBJ_HANDLE* handle, const fw::Transform& transform, bool);
     static void setVolumeFadeUserFlag(GF_OBJ_HANDLE* handle, bool);

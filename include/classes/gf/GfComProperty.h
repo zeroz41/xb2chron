@@ -8,6 +8,7 @@
 #include "mm/mtl/IntrusivePtr.h"
 #include "mm/mtl/UniquePtr.h"
 namespace gf { class GfTargetProperty; }  // gf/GfTargetProperty.h
+#include "gf/GfAlphaProperty.h"
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
 
@@ -27,7 +28,9 @@ public:
     mm::mtl::IntrusivePtr<gf::GfStatusProperty> m_status;  // the object's hit points (none: it takes no damage)
     // what those targeting or following the object read (the PC's flush fills it; the name is not the original's)
     mm::mtl::UniquePtr<gf::GfTargetProperty> m_target;
-    unsigned char pad_20[0x10];  // two more UniquePtrs
+    // the object's alphas by OBJ_ALPHA (1.0.0's symbols hold UniquePtr<GfAlphaProperty>; GfObjAcc reads it)
+    mm::mtl::UniquePtr<gf::GfAlphaProperty> m_alpha;
+    unsigned char pad_28[0x8];  // one more UniquePtr
     mm::mtl::UniquePtr<gf::GfDebugStatusProperty> m_debugStatus;  // debug switches (procMsgObjectDamage's)
 };
 }  // namespace gf

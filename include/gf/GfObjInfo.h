@@ -5,6 +5,7 @@
 #include "mm/Vec3.h"
 #include "mm/mtl/Bitflag.h"
 #include "mm/mtl/FixStr.h"
+#include "fw/Transform.h"
 #include "gf/GfAppend.h"
 
 namespace fw { class UpdatableObject; }
@@ -62,8 +63,9 @@ public:
     // OBJDISP bits that hide the object: GfObjAcc::isDisp is true while none of the asked ones is set (the name is
     // not the original's)
     unsigned int m_dispOff;
-    mm::Vec3 m_pos;  // (the names are not the original's)
-    mm::Quat m_rot;
+    // the object's place without a transform component: GfObjAcc::getWorldTransform returns it (the name is not
+    // the original's)
+    fw::Transform m_transform;
     unsigned long m_userData[3];  // by GfObjUserData: GfObjAcc::setUserData / getUserData
     // a handle, -1 when none (the name is not the original's)
     GF_OBJ_HANDLE* m_subHandle;

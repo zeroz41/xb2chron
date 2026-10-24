@@ -27,6 +27,7 @@ public:
     // not in the symbol)
     mm::Vec3& getOffsetInfo(bool);
     void setFrameSpd(float spd);
+    void setDisp(bool on);  // GfObjAcc::applyDisp passes whether the object and its parent show
     bool isDisp() const;
     bool isClip() const;
     virtual ~ScnObjModel();  // slot 0

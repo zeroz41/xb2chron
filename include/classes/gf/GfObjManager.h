@@ -26,6 +26,10 @@ public:
     virtual void gevMapjump(gf::GEV, gf::MapjumpCallbackInfo const&);  // slot 2
     void addDestroyObj(GF_OBJ_HANDLE* handle, bool flag);
     static GFOBJ_INFO* getObjInfo(GF_OBJ_HANDLE* handle);
+    // has the object's parameters (its alpha) applied again (GfObjAcc::setAlpha asks once one changed)
+    void addApplyParam(GF_OBJ_HANDLE* handle);
+    // whether a multi-bind id is still valid for the handle (GfObjAcc::isMultiBindWaiting)
+    bool isValidMultiBind(GF_OBJ_HANDLE* handle, unsigned int id) const;
     // a listener called for the objects' events, and its removal
     static void addListener(IGfObjListener* listener, IGfObjListener::OBJEVT evt);
     static void removeListener(IGfObjListener* listener);

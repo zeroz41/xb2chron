@@ -24,6 +24,8 @@ public:
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     mm::mtl::IntrusivePtr<fw::ReferenceFrame> createBoneReferenceFrame(const char* bone);
     void destroyBoneReferenceFrame(const char* bone);
+    // the model's scale, every axis the same (GfObjAcc::setModelScale forwards to it)
+    void setModelScale(float scale);
     static mm::mtl::RTTI m_rtti;
 
     unsigned char pad_10[0x8];
