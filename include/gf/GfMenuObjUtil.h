@@ -14,6 +14,15 @@ namespace gf {
 // the menu objects' shared helpers; its functions take no object
 class GfMenuObjUtil {
 public:
+    // the menu's parameters fw::ParamManager holds (getParamMenu; null without them). Only the two times
+    // GfMenuFieldSkill reads are known (the names are not the original's).
+    struct ParamMenu {
+        unsigned char pad_0[4];
+        float m_infoWait;   // seconds StateDispInfo waits after a skill
+        unsigned char pad_8[0xC];
+        float m_totalWait;  // seconds StateTotalNext waits
+    };
+    static const ParamMenu* getParamMenu();
     // what startCtrl hands UICtrlManager: the methods to add (m_methods' bits) and how long they run
     struct CtrlParam {
         // its fields the callers' code zeroes; the rest stay as they were
