@@ -68,6 +68,7 @@ public:
     static int s_nDblStockIdx;
     static DrMan* s_pTop;
     static int s_nDblNowIdx;
+    static int s_nDblMemIdx;
     static bool s_bSRGBMode;
     static bool s_bFogSRGB;
 

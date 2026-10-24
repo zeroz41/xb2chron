@@ -22,6 +22,11 @@
 #include "ml/DrResMdoLodObj.h"
 #include "ml/DrResMdoMeshObj.h"
 #include "ml/DrResMdoMorpObj.h"
+#include "classes/ml/DrMan.h"
+#include "classes/ml/DrResMdoInstPartsObj.h"
+#include "ml/DrResShdShw.h"
+#include "ml/DrResShdStreamOut.h"
+#include "ml/DrShdDataObj.h"
 
 namespace ml {
 
@@ -606,6 +611,144 @@ DrResFetch::SetVertFunc DrResFetch::s_callSetVert[52] = {
     nullptr,
     nullptr,
 };
+
+void DrShdLgtClustered::setPntLightUniformBlock(unsigned int idx, unsigned int location) {
+    m_viewWork[idx].pntLight.setUniformBlock(location);
+}
+
+void DrShdLgtClustered::setSptLightUniformBlock(unsigned int idx, unsigned int location) {
+    m_viewWork[idx].sptLight.setUniformBlock(location);
+}
+
+void DrShdLgtClustered::setPointerListUniformBlock(unsigned int idx, unsigned int location) {
+    m_viewWork[idx].pointerList.setUniformBlock(location);
+}
+
+void DrShdLgtClustered::setLightListUniformBlock(unsigned int, unsigned int) {}
+
+void DrShdLgtClustered::setParamUniformBlock(unsigned int idx, unsigned int location) {
+    m_viewWork[idx].param.setUniformBlock(location);
+}
+
+void DrShdLgtClustered::setPntLightStorageBuffer(unsigned int idx, unsigned int location) {
+    m_viewWork[idx].pntLight.setStorageBuffer(location);
+}
+
+void DrShdLgtClustered::setSptLightStorageBuffer(unsigned int idx, unsigned int location) {
+    m_viewWork[idx].sptLight.setStorageBuffer(location);
+}
+
+void DrShdLgtClustered::setPointerListStorageBuffer(unsigned int idx, unsigned int location) {
+    m_viewWork[idx].pointerList.setStorageBuffer(location);
+}
+
+void DrShdLgtClustered::setLightListStorageBuffer(unsigned int idx, unsigned int location) {
+    m_viewWork[idx].lightList.setStorageBuffer(location);
+}
+
+void DrShdLgtClustered::setParamStorageBuffer(unsigned int idx, unsigned int location) {
+    m_viewWork[idx].param.setStorageBuffer(location);
+}
+
+void DrResMdoInstPartsObj::getMatrix(mm::Mat44& m) const {
+    if (m_info->flags & 0x20) {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                m.m[i][j] = m_matrix->m[i][j];
+            }
+        }
+    }
+}
+
+void DrResMdoInstPartsAnm::setNodeFrame(float frame) {
+    m_nodeFrameStock[DrMan::s_nDblStockIdx] = frame;
+    m_stockFlags |= 1 << DrMan::s_nDblStockIdx;
+}
+
+float DrResMdoInstPartsAnm::getNodeFrame() const {
+    if (m_stockFlags & (1 << DrMan::s_nDblStockIdx)) {
+        return m_nodeFrameStock[DrMan::s_nDblStockIdx];
+    }
+    if (m_stockFlags & (1 << DrMan::s_nDblMemIdx)) {
+        return m_nodeFrameStock[DrMan::s_nDblMemIdx];
+    }
+    return m_nodeFrame;
+}
+
+void DrResMdoInstPartsAnm::setSwitchID(unsigned char id) {
+    if ((m_info->flags & 0x80) && m_switchID != id) {
+        m_switchID = id;
+        updateSwitch();
+    }
+}
+
+unsigned char DrResMdoInstPartsAnm::getSwitchIndex(unsigned int idx) const {
+    if (idx < m_switchMax) {
+        return m_switches[idx].index;
+    }
+    return 0;
+}
+
+void DrResShdStreamOut::setupStreamShader(unsigned int idx) {
+    m_data->setupShader(idx);
+}
+
+void (DrResShdShw::*DrResShdShw::s_callShwSet[5])() = {
+    &DrResShdShw::shwShdset_DefObj, &DrResShdShw::shwShdset_Inst, &DrResShdShw::shwShdset_Mot,
+    &DrResShdShw::shwShdset_InstMot, &DrResShdShw::shwShdset_Fw,
+};
+
+void (DrResShdStreamOut::*DrResShdStreamOut::s_callStmOuSet[9])() = {
+    &DrResShdStreamOut::stmShdset_Weight, &DrResShdStreamOut::stmShdset_Weight,
+    &DrResShdStreamOut::stmShdset_Weight, &DrResShdStreamOut::stmShdset_Weight,
+    &DrResShdStreamOut::stmShdset_WetVtx, &DrResShdStreamOut::stmShdset_MofSet,
+    &DrResShdStreamOut::stmShdset_MofSet, &DrResShdStreamOut::stmShdset_MeshVtxSet,
+    &DrResShdStreamOut::stmShdset_MofSet,
+};
+
+DrResShdShw::DrResShdShw(DrShdDataObj* data, int type) {
+    m_data = data;
+    for (int i = 0; i < 7; i++) {
+        m_shaderSel[i] = -1;
+    }
+    m_flags = 1;
+    m_type = type;
+    m_texTypeOfs = data->getDeclarationOfs("TEX_TYPE");
+    m_sptTypeOfs = m_data->getDeclarationOfs("SPT_TYPE");
+    (this->*s_callShwSet[m_type])();
+    m_flags &= ~1;
+}
+
+void DrResShdShw::setupShader(DrResFetch* fetch) {
+    m_data->setupShader(fetch);
+}
+
+void DrResShdShw::setDecAType(unsigned int idx) {
+    m_data->setDeclarationIdx(m_texTypeOfs, idx);
+}
+
+void DrResShdShw::setDecBType(unsigned int idx) {
+    m_data->setDeclarationIdx(m_sptTypeOfs, idx);
+}
+
+void DrResShdStreamOut::setDecNum(unsigned int idx) {
+    m_data->setDeclarationIdx(m_wetNumOfs, idx);
+}
+
+void DrResShdStreamOut::stmShdset_Weight() {
+    m_shaderSel[0] = 1;
+    m_shaderSel[1] = 0;
+}
+
+void DrResShdStreamOut::stmShdset_MofSet() {
+    m_shaderSel[0] = 0;
+    m_shaderSel[1] = 0;
+}
+
+void DrResShdStreamOut::stmShdset_MeshVtxSet() {
+    m_shaderSel[0] = 0;
+    m_shaderSel[1] = 1;
+}
 
 }  // namespace ml
 
