@@ -16,6 +16,7 @@ public:
     static void stop();
     static void gevPause(unsigned int, unsigned int);
     virtual ~GfGameEvent();  // slot 0
+    static void setCancelFlag(bool flag);
     static void setAfterEventStartID(int id);
     // GfEvtModel::destroy hands it the model first
     // the event playing now (GfEvtModelBlade::create asks)

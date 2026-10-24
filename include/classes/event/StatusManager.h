@@ -2,27 +2,50 @@
 #define CLASSES_EVENT_STATUSMANAGER_H
 
 #include "classes/ml/IWorkEvent.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace event { enum MSG_TYPE : int; }
 
 namespace event {
+
 // a base of event::StatusManager no evidence names yet
 class TUnk_B3D790 {
 public:
-    virtual ~TUnk_B3D790();
+    virtual ~TUnk_B3D790() {}
     virtual void OnEventProc(event::MSG_TYPE) = 0;
 };
+
 // a base of event::StatusManager no evidence names yet
 class TUnk_B3D808 {
 public:
-    virtual ~TUnk_B3D808();
+    virtual ~TUnk_B3D808() {}
 };
+
 // table 0x7100B3D790; base at 0x0 unknown (TUnk_B3D790), base at 0x10 unknown (TUnk_B3D808)
 class StatusManager : public TUnk_B3D790, public ::ml::IWorkEvent, public TUnk_B3D808 {
 public:
+    // one row changeFromBdat reads from EVT_listList (0x20 bytes: five ints, then a pointer at 0x18); the name and
+    // the layout's meaning are not the original's
+    struct ListItem {
+        unsigned char pad_0[0x18];
+        void* pad_18;
+    };
+
+    StatusManager();
     virtual ~StatusManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    // 1.0.0's init() (0x71000F69B8): clear(), then GfGameEvent::setCancelFlag(false)
+    void init();
+    // 1.0.0's clear() (0x71000F69D0): empties the list, then zeroes the flags
+    void clear();
+
+private:
+    // bit 0 makes changeFromBdat do nothing; the name is not the original's
+    unsigned int m_flags;  // 0x18
+    // filled by changeFromBdat (asserts size() < capacity() for 32 rows); the name is not the original's
+    mm::mtl::FixedVector<ListItem, 32> m_list;  // 0x20 (size at 0x420)
 };
+
 }  // namespace event
 
 #endif

@@ -316,3 +316,71 @@ void ObjectCamera::tail() {
 }
 
 }  // namespace event
+
+#include "classes/event/CharaManager.h"
+#include "classes/event/QuestManager.h"
+#include "classes/event/StatusManager.h"
+#include "classes/gf/GfGameEvent.h"
+
+namespace event {
+
+CharaManager::CharaManager() : m_modeFlags(0), m_dispFlags(0), m_offscrID(0), m_reuseFlag(0) {}
+
+void CharaManager::clear() {
+    m_offscrID = 0;
+    m_reuseFlag = 0;
+    m_modeFlags = 0;
+}
+
+void CharaManager::OnEventProc(event::MSG_TYPE msg) {
+    if (msg == 4) {
+        clear();
+    }
+}
+
+void QuestManager::clear() {
+    m_flags = 0;
+}
+
+void QuestManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+        clear();
+        break;
+    case 12:
+        clear();
+        break;
+    default:
+        break;
+    }
+}
+
+StatusManager::StatusManager() : m_flags(0) {}
+
+StatusManager::~StatusManager() {}
+
+void StatusManager::init() {
+    clear();
+    gf::GfGameEvent::setCancelFlag(false);
+}
+
+void StatusManager::clear() {
+    m_list.clear();
+    m_flags = 0;
+}
+
+void StatusManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+        init();
+        break;
+    case 12:
+        clear();
+        break;
+    default:
+        break;
+    }
+}
+
+}  // namespace event
+
