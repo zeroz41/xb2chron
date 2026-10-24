@@ -163,6 +163,13 @@ void GfMenuObject::setupPadLineSelection(unsigned int handle, unsigned int count
     }
 }
 
+void GfMenuObject::fn_7100362A08(unsigned int handle, unsigned int value) {
+    unsigned int input = ui::UIInputManager::get()->searchInputHandle(handle);
+    if (input != 0) {
+        ui::UIInputManager::get()->fn_7100679754(input, value);
+    }
+}
+
 void GfMenuObject::setPadLineSelectionLoop(unsigned int handle, bool loop) {
     unsigned int input = ui::UIInputManager::get()->searchInputHandle(handle);
     if (input != 0) {
@@ -429,6 +436,27 @@ bool GfMenuObject::getMenuDesc(unsigned int menuId, unsigned char*& file, unsign
         return true;
     }
     return false;
+}
+
+void GfMenuObject::changeFSSubLayer(unsigned int handle, unsigned short group, unsigned short layer, bool flag) {
+    int layerGroup = group;
+    ui::EventData event(1);
+    event.m_param0 = layer;
+    event.m_param1 = layerGroup;
+    event.m_param2 = flag;
+    ui::UIManager::get()->requestGameEvent(handle, event);
+}
+
+void GfMenuObject::returnFSSubLayer(unsigned int handle, unsigned short group) {
+    int layerGroup = group;
+    ui::EventData event;
+    event.m_type = 3;
+    event.m_param0 = layerGroup;
+    ui::UIManager::get()->requestGameEvent(handle, event);
+}
+
+void GfMenuObject::returnFSSubLayer(GfMenuObject* object) {
+    returnFSSubLayer(object->m_handle, GfMenuFullScreen::getLayerGroup(object->m_fsLayer));
 }
 
 void GfMenuObject::registFSLayerObject(unsigned int layer, unsigned int handle) {
