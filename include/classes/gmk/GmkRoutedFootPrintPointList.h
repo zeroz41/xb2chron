@@ -12,7 +12,8 @@ namespace gmk {
 class GmkRoutedFootPrintPointList : public ::gmk::TGmkList< ::gmk::GmkRoutedFootPrintPoint, ::gmk::GmkRoutedFootPrintPoint::BdatInfo, 1347438162u, 1u, ::gmk::GmkRoutedFootPrintPointGobCustom> {
 public:
     explicit GmkRoutedFootPrintPointList(unsigned int updateGmkNumPerFrame) : TGmkList(updateGmkNumPerFrame) {}
-    virtual ~GmkRoutedFootPrintPointList();  // slot 0
+    // trivial: its table's complete-object slot holds the base destructor, so it is inline
+    virtual ~GmkRoutedFootPrintPointList() {}  // slot 0
 };
 }  // namespace gmk
 

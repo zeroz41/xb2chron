@@ -12,7 +12,8 @@ namespace gmk {
 class GmkSalvageLocatorList : public ::gmk::TGmkList< ::gmk::GmkSalvageLocator, ::gmk::GmkSalvageLocator::BdatInfo, 1129073747u, 1u, ::gmk::GmkSalvageLocatorGob> {
 public:
     explicit GmkSalvageLocatorList(unsigned int updateGmkNumPerFrame) : TGmkList(updateGmkNumPerFrame) {}
-    virtual ~GmkSalvageLocatorList();  // slot 0
+    // trivial: its table's complete-object slot holds the base destructor, so it is inline
+    virtual ~GmkSalvageLocatorList() {}  // slot 0
     virtual gmk::AGmkBase* getInst(unsigned int) const;  // slot 6
 };
 }  // namespace gmk

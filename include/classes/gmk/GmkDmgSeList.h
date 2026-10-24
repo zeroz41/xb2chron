@@ -12,7 +12,8 @@ namespace gmk {
 class GmkDmgSeList : public ::gmk::TGmkList< ::gmk::GmkDmgSe, ::gmk::GmkDmgSe::BdatInfo, 1163087172u, 2u, ::gmk::GmkDmgSeGob> {
 public:
     explicit GmkDmgSeList(unsigned int updateGmkNumPerFrame) : TGmkList(updateGmkNumPerFrame) {}
-    virtual ~GmkDmgSeList();  // slot 0
+    // trivial: its table's complete-object slot holds the base destructor, so it is inline
+    virtual ~GmkDmgSeList() {}  // slot 0
     virtual gmk::AGmkBase* getInst(unsigned int) const;  // slot 6
 };
 }  // namespace gmk

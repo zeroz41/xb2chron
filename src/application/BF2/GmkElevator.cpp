@@ -165,7 +165,7 @@ static const char* s_gmkKindNames[gmk::GmkSet::GMK_LIST_NUM] = {
 
 // one kind's entry of the names table; its users pass the table in, which keeps it writable (.data, reached
 // without the GOT) as the original's is (the name is not the original's)
-static inline const char* getGmkKindName(const char** names, int type) {
+static inline const char* getGmkKindName(const char** names, unsigned int type) {
     return names[type];
 }
 
@@ -199,15 +199,38 @@ GmkRoutedEnemyPointList::~GmkRoutedEnemyPointList() {}
 
 GmkMobList::~GmkMobList() {}
 
-GmkDmgPhantomList::~GmkDmgPhantomList() {}
+gmk::AGmkBase* GmkDmgPhantomList::getInst(unsigned int index) const {
+    return const_cast<GmkDmgPhantom*>(&m_gmks[index]);
+}
 
-GmkDmgEffectList::~GmkDmgEffectList() {}
+gmk::AGmkBase* GmkDmgEffectList::getInst(unsigned int index) const {
+    return const_cast<GmkDmgEffect*>(&m_gmks[index]);
+}
 
-GmkDmgSeList::~GmkDmgSeList() {}
+gmk::AGmkBase* GmkDmgSeList::getInst(unsigned int index) const {
+    return const_cast<GmkDmgSe*>(&m_gmks[index]);
+}
 
-GmkRoutedFootPrintPointList::~GmkRoutedFootPrintPointList() {}
+gmk::AGmkBase* GmkSalvageLocatorList::getInst(unsigned int index) const {
+    return const_cast<GmkSalvageLocator*>(&m_gmks[index]);
+}
 
-GmkSalvageLocatorList::~GmkSalvageLocatorList() {}
+const char* GmkManager::getSheetnameByType(int id, GmkType type) const {
+    mm::mtl::FixStr<256> column;
+    column.format("%s_bdat", getGmkKindName(s_gmkKindNames, type));
+    unsigned char* setFp = m_gmkSetBdatFp;
+    return Bdat::getMember(setFp, column.m_str) != nullptr ? Bdat::getValCheck(setFp, column.m_str, id, 7) : nullptr;
+}
+
+int GmkManager::getMapBdatId(int id) const {
+    unsigned char* fp = m_gmkSetBdatFp;
+    int count = Bdat::getIdCount(fp);
+    int top = Bdat::getIdTop(fp);
+    if (id < top || id >= top + count) {
+        return -1;
+    }
+    return static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "mapId", id, 2)));
+}
 
 GmkCollectionList::~GmkCollectionList() {
     dispose();
