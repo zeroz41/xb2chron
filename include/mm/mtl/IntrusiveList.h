@@ -32,6 +32,10 @@ public:
 template <typename T>
 class IntrusiveListNode : public IntrusiveListNodeBase {
 public:
+    IntrusiveListNode() {}
+    // one that starts with its owner given (fw::Camera's constructor passes none)
+    explicit IntrusiveListNode(T* owner) : m_pOwner(owner) {}
+
     T* m_pOwner;  // the element's constructor sets it to the element
 };
 
