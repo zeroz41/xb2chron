@@ -11,6 +11,8 @@ namespace gf {
 // table 0x7100B6B240
 class SCOM_OBJ_WARP_POS : public ::gf::SCOM {
 public:
+    // warps an object to pos facing rot (GfEvtModelSalvage::setTransform; the last flag's meaning is not known)
+    static void create(GF_OBJ_HANDLE* handle, const mm::Vec3& pos, const mm::Vec3& rot, bool arg);
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
 
     // the names are not the original's: what the create functions store (their arguments, in order)

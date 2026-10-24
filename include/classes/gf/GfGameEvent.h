@@ -14,6 +14,10 @@ public:
     static void gevPause(unsigned int, unsigned int);
     virtual ~GfGameEvent();  // slot 0
     static void setAfterEventStartID(int id);
+    // GfEvtModel::destroy hands it the model first
+    // the event playing now (GfEvtModelBlade::create asks)
+    static int getPlayEventId();
+    static void destroyEvtModel(class GfEvtModel* model);
 };
 }  // namespace gf
 

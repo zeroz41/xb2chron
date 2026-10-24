@@ -3,12 +3,16 @@
 
 #include "mm/mtl/RTTI.h"
 #include "classes/gf/GfEvtModel.h"
+#include "classes/gf/GfInitParamEventObj.h"
 
 namespace gf {
 // table 0x7100B54048
 class GfEvtModelEvent : public ::gf::GfEvtModel {
 public:
-    virtual ~GfEvtModelEvent();  // slot 0
+    explicit GfEvtModelEvent(GfInitParamEventObj& param);
+    // a new model, its first reference taken
+    static GfEvtModelEvent* create(GfInitParamEventObj& param);
+    virtual ~GfEvtModelEvent() {}  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
     static mm::mtl::RTTI m_rtti;
 };

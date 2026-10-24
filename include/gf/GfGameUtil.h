@@ -37,6 +37,11 @@ public:
     static gf::GF_OBJ_HANDLE* getWeaponOwner(gf::GF_OBJ_HANDLE* handle);
     // the name of a weapon's idle state for its owner, in battle or not
     static void makeWeaponStateIdle(mm::mtl::FixStr<32>& out, gf::GF_OBJ_HANDLE* owner, bool battle);
+    // the same for a weapon id (GfEvtModelWeapon's states; the parameter names are not the original's)
+    static void makeWeaponStateIdle(mm::mtl::FixStr<32>& out, unsigned int weaponId, bool battle);
+    // the name of a weapon's battle (or field) command for a weapon id (GfEvtModelWeapon's commands; the meaning of
+    // the last flag is not known)
+    static void makeWeaponCommandBattle(mm::mtl::FixStr<32>& out, unsigned int weaponId, bool battle, bool arg);
     // shows or hides the gimmicks of a type
     static void setDispByGmkType(gmk::GmkType type, bool disp);
 

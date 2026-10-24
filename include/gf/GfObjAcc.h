@@ -30,6 +30,8 @@ public:
     int getType() const;  // the object's type (3: a driver)
     unsigned int getBdatId() const;
     bool isDisp(OBJDISP disp) const;
+    // shows or hides it for disp (GfEvtModelDriver::setDispWeapon asks 2 for its weapons)
+    void setDisp(OBJDISP disp, bool on);
     bool isValidTransform() const;  // its world transform can be read
     // a bone's world transform; false when the object has no such bone
     bool getBoneTransform(fw::Transform& transform, const char* bone);

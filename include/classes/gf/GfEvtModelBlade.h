@@ -24,14 +24,24 @@ public:
     virtual void update(fw::UpdateInfo const&);  // slot 3
     virtual void setDispWeapon(bool);  // slot 4
     virtual void setDispWeapon(bool, bool);  // slot 5
-    virtual void getWeaponHandleRight() const;  // slot 6
-    virtual void getWeaponHandleLeft() const;  // slot 7
+    virtual GF_OBJ_HANDLE* getWeaponHandleRight() const;  // slot 6
+    virtual GF_OBJ_HANDLE* getWeaponHandleLeft() const;  // slot 7
     virtual void setWeaponBattleCommand();  // slot 8
     virtual void setWeaponFieldCommand();  // slot 9
     virtual void setWeaponBattleState();  // slot 10
     virtual void setWeaponFieldState();  // slot 11
     virtual void setWeaponBattleMount();  // slot 12
     virtual void setWeaponFieldMount();  // slot 13
+    // a new blade model, its first reference taken
+    static GfEvtModelBlade* create(GfInitParamBlade& param);
+    // the weapon's (right: its first object, left: its second) GfComPackAnim: plays name, whether it has ended
+    // (also when there is none), its speed
+    void playAnimWeaponRightCS(const char* name);
+    bool isPlayEndAnimWeaponRightCS();
+    void setAnimSpeedWeaponRightCS(float speed);
+    void playAnimWeaponLeftCS(const char* name);
+    bool isPlayEndAnimWeaponLeftCS();
+    void setAnimSpeedWeaponLeftCS(float speed);
     static mm::mtl::RTTI m_rtti;
 
     ai::Fsm m_fsm;  // the four states (the name is not the original's)
