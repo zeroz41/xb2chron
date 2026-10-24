@@ -79,6 +79,9 @@ enum EventClearMode {
     EventClearMode_ManualClear,
     EventClearMode_AutoClear,
 };
+// writes the CPU cache lines of the range back to memory (the SDK's)
+void FlushDataCache(const void* address, unsigned long size);
+
 void InitializeEvent(EventType* event, bool initiallySignaled, EventClearMode clearMode);
 void FinalizeEvent(EventType* event);
 void WaitEvent(EventType* event);

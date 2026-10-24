@@ -6,6 +6,9 @@ namespace ml {
 class DrResEtcParams {
 public:
     float getParams() const;
+    void setParams(float value);
+    void setPreParams(float value);
+    void setInitParams(float value);
 
     unsigned char pad_0[0x14];
     float m_params;  // 0x14, returned by getParams (the name is not the original's)

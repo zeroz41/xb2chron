@@ -10,6 +10,9 @@ namespace grlib {
 class CGLibManager : public ::mm::mtl::PtrSingleton< ::grlib::CGLibManager> {
 public:
     virtual ~CGLibManager();  // slot 0
+
+    // which of the double-buffered frame halves is current
+    static int s_nDblNowIdx;
 };
 }  // namespace grlib
 

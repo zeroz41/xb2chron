@@ -16,6 +16,7 @@ namespace ml { class WinProc; }
 namespace ml {
 // what ScnRenderDrSysParmAcc::createAddRenderView builds from a ScnRenderDrViewCtrl
 struct DR_VIEW_PARAM;
+class DrEnvironmentMan;
 
 // a texture a scene's models are drawn with (ScnRenderDrSysParmAcc::setModelTexture builds it; the field names are
 // not the original's)
@@ -57,12 +58,15 @@ public:
     void setModelTexture(DR_MODEL_TEXTURE* texture, unsigned int slot);
     void resetModelTexture(unsigned int slot);
 
+    static int s_nDblIdx;
     static int s_nDblStockIdx;
 
     unsigned char pad_8[0x68];
     DrIniSys* m_iniSys;                 // the constructor makes it (0x1BA0 bytes)
     DrPixlMan* m_pixlMan;               // 0x78, DrMdoSetup::varStTex_* call DrPixlMan methods on it (the name is not the original's)
-    unsigned char pad_80[0xA0];
+    unsigned char pad_80[0x80];
+    // the constructor makes one per view (index 0 here), after the DrLightMan/DrFogMan it is built from
+    DrEnvironmentMan* m_envMan[4];
     DrPixlPostParm* m_postParm[4];      // the constructor makes them; ScnRenderDrSysParmAcc takes one per view
     unsigned char pad_140[0x480];
     DrAPCache* m_apCache;               // 0x5C0, DrMdoSetup::varStTex_* bind textures through it (the name is not the original's)

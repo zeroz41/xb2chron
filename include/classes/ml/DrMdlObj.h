@@ -3,8 +3,11 @@
 
 #include "classes/ml/DrMdoCtl.h"
 #include "mm/Vec3.h"
+#include "mm/Mat44.h"
 
 namespace ml { class DrMdoSmlShadowMan; }
+namespace ml { class DrResEtcParams; }
+namespace ml { struct MdoRimBloomWrk; }
 
 namespace ml {
 // table 0x7100B7ABE0
@@ -25,6 +28,34 @@ public:
     void setGroups(int groups) { m_groups = groups; }
     const mm::Vec3& getCenter() const { return m_center; }
     float getLength() const { return m_length; }
+
+    // the model's etc-parameter table (ScnObjAccEtcParams reads it; field names are not the original's)
+    struct EtcParamsName {
+        unsigned int m_nameOfs;  // from m_strBase
+        unsigned char pad_4[0xC];
+    };
+    struct EtcParamsTable {
+        const char* m_strBase;
+        const EtcParamsName* m_names;
+        DrResEtcParams* m_params;
+        unsigned int m_num;
+        unsigned int m_flags;  // bit 0: rim bloom (ScnObjAccEtcParams::setRimBloom)
+    };
+
+    bool isGpuRender() const;
+    bool isCamCheckResl() const;
+    void setAlwaysMiddleTexStm(bool on);
+    void setGpuClip(bool on);
+    void setDblBuffAlpha(bool on);
+    void setSpAlphaMode(bool on);
+    void setCamCheckMode(bool on);
+    int getNodeMax() const;
+    int getNodeIdx(const char* name) const;
+    const char* getNodeName(int index) const;
+    void setResBoneMat(int index, const mm::Mat44& mat);
+    mm::Mat44 getResBoneMat(int index) const;
+    mm::Mat44* getResBoneMatPtr(int index);
+    MdoRimBloomWrk* getRimBloomWrk(unsigned int bank);
 
     // the names are not the original's
     unsigned char pad_DC[0x54];

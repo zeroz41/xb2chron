@@ -1,3 +1,4 @@
+#include "classes/ml/DrMdoMat.h"
 #include "classes/ml/ScnRender.h"
 #include "classes/ml/ScnRenderDrSys.h"
 #include "classes/ml/DrMan.h"
@@ -6,8 +7,454 @@
 #include "ml/DrPixlPostParm.h"
 #include "ml/ScnRenderDrSysParmAcc.h"
 #include "ml/ScnRenderDrViewCtrl.h"
+#include "classes/ml/ScnObjModelDrSys.h"
+#include "ml/MdoWrkMatRes.h"
+#include "classes/ml/DrMdlObj.h"
+#include "classes/ml/DrMdoCtlNom.h"
+#include "ml/DrResEtcParams.h"
+#include "ml/DrResMdoMeshObj.h"
+#include "ml/DrResMdoVtxMeshObj.h"
+#include "ml/DrCreator.h"
+#include "ml/DrEnvColiMan.h"
+#include "ml/DrEnvironmentMan.h"
+#include "ml/ScnObjAccResMdlInfo.h"
+#include "ml/ScnObjAccResNode.h"
+#include "ml/ScnObjAccEtcParams.h"
+#include "ml/ScnObjAccResSubMesh.h"
+#include "ml/ScnObjAccVolumeFade.h"
+#include "ml/ScnObjAccMdlParticle.h"
+#include "ml/ScnObjAccGpuCheck.h"
+#include "ml/ScnObjAccStmReadObj.h"
+#include "ml/ScnRenderDrEnvColi.h"
+#include "ml/ScnObjAccRimBloom.h"
+#include "ml/DrStmReadObj.h"
+#include "nn/os.h"
+#include "classes/grlib/CGLibManager.h"
+#include "classes/grlib/context/CGLibSystemContext.h"
+#include "grlib/CGLibMemHandle.h"
+#include "grlib/CGLibVtxInstans.h"
+#include "grlib/CGLibVtxOneInstans.h"
+#include "grlib/CGLibVtxVertex.h"
+#include "grlib/CGLibVtlMemPool.h"
+#include "grlib/CGLibVtxStmOut.h"
+#include <string.h>
+
+namespace grlib {
+
+CGLibVtxInstans::CGLibVtxInstans() { m_base = 0; }
+
+CGLibVtxInstans::~CGLibVtxInstans() { CGLibMemHandle::free(m_mem); }
+
+void CGLibVtxInstans::release() { CGLibMemHandle::free(m_mem); }
+
+void CGLibVtxInstans::createInstansBuffer(int size) {
+    CGLibMemHandle::free(m_mem);
+    m_size = size;
+    m_frameSize = m_size / 2;
+    CGLibMemHandle::allocVertex(m_mem, size);
+    context::CGLibSystemContext::sys()->getVertexGpuAddress(m_gpuAddress, m_mem);
+}
+
+void CGLibVtxInstans::beginInstansBuff() {
+    m_base = CGLibManager::s_nDblNowIdx * m_frameSize;
+    m_offset = 0;
+    m_flushed = 0;
+}
+
+void CGLibVtxInstans::updateInstansBuff() {
+    unsigned int size = m_offset - m_flushed;
+    if (size != 0) {
+        nn::os::FlushDataCache(static_cast<unsigned char*>(m_mem.m_pMem) + (m_base + m_flushed), size);
+        m_flushed = m_offset;
+    }
+}
+
+void* CGLibVtxInstans::getNextInstansBuff() { return static_cast<unsigned char*>(m_mem.m_pMem) + (m_offset + m_base); }
+
+CGLibVtxOneInstans::CGLibVtxOneInstans() {}
+
+CGLibVtxOneInstans::~CGLibVtxOneInstans() { CGLibMemHandle::free(m_mem); }
+
+void CGLibVtxOneInstans::createInstansBuffer(int size) {
+    CGLibMemHandle::free(m_mem);
+    m_size = size;
+    CGLibMemHandle::allocVertex(m_mem, size);
+    context::CGLibSystemContext::sys()->getVertexGpuAddress(m_gpuAddress, m_mem);
+}
+
+void CGLibVtxOneInstans::beginInstansBuff() {
+    m_offset = 0;
+    m_flushed = 0;
+}
+
+void CGLibVtxOneInstans::updateInstansBuff() {
+    if (m_offset != m_flushed) {
+        nn::os::FlushDataCache(static_cast<unsigned char*>(m_mem.m_pMem) + m_flushed, m_offset - m_flushed);
+        m_flushed = m_offset;
+    }
+}
+
+void* CGLibVtxOneInstans::getBuff() { return m_mem.m_pMem; }
+
+CGLibVtxStmOut::CGLibVtxStmOut() {}
+
+CGLibVtxStmOut::~CGLibVtxStmOut() { CGLibMemHandle::free(m_mem); }
+
+void CGLibVtxStmOut::release() { CGLibMemHandle::free(m_mem); }
+
+unsigned int CGLibVtxStmOut::getSize() { return m_size; }
+
+CGLibVtxVertex::CGLibVtxVertex() : m_size(0), m_stride(0), m_num(0) {}
+
+CGLibVtxVertex::~CGLibVtxVertex() { CGLibMemHandle::free(m_mem); }
+
+void CGLibVtxVertex::release() { CGLibMemHandle::free(m_mem); }
+
+void CGLibVtxVertex::delayRelease() { context::CGLibSystemContext::sys()->releaseDelayVertex(m_mem); }
+
+void CGLibVtxVertex::createVertexBuff(unsigned int size, unsigned int stride) {
+    CGLibMemHandle::free(m_mem);
+    m_size = size;
+    m_stride = stride;
+    m_num = size / stride;
+    CGLibMemHandle::allocVertex(m_mem, size + (-size & 3));
+    context::CGLibSystemContext::sys()->getVertexGpuAddress(m_gpuAddress, m_mem);
+}
+
+void CGLibVtxVertex::createMemVertexBuff(CGLibVtlMemPool* pool, unsigned int offset, unsigned int size,
+                                         unsigned int stride) {
+    CGLibMemHandle::free(m_mem);
+    m_size = size;
+    m_stride = stride;
+    m_num = size / stride;
+    CGLibMemHandle::setMemBuff(m_mem, pool->m_pMem + offset);
+    m_gpuAddress = pool->m_gpuAddress + offset;
+}
+
+void CGLibVtxVertex::createCopyVertexBuff(const void* vertices, unsigned int size, unsigned int stride) {
+    CGLibMemHandle::free(m_mem);
+    m_num = size / m_stride;
+    m_size = size;
+    m_stride = stride;
+    CGLibMemHandle::allocVertex(m_mem, size + (-size & 3));
+    memcpy(m_mem.m_pMem, vertices, size);
+    nn::os::FlushDataCache(m_mem.m_pMem, size);
+    context::CGLibSystemContext::sys()->getVertexGpuAddress(m_gpuAddress, m_mem);
+}
+
+void CGLibVtxVertex::resetVertexBuff(CGLibVtlMemPool* pool, unsigned int offset) {
+    CGLibMemHandle::setMemBuff(m_mem, pool->m_pMem + offset);
+    m_gpuAddress = pool->m_gpuAddress + offset;
+}
+
+void CGLibVtxVertex::lock(void** ppBuffer, unsigned int* pSize) {
+    *ppBuffer = m_mem.m_pMem;
+    *pSize = m_size;
+}
+
+void CGLibVtxVertex::unlock() { nn::os::FlushDataCache(m_mem.m_pMem, m_size); }
+
+void CGLibVtxVertex::unlock(unsigned int offset, unsigned int size) {
+    nn::os::FlushDataCache(static_cast<unsigned char*>(m_mem.m_pMem) + offset, size);
+}
+
+}  // namespace grlib
+
 
 namespace ml {
+ScnObjAccResMdlInfo::ScnObjAccResMdlInfo(ScnObjModel* model) {
+    m_drMdl = nullptr;
+    m_drMdl = static_cast<ScnObjModelDrSys*>(model)->m_pMdlObj;
+}
+
+int ScnObjAccResMdlInfo::isGpuRender() const { return m_drMdl->isGpuRender(); }
+
+void ScnObjAccResMdlInfo::setAlwaysMiddleTexStm(bool on) { m_drMdl->setAlwaysMiddleTexStm(on); }
+
+void ScnObjAccResMdlInfo::setGpuClip(bool on) { m_drMdl->setGpuClip(on); }
+
+void ScnObjAccResMdlInfo::setAlwaysTexStm(bool on) { m_drMdl->setAlwaysTexStm(on); }
+
+void ScnObjAccResMdlInfo::setDblBuffAlpha(bool on) { m_drMdl->setDblBuffAlpha(on); }
+
+void ScnObjAccResMdlInfo::setSpAlphaMode(bool on) { m_drMdl->setSpAlphaMode(on); }
+
+void ScnObjAccResMdlInfo::setCamCheckMode(bool on) { m_drMdl->setCamCheckMode(on); }
+
+bool ScnObjAccResMdlInfo::isCamCheckResl() const { return m_drMdl->isCamCheckResl(); }
+
+void ScnObjAccResMdlInfo::createAfterImage(const DrMdlAfterImageParams& params) {
+    if (m_drMdl->m_mdlType != 0) {
+        return;
+    }
+    static_cast<DrMdoCtlNom*>(m_drMdl)->createAfterImage(
+        params.m_params0[0], params.m_params0[1], params.m_params0[2], params.m_color0, params.m_params1[0],
+        params.m_params1[1], params.m_params1[2], params.m_color1, params.m_params2[0], params.m_params2[1],
+        params.m_params2[2]);
+}
+
+void ScnObjAccResMdlInfo::releaseAfterImage() {
+    if (m_drMdl->m_mdlType != 0) {
+        return;
+    }
+    static_cast<DrMdoCtlNom*>(m_drMdl)->releaseAfterImage();
+}
+
+ScnObjAccResNode::ScnObjAccResNode() : m_drMdl(nullptr) {}
+
+ScnObjAccResNode::ScnObjAccResNode(ScnObjModel* model) : m_drMdl(static_cast<ScnObjModelDrSys*>(model)->m_pMdlObj) {}
+
+void ScnObjAccResNode::setDrMdl(DrMdlObj* mdl) { m_drMdl = mdl; }
+
+int ScnObjAccResNode::getBoneMax() const { return m_drMdl->getNodeMax(); }
+
+int ScnObjAccResNode::getBoneIndex(const char* name) const { return m_drMdl->getNodeIdx(name); }
+
+const char* ScnObjAccResNode::getBoneName(int index) const {
+    if (index < 0) {
+        return nullptr;
+    }
+    return m_drMdl->getNodeName(index);
+}
+
+void ScnObjAccResNode::setBoneMat(int index, const mm::Mat44& mat) { m_drMdl->setResBoneMat(index, mat); }
+
+mm::Mat44* ScnObjAccResNode::getBoneMatPtr(int index) { return m_drMdl->getResBoneMatPtr(index); }
+
+ScnObjAccEtcParams::ScnObjAccEtcParams(ScnObjModel* model) {
+    DrMdlObj* mdl = static_cast<ScnObjModelDrSys*>(model)->m_pMdlObj;
+    if (mdl->m_mdlType != 0) {
+        m_table = nullptr;
+    } else {
+        m_table = static_cast<DrMdoCtlNom*>(mdl)->m_etcParams;
+    }
+}
+
+unsigned int ScnObjAccEtcParams::getMax() const {
+    if (m_table == nullptr) {
+        return 0;
+    }
+    return m_table->m_num;
+}
+
+const char* ScnObjAccEtcParams::getName(unsigned int index) const {
+    if (m_table == nullptr) {
+        return nullptr;
+    }
+    if (index >= m_table->m_num) {
+        return nullptr;
+    }
+    return m_table->m_strBase + m_table->m_names[index].m_nameOfs;
+}
+
+int ScnObjAccEtcParams::getIndex(const char* name) const {
+    if (m_table != nullptr) {
+        for (unsigned long i = 0; i < m_table->m_num; i++) {
+            if (strcmp(name, m_table->m_strBase + m_table->m_names[i].m_nameOfs) == 0) {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
+void ScnObjAccEtcParams::setParams(unsigned int index, float value) {
+    if (m_table != nullptr && index < m_table->m_num) {
+        m_table->m_params[index].setParams(value);
+    }
+}
+
+void ScnObjAccEtcParams::setPreParams(unsigned int index, float value) {
+    if (m_table != nullptr && index < m_table->m_num) {
+        m_table->m_params[index].setPreParams(value);
+    }
+}
+
+void ScnObjAccEtcParams::setInitParams(unsigned int index, float value) {
+    if (m_table != nullptr && index < m_table->m_num) {
+        m_table->m_params[index].setInitParams(value);
+    }
+}
+
+void ScnObjAccEtcParams::setRimBloom(bool on) {
+    if (m_table != nullptr) {
+        m_table->m_flags = !on ? (m_table->m_flags & ~1) : (m_table->m_flags | 1);
+    }
+}
+
+ScnObjAccResSubMesh::ScnObjAccResSubMesh(ScnObjModel* model) {
+    m_mesh = nullptr;
+    DrMdlObj* mdl = static_cast<ScnObjModelDrSys*>(model)->m_pMdlObj;
+    if (mdl->m_mdlType == 0 && mdl->m_pWrkMatRes != nullptr) {
+        MdoWrkMatRes* res = mdl->m_pWrkMatRes;
+        m_mesh = static_cast<DrMdoCtlNom*>(mdl)->m_mesh;
+        const MdoMdlData* data = res->m_pMdlData;
+        m_subMesh = reinterpret_cast<const char*>(data) + data->m_subMeshOfs;
+    }
+}
+
+int ScnObjAccResSubMesh::getExtMax() const {
+    if (m_mesh == nullptr) {
+        return 0;
+    }
+    return m_mesh->m_num;
+}
+
+int ScnObjAccResSubMesh::getExtIdx(const char* name) const {
+    if (m_mesh == nullptr) {
+        return -1;
+    }
+    return m_mesh->getIdx(name);
+}
+
+const char* ScnObjAccResSubMesh::getExtName(int index) const {
+    DrResMdoMeshParts* parts = m_mesh->m_parts;
+    return parts[static_cast<unsigned int>(index)].m_name;
+}
+
+void ScnObjAccResSubMesh::setExtAlpha(int index, float alpha) {
+    DrResMdoMeshParts* parts = m_mesh->m_parts;
+    parts[static_cast<unsigned int>(index)].setDefAlpha(alpha);
+}
+
+ScnObjAccVolumeFade::ScnObjAccVolumeFade(ScnObjModel* model) : m_material(static_cast<ScnObjModelDrSys*>(model)->m_pMdlObj) {}
+
+ScnObjAccVolumeFade::~ScnObjAccVolumeFade() {}
+
+int ScnObjAccVolumeFade::getMax() const {
+    if (m_material == nullptr) {
+        return 0;
+    }
+    return m_material->getVanishEffectMax();
+}
+
+void ScnObjAccVolumeFade::setRatio(float ratio, int index) {
+    if (m_material == nullptr) {
+        return;
+    }
+    if (index >= 0) {
+        MdoVanishEffectWrk* wrk = m_material->getVanishEffectWrk(index, DrMan::s_nDblIdx);
+        if (wrk != nullptr) {
+            wrk->m_ratio = ratio;
+            wrk->m_flags |= 0x100;
+        }
+    } else {
+        for (unsigned int i = 0; i < m_material->getVanishEffectMax(); i++) {
+            MdoVanishEffectWrk* wrk = m_material->getVanishEffectWrk(i, DrMan::s_nDblIdx);
+            wrk->m_ratio = ratio;
+            wrk->m_flags |= 0x100;
+        }
+    }
+}
+
+float ScnObjAccVolumeFade::getRatio(unsigned int index) const {
+    float ratio = 0.0f;
+    if (m_material != nullptr) {
+        MdoVanishEffectWrk* base = m_material->getVanishEffectWrk(index, 2);
+        if (base != nullptr) {
+            MdoVanishEffectWrk* wrk = m_material->getVanishEffectWrk(index, DrMan::s_nDblIdx);
+            if (!(wrk->m_flags & 0x100)) {
+                wrk = m_material->getVanishEffectWrk(index, DrMan::s_nDblStockIdx);
+                if (!(wrk->m_flags & 0x100)) {
+                    return base->m_ratio;
+                }
+            }
+            ratio = wrk->m_ratio;
+        }
+    }
+    return ratio;
+}
+
+ScnObjAccRimBloom::ScnObjAccRimBloom(ScnObjModel* model) : m_drMdl(static_cast<ScnObjModelDrSys*>(model)->m_pMdlObj) {}
+
+ScnObjAccRimBloom::~ScnObjAccRimBloom() {}
+
+void ScnObjAccRimBloom::setRimColor(const mm::Col3& color) {
+    if (m_drMdl != nullptr) {
+        MdoRimBloomWrk* wrk = m_drMdl->getRimBloomWrk(DrMan::s_nDblIdx);
+        if (wrk != nullptr) {
+            wrk->m_color = color;
+            wrk->m_flags |= 1;
+        }
+    }
+}
+
+void ScnObjAccRimBloom::setRimEmissive(float emissive) {
+    if (m_drMdl != nullptr) {
+        MdoRimBloomWrk* wrk = m_drMdl->getRimBloomWrk(DrMan::s_nDblIdx);
+        if (wrk != nullptr) {
+            wrk->m_emissive = emissive;
+            wrk->m_flags |= 8;
+        }
+    }
+}
+
+void ScnObjAccRimBloom::setRimPower(float power) {
+    if (m_drMdl != nullptr) {
+        MdoRimBloomWrk* wrk = m_drMdl->getRimBloomWrk(DrMan::s_nDblIdx);
+        if (wrk != nullptr) {
+            wrk->m_power = power;
+            wrk->m_flags |= 2;
+        }
+    }
+}
+
+void ScnObjAccRimBloom::setBlackRatio(float ratio) {
+    if (m_drMdl != nullptr) {
+        MdoRimBloomWrk* wrk = m_drMdl->getRimBloomWrk(DrMan::s_nDblIdx);
+        if (wrk != nullptr) {
+            wrk->m_blackRatio = ratio;
+            wrk->m_flags |= 4;
+        }
+    }
+}
+
+ScnObjAccMdlParticle::ScnObjAccMdlParticle(ScnObjModel* model) {
+    DrMdlObj* mdl = static_cast<ScnObjModelDrSys*>(model)->m_pMdlObj;
+    if (mdl->m_mdlType != 0) {
+        m_vtxMesh = nullptr;
+    } else {
+        m_vtxMesh = static_cast<DrMdoCtlNom*>(mdl)->m_vtxMesh;
+    }
+}
+
+void ScnObjAccMdlParticle::setActive(bool active, unsigned int index) {
+    if (m_vtxMesh != nullptr) {
+        m_vtxMesh->setActive(active, index);
+    }
+}
+ScnObjAccGpuCheck::ScnObjAccGpuCheck(DrGpuCheckBase* check) : m_check(check) {}
+
+void ScnObjAccGpuCheck::setPos(const mm::Vec3& pos, float radius) { m_check->setPos(pos, radius); }
+
+bool ScnObjAccGpuCheck::isRender() const { return m_check->isRender(); }
+
+DrGpuCheckBase* ScnObjAccGpuCheck::create(unsigned int arg) {
+    DrCreator creator;
+    return creator.createGpuCheckObj(arg);
+}
+
+ScnObjAccStmReadObj::ScnObjAccStmReadObj(DrStmReadObj* obj) : m_obj(obj) {}
+
+void ScnObjAccStmReadObj::readType(ReadType type) {
+    switch (type) {
+    case READ_TYPE_0:
+        m_obj->m_readType = 0;
+        break;
+    case READ_TYPE_1:
+        m_obj->m_readType = 1;
+        break;
+    case READ_TYPE_2:
+        m_obj->m_readType = 2;
+        break;
+    }
+}
+
+DrStmReadCheck* ScnObjAccStmReadObj::create(const char* name) {
+    DrCreator creator;
+    return creator.createStmLoadObj(name);
+}
+
 
 void ScnRenderDrSys::setDefaultEvn() {}
 
@@ -47,6 +494,18 @@ void ScnRenderDrSys::releaseCallBack(IDrDrawCallback* callback) { m_drMan->relea
 void ScnRenderDrSys::openPixelDebugWindow(WinProc* proc) { m_drMan->openPixelDebugWindow(proc); }
 
 void ScnRenderDrSys::openHisgtramDebugWindow(WinProc* proc) { m_drMan->openHistgramDebugWindow(proc); }
+
+ScnRenderDrEnvColi::ScnRenderDrEnvColi(int view) { m_envColi = DrMan::getIns()->m_envMan[view]->m_envColiMan; }
+
+ScnRenderDrEnvColi::~ScnRenderDrEnvColi() {}
+
+bool ScnRenderDrEnvColi::testEnvColi(const mm::Vec3& pos, float range) {
+    return m_envColi->testEnvColi(nullptr, pos, range);
+}
+
+int ScnRenderDrEnvColi::getWindId() const { return m_envColi->m_windId; }
+
+bool ScnRenderDrEnvColi::isRoom() const { return (m_envColi->m_flags >> 2) & 1; }
 
 ScnRenderDrSysParmAcc::ScnRenderDrSysParmAcc() : m_drMan(nullptr), m_postParm(nullptr), m_view(0) {
     m_drMan = DrMan::get();

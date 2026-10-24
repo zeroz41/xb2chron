@@ -37,10 +37,40 @@ struct MdoWrkAvatarTbl {
     grlib::CGLibTextureBuffer* m_eyeTex;  // 0x28, varStTex_AvatarEyeTex
 };
 
+// The model data MdoWrkMatRes+0x20 points to: ScnObjAccResSubMesh's constructor adds m_subMeshOfs to its address.
+// The type and field names are not the original's.
+struct MdoMdlData {
+    unsigned char pad_0[0x64];
+    unsigned int m_subMeshOfs;  // 0x64
+};
+
+// One volume fade (vanish effect) work entry, 0xE0 bytes: DrMdoMat::getVanishEffectWrk(index, bank) returns entry
+// index * 3 + bank of the array at MdoWrkMatRes+0x158 (banks: DrMan::s_nDblIdx, s_nDblStockIdx, 2). The type and
+// field names are not the original's.
+struct MdoVanishEffectWrk {
+    unsigned char pad_0[0xA4];
+    float m_ratio;  // 0xA4, ScnObjAccVolumeFade::setRatio/getRatio
+    unsigned char pad_A8[0x2C];
+    unsigned int m_flags;  // 0xD4, 0x100: m_ratio was set
+    unsigned char pad_D8[0x8];
+};
+
+// One rim bloom work entry, 0x20 bytes: DrMdlObj::getRimBloomWrk(bank) returns entry bank of the array at
+// MdoWrkMatRes+0x160. The type and field names are not the original's.
+struct MdoRimBloomWrk {
+    mm::Col3 m_color;  // 0x0
+    float m_power;  // 0xC
+    float m_blackRatio;  // 0x10
+    float m_emissive;  // 0x14
+    unsigned char pad_18[0x4];
+    unsigned int m_flags;  // 0x1C, which values were set: 1 color, 2 power, 4 black ratio, 8 emissive
+};
+
 struct MdoWrkMatRes {
     unsigned char pad_0[0x10];
     const unsigned char* m_pMatData;  // 0x10, base of the offsets in m_pCallBackTbl
-    unsigned char pad_18[0x10];
+    unsigned char pad_18[0x8];
+    const MdoMdlData* m_pMdlData;  // 0x20
     const MdsMatInfoHeader* m_pMatInfo;  // 0x28, DrMdlObj::getMaterialHeader returns it
     int m_matNum;  // 0x30, ... and this as the count
     unsigned char pad_34[0x4];

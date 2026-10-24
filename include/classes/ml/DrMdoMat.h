@@ -5,6 +5,7 @@
 
 namespace ml { class DrMan; }
 namespace ml { struct MdoWrkMatRes; }
+namespace ml { struct MdoVanishEffectWrk; }
 namespace ml { struct MdsMatInfoHeader; }
 
 namespace ml {
@@ -57,13 +58,21 @@ public:
     void fn_7100772150(const MdsMatInfoHeader* info, int slot, int matIdx);
     void fn_7100777C88(const MdsMatInfoHeader* info, int slot, int matIdx);
 
+    int getVanishEffectMax() const;
+    MdoVanishEffectWrk* getVanishEffectWrk(unsigned int index, unsigned int bank);
+
     static void (DrMdoMat::*s_pCallMatVal[35])(const MdsMatInfoHeader*, int, int);
 
     unsigned char pad_8[0x10];
     // DrMdlObj's getGroups/setGroups read it; which class of the DrMdlBase..DrMdlObj chain owns it is not known
     // (the name is not the original's)
     short m_groups;  // 0x18
-    unsigned char pad_1A[0xE];
+    unsigned char pad_1A[0x2];
+    // the model's kind: 0 is a DrMdoCtlNom (the ScnObjAcc* accessors then use its data), ScnObjAccSeamPos takes
+    // data at different offsets for 1 and 3; which class of the chain owns it is not known (the name is not the
+    // original's)
+    unsigned char m_mdlType;  // 0x1C
+    unsigned char pad_1D[0xB];
     DrMan* m_pDrMan;  // 0x28, set by 1.0.0's setDrMan(DrMan*) (the field name is not the original's)
     MdoWrkMatRes* m_pWrkMatRes;  // 0x30 (the field name is not the original's)
     unsigned char pad_38[0xA0];

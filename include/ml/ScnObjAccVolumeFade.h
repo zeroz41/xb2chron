@@ -5,6 +5,7 @@
 #include "mm/Vec3.h"
 
 namespace ml { class ScnObjModel; }
+namespace ml { class DrMdlObj; }
 
 namespace ml {
 
@@ -29,8 +30,10 @@ public:
     ~ScnObjAccVolumeFade();
     int getMax() const;
     void setParams(const VolumeFadeParams& params, int index);
+    void setRatio(float ratio, int index);
+    float getRatio(unsigned int index) const;
 
-    void* m_material;
+    DrMdlObj* m_material;  // the constructor's model's draw object
 };
 
 }  // namespace ml

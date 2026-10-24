@@ -2,6 +2,7 @@
 #define ML_SCNRENDERDRENVCOLI_H
 
 namespace mm { class Vec3; }
+namespace ml { class DrEnvColiMan; }
 
 namespace ml {
 // a test of a position against a view's environment collision (fw::RenderParam::isRoom and getWindIndex build one
@@ -15,7 +16,7 @@ public:
     bool isRoom() const;
     int getWindId() const;
 
-    unsigned char pad_0[0x8];
+    DrEnvColiMan* m_envColi;  // the view's (the name is not the original's)
 };
 }  // namespace ml
 

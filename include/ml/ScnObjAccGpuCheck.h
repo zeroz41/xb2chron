@@ -10,6 +10,9 @@ class DrGpuCheckBase {
 public:
     virtual ~DrGpuCheckBase() {}  // slot 0
     virtual void release() = 0;  // slot 2
+    virtual bool isRender() const = 0;  // slot 3
+    virtual void setPause(bool) = 0;  // slot 4
+    virtual void setPos(const mm::Vec3& pos, float radius) = 0;  // slot 5
 };
 // access to a GPU visibility check (fw::VisibleObject's)
 class ScnObjAccGpuCheck {
