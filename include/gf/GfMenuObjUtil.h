@@ -8,6 +8,8 @@ namespace gf { class GfMenuCallContext; }
 namespace gf { class DataParamAcc; }
 namespace ui { class UIListInfoBase; }
 namespace fw { enum SoundCategory : int; }
+namespace fw { enum VibrationID : int; }
+namespace gf { class QuestID; }
 namespace ui { class UIStr; }
 
 namespace gf {
@@ -117,21 +119,43 @@ public:
     static int getCtrlID(unsigned int handle);  // the slot of the control running on the handle, -1 for none
     static void stopCtrl(int slot);  // nothing for -1
     static bool isBusyCtrl(int slot);
-    static void playSE(unsigned int se);
-    static void playSE(const char* se);  // a sound by its name
+    // the sound of a menu sound table row (BDAT 0x187's resource_id), and its handle (0 when nothing plays)
+    static unsigned int playSE(unsigned int se);
+    static unsigned int playSE(const char* se);  // a sound by its name
     static int startPresetCtrl(unsigned int handle, const PresetCtrlParam& param);  // startCtrl's slot
     static short getBtnIconNumber(unsigned int button);  // the icon number of a button
+    static short getPadSelectIconNumber(unsigned int select);  // the icon number of a pad selection, 0xFFFF for none
     static unsigned int playBGM(unsigned int bgm, bool, fw::SoundCategory category);  // the handle stopBGM takes
     static void stopBGM(unsigned int handle, float time);
     static bool isValidBlade(unsigned int blade);
     static bool getBladeTeamName(unsigned int blade, ui::UIStr& name);  // false when it has none
     static ui::UIStr getName(const DataParamAcc& acc);
     static void playSECommonFromInput(unsigned int input);  // the common sound for a menu input
-    static void playSECommonCursor();  // the common sound of a cursor move
-    static void playSECommon(unsigned int se);  // one of the common menu sounds
-    static void playSECommonDecide();
-    static void playSECommonCancel();
+    static unsigned int playSECommonCursor();  // the common sound of a cursor move
+    static unsigned int playSECommon(unsigned int se);  // one of the common menu sounds (0-2)
+    static unsigned int playSECommonDecide();
+    static unsigned int playSECommonCancel();
     static void setChildDisp(unsigned int handle, const char* child, bool disp);  // its child of that name
+    static void setChildAddColor(unsigned int handle, const char* child, const char* color);  // a named colour
+    static void setChildText(unsigned int handle, const char* child, const ui::UIStr& text);
+    // shows the child and starts its animation: the child's handle, 0 when there is no such child
+    static unsigned int playAnime(unsigned int handle, const char* child, const char* anime);
+    static short getPointerSelectIconNumber();  // always 17
+    static void suspendCtrl(int slot);  // stops it without its end (nothing for -1)
+    static void releaseCtrl(int slot);  // nothing for -1
+    static void setCtrlDefault(int slot);  // nothing for -1
+    static void setCtrlSpeedFactor(int slot, float factor);  // nothing for -1
+    static int getPresetCtrlCurve(unsigned int preset);  // 3.0.1's always 1
+    static unsigned int getLeaderPartyID();  // always 0
+    static bool isExitDriver(unsigned int index);  // a driver in that party slot (index modulo 3)
+    // the other common sounds (BDAT 0x187 rows 5, 0xB, 0xC, 0xE)
+    static unsigned int playSECommonTab();
+    static unsigned int playSECommonSort();
+    static unsigned int playSECommonOpenSubMenu();
+    static unsigned int playSECommonCloseSubMenu();
+    static void stopSE(unsigned int handle, float time);
+    static void playVibration(fw::VibrationID id, float scale);
+    static bool isQuestCompleted(QuestID id);
     static void setChildIcon(unsigned int handle, const char* child, unsigned short icon);
     static void playJingle(unsigned int jingle);
     // the common fades, in and out: startCtrl's slot (the second argument is the end event's CtrlParam::m_eventId)

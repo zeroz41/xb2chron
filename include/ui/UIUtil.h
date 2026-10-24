@@ -78,6 +78,11 @@ unsigned int registObject(UIObject* object);  // the handle its object map gives
 // 4: below), target's rectangle taken by getRect mode 3 when outer, 2 otherwise (the parameter names are not the
 // original's)
 void setDockPos(unsigned int handle, unsigned int target, unsigned char side, bool outer);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free UIUtil function because its address is
+// in ui/UIUtil's unit among UIUtil's functions. What it does: whether bit `bit` of the layer mask lbl_7100B75878 is
+// set (1 << bit tested against the word). GfMenuObjUtil::fn_710048FD30 passes its add-on menu layer, and
+// ui::UIManager::createLayer/terminateLayer/releaseLayer call it too.
+bool fn_7100696970(unsigned int bit);
 const fw::PadData* getPadData();  // the pad the UI reads this frame (UIManager's, else the control pad's)
 unsigned int convUIPadToFWPad(int pad, bool);  // a UI pad button's fw::PadData bits
 }}  // namespace ui::UIUtil

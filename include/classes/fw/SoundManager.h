@@ -35,6 +35,9 @@ public:
     unsigned int playSe(unsigned int id, SoundPack* pack, float volume, SoundCategory category);
     // stops the sound of handle, fading over fade (the driver's stopSe)
     void stopSe(unsigned int handle, float fade);
+    // plays the sound of that name (GfMenuObjUtil::playSE passes category 3)
+    unsigned int playSe(const char* name, SoundPack* pack, float volume, SoundCategory category);
+    void stopBgm(unsigned int handle, float fade);  // GfMenuObjUtil::stopBGM's, for a nonzero handle
     void removePack(SoundPack* pack);
     // whether handle's sound still plays (GfComSound::flush drops its cache entry otherwise)
     bool isValid(unsigned int handle) const;

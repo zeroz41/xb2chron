@@ -17,6 +17,12 @@ public:
     void delUpdater(IUICtrlUpdater& updater);  // unlinks it, if linked
     // the object told when that control (what startCtrl returned) ends
     void changeEventHandleObject(int ctrl, unsigned int handle);
+    int getCtrlSlot(unsigned int handle);  // the slot of the control running on the handle, -1 for none
+    void stopCtrl(int slot, bool, bool);
+    void releaseCtrlSlot(int slot);
+    bool isBusyCtrl(int slot);
+    void setDefault(int slot);
+    void setSpeedFactor(int slot, float factor);
 };
 }  // namespace ui
 
