@@ -23,8 +23,8 @@ public:
     virtual void wkTail();  // slot 12
     virtual bool wkStandbyLogin();  // slot 14
     virtual bool wkStandbyLogout();  // slot 15
-    virtual void evtFocusOn();  // slot 17
-    virtual void evtFocusOff();  // slot 18
+    virtual bool evtFocusOn();  // slot 17 (returns true)
+    virtual bool evtFocusOff();  // slot 18 (returns true)
     virtual void detachRenderWork(ml::WorkObj const*);  // slot 19
     virtual void detachWorkEvent(ml::IWorkEvent const*);  // slot 20
     virtual void destroyCtrlMemory();  // slot 21
