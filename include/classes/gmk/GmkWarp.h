@@ -31,7 +31,7 @@ public:
     // original's)
     struct Point {
         mm::Vec3NA m_pos;
-        float m_param;  // passed on in MsgUnk_1000014 (meaning not known)
+        float m_param;  // passed on in MsgPcFieldNotifyWarp (meaning not known)
     };
     const Point* getPoints() const { return reinterpret_cast<const Point*>(m_data); }
     static const gmk::GmkType TYPE = gmk::GmkType(38);

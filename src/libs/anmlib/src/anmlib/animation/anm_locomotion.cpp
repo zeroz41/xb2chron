@@ -12,14 +12,6 @@
 
 namespace anm {
 
-EmptyAnimation::EmptyAnimation(const SerialiseArg&) {}
-
-int EmptyAnimation::getImplType() const {
-    return 2;
-}
-
-void EmptyAnimation::sampleTrucks(float, const anm::Binding&, anm::QsTransform*) const {}
-
 // the locals' names are not the original's
 void Locomotion::getReference(float time, QsTransform* pDst) const {
 #line 24

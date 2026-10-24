@@ -36,12 +36,6 @@ DrResMdoInstPartsGlbID::~DrResMdoInstPartsGlbID() {}
 
 DrResMdoSeamColi::~DrResMdoSeamColi() {}
 
-void DrShdLgtClustered::update() {}
-
-void DrShdLgtClustered::delViewInfo(int) {}
-
-void DrShdLgtClustered::debugRender() {}
-
 void DrResMdoLodObj::release(DrResMdoLodObj*& obj) {
     if (obj != nullptr) {
         obj = nullptr;
@@ -612,44 +606,6 @@ DrResFetch::SetVertFunc DrResFetch::s_callSetVert[52] = {
     nullptr,
 };
 
-void DrShdLgtClustered::setPntLightUniformBlock(unsigned int idx, unsigned int location) {
-    m_viewWork[idx].pntLight.setUniformBlock(location);
-}
-
-void DrShdLgtClustered::setSptLightUniformBlock(unsigned int idx, unsigned int location) {
-    m_viewWork[idx].sptLight.setUniformBlock(location);
-}
-
-void DrShdLgtClustered::setPointerListUniformBlock(unsigned int idx, unsigned int location) {
-    m_viewWork[idx].pointerList.setUniformBlock(location);
-}
-
-void DrShdLgtClustered::setLightListUniformBlock(unsigned int, unsigned int) {}
-
-void DrShdLgtClustered::setParamUniformBlock(unsigned int idx, unsigned int location) {
-    m_viewWork[idx].param.setUniformBlock(location);
-}
-
-void DrShdLgtClustered::setPntLightStorageBuffer(unsigned int idx, unsigned int location) {
-    m_viewWork[idx].pntLight.setStorageBuffer(location);
-}
-
-void DrShdLgtClustered::setSptLightStorageBuffer(unsigned int idx, unsigned int location) {
-    m_viewWork[idx].sptLight.setStorageBuffer(location);
-}
-
-void DrShdLgtClustered::setPointerListStorageBuffer(unsigned int idx, unsigned int location) {
-    m_viewWork[idx].pointerList.setStorageBuffer(location);
-}
-
-void DrShdLgtClustered::setLightListStorageBuffer(unsigned int idx, unsigned int location) {
-    m_viewWork[idx].lightList.setStorageBuffer(location);
-}
-
-void DrShdLgtClustered::setParamStorageBuffer(unsigned int idx, unsigned int location) {
-    m_viewWork[idx].param.setStorageBuffer(location);
-}
-
 void DrResMdoInstPartsObj::getMatrix(mm::Mat44& m) const {
     if (m_info->flags & 0x20) {
         for (int i = 0; i < 4; i++) {
@@ -751,10 +707,4 @@ void DrResShdStreamOut::stmShdset_MeshVtxSet() {
 }
 
 }  // namespace ml
-
-namespace navi {
-
-NvmshAcObjBaseGbl::~NvmshAcObjBaseGbl() {}
-
-}  // namespace navi
 

@@ -4,8 +4,4 @@
 
 namespace minigame { namespace tora {
 
-minigame::~minigame() {}
-
-mm::mtl::RTTI MinigameUpdatableObject::m_rtti("MinigameUpdatableObject", &::fw::UpdatableObject::m_rtti, nullptr);
-
 }}  // namespace minigame::tora

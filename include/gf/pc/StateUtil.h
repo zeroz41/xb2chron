@@ -2,11 +2,13 @@
 #define GF_PC_STATEUTIL_H
 
 #include "gf/EnviromentSensor.h"
+#include "classes/gf/pc/TimerPlugin.h"
 
 namespace fw { class Message; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfComBehaviorPc; }
 namespace gf { class MsgObjectNotifyDead; }
+namespace gf { class MsgObjectNotifyHealHp; }
 
 namespace gf { namespace pc {
 
@@ -14,6 +16,12 @@ namespace gf { namespace pc {
 class StateUtil {
 public:
     // hands msg from the PC to the party's drivers and blades (each but the PC itself)
+    // StateFieldMove::leave's (by its symbol)
+    static void resetPlacementDownDist(gf::GfComBehaviorPc& behavior);
+    // StateFieldFall::enter's (by its symbol): switches the PC's TimerPlugin timer
+    static void setActivateTimer(gf::GfComBehaviorPc& behavior, TimerPlugin::TYPE type, bool activate);
+    // StateFieldAir::enter's and leave's (by its symbol)
+    static void setEnableFallDistChecker(gf::GfComBehaviorPc& behavior, bool enable);
     static void broadcastPlayer(gf::GfComBehaviorPc& behavior, fw::Message& msg);
     static void broadcastDriver(gf::GfComBehaviorPc& behavior, fw::Message& msg);
     static void broadcastBlade(gf::GfComBehaviorPc& behavior, fw::Message& msg);
@@ -39,6 +47,7 @@ public:
     // the fall damage plugin's m_damageDisable, the foot IK controller's m_enableDownIK
     static void setFallDamageDisable(gf::GfComBehaviorPc& behavior, bool disable);
     static void setEnableDownIK(gf::GfComBehaviorPc& behavior, bool enable);
+    static void setEnableLookIK(gf::GfComBehaviorPc& behavior, bool enable);
     // switches the foot IK controller's mode: set, to its slope solver (MODE_SLOPE); clear, to its placement one
     static void switchPlacementIK(gf::GfComBehaviorPc& behavior, bool placement);
     static void setEnvSensor(gf::GfComBehaviorPc& behavior, unsigned int flags, bool on);
@@ -47,6 +56,8 @@ public:
     static bool isOnSlideGround(gf::GfComBehaviorPc& behavior);
     static void applyDamage(gf::GfComBehaviorPc& behavior, unsigned int damage, bool percent);
     static void notifyDead(gf::GfComBehaviorPc& behavior, gf::MsgObjectNotifyDead& msg, bool force);
+    // the PC's revival on a heal (StateFieldDead and StateFieldWaterDead::onAlive hand it the heal message)
+    static void notifyRevival(gf::GfComBehaviorPc& behavior, gf::MsgObjectNotifyHealHp& msg);
 };
 
 }}  // namespace gf::pc

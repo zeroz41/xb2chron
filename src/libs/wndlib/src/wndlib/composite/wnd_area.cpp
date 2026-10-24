@@ -9,15 +9,6 @@
 
 namespace wnd {
 
-SphereShape::SphereShape(float radius) : Shape(SHAPE_TYPE_SPHERE), m_radius(radius) {}
-
-// the position less the radius each way, and plus it
-void SphereShape::calcAABB(const Transform& transform, AABB* aabb) {
-    float radius = m_radius;
-    aabb->min = transform.position - mm::Vec3(radius, radius, radius);
-    aabb->max = mm::Vec3(radius, radius, radius) + transform.position;
-}
-
 AreaBlock::AreaBlock()
     : m_pParent(nullptr), m_childFlags(0), m_level(0), m_aabb{mm::Vec3::zero, mm::Vec3::zero} {
     for (int i = 0; i < 8; i++) {

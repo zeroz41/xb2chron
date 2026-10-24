@@ -10,13 +10,6 @@
 
 namespace ssd {
 
-SoundEntry::~SoundEntry() {}
-
-void SoundHandle::UpdateAudioFrame(float frameTime) {
-    pitch_.Update(frameTime);
-    volume_.Update(frameTime);
-}
-
 void SystemCore::SetMasterVolume(float volume, float fadeTime) {
     masterVolume_.Start(this, &SystemCore::MasterVolumeBehavior, volume, fadeTime);
 }

@@ -14,8 +14,6 @@
 
 namespace anm {
 
-UncompressAnimation::UncompressAnimation(const SerialiseArg&) {}
-
 // sampleTrucks (0x71008836B0) is not here yet: written as below its data flow is the original's; the original keeps
 // frame0 + 1 in a register for the wrap (csel, where this folds it into csinc), multiplies the track count by the
 // first frame the other way round, and orders the normalization's last sum the other way round
@@ -60,10 +58,6 @@ UncompressAnimation::UncompressAnimation(const SerialiseArg&) {}
 //         pDst->m_scale = rest * from.m_scale + blend * to.m_scale;
 //     }
 // }
-
-int UncompressAnimation::getImplType() const {
-    return 0;
-}
 
 void BlendUtil::blendNormal(const BlendSrc& src, BlendNormalDst* pDst) {
     for (unsigned int i = 0; i < src.count; i++) {

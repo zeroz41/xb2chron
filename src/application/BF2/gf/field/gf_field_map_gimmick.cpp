@@ -26,9 +26,9 @@
 #include "classes/gf/GfFieldMapGimmick.h"
 #include "classes/gmk/GmkJump.h"
 #include "classes/gmk/GmkWarp.h"
-#include "gf/MsgUnk_1000010.h"
-#include "gf/MsgUnk_1000011.h"
-#include "gf/MsgUnk_1000014.h"
+#include "gf/MsgPcFieldNotifyWallJump.h"
+#include "gf/MsgPcFieldNotifyBigJump.h"
+#include "gf/MsgPcFieldNotifyWarp.h"
 #include "classes/gf/IFieldSeq.h"
 #include "classes/gf/AFieldSeq.h"
 #include "classes/gf/GfFieldGrave.h"
@@ -549,7 +549,7 @@ void GfFieldJump::onFsSucceeded() {
             if (obj) {
                 switch (gmk->getBdatInfo()->m_type) {
                 case 0: {
-                    MsgUnk_1000010 msg;
+                    MsgPcFieldNotifyWallJump msg;
                     const gmk::GmkJump::Data* data = gmk->getData();
                     msg.m_pos.x = data->m_pos.x;
                     msg.m_pos.y = data->m_pos.y;
@@ -561,7 +561,7 @@ void GfFieldJump::onFsSucceeded() {
                     return;
                 }
                 case 1: {
-                    MsgUnk_1000011 msg;
+                    MsgPcFieldNotifyBigJump msg;
                     const gmk::GmkJump::Data* data = gmk->getData();
                     msg.m_pos.x = data->m_pos.x;
                     msg.m_pos.y = data->m_pos.y;
@@ -595,7 +595,7 @@ void GfFieldWarp::onFsSucceeded() {
         if (mover) {
             GfObj* obj = GfObjUtil::getObj(m_handle);
             if (obj) {
-                MsgUnk_1000014 msg;
+                MsgPcFieldNotifyWarp msg;
                 const gmk::GmkWarp::Point* points = gmk->getPoints();
                 bool second = m_handle == gmk->m_firstHandle;
                 const mm::Vec3NA& pos = second ? points[1].m_pos : points[0].m_pos;

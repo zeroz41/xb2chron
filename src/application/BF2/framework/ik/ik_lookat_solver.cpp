@@ -19,12 +19,6 @@
 
 namespace fw {
 
-PlaneRayCaster::PlaneRayCaster() : m_ground(nullptr) {}
-
-void PlaneRayCaster::bind(IKFootGroundInterface& ground) {
-    m_ground = &ground;
-}
-
 // castRay (0x7100187030) is not here yet: written as
 //     if (m_ground == nullptr) return false;
 //     const mm::Plane* plane = m_ground->getPlane();

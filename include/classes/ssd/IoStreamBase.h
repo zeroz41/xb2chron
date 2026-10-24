@@ -8,7 +8,8 @@ namespace ssd { class TextRef; }
 
 namespace ssd {
 // table none (its derived classes'): a stream the library reads audio from. 1.0.0 has every virtual out of
-// line; 3.0.1 keeps only the two Opens its derived tables use, so the rest are inline here.
+// line in IoStreamBase.cpp; 3.0.1 keeps only the two Opens its derived tables use (global, in IoStreamBase's
+// unit), so those are out of line and the rest are inline here.
 class IoStreamBase : public ::ssd::Object {
 public:
     // how a stream opens: MemoryStream::Open accepts only 1
@@ -28,12 +29,8 @@ public:
     virtual bool IsOpen() const {  // slot 2
         return false;
     }
-    virtual Result Open(const TextRef& path, OpenMode mode) {  // slot 3
-        return Result(-1);
-    }
-    virtual Result Open(void* data, unsigned long size, OpenMode mode) {  // slot 4
-        return Result(-1);
-    }
+    virtual Result Open(const TextRef& path, OpenMode mode);  // slot 3
+    virtual Result Open(void* data, unsigned long size, OpenMode mode);  // slot 4
     virtual Result Close() {  // slot 5
         return Result(-1);
     }

@@ -43,9 +43,6 @@
 
 namespace gf {
 
-// a tag's parameters: (name, value) pairs
-typedef mm::mtl::FixedVector<mm::mtl::MapPair<const char*, const char*>, 8> TagParams;
-
 namespace {
 // a float column's value: the low 32 bits of what getVal returns
 inline float bdatFloat(unsigned char* fp, const char* column, int id) {
@@ -55,81 +52,5 @@ inline float bdatFloat(unsigned char* fp, const char* column, int id) {
     return value;
 }
 }  // namespace
-
-const char* GfMenuTagAchievement::getTagName() {
-    return "ML:AchieveParam";
-}
-
-const char* GfMenuTagAchievement::convBegin(const TagParams& params, unsigned short id) {
-    const ui::UIStr& text = GfMenuReference::getReferenceString(id);
-    if (text.isValid()) {
-        return text.c_str();
-    }
-    return "<error>";
-}
-
-const char* GfMenuTagDash::getTagName() {
-    return "ML:Dash";
-}
-
-const char* GfMenuTagDash::convBegin(const TagParams& params, unsigned short id) {
-    return Bdat::getMSText(GfDataBdat::getFP(278), 1);
-}
-
-const char* GfMenuTagEnhance::getTagName() {
-    return "ML:Enhance";
-}
-
-const char* GfMenuTagHomuriName::getTagName() {
-    return "ML:HomuriName";
-}
-
-const char* GfMenuTagLink::getTagName() {
-    return "ML:link";
-}
-
-const char* GfMenuTagNumber::getTagName() {
-    return "ML:number";
-}
-
-const char* GfMenuTagNumberMoney::getTagName() {
-    return "ML:number_money";
-}
-
-const char* GfMenuTagPercent::getTagName() {
-    return "ML:%";
-}
-
-const char* GfMenuTagPercent::convBegin(const TagParams& params, unsigned short id) {
-    switch (fw::LangUtil::getLangType()) {
-    case 2: case 3: case 5: case 13: case 14:
-        return " %";
-    }
-    return "%";
-}
-
-const char* GfMenuTagPouch::getTagName() {
-    return "ML:PouchParam";
-}
-
-const char* GfMenuTagSpace::getTagName() {
-    return "ML:Space";
-}
-
-const char* GfMenuTagSpace::convBegin(const TagParams& params, unsigned short id) {
-    return "";
-}
-
-const char* GfMenuTagTownFlag::getTagName() {
-    return "ML:TownFlag";
-}
-
-const char* GfMenuTagUndisp::getTagName() {
-    return "ML:undisp";
-}
-
-const char* GfMenuTagUndisp::convBegin(const TagParams& params, unsigned short id) {
-    return "";
-}
 
 }  // namespace gf

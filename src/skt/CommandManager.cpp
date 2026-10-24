@@ -59,23 +59,6 @@ void addDetectSphereJob(const ShpereCollObj* obj, const ResNodeCollision* collis
 
 }  // namespace skd
 
-// the functions LMSi_Malloc and LMSi_Free hand on to (the name is not the original's: the symbols leave it unnamed)
-static struct {
-    LMS_MallocFunc mallocFunc;
-    LMS_FreeFunc freeFunc;
-} s_memFuncs;
-
 extern "C" {
-void LMS_SetMemFuncs(LMS_MallocFunc mallocFunc, LMS_FreeFunc freeFunc) {
-    s_memFuncs.mallocFunc = mallocFunc;
-    s_memFuncs.freeFunc = freeFunc;
-}
 
-void* LMSi_Malloc(size_t size) {
-    return s_memFuncs.mallocFunc(size);
-}
-
-void LMSi_Free(void* memory) {
-    s_memFuncs.freeFunc(memory);
-}
 }

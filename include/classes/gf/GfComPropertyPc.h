@@ -9,6 +9,7 @@
 #include "mm/Quat.h"
 #include "mm/mtl/IntrusivePtr.h"
 #include "classes/gf/pc/GfPropertyField.h"
+#include "classes/gf/pc/GfPropertyBattle.h"
 
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
@@ -80,7 +81,10 @@ public:
     mm::Quat m_rot;             // the PC's facing: isActiveRange and isActiveRangeLure turn their reach's offset by it
                                 // (the name is not the original's)
     mm::Vec3 m_prevPos;         // DeadColCheckPlugin::testDead: falling from above a dead plane's height to it
-    unsigned char pad_190[0x50];
+    unsigned char pad_190[0x30];
+    mm::Vec3 m_frontDir;        // StateFieldIdle::checkSpace starts its capsule 0.6 along it from m_pos
+                                // (the name is not the original's)
+    unsigned char pad_1d0[0x10];
     mm::Vec3 m_moveDir;         // TaskFieldJump::update sets m_velocity along it
     unsigned char pad_1f0[0xA0];
     // two of updateWorldDirs' world directions: the ones the stick's y and x move the PC along
@@ -94,6 +98,7 @@ public:
     mm::mtl::IntrusivePtr<fw::ParamList> m_paramList;  // the PC's parameters
     unsigned char pad_308[0x8];
     pc::GfPropertyField m_field;  // setup, cleanup and flush pass it this property
+    pc::GfPropertyBattle m_battle;  // StateField::recieveMessage hands it the battle start (0x470)
 };
 }  // namespace gf
 

@@ -7,42 +7,6 @@
 
 namespace ui {
 
-UIColorLibrary::UIColorLibrary() {
-    m_colors.setAllocator(UIUtil::getProgAllocator());
-    m_colors.reserve(8, 8);
-}
-
-UIColorLibrary::~UIColorLibrary() {
-    reset();
-}
-
-bool UIColorLibrary::add(const char* name, const mm::Col4& color) {
-    unsigned int hash = mm::mtl::hashStrCrc(name);
-    for (ColorInfo* it = m_colors.begin(); it != m_colors.end(); ++it) {
-        if (it->m_hash == hash) {
-            it->m_color = color;
-            return true;
-        }
-    }
-    ColorInfo info;
-    info.m_hash = hash;
-    info.m_color = color;
-    m_colors.push_back(info);
-    return true;
-}
-
-bool UIColorLibrary::find(const char* name, mm::Col4& color) {
-    unsigned int hash = mm::mtl::hashStrCrc(name);
-    color = mm::Col4::white;
-    for (ColorInfo* it = m_colors.begin(); it != m_colors.end(); ++it) {
-        if (it->m_hash == hash) {
-            color = it->m_color;
-            return true;
-        }
-    }
-    return false;
-}
-
 UIDisplayInfo::UIDisplayInfo()
     : m_disp(true), m_center(0), m_blendType(0), m_priority(0), m_mulColor(1.0f, 1.0f, 1.0f, 1.0f),
       m_addColor(0.0f, 0.0f, 0.0f), m_pixelWidth(0), m_pixelHeight(0), m_changed(false), m_defColor(nullptr),

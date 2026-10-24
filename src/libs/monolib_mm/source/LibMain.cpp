@@ -6,14 +6,10 @@
 #include "classes/ml/LibMain.h"
 #include "classes/ml/WorkCpu.h"
 #include "classes/ml/DevFileTh.h"
-#include "mtl/MemManager.h"
 #include "ml/WorkRootState.h"
 #include "ml/WorkUtil.h"
-#include "ml/MlMem.h"
 #include "classes/ml/WorkControl.h"
 #include "classes/ml/WorkSystem.h"
-#include "mm/mtl/FixedList.h"
-#include "mtl/AllocHandle.h"
 
 namespace ml {
 
@@ -51,54 +47,6 @@ LibMain* LibMain::create() {
     LibMain* main = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) LibMain(parent);
     WorkRootState::entryWork(main, parent, false);
     return main;
-}
-
-namespace {
-// a static of its own that MlMem::initialize and terminate pass through: guarded, constructing nothing (the name is
-// not the original's)
-mtl::MemManager& memManager() {
-    static mtl::MemManager s_manager;
-    return s_manager;
-}
-}  // namespace
-
-// the allocators MlMem hands out, and the extra ones 1.0.0's addExtMem kept (the names are not the original's; the
-// compiler merges the four into one block)
-static mtl::ALLOC_HANDLE s_productMem;
-static mtl::ALLOC_HANDLE s_debugMem;
-static mtl::ALLOC_HANDLE s_graphicMem;
-static mm::mtl::FixedList<mtl::ALLOC_HANDLE, 64> s_extMem;
-
-void MlMem::initialize() {
-    memManager().initialize();
-}
-
-void MlMem::terminate() {
-    memManager().terminate();
-}
-
-void MlMem::setProductMem(mtl::ALLOC_HANDLE handle) {
-    s_productMem = handle;
-}
-
-mtl::ALLOC_HANDLE MlMem::getProductMem() {
-    return s_productMem;
-}
-
-void MlMem::setDebugMem(mtl::ALLOC_HANDLE handle) {
-    s_debugMem = handle;
-}
-
-mtl::ALLOC_HANDLE MlMem::getDebugMem() {
-    return s_debugMem;
-}
-
-void MlMem::setGraphicMem(mtl::ALLOC_HANDLE handle) {
-    s_graphicMem = handle;
-}
-
-mtl::ALLOC_HANDLE MlMem::getGraphicMem() {
-    return s_graphicMem;
 }
 
 }  // namespace ml

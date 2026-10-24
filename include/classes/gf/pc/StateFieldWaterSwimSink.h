@@ -24,7 +24,9 @@ public:
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
-    unsigned char pad_18[0x8];
+    // the time spent in the state: update adds each frame's delta (the name is not the original's)
+    float m_time;
+    unsigned char pad_1c[0x4];
 };
 }}  // namespace gf::pc
 

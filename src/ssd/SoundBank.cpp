@@ -1,7 +1,14 @@
 #include "classes/ssd/SoundActor.h"
+#include "classes/ssd/SoundCore.h"
+#include "classes/ssd/SystemCorePlatform.h"
+#include "classes/ssd/BehaviorInstance.h"
+#include "classes/ssd/XorShift128Random.h"
+#include "classes/ssd/SystemCore.h"
+#include "classes/ssd/SoundHandle.h"
+#include "classes/ssd/SoundEntry.h"
 
 namespace ssd {
 
-void SoundActor::UpdateGameFrame(float) {}
+SoundEntry::~SoundEntry() {}
 
 }  // namespace ssd

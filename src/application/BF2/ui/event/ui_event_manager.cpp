@@ -9,12 +9,6 @@
 
 namespace ui {
 
-void UIObjectListener::reciveEvent(const EventData& event, unsigned int handle) {
-    if (event.m_type == 2) {
-        UIUtil::getObject(handle)->setTerm();
-    }
-}
-
 UIEventManager::UIEventManager() : m_gameListener(nullptr) {}
 
 UIEventManager::~UIEventManager() {

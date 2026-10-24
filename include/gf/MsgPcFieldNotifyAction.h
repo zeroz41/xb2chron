@@ -9,6 +9,8 @@ namespace gf {
 // object (GfComBehaviorGmk acts on the bound gimmick for action 0)
 class MsgPcFieldNotifyAction : public ::fw::Message {
 public:
+    explicit MsgPcFieldNotifyAction(int action) : fw::Message(0x100000D, 0x40), m_action(action) {}
+
     int m_action;  // (the name is not the original's)
 };
 

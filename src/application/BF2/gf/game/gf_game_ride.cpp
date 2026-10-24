@@ -2,7 +2,7 @@
 #include "ml/PathUtil.h"
 #include "classes/gf/GfGameRide.h"
 #include "gf/MsgGameRideEvent.h"
-#include "gf/MsgUnk_100000A.h"
+#include "gf/MsgPcBattleStart.h"
 #include "classes/gf/GfGameTarget.h"
 #include "classes/gf/GfGameScene.h"
 #include "classes/gf/GfObjSetup.h"
@@ -91,7 +91,7 @@ void GfGameRide::procMsgGameRideEvent(fw::MessageObject* sender, MsgGameRideEven
         if (!testRideOn()) {
             GfGameTarget::disableTargetWithoutEnemy();
             if (GfObj* obj = GfObjUtil::getObj(leader)) {
-                MsgUnk_100000A message(0);
+                MsgPcBattleStart message(0);
                 static_cast<fw::MessageObject*>(obj)->recieveMessage(this, message);
             }
         }
@@ -101,45 +101,6 @@ void GfGameRide::procMsgGameRideEvent(fw::MessageObject* sender, MsgGameRideEven
         getDown(GfGameManager::getPartyLeaderDriver());
         break;
     }
-}
-
-bool GfGameLoad::OnFileEvent(ml::EventFileTh* event) {
-    if (m_fileHandle == event->m_handle) {
-        m_fileKind = event->m_kind;
-        if (m_fileKind == 2) {
-            m_fileResult = event->m_result;
-        }
-        m_fileHandle = nullptr;
-    }
-    if (m_state == 1 && m_fileHandle == nullptr) {
-        phaseBinData();
-        m_state = 0;
-    }
-    return true;
-}
-
-void GfGameLoad::getGameFileNameBin(mm::mtl::FixStr<256>& out) {
-    mm::mtl::FixStr<256> name;
-    if (m_fileName.m_nLen != 0) {
-        name = m_fileName.m_str;
-    } else if (m_ira) {
-        GfDataSave::fn_710022C2B0(name, m_slot);
-    } else {
-        GfDataSave::getFileNameForLoad(name, m_slot);
-    }
-    ml::PathUtil::getNoExtName(out, name.m_str);
-    out += GfDataSave::getSaveDataExtNameForBin();
-}
-
-void GfGameLoad::getOptionFileNameBin(mm::mtl::FixStr<256>& out) {
-    mm::mtl::FixStr<256> name;
-    if (m_ira) {
-        GfDataSave::fn_710022C894(name);
-    } else {
-        GfDataSave::getFileNameForOption(name);
-    }
-    ml::PathUtil::getNoExtName(out, name.m_str);
-    out += GfDataSave::getSaveDataExtNameForBin();
 }
 
 }  // namespace gf

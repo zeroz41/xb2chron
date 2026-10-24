@@ -206,10 +206,4 @@ bool GfMovieManager::isplaying() {
     return fw::MovieManager::get()->isplaying();
 }
 
-GfComAnimation::GfComAnimation() {}
-
-GfComAnimation::~GfComAnimation() {}
-
-mm::mtl::RTTI GfComAnimation::m_rtti("GfComAnimation", &GfComponent::m_rtti, nullptr);
-
 }  // namespace gf

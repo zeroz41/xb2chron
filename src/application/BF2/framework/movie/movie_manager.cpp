@@ -25,8 +25,6 @@
 
 namespace fw {
 
-ModelManager::~ModelManager() {}
-
 ModelObject::~ModelObject() {
     if (m_scn != nullptr) {
         if (m_model != nullptr) {

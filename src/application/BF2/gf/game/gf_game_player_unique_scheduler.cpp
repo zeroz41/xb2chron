@@ -1,8 +1,8 @@
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfBdatUniqueMotion.h"
 #include "classes/gf/GfGamePlayerUniqueScheduler.h"
-#include "gf/MsgUnk_1000023.h"
-#include "gf/MsgUnk_1000024.h"
+#include "gf/MsgPcFieldSetUniqueMotion.h"
+#include "gf/MsgPcFieldTestEnableUniqueMotion.h"
 #include "algorithm"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfGameParty.h"
@@ -50,7 +50,7 @@ inline void GfGamePlayerUniqueScheduler::executeRequest(const fw::UpdateInfo& in
         if (member.m_state == 3) {
             member.m_wait -= info.m_deltaTime;
             if (member.m_wait < 0.0f) {
-                MsgUnk_1000023 msg(member.m_motion < 3 ? member.m_motion : 0);
+                MsgPcFieldSetUniqueMotion msg(member.m_motion < 3 ? member.m_motion : 0);
                 if (GfObj* obj = GfObjUtil::getObj(member.m_handle)) {
                     static_cast<fw::MessageObject*>(obj)->recieveMessage(this, msg);
                 }
@@ -66,7 +66,7 @@ void GfGamePlayerUniqueScheduler::judge(const fw::UpdateInfo& info) {
     if (m_timer > param->m_interval) {
         for (Member& member : m_members) {
             if (member.m_state == 1) {
-                MsgUnk_1000024 msg;
+                MsgPcFieldTestEnableUniqueMotion msg;
                 if (GfObj* obj = GfObjUtil::getObj(member.m_handle)) {
                     static_cast<fw::MessageObject*>(obj)->recieveMessage(this, msg);
                     if (msg.m_result) {

@@ -32,7 +32,7 @@ public:
         GF_OBJ_HANDLE* m_handle;
         unsigned short m_charaId;  // its GfObjSetup's m_bdatId (its bdat row), 0 for none
         unsigned char pad_a[0x2];
-        int m_state;  // 0 none, 1 waiting, 2 ready (answered MsgUnk_1000024), 3 motion scheduled
+        int m_state;  // 0 none, 1 waiting, 2 ready (answered MsgPcFieldTestEnableUniqueMotion), 3 motion scheduled
         unsigned short m_motion;  // which of its three motions (0 to 2)
         unsigned char pad_12[0x2];
         float m_wait;  // seconds until the scheduled motion plays

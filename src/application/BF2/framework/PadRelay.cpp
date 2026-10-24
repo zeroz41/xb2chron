@@ -8,30 +8,6 @@
 
 namespace fw {
 
-namespace {
-// the head of a pad event binary, as bin::BinaryResolver resolves it (the names are not the original's)
-struct PadEventHeader {
-    unsigned int m_version;  // 1
-    char m_magic[4];         // "PADD"
-    PadResEvent* m_event;
-};
-}  // namespace
-
-PadResEvent* PadEventImporter::create(void* binary, const char* name) {
-    PadEventHeader* header = static_cast<PadEventHeader*>(bin::BinaryResolver::resolve(binary));
-    if (header == nullptr) {
-        return nullptr;
-    }
-    if (memcmp(header->m_magic, "PADD", 4) != 0) {
-        return nullptr;
-    }
-    if (header->m_version != 1) {
-        return nullptr;
-    }
-    new (header->m_event) PadResEvent;
-    return header->m_event;
-}
-
 PadRelay::PadRelay() : m_padNo(-1), m_eventNo(-1) {}
 
 PadRelay::~PadRelay() {}

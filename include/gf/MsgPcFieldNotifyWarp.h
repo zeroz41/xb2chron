@@ -1,17 +1,19 @@
-#ifndef GF_MSGUNK_1000014_H
-#define GF_MSGUNK_1000014_H
+#ifndef GF_MSGPCFIELDNOTIFYWARP_H
+#define GF_MSGPCFIELDNOTIFYWARP_H
 
 #include "fw/Message.h"
 #include "mm/Vec3.h"
 
 namespace gf {
 
-// message 0x1000014 (no name for it survives; 1.0.0's same function sends it too):
+// message 0x1000014, MsgPcFieldNotifyWarp: 3.0.1 symbol GfPropertyField::setWarpInfo(MsgPcFieldNotifyWarp const*) takes it
+// from StateFieldWaterPrepareWarp::recieveMessage case 0x1000014 (1.0.0: procMsgPcFieldNotifyWarp); formerly MsgUnk_1000014.
+// 1.0.0's same function sends it too:
 // GfFieldWarp::onFsSucceeded sends it to the player's object (from the warp gimmick's object) with the
 // point of the warp's other end
-class MsgUnk_1000014 : public ::fw::Message {
+class MsgPcFieldNotifyWarp : public ::fw::Message {
 public:
-    MsgUnk_1000014() : fw::Message(0x1000014, 0x40), m_pos(mm::Vec3::zero), m_param(0.0f), m_bdat(nullptr), m_bdatId(0), m_gmkId(0) {}
+    MsgPcFieldNotifyWarp() : fw::Message(0x1000014, 0x40), m_pos(mm::Vec3::zero), m_param(0.0f), m_bdat(nullptr), m_bdatId(0), m_gmkId(0) {}
 
     unsigned char pad_8[0x8];
     mm::Vec3 m_pos;  // where to go (the name is not the original's)
