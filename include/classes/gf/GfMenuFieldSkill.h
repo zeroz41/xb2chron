@@ -34,23 +34,34 @@ public:
         unsigned short m_skill;
         unsigned char m_level;
     };
+    // a blade skill shown (1.0.0: gf::GfGameUtil::findBladeSkillList(mm::mtl::FixedVector<GfMenuFieldSkill::BladeSkillInfo, 30>&, unsigned int)
+    // fills StartParam::m_skills)
+    struct BladeSkillInfo {
+        BladeSkillInfo(unsigned short blade, unsigned char level)
+            : m_blade(blade), m_unk2(0), m_skill(9), m_level(level), m_unk7(0) {}
+        unsigned short m_blade;
+        unsigned short m_unk2;
+        // bit fields of one word: StateDispInfo::enter and StateSkip::update load the word once for both
+        unsigned int m_skill : 16;  // compared with m_levels' skills
+        unsigned int m_level : 8;
+        unsigned int m_unk7 : 8;
+    };
     // what start shows: the skills that worked (the names are not the original's: StateSalvageSkillCheck fills
     // m_skills, each a blade, skill 9 and the skill's level)
     struct StartParam {
-        struct Skill {
-            Skill(unsigned short blade, unsigned char level)
-                : m_blade(blade), m_unk2(0), m_skill(9), m_level(level), m_unk7(0) {}
-            unsigned short m_blade;
-            unsigned short m_unk2;
-            // bit fields of one word: StateDispInfo::enter and StateSkip::update load the word once for both
-            unsigned int m_skill : 16;  // compared with m_levels' skills
-            unsigned int m_level : 8;
-            unsigned int m_unk7 : 8;
-        };
-        StartParam() : m_type(0), m_unk100(0), m_unk108(0), m_unk110(0), m_unk118(0), m_unk11C(0), m_unk130(0) {}
+        StartParam() : m_type(0), m_unk100(0), m_unk108(0), m_unk130(0) {
+            clearExtra();
+        }
+        // zeroes m_unk110..m_unk11C; the constructor calls it after its init list (GfMenuFieldSkill::build's
+        // inlined constructor stores these three as one block after the others; the name is not the original's)
+        void clearExtra() {
+            m_unk110 = 0;
+            m_unk118 = 0;
+            m_unk11C = 0;
+        }
 
         unsigned int m_type;  // 0: one skill at a time (StateDispInfo), 1: the total (StateDispTotal)
-        mm::mtl::FixedVector<Skill, 30> m_skills;
+        mm::mtl::FixedVector<BladeSkillInfo, 30> m_skills;
         unsigned long m_unk100;  // with m_unk108, handed to openTotalInfo and (m_unk130 0) openResult
         unsigned int m_unk108;
         unsigned long m_unk110;

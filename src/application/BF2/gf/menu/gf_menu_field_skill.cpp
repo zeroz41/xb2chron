@@ -42,6 +42,23 @@ GfMenuFieldSkill::~GfMenuFieldSkill() {
     releaseContext(m_context);
 }
 
+void GfMenuFieldSkill::build(const GfSetupParam& param) {
+#line 70
+    GfMenuFieldSkill* menu = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfMenuFieldSkill();
+    menu->m_fsm.beginSetup(menu, 9);
+    menu->m_fsm.registerState<StateIdle>(0);
+    menu->m_fsm.registerState<StateStart>(1);
+    menu->m_fsm.registerState<StateDispInfo>(2);
+    menu->m_fsm.registerState<StateDispTotal>(3);
+    menu->m_fsm.registerState<StateDispResult>(6);
+    menu->m_fsm.registerState<StateWait>(4);
+    menu->m_fsm.registerState<StateTotalNext>(5);
+    menu->m_fsm.registerState<StateSkip>(7);
+    menu->m_fsm.registerState<StateQuit>(8);
+    menu->m_fsm.endSetup();
+    menu->m_fsm.setState(0);
+}
+
 void GfMenuFieldSkill::destroy() {
     GfMenuFieldSkill* menu = get();
     menu->m_fsm.cleanup();
