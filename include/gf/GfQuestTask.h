@@ -2,7 +2,8 @@
 #define GF_GFQUESTTASK_H
 
 namespace gmk { enum GmkType : int; }
-namespace gf { class QuestTaskParam; }
+namespace gf { class QuestTaskParam; class GF_OBJ_HANDLE; }
+#include "gf/QuestID.h"
 
 namespace gf {
 // the quests' tasks (functions, by their symbols)
@@ -17,6 +18,7 @@ public:
     // completes a quest's task (GfQuestEvent::setQuestComp)
     static void completeTask(const QuestTaskParam& param);
     static bool isCompleteFlag(const QuestTaskParam& param);
+    static bool isReduceHpObj(gf::QuestID id, gf::GF_OBJ_HANDLE* handle);
 };
 }  // namespace gf
 

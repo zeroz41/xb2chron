@@ -96,6 +96,8 @@ public:
     void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int);
     void clear();
     bool isPlayEvent() const;
+    bool isBattleStop();
+    bool isNeedFieldBladeChange(unsigned int index) const;
 };
 }  // namespace gf
 

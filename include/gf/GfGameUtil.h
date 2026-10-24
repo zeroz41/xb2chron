@@ -77,6 +77,8 @@ public:
     };
     static void makeCommandBattle(mm::mtl::FixStr<32>& out, bool battle);
     static void makeStateBattle(mm::mtl::FixStr<32>& out, gf::GF_OBJ_HANDLE* handle, bool battle);
+    static void debugHpZero(gf::GF_OBJ_HANDLE* handle);
+    static void execSaveAchievementPopup(unsigned int blade);
 };
 
 }  // namespace gf

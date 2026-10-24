@@ -51,6 +51,7 @@ public:
 
     GFOBJ_INFO* m_info;  // GfObjManager::getObjInfo's for the handle
     GfObj* m_obj;  // the GfObj constructor's argument
+    float getAlpha() const;
 };
 }  // namespace gf
 

@@ -3,6 +3,7 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/mtl/FixStr.h"
+#include "mm/mtl/FixedList.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfGameObj; }
@@ -30,6 +31,7 @@ public:
     static bool isEnterGameObj(gf::GF_OBJ_HANDLE* handle);
     static void destroyGameObj(gf::GF_OBJ_HANDLE* handle, float fadeTime);
     static bool isDestroyGameObj(gf::GF_OBJ_HANDLE* handle);
+    static mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 1024>* getList(unsigned int kind);
 };
 }  // namespace gf
 

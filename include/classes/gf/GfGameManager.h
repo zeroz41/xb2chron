@@ -222,6 +222,13 @@ public:
     // set by leaveGameForDebug, read by isLeaveGameForDebug (the name is not the original's)
     bool m_leaveGameForDebug;
     unsigned char pad_1A[0x6];
+    static bool isFadeClear();
+    static bool isExistBossEnemy();
+    static bool isExistBossEnemyWithHp();
+    static bool isPlayerFinishBattleState();
+    static bool isWaitGimmickPopForMapjump();
+    static bool isBattleStop();
+    static const mm::Vec3& getControlMoverPosition();
 };
 }  // namespace gf
 

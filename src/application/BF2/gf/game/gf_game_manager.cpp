@@ -1,3 +1,14 @@
+#include "gf/GfGameUtil.h"
+#include "gf/GfQuestTask.h"
+#include "classes/gf/GfQuestManager.h"
+#include "gf/GfObjAcc.h"
+#include "classes/gf/DataParamAcc.h"
+#include "classes/gf/GfGameParty.h"
+#include "classes/gf/GfGameVoice.h"
+#include "gf/GfGameUtil.h"
+#include "classes/gf/GfGameObj.h"
+#include "classes/gf/GfGameScene.h"
+#include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfObjManager.h"
 #include "classes/gf/GfGameMercenaries.h"
 #include "classes/gf/GfGameEnv.h"
@@ -56,6 +67,14 @@
 #include "classes/fw/Framework.h"
 #include "classes/gf/GfReqSmallCom.h"
 #include "mm/mtl/FixedArray.h"
+
+#include "classes/tl/TitleMain.h"
+#include "gf/GfDataDriver.h"
+#include "gf/GfQuestTask.h"
+#include "classes/gf/GfPause.h"
+#include "gf/GfDataEnemy.h"
+#include "classes/gf/DataParamAcc.h"
+#include "classes/gf/GfObjSetup.h"
 
 namespace gf {
 
@@ -733,6 +752,152 @@ bool GfGameManager::isAutoTalkOK() {
 bool GfGameManager::isQuestCompleteUI() {
     return GfPlayComQuestCompleteUI::s_active > 0;
 }
+
+
+bool GfGameManager::isBattleStop() {
+    if (GfGameScene* scene = GfGameScene::get()) {
+        if (scene->isBattleStop()) {
+            return true;
+        }
+        if (isBattle()) {
+            return false;
+        }
+    }
+    if (GfGameParty::getBladeBdatId(0, -1) != 1001) {
+        return false;
+    }
+    GfObjAcc driver(GfGameParty::getHandleDriver(0, 0));
+    GfObjAcc blade(GfGameParty::getHandleBlade(0, -1));
+    if (blade.getBladeId() == 1001 && !driver.isBattle() && blade.isRebuild()) {
+        return true;
+    }
+    return false;
+}
+
+bool GfGameManager::isFadeClear() {
+    if (isFadeout()) {
+        return false;
+    }
+    if (isFading(0xFFFFFFFF)) {
+        return false;
+    }
+    for (unsigned int layer = 0; layer < 3; layer++) {
+        mm::Col4 color;
+        GfMenuManager::getFadeColor(layer, color);
+        if (color.a > 0.0f) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool GfGameManager::isPlayerFinishBattleState() {
+    if (GfGameParty::isLeaderBlade()) {
+        return true;
+    }
+    DataParamAcc acc(GfGameParty::getLeader());
+    if (acc.getObjType() == 3 && acc.isValid() && acc.getObjType() == 3 && acc.getBdatId() == 2 &&
+        acc.getBlade(-1, false) == 1004) {
+        return true;
+    }
+    return false;
+}
+
+namespace {
+// a create type a blade's creation event shows (6, 7 and 12) (the name is not the original's)
+bool isBladeCreateType(int type) {
+    switch (type) {
+    case 6:
+    case 7:
+    case 12:
+        return true;
+    default:
+        return false;
+    }
+}
+}  // namespace
+
+bool GfGameManager::isBusyBladeCreateEvent() {
+    if (!GfPause::isPause(1)) {
+        return false;
+    }
+    if (isEvent(false)) {
+        return true;
+    }
+    mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>& list = *GfGameObj::getList(0);
+    for (mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>::iterator it = list.begin(); it != list.end(); ++it) {
+        GfObjSetup* setup = GfObjUtil::getObjSetup(*it);
+        if (setup == nullptr) {
+            continue;
+        }
+        if (!isBladeCreateType(setup->m_createType)) {
+            continue;
+        }
+        GfObjAcc acc(*it);
+        if (acc.getAlpha() <= 0.0f) {
+            continue;
+        }
+        if (acc.isDisp(static_cast<OBJDISP>(0))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GfGameManager::isExistBossEnemy() {
+    mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>& list = *GfGameObj::getList(5);
+    for (mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>::iterator it = list.begin(); it != list.end(); ++it) {
+        GfObjAcc acc(*it);
+        if (GfDataEnemy::isBoss(acc.getEnArrangeId())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void GfGameManager::destroyBattleEnemy() {
+    mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>& list = *GfGameObj::getList(5);
+    for (mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>::iterator it = list.begin(); it != list.end(); ++it) {
+        GfObjAcc acc(*it);
+        if (acc.isBattle()) {
+            DataParamAcc param(*it);
+            if (param.getHp() != 0) {
+                GfGameUtil::debugHpZero(*it);
+            }
+        }
+    }
+}
+
+bool GfGameManager::isWaitGimmickPopForMapjump() {
+    tl::TitleMain* title = tl::TitleMain::get();
+    if (title == nullptr) {
+        return true;
+    }
+    if (title->m_reqReturnTitle) {
+        return false;
+    }
+    return !title->isStateReturnTitle();
+}
+
+
+bool GfGameManager::isExistBossEnemyWithHp() {
+    mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>& list = *GfGameObj::getList(5);
+    for (mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>::iterator it = list.begin(); it != list.end(); ++it) {
+        GfObjAcc acc(*it);
+        if (!acc.isBattle()) {
+            continue;
+        }
+        DataParamAcc param(*it);
+        unsigned int id = param.isValid() ? param.getBdatId() : 0;
+        if ((GfDataEnemy::isBoss(id) || (param.isValid() && param.getBdatId() == 1683)) && param.getHp() != 0 &&
+            param.getHp() < param.getHpMax(false)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 
 }  // namespace gf
 

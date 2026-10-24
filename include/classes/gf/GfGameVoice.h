@@ -17,6 +17,7 @@ public:
     static CV_RESULT getResult(GAME_VOICE_HANDLE* voice);
     bool isPlayEnemyVoice() const;
     static void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
+    bool isPlayVoice(gf::GF_OBJ_HANDLE* handle) const;
 };
 }  // namespace gf
 

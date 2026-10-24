@@ -52,6 +52,7 @@ public:
     static void fn_71002BC7AC(unsigned int slot);
     static void fn_71002BC840(unsigned int slot);
     static unsigned short getPartyGauge();  // GfMenuBattleAdapter shows it in hundreds (300 full)
+    static bool isLeaderBlade();
 };
 }  // namespace gf
 

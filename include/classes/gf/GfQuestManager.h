@@ -35,6 +35,7 @@ public:
     static gf::QuestID getProgressCurrentQuest(gf::QTYPE type);
     static void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
     static void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int);
+    static void eventCheckTask(gf::QuestID id);
 };
 }  // namespace gf
 
