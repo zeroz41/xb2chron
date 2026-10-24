@@ -1,21 +1,28 @@
 #ifndef GRLIB_CGLIBACC2DTEXTURE_H
 #define GRLIB_CGLIBACC2DTEXTURE_H
 
+#include "grlib/CGLibAccUtilTexture.h"
+
 namespace grlib { class CGLibTextureBuffer; }
 
 namespace grlib {
 
-// write access to a 2D texture's texels while locked (0xA8 bytes: FontSys::construct keeps one on its stack)
-class CGLibAcc2DTexture {
+// access to a 2D texture's texels while locked (0xB0 bytes: lock stores the buffer at 0xA8). Field names are
+// not the original's.
+class CGLibAcc2DTexture : public CGLibAccUtilTexture {
 public:
     CGLibAcc2DTexture();
     ~CGLibAcc2DTexture();
-    void lock(CGLibTextureBuffer& buffer);
+    bool lock(CGLibTextureBuffer& buffer);
     void unlock();
     // the texel at x, y set to value
     void setInt(int value, unsigned int x, unsigned int y);
 
-    alignas(8) unsigned char pad_0[0xA8];
+    void* m_pUnused[2];                // 0x90: zeroed by the constructor, read by nothing (3.0.1 or 1.0.0)
+    bool m_isLock;                     // 0xA0
+    bool m_isWrite;                    // 0xA1: unlock flushes the texture's memory
+    bool m_unusedFlag;                 // 0xA2: zeroed by the constructor, read by nothing
+    CGLibTextureBuffer* m_pBuffer;     // 0xA8
 };
 
 }  // namespace grlib
