@@ -86,6 +86,9 @@ public:
         }
         return nullptr;
     }
+    // keeps the handle, the parameter, its object id and a copy of its BDAT table pointer
+    void setupParam(GF_ASSET_HANDLE* handle, const GfInitParam& param);
+
     // a name, none when it is empty (inline; the name is not the original's)
     static const char* validName(const char* name) {
         if (name == nullptr) {
