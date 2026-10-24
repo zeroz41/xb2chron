@@ -29,7 +29,10 @@ public:
     // -1 (failed), for challenges of kind 3.
     void fn_710000BAE0(int id, bool failed);
 
-    unsigned char pad_8[0x83C2];
+    unsigned char pad_8[0x5C44];
+    // EnemyParameter::ApplyStatusEnhance scales every enhanced value by it (the name is not the original's)
+    float m_statusEnhanceRate;
+    unsigned char pad_5c50[0x277A];
     // flags (the names are not the original's): one storage unit of 7 bytes, as their reads load it
     bool pad_bit0 : 1;
     bool pad_bit1 : 1;

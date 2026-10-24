@@ -21,7 +21,7 @@ public:
     virtual void Update(fw::UpdateInfo const&, bool);  // slot 8
     virtual void vf10();  // slot 10
     virtual void GetBladeIndex() const;  // slot 12
-    virtual void GetWeaponID(int) const;  // slot 13
+    virtual unsigned int GetWeaponID(int) const;  // slot 13
     virtual void GetEquipAccessory() const;  // slot 14
     virtual void GetIdeaLevel(int) const;  // slot 15
     virtual void vf16();  // slot 16
@@ -44,7 +44,7 @@ public:
     virtual void vf54();  // slot 54
     virtual void vf63();  // slot 63
     virtual void vf64();  // slot 64
-    virtual void vf65();  // slot 65
+    virtual bool fn_7100085314(int) const;  // slot 65 (placeholder name: see CharacterParameter)
     virtual void vf75();  // slot 75
     virtual void InitializeAttackParam();  // slot 79
     virtual void CalcDamageArmorEx(unsigned int);  // slot 80

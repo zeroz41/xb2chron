@@ -2,7 +2,10 @@
 #ifndef CLASSES_BTL_BATTLECHARACTER_H
 #define CLASSES_BTL_BATTLECHARACTER_H
 
+#include "mm/Vec3.h"
+
 namespace btl { class CharacterParameter; }
+namespace gf { class GF_OBJ_HANDLE; }
 
 namespace btl {
 // table 0x7100B3AA08
@@ -28,7 +31,9 @@ public:
         int pad_10;
         bool pad_14;
     };
+    CharacterParameter* GetCharacterParameter(bool);
     CharacterParameter* GetCharacterParameterConst(bool) const;
+    void NotifyChangeAttr(gf::GF_OBJ_HANDLE* handle, unsigned int attr, unsigned int prevAttr);
     bool IsDead(unsigned int) const;
     bool IsControlCharacter() const;
     void SetWeaponType(int type);
@@ -51,6 +56,10 @@ public:
     // Placeholder name: 1.0.0's ResultProc calls AchieveCondition(int, unsigned int) const in its place, with the
     // same arguments (0xC, 0): the rename's evidence. A member: as fn_7100028D0C.
     void fn_7100041D00(int, unsigned int);
+
+    unsigned char pad_8[0x8];
+    // where the character stands: EnemyParameter::AngryInfection measures from it (the name is not the original's)
+    mm::Vec3 m_pos;
 };
 }  // namespace btl
 

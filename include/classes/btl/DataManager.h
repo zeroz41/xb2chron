@@ -5,6 +5,7 @@
 
 namespace btl { class DataManager; }
 namespace fw { class UpdateInfo; }
+namespace gf { class GF_OBJ_HANDLE; }
 
 namespace btl {
 // table 0x7100B3BAF8
@@ -15,6 +16,7 @@ public:
     static void Create();
     static void Destroy();
     static void PostUpdate(const fw::UpdateInfo& info);
+    void ReleaseEnemyGroup(gf::GF_OBJ_HANDLE* handle);
 };
 }  // namespace btl
 

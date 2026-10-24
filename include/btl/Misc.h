@@ -7,7 +7,11 @@
 namespace btl {
 
 // the battle code's vector helpers (1.0.0's btl::Misc; 3.0.1 keeps the ones below in battle/Misc.cpp)
+class BattleCharacter;
 namespace Misc {
+// whether chr is within range of pos (EnemyParameter::AngryInfection passes its character's position, the
+// candidate, the candidate's radius plus its range, and false)
+bool CheckInRange(const mm::Vec3& pos, BattleCharacter* chr, float range, bool flag);
 
 // which way GetCrossDirection turns: 0 one side, any other the opposite (the names are not the original's)
 enum CROSS_MODE {

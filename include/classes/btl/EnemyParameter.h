@@ -22,7 +22,7 @@ public:
     virtual void PostUpdate(fw::UpdateInfo const&);  // slot 9
     virtual void vf10();  // slot 10
     virtual int GetAttribute() const;  // slot 11
-    virtual void GetWeaponID(int) const;  // slot 13
+    virtual unsigned int GetWeaponID(int) const;  // slot 13
     virtual void vf16();  // slot 16
     virtual void InitializeEnhance() const;  // slot 21
     virtual void vf22();  // slot 22
@@ -66,7 +66,7 @@ public:
     virtual void vf74();  // slot 74
     virtual void vf76();  // slot 76
     virtual void SetBuddy(gf::GF_OBJ_HANDLE*, bool);  // slot 77
-    virtual void ApplyStatusEnhance(int, int, int) const;  // slot 78
+    virtual int ApplyStatusEnhance(int, int, int) const;  // slot 78
     virtual void InitializeAttackParam();  // slot 79
     virtual ~EnemyParameter();  // slot 81
 
@@ -99,13 +99,17 @@ public:
 
     void ResetHate(int index, bool clearFlag);
     void MulHate(int index, int kind, float rate);
+    void CheckChangeAttr();
+    void AngryInfection(float range);
 
     unsigned char pad_624[0x23C];
     HATE_DATA m_hateData[3];
     int m_hateTarget;  // GetHateTarget (the name is not the original's)
     unsigned char pad_894[0x1D];
     unsigned char m_overwriteAttr;  // set by the slot 1.0.0 named SetOverwriteAttr; above 8 when not overwritten
-    unsigned char pad_8b2[0x4];
+    // the attribute CheckChangeAttr last told the characters about; 9 when none (the name is not the original's)
+    unsigned char m_notifiedAttr;
+    unsigned char pad_8b3[0x3];
     unsigned short pad_bit0 : 1;
     unsigned short pad_bit1 : 1;
     bool pad_bit2 : 1;  // ResetHate(-1, true) clears it
