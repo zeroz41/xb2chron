@@ -7,6 +7,7 @@
 #include "gf/SoundHandle.h"
 
 namespace gf { class SDataOption; }
+namespace gf { class SDataSave; }
 namespace gf { class GF_SE_CATEGORY_HANDLE; }
 namespace gf { enum SAVESLOT : int; }
 
@@ -32,8 +33,17 @@ public:
     static bool isReturnTitle();
     static void returnTitle(gf::SAVESLOT slot);  // GfPlayComReturnTitle passes -1
     bool isStateReturnTitle() const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has getSaveBuffer, getOptionBuffer,
+    // clearSaveBuffer there). A member because it reads this+0x130 like getSaveBuffer, right before it. What it
+    // does: returns the save buffer (createSaveBuffer's), exactly as getSaveBuffer does; 14 callers
+    // (GfGameManager::isClearGame, GfGameUtilSaveData::setupGameSaveData, GfMenuObjTitle::initialize...).
+    gf::SDataSave* fn_710014FB00();
+    gf::SDataSave* getSaveBuffer();
     gf::SDataOption* getOptionBuffer();
     void setupTitleOptionToGameOption();
+    // the chapter of the save buffer's game: 0 for no save (wrong version) or no scenario, else the scenario
+    // flag / 1000, 1 to 10
+    unsigned int getChapterIdFromSaveData();
     // stops the title BGM (fading over the given time) when one plays
     void stopTitleBGM(float time);
     void playTitleBGM();
@@ -61,7 +71,8 @@ public:
     unsigned char pad_96[0x2];
     gf::SoundHandle m_titleBgm;  // the title BGM; stopTitleBGM stops and clears it (the name is not the original's)
     bool m_isTitleBgm;  // stopTitleBGM clears it (the name is not the original's)
-    unsigned char pad_A1[0x97];
+    unsigned char pad_A1[0x8F];
+    gf::SDataSave* m_saveBuffer;  // createSaveBuffer's (getSaveBuffer; the name is not the original's)
     gf::SDataOption* m_optionBuffer;  // createSaveBuffer's (getOptionBuffer; the name is not the original's)
     unsigned char pad_140[0xC0];
     unsigned int m_playTitleEvent;  // playTitleEvent's (the name is not the original's)

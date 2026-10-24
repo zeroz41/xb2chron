@@ -9,6 +9,12 @@
 #include "mm/Vec3.h"
 
 namespace gf {
+// one of the game data's task achievements: 12 bytes (fn_71002E9D10 steps them by 12); the fields are not known
+// (the type name is not the original's)
+struct TaskAchieve {
+    unsigned char pad_0[0xC];
+};
+
 // the game's data, as GfDataManager::getDataGame hands it out (1.0.0's GfGameUtil::setupNewGameParam takes one;
 // that getDataGame's is one is inferred)
 class SDataGame {
@@ -39,7 +45,12 @@ public:
     mm::mtl::FixedVector<GfDataMercenaries::Team, 3> m_teams;
     unsigned char pad_109948[0x1E0];
     float m_playerCameraDistance;  // 0x109B28 (named after its accessors; the name is not the original's)
-    unsigned char pad_109B2C[0x1210];
+    unsigned char pad_109B2C[0x4];
+    // 0x109B30: the task achievements (GfDataQuest::getTaskAchieve returns them; fn_71002E9D10 copies them, its end
+    // is begin + count * 12; the count sits at 0x10A130, room for 128; ~SDataSave clears it after none other than
+    // m_teams; the name is not the original's)
+    mm::mtl::FixedVector<TaskAchieve, 128> m_taskAchieve;
+    unsigned char pad_10A138[0xC04];
     unsigned int m_ether;  // 0x10AD3C (named after its accessors; the name is not the original's)
     unsigned char pad_10AD40[0x8];
     unsigned int m_assurePoint;  // 0x10AD48 (named after its accessors; the name is not the original's)
@@ -58,6 +69,9 @@ public:
     unsigned char m_collectFlagNewVersion;  // 0x10AE80 (named after its accessors; the name is not the original's)
     unsigned char pad_10AE81[0x1];
     unsigned char m_cameraSide;  // 0x10AE82 (named after its accessors; the name is not the original's)
+    // to 0x126D80: SDataGame::SDataGame's last store (a 0x8000-byte clear at 0x11ED80); GfDataStore keeps its
+    // SDataOption right after its SDataGame (0x20 + 0x126D80 = getDataOption's 0x126DA0)
+    unsigned char pad_10AE83[0x1BEFD];
 };
 }  // namespace gf
 

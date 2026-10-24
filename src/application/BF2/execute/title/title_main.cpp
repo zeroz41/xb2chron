@@ -1,7 +1,11 @@
+#include "gf/SDataGame.h"
+#include "classes/tl/TitleMain.h"
+#include "gf/SDataSave.h"
 // the title screen: TitleMain and its states (the states' slots are inline: their tables are emitted with the
 // registrations in TitleMain::initialize, or with the state's own out-of-line virtual)
 
 #include "classes/tl/TitleMain.h"
+#include "gf/SDataSave.h"
 #include "classes/tl/TitleStatePlayEvent.h"
 #include "classes/gf/GfFieldLod.h"
 #include "classes/gf/GfGameManager.h"
@@ -157,6 +161,14 @@ bool TitleMain::isStateReturnTitle() const {
         return false;
     }
     return title->m_fsm.m_pState->m_stateID == 8;
+}
+
+gf::SDataSave* TitleMain::fn_710014FB00() {
+    return m_saveBuffer;
+}
+
+gf::SDataSave* TitleMain::getSaveBuffer() {
+    return m_saveBuffer;
 }
 
 gf::SDataOption* TitleMain::getOptionBuffer() {
