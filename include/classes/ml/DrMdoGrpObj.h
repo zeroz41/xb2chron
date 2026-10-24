@@ -14,7 +14,7 @@ public:
     virtual void dispOffUpdate();  // slot 3
     virtual void resourceInit() {}  // slot 5
     virtual void shadowRender();  // slot 6
-    virtual void shadowCacheRender(ml::DrPixlShadowCacheObj&);  // slot 7
+    virtual bool shadowCacheRender(ml::DrPixlShadowCacheObj&);  // slot 7
     virtual void shadowCacheOnlyRender();  // slot 9
     virtual void callShadowCacheUpdate(unsigned long);  // slot 11
     virtual void occRender();  // slot 12
@@ -28,6 +28,17 @@ public:
     void callZSortNomAlphaRender();
     void callZSortNomSpAlphaRender();
     void callZSortNomRefractionRender();
+
+    // the names below are not the original's
+    // one list of objects (the constructor zeroes both words)
+    struct MdlList {
+        DrMdlBase* m_pTop;
+        unsigned char pad_8[0x8];
+    };
+    unsigned char pad_28[0x8];
+    MdlList** m_ppList;  // 0x30, the constructor points it after its MdlList entries in the same allocation
+    unsigned char pad_38[0x34];
+    int m_listNum;  // 0x6C, the count the render passes walk
 };
 }  // namespace ml
 

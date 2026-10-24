@@ -4,6 +4,7 @@
 #include "classes/ml/DrMdlBase.h"
 
 namespace ml { class DrMan; }
+namespace ml { class DrMdoSmlShadowObj; }
 namespace ml { struct MdoWrkMatRes; }
 namespace ml { struct MdoVanishEffectWrk; }
 namespace ml { struct MdsMatInfoHeader; }
@@ -12,7 +13,7 @@ namespace ml {
 // table 0x7100B7BD30
 class DrMdoMat : public ::ml::DrMdlBase {
 public:
-    virtual ~DrMdoMat();  // slot 0
+    virtual ~DrMdoMat() {}  // slot 0
 
     void updateMatCallBack(const unsigned int* dispBits);
 
@@ -63,19 +64,12 @@ public:
 
     static void (DrMdoMat::*s_pCallMatVal[35])(const MdsMatInfoHeader*, int, int);
 
-    unsigned char pad_8[0x10];
-    // DrMdlObj's getGroups/setGroups read it; which class of the DrMdlBase..DrMdlObj chain owns it is not known
-    // (the name is not the original's)
-    short m_groups;  // 0x18
-    unsigned char pad_1A[0x2];
-    // the model's kind: 0 is a DrMdoCtlNom (the ScnObjAcc* accessors then use its data), ScnObjAccSeamPos takes
-    // data at different offsets for 1 and 3; which class of the chain owns it is not known (the name is not the
-    // original's)
-    unsigned char m_mdlType;  // 0x1C
-    unsigned char pad_1D[0xB];
     DrMan* m_pDrMan;  // 0x28, set by 1.0.0's setDrMan(DrMan*) (the field name is not the original's)
     MdoWrkMatRes* m_pWrkMatRes;  // 0x30 (the field name is not the original's)
-    unsigned char pad_38[0xA0];
+    unsigned char pad_38[0x20];
+    // DrMdlObj::chageShadowObject hands it to DrMdoSmlShadowMan::changeViewNum (the name is not the original's)
+    DrMdoSmlShadowObj* m_pSmlShadowObj;  // 0x58
+    unsigned char pad_60[0x78];
     float m_colorScale;  // 0xD8, 1.0f from the constructor; scales CalcBloom/CalcColor (name inferred)
 };
 }  // namespace ml

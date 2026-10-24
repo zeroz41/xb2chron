@@ -15,7 +15,7 @@ public:
     virtual void noOffScreenUpdate();  // slot 4
     virtual void resourceInit();  // slot 5
     virtual void shadowRender();  // slot 6
-    virtual void shadowCacheRender(ml::DrPixlShadowCacheObj&);  // slot 7
+    virtual bool shadowCacheRender(ml::DrPixlShadowCacheObj&);  // slot 7
     virtual void shadowCacheAddRender(int);  // slot 8
     virtual void callShadowCacheUpdate(unsigned long);  // slot 11
     virtual void occRender();  // slot 12

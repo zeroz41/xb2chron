@@ -9,6 +9,7 @@ namespace grlib { class CGLibTextureBuffer; }
 namespace ml { class DrAPCache; }
 namespace ml { class DrIniSys; }
 namespace ml { class DrPixlMan; }
+namespace ml { class DrMdlMan; }
 namespace ml { class DrPixlPostParm; }
 namespace ml { class IDrDrawCallback; }
 namespace ml { class WinProc; }
@@ -34,10 +35,12 @@ public:
     // both read s_pTop
     static DrMan* getIns();
     static DrMan* get();
+    static bool isSRGBMode();
+    static bool isFogSRGB();
 
     void begin();
     void end();
-    void loopCnt();
+    bool loopCnt();
     void apply(int);
     void render(int);
     void tail();
@@ -48,6 +51,9 @@ public:
     void setTimeVal(float time);
     void setAutoReduction(bool enable);
     void setGlobalWind(const mm::Vec3& power);
+    const mm::Vec3& getGlobalWind() const;
+    bool isIBLHalfRes() const;
+    void setSeamMapStmOk(bool ok);
     void setGblIdx(int index);
     void offGblIdx(int index);
     bool isAllMiddelTexStmChk() const;
@@ -60,17 +66,27 @@ public:
 
     static int s_nDblIdx;
     static int s_nDblStockIdx;
+    static DrMan* s_pTop;
+    static int s_nDblNowIdx;
+    static bool s_bSRGBMode;
+    static bool s_bFogSRGB;
 
     unsigned char pad_8[0x68];
     DrIniSys* m_iniSys;                 // the constructor makes it (0x1BA0 bytes)
     DrPixlMan* m_pixlMan;               // 0x78, DrMdoSetup::varStTex_* call DrPixlMan methods on it (the name is not the original's)
-    unsigned char pad_80[0x80];
+    unsigned char pad_80[0x8];
+    DrMdlMan* m_mdlMan;                 // 0x88, DrCreator's model calls go to it
+    unsigned char pad_90[0x70];
     // the constructor makes one per view (index 0 here), after the DrLightMan/DrFogMan it is built from
     DrEnvironmentMan* m_envMan[4];
     DrPixlPostParm* m_postParm[4];      // the constructor makes them; ScnRenderDrSysParmAcc takes one per view
     unsigned char pad_140[0x480];
     DrAPCache* m_apCache;               // 0x5C0, DrMdoSetup::varStTex_* bind textures through it (the name is not the original's)
-    unsigned char pad_5C8[0x16A8];
+    bool* m_pAutoReduction;             // 0x5C8, setAutoReduction writes through it
+    unsigned char pad_5D0[0x8];
+    IDrDrawCallback* m_callBack[16];    // 0x5D8, setCallBack/releaseCallBack
+    int m_callBackNum;                  // 0x658
+    unsigned char pad_65C[0x1614];
     // the field names below are not the original's: each is named after the ScnRenderDrSys/ScnRenderDrSysParmAcc
     // setter that writes it
     mm::Vec3 m_seamMapReadPos;
@@ -82,11 +98,17 @@ public:
     float m_gamma;
     unsigned char pad_1C94[0x8];
     unsigned int m_viewRenderSkip;      // a bit per view
-    unsigned char pad_1CA0[0x23];
+    unsigned char pad_1CA0[0x22];
+    bool m_homeMenu;                    // 0x1CC2, bkgHomeMenu(true) sets it
     bool m_autoResetScene;
-    unsigned char pad_1CC4[0xD3];
+    unsigned char pad_1CC4[0x6C];
+    mm::Vec3 m_globalWind[2];           // 0x1D30, by s_nDblNowIdx (getGlobalWind)
+    unsigned char pad_1D50[0x47];
     bool m_mdlDblPause;
-    unsigned char pad_1D98[0x26];
+    unsigned char pad_1D98[0x20];
+    bool m_allMiddelTexStmChk[2];       // 0x1DB8, by s_nDblStockIdx
+    bool m_seamMapStmOk[2];             // 0x1DBA, setSeamMapStmOk writes [s_nDblIdx]
+    unsigned char pad_1DBC[0x2];
     bool m_cameraLight;
     unsigned char pad_1DBF[0x51];
     cloud::CloudMan* m_cloudMan;        // setPlaneCloudNum hands it the cloud count
