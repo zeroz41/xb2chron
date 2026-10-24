@@ -1,7 +1,10 @@
 #include "gf/QuestListAcc.h"
-#include "classes/gf/GfBdatQuest.h"
 #include "gf/QuestListAcc.h"
 #include "classes/gf/GfBdatQuest.h"
+#include "gf/GfDataQuest.h"
+#include "gf/GfDataUtil.h"
+#include "gf/QuestTaskParam.h"
+#include "string.h"
 #include "plugin/Bdat.h"
 
 namespace gf {
@@ -2750,6 +2753,433 @@ inline unsigned int getColumn(ColumnGetter* table, unsigned int index, const CBd
 }
 }  // namespace
 
+namespace {
+// where a purpose's task row or a quest's list row lies (the getters build it on the stack; the names are not the
+// original's)
+struct QuestRow {
+    explicit QuestRow(unsigned int purposeId) : m_purposeId(purposeId) {}
+    explicit QuestRow(QuestID questId) : m_purposeId(0), m_questId(questId) {}
+
+    unsigned int m_row;       // the row in the acc's numbering
+    unsigned int m_begin;     // its category's first row
+    int m_category;  // 0 none
+    unsigned int m_purposeId;
+    QuestID m_questId;
+};
+
+// looks a row up: a purpose id in the task index, else a quest id in the list index (the name is not the original's)
+inline void findRow(const QuestListAcc& acc, QuestRow& row) {
+    if (row.m_purposeId != 0) {
+        unsigned int index = acc.m_taskIndex[row.m_purposeId];
+        row.m_category = index >> 24;
+        row.m_row = index & 0xFFFFFF;
+        row.m_begin = acc.m_task[row.m_category - 1].m_begin;
+    } else if (!row.m_questId.empty()) {
+        unsigned int index = acc.m_listIndex[row.m_questId.m_id];
+        row.m_category = index >> 24;
+        row.m_row = index & 0xFFFFFF;
+        row.m_begin = acc.m_list[row.m_category - 1].m_begin;
+    } else {
+        row.m_category = 0;
+        row.m_row = 0;
+        row.m_begin = 0;
+    }
+}
+
+// the table a row is read from (category 0: the second category's first table; the names are not the original's)
+template <unsigned long N>
+inline CBdatWrapper* getRowBdat(const QuestCategory<N>* categories, const QuestRow& row) {
+    if (row.m_category == 0) {
+        return categories[1].m_bdat;
+    }
+    const QuestCategory<N>& category = categories[row.m_category - 1];
+    return row.m_row >= category.m_split ? category.m_bdat2 : category.m_bdat;
+}
+
+// a quest's list table and its row in it (no category: the second category's first table, the row left as it is;
+// the name is not the original's)
+inline void getListBdat(const QuestListAcc& acc, CBdatWrapper*& bdat, unsigned short& rowId, QuestID id) {
+    QuestRow row(id);
+    findRow(acc, row);
+    if (row.m_category == 0) {
+        bdat = acc.m_list[1].m_bdat;
+        return;
+    }
+    rowId = row.m_questId.m_id;
+    const QuestCategory<8096>& category = acc.m_list[row.m_category - 1];
+    bdat = category.m_split <= row.m_row ? category.m_bdat2 : category.m_bdat;
+}
+}  // namespace
+
+unsigned int QuestListAcc::getListQuestTitle(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListQuestTitle(*bdat, id.m_id);
+}
+
+int QuestListAcc::getListQuestCategory(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListQuestCategory(*bdat, id.m_id);
+}
+
+int QuestListAcc::getListVisible(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListVisible(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListTalker(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListTalker(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListSummary(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListSummary(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListResultA(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListResultA(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListResultB(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListResultB(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListRewardSetA(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListRewardSetA(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListRewardSetB(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListRewardSetB(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListPRTQuestID(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListPRTQuestID(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListFlagPRT(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListFlagPRT(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListFlagCLD(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListFlagCLD(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListPurposeID(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListPurposeID(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListCountCancel(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListCountCancel(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListNextQuestA(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListNextQuestA(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListCallEventA(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListCallEventA(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListNextQuestB(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListNextQuestB(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListCallEventB(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListCallEventB(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListHintsID(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListHintsID(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListAutoStart(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListAutoStart(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListItemLost(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListItemLost(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListCancelCondition(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListCancelCondition(*bdat, id.m_id);
+}
+
+int QuestListAcc::getListQuestIcon(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListQuestIcon(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getListLinkedQuestID(QuestID id) const {
+    if (id.empty()) {
+        return 0;
+    }
+    CBdatWrapper* bdat;
+    getListBdat(*this, bdat, id.m_id, id);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getListLinkedQuestID(*bdat, id.m_id);
+}
+
+unsigned int QuestListAcc::getTaskPreCondition(unsigned int purposeId) const {
+    QuestRow row(purposeId);
+    findRow(*this, row);
+    CBdatWrapper* bdat = getRowBdat(m_task, row);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getTaskPreCondition(*bdat, purposeId);
+}
+
+unsigned int QuestListAcc::getTaskTaskCondition1(unsigned int purposeId) const {
+    QuestRow row(purposeId);
+    findRow(*this, row);
+    CBdatWrapper* bdat = getRowBdat(m_task, row);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return _gfbqa::getTaskTaskCondition1(*bdat, purposeId);
+}
+
+unsigned int QuestListAcc::getTaskTaskID(unsigned int purposeId, unsigned int task) const {
+    QuestRow row(purposeId);
+    findRow(*this, row);
+    CBdatWrapper* bdat = getRowBdat(m_task, row);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return getColumn(s_getTaskTaskID, task, *bdat, purposeId);
+}
+
+unsigned int QuestListAcc::getTaskTaskUI(unsigned int purposeId, unsigned int task) const {
+    QuestRow row(purposeId);
+    findRow(*this, row);
+    CBdatWrapper* bdat = getRowBdat(m_task, row);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return getColumn(s_getTaskTaskUI, task, *bdat, purposeId);
+}
+
+unsigned int QuestListAcc::getTaskTaskType(unsigned int purposeId, unsigned int task) const {
+    QuestRow row(purposeId);
+    findRow(*this, row);
+    CBdatWrapper* bdat = getRowBdat(m_task, row);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return getColumn(s_getTaskTaskType, task, *bdat, purposeId);
+}
+
+unsigned int QuestListAcc::getTaskTaskBranch(unsigned int purposeId, unsigned int task) const {
+    QuestRow row(purposeId);
+    findRow(*this, row);
+    CBdatWrapper* bdat = getRowBdat(m_task, row);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return getColumn(s_getTaskBranch, task, *bdat, purposeId);
+}
+
+unsigned int QuestListAcc::getTaskTaskLog(unsigned int purposeId, unsigned int task) const {
+    QuestRow row(purposeId);
+    findRow(*this, row);
+    CBdatWrapper* bdat = getRowBdat(m_task, row);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return getColumn(s_getTaskTaskLog, task, *bdat, purposeId);
+}
+
+unsigned int QuestListAcc::getTaskTaskCondition(unsigned int purposeId, unsigned int task) const {
+    QuestRow row(purposeId);
+    findRow(*this, row);
+    CBdatWrapper* bdat = getRowBdat(m_task, row);
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return getColumn(s_getTaskTaskCondition, task, *bdat, purposeId);
+}
+
+
 unsigned int QuestListAcc::getBattleEnemyID(unsigned int id) const {
     return _gfbqa::getBattleEnemyID(*GfBdatQuest::get()->m_fpBattle, id);
 }
@@ -3245,5 +3675,304 @@ unsigned int QuestListAcc::fn_710025E8E4(unsigned int id) const {
 unsigned int QuestListAcc::getFLD_DevelopmentLevelValue(unsigned int id) const {
     return _gfbqa::getFLD_DevelopmentLevelValue(*GfBdatQuest::get()->m_fpFLD_DevelopmentLevel, id);
 }
+
+QuestListAcc::QuestListAcc() {
+    clear();
+}
+
+void QuestListAcc::clear() {
+    memset(m_listIndex, 0, sizeof(m_listIndex) + sizeof(m_listCount));
+    for (int i = 0; i < 6; i++) {
+        m_list[i].clear();
+    }
+    memset(m_taskIndex, 0, sizeof(m_taskIndex) + sizeof(m_taskCount));
+    for (int i = 0; i < 6; i++) {
+        m_task[i].clear();
+    }
+}
+
+QuestListAcc::~QuestListAcc() {}
+
+QuestListAcc* QuestListAcc::get() {
+    return GfBdatQuest::get()->m_questListAcc;
+}
+
+bool QuestListAcc::getQuestListByIndex(CBdatWrapper*& bdat, unsigned short& id, unsigned int index) const {
+    for (const QuestCategory<8096>* category = m_list; category != m_list + 6; category++) {
+        if (category->m_begin <= index && index < category->m_end) {
+            bdat = index >= category->m_split ? category->m_bdat2 : category->m_bdat;
+            id = category->m_ids[index - category->m_begin];
+            return true;
+        }
+    }
+    return false;
+}
+
+qlist_iterator QuestListAcc::begin(QTYPE type) const {
+    qlist_iterator it(type);
+    if (type == 0 || (static_cast<unsigned int>(type - 1) < 6 && !m_list[type - 1].m_ids.empty())) {
+        it.m_index = 0;
+    }
+    return it;
+}
+
+qlist_iterator QuestListAcc::end(QTYPE type) const {
+    qlist_iterator it(type);
+    it.m_index = -1;
+    return it;
+}
+
+void QuestListAcc::addListCategory(unsigned short id, unsigned int category, CBdatWrapper* bdat) {
+    QuestCategory<8096>& list = m_list[category - 1];
+    list.m_ids.push_back(id);
+    m_listIndex[id] = m_listCount | category << 24;
+    if (list.m_bdat == nullptr) {
+        list.m_bdat = bdat;
+        list.m_begin = m_listCount;
+        list.m_end = m_listCount + 1;
+    } else {
+        if (list.m_bdat != bdat && list.m_bdat2 == nullptr) {
+            list.m_bdat2 = bdat;
+            list.m_split = m_listCount;
+        }
+        list.m_end++;
+    }
+    m_listCount++;
+}
+
+void QuestListAcc::addTaskCategory(unsigned short id, unsigned int category, CBdatWrapper* bdat) {
+    QuestCategory<4096>& task = m_task[category - 1];
+    task.m_ids.push_back(id);
+    m_taskIndex[id] = m_taskCount | category << 24;
+    if (task.m_bdat == nullptr) {
+        task.m_bdat = bdat;
+        task.m_begin = m_taskCount;
+        task.m_end = m_taskCount + 1;
+    } else {
+        if (task.m_bdat != bdat && task.m_bdat2 == nullptr) {
+            task.m_bdat2 = bdat;
+            task.m_split = m_taskCount;
+        }
+        task.m_end++;
+    }
+    m_taskCount++;
+}
+
+
+
+
+
+void QuestListAcc::rebuild() {
+    clear();
+    _gfbqa::initBattleRefer(*GfBdatQuest::get()->m_fpBattle);
+    _gfbqa::initBattleEnemyID(*GfBdatQuest::get()->m_fpBattle);
+    _gfbqa::initBattleEnemyGroupID(*GfBdatQuest::get()->m_fpBattle);
+    _gfbqa::initBattleEnemySpeciesID(*GfBdatQuest::get()->m_fpBattle);
+    _gfbqa::initBattleEnemyRaceID(*GfBdatQuest::get()->m_fpBattle);
+    _gfbqa::initBattleCount(*GfBdatQuest::get()->m_fpBattle);
+    _gfbqa::initBattleCountFlag(*GfBdatQuest::get()->m_fpBattle);
+    _gfbqa::initBattleDeadAll(*GfBdatQuest::get()->m_fpBattle);
+    _gfbqa::initBattleTimeCount(*GfBdatQuest::get()->m_fpBattle);
+    _gfbqa::initBattleTimeCountFlag(*GfBdatQuest::get()->m_fpBattle);
+    _gfbqa::initBattleReduceEnemyHP(*GfBdatQuest::get()->m_fpBattle);
+    _gfbqa::initBattleReducePCHP(*GfBdatQuest::get()->m_fpBattle);
+    _gfbqa::initBattleTargetOff(*GfBdatQuest::get()->m_fpBattle);
+    _gfbqa::initRequestItemSetItemID1(*GfBdatQuest::get()->m_fpRequestItemSet);
+    _gfbqa::initRequestItemSetItemID2(*GfBdatQuest::get()->m_fpRequestItemSet);
+    _gfbqa::initRequestItemSetItemID3(*GfBdatQuest::get()->m_fpRequestItemSet);
+    _gfbqa::initRequestItemSetItemID4(*GfBdatQuest::get()->m_fpRequestItemSet);
+    _gfbqa::initRequestItemSetItemID5(*GfBdatQuest::get()->m_fpRequestItemSet);
+    _gfbqa::initRequestItemSetCount1(*GfBdatQuest::get()->m_fpRequestItemSet);
+    _gfbqa::initRequestItemSetCount2(*GfBdatQuest::get()->m_fpRequestItemSet);
+    _gfbqa::initRequestItemSetCount3(*GfBdatQuest::get()->m_fpRequestItemSet);
+    _gfbqa::initRequestItemSetCount4(*GfBdatQuest::get()->m_fpRequestItemSet);
+    _gfbqa::initRequestItemSetCount5(*GfBdatQuest::get()->m_fpRequestItemSet);
+    _gfbqa::initRequestItemSetMapID(*GfBdatQuest::get()->m_fpRequestItemSet);
+    _gfbqa::initRequestItemSetNpcID(*GfBdatQuest::get()->m_fpRequestItemSet);
+    _gfbqa::initCollectItemID(*GfBdatQuest::get()->m_fpCollect);
+    _gfbqa::initCollectCategory(*GfBdatQuest::get()->m_fpCollect);
+    _gfbqa::initCollectCount(*GfBdatQuest::get()->m_fpCollect);
+    _gfbqa::initCollectDeduct(*GfBdatQuest::get()->m_fpCollect);
+    _gfbqa::initCollectTresureID(*GfBdatQuest::get()->m_fpCollect);
+    _gfbqa::initCollectEnemyID(*GfBdatQuest::get()->m_fpCollect);
+    _gfbqa::initCollectMapID(*GfBdatQuest::get()->m_fpCollect);
+    _gfbqa::initCollectNpcID(*GfBdatQuest::get()->m_fpCollect);
+    _gfbqa::initCollectCollectionID(*GfBdatQuest::get()->m_fpCollect);
+    _gfbqa::initUseItemID(*GfBdatQuest::get()->m_fpUse);
+    _gfbqa::initUseCategory(*GfBdatQuest::get()->m_fpUse);
+    _gfbqa::initUseItemNumber(*GfBdatQuest::get()->m_fpUse);
+    _gfbqa::initUsePartyInPC(*GfBdatQuest::get()->m_fpUse);
+    _gfbqa::initUsebladeID(*GfBdatQuest::get()->m_fpUse);
+    _gfbqa::initReachCategory(*GfBdatQuest::get()->m_fpReach);
+    _gfbqa::initReachMapID(*GfBdatQuest::get()->m_fpReach);
+    _gfbqa::initReachPlaceID(*GfBdatQuest::get()->m_fpReach);
+    _gfbqa::initTalkMapID(*GfBdatQuest::get()->m_fpTalk);
+    _gfbqa::initTalkNpcID(*GfBdatQuest::get()->m_fpTalk);
+    _gfbqa::initTalkDummyGroup(*GfBdatQuest::get()->m_fpTalk);
+    _gfbqa::initDummyGroupNpcID1(*GfBdatQuest::get()->m_fpDummyGroup);
+    _gfbqa::initDummyGroupNpcID2(*GfBdatQuest::get()->m_fpDummyGroup);
+    _gfbqa::initDummyGroupNpcID3(*GfBdatQuest::get()->m_fpDummyGroup);
+    _gfbqa::initDummyGroupNpcID4(*GfBdatQuest::get()->m_fpDummyGroup);
+    _gfbqa::initDummyGroupNpcID5(*GfBdatQuest::get()->m_fpDummyGroup);
+    _gfbqa::initDummyGroupNpcID6(*GfBdatQuest::get()->m_fpDummyGroup);
+    _gfbqa::initDummyGroupNpcID7(*GfBdatQuest::get()->m_fpDummyGroup);
+    _gfbqa::initDummyGroupNpcID8(*GfBdatQuest::get()->m_fpDummyGroup);
+    _gfbqa::initGimmickMapID(*GfBdatQuest::get()->m_fpGimmick);
+    _gfbqa::initGimmickDoorGimmickID(*GfBdatQuest::get()->m_fpGimmick);
+    _gfbqa::initGimmickElevatorGimmickID(*GfBdatQuest::get()->m_fpGimmick);
+    _gfbqa::initGimmickJumpGimmickID(*GfBdatQuest::get()->m_fpGimmick);
+    _gfbqa::initGimmickMapGimmickID(*GfBdatQuest::get()->m_fpGimmick);
+    _gfbqa::initGimmickMapGmkIconOff(*GfBdatQuest::get()->m_fpGimmick);
+    _gfbqa::initGimmickWarpGimmickID(*GfBdatQuest::get()->m_fpGimmick);
+    _gfbqa::initGimmickSalvagePointID(*GfBdatQuest::get()->m_fpGimmick);
+    _gfbqa::initGimmickTboxPopID(*GfBdatQuest::get()->m_fpGimmick);
+    _gfbqa::initGimmickEnemyWaveID(*GfBdatQuest::get()->m_fpGimmick);
+    _gfbqa::initGimmickCampPopID(*GfBdatQuest::get()->m_fpGimmick);
+    _gfbqa::initGimmickCollectionPopID(*GfBdatQuest::get()->m_fpGimmick);
+    _gfbqa::initGimmickEndCheck(*GfBdatQuest::get()->m_fpGimmick);
+    _gfbqa::initFieldSkillCountFieldSkillID(*GfBdatQuest::get()->m_fpFieldSkillCount);
+    _gfbqa::initFieldSkillCountCount(*GfBdatQuest::get()->m_fpFieldSkillCount);
+    _gfbqa::initRequestBladeRequestCategory(*GfBdatQuest::get()->m_fpRequestBlade);
+    _gfbqa::initRequestBladeRequestAtr(*GfBdatQuest::get()->m_fpRequestBlade);
+    _gfbqa::initRequestBladeRequestPerformance(*GfBdatQuest::get()->m_fpRequestBlade);
+    _gfbqa::initRequestBladeRequestRace(*GfBdatQuest::get()->m_fpRequestBlade);
+    _gfbqa::initRequestBladeRequestGender(*GfBdatQuest::get()->m_fpRequestBlade);
+    _gfbqa::initRequestBladeRequestArts(*GfBdatQuest::get()->m_fpRequestBlade);
+    _gfbqa::initRequestBladeRequestArtsLevel(*GfBdatQuest::get()->m_fpRequestBlade);
+    _gfbqa::initRequestBladeRequestFSkill(*GfBdatQuest::get()->m_fpRequestBlade);
+    _gfbqa::initRequestBladeRequestFSLevel(*GfBdatQuest::get()->m_fpRequestBlade);
+    _gfbqa::initRequestBladeRequestNumber(*GfBdatQuest::get()->m_fpRequestBlade);
+    _gfbqa::initConditionConditionID(*GfBdatQuest::get()->m_fpCondition);
+    _gfbqa::initConditionMapID(*GfBdatQuest::get()->m_fpCondition);
+    _gfbqa::initConditionNpcID(*GfBdatQuest::get()->m_fpCondition);
+    _gfbqa::initAchievementStatsID(*GfBdatQuest::get()->m_fpAchievement);
+    _gfbqa::initAchievementCount(*GfBdatQuest::get()->m_fpAchievement);
+    _gfbqa::initAchievementDebugName(*GfBdatQuest::get()->m_fpAchievement);
+    _gfbqa::initHintsMainChar1(*GfBdatQuest::get()->m_fpHints);
+    _gfbqa::initHintsMainChar2(*GfBdatQuest::get()->m_fpHints);
+    _gfbqa::initHintsMainChar3(*GfBdatQuest::get()->m_fpHints);
+    _gfbqa::initHintsMainChar4(*GfBdatQuest::get()->m_fpHints);
+    _gfbqa::initHintsFSkillID1(*GfBdatQuest::get()->m_fpHints);
+    _gfbqa::initHintsFSkillID2(*GfBdatQuest::get()->m_fpHints);
+    _gfbqa::initHintsFSkillID3(*GfBdatQuest::get()->m_fpHints);
+    _gfbqa::initHintsClientNpc(*GfBdatQuest::get()->m_fpHints);
+    _gfbqa::initHintsZoneID(*GfBdatQuest::get()->m_fpHints);
+    _gfbqa::initEventEventID(*GfBdatQuest::get()->m_fpEvent);
+    _gfbqa::initRewardGold(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardEXP(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardSp(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardCoin(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardDevelopZone(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardDevelopPoint(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardTrustPoint(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardMercenariesPoint(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardIdeaCategory(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardIdeaValue(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardItemID1(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardItemNumber1(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardItemID2(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardItemNumber2(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardItemID3(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardItemNumber3(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardItemID4(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initRewardItemNumber4(*GfBdatQuest::get()->m_fpReward);
+    _gfbqa::initFLD_AchievementSetCategory(*GfBdatQuest::get()->m_fpFLD_AchievementSet);
+    _gfbqa::initFLD_AchievementSetAbilityLevel(*GfBdatQuest::get()->m_fpFLD_AchievementSet);
+    _gfbqa::initFLD_AchievementSetAchievementID1(*GfBdatQuest::get()->m_fpFLD_AchievementSet);
+    _gfbqa::initFLD_AchievementSetAchievementID2(*GfBdatQuest::get()->m_fpFLD_AchievementSet);
+    _gfbqa::initFLD_AchievementSetAchievementID3(*GfBdatQuest::get()->m_fpFLD_AchievementSet);
+    _gfbqa::initFLD_AchievementSetAchievementID4(*GfBdatQuest::get()->m_fpFLD_AchievementSet);
+    _gfbqa::initFLD_AchievementSetAchievementID5(*GfBdatQuest::get()->m_fpFLD_AchievementSet);
+    _gfbqa::initFLD_AchievementListTitle(*GfBdatQuest::get()->m_fpFLD_AchievementList);
+    _gfbqa::initFLD_AchievementListCategory(*GfBdatQuest::get()->m_fpFLD_AchievementList);
+    _gfbqa::initFLD_AchievementListIcon(*GfBdatQuest::get()->m_fpFLD_AchievementList);
+    _gfbqa::initFLD_AchievementListTask(*GfBdatQuest::get()->m_fpFLD_AchievementList);
+    _gfbqa::initFLD_AchievementListVoiceCategory(*GfBdatQuest::get()->m_fpFLD_AchievementList);
+    _gfbqa::initFLD_AchievementListAfterVoice(*GfBdatQuest::get()->m_fpFLD_AchievementList);
+    _gfbqa::initFLD_AchievementListDifficulty(*GfBdatQuest::get()->m_fpFLD_AchievementList);
+    _gfbqa::initFLD_AchievementListIdeaCategory(*GfBdatQuest::get()->m_fpFLD_AchievementList);
+    _gfbqa::initFLD_AchievementListIdeaValue(*GfBdatQuest::get()->m_fpFLD_AchievementList);
+    _gfbqa::initFLD_MercenariesConfigValue(*GfBdatQuest::get()->m_fpFLD_MercenariesConfig);
+    _gfbqa::initFLD_MercenariesMissionQuestID(*GfBdatQuest::get()->m_fpFLD_MercenariesMission);
+    _gfbqa::initFLD_MercenariesMissionCategory(*GfBdatQuest::get()->m_fpFLD_MercenariesMission);
+    _gfbqa::initFLD_MercenariesMissionRequestPerformance(*GfBdatQuest::get()->m_fpFLD_MercenariesMission);
+    _gfbqa::initFLD_MercenariesMissionRepeatable(*GfBdatQuest::get()->m_fpFLD_MercenariesMission);
+    _gfbqa::initFLD_MercenariesMissionAutoStart(*GfBdatQuest::get()->m_fpFLD_MercenariesMission);
+    _gfbqa::initFLD_FieldSkillListName(*GfBdatQuest::get()->m_fpFLD_FieldSkillList);
+    _gfbqa::initFLD_FieldSkillListCaption(*GfBdatQuest::get()->m_fpFLD_FieldSkillList);
+    _gfbqa::initFLD_FieldSkillListType(*GfBdatQuest::get()->m_fpFLD_FieldSkillList);
+    _gfbqa::initFLD_FieldSkillListRandomID(*GfBdatQuest::get()->m_fpFLD_FieldSkillList);
+    _gfbqa::initFLD_FieldSkillListMinLevel(*GfBdatQuest::get()->m_fpFLD_FieldSkillList);
+    _gfbqa::initFLD_FieldSkillListMaxLevel(*GfBdatQuest::get()->m_fpFLD_FieldSkillList);
+    _gfbqa::initFLD_FieldSkillListCategory(*GfBdatQuest::get()->m_fpFLD_FieldSkillList);
+    _gfbqa::initFLD_FieldSkillListRarity(*GfBdatQuest::get()->m_fpFLD_FieldSkillList);
+    _gfbqa::initFLD_FieldSkillListIcon(*GfBdatQuest::get()->m_fpFLD_FieldSkillList);
+    _gfbqa::initFLD_FieldSkillListVoiceCategory(*GfBdatQuest::get()->m_fpFLD_FieldSkillList);
+    _gfbqa::initFLD_FieldSkillListAttirbute(*GfBdatQuest::get()->m_fpFLD_FieldSkillList);
+    _gfbqa::initFLD_FieldSkillSettingName(*GfBdatQuest::get()->m_fpFLD_FieldSkillSetting);
+    _gfbqa::initFLD_FieldSkillSettingFieldSkillID1(*GfBdatQuest::get()->m_fpFLD_FieldSkillSetting);
+    _gfbqa::initFLD_FieldSkillSettingFieldSkillLevel1(*GfBdatQuest::get()->m_fpFLD_FieldSkillSetting);
+    _gfbqa::initFLD_FieldSkillSettingFieldSkillID2(*GfBdatQuest::get()->m_fpFLD_FieldSkillSetting);
+    _gfbqa::initFLD_FieldSkillSettingFieldSkillLevel2(*GfBdatQuest::get()->m_fpFLD_FieldSkillSetting);
+    _gfbqa::initFLD_FieldSkillSettingSuccessVoiceCategory(*GfBdatQuest::get()->m_fpFLD_FieldSkillSetting);
+    _gfbqa::initFLD_FieldSkillSettingMissVoiceCategory(*GfBdatQuest::get()->m_fpFLD_FieldSkillSetting);
+    _gfbqa::initFLD_FieldSkillRandomLevel1Chance(*GfBdatQuest::get()->m_fpFLD_FieldSkillRandom);
+    _gfbqa::initFLD_FieldSkillRandomLevel2Chance(*GfBdatQuest::get()->m_fpFLD_FieldSkillRandom);
+    _gfbqa::initFLD_FieldSkillRandomLevel3Chance(*GfBdatQuest::get()->m_fpFLD_FieldSkillRandom);
+    _gfbqa::initFLD_DevelopmentLevelValue(*GfBdatQuest::get()->m_fpFLD_DevelopmentLevel);
+    _gfbqa::initListQuestTitle(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListQuestCategory(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListVisible(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListTalker(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListSummary(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListResultA(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListResultB(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListSortNo(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListRewardDisp(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListRewardSetA(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListRewardSetB(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListPRTQuestID(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListFlagPRT(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListFlagCLD(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListPurposeID(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListCountCancel(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListNextQuestA(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListCallEventA(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListNextQuestB(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListCallEventB(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListHintsID(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListClearVoice(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListAutoStart(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListItemLost(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListCancelCondition(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListQuestIcon(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initListLinkedQuestID(*GfBdatQuest::get()->m_fpList);
+    _gfbqa::initTaskPreCondition(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskType1(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskType2(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskType3(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskType4(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskID1(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskID2(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskID3(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskID4(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskBranch1(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskBranch2(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskBranch3(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskBranch4(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskLog1(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskLog2(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskLog3(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskLog4(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskUI1(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskUI2(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskUI3(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskUI4(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskCondition1(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskCondition2(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskCondition3(*GfBdatQuest::get()->m_fpTask);
+    _gfbqa::initTaskTaskCondition4(*GfBdatQuest::get()->m_fpTask);
+}
+
 
 }  // namespace gf

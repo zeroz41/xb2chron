@@ -2,6 +2,9 @@
 #define GF_QUESTLISTACC_H
 
 #include "gf/QuestID.h"
+#include "mm/mtl/FixedVector.h"
+
+class CBdatWrapper;
 
 namespace gf { class QuestTaskParam; }
 
@@ -11,23 +14,57 @@ class QuestListAcc;
 // which quest list QuestListAcc::begin and end walk
 enum QTYPE {};
 
+// one category of quest list or task rows: the rows in order and the (up to two) BDAT tables they come from
+// (layout from addListCategory, addTaskCategory and getQuestListByIndex; the names are not the original's)
+template <unsigned long N>
+class QuestCategory {
+public:
+    void clear() {
+        m_begin = 0;
+        m_end = 0;
+        m_bdat2 = nullptr;
+        m_bdat = nullptr;
+        m_split = 0xFFFF;
+        m_ids.clear();
+    }
+
+    mm::mtl::FixedVector<unsigned short, N> m_ids;  // the rows' ids
+    CBdatWrapper* m_bdat;    // the first table
+    CBdatWrapper* m_bdat2;   // the table rows from m_split on come from
+    unsigned short m_begin;  // the first and one past the last row (in the acc's numbering)
+    unsigned short m_end;
+    unsigned short m_split;  // the first row of m_bdat2 (0xFFFF none)
+};
+
 // a position in a quest list (0x18 bytes: 1.0.0's operator++ copies it out as three words)
 class qlist_iterator {
 public:
+    // at the end of type's list (begin and end build one; a walk of the acc QuestListAcc::get returns)
+    explicit qlist_iterator(QTYPE type);
     QuestID getQuestID() const;
     qlist_iterator operator++();
     // the walk compares positions only (GfMenuQuestList::setup reads the words at 0xC)
     bool operator!=(const qlist_iterator& other) const { return m_index != other.m_index; }
 
     QuestListAcc* m_acc;  // what 1.0.0's operator++ asks getQuestListByIndex; the name is not the original's
-    unsigned char pad_08[4];
+    QTYPE m_type;         // the list walked (0 all of them, else category m_type); the name is not the original's
     int m_index;  // the position (-1 past the end, 1.0.0's operator++); the name is not the original's
-    unsigned char pad_10[8];
+    const QuestCategory<8096>* m_category;  // m_type's category (begin, end); the name is not the original's
 };
 
 // the quest lists
 class QuestListAcc {
 public:
+    QuestListAcc();
+    ~QuestListAcc();
+    void clear();
+    void rebuild();
+    void addListCategory(unsigned short id, unsigned int category, CBdatWrapper* bdat);
+    void addTaskCategory(unsigned short id, unsigned int category, CBdatWrapper* bdat);
+    void makeQuestTaskInfo();
+    bool getQuestListByIndex(CBdatWrapper*& bdat, unsigned short& id, unsigned int index) const;
+    // the game flag a task of a purpose counts in (getTaskFlag's per-category bases)
+    unsigned int getTaskFlag(unsigned int purposeId, unsigned int task) const;
     static QuestListAcc* get();
     qlist_iterator begin(QTYPE type) const;
     qlist_iterator end(QTYPE type) const;
@@ -46,6 +83,18 @@ public:
     unsigned int getListCallEventB(QuestID id) const;
     unsigned int getListHintsID(QuestID id) const;
     unsigned int getListPurposeID(QuestID id) const;
+    unsigned int getListQuestTitle(QuestID id) const;
+    unsigned int getListPRTQuestID(QuestID id) const;
+    unsigned int getListCountCancel(QuestID id) const;
+    unsigned int getListNextQuestA(QuestID id) const;
+    unsigned int getListNextQuestB(QuestID id) const;
+    unsigned int getListAutoStart(QuestID id) const;
+    unsigned int getListItemLost(QuestID id) const;
+    unsigned int getListCancelCondition(QuestID id) const;
+    unsigned int getListLinkedQuestID(QuestID id) const;
+    unsigned int getTaskTaskID(unsigned int purposeId, unsigned int task) const;
+    unsigned int getTaskTaskType(unsigned int purposeId, unsigned int task) const;
+    unsigned int getTaskTaskBranch(unsigned int purposeId, unsigned int task) const;
     // the first condition of the tasks of a purpose (GfKizunaringBlade::isNetabareOK asks GfGameCond about it)
     unsigned int getTaskTaskCondition1(unsigned int purposeId) const;
     unsigned int getTaskTaskUI(unsigned int purposeId, unsigned int task) const;
@@ -225,7 +274,22 @@ public:
     // BDAT column name from rebuild's getMember string), 0 out of the table's range.
     unsigned int fn_710025E8E4(unsigned int id) const;
     unsigned int getFLD_DevelopmentLevelValue(unsigned int id) const;
+    // (layout from the constructor, clear, the getters and makeQuestTaskInfo; the names are not the original's)
+    QuestCategory<8096> m_list[6];         // the quest list categories (category k is m_list[k - 1])
+    unsigned int m_listIndex[16000];       // per quest id: category << 24 | row
+    unsigned int m_listCount;              // the rows added
+    QuestCategory<4096> m_task[6];         // the task categories
+    unsigned int m_taskIndex[16000];       // per purpose id: category << 24 | row
+    unsigned int m_taskCount;
+    unsigned short m_taskInfoIndex[64000]; // per quest id * 4 + task: 1 + the task's m_taskInfo entry (0 none)
+    mm::mtl::FixedVector<unsigned short, 1024> m_taskInfo;  // per collect/use task: its count flag
 };
+
+inline qlist_iterator::qlist_iterator(QTYPE type)
+    : m_type(type), m_index(-1) {
+    m_acc = QuestListAcc::get();
+    m_category = type != 0 ? &m_acc->m_list[type - 1] : nullptr;
+}
 }  // namespace gf
 
 #endif
