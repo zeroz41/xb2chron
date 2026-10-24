@@ -21,7 +21,11 @@ public:
     virtual void debugDraw() const;  // slot 7
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(10);
-    unsigned char pad_48[0xb8];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_48[0xa8];  // fields: size from TGmkList::getInst's stride
+    // update() stores whether the event's pop conditions (blade, quest state, game cond) hold, creating or
+    // disposing its phantom when it changes; the field locators read it. The name is not the original's.
+    bool m_isCondMatched;
+    unsigned char pad_f1[0xf];
 };
 }  // namespace gmk
 

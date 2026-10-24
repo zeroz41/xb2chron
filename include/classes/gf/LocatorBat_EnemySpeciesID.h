@@ -10,7 +10,7 @@ class LocatorBat_EnemySpeciesID : public ::gf::AFieldLocator {
 public:
     LocatorBat_EnemySpeciesID(QuestID questId, unsigned char speciesId);
     virtual ~LocatorBat_EnemySpeciesID() {  // slot 0
-        reset();
+        dispose();
     }
     virtual unsigned int getPosNum() const {  // slot 3
         return m_posList.size();
@@ -19,8 +19,8 @@ public:
         return &m_posList[index];
     }
     virtual void update();  // slot 6
-    // the name is not the original's
-    void reset() {
+    // the destructor's clearing; 1.0.0's symbols name it dispose() (3.0.1 inlines it)
+    void dispose() {
         m_posList.clear();
         m_speciesId = 0;
     }

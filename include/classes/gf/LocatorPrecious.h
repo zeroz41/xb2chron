@@ -17,7 +17,7 @@ public:
 class LocatorPrecious : public ::gf::AFieldLocator, public TUnk_B51CF0 {
 public:
     virtual ~LocatorPrecious() {  // slot 0
-        reset();
+        dispose();
     }
     virtual unsigned int getPosNum() const {  // slot 3
         return m_posList.size();
@@ -28,8 +28,8 @@ public:
     virtual void update();  // slot 6
     virtual void onTraverse(gmk::AGmkBase const&);  // slot 7
     void create(QuestID questId, unsigned short preciousId);
-    // the name is not the original's
-    void reset() {
+    // the destructor's clearing; 1.0.0's symbols name it dispose() (3.0.1 inlines it)
+    void dispose() {
         m_posList.clear();
         m_accs.clear();
         m_preciousId = 0;

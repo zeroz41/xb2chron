@@ -3,6 +3,7 @@
 
 #include "classes/gf/IQuestEvent.h"
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "gf/QuestID.h"
 
 namespace gf { class GfQuestTarget; }
 namespace gf { class QuestChangeParam; }
@@ -22,6 +23,10 @@ public:
     virtual void qevCompleteChildQuest(gf::QuestCompleteChildParam const&);  // slot 5
     virtual void qevChangeCurrentQuest(gf::QuestChangeParam const&);  // slot 6
     virtual void qevChangeTaskCondition(gf::QuestTaskParam const&);  // slot 7
+    // the field locators pass its result to gmk::getBdatIdOfQuestTargetIcon (LocatorTbox: 1 and the box's id,
+    // LocatorPrecious: 2 and the item's id, then the quest, the map's FLD_maplist id, true)
+    static unsigned int getIconTypeCollect(unsigned int kind, unsigned int id, QuestID questId, unsigned int mapId,
+                                           bool flag);
 };
 }  // namespace gf
 

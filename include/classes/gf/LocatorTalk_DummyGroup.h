@@ -10,7 +10,7 @@ class LocatorTalk_DummyGroup : public ::gf::AFieldLocator {
 public:
     LocatorTalk_DummyGroup() : m_gmkSetId(0), m_npcId(0), m_groupId(0) {}
     virtual ~LocatorTalk_DummyGroup() {  // slot 0
-        reset();
+        dispose();
     }
     virtual unsigned int getPosNum() const {  // slot 3
         return m_posList.size();
@@ -20,8 +20,8 @@ public:
     }
     virtual void update();  // slot 6
     void create(QuestID questId, unsigned short mapId, unsigned short npcId, unsigned short groupId);
-    // the name is not the original's
-    void reset() {
+    // the destructor's clearing; 1.0.0's symbols name it dispose() (3.0.1 inlines it)
+    void dispose() {
         m_posList.clear();
         m_npcIds.clear();
         m_npcId = 0;

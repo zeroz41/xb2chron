@@ -15,7 +15,10 @@ public:
     class BdatInfo {
     public:
         bool isPopCondMatched() const;
-        unsigned char pad_0[0x30];
+        // the precious item's id: LocatorPrecious::onTraverse compares it with its id, which create() looks up in
+        // the gimmick sheets' "itmID" column. The name is not the original's.
+        unsigned short m_itmId;
+        unsigned char pad_2[0x2e];
     };
     virtual ~GmkPrecious();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

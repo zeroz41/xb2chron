@@ -9,7 +9,7 @@ class LocatorReach : public ::gf::AFieldLocator {
 public:
     LocatorReach(QuestID questId, int row);
     virtual ~LocatorReach() {  // slot 0
-        reset();
+        dispose();
     }
     virtual unsigned int getPosNum() const {  // slot 3
         return m_posNum;
@@ -18,8 +18,8 @@ public:
         return &m_pos;
     }
     virtual void update();  // slot 6
-    // the name is not the original's
-    void reset() {
+    // the destructor's clearing; 1.0.0's symbols name it dispose() (3.0.1 inlines it)
+    void dispose() {
         m_posNum = 0;
         m_placeId = 0;
         m_category = 0;

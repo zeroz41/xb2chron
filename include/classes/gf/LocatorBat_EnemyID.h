@@ -16,7 +16,7 @@ public:
         }
     }
     virtual ~LocatorBat_EnemyID() {  // slot 0
-        reset();
+        dispose();
     }
     virtual unsigned int getPosNum() const {  // slot 3
         return m_posList.size();
@@ -26,8 +26,8 @@ public:
     }
     virtual void update();  // slot 6
     void create(QuestID questId, unsigned short enemyId);
-    // the destructor's and create's clearing; the name is not the original's
-    void reset() {
+    // the destructor's clearing; 1.0.0's symbols name it dispose() (3.0.1 inlines it)
+    void dispose() {
         m_posList.clear();
         m_type1Accs.clear();
         m_type0Accs.clear();

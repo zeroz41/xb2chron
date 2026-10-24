@@ -16,6 +16,8 @@ public:
     virtual ~GmkManager();  // slot 0
     bool isGmkSetsReady() const;
     AGmkBase* findFirstGmkInstByBdatId(GmkType type, int bdatId) const;
+    // the RSC_GmkSetList row of the first gimmick set holding a gimmick of this type and id (<= 0: none)
+    int findFirstBdatId_RSC_GmkSetList(GmkType type, int bdatId) const;
     // calls f with every gimmick of a kind in every gimmick set; false while the sets are not ready
     template <typename F>
     bool traverseGmkInst(GmkType type, F& f) const {
@@ -48,6 +50,9 @@ public:
     unsigned char pad_198[0xf1c0];
     mm::mtl::Vector<GmkSet*> m_gmkSets;  // the gimmick sets (the name is not the original's)
 };
+// a quest-target icon type's id in the icon sheet (< 0: none; the field locators then use 0x19f). A free
+// function among GmkManager's in the same unit (GmkElevator.cpp's range).
+int getBdatIdOfQuestTargetIcon(unsigned int iconType);
 }  // namespace gmk
 
 #endif
