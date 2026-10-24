@@ -13,7 +13,8 @@ public:
     void stopBgmForDebug(bool stop);
     void setGimmickBgmID(unsigned int id);
     void setRscBattleBgmID(unsigned int id);
-    void gevBattleEnd();  // 1.0.0's symbol at the same place, with the same caller (GfFieldSound::gevBattleEnd)
+    void gevBattleEnd();
+    bool isBossBgmCopied() const;  // 1.0.0's symbol at the same place, with the same caller (GfFieldSound::gevBattleEnd)
     // 1.0.0's out-of-line getters (3.0.1 inlines them)
     unsigned int getRscFieldBgmID() const;
     unsigned int getRscGimmickBgmID() const { return m_rscGimmickBgmID; }

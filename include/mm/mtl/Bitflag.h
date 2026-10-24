@@ -40,7 +40,7 @@ public:
 
     // clears every flag (gevBattleEnd's single store; the name is not the original's)
     void reset() {
-        for (unsigned int i = 0; i < Size / 32; i++) {
+        for (unsigned int i = 0; i < (Size + 31) / 32; i++) {
             m_flags[i] = 0;
         }
     }
@@ -53,7 +53,7 @@ public:
         return (m_flags[word] & mask) != 0;
     }
 
-    unsigned int m_flags[Size / 32];
+    unsigned int m_flags[(Size + 31) / 32];  // a word for every 32 flags or part of 32 (GfGameScene's Bitflag<6>)
 };
 
 }}  // namespace mm::mtl

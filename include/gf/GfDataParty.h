@@ -14,6 +14,8 @@ public:
     // parties' kept elsewhere (3.0.1 added the second parameter; its name is not the original's)
     static PartyMember* getPartyMember(unsigned int index, unsigned int party);
     static bool isRideChar(unsigned int chara);
+    // GfGameScene::isRide and isRideParty ask it about a party id
+    static bool isNiaByakko(unsigned int id);
 };
 }  // namespace gf
 

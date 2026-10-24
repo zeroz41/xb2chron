@@ -39,6 +39,10 @@ public:
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
     // plays at once (no request) for the object the player controls
     static GAME_VOICE_HANDLE* create(CV_FIELD field, CV_PRIO prio);
+    // the bad weather voice and a time range's voice (GfGameScene::gevChangeWeather and gevChangeTimeRange call them
+    // and ignore what they return, so the return type is not established)
+    static void createBadWeather();
+    static void createTime(CV_FIELD field);
     // plays at once for obj, or for the object the player controls when obj names nothing (1.0.0 has it out of line;
     // 3.0.1 inlines every call)
     static GAME_VOICE_HANDLE* create(const ParamObj& obj, CV_FIELD field, CV_PRIO prio);

@@ -13,6 +13,7 @@ public:
     static bool isWaitControllFreeStats(unsigned int stats);
     // SCOM_ACHIEV_INC::addTotalCount forwards here
     static void addTotalCount(unsigned int type, unsigned int value);
+    static void clearTotalCount(unsigned int type);  // GfGameScene::gevBattleStart clears type 146
 };
 }  // namespace gf
 
