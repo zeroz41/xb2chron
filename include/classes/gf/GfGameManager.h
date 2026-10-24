@@ -110,6 +110,10 @@ public:
     static bool isBusyBladeCreateEvent();
     static bool isLeaveGameForDebug();
     static bool isControlFree();
+    // an event plays: GfGameScene::isPlayEvent() when there is a GfGameScene (the symbols still spell it
+    // fn_71002AA244; 1.0.0's isPlayEvent at 0x71003196DC has the same code, and SCOM_FIELD_VOICE's stop test calls it
+    // in both)
+    static bool isPlayEvent();
     static bool isScenarioGame();
     static bool isGmkTutorialOK();
     static bool isTalkOK();

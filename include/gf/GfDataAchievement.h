@@ -11,6 +11,8 @@ public:
     static bool getAchievementType(ACHIEVEMENT_TYPE& type, unsigned int& index, unsigned int line);
     static void setupTotalCount(AchievQuest& quest);
     static bool isWaitControllFreeStats(unsigned int stats);
+    // SCOM_ACHIEV_INC::addTotalCount forwards here
+    static void addTotalCount(unsigned int type, unsigned int value);
 };
 }  // namespace gf
 

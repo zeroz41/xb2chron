@@ -3,7 +3,7 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 
-namespace gf { class GfGameVoice; }
+namespace gf { class GfGameVoice; class GAME_VOICE_HANDLE; enum CV_RESULT : int; }
 
 namespace gf {
 // table 0x7100B56B40
@@ -11,6 +11,9 @@ class GfGameVoice : public ::mm::mtl::PtrSingleton< ::gf::GfGameVoice> {
 public:
     virtual ~GfGameVoice();  // slot 0
     static void gevLayerPause(unsigned int, bool);
+    // SCOM_FIELD_VOICE::exec stops a voice it cuts short, then asks how it ended
+    static void playStop(GAME_VOICE_HANDLE* voice);
+    static CV_RESULT getResult(GAME_VOICE_HANDLE* voice);
     bool isPlayEnemyVoice() const;
 };
 }  // namespace gf

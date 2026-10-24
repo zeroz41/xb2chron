@@ -59,6 +59,14 @@
 #include "classes/gf/SCOM_ENBOOK_DEAD_PLAYER.h"
 #include "classes/gf/SCOM_REFRESH_COMPASS.h"
 #include "classes/gf/SCOM_BATTLE_TASK_RESET.h"
+#include "gf/ParamObj.h"
+#include "gf/GfFieldVoice.h"
+#include "classes/gf/SCOM_FIELD_VOICE.h"
+#include "gf/GfDataBlade.h"
+#include "classes/gf/GfAchievManager.h"
+#include "gf/GfDataAchievement.h"
+#include "classes/gf/GfGameVoice.h"
+#include "fw/UpdateInfo.h"
 #include "classes/gf/GfAllocator.h"
 
 namespace gf {
@@ -724,5 +732,153 @@ unsigned long SCOM_POPUP::createArts(unsigned int a0, unsigned int a1) {
     return GfReqSmallCom::addRequestParallel(request);
 }
 
+
+unsigned int SCOM_ACHIEV_INC::s_countSalvageShop;
+
+bool SCOM_ACHIEV_INC::exec(fw::UpdateInfo const&) {
+    GfAchievManager* manager = GfAchievManager::sys();
+    if (manager == 0) {
+        return true;
+    }
+    if (GfDataAchievement::isWaitControllFreeStats(m_value)) {
+        if (!GfGameManager::isControlFree()) {
+            return false;
+        }
+        if (m_value == 0x22) {
+            if (s_countSalvageShop != 0) {
+                s_countSalvageShop = 0;
+                manager->incAchiev(0x22, 1);
+            }
+            return true;
+        }
+    }
+    if (!m_blades.empty()) {
+        manager->incAchievWithBlade(m_value, m_value2, m_blades);
+    } else {
+        manager->incAchiev(m_value, m_value2);
+    }
+    return true;
+}
+
+unsigned long SCOM_ACHIEV_INC::create(unsigned int type, int value, unsigned int blade) {
+#line 3345
+    SCOM_ACHIEV_INC* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ACHIEV_INC(type, value);
+    if (blade != 0) {
+        request->m_blades.push_back(blade);
+    }
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_ACHIEV_INC::createParty(unsigned int type, int value) {
+#line 3351
+    SCOM_ACHIEV_INC* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ACHIEV_INC(type, value);
+    GfDataBlade::getListPartyAll(request->m_blades);
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+void SCOM_ACHIEV_INC::addTotalCount(unsigned int type, unsigned int value) {
+    GfDataAchievement::addTotalCount(type, value);
+}
+
+void SCOM_ACHIEV_INC::createCrystal() {
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    GfDataBlade::getListPartyAll(blades);
+    if (GfAchievManager* manager = GfAchievManager::sys()) {
+        manager->incAchievWithBlade(0x43, 1, blades);
+    }
+}
+
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::create(CV_FIELD field, CV_PRIO prio) {
+    ParamObj obj(GfGameManager::getControlMover());
+    return GfFieldVoice::playVoice(obj, field, prio);
+}
+
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::create(const ParamObj& obj, CV_FIELD field, CV_PRIO prio) {
+    ParamObj target = obj;
+    if (obj.m_handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1) && obj.m_id == 0) {
+        target = ParamObj(GfGameManager::getControlMover());
+    }
+    return GfFieldVoice::playVoice(target, field, prio);
+}
+
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createHighLanding(const ParamObj& obj) {
+    if (GfGameManager::getControlMover() != obj.m_handle) {
+        return 0;
+    }
+    return create(obj, CV_FIELD(2), CV_PRIO(1));
+}
+
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createFallDead(const ParamObj& obj) {
+    if (GfGameManager::isEvent(false)) {
+        return 0;
+    }
+    return create(obj, CV_FIELD(1), CV_PRIO(4));
+}
+
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createMercenariesIn(unsigned int id) {
+    return create(ParamObj(4, id), CV_FIELD(13), CV_PRIO(1));
+}
+
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createMercenariesLeader(unsigned int id) {
+    return create(ParamObj(4, id), CV_FIELD(14), CV_PRIO(1));
+}
+
+unsigned long SCOM_FIELD_VOICE::createMercenariesStart(unsigned int id) {
+    unsigned int blade = fn_7100567A44();
+#line 4793
+    SCOM_FIELD_VOICE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_FIELD_VOICE();
+    if (request == 0) {
+        return -1;
+    }
+    request->add(ParamObj(4, id), CV_FIELD(15), CV_PRIO(1));
+    if (blade != 0) {
+        request->add(ParamObj(3, blade), CV_FIELD(15), CV_PRIO(1));
+    }
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_FIELD_VOICE::createMercenariesEnd(unsigned int id) {
+    unsigned int blade = fn_7100567A44();
+#line 4810
+    SCOM_FIELD_VOICE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_FIELD_VOICE();
+    if (request == 0) {
+        return -1;
+    }
+    request->add(ParamObj(4, id), CV_FIELD(16), CV_PRIO(1));
+    if (blade != 0) {
+        request->add(ParamObj(3, blade), CV_FIELD(16), CV_PRIO(1));
+    }
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_FIELD_VOICE::createMercenariesResult(unsigned int id) {
+    unsigned int blade = fn_7100567A44();
+#line 4827
+    SCOM_FIELD_VOICE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_FIELD_VOICE();
+    if (request == 0) {
+        return -1;
+    }
+    request->add(ParamObj(4, id), CV_FIELD(17), CV_PRIO(1));
+    if (blade != 0) {
+        request->add(ParamObj(3, blade), CV_FIELD(17), CV_PRIO(1));
+    }
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createReleaseBlade(unsigned int id) {
+    return create(ParamObj(4, id), CV_FIELD(18), CV_PRIO(1));
+}
+
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createAchievement(unsigned int id, unsigned int level) {
+    ParamObj obj(4, id);
+    if (level == 9) {
+        return GfFieldVoice::playVoice(obj, CV_FIELD(26), 0, 0, CV_PRIO(1));
+    }
+    return GfFieldVoice::playVoice(obj, CV_FIELD(25), level / 3, level % 3, CV_PRIO(1));
+}
+
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createEngage(unsigned int id) {
+    return GfFieldVoice::playVoice(ParamObj(4, id), CV_FIELD(36), 0, 0, CV_PRIO(1));
+}
 
 }  // namespace gf

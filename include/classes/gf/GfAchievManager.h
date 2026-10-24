@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFACHIEVMANAGER_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace gf { class GfAchievManager; }
 
@@ -10,6 +11,9 @@ namespace gf {
 class GfAchievManager : public ::mm::mtl::PtrSingleton< ::gf::GfAchievManager> {
 public:
     void gevItemAdd(unsigned int, int);
+    // SCOM_ACHIEV_INC::exec adds its request's value to its achievement counter, for its blades when it has any
+    void incAchiev(unsigned int type, int value);
+    void incAchievWithBlade(unsigned int type, int value, const mm::mtl::FixedVector<unsigned short, 422>& blades);
     virtual ~GfAchievManager();  // slot 0
 };
 }  // namespace gf

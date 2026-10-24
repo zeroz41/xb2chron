@@ -22,6 +22,8 @@ struct AchievInfo {
 // the blades' game data (functions, by its symbols)
 class GfDataBlade {
 public:
+    // fills list with the party's blades (SCOM_ACHIEV_INC::createParty and createCrystal)
+    static void getListPartyAll(mm::mtl::FixedVector<unsigned short, 422>& list);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
     // unit among its functions. What it does: GfGameFlag::getLocal of the game data's flags (GfDataManager::getDataGame
     // + 0xFBBC4), width 16, index 1; TUnk_B64F08::fn_71004944B8 compares it with 2000.
