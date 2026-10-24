@@ -67,6 +67,15 @@
 #include "gf/GfDataAchievement.h"
 #include "classes/gf/GfGameVoice.h"
 #include "fw/UpdateInfo.h"
+#include "classes/gf/SCOM_ADD_ETHER.h"
+#include "gf/GfDataMap.h"
+#include "gf/GfObjAcc.h"
+#include "classes/gf/SCOM_ADD_WP.h"
+#include "classes/gf/SCOM_MISSION_COMPLETE.h"
+#include "classes/gf/GfGameFlag.h"
+#include "classes/gf/SCOM_CHAR_DEAD.h"
+#include "classes/gf/GfGameScene.h"
+#include "classes/gf/GfGameParty.h"
 #include "classes/gf/GfAllocator.h"
 
 namespace gf {
@@ -237,7 +246,7 @@ unsigned long SCOM_ADD_EXP::createInnExp(unsigned int a0) {
     SCOM_ADD_EXP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ADD_EXP(SCOM_TYPE(4));
     request->m_value = a0;
     request->m_value2 = 0;
-    request->m_value3 = -1;
+    request->m_value3 = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
     request->m_value4 = 1;
     return GfReqSmallCom::addRequestParallel(request);
 }
@@ -879,6 +888,161 @@ GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createAchievement(unsigned int id, unsigned
 
 GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createEngage(unsigned int id) {
     return GfFieldVoice::playVoice(ParamObj(4, id), CV_FIELD(36), 0, 0, CV_PRIO(1));
+}
+
+unsigned long SCOM_ADD_ETHER::create(int a0) {
+    GfGameUtil::addEther(a0);
+    return -1;
+}
+
+unsigned long SCOM_ADD_DEVELOP::create(unsigned int a0, unsigned int a1) {
+    if (!a0 || !a1) {
+        return -1;
+    }
+#line 464
+    SCOM_ADD_DEVELOP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ADD_DEVELOP(SCOM_TYPE(11));
+    request->m_value = a1;
+    request->m_value2 = a0;
+    return GfReqSmallCom::addRequest(request);
+}
+
+unsigned long SCOM_ADD_DEVELOP::createGmk(unsigned int a0, unsigned int a1) {
+    return create(GfDataMap::getFieldZoneId(a0), a1);
+}
+
+bool SCOM_ADD_EXP::exec(fw::UpdateInfo const&) {
+    unsigned int driver = m_value2;
+    if (driver == 0) {
+        if (m_value3 == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            driver = 0;
+        } else {
+            GfObjAcc acc(m_value3);
+            driver = acc.getDriverId();
+        }
+    }
+    if (m_value4) {
+        GfGameUtil::addExpInn(m_value);
+    } else {
+        GfGameUtil::addExpBattle(driver, m_value);
+    }
+    return true;
+}
+
+bool SCOM_ADD_SP::exec(fw::UpdateInfo const&) {
+    unsigned int driver = m_value2;
+    if (driver == 0) {
+        if (m_value3 == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            driver = 0;
+        } else {
+            GfObjAcc acc(m_value3);
+            driver = acc.getDriverId();
+        }
+    }
+    GfGameUtil::addSP(driver, m_value);
+    return true;
+}
+
+bool SCOM_ADD_IDEA::exec(fw::UpdateInfo const&) {
+    unsigned int driver = m_value2;
+    if (driver == 0) {
+        if (m_value4 == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            driver = 0;
+        } else {
+            GfObjAcc acc(m_value4);
+            driver = acc.getDriverId();
+        }
+    }
+    GfGameUtil::addIdeaPoint(driver, m_value3, m_value);
+    return true;
+}
+
+bool SCOM_ADD_WP::exec(fw::UpdateInfo const&) {
+    unsigned int driver;
+    if (m_mode == 3) {
+        driver = m_driver;
+    } else {
+        GfObjAcc acc(m_handle);
+        driver = acc.getType() == 3 ? acc.getDriverId() : 0;
+        if (m_mode == 0) {
+            GfGameUtil::addWp(driver, m_value2, m_value);
+            return true;
+        } else if (m_mode == 2) {
+            GfGameUtil::addWpForReserve(m_value);
+            return true;
+        } else if (m_mode != 1) {
+            return true;
+        }
+    }
+    GfGameUtil::addWpForObject(driver, m_value2, m_value);
+    return true;
+}
+
+bool SCOM_MISSION_COMPLETE::exec(fw::UpdateInfo const&) {
+    int flag = GfGameMercenaries::getMissionFlag(m_mission);
+    if (flag == 2) {
+        unsigned int team = GfDataMercenaries::getTeamIDByMissionID(m_mission);
+        GfGameMercenaries::setMissionCompleteForce(m_mission);
+        GfGameMercenaries::execMissionRewardAchievementBonusForBlade(m_mission);
+        GfGameMercenaries::execMissionAchievementForBlade(m_mission);
+        GfGameMercenaries::clearTeamMember(team);
+        return false;
+    } else if (flag == 3) {
+        GfGameMercenaries::execMissionReward(m_mission);
+    }
+    return true;
+}
+
+unsigned long SCOM_MISSION_COMPLETE::create(unsigned int a0) {
+    unsigned int flag = GfGameMercenaries::getMissionFlag(a0);
+    if (flag != 2 && flag != 3) {
+        return -1;
+    }
+#line 560
+    SCOM_MISSION_COMPLETE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_MISSION_COMPLETE(SCOM_TYPE(80));
+    request->m_mission = a0;
+    return GfReqSmallCom::addRequest(request);
+}
+
+bool SCOM_SET_FLAG::exec(fw::UpdateInfo const&) {
+    switch (m_value) {
+    case 1:
+        GfGameFlag::setLocal(1, m_value2, m_value3);
+        break;
+    case 2:
+        GfGameFlag::setLocal(2, m_value2, m_value3);
+        break;
+    case 4:
+        GfGameFlag::setLocal(4, m_value2, m_value3);
+        break;
+    case 8:
+        GfGameFlag::setLocal(8, m_value2, m_value3);
+        break;
+    case 0x10:
+        GfGameFlag::setLocal(0x10, m_value2, m_value3);
+        break;
+    case 0x20:
+        GfGameFlag::setLocal(0x20, m_value2, m_value3);
+        break;
+    }
+    return true;
+}
+
+bool SCOM_CHAR_DEAD::exec(fw::UpdateInfo const&) {
+    GfObjAcc acc(m_handle);
+    GfObjAcc killer(m_msg.m_killer);
+    if (m_handle != m_msg.m_killer) {
+        GfGameParty::getPartyId(m_handle);
+    }
+    if (acc.getType() == 5) {
+        if (!GfGameManager::isPlayerDeadSequence()) {
+            GfQuestTask::incSuppressEnemy(acc.getEnArrangeId());
+            GfGameUtil::incEnemySuppress(acc.getEnArrangeId());
+        }
+        if (GfGameScene::sys()) {
+            GfGameScene::sys()->setEnemyDead(m_handle);
+        }
+    }
+    return true;
 }
 
 }  // namespace gf

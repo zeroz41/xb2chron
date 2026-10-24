@@ -3,6 +3,7 @@
 
 #include "classes/gf/SCOM.h"
 
+namespace gf { class GF_OBJ_HANDLE; }
 namespace fw { class UpdateInfo; }
 
 namespace gf {
@@ -17,7 +18,7 @@ public:
     unsigned int m_value;
     int m_value2;
     unsigned char pad_24[0x4];
-    unsigned long m_value3;
+    GF_OBJ_HANDLE* m_value3;
     bool m_value4;
 };
 }  // namespace gf

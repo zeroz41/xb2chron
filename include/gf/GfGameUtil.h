@@ -26,6 +26,24 @@ public:
     // add to the party's money and coins (SCOM_ADD_MONEY, SCOM_ADD_COIN)
     static void addMoney(int money);
     static void addCoin(int coin);
+    // SCOM_ADD_ETHER::create forwards its value
+    static void addEther(int ether);
+    // SCOM_ADD_TRUST::exec: (blade or driver, value); the debug setter in the Torna mode (GfGameManager::fn_71002A9E68)
+    static void addTrustPoint(unsigned int id, unsigned int point);
+    static void setTrustPointForDebug(unsigned int driver, unsigned int point);
+    // SCOM_CHAR_DEAD::exec passes the dead enemy's arrange id
+    static void incEnemySuppress(unsigned int enemy);
+    // SCOM_ADD_EXP::exec: inn experience (its value), else battle experience for a driver (driver, value)
+    static void addExpInn(unsigned int exp);
+    static void addExpBattle(unsigned int driver, unsigned int exp);
+    // SCOM_ADD_SP::exec: (driver, value)
+    static void addSP(unsigned int driver, int sp);
+    // SCOM_ADD_IDEA::exec: (driver, its third value, value)
+    static void addIdeaPoint(unsigned int driver, unsigned int type, int point);
+    // SCOM_ADD_WP::exec, by its mode: 0 addWp, 1 and 3 addWpForObject (driver, its second value, value), 2 addWpForReserve (value)
+    static void addWp(unsigned int driver, unsigned int id, int wp);
+    static void addWpForObject(unsigned int driver, unsigned int id, int wp);
+    static void addWpForReserve(int wp);
     // whether the object behind a handle is playing a voice
     static bool isPlayVoice(gf::GF_OBJ_HANDLE* handle);
     static int getObjAttribute(gf::GF_OBJ_HANDLE* handle);

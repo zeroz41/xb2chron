@@ -2,6 +2,7 @@
 #define CLASSES_GF_SCOM_CHAR_DEAD_H
 
 #include "classes/gf/SCOM.h"
+#include "gf/MsgObjectNotifyDead.h"
 
 namespace fw { class UpdateInfo; }
 
@@ -9,8 +10,11 @@ namespace gf {
 // table 0x7100B6A9E0
 class SCOM_CHAR_DEAD : public ::gf::SCOM {
 public:
-    virtual ~SCOM_CHAR_DEAD();  // slot 0
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
+
+    // the names are not the original's: create stores the dead object and a copy of its message
+    GF_OBJ_HANDLE* m_handle;
+    MsgObjectNotifyDead m_msg;
 };
 }  // namespace gf
 

@@ -27,6 +27,7 @@ public:
     bool isDestroy() const;
     bool isBattle() const;
     void* getUserData(GfObjUserData kind) const;
+    unsigned int getEnArrangeId() const;  // SCOM_CHAR_DEAD::exec hands it to the quest tasks
     int getType() const;  // the object's type (3: a driver)
     unsigned int getBdatId() const;
     bool isDisp(OBJDISP disp) const;

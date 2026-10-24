@@ -14,6 +14,13 @@ public:
     // SCOM_ADD_MERCENARIES_POINT and SCOM_SET_MERCENARIES_LEVEL pass their request's value
     static void addPoint(unsigned int point);
     static void setLevel(unsigned int level);
+    // SCOM_MISSION_COMPLETE (the mission): 3 runs the reward, 2 completes it by force
+    static int getMissionFlag(unsigned int mission);
+    static void execMissionReward(unsigned int mission);
+    static void setMissionCompleteForce(unsigned int mission);
+    static void execMissionRewardAchievementBonusForBlade(unsigned int mission);
+    static void execMissionAchievementForBlade(unsigned int mission);
+    static void clearTeamMember(unsigned int team);
     virtual ~GfGameMercenaries();  // slot 0
     static void qevOrderQuest(const gf::QuestOrderParam&);
     // a mission's rewards (team: GfDataMercenaries::isMissionOrderTeam), the bonus parts ("Hosei") on their own

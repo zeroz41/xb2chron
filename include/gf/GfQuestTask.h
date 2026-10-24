@@ -8,6 +8,8 @@ namespace gf {
 // the quests' tasks (functions, by their symbols)
 class GfQuestTask {
 public:
+    static void completeReachTask(unsigned int type, unsigned int id);  // SCOM_QUEST_REACH::exec passes its two values
+    static void incSuppressEnemy(unsigned int enemy);  // SCOM_CHAR_DEAD::exec passes the dead enemy's arrange id
     // SCOM_QUEST_GIMMICK passes its request's gimmick type and id
     static void completeGimmickTask(gmk::GmkType, unsigned int);
     // SCOM_ITEM_USE's request: its item and count (the names are not the original's)

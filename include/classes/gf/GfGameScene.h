@@ -19,6 +19,7 @@ namespace gf {
 class GfGameScene : public ::mm::mtl::PtrSingleton< ::gf::GfGameScene> {
 public:
     void postUpdate(const fw::UpdateInfo& info);
+    void setEnemyDead(GF_OBJ_HANDLE* handle);  // SCOM_CHAR_DEAD::exec passes the dead object
     void gevChangeWeather(unsigned int, unsigned int);
     void gevChangeTimeRange(unsigned int);
     void gevItemAdd(unsigned int, int);
