@@ -59,7 +59,11 @@ public:
 
     static void (DrMdoMat::*s_pCallMatVal[35])(const MdsMatInfoHeader*, int, int);
 
-    unsigned char pad_8[0x20];
+    unsigned char pad_8[0x10];
+    // DrMdlObj's getGroups/setGroups read it; which class of the DrMdlBase..DrMdlObj chain owns it is not known
+    // (the name is not the original's)
+    short m_groups;  // 0x18
+    unsigned char pad_1A[0xE];
     DrMan* m_pDrMan;  // 0x28, set by 1.0.0's setDrMan(DrMan*) (the field name is not the original's)
     MdoWrkMatRes* m_pWrkMatRes;  // 0x30 (the field name is not the original's)
     unsigned char pad_38[0xA0];

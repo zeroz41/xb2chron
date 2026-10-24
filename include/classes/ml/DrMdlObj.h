@@ -26,10 +26,8 @@ public:
     const mm::Vec3& getCenter() const { return m_center; }
     float getLength() const { return m_length; }
 
-    // DrMdoCtl's fields are not declared yet: pad_8 covers them up to 0x18
-    unsigned char pad_8[0x10];
-    short m_groups;  // 0x18
-    unsigned char pad_1A[0x116];
+    // the names are not the original's
+    unsigned char pad_DC[0x54];
     mm::Vec3 m_center;  // 0x130
     unsigned char pad_140[0x20];
     float m_length;  // 0x160
