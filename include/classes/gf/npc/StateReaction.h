@@ -28,7 +28,7 @@ public:
         pad_70 = 0;
         m_seq = &StateReaction::seqTurnToPc;
     }  // slot 3
-    virtual void onLeave(void* owner, ai::State* next) { static_cast<T*>(owner)->pad_120 = pad_60; }  // slot 4
+    virtual void onLeave(void* owner, ai::State* next) { static_cast<T*>(owner)->m_reactionRot = pad_60; }  // slot 4
     virtual void onStep(void* owner, const void* arg) {  // slot 5
         const fw::UpdateInfo& info = *static_cast<const fw::UpdateInfo*>(arg);
         m_execCmd.update(info.m_deltaTime);

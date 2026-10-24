@@ -8,6 +8,7 @@ namespace gf {
 class GfComBehaviorNpc::Listener {
 public:
     virtual void onWkStandbyLogout();  // slot 0
+    GfComBehaviorNpc* m_owner;  // the behavior it listens for (the name is not the original's)
 };
 }  // namespace gf
 

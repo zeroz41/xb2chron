@@ -28,7 +28,8 @@ public:
     void createFsm();
     static mm::mtl::RTTI m_rtti;
     unsigned char pad_98[0x88];
-    mm::Quat pad_120;  // StateReaction hands its saved rotation back to it
+    // StateReaction<GfComBehaviorMob>::onLeave hands its saved rotation back to it (the name is not the original's)
+    mm::Quat m_reactionRot;
     unsigned char pad_130[0x51F8];
     ai::Hfsm m_hfsm;
     // set while createFsm cleans up and sets the machine up again (the name is not the original's)

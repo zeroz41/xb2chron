@@ -2,6 +2,7 @@
 #define CLASSES_GF_LIPSYNCPLUGIN_H
 
 #include "classes/gf/Plugin.h"
+#include "classes/gf/GfAllocator.h"
 
 namespace fw { class UpdateInfo; }
 namespace gf { class GfComBehavior; }
@@ -11,6 +12,11 @@ namespace gf {
 class LipSyncPlugin : public ::gf::Plugin {
 public:
     LipSyncPlugin();
+    // what a behavior's plugin manager makes it with (inline: GfComBehaviorNpc's unit emits it, citing this header)
+    static Plugin* create() {
+#line 23 "D:/Monolithsoft/BF2/prog/application/BF2\\gf/object/component/behavior/plugin/gf_lip_sync_plugin.h"
+        return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) LipSyncPlugin;
+    }
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~LipSyncPlugin() {}  // slot 1
     virtual void onActivate();  // slot 3
