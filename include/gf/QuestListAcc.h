@@ -34,10 +34,6 @@ public:
     int getListQuestCategory(QuestID id) const;
     int getListVisible(QuestID id) const;
     int getListQuestIcon(QuestID id) const;  // 0 for none
-    unsigned int getFLD_MercenariesMissionStart() const;
-    unsigned int getFLD_MercenariesMissionQuestID(unsigned int mission) const;
-    unsigned int getFLD_MercenariesMissionRequestPerformance(unsigned int mission) const;
-    unsigned int getFLD_MercenariesMissionRepeatable(unsigned int mission) const;
     unsigned int getListTalker(QuestID id) const;
     unsigned int getListRewardSetA(QuestID id) const;
     unsigned int getListRewardSetB(QuestID id) const;
@@ -73,16 +69,162 @@ public:
     unsigned int getConditionConditionID(unsigned int id) const;
     // the game flag (8 bits wide, after 0x5EF) counting a collect or use task's items
     int getCollectUseFlagIndex(const QuestTaskParam& param) const;
-    // Placeholder name: new in 3.0.1's place, nothing names it. A member because it fills QuestListAcc's unit and is
-    // called with QuestListAcc::get()'s object. What it does: reads a row of GfBdatQuest's table at 0x50 (the collect
-    // tasks') in the column lbl_7100C34680 keeps at 0xF8, as 16 bits; 0 out of the table's range. Callers pass a
-    // collect task's id (GfQuestTask::getTaskMap, GfQuestInfo's task map lookup).
-    unsigned int fn_710025B4A4(unsigned int id) const;
-    // Placeholder name: new in 3.0.1's place, nothing names it. A member because it fills QuestListAcc's unit and is
-    // called with QuestListAcc::get()'s object. What it does: reads a row of a GfBdatQuest table in the column
-    // lbl_7100C34680 keeps at 0x1F0 (callers pass a gimmick task's id: GfQuestTarget::getIconTypeGimmick,
-    // GfQuestTask::completeGimmickTask, GfQuestUtil::getGimmickTaskEndCheck).
+    // generated column accessors
+    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
+    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
+    // has their shape. What it does: reads a row of GfBdatQuest's column BattleEnemyRaceID (1.0.0 accessor prefix +
+    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
+    unsigned int fn_710025ABB8(unsigned int id) const;
+    unsigned int getBattleDeadAll(unsigned int id) const;
+    unsigned int getBattleTimeCount(unsigned int id) const;
+    unsigned int getBattleReduceEnemyHP(unsigned int id) const;
+    unsigned int getBattleReducePCHP(unsigned int id) const;
+    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
+    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
+    // has their shape. What it does: reads a row of GfBdatQuest's column BattleTargetOff (1.0.0 accessor prefix +
+    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
+    unsigned int fn_710025AFC4(unsigned int id) const;
+    unsigned int getRequestItemSetNpcID(unsigned int id) const;
+    unsigned int getRequestItemSetItemID(unsigned int id, unsigned int index) const;
+    unsigned int getRequestItemSetCount(unsigned int id, unsigned int index) const;
+    unsigned int getCollectDeduct(unsigned int id) const;
+    // 1.0.0's name: QuestListAcc::getCollectTresureID reads the same table and BDAT column
+    unsigned int getCollectTresureID(unsigned int id) const;
+    // 1.0.0's name: QuestListAcc::getCollectEnemyID reads the same table and BDAT column
+    unsigned int getCollectEnemyID(unsigned int id) const;
+    // 1.0.0's name: QuestListAcc::getCollectMapID reads the same table and BDAT column
+    unsigned int getCollectMapID(unsigned int id) const;
+    // 1.0.0's name: QuestListAcc::getCollectNpcID reads the same table and BDAT column
+    unsigned int getCollectNpcID(unsigned int id) const;
+    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
+    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
+    // has their shape. What it does: reads a row of GfBdatQuest's column CollectCollectionID (1.0.0 accessor prefix +
+    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
+    unsigned int fn_710025B5CC(unsigned int id) const;
+    // 1.0.0's name: QuestListAcc::getUsebladeID reads the same table and BDAT column
+    unsigned int getUsebladeID(unsigned int id) const;
+    unsigned int getReachCategory(unsigned int id) const;
+    unsigned int getReachPlaceID(unsigned int id) const;
+    unsigned int getTalkStart() const;
+    unsigned int getTalkEnd() const;
+    unsigned int getTalkNpcID(unsigned int id) const;
+    unsigned int getTalkDummyGroup(unsigned int id) const;
+    unsigned int getDummyGroupNpcID(unsigned int id, unsigned int index) const;
+    unsigned int getGimmickStart() const;
+    unsigned int getGimmickEnd() const;
+    unsigned int getGimmickMapID(unsigned int id) const;
+    unsigned int getGimmickDoorGimmickID(unsigned int id) const;
+    unsigned int getGimmickElevatorGimmickID(unsigned int id) const;
+    unsigned int getGimmickJumpGimmickID(unsigned int id) const;
+    unsigned int getGimmickMapGimmickID(unsigned int id) const;
+    unsigned int getGimmickMapGmkIconOff(unsigned int id) const;
+    unsigned int getGimmickWarpGimmickID(unsigned int id) const;
+    unsigned int getGimmickSalvagePointID(unsigned int id) const;
+    unsigned int getGimmickTboxPopID(unsigned int id) const;
+    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
+    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
+    // has their shape. What it does: reads a row of GfBdatQuest's column GimmickEnemyWaveID (1.0.0 accessor prefix +
+    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
     unsigned int fn_710025C23C(unsigned int id) const;
+    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
+    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
+    // has their shape. What it does: reads a row of GfBdatQuest's column GimmickCampPopID (1.0.0 accessor prefix +
+    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
+    unsigned int fn_710025C2D0(unsigned int id) const;
+    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
+    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
+    // has their shape. What it does: reads a row of GfBdatQuest's column GimmickCollectionPopID (1.0.0 accessor prefix +
+    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
+    unsigned int fn_710025C364(unsigned int id) const;
+    // 1.0.0's name: QuestListAcc::getGimmickEndCheck reads the same table and BDAT column
+    unsigned int getGimmickEndCheck(unsigned int id) const;
+    unsigned int getFieldSkillCountFieldSkillID(unsigned int id) const;
+    unsigned int getFieldSkillCountCount(unsigned int id) const;
+    unsigned int getRequestBladeRequestCategory(unsigned int id) const;
+    unsigned int getRequestBladeRequestAtr(unsigned int id) const;
+    unsigned int getRequestBladeRequestPerformance(unsigned int id) const;
+    unsigned int getRequestBladeRequestRace(unsigned int id) const;
+    unsigned int getRequestBladeRequestGender(unsigned int id) const;
+    unsigned int getRequestBladeRequestArts(unsigned int id) const;
+    unsigned int getRequestBladeRequestArtsLevel(unsigned int id) const;
+    unsigned int getRequestBladeRequestFSkill(unsigned int id) const;
+    unsigned int getRequestBladeRequestFSLevel(unsigned int id) const;
+    unsigned int getRequestBladeRequestNumber(unsigned int id) const;
+    unsigned int getConditionNpcID(unsigned int id) const;
+    unsigned int getAchievementStatsID(unsigned int id) const;
+    unsigned int getAchievementCount(unsigned int id) const;
+    unsigned int getHintsFSkillID1(unsigned int id) const;
+    unsigned int getHintsFSkillID2(unsigned int id) const;
+    unsigned int getHintsFSkillID3(unsigned int id) const;
+    unsigned int getHintsZoneID(unsigned int id) const;
+    unsigned int getHintsFSkillID(unsigned int id, unsigned int index) const;
+    unsigned int getEventEventID(unsigned int id) const;
+    unsigned int getRewardGold(unsigned int id) const;
+    unsigned int getRewardEXP(unsigned int id) const;
+    unsigned int getRewardSp(unsigned int id) const;
+    unsigned int getRewardCoin(unsigned int id) const;
+    unsigned int getRewardDevelopZone(unsigned int id) const;
+    unsigned int getRewardDevelopPoint(unsigned int id) const;
+    unsigned int getRewardTrustPoint(unsigned int id) const;
+    unsigned int getRewardMercenariesPoint(unsigned int id) const;
+    unsigned int getRewardIdeaCategory(unsigned int id) const;
+    unsigned int getRewardIdeaValue(unsigned int id) const;
+    unsigned int getRewardItemID(unsigned int id, unsigned int index) const;
+    unsigned int getRewardItemNumber(unsigned int id, unsigned int index) const;
+    unsigned int getFLD_AchievementSetStart() const;
+    unsigned int getFLD_AchievementSetEnd() const;
+    unsigned int getFLD_AchievementSetCategory(unsigned int id) const;
+    unsigned int getFLD_AchievementSetAbilityLevel(unsigned int id) const;
+    unsigned int getFLD_AchievementSetAchievementID1(unsigned int id) const;
+    unsigned int getFLD_AchievementSetAchievementID2(unsigned int id) const;
+    unsigned int getFLD_AchievementSetAchievementID3(unsigned int id) const;
+    unsigned int getFLD_AchievementSetAchievementID4(unsigned int id) const;
+    unsigned int getFLD_AchievementSetAchievementID5(unsigned int id) const;
+    unsigned int getFLD_AchievementSetAchievementID(unsigned int id, unsigned int index) const;
+    unsigned int getFLD_AchievementListCategory(unsigned int id) const;
+    unsigned int getFLD_AchievementListIcon(unsigned int id) const;
+    unsigned int getFLD_AchievementListTask(unsigned int id) const;
+    unsigned int getFLD_AchievementListVoiceCategory(unsigned int id) const;
+    unsigned int getFLD_AchievementListAfterVoice(unsigned int id) const;
+    unsigned int getFLD_AchievementListDifficulty(unsigned int id) const;
+    unsigned int getFLD_AchievementListIdeaCategory(unsigned int id) const;
+    unsigned int getFLD_MercenariesConfigValue(unsigned int id) const;
+    unsigned int getFLD_MercenariesMissionStart() const;
+    unsigned int getFLD_MercenariesMissionEnd() const;
+    unsigned int getFLD_MercenariesMissionQuestID(unsigned int id) const;
+    unsigned int getFLD_MercenariesMissionCategory(unsigned int id) const;
+    unsigned int getFLD_MercenariesMissionRequestPerformance(unsigned int id) const;
+    unsigned int getFLD_MercenariesMissionRepeatable(unsigned int id) const;
+    unsigned int getFLD_MercenariesMissionAutoStart(unsigned int id) const;
+    unsigned int getFLD_FieldSkillListStart() const;
+    unsigned int getFLD_FieldSkillListEnd() const;
+    unsigned int getFLD_FieldSkillListName(unsigned int id) const;
+    unsigned int getFLD_FieldSkillListCaption(unsigned int id) const;
+    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
+    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
+    // has their shape. What it does: reads a row of GfBdatQuest's column FLD_FieldSkillListMinLevel (1.0.0 accessor prefix +
+    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
+    unsigned int fn_710025E554(unsigned int id) const;
+    unsigned int getFLD_FieldSkillListMaxLevel(unsigned int id) const;
+    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
+    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
+    // has their shape. What it does: reads a row of GfBdatQuest's column FLD_FieldSkillListCategory (1.0.0 accessor prefix +
+    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
+    unsigned int fn_710025E67C(unsigned int id) const;
+    unsigned int getFLD_FieldSkillListVoiceCategory(unsigned int id) const;
+    unsigned int getFLD_FieldSkillListAttirbute(unsigned int id) const;
+    unsigned int getFLD_FieldSkillSettingStart() const;
+    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
+    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
+    // has their shape. What it does: reads a row of GfBdatQuest's column FLD_FieldSkillSettingSuccessVoiceCategory (1.0.0 accessor prefix +
+    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
+    unsigned int fn_710025E850(unsigned int id) const;
+    // Placeholder name: nothing in 1.0.0's place names it (new in 3.0.1, or 1.0.0 has no QuestListAcc
+    // accessor for this column). A member because it fills QuestListAcc's unit between proven getters and
+    // has their shape. What it does: reads a row of GfBdatQuest's column FLD_FieldSkillSettingMissVoiceCategory (1.0.0 accessor prefix +
+    // BDAT column name from rebuild's getMember string), 0 out of the table's range.
+    unsigned int fn_710025E8E4(unsigned int id) const;
+    unsigned int getFLD_DevelopmentLevelValue(unsigned int id) const;
 };
 }  // namespace gf
 

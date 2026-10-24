@@ -350,7 +350,7 @@ int GfQuestInfo::getQuestTaskWeatherInfo(const QuestTaskParam& param) {
 
 // Placeholder name: nothing names it (1.0.0's copy, fn_7100369680, is unnamed too: a file-local function). What it
 // does: the weather (0-3) a task's environment condition asks for on the task's map, as GfBdatMaplist::getMaplistw_type
-// gives it, 0 for weather 4, -1 for none: it takes the map by the task's type (3 collect: QuestListAcc::fn_710025B4A4,
+// gives it, 0 for weather 4, -1 for none: it takes the map by the task's type (3 collect: QuestListAcc::getCollectMapID,
 // 5 reach, 6 talk, 10 condition), then the first weather bit of the first environment entry of the condition list.
 static int fn_7100303150(const QuestTaskParam& param, unsigned int cond) {
     if (cond == 0) {
@@ -361,7 +361,7 @@ static int fn_7100303150(const QuestTaskParam& param, unsigned int cond) {
     unsigned int map;
     switch (param.m_taskType) {
     case 3:
-        map = acc->fn_710025B4A4(param.m_taskId);
+        map = acc->getCollectMapID(param.m_taskId);
         break;
     case 5:
         map = acc->getReachMapID(param.m_taskId);
