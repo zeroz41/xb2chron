@@ -2,6 +2,7 @@
 #define CLASSES_GF_ENEMY_STATEBATTLE_H
 
 #include "classes/gf/enemy/StateBattleActionBase.h"
+#include <new>
 
 namespace ai { class State; }
 namespace btl { class BattleCharacter; }
@@ -12,6 +13,9 @@ namespace gf { namespace enemy {
 // table 0x7100B65BB0
 class StateBattle : public ::gf::enemy::StateBattleActionBase {
 public:
+    StateBattle() {}
+    // what GfComBehaviorEnemy::createFsm registers with its Hfsm: the state made in a state buffer
+    static ai::State* create(void* buffer) { return new (buffer) StateBattle; }
     virtual ~StateBattle();  // slot 0
     virtual const char* getName() const;  // slot 2
     virtual void onEnter(void*, ai::State*);  // slot 3
@@ -20,6 +24,9 @@ public:
     virtual void Enter(gf::GfComBehaviorEnemy*, ai::State*);  // slot 8
     virtual void Leave(gf::GfComBehaviorEnemy*, ai::State*);  // slot 9
     virtual void Update(btl::BattleCharacter*, gf::GfComBehaviorEnemy*, fw::UpdateInfo const&);  // slot 11
+    // registerState<StateBattle> sizes it 0x28; create leaves this uninitialized (whether it is StateBattle's or
+    // StateBattleActionBase's is not known)
+    void* pad_20;
 };
 }}  // namespace gf::enemy
 

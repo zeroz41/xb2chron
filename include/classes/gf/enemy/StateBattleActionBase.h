@@ -1,7 +1,7 @@
 #ifndef CLASSES_GF_ENEMY_STATEBATTLEACTIONBASE_H
 #define CLASSES_GF_ENEMY_STATEBATTLEACTIONBASE_H
 
-#include "classes/gf/GfStateBase.h"
+#include "classes/gf/enemy/StateBattleBase.h"
 
 namespace ai { class State; }
 namespace btl { class BattleCharacter; }
@@ -12,8 +12,11 @@ namespace gf { class GfComBehaviorEnemy; }
 
 namespace gf { namespace enemy {
 // table none (its derived classes')
-class StateBattleActionBase : public ::gf::GfStateBase {
+// its base is StateBattleBase: StateBattle::create calls StateBattleBase's constructor and stores only StateBattle's
+// table, so this constructor is inline and adds nothing
+class StateBattleActionBase : public ::gf::enemy::StateBattleBase {
 public:
+    StateBattleActionBase() {}
     virtual ~StateBattleActionBase();  // slot 0
     virtual void recieveMessage(void*, fw::MessageObject*, fw::Message&);  // slot 7
     virtual void Enter(gf::GfComBehaviorEnemy*, ai::State*) = 0;  // slot 8
