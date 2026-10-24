@@ -19,6 +19,7 @@ public:
 
     // its object made and every CPU thread logged in
     static bool isInitialized();
+    static const unsigned int& getFrameCount();  // the work CPU's frame counter (fw::Framework::getFrameCount)
     // a listener told of the HOME menu no more (fw::MovieManager's destructor)
     static void removeBackgroundListener(IWorkBackground* listener);
     // a listener of system information (operation and performance mode) no more (ml::DevPerfNx's destructor)
