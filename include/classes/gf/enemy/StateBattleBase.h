@@ -13,14 +13,17 @@ namespace gf { namespace enemy {
 class StateBattleBase : public ::gf::GfStateBase {
 public:
     StateBattleBase();  // out of line: StateBattle::create calls it
-    virtual ~StateBattleBase();  // slot 0
-    virtual void Enter(gf::GfComBehaviorEnemy*, ai::State*);  // slot 8
+    virtual ~StateBattleBase() {}  // slot 0: inline (the table's slot holds ai::State's)
+    // true when the state runs (StateBattle::onEnter keeps the answer)
+    virtual bool Enter(gf::GfComBehaviorEnemy*, ai::State*);  // slot 8
     virtual void Leave(gf::GfComBehaviorEnemy*, ai::State*);  // slot 9
     virtual void BeforeUpdate(btl::BattleCharacter*, gf::GfComBehaviorEnemy*, fw::UpdateInfo const&);  // slot 10
     virtual void Update(btl::BattleCharacter*, gf::GfComBehaviorEnemy*, fw::UpdateInfo const&);  // slot 11
     virtual void AfterUpdate(btl::BattleCharacter*, gf::GfComBehaviorEnemy*, fw::UpdateInfo const&);  // slot 12
     virtual bool IsBattleActionState() const { return false; }  // slot 13
-    void* pad_18;  // its constructor zeroes it
+    // the owner while a slot runs (onEnter/onLeave/onStep/recieveMessage set it and clear it after; the name is
+    // not the original's)
+    void* m_owner;
 };
 }}  // namespace gf::enemy
 

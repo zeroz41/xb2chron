@@ -24,7 +24,7 @@ public:
     // inline: the original's slot holds the state's own code (not written yet)
     virtual inline void onLeave(void*, ai::State*);  // slot 4
     virtual void onStep(void*, void const*);  // slot 5
-    virtual void recieveMessage(void*, fw::MessageObject*, fw::Message&);  // slot 7
+    virtual bool recieveMessage(void*, fw::MessageObject*, fw::Message&);  // slot 7
     // the state's own functions; the slots above hand them the owner
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
     unsigned char pad_18[0x120];

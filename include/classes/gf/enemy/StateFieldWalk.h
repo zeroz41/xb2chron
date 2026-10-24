@@ -15,7 +15,9 @@ namespace gf { namespace enemy {
 // table 0x7100B66030
 class StateFieldWalk : public ::gf::GfStateBase {
 public:
-    StateFieldWalk() : pad_18(false), pad_19(false), pad_1c(0), pad_58(nullptr), pad_60(nullptr), pad_68(0), pad_70(mm::Vec3::zero), pad_80(-1), pad_84(-1), pad_88(false), pad_8c(0), pad_90(0), pad_94(0.0f), pad_98(5.0f), pad_9c(0.0f) {}
+    // a step of the state: the sequence update runs, none when null
+    typedef void (StateFieldWalk::*Seq)(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    StateFieldWalk() : pad_18(false), pad_19(false), pad_1c(0), m_seq(nullptr), pad_68(0), pad_70(mm::Vec3::zero), pad_80(-1), pad_84(-1), m_hasPointRotY(false), m_pointRotY(0.0f), pad_90(0), pad_94(0.0f), pad_98(5.0f), pad_9c(0.0f) {}
     // what GfComBehaviorEnemy::createFsm registers with its Hfsm: the state made in a state buffer
     static ai::State* create(void* buffer) { return new (buffer) StateFieldWalk; }
     virtual ~StateFieldWalk() {}  // slot 0: inline (emitted with the table by the registering unit)
@@ -29,18 +31,35 @@ public:
     void enter(GfComBehaviorEnemy* owner, ai::State* prev);
     void leave(GfComBehaviorEnemy* owner, ai::State* next);
     void update(GfComBehaviorEnemy* owner, const fw::UpdateInfo& info);
+    void seqIdleInfinit(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    void seqInitGoalPos(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    void pollToShiftLandingSeq(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    void seqWaitToIdle(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    void seqUpdateMove(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    void seqWaitTurnEnd(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    void seqWaitToIdleAtRoutePoint(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    void seqWaitTurnEndAtRoutePoint(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    void seqPlayMotAtRoutePoint(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    void seqWaitSpecialEndAtRoutePoint(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    void seqWaitSyncLoco(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    void seqMoveToBeginLanding(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    void seqLandingIdle(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    void seqWaitTakeOffEnd(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    // whether the enemy may take this state (GfComBehaviorEnemy asks before requesting it)
+    static bool isCondMatch(const GfComBehaviorEnemy& owner);
     bool pad_18;
     bool pad_19;
     unsigned int pad_1c;
     TFieldExecCmd<GfComAsm> m_execCmd;
-    void* pad_58;
-    void* pad_60;
+    Seq m_seq;
     unsigned int pad_68;
     mm::Vec3 pad_70;
     int pad_80;
     int pad_84;
-    bool pad_88;
-    unsigned int pad_8c;
+    // whether a route point has a direction to turn to, and that direction (seqWaitToIdleAtRoutePoint turns the
+    // enemy to it; the names are not the original's)
+    bool m_hasPointRotY;
+    float m_pointRotY;
     unsigned int pad_90;
     float pad_94;
     float pad_98;

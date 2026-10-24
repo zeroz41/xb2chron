@@ -17,13 +17,14 @@ namespace gf { namespace enemy {
 class StateBattleActionBase : public ::gf::enemy::StateBattleBase {
 public:
     StateBattleActionBase() {}
-    virtual ~StateBattleActionBase();  // slot 0
-    virtual void recieveMessage(void*, fw::MessageObject*, fw::Message&);  // slot 7
-    virtual void Enter(gf::GfComBehaviorEnemy*, ai::State*) = 0;  // slot 8
+    virtual ~StateBattleActionBase() {}  // slot 0: inline (StateBattle's destructor folds into ai::State's)
+    virtual bool recieveMessage(void*, fw::MessageObject*, fw::Message&);  // slot 7
+    virtual bool Enter(gf::GfComBehaviorEnemy*, ai::State*) = 0;  // slot 8
     virtual void Leave(gf::GfComBehaviorEnemy*, ai::State*) = 0;  // slot 9
     virtual void BeforeUpdate(btl::BattleCharacter*, gf::GfComBehaviorEnemy*, fw::UpdateInfo const&);  // slot 10
     virtual void Update(btl::BattleCharacter*, gf::GfComBehaviorEnemy*, fw::UpdateInfo const&) = 0;  // slot 11
-    virtual void vf12();  // slot 12
+    // 1.0.0's name, from its table (same slot)
+    virtual void AfterUpdate(btl::BattleCharacter*, gf::GfComBehaviorEnemy*, fw::UpdateInfo const&);  // slot 12
     virtual bool IsBattleActionState() const { return true; }  // slot 13
 };
 }}  // namespace gf::enemy

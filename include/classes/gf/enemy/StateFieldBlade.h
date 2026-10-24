@@ -14,7 +14,9 @@ namespace gf { namespace enemy {
 // table 0x7100B66080
 class StateFieldBlade : public ::gf::GfStateBase {
 public:
-    StateFieldBlade() : pad_50(nullptr), pad_58(nullptr) {}
+    // a step of the state: the sequence update runs, none when null
+    typedef void (StateFieldBlade::*Seq)(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    StateFieldBlade() : m_seq(nullptr) {}
     // what GfComBehaviorEnemy::createFsm registers with its Hfsm: the state made in a state buffer
     static ai::State* create(void* buffer) { return new (buffer) StateFieldBlade; }
     virtual ~StateFieldBlade() {}  // slot 0: inline (emitted with the table by the registering unit)
@@ -28,9 +30,11 @@ public:
     void enter(GfComBehaviorEnemy* owner, ai::State* prev);
     void leave(GfComBehaviorEnemy* owner, ai::State* next);
     void update(GfComBehaviorEnemy* owner, const fw::UpdateInfo& info);
+    void seqWaitIdle(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    void seqIdle(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
+    void seqMoveToDriver(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
     TFieldExecCmd<GfComAsm> m_execCmd;
-    void* pad_50;
-    void* pad_58;
+    Seq m_seq;
 };
 }}  // namespace gf::enemy
 

@@ -22,7 +22,7 @@ public:
     virtual void onEnter(void*, ai::State*);  // slot 3
     virtual void onLeave(void*, ai::State*);  // slot 4
     virtual void onStep(void*, void const*);  // slot 5
-    virtual void recieveMessage(void*, fw::MessageObject*, fw::Message&);  // slot 7
+    virtual bool recieveMessage(void*, fw::MessageObject*, fw::Message&);  // slot 7
     // the state's own functions; the slots above hand them the owner
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);

@@ -1,11 +1,12 @@
-// not proven yet: its table differs from the original's (word 6: _ZN3btl15BattleCharacter3vf3Ev where the original has _ZN3btl15BattleCharacter11AfterUpdateEv)
 #ifndef CLASSES_BTL_BATTLECHARACTER_H
 #define CLASSES_BTL_BATTLECHARACTER_H
 
 #include "mm/Vec3.h"
 
 namespace btl { class CharacterParameter; }
+namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class MsgObjectNotifyAsmCallback; }
 
 namespace btl {
 // table 0x7100B3AA08
@@ -13,9 +14,9 @@ class BattleCharacter {
 public:
     enum ANIM_ID : int;
     virtual ~BattleCharacter();  // slot 0
-    virtual void vf1();  // slot 1
-    virtual void vf2();  // slot 2
-    virtual void vf3();  // slot 3
+    // 1.0.0's names, from its table (same slots); StateBattleActionBase::BeforeUpdate forwards to the first
+    virtual void BeforeUpdate(fw::UpdateInfo const&);  // slot 2
+    virtual void Update();  // slot 3
     virtual void AfterUpdate();  // slot 4
     virtual void SetAnimationCallback(btl::BattleCharacter::ANIM_ID, int, int, char const*);  // slot 5
     virtual void OnLandCallback(bool, bool);  // slot 6
@@ -33,6 +34,8 @@ public:
     };
     CharacterParameter* GetCharacterParameter(bool);
     CharacterParameter* GetCharacterParameterConst(bool) const;
+    // what the enemy's battle states hand an animation annotation to (1.0.0's name)
+    void AsmCallback(const gf::MsgObjectNotifyAsmCallback& msg);
     void NotifyChangeAttr(gf::GF_OBJ_HANDLE* handle, unsigned int attr, unsigned int prevAttr);
     bool IsDead(unsigned int) const;
     bool IsControlCharacter() const;

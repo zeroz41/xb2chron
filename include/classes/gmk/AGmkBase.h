@@ -46,6 +46,9 @@ public:
 };
 // the gimmick bound to an object, null for none
 AGmkBase* getBindedGmkInst(gf::GF_OBJ_HANDLE* handle);
+// whether the player's object exists (defined in GmkElevator.cpp's unit; StateFieldHome::isCondMatch is its tail
+// call)
+bool isPlayerExist();
 }  // namespace gmk
 
 #endif

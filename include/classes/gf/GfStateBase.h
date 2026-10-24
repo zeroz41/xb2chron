@@ -15,8 +15,15 @@ public:
     virtual void onEnter(void*, ai::State*) = 0;  // slot 3
     virtual void onLeave(void*, ai::State*) = 0;  // slot 4
     virtual void onStep(void*, void const*) = 0;  // slot 5
-    virtual bool onEvent(void*, void*);  // slot 6 (bool as ai::State's: its code tail-calls recieveMessage, so that returns bool too, not yet declared so)
-    virtual void recieveMessage(void*, fw::MessageObject*, fw::Message&);  // slot 7
+    // what its owner hands its state machine's execEvent for a message: the sender and the message (the name is
+    // not the original's)
+    struct MessageEvent {
+        fw::MessageObject* from;
+        fw::Message* msg;
+    };
+    // slot 6: the event (a MessageEvent) handed to recieveMessage
+    virtual bool onEvent(void* owner, void* event);
+    virtual bool recieveMessage(void*, fw::MessageObject*, fw::Message&);  // slot 7: false, not handled
 };
 }  // namespace gf
 

@@ -19,7 +19,7 @@ class StateBattleBase : public ::gf::GfStateBase {
 public:
     StateBattleBase();  // out of line (the states' create functions call it)
     virtual ~StateBattleBase() {}  // slot 0: inline (its derived states' deleting destructors only free them)
-    virtual void recieveMessage(void*, fw::MessageObject*, fw::Message&);  // slot 7
+    virtual bool recieveMessage(void*, fw::MessageObject*, fw::Message&);  // slot 7
     // bool: StateBattleStart::Enter tests what StateBattleActionBase::Enter returns and returns 0 or 1
     virtual bool Enter(gf::GfComBehaviorPc*, ai::State*);  // slot 8
     virtual void Leave(gf::GfComBehaviorPc*, ai::State*);  // slot 9: out of line (0x71004E75DC)
