@@ -7,6 +7,8 @@ namespace gf {
 // table 0x7100B63FF0
 class GfMenuObjPartyStatus : public ::gf::GfMenuObject {
 public:
+    static void open(bool flag);  // 1.0.0 symbol
+    static void close(bool flag);  // 1.0.0 symbol
     class ComboReqListener;
     class MainListener;
     virtual ~GfMenuObjPartyStatus();  // slot 0

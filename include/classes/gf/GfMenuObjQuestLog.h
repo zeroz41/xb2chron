@@ -3,12 +3,15 @@
 
 #include "classes/gf/GfMenuObject.h"
 
+namespace gf { class QuestTaskParam; }
 namespace gf { class GfMenuCallContext; }
 #include "gf/QuestID.h"
 namespace gf {
 // table 0x7100B644A0
 class GfMenuObjQuestLog : public ::gf::GfMenuObject {
 public:
+    static void completeTask(const QuestTaskParam& param);  // 1.0.0 symbol
+    static void updateTask();  // 1.0.0 symbol
     class CompleteListener;
     class LogListener;
     class OrderListener;

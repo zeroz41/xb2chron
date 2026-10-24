@@ -70,7 +70,8 @@ public:
     gf::GF_SE_CATEGORY_HANDLE* m_seCategory;
     // fn_710014F70C's sound category handle, made on first use (the name is not the original's)
     gf::GF_SE_CATEGORY_HANDLE* m_seCategorySub;
-    unsigned char pad_218[0x8];
+    bool m_isClear;  // GfMenuManager::isClearCheck returns it (the name is not the original's)
+    unsigned char pad_219[0x7];
 };
 }  // namespace tl
 

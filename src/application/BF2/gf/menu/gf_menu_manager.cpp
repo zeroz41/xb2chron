@@ -1,3 +1,20 @@
+#include "mm/mtl/Bitflag.h"
+#include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfMenuObjCommonText.h"
+#include "classes/gf/GfMenuObjEnemyStatus.h"
+#include "classes/gf/GfMenuObjPartyStatus.h"
+#include "classes/gf/GfMenuObjPartyGauge.h"
+#include "classes/gf/GfMenuReference.h"
+#include "classes/gf/GfMenuObjQuestLog.h"
+#include "classes/gf/GfGameScene.h"
+#include "gf/QuestTaskParam.h"
+#include "classes/tl/TitleMain.h"
+#include "gf/QuestCompleteChildParam.h"
+#include "gf/SDataOption.h"
+#include "classes/gf/GfMenuObjActionWindow.h"
+#include "classes/gf/GfMenuObjComboRoute.h"
+#include "gf/GfObjAcc.h"
+#include "gf/GfMenuFlag.h"
 #include "classes/gf/GfMenuLocation.h"
 #include "classes/gf/GfMenuObjSaveLoad2.h"
 #include "classes/gf/GfMenuManager.h"
@@ -123,6 +140,16 @@ void GfMenuManager::openCommonWindow(unsigned short id) {
     }
     mgr->m_callContext->reset();
     GfMenuObjCommonText::open(mgr->m_callContext, id, 0);
+    mgr->m_latestCommonWinID = id;
+}
+
+void GfMenuManager::fn_7100359CD8(unsigned short id, unsigned short arg) {
+    GfMenuManager* mgr = get();
+    if (mgr == nullptr || !mgr->m_initialized || mgr->m_callContext == nullptr) {
+        return;
+    }
+    mgr->m_callContext->reset();
+    GfMenuObjCommonText::fn_71003E1F60(mgr->m_callContext, id, arg);
     mgr->m_latestCommonWinID = id;
 }
 
@@ -437,6 +464,92 @@ void GfMenuManager::setDispAll(bool disp) {
         return;
     }
     mgr->m_hideAll = !disp;
+}
+
+void GfMenuManager::applyOptionData(const SDataOption& option) {
+    applyGammaCorrectValue(option.m_gamma / 255.0f);
+}
+
+void GfMenuManager::setBattleState(unsigned int state, bool on) {
+    GfMenuManager* mgr = get();
+    if (mgr == nullptr || !mgr->m_initialized || !mgr->m_battleStateEnable) {
+        return;
+    }
+    mgr->m_battleState.set(state, on);
+}
+
+bool GfMenuManager::isBattleState(unsigned int state) {
+    GfMenuManager* mgr = get();
+    if (mgr == nullptr || !mgr->m_initialized) {
+        return false;
+    }
+    return mgr->m_battleState.test(state);
+}
+
+bool GfMenuManager::isClearCheck() {
+    tl::TitleMain* title = tl::TitleMain::get();
+    if (title == nullptr) {
+        return false;
+    }
+    return title->m_isClear;
+}
+
+void GfMenuManager::gevAccessTarget(GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    if (acc.m_obj == nullptr) {
+        GfMenuObjActionWindow::close();
+        if (m_accessObjHandle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            m_accessChanged = true;
+        }
+        m_accessObjHandle = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    } else {
+        GfMenuObjActionWindow::OpenParam param;
+        param.m_obj = handle;
+        param.m_button = 4;
+        GfMenuObjActionWindow::open(param);
+        if (m_accessObjHandle != handle) {
+            m_accessChanged = true;
+        }
+        m_accessObjHandle = handle;
+    }
+}
+
+void GfMenuManager::gevChangeTarget(GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    if (acc.m_obj == nullptr || acc.getType() != 5) {
+        GfMenuReference::setPartyStatusLock(0, false);
+        GfMenuObjPartyStatus::close(false);
+        GfMenuObjEnemyStatus::close();
+    } else {
+        GfMenuObjEnemyStatus::OpenParam param;
+        param.m_obj = handle;
+        GfMenuObjEnemyStatus::open(param);
+        GfMenuReference::setPartyStatusLock(0, true);
+        GfMenuObjPartyStatus::open(true);
+    }
+    if (m_targetObjHandle != handle) {
+        m_targetChanged = true;
+    }
+    m_targetObjHandle = handle;
+}
+
+void GfMenuManager::gevBattleStart() {
+    GfMenuObjEnemyStatus::disp(true);
+    GfMenuObjComboRoute::disp(true);
+    GfMenuObjPartyGauge::disp(true);
+    setBattleState(0, true);
+}
+
+
+
+
+void GfMenuManager::qevCompleteChildQuest(const QuestCompleteChildParam& param) {
+    if (param.m_questId.m_id == 0 && param.m_questId.m_achieveId == 0) {
+        return;
+    }
+    GfMenuLocation::refreshLocator(0);
+    GfMenuLocation::refreshLocator(1);
+    GfMenuLocation::refreshLocator(3);
 }
 
 void GfMenuManager::qevOrderQuest(const QuestOrderParam&) {

@@ -1,7 +1,9 @@
 #ifndef CLASSES_GF_GFMENUMANAGER_H
 #define CLASSES_GF_GFMENUMANAGER_H
 
+#include "classes/gf/IGfEvent.h"
 #include "classes/gf/IQuestEvent.h"
+#include "mm/mtl/Bitflag.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/ml/fixed_size_alloc_inside.h"
 #include "classes/ui/UIUpdateCallback.h"
@@ -26,78 +28,13 @@ namespace ui { class EventData; }
 
 namespace gf {
 // a base of gf::GfMenuManager no evidence names yet
-class TUnk_B5EA58 {
-public:
-    virtual ~TUnk_B5EA58();
-    virtual void vf2();
-    virtual void vf3();
-    virtual void vf4();
-    virtual void vf5();
-    virtual void vf6();
-    virtual void vf7();
-    virtual void vf8();
-    virtual void vf9();
-    virtual void vf10();
-    virtual void vf11();
-    virtual void vf12();
-    virtual void vf13();
-    virtual void vf14();
-    virtual void vf15();
-    virtual void vf16();
-    virtual void vf17();
-    virtual void vf18();
-    virtual void vf19();
-    virtual void vf20();
-    virtual void vf21();
-    virtual void vf22();
-    virtual void vf23();
-    virtual void vf24();
-    virtual void vf25();
-    virtual void vf26();
-    virtual void vf27();
-    virtual void vf28();
-    virtual void vf29();
-    virtual void vf30();
-    virtual void vf31();
-    virtual void vf32();
-    virtual void vf33();
-    virtual void vf34();
-    virtual void vf35();
-    virtual void gevPlayEvent(gf::GEV, unsigned int) = 0;
-    virtual void vf37();
-    virtual void vf38();
-    virtual void gevCameraControl(unsigned int) = 0;
-    virtual void gevChangeTarget(gf::GF_OBJ_HANDLE*) = 0;
-    virtual void gevAccessTarget(gf::GF_OBJ_HANDLE*) = 0;
-    virtual void vf42();
-    virtual void gevBattleStart() = 0;
-    virtual void vf44();
-    virtual void vf45();
-    virtual void vf46();
-    virtual void gevSalvageStateChange(unsigned int) = 0;
-    virtual void vf48();
-    virtual void vf49();
-    virtual void vf50();
-    virtual void vf51();
-    virtual void vf52();
-    virtual void vf53();
-    virtual void vf54();
-    virtual void vf55();
-    virtual void vf56();
-    virtual void vf57();
-    virtual void vf58();
-    virtual void vf59();
-    virtual void vf60();
-    virtual void vf61();
-    virtual void vf62();
-};
 // a base of gf::GfMenuManager no evidence names yet
 class TUnk_B5ECD0 {
 public:
     virtual void reciveEvent(ui::EventData const&, unsigned int) = 0;
 };
-// table 0x7100B5E990; base at 0x8 unknown (TUnk_B5EA58), base at 0x18 unknown (TUnk_B5ECD0)
-class GfMenuManager : public ::mm::mtl::PtrSingleton< ::gf::GfMenuManager>, public TUnk_B5EA58, public ::gf::IQuestEvent, public TUnk_B5ECD0, public ::ui::UIUpdateCallback {
+// table 0x7100B5E990; base at 0x8 gf::IGfEvent, base at 0x18 unknown (TUnk_B5ECD0)
+class GfMenuManager : public ::mm::mtl::PtrSingleton< ::gf::GfMenuManager>, public ::gf::IGfEvent, public ::gf::IQuestEvent, public TUnk_B5ECD0, public ::ui::UIUpdateCallback {
 public:
     GfMenuManager(const GfSetupParam& param);
     static void build(const GfSetupParam& param);
@@ -118,18 +55,18 @@ public:
     };
     virtual ~GfMenuManager();  // slot 0
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
-    virtual void vf3();  // slot 3
+    virtual void gevMapjump(gf::GEV, gf::MapjumpCallbackInfo const&);  // slot 3 (1.0.0 slot 3)
     virtual void gevAccessTarget(gf::GF_OBJ_HANDLE*);  // slot 4
     virtual void gevChangeTarget(gf::GF_OBJ_HANDLE*);  // slot 5
     virtual void gevCameraControl(unsigned int);  // slot 6
     virtual void gevBattleStart();  // slot 7
-    virtual void vf8();  // slot 8
+    virtual void gevBattleEnd();  // slot 8 (1.0.0 slot 8)
     virtual void gevPlayEvent(gf::GEV, unsigned int);  // slot 9
     virtual void gevSalvageStateChange(unsigned int);  // slot 10
-    virtual void vf11();  // slot 11
-    virtual void vf12();  // slot 12
-    virtual void vf13();  // slot 13
-    virtual void vf14();  // slot 14
+    virtual void gevPlayerControl(gf::GEV);  // slot 11 (IGfEvent slot 10)
+    virtual void gevItemAdd(unsigned int, int);  // slot 12 (IGfEvent slot 20)
+    virtual void gevChangeParty();  // slot 13 (IGfEvent slot 34)
+    virtual void gevChangeScenarioFlag(unsigned int, unsigned int);  // slot 14 (IGfEvent slot 45)
     virtual void qevOrderQuest(gf::QuestOrderParam const&);  // slot 15
     virtual void qevCompleteQuest(gf::QuestCompleteParam const&);  // slot 16
     virtual void qevChangeTaskState(gf::QuestTaskParam const&);  // slot 17
@@ -138,7 +75,24 @@ public:
     virtual void qevChangeQuestState(gf::QuestStateParam const&);  // slot 20
     virtual void qevChangeCurrentQuest(gf::QuestChangeParam const&);  // slot 21
     virtual void beginUpdate(fw::UpdateInfo const&);  // slot 22
+    // Placeholder names below: new in 3.0.1, nothing in 1.0.0's place names them. Static members: each reads or
+    // writes the manager's own singleton (GfMenuManager::get()) and lives in its unit.
+    static bool fn_71003596C0();  // m_optionFlag, false without a manager (GfMenuObjOption's listeners, GfGameUtilSaveData::flushOptionSaveData)
+    static void fn_7100359EA0();  // clears m_latestCommonWinID while m_initialized
+    static int fn_710035A364();  // m_titleValue, 0 without a manager (one caller, fn_710066AA7C)
+    static bool fn_710035A524();  // m_titleCount != 0 (tl::TitleStateWarning::fn_71001565A8, fn_71003AF924)
+    static bool fn_710035A634(int index);  // m_bladeBookFlag's bit for index 0, else false (GfMenuBladeList::setupFromBook)
+    static bool fn_710035A6BC();  // returns true (GfMenuObjMainMenu2's setupMainMenu and listener)
+    static bool fn_710035A6CC();  // m_battleStateEnable (GfGamePad::eventInGameOpenSkipTravelMenu)
+    static bool fn_710035A6F8();  // GfMenuFlag::get1(31) == 0 (GfGamePad::eventInGameOpenSkipTravelMenu)
+    static void fn_710035A718(bool flag);  // stores m_evTheaterFlag (GfMenuObjEvTheater::finalize)
+    static bool fn_710035A800();  // calls GfMenuObjUtil::fn_710048FD30(3), then m_attachedObj != nullptr
+    static bool fn_710035DE04();  // m_hideAll, false without a manager or while m_locked
     static bool isBattleState(unsigned int);
+    static void setBattleState(unsigned int state, bool on);
+    static void applyOptionData(const SDataOption& option);
+    static bool isClearCheck();  // tl::TitleMain's clear flag, false without a TitleMain
+    static bool isDispHud(int hud);  // false while m_locked; garbage without a manager, as the original
     // the object the menu targets, -1 without a manager or a target
     static GF_OBJ_HANDLE* getTargetObjHandle();
     static bool isOpenFullScreen();
@@ -205,11 +159,19 @@ public:
     unsigned char pad_4092[0x26];
     GF_OBJ_HANDLE* m_targetObjHandle;  // 0x40B8 getTargetObjHandle
     GF_OBJ_HANDLE* m_accessObjHandle;  // 0x40C0 getAccessObjHandle
-    unsigned char pad_40C8[0x4];
+    bool m_targetChanged;  // 0x40C8 gevChangeTarget sets it when the target changes (the name is not the original's)
+    bool m_accessChanged;  // 0x40C9 gevAccessTarget sets it when the access object changes (the name is not the original's)
+    // 0x40CA setBattleState and gevBattleStart change m_battleState only while it holds; gevPlayEvent(12) clears it
+    // (the name is not the original's)
+    bool m_battleStateEnable;
+    unsigned char pad_40CB[0x1];
     unsigned int m_curCameraType;  // 0x40CC getCurCameraType, gevCameraControl
     GfMenuCallContext* m_callContext;  // 0x40D0 the common window's and telops' (the name is not the original's)
     int m_commonWindowResult;  // 0x40D8 getCommonWindowResult
-    unsigned char pad_40DC[0x1C];
+    mm::mtl::Bitflag<32> m_battleState;  // 0x40DC isBattleState, setBattleState (the name is not the original's)
+    unsigned char pad_40E0[0x4];
+    mm::mtl::Bitflag<32> m_dispHud;  // 0x40E4 isDispHud (the name is not the original's)
+    unsigned char pad_40E8[0x10];
     float m_updateDT;  // 0x40F8 getUpdateDT
     unsigned char pad_40FC[0x1];
     bool m_openBtlModelView;  // 0x40FD isOpenBtlModelView
@@ -217,13 +179,22 @@ public:
     bool m_openOpeningTelop;  // 0x40FF openOpeningTelop sets it (the name is not the original's)
     bool m_hideAll;  // 0x4100 setDispAll stores !disp (the name is not the original's)
     bool m_enableQuestOpen;  // 0x4101 isEnableQuestOpen, setEnableQuestOpen
-    unsigned char pad_4102[0xA];
+    // 0x4102 fn_710035A718 stores it (GfMenuObjEvTheater::finalize), fn_710035A738 reads it (the name is not the original's)
+    bool m_evTheaterFlag;
+    unsigned char pad_4103[0x9];
     unsigned int m_region;  // 0x410C getRegion; the constructor sets 1 without bdat/jp.bin (the name is not the original's)
-    unsigned char pad_4110[0x1];
+    bool m_optionFlag;  // 0x4110 fn_71003596C0 reads it (GfMenuObjOption, flushOptionSaveData) (the name is not the original's)
     bool m_regionJP;  // 0x4111 isRegionJP
-    unsigned char pad_4112[0x52];
+    unsigned char pad_4112[0x2];
+    bool m_bladeBookFlag : 1;  // 0x4114 fn_710035A634 reads its low bit (GfMenuBladeList::setupFromBook) (the name is not the original's)
+    unsigned char pad_4115[0x4F];
     unsigned int m_latestCommonWinID;  // 0x4164 getLatestCommonWinID, openCommonWindow
-    unsigned char pad_4168[0x258];
+    unsigned char pad_4168[0x38];
+    int m_titleValue;  // 0x41A0 fn_710035A364 returns it (the name is not the original's)
+    int m_titleCount;  // 0x41A4 fn_710035A524 tests it against 0 (TitleStateWarning) (the name is not the original's)
+    unsigned char pad_41A8[0x200];
+    void* m_attachedObj;  // 0x43A8 the destructor clears it, fn_710035A800 tests it (what it points to and the name are not known)
+    unsigned char pad_43B0[0x10];
 };
 }  // namespace gf
 

@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFGAMESCENE_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "gf/QuestID.h"
 
 namespace gf { class GfGameScene; }
 namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
@@ -19,6 +20,7 @@ namespace gf {
 // table 0x7100B55EF0
 class GfGameScene : public ::mm::mtl::PtrSingleton< ::gf::GfGameScene> {
 public:
+    QuestID getQuestIdForTaskLog() const;  // 1.0.0 symbol
     void postUpdate(const fw::UpdateInfo& info);
     void setEnemyDead(GF_OBJ_HANDLE* handle);  // SCOM_CHAR_DEAD::exec passes the dead object
     void gevChangeWeather(unsigned int, unsigned int);

@@ -18,6 +18,33 @@ namespace mm { namespace mtl {
 template <unsigned int Size>
 class Bitflag {
 public:
+    // set and test as GfMenuManager's Bitflag<32> code shows them (one 32-bit word: no word index, the mask
+    // 1UL << index without & 31); the names are not the original's
+    void set(unsigned int index, bool on) {
+#line 104 MM_MTL_BITFLAG_PATH
+        MM_ASSERT(index < Size);
+        unsigned long mask = 1UL << index;
+        if (on) {
+            m_flags[0] |= mask;
+        } else {
+            m_flags[0] &= ~mask;
+        }
+    }
+
+    bool test(unsigned int index) const {
+#line 133 MM_MTL_BITFLAG_PATH
+        MM_ASSERT(index < Size);
+        unsigned int mask = 1UL << index;
+        return (m_flags[0] & mask) != 0;
+    }
+
+    // clears every flag (gevBattleEnd's single store; the name is not the original's)
+    void reset() {
+        for (unsigned int i = 0; i < Size / 32; i++) {
+            m_flags[i] = 0;
+        }
+    }
+
     bool operator[](unsigned int index) const {
 #line 119 MM_MTL_BITFLAG_PATH
         MM_ASSERT(index < Size);

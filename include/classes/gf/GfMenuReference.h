@@ -13,6 +13,14 @@ namespace gf {
 // table 0x7100B5EF48
 class GfMenuReference : public ::mm::mtl::PtrSingleton< ::gf::GfMenuReference> {
 public:
+    static void setPartyStatusLock(unsigned int index, bool lock);  // 1.0.0 symbol
+    // 1.0.0 symbol (GfMenuManager::gevBattleEnd passes 0 in 1.0.0 and 3.0.1); 3.0.1's copy still carries a
+    // placeholder name (fn_71003670E4)
+    static void setChainNum(unsigned int num);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its address lies in
+    // gf_menu_reference's unit, between GfMenuReference's functions. What it does: GfMenuManager::gevBattleEnd
+    // tail-calls it, without arguments, after GfMenuObjPartyGauge::close when GfMenuObjUtil::fn_710048FD30(3) holds.
+    static void fn_7100367D1C();
     class REFLIST;
     // a route of the elemental combo the menu shows (8 bytes each, 7 of them; the names are not the original's)
     struct ElementComboRoot {

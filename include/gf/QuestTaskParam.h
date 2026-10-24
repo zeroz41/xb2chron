@@ -19,7 +19,8 @@ public:
     unsigned int m_task;
     unsigned int m_taskType;  // the constructor's QuestListAcc::getTaskTaskType (3 collect, 4 use, 8 gimmick, 10 condition)
     unsigned int m_taskId;    // the constructor's QuestListAcc::getTaskTaskID: the row in the type's table
-    unsigned char pad_18[0x8];
+    TASK_STATE m_state;  // the constructor's state (GfMenuManager::qevChangeTaskState: 1 completes the task)
+    unsigned char pad_1C[0x4];
 };
 
 }  // namespace gf
