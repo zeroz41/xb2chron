@@ -39,6 +39,17 @@ public:
     // still spells one argument)
     static gf::GF_OBJ_HANDLE* getHandleDriver(unsigned int index, unsigned int party);
     static gf::GF_OBJ_HANDLE* getHandleBlade(unsigned int index, int slot);
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (1.0.0's GfPlayComResetBlade::update
+    // has no such calls). Statics of GfGameParty: their addresses lie in gf_game_party's unit and they read
+    // PtrSingleton<GfGameParty> (the driver handle of party slot `slot`, entries of 0x50 from +0x10; -1 for
+    // slot -1 or no party). What they do: GfObjUtil::getObj of that handle, then GfGameMoverSwitcher's object
+    // at +8 gets, through its table slot 3, the object's +0xE0 and a 0x18-byte message {0x33, 0x01000000, 0,
+    // slot, ...}: fn_71002BC718 with words {0, 1}, fn_71002BC7AC with {0, 2}, fn_71002BC840 with {1, ...}.
+    // GfPlayComResetBlade::update calls them for its mode 0, 1, 2 when GfGameManager::fn_71002A9E68 answers
+    // true and the slot is 0-2; ChainAttackManager::UpdateProc calls fn_71002BC7AC too.
+    static void fn_71002BC718(unsigned int slot);
+    static void fn_71002BC7AC(unsigned int slot);
+    static void fn_71002BC840(unsigned int slot);
     static unsigned short getPartyGauge();  // GfMenuBattleAdapter shows it in hundreds (300 full)
 };
 }  // namespace gf

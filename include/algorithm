@@ -105,6 +105,15 @@ inline _ForwardIterator upper_bound(_ForwardIterator __first, _ForwardIterator _
 // std::sort, as libc++ writes it: forwards to __sort with the comparator by reference. __sort is the library's
 // (libc++ instantiates it in the shared library for the integer types: GfGamePlayerUniqueScheduler calls
 // __sort<__less<unsigned short, unsigned short>&, unsigned short*> there).
+// libc++'s linear search (GfPlayComResetBlade::isPlaying)
+template <class _InputIterator, class _Tp>
+inline _InputIterator find(_InputIterator __first, _InputIterator __last, const _Tp& __value_) {
+    for (; __first != __last; ++__first)
+        if (*__first == __value_)
+            break;
+    return __first;
+}
+
 template <class _T1, class _T2 = _T1>
 struct __less {
     bool operator()(const _T1& __x, const _T1& __y) const { return __x < __y; }

@@ -1,3 +1,11 @@
+#include "classes/gf/GfMenuObjCommonText.h"
+#include "classes/gf/GfPlayComResetBlade.h"
+#include "classes/gf/GfPlayComMenuObjCommonText.h"
+#include "classes/gf/GfGameParty.h"
+#include "gf/GfReqCommand.h"
+#include "algorithm"
+#include "classes/gf/GfPlayComGmkCameraSeq.h"
+#include "classes/gf/GfPlayComGmkTutorialSeq.h"
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/MenuCommonWindowParam.h"
 #include "classes/gf/GfPlayComMenuCommon.h"
@@ -153,6 +161,11 @@
 #include "classes/gf/GfPlayComExecuteSignal.h"
 #include "classes/gf/GfPlayComChainAttack.h"
 #include "classes/gf/GfPlayComArtsMovie.h"
+// hand5: begin #include "classes/gf/GfPlayComMenuObjCommonText.h"
+#include "gf/GfObjAcc.h"
+#include <algorithm>
+
+// hand5: end
 #include "classes/gf/GfPlayComMenuObjCommonText.h"
 #include "classes/gf/GfPlayComCallbackEventSequence.h"
 #include "classes/gf/GfPlayComGmkCameraSeq.h"
@@ -670,8 +683,173 @@ void GfPlayComSalvage::end() {
     }
 }
 
+// hand5: begin void GfPlayComGmkCameraSeq::start() {}
+GfPlayComGmkCameraSeq::~GfPlayComGmkCameraSeq() {
+    s_activate--;
+}
+
+// hand5: end
+// hand5: begin void GfPlayComGmkCameraSeq::start() {}
+GfPlayComGmkTutorialSeq::GfPlayComGmkTutorialSeq(const char* name, unsigned int id) : GfPlayCom(30, false) {
+    m_name = name;
+    m_id = id;
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        m_pause = scene->createPlayerPause();
+    }
+    s_activate++;
+}
+
+GfPlayComGmkTutorialSeq::~GfPlayComGmkTutorialSeq() {
+    s_activate--;
+}
+
+void GfPlayComGmkTutorialSeq::start() {
+    GfFieldGmkTutorial* tutorial = mm::mtl::PtrSingleton<GfFieldGmkTutorial>::sys();
+    if (!tutorial->m_waitMover) {
+        tutorial->create(m_name.m_str, m_id);
+    }
+}
+
+void GfPlayComGmkTutorialSeq::end() {
+    mm::mtl::PtrSingleton<GfFieldGmkTutorial>::sys()->dispose();
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        scene->destroyPlayerPause(m_pause);
+    }
+}
+
+GfPlayComGmkTutorialSeq* GfPlayComGmkTutorialSeq::create(const char* name, unsigned int id) {
+#line 2458
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComGmkTutorialSeq(name, id);
+}
+
+// hand5: end
 void GfPlayComGmkCameraSeq::start() {}
 
+// hand5: begin void GfPlayComResetBlade::end() {}
+void GfPlayComResetBlade::start() {
+    m_wait = 3;
+}
+
+bool GfPlayComResetBlade::update(const fw::UpdateInfo& info, bool flag) {
+    switch (m_state) {
+    case 0: {
+        if (GfGameManager::isBattle()) {
+            return true;
+        }
+        if (m_blade <= 2) {
+            GfObjAcc acc(GfGameParty::getHandleDriver(m_blade, 0));
+            if (acc.isBattle()) {
+                return true;
+            }
+        }
+        if (--m_wait > 0) {
+            return false;
+        }
+        if (GfSequentialPlay::isSequenceSpecialAction()) {
+            return true;
+        }
+        if (GfGameManager::fn_71002A9E68()) {
+            if (m_blade <= 2) {
+                if (m_mode == 0) {
+                    GfGameParty::fn_71002BC718(m_blade);
+                } else if (m_mode == 1) {
+                    GfGameParty::fn_71002BC7AC(m_blade);
+                } else if (m_mode == 2) {
+                    GfGameParty::fn_71002BC840(m_blade);
+                }
+                return true;
+            }
+            // the original passes no second argument (w1 is never set before the call; 3.0.1's
+            // reqChangeBladeWithBladeId reads neither): an uninitialized local reproduces that
+            unsigned int blade;
+            m_req = GfReqCommand::reqChangeBladeWithBladeId(m_blade, blade);
+        } else {
+            m_req = GfReqCommand::reqChangeBladeWithSetId(m_blade, m_mode, true);
+        }
+        m_state = 1;
+        return false;
+    }
+    case 1:
+        if (GfReqManager::isValid(m_req)) {
+            return false;
+        }
+        m_req = -1;
+        return true;
+    }
+    return true;
+}
+
+GfPlayComResetBlade* GfPlayComResetBlade::create(unsigned int blade, int mode) {
+#line 3349
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComResetBlade(blade, mode);
+}
+
+GfPlayComResetBlade::~GfPlayComResetBlade() {
+    signed char* it = std::find(s_execFlag.begin(), s_execFlag.end(), static_cast<signed char>(m_blade));
+    if (it != s_execFlag.end()) {
+        s_execFlag.erase(it);
+    }
+}
+
+bool GfPlayComResetBlade::isPlaying(unsigned int slot) {
+    return std::find(s_execFlag.begin(), s_execFlag.end(), static_cast<signed char>(slot)) != s_execFlag.end();
+}
+
+void GfPlayComMenuObjCommonText::start() {
+    m_context = GfMenuCallContext::create();
+    GfMenuObjCommonText::openKizunaDialog(m_context, m_param);
+}
+
+void GfPlayComMenuObjCommonText::end() {
+    if (m_context != nullptr) {
+        GfMenuObjCommonText::close();
+        if (m_context != nullptr) {
+            m_context->release();
+            m_context = nullptr;
+        }
+    }
+}
+
+bool GfPlayComMenuObjCommonText::update(const fw::UpdateInfo& info, bool flag) {
+    if (flag) {
+        return true;
+    }
+    return m_context->isTerm();
+}
+
+
+GfPlayComMenuObjCommonText::~GfPlayComMenuObjCommonText() {
+    s_activate--;
+}
+
+GfPlayComMenuObjCommonText* GfPlayComMenuObjCommonText::create(GfMenuObjCommonText::OpenKizunaParam& param) {
+#line 3577
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComMenuObjCommonText(param);
+}
+
+// hand5: end
+// hand5: begin void GfPlayComResetBlade::end() {}
+void GfPlayComGmkCameraSeq::end() {
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        scene->destroyPlayerPause(m_pause);
+    }
+}
+
+bool GfPlayComGmkCameraSeq::update(const fw::UpdateInfo& info, bool flag) {
+    if (!flag && m_camera->m_pushed) {
+        return false;
+    }
+    GfGameManager::setGmkTutorialSequenceOK(false);
+    GfGameManager::setGmkTutorialMoverOK(false);
+    return true;
+}
+
+GfPlayComGmkCameraSeq* GfPlayComGmkCameraSeq::create(mm::mtl::IntrusivePtr<fw::Camera> camera) {
+#line 2515
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComGmkCameraSeq(camera);
+}
+
+// hand5: end
 void GfPlayComResetBlade::end() {}
 
 void GfPlayComHoodHomuraBattou::start() {}
@@ -1021,7 +1199,15 @@ mm::mtl::RTTI GfPlayComFieldTbox::m_rtti("GfPlayComFieldTbox", &GfPlayCom::m_rtt
 mm::mtl::RTTI GfPlayComFieldSeq::m_rtti("GfPlayComFieldSeq", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComWaitPlayerToStartGmkTuto::m_rtti("GfPlayComWaitPlayerToStartGmkTuto", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComGmkTutorialSeq::m_rtti("GfPlayComGmkTutorialSeq", &GfPlayCom::m_rtti, nullptr);
+// hand5: begin mm::mtl::RTTI GfPlayComGmkCameraSeq::m_rtti
+int GfPlayComGmkTutorialSeq::s_activate;
+
+// hand5: end
 mm::mtl::RTTI GfPlayComGmkCameraSeq::m_rtti("GfPlayComGmkCameraSeq", &GfPlayCom::m_rtti, nullptr);
+// hand5: begin mm::mtl::RTTI GfPlayComPlayerDead::m_rtti
+int GfPlayComGmkCameraSeq::s_activate;
+
+// hand5: end
 mm::mtl::RTTI GfPlayComPlayerDead::m_rtti("GfPlayComPlayerDead", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComTalk::m_rtti("GfPlayComTalk", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComQuestOrderUI::m_rtti("GfPlayComQuestOrderUI", &GfPlayCom::m_rtti, nullptr);
@@ -1042,6 +1228,10 @@ mm::mtl::FixedVector<signed char, 3> GfPlayComResetBlade::s_execFlag;
 mm::mtl::RTTI GfPlayComMoverSwitch::m_rtti("GfPlayComMoverSwitch", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComHoodHomuraBattou::m_rtti("GfPlayComHoodHomuraBattou", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComMenuObjCommonText::m_rtti("GfPlayComMenuObjCommonText", &GfPlayCom::m_rtti, nullptr);
+// hand5: begin mm::mtl::RTTI GfPlayComMapjumpForArena::m_rtti
+int GfPlayComMenuObjCommonText::s_activate;
+
+// hand5: end
 mm::mtl::RTTI GfPlayComMapjumpForArena::m_rtti("GfPlayComMapjumpForArena", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComMapjumpForLeaveArena::m_rtti("GfPlayComMapjumpForLeaveArena", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComMapjumpForBattleMapFromArena::m_rtti("GfPlayComMapjumpForBattleMapFromArena", &GfPlayCom::m_rtti, nullptr);
