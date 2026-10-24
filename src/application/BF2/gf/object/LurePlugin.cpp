@@ -51,7 +51,7 @@ bool isActiveRangeLure(gf::GfComPropertyPc& property, const gf::AccessParam& par
     float upper = param.accessUpper;
     float down = -param.accessDown;
     bool inHeight = (diff.y <= upper) & (down <= diff.y);
-    const OwnerBonus* bonus = GfGameManager::getOwnerBonus();
+    const OwnerBonus* bonus = &GfGameManager::getOwnerBonus();
     float radius = param.accessRadius;
     int value = bonus->m_values[11];
     float extra = value >= 0 ? static_cast<float>(value > 9 ? 10 : value) : 0.0f;

@@ -8,6 +8,7 @@
 namespace gf { class GfSetupParam; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GfObjManager; }
+namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
 namespace gf { class MapjumpCallbackInfo; }
 namespace gf { enum GEV : int; }
 namespace gf { class GF_OBJ_HANDLE; }
@@ -28,6 +29,7 @@ public:
     // a listener called for the objects' events, and its removal
     static void addListener(IGfObjListener* listener, IGfObjListener::OBJEVT evt);
     static void removeListener(IGfObjListener* listener);
+    bool hasReloadObjForDebug();
 };
 }  // namespace gf
 

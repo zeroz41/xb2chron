@@ -4,6 +4,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class GfGameScene; }
+namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
 namespace gf { enum GfPlayerDead : int; }
 namespace gf { enum ActivateType : int; }
 namespace gf { struct OwnerBonus; }
@@ -36,6 +37,8 @@ public:
     void enterBattle(bool);
     bool isBattle() const;
     bool isControlFree() const;
+    const gf::OwnerBonus* getOwnerBonus() const;
+    void setForceStopBattle(bool stop);
     bool isForceBossBattleBgm() const;
     bool isForceEventBgm() const;
     bool isDisableJumpForRide() const;
@@ -67,10 +70,25 @@ public:
     // when the script name contains "aoc_tut24", "aoc_tut04" or "aoc_tut10" (it never clears it).
     void fn_71002C4B80(const char* name);
 
-    unsigned char pad_8[0x660];
+    // GfGameManager reads and writes the next four through its own accessors (isStartGame/setStartGame,
+    // isEnableRoomForHikariLv4, setStopMainMenuOpenForGimmick, is/setValidCollisionVelocity); the field names
+    // follow those accessors and are not the original's
+    unsigned char pad_8[0x1D1];
+    bool m_startGame;
+    bool m_enableRoomForHikariLv4;
+    unsigned char pad_1DB[0x5];
+    bool m_stopMainMenuOpenForGimmick;
+    unsigned char pad_1E1[0x9F];
+    bool m_validCollisionVelocity;
+    unsigned char pad_281[0x3E7];
     // gf::_gffsn::bgmvolFadeBattleEvent fades its track out while it is set (+0x648 in 1.0.0; the name is not the
     // original's)
     bool m_battleEventBgm;
+    void qevCompleteQuest(const gf::QuestCompleteParam& param);
+    void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
+    void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int);
+    void clear();
+    bool isPlayEvent() const;
 };
 }  // namespace gf
 

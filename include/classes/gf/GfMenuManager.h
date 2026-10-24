@@ -5,12 +5,14 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/ui/UIUpdateCallback.h"
 
+namespace mm { struct Col4; }
 namespace gf { class GfSetupParam; }
 namespace gf { class MenuCommonWindowParam; }
 namespace fw { class UpdateInfo; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfMenuManager; }
+namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
 namespace gf { class QuestChangeParam; }
 namespace gf { class QuestCompleteChildParam; }
 namespace gf { class QuestCompleteParam; }
@@ -98,6 +100,7 @@ public:
     static void build(const GfSetupParam& param);
     static void destroy();
     static bool isInitialized();
+    static bool isFading(unsigned int layer);  // the fade of that layer runs
     static void update(const fw::UpdateInfo& info);
     void postUpdate(const fw::UpdateInfo& info);
     enum OBJ : int;
@@ -160,6 +163,7 @@ public:
     // a bool, false without a manager; GfMenuObjOpeningTelop's open/close calls send nothing while it holds, and
     // GfMenuObjStaffroll::update tests it.
     static bool fn_710035A738();
+    static void getFadeColor(unsigned int layer, mm::Col4& color);
 };
 }  // namespace gf
 

@@ -4,6 +4,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class GfGameSpeed; }
+namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
 
 namespace gf {
 // table 0x7100B54818
@@ -14,6 +15,7 @@ public:
     virtual ~GfGameSpeed();  // slot 0
     static float getPlaySpeed();  // 0 without the singleton
     static void setSalvageSpeed(float speed);
+    static void clear();
 };
 }  // namespace gf
 

@@ -9,6 +9,7 @@
 #include "gf/GfQuestReward.h"
 
 namespace gf { class GfQuestManager; }
+namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
 
 namespace gf { enum RELOAD_BDAT : int; }
 namespace gf {
@@ -32,6 +33,8 @@ public:
     static void eventChangeQuestState(gf::QuestID id, gf::QSTATE before, gf::QSTATE after);
     static void addCompleteQuest(gf::QuestID id);
     static gf::QuestID getProgressCurrentQuest(gf::QTYPE type);
+    static void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
+    static void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int);
 };
 }  // namespace gf
 

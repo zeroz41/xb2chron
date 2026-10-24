@@ -11,6 +11,7 @@ namespace gf { enum GF_STATE : int; }
 namespace gf { enum ActivateType : int; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfGameManager; }
+namespace mm { namespace mtl { template <typename, unsigned long> class FixedArray; }}
 namespace gf { struct OwnerBonus; }
 namespace gf { class MapjumpCallbackInfo; }
 namespace gf { class QuestCompleteChildParam; }
@@ -25,6 +26,27 @@ namespace gf {
 // table 0x7100B54938; IGfEvent at 0x8 (1.0.0's table names the overrides), IQuestEvent at 0x10
 class GfGameManager : public ::mm::mtl::PtrSingleton< ::gf::GfGameManager>, public ::gf::IGfEvent, public ::gf::IQuestEvent {
 public:
+    GfGameManager() : m_initialized(false), m_leaveGameForDebug(false) {}
+    static void setStartGame();
+    static bool isEnableRoomForHikariLv4();
+    static void setStopMainMenuOpenForGimmick(bool stop);
+    static bool isValidCollisionVelocity();
+    // whether a map jump may start (neither the state nor the reserved one is 8 or 9)
+    static bool isMapjumpOK();
+    // GfGameScene has player stop flag 1, 3, 4 or 5 set (false without a GfGameScene)
+    static bool isGmkTutorialSequenceOK();
+    // not in battle, not in theater mode, and the control is free
+    static bool isAutoTalkOK();
+    // a GfPlayComQuestCompleteUI is alive
+    static bool isQuestCompleteUI();
+    static bool isEnableBattouWithHoodHomura(bool flag);
+    // the leader may not draw its weapon (a blade reset plays, the first blade rebuilds, or isEnableBattouWithHoodHomura(true))
+    static bool isDisableBattou();
+    // whether the fade of that layer runs (or SCOM type 27 is queued); -1 asks layers 0, 1 and 2
+    static bool isFading(unsigned int layer);
+    // the pad's characters: the controlled mover first
+    static void collectPadCharList(mm::mtl::FixedArray<gf::GF_OBJ_HANDLE*, 2>* list);
+    static void setValidCollisionVelocity(bool valid);
     // SCOM_ACCESS_TARGET and SCOM_TARGET_UI pass their request's object
     static void setAccessTarget(gf::GF_OBJ_HANDLE* handle);
     static void setTargetUI(gf::GF_OBJ_HANDLE* handle);
@@ -37,6 +59,7 @@ public:
     // fn_71002A7430 (as GfGameManager::setupGame does); GfManager::fn_710032A1FC calls it
     static void fn_71002AC558(bool flag);
     static void build(const GfSetupParam& param);
+    void initialize(const GfSetupParam& param);
     static void destroy();
     static void setState(GF_STATE state, bool flag);
     static void leaveGameForDebug();
@@ -100,7 +123,7 @@ public:
     static bool isPlaySequenceClear();
     static bool isPlayerCameraPause();
     // the owner bonuses the party's precious items add up to (GfGameScene's)
-    static const gf::OwnerBonus* getOwnerBonus();
+    static const gf::OwnerBonus& getOwnerBonus();
     // whether the PC may access objects on the field now
     static bool isEnableFieldAccess();
     static bool isRoom();
@@ -185,6 +208,12 @@ public:
     virtual void qevOrderQuest(gf::QuestOrderParam const&);  // slot 38
     virtual void qevCompleteQuest(gf::QuestCompleteParam const&);  // slot 39
     virtual void qevCompleteChildQuest(gf::QuestCompleteChildParam const&);  // slot 40
+
+    // set at the end of initialize, cleared by finalize (the name is not the original's)
+    bool m_initialized;
+    // set by leaveGameForDebug, read by isLeaveGameForDebug (the name is not the original's)
+    bool m_leaveGameForDebug;
+    unsigned char pad_1A[0x6];
 };
 }  // namespace gf
 

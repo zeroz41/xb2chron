@@ -4,6 +4,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class GfGameVoice; class GAME_VOICE_HANDLE; enum CV_RESULT : int; }
+namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
 
 namespace gf {
 // table 0x7100B56B40
@@ -15,6 +16,7 @@ public:
     static void playStop(GAME_VOICE_HANDLE* voice);
     static CV_RESULT getResult(GAME_VOICE_HANDLE* voice);
     bool isPlayEnemyVoice() const;
+    static void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
 };
 }  // namespace gf
 

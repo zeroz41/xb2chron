@@ -4,6 +4,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class GfGameMercenaries; }
+namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
 namespace gf { class QuestOrderParam; }
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
 
@@ -32,6 +33,9 @@ public:
     static int getRewardTrust(unsigned int mission);
     static int getRewardMercenariesPoint(unsigned int mission);
     static void getZoneMission(mm::mtl::FixedVector<unsigned short, 500>& missions, unsigned int zone);  // a zone's missions
+    static void qevCompleteQuest(const gf::QuestCompleteParam& param);
+    static void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
+    static void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int);
 };
 }  // namespace gf
 

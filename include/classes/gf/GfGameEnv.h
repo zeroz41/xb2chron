@@ -6,6 +6,7 @@
 namespace mm { class Vec3; }
 
 namespace gf { class GfGameEnv; }
+namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
 namespace gf { enum GF_STATE : int; }
 
 namespace gf {
@@ -21,6 +22,8 @@ public:
     static bool isMapjumpWithSaveData();
     static void gevGameState(GF_STATE, GF_STATE);
     static void sendPlayerPositionToRender(const mm::Vec3& pos);
+    static void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
+    static void clear();
 };
 }  // namespace gf
 

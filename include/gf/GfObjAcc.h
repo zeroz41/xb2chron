@@ -20,6 +20,8 @@ public:
     GfObjAcc(GF_OBJ_HANDLE* handle);
     bool testFlag(unsigned int flag) const;
     GfObj* getObj() const;
+    unsigned int getLayer() const;
+    bool isRebuild() const;  // the layer the object updates in (fw::Framework::isLayerPause takes it)
     // the object's world transform (its frame's, synced first)
     const fw::Transform& getWorldTransform() const;
     // the same without syncing the frame first

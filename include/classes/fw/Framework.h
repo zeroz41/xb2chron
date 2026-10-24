@@ -30,6 +30,7 @@ public:
     static mm::mtl::IAllocator* getAllocator();
     static mtl::ALLOC_HANDLE getMemHandle();  // the memory resources are made in (ResourceManager::getMemSYS)
     static unsigned int getFrameCount();
+    static bool isLayerPause(unsigned int layer);
     unsigned char pad_8[0x50];
     ml::Scn* m_scn;  // what LayerSetManager gives layer::LayerManager; the name is not the original's
 };

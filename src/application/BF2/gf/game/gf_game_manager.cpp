@@ -1,3 +1,18 @@
+#include "classes/gf/GfObjManager.h"
+#include "classes/gf/GfGameMercenaries.h"
+#include "classes/gf/GfGameEnv.h"
+#include "classes/gf/GfGameVoice.h"
+#include "classes/gf/GfQuestManager.h"
+#include "classes/gf/GfAchievManager.h"
+#include "classes/gf/GfGameSpeed.h"
+#include "classes/gf/GfGameObj.h"
+#include "classes/gf/GfReqSmallCom.h"
+#include "classes/gf/GfMenuManager.h"
+#include "gf/GfObjAcc.h"
+#include "classes/fw/Framework.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfGameScene.h"
+#include "classes/gf/GfGameEvent.h"
 #include "classes/gf/IQuestEvent.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfGameScene.h"
@@ -29,6 +44,18 @@
 #include "classes/gf/GfGameState.h"
 #include "fw/UpdateInfo.h"
 #include "classes/gf/GfManager.h"
+#include "classes/gf/GfAllocator.h"
+#include "gf/GfDataBlade.h"
+#include "classes/gf/GfPlayComQuestCompleteUI.h"
+#include "classes/gf/GfPlayComResetBlade.h"
+#include "classes/btl/BattleManager.h"
+#include "classes/gf/GfObjManager.h"
+#include "mm/Col4.h"
+#include "classes/gf/GfKizunaringManager.h"
+#include "gf/GfObjAcc.h"
+#include "classes/fw/Framework.h"
+#include "classes/gf/GfReqSmallCom.h"
+#include "mm/mtl/FixedArray.h"
 
 namespace gf {
 
@@ -446,6 +473,265 @@ void GfGameManager::postUpdate(const fw::UpdateInfo& info) {
         scene->postUpdate(info);
     }
     GfGameEvent::postUpdate(info);
+}
+
+
+void GfGameManager::build(const GfSetupParam& param) {
+#line 138
+    GfGameManager* self = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfGameManager();
+    self->initialize(param);
+}
+
+bool GfGameManager::isValidCollisionVelocity() {
+    if (GfGameScene* scene = GfGameScene::get()) {
+        return scene->m_validCollisionVelocity;
+    }
+    return false;
+}
+
+void GfGameManager::setValidCollisionVelocity(bool valid) {
+    if (GfGameScene* scene = GfGameScene::get()) {
+        scene->m_validCollisionVelocity = valid;
+    }
+}
+
+bool GfGameManager::isLeaveGameForDebug() {
+    if (GfGameManager* manager = get()) {
+        if (manager->m_leaveGameForDebug) {
+            return true;
+        }
+        return GfManager::isDestroyNow();
+    }
+    return false;
+}
+
+void GfGameManager::leaveGameForDebug() {
+    if (GfGameManager* manager = get()) {
+        manager->m_leaveGameForDebug = true;
+        GfGameEvent::finishNewGameWait();
+        GfGameEvent::stop();
+        if (GfGameScene* scene = GfGameScene::get()) {
+            scene->setForceStopBattle(true);
+        }
+    }
+}
+
+const OwnerBonus& GfGameManager::getOwnerBonus() {
+    return *GfGameScene::get()->getOwnerBonus();
+}
+
+bool GfGameManager::isStartGame() {
+    if (GfGameScene* scene = GfGameScene::get()) {
+        return scene->m_startGame;
+    }
+    return true;
+}
+
+int GfGameManager::getScenarioId() {
+    if (GfManager::isExecModeScenarioGame()) {
+        unsigned short scenario = GfDataBlade::fn_7100231884();
+        return scenario == 0 ? 1 : scenario / 1000;
+    }
+    return 0;
+}
+
+void GfGameManager::setStartGame() {
+    if (GfGameScene* scene = GfGameScene::get()) {
+        scene->m_startGame = true;
+    }
+}
+
+bool GfGameManager::isEnableRoomForHikariLv4() {
+    if (GfGameScene* scene = GfGameScene::get()) {
+        return scene->m_enableRoomForHikariLv4;
+    }
+    return false;
+}
+
+void GfGameManager::setStopMainMenuOpenForGimmick(bool stop) {
+    if (GfGameScene* scene = GfGameScene::get()) {
+        scene->m_stopMainMenuOpenForGimmick = stop;
+    }
+}
+
+
+GF_OBJ_HANDLE* GfGameManager::getPartyLeader() {
+    GF_OBJ_HANDLE* leader = GfGameParty::getLeader();
+    GfObjAcc acc(leader);
+    if (acc.m_obj != nullptr) {
+        if (GfGameObj::isValidGameObj(leader, true, nullptr) || GfGameObj::isEnterGameObj(leader)) {
+            return leader;
+        }
+        if (fw::Framework::isLayerPause(acc.getLayer()) && GfObjUtil::isUpdate(leader)) {
+            return leader;
+        }
+    }
+    return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+}
+
+GF_OBJ_HANDLE* GfGameManager::getPartyLeaderDriver() {
+    GF_OBJ_HANDLE* driver = GfGameParty::getLeaderDriver();
+    GfObjAcc acc(driver);
+    if (GfGameObj::isValidGameObj(driver, true, nullptr) || GfGameObj::isEnterGameObj(driver)) {
+        return driver;
+    }
+    if (fw::Framework::isLayerPause(acc.getLayer()) && GfObjUtil::isUpdate(driver)) {
+        return driver;
+    }
+    return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+}
+
+void GfGameManager::collectPadCharList(mm::mtl::FixedArray<GF_OBJ_HANDLE*, 2>* list) {
+    (*list)[0] = getControlMover();
+}
+
+bool GfGameManager::isEvent(bool sequential) {
+    if (get() == nullptr) {
+        return false;
+    }
+    if (GfGameState::test(2)) {
+        return true;
+    }
+    if (!sequential) {
+        return false;
+    }
+    return GfSequentialPlay::isInnerState(static_cast<GF_STATE>(20));
+}
+
+bool GfGameManager::isField() {
+    if (get() == nullptr || GfGameState::getState() != static_cast<GF_STATE>(3)) {
+        return false;
+    }
+    if (isPlayerPause()) {
+        return false;
+    }
+    if (isBattle()) {
+        return false;
+    }
+    return GfGameState::getStateReserve() == static_cast<GF_STATE>(3);
+}
+
+namespace {
+// the state or the reserved one is state (the name is not the original's)
+bool isStateOrReserve(GF_STATE state) {
+    return GfGameState::getState() == state || GfGameState::getStateReserve() == state;
+}
+}  // namespace
+
+bool GfGameManager::isMapjumpOK() {
+    return !isStateOrReserve(static_cast<GF_STATE>(8)) && !isStateOrReserve(static_cast<GF_STATE>(9));
+}
+
+bool GfGameManager::isFading(unsigned int layer) {
+    if (layer == 0xFFFFFFFF) {
+        return GfMenuManager::isFading(0) || GfMenuManager::isFading(1) || GfMenuManager::isFading(2);
+    }
+    return GfMenuManager::isFading(layer) || GfReqSmallCom::isExistCommand(static_cast<SCOM_TYPE>(27));
+}
+
+
+void GfGameManager::gevMapjump(GEV gev, const MapjumpCallbackInfo& info) {
+    GfGameEnv::gevMapjump(gev, info);
+    GfGameEvent::gevMapjump(gev, info);
+    if (GfGameScene* scene = GfGameScene::get()) {
+        scene->gevMapjump(gev, info);
+    }
+    GfGameVoice::gevMapjump(gev, info);
+    GfQuestManager::gevMapjump(gev, info);
+    GfGameMercenaries::gevMapjump(gev, info);
+}
+
+void GfGameManager::gevMercenariesMissionFlag(unsigned int a, unsigned int b, unsigned int c) {
+    if (GfAchievManager* achiev = GfAchievManager::get()) {
+        achiev->gevMercenariesMissionFlag(a, b, c);
+    }
+    if (GfGameScene* scene = GfGameScene::get()) {
+        scene->gevMercenariesMissionFlag(a, b, c);
+    }
+    GfQuestManager::gevMercenariesMissionFlag(a, b, c);
+    GfGameMercenaries::gevMercenariesMissionFlag(a, b, c);
+}
+
+void GfGameManager::qevCompleteQuest(const QuestCompleteParam& param) {
+    GfGameMercenaries::qevCompleteQuest(param);
+    if (GfKizunaringManager* kizunaring = GfKizunaringManager::get()) {
+        kizunaring->qevCompleteQuest(param);
+    }
+    if (GfGameScene* scene = GfGameScene::get()) {
+        scene->qevCompleteQuest(param);
+    }
+}
+
+
+bool GfGameManager::isDisableBattou() {
+    if (GfPlayComResetBlade::isPlaying(0)) {
+        return true;
+    }
+    GfObjAcc acc(GfGameParty::getHandleBlade(0, -1));
+    if (acc.isRebuild()) {
+        return true;
+    }
+    return isEnableBattouWithHoodHomura(true);
+}
+
+bool GfGameManager::isStopBattleSequence() {
+    if (get() == nullptr || btl::BattleManager::get() == nullptr) {
+        return true;
+    }
+    if (!btl::BattleManager::isInitialized()) {
+        return true;
+    }
+    if (GfReqSmallCom::isExistCommand(static_cast<SCOM_TYPE>(53))) {
+        return true;
+    }
+    if (GfObjManager* manager = GfObjManager::get()) {
+        if (manager->hasReloadObjForDebug()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GfGameManager::isFadeout() {
+    for (unsigned int layer = 0; layer < 3; layer++) {
+        mm::Col4 color;
+        GfMenuManager::getFadeColor(layer, color);
+        if (color.a >= 0.9f) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+bool GfGameManager::isPlayEvent() {
+    if (GfGameScene* scene = GfGameScene::get()) {
+        return scene->isPlayEvent();
+    }
+    return false;
+}
+
+bool GfGameManager::isGmkTutorialSequenceOK() {
+    GfGameScene* scene = GfGameScene::get();
+    if (scene == nullptr) {
+        return false;
+    }
+    return scene->isPlayerStopFlag(static_cast<PLSTOP>(1)) || scene->isPlayerStopFlag(static_cast<PLSTOP>(3)) ||
+           scene->isPlayerStopFlag(static_cast<PLSTOP>(4)) || scene->isPlayerStopFlag(static_cast<PLSTOP>(5));
+}
+
+bool GfGameManager::isAutoTalkOK() {
+    if (isBattle()) {
+        return false;
+    }
+    if (GfManager::isExecModeThater()) {
+        return false;
+    }
+    return isControlFree();
+}
+
+bool GfGameManager::isQuestCompleteUI() {
+    return GfPlayComQuestCompleteUI::s_active > 0;
 }
 
 }  // namespace gf

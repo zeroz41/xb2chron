@@ -5,6 +5,7 @@
 #include "mm/mtl/FixedVector.h"
 
 namespace gf { class GfAchievManager; }
+namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
 
 namespace gf {
 // table 0x7100B52BF0
@@ -15,6 +16,7 @@ public:
     void incAchiev(unsigned int type, int value);
     void incAchievWithBlade(unsigned int type, int value, const mm::mtl::FixedVector<unsigned short, 422>& blades);
     virtual ~GfAchievManager();  // slot 0
+    void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int);
 };
 }  // namespace gf
 
