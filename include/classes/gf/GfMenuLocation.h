@@ -10,6 +10,8 @@ namespace gf {
 class GfMenuLocation : public ::mm::mtl::PtrSingleton< ::gf::GfMenuLocation> {
 public:
     virtual ~GfMenuLocation();  // slot 0
+    // GfMenuManager's quest events refresh locators 0, 1 and 3
+    static void refreshLocator(unsigned int kind);
 };
 }  // namespace gf
 

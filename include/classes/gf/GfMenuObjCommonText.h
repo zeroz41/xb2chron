@@ -3,6 +3,8 @@
 
 #include "classes/gf/GfMenuObject.h"
 
+namespace gf { class MenuCommonWindowParam; }
+
 namespace gf {
 // table 0x7100B61478
 class GfMenuObjCommonText : public ::gf::GfMenuObject {
@@ -25,6 +27,10 @@ public:
     virtual void update();  // slot 4
     // opens text `text` for a call context
     static void open(GfMenuCallContext* context, unsigned int text, unsigned int);
+    static void open(GfMenuCallContext* context, const MenuCommonWindowParam& param);
+    // an item's text (GfMenuManager::openPreciousWindow passes kind 11 and the item id)
+    static void openItem(GfMenuCallContext* context, unsigned int kind, unsigned int item);
+    static void close();
 };
 }  // namespace gf
 

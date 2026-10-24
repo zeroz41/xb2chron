@@ -3,6 +3,7 @@
 
 #include "classes/gf/IQuestEvent.h"
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "classes/ml/fixed_size_alloc_inside.h"
 #include "classes/ui/UIUpdateCallback.h"
 
 namespace mm { struct Col4; }
@@ -12,6 +13,7 @@ namespace fw { class UpdateInfo; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfMenuManager; }
+namespace gf { class GfMenuCallContext; class SDataOption; }
 namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
 namespace gf { class QuestChangeParam; }
 namespace gf { class QuestCompleteChildParam; }
@@ -97,13 +99,23 @@ public:
 // table 0x7100B5E990; base at 0x8 unknown (TUnk_B5EA58), base at 0x18 unknown (TUnk_B5ECD0)
 class GfMenuManager : public ::mm::mtl::PtrSingleton< ::gf::GfMenuManager>, public TUnk_B5EA58, public ::gf::IQuestEvent, public TUnk_B5ECD0, public ::ui::UIUpdateCallback {
 public:
+    GfMenuManager(const GfSetupParam& param);
     static void build(const GfSetupParam& param);
     static void destroy();
+    void finalize();
+    // the gamma of both the layer and the scene renderer: value * 2 + 1.2 (applyOptionData passes the option's
+    // 0..255 setting / 255)
+    static void applyGammaCorrectValue(float value);
     static bool isInitialized();
+    static bool isFading();  // a fade of layer 0, 1 or 2 runs
     static bool isFading(unsigned int layer);  // the fade of that layer runs
     static void update(const fw::UpdateInfo& info);
     void postUpdate(const fw::UpdateInfo& info);
-    enum OBJ : int;
+    // the elements of the manager's fixed_size_alloc_inside<OBJ, 512>: the constructor places 512 of 0x20 bytes
+    // (0x4000) before the in-use bits
+    struct OBJ {
+        unsigned char pad_0[0x20];
+    };
     virtual ~GfMenuManager();  // slot 0
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
     virtual void vf3();  // slot 3
@@ -164,6 +176,48 @@ public:
     // GfMenuObjStaffroll::update tests it.
     static bool fn_710035A738();
     static void getFadeColor(unsigned int layer, mm::Col4& color);
+    static void initOptionData(SDataOption& option);
+    static bool isRegionJP();  // the constructor sets it when menu_ira/font/bf2.wisty exists
+    static unsigned int getRegion();
+    static bool isRegionUS();  // getRegion() is 1
+    static void setEnableQuestOpen(bool enable);
+    static float getUpdateDT();
+    static unsigned int getCurCameraType();  // the type gevCameraControl last passed
+    static unsigned int getLatestCommonWinID();  // the id openCommonWindow last opened
+    static void openNameSelect();
+    static bool isOpenNameSelect();
+    static void openOpeningTelop();
+    static void closeOpeningTelop();
+    static void openStaffroll();
+    static void closeStaffroll();
+    static void acceptAccess(GF_OBJ_HANDLE* handle);
+    static void setDispAll(bool disp);
+    // (field names follow the 1.0.0 accessors that read them; where marked, the name is not the original's)
+    ::ml::fixed_size_alloc_inside<OBJ, 512> m_objs;  // 0x28 (the name is not the original's)
+    bool m_initialized;     // 0x4090: every accessor tests it (the name is not the original's)
+    bool m_locked;  // 0x4091: getFadeColor, setDispAll and isDispHud do nothing while it holds (the name is not the original's)
+    unsigned char pad_4092[0x26];
+    GF_OBJ_HANDLE* m_targetObjHandle;  // 0x40B8 getTargetObjHandle
+    GF_OBJ_HANDLE* m_accessObjHandle;  // 0x40C0 getAccessObjHandle
+    unsigned char pad_40C8[0x4];
+    unsigned int m_curCameraType;  // 0x40CC getCurCameraType, gevCameraControl
+    GfMenuCallContext* m_callContext;  // 0x40D0 the common window's and telops' (the name is not the original's)
+    int m_commonWindowResult;  // 0x40D8 getCommonWindowResult
+    unsigned char pad_40DC[0x1C];
+    float m_updateDT;  // 0x40F8 getUpdateDT
+    unsigned char pad_40FC[0x1];
+    bool m_openBtlModelView;  // 0x40FD isOpenBtlModelView
+    bool m_openNameSelect;  // 0x40FE isOpenNameSelect, openNameSelect sets it
+    bool m_openOpeningTelop;  // 0x40FF openOpeningTelop sets it (the name is not the original's)
+    bool m_hideAll;  // 0x4100 setDispAll stores !disp (the name is not the original's)
+    bool m_enableQuestOpen;  // 0x4101 isEnableQuestOpen, setEnableQuestOpen
+    unsigned char pad_4102[0xA];
+    unsigned int m_region;  // 0x410C getRegion; the constructor sets 1 without bdat/jp.bin (the name is not the original's)
+    unsigned char pad_4110[0x1];
+    bool m_regionJP;  // 0x4111 isRegionJP
+    unsigned char pad_4112[0x52];
+    unsigned int m_latestCommonWinID;  // 0x4164 getLatestCommonWinID, openCommonWindow
+    unsigned char pad_4168[0x258];
 };
 }  // namespace gf
 

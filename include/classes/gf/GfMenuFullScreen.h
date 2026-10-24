@@ -15,6 +15,9 @@ public:
     virtual ~GfMenuFullScreen();  // slot 0
     static void destroy();
     static bool isInitialized();
+    // shows a screen (GfMenuManager::openMenu opens screen 2 so)
+    static void open(unsigned int screen, bool flag0, bool flag1);
+    static void close(bool flag0, bool flag1);
     static bool isOpen();       // a screen shown, or one being switched to
     static bool isSwitching();
     static unsigned int getScreenLayerID(unsigned int screen);  // 0 past the eighth
