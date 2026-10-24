@@ -384,3 +384,186 @@ void StatusManager::OnEventProc(event::MSG_TYPE msg) {
 
 }  // namespace event
 
+
+#include "classes/event/DofManager.h"
+
+namespace event {
+
+void DofManager::clear() {
+    stop();
+}
+
+void DofManager::OnEventProc(event::MSG_TYPE msg) {
+    // the cases' order keeps the two stop() tails apart (as the original's jump table has them)
+    switch (msg) {
+    case 4:
+        clear();
+        break;
+    case 14:
+        update();
+        break;
+    case 12:
+        stop();
+        break;
+    case 17:
+        render();
+        break;
+    default:
+        break;
+    }
+}
+
+}  // namespace event
+
+#include "classes/event/MovieManager.h"
+
+namespace event {
+
+void MovieManager::OnEventProc(event::MSG_TYPE msg) {
+    // the cases' order keeps the two clear() tails apart (as the original's jump table has them)
+    switch (msg) {
+    case 4:
+        clear();
+        break;
+    case 15:
+        update();
+        break;
+    case 12:
+        clear();
+        break;
+    case 17:
+        render();
+        break;
+    default:
+        break;
+    }
+}
+
+}  // namespace event
+
+#include "classes/event/CamManager.h"
+
+namespace event {
+
+void CamManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+        init();
+        break;
+    case 12:
+        clear();
+        break;
+    case 14:
+        update();
+        break;
+    case 16:
+        render();
+        break;
+    default:
+        break;
+    }
+}
+
+}  // namespace event
+
+#include "classes/event/ResManager.h"
+
+namespace event {
+
+void ResManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+        clear();
+        break;
+    case 14:
+        update();
+        break;
+    case 12:
+        clear();
+        break;
+    case 16:
+        render();
+        break;
+    default:
+        break;
+    }
+}
+
+}  // namespace event
+
+#include "classes/event/ShakeManager.h"
+
+namespace event {
+
+void Shaker::stop() {
+    m_flags = 0;
+}
+
+void Shaker::tail() {
+    m_cmdQueue.update();
+}
+
+void ShakeManager::clear() {
+    m_shaker.stop();
+    m_flags = 0;
+}
+
+void ShakeManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+        clear();
+        break;
+    case 14:
+        update();
+        break;
+    case 12:
+        clear();
+        break;
+    case 18:
+        m_shaker.tail();
+        break;
+    default:
+        break;
+    }
+}
+
+}  // namespace event
+
+#include "classes/event/CaptureManager.h"
+
+namespace event {
+
+void CaptureManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+        if (m_flags & 1) {
+            ready();
+        }
+        break;
+    case 8:
+        if ((m_flags & 3) == 1) {
+            start();
+        }
+        break;
+    case 10:
+        if (m_flags & 2) {
+            stop();
+        }
+        break;
+    case 12:
+        if (m_flags & 2) {
+            stop();
+        }
+        break;
+    case 14:
+        update();
+        break;
+    case 17:
+        render();
+        break;
+    default:
+        break;
+    }
+}
+
+}  // namespace event

@@ -7,6 +7,7 @@ template <unsigned long T0, int T1>
 class CmdQueue {
 public:
     virtual ~CmdQueue();  // slot T1
+    void update();
 };
 }  // namespace event
 

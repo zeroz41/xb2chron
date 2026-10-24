@@ -20,6 +20,14 @@ class CaptureManager : public TUnk_B3D988, public TUnk_B3D9B0 {
 public:
     virtual ~CaptureManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    void ready();
+    void start();
+    void stop();
+    void update();
+    void render();
+
+    // OnEventProc: bit 0 gates ready(), bits 0..1 == 1 gate start(), bit 1 gates stop(); the name is not the original's
+    unsigned int m_flags;  // @0x10
 };
 }  // namespace event
 
