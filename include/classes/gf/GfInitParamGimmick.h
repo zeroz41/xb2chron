@@ -7,6 +7,8 @@ namespace gf {
 // table 0x7100B69F80
 class GfInitParamGimmick : public ::gf::GfInitParam {
 public:
+    // createSetupParam copies it into the setup
+    void* pad_90;
 };
 }  // namespace gf
 

@@ -3,6 +3,8 @@
 
 #include "mm/mtl/RTTI.h"
 #include "classes/gf/GfObjSetup.h"
+#include "mm/mtl/FixStr.h"
+#include "classes/gf/GfInitParamGimmick.h"
 #include "classes/gf/DataParamAcc.h"
 
 namespace gf {
@@ -10,12 +12,18 @@ namespace gf {
 class GfObjSetupGimmick : public ::gf::GfObjSetup {
 public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfObjSetupGimmick();  // slot 1
+    virtual ~GfObjSetupGimmick() {}  // slot 1
     static mm::mtl::RTTI m_rtti;
 
-    unsigned char pad_50[0xC];
-    // the gimmick's type: DataObjGmk(GF_OBJ_HANDLE*) copies it (the name is not the original's)
-    GimmickType m_gimmickType;
+    GfObjSetupGimmick(const GfInitParamGimmick& param);
+
+    unsigned int pad_6c;
+    // the state the object starts in: "S_idle" (the name is not the original's)
+    mm::mtl::FixStr<32> m_stateName;
+    // the parameter's pad_90 (createSetupParam copies it)
+    void* pad_98;
+    bool pad_a0;
+    bool pad_a1;
 };
 }  // namespace gf
 
