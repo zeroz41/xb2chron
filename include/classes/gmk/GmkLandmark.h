@@ -19,7 +19,10 @@ public:
     class BdatInfo {
     public:
         bool isCondMatched() const;
-        unsigned char pad_0[0x10];
+        // the landmark's name in BDAT 0x1B3's messages (GfFieldManager::getLandmarkNameId hands it out; the name is
+        // not the original's)
+        unsigned short m_nameId;
+        unsigned char pad_2[0xE];
     };
     virtual ~GmkLandmark();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

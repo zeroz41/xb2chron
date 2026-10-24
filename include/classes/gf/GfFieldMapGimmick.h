@@ -12,6 +12,8 @@
 #include "classes/gmk/GmkCamera.h"
 #include "classes/gmk/GmkCtrlVolSe.h"
 #include "classes/gmk/GmkMapGimmick.h"
+#include "classes/gf/GfAllocator.h"
+
 namespace gf { class GF_OBJ_HANDLE; }
 class CBdatWrapper;
 
@@ -42,6 +44,12 @@ public:
     };
 
     GfFieldMapGimmick(const GfSetupParam& param);
+    // GfFieldManager::initialize's (inline in gf_field_map_gimmick.h, which its allocation cites; the name is not the
+    // original's)
+    static void build(const GfSetupParam& param) {
+#line 218 "D:/Monolithsoft/BF2/prog/application/BF2\\gf/field/gf_field_map_gimmick.h"
+        new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfFieldMapGimmick(param);
+    }
     virtual const char* getIdStr() const {  // slot 0
         static const char s_classId[] = "GfFieldMapGimmick";
         return s_classId;

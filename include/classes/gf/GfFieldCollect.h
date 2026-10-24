@@ -5,12 +5,19 @@
 
 namespace gf { class GfFieldCollect; }
 namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GfSetupParam; class MapjumpCallbackInfo; class GF_OBJ_HANDLE; enum GEV : int; enum RELOAD_BDAT : int; }
+namespace fw { class UpdateInfo; }
 
 namespace gf {
 // table 0x7100B51488
 class GfFieldCollect : public ::mm::mtl::PtrSingleton< ::gf::GfFieldCollect> {
 public:
     virtual ~GfFieldCollect();  // slot 0
+    // GfFieldManager's forwards (its initialize, finalize, update and gevMapjump call them)
+    static void build(const GfSetupParam& param);
+    static void destroy();
+    static void update(const fw::UpdateInfo& info);
+    void gevMapjump(GEV gev, const MapjumpCallbackInfo& info);
     void start(GF_OBJ_HANDLE* handle);  // GfPlayComCollect::start calls it
 };
 }  // namespace gf

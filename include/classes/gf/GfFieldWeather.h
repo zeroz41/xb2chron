@@ -4,6 +4,8 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class GfFieldWeather; }
+namespace gf { class GfSetupParam; class MapjumpCallbackInfo; class GF_OBJ_HANDLE; enum GEV : int; enum RELOAD_BDAT : int; }
+namespace fw { class UpdateInfo; }
 
 namespace gf {
 // table 0x7100B526C0
@@ -11,6 +13,16 @@ class GfFieldWeather : public ::mm::mtl::PtrSingleton< ::gf::GfFieldWeather> {
 public:
     virtual ~GfFieldWeather();  // slot 0
     static unsigned int getCurrentWtrType(bool);
+    // GfFieldManager's forwards (its initialize, finalize, clear, setupGame and gev* functions call them)
+    static void build(const GfSetupParam& param);
+    static void destroy();
+    static void clear();
+    // 1.0.0's GfFieldManager::setupGame calls setupGame() where 3.0.1's calls this, and the bodies make the same calls
+    static void setupGame();
+    static void gevMapjump(GEV gev, const MapjumpCallbackInfo& info);
+    static void gevGameMapModel(GF_OBJ_HANDLE* handle, bool flag);
+    static void gevPause(unsigned int flags0, unsigned int flags1);
+    static void update(const fw::UpdateInfo& info);
     static bool isDispWeather();  // whether the weather shows (WeatherEff and WeatherSnd play only then)  // the weather now (GfMenuBdat::getIconIDFromWeatherType takes it)
 };
 }  // namespace gf

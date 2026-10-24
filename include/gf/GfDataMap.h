@@ -24,6 +24,9 @@ public:
     static unsigned int getWeatherTimeEnd(unsigned int mapId, WEATHERID weather);
     static unsigned int getWeatherPopRate(unsigned int mapId, WEATHERID weather);
     static bool isMapCompleteFlag(unsigned int mapId);
+    // the FLD_maplist id of a map jump (GfFieldManager passes GfGameManager::getMapJumpID and
+    // MapjumpCallbackInfo::m_mapJumpId), 0 for none
+    static unsigned int getMapID(unsigned int mapJumpId);
     static void setMapCompleteFlag(unsigned int mapId);
 };
 }  // namespace gf

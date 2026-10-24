@@ -3,6 +3,7 @@
 
 #include "classes/gf/IFieldSeq.h"
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "classes/gf/GfAllocator.h"
 
 namespace gf { class GF_OBJ_HANDLE; class GfSetupParam; class MapjumpCallbackInfo; enum GEV : int; }
 
@@ -13,6 +14,12 @@ namespace gf {
 class GfFieldGrave : public ::gf::IFieldSeq, public ::mm::mtl::PtrSingleton< ::gf::GfFieldGrave> {
 public:
     GfFieldGrave(const GfSetupParam& param);
+    // GfFieldManager::initialize's (inline in gf_field_map_gimmick.h, which its allocation cites; the name is not the
+    // original's)
+    static void build(const GfSetupParam& param) {
+#line 332 "D:/Monolithsoft/BF2/prog/application/BF2\\gf/field/gf_field_map_gimmick.h"
+        new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfFieldGrave(param);
+    }
     virtual const char* getIdStr() const {  // slot 0
         static const char s_classId[] = "GfFieldGrave";
         return s_classId;

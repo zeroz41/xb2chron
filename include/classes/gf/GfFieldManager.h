@@ -1,104 +1,63 @@
 #ifndef CLASSES_GF_GFFIELDMANAGER_H
 #define CLASSES_GF_GFFIELDMANAGER_H
 
+#include "classes/gf/IGfEvent.h"
+#include "classes/gf/IGfObjListener.h"
+#include "classes/gf/GfObjManager.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class GfSetupParam; }
 namespace fw { class UpdateInfo; }
+namespace fw { class EffectPack; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfFieldManager; }
 namespace gf { class MapjumpCallbackInfo; }
 namespace gf { enum GEV : int; }
 namespace gf { enum RELOAD_BDAT : int; }
-#include "classes/gf/IGfObjListener.h"
+namespace mm { class Vec3; }
 
 namespace gf {
-// a base of gf::GfFieldManager no evidence names yet
-class TUnk_B51F68 {
+// table 0x7100B51F08; the object listener at 0x8 is what the constructor registers (GfObjManager::addListener(this +
+// 8)) and the destructor removes, the event listener at 0x10 what initialize adds (GfEvent::addEventCallback) and
+// finalize removes. Builds and destroys the field's managers and forwards the game's events and updates to them.
+class GfFieldManager : public ::mm::mtl::PtrSingleton< ::gf::GfFieldManager>, public ::gf::IGfObjListener, public ::gf::IGfEvent {
 public:
-    virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int) = 0;
-};
-// a base of gf::GfFieldManager no evidence names yet
-class TUnk_B51F80 {
-public:
-    virtual ~TUnk_B51F80();
-    virtual void vf2();
-    virtual void vf3();
-    virtual void vf4();
-    virtual void vf5();
-    virtual void vf6();
-    virtual void vf7();
-    virtual void vf8();
-    virtual void vf9();
-    virtual void vf10();
-    virtual void vf11();
-    virtual void vf12();
-    virtual void vf13();
-    virtual void vf14();
-    virtual void vf15();
-    virtual void vf16();
-    virtual void vf17();
-    virtual void vf18();
-    virtual void vf19();
-    virtual void vf20();
-    virtual void vf21();
-    virtual void vf22();
-    virtual void vf23();
-    virtual void vf24();
-    virtual void vf25();
-    virtual void vf26();
-    virtual void vf27();
-    virtual void vf28();
-    virtual void vf29();
-    virtual void vf30();
-    virtual void vf31();
-    virtual void vf32();
-    virtual void vf33();
-    virtual void vf34();
-    virtual void vf35();
-    virtual void gevPlayEvent(gf::GEV, unsigned int) = 0;
-    virtual void gevPause(unsigned int, unsigned int) = 0;
-    virtual void vf38();
-    virtual void vf39();
-    virtual void vf40();
-    virtual void vf41();
-    virtual void gevMapjump(gf::GEV, gf::MapjumpCallbackInfo const&) = 0;
-    virtual void gevBattleStart() = 0;
-    virtual void gevBattleEnd() = 0;
-    virtual void vf45();
-    virtual void vf46();
-    virtual void vf47();
-    virtual void gevGameMapModel(gf::GF_OBJ_HANDLE*, bool) = 0;
-    virtual void vf49();
-    virtual void vf50();
-    virtual void vf51();
-    virtual void gevReloadBdat(gf::RELOAD_BDAT, unsigned int) = 0;
-    virtual void vf53();
-    virtual void vf54();
-    virtual void vf55();
-    virtual void vf56();
-    virtual void vf57();
-    virtual void vf58();
-    virtual void vf59();
-    virtual void vf60();
-    virtual void vf61();
-    virtual void vf62();
-};
-// table 0x7100B51F08; base at 0x8 unknown (TUnk_B51F68), base at 0x10 unknown (TUnk_B51F80)
-class GfFieldManager : public ::mm::mtl::PtrSingleton< ::gf::GfFieldManager>, public TUnk_B51F68, public TUnk_B51F80 {
-public:
-    // SCOM_DESTROY_FIELD_OBJ's request
-    static void destroyObj();
+    // inline: 3.0.1 has no copy of it (build inlines it)
+    GfFieldManager(const GfSetupParam& param) : m_initialized(false), m_enemyBaloonRadius(0.0f) {
+        initialize(param);
+        GfObjManager::addListener(this, static_cast<IGfObjListener::OBJEVT>(0));
+    }
+    void initialize(const GfSetupParam& param);
+    virtual ~GfFieldManager();  // slot 0
     static void build(const GfSetupParam& param);
     static void destroy();
-    void update(const fw::UpdateInfo& info);
-    void postUpdate(const fw::UpdateInfo& info);
-    virtual ~GfFieldManager();  // slot 0
+    void finalize();
     static void clear();
     static void setupGame();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's setupGame is followed directly by
+    // setSuspendGame). A member because it lies among GfFieldManager's functions in their unit. What it does: calls
+    // GfFobjManager::fn_7100289668 on GfFobjManager's instance when there is one; tl::TitleStateChangeGameType's
+    // fn_7100156288 calls it.
+    static void fn_7100277784();
     void setSuspendGame(bool suspend);
+    static bool isExistObj();
+    // SCOM_DESTROY_FIELD_OBJ's request
+    static void destroyObj();
+    static fw::EffectPack* getEffectPack();
+    static bool execMapScript(const char* name);
+    static void destroyMapScript();
+    static bool isExecMapScriptBusy();
+    static bool isDestroyMapScriptBusy();
+    static float getEnemyBaloonRadius();
     static const char* getMapName();  // the current map's name, none when there is none
     static bool getLandmarkNameId(unsigned char*& bdat, int& id);  // the current location's name in a message table
+    // 1.0.0's name and arguments (its body stores the same fields; 3.0.1's skips map 0x3A)
+    static void setLandmarkPoint(unsigned int point, const mm::Vec3& pos, float rotY);
+    static unsigned int getLandmarkPoint();
+    static const mm::Vec3& getLandmarkPos();
+    static float getLandmarkRotY();
+    void postUpdate(const fw::UpdateInfo& info);
+    void update(const fw::UpdateInfo& info);
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 2
     virtual void gevMapjump(gf::GEV, gf::MapjumpCallbackInfo const&);  // slot 3
     virtual void gevReloadBdat(gf::RELOAD_BDAT, unsigned int);  // slot 4
@@ -107,6 +66,10 @@ public:
     virtual void gevGameMapModel(gf::GF_OBJ_HANDLE*, bool);  // slot 7
     virtual void gevPause(unsigned int, unsigned int);  // slot 8
     virtual void gevPlayEvent(gf::GEV, unsigned int);  // slot 9
+
+    bool m_initialized;  // 0x18: initialize sets it as it ends, finalize clears it (the name is not the original's)
+    // 0x1C: the current map's FLD_maplist balloondisp_r (named after getEnemyBaloonRadius; not the original's name)
+    float m_enemyBaloonRadius;
 };
 }  // namespace gf
 

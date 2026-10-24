@@ -23,7 +23,7 @@ public:
     static void build(const GfSetupParam& param);
     static void destroy();
     void finalize();
-    void update(const fw::UpdateInfo& info);
+    static void update(const fw::UpdateInfo& info);  // static: GfFieldManager::update passes only the info
     static void addEvent(IEventZone* event);
     static void removeEvent(IEventZone* event);
     void gevMapjump(GEV gev, const MapjumpCallbackInfo& info);

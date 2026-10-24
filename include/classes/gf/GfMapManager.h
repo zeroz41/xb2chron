@@ -8,6 +8,7 @@ namespace gf { class GfSetupParam; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfMapManager; }
+namespace fw { class EffectPack; }
 namespace gf { class MapjumpCallbackInfo; }
 namespace gf { enum GEV : int; }
 #include "classes/gf/IGfObjListener.h"
@@ -23,6 +24,10 @@ class GfMapManager : public ::mm::mtl::PtrSingleton< ::gf::GfMapManager>, public
 public:
     // SCOM_DESTROY_MAP_OBJ's request
     static void destroyObj();
+    // the pack at 0x48 (the type: GfFieldManager::getEffectPack's callers hand it to fw::EffectManager::create)
+    static fw::EffectPack* getEffectPack();
+    static const char* getMapName();  // the current map's name, none when there is none
+    static void setEnvTime(unsigned int hour, unsigned int min);  // GfFieldManager::update passes GfFieldTime's
     static void build(const GfSetupParam& param);
     static void destroy();
     void update(const fw::UpdateInfo& info);

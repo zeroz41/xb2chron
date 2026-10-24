@@ -5,6 +5,7 @@
 #include "gf/SDataBlade.h"
 #include "gf/GfDataMercenaries.h"
 #include "mm/mtl/FixedVector.h"
+#include "mm/Vec3.h"
 
 namespace gf {
 // the game's data, as GfDataManager::getDataGame hands it out (1.0.0's GfGameUtil::setupNewGameParam takes one;
@@ -12,7 +13,13 @@ namespace gf {
 class SDataGame {
 public:
     unsigned int m_money;  // 0x0 (named after its accessors; the name is not the original's)
-    unsigned char pad_4[0x24];
+    // 0x4-0x24: the landmark point, its position and Y rotation (1.0.0's GfFieldManager::setLandmarkPoint stores them,
+    // getLandmarkPoint/Pos/RotY read them; the names are not the original's)
+    unsigned int m_landmarkPoint;
+    unsigned char pad_8[0x8];
+    mm::Vec3 m_landmarkPos;
+    float m_landmarkRotY;
+    unsigned char pad_24[0x4];
     unsigned short m_eventChapterSave;  // 0x28 (named after its accessors; the name is not the original's)
     unsigned char pad_2A[0x5A02];
     // by GfDataBlade::getBladeIndex (the name is not the original's; the count is the indexes it hands out)

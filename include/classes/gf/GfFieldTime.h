@@ -4,6 +4,8 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class GfFieldTime; }
+namespace gf { class GfSetupParam; class MapjumpCallbackInfo; class GF_OBJ_HANDLE; enum GEV : int; enum RELOAD_BDAT : int; }
+namespace fw { class UpdateInfo; }
 
 namespace gf {
 // a play time in 32 bits (GfMenuGameAdapter::update_GamePlayTime shows at most 999:59:59)
@@ -49,6 +51,16 @@ public:
     bool getTimeRangeName(unsigned char*& bdat, unsigned int& id) const;  // its name in a message table
     void getRealTime(RealTime& time) const;
     unsigned int getTimeRangeBits() const;  // the time of day's range as a bit (WeatherInfo::isTimeRangeOK tests it)
+    // GfFieldManager's forwards (its initialize, finalize, clear, setupGame, gevReloadBdat, update call them)
+    static void build(const GfSetupParam& param);
+    static void destroy();
+    void clear();
+    void setupGame();
+    void gevReloadBdat(RELOAD_BDAT type, unsigned int id);
+    void update(const fw::UpdateInfo& info);
+    // 1.0.0's GfFieldManager::setSuspendGame calls saveSuspendRealTime() where 3.0.1's calls this (same instance, no
+    // other argument); 3.0.1's body is empty
+    void saveSuspendRealTime();
 };
 }  // namespace gf
 
