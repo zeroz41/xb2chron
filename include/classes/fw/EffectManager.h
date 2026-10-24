@@ -6,6 +6,9 @@
 #include "classes/ml/IScnRender.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "fw/VolumeFadeParams.h"
+#include "mtl/AllocHandle.h"
+#include "mm/mtl/FixedArray.h"
+#include "classes/fw/EffectCasterSend.h"
 
 namespace effect { class SendParam; }
 namespace fw { class EffectData; }
@@ -17,6 +20,9 @@ namespace fw { class UpdateInfo; }
 namespace ml { class IDrDrawWorkInfo; }
 
 namespace fw {
+// effect categories (setCategory hands one to effect::SystemManager::es_set_category)
+enum EF_CATEGORY : int;
+
 // a base of fw::EffectManager no evidence names yet
 class TUnk_B41508 {
 public:
@@ -36,8 +42,12 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in effect_manager's unit and
     // GfManager::fn_710032A1FC calls it on PtrSingleton<fw::EffectManager>'s instance. What it does: stores its bool at 0x2FD8
     void fn_710017CB08(bool flag);
+    // the casters' sends of one layer
+    class CasterGroup : public ::mm::mtl::IntrusiveList<EffectCasterSend> {};
     virtual ~EffectManager();  // slot 0
     virtual bool initialize();  // slot 2
+    bool isCommonLoaded();
+    bool commonLoaded();
     virtual void vf3();  // slot 3
     virtual void update(fw::UpdateInfo const&);  // slot 4
     virtual void updateLayer(fw::UpdateInfo const&, unsigned int);  // slot 5
@@ -63,11 +73,42 @@ public:
     void removeData(EffectData* data);
     // an effect by name, its handle (0 for none)
     unsigned int create(const char* name, EffectPack* pack, const effect::SendParam* param, bool flag);
+    // the effect library's callbacks: memory from the system and resource allocators ("no name", line 0), the
+    // model and debug hooks
+    static void* effectAllocSys(void* user, unsigned int size, unsigned int alignment, const char* name, unsigned int line);
+    static void effectFreeSys(void* user, void* p);
+    static void* effectAllocRes(void* user, unsigned int size, unsigned int alignment, const char* name, unsigned int line);
+    static void effectFreeRes(void* user, void* p);
+    static mtl::ALLOC_HANDLE effectSysHandle();
+    static mtl::ALLOC_HANDLE effectResHandle();
+    static void debugReadFileEnd(void* data);
+    static void debugOutputString(const char* text);
+    static void warnOutputString(const char* text);
+    static void setMdlPos(void* mdl, void* pos);
+    static void setMdlMatrix(void* mdl, void* matrix);
+    static void setMdlAlpha(void* mdl, float alpha);
+    void destroyHateRing(unsigned int handle);
+    void destroyHateRingVec(unsigned int handle);
+    void destroyHateArrow(unsigned int handle);
+    void destroyComboBall(unsigned int handle);
+    void setMasterPause(bool pause);
+    void kill(unsigned int handle);
     void remove(unsigned int handle);
     // EffectCasterBase's destructor drops the caster with these
     void remove(EffectCasterBase* caster);
     void removeCaster(EffectCasterBase* caster);
     void dead(unsigned int handle);
+    void fadeOutDead(unsigned int handle);
+    void fadeOutDead(unsigned int handle, unsigned int frames);
+    void setDisp(unsigned int handle, bool disp);
+    void setCategory(unsigned int handle, EF_CATEGORY category);
+    void setViewnum(unsigned int handle, unsigned int viewnum);
+    void setParamPosOnly(unsigned int handle, const effect::SendParam* param);
+    void setParamPosOnly2(unsigned int handle, const effect::SendParam* param);
+    void setParam(unsigned int handle, const effect::SendParam* param);
+    int getDeadFlag(unsigned int handle);
+    bool isLoop(void* data) const;
+    bool containsCamAxis(void* data) const;
     void setAlpha(unsigned int handle, float alpha);
     void setSpeed(unsigned int handle, float speed);
     bool isExist(unsigned int handle);
@@ -79,7 +120,19 @@ public:
         return m_volumeFadeParams[type];
     }
 
-    unsigned char pad_28[0x2fb8];
+    unsigned char pad_28[0x4];
+    // the allocators effectAllocSys and effectAllocRes take from (effectSysHandle and effectResHandle hand them out;
+    // the names are not the original's)
+    mtl::ALLOC_HANDLE m_sysHandle;
+    mtl::ALLOC_HANDLE m_resHandle;
+    unsigned char pad_34[0x14];
+    mm::mtl::FixedArray<CasterGroup, 32> m_casterGroups;  // by layer (changeLayerCaster moves a send between them)
+    unsigned char pad_348[0x2c8d];
+    bool m_masterPause;  // what setMasterPause last handed effect::SystemManager::es_pause (the name is not the original's)
+    // set when finalize starts, cleared once update's pending commonLoaded succeeds; update and the renders skip
+    // while it is set (the name is not the original's)
+    bool m_inactive;
+    unsigned char pad_2fd7[0x9];
     // the volume fade (vanish) parameters by gf::VFEFF, each from its effect/common/vanish/<VolumeName>.dprm
     // (BTL_VolumeFade's rows; gf::GfVolumeFade reads them)
     VolumeFadeParams* m_volumeFadeParams[32];
