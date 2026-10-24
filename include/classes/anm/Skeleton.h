@@ -39,6 +39,10 @@ public:
 
     // the index of the extra-track slot named `name`, -1 when none is
     short getExtraTruckSlotID(const char* name) const;
+    // orders the extra-track slots by name (std::lower_bound's comparator in getExtraTruckSlotID)
+    struct CompTruck {
+        bool operator()(const ExtraTruckSlot& slot, const char* name) const { return strcmp(slot.m_name, name) < 0; }
+    };
 
     unsigned char pad_8[0x10];
     const char* m_name;  // Factory::createASMResource prints it (the name is not the original's)

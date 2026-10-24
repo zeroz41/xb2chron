@@ -21,7 +21,9 @@ public:
     anm::ASMControl* m_control;  // bind's (the names are not the original's)
     anm::Pose* m_pose;
     anm::ExtraTruckBuffer* m_extra;
-    unsigned char pad_30[0x3];
+    unsigned short m_extraIndex;  // bind's slot index of the extra truck buffer (the name is not the original's)
+    // samplePose skips sampling while it is set (the name is not the original's)
+    bool m_pause;
     bool m_sampleFlag;  // set from the owner's setup info before bind (the name is not the original's)
 };
 }  // namespace fw

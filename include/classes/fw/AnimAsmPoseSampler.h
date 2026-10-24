@@ -22,7 +22,7 @@ public:
     anm::ASMControl* m_control;
     anm::Pose* m_pose;
     anm::ExtraTruckBuffer* m_extra;
-    unsigned short pad_30;
+    unsigned short m_extraIndex;  // bind's slot index of the extra truck buffer (the name is not the original's)
     // set from the owner's setup info before bind, as AnimSinglePoseSamper's (the name is not the original's)
     bool m_sampleFlag;
 };

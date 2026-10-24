@@ -14,7 +14,12 @@ public:
     ExtraTruckBuffer(const Skeleton& skeleton, const ExtraTruckSlot& slot, mm::mtl::IAllocator* pAllocator);
     virtual ~ExtraTruckBuffer();  // slot 0
 
-    unsigned char pad_18[0x38];  // Factory::createExtraTruckBuffer allocates 0x50 bytes
+    // the fields' names are not the original's: the fw pose samplers read them
+    const Skeleton* m_pSkeleton;  // the constructor's skeleton: the samplers find the slot's index in it
+    const ExtraTruckSlot* m_pSlot;  // the constructor's slot: the samplers find it by its name
+    float* m_pValues;  // the samplers sample the slot's values into it
+    unsigned int m_count;  // how many values m_pValues holds
+    unsigned char pad_34[0x1C];  // Factory::createExtraTruckBuffer allocates 0x50 bytes
 };
 }  // namespace anm
 

@@ -2,6 +2,8 @@
 #define ANM_UTIL_H
 
 namespace anm { class Binding; }
+namespace anm { class Control; }
+namespace anm { class Pose; }
 namespace anm { class QsTransform; }
 namespace anm { struct ExtraTruckSlot; }
 namespace anm { class ResASM; }
@@ -45,6 +47,8 @@ public:
     static bool calcDeltaExtractMotion(const Binding& binding, float time, float dt, float start, float end,
                                        QsTransform* pOut);
     // count values of the slot, each clamped to its limits
+    // the control's animation sampled into the pose (fw::AnimSinglePoseSamper::samplePose passes its flag)
+    static void samplePoseSmartFromControl(Control* control, Pose* pose, bool flag);
     static void clampLimitExtraTruck(const ExtraTruckSlot& slot, unsigned int count, float* pValues);
     // a state's clip's playback time, locomotion, binding and appendix (gf::GfComAsm's getters)
     static bool getAsmPlaybackTime(const ResASM& res, const char* state, unsigned int index, float* pTime);

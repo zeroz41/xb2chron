@@ -2,6 +2,7 @@
 #define CLASSES_ANM_POSE_H
 
 #include "classes/anm/ReferenceObject.h"
+#include "anm/Array.h"
 
 namespace anm { class QsTransform; }
 namespace anm { class Skeleton; }
@@ -22,6 +23,10 @@ public:
     void setBoneModelSpace(unsigned short bone, QsTransform const& transform, PROPAGATE_TYPE propagate);
     void syncLocalSpace();
     void syncModelSpace();
+    void setReferencePose();
+    // the transforms synced to the space they are written in, for a sampler to overwrite
+    Array<QsTransform>& accessSyncedPoseLocalSpace();
+    Array<QsTransform>& accessSyncedPoseModelSpace();
 
     const Skeleton* m_pSkeleton;  // the constructor's; anm_pose.cpp asserts `m_pSkeleton`
     unsigned char pad_20[0x70];   // Factory::createPose allocates 0x90 bytes

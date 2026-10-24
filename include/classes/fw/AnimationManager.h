@@ -22,6 +22,7 @@ namespace fw {
 class AnimPoseModifierInterface : public mm::mtl::IntrusiveListNodeBase {
 public:
     virtual ~AnimPoseModifierInterface() {}
+    virtual void apply() = 0;  // slot 2: AnimModifyPoseJob::exec calls it
 };
 
 // the jobs AnimationManager queues on its thread pool, up to four samplers (modifiers) or one resolver each
@@ -29,6 +30,7 @@ public:
 class AnimSamplePoseJob : public anm::Job {
 public:
     explicit AnimSamplePoseJob(unsigned int count);
+    static const char* _TYPE_NAME;  // "AnimSamplePoseJob"
     static void exec(anm::Job& job);
     AnimPoseSamplerInterface* m_samplers[4];
     unsigned int m_count;
@@ -36,6 +38,7 @@ public:
 class AnimModifyPoseJob : public anm::Job {
 public:
     explicit AnimModifyPoseJob(unsigned int count);
+    static const char* _TYPE_NAME;  // "AnimModifyPoseJob"
     static void exec(anm::Job& job);
     AnimPoseModifierInterface* m_modifiers[4];
     unsigned int m_count;
@@ -43,6 +46,7 @@ public:
 class AnimAfterModifyJob : public anm::Job {
 public:
     explicit AnimAfterModifyJob(unsigned int count);
+    static const char* _TYPE_NAME;  // "AnimAfterModifyJob"
     static void exec(anm::Job& job);
     AnimAfterModifierInterface* m_modifiers[4];
     unsigned int m_count;
@@ -50,6 +54,7 @@ public:
 class AnimIkResolveJob : public anm::Job {
 public:
     explicit AnimIkResolveJob(unsigned int count);
+    static const char* _TYPE_NAME;  // "AnimIkResolveJob"
     static void exec(anm::Job& job);
     IkResolver* m_resolvers[1];
     unsigned int m_count;
