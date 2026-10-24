@@ -9,7 +9,7 @@ namespace ml {
 template <int T0>
 class MsgParam {
 public:
-    virtual ~MsgParam();  // slot 0
+    virtual ~MsgParam() {}  // slot 0
 
     // one queued message: its kind first (WorkObj's EVT), then its argument (the names are not the original's)
     struct Msg {

@@ -45,5 +45,8 @@ public:
 // RenderResource::request pass none, 0, 4, false); the parameter names are not the original's
 void* operator new(unsigned long size, mtl::ALLOC_HANDLE handle, const char* file, unsigned long line, int alignment,
                    bool flag);
+// the array form (ml::WorkObj's constructor allocates its children's nodes so: none, 0, 4, false)
+void* operator new[](unsigned long size, mtl::ALLOC_HANDLE handle, const char* file, unsigned long line, int alignment,
+                     bool flag);
 
 #endif

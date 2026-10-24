@@ -37,10 +37,10 @@ bool LibMain::wkStandbyLogin() {
 
 bool LibMain::wkStandbyLogout() {
     // the count read first, the system tested first (the original's order)
-    int childNum = m_childNum;
+    int childNum = m_child.size();
     wkCheckTimeout(30000, mm::mtl::PtrSingleton<WorkSystem>::get() == nullptr && childNum == 0,
                    "ログアウトに失敗しました");
-    if (m_childNum == 0 && mm::mtl::PtrSingleton<WorkSystem>::get() == nullptr) {
+    if (m_child.size() == 0 && mm::mtl::PtrSingleton<WorkSystem>::get() == nullptr) {
         return WorkObj::wkStandbyLogout();
     }
     return false;

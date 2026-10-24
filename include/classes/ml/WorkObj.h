@@ -4,6 +4,8 @@
 #include "classes/ml/IWorkEvent.h"
 #include "classes/ml/MsgParam.h"
 #include "classes/ml/reslist.h"
+#include "mm/mtl/FixStr.h"
+#include "mtl/AllocHandle.h"
 
 namespace ml {
 // table 0x7100B78CB8
@@ -30,9 +32,15 @@ public:
     void wkCheckTimeout(unsigned int timeout, bool done, const char* message);
     // the children list (WorkRootState's walks call it for begin and end alike)
     reslist<WorkObj*>* wkGetChild();
+    const reslist<WorkObj*>* wkGetChild() const;
     // child entered under this, removed from this (the parameter names are not the original's)
     void wkEntryChild(WorkObj* child, bool flag);
     void wkRemoveChild(WorkObj* child);
+    // evt queued on this, on every child (the parameter names are not the original's)
+    void wkSetEvent(EVT evt);
+    void wkSetEventChild(EVT evt);
+    // the children's list made anew with room for capacity children (the parameter name is not the original's)
+    void wkReplaceHasChild(int capacity);
 
     // the index of the first queued event of kind evt, -1 for none (inline: LibMain::isInitialized and
     // WorkCpu::isInitialized inline it; the name is not the original's)
@@ -56,19 +64,28 @@ public:
         return m_state == 2 || m_state == 3;
     }
 
-    char m_name[64];     // 0x08 the constructor copies the name in and asserts it is shorter than 64
-    int m_nameLength;    // 0x48 (the name is not the original's)
+    mm::mtl::FixStr<64> m_name;  // 0x08 the constructor assigns the name (fixstr.h's asserts: not null, shorter than 64)
     int m_state;         // 0x4C wkStandbyLogin sets 2, wkStandbyLogout 4 (the name is not the original's)
     unsigned int m_wid;  // 0x50 WorkRootState::allocWID's id: the slot in its low 16 bits (the name is not the original's)
-    unsigned char pad_54[0x4];
+    mtl::ALLOC_HANDLE m_mem;  // 0x54 WorkRootState::getWorkMem's: the children's nodes come from it (the name is not the original's)
     WorkObj* m_parent;   // 0x58 procParent removes the work from this one's children (the name is not the original's)
-    unsigned char pad_60[0x34];
-    int m_childNum;      // 0x94 the children entered: LibMain logs out with none left (the name is not the original's)
-    unsigned char pad_98[0x8];
+    // 0x60 the children entered (wkGetChild returns it; its size is 0 once LibMain logs out); the name is not the
+    // original's
+    reslist<WorkObj*> m_child;
     unsigned int m_flags;  // 0xA0 0x10: no more running (the name is not the original's)
     unsigned char pad_a4[0x4];
     MsgParam<8> m_event;   // 0xA8 the queued events (the name is not the original's)
-    unsigned char pad_180[0x1C];
+    int m_lastEvent;     // 0x180 the queue index wkSetEvent pushed last (the name is not the original's)
+    unsigned char pad_184[0x4];
+    // 0x188 a work id wkStandby hands to wkStandbyExceptionRetry and then sends event 0; -1 for none (the name is not
+    // the original's)
+    unsigned int m_retryWid;
+    // 0x190 the clock at the last login or logout (wkStandbyLogin/wkStandbyLogout: DevClock::getClockNow; the name is
+    // not the original's)
+    long m_clock;
+    // 0x198 children are entered in its order (wkEntryChild compares it; the constructor sets 10; the name is not the
+    // original's)
+    int m_priority;
     bool m_updateStop;   // 0x19C WorkRootState::updateWork skips wkUpdate while it is set, unless m_flags 0x800 (the name is not the original's)
     unsigned char pad_19d[0x3];
     // 0x1A0 wkEntryChild asks it (child already there, child entered) where equal priorities go (the name is not the

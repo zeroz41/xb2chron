@@ -1,4 +1,8 @@
 #define MM_LIB_FROM_MONOLIB_MM
+#include "mtl/MemManager.h"
+#include "classes/ml/_reslist_base.h"
+#include "classes/ml/MsgParam.h"
+#include "classes/ml/WorkObj.h"
 #include "classes/ml/WorkControl.h"
 #include "classes/ml/WorkCpu.h"
 #include "classes/ml/WorkFlowSetup.h"
@@ -13,6 +17,7 @@
 #include "mtl/MemManager.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/ml/WorkObj.h"
+#include "classes/ml/DevClock.h"
 #include "classes/ml/WorkControl.h"
 #include "classes/ml/WorkCpu.h"
 #include "classes/ml/WorkFlowSetup.h"
@@ -68,6 +73,96 @@ namespace _wkut {
 bool s_bDispLogH;
 
 }  // namespace _wkut
+
+WorkObj::WorkObj(const char* name, WorkObj* parent, int childCapacity)
+    : m_state(0), m_wid(-1), m_parent(parent), m_flags(0), m_lastEvent(0), m_retryWid(-1), m_clock(0),
+      m_priority(10), m_updateStop(false), m_childOrder(nullptr) {
+    m_mem = WorkRootState::getWorkMem();
+    m_name = name;
+    m_wid = WorkRootState::allocWID(this);
+    if (childCapacity > 0) {
+        m_child.create(childCapacity, m_mem);
+    }
+    if (parent != nullptr) {
+        if (parent->m_flags & 0x40) {
+            m_flags |= 0x40;
+        }
+        if (parent->m_flags & 0x80) {
+            m_flags |= 0x80;
+        }
+        if (parent->m_flags & 0x200) {
+            m_flags |= 0x200;
+        }
+        if (parent->m_flags & 0x100) {
+            m_flags |= 0x100;
+        }
+        if (parent->m_flags & 0x400) {
+            m_flags |= 0x400;
+        }
+        if ((parent->m_flags & 1) | parent->m_updateStop) {
+            m_flags |= 1;
+        }
+    }
+}
+
+WorkObj::~WorkObj() {
+    if (m_child.size() != 0) {
+        for (reslist<WorkObj*>::iterator it = m_child.begin(); it != m_child.end(); ++it) {
+        }
+    }
+    WorkRootState::freeWID(m_wid);
+}
+
+const reslist<WorkObj*>* WorkObj::wkGetChild() const {
+    return &m_child;
+}
+
+reslist<WorkObj*>* WorkObj::wkGetChild() {
+    return &m_child;
+}
+
+void WorkObj::wkSetEventChild(EVT evt) {
+    for (reslist<WorkObj*>::iterator it = m_child.begin(); it != m_child.end(); ++it) {
+        (*it)->wkSetEvent(evt);
+    }
+}
+
+void WorkObj::wkReplaceHasChild(int capacity) {
+    if (capacity <= 0) {
+        return;
+    }
+    m_child.release();
+    m_child.create(capacity, m_mem);
+}
+
+bool WorkObj::wkStandbyLogin() {
+    m_state = 2;
+    if (mm::mtl::PtrSingleton<DevClock>::get() != nullptr) {
+        DevClock::getClockNow(m_clock);
+    }
+    return true;
+}
+
+bool WorkObj::wkStandbyLogout() {
+    m_state = 4;
+    if (mm::mtl::PtrSingleton<DevClock>::get() != nullptr) {
+        DevClock::getClockNow(m_clock);
+    }
+    return true;
+}
+
+WorkControl::~WorkControl() {}
+
+WorkSystem::~WorkSystem() {}
+
+WorkFlowSetup::~WorkFlowSetup() {}
+
+mtl::ALLOC_HANDLE WorkCpu::getMemStack() {
+    if (WorkCpu* cpu = get()) {
+        return cpu->m_memStack;
+    }
+    return mtl::ALLOC_HANDLE();
+}
 
 void WorkControl::wkTail() {}
 

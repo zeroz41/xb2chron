@@ -1,6 +1,8 @@
 #ifndef CLASSES_ML__RESLIST_BASE_H
 #define CLASSES_ML__RESLIST_BASE_H
 
+#include "mtl/MemManager.h"
+
 namespace ml {
 // a template: 10 instances in the module. A doubly linked list of T in a node buffer of m_capacity nodes (a node
 // with no next is free) around an end node of its own; _wrootst::WorkRoot's destructor inlines the clear and the
@@ -30,6 +32,13 @@ public:
         Node* m_node;
     };
 
+    // empty, with no node buffer (ml::WorkObj's constructor then gives its children's list one)
+    // (mm_lib's list.h shape: the end set in the body, its links through it)
+    _reslist_base() : m_pBuffer(nullptr), m_capacity(0), m_size(0), m_isExternal(false) {
+        m_pEnd = &m_end;
+        m_pEnd->m_next = m_pEnd;
+        m_pEnd->m_prev = m_pEnd;
+    }
     // clears the list, then releases the node buffer unless it is external (inline: every owner's destructor
     // inlines it; the out-of-line copies are the weak instances in the owners' units)
     virtual ~_reslist_base() {  // slot 0
@@ -38,6 +47,16 @@ public:
             delete[] m_pBuffer;
             m_pBuffer = nullptr;
         }
+    }
+
+    // a buffer of capacity free nodes from mem (inline: WorkObj's constructor and wkReplaceHasChild inline it; the
+    // name is not the original's)
+    void create(int capacity, mtl::ALLOC_HANDLE mem) {
+        m_pBuffer = new (mem, nullptr, 0, 4, false) Node[capacity];
+        for (int i = 0; i < capacity; i++) {
+            m_pBuffer[i].m_next = nullptr;
+        }
+        m_capacity = capacity;
     }
 
     iterator begin() { return iterator(static_cast<Node*>(m_pEnd->m_next)); }
@@ -58,6 +77,16 @@ public:
         m_pEnd->m_prev->m_next = node;
         m_pEnd->m_prev = node;
         m_size++;
+    }
+    // empties the list and releases its node buffer unless it is external, leaving no room (inline:
+    // WorkObj::wkReplaceHasChild inlines it before create; the name is not the original's)
+    void release() {
+        clear();
+        if (!m_isExternal && m_pBuffer != nullptr) {
+            delete[] m_pBuffer;
+            m_pBuffer = nullptr;
+        }
+        m_capacity = 0;
     }
     void pop_front() {
         Node* node = static_cast<Node*>(m_pEnd->m_next);

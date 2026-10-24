@@ -52,7 +52,7 @@ bool DevClock::wkStandbyLogin() {
 }
 
 bool DevClock::wkStandbyLogout() {
-    if (m_childNum == 0 && mm::mtl::PtrSingleton<DevFileTh>::get() == nullptr) {
+    if (m_child.size() == 0 && mm::mtl::PtrSingleton<DevFileTh>::get() == nullptr) {
         return WorkObj::wkStandbyLogout();
     }
     return false;

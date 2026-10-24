@@ -95,7 +95,7 @@ mtl::ALLOC_HANDLE WorkRootState::getWorkMem() {
 WorkObj* WorkRootState::getWork(WorkObj* work, const char* name) {
     CS lock(getCriticalSection());
     if (work != nullptr) {
-        if (strcmp(work->m_name, name) == 0) {
+        if (strcmp(work->m_name.m_str, name) == 0) {
             return work;
         }
         for (reslist<WorkObj*>::iterator it = work->wkGetChild()->begin(); it != work->wkGetChild()->end(); ++it) {
@@ -187,7 +187,7 @@ void WorkRootState::tailWork(WorkObj* work) {
 namespace _wrootst {
 
 bool WorkRoot::wkStandbyLogout() {
-    if (m_childNum != 0) {
+    if (m_child.size() != 0) {
         return false;
     }
     return WorkObj::wkStandbyLogout();
