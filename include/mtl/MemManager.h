@@ -5,7 +5,8 @@
 
 namespace mtl {
 
-// the kind of allocator MemManager::create makes (fw::MemorySectionInfo's default is 1; its values are not known)
+// the kind of allocator MemManager::create makes (fw::MemorySectionInfo's default is 1): createAllocator makes a
+// NullAllocator for 0, a DlAllocator for 1, an AssetAllocator<1024> for 2 (their names are not known)
 enum AllocatorType : int;
 
 // monolib's memory manager (its functions, by its symbols)
@@ -19,7 +20,12 @@ public:
     // the parameter names are not the original's
     static void* allocate(ALLOC_HANDLE handle, unsigned long size, unsigned long alignment, bool flag, const char* name,
                           int line);
+    // gives p back to the allocator that holds it, once the manager is initialized
     static void deallocate(void* p, unsigned long size, bool flag);
+    static void deallocate_section(void* p, unsigned long size, bool flag);
+    // a new allocator of size bytes in the memory at p (the type's default, 1: a DlAllocator)
+    static ALLOC_HANDLE create(void* p, unsigned long size, const char* name, bool flag, AllocatorType type);
+    static ALLOC_HANDLE create(void* p, unsigned long size, const char* name, bool flag);
     // a new allocator of size bytes inside parent's memory, named (fw::FrameworkMemory::createSection passes its
     // section's name and type, "no name", 0 for the last two); the parameter names are not the original's
     static ALLOC_HANDLE create(ALLOC_HANDLE parent, unsigned long size, const char* name, bool flag, AllocatorType type,
@@ -29,6 +35,8 @@ public:
                                int line);
     // gives back an allocator create made (fw::FrameworkMemory::removeSection)
     static void erase(ALLOC_HANDLE handle);
+
+    static bool s_bInitialize;  // initialize sets it, terminate clears it
 };
 
 }  // namespace mtl

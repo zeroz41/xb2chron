@@ -8,6 +8,7 @@
 extern "C" {
 #endif
 
+void* malloc(size_t size);
 void free(void* pointer);
 
 #ifdef __cplusplus

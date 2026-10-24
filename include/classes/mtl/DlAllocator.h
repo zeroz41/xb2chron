@@ -2,36 +2,45 @@
 #define CLASSES_MTL_DLALLOCATOR_H
 
 #include "classes/mtl/IMemAllocator.h"
-
-namespace mtl { class MEMIMAGE_HEAD; }
-namespace mtl { class MemoryInfo1; }
-namespace mtl { class MemoryInfo; }
+#include "ml/CriticalSection.h"
+#include "mm/mtl/IntrusiveList.h"
 
 namespace mtl {
-// table 0x7100B79320
-class DlAllocator : public ::mtl::IMemAllocator {
+
+// table 0x7100B79320: an allocator over a dlmalloc mspace made in the memory create is handed (MemManager::
+// createAllocator's type 1; 0x88 bytes). Member names other than m_name are not the original's
+class DlAllocator : public IMemAllocator {
 public:
+    DlAllocator() : m_mspace(nullptr), m_base(nullptr), m_size(0) {}
     virtual ~DlAllocator();  // slot 0
-    virtual void create(void*, unsigned long, char const*);  // slot 2
+    virtual void create(void* p, unsigned long size, const char* pszName);  // slot 2
     virtual void destroy();  // slot 3
-    virtual void getType() const;  // slot 4
-    virtual void allocate(unsigned long, unsigned long);  // slot 5
-    virtual void allocate(unsigned long, unsigned long, char const*, int);  // slot 6
-    virtual void deallocate(void*, unsigned long);  // slot 8
-    virtual void reallocate(void*, unsigned long);  // slot 9
-    virtual void log(mtl::MemoryInfo*, bool) const;  // slot 10
-    virtual void log_callSTack(void*) const;  // slot 11
+    virtual AllocatorType getType() const { return static_cast<AllocatorType>(1); }  // slot 4
+    virtual void* allocate(unsigned long size, unsigned long alignment);  // slot 5
+    virtual void* allocate(unsigned long size, unsigned long alignment, const char* file, int line);  // slot 6
+    virtual void deallocate(void* p, unsigned long size);  // slot 8
+    virtual void* reallocate(void* p, unsigned long size);  // slot 9
+    virtual void log(MemoryInfo* info, bool flag) const;  // slot 10
+    virtual void log_callSTack(void* p) const;  // slot 11
     virtual void checkLeakMemory();  // slot 12
-    virtual void getName() const;  // slot 13
-    virtual bool hasMemory(void const*) const;  // slot 14
-    virtual void getAllocSize(void const*) const;  // slot 15
-    virtual void memoryInfo(mtl::MemoryInfo*) const;  // slot 16
-    virtual void getMemImage(mtl::MEMIMAGE_HEAD*) const;  // slot 17
-    virtual void getMemInfo1(mtl::MemoryInfo1*, unsigned int) const;  // slot 18
-    virtual void empty() const;  // slot 19
-    virtual void valid() const;  // slot 20
-    virtual bool dummy() const;  // slot 21
+    virtual const char* getName() const;  // slot 13
+    virtual bool hasMemory(const void* p) const;  // slot 14
+    virtual unsigned long getAllocSize(const void* p) const;  // slot 15
+    virtual void memoryInfo(MemoryInfo* info) const;  // slot 16
+    virtual void getMemImage(MEMIMAGE_HEAD* head) const;  // slot 17
+    virtual int getMemInfo1(MemoryInfo1* info, unsigned int flags) const;  // slot 18
+    virtual bool empty() const { return m_name.m_str[0] == '\0'; }  // slot 19
+    virtual bool valid() const { return m_name.m_str[0] != '\0'; }  // slot 20
+    virtual bool dummy() const { return m_name.m_str[0] != '\0' && m_mspace == nullptr; }  // slot 21
+
+    mm::mtl::FixStr<32> m_name;  // create's name
+    void* m_mspace;  // the dlmalloc mspace create made in m_base (destroy forgets it)
+    void* m_base;  // the memory create was handed
+    unsigned long m_size;  // its size
+    mm::mtl::IntrusiveListBase m_list;  // (its use is not read yet)
+    ml::CriticalSection m_cs;
 };
+
 }  // namespace mtl
 
 #endif

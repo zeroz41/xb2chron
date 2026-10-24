@@ -4,6 +4,10 @@
 // The C++ library's placement forms, as the SDK's <new> defines them.
 #include <stddef.h>
 
+namespace std {
+struct nothrow_t {};
+}  // namespace std
+
 inline void* operator new(size_t, void* place) noexcept {
     return place;
 }
