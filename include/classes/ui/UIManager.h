@@ -16,6 +16,10 @@ public:
     void createLayer(unsigned int id);
     void terminateLayer(unsigned int id, bool flag);
     void requestObjectEvent(unsigned int handle, const EventData& event, float delay);
+    void requestGameEvent(unsigned int handle, const EventData& event);
+    // a timer for the object of that handle (the time in UI time units, UIUtil::timeSecToUITime's)
+    void registObjectTimer(unsigned int handle, unsigned short id, unsigned long time, bool loop);
+    void releaseObjectTimer(unsigned int handle);
 };
 }  // namespace ui
 

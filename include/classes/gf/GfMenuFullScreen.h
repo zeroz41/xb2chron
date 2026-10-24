@@ -27,6 +27,11 @@ public:
     static void enableInput(unsigned int index);
     static void disableInput();
     static void registLayerParam(unsigned int layer, const GfMenuTypes::Param& param);
+    static bool getLayerParam(unsigned int layer, GfMenuTypes::Param& param);
+    static void removeLayerParam(unsigned int layer);
+    static void registLayerObject(unsigned int layer, unsigned int handle);
+    static void setShadowLayer(unsigned int layer, bool shadow);
+    static unsigned short getLayerGroup(unsigned int layer);
     // 1.0.0's: clears m_initialized (3.0.1 has no copy: destroy inlines it)
     void finalize() {
         m_initialized = false;

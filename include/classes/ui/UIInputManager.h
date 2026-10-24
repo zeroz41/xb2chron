@@ -45,6 +45,12 @@ public:
     void setupPointerSelection(unsigned int handle, const UIInputPointer::SelectionSetup& setup);
     void changePointerPos(unsigned int handle, const mm::Pnt<short>& pos);
     void changeRegionScale(unsigned int handle, float scale);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its code walks this
+    // manager's layers (m_layers) for the handle, as its neighbours do. What it does: for the layer of that handle,
+    // asks it (slot 6) for its pad selection and, when that has one, stores the value (+0x3F0) and the rows its
+    // count (+0x44) fills at that many each, rounded up (+0x3F4). Its one caller is GfMenuObject::fn_7100362A08,
+    // which passes the handle searchInputHandle found and its own second argument.
+    void fn_7100679754(unsigned int handle, unsigned int value);
 
     InputList m_layers;
     unsigned int m_minimumLayerHandle;  // update stops at a layer below this handle

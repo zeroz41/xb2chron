@@ -15,6 +15,8 @@ public:
     void addCtrlObject(UICtrlObject* object);  // takes a reference to it and runs it
     void addUpdater(IUICtrlUpdater& updater);  // links it into the updaters it runs each frame, unless linked
     void delUpdater(IUICtrlUpdater& updater);  // unlinks it, if linked
+    // the object told when that control (what startCtrl returned) ends
+    void changeEventHandleObject(int ctrl, unsigned int handle);
 };
 }  // namespace ui
 
