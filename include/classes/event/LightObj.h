@@ -6,6 +6,8 @@ namespace event {
 class LightObj {
 public:
     virtual ~LightObj();  // slot 0
+    // starts the named light animation (ObjectLight::play forwards to it); returns nothing that ObjectLight uses
+    void play(const char* name, float frame);
 };
 }  // namespace event
 

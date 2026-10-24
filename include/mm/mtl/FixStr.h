@@ -46,6 +46,14 @@ public:
         strcpy(m_str, pszName);
         return *this;
     }
+    // the first len characters of psz, terminated; the length is left as it was (event::Extend::dirname inlines
+    // it; fixstr.h asserts `len<LEN` at line 227; the name is not the original's)
+    void set(const char* psz, int len) {
+#line 227 MM_MTL_FIXSTR_H_FILE
+        MM_ASSERT(len<LEN);
+        strncpy(m_str, psz, len);
+        m_str[len] = '\0';
+    }
     // ordered by strcmp (a Map keyed by it compares so: PadRelay's maps; the name is the operator's)
     bool operator<(const FixStr& s) const {
         return strcmp(m_str, s.m_str) < 0;

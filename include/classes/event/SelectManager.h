@@ -20,6 +20,12 @@ class SelectManager : public TUnk_B3D748, public TUnk_B3D770 {
 public:
     virtual ~SelectManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    int getResult() const;
+
+private:
+    unsigned char pad_10[0x2c];
+    // what getResult returns; the name is not the original's
+    int m_result;  // 0x3c
 };
 }  // namespace event
 

@@ -18,6 +18,7 @@ public:
     virtual void render(mm::Col4 const&) {}  // slot 8
     virtual void tail() {}  // slot 9
     virtual bool isLoading() const { return false; }  // slot 10
+    unsigned char pad_10[0x58];
 };
 }  // namespace event
 

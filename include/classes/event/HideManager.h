@@ -20,6 +20,14 @@ class HideManager : public TUnk_B3D178, public TUnk_B3D1A0 {
 public:
     virtual ~HideManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    enum GRP_TYPE {};
+    void defineGroup(GRP_TYPE group);
+    GRP_TYPE getGroup() const;
+
+private:
+    unsigned char pad_10[0x4];
+    // the group defineGroup sets and getGroup returns; the name is not the original's
+    GRP_TYPE m_group;  // 0x14
 };
 }  // namespace event
 

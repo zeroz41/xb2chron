@@ -4,6 +4,7 @@
 #include "classes/event/IBouCallback.h"
 #include "classes/event/IManiCallback.h"
 #include "classes/event/Object.h"
+#include "classes/event/CamObj.h"
 
 namespace mm { class Col4; }
 
@@ -24,6 +25,8 @@ public:
     virtual void OnManiStartTar(event::IManiCallback::StartParam&);  // slot 13
     virtual void OnManiSetTar(event::IManiCallback::SetParam&);  // slot 14
     virtual void OnManiRender(event::IManiCallback::RenderParam&);  // slot 15
+    // the camera the object drives (tail calls its slot 4, CamObj::tail); the name is not the original's
+    CamObj* m_cam;  // 0x68
 };
 }  // namespace event
 

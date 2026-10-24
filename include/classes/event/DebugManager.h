@@ -20,6 +20,12 @@ class DebugManager : public TUnk_B3BFD0, public TUnk_B3BFF8 {
 public:
     virtual ~DebugManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    bool isMovieDebug() const;
+
+private:
+    unsigned char pad_10[0x2];
+    // bit 0: movie debugging (isMovieDebug); the name is not the original's
+    unsigned char m_movieFlags;  // 0x12
 };
 }  // namespace event
 

@@ -20,6 +20,16 @@ class FrameManager : public TUnk_B3E1A8, public TUnk_B3E1D0 {
 public:
     virtual ~FrameManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    float getFrame() const;
+    float getMaxFrame() const;
+
+private:
+    unsigned char pad_10[0x148];
+    // what getFrame returns; the name is not the original's
+    float m_frame;  // 0x158
+    unsigned char pad_15c[0x14];
+    // what getMaxFrame returns; the name is not the original's
+    float m_maxFrame;  // 0x170
 };
 }  // namespace event
 

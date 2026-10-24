@@ -20,6 +20,11 @@ class SkipManager : public TUnk_B3E1F0, public TUnk_B3E218 {
 public:
     virtual ~SkipManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    bool isSkip() const;
+
+private:
+    // bit 0: skipping (isSkip); the name is not the original's
+    unsigned int m_flags;  // 0x10
 };
 }  // namespace event
 
