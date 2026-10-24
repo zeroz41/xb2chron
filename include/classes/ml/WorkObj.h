@@ -70,7 +70,10 @@ public:
     MsgParam<8> m_event;   // 0xA8 the queued events (the name is not the original's)
     unsigned char pad_180[0x1C];
     bool m_updateStop;   // 0x19C WorkRootState::updateWork skips wkUpdate while it is set, unless m_flags 0x800 (the name is not the original's)
-    unsigned char pad_19d[0xB];
+    unsigned char pad_19d[0x3];
+    // 0x1A0 wkEntryChild asks it (child already there, child entered) where equal priorities go (the name is not the
+    // original's)
+    bool (*m_childOrder)(WorkObj*, WorkObj*);
 };
 }  // namespace ml
 

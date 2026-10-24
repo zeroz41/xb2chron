@@ -8,9 +8,13 @@ namespace ml {
 template <typename T0>
 class _reslist_base {
 public:
-    struct Node {
-        Node* m_next;
-        Node* m_prev;
+    // a node's links, a base of its own as in mm_lib's list.h (mm::mtl::_ReslistBase): clear()'s store of the end's
+    // next through the node the walk stops on comes out as the original's only with the link a base pointer
+    struct NodeBase {
+        NodeBase* m_next;
+        NodeBase* m_prev;
+    };
+    struct Node : NodeBase {
         T0 m_value;
     };
     class iterator {
@@ -18,7 +22,7 @@ public:
         iterator(Node* node) : m_node(node) {}
         T0& operator*() const { return m_node->m_value; }
         iterator& operator++() {
-            m_node = m_node->m_next;
+            m_node = static_cast<Node*>(m_node->m_next);
             return *this;
         }
         bool operator==(const iterator& other) const { return m_node == other.m_node; }
@@ -26,9 +30,17 @@ public:
         Node* m_node;
     };
 
-    virtual ~_reslist_base();  // slot 0
+    // clears the list, then releases the node buffer unless it is external (inline: every owner's destructor
+    // inlines it; the out-of-line copies are the weak instances in the owners' units)
+    virtual ~_reslist_base() {  // slot 0
+        clear();
+        if (!m_isExternal && m_pBuffer != nullptr) {
+            delete[] m_pBuffer;
+            m_pBuffer = nullptr;
+        }
+    }
 
-    iterator begin() { return iterator(m_pEnd->m_next); }
+    iterator begin() { return iterator(static_cast<Node*>(m_pEnd->m_next)); }
     iterator end() { return iterator(m_pEnd); }
     int size() const { return m_size; }
 
@@ -48,20 +60,24 @@ public:
         m_size++;
     }
     void pop_front() {
-        Node* node = m_pEnd->m_next;
+        Node* node = static_cast<Node*>(m_pEnd->m_next);
         node->m_prev->m_next = node->m_next;
         node->m_next->m_prev = node->m_prev;
         node->m_next = nullptr;
         m_size--;
     }
+    // unlinks every node (a free node has no next); the end's next is stored through the node the walk stops on,
+    // as mm_lib's list.h clear() does
+    // unlinks every node (a free node has no next) and empties the list; the walk ends on the end node, whose next
+    // is stored through it (inlined in every _reslist_base destructor, e.g. 0x71006BE514)
     void clear() {
-        Node* node = m_pEnd->m_next;
+        Node* node = static_cast<Node*>(m_pEnd->m_next);
         while (node != m_pEnd) {
-            Node* next = node->m_next;
+            Node* next = static_cast<Node*>(node->m_next);
             node->m_next = nullptr;
             node = next;
         }
-        m_pEnd->m_next = m_pEnd;
+        node->m_next = node;
         m_pEnd->m_prev = m_pEnd;
         m_size = 0;
     }

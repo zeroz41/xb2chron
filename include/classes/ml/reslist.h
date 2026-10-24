@@ -18,7 +18,7 @@ namespace ml {
 template <typename T0>
 class reslist : public ::ml::_reslist_base< T0> {
 public:
-    virtual ~reslist();  // slot 0
+    virtual ~reslist() {}  // slot 0
 };
 }  // namespace ml
 

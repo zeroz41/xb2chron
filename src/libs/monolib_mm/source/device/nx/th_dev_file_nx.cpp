@@ -470,3 +470,7 @@ void DevGraph::setFrameSpd(float spd) {
 }
 
 }  // namespace ml
+
+namespace ml {
+DevGraph::~DevGraph() {}
+}  // namespace ml
