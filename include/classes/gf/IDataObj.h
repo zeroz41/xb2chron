@@ -68,7 +68,8 @@ public:
     virtual void setVirtualEquipWpnChip(unsigned int) {}  // slot 50
     virtual void setVirtualEquipOrb(unsigned int, unsigned int) {}  // slot 51
     // new in 3.0.1 (1.0.0's table has no slot here); nothing names it
-    virtual void vf52() {}  // slot 52
+    // takes an item (DataObjDriver's override asks GfDataItem::getItemType of it; DataParamAcc's forwards one)
+    virtual void vf52(unsigned int) {}  // slot 52
     virtual bool isVirtualSetting() const { return false; }  // slot 53
     virtual bool isEnbaleTarget() const { return true; }  // slot 54
     virtual int getMenuOffset() const { return 0; }  // slot 55
@@ -92,7 +93,9 @@ public:
     virtual void addWeaponPoint(unsigned int, int) {}  // slot 73
     virtual unsigned int getSkillPoint() const { return 0; }  // slot 74
     virtual void addSkillPoint(int) {}  // slot 75
-    virtual unsigned int getDriverArts(unsigned int, unsigned int) const { return 0; }  // slot 76
+    // three arguments in 3.0.1 (1.0.0's has two): DataParamAcc's forwarder passes w1-w3 and DataObjDriver's override
+    // picks its table by the third
+    virtual unsigned int getDriverArts(unsigned int, unsigned int, unsigned int) const { return 0; }  // slot 76
     virtual bool setDriverArts(unsigned int, int, unsigned int) { return false; }  // slot 77
     virtual unsigned int getDriverArtsLevel(unsigned int) const { return 0; }  // slot 78
     virtual void setDriverArtsLevel(unsigned int, unsigned int) {}  // slot 79

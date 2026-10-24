@@ -61,7 +61,7 @@ public:
     virtual void setVirtualEquipWpn(unsigned int, int);  // slot 47
     virtual void setVirtualEquipAcc(unsigned int, unsigned int);  // slot 48
     virtual void setVirtualSetBlade(unsigned int, int);  // slot 49
-    virtual void vf52() override;  // slot 52
+    virtual void vf52(unsigned int) override;  // slot 52
     virtual bool isVirtualSetting() const;  // slot 53
     virtual int getMenuOffset() const;  // slot 55
     virtual const char* getCamBone() const;  // slot 57
@@ -82,7 +82,7 @@ public:
     virtual void addWeaponPoint(unsigned int, int);  // slot 73
     virtual unsigned int getSkillPoint() const;  // slot 74
     virtual void addSkillPoint(int);  // slot 75
-    virtual unsigned int getDriverArts(unsigned int, unsigned int) const;  // slot 76
+    virtual unsigned int getDriverArts(unsigned int, unsigned int, unsigned int) const;  // slot 76
     virtual bool setDriverArts(unsigned int, int, unsigned int);  // slot 77
     virtual unsigned int getDriverArtsLevel(unsigned int) const;  // slot 78
     virtual void setDriverArtsLevel(unsigned int, unsigned int);  // slot 79

@@ -7,7 +7,15 @@ namespace gf {
 // what DataObjBlade::getIdea and DataObjDriver::getIdea point at (an SDataBlade's +0xC, an SDataDriver's start);
 // at most 0x20 bytes (SDataDriver's +0x20 is its data type). The type name is not the original's.
 struct SDataIdea {
-    unsigned char pad_0[0x20];
+    // one of the four ideas (the struct and field names are not the original's): DataIdeaAcc::getLevel reads the
+    // level, addPoint the point
+    struct Idea {
+        unsigned int m_point;
+        unsigned int m_level;
+    };
+    void setPoint(unsigned int idea, unsigned int point);
+
+    Idea m_ideas[4];
 };
 
 // one of a blade's arts (the name is not the original's)
