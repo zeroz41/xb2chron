@@ -8,6 +8,10 @@ namespace gf {
 class GfMenuObjEvTheater : public ::gf::GfMenuObject {
 public:
     class HeaderListener;
+    // TitleMenu::setupEventTheater / openEventTheater / fadeoutEventTheater pass their call context
+    static void attach(GfMenuCallContext* context);
+    static void fadein(GfMenuCallContext* context);
+    static void fadeout(GfMenuCallContext* context);
     virtual ~GfMenuObjEvTheater();  // slot 0
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3

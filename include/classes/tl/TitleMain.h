@@ -4,6 +4,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "ai/Fsm.h"
 #include "fw/UpdateInfo.h"
+#include "gf/SoundHandle.h"
 
 namespace gf { class SDataOption; }
 namespace gf { enum SAVESLOT : int; }
@@ -19,6 +20,9 @@ public:
     virtual ~TitleMain();  // slot 0
     static TitleMain* create();
     void initialize();
+    // finalizes the title and deletes it
+    static void destroy();
+    void finalize();
     void createSaveBuffer();
     // the micro thread's function: steps the state machine until it reaches state 9 (TitleStateDestroy)
     static void fnUpdate(TitleMain* self);
@@ -29,6 +33,8 @@ public:
     bool isStateReturnTitle() const;
     gf::SDataOption* getOptionBuffer();
     void setupTitleOptionToGameOption();
+    // stops the title BGM (fading over the given time) when one plays
+    void stopTitleBGM(float time);
     void playTitleEvent(unsigned int eventID);
     unsigned int getPlayTitleEvent();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because returnTitle and
@@ -44,7 +50,10 @@ public:
     bool m_reqDestroy;
     // set by returnTitle to have TitleStatePlayGame change to TitleStateToTitle (8) (the name is not the original's)
     bool m_reqReturnTitle;
-    unsigned char pad_96[0xA2];
+    unsigned char pad_96[0x2];
+    gf::SoundHandle m_titleBgm;  // the title BGM; stopTitleBGM stops and clears it (the name is not the original's)
+    bool m_isTitleBgm;  // stopTitleBGM clears it (the name is not the original's)
+    unsigned char pad_A1[0x97];
     gf::SDataOption* m_optionBuffer;  // createSaveBuffer's (getOptionBuffer; the name is not the original's)
     unsigned char pad_140[0xC0];
     unsigned int m_playTitleEvent;  // playTitleEvent's (the name is not the original's)

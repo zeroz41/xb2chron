@@ -11,6 +11,8 @@ public:
     class ItemSettingListener;
     class MainListener;
     class SubMenuListener;
+    // TitleMenu::setupOption attaches the option menu object to its call context
+    static void attach(GfMenuCallContext* context);
     virtual ~GfMenuObjOption();  // slot 0
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
