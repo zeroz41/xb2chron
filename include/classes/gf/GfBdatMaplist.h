@@ -16,6 +16,7 @@ public:
     virtual void bdatRefresh();  // slot 2
     unsigned int getMaplistStart() const;
     unsigned int getMaplistEnd() const;
+    unsigned int getMaplistbgm_cndID(unsigned int map) const;  // the map's BGM condition row
     const char* getMaplistresource(unsigned int map) const;
     // a map's weather of a type (its w_type columns)
     int getMaplistw_type(unsigned int mapId, unsigned int type) const;

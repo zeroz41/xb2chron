@@ -14,10 +14,14 @@ namespace gf {
 class BgmEvent : public BgmTrack, public ::mm::mtl::PtrSingleton< ::gf::BgmEvent> {
 public:
     virtual ~BgmEvent();  // slot 0
-    virtual void getTrackName() const;  // slot 2
+    virtual const char* getTrackName() const;  // slot 2
     virtual bool isPlaying() const;  // slot 3
     virtual void update(fw::UpdateInfo const&);  // slot 4
     void cancelOverTime();
+
+    unsigned char pad_638[0x5C];
+    // cancelOverTime clears it (the name is not the original's)
+    float m_overTime;
 };
 }  // namespace gf
 

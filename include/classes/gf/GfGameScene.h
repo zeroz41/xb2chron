@@ -64,6 +64,11 @@ public:
     // GfPlayComAfterEventScript::start calls it on the GfGameScene singleton. What it does: sets the bool at +0x8B9
     // when the script name contains "aoc_tut24", "aoc_tut04" or "aoc_tut10" (it never clears it).
     void fn_71002C4B80(const char* name);
+
+    unsigned char pad_8[0x660];
+    // gf::_gffsn::bgmvolFadeBattleEvent fades its track out while it is set (+0x648 in 1.0.0; the name is not the
+    // original's)
+    bool m_battleEventBgm;
 };
 }  // namespace gf
 
