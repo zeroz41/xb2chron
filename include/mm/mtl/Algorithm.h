@@ -49,6 +49,29 @@ inline void destroy_n(T* first, size_t n) {
     }
 }
 
+// copies n elements from first to result, which must not overlap the source ahead of it (FixStr<128>::insert
+// inlines it; algorithm.h asserts the overlap at line 264; the name is not the original's)
+template <typename T>
+inline T* copy_n(const T* first, size_t n, T* result) {
+#line 264 MM_MTL_ALGORITHM_PATH
+    MM_ASSERT(result >= first + n || result < first);
+    memcpy(result, first, n * sizeof(T));
+    return result + n;
+}
+
+// moves n elements from from to result, overlapping or not (FixStr<128>::insert inlines it; algorithm.h asserts
+// `from != result || n == 0` at line 393; the name is not the original's)
+template <typename T>
+inline void move_n(const T* from, size_t n, T* result) {
+#line 393 MM_MTL_ALGORITHM_PATH
+    MM_ASSERT(from != result || n == 0);
+    if (result > from && result < from + n) {
+        memmove(result, from, n * sizeof(T));
+    } else {
+        copy_n(from, n, result);
+    }
+}
+
 }}  // namespace mm::mtl
 
 #endif

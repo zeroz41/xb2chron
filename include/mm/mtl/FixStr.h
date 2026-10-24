@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include "mm/MMStdBase.h"
+#include "mm/mtl/Algorithm.h"
 
 // mm_mtl/fixstr.h as its includer's project named it: mm_lib's own (MM_LIB_PROJECT), eflib's (MM_LIB_FROM_EFLIB:
 // ptlib::HeapAllocator::create cites it so), a library under libs/ that
@@ -118,9 +119,50 @@ public:
         }
     }
 
+    // the most characters it holds (fixstr.h asserts `newSize < capacity()`; the name is the assertion's)
+    int capacity() const { return LEN - 1; }
+    // the index of the first `s`, -1 when there is none (gf::fn_71001C0EE0 inlines it; the name is not the
+    // original's)
+    int find(const char* s) const {
+        for (long i = 0; i < m_nLen; ++i) {
+            if (strncmp(m_str + i, s, strlen(s)) == 0) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    // the first n characters dropped, at most all of them (gf::fn_71001C0EE0 inlines it; the name is not the
+    // original's)
+    void cutFront(int n) {
+        n = n < m_nLen ? n : m_nLen;
+        strcpy(m_str, m_str + n);
+        m_nLen = strlen(m_str);
+    }
+    // n characters of pszStr inserted at index (fixstr.h asserts `pszStr`, `newSize < capacity()` and
+    // `index <= nowSize`; the name is the symbol's)
+    FixStr& insert(int index, const char* pszStr, int n);
+
     char m_str[LEN];  // the text: format() copies what it formats here
     int m_nLen;  // fixstr.h asserts `m_nLen < LEN` as it stores a new text's length
 };
+
+template <int LEN>
+FixStr<LEN>& FixStr<LEN>::insert(int index, const char* pszStr, int n) {
+#line 715 MM_MTL_FIXSTR_H_FILE
+    MM_ASSERT(pszStr);
+    int nowSize = m_nLen;
+    int newSize = nowSize + n;
+#line 725 MM_MTL_FIXSTR_H_FILE
+    MM_ASSERT(newSize < capacity());
+#line 726 MM_MTL_FIXSTR_H_FILE
+    MM_ASSERT(index <= nowSize);
+    char* p = m_str + index;
+    move_n(p, nowSize - index, p + n);
+    copy_n(pszStr, n, p);
+    m_nLen = newSize;
+    m_str[newSize] = '\0';
+    return *this;
+}
 
 }}  // namespace mm::mtl
 

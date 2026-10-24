@@ -1,3 +1,7 @@
+#include "mm/mtl/Algorithm.h"
+#include "mm/mtl/FixStr.h"
+#include "classes/gf/GfInitParam.h"
+#include "classes/gf/GfAssetSetupWeapon.h"
 // the asset setups: per kind of object, which files of its asset load and into which slots
 
 #include "classes/gf/GfAssetManager.h"
@@ -161,7 +165,6 @@ const char* GfAssetSetupSalvage::getMdlFile(GfAssetType type) {
 const char* GfAssetSetupSalvage::getArcFile(GfAssetType type) {
     return getMdlFile(type);
 }
-
 GfAssetSetupBlade::GfAssetSetupBlade() : pad_1fc(0) {}
 
 const char* GfAssetSetupBlade::getMdlFile(GfAssetType type) {
@@ -706,6 +709,18 @@ const char* GfAssetSetupFobj::getPath() const {
 
 GfAssetSetupWeapon::GfAssetSetupWeapon() {}
 
+void fn_71001C0EE0(mm::mtl::FixStr<128>& out, const mm::mtl::FixStr<128>& file, const char* name, bool dbPath) {
+    out.clear();
+    if (file.m_nLen != 0) {
+        out = file;
+    } else if (name != nullptr && *name != '\0') {
+        out = name;
+    }
+    if (dbPath && out.find("wp/") != -1) {
+        out.cutFront(3);
+        out.insert(0, "db/", 3);
+    }
+}
 const char* GfAssetSetupWeapon::getStpFile(GfAssetType type) {
     return validName(m_append.getModelName());
 }

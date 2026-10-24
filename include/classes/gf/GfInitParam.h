@@ -49,7 +49,10 @@ public:
     // not the original's)
     bool m_hasTransform;
     bool pad_81;
-    unsigned char pad_82[0x88 - 0x82];
+    unsigned char pad_82;
+    // a weapon's files from db/ in place of wp/: GfAssetSetupWeapon's file getters pass it to gf::fn_71001C0EE0
+    bool pad_83;
+    unsigned char pad_84[0x88 - 0x84];
     // a setup to use instead of the factory's own (the name is not the original's)
     GfAssetSetup* m_assetSetup;
 };
