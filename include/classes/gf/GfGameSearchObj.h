@@ -18,6 +18,8 @@ public:
     // what a search found, by its handle
     static mm::mtl::FixedList<gf::GfSearchInfo*, 256>* getObj(gf::GF_SEARCH_OBJ* obj);
     static gf::GF_SEARCH_OBJ* createObj(const gf::GfSearchParam& param);
+    // the search's parameters as createObj copied them, null for no search
+    static gf::GfSearchParam* getInfo(gf::GF_SEARCH_OBJ* obj);
     static void destroyObj(gf::GF_SEARCH_OBJ* obj);
     static void setEnable(gf::GF_SEARCH_OBJ* obj, bool enable);
     static bool isEnable(gf::GF_SEARCH_OBJ* obj);

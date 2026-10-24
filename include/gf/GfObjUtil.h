@@ -49,6 +49,8 @@ public:
     static void dettachGfObject(gf::GF_OBJ_HANDLE* parent, gf::GF_OBJ_HANDLE* child);
     // the kind of the object behind a handle (its info's setup's), 0 without one; 5 is what isActiveRangeLure lures
     static int getObjType(gf::GF_OBJ_HANDLE* handle);
+    // whether the object is in battle (GfGameTarget::setTargetNearestEnemyBattle takes only those)
+    static bool isBattle(gf::GF_OBJ_HANDLE* handle);
     // the property of the object behind a handle (its object info's, GfObjManager::createGfObjProperty's), none
     // without an info
     static gf::GfObjProperty* getProperty(gf::GF_OBJ_HANDLE* handle);

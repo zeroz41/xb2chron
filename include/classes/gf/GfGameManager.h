@@ -149,6 +149,8 @@ public:
     static bool isEnablePlayerDeadSequence();
     static void setGmkTutorialSequenceOK(bool ok);
     static bool isBattle();
+    // whether the field target may be a battle target (GfGameTarget asks it each update)
+    static bool isEnableFieldBattleTarget();
     // the game's state (GfGameState::getState's: this only forwards to it; GfGameSalvage::startSalvage starts only in
     // state 11)
     static GF_STATE getState();

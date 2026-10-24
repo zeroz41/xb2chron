@@ -29,6 +29,7 @@ public:
     static bool isValidGameObj(gf::GF_OBJ_HANDLE* handle, bool checkLoad, mm::mtl::FixStr<128>* error);
     static bool isEnterGameObj(gf::GF_OBJ_HANDLE* handle);
     static void destroyGameObj(gf::GF_OBJ_HANDLE* handle, float fadeTime);
+    static bool isDestroyGameObj(gf::GF_OBJ_HANDLE* handle);
 };
 }  // namespace gf
 

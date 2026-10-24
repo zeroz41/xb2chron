@@ -17,6 +17,14 @@ public:
     void SetPause(int kind, bool pause);
     void DeleteSlow(unsigned int id);
     bool IsGameOver() const;
+    // whether the battle is paused for kind (GfGameTarget's selectRight/selectLeft pass -1: any)
+    bool IsPause(int kind) const;
+    // GfGameTarget::updateImpl calls it once its near-target hold outlasts its parameter's time
+    void NotifyShiftTimeOver();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfGameTarget::judgeNearTarget makes
+    // no call there). A member: GfGameTarget::judgeNearTarget passes PtrSingleton<BattleGlobal>::sys(). What it does:
+    // clears flag bits 40 and 41 (bits 0 and 1 of the byte at 0x83CF).
+    void fn_710000A764();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: ButtonChallenge passes
     // PtrSingleton<BattleGlobal>::sys(). What it does: tests flag bits at 0x83CE (bits 17 and 18 both set, or bit 3).
     // ButtonChallenge::fn_710001C6A8 skips opening its menu when it holds.
@@ -46,7 +54,9 @@ public:
     unsigned char : 6;
     unsigned char : 8;
     unsigned char : 8;
-    unsigned char : 8;
+    // GfGameTarget's selectRight/selectLeft change no target while it is clear (the name is not the original's)
+    bool pad_bit40 : 1;
+    unsigned char : 7;
     unsigned char : 3;
 };
 }  // namespace btl

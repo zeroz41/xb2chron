@@ -34,7 +34,9 @@ public:
     GF_OBJ_HANDLE* m_handle;  // its handle: GfObjAcc(GfObj*) looks the object's info up by it
     // its info at GfObjManager (GfObjUtil::applyExecUpdate tests its flags); none at first
     GFOBJ_INFO* m_info;
-    unsigned char pad_108[0xC];  // zeroed by the constructor
+    unsigned char pad_108[0x8];  // zeroed by the constructor
+    // zeroed by the constructor; GfGameTarget targets only objects with bit 2 set
+    unsigned int pad_110;
     // bit 0: update is running the components' updates; bit 1: setUpdateComponent's switch
     unsigned int m_updateFlags;
     // whether GfObjUpdate::updateComponent runs the components' updates (GfObjUtil::applyExecUpdate sets it)

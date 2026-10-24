@@ -3,14 +3,17 @@
 
 #include "classes/ai/State.h"
 #include "classes/gf/GfGameTarget.h"
+#include <new>
 
 namespace ai { class State; }
+namespace fw { class UpdateInfo; }
 
 namespace gf {
 // table 0x7100B56990
 class GfGameTarget::StateDriverNotActive : public ::ai::State {
 public:
-    virtual ~StateDriverNotActive();  // slot 0
+    static ai::State* create(void* buffer) { return new (buffer) StateDriverNotActive(); }
+    virtual ~StateDriverNotActive() {}  // slot 0
     virtual const char* getName() const;  // slot 2
     virtual void onEnter(void*, ai::State*);  // slot 3
     virtual void onLeave(void*, ai::State*);  // slot 4

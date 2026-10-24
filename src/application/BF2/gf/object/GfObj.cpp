@@ -16,6 +16,7 @@ GfObj::GfObj(unsigned int type, const fw::HandlePtr<fw::UpdatableObject>& handle
       m_handle(reinterpret_cast<GF_OBJ_HANDLE*>(-1)),
       m_info(nullptr),
       pad_108(),
+      pad_110(),
       m_updateFlags(0),
       m_execUpdate(false) {}
 
