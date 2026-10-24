@@ -66,6 +66,7 @@ void UIListInfo<T0>::addContents(const T0& contents) {
     addSize(1);
     m_changed = true;
 }
+
 }  // namespace ui
 
 #endif
