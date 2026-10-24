@@ -21,7 +21,10 @@ public:
     void gevMapjump(GEV gev, const MapjumpCallbackInfo& info);
     void gevPlayEvent(GEV gev, unsigned int eventId);
     int findBdatIdByLodId(unsigned short lodId) const;
-    void setAnimReverse(int bdatId, bool flag0, bool flag1);
+    // true when a part of the LOD model animates (GfFieldMapGimmick::seqLod_init then waits for the animation's end)
+    bool setAnimReverse(int bdatId, bool flag0, bool flag1);
+    void setFade(int bdatId, bool flag0, bool flag1);
+    void setLodSwitchId(int bdatId, unsigned int switchId);
 };
 }  // namespace gf
 

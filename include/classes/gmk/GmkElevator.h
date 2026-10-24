@@ -9,6 +9,8 @@ namespace gf { class GF_OBJ_HANDLE; }
 namespace gmk { class GmkElevatorGobCustom; }
 
 namespace gmk {
+// a free function of this unit (GfFieldMapGimmick::seqLod_init calls it with a LOD id when its animation plays)
+void applyLodFade(unsigned short lodId, bool flag);
 // a base of gmk::GmkElevator no evidence names yet
 class TUnk_B6CE88 {
 public:

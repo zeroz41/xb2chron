@@ -5,7 +5,7 @@
 
 namespace gf { class GfFieldSound; }
 namespace gf { class GfSetupParam; class MapjumpCallbackInfo; class GF_OBJ_HANDLE; enum GEV : int; enum RELOAD_BDAT : int; }
-namespace fw { class UpdateInfo; }
+namespace fw { class UpdateInfo; class SoundPack; }
 
 namespace gf {
 // table 0x7100B525B8
@@ -23,6 +23,9 @@ public:
     void gevGameMapModel(GF_OBJ_HANDLE* handle, bool flag);
     void gevMapjump(GEV gev, const MapjumpCallbackInfo& info);
     void gevPause(unsigned int flags0, unsigned int flags1);
+    // the sound packs its +0x28 and +0x38 hold (GfFieldMapGimmick picks one by a row's "flag" bit)
+    fw::SoundPack* getCommonPack();
+    fw::SoundPack* getMapPack();
 };
 }  // namespace gf
 

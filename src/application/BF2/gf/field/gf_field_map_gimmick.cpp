@@ -1,3 +1,8 @@
+#include "classes/gf/GfFieldLod.h"
+#include "classes/gf/GfFieldSound.h"
+#include "classes/gmk/GmkCtrlVolSe.h"
+#include "classes/gmk/GmkMapGimmick.h"
+#include "classes/gmk/GmkElevator.h"
 #include "classes/gmk/TimeCond.h"
 #include "classes/gf/GfGameScene.h"
 #include "classes/gf/MenuCommonWindowParam.h"
@@ -51,6 +56,9 @@
 #include "classes/gf/GfGameCond.h"
 #include "classes/gf/GfDataBdat.h"
 #include "gf/GfPlayFactory.h"
+#include "classes/gf/GfFieldSound.h"
+#include "classes/gmk/GmkElevator.h"
+#include "mm/mtl/FixStr.h"
 
 namespace gf {
 
@@ -290,6 +298,81 @@ void GfFieldMapGimmick::seqLod_waitToElapseTime(float dt) {
             gmk->setSolved();
             m_solveState = 2;
         }
+    }
+}
+
+void GfFieldMapGimmick::seqLod_init(float) {
+    gmk::AGmkBase* gmk = m_gmkAcc.m_gmk;
+    unsigned char* fp = gmk->getBindedBdatFp();
+    int row = gmk->m_bdatId;
+    mm::mtl::FixStr<32> name;
+    name.format("G%d_LODmodel", m_lodStep);
+    m_lodAnim = (unsigned short)(unsigned long)Bdat::getValCheck(fp, name.m_str, row, 2);
+    if (m_lodAnim == 0) {
+        m_seqLod = nullptr;
+        if (m_bdatInfo.m_nowaitGmkCam && m_isFsSucceeded) {
+            if (gmk::GmkMapGimmick* gmk = static_cast<gmk::GmkMapGimmick*>(m_gmkAcc.m_gmk)) {
+                SCOM_QUEST_GIMMICK::createMapGimmick(gmk->m_bdatId, 0.0f);
+                gmk->setSolved();
+                m_solveState = 2;
+            }
+        }
+        return;
+    }
+    name.format("G%d_LODanime_play", m_lodStep);
+    bool reverse = false;
+    bool fade = false;
+    unsigned int switchId = 1;
+    unsigned char mode = (unsigned char)(unsigned long)Bdat::getValCheck(fp, name.m_str, row, 1);
+    switch (mode) {
+    case 0:
+        mm::mtl::PtrSingleton<GfFieldLod>::get()->setFade(m_lodAnim, false, false);
+        m_seqLod = &GfFieldMapGimmick::seqLod_waitToElapseTime;
+        break;
+    case 6:
+        switchId = 3;
+        goto lodSwitch;
+    case 5:
+        switchId = 2;
+    case 4:
+    lodSwitch:
+        mm::mtl::PtrSingleton<GfFieldLod>::get()->setLodSwitchId(m_lodAnim, switchId);
+        m_seqLod = &GfFieldMapGimmick::seqLod_waitToElapseTime;
+        break;
+    case 2:
+        reverse = true;
+        goto play;
+    case 3:
+        fade = true;
+    default:
+    play:
+        if (mm::mtl::PtrSingleton<GfFieldLod>::get()->setAnimReverse(m_lodAnim, reverse, fade)) {
+            gmk::applyLodFade(m_lodAnim, fade);
+            m_seqLod = &GfFieldMapGimmick::seqLod_waitToEndAnim;
+        } else {
+            static_cast<gmk::GmkMapGimmick*>(gmk)->validateEffectWithoutLodControl(m_lodAnim, false);
+            m_seqLod = &GfFieldMapGimmick::seqLod_waitToElapseTime;
+        }
+        break;
+    }
+    name.format("nextwait%d", m_lodStep);
+    m_waitTime = (short)(unsigned long)Bdat::getValCheck(fp, name.m_str, row, 5);
+    m_elapsedTime = 0.0f;
+    name.format("G%d_LOD_SE", m_lodStep);
+    unsigned short seId = (unsigned short)(unsigned long)Bdat::getValCheck(fp, name.m_str, row, 2);
+    if (seId) {
+        gmk::GmkCtrlVolSe::CreateInfo info;
+        name.format("G%d_LOD_SE_type", m_lodStep);
+        info.m_pack = Bdat::getFlagVal(fp, "flag", row, name.m_str)
+                          ? mm::mtl::PtrSingleton<GfFieldSound>::get()->getMapPack()
+                          : mm::mtl::PtrSingleton<GfFieldSound>::get()->getCommonPack();
+        name.format("G%d_LOD_size", m_lodStep);
+        float size = (unsigned char)(unsigned long)Bdat::getValCheck(fp, name.m_str, row, 1);
+        info.m_seId = seId;
+        info.m_minDist = size;
+        info.m_maxDist = size;
+        info.m_pos = *gmk->m_pos;
+        m_se[m_lodStep - 1].create(info);
     }
 }
 
