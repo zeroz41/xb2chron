@@ -16,6 +16,11 @@ public:
     virtual void resourceInit();  // slot 3
     virtual void setDrawList(layer::LayerSortMan*, bool) {}  // slot 7
     virtual void applyParams(layer::LayerRenderView const*, layer::LayerResMatrix const&, layer::LayerResColor const&);  // slot 9
+
+    // The field names follow LayerAccDefObj's accessors (its objects of type 7; not the original's).
+    unsigned char pad_248[0x88];
+    unsigned short m_iconNum;  // setIconNum / getIconNum
+    unsigned short m_iconMax;  // getIconMax
 };
 }  // namespace layer
 

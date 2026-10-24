@@ -18,6 +18,11 @@ public:
     unsigned char pad_0[0x8];
     const LyrActionInfo* m_actions;  // m_actionMax records
     int m_actionMax;  // LayerAccAction::getActionMax
+    // the action running when the object's STATE_PARTS_ACTION is set (LayerAccAction::getRunningActIdx and
+    // setRunningActSec; the names are not the original's)
+    float m_runningSec;
+    unsigned char pad_18[0x8];
+    int m_runningIdx;
 };
 }  // namespace layer
 
@@ -28,6 +33,11 @@ public:
     virtual ~LayerActBase();  // slot 0
     virtual void updatePartsAction(layer::LyrActionData const*) {}  // slot 10
     void actionEnd();
+    // what an action's end type does when it ends (returns whether the action ends; the third argument, as its
+    // end-of-commands flag, actend_cmdend negates)
+    bool actend_no(const LyrActionData* data, bool cmdEnd);
+    bool actend_cmdend(const LyrActionData* data, bool cmdEnd);
+    bool actend_on(const LyrActionData* data, bool cmdEnd);
     void actionIdx(unsigned int index);
 
     unsigned char pad_248[0x8];

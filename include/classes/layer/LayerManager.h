@@ -9,6 +9,7 @@ namespace ml { class IDrDrawWorkInfo; }
 namespace ml { class Scn; }
 namespace layer { class LayerObjManager; }
 namespace layer { class LayerFontManager; }
+namespace layer { class LayerShdManager; }
 #include "layer/LayerAccManager.h"
 
 namespace layer {
@@ -23,7 +24,18 @@ public:
     LayerManager(ml::Scn* scn, mtl::ALLOC_HANDLE handle, unsigned int size);
     virtual ~LayerManager();  // slot 0
     void tail();  // the end of a frame
-    unsigned char pad_10[0x50];  // 0xB0 bytes: fw::LayerSetManager::initialize allocates that
+    float getScreenDivWidth() const;
+    float getScreenCalcSclWidth() const;
+    float getScreenCalcSclHeight() const;
+    float getScreenCalcPosWidth() const;
+    float getScreenCalcPosHeight() const;
+    // the m_flags / m_params entry objects write this frame, and the one they read back (LayerObj's accessors;
+    // the constructor sets 1 and 0)
+    static int s_nStkIdx;
+    static int s_nDebIdx;
+    static int s_nTriIdx;
+    unsigned char pad_10[0x48];  // 0xB0 bytes: fw::LayerSetManager::initialize allocates that
+    LayerShdManager* m_shdManager;  // the constructor makes it (the name is not the original's)
     // The names follow LayerAccManager's functions that use them (not the original's).
     LayerObjManager* m_objManager;  // LayerAccManager's create functions
     LayerFontManager* m_fontManager;  // LayerAccManager's font create functions

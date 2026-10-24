@@ -18,6 +18,13 @@ public:
     virtual void applyBegin(layer::LayerResUpdateInfo&, layer::LayerRenderView const*);  // slot 5
     virtual void applyEnd(layer::LayerResUpdateInfo&, layer::LayerRenderView const*);  // slot 6
     virtual void setDrawList(layer::LayerSortMan*, bool);  // slot 7
+
+    // The field names follow LayerAccDefObj's accessors (its objects of type 1; not the original's).
+    unsigned char pad_248[0x58];
+    float m_param;  // setParm
+    unsigned short m_iconNum;  // setIconNum / getIconNum
+    unsigned short m_iconMax;  // getIconMax
+    unsigned short m_gauge;  // setGauge / getGauge (a LAYER_GAUGE)
 };
 }  // namespace layer
 

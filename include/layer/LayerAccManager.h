@@ -15,6 +15,9 @@ public:
     LayerAccManager();
     void setCoordinate(LayerCoordinate coordinate);
     LayerCoordinate getCoordinate() const;
+    float getScreenWidth() const;
+    float getScreenHeight() const;
+    void setGamma(float gamma);
     LayerBase* createObj(const void* resource);  // the objects made, or null
     LayerBase* createMaskObj(const void* resource);
     LayerBase* createLayoutObj();

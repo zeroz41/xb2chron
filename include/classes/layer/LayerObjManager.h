@@ -9,6 +9,7 @@ namespace layer {
 // makes the layer objects (LayerAccManager's create functions forward to it); no table
 class LayerObjManager {
 public:
+    void end();  // the end of a frame: nothing to do
     LayerBase* createObj(const void* resource);
     LayerBase* createMaskObj(const void* resource);
     LayerBase* createLayoutObj();

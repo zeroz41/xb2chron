@@ -1,3 +1,12 @@
+#include "layer/LayerAccManager.h"
+#include "classes/layer/LayerShdManager.h"
+#include "classes/layer/LayerManager.h"
+#include "classes/layer/LayerObj.h"
+#include "classes/layer/LayerActBase.h"
+#include "classes/layer/LayerObjManager.h"
+#include "classes/layer/LayerObjTopDef.h"
+#include "classes/layer/LayerObjTopMaskObj.h"
+#include "classes/layer/LayerObjLayout.h"
 #include "layer/LayerAccObjBase.h"
 #include "layer/LayerAccFontObj.h"
 #include "layer/LayerAccFontStyle.h"
@@ -7,6 +16,7 @@
 #include "layer/LayerAccAction.h"
 #include "layer/LayerAccDefTexture.h"
 #include "layer/LayerAccDefObj.h"
+#include "layer/LayerAccLayoutObj.h"
 #include "classes/layer/LayerObj.h"
 #include "classes/layer/LayerActBase.h"
 #include "classes/layer/LayerObjWork.h"
@@ -57,6 +67,23 @@ void NvmshAcObjBase::setMoveSpd(float spd) { m_moveSpd = spd; }
 namespace layer {
 
 LayerTagStr::~LayerTagStr() {}
+LayerTagStr::LayerTagStr() : m_stockTbl(nullptr), m_stockSize(0), m_stockCount(0) {}
+void LayerTagStr::setStockTbl(char* tbl, int size) {
+    m_stockTbl = tbl;
+    m_stockSize = size;
+}
+void LayerTagStr::stockString(const char* str) {
+    for (unsigned int i = 0; str[i] != '\0'; i++) {
+        m_stockTbl[m_stockCount++] = str[i];
+    }
+}
+void LayerTagStr::beginParseString() { m_stockCount = 0; }
+void LayerTagStr::endParseString() { m_stockTbl[m_stockCount] = '\0'; }
+void LayerTagStr::parseNotTag(const unsigned char* str, unsigned int& pos) {
+    m_stockTbl[m_stockCount++] = str[pos];
+    pos++;
+}
+void LayerTagStr::callTagNoUse(const unsigned char* str) { stockString(reinterpret_cast<const char*>(str)); }
 
 LayerAccManager::LayerAccManager() {}
 LayerBase* LayerAccManager::createObj(const void* resource) {
@@ -95,9 +122,41 @@ LayerCoordinate LayerAccManager::getCoordinate() const { return mm::mtl::PtrSing
 void LayerAccManager::setCoordinate(LayerCoordinate coordinate) {
     mm::mtl::PtrSingleton<LayerManager>::get()->m_coordinate = coordinate;
 }
+float LayerAccManager::getScreenWidth() const {
+    return mm::mtl::PtrSingleton<LayerManager>::get()->m_shdManager->m_screenWidth;
+}
+float LayerAccManager::getScreenHeight() const {
+    return mm::mtl::PtrSingleton<LayerManager>::get()->m_shdManager->m_screenHeight;
+}
+void LayerAccManager::setGamma(float gamma) { mm::mtl::PtrSingleton<LayerManager>::get()->m_shdManager->m_gamma = gamma; }
 
 LayerAccAction::LayerAccAction(LayerBase* layer) : m_layer(layer) {}
 bool LayerAccAction::isActionData() const { return static_cast<LayerActBase*>(m_layer)->m_actionData != nullptr; }
+bool LayerAccAction::isRunning() const {
+    const LayerActBase* act = static_cast<LayerActBase*>(m_layer);
+    if (act->m_stateFlags & LayerObj::STATE_PARTS_ACTION) {
+        return true;
+    }
+    return act->isFlag(LayerManager::s_nDebIdx, LayerObj::FLAG_ACTION_RUNNING);
+}
+unsigned int LayerAccAction::getRunningActIdx() const {
+    const LayerActBase* act = static_cast<LayerActBase*>(m_layer);
+    if (act->m_stateFlags & LayerObj::STATE_PARTS_ACTION) {
+        return act->m_actionData->m_runningIdx;
+    }
+    int index = LayerManager::s_nDebIdx;
+    if (!act->isFlag(index, LayerObj::FLAG_ACTION_RUNNING)) {
+        return -1;
+    }
+    return act->m_runningActIdx[index];
+}
+void LayerAccAction::setRunningActSec(float sec) {
+    LayerActBase* act = static_cast<LayerActBase*>(m_layer);
+    if ((act->m_stateFlags & LayerObj::STATE_PARTS_ACTION) ||
+        act->isFlag(LayerManager::s_nDebIdx, LayerObj::FLAG_ACTION_RUNNING)) {
+        act->m_actionData->m_runningSec = sec;
+    }
+}
 unsigned int LayerAccAction::getActionMax() const {
     LyrActionData* data = static_cast<LayerActBase*>(m_layer)->m_actionData;
     if (data == nullptr) {
@@ -173,6 +232,50 @@ void LayerAccObjBase::setMaskObj(const LayerBase* mask) { static_cast<LayerObj*>
 const void* LayerAccObjBase::getResData() const { return static_cast<LayerObj*>(m_layer)->m_resData; }
 
 LayerAccDefObj::LayerAccDefObj(LayerBase* layer) : LayerAccObjBase(layer) {}
+void LayerAccDefObj::setParm(float param) {
+    if (m_layer->m_objType == 1) {
+        static_cast<LayerObjTopDef*>(m_layer)->m_param = param;
+    }
+}
+void LayerAccDefObj::setIconNum(unsigned short num) {
+    switch (m_layer->m_objType) {
+    case 1:
+        static_cast<LayerObjTopDef*>(m_layer)->m_iconNum = num;
+        break;
+    case 7:
+        static_cast<LayerObjTopMaskObj*>(m_layer)->m_iconNum = num;
+        break;
+    }
+}
+unsigned short LayerAccDefObj::getIconNum() const {
+    switch (m_layer->m_objType) {
+    case 1:
+        return static_cast<LayerObjTopDef*>(m_layer)->m_iconNum;
+    case 7:
+        return static_cast<LayerObjTopMaskObj*>(m_layer)->m_iconNum;
+    }
+    return 0;
+}
+unsigned short LayerAccDefObj::getIconMax() const {
+    switch (m_layer->m_objType) {
+    case 1:
+        return static_cast<LayerObjTopDef*>(m_layer)->m_iconMax;
+    case 7:
+        return static_cast<LayerObjTopMaskObj*>(m_layer)->m_iconMax;
+    }
+    return 0;
+}
+void LayerAccDefObj::setGauge(LAYER_GAUGE gauge) {
+    if (m_layer->m_objType == 1) {
+        static_cast<LayerObjTopDef*>(m_layer)->m_gauge = gauge;
+    }
+}
+LAYER_GAUGE LayerAccDefObj::getGauge() const {
+    if (m_layer->m_objType == 1) {
+        return static_cast<LAYER_GAUGE>(static_cast<LayerObjTopDef*>(m_layer)->m_gauge);
+    }
+    return static_cast<LAYER_GAUGE>(0);
+}
 
 LayerAccDefTexture::LayerAccDefTexture(LayerBase* layer) : m_layer(layer) {}
 void LayerAccDefTexture::setTexutre(const void* texture) { static_cast<LayerObjWork*>(m_layer)->setAddTexture(texture, 0); }
@@ -259,9 +362,47 @@ void LayerAccFontObj::setColorMap(const LayerBase* colorMap, unsigned int patter
     static_cast<LayerObjFont*>(m_layer)->setColorMap(static_cast<const LayerFontIconObj*>(colorMap), pattern);
 }
 
+LayerAccLayoutObj::LayerAccLayoutObj(LayerBase* layer) : m_layer(layer) {}
+void LayerAccLayoutObj::setViewPortMode(bool enable) {
+    LayerObjLayout* obj = static_cast<LayerObjLayout*>(m_layer);
+    if (enable) {
+        obj->m_stateFlags |= LayerObj::STATE_VIEWPORT;
+    } else {
+        obj->m_stateFlags &= ~LayerObj::STATE_VIEWPORT;
+    }
+}
+void LayerAccLayoutObj::setViewPort(float x, float y, float width, float height) {
+    LayerObjLayout* obj = static_cast<LayerObjLayout*>(m_layer);
+    obj->m_viewPortX = x;
+    obj->m_viewPortY = y;
+    obj->m_viewPortWidth = width;
+    obj->m_viewPortHeight = height;
+}
+void LayerAccLayoutObj::createPriorityTbl(unsigned int count) {
+    static_cast<LayerObjLayout*>(m_layer)->m_priorityTblCount[LayerManager::s_nStkIdx] = count;
+    static_cast<LayerObjLayout*>(m_layer)->offFlag(LayerManager::s_nStkIdx, LayerObj::FLAG_PRIORITY_TBL);
+}
+void LayerAccLayoutObj::setAutoAnchorMode(LAYER_ANCHOR anchor) { static_cast<LayerObjLayout*>(m_layer)->m_anchorMode = anchor; }
+
+int LayerManager::s_nStkIdx = 1;
+int LayerManager::s_nDebIdx;
+int LayerManager::s_nTriIdx;
+float LayerManager::getScreenDivWidth() const { return m_shdManager->m_screenDivWidth; }
+float LayerManager::getScreenCalcSclWidth() const { return m_shdManager->m_screenCalcSclWidth; }
+float LayerManager::getScreenCalcSclHeight() const { return m_shdManager->m_screenCalcSclHeight; }
+float LayerManager::getScreenCalcPosWidth() const { return m_shdManager->m_screenCalcPosWidth; }
+float LayerManager::getScreenCalcPosHeight() const { return m_shdManager->m_screenCalcPosHeight; }
+
+void LayerObjManager::end() {}
+
+bool LayerActBase::actend_no(const LyrActionData* data, bool cmdEnd) { return false; }
+bool LayerActBase::actend_cmdend(const LyrActionData* data, bool cmdEnd) { return !cmdEnd; }
+bool LayerActBase::actend_on(const LyrActionData* data, bool cmdEnd) { return true; }
+
 void LayerObjSortDef::finalRender() { static_cast<LayerObjTopDef*>(m_obj)->finalRender(); }
 void LayerObjSortFont::finalRender() { static_cast<LayerObjTopFont*>(m_obj)->finalRender(); }
 void LayerObjSortTexObj::finalRender() { static_cast<LayerObjTopTexObj*>(m_obj)->finalRender(); }
 void LayerObjSortPolyObj::finalRender() { static_cast<LayerObjTopPolyObj*>(m_obj)->finalRender(); }
 
 }  // namespace layer
+
