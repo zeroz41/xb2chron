@@ -7,7 +7,11 @@ namespace gmk {
 // table 0x7100B6D308
 class GmkTutorial : public ::gmk::AGmkBase {
 public:
-    class BdatInfo;
+    // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
+    class BdatInfo {
+    public:
+        unsigned char pad_0[0xa];
+    };
     virtual ~GmkTutorial();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3

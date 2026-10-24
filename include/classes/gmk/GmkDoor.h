@@ -7,6 +7,7 @@
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
+namespace gmk { class GmkDoorGob; }
 
 namespace gmk {
 // a base of gmk::GmkDoor no evidence names yet
@@ -23,7 +24,11 @@ public:
 // table 0x7100B6CD30; base at 0x48 unknown (TUnk_B6CDB0), base at 0x50 unknown (TUnk_B6CDD0)
 class GmkDoor : public ::gmk::AGmkBase, public TUnk_B6CDB0, public TUnk_B6CDD0 {
 public:
-    class BdatInfo;
+    // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
+    class BdatInfo {
+    public:
+        unsigned char pad_0[0x48];
+    };
     virtual ~GmkDoor();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
@@ -36,6 +41,9 @@ public:
     virtual void onEnterPhantom(gmk::IGmkPhantomEventListener::OnEnterInfo const&);  // slot 12
     virtual void onLeavePhantom(gmk::IGmkPhantomEventListener::OnLeaveInfo const&);  // slot 13
     static mm::mtl::RTTI m_rtti;
+    // its kind (TGmkList::getGmkType returns it; the name is not the original's)
+    static const gmk::GmkType TYPE = gmk::GmkType(41);
+    unsigned char pad_58[0x308];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

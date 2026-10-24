@@ -10,7 +10,8 @@ namespace gmk {
 // table 0x7100B6DD88
 class GmkMob : public ::gmk::AGmkBase {
 public:
-    class BdatInfo;
+    // empty: its Vector<BdatInfo>::resize is the empty-element form (no element stores)
+    class BdatInfo {};
     class PopXformFinder;
     virtual ~GmkMob();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

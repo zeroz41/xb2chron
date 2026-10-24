@@ -4,12 +4,14 @@
 #include "classes/gmk/AGmkBase.h"
 #include "classes/mm/mtl/ReferenceObject.h"
 #include "mm/mtl/IntrusivePtr.h"
+namespace gmk { class GmkBattleLockGob; }
 
 namespace gmk {
 // table 0x7100B6C480
 class GmkBattleLock : public ::gmk::AGmkBase {
 public:
-    class BdatInfo;
+    // empty: its Vector<BdatInfo>::resize is the empty-element form (no element stores)
+    class BdatInfo {};
     virtual ~GmkBattleLock();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3
@@ -24,6 +26,7 @@ public:
     // what the lock holds while it is engaged, none otherwise: dispose clears three of its fields and releases it
     // (its class is not known yet; the name is not the original's)
     mm::mtl::IntrusivePtr<mm::mtl::ReferenceObject> m_lockObject;
+    unsigned char pad_b0[0x20];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

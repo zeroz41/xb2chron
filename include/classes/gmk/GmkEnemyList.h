@@ -23,7 +23,7 @@ public:
     virtual void debugUpdateMmf();  // slot 13
     virtual void debugDraw() const;  // slot 14
     virtual void createGmk(void*);  // slot 16
-    unsigned char pad_230[0x6b0];  // fields: size from GmkSet::createGmkLists's new
+    unsigned char pad_228[0x6b8];  // fields: size from GmkSet::createGmkLists's new
 };
 }  // namespace gmk
 

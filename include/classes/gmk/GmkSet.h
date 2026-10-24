@@ -26,7 +26,10 @@ public:
     float m_rotY;  // 0x30: its lists' rotation (the name is not the original's)
     unsigned char pad_34[0x144];
     GmkNpcManager m_npcManager;  // 0x178 (the name is not the original's)
-    unsigned char pad_180[0x38];
+    unsigned char pad_180[0x2c];
+    // createGmkLists sets it to 0x20 before anything else (nothing else here reads it; the name is not the original's)
+    int m_listParam;  // 0x1ac
+    unsigned char pad_1b0[0x8];
     IGmkList* m_gmkLists[GMK_LIST_NUM];  // 0x1b8: its list of each kind, by GmkType (the name is not the original's)
 };
 }  // namespace gmk

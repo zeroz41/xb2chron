@@ -14,6 +14,7 @@ namespace gmk {
 template <typename T0, typename T1>
 class TGmkFormPcList : public T1 {
 public:
+    explicit TGmkFormPcList(unsigned int updateGmkNumPerFrame) : T1(updateGmkNumPerFrame) {}
     virtual ~TGmkFormPcList();  // slot 0
     virtual void create(gmk::IGmkList::CreateInfo const&);  // slot 9
     virtual void createGmk(void*);  // slot 16

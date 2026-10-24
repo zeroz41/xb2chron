@@ -7,7 +7,8 @@ namespace gmk {
 // table 0x7100B6D2A0
 class GmkRoutedFootPrintPoint : public ::gmk::AGmkBase {
 public:
-    class BdatInfo;
+    // empty: its Vector<BdatInfo>::resize is the empty-element form (no element stores)
+    class BdatInfo {};
     virtual ~GmkRoutedFootPrintPoint();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3

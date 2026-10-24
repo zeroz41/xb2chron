@@ -5,12 +5,17 @@
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
+namespace gmk { class GmkTboxGob; }
 
 namespace gmk {
 // table 0x7100B6C3B0
 class GmkTbox : public ::gmk::AGmkBase {
 public:
-    class BdatInfo;
+    // its size: the element size of Vector<BdatInfo>::resize 0x71005DFFBC (zero-filled)
+    class BdatInfo {
+    public:
+        unsigned char pad_0[0x10];
+    };
     virtual ~GmkTbox();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
@@ -20,6 +25,9 @@ public:
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9
     void setTargetable(bool targetable) const;
+    // its kind (TGmkList::getGmkType returns it; the name is not the original's)
+    static const gmk::GmkType TYPE = gmk::GmkType(9);
+    unsigned char pad_48[0x18];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

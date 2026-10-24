@@ -7,6 +7,7 @@
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
+namespace gmk { class GmkRouteGob; }
 namespace mm { class Vec3; }
 
 namespace gmk {
@@ -30,6 +31,9 @@ public:
     virtual void bindToGameObj(gf::GF_OBJ_HANDLE*) const;  // slot 19
     virtual void unbindToGameObj(gf::GF_OBJ_HANDLE*) const;  // slot 20
     virtual void validateDisp() const;  // slot 21
+    // its kind (TGmkList::getGmkType returns it; the name is not the original's)
+    static const gmk::GmkType TYPE = gmk::GmkType(4);
+    unsigned char pad_58[0x48];  // fields: size from TGmkList::getInst's stride (0xa0; AGmkNpc, vptr only, sits at 0x50)
 };
 }  // namespace gmk
 

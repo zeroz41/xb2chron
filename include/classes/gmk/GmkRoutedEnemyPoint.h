@@ -7,7 +7,8 @@ namespace gmk {
 // table 0x7100B71990
 class GmkRoutedEnemyPoint : public ::gmk::GmkRoutePoint {
 public:
-    class BdatInfo;
+    // empty: its Vector<BdatInfo>::resize is the empty-element form (no element stores)
+    class BdatInfo {};
     virtual ~GmkRoutedEnemyPoint();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)

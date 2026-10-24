@@ -11,6 +11,7 @@ namespace gmk {
 // table 0x7100B6EA98
 class GmkDmgSeList : public ::gmk::TGmkList< ::gmk::GmkDmgSe, ::gmk::GmkDmgSe::BdatInfo, 1163087172u, 2u, ::gmk::GmkDmgSeGob> {
 public:
+    explicit GmkDmgSeList(unsigned int updateGmkNumPerFrame) : TGmkList(updateGmkNumPerFrame) {}
     virtual ~GmkDmgSeList();  // slot 0
     virtual gmk::AGmkBase* getInst(unsigned int) const;  // slot 6
 };

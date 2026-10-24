@@ -5,6 +5,7 @@
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
+namespace gmk { class GmkNpcGob; }
 namespace mm { class Vec3; }
 
 namespace gmk {
@@ -27,7 +28,11 @@ public:
 // table 0x7100B6DA48; base at 0x48 unknown (TUnk_B6DB08)
 class GmkNpc : public ::gmk::AGmkBase, public TUnk_B6DB08 {
 public:
-    class BdatInfo;
+    // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
+    class BdatInfo {
+    public:
+        unsigned char pad_0[0x30];
+    };
     virtual ~GmkNpc();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void debugDraw() const;  // slot 7
@@ -43,6 +48,9 @@ public:
     virtual void unbindToGameObj(gf::GF_OBJ_HANDLE*) const;  // slot 19
     virtual void validateDisp() const;  // slot 20
     virtual void debugUpdate(float) {}  // slot 21
+    // its kind (TGmkList::getGmkType returns it; the name is not the original's)
+    static const gmk::GmkType TYPE = gmk::GmkType(3);
+    unsigned char pad_50[0x20];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

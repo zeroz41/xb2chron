@@ -6,6 +6,7 @@
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
+namespace gmk { class GmkRouteGob; }
 
 namespace gmk {
 // table 0x7100B6C340
@@ -18,6 +19,9 @@ public:
     virtual void update(float);  // slot 6
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual void getBindedRoutePointList() const;  // slot 11
+    // its kind (TGmkList::getGmkType returns it; the name is not the original's)
+    static const gmk::GmkType TYPE = gmk::GmkType(7);
+    unsigned char pad_51[0xf];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

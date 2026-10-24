@@ -11,6 +11,7 @@ namespace gmk {
 // table 0x7100B6F248
 class GmkSalvageLocatorList : public ::gmk::TGmkList< ::gmk::GmkSalvageLocator, ::gmk::GmkSalvageLocator::BdatInfo, 1129073747u, 1u, ::gmk::GmkSalvageLocatorGob> {
 public:
+    explicit GmkSalvageLocatorList(unsigned int updateGmkNumPerFrame) : TGmkList(updateGmkNumPerFrame) {}
     virtual ~GmkSalvageLocatorList();  // slot 0
     virtual gmk::AGmkBase* getInst(unsigned int) const;  // slot 6
 };

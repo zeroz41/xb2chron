@@ -15,10 +15,11 @@ template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T
 class TGmkList : public ::gmk::IGmkList {
 public:
     typedef void (TGmkList::*SeqFunc)(float);
+    // the count of gimmicks seqUpdate updates a frame comes from the creator (GmkSet::createGmkLists)
     // every list shares the gimmick object listener (GmkGobEventListener::addRef); the destructor releases it
-    TGmkList()
+    explicit TGmkList(unsigned int updateGmkNumPerFrame)
         : m_resource(nullptr), m_assetData(nullptr), pad_180(), m_gmkSection(nullptr), pad_1a8(), m_bdatFp(nullptr),
-          m_seq(nullptr), m_updateGmkNumPerFrame(0), m_updateGmkIndex(0) {
+          m_seq(nullptr), m_updateGmkNumPerFrame(updateGmkNumPerFrame), m_updateGmkIndex(0) {
         GmkGobEventListener::addRef();
     }
     virtual ~TGmkList();  // slot 0
@@ -55,7 +56,7 @@ public:
     mm::mtl::Vector<T0> m_gmks;  // 0x1f8
     unsigned int m_updateGmkNumPerFrame;  // 0x220: how many gimmicks seqUpdate updates a frame
     unsigned int m_updateGmkIndex;  // 0x224: the next one it updates
-    unsigned char pad_228[0x8];
+    // (no field at 0x228: GmkMobList and GmkCollectionList keep theirs there, in the tail padding of this 16-aligned class)
 };
 
 template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
