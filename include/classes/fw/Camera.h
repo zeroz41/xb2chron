@@ -3,6 +3,8 @@
 
 #include "mm/mtl/RTTI.h"
 #include "mm/Vec3.h"
+#include "mm/Mat44.h"
+#include "mm/mtl/IntrusiveList.h"
 #include "classes/mm/mtl/ReferenceObject.h"
 namespace fw { class UpdateInfo; }
 
@@ -10,7 +12,8 @@ namespace fw {
 // the camera manager's ordering of a camera (SubViewCamera's is 55)
 enum CAMERA_PRIO {};
 
-// table none (its derived classes'); counted by mm::mtl::IntrusivePtr (SubViewCamera::create returns one).
+// table 0x7100B40FD8 (AssetManager.cpp: updateViewMatrix is its first out-of-line virtual; CharaObj.cpp keeps the
+// inline ones' copies); counted by mm::mtl::IntrusivePtr (SubViewCamera::create returns one).
 // Its destructor is inline: only the deleting one is out of line (0x7100162460, with the table), and a derived
 // class's complete destructor returns without calling a base one.
 class Camera : public ::mm::mtl::ReferenceObject {
@@ -18,7 +21,8 @@ public:
     Camera(CAMERA_PRIO prio);
     virtual ~Camera() {}  // slot 0
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 2
-    virtual const char* getName() const;  // slot 3
+    // inline: CharaObj.cpp keeps its copy (0x710014C4B0, between getRTTI's and onPush's)
+    virtual const char* getName() const { return "Camera"; }  // slot 3
     virtual void onPush() {}  // slot 4
     virtual void onPop() {}  // slot 5
     virtual void onActivate() {}  // slot 6
@@ -28,7 +32,10 @@ public:
     void setLookAt(const mm::Vec3& eye, const mm::Vec3& target, float roll);
     static mm::mtl::RTTI m_rtti;
 
-    unsigned char pad_c[0x20];
+    unsigned char pad_c[0x4];
+    // unlinked, no owner, as the constructor leaves it (the name is not the original's)
+    mm::mtl::IntrusiveListNode<Camera> m_layerNode;
+    CAMERA_PRIO m_prio;  // the constructor's
     float m_fov;  // GfGameFallDeadCamera::onActivate sets it from GfInfo::m_camFov
     float m_nearClip;  // 0.4 and 80000 from gf::ScriptCameraEntity's constructor: gf::PlayerCamera::getNearClip and
     float m_farClip;   // getFarClip return the same
@@ -36,7 +43,7 @@ public:
     // setLookAt(eye, target, roll) stores its arguments here (the names are its parameters')
     mm::Vec3 m_eye;
     mm::Vec3 m_target;
-    unsigned char pad_60[0x40];
+    mm::Mat44 m_view;  // identity from the constructor; updateViewMatrix's look-at matrix (the name is not the original's)
     bool m_pushed;  // CameraLayer::pop and cleanup clear it; gf::ScriptCamera::end pops the camera only while it is set
     unsigned char pad_a1[0x3];
     float m_roll;  // radians (gf::ShipRollPlugin rolls the player camera through it)

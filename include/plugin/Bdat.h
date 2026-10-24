@@ -3,6 +3,12 @@
 
 // the BDAT tables (application/BF2/plugin/bdat.cpp)
 namespace Bdat {
+// the BDAT file in a slot (fw::BdatManager's layers 0-15): its data registered, its tables' count and names, and the
+// slot released (fw::BdatManager::Impl registers a loaded file's data and indexes its tables by name)
+void regist(int slot, void* data);
+void unregist(int slot);
+int getFileCount(int slot);
+const char* getFileName(int slot, int index);
 // the loaded table of that name
 unsigned char* getFP(const char* name);
 // the table's name, stored in the table (ui::UITextManager::registTextFile hashes it)
