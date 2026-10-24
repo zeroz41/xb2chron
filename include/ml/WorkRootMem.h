@@ -9,6 +9,8 @@ class WorkRootMem {
 public:
     // the work root state's memory: WorkRootState::getWorkMem returns it, initialize allocates the id tables from it
     static mtl::ALLOC_HANDLE getMemState();
+    // the temporary memory (ml::WorkRoot::getMemTMP returns it)
+    static mtl::ALLOC_HANDLE getMemTMP();
 };
 }  // namespace ml
 

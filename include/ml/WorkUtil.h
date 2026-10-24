@@ -11,6 +11,7 @@ class WorkUtil {
 public:
     // the allocator work objects are made from
     static mtl::ALLOC_HANDLE getWorkMem();
+    static void setDispLogH(bool dispLogH);
     // makes a work of type T under parent and enters it (instances: tl::TitleApp)
     template <typename T>
     static T* createWork(const char* name, WorkObj* parent, bool flag) {
