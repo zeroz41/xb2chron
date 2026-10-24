@@ -1,11 +1,13 @@
 #ifndef CLASSES_GF_AFIELDSEQ_H
 #define CLASSES_GF_AFIELDSEQ_H
 
+#include "classes/gf/IFieldSeq.h"
 namespace gf { class GF_OBJ_HANDLE; }
 
 namespace gf {
-// table 0x7100B52248
-class AFieldSeq {
+// table 0x7100B52248; slots 0-4 are IFieldSeq's (GfSequentialPlay::addMapGimmick, addJump and addWarp pass their
+// singletons to GfPlayComFieldSeq::create(IFieldSeq*) unadjusted)
+class AFieldSeq : public IFieldSeq {
 public:
     virtual void getIdStr() const = 0;  // slot 0
     virtual void create(gf::GF_OBJ_HANDLE*);  // slot 1

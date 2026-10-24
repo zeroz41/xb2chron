@@ -93,6 +93,16 @@ public:
 
     iterator begin() { return iterator(node(node(0)->m_next), this); }
     iterator end() { return iterator(node(0), this); }
+    // a const list's walk (GfSequentialPlay::isExistEvent)
+    typedef node_iterator<const T, ListNode*> const_iterator;
+    const_iterator begin() const {
+        FixedList* self = const_cast<FixedList*>(this);
+        return const_iterator(self->node(self->node(0)->m_next), self);
+    }
+    const_iterator end() const {
+        FixedList* self = const_cast<FixedList*>(this);
+        return const_iterator(self->node(0), self);
+    }
     bool empty() const { return m_num_nodes == 0; }
     unsigned long size() const { return m_num_nodes; }
     // the first element, read without the iterator's assertion (GfFobjManager::registFiledObj reads its full
@@ -120,6 +130,25 @@ public:
 #line 246 MM_MTL_FIXED_LIST_PATH
         MM_ASSERT(m_num_nodes <= N + 1);
         ListNode* pos = node(0);
+        added->m_prev = pos->m_prev;
+        node(added->m_prev)->m_next = added->m_index;
+        pos->m_prev = added->m_index;
+        added->m_next = pos->m_index;
+    }
+
+    // value linked first, in a node off the free stack (GfSequentialPlay::addCommand and postUpdate inline it:
+    // the assertions' lines 220 and 224, `m_num_nodes <= N`)
+    void push_front(const T& value) {
+#line 220 MM_MTL_FIXED_LIST_PATH
+        MM_ASSERT(m_free_index_top > 0);
+        index_type index = m_free_index[m_free_index_top--];
+        ListNode* added = node(index);
+        new (added->m_value) T(value);
+        added->m_index = index;
+        ++m_num_nodes;
+#line 224 MM_MTL_FIXED_LIST_PATH
+        MM_ASSERT(m_num_nodes <= N);
+        ListNode* pos = node(node(0)->m_next);
         added->m_prev = pos->m_prev;
         node(added->m_prev)->m_next = added->m_index;
         pos->m_prev = added->m_index;

@@ -4,6 +4,10 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "gf/GfQuestInfo.h"
 #include "gf/QuestID.h"
+#include "mm/mtl/FixedList.h"
+#include "classes/gf/GfInfo.h"
+#include "mm/mtl/FixedQueue.h"
+#include "classes/gf/GfPlayCom.h"
 
 namespace gf { class GfSequentialPlay; }
 namespace gf { class ParamReturnTitle; }
@@ -26,11 +30,41 @@ namespace gf { class MenuCommonWindowParam; }
 namespace gmk { enum GmkType : int; }
 #include "classes/gf/GfMenuObjCommonText.h"
 namespace gf { enum GF_STATE : int; }  // as GfGameManager.h declares it
+namespace gf { class GfSetupParam; }
+namespace gf { struct GF_PAUSE_HANDLE; }
+namespace gf { enum GfPlayerDead : int; }
+// a command's kind (GfPlayCom::m_kind): hasCommand's first argument; no value has a name yet
+namespace gf { enum PCOMTYPE : int {}; }
 
 namespace gf {
 // table 0x7100B590E8
 class GfSequentialPlay : public ::mm::mtl::PtrSingleton< ::gf::GfSequentialPlay> {
 public:
+    typedef ::mm::mtl::FixedList<GfPlayCom*, 256> CommandList;
+    typedef ::mm::mtl::FixedList<GfPlayCom*, 128> AddList;
+
+    // inline in 3.0.1 (1.0.0's GfSequentialPlay(GfSetupParam const&), initialize and finalize: build and destroy
+    // carry them)
+    GfSequentialPlay(const GfSetupParam& param) : m_flag(false), m_type(TYPE()) {
+        initialize(param);
+    }
+    void initialize(const GfSetupParam& param) { m_initialized = true; }
+    void finalize() {
+        while (isPlay()) {
+            GfSleep(1);
+        }
+        destroyCommand();
+        m_initialized = false;
+    }
+    static void build(const GfSetupParam& param);
+    static void destroy();
+    void destroyCommand();
+    static void addCommand(GfPlayCom* com);
+    static bool hasCommand(PCOMTYPE type, GfPlayCom* com);
+    bool isExistEvent(unsigned int id) const;
+    // 1.0.0's out-of-line copies; isInnerState and isInnerPause inline them in 3.0.1
+    bool isExistState(GfPlayCom* com, GF_STATE state) const;
+    bool isExistPauseType(GfPlayCom* com, unsigned int pause) const;
     static void postUpdate(const fw::UpdateInfo& info);
     // how beginCommand starts a command list (GfPlayFactory passes 0 or 1); no value has a name yet
     enum TYPE {};
@@ -48,6 +82,9 @@ public:
     static void addWaitBattleEnd(unsigned int wait);
     static void addMiniGame();
     static void addEventFade();
+    static void addEvent(int id, unsigned int, unsigned int, bool flag);
+    static void addEvent(const char* name, unsigned int, unsigned int, bool flag);
+    static void addPlayerDead(GfPlayerDead dead);
     static void addMenuZone(unsigned int id);
     static void addMenuChapter(unsigned int id);
     static void addMenuChapterEnd(unsigned int id);
@@ -102,8 +139,17 @@ public:
     // what GfPlayComPause and GfPlayComState run when they start
     static void pauseOn(unsigned int pause);
     static void pauseOff();
-    static void execPushState(GF_STATE state);
-    static void execPopState();
+    // the state before / the state taken off
+    static GF_STATE execPushState(GF_STATE state);
+    static GF_STATE execPopState();
+
+    CommandList m_list;  // the commands running, first first (the name is not the original's)
+    bool m_flag;  // build clears it; nothing in this unit reads it (the name is not the original's)
+    ::mm::mtl::FixedQueue<GF_PAUSE_HANDLE*, 128> m_pauses;  // pauseOn's handles, pauseOff's last first
+    ::mm::mtl::FixedQueue<GF_STATE, 128> m_states;  // execPushState's states
+    AddList m_addList;  // a TYPE 1 list's commands, moved to the front of m_list by postUpdate
+    TYPE m_type;  // beginCommand's; play clears it
+    bool m_initialized;  // initialize sets it, finalize clears it; postUpdate runs only while it holds
 };
 }  // namespace gf
 
