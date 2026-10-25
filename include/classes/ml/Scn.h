@@ -36,6 +36,8 @@ public:
     ScnObjIBL* createIBL(const void* resource, int arg);
     void releaseItem(ScnObj* item);
     void setView(WinView* view, int index);
+    // a view by index; -1 the current one (event::BouManager detaches itself from it)
+    WinView* getView(int index);
     // a model made from a resource (fw::ModelObject::create's)
     ScnObjModel* createMdl(const void* resource, const char* name, int arg);
     ScnPoolObj* m_pool;  // 0x20 releaseItem gives items back to it (the name is not the original's)

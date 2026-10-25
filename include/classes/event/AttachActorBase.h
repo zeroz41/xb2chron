@@ -9,7 +9,7 @@ namespace event {
 // table 0x7100B3C220
 class AttachActorBase {
 public:
-    virtual ~AttachActorBase();  // slot 0
+    virtual ~AttachActorBase() {}  // slot 0
     virtual void getName() const;  // slot 2
     virtual void setEffectCaster(bool, unsigned int) = 0;  // slot 3
     virtual void setEffectMount(bool, unsigned int, char const*, mm::Vec3 const&, bool, event::ATTACH_TYPE) = 0;  // slot 4

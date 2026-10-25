@@ -6,6 +6,7 @@ namespace event {
 class CmdItem {
 public:
     virtual ~CmdItem() {}  // slot 0
+    unsigned char pad_8[0x120];  // CmdQueue steps through its items 0x128 bytes apart
 };
 }  // namespace event
 

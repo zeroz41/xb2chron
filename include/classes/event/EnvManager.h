@@ -4,6 +4,9 @@
 namespace event { enum MSG_TYPE : int; }
 namespace gf { enum WEATHERID : int; enum WEATYPE : int; }
 
+#include "classes/gf/GfFieldTime.h"
+#include "classes/gf/GfFieldWeather.h"
+
 namespace event {
 // a base of event::EnvManager no evidence names yet
 class TUnk_B3C730 {
@@ -35,6 +38,26 @@ public:
     void setMotBlur(bool enable);
     void setToneMap(bool enable, float value);
     void resetScene();
+    // out of line (OnEventProc branches to them)
+    void clear();
+    void update();
+    void render();
+    // 1.0.0's EnvManager::login (0x71000AC00C); 3.0.1 inlines it into OnEventProc: the field's time and weather
+    void login() {
+        m_weatherID = (gf::WEATHERID)1;
+        m_hour = 0;
+        m_min = 0;
+        if (gf::GfFieldTime* time = mm::mtl::PtrSingleton<gf::GfFieldTime>::sys()) {
+            time->getTime(m_hour, m_min);
+            m_weatherID = gf::GfFieldWeather::getCurrentMapWeatherID(false);
+            m_cloudSea = gf::GfFieldWeather::getCurrentCloudSea();
+        }
+    }
+    unsigned char pad_10[0x58];
+    unsigned int m_hour;  // 0x68 (the name is not the original's)
+    unsigned int m_min;  // 0x6c (the name is not the original's)
+    gf::WEATHERID m_weatherID;  // 0x70 (the name is not the original's)
+    int m_cloudSea;  // 0x74 (the name is not the original's)
 };
 }  // namespace event
 

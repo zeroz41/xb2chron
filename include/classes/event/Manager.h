@@ -48,7 +48,9 @@ public:
 
     unsigned int m_playing : 1;  // end and stop act only while it is set; GfGameTalk::isPlaying returns it
     unsigned int pad_18_1 : 31;  // the rest of the word, which isPlaying loads whole
-    unsigned char pad_1c[0x254 - 0x1C];
+    unsigned char pad_1c[0x228 - 0x1C];
+    ml::Scn* m_scn;  // 0x228 the constructor's argument; BouManager::clear reaches the view through it (the name is not the original's)
+    unsigned char pad_230[0x254 - 0x230];
     // the scene name setupScene/startScene copy their name argument into (evt_setup's setSeamlessReadPos/Axis pass
     // it to SeamlessManager::addFirstSeamPoint); the name is not the original's
     mm::mtl::FixStr<32> m_sceneName;  // 0x254

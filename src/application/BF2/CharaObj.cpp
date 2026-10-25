@@ -1129,3 +1129,106 @@ MemoryManager::MemoryManager() : pad_10(0), pad_18(0), pad_24(0), pad_28(0), pad
 EffectManager::~EffectManager() {}
 
 }  // namespace event
+#include "classes/event/BouManager.h"
+#include "classes/event/CpuManager.h"
+#include "classes/event/Manager.h"
+#include "classes/event/EnvManager.h"
+#include "classes/event/SelectManager.h"
+#include "classes/event/RandManager.h"
+#include "classes/ml/Scn.h"
+#include "classes/ml/WinView.h"
+
+namespace event {
+
+// 1.0.0's BouManager::clear: detaches from the view first when attached
+inline void BouManager::clear() {
+    endActive();
+    if (m_flags & 2) {
+        mm::mtl::PtrSingleton<Manager>::sys()->m_scn->getView(-1)->detachWorkEvent(this);
+        m_flags &= ~2;
+    }
+    m_actives.clear();
+    m_callbacks.clear();
+    m_flags = 0;
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void BouManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 16:
+        render();
+        break;
+    case 12:
+        clear();
+        break;
+    }
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void EnvManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+    case 12:
+        clear();
+        break;
+    case 1:
+        login();
+        break;
+    case 14:
+        update();
+        break;
+    case 17:
+        render();
+        break;
+    }
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void SelectManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+        clear();
+        break;
+    case 12:
+        clear();
+        break;
+    case 14:
+        update();
+        break;
+    }
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void RandManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+        clear();
+        break;
+    case 12:
+        clear();
+        break;
+    case 14:
+        update();
+        break;
+    }
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void CpuManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+        init();
+        break;
+    case 12:
+        end();
+        break;
+    case 14:
+        update();
+        break;
+    case 19:
+        tailAlways();
+        break;
+    }
+}
+
+}  // namespace event
