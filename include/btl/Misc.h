@@ -5,6 +5,7 @@
 #include "mm/Vec3.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GfObj; }
 
 namespace btl {
 
@@ -43,6 +44,29 @@ enum TRANS_TYPE : int {
 bool GetObjectTransform(gf::GF_OBJ_HANDLE* handle, mm::Vec3& out, TRANS_TYPE type);
 // the angle of v about the Y axis from unitZ
 float CalcRotY(const mm::Vec3& v);
+
+// the helpers 3.0.1 keeps after battle/Misc.cpp's (ShakeCameraManager's unit)
+// v to length 1 in the XZ plane (y 0); false (and unitZ) when it is within 1e-6 of zero there
+bool NormalizeXZ(mm::Vec3& v);
+float CalcLength(const mm::Vec3& a, const mm::Vec3& b);
+float CalcSquareLength(const mm::Vec3& a, const mm::Vec3& b);
+float CalcLengthXZ(const mm::Vec3& a, const mm::Vec3& b);
+float CalcSquareLengthXZ(const mm::Vec3& a, const mm::Vec3& b);
+float CalcLengthXZ(const mm::Vec3& v);
+// the XZ direction from from to to, false (and unitZ) when they are within 1e-6 of each other there
+bool CalcDirectionXZ(const mm::Vec3& from, const mm::Vec3& to, mm::Vec3& out);
+// a random direction (each component in (-0.5, 0.5] before normalizing)
+void RandomVector(mm::Vec3& out);
+void RandomVectorXZ(mm::Vec3& out);
+bool GetObjectTransform(const gf::GfObj* obj, mm::Vec3& out, TRANS_TYPE type);
+// the trust stage's id: stages count down from 7
+int CovertKizunaStageToID(int stage);
+// the world position of the object's node (bone) of that name; false when it has no object or no such node
+bool GetNodePosition(gf::GF_OBJ_HANDLE* handle, const char* node, mm::Vec3& out);
+// the trust stage's bounds (BDAT file 51's KizunaMin and KizunaMax)
+void GetKizunaMinMax(int stage, int& min, int& max);
+// whether a and b are within range of each other (in the XZ plane when xz)
+bool CheckInRange(const mm::Vec3& a, const mm::Vec3& b, float range, bool xz);
 
 }  // namespace Misc
 
