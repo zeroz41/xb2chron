@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFFIELDBGM_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "mm/mtl/FixStr.h"
 
 namespace gf { class GfFieldBgm; }
 
@@ -14,6 +15,10 @@ public:
     void setGimmickBgmID(unsigned int id);
     void setRscBattleBgmID(unsigned int id);
     void gevBattleEnd();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: GfPlayComEvent::gevPlayEvent calls
+    // it on GfFieldBgm's instance (it then ignores this). What it does: hands the name to gf::BgmField's instance
+    // (fn_7100262E70) when there is one; its only caller passes GfPlayComEvent's BGM name on GEV 14.
+    void fn_7100262E58(const mm::mtl::FixStr<64>& name);
     bool isBossBgmCopied() const;  // 1.0.0's symbol at the same place, with the same caller (GfFieldSound::gevBattleEnd)
     // 1.0.0's out-of-line getters (3.0.1 inlines them)
     unsigned int getRscFieldBgmID() const;

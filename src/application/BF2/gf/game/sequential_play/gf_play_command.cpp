@@ -1,3 +1,13 @@
+#include "classes/gf/GfGameEvent.h"
+#include "classes/gf/GfFieldBgm.h"
+#include "classes/gf/GfPlayComEvent.h"
+#include "classes/gf/GfPlayComPlayerDead.h"
+#include "btl/Utility.h"
+#include "classes/gf/GfGameScene.h"
+#include "classes/gf/GfPlayComWaitBattleEnd.h"
+#include "gf/MsgObjectHealHp.h"
+#include "gf/GfObjUtil.h"
+#include "classes/gf/GfObj.h"
 #include "classes/gf/GfPlayComScriptTutorialSeq.h"
 #include "classes/gf/GfGameScene.h"
 #include "classes/gf/GfFieldWeather.h"
@@ -265,6 +275,69 @@ bool GfPlayComMapjump::update(const fw::UpdateInfo& info, bool flag) {
 GfPlayComMapjump* GfPlayComMapjump::create(const GfMapjumpInfo& info) {
 #line 501
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComMapjump(info);
+}
+
+void GfPlayComWaitBattleEnd::start() {
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        scene->setForceStopBattle(true);
+        if (m_eventId != 0) {
+            unsigned int type = GfDataEvent::getEventType(m_eventId) - 1;
+            if (type < 3 && scene->isNeedResetBladeForBattleEndForBattleEnd()) {
+                btl::Utility::fn_71000100F0();
+            }
+        }
+    }
+    m_time = 0.0f;
+    s_activate++;
+}
+
+void GfPlayComWaitBattleEnd::end() {
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        scene->setForceStopBattle(false);
+    }
+    s_activate--;
+}
+
+GfPlayComWaitBattleEnd* GfPlayComWaitBattleEnd::create(unsigned int eventId) {
+#line 637
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComWaitBattleEnd(eventId);
+}
+
+GfPlayComEvent::~GfPlayComEvent() { m_activate--; }
+
+void GfPlayComEvent::start() {
+    GfEvent::addEventCallback(this);
+    GfGameEvent::setAfterEventStartID(0);
+    GfGameEvent::fn_71002A0CDC(m_event, pad_1C, pad_20, &m_pos, m_time);
+}
+
+void GfPlayComEvent::end() { GfEvent::removeEventCallback(this); }
+
+bool GfPlayComEvent::update(const fw::UpdateInfo& info, bool flag) {
+    if (flag) {
+        return true;
+    }
+    if (!GfGameEvent::isPlaying()) {
+        return true;
+    }
+    if (GfPlayComPlayerDead* dead = mm::mtl::PtrSingleton<GfPlayComPlayerDead>::sys()) {
+        dead->m_eventPlaying = true;
+        return false;
+    }
+    return false;
+}
+
+void GfPlayComEvent::gevPlayEvent(GEV gev, unsigned int id) {
+    if (gev == GEV(10)) {
+        m_eventStarted = true;
+    } else if (gev == GEV(14)) {
+        if (m_bgm.m_nLen != 0) {
+            if (GfFieldBgm* bgm = mm::mtl::PtrSingleton<GfFieldBgm>::sys()) {
+                bgm->fn_7100262E58(m_bgm);
+            }
+            m_bgm.clear();
+        }
+    }
 }
 
 void GfPlayComCallbackEventSequence::start() { GfEvent::callEventPlay(GEV(m_begin ? 12 : 13), m_id); }

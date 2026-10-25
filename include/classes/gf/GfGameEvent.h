@@ -8,6 +8,7 @@
 #include "mtl/AllocHandle.h"
 
 namespace gf { class GfGameEvent; }
+namespace mm { class Vec3; }
 namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
 namespace gf { class GfSetupParam; class GfEvtModel; class EventBgmSetup; class GF_OBJ_HANDLE; class GF_SE_CATEGORY_HANDLE; }
 namespace gf { enum WEATHERID : int; enum WEATYPE : int; enum CFILTER_HANDLE : int; enum CLOUD_SEA_HANDLE : int; class GF_LP_HANDLE; }
@@ -26,6 +27,12 @@ public:
     static void postUpdate(const fw::UpdateInfo& info);
     static void finishNewGameWait();
     static void stop();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its unit is gf_game_event and
+    // it reads GfGameEvent's and event::Manager's instances. What it does: finds the event id in EVT_listList's sheets,
+    // builds its evtName (+ "_link" when linkID is set and debug one-time play is off), stores the id and third
+    // argument at GfGameEvent+0x190C/0x1910 and starts the event; GfPlayComEvent::start passes its three ids, &m_pos
+    // and m_time (in s0).
+    static void fn_71002A0CDC(unsigned int id, unsigned int, unsigned int, const mm::Vec3* pos, float time);
     static void gevPause(unsigned int, unsigned int);
     virtual ~GfGameEvent();  // slot 0
     static void setCancelFlag(bool flag);

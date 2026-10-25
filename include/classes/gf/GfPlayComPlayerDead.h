@@ -34,6 +34,10 @@ public:
     virtual bool update(const fw::UpdateInfo& info, bool flag);  // slot 6
     virtual void gevMapjump(gf::GEV, gf::MapjumpCallbackInfo const&);  // slot 7
     static mm::mtl::RTTI m_rtti;
+
+    unsigned char pad_20[0x1A];
+    // GfPlayComEvent::update sets it while its event is still playing (the name is not the original's)
+    bool m_eventPlaying;
 };
 }  // namespace gf
 

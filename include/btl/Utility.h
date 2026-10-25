@@ -42,6 +42,13 @@ bool AI_IsFly(gf::GF_OBJ_HANDLE* handle);
 int AI_GetEnemyNum();
 int AI_GetPlayerNum();
 bool IsEnableDeadSequence();
+bool IsEnableEventStart();
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfPlayComWaitBattleEnd::start has no
+// such call). In btl::Utility because its address sits between Utility functions (fn_71000100A8, GetArtsData) in
+// the unit that holds them. What it does: sets bit 7 of the 32-bit word at BattleGlobal+0x83CA (rewriting the
+// halfword at 0x83CE and the byte at 0x83D0 unchanged); its only caller is GfPlayComWaitBattleEnd::start, when the
+// event after the battle is of type 1..3 and GfGameScene::isNeedResetBladeForBattleEndForBattleEnd holds.
+void fn_71000100F0();
 // fills the list with the indices of the characters the handle's character sees (EnemyParameter::CheckChangeAttr
 // passes mode 0 and 0x23, AngryInfection mode 1 and 0x62) and returns how many
 int GetCharacterList(mm::mtl::FixedVector<unsigned char, 90>& list, gf::GF_OBJ_HANDLE* handle,

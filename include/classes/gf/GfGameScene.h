@@ -121,6 +121,7 @@ public:
     GfAppendWire* getAppendControl(GF_OBJ_HANDLE* handle);
     const mm::Vec3& getEnableSavePos() const;
     bool isResetBladePlay() const;
+    bool isNeedResetBladeForBattleEndForBattleEnd() const;
     void gevExecBuy(unsigned int, unsigned int, unsigned int shop);
     void gevChangeParty();
     void gevBattleStart();
