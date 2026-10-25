@@ -2,8 +2,18 @@
 #define CLASSES_FW_ISOUNDDRIVER_H
 
 namespace fw { enum SoundCategory : int; }
-namespace fw { class SoundCategoryDebugInfo; }
-namespace fw { class SoundHandleDebugInfo; }
+namespace fw {
+// the driver's debug report of one sound handle (layout only: SoundManager keeps 128 of them in 0x4000 bytes)
+class SoundHandleDebugInfo {
+public:
+    unsigned char pad_0[0x80];
+};
+// the driver's debug report of one category (layout only: SoundManager keeps 18 of them in 0x360 bytes)
+class SoundCategoryDebugInfo {
+public:
+    unsigned char pad_0[0x30];
+};
+}  // namespace fw
 namespace fw { class SoundOutputType; }
 namespace fw { class SoundPack; }
 namespace fw { class SoundPlayInfo; }
@@ -35,15 +45,15 @@ public:
     virtual void removeCategory(fw::SoundCategory) = 0;  // slot 14
     virtual void pauseCategory(fw::SoundCategory, bool, float) = 0;  // slot 15
     virtual bool isDeviceEnable() const { return false; }  // slot 16
-    virtual void playBgm(char const*, float, bool, int, fw::SoundCategory) = 0;  // slot 17
+    virtual unsigned int playBgm(char const*, float, bool, int, fw::SoundCategory) = 0;  // slot 17
     virtual bool startBgm(unsigned int) = 0;  // slot 18
     virtual bool stopBgm(unsigned int, float) = 0;  // slot 19
     virtual void stopBgmAll() = 0;  // slot 20
-    virtual void playVoice(char const*, float, bool, fw::SoundCategory) = 0;  // slot 21
+    virtual unsigned int playVoice(char const*, float, bool, fw::SoundCategory) = 0;  // slot 21
     virtual bool startVoice(unsigned int) = 0;  // slot 22
     virtual bool stopVoice(unsigned int, float) = 0;  // slot 23
-    virtual void playSe(char const*, fw::SoundPack*, float, fw::SoundCategory) = 0;  // slot 24
-    virtual void playSe(unsigned int, fw::SoundPack*, float, fw::SoundCategory) = 0;  // slot 25
+    virtual unsigned int playSe(char const*, fw::SoundPack*, float, fw::SoundCategory) = 0;  // slot 24
+    virtual unsigned int playSe(unsigned int, fw::SoundPack*, float, fw::SoundCategory) = 0;  // slot 25
     virtual void playSeEx(fw::SoundPlayInfo const&, fw::SoundResult&) = 0;  // slot 26
     virtual bool stopSe(unsigned int, float) = 0;  // slot 27
     virtual bool isValid(unsigned int) const = 0;  // slot 28
