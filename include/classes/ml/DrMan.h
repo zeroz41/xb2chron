@@ -1,6 +1,7 @@
 #ifndef CLASSES_ML_DRMAN_H
 #define CLASSES_ML_DRMAN_H
 
+#include "mtl/AllocHandle.h"
 #include "classes/ml/IWorkBackground.h"
 #include "mm/Vec3.h"
 
@@ -80,7 +81,9 @@ public:
     static bool s_bSRGBMode;
     static bool s_bFogSRGB;
 
-    unsigned char pad_8[0x68];
+    unsigned char pad_8[0xC];
+    mtl::ALLOC_HANDLE m_allocHandle;    // 0x14, DrResOccUniformObj/DrResEtcUniformObj allocate from it (the name is not the original's)
+    unsigned char pad_18[0x58];
     DrIniSys* m_iniSys;                 // the constructor makes it (0x1BA0 bytes)
     DrPixlMan* m_pixlMan;               // 0x78, DrMdoSetup::varStTex_* call DrPixlMan methods on it (the name is not the original's)
     unsigned char pad_80[0x8];

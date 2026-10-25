@@ -8,8 +8,9 @@ class DrResMdoMat {
 public:
     void setColor(float r, float g, float b, float a);
     void setAlpha(float);  // stores m_alpha
+    void setName(const char* name);
 
-    unsigned char pad_0[0x8];
+    const char* m_name;  // 0x00, set by setName
     float m_color[3];  // 0x08, set by DrMdoAnim::animcall_MatColorR/G/B
     float m_alpha;  // 0x14, set by setAlpha
     unsigned char pad_18[0x8];

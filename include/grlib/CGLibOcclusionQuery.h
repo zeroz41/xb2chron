@@ -4,10 +4,12 @@
 namespace grlib {
 
 // an occlusion query reporting into two alternating report slots of the context's CGLibBuffOcclusion
-// (0x14 bytes used; the field names are not the original's)
+// (0x14 bytes used, 0x18 with padding: ml::DrResQueryObj holds one at 0x10 and its next field at 0x28; the field
+// names are not the original's)
 class CGLibOcclusionQuery {
 public:
     CGLibOcclusionQuery();
+    ~CGLibOcclusionQuery() { release(); }
     void release();
     void beginQuery();
     void endQuery();

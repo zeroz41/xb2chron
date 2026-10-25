@@ -14,6 +14,11 @@
 #include "classes/ml/DrShdLgtClustered.h"
 #include "classes/navi/NvmshAcObjBaseGbl.h"
 #include "ml/DrResEtcParams.h"
+#include "ml/DrResMdoMat.h"
+#include "ml/DrResQueryObj.h"
+#include "ml/DrPixlOccQuery.h"
+#include "ml/DrResOccUniformObj.h"
+#include "mtl/MemManager.h"
 #include "ml/DrResFetch.h"
 #include "ml/DrResMdoLight.h"
 #include "ml/DrResMdoPosInstAnm.h"
@@ -27,6 +32,8 @@
 #include "ml/DrResShdPrePass.h"
 #include "ml/DrResShdShw.h"
 #include "ml/DrResShdStreamOut.h"
+#include "ml/DrResShdObjMot.h"
+#include "ml/DrResShdMpf.h"
 #include "ml/DrShdDataObj.h"
 
 namespace ml {
@@ -3052,6 +3059,284 @@ DrResFetch::DefVertexFunc DrResFetch::s_callDefVertex[91] = {
     &DrResFetch::setupMofShadowMotTex,
     &DrResFetch::setupMeshVtxAdd,
 };
+
+
+namespace _drrsm {
+const char* c_DeclOfsNames[2] = {"MODE_UMATE_ON", "DECL_DITHER"};
+}  // namespace _drrsm
+
+DrResShdMpf::DrResShdMpf(DrShdDataObj* data, int type) {
+    m_data = data;
+    for (int i = 0; i < 8; i++) {
+        m_shaderSel[i] = -1;
+    }
+    m_flags = 1;
+    m_type = type;
+    for (int i = 0; i < 2; i++) {
+        m_declOfs[i] = m_data->getDeclarationOfs(_drrsm::c_DeclOfsNames[i]);
+    }
+    m_shaderSel[2] = 1;
+    m_shaderSel[0] = 0;
+    m_shaderSel[1] = 1;
+    m_shaderSel[3] = m_data->getCurrentShader().getUniformBlockOfs("U_MpfWet");
+    m_shaderSel[4] = m_data->getCurrentShader().getUniformBlockOfs("U_MpfOld");
+    m_shaderSel[5] = 1;
+    m_shaderSel[6] = 0;
+    m_shaderSel[7] = 2;
+    m_flags &= ~1;
+}
+
+void DrResShdMpf::setupShader(unsigned int idx) {
+    m_data->setDeclarationIdx(m_declOfs[0], 2 - (idx & 1));
+    m_data->setDeclarationIdx(m_declOfs[1], 2 - ((idx >> 1) & 1));
+    m_data->setupShader((idx >> 1) & 1);
+}
+
+void DrResShdShw::shwShdset_DefObj() {
+    m_shaderSel[2] = 1;
+    m_shaderSel[3] = 2;
+    m_shaderSel[1] = 0;
+    m_shaderSel[0] = 0;
+}
+
+void DrResShdShw::shwShdset_Inst() {
+    m_shaderSel[2] = 1;
+    m_shaderSel[3] = 2;
+    m_shaderSel[1] = 0;
+    m_shaderSel[0] = 0;
+}
+
+void DrResShdShw::shwShdset_Mot() {
+    m_shaderSel[2] = 1;
+    m_shaderSel[3] = 2;
+    m_shaderSel[1] = 0;
+    m_shaderSel[0] = 0;
+}
+
+void DrResShdShw::shwShdset_InstMot() {
+    m_shaderSel[2] = 1;
+    m_shaderSel[3] = 2;
+    m_shaderSel[1] = 0;
+    m_shaderSel[0] = 0;
+}
+
+void DrResShdShw::shwShdset_Fw() {
+    m_shaderSel[2] = 1;
+    m_shaderSel[3] = 2;
+    m_shaderSel[1] = 0;
+    m_shaderSel[0] = 0;
+    m_shaderSel[4] = 3;
+    m_shaderSel[5] = 1;
+    m_shaderSel[6] = 2;
+}
+
+DrResShdStreamOut::DrResShdStreamOut(DrShdDataObj* data, int type) {
+    m_data = data;
+    m_shaderSel[0] = -1;
+    m_shaderSel[1] = -1;
+    m_shaderSel[2] = -1;
+    m_type = type;
+    m_wetNumOfs = 0;
+    (this->*s_callStmOuSet[m_type])();
+}
+
+
+void (DrResShdObjMot::*DrResShdObjMot::s_callMotObjSet[6])() = {
+    &DrResShdObjMot::motblur_motObj, &DrResShdObjMot::motblur_motObjTex, &DrResShdObjMot::motblur_motObjTex,
+    &DrResShdObjMot::motblur_notObj, &DrResShdObjMot::motblur_notObjTex, &DrResShdObjMot::motblur_notObjTex,
+};
+
+DrResShdObjMot::DrResShdObjMot(DrShdDataObj* data, int type) {
+    m_data = data;
+    for (int i = 0; i < 5; i++) {
+        m_shaderSel[i] = -1;
+    }
+    m_flags = 1;
+    m_type = type;
+    (this->*s_callMotObjSet[m_type])();
+    m_flags &= ~1;
+}
+
+void DrResShdObjMot::motblur_motObj() {
+    m_shaderSel[0] = 0;
+    m_shaderSel[1] = 1;
+    m_shaderSel[2] = m_data->getCurrentShader().getUniformBlockOfs("U_VPam");
+    m_shaderSel[3] = m_data->getCurrentShader().getUniformBlockOfs("U_VPam");
+}
+
+void DrResShdObjMot::motblur_motObjTex() {
+    m_shaderSel[0] = 0;
+    m_shaderSel[1] = 1;
+    m_shaderSel[2] = m_data->getCurrentShader().getUniformBlockOfs("U_VPam");
+    m_shaderSel[3] = m_data->getCurrentShader().getUniformBlockOfs("U_VPam");
+    m_shaderSel[4] = m_data->getCurrentShader().getTextureLocation("tex");
+}
+
+void DrResShdObjMot::motblur_notObj() {
+    m_shaderSel[0] = m_data->getCurrentShader().getUniformBlockOfs("U_MDL1");
+    m_shaderSel[1] = m_data->getCurrentShader().getUniformBlockOfs("U_MDL2");
+    m_shaderSel[2] = m_data->getCurrentShader().getUniformBlockOfs("U_VPam");
+    m_shaderSel[3] = m_data->getCurrentShader().getUniformBlockOfs("U_VPam");
+}
+
+void DrResShdObjMot::motblur_notObjTex() {
+    m_shaderSel[0] = m_data->getCurrentShader().getUniformBlockOfs("U_MDL1");
+    m_shaderSel[1] = m_data->getCurrentShader().getUniformBlockOfs("U_MDL2");
+    m_shaderSel[2] = m_data->getCurrentShader().getUniformBlockOfs("U_VPam");
+    m_shaderSel[3] = m_data->getCurrentShader().getUniformBlockOfs("U_VPam");
+    m_shaderSel[4] = m_data->getCurrentShader().getTextureLocation("tex");
+}
+
+void DrResEtcParams::setParams(float value) {
+    m_flags |= 1 << DrMan::s_nDblStockIdx;
+    m_value[DrMan::s_nDblStockIdx] = value;
+}
+
+void DrResEtcParams::setPreParams(float value) {
+    m_flags |= 4 << DrMan::s_nDblStockIdx;
+    m_preValue[DrMan::s_nDblStockIdx] = value;
+}
+
+void DrResEtcParams::setInitParams(float value) {
+    m_preValue[1] = value;
+    m_preValue[0] = value;
+    m_value[1] = value;
+    m_value[0] = value;
+    m_params = value;
+}
+
+void DrResMdoMat::setColor(float r, float g, float b, float a) {
+    m_color[0] = r;
+    m_color[1] = g;
+    m_color[2] = b;
+    m_alpha = a;
+}
+
+void DrResMdoMat::setAlpha(float alpha) {
+    m_alpha = alpha;
+}
+
+void DrResMdoMat::setName(const char* name) {
+    m_name = name;
+}
+
+DrResQueryAcc::DrResQueryAcc() : m_query(nullptr) {}
+
+void DrResQueryAcc::releaseQuery() {
+    if (m_query != nullptr) {
+        m_query->m_user = nullptr;
+        m_query = nullptr;
+    }
+}
+
+int DrResQueryObj::getOccZPassCount() {
+    if (m_flags & (4 << DrMan::s_nDblNowIdx)) {
+        return m_query.getQueryPixel();
+    }
+    return 0;
+}
+
+DrResQueryObj::DrResQueryObj() : m_work(), m_user(nullptr), m_userWork(nullptr), m_flags(0) {}
+
+DrResQueryObj::~DrResQueryObj() {
+    m_query.release();
+}
+
+bool DrResQueryObj::update() {
+    if (m_user != nullptr) {
+        if (m_flags & 2) {
+            if (m_flags & 1) {
+                m_flags &= ~1;
+                return false;
+            }
+            m_user->m_query = nullptr;
+        } else {
+            if (m_flags & 1) {
+                m_flags &= ~1;
+                return false;
+            }
+            m_flags = 2;
+            return false;
+        }
+    } else if (m_flags & 1) {
+        m_flags &= ~3;
+        return false;
+    }
+    m_flags = 0;
+    m_user = nullptr;
+    m_userWork = nullptr;
+    return true;
+}
+
+void DrResQueryObj::begin() {
+    m_query.beginQuery();
+    m_flags |= 4 << DrMan::s_nDblNowIdx;
+}
+
+void DrResQueryObj::end() {
+    m_query.endQuery();
+}
+
+DrResUseQueryObj::DrResUseQueryObj() : m_query(nullptr), m_pixel(0) {}
+
+DrResUseQueryObj::~DrResUseQueryObj() {
+    if (m_query != nullptr) {
+        m_query->m_user = nullptr;
+        m_query = nullptr;
+    }
+}
+
+void DrResUseQueryObj::update() {
+    if (m_query != nullptr) {
+        m_pixel = m_query->getOccZPassCount();
+    } else {
+        m_pixel = 0;
+    }
+}
+
+void DrResUseQueryObj::end() {
+    if (m_query != nullptr) {
+        m_query->end();
+    }
+}
+
+void DrResUseQueryObj::begin(DrPixlOccQuery* occ) {
+    DrResQueryObj* query = m_query;
+    if (query == nullptr) {
+        query = occ->createObj();
+        if (query == nullptr) {
+            return;
+        }
+        m_query = query;
+        query->m_user = this;
+    }
+    query->m_flags |= 1;
+    query->begin();
+}
+
+DrResOccUniformObj::~DrResOccUniformObj() {
+    if (m_buf != nullptr) {
+        mtl::MemManager::deallocate(m_buf, 0, false);
+        m_buf = nullptr;
+    }
+}
+
+void DrResOccUniformObj::begin() {
+    m_cnt = 0;
+}
+
+void DrResOccUniformObj::end() {}
+
+mm::Mat44* DrResOccUniformObj::getMatTbl() {
+    if (m_max <= m_cnt) {
+        return nullptr;
+    }
+    return &m_matTbl[m_cnt++];
+}
+
+mm::Mat44* DrResOccUniformObj::getMatTbl(int idx) {
+    return m_matTbl + idx;
+}
 
 }  // namespace ml
 
