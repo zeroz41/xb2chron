@@ -24,7 +24,10 @@ public:
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
-    unsigned char pad_18[0x8];
+    // which motion the controlled PC shows: -1 none (enter's start), 0 "S_move", 1 "S_walkendL"/"S_walkendR",
+    // 2 "S_idle", 3 "S_talkA_02" (enter sets it from the asm's state; the name is not the original's)
+    int m_mode;
+    unsigned char pad_1c[0x4];
 };
 }}  // namespace gf::pc
 

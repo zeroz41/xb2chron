@@ -12,6 +12,9 @@ namespace gf {
 // lifts' objects and whether the asking object is on its switch (the field names are not the original's)
 class MsgPcGetElvLift : public ::fw::Message {
 public:
+    // StateFieldAccess::enter asks the accessed object with one
+    MsgPcGetElvLift() : fw::Message(0x1000027, 0x40), m_isLiftSwitch(false) {}
+
     mm::mtl::FixedVector<gf::GF_OBJ_HANDLE*, 16> m_lifts;  // the lift objects found
     bool m_isLiftSwitch;
 };

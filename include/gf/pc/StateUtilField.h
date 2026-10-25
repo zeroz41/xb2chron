@@ -22,10 +22,12 @@ namespace gf { namespace pc {
 enum ASM_CMD_ID_FIELD : unsigned int {
     ASM_CMD_ID_FIELD_IDLE = 0,           // "C_idle"
     ASM_CMD_ID_FIELD_MOVE = 1,           // "C_move"
+    ASM_CMD_ID_FIELD_FALL = 6,           // "C_fall" (the name is not the original's: from the string)
     ASM_CMD_ID_FIELD_WATERIDLE = 7,      // "C_wateridle"
     ASM_CMD_ID_FIELD_SWIM_00 = 8,        // "C_swim_00"
     ASM_CMD_ID_FIELD_SWIM_01 = 9,        // "C_swim_01"
     ASM_CMD_ID_FIELD_WATERHOLE_00 = 10,  // "C_waterhole_00"
+    ASM_CMD_ID_FIELD_WATERDEAD = 11,     // "C_waterdead" (the name is not the original's: from the string)
 };
 
 // the asm command an ASM_CMD_ID_FIELD stands for (inline: its table is a weak static of this unit's, read through

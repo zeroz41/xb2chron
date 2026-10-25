@@ -1,3 +1,9 @@
+#include "gf/pc/StateUtilField.h"
+#include "classes/gf/pc/StateFieldExtraControl.h"
+#include "gf/MsgPcGetElvLift.h"
+#include "gf/MsgPcFieldElvWarp.h"
+#include "gf/MsgPcGetElvLift.h"
+#include "gf/MsgPcFieldElvWarp.h"
 #include "classes/gf/pc/GfPropertyBattle.h"
 #include "classes/gf/GfComPropertyPc.h"
 #include "gf/MsgObjectDamage.h"
@@ -334,6 +340,51 @@ void StateFieldStart::leave(GfComBehaviorPc* behavior, ai::State* next) {
     StateUtilField::setSpecialActStatus(*behavior, false);
 }
 
+void StateFieldStart::update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info) {
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    GfComAsm* com = behavior->m_owner->getComponent<GfComAsm>(2);
+    if (property->m_waterLevel == 3) {
+        if (property->m_stateFlags & 0x800) {
+            if (StateUtilField::execAsmCmd(*com, ASM_CMD_ID_FIELD_WATERDEAD)) {
+                requestState(0x23);
+            }
+        } else if (StateUtilField::execAsmCmd(*com, ASM_CMD_ID_FIELD_WATERIDLE)) {
+            requestState(0x19);
+        }
+    } else if (property->m_stateFlags & 0x10) {
+        const char* state = com->getStateName(AnimLayer(0));
+        if (state != nullptr && strcmp(state, "S_idle") == 0) {
+            requestState(3);
+        }
+    } else if (StateUtilField::execAsmCmd(*com, ASM_CMD_ID_FIELD_FALL)) {
+        requestState(0xF);
+    }
+}
+
+void StateFieldAccess::enter(GfComBehaviorPc* behavior, ai::State* prev) {
+    m_target = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    if (GfObj* target = StateUtilField::getAccessTarget(*behavior)) {
+        if (property->m_stateFlags & 0x400) {
+            MsgPcGetElvLift lift;
+            static_cast<fw::MessageObject*>(target)->recieveMessage(&static_cast<fw::MessageObject&>(*static_cast<GfObj*>(behavior->m_owner)), lift);
+            if (lift.m_isLiftSwitch) {
+                MsgPcFieldElvWarp warp(&lift, target->m_handle);
+                StateUtil::broadcastPlayer(*behavior, warp);
+            }
+        }
+        m_target = target->m_handle;
+        MsgPcFieldNotifyAction action(0);
+        static_cast<GfObj*>(behavior->m_owner)->sendMessage(target, action);
+    }
+    StateUtilField::setAccessFlag(*behavior, false);
+    StateUtilField::setSpecialActStatus(*behavior, true);
+    property->m_velocity = mm::Vec3::zero;
+    property->m_moveVec2.y = 0.0f;
+    StateUtil::setEnableDownIK(*behavior, true);
+    GfObjUtil::setInvincible(static_cast<GfObj*>(behavior->m_owner)->m_handle, true, false);
+}
+
 void StateFieldAccess::update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info) {
     if (strcmp(behavior->m_owner->getComponent<GfComAsm>(2)->getStateName(AnimLayer(0)), "S_idle") == 0 &&
         !GfGameManager::isPlayerPause()) {
@@ -658,6 +709,35 @@ void StateFieldAlive::update(GfComBehaviorPc* behavior, const fw::UpdateInfo& in
     if (com->isEnd(AnimLayer(0)) && StateUtilField::execAsmCmd(*com, ASM_CMD_ID_FIELD_IDLE)) {
         requestState(3);
     }
+}
+
+void StateFieldExtraControl::enter(GfComBehaviorPc* behavior, ai::State* prev) {
+    m_mode = -1;
+    GfComAsm* com = behavior->m_owner->getComponent<GfComAsm>(2);
+    if (const char* state = com->getStateName(AnimLayer(0))) {
+        if (strcmp(state, "S_idle") == 0) {
+            if (m_mode != 2) {
+                GfGameManager::setGmkTutorialMoverOK(true);
+                StateUtil::setEnableDownIK(*behavior, true);
+                StateUtil::setEnableDownIK(*behavior, true);
+                m_mode = 2;
+            }
+        } else if (strcmp(state, "S_move") == 0) {
+            if (m_mode != 0) {
+                m_mode = 0;
+            }
+        } else if (strcmp(state, "S_walkendL") == 0 || strcmp(state, "S_walkendR") == 0) {
+            if (m_mode != 1) {
+                m_mode = 1;
+            }
+        } else if (strcmp(state, "S_talkA_02") == 0) {
+            if (m_mode != 3) {
+                StateUtil::setEnableDownIK(*behavior, true);
+                m_mode = 3;
+            }
+        }
+    }
+    behavior->m_owner->findComponent<GfComPropertyPc>(5)->m_moveVec2.y = 0.0f;
 }
 
 void StateFieldExtraControl::leave(GfComBehaviorPc* behavior, ai::State* next) {
