@@ -2,6 +2,7 @@
 #define GRLIB_CGLIBMEMHANDLE_H
 
 #include "mtl/AllocHandle.h"
+#include "ml/CriticalSection.h"
 
 namespace grlib {
 // a block of GPU-visible memory: CGLibMemHandle allocates and frees it. The field names are not the original's.
@@ -37,6 +38,7 @@ public:
     };
 
     // creates the allocators (releasing any first)
+    static const ml::CriticalSection& getCriticalSection();
     static void setup(const ArgMemInfo& info);
     static void release();
     static void free(CGLibMemType& mem);
@@ -46,6 +48,7 @@ public:
     static void setMemBuff(CGLibMemType& mem, void* buffer);
 
     // the allocators setup creates (defined in this order). The names are 1.0.0's.
+    static mtl::ALLOC_HANDLE s_hTop;
     static mtl::ALLOC_HANDLE s_hDefHandle;
     // the allocator pixel memory comes from (CGLibState::setPixelResidentArea)
     static mtl::ALLOC_HANDLE s_hPxlHandle;

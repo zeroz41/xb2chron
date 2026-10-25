@@ -2,6 +2,7 @@
 #define GRLIB_CGLIBBUFFFIXALLOC_H
 
 #include "mtl/AllocHandle.h"
+#include "grlib/CGLibMemPool.h"
 
 namespace grlib {
 
@@ -76,6 +77,16 @@ public:
     void release();
     void createMemPoolTbl(unsigned int num);
 };
+// fixed-size uniform slots in one GPU memory pool
+class CGLibBuffMinUniform : public CGLibBuffFixAlloc {
+public:
+    CGLibBuffMinUniform();
+    ~CGLibBuffMinUniform();
+    void release();
+    void createUniform(unsigned int size, unsigned int elemSize);
+    CGLibMemPool m_pool;  // 0x28: holds m_pBuff (the name is not the original's)
+};
+
 }  // namespace grlib
 
 #endif

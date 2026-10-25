@@ -1,11 +1,13 @@
 #include "nvn/nvn.h"
+#include "grlib/CGLibVtlMemPool.h"
+#include "grlib/CGLibMemHandle.h"
+#include "grlib/CGLibBuffReleaseTbl.h"
 #include "nvn/nvn_FuncPtrInline.h"
 #include "mtl/MemManager.h"
 #include "grlib/CGLibDeviceObj.h"
 #include "grlib/CGLibBuffFixAlloc.h"
 #include "grlib/CGLibMemPoolAdder.h"
 #include "grlib/CGLibMemPool.h"
-#include "grlib/CGLibMemHandle.h"
 #include "classes/grlib/context/CGLibSystemContext.h"
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/ScnRender.h"
@@ -50,7 +52,6 @@
 #include "grlib/CGLibVtxInstans.h"
 #include "grlib/CGLibVtxOneInstans.h"
 #include "grlib/CGLibVtxVertex.h"
-#include "grlib/CGLibVtlMemPool.h"
 #include "grlib/CGLibVtxStmOut.h"
 #include <string.h>
 
@@ -271,6 +272,23 @@ void CGLibMemPoolAdder::addAdder(mtl::ALLOC_HANDLE handle) {
 
 void CGLibMemPoolAdder::releaseAdder(mtl::ALLOC_HANDLE handle) { releaseAdder(mtl::MemManager::getTopAdr(handle)); }
 
+mtl::ALLOC_HANDLE CGLibMemHandle::s_hTop;
+mtl::ALLOC_HANDLE CGLibMemHandle::s_hDefHandle;
+mtl::ALLOC_HANDLE CGLibMemHandle::s_hPxlHandle;
+mtl::ALLOC_HANDLE CGLibMemHandle::s_hVtxHandle;
+mtl::ALLOC_HANDLE CGLibMemHandle::s_hUniHandle;
+mtl::ALLOC_HANDLE CGLibMemHandle::s_hMemHandle;
+mtl::ALLOC_HANDLE CGLibMemHandle::s_hFchHandle;
+mtl::ALLOC_HANDLE CGLibMemHandle::s_hShdHandle;
+mtl::ALLOC_HANDLE CGLibMemHandle::s_hCntHandle;
+
+// 1.0.0 still had it out of line (3.0.1 inlines it everywhere)
+const ml::CriticalSection& CGLibMemHandle::getCriticalSection() {
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_71015E9338, its guard lbl_71015E9360)
+    static ml::CriticalSection s_cs;
+    return s_cs;
+}
+
 void CGLibBuffFixAlloc::freeBuffer(void* p) {
     freeID((reinterpret_cast<unsigned long>(p) - reinterpret_cast<unsigned long>(m_pBuff)) / m_elemSize);
 }
@@ -378,6 +396,160 @@ void CGLibBuffMemPoolTbl::createMemPoolTbl(unsigned int num) {
     release();
     setupTbl(CGLibMemHandle::s_hDefHandle, CGLibMemHandle::s_hDefHandle, num, 0x100, 0x100);
 }
+
+// 1.0.0 still had these three out of line (3.0.1 inlines them everywhere)
+CGLibReleaseObj::CGLibReleaseObj() : m_work(), m_pNext(nullptr) {}
+
+CGLibReleaseObj::~CGLibReleaseObj() { release(); }
+
+void CGLibReleaseObj::release() {
+    if (m_work.m_use) {
+        s_callRelease[m_work.m_type](m_work);
+        m_work = wrkRelease();
+    }
+}
+
+CGLibBuffReleaseTbl::CGLibBuffReleaseTbl() : m_num(0), m_pTbl(nullptr), m_free(), m_stock() {}
+
+void CGLibBuffReleaseTbl::release() {
+    for (int i = 0; i < m_num; i++) {
+        m_pTbl[i].release();
+    }
+    if (m_pTbl != nullptr) {
+        mtl::MemManager::deallocate(m_pTbl, 0, false);
+        m_pTbl = nullptr;
+    }
+    m_num = 0;
+    m_stock[1] = List();
+    m_stock[0] = List();
+    m_free = List();
+}
+
+CGLibReleaseObj* CGLibBuffReleaseTbl::createObj() {
+    CGLibReleaseObj* pObj = m_free.pop();
+    m_stock[CGLibManager::s_nStkNowIdx].push(pObj);
+    return pObj;
+}
+
+void CGLibBuffReleaseTbl::update() {
+    List& list = m_stock[CGLibManager::s_nDblNowIdx];
+    CGLibReleaseObj* pObj = list.m_pHead;
+    if (pObj != nullptr) {
+        do {
+            CGLibReleaseObj* pNext = pObj->m_pNext;
+            pObj->release();
+            m_free.push(pObj);
+            pObj = pNext;
+        } while (pObj != nullptr);
+        m_stock[CGLibManager::s_nDblNowIdx] = List();
+    }
+}
+
+CGLibBuffMinUniform::CGLibBuffMinUniform() { release(); }
+
+void CGLibBuffMinUniform::release() {
+    m_pool.release();
+    releaseTbl();
+}
+
+CGLibBuffMinUniform::~CGLibBuffMinUniform() {}
+
+void CGLibBuffMinUniform::createUniform(unsigned int size, unsigned int elemSize) {
+    release();
+    setupFixTbl(CGLibMemHandle::s_hDefHandle, CGLibMemHandle::s_hDefHandle, size / elemSize, elemSize, size, 0x1000);
+    m_pool.setupBuffer(m_pBuff, size, 0x24);
+}
+
+CGLibVtlMemPool::CGLibVtlMemPool() {
+    m_size = 0;
+    m_pMem = nullptr;
+    m_isOwner = false;
+    m_offset = 0;
+}
+
+CGLibVtlMemPool::~CGLibVtlMemPool() { release(); }
+
+void CGLibVtlMemPool::release() {
+    if (m_isOwner) {
+        nvnMemoryPoolFinalize(m_pPool);
+        context::CGLibSystemContext::sys()->m_memPoolTbl.freeBuffer(m_pPool);
+    }
+    m_size = 0;
+    m_pMem = nullptr;
+    m_isOwner = false;
+    m_offset = 0;
+}
+
+void CGLibVtlMemPool::setupBuffer(void* buffer, unsigned int size) {
+    release();
+    m_size = size;
+    m_pMem = static_cast<unsigned char*>(buffer);
+    m_offset = 0;
+    CGLibMemPool* pPool = context::CGLibSystemContext::sys()->m_memPoolAdder.getMemPool(buffer);
+    if (pPool == nullptr) {
+        NVNdevice* pDevice = &CGLibManager::sys()->m_device;
+        NVNmemoryPoolBuilder builder;
+        nvnMemoryPoolBuilderSetDefaults(&builder);
+        nvnMemoryPoolBuilderSetDevice(&builder, pDevice);
+        nvnMemoryPoolBuilderSetFlags(&builder, 100);
+        nvnMemoryPoolBuilderSetStorage(&builder, buffer, size);
+        CGLibBuffMemPoolTbl& tbl = context::CGLibSystemContext::sys()->m_memPoolTbl;
+        m_pPool = reinterpret_cast<NVNmemoryPool*>(tbl.getBuffer(tbl.allocID()));
+        nvnMemoryPoolInitialize(m_pPool, &builder);
+        m_gpuAddress = nvnMemoryPoolGetBufferAddress(m_pPool);
+        m_isOwner = true;
+    } else {
+        nn::os::FlushDataCache(m_pMem, size);
+        m_offset = reinterpret_cast<unsigned long>(buffer) - reinterpret_cast<unsigned long>(pPool->m_pBuffer);
+        m_pPool = pPool->m_pPool;
+        NVNbufferAddress address = nvnMemoryPoolGetBufferAddress(pPool->m_pPool);
+        m_gpuAddress = m_offset + address;
+        m_isOwner = false;
+    }
+}
+
+void CGLibVtlMemPool::delayRelease() {
+    if (m_isOwner) {
+        context::CGLibSystemContext::sys()->releaseDelayMempool(m_pPool, nullptr);
+    }
+    m_size = 0;
+    m_pMem = nullptr;
+    m_isOwner = false;
+    m_offset = 0;
+}
+
+void CGLibReleaseObj_plf::release_mempool(wrkRelease& work) {
+    if (work.m_mempool) {
+        nvnMemoryPoolFinalize(static_cast<NVNmemoryPool*>(work.m_res.m_obj.m_pObj));
+        context::CGLibSystemContext::sys()->m_memPoolTbl.freeBuffer(work.m_res.m_obj.m_pObj);
+    }
+    if (work.m_res.m_obj.m_pBuff != nullptr) {
+        mtl::MemManager::deallocate(work.m_res.m_obj.m_pBuff, 0, false);
+        work.m_res.m_obj.m_pBuff = nullptr;
+    }
+}
+
+void CGLibReleaseObj_plf::release_textrue(wrkRelease& work) {
+    if (work.m_texture) {
+        nvnTextureFinalize(static_cast<NVNtexture*>(work.m_res.m_obj.m_pObj));
+        context::CGLibSystemContext::sys()->m_textureAlloc.freeBuffer(work.m_res.m_obj.m_pObj);
+    }
+    if (work.m_res.m_obj.m_pBuff != nullptr) {
+        mtl::MemManager::deallocate(work.m_res.m_obj.m_pBuff, 0, false);
+        work.m_res.m_obj.m_pBuff = nullptr;
+    }
+    if (work.m_textureID != -1) {
+        context::CGLibSystemContext::sys()->m_texDescriptor.freeID(work.m_textureID);
+    }
+    if (work.m_samplerID != -1) {
+        context::CGLibSystemContext::sys()->m_texDescriptor.freeID(work.m_samplerID);
+    }
+}
+
+void CGLibReleaseObj_plf::release_vertex(wrkRelease& work) { CGLibMemHandle::free(work.m_res.m_mem); }
+
+void (*CGLibReleaseObj_plf::s_callRelease[4])(wrkRelease& work) = {release_mempool, release_textrue, release_sampler,
+                                                                   release_vertex};
 
 }  // namespace grlib
 
