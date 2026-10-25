@@ -190,6 +190,11 @@ public:
     // gives UIStr the font folder "menu_ira") or add-on content 0x101 is owned. 344 functions call it: 3 at 427 call sites
     // and 1 at 46.
     static bool fn_710048FD30(unsigned int layer);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // GfMenuObjUtil's functions (unit GfMenuObjUtil). What it does: true when bit 2 of byte 4 of
+    // ui::UIUtil::getPadData() is set, else that byte's bit 1 (GfMenuObjFieldSkill::update stops its voice when this
+    // and fn_710048FD30(3) hold).
+    static bool fn_7100492C88();
     // the icons of a driver's arts at a level (getArtsIconInfo zeroes it first); the names are not the original's
     struct ArtsIconInfo {
         unsigned int m_type;     // 0xC, 0xD, 0xE for the special kinds

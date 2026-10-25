@@ -62,7 +62,9 @@ public:
 
         unsigned int m_type;  // 0: one skill at a time (StateDispInfo), 1: the total (StateDispTotal)
         mm::mtl::FixedVector<BladeSkillInfo, 30> m_skills;
-        unsigned long m_unk100;  // with m_unk108, handed to openTotalInfo and (m_unk130 0) openResult
+        // with m_unk108, handed to openTotalInfo and (m_unk130 0) openResult: a message file and the id of a text in
+        // it (the menu object builds a ui::UIStr from them)
+        unsigned char* m_unk100;
         unsigned int m_unk108;
         unsigned long m_unk110;
         unsigned int m_unk118;
