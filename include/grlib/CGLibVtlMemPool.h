@@ -6,6 +6,12 @@ namespace grlib {
 // the vertex buffers read are known; their names are not the original's.
 class CGLibVtlMemPool {
 public:
+    CGLibVtlMemPool();
+    ~CGLibVtlMemPool();
+    void release();
+    // frees the pool once the GPU is done with it
+    void delayRelease();
+
     unsigned char pad_0[0x8];
     unsigned long m_gpuAddress;  // 0x8, the pool's GPU address
     unsigned char pad_10[0x18];

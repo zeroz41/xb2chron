@@ -2,6 +2,8 @@
 #define GRLIB_CGLIBTEXTUREBUFFER_H
 
 #include "grlib/GrlTypes.h"
+#include "grlib/CGLibVtlMemPool.h"
+#include "nvn/nvn.h"
 
 namespace grlib {
 
@@ -21,6 +23,9 @@ public:
     // the texture's first texel (CGLibTexture::get1PixelTextureInfo)
     float get1PixelTextureInfo();
     unsigned int getMipmap() const;
+    // frees the texture, its memory and its descriptor ids now / once the GPU is done with them
+    void release();
+    void delayRelease();
 
     GrlSurfaceFormat m_format;     // 0x00
     unsigned short m_width;        // 0x04
@@ -28,11 +33,16 @@ public:
     unsigned char pad_8[0x4];
     unsigned short m_mipmap;       // 0x0C: getMipmap
     unsigned short m_type;         // 0x0E: 1 = 1D (isTexture1D), 5 = 3D (isTexture3D)
-    unsigned int m_flags;          // 0x10: 1 = initialized, 0x20 = linear (not block-linear) layout
-    unsigned char pad_14[0x14];
+    unsigned int m_flags;          // 0x10: 1 = initialized, 2 = owns m_pData, 0x20 = linear (not block-linear) layout
+    unsigned char pad_14[0x4];
+    NVNtexture* m_pNvnTexture;     // 0x18: from CGLibSystemContext::m_textureAlloc
+    void* m_pStorage;              // 0x20: the texture's memory (pool memory + offset, setupTextureBuff)
     unsigned char* m_pData;        // 0x28
     unsigned int m_dataSize;       // 0x30
-    unsigned char pad_34[0x3C];
+    int m_textureId;               // 0x34: CGLibSystemContext::m_texDescriptor ids, -1 = none
+    int m_samplerId;               // 0x38
+    unsigned char pad_3C[0x4];
+    CGLibVtlMemPool m_memPool;     // 0x40
 };
 
 }  // namespace grlib

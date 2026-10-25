@@ -7,6 +7,10 @@
 // (pfnc_<name>, loaded at start-up) and an inline wrapper calling through it. Only the entry points the
 // decompiled code calls are listed; the signatures are the SDK's.
 
+typedef void (*PFNNVNTEXTUREFINALIZEPROC)(NVNtexture* texture);
+extern PFNNVNTEXTUREFINALIZEPROC pfnc_nvnTextureFinalize;
+static inline void nvnTextureFinalize(NVNtexture* texture) { pfnc_nvnTextureFinalize(texture); }
+
 typedef NVNbufferAddress (*PFNNVNMEMORYPOOLGETBUFFERADDRESSPROC)(const NVNmemoryPool* pool);
 extern PFNNVNMEMORYPOOLGETBUFFERADDRESSPROC pfnc_nvnMemoryPoolGetBufferAddress;
 static inline NVNbufferAddress nvnMemoryPoolGetBufferAddress(const NVNmemoryPool* pool) { return pfnc_nvnMemoryPoolGetBufferAddress(pool); }

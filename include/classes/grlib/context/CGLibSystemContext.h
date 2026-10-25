@@ -52,11 +52,16 @@ public:
     unsigned int getPixelResAreaOffset(unsigned int offset);
     // frees the block once the GPU is done with it
     void releaseDelayVertex(CGLibMemType& mem);
+    // finalizes and frees the texture, frees the memory and the descriptor ids once the GPU is done with them
+    void releaseDelayTexture(NVNtexture* texture, void* mem, int textureId, int samplerId);
 
-    unsigned char pad_8[0x600];
+    unsigned char pad_8[0x530];
+    CGLibBuffFixAlloc m_texDescriptor;  // 0x538: texture and sampler descriptor ids (CGLibTextureBuffer::release)
+    unsigned char pad_560[0xA8];
     CGLibBuffSamplerTbl m_samplerTbl;  // 0x608: CGLibSampler::updateData
     CGLibBuffOcclusion m_occlusion;  // 0xE38: CGLibOcclusionQuery's report slots
-    unsigned char pad_E60[0x30];
+    CGLibBuffFixAlloc m_textureAlloc;  // 0xE60: the NVNtexture objects (CGLibTextureBuffer::release)
+    unsigned char pad_E88[0x8];
     CGLibBuffMemPoolTbl m_memPoolTbl;  // 0xE90: CGLibMemPool takes its NVNmemoryPool objects from it (the name is not the original's)
     unsigned char pad_EB8[0x40];
     CGLibMemPoolAdder m_memPoolAdder;  // 0xEF8: CGLibGPUCache's pools

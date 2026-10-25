@@ -24,6 +24,8 @@
 #include "grlib/CGLibCtl.h"
 #include "grlib/CGLibTexture.h"
 #include "grlib/CGLibDecShader.h"
+#include "grlib/CGLibState.h"
+#include "mtl/MemManager.h"
 
 namespace grlib {
 
@@ -1176,6 +1178,286 @@ void CGLibDecShdExtTbl::setObj(CGLibDecShader* pDecShader) {
         m_pTbl[i] = 0;
     }
     m_current = 0;
+}
+
+
+}  // namespace grlib
+
+namespace grlib {
+
+void CGLibRenderTarget::setRenderTarget() {
+    float width = m_width;
+    float height = m_height;
+    LibMainStateViewPort viewport = {0.0f, 0.0f, width, height, 0.0f, 1.0f};
+    CGLibState::setViewport(viewport);
+    CGLibState::beginRegisterRenderTarget();
+    CGLibState::setRegisterRenderTarget(m_colorBuffer, (GrlMrtType)0);
+    CGLibState::endRegisterRenderTarget();
+}
+
+void CGLibRenderTarget::setRenderTarget(CGLibRenderTarget& target1) {
+    float width = m_width;
+    float height = m_height;
+    LibMainStateViewPort viewport = {0.0f, 0.0f, width, height, 0.0f, 1.0f};
+    CGLibState::setViewport(viewport);
+    CGLibState::beginRegisterRenderTarget();
+    CGLibState::setRegisterRenderTarget(m_colorBuffer, (GrlMrtType)0);
+    CGLibState::setRegisterRenderTarget(target1, (GrlMrtType)1);
+    CGLibState::endRegisterRenderTarget();
+}
+
+void CGLibRenderTarget::setRenderTarget(CGLibRenderTarget& target1, CGLibRenderTarget& target2) {
+    float width = m_width;
+    float height = m_height;
+    LibMainStateViewPort viewport = {0.0f, 0.0f, width, height, 0.0f, 1.0f};
+    CGLibState::setViewport(viewport);
+    CGLibState::beginRegisterRenderTarget();
+    CGLibState::setRegisterRenderTarget(m_colorBuffer, (GrlMrtType)0);
+    CGLibState::setRegisterRenderTarget(target1, (GrlMrtType)1);
+    CGLibState::setRegisterRenderTarget(target2, (GrlMrtType)2);
+    CGLibState::endRegisterRenderTarget();
+}
+
+void CGLibRenderTarget::setRenderTarget(CGLibDepthBuffer& depth) {
+    float width = m_width;
+    float height = m_height;
+    LibMainStateViewPort viewport = {0.0f, 0.0f, width, height, 0.0f, 1.0f};
+    CGLibState::setViewport(viewport);
+    CGLibState::beginRegisterRenderTarget();
+    CGLibState::setRegisterRenderTarget(m_colorBuffer, (GrlMrtType)0);
+    CGLibState::setRegisterDepthTarget(depth);
+    CGLibState::endRegisterRenderTarget();
+}
+
+void CGLibRenderTarget::setRenderTarget(CGLibDepthBuffer& depth, CGLibRenderTarget& target1) {
+    float width = m_width;
+    float height = m_height;
+    LibMainStateViewPort viewport = {0.0f, 0.0f, width, height, 0.0f, 1.0f};
+    CGLibState::setViewport(viewport);
+    CGLibState::beginRegisterRenderTarget();
+    CGLibState::setRegisterRenderTarget(m_colorBuffer, (GrlMrtType)0);
+    CGLibState::setRegisterRenderTarget(target1, (GrlMrtType)1);
+    CGLibState::setRegisterDepthTarget(depth);
+    CGLibState::endRegisterRenderTarget();
+}
+
+void CGLibRenderTarget::setRenderTarget(CGLibDepthBuffer& depth, CGLibRenderTarget& target1, CGLibRenderTarget& target2) {
+    float width = m_width;
+    float height = m_height;
+    LibMainStateViewPort viewport = {0.0f, 0.0f, width, height, 0.0f, 1.0f};
+    CGLibState::setViewport(viewport);
+    CGLibState::beginRegisterRenderTarget();
+    CGLibState::setRegisterRenderTarget(m_colorBuffer, (GrlMrtType)0);
+    CGLibState::setRegisterRenderTarget(target1, (GrlMrtType)1);
+    CGLibState::setRegisterRenderTarget(target2, (GrlMrtType)2);
+    CGLibState::setRegisterDepthTarget(depth);
+    CGLibState::endRegisterRenderTarget();
+}
+
+void CGLibRenderTarget::setRenderTargetImpl(CGLibRenderTarget** targets, unsigned long count, CGLibDepthBuffer* depth) {
+    float width = m_width;
+    float height = m_height;
+    LibMainStateViewPort viewport = {0.0f, 0.0f, width, height, 0.0f, 1.0f};
+    CGLibState::setViewport(viewport);
+    CGLibState::beginRegisterRenderTarget();
+    CGLibState::setRegisterRenderTarget(m_colorBuffer, (GrlMrtType)0);
+    for (unsigned long i = 0; i < count; i++) {
+        CGLibState::setRegisterRenderTarget(*targets[i], (GrlMrtType)(i + 1));
+    }
+    if (depth != nullptr) {
+        CGLibState::setRegisterDepthTarget(*depth);
+    }
+    CGLibState::endRegisterRenderTarget();
+}
+
+
+CGLibRenderArrayCubeMap::~CGLibRenderArrayCubeMap() {
+    releaseWork();
+}
+
+void CGLibRenderArrayCubeMap::releaseWork() {
+    unsigned int num = (m_mipNum * m_arrayNum + m_mipNum) * 6;
+    for (unsigned int i = 0; i < num; i++) {
+        m_pColorBuffers[i].release();
+    }
+    if (m_pColorBuffers != nullptr) {
+        mtl::MemManager::deallocate(m_pColorBuffers, 0, false);
+        m_pColorBuffers = nullptr;
+    }
+    m_texture.delayRelease();
+    m_isSetup = false;
+    m_width = 0;
+    m_height = 0;
+    m_mipNum = 0;
+    m_arrayNum = 0;
+}
+
+void CGLibRenderArrayCubeMap::setMipmapRenderTarget(GrlCubeMapFace face, unsigned int mip, unsigned int index) {
+    CGLibColorBuffer& buffer = m_pColorBuffers[face * (m_mipNum * m_arrayNum + m_mipNum) + index * m_mipNum + mip];
+    float width = buffer.m_width;
+    float height = buffer.m_height;
+    LibMainStateViewPort viewport = {0.0f, 0.0f, width, height, 0.0f, 1.0f};
+    CGLibState::setViewport(viewport);
+    CGLibState::beginRegisterRenderTarget();
+    CGLibState::setRegisterRenderTarget(buffer, (GrlMrtType)0);
+    CGLibState::endRegisterRenderTarget();
+}
+
+
+CGLibRenderTarget::~CGLibRenderTarget() {
+    releaseWork();
+    for (int i = 0; i < 6; i++) {
+        m_mipTextures[i].delayRelease();
+    }
+    m_mipNum = 0;
+}
+
+void CGLibRenderTarget::releaseWork() {
+    m_colorBuffer.release();
+    m_texture.delayRelease();
+    m_isSetup = false;
+}
+
+void CGLibRenderTarget::release() {
+    releaseWork();
+}
+
+void CGLibRenderTarget::releaseTexture() {
+    releaseWork();
+    m_width = 0;
+    m_height = 0;
+}
+
+void CGLibDepthTarget::release() {
+    releaseWork();
+}
+
+void CGLibDepthTarget::clearDepth(bool flag) {
+    CGLibDepthCtl::clearDepthBuffer(*m_pDepthBuffer, flag);
+}
+
+void CGLibDepthTarget::setRenderTarget() {
+    float width = m_width;
+    float height = m_height;
+    LibMainStateViewPort viewport = {0.0f, 0.0f, width, height, 0.0f, 1.0f};
+    CGLibState::setViewport(viewport);
+    CGLibState::beginRegisterRenderTarget();
+    CGLibState::setRegisterDepthTarget(*m_pDepthBuffer);
+    CGLibState::endRegisterRenderTarget();
+}
+
+void CGLibRenderCubeMapMipMap::setRenderTarget(GrlCubeMapFace face, unsigned int mip) {
+    CGLibColorBuffer& buffer = m_colorBuffers[face][mip];
+    float width = buffer.m_width;
+    float height = buffer.m_height;
+    LibMainStateViewPort viewport = {0.0f, 0.0f, width, height, 0.0f, 1.0f};
+    CGLibState::setViewport(viewport);
+    CGLibState::beginRegisterRenderTarget();
+    CGLibState::setRegisterRenderTarget(buffer, (GrlMrtType)0);
+    CGLibState::endRegisterRenderTarget();
+}
+
+
+CGLibRenderVolume::~CGLibRenderVolume() {
+    releaseWork();
+}
+
+void CGLibRenderVolume::setRenderTarget(unsigned int slice, CGLibRenderVolume& other) {
+    float width = m_width;
+    float height = m_height;
+    LibMainStateViewPort viewport = {0.0f, 0.0f, width, height, 0.0f, 1.0f};
+    CGLibState::setViewport(viewport);
+    CGLibState::beginRegisterRenderTarget();
+    CGLibState::setRegisterRenderTarget(m_pColorBuffers[slice], (GrlMrtType)0);
+    CGLibState::setRegisterRenderTarget(other.m_pColorBuffers[slice], (GrlMrtType)1);
+    CGLibState::endRegisterRenderTarget();
+}
+
+void CGLibRenderVolume::releaseWork() {
+    for (unsigned int i = 0; i < m_depth; i++) {
+        m_pColorBuffers[i].release();
+    }
+    if (m_pColorBuffers != nullptr) {
+        mtl::MemManager::deallocate(m_pColorBuffers, 0, false);
+        m_pColorBuffers = nullptr;
+    }
+    m_texture.delayRelease();
+    m_isSetup = false;
+    m_width = 0;
+    m_height = 0;
+    m_depth = 0;
+}
+
+CGLibRenderCubeMapMipMap::~CGLibRenderCubeMapMipMap() {
+    releaseWork();
+}
+
+void CGLibRenderCubeMapMipMap::releaseWork() {
+    for (int face = 0; face < 6; face++) {
+        for (int mip = 0; mip < 16; mip++) {
+            m_colorBuffers[face][mip].release();
+        }
+    }
+    m_mipNum = 0;
+    m_texture.delayRelease();
+    m_isSetup = false;
+}
+
+void CGLibTextureBuffer::delayRelease() {
+    unsigned int flags = m_flags;
+    if ((flags & 3) == 0) {
+        return;
+    }
+    void* mem = (flags & 2) ? m_pData : nullptr;
+    NVNtexture* texture = (flags & 1) ? m_pNvnTexture : nullptr;
+    m_pData = nullptr;
+    m_dataSize = 0;
+    m_flags = flags & ~3;
+    ::grlib::context::CGLibSystemContext::sys()->releaseDelayTexture(texture, mem, m_textureId, m_samplerId);
+    m_textureId = -1;
+    m_samplerId = -1;
+    m_memPool.delayRelease();
+}
+
+CGLibTextureBuffer::CGLibTextureBuffer() {
+    m_flags = 0;
+    m_pNvnTexture = nullptr;
+    m_pStorage = nullptr;
+    m_pData = nullptr;
+    m_textureId = -1;
+    m_dataSize = 0;
+    m_samplerId = -1;
+}
+
+CGLibTextureBuffer::~CGLibTextureBuffer() {
+    release();
+}
+
+void CGLibTextureBuffer::release() {
+    if (m_flags & 2) {
+        if (m_pData != nullptr) {
+            mtl::MemManager::deallocate(m_pData, 0, false);
+            m_pData = nullptr;
+        }
+    } else {
+        m_pData = nullptr;
+    }
+    m_dataSize = 0;
+    m_pStorage = nullptr;
+    if (m_flags & 1) {
+        nvnTextureFinalize(m_pNvnTexture);
+        ::grlib::context::CGLibSystemContext::sys()->m_textureAlloc.freeBuffer(m_pNvnTexture);
+    }
+    m_memPool.release();
+    if (m_textureId != -1) {
+        ::grlib::context::CGLibSystemContext::sys()->m_texDescriptor.freeID(m_textureId);
+        m_textureId = -1;
+    }
+    if (m_samplerId != -1) {
+        ::grlib::context::CGLibSystemContext::sys()->m_texDescriptor.freeID(m_samplerId);
+        m_samplerId = -1;
+    }
+    m_flags &= ~3;
 }
 
 

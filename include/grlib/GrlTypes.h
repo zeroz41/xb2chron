@@ -23,6 +23,8 @@ namespace grlib {
 enum GrlMrtType {};
 enum GrlUtilVertFetch {};
 enum GrlUtilSampler {};
+// a cube map face (0..5)
+enum GrlCubeMapFace {};
 }  // namespace grlib
 
 #endif

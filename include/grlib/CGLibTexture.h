@@ -24,6 +24,8 @@ public:
     // buffer made empty, width by height texels of the format
     static void createTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
                                   GrlSurfaceFormat format);
+    // the mip levels down to a 4x4 block for a width by height texture (0 below 2, at most 17)
+    static unsigned int getMipMapCnt(unsigned int width, unsigned int height);
     // the texture's first texel, into pValue (the return type is not known)
     static void get1PixelTextureInfo(float* pValue, CGLibTextureBuffer& buffer);
 };
