@@ -1,4 +1,17 @@
 #include "gf/GfDataBlade.h"
+#include "gf/GfDataHana.h"
+#include "gf/SDataDriver.h"
+#include "gf/GfDataDriver.h"
+#include "gf/GfEquipUtil.h"
+#include "classes/gf/GfGameManager.h"
+#include "gf/SDataGame.h"
+#include "gf/GfGameUtil.h"
+#include "gf/GfGameUtilHana.h"
+#include "gf/MsgObjectHealHp.h"
+#include "gf/MsgObjectMaxHp.h"
+#include "classes/gf/GfBdatBtl.h"
+#include "classes/gf/GfGameParty.h"
+#include "gf/GfDataBlade.h"
 #include "gf/GfDataBlade.h"
 #include "gf/GfGameUtil.h"
 #include "gf/GfGameUtil.h"
@@ -48,6 +61,19 @@
 #include "classes/tl/TitleMain.h"
 #include "gf/GfItemUtil.h"
 #include "mm/mtl/FixStr.h"
+#include "gf/MsgObjectHealHp.h"
+#include "gf/MsgObjectMaxHp.h"
+#include "classes/gf/GfBdatBtl.h"
+#include "classes/gf/GfGameParty.h"
+#include "classes/gf/SCOM_ADD_ETHER.h"
+#include "gf/GfDataItem.h"
+#include "gf/GfEquipUtil.h"
+#include "classes/gf/GfItemBox.h"
+#include "gf/SDataGame.h"
+#include "gf/GfDataDriver.h"
+#include "classes/gf/GfBdatChrEnArrange.h"
+#include "classes/gf/GfGameFlag.h"
+#include "classes/fw/MessageObject.h"
 
 namespace gf {
 
@@ -331,6 +357,139 @@ namespace gf {
 void GfGameUtilCloudSea::setInnCloudSea(CLOUD_SEA cloudSea) {
     GfDataBlade::fn_710024E8F4(GfGameManager::getMapID(), cloudSea);
     GfFieldWeather::setCloudSea(GfGameManager::getMapID(), cloudSea);
+}
+
+}  // namespace gf
+
+namespace gf {
+
+void GfGameUtil::incGameClearCount() {
+    SDataGame* game = GfDataManager::getDataGame();
+    GfDataBlade::fn_71002320AC(game, true);
+    if (game->m_gameClearCount < 9999) {
+        game->m_gameClearCount++;
+    }
+}
+
+void GfGameUtil::setHp(GF_OBJ_HANDLE* handle, unsigned int hp) {
+    if (GfObj* obj = GfObjUtil::getObj(handle)) {
+        MsgObjectHealHp msg(hp, 2);
+        fw::MessageObject* object = obj;
+        object->recieveMessage(object, msg);
+    }
+}
+
+void GfGameUtil::incEnemySuppress(unsigned int enemy) {
+    if (!GfGameManager::fn_71002AC580() && GfDataBlade::fn_7100234998(enemy) &&
+        mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys()->isChrEnArrangeFlagNamed(enemy) &&
+        GfDataBlade::fn_7100234940(enemy) == 1) {
+        GfDataBlade::fn_71002355AC();
+    }
+}
+
+bool GfGameUtil::execActivateReserverForBlade(unsigned int blade) {
+    ActivateType from = GfDataBlade::getBladeActivateType(*GfDataBlade::getSDataBlade(blade));
+    if (GfDataBlade::isActivateReserver(blade)) {
+        if (GfDataBlade::getSetDriver(blade) != 0) {
+            GfDataDriver::unsetBlade(blade);
+        }
+        return true;
+    }
+    if (!GfDataBlade::setActivateReserver(blade)) {
+        return false;
+    }
+    GfEvent::callBladeActivate(blade, from, static_cast<ActivateType>(1));
+    return true;
+}
+
+bool GfGameUtil::hasBelonging(GF_OBJ_HANDLE* handle, unsigned int slot) {
+    GfWeapon* weapon = GfMountManager::getGfWeapon(handle, static_cast<GFATTACH>(2));
+    if (weapon == nullptr) {
+        return false;
+    }
+    if (slot == 2) {
+        return weapon->getObjHandles()[1] != reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    if (slot == 1) {
+        return weapon->getObjHandles()[0] != reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    return false;
+}
+
+RESULT_HANA GfGameUtilHana::getEquip(EquipHana& equip, unsigned int hana) {
+    if (!GfDataHana::isValid(hana)) {
+        return static_cast<RESULT_HANA>(4);
+    }
+    equip = *GfDataHana::getEquipParts(hana);
+    return static_cast<RESULT_HANA>(0);
+}
+
+void GfGameUtil::refreshEnhanceState(unsigned int driver) {
+    GF_OBJ_HANDLE* handle = GfGameParty::getHandleDriverByBdatID(driver);
+    if (GfObj* obj = GfObjUtil::getObj(handle)) {
+        DataParamAcc acc(3, driver, static_cast<GimmickType>(0));
+        MsgObjectMaxHp msg(acc.getHpMax(false));
+        fw::MessageObject* object = obj;
+        object->recieveMessage(object, msg);
+    }
+}
+
+int GfGameUtilHana::getNeedEtherForExecPowerRankup(unsigned int hana, unsigned int rank) {
+    unsigned int current = GfDataHana::getEquipPowerRank(hana);
+    int ether = 0;
+    if (current < rank) {
+        GfBdatBtl* bdat = mm::mtl::PtrSingleton<GfBdatBtl>::sys();
+        for (unsigned int r = current + 1; r <= rank; r++) {
+            ether += bdat->getBTL_HanaPowerEtherNum(r, hana - 1005);
+        }
+    }
+    return ether;
+}
+
+RESULT_HANA GfGameUtilHana::execConvertToEther(unsigned int item) {
+    ItemProperty property;
+    GfItemUtil::getProperty(property, item, 0);
+    if (static_cast<unsigned int>(property.m_type - 16) > 4) {
+        return static_cast<RESULT_HANA>(0);
+    }
+    if (GfItemUtil::getItemBoxCountWithoutEquip(item) == 0) {
+        return static_cast<RESULT_HANA>(8);
+    }
+    GfItemUtil::addItemBox(item, -1);
+    if (property.m_dustEther != 0) {
+        SCOM_ADD_ETHER::create(property.m_dustEther);
+    }
+    return static_cast<RESULT_HANA>(0);
+}
+
+int GfGameUtilHana::getEmptyParts(unsigned int item) {
+    if (item == 0) {
+        return 0;
+    }
+    unsigned int begin;
+    unsigned int end;
+    if (!GfDataItem::getItemBdatCount(begin, end, static_cast<ItemType::Type>(GfDataItem::getItemType(item)))) {
+        return 0;
+    }
+    int count = 0;
+    for (unsigned int i = begin; i < end; i++) {
+        count += GfItemUtil::getItemBoxCount(i);
+    }
+    return GfItemUtil::getEnableStock(item) - count;
+}
+
+void GfGameUtil::execEquipDriverDefaultAcce(unsigned int driver) {
+    if (driver == 0 || GfDataDriver::fn_71002491D4(driver)) {
+        return;
+    }
+    GfDataDriver::getSDataDriver(driver)->m_defaultAcceDone = true;
+    unsigned int accessory = mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->getChrDrDefAcce(driver);
+    if (accessory != 0) {
+        if (GfItemUtil::isEnableAddItemBox(accessory, 1)) {
+            GfItemUtil::addItemBoxWithSilent(accessory, 1);
+        }
+        GfEquipUtil::equipDriverAcce(driver, 0, accessory, GfItemHandle());
+    }
 }
 
 }  // namespace gf

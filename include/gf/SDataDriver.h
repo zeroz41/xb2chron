@@ -30,7 +30,11 @@ public:
     // 0x2E8: its low 16 bits are the accessory of GfDataDriver::getEquipAcce's slots past the first two (setEquipAcce
     // keeps the high 16 bits; the name is not the original's)
     unsigned int m_equipAcceEx;
-    unsigned char pad_2ec[0x28C];
+    unsigned char pad_2ec[0x286];
+    // 0x572: the driver's default accessory was handed out (GfGameUtil::execEquipDriverDefaultAcce sets it, its
+    // fn_71002491D4 check reads it; the name is not the original's)
+    bool m_defaultAcceDone;
+    unsigned char pad_573[0x5];
     SDataDriverAcce m_equipAcce[2];  // 0x578 (GfDataDriver::getEquipAcce's slots 0 and 1)
     unsigned char pad_588[0x18];
 };

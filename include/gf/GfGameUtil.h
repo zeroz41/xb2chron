@@ -23,6 +23,13 @@ public:
     static void addDevelopPoint(unsigned int, unsigned int);
     static void setHp(GF_OBJ_HANDLE* handle, unsigned int hp);
     static void incGameClearCount();
+    // whether the object's weapon (mount 2) holds an object in slot 1 or 2 of its set in use
+    static bool hasBelonging(gf::GF_OBJ_HANDLE* handle, unsigned int slot);
+    static bool execActivateReserverForBlade(unsigned int blade);
+    // sends the driver's party object its maximum hit points again (DataParamAcc::getHpMax)
+    static void refreshEnhanceState(unsigned int driver);
+    // hands a driver its default accessory once (CHR_Dr's DefAcce) and equips it in slot 0
+    static void execEquipDriverDefaultAcce(unsigned int driver);
     // SCOM_POPUP::createAchievement passes its blade, line and level; when it returns true no popup is queued
     static bool setupSaveAchievementPopup(unsigned int, unsigned int, unsigned int);
     static bool isCondDriverModel(unsigned int);

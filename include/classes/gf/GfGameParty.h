@@ -85,6 +85,8 @@ public:
     // still spells one argument)
     static gf::GF_OBJ_HANDLE* getHandleDriver(unsigned int index, unsigned int party);
     static gf::GF_OBJ_HANDLE* getHandleBlade(unsigned int index, int slot);
+    // the handle of the party driver of a driver id (GfGameUtil::refreshEnhanceState)
+    static gf::GF_OBJ_HANDLE* getHandleDriverByBdatID(unsigned int driver);
     // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (1.0.0's GfPlayComResetBlade::update
     // has no such calls). Statics of GfGameParty: their addresses lie in gf_game_party's unit and they read
     // PtrSingleton<GfGameParty> (the driver handle of party slot `slot`, entries of 0x50 from +0x10; -1 for

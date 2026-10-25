@@ -3,6 +3,12 @@
 
 namespace gf {
 
+// Hana's equipment (GfDataHana::getEquipParts hands it out, GfGameUtilHana::getEquip copies its 0x78 bytes); the
+// fields are not known
+struct EquipHana {
+    unsigned char pad_0[0x78];
+};
+
 // Hana's (the artificial blade's) data (functions, by their symbols)
 class GfDataHana {
 public:
@@ -29,6 +35,7 @@ public:
     static unsigned int getOpenCircuitEther(unsigned int hana, unsigned int index);
     static void setEther(unsigned int value);
     static bool isOpenCircuit(unsigned int hana, unsigned int circuit);
+    static const EquipHana* getEquipParts(unsigned int hana);
     static unsigned int getEquipPowerRank(unsigned int hana);  // GfGameUtilHana::getPowerRank forwards here
 };
 

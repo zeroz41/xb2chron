@@ -8,6 +8,7 @@ namespace gf { class SDataBlade; enum ActivateType : int; enum CLOUD_SEA : int; 
 namespace gf { struct BladeArtsSlot; }
 namespace gf { struct BladeSkillSlot; }
 namespace gf { struct SDataIdea; }
+namespace gf { class SDataGame; }
 namespace gf { enum FAVORITE : int; }
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedArray; }}
 
@@ -66,6 +67,26 @@ public:
     // isActivateMercenaryTeam uses) is 2; execActivateMercenaryTeamForBlade does nothing when it holds.
     static bool fn_71002383C8(unsigned int blade);
     static ActivateType getBladeActivateType(const SDataBlade& blade);
+    static bool isActivateReserver(unsigned int blade);
+    static bool setActivateReserver(unsigned int blade);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among its functions (no this). What it does: sets local game flag 0xBDCD (width 1) of the game data's
+    // GameFlag (game + 0xFBBC4) to flag; GfGameUtil::incGameClearCount passes getDataGame() and true.
+    static void fn_71002320AC(SDataGame* game, bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among its functions (no this). What it does: counts an enemy (arrange id) up by one: below 1500 local
+    // flag type 0x10 (16 bits) index enemy + 0x2E, else the short at 0x11C084 + enemy * 2 of the game data; capped
+    // at 0xFFFF; false for enemy 0 or a full count, else true. GfGameUtil::incEnemySuppress passes its enemy.
+    static bool fn_7100234998(unsigned int enemy);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among its functions (no this). What it does: the count fn_7100234998 raises (0 for enemy 0);
+    // GfGameUtil::incEnemySuppress, GmkEnemyInsts::PopInfo and GmkGrave::update read it.
+    static unsigned int fn_7100234940(unsigned int enemy);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among its functions (no this). What it does: counts local game flag type 8 index 0x874 up by one, up to
+    // 0xFF (GfGameFlag::getLocal/setLocal); GfGameUtil::incEnemySuppress calls it for a named enemy counted the
+    // first time.
+    static void fn_71002355AC();
     static bool getTaskSkillMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line);
     static bool getTaskResultMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line,
                                      unsigned int level);

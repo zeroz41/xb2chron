@@ -60,6 +60,12 @@ public:
     // a function-static Vec3 (guard 0x7100D6CC00, first set to mm::Vec3::zero); TitleStatePlayEvent::gevPlayEvent
     // passes gf::GfInfo::m_camPos (GEV 0xE) and mm::Vec3::zero (GEV 0xD).
     static void fn_71002AB894(const mm::Vec3& pos);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in
+    // gf_game_manager's unit among GfGameManager's functions and takes no instance. What it does: when the instance
+    // the pointer at 0x7100B94428 holds exists, tail-calls fn_7100291DB4 on it (that one reads local game flag type 1
+    // index 0xDC0D); false otherwise. 23 callers (GfGameUtil::incEnemySuppress skips counting while it holds,
+    // GfFieldWeather::updateWeather, GfGameScene::setEnemyDead, GfMenuBattleAdapter).
+    static bool fn_71002AC580();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in gf_game_manager's unit
     // among GfGameManager's functions. What it does: when the instance at lbl_7100C23300 exists, passes it and its bool to
     // fn_71002A7430 (as GfGameManager::setupGame does); GfManager::fn_710032A1FC calls it

@@ -115,6 +115,14 @@ public:
     static bool isEnableLevelUp(unsigned int driver);
     static SDataIdea* getSDataIdea(unsigned int driver);
     static unsigned int getExpUsed(unsigned int driver);  // (appended by chardata)
+    // takes the blade off the driver it is set to (GfGameUtil::execActivateReserverForBlade)
+    static void unsetBlade(unsigned int blade);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // GfDataDriver's functions and it reads a driver's data the way getSDataDriver finds it (DLC rows 0x11-0x19 from
+    // GfDataManager::fn_7100224A10, else the game data's rows). What it does: false for driver 0, else whether the
+    // byte at 0x572 of that SDataDriver (m_defaultAcceDone) is set; GfGameUtil::execEquipDriverDefaultAcce skips a
+    // driver for which it holds.
+    static bool fn_71002491D4(unsigned int driver);
 };
 }  // namespace gf
 

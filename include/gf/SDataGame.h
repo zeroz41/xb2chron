@@ -45,7 +45,9 @@ public:
     mm::mtl::FixedVector<GfDataMercenaries::Team, 3> m_teams;
     unsigned char pad_109948[0x1E0];
     float m_playerCameraDistance;  // 0x109B28 (named after its accessors; the name is not the original's)
-    unsigned char pad_109B2C[0x4];
+    // 0x109B2C: how many times the game was cleared (GfGameUtil::incGameClearCount counts it up to 9999; the name is
+    // not the original's)
+    unsigned int m_gameClearCount;
     // 0x109B30: the task achievements (GfDataQuest::getTaskAchieve returns them; fn_71002E9D10 copies them, its end
     // is begin + count * 12; the count sits at 0x10A130, room for 128; ~SDataSave clears it after none other than
     // m_teams; the name is not the original's)
