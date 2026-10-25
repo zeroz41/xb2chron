@@ -1214,6 +1214,27 @@ void SCOM_PARTY_ADD::removeDriver(unsigned int driver, bool flag) {
     create();
 }
 
+void SCOM_PARTY_ADD::removeBlade(unsigned int blade, bool flag, bool checkClear) {
+    if (blade == 0) {
+        return;
+    }
+    if (GfGameManager::isClearGame() && checkClear && (blade - 1001 < 3 || GfDataBlade::fn_71002383C8(blade))) {
+        return;
+    }
+    Info info = {GfDataBlade::getActBlade2CommonBlade(blade), 0, -1, flag, false, false, true, 2};
+    s_info.push_front(info);
+    create();
+}
+
+void SCOM_PARTY_ADD::addDriver(unsigned int driver, unsigned int param) {
+    Info info = {0, driver, static_cast<int>(param), true, false, false, driver != 4, 3};
+    s_info.push_back(info);
+    if (driver == 2) {
+        removeBlade(1011, false);
+    }
+    create();
+}
+
 bool SCOM_QUEST_REACH::exec(const fw::UpdateInfo&) {
     if (m_value != 3 || !GfGameManager::isInnerState(GF_STATE(20)) ||
         (GfGameEvent::get() != nullptr && GfGameEvent::get()->m_eventPhase >= 2)) {
