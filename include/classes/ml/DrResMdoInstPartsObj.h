@@ -29,14 +29,19 @@ public:
 
     // The record a part's object reads (0x18); type and field names are not the original's.
     struct Info {
-        unsigned char pad_0[0xA];
+        unsigned int nameOfs;      // 0x0: name string offset in the object's name block (ScnObjAccPartsPos::getName)
+        unsigned char pad_4[0x4];
+        unsigned short id;         // 0x8 (ScnObjAccPartsPos::getID)
         unsigned short flags;      // 0xA: 0x20 = has a matrix (getMatrix), 0x80 = has switches (setSwitchID)
         unsigned char startFrame;  // 0xC: start frame in 1/255 of the max frame (get*StartFrame)
     };
 
-    unsigned char pad_8[0x10];
+    unsigned int m_flags;      // 0x8: bit 2 loop, bit 3 collision off, bit 4 collision skip data (ScnObjAccPartsPos)
+    unsigned char pad_C[0x4];
+    const char* m_names;       // 0x10: the name block Info::nameOfs indexes (ScnObjAccPartsPos::getName)
     const Info* m_info;        // 0x18; the name is not the original's
     const mm::Mat44* m_matrix; // 0x20: getMatrix copies it; the name is not the original's
+    float m_alpha;             // 0x28: ScnObjAccPartsPos::setAlpha (1.0.0 also has getAlpha); the name is not the original's
 };
 }  // namespace ml
 

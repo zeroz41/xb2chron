@@ -6,10 +6,13 @@
 namespace ml { class WinProc; }
 namespace mm { class Vec3; }
 
+namespace ml { class Scn; }
+
 namespace ml {
 // table 0x7100B7E6D8
 class ScnObjIBLDr : public ::ml::ScnObjIBL {
 public:
+    static ScnObjIBLDr* create(ml::Scn* scn, const void* res, int view);  // ScnRenderDrSys::create* forward to it
     virtual ~ScnObjIBLDr();  // slot 0
     virtual void apply();  // slot 4
     virtual const char* getName() const;  // slot 6

@@ -5,10 +5,13 @@
 #include "classes/ml/DrEnvironmentObj.h"
 
 
+namespace ml { class Scn; }
+
 namespace ml {
 // table 0x7100B7E750
 class ScnObjLightDrSys : public ::ml::ScnObjLight {
 public:
+    static ScnObjLightDrSys* create(ml::Scn* scn, const void* res, int view);  // ScnRenderDrSys::create* forward to it
     virtual ~ScnObjLightDrSys();  // slot 0
     virtual void apply();  // slot 4
     virtual void tail();  // slot 5

@@ -28,6 +28,14 @@
 #include "ml/ScnRenderDrEnvColi.h"
 #include "ml/ScnObjAccRimBloom.h"
 #include "ml/DrStmReadObj.h"
+#include "classes/ml/ScnObjModelDrSysStandard.h"
+#include "classes/ml/ScnObjLightDrSys.h"
+#include "classes/ml/ScnObjClipDySys.h"
+#include "classes/ml/ScnObjIBLDr.h"
+#include "classes/ml/ScnObjEnvColiDr.h"
+#include "ml/ScnObjAccSeamPos.h"
+#include "ml/ScnObjAccSeamEtcPos.h"
+#include "classes/ml/DrMdoCtlPos.h"
 #include "nn/os.h"
 #include "classes/grlib/CGLibManager.h"
 #include "classes/grlib/context/CGLibSystemContext.h"
@@ -423,6 +431,115 @@ void ScnObjAccMdlParticle::setActive(bool active, unsigned int index) {
         m_vtxMesh->setActive(active, index);
     }
 }
+ScnObjAccSeamPos::ScnObjAccSeamPos(ScnObjModel* model) : m_anm(nullptr) {
+    DrMdlObj* mdl = static_cast<ScnObjModelDrSys*>(model)->m_pMdlObj;
+    if (mdl->m_mdlType == 3) {
+        m_anm = &static_cast<DrMdoCtlSeam*>(mdl)->m_instAnm;
+    } else if (mdl->m_mdlType == 1) {
+        m_anm = &static_cast<DrMdoCtlPos*>(mdl)->m_instAnm;
+    } else {
+        m_anm = nullptr;
+    }
+}
+
+unsigned int ScnObjAccSeamPos::getMax() const {
+    if (m_anm == nullptr) {
+        return 0;
+    }
+    if (m_anm->m_header == nullptr) {
+        return 0;
+    }
+    return m_anm->m_header->partsMax;
+}
+
+ScnObjAccPartsPos ScnObjAccSeamPos::getObj(unsigned int index) {
+    if (m_anm == nullptr) {
+        return ScnObjAccPartsPos(nullptr);
+    }
+    DrResMdoInstPartsObj* obj;
+    if (m_anm->m_header == nullptr) {
+        obj = nullptr;
+    } else {
+        obj = m_anm->m_parts[index];
+    }
+    return ScnObjAccPartsPos(obj);
+}
+
+void ScnObjAccPartsPos::setMatrix(const mm::Mat44& mat) { m_obj->setMatrix(mat); }
+void ScnObjAccPartsPos::getMatrix(mm::Mat44& mat) { m_obj->getMatrix(mat); }
+const char* ScnObjAccPartsPos::getName() const { return m_obj->m_names + m_obj->m_info->nameOfs; }
+unsigned int ScnObjAccPartsPos::getID() const { return m_obj->m_info->id; }
+bool ScnObjAccPartsPos::isPosAnm() const { return (m_obj->m_info->flags >> 4) & 1; }
+bool ScnObjAccPartsPos::isNodeAnm() const { return (m_obj->m_info->flags >> 3) & 1; }
+bool ScnObjAccPartsPos::isPosMatrix() const { return (m_obj->m_info->flags & 0x30) != 0; }
+bool ScnObjAccPartsPos::isRandomStart() const { return (m_obj->m_info->flags >> 1) & 1; }
+bool ScnObjAccPartsPos::isSwitch() const { return (m_obj->m_info->flags >> 7) & 1; }
+bool ScnObjAccPartsPos::isColiOff() const { return (m_obj->m_flags >> 3) & 1; }
+bool ScnObjAccPartsPos::isColiSkipData() const { return (m_obj->m_flags >> 4) & 1; }
+void ScnObjAccPartsPos::setAlpha(float alpha) { m_obj->m_alpha = alpha; }
+bool ScnObjAccPartsPos::isLoop() const { return (m_obj->m_flags >> 2) & 1; }
+void ScnObjAccPartsPos::setPosFrame(float frame) { m_obj->setPosFrame(frame); }
+float ScnObjAccPartsPos::getPosFrame() const { return m_obj->getPosFrame(); }
+float ScnObjAccPartsPos::getPosMaxFrame() const { return m_obj->getPosMaxFrame(); }
+float ScnObjAccPartsPos::getPosStartFrame() const { return m_obj->getPosStartFrame(); }
+void ScnObjAccPartsPos::setNodeFrame(float frame) { m_obj->setNodeFrame(frame); }
+float ScnObjAccPartsPos::getNodeFrame() const { return m_obj->getNodeFrame(); }
+float ScnObjAccPartsPos::getNodeMaxFrame() const { return m_obj->getNodeMaxFrame(); }
+float ScnObjAccPartsPos::getNodeStartFrame() const { return m_obj->getNodeStartFrame(); }
+void ScnObjAccPartsPos::getAnmMatrix(mm::Mat44* mat) const { m_obj->getAnmMatrix(*mat); }
+unsigned char ScnObjAccPartsPos::getSwitchID() const { return m_obj->getSwitchID(); }
+void ScnObjAccPartsPos::setSwitchID(unsigned int id) { m_obj->setSwitchID(id); }
+
+ScnObjAccSeamEtcPos::ScnObjAccSeamEtcPos(ScnObjModel* model) : m_list(nullptr) {
+    DrMdlObj* mdl = static_cast<ScnObjModelDrSys*>(model)->m_pMdlObj;
+    if (mdl->m_mdlType != 3) {
+        m_list = nullptr;
+    } else {
+        m_list = &static_cast<DrMdoCtlSeam*>(mdl)->m_etcPos;
+    }
+}
+
+unsigned int ScnObjAccSeamEtcPos::getObjMax() const {
+    if (m_list == nullptr) {
+        return 0;
+    }
+    return m_list->m_max;
+}
+
+ScnObjAccPartsEtcPos ScnObjAccSeamEtcPos::getObj(unsigned int index) {
+    return ScnObjAccPartsEtcPos(&m_list->m_entries[index]);
+}
+
+const char* ScnObjAccPartsEtcPos::getObjName() const {
+    const DrMdoCtlSeam::EtcPos::Data* data = m_entry->m_data;
+    return reinterpret_cast<const char*>(data) + data->objNameOfs;
+}
+const char* ScnObjAccPartsEtcPos::getEffName() const {
+    const DrMdoCtlSeam::EtcPos::Data* data = m_entry->m_data;
+    return reinterpret_cast<const char*>(data) + data->effNameOfs;
+}
+float ScnObjAccPartsEtcPos::getRange() const { return m_entry->m_data->range; }
+float ScnObjAccPartsEtcPos::getNearClip(unsigned int index) const { return m_entry->m_data->nearClip[index]; }
+float ScnObjAccPartsEtcPos::getFarClip(unsigned int index) const { return m_entry->m_data->farClip[index]; }
+unsigned int ScnObjAccPartsEtcPos::getMatrixMax() const { return m_entry->m_data->matrixMax; }
+const mm::Mat44& ScnObjAccPartsEtcPos::getMatrix(unsigned int index) const {
+    const DrMdoCtlSeam::EtcPos::Data* data = m_entry->m_data;
+    const mm::Mat44* mats = reinterpret_cast<const mm::Mat44*>(reinterpret_cast<const char*>(data) + data->matrixOfs);
+    return mats[index];
+}
+bool ScnObjAccPartsEtcPos::isDisp(unsigned int index) const {
+    if (m_entry->m_dispOn) {
+        return true;
+    }
+    const DrMdoCtlSeam::EtcPos::Data* data = m_entry->m_data;
+    unsigned short dispIdx =
+        reinterpret_cast<const unsigned short*>(reinterpret_cast<const char*>(data) + data->dispIdxOfs)[index];
+    if (dispIdx != 0 && (DrMan::getIns()->m_dispOffBits[dispIdx >> 5] & (1 << (dispIdx & 0x1F))) != 0) {
+        return false;
+    }
+    return true;
+}
+
 ScnObjAccGpuCheck::ScnObjAccGpuCheck(DrGpuCheckBase* check) : m_check(check) {}
 
 void ScnObjAccGpuCheck::setPos(const mm::Vec3& pos, float radius) { m_check->setPos(pos, radius); }
@@ -494,6 +611,21 @@ void ScnRenderDrSys::releaseCallBack(IDrDrawCallback* callback) { m_drMan->relea
 void ScnRenderDrSys::openPixelDebugWindow(WinProc* proc) { m_drMan->openPixelDebugWindow(proc); }
 
 void ScnRenderDrSys::openHisgtramDebugWindow(WinProc* proc) { m_drMan->openHistgramDebugWindow(proc); }
+
+ScnObjModel* ScnRenderDrSys::createMdl(Scn* scn, const void* res, const char* name, int view) {
+    if (res == nullptr) {
+        return nullptr;
+    }
+    return ScnObjModelDrSysStandard::create(scn, res, name, view);
+}
+
+ScnObj* ScnRenderDrSys::createLgt(Scn* scn, const void* res, int view) { return ScnObjLightDrSys::create(scn, res, view); }
+
+void ScnRenderDrSys::createClip(Scn* scn, const void* res, int view) { ScnObjClipDySys::create(scn, res, view); }
+
+ScnObjIBL* ScnRenderDrSys::createIBL(Scn* scn, const void* res, int view) { return ScnObjIBLDr::create(scn, res, view); }
+
+void ScnRenderDrSys::createEnvColi(Scn* scn, const void* res, int view) { ScnObjEnvColiDr::create(scn, res, view); }
 
 ScnRenderDrEnvColi::ScnRenderDrEnvColi(int view) { m_envColi = DrMan::getIns()->m_envMan[view]->m_envColiMan; }
 
@@ -618,6 +750,8 @@ void ScnRenderDrSysParmAcc::setWeather(int weather) { m_postParm->m_weather = we
 
 void ScnRenderDrSysParmAcc::setWeatherFrame(float frame) { m_postParm->setWeatherFrame(frame); }
 
+void ScnRenderDrSysParmAcc::getWeatherFrame() const { m_drMan->fn_710071E620(); }
+
 void ScnRenderDrSysParmAcc::setSeamMapAddPosMode(bool enable) { m_drMan->m_seamMapAddPosMode = enable; }
 
 void ScnRenderDrSysParmAcc::setSeamMapReadPos(const mm::Vec3& pos) {
@@ -635,6 +769,8 @@ void ScnRenderDrSysParmAcc::setSelectIdDisp(int index, bool off) {
 bool ScnRenderDrSysParmAcc::isMdlAllMiddleTexStm() const { return m_drMan->isAllMiddelTexStmChk(); }
 
 bool ScnRenderDrSysParmAcc::isSeamMapRead() const { return m_drMan->isSeamMapStmOk(); }
+
+bool ScnRenderDrSysParmAcc::fn_710070A0DC() { return m_drMan->fn_710071E77C(); }
 
 void ScnRenderDrSysParmAcc::setToonDirLightScale(bool enable) { m_drMan->m_toonDirLightScale = enable; }
 

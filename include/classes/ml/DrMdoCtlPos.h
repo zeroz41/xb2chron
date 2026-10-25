@@ -2,6 +2,7 @@
 #define CLASSES_ML_DRMDOCTLPOS_H
 
 #include "classes/ml/DrMdlObj.h"
+#include "ml/DrResMdoInstAnmObj.h"
 
 namespace ml { class DrPixlShadowCacheObj; }
 
@@ -28,6 +29,10 @@ public:
     void callSpAlphaRenderPosAll();
     void callLightPrePassRenderPosAll();
     void callRefractionRenderPosAll();
+
+    // the names are not the original's
+    unsigned char pad_182[0x66];
+    DrResMdoInstAnmObj m_instAnm;  // 0x1E8: releasePos releases it; ScnObjAccSeamPos reads it (m_mdlType 1)
 };
 }  // namespace ml
 

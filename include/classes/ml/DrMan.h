@@ -34,6 +34,14 @@ public:
 
     // both read s_pTop
     static DrMan* getIns();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: `this` is the DrMan
+    // (ScnRenderDrSysParmAcc::getWeatherFrame passes its m_drMan), its code is in the DrMan unit. What it does: sets the
+    // byte at 0x1CC0 + s_nDblStockIdx to 1 (a double-buffered bool flag).
+    void fn_710071E620();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: `this` is the DrMan
+    // (ScnRenderDrSysParmAcc::fn_710070A0DC passes its m_drMan), its code is in the DrMan unit. What it does: returns
+    // the byte at 0x1DBC + s_nDblStockIdx (a double-buffered bool flag).
+    bool fn_710071E77C();
     static DrMan* get();
     static bool isSRGBMode();
     static bool isFogSRGB();
@@ -103,7 +111,9 @@ public:
     unsigned char pad_1CA0[0x22];
     bool m_homeMenu;                    // 0x1CC2, bkgHomeMenu(true) sets it
     bool m_autoResetScene;
-    unsigned char pad_1CC4[0x6C];
+    unsigned char pad_1CC4[0x5C];
+    const unsigned int* m_dispOffBits;  // 0x1D20: a bit per display index, set = hidden (ScnObjAccPartsEtcPos::isDisp; name inferred)
+    unsigned char pad_1D28[0x8];
     mm::Vec3 m_globalWind[2];           // 0x1D30, by s_nDblNowIdx (getGlobalWind)
     unsigned char pad_1D50[0x47];
     bool m_mdlDblPause;

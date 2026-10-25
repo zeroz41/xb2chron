@@ -63,6 +63,9 @@ public:
     void setTimeVal(float time);  // the time of day, 0..1 of 24 hours
     void setWeather(int weather);
     void setWeatherFrame(float frame);
+    // 3.0.1's code under this name sets a DrMan flag (DrMan::fn_710071E620); 1.0.0's forwarded to
+    // DrPixlPostParm::getWeatherFrame.
+    void getWeatherFrame() const;
     void setSeamMapAddPosMode(bool enable);
     void setSeamMapReadPos(const mm::Vec3& pos);
     void setSelectIdDisp(int index, bool off);  // off: DrMan::offGblIdx, else setGblIdx
