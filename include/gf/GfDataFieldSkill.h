@@ -7,6 +7,7 @@ class GfDataFieldSkill {
 public:
     // a field skill's name: the message table and the id in it; false for none
     static bool getName(unsigned char*& bdat, unsigned int& id, unsigned int skill);
+    static bool getCaption(unsigned char*& bdat, unsigned int& id, unsigned int skill);  // (appended by chardata)
 };
 }  // namespace gf
 

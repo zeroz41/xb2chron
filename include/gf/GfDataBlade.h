@@ -143,6 +143,9 @@ public:
     static void setTrustPoint(unsigned int blade, unsigned int point);
     static bool getExtraParts(unsigned int blade, unsigned int part);
     static const BladeSkillSlot* getSkill(unsigned int blade, unsigned int index);
+    // (appended by chardata) 1.0.0's name: its GfMenuCharDataAdapter::update_BL_InMercenry calls it at the same site
+    // (the symbols call it fn_71002398D8)
+    static bool isActivateMercenaryTeam(unsigned int blade);
 };
 
 }  // namespace gf

@@ -7,6 +7,7 @@
 namespace gf { class GfMenuCallContext; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class DataParamAcc; }
+namespace gf { class GfMenuBladeList; }
 namespace ui { class UIListInfoBase; }
 namespace fw { enum SoundCategory : int; }
 namespace fw { enum VibrationID : int; }
@@ -206,6 +207,18 @@ public:
     // fn_7100249238's arts of mode 3 or 2); GfMenuWeaponTypeAdapter passes 0 and false
     static unsigned int getEnableArts(mm::mtl::FixedArray<unsigned int, 4>& arts, unsigned int driver,
                                       unsigned int wpnType, int mode, bool flag);
+    // (appended by chardata) used by GfMenuCharDataAdapter::update_*
+    static unsigned int convMenuDriverID(unsigned int driver);  // the driver's menu id (0 for none)
+    static unsigned int convMenuBladeID(unsigned int blade);    // the blade's menu id
+    static unsigned int getDriverClassBuffRatio(unsigned int driverClass, unsigned int index);
+    static unsigned short getBladeRareIconID(unsigned int blade);  // 0 for none
+    static unsigned short getBladeAttributeID(unsigned int blade);
+    static bool isBladeSelectable(unsigned int blade, const GfMenuBladeList* list);
+    static bool isBladeReleasable(unsigned int blade, const GfMenuBladeList* list);
+    static unsigned int getBladeRank(unsigned int blade);
+    static unsigned int getBladeRarity(unsigned int blade);
+    static unsigned int getBladeCorrectiveType(unsigned int blade);  // 0 for none
+    static unsigned int getBladeCorrectiveRatio(unsigned int blade);
 };
 }  // namespace gf
 
