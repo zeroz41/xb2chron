@@ -46,6 +46,16 @@ public:
     // unit among its functions. What it does: GfGameFlag::getLocal of the game data's flags (GfDataManager::getDataGame
     // + 0xFBBC4), width 16, index 1; TUnk_B64F08::fn_71004944B8 compares it with 2000.
     static unsigned short fn_7100231884();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's fld plugin has no setNpcMeet). A
+    // member because its address is in GfDataBlade's unit. What it does: for an id above 2000, looks the id up with
+    // GfBdatRsc::fn_7100219CE0 and answers whether that local flag (type 1) is set; false otherwise. Callers: the fld
+    // plugin's setNpcMeet (before and after fn_710024DDDC), GfMenuManager::fn_710035A764.
+    static bool fn_710024DE6C(unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit. What it does: for an id above 2000 with a GfBdatRsc::fn_7100219CE0 flag, sets that local
+    // flag (type 1) to the bool; when the flag changed and fn_7100219C58 answers nonzero, records that value - 0xED02
+    // in the first free one of the 256 type-8 local flags from 0x10C4 (unless already there). Caller: setNpcMeet (id, true).
+    static void fn_710024DDDC(unsigned int id, bool set);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfGameUtil::setTrustPointForDebug
     // calls setTrustPoint instead). A member because it lives in GfDataBlade's unit among its functions (no this).
     // What it does: for drivers 17-25 only (else 0), GfBdatChrDr::getChrDrDefBlade(driver, 0) of the driver itself

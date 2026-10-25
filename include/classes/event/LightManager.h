@@ -19,6 +19,9 @@ public:
 class LightManager : public TUnk_B3D208, public TUnk_B3D230 {
 public:
     virtual ~LightManager() {}  // slot 0
+    LightManager();  // out of line (Singleton<LightManager>::getPtr calls it)
+    // called by the evt_setup script plugin (application/BF2/ScriptPlayText); a result its callers ignore is declared void
+    void loadResource(const char* name);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event

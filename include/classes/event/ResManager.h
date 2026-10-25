@@ -29,6 +29,8 @@ public:
 class ResManager : public TUnk_B3C098, public TUnk_B3C0C8, public TUnk_B3C0E8 {
 public:
     virtual ~ResManager() {}  // slot 0
+    ResManager();  // out of line (Singleton<ResManager>::getPtr calls it)
+    void loadPack(const char* name);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     virtual void OnPackEvent(event::IResPackEvent::PARAM const&);  // slot 3
     void clear();

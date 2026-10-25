@@ -175,6 +175,11 @@ public:
     static bool isClearGame();  // the game has been cleared once (the story's end reached)
     static bool fn_71002A9E68();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // gf_game_manager's unit among GfGameManager's functions. What it does: when fn_71002EDA8C answers true and
+    // PtrSingleton<GfGameScene> exists, sets the scene's byte at 0x8B8 to 1. Callers: fn_71003BE1BC and the sys
+    // plugin's autoSave (no arguments).
+    static void fn_71002AC6A8();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // gf_game_manager's unit among GfGameManager's functions. What it does: false when gf_game_env.cpp's 3.0.1
     // singleton (lbl_7100C23300) does not exist, else tail-calls fn_71002A75DC(singleton, 0x01010003) (an add-on
     // content check). GfMenuObjUtil::fn_710048FD30 answers its add-on menu layer 1 with it; GfMenuManager's

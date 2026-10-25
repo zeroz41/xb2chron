@@ -7,7 +7,7 @@
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedVector.h"
 
-namespace event { enum MSG_TYPE : int; }
+namespace event { enum MSG_TYPE : int; enum CHARA_TYPE : int; }
 
 namespace event {
 // a base of event::ObjectManager no evidence names yet
@@ -25,9 +25,23 @@ public:
 // mm::mtl::Singleton<event::ObjectManager>::getPtr's static
 class ObjectManager : public TUnk_B3E118, public TUnk_B3E140 {
 public:
-    // 1.0.0 has it out of line (0x710011C8C0, same stores); 3.0.1 inlines it into getPtr's static
-    ObjectManager() : m_flags(0), pad_14(0), m_sceneName("default") {}
+    // out of line (0x710012A11C; 1.0.0 0x710011C8C0): the evt_setup plugin's Singleton<ObjectManager>::getPtr calls it; the event unit
+    // that defines it (application/BF2/CharaObj) inlines it into its own getPtr
+    ObjectManager();
     virtual ~ObjectManager();  // slot 0
+    // each creates an event::ObjectChara (createGfObjTalk: new ObjectChara(name)) and links it in; called by the
+    // evt_setup script plugin (application/BF2/ScriptPlayText), names from 1.0.0's symbols
+    event::Object* createGfObjTalk(const char* name);
+    event::Object* createGfObjPcByWalkID(const char* name, unsigned int walkId, unsigned int);
+    event::Object* createGfObjPcByBladeID(const char* name, unsigned int bladeId, unsigned int);
+    event::Object* createGfObjBlByWalkID(const char* name, unsigned int walkId, unsigned int);
+    event::Object* createGfObjBladeByPcID(const char* name, unsigned int pcId, unsigned int);
+    event::Object* createGfObj(const char* name, event::CHARA_TYPE type, unsigned int id, unsigned int, unsigned int);
+    event::Object* createGfObjPartyIn(const char* name, event::CHARA_TYPE type, unsigned int id, unsigned int, unsigned int);
+    event::Object* createModel(const char* name, const char* model, unsigned int, unsigned int);
+    event::Object* createCamera(const char* name, unsigned int id);
+    event::Object* createEffect(const char* name);
+    event::Object* createLight(const char* name, unsigned int id);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     // the current scene's active object when it is of the given type (Object::m_type), else null; the current
     // scene is not updated first (the script commands' undo and redo inline it); the name is not the original's

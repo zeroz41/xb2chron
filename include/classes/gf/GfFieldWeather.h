@@ -19,6 +19,7 @@ public:
     static void setCloudSea(unsigned int map, CLOUD_SEA cloudSea);  // GfGameUtilCloudSea::getCloudSea forwards here
     // GfFieldManager's forwards (its initialize, finalize, clear, setupGame and gev* functions call them)
     static void build(const GfSetupParam& param);
+    static void setWeather(WEATYPE type, bool flag);  // the fld script plugin's setWeather (name from the symbols)
     static void destroy();
     static void clear();
     // 1.0.0's GfFieldManager::setupGame calls setupGame() where 3.0.1's calls this, and the bodies make the same calls

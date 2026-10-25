@@ -8,7 +8,9 @@ namespace event {
 // table 0x7100B3FC68
 class Extend {
 public:
-    virtual ~Extend();  // slot 0
+    // inline and empty: the table's slot 0 holds the identical-code-folded NoncopyableBase destructor, and
+    // Singleton<Extend>::getPtr (evt_setup's evpa) registers no destructor (an empty one is dropped)
+    virtual ~Extend() {}  // slot 0
 
     // the name with the extension the function is named after appended (".wav" appends ".nop")
     const char* mdo(const char* pszName);

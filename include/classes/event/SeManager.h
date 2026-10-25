@@ -19,6 +19,9 @@ public:
 class SeManager : public TUnk_B3D428, public TUnk_B3D450 {
 public:
     virtual ~SeManager();  // slot 0
+    SeManager();  // out of line (Singleton<SeManager>::getPtr calls it)
+    // called by the evt_setup script plugin (application/BF2/ScriptPlayText); a result its callers ignore is declared void
+    void load(const char* name);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event

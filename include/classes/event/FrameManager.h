@@ -22,6 +22,8 @@ public:
 class FrameManager : public TUnk_B3E1A8, public TUnk_B3E1D0 {
 public:
     virtual ~FrameManager();  // slot 0
+    // called by the evt_setup script plugin (application/BF2/ScriptPlayText); a result its callers ignore is declared void
+    void addKeyFrame(float frame, bool);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     // out of line (mm::mtl::Singleton<event::FrameManager>::getPtr's static calls it)
     FrameManager();

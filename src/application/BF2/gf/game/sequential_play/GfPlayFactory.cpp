@@ -296,7 +296,8 @@ bool GfPlayFactory::createGameOver() {
         scene->setDeadType(GfPlayerDead(1));
     }
     ParamReturnTitle param;
-    param.m_reason = 1;
+    param.m_waitVoice = true;
+    param.m_gameClear = false;
     return createReturnTitle(param);
 }
 

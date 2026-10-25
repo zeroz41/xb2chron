@@ -79,6 +79,12 @@ public:
     // writes the manager's own singleton (GfMenuManager::get()) and lives in its unit.
     static bool fn_71003596C0();  // m_optionFlag, false without a manager (GfMenuObjOption's listeners, GfGameUtilSaveData::flushOptionSaveData)
     static void fn_7100359EA0();  // clears m_latestCommonWinID while m_initialized
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // gf_menu_manager's unit and it reads the manager singleton. What it does: when the manager exists,
+    // GfMenuObjUtil::fn_710048FD30(3) answers true, its 256-entry ushort list at 0x41A8 (count 0x43A8) is not full,
+    // fn_710024DAB0(id) is nonzero and GfDataBlade::fn_710024DE6C(id) answers true, appends the id to that list.
+    // Caller: the fld plugin's setNpcMeet when the id's flag changed.
+    static void fn_710035A764(unsigned int id);
     static int fn_710035A364();  // m_titleValue, 0 without a manager (one caller, fn_710066AA7C)
     static bool fn_710035A524();  // m_titleCount != 0 (tl::TitleStateWarning::fn_71001565A8, fn_71003AF924)
     static bool fn_710035A634(int index);  // m_bladeBookFlag's bit for index 0, else false (GfMenuBladeList::setupFromBook)

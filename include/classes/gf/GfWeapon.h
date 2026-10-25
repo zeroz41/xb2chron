@@ -26,6 +26,12 @@ public:
 // fn_710024F910's result. GfAssetSetupDriver's getMdlFile/getArcFile pass (id, create type in {2, 3, 11},
 // create type == 3), GfAssetSetupNpc::getMdlFile (id, false, create type == 3) for ids below 26.
 const char* fn_71002DF39C(unsigned int driverId, bool createTypeIn2311, bool createType3);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit next to fn_71002EEB14 (no object: it takes nothing). What it does: returns the int at .bss
+// 0x7100EA4890, which fn_71002EEB14 (called by tl::TitleStatePlayGame::enter) stores from its first argument before
+// running the "aoc_boot" script (GfScriptManager slot 0x46) and clears afterwards. The sys plugin's getBootType
+// returns it to scripts.
+int fn_71002EEBE4();
 }  // namespace gf
 
 #endif

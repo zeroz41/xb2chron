@@ -19,6 +19,9 @@ public:
 class EffectManager : public TUnk_B3CED8, public TUnk_B3CF00 {
 public:
     virtual ~EffectManager();  // slot 0
+    EffectManager();  // out of line (Singleton<EffectManager>::getPtr calls it)
+    // called by the evt_setup script plugin (application/BF2/ScriptPlayText); a result its callers ignore is declared void
+    void loadResource(const char* name);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event

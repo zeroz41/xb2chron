@@ -326,6 +326,8 @@ namespace event {
 
 CharaManager::CharaManager() : m_modeFlags(0), m_dispFlags(0), m_offscrID(0), m_reuseFlag(0) {}
 
+CharaManager::~CharaManager() {}
+
 void CharaManager::clear() {
     m_offscrID = 0;
     m_reuseFlag = 0;
@@ -570,6 +572,8 @@ void CaptureManager::OnEventProc(event::MSG_TYPE msg) {
 
 // ---- script commands (session 19) ----
 #include "classes/event/ObjectManager.h"
+
+event::ObjectManager::ObjectManager() : m_flags(0), pad_14(0), m_sceneName("default") {}
 #include "classes/event/ObjectChara.h"
 #include "classes/event/ObjectEffect.h"
 #include "classes/event/PosAxis.h"

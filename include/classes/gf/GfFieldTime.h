@@ -41,6 +41,9 @@ public:
     virtual ~GfFieldTime();  // slot 0
     const ElapseTime& getElapseTime() const;  // the play time
     int getHour() const;
+    // the fld script plugin's setTime and stopTime (names from the symbols)
+    void setTime(unsigned int hour, unsigned int min);
+    void setFieldScriptTimeStop(bool stop);
     int getMin() const;
     void setHour(unsigned int hour);
     void setMin(unsigned int min);

@@ -17,6 +17,9 @@ public:
     static unsigned int reqMapjump(const GfMapjumpInfo& info);
     // returns its handle (GfPlayComIraCampSave::start passes 22 and waits on GfReqManager::isValid)
     static unsigned int reqSoloParty(unsigned int party);
+    // the fld script plugin's startScript passes (0, name, true); the name is the symbol's, the result (if any) is
+    // ignored by its caller
+    static void reqStartScript(unsigned int, const char* name, bool);
     static void reqDestroyGf();  // GfManager::finalize's: the game framework's teardown
 };
 }  // namespace gf

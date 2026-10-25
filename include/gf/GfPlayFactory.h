@@ -34,6 +34,12 @@ public:
     static bool createJump(GF_OBJ_HANDLE* handle);
     static bool createWarp(GF_OBJ_HANDLE* handle);
     static bool createGmkTutorial(const char* name, unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address sits between
+    // GfPlayFactory's unit and gf_sequential_play's and its body is a create* sequence: when isScenarioGame and not
+    // isLeaveGameForDebug, beginCommand(0), pushState(6), addEventPlayerStop(true), fn_7100322C64(name, id),
+    // fn_7100322808(), addEventPlayerStop(false), popState(), clears the GfSequentialPlay's int at 0x20F0 and answers
+    // true. Caller: the sys plugin's playTutorial (a string and an int from the script).
+    static bool fn_7100321924(const char* name, unsigned int id);
     static bool createGmkCamera(mm::mtl::IntrusivePtr<fw::Camera> camera);
     static bool createGameOver();
     static bool createTalk(const GfSetupPfTalk& talk);
@@ -41,6 +47,7 @@ public:
     static bool createEventMapjump(const GfMapjumpInfo& info);
     static bool createOneEventForGimmick(unsigned int id);
     static bool createOneEvent(unsigned int id);
+    static bool createReserveEvent(const char* name);  // the sys plugin's reserveEvent (a script name)
     // whether a common message window is open, and its result (GfPlayComMenuCommon's)
     static bool createEventWait(float time, GF_OBJ_HANDLE* handle);
     // a common window's handle, -1 when none opens

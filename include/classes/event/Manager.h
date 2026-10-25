@@ -4,6 +4,7 @@
 #include "classes/ml/IWorkBackground.h"
 #include "classes/ml/IWorkEvent.h"
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "mm/mtl/FixStr.h"
 
 namespace event { class Manager; }
 namespace ml { class EventView; class Scn; }
@@ -45,7 +46,11 @@ public:
 
     unsigned int m_playing : 1;  // end and stop act only while it is set; GfGameTalk::isPlaying returns it
     unsigned int pad_18_1 : 31;  // the rest of the word, which isPlaying loads whole
-    unsigned char pad_1c[0x294 - 0x1C];
+    unsigned char pad_1c[0x254 - 0x1C];
+    // the scene name setupScene/startScene copy their name argument into (evt_setup's setSeamlessReadPos/Axis pass
+    // it to SeamlessManager::addFirstSeamPoint); the name is not the original's
+    mm::mtl::FixStr<32> m_sceneName;  // 0x254
+    unsigned char pad_278[0x294 - 0x278];
     // nonzero: GfEvtModelDriver's constructor then moves its init parameter in the theater; not known yet
     unsigned int pad_294;
 };

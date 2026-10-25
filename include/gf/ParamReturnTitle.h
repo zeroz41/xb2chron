@@ -2,11 +2,14 @@
 #define GF_PARAMRETURNTITLE_H
 
 namespace gf {
-// what a return to the title is made with (2 bytes: GfPlayComReturnTitle::create copies it as a halfword)
+// what a return to the title is made with (2 bytes: GfPlayComReturnTitle::create copies it as a halfword,
+// GfPlayComReturnTitle::update reads each byte); the field names are not the original's
 class ParamReturnTitle {
 public:
-    // why the game returns to the title (GfPlayFactory::createGameOver passes 1); the name is not the original's
-    unsigned short m_reason;
+    // update first waits until no enemy or party member voice plays (GfPlayFactory::createGameOver sets it)
+    bool m_waitVoice;
+    // update counts a game clear (GfGameUtil::incGameClearCount) first (the sys plugin's returnTitle sets it)
+    bool m_gameClear;
 };
 }  // namespace gf
 

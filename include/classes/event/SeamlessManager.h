@@ -1,6 +1,8 @@
 #ifndef CLASSES_EVENT_SEAMLESSMANAGER_H
 #define CLASSES_EVENT_SEAMLESSMANAGER_H
 
+#include "classes/event/PosAxis.h"
+
 namespace event { enum MSG_TYPE : int; }
 
 namespace event {
@@ -19,6 +21,8 @@ public:
 class SeamlessManager : public TUnk_B3D470, public TUnk_B3D498 {
 public:
     virtual ~SeamlessManager();  // slot 0
+    SeamlessManager();  // out of line (Singleton<SeamlessManager>::getPtr calls it)
+    void addFirstSeamPoint(const char* name, const PosAxis& pos);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event
