@@ -81,6 +81,20 @@ public:
     static void makeStateBattle(mm::mtl::FixStr<32>& out, gf::GF_OBJ_HANDLE* handle, bool battle);
     static void debugHpZero(gf::GF_OBJ_HANDLE* handle);
     static void execSaveAchievementPopup(unsigned int blade);
+    // the HP the UI shows for an object and its maximum (false when it has none)
+    static bool getNowHpForUi(gf::GF_OBJ_HANDLE* handle, unsigned int* hp);
+    static bool getMaxHpForUi(gf::GF_OBJ_HANDLE* handle, unsigned int* hp);
+    // whether the object is near enough for its name / info icon to show
+    static bool isUiNameDistMatch(gf::GF_OBJ_HANDLE* handle);
+    static bool isUiInfoIconDistMatch(gf::GF_OBJ_HANDLE* handle);
+    static int getUiInfoIconBdatId(gf::GF_OBJ_HANDLE* handle);  // -1: none
+    // the status icons an enemy shows (the field names are not the original's)
+    struct UiEnemyStatusIconInfo {
+        UiEnemyStatusIconInfo() : m_aggressive(false), m_link(false) {}
+        void create(gf::GF_OBJ_HANDLE* handle);
+        bool m_aggressive;
+        bool m_link;
+    };
 };
 
 }  // namespace gf

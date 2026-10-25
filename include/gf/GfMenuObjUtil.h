@@ -5,6 +5,7 @@
 #include "mm/mtl/FixedArray.h"
 
 namespace gf { class GfMenuCallContext; }
+namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class DataParamAcc; }
 namespace ui { class UIListInfoBase; }
 namespace fw { enum SoundCategory : int; }
@@ -168,6 +169,11 @@ public:
     // an elemental combo's attribute and name, from its BDAT row (attribute 0 for an invalid one)
     static unsigned char getElementComboAtr(unsigned int combo);
     static ui::UIStr getElementComboName(unsigned int combo);
+    static ui::UIStr getEnemyArtsName(unsigned int arts);
+    static bool isEnemyNamed(gf::GF_OBJ_HANDLE* handle);
+    static bool isEnemyBoss(gf::GF_OBJ_HANDLE* handle);
+    static gf::GF_OBJ_HANDLE* getLeaderBladeHandle(bool);
+    static gf::GF_OBJ_HANDLE* getBladeHandleFromPartySlot(unsigned int driver, int slot, bool);
     // a combo's effect text, and its effect (3.0.1's always 1) (GfMenuElementComboAdapter's update_*)
     static ui::UIStr getElementComboEffectName(unsigned int combo);
     static unsigned char getElementComboEffect(unsigned int combo);
