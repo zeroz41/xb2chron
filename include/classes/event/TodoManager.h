@@ -3,7 +3,7 @@
 
 #include "classes/event/Param.h"
 
-namespace event { enum MSG_TYPE : int; }
+namespace event { enum MSG_TYPE : int; class ITodo; }
 
 namespace event {
 // a base of event::TodoManager no evidence names yet
@@ -20,8 +20,12 @@ public:
 // table 0x7100B3DBA8; base at 0x0 unknown (TUnk_B3DBA8), base at 0x8 unknown (TUnk_B3DBD0)
 class TodoManager : public TUnk_B3DBA8, public TUnk_B3DBD0 {
 public:
+    // out of line (mm::mtl::Singleton<event::TodoManager>::getPtr's static calls it)
+    TodoManager();
     virtual ~TodoManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    // the script plugins' commands: exec makes the command, which then runs with a copy of the parameters
+    void add(ITodo* (*exec)(), const Param& param);
     static Param s_zero;
 };
 }  // namespace event

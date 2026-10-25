@@ -1,5 +1,6 @@
-// Script VM plugins btl_ai and deb (their tables, entries and Regist functions). The entries are static and nothing
-// names them: they keep placeholder fn_ names. The other plugins of this unit are separate translation units (SPLITS.md).
+// Script VM plugins btl_ai, deb, evt and evt_env (their tables, entries and Regist functions). The entries are static
+// and nothing names them: they keep placeholder fn_ names. The other plugins of this unit (evt_bgm, evt_cam,
+// evt_chara, evt_eff, evt_ex) are separate translation units (SPLITS.md) and are not written yet.
 #include "vm/yvm2.h"
 #include "btl/Utility.h"
 #include "classes/ai/AiManager.h"
@@ -7,6 +8,10 @@
 #include "ml/MTRand.h"
 #include "classes/gf/GfDataBdat.h"
 #include "plugin/Bdat.h"
+#include "classes/event/Manager.h"
+#include "classes/event/FrameManager.h"
+#include "classes/mm/mtl/Singleton.h"
+#include "classes/event/EnvManager.h"
 
 // The plugins' return-value setters. Inferred: the names are not the original's (the original may have spelled
 // these out in every function).
@@ -382,5 +387,207 @@ static VMPluginFunc s_debPlugin[] = {
 
 void pluginDebRegist() {
     vmPluginRegist("deb", s_debPlugin);
+}
+
+// evt.init
+static int fn_7100658674(VMThread* pThread) {
+    const char* name = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    if (!mm::mtl::PtrSingleton<event::Manager>::sys()->init(name)) {
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
+
+// evt.setupScene
+static int fn_71006586C8(VMThread* pThread) {
+    const char* name = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    if (!mm::mtl::PtrSingleton<event::Manager>::sys()->setupScene(name)) {
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
+
+// evt.setupSceneEnd
+static int fn_710065871C(VMThread* pThread) {
+    if (!mm::mtl::PtrSingleton<event::Manager>::sys()->setupSceneEnd()) {
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
+
+// evt.startScene
+static int fn_7100658758(VMThread* pThread) {
+    const char* name = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    int no = vmArgOmitChk(pThread, 2) ? 1 : vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    if (!mm::mtl::PtrSingleton<event::Manager>::sys()->startScene(name, no)) {
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
+
+// evt.startPage
+static int fn_71006587EC(VMThread* pThread) {
+    const char* name = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    float frame = vmArgOmitChk(pThread, 2) ? 0.0f : vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int no = vmArgOmitChk(pThread, 3) ? 1 : vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    if (!mm::mtl::PtrSingleton<event::Manager>::sys()->startPage(name, no, frame)) {
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
+
+// evt.endScene
+static int fn_71006588B8(VMThread* pThread) {
+    if (!mm::mtl::PtrSingleton<event::Manager>::sys()->endScene()) {
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
+
+// evt.end
+static int fn_71006588F4(VMThread* pThread) {
+    if (!mm::mtl::PtrSingleton<event::Manager>::sys()->end()) {
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
+
+// evt.wait
+static int fn_7100658930(VMThread* pThread) {
+    int frame = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    mm::mtl::Singleton<event::FrameManager>::getPtr()->setSkipAbleFrame(frame);
+    if (mm::mtl::Singleton<event::FrameManager>::getPtr()->getFrame() < frame) {
+        if (mm::mtl::Singleton<event::FrameManager>::getPtr()->getFrame() < mm::mtl::Singleton<event::FrameManager>::getPtr()->getMaxFrame()) {
+            vmWaitModeSet(pThread);
+        }
+    }
+    return 0;
+}
+
+// evt.print
+static int fn_7100658B04(VMThread* pThread) {
+    vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    return 0;
+}
+
+// evt.beginJP
+static int fn_7100658B2C(VMThread* pThread) {
+    mm::mtl::PtrSingleton<event::Manager>::sys()->setLanguageMode(true, event::Manager::LANGUAGE_MODE_JP);
+    return 0;
+}
+
+// evt.endJP
+static int fn_7100658B58(VMThread* pThread) {
+    mm::mtl::PtrSingleton<event::Manager>::sys()->setLanguageMode(false, event::Manager::LANGUAGE_MODE_NONE);
+    return 0;
+}
+
+// evt.beginUS
+static int fn_7100658B84(VMThread* pThread) {
+    mm::mtl::PtrSingleton<event::Manager>::sys()->setLanguageMode(true, event::Manager::LANGUAGE_MODE_US);
+    return 0;
+}
+
+// evt.endUS
+static int fn_7100658BB0(VMThread* pThread) {
+    mm::mtl::PtrSingleton<event::Manager>::sys()->setLanguageMode(false, event::Manager::LANGUAGE_MODE_NONE);
+    return 0;
+}
+
+static VMPluginFunc s_evtPlugin[] = {
+    {"init", fn_7100658674},
+    {"setupScene", fn_71006586C8},
+    {"setupSceneEnd", fn_710065871C},
+    {"startScene", fn_7100658758},
+    {"startPage", fn_71006587EC},
+    {"endScene", fn_71006588B8},
+    {"end", fn_71006588F4},
+    {"wait", fn_7100658930},
+    {"print", fn_7100658B04},
+    {"beginJP", fn_7100658B2C},
+    {"endJP", fn_7100658B58},
+    {"beginUS", fn_7100658B84},
+    {"endUS", fn_7100658BB0},
+    {nullptr, nullptr},
+};
+
+void pluginEvtRegist() {
+    vmPluginRegist("evt", s_evtPlugin);
+}
+
+// evt_env.setClock
+static int fn_710066100C(VMThread* pThread) {
+    const char* clock = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    mm::mtl::Singleton<event::EnvManager>::getPtr()->setClock(clock);
+    return 0;
+}
+
+// evt_env.setClockStop
+static int fn_71006610A4(VMThread* pThread) {
+    bool stop = vmArgBoolGet(1, vmArgPtrGet(pThread, 1)) != 0;
+    mm::mtl::Singleton<event::EnvManager>::getPtr()->setClockStop(stop);
+    return 0;
+}
+
+// evt_env.setWeather
+static int fn_7100661140(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    float frame = vmArgOmitChk(pThread, 2) ? 0.0f : vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    mm::mtl::Singleton<event::EnvManager>::getPtr()->setMapWeatherID(gf::WEATHERID(id), frame);
+    return 0;
+}
+
+// evt_env.setWeatherType
+static int fn_710066121C(VMThread* pThread) {
+    int type = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    mm::mtl::Singleton<event::EnvManager>::getPtr()->setWeatherType(gf::WEATYPE(type));
+    return 0;
+}
+
+// evt_env.setColorFilter
+static int fn_71006612B4(VMThread* pThread) {
+    bool enable = vmArgBoolGet(1, vmArgPtrGet(pThread, 1)) != 0;
+    int no = vmArgOmitChk(pThread, 2) ? 0 : vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int frame = vmArgOmitChk(pThread, 3) ? 0 : vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    float rate = vmArgOmitChk(pThread, 4) ? 0.0f : vmArgIntGet(4, vmArgPtrGet(pThread, 4));
+    mm::mtl::Singleton<event::EnvManager>::getPtr()->setColorFilter(event::EnvManager::COLORFILTER_TYPE(enable ? 1 : 2), no, frame, rate);
+    return 0;
+}
+
+// evt_env.setMotBlur
+static int fn_7100661410(VMThread* pThread) {
+    bool enable = vmArgBoolGet(1, vmArgPtrGet(pThread, 1)) != 0;
+    mm::mtl::Singleton<event::EnvManager>::getPtr()->setMotBlur(enable);
+    return 0;
+}
+
+// evt_env.setToneMap
+static int fn_71006614AC(VMThread* pThread) {
+    bool enable = vmArgBoolGet(1, vmArgPtrGet(pThread, 1)) != 0;
+    float value = vmArgOmitChk(pThread, 2) ? 0.23f : vmArgFixedGet(2, vmArgPtrGet(pThread, 2));
+    mm::mtl::Singleton<event::EnvManager>::getPtr()->setToneMap(enable, value);
+    return 0;
+}
+
+// evt_env.resetScene
+static int fn_7100661590(VMThread* pThread) {
+    mm::mtl::Singleton<event::EnvManager>::getPtr()->resetScene();
+    return 0;
+}
+
+static VMPluginFunc s_evtenvPlugin[] = {
+    {"setClock", fn_710066100C},
+    {"setClockStop", fn_71006610A4},
+    {"setWeather", fn_7100661140},
+    {"setWeatherType", fn_710066121C},
+    {"setColorFilter", fn_71006612B4},
+    {"setMotBlur", fn_7100661410},
+    {"setToneMap", fn_71006614AC},
+    {"resetScene", fn_7100661590},
+    {nullptr, nullptr},
+};
+
+void pluginEvtEnvRegist() {
+    vmPluginRegist("evt_env", s_evtenvPlugin);
 }
 

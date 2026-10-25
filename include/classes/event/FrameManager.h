@@ -20,6 +20,10 @@ class FrameManager : public TUnk_B3E1A8, public TUnk_B3E1D0 {
 public:
     virtual ~FrameManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    // out of line (mm::mtl::Singleton<event::FrameManager>::getPtr's static calls it)
+    FrameManager();
+    // the evt plugin's wait passes its frame count (1.0.0's evt wait calls it by this name)
+    void setSkipAbleFrame(float frame);
     float getFrame() const;
     float getMaxFrame() const;
 

@@ -15,6 +15,21 @@ public:
     virtual ~Manager();  // slot 0
     virtual void OnKeyDown(ml::EventView*);  // slot 2
     virtual void bkgHomeMenu(bool);  // slot 3
+    // the language a scene's text follows (the evt plugin's beginJP/beginUS pass 1/2, endJP/endUS 0); the
+    // enumerator names are not the original's
+    enum LANGUAGE_MODE : int {
+        LANGUAGE_MODE_NONE = 0,
+        LANGUAGE_MODE_JP = 1,
+        LANGUAGE_MODE_US = 2,
+    };
+    // the evt script plugin's commands: each returns true when done, false when the script must wait
+    bool init(const char* name);
+    bool setupScene(const char* name);
+    bool setupSceneEnd();
+    bool startScene(const char* name, int no);
+    bool startPage(const char* name, int no, float frame);
+    bool endScene();
+    void setLanguageMode(bool enable, LANGUAGE_MODE mode);
     bool end();  // returns whether an event was playing
     // GfGameEvent's: initialize creates it on its scene when there is none, finalize destroys it
     static void create(ml::Scn* scn);

@@ -7,6 +7,8 @@ namespace event {
 // table 0x7100B3BF90
 class RotAxis {
 public:
+    // out of line (the script commands' exec construct their member with it)
+    RotAxis();
     RotAxis(unsigned int type, float x, float y, float z);
     virtual ~RotAxis() {}  // slot 0
     // how the rotation is given (1.0.0's getOrigName names the origin from it); the name is not the original's

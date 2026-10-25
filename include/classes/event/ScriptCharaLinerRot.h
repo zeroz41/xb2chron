@@ -2,6 +2,9 @@
 #define CLASSES_EVENT_SCRIPTCHARALINERROT_H
 
 #include "classes/event/ITodo.h"
+#include "classes/event/MemoryManager.h"
+#include "classes/mm/mtl/Singleton.h"
+#include "mtl/MemManager.h"
 #include "classes/event/RotAxis.h"
 
 namespace event { class Param; }
@@ -10,6 +13,10 @@ namespace event {
 // table 0x7100B3F278
 class ScriptCharaLinerRot : public ::event::ITodo {
 public:
+    // the factory TodoManager::add takes: a new command from the event memory manager's allocator
+    static ITodo* exec() {
+        return new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) ScriptCharaLinerRot;
+    }
     virtual ~ScriptCharaLinerRot() {}  // slot 0
     virtual const char* cmdName() const { return "charalinerrot"; }  // slot 2
     virtual void doit(event::Param const&);  // slot 3
