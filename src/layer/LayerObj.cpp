@@ -229,11 +229,11 @@ void LayerObjPlace::placeAnm_Blend(LayerResNode* node, const unsigned char* data
 }
 void* LayerObjTopMemObj::getBuffer() {
     unsigned int index = LayerManager::s_nDebIdx;
-    return m_buffers[index].m_buffer;
+    return m_buffers[index].m_pBuff;
 }
 void LayerObjTopMemObj::updateBufer() {
     unsigned int index = LayerManager::s_nDebIdx;
-    unsigned long* clear = static_cast<unsigned long*>(m_clearBuffers[index].m_buffer);
+    unsigned long* clear = reinterpret_cast<unsigned long*>(m_clearBuffers[index].m_pBuff);
     clear[0] = 0;
     clear[1] = 0;
     m_clearBuffers[index].updateData();

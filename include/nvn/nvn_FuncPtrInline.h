@@ -147,4 +147,20 @@ typedef void (*PFNNVNCOLORSTATESETBLENDENABLEPROC)(NVNcolorState* color, int ind
 extern PFNNVNCOLORSTATESETBLENDENABLEPROC pfnc_nvnColorStateSetBlendEnable;
 static inline void nvnColorStateSetBlendEnable(NVNcolorState* color, int index, NVNboolean enable) { pfnc_nvnColorStateSetBlendEnable(color, index, enable); }
 
+typedef void (*PFNNVNCOMMANDBUFFERBINDUNIFORMBUFFERPROC)(NVNcommandBuffer* cmdBuf, NVNshaderStage stage, int index, NVNbufferAddress buffer, size_t size);
+extern PFNNVNCOMMANDBUFFERBINDUNIFORMBUFFERPROC pfnc_nvnCommandBufferBindUniformBuffer;
+static inline void nvnCommandBufferBindUniformBuffer(NVNcommandBuffer* cmdBuf, NVNshaderStage stage, int index, NVNbufferAddress buffer, size_t size) { pfnc_nvnCommandBufferBindUniformBuffer(cmdBuf, stage, index, buffer, size); }
+
+typedef void (*PFNNVNCOMMANDBUFFERBINDSTORAGEBUFFERPROC)(NVNcommandBuffer* cmdBuf, NVNshaderStage stage, int index, NVNbufferAddress buffer, size_t size);
+extern PFNNVNCOMMANDBUFFERBINDSTORAGEBUFFERPROC pfnc_nvnCommandBufferBindStorageBuffer;
+static inline void nvnCommandBufferBindStorageBuffer(NVNcommandBuffer* cmdBuf, NVNshaderStage stage, int index, NVNbufferAddress buffer, size_t size) { pfnc_nvnCommandBufferBindStorageBuffer(cmdBuf, stage, index, buffer, size); }
+
+typedef void (*PFNNVNCOMMANDBUFFERBINDTEXTUREPROC)(NVNcommandBuffer* cmdBuf, NVNshaderStage stage, int index, NVNtextureHandle texture);
+extern PFNNVNCOMMANDBUFFERBINDTEXTUREPROC pfnc_nvnCommandBufferBindTexture;
+static inline void nvnCommandBufferBindTexture(NVNcommandBuffer* cmdBuf, NVNshaderStage stage, int index, NVNtextureHandle texture) { pfnc_nvnCommandBufferBindTexture(cmdBuf, stage, index, texture); }
+
+typedef void (*PFNNVNCOMMANDBUFFERBINDIMAGEPROC)(NVNcommandBuffer* cmdBuf, NVNshaderStage stage, int index, NVNimageHandle image);
+extern PFNNVNCOMMANDBUFFERBINDIMAGEPROC pfnc_nvnCommandBufferBindImage;
+static inline void nvnCommandBufferBindImage(NVNcommandBuffer* cmdBuf, NVNshaderStage stage, int index, NVNimageHandle image) { pfnc_nvnCommandBufferBindImage(cmdBuf, stage, index, image); }
+
 #endif

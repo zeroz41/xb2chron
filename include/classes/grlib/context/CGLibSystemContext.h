@@ -39,6 +39,8 @@ public:
     bool isRelease();
     // the GPU address of a block's memory, into address
     void getVertexGpuAddress(unsigned long& address, const CGLibMemType& mem);
+    // the GPU address of a uniform block's memory, into address
+    void getUniformoGpuAddress(unsigned long& address, const CGLibMemType& mem);
     // the global uniform buffer's current position: its CPU pointer and its GPU address
     void getGlbUniformParam(unsigned char*& buffer, unsigned long& gpuAddress);
     // advances the global uniform buffer past size bytes (rounded up to 0x100)

@@ -8,12 +8,15 @@
 // name yet.
 typedef unsigned char NVNboolean;
 typedef unsigned long NVNbufferAddress;
+typedef unsigned long NVNtextureHandle;
+typedef unsigned long NVNimageHandle;
 typedef unsigned long uint64_t;
 
 typedef enum NVNblendEquation { NVN_BLEND_EQUATION_LARGE = 0x7FFFFFFF } NVNblendEquation;
 typedef enum NVNblendFunc { NVN_BLEND_FUNC_LARGE = 0x7FFFFFFF } NVNblendFunc;
 typedef enum NVNdepthFunc { NVN_DEPTH_FUNC_LARGE = 0x7FFFFFFF } NVNdepthFunc;
 typedef enum NVNdrawPrimitive { NVN_DRAW_PRIMITIVE_LARGE = 0x7FFFFFFF } NVNdrawPrimitive;
+typedef enum NVNshaderStage { NVN_SHADER_STAGE_LARGE = 0x7FFFFFFF } NVNshaderStage;
 typedef enum NVNlogicOp { NVN_LOGIC_OP_LARGE = 0x7FFFFFFF } NVNlogicOp;
 typedef enum NVNsyncWaitResult { NVN_SYNC_WAIT_RESULT_LARGE = 0x7FFFFFFF } NVNsyncWaitResult;
 typedef enum NVNtiledCacheAction { NVN_TILED_CACHE_ACTION_LARGE = 0x7FFFFFFF } NVNtiledCacheAction;

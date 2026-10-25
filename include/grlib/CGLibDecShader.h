@@ -12,6 +12,7 @@ public:
     void setDeclarationIdx(unsigned int ofs, unsigned int idx);
     // the program the declarations select (inline: the name is not the original's)
     CGLibShader& getCurrentShader() { return *(m_pShaders + m_current); }
+    const CGLibShader& getCurrentShader() const { return *(m_pShaders + m_current); }
 
     unsigned char pad_0[0x38];
     CGLibShader* m_pShaders;

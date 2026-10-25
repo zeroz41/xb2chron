@@ -41,6 +41,7 @@ public:
     static void release();
     static void free(CGLibMemType& mem);
     static void allocVertex(CGLibMemType& mem, unsigned int size);
+    static void allocUniform(CGLibMemType& mem, unsigned int size);
     // the block takes memory owned elsewhere (a CGLibVtlMemPool's)
     static void setMemBuff(CGLibMemType& mem, void* buffer);
 
