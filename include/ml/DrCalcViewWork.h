@@ -1,6 +1,7 @@
 #ifndef ML_DRCALCVIEWWORK_H
 #define ML_DRCALCVIEWWORK_H
 
+#include "classes/ml/DrCalcClipWorkViewPlane.h"
 #include "mm/Mat44.h"
 #include "mm/Vec3.h"
 #include "mm/Vec4.h"
@@ -92,7 +93,11 @@ public:
     mm::Vec3 m_viewYVec;            // 0x460
     unsigned char pad_470[0x20];
     float m_fade[12];               // 0x490
-    unsigned char pad_4C0[0x240];
+    unsigned char pad_4C0[0x8];
+    float m_near;                   // 0x4C8: 0.1 from the constructor (the name is not the original's)
+    unsigned char pad_4CC[0x14];
+    DrCalcClipWorkViewPlane m_clipPlane;  // 0x4E0: set from m_proj by the constructor (the name is not the original's)
+    unsigned char pad_4E8[0x218];
     DrMan* m_pDrMan;                // 0x700
     unsigned char pad_708[0x68];
     mm::Vec3 m_oldViewPos;          // 0x770

@@ -18,6 +18,14 @@
 #include "ml/DrResQueryObj.h"
 #include "ml/DrPixlOccQuery.h"
 #include "ml/DrResOccUniformObj.h"
+#include "ml/DrResEtcUniformObj.h"
+#include "ml/DrResClip.h"
+#include "ml/DrResMpfSampler.h"
+#include "ml/DrResEtcTexList.h"
+#include "classes/ml/DrGpuCheckObj.h"
+#include "ml/MdsMpfMatInfoHeader.h"
+#include "ml/DrCalcViewWork.h"
+#include "mm/Math.h"
 #include "mtl/MemManager.h"
 #include "ml/DrResFetch.h"
 #include "ml/DrResMdoLight.h"
@@ -3336,6 +3344,268 @@ mm::Mat44* DrResOccUniformObj::getMatTbl() {
 
 mm::Mat44* DrResOccUniformObj::getMatTbl(int idx) {
     return m_matTbl + idx;
+}
+
+
+DrResEtcUniformObj::DrResEtcUniformObj(DrMan* man, int entryMax, int size, int matMax)
+    : m_entryMax(entryMax), m_entryCnt(0), m_used(0), m_matMax(matMax), m_buf(nullptr) {
+    int allocSize = m_entryMax * 8 + m_matMax * 0x40;
+    void* buf = mtl::MemManager::allocate(man->m_allocHandle, allocSize, 0x10, false, "no name", 0);
+    m_buf = buf;
+    m_matTbl = reinterpret_cast<mm::Mat44*>(static_cast<unsigned char*>(buf) + (m_entryMax << 3));
+    m_entry = static_cast<Entry*>(buf);
+    m_size = size;
+    m_block.setup(size);
+}
+
+DrResEtcUniformObj::~DrResEtcUniformObj() {
+    m_block.release();
+    if (m_buf != nullptr) {
+        mtl::MemManager::deallocate(m_buf, 0, false);
+        m_buf = nullptr;
+    }
+}
+
+void DrResEtcUniformObj::begin() {
+    m_entryCnt = 0;
+    m_used = 0;
+}
+
+void DrResEtcUniformObj::end() {
+    if (m_used != 0) {
+        m_block.updateData(0, m_used);
+    }
+}
+
+void DrResEtcUniformObj::setUniformBlock(short idx, unsigned int location) {
+    m_block.setUniformBlock(location, m_entry[idx].ofs, m_entry[idx].size);
+}
+
+void DrResEtcUniformObj::setStorageBuffer(short idx, unsigned int location, unsigned int ofs) {
+    m_block.setStorageBuffer(location, m_entry[idx].ofs + ofs, m_entry[idx].size - ofs);
+}
+
+unsigned char* DrResEtcUniformObj::createUniformBuff(int size) {
+    int alignedSize = size + (0x100 - size % 0x100) % 0x100;
+    unsigned char* buf = m_block.getBuff() + m_used;
+    m_entry[m_entryCnt].ofs = m_used;
+    m_entry[m_entryCnt].size = size;
+    m_used += alignedSize;
+    m_entryCnt++;
+    return buf;
+}
+
+// the pixel count m_pixel is forced to while the camera is inside the box (the name is not the original's)
+static const unsigned int c_fullPixel = 800000;
+
+DrResClip::DrResClip() : m_query(nullptr), m_flags(FLAG_INIT0 | FLAG_INIT1), m_holdCnt(0), m_pixel(0) {}
+
+DrResClip::~DrResClip() {
+    if (m_query != nullptr) {
+        m_query->m_user = nullptr;
+        m_query = nullptr;
+    }
+}
+
+bool DrResClip::clipChk(DrCalcViewWork* view, const mm::Vec3& pos, const mm::Vec3& size, float radius, bool noOcc) {
+    m_flags &= ~(FLAG_IN_FRUSTUM | FLAG_OUT_FRUSTUM);
+    mm::Vec3 d(view->m_viewPos.x - pos.x, view->m_viewPos.y - pos.y, view->m_viewPos.z - pos.z);
+    float margin = view->m_near + 0.2f;
+    if (size.x + margin >= mm::fabs(d.x) && margin + size.y >= mm::fabs(d.y) && margin + size.z >= mm::fabs(d.z)) {
+        m_flags = (m_flags & ~(FLAG_INIT0 | FLAG_INIT1)) | FLAG_SKIP0 | FLAG_SKIP1 | FLAG_SKIP2 | FLAG_VISIBLE |
+                  FLAG_FULL_PIXEL;
+        m_pixel = c_fullPixel;
+        m_holdCnt = 4;
+        return false;
+    }
+    if (!view->m_clipPlane.clipTest(&pos.x, &size.x)) {
+        m_pixel = 0;
+        m_flags = (m_flags & ~(FLAG_VISIBLE | FLAG_INIT0 | FLAG_INIT1 | FLAG_FULL_PIXEL)) | FLAG_SKIP0 | FLAG_SKIP1 |
+                  FLAG_SKIP2 | FLAG_OUT_FRUSTUM;
+        return true;
+    }
+    m_flags |= FLAG_IN_FRUSTUM;
+    if (noOcc) {
+        if (m_flags & FLAG_FULL_PIXEL) {
+            m_pixel = c_fullPixel;
+        }
+        m_flags = (m_flags & ~(FLAG_INIT0 | FLAG_INIT1)) | FLAG_SKIP0 | FLAG_SKIP1 | FLAG_SKIP2 | FLAG_VISIBLE;
+        m_holdCnt = 3;
+        return false;
+    }
+    if (m_flags & (FLAG_SKIP0 | FLAG_SKIP1 | FLAG_SKIP2)) {
+        if (m_flags & FLAG_FULL_PIXEL) {
+            m_pixel = c_fullPixel;
+        }
+        if (m_flags & FLAG_SKIP0) {
+            m_flags &= ~FLAG_SKIP0;
+        } else if (m_flags & FLAG_SKIP1) {
+            m_flags &= ~FLAG_SKIP1;
+        } else if (m_flags & FLAG_SKIP2) {
+            m_flags &= ~(FLAG_SKIP2 | FLAG_FULL_PIXEL);
+        }
+        return false;
+    }
+    if (m_flags & (FLAG_INIT0 | FLAG_INIT1)) {
+        if (m_flags & FLAG_INIT0) {
+            m_flags &= ~FLAG_INIT0;
+        } else {
+            m_flags &= ~FLAG_INIT1;
+        }
+        m_flags &= ~(FLAG_VISIBLE | FLAG_FULL_PIXEL);
+        m_pixel = 0;
+        return false;
+    }
+    if (m_query != nullptr && (m_query->m_flags & (4 << DrMan::s_nDblNowIdx))) {
+        m_pixel = m_query->m_query.getQueryPixel();
+    } else {
+        m_pixel = 0;
+    }
+    if (m_pixel == 0) {
+        if (!(m_flags & FLAG_VISIBLE)) {
+            return true;
+        }
+        if (m_holdCnt-- < 0) {
+            m_flags &= ~FLAG_VISIBLE;
+            m_holdCnt = 0;
+            return true;
+        }
+        return false;
+    }
+    m_flags |= FLAG_VISIBLE;
+    m_holdCnt = 5;
+    return false;
+}
+
+bool DrResClip::clipChkOccOff(DrCalcViewWork* view, const mm::Vec3& pos, float radius) {
+    m_flags &= ~(FLAG_IN_FRUSTUM | FLAG_INIT0 | FLAG_INIT1 | FLAG_OUT_FRUSTUM);
+    m_pixel = 0;
+    float dx = view->m_viewPos.x - pos.x;
+    float dy = view->m_viewPos.y - pos.y;
+    float dz = view->m_viewPos.z - pos.z;
+    if (dx * dx + dy * dy + dz * dz <= radius * radius) {
+        m_flags = (m_flags & ~FLAG_VISIBLE) | FLAG_SKIP0 | FLAG_SKIP1 | FLAG_SKIP2;
+        return false;
+    }
+    if (view->m_clipPlane.clipTest(pos, radius)) {
+        return false;
+    }
+    m_flags = 0;
+    return true;
+}
+
+DrResMpfSampler::DrResMpfSampler(const MdsMpfMatInfoHeader* header) : m_sampler() {
+    setupSampler(header);
+}
+
+DrResMpfSampler::~DrResMpfSampler() {
+    for (int i = 0; i < 3; i++) {
+        if (m_sampler[i] != nullptr) {
+            delete m_sampler[i];
+            m_sampler[i] = nullptr;
+        }
+    }
+}
+
+void DrResMpfSampler::setupSampler(const MdsMpfMatInfoHeader* header) {
+    for (int i = 0; i < 3; i++) {
+        if (m_sampler[i] != nullptr) {
+            delete m_sampler[i];
+            m_sampler[i] = nullptr;
+        }
+    }
+    for (int i = 0; i < 3; i++) {
+        m_sampler[i] = new (DrMan::getIns()->m_resHandle, nullptr, 0, 4, false) grlib::CGLibSampler;
+        unsigned short flags;
+        switch (i) {
+        case 0:
+            flags = header->m_samplerFlags0;
+            break;
+        case 1:
+            flags = header->m_samplerFlags1;
+            break;
+        case 2:
+            flags = header->m_samplerFlags2;
+            break;
+        default:
+            flags = 0;
+            break;
+        }
+        m_sampler[i]->initSampler(static_cast<GrlTexClamp>(2), static_cast<GrlTexMagFilterType>(1));
+        // bit 0/1: s/t clamp 0, else 2 (1 with bit 2/3)
+        GrlTexClamp clampS = static_cast<GrlTexClamp>((flags & 1) ? 0 : 2 - ((flags >> 2) & 1));
+        GrlTexClamp clampT = static_cast<GrlTexClamp>((flags & 2) ? 0 : 2 - ((flags >> 3) & 1));
+        m_sampler[i]->setClamp(clampS, clampT, static_cast<GrlTexClamp>(2));
+        if (flags & 0x10) {
+            m_sampler[i]->setFilter(static_cast<GrlTexMagFilterType>(0), static_cast<GrlTexMinFilterType>(2),
+                                    static_cast<GrlTexTexAnisoRatio>(0));
+        } else {
+            m_sampler[i]->setFilter(static_cast<GrlTexMagFilterType>(1), static_cast<GrlTexMinFilterType>(5),
+                                    static_cast<GrlTexTexAnisoRatio>(0));
+        }
+        m_sampler[i]->updateData();
+    }
+}
+
+DrResEtcTexList::~DrResEtcTexList() {
+    releaseTexture();
+}
+
+// 1.0.0 has it out of line (0x7100868D70); 3.0.1 keeps only the copy inlined into the destructor
+void DrResEtcTexList::releaseTexture() {
+    if (m_buf != nullptr) {
+        for (int i = 0; i < m_num; i++) {
+            m_texture[i].~CGLibTextureBuffer();
+        }
+        if (m_buf != nullptr) {
+            mtl::MemManager::deallocate(m_buf, 0, false);
+            m_buf = nullptr;
+        }
+        m_texture = nullptr;
+        m_num = 0;
+    }
+}
+
+void DrResEtcTexList::release() {
+    m_flags |= 1;
+}
+
+grlib::CGLibTextureBuffer* DrResEtcTexList::getTextureID(unsigned int id) {
+    if (m_flags & 1) {
+        return nullptr;
+    }
+    const Entry* entry =
+        reinterpret_cast<const Entry*>(reinterpret_cast<const unsigned char*>(m_header) + m_header->m_entryOfs);
+    for (int i = 0; i < m_num; i++, entry++) {
+        if (entry->m_id == id) {
+            return &m_texture[i];
+        }
+    }
+    return nullptr;
+}
+
+DrGpuCheckObj::~DrGpuCheckObj() {
+    m_query.release();
+}
+
+void DrGpuCheckObj::setPause(bool pause) {
+    if (pause) {
+        m_flags |= FLAG_PAUSE;
+    } else {
+        m_flags &= ~FLAG_PAUSE;
+    }
+}
+
+void DrGpuCheckObj::release() {
+    m_flags |= FLAG_RELEASE << DrMan::s_nDblStockIdx;
+}
+
+unsigned int DrGpuCheckObj::isDeleteCall() const {
+    return m_flags & (FLAG_RELEASE << DrMan::s_nDblIdx);
+}
+
+bool DrGpuCheckObj::isRender() const {
+    return (m_flags & FLAG_RENDER) != 0;
 }
 
 }  // namespace ml
