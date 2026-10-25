@@ -11,9 +11,9 @@ repository contains no game code or assets; you need your own copy of the game.
 <!-- progress -->
 | | Matched | Linked |
 |:--|--:|--:|
-| Code | 15.25% | 6.00% |
+| Code | 15.37% | 6.00% |
 | Data | 1.04% | 1.00% |
-| Functions | 14,124 of 35,531 | |
+| Functions | 14,270 of 35,531 | |
 | Units | | 301 of 847 |
 <!-- /progress -->
 
