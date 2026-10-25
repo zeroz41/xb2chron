@@ -120,6 +120,16 @@ public:
     bool isITM_HanaAssistFlagJD(unsigned int item) const;
     unsigned int getITM_HanaRoleAutoHate(unsigned int parts) const;
     unsigned int getITM_HanaRoleArtsHate(unsigned int parts) const;
+    unsigned int getPcWpnName(unsigned int weapon) const;  // GfDataWeapon::getName
+    unsigned int getITM_HanaRoleNeedPow(unsigned int parts) const;  // GfDataHana::getEquipPower
+    unsigned int getITM_HanaAtrNeedPow(unsigned int parts) const;
+    unsigned int getITM_HanaArtsEnhNeedPow(unsigned int parts) const;
+    unsigned int getITM_HanaArtsEnhEnhance(unsigned int parts) const;  // EquipHana::setArtsParts
+    unsigned int getITM_HanaNArtsSetNeedPow(unsigned int parts) const;
+    unsigned int getITM_HanaNArtsSetNArts(unsigned int parts) const;  // EquipHana::setNArtsParts
+    unsigned int getITM_HanaNArtsSetNArtsRecastRev(unsigned int parts) const;
+    unsigned int getITM_HanaAssistNeedPow(unsigned int parts) const;
+    unsigned int getITM_HanaRoleRole(unsigned int parts) const;  // GfDataHana::getRole
 };
 }  // namespace gf
 

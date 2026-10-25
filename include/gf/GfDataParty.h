@@ -4,13 +4,7 @@
 namespace mm { class Vec3; }
 
 namespace gf {
-// the party's part of the game data (GfDataParty::getSDataParty points at it); the name is not the original's
-struct SDataParty {
-    unsigned char pad_0[0x40];
-    unsigned int m_leader;  // 0x40: GfDataParty::isLeader compares a character with it (the name is not the original's)
-    unsigned char pad_44[0x8];
-    unsigned short m_partyGauge;  // GfGameParty::getPartyGauge and setPartyGauge (300 full)
-};
+struct SDataParty;
 
 // the party's game data (functions, by 1.0.0's symbols)
 class GfDataParty {
@@ -43,6 +37,17 @@ public:
     static bool isLeader(unsigned int chara);  // false for 0
     static mm::Vec3* getSavePos(unsigned int index, bool flag);
     static mm::Vec3* getSaveRot(unsigned int index, bool flag);
+    static bool empty();  // no driver in the first three members
+};
+
+// the party's part of the game data (GfDataParty::getSDataParty points at it); the name is not the original's
+struct SDataParty {
+    // its first members (GfDataParty::empty tests the first three's drivers; the count is not known)
+    GfDataParty::PartyMember m_members[3];
+    unsigned char pad_12[0x2E];
+    unsigned int m_leader;  // 0x40: GfDataParty::isLeader compares a character with it (the name is not the original's)
+    unsigned char pad_44[0x8];
+    unsigned short m_partyGauge;  // GfGameParty::getPartyGauge and setPartyGauge (300 full)
 };
 }  // namespace gf
 

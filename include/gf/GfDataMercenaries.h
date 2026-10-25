@@ -94,6 +94,9 @@ public:
     static unsigned int getRewardAchievmentRatio();
     // 24 per mercenary level (local flag (4, 2)) plus 24, and 48 more once the game was cleared
     static unsigned int getReserverMax();
+    // whether a mission can be ordered: true while its local flag (type 4, mission + 5) is 0 (and for mission 0),
+    // at state 4 whether it is repeatable, else false
+    static bool isEnableOrder(unsigned int mission);
 };
 }  // namespace gf
 

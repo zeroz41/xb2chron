@@ -26,6 +26,7 @@ public:
     CBdatWrapper* m_fpBLD_RareList;  // 0x80
     unsigned char pad_88[0x8];
     unsigned int getBLD_IdeaNeedPoint(unsigned int level) const;
+    unsigned int getNameListCategory(unsigned int blade) const;  // GfDataBlade::getCommonBladeName
 };
 }  // namespace gf
 

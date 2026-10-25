@@ -2,6 +2,7 @@
 #define GF_SDATABLADE_H
 
 #include "gf/GfDataBlade.h"
+#include "gf/GfDataHana.h"
 
 namespace gf {
 // what DataObjBlade::getIdea and DataObjDriver::getIdea point at (an SDataBlade's +0xC, an SDataDriver's start);
@@ -45,7 +46,7 @@ public:
     SDataBlade& operator=(const SDataBlade& other);
 
     unsigned short m_dataType;  // DataObjBlade::getDataType
-    unsigned char pad_2[0x2];
+    unsigned short m_creator;  // GfDataBlade::getCreator (named after its accessor; the name is not the original's)
     unsigned short m_setDriver;  // the driver it is set to, 0 for none (GfDataBlade::getSetDriver)
     unsigned short m_bladeId;  // its blade row (GfDataBlade::getQuestRace takes it)
     unsigned int m_bornTime;  // (named after its accessor; the name is not the original's)
@@ -69,8 +70,7 @@ public:
     unsigned char pad_666[0x12];
     unsigned short m_equipOrbs[3];  // DataObjBlade::setVirtualEquipOrb sets one, by slot; the count is not known
     unsigned char pad_67e[0xE];
-    unsigned short m_hanaRoleParts;  // Hana's role part (GfDataBlade::getHpMaxRev reads its row; the name is not the original's)
-    unsigned char pad_68e[0x76];
+    EquipHana m_equipHana;  // Hana's equipment (GfDataHana::getEquipParts; the name is not the original's)
     // 0x704: Hana's equipment power rank (GfDataHana::getEquipPowerRank/setEquipPowerRank; the name is not the
     // original's)
     unsigned short m_hanaPowerRank;
@@ -89,7 +89,8 @@ public:
     int m_hasCondMotion;
     char m_addMotionName[0x14];  // GfDataBlade::getResourceNameAddMotion; the length is the distance to the next
     char m_voiceStr[0x1C];  // GfDataBlade::getVoiceStr; the length is the distance to the next
-    unsigned char pad_78c[0x20];
+    unsigned char m_activateMercenaryTeam;  // GfDataBlade::isActivateMercenaryTeam (named after it; not the original's name)
+    unsigned char pad_78d[0x1F];
     char m_effectName[0x28];  // getEffectResourceName; the length is not known
     char m_centerBone[0x14];  // getCenterBone; the length is the distance to the next
     char m_camBone[0x14];  // getCamBone; the length is the distance to the next

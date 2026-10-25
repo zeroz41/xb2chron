@@ -209,6 +209,10 @@ public:
     static unsigned int getBladeRelativeID(unsigned int blade);  // getBladeIndex
     // whether a model path names a common blade (it starts with "bl/bl2")
     static bool getCommonBladeName(const char* path);
+    // a blade's mercenary name message (none for the common blades' ids 1197-1422)
+    static bool getMercenaryName(unsigned char*& bdat, unsigned int& id, unsigned int blade);
+    // a common blade's name text ("" for none)
+    static const char* getCommonBladeName(unsigned int blade);
 };
 
 }  // namespace gf

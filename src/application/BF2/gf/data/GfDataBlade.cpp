@@ -1,4 +1,12 @@
 #include "classes/gf/GfBdatBlade.h"
+#include "classes/gf/GfBdatItem.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfDataHana.h"
+#include "gf/GfDataMercenaries.h"
+#include "gf/GfDataParty.h"
+#include "gf/SDataBlade.h"
+#include "gf/QuestID.h"
+#include "classes/gf/GfBdatBlade.h"
 #include "classes/gf/GfBdatBtl.h"
 #include "gf/GfDataBattle.h"
 #include "gf/GfDataBlade.h"
@@ -2017,13 +2025,13 @@ bool GfDataNanakoori::setFan(unsigned int fan) {
 unsigned int GfDataHana::getAutoHate(unsigned int hana) {
     GfBdatItem* bdat = GfBdatItem::get();
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)];
-    return bdat->getITM_HanaRoleAutoHate(data.m_hanaRoleParts);
+    return bdat->getITM_HanaRoleAutoHate(data.m_equipHana.m_roleParts);
 }
 
 unsigned int GfDataHana::getArtsHate(unsigned int hana) {
     GfBdatItem* bdat = GfBdatItem::get();
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)];
-    return bdat->getITM_HanaRoleArtsHate(data.m_hanaRoleParts);
+    return bdat->getITM_HanaRoleArtsHate(data.m_equipHana.m_roleParts);
 }
 
 void GfDataBladeCreate::addAssurePoint(unsigned int point) {
@@ -2387,5 +2395,221 @@ unsigned int GfDataMercenaries::getReserverMax() {
     return level * 24 + (GfDataManager::getDataGame()->m_gameClearCount != 0 ? 48 : 0) + 24;
 }
 
+
+
+const EquipHana* GfDataHana::getEquipParts(unsigned int hana) {
+    return &GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)].m_equipHana;
+}
+
+void GfDataHana::setEquipParts(unsigned int hana, const EquipHana& equip) {
+    GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)].m_equipHana = equip;
+}
+
+void EquipHana::setArtsParts(unsigned int item, unsigned int handle, unsigned int slot) {
+    Parts& parts = m_artsParts[slot];
+    parts.m_item = item;
+    parts.m_handle = handle;
+    parts.m_value = GfBdatItem::get()->getITM_HanaArtsEnhEnhance(item);
+}
+
+void EquipHana::setNArtsParts(unsigned int item, unsigned int handle, unsigned int slot) {
+    Parts& parts = m_nArtsParts[slot];
+    parts.m_item = item;
+    parts.m_handle = handle;
+    parts.m_value = GfBdatItem::get()->getITM_HanaNArtsSetNArts(item);
+    parts.m_value2 = GfBdatItem::get()->getITM_HanaNArtsSetNArtsRecastRev(item);
+}
+
+int GfDataHana::getEquipPower(unsigned int hana) {
+    return getEquipPower(*getEquipParts(hana));
+}
+
+int GfDataHana::getEquipPower(const EquipHana& equip) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    int power = 0;
+    if (equip.m_roleParts != 0) {
+        power = bdat->getITM_HanaRoleNeedPow(equip.m_roleParts);
+    }
+    if (equip.m_attributeParts != 0) {
+        power += bdat->getITM_HanaAtrNeedPow(equip.m_attributeParts);
+    }
+    for (int i = 0; i < 3; i++) {
+        if (equip.m_artsParts[i].m_value != 0) {
+            power += bdat->getITM_HanaArtsEnhNeedPow(equip.m_artsParts[i].m_item);
+        }
+    }
+    for (int i = 0; i < 3; i++) {
+        if (equip.m_nArtsParts[i].m_value != 0) {
+            power += bdat->getITM_HanaNArtsSetNeedPow(equip.m_nArtsParts[i].m_item);
+        }
+    }
+    for (int i = 0; i < 6; i++) {
+        if (equip.m_condenserParts[i] != 0) {
+            power += bdat->getITM_HanaAssistNeedPow(equip.m_condenserParts[i]);
+        }
+    }
+    return power;
+}
+
+bool GfDataFieldSkill::getName(unsigned char*& bdat, unsigned int& id, unsigned int skill) {
+    if (skill == 0) {
+        return false;
+    }
+    id = QuestListAcc::get()->getFLD_FieldSkillListName(skill);
+    bdat = GfBdatMsg::getFpFieldSkill();
+    return id != 0;
+}
+
+bool GfDataFieldSkill::getCaption(unsigned char*& bdat, unsigned int& id, unsigned int skill) {
+    if (skill == 0) {
+        return false;
+    }
+    id = QuestListAcc::get()->getFLD_FieldSkillListCaption(skill);
+    bdat = GfBdatMsg::getFpFieldSkill();
+    return id != 0;
+}
+
+bool GfDataWeapon::getName(unsigned char*& bdat, unsigned int& id, unsigned int weapon) {
+    GfBdatItem* item = GfBdatItem::get();
+    bdat = nullptr;
+    id = item->getPcWpnName(weapon);
+    bdat = GfBdatMsg::getFpPcWpn();
+    return id != 0 && bdat != nullptr;
+}
+
+bool GfDataBlade::getMercenaryName(unsigned char*& bdat, unsigned int& id, unsigned int blade) {
+    if (blade - 1197 < 226) {
+        return false;
+    }
+    id = GfBdatChrBl::get()->getChrBlMerceName(blade);
+    bdat = GfBdatMsg::getFpMerceName();
+    return id != 0;
+}
+
+bool GfDataMercenaries::getMsgZoneName(unsigned char*& bdat, unsigned int& id, unsigned int mission) {
+    unsigned int map = getMissionMapID(mission);
+    if (map == 0) {
+        return false;
+    }
+    id = GfBdatMaplist::get()->getMaplistnameID(map);
+    bdat = GfBdatMsg::getFpMapInfo();
+    return id != 0;
+}
+
+int GfDataBlade::getCreator(unsigned int blade) {
+    if (blade == 0) {
+        return 0;
+    }
+    return GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_creator;
+}
+
+bool GfDataBlade::isActivateMercenaryTeam(unsigned int blade) {
+    return GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_activateMercenaryTeam != 0;
+}
+
+const char* GfDataBlade::getCommonBladeName(unsigned int blade) {
+    unsigned int name = GfBdatBlade::get()->getNameListCategory(blade);
+    unsigned char* fp = GfBdatMsg::getFpCommonBladeName();
+    const char* text = name != 0 ? Bdat::getMSText(fp, name) : nullptr;
+    return text == nullptr ? "" : text;
+}
+
+unsigned int GfDataMercenaries::getMissionZoneID(unsigned int mission) {
+    unsigned int map = getMissionMapID(mission);
+    if (map == 0) {
+        return 0;
+    }
+    return GfDataMap::getZoneIdForGameMap(map);
+}
+
+bool GfDataBlade::fn_71002383C8(unsigned int blade) {
+    if (blade == 0) {
+        return false;
+    }
+    return GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_dataType == 2;
+}
+
+QuestID GfDataQuest::getListNextQuestA(QuestID id) {
+    if (!id.empty()) {
+        unsigned short next = QuestListAcc::get()->getListNextQuestA(id);
+        if (next != 30000 && next != 30001) {
+            QuestID quest;
+            quest.m_id = next;
+            quest.m_achieveId = id.m_achieveId;
+            return quest;
+        }
+    }
+    return QuestID();
+}
+
+QuestID GfDataQuest::getListNextQuestB(QuestID id) {
+    if (!id.empty()) {
+        unsigned short next = QuestListAcc::get()->getListNextQuestB(id);
+        if (next != 30000 && next != 30001) {
+            QuestID quest;
+            quest.m_id = next;
+            quest.m_achieveId = id.m_achieveId;
+            return quest;
+        }
+    }
+    return QuestID();
+}
+
+bool GfDataParty::empty() {
+    for (int i = 0; i < 3; i++) {
+        if (GfDataManager::getDataGame()->m_party.m_members[i].m_driver != 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+unsigned int GfDataHana::getRole(unsigned int hana) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)];
+    return bdat->getITM_HanaRoleRole(data.m_equipHana.m_roleParts);
+}
+
+bool GfDataDriver::isActivateUnuse(unsigned int driver) {
+    return getSDataDriver(driver)->m_dataType == 0;
+}
+
+bool GfDataMercenaries::isEnableOrder(unsigned int mission) {
+    if (mission == 0) {
+        return true;
+    }
+    unsigned int state = GfGameFlag::getLocal(4, mission + 5);
+    if (state == 0) {
+        return true;
+    }
+    QuestListAcc* acc = QuestListAcc::get();
+    if (state == 4) {
+        return acc->getFLD_MercenariesMissionRepeatable(mission) != 0;
+    }
+    return false;
+}
+
+void GfDataNanakoori::setMissionComplete(unsigned int mission) {
+    unsigned int flag = getNanakooriMissionClearFlg1Offset(mission);
+    if (flag == 0 || GfGameFlag::getLocal(1, flag) != 0) {
+        return;
+    }
+    flag = getNanakooriMissionClearFlg1Offset(mission);
+    if (flag != 0) {
+        GfGameFlag::setLocal(1, flag, 1);
+    }
+}
+
+unsigned int GfDataBlade::getBladeID(unsigned int index) {
+    if (index < 20) {
+        unsigned int blade = index + 1001;
+        return blade > 1013 ? 0 : blade;
+    }
+    if (index < 196) {
+        unsigned int blade = index + 994;
+        return blade < GfBdatChrBl::get()->getChrBlEnd() ? blade : 0;
+    }
+    return index < 422 ? index + 1001 : 0;
+}
 
 }  // namespace gf
