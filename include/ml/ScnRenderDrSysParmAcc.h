@@ -86,6 +86,10 @@ public:
     // (fw::fn_71001996F0) hands it a ScnRenderDrSysParmAcc it just constructed. What it does: stores the flag as a
     // word at 0x1D50 of DrMan::get()'s DrMan (not through the accessor's own m_drMan).
     void fn_710070A2F4(bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in this unit and
+    // reads the accessor's m_drMan. What it does: returns fn_710071E77C's answer on m_drMan; GfMapManager::isExistObj
+    // asks it (on a just-constructed accessor) when no map object exists.
+    bool fn_710070A0DC();
 
     DrMan* m_drMan;                  // the renderer's (its 0x10)
     DrPixlPostParm* m_postParm;      // the DrMan's for the view (the name is not the original's)

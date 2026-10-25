@@ -29,6 +29,8 @@ public:
     // listener joins (leaves) the ones GfEvent's calls reach
     static void addEventCallback(IGfEvent* listener);
     static void removeEventCallback(IGfEvent* listener);
+    // each listener's gevGameMapModel (GfMapManager::destroyMapData passes the map's object and false)
+    static void callGameMapModel(GF_OBJ_HANDLE* handle, bool flag);
     static void callGameState(GF_STATE prev, GF_STATE next);  // each listener's gevGameState
     static void callExecState(EXEC_STATE state);  // each listener's gevExecState
     static void callLoadGameTime(float time);  // each listener's gevLoadGameTime

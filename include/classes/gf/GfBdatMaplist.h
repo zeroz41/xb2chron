@@ -18,6 +18,7 @@ public:
     unsigned int getMaplistEnd() const;
     unsigned int getMaplistbgm_cndID(unsigned int map) const;  // the map's BGM condition row
     const char* getMaplistresource(unsigned int map) const;
+    unsigned int getMaplistnameID(unsigned int map) const;  // the map's name row (GfMapManager::getMapName)
     // the map's enemy balloon radius (its balloondisp_r column, a byte; GfFieldManager keeps it as a float)
     unsigned int getMapliste_balloondisp_r(unsigned int map) const;
     // a map's weather of a type (its w_type columns)

@@ -16,6 +16,7 @@ namespace gf {
 // its effects (file 6): an effect pack, and the effect LOD manager set up for the map's model
 class MapEff {
 public:
+    MapEff() : m_lodInit(false), m_pack(nullptr) {}  // inline: GfMapManager's constructor (inlined in build) clears the fields
     ~MapEff();
     void create(GF_ASSET_HANDLE* handle, fw::ModelObject* model);
     void destroy();
@@ -29,6 +30,7 @@ public:
 // its navigation mesh (file 2), handed to the navigation manager
 class MapNavi {
 public:
+    MapNavi() : m_created(false) {}  // inline: GfMapManager's constructor (inlined in build) clears the fields
     ~MapNavi();
     void create(GF_ASSET_HANDLE* handle);
     void destroy();
@@ -39,6 +41,7 @@ public:
 // its ground collision (file 1)
 class MapColi {
 public:
+    MapColi() : m_coli(nullptr) {}  // inline: GfMapManager's constructor (inlined in build) clears the fields
     ~MapColi();
     void create(GF_ASSET_HANDLE* handle);
     void destroy();
@@ -49,6 +52,7 @@ public:
 // its global image-based light (file 7), in the setup parameters' scene
 class MapGIBL {
 public:
+    MapGIBL() : m_ibl(nullptr) {}  // inline: GfMapManager's constructor (inlined in build) clears the fields
     ~MapGIBL();
     void create(GF_ASSET_HANDLE* handle);
     void destroy();
@@ -60,6 +64,7 @@ public:
 // its local lights (file 8), in the setup parameters' scene
 class MapLIBL {
 public:
+    MapLIBL() : m_lgt(nullptr) {}  // inline: GfMapManager's constructor (inlined in build) clears the fields
     ~MapLIBL();
     void create(GF_ASSET_HANDLE* handle);
     void destroy();
