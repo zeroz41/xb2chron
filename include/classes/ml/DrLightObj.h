@@ -9,6 +9,8 @@ class DrLightObj {
 public:
     virtual ~DrLightObj() {}  // slot 0
     virtual void update(ml::DrLightMan*) {}  // slot 2
+
+    bool isPnt() const;  // a point light (DrResMdoLight::release hands those to releasePntLight)
 };
 }  // namespace ml
 

@@ -101,7 +101,11 @@ public:
     DrMan* m_pDrMan;                // 0x700
     unsigned char pad_708[0x68];
     mm::Vec3 m_oldViewPos;          // 0x770
-    unsigned char pad_780[0x360];
+    unsigned char pad_780[0x22A];
+    // DrGpuCheckObj::setWorldPos/update treat every check object as visible while it is set (the name is not the
+    // original's)
+    bool m_gpuCheckAllVisible;      // 0x9AA
+    unsigned char pad_9AB[0x135];
     float m_jitter[2];              // 0xAE0
     unsigned char pad_AE8[0x8];
     float m_oldJitter[2];           // 0xAF0

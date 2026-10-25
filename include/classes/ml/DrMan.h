@@ -8,6 +8,9 @@
 namespace cloud { class CloudMan; }
 namespace grlib { class CGLibTextureBuffer; }
 namespace ml { class DrAPCache; }
+namespace ml { class DrCalcMan; }
+namespace ml { class DrLightMan; }
+namespace ml { class DrCalcTexStreamMan; }
 namespace ml { class DrIniSys; }
 namespace ml { class DrPixlMan; }
 namespace ml { class DrMdlMan; }
@@ -93,7 +96,14 @@ public:
     // the constructor makes one per view (index 0 here), after the DrLightMan/DrFogMan it is built from
     DrEnvironmentMan* m_envMan[4];
     DrPixlPostParm* m_postParm[4];      // the constructor makes them; ScnRenderDrSysParmAcc takes one per view
-    unsigned char pad_140[0x480];
+    unsigned char pad_140[0x440];
+    // the current view's DrCalcMan: beginSetup stores the one it makes at 0xA0 + index * 8 here too (the name is
+    // not the original's)
+    DrCalcMan* m_calcMan;               // 0x580
+    DrLightMan* m_lightMan;             // 0x588, DrResMdoLight makes and releases its lights with it (the name is not the original's)
+    unsigned char pad_590[0x20];
+    DrCalcTexStreamMan* m_texStreamMan;  // 0x5B0, DrStmReadCheck makes its stream lists with it (the name is not the original's)
+    unsigned char pad_5B8[0x8];
     DrAPCache* m_apCache;               // 0x5C0, DrMdoSetup::varStTex_* bind textures through it (the name is not the original's)
     bool* m_pAutoReduction;             // 0x5C8, setAutoReduction writes through it
     unsigned char pad_5D0[0x8];

@@ -23,6 +23,23 @@
 #include "ml/DrResMpfSampler.h"
 #include "ml/DrResEtcTexList.h"
 #include "classes/ml/DrGpuCheckObj.h"
+#include "ml/DrGpuCheckRender.h"
+#include "ml/DrMdlMan.h"
+#include "ml/DrMdoVertexMan.h"
+#include "ml/ScnObjAccGpuCheck.h"
+#include "ml/DrShdDataList.h"
+#include "ml/DrShdDataObj.h"
+#include "grlib/CGLibCtl.h"
+#include "grlib/CGLibVtxInstans.h"
+#include "ml/DrPixlMan.h"
+#include "ml/DrCalcMan.h"
+#include "ml/DrLightMan.h"
+#include "classes/ml/DrLightObjPnt.h"
+#include "classes/ml/DrLightObjSpt.h"
+#include <new>
+#include "classes/ml/DrStmReadCheck.h"
+#include "classes/ml/DrCalcStmListObj.h"
+#include "classes/ml/DrCalcTexStreamMan.h"
 #include "ml/MdsMpfMatInfoHeader.h"
 #include "ml/DrCalcViewWork.h"
 #include "mm/Math.h"
@@ -3606,6 +3623,160 @@ unsigned int DrGpuCheckObj::isDeleteCall() const {
 
 bool DrGpuCheckObj::isRender() const {
     return (m_flags & FLAG_RENDER) != 0;
+}
+
+
+
+DrGpuCheckBase* DrGpuCheckBase::createEffGpuCheckObj(int type) {
+    return DrMan::get()->m_mdlMan->createEffGpuCheckObj(type);
+}
+
+DrGpuCheckRender::DrGpuCheckRender() {
+    m_uniform.setup(0x80);
+}
+
+DrGpuCheckRender::~DrGpuCheckRender() {}
+
+void DrGpuCheckRender::beginUpdate() {
+    m_viewWork = DrMan::get()->m_calcMan->m_pViewWork;
+    m_instans = DrMan::get()->m_mdlMan->m_vertexMan->m_instans;
+    m_instansBuff = static_cast<mm::Vec4*>(m_instans->getNextInstansBuff());
+    m_instansOfs = m_instansStart = m_instans->m_offset;
+    m_mode = 1;
+}
+
+void DrGpuCheckRender::endUpdate() {
+    if (m_instansOfs != m_instansStart) {
+        m_instans->m_offset += m_instansOfs - m_instansStart;
+    }
+}
+
+void DrGpuCheckRender::endRender() {
+    DrMan::get()->m_pixlMan->depCheckEnd();
+}
+
+void DrGpuCheckRender::render(unsigned int ofs, int mode) {
+    if (m_mode != mode) {
+        DrShdDataObj* shd = m_shdList->getSelectShdObj(8);
+        shd->setDeclarationIdx(m_declOfs, mode);
+        shd->setupShader(0u);
+        if (mode == 1) {
+            m_shdList->bindShdDepthCheck();
+        } else {
+            m_shdList->bindShdBoxVertex();
+        }
+        m_mode = mode;
+    }
+    grlib::CGLibCtlVertex::setInstanceVertex(*m_instans, 0x10, ofs, 1, 1);
+    if (mode == 1) {
+        m_shdList->renderQuads();
+    } else {
+        m_shdList->renderBox();
+    }
+}
+
+DrGpuCheckObj::DrGpuCheckObj(int type, bool eff)
+    : m_prev(nullptr), m_next(nullptr), m_type(type), m_query(), m_instansOfs(0), m_flags(0),
+      m_pos{mm::Vec4(0.0f, 0.0f, 0.0f, 1.0f), mm::Vec4(0.0f, 0.0f, 0.0f, 1.0f)}, m_worldPos(0.0f, 0.0f, 0.0f, 1.0f),
+      m_holdCnt(3), m_waitCnt(0) {
+    if (eff) {
+        m_flags = FLAG_CREATE;
+    }
+}
+
+void DrGpuCheckObj::setPos(const mm::Vec3& pos, float radius) {
+    int idx = DrMan::s_nDblStockIdx;
+    m_flags |= FLAG_POS << idx;
+    mm::Vec3 p(pos);
+    m_pos[idx].x = p.x;
+    m_pos[idx].y = p.y;
+    m_pos[idx].z = p.z;
+    m_pos[idx].w = radius;
+}
+
+void DrGpuCheckObj::setWorldPos(const mm::Vec3& pos, float radius) {
+    mm::Vec3 p(pos);
+    m_worldPos.x = p.x;
+    m_worldPos.y = p.y;
+    m_worldPos.z = p.z;
+    m_worldPos.w = radius;
+    if (DrMan::get()->m_mdlMan->m_gpuCheckRender->m_viewWork->m_gpuCheckAllVisible) {
+        m_holdCnt = 3;
+        m_flags |= FLAG_RENDER;
+    }
+}
+
+
+
+DrStmReadCheck::~DrStmReadCheck() {
+    if (m_list != nullptr) {
+        m_list->release();
+        m_list = nullptr;
+    }
+}
+
+void DrStmReadCheck::release() {
+    m_flags |= FLAG_RELEASE << DrMan::s_nDblStockIdx;
+}
+
+void* DrStmReadCheck::getAdder() {
+    if ((m_flags & FLAG_READY) && m_list != nullptr) {
+        m_list->getAdder();
+    }
+    return nullptr;
+}
+
+bool DrStmReadCheck::update() {
+    if (m_flags & (FLAG_RELEASE << DrMan::s_nDblIdx)) {
+        return true;
+    }
+    if (!(m_flags & FLAG_READY)) {
+        if (m_mode == 2) {
+            m_list->setUseMode(static_cast<DrCalcStmListObj::DrTexUseMode>(2));
+        } else if (m_mode == 1) {
+            m_list->setUseMode(static_cast<DrCalcStmListObj::DrTexUseMode>(1));
+        } else {
+            m_list->setUseMode(static_cast<DrCalcStmListObj::DrTexUseMode>(0));
+        }
+    }
+    return false;
+}
+
+
+void DrResMdoLight::setDisp(bool disp) {
+    if (disp) {
+        m_flags |= FLAG_DISP;
+    } else {
+        m_flags &= ~FLAG_DISP;
+    }
+}
+
+unsigned int DrResMdoLight::calcWorkSize(const unsigned char* mdo) {
+    const MdoHeader* header = reinterpret_cast<const MdoHeader*>(mdo);
+    const MdoLights* lights = reinterpret_cast<const MdoLights*>(mdo + header->m_lightOfs);
+    return lights->m_num * sizeof(DrLightObj*) + sizeof(DrResMdoLight);
+}
+
+void DrResMdoLight::release(DrResMdoLight*& obj) {
+    DrResMdoLight* light = obj;
+    if (light == nullptr) {
+        return;
+    }
+    if (light->m_lights != nullptr) {
+        DrLightMan* man = DrMan::getIns()->m_lightMan;
+        for (int i = 0; i < light->m_num; i++) {
+            if (light->m_lights[i] != nullptr) {
+                if (light->m_lights[i]->isPnt()) {
+                    man->releasePntLight(static_cast<DrLightObjPnt*>(light->m_lights[i]));
+                } else {
+                    man->releaseSptLight(static_cast<DrLightObjSpt*>(light->m_lights[i]));
+                }
+            }
+        }
+        light->m_num = 0;
+        light->m_lights = nullptr;
+    }
+    obj = nullptr;
 }
 
 }  // namespace ml

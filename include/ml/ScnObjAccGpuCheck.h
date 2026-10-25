@@ -13,6 +13,9 @@ public:
     virtual bool isRender() const = 0;  // slot 3
     virtual void setPause(bool) = 0;  // slot 4
     virtual void setPos(const mm::Vec3& pos, float radius) = 0;  // slot 5
+    // an effect's check object: DrMdlMan::createEffGpuCheckObj of DrMan's model manager (the parameter name is
+    // not the original's)
+    static DrGpuCheckBase* createEffGpuCheckObj(int type);
 };
 // access to a GPU visibility check (fw::VisibleObject's)
 class ScnObjAccGpuCheck {

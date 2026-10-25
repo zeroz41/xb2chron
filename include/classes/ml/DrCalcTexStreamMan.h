@@ -4,12 +4,17 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace ml { class DrCalcTexStreamMan; }
+namespace ml { class DrCalcStmListObj; }
 
 namespace ml {
 // table 0x7100B7EDA8
 class DrCalcTexStreamMan : public ::mm::mtl::PtrSingleton< ::ml::DrCalcTexStreamMan> {
 public:
     virtual ~DrCalcTexStreamMan();  // slot 0
+
+    // the stream list of the named texture stream (DrStmReadCheck's constructor; the parameter name is not the
+    // original's)
+    DrCalcStmListObj* createTexStmListObj(const char* name);
 };
 }  // namespace ml
 
