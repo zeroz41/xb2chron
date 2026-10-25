@@ -18,7 +18,17 @@ struct PadData {
     float m_ly;
     float m_rx;  // from ml::DevPad::getARX/getARY: ui::UIInputPointer moves with them
     float m_ry;
-    unsigned char pad_2C[0x1C];
+    // four 0.2f in fw::PadManager::m_nullPad; makePadData copies them from the raw pad
+    float pad_2C[4];
+    // the ml::DevPad pad number the data comes from (-1: none): fw::PadManager::playVibration and finalize hand
+    // the first control pad's to ml::DevPad::playVibration/stopVibration. The name is not the original's.
+    int m_padNo;
+    // set while that pad is connected (playVibration and finalize skip a pad without it; updateControlPadNo picks
+    // only pads with it). The name is not the original's.
+    bool m_isConnect;
+    unsigned char pad_41[0x3];
+    // the pad's style (updateControlPadNo picks a pad whose style is 1 or 2). The name is not the original's.
+    int m_style;
 };
 
 }  // namespace fw

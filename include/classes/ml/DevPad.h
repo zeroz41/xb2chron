@@ -35,6 +35,8 @@ public:
     virtual void loadLocalVibration(unsigned int, void*, unsigned long) {}  // slot 33
     virtual void viBeginFrame();  // slot 34
 
+    // whether the pad device is set up (fw::PadManager::isInitialized requires it)
+    static bool isInitialized();
     static int getPadMax();
     static bool isConnectPad(int pad);
     static int getStylePad(int pad);
