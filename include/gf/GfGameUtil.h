@@ -11,6 +11,9 @@ namespace gf {
 class GfGameUtil {
 public:
     static void clearEnemyRepopCounter(int enemy);
+    // switches the current Homura/Hikari blade (true: to Hikari); GfMenuObjCharSelect::seqSpHomuraToHikari and
+    // seqSpHikariToHomura call it
+    static void changeHikariCurrent(bool hikari);
     // GfGameEvent::setGmkIdDisp and setGmkBdatDisp forward to them
     static void setDispByGmkTypeAndGmkIdx(gmk::GmkType type, unsigned int idx, bool flag);
     static void setDispByGmkTypeAndBdatId(gmk::GmkType type, int bdatId, bool flag);

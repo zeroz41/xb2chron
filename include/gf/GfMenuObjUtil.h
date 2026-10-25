@@ -148,6 +148,8 @@ public:
     static void setCtrlDefault(int slot);  // nothing for -1
     static void setCtrlSpeedFactor(int slot, float factor);  // nothing for -1
     static int getPresetCtrlCurve(unsigned int preset);  // 3.0.1's always 1
+    // the time of that preset control (GfMenuObjCharSelect::seqStreamWaitStatDr passes 6)
+    static float getPresetCtrlTime(unsigned int preset);
     static unsigned int getLeaderPartyID();  // always 0
     static bool isExitDriver(unsigned int index);  // a driver in that party slot (index modulo 3)
     // the other common sounds (BDAT 0x187 rows 5, 0xB, 0xC, 0xE)
