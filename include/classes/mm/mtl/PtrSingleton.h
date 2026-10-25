@@ -9,6 +9,10 @@
 #if defined(MM_LIB_FROM_MONOLIB_MM)
 #define MM_MTL_SINGLETON_PATH \
     "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../../MCL/mm_lib/source\\mm_mtl/singleton.h"
+#elif defined(MM_LIB_FROM_IDCOLI)
+// idcoli's (IDColiManager's constructor cites it so)
+#define MM_MTL_SINGLETON_PATH \
+    "D:/Monolithsoft/BF2/prog/libs/idcoli/proj/windows/../../../mcl/mm_lib/source\\mm_mtl/singleton.h"
 #else
 #define MM_MTL_SINGLETON_PATH \
     "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/singleton.h"
