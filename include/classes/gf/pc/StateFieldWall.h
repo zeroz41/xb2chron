@@ -24,6 +24,8 @@ public:
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
+    // sets the sound variable 2 from the wall the PC is on (enter and update call it)
+    void flushWallType(GfComBehaviorPc* behavior);
 };
 }}  // namespace gf::pc
 

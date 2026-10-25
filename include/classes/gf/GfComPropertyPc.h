@@ -14,6 +14,7 @@
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
 namespace gf { class EnviromentSensor; }
+namespace anm { class QsTransform; }
 
 namespace gf {
 // table 0x7100B69448
@@ -26,6 +27,7 @@ public:
     // sets (on) or clears (off) the given bits of its GfComEnvSensor's sensor's m_checkFlags
     void setEnvSensorCheckFlags(unsigned int flags, bool on);
     void setInputDirPow(const mm::Vec3& dir, float pow);
+    void setLocomotion(const anm::QsTransform& locomotion);
 
     static mm::mtl::RTTI m_rtti;
 
@@ -69,7 +71,8 @@ public:
     unsigned char pad_118[0x4];
     float m_waterDepth;         // flush's: the water surface's height above the ground under the PC (the name is not
                                 // the original's)
-    unsigned char pad_120[0x10];
+    int m_wallJumpState;        // StateFieldWallJump::enter sets 0, leave 2 (the name is not the original's)
+    unsigned char pad_124[0xC];
     // a warp the field AI's warp tasks ask for (setting m_stateFlags bit 26, which 1.0.0's procMsgPcFieldWarpCancel
     // clears): where to, facing which way, and how (0 to the formation, 1 to the wall follow transform, 3 1.0.0's
     // TaskFieldCheckWarpFallDead's). The names are not the original's.

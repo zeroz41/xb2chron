@@ -1,6 +1,8 @@
 #ifndef CLASSES_GF_PC_STATEFIELDWALLADSORPTIONUNDERGROUND_H
 #define CLASSES_GF_PC_STATEFIELDWALLADSORPTIONUNDERGROUND_H
 
+#include "mm/Vec3.h"
+#include "mm/Quat.h"
 #include "classes/gf/GfStateBase.h"
 #include <new>
 
@@ -24,7 +26,10 @@ public:
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
-    unsigned char pad_18[0x28];
+    float m_startBlend;   // enter's copy of the field property's m_wallBlend (the names are not the original's)
+    unsigned char pad_1c[0x4];
+    mm::Vec3 m_offset;    // enter: zero
+    mm::Quat m_rot;       // enter: identity
 };
 }}  // namespace gf::pc
 

@@ -51,6 +51,7 @@ public:
     // switches the foot IK controller's mode: set, to its slope solver (MODE_SLOPE); clear, to its placement one
     static void switchPlacementIK(gf::GfComBehaviorPc& behavior, bool placement);
     static void setEnvSensor(gf::GfComBehaviorPc& behavior, unsigned int flags, bool on);
+    static void changeGroundAnglesForMotion(gf::GfComBehaviorPc& behavior, const mm::Vec3& normal);
     static const gf::EnviromentSensor::WaterInfo* getWaterInfo(gf::GfComBehaviorPc& behavior);
     static const gf::EnviromentSensor::DeadPlaneInfo* getDeadPlaneInfo(gf::GfComBehaviorPc& behavior);
     static bool isOnSlideGround(gf::GfComBehaviorPc& behavior);

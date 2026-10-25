@@ -18,9 +18,20 @@ enum ASM_CMD_ID_FIELD : unsigned int {
     ASM_CMD_ID_FIELD_WATERHOLE_00 = 10,  // "C_waterhole_00"
 };
 
+// a rider event notifyRiderEvent passes on (the type is the symbols'; StateFieldWallPerformance::leave passes 0)
+enum VehicleEvent : unsigned int {};
+
 // what the PC's field states share (functions, by its symbols)
 class StateUtilField {
 public:
+    // when resetCameraForWall is called (the type is the symbols'; StateFieldWallAdsorptionGround::enter passes 1,
+    // StateFieldWallAdsorptionAir::enter 2: no enumerator names known)
+    enum Timing : unsigned int {};
+    static void resetCameraForWall(gf::GfComBehaviorPc& behavior, Timing timing);
+    static void setAsmSpeedSlideBrake(gf::GfComPropertyPc& property);
+    static void setWallMoveMode(gf::GfComBehaviorPc& behavior, bool on);
+    static void notifySkillAct(gf::GfComBehaviorPc& behavior, bool act);
+    static void notifyRiderEvent(gf::GfComBehaviorPc& behavior, VehicleEvent event);
     // where the PC gets ready to climb a wall: from the wall's point and plane
     static mm::Vec3 calcWallPreparePosition(gf::GfComPropertyPc& property, const mm::Vec3& wallPos,
                                             const mm::Plane& wallPlane);
