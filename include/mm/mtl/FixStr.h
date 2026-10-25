@@ -121,6 +121,9 @@ public:
 
     // the most characters it holds (fixstr.h asserts `newSize < capacity()`; the name is the assertion's)
     int capacity() const { return LEN - 1; }
+    // the text's length (the name is not the original's: SCOM_SCRIPT::exec reads it through the string, as a
+    // 4-byte-aligned load the next field's load is not merged with)
+    int length() const { return m_nLen; }
     // the index of the first `s`, -1 when there is none (gf::fn_71001C0EE0 inlines it; the name is not the
     // original's)
     int find(const char* s) const {

@@ -90,6 +90,14 @@
 #include "gf/GfDataUtil.h"
 #include "classes/gf/GfGameVoice.h"
 #include "classes/gf/SCOM_FADE.h"
+#include "gf/FileStaticVec3.h"
+#include "classes/gf/SCOM_PARTY_ADD.h"
+#include "classes/gf/SCOM_PARTY_LEADER.h"
+#include "classes/gf/DataParamAcc.h"
+#include "classes/gf/GfGameEvent.h"
+#include "gf/GfUtil.h"
+#include "classes/gf/SCOM_SCRIPT.h"
+#include "classes/gf/GfScriptManager.h"
 namespace gf {
 bool SCOM_ADD_MONEY::exec(fw::UpdateInfo const&) {
     GfGameUtil::addMoney(m_money);
@@ -1169,5 +1177,92 @@ unsigned long SCOM_FADE::create(unsigned int slot, unsigned int frames, const mm
     }
     return s_hCreatedReq;
 }
+
+mm::mtl::FixedQueue<SCOM_PARTY_ADD::Info, 16> SCOM_PARTY_ADD::s_info;
+
+void SCOM_PARTY_ADD::addBlade(unsigned int blade, unsigned int driver, int param) {
+    if (blade == 0) {
+        return;
+    }
+    if (GfGameManager::isClearGame() && (blade - 1001 < 3 || GfDataBlade::fn_71002383C8(blade))) {
+        return;
+    }
+    Info info = {GfDataBlade::getActBlade2CommonBlade(blade), driver, param, true, false, false, true, 1};
+    s_info.push_back(info);
+    create();
+}
+
+unsigned long SCOM_PARTY_ADD::create() {
+    if (sys() != nullptr) {
+        return -1;
+    }
+#line 2992
+    SCOM_PARTY_ADD* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_PARTY_ADD();
+    return GfReqSmallCom::addRequest(request);
+}
+
+void SCOM_PARTY_ADD::removeBlade(unsigned int driver, int slot, bool flag) {
+    DataParamAcc acc(3, driver, GimmickType(0));
+    if (acc.isValid()) {
+        removeBlade(acc.getBlade(slot, false), flag, true);
+    }
+}
+
+void SCOM_PARTY_ADD::removeDriver(unsigned int driver, bool flag) {
+    Info info = {0, driver, -1, flag, false, false, true, 4};
+    s_info.push_back(info);
+    create();
+}
+
+bool SCOM_QUEST_REACH::exec(const fw::UpdateInfo&) {
+    if (m_value != 3 || !GfGameManager::isInnerState(GF_STATE(20)) ||
+        (GfGameEvent::get() != nullptr && GfGameEvent::get()->m_eventPhase >= 2)) {
+        GfQuestTask::completeReachTask(m_value, m_value2);
+        return true;
+    }
+    return false;
+}
+
+bool SCOM_SCRIPT::exec(const fw::UpdateInfo&) {
+    if (m_name.length() == 0) {
+        GfScriptManager::destroyScript(m_id);
+        return true;
+    }
+    if (m_step == 0) {
+        GfScriptManager::loadScript(m_id, m_name.m_str);
+        m_step = 1;
+    }
+    if (m_step == 1) {
+        if (GfScriptManager::isScriptLoadError(m_id)) {
+            return true;
+        }
+        if (!GfScriptManager::isScriptWaitStart(m_id)) {
+            return false;
+        }
+        GfScriptManager::startScript(m_id);
+        if (!m_flag) {
+            return true;
+        }
+        m_step = 2;
+    }
+    if (m_step == 2) {
+        if (GfScriptManager::isScriptActive(m_id)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+GF_SCOM_HANDLE* SCOM_SCRIPT::create(unsigned int id, const char* name, bool flag) {
+    mm::mtl::FixStr<32> script;
+    if (name != nullptr) {
+        script = util::getNoPathExtName(name).m_str;
+    }
+#line 1205
+    SCOM_SCRIPT* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_SCRIPT(SCOM_TYPE(29), id, script, flag);
+    return reinterpret_cast<GF_SCOM_HANDLE*>(GfReqSmallCom::addRequestParallel(request));
+}
+
+mm::Vec3 SCOM_PARTY_LEADER::s_pos = mm::Vec3::zero;
 
 }  // namespace gf

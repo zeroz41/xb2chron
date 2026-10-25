@@ -84,7 +84,7 @@ public:
         : m_flags(0), m_initialized(false), m_eventMem(), m_eventMem2(), m_afterEventStartID(0), m_mapjumped(0),
           m_layerPause(reinterpret_cast<GF_LP_HANDLE*>(-1)), m_colorFilter(CFILTER_HANDLE(0)), m_cloudSea(CLOUD_SEA_HANDLE(0)),
           m_tempWeather(0), m_tempWeatherMapId(0), m_weaType(0), m_weaTypeWeather(5), pad_1908(0), m_playEventId(0),
-          m_playBladeId(0), pad_1914(0), pad_1918(0), m_categoryHandle(reinterpret_cast<GF_SE_CATEGORY_HANDLE*>(-1)),
+          m_playBladeId(0), pad_1914(0), m_eventPhase(0), m_categoryHandle(reinterpret_cast<GF_SE_CATEGORY_HANDLE*>(-1)),
           m_csCategoryHandle(reinterpret_cast<GF_SE_CATEGORY_HANDLE*>(-1)), m_csEventMute(false), m_stop(false),
           m_fadeInWaitSec(0.0f), m_fadeInSec(0.0f) {
         initialize(param);
@@ -112,7 +112,9 @@ public:
     int m_playEventId;  // getPlayEventId's
     int m_playBladeId;  // getPlayBladeId's
     int pad_1914;
-    int pad_1918;
+    // the name is not the original's: SCOM_QUEST_REACH::exec waits (in GF_STATE 20) until it is 2 or more
+    // (1.0.0 read it at 0x1914)
+    int m_eventPhase;
     GF_SE_CATEGORY_HANDLE* m_categoryHandle;  // setCategoryVolume's GfSound category handle
     GF_SE_CATEGORY_HANDLE* m_csCategoryHandle;  // updateCsEventCategoryVolume's
     bool m_csEventMute;  // updateCsEventCategoryVolume mutes category 13 while it is set
