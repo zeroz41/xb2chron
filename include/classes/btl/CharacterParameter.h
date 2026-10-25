@@ -15,6 +15,11 @@ public:
         unsigned char pad_4[0x4];
     };
     bool GetAdditionalEnhanceEffect(ENHANCE_DATA& data, int id, int* out) const;
+    // what slot 16 (1.0.0's GetArtsPaletteDataConst) returns; the type's name follows that function, its layout is
+    // not recovered (EnemyParameter holds one at 0x628, up to its hate data)
+    struct ARTS_PALETTE_DATA {
+        unsigned char pad_0[0x238];
+    };
     virtual void Reset();  // slot 0
     virtual void Initialize(gf::GF_OBJ_HANDLE*);  // slot 1
     virtual void InitializeArtsPalette(int);  // slot 2
@@ -31,23 +36,29 @@ public:
     virtual unsigned int GetWeaponID(int) const = 0;  // slot 13
     virtual void GetEquipAccessory() const;  // slot 14
     virtual void GetIdeaLevel(int) const;  // slot 15
-    virtual void vf16() = 0;  // slot 16
-    virtual void GetArtsPaletteNum() const;  // slot 17
+    virtual const ARTS_PALETTE_DATA* GetArtsPaletteDataConst(int) const = 0;  // slot 16
+    virtual int GetArtsPaletteNum() const;  // slot 17
     virtual void ResetRecast();  // slot 18
     virtual void WritebackRecast(btl::GROUP_DATA*);  // slot 19
     virtual void GetWeakAttributeFlag() const;  // slot 20
     virtual void InitializeEnhance() const;  // slot 21
     virtual void vf22();  // slot 22
-    virtual void vf23();  // slot 23
-    virtual void vf24();  // slot 24
-    virtual void vf25();  // slot 25
+    virtual bool IsPlayerParameter() const;  // slot 23
+    virtual bool IsEnemyParameter() const;  // slot 24
+    virtual bool IsInvalidWarp() const;  // slot 25
     virtual void vf26();  // slot 26
-    virtual void vf27();  // slot 27
-    virtual void vf28();  // slot 28
-    virtual void vf29();  // slot 29
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 27 of this table.
+    // What it does: returns false; EnemyParameter's returns bit 12 of its flags at 0x8B6.
+    virtual bool fn_7100088ED0() const;  // slot 27
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 28 of this table.
+    // What it does: returns false; EnemyParameter's returns bit 9 of its flags at 0x8B6 (1.0.0's IsLevelDiffDamageCorrect read the bit after IsInvalidWarp's, but 3.0.1 inserted slots here).
+    virtual bool fn_7100088ED8() const;  // slot 28
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 29 of this table.
+    // What it does: returns false; EnemyParameter's returns bit 10 of its flags at 0x8B6.
+    virtual bool fn_7100088EE0() const;  // slot 29
     virtual bool IsFallDeadDrop() const { return true; }  // slot 30
     virtual void SetAngry(bool, float);  // slot 31
-    virtual void vf32();  // slot 32
+    virtual int GetAngryAuraID() const;  // slot 32
     // 1.0.0 had GetAngryAttr here; 3.0.1's GetAttribute calls this slot where 1.0.0's read the angry attribute
     virtual int GetAngryAttr() const;  // slot 33
     virtual void vf34();  // slot 34
@@ -68,19 +79,25 @@ public:
     virtual void vf48();  // slot 48
     virtual void GetUseWeaponRate(int) const;  // slot 49
     virtual void vf50();  // slot 50
-    virtual void vf51();  // slot 51
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 51 of this table.
+    // What it does: does nothing; PlayerParameter's clears its 32-bit field at 0x638.
+    virtual void fn_7100088F58();  // slot 51
     virtual void vf52();  // slot 52
     virtual void vf53();  // slot 53
     virtual void vf54();  // slot 54
-    virtual void vf55();  // slot 55
-    virtual void vf56();  // slot 56
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 55 of this table.
+    // What it does: returns 0; EnemyParameter's returns its 16-bit field at 0x8AA.
+    virtual int fn_7100088F70() const;  // slot 55
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 56 of this table.
+    // What it does: returns 0; EnemyParameter's returns its 16-bit field at 0x8AC.
+    virtual int fn_7100088F78() const;  // slot 56
     virtual void vf57();  // slot 57
     virtual void vf58();  // slot 58
-    virtual void vf59();  // slot 59
-    virtual void vf60();  // slot 60
-    virtual void vf61();  // slot 61
-    virtual void vf62();  // slot 62
-    virtual void vf63();  // slot 63
+    virtual int GetDeadSEID() const;  // slot 59
+    virtual void SetOverwriteAttr(int);  // slot 60
+    virtual int GetEatNum() const;  // slot 61
+    virtual void IncEatNum();  // slot 62
+    virtual int GetBladeChangeType() const;  // slot 63
     virtual void vf64();  // slot 64
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's EnemyParameter::GetWeaponID read
     // bit 2 of the flags at 0x622 directly where 3.0.1's calls this slot with 0). A member because it is slot 65 of
@@ -94,14 +111,22 @@ public:
     virtual bool IsChild() const;  // slot 70
     virtual bool IsInvalidHikariSp() const;  // slot 71
     virtual bool IsAlwaysKakusei() const;  // slot 72
-    virtual void vf73();  // slot 73
-    virtual void vf74();  // slot 74
-    virtual void vf75();  // slot 75
-    virtual void vf76();  // slot 76
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 73 of this table.
+    // What it does: returns false; EnemyParameter's returns bit 13 of its flags at 0x8B6.
+    virtual bool fn_7100088FE4() const;  // slot 73
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 74 of this table.
+    // What it does: returns false; EnemyParameter's returns bit 14 of its flags at 0x8B6.
+    virtual bool fn_7100088FEC() const;  // slot 74
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 75 of this table.
+    // What it does: returns true; PlayerParameter's returns its byte at 0x643.
+    virtual bool fn_7100088FF4() const;  // slot 75
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 76 of this table.
+    // What it does: returns false; EnemyParameter's returns bit 15 of its flags at 0x8B6.
+    virtual bool fn_7100088FFC() const;  // slot 76
     virtual void SetBuddy(gf::GF_OBJ_HANDLE*, bool);  // slot 77
     virtual int ApplyStatusEnhance(int, int, int) const;  // slot 78
     virtual void InitializeAttackParam();  // slot 79
-    virtual void CalcDamageArmorEx(unsigned int);  // slot 80
+    virtual unsigned int CalcDamageArmorEx(unsigned int);  // slot 80
     // inline: its body is part of both EnemyParameter destructors (the D0 drops the dead store)
     virtual ~CharacterParameter() {
         if (pad_428 != nullptr) {

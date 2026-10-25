@@ -24,12 +24,12 @@ public:
     virtual unsigned int GetWeaponID(int) const;  // slot 13
     virtual void GetEquipAccessory() const;  // slot 14
     virtual void GetIdeaLevel(int) const;  // slot 15
-    virtual void vf16();  // slot 16
-    virtual void GetArtsPaletteNum() const;  // slot 17
+    virtual const ARTS_PALETTE_DATA* GetArtsPaletteDataConst(int) const;  // slot 16
+    virtual int GetArtsPaletteNum() const;  // slot 17
     virtual void ResetRecast();  // slot 18
     virtual void WritebackRecast(btl::GROUP_DATA*);  // slot 19
     virtual void InitializeEnhance() const;  // slot 21
-    virtual void vf23();  // slot 23
+    virtual bool IsPlayerParameter() const;  // slot 23
     virtual void vf43();  // slot 43
     virtual void vf44();  // slot 44
     virtual void vf45();  // slot 45
@@ -38,17 +38,25 @@ public:
     virtual void vf48();  // slot 48
     virtual void GetUseWeaponRate(int) const;  // slot 49
     virtual void vf50();  // slot 50
-    virtual void vf51();  // slot 51
+    virtual void fn_7100088F58();  // slot 51 (placeholder name: see CharacterParameter)
     virtual void vf52();  // slot 52
     virtual void vf53();  // slot 53
     virtual void vf54();  // slot 54
-    virtual void vf63();  // slot 63
+    virtual int GetBladeChangeType() const;  // slot 63
     virtual void vf64();  // slot 64
     virtual bool fn_7100085314(int) const;  // slot 65 (placeholder name: see CharacterParameter)
-    virtual void vf75();  // slot 75
+    virtual bool fn_7100088FF4() const;  // slot 75 (placeholder name: see CharacterParameter)
     virtual void InitializeAttackParam();  // slot 79
-    virtual void CalcDamageArmorEx(unsigned int);  // slot 80
+    virtual unsigned int CalcDamageArmorEx(unsigned int);  // slot 80
     virtual ~PlayerParameter();  // slot 81
+
+    unsigned char pad_624[0x14];
+    int pad_638;  // cleared by slot 51 (fn_7100088F58); meaning unknown
+    unsigned char pad_63c[0x4];
+    unsigned char m_artsPaletteNum;  // GetArtsPaletteNum (the name is not the original's)
+    unsigned char m_bladeChangeType;  // GetBladeChangeType (the name is not the original's)
+    unsigned char pad_642;
+    bool pad_643;  // returned by slot 75 (fn_7100088FF4); meaning unknown
 };
 }  // namespace btl
 
