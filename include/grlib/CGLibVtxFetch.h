@@ -1,6 +1,8 @@
 #ifndef GRLIB_CGLIBVTXFETCH_H
 #define GRLIB_CGLIBVTXFETCH_H
 
+#include "nvn/nvn.h"
+
 namespace grlib {
 
 // one vertex attribute of a fetch object (the field names are not the original's)
@@ -20,7 +22,10 @@ public:
     void createMemFetchObj(void* memory, CGLibVtxAttr* attributes, int count);
     void release();
 
-    unsigned char pad_0[0x10];
+    // the NVN attribute states CGLibCtlShader::setShader binds and their count (the names are not the original's)
+    const NVNvertexAttribState* m_pAttribs;  // 0x0
+    unsigned short m_attribNum;  // 0x8
+    unsigned char pad_A[0x6];
 };
 
 }  // namespace grlib

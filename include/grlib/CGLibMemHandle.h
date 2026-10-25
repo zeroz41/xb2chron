@@ -1,6 +1,8 @@
 #ifndef GRLIB_CGLIBMEMHANDLE_H
 #define GRLIB_CGLIBMEMHANDLE_H
 
+#include "mtl/AllocHandle.h"
+
 namespace grlib {
 // a block of GPU-visible memory: CGLibMemHandle allocates and frees it. The field names are not the original's.
 struct CGLibMemType {
@@ -20,6 +22,9 @@ public:
     static void allocVertex(CGLibMemType& mem, unsigned int size);
     // the block takes memory owned elsewhere (a CGLibVtlMemPool's)
     static void setMemBuff(CGLibMemType& mem, void* buffer);
+
+    // the allocator pixel memory comes from (CGLibState::setPixelResidentArea)
+    static mtl::ALLOC_HANDLE s_hPxlHandle;
 };
 }  // namespace grlib
 

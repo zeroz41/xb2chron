@@ -13,6 +13,8 @@ public:
 
     // which of the double-buffered frame halves is current
     static int s_nDblNowIdx;
+    // which of the two stacked halves is current (CGLibState::setPixelResidentArea keeps the old area there)
+    static int s_nStkNowIdx;
 };
 }  // namespace grlib
 

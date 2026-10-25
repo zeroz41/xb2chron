@@ -20,6 +20,14 @@ public:
     unsigned char pad_5c[0xC];
 };
 
+// a shader table entry: a declared shader and the program it selects (the field names are not the original's; the
+// size is not known)
+class CGLibDecShdExtTbl {
+public:
+    CGLibDecShader* m_pDecShader;  // 0x0
+    unsigned int m_current;  // 0x8
+};
+
 }  // namespace grlib
 
 #endif
