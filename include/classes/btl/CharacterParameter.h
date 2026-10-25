@@ -115,7 +115,10 @@ public:
     // a blade's driver: ButtonChallenge gives a blade's challenge to the character it names (the name is not the
     // original's)
     gf::GF_OBJ_HANDLE* m_driverHandle;
-    unsigned char pad_18[0x14];
+    unsigned char pad_18[0x4];
+    // BattleCharacter::GetGroupIndex returns it (the name is not the original's)
+    int m_groupIndex;
+    unsigned char pad_20[0xC];
     // EnemyParameter::AngryInfection widens its range by each character's (the name is not the original's)
     float m_radius;
     unsigned char pad_30[0x3F8];
@@ -128,7 +131,11 @@ public:
     unsigned short m_flags622_0 : 1;  // unknown
     // GetHateTarget answers -1 while it is clear (the name is not the original's)
     bool m_hasHateTarget : 1;
-    unsigned short m_flags622_2 : 14;  // unknown
+    unsigned short m_flags622_2 : 11;  // unknown
+    // set for a character that is not a blade: BattleCharacter::IsBlade answers its negation (the name is not the
+    // original's)
+    unsigned short m_isNotBlade : 1;
+    unsigned short m_flags622_14 : 2;  // unknown
 };
 }  // namespace btl
 
