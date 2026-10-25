@@ -74,7 +74,7 @@ public:
     // 0x704: Hana's equipment power rank (GfDataHana::getEquipPowerRank/setEquipPowerRank; the name is not the
     // original's)
     unsigned short m_hanaPowerRank;
-    unsigned char pad_706[0x2];
+    unsigned short m_openCircuit;  // Hana's opened circuits, one bit each (GfDataHana::isOpenCircuit; the name is not the original's)
     unsigned char m_race;
     unsigned char m_gender;
     unsigned short m_iconData;

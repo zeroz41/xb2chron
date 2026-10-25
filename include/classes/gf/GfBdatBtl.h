@@ -77,6 +77,8 @@ public:
     unsigned int getArtsDrRecast(unsigned int arts, unsigned int level) const;
     unsigned int getArtsDrEnhance(unsigned int arts, unsigned int level) const;
     unsigned int getBTL_ClassName(unsigned int) const;
+    // the power a power rank gives (GfDataHana::getPowerCapacity passes the rank, then hana - 1005)
+    int getBTL_HanaPowerPowerNum(unsigned int rank, unsigned int hana) const;
 };
 }  // namespace gf
 

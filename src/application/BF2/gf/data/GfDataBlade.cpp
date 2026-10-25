@@ -1,3 +1,4 @@
+#include "gf/SDataDriver.h"
 #include "classes/gf/GfBdatBlade.h"
 #include "classes/gf/GfBdatItem.h"
 #include "gf/GfDataBlade.h"
@@ -2610,6 +2611,78 @@ unsigned int GfDataBlade::getBladeID(unsigned int index) {
         return blade < GfBdatChrBl::get()->getChrBlEnd() ? blade : 0;
     }
     return index < 422 ? index + 1001 : 0;
+}
+
+
+int GfDataHana::getAttribute(unsigned int hana) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)];
+    if (data.m_equipHana.m_attributeParts == 0) {
+        return 0;
+    }
+    return GfBdatItem::get()->getITM_HanaAtrAtr(data.m_equipHana.m_attributeParts);
+}
+
+int GfDataHana::getPowerCapacity(unsigned int hana) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)];
+    unsigned int rank = data.m_hanaPowerRank;
+    return GfBdatBtl::get()->getBTL_HanaPowerPowerNum(rank, hana - 1005);
+}
+
+bool GfDataHana::isOpenCircuit(unsigned int hana, unsigned int circuit) {
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)];
+    return (data.m_openCircuit & (1 << circuit)) != 0;
+}
+
+unsigned int GfDataBlade::getBladePower(unsigned int blade) {
+    if (blade == 0) {
+        return 0;
+    }
+    return getBladePower(GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)]);
+}
+
+int GfDataDriver::getBladeSet(unsigned int driver) {
+    if (driver == 0) {
+        return -1;
+    }
+    return getBladeSet(*getSDataDriver(driver));
+}
+
+bool GfDataDriver::isScenarioMask(unsigned int driver) {
+    if (driver == 0) {
+        return false;
+    }
+    return getSDataDriver(driver)->m_scenarioMask == 1;
+}
+
+unsigned int GfDataWeapon::getNewWeapon(unsigned int weapon, unsigned int chip) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    unsigned int type = bdat->getPcWpnWpnType(weapon);
+    if (type < 37 || type - 1 < 16) {
+        return bdat->getPcWpnChipCreateWpn(chip, type - 1);
+    }
+    return 0;
+}
+
+bool GfDataDriver::fn_71002491D4(unsigned int driver) {
+    if (driver == 0) {
+        return false;
+    }
+    return getSDataDriver(driver)->m_defaultAcceDone;
+}
+
+int GfDataDriver::getMaxSetBladeNum(unsigned int driver) {
+    if (driver == 0) {
+        return 0;
+    }
+    return getMaxSetBladeNum(*getSDataDriver(driver));
+}
+
+unsigned char* GfDataItem::getFavoriteItemType(unsigned int type) {
+    return GfDataManager::getDataGame()->m_favoriteItemType;
+}
+
+unsigned char* GfDataItem::getItemBox() {
+    return GfDataManager::getDataGame()->m_itemBox;
 }
 
 }  // namespace gf

@@ -130,6 +130,8 @@ public:
     unsigned int getITM_HanaNArtsSetNArtsRecastRev(unsigned int parts) const;
     unsigned int getITM_HanaAssistNeedPow(unsigned int parts) const;
     unsigned int getITM_HanaRoleRole(unsigned int parts) const;  // GfDataHana::getRole
+    unsigned int getITM_HanaAtrAtr(unsigned int parts) const;  // GfDataHana::getAttribute
+    unsigned int getPcWpnChipCreateWpn(unsigned int chip, unsigned int type) const;  // GfDataWeapon::getNewWeapon
 };
 }  // namespace gf
 
