@@ -19,6 +19,9 @@ public:
 class RandManager : public TUnk_B3D3C0, public TUnk_B3D3E8 {
 public:
     virtual ~RandManager();  // slot 0
+    RandManager();  // out of line (Singleton<RandManager>::getPtr calls it)
+    // evt_rand.play: returns false while the script has to wait
+    bool play(int no);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event

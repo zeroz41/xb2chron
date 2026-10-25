@@ -31,6 +31,7 @@ public:
     bool startPage(const char* name, int no, float frame);
     bool endScene();
     void setLanguageMode(bool enable, LANGUAGE_MODE mode);
+    // 0x7100149334; evt_obj.select only queues its command when it returns true
     bool checkLanguageMode() const;
     bool end();  // returns whether an event was playing
     // GfGameEvent's: initialize creates it on its scene when there is none, finalize destroys it

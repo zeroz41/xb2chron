@@ -271,6 +271,8 @@ HideManager::GRP_TYPE HideManager::getGroup() const {
     return m_group;
 }
 
+SelectManager::~SelectManager() {}
+
 int SelectManager::getResult() const {
     return m_result;
 }
@@ -388,8 +390,13 @@ void StatusManager::OnEventProc(event::MSG_TYPE msg) {
 
 
 #include "classes/event/DofManager.h"
+#include "classes/event/FadeManager.h"
 
 namespace event {
+
+DofManager::~DofManager() {}
+
+FadeManager::~FadeManager() {}
 
 void DofManager::clear() {
     stop();

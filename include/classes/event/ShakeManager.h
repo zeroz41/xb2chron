@@ -22,6 +22,9 @@ public:
 class ShakeManager : public TUnk_B3D4F8, public TUnk_B3D520 {
 public:
     virtual ~ShakeManager();  // slot 0
+    ShakeManager();  // out of line (Singleton<ShakeManager>::getPtr calls it)
+    void play(const char* name, float p0, float p1, float p2);
+    void setIdleShake(bool enable);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     static const mm::mtl::FixStr<32> s_names[4];  // the shake types' names
     // 1.0.0 has it out of line (0x71000EDE80); 3.0.1 inlines it into OnEventProc

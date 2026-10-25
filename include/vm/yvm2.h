@@ -75,6 +75,12 @@ typedef struct VMOC {
 } VMOC;
 
 int vmOCRegist(VMOC* pOC);
+// registers the class every object's methods fall back on (ocBuiltinRegist: "builtin")
+void vmBuiltinOCRegist(VMOC* pOC);
+// the index of the class's property / method (selector) of that name, negative when it has none (the builtin
+// class's isExistProperty / isExistSelector test the sign)
+int vmPropertySearch(VMOC* pOC, const char* name);
+int vmSelectorSearch(VMOC* pOC, const char* name);
 
 // argument no (from 1) of the running call; nonzero from vmArgOmitChk when the call left it out
 VMData* vmArgPtrGet(VMThread* pThread, int no);

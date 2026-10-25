@@ -1,6 +1,8 @@
 #ifndef CLASSES_EVENT_SEMANAGER_H
 #define CLASSES_EVENT_SEMANAGER_H
 
+#include "event/CvType.h"
+
 namespace event { enum MSG_TYPE : int; }
 
 namespace event {
@@ -22,6 +24,9 @@ public:
     SeManager();  // out of line (Singleton<SeManager>::getPtr calls it)
     // called by the evt_setup script plugin (application/BF2/ScriptPlayText); a result its callers ignore is declared void
     void load(const char* name);
+    void play(int id, const char* name, float p0, float p1, float p2, float volume);
+    void changeVolume(int id, float volume, float frame);
+    void pan(int id, float pan, float frame, CV_TYPE type);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event

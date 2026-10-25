@@ -45,6 +45,11 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because evt_ex's getResult calls
     // it on Singleton<UIManager>::getPtr(). What it does: returns the int at offset 0x48 (evt_ex.getResult's value).
     int fn_7100104AE8();
+    // evt_pay.play: returns false while the script has to wait
+    bool openPayoffUI(const char* text, const mm::mtl::FixedVector<unsigned int, 16>& money,
+                      const mm::mtl::FixedVector<const char*, 16>& select, const char* cancel);
+    // evt_pay.getResult's value (the int at 0x38)
+    int getPayoffUI() const;
     bool openChapTelopUI(unsigned int id);
     void openAvanTitleUI(unsigned int id);
     void closeAvanTitleUI(int frame);

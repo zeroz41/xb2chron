@@ -23,6 +23,12 @@ unsigned char* getMember(unsigned char* fp, const char* name);
 // a row's value of the named column, in 64 bits: a string column's text, a number column's value (0 when there is no
 // such member; 1.0.0's ui::UIManager::createLayer tests bits of it above 16)
 char* getVal(unsigned char* fp, const char* column, int id);
+// the index-th value of an array column (the bdat script class's getArrayVal hands it on like getVal's)
+char* getArrayVal(unsigned char* fp, const char* column, int id, int index);
+int getArrayCount(unsigned char* fp, const char* column);
+// a column's value type: 1 u8, 2 u16, 3 u32, 4 s8, 5 s16, 6 s32, 7 string, 8 float (the bdat script class's getVal
+// converts by it)
+int getVarType(unsigned char* fp, const char* column);
 // getVal for a column of that value type (7: a string; ai::AiScriptDataManager reads its Script column so)
 char* getValCheck(unsigned char* fp, const char* column, int id, int type);
 // a row's text in a message table

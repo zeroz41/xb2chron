@@ -1,7 +1,15 @@
 #ifndef CLASSES_EVENT_SELECTMANAGER_H
 #define CLASSES_EVENT_SELECTMANAGER_H
 
-namespace event { enum MSG_TYPE : int; }
+#include "mm/mtl/FixedVector.h"
+
+namespace event { enum MSG_TYPE : int; class CharaObj; }
+
+namespace event {
+// what kind of selection evt_sel.play shows (its begin entry's parameter); 1.0.0's mangled names spell the type
+// event::SELECT_TYPE, its values are not known
+enum SELECT_TYPE {};
+}  // namespace event
 
 namespace event {
 // a base of event::SelectManager no evidence names yet
@@ -18,7 +26,11 @@ public:
 // table 0x7100B3D748; base at 0x0 unknown (TUnk_B3D748), base at 0x8 unknown (TUnk_B3D770)
 class SelectManager : public TUnk_B3D748, public TUnk_B3D770 {
 public:
-    virtual ~SelectManager() {}  // slot 0
+    // out of line: Singleton<SelectManager>::getPtr registers it with __cxa_atexit (see DofManager.h)
+    virtual ~SelectManager();  // slot 0
+    SelectManager();  // out of line (Singleton<SelectManager>::getPtr calls it)
+    // evt_sel.play: returns false while the script has to wait
+    bool play(SELECT_TYPE type, const char* text, mm::mtl::FixedVector<const char*, 16>& items, CharaObj* chara);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     int getResult() const;
 
