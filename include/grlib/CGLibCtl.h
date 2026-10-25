@@ -4,7 +4,7 @@
 #include "grlib/GrlTypes.h"
 
 namespace grlib { class CGLibDecShader; class CGLibSampler; class CGLibTextureBuffer; class CGLibVtxFetch; }
-namespace grlib { class CGLibVtxVertex; }
+namespace grlib { class CGLibVtxVertex; class CGLibVtxInstans; class CGLibVtxOneInstans; }
 
 namespace grlib {
 
@@ -15,6 +15,10 @@ public:
     // draws count vertices of the bound vertex buffer as the primitive type (once per instance)
     static void renderVertex(GrlPrimitiveType type, int count);
     static void renderInstanceVertex(GrlPrimitiveType type, int count, int instances);
+    // binds an instance vertex buffer (layer::LayerShdManager::setupInstaceVertex passes 1, 1 for the last two;
+    // the parameter names are not the original's)
+    static void setInstanceVertex(CGLibVtxInstans& vertex, int first, int count, int step, unsigned int slot);
+    static void setInstanceVertex(CGLibVtxOneInstans& vertex, int first, int count, int step, unsigned int slot);
 };
 
 class CGLibCtlShader {
@@ -38,8 +42,18 @@ public:
     static void setMrtBlend(unsigned char mask, GrlLogicType logic);
     static void setMrtBlendControl(GrlMrtType mrt, GrlBlendFunc src, GrlBlendFunc dst, GrlBlendCombine combine);
     static void setBlendOffControl(GrlLogicType logic);
+    // the colour then the alpha source, destination and combine (layer::LayerShdManager's setupBlend functions)
+    static void setBlendControl(GrlBlendFunc colorSrc, GrlBlendFunc colorDst, GrlBlendCombine colorCombine,
+                                GrlBlendFunc alphaSrc, GrlBlendFunc alphaDst, GrlBlendCombine alphaCombine,
+                                GrlLogicType logic);
 };
 
+class CGLibDepthCtl {
+public:
+    // depth test on/off, depth write on/off, the comparison (layer::LayerShdManager::setDepthBufferCheckOn/Off;
+    // the parameter names are not the original's)
+    static void setDepthControl(unsigned char test, unsigned char write, GrlCompare compare);
+};
 class CGLibPolygon {
 public:
     static void setCullingOff();

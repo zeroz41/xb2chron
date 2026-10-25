@@ -10,6 +10,7 @@ enum GrlLogicType {};
 enum GrlBlendFunc {};
 enum GrlBlendCombine {};
 enum GrlSurfaceFormat {};
+enum GrlCompare {};
 
 namespace grlib {
 enum GrlMrtType {};
