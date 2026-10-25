@@ -16,6 +16,17 @@
 
 namespace fw {
 
+namespace {
+
+// The drop towards the lowest foot, clamped to [-maxDown, 0]. Inferred helper (the name is not the original's): the
+// original's clamp is inlined into a function of its own before the caller (its selects are formed before the
+// caller's join with the target = 0 branch), which mm::clamp written directly in the caller does not reproduce.
+inline float clampDown(float down, float maxDown) {
+    return mm::clamp(down, -maxDown, 0.0f);
+}
+
+}  // namespace
+
 PlacementGroundSolver* PlacementGroundSolver::create(const Description& desc,
                                                      mm::mtl::IntrusivePtr<ReferenceFrame>& frame, anm::Pose& pose,
                                                      IKGroundInterface* ground) {
@@ -75,61 +86,59 @@ void PlacementGroundSolver::setEnablePlacement(bool enable) {
     }
 }
 
-// solve (0x71001888CC) is not here yet: written as below, it differs from the original only in the target's clamp,
-// which the original selects (fmin, then fcsel) where this branches (17 words)
-// void PlacementGroundSolver::solve(UpdateInfo const& info) {
-//     if (m_ground == nullptr) {
-//         return;
-//     }
-//     bool adjust = m_enableDown || m_offset < 0.0f;
-//     if (!m_enablePlacement && !adjust) {
-//         return;
-//     }
-//     ReferenceFrame* frame = m_frame.operator->();
-//     float lowest = frame->m_worldTransform.position.y;
-//     for (unsigned int i = 0; i < m_solvers.size(); ++i) {
-//         if (*m_solvers.at(i)) {
-//             IKFootGroundInterface* foot = m_ground->getFootGround(IKFootIndex(i));
-//             if (foot != nullptr) {
-//                 const mm::Vec3* hitPos = foot->getHitPos();
-//                 if (hitPos != nullptr) {
-//                     lowest = lowest < hitPos->y ? lowest : hitPos->y;
-//                 }
-//             }
-//         }
-//     }
-//     if (adjust) {
-//         float target;
-//         if (m_enableDown) {
-//             float down = lowest - frame->m_worldTransform.position.y;
-//             target = mm::clamp(down, -m_desc.maxDown, 0.0f);
-//         } else {
-//             target = 0.0f;
-//         }
-//         // towards the target by at most 0.05 down and 0.03 up per frame
-//         float offset;
-//         if (target > m_offset) {
-//             offset = target < m_offset + 0.05f ? target : m_offset + 0.05f;
-//         } else {
-//             offset = target > m_offset + -0.03f ? target : m_offset + -0.03f;
-//         }
-//         if (offset < 0.0f) {
-//             anm::QsTransform transform = m_pose->getBoneModelSpace(0);
-//             transform.m_translation.y = offset + transform.m_translation.y;
-//             m_pose->setBoneModelSpace(0, transform, anm::Pose::PROPAGATE_TYPE(1));
-//         }
-//         m_offset = offset;
-//     }
-//     if (!m_solvers.empty()) {
-//         unsigned long i = 0;
-//         unsigned int next = 1;
-//         do {
-//             if (*m_solvers.at(i)) {
-//                 m_solvers[i]->solve(info);
-//             }
-//         } while ((i = next++) < m_solvers.size());
-//     }
-// }
+void PlacementGroundSolver::solve(UpdateInfo const& info) {
+    if (m_ground == nullptr) {
+        return;
+    }
+    bool adjust = m_enableDown || m_offset < 0.0f;
+    if (!m_enablePlacement && !adjust) {
+        return;
+    }
+    ReferenceFrame* frame = m_frame.operator->();
+    float lowest = frame->m_worldTransform.position.y;
+    for (unsigned int i = 0; i < m_solvers.size(); ++i) {
+        if (*m_solvers.at(i)) {
+            IKFootGroundInterface* foot = m_ground->getFootGround(IKFootIndex(i));
+            if (foot != nullptr) {
+                const mm::Vec3* hitPos = foot->getHitPos();
+                if (hitPos != nullptr) {
+                    lowest = lowest < hitPos->y ? lowest : hitPos->y;
+                }
+            }
+        }
+    }
+    if (adjust) {
+        float target;
+        if (m_enableDown) {
+            float down = lowest - frame->m_worldTransform.position.y;
+            target = clampDown(down, m_desc.maxDown);
+        } else {
+            target = 0.0f;
+        }
+        // towards the target by at most 0.05 down and 0.03 up per frame
+        float offset;
+        if (target > m_offset) {
+            offset = target < m_offset + 0.05f ? target : m_offset + 0.05f;
+        } else {
+            offset = target > m_offset + -0.03f ? target : m_offset + -0.03f;
+        }
+        if (offset < 0.0f) {
+            anm::QsTransform transform = m_pose->getBoneModelSpace(0);
+            transform.m_translation.y = offset + transform.m_translation.y;
+            m_pose->setBoneModelSpace(0, transform, anm::Pose::PROPAGATE_TYPE(1));
+        }
+        m_offset = offset;
+    }
+    if (!m_solvers.empty()) {
+        unsigned long i = 0;
+        unsigned int next = 1;
+        do {
+            if (*m_solvers.at(i)) {
+                m_solvers[i]->solve(info);
+            }
+        } while ((i = next++) < m_solvers.size());
+    }
+}
 
 void PlacementGroundSolver::overwriteRaycastDown(float length) {
     if (!m_solvers.empty()) {

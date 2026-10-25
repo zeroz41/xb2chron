@@ -20,6 +20,17 @@
 
 namespace fw {
 
+namespace {
+
+// The drop towards the lowest foot, clamped to [-maxDown, 0]. Inferred helper (the name is not the original's): the
+// original's clamp is inlined into a function of its own before the caller (its selects are formed before the
+// caller's join with the target = 0 branch), which mm::clamp written directly in the caller does not reproduce.
+inline float clampDown(float down, float maxDown) {
+    return mm::clamp(down, -maxDown, 0.0f);
+}
+
+}  // namespace
+
 TwoCharaGroundSolver* TwoCharaGroundSolver::create(const Description& desc,
                                                    mm::mtl::IntrusivePtr<ReferenceFrame>& frame, anm::Pose& pose,
                                                    IKGroundInterface* ground) {
@@ -144,138 +155,132 @@ void TwoCharaGroundSolver::solve(UpdateInfo const& info) {
     doPlacementFoot(info);
 }
 
-// doPlacementRoot (0x710018E4DC) is not in yet. Written as below it is identical (the unit then links whole) only
-// with mm::clamp taking its arguments by value: the original selects the clamp's lower bound (fmin, then fcsel)
-// where the by-reference mm::clamp of mm/Math.h branches (34 words, all register and block order from there). By
-// value, mm::clamp regresses gf_move_jump (2/2 -> 1/2) and gf_pc_ai_sensor_task_field (7/7 -> 5/7), so the clamp
-// this unit inlines is not the one those do, or the call differs in a way not found (a local bound, the expression
-// as the argument, the ternary, `target = 0` first all leave it).
-// void TwoCharaGroundSolver::doPlacementRoot() {
-//     if (m_syncDown == 0) {
-//         if ((m_enableDown && m_enableMain) || m_mainOffset < 0.0f) {
-//             const anm::QsTransform& bone = m_pose->getBoneModelSpace(m_mainRoot);
-//             Transform root;
-//             TransformUtil::mul(m_frame->m_worldTransform, bone, 1.0f, &root);
-//             float lowest = root.position.y;
-//             for (unsigned int i = 0; i < m_mainSolvers.size(); ++i) {
-//                 if (*m_mainSolvers.at(i)) {
-//                     IKFootGroundInterface* foot = m_ground->getFootGround(IKFootIndex(i));
-//                     if (foot != nullptr) {
-//                         const mm::Vec3* hitPos = foot->getHitPos();
-//                         if (hitPos != nullptr) {
-//                             lowest = lowest < hitPos->y ? lowest : hitPos->y;
-//                         }
-//                     }
-//                 }
-//             }
-//             float target;
-//             if (m_enableDown) {
-//                 float down = lowest - root.position.y;
-//                 target = mm::clamp(down, -m_desc.maxDown, 0.0f);
-//             } else {
-//                 target = 0.0f;
-//             }
-//             float offset;
-//             if (target > m_mainOffset) {
-//                 offset = target < m_mainOffset + 0.05f ? target : m_mainOffset + 0.05f;
-//             } else {
-//                 offset = target > m_mainOffset + -0.03f ? target : m_mainOffset + -0.03f;
-//             }
-//             if (offset < 0.0f) {
-//                 anm::QsTransform transform = m_pose->getBoneModelSpace(m_mainRoot);
-//                 transform.m_translation.y = offset + transform.m_translation.y;
-//                 m_pose->setBoneModelSpace(m_mainRoot, transform, anm::Pose::PROPAGATE_TYPE(1));
-//             }
-//             m_mainOffset = offset;
-//         }
-//         if ((m_enableDown && m_enableSub) || m_subOffset != 0.0f) {
-//             float lowest;
-//             const mm::Vec3* hitPos = m_ground->getHitPosSub();
-//             if (hitPos != nullptr) {
-//                 lowest = hitPos->y;
-//             } else {
-//                 const anm::QsTransform& bone = m_pose->getBoneModelSpace(m_mainRoot);
-//                 Transform root;
-//                 TransformUtil::mul(m_frame->m_worldTransform, bone, 1.0f, &root);
-//                 lowest = root.position.y;
-//             }
-//             for (unsigned int i = 0; i < m_subSolvers.size(); ++i) {
-//                 if (*m_subSolvers.at(i)) {
-//                     IKFootGroundInterface* foot = m_ground->getFootGround(IKFootIndex(i));
-//                     if (foot != nullptr) {
-//                         const mm::Vec3* footHitPos = foot->getHitPos();
-//                         if (footHitPos != nullptr) {
-//                             lowest = lowest < footHitPos->y ? lowest : footHitPos->y;
-//                         }
-//                     }
-//                 }
-//             }
-//             // the main's root's height (its transform's scope ends here: the original reuses its stack for the
-//             // sub's root's transform below)
-//             float rootHeight;
-//             {
-//                 const anm::QsTransform& bone = m_pose->getBoneModelSpace(m_mainRoot);
-//                 Transform root;
-//                 TransformUtil::mul(m_frame->m_worldTransform, bone, 1.0f, &root);
-//                 rootHeight = root.position.y;
-//             }
-//             float target = m_enableDown ? lowest - rootHeight : 0.0f;
-//             // towards the target by at most 1 either way per frame
-//             float offset;
-//             if (target > m_subOffset) {
-//                 offset = target < m_subOffset + 1.0f ? target : m_subOffset + 1.0f;
-//             } else {
-//                 offset = target > m_subOffset + -1.0f ? target : m_subOffset + -1.0f;
-//             }
-//             if (offset != 0.0f) {
-//                 anm::QsTransform transform = m_pose->getBoneModelSpace(m_subRoot);
-//                 transform.m_translation.y = offset + transform.m_translation.y;
-//                 m_pose->setBoneModelSpace(m_subRoot, transform, anm::Pose::PROPAGATE_TYPE(1));
-//             }
-//             m_subOffset = offset;
-//         }
-//     } else if (m_syncDown == 1) {
-//         if (!m_enableDown && !(m_mainOffset < 0.0f)) {
-//             return;
-//         }
-//         ReferenceFrame* frame = m_frame.operator->();
-//         float lowest = frame->m_worldTransform.position.y;
-//         for (unsigned int i = 0; i < m_subSolvers.size(); ++i) {
-//             if (*m_subSolvers.at(i)) {
-//                 IKFootGroundInterface* foot = m_ground->getFootGround(IKFootIndex(i));
-//                 if (foot != nullptr) {
-//                     const mm::Vec3* hitPos = foot->getHitPos();
-//                     if (hitPos != nullptr) {
-//                         lowest = lowest < hitPos->y ? lowest : hitPos->y;
-//                     }
-//                 }
-//             }
-//         }
-//         float target;
-//         if (m_enableDown) {
-//             float down = lowest - frame->m_worldTransform.position.y;
-//             target = mm::clamp(down, -m_desc.maxDown, 0.0f);
-//         } else {
-//             target = 0.0f;
-//         }
-//         float offset;
-//         if (target > m_mainOffset) {
-//             offset = target < m_mainOffset + 0.05f ? target : m_mainOffset + 0.05f;
-//         } else {
-//             offset = target > m_mainOffset + -0.03f ? target : m_mainOffset + -0.03f;
-//         }
-//         if (offset < 0.0f) {
-//             anm::QsTransform transform = m_pose->getBoneModelSpace(m_mainRoot);
-//             transform.m_translation.y = offset + transform.m_translation.y;
-//             m_pose->setBoneModelSpace(m_mainRoot, transform, anm::Pose::PROPAGATE_TYPE(1));
-//             transform = m_pose->getBoneModelSpace(m_subRoot);
-//             transform.m_translation.y = offset + transform.m_translation.y;
-//             m_pose->setBoneModelSpace(m_subRoot, transform, anm::Pose::PROPAGATE_TYPE(1));
-//         }
-//         m_mainOffset = offset;
-//         m_subOffset = offset;
-//     }
-// }
+void TwoCharaGroundSolver::doPlacementRoot() {
+    if (m_syncDown == 0) {
+        if ((m_enableDown && m_enableMain) || m_mainOffset < 0.0f) {
+            const anm::QsTransform& bone = m_pose->getBoneModelSpace(m_mainRoot);
+            Transform root;
+            TransformUtil::mul(m_frame->m_worldTransform, bone, 1.0f, &root);
+            float lowest = root.position.y;
+            for (unsigned int i = 0; i < m_mainSolvers.size(); ++i) {
+                if (*m_mainSolvers.at(i)) {
+                    IKFootGroundInterface* foot = m_ground->getFootGround(IKFootIndex(i));
+                    if (foot != nullptr) {
+                        const mm::Vec3* hitPos = foot->getHitPos();
+                        if (hitPos != nullptr) {
+                            lowest = lowest < hitPos->y ? lowest : hitPos->y;
+                        }
+                    }
+                }
+            }
+            float target;
+            if (m_enableDown) {
+                float down = lowest - root.position.y;
+                target = clampDown(down, m_desc.maxDown);
+            } else {
+                target = 0.0f;
+            }
+            float offset;
+            if (target > m_mainOffset) {
+                offset = target < m_mainOffset + 0.05f ? target : m_mainOffset + 0.05f;
+            } else {
+                offset = target > m_mainOffset + -0.03f ? target : m_mainOffset + -0.03f;
+            }
+            if (offset < 0.0f) {
+                anm::QsTransform transform = m_pose->getBoneModelSpace(m_mainRoot);
+                transform.m_translation.y = offset + transform.m_translation.y;
+                m_pose->setBoneModelSpace(m_mainRoot, transform, anm::Pose::PROPAGATE_TYPE(1));
+            }
+            m_mainOffset = offset;
+        }
+        if ((m_enableDown && m_enableSub) || m_subOffset != 0.0f) {
+            float lowest;
+            const mm::Vec3* hitPos = m_ground->getHitPosSub();
+            if (hitPos != nullptr) {
+                lowest = hitPos->y;
+            } else {
+                const anm::QsTransform& bone = m_pose->getBoneModelSpace(m_mainRoot);
+                Transform root;
+                TransformUtil::mul(m_frame->m_worldTransform, bone, 1.0f, &root);
+                lowest = root.position.y;
+            }
+            for (unsigned int i = 0; i < m_subSolvers.size(); ++i) {
+                if (*m_subSolvers.at(i)) {
+                    IKFootGroundInterface* foot = m_ground->getFootGround(IKFootIndex(i));
+                    if (foot != nullptr) {
+                        const mm::Vec3* footHitPos = foot->getHitPos();
+                        if (footHitPos != nullptr) {
+                            lowest = lowest < footHitPos->y ? lowest : footHitPos->y;
+                        }
+                    }
+                }
+            }
+            // the main's root's height (its transform's scope ends here: the original reuses its stack for the
+            // sub's root's transform below)
+            float rootHeight;
+            {
+                const anm::QsTransform& bone = m_pose->getBoneModelSpace(m_mainRoot);
+                Transform root;
+                TransformUtil::mul(m_frame->m_worldTransform, bone, 1.0f, &root);
+                rootHeight = root.position.y;
+            }
+            float target = m_enableDown ? lowest - rootHeight : 0.0f;
+            // towards the target by at most 1 either way per frame
+            float offset;
+            if (target > m_subOffset) {
+                offset = target < m_subOffset + 1.0f ? target : m_subOffset + 1.0f;
+            } else {
+                offset = target > m_subOffset + -1.0f ? target : m_subOffset + -1.0f;
+            }
+            if (offset != 0.0f) {
+                anm::QsTransform transform = m_pose->getBoneModelSpace(m_subRoot);
+                transform.m_translation.y = offset + transform.m_translation.y;
+                m_pose->setBoneModelSpace(m_subRoot, transform, anm::Pose::PROPAGATE_TYPE(1));
+            }
+            m_subOffset = offset;
+        }
+    } else if (m_syncDown == 1) {
+        if (!m_enableDown && !(m_mainOffset < 0.0f)) {
+            return;
+        }
+        ReferenceFrame* frame = m_frame.operator->();
+        float lowest = frame->m_worldTransform.position.y;
+        for (unsigned int i = 0; i < m_subSolvers.size(); ++i) {
+            if (*m_subSolvers.at(i)) {
+                IKFootGroundInterface* foot = m_ground->getFootGround(IKFootIndex(i));
+                if (foot != nullptr) {
+                    const mm::Vec3* hitPos = foot->getHitPos();
+                    if (hitPos != nullptr) {
+                        lowest = lowest < hitPos->y ? lowest : hitPos->y;
+                    }
+                }
+            }
+        }
+        float target;
+        if (m_enableDown) {
+            float down = lowest - frame->m_worldTransform.position.y;
+            target = clampDown(down, m_desc.maxDown);
+        } else {
+            target = 0.0f;
+        }
+        float offset;
+        if (target > m_mainOffset) {
+            offset = target < m_mainOffset + 0.05f ? target : m_mainOffset + 0.05f;
+        } else {
+            offset = target > m_mainOffset + -0.03f ? target : m_mainOffset + -0.03f;
+        }
+        if (offset < 0.0f) {
+            anm::QsTransform transform = m_pose->getBoneModelSpace(m_mainRoot);
+            transform.m_translation.y = offset + transform.m_translation.y;
+            m_pose->setBoneModelSpace(m_mainRoot, transform, anm::Pose::PROPAGATE_TYPE(1));
+            transform = m_pose->getBoneModelSpace(m_subRoot);
+            transform.m_translation.y = offset + transform.m_translation.y;
+            m_pose->setBoneModelSpace(m_subRoot, transform, anm::Pose::PROPAGATE_TYPE(1));
+        }
+        m_mainOffset = offset;
+        m_subOffset = offset;
+    }
+}
 
 void TwoCharaGroundSolver::doPlacementFoot(const UpdateInfo& info) {
     if (!m_mainSolvers.empty()) {
