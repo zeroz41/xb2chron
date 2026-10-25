@@ -2,6 +2,8 @@
 #define GF_GFDATAUTIL_H
 
 namespace gf {
+// a kind of move (only its symbols' spelling is known: the functions taking it tell 0 and 1 apart)
+enum AMOVE : int;
 // the game data's helpers (functions, by its symbols)
 class GfDataUtil {
 public:
@@ -32,6 +34,8 @@ public:
     static void setCameraSide(unsigned char value);
     static void convertNewCollectFlagPatch();
     static const char* getAttributeFileName(unsigned int attribute);
+    static float getMoveDistance(AMOVE move);
+    static void setMoveDistance(AMOVE move, float distance);
 };
 }  // namespace gf
 

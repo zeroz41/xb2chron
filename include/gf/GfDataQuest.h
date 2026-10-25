@@ -4,6 +4,9 @@
 #include "gf/AchievQuest.h"
 #include "gf/QuestID.h"
 
+namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
+namespace gf { struct TaskAchieve; }
+
 namespace gf {
 
 // the quests' game data (functions, by its symbols)
@@ -46,6 +49,9 @@ public:
 
     // indexed by achievement id (0x4D80 entries: the .bss object's size)
     static unsigned short m_achieve2blade[0x4D80];
+    static mm::mtl::FixedVector<TaskAchieve, 128>* getTaskAchieve();  // SDataGame::m_taskAchieve
+    // the quest's title message (QuestListAcc::getListQuestTitle) and its message table; false for none
+    static bool getTitle(unsigned char*& fp, unsigned int& id, QuestID quest);
 };
 
 }  // namespace gf

@@ -26,6 +26,8 @@ public:
     static bool isYuohCookItem(unsigned int item);
     static unsigned int getItemStartID(ItemType::Type type);  // the type's first BDAT row, 0 for none
     static float getFavoriteItemTime(unsigned int item);  // GfBdatItem::getFavoriteTime in seconds (x 60)
+    // the item type of an item category: 11 below 4, 7 below 12, 10 below 24, 8 below 28, 6 below 30, else 0
+    static unsigned int getTypeByItemCategory(unsigned int category);
 };
 }  // namespace gf
 

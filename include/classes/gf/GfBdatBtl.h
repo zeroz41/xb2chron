@@ -76,6 +76,7 @@ public:
     unsigned int getArtsDrDmgMgn(unsigned int arts, unsigned int level) const;
     unsigned int getArtsDrRecast(unsigned int arts, unsigned int level) const;
     unsigned int getArtsDrEnhance(unsigned int arts, unsigned int level) const;
+    unsigned int getBTL_ClassName(unsigned int) const;
 };
 }  // namespace gf
 

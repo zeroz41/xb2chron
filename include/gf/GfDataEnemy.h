@@ -28,6 +28,7 @@ public:
     static unsigned int getSavedHp(unsigned int type);  // SDataGame::m_enemySavedHp[type - 4]
     static void setSavedHp(unsigned int type, unsigned int hp);  // SDataGame::m_enemySavedHp[type - 1]
     static const char* getLoopEffect(unsigned int rsc);  // null for none or empty
+    static unsigned int getRscIdByArrangeId(unsigned int arrange);  // the arrangement's param's GfBdatRsc row, 0 for none
 };
 }  // namespace gf
 

@@ -5,6 +5,8 @@
 #include "gf/SDataBlade.h"
 #include "gf/SDataDriver.h"
 #include "gf/GfDataMercenaries.h"
+#include "gf/GfDataParty.h"
+#include "gf/QuestID.h"
 #include "mm/mtl/FixedVector.h"
 #include "mm/Vec3.h"
 
@@ -26,24 +28,36 @@ public:
     unsigned char pad_8[0x8];
     mm::Vec3 m_landmarkPos;
     float m_landmarkRotY;
-    unsigned char pad_24[0x4];
+    unsigned char pad_24[0x2];
+    // 0x26: GfDataUtil::setChapterSave's second argument (stored before m_eventChapterSave, its first; the name
+    // is not the original's)
+    unsigned short m_chapterSaveValue;
     unsigned short m_eventChapterSave;  // 0x28 (named after its accessors; the name is not the original's)
     unsigned char pad_2A[0x2];
     // by GfDataDriver::getSDataDriver (rows 1-16; the name is not the original's)
     SDataDriver m_drivers[16];
     // by GfDataBlade::getBladeIndex (the name is not the original's; the count is the indexes it hands out)
     SDataBlade m_blades[422];
-    unsigned char pad_E9884[0x12340];  // GfDataParty::getSDataParty points at its start
+    SDataParty m_party;  // 0xE9884: GfDataParty::getSDataParty (the name is not the original's)
+    unsigned char pad_E98D4[0x122F0];  // (m_party is 0x50 bytes: m_leader aligns it to 4)
     GameFlag m_gameFlag;  // GfGameFlag's (the name is not the original's)
-    unsigned int m_scenario;  // 0x1097E4 (named after its accessors; the name is not the original's)
-    unsigned int m_select;  // 0x1097E8 (named after its accessors; the name is not the original's)
-    unsigned char pad_1097EC[0xC4];
+    QuestID m_scenario;  // 0x1097E4 (setScenario stores its halves one by one) (named after its accessors; the name is not the original's)
+    QuestID m_select;  // 0x1097E8 (setSelect stores its halves one by one) (named after its accessors; the name is not the original's)
+    unsigned char pad_1097EC[0x4];
+    // 0x1097F0-0x1098B0: the saved positions and rotations, three each (GfDataParty::getSavePos/getSaveRot pick the
+    // first array of each for a true flag, the second for false; the names are not the original's)
+    mm::Vec3 m_savePos[3];
+    mm::Vec3 m_savePos2[3];
+    mm::Vec3 m_saveRot[3];
+    mm::Vec3 m_saveRot2[3];
     unsigned int m_skipTravelID;  // 0x1098B0 (named after its accessors; the name is not the original's)
     unsigned char pad_1098B4[0x14];
     // 0x1098C8: the mercenary teams (GfDataMercenaries' team functions search them; getTeamByIndex asserts in
     // fixed_vector.h's operator[]; the capacity is the room before the count at 0x109940; the name is not the original's)
     mm::mtl::FixedVector<GfDataMercenaries::Team, 3> m_teams;
-    unsigned char pad_109948[0x1E0];
+    // 0x109948: the mercenary team presets (GfDataMercenaries::getPreset; the count is the room up to
+    // m_playerCameraDistance; the name is not the original's)
+    GfDataMercenaries::Preset m_mercenaryPresets[40];
     float m_playerCameraDistance;  // 0x109B28 (named after its accessors; the name is not the original's)
     // 0x109B2C: how many times the game was cleared (GfGameUtil::incGameClearCount counts it up to 9999; the name is
     // not the original's)
@@ -54,7 +68,9 @@ public:
     mm::mtl::FixedVector<TaskAchieve, 128> m_taskAchieve;
     unsigned char pad_10A138[0xC04];
     unsigned int m_ether;  // 0x10AD3C (named after its accessors; the name is not the original's)
-    unsigned char pad_10AD40[0x8];
+    // 0x10AD40: GfDataUtil::getMoveDistance/setMoveDistance, [0] for AMOVE 0, [1] for 1 (the name is not the
+    // original's)
+    float m_moveDistance[2];
     unsigned int m_assurePoint;  // 0x10AD48 (named after its accessors; the name is not the original's)
     unsigned int m_assureCount;  // 0x10AD4C (named after its accessors; the name is not the original's)
     unsigned short m_rareBladeAppearType;  // 0x10AD50 (named after its accessors; the name is not the original's)

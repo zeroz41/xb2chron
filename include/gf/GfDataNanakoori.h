@@ -22,6 +22,7 @@ public:
     static unsigned int getClearMissionForLive();
     static unsigned int getClearMissionForLesson();
     static bool setFan(unsigned int fan);
+    static unsigned int getNanakooriMissionClearFlg1Offset(unsigned int mission);  // 0 for none
 };
 }  // namespace gf
 

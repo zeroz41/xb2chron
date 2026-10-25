@@ -14,6 +14,7 @@ struct SDataIdea {
         unsigned int m_level;
     };
     void setPoint(unsigned int idea, unsigned int point);
+    void setLevel(unsigned int idea, int level);  // the point becomes GfBdatBlade's need for levels 0-10, else 0
 
     Idea m_ideas[4];
 };
@@ -69,7 +70,11 @@ public:
     unsigned short m_equipOrbs[3];  // DataObjBlade::setVirtualEquipOrb sets one, by slot; the count is not known
     unsigned char pad_67e[0xE];
     unsigned short m_hanaRoleParts;  // Hana's role part (GfDataBlade::getHpMaxRev reads its row; the name is not the original's)
-    unsigned char pad_68e[0x7A];
+    unsigned char pad_68e[0x76];
+    // 0x704: Hana's equipment power rank (GfDataHana::getEquipPowerRank/setEquipPowerRank; the name is not the
+    // original's)
+    unsigned short m_hanaPowerRank;
+    unsigned char pad_706[0x2];
     unsigned char m_race;
     unsigned char m_gender;
     unsigned short m_iconData;

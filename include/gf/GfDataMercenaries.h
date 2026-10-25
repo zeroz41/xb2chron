@@ -84,6 +84,16 @@ public:
     static unsigned int getEndMissionID();  // QuestListAcc::getFLD_MercenariesMissionEnd
     static bool getReserver(mm::mtl::FixedVector<unsigned short, 422>& list);  // false for none
     static unsigned int getTeamMax();
+    // a team preset (12 bytes: GfMenuObjMercenaryForm::seqPresetSave stores six blades, steps by 12); the name is not
+    // the original's
+    struct Preset {
+        unsigned short m_blades[6];
+    };
+    static Preset* getPreset(unsigned int index);
+    // QuestListAcc's mercenaries config value 16 plus five times local flag (4, 2)
+    static unsigned int getRewardAchievmentRatio();
+    // 24 per mercenary level (local flag (4, 2)) plus 24, and 48 more once the game was cleared
+    static unsigned int getReserverMax();
 };
 }  // namespace gf
 

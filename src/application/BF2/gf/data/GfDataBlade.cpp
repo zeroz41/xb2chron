@@ -1,3 +1,28 @@
+#include "classes/gf/GfBdatBlade.h"
+#include "classes/gf/GfBdatBtl.h"
+#include "gf/GfDataBattle.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfDataDriver.h"
+#include "gf/GfDataEnBook.h"
+#include "gf/GfDataEnemy.h"
+#include "gf/GfDataEvent.h"
+#include "gf/GfDataHana.h"
+#include "gf/GfDataIdea.h"
+#include "gf/GfDataItem.h"
+#include "gf/GfDataMercenaries.h"
+#include "gf/GfDataNanakoori.h"
+#include "gf/GfDataParty.h"
+#include "gf/GfDataQuest.h"
+#include "gf/GfDataUtil.h"
+#include "gf/SDataBlade.h"
+#include "gf/SDataGame.h"
+#include "gf/GfDataIdea.h"
+#include "gf/GfDataBattle.h"
+#include "classes/gf/GfInitParamDriver.h"
+#include "classes/gf/GfBdatChrBl.h"
+#include "classes/gf/GfBdatChrEnParam.h"
+#include "classes/gf/GfBdatBlade.h"
+#include "string.h"
 #include "classes/gf/GfBdatBtl.h"
 #include "classes/gf/GfBdatItem.h"
 #include "classes/gf/GfBdatMaplist.h"
@@ -2045,5 +2070,322 @@ bool GfDataEnemy::getExtraParts(unsigned int rsc, unsigned int part) {
     }
     return GfBdatRsc::get()->getRscEnExtraParts(rsc, part) != 0;
 }
+
+
+int GfDataEvent::getEventType(unsigned int eventId) {
+    if (eventId == 0) {
+        return 0;
+    }
+    unsigned char* fp = GfDataBdat::getFP(fn_710024EBD8(eventId));
+    if (fp == nullptr) {
+        return 0;
+    }
+    return static_cast<unsigned char>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "category", eventId, 1)));
+}
+
+int GfDataEvent::getEventAfterScriptStartID(unsigned int event) {
+    unsigned char* fp = GfDataBdat::getFP(fn_710024EBD8(event));
+    if (fp == nullptr) {
+        return 0;
+    }
+    return static_cast<int>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "scriptStartId", event, 6)));
+}
+
+
+SDataBlade* GfDataBlade::getSDataBlade(unsigned int blade) {
+    return &GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+}
+
+unsigned int GfDataDriver::getDriverBySetBlade(unsigned int blade) {
+    return GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(blade)].m_setDriver;
+}
+
+bool GfDataBlade::getCommonBladeName(const char* path) {
+    if (path == nullptr || strlen(path) < 6) {
+        return false;
+    }
+    return strncmp(path, "bl/bl2", 6) == 0;
+}
+
+SDataIdea* GfDataDriver::getSDataIdea(unsigned int driver) {
+    return &getSDataDriver(driver)->m_idea;
+}
+
+bool GfDataDriver::isEnableLevelUp(unsigned int driver) {
+    return fn_7100245C98(*getSDataDriver(driver));
+}
+
+unsigned int GfDataMap::getZoneIdForGameMap(unsigned int map) {
+    unsigned int zone = getZoneIdForDevelopPoint(map);
+    if (zone == 0) {
+        return 0;
+    }
+    if (map == 15) {
+        return 8;
+    }
+    return zone;
+}
+
+unsigned int GfDataHana::getEquipPowerRank(unsigned int hana) {
+    return GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)].m_hanaPowerRank;
+}
+
+void GfDataHana::setEquipPowerRank(unsigned int hana, unsigned int rank) {
+    GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)].m_hanaPowerRank = rank;
+}
+
+bool GfDataEnBook::isAttackFlag(unsigned int arrange) {
+    if (arrange == 0) {
+        return false;
+    }
+    unsigned int book = GfBdatChrEnArrange::get()->getChrEnArrangeBookID(arrange);
+    if (book == 0) {
+        return false;
+    }
+    return GfGameFlag::getLocal(1, book + 48590) != 0;
+}
+
+bool GfDataQuest::getTitle(unsigned char*& fp, unsigned int& id, QuestID quest) {
+    id = QuestListAcc::get()->getListQuestTitle(quest);
+    if (id == 0) {
+        return false;
+    }
+    fp = GfBdatMsg::getFpQuest(quest);
+    return true;
+}
+
+bool GfDataBattle::getClassName(unsigned char*& fp, unsigned int& id, unsigned int cls) {
+    if (cls == 0) {
+        return false;
+    }
+    id = GfBdatBtl::get()->getBTL_ClassName(cls);
+    if (id == 0) {
+        return false;
+    }
+    fp = GfBdatMsg::getFpBtlClass();
+    return true;
+}
+
+bool GfDataParty::isPartyMember(unsigned int chara) {
+    return fn_710024BF60(chara, 10);
+}
+
+bool GfDataParty::isPartyBattleMember(unsigned int chara) {
+    return fn_710024BF60(chara, 3);
+}
+
+void GfDataDriver::openDriverArtsForLevelup(unsigned int driver) {
+    fn_7100244A44(driver, 0, true);
+}
+
+unsigned int GfDataParty::getFixedHandleForBlade(unsigned int driver, int index) {
+    return driver * 5 + 3 + index;
+}
+
+bool GfDataBlade::getExtraParts(const SDataBlade& data, unsigned int part) {
+    return data.m_extraParts[part] != 0;
+}
+
+SDataParty* GfDataParty::getSDataParty() {
+    return &GfDataManager::getDataGame()->m_party;
+}
+
+mm::mtl::FixedVector<TaskAchieve, 128>* GfDataQuest::getTaskAchieve() {
+    return &GfDataManager::getDataGame()->m_taskAchieve;
+}
+
+GfDataMercenaries::Preset* GfDataMercenaries::getPreset(unsigned int index) {
+    return &GfDataManager::getDataGame()->m_mercenaryPresets[index];
+}
+
+void GfDataUtil::setChapterSave(unsigned int id, unsigned short value) {
+    SDataGame* game = GfDataManager::getDataGame();
+    game->m_chapterSaveValue = value;
+    game->m_eventChapterSave = id;
+}
+
+void GfDataQuest::setScenario(QuestID id) {
+    GfDataManager::getDataGame()->m_scenario = id;
+}
+
+void GfDataQuest::setSelect(QuestID id) {
+    GfDataManager::getDataGame()->m_select = id;
+}
+
+const char* GfDataMap::getMapResourceName(unsigned int mapId) {
+    unsigned int id = getMapID(mapId);
+    if (id == 0) {
+        return "";
+    }
+    return GfBdatMaplist::get()->getMaplistresource(id);
+}
+
+const char* GfDataDriver::getBelongingModelName(const GfInitParamDriver& param) {
+    if (param.m_objId == 1) {
+        return param.m_createType == 9 || param.m_createType == 13 ? "oj/oj300002" : "oj/oj300001";
+    }
+    return nullptr;
+}
+
+unsigned int GfDataMercenaries::getRewardAchievmentRatio() {
+    unsigned int ratio = QuestListAcc::get()->getFLD_MercenariesConfigValue(16);
+    return GfGameFlag::getLocal(4, 2) * 5 + ratio;
+}
+
+bool GfDataNanakoori::isMissionComplete(unsigned int mission) {
+    unsigned int flag = getNanakooriMissionClearFlg1Offset(mission);
+    if (flag == 0) {
+        return true;
+    }
+    return GfGameFlag::getLocal(1, flag) != 0;
+}
+
+bool GfDataParty::isLeader(unsigned int chara) {
+    if (chara == 0) {
+        return false;
+    }
+    return GfDataManager::getDataGame()->m_party.m_leader == chara;
+}
+
+float GfDataUtil::getMoveDistance(AMOVE move) {
+    SDataGame* game = GfDataManager::getDataGame();
+    return move == 0 ? game->m_moveDistance[0] : game->m_moveDistance[1];
+}
+
+void GfDataUtil::setMoveDistance(AMOVE move, float distance) {
+    SDataGame* game = GfDataManager::getDataGame();
+    switch (move) {
+    case 0:
+        game->m_moveDistance[0] = distance;
+        break;
+    case 1:
+        game->m_moveDistance[1] = distance;
+        break;
+    }
+}
+
+bool GfDataBlade::isRareBlade(unsigned int blade) {
+    return blade >= 1014 && blade < GfBdatChrBl::get()->getChrBlEnd();
+}
+
+bool GfDataDriver::isExistBlade(unsigned int driver) {
+    mm::mtl::FixedVector<unsigned short, 422> list;
+    return getListBlade(list, driver);
+}
+
+mm::Vec3* GfDataParty::getSavePos(unsigned int index, bool flag) {
+    SDataGame* game = GfDataManager::getDataGame();
+    if (flag) {
+        return &game->m_savePos[index];
+    }
+    return &game->m_savePos2[index];
+}
+
+mm::Vec3* GfDataParty::getSaveRot(unsigned int index, bool flag) {
+    SDataGame* game = GfDataManager::getDataGame();
+    if (flag) {
+        return &game->m_saveRot[index];
+    }
+    return &game->m_saveRot2[index];
+}
+
+unsigned int GfDataEnemy::getRscIdByArrangeId(unsigned int arrange) {
+    unsigned int param = GfBdatChrEnArrange::get()->getChrEnArrangeParamID(arrange);
+    if (param == 0) {
+        return 0;
+    }
+    return GfBdatChrEnParam::get()->getChrEnParamResourceID(param);
+}
+
+unsigned int GfDataQuest::getListQuestCategory(QuestID id) {
+    unsigned int quest = id.m_id;
+    if (quest == 0) {
+        return 0;
+    }
+    if (quest < 1000) {
+        return 1;
+    }
+    if (quest < 5000) {
+        return 3;
+    }
+    if (quest < 6000) {
+        return 2;
+    }
+    if (quest < 7000) {
+        return 5;
+    }
+    return 6;
+}
+
+void SDataIdea::setPoint(unsigned int idea, unsigned int point) {
+    Idea& data = m_ideas[idea];
+    data.m_point = point;
+    data.m_level = GfDataIdea::calcLevel(point);
+}
+
+void SDataIdea::setLevel(unsigned int idea, int level) {
+    m_ideas[idea].m_level = level;
+    unsigned int point = 0;
+    if (level >= 0 && level <= 10u) {
+        point = GfBdatBlade::get()->getBLD_IdeaNeedPoint(level);
+    }
+    m_ideas[idea].m_point = point;
+}
+
+bool GfDataEvent::isSaveScenarioEvent(unsigned int event) {
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BA1BE)
+    static const unsigned short s_saveScenarioEvents[] = {
+        10001, 10003, 10007, 10008, 10009, 10011, 10012, 10013, 10015, 10018, 10022, 10023,
+        10025, 10026, 10029, 10032, 10033, 10035, 10037, 10039, 10043, 10044, 10049, 10051,
+        10052, 10055, 10058, 10062, 10064, 10067, 10068, 10069, 10072, 10073, 10075, 10076,
+        10077, 10078, 10079, 10082, 10085, 10086, 10090, 10091, 10092, 10093, 10094, 10095,
+        10096, 10097, 10098, 10099, 10100, 10102, 10105, 10106, 10108, 10109, 10110, 10112,
+        10113, 10114, 10116, 10119, 10125, 10128, 10130, 10131, 10139, 10140, 10141, 10145,
+        10146, 10148, 10149, 10150, 10151, 10152, 10153, 10154, 10156, 10157, 10159, 10162,
+        10163, 10164, 10165, 10168, 10172, 10173, 10174, 10176, 10178, 10179, 10180, 10181,
+        10182, 10185, 10186, 10188, 10189, 10191, 10195, 10200, 10201, 10202, 10204, 10205,
+        10206, 10211, 10212, 10214, 10215, 10216, 10220, 10225, 10230, 10231, 10232, 10233,
+        10235, 10236, 10237, 10239, 10240, 10242, 10246, 10252, 10253, 10256, 10259, 10261,
+        10262, 10263, 10264, 10265, 10266, 10270, 10276, 10277, 10278, 10279, 10280, 10286,
+        10287, 10289, 10290, 10295, 10297, 10300, 10303, 10304, 10306, 10314, 10318, 10319,
+        10325, 10326, 10327, 10333, 10334, 10335, 10336, 10344, 10345, 10348, 10350, 10355,
+        10360, 10361, 10362, 10363, 10366, 10367, 10370, 10371, 10372, 10376, 10381, 10382,
+        10384, 10386, 10391, 10392, 10395, 10397, 10399, 10400, 10404, 10405, 10406, 10410,
+        10411, 10418, 10428, 10433, 10437, 10439, 10444, 10451, 10456, 10458, 10461, 10463,
+        10464, 10465, 10468, 10471, 10473, 10485, 10488, 10491, 10494,
+    };
+    for (unsigned int i = 0; i < 213; i++) {
+        if (s_saveScenarioEvents[i] == event) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+unsigned int GfDataItem::getTypeByItemCategory(unsigned int category) {
+    if (category < 4) {
+        return 11;
+    }
+    if (category < 12) {
+        return 7;
+    }
+    if (category < 24) {
+        return 10;
+    }
+    if (category < 28) {
+        return 8;
+    }
+    if (category < 30) {
+        return 6;
+    }
+    return 0;
+}
+
+unsigned int GfDataMercenaries::getReserverMax() {
+    unsigned int level = GfGameFlag::getLocal(4, 2);
+    return level * 24 + (GfDataManager::getDataGame()->m_gameClearCount != 0 ? 48 : 0) + 24;
+}
+
 
 }  // namespace gf

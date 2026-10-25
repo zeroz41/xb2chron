@@ -11,6 +11,8 @@ public:
     static void incDeadNum(unsigned int);
     static unsigned int getEnBoolId(unsigned int arrange);
     static unsigned int getDefeatNum(unsigned int arrange);  // local flag 0x20, the book row + 0x142
+    // local flag (1, book + 48590) of the arrangement's enemy book row; false for none
+    static bool isAttackFlag(unsigned int arrange);
 };
 }  // namespace gf
 

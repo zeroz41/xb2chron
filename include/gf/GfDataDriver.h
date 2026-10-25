@@ -4,7 +4,7 @@
 namespace gf { class SDataDriver; enum DBSLOT : int; }
 namespace gf { struct SDataDriverDlc; }
 namespace gf { enum FAVORITE : int; }
-namespace gf { struct SDataIdea; }
+namespace gf { struct SDataIdea; class GfInitParamDriver; }
 
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
 
@@ -128,6 +128,21 @@ public:
     static const char* getBelongingMountBoneB();  // "EX_wireB"
     static unsigned int getDeathBlowEfbFileIdx(DBSLOT slot, int index);
     static unsigned int getDeathBlowEabFileIdx(DBSLOT slot, int index);
+    static void openDriverArtsForLevelup(unsigned int driver);  // fn_7100244A44(driver, 0, true)
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its callers are
+    // GfDataDriver::openDriverArtsForLevelup and GfDataBlade::addRareBlade, in this unit, and it takes a driver.
+    // What it does: opens the driver's arts (all of them when arts is 0, else the one whose id matches) and, per
+    // opened art, calls GfEvent::callGetArts(driver, art, event).
+    static void fn_7100244A44(unsigned int driver, unsigned int arts, bool event);
+    // "oj/oj300002" for create types 9 and 13, else "oj/oj300001", when the param's object id is 1; else none
+    static const char* getBelongingModelName(const GfInitParamDriver& param);
+    static bool isExistBlade(unsigned int driver);  // getListBlade finds any
+    static bool getListBlade(mm::mtl::FixedVector<unsigned short, 422>& list, unsigned int driver);
+    static unsigned int getDriverBySetBlade(unsigned int blade);  // the blade's m_setDriver
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its only caller is
+    // GfDataDriver::isEnableLevelUp, which hands it getSDataDriver's data. What it does: whether the driver can level
+    // up: compares getExp(data) with the growth table (GfBdatBtl::getGrowEnd, GfBdatChrDr::fn_71001F13E0/fn_71001F16A4).
+    static bool fn_7100245C98(const SDataDriver& data);
 };
 }  // namespace gf
 

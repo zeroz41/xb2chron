@@ -25,6 +25,7 @@ public:
     unsigned char pad_38[0x48];
     CBdatWrapper* m_fpBLD_RareList;  // 0x80
     unsigned char pad_88[0x8];
+    unsigned int getBLD_IdeaNeedPoint(unsigned int level) const;
 };
 }  // namespace gf
 
