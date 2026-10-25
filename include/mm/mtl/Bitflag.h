@@ -45,6 +45,19 @@ public:
         }
     }
 
+    // sets or clears a flag in its word (GfObjUtil::setFlag; the name is not the original's)
+    void change(unsigned int index, bool on) {
+#line 89 MM_MTL_BITFLAG_PATH
+        MM_ASSERT(index < Size);
+        unsigned int word = index >> 5;
+        unsigned int mask = 1UL << (index & 31UL);
+        if (on) {
+            m_flags[word] |= mask;
+        } else {
+            m_flags[word] &= ~mask;
+        }
+    }
+
     bool operator[](unsigned int index) const {
 #line 119 MM_MTL_BITFLAG_PATH
         MM_ASSERT(index < Size);

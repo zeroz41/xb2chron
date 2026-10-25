@@ -5,6 +5,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class GfSetupParam; }
+namespace gf { class GfExtendResource; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GfAssetManager; }
 namespace gf { class AssetPackInfo; }
@@ -38,6 +39,10 @@ public:
     static AssetPackInfo* getAssetPackInfo(GF_ASSET_HANDLE* handle);
     // an asset's loaded file, none while it is not loaded
     static GfAssetResource* getResource(GF_ASSET_HANDLE* handle, GfFileIdx file, GfAssetType type);
+    // the asset's extend resource at an index (GfObjUtil::isExistAsm asks for 0 and casts it to GfExtendPacking)
+    // the asset's motion name (GfObjUtil::getAssetMotionName returns it)
+    static const char* getMotionInfo(GF_ASSET_HANDLE* handle);
+    static GfExtendResource* getExtentResource(GF_ASSET_HANDLE* handle, unsigned int index);
 };
 }  // namespace gf
 

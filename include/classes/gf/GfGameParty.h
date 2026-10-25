@@ -20,6 +20,8 @@ public:
     static void gevGameObjEnter(gf::GF_OBJ_HANDLE*);
     static void gevGameObjLeave(gf::GF_OBJ_HANDLE*);
     static void refreshPartyMemberPosition();
+    // whether the party members are in the game (GfObjUtil::applyExecUpdate updates flag-18 objects only then)
+    static bool isPartyMemberInGameObj();
     static gf::GF_OBJ_HANDLE* getHandleMover(unsigned int id);
     static void gevChangeBlade(gf::GF_OBJ_HANDLE*, int, int);
     static void gevPartyIDMemberOK(bool, unsigned int);

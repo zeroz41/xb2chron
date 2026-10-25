@@ -28,6 +28,8 @@ public:
     static GFOBJ_INFO* getObjInfo(GF_OBJ_HANDLE* handle);
     // has the object's parameters (its alpha) applied again (GfObjAcc::setAlpha asks once one changed)
     void addApplyParam(GF_OBJ_HANDLE* handle);
+    // while set, objects' components are not updated (GfObjUtil::applyExecUpdate)
+    bool isSuspendUpdate() const;
     // whether a multi-bind id is still valid for the handle (GfObjAcc::isMultiBindWaiting)
     bool isValidMultiBind(GF_OBJ_HANDLE* handle, unsigned int id) const;
     // a listener called for the objects' events, and its removal

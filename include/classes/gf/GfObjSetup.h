@@ -5,6 +5,7 @@
 #include "mm/Vec3.h"
 #include "classes/gf/GfInitParam.h"
 #include "classes/gf/DataParamAcc.h"
+namespace fw { class Transform; }
 namespace gf {
 class GF_OBJ_HANDLE;
 class GfInitParamDriver;
@@ -47,6 +48,8 @@ public:
     static GfObjSetup* createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamExtra& param);
     static GfObjSetup* createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamEventObj& param);
     static GfObjSetup* createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamUiObj& param);
+    // takes a transform as the object's initial one (GfObjUtil::copyTransformToSetup)
+    void setInitialTransform(const fw::Transform& transform);
     static mm::mtl::RTTI m_rtti;
 
     // which kind of object the setup makes: 3 a driver, 4 a blade (getFootStep reads the driver's or the blade's

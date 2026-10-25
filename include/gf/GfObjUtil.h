@@ -16,6 +16,9 @@ namespace gf { class GfObjSetup; }
 namespace gf { class GfAppend; }
 namespace gf { class GfAppendInfo; }
 namespace gf { enum OPTMNT : int; }
+namespace gf { class GF_ASSET_HANDLE; }
+namespace gf { class GfComModel; }
+namespace gf { class GfVolumeFade; }
 
 namespace gf {
 
@@ -32,7 +35,7 @@ class GfObjUtil {
 public:
     static bool isTrinityBlade(gf::GF_OBJ_HANDLE* handle);
     // an info's flag bits (GfObjAcc's setFlag / testFlag forward to them)
-    static void setFlag(gf::GFOBJ_INFO* info, unsigned int flag, bool on);
+    static bool setFlag(gf::GFOBJ_INFO* info, unsigned int flag, bool on);  // whether it changed
     static bool testFlag(const gf::GFOBJ_INFO* info, unsigned int flag);
     // the object this one is attached to, none without one
     static gf::GfObj* getParentObj(gf::GfObj* obj);
@@ -83,6 +86,42 @@ public:
     static void setOwner(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* owner);
     static gf::GF_OBJ_HANDLE* getParentHandle(gf::GF_OBJ_HANDLE* handle);
     static bool isUpdate(gf::GF_OBJ_HANDLE* handle);
+    // the layer bit of the object behind a handle (its m_updateBit), 4 without one
+    static unsigned int getObjLayer(gf::GF_OBJ_HANDLE* handle);
+    // the scale the object's setup gives it (x), 1 without a setup
+    static float getSetupScale(gf::GF_OBJ_HANDLE* handle);
+    static gf::GF_ASSET_HANDLE* getAssetHandle(gf::GF_OBJ_HANDLE* handle);
+    // the first layer of the section of three a layer is in (0; 1-3, 4-6, 7-9, 10-12), 4 for any other
+    static unsigned int getLayerSection(unsigned int layer);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits between
+    // GfObjUtil's getExtraMountObject and fn_710054FCDC, takes a handle and reads its GfObjManager info like
+    // the getters around it. What it does: returns the info's m_subHandle (+0x88), -1 without an info.
+    static gf::GF_OBJ_HANDLE* fn_710054FCB4(gf::GF_OBJ_HANDLE* handle);
+    static bool isLoading(gf::GF_OBJ_HANDLE* handle);
+    static gf::GF_OBJ_HANDLE* getOwner(gf::GF_OBJ_HANDLE* handle);
+    // whether the object's asset has a state machine resource (its extend resource 0's, a GfExtendPacking)
+    static bool isExistAsm(gf::GF_OBJ_HANDLE* handle);
+    // has the object rebuilt: destroyed outright when it carries user data 0, else flagged (6) and queued
+    static void rebuild(gf::GF_OBJ_HANDLE* handle);
+    static const char* getResourceName(gf::GF_OBJ_HANDLE* handle);  // the object's model resource name
+    static void setLimitHP(gf::GF_OBJ_HANDLE* handle, unsigned int hp);
+    static void setInvincible(gf::GF_OBJ_HANDLE* handle, bool on, bool);
+    static void setDisableAutoHeal(gf::GF_OBJ_HANDLE* handle, bool on);
+    static bool setFlag(gf::GF_OBJ_HANDLE* handle, unsigned int flag, bool on);  // whether it changed
+    static bool testFlag(gf::GF_OBJ_HANDLE* handle, unsigned int flag);
+    static const char* getModelBaseName(gf::GF_OBJ_HANDLE* handle);
+    static const char* getAssetMotionName(gf::GF_OBJ_HANDLE* handle);
+    // whether an object it follows is not ready yet (applyExecUpdate keeps its components still meanwhile)
+    static bool isFollowObjNotReady(gf::GF_OBJ_HANDLE* handle);
+    static gf::GfComModel* getComModel(gf::GF_OBJ_HANDLE* handle);  // the object's model component (slot 1)
+    static gf::GfVolumeFade* getVolumeFade(gf::GF_OBJ_HANDLE* handle);
+    static bool isVolumeFadeForUser(gf::GF_OBJ_HANDLE* handle);  // its info's flag 20
+    static void setTalking(gf::GF_OBJ_HANDLE* handle, bool on);  // its info's flag 21
+    // the sound category of the object's sounds: 3 for create types 6, 7 and 12, else 13 (14 without slow)
+    static unsigned int getSoundCategoryNormal(gf::GF_OBJ_HANDLE* handle);
+    static unsigned int getSoundCategoryWithoutSlow(gf::GF_OBJ_HANDLE* handle);
+    // gives dst's setup src's world transform as its initial one
+    static void copyTransformToSetup(gf::GF_OBJ_HANDLE* src, gf::GF_OBJ_HANDLE* dst);
 };
 
 }  // namespace gf
