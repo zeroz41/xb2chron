@@ -2,6 +2,12 @@
 #define GF_GFDATAPARTY_H
 
 namespace gf {
+// the party's part of the game data (GfDataParty::getSDataParty points at it); the name is not the original's
+struct SDataParty {
+    unsigned char pad_0[0x4C];
+    unsigned short m_partyGauge;  // GfGameParty::getPartyGauge and setPartyGauge (300 full)
+};
+
 // the party's game data (functions, by 1.0.0's symbols)
 class GfDataParty {
 public:
@@ -14,6 +20,7 @@ public:
     // parties' kept elsewhere (3.0.1 added the second parameter; its name is not the original's)
     static PartyMember* getPartyMember(unsigned int index, unsigned int party);
     static bool isRideChar(unsigned int chara);
+    static SDataParty* getSDataParty();
     // GfGameScene::isRide and isRideParty ask it about a party id
     static bool isNiaByakko(unsigned int id);
 };

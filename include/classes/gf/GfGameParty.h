@@ -7,16 +7,59 @@ namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfGameParty; }
 namespace gf { class GfComTransform; }
 #include "classes/gf/IGfObjListener.h"
+#include "classes/gf/GfStatusProperty.h"
+#include "gf/GfReqParam.h"
+#include "gf/GfSelectBlade.h"
+#include "mm/mtl/FixedArray.h"
+#include "mm/mtl/FixedVector.h"
+#include "mm/mtl/IntrusivePtr.h"
+
+namespace fw { class UpdateInfo; }
+namespace gf { class GfObj; class GfSetupParam; }
 
 namespace gf {
-// a base of gf::GfGameParty no evidence names yet
-class TUnk_B553D8 {
+// a party member's objects (0x50 bytes; GfGameParty holds three, by party slot). Its constructor and destructor
+// clear the handles to -1 (1.0.0's GfMemberInfo::GfMemberInfo, clear and ~GfMemberInfo; 3.0.1 inlines them).
+class GfMemberInfo {
 public:
-    virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int) = 0;
+    GfMemberInfo() { clear(); }
+    ~GfMemberInfo() { clear(); }
+    void clear() {
+        for (int i = 0; i < 9; ++i) {
+            m_handles[i] = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+        }
+    }
+
+    // the member's object handles: 0 the driver (getHandleDriver reads its index by the party argument),
+    // 3-5 the blades by set (getHandleBlade); the names are not the original's
+    GF_OBJ_HANDLE* m_handles[9];
+    mm::mtl::IntrusivePtr<GfStatusProperty> m_statusProperty;  // getPartyStatusProperty
 };
-// table 0x7100B553B0; base at 0x8 unknown (TUnk_B553D8)
-class GfGameParty : public ::mm::mtl::PtrSingleton< ::gf::GfGameParty>, public TUnk_B553D8 {
+
+// table 0x7100B553B0; the base at 0x8 is the object listener GfObjManager::addListener registers (the constructor
+// passes this+8)
+class GfGameParty : public ::mm::mtl::PtrSingleton< ::gf::GfGameParty>, public IGfObjListener {
 public:
+    GfGameParty(const GfSetupParam& param);
+    static void build(const GfSetupParam& param);
+    static void destroy();
+    void update(const fw::UpdateInfo& info);
+    // 1.0.0's (3.0.1 inlines them in the constructor and destroy)
+    void initialize() {
+        m_initialized = true;
+    }
+    void finalize() { m_initialized = false; }
+    static gf::GF_OBJ_HANDLE* getHandleByHierarchy(unsigned int hierarchy);
+    // the blade set of the driver at an index: a set given (not negative) as it is, else the driver's
+    static int getBladeSetId(unsigned int index, int set);
+    static GfStatusProperty* getPartyStatusProperty(unsigned int index);
+    static void setPartyGauge(unsigned short gauge);
+    static gf::GfObj* getLeaderTransformObj();  // the controlled mover's object
+    void createdObject(gf::GF_OBJ_HANDLE* handle);
+    // gives the member at an index a new status property with the hit points given (the second argument is unused)
+    static void createPartyStatusProperty(unsigned int index, unsigned int, unsigned int hp);
+    // the driver slot's blade set to start battles with: its driver's current one
+    static void setupBattleStart(unsigned int index);
     static void gevGameObjEnter(gf::GF_OBJ_HANDLE*);
     static void gevGameObjLeave(gf::GF_OBJ_HANDLE*);
     static void refreshPartyMemberPosition();
@@ -55,6 +98,19 @@ public:
     static void fn_71002BC840(unsigned int slot);
     static unsigned short getPartyGauge();  // GfMenuBattleAdapter shows it in hundreds (300 full)
     static bool isLeaderBlade();
+
+    mm::mtl::FixedArray<GfMemberInfo, 3> m_members;  // by party slot
+    bool m_initialized;  // 1.0.0's initialize sets it, finalize clears it, isInitialized reads it
+    unsigned char pad_101[0x3];
+    GfSelectBlade m_selectBlade;
+    unsigned char pad_124[0xC];
+    RQ_SETUP_PARTY m_currentParty;  // what getCurrentPartyInfo fills (the name is not the original's)
+    unsigned char pad_1f8[0x178];
+    bool m_currentPartyValid;  // set once m_currentParty is filled (the name is not the original's)
+    unsigned char pad_371[0xF];
+    unsigned char pad_380[0x20];
+    mm::mtl::FixedVector<unsigned int, 4> m_hierarchy;  // party slots in hierarchy order (getHandleByHierarchy)
+    unsigned char pad_3b8[0x8];
 };
 }  // namespace gf
 

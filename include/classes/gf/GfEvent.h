@@ -24,6 +24,9 @@ public:
     static void callTargetAccess(GF_OBJ_HANDLE*);
     static void callItemAdd(unsigned int item, int count);  // count of the item gained (or lost)
     static void callTargetChange(GF_OBJ_HANDLE*);
+    // a party driver's object entering (true) or leaving (false) the game, with its setup's party id
+    // (GfGameParty::gevGameObjEnter and gevGameObjLeave; 1.0.0's symbol)
+    static void callPartyDriver(GF_OBJ_HANDLE* handle, unsigned int partyId, bool enter);
     // GfPlayComCallbackEventSequence::start passes 12 (begin) or 13 and its id
     static void callEventPlay(GEV gev, unsigned int id);
     virtual ~GfEvent();  // slot 0

@@ -111,6 +111,8 @@ public:
     bool isMoverGetFieldDamage() const;
     void refreshGimmickFlag();
     bool isRide(unsigned int id) const;
+    // GfGameParty::gevPartyIDMemberOK passes the party id it is told about (1.0.0's symbol)
+    void setRideOn(unsigned int id);
     bool isRideObj(GF_OBJ_HANDLE* handle) const;
     bool isPlayerPauseForBattle() const;
     void setDamageCharacter(GF_OBJ_HANDLE* handle);
