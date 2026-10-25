@@ -16,6 +16,12 @@ namespace idcoli {
 // through. The return type is not in the symbols (both return 0 or 1; bool assumed).
 class IDColiUtilColiSimple {
 public:
+    // indexed by the other object's IDColiBaseType (this unit's .data)
+    static bool (*s_CallLine[8])(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool (*s_CallRay[8])(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool (*s_CallSphere[8])(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool (*s_CallCapsule[8])(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool (*s_CallBox[8])(IDColiResult& result, const IDColiInput& input, const void* pOther);
     static bool isSphereBox(IDColiResult& result, const CLSphereWork* sphere, const CLBoxWork* box);
     static bool isCapsuleBox(IDColiResult& result, const CLCapsuleWork* capsule, const CLBoxWork* box);
     static bool isCapsuleInBox(IDColiResult& result, const CLCapsuleWork* capsule, const CLBoxWork* box);
@@ -41,6 +47,11 @@ public:
 
 class IDColiUtilColiResult {
 public:
+    // indexed by the other object's IDColiBaseType (this unit's .data)
+    static bool (*s_CallLine[8])(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool (*s_CallRay[8])(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool (*s_CallSphere[8])(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool (*s_CallCapsule[8])(IDColiResult& result, const IDColiInput& input, const void* pOther);
     // the last bool: a line in a box/capsule test sets it (isLineInBox/isLineInCapsule); the names are not the
     // original's
     static bool isPartsLineSphere(IDColiResult& result, const CLLineWork* line, const void* pOther, bool ray);
