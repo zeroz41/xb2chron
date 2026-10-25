@@ -1,6 +1,7 @@
 #ifndef CLASSES_GMK_TGMKLIST_H
 #define CLASSES_GMK_TGMKLIST_H
 
+#include <algorithm>
 #include "classes/fw/CommonResource.h"
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkAccManager.h"
@@ -46,7 +47,6 @@ public:
     virtual void onResetUpdateGmkIndex();  // slot 18
     // the sequences update runs: wait for the resource, then update a share of the gimmicks each frame
     void seqWaitResourceLoaded(float dt);
-    // (seqUpdate has no body here yet: its last candidate is two instructions off, kept outside the tree)
     void seqUpdate(float dt);
 
     unsigned char pad_8[0x8];
@@ -239,6 +239,35 @@ void TGmkList<T0, T1, T2, T3, T4>::seqWaitResourceLoaded(float dt) {
         }
         createGmk(data);
         m_seq = &TGmkList::seqUpdate;
+    }
+}
+
+template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
+void TGmkList<T0, T1, T2, T3, T4>::seqUpdate(float dt) {
+    if (!isValid()) {
+        return;
+    }
+    if (m_updateGmkNumPerFrame == 0) {
+        return;
+    }
+    unsigned int count = m_gmks.size();
+    if (count == 0) {
+        return;
+    }
+    if (count <= m_updateGmkIndex) {
+        m_updateGmkIndex = 0;
+        onResetUpdateGmkIndex();
+    }
+    unsigned int num = std::min(count, m_updateGmkNumPerFrame);
+    // each gimmick is updated once every that many frames: with that many frames' time
+    float frameDt = static_cast<float>((count + num - 1) / num) * dt;
+    for (unsigned int i = 0; i < num; i++, m_updateGmkIndex++) {
+        if (count <= m_updateGmkIndex) {
+            m_updateGmkIndex = 0;
+            onResetUpdateGmkIndex();
+            return;
+        }
+        m_gmks[m_updateGmkIndex].update(frameDt);
     }
 }
 

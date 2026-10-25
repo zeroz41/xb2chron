@@ -119,6 +119,18 @@ struct __less {
     bool operator()(const _T1& __x, const _T1& __y) const { return __x < __y; }
 };
 
+// std::min, as libc++ writes it: both by reference, the second wins only when it is smaller (TGmkList::seqUpdate:
+// the reference read of the per-frame count is what keeps its load and the next field's apart)
+template <class _Tp, class _Compare>
+inline const _Tp& min(const _Tp& __a, const _Tp& __b, _Compare __comp) {
+    return __comp(__b, __a) ? __b : __a;
+}
+
+template <class _Tp>
+inline const _Tp& min(const _Tp& __a, const _Tp& __b) {
+    return std::min(__a, __b, __less<_Tp>());
+}
+
 template <class _Compare, class _RandomAccessIterator>
 void __sort(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare __comp);
 
