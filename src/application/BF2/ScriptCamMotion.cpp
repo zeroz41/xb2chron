@@ -1570,10 +1570,6 @@ static int s_exEther;
 static const char* s_exText;
 static const char* s_exCancel;
 
-// Placeholder name: the symbols name no function here (pluginRegist calls it; the pattern of the other plugins
-// would make it pluginEvtExRegist, which no evidence confirms).
-void fn_710066162C();
-
 // evt_ex.begin
 static int fn_7100661640(VMThread* pThread) {
     s_exText = nullptr;
@@ -1653,6 +1649,8 @@ static VMPluginFunc s_evtexPlugin[] = {
     {nullptr, nullptr},
 };
 
+// Placeholder name: new in 3.0.1 (1.0.0 has no evt_ex plugin), and the symbols name no function here. pluginRegist
+// calls it; the pattern of the other plugins would make it pluginEvtExRegist, which no evidence confirms.
 void fn_710066162C() {
     vmPluginRegist("evt_ex", s_evtexPlugin);
 }
