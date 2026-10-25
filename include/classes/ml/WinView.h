@@ -1,6 +1,7 @@
 #ifndef CLASSES_ML_WINVIEW_H
 #define CLASSES_ML_WINVIEW_H
 
+#include "classes/ml/FontLayer.h"
 #include "classes/ml/WorkObj.h"
 
 namespace ml { class IWorkEvent; }
@@ -9,14 +10,11 @@ namespace mm { template <typename> class Rect; }
 namespace mm { struct Col4; }
 
 namespace ml {
-// a base of ml::WinView no evidence names yet
-class TUnk_B788F8 {
+// table 0x7100B78828; base FontLayer at 0x1A8 (the font commands' flushes print through getView(false) + 0x1A8 as
+// FontLayer::font's this)
+class WinView : public ::ml::WorkObj, public ::ml::FontLayer {
 public:
-    virtual ~TUnk_B788F8();
-};
-// table 0x7100B78828; base at 0x1A8 unknown (TUnk_B788F8)
-class WinView : public ::ml::WorkObj, public TUnk_B788F8 {
-public:
+    static WinView* getView(bool sub);
     enum RENDER_INFO : int;
     static void setInitialBackCol(const mm::Col4& col);
     virtual ~WinView();  // slot 0

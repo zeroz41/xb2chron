@@ -7,7 +7,7 @@ namespace ml { class DebDraw; }
 
 namespace ml {
 // table 0x7100B77120
-class CacheDraw::DEND {
+class CacheDraw::DEND : public CacheDraw::CMD {
 public:
     virtual void flush(ml::DebDraw*);  // slot 0
 };

@@ -16,11 +16,13 @@ class DevFont : public ::ml::FontLayer, public ::ml::WorkObj, public TUnk_B75B88
 public:
     virtual ~DevFont();  // slot 0
     virtual bool wkStandbyLogin();  // slot 2
-    virtual void wkStandbyLogout();  // slot 3
+    virtual bool wkStandbyLogout();  // slot 3
     virtual void wkUpdate();  // slot 4
     virtual void wkTail();  // slot 5
     virtual void createFont() = 0;  // slot 6
     virtual void releaseFont() = 0;  // slot 7
+
+    static void fontLayerStyle(const FontLayer* layer, FONT_STYLE style);
 };
 }  // namespace ml
 

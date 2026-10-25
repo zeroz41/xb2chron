@@ -7,9 +7,11 @@ namespace ml { class DebDraw; }
 
 namespace ml {
 // table 0x7100B76F28
-class CacheDraw::DDOUBLESIDE {
+class CacheDraw::DDOUBLESIDE : public CacheDraw::CMD {
 public:
+    DDOUBLESIDE(bool doubleSide) : CMD(6, 0, sizeof(DDOUBLESIDE)), m_doubleSide(doubleSide) {}
     virtual void flush(ml::DebDraw*);  // slot 0
+    bool m_doubleSide;  // 0x0C (the name is not the original's)
 };
 }  // namespace ml
 

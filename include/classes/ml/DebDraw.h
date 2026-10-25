@@ -10,6 +10,10 @@ namespace mm { class Vec3; }
 namespace mm { template <typename> class Pnt; }
 namespace mm { template <typename> class Rect; }
 
+namespace grlib { class CGLibTextureBuffer; }
+
+namespace ml { class CacheDraw; }
+
 namespace ml {
 // table 0x7100B761D0
 class DebDraw : public ::ml::DevGraphCB {
@@ -38,6 +42,27 @@ public:
     virtual void setPerspective(float, float, float, mm::Mat44 const&, mm::Vec3 const*);  // slot 26
     virtual void setOrtho();  // slot 27
     virtual void clear();  // slot 28
+
+    // 1.0.0 has it out of line; 3.0.1 inlines every use (defined inline in ml/CacheDraw.cpp): whether commands go to the cache (a debug draw exists and
+    // the caller is not the render thread, or the cache is used there too)
+    static bool isNotRender();
+
+    void setLineWidth(unsigned int width);
+    void setAlphaBlend(bool blend);
+    void clrTex();
+    void renderLine(const mm::Vec3& start, const mm::Vec3& end);
+    void renderLine(const mm::Pnt<int>& start, const mm::Pnt<int>& end);
+    void fontColor(const mm::Col4& col);
+    void font(int x, int y, const char* text);
+
+    unsigned int m_flags;                 // 0x08 (the name is not the original's)
+    unsigned char pad_00c[0x138];
+    unsigned int m_lineWidth;             // 0x144 setLineWidth's (the name is not the original's)
+    unsigned char pad_148[0x38];
+    grlib::CGLibTextureBuffer* m_tex;     // 0x180 setTex's (the name is not the original's)
+    unsigned char pad_188[0x88];
+    CacheDraw* m_cache;                   // 0x210 (the name is not the original's)
+    bool m_cacheOnRender;                 // 0x218 isNotRender's (the name is not the original's)
 };
 }  // namespace ml
 

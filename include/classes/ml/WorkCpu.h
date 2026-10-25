@@ -5,6 +5,7 @@
 #include "mtl/AllocHandle.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 namespace ml {
+enum CPUID : int;
 class IWorkInfomation; class IWorkBackground; class IThreadValue; }
 
 namespace ml {
@@ -33,6 +34,12 @@ public:
     static mtl::ALLOC_HANDLE getMemStack();
     // the bank in use this frame: 0 even, else odd (getOdd is its negation)
     static int getEven();
+    // the calling thread's id, the main thread's, the thread a CPU runs and the CPU the renderer runs on
+    // (ml::CacheDraw's command queue compares them)
+    static unsigned long getCurrentThreadId();
+    static unsigned long getMainThreadId();
+    static unsigned long getThreadId(CPUID cpu);
+    static CPUID getRenderCPUID();
     static bool getOdd();
     // shutting down (false before the CPU work exists)
     static bool isShutdown();

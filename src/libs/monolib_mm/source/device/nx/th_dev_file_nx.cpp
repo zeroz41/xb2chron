@@ -19,7 +19,148 @@
 #include "nn/oe.h"
 #include "nn/os.h"
 
+#include "classes/ml/CacheDraw/DRLINE.h"
+#include "classes/ml/CacheDraw/DRLINE_PNT.h"
+#include "classes/ml/CacheDraw/DLINE_WIDTH.h"
+#include "classes/ml/CacheDraw/DALPHA_BLEND.h"
+#include "classes/ml/CacheDraw/DBEGIN.h"
+#include "classes/ml/CacheDraw/DEND.h"
+#include "classes/ml/CacheDraw/DADDV3_3.h"
+#include "classes/ml/CacheDraw/DADDV3_2.h"
+#include "classes/ml/CacheDraw/DADDV3_1.h"
+#include "classes/ml/CacheDraw.h"
+#include "mm/Col4.h"
+#include "classes/ml/CacheDraw/DFONT32.h"
+#include "classes/ml/CacheDraw/DFONT64.h"
+#include "classes/ml/CacheDraw/DFONT128.h"
+#include "classes/ml/CacheDraw/DFONT256.h"
+#include "classes/ml/WinView.h"
+#include "classes/ml/DevFont.h"
+
 namespace ml {
+
+// ---- debug draw commands (ml::CacheDraw::D*) and the DebDraw setters their flushes inline ----
+
+void DebDraw::setLineWidth(unsigned int width) {
+    if (m_cache->setLineWidth(width)) {
+        return;
+    }
+    if (m_lineWidth != width) {
+        m_lineWidth = width;
+        m_flags &= ~4;
+    }
+}
+
+void DebDraw::setAlphaBlend(bool blend) {
+    if (m_cache->setAlphaBlend(blend)) {
+        return;
+    }
+    if (blend) {
+        m_flags |= 0x10;
+    } else {
+        m_flags &= ~0x10;
+    }
+}
+
+// 1.0.0 has these out of line (DebDraw::renderLine at 0x710070D12C and 0x710070D23C); 3.0.1 inlines every use
+inline void DebDraw::renderLine(const mm::Vec3& start, const mm::Vec3& end) {
+    if (m_cache->renderLine(start, end)) {
+        return;
+    }
+    begin(2, 1);
+    add(start, end);
+    this->end();
+}
+
+inline void DebDraw::renderLine(const mm::Pnt<int>& start, const mm::Pnt<int>& end) {
+    if (m_cache->renderLine(start, end)) {
+        return;
+    }
+    begin(2, 1);
+    add(start, end);
+    this->end();
+}
+
+void CacheDraw::DRLINE::flush(DebDraw* draw) {
+    draw->renderLine(vec(m_start), vec(m_end));
+}
+
+void CacheDraw::DRLINE_PNT::flush(DebDraw* draw) {
+    draw->renderLine(m_start, m_end);
+}
+
+void CacheDraw::DLINE_WIDTH::flush(DebDraw* draw) {
+    draw->setLineWidth(m_width);
+}
+
+void CacheDraw::DALPHA_BLEND::flush(DebDraw* draw) {
+    draw->setAlphaBlend(m_blend);
+}
+
+void CacheDraw::DBEGIN::flush(DebDraw* draw) {
+    draw->begin(m_prim, m_param);
+}
+
+void CacheDraw::DEND::flush(DebDraw* draw) {
+    draw->end();
+}
+
+void CacheDraw::DADDV3_3::flush(DebDraw* draw) {
+    draw->add(vec(m_v0), vec(m_v1), vec(m_v2));
+}
+
+void CacheDraw::DADDV3_2::flush(DebDraw* draw) {
+    draw->add(vec(m_v0), vec(m_v1));
+}
+
+void CacheDraw::DADDV3_1::flush(DebDraw* draw) {
+    draw->add(vec(m_v0));
+}
+
+void CacheDraw::DFONT32::flush(DebDraw*) {
+    WinView::getView(false)->font(m_pos.x, m_pos.y, m_text);
+}
+
+void CacheDraw::DFONT64::flush(DebDraw*) {
+    WinView::getView(false)->font(m_pos.x, m_pos.y, m_text);
+}
+
+void CacheDraw::DFONT128::flush(DebDraw*) {
+    WinView::getView(false)->font(m_pos.x, m_pos.y, m_text);
+}
+
+void CacheDraw::DFONT256::flush(DebDraw*) {
+    WinView::getView(false)->font(m_pos.x, m_pos.y, m_text);
+}
+
+void DebDraw::fontColor(const mm::Col4& col) {
+    m_cache->fontColor(col);
+}
+
+void DebDraw::font(int x, int y, const char* text) {
+    m_cache->font(x, y, text);
+}
+
+void DebDraw::clrTex() {
+    if (m_flags & 2) {
+        m_flags &= ~6;
+    }
+}
+
+void DebDraw::setOrtho() {
+    if (m_cache->setOrtho()) {
+        return;
+    }
+    if (m_flags & 8) {
+        m_flags &= ~4;
+    }
+    m_flags &= ~8;
+}
+
+void FontLayer::fontStyle(FONT_STYLE style) {
+    DevFont::fontLayerStyle(this, style);
+}
+
 
 bool DevClock::getClockNow(long& clock) {
     DevClock* dev = get();
