@@ -14,7 +14,7 @@ class MsgPcFieldNotifyBigJump : public ::fw::Message {
 public:
     MsgPcFieldNotifyBigJump() : fw::Message(0x1000011, 0x40), m_pos(mm::Vec3::zero), m_param0(0.0f), m_param1(2.0f), m_param2(1.0f), m_bdat(nullptr), m_bdatId(0), m_gmkId(0) {}
 
-    unsigned char pad_8[0x8];
+    // (8 bytes of alignment padding before m_pos: the copies GfPropertyField keeps skip them)
     mm::Vec3 m_pos;  // where to go (the name is not the original's)
     float m_param0, m_param1, m_param2;  // the three values after the point in the gimmick's data (meaning not known)
     unsigned char pad_2c[0x4];

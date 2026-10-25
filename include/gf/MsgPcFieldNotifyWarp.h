@@ -15,7 +15,7 @@ class MsgPcFieldNotifyWarp : public ::fw::Message {
 public:
     MsgPcFieldNotifyWarp() : fw::Message(0x1000014, 0x40), m_pos(mm::Vec3::zero), m_param(0.0f), m_bdat(nullptr), m_bdatId(0), m_gmkId(0) {}
 
-    unsigned char pad_8[0x8];
+    // (8 bytes of alignment padding before m_pos: the copies GfPropertyField keeps skip them)
     mm::Vec3 m_pos;  // where to go (the name is not the original's)
     float m_param;  // the value after the point in the gimmick's data (meaning not known)
     unsigned char pad_24[0x4];

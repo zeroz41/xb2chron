@@ -154,7 +154,7 @@ bool TaskFieldWallJumpWait::testCondition(const BlackBoardField& bb) {
 
 void TaskFieldWallJumpWait::update(BlackBoardField& bb) {
     GfComPropertyPc* property = bb.m_property;
-    const GfPropertyField::WallJumpInfo* info = property->m_field.getWallJumpInfo();
+    const MsgPcFieldNotifyWallJump* info = property->m_field.getWallJumpInfo();
     if (!AgentUtilField::existNearChimbPlayer(*property, info->m_pos) && !AgentUtilField::isWallJumpAnyPlayer()) {
         MsgPcFieldWallJump msg;
         GfObj* obj = static_cast<GfObj*>(property->m_owner);

@@ -81,7 +81,8 @@ public:
     // flush's: how deep in water the PC is, 0 out of it up to 3 (the water surface at least its chest height above
     // the ground under it); the field AI takes its swimming parameters at 3 (the name is not the original's)
     int m_waterLevel;
-    unsigned char pad_118[0x4];
+    // StateUtilField::isInterruptionWater: the PC is out of the water once m_pos.y is 0.2 above it less m_chestHeight
+    float pad_118;
     float m_waterDepth;         // flush's: the water surface's height above the ground under the PC (the name is not
                                 // the original's)
     int m_wallJumpState;        // StateFieldWallJump::enter sets 0, leave 2 (the name is not the original's)

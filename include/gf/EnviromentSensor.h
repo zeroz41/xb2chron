@@ -31,7 +31,9 @@ public:
         float m_height;          // the water surface's height
         unsigned char pad_4[0x2C];
         unsigned int m_damageId; // the terrain damage the water deals (GfFieldDmgManager::findBdatInfo's)
-        unsigned char pad_34[0xC];
+        // what kind of water it is: 11 is the cloud sea (StateUtilField::testCloud; the name is not the original's)
+        unsigned int m_kind;
+        unsigned char pad_38[0x8];
     };
     // the plane below which the object dies; the name is not the original's (StateUtil::getDeadPlaneInfo)
     struct DeadPlaneInfo {

@@ -4,6 +4,7 @@
 #include "mm/Vec3.h"
 #include "mm/Vec2.h"
 #include "mm/mtl/FixedQueue.h"
+#include "classes/gf/pc/GfPropertyField.h"
 
 namespace gf { class GfComAsm; }
 namespace gf { class GfComPropertyPc; }
@@ -26,6 +27,23 @@ enum ASM_CMD_ID_FIELD : unsigned int {
     ASM_CMD_ID_FIELD_SWIM_01 = 9,        // "C_swim_01"
     ASM_CMD_ID_FIELD_WATERHOLE_00 = 10,  // "C_waterhole_00"
 };
+
+// the asm command an ASM_CMD_ID_FIELD stands for (inline: its table is a weak static of this unit's, read through
+// the GOT; the table's type and name are the symbols')
+inline const char* getASMCmdNameField(ASM_CMD_ID_FIELD id) {
+    static const char* TABLE[] = {
+        "C_idle", "C_move", "C_jump", "C_jump_end", "C_jumpdmg", "C_walkend",
+        "C_fall", "C_wateridle", "C_swim_00", "C_swim_01", "C_waterhole_00", "C_waterdead",
+        "C_climbidle", "C_climbup", "C_climbdown", "C_climbright", "C_climbleft", "C_uplanding_00",
+        "C_uplanding_01", "C_downlanding_00", "C_downlanding_01", "C_climbjump_00", "C_climbjump_01", "C_climbjump_02",
+        "C_access", "C_slope", "C_highjump", "C_highjump_01", "C_lure", "C_dead",
+        "C_down_00", "C_down_01", "C_downpose", "C_rise", "C_uniqueA", "C_uniqueB",
+        "C_uniqueC", "C_ride", "C_move_ride", "C_rideup_00", "C_rideup_01", "C_ridedown_00",
+        "C_ridedown_01", "C_rideclimbidle", "C_ridejump_00", "C_ridejump_02", "C_ridejumpdmg", "C_ridehighjump_00",
+        "C_ridehighjump_01", "C_ridefall", "C_ridewaterhole_00",
+    };
+    return TABLE[id];
+}
 
 // a rider event notifyRiderEvent passes on (the type is the symbols'; StateFieldWallPerformance::leave passes 0)
 enum VehicleEvent : unsigned int {};
@@ -104,6 +122,10 @@ public:
     static gf::GfObj* getLureTarget(gf::GfComBehaviorPc& behavior);
     static bool isStartSlidePosuture(gf::GfComBehaviorPc& behavior);
     static bool requestBattleStart(gf::GfComPropertyPc& property);
+    static bool testVechile(gf::GfComBehaviorPc& behavior);  // whether the PC is a vehicle (GfGameRide::isVehicle)
+    static bool testCloud(gf::GfComPropertyPc& property);
+    // the climb command a wall move mode plays ("C_climbidle" for none of 0-7)
+    static ASM_CMD_ID_FIELD getAsmID(gf::pc::GfPropertyField::WALL_MOVE_MODE mode);
 };
 
 }}  // namespace gf::pc
