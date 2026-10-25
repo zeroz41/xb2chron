@@ -10,6 +10,7 @@ public:
     UIMotionData(mm::mtl::IAllocator* allocator);
     virtual ~UIMotionData();  // slot 0
     void deserialize(const void* data, unsigned int size);  // a motion file's (UIMotionLibrary::update's)
+    int searchMotion(const char* name) const;  // the index of a motion by its name (UICtrlMethodMotion::setup)
     unsigned char pad_08[0x58];  // 0x60 bytes: UIMotionLibrary::update allocates them so
 };
 }  // namespace ui

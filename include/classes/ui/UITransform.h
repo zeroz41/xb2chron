@@ -9,6 +9,8 @@ class UITransform {
 public:
     UITransform();
     virtual ~UITransform();  // slot 0
+    // out of line (UICtrlManager's copies call it; the return type is not known)
+    void operator=(const UITransform& other);
     void setPos(short x, short y);
     void setScale(float x, float y);
     void syncParent();  // nothing (1.0.0's setParent did nothing either)
