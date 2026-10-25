@@ -24,6 +24,10 @@ public:
     unsigned char pad_78[0x4D8];
     unsigned int m_screenWidth;
     unsigned int m_screenHeight;
+    unsigned char pad_558[0x8];
+    // the view being drawn: 0 is the main one, the only one effect::SystemManager runs its commands for (the name is
+    // not the original's)
+    int m_view;
 };
 
 }  // namespace ptlib

@@ -6,6 +6,9 @@ namespace ptlib { namespace emitter {
 class ComputeManager {
 public:
     virtual ~ComputeManager();  // slot 0
+    static ComputeManager*& getPtr();
+    void update(unsigned int view);
+    void resetUpdate();
 };
 }}  // namespace ptlib::emitter
 
