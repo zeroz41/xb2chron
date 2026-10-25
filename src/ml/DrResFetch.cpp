@@ -24,6 +24,7 @@
 #include "ml/DrResMdoMorpObj.h"
 #include "classes/ml/DrMan.h"
 #include "classes/ml/DrResMdoInstPartsObj.h"
+#include "ml/DrResShdPrePass.h"
 #include "ml/DrResShdShw.h"
 #include "ml/DrResShdStreamOut.h"
 #include "ml/DrShdDataObj.h"
@@ -705,6 +706,2352 @@ void DrResShdStreamOut::stmShdset_MeshVtxSet() {
     m_shaderSel[0] = 0;
     m_shaderSel[1] = 1;
 }
+
+
+DrResFetch::DrResFetch() {}
+
+DrResFetch::~DrResFetch() {
+    release();
+}
+
+void DrResFetch::clearWork() {
+    release();
+}
+
+void DrResFetch::setDefVertexParam(int type) {
+    (this->*s_callDefVertex[type])();
+}
+
+DrResShdPrePass::DrResShdPrePass(DrShdDataObj* data, int type) {
+    m_data = data;
+    for (int i = 0; i < 11; i++) {
+        m_shaderSel[i] = -1;
+    }
+    m_flags = 1;
+    m_type = type;
+    m_passTypeOfs = data->getDeclarationOfs("DECL_PASS_TYPE");
+    (this->*s_callShdSet[m_type])();
+    m_flags &= ~1;
+}
+
+void DrResShdPrePass::setupShader(unsigned int fetch, unsigned int passType) {
+    m_data->setDeclarationIdx(m_passTypeOfs, passType);
+    m_data->setupShader(fetch);
+}
+
+void DrResShdPrePass::preshdset_Obj() {
+    m_shaderSel[5] = 2;
+}
+
+void DrResShdPrePass::preshdset_ObjT() {
+    m_shaderSel[5] = 2;
+    m_shaderSel[8] = 1;
+    m_shaderSel[0] = 0;
+}
+
+void DrResShdPrePass::preshdset_ObjT_Al() {
+    m_shaderSel[5] = 2;
+    m_shaderSel[6] = 0;
+    m_shaderSel[9] = 4;
+    m_shaderSel[8] = 1;
+    m_shaderSel[0] = 0;
+    m_shaderSel[1] = 1;
+}
+
+void DrResShdPrePass::preshdset_Mot() {
+    m_shaderSel[6] = 0;
+}
+
+void DrResShdPrePass::preshdset_MotT() {
+    m_shaderSel[6] = 0;
+    m_shaderSel[8] = 1;
+    m_shaderSel[0] = 0;
+}
+
+void DrResShdPrePass::preshdset_MotT_Al() {
+    m_shaderSel[5] = 2;
+    m_shaderSel[6] = 0;
+    m_shaderSel[9] = 4;
+    m_shaderSel[8] = 1;
+    m_shaderSel[0] = 0;
+    m_shaderSel[1] = 1;
+}
+
+void DrResShdPrePass::preshdset_Inst() {
+    m_shaderSel[6] = 0;
+}
+
+void DrResShdPrePass::preshdset_InstT() {
+    m_shaderSel[6] = 0;
+    m_shaderSel[8] = 1;
+    m_shaderSel[0] = 0;
+}
+
+void DrResShdPrePass::preshdset_Obj_Al() {
+    m_shaderSel[5] = 2;
+    m_shaderSel[6] = 0;
+    m_shaderSel[9] = 4;
+    m_shaderSel[8] = 1;
+    m_shaderSel[1] = 1;
+}
+
+void DrResShdPrePass::preshdset_Mot_Al() {
+    m_shaderSel[5] = 2;
+    m_shaderSel[6] = 0;
+    m_shaderSel[9] = 4;
+    m_shaderSel[8] = 1;
+    m_shaderSel[1] = 1;
+}
+
+void DrResShdPrePass::preshdset_Inst_Al() {
+    m_shaderSel[6] = 0;
+    m_shaderSel[9] = 4;
+    m_shaderSel[8] = 1;
+    m_shaderSel[1] = 1;
+}
+
+void DrResShdPrePass::preshdset_InstT_Al() {
+    m_shaderSel[6] = 0;
+    m_shaderSel[9] = 4;
+    m_shaderSel[8] = 1;
+    m_shaderSel[0] = 0;
+    m_shaderSel[1] = 1;
+}
+
+void DrResShdPrePass::preshdset_Inst_Bill_Al() {
+    m_shaderSel[5] = 3;
+    m_shaderSel[6] = 0;
+    m_shaderSel[9] = 4;
+    m_shaderSel[8] = 1;
+    m_shaderSel[1] = 1;
+}
+
+void DrResShdPrePass::preshdset_InstT_Bill_Al() {
+    m_shaderSel[5] = 3;
+    m_shaderSel[6] = 0;
+    m_shaderSel[9] = 4;
+    m_shaderSel[8] = 1;
+    m_shaderSel[0] = 0;
+    m_shaderSel[1] = 1;
+}
+
+void DrResShdPrePass::preshdset_Fw() {
+    m_shaderSel[5] = 2;
+    m_shaderSel[3] = 3;
+    m_shaderSel[10] = 3;
+    m_shaderSel[4] = 4;
+}
+
+void DrResShdPrePass::preshdset_FwT() {
+    m_shaderSel[5] = 2;
+    m_shaderSel[8] = 1;
+    m_shaderSel[3] = 3;
+    m_shaderSel[0] = 0;
+    m_shaderSel[10] = 3;
+    m_shaderSel[4] = 4;
+}
+
+void DrResShdPrePass::preshdset_Fw_Al() {
+    m_shaderSel[5] = 2;
+    m_shaderSel[6] = 0;
+    m_shaderSel[9] = 4;
+    m_shaderSel[8] = 1;
+    m_shaderSel[3] = 3;
+    m_shaderSel[1] = 1;
+    m_shaderSel[10] = 3;
+    m_shaderSel[4] = 4;
+}
+
+void (DrResShdPrePass::*DrResShdPrePass::s_callShdSet[42])() = {
+    &DrResShdPrePass::preshdset_Obj,
+    &DrResShdPrePass::preshdset_ObjT,
+    &DrResShdPrePass::preshdset_ObjT,
+    &DrResShdPrePass::preshdset_ObjT_Al,
+    &DrResShdPrePass::preshdset_ObjT_Al,
+    &DrResShdPrePass::preshdset_Mot,
+    &DrResShdPrePass::preshdset_MotT,
+    &DrResShdPrePass::preshdset_MotT,
+    &DrResShdPrePass::preshdset_MotT_Al,
+    &DrResShdPrePass::preshdset_MotT_Al,
+    &DrResShdPrePass::preshdset_Inst,
+    &DrResShdPrePass::preshdset_InstT,
+    &DrResShdPrePass::preshdset_InstT,
+    &DrResShdPrePass::preshdset_Obj_Al,
+    &DrResShdPrePass::preshdset_ObjT_Al,
+    &DrResShdPrePass::preshdset_ObjT_Al,
+    &DrResShdPrePass::preshdset_ObjT_Al_Fs,
+    &DrResShdPrePass::preshdset_ObjT_Al_Fs,
+    &DrResShdPrePass::preshdset_Mot_Al,
+    &DrResShdPrePass::preshdset_MotT_Al,
+    &DrResShdPrePass::preshdset_MotT_Al,
+    &DrResShdPrePass::preshdset_MotT_Al_Fs,
+    &DrResShdPrePass::preshdset_MotT_Al_Fs,
+    &DrResShdPrePass::preshdset_Inst_Al,
+    &DrResShdPrePass::preshdset_InstT_Al,
+    &DrResShdPrePass::preshdset_InstT_Al,
+    &DrResShdPrePass::preshdset_Inst_Bill_Al,
+    &DrResShdPrePass::preshdset_InstT_Bill_Al,
+    &DrResShdPrePass::preshdset_InstT_Bill_Al,
+    &DrResShdPrePass::preshdset_Inst_Bill_Al,
+    &DrResShdPrePass::preshdset_InstT_Bill_Al,
+    &DrResShdPrePass::preshdset_InstT_Bill_Al,
+    &DrResShdPrePass::preshdset_Fw,
+    &DrResShdPrePass::preshdset_FwT,
+    &DrResShdPrePass::preshdset_FwT,
+    &DrResShdPrePass::preshdset_FwT_Al,
+    &DrResShdPrePass::preshdset_FwT_Al,
+    &DrResShdPrePass::preshdset_Fw_Al,
+    &DrResShdPrePass::preshdset_FwT_Al,
+    &DrResShdPrePass::preshdset_FwT_Al,
+    &DrResShdPrePass::preshdset_FwT_Al_Fs,
+    &DrResShdPrePass::preshdset_FwT_Al_Fs,
+};
+
+void DrResFetch::setupTexture2D() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupPositionOnly() {
+    grlib::CGLibVtxAttr attrs[1];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    createFetchObj(attrs, 1);
+}
+
+void DrResFetch::setupSkinWeightCalc() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 39;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupZBuffObj() {
+    grlib::CGLibVtxAttr attrs[1];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    createFetchObj(attrs, 1);
+}
+
+void DrResFetch::setupZBuffObjTex() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupZBuffMot() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 20;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupZBuffMotTex() {
+    grlib::CGLibVtxAttr attrs[3];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 20;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 22;
+    attrs[2].location = 2;
+    attrs[2].offset = 16;
+    attrs[2].stream = 0;
+    createFetchObj(attrs, 3);
+}
+
+void DrResFetch::setupZBuffInst() {
+    grlib::CGLibVtxAttr attrs[4];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 46;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 16;
+    attrs[2].stream = 1;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 32;
+    attrs[3].stream = 1;
+    createFetchObj(attrs, 4);
+}
+
+void DrResFetch::setupZBuffInstTex() {
+    grlib::CGLibVtxAttr attrs[5];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 16;
+    attrs[3].stream = 1;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 32;
+    attrs[4].stream = 1;
+    createFetchObj(attrs, 5);
+}
+
+void DrResFetch::setupZBuffObjAL() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 10;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupZBuffObjTexAL() {
+    grlib::CGLibVtxAttr attrs[3];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 10;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    createFetchObj(attrs, 3);
+}
+
+void DrResFetch::setupZBuffMotAL() {
+    grlib::CGLibVtxAttr attrs[3];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 20;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 10;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    createFetchObj(attrs, 3);
+}
+
+void DrResFetch::setupZBuffMotTexAL() {
+    grlib::CGLibVtxAttr attrs[4];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 20;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 22;
+    attrs[2].location = 2;
+    attrs[2].offset = 16;
+    attrs[2].stream = 0;
+    attrs[3].format = 10;
+    attrs[3].location = 3;
+    attrs[3].offset = 0;
+    attrs[3].stream = 1;
+    createFetchObj(attrs, 4);
+}
+
+void DrResFetch::setupShadowObj() {
+    grlib::CGLibVtxAttr attrs[1];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    createFetchObj(attrs, 1);
+}
+
+void DrResFetch::setupShadowObjTex() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupShadowMot() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 20;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupShadowMotTex() {
+    grlib::CGLibVtxAttr attrs[3];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 20;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 22;
+    attrs[2].location = 2;
+    attrs[2].offset = 16;
+    attrs[2].stream = 0;
+    createFetchObj(attrs, 3);
+}
+
+void DrResFetch::setupShadowMotInst() {
+    grlib::CGLibVtxAttr attrs[5];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 20;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 16;
+    attrs[3].stream = 1;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 32;
+    attrs[4].stream = 1;
+    createFetchObj(attrs, 5);
+}
+
+void DrResFetch::setupShadowMotInstTex() {
+    grlib::CGLibVtxAttr attrs[6];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 20;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 22;
+    attrs[2].location = 2;
+    attrs[2].offset = 16;
+    attrs[2].stream = 0;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 0;
+    attrs[3].stream = 1;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 16;
+    attrs[4].stream = 1;
+    attrs[5].format = 46;
+    attrs[5].location = 5;
+    attrs[5].offset = 32;
+    attrs[5].stream = 1;
+    createFetchObj(attrs, 6);
+}
+
+void DrResFetch::setupMpf_Stm_Bill() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupMpf_Stm_Bill_Wind() {
+    grlib::CGLibVtxAttr attrs[4];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 20;
+    attrs[1].stream = 0;
+    attrs[2].format = 22;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    attrs[3].format = 11;
+    attrs[3].location = 3;
+    attrs[3].offset = 8;
+    attrs[3].stream = 1;
+    createFetchObj(attrs, 4);
+}
+
+void DrResFetch::setupMpf_Stm_Mdl_Wind() {
+    grlib::CGLibVtxAttr attrs[3];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 36;
+    attrs[1].stream = 0;
+    attrs[2].format = 11;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    createFetchObj(attrs, 3);
+}
+
+void DrResFetch::setupMpf_Stm_Mdl_Wind_NoNom() {
+    grlib::CGLibVtxAttr attrs[3];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 24;
+    attrs[1].stream = 0;
+    attrs[2].format = 11;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    createFetchObj(attrs, 3);
+}
+
+void DrResFetch::setupMpf_Stm_Mdl_NormalMap_Wind() {
+    grlib::CGLibVtxAttr attrs[3];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 44;
+    attrs[1].stream = 0;
+    attrs[2].format = 11;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    createFetchObj(attrs, 3);
+}
+
+void DrResFetch::setupMpf_Stm_Mdl_NormalMap_Wind_VNom() {
+    grlib::CGLibVtxAttr attrs[5];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 20;
+    attrs[1].stream = 0;
+    attrs[2].format = 43;
+    attrs[2].location = 2;
+    attrs[2].offset = 32;
+    attrs[2].stream = 0;
+    attrs[3].format = 34;
+    attrs[3].location = 3;
+    attrs[3].offset = 44;
+    attrs[3].stream = 0;
+    attrs[4].format = 11;
+    attrs[4].location = 4;
+    attrs[4].offset = 0;
+    attrs[4].stream = 1;
+    createFetchObj(attrs, 5);
+}
+
+void DrResFetch::setupMpf_Pre_Bill() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 1;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 2;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupMpf_Pre_Bill_Nuki() {
+    grlib::CGLibVtxAttr attrs[3];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    attrs[2].format = 34;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 2;
+    createFetchObj(attrs, 3);
+}
+
+void DrResFetch::setupMpf_Pre_Bill_Nuki_Layer() {
+    grlib::CGLibVtxAttr attrs[4];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    attrs[2].format = 34;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 2;
+    attrs[3].format = 17;
+    attrs[3].location = 3;
+    attrs[3].offset = 16;
+    attrs[3].stream = 2;
+    createFetchObj(attrs, 4);
+}
+
+void DrResFetch::setupMpf_Pre_Mdl() {
+    grlib::CGLibVtxAttr attrs[4];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 1;
+    attrs[1].format = 46;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 2;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 16;
+    attrs[2].stream = 2;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 32;
+    attrs[3].stream = 2;
+    createFetchObj(attrs, 4);
+}
+
+void DrResFetch::setupMpf_Pre_Mdl_Nuki() {
+    grlib::CGLibVtxAttr attrs[5];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 2;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 16;
+    attrs[3].stream = 2;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 32;
+    attrs[4].stream = 2;
+    createFetchObj(attrs, 5);
+}
+
+void DrResFetch::setupMpf_Pre_Mdl_Nuki_Layer() {
+    grlib::CGLibVtxAttr attrs[6];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 2;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 16;
+    attrs[3].stream = 2;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 32;
+    attrs[4].stream = 2;
+    attrs[5].format = 17;
+    attrs[5].location = 5;
+    attrs[5].offset = 52;
+    attrs[5].stream = 2;
+    createFetchObj(attrs, 6);
+}
+
+void DrResFetch::setupMpf_Pre_Mdl_Def() {
+    grlib::CGLibVtxAttr attrs[4];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 46;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 16;
+    attrs[2].stream = 1;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 32;
+    attrs[3].stream = 1;
+    createFetchObj(attrs, 4);
+}
+
+void DrResFetch::setupMpf_Pre_Mdl_Def_Nuki() {
+    grlib::CGLibVtxAttr attrs[5];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 16;
+    attrs[3].stream = 1;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 32;
+    attrs[4].stream = 1;
+    createFetchObj(attrs, 5);
+}
+
+void DrResFetch::setupMpf_Pre_Mdl_Def_Nuki_Layer() {
+    grlib::CGLibVtxAttr attrs[6];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 0;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 16;
+    attrs[3].stream = 1;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 32;
+    attrs[4].stream = 1;
+    attrs[5].format = 17;
+    attrs[5].location = 5;
+    attrs[5].offset = 52;
+    attrs[5].stream = 1;
+    createFetchObj(attrs, 6);
+}
+
+void DrResFetch::setupMpf_Pre_Dithe_Bill() {
+    grlib::CGLibVtxAttr attrs[3];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 1;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 2;
+    attrs[2].format = 37;
+    attrs[2].location = 2;
+    attrs[2].offset = 12;
+    attrs[2].stream = 2;
+    createFetchObj(attrs, 3);
+}
+
+void DrResFetch::setupMpf_Pre_Dithe_Bill_Nuki() {
+    grlib::CGLibVtxAttr attrs[4];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    attrs[2].format = 34;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 2;
+    attrs[3].format = 37;
+    attrs[3].location = 3;
+    attrs[3].offset = 12;
+    attrs[3].stream = 2;
+    createFetchObj(attrs, 4);
+}
+
+void DrResFetch::setupMpf_Pre_Dithe_Bill_Nuki_Layer() {
+    grlib::CGLibVtxAttr attrs[5];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    attrs[2].format = 34;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 2;
+    attrs[3].format = 17;
+    attrs[3].location = 3;
+    attrs[3].offset = 16;
+    attrs[3].stream = 2;
+    attrs[4].format = 37;
+    attrs[4].location = 4;
+    attrs[4].offset = 12;
+    attrs[4].stream = 2;
+    createFetchObj(attrs, 5);
+}
+
+void DrResFetch::setupMpf_Pre_Dithe_Mdl() {
+    grlib::CGLibVtxAttr attrs[5];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 1;
+    attrs[1].format = 46;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 2;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 16;
+    attrs[2].stream = 2;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 32;
+    attrs[3].stream = 2;
+    attrs[4].format = 37;
+    attrs[4].location = 4;
+    attrs[4].offset = 48;
+    attrs[4].stream = 2;
+    createFetchObj(attrs, 5);
+}
+
+void DrResFetch::setupMpf_Pre_Dithe_Mdl_Nuki() {
+    grlib::CGLibVtxAttr attrs[6];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 2;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 16;
+    attrs[3].stream = 2;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 32;
+    attrs[4].stream = 2;
+    attrs[5].format = 37;
+    attrs[5].location = 5;
+    attrs[5].offset = 48;
+    attrs[5].stream = 2;
+    createFetchObj(attrs, 6);
+}
+
+void DrResFetch::setupMpf_Pre_Dithe_Mdl_Nuki_Layer() {
+    grlib::CGLibVtxAttr attrs[7];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 2;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 16;
+    attrs[3].stream = 2;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 32;
+    attrs[4].stream = 2;
+    attrs[5].format = 17;
+    attrs[5].location = 5;
+    attrs[5].offset = 52;
+    attrs[5].stream = 2;
+    attrs[6].format = 37;
+    attrs[6].location = 6;
+    attrs[6].offset = 48;
+    attrs[6].stream = 2;
+    createFetchObj(attrs, 7);
+}
+
+void DrResFetch::setupMpf_Pre_Dithe_Mdl_Def() {
+    grlib::CGLibVtxAttr attrs[5];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 46;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 16;
+    attrs[2].stream = 1;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 32;
+    attrs[3].stream = 1;
+    attrs[4].format = 37;
+    attrs[4].location = 4;
+    attrs[4].offset = 48;
+    attrs[4].stream = 1;
+    createFetchObj(attrs, 5);
+}
+
+void DrResFetch::setupMpf_Pre_Dithe_Mdl_Def_Nuki() {
+    grlib::CGLibVtxAttr attrs[6];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 16;
+    attrs[3].stream = 1;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 32;
+    attrs[4].stream = 1;
+    attrs[5].format = 37;
+    attrs[5].location = 5;
+    attrs[5].offset = 48;
+    attrs[5].stream = 1;
+    createFetchObj(attrs, 6);
+}
+
+void DrResFetch::setupMpf_Pre_Dithe_Mdl_Def_Nuki_Layer() {
+    grlib::CGLibVtxAttr attrs[7];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 0;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 16;
+    attrs[3].stream = 1;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 32;
+    attrs[4].stream = 1;
+    attrs[5].format = 17;
+    attrs[5].location = 5;
+    attrs[5].offset = 52;
+    attrs[5].stream = 1;
+    attrs[6].format = 37;
+    attrs[6].location = 6;
+    attrs[6].offset = 48;
+    attrs[6].stream = 1;
+    createFetchObj(attrs, 7);
+}
+
+void DrResFetch::setupMpf_Drw_Bill() {
+    grlib::CGLibVtxAttr attrs[5];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    attrs[2].format = 34;
+    attrs[2].location = 2;
+    attrs[2].offset = 12;
+    attrs[2].stream = 1;
+    attrs[3].format = 34;
+    attrs[3].location = 3;
+    attrs[3].offset = 0;
+    attrs[3].stream = 2;
+    attrs[4].format = 37;
+    attrs[4].location = 4;
+    attrs[4].offset = 12;
+    attrs[4].stream = 2;
+    createFetchObj(attrs, 5);
+}
+
+void DrResFetch::setupMpf_Drw_Bill_Layer() {
+    grlib::CGLibVtxAttr attrs[7];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    attrs[2].format = 34;
+    attrs[2].location = 2;
+    attrs[2].offset = 12;
+    attrs[2].stream = 1;
+    attrs[3].format = 34;
+    attrs[3].location = 3;
+    attrs[3].offset = 0;
+    attrs[3].stream = 2;
+    attrs[4].format = 37;
+    attrs[4].location = 4;
+    attrs[4].offset = 12;
+    attrs[4].stream = 2;
+    attrs[5].format = 17;
+    attrs[5].location = 5;
+    attrs[5].offset = 16;
+    attrs[5].stream = 2;
+    attrs[6].format = 38;
+    attrs[6].location = 6;
+    attrs[6].offset = 20;
+    attrs[6].stream = 2;
+    createFetchObj(attrs, 7);
+}
+
+void DrResFetch::setupMpf_Drw_Mdl() {
+    grlib::CGLibVtxAttr attrs[9];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 20;
+    attrs[1].stream = 0;
+    attrs[2].format = 37;
+    attrs[2].location = 2;
+    attrs[2].offset = 32;
+    attrs[2].stream = 0;
+    attrs[3].format = 34;
+    attrs[3].location = 3;
+    attrs[3].offset = 0;
+    attrs[3].stream = 1;
+    attrs[4].format = 34;
+    attrs[4].location = 4;
+    attrs[4].offset = 12;
+    attrs[4].stream = 1;
+    attrs[5].format = 46;
+    attrs[5].location = 5;
+    attrs[5].offset = 0;
+    attrs[5].stream = 2;
+    attrs[6].format = 46;
+    attrs[6].location = 6;
+    attrs[6].offset = 16;
+    attrs[6].stream = 2;
+    attrs[7].format = 46;
+    attrs[7].location = 7;
+    attrs[7].offset = 32;
+    attrs[7].stream = 2;
+    attrs[8].format = 37;
+    attrs[8].location = 8;
+    attrs[8].offset = 48;
+    attrs[8].stream = 2;
+    createFetchObj(attrs, 9);
+}
+
+void DrResFetch::setupMpf_Drw_Mdl_Layer() {
+    grlib::CGLibVtxAttr attrs[10];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 20;
+    attrs[1].stream = 0;
+    attrs[2].format = 37;
+    attrs[2].location = 2;
+    attrs[2].offset = 32;
+    attrs[2].stream = 0;
+    attrs[3].format = 34;
+    attrs[3].location = 3;
+    attrs[3].offset = 0;
+    attrs[3].stream = 1;
+    attrs[4].format = 34;
+    attrs[4].location = 4;
+    attrs[4].offset = 12;
+    attrs[4].stream = 1;
+    attrs[5].format = 46;
+    attrs[5].location = 5;
+    attrs[5].offset = 0;
+    attrs[5].stream = 2;
+    attrs[6].format = 46;
+    attrs[6].location = 6;
+    attrs[6].offset = 16;
+    attrs[6].stream = 2;
+    attrs[7].format = 46;
+    attrs[7].location = 7;
+    attrs[7].offset = 32;
+    attrs[7].stream = 2;
+    attrs[8].format = 37;
+    attrs[8].location = 8;
+    attrs[8].offset = 48;
+    attrs[8].stream = 2;
+    attrs[9].format = 17;
+    attrs[9].location = 9;
+    attrs[9].offset = 52;
+    attrs[9].stream = 2;
+    createFetchObj(attrs, 10);
+}
+
+void DrResFetch::setupMpf_Drw_Mdl_NoNom() {
+    grlib::CGLibVtxAttr attrs[8];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 37;
+    attrs[1].location = 1;
+    attrs[1].offset = 20;
+    attrs[1].stream = 0;
+    attrs[2].format = 34;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    attrs[3].format = 34;
+    attrs[3].location = 3;
+    attrs[3].offset = 12;
+    attrs[3].stream = 1;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 0;
+    attrs[4].stream = 2;
+    attrs[5].format = 46;
+    attrs[5].location = 5;
+    attrs[5].offset = 16;
+    attrs[5].stream = 2;
+    attrs[6].format = 46;
+    attrs[6].location = 6;
+    attrs[6].offset = 32;
+    attrs[6].stream = 2;
+    attrs[7].format = 37;
+    attrs[7].location = 7;
+    attrs[7].offset = 48;
+    attrs[7].stream = 2;
+    createFetchObj(attrs, 8);
+}
+
+void DrResFetch::setupMpf_Drw_Mdl_NoNom_Layer() {
+    grlib::CGLibVtxAttr attrs[9];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 37;
+    attrs[1].location = 1;
+    attrs[1].offset = 20;
+    attrs[1].stream = 0;
+    attrs[2].format = 34;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    attrs[3].format = 34;
+    attrs[3].location = 3;
+    attrs[3].offset = 12;
+    attrs[3].stream = 1;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 0;
+    attrs[4].stream = 2;
+    attrs[5].format = 46;
+    attrs[5].location = 5;
+    attrs[5].offset = 16;
+    attrs[5].stream = 2;
+    attrs[6].format = 46;
+    attrs[6].location = 6;
+    attrs[6].offset = 32;
+    attrs[6].stream = 2;
+    attrs[7].format = 37;
+    attrs[7].location = 7;
+    attrs[7].offset = 48;
+    attrs[7].stream = 2;
+    attrs[8].format = 17;
+    attrs[8].location = 8;
+    attrs[8].offset = 52;
+    attrs[8].stream = 2;
+    createFetchObj(attrs, 9);
+}
+
+void DrResFetch::setupMpf_Drw_Mdl_Def() {
+    grlib::CGLibVtxAttr attrs[8];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 34;
+    attrs[2].location = 2;
+    attrs[2].offset = 20;
+    attrs[2].stream = 0;
+    attrs[3].format = 37;
+    attrs[3].location = 3;
+    attrs[3].offset = 32;
+    attrs[3].stream = 0;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 0;
+    attrs[4].stream = 1;
+    attrs[5].format = 46;
+    attrs[5].location = 5;
+    attrs[5].offset = 16;
+    attrs[5].stream = 1;
+    attrs[6].format = 46;
+    attrs[6].location = 6;
+    attrs[6].offset = 32;
+    attrs[6].stream = 1;
+    attrs[7].format = 37;
+    attrs[7].location = 7;
+    attrs[7].offset = 48;
+    attrs[7].stream = 1;
+    createFetchObj(attrs, 8);
+}
+
+void DrResFetch::setupMpf_Drw_Mdl_Def_Layer() {
+    grlib::CGLibVtxAttr attrs[9];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 34;
+    attrs[2].location = 2;
+    attrs[2].offset = 20;
+    attrs[2].stream = 0;
+    attrs[3].format = 37;
+    attrs[3].location = 3;
+    attrs[3].offset = 32;
+    attrs[3].stream = 0;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 0;
+    attrs[4].stream = 1;
+    attrs[5].format = 46;
+    attrs[5].location = 5;
+    attrs[5].offset = 16;
+    attrs[5].stream = 1;
+    attrs[6].format = 46;
+    attrs[6].location = 6;
+    attrs[6].offset = 32;
+    attrs[6].stream = 1;
+    attrs[7].format = 37;
+    attrs[7].location = 7;
+    attrs[7].offset = 48;
+    attrs[7].stream = 1;
+    attrs[8].format = 17;
+    attrs[8].location = 8;
+    attrs[8].offset = 52;
+    attrs[8].stream = 1;
+    createFetchObj(attrs, 9);
+}
+
+void DrResFetch::setupMpf_Drw_Mdl_Def_NoNom() {
+    grlib::CGLibVtxAttr attrs[7];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 37;
+    attrs[2].location = 2;
+    attrs[2].offset = 20;
+    attrs[2].stream = 0;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 0;
+    attrs[3].stream = 1;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 16;
+    attrs[4].stream = 1;
+    attrs[5].format = 46;
+    attrs[5].location = 5;
+    attrs[5].offset = 32;
+    attrs[5].stream = 1;
+    attrs[6].format = 37;
+    attrs[6].location = 6;
+    attrs[6].offset = 48;
+    attrs[6].stream = 1;
+    createFetchObj(attrs, 7);
+}
+
+void DrResFetch::setupMpf_Drw_Mdl_Def_NoNom_Layer() {
+    grlib::CGLibVtxAttr attrs[8];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 37;
+    attrs[2].location = 2;
+    attrs[2].offset = 20;
+    attrs[2].stream = 0;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 0;
+    attrs[3].stream = 1;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 16;
+    attrs[4].stream = 1;
+    attrs[5].format = 46;
+    attrs[5].location = 5;
+    attrs[5].offset = 32;
+    attrs[5].stream = 1;
+    attrs[6].format = 37;
+    attrs[6].location = 6;
+    attrs[6].offset = 48;
+    attrs[6].stream = 1;
+    attrs[7].format = 17;
+    attrs[7].location = 7;
+    attrs[7].offset = 52;
+    attrs[7].stream = 1;
+    createFetchObj(attrs, 8);
+}
+
+void DrResFetch::setupMpf_Drw_Mdl_NormalMap() {
+    grlib::CGLibVtxAttr attrs[9];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 34;
+    attrs[2].location = 2;
+    attrs[2].offset = 20;
+    attrs[2].stream = 0;
+    attrs[3].format = 43;
+    attrs[3].location = 3;
+    attrs[3].offset = 32;
+    attrs[3].stream = 0;
+    attrs[4].format = 37;
+    attrs[4].location = 4;
+    attrs[4].offset = 40;
+    attrs[4].stream = 0;
+    attrs[5].format = 46;
+    attrs[5].location = 5;
+    attrs[5].offset = 0;
+    attrs[5].stream = 1;
+    attrs[6].format = 46;
+    attrs[6].location = 6;
+    attrs[6].offset = 16;
+    attrs[6].stream = 1;
+    attrs[7].format = 46;
+    attrs[7].location = 7;
+    attrs[7].offset = 32;
+    attrs[7].stream = 1;
+    attrs[8].format = 37;
+    attrs[8].location = 8;
+    attrs[8].offset = 48;
+    attrs[8].stream = 1;
+    createFetchObj(attrs, 9);
+}
+
+void DrResFetch::setupMpf_Drw_Mdl_NormalMap_Wind() {
+    grlib::CGLibVtxAttr attrs[10];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 20;
+    attrs[1].stream = 0;
+    attrs[2].format = 43;
+    attrs[2].location = 2;
+    attrs[2].offset = 32;
+    attrs[2].stream = 0;
+    attrs[3].format = 37;
+    attrs[3].location = 3;
+    attrs[3].offset = 40;
+    attrs[3].stream = 0;
+    attrs[4].format = 34;
+    attrs[4].location = 4;
+    attrs[4].offset = 0;
+    attrs[4].stream = 1;
+    attrs[5].format = 34;
+    attrs[5].location = 5;
+    attrs[5].offset = 12;
+    attrs[5].stream = 1;
+    attrs[6].format = 46;
+    attrs[6].location = 6;
+    attrs[6].offset = 0;
+    attrs[6].stream = 2;
+    attrs[7].format = 46;
+    attrs[7].location = 7;
+    attrs[7].offset = 16;
+    attrs[7].stream = 2;
+    attrs[8].format = 46;
+    attrs[8].location = 8;
+    attrs[8].offset = 32;
+    attrs[8].stream = 2;
+    attrs[9].format = 37;
+    attrs[9].location = 9;
+    attrs[9].offset = 48;
+    attrs[9].stream = 2;
+    createFetchObj(attrs, 10);
+}
+
+void DrResFetch::setupMpf_Drw_Mdl_NormalMap_Wind_Layer() {
+    grlib::CGLibVtxAttr attrs[11];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 20;
+    attrs[1].stream = 0;
+    attrs[2].format = 43;
+    attrs[2].location = 2;
+    attrs[2].offset = 32;
+    attrs[2].stream = 0;
+    attrs[3].format = 37;
+    attrs[3].location = 3;
+    attrs[3].offset = 40;
+    attrs[3].stream = 0;
+    attrs[4].format = 34;
+    attrs[4].location = 4;
+    attrs[4].offset = 0;
+    attrs[4].stream = 1;
+    attrs[5].format = 34;
+    attrs[5].location = 5;
+    attrs[5].offset = 12;
+    attrs[5].stream = 1;
+    attrs[6].format = 46;
+    attrs[6].location = 6;
+    attrs[6].offset = 0;
+    attrs[6].stream = 2;
+    attrs[7].format = 46;
+    attrs[7].location = 7;
+    attrs[7].offset = 16;
+    attrs[7].stream = 2;
+    attrs[8].format = 46;
+    attrs[8].location = 8;
+    attrs[8].offset = 32;
+    attrs[8].stream = 2;
+    attrs[9].format = 37;
+    attrs[9].location = 9;
+    attrs[9].offset = 48;
+    attrs[9].stream = 2;
+    attrs[10].format = 17;
+    attrs[10].location = 10;
+    attrs[10].offset = 52;
+    attrs[10].stream = 2;
+    createFetchObj(attrs, 11);
+}
+
+void DrResFetch::setupMpf_Drw_Mdl_NormalMap_Wind_VNom() {
+    grlib::CGLibVtxAttr attrs[10];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 24;
+    attrs[1].stream = 1;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 36;
+    attrs[2].stream = 1;
+    attrs[3].format = 37;
+    attrs[3].location = 3;
+    attrs[3].offset = 40;
+    attrs[3].stream = 0;
+    attrs[4].format = 34;
+    attrs[4].location = 4;
+    attrs[4].offset = 0;
+    attrs[4].stream = 1;
+    attrs[5].format = 34;
+    attrs[5].location = 5;
+    attrs[5].offset = 12;
+    attrs[5].stream = 1;
+    attrs[6].format = 46;
+    attrs[6].location = 6;
+    attrs[6].offset = 0;
+    attrs[6].stream = 2;
+    attrs[7].format = 46;
+    attrs[7].location = 7;
+    attrs[7].offset = 16;
+    attrs[7].stream = 2;
+    attrs[8].format = 46;
+    attrs[8].location = 8;
+    attrs[8].offset = 32;
+    attrs[8].stream = 2;
+    attrs[9].format = 37;
+    attrs[9].location = 9;
+    attrs[9].offset = 48;
+    attrs[9].stream = 2;
+    createFetchObj(attrs, 10);
+}
+
+void DrResFetch::setupMpf_Drw_Mdl_NormalMap_Layer() {
+    grlib::CGLibVtxAttr attrs[10];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 12;
+    attrs[0].stream = 0;
+    attrs[1].format = 34;
+    attrs[1].location = 1;
+    attrs[1].offset = 20;
+    attrs[1].stream = 0;
+    attrs[2].format = 43;
+    attrs[2].location = 2;
+    attrs[2].offset = 32;
+    attrs[2].stream = 0;
+    attrs[3].format = 37;
+    attrs[3].location = 3;
+    attrs[3].offset = 40;
+    attrs[3].stream = 0;
+    attrs[4].format = 34;
+    attrs[4].location = 4;
+    attrs[4].offset = 0;
+    attrs[4].stream = 0;
+    attrs[5].format = 46;
+    attrs[5].location = 5;
+    attrs[5].offset = 0;
+    attrs[5].stream = 1;
+    attrs[6].format = 46;
+    attrs[6].location = 6;
+    attrs[6].offset = 16;
+    attrs[6].stream = 1;
+    attrs[7].format = 46;
+    attrs[7].location = 7;
+    attrs[7].offset = 32;
+    attrs[7].stream = 1;
+    attrs[8].format = 37;
+    attrs[8].location = 8;
+    attrs[8].offset = 48;
+    attrs[8].stream = 1;
+    attrs[9].format = 17;
+    attrs[9].location = 9;
+    attrs[9].offset = 52;
+    attrs[9].stream = 1;
+    createFetchObj(attrs, 10);
+}
+
+void DrResFetch::setupZBuffInstDith() {
+    grlib::CGLibVtxAttr attrs[5];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 46;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 16;
+    attrs[2].stream = 1;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 32;
+    attrs[3].stream = 1;
+    attrs[4].format = 10;
+    attrs[4].location = 4;
+    attrs[4].offset = 48;
+    attrs[4].stream = 1;
+    createFetchObj(attrs, 5);
+}
+
+void DrResFetch::setupZBuffInstDithTex() {
+    grlib::CGLibVtxAttr attrs[6];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 16;
+    attrs[3].stream = 1;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 32;
+    attrs[4].stream = 1;
+    attrs[5].format = 10;
+    attrs[5].location = 5;
+    attrs[5].offset = 48;
+    attrs[5].stream = 1;
+    createFetchObj(attrs, 6);
+}
+
+void DrResFetch::setupZBuffInstBillDith() {
+    grlib::CGLibVtxAttr attrs[6];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 20;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 16;
+    attrs[3].stream = 1;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 32;
+    attrs[4].stream = 1;
+    attrs[5].format = 10;
+    attrs[5].location = 5;
+    attrs[5].offset = 48;
+    attrs[5].stream = 1;
+    createFetchObj(attrs, 6);
+}
+
+void DrResFetch::setupZBuffInstBillDithTex() {
+    grlib::CGLibVtxAttr attrs[7];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 20;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 22;
+    attrs[2].location = 2;
+    attrs[2].offset = 16;
+    attrs[2].stream = 0;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 0;
+    attrs[3].stream = 1;
+    attrs[4].format = 46;
+    attrs[4].location = 4;
+    attrs[4].offset = 16;
+    attrs[4].stream = 1;
+    attrs[5].format = 46;
+    attrs[5].location = 5;
+    attrs[5].offset = 32;
+    attrs[5].stream = 1;
+    attrs[6].format = 10;
+    attrs[6].location = 6;
+    attrs[6].offset = 52;
+    attrs[6].stream = 1;
+    createFetchObj(attrs, 7);
+}
+
+void DrResFetch::setupDebugPosColor() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 37;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupXYZW() {
+    grlib::CGLibVtxAttr attrs[1];
+    attrs[0].format = 46;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    createFetchObj(attrs, 1);
+}
+
+void DrResFetch::setupOutLineObj() {
+    grlib::CGLibVtxAttr attrs[3];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 38;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    attrs[2].format = 37;
+    attrs[2].location = 2;
+    attrs[2].offset = 4;
+    attrs[2].stream = 1;
+    createFetchObj(attrs, 3);
+}
+
+void DrResFetch::setupGlassBrObj() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 45;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 38;
+    attrs[1].location = 1;
+    attrs[1].offset = 8;
+    attrs[1].stream = 0;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupMofSetObj() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 46;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 47;
+    attrs[1].location = 1;
+    attrs[1].offset = 16;
+    attrs[1].stream = 0;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupMeshVtxObj() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 45;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 38;
+    attrs[1].location = 1;
+    attrs[1].offset = 8;
+    attrs[1].stream = 0;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupOutMeshVtx() {
+    grlib::CGLibVtxAttr attrs[4];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 37;
+    attrs[1].location = 1;
+    attrs[1].offset = 8;
+    attrs[1].stream = 0;
+    attrs[2].format = 34;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    attrs[3].format = 37;
+    attrs[3].location = 3;
+    attrs[3].offset = 12;
+    attrs[3].stream = 1;
+    createFetchObj(attrs, 4);
+}
+
+void DrResFetch::setupMpf_Cull_Fade_Mdl() {
+    grlib::CGLibVtxAttr attrs[4];
+    attrs[0].format = 46;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 46;
+    attrs[1].location = 1;
+    attrs[1].offset = 16;
+    attrs[1].stream = 0;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 32;
+    attrs[2].stream = 0;
+    attrs[3].format = 47;
+    attrs[3].location = 3;
+    attrs[3].offset = 48;
+    attrs[3].stream = 0;
+    createFetchObj(attrs, 4);
+}
+
+void DrResFetch::setupMpf_Pre_Mdl_Layer() {
+    grlib::CGLibVtxAttr attrs[5];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 1;
+    attrs[1].format = 46;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 2;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 16;
+    attrs[2].stream = 2;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 32;
+    attrs[3].stream = 2;
+    attrs[4].format = 17;
+    attrs[4].location = 4;
+    attrs[4].offset = 52;
+    attrs[4].stream = 2;
+    createFetchObj(attrs, 5);
+}
+
+void DrResFetch::setupMpf_Pre_Dithe_Mdl_Layer() {
+    grlib::CGLibVtxAttr attrs[6];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 1;
+    attrs[1].format = 46;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 2;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 16;
+    attrs[2].stream = 2;
+    attrs[3].format = 46;
+    attrs[3].location = 3;
+    attrs[3].offset = 32;
+    attrs[3].stream = 2;
+    attrs[4].format = 17;
+    attrs[4].location = 4;
+    attrs[4].offset = 52;
+    attrs[4].stream = 2;
+    attrs[5].format = 37;
+    attrs[5].location = 5;
+    attrs[5].offset = 48;
+    attrs[5].stream = 2;
+    createFetchObj(attrs, 6);
+}
+
+void DrResFetch::setupWeightVtx() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 42;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 39;
+    attrs[1].location = 1;
+    attrs[1].offset = 8;
+    attrs[1].stream = 0;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupShadowFw() {
+    grlib::CGLibVtxAttr attrs[4];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 37;
+    attrs[2].location = 2;
+    attrs[2].offset = 20;
+    attrs[2].stream = 0;
+    attrs[3].format = 38;
+    attrs[3].location = 3;
+    attrs[3].offset = 24;
+    attrs[3].stream = 0;
+    createFetchObj(attrs, 4);
+}
+
+void DrResFetch::setupDepthCheck() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 46;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupDebTexStm() {
+    grlib::CGLibVtxAttr attrs[3];
+    attrs[0].format = 22;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 46;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    attrs[2].format = 37;
+    attrs[2].location = 2;
+    attrs[2].offset = 16;
+    attrs[2].stream = 1;
+    createFetchObj(attrs, 3);
+}
+
+void DrResFetch::setupZBuffFw() {
+    grlib::CGLibVtxAttr attrs[4];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 37;
+    attrs[2].location = 2;
+    attrs[2].offset = 20;
+    attrs[2].stream = 0;
+    attrs[3].format = 38;
+    attrs[3].location = 3;
+    attrs[3].offset = 24;
+    attrs[3].stream = 0;
+    createFetchObj(attrs, 4);
+}
+
+void DrResFetch::setupZBuffFwAL() {
+    grlib::CGLibVtxAttr attrs[5];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 37;
+    attrs[2].location = 2;
+    attrs[2].offset = 20;
+    attrs[2].stream = 0;
+    attrs[3].format = 38;
+    attrs[3].location = 3;
+    attrs[3].offset = 24;
+    attrs[3].stream = 0;
+    attrs[4].format = 10;
+    attrs[4].location = 4;
+    attrs[4].offset = 0;
+    attrs[4].stream = 1;
+    createFetchObj(attrs, 5);
+}
+
+void DrResFetch::setupMofZBuffObj() {
+    grlib::CGLibVtxAttr attrs[1];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 2;
+    createFetchObj(attrs, 1);
+}
+
+void DrResFetch::setupMofZBuffObjTex() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 2;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 0;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupMofZBuffMot() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 2;
+    attrs[1].format = 20;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 0;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupMofZBuffMotTex() {
+    grlib::CGLibVtxAttr attrs[3];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 2;
+    attrs[1].format = 20;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 0;
+    attrs[2].format = 22;
+    attrs[2].location = 2;
+    attrs[2].offset = 4;
+    attrs[2].stream = 0;
+    createFetchObj(attrs, 3);
+}
+
+void DrResFetch::setupMofZBuffObjAL() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 2;
+    attrs[1].format = 10;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 1;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupMofZBuffObjTexAL() {
+    grlib::CGLibVtxAttr attrs[3];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 2;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 0;
+    attrs[2].format = 10;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    createFetchObj(attrs, 3);
+}
+
+void DrResFetch::setupMofZBuffMotAL() {
+    grlib::CGLibVtxAttr attrs[3];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 2;
+    attrs[1].format = 20;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 0;
+    attrs[2].format = 10;
+    attrs[2].location = 2;
+    attrs[2].offset = 0;
+    attrs[2].stream = 1;
+    createFetchObj(attrs, 3);
+}
+
+void DrResFetch::setupMofZBuffMotTexAL() {
+    grlib::CGLibVtxAttr attrs[4];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 2;
+    attrs[1].format = 20;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 0;
+    attrs[2].format = 22;
+    attrs[2].location = 2;
+    attrs[2].offset = 4;
+    attrs[2].stream = 0;
+    attrs[3].format = 10;
+    attrs[3].location = 3;
+    attrs[3].offset = 0;
+    attrs[3].stream = 1;
+    createFetchObj(attrs, 4);
+}
+
+void DrResFetch::setupMofShadowObj() {
+    grlib::CGLibVtxAttr attrs[1];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 2;
+    createFetchObj(attrs, 1);
+}
+
+void DrResFetch::setupMofShadowObjTex() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 2;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 0;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupMofShadowMot() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 2;
+    attrs[1].format = 20;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 0;
+    createFetchObj(attrs, 2);
+}
+
+void DrResFetch::setupMofShadowMotTex() {
+    grlib::CGLibVtxAttr attrs[3];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 2;
+    attrs[1].format = 20;
+    attrs[1].location = 1;
+    attrs[1].offset = 0;
+    attrs[1].stream = 0;
+    attrs[2].format = 22;
+    attrs[2].location = 2;
+    attrs[2].offset = 4;
+    attrs[2].stream = 0;
+    createFetchObj(attrs, 3);
+}
+
+void DrResFetch::setupMeshVtxAdd() {
+    grlib::CGLibVtxAttr attrs[3];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 37;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    attrs[2].format = 46;
+    attrs[2].location = 2;
+    attrs[2].offset = 16;
+    attrs[2].stream = 0;
+    createFetchObj(attrs, 3);
+}
+
+void DrResFetch::setLgtVertexParam() {
+    grlib::CGLibVtxAttr attrs[2];
+    attrs[0].format = 34;
+    attrs[0].location = 0;
+    attrs[0].offset = 0;
+    attrs[0].stream = 0;
+    attrs[1].format = 22;
+    attrs[1].location = 1;
+    attrs[1].offset = 12;
+    attrs[1].stream = 0;
+    createFetchObj(attrs, 2);
+}
+
+DrResFetch::DefVertexFunc DrResFetch::s_callDefVertex[91] = {
+    &DrResFetch::setupTexture2D,
+    &DrResFetch::setupPositionOnly,
+    &DrResFetch::setupSkinWeightCalc,
+    &DrResFetch::setupZBuffObj,
+    &DrResFetch::setupZBuffObjTex,
+    &DrResFetch::setupZBuffMot,
+    &DrResFetch::setupZBuffMotTex,
+    &DrResFetch::setupZBuffInst,
+    &DrResFetch::setupZBuffInstTex,
+    &DrResFetch::setupZBuffObjAL,
+    &DrResFetch::setupZBuffObjTexAL,
+    &DrResFetch::setupZBuffMotAL,
+    &DrResFetch::setupZBuffMotTexAL,
+    &DrResFetch::setupShadowObj,
+    &DrResFetch::setupShadowObjTex,
+    &DrResFetch::setupShadowMot,
+    &DrResFetch::setupShadowMotTex,
+    &DrResFetch::setupShadowMotInst,
+    &DrResFetch::setupShadowMotInstTex,
+    &DrResFetch::setupMpf_Stm_Bill,
+    &DrResFetch::setupMpf_Stm_Bill_Wind,
+    &DrResFetch::setupMpf_Stm_Mdl_Wind,
+    &DrResFetch::setupMpf_Stm_Mdl_Wind_NoNom,
+    &DrResFetch::setupMpf_Stm_Mdl_NormalMap_Wind,
+    &DrResFetch::setupMpf_Stm_Mdl_NormalMap_Wind_VNom,
+    &DrResFetch::setupMpf_Pre_Bill,
+    &DrResFetch::setupMpf_Pre_Bill_Nuki,
+    &DrResFetch::setupMpf_Pre_Bill_Nuki_Layer,
+    &DrResFetch::setupMpf_Pre_Mdl,
+    &DrResFetch::setupMpf_Pre_Mdl_Nuki,
+    &DrResFetch::setupMpf_Pre_Mdl_Nuki_Layer,
+    &DrResFetch::setupMpf_Pre_Mdl_Def,
+    &DrResFetch::setupMpf_Pre_Mdl_Def_Nuki,
+    &DrResFetch::setupMpf_Pre_Mdl_Def_Nuki_Layer,
+    &DrResFetch::setupMpf_Pre_Dithe_Bill,
+    &DrResFetch::setupMpf_Pre_Dithe_Bill_Nuki,
+    &DrResFetch::setupMpf_Pre_Dithe_Bill_Nuki_Layer,
+    &DrResFetch::setupMpf_Pre_Dithe_Mdl,
+    &DrResFetch::setupMpf_Pre_Dithe_Mdl_Nuki,
+    &DrResFetch::setupMpf_Pre_Dithe_Mdl_Nuki_Layer,
+    &DrResFetch::setupMpf_Pre_Dithe_Mdl_Def,
+    &DrResFetch::setupMpf_Pre_Dithe_Mdl_Def_Nuki,
+    &DrResFetch::setupMpf_Pre_Dithe_Mdl_Def_Nuki_Layer,
+    &DrResFetch::setupMpf_Drw_Bill,
+    &DrResFetch::setupMpf_Drw_Bill_Layer,
+    &DrResFetch::setupMpf_Drw_Mdl,
+    &DrResFetch::setupMpf_Drw_Mdl_Layer,
+    &DrResFetch::setupMpf_Drw_Mdl_NoNom,
+    &DrResFetch::setupMpf_Drw_Mdl_NoNom_Layer,
+    &DrResFetch::setupMpf_Drw_Mdl_Def,
+    &DrResFetch::setupMpf_Drw_Mdl_Def_Layer,
+    &DrResFetch::setupMpf_Drw_Mdl_Def_NoNom,
+    &DrResFetch::setupMpf_Drw_Mdl_Def_NoNom_Layer,
+    &DrResFetch::setupMpf_Drw_Mdl_NormalMap,
+    &DrResFetch::setupMpf_Drw_Mdl_NormalMap_Wind,
+    &DrResFetch::setupMpf_Drw_Mdl_NormalMap_Wind_Layer,
+    &DrResFetch::setupMpf_Drw_Mdl_NormalMap_Wind_VNom,
+    &DrResFetch::setupMpf_Drw_Mdl_NormalMap_Layer,
+    &DrResFetch::setupZBuffInstDith,
+    &DrResFetch::setupZBuffInstDithTex,
+    &DrResFetch::setupZBuffInstBillDith,
+    &DrResFetch::setupZBuffInstBillDithTex,
+    &DrResFetch::setupDebugPosColor,
+    &DrResFetch::setupXYZW,
+    &DrResFetch::setupOutLineObj,
+    &DrResFetch::setupGlassBrObj,
+    &DrResFetch::setupMofSetObj,
+    &DrResFetch::setupMeshVtxObj,
+    &DrResFetch::setupOutMeshVtx,
+    &DrResFetch::setupMpf_Cull_Fade_Mdl,
+    &DrResFetch::setupMpf_Pre_Mdl_Layer,
+    &DrResFetch::setupMpf_Pre_Dithe_Mdl_Layer,
+    &DrResFetch::setupWeightVtx,
+    &DrResFetch::setupShadowFw,
+    &DrResFetch::setupDepthCheck,
+    &DrResFetch::setupDebTexStm,
+    &DrResFetch::setupZBuffFw,
+    &DrResFetch::setupZBuffFwAL,
+    &DrResFetch::setupMofZBuffObj,
+    &DrResFetch::setupMofZBuffObjTex,
+    &DrResFetch::setupMofZBuffMot,
+    &DrResFetch::setupMofZBuffMotTex,
+    &DrResFetch::setupMofZBuffObjAL,
+    &DrResFetch::setupMofZBuffObjTexAL,
+    &DrResFetch::setupMofZBuffMotAL,
+    &DrResFetch::setupMofZBuffMotTexAL,
+    &DrResFetch::setupMofShadowObj,
+    &DrResFetch::setupMofShadowObjTex,
+    &DrResFetch::setupMofShadowMot,
+    &DrResFetch::setupMofShadowMotTex,
+    &DrResFetch::setupMeshVtxAdd,
+};
 
 }  // namespace ml
 

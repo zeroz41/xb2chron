@@ -19,6 +19,8 @@ public:
     CGLibVtxFetch();
     ~CGLibVtxFetch();
     // the fetch object in memory, for count attributes
+    // builds the fetch object for count attributes
+    void createFetchObj(CGLibVtxAttr* attributes, int count);
     void createMemFetchObj(void* memory, CGLibVtxAttr* attributes, int count);
     void release();
 
