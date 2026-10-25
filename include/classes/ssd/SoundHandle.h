@@ -2,6 +2,7 @@
 #define CLASSES_SSD_SOUNDHANDLE_H
 
 namespace ssd { class SoundActor; }
+namespace ssd { class SoundEntry; }
 namespace ssd {
 // a base of ssd::SoundHandle no evidence names yet
 class TUnk_B81C50 {
@@ -22,6 +23,7 @@ public:
     bool IsValidHandle() const;
     bool IsPlay() const;
     int GetState() const;  // 8 once ready to start; 5, 6 and 7 while preparing
+    long Play(const SoundEntry* entry, SoundActor* actor, float volume, float pitch);  // SoundActor::Play's
     long Start(SoundActor* actor, float volume, float pitch);  // negative on failure
     long Stop(float fadeTime);
     void SetCategoryId(int id);

@@ -114,8 +114,9 @@ void CommandManager::ExecuteCommands() {
     }
 }
 
-void set_result(Result result) {
+Result set_result(Result result) {
     SoundCore::instance_->result_ = result;
+    return result;
 }
 
 void abort() {

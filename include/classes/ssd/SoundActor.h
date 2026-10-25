@@ -1,37 +1,43 @@
 #ifndef CLASSES_SSD_SOUNDACTOR_H
 #define CLASSES_SSD_SOUNDACTOR_H
 
+#include "classes/ssd/List.h"
+#include "classes/ssd/Object.h"
+#include "ssd/Debug.h"
+
 namespace ssd { class SoundEntry; }
 namespace ssd { class SoundHandle; }
 
 namespace ssd {
-// a base of ssd::SoundActor no evidence names yet
-class TUnk_B81960 {
+// table 0x7100B81960. What sounds play from: Init connects it to the SystemCore (which links it into its actor
+// list through the Node base at 0x18), Play starts a handle's sound on it, Quit disconnects it.
+// The field names are not the original's.
+class SoundActor : public Object, public List<SoundActor>::Node {
 public:
-    virtual ~TUnk_B81960();
-    virtual void Init() = 0;
-    virtual void Quit() = 0;
-    virtual void Play(ssd::SoundHandle*, ssd::SoundEntry const*, float, float) = 0;
-    virtual void Stop(float) = 0;
-    virtual void Pause(bool, float) = 0;
-    virtual void UpdateGameFrame(float) = 0;
-    unsigned char pad_8[0x10];  // fields: size from where the next base starts
-};
-// a base of ssd::SoundActor no evidence names yet
-class TUnk_B819B0 {
-public:
-    virtual ~TUnk_B819B0();
-};
-// table 0x7100B81960; base at 0x0 unknown (TUnk_B81960), base at 0x18 unknown (TUnk_B819B0)
-class SoundActor : public TUnk_B81960, public TUnk_B819B0 {
-public:
+    SoundActor();
+    // SoundActor3D's constructor passes its own type (9) here; SoundActor() passes 8
+    SoundActor(ObjectType::Id type)
+        : Object(type), connected_(false), linked_(false), is3D_(false), pad_33(0), pad_34(0), pad_38(1.0f),
+          volume_(1.0f), pad_40(0.0f) {}
     virtual ~SoundActor();  // slot 0
-    virtual void Init();  // slot 2
-    virtual void Quit();  // slot 3
-    virtual void Play(ssd::SoundHandle*, ssd::SoundEntry const*, float, float);  // slot 4
-    virtual void Stop(float);  // slot 5
-    virtual void Pause(bool, float);  // slot 6
-    virtual void UpdateGameFrame(float);  // slot 7
+    virtual Result Init();  // slot 2: -15 when already connected
+    virtual Result Quit();  // slot 3: -15 when not connected
+    virtual Result Play(SoundHandle* handle, const SoundEntry* entry, float volume, float pitch);  // slot 4
+    virtual Result Stop(float fadeTime);  // slot 5
+    virtual Result Pause(bool pause, float fadeTime);  // slot 6
+    virtual void UpdateGameFrame(float frameTime);  // slot 7
+
+    void SetVolume(float volume, float fadeTime);
+    void SetCategoryId(int id);
+
+    bool connected_;  // Init sets it, Quit clears it
+    bool linked_;  // SystemCore::ConnectActor sets it
+    bool is3D_;  // SoundActor3D's constructor sets it
+    unsigned char pad_33;
+    unsigned char pad_34;
+    float pad_38;  // the constructor sets 1
+    float volume_;  // SetVolume
+    float pad_40;
 };
 }  // namespace ssd
 

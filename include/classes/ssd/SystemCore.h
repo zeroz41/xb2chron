@@ -7,7 +7,10 @@
 #include "classes/ssd/XorShift128Random.h"
 #include "ssd/Mutex.h"
 
+namespace ssd { class SoundActor; }
 namespace ssd { class SoundEffecter; }
+namespace ssd { class SoundHandle; }
+namespace ssd { template <typename T0> class Array; }
 namespace ssd { class SoundListener; }
 namespace ssd { class VoiceHandle; }
 namespace ssd { namespace OutputMode { enum Type : int; }}  // the values are not known yet
@@ -42,6 +45,14 @@ public:
     Result Quit();
     Result SetCategory(const SoundCategory& category);
     Result ResetCategory(int categoryId);
+    // the actors SoundActor::Init connects and Quit disconnects (ConnectActor links the actor into the list at
+    // 0x448 under audioLock_); Stop and Pause reach every sound an actor plays
+    void StopActor(SoundActor* actor, float fadeTime);
+    void PauseActor(SoundActor* actor, bool pause, float fadeTime);
+    // fills handles with the sounds actor plays and returns how many
+    int GetPlaySoundHandleFromActor(const SoundActor* actor, Array<SoundHandle*>* handles) const;
+    void ConnectActor(SoundActor* actor);
+    void DisconnectActor(SoundActor* actor);
     void UpdateGameFrame(float frameTime);
     void StopSound(float fadeTime);
 

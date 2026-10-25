@@ -48,7 +48,8 @@ void SetTimeStampType(LogTimeStamp::Type type);
 
 }  // namespace Debug
 
-void set_result(Result result);
+// keeps result as the last one and returns it (SoundActor::Init and Quit return what it returns: a tail call)
+Result set_result(Result result);
 // the logged form of a source path (the assertions pass their file's)
 const char16_t* get_logfilename(const char16_t* path);
 void abort();
