@@ -29,6 +29,8 @@ public:
     void setInputDirPow(const mm::Vec3& dir, float pow);
     bool existInputXY() const;  // (by its symbol)
     void setLocomotion(const anm::QsTransform& locomotion);
+    // by its symbol: the water states call it after turning m_rot
+    void syncDirection();
 
     static mm::mtl::RTTI m_rtti;
 
@@ -98,7 +100,11 @@ public:
     mm::Vec3 m_stickSideDir;
     unsigned char pad_2e0[0x10];
     float m_chestHeight;        // setup's: the character data's chest height in metres (the name is not the original's)
-    unsigned char pad_2f4[0xC];
+    unsigned char pad_2f4[0x4];
+    // StateFieldWater::update takes the PC out of water once m_waterDepth is no more than it (the name is not the
+    // original's)
+    float m_waterLeaveDepth;
+    unsigned char pad_2fc[0x4];
     mm::mtl::IntrusivePtr<fw::ParamList> m_paramList;  // the PC's parameters
     unsigned char pad_308[0x8];
     pc::GfPropertyField m_field;  // setup, cleanup and flush pass it this property

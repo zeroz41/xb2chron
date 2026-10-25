@@ -17,6 +17,13 @@ public:
     static void updateFallDown(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
     static void updateBrake(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
     static float getSpeedEffect(gf::GfComPropertyPc& property);
+    // the water states'
+    static void enterMoveSwim(gf::GfComPropertyPc& property);
+    static void updateMoveSwim(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
+    static void updateMoveWaterSink(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
+    static void updateMoveWaterRise(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
+    static void updateMoveWaterHoleRise(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
+    static void updateMoveWaterTurn(const fw::UpdateInfo& info, gf::GfComPropertyPc& property, const mm::Vec3& dir);
 };
 
 }}  // namespace gf::pc

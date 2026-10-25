@@ -11,6 +11,7 @@ namespace gf { class GfComPropertyPc; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class MsgPcFieldNotifyWallJump; }
 namespace gf { class MsgPcFieldNotifyWarp; }
+namespace gf { class MsgPcFieldNotifyBigJump; }
 
 namespace gf { namespace pc {
 // table 0x7100B67E78
@@ -22,6 +23,23 @@ public:
     virtual void flush(gf::GfComPropertyPc const&);  // slot 2
     virtual void flushOwner(gf::GfComPropertyPc&);  // slot 3
     virtual void recieveMessage(gf::GfComPropertyPc const&, fw::MessageObject*, fw::Message&);  // slot 4
+
+    // m_paramList's entry 0 (the names are not the original's)
+    struct MoveParam {
+        unsigned char pad_0[0x28];
+        float m_brakeSlowSpeed;  // StateFieldWaterBrake::update runs C_swim_01 once the PC is this slow
+    };
+
+    // the water states' parameters: m_paramList's entry 9 (the names are not the original's)
+    struct WaterParam {
+        float m_sinkTime;      // StateFieldWaterSink::update: how long the PC sinks before it rises
+        float m_sinkDepth;     // and how deep (the child frame's height below the surface) it sinks at most
+        unsigned char pad_8[0x4];
+        float m_swimSinkTime;  // StateFieldWaterSwimSink::update: how long the PC sinks swimming
+        unsigned char pad_10[0x8];
+        float m_warpDiveTime;  // StateFieldWaterWarpDive: how long the dive into a warp lasts
+        float m_maxSinkSpeed;  // StateFieldWaterDeadSink::enter limits the downward speed to it
+    };
 
     // the wall jump the PC prepares (the name is not the original's)
     struct WallJumpInfo {
@@ -46,6 +64,10 @@ public:
     void setWallJump(const MsgPcFieldNotifyWallJump* msg);
     // keeps the warp a MsgPcFieldNotifyWarp tells of (StateFieldWaterPrepareWarp hands it on)
     void setWarpInfo(const gf::MsgPcFieldNotifyWarp* msg);
+    // the kept warp notice, none while status bit 13 is clear (by its symbol)
+    const gf::MsgPcFieldNotifyWarp* getWarpInfo() const;
+    // keeps a big jump notice; null clears the big jump's status bit 12 (by its symbol)
+    void setBigJumpInfo(const gf::MsgPcFieldNotifyBigJump* msg);
 
     mm::mtl::IntrusivePtr<fw::ParamList> m_paramList;  // the PC's field parameters (FadePlugin::setup takes entry 18)
     // resetStatus and flush set its bits; bit 2: TaskFieldIdle::update clears the field AI blackboard's bit 3
@@ -58,7 +80,9 @@ public:
     float m_wallBlend;
     unsigned char pad_1c[0x30];
     float m_wallBlendTarget;
-    unsigned char pad_50[0x4];
+    // the warp states set the child frame's height to minus it as the PC comes out of a warp (the name is not the
+    // original's)
+    float m_warpRiseDepth;
     // setup reads it from the asm's "uniqueIdleSpace" appendix: the room StateFieldIdle::checkSpace tests for a unique
     // idle motion, the length of its capsule (0: no test; the name is not the original's)
     float m_uniqueIdleSpace;

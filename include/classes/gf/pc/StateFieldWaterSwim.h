@@ -1,6 +1,8 @@
 #ifndef CLASSES_GF_PC_STATEFIELDWATERSWIM_H
 #define CLASSES_GF_PC_STATEFIELDWATERSWIM_H
 
+#include "mm/mtl/FixedQueue.h"
+#include "mm/Vec2.h"
 #include "classes/gf/GfStateBase.h"
 #include <new>
 
@@ -24,8 +26,9 @@ public:
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
-    unsigned char pad_18[0x28];
-    unsigned long pad_40[2] = {};
+    unsigned char pad_18[0x8];
+    // the stick's recent directions update hands StateUtilField::isTurnRange (the name is not the original's)
+    mm::mtl::FixedQueue<mm::Vec2, 2> m_inputQueue;
 };
 }}  // namespace gf::pc
 

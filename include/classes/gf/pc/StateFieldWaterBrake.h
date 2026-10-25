@@ -24,7 +24,9 @@ public:
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
-    unsigned char pad_18[0x8];
+    // update sets it once C_swim_01 ran as the PC slowed down (the name is not the original's)
+    bool m_slowCmdRun;
+    unsigned char pad_19[0x7];
 };
 }}  // namespace gf::pc
 

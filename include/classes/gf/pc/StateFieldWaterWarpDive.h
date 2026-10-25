@@ -24,7 +24,11 @@ public:
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
-    unsigned char pad_18[0x10];
+    // the names are not the original's
+    float m_time;           // update adds each frame's delta
+    bool m_fadeStarted;     // update starts the warp fade once
+    float m_fadeStartTime;  // when: enter's dive length less the fade's wait
+    unsigned char pad_24[0x4];
 };
 }}  // namespace gf::pc
 
