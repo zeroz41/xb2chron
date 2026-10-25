@@ -14,31 +14,7 @@ typedef signed int s32;
 typedef unsigned int u32;
 typedef float f32;
 
-#pragma pack(push, 2)
-// One script value (12 bytes, 2-byte aligned: a string pointer sits at +4).
-typedef struct VMData {
-    u8 type;
-    u8 pad_1;
-    u16 hi;
-    union {
-        s32 i;
-        f32 f;
-        const char* str;
-        u16 lo;
-    } v;
-} VMData;
-#pragma pack(pop)
 
-enum {
-    VMDATA_NIL = 0,
-    VMDATA_TRUE = 1,
-    VMDATA_FALSE = 2,
-    VMDATA_INT = 3,
-    VMDATA_FIXED = 4,
-    VMDATA_STRING = 5,
-    VMDATA_ARRAY = 6,
-    VMDATA_FUNCTION = 7,
-};
 
 // A script binary's header: offsets (from the header) of its sections. codeOfs is the original's name (an assertion
 // in vmCodeExecSub spells it); the pool names follow the original's pool functions (vmIdPoolGet, vmIntPoolGet, ...);
@@ -182,7 +158,7 @@ void vmInit(void) {
     memset(&s_vmWork, 0, sizeof(s_vmWork));
 }
 
-int vmArgBoolGet(VMThread* pThread, VMData* pData) {
+int vmArgBoolGet(s32 no, VMData* pData) {
     u8 type = pData->type;
     if (type != VMDATA_TRUE && type != VMDATA_FALSE) {
         vmArgErr();
@@ -190,7 +166,7 @@ int vmArgBoolGet(VMThread* pThread, VMData* pData) {
     return type != VMDATA_FALSE;
 }
 
-s32 vmArgIntGet(VMThread* pThread, VMData* pData) {
+s32 vmArgIntGet(s32 no, VMData* pData) {
     if (pData->type != VMDATA_INT) {
         if (pData->type == VMDATA_FIXED) {
             return (s32)pData->v.f;
@@ -200,7 +176,7 @@ s32 vmArgIntGet(VMThread* pThread, VMData* pData) {
     return pData->v.i;
 }
 
-f32 vmArgFixedGet(VMThread* pThread, VMData* pData) {
+f32 vmArgFixedGet(s32 no, VMData* pData) {
     if (pData->type != VMDATA_FIXED) {
         if (pData->type == VMDATA_INT) {
             return (f32)pData->v.i;
@@ -210,14 +186,14 @@ f32 vmArgFixedGet(VMThread* pThread, VMData* pData) {
     return pData->v.f;
 }
 
-const char* vmArgStringGet(VMThread* pThread, VMData* pData) {
+const char* vmArgStringGet(s32 no, VMData* pData) {
     if (pData->type != VMDATA_STRING) {
         vmArgErr();
     }
     return pData->v.str;
 }
 
-s32 vmArgFunctionGet(VMThread* pThread, VMData* pData) {
+s32 vmArgFunctionGet(s32 no, VMData* pData) {
     if (pData->type != VMDATA_FUNCTION) {
         vmArgErr();
     }

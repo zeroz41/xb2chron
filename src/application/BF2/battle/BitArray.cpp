@@ -64,7 +64,7 @@ int Utility::GetAttrSeType(int attr) {
     return 0;
 }
 
-unsigned char Utility::GetElementalEffectID() {
+int Utility::GetElementalEffectID() {
     return DataManager::sys()->m_elementalEffectID;
 }
 
