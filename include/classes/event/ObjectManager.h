@@ -43,6 +43,11 @@ public:
     event::Object* createEffect(const char* name);
     event::Object* createLight(const char* name, unsigned int id);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    // the object of the current scene with that name, else null (the evt_chara script commands test its m_type)
+    Object* searchByName(const char* name);
+    // the object of the given type (Object::m_type) and id, else null (evt_chara's setWeaponDispByBladeID passes
+    // type 3 and GfDataBlade::getCreator's result)
+    Object* searchByID(unsigned int type, unsigned int id);
     // the current scene's active object when it is of the given type (Object::m_type), else null; the current
     // scene is not updated first (the script commands' undo and redo inline it); the name is not the original's
     Object* getActive(int type) const {

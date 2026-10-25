@@ -18,7 +18,10 @@ public:
 // table 0x7100B3E1F0; base at 0x0 unknown (TUnk_B3E1F0), base at 0x8 unknown (TUnk_B3E218)
 class SkipManager : public TUnk_B3E1F0, public TUnk_B3E218 {
 public:
+    SkipManager();  // out of line (0x7100133CD4); the script plugins' getPtr statics call it
     virtual ~SkipManager();  // slot 0
+    // whether the scene is being skipped fast (evt_chara's mount then queues nothing)
+    bool isSkipFast() const;
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     bool isSkip() const;
 

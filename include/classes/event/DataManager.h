@@ -27,6 +27,8 @@ public:
     void setOffsetSrc(const mm::Vec3& offset, float angle, bool flag);
     void setOffsetDes(const mm::Vec3& offset, float angle, bool flag);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    // whether the target id's values are angles (evt_chara's setTar then converts degrees to radians)
+    bool checkRadianTar(unsigned int id);
 };
 }  // namespace event
 

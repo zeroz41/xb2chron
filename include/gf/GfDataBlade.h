@@ -40,6 +40,8 @@ public:
         }
         return 0;
     }
+    // the blade's creator (a 16-bit field of its SDataGame entry, 0x8A4 bytes each, at 0x5A2E)
+    static int getCreator(unsigned int blade);
     // fills list with the party's blades (SCOM_ACHIEV_INC::createParty and createCrystal)
     static void getListPartyAll(mm::mtl::FixedVector<unsigned short, 422>& list);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
