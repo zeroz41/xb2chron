@@ -4,6 +4,7 @@
 #include "classes/event/CharaEffectPlayer.h"
 
 namespace mm { class Vec3; }
+namespace event { class AttachActorBase; }
 
 namespace event {
 // which weapon a hide request is for (the evt_chara script commands pass 3); no enumerator is named
@@ -30,6 +31,9 @@ public:
     unsigned char pad_8[0xc98];
     // bit 5: playFade's flag (it sets or clears it); the name is not the original's
     unsigned int m_flags;  // 0xca0
+    unsigned char pad_ca4[0xb4];
+    // initModel stores a new AttachActorGf here (the destructor deletes it); the name is not the original's
+    AttachActorBase* m_attach;  // 0xd58
 };
 }  // namespace event
 

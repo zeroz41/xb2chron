@@ -19,6 +19,9 @@ public:
 class BgmManager : public TUnk_B3C660, public TUnk_B3C688 {
 public:
     virtual ~BgmManager() {}  // slot 0
+    BgmManager();  // out of line (Singleton<BgmManager>::getPtr calls it)
+    void play(const char*, float, float, float, float, float, float, float, bool, float);
+    void changeVolume(float, float);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event

@@ -22,7 +22,7 @@ public:
     virtual void hasEfp(char const*) const;  // slot 11
     virtual void getBoneMatGlobal(mm::Mat44&, char const*) const;  // slot 12
     virtual void getBoneMat(mm::Mat44&, char const*) const = 0;  // slot 13
-    virtual void hasBone(char const*) const;  // slot 14
+    virtual bool hasBone(char const*) const;  // slot 14 (evt_eff.play stores its result with setBool)
     virtual void getMultipleMatGlobal(mm::Mat44&, char const*) const;  // slot 15
     virtual void getMultipleMat(mm::Mat44&, char const*) const;  // slot 16
     virtual bool hasMultiple(char const*) const;  // slot 17

@@ -23,6 +23,7 @@ public:
     virtual ~SeamlessManager();  // slot 0
     SeamlessManager();  // out of line (Singleton<SeamlessManager>::getPtr calls it)
     void addFirstSeamPoint(const char* name, const PosAxis& pos);
+    void addSeamPoint(float frame, const PosAxis& pos);  // the parameter name is not the original's
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 };
 }  // namespace event

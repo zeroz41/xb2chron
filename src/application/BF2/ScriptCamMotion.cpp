@@ -1,6 +1,6 @@
-// Script VM plugins btl_ai, deb, evt, evt_chara and evt_env (their tables, entries and Regist functions). The entries
-// are static and nothing names them: they keep placeholder fn_ names. The other plugins of this unit (evt_bgm, evt_cam,
-// evt_eff, evt_ex) are separate translation units (SPLITS.md) and are not written yet.
+// Script VM plugins btl_ai, deb, evt, evt_bgm, evt_cam, evt_chara, evt_eff, evt_env and evt_ex (their tables, entries
+// and Regist functions). The entries are static and nothing names them: they keep placeholder fn_ names.
+#include "classes/event/UIManager.h"
 #include "vm/yvm2.h"
 #include "btl/Utility.h"
 #include "classes/ai/AiManager.h"
@@ -13,6 +13,23 @@
 #include "classes/mm/mtl/Singleton.h"
 #include "classes/event/Param.h"
 #include "classes/event/TodoManager.h"
+#include "classes/event/BgmManager.h"
+#include "classes/event/ScriptCamCut.h"
+#include "classes/event/ScriptCamFollowPos.h"
+#include "classes/event/ScriptCamFollowTar.h"
+#include "classes/event/ScriptCamFov.h"
+#include "classes/event/ScriptCamMotion.h"
+#include "classes/event/ScriptCamMoveFov.h"
+#include "classes/event/ScriptCamMovePos.h"
+#include "classes/event/ScriptCamMoveRotZ.h"
+#include "classes/event/ScriptCamMoveTar.h"
+#include "classes/event/ScriptCamNearfar.h"
+#include "classes/event/ScriptCamPos.h"
+#include "classes/event/ScriptCamRotZ.h"
+#include "classes/event/ScriptCamTar.h"
+#include "classes/event/DataManager.h"
+#include "classes/event/PosAxis.h"
+#include "classes/event/SeamlessManager.h"
 #include "classes/event/ScriptCharaAction.h"
 #include "classes/event/ScriptCharaFacial.h"
 #include "classes/event/ScriptCharaFade.h"
@@ -35,8 +52,17 @@
 #include "classes/event/ScriptUtil.h"
 #include "classes/event/ObjectList.h"
 #include "mm/Vec3.h"
-#include "classes/event/DataManager.h"
 #include "classes/event/SkipManager.h"
+#include "classes/event/ScriptEffectAnim.h"
+#include "classes/event/ScriptEffectCast.h"
+#include "classes/event/ScriptEffectColor.h"
+#include "classes/event/ScriptEffectKill.h"
+#include "classes/event/ScriptEffectMount.h"
+#include "classes/event/ScriptEffectMove.h"
+#include "classes/event/ScriptEffectPlay.h"
+#include "classes/event/ScriptEffectScale.h"
+#include "classes/event/ScriptEffectTurn.h"
+#include "classes/event/AttachActorBase.h"
 #include "classes/event/EnvManager.h"
 
 // The plugins' return-value setters. Inferred: the names are not the original's (the original may have spelled
@@ -520,6 +546,7 @@ static int fn_7100658BB0(VMThread* pThread) {
     return 0;
 }
 
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B72F18).
 static VMPluginFunc s_evtPlugin[] = {
     {"init", fn_7100658674},
     {"setupScene", fn_71006586C8},
@@ -539,6 +566,267 @@ static VMPluginFunc s_evtPlugin[] = {
 
 void pluginEvtRegist() {
     vmPluginRegist("evt", s_evtPlugin);
+}
+
+// evt_bgm.play
+static int fn_7100658BF0(VMThread* pThread) {
+    const char* name = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    int a2 = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    float a3 = vmArgOmitChk(pThread, 3) ? 1.0f : (float)vmArgIntGet(3, vmArgPtrGet(pThread, 3)) * 0.01f;
+    float a4 = vmArgOmitChk(pThread, 4) ? 0.0f : (float)vmArgIntGet(4, vmArgPtrGet(pThread, 4));
+    float a5 = vmArgOmitChk(pThread, 5) ? 0.0f : (float)vmArgIntGet(5, vmArgPtrGet(pThread, 5));
+    float a6 = vmArgOmitChk(pThread, 6) ? 0.0f : (float)vmArgIntGet(6, vmArgPtrGet(pThread, 6));
+    float a7 = vmArgOmitChk(pThread, 7) ? 0.0f : (float)vmArgIntGet(7, vmArgPtrGet(pThread, 7));
+    float a8 = vmArgOmitChk(pThread, 8) ? 0.0f : (float)vmArgIntGet(8, vmArgPtrGet(pThread, 8));
+    int a9 = vmArgOmitChk(pThread, 9) ? 0 : vmArgBoolGet(9, vmArgPtrGet(pThread, 9));
+    float a10 = vmArgOmitChk(pThread, 10) ? 0.0f : (float)vmArgIntGet(10, vmArgPtrGet(pThread, 10));
+    mm::mtl::Singleton<event::BgmManager>::getPtr()->play(name, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+    return 0;
+}
+
+// evt_bgm.changeVolume
+static int fn_7100658EA4(VMThread* pThread) {
+    int a1 = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int a2 = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    mm::mtl::Singleton<event::BgmManager>::getPtr()->changeVolume(a1 * 0.01f, a2);
+    return 0;
+}
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B72FF8).
+static VMPluginFunc s_evtbgmPlugin[] = {
+    {"play", fn_7100658BF0},
+    {"changeVolume", fn_7100658EA4},
+    {nullptr, nullptr},
+};
+
+void pluginEvtBgmRegist() {
+    vmPluginRegist("evt_bgm", s_evtbgmPlugin);
+}
+
+// evt_cam.playMotion
+static int fn_7100658F88(VMThread* pThread) {
+    const char* a1 = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    float a2 = vmArgOmitChk(pThread, 2) ? 0.0f : vmArgIntGet(2, vmArgPtrGet(pThread, 2)) * 0.001f;
+    float a3 = vmArgOmitChk(pThread, 3) ? 0.0f : vmArgIntGet(3, vmArgPtrGet(pThread, 3)) * 0.001f;
+    float a4 = vmArgOmitChk(pThread, 4) ? 0.0f : vmArgIntGet(4, vmArgPtrGet(pThread, 4)) * 0.001f;
+    event::Param param;
+    param.val(0).setStr(a1);
+    param.val(1).setF32(a2);
+    param.val(2).setF32(a3);
+    param.val(3).setF32(a4);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptCamMotion::exec, param);
+    return 0;
+}
+
+// evt_cam.setPos
+static int fn_71006591C0(VMThread* pThread) {
+    int a1 = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int a2 = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int a3 = vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    int a4 = vmArgIntGet(4, vmArgPtrGet(pThread, 4));
+    event::Param param;
+    param.val(0).setS32(a1);
+    param.val(1).setF32(a2 * 0.001f);
+    param.val(2).setF32(a3 * 0.001f);
+    param.val(3).setF32(a4 * 0.001f);
+    param.val(4).setS32(1);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptCamPos::exec, param);
+    return 0;
+}
+
+// evt_cam.movePos
+static int fn_71006593C0(VMThread* pThread) {
+    int a1 = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int a2 = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int a3 = vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    int a4 = vmArgIntGet(4, vmArgPtrGet(pThread, 4));
+    int a5 = vmArgIntGet(5, vmArgPtrGet(pThread, 5));
+    int a6 = vmArgOmitChk(pThread, 6) ? 1 : vmArgIntGet(6, vmArgPtrGet(pThread, 6));
+    event::Param param;
+    param.val(0).setS32(a1);
+    param.val(1).setF32(a2 * 0.001f);
+    param.val(2).setF32(a3 * 0.001f);
+    param.val(3).setF32(a4 * 0.001f);
+    param.val(4).setF32(a5);
+    param.val(5).setS32(a6);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptCamMovePos::exec, param);
+    return 0;
+}
+
+// evt_cam.setTar
+static int fn_710065962C(VMThread* pThread) {
+    int a1 = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int a2 = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int a3 = vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    int a4 = vmArgIntGet(4, vmArgPtrGet(pThread, 4));
+    event::Param param;
+    param.val(0).setS32(a1);
+    if (mm::mtl::Singleton<event::DataManager>::getPtr()->checkRadianTar(a1)) {
+        param.val(1).setF32((float)a2 * 0.001f * 0.017453292f);
+        param.val(2).setF32((float)a3 * 0.001f * 0.017453292f);
+        param.val(3).setF32((float)a4 * 0.001f * 0.017453292f);
+    } else {
+        param.val(1).setF32((float)a2 * 0.001f);
+        param.val(2).setF32((float)a3 * 0.001f);
+        param.val(3).setF32((float)a4 * 0.001f);
+    }
+    param.val(4).setS32(1);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptCamTar::exec, param);
+    return 0;
+}
+
+// evt_cam.moveTar
+static int fn_71006598E0(VMThread* pThread) {
+    int a1 = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int a2 = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int a3 = vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    int a4 = vmArgIntGet(4, vmArgPtrGet(pThread, 4));
+    int a5 = vmArgIntGet(5, vmArgPtrGet(pThread, 5));
+    int a6 = vmArgOmitChk(pThread, 6) ? 1 : vmArgIntGet(6, vmArgPtrGet(pThread, 6));
+    event::Param param;
+    param.val(0).setS32(a1);
+    if (mm::mtl::Singleton<event::DataManager>::getPtr()->checkRadianTar(a1)) {
+        param.val(1).setF32((float)a2 * 0.001f * 0.017453292f);
+        param.val(2).setF32((float)a3 * 0.001f * 0.017453292f);
+        param.val(3).setF32((float)a4 * 0.001f * 0.017453292f);
+    } else {
+        param.val(1).setF32((float)a2 * 0.001f);
+        param.val(2).setF32((float)a3 * 0.001f);
+        param.val(3).setF32((float)a4 * 0.001f);
+    }
+    param.val(4).setF32(a5);
+    param.val(5).setS32(a6);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptCamMoveTar::exec, param);
+    return 0;
+}
+
+// evt_cam.setFov
+static int fn_7100659C00(VMThread* pThread) {
+    int a1 = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    event::Param param;
+    param.val(0).setF32(a1 * 0.001f);
+    param.val(1).setS32(1);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptCamFov::exec, param);
+    return 0;
+}
+
+// evt_cam.moveFov
+static int fn_7100659D54(VMThread* pThread) {
+    int a1 = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int a2 = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int a3 = vmArgOmitChk(pThread, 3) ? 1 : vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    event::Param param;
+    param.val(0).setF32(a1 * 0.001f);
+    param.val(1).setF32(a2);
+    param.val(2).setS32(a3);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptCamMoveFov::exec, param);
+    return 0;
+}
+
+// evt_cam.setRotZ
+static int fn_7100659F14(VMThread* pThread) {
+    int a1 = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    event::Param param;
+    param.val(0).setF32(a1 * 0.001f);
+    param.val(1).setS32(1);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptCamRotZ::exec, param);
+    return 0;
+}
+
+// evt_cam.moveRotZ
+static int fn_710065A068(VMThread* pThread) {
+    int a1 = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int a2 = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int a3 = vmArgOmitChk(pThread, 3) ? 1 : vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    event::Param param;
+    param.val(0).setF32(a1 * 0.001f);
+    param.val(1).setF32(a2);
+    param.val(2).setS32(a3);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptCamMoveRotZ::exec, param);
+    return 0;
+}
+
+// evt_cam.setNearfar
+static int fn_710065A228(VMThread* pThread) {
+    int a1 = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    event::Param param;
+    param.val(0).setS32(a1);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptCamNearfar::exec, param);
+    return 0;
+}
+
+// evt_cam.setCut
+static int fn_710065A35C(VMThread* pThread) {
+    const char* a1 = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    event::Param param;
+    param.val(0).setStr(a1);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptCamCut::exec, param);
+    return 0;
+}
+
+// evt_cam.followPos
+static int fn_710065A490(VMThread* pThread) {
+    int a1 = vmArgBoolGet(1, vmArgPtrGet(pThread, 1));
+    event::Param param;
+    param.val(0).setBool(a1 != 0);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptCamFollowPos::exec, param);
+    return 0;
+}
+
+// evt_cam.followTar
+static int fn_710065A5C8(VMThread* pThread) {
+    int a1 = vmArgBoolGet(1, vmArgPtrGet(pThread, 1));
+    event::Param param;
+    param.val(0).setBool(a1 != 0);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptCamFollowTar::exec, param);
+    return 0;
+}
+
+// evt_cam.setSeamlessReadPos
+static int fn_710065A700(VMThread* pThread) {
+    int frame = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int x = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int y = vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    int z = vmArgIntGet(4, vmArgPtrGet(pThread, 4));
+    event::PosAxis pos(2, x * 0.001f, y * 0.001f, z * 0.001f);
+    mm::mtl::Singleton<event::SeamlessManager>::getPtr()->addSeamPoint(frame, pos);
+    return 0;
+}
+
+// evt_cam.setSeamlessReadAxis
+static int fn_710065A82C(VMThread* pThread) {
+    int frame = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    unsigned int type = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int x = vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    int y = vmArgIntGet(4, vmArgPtrGet(pThread, 4));
+    int z = vmArgIntGet(5, vmArgPtrGet(pThread, 5));
+    event::PosAxis pos(type, x * 0.001f, y * 0.001f, z * 0.001f);
+    mm::mtl::Singleton<event::SeamlessManager>::getPtr()->addSeamPoint(frame, pos);
+    return 0;
+}
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B73028).
+static VMPluginFunc s_evtcamPlugin[] = {
+    {"playMotion", fn_7100658F88},
+    {"setPos", fn_71006591C0},
+    {"movePos", fn_71006593C0},
+    {"setTar", fn_710065962C},
+    {"moveTar", fn_71006598E0},
+    {"setFov", fn_7100659C00},
+    {"moveFov", fn_7100659D54},
+    {"setRotZ", fn_7100659F14},
+    {"moveRotZ", fn_710065A068},
+    {"setNearfar", fn_710065A228},
+    {"setCut", fn_710065A35C},
+    {"followPos", fn_710065A490},
+    {"followTar", fn_710065A5C8},
+    {"setSeamlessReadPos", fn_710065A700},
+    {"setSeamlessReadAxis", fn_710065A82C},
+    {nullptr, nullptr},
+};
+
+void pluginEvtCamRegist() {
+    vmPluginRegist("evt_cam", s_evtcamPlugin);
 }
 
 // evt_chara.setPos
@@ -1013,6 +1301,7 @@ static int fn_710065EC44(VMThread* pThread) {
     return 0;
 }
 
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B73128).
 static VMPluginFunc s_evtcharaPlugin[] = {
     {"setPos", fn_710065B23C},
     {"walkPos", fn_710065B3A4},
@@ -1046,6 +1335,152 @@ static VMPluginFunc s_evtcharaPlugin[] = {
 
 void pluginEvtCharaRegist() {
     vmPluginRegist("evt_chara", s_evtcharaPlugin);
+}
+
+// evt_eff.play
+static int fn_710065F768(VMThread* pThread) {
+    const char* name = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    int a2 = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    float a3 = vmArgOmitChk(pThread, 3) ? 0.0f : (float)vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    float a4 = vmArgOmitChk(pThread, 4) ? 1.0f : (float)vmArgIntGet(4, vmArgPtrGet(pThread, 4)) * 0.01f;
+    int cast = vmArgOmitChk(pThread, 5) ? -1 : vmArgIntGet(5, vmArgPtrGet(pThread, 5));
+    int mount = vmArgOmitChk(pThread, 6) ? -1 : vmArgIntGet(6, vmArgPtrGet(pThread, 6));
+    int a7 = vmArgOmitChk(pThread, 7) ? 0 : vmArgIntGet(7, vmArgPtrGet(pThread, 7));
+    const char* a8 = vmArgOmitChk(pThread, 8) ? "" : vmArgStringGet(8, vmArgPtrGet(pThread, 8));
+    float a9 = vmArgOmitChk(pThread, 9) ? 0.0f : (float)vmArgIntGet(9, vmArgPtrGet(pThread, 9)) * 0.001f;
+    float a10 = vmArgOmitChk(pThread, 10) ? 0.0f : (float)vmArgIntGet(10, vmArgPtrGet(pThread, 10)) * 0.001f;
+    float a11 = vmArgOmitChk(pThread, 11) ? 0.0f : (float)vmArgIntGet(11, vmArgPtrGet(pThread, 11)) * 0.001f;
+    int a12 = vmArgOmitChk(pThread, 12) ? 0 : vmArgIntGet(12, vmArgPtrGet(pThread, 12));
+    int a13 = vmArgOmitChk(pThread, 13) ? 0 : vmArgIntGet(13, vmArgPtrGet(pThread, 13));
+    if (mm::mtl::Singleton<event::SkipManager>::getPtr()->isSkipFast()) {
+        return 0;
+    }
+    event::Param param;
+    param.val(0).setStr(name);
+    param.val(1).setF32(a2);
+    param.val(2).setF32(a4);
+    param.val(3).setF32(a3);
+    param.val(4).setS32(a12);
+    param.val(5).setS32(a13);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptEffectPlay::exec, param);
+    if (cast >= 0) {
+        event::ObjectChara* chara = mm::mtl::Singleton<event::ObjectManager>::getPtr()->getChara(cast);
+        param.val(0).setUserdata(chara);
+        mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptEffectCast::exec, param);
+    } else if (mount >= 0) {
+        event::ObjectChara* chara = mm::mtl::Singleton<event::ObjectManager>::getPtr()->getChara(mount);
+        bool bone = chara->m_chara->m_attach->hasBone(a8);
+        param.val(0).setUserdata(chara);
+        param.val(1).setS32(a7);
+        param.val(2).setStr(a8);
+        param.val(3).setF32(a9);
+        param.val(4).setF32(a10);
+        param.val(5).setF32(a11);
+        param.val(6).setBool(bone);
+        mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptEffectMount::exec, param);
+    }
+    return 0;
+}
+
+// evt_eff.kill
+static int fn_710065FE84(VMThread* pThread) {
+    event::Param param;
+    param.val(0).setBool(1);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptEffectKill::exec, param);
+    return 0;
+}
+
+// evt_eff.playAnm
+static int fn_710065FFA0(VMThread* pThread) {
+    const char* a1 = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    int a2 = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    event::Param param;
+    param.val(0).setStr(a1);
+    param.val(1).setF32(a2);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptEffectAnim::exec, param);
+    return 0;
+}
+
+// evt_eff.moveTo
+static int fn_7100660108(VMThread* pThread) {
+    int a1 = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int a2 = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int a3 = vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    int a4 = vmArgIntGet(4, vmArgPtrGet(pThread, 4));
+    int a5 = vmArgOmitChk(pThread, 5) ? 0 : vmArgIntGet(5, vmArgPtrGet(pThread, 5));
+    int a6 = vmArgOmitChk(pThread, 6) ? 1 : vmArgIntGet(6, vmArgPtrGet(pThread, 6));
+    event::Param param;
+    param.val(0).setS32(a1);
+    param.val(1).setF32(a2 * 0.001f);
+    param.val(2).setF32(a3 * 0.001f);
+    param.val(3).setF32(a4 * 0.001f);
+    param.val(4).setS32(a5);
+    param.val(5).setS32(a6);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptEffectMove::exec, param);
+    return 0;
+}
+
+// evt_eff.turnTo
+static int fn_7100660390(VMThread* pThread) {
+    int a1 = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int a2 = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int a3 = vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    int a4 = vmArgIntGet(4, vmArgPtrGet(pThread, 4));
+    int a5 = vmArgOmitChk(pThread, 5) ? 0 : vmArgIntGet(5, vmArgPtrGet(pThread, 5));
+    int a6 = vmArgOmitChk(pThread, 6) ? 1 : vmArgIntGet(6, vmArgPtrGet(pThread, 6));
+    event::Param param;
+    param.val(0).setS32(a1);
+    param.val(1).setF32(a2 * 0.001f * 0.017453292f);
+    param.val(2).setF32(a3 * 0.001f * 0.017453292f);
+    param.val(3).setF32(a4 * 0.001f * 0.017453292f);
+    param.val(4).setS32(a5);
+    param.val(5).setS32(a6);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptEffectTurn::exec, param);
+    return 0;
+}
+
+// evt_eff.scale
+static int fn_710066062C(VMThread* pThread) {
+    int a1 = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    event::Param param;
+    param.val(0).setF32(a1 * 0.01f);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptEffectScale::exec, param);
+    return 0;
+}
+
+// evt_eff.colorTo
+static int fn_710066076C(VMThread* pThread) {
+    int a1 = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int a2 = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int a3 = vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    int a4 = vmArgIntGet(4, vmArgPtrGet(pThread, 4));
+    int a5 = vmArgOmitChk(pThread, 5) ? 0 : vmArgIntGet(5, vmArgPtrGet(pThread, 5));
+    int a6 = vmArgOmitChk(pThread, 6) ? 1 : vmArgIntGet(6, vmArgPtrGet(pThread, 6));
+    event::Param param;
+    param.val(0).setF32(a1 * 0.01f);
+    param.val(1).setF32(a2 * 0.01f);
+    param.val(2).setF32(a3 * 0.01f);
+    param.val(3).setF32(a4 * 0.01f);
+    param.val(4).setS32(a5);
+    param.val(5).setS32(a6);
+    mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptEffectColor::exec, param);
+    return 0;
+}
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B732E8).
+static VMPluginFunc s_evteffPlugin[] = {
+    {"play", fn_710065F768},
+    {"kill", fn_710065FE84},
+    {"playAnm", fn_710065FFA0},
+    {"moveTo", fn_7100660108},
+    {"turnTo", fn_7100660390},
+    {"scale", fn_710066062C},
+    {"colorTo", fn_710066076C},
+    {nullptr, nullptr},
+};
+
+void pluginEvtEffRegist() {
+    vmPluginRegist("evt_eff", s_evteffPlugin);
 }
 
 // evt_env.setClock
@@ -1108,6 +1543,7 @@ static int fn_7100661590(VMThread* pThread) {
     return 0;
 }
 
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B73368).
 static VMPluginFunc s_evtenvPlugin[] = {
     {"setClock", fn_710066100C},
     {"setClockStop", fn_71006610A4},
@@ -1124,3 +1560,99 @@ void pluginEvtEnvRegist() {
     vmPluginRegist("evt_env", s_evtenvPlugin);
 }
 
+
+// evt_ex: a selection the script builds (begin, the set* entries) and then shows (play, getResult). Proposed names,
+// not the original's: the symbols leave the file statics unnamed (lbl_7100EC1790, one merged block).
+static mm::mtl::FixedVector<unsigned int, 16> s_exExp;
+static mm::mtl::FixedVector<const char*, 16> s_exSelect;
+static mm::mtl::FixedVector<unsigned int, 16> s_exItem;
+static int s_exEther;
+static const char* s_exText;
+static const char* s_exCancel;
+
+// Placeholder name: the symbols name no function here (pluginRegist calls it; the pattern of the other plugins
+// would make it pluginEvtExRegist, which no evidence confirms).
+void fn_710066162C();
+
+// evt_ex.begin
+static int fn_7100661640(VMThread* pThread) {
+    s_exText = nullptr;
+    s_exEther = 0;
+    s_exExp.clear();
+    s_exSelect.clear();
+    s_exItem.clear();
+    s_exCancel = nullptr;
+    return 0;
+}
+
+// evt_ex.setText
+static int fn_7100661680(VMThread* pThread) {
+    s_exText = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    return 0;
+}
+
+// evt_ex.setEther
+static int fn_71006616B4(VMThread* pThread) {
+    s_exEther = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    return 0;
+}
+
+// evt_ex.setExp
+static int fn_71006616E4(VMThread* pThread) {
+    unsigned int exp = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    s_exExp.push_back(exp);
+    return 0;
+}
+
+// evt_ex.setSelect
+static int fn_7100661764(VMThread* pThread) {
+    const char* select = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    s_exSelect.push_back(select);
+    return 0;
+}
+
+// evt_ex.setItem
+static int fn_71006617E4(VMThread* pThread) {
+    unsigned int item = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    s_exItem.push_back(item);
+    return 0;
+}
+
+// evt_ex.setCancel
+static int fn_7100661864(VMThread* pThread) {
+    s_exCancel = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    return 0;
+}
+
+// evt_ex.play
+static int fn_7100661898(VMThread* pThread) {
+    if (!mm::mtl::Singleton<event::UIManager>::getPtr()->fn_7100104130(s_exText, s_exEther, s_exExp, s_exSelect,
+                                                                         s_exItem, s_exCancel)) {
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
+
+// evt_ex.getResult
+static int fn_7100661940(VMThread* pThread) {
+    vmRetIntSet(pThread, mm::mtl::Singleton<event::UIManager>::getPtr()->fn_7100104AE8());
+    return 1;
+}
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B733F8).
+static VMPluginFunc s_evtexPlugin[] = {
+    {"begin", fn_7100661640},
+    {"setText", fn_7100661680},
+    {"setEther", fn_71006616B4},
+    {"setExp", fn_71006616E4},
+    {"setSelect", fn_7100661764},
+    {"setItem", fn_71006617E4},
+    {"setCancel", fn_7100661864},
+    {"play", fn_7100661898},
+    {"getResult", fn_7100661940},
+    {nullptr, nullptr},
+};
+
+void fn_710066162C() {
+    vmPluginRegist("evt_ex", s_evtexPlugin);
+}

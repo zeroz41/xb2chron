@@ -2,6 +2,7 @@
 #define CLASSES_EVENT_UIMANAGER_H
 
 #include "classes/gf/GfMenuObjFade.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace event { enum MSG_TYPE : int; }
 
@@ -21,8 +22,19 @@ public:
 class UIManager : public TUnk_B3D5C8, public TUnk_B3D5F0 {
 public:
     virtual ~UIManager();  // slot 0
+    UIManager();  // out of line (Singleton<UIManager>::getPtr calls it)
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     void clear();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because the evt_ex plugin's
+    // play (ScriptCamMotion) calls it on Singleton<UIManager>::getPtr(). What it does: takes the text, ether value,
+    // exp/select/item lists and cancel text evt_ex's set* entries collected, checks MstxtManager's state and opens a
+    // selection; returns false while the script must wait (play then calls vmWaitModeSet).
+    bool fn_7100104130(const char* text, int ether, const mm::mtl::FixedVector<unsigned int, 16>& exp,
+                       const mm::mtl::FixedVector<const char*, 16>& select,
+                       const mm::mtl::FixedVector<unsigned int, 16>& item, const char* cancel);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because evt_ex's getResult calls
+    // it on Singleton<UIManager>::getPtr(). What it does: returns the int at offset 0x48 (evt_ex.getResult's value).
+    int fn_7100104AE8();
     void update();
     // 1.0.0's UIManager::logout (0x71000F02E8); 3.0.1 inlines it into OnEventProc
     void logout() {

@@ -7,7 +7,7 @@
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedVector.h"
 
-namespace event { enum MSG_TYPE : int; enum CHARA_TYPE : int; }
+namespace event { enum MSG_TYPE : int; enum CHARA_TYPE : int; class ObjectChara; }
 
 namespace event {
 // a base of event::ObjectManager no evidence names yet
@@ -48,6 +48,8 @@ public:
     // the object of the given type (Object::m_type) and id, else null (evt_chara's setWeaponDispByBladeID passes
     // type 3 and GfDataBlade::getCreator's result)
     Object* searchByID(unsigned int type, unsigned int id);
+    // a character object (evt_eff.play reads its m_chara)
+    ObjectChara* getChara(unsigned int id);
     // the current scene's active object when it is of the given type (Object::m_type), else null; the current
     // scene is not updated first (the script commands' undo and redo inline it); the name is not the original's
     Object* getActive(int type) const {
