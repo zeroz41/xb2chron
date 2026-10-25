@@ -17,6 +17,10 @@ public:
     void setBool(bool value);
     void setStr(const char* value);
     void setUserdata(void* value);
+    // 1.0.0 has them out of line (0x7100097270, 0x71000972A0); 3.0.1 inlines them: the value converted when it
+    // holds the other number type
+    int getS32() const { return m_type == 2 ? (int)m_value.floatValue : m_value.intValue; }
+    float getF32() const { return m_type == 1 ? (float)m_value.intValue : m_value.floatValue; }
     // the value as text ("%d", "%f", "true"/"false", the string, "%lld"); empty for nothing
     void createString(mm::mtl::FixStr<256>& str);
 

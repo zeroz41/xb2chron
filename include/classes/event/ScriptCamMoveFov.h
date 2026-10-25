@@ -9,8 +9,8 @@ namespace event {
 // table 0x7100B3F6B8
 class ScriptCamMoveFov : public ::event::ITodo {
 public:
-    virtual ~ScriptCamMoveFov();  // slot 0
-    virtual void cmdName() const;  // slot 2
+    virtual ~ScriptCamMoveFov() {}  // slot 0
+    virtual const char* cmdName() const { return "camfov"; }  // slot 2
     virtual void doit(event::Param const&);  // slot 3
     virtual void redo(event::Param const&);  // slot 5
 };

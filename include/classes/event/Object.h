@@ -18,7 +18,10 @@ public:
     virtual void render(mm::Col4 const&) {}  // slot 8
     virtual void tail() {}  // slot 9
     virtual bool isLoading() const { return false; }  // slot 10
-    unsigned char pad_10[0x58];
+    // what kind of object it is: the script commands test 2 before treating it as an ObjectChara and 4 before an
+    // ObjectEffect; the name is not the original's
+    int m_type;  // 0x10
+    unsigned char pad_14[0x54];
 };
 }  // namespace event
 

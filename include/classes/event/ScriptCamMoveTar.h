@@ -9,8 +9,8 @@ namespace event {
 // table 0x7100B3F638
 class ScriptCamMoveTar : public ::event::ITodo {
 public:
-    virtual ~ScriptCamMoveTar();  // slot 0
-    virtual void cmdName() const;  // slot 2
+    virtual ~ScriptCamMoveTar() {}  // slot 0
+    virtual const char* cmdName() const { return "camtar"; }  // slot 2
     virtual void doit(event::Param const&);  // slot 3
     virtual void redo(event::Param const&);  // slot 5
 };

@@ -9,8 +9,8 @@ namespace event {
 // table 0x7100B3F2B8
 class ScriptCharaSetIdle : public ::event::ITodo {
 public:
-    virtual ~ScriptCharaSetIdle();  // slot 0
-    virtual void cmdName() const;  // slot 2
+    virtual ~ScriptCharaSetIdle() {}  // slot 0
+    virtual const char* cmdName() const { return "charasetidle"; }  // slot 2
     virtual void doit(event::Param const&);  // slot 3
     virtual void undo(event::Param const&);  // slot 4
 };

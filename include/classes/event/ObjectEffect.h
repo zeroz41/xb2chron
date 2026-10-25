@@ -6,6 +6,7 @@
 #include "classes/event/Object.h"
 
 namespace mm { class Col4; }
+namespace event { class PosAxis; class RotAxis; }
 
 namespace event {
 // table 0x7100B3DF50
@@ -24,6 +25,8 @@ public:
     virtual void OnManiStartRot(event::IManiCallback::StartParam&);  // slot 13
     virtual void OnManiSetRot(event::IManiCallback::SetParam&);  // slot 14
     virtual void OnManiRender(event::IManiCallback::RenderParam&);  // slot 15
+    void setPosAxis(const PosAxis& pos);
+    void setRotAxis(const RotAxis& rot);
 };
 }  // namespace event
 

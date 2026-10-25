@@ -9,8 +9,8 @@ namespace event {
 // table 0x7100B3FAB8
 class ScriptPlayText : public ::event::ITodo {
 public:
-    virtual ~ScriptPlayText();  // slot 0
-    virtual void cmdName() const;  // slot 2
+    virtual ~ScriptPlayText() {}  // slot 0
+    virtual const char* cmdName() const { return "text"; }  // slot 2
     virtual void doit(event::Param const&);  // slot 3
     virtual void undo(event::Param const&);  // slot 4
 };

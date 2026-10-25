@@ -567,3 +567,94 @@ void CaptureManager::OnEventProc(event::MSG_TYPE msg) {
 }
 
 }  // namespace event
+
+// ---- script commands (session 19) ----
+#include "classes/event/ObjectManager.h"
+#include "classes/event/ObjectChara.h"
+#include "classes/event/ObjectEffect.h"
+#include "classes/event/PosAxis.h"
+#include "classes/event/RotAxis.h"
+#include "classes/event/ScriptCharaWalkPos.h"
+#include "classes/event/ScriptCharaTurnRot.h"
+#include "classes/event/ScriptCharaLinerPos.h"
+#include "classes/event/ScriptCharaLinerRot.h"
+#include "classes/event/ScriptEffectMove.h"
+#include "classes/event/ScriptEffectTurn.h"
+
+namespace event {
+
+void ScriptCharaWalkPos::redo(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        obj->setPosAxis(PosAxis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32()));
+    }
+}
+
+void ScriptCharaTurnRot::redo(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        obj->setRotAxis(RotAxis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32()));
+    }
+}
+
+void ScriptCharaLinerPos::undo(const event::Param&) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        obj->setPosAxis(m_prevPos);
+    }
+}
+
+void ScriptCharaLinerPos::redo(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        obj->setPosAxis(PosAxis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32()));
+    }
+}
+
+void ScriptCharaLinerRot::undo(const event::Param&) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        obj->setRotAxis(m_prevRot);
+    }
+}
+
+void ScriptCharaLinerRot::redo(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        obj->setRotAxis(RotAxis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32()));
+    }
+}
+
+void ScriptEffectMove::undo(const event::Param&) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        obj->setPosAxis(m_prevPos);
+    }
+}
+
+void ScriptEffectMove::redo(const event::Param& param) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        obj->setPosAxis(PosAxis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32()));
+    }
+}
+
+void ScriptEffectTurn::undo(const event::Param&) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        obj->setRotAxis(m_prevRot);
+    }
+}
+
+void ScriptEffectTurn::redo(const event::Param& param) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        obj->setRotAxis(RotAxis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32()));
+    }
+}
+
+PosAxis::PosAxis(unsigned int type, float x, float y, float z) : m_type(type), m_value(x, y, z) {}
+
+RotAxis::RotAxis(unsigned int type, float x, float y, float z) : m_type(type), m_value(x, y, z) {}
+
+}  // namespace event

@@ -9,8 +9,8 @@ namespace event {
 // table 0x7100B3F378
 class ScriptCharaMotionABC : public ::event::ITodo {
 public:
-    virtual ~ScriptCharaMotionABC();  // slot 0
-    virtual void cmdName() const;  // slot 2
+    virtual ~ScriptCharaMotionABC() {}  // slot 0
+    virtual const char* cmdName() const { return "charamotABC"; }  // slot 2
     virtual void doit(event::Param const&);  // slot 3
     virtual void undo(event::Param const&);  // slot 4
 };
