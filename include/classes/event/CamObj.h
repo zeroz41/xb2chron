@@ -2,6 +2,7 @@
 #define CLASSES_EVENT_CAMOBJ_H
 
 #include "classes/event/CamHands.h"
+#include "classes/event/CamMotion.h"
 
 namespace event { class FrameInfo; }
 namespace mm { class Col4; }
@@ -25,6 +26,9 @@ public:
     float m_rotZ;  // 0x34; the name is not the original's
     unsigned char pad_38[0x78];
     CamHands m_hands;  // 0xb0; the name is not the original's
+    // CamHands is bigger than declared (setFov writes m_hands+0x480): part of this space is its
+    unsigned char pad_f8[0xab8];
+    CamMotion m_motion;  // 0xbb0; ScriptCamMotion plays it; the name is not the original's
 
 };
 }  // namespace event

@@ -41,6 +41,9 @@ public:
         return 0;
     }
 
+    // makes the scene named m_sceneName current (ScriptSetActive calls it before reading m_current)
+    void updateCurrent();
+
     // bit 0 is passed to each new ObjectList (1.0.0's createScene); the name is not the original's
     unsigned int m_flags;  // 0x10
     // zeroed with m_flags (one 64-bit store with the second table pointer); no reader seen yet

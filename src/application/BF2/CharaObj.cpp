@@ -876,3 +876,144 @@ void ScriptCamFollowTar::doit(const event::Param& param) {
 }
 
 }  // namespace event
+
+#include "plugin/Bdat.h"
+#include "classes/event/ScriptSetActive.h"
+#include "classes/event/ScriptCamCut.h"
+#include "classes/event/ScriptCamMotion.h"
+#include "classes/event/ScriptCamNearfar.h"
+#include "classes/event/ScriptCharaWink.h"
+#include "classes/event/ScriptCharaTalk.h"
+#include "classes/event/ScriptCamFollowPos.h"
+#include "classes/event/ScriptCamFollowTar.h"
+#include "classes/event/ObjectList.h"
+#include "classes/event/GroupManager.h"
+#include "classes/event/TextManager.h"
+#include "mm/Vec3.h"
+
+namespace event {
+
+void ScriptSetActive::doit(const event::Param& param) {
+    const char* path = param.val(0).getStr();
+    ObjectList* scene = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+    m_prevActive = scene != 0 ? scene->m_active : 0;
+    ObjectManager* mgr = mm::mtl::Singleton<ObjectManager>::getPtr();
+    mgr->updateCurrent();
+    mgr->m_current->setActivePath(path);
+}
+
+void ScriptSetActive::undo(const event::Param&) {
+    Object* prev = m_prevActive;
+    ObjectManager* mgr = mm::mtl::Singleton<ObjectManager>::getPtr();
+    mgr->updateCurrent();
+    mgr->m_current->m_active = prev;
+}
+
+void ScriptCamMotion::doit(const event::Param& param) {
+    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
+    if (obj != 0) {
+        const char* name = param.val(0).getStr();
+        mm::Vec3 pos(param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_motion);
+        cam->m_motion.play(name, pos);
+    }
+}
+
+void ScriptCamNearfar::doit(const event::Param& param) {
+    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
+    if (obj != 0) {
+        int id = param.val(0).getS32();
+        m_prevNear = obj->m_cam->m_hands.m_near;
+        m_prevFar = obj->m_cam->m_hands.m_far;
+        CamObj* cam = obj->m_cam;
+        // a float column's value is its 32 bits
+        union {
+            unsigned int bits;
+            float value;
+        } nearVal, farVal;
+        nearVal.bits = (unsigned int)(unsigned long)Bdat::getValCheck(Bdat::getFP("EVT_nearfar"), "near", id, 8);
+        farVal.bits = (unsigned int)(unsigned long)Bdat::getValCheck(Bdat::getFP("EVT_nearfar"), "far", id, 8);
+        cam->m_hands.m_near = nearVal.value;
+        cam->m_hands.m_far = farVal.value;
+    }
+}
+
+void ScriptCamNearfar::undo(const event::Param&) {
+    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
+    if (obj != 0) {
+        float nearClip = m_prevNear;
+        float farClip = m_prevFar;
+        CamObj* cam = obj->m_cam;
+        cam->m_hands.m_near = nearClip;
+        cam->m_hands.m_far = farClip;
+    }
+}
+
+void ScriptCharaWink::doit(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        int a = param.val(0).getS32();
+        float b = param.val(1).getF32();
+        bool c = param.val(2).getBool();
+        float d = param.val(3).getF32();
+        float e = param.val(4).getF32();
+        int f = param.val(5).getS32();
+        bool g = param.val(6).getBool();
+        bool h = param.val(7).getBool();
+        obj->m_chara->playWink(a, b, c, d, e, f, g, h);
+    }
+}
+
+void ScriptCharaTalk::doit(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        float b = param.val(0).getF32();
+        bool c = param.val(1).getBool();
+        bool d = param.val(2).getBool();
+        float e = param.val(3).getF32();
+        float f = param.val(4).getF32();
+        float g = param.val(5).getF32();
+        float h = param.val(6).getF32();
+        obj->m_chara->playTalk(true, b, c, d, e, f, g, h);
+    }
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void GroupManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+    case 12:
+        clear();
+        break;
+    case 14:
+        update();
+        break;
+    case 16:
+        render();
+        break;
+    }
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void TextManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+        init();
+        break;
+    case 12:
+        clear();
+        break;
+    case 14:
+        update();
+        break;
+    case 16:
+        render();
+        break;
+    case 18:
+        m_flags &= ~0x20;
+        break;
+    }
+}
+
+}  // namespace event

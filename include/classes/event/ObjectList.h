@@ -8,6 +8,9 @@ namespace event {
 class ObjectList {
 public:
     virtual ~ObjectList();  // slot 0
+    // makes the object at the given path active (ScriptSetActive::doit tail-calls it)
+    void setActivePath(const char* path);
+
     unsigned char pad_8[0x70];
     // the object the script commands act on (ScriptSetActive's doit sets it); the name is not the original's
     Object* m_active;  // 0x78
