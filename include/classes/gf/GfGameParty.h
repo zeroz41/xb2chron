@@ -45,7 +45,10 @@ public:
     static void destroy();
     void update(const fw::UpdateInfo& info);
     // 1.0.0's (3.0.1 inlines them in the constructor and destroy)
-    void initialize() {
+    void initialize(const GfSetupParam&) {
+        for (int i = 0; i < 3; ++i) {
+            m_partyIdMemberOK[i] = 0;
+        }
         m_initialized = true;
     }
     void finalize() { m_initialized = false; }
@@ -113,9 +116,21 @@ public:
     unsigned char pad_1f8[0x178];
     bool m_currentPartyValid;  // set once m_currentParty is filled (the name is not the original's)
     unsigned char pad_371[0xF];
-    unsigned char pad_380[0x20];
+    // frames since the party's objects got ready, counted to 100 (update announces callPartyMemberOK(true) at 2),
+    // and the request to start over (update then announces callPartyMemberOK(false)); the names are not the
+    // original's
+    int m_memberOKCount;
+    bool m_memberOKReset;
+    unsigned char pad_385[0x3];
+    GF_OBJ_HANDLE* m_leader;  // the leader update last announced (GfEvent::callChangeLeader), -1 for none
+    // by party ID: 2 once callPartyIDMemberOK(true) was announced (listenerGfObj announces false when the member
+    // leaves); the name is not the original's
+    int m_partyIdMemberOK[3];
+    unsigned char pad_39c[0x4];
     mm::mtl::FixedVector<unsigned int, 4> m_hierarchy;  // party slots in hierarchy order (getHandleByHierarchy)
-    unsigned char pad_3b8[0x8];
+    // the object update warps to the controlled mover's position each frame, -1 for none (fn_71002BC6F8 returns
+    // it); the name is not the original's
+    GF_OBJ_HANDLE* m_warpObj;
 };
 }  // namespace gf
 

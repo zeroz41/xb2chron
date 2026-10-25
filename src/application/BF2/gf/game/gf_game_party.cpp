@@ -1,4 +1,10 @@
+#include "gf/GfDataParty.h"
+#include "gf/GfReqParam.h"
+#include "classes/gf/GfEvent.h"
+#include "classes/gf/GfGameParty.h"
 #include "gf/GfSelectBlade.h"
+#include "gf/MsgUnk_1000033.h"
+#include "classes/gf/GfGameMoverSwitcher.h"
 #include "gf/GfDataParty.h"
 #include "classes/gf/GfStatusProperty.h"
 #include "classes/gf/GfEvent.h"
@@ -167,6 +173,48 @@ bool GfGameParty::isLeaderDriver(GF_OBJ_HANDLE* handle) {
         return false;
     }
     return getHandleDriver(getPartyId(getLeader()), 0) == handle;
+}
+
+void GfGameParty::fn_71002BC718(unsigned int slot) {
+    GfGameMoverSwitcher* switcher = GfGameMoverSwitcher::get();
+    if (switcher == nullptr) {
+        return;
+    }
+    GfObj* obj = GfObjUtil::getObj(getHandleDriver(slot, 0));
+    if (obj == nullptr) {
+        return;
+    }
+    MsgUnk_1000033 msg(slot, 0, 1);
+    // sent through the switcher's fw::MessageObject base
+    static_cast<fw::MessageObject*>(switcher)->recieveMessage(obj, msg);
+}
+
+void GfGameParty::fn_71002BC7AC(unsigned int slot) {
+    GfGameMoverSwitcher* switcher = GfGameMoverSwitcher::get();
+    if (switcher == nullptr) {
+        return;
+    }
+    GfObj* obj = GfObjUtil::getObj(getHandleDriver(slot, 0));
+    if (obj == nullptr) {
+        return;
+    }
+    MsgUnk_1000033 msg(slot, 0, 2);
+    // sent through the switcher's fw::MessageObject base
+    static_cast<fw::MessageObject*>(switcher)->recieveMessage(obj, msg);
+}
+
+void GfGameParty::fn_71002BC840(unsigned int slot) {
+    GfGameMoverSwitcher* switcher = GfGameMoverSwitcher::get();
+    if (switcher == nullptr) {
+        return;
+    }
+    GfObj* obj = GfObjUtil::getObj(getHandleDriver(slot, 0));
+    if (obj == nullptr) {
+        return;
+    }
+    MsgUnk_1000033 msg(slot, 1, 2);
+    // sent through the switcher's fw::MessageObject base
+    static_cast<fw::MessageObject*>(switcher)->recieveMessage(obj, msg);
 }
 
 int GfSelectBlade::getStartBattleSetId(unsigned int slot) {

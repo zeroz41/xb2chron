@@ -23,6 +23,7 @@ public:
 // the party to set up: ten drivers, each with the blades it engages. The names are not the original's.
 class RQ_SETUP_PARTY {
 public:
+    RQ_SETUP_PARTY();  // GfAppendWire's unit holds its C2 (0x710028D7E8)
     struct Driver {
         unsigned int m_driver;  // getAllBlade asks GfDataDriver::getMaxSetBladeNum with it
         unsigned int m_activeIndex;  // the engaged blade's index (replaceActBlade engages the first with the default)
