@@ -67,6 +67,7 @@ public:
     // the kept warp notice, none while status bit 13 is clear (by its symbol)
     const gf::MsgPcFieldNotifyWarp* getWarpInfo() const;
     // keeps a big jump notice; null clears the big jump's status bit 12 (by its symbol)
+    const gf::MsgPcFieldNotifyBigJump* getBigJumpInfo() const;  // (by its symbol)
     void setBigJumpInfo(const gf::MsgPcFieldNotifyBigJump* msg);
 
     mm::mtl::IntrusivePtr<fw::ParamList> m_paramList;  // the PC's field parameters (FadePlugin::setup takes entry 18)

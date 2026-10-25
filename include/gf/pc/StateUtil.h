@@ -38,6 +38,11 @@ public:
     // the handle of the object the PC's property targets
     static gf::GF_OBJ_HANDLE* getTarget(const gf::GfComBehaviorPc& behavior);
     static void setTargetLock(bool lock);
+    static void setTarget(gf::GfComBehaviorPc& behavior, gf::GF_OBJ_HANDLE* target);  // (by its symbol)
+    static void setEnableHeadDetectForSwitcher(gf::GfComBehaviorPc& behavior, bool enable);  // (by its symbol)
+    static void setEnableSpineIK(gf::GfComBehaviorPc& behavior, bool enable);  // (by its symbol)
+    static void setEnableAttach(gf::GfComBehaviorPc& behavior, bool enable);  // (by its symbol)
+    static void setEnableTimer(gf::GfComBehaviorPc& behavior, bool enable);  // (by its symbol)
     static unsigned int getFwPadKey(const char* name);
     static void setEnableAgentField(gf::GfComBehaviorPc& behavior, bool enable);
     static void setEnableAgentBattle(gf::GfComBehaviorPc& behavior, bool enable);

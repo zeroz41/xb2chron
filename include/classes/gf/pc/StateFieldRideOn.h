@@ -3,6 +3,8 @@
 
 #include "classes/gf/GfStateBase.h"
 #include <new>
+#include "mm/mtl/FixedQueue.h"
+#include "mm/mtl/FixStr.h"
 
 namespace ai { class State; }
 namespace fw { class Message; }
@@ -10,6 +12,7 @@ namespace fw { class MessageObject; }
 
 namespace fw { class UpdateInfo; }
 namespace gf { class GfComBehaviorPc; }
+namespace gf { class GfComAsm; }
 namespace gf { class MsgPcFieldNotifyRiderEvent; }
 
 namespace gf { namespace pc {
@@ -30,8 +33,11 @@ public:
     // the state's own functions; the slots above hand them the owner
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
     void procMsgPcFieldNotifyRiderEvent(GfComBehaviorPc* behavior, fw::MessageObject* from, gf::MsgPcFieldNotifyRiderEvent& msg);
-    unsigned char pad_18[0x120];
-    unsigned long pad_138[2] = {};
+    void syncMotion(GfComBehaviorPc* behavior);  // (by its symbol)
+    unsigned int getVehicleMotType(GfComAsm& com) const;  // (by its symbol)
+    unsigned int getRiderMotType(GfComAsm& com) const;  // (by its symbol)
+    // asm commands update runs, first in first out (the name is not the original's)
+    mm::mtl::FixedQueue<mm::mtl::FixStr<32>, 8> m_cmdQueue;
 };
 }}  // namespace gf::pc
 

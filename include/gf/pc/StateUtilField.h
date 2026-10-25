@@ -10,6 +10,7 @@ namespace gf { class GfComPropertyPc; }
 namespace gf { class GfComBehaviorPc; }
 namespace gf { class GfComponent; }
 namespace gf { class GfObj; }
+namespace gf { class GF_OBJ_HANDLE; }
 namespace mm { class Plane; }
 
 namespace gf { namespace pc {
@@ -57,6 +58,7 @@ public:
     // the object the PC can access now, if any (by its symbol)
     static gf::GfObj* getAccessTarget(gf::GfComBehaviorPc& behavior);
     static void setSpecialActStatus(gf::GfComBehaviorPc& behavior, bool status);
+    static gf::GF_OBJ_HANDLE* getLureTargetHandle(gf::GfComBehaviorPc& behavior);  // (by its symbol)
     static void setEnableLure(gf::GfComBehaviorPc& behavior, bool enable);  // StateFieldLure::leave's (by its symbol)
     // the auto-run: toggled, set, tested and fed to the input (by their symbols)
     static void flipAutoRun(gf::GfComPropertyPc& property);

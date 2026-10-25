@@ -8,6 +8,7 @@ namespace ai { class State; }
 
 namespace fw { class UpdateInfo; }
 namespace gf { class GfComBehaviorPc; }
+namespace gf { class GF_OBJ_HANDLE; }
 
 namespace gf { namespace pc {
 // table 0x7100B68448
@@ -24,7 +25,8 @@ public:
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
-    unsigned char pad_18[0x8];
+    // the lure's target: enter takes StateUtilField::getLureTargetHandle's (the name is not the original's)
+    GF_OBJ_HANDLE* m_target;
 };
 }}  // namespace gf::pc
 
