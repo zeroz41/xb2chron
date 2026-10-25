@@ -58,6 +58,8 @@ void AI_PlayVoice(gf::GF_OBJ_HANDLE* handle, int voice);
 int AI_GetPlayVoiceID(gf::GF_OBJ_HANDLE* handle);
 void AI_SetScout(gf::GF_OBJ_HANDLE* handle, bool);
 void AI_SetSuperArmor(gf::GF_OBJ_HANDLE* handle, float time);
+// StateFieldOnGround::update asks it for the PC's handle before starting a field battle (by its symbol)
+bool IsBattleStart(gf::GF_OBJ_HANDLE* handle);
 }}  // namespace btl::Utility
 
 #endif

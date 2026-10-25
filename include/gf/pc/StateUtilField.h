@@ -89,6 +89,21 @@ public:
     static void notifyTurn(gf::GfComBehaviorPc& behavior);
     static bool isStop(gf::GfComPropertyPc& property, unsigned int noInputFrames);  // (by its symbol)
     static void setAsmSpeedMove(gf::GfComPropertyPc& property);  // (by its symbol)
+    // (by their symbols)
+    static bool isWallAdsorptionAir(gf::GfComPropertyPc& property);
+    static bool isWallAdsorption(gf::GfComPropertyPc& property);
+    static bool isWallAdsorptionUnderWall(gf::GfComPropertyPc& property);
+    static bool isSwimFromAir(gf::GfComPropertyPc& property);
+    static bool isSwimMoveFromAir(gf::GfComPropertyPc& property);
+    static bool isSlideGroundLanding(gf::GfComPropertyPc& property);
+    static bool isSlideSlope(gf::GfComPropertyPc& property);
+    static bool isBackRangeAir(gf::GfComPropertyPc& property);
+    static bool isBigLandDistance(gf::GfComBehaviorPc& behavior);
+    static void onLandSliding(gf::GfComBehaviorPc& behavior);
+    static bool ignoreOnGroundJump(gf::GfComPropertyPc& property, float time);
+    static gf::GfObj* getLureTarget(gf::GfComBehaviorPc& behavior);
+    static bool isStartSlidePosuture(gf::GfComBehaviorPc& behavior);
+    static bool requestBattleStart(gf::GfComPropertyPc& property);
 };
 
 }}  // namespace gf::pc

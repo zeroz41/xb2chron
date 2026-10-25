@@ -95,6 +95,12 @@
 #include "classes/gf/pc/AccessPlugin.h"
 #include "gf/ParamObj.h"
 #include "gf/pc/MoveUtilField.h"
+#include "anm/QsTransform.h"
+#include "btl/Utility.h"
+#include "gf/MsgPcBattleStart.h"
+#include "gf/MsgPcFieldGetAccessType.h"
+#include "classes/gf/GfMenuManager.h"
+#include "mm/Math.h"
 #include <string.h>
 
 namespace gf {
@@ -136,6 +142,39 @@ void StateFieldAir::leave(GfComBehaviorPc* behavior, ai::State* next) {
     }
 }
 
+void StateFieldAir::update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info) {
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    GfComAsm* comAsm = behavior->m_owner->getComponent<GfComAsm>(2);
+    if (StateUtilField::isWallAdsorptionAir(*property) && StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(0xC))) {
+        requestState(0x29);
+        return;
+    }
+    if (property->m_waterLevel != 3) {
+        return;
+    }
+    if (property->m_stateFlags & 0x800) {
+        if (StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(0xB))) {
+            requestState(0x23);
+        }
+        return;
+    }
+    if (StateUtilField::isSwimFromAir(*property)) {
+        if (StateUtilField::isSwimMoveFromAir(*property)) {
+            if (StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD_SWIM_00)) {
+                requestState(0x16);
+            }
+        } else if (StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD_WATERIDLE)) {
+            requestState(0x14);
+        }
+    } else if (StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD_WATERIDLE)) {
+        if (StateUtilField::isSwimMoveFromAir(*property)) {
+            requestState(0x1B);
+        } else {
+            requestState(0x19);
+        }
+    }
+}
+
 void StateFieldJump::enter(GfComBehaviorPc* behavior, ai::State* prev) {
     GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
     property->m_moveVec2.x = 0.0f;
@@ -155,6 +194,61 @@ void StateFieldJump::leave(GfComBehaviorPc* behavior, ai::State* next) {
     }
 }
 
+void StateFieldJump::update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info) {
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    GfComAsm* comAsm = behavior->m_owner->getComponent<GfComAsm>(2);
+    const Param* param = property->m_paramList->getAdapter(1).get<Param>();
+    anm::QsTransform locomotion = *comAsm->getLocomotion();
+    locomotion.m_translation = param->m_locomotionScale * locomotion.m_translation;
+    property->setLocomotion(locomotion);
+    m_time += info.m_deltaTime;
+    if (!StateUtilField::ignoreOnGroundJump(*property, m_time)) {
+        if (property->m_stateFlags & 0x10) {
+            if (!StateUtilField::isSlideGroundLanding(*property) ||
+                !StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(0x19))) {
+                if (property->m_moveSpeed > 0.0f && StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD_MOVE)) {
+                    StateUtilField::onLandSliding(*behavior);
+                    requestState(0x37);
+                } else if (StateUtilField::isBigLandDistance(*behavior)) {
+                    StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(4));
+                    requestState(0xE);
+                } else {
+                    StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(3));
+                    requestState(0xD);
+                }
+                return;
+            }
+            requestState(0x36);
+            return;
+        }
+        if (StateUtilField::isSlideSlope(*property) && StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(0x19))) {
+            requestState(0x36);
+            return;
+        }
+    }
+    if (comAsm->isEnd(static_cast<AnimLayer>(0)) &&
+        strcmp(comAsm->getStateName(static_cast<AnimLayer>(0)), "S_jump_01") == 0) {
+        property->m_moveVec2.x = m_speed;
+        property->m_stateFlags &= ~4u;
+        if (StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(6))) {
+            requestState(0xF);
+            return;
+        }
+    }
+    const GfComPropertyPc::Locomotion* applied = property->getLocomotion();
+    if (mm::fabs(applied->m_translation.y) > 1.1920929e-07f) {
+        m_speed = applied->m_translation.y / info.m_deltaTime;
+    }
+    if (m_fromSlide) {
+        return;
+    }
+    if (StateUtilField::isBackRangeAir(*property)) {
+        MoveUtilField::updateMoveJumpBack(info, *property);
+    } else {
+        MoveUtilField::updateMoveJump(info, *property);
+    }
+}
+
 void StateFieldLand::enter(GfComBehaviorPc* behavior, ai::State* prev) {
     GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
     property->m_velocity = mm::Vec3::zero;
@@ -169,6 +263,35 @@ void StateFieldLand::leave(GfComBehaviorPc* behavior, ai::State* next) {
     StateUtil::setEnableDownIK(*behavior, false);
     StateUtil::setFallDamageDisable(*behavior, false);
     StateUtilField::notifyJumpEnd(*behavior);
+}
+
+void StateFieldLand::update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info) {
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    GfComAsm* comAsm = behavior->m_owner->getComponent<GfComAsm>(2);
+    if (!(property->m_stateFlags & 0x400) || !GfGameManager::isGmkTutorialSequenceOK()) {
+        if (property->existInputXY() && StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD_MOVE)) {
+            if (StateUtilField::isInputInverseDir(*property)) {
+                requestState(4);
+            } else {
+                requestState(7);
+            }
+            return;
+        }
+        if (!(property->m_stateFlags & 0x10) && StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(6))) {
+            requestState(0xF);
+            return;
+        }
+        if ((property->m_inputFlags.m_actions & 4) && (property->m_field.m_statusFlags & 0x20000) &&
+            StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(2))) {
+            property->m_moveSpeed = 0.0f;
+            requestState(0xC);
+            return;
+        }
+    }
+    MoveUtilField::updateLandBrake(info, *property);
+    if (comAsm->isEnd(static_cast<AnimLayer>(0)) && StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD_IDLE)) {
+        requestState(3);
+    }
 }
 
 void StateFieldLandBig::enter(GfComBehaviorPc* behavior, ai::State* prev) {
@@ -210,6 +333,37 @@ void StateFieldFall::leave(GfComBehaviorPc* behavior, ai::State* next) {
     if (next != nullptr && next->m_stateID != 0xD) {
         StateUtilField::notifyJumpEnd(*behavior);
     }
+}
+
+void StateFieldFall::update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info) {
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    GfComAsm* comAsm = behavior->m_owner->getComponent<GfComAsm>(2);
+    if ((property->m_stateFlags & 0x810) == 0x10) {
+        if (!StateUtilField::isSlideGroundLanding(*property) ||
+            !StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(0x19))) {
+            if (property->m_moveSpeed > 0.0f && StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD_MOVE)) {
+                StateUtilField::onLandSliding(*behavior);
+                requestState(0x37);
+            } else if (StateUtilField::isBigLandDistance(*behavior)) {
+                StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(4));
+                requestState(0xE);
+            } else {
+                StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(3));
+                requestState(0xD);
+            }
+            return;
+        }
+    } else if (!StateUtilField::isSlideSlope(*property) ||
+               !StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(0x19))) {
+        if (StateUtilField::isBackRangeAir(*property)) {
+            MoveUtilField::updateMoveJumpBack(info, *property);
+        } else {
+            MoveUtilField::updateMoveJump(info, *property);
+        }
+        MoveUtilField::updateFallDown(info, *property);
+        return;
+    }
+    requestState(0x36);
 }
 
 void StateFieldAirDead::enter(GfComBehaviorPc* behavior, ai::State* prev) {
@@ -296,6 +450,36 @@ void StateFieldStopBrake::enter(GfComBehaviorPc* behavior, ai::State* prev) {
 }
 
 void StateFieldStopBrake::leave(GfComBehaviorPc* behavior, ai::State* next) {}
+
+void StateFieldStopBrake::update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info) {
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    GfComAsm* comAsm = behavior->m_owner->getComponent<GfComAsm>(2);
+    if (property->existInputXY() && StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD_MOVE)) {
+        if (StateUtilField::isInputInverseDir(*property)) {
+            requestState(4);
+        } else {
+            requestState(7);
+        }
+        return;
+    }
+    const GfPropertyField::MoveParam* param =
+        property->m_field.m_paramList->getAdapter(0).get<GfPropertyField::MoveParam>();
+    MoveUtilField::updateBrake(info, *property);
+    float speed = property->m_velocity.length();
+    if (speed <= 0.0f && (param->m_brakeStopSpeed != 0.0f
+                              ? strcmp(comAsm->getStateName(static_cast<AnimLayer>(0)), "S_idle") == 0
+                              : StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD_IDLE))) {
+        requestState(3);
+        return;
+    }
+    if (param->m_brakeStopSpeed != 0.0f && !m_stopped && speed <= param->m_brakeStopSpeed &&
+        StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(5))) {
+        m_stopped = true;
+        StateUtil::setEnableDownIK(*behavior, true);
+        property->m_velocity = mm::Vec3::zero;
+    }
+    StateUtilField::setAsmSpeedMove(*property);
+}
 
 void StateFieldOnGround::enter(GfComBehaviorPc* behavior, ai::State* prev) {
     StateUtilField::setAccessFlag(*behavior, true);
@@ -414,6 +598,28 @@ void StateFieldIdle::procMsgPcFieldSetUniqueMotion(GfComBehaviorPc* behavior, fw
         unsigned int motion = msg.m_motion;
         msg.m_flag = StateUtilField::execAsmCmd(*motionAsm, ASM_CMD_ID_FIELD(motion < 3 ? motion + 0x22 : 0x22));
     }
+}
+
+void StateFieldIdleTurn::enter(GfComBehaviorPc* behavior, ai::State* prev) {
+    behavior->m_owner->getComponent<GfComAsm>(2)->setVariable("V_speed", 8.0f);
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    property->m_velocity = mm::Vec3::zero;
+    property->m_moveVec2.y = 0.0f;
+    m_dir = property->m_inputDir.y * property->m_groundFrontDir + property->m_inputDir.x * property->m_stickSideDir;
+    if (m_dir.isZero()) {
+        m_dir = property->m_moveDirInv;
+    } else {
+        float length = m_dir.length();
+        if (length <= 1e-6f) {
+            m_dir = mm::Vec3::zero;
+        } else {
+            float scale = 1.0f / length;
+            m_dir.x = scale * m_dir.x;
+            m_dir.y = scale * m_dir.y;
+            m_dir.z = scale * m_dir.z;
+        }
+    }
+    StateUtilField::notifyTurn(*behavior);
 }
 
 void StateFieldIdleTurn::leave(GfComBehaviorPc* behavior, ai::State* next) {

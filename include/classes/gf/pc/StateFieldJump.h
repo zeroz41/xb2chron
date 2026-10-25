@@ -24,6 +24,11 @@ public:
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
+    // entry 1 of the PC's parameter list (the names are not the original's)
+    struct Param {
+        unsigned char pad_0[0x20];
+        float m_locomotionScale;  // update scales the jump motion's locomotion translation by it
+    };
     // the names are not the original's: update adds each frame's time to m_time, enter sets m_fromSlide when the
     // previous state is 0x36 and clears the rest
     float m_time;

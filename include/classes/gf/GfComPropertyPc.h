@@ -29,6 +29,13 @@ public:
     void setInputDirPow(const mm::Vec3& dir, float pow);
     bool existInputXY() const;  // (by its symbol)
     void setLocomotion(const anm::QsTransform& locomotion);
+    // what setLocomotion keeps (pad_a0, its translation and rotation) while m_stateFlags bit 2 is set, else a static
+    // zero translation and identity rotation (by its symbol; the struct's names are not the original's)
+    struct Locomotion {
+        mm::Vec3 m_translation;
+        mm::Quat m_rotation;
+    };
+    const Locomotion* getLocomotion() const;
     // by its symbol: the water states call it after turning m_rot
     void syncDirection();
 
@@ -51,7 +58,10 @@ public:
         unsigned char pad_4[0x4];
     };
 
-    unsigned char pad_3c[0x24];
+    // StateFieldOnGround::update: at 1 a battle start hands m_battle MsgPcBattleStart(0) and goes to state 0x3F,
+    // otherwise it asks StateUtilField::requestBattleStart (the name is not the original's)
+    int m_battleStartKind;
+    unsigned char pad_40[0x20];
     InputDir m_inputDir;
     InputFlags m_inputFlags;
     InputDir m_prevInputDir;      // PadAgent::update's copy of last frame's m_inputDir

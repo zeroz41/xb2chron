@@ -26,7 +26,10 @@ public:
 
     // m_paramList's entry 0 (the names are not the original's)
     struct MoveParam {
-        unsigned char pad_0[0x28];
+        unsigned char pad_0[0x24];
+        // StateFieldStopBrake::update runs its stop motion (asm command 5) once the PC is this slow; at 0 it has
+        // none and goes to C_idle when the PC stands
+        float m_brakeStopSpeed;
         float m_brakeSlowSpeed;  // StateFieldWaterBrake::update runs C_swim_01 once the PC is this slow
     };
 
