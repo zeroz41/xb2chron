@@ -33,8 +33,19 @@ public:
     // SCOM_POPUP::createAchievement passes its blade, line and level; when it returns true no popup is queued
     static bool setupSaveAchievementPopup(unsigned int, unsigned int, unsigned int);
     static bool isCondDriverModel(unsigned int);
+    // the blade's model condition holds (GfGameCond), outside battle (no forced normal Homura, its driver of party
+    // 4 not in battle)
+    static bool isCondBladeModel(unsigned int blade);
+    // an alpha change (SCOM_OBJ_ALPHA) for the belonging in slot 1 or 2 of the object's weapon
+    static void changeAlphaBelonging(GF_OBJ_HANDLE* handle, unsigned int slot, float alpha, float time);
     static const char* getBladeModel(unsigned int blade, bool flag);
     static const char* getBladeMotion(unsigned int blade, bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // GfGameUtil's (right after getBladeModel, its only caller found). What it does: unless the blade is a Hana
+    // (GfDataHana::isValid), the model name a GfBdatItem row of one of the blade's equipped orbs gives
+    // (GfDataBlade::getEquipOrb by slot, fn_7100200F60 the name, fn_7100200FE4 the blade it is for, which must be
+    // this blade); nullptr for none. getBladeModel falls back to SDataBlade::m_modelName.
+    static const char* fn_71002DEFBC(unsigned int blade);
     static const char* getSalvageDriverModel(unsigned int driver);  // the salvage setup passes its object id
     // the player party enters a battle (GfPlayComBattleStart retries it up to 3 seconds); handle -1 for none
     static bool enterPlayerBattle(bool flag, GF_OBJ_HANDLE* handle, bool flag2);

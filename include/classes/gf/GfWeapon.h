@@ -14,6 +14,10 @@ public:
     // idle state name GfGameUtil::makeWeaponStateIdle gives for the weapon's owner (GfGameUtil::getWeaponOwner of the
     // object's handle) and whether that owner is in battle, and sets it on layer 0 (GfComAsm::setState).
     void fn_71002AE854();
+    // the resource ID (GfAppend::getRscID) of the first append in the append list of the object in use's first
+    // (right) and second (left) handle; 0 without appends (the original zero-extends it: a wider return type)
+    unsigned int getRscRight() const;
+    unsigned int getRscLeft() const;
 };
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function of the GfWeapon unit
 // (its address lies there; no this). What it does: the model name of driver id from GfBdatChrDr

@@ -73,8 +73,15 @@ public:
     unsigned char m_race;
     unsigned char m_gender;
     unsigned short m_iconData;
-    char m_modelName[0x28];  // getModelResourceName; the length is the distance to the next
-    char m_motionName[0x28];  // getMotionResourceName; the length is the distance to the next
+    char m_modelName[0x14];  // getModelResourceName; the length is the distance to the next
+    // the model GfGameUtil::getBladeModel gives while isCondBladeModel holds, when m_hasCondModel is set (the names
+    // are not the original's; the length is the distance to the next)
+    char m_condModelName[0x10];
+    int m_hasCondModel;
+    char m_motionName[0x14];  // getMotionResourceName; the length is the distance to the next
+    // the same for the motion (GfGameUtil::getBladeMotion; the names are not the original's)
+    char m_condMotionName[0x10];
+    int m_hasCondMotion;
     char m_addMotionName[0x14];  // GfDataBlade::getResourceNameAddMotion; the length is the distance to the next
     char m_voiceStr[0x1C];  // GfDataBlade::getVoiceStr; the length is the distance to the next
     unsigned char pad_78c[0x20];
@@ -91,7 +98,9 @@ public:
     unsigned char m_eyeRotControl;
     unsigned char pad_827[0x1];
     unsigned short m_coolTime;
-    unsigned char pad_82a[0x2];
+    // the game condition under which the blade shows its alternate model (GfGameUtil::isCondBladeModel; the name
+    // is not the original's)
+    unsigned short m_modelCondition;
     unsigned short m_equipWeapon;  // its weapon (DataObjPcWpn::getBladeSet compares it with the weapon's row)
     unsigned short m_chestHeight;
     unsigned short m_landingHeight;

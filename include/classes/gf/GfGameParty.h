@@ -79,6 +79,9 @@ public:
     static unsigned int getDriverBdatId(unsigned int index, unsigned int party);
     static unsigned int getBladeBdatId(unsigned int index, int slot);
     static unsigned int getPartyId(gf::GF_OBJ_HANDLE* handle);
+    // the party of a member by id (GfGameUtil::isCondBladeModel passes 4 and a blade id; the names are not the
+    // original's)
+    static unsigned int getPartyId(unsigned int kind, unsigned int id);
     static gf::GF_OBJ_HANDLE* getLeaderDriver();
     // the handle of the party member driver at an index, and of the blade in a slot of the driver at an index
     // (3.0.1's getHandleDriver reads a second argument too, as getDriverBdatId does: StateUtil passes 0; its symbol

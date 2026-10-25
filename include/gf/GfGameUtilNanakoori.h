@@ -8,6 +8,8 @@ public:
     // whether the mission flag change completes a mission (GfGameScene::gevMercenariesMissionFlag passes its first
     // two arguments)
     static bool checkCompleteMission(unsigned int mission, unsigned int flag);
+    // the three levels from the level-up items' counts, then the fans from the cleared missions and the levels
+    static void calcLevelAndFan();
 };
 }  // namespace gf
 

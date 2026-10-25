@@ -1,3 +1,10 @@
+#include "classes/gf/GfWeapon.h"
+#include "gf/SDataBlade.h"
+#include "classes/gf/GfGameParty.h"
+#include "classes/gf/GfGameManager.h"
+#include "gf/GfGameUtil.h"
+#include "gf/GfDataNanakoori.h"
+#include "gf/GfGameUtilNanakoori.h"
 #include "gf/GfDataBlade.h"
 #include "gf/GfDataHana.h"
 #include "gf/SDataDriver.h"
@@ -74,6 +81,12 @@
 #include "classes/gf/GfBdatChrEnArrange.h"
 #include "classes/gf/GfGameFlag.h"
 #include "classes/fw/MessageObject.h"
+#include "gf/SDataBlade.h"
+#include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfSound.h"
+#include "classes/gf/SCOM_OBJ_ALPHA.h"
+#include "gf/GfAppend.h"
+#include "fw/LangUtil.h"
 
 namespace gf {
 
@@ -490,6 +503,95 @@ void GfGameUtil::execEquipDriverDefaultAcce(unsigned int driver) {
         }
         GfEquipUtil::equipDriverAcce(driver, 0, accessory, GfItemHandle());
     }
+}
+
+}  // namespace gf
+
+namespace gf {
+
+bool GfGameUtil::isCondBladeModel(unsigned int blade) {
+    if (GfGameManager::isChangeNormalHomuraForce(blade)) {
+        return false;
+    }
+    GfObjAcc acc(GfGameParty::getHandleDriver(GfGameParty::getPartyId(4, blade), 0));
+    if (acc.m_obj != nullptr && acc.isBattle()) {
+        return false;
+    }
+    if (GfGameManager::isBattle()) {
+        return false;
+    }
+    return GfGameCond::isGameCond(GfDataBlade::getSDataBlade(blade)->m_modelCondition);
+}
+
+void GfGameUtil::changeAlphaBelonging(GF_OBJ_HANDLE* handle, unsigned int slot, float alpha, float time) {
+    GfWeapon* weapon = GfMountManager::getGfWeapon(handle, static_cast<GFATTACH>(2));
+    if (weapon == nullptr) {
+        return;
+    }
+    if (slot == 2) {
+        SCOM_OBJ_ALPHA::create(weapon->getObjHandles()[1], time, alpha);
+    } else if (slot == 1) {
+        SCOM_OBJ_ALPHA::create(weapon->getObjHandles()[0], time, alpha);
+    }
+}
+
+void GfGameUtilNanakoori::calcLevelAndFan() {
+    GfDataNanakoori::setVocalLevel(
+        GfDataNanakoori::getLevelForNanakoori(GfItemUtil::getItemBoxCount(GfDataNanakoori::getItemForVocalLevelUp())));
+    GfDataNanakoori::setVisualLevel(
+        GfDataNanakoori::getLevelForNanakoori(GfItemUtil::getItemBoxCount(GfDataNanakoori::getItemForVisualLevelUp())));
+    GfDataNanakoori::setSoulLevel(
+        GfDataNanakoori::getLevelForNanakoori(GfItemUtil::getItemBoxCount(GfDataNanakoori::getItemForSoulLevelUp())));
+    unsigned int level =
+        GfDataNanakoori::getSoulLevel() + GfDataNanakoori::getVisualLevel() + GfDataNanakoori::getVocalLevel();
+    unsigned int mission = GfDataNanakoori::getClearMissionForSpecial() * 16 +
+                           GfDataNanakoori::getClearMissionForLive() * 12 +
+                           GfDataNanakoori::getClearMissionForLesson() * 3;
+    GfDataNanakoori::setFan(mission * level);
+}
+
+unsigned int GfWeapon::getRscRight() const {
+    const GfAppendInfo* info = GfObjUtil::getAppendInfo(getObjHandles()[0], static_cast<GFATTACH>(0));
+    if (info == nullptr) {
+        return 0;
+    }
+    const mm::mtl::FixedVector<GfAppend*, 10>& appends = info->m_appends[info->m_list];
+    if (static_cast<int>(appends.size()) == 0) {
+        return 0;
+    }
+    return appends[0]->getRscID();
+}
+
+unsigned int GfWeapon::getRscLeft() const {
+    const GfAppendInfo* info = GfObjUtil::getAppendInfo(getObjHandles()[1], static_cast<GFATTACH>(0));
+    if (info == nullptr) {
+        return 0;
+    }
+    const mm::mtl::FixedVector<GfAppend*, 10>& appends = info->m_appends[info->m_list];
+    if (static_cast<int>(appends.size()) == 0) {
+        return 0;
+    }
+    return appends[0]->getRscID();
+}
+
+const char* GfGameUtil::getBladeModel(unsigned int blade, bool flag) {
+    SDataBlade* data = GfDataBlade::getSDataBlade(blade);
+    const char* name = fn_71002DEFBC(blade);
+    if (name == nullptr) {
+        name = data->m_modelName;
+    }
+    if (data->m_hasCondModel != 0 && !flag && isCondBladeModel(blade)) {
+        name = data->m_condModelName;
+    }
+    return name;
+}
+
+const char* GfGameUtil::getBladeMotion(unsigned int blade, bool flag) {
+    SDataBlade* data = GfDataBlade::getSDataBlade(blade);
+    if (data->m_hasCondMotion != 0 && !flag && isCondBladeModel(blade)) {
+        return data->m_condMotionName;
+    }
+    return data->m_motionName;
 }
 
 }  // namespace gf

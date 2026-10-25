@@ -155,6 +155,8 @@ public:
     static bool isEnablePlayerDeadSequence();
     static void setGmkTutorialSequenceOK(bool ok);
     static bool isBattle();
+    // GfGameUtil::isCondBladeModel asks it for a blade id before the blade's model condition
+    static bool isChangeNormalHomuraForce(unsigned int blade);
     // whether the field target may be a battle target (GfGameTarget asks it each update)
     static bool isEnableFieldBattleTarget();
     // the game's state (GfGameState::getState's: this only forwards to it; GfGameSalvage::startSalvage starts only in
