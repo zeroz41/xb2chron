@@ -10,6 +10,7 @@ public:
     virtual ~DrAPCache() {}  // slot 0
 
     void endZRender();
+    void shadowBegin();  // DrPixlMan::shadowDirBegin
     void endThicknessRenderFirst();
     void endThicknessRenderSecond();
     void endMdlZRender();

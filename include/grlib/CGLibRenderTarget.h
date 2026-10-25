@@ -31,8 +31,15 @@ public:
     const NVNtexture* m_pNvnTexture;  // 0x10
 };
 
+// the render targets' base: DrPixlMan calls its setColorInvalidate on its CGLibRenderTarget objects (no fields
+// known; that CGLibRenderTarget derives from it is inferred from those calls)
+class CGLibRenderTargetBase {
+public:
+    void setColorInvalidate();
+};
+
 // a render target: the colour buffers drawing goes to (the field names are not the original's)
-class CGLibRenderTarget {
+class CGLibRenderTarget : public CGLibRenderTargetBase {
 public:
     // makes this target current, with up to two more (the other colour buffers)
     void setRenderTarget();

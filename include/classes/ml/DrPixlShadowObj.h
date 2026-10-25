@@ -1,6 +1,8 @@
 #ifndef CLASSES_ML_DRPIXLSHADOWOBJ_H
 #define CLASSES_ML_DRPIXLSHADOWOBJ_H
 
+#include "grlib/CGLibDblUniformBlock.h"
+
 namespace mm { class Vec3; }
 
 namespace ml {
@@ -18,6 +20,9 @@ public:
     virtual void stockTile() {}  // slot 9
     virtual void debugInfo() {}  // slot 10
     virtual void getParmTbl() const;  // slot 11
+
+    // 0x8, the destructor destroys it; DrPixlMan::setShadowObj keeps its address (the name is not the original's)
+    grlib::CGLibDblUniformBlock m_uniform;
 };
 }  // namespace ml
 
