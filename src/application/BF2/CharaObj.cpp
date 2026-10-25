@@ -658,3 +658,221 @@ PosAxis::PosAxis(unsigned int type, float x, float y, float z) : m_type(type), m
 RotAxis::RotAxis(unsigned int type, float x, float y, float z) : m_type(type), m_value(x, y, z) {}
 
 }  // namespace event
+
+#include "classes/event/ObjectCamera.h"
+#include "classes/event/CamObj.h"
+#include "classes/event/ScriptEffectKill.h"
+#include "classes/event/ScriptEffectAnim.h"
+#include "classes/event/ScriptCharaMotion.h"
+#include "classes/event/ScriptCharaFade.h"
+#include "classes/event/ScriptCamFov.h"
+#include "classes/event/ScriptCamRotZ.h"
+#include "classes/event/ScriptCamMoveFov.h"
+#include "classes/event/ScriptCamMoveRotZ.h"
+#include "classes/event/ScriptCamFollowPos.h"
+#include "classes/event/ScriptCamFollowTar.h"
+#include "classes/event/ScriptCharaWink.h"
+#include "classes/event/ScriptCharaTalk.h"
+
+namespace event {
+
+void ScriptCharaLinerRot::doit(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        RotAxis axis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        m_prevRot = obj->m_rot;
+        obj->linerRotAxis(axis, param.val(4).getF32(), static_cast<CV_TYPE>(param.val(5).getS32()));
+    }
+}
+
+void ScriptEffectMove::doit(const event::Param& param) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        PosAxis axis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        m_prevPos = obj->m_pos;
+        obj->linerPosAxis(axis, param.val(4).getF32(), static_cast<CV_TYPE>(param.val(5).getS32()));
+    }
+}
+
+void ScriptEffectTurn::doit(const event::Param& param) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        RotAxis axis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        m_prevRot = obj->m_rot;
+        obj->linerRotAxis(axis, param.val(4).getF32(), static_cast<CV_TYPE>(param.val(5).getS32()));
+    }
+}
+
+void ScriptEffectKill::doit(const event::Param&) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        obj->m_effect->m_ctrl.kill();
+    }
+}
+
+void ScriptEffectKill::redo(const event::Param&) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        obj->m_effect->m_ctrl.kill();
+    }
+}
+
+void ScriptEffectAnim::doit(const event::Param& param) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        obj->m_effect->playAnim(param.val(0).getStr(), param.val(1).getF32());
+    }
+}
+
+void ScriptCharaMotion::doit(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        obj->m_chara->playMotion(param.val(0).getStr(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+    }
+}
+
+void ScriptCharaFade::doit(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        float time = param.val(1).getF32();
+        bool fade = param.val(0).getBool();
+        m_prevFade = (obj->m_chara->m_flags & 0x20) != 0;
+        obj->m_chara->playFade(fade, time);
+    }
+}
+
+void ScriptCharaFade::undo(const event::Param&) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        obj->m_chara->playFade(m_prevFade, 0.0f);
+    }
+}
+
+void ScriptCharaFade::redo(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        obj->m_chara->playFade(param.val(0).getBool(), 0.0f);
+    }
+}
+
+void ScriptCamFov::doit(const event::Param& param) {
+    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
+    if (obj != 0) {
+        float value = param.val(0).getF32();
+        CV_TYPE type = static_cast<CV_TYPE>(param.val(1).getS32());
+        m_prevFov = obj->m_cam->m_fov;
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        cam->m_hands.setFov(value, type);
+    }
+}
+
+void ScriptCamFov::undo(const event::Param&) {
+    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
+    if (obj != 0) {
+        float value = m_prevFov;
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        cam->m_hands.setFov(value, static_cast<CV_TYPE>(1));
+    }
+}
+
+void ScriptCamRotZ::doit(const event::Param& param) {
+    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
+    if (obj != 0) {
+        float value = param.val(0).getF32() * 0.0174532924f;
+        CV_TYPE type = static_cast<CV_TYPE>(param.val(1).getS32());
+        m_prevRotZ = obj->m_cam->m_rotZ;
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        cam->m_hands.setRotZ(value, type);
+    }
+}
+
+void ScriptCamRotZ::undo(const event::Param&) {
+    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
+    if (obj != 0) {
+        float value = m_prevRotZ;
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        cam->m_hands.setRotZ(value, static_cast<CV_TYPE>(1));
+    }
+}
+
+void ScriptCamMoveFov::doit(const event::Param& param) {
+    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
+    if (obj != 0) {
+        float value = param.val(0).getF32();
+        float time = param.val(1).getF32();
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        cam->m_hands.addAnmFov(time, value, static_cast<CV_TYPE>(1));
+    }
+}
+
+void ScriptCamMoveFov::redo(const event::Param& param) {
+    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
+    if (obj != 0) {
+        float value = param.val(0).getF32();
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        cam->m_hands.addAnmFov(0.0f, value, static_cast<CV_TYPE>(1));
+    }
+}
+
+void ScriptCamMoveRotZ::doit(const event::Param& param) {
+    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
+    if (obj != 0) {
+        float value = param.val(0).getF32() * 0.0174532924f;
+        float time = param.val(1).getF32();
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        cam->m_hands.addAnmRotZ(time, value, static_cast<CV_TYPE>(1));
+    }
+}
+
+void ScriptCamMoveRotZ::redo(const event::Param& param) {
+    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
+    if (obj != 0) {
+        float value = param.val(0).getF32() * 0.0174532924f;
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        cam->m_hands.addAnmRotZ(0.0f, value, static_cast<CV_TYPE>(1));
+    }
+}
+
+void ScriptCamFollowPos::doit(const event::Param& param) {
+    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
+    if (obj != 0) {
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        m_prevFollow = (cam->m_hands.m_flags & 1) != 0;
+        bool follow = param.val(0).getBool();
+        cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        if (follow) {
+            cam->m_hands.m_flags |= 1;
+        } else {
+            cam->m_hands.m_flags &= ~1;
+        }
+    }
+}
+
+void ScriptCamFollowTar::doit(const event::Param& param) {
+    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
+    if (obj != 0) {
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        m_prevFollow = (cam->m_hands.m_flags & 1) != 0; // bit 0 (the position flag) here too, as the original reads it
+        bool follow = param.val(0).getBool();
+        cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        if (follow) {
+            cam->m_hands.m_flags |= 2;
+        } else {
+            cam->m_hands.m_flags &= ~2;
+        }
+    }
+}
+
+}  // namespace event

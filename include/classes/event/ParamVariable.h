@@ -21,6 +21,9 @@ public:
     // holds the other number type
     int getS32() const { return m_type == 2 ? (int)m_value.floatValue : m_value.intValue; }
     float getF32() const { return m_type == 1 ? (float)m_value.intValue : m_value.floatValue; }
+    // 1.0.0 has them out of line too (0x71000972D4, 0x71000972EC): the stored value, unconverted
+    bool getBool() const { return m_value.boolValue; }
+    const char* getStr() const { return m_value.strValue; }
     // the value as text ("%d", "%f", "true"/"false", the string, "%lld"); empty for nothing
     void createString(mm::mtl::FixStr<256>& str);
 

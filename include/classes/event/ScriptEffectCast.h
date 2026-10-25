@@ -13,7 +13,7 @@ public:
     virtual const char* cmdName() const { return "effcast"; }  // slot 2
     virtual void doit(event::Param const&);  // slot 3
     virtual void undo(event::Param const&);  // slot 4
-    virtual void redo(event::Param const&);  // slot 5
+    virtual void redo(event::Param const& param) { doit(param); }  // slot 5
 };
 }  // namespace event
 

@@ -6,7 +6,10 @@
 #include "classes/event/Object.h"
 
 namespace mm { class Col4; }
-namespace event { class PosAxis; class RotAxis; }
+#include "classes/event/EffectObj.h"
+#include "classes/event/PosAxis.h"
+#include "classes/event/RotAxis.h"
+#include "event/CvType.h"
 
 namespace event {
 // table 0x7100B3DF50
@@ -27,6 +30,14 @@ public:
     virtual void OnManiRender(event::IManiCallback::RenderParam&);  // slot 15
     void setPosAxis(const PosAxis& pos);
     void setRotAxis(const RotAxis& rot);
+    void linerPosAxis(const PosAxis& pos, float time, CV_TYPE type);
+    void linerRotAxis(const RotAxis& rot, float time, CV_TYPE type);
+
+    EffectObj* m_effect;  // 0x68; the effect the commands play, kill and animate; the name is not the original's
+    // the position and rotation setPosAxis/setRotAxis store (the script commands save and restore them); the
+    // names are not the original's
+    PosAxis m_pos;  // 0x70
+    RotAxis m_rot;  // 0x90
 };
 }  // namespace event
 

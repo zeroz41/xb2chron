@@ -6,6 +6,7 @@ namespace event {
 class EffectCtrl {
 public:
     virtual ~EffectCtrl();  // slot 0
+    void kill();
 };
 }  // namespace event
 

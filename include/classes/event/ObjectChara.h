@@ -6,7 +6,10 @@
 #include "classes/event/Object.h"
 
 namespace mm { class Col4; }
-namespace event { class PosAxis; class RotAxis; }
+#include "classes/event/CharaObj.h"
+#include "classes/event/PosAxis.h"
+#include "classes/event/RotAxis.h"
+#include "event/CvType.h"
 
 namespace event {
 // table 0x7100B3DD70 (its first slots are event::Object's)
@@ -31,6 +34,16 @@ public:
     virtual void OnManiRender(event::IManiCallback::RenderParam&);  // slot 17
     void setPosAxis(const PosAxis& pos);
     void setRotAxis(const RotAxis& rot);
+    void linerPosAxis(const PosAxis& pos, bool flag, float time, CV_TYPE type);
+    void linerRotAxis(const RotAxis& rot, float time, CV_TYPE type);
+
+    unsigned char pad_68[0x8];
+    CharaObj* m_chara;  // 0x70; the character the commands drive; the name is not the original's
+    unsigned char pad_78[0x8];
+    // the position and rotation setPosAxis/setRotAxis store (the script commands save and restore them); the
+    // names are not the original's
+    PosAxis m_pos;  // 0x80
+    RotAxis m_rot;  // 0xa0
 };
 }  // namespace event
 

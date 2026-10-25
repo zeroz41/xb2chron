@@ -14,6 +14,9 @@ public:
     virtual void doit(event::Param const&);  // slot 3
     virtual void undo(event::Param const&);  // slot 4
     virtual void redo(event::Param const&);  // slot 5
+
+    // the character's fade flag before doit, which undo restores; the name is not the original's
+    bool m_prevFade;  // 0x8
 };
 }  // namespace event
 
