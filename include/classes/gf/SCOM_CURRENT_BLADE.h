@@ -9,8 +9,10 @@ namespace gf {
 // table 0x7100B6AC28
 class SCOM_CURRENT_BLADE : public ::gf::SCOM {
 public:
-    virtual ~SCOM_CURRENT_BLADE();  // slot 0
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
+
+    // the name is not the original's: the blade exec makes current (1001/1002 also pick Pyra or Mythra)
+    unsigned int m_value;
 };
 }  // namespace gf
 

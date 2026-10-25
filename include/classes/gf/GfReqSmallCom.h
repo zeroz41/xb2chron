@@ -18,6 +18,7 @@ public:
     virtual ~GfReqSmallCom();  // slot 0
     void update(const fw::UpdateInfo& info);
     static bool isExistCommand();
+    static bool isExistCommandWithoutParallel();  // a request is queued in m_list (the parallel lists not counted)
     static bool isExistCommand(SCOM_TYPE type);  // a request of that type is queued or running
     bool isValid(GF_SCOM_HANDLE* handle);  // the request is still queued or running
 

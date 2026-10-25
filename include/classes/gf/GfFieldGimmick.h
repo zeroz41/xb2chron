@@ -17,6 +17,9 @@ public:
     static int getBdatIdOfActiveGmkAntiBladeArea();  // GfGameUtil::getAntiBladeAreaBdatId forwards here
     // whether the map's gimmick sets are ready (GfAutoTalkManager::seqInit waits for it)
     static bool isGmkSetReady();
+    // SCOM_CREATE_GMK_SET / SCOM_DESTROY_GMK_SET's exec pass their gimmick set id
+    static void createGmkSet(int gmkSetId);
+    static void disposeGmkSet(int gmkSetId);
     // GfFieldManager's forwards (its initialize, finalize and update call them)
     static void build(const GfSetupParam& param);
     static void destroy();

@@ -78,6 +78,18 @@
 #include "classes/gf/GfGameParty.h"
 #include "classes/gf/GfAllocator.h"
 
+#include "classes/gf/GfFieldGimmick.h"
+#include "classes/gf/GfAutoTalkManager.h"
+#include "classes/gf/SCOM_CURRENT_BLADE.h"
+#include "classes/gf/SCOM_SALVAGE_VOICE.h"
+#include "classes/gf/SCOM_RANDOM_INN.h"
+#include "gf/GfSalvageVoice.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfDataDriver.h"
+#include "gf/GfDataMap.h"
+#include "gf/GfDataUtil.h"
+#include "classes/gf/GfGameVoice.h"
+#include "classes/gf/SCOM_FADE.h"
 namespace gf {
 bool SCOM_ADD_MONEY::exec(fw::UpdateInfo const&) {
     GfGameUtil::addMoney(m_money);
@@ -1043,6 +1055,119 @@ bool SCOM_CHAR_DEAD::exec(fw::UpdateInfo const&) {
         }
     }
     return true;
+}
+
+bool SCOM_DESTROY_GMK_SET::exec(fw::UpdateInfo const&) {
+    GfFieldGimmick::disposeGmkSet(m_value);
+    return true;
+}
+
+bool SCOM_CREATE_GMK_SET::exec(fw::UpdateInfo const&) {
+    GfFieldGimmick::createGmkSet(m_value);
+    GfAutoTalkManager::sys()->create();
+    return true;
+}
+
+bool SCOM_ZONE::exec(fw::UpdateInfo const&) {
+    if (!GfGameManager::isControlFree()) {
+        return false;
+    }
+    unsigned int mapId = GfGameManager::getMapID();
+    if (mapId == m_value && !GfDataMap::isMapCompleteFlag(mapId)) {
+        GfDataMap::setMapCompleteFlag(m_value);
+    }
+    return true;
+}
+
+bool SCOM_CURRENT_BLADE::exec(fw::UpdateInfo const&) {
+    unsigned int setId = GfDataBlade::getDriverSetID(m_value);
+    unsigned int driver = GfDataBlade::getSetDriver(m_value);
+    if (setId <= 4 && driver != 0) {
+        GfDataDriver::setEquipBlade(driver, true, setId);
+    }
+    if (m_value == 1001) {
+        GfDataBlade::setHikariCurrent(false);
+    } else if (m_value == 1002) {
+        GfDataBlade::setHikariCurrent(true);
+    }
+    return true;
+}
+
+GAME_VOICE_HANDLE* SCOM_SALVAGE_VOICE::create(GF_OBJ_HANDLE* handle, CV_SALVAGE voice) {
+    return GfSalvageVoice::playVoice(handle, voice);
+}
+
+GAME_VOICE_HANDLE* SCOM_SALVAGE_VOICE::createResult(GF_OBJ_HANDLE* handle, CV_SALVAGE_RESULT voice) {
+    return GfSalvageVoice::playResultVoice(handle, voice);
+}
+
+bool SCOM_SALVAGE_VOICE::isPlayEnd(GAME_VOICE_HANDLE* voice) {
+    return GfGameVoice::getResult(voice) != CV_RESULT(2);
+}
+
+void SCOM_RANDOM_INN::setRandom() {
+    GfDataUtil::setRandomInn();
+}
+
+bool GfReqSmallCom::isExistCommand() {
+    if (!sys()->m_list.empty()) {
+        return true;
+    }
+    return !sys()->m_parallelList.empty();
+}
+
+bool GfReqSmallCom::isExistCommandWithoutParallel() {
+    return !sys()->m_list.empty();
+}
+
+bool SCOM_SOLO_REX::exec(fw::UpdateInfo const&) {
+    for (unsigned int i = 0; i < 422; ++i) {
+        unsigned int blade = GfDataBlade::getBladeID(i);
+        if (blade == 0) {
+            continue;
+        }
+        int creator = GfDataBlade::getCreator(blade);
+        if (creator == 0 || creator == 1) {
+            continue;
+        }
+        if (GfDataBlade::isDummyBlade(blade) || GfDataBlade::fn_71002383C8(blade)) {
+            continue;
+        }
+        if (GfDataBlade::getSetDriver(blade) == 0 || GfDataBlade::isReleasedRareBlade(blade)) {
+            continue;
+        }
+        GfDataBlade::setUnselect(blade, m_value);
+    }
+    return true;
+}
+
+SCOM_FADE::Fade SCOM_FADE::s_fades[3];
+unsigned long SCOM_FADE::s_hCreatedReq = -1;
+
+bool SCOM_FADE::exec(fw::UpdateInfo const&) {
+    if (!GfMenuFade::isInitialized()) {
+        return false;
+    }
+    for (int i = 0; i < 3; ++i) {
+        if (s_fades[i].m_slot != static_cast<unsigned int>(-1)) {
+            GfMenuFade::setFade(s_fades[i].m_slot, s_fades[i].m_frames, s_fades[i].m_color);
+            s_fades[i].m_slot = -1;
+        }
+    }
+    s_hCreatedReq = -1;
+    return true;
+}
+
+unsigned long SCOM_FADE::create(unsigned int slot, unsigned int frames, const mm::Col4& color) {
+    s_fades[slot].m_slot = slot;
+    s_fades[slot].m_frames = frames;
+    s_fades[slot].m_color = color;
+    if (s_hCreatedReq == static_cast<unsigned long>(-1)) {
+#line 1114
+        SCOM_FADE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_FADE(SCOM_TYPE(27));
+        s_hCreatedReq = GfReqSmallCom::addRequest(request);
+    }
+    return s_hCreatedReq;
 }
 
 }  // namespace gf

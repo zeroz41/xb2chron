@@ -42,6 +42,7 @@ public:
     }
     // the blade's creator (a 16-bit field of its SDataGame entry, 0x8A4 bytes each, at 0x5A2E)
     static int getCreator(unsigned int blade);
+    static unsigned int getBladeID(unsigned int index);  // the blade in list slot index (0..421), 0 for none
     // fills list with the party's blades (SCOM_ACHIEV_INC::createParty and createCrystal)
     static void getListPartyAll(mm::mtl::FixedVector<unsigned short, 422>& list);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
@@ -117,6 +118,8 @@ public:
     static bool isUnselect(unsigned int blade);
     // the driver the blade is set to, 0 for none
     static unsigned int getSetDriver(unsigned int blade);
+    // the driver's slot (0..4) the blade is set in; SCOM_CURRENT_BLADE::exec passes it to GfDataDriver::setEquipBlade
+    static unsigned int getDriverSetID(unsigned int blade);
     static AchievInfo* getAchievInfo(unsigned int blade, unsigned int line);
     // the blades with an affinity chart
     static void getListForAchievement(mm::mtl::FixedVector<unsigned short, 422>& list);
