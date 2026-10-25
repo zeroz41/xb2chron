@@ -1118,7 +1118,13 @@ HideManager::HideManager() : pad_10(0), m_group(), pad_1018(0), pad_2020(0), pad
 
 DebugManager::DebugManager() : m_flags(0), pad_224(0) {}
 
+// out of line: Singleton<DebugManager>::getPtr registers it with __cxa_atexit (D2 0x7100149758, a bare ret)
+DebugManager::~DebugManager() {}
+
 MovieManager::MovieManager() : pad_10(0), pad_118(false), pad_220(-1) {}
+
+// out of line: Singleton<MovieManager>::getPtr registers it with __cxa_atexit (D2 0x710014B038, a bare ret)
+MovieManager::~MovieManager() {}
 
 TodoManager::TodoManager() : pad_10(0), pad_8c18(0), pad_8c20(0), pad_10e28(0) {}
 

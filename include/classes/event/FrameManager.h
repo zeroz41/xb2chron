@@ -24,6 +24,9 @@ public:
     virtual ~FrameManager();  // slot 0
     // called by the evt_setup script plugin (application/BF2/ScriptPlayText); a result its callers ignore is declared void
     void addKeyFrame(float frame, bool);
+    // what pauses the frame (evt_movie.play passes 11); the enumerators' names are unknown
+    enum PAUSE_TYPE : int {};
+    void pause(PAUSE_TYPE type, bool enable);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     // out of line (mm::mtl::Singleton<event::FrameManager>::getPtr's static calls it)
     FrameManager();

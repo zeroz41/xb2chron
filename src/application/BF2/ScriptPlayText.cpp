@@ -1,24 +1,29 @@
 // Script VM plugins of this unit (their tables, entries and Regist functions). The entries are static and nothing
-// names them: they keep placeholder fn_ names. Plugins not written yet: evt_status, evt_movie, pt
-// (and ocThreadRegist).
+// names them: they keep placeholder fn_ names. Plugins not written yet: pt (and
+// ocThreadRegist).
 #include "vm/yvm2.h"
 #include "classes/mm/mtl/Singleton.h"
 #include "classes/event/CamManager.h"
 #include "classes/event/CharaManager.h"
 #include "classes/event/DataManager.h"
+#include "classes/event/DebugManager.h"
 #include "classes/event/EffectManager.h"
 #include "classes/event/Extend.h"
 #include "classes/event/FrameManager.h"
 #include "classes/event/HideManager.h"
 #include "classes/event/LightManager.h"
 #include "classes/event/Manager.h"
+#include "classes/event/MovieManager.h"
 #include "classes/event/ObjectManager.h"
+#include "classes/event/ObjectPartyList.h"
 #include "classes/event/Param.h"
 #include "classes/event/PosAxis.h"
 #include "classes/event/ResManager.h"
 #include "classes/event/ScriptPlayText.h"
 #include "classes/event/SeManager.h"
 #include "classes/event/SeamlessManager.h"
+#include "classes/event/SkipManager.h"
+#include "classes/event/StatusManager.h"
 #include "classes/event/TodoManager.h"
 #include "classes/event/UIManager.h"
 #include "classes/event/VoiceManager.h"
@@ -42,6 +47,7 @@
 #include "classes/gf/GfMenuObjPopup.h"
 #include "classes/gf/GfMenuObjQuestLog.h"
 #include "classes/gf/GfMenuObjTutorial.h"
+#include "classes/gf/GfQuestManager.h"
 #include "classes/gf/GfSequentialPlay.h"
 #include "classes/gf/GfWeapon.h"
 #include "classes/gf/SCOM_ADD_MONEY.h"
@@ -554,6 +560,97 @@ void pluginEvtSetupRegist() {
     vmPluginRegist("evt_setup", s_evtsetupPlugin);
 }
 
+// evt_status.judge
+static int fn_7100665B40(VMThread* pThread) {
+    int type = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int param1 = vmArgOmitChk(pThread, 2) ? 0 : vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int param2 = vmArgOmitChk(pThread, 3) ? 0 : vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    int param3 = vmArgOmitChk(pThread, 4) ? 0 : vmArgIntGet(4, vmArgPtrGet(pThread, 4));
+    int param4 = vmArgOmitChk(pThread, 5) ? 0 : vmArgIntGet(5, vmArgPtrGet(pThread, 5));
+    bool result;
+    if (!mm::mtl::Singleton<event::StatusManager>::getPtr()->judge(static_cast<EVT_judge>(type), param1, param2, param3,
+                                                                   param4, result)) {
+        vmWaitModeSet(pThread);
+    }
+    vmRetBoolSet(pThread, result);
+    return 1;
+}
+
+// evt_status.change
+static int fn_7100665D10(VMThread* pThread) {
+    int type = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int param1 = vmArgOmitChk(pThread, 2) ? 0 : vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int param2 = vmArgOmitChk(pThread, 3) ? 0 : vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    int param3 = vmArgOmitChk(pThread, 4) ? 0 : vmArgIntGet(4, vmArgPtrGet(pThread, 4));
+    int param4 = vmArgOmitChk(pThread, 5) ? 0 : vmArgIntGet(5, vmArgPtrGet(pThread, 5));
+    const char* name = vmArgOmitChk(pThread, 6) ? "" : vmArgStringGet(6, vmArgPtrGet(pThread, 6));
+    bool done = mm::mtl::Singleton<event::StatusManager>::getPtr()->change(static_cast<EVT_change>(type), param1, param2,
+                                                                           param3, param4, name);
+    gf::GfQuestManager::requestOrderQuestForce();
+    if (!done) {
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
+
+// evt_status.getLeader
+static int fn_7100665EF8(VMThread* pThread) {
+    unsigned int id = mm::mtl::Singleton<event::ObjectPartyList>::getPtr()->getLeaderDriverId();
+    if (gf::GfGameManager::fn_71002A9E68()) {
+        // drivers 17-25 are the script's 1-9; the rest count as 1
+        static const unsigned int table[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        if (id < 26) {
+            id = table[id];
+        }
+        if (id < 1 || id > 9) {
+            id = 1;
+        }
+    } else {
+        static const unsigned int table[] = {0, 1, 2, 3, 4, 0, 5};
+        if (id < 7) {
+            id = table[id];
+        }
+        if (id < 1 || id > 5) {
+            id = 1;
+        }
+    }
+    vmRetIntSet(pThread, id);
+    return 1;
+}
+
+// evt_status.getPartner
+static int fn_7100665FD8(VMThread* pThread) {
+    unsigned int bladeId = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    unsigned int id = mm::mtl::Singleton<event::StatusManager>::getPtr()->getDriverByBladeId(bladeId);
+    if (gf::GfGameManager::fn_71002A9E68()) {
+        id = 1;
+    } else {
+        static const unsigned int table[] = {0, 1, 2, 3, 0, 0, 4};
+        if (id < 7) {
+            id = table[id];
+        }
+        if (id < 1 || id > 4) {
+            id = 1;
+        }
+    }
+    vmRetIntSet(pThread, id);
+    return 1;
+}
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B73928).
+static VMPluginFunc s_evtstatusPlugin[] = {
+    {"judge", fn_7100665B40},
+    {"change", fn_7100665D10},
+    {"getLeader", fn_7100665EF8},
+    {"getPartner", fn_7100665FD8},
+    {nullptr, nullptr},
+};
+
+void pluginEvtStatusRegist() {
+    vmPluginRegist("evt_status", s_evtstatusPlugin);
+}
+
+
 // evt_text.seamVoice
 static int fn_71006660E8(VMThread* pThread) {
     int frame = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
@@ -600,6 +697,89 @@ static VMPluginFunc s_evttextPlugin[] = {
 
 void pluginEvtTextRegist() {
     vmPluginRegist("evt_text", s_evttextPlugin);
+}
+
+// evt_movie.preload
+static int fn_7100666634(VMThread* pThread) {
+    const char* name = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    if (!mm::mtl::Singleton<event::DebugManager>::getPtr()->isMovieDebug()) {
+        mm::mtl::Singleton<event::MovieManager>::getPtr()->preload(name, false);
+    }
+    return 0;
+}
+
+// evt_movie.preloadObj
+static int fn_7100666734(VMThread* pThread) {
+    const char* name = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    if (!mm::mtl::Singleton<event::DebugManager>::getPtr()->isMovieDebug()) {
+        mm::mtl::Singleton<event::MovieManager>::getPtr()->preload(name, true);
+    }
+    return 0;
+}
+
+// evt_movie.play
+static int fn_7100666834(VMThread* pThread) {
+    const char* name = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    if (!mm::mtl::Singleton<event::MovieManager>::getPtr()->isScriptFlag() &&
+        !mm::mtl::Singleton<event::MovieManager>::getPtr()->isLoadedAuto(name, false) &&
+        !mm::mtl::Singleton<event::SkipManager>::getPtr()->isSkip()) {
+        mm::mtl::Singleton<event::FrameManager>::getPtr()->pause(static_cast<event::FrameManager::PAUSE_TYPE>(11), true);
+        mm::mtl::Singleton<event::MovieManager>::getPtr()->captureScreen(true);
+        mm::mtl::Singleton<event::MovieManager>::getPtr()->setScriptFlag(true);
+        vmWaitModeSet(pThread);
+        return 0;
+    }
+    mm::mtl::Singleton<event::MovieManager>::getPtr()->preload(name, false);
+    if (!mm::mtl::Singleton<event::MovieManager>::getPtr()->isLoading()) {
+        mm::mtl::Singleton<event::MovieManager>::getPtr()->play(name, false, true);
+        mm::mtl::Singleton<event::FrameManager>::getPtr()->pause(static_cast<event::FrameManager::PAUSE_TYPE>(11), false);
+        mm::mtl::Singleton<event::MovieManager>::getPtr()->captureScreen(false);
+        mm::mtl::Singleton<event::MovieManager>::getPtr()->setScriptFlag(false);
+        return 0;
+    }
+    mm::mtl::Singleton<event::FrameManager>::getPtr()->pause(static_cast<event::FrameManager::PAUSE_TYPE>(11), true);
+    mm::mtl::Singleton<event::MovieManager>::getPtr()->captureScreen(true);
+    vmWaitModeSet(pThread);
+    return 0;
+}
+
+// evt_movie.playObj
+static int fn_7100666DD4(VMThread* pThread) {
+    const char* name = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    if (!mm::mtl::Singleton<event::MovieManager>::getPtr()->isScriptFlag() &&
+        !mm::mtl::Singleton<event::SkipManager>::getPtr()->isSkip() &&
+        !mm::mtl::Singleton<event::MovieManager>::getPtr()->isLoadedAuto(name, false)) {
+        mm::mtl::Singleton<event::FrameManager>::getPtr()->pause(static_cast<event::FrameManager::PAUSE_TYPE>(11), true);
+        mm::mtl::Singleton<event::MovieManager>::getPtr()->captureScreen(true);
+        mm::mtl::Singleton<event::MovieManager>::getPtr()->setScriptFlag(true);
+        vmWaitModeSet(pThread);
+        return 0;
+    }
+    mm::mtl::Singleton<event::MovieManager>::getPtr()->preload(name, true);
+    if (!mm::mtl::Singleton<event::MovieManager>::getPtr()->isLoading()) {
+        mm::mtl::Singleton<event::MovieManager>::getPtr()->play(name, true, true);
+        mm::mtl::Singleton<event::FrameManager>::getPtr()->pause(static_cast<event::FrameManager::PAUSE_TYPE>(11), false);
+        mm::mtl::Singleton<event::MovieManager>::getPtr()->captureScreen(false);
+        mm::mtl::Singleton<event::MovieManager>::getPtr()->setScriptFlag(false);
+        return 0;
+    }
+    mm::mtl::Singleton<event::FrameManager>::getPtr()->pause(static_cast<event::FrameManager::PAUSE_TYPE>(11), true);
+    mm::mtl::Singleton<event::MovieManager>::getPtr()->captureScreen(true);
+    vmWaitModeSet(pThread);
+    return 0;
+}
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B739A8).
+static VMPluginFunc s_evtmoviePlugin[] = {
+    {"preload", fn_7100666634},
+    {"preloadObj", fn_7100666734},
+    {"play", fn_7100666834},
+    {"playObj", fn_7100666DD4},
+    {nullptr, nullptr},
+};
+
+void pluginEvtMovRegist() {
+    vmPluginRegist("evt_movie", s_evtmoviePlugin);
 }
 
 // evt_map.setDisp

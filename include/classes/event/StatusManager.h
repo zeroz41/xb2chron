@@ -5,6 +5,9 @@
 #include "mm/mtl/FixedVector.h"
 
 namespace event { enum MSG_TYPE : int; }
+// evt_status.judge's and evt_status.change's first argument (the script passes an int)
+enum EVT_judge : int;
+enum EVT_change : int;
 
 namespace event {
 
@@ -38,6 +41,11 @@ public:
     void init();
     // 1.0.0's clear() (0x71000F69D0): empties the list, then zeroes the flags
     void clear();
+    // false while the judgement still waits (evt_status.judge then waits); the result goes to pResult; param1..param4 are the script's numbered arguments (names not the original's)
+    bool judge(EVT_judge type, int param1, int param2, int param3, int param4, bool& pResult);
+    // false while the change still waits (evt_status.change then waits)
+    bool change(EVT_change type, int param1, int param2, int param3, int param4, const char* name);
+    unsigned int getDriverByBladeId(unsigned int bladeId) const;
 
 private:
     // bit 0 makes changeFromBdat do nothing; the name is not the original's
