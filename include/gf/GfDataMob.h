@@ -13,6 +13,7 @@ public:
     static unsigned int getRace(unsigned int mob);
     static const char* getMotionName(unsigned int mob);
     static const char* getEffectName(unsigned int mob);
+    static const char* getAddMotionName(unsigned int mob);  // null for none or empty
 };
 }  // namespace gf
 

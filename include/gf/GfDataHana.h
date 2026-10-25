@@ -37,6 +37,11 @@ public:
     static bool isOpenCircuit(unsigned int hana, unsigned int circuit);
     static const EquipHana* getEquipParts(unsigned int hana);
     static unsigned int getEquipPowerRank(unsigned int hana);  // GfGameUtilHana::getPowerRank forwards here
+    static bool isEquipRoleParts(unsigned int hana, unsigned int item);  // GfBdatItem::isITM_HanaRoleFlag{JS,JK,JD}
+    static bool isEquipAttributeParts(unsigned int hana, unsigned int item);  // GfBdatItem::isITM_HanaAtrFlag{JS,JK,JD}
+    static bool isEquipArtsParts(unsigned int hana, unsigned int item);  // GfBdatItem::isITM_HanaArtsEnhFlag{JS,JK,JD}
+    static bool isEquipNArtsParts(unsigned int hana, unsigned int item);  // GfBdatItem::isITM_HanaNArtsSetFlag{JS,JK,JD}
+    static bool isEquipCondenserParts(unsigned int hana, unsigned int item);  // GfBdatItem::isITM_HanaAssistFlag{JS,JK,JD}
 };
 
 }  // namespace gf

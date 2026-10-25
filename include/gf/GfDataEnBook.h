@@ -10,6 +10,7 @@ public:
     static void incDefeatNum(unsigned int);
     static void incDeadNum(unsigned int);
     static unsigned int getEnBoolId(unsigned int arrange);
+    static unsigned int getDefeatNum(unsigned int arrange);  // local flag 0x20, the book row + 0x142
 };
 }  // namespace gf
 

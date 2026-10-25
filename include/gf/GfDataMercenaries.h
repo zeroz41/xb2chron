@@ -81,6 +81,9 @@ public:
     static void setMissionCompleteFlag(unsigned int mission);
     static void clearNewMission(unsigned int mission);
     static unsigned int getLevelMax();
+    static unsigned int getEndMissionID();  // QuestListAcc::getFLD_MercenariesMissionEnd
+    static bool getReserver(mm::mtl::FixedVector<unsigned short, 422>& list);  // false for none
+    static unsigned int getTeamMax();
 };
 }  // namespace gf
 

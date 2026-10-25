@@ -20,6 +20,7 @@ public:
     static bool getWeaponTypeName(unsigned char*& bdat, unsigned int& id, unsigned int wpnType);
     static const char* getModelName(unsigned int weapon);
     static unsigned int getAsmWeaponType(unsigned int weapon);
+    static unsigned int getEffWeaponType(unsigned int type);  // 0 and 17 as they are, else GfBdatItem::getPcWpnTypeMotion
 };
 
 }  // namespace gf

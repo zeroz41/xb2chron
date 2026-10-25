@@ -24,6 +24,10 @@ public:
     static bool isNamed(unsigned int arrange);
     static bool isBoss(unsigned int arrange);
     static unsigned int getSavedHpType(unsigned int arrange);
+    static const char* getAddMotionName(unsigned int rsc);  // null for none or empty
+    static unsigned int getSavedHp(unsigned int type);  // SDataGame::m_enemySavedHp[type - 4]
+    static void setSavedHp(unsigned int type, unsigned int hp);  // SDataGame::m_enemySavedHp[type - 1]
+    static const char* getLoopEffect(unsigned int rsc);  // null for none or empty
 };
 }  // namespace gf
 

@@ -13,14 +13,15 @@ public:
     static unsigned int getItemForVocalLevelUp();
     static unsigned int getItemForVisualLevelUp();
     static unsigned int getItemForSoulLevelUp();
-    static void setVocalLevel(unsigned int level);
-    static void setVisualLevel(unsigned int level);
-    static void setSoulLevel(unsigned int level);
+    // the setters return whether the value changed
+    static bool setVocalLevel(unsigned int level);
+    static bool setVisualLevel(unsigned int level);
+    static bool setSoulLevel(unsigned int level);
     static unsigned int getLevelForNanakoori(unsigned int count);  // the level an item count gives
     static unsigned int getClearMissionForSpecial();
     static unsigned int getClearMissionForLive();
     static unsigned int getClearMissionForLesson();
-    static void setFan(unsigned int fan);
+    static bool setFan(unsigned int fan);
 };
 }  // namespace gf
 

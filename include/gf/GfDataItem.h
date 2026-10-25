@@ -22,6 +22,10 @@ public:
     static bool isFavoriteCategoryFood(unsigned int category);
     static bool isMayItem(unsigned int item);
     static bool isTukiItem(unsigned int item);
+    static bool isMusubiCookItem(unsigned int item);
+    static bool isYuohCookItem(unsigned int item);
+    static unsigned int getItemStartID(ItemType::Type type);  // the type's first BDAT row, 0 for none
+    static float getFavoriteItemTime(unsigned int item);  // GfBdatItem::getFavoriteTime in seconds (x 60)
 };
 }  // namespace gf
 

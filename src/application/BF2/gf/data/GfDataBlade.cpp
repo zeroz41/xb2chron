@@ -1,3 +1,27 @@
+#include "classes/gf/GfBdatBtl.h"
+#include "classes/gf/GfBdatItem.h"
+#include "classes/gf/GfBdatMaplist.h"
+#include "gf/GfDataBladeCreate.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfDataDriver.h"
+#include "gf/GfDataEnBook.h"
+#include "gf/GfDataEnemy.h"
+#include "gf/GfDataFieldSkill.h"
+#include "gf/GfDataHana.h"
+#include "gf/GfDataItem.h"
+#include "gf/GfDataMap.h"
+#include "gf/GfDataMercenaries.h"
+#include "gf/GfDataMob.h"
+#include "gf/GfDataNanakoori.h"
+#include "gf/GfDataSound.h"
+#include "gf/GfDataUtil.h"
+#include "gf/GfDataWeapon.h"
+#include "gf/SDataGame.h"
+#include "gf/GfUtil.h"
+#include "gf/GfDataSound.h"
+#include "classes/gf/GfDataBdat.h"
+#include "mm/mtl/FixStr.h"
+#include "mm/mtl/FixedVector.h"
 #include "gf/GfDataQuest.h"
 #include "gf/SDataGame.h"
 #include "gf/GfDataAchievement.h"
@@ -1592,6 +1616,434 @@ int GfDataMercenaries::getTeamFemaleNum(unsigned int teamId) {
         }
     }
     return num;
+}
+
+
+unsigned char* GfDataDriverArts::getNameFP() {
+    return GfDataBdat::getFP(400);
+}
+
+unsigned char* GfDataDriverArts::getCaptionFP() {
+    return GfDataBdat::getFP(401);
+}
+
+unsigned int GfDataDriverArts::getDamageMul(unsigned int arts, unsigned int level) {
+    if (arts == 0 || level == 0) {
+        return 0;
+    }
+    return GfBdatBtl::get()->getArtsDrDmgMgn(arts, level - 1);
+}
+
+unsigned int GfDataDriverArts::getRecast(unsigned int arts, unsigned int level) {
+    if (arts == 0 || level == 0) {
+        return 0;
+    }
+    return GfBdatBtl::get()->getArtsDrRecast(arts, level - 1);
+}
+
+unsigned int GfDataDriverArts::getEnhance(unsigned int arts, unsigned int level) {
+    if (arts == 0 || level == 0) {
+        return 0;
+    }
+    return GfBdatBtl::get()->getArtsDrEnhance(arts, level - 1);
+}
+
+const char* GfDataDriver::getBelongingMountBone() {
+    return "MT_wire";
+}
+
+const char* GfDataDriver::getBelongingMountBoneA() {
+    return "EX_wireA";
+}
+
+const char* GfDataDriver::getBelongingMountBoneB() {
+    return "EX_wireB";
+}
+
+bool GfDataDriver::fn_710023F9A8(unsigned int driver) {
+    return driver - 0x11 < 9;
+}
+
+unsigned int GfDataMercenaries::getEndMissionID() {
+    return QuestListAcc::get()->getFLD_MercenariesMissionEnd();
+}
+
+int GfDataMercenaries::getMissionCategory(unsigned int mission) {
+    return QuestListAcc::get()->getFLD_MercenariesMissionCategory(mission);
+}
+
+bool GfDataMercenaries::getReserver(mm::mtl::FixedVector<unsigned short, 422>& list) {
+    GfDataBlade::getListReserver(list);
+    return !list.empty();
+}
+
+unsigned int GfDataMercenaries::getTeamMax() {
+    unsigned int level = GfGameFlag::getLocal(4, 2);
+    unsigned int max = 1;
+    if (level > 1) {
+        max++;
+    }
+    if (level > 3) {
+        max++;
+    }
+    return max;
+}
+
+void GfDataBlade::fn_71002320AC(SDataGame* game, bool flag) {
+    GfGameFlag::setLocal(game->m_gameFlag, 1, 0xBDCD, flag);
+}
+
+unsigned short GfDataBlade::fn_7100231884() {
+    return GfGameFlag::getLocal(GfDataManager::getDataGame()->m_gameFlag, 0x10, 1);
+}
+
+void GfDataSound::getFullPath(mm::mtl::FixStr<128>& path, const char* name) {
+    path.format("sound/se/%s%s", name, ".xsp");
+}
+
+unsigned int GfDataMap::getFieldZoneId(unsigned int id) {
+    switch (id) {
+    case 0: return 1;
+    case 1: return 2;
+    case 2: return 3;
+    case 3: return 4;
+    case 4: return 7;
+    case 5: return 5;
+    case 6: return 6;
+    }
+    return 0;
+}
+
+int GfDataUtil::getObjTypeByCharaId(unsigned int chara) {
+    if (chara - 1 < 25) {
+        return 3;
+    }
+    return chara - 1001 < 1000 ? 4 : 0;
+}
+
+const char* GfDataMob::getName(unsigned int mob) {
+    return util::getFilePtrFromPath(GfBdatRsc::get()->getRscMobListModel(mob));
+}
+
+unsigned int GfDataMap::getZoneIdForDevelopPoint(unsigned int point) {
+    if (point == 0) {
+        return 0;
+    }
+    if (GfBdatMaplist* bdat = GfBdatMaplist::get()) {
+        return bdat->getMaplistzone(point);
+    }
+    return 0;
+}
+
+const char* GfDataMap::getWeatherEffName(WEATYPE type) {
+    if (type == 0) {
+        return "";
+    }
+    return GfBdatMaplist::get()->getWeatherInfoeff(type);
+}
+
+const char* GfDataMap::getWeatherSndBeginName(WEATYPE type) {
+    if (type == 0) {
+        return "";
+    }
+    return GfBdatMaplist::get()->getWeatherInfosndBegin(type);
+}
+
+int GfDataMap::getWeatherType(unsigned int mapId, WEATHERID id) {
+    unsigned int index = id - 1;
+    if (index > 3) {
+        return 0x15;
+    }
+    return GfBdatMaplist::get()->getMaplistw_type(mapId, index);
+}
+
+bool GfDataBlade::isNeedAttributeResource(unsigned int blade) {
+    if (blade >= 1197 && blade < 1423) {
+        return true;
+    }
+    if (blade >= 1051 && blade < 1073) {
+        return true;
+    }
+    return blade >= 1005 && blade < 1008;
+}
+
+bool GfDataItem::isMusubiCookItem(unsigned int item) {
+    switch (item) {
+    case 40269:
+    case 40270:
+    case 40271:
+    case 40272:
+    case 40305:
+        return true;
+    }
+    return false;
+}
+
+
+bool GfDataBlade::isHomuriNameHikari() {
+    return GfGameFlag::getLocal(GfDataManager::getDataGame()->m_gameFlag, 1, 0x89FB) != 0;
+}
+
+
+const char* GfDataMob::getEffectName(unsigned int mob) {
+    const char* name = GfBdatRsc::get()->getRscMobListComp_Eff(mob);
+    return *name == '\0' ? nullptr : name;
+}
+
+unsigned int GfDataWeapon::getEffWeaponType(unsigned int type) {
+    if (type == 0) {
+        return 0;
+    }
+    if (type == 17) {
+        return 17;
+    }
+    return GfBdatItem::get()->getPcWpnTypeMotion(type);
+}
+
+unsigned int GfDataItem::getItemType(unsigned int item) {
+    ItemType::Type type;
+    unsigned int index;
+    return getItemType(type, index, item) ? type : 0;
+}
+
+unsigned int GfDataItem::getItemStartID(ItemType::Type type) {
+    unsigned int begin;
+    unsigned int end;
+    return getItemBdatCount(begin, end, type) ? begin : 0;
+}
+
+float GfDataItem::getFavoriteItemTime(unsigned int item) {
+    return GfBdatItem::get()->getFavoriteTime(item) * 60.0f;
+}
+
+
+const char* GfDataEnemy::getAddMotionName(unsigned int rsc) {
+    const char* name = GfBdatRsc::get()->getRscEnRefMotion(rsc);
+    if (name != nullptr && *name != '\0') {
+        return name;
+    }
+    return nullptr;
+}
+
+bool GfDataEnemy::fn_7100235424(unsigned int rsc, unsigned int part) {
+    return GfBdatRsc::get()->getRscEnExtraParts(rsc, part) == 2;
+}
+
+unsigned int GfDataEnemy::getSavedHp(unsigned int type) {
+    SDataGame* game = GfDataManager::getDataGame();
+    return game->m_enemySavedHp[type - 4];
+}
+
+void GfDataEnemy::setSavedHp(unsigned int type, unsigned int hp) {
+    SDataGame* game = GfDataManager::getDataGame();
+    game->m_enemySavedHp[type - 1] = hp;
+}
+
+void GfDataBlade::fn_71002355AC() {
+    unsigned int count = GfGameFlag::getLocal(8, 0x874);
+    if (count > 0xFE) {
+        return;
+    }
+    GfGameFlag::setLocal(8, 0x874, count + 1);
+}
+
+bool GfDataBlade::isDummyBlade(unsigned int blade) {
+    return blade - 1124 < 9 || blade - 1012 < 2 || blade == 1073 || blade == 1110;
+}
+
+unsigned int GfDataBlade::getBladeRelativeID(unsigned int blade) {
+    unsigned int id = 0;
+    if (blade - 1001 < 13) {
+        id = blade - 1001;
+    } else if (blade - 1014 < 176) {
+        id = blade - 994;
+    } else if (blade - 1197 < 226) {
+        id = blade - 1001;
+    }
+    return id;
+}
+
+const char* GfDataMob::getAddMotionName(unsigned int mob) {
+    const char* name = GfBdatRsc::get()->getRscMobListAddMotion(mob);
+    if (name != nullptr && *name != '\0') {
+        return name;
+    }
+    return nullptr;
+}
+
+bool GfDataHana::isEquipRoleParts(unsigned int hana, unsigned int item) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    if (hana == 1005) {
+        return bdat->isITM_HanaRoleFlagJS(item);
+    }
+    if (hana == 1006) {
+        return bdat->isITM_HanaRoleFlagJK(item);
+    }
+    if (hana == 1007) {
+        return bdat->isITM_HanaRoleFlagJD(item);
+    }
+    return false;
+}
+
+bool GfDataHana::isEquipAttributeParts(unsigned int hana, unsigned int item) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    if (hana == 1005) {
+        return bdat->isITM_HanaAtrFlagJS(item);
+    }
+    if (hana == 1006) {
+        return bdat->isITM_HanaAtrFlagJK(item);
+    }
+    if (hana == 1007) {
+        return bdat->isITM_HanaAtrFlagJD(item);
+    }
+    return false;
+}
+
+bool GfDataHana::isEquipArtsParts(unsigned int hana, unsigned int item) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    if (hana == 1005) {
+        return bdat->isITM_HanaArtsEnhFlagJS(item);
+    }
+    if (hana == 1006) {
+        return bdat->isITM_HanaArtsEnhFlagJK(item);
+    }
+    if (hana == 1007) {
+        return bdat->isITM_HanaArtsEnhFlagJD(item);
+    }
+    return false;
+}
+
+bool GfDataHana::isEquipNArtsParts(unsigned int hana, unsigned int item) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    if (hana == 1005) {
+        return bdat->isITM_HanaNArtsSetFlagJS(item);
+    }
+    if (hana == 1006) {
+        return bdat->isITM_HanaNArtsSetFlagJK(item);
+    }
+    if (hana == 1007) {
+        return bdat->isITM_HanaNArtsSetFlagJD(item);
+    }
+    return false;
+}
+
+bool GfDataHana::isEquipCondenserParts(unsigned int hana, unsigned int item) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    if (hana == 1005) {
+        return bdat->isITM_HanaAssistFlagJS(item);
+    }
+    if (hana == 1006) {
+        return bdat->isITM_HanaAssistFlagJK(item);
+    }
+    if (hana == 1007) {
+        return bdat->isITM_HanaAssistFlagJD(item);
+    }
+    return false;
+}
+
+bool GfDataFieldSkill::isFieldSkillSettingAccessed(unsigned int skill) {
+    unsigned int start = QuestListAcc::get()->getFLD_FieldSkillSettingStart();
+    unsigned int index = skill + 59675 - start;
+    return GfGameFlag::getLocal(2, index) & 1;
+}
+
+void GfDataFieldSkill::setFieldSkillSettingAccessed(unsigned int skill) {
+    unsigned int start = QuestListAcc::get()->getFLD_FieldSkillSettingStart();
+    unsigned int index = skill + 59675 - start;
+    GfGameFlag::setLocal(2, index, GfGameFlag::getLocal(2, index) | 1);
+}
+
+bool GfDataFieldSkill::isFieldSkillSettingComplete(unsigned int skill) {
+    unsigned int start = QuestListAcc::get()->getFLD_FieldSkillSettingStart();
+    unsigned int index = skill + 59675 - start;
+    return GfGameFlag::getLocal(2, index) >> 1 & 1;
+}
+
+void GfDataFieldSkill::setFieldSkillSettingComplete(unsigned int skill) {
+    unsigned int start = QuestListAcc::get()->getFLD_FieldSkillSettingStart();
+    unsigned int index = skill + 59675 - start;
+    GfGameFlag::setLocal(2, index, GfGameFlag::getLocal(2, index) | 2);
+}
+
+bool GfDataNanakoori::setVocalLevel(unsigned int level) {
+    unsigned int old = GfGameFlag::getLocal(8, 0x84F);
+    GfGameFlag::setLocal(8, 0x84F, level);
+    return old != level;
+}
+
+bool GfDataNanakoori::setVisualLevel(unsigned int level) {
+    unsigned int old = GfGameFlag::getLocal(8, 0x850);
+    GfGameFlag::setLocal(8, 0x850, level);
+    return old != level;
+}
+
+bool GfDataNanakoori::setSoulLevel(unsigned int level) {
+    unsigned int old = GfGameFlag::getLocal(8, 0x851);
+    GfGameFlag::setLocal(8, 0x851, level);
+    return old != level;
+}
+
+bool GfDataNanakoori::setFan(unsigned int fan) {
+    unsigned int old = GfGameFlag::getLocal(16, 0x60E);
+    GfGameFlag::setLocal(16, 0x60E, fan);
+    return old != fan;
+}
+
+unsigned int GfDataHana::getAutoHate(unsigned int hana) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)];
+    return bdat->getITM_HanaRoleAutoHate(data.m_hanaRoleParts);
+}
+
+unsigned int GfDataHana::getArtsHate(unsigned int hana) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)];
+    return bdat->getITM_HanaRoleArtsHate(data.m_hanaRoleParts);
+}
+
+void GfDataBladeCreate::addAssurePoint(unsigned int point) {
+    unsigned int total = GfDataManager::getDataGame()->m_assurePoint + point;
+    if (total < GfDataManager::getDataGame()->m_assurePoint) {
+        total = 0xFFFFFFFF;
+    }
+    GfDataManager::getDataGame()->m_assurePoint = total;
+}
+
+void GfDataBladeCreate::addAssureCount(unsigned int count) {
+    unsigned int total = GfDataManager::getDataGame()->m_assureCount + count;
+    if (total < GfDataManager::getDataGame()->m_assureCount) {
+        total = 0xFFFFFFFF;
+    }
+    GfDataManager::getDataGame()->m_assureCount = total;
+}
+
+const char* GfDataEnemy::getLoopEffect(unsigned int rsc) {
+    if (rsc == 0) {
+        return nullptr;
+    }
+    const char* name = GfBdatRsc::get()->getRscEnLoopEffect(rsc);
+    if (name == nullptr) {
+        return nullptr;
+    }
+    return *name == '\0' ? nullptr : name;
+}
+
+unsigned int GfDataEnBook::getDefeatNum(unsigned int arrange) {
+    if (arrange == 0) {
+        return 0;
+    }
+    unsigned int book = GfBdatChrEnArrange::get()->getChrEnArrangeBookID(arrange);
+    if (book == 0) {
+        return 0;
+    }
+    return GfGameFlag::getLocal(0x20, book + 0x142);
+}
+
+bool GfDataEnemy::getExtraParts(unsigned int rsc, unsigned int part) {
+    if (part > 3) {
+        return true;
+    }
+    return GfBdatRsc::get()->getRscEnExtraParts(rsc, part) != 0;
 }
 
 }  // namespace gf

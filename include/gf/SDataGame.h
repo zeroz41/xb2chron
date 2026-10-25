@@ -60,7 +60,9 @@ public:
     unsigned short m_rareBladeAppearType;  // 0x10AD50 (named after its accessors; the name is not the original's)
     unsigned char pad_10AD52[0x2];
     unsigned int m_coin;  // 0x10AD54 (named after its accessors; the name is not the original's)
-    unsigned char pad_10AD58[0x18];
+    // 0x10AD58: saved enemy HP (GfDataEnemy::getSavedHp reads [type - 4], setSavedHp writes [type - 1]; the name is
+    // not the original's)
+    unsigned int m_enemySavedHp[6];
     float m_cameraHeight;  // 0x10AD70 (named after its accessors; the name is not the original's)
     unsigned char pad_10AD74[0x100];
     float m_cameraYaw;  // 0x10AE74 (named after its accessors; the name is not the original's)

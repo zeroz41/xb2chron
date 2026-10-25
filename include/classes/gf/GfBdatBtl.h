@@ -73,6 +73,9 @@ public:
     unsigned int getBTL_HanaBaseCircuitNum(unsigned int, unsigned int) const;
     // the ether a power rank costs (GfGameUtilHana::getNeedEtherForExecPowerRankup passes the rank, then hana - 1005)
     int getBTL_HanaPowerEtherNum(unsigned int rank, unsigned int hana) const;
+    unsigned int getArtsDrDmgMgn(unsigned int arts, unsigned int level) const;
+    unsigned int getArtsDrRecast(unsigned int arts, unsigned int level) const;
+    unsigned int getArtsDrEnhance(unsigned int arts, unsigned int level) const;
 };
 }  // namespace gf
 

@@ -28,6 +28,8 @@ public:
     // MapjumpCallbackInfo::m_mapJumpId), 0 for none
     static unsigned int getMapID(unsigned int mapJumpId);
     static void setMapCompleteFlag(unsigned int mapId);
+    static unsigned int getZoneIdForDevelopPoint(unsigned int point);
+    static int getWeatherType(unsigned int mapId, WEATHERID id);
 };
 }  // namespace gf
 

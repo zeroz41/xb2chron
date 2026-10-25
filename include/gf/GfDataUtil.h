@@ -31,6 +31,7 @@ public:
     static unsigned char getCameraSide();
     static void setCameraSide(unsigned char value);
     static void convertNewCollectFlagPatch();
+    static const char* getAttributeFileName(unsigned int attribute);
 };
 }  // namespace gf
 

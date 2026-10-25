@@ -11,6 +11,8 @@ public:
     static void resetAssureCount();
     static unsigned int getRareBladeAppearType();
     static void setRareBladeAppearType(unsigned int value);
+    static void addAssurePoint(unsigned int point);  // SDataGame::m_assurePoint, saturating
+    static void addAssureCount(unsigned int count);  // SDataGame::m_assureCount, saturating
 };
 }  // namespace gf
 

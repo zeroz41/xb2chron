@@ -188,6 +188,10 @@ public:
     // (appended by chardata) 1.0.0's name: its GfMenuCharDataAdapter::update_BL_InMercenry calls it at the same site
     // (the symbols call it fn_71002398D8)
     static bool isActivateMercenaryTeam(unsigned int blade);
+    static bool isNeedAttributeResource(unsigned int blade);
+    // the reserve blades (GfDataMercenaries::getReserver fills its list with them)
+    static void getListReserver(mm::mtl::FixedVector<unsigned short, 422>& list);
+    static unsigned int getBladeRelativeID(unsigned int blade);  // getBladeIndex
 };
 
 }  // namespace gf

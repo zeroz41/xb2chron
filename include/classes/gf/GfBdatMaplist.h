@@ -32,6 +32,9 @@ public:
     unsigned int getMaplistw_time_BNS(unsigned int, unsigned int) const;
     unsigned int getMaplistw_end_time(unsigned int, unsigned int) const;
     unsigned int getMaplistw_pop_rate(unsigned int, unsigned int) const;
+    unsigned int getMaplistzone(unsigned int map) const;
+    const char* getWeatherInfoeff(unsigned int type) const;
+    const char* getWeatherInfosndBegin(unsigned int type) const;
 };
 }  // namespace gf
 

@@ -1,7 +1,7 @@
 #ifndef GF_GFDATADRIVER_H
 #define GF_GFDATADRIVER_H
 
-namespace gf { class SDataDriver; }
+namespace gf { class SDataDriver; enum DBSLOT : int; }
 namespace gf { struct SDataDriverDlc; }
 namespace gf { enum FAVORITE : int; }
 namespace gf { struct SDataIdea; }
@@ -123,6 +123,11 @@ public:
     // byte at 0x572 of that SDataDriver (m_defaultAcceDone) is set; GfGameUtil::execEquipDriverDefaultAcce skips a
     // driver for which it holds.
     static bool fn_71002491D4(unsigned int driver);
+    static const char* getBelongingMountBone();   // "MT_wire"
+    static const char* getBelongingMountBoneA();  // "EX_wireA"
+    static const char* getBelongingMountBoneB();  // "EX_wireB"
+    static unsigned int getDeathBlowEfbFileIdx(DBSLOT slot, int index);
+    static unsigned int getDeathBlowEabFileIdx(DBSLOT slot, int index);
 };
 }  // namespace gf
 

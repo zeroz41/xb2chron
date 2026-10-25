@@ -102,6 +102,24 @@ public:
     unsigned int getITM_HanaArtsEnhNeedEther(unsigned int) const;
     unsigned int getITM_HanaNArtsSetNeedEther(unsigned int) const;
     unsigned int getITM_HanaAssistNeedEther(unsigned int) const;
+    unsigned int getFavoriteTime(unsigned int item) const;
+    bool isITM_HanaRoleFlagJS(unsigned int item) const;
+    bool isITM_HanaRoleFlagJK(unsigned int item) const;
+    bool isITM_HanaRoleFlagJD(unsigned int item) const;
+    bool isITM_HanaAtrFlagJS(unsigned int item) const;
+    bool isITM_HanaAtrFlagJK(unsigned int item) const;
+    bool isITM_HanaAtrFlagJD(unsigned int item) const;
+    bool isITM_HanaArtsEnhFlagJS(unsigned int item) const;
+    bool isITM_HanaArtsEnhFlagJK(unsigned int item) const;
+    bool isITM_HanaArtsEnhFlagJD(unsigned int item) const;
+    bool isITM_HanaNArtsSetFlagJS(unsigned int item) const;
+    bool isITM_HanaNArtsSetFlagJK(unsigned int item) const;
+    bool isITM_HanaNArtsSetFlagJD(unsigned int item) const;
+    bool isITM_HanaAssistFlagJS(unsigned int item) const;
+    bool isITM_HanaAssistFlagJK(unsigned int item) const;
+    bool isITM_HanaAssistFlagJD(unsigned int item) const;
+    unsigned int getITM_HanaRoleAutoHate(unsigned int parts) const;
+    unsigned int getITM_HanaRoleArtsHate(unsigned int parts) const;
 };
 }  // namespace gf
 
