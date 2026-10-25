@@ -1,20 +1,35 @@
 #ifndef CLASSES_GF_GFPLAYCOMIRACAMPSAVE_H
 #define CLASSES_GF_GFPLAYCOMIRACAMPSAVE_H
 
+#include "classes/gf/GfPlayCom.h"
 #include "mm/mtl/RTTI.h"
-namespace fw { class UpdateInfo; }
 
 namespace gf {
 // table 0x7100B57B28
-class GfPlayComIraCampSave {
+class GfPlayComIraCampSave : public GfPlayCom {
 public:
+    explicit GfPlayComIraCampSave(bool skip) : GfPlayCom(11, false), m_req(-1), m_skip(skip) { s_activate++; }
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Static members: they allocate this
+    // class (table 0x7100B57B28, kind 11). What they do: the first news one that never skips the solo-party request,
+    // the second one that skips it unless no other is running (s_activate < 1).
+    static GfPlayComIraCampSave* fn_710031988C();
+    static GfPlayComIraCampSave* fn_7100319900();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfPlayComIraCampSave();  // slot 1
-    virtual void getFuncName() const;  // slot 3
+    virtual const char* getFuncName() const {  // slot 3
+        static const char* func = "IraCampSave";
+        return func;
+    }
     virtual void start();  // slot 4
     virtual void end();  // slot 5
-    virtual void update(fw::UpdateInfo const&, bool);  // slot 6
+    virtual bool update(const fw::UpdateInfo& info, bool flag);  // slot 6
     static mm::mtl::RTTI m_rtti;
+    // how many exist (the constructor counts up, the destructor down; start acts only while it is 1). Proposed
+    // name, not the original's: the symbols leave it unnamed (lbl_7100EA4B30)
+    static int s_activate;
+
+    unsigned int m_req;  // start's GfReqCommand::reqSoloParty handle; the name is not the original's
+    bool m_skip;  // start makes no request when it is set; the name is not the original's
 };
 }  // namespace gf
 

@@ -2,6 +2,7 @@
 #define GF_GFREQPARAM_H
 
 #include "mm/Vec3.h"
+#include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedVector.h"
 
 namespace gf {
@@ -45,12 +46,24 @@ public:
     // and GfDataUtil::isStartChapterSave)
     void setupForSaveData(unsigned int map, const mm::Vec3& pos, const mm::Vec3& rot, bool startChapter);
 
+    // a position and turn after the jump; GfMapjumpInfo holds nine (its copy, out of line in gf_play_command, copies
+    // each one's Vec3, then the float and the bool only). The name is not the original's
+    class Point {
+    public:
+        mm::Vec3 m_pos;
+        float m_rotY;
+        bool m_setRotY;
+    };
+
     unsigned int m_map;
-    unsigned char pad_4[0x3C];
+    unsigned char pad_4[0xC];
+    // a text of up to 31 characters (the copy runs FixStr's strlen, assert and strcpy on it)
+    mm::mtl::FixStr<32> pad_10;
     mm::Vec3 m_pos;
     float m_rotY;
     bool m_setRotY;
-    unsigned char pad_55[0x10B];
+    // eight more positions after m_pos's; the name is not the original's
+    Point m_points[8];
     bool m_fromSaveData;
     bool m_startChapter;
     unsigned char pad_162[0x2];

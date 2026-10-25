@@ -1,3 +1,11 @@
+#include "classes/gf/GfPlayComScriptTutorialSeq.h"
+#include "classes/gf/GfGameScene.h"
+#include "classes/gf/GfFieldWeather.h"
+#include "classes/gf/GfPlayComEventWeather.h"
+#include "classes/gf/GfPlayComIraCampSave.h"
+#include "gf/GfReqParam.h"
+#include "gf/GfReqCommand.h"
+#include "classes/gf/GfPlayComMapjump.h"
 #include "classes/gf/GfMenuObjCommonText.h"
 #include "classes/gf/GfPlayComResetBlade.h"
 #include "classes/gf/GfPlayComMenuObjCommonText.h"
@@ -243,7 +251,21 @@ GfPlayComWait* GfPlayComWait::create(float time) {
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComWait(time);
 }
 
+void GfPlayComMapjump::start() { m_req = GfReqCommand::reqMapjump(m_info); }
+
 void GfPlayComMapjump::end() {}
+
+bool GfPlayComMapjump::update(const fw::UpdateInfo& info, bool flag) {
+    if (flag) {
+        return true;
+    }
+    return !GfReqManager::isValid(m_req);
+}
+
+GfPlayComMapjump* GfPlayComMapjump::create(const GfMapjumpInfo& info) {
+#line 501
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComMapjump(info);
+}
 
 void GfPlayComCallbackEventSequence::start() { GfEvent::callEventPlay(GEV(m_begin ? 12 : 13), m_id); }
 
@@ -254,6 +276,28 @@ bool GfPlayComCallbackEventSequence::update(const fw::UpdateInfo& info, bool fla
 GfPlayComCallbackEventSequence* GfPlayComCallbackEventSequence::create(int id, bool begin) {
 #line 942
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComCallbackEventSequence(id, begin);
+}
+
+GfPlayComIraCampSave::~GfPlayComIraCampSave() { s_activate--; }
+
+void GfPlayComIraCampSave::start() {
+    if (s_activate == 1 && !m_skip) {
+        GfGameScene* scene = GfGameScene::get();
+        if (scene != nullptr && scene->m_iraCampSolo) {
+            scene->m_iraCampSolo = false;
+            m_req = GfReqCommand::reqSoloParty(22);
+        }
+    }
+}
+
+void GfPlayComIraCampSave::end() {}
+
+bool GfPlayComIraCampSave::update(const fw::UpdateInfo& info, bool flag) {
+    if (GfReqManager::isValid(m_req)) {
+        return false;
+    }
+    m_req = -1;
+    return true;
 }
 
 // hand: begin GfPlayComOpenMenu::~GfPlayComOpenMenu
@@ -279,6 +323,21 @@ void GfPlayComEventFade::end() {
 GfPlayComEventFade* GfPlayComEventFade::create() {
 #line 254
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComEventFade();
+}
+
+void GfPlayComEventWeather::start() {
+    if (GfFieldWeather::get() == nullptr) {
+        return;
+    }
+    if (m_weather == 0x15) {
+        return;
+    }
+    GfFieldWeather::setWeatherForEvent(m_weather, nullptr);
+}
+
+GfPlayComEventWeather* GfPlayComEventWeather::fn_7100318730(WEATYPE weather) {
+#line 276
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComEventWeather(weather);
 }
 
 // hand4: end
@@ -1136,6 +1195,27 @@ GfPlayComWaitPlayerToStartGmkTuto* GfPlayComWaitPlayerToStartGmkTuto::create() {
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComWaitPlayerToStartGmkTuto();
 }
 
+GfPlayComScriptTutorialSeq::~GfPlayComScriptTutorialSeq() { s_activate--; }
+
+void GfPlayComScriptTutorialSeq::end() {
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        scene->setEventPlayerStop(false);
+    }
+}
+
+bool GfPlayComScriptTutorialSeq::update(const fw::UpdateInfo& info, bool flag) {
+    if (flag) {
+        SCOM_SCRIPT::create(3, nullptr, false);
+        return true;
+    }
+    return !mm::mtl::PtrSingleton<GfReqSmallCom>::sys()->isValid(m_script);
+}
+
+GfPlayComScriptTutorialSeq* GfPlayComScriptTutorialSeq::fn_710031E044(const char* name, int startId) {
+#line 3922
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComScriptTutorialSeq(name, startId);
+}
+
 // hand: end
 mm::mtl::RTTI GfPlayCom::m_rtti("GfPlayCom", nullptr, nullptr);
 mm::mtl::RTTI GfPlayComEventFade::m_rtti("GfPlayComEventFade", &GfPlayCom::m_rtti, nullptr);
@@ -1159,6 +1239,7 @@ int GfPlayComAfterEventScript::s_activate;
 mm::mtl::RTTI GfPlayComEvent::m_rtti("GfPlayComEvent", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComCallbackEventSequence::m_rtti("GfPlayComCallbackEventSequence", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComIraCampSave::m_rtti("GfPlayComIraCampSave", &GfPlayCom::m_rtti, nullptr);
+int GfPlayComIraCampSave::s_activate;
 int GfPlayComOpenMenu::s_active;
 mm::mtl::RTTI GfPlayComOpenMenu::m_rtti("GfPlayComOpenMenu", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComOpenMenu2::m_rtti("GfPlayComOpenMenu2", &GfPlayCom::m_rtti, nullptr);
@@ -1238,5 +1319,6 @@ mm::mtl::RTTI GfPlayComMapjumpForBattleMapFromArena::m_rtti("GfPlayComMapjumpFor
 mm::mtl::RTTI GfPlayComWaitArenaStateField::m_rtti("GfPlayComWaitArenaStateField", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComStartChallengeBattle::m_rtti("GfPlayComStartChallengeBattle", &GfPlayCom::m_rtti, nullptr);
 mm::mtl::RTTI GfPlayComScriptTutorialSeq::m_rtti("GfPlayComScriptTutorialSeq", &GfPlayCom::m_rtti, nullptr);
+int GfPlayComScriptTutorialSeq::s_activate;
 
 }  // namespace gf

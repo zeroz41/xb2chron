@@ -185,7 +185,11 @@ public:
     // gf::_gffsn::bgmvolFadeBattleEvent fades its track out while it is set (+0x648 in 1.0.0; the name is not the
     // original's)
     bool m_battleEventBgm;
-    unsigned char pad_669[0x267];  // build allocates 0x8D0 bytes
+    unsigned char pad_669[0x24F];
+    // GfPlayComIraCampSave::start clears it and requests solo party 22 (GfReqCommand::reqSoloParty) while it is set;
+    // the name is not the original's
+    bool m_iraCampSolo;
+    unsigned char pad_8B9[0x17];  // build allocates 0x8D0 bytes
     void qevCompleteQuest(const gf::QuestCompleteParam& param);
     void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
     void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int);
