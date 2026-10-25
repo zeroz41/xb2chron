@@ -1,6 +1,8 @@
 #ifndef GRLIB_CGLIBDEVICEOBJ_H
 #define GRLIB_CGLIBDEVICEOBJ_H
 
+#include "nvn/nvn.h"
+
 namespace grlib {
 // the video interface part of the device (CGLibDeviceObj holds one at 0x5000; its destructor is out of line)
 class CGLibDeviceVI {
@@ -18,7 +20,8 @@ public:
     void release();
     void swapChain();
 
-    unsigned char pad_0[0x5000];
+    NVNdevice m_device;  // 0x0: CGLibMemPool::setupBuffer builds its pools on it (the name is not the original's)
+    unsigned char pad_3000[0x2000];
     CGLibDeviceVI m_vi;  // 0x5000
 };
 }  // namespace grlib

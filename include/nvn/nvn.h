@@ -29,6 +29,7 @@ typedef struct NVNcommandBuffer { char reserved[160]; } NVNcommandBuffer;
 typedef struct NVNdevice { char reserved[12288]; } NVNdevice;
 typedef struct NVNdepthStencilState { char reserved[8]; } NVNdepthStencilState;
 typedef struct NVNmemoryPool { char reserved[256]; } NVNmemoryPool;
+typedef struct NVNmemoryPoolBuilder { char reserved[64]; } NVNmemoryPoolBuilder;
 typedef struct NVNpolygonState { char reserved[4]; } NVNpolygonState;
 typedef struct NVNprogram { char reserved[192]; } NVNprogram;
 typedef struct NVNqueue { char reserved[8192]; } NVNqueue;

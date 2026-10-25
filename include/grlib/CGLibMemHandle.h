@@ -45,10 +45,17 @@ public:
     // the block takes memory owned elsewhere (a CGLibVtlMemPool's)
     static void setMemBuff(CGLibMemType& mem, void* buffer);
 
+    // the allocators setup creates (defined in this order). The names are 1.0.0's.
+    static mtl::ALLOC_HANDLE s_hDefHandle;
     // the allocator pixel memory comes from (CGLibState::setPixelResidentArea)
     static mtl::ALLOC_HANDLE s_hPxlHandle;
+    static mtl::ALLOC_HANDLE s_hVtxHandle;
+    static mtl::ALLOC_HANDLE s_hUniHandle;
     // the "GLIBMEM" allocator (CGLibManager::deviceInit allocates the system context from it)
     static mtl::ALLOC_HANDLE s_hMemHandle;
+    static mtl::ALLOC_HANDLE s_hFchHandle;
+    static mtl::ALLOC_HANDLE s_hShdHandle;
+    static mtl::ALLOC_HANDLE s_hCntHandle;
 };
 }  // namespace grlib
 

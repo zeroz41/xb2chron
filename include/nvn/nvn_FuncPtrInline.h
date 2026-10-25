@@ -169,4 +169,28 @@ typedef void (*PFNNVNCOMMANDBUFFERBINDIMAGEPROC)(NVNcommandBuffer* cmdBuf, NVNsh
 extern PFNNVNCOMMANDBUFFERBINDIMAGEPROC pfnc_nvnCommandBufferBindImage;
 static inline void nvnCommandBufferBindImage(NVNcommandBuffer* cmdBuf, NVNshaderStage stage, int index, NVNimageHandle image) { pfnc_nvnCommandBufferBindImage(cmdBuf, stage, index, image); }
 
+typedef void (*PFNNVNMEMORYPOOLBUILDERSETDEFAULTSPROC)(NVNmemoryPoolBuilder* builder);
+extern PFNNVNMEMORYPOOLBUILDERSETDEFAULTSPROC pfnc_nvnMemoryPoolBuilderSetDefaults;
+static inline void nvnMemoryPoolBuilderSetDefaults(NVNmemoryPoolBuilder* builder) { pfnc_nvnMemoryPoolBuilderSetDefaults(builder); }
+
+typedef void (*PFNNVNMEMORYPOOLBUILDERSETDEVICEPROC)(NVNmemoryPoolBuilder* builder, NVNdevice* device);
+extern PFNNVNMEMORYPOOLBUILDERSETDEVICEPROC pfnc_nvnMemoryPoolBuilderSetDevice;
+static inline void nvnMemoryPoolBuilderSetDevice(NVNmemoryPoolBuilder* builder, NVNdevice* device) { pfnc_nvnMemoryPoolBuilderSetDevice(builder, device); }
+
+typedef void (*PFNNVNMEMORYPOOLBUILDERSETFLAGSPROC)(NVNmemoryPoolBuilder* builder, int flags);
+extern PFNNVNMEMORYPOOLBUILDERSETFLAGSPROC pfnc_nvnMemoryPoolBuilderSetFlags;
+static inline void nvnMemoryPoolBuilderSetFlags(NVNmemoryPoolBuilder* builder, int flags) { pfnc_nvnMemoryPoolBuilderSetFlags(builder, flags); }
+
+typedef void (*PFNNVNMEMORYPOOLBUILDERSETSTORAGEPROC)(NVNmemoryPoolBuilder* builder, void* memory, size_t size);
+extern PFNNVNMEMORYPOOLBUILDERSETSTORAGEPROC pfnc_nvnMemoryPoolBuilderSetStorage;
+static inline void nvnMemoryPoolBuilderSetStorage(NVNmemoryPoolBuilder* builder, void* memory, size_t size) { pfnc_nvnMemoryPoolBuilderSetStorage(builder, memory, size); }
+
+typedef NVNboolean (*PFNNVNMEMORYPOOLINITIALIZEPROC)(NVNmemoryPool* pool, const NVNmemoryPoolBuilder* builder);
+extern PFNNVNMEMORYPOOLINITIALIZEPROC pfnc_nvnMemoryPoolInitialize;
+static inline NVNboolean nvnMemoryPoolInitialize(NVNmemoryPool* pool, const NVNmemoryPoolBuilder* builder) { return pfnc_nvnMemoryPoolInitialize(pool, builder); }
+
+typedef void (*PFNNVNMEMORYPOOLFINALIZEPROC)(NVNmemoryPool* pool);
+extern PFNNVNMEMORYPOOLFINALIZEPROC pfnc_nvnMemoryPoolFinalize;
+static inline void nvnMemoryPoolFinalize(NVNmemoryPool* pool) { pfnc_nvnMemoryPoolFinalize(pool); }
+
 #endif

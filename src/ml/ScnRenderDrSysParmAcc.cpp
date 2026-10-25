@@ -1,3 +1,12 @@
+#include "nvn/nvn.h"
+#include "nvn/nvn_FuncPtrInline.h"
+#include "mtl/MemManager.h"
+#include "grlib/CGLibDeviceObj.h"
+#include "grlib/CGLibBuffFixAlloc.h"
+#include "grlib/CGLibMemPoolAdder.h"
+#include "grlib/CGLibMemPool.h"
+#include "grlib/CGLibMemHandle.h"
+#include "classes/grlib/context/CGLibSystemContext.h"
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/ScnRender.h"
 #include "classes/ml/ScnRenderDrSys.h"
@@ -38,8 +47,6 @@
 #include "classes/ml/DrMdoCtlPos.h"
 #include "nn/os.h"
 #include "classes/grlib/CGLibManager.h"
-#include "classes/grlib/context/CGLibSystemContext.h"
-#include "grlib/CGLibMemHandle.h"
 #include "grlib/CGLibVtxInstans.h"
 #include "grlib/CGLibVtxOneInstans.h"
 #include "grlib/CGLibVtxVertex.h"
@@ -164,6 +171,212 @@ void CGLibVtxVertex::unlock() { nn::os::FlushDataCache(m_mem.m_pMem, m_size); }
 
 void CGLibVtxVertex::unlock(unsigned int offset, unsigned int size) {
     nn::os::FlushDataCache(static_cast<unsigned char*>(m_mem.m_pMem) + offset, size);
+}
+
+CGLibMemPoolList::CGLibMemPoolList() : m_offset(0) {}
+
+CGLibMemPoolList::~CGLibMemPoolList() { release(); }
+
+void CGLibMemPoolList::release() {
+    CGLibMemPool::release();
+    m_offset = 0;
+}
+
+void CGLibMemPoolList::setupHandle(mtl::ALLOC_HANDLE handle, unsigned int size, unsigned int flags) {
+    CGLibMemPool::setupHandle(handle, size, flags);
+}
+
+void CGLibMemPool::setupHandle(mtl::ALLOC_HANDLE handle, unsigned int size, unsigned int flags) {
+    release();
+    m_pAlloc = mtl::MemManager::allocate(handle, size, 0x1000, false, "no name", 0);
+    setupBuffer(m_pAlloc, size + (-size & 0xFFF), flags);
+}
+
+void CGLibMemPool::release() {
+    if (m_size != 0) {
+        nvnMemoryPoolFinalize(m_pPool);
+        context::CGLibSystemContext::sys()->m_memPoolTbl.freeBuffer(m_pPool);
+        m_size = 0;
+        if (m_pAlloc != nullptr) {
+            mtl::MemManager::deallocate(m_pAlloc, 0, false);
+            m_pAlloc = nullptr;
+        }
+        m_pPool = nullptr;
+    }
+}
+
+CGLibMemPool::CGLibMemPool() : m_size(0), m_pAlloc(nullptr), m_pBuffer(nullptr) {}
+
+CGLibPartsMemPool::CGLibPartsMemPool() : m_pPrev(nullptr), m_pNext(nullptr) {}
+
+CGLibPartsMemPool::~CGLibPartsMemPool() { m_pool.release(); }
+
+CGLibMemPool::~CGLibMemPool() { release(); }
+
+void CGLibPartsMemPool::addAdder(void* buffer, unsigned int size) { m_pool.setupBuffer(buffer, size, 100); }
+
+void CGLibMemPool::setupBuffer(void* buffer, unsigned int size, unsigned int flags) {
+    release();
+    m_size = size;
+    m_pBuffer = buffer;
+    NVNdevice* pDevice = &CGLibManager::sys()->m_device;
+    NVNmemoryPoolBuilder builder;
+    nvnMemoryPoolBuilderSetDefaults(&builder);
+    nvnMemoryPoolBuilderSetDevice(&builder, pDevice);
+    nvnMemoryPoolBuilderSetFlags(&builder, flags);
+    nvnMemoryPoolBuilderSetStorage(&builder, buffer, size);
+    CGLibBuffMemPoolTbl& tbl = context::CGLibSystemContext::sys()->m_memPoolTbl;
+    m_pPool = reinterpret_cast<NVNmemoryPool*>(tbl.getBuffer(tbl.allocID()));
+    nvnMemoryPoolInitialize(m_pPool, &builder);
+}
+
+// 1.0.0 still had it out of line (3.0.1 inlines it everywhere)
+const ml::CriticalSection& CGLibMemPoolAdder::getCriticalSection() {
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_71015E92E0, its guard lbl_71015E9308)
+    static ml::CriticalSection s_cs;
+    return s_cs;
+}
+
+CGLibMemPoolAdder::CGLibMemPoolAdder() : m_pHead(nullptr), m_pTail(nullptr) {}
+
+CGLibMemPoolAdder::~CGLibMemPoolAdder() { release(); }
+
+void CGLibMemPoolAdder::release() {
+    CGLibPartsMemPool* pPool = m_pHead;
+    while (pPool != nullptr) {
+        CGLibPartsMemPool* pNext = pPool->m_pNext;
+        delete pPool;
+        pPool = pNext;
+    }
+    m_pHead = nullptr;
+    m_pTail = nullptr;
+}
+
+void CGLibMemPoolAdder::setup() { release(); }
+
+CGLibMemPool* CGLibMemPoolAdder::getMemPool(const void* p) {
+    ml::CS lock(getCriticalSection());
+    for (CGLibPartsMemPool* pPool = m_pHead; pPool != nullptr; pPool = pPool->m_pNext) {
+        unsigned long top = reinterpret_cast<unsigned long>(pPool->m_pool.m_pBuffer);
+        if (top <= reinterpret_cast<unsigned long>(p) && reinterpret_cast<unsigned long>(p) - top < pPool->m_pool.m_size) {
+            return &pPool->m_pool;
+        }
+    }
+    return nullptr;
+}
+
+void CGLibMemPoolAdder::addAdder(mtl::ALLOC_HANDLE handle) {
+    addAdder(mtl::MemManager::getTopAdr(handle), mtl::MemManager::getTotalSize(handle));
+}
+
+void CGLibMemPoolAdder::releaseAdder(mtl::ALLOC_HANDLE handle) { releaseAdder(mtl::MemManager::getTopAdr(handle)); }
+
+void CGLibBuffFixAlloc::freeBuffer(void* p) {
+    freeID((reinterpret_cast<unsigned long>(p) - reinterpret_cast<unsigned long>(m_pBuff)) / m_elemSize);
+}
+
+CGLibBuffFixAlloc::CGLibBuffFixAlloc() : m_pBuff(nullptr), m_pBits(nullptr), m_nextID(0), m_num(0) {}
+
+CGLibBuffFixAlloc::~CGLibBuffFixAlloc() { releaseTbl(); }
+
+void CGLibBuffFixAlloc::releaseTbl() {
+    if (m_pBuff != nullptr) {
+        mtl::MemManager::deallocate(m_pBuff, 0, false);
+        m_pBuff = nullptr;
+    }
+    if (m_pBits != nullptr) {
+        mtl::MemManager::deallocate(m_pBits, 0, false);
+        m_pBits = nullptr;
+    }
+}
+
+void CGLibBuffFixAlloc::setupTbl(mtl::ALLOC_HANDLE hTbl, mtl::ALLOC_HANDLE hBuff, unsigned int num, unsigned int size,
+                                 unsigned int alignment) {
+    setupTbl(hTbl, num, size);
+    unsigned int buffSize = m_elemSize * m_num;
+    m_pBuff = static_cast<unsigned char*>(mtl::MemManager::allocate(hBuff, buffSize, alignment, false, "no name", 0));
+}
+
+// Not identical yet: 6 words off from the original (0x7100706764; register scheduling). Kept because the 5-argument
+// setupTbl and setupFixTbl inline it, and those match only with this body.
+void CGLibBuffFixAlloc::setupTbl(mtl::ALLOC_HANDLE hTbl, unsigned int num, unsigned int size) {
+    releaseTbl();
+    unsigned int bitsNum = num / 64;
+    if (num % 64 != 0) {
+        bitsNum++;
+    }
+    m_elemSize = size;
+    m_num = num;
+    m_bitsNum = bitsNum;
+    unsigned int bitsSize = bitsNum * sizeof(unsigned long);
+    m_pBits = static_cast<unsigned long*>(mtl::MemManager::allocate(hTbl, bitsSize, 0x10, false, "no name", 0));
+    m_bitsIdx = 0;
+    m_useNum = 0;
+    m_nextID = 0;
+    memset(m_pBits, 0, bitsSize);
+}
+
+void CGLibBuffFixAlloc::setupFixTbl(mtl::ALLOC_HANDLE hTbl, mtl::ALLOC_HANDLE hBuff, unsigned int num,
+                                    unsigned int size, unsigned int buffSize, unsigned int alignment) {
+    setupTbl(hTbl, num, size);
+    m_pBuff = static_cast<unsigned char*>(mtl::MemManager::allocate(hBuff, buffSize, alignment, false, "no name", 0));
+}
+
+int CGLibBuffFixAlloc::createBuff() {
+    m_pBits[m_nextID >> 6] |= 1UL << (m_nextID & 0x3F);
+    int id = m_nextID;
+    m_nextID = id + 1 < m_num ? id + 1 : 0;
+    m_useNum++;
+    m_bitsIdx = m_nextID >> 6;
+    return id;
+}
+
+void CGLibBuffFixAlloc::freeID(unsigned int id) {
+    m_pBits[id >> 6] &= ~(1UL << (static_cast<unsigned long>(id) & 0x3F));
+    m_useNum--;
+}
+
+CGLibBuffTexture::CGLibBuffTexture() {}
+
+CGLibBuffTexture::~CGLibBuffTexture() { release(); }
+
+void CGLibBuffTexture::release() {
+    releasePlf();
+    releaseTbl();
+}
+
+void CGLibBuffTexture::createTexture(unsigned int num) {
+    release();
+    setupTbl(CGLibMemHandle::s_hDefHandle, CGLibMemHandle::s_hDefHandle, num, 0xC0, 0x10);
+    createPlf(num, m_pBuff);
+}
+
+CGLibBuffOcclusion::CGLibBuffOcclusion() {}
+
+CGLibBuffOcclusion::~CGLibBuffOcclusion() { release(); }
+
+void CGLibBuffOcclusion::release() {
+    releasePlf();
+    releaseTbl();
+}
+
+unsigned int CGLibBuffOcclusion_plf::getBufferSize() { return context::CGLibSystemContext::s_nvReportCounterSize * 2; }
+
+void CGLibBuffOcclusion::createOcclusion(unsigned int num) {
+    release();
+    setupTbl(CGLibMemHandle::s_hDefHandle, CGLibMemHandle::s_hCntHandle, num, getBufferSize(), 0x1000);
+    createPlf(num, m_pBuff);
+}
+
+CGLibBuffMemPoolTbl::CGLibBuffMemPoolTbl() {}
+
+CGLibBuffMemPoolTbl::~CGLibBuffMemPoolTbl() { release(); }
+
+void CGLibBuffMemPoolTbl::release() { releaseTbl(); }
+
+void CGLibBuffMemPoolTbl::createMemPoolTbl(unsigned int num) {
+    release();
+    setupTbl(CGLibMemHandle::s_hDefHandle, CGLibMemHandle::s_hDefHandle, num, 0x100, 0x100);
 }
 
 }  // namespace grlib

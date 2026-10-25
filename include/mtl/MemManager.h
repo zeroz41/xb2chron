@@ -22,6 +22,9 @@ public:
                           int line);
     // gives p back to the allocator that holds it, once the manager is initialized
     static void deallocate(void* p, unsigned long size, bool flag);
+    // the first address of the handle's allocator's memory and its size (CGLibMemPoolAdder::addAdder pools them)
+    static void* getTopAdr(const ALLOC_HANDLE& handle);
+    static unsigned long getTotalSize(ALLOC_HANDLE handle);
     static void deallocate_section(void* p, unsigned long size, bool flag);
     // p's memory resized to size (MultimediaReallocate's, flag false)
     static void* reallocate(void* p, unsigned long size, bool flag);

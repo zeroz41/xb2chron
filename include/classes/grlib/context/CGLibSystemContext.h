@@ -56,7 +56,9 @@ public:
     unsigned char pad_8[0x600];
     CGLibBuffSamplerTbl m_samplerTbl;  // 0x608: CGLibSampler::updateData
     CGLibBuffOcclusion m_occlusion;  // 0xE38: CGLibOcclusionQuery's report slots
-    unsigned char pad_E60[0x98];
+    unsigned char pad_E60[0x30];
+    CGLibBuffMemPoolTbl m_memPoolTbl;  // 0xE90: CGLibMemPool takes its NVNmemoryPool objects from it (the name is not the original's)
+    unsigned char pad_EB8[0x40];
     CGLibMemPoolAdder m_memPoolAdder;  // 0xEF8: CGLibGPUCache's pools
     unsigned char pad_F08[0x168];
     CGLibPipeline m_pipeline;  // 0x1070
