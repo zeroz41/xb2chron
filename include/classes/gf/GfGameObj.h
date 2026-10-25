@@ -21,6 +21,7 @@ class GfGameObj : public ::mm::mtl::PtrSingleton< ::gf::GfGameObj>, public TUnk_
 public:
     // SCOM_DESTROY_GAME_OBJ passes its request's object, time and attribute
     static void destroyGameObjWithAttribute(gf::GF_OBJ_HANDLE* handle, float fadeTime, unsigned int);
+    int getObjNumberByEnArrangeId(unsigned int arrangeId);  // the live objects of an enemy arrange id
     static void postUpdate(const fw::UpdateInfo& info);
     static void bdatReload();
     virtual ~GfGameObj();  // slot 0

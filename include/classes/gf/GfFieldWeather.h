@@ -4,7 +4,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { class GfFieldWeather; }
-namespace gf { class GfSetupParam; class MapjumpCallbackInfo; class GF_OBJ_HANDLE; enum GEV : int; enum RELOAD_BDAT : int; }
+namespace gf { class GfSetupParam; class MapjumpCallbackInfo; class GF_OBJ_HANDLE; enum GEV : int; enum RELOAD_BDAT : int; enum CLOUD_SEA : int; }
 namespace fw { class UpdateInfo; }
 
 namespace gf {
@@ -13,6 +13,8 @@ class GfFieldWeather : public ::mm::mtl::PtrSingleton< ::gf::GfFieldWeather> {
 public:
     virtual ~GfFieldWeather();  // slot 0
     static unsigned int getCurrentWtrType(bool);
+    static int getCurrentCloudSea();
+    static void setCloudSea(unsigned int map, CLOUD_SEA cloudSea);  // GfGameUtilCloudSea::getCloudSea forwards here
     // GfFieldManager's forwards (its initialize, finalize, clear, setupGame and gev* functions call them)
     static void build(const GfSetupParam& param);
     static void destroy();

@@ -15,6 +15,7 @@ public:
     // SCOM_FIELD_VOICE::exec stops a voice it cuts short, then asks how it ended
     static void playStop(GAME_VOICE_HANDLE* voice);
     static CV_RESULT getResult(GAME_VOICE_HANDLE* voice);
+    static CV_RESULT getResult(GF_OBJ_HANDLE* handle);  // the voice of an object (GfGameUtil::isPlayVoice: 2 playing)
     bool isPlayEnemyVoice() const;
     static void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
     bool isPlayVoice(gf::GF_OBJ_HANDLE* handle) const;

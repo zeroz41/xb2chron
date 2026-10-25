@@ -28,6 +28,8 @@ public:
     static unsigned int getDefaultCondenserParts(unsigned int hana, unsigned int index);
     static unsigned int getOpenCircuitEther(unsigned int hana, unsigned int index);
     static void setEther(unsigned int value);
+    static bool isOpenCircuit(unsigned int hana, unsigned int circuit);
+    static unsigned int getEquipPowerRank(unsigned int hana);  // GfGameUtilHana::getPowerRank forwards here
 };
 
 }  // namespace gf

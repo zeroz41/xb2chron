@@ -17,6 +17,7 @@ struct ARTS_DATA {
 class DataManager : public ::mm::mtl::PtrSingleton< ::btl::DataManager> {
 public:
     virtual ~DataManager();  // slot 0
+    void SetPartyGauge(int value, bool flag);  // GfGameUtil::setMaxPartyGauge passes (300, false)
     // Create: 1.0.0's name (fn_710009028C in 3.0.1): 1.0.0's BattleManager::Initialize calls it fourth, as 3.0.1's does
     static void Create();
     static void Destroy();

@@ -109,6 +109,7 @@ public:
     static void setDisableAutoHeal(gf::GF_OBJ_HANDLE* handle, bool on);
     static bool setFlag(gf::GF_OBJ_HANDLE* handle, unsigned int flag, bool on);  // whether it changed
     static bool testFlag(gf::GF_OBJ_HANDLE* handle, unsigned int flag);
+    static int getSetupObjNumberByEnArrangeId(unsigned int arrangeId);  // the objects of an arrange id still set up
     static const char* getModelBaseName(gf::GF_OBJ_HANDLE* handle);
     static const char* getAssetMotionName(gf::GF_OBJ_HANDLE* handle);
     // whether an object it follows is not ready yet (applyExecUpdate keeps its components still meanwhile)

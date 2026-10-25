@@ -49,6 +49,13 @@ AGmkBase* getBindedGmkInst(gf::GF_OBJ_HANDLE* handle);
 // whether the player's object exists (defined in GmkElevator.cpp's unit; StateFieldHome::isCondMatch is its tail
 // call)
 bool isPlayerExist();
+// the current map's FLD_maplist id (defined in GmkElevator.cpp's unit)
+int getCurrentMapBdatId();
+// show or hide the gimmicks of a type: all of them, the one of a BDAT row, the one of a gimmick set's index (defined
+// in GmkElevator.cpp's unit; GfGameUtil's setDispByGmkType* forward to them)
+void setDispByGmkType(GmkType type, bool disp);
+void setDispByGmkTypeAndBdatId(GmkType type, int bdatId, bool disp);
+void setDispByGmkTypeAndGmkIdx(int gmkSetId, GmkType type, unsigned int idx, bool disp);
 }  // namespace gmk
 
 #endif

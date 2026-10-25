@@ -76,6 +76,31 @@ public:
     static void makeWeaponCommandBattle(mm::mtl::FixStr<32>& out, unsigned int weaponId, bool battle, bool arg);
     // shows or hides the gimmicks of a type
     static void setDispByGmkType(gmk::GmkType type, bool disp);
+    // the object's wire to target (GfAppendWire, through GfGameScene::getAppendControl)
+    static void startWire(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* target, float time);
+    static void startWireWithClose(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* target, float time, float, float);
+    static void endWire(gf::GF_OBJ_HANDLE* handle, float time);
+    // the objects of an enemy arrange id: live ones plus ones still set up
+    static int getObjNumberByEnArrangeId(unsigned int arrangeId);
+    static void setMaxPartyGauge();  // the battle party gauge to 300
+    static int getAntiBladeAreaBdatId();
+    // the blade joins its mercenary team (false when it already is on one)
+    static bool execActivateMercenaryTeamForBlade(unsigned int blade);
+    static bool isDummyBlade(gf::GF_OBJ_HANDLE* handle);  // the object is a dummy blade
+    // whether a blade waits in the village: not one of the three main blades (1001-1003) nor Hana, not engaged
+    // and set to no driver
+    static bool isBladeInVillage(unsigned int blade);
+    // the crystals on the drivers' chests: whether each shows, and show or hide it on an object's model
+    static bool isDispRexCrystal();
+    static bool isDispHomuraCrystal();
+    static bool isDispMetsuCrystal();
+    static void dispRexCrystal(gf::GF_OBJ_HANDLE* handle, bool disp);
+    static void dispMetsuCrystal(gf::GF_OBJ_HANDLE* handle, bool disp);
+    // a driver's weapon objects (-1 for none): the mounted weapon's, else the one of attach slot 3
+    static gf::GF_OBJ_HANDLE* getDriverWeaponRight(gf::GF_OBJ_HANDLE* handle);
+    static gf::GF_OBJ_HANDLE* getDriverWeaponLeft(gf::GF_OBJ_HANDLE* handle);  // the active anti-blade area gimmick's row
+    static bool isGameObjWait(gf::GF_OBJ_HANDLE* handle);  // the object's flag 0x10
+    static gf::GF_OBJ_HANDLE* getBlade(gf::GF_OBJ_HANDLE* handle);  // the blade mounted on a driver
 
     // the text the action window shows for an object (the names are not the original's)
     struct UiActionWindowInfo {

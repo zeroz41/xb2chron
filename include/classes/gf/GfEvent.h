@@ -4,7 +4,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf { enum GEV : int; }  // as IGfEvent.h declares it
-namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GF_OBJ_HANDLE; enum ActivateType : int; }
 namespace gf { class GfSetupParam; }
 namespace gf { class GfEvent; }
 namespace gf { class IGfEvent; }
@@ -17,6 +17,8 @@ class GfEvent : public ::mm::mtl::PtrSingleton< ::gf::GfEvent> {
 public:
     // the event for a driver changing its engaged blade from one slot to another
     static void callBladeChange(GF_OBJ_HANDLE* handle, int from, int to);
+    static void callHikariCurrent(bool hikari);
+    static void callBladeActivate(unsigned int blade, ActivateType from, ActivateType to);  // GfGameUtil::changeHikariCurrent passes its flag
     static void build(const GfSetupParam& param);
     static void destroy();
     static void callTargetAccess(GF_OBJ_HANDLE*);

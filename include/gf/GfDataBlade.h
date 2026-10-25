@@ -4,7 +4,7 @@
 #include "gf/AchievQuest.h"
 #include "mm/mtl/FixedVector.h"
 
-namespace gf { class SDataBlade; }
+namespace gf { class SDataBlade; enum ActivateType : int; enum CLOUD_SEA : int; }
 namespace gf { struct BladeArtsSlot; }
 namespace gf { struct BladeSkillSlot; }
 namespace gf { struct SDataIdea; }
@@ -45,6 +45,27 @@ public:
     // unit among its functions. What it does: GfGameFlag::getLocal of the game data's flags (GfDataManager::getDataGame
     // + 0xFBBC4), width 16, index 1; TUnk_B64F08::fn_71004944B8 compares it with 2000.
     static unsigned short fn_7100231884();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfGameUtil::setTrustPointForDebug
+    // calls setTrustPoint instead). A member because it lives in GfDataBlade's unit among its functions (no this).
+    // What it does: for drivers 17-25 only (else 0), GfBdatChrDr::getChrDrDefBlade(driver, 0) of the driver itself
+    // (slot other than 0/1), or of the first (slot 0) / second (slot 1) id fn_71002416B4 lists for it, 0 when the
+    // list is too short. GfGameUtil::setTrustPointForDebug passes (driver, -1) and adds the trust to the result.
+    static unsigned int fn_7100237B70(unsigned int driver, int slot);
+    // whether a blade is one of the dummy blades (ids 1012-1013, 1073, 1110, 1124-1132); the symbols spell it
+    // fn_7100237D28, 1.0.0's GfGameUtil::isDummyBlade calls GfDataBlade::isDummyBlade at the same place
+    static bool isDummyBlade(unsigned int blade);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among its functions (no this). What it does: stores (cloudSea != 0) at 0x1C of the record fn_710024E1C8
+    // returns for the map; GfGameUtilCloudSea::setInnCloudSea passes (GfGameManager::getMapID(), its cloud sea),
+    // GfPlayComPlayerDead::update calls it too.
+    static void fn_710024E8F4(unsigned int map, CLOUD_SEA cloudSea);
+    // Placeholder name: nothing names it (1.0.0's GfGameUtil::execActivateMercenaryTeamForBlade calls
+    // isActivateMercenaryTeam at its place, but 3.0.1 keeps that function at 0x71002398D8, reading another field).
+    // A member because it lives in GfDataBlade's unit among its functions (no this). What it does: false for blade 0,
+    // else whether the short at 0x5A2C of the blade's game data slot (getDataGame + slot * 0x8A4, the slot mapping
+    // isActivateMercenaryTeam uses) is 2; execActivateMercenaryTeamForBlade does nothing when it holds.
+    static bool fn_71002383C8(unsigned int blade);
+    static ActivateType getBladeActivateType(const SDataBlade& blade);
     static bool getTaskSkillMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line);
     static bool getTaskResultMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line,
                                      unsigned int level);

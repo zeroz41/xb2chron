@@ -13,6 +13,8 @@ class GfFieldGimmick : public ::mm::mtl::PtrSingleton< ::gf::GfFieldGimmick> {
 public:
     // the FLD_maplist id of the map an RSC_GmkSetList row belongs to
     static int getBdatIdFrom_RSC_GmkSetList_To_FLD_maplist(int gmkSetId);
+    static int getBdatIdFrom_FLD_maplist_To_RSC_GmkSetList(int mapId);
+    static int getBdatIdOfActiveGmkAntiBladeArea();  // GfGameUtil::getAntiBladeAreaBdatId forwards here
     // whether the map's gimmick sets are ready (GfAutoTalkManager::seqInit waits for it)
     static bool isGmkSetReady();
     // GfFieldManager's forwards (its initialize, finalize and update call them)

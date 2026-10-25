@@ -16,6 +16,7 @@ public:
     virtual void bdatRefresh();  // slot 2
     unsigned int getMaplistStart() const;
     unsigned int getMaplistEnd() const;
+    unsigned int getMaplistebb_inn_cndID(unsigned int map) const;  // the map's inn condition row (0: none)
     unsigned int getMaplistbgm_cndID(unsigned int map) const;  // the map's BGM condition row
     const char* getMaplistresource(unsigned int map) const;
     unsigned int getMaplistnameID(unsigned int map) const;  // the map's name row (GfMapManager::getMapName)

@@ -8,7 +8,7 @@ namespace mm { class Vec3; }
 #include "mm/mtl/Bitflag.h"
 #include "mm/mtl/FixedQueue.h"
 
-namespace gf { class GfGameScene; }
+namespace gf { class GfGameScene; class GfAppendWire; }
 namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
 namespace gf { enum GfPlayerDead : int; }
 namespace gf { enum ActivateType : int; }
@@ -114,6 +114,9 @@ public:
     bool isRideObj(GF_OBJ_HANDLE* handle) const;
     bool isPlayerPauseForBattle() const;
     void setDamageCharacter(GF_OBJ_HANDLE* handle);
+    // the object's wire, null for none (GfGameUtil's startWire/startWireWithClose/endWire call GfAppendWire's
+    // members on it; the return type is inferred from that)
+    GfAppendWire* getAppendControl(GF_OBJ_HANDLE* handle);
     const mm::Vec3& getEnableSavePos() const;
     bool isResetBladePlay() const;
     void gevExecBuy(unsigned int, unsigned int, unsigned int shop);

@@ -5,6 +5,8 @@ namespace gf {
 // (functions, by their symbols)
 class GfDataNanakoori {
 public:
+    static bool isMissionComplete(unsigned int mission);
+    static void setMissionComplete(unsigned int mission);
     static unsigned int getVocalLevel();
     static unsigned int getVisualLevel();
     static unsigned int getSoulLevel();

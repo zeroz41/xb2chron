@@ -15,6 +15,9 @@ public:
     static RESULT_HANA isOpenCondenserCircuit(unsigned int hana, unsigned int circuit);
     static int getEtherForOpenCondenserCircuit(unsigned int hana, unsigned int circuit);
     static unsigned int getPowerRank(unsigned int hana);
+    // how many of an item can be turned into ether: its box count (without the equipped ones) for item types 16-20,
+    // else 0
+    static int getConvertToEther(unsigned int item);
     static RESULT_HANA isExecPowerRankup(unsigned int hana, unsigned int rank);
     static int getNeedEtherForExecPowerRankup(unsigned int hana, unsigned int rank);
 };
