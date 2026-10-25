@@ -47,14 +47,16 @@ bool IsEnableDeadSequence();
 int GetCharacterList(mm::mtl::FixedVector<unsigned char, 90>& list, gf::GF_OBJ_HANDLE* handle,
                      CHECK_CHR_NUM_MODE mode, unsigned int flags);
 bool AI_IsAngry(gf::GF_OBJ_HANDLE* handle);
-void AI_SetAngry(gf::GF_OBJ_HANDLE* handle, float time);
+bool AI_SetAngry(gf::GF_OBJ_HANDLE* handle, float time);
 bool AI_TurnTarget(gf::GF_OBJ_HANDLE* handle);
-void AI_StartActionEscape(gf::GF_OBJ_HANDLE* handle);
-void AI_MoveStop(gf::GF_OBJ_HANDLE* handle, bool);
+bool AI_StartActionEscape(gf::GF_OBJ_HANDLE* handle);
+bool AI_MoveStop(gf::GF_OBJ_HANDLE* handle, bool);
 void AI_AddKizuna(gf::GF_OBJ_HANDLE* handle, int value);
 int AI_GetKizunaStage(gf::GF_OBJ_HANDLE* handle);
 bool AI_IsInAttackRange(gf::GF_OBJ_HANDLE* handle);
-void AI_PlayVoice(gf::GF_OBJ_HANDLE* handle, int voice);
+// a 64-bit value from the talk manager's entry for the voice (its type is not known), 0 when none plays (the
+// aiData script method playVoice tests it)
+unsigned long AI_PlayVoice(gf::GF_OBJ_HANDLE* handle, int voice);
 int AI_GetPlayVoiceID(gf::GF_OBJ_HANDLE* handle);
 void AI_SetScout(gf::GF_OBJ_HANDLE* handle, bool);
 void AI_SetSuperArmor(gf::GF_OBJ_HANDLE* handle, float time);
@@ -103,6 +105,57 @@ void fn_7100015320(float ratio);
 int fn_7100015334(int white);
 // What it does: the int btl_ai.getChallengeID returns.
 int fn_710001535C();
+// The ones below are what the aiData script methods (application/BF2/unit_7100652854) call; the return types are what those test.
+void AI_AddBladeArtsRecast(gf::GF_OBJ_HANDLE* handle, float time, bool);
+int AI_GetLinkCharacterID(gf::GF_OBJ_HANDLE* handle);
+float AI_GetVertDiff(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* target);
+int AI_GetEatTargetCharacterID(gf::GF_OBJ_HANDLE* handle, float);
+int AI_GetFightComboID(gf::GF_OBJ_HANDLE* handle);
+int AI_GetElementalComboID(gf::GF_OBJ_HANDLE* handle);
+int AI_GetCharacterAIID(gf::GF_OBJ_HANDLE* handle);
+int AI_SearchVoiceCodeCharacter(int voiceCode);
+int AI_GetBackAttackerCharacterID(gf::GF_OBJ_HANDLE* handle);
+int AI_GetTargetDirection(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* target);
+int AI_CheckCharacterNum(gf::GF_OBJ_HANDLE* handle, int, CHECK_CHR_NUM_MODE mode);
+int AI_CheckHpRateCharacterNum(gf::GF_OBJ_HANDLE* handle, int, CHECK_CHR_NUM_MODE mode);
+int AI_GetSpAttackLevel(gf::GF_OBJ_HANDLE* handle);
+int AI_GetReactionID(gf::GF_OBJ_HANDLE* handle);
+int AI_GetBdatID(gf::GF_OBJ_HANDLE* handle);
+int AI_GetAutoAttackState(gf::GF_OBJ_HANDLE* handle);
+bool AI_StartActionRescue(gf::GF_OBJ_HANDLE* handle, int);
+bool AI_StartActionArts(gf::GF_OBJ_HANDLE* handle, int, int);
+bool AI_StartActionArtsByID(gf::GF_OBJ_HANDLE* handle, int id, int);
+bool AI_StartActionAttack(gf::GF_OBJ_HANDLE* handle);
+bool AI_StartActionBladeChange(gf::GF_OBJ_HANDLE* handle, int);
+bool AI_StartSpAttack(gf::GF_OBJ_HANDLE* handle);
+bool AI_StartMoveSide(gf::GF_OBJ_HANDLE* handle, int target, float, float);
+bool AI_StartMoveBack(gf::GF_OBJ_HANDLE* handle, int target, float, float);
+bool AI_StartMoveFront(gf::GF_OBJ_HANDLE* handle, int target, float, float);
+bool AI_StartMoveLeft(gf::GF_OBJ_HANDLE* handle, int target, float, float);
+bool AI_StartMoveRight(gf::GF_OBJ_HANDLE* handle, int target, float, float);
+bool AI_StartMoveTarget(gf::GF_OBJ_HANDLE* handle, int target, float, float);
+bool AI_StartMoveFriendBack(gf::GF_OBJ_HANDLE* handle, float, float);
+bool AI_StartMoveBackward(gf::GF_OBJ_HANDLE* handle, float, float);
+bool AI_StartMoveSatellite(gf::GF_OBJ_HANDLE* handle, bool, float);
+bool AI_StartMovePosition(gf::GF_OBJ_HANDLE* handle, const mm::Vec3& pos, float);
+bool AI_StartMovePosBackward(gf::GF_OBJ_HANDLE* handle, mm::Vec3& pos, float);
+void AI_TurnDirection(gf::GF_OBJ_HANDLE* handle, const mm::Vec3& dir);
+void AI_SetUseNavi(gf::GF_OBJ_HANDLE* handle, bool);
+bool AI_IsBattleOpening(gf::GF_OBJ_HANDLE* handle);
+bool AI_IsEnableArts(gf::GF_OBJ_HANDLE* handle, int, int);
+bool AI_IsEnableArtsByID(gf::GF_OBJ_HANDLE* handle, int id, int);
+bool AI_IsEnableSpAttack(gf::GF_OBJ_HANDLE* handle, int);
+// Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. In btl::Utility because they sit among its
+// AI_ functions (battle/BitArray's range) and take the handle the aiData script methods pass them.
+// fn_71000126C0: aiData's getElemBall returns its int.
+int fn_71000126C0(gf::GF_OBJ_HANDLE* handle);
+// fn_7100012DEC: aiData's actionTalentArts starts an action with it and returns its bool.
+bool fn_7100012DEC(gf::GF_OBJ_HANDLE* handle);
+// fn_7100014958: aiData's isTalentArts passes it -1 and returns its bool.
+bool fn_7100014958(gf::GF_OBJ_HANDLE* handle, int);
+// fn_7100014DC0: aiData's getTargetBladeId calls it on the target (getTargetDriverId calls AI_GetBdatID the same
+// way) and returns its int, -1 for 0.
+int fn_7100014DC0(gf::GF_OBJ_HANDLE* handle);
 }}  // namespace btl::Utility
 
 #endif

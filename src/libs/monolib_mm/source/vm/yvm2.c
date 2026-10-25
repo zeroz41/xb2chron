@@ -85,19 +85,6 @@ typedef struct VMPlugin {
     void* pPlugin;
 } VMPlugin;
 
-typedef struct VMOCMethod {
-    const char* name;
-    void* func;
-    s32 nameLen;
-    u8 pad_14[4];
-} VMOCMethod;
-
-typedef struct VMOC {
-    const char* name;
-    u8 pad_8[0x10];
-    VMOCMethod* methods;
-} VMOC;
-
 typedef struct VMWork {
     VMLink link[32];            // 0x0000
     VMThread* pCurThread;       // 0x0200

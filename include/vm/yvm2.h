@@ -13,12 +13,13 @@ extern "C" {
 typedef struct VMData {
     unsigned char type;
     unsigned char pad_1;
-    unsigned short hi;
+    unsigned short hi;  // VMDATA_OC: the id the object's constructor was handed
     union {
         int i;
         float f;
         const char* str;
         unsigned short lo;
+        void* obj;  // VMDATA_OC: the object
     } v;
 } VMData;
 #pragma pack(pop)
@@ -32,6 +33,8 @@ enum {
     VMDATA_STRING = 5,
     VMDATA_ARRAY = 6,
     VMDATA_FUNCTION = 7,
+    // an object of a class (VMOC) a plugin registers; the name is not the original's
+    VMDATA_OC = 9,
 };
 
 // The script thread a plugin function runs on (yvm2.c defines it).
@@ -46,6 +49,33 @@ typedef struct VMPluginFunc {
 
 void vmPluginRegist(const char* name, VMPluginFunc* pPlugin);
 
+// A method of a script class: the VM looks it up by name (vmOCRegist fills nameLen).
+typedef struct VMOCMethod {
+    const char* name;
+    void* func;
+    int nameLen;
+    unsigned char pad_14[4];
+} VMOCMethod;
+
+// A property of a script class (vmOCRegist fills nameLen); the layout past the name is unknown.
+typedef struct VMOCProperty {
+    const char* name;
+    unsigned char pad_8[0x10];
+    int nameLen;
+    unsigned char pad_1C[4];
+} VMOCProperty;
+
+// A script class a plugin registers with vmOCRegist (ocAiDataRegist: "aiData").
+typedef struct VMOC {
+    const char* name;
+    // makes the object a script asks for: (thread, ?, id), returns 1 after pushing a VMDATA_OC value
+    void* ctor;
+    VMOCProperty* properties;
+    VMOCMethod* methods;
+} VMOC;
+
+int vmOCRegist(VMOC* pOC);
+
 // argument no (from 1) of the running call; nonzero from vmArgOmitChk when the call left it out
 VMData* vmArgPtrGet(VMThread* pThread, int no);
 int vmArgOmitChk(VMThread* pThread, int no);
@@ -54,6 +84,7 @@ int vmArgBoolGet(int no, VMData* pData);
 int vmArgIntGet(int no, VMData* pData);
 float vmArgFixedGet(int no, VMData* pData);
 const char* vmArgStringGet(int no, VMData* pData);
+int vmArgFunctionGet(int no, VMData* pData);
 void vmRetValSet(VMThread* pThread, VMData* pData);
 void vmWaitModeSet(VMThread* pThread);
 void splitFixed(float value, int* pSign, int* pInt, int* pFrac);

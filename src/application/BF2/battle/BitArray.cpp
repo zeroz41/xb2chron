@@ -167,11 +167,12 @@ int Utility::AI_GetStamp(gf::GF_OBJ_HANDLE* handle) {
     return 0;
 }
 
-void Utility::AI_StartActionEscape(gf::GF_OBJ_HANDLE* handle) {
+bool Utility::AI_StartActionEscape(gf::GF_OBJ_HANDLE* handle) {
     BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
     if (chr) {
-        chr->StartBackHome();
+        return chr->StartBackHome();
     }
+    return false;
 }
 
 bool Utility::AI_IsAngry(gf::GF_OBJ_HANDLE* handle) {
@@ -182,11 +183,12 @@ bool Utility::AI_IsAngry(gf::GF_OBJ_HANDLE* handle) {
     return false;
 }
 
-void Utility::AI_SetAngry(gf::GF_OBJ_HANDLE* handle, float time) {
+bool Utility::AI_SetAngry(gf::GF_OBJ_HANDLE* handle, float time) {
     BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
     if (chr) {
-        chr->SetAngry(true, time);
+        return chr->SetAngry(true, time);
     }
+    return false;
 }
 
 bool Utility::AI_TurnTarget(gf::GF_OBJ_HANDLE* handle) {
@@ -198,11 +200,12 @@ bool Utility::AI_TurnTarget(gf::GF_OBJ_HANDLE* handle) {
     return false;
 }
 
-void Utility::AI_MoveStop(gf::GF_OBJ_HANDLE* handle, bool flag) {
+bool Utility::AI_MoveStop(gf::GF_OBJ_HANDLE* handle, bool flag) {
     BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
     if (chr) {
-        chr->MoveStop(flag);
+        return chr->MoveStop(flag);
     }
+    return false;
 }
 
 bool Utility::AI_IsDestruct(gf::GF_OBJ_HANDLE* handle) {

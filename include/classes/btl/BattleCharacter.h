@@ -57,10 +57,10 @@ public:
         }
         return id;
     }
-    void SetAngry(bool, float);
+    bool SetAngry(bool, float);
     int GetKizunaStage(float*) const;
-    void StartBackHome();
-    void MoveStop(bool);
+    bool StartBackHome();
+    bool MoveStop(bool);
     void AddKizuna(float);
     void SetScout(bool);
     void SetSuperArmorTime(float);
