@@ -209,5 +209,38 @@ bool DrPixlPostParm::getSSRWithTrans() const { return !DrMan::getIns()->m_autoRe
 
 void DrPixlShadowObjSpt::renderLight() {}
 
+grlib::CGLibRenderTarget* DrPixlMan::getPixlObj(int index) {
+    bool dbl = (0x27200ull >> (unsigned int)index) & 1;
+    DrPixlObjTbl* tbl = m_objTbl;
+    if (dbl) {
+        return tbl->m_obj[index][DrMan::s_nDblIdx];
+    }
+    return tbl->m_obj[index][0];
+}
+
+void DrPixlMan::setupCate(int cate) {
+    m_objTbl = &m_cate[cate];
+    m_cateIdx = cate;
+}
+
+grlib::CGLibRenderTarget* DrPixlMan::getDeactivePixlObj(int index) {
+    if ((0x27200ull >> (unsigned int)index) & 1) {
+        return m_objTbl->m_obj[index][DrMan::s_nDblIdx ^ 1];
+    }
+    return nullptr;
+}
+
+grlib::CGLibRenderTarget* DrPixlMan::getSpecIBLObj() {
+    DrMan* drMan = m_drMan;
+    int index = drMan->m_postParm[drMan->m_postParmIdx]->m_iblSel ? 9 : 11;
+    return drMan->m_pixlMan->getPixlObj(index);
+}
+
+grlib::CGLibRenderTarget* DrPixlMan::getDiffIBLObj() {
+    DrMan* drMan = m_drMan;
+    int index = drMan->m_postParm[drMan->m_postParmIdx]->m_iblSel ? 14 : 10;
+    return drMan->m_pixlMan->getPixlObj(index);
+}
+
 
 }  // namespace ml

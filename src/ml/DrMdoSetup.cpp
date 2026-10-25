@@ -492,10 +492,10 @@ void DrMdoSetup::varStTex_AvatarFaceMap1(const MdsMatInfoHeader* info, unsigned 
 void DrMdoSetup::varStTex_Capture1(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
     DrPixlMan* pixl = m_pDrMan->m_pixlMan;
     DrAPCache* ap = m_pDrMan->m_apCache;
-    bool valid = pixl->m_capture1 != nullptr;
+    bool valid = pixl->m_cate[1].m_capture != nullptr;
     ap->beginTexSampling(2, 1);
     if (valid) {
-        ap->setTexture(*pixl->m_capture1->m_pTexture, location);
+        ap->setTexture(*pixl->m_cate[1].m_capture->m_pTexture, location);
     } else {
         ap->setTexture(*pixl->getDammyTexObj(), location);
     }
@@ -505,8 +505,8 @@ void DrMdoSetup::varStTex_Capture2(const MdsMatInfoHeader* info, unsigned int lo
     DrAPCache* ap = m_pDrMan->m_apCache;
     DrPixlMan* pixl = m_pDrMan->m_pixlMan;
     ap->beginTexSampling(2, 1);
-    if (pixl->m_capture2 != nullptr) {
-        ap->setTexture(*pixl->m_capture2->m_pTexture, location);
+    if (pixl->m_cate[2].m_capture != nullptr) {
+        ap->setTexture(*pixl->m_cate[2].m_capture->m_pTexture, location);
     } else {
         ap->setTexture(*pixl->getDammyTexObj(), location);
     }
@@ -516,8 +516,8 @@ void DrMdoSetup::varStTex_Capture3(const MdsMatInfoHeader* info, unsigned int lo
     DrAPCache* ap = m_pDrMan->m_apCache;
     DrPixlMan* pixl = m_pDrMan->m_pixlMan;
     ap->beginTexSampling(2, 1);
-    if (pixl->m_capture3 != nullptr) {
-        ap->setTexture(*pixl->m_capture3->m_pTexture, location);
+    if (pixl->m_cate[3].m_capture != nullptr) {
+        ap->setTexture(*pixl->m_cate[3].m_capture->m_pTexture, location);
     } else {
         ap->setTexture(*pixl->getDammyTexObj(), location);
     }
@@ -569,10 +569,10 @@ void DrMdoSetup::varStTex_AvatarEyeTex(const MdsMatInfoHeader* info, unsigned in
 void DrMdoSetup::varStTex_CaptureMain(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
     DrPixlMan* pixl = m_pDrMan->m_pixlMan;
     DrAPCache* ap = m_pDrMan->m_apCache;
-    bool valid = pixl->m_captureMain != nullptr;
+    bool valid = pixl->m_cate[0].m_capture != nullptr;
     ap->beginTexSampling(2, 1);
     if (valid) {
-        ap->setTexture(*pixl->m_captureMain->m_pTexture, location);
+        ap->setTexture(*pixl->m_cate[0].m_capture->m_pTexture, location);
     } else {
         ap->setTexture(*pixl->getDammyTexObj(), location);
     }

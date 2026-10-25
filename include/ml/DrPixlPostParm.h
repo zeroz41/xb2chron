@@ -140,7 +140,9 @@ public:
     unsigned int m_ofsRenderCheck;  // 0xFC8, calcOfsRenderCheck: x * 100 | y * 100 << 8
     unsigned char pad_FCC[0x58];
     bool m_shwRaytraceTemporal;  // 0x1024, isShwRaytraceTemporalWithOthers (with DrMan::isIBLHalfRes)
-    unsigned char pad_1025[0x5F];
+    unsigned char pad_1025[0x3C];
+    bool m_iblSel;  // 0x1061, DrPixlMan::getSpecIBLObj/getDiffIBLObj pick the second IBL pair when set (name inferred)
+    unsigned char pad_1062[0x22];
     int m_weather;  // 0x1084
     float m_weatherFrame[2];  // 0x1088, set by DrMan::s_nDblStockIdx, read by s_nDblIdx; reset to 60
     unsigned char pad_1090[0x75];

@@ -9,6 +9,8 @@ namespace ml { class DrPixlPostMan; }
 namespace ml { class DrMan; }
 namespace ml { class DrPixlRenderTarget; }
 namespace ml { class DrPixlShadowObj; }
+namespace ml { class DrPixlOccQuery; }
+namespace ml { class DrPixlShadowCacheMan; }
 namespace grlib { class CGLibDblUniformBlock; }
 
 namespace ml {
@@ -18,6 +20,10 @@ namespace ml {
 // The table is really 0x10-byte entries of two object pointers (getPixlObj(i): entry i, the second pointer for the
 // double-buffered entries 17, 20, 21, 22, 25 by DrMan::s_nDblIdx); the fields below name what callers read.
 struct DrPixlObjTbl {
+  union {
+    // getPixlObj(i): entry i; the double-buffered entries (9, 12, 13, 14, 17) by DrMan::s_nDblIdx
+    grlib::CGLibRenderTarget* m_obj[31][2];
+    struct {
     grlib::CGLibRenderTarget* m_gBuff[5][2];  // 0x0, refractionGBuffInvalidate invalidates [i][0]
     unsigned char pad_50[0xD0];
     grlib::CGLibRenderTarget* m_responsiveAAMask;  // 0x120, getResponsiveAAMask
@@ -28,19 +34,25 @@ struct DrPixlObjTbl {
     DrPixlDeferred* m_deferred;  // 0x170
     unsigned char pad_178[0x8];
     DrPixlPostMan* m_postMan;  // 0x180
-    unsigned char pad_188[0x18];
+    // 0x188, DrPixlPostObjToneMap::updateByCompute stores the three; the constructor sets [1] = 1 (name inferred)
+    float m_toneMapVal[3];
+    unsigned char pad_194[0xC];
     grlib::CGLibRenderTarget* m_depth[2];  // 0x1A0, getDepthObj: by DrMan::s_nDblIdx
     unsigned char pad_1B0[0x20];
     grlib::CGLibRenderTarget* m_capture;  // 0x1D0, renderEnd invalidates its colour
     unsigned int m_flags;  // 0x1D8, updateShadowDisplayList clears 0x20
     unsigned char pad_1DC[0x1C];
+    };
+  };
 };
 
 // DrMan's pixel manager (DrMan::m_pixlMan). Only what DrMdoSetup's texture callbacks read is known; the field
 // names are not the original's. The capture and movie fields are read by DrMdoSetup::varStTex_Capture*/Movie*.
 class DrPixlMan {
 public:
+    DrPixlMan(DrMan* drMan);
     ~DrPixlMan();
+    void createColorBuffer();
     static DrPixlMan* get();
     void releaseColorBuffer();
     void occRenderEnd();
@@ -71,29 +83,31 @@ public:
     grlib::CGLibTextureBuffer* getDammyWhiteTexObj();  // reads m_dammyWhiteObj's texture
     grlib::CGLibRenderTarget* getBackFaceDepthTexture();
     grlib::CGLibRenderTarget* getDiffIBLObj();
+    grlib::CGLibRenderTarget* getSpecIBLObj();
+    grlib::CGLibRenderTarget* getDeactivePixlObj(int index);
+    void setupCate(int cate);
 
-    unsigned char pad_0[0x8];
+    float m_rate;  // 0x0, the constructor sets 1.0f; no reader in this unit is known (name inferred)
+    unsigned char pad_4[0x4];
     DrMan* m_drMan;  // 0x8, shadowDirBegin reaches DrMan::m_apCache through it
-    unsigned char pad_10[0x1D0];
-    grlib::CGLibRenderTarget* m_captureMain;  // 0x1E0
-    unsigned char pad_1E8[0x1F0];
-    grlib::CGLibRenderTarget* m_capture1;  // 0x3D8
-    unsigned char pad_3E0[0x1F0];
-    grlib::CGLibRenderTarget* m_capture2;  // 0x5D0
-    unsigned char pad_5D8[0x1F0];
-    grlib::CGLibRenderTarget* m_capture3;  // 0x7C8
-    unsigned char pad_7D0[0x20];
+    // 0x10, one table per category; setupCate points m_objTbl at one. varStTex_Capture* read
+    // m_cate[0..3].m_capture (main, 1, 2, 3).
+    DrPixlObjTbl m_cate[4];
     DrPixlObjTbl* m_objTbl;  // 0x7F0
-    unsigned char pad_7F8[0x10];
+    DrPixlOccQuery* m_occQuery;  // 0x7F8, DrPixlSkyDome::godRayRender passes it to DrResUseQueryObj::begin
+    DrPixlShadowCacheMan* m_shadowCacheMan;  // 0x800, fastRender calls shadowCacheRender on it
     grlib::CGLibTextureBuffer* m_movieTex[4];  // 0x808
     bool m_movieFilter[4];  // 0x828, true: varStTex_Movie* sample with filter mode 1, else 0
     grlib::CGLibRenderTarget* m_dammyObj;  // 0x830, getDammyTexObj
     grlib::CGLibRenderTarget* m_dammyWhiteObj;  // 0x838, getDammyWhiteTexObj
-    unsigned char pad_840[0x8];
+    bool m_clearTarget;  // 0x840, renderBegin clears the targets once while set; releaseColorBuffer sets it
+    unsigned char pad_841[0x7];
     DrPixlShadowObj* m_shadowObj;  // 0x848, setShadowObj
     grlib::CGLibDblUniformBlock* m_shadowUniform;  // 0x850, setShadowObj: the object's uniform block
     int m_renderTarget;  // 0x858, resetRenderTarget clears it
-    unsigned char pad_85C[0x164];
+    int m_renderTargetSub;  // 0x85C, cleared and set together with m_renderTarget (name inferred)
+    int m_cateIdx;  // 0x860, setupCate stores the category (name inferred)
+    unsigned char pad_864[0x15C];
     grlib::CGLibRenderTarget* m_capture4;  // 0x9C0
 };
 }  // namespace ml
