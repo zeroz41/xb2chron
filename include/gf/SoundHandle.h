@@ -11,7 +11,9 @@ public:
     bool isValid() const;  // whether it holds a sound (a nonzero id)
     void clear();  // back to no sound
     unsigned int m_id;  // the constructor's; the name is not the original's
-    unsigned int pad_4;
+    // its GfSound::SeParam's index in the low 16 bits, 0xFFFF for none (GfSound::setCategory reads 16 bits; the
+    // name is not the original's)
+    unsigned int m_seIndex;
 };
 }  // namespace gf
 

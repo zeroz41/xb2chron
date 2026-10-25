@@ -11,7 +11,7 @@ public:
     fixed_size_alloc_inside() : m_data(), m_bits() {
         m_words = T1 / 32;
         m_pBits = m_bits;
-        m_pData = m_data;
+        m_pData = reinterpret_cast<T0*>(m_data);
         m_count = 0;
     }
     virtual ~fixed_size_alloc_inside() {}  // slot 0
@@ -69,7 +69,9 @@ public:
         free(static_cast<unsigned long>(reinterpret_cast<char*>(p) - reinterpret_cast<char*>(m_pData)) / sizeof(T0));
     }
 
-    T0 m_data[T1];
+    // raw storage: the elements are not constructed (GfSound's constructor only zeroes its SeParams, whose
+    // SoundHandle has a user-provided constructor)
+    alignas(T0) unsigned char m_data[sizeof(T0) * T1];
     unsigned int m_bits[T1 / 32 + 1];
     unsigned int* m_pBits;
     T0* m_pData;
