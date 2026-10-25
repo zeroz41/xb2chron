@@ -59,6 +59,10 @@ public:
     static const Binding* getAsmBinding(const ResASM& res, const char* state, unsigned int index);
     static float getInvFps(const Binding& binding);
     static const ResAppendix* findAppendix(const ResASM& res, const char* name);
+    // a variable's minimum and maximum over a state's blend tree into *pMin/*pMax (true when found; the
+    // parameter names are not the original's)
+    static bool getVariableMinMax(const ResASM& res, const char* state, const char* variable, float* pMin,
+                                  float* pMax);
 };
 }  // namespace anm
 

@@ -10,6 +10,9 @@ namespace gf {
 class GfGameDepopMeterManager : public ::mm::mtl::PtrSingleton< ::gf::GfGameDepopMeterManager> {
 public:
     virtual ~GfGameDepopMeterManager();  // slot 0
+
+    // deletes the instance
+    static void dispose();
 };
 }  // namespace gf
 

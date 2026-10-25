@@ -18,7 +18,8 @@ public:
     void update(float deltaTime);
 
     gf::GF_OBJ_HANDLE* m_handle;  // create's, -1 without one
-    unsigned char pad_8[0x8];
+    float m_elapsed;   // seconds since create or the last unique command
+    float m_prevTime;  // the asm's layer-0 local time last update
 };
 }  // namespace gf
 
