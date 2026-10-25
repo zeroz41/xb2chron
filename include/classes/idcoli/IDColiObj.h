@@ -23,7 +23,9 @@ public:
     // the shape creators set 0x20 (and 0x400 for their alternative shape)
     unsigned int m_flags;
     unsigned int m_attr;  // 0x20, 1 << ColiAtrr bits (IDColiParmsBase::isAttr)
-    unsigned char pad_24[4];
+    // 0x24, what kind of object it is: fw::ColiObject builds an IDColiParmsCharacter over 1, an IDColiParmsPhantom
+    // over 2 and tests 3 for a ground (isChar, isGrand). The name is not the original's.
+    int m_type;
     unsigned int pad_28;  // the constructor zeroes it; no reader seen yet
     unsigned int m_materialBit;  // 0x2C, IDColiParmsBase::setMaterialBit
     void* pad_30;  // the constructor zeroes it; no reader seen yet

@@ -12,6 +12,8 @@ public:
     virtual ~ReferenceFrame();  // slot 0
     void syncLocalTransform();
     void syncWorldTransform();
+    // m_worldMatrix, rebuilt from the synced world transform when bit 2 of m_syncFlags is clear
+    const mm::Mat44& getSyncedWorldMatrix();
     // m_worldTransform, synced first (inline: the name is not the original's; its callers read the transform
     // through the frame pointer they synced, with no second null check)
     const Transform& getWorldTransform() {

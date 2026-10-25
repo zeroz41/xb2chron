@@ -19,6 +19,9 @@ public:
     virtual bool initialize();  // slot 2
     virtual bool finalize();  // slot 3
     void registObject(ColiObject* object);
+    void removeObject(ColiObject* object);
+    // what its Impl holds at 0x20; its type is not known yet: its one caller, ColiObject's destructor, discards it
+    void* getInterface();
 };
 }  // namespace fw
 
