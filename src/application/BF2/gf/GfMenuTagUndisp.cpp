@@ -37,7 +37,7 @@ const char* GfMenuTagUndisp::getTagName() {
 }
 
 const char* GfMenuTagUndisp::convBegin(const TagParams& params, unsigned short id) {
-    return "";
+    return " ";
 }
 
 }  // namespace gf

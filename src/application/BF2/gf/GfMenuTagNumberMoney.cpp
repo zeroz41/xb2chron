@@ -29,8 +29,21 @@
 
 namespace gf {
 
+// a tag's parameters: (name, value) pairs
+typedef mm::mtl::FixedVector<mm::mtl::MapPair<const char*, const char*>, 8> TagParams;
+
 const char* GfMenuTagNumberMoney::getTagName() {
     return "ML:number_money";
+}
+
+const char* GfMenuTagNumberMoney::convBegin(const TagParams& params, unsigned short id) {
+    static mm::mtl::FixStr<16> s_format;
+    if (ui::UIUtil::getMoneySeparetor(static_cast<fw::LangType>(fw::LangUtil::getLangType()))) {
+        s_format = "%s";
+    } else {
+        s_format = "%d";
+    }
+    return s_format.m_str;
 }
 
 }  // namespace gf
