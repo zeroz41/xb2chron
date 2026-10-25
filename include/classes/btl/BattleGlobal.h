@@ -2,9 +2,11 @@
 #define CLASSES_BTL_BATTLEGLOBAL_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace btl { class BattleGlobal; }
 namespace fw { class UpdateInfo; }
+namespace gf { class GF_OBJ_HANDLE; }
 
 namespace btl {
 // table 0x7100B3A3E0
@@ -13,7 +15,15 @@ public:
     virtual ~BattleGlobal();  // slot 0
     static void Create();
     static void Destroy();
+    static void PreUpdate(const fw::UpdateInfo& info);
+    static void Update(const fw::UpdateInfo& info);
     static void PostUpdate(const fw::UpdateInfo& info);
+    void PreUpdateProc(const fw::UpdateInfo& info);
+    void UpdateProc(const fw::UpdateInfo& info);
+    void PostUpdateProc(const fw::UpdateInfo& info);
+    // whether a battle can run: not while GfGameManager stops battles
+    bool IsEnableBattle() const;
+    void SetElementalComboImmortal(gf::GF_OBJ_HANDLE* handle);
     void SetPause(int kind, bool pause);
     void DeleteSlow(unsigned int id);
     bool IsGameOver() const;
@@ -42,10 +52,107 @@ public:
     // the byte at 0x83D0; while it is clear, isValid refuses the party's leader driver (GfGameParty::isLeaderDriver).
     bool fn_710000A6CC();
 
-    unsigned char pad_8[0x5C44];
+    // One attack's record, found by its id (CreateAttackData hands the ids out). The type and field names are not the
+    // original's (1.0.0's GetAttackDamageDataNum/GetAttackDamageDataConst read the records). Its bit-fields from 0x8 on
+    // are separate storage runs: 64 bits at 0x8, 16 at 0x10, 8 at 0x12.
+    struct AttackDamageData {
+        unsigned int id;
+        int damage;  // AddAttackDamage adds to it, GetAttackDamage returns it
+        unsigned int damageRate : 27;  // 16.16 fixed point (GetDamageRate), 1.0 when created
+        unsigned int attr : 5;  // SetAttackAttr/GetAttackAttr; 9 when created, read as none (-1)
+        unsigned int hitCount : 7;  // AddAttackDamage counts each further hit
+        unsigned int : 19;
+        unsigned int pad_bit58 : 6;  // 1 when created
+        unsigned int : 0;  // the flags below are a storage unit of their own (32-bit loads, no 64-bit one)
+        bool justDistanceAttack : 1;  // SetJustDistanceAttack/IsJustDistanceAttack
+        bool resistantBreakDamageEnd : 1;  // SetResistantBreakDamageEnd; IsEnableResistantBreakDamage while clear
+        bool chainAttack : 1;  // ChainAttackManager::IsProc(true) when created
+        bool permitArts : 1;  // SetPermitArts/IsPermitArts
+        bool noShootBullet : 1;  // SetShootBullet stores the negation; IsShootBullet while clear
+        bool damageRateChanged : 1;  // AddDamageRate/MulDamageRate set it when asked; GetDamageRate reports it
+        bool endDropHealPot2 : 1;  // SetEndDropHealPot2/IsEndDropHealPot2
+        bool endCriticalRecastEnhance : 1;  // IsEndCriticalRecastEnhance
+        bool pad_bit8 : 1;
+        bool pad_bit9 : 1;
+        bool pad_bit10 : 1;
+        bool pad_bit11 : 1;
+        bool criticalRecastEnhanceEnd : 1;  // SetCriticalRecastEnhanceEnd
+        bool updated : 1;  // set by every lookup
+        unsigned int : 2;
+        unsigned char : 0;  // 16-bit flags, then a byte of flags of its own (16- and 8-bit stores)
+        bool enableAddElementalBall : 1;  // SetEnableAddElementalBall/IsEnableAddElementalBall, set when created
+        bool validAttackRange : 1;  // SetValidAttackRange/IsValidAttackRange, set when created
+        bool pad_bit18 : 1;
+        bool pad_bit19 : 1;
+        unsigned char pad_bit20 : 4;
+        unsigned char charaIndex;  // CharacterManager's index of the attacker (SearchCharacter)
+    };
+
+    void UpdateAttackData(unsigned int id);
+    int GetAttackDamage(unsigned int id) const;
+    void SetAttackAttr(unsigned int id, int attr);
+    int GetAttackAttr(unsigned int id) const;
+    void SetEndDropHealPot2(unsigned int id);
+    bool IsEndDropHealPot2(unsigned int id) const;
+    bool IsEndCriticalRecastEnhance(unsigned int id) const;
+    void SetJustDistanceAttack(unsigned int id);
+    bool IsJustDistanceAttack(unsigned int id) const;
+    void SetCriticalRecastEnhanceEnd(unsigned int id);
+    void SetEnableAddElementalBall(unsigned int id, bool enable);
+    bool IsEnableAddElementalBall(unsigned int id) const;
+    void SetResistantBreakDamageEnd(unsigned int id);
+    bool IsEnableResistantBreakDamage(unsigned int id) const;
+    void SetPermitArts(unsigned int id);
+    bool IsPermitArts(unsigned int id) const;
+    void SetShootBullet(unsigned int id, bool shoot);
+    bool IsShootBullet(unsigned int id) const;
+    void SetValidAttackRange(unsigned int id, bool valid);
+    bool IsValidAttackRange(unsigned int id) const;
+    // 1.0.0's AddDamageRate/MulDamageRate: the same code in the same place after SetDamageRate (3.0.1's symbols
+    // spell fn_710000BE60/fn_710000BEE8)
+    void AddDamageRate(unsigned int id, float rate, bool markChanged);
+    void MulDamageRate(unsigned int id, float rate, bool markChanged);
+    float GetDamageRate(unsigned int id, bool* changed) const;
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (1.0.0's attack accessors run
+    // SetEndDropHealPot2 ... GetDamageRate without them). Members: they sit among BattleGlobal's attack accessors and
+    // look the record up in this BattleGlobal's records. What they do:
+    void fn_710000B338(unsigned int id);  // sets the flag IsEndCriticalRecastEnhance reads
+    void fn_710000B4D0(unsigned int id);  // sets flag bit 11
+    bool fn_710000B52C(unsigned int id) const;  // flag bit 11 (false when there is no record)
+    bool fn_710000B5F4(unsigned int id) const;  // the flag SetCriticalRecastEnhanceEnd sets
+    void fn_710000B664(unsigned int id, bool on);  // stores flag bit 10
+    bool fn_710000B6C0(unsigned int id) const;  // flag bit 10
+    bool fn_710000B8CC(unsigned int id) const;  // whether a chain attack was running when the record was made
+    void fn_710000BA08(unsigned int id, bool on);  // clears flag bit 8, stores flag bit 9
+    int fn_710000BA74(unsigned int id) const;  // 1 when flag bit 8 is set, else 2 when bit 9 is, else 0
+
+    // every attack accessor's lookup (inline: no copy of its own in either version)
+    AttackDamageData* findAttackData(unsigned int id) const {
+        if (id != 0) {
+            for (AttackDamageData* it = m_attackData.begin(); it != m_attackData.end(); ++it) {
+                if (it->id == id) {
+                    it->updated = true;
+                    return it;
+                }
+            }
+        }
+        return nullptr;
+    }
+
+    unsigned char pad_8[0xAA0];
+    unsigned int m_nextAttackId;  // CreateAttackData's next id, never 0 (the name is not the original's)
+    unsigned char pad_aac[0x4];
+    // the attack records (the name is not the original's); full, AddAttackDamage drops the oldest
+    mutable ::mm::mtl::FixedVector<AttackDamageData, 1000> m_attackData;
+    unsigned char pad_58d8[0x374];
     // EnemyParameter::ApplyStatusEnhance scales every enhanced value by it (the name is not the original's)
     float m_statusEnhanceRate;
-    unsigned char pad_5c50[0x277A];
+    unsigned char pad_5c50[0x88];
+    gf::GF_OBJ_HANDLE* m_elementalComboImmortal;  // SetElementalComboImmortal (the name is not the original's)
+    unsigned char pad_5ce0[0x26D6];
+    // pause flags by kind, 8 to a byte; IsPause(-1) asks for any (the name is not the original's)
+    unsigned char m_pause[2];
+    unsigned char pad_83b8[0x12];
     // flags (the names are not the original's): one storage unit of 7 bytes, as their reads load it
     bool pad_bit0 : 1;
     bool pad_bit1 : 1;
@@ -62,7 +169,9 @@ public:
     // GfGameTarget's selectRight/selectLeft change no target while it is clear (the name is not the original's)
     bool pad_bit40 : 1;
     unsigned char : 7;
-    unsigned char : 3;
+    bool pad_bit48 : 1;
+    bool pad_bit49 : 1;  // fn_710000A6CC returns it; fn_71000068F8 asks for it with pad_bit50
+    bool pad_bit50 : 1;
 };
 }  // namespace btl
 
