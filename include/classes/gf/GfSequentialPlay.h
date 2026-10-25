@@ -62,6 +62,12 @@ public:
     static void addCommand(GfPlayCom* com);
     static bool hasCommand(PCOMTYPE type, GfPlayCom* com);
     bool isExistEvent(unsigned int id) const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because both callers (ScriptPlayText's
+    // ui isOpenPartyForm and waitCloseFullScreen) call it on PtrSingleton<GfSequentialPlay>::sys(). What it does: for
+    // menu 0x24 while GfGameManager::fn_71002A9E68 holds, looks through the command list at 0x1850 and the one at 0x8
+    // for a GfPlayComOpenMenu2 command of state 0xC whose value at 0x10 is 1; other menus take a second path through
+    // the same lists (GfPlayComOpenMenu). The callers pass 0x24 and 0; the second argument is not read.
+    bool fn_7100323420(unsigned int menu, unsigned int param);
     // 1.0.0's out-of-line copies; isInnerState and isInnerPause inline them in 3.0.1
     bool isExistState(GfPlayCom* com, GF_STATE state) const;
     bool isExistPauseType(GfPlayCom* com, unsigned int pause) const;

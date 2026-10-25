@@ -31,6 +31,10 @@ bool isPartyMemberGetFieldDamage(unsigned int index);
 // table 0x7100B55EF0
 class GfGameScene : public ::mm::mtl::PtrSingleton< ::gf::GfGameScene> {
 public:
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because ScriptPlayText's ui
+    // startTutorial calls it on PtrSingleton<GfGameScene>::sys() (when there is one). What it does: when the byte at
+    // 0x8B9 is set, clears it and calls GfEvent::callPlayerControl(15).
+    void fn_71002C4BE4();
     QuestID getQuestIdForTaskLog() const;  // 1.0.0 symbol
     void postUpdate(const fw::UpdateInfo& info);
     void setEnemyDead(GF_OBJ_HANDLE* handle);  // SCOM_CHAR_DEAD::exec passes the dead object

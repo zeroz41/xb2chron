@@ -10,6 +10,12 @@ public:
     class BGListener;
     class DriverSelectListener;
     class MainListener;
+    // what registOpenParam keeps for the next open (ScriptPlayText's ui settingPartyFormBeforeBattle passes 1);
+    // the name is not the original's
+    struct OpenParam {
+        unsigned short m_value;
+    };
+    static void registOpenParam(const OpenParam& param);
     virtual ~GfMenuObjPartyForm3();  // slot 0
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3

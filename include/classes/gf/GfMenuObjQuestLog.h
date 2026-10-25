@@ -12,6 +12,8 @@ class GfMenuObjQuestLog : public ::gf::GfMenuObject {
 public:
     static void completeTask(const QuestTaskParam& param);  // 1.0.0 symbol
     static void updateTask();  // 1.0.0 symbol
+    static void lockLogOpen();  // 1.0.0 symbol
+    static void unlockLogOpen();  // 1.0.0 symbol
     class CompleteListener;
     class LogListener;
     class OrderListener;

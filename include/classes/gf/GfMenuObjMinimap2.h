@@ -9,6 +9,8 @@ class GfMenuObjMinimap2 : public ::gf::GfMenuObject {
 public:
     class MainListener;
     class MapListener;
+    static void enable();
+    static void disable();
     virtual ~GfMenuObjMinimap2();  // slot 0
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3

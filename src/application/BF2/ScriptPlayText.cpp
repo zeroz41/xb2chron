@@ -1,5 +1,5 @@
 // Script VM plugins of this unit (their tables, entries and Regist functions). The entries are static and nothing
-// names them: they keep placeholder fn_ names. Plugins not written yet: evt_status, evt_text, evt_movie, evt_ui, pt, ui
+// names them: they keep placeholder fn_ names. Plugins not written yet: evt_status, evt_text, evt_movie, pt
 // (and ScriptPlayText::exec, ocThreadRegist).
 #include "vm/yvm2.h"
 #include "classes/mm/mtl/Singleton.h"
@@ -17,6 +17,7 @@
 #include "classes/event/ResManager.h"
 #include "classes/event/SeManager.h"
 #include "classes/event/SeamlessManager.h"
+#include "classes/event/UIManager.h"
 #include "classes/event/VoiceManager.h"
 #include "classes/event/VolumeManager.h"
 #include "classes/gf/GfEvent.h"
@@ -27,9 +28,18 @@
 #include "classes/gf/GfGameEvent.h"
 #include "classes/gf/GfGameFlag.h"
 #include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfGameScene.h"
 #include "classes/gf/GfManager.h"
 #include "classes/gf/GfMenuFade.h"
 #include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfMenuObjBladeCreate.h"
+#include "classes/gf/GfMenuObjEnvironmentInfo.h"
+#include "classes/gf/GfMenuObjMinimap2.h"
+#include "classes/gf/GfMenuObjPartyForm3.h"
+#include "classes/gf/GfMenuObjPopup.h"
+#include "classes/gf/GfMenuObjQuestLog.h"
+#include "classes/gf/GfMenuObjTutorial.h"
+#include "classes/gf/GfSequentialPlay.h"
 #include "classes/gf/GfWeapon.h"
 #include "classes/gf/SCOM_ADD_MONEY.h"
 #include "classes/gf/SCOM_SET_FLAG.h"
@@ -39,12 +49,16 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "gf/GfDataBlade.h"
 #include "gf/GfItemUtil.h"
+#include "gf/GfMenuObjUtil.h"
 #include "gf/GfPlayFactory.h"
 #include "gf/GfReqCommand.h"
 #include "gf/ParamReturnTitle.h"
+#include "gf/gf_menu_obj_camp_menu.h"
+#include "gf/gf_menu_obj_tips.h"
 #include "mm/Col4.h"
 #include "mm/Vec3.h"
 #include "mm/mtl/FixStr.h"
+#include "mm/mtl/FixedVector.h"
 
 // The plugins' return-value setters. Inferred: the names are not the original's (the original may have spelled
 // these out in every function).
@@ -560,6 +574,182 @@ void pluginEvtMapRegist() {
     vmPluginRegist("evt_map", s_evtmapPlugin);
 }
 
+// evt_ui.openChapTelop
+static int fn_7100667534(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    if (!mm::mtl::Singleton<event::UIManager>::getPtr()->openChapTelopUI(id)) {
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
+
+// evt_ui.openAvanTitle
+static int fn_71006675E4(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    mm::mtl::Singleton<event::UIManager>::getPtr()->openAvanTitleUI(id);
+    return 0;
+}
+
+// evt_ui.closeAvanTitle
+static int fn_710066767C(VMThread* pThread) {
+    mm::mtl::Singleton<event::UIManager>::getPtr()->closeAvanTitleUI(10);
+    return 0;
+}
+
+// evt_ui.openZoneTelop
+static int fn_71006676FC(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    mm::mtl::Singleton<event::UIManager>::getPtr()->openZoneTelopUI(id);
+    return 0;
+}
+
+// evt_ui.openOpeningTelopC
+static int fn_7100667794(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    mm::mtl::Singleton<event::UIManager>::getPtr()->openOpeningTelopUI(event::UIManager::OPTELOP_C, id);
+    return 0;
+}
+
+// evt_ui.openOpeningTelopLB
+static int fn_7100667830(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    mm::mtl::Singleton<event::UIManager>::getPtr()->openOpeningTelopUI(event::UIManager::OPTELOP_LB, id);
+    return 0;
+}
+
+// evt_ui.openOpeningTelopRT
+static int fn_71006678CC(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    mm::mtl::Singleton<event::UIManager>::getPtr()->openOpeningTelopUI(event::UIManager::OPTELOP_RT, id);
+    return 0;
+}
+
+// evt_ui.openOpeningTelopLH
+static int fn_7100667968(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    mm::mtl::Singleton<event::UIManager>::getPtr()->openOpeningTelopUI(event::UIManager::OPTELOP_LH, id);
+    return 0;
+}
+
+// evt_ui.openOpeningTelopRH
+static int fn_7100667A04(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    mm::mtl::Singleton<event::UIManager>::getPtr()->openOpeningTelopUI(event::UIManager::OPTELOP_RH, id);
+    return 0;
+}
+
+// evt_ui.closeOpeningTelopC
+static int fn_7100667AA0(VMThread* pThread) {
+    mm::mtl::Singleton<event::UIManager>::getPtr()->closeOpeningTelopUI(event::UIManager::OPTELOP_C);
+    return 0;
+}
+
+// evt_ui.closeOpeningTelopLB
+static int fn_7100667B20(VMThread* pThread) {
+    mm::mtl::Singleton<event::UIManager>::getPtr()->closeOpeningTelopUI(event::UIManager::OPTELOP_LB);
+    return 0;
+}
+
+// evt_ui.closeOpeningTelopRT
+static int fn_7100667BA0(VMThread* pThread) {
+    mm::mtl::Singleton<event::UIManager>::getPtr()->closeOpeningTelopUI(event::UIManager::OPTELOP_RT);
+    return 0;
+}
+
+// evt_ui.closeOpeningTelopLH
+static int fn_7100667C20(VMThread* pThread) {
+    mm::mtl::Singleton<event::UIManager>::getPtr()->closeOpeningTelopUI(event::UIManager::OPTELOP_LH);
+    return 0;
+}
+
+// evt_ui.closeOpeningTelopRH
+static int fn_7100667CA0(VMThread* pThread) {
+    mm::mtl::Singleton<event::UIManager>::getPtr()->closeOpeningTelopUI(event::UIManager::OPTELOP_RH);
+    return 0;
+}
+
+// evt_ui.startStaffroll
+static int fn_7100667D20(VMThread* pThread) {
+    float speed = vmArgFixedGet(1, vmArgPtrGet(pThread, 1));
+    int type = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    mm::mtl::Singleton<event::UIManager>::getPtr()->startStaffrollUI(speed, type);
+    return 0;
+}
+
+// evt_ui.endStaffroll
+static int fn_7100667DE4(VMThread* pThread) {
+    mm::mtl::Singleton<event::UIManager>::getPtr()->endStaffroll();
+    return 0;
+}
+
+// evt_ui.openHomuraHikari
+static int fn_7100667E60(VMThread* pThread) {
+    if (!gf::GfManager::isExecModeThater()) {
+        if (!mm::mtl::Singleton<event::UIManager>::getPtr()->openHomuraHikariUI()) {
+            vmWaitModeSet(pThread);
+        }
+    }
+    return 0;
+}
+
+// evt_ui.openMiniGame
+static int fn_7100667EF4(VMThread* pThread) {
+    if (!mm::mtl::Singleton<event::UIManager>::getPtr()->openMinigame()) {
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
+
+// evt_ui.openHitonowa
+static int fn_7100667F80(VMThread* pThread) {
+    int id0 = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int param = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int flag = vmArgBoolGet(3, vmArgPtrGet(pThread, 3));
+    int id1 = vmArgIntGet(4, vmArgPtrGet(pThread, 4));
+    int id2 = vmArgIntGet(5, vmArgPtrGet(pThread, 5));
+    mm::mtl::FixedVector<int, 3> ids;
+    if (id0 > 0) {
+        ids.push_back(id0);
+    }
+    if (id1 > 0) {
+        ids.push_back(id1);
+    }
+    if (id2 > 0) {
+        ids.push_back(id2);
+    }
+    if (!mm::mtl::Singleton<event::UIManager>::getPtr()->fn_7100105B40(ids, param, flag != 0)) {
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
+
+static VMPluginFunc s_evtuiPlugin[] = {
+    {"openChapTelop", fn_7100667534},
+    {"openAvanTitle", fn_71006675E4},
+    {"closeAvanTitle", fn_710066767C},
+    {"openZoneTelop", fn_71006676FC},
+    {"openOpeningTelopC", fn_7100667794},
+    {"openOpeningTelopLB", fn_7100667830},
+    {"openOpeningTelopRT", fn_71006678CC},
+    {"openOpeningTelopLH", fn_7100667968},
+    {"openOpeningTelopRH", fn_7100667A04},
+    {"closeOpeningTelopC", fn_7100667AA0},
+    {"closeOpeningTelopLB", fn_7100667B20},
+    {"closeOpeningTelopRT", fn_7100667BA0},
+    {"closeOpeningTelopLH", fn_7100667C20},
+    {"closeOpeningTelopRH", fn_7100667CA0},
+    {"startStaffroll", fn_7100667D20},
+    {"endStaffroll", fn_7100667DE4},
+    {"openHomuraHikari", fn_7100667E60},
+    {"openMiniGame", fn_7100667EF4},
+    {"openHitonowa", fn_7100667F80},
+    {nullptr, nullptr},
+};
+
+void pluginEvtUiRegist() {
+    vmPluginRegist("evt_ui", s_evtuiPlugin);
+}
+
 // evt_voice.play
 static int fn_710066814C(VMThread* pThread) {
     const char* name = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
@@ -1068,6 +1258,349 @@ static VMPluginFunc s_sysPlugin[] = {
 
 void pluginSysRegist() {
     vmPluginRegist("sys", s_sysPlugin);
+}
+
+// ui.dispCommonUI
+static int fn_710066A1DC(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    vmRetIntSet(pThread, gf::GfPlayFactory::createCommonMessage(id));
+    return 1;
+}
+
+// ui.isDispCommonUI
+static int fn_710066A234(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    vmRetBoolSet(pThread, gf::GfPlayFactory::isDispCommonMessage(id));
+    return 1;
+}
+
+// ui.getDispCommonUI
+static int fn_710066A290(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    vmRetIntSet(pThread, gf::GfPlayFactory::getDispCommonMessage(id));
+    return 1;
+}
+
+// ui.openChapterSave
+static int fn_710066A2E8(VMThread* pThread) {
+    int id = vmArgOmitChk(pThread, 1) ? 0 : vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    gf::GfPlayFactory::createOpenChapterSave(id);
+    return 0;
+}
+
+// ui.isCloseChapterSave
+static int fn_710066A338(VMThread* pThread) {
+    vmRetBoolSet(pThread, !gf::GfPlayFactory::isDispChapterSave());
+    return 1;
+}
+
+// ui.openChapter
+static int fn_710066A380(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    gf::GfPlayFactory::createOpenChapterUI(id);
+    return 0;
+}
+
+// ui.openChapterEnd
+static int fn_710066A3AC(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    gf::GfPlayFactory::createOpenChapterEndUI(id);
+    return 0;
+}
+
+// ui.openZone
+static int fn_710066A3D8(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    gf::GfPlayFactory::createOpenZoneUI(id);
+    return 0;
+}
+
+// ui.settingPartyFormBeforeBattle
+static int fn_710066A404(VMThread* pThread) {
+    gf::GfMenuObjPartyForm3::OpenParam param;
+    param.m_value = 1;
+    gf::GfMenuObjPartyForm3::registOpenParam(param);
+    return 0;
+}
+
+// ui.openPartyForm
+static int fn_710066A430(VMThread* pThread) {
+    gf::GfPlayFactory::createOpenMenu(0x24, nullptr);
+    return 0;
+}
+
+// ui.isOpenPartyForm
+static int fn_710066A450(VMThread* pThread) {
+    gf::GfSequentialPlay* play = mm::mtl::PtrSingleton<gf::GfSequentialPlay>::sys();
+    vmRetBoolSet(pThread, play != nullptr && play->fn_7100323420(0x24, 0));
+    return 1;
+}
+
+// ui.openBladeCreate
+static int fn_710066A4B8(VMThread* pThread) {
+    gf::GfMenuObjBladeCreate::OpenParam param;
+    param.m_value = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    gf::GfMenuObjBladeCreate::registOpenParam(param);
+    gf::GfPlayFactory::createOpenMenu(0xB, nullptr);
+    return 0;
+}
+
+// ui.openOrbMenu
+static int fn_710066A500(VMThread* pThread) {
+    return 0;
+}
+
+// ui.openTutorial
+static int fn_710066A508(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    if (!gf::GfManager::isExecModeThater()) {
+        if (vmWkIdxGet(pThread) == 0) {
+            gf::GfPlayFactory::createOpenDummyTutorial(id);
+            vmWkIdxSet(pThread, 1);
+        } else if (!gf::GfMenuManager::isOpenDummyTutorial()) {
+            return 0;
+        }
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
+
+// ui.waitCloseFullScreen
+static int fn_710066A57C(VMThread* pThread) {
+    if (gf::GfMenuObjUtil::fn_710048FD30(3)) {
+        gf::GfSequentialPlay* play = mm::mtl::PtrSingleton<gf::GfSequentialPlay>::sys();
+        if (play != nullptr && play->fn_7100323420(0x24, 0)) {
+            vmWaitModeSet(pThread);
+        }
+    }
+    if (gf::GfMenuManager::isOpenFullScreen()) {
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
+
+// ui.enableEnvironmentInfo
+static int fn_710066A5E0(VMThread* pThread) {
+    gf::GfMenuObjEnvironmentInfo::enable();
+    return 0;
+}
+
+// ui.disableEnvironmentInfo
+static int fn_710066A5F8(VMThread* pThread) {
+    gf::GfMenuObjEnvironmentInfo::disable();
+    return 0;
+}
+
+// ui.openMiniGame
+static int fn_710066A610(VMThread* pThread) {
+    gf::GfPlayFactory::createMiniGame();
+    return 0;
+}
+
+// ui.openTutorialText
+static int fn_710066A628(VMThread* pThread) {
+    int index = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int text = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    if (!gf::GfManager::isExecModeThater()) {
+        if (vmWkIdxGet(pThread) == 0) {
+            gf::GfMenuObjTutorial::TextParam param;
+            param.m_text = text;
+            gf::GfMenuObjTutorial::openText(index, param);
+            vmWkIdxSet(pThread, 1);
+        } else if (!gf::GfMenuObjTutorial::isWaiting()) {
+            return 0;
+        }
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
+
+// ui.closeTutorialText
+static int fn_710066A6C8(VMThread* pThread) {
+    int index = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    if (!gf::GfManager::isExecModeThater()) {
+        gf::GfMenuObjTutorial::closeText(index);
+    }
+    return 0;
+}
+
+// ui.nextTutorialText
+static int fn_710066A70C(VMThread* pThread) {
+    int index = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int text = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    if (!gf::GfManager::isExecModeThater()) {
+        if (vmWkIdxGet(pThread) == 0) {
+            gf::GfMenuObjTutorial::TextParam param;
+            param.m_text = text;
+            gf::GfMenuObjTutorial::openText(index, param);
+            vmWkIdxSet(pThread, 1);
+        } else if (!gf::GfMenuObjTutorial::isWaiting()) {
+            return 0;
+        }
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
+
+// ui.openTutorialArrow
+static int fn_710066A7AC(VMThread* pThread) {
+    int index = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int a = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int b = vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    int c = vmArgIntGet(4, vmArgPtrGet(pThread, 4));
+    if (!gf::GfManager::isExecModeThater()) {
+        gf::GfMenuObjTutorial::FocusParam param;
+        param.m_value[2] = a;
+        param.m_value[0] = b;
+        param.m_value[1] = c;
+        gf::GfMenuObjTutorial::openFocus(index, param);
+    }
+    return 0;
+}
+
+// ui.closeTutorialArrow
+static int fn_710066A868(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    gf::GfMenuObjTutorial::closeFocus(id);
+    return 0;
+}
+
+// ui.openTutorialIcon
+static int fn_710066A894(VMThread* pThread) {
+    int index = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    int a = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    int b = vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    if (!gf::GfManager::isExecModeThater()) {
+        gf::GfMenuObjTutorial::IconParam param;
+        param.m_value[0] = a;
+        param.m_value[1] = b;
+        gf::GfMenuObjTutorial::openIcon(index, param);
+    }
+    return 0;
+}
+
+// ui.closeTutorialIcon
+static int fn_710066A928(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    gf::GfMenuObjTutorial::closeIcon(id);
+    return 0;
+}
+
+// ui.closeTutorial
+static int fn_710066A954(VMThread* pThread) {
+    gf::GfMenuObjTutorial::closeAll();
+    return 0;
+}
+
+// ui.openPopup
+static int fn_710066A96C(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    gf::GfMenuObjPopup::OpenParam param = {10, {static_cast<unsigned int>(id), 0, 0}};
+    gf::GfMenuObjPopup::open(param);
+    return 0;
+}
+
+// ui.startTutorial
+static int fn_710066A9B0(VMThread* pThread) {
+    if (!gf::GfManager::isExecModeThater()) {
+        if (vmWkIdxGet(pThread) == 0) {
+            gf::GfMenuObjTutorial::start();
+            vmWkIdxSet(pThread, 1);
+            vmWaitModeSet(pThread);
+        } else if (gf::GfMenuObjTutorial::isWaiting()) {
+            vmWaitModeSet(pThread);
+        }
+    }
+    if (gf::GfGameScene* scene = mm::mtl::PtrSingleton<gf::GfGameScene>::sys()) {
+        scene->fn_71002C4BE4();
+    }
+    return 0;
+}
+
+// ui.enableMinimap
+static int fn_710066AA1C(VMThread* pThread) {
+    gf::GfMenuObjMinimap2::enable();
+    return 0;
+}
+
+// ui.disableMinimap
+static int fn_710066AA34(VMThread* pThread) {
+    gf::GfMenuObjMinimap2::disable();
+    return 0;
+}
+
+// ui.lockQuestLogOpen
+static int fn_710066AA4C(VMThread* pThread) {
+    gf::GfMenuObjQuestLog::lockLogOpen();
+    return 0;
+}
+
+// ui.unlockQuestLogOpen
+static int fn_710066AA64(VMThread* pThread) {
+    gf::GfMenuObjQuestLog::unlockLogOpen();
+    return 0;
+}
+
+// ui.getTutorialStartID
+static int fn_710066AA7C(VMThread* pThread) {
+    vmRetIntSet(pThread, gf::GfMenuManager::fn_710035A364());
+    return 1;
+}
+
+// ui.unlockTips
+static int fn_710066AAC0(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    gf::fn_7100487A90(id);
+    return 0;
+}
+
+// ui.setCampTalkNew
+static int fn_710066AAEC(VMThread* pThread) {
+    gf::fn_71003BBCDC();
+    return 0;
+}
+
+static VMPluginFunc s_uiPlugin[] = {
+    {"dispCommonUI", fn_710066A1DC},
+    {"isDispCommonUI", fn_710066A234},
+    {"getDispCommonUI", fn_710066A290},
+    {"openChapterSave", fn_710066A2E8},
+    {"isCloseChapterSave", fn_710066A338},
+    {"openChapter", fn_710066A380},
+    {"openChapterEnd", fn_710066A3AC},
+    {"openZone", fn_710066A3D8},
+    {"settingPartyFormBeforeBattle", fn_710066A404},
+    {"openPartyForm", fn_710066A430},
+    {"isOpenPartyForm", fn_710066A450},
+    {"openBladeCreate", fn_710066A4B8},
+    {"openOrbMenu", fn_710066A500},
+    {"openTutorial", fn_710066A508},
+    {"waitCloseFullScreen", fn_710066A57C},
+    {"enableEnvironmentInfo", fn_710066A5E0},
+    {"disableEnvironmentInfo", fn_710066A5F8},
+    {"openMiniGame", fn_710066A610},
+    {"openTutorialText", fn_710066A628},
+    {"closeTutorialText", fn_710066A6C8},
+    {"nextTutorialText", fn_710066A70C},
+    {"openTutorialArrow", fn_710066A7AC},
+    {"closeTutorialArrow", fn_710066A868},
+    {"openTutorialIcon", fn_710066A894},
+    {"closeTutorialIcon", fn_710066A928},
+    {"closeTutorial", fn_710066A954},
+    {"openPopup", fn_710066A96C},
+    {"startTutorial", fn_710066A9B0},
+    {"enableMinimap", fn_710066AA1C},
+    {"disableMinimap", fn_710066AA34},
+    {"lockQuestLogOpen", fn_710066AA4C},
+    {"unlockQuestLogOpen", fn_710066AA64},
+    {"getTutorialStartID", fn_710066AA7C},
+    {"unlockTips", fn_710066AAC0},
+    {"setCampTalkNew", fn_710066AAEC},
+    {nullptr, nullptr},
+};
+
+void pluginUiRegist() {
+    vmPluginRegist("ui", s_uiPlugin);
 }
 
 // wait.frame

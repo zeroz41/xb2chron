@@ -16,6 +16,12 @@ public:
     class IdeagramListener;
     class MainListener;
     class ResultListener;
+    // what registOpenParam keeps for the next open (ScriptPlayText's ui openBladeCreate passes its script
+    // argument); the name is not the original's
+    struct OpenParam {
+        unsigned int m_value;
+    };
+    static void registOpenParam(const OpenParam& param);
     virtual ~GfMenuObjBladeCreate();  // slot 0
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3

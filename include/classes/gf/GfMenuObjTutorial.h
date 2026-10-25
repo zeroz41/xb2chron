@@ -13,6 +13,14 @@ public:
     struct TextParam {
         unsigned int m_text;
     };
+    // what openFocus / openIcon show (ScriptPlayText's ui openTutorialArrow / openTutorialIcon pass their script
+    // arguments 3, 4, 2 / 2, 3); the names are not the original's
+    struct FocusParam {
+        unsigned short m_value[3];
+    };
+    struct IconParam {
+        unsigned short m_value[2];
+    };
     GfMenuObjTutorial(unsigned int handle);
     virtual ~GfMenuObjTutorial();  // slot 0
     virtual void initialize();  // slot 2
@@ -23,6 +31,8 @@ public:
     static void openText(unsigned int index, const TextParam& param);
     static void closeText(unsigned int index);
     static bool isWaiting();  // the tutorial's call context is running
+    static void openFocus(unsigned int index, const FocusParam& param);
+    static void openIcon(unsigned int index, const IconParam& param);
     static void closeFocus(unsigned int index);
     static void closeIcon(unsigned int index);
     static void start();
