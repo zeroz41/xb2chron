@@ -24,7 +24,10 @@ public:
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
-    unsigned char pad_18[0x8];
+    // enter sets it when the asm is in S_down_00; update runs asm command 0x1F once that motion ends and clears it
+    // (the name is not the original's)
+    bool m_isDown;
+    unsigned char pad_19[0x7];
 };
 }}  // namespace gf::pc
 

@@ -24,7 +24,12 @@ public:
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
-    unsigned char pad_18[0x8];
+    // the names are not the original's: update sets m_keepAccess before the moves to other ground states (leave
+    // then keeps the access flag and foot steps on) and m_keepLure before the move to state 0x38 (leave keeps the
+    // lure on); enter clears both
+    bool m_keepAccess;
+    bool m_keepLure;
+    unsigned char pad_1a[0x6];
 };
 }}  // namespace gf::pc
 

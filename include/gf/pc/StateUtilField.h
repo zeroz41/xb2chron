@@ -63,6 +63,10 @@ public:
     static void setEnableFallIntoColi(gf::GfComBehaviorPc& behavior, bool enable);
     // StateFieldAir::leave's into state 0x36 (by its symbol)
     static void setSlideDirForce(gf::GfComPropertyPc& property);
+    static bool isTurnEndRangeCacheInput(gf::GfComPropertyPc& property, const mm::Vec3& dir);  // (by its symbol)
+    static bool isInputInverseDir(gf::GfComPropertyPc& property);  // (by its symbol)
+    static bool isStop(gf::GfComPropertyPc& property, unsigned int noInputFrames);  // (by its symbol)
+    static void setAsmSpeedMove(gf::GfComPropertyPc& property);  // (by its symbol)
 };
 
 }}  // namespace gf::pc

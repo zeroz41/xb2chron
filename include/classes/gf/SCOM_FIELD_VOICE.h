@@ -47,6 +47,7 @@ public:
     // 3.0.1 inlines every call)
     static GAME_VOICE_HANDLE* create(const ParamObj& obj, CV_FIELD field, CV_PRIO prio);
     static GAME_VOICE_HANDLE* createHighLanding(const ParamObj& obj);
+    static GAME_VOICE_HANDLE* createJump(const ParamObj& obj);  // (by its symbol; the return type is not established)
     static GAME_VOICE_HANDLE* createFallDead(const ParamObj& obj);
     static GAME_VOICE_HANDLE* createMercenariesIn(unsigned int id);
     static GAME_VOICE_HANDLE* createMercenariesLeader(unsigned int id);

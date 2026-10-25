@@ -24,7 +24,10 @@ public:
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
-    unsigned char pad_18[0x8];
+    // update counts the frames without stick input (0 while there is some) and hands the count to
+    // StateUtilField::isStop; enter clears it (the name is not the original's)
+    unsigned int m_noInputFrames;
+    unsigned char pad_1c[0x4];
 };
 }}  // namespace gf::pc
 

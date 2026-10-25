@@ -24,7 +24,10 @@ public:
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
-    unsigned char pad_18[0x8];
+    // set once update has run the stop asm command (5) at the brake's end speed; enter clears it (the name is not
+    // the original's)
+    bool m_stopped;
+    unsigned char pad_19[0x7];
 };
 }}  // namespace gf::pc
 

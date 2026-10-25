@@ -2,6 +2,7 @@
 #define CLASSES_GF_PC_STATEFIELDTURN_H
 
 #include "classes/gf/GfStateBase.h"
+#include "mm/Vec3.h"
 #include <new>
 
 namespace ai { class State; }
@@ -24,7 +25,11 @@ public:
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
-    unsigned char pad_18[0x18];
+    // the names are not the original's: enter decides whether the turn is a walking one (update then turns with
+    // MoveUtilField::updateMoveWalkTurn, else updateMoveTurn) and the direction to turn to
+    bool m_walk;
+    unsigned char pad_19[0x7];
+    mm::Vec3 m_dir;  // 16 bytes on a 16-byte boundary: it ends the state at 0x30
 };
 }}  // namespace gf::pc
 

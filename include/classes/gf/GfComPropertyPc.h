@@ -27,6 +27,7 @@ public:
     // sets (on) or clears (off) the given bits of its GfComEnvSensor's sensor's m_checkFlags
     void setEnvSensorCheckFlags(unsigned int flags, bool on);
     void setInputDirPow(const mm::Vec3& dir, float pow);
+    bool existInputXY() const;  // (by its symbol)
     void setLocomotion(const anm::QsTransform& locomotion);
 
     static mm::mtl::RTTI m_rtti;

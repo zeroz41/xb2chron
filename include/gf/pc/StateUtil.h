@@ -5,6 +5,7 @@
 #include "classes/gf/pc/TimerPlugin.h"
 
 namespace fw { class Message; }
+namespace fw { enum VibrationID : int; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfComBehaviorPc; }
 namespace gf { class MsgObjectNotifyDead; }
@@ -55,6 +56,9 @@ public:
     static const gf::EnviromentSensor::WaterInfo* getWaterInfo(gf::GfComBehaviorPc& behavior);
     static const gf::EnviromentSensor::DeadPlaneInfo* getDeadPlaneInfo(gf::GfComBehaviorPc& behavior);
     static bool isOnSlideGround(gf::GfComBehaviorPc& behavior);
+    static void setEnableFootStep(gf::GfComBehaviorPc& behavior, bool enable);  // (by its symbol)
+    static void playVibration(gf::GfComBehaviorPc& behavior, fw::VibrationID id);  // (by its symbol)
+    static void changePlacementDownDist(gf::GfComBehaviorPc& behavior, float dist);  // (by its symbol)
     static void applyDamage(gf::GfComBehaviorPc& behavior, unsigned int damage, bool percent);
     static void notifyDead(gf::GfComBehaviorPc& behavior, gf::MsgObjectNotifyDead& msg, bool force);
     // the PC's revival on a heal (StateFieldDead and StateFieldWaterDead::onAlive hand it the heal message)

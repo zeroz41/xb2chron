@@ -24,7 +24,13 @@ public:
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
-    unsigned char pad_18[0x10];
+    // the names are not the original's: update adds each frame's time to m_time, enter sets m_fromSlide when the
+    // previous state is 0x36 and clears the rest
+    float m_time;
+    bool m_fromSlide;
+    unsigned char pad_1d[0x3];
+    float m_speed;
+    unsigned char pad_24[0x4];
 };
 }}  // namespace gf::pc
 

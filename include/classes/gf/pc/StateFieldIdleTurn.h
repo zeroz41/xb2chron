@@ -2,6 +2,7 @@
 #define CLASSES_GF_PC_STATEFIELDIDLETURN_H
 
 #include "classes/gf/GfStateBase.h"
+#include "mm/Vec3.h"
 #include <new>
 
 namespace ai { class State; }
@@ -24,7 +25,10 @@ public:
     void enter(GfComBehaviorPc* behavior, ai::State* prev);
     void leave(GfComBehaviorPc* behavior, ai::State* next);
     void update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
-    unsigned char pad_18[0x18];
+    unsigned char pad_18[0x8];
+    // the direction to turn to: enter sets it from the stick, update turns along it until
+    // StateUtilField::isTurnEndRangeCacheInput (the name is not the original's)
+    mm::Vec3 m_dir;  // 16 bytes on a 16-byte boundary: it ends the state at 0x30
 };
 }}  // namespace gf::pc
 

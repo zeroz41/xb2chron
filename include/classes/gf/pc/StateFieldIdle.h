@@ -23,7 +23,7 @@ public:
     virtual ~StateFieldIdle() {}  // slot 0: inline (the deleting destructor only frees the state)
     // inline: recieveMessage is the key function (the unit emits the table and these slots' weak copies)
     virtual inline const char* getName() const;  // slot 2
-    // inline: the original's slot holds the state's own code (not written yet)
+    // inline: the original's slot holds enter's code (inlined)
     virtual inline void onEnter(void*, ai::State*);  // slot 3
     // inline: the original's slot holds leave's code (inlined)
     virtual inline void onLeave(void*, ai::State*);  // slot 4
