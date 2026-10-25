@@ -1,6 +1,6 @@
 // Script VM plugins of this unit (their tables, entries and Regist functions). The entries are static and nothing
-// names them: they keep placeholder fn_ names. Plugins not written yet: evt_status, evt_text, evt_movie, pt
-// (and ScriptPlayText::exec, ocThreadRegist).
+// names them: they keep placeholder fn_ names. Plugins not written yet: evt_status, evt_movie, pt
+// (and ocThreadRegist).
 #include "vm/yvm2.h"
 #include "classes/mm/mtl/Singleton.h"
 #include "classes/event/CamManager.h"
@@ -13,10 +13,13 @@
 #include "classes/event/LightManager.h"
 #include "classes/event/Manager.h"
 #include "classes/event/ObjectManager.h"
+#include "classes/event/Param.h"
 #include "classes/event/PosAxis.h"
 #include "classes/event/ResManager.h"
+#include "classes/event/ScriptPlayText.h"
 #include "classes/event/SeManager.h"
 #include "classes/event/SeamlessManager.h"
+#include "classes/event/TodoManager.h"
 #include "classes/event/UIManager.h"
 #include "classes/event/VoiceManager.h"
 #include "classes/event/VolumeManager.h"
@@ -502,6 +505,7 @@ static int fn_71006659F4(VMThread* pThread) {
     return 0;
 }
 
+// The evt_setup plugin's table. Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B73698).
 static VMPluginFunc s_evtsetupPlugin[] = {
     {"talk", fn_710066332C},
     {"walk", fn_71006633E0},
@@ -550,6 +554,54 @@ void pluginEvtSetupRegist() {
     vmPluginRegist("evt_setup", s_evtsetupPlugin);
 }
 
+// evt_text.seamVoice
+static int fn_71006660E8(VMThread* pThread) {
+    int frame = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    const char* name = vmArgStringGet(2, vmArgPtrGet(pThread, 2));
+    const char* voice = vmArgOmitChk(pThread, 3) ? "" : vmArgStringGet(3, vmArgPtrGet(pThread, 3));
+    if (mm::mtl::PtrSingleton<event::Manager>::sys()->checkLanguageMode()) {
+        if (*voice != '\0') {
+            mm::mtl::Singleton<event::VoiceManager>::getPtr()->preload(frame, voice);
+        } else if (*name != '\0') {
+            mm::mtl::Singleton<event::VoiceManager>::getPtr()->preloadAuto(frame, name);
+        }
+    }
+    return 0;
+}
+
+// evt_text.play
+static int fn_7100666274(VMThread* pThread) {
+    // slotN: the value for the command Param's slot N (what each means is not known; the names are not the original's)
+    const char* text = vmArgStringGet(1, vmArgPtrGet(pThread, 1));
+    int slot1 = vmArgOmitChk(pThread, 2) ? -1 : vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    float slot2 = vmArgOmitChk(pThread, 3) ? 30.0f : vmArgIntGet(3, vmArgPtrGet(pThread, 3));
+    float slot3 = vmArgOmitChk(pThread, 4) ? 0.0f : vmArgIntGet(4, vmArgPtrGet(pThread, 4));
+    float slot4 = vmArgOmitChk(pThread, 5) ? 0.0f : vmArgIntGet(5, vmArgPtrGet(pThread, 5));
+    int slot5 = vmArgOmitChk(pThread, 6) ? 0 : vmArgIntGet(6, vmArgPtrGet(pThread, 6));
+    if (mm::mtl::PtrSingleton<event::Manager>::sys()->checkLanguageMode()) {
+        event::Param param;
+        param.val(0).setStr(text);
+        param.val(1).setS32(slot1);
+        param.val(2).setF32(slot2);
+        param.val(3).setF32(slot3);
+        param.val(4).setF32(slot4);
+        param.val(5).setS32(slot5);
+        mm::mtl::Singleton<event::TodoManager>::getPtr()->add(&event::ScriptPlayText::exec, param);
+    }
+    return 0;
+}
+
+// The evt_text plugin's table. Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B73978).
+static VMPluginFunc s_evttextPlugin[] = {
+    {"seamVoice", fn_71006660E8},
+    {"play", fn_7100666274},
+    {nullptr, nullptr},
+};
+
+void pluginEvtTextRegist() {
+    vmPluginRegist("evt_text", s_evttextPlugin);
+}
+
 // evt_map.setDisp
 static int fn_7100667374(VMThread* pThread) {
     int disp = vmArgBoolGet(1, vmArgPtrGet(pThread, 1));
@@ -565,6 +617,7 @@ static int fn_7100667374(VMThread* pThread) {
     return 0;
 }
 
+// The evt_map plugin's table. Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B739F8).
 static VMPluginFunc s_evtmapPlugin[] = {
     {"setDisp", fn_7100667374},
     {nullptr, nullptr},
@@ -723,6 +776,7 @@ static int fn_7100667F80(VMThread* pThread) {
     return 0;
 }
 
+// The evt_ui plugin's table. Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B73A18).
 static VMPluginFunc s_evtuiPlugin[] = {
     {"openChapTelop", fn_7100667534},
     {"openAvanTitle", fn_71006675E4},
@@ -757,6 +811,7 @@ static int fn_710066814C(VMThread* pThread) {
     return 0;
 }
 
+// The evt_voice plugin's table. Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B73B58).
 static VMPluginFunc s_evtvoicePlugin[] = {
     {"play", fn_710066814C},
     {nullptr, nullptr},
@@ -878,6 +933,7 @@ static int fn_7100668B70(VMThread* pThread) {
     return 0;
 }
 
+// The evt_vol plugin's table. Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B73B78).
 static VMPluginFunc s_evtvolPlugin[] = {
     {"changeBgmCategory", fn_71006681FC},
     {"changeFldCategory", fn_71006682D0},
@@ -1108,6 +1164,7 @@ static int fn_7100669718(VMThread* pThread) {
     return 0;
 }
 
+// The fld plugin's table. Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B73C68).
 static VMPluginFunc s_fldPlugin[] = {
     {"getScenario", fn_7100668C20},
     {"setScenario", fn_7100668C68},
@@ -1156,6 +1213,7 @@ static int fn_71006697CC(VMThread* pThread) {
     return 0;
 }
 
+// The gmk plugin's table. Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B73E08).
 static VMPluginFunc s_gmkPlugin[] = {
     {"getStartId", fn_710066978C},
     {"openPortal", fn_71006697CC},
@@ -1242,6 +1300,7 @@ static int fn_710066A160(VMThread* pThread) {
     return 0;
 }
 
+// The sys plugin's table. Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B73F48).
 static VMPluginFunc s_sysPlugin[] = {
     {"getStartId", fn_7100669F18},
     {"playEvent", fn_7100669F5C},
@@ -1560,6 +1619,7 @@ static int fn_710066AAEC(VMThread* pThread) {
     return 0;
 }
 
+// The ui plugin's table. Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B73FF8).
 static VMPluginFunc s_uiPlugin[] = {
     {"dispCommonUI", fn_710066A1DC},
     {"isDispCommonUI", fn_710066A234},
@@ -1623,6 +1683,7 @@ static int fn_710066AB18(VMThread* pThread) {
     return 0;
 }
 
+// The wait plugin's table. Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B74238).
 static VMPluginFunc s_waitPlugin[] = {
     {"frame", fn_710066AB18},
     {nullptr, nullptr},

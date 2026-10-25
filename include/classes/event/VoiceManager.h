@@ -23,6 +23,8 @@ public:
     // out of line (mm::mtl::Singleton<event::VoiceManager>::getPtr's static calls it)
     VoiceManager();
     void playOneshot(const char* name, float volume);
+    void preload(float frame, const char* name);
+    void preloadAuto(float frame, const char* name);
 };
 }  // namespace event
 
