@@ -3,13 +3,15 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 
-namespace gf { class GfLayerPause; }
+namespace gf { class GfLayerPause; class GF_LP_HANDLE; }
 
 namespace gf {
 // table 0x7100B547F8
 class GfLayerPause : public ::mm::mtl::PtrSingleton< ::gf::GfLayerPause> {
 public:
     static bool isLayerPause(unsigned int layer);
+    // GfGameEvent::clear hands it its handle
+    static void destroyLayerPause(GF_LP_HANDLE*& handle);
     static void gevPause(unsigned int, unsigned int);
     virtual ~GfLayerPause();  // slot 0
 };

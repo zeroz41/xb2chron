@@ -25,6 +25,8 @@ public:
     bool setAnimReverse(int bdatId, bool flag0, bool flag1);
     void setFade(int bdatId, bool flag0, bool flag1);
     void setLodSwitchId(int bdatId, unsigned int switchId);
+    bool isFadeOut(int bdatId) const;  // GfGameEvent::isMapLodDisp's: not shown
+    bool isAnimReverse(int bdatId) const;  // GfGameEvent::isMapLodAnimReverse's
 };
 }  // namespace gf
 

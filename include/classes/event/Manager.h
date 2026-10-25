@@ -6,7 +6,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace event { class Manager; }
-namespace ml { class EventView; }
+namespace ml { class EventView; class Scn; }
 
 namespace event {
 // table 0x7100B3E2F8
@@ -16,6 +16,16 @@ public:
     virtual void OnKeyDown(ml::EventView*);  // slot 2
     virtual void bkgHomeMenu(bool);  // slot 3
     bool end();  // returns whether an event was playing
+    // GfGameEvent's: initialize creates it on its scene when there is none, finalize destroys it
+    static void create(ml::Scn* scn);
+    static void destroy();
+    // GfGameEvent::update runs these three in turn, postUpdate runs post
+    void update();
+    void tail();
+    void render();
+    void post();
+    void stop();  // GfGameEvent::stop's
+    void finishNewGameWait();  // GfGameEvent::finishNewGameWait's
     bool isPlaying() const { return m_playing; }
 
     unsigned int m_playing : 1;  // end and stop act only while it is set; GfGameTalk::isPlaying returns it

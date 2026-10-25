@@ -10,6 +10,9 @@ namespace gf {
 // game-wide helpers (functions, by its symbols)
 class GfGameUtil {
 public:
+    // GfGameEvent::setGmkIdDisp and setGmkBdatDisp forward to them
+    static void setDispByGmkTypeAndGmkIdx(gmk::GmkType type, unsigned int idx, bool flag);
+    static void setDispByGmkTypeAndBdatId(gmk::GmkType type, int bdatId, bool flag);
     static bool getGmkTargetPointPos(mm::Vec3& pos, gf::GF_OBJ_HANDLE* handle);
     static bool getGmkTargetPointPos(mm::Vec3& pos, unsigned int id);
     // SCOM_ADD_DEVELOP's request passes its second value, then its first
