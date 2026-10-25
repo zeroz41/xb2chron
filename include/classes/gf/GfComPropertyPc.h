@@ -61,7 +61,11 @@ public:
     // StateFieldOnGround::update: at 1 a battle start hands m_battle MsgPcBattleStart(0) and goes to state 0x3F,
     // otherwise it asks StateUtilField::requestBattleStart (the name is not the original's)
     int m_battleStartKind;
-    unsigned char pad_40[0x20];
+    // the height GfComBehaviorPc::resetHeadColPosition hands calcHeadColiPos, which it skips while this is not above
+    // FLT_EPSILON (the name is not the original's)
+    float m_headColiHeight;
+    unsigned char pad_44[0xC];
+    mm::Vec3 m_headColiPos;  // resetHeadColPosition's: what calcHeadColiPos computes (the name is not the original's)
     InputDir m_inputDir;
     InputFlags m_inputFlags;
     InputDir m_prevInputDir;      // PadAgent::update's copy of last frame's m_inputDir

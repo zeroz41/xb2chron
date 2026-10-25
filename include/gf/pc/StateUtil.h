@@ -19,6 +19,8 @@ public:
     // hands msg from the PC to the party's drivers and blades (each but the PC itself)
     // StateFieldMove::leave's (by its symbol)
     static void resetPlacementDownDist(gf::GfComBehaviorPc& behavior);
+    // GfComBehaviorPc::integrateMove calls it first, before the move of the property's integrate mode
+    static void reflectionAdsorption(gf::GfComBehaviorPc& behavior);
     // StateFieldFall::enter's (by its symbol): switches the PC's TimerPlugin timer
     static void setActivateTimer(gf::GfComBehaviorPc& behavior, TimerPlugin::TYPE type, bool activate);
     // StateFieldAir::enter's and leave's (by its symbol)
