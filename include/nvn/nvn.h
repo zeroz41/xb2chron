@@ -20,6 +20,7 @@ typedef enum NVNshaderStage { NVN_SHADER_STAGE_LARGE = 0x7FFFFFFF } NVNshaderSta
 typedef enum NVNlogicOp { NVN_LOGIC_OP_LARGE = 0x7FFFFFFF } NVNlogicOp;
 typedef enum NVNsyncWaitResult { NVN_SYNC_WAIT_RESULT_LARGE = 0x7FFFFFFF } NVNsyncWaitResult;
 typedef enum NVNtiledCacheAction { NVN_TILED_CACHE_ACTION_LARGE = 0x7FFFFFFF } NVNtiledCacheAction;
+typedef enum NVNcounterType { NVN_COUNTER_TYPE_LARGE = 0x7FFFFFFF } NVNcounterType;
 
 typedef struct NVNblendState { char reserved[8]; } NVNblendState;
 typedef struct NVNchannelMaskState { char reserved[4]; } NVNchannelMaskState;

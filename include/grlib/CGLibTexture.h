@@ -24,6 +24,8 @@ public:
     // buffer made empty, width by height texels of the format
     static void createTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
                                   GrlSurfaceFormat format);
+    // the texture's first texel, into pValue (the return type is not known)
+    static void get1PixelTextureInfo(float* pValue, CGLibTextureBuffer& buffer);
 };
 
 }  // namespace grlib

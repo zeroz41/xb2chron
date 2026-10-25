@@ -4,6 +4,10 @@
 // grlib's enumerations as its functions' symbols spell them (all global but GrlMrtType, GrlUtilVertFetch and GrlUtilSampler); no value has a name yet
 enum GrlTexClamp {};
 enum GrlTexMagFilterType {};
+enum GrlTexMinFilterType {};
+enum GrlTexTexAnisoRatio {};
+enum GrlTexCompare {};
+enum GrlTexBorderType {};
 enum GrlPrimitiveType {};
 enum GrlIndexFormat {};
 enum GrlLogicType {};

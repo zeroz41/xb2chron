@@ -10,6 +10,8 @@
 #include "grlib/CGLibDecShader.h"
 #include "grlib/CGLibVtxFetch.h"
 #include "grlib/CGLibSampler.h"
+#include "grlib/CGLibBuffSamplerTbl.h"
+#include "grlib/CGLibBuffFixAlloc.h"
 #include "grlib/CGLibGpuTimeStamp.h"
 namespace grlib { struct CGLibMemType; }
 
@@ -37,6 +39,8 @@ public:
     static const unsigned int ETCBUFFER_1024_SIZE;
 
     bool isRelease();
+    // the bytes of one counter report (CGLibOcclusionQuery double-buffers its reports)
+    static unsigned int s_nvReportCounterSize;
     // the GPU address of a block's memory, into address
     void getVertexGpuAddress(unsigned long& address, const CGLibMemType& mem);
     // the GPU address of a uniform block's memory, into address
@@ -49,7 +53,10 @@ public:
     // frees the block once the GPU is done with it
     void releaseDelayVertex(CGLibMemType& mem);
 
-    unsigned char pad_8[0xEF0];
+    unsigned char pad_8[0x600];
+    CGLibBuffSamplerTbl m_samplerTbl;  // 0x608: CGLibSampler::updateData
+    CGLibBuffOcclusion m_occlusion;  // 0xE38: CGLibOcclusionQuery's report slots
+    unsigned char pad_E60[0x98];
     CGLibMemPoolAdder m_memPoolAdder;  // 0xEF8: CGLibGPUCache's pools
     unsigned char pad_F08[0x168];
     CGLibPipeline m_pipeline;  // 0x1070
@@ -57,7 +64,11 @@ public:
     unsigned char pad_2120[0x200];
     CGLibDecShader m_decShader;  // 0x2320: CGLibCtlShader::getDecShader
     CGLibVtxFetch m_vtxFetches[3];  // 0x2388: CGLibCtlShader::getVtxFetch
-    CGLibSampler m_samplers[6];  // 0x23B8: CGLibCtlShader::getSampler
+    CGLibSampler m_samplers[2];  // 0x23B8: CGLibCtlShader::getSampler (CGLibUtilObj's constructor builds two)
+    unsigned char pad_23F8[0x60];
+    NVNmemoryPool* m_pReportPool;  // 0x2458: the pool the occlusion reports are written to
+    unsigned char pad_2460[0x10];
+    unsigned char* m_pReportPoolMem;  // 0x2470: its memory
     NVNmemoryPool* m_pPixelPool;  // 0x2478: the pool pixel memory comes from
     unsigned char pad_2480[0x10];
     unsigned char* m_pPixelPoolMem;  // 0x2490: its memory

@@ -5,16 +5,28 @@
 
 namespace grlib {
 
+// the head of a declared shader's data (the names are not the original's: calcTblSize checks the magic and the
+// version and returns the declaration count)
+struct CGLibDecShaderData {
+    unsigned int m_magic;    // 0x0: 0x54434C53
+    unsigned int m_version;  // 0x4: 0x1002 or 0x1003 (calcTblSize compares it shifted down by one)
+    int m_declNum;           // 0x8: the declarations
+};
+
 // a shader with declarations (0x68 bytes): its programs by the declarations' current values
 class CGLibDecShader {
 public:
+    // the declarations' count, the size of a CGLibDecShdExtTbl table, of data (0 when it is no declared shader)
+    static unsigned int calcTblSize(const void* data);
+    unsigned int getDeclarationMax() const;
     unsigned int getDeclarationOfs(const char* name) const;
     void setDeclarationIdx(unsigned int ofs, unsigned int idx);
     // the program the declarations select (inline: the name is not the original's)
     CGLibShader& getCurrentShader() { return *(m_pShaders + m_current); }
     const CGLibShader& getCurrentShader() const { return *(m_pShaders + m_current); }
 
-    unsigned char pad_0[0x38];
+    const CGLibDecShaderData* m_pData;  // 0x0
+    unsigned char pad_8[0x30];
     CGLibShader* m_pShaders;
     unsigned char pad_40[0x18];
     unsigned int m_current;  // the index of the program the declarations select
@@ -25,8 +37,15 @@ public:
 // size is not known)
 class CGLibDecShdExtTbl {
 public:
+    CGLibDecShdExtTbl();
+    // the table of declaration values (calcTblSize bytes)
+    void setTbl(unsigned char* pTbl);
+    // the shader the table selects programs of: its values all 0
+    void setObj(CGLibDecShader* pDecShader);
+
     CGLibDecShader* m_pDecShader;  // 0x0
     unsigned int m_current;  // 0x8
+    unsigned char* m_pTbl;  // 0x10: a value per declaration
 };
 
 }  // namespace grlib

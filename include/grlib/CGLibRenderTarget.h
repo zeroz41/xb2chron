@@ -17,7 +17,10 @@ public:
     unsigned int getWidth() const;
     unsigned int getHeight() const;
 
-    unsigned char pad_0[0x10];
+    unsigned char pad_0[0x4];
+    unsigned short m_width;   // 0x04
+    unsigned short m_height;  // 0x06
+    unsigned char pad_8[0x8];
     NVNtextureView m_view;  // 0x10
     const NVNtexture* m_pNvnTexture;  // 0x38
 };
@@ -26,8 +29,13 @@ public:
 class CGLibDepthBuffer {
 public:
     void invalidate();
+    unsigned int getWidth() const;
+    unsigned int getHeight() const;
 
-    unsigned char pad_0[0x10];
+    unsigned char pad_0[0x4];
+    unsigned short m_width;   // 0x04
+    unsigned short m_height;  // 0x06
+    unsigned char pad_8[0x8];
     const NVNtexture* m_pNvnTexture;  // 0x10
 };
 
@@ -49,6 +57,8 @@ public:
     void setRenderTarget(CGLibDepthBuffer& depth);
     // clears the colour buffer's masked channels to color
     void clearTexture(const mm::Col4& color, GrlClaerMask mask);
+    // clears the colour buffer's masked channels to the integer values
+    void clearIntTexture(const int* values, GrlClaerMask mask);
 
     unsigned char pad_0[0x70];
     CGLibTextureBuffer* m_pTexture;  // its colour texture

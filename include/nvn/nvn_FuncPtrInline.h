@@ -147,6 +147,12 @@ typedef void (*PFNNVNCOLORSTATESETBLENDENABLEPROC)(NVNcolorState* color, int ind
 extern PFNNVNCOLORSTATESETBLENDENABLEPROC pfnc_nvnColorStateSetBlendEnable;
 static inline void nvnColorStateSetBlendEnable(NVNcolorState* color, int index, NVNboolean enable) { pfnc_nvnColorStateSetBlendEnable(color, index, enable); }
 
+typedef void (*PFNNVNCOMMANDBUFFERRESETCOUNTERPROC)(NVNcommandBuffer* cmdBuf, NVNcounterType counter);
+extern PFNNVNCOMMANDBUFFERRESETCOUNTERPROC pfnc_nvnCommandBufferResetCounter;
+static inline void nvnCommandBufferResetCounter(NVNcommandBuffer* cmdBuf, NVNcounterType counter) { pfnc_nvnCommandBufferResetCounter(cmdBuf, counter); }
+typedef void (*PFNNVNCOMMANDBUFFERREPORTCOUNTERPROC)(NVNcommandBuffer* cmdBuf, NVNcounterType counter, NVNbufferAddress buffer);
+extern PFNNVNCOMMANDBUFFERREPORTCOUNTERPROC pfnc_nvnCommandBufferReportCounter;
+static inline void nvnCommandBufferReportCounter(NVNcommandBuffer* cmdBuf, NVNcounterType counter, NVNbufferAddress buffer) { pfnc_nvnCommandBufferReportCounter(cmdBuf, counter, buffer); }
 typedef void (*PFNNVNCOMMANDBUFFERBINDUNIFORMBUFFERPROC)(NVNcommandBuffer* cmdBuf, NVNshaderStage stage, int index, NVNbufferAddress buffer, size_t size);
 extern PFNNVNCOMMANDBUFFERBINDUNIFORMBUFFERPROC pfnc_nvnCommandBufferBindUniformBuffer;
 static inline void nvnCommandBufferBindUniformBuffer(NVNcommandBuffer* cmdBuf, NVNshaderStage stage, int index, NVNbufferAddress buffer, size_t size) { pfnc_nvnCommandBufferBindUniformBuffer(cmdBuf, stage, index, buffer, size); }

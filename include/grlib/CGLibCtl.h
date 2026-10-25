@@ -79,6 +79,7 @@ public:
     // the parameter names are not the original's)
     static void setDepthControl(unsigned char test, unsigned char write, GrlCompare compare);
     static void clearColorBuffer(CGLibColorBuffer& buffer, const mm::Col4& color, GrlClaerMask mask);
+    static void clearIntColorBuffer(CGLibColorBuffer& buffer, const int* values, GrlClaerMask mask);
 };
 class CGLibPolygon {
 public:

@@ -12,7 +12,14 @@ class CGLibTextureBuffer {
 public:
     CGLibTextureBuffer();
     ~CGLibTextureBuffer();
+    bool isTexture1D() const;
     bool isTexture3D() const;
+    bool isInitialized() const;
+    unsigned int getWidth() const;
+    unsigned int getHeight() const;
+    GrlSurfaceFormat getFormat() const;
+    // the texture's first texel (CGLibTexture::get1PixelTextureInfo)
+    float get1PixelTextureInfo();
     unsigned int getMipmap() const;
 
     GrlSurfaceFormat m_format;     // 0x00
@@ -20,8 +27,8 @@ public:
     unsigned short m_height;       // 0x06
     unsigned char pad_8[0x4];
     unsigned short m_mipmap;       // 0x0C: getMipmap
-    unsigned char pad_E[0x2];
-    unsigned int m_flags;          // 0x10: 0x20 = linear (not block-linear) layout
+    unsigned short m_type;         // 0x0E: 1 = 1D (isTexture1D), 5 = 3D (isTexture3D)
+    unsigned int m_flags;          // 0x10: 1 = initialized, 0x20 = linear (not block-linear) layout
     unsigned char pad_14[0x14];
     unsigned char* m_pData;        // 0x28
     unsigned int m_dataSize;       // 0x30

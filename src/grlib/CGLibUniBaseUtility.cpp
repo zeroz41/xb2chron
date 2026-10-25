@@ -15,6 +15,15 @@
 #include "nvn/nvn_FuncPtrInline.h"
 #include <string.h>
 #include "nn/os.h"
+#include "grlib/CGLibSampler.h"
+#include "grlib/CGLibBuffSamplerTbl.h"
+#include "grlib/CGLibBuffFixAlloc.h"
+#include "grlib/CGLibPixlCounter.h"
+#include "grlib/CGLibOcclusionQuery.h"
+#include "grlib/CGLibRenderTarget.h"
+#include "grlib/CGLibCtl.h"
+#include "grlib/CGLibTexture.h"
+#include "grlib/CGLibDecShader.h"
 
 namespace grlib {
 
@@ -951,5 +960,223 @@ void CGLibEtcUniformBlock::setMoveMem(unsigned int size) {
         ::grlib::context::CGLibSystemContext::sys()->nextGlbUniformOfs(size);
     }
 }
+
+}  // namespace grlib
+
+namespace grlib {
+
+// ---- CGLibSampler ----
+
+namespace {
+
+// the border colour of each GrlTexBorderType. Proposed name, not the original's: the symbols leave it unnamed
+// (lbl_71009CEE0C)
+const mm::Col4 s_borderColorTbl[3] = {
+    mm::Col4(0.0f, 0.0f, 0.0f, 0.0f),
+    mm::Col4(0.0f, 0.0f, 0.0f, 1.0f),
+    mm::Col4(1.0f, 1.0f, 1.0f, 1.0f),
+};
+
+}  // namespace
+
+
+CGLibSampler::~CGLibSampler() {
+    release();
+}
+
+void CGLibSampler::release() {
+    if (m_pSamObj != nullptr) {
+        context::CGLibSystemContext::sys()->m_samplerTbl.freeSampler(m_pSamObj);
+    }
+}
+
+void CGLibSampler::initSampler(GrlTexClamp clamp, GrlTexMagFilterType filter) {
+    m_params = CGLibWkrSamplerParams();
+    setClamp(clamp, clamp, clamp);
+    if (filter == 0) {
+        setFilter(filter, static_cast<GrlTexMinFilterType>(0), static_cast<GrlTexTexAnisoRatio>(0));
+    } else {
+        setFilter(filter, static_cast<GrlTexMinFilterType>(1), static_cast<GrlTexTexAnisoRatio>(0));
+    }
+}
+
+void CGLibSampler::setClamp(GrlTexClamp s, GrlTexClamp t, GrlTexClamp r) {
+    m_params.m_clampS = s;
+    m_params.m_clampT = t;
+    m_params.m_clampR = r;
+    if (s > 5 || t > 5 || r > 5) {
+        m_params.m_border = 1;
+    } else {
+        m_params.m_border = 0;
+    }
+}
+
+void CGLibSampler::setFilter(GrlTexMagFilterType mag, GrlTexMinFilterType min, GrlTexTexAnisoRatio aniso) {
+    m_params.m_magFilter = mag;
+    m_params.m_minFilter = min;
+    m_params.m_aniso = aniso;
+}
+
+void CGLibSampler::setLOD(float lod) {
+    m_params.m_lod = lod;
+}
+
+void CGLibSampler::setDepthCompare(GrlTexCompare compare) {
+    m_params.m_compare = compare;
+}
+
+void CGLibSampler::setBorderType(GrlTexBorderType type) {
+    setBorderColor(s_borderColorTbl[type]);
+}
+
+void CGLibSampler::setBorderColor(const mm::Col4& color) {
+    m_params.m_borderColor.r = color.r;
+    m_params.m_borderColor.g = color.g;
+    m_params.m_borderColor.b = color.b;
+    m_params.m_borderColor.a = color.a;
+}
+
+void CGLibSampler::updateData() {
+    release();
+    m_pSamObj = context::CGLibSystemContext::sys()->m_samplerTbl.allocSampler(m_params);
+}
+
+// ---- CGLibOcclusionQuery ----
+
+CGLibOcclusionQuery::CGLibOcclusionQuery() : m_pReport(nullptr), m_id(0), m_validMask(0), m_writeIdx(0), m_readIdx(1) {}
+
+void CGLibOcclusionQuery::release() {
+    if (m_pReport != nullptr) {
+        context::CGLibSystemContext::sys()->m_occlusion.freeID(m_id);
+        m_pReport = nullptr;
+        m_id = 0;
+    }
+}
+
+void CGLibOcclusionQuery::beginQuery() {
+    nvnCommandBufferResetCounter(context::CGLibSystemContext::sys()->m_pipeline.m_pCmdBuf, static_cast<NVNcounterType>(1));
+}
+
+
+
+// ---- CGLibPixlCounter ----
+
+CGLibPixlCounter::CGLibPixlCounter() : m_gpuAddress(0) {}
+
+void CGLibPixlCounter::release() {
+    CGLibMemHandle::free(m_mem);
+    m_gpuAddress = 0;
+}
+
+void CGLibPixlCounter::beginCounter() {
+    nvnCommandBufferResetCounter(context::CGLibSystemContext::sys()->m_pipeline.m_pCmdBuf, static_cast<NVNcounterType>(1));
+}
+
+void CGLibPixlCounter::endCounter() {
+    context::CGLibSystemContext* pSys = context::CGLibSystemContext::sys();
+    if (m_gpuAddress == 0) {
+        CGLibMemHandle::allocUniform(m_mem, 0x100);
+        context::CGLibSystemContext::sys()->getUniformoGpuAddress(m_gpuAddress, m_mem);
+    }
+    nvnCommandBufferReportCounter(pSys->m_pipeline.m_pCmdBuf, static_cast<NVNcounterType>(1), m_gpuAddress);
+}
+
+
+// ---- small accessors ----
+
+void CGLibRenderTargetBase::setColorInvalidate() {}
+
+unsigned int CGLibColorBuffer::getWidth() const {
+    return m_width;
+}
+
+unsigned int CGLibColorBuffer::getHeight() const {
+    return m_height;
+}
+
+unsigned int CGLibTextureBuffer::getWidth() const {
+    return m_width;
+}
+
+unsigned int CGLibTextureBuffer::getHeight() const {
+    return m_height;
+}
+
+GrlSurfaceFormat CGLibTextureBuffer::getFormat() const {
+    return m_format;
+}
+
+void CGLibRenderTarget::clearTexture(const mm::Col4& color, GrlClaerMask mask) {
+    CGLibDepthCtl::clearColorBuffer(m_colorBuffer, color, mask);
+}
+
+void CGLibRenderTarget::clearIntTexture(const int* values, GrlClaerMask mask) {
+    CGLibDepthCtl::clearIntColorBuffer(m_colorBuffer, values, mask);
+}
+
+bool CGLibTextureBuffer::isTexture1D() const {
+    return m_type == 1;
+}
+
+bool CGLibTextureBuffer::isTexture3D() const {
+    return m_type == 5;
+}
+
+bool CGLibTextureBuffer::isInitialized() const {
+    return m_flags & 1;
+}
+
+float CGLibTextureBuffer::get1PixelTextureInfo() {
+    float value;
+    CGLibTexture::get1PixelTextureInfo(&value, *this);
+    return value;
+}
+
+unsigned int CGLibDepthBuffer::getWidth() const {
+    return m_width;
+}
+
+unsigned int CGLibDepthBuffer::getHeight() const {
+    return m_height;
+}
+
+void CGLibDepthBuffer::invalidate() {}
+
+// ---- CGLibDecShader / CGLibDecShdExtTbl ----
+
+unsigned int CGLibDecShader::calcTblSize(const void* data) {
+    const CGLibDecShaderData* pData = static_cast<const CGLibDecShaderData*>(data);
+    if (pData->m_magic != 0x54434C53) {
+        return 0;
+    }
+    if ((pData->m_version >> 1) != 0x801) {
+        return 0;
+    }
+    return pData->m_declNum;
+}
+
+unsigned int CGLibDecShader::getDeclarationMax() const {
+    return m_pData->m_declNum;
+}
+
+CGLibDecShdExtTbl::CGLibDecShdExtTbl() {
+    m_current = 0;
+    m_pTbl = nullptr;
+    m_pDecShader = nullptr;
+}
+
+void CGLibDecShdExtTbl::setTbl(unsigned char* pTbl) {
+    m_pTbl = pTbl;
+}
+
+void CGLibDecShdExtTbl::setObj(CGLibDecShader* pDecShader) {
+    m_pDecShader = pDecShader;
+    int num = pDecShader->getDeclarationMax();
+    for (int i = 0; i < num; i++) {
+        m_pTbl[i] = 0;
+    }
+    m_current = 0;
+}
+
 
 }  // namespace grlib
