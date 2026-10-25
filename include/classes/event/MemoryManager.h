@@ -25,10 +25,22 @@ public:
     virtual ~MemoryManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 
-    unsigned char pad_10[0x10];
+    long pad_10;
+    long pad_18;
     // the allocator the script commands come from (every event::Script*::exec passes it to operator new); the name
     // is not the original's
     mtl::ALLOC_HANDLE m_handle;  // 0x20
+    unsigned int pad_24;  // zeroed by the constructor
+    // fields the constructor initializes; what they hold is not known yet
+    long pad_28;
+    long pad_30;
+    unsigned int pad_38;
+    unsigned char pad_3c[0x1004];
+    long pad_1040;
+    long pad_1048;
+    long pad_1050;
+    unsigned int pad_1058;
+    unsigned char pad_105c[0x4];
 };
 }  // namespace event
 

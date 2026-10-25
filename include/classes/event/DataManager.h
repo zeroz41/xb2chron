@@ -5,17 +5,20 @@
 
 namespace event { enum MSG_TYPE : int; }
 
+#include "mm/mtl/FixStr.h"
+#include "mm/mtl/FixedVector.h"
+
 namespace event {
 // a base of event::DataManager no evidence names yet
 class TUnk_B3E2B0 {
 public:
-    virtual ~TUnk_B3E2B0();
+    virtual ~TUnk_B3E2B0() {}
     virtual void OnEventProc(event::MSG_TYPE) = 0;
 };
 // a base of event::DataManager no evidence names yet
 class TUnk_B3E2D8 {
 public:
-    virtual ~TUnk_B3E2D8();
+    virtual ~TUnk_B3E2D8() {}
 };
 // table 0x7100B3E2B0; base at 0x0 unknown (TUnk_B3E2B0), base at 0x8 unknown (TUnk_B3E2D8)
 class DataManager : public TUnk_B3E2B0, public TUnk_B3E2D8 {
@@ -29,6 +32,20 @@ public:
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     // whether the target id's values are angles (evt_chara's setTar then converts degrees to radians)
     bool checkRadianTar(unsigned int id);
+
+    // the 0x170-byte scene 1.0.0's createScene news; the name is not the original's
+    struct Scene {
+        unsigned char pad_0[0x170];
+    };
+    unsigned int m_flags;  // 0x10; the name is not the original's
+    unsigned int pad_14;
+    // the scenes 1.0.0's createScene adds; the name is not the original's
+    mm::mtl::FixedVector<Scene*, 16> m_scenes;  // 0x18 (size 0x98)
+    // the scene updateCurrent makes current ("default" at first, as ObjectManager's); the name is not the original's
+    mm::mtl::FixStr<64> m_sceneName;  // 0xa0
+    mm::mtl::FixStr<64> m_currentName;  // 0xe4; the name is not the original's
+    Scene* m_current;  // 0x128; the name is not the original's
+    unsigned char pad_130[0x50];
 };
 }  // namespace event
 

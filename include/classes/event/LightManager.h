@@ -23,6 +23,14 @@ public:
     // called by the evt_setup script plugin (application/BF2/ScriptPlayText); a result its callers ignore is declared void
     void loadResource(const char* name);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    // fields the constructor initializes; what they hold is not known yet
+    unsigned int pad_10;
+    unsigned int pad_14;
+    long pad_18;
+    long pad_20;
+    long pad_28;
+    long pad_30;
+    long pad_38;
 };
 }  // namespace event
 

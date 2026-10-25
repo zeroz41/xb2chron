@@ -41,10 +41,10 @@ public:
     // holder @0x418, the asset @0x420 clear() releases through GfAssetManager::releaseRefResource)
     struct Entry;
 
-    unsigned char pad_0x18[0x4];  // the constructor and clear() zero an int here
+    unsigned int pad_0x18;  // the constructor and clear() zero an int here
     mm::mtl::FixedVector<Entry*, 512> m_entries;  // @0x20, size @0x1020; the name is not the original's
     ResPackManager m_packManager;  // @0x1028; the name is not the original's
-    unsigned char pad_0x10b8[0x8];  // the constructor and clear() zero 8 bytes here
+    long pad_0x10b8;  // the constructor and clear() zero 8 bytes here
 };
 }  // namespace event
 

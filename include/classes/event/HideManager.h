@@ -28,9 +28,16 @@ public:
     void hideGroup(bool hide);
 
 private:
-    unsigned char pad_10[0x4];
+    unsigned int pad_10;
     // the group defineGroup sets and getGroup returns; the name is not the original's
     GRP_TYPE m_group;  // 0x14
+    // fields the constructor initializes; what they hold is not known yet
+    unsigned char pad_18[0x1000];
+    unsigned long pad_1018;
+    unsigned char pad_1020[0x1000];
+    unsigned long pad_2020;
+    unsigned char pad_2028[0x200];
+    unsigned long pad_2228;
 };
 }  // namespace event
 

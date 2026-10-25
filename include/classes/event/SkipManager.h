@@ -28,6 +28,10 @@ public:
 private:
     // bit 0: skipping (isSkip); the name is not the original's
     unsigned int m_flags;  // 0x10
+    // fields the constructor initializes; what they hold is not known yet
+    unsigned int pad_14;
+    float pad_18;  // -1.0f at first
+    unsigned char pad_1c[0x4];
 };
 }  // namespace event
 

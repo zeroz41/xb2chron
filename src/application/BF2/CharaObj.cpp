@@ -1082,3 +1082,43 @@ void DebugManager::OnEventProc(event::MSG_TYPE msg) {
 }
 
 }  // namespace event
+#include "classes/event/EffectManager.h"
+#include "classes/event/LightManager.h"
+#include "classes/event/SeamlessManager.h"
+#include "classes/event/SkipManager.h"
+#include "classes/event/BgmManager.h"
+#include "classes/event/HideManager.h"
+#include "classes/event/DebugManager.h"
+#include "classes/event/MovieManager.h"
+#include "classes/event/TodoManager.h"
+#include "classes/event/DataManager.h"
+#include "classes/event/MemoryManager.h"
+#include "classes/event/ResManager.h"
+
+namespace event {
+
+EffectManager::EffectManager() : m_flags(0), m_dispFlags(0), pad_a0(0), m_offscrID(0), pad_ac(0) {}
+
+LightManager::LightManager() : pad_10(0), pad_14(0), pad_18(0), pad_20(0), pad_28(0), pad_30(0), pad_38(0) {}
+
+SeamlessManager::SeamlessManager() : pad_10(0), pad_520(0), pad_2540(0) {}
+
+SkipManager::SkipManager() : m_flags(0), pad_14(0), pad_18(-1.0f) {}
+
+BgmManager::BgmManager() : pad_10(0), pad_14(0), pad_7c(0) {}
+
+HideManager::HideManager() : pad_10(0), m_group(), pad_1018(0), pad_2020(0), pad_2228(0) {}
+
+DebugManager::DebugManager() : m_flags(0), pad_224(0) {}
+
+MovieManager::MovieManager() : pad_10(0), pad_118(false), pad_220(-1) {}
+
+TodoManager::TodoManager() : pad_10(0), pad_8c18(0), pad_8c20(0), pad_10e28(0) {}
+
+DataManager::DataManager() : m_flags(0), m_sceneName("default"), m_current(0) {}
+
+MemoryManager::MemoryManager() : pad_10(0), pad_18(0), pad_24(0), pad_28(0), pad_30(0), pad_38(0), pad_1040(0), pad_1048(0), pad_1050(0), pad_1058(0) {}
+
+EffectManager::~EffectManager() {}
+
+}  // namespace event

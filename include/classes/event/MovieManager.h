@@ -3,6 +3,8 @@
 
 namespace event { enum MSG_TYPE : int; }
 
+#include "mm/mtl/FixStr.h"
+
 namespace event {
 // a base of event::MovieManager no evidence names yet
 class TUnk_B3D308 {
@@ -19,10 +21,19 @@ public:
 class MovieManager : public TUnk_B3D308, public TUnk_B3D330 {
 public:
     virtual ~MovieManager() {}  // slot 0
+    // the constructor (out of line: the unit has it at its own address, Singleton<T>::getPtr calls it)
+    MovieManager();
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     void clear();
     void update();
     void render();
+    // fields the constructor initializes; what they hold is not known yet
+    unsigned int pad_10;
+    mm::mtl::FixStr<256> pad_14;
+    bool pad_118;
+    mm::mtl::FixStr<256> pad_11c;
+    long pad_220;  // -1 at first
+    unsigned char pad_228[0x8];
 };
 }  // namespace event
 

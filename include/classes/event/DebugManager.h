@@ -3,6 +3,8 @@
 
 namespace event { enum MSG_TYPE : int; }
 
+#include "mm/mtl/FixStr.h"
+
 namespace event {
 // a base of event::DebugManager no evidence names yet
 class TUnk_B3BFD0 {
@@ -19,6 +21,8 @@ public:
 class DebugManager : public TUnk_B3BFD0, public TUnk_B3BFF8 {
 public:
     virtual ~DebugManager() {}  // slot 0
+    // the constructor (out of line: the unit has it at its own address, Singleton<T>::getPtr calls it)
+    DebugManager();
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     bool isMovieDebug() const;
     void render();
@@ -39,11 +43,13 @@ public:
 private:
     // 1.0.0's setX(bool)/isX() pairs set and test its bits (setMovieDebug: bit 16); the name is not the original's
     unsigned int m_flags;  // 0x10
-    unsigned char pad_14[0x104];
+    mm::mtl::FixStr<256> pad_14;
     // frames left of the message (bit 1) and the warning (bit 2); the name is not the original's
     int m_messageTime;  // 0x118
-    unsigned char pad_11c[0x104];
+    mm::mtl::FixStr<256> pad_11c;
     int m_warningTime;  // 0x220
+    unsigned int pad_224;
+    unsigned char pad_228[0x40];
 };
 }  // namespace event
 

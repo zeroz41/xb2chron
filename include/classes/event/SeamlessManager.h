@@ -25,6 +25,13 @@ public:
     void addFirstSeamPoint(const char* name, const PosAxis& pos);
     void addSeamPoint(float frame, const PosAxis& pos);  // the parameter name is not the original's
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    // fields the constructor initializes; what they hold is not known yet
+    long pad_10;
+    unsigned char pad_18[0x508];
+    long pad_520;
+    unsigned char pad_528[0x2018];
+    long pad_2540;
+    unsigned char pad_2548[0x18];
 };
 }  // namespace event
 
