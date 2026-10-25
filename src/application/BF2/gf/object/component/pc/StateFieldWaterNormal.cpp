@@ -22,6 +22,8 @@
 #include "gf/pc/StateUtil.h"
 #include "gf/pc/StateUtilField.h"
 #include "gf/MsgPcFieldNotifyWarp.h"
+#include "gf/MsgPcFieldNotifyAction.h"
+#include "gf/MsgPcFieldNotifyWaterWarp.h"
 #include "gf/MsgPcFieldRelaySurvive.h"
 #include "gf/MsgObjectNotifyHealHp.h"
 #include "gf/MsgPcGetState.h"
@@ -323,6 +325,35 @@ void StateFieldWaterDive::procMsgPcFieldRelaySurvive(GfComBehaviorPc* behavior, 
 
 // StateFieldWaterPrepareWarp
 
+void StateFieldWaterPrepareWarp::enter(GfComBehaviorPc* behavior, ai::State*) {
+    if (GfObj* target = StateUtilField::getAccessTarget(*behavior)) {
+        MsgPcFieldNotifyAction msg(0);
+        static_cast<GfObj*>(behavior->m_owner)->sendMessage(target, msg);
+    }
+    StateUtilField::setAccessFlag(*behavior, false);
+    StateUtilField::setSpecialActStatus(*behavior, true);
+    StateUtilField::execAsmCmd(*behavior->m_owner->getComponent<GfComAsm>(2), ASM_CMD_ID_FIELD_SWIM_01);
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    property->m_velocity = mm::Vec3::zero;
+    property->m_moveVec2.x = 0.0f;
+    property->m_moveVec2.y = 0.0f;
+    m_warpNotified = false;
+}
+
+void StateFieldWaterPrepareWarp::update(GfComBehaviorPc* behavior, const fw::UpdateInfo&) {
+    GfComAsm* comAsm = behavior->m_owner->getComponent<GfComAsm>(2);
+    if (m_warpNotified) {
+        if (StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD_WATERHOLE_00)) {
+            GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+            MsgPcFieldNotifyWaterWarp msg(property->m_field.getWarpInfo());
+            StateUtil::broadcastMainChar(*behavior, msg);
+            requestState(0x1E);
+        }
+    } else if (!GfGameManager::isPlayerPause()) {
+        requestState(0x14);
+    }
+}
+
 bool StateFieldWaterPrepareWarp::recieveMessage(void* owner, fw::MessageObject* sender, fw::Message& msg) {
     GfComBehaviorPc* behavior = static_cast<GfComBehaviorPc*>(owner);
     if (msg.m_id == 0x1000014) {
@@ -475,10 +506,47 @@ void StateFieldWaterSwimRise::enter(GfComBehaviorPc* behavior, ai::State*) {
 
 void StateFieldWaterSwimRise::leave(GfComBehaviorPc*, ai::State*) {}
 
+void StateFieldWaterIdleTurn::enter(GfComBehaviorPc* behavior, ai::State*) {
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    property->m_velocity = mm::Vec3::zero;
+    property->m_moveVec2.y = 0.0f;
+    m_dir = property->m_inputDir.y * property->m_groundFrontDir + property->m_inputDir.x * property->m_stickSideDir;
+    if (m_dir.isZero()) {
+        m_dir = property->m_moveDirInv;
+    } else {
+        float length = m_dir.length();
+        if (length <= 1e-6f) {
+            m_dir = mm::Vec3::zero;
+        } else {
+            float scale = 1.0f / length;
+            m_dir.x = scale * m_dir.x;
+            m_dir.y = scale * m_dir.y;
+            m_dir.z = scale * m_dir.z;
+        }
+    }
+    StateUtilField::notifyTurn(*behavior);
+}
+
 void StateFieldWaterIdleTurn::leave(GfComBehaviorPc* behavior, ai::State*) {
     GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
     property->m_velocity = mm::Vec3::zero;
     property->m_moveVec2.y = 0.0f;
+}
+
+void StateFieldWaterIdleTurn::update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info) {
+    GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
+    if (StateUtilField::isTurnEndRangeCacheInput(*property, m_dir)) {
+        GfComAsm* comAsm = behavior->m_owner->getComponent<GfComAsm>(2);
+        if (!property->existInputXY()) {
+            requestState(0x14);
+            return;
+        }
+        if (StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD_SWIM_00)) {
+            requestState(0x16);
+            return;
+        }
+    }
+    MoveUtilField::updateMoveWaterTurn(info, *property, m_dir);
 }
 
 void StateFieldWaterWarpDive::leave(GfComBehaviorPc* behavior, ai::State*) {
@@ -543,6 +611,24 @@ void StateFieldWaterSink::update(GfComBehaviorPc* behavior, const fw::UpdateInfo
     if ((property->m_stateFlags & 0x10) != 0 || m_time >= param->m_sinkTime) {
         requestState(0x1A);
     } else if (StateUtilField::getChildFrameHeight(*behavior) <= -param->m_sinkDepth) {
+        property->m_moveVec2.x = 0.0f;
+    } else {
+        MoveUtilField::updateMoveWaterSink(info, *property);
+    }
+}
+
+void StateFieldWaterSwimSink::update(GfComBehaviorPc* behavior, const fw::UpdateInfo& info) {
+    GfComPropertyPc* property = behavior->m_owner->findComponent<GfComPropertyPc>(5);
+    const GfPropertyField::WaterParam* param =
+        property->m_field.m_paramList->getAdapter(9).get<GfPropertyField::WaterParam>();
+    m_time += info.m_deltaTime;
+    if (m_time >= param->m_swimSinkTime &&
+        StateUtilField::execAsmCmd(*behavior->m_owner->getComponent<GfComAsm>(2), ASM_CMD_ID_FIELD_SWIM_00)) {
+        requestState(0x1C);
+        return;
+    }
+    MoveUtilField::updateMoveSwim(info, *property);
+    if (StateUtilField::getChildFrameHeight(*behavior) <= -param->m_sinkDepth) {
         property->m_moveVec2.x = 0.0f;
     } else {
         MoveUtilField::updateMoveWaterSink(info, *property);

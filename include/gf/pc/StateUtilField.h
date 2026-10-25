@@ -83,6 +83,8 @@ public:
     // StateFieldAir::leave's into state 0x36 (by its symbol)
     static void setSlideDirForce(gf::GfComPropertyPc& property);
     static bool isTurnEndRangeCacheInput(gf::GfComPropertyPc& property, const mm::Vec3& dir);  // (by its symbol)
+    // the turn states' enter tail-calls it (by its symbol)
+    static void notifyTurn(gf::GfComBehaviorPc& behavior);
     static bool isStop(gf::GfComPropertyPc& property, unsigned int noInputFrames);  // (by its symbol)
     static void setAsmSpeedMove(gf::GfComPropertyPc& property);  // (by its symbol)
 };

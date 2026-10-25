@@ -92,11 +92,18 @@ public:
                                 // (the name is not the original's)
     unsigned char pad_1d0[0x10];
     mm::Vec3 m_moveDir;         // TaskFieldJump::update sets m_velocity along it
-    unsigned char pad_1f0[0xA0];
+    // syncDirection stores -m_moveDir here; the turn states turn to it when the stick gives no direction
+    // (the name is not the original's)
+    mm::Vec3 m_moveDirInv;
+    unsigned char pad_200[0x90];
     // two of updateWorldDirs' world directions: the ones the stick's y and x move the PC along
     // (TaskFieldWallEscape::update picks the stick's signs by them; the names are not the original's)
     mm::Vec3 m_stickFrontDir;
-    unsigned char pad_2a0[0x30];
+    unsigned char pad_2a0[0x10];
+    // updateWorldDirs': the front direction at +0x250 flattened against m_stickFrontDir and normalized; the turn
+    // states move the stick's y along it with m_stickSideDir for its x (the name is not the original's)
+    mm::Vec3 m_groundFrontDir;
+    unsigned char pad_2c0[0x10];
     mm::Vec3 m_stickSideDir;
     unsigned char pad_2e0[0x10];
     float m_chestHeight;        // setup's: the character data's chest height in metres (the name is not the original's)
