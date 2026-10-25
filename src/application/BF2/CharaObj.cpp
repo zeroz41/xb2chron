@@ -288,7 +288,7 @@ bool SkipManager::isSkip() const {
 }
 
 bool DebugManager::isMovieDebug() const {
-    return m_movieFlags & 1;
+    return (m_flags >> 16) & 1;
 }
 
 void CharaSetIdle::init() {
@@ -1012,6 +1012,67 @@ void TextManager::OnEventProc(event::MSG_TYPE msg) {
         break;
     case 18:
         m_flags &= ~0x20;
+        break;
+    }
+}
+
+}  // namespace event
+#include "classes/event/UIManager.h"
+#include "classes/event/ModelManager.h"
+#include "classes/event/DebugManager.h"
+#include "classes/event/FrameManager.h"
+
+namespace event {
+
+FrameManager::FrameManager()
+    : pad_18(0), pad_d0(), m_frame(0.0f), pad_15c(0.0f), pad_160(0.0f), pad_164(0.0f), pad_16c(0),
+      m_maxFrame(1000.0f), pad_184(1), pad_1190(0), pad_1198(0), pad_11a0(0), pad_11a8(0) {
+    pad_10 = 0;
+    pad_14 = 2;
+    for (int i = 0; i < 22; i++) {
+        pad_20[i] = reinterpret_cast<gf::GF_PAUSE_HANDLE*>(-1);
+    }
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void UIManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 2:
+        logout();
+        break;
+    case 4:
+    case 12:
+        clear();
+        break;
+    case 14:
+        update();
+        break;
+    }
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void ModelManager::OnEventProc(event::MSG_TYPE msg) {
+    if (msg == 14) {
+        update();
+    }
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void DebugManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+        m_flags &= ~0x150;
+        break;
+    case 15:
+        update();
+        break;
+    case 17:
+        render();
+        break;
+    case 19:
+        if (m_flags & 0x4000) {
+            m_flags &= ~0x6000;
+        }
         break;
     }
 }

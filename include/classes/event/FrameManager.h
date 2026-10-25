@@ -1,6 +1,9 @@
 #ifndef CLASSES_EVENT_FRAMEMANAGER_H
 #define CLASSES_EVENT_FRAMEMANAGER_H
 
+#include "mm/mtl/FixStr.h"
+
+namespace gf { struct GF_PAUSE_HANDLE; }
 namespace event { enum MSG_TYPE : int; }
 
 namespace event {
@@ -28,12 +31,31 @@ public:
     float getMaxFrame() const;
 
 private:
-    unsigned char pad_10[0x148];
+    // the fields below up to m_frame are set by the constructor; no reader seen yet
+    int pad_10;
+    int pad_14;
+    int pad_18;
+    unsigned char pad_1c[0x4];
+    // each set to -1 (an invalid handle); the type is inferred: FrameManager::OnEventProc destroys pause handles
+    gf::GF_PAUSE_HANDLE* pad_20[22];
+    mm::mtl::FixStr<128> pad_d0;
+    unsigned char pad_154[0x4];
     // what getFrame returns; the name is not the original's
     float m_frame;  // 0x158
-    unsigned char pad_15c[0x14];
+    float pad_15c;
+    float pad_160;
+    float pad_164;
+    unsigned char pad_168[0x4];
+    int pad_16c;
     // what getMaxFrame returns; the name is not the original's
     float m_maxFrame;  // 0x170
+    unsigned char pad_174[0x10];
+    int pad_184;
+    unsigned char pad_188[0x1008];
+    long pad_1190;
+    long pad_1198;
+    long pad_11a0;
+    int pad_11a8;
 };
 }  // namespace event
 

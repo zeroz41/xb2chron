@@ -48,6 +48,7 @@ public:
     void destroy();
     // takes this model off model's mount (destroy hands each mounted model this one)
     void resetMount(GfEvtModel* model);
+    bool isBusy(mm::mtl::FixStr<128>* name) const;
     static mm::mtl::RTTI m_rtti;
 
     // which model: 0 a driver, 1 a blade, 5 an enemy (what each constructor passes) (the name is not the original's)
