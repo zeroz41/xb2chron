@@ -43,7 +43,7 @@ public:
     virtual void vf53();  // slot 53
     virtual void vf54();  // slot 54
     virtual int GetBladeChangeType() const;  // slot 63
-    virtual void vf64();  // slot 64
+    virtual bool fn_710008527C(bool) const;  // slot 64
     virtual bool fn_7100085314(int) const;  // slot 65 (placeholder name: see CharacterParameter)
     virtual bool fn_7100088FF4() const;  // slot 75 (placeholder name: see CharacterParameter)
     virtual void InitializeAttackParam();  // slot 79

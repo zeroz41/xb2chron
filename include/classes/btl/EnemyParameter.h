@@ -46,7 +46,7 @@ public:
     virtual void vf39();  // slot 39
     virtual void vf40();  // slot 40
     virtual void vf41();  // slot 41
-    virtual void vf42();  // slot 42
+    virtual bool fn_7100088F40() const;  // slot 42
     virtual int fn_7100088F70() const;  // slot 55 (placeholder name: see CharacterParameter)
     virtual int fn_7100088F78() const;  // slot 56 (placeholder name: see CharacterParameter)
     virtual void vf57();  // slot 57

@@ -15,6 +15,7 @@ public:
     static void Create();
     static void Destroy();
     bool IsProc(bool) const;
+    bool IsResult() const;
     int GetGroupIndex() const;
 };
 }  // namespace btl

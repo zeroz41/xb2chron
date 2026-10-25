@@ -29,6 +29,8 @@ public:
     // BattleCharacter::GetCharacterParameter passes the character's id
     CharacterParameter* GetCharacterParameterConst(int id) const;
     void FluctuatePartyGauge(int value, int groupIndex);
+    // BattleCharacter::AddPartyGauge passes its value, its group index and true
+    void AddPartyGauge(float value, int groupIndex, bool);
 
     unsigned char pad_8[0x15D0B];
     // Utility::GetElementalEffectID returns it (the name is not the original's)

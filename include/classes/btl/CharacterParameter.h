@@ -6,6 +6,13 @@ namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 
 namespace btl {
+struct ARTS_SLOT_DATA;
+// what CharacterParameter's slot 16 (1.0.0's GetArtsPaletteDataConst) returns; the layout is not recovered
+// (EnemyParameter holds one at 0x628, up to its hate data)
+struct ARTS_PALETTE_DATA {
+    const ARTS_SLOT_DATA* GetSlotDataConst(int slot, bool) const;
+    unsigned char pad_0[0x238];
+};
 // table 0x7100B3B2F0
 class CharacterParameter {
 public:
@@ -15,11 +22,7 @@ public:
         unsigned char pad_4[0x4];
     };
     bool GetAdditionalEnhanceEffect(ENHANCE_DATA& data, int id, int* out) const;
-    // what slot 16 (1.0.0's GetArtsPaletteDataConst) returns; the type's name follows that function, its layout is
-    // not recovered (EnemyParameter holds one at 0x628, up to its hate data)
-    struct ARTS_PALETTE_DATA {
-        unsigned char pad_0[0x238];
-    };
+    typedef ::btl::ARTS_PALETTE_DATA ARTS_PALETTE_DATA;
     virtual void Reset();  // slot 0
     virtual void Initialize(gf::GF_OBJ_HANDLE*);  // slot 1
     virtual void InitializeArtsPalette(int);  // slot 2
@@ -70,7 +73,9 @@ public:
     virtual void vf39();  // slot 39
     virtual void vf40();  // slot 40
     virtual void vf41();  // slot 41
-    virtual void vf42();  // slot 42
+    // what the base (fn_7100088F40) gives: false; BattleCharacter::fn_7100041CA4 answers it
+    // Placeholder name: new in 3.0.1 (1.0.0's table has 51 slots). Slot 42; the base returns false.
+    virtual bool fn_7100088F40() const;  // slot 42
     virtual void vf43();  // slot 43
     virtual void vf44();  // slot 44
     virtual void vf45();  // slot 45
@@ -98,7 +103,9 @@ public:
     virtual int GetEatNum() const;  // slot 61
     virtual void IncEatNum();  // slot 62
     virtual int GetBladeChangeType() const;  // slot 63
-    virtual void vf64();  // slot 64
+    // the base's (fn_710008527C): false while slot 65 holds for the argument, else whether m_driverHandle is set
+    // Placeholder name: new in 3.0.1 (1.0.0's table has 51 slots). Slot 64, base 0x710008527C.
+    virtual bool fn_710008527C(bool) const;  // slot 64
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's EnemyParameter::GetWeaponID read
     // bit 2 of the flags at 0x622 directly where 3.0.1's calls this slot with 0). A member because it is slot 65 of
     // this class's table. What it does: returns bit 2 of the 16-bit flags at 0x622 and ignores its argument;

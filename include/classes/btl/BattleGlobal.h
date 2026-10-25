@@ -139,7 +139,11 @@ public:
         return nullptr;
     }
 
-    unsigned char pad_8[0xAA0];
+    unsigned char pad_8[0x8];
+    // the character the player controls: BattleCharacter::IsControlCharacter compares its handle with it (the name is
+    // not the original's)
+    gf::GF_OBJ_HANDLE* m_controlHandle;
+    unsigned char pad_18[0xA90];
     unsigned int m_nextAttackId;  // CreateAttackData's next id, never 0 (the name is not the original's)
     unsigned char pad_aac[0x4];
     // the attack records (the name is not the original's); full, AddAttackDamage drops the oldest
@@ -154,7 +158,9 @@ public:
     unsigned char m_pause[2];
     unsigned char pad_83b8[0x12];
     // flags (the names are not the original's): one storage unit of 7 bytes, as their reads load it
-    bool pad_bit0 : 1;
+    // while set, BattleCharacter::NotifyAngryEnd removes the angry effect at once instead of fading it out (the name
+    // is not the original's)
+    bool m_removeEffect : 1;
     bool pad_bit1 : 1;
     bool pad_bit2 : 1;
     bool m_challengeAnySuccess : 1;  // ButtonChallenge's results 1-3 (not only 3) achieve its condition 0xC

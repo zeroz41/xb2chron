@@ -11,6 +11,10 @@
 #include "classes/gf/GfObj.h"
 #include "classes/gf/GfComAsm.h"
 #include "classes/btl/CharacterManager.h"
+#include "classes/btl/BattleGlobal.h"
+#include "classes/btl/ChainAttackManager.h"
+#include "classes/btl/BtlSystemBalanceAccess.h"
+#include "classes/fw/EffectManager.h"
 #include "classes/gf/GfComProperty.h"
 #include "classes/gf/GfComPropertyPc.h"
 #include "classes/gf/GfComEffectCaster.h"
@@ -453,6 +457,142 @@ bool BattleCharacter::SetAngry(bool angry, float time) {
     return param->SetAngry(angry, time);
 }
 
+
+bool BattleCharacter::fn_710002F1F8() const {
+    if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
+        return param->m_isNotBlade;
+    }
+    return false;
+}
+
+bool BattleCharacter::fn_7100041CA4() const {
+    if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
+        return param->fn_7100088F40();
+    }
+    return false;
+}
+
+bool BattleCharacter::fn_7100028D0C(bool flag) {
+    if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
+        return param->fn_7100085314(flag);
+    }
+    return false;
+}
+
+bool BattleCharacter::fn_71000290BC(bool flag) {
+    if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
+        return param->fn_710008527C(flag);
+    }
+    return false;
+}
+
+void BattleCharacter::fn_7100042E30() {
+    if (IsBlade()) {
+        fn_710002FC0C(13);
+    }
+}
+
+void BattleCharacter::fn_7100042E90() {
+    if (IsBlade()) {
+        fn_710002FC0C(14);
+    }
+}
+
+void BattleCharacter::StartBladeTimer(BLADE_TIMER_MODE mode) {
+    if (m_bladeTimerMode > mode) {
+        return;
+    }
+    float time;
+    switch (mode) {
+    case 1:
+        time = 5.0f;
+        break;
+    case 2:
+        time = mm::mtl::PtrSingleton<BtlSystemBalanceAccess>::sys()->m_bladeTimer2;
+        break;
+    case 3:
+        time = mm::mtl::PtrSingleton<BtlSystemBalanceAccess>::sys()->m_bladeTimer3;
+        break;
+    default:
+        time = 0.0f;
+        break;
+    }
+    m_bladeTimer = time;
+    m_bladeTimerMode = mode;
+}
+
+void BattleCharacter::NotifyAngryEnd() {
+    if (m_angryEffect != 0) {
+        if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_removeEffect) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_angryEffect);
+        } else {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->fadeOutDead(m_angryEffect, 5);
+        }
+        m_angryEffect = 0;
+    }
+}
+
+void BattleCharacter::fn_7100042460() {
+    if (m_subEffect != 0) {
+        if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_removeEffect) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_subEffect);
+        } else {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->fadeOutDead(m_subEffect, 5);
+        }
+        m_subEffect = 0;
+    }
+}
+
+bool BattleCharacter::IsControlCharacter() const {
+    if (m_isControlCharaCached) {
+        return m_isControlChara;
+    }
+    bool control = false;
+    if (m_isPlayer) {
+        gf::GF_OBJ_HANDLE* handle = mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_controlHandle;
+        control = m_handle == handle;
+    }
+    if (!mm::mtl::PtrSingleton<ChainAttackManager>::sys()->IsResult()) {
+        m_isControlChara = control;
+        m_isControlCharaCached = true;
+    }
+    return control;
+}
+
+void BattleCharacter::ActionRun() {
+    if (m_actionID == ACTION_IDLE) {
+        if (!m_isFly && !(m_isPlayer && IsControlCharacter())) {
+            m_isAutoRun = true;
+        }
+        m_actionID = ACTION_PUT_OUT_WEAPON;
+    }
+    m_actionStep = 0;
+}
+
+bool BattleCharacter::IsBladeArtsEnd() const {
+    if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
+        if (param->fn_710008527C(false)) {
+            return m_bladeArtsState != 1;
+        }
+    }
+    return false;
+}
+
+void BattleCharacter::AddPartyGauge(float value) {
+    if (!m_isPlayer) {
+        return;
+    }
+    int group = GetGroupIndex();
+    mm::mtl::PtrSingleton<DataManager>::sys()->AddPartyGauge(value, group, true);
+}
+
+void BattleCharacter::FluctuatePartyGauge(int value) {
+    if (!m_isPlayer) {
+        return;
+    }
+    int group = GetGroupIndex();
+    mm::mtl::PtrSingleton<DataManager>::sys()->FluctuatePartyGauge(value, group);
+}
 void BattleCharacter::ActionCommandEndIdle() {}
 
 void BattleCharacter::ActionCommandPutOutWeapon(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}

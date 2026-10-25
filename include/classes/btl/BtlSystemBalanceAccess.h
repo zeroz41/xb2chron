@@ -24,7 +24,10 @@ public:
     // not the original's)
     unsigned char m_waterDeadRate0;
     unsigned char m_waterDeadRate2;
-    unsigned char pad_B5[0x37];
+    // StartBladeTimer's times for the BLADE_TIMER_MODEs 2 and 3 (the names are not the original's)
+    unsigned char m_bladeTimer2;
+    unsigned char m_bladeTimer3;
+    unsigned char pad_B7[0x35];
     // the HP rate below which a character counts as dying: Utility::GetDyingHpRate reads it (the name is not
     // the original's)
     float m_dyingHpRate;

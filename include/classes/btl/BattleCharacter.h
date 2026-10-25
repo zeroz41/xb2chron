@@ -5,6 +5,7 @@
 #include "mm/Vec3.h"
 
 namespace btl { class CharacterParameter; }
+namespace btl { struct ARTS_SLOT_DATA; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfObj; }
@@ -123,7 +124,16 @@ public:
     void SetBladeSupportCondition(int condition);
     bool IsEnableBattleFace() const;
     int GetWeaponType(bool asmType) const;
+    void StartBladeTimer(BLADE_TIMER_MODE mode);
     void EndBladeTimer(BLADE_TIMER_MODE mode);
+    const ARTS_SLOT_DATA* GetArtsSlotData(int slot, bool, int palette) const;
+    void NotifyAngryEnd();
+    void ActionRun();
+    bool IsBladeArtsEnd() const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: EnemyParameter's fn_7100088B6C
+    // calls it on CharacterManager::GetCharacterConst's character. What it does: as NotifyAngryEnd for the effect at
+    // 0x154 (m_subEffect): removed at once while BattleGlobal::m_removeEffect is set, else faded out over 5.
+    void fn_7100042460();
     bool IsMove() const;
     bool IsScout() const;
     void GetMoveDataPerSec(mm::Vec3& move) const;
@@ -205,6 +215,20 @@ public:
     void fn_7100059D3C(bool flag, int param);
     // m_actionParam = param, m_actionValue = value, then m_actionID = 10.
     void fn_7100059D54(int param, float value);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: Utility's AI_StartAction*/
+    // AI_StartMove* ask it of the character a handle names. What it does: the parameter's m_isNotBlade (false
+    // without a parameter).
+    bool fn_710002F1F8() const;
+    // Placeholder name: as fn_710002F1F8; caller Utility::AI_CheckState. What it does: the parameter's slot 42
+    // (false without a parameter).
+    bool fn_7100041CA4() const;
+    // Placeholder name: as fn_710002F1F8; callers Utility::AI_AddBladeArtsRecast and ten others. What it does:
+    // the parameter's slot 64 with the flag (false without a parameter).
+    bool fn_71000290BC(bool);
+    // Placeholder names: new in 3.0.1. Members: they call fn_710002FC0C. What they do: for a blade (IsBlade),
+    // fn_710002FC0C(13) / fn_710002FC0C(14).
+    void fn_7100042E30();
+    void fn_7100042E90();
     // Talk trigger: when the BattleGlobal flag (+0x83CA bit 3) allows, and the id bit (1 << id) is set in the
     // word at 0xECC and clear in 0xED0, notifies TalkManager::NotifyTrigger with trigger 0x29/0x2A/0x2B by which
     // byte of 0xED4/0xED6/0xED8 equals id, and on success sets the bit in 0xED0. Returns whether it notified.
@@ -232,7 +256,12 @@ public:
     // the object the character targets, (GF_OBJ_HANDLE*)-1 for none: Utility::AI_GetTargetCharacterID reads it
     // (the name is not the original's)
     gf::GF_OBJ_HANDLE* m_targetHandle;
-    unsigned char pad_128[0x58];
+    unsigned char pad_128[0x28];
+    // the angry aura's effect, NotifyAngryEnd ends it (the name is not the original's)
+    unsigned int m_angryEffect;
+    // the effect fn_7100042460 ends the same way (the name is not the original's)
+    unsigned int m_subEffect;
+    unsigned char pad_158[0x28];
     // GetCharacterParameter's cache of DataManager's parameter for m_chrID (the name is not the original's)
     mutable CharacterParameter* m_param;
     unsigned char pad_188[0xB68];
@@ -271,12 +300,20 @@ public:
     signed char m_weaponType;
     unsigned char pad_EF2[0xC];
     // one 16-byte bitfield run (StartBackHome loads and stores 0xEFE and 0xF06 as two 8-byte halves)
-    unsigned int pad_EFE : 15;
+    unsigned int pad_EFE : 8;
+    // IsControlCharacter's cached answer and whether it is cached (the names are not the original's)
+    mutable unsigned int m_isControlChara : 1;
+    mutable unsigned int m_isControlCharaCached : 1;
+    unsigned int pad_EFF_2 : 5;
     // a player-side character (GetAiChrID, IsEnableBattleFace; the name is not the original's)
     unsigned int m_isPlayer : 1;
     // IsBattle returns it (the name is not the original's)
     unsigned int m_isBattle : 1;
-    unsigned int pad_F00_1 : 11;
+    unsigned int pad_F00_1 : 9;
+    // ActionRun sets it when it draws the weapon of a character the player does not control and that does not fly
+    // (the name is not the original's)
+    unsigned int m_isAutoRun : 1;
+    unsigned int pad_F01_3 : 1;
     // the name is not the original's: ActionCommandEndRun stays in the run action while it is set (run bit 28)
     unsigned int m_isRunHold : 1;
     unsigned int pad_F01_5 : 4;
@@ -310,7 +347,13 @@ public:
     unsigned char pad_1000[0xC];
     // the name is not the original's: SetAction's float argument
     float m_actionValue;
-    unsigned char pad_1010[0x80];
+    unsigned char pad_1010[0x60];
+    unsigned int pad_1070 : 21;
+    // IsBladeArtsEnd holds while it is not 1 (the name is not the original's)
+    unsigned int m_bladeArtsState : 3;
+    // a 3-byte run: IsBladeArtsEnd loads the byte at 0x1072 shifted, the byte at 0x1073 is a counter of its own
+    unsigned char pad_1073;
+    unsigned char pad_1074[0x1C];
     // SetSuperArmorTime keeps the longer time (the name is not the original's)
     float m_superArmorTime;
     unsigned char pad_1094[0x8C];
