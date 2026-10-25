@@ -1,4 +1,12 @@
 #include "classes/layer/LayerObj.h"
+#include "classes/layer/LayerActDef.h"
+#include "classes/layer/LayerObjMesh.h"
+#include "classes/layer/LayerObjTopDef.h"
+#include "layer/LayerObjUtil.h"
+#include "classes/layer/LayerObjTopMaskObj.h"
+#include "layer/LayerTextureObj.h"
+#include "classes/layer/LayerObjTopPolyObj.h"
+#include "classes/layer/LayerObj.h"
 #include "classes/layer/LayerActBase.h"
 #include "classes/layer/LayerActLayout.h"
 #include "grlib/CGLibOneUniformBlock.h"
@@ -14,6 +22,9 @@
 #include "classes/layer/LayerActBase.h"
 #include "classes/layer/LayerObjManager.h"
 #include "classes/layer/LayerObjTopDef.h"
+#include "classes/layer/LayerObjMesh.h"
+#include "layer/LayerObjUtil.h"
+#include "layer/LayerTextureObj.h"
 #include "classes/layer/LayerObjTopMaskObj.h"
 #include "classes/layer/LayerObjLayout.h"
 #include "layer/LayerAccObjBase.h"
@@ -52,6 +63,14 @@
 
 namespace layer {
 
+void LayerObj::setInitPos(float x, float y) {
+    m_params[1].m_posX = x;
+    m_params[0].m_posX = x;
+    m_params[2].m_posX = x;
+    m_params[1].m_posY = y;
+    m_params[0].m_posY = y;
+    m_params[2].m_posY = y;
+}
 void LayerObj::setPos(float x, float y) {
     int index = LayerManager::s_nStkIdx;
     m_params[index].m_posX = x;
@@ -138,6 +157,25 @@ bool LayerActBase::actcmd_ctrlspd(const unsigned char*& cmd) {
 bool LayerActBase::actend_no(const LyrActionData* data, bool cmdEnd) { return false; }
 bool LayerActBase::actend_cmdend(const LyrActionData* data, bool cmdEnd) { return !cmdEnd; }
 bool LayerActBase::actend_on(const LyrActionData* data, bool cmdEnd) { return true; }
+bool LayerActDef::actcmd_iconnum(const unsigned char*& cmd) {
+    m_iconNum = reinterpret_cast<const unsigned short*>(cmd)[1];
+    cmd += 4;
+    return false;
+}
+bool LayerActDef::actcmd_animicon(const unsigned char*& cmd) {
+    const unsigned char* anim = cmd;
+    const unsigned short* icons = reinterpret_cast<const unsigned short*>(anim + 0xC);
+    bool wait;
+    if (reinterpret_cast<const float*>(anim)[1] <= m_actionData->m_runningSec) {
+        m_iconNum = icons[reinterpret_cast<const unsigned short*>(anim)[1] - 1];
+        wait = false;
+    } else {
+        m_iconNum = icons[static_cast<unsigned int>(m_actionData->m_runningSec * reinterpret_cast<const float*>(anim)[2])];
+        wait = true;
+    }
+    cmd = cmd + reinterpret_cast<const unsigned short*>(anim)[1] * 2 + 0xC;
+    return wait;
+}
 bool LayerActLayout::actcmd_notcmd01(const unsigned char*& cmd) {
     cmd += 4;
     return false;
@@ -150,7 +188,24 @@ bool LayerActLayout::actcmd_notcmd02(const unsigned char*& cmd) {
     cmd += 8;
     return false;
 }
+void LayerObjFont::setColorMap(const LayerFontIconObj* colorMap, unsigned int pattern) {
+    m_colorMap = colorMap;
+    m_colorMapPattern = pattern;
+}
+void LayerObjFont::setSlopeRot(float rot) { m_slopeRot = rot; }
+float LayerObjFont::getSlopeRot() const { return m_slopeRot; }
 void LayerObjManager::end() {}
+void LayerObjMesh::call_uniform_win_ga_X(LayerArgMdlRenInf& arg) { setUniformWinGaX(arg, false); }
+void LayerObjMesh::call_uniform_win_ga_Y(LayerArgMdlRenInf& arg) { setUniformWinGaY(arg, false); }
+void LayerObjMesh::call_uniform_noImage(LayerArgMdlRenInf& arg) {
+    LayerObjUtil::updatePosMatrixUniformBlock(arg.m_buff, arg.m_matrix, *arg.m_viewMatrix, m_posZ,
+                                              (m_stateFlags & STATE_RAW_POS) != 0);
+    arg.m_buff += 8;
+}
+void LayerObjMesh::call_uniform_win_height(LayerArgMdlRenInf& arg) { setUniformWinHeight(arg, false); }
+void LayerObjMesh::call_uniform_win_sclheight(LayerArgMdlRenInf& arg) { setUniformWinHeight(arg, true); }
+void LayerObjMesh::call_uniform_win_sclga_X(LayerArgMdlRenInf& arg) { setUniformWinGaX(arg, true); }
+void LayerObjMesh::call_uniform_win_sclga_Y(LayerArgMdlRenInf& arg) { setUniformWinGaY(arg, true); }
 void LayerObjPlace::placeReset_Off(LayerResNode* node) {}
 void LayerObjPlace::placeReset_Pos(LayerResNode* node) {
     node->m_posX = 0.0f;
@@ -267,6 +322,12 @@ void LayerObjTopPolyObj::setIndexInfo(unsigned short start, unsigned short count
     m_updateFlags |= UPDATE_INDEX_INFO << index;
     m_indexStart[index] = start;
     m_indexCount[index] = count;
+}
+void LayerObjTopPolyObj::applyPartsSetup() { updateVertexBuffer(); }
+void LayerObjTopMaskObj::resourceInit() {
+    if (m_texture != nullptr) {
+        m_texture->setupResource();
+    }
 }
 void LayerObjSortDef::finalRender() { static_cast<LayerObjTopDef*>(m_obj)->finalRender(); }
 void LayerObjSortFont::finalRender() { static_cast<LayerObjTopFont*>(m_obj)->finalRender(); }

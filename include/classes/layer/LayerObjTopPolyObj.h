@@ -27,6 +27,8 @@ public:
     void setTexutre(grlib::CGLibTextureBuffer& texture);
     virtual void setDrawList(layer::LayerSortMan*, bool);  // slot 7
     virtual void applyPartsSetup();  // slot 8
+    // rebuilds the vertex buffer (applyPartsSetup)
+    void updateVertexBuffer();
     virtual void applyParams(layer::LayerRenderView const*, layer::LayerResMatrix const&, layer::LayerResColor const&);  // slot 9
 
     // what Unlock*/setIndexInfo mark as updated, each bit shifted by LayerManager::s_nStkIdx (not the original's)

@@ -29,6 +29,8 @@ public:
     virtual void applyParams(layer::LayerRenderView const*, layer::LayerResMatrix const&, layer::LayerResColor const&) {}  // slot 9
 
     void setPos(float x, float y);
+    // sets the position in all three m_params
+    void setInitPos(float x, float y);
     void setRot(float rot);
     void setScale(float x, float y);
     void setMulCol(const mm::Col4& col);
@@ -63,6 +65,9 @@ public:
     enum {
         STATE_VIEWPORT = 0x10,  // LayerAccLayoutObj::setViewPortMode
         STATE_PARTS_ACTION = 0x40,  // LayerAccAction reads the running action from m_actionData
+        // LayerObjUtil::updatePosMatrixUniformBlock leaves the position unscaled by the LayerManager's screen
+        // scale (LayerObjMesh::call_uniform_noImage passes it)
+        STATE_RAW_POS = 0x800,
     };
     // what setPos/setRot/setScale/setMulCol/setAddCol write, one per m_flags entry and a third the getters fall
     // back to (the layout is not the original's)
@@ -108,7 +113,11 @@ public:
     unsigned short m_runningActIdx[2];  // LayerAccAction::getRunningActIdx, indexed by LayerManager::s_nDebIdx
     unsigned char pad_1DC[0x18];
     float m_ctrlSpd;  // LayerActBase::actcmd_ctrlspd (the name is not the original's)
-    unsigned char pad_1F8[0x48];
+    unsigned char pad_1F8[0x4];
+    // the z LayerObjUtil::updatePosMatrixUniformBlock writes into the position uniform (LayerObjMesh's
+    // call_uniform_noImage; the name is not the original's)
+    float m_posZ;
+    unsigned char pad_200[0x40];
     const LayerBase* m_maskObj;  // setMaskObj
 };
 inline const LayerObj::Param& LayerObj::getParam(unsigned int flag) const {
