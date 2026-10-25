@@ -4,6 +4,7 @@
 namespace gmk { enum GmkType : int; }
 namespace gf { class QuestTaskParam; class GF_OBJ_HANDLE; }
 #include "gf/QuestID.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace gf {
 // the quests' tasks (functions, by their symbols)
@@ -19,6 +20,12 @@ public:
     static void completeTask(const QuestTaskParam& param);
     static bool isCompleteFlag(const QuestTaskParam& param);
     static bool isReduceHpObj(gf::QuestID id, gf::GF_OBJ_HANDLE* handle);
+    static void updateQuestTask(QuestID id);
+    static void completeEventTask(unsigned int id);
+    static void applyGetItem(unsigned int item, bool add);
+    static void refreshTaskCounters();
+    static void resetBattleTaskForPlayerDead(QuestID id);
+    static void resetBattleTaskForBattleEnd(::mm::mtl::FixedVector<unsigned short, 128>& enemies, QuestID id);
 };
 }  // namespace gf
 

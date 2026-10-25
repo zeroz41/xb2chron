@@ -13,6 +13,7 @@ namespace gf {
 class GfGameMercenaries : public ::mm::mtl::PtrSingleton< ::gf::GfGameMercenaries> {
 public:
     // SCOM_ADD_MERCENARIES_POINT and SCOM_SET_MERCENARIES_LEVEL pass their request's value
+    static void updateMissionAutoStart();
     static void addPoint(unsigned int point);
     static void setLevel(unsigned int level);
     // SCOM_MISSION_COMPLETE (the mission): 3 runs the reward, 2 completes it by force

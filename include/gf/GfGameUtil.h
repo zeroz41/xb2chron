@@ -10,6 +10,7 @@ namespace gf {
 // game-wide helpers (functions, by its symbols)
 class GfGameUtil {
 public:
+    static void clearEnemyRepopCounter(int enemy);
     // GfGameEvent::setGmkIdDisp and setGmkBdatDisp forward to them
     static void setDispByGmkTypeAndGmkIdx(gmk::GmkType type, unsigned int idx, bool flag);
     static void setDispByGmkTypeAndBdatId(gmk::GmkType type, int bdatId, bool flag);

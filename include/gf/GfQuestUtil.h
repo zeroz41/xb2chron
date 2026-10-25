@@ -2,6 +2,7 @@
 #define GF_GFQUESTUTIL_H
 
 #include "gf/QuestID.h"
+#include "gf/QuestListAcc.h"
 
 namespace gf { class QuestTaskParam; }
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
@@ -30,6 +31,10 @@ struct GfQuestTaskLogResult {
 // the quests' helpers (functions, by their symbols)
 class GfQuestUtil {
 public:
+    static QuestID getLastOrderCategoryQuest(QTYPE type);
+    static void clearOrderParentQuest();
+    static void addOrderParentQuest(QuestID id);
+    static QuestID getLastOrderParentQuest();
     static bool getDispCount(unsigned int& count, unsigned int& max, const struct AchievQuest& quest);
     static bool getResultIdea(unsigned int& idea, unsigned int& count, unsigned int blade, unsigned int line,
                               unsigned int level);

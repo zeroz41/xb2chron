@@ -6,6 +6,7 @@
 #include "gf/QuestID.h"
 
 namespace gf { class GfQuestTarget; }
+namespace fw { class UpdateInfo; }
 namespace gf { class QuestChangeParam; }
 namespace gf { class QuestCompleteChildParam; }
 namespace gf { class QuestOrderParam; }
@@ -16,7 +17,9 @@ namespace gf {
 // table 0x7100B56DF8
 class GfQuestTarget : public ::mm::mtl::PtrSingleton< ::gf::GfQuestTarget>, public ::gf::IQuestEvent {
 public:
+    GfQuestTarget();
     virtual ~GfQuestTarget();  // slot 0
+    void update(const fw::UpdateInfo& info);
     virtual void qevChangeTaskState(gf::QuestTaskParam const&);  // slot 2
     virtual void qevChangeQuestState(gf::QuestStateParam const&);  // slot 3
     virtual void qevOrderQuest(gf::QuestOrderParam const&);  // slot 4

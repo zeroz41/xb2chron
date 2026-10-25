@@ -1,3 +1,4 @@
+#include "gf/GfDataQuest.h"
 #include "gf/SDataGame.h"
 #include "gf/GfDataAchievement.h"
 #include "gf/GfDataBlade.h"
@@ -445,11 +446,11 @@ unsigned int GfDataUtil::getEventChapterSave() {
     return GfDataManager::getDataGame()->m_eventChapterSave;
 }
 
-unsigned int GfDataQuest::getScenario() {
+QuestID GfDataQuest::getScenario() {
     return GfDataManager::getDataGame()->m_scenario;
 }
 
-unsigned int GfDataQuest::getSelect() {
+QuestID GfDataQuest::getSelect() {
     return GfDataManager::getDataGame()->m_select;
 }
 

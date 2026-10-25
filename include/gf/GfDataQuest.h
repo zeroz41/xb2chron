@@ -39,8 +39,10 @@ public:
     static bool getListVisible(QuestID id);
     // a quest's message (GfQuestUtil's message ids), none for none
     static const char* getTaskLog(QuestID id, unsigned int msg);
-    static unsigned int getScenario();
-    static unsigned int getSelect();
+    static QuestID getScenario();
+    static QuestID getSelect();
+    static void setScenario(QuestID id);
+    static void setSelect(QuestID id);
 
     // indexed by achievement id (0x4D80 entries: the .bss object's size)
     static unsigned short m_achieve2blade[0x4D80];
