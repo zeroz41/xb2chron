@@ -54,6 +54,7 @@ public:
         FLAG_DISP_OFF = 0x100,  // setDisp(false)
         FLAG_PRIORITY_TBL = 0x800,  // LayerAccLayoutObj::createPriorityTbl clears it
         FLAG_ACTION_RUNNING = 0x10000,  // LayerAccAction::isRunning
+        FLAG_ACTION_END = 0x20000,  // LayerActBase::actionEnd
         FLAG_MATRIX = 0x40000,  // setMatrix
         FLAG_FLIP_ON = 0x80000,  // setFlip(type, true), shifted by the type
         FLAG_FLIP_OFF = 0x200000,  // setFlip(type, false), shifted by the type
@@ -105,16 +106,14 @@ public:
     unsigned char m_centerType;  // set/getCenterType (a LayerCenterType)
     unsigned char pad_199[0x3F];
     unsigned short m_runningActIdx[2];  // LayerAccAction::getRunningActIdx, indexed by LayerManager::s_nDebIdx
-    unsigned char pad_1DC[0x64];
+    unsigned char pad_1DC[0x18];
+    float m_ctrlSpd;  // LayerActBase::actcmd_ctrlspd (the name is not the original's)
+    unsigned char pad_1F8[0x48];
     const LayerBase* m_maskObj;  // setMaskObj
 };
 inline const LayerObj::Param& LayerObj::getParam(unsigned int flag) const {
-    int index = LayerManager::s_nStkIdx;
-    if (isFlag(index, flag)) {
-        return m_params[index];
-    }
-    index = LayerManager::s_nDebIdx;
-    return isFlag(index, flag) ? m_params[index] : m_params[2];
+    if (isFlag(LayerManager::s_nStkIdx, flag)) return m_params[LayerManager::s_nStkIdx];
+    return isFlag(LayerManager::s_nDebIdx, flag) ? m_params[LayerManager::s_nDebIdx] : m_params[2];
 }
 }  // namespace layer
 

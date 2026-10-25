@@ -39,6 +39,11 @@ public:
     bool actend_cmdend(const LyrActionData* data, bool cmdEnd);
     bool actend_on(const LyrActionData* data, bool cmdEnd);
     void actionIdx(unsigned int index);
+    // the action commands: each reads its command at cmd, steps cmd past it and returns whether the action waits
+    bool actcmd_no(const unsigned char*& cmd);
+    bool actcmd_priority(const unsigned char*& cmd);
+    bool actcmd_wait(const unsigned char*& cmd);
+    bool actcmd_ctrlspd(const unsigned char*& cmd);
 
     unsigned char pad_248[0x8];
     LyrActionData* m_actionData;  // its actions, or null (LayerAccAction::isActionData; the name is not the original's)

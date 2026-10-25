@@ -2,6 +2,7 @@
 #define CLASSES_LAYER_LAYEROBJTOPMEMOBJ_H
 
 #include "classes/layer/LayerObj.h"
+#include "grlib/CGLibOneUniformBlock.h"
 
 namespace grlib { class CGLibTextureBuffer; }
 namespace layer { class LayerRenderView; }
@@ -17,11 +18,17 @@ public:
     void* getBuffer();
     void updateBufer();
     void setRender(bool render);
+    enum { RENDER_ON = 0x4 };  // the name is not the original's
 
     // The field names follow LayerAccMemObj's accessors that read them (not the original's).
-    unsigned char pad_248[0xA0];
+    // The field names follow the functions that use them (not the original's).
+    unsigned char pad_248[0x28];
+    unsigned int m_renderFlags;  // setRender sets or clears RENDER_ON
+    unsigned char pad_274[0x74];
     grlib::CGLibTextureBuffer* m_texture;  // getTexture
-    unsigned char pad_2F0[0x450];
+    unsigned char pad_2F0[0x3B0];
+    grlib::CGLibOneUniformBlock m_buffers[2];  // getBuffer, indexed by LayerManager::s_nDebIdx
+    grlib::CGLibOneUniformBlock m_clearBuffers[2];  // updateBufer zeroes its first 16 bytes before flushing
     unsigned int m_memWidth;  // getMemWidth
     unsigned int m_memHeight;  // getMemHeight
     virtual void resourceInit();  // slot 3
