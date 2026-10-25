@@ -57,7 +57,7 @@ public:
     // What it does: returns false; EnemyParameter's returns bit 10 of its flags at 0x8B6.
     virtual bool fn_7100088EE0() const;  // slot 29
     virtual bool IsFallDeadDrop() const { return true; }  // slot 30
-    virtual void SetAngry(bool, float);  // slot 31
+    virtual bool SetAngry(bool, float);  // slot 31 (BattleCharacter::SetAngry tail-calls it and returns its result)
     virtual int GetAngryAuraID() const;  // slot 32
     // 1.0.0 had GetAngryAttr here; 3.0.1's GetAttribute calls this slot where 1.0.0's read the angry attribute
     virtual int GetAngryAttr() const;  // slot 33

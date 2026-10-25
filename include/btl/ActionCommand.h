@@ -24,6 +24,12 @@ public:
     // marks the action (a BattleCharacter::ACTION_ID) as one that takes the command; 1.0.0 has it out of line, 3.0.1
     // inlines it into every act_cmd Initialize
     void SetActionID(int id) { m_actionIDs |= 1 << id; }
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: like the act_cmd
+    // Initialize functions they sit before (first functions of BattleCharacter's unit), they set up this command.
+    // What they do: m_type = 5 (a command type 1.0.0 lacks), SetActionID(1), SetActionID(4) / m_type = 6,
+    // SetActionID(1).
+    void fn_7100027124();
+    void fn_7100027140();
 
     // the command's parameters, laid out by its type (the field names are not the original's)
     union {

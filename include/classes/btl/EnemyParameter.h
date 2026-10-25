@@ -33,7 +33,7 @@ public:
     virtual bool fn_7100088ED8() const;  // slot 28 (placeholder name: see CharacterParameter)
     virtual bool fn_7100088EE0() const;  // slot 29 (placeholder name: see CharacterParameter)
     virtual bool IsFallDeadDrop() const;  // slot 30
-    virtual void SetAngry(bool, float);  // slot 31
+    virtual bool SetAngry(bool, float);  // slot 31 (returns bool like the base: BattleCharacter::SetAngry returns its result)
     virtual int GetAngryAuraID() const;  // slot 32
     // 1.0.0 had GetAngryAttr here; 3.0.1's GetAttribute calls this slot where 1.0.0's read the angry attribute
     virtual int GetAngryAttr() const;  // slot 33

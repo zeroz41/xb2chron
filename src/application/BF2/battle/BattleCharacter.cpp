@@ -8,6 +8,12 @@
 #include "classes/gf/GfGameParty.h"
 #include "gf/GfObjUtil.h"
 #include "ml/MtRand.h"
+#include "classes/gf/GfObj.h"
+#include "classes/gf/GfComAsm.h"
+#include "classes/btl/CharacterManager.h"
+#include "classes/gf/GfComProperty.h"
+#include "classes/gf/GfComPropertyPc.h"
+#include "classes/gf/GfComEffectCaster.h"
 
 namespace btl {
 namespace act_cmd {
@@ -90,6 +96,17 @@ void ATTACK_REPELLED::Initialize() {
 }
 
 }  // namespace act_cmd
+
+void ActionCommand::fn_7100027124() {
+    m_type = 5;
+    SetActionID(BattleCharacter::ACTION_PUT_OUT_WEAPON);
+    SetActionID(BattleCharacter::ACTION_KIZUNA_MAX);
+}
+
+void ActionCommand::fn_7100027140() {
+    m_type = 6;
+    SetActionID(BattleCharacter::ACTION_PUT_OUT_WEAPON);
+}
 
 CharacterParameter* BattleCharacter::GetCharacterParameterConst(bool) const {
     if (m_param == nullptr) {
@@ -281,6 +298,161 @@ gf::GF_OBJ_HANDLE* BattleCharacter::GetRescueTarget() const {
     return gf::GfGameParty::getHandleDriver(target, 0);
 }
 
+
+bool BattleCharacter::fn_710002F118() const {
+    return m_state == 1;
+}
+
+bool BattleCharacter::fn_710002F368() const {
+    return !m_isBattle || m_isBattleIgnore;
+}
+
+void BattleCharacter::fn_710003D114(bool flag0, int slot, bool flag1, float value) {
+    fn_710005F554(~(slot < 0 ? 16 : slot), flag0, flag1, value);
+}
+
+bool BattleCharacter::fn_7100041728() const {
+    return m_isPlayer && !m_isBattle;
+}
+
+bool BattleCharacter::fn_710004232C() {
+    return fn_710002FC0C(7);
+}
+
+void BattleCharacter::ActionCommandEndRun() {
+    if (!m_isRunHold && m_actionStep == 0) {
+        SetAction(ACTION_PUT_OUT_WEAPON, false, false, 0, 0.0f);
+    }
+}
+
+bool BattleCharacter::fn_7100059D0C() const {
+    return m_actionID == 4;
+}
+
+bool BattleCharacter::fn_7100059D1C() const {
+    return m_actionID == 9;
+}
+
+void BattleCharacter::fn_7100059D2C(int param) {
+    m_actionParam = param;
+    m_actionID = 5;
+}
+
+void BattleCharacter::fn_7100059D3C(bool flag, int param) {
+    m_actionParam = flag ? param : -param;
+    m_actionID = 7;
+}
+
+void BattleCharacter::fn_7100059D54(int param, float value) {
+    m_actionParam = param;
+    m_actionValue = value;
+    m_actionID = 10;
+}
+
+void BattleCharacter::fn_7100059D68(int param) {
+    m_actionParam = param;
+    m_actionID = 0xF;
+}
+
+void BattleCharacter::fn_710006C39C(int type) {
+    DropItem(static_cast<DROP_ITEM_TYPE>(type + 5), false);
+}
+
+bool BattleCharacter::CheckRandFriendEnhanceRate(int id) const {
+    float rate = const_cast<BattleCharacter*>(this)->fn_710005F0D8(id, 0, 0);
+    if (rate <= 0.0f) {
+        return false;
+    }
+    return ml::mtRandf1() <= rate;
+}
+
+const gf::GfComProperty* BattleCharacter::GetComPropertyConst() const {
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    if (obj == nullptr) {
+        return nullptr;
+    }
+    return obj->getComponent<gf::GfComProperty>(5);
+}
+
+gf::GfComEffectCaster* BattleCharacter::GetEffectCaster() {
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    if (obj == nullptr) {
+        return nullptr;
+    }
+    return obj->getComponent<gf::GfComEffectCaster>(7);
+}
+
+void BattleCharacter::SetRimBloom(RIMBLOOM_ID id, bool on) {
+    if (id == 0) {
+        if (on) {
+            m_rimBloomFlags |= 1;
+        } else {
+            m_rimBloomFlags &= ~1;
+        }
+    } else if (id >= 1 && id <= 8) {
+        m_rimBloomFlags &= ~0x1FE;
+        if (on) {
+            m_rimBloomFlags |= 1 << id;
+        }
+    }
+}
+
+bool BattleCharacter::IsOnSlide() const {
+    if (!m_isPlayer) {
+        return false;
+    }
+    gf::GfComPropertyPc* pc = gf::GfObjUtil::getObj(m_handle)->findComponent<gf::GfComPropertyPc>(5);
+    return (pc->m_stateFlags >> 7) & 1;
+}
+
+bool BattleCharacter::IsAngry() const {
+    CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr) {
+        return false;
+    }
+    return param->IsAngry();
+}
+
+gf::GF_OBJ_HANDLE* BattleCharacter::GetBuddyTargetObjectHandle() const {
+    CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr) {
+        return reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    gf::GF_OBJ_HANDLE* driver = param->m_driverHandle;
+    BattleCharacter* buddy = mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(driver);
+    if (buddy == nullptr) {
+        return reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    return buddy->m_targetHandle;
+}
+
+const char* BattleCharacter::GetNowAnimationStateName() const {
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    if (obj != nullptr) {
+        if (gf::GfComAsm* com = obj->getComponent<gf::GfComAsm>(2)) {
+            return com->getStateName(static_cast<gf::AnimLayer>(0));
+        }
+    }
+    return "";
+}
+
+float BattleCharacter::GetAnimationFrame() const {
+    gf::GfComAsm* com = gf::GfObjUtil::getObj(m_handle)->getComponent<gf::GfComAsm>(2);
+    float frame = 0.0f;
+    if (com != nullptr) {
+        frame = com->getLocalTime(static_cast<gf::AnimLayer>(0)) * 30.0f;
+    }
+    return frame;
+}
+
+bool BattleCharacter::SetAngry(bool angry, float time) {
+    CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr) {
+        return false;
+    }
+    return param->SetAngry(angry, time);
+}
+
 void BattleCharacter::ActionCommandEndIdle() {}
 
 void BattleCharacter::ActionCommandPutOutWeapon(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
@@ -328,6 +500,40 @@ void BattleCharacter::ActionCommandEndBreak() {}
 void BattleCharacter::ActionCommandDead(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
 
 void BattleCharacter::ActionCommandEndDead() {}
+
+void BattleCharacter::ActionCommandEndArts() {}
+
+void BattleCharacter::ActionCommandBladeChange(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
+
+void BattleCharacter::ActionCommandEndBladeChange() {}
+
+void BattleCharacter::ActionCommandRescue(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
+
+void BattleCharacter::ActionCommandEndRescue() {}
+
+void BattleCharacter::fn_7100048D28(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
+
+void BattleCharacter::fn_7100048D2C() {}
+
+void BattleCharacter::fn_710004BFD8(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
+
+void BattleCharacter::fn_710004BFDC() {}
+
+void BattleCharacter::fn_7100051E78(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
+
+void BattleCharacter::fn_7100051E7C() {}
+
+void BattleCharacter::fn_7100052154(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
+
+void BattleCharacter::fn_7100052158() {}
+
+void BattleCharacter::fn_7100052364(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
+
+void BattleCharacter::fn_7100052368() {}
+
+void BattleCharacter::fn_7100052CD8(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
+
+void BattleCharacter::fn_7100052CDC() {}
 
 void BattleCharacter::LandingCallback() {}
 

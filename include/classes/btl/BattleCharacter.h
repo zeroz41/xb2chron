@@ -8,6 +8,8 @@ namespace btl { class CharacterParameter; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfObj; }
+namespace gf { class GfComProperty; }
+namespace gf { class GfComEffectCaster; }
 namespace gf { class MsgObjectNotifyAsmCallback; }
 
 namespace btl {
@@ -102,6 +104,19 @@ public:
     enum BLADE_TIMER_MODE : int;
     enum ALPHA_PROC_ID : int;
     enum ANIM_SPDATA_TYPE : int;
+    enum DROP_ITEM_TYPE : int;
+    enum RIMBLOOM_ID : int;
+
+    void SetAction(ACTION_ID id, bool, bool, int param, float value);
+    void DropItem(DROP_ITEM_TYPE type, bool);
+    void SetRimBloom(RIMBLOOM_ID id, bool on);
+    const gf::GfComProperty* GetComPropertyConst() const;
+    gf::GfComEffectCaster* GetEffectCaster();
+    bool IsOnSlide() const;
+    gf::GF_OBJ_HANDLE* GetBuddyTargetObjectHandle() const;
+    const char* GetNowAnimationStateName() const;
+    float GetAnimationFrame() const;
+    void FluctuatePartyGauge(int value);
 
     gf::GfObj* GetObject() const;
     void NotifyHateElse();
@@ -158,6 +173,53 @@ public:
     void ActionCommandRescue(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
     void ActionCommandEndRescue();
 
+    // Placeholder names (all below): new in 3.0.1, nothing in 1.0.0's place names them.
+    // Members: second and third slots of the six m_aActionFuncList triples 3.0.1 added (member-pointer table of
+    // (Action<X>, ActionCommand<X>, ActionCommandEnd<X>)); what they do: nothing (bare ret).
+    void fn_7100048D28(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
+    void fn_7100048D2C();
+    void fn_710004BFD8(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
+    void fn_710004BFDC();
+    void fn_7100051E78(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
+    void fn_7100051E7C();
+    void fn_7100052154(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
+    void fn_7100052158();
+    void fn_7100052364(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
+    void fn_7100052368();
+    void fn_7100052CD8(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type);
+    void fn_7100052CDC();
+    // Members: they read or write this object's fields only (this in x0), inside this unit.
+    // What they do: m_state == 1.
+    bool fn_710002F118() const;
+    // !m_isBattle || m_isBattleIgnore (run bit 73: 0xF07 bit 1).
+    bool fn_710002F368() const;
+    // m_isPlayer && !m_isBattle.
+    bool fn_7100041728() const;
+    // m_actionID == 4 / m_actionID == 9.
+    bool fn_7100059D0C() const;
+    bool fn_7100059D1C() const;
+    // m_actionParam = param, then m_actionID = 5 / 0xF.
+    void fn_7100059D2C(int param);
+    void fn_7100059D68(int param);
+    // m_actionParam = flag ? param : -param, then m_actionID = 7.
+    void fn_7100059D3C(bool flag, int param);
+    // m_actionParam = param, m_actionValue = value, then m_actionID = 10.
+    void fn_7100059D54(int param, float value);
+    // Talk trigger: when the BattleGlobal flag (+0x83CA bit 3) allows, and the id bit (1 << id) is set in the
+    // word at 0xECC and clear in 0xED0, notifies TalkManager::NotifyTrigger with trigger 0x29/0x2A/0x2B by which
+    // byte of 0xED4/0xED6/0xED8 equals id, and on success sets the bit in 0xED0. Returns whether it notified.
+    // Callers: NotifyDirectDamage, AfterUpdate, NotifyLostHateTarget, DeadProc, AttackProc, DropHeadPot, others.
+    bool fn_710002FC0C(int id);
+    // fn_710002FC0C(7).
+    bool fn_710004232C();
+    // DropItem((DROP_ITEM_TYPE)(type + 5), false).
+    void fn_710006C39C(int type);
+    // Blade arts recast: called by fn_710003D114 (and so by Utility::AI_AddBladeArtsRecast) with a slot code
+    // (~slot, ~16 for a negative slot), two flags and a float; 0x3B0 bytes, not written yet.
+    void fn_710005F554(int slot, bool, bool, float value);
+    // fn_710005F554(~(slot < 0 ? 16 : slot), flag0, flag1, value). Caller: Utility::AI_AddBladeArtsRecast.
+    void fn_710003D114(bool flag0, int slot, bool flag1, float value);
+
     unsigned char pad_8[0x8];
     // where the character stands: EnemyParameter::AngryInfection measures from it (the name is not the original's)
     mm::Vec3 m_pos;
@@ -200,7 +262,9 @@ public:
     // the BLADE_TIMER_MODE m_bladeTimer runs for (the name is not the original's)
     unsigned int m_bladeTimerMode : 3;
     unsigned int pad_EE8_12 : 20;
-    unsigned char pad_EEC[0x4];
+    // SetRimBloom's: bit 0 for RIMBLOOM_ID 0, one of bits 1-8 for the ids 1-8 (the name is not the original's)
+    unsigned short m_rimBloomFlags;
+    unsigned char pad_EEE[0x2];
     // the character's index on its side (GetAiChrID; the name is not the original's)
     signed char m_index;
     // GetWeaponType returns it (the name is not the original's)
@@ -212,14 +276,20 @@ public:
     unsigned int m_isPlayer : 1;
     // IsBattle returns it (the name is not the original's)
     unsigned int m_isBattle : 1;
-    unsigned int pad_F00_1 : 16;
+    unsigned int pad_F00_1 : 11;
+    // the name is not the original's: ActionCommandEndRun stays in the run action while it is set (run bit 28)
+    unsigned int m_isRunHold : 1;
+    unsigned int pad_F01_5 : 4;
     // StartBackHome sets it (the name is not the original's)
     unsigned int m_reqBackHome : 1;
     unsigned int pad_F00_18 : 5;
     // Utility::AI_IsFly returns it (the name is not the original's)
     unsigned int m_isFly : 1;
     unsigned int pad_F00_24 : 8;
-    unsigned int pad_F04 : 32;
+    unsigned int pad_F04 : 25;
+    // the name is not the original's: fn_710002F368 treats the character as out of battle while it is set
+    unsigned int m_isBattleIgnore : 1;
+    unsigned int pad_F07_2 : 6;
     unsigned int pad_F08 : 32;
     unsigned int pad_F0C : 16;
     unsigned char pad_F0E[0x12];
@@ -231,17 +301,23 @@ public:
     unsigned char pad_FED;
     // the ACTION_ID being run (ActionCommandBladeArts; the name is not the original's)
     unsigned short m_actionID;
-    unsigned char pad_FF0[0xC];
+    // the name is not the original's: ActionRun resets it, SetAction sets it, ActionCommandEndRun tests it for 0
+    int m_actionStep;
+    unsigned char pad_FF4[0x8];
     // what the action runs for: the party index of the character to rescue while m_state is 0x14 (GetRescueTarget;
     // the name is not the original's)
     int m_actionParam;
-    unsigned char pad_1000[0x90];
+    unsigned char pad_1000[0xC];
+    // the name is not the original's: SetAction's float argument
+    float m_actionValue;
+    unsigned char pad_1010[0x80];
     // SetSuperArmorTime keeps the longer time (the name is not the original's)
     float m_superArmorTime;
     unsigned char pad_1094[0x8C];
     // one 8-byte bitfield run (GetRescueTarget loads it whole): the moving kind's own state, 0x14 while it rescues
-    // m_moveRescueTarget (IsRescue, GetRescueTarget; the names are not the original's)
-    unsigned int m_moveState : 8;
+    // m_moveRescueTarget (IsRescue, GetRescueTarget, MoveStop; the names are not the original's). An unsigned char
+    // bitfield: IsRescue and MoveStop compare it as a 32-bit value, GetRescueTarget as the 64-bit run.
+    unsigned char m_moveState : 8;
     unsigned int pad_1120_8 : 24;
     int m_moveRescueTarget : 32;
     unsigned char pad_1128[0xC];
@@ -250,7 +326,11 @@ public:
     // 1 for a moving kind of character: IsMove holds, IsScout/SetScout act (the name is not the original's)
     int m_moveKind;
     unsigned char pad_113C[0x4];
-    unsigned int pad_1140 : 4;
+    unsigned int pad_1140 : 1;
+    // MoveStop's requests: bit 1 for MoveStop(false), bit 2 for MoveStop(true) (the names are not the original's)
+    unsigned int m_moveStopReq : 1;
+    unsigned int m_moveStopReqArg : 1;
+    unsigned int pad_1140_3 : 1;
     // IsScout returns it (the name is not the original's)
     unsigned int m_isScout : 1;
     unsigned int pad_1140_5 : 27;
