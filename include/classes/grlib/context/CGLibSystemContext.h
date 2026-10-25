@@ -5,10 +5,12 @@
 #include "grlib/CGLibMemPoolAdder.h"
 #include "grlib/CGLibPipeline.h"
 #include "grlib/CGLibRenderTarget.h"
+#include "grlib/CGLibDisplay.h"
 #include "grlib/CGLibState.h"
 #include "grlib/CGLibDecShader.h"
 #include "grlib/CGLibVtxFetch.h"
 #include "grlib/CGLibSampler.h"
+#include "grlib/CGLibGpuTimeStamp.h"
 namespace grlib { struct CGLibMemType; }
 
 namespace grlib { namespace context { class CGLibSystemContext; }}
@@ -18,7 +20,21 @@ namespace grlib { namespace context {
 // The field names are not the original's.
 class CGLibSystemContext : public ::mm::mtl::PtrSingleton< ::grlib::context::CGLibSystemContext> {
 public:
+    CGLibSystemContext();
     virtual ~CGLibSystemContext();  // slot 0
+
+    void setup();
+    // true when everything was released
+    bool cleanup();
+    void begin();
+    void end();
+
+    // the etc uniform buffers' sizes (CGLibManager::deviceInit hands them to CGLibMemHandle::setup)
+    static const unsigned int ETCBUFFER_128_SIZE;
+    static const unsigned int ETCBUFFER_256_SIZE;
+    static const unsigned int ETCBUFFER_512_SIZE;
+    static const unsigned int ETCBUFFER_768_SIZE;
+    static const unsigned int ETCBUFFER_1024_SIZE;
 
     bool isRelease();
     // the GPU address of a block's memory, into address
@@ -35,19 +51,17 @@ public:
     CGLibMemPoolAdder m_memPoolAdder;  // 0xEF8: CGLibGPUCache's pools
     unsigned char pad_F08[0x168];
     CGLibPipeline m_pipeline;  // 0x1070
-    CGLibRenderTarget m_mainRenderTargets[2];  // 0x1110: the display's, m_mainIndex picks the current one
-    unsigned char pad_18A0[0x120];
-    CGLibDepthBuffer* m_pMainDepthBuffer;  // 0x19C0
-    unsigned char pad_19C8[0x70C];
-    int m_mainIndex;  // 0x20D4
-    unsigned char pad_20D8[0x248];
+    CGLibDisplay m_display;  // 0x1110
+    unsigned char pad_2120[0x200];
     CGLibDecShader m_decShader;  // 0x2320: CGLibCtlShader::getDecShader
     CGLibVtxFetch m_vtxFetches[3];  // 0x2388: CGLibCtlShader::getVtxFetch
     CGLibSampler m_samplers[6];  // 0x23B8: CGLibCtlShader::getSampler
     NVNmemoryPool* m_pPixelPool;  // 0x2478: the pool pixel memory comes from
     unsigned char pad_2480[0x10];
     unsigned char* m_pPixelPoolMem;  // 0x2490: its memory
-    unsigned char pad_2498[0xB0];
+    unsigned char pad_2498[0x40];
+    CGLibGpuTimeStamp m_gpuTimeStamp;  // 0x24D8: end() ends it, CGLibManager::getGpuTimeStamp reads it
+    unsigned char pad_2540[0x8];
     unsigned long m_glbUniformGpuAddress;  // 0x2548
     unsigned char* m_pGlbUniformBuffer;  // 0x2550
     unsigned char pad_2558[0x10];

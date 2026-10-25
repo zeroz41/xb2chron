@@ -43,7 +43,7 @@ using context::CGLibSystemContext;
 
 void CGLibState::setMainFrameBuffer() {
     CGLibSystemContext* ctx = CGLibSystemContext::get();
-    ctx->m_mainRenderTargets[ctx->m_mainIndex].setRenderTarget(*ctx->m_pMainDepthBuffer);
+    ctx->m_display.m_renderTargets[ctx->m_display.m_index].setRenderTarget(*ctx->m_display.m_pDepthBuffer);
 }
 
 }  // namespace grlib
@@ -115,7 +115,7 @@ void CGLibState::endRegisterRenderTarget() {
 }
 
 CGLibRenderTarget* CGLibState::getMainRenderTarget() {
-    return &CGLibSystemContext::get()->m_mainRenderTargets[CGLibSystemContext::get()->m_mainIndex];
+    return &CGLibSystemContext::get()->m_display.m_renderTargets[CGLibSystemContext::get()->m_display.m_index];
 }
 
 void CGLibState::setPixelResidentArea(bool enable, unsigned int size) {
