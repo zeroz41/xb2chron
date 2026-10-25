@@ -2,9 +2,28 @@
 #define PTLIB_PARTICLESYSTEM_H
 
 namespace mtl { class ALLOC_HANDLE; }
+namespace mm { class Vec3; class Col4; }
+namespace ptlib { namespace emitter { class EmitterParam; class EmitterObj; class EmitterArg; class ParticleObj; } }
 
 namespace ptlib {
 class DrDrawWorkInfoEF;
+
+// one entry of an effect resource's material table (the names are not the original's:
+// ParticleManager::convert_key_by_material_index reads the key of entry <index>)
+class FxMaterialEntry {
+public:
+    int m_key;
+    unsigned char pad_4[0xc];
+};
+
+// an effect resource's material table: a count, then the entries (the names are not the original's)
+class FxMaterialTable {
+public:
+    const FxMaterialEntry* getEntry(unsigned int index) const { return index < m_count ? &m_entries[index] : nullptr; }
+
+    unsigned int m_count;
+    FxMaterialEntry m_entries[1];  // m_count of them
+};
 
 // an effect resource's header, as effect::SystemManager::es_regist hands it out (the names are not the original's:
 // es_is_loop and es_contais_cam_axis read the flags)
@@ -13,6 +32,40 @@ public:
     unsigned char pad_0[0x9];
     unsigned char m_loop;
     unsigned char m_containsCamAxis;
+    unsigned char pad_b[0x5];
+    unsigned int m_materialTableOffset;  // from the header; 0 for none (the name is not the original's)
+
+    const FxMaterialTable* getMaterialTable() const {
+        return m_materialTableOffset != 0
+                   ? reinterpret_cast<const FxMaterialTable*>(reinterpret_cast<const unsigned char*>(this) +
+                                                              m_materialTableOffset)
+                   : nullptr;
+    }
+};
+
+// the library's state that the renderer shares (RenderManager::init takes it; ParticleManager::getFxParam)
+class FxParam {
+public:
+    // what ParticleManager::init sets (the name is not the original's)
+    void reset() {
+        m_paused = false;
+        m_pause = false;
+        m_flagF = true;
+        m_flag10 = false;
+        m_flag11 = false;
+        m_flag12 = false;
+        m_value14 = 1;
+    }
+
+    unsigned char pad_0[0xd];
+    bool m_paused;  // the pause state update_pause applied (the name is not the original's)
+    bool m_pause;   // set_pause's request (the name is not the original's)
+    bool m_flagF;
+    bool m_flag10;  // move does nothing while it is set
+    bool m_flag11;
+    bool m_flag12;
+    unsigned char pad_13[0x1];
+    int m_value14;
 };
 
 // reports a failed check of the effect library with a printf-style message; the expression comes first
@@ -22,9 +75,78 @@ void efMsg(const char* format, ...);
 // prints a printf-style warning of the effect library
 void efWng(const char* format, ...);
 
+// the game's drawing hooks, as setUserDrFunc stores them; ParticleManager's forwarders of the same names call
+// them (the type's name is not the original's; the members are named after 1.0.0's forwarders)
+struct DrFunc {
+    void* (*createMdl)(const void*, const char*, int, const void*, int);
+    void (*deleteMdl)(void*);
+    void* (*createLgt)(unsigned int, int);
+    void (*deleteLgt)(unsigned int, void*);
+    void (*setMdlPos)(void*, void*);
+    void (*setMdlMatrix)(void*, void*);
+    void (*setMdlColor)(void*, void*);
+    void (*setMdlAlpha)(void*, float);
+    void (*setMdlSpd)(void*, void*);
+    void (*setLgtPos)(unsigned int, void*, void*);
+    void (*setLgtMatrix)(unsigned int, void*, void*);
+    void (*setLgtParam)(unsigned int, void*, void*);
+    void* (*createGrp)(int, int);
+    void (*destroyGrp)(void*);
+    void (*debugRenderer)(void*);
+    void* pad_78;
+};
+
 // the effect library's manager (particle_system.cpp)
 class ParticleManager {
 public:
+    static void* (*s_pAllocFuncSys)(void*, unsigned int, unsigned int, const char*, unsigned int);
+    static void (*s_pFreeFuncSys)(void*, void*);
+    static void* (*s_pAllocFuncRes)(void*, unsigned int, unsigned int, const char*, unsigned int);
+    static void (*s_pFreeFuncRes)(void*, void*);
+    static mtl::ALLOC_HANDLE (*s_pGetSysHandle)();
+    static mtl::ALLOC_HANDLE (*s_pGetResHandle)();
+    static void* (*s_pReadFunc)(const char*, int&);
+    static void (*s_pReadEndFunc)(void*);
+    static void (*s_pOutputDebugStringFunc)(const char*);
+    static void (*s_pOutputWarnStringFunc)(const char*);
+    static DrFunc s_pDrFunc;
+
+    static void resFree(void* p);
+    static void* readFileBlock(const char* path, int& size);
+    static void* createMdl(const void* a, const char* b, int c, const void* d, int e);
+    static void deleteMdl(void* pMdl);
+    static void* createLgt(unsigned int a, int b);
+    static void deleteLgt(unsigned int a, void* pLgt);
+    static void debugRenderer(void* p);
+    // 1.0.0 has these two out of line; 3.0.1 only inlines them (init, term)
+    static void* createGrp(int index, int a) { return s_pDrFunc.createGrp(index, a); }
+    static void destroyGrp(void* pGrp) { s_pDrFunc.destroyGrp(pGrp); }
+    // the draw group <index> (0..3) init made, or null
+    static void* getGrp(int index);
+    FxParam* getFxParam();
+    void getCamParam();
+    void set_pause(bool pause);
+    int convert_key_by_material_index(int index, FxHeader* pHeader) const;
+
+    void emitter_set_search(int a, const char* b, void* c, unsigned int d);
+    void emitter_set_param_pos_only(unsigned int handle, emitter::EmitterParam* pParam);
+    void emitter_set_param_pos_only2(unsigned int handle, emitter::EmitterParam* pParam);
+    void emitter_set_param(unsigned int handle, emitter::EmitterParam* pParam);
+    void emitter_set_param(FxHeader* pHeader, emitter::EmitterParam* pParam);
+    void emitter_set_casname(unsigned int handle, const void* a, const char* b, int c, float d, int e);
+    void emitter_set_casparam(unsigned int handle, const void* a, emitter::EmitterParam* pParam);
+    void emitter_set_disp(unsigned int handle, int disp);
+    void emitter_set_alpha(unsigned int handle, float alpha);
+    void emitter_set_speed(unsigned int handle, float speed);
+    void emitter_set_category(unsigned int handle, unsigned int category);
+    void emitter_set_viewnum(unsigned int handle, int view);
+    void emitter_set_nowait(unsigned int handle, int nowait);
+    void emitter_set_fadeout(unsigned int handle, int frames);
+    void emitter_set_fadeout(FxHeader* pHeader, int frames);
+    void emitter_set_fadeout(void* p, int frames);
+    void emitter_pack_free(unsigned long pack);
+    void emitter_alloc01_set_draw(emitter::EmitterObj* pObj, emitter::EmitterArg* pArg);
+
     // the library's own memory: size bytes on an align boundary, cited with the requesting file and line
     static void* sysAlloc(unsigned int size, unsigned int align, const char* file, unsigned int line);
     static void sysFree(void* p);
@@ -53,14 +175,92 @@ public:
                               void (*i)(void*, void*), void (*j)(unsigned int, void*, void*),
                               void (*k)(unsigned int, void*, void*), void (*l)(unsigned int, void*, void*),
                               void (*m)(void*), void* (*n)(int, int), void (*o)(void*));
+
+    // 1.0.0's clear(), which 3.0.1 only inlines into init
+    void clear() {
+        m_pReserved = nullptr;
+        m_frame = 0.0f;
+        m_param0 = 0.25f;
+        m_param1 = 0.0f;
+        m_param2 = 1.0f;
+        m_param3 = 1.0f;
+        m_param4 = 1.0f;
+        m_pGrp[0] = nullptr;
+        m_pGrp[1] = nullptr;
+        m_pGrp[2] = nullptr;
+        m_pGrp[3] = nullptr;
+    }
+
+    unsigned char pad_0[0x130];
+    FxParam m_fxParam;
+    // clear() sets them to 0.25, 0, 1, 1, 1; what they are is not known yet (separate members: as an array the
+    // stores do not pair the way the original's do)
+    float m_param0;
+    float m_param1;
+    float m_param2;
+    float m_param3;
+    float m_param4;
+    float m_frame;      // move's frame accumulator (the name is not the original's)
+    void* m_pReserved;  // clear() nulls it; nothing in this unit is known to read it yet
+    bool m_initFlags[2];  // init sets {true, false}; what they are is not known yet
+    unsigned char pad_16a[0x6];
+    void* m_pGrp[4];  // the draw groups (the name is not the original's)
 };
 
 // the live effects' handles (searchDead is -1 for an unknown handle)
 class HashManager {
 public:
+    // one live handle, with the name 1.0.0's add_core could give it
+    struct Entry {
+        const char* m_name;
+        unsigned int m_handle;
+    };
+    // a handle that died, with what it died with
+    struct Dead {
+        unsigned int m_handle;
+        int m_value;
+    };
+
+    static void init();
+    static void term();
+    static HashManager* get();
     static HashManager*& getPtr();
+    void reset() {
+        Entry* pEntry = m_entries;
+        long count = 4000;
+        while (count--) {
+            pEntry->m_name = nullptr;
+            pEntry->m_handle = 0;
+            pEntry++;
+        }
+        m_count = 0;
+    }
+    void add(unsigned int handle);
     bool check(unsigned int handle);
+    unsigned int get_create_key();
     int searchDead(unsigned int handle);
+
+    void add_core(unsigned int handle, const char* name) {
+        m_entries[m_count].m_handle = handle;
+        m_entries[m_count].m_name = name;
+        m_count++;
+        m_entries[m_count].m_handle = 0;
+        m_entries[m_count].m_name = nullptr;
+    }
+    unsigned int check_core(unsigned int handle) {
+        for (unsigned int i = 0; i < m_count; i++) {
+            if (m_entries[i].m_handle == handle) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    Entry m_entries[4000];
+    Dead m_dead[4000];
+    unsigned int m_deadCount;
+    unsigned int m_count;
+    unsigned int m_createKey;
 };
 
 }  // namespace ptlib

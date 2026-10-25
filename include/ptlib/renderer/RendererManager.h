@@ -3,6 +3,7 @@
 
 namespace ptlib { class DrDrawWorkInfoEF; class FxParam; class StaticAllocObj; }
 namespace ptlib { namespace renderer { class EffStateManager; class RenderGrObj; } }
+namespace ptlib { namespace emitter { class EmitterObj; class EmitterArg; } }
 
 namespace ptlib { namespace renderer {
 
@@ -17,6 +18,8 @@ public:
     void setDrInfo(const DrDrawWorkInfoEF* pDrInfo);
     static void term();
     RenderGrObj* getRenderGrObj();
+    void fxcore_setup_target();
+    void setEmitterDraw(emitter::EmitterObj* pObj, emitter::EmitterArg* pArg);
 
     FxParam* m_pFxParam;
     RenderGrObj* m_pGrObj;
