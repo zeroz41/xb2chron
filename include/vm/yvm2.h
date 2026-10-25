@@ -87,6 +87,10 @@ const char* vmArgStringGet(int no, VMData* pData);
 int vmArgFunctionGet(int no, VMData* pData);
 void vmRetValSet(VMThread* pThread, VMData* pData);
 void vmWaitModeSet(VMThread* pThread);
+// the running call's work state (yvm2.c): an index kept across waits, and three 8-byte work slots
+int vmWkIdxGet(VMThread* pThread);
+void vmWkIdxSet(VMThread* pThread, short idx);
+void** vmWkGet(VMThread* pThread, int idx);
 void splitFixed(float value, int* pSign, int* pInt, int* pFrac);
 
 int vmLink(void* program);

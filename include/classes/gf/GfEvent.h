@@ -27,7 +27,12 @@ public:
     // a party driver's object entering (true) or leaving (false) the game, with its setup's party id
     // (GfGameParty::gevGameObjEnter and gevGameObjLeave; 1.0.0's symbol)
     static void callPartyDriver(GF_OBJ_HANDLE* handle, unsigned int partyId, bool enter);
-    static void callPartyMemberOK(bool ok);  // GfGameParty::update: the party's objects are ready (or not any more)
+    static void callPartyMemberOK(bool ok);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // gf_event's unit and it works on PtrSingleton<GfEvent>. What it does: calls virtual slot 4 (+0x20) of every
+    // entry of the GfEvent's ring of up to 32 listeners (count at 0x108, start index at 0x110, "index < N").
+    // Caller: the gmk plugin's openPortal (no arguments).
+    static void fn_7100328774();  // GfGameParty::update: the party's objects are ready (or not any more)
     static void callChangeLeader(GF_OBJ_HANDLE* leader);  // GfGameParty::update: the party leader changed
     static void callPartyIDMemberOK(bool ok, unsigned int partyId);
     // GfPlayComCallbackEventSequence::start passes 12 (begin) or 13 and its id

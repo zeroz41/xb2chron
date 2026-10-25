@@ -20,6 +20,12 @@ class VolumeManager : public TUnk_B3D930, public TUnk_B3D958 {
 public:
     virtual ~VolumeManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    // out of line (mm::mtl::Singleton<event::VolumeManager>::getPtr's static calls it)
+    VolumeManager();
+    // a sound category (the evt_vol plugin passes 0, 3, 4, 5, 6, 9, 7); no enumerator names are known
+    enum CATE {};
+    void changeCategoryVolume(CATE cate, float volume, float frame);
+    void resetCategoryVolume(CATE cate, float frame);
 };
 }  // namespace event
 

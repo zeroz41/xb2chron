@@ -23,6 +23,9 @@ public:
     enum GRP_TYPE {};
     void defineGroup(GRP_TYPE group);
     GRP_TYPE getGroup() const;
+    // out of line (mm::mtl::Singleton<event::HideManager>::getPtr's static calls it)
+    HideManager();
+    void hideGroup(bool hide);
 
 private:
     unsigned char pad_10[0x4];

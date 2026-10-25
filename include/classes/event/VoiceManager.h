@@ -20,6 +20,9 @@ class VoiceManager : public TUnk_B3D888, public TUnk_B3D8B0 {
 public:
     virtual ~VoiceManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    // out of line (mm::mtl::Singleton<event::VoiceManager>::getPtr's static calls it)
+    VoiceManager();
+    void playOneshot(const char* name, float volume);
 };
 }  // namespace event
 

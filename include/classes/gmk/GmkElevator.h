@@ -36,6 +36,10 @@ public:
     virtual void onLeavePhantom(gmk::IGmkPhantomEventListener::OnLeaveInfo const&);  // slot 12
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(42);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GmkElevator's unit. What it does: walks PtrSingleton<GmkManager>'s gimmick vector (0xF358 buffer, 0xF360
+    // count, "m_buffer != 0") and answers a flag over them; the gmk plugin's openPortal waits while it answers false.
+    static bool fn_71005B928C();
     unsigned char pad_50[0x480];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
