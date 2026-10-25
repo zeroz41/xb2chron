@@ -23,6 +23,8 @@ public:
     // gives p back to the allocator that holds it, once the manager is initialized
     static void deallocate(void* p, unsigned long size, bool flag);
     static void deallocate_section(void* p, unsigned long size, bool flag);
+    // p's memory resized to size (MultimediaReallocate's, flag false)
+    static void* reallocate(void* p, unsigned long size, bool flag);
     // a new allocator of size bytes in the memory at p (the type's default, 1: a DlAllocator)
     static ALLOC_HANDLE create(void* p, unsigned long size, const char* name, bool flag, AllocatorType type);
     static ALLOC_HANDLE create(void* p, unsigned long size, const char* name, bool flag);

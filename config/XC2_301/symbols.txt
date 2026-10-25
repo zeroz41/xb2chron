@@ -56395,8 +56395,8 @@ _ZZN2mm3mtl12PtrSingletonIN3gmk14TGmkActiveListINS2_9GmkSeLineEEEE3sysEvE10s_ins
 _ZZN2mm3mtl12PtrSingletonIN3gmk14TGmkActiveListINS2_8GmkEventEEEE3sysEvE10s_instance = .bss:0x00EB7DF8; // type:object size:0x8 scope:weak
 _ZZN2mm3mtl12PtrSingletonIN3gmk14TGmkActiveListINS2_11GmkTutorialEEEE3sysEvE10s_instance = .bss:0x00EB7E00; // type:object size:0x8 scope:weak
 _ZZN2mm3mtl12PtrSingletonIN3gmk17GmkPhantomManagerEE3sysEvE10s_instance = .bss:0x00EB7E08; // type:object size:0x8 scope:weak
-lbl_7100EB7E10 = .bss:0x00EB7E10; // type:object size:0x1 scope:global
-lbl_7100EB7E14 = .bss:0x00EB7E14; // type:object size:0x1 scope:global
+_ZL7s_pause = .bss:0x00EB7E10; // type:object size:0x1 scope:global
+_ZL10s_homeMenu = .bss:0x00EB7E14; // type:object size:0x1 scope:global
 _ZN2ms9MsWrapper7m_pProjE = .bss:0x00EB7E18; // type:object size:0x8 scope:global
 _ZN2ms9MsWrapper13m_allocHandleE = .bss:0x00EB7E20; // type:object size:0x4 scope:global
 _ZN5_main12g_AutorunAppE = .bss:0x00EB7E24; // type:object size:0x104 scope:global

@@ -4,6 +4,7 @@
 #include "classes/ICMovie.h"
 
 namespace mm { namespace mtl { class IAllocator; }}
+class MovieDecoderPlayer;
 
 namespace CMovieNX {
 // table none (its derived classes'): ::CMovie's destructor goes straight to PtrSingleton<ICMovie>'s, so this one is
@@ -24,7 +25,11 @@ public:
     virtual bool ispause();  // slot 12
     virtual bool isplaying();  // slot 13
     virtual void doHomeMenu(bool);  // slot 14
-    unsigned char pad_8[0x20];  // fields: fw::MovieManager::open makes it 0x28 bytes
+    // fields: fw::MovieManager::open makes it 0x28 bytes (the names are not the original's)
+    MovieDecoderPlayer* m_player;
+    unsigned char* m_frame;  // a 1280x720 NV12 frame (initialize fills it, finalize frees it)
+    unsigned long m_frameSize;
+    mm::mtl::IAllocator* m_allocator;
 };
 }  // namespace CMovieNX
 
