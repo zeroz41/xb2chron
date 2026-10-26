@@ -948,12 +948,9 @@ application/BF2/gf/data/gf_bdat_unique_motion.cpp:
 	.bss         start:0x00C29478 end:0x00C294C0
 
 application/BF2/gf/data/DataParamAcc.cpp:
-	.text        start:0x0021FDD8 end:0x002226F0
+	.text        start:0x0021FDD8 end:0x002226F4
 	.rodata      start:0x009B9AC0 end:0x009B9B30
 	.data        start:0x00B47FC8 end:0x00B4C840
-
-application/BF2/gf/data/unit_71002226F0.cpp:
-	.text        start:0x002226F0 end:0x002226F4
 
 application/BF2/gf/data/gf_data_aoc.cpp:
 	.text        start:0x002226F4 end:0x00222A24
@@ -1976,6 +1973,7 @@ application/BF2/gf/menu/object/gf_menu_obj_arts_palette.cpp:
 
 application/BF2/gf/menu/object/GfMenuReferenceNumber.cpp:
 	.text        start:0x00387AE8 end:0x00387AEC
+	.data        start:0x00B5FB90 end:0x00B5FBB0
 
 application/BF2/gf/menu/object/gf_menu_obj_balloon.cpp:
 	.text        start:0x00387AEC end:0x0038CDD8
@@ -2832,7 +2830,7 @@ application/BF2/gf/object/component/StateFieldHome.cpp:
 
 application/BF2/gf/object/component/StateFieldSquadMember.cpp:
 	.text        start:0x004B81FC end:0x004B9134
-	.rodata      start:0x009A0C69 end:0x009A0CBC
+	.rodata      start:0x009A0C5B end:0x009A0CBC
 	.data        start:0x00B65C88 end:0x00B65D78
 
 application/BF2/gf/object/component/StateFieldWalk.cpp:
@@ -3597,7 +3595,7 @@ application/BF2/ScriptEffectPlay.cpp:
 
 application/BF2/ScriptSetActive.cpp:
 	.text        start:0x00660FF8 end:0x00661A54
-	.rodata      start:0x009A745E end:0x009A74E3
+	.rodata      start:0x009A745E end:0x009A7509
 	.rodata      start:0x009B5564 end:0x009B5568
 	.data        start:0x00B73368 end:0x00B73498
 	.init_array  start:0x00B8FC30 end:0x00B8FC38
