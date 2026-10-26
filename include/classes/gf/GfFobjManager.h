@@ -57,8 +57,10 @@ public:
     unsigned char* m_dropitemListFP;   // RSC_dropitemList(Ira), once loaded (the name is not the original's)
     unsigned char* m_dropitemParamFP;  // RSC_dropitemParam, once loaded (the name is not the original's)
     bool m_eventDisp;  // what setEventDisp gets (the name is not the original's)
-    int m_unusedInt;     // zeroed by the constructor, read nowhere in the unit (the name is not the original's)
-    bool m_unusedFlag;   // zeroed by the constructor, read nowhere in the unit (the name is not the original's)
+    // GfReqCommand::execWaitEvent ramps it from 0 to 40 over the wait's last 0.5 or 1.5 seconds, then sets 1000 and
+    // 0 (GfPlayCommand's clears it too); the name is not the original's
+    float m_waitEventValue;
+    bool m_waitEvent;  // set while execWaitEvent ramps m_waitEventValue (the name is not the original's)
     GfFobjGottenEffectManager m_gottenEffect;  // the name is not the original's
     GfFobjSeManager m_seManager;                // the name is not the original's
     float m_leaderBonus;  // fn_7100289504's (the name is not the original's)

@@ -20,7 +20,7 @@ namespace gf {
 
 GfFobjManager::GfFobjManager(const GfSetupParam& param)
     : m_initialized(false), m_dropitemParams(nullptr), m_dropitemListFP(nullptr), m_dropitemParamFP(nullptr),
-      m_eventDisp(true), m_unusedInt(0), m_unusedFlag(false), m_gottenEffect(nullptr), m_seManager(nullptr),
+      m_eventDisp(true), m_waitEventValue(0), m_waitEvent(false), m_gottenEffect(nullptr), m_seManager(nullptr),
       m_leaderBonus(0.0f), m_settingValue(0.0f) {
     initialize(param);
     GfObjManager::addListener(this, static_cast<IGfObjListener::OBJEVT>(0));

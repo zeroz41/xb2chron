@@ -420,8 +420,8 @@ void GfPlayComWaitEvent::start() { m_req = GfReqCommand::reqWaitEvent(m_time, m_
 
 void GfPlayComWaitEvent::end() {
     GfFobjManager* manager = mm::mtl::PtrSingleton<GfFobjManager>::sys();
-    manager->m_unusedInt = 0;
-    manager->m_unusedFlag = false;
+    manager->m_waitEventValue = 0;
+    manager->m_waitEvent = false;
 }
 
 bool GfPlayComWaitEvent::update(const fw::UpdateInfo& info, bool flag) {
