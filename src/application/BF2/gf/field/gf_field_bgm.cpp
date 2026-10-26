@@ -6,23 +6,16 @@
 #include "classes/gf/BgmField.h"
 #include "classes/gf/BgmEvent.h"
 #include "classes/gf/GfGameScene.h"
+#include "gf/MapjumpCallbackInfo.h"
 #include "classes/gf/GfBdatMaplist.h"
-#include "classes/gf/BgmTrack.h"
-#include "classes/gf/GfFieldBgm.h"
-#include "classes/gf/BgmGimmick.h"
-#include "classes/gf/BgmBattle.h"
-#include "classes/gf/BgmBattleBoss.h"
-#include "classes/gf/BgmField.h"
-#include "classes/gf/BgmEvent.h"
-#include "classes/gf/GfGameScene.h"
 #include "fw/UpdateInfo.h"
 #include "classes/gf/GfBdatBgm.h"
-#include "classes/gf/GfBdatMaplist.h"
 #include "classes/gf/GfDeadCamera.h"
 #include "classes/gf/GfEvtBgm.h"
 #include "classes/gf/GfGameCond.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfManager.h"
+#include "classes/gf/GfSound.h"
 
 namespace gf {
 namespace _gffsn {
@@ -159,8 +152,171 @@ unsigned int GfFieldBgm::getRscFieldBgmID() const {
     return GfBdatMaplist::get()->getMaplistbgm_cndID(mapId);
 }
 
+GfFieldBgm::~GfFieldBgm() {
+    for (BgmTrack** it = m_tracks.begin(); it != m_tracks.end(); ++it) {
+        if (*it != nullptr) {
+            delete *it;
+            *it = nullptr;
+        }
+    }
+}
+
+void GfFieldBgm::setRscBattleBgmID(unsigned int id) {
+    if (id != 0) {
+        if (GfBdatBgm::get()->getBgmConditionPriority(id) <= 1) {
+            m_rscBossBattleBgmID = 0;
+            m_rscBattleBgmID = id;
+        } else if (BgmBattle::get()->getBgmCondID() == id) {
+            m_rscBossBattleBgmID = 0;
+        } else {
+            m_rscBossBattleBgmID = id;
+            m_bossBattleBgmWait = 0;
+        }
+    } else {
+        m_rscBossBattleBgmID = 0;
+        m_rscBattleBgmID = 0;
+    }
+}
+
+void GfFieldBgm::gevBattleEnd() {
+    m_rscBossBattleBgmID = 0;
+    m_rscBattleBgmID = 0;
+}
+
+void GfFieldBgm::gevMapjump(GEV gev, const MapjumpCallbackInfo& info) {
+    switch (gev) {
+    case GEV(1):
+        if (info.m_jumpKind == 2) {
+            m_deadSequence = true;
+        }
+        m_disableFieldBgmChange = true;
+        break;
+    case GEV(6):
+        if (info.m_jumpKind == 2) {
+            m_deadSequence = false;
+        }
+        m_disableFieldBgmChange = false;
+        break;
+    default:
+        break;
+    }
+}
+
+inline void GfFieldBgm::setPause(bool pause) {
+    for (BgmTrack* track : m_tracks) {
+        track->setPause(pause);
+    }
+}
+
+void GfFieldBgm::gevPause(unsigned int prev, unsigned int cur) {
+    if (!(prev & 4) && (cur & 4)) {
+        setPause(true);
+    } else if ((prev & 4) && !(cur & 4)) {
+        setPause(false);
+    }
+}
+
+void GfFieldBgm::gevPlayEvent(GEV gev, unsigned int param) {
+    if (gev == GEV(13)) {
+        if (BgmEvent* event = BgmEvent::get()) {
+            event->gevPlayEvent(gev, param);
+        }
+    }
+}
+
+void BgmTrack::setPause(bool pause) {
+    m_pause = pause;
+    if (GfSound* sound = GfSound::get()) {
+        for (unsigned long i = 0; i < 4; ++i) {
+            BGMCOND& cond = m_conds[i];
+            if (cond.m_handle.isValid()) {
+                sound->setPause(cond.m_handle, pause, 0.0f);
+            }
+        }
+    }
+}
+
+bool GfFieldBgm::isBossBgmCopied() const {
+    BgmBattleBoss* boss = BgmBattleBoss::get();
+    return boss != nullptr ? boss->m_copied : false;
+}
+
+void GfFieldBgm::fn_7100262E58(const mm::mtl::FixStr<64>& name) {
+    if (BgmField* field = BgmField::get()) {
+        field->fn_7100262E70(name.m_str);
+    }
+}
+
+void BgmBattle::update(const fw::UpdateInfo& info) {
+    if (getBgmCondID() != m_fieldBgm->getRscBattleBgmID()) {
+        fn_7100263490(m_fieldBgm->getRscBattleBgmID());
+    }
+    BgmTrack::update(info);
+}
+
+bool BgmTrack::isPlaying() const {
+    for (unsigned long i = 0; i < 4; ++i) {
+        const BGMCOND& cond = m_conds[i];
+        if (cond.m_bgmFileName.length() != 0 || cond.m_handle.isValid()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void BgmTrack::setCategoryApply(unsigned char category) {
+    m_category = category;
+    if (GfSound* sound = GfSound::get()) {
+        for (unsigned long i = 0; i < 4; ++i) {
+            BGMCOND& cond = m_conds[i];
+            if (cond.m_handle.isValid()) {
+                sound->setCategory(cond.m_handle, fw::SoundCategory(category));
+            }
+        }
+    }
+}
+
+bool BgmEvent::isPlaying() const {
+    return BgmTrack::isPlaying();
+}
+
 void BgmEvent::cancelOverTime() {
     m_overTime = 0.0f;
+}
+
+void BgmEvent::update(const fw::UpdateInfo& info) {
+    fn_7100265120(info);
+    BgmTrack::update(info);
+}
+
+float BgmTrack::getPlayTime() const {
+    float result = 0.0f;
+    if (GfSound* sound = GfSound::get()) {
+        for (unsigned long i = 0; i < 4; ++i) {
+            const BGMCOND& cond = m_conds[i];
+            if (cond.m_handle.isValid()) {
+                float time;
+                result = sound->getPlayTime(cond.m_handle, time) ? time : 0.0f;
+                break;
+            }
+        }
+    }
+    return result;
+}
+
+float BgmTrack::getTotalTime() const {
+    float result = 0.0f;
+    if (GfSound* sound = GfSound::get()) {
+        for (unsigned long i = 0; i < 4; ++i) {
+            const BGMCOND& cond = m_conds[i];
+            if (cond.m_handle.isValid()) {
+                float time;
+                result = sound->getTotalTime(cond.m_handle, time) ? time : 0.0f;
+                break;
+            }
+        }
+    }
+    return result;
 }
 
 BgmTrack::~BgmTrack() {}

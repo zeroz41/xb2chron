@@ -9,6 +9,10 @@ public:
     // GfGameManager::getMapJumpID; the name is not the original's)
     unsigned int m_mapJumpId;
     unsigned int m_mapId;  // the map jumped to (GfFieldDmgManager matches its rows' MAPID)
+    unsigned char pad_8[0x8];
+    // the kind of jump (GfFieldBgm::gevMapjump sets and clears its dead-sequence flag for kind 2; the name is not
+    // the original's)
+    int m_jumpKind;
 };
 }  // namespace gf
 

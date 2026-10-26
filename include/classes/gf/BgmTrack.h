@@ -4,6 +4,8 @@
 #include "gf/SoundHandle.h"
 #include "mm/mtl/Delegate.h"
 #include "mm/mtl/FixedVector.h"
+#include "mm/mtl/FixedArray.h"
+#include "mm/mtl/FixStr.h"
 
 namespace fw { class UpdateInfo; }
 
@@ -17,7 +19,10 @@ struct ExecFadeParam;
 struct BGMCOND {
     unsigned char pad_0[0x4];
     SoundHandle m_handle;
-    unsigned char pad_C[0x4C];
+    unsigned char pad_C[0x8];
+    // the BGM file it plays (1.0.0's BGMCOND::isSilentPlay compares it with "SilentBgm"; BgmTrack::isPlaying
+    // counts an entry with a name as playing; the name is not the original's)
+    mm::mtl::FixStr<64> m_bgmFileName;
     // which of the BGM condition row's set conditions plays (the bgmvol checks hand it to
     // BgmTrack::getBgmConditionConditionID as the index; the name is not the original's)
     unsigned int m_conditionNo;
@@ -48,6 +53,8 @@ public:
     virtual const char* getTrackName() const = 0;  // slot 2
     virtual bool isPlaying() const;  // slot 3
     virtual void update(fw::UpdateInfo const&);  // slot 4
+    void setPause(bool pause);
+    void setCategoryApply(unsigned char category);
     float getPlayTime() const;
     float getTotalTime() const;
     // the n-th set condition of the BGM condition row (1.0.0's symbol names it)
@@ -56,7 +63,14 @@ public:
     // 1.0.0's out-of-line getter (3.0.1 inlines it)
     unsigned int getBgmCondID() const { return m_bgmCondID; }
 
-    unsigned char pad_8[0x170];
+    // placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. What it does: BgmBattle::update calls it
+    // with the field BGM's battle BGM id when the track's condition id differs (it sits where 1.0.0's
+    // BgmTrack::play(unsigned int) sat, after the constructor; the BgmBattle constructor calls it too)
+    void fn_7100263490(unsigned int id);
+
+    // the four condition entries (1.0.0 has FixedArray<BGMCOND, 4>::assign; isPlaying reads 4 entries of 0x5C
+    // from +8)
+    mm::mtl::FixedArray<BGMCOND, 4> m_conds;
     mm::mtl::FixedVector<BgmVolumeFade, 12> m_volumeFades;  // 1.0.0's addVolumeFade asserts size() < capacity()
     unsigned char pad_3C0[0xD0];
     // element type unproven (its size fits 0x170 = 4 x BGMCOND); ~BgmTrack clears its count at +0x600
@@ -64,7 +78,11 @@ public:
     unsigned int m_bgmCondID;  // 1.0.0's getBgmCondID reads it
     unsigned char pad_60C[0x14];
     GfFieldBgm* m_fieldBgm;  // the owner (the constructors take it)
-    unsigned char pad_628[0x8];
+    bool m_pause;  // setPause stores it (1.0.0's symbol names the setter)
+    // GfFieldBgm::isBossBgmCopied reads it on the boss track (the name is not the original's)
+    bool m_copied;
+    unsigned char m_category;  // setCategoryApply stores it (the name is not the original's)
+    unsigned char pad_62B[0x5];
 };
 }  // namespace gf
 
