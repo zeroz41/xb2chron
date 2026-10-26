@@ -1106,11 +1106,13 @@ namespace event {
 
 EffectManager::EffectManager() : m_flags(0), m_dispFlags(0), pad_a0(0), m_offscrID(0), pad_ac(0) {}
 
-LightManager::LightManager() : pad_10(0), pad_14(0), pad_18(0), pad_20(0), pad_28(0), pad_30(0), pad_38(0) {}
+LightManager::LightManager() : m_flags(0), m_modeFlags(0), m_offScrLights(), m_evtLight(nullptr) {}
+
+LightManager::~LightManager() {}
 
 SeamlessManager::SeamlessManager() : pad_10(0), pad_520(0), pad_2540(0) {}
 
-SkipManager::SkipManager() : m_flags(0), pad_14(0), pad_18(-1.0f) {}
+SkipManager::SkipManager() : m_flags(0), pad_14(0), m_endFrame(-1.0f) {}
 
 BgmManager::BgmManager() : pad_10(0), pad_14(0), pad_7c(0) {}
 
@@ -1233,6 +1235,65 @@ void CpuManager::OnEventProc(event::MSG_TYPE msg) {
         break;
     case 19:
         tailAlways();
+        break;
+    }
+}
+
+}  // namespace event
+#include "classes/event/LightManager.h"
+#include "classes/event/LightEvt.h"
+#include "classes/event/OutsiderManager.h"
+#include "classes/event/SkipManager.h"
+#include "classes/event/FrameManager.h"
+#include "classes/event/RandManager.h"
+#include "classes/event/RandPlayer.h"
+#include "classes/ml/Scn.h"
+#include "classes/ml/WinView.h"
+
+namespace event {
+
+// RandManager's table is emitted by OnEventProc; its D2 inlines the RandPlayer's (0x710014B070)
+RandManager::~RandManager() {}
+
+RandPlayer::~RandPlayer() {}
+
+// 1.0.0's LightManager::clearEvtLight
+inline void LightManager::clearEvtLight() {
+    if (m_evtLight) {
+        delete m_evtLight;
+        m_evtLight = nullptr;
+    }
+}
+
+// 1.0.0's LightManager::clearOffScrLight
+inline void LightManager::clearOffScrLight() {
+    for (int i = 0; i < 4; i++) {
+        if (m_offScrLights[i]) {
+            delete m_offScrLights[i];
+            m_offScrLights[i] = nullptr;
+        }
+    }
+}
+
+// 1.0.0's LightManager::clear
+inline void LightManager::clear() {
+    clearEvtLight();
+    clearOffScrLight();
+    m_modeFlags = 0;
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void LightManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+    case 12:
+        clear();
+        break;
+    case 16:
+        render();
+        break;
+    case 18:
+        update();
         break;
     }
 }

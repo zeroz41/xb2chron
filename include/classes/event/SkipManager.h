@@ -24,13 +24,18 @@ public:
     bool isSkipFast() const;
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     bool isSkip() const;
+    // 1.0.0's clear/update/tail (3.0.1 inlines them; defined inline in CharaObj.cpp)
+    void clear();
+    void update();
+    void tail();
+    void setSkipVolume(bool);  // out of line
 
 private:
     // bit 0: skipping (isSkip); the name is not the original's
     unsigned int m_flags;  // 0x10
     // fields the constructor initializes; what they hold is not known yet
     unsigned int pad_14;
-    float pad_18;  // -1.0f at first
+    float m_endFrame;  // 0x18 -1.0f at first; getEndFrame returns it (the name is not the original's)
     unsigned char pad_1c[0x4];
 };
 }  // namespace event
