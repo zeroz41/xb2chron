@@ -4,6 +4,7 @@
 #include "classes/ml/WorkObj.h"
 #include "mtl/AllocHandle.h"
 #include "mm/mtl/FixedList.h"
+#include "classes/ml/reslist.h"
 #include "ml/CriticalSection.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 namespace ml {
@@ -17,6 +18,14 @@ namespace ml {
 // PtrSingleton<WorkCpu>'s table)
 class WorkCpu : public ::ml::WorkObj, public ::mm::mtl::PtrSingleton<WorkCpu> {
 public:
+    // a job group beginUpdate wakes every frame: entryAutoExecGrp enters them sorted by the second word (the field
+    // names are not the original's)
+    struct AUTO_EXEC {
+        int m_group;
+        unsigned int m_priority;
+    };
+
+    WorkCpu(const char* name, WorkObj* parent);
     virtual ~WorkCpu();  // slot 0
     virtual void wkTail();  // slot 12
     virtual bool wkStandbyLogin();  // slot 14
@@ -38,7 +47,15 @@ public:
     static void addSystemInfoListener(IWorkInfomation* listener);
     static void removeSystemInfoListener(IWorkInfomation* listener);
     // a value swapped every frame no more (threadval's destructor)
+    static void entrySwap(IThreadValue* value);
     static void removeSwap(IThreadValue* value);
+    static unsigned int thSwap(void* bank, void* param);
+    static unsigned int thRender(void* cpu, void* param);
+    static void beginUpdate();
+    static void beginFrame();
+    static void resumeThread();
+    static WorkCpu* create(WorkObj* parent);
+    static CPUID getCurrentCPUID();
     // the library enabled (sets _mlwcpu::s_bEnableLib)
     static void setEnableSystem();
     static void setRenderSubCpu(bool renderSubCpu);
@@ -78,22 +95,34 @@ public:
     mtl::ALLOC_HANDLE m_memStack;      // 0x1B8 getMemStack (the name is not the original's)
     // 0x1BC the CPUs the work runs on: getRenderCPUID and getSubWorkCPUID choose by it (the name is not the original's)
     unsigned int m_cpuNum;
-    unsigned char pad_1c0[0x1580];
+    // 0x1C0 the values swapped each frame, one list per CPU: entrySwap enters a value in the shortest of the first
+    // m_cpuNum and keeps the list's index as its getCpuBank, removeSwap picks the list by it, thSwap swaps one list
+    // (the name is not the original's)
+    reslist<IThreadValue*> m_swap[3];
+    unsigned char pad_280[0x14C0];
     // 0x1740 the thread work of each CPU, m_cpuNum of them (isInitialized asks each it is logged in; the name is not
     // the original's)
     WorkCpuThread* m_thread[3];
     // 0x1758 the job group the renderer wakes (beginRender) and syncs (endUpdate); -1 for none (the name is not the
     // original's)
     int m_renderGroup;
-    unsigned char pad_175c[0x8];
+    // 0x175C the job group swapBank wakes and syncs; -1 for none (the name is not the original's)
+    int m_swapGroup;
+    bool m_rendering;                  // 0x1760 set while thRender renders (the name is not the original's)
+    unsigned char pad_1761[0x3];
     int m_bank;                        // 0x1764 getEven (the name is not the original's)
-    unsigned char pad_1768[0x438];
+    unsigned char pad_1768[0x38];
+    // 0x17A0 the job groups beginUpdate wakes (entryAutoExecGrp, removeAutoExecGrp) (the name is not the original's)
+    mm::mtl::FixedList<AUTO_EXEC, 32> m_autoExec;
+    unsigned char pad_1958[0x248];
     // 0x1BA0 the listeners told of the HOME menu (add/removeBackgroundListener, setBackground) and of the system
     // information (add/removeSystemInfoListener), under one lock (the names are not the original's)
     mm::mtl::FixedList<IWorkBackground*, 32> m_backgroundListener;
     mm::mtl::FixedList<IWorkInfomation*, 32> m_systemInfoListener;  // 0x1DE0
     unsigned long m_mainThreadId;      // 0x2020 getMainThreadId (the name is not the original's)
-    unsigned char pad_2028[0x20];
+    int m_bankCount[2];                // 0x2028 beginFrame zeroes the current bank's (the name is not the original's)
+    float m_renderTime;                // 0x2030 thRender's time of WorkRootState::renderWork (the name is not the original's)
+    unsigned char pad_2034[0x14];
     long m_beginClock[8];              // 0x2048 getBeginClock returns [0] or [4] (the name is not the original's)
     unsigned char pad_2088[0x8];
     unsigned int m_frameCount;         // 0x2090 getFrameCount (the name is not the original's)

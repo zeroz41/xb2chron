@@ -1,4 +1,8 @@
 #define MM_LIB_FROM_MONOLIB_MM
+#include "classes/ml/_reslist_base.h"
+#include "classes/ml/WorkCpu.h"
+#include "classes/ml/DevGraph.h"
+#include "classes/ml/WorkCpuThread.h"
 #include "mm/mtl/FixedList.h"
 #include "mm/mtl/FixedList.h"
 #include "mm/Col3.h"
@@ -49,6 +53,7 @@
 #include "classes/ml/WinProcRoot.h"
 #include "classes/ml/WinViewRoot.h"
 #include "ml/MlMem.h"
+#include "classes/ml/threadval.h"
 #include <algorithm>
 
 namespace ml {
@@ -80,8 +85,16 @@ static const CriticalSection& getListenerCriticalSection() {
     return s_cs;
 }
 
+// the lock the swap lists are changed under (inline in each user; the name is not the original's)
+static const CriticalSection& getSwapCriticalSection() {
+    // Proposed name, not the original's: the symbols leave it and its guard unnamed (lbl_7100ECFFE0, lbl_7100ED0008)
+    static CriticalSection s_cs;
+    return s_cs;
+}
+
 bool s_bEnableLib;
 bool s_bStallRender;
+bool s_bBackGround;
 
 }  // namespace _mlwcpu
 
@@ -532,6 +545,137 @@ void WorkCpu::removeSystemInfoListener(IWorkInfomation* listener) {
             cpu->m_systemInfoListener.erase(it);
         }
     }
+}
+
+void WorkObj::wkRemoveChild(WorkObj* child) {
+    reslist<WorkObj*>::iterator it = std::find(m_child.begin(), m_child.end(), child);
+    if (it != m_child.end()) {
+        m_child.erase(it);
+    }
+}
+
+unsigned int WorkCpu::thSwap(void* bank, void* param) {
+    reslist<IThreadValue*>& list = get()->m_swap[reinterpret_cast<long>(bank)];
+    for (reslist<IThreadValue*>::iterator it = list.begin(); it != list.end(); ++it) {
+        (*it)->tvSwap();
+    }
+    return 0;
+}
+
+void WorkCpu::entrySwap(IThreadValue* value) {
+    CS lock(_mlwcpu::getSwapCriticalSection());
+    WorkCpu* cpu = get();
+    value->tvSwap();
+    unsigned int shortest = 0xFFFFF;
+    unsigned int index = 0;
+    for (unsigned int i = 0; i != get()->m_cpuNum; i++) {
+        if (shortest > static_cast<unsigned int>(cpu->m_swap[i].size())) {
+            shortest = cpu->m_swap[i].size();
+            index = i;
+        }
+    }
+    value->setCpuBank(index);
+    cpu->m_swap[index].push_back(value);
+}
+
+void WorkCpu::removeSwap(IThreadValue* value) {
+    CS lock(_mlwcpu::getSwapCriticalSection());
+    WorkCpu* cpu = get();
+    reslist<IThreadValue*>& list = cpu->m_swap[value->getCpuBank()];
+    reslist<IThreadValue*>::iterator it = std::find(list.begin(), list.end(), value);
+    if (it != list.end()) {
+        list.erase(it);
+    }
+}
+
+CPUID WorkCpu::getCurrentCPUID() {
+    WorkCpu* cpu = get();
+    if (cpu == nullptr) {
+        return CPUID(0);
+    }
+    unsigned long id = getCurrentThreadId();
+    for (unsigned int i = 0; i < cpu->m_cpuNum; i++) {
+        WorkCpuThread* thread = cpu->m_thread[i];
+        if (thread != nullptr && thread->m_threadId == id) {
+            return thread->m_cpu;
+        }
+    }
+    return ThreadUtil::getCurrentCPUID();
+}
+
+unsigned int WorkCpu::thRender(void* arg, void* param) {
+    WorkCpu* cpu = static_cast<WorkCpu*>(arg);
+    long clock;
+    if (cpu->m_flags & 0x10) {
+        DevClock::getClockNow(clock);
+        while (!(cpu->m_flags & 0x20)) {
+            float time;
+            DevClock::getTimeNow(time, clock);
+            if (time > 0.1f) {
+                break;
+            }
+        }
+    }
+    cpu->m_rendering = true;
+    DevClock::getClockNow(clock);
+    WorkRootState::renderWork();
+    DevClock::getTimeNow(cpu->m_renderTime, clock);
+    cpu->m_rendering = false;
+    return 0;
+}
+
+void WorkCpu::beginUpdate() {
+    if (WorkCpu* cpu = get()) {
+        for (mm::mtl::FixedList<AUTO_EXEC, 32>::iterator it = cpu->m_autoExec.begin(); it != cpu->m_autoExec.end();
+             ++it) {
+            wakeup((*it).m_group);
+        }
+    }
+}
+
+void WorkCpu::resumeThread() {
+    WorkCpu* cpu = get();
+    if (cpu != nullptr && getCurrentCPUID() == CPUID(1)) {
+        for (unsigned int i = 1; i < cpu->m_cpuNum; i++) {
+            if (Thread* thread = cpu->m_thread[i]->m_th) {
+                thread->setSignalEvent(true);
+            }
+        }
+    }
+}
+
+WorkCpu* WorkCpu::create(WorkObj* parent) {
+    return WorkUtil::createWork<WorkCpu>("WorkCpu", parent, false);
+}
+
+void WorkCpu::swapBank() {
+    CS lock(_mlwcpu::getSwapCriticalSection());
+    WorkCpu* cpu = get();
+    cpu->m_bank = cpu->m_bank == 0;
+    if (cpu->m_swapGroup != -1) {
+        wakeup(cpu->m_swapGroup);
+        sync(cpu->m_swapGroup, WKCPU_SYNC(0), CPUID(0));
+    }
+}
+
+void WorkCpu::beginFrame() {
+    WorkCpu* cpu = get();
+    if (cpu == nullptr) {
+        return;
+    }
+    cpu->m_bankCount[static_cast<unsigned int>(cpu->m_bank)] = 0;
+    if (cpu->m_flags & 2 ? _mlwcpu::s_bBackGround && !_mlwcpu::s_bStallRender : !_mlwcpu::s_bStallRender) {
+        DevGraph::cmdExecDisplayList();
+    }
+    DevClock::getClockNow(cpu->m_beginClock[0]);
+    for (unsigned int i = 0; i < get()->m_cpuNum; i++) {
+        if (WorkCpuThread* thread = cpu->m_thread[i]) {
+            thread->m_frameCount = 0;
+            DevClock::getClockNow(thread->m_frameClock);
+            thread->m_frameClockCopy = thread->m_frameClock;
+        }
+    }
+    DevGraph::cb(RCB(0));
 }
 
 }  // namespace ml

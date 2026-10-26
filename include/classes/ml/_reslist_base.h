@@ -66,7 +66,10 @@ public:
     iterator end() const { return iterator(m_pEnd); }
     int size() const { return m_size; }
 
-    void push_back(const T0& value) {
+    void push_back(const T0& value) { insert(end(), value); }
+    // enters the value before pos in the first free node (entrySwap's push_back reads the end node before it looks
+    // for a free one; the name is not the original's)
+    void insert(iterator pos, const T0& value) {
         int i;
         for (i = 0; i < m_capacity; i++) {
             if (m_pBuffer[i].m_next == nullptr) {
@@ -75,10 +78,10 @@ public:
         }
         Node* node = &m_pBuffer[i];
         node->m_value = value;
-        node->m_next = m_pEnd;
-        node->m_prev = m_pEnd->m_prev;
-        m_pEnd->m_prev->m_next = node;
-        m_pEnd->m_prev = node;
+        node->m_next = pos.m_node;
+        node->m_prev = pos.m_node->m_prev;
+        pos.m_node->m_prev->m_next = node;
+        pos.m_node->m_prev = node;
         m_size++;
     }
     // empties the list and releases its node buffer unless it is external, leaving no room (inline:
@@ -102,6 +105,16 @@ public:
     // as mm_lib's list.h clear() does
     // unlinks every node (a free node has no next) and empties the list; the walk ends on the end node, whose next
     // is stored through it (inlined in every _reslist_base destructor, e.g. 0x71006BE514)
+    // unlinks the node it names and frees it (WorkObj::wkRemoveChild, WorkCpu::removeSwap)
+    void erase(iterator it) {
+        Node* node = it.m_node;
+        NodeBase* next = node->m_next;
+        NodeBase* prev = node->m_prev;
+        prev->m_next = next;
+        next->m_prev = prev;
+        node->m_next = nullptr;
+        m_size--;
+    }
     void clear() {
         Node* node = static_cast<Node*>(m_pEnd->m_next);
         while (node != m_pEnd) {

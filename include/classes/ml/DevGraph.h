@@ -25,6 +25,8 @@ extern bool s_bIgnore;
 
 // table 0x7100B75C48; its base at 0x1B0 is its singleton (the destructor stores PtrSingleton<ml::DevGraph>'s table
 // there and clears its instance)
+// what DevGraph::cb is told (WorkCpu::beginFrame passes 0; enumerators not recovered)
+enum RCB : int;
 class DevGraph : public ::ml::DevBase, public ::mm::mtl::PtrSingleton<DevGraph> {
 public:
     virtual ~DevGraph();  // slot 0
@@ -39,6 +41,7 @@ public:
     static void* cmdOpenDisplayList(unsigned int size);
     static bool cmdCloseDisplayList();
     static void cmdExecDisplayList();
+    static void cb(RCB rcb);
     static void pushRect(const mm::Rect<int>& a, const mm::Rect<int>& b, const mm::Rect<int>& c, bool flag);
     static void popRect();
     static void getPers(mm::Mat44& mtx, float fovy, float nearZ, float farZ);
