@@ -448,6 +448,8 @@ static inline bool getValCheckSub(unsigned char* fp, unsigned char* member, int 
     return getVarType(fp, member) == type;
 }
 
+// one case per destination type, each storing that type's own member: the separate (codegen-merged) case blocks put
+// convertType's inline cost at 275, so getValCheck/getArrayValCheck call it out of line as the original does
 void convertType(unsigned char* fp, unsigned char* member, int type, uVal* val) {
     int from = getVarType(fp, member);
     if (type == 7 || from == 7) {
@@ -462,41 +464,51 @@ void convertType(unsigned char* fp, unsigned char* member, int type, uVal* val) 
     case 1:
         switch (type) {
         case 2:
-        case 5:
             val->ushort = val->ubyte;
             break;
         case 3:
-        case 6:
             val->uint = val->ubyte;
             break;
         case 4:
             val->sbyte = val->ubyte;
+            break;
+        case 5:
+            val->sshort = val->ubyte;
+            break;
+        case 6:
+            val->sint = val->ubyte;
             break;
         }
         break;
     case 2:
         switch (type) {
         case 1:
-        case 4:
             val->ubyte = val->ushort;
             break;
         case 3:
-        case 6:
             val->uint = val->ushort;
+            break;
+        case 4:
+            val->sbyte = val->ushort;
             break;
         case 5:
             val->sshort = val->ushort;
+            break;
+        case 6:
+            val->sint = val->ushort;
             break;
         }
         break;
     case 3:
         switch (type) {
         case 1:
-        case 4:
             val->ubyte = val->uint;
             break;
         case 2:
             val->uint = val->ushort;
+            break;
+        case 4:
+            val->sbyte = val->uint;
             break;
         case 5:
             val->sshort = val->uint;
@@ -506,25 +518,33 @@ void convertType(unsigned char* fp, unsigned char* member, int type, uVal* val) 
     case 4:
         switch (type) {
         case 2:
-        case 5:
             val->ushort = val->sbyte;
             break;
         case 3:
-        case 6:
             val->uint = val->sbyte;
+            break;
+        case 5:
+            val->sshort = val->sbyte;
+            break;
+        case 6:
+            val->sint = val->sbyte;
             break;
         }
         break;
     case 5:
         switch (type) {
         case 1:
-        case 4:
             val->ubyte = val->sshort;
             break;
         case 2:
             val->ushort = val->sshort;
             break;
         case 3:
+            val->uint = val->sshort;
+            break;
+        case 4:
+            val->sbyte = val->sshort;
+            break;
         case 6:
             val->sint = val->sshort;
             break;
@@ -533,12 +553,16 @@ void convertType(unsigned char* fp, unsigned char* member, int type, uVal* val) 
     case 6:
         switch (type) {
         case 1:
-        case 4:
             val->ubyte = val->sint;
             break;
         case 2:
-        case 5:
             val->ushort = val->sint;
+            break;
+        case 4:
+            val->sbyte = val->sint;
+            break;
+        case 5:
+            val->sshort = val->sint;
             break;
         }
         break;
@@ -556,5 +580,92 @@ int getMSStyle(unsigned char* fp, int id) {
 const char* getMSLabel(unsigned char* fp, int id) {
     return reinterpret_cast<const char*>(getVal(fp, "label", id));
 }
+
+// getValCheck x3 / getArrayValCheck x2 with the unsigned long getters: each differs only by convertType being
+// inlined (the original calls it); see NOTES.md
+
+unsigned long getValCheck(unsigned char* fp, const char* column, int id, int type) {
+    unsigned char* member = getMember(fp, column);
+    uVal val;
+    if (member == 0) {
+        clearVal(&val);
+        return val.ulong;
+    }
+    bool same = getValCheckSub(fp, member, type);
+    unsigned long ret = getVal(fp, member, id);
+    if (!same) {
+        val.ulong = ret;
+        convertType(fp, member, type, &val);
+        return val.ulong;
+    }
+    return ret;
+}
+
+unsigned long getValCheck(unsigned char* fp, int member, int id, int type) {
+    unsigned char* var = getMember(fp, member);
+    uVal val;
+    if (var == 0) {
+        clearVal(&val);
+        return val.ulong;
+    }
+    bool same = getValCheckSub(fp, var, type);
+    unsigned long ret = getVal(fp, var, id);
+    if (!same) {
+        val.ulong = ret;
+        convertType(fp, var, type, &val);
+        return val.ulong;
+    }
+    return ret;
+}
+
+unsigned long getValCheck(unsigned char* fp, unsigned char* member, int id, int type) {
+    uVal val;
+    if (member == 0) {
+        clearVal(&val);
+        return val.ulong;
+    }
+    bool same = getValCheckSub(fp, member, type);
+    unsigned long ret = getVal(fp, member, id);
+    if (!same) {
+        val.ulong = ret;
+        convertType(fp, member, type, &val);
+        return val.ulong;
+    }
+    return ret;
+}
+
+unsigned long getArrayValCheck(unsigned char* fp, const char* column, int id, int index, int type) {
+    unsigned char* member = getMember(fp, column);
+    uVal val;
+    if (member == 0) {
+        clearVal(&val);
+        return val.ulong;
+    }
+    bool same = getValCheckSub(fp, member, type);
+    unsigned long ret = getArrayVal(fp, member, id, index);
+    if (!same) {
+        val.ulong = ret;
+        convertType(fp, member, type, &val);
+        return val.ulong;
+    }
+    return ret;
+}
+
+unsigned long getArrayValCheck(unsigned char* fp, unsigned char* member, int id, int index, int type) {
+    uVal val;
+    if (member == 0) {
+        clearVal(&val);
+        return val.ulong;
+    }
+    bool same = getValCheckSub(fp, member, type);
+    unsigned long ret = getArrayVal(fp, member, id, index);
+    if (!same) {
+        val.ulong = ret;
+        convertType(fp, member, type, &val);
+        return val.ulong;
+    }
+    return ret;
+}
+
 
 }  // namespace Bdat
