@@ -4,6 +4,7 @@
 #include "classes/gf/DataObjDriver.h"
 #include "classes/gf/DataObjBlade.h"
 #include "gf/GfDataBlade.h"
+#include "gf/SDataDriver.h"
 #include "gf/GfDataDriver.h"
 #include "gf/SDataBlade.h"
 #include "gf/SDataDriver.h"
@@ -12,7 +13,14 @@
 #include "classes/gf/GfBdatItem.h"
 #include "classes/gf/DataParamAcc.h"
 #include "gf/GfDataItem.h"
+#include "gf/GfDataParty.h"
+#include "mm/mtl/FixedVector.h"
 #include "classes/gf/GfEvent.h"
+#include "classes/gf/GfBdatBtl.h"
+#include "classes/gf/GfObjSetup.h"
+#include "gf/GfObjUtil.h"
+#include "gf/GfDataDriverArts.h"
+#include "gf/GfGameUtil.h"
 
 namespace gf {
 
@@ -116,6 +124,28 @@ unsigned short DataObjDriver::getDataType() const {
     return m_sdata->m_dataType;
 }
 
+// GEN-HPMAX-BEGIN
+void fn_71002255EC(unsigned int& value, const SDataDriver& data, unsigned int rateEffect, unsigned int addEffect);
+void fn_710022571C(unsigned int& value, const SDataDriverDlc& data, unsigned int rateEffect, unsigned int addEffect);
+
+unsigned int DataObjDriver::getHpMax(bool virtualParam) const {
+    if (GfDataDriver::fn_710023F9A8(getBdatId()) && !GfDataDriver::fn_7100237A94(getBdatId())) {
+        DataParamAcc acc(3, GfDataDriver::fn_71002417DC(getBdatId()), static_cast<GimmickType>(0));
+        return acc.getHpMax(virtualParam);
+    }
+    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    unsigned int value = data->m_hpMax;
+    fn_71002255EC(value, *data, 1, 11);
+    if (m_dlc != nullptr) {
+        fn_710022571C(value, *m_dlc, 1, 11);
+    }
+    float rate = GfDataDriver::fn_7100246694(*data) * 0.01f;
+    value += static_cast<unsigned int>(value * rate);
+    value = value > 9999 ? 9999 : value;
+    return value;
+}
+
+// GEN-HPMAX-END
 unsigned int DataObjDriver::getLevel(bool virtualParam) const {
     const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
     unsigned int level = GfDataDriver::getLevel(*data);
@@ -138,6 +168,17 @@ unsigned int DataObjDriver::getExpNext(bool virtualParam) const {
 unsigned int DataObjDriver::getBattleExpNext(bool virtualParam) const {
     const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
     return GfDataDriver::getBattleExpNextLevel(*data);
+}
+
+unsigned int DataObjDriver::getWeaponPoint(unsigned int wpnType) const {
+    if (wpnType == 0) {
+        unsigned int blade = getBlade(false, -1);
+        if (blade == 0) {
+            return 0;
+        }
+        wpnType = GfDataBlade::getSDataBlade(blade)->m_weaponType;
+    }
+    return GfDataDriverArts::getWp(m_bdatId, wpnType, 0);
 }
 
 unsigned int DataObjDriver::getSkillPoint() const {
@@ -261,6 +302,93 @@ unsigned int DataObjDriver::getClass(bool virtualParam) const {
     return GfDataDriver::getClass(*data);
 }
 
+// GEN-STATS-BEGIN
+unsigned int DataObjDriver::getStrength(bool virtualParam) const {
+    if (GfDataDriver::fn_710023F9A8(getBdatId()) && !GfDataDriver::fn_7100237A94(getBdatId())) {
+        DataParamAcc acc(3, GfDataDriver::fn_71002417DC(getBdatId()), static_cast<GimmickType>(0));
+        return acc.getStrength(virtualParam);
+    }
+    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    unsigned int value = (virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId()))->m_strength;
+    fn_71002255EC(value, *data, 2, 12);
+    if (m_dlc != nullptr) {
+        fn_710022571C(value, *m_dlc, 2, 12);
+    }
+    float rate = GfDataDriver::getStrengthRev(*data) * 0.01f;
+    value += static_cast<unsigned int>(value * rate);
+    value = value > 999 ? 999 : value;
+    return value;
+}
+
+unsigned int DataObjDriver::getPowerEther(bool virtualParam) const {
+    if (GfDataDriver::fn_710023F9A8(getBdatId()) && !GfDataDriver::fn_7100237A94(getBdatId())) {
+        DataParamAcc acc(3, GfDataDriver::fn_71002417DC(getBdatId()), static_cast<GimmickType>(0));
+        return acc.getPowerEther(virtualParam);
+    }
+    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    unsigned int value = (virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId()))->m_powEther;
+    fn_71002255EC(value, *data, 3, 13);
+    if (m_dlc != nullptr) {
+        fn_710022571C(value, *m_dlc, 3, 13);
+    }
+    float rate = GfDataDriver::getPowEtherRev(*data) * 0.01f;
+    value += static_cast<unsigned int>(value * rate);
+    value = value > 999 ? 999 : value;
+    return value;
+}
+
+unsigned int DataObjDriver::getDex(bool virtualParam) const {
+    if (GfDataDriver::fn_710023F9A8(getBdatId()) && !GfDataDriver::fn_7100237A94(getBdatId())) {
+        DataParamAcc acc(3, GfDataDriver::fn_71002417DC(getBdatId()), static_cast<GimmickType>(0));
+        return acc.getDex(virtualParam);
+    }
+    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    unsigned int value = (virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId()))->m_dex;
+    fn_71002255EC(value, *data, 4, 14);
+    if (m_dlc != nullptr) {
+        fn_710022571C(value, *m_dlc, 4, 14);
+    }
+    float rate = GfDataDriver::getDexRev(*data) * 0.01f;
+    value += static_cast<unsigned int>(value * rate);
+    value = value > 999 ? 999 : value;
+    return value;
+}
+
+unsigned int DataObjDriver::getAgility(bool virtualParam) const {
+    if (GfDataDriver::fn_710023F9A8(getBdatId()) && !GfDataDriver::fn_7100237A94(getBdatId())) {
+        DataParamAcc acc(3, GfDataDriver::fn_71002417DC(getBdatId()), static_cast<GimmickType>(0));
+        return acc.getAgility(virtualParam);
+    }
+    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    unsigned int value = (virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId()))->m_agility;
+    fn_71002255EC(value, *data, 5, 15);
+    if (m_dlc != nullptr) {
+        fn_710022571C(value, *m_dlc, 5, 15);
+    }
+    float rate = GfDataDriver::getAgilityRev(*data) * 0.01f;
+    value += static_cast<unsigned int>(value * rate);
+    value = value > 999 ? 999 : value;
+    return value;
+}
+
+unsigned int DataObjDriver::getLuck(bool virtualParam) const {
+    if (GfDataDriver::fn_710023F9A8(getBdatId()) && !GfDataDriver::fn_7100237A94(getBdatId())) {
+        DataParamAcc acc(3, GfDataDriver::fn_71002417DC(getBdatId()), static_cast<GimmickType>(0));
+        return acc.getLuck(virtualParam);
+    }
+    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    unsigned int value = (virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId()))->m_luck;
+    fn_71002255EC(value, *data, 6, 16);
+    if (m_dlc != nullptr) {
+        fn_710022571C(value, *m_dlc, 6, 16);
+    }
+    float rate = GfDataDriver::getLuckRev(*data) * 0.01f;
+    value += static_cast<unsigned int>(value * rate);
+    value = value > 999 ? 999 : value;
+    return value;
+}
+
+// GEN-STATS-END
 bool DataObjBlade::isValid() const {
     if (m_sdata == nullptr) {
         return false;
@@ -276,9 +404,25 @@ void DataObjBlade::setVirtualEquipWpn(unsigned int weapon, int) {
     m_virtual->m_equipWeapon = weapon;
 }
 
+unsigned int DataObjDriver::getAutoHate(bool virtualParam) const {
+    unsigned int blade = getBlade(virtualParam, -1);
+    if (blade != 0 && GfDataBlade::getSDataBlade(blade)->m_bladeId != 0 && GfDataHana::isValid(blade)) {
+        return GfDataHana::getAutoHate(blade);
+    }
+    return 0;
+}
+
 unsigned int DataObjBlade::getAutoHate(bool) const {
     if (GfDataHana::isValid(getBdatId())) {
         return GfDataHana::getAutoHate(getBdatId());
+    }
+    return 0;
+}
+
+unsigned int DataObjDriver::getArtsHate(bool virtualParam) const {
+    unsigned int blade = getBlade(virtualParam, -1);
+    if (blade != 0 && GfDataBlade::getSDataBlade(blade)->m_bladeId != 0 && GfDataHana::isValid(blade)) {
+        return GfDataHana::getArtsHate(blade);
     }
     return 0;
 }
@@ -335,9 +479,53 @@ void DataObjDriver::setBladeSet(int slot) {
     GfEvent::callBladeChange(m_handle, current, slot);
 }
 
+unsigned int DataObjDriver::getEquipWeapon(bool virtualParam, int slot) const {
+    if (slot < 0) {
+        slot = getBladeSet(virtualParam);
+    }
+    unsigned int blade = getBlade(virtualParam, slot);
+    if (blade == 0) {
+        return 0;
+    }
+    const SDataBlade* data = GfDataBlade::getSDataBlade(blade);
+    if (data->m_bladeId == 0) {
+        return 0;
+    }
+    if (virtualParam) {
+        unsigned int weapon = m_virtualWeapons[slot];
+        if (weapon != 0) {
+            return weapon;
+        }
+        return data->m_equipWeapon;
+    }
+    return GfDataBlade::getSDataBlade(blade)->m_equipWeapon;
+}
+
 unsigned int DataObjBlade::getEquipWeapon(bool virtualParam, int) const {
     const SDataBlade* data = virtualParam ? m_sdata : GfDataBlade::getSDataBlade(getBdatId());
     return data->m_equipWeapon;
+}
+
+unsigned int DataObjDriver::getWeaponType(bool virtualParam, int slot) const {
+    unsigned int blade = getBlade(virtualParam, slot);
+    GfObjSetup* setup = GfObjUtil::getObjSetup(m_handle);
+    if (setup != nullptr) {
+        unsigned int other = setup->m_isAllWeapon ? setup->pad_58 : 0;
+        if (other != 0) {
+            blade = other;
+        }
+    }
+    if (blade == 0) {
+        return 0;
+    }
+    const SDataBlade* data = GfDataBlade::getSDataBlade(blade);
+    if (data->m_bladeId == 0) {
+        return 0;
+    }
+    if (!virtualParam) {
+        data = GfDataBlade::getSDataBlade(blade);
+    }
+    return data->m_weaponType;
 }
 
 unsigned int DataObjBlade::getWeaponType(bool virtualParam, int) const {
@@ -569,6 +757,20 @@ const char* DataObjBlade::getVoiceStr() const {
     return GfDataBlade::getVoiceStr(getBdatId());
 }
 
+int DataObjBlade::getBladeSet(bool) const {
+    int driver = GfDataBlade::getCreator(getBdatId());
+    if (GfDataParty::getDriverPartyID(driver) == -1) {
+        return -1;
+    }
+    int num = GfDataDriver::getMaxSetBladeNum(driver);
+    for (int slot = 0; slot < num; slot++) {
+        if (GfDataDriver::getBlade(driver, slot) == getBdatId()) {
+            return slot;
+        }
+    }
+    return -1;
+}
+
 unsigned int DataObjBlade::getBlade(bool, int) const {
     return getBdatId();
 }
@@ -662,6 +864,38 @@ unsigned int DataObjBlade::getFieldSkillAchievement(unsigned int line) const {
 
 unsigned int DataObjBlade::getKeyAchievement() const {
     return GfDataBlade::getSDataBlade(getBdatId())->m_keyAchievement.m_achievementId;
+}
+
+unsigned int DataObjBlade::getLinkNum() const {
+    unsigned int link = GfGameUtil::getKizunaLink(getBlade(false, -1));
+    return GfBdatBtl::sys()->getBTL_Bl_KizunaLinkLinkNum(link);
+}
+
+// 1.0.0's getDeadNum reads the LinkNum column too
+unsigned int DataObjBlade::getDeadNum() const {
+    unsigned int link = GfGameUtil::getKizunaLink(getBlade(false, -1));
+    return GfBdatBtl::sys()->getBTL_Bl_KizunaLinkLinkNum(link);
+}
+
+unsigned int DataObjBlade::getAppStNum() const {
+    unsigned int link = GfGameUtil::getKizunaLink(getBlade(false, -1));
+    return GfBdatBtl::sys()->getBTL_Bl_KizunaLinkAppStNum(link);
+}
+
+unsigned int DataObjBlade::getAppEndNum() const {
+    unsigned int link = GfGameUtil::getKizunaLink(getBlade(false, -1));
+    return GfBdatBtl::sys()->getBTL_Bl_KizunaLinkAppEndNum(link);
+}
+
+void DataObjBlade::setVirtualEquipWpnChip(unsigned int chip) {
+    if (chip == 0) {
+        return;
+    }
+    setupVirtualParam();
+    unsigned int weapon = GfDataBlade::getBladeWeaponByRank(getBdatId(), chip);
+    if (weapon != 0) {
+        m_virtual->m_equipWeapon = weapon;
+    }
 }
 
 void DataObjBlade::setVirtualEquipOrb(unsigned int orb, unsigned int slot) {

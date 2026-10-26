@@ -148,6 +148,26 @@ public:
     // items (the game data's driver rows, 0x5A0 apart; drivers 0x11-0x19 from another table, 0xDAC apart);
     // GfFobjManager::fn_7100289504 passes its party leader's driver id and sums the "EnhanceEffect" 0xFB rows.
     static bool fn_7100247580(mm::mtl::FixedVector<unsigned short, 64>& enhances, int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member because its address sits
+    // among GfDataDriver's functions in the GfDataBlade unit (after getEquipWpnType) and it takes a driver's data, no
+    // object. What it does: fills enhances with the enhance ids that apply to the driver (its row at data+0x22, the
+    // DLC drivers 0x11-0x19 through GfBdatChrDr and fn_71002416B4); DataObjDriver's stat getters sum the
+    // BTL_Enhance rows of a given EnhanceEffect from it.
+    static void fn_7100247FD0(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriver& data);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member for the same placement as
+    // fn_7100247FD0. What it does: pushes onto enhances the equipment enhance (GfBdatItem::getPcEquipEnhance1) of the
+    // DLC driver record's item at +0x5A4, when it has one; DataObjDriver's stat getters use it for m_dlc.
+    static void fn_7100248668(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriverDlc& data);
+    // the stat corrections (percent) DataObjDriver's stat getters apply
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (checked below). A static member because it
+    // sits before getStrengthRev among GfDataDriver's functions and takes a driver's data. What it does: the HP
+    // correction percent DataObjDriver::getHpMax applies (like getStrengthRev for the strength).
+    static unsigned int fn_7100246694(const SDataDriver& data);
+    static unsigned int getStrengthRev(const SDataDriver& data);
+    static unsigned int getPowEtherRev(const SDataDriver& data);
+    static unsigned int getDexRev(const SDataDriver& data);
+    static unsigned int getAgilityRev(const SDataDriver& data);
+    static unsigned int getLuckRev(const SDataDriver& data);
     static unsigned int getAiID(unsigned int driver);
     static unsigned int getExtraMountNpcRsc(unsigned int driver);
     static const char* getExtraMountBone(unsigned int driver);

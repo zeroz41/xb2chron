@@ -21,7 +21,15 @@ public:
     unsigned short m_blades[3];  // the blade in each slot (DataObjDriver::getBlade); the count is not known
     unsigned char pad_2c[0x68];
     unsigned short m_level;  // 0x94 (GfDataDriver::getLevel; the name is not the original's)
-    unsigned char pad_96[0x1A];
+    unsigned short m_hpMax;  // 0x96: DataObjDriver::getHpMax's base (the name is not the original's)
+    // 0x98..0xA0: the base stats DataObjDriver's getters read before enhances and GfDataDriver's *Rev corrections
+    // (named after those getters; the names are not the original's)
+    unsigned short m_strength;
+    unsigned short m_powEther;
+    unsigned short m_dex;
+    unsigned short m_agility;
+    unsigned short m_luck;
+    unsigned char pad_a2[0xE];
     unsigned int m_exp;  // 0xB0 (GfDataDriver::getExp; the name is not the original's)
     unsigned int m_battleExp;  // 0xB4 (GfDataDriver::getBattleExp; the name is not the original's)
     unsigned int m_skillPoint;  // 0xB8 (GfDataDriver::getSkillPoint; the name is not the original's)

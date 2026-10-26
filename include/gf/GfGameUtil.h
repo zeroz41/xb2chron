@@ -28,6 +28,8 @@ public:
     // whether the object's weapon (mount 2) holds an object in slot 1 or 2 of its set in use
     static bool hasBelonging(gf::GF_OBJ_HANDLE* handle, unsigned int slot);
     static bool execActivateReserverForBlade(unsigned int blade);
+    // the blade's kizuna link row (DataObjBlade::getLinkNum and its neighbours read BTL_Bl_KizunaLink by it)
+    static unsigned int getKizunaLink(unsigned int blade);
     // sends the driver's party object its maximum hit points again (DataParamAcc::getHpMax)
     static void refreshEnhanceState(unsigned int driver);
     // hands a driver its default accessory once (CHR_Dr's DefAcce) and equips it in slot 0
