@@ -18,6 +18,9 @@ public:
         CreateInfo()
             : handle(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), pad_8(0.0f), pad_c(0.785398185f), pad_10(1.57079637f),
               pad_14(1.0f), pad_18(0) {}
+        // a turn of the object by angle (GfComBehaviorMob::execTurnCmdToPos)
+        CreateInfo(GF_OBJ_HANDLE* handle_, float angle)
+            : handle(handle_), pad_8(angle), pad_c(0.785398185f), pad_10(1.57079637f), pad_14(1.0f), pad_18(0) {}
         GF_OBJ_HANDLE* handle;
         float pad_8;
         float pad_c;

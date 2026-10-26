@@ -15,6 +15,9 @@ public:
     // what create takes: the object, the command and how long it may take to start
     struct CreateInfo {
         CreateInfo() : handle(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), timeout(5.0f) {}
+        // the object and a command named at run time (StateReaction::beginReaction: a BDAT cell)
+        CreateInfo(GF_OBJ_HANDLE* handle_, const char* name, float timeout_ = 5.0f)
+            : handle(handle_), cmdName(name), timeout(timeout_) {}
         GF_OBJ_HANDLE* handle;
         mm::mtl::FixStr<32> cmdName;
         float timeout;
