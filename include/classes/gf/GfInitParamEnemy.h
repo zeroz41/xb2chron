@@ -9,7 +9,7 @@ namespace gf {
 class GfInitParamEnemy : public ::gf::GfInitParam {
 public:
     virtual unsigned int getBladeID() const;  // slot 1
-    virtual void getEnArrangeID() const;  // slot 2
+    virtual unsigned int getEnArrangeID() const;  // slot 2
     unsigned char pad_90[0x98 - 0x90];
     // the enemy's CHR_EnParam row: setupForEvent and setupForUi read it from its CHR_EnArrange row (the name is not
     // the original's)

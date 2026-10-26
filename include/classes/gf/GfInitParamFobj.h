@@ -10,6 +10,8 @@ public:
     unsigned char pad_90[0x94 - 0x90];
     // createSetupParam formats "paramid%d" with it
     unsigned char pad_94;
+    // GfObjFactory::createFieldObj registers a GfFobjDropitem for the object when set (the name is not the original's)
+    bool m_isDropItem;
 };
 }  // namespace gf
 

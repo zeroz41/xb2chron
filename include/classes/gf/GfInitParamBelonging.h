@@ -4,13 +4,22 @@
 #include "classes/gf/GfInitParam.h"
 #include "gf/GfAppend.h"
 
+namespace gf { class GfInitParamDriver; }
+
 namespace gf {
 // table 0x7100B69F30
 class GfInitParamBelonging : public ::gf::GfInitParam {
 public:
     // the model: createSetupParam takes its getMountIndex()
     GfAppend m_append;
-    unsigned char pad_118[0x130 - 0x118];
+    // the four values GfObjFactory::createBelonging hands GfAppendUtil::setupBelonging without m_isForDriver (the
+    // names are not the original's)
+    unsigned short m_belongingValues[4];
+    // whether GfObjFactory::createBelonging sets the belonging up for m_driverParam's driver (the name is not the
+    // original's)
+    bool m_isForDriver;
+    unsigned char pad_121[0x128 - 0x121];
+    const GfInitParamDriver* m_driverParam;  // GfAppendUtil::setupBelongingForDriver's (the name is not the original's)
     // whether the setup's pad_50 is 1.0f (else 0.0f; createSetupParam)
     bool pad_130;
 };

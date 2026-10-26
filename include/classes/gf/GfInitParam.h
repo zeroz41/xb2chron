@@ -12,12 +12,14 @@ class GfInitParam {
 public:
     virtual bool isAllWeapon() const { return false; }  // slot 0
     virtual unsigned int getBladeID() const;  // slot 1 (GfEvtModelBlade's constructor compares it with 0x451)
-    virtual void getEnArrangeID() const;  // slot 2
+    virtual unsigned int getEnArrangeID() const;  // slot 2
 
     // what the object is made for: GfAssetFactory picks the event (2, 3, 11), salvage (9, 13) and UI (6, 7, 12)
     // setups by it (the name is not the original's)
     int m_createType;
-    unsigned char pad_c[0x10 - 0xC];
+    // set by the derived classes' constructors: 8 for a gimmick, 1 for a map's LOD animation (what it means is not
+    // known yet)
+    int pad_c;
     // the object's id: GfEvtModel keeps it, GfEvtModelDriver reads its blade by it (DataParamAcc(3, id, 0))
     // (the name is not the original's)
     unsigned int m_objId;
@@ -27,14 +29,16 @@ public:
     // GfObjSetup's constructor copies these two (the first into its m_partyId)
     unsigned int pad_20;
     unsigned int pad_24;
-    unsigned char pad_28[0x30 - 0x28];
+    int pad_28;  // -1 at first
+    unsigned char pad_2c[0x30 - 0x2C];
     // the objects GfInitParamWeapon::setupForEventBlade and GfInitParamBlade::setupForParty are given
     GF_OBJ_HANDLE* pad_30;
     GF_OBJ_HANDLE* pad_38;
     // GfEvtModelDriver's constructor moves 7..9 to 10..12 in the theater or in full-screen menus of game
     // state 6; what the values mean is not known yet
     int pad_40;
-    unsigned char pad_44[0x48 - 0x44];
+    unsigned short pad_44;
+    unsigned char pad_46[0x48 - 0x46];
     // the third DataParamAcc argument for the object: GfObjSetup's constructor copies it into its own
     // (the name is not the original's)
     GimmickType m_gimmickType;
@@ -56,7 +60,8 @@ public:
     unsigned char pad_82;
     // a weapon's files from db/ in place of wp/: GfAssetSetupWeapon's file getters pass it to gf::fn_71001C0EE0
     bool pad_83;
-    unsigned char pad_84[0x88 - 0x84];
+    unsigned char pad_84;
+    unsigned char pad_85[0x88 - 0x85];
     // a setup to use instead of the factory's own (the name is not the original's)
     GfAssetSetup* m_assetSetup;
 };

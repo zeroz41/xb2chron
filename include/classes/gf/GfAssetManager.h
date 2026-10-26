@@ -39,6 +39,8 @@ public:
     static unsigned int getUsedAssetPackInfo();
     static void build(const GfSetupParam& param);
     static void destroy();
+    // releases an asset pack (GfObjFactory::destroyObjHandle passes its object's)
+    static void destroy(GF_ASSET_HANDLE* handle);
     void finalize();
     void update(const fw::UpdateInfo& info);
     void updateCheckLoading();

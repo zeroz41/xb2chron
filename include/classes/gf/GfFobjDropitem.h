@@ -8,6 +8,7 @@ namespace gf {
 // table 0x7100B52910
 class GfFobjDropitem {
 public:
+    GfFobjDropitem(GF_OBJ_HANDLE* handle);
     virtual ~GfFobjDropitem();  // slot 0
     void initialize();
     void destroy();
@@ -18,6 +19,7 @@ public:
     // the item's object: GfFobjManager finds an item by it (listenerGfObj, leaveGameField) and destroys it
     // (GfObjUtil::destroy) (the name is not the original's)
     GF_OBJ_HANDLE* m_handle;
+    unsigned char pad_18[0x60 - 0x18];  // GfObjFactory::createFieldObj allocates 0x60
 };
 }  // namespace gf
 

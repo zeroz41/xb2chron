@@ -54,6 +54,10 @@ public:
     // the objects appended to an object's mount point 1 (GfMountManager::getAppendHandles)
     static gf::GfAppendHandles* getExtraMountObject(gf::GF_OBJ_HANDLE* handle);
     static void destroy(gf::GF_OBJ_HANDLE* handle);
+    // 1.0.0's: what the factory calls after an object's setup parameters (1.0.0's body is empty; 3.0.1's names the
+    // object for debugging). 3.0.1's symbols leave it unnamed (fn_710054E6F0); 1.0.0's createMapObj and its
+    // 16 other callers call it at the same place with the same argument
+    static void addDebugName(gf::GF_OBJ_HANDLE* handle);
     // attaches the object behind child to the one behind parent, and detaches it again
     static void attachGfObj(gf::GF_OBJ_HANDLE* parent, gf::GF_OBJ_HANDLE* child);
     static void dettachGfObject(gf::GF_OBJ_HANDLE* parent, gf::GF_OBJ_HANDLE* child);

@@ -1,0 +1,19 @@
+#ifndef GF_GFAPPENDUTIL_H
+#define GF_GFAPPENDUTIL_H
+#include "gf/GFATTACH.h"
+
+namespace gf { class GF_OBJ_HANDLE; class GfInitParamDriver; }
+
+namespace gf {
+// sets up what objects append to others (functions, by its symbols)
+class GfAppendUtil {
+public:
+    static void setupExtraModel(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* owner);
+    static void setupBelonging(GF_OBJ_HANDLE* handle, unsigned int a, unsigned int b, unsigned int c, unsigned int d);
+    static void setupEnemy(GFATTACH attach, GF_OBJ_HANDLE* handle, unsigned int enArrangeId, GF_OBJ_HANDLE* owner);
+    static void setupEventActEnemy(GFATTACH attach, GF_OBJ_HANDLE* handle, unsigned int enArrangeId);
+    static void setupBelongingForDriver(GF_OBJ_HANDLE* handle, const GfInitParamDriver& param);
+};
+}  // namespace gf
+
+#endif
