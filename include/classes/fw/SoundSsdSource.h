@@ -5,6 +5,9 @@
 #include "mm/mtl/FixStr.h"
 #include "classes/ssd/WaveSource.h"
 
+namespace ssd { class SoundEntry; }
+namespace fw { class SoundSsdBank; }
+
 namespace fw {
 // table 0x7100B42EA0
 class SoundSsdSource : public ::fw::SoundReferenceObject {
@@ -18,7 +21,11 @@ public:
 
     unsigned char pad_c[0x4];
     ssd::WaveSource* m_wave;  // 0x10: createWave and createStream make it
-    unsigned char pad_18[0x11c];
+    // 0x18: the bank entry the source plays through and 0x20 the bank it belongs to (the destructor removes the
+    // entry from the bank and the source from the bank's list; the names are not the original's)
+    ssd::SoundEntry* m_entry;
+    SoundSsdBank* m_bank;
+    unsigned char pad_28[0x10c];
     // the name SoundPack::findSource looks sources up by: the wave constructor copies its setup's second name here
     // (the field's name is not the original's)
     mm::mtl::FixStr<256> m_label;

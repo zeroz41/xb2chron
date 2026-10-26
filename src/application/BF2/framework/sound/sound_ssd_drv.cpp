@@ -1,3 +1,8 @@
+#include "classes/fw/SoundSsdSource.h"
+#include "classes/ssd/SoundEntry.h"
+#include "classes/mm/mtl/_ReslistBase.h"
+#include "classes/ssd/SoundGroup.h"
+#include "classes/fw/SoundSsdBank.h"
 #include "classes/ssd/SoundCategory.h"
 #include "classes/fw/ISoundDriver.h"
 #include "classes/fw/SoundSsdPlayer.h"
@@ -69,9 +74,33 @@ int SoundReferenceObject::release() {
     return count;
 }
 
+void SoundSsdBank::setMaxSound(int maxSound) {
+    m_group.id_ = m_id;
+    m_group.maxSound_ = maxSound;
+    m_maxSound = maxSound;
+}
+
+SoundSsdBank::~SoundSsdBank() {
+    if (m_bank.GetReferenceCounter() == 0) {
+        m_bank.NumSoundEntry();
+    }
+    for (mm::mtl::List<SoundSsdSource*>::iterator it = m_sources.begin(); it != m_sources.end(); ++it) {
+    }
+    m_sources.freeNodes();
+    m_sources.clear();
+    m_bank.Quit();
+}
+
 void SoundSsdBank::stopAll() {
     m_bank.Stop(0.0f);
 }
+
+bool SoundSsdDriver::isDeviceEnable() const {
+    return m_core != nullptr && !m_core->pad_11;
+}
+
+void SoundSsdDriver::updateDebugInfo(mm::mtl::FixedVector<SoundHandleDebugInfo, 128ul>&,
+                                     mm::mtl::FixedVector<SoundCategoryDebugInfo, 18ul>&) {}
 
 const mm::Mat44& SoundSsdDriver::getListeningPoint() const {
     return m_listeningPoint;

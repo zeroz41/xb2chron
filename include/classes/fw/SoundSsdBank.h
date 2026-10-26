@@ -3,6 +3,8 @@
 
 #include "classes/fw/SoundReferenceObject.h"
 #include "classes/ssd/SoundBank.h"
+#include "classes/ssd/SoundGroup.h"
+#include "classes/mm/mtl/List.h"
 #include "mm/mtl/IntrusivePtr.h"
 #include "mm/mtl/FixStr.h"
 
@@ -11,6 +13,16 @@ namespace fw { enum SoundPriority : int; }
 namespace fw { class SoundSsdSource; }
 
 namespace fw {
+// what fw::SoundSsdBank's constructor builds a bank from (create fills it: allocator 5, the next unique id, the
+// name; the names but the type's are not the original's)
+struct SoundBankSetup {
+    mm::mtl::IAllocator* allocator;
+    unsigned int id;  // 0x08
+    const char* name;  // 0x10
+    unsigned int pad_18;
+    unsigned int maxSound;  // 0x1C: the most sounds the group plays; the sources list reserves at least 256
+};
+
 // table 0x7100B42ED0
 class SoundSsdBank : public ::fw::SoundReferenceObject {
 public:
@@ -38,6 +50,7 @@ public:
         unsigned short pad_44;
     };
 
+    SoundSsdBank(const SoundBankSetup& setup);
     virtual ~SoundSsdBank();  // slot 0
 
     static SoundSsdBank* create(const char* name, SoundCategory category, unsigned int maxSound);
@@ -47,11 +60,21 @@ public:
     mm::mtl::IntrusivePtr<SoundSsdSource> addWave(const WaveInfo& info);
 
     ssd::SoundBank m_bank;  // 0x10 (stopAll stops it; the name is not the original's)
-    unsigned char pad_130[0x24];
+    // 0x130: the bank's one sound group (the constructor builds it, SoundBank::AddSoundGroup adds it; the name is
+    // not the original's)
+    ssd::SoundGroup m_group;
+    unsigned int pad_150;  // the setup's word at 0x18
     // the bank's name and its mm::mtl::hashStrCrc (fw::SoundSsdDriver::findBank compares both; the names are not
     // the original's)
     mm::mtl::FixStr<256> m_name;  // 0x154
     unsigned int m_nameHash;  // 0x258
+    // the setup's id (the constructor hands it to SoundBank::Init and the group) and the most sounds the bank
+    // plays (setMaxSound; the names are not the original's)
+    int m_id;  // 0x25C
+    int m_maxSound;  // 0x260
+    unsigned int pad_264;
+    mm::mtl::IAllocator* m_allocator;  // 0x268: the setup's allocator, the sources list's
+    mm::mtl::List<SoundSsdSource*> m_sources;  // 0x270 (the name is not the original's)
 };
 }  // namespace fw
 

@@ -83,6 +83,20 @@ public:
         m_capacity = 0;
         m_size = 0;
     }
+    // frees every node like clear() but keeps the count reserve set (fw::SoundSsdBank's destructor stores only the
+    // size before its clear(); the name is not the original's)
+    void freeNodes() {
+        Node* node = first();
+        while (node != last()) {
+            Node* next = static_cast<Node*>(node->m_next);
+            node->m_value.~T0();
+            freeNode(node);
+            node = next;
+        }
+        node->m_next = node;
+        m_head->m_prev = m_head;
+        m_size = 0;
+    }
     // the allocator the nodes come from: a different one frees the nodes first
     void setAllocator(IAllocator* allocator) {
         if (m_allocator != allocator) {
