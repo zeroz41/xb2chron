@@ -240,10 +240,15 @@ application/BF2/CharaObj.cpp:
 	.bss         start:0x00B94530 end:0x00C232C0
 
 application/BF2/TitleApp.cpp:
-	.text        start:0x0014D7A0 end:0x0014E74C
+	.text        start:0x0014D7A0 end:0x0014E4C8
 	.rodata      start:0x0097FF42 end:0x0097FFD0
-	.data        start:0x00B3FE68 end:0x00B40138
-	.bss         start:0x00C232C0 end:0x00C232E8
+	.data        start:0x00B3FE68 end:0x00B3FFB8
+	.bss         start:0x00C232C0 end:0x00C232E0
+
+application/BF2/TitleApplet.cpp:
+	.text        start:0x0014E4C8 end:0x0014E74C
+	.data        start:0x00B3FFB8 end:0x00B40138
+	.bss         start:0x00C232E0 end:0x00C232E8
 
 application/BF2/execute/title/title_main.cpp:
 	.text        start:0x0014E74C end:0x0015791C
