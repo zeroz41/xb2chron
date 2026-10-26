@@ -64,7 +64,7 @@ public:
     virtual void gevBattleStart() {}  // slot 43
     virtual void gevBattleEnd() {}  // slot 44
     virtual void gevChangeScenarioFlag(unsigned int, unsigned int) {}  // slot 45
-    virtual void fn_710000FAB8() {}  // slot 46
+    virtual void fn_710000FAB8(unsigned int) {}  // slot 46 (GfGameManager's override forwards a 32-bit id)
     virtual void gevSalvageStateChange(unsigned int) {}  // slot 47
     virtual void gevGameMapModel(gf::GF_OBJ_HANDLE*, bool) {}  // slot 48
     virtual void gevChangeWeather(unsigned int, unsigned int) {}  // slot 49

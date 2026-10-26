@@ -1,4 +1,13 @@
 #include "classes/gf/GfGameEvent.h"
+#include "classes/gf/IGfEvent.h"
+#include "classes/gf/GfGameScene.h"
+#include "classes/gf/GfFieldGimmick.h"
+#include "gf/GfDataBlade.h"
+#include "classes/gf/GfFieldGimmick.h"
+#include "gf/SDataSave.h"
+#include "btl/Utility.h"
+#include "classes/gf/GfGameEnv.h"
+#include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfGameEnv.h"
 #include "classes/gf/IGfEvent.h"
 #include "classes/gf/GfGameManager.h"
@@ -31,6 +40,7 @@
 #include "classes/gf/GfGameScene.h"
 #include "classes/gf/GfGameEvent.h"
 #include "classes/gf/IQuestEvent.h"
+#include "gf/QuestCompleteChildParam.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfGameScene.h"
 #include "classes/gf/GfGameObj.h"
@@ -279,9 +289,15 @@ void GfGameManager::gevSalvageStateChange(unsigned int state) {
     }
 }
 
-void GfGameManager::gevChangeScenarioFlag(unsigned int a0, unsigned int a1) {
+void GfGameManager::gevChangeScenarioFlag(unsigned int flag, unsigned int value) {
     if (GfGameScene* scene = GfGameScene::get()) {
-        scene->gevChangeScenarioFlag(a0, a1);
+        scene->gevChangeScenarioFlag(flag, value);
+    }
+}
+
+void GfGameManager::fn_710000FAB8(unsigned int id) {
+    if (TUnk_B54858* aoc = TUnk_B54858::get()) {
+        aoc->fn_71002A7734(id);
     }
 }
 
@@ -479,6 +495,60 @@ float GfGameManager::getFieldSpeed(const fw::UpdateInfo& info) {
     return info.m_speed * (speed * pause);
 }
 
+bool GfGameManager::isEnableOpenMainMenu() {
+    if (fn_71002A9E68() && GfDataBlade::fn_7100231884() == 11002) {
+        return false;
+    }
+    if (!isEnableOpenMainMenuSequence()) {
+        return false;
+    }
+    if (GfFieldGimmick* gimmick = GfFieldGimmick::get()) {
+        if (!gimmick->m_enableOpenMainMenu) {
+            return false;
+        }
+    }
+    if (GfGameScene* scene = GfGameScene::get()) {
+        if (scene->m_stopMainMenuOpenForGimmick) {
+            return false;
+        }
+    }
+    if (GfSequentialPlay::isInnerState(static_cast<GF_STATE>(24))) {
+        return false;
+    }
+    if (btl::BattleManager::isInitialized() && !btl::Utility::IsEnableEventStart()) {
+        return false;
+    }
+    GfGameScene* scene = GfGameScene::get();
+    if (scene == nullptr) {
+        return false;
+    }
+    if (scene->fn_71002C4A14() || scene->isMaskMainMenu()) {
+        return false;
+    }
+    int state = scene->m_openMainMenuState;
+    bool open = (state == 0 || state == 1) && !scene->isMoverGetFieldDamage();
+    if (!open) {
+        return false;
+    }
+    if (GfGameCond::isGameCond(2592)) {
+        if (!isClearGame() || GfDataBlade::fn_7100231884() != 1031) {
+            return false;
+        }
+    }
+    return !scene->m_disableOpenMainMenu;
+}
+
+bool GfGameManager::isClearGame() {
+    if (GfManager::isExecModeAdvertize() || GfManager::isExecModeThater()) {
+        tl::TitleMain* title = tl::TitleMain::get();
+        if (title != nullptr && title->m_saveBuffer != nullptr &&
+            GfDataBlade::fn_7100232054(title->fn_710014FB00()->m_game)) {
+            return true;
+        }
+    }
+    return GfDataBlade::fn_7100231FF8();
+}
+
 bool GfGameManager::isEnableHoodHomuraScenes() {
     return !GfSequentialPlay::isInnerState(static_cast<GF_STATE>(24)) && !GfSequentialPlay::isInnerState(static_cast<GF_STATE>(10));
 }
@@ -566,6 +636,19 @@ bool GfGameManager::isDisableAutoRun() {
 
 bool GfGameManager::isAssetNumberInvalid() {
     return GfAssetManager::getUsedAssetPackInfo() > 511;
+}
+
+void GfGameManager::fn_71002AC558(bool flag) {
+    if (TUnk_B54858* aoc = TUnk_B54858::get()) {
+        aoc->fn_71002A7430(flag);
+    }
+}
+
+bool GfGameManager::fn_71002AC598() {
+    if (TUnk_B54858* aoc = TUnk_B54858::get()) {
+        return aoc->fn_71002A75DC(0x30101);
+    }
+    return false;
 }
 
 bool GfGameManager::fn_71002AC650() {
@@ -795,6 +878,30 @@ void GfGameManager::qevCompleteQuest(const QuestCompleteParam& param) {
     if (GfGameScene* scene = GfGameScene::get()) {
         scene->qevCompleteQuest(param);
     }
+}
+
+void GfGameManager::qevCompleteChildQuest(const QuestCompleteChildParam& param) {
+    if (fn_71002A9E68()) {
+        return;
+    }
+    if (param.m_questId.m_id != 210) {
+        return;
+    }
+    if (GfDataBlade::fn_7100231884() != 8024) {
+        return;
+    }
+    if (GfGameScene* scene = GfGameScene::get()) {
+        if (!scene->isForceBossBattleBgm()) {
+            scene->setForceBossBattleBgm(true);
+        }
+    }
+}
+
+bool GfGameManager::fn_71002A9E68() {
+    if (TUnk_B54858* aoc = TUnk_B54858::get()) {
+        return aoc->m_mode == 1;
+    }
+    return false;
 }
 
 

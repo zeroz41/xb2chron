@@ -52,6 +52,14 @@ public:
     // unit among its functions. What it does: GfGameFlag::getLocal of the game data's flags (GfDataManager::getDataGame
     // + 0xFBBC4), width 16, index 1; TUnk_B64F08::fn_71004944B8 compares it with 2000.
     static unsigned short fn_7100231884();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit. What it does: true when local flag 0xBDCD (type 1) of game's flags (+0xFBBC4) is set, else
+    // whether flag 0xD880 is; GfGameManager::isClearGame passes the title's save buffer's game data.
+    static bool fn_7100232054(const SDataGame& game);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit. What it does: fn_7100232054's test on GfDataManager::getDataGame()'s flags; GfGameManager::
+    // isClearGame tail-calls it.
+    static bool fn_7100231FF8();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's fld plugin has no setNpcMeet). A
     // member because its address is in GfDataBlade's unit. What it does: for an id above 2000, looks the id up with
     // GfBdatRsc::fn_7100219CE0 and answers whether that local flag (type 1) is set; false otherwise. Callers: the fld

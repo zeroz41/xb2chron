@@ -67,8 +67,8 @@ public:
     // GfFieldWeather::updateWeather, GfGameScene::setEnemyDead, GfMenuBattleAdapter).
     static bool fn_71002AC580();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in gf_game_manager's unit
-    // among GfGameManager's functions. What it does: when the instance at lbl_7100C23300 exists, passes it and its bool to
-    // fn_71002A7430 (as GfGameManager::setupGame does); GfManager::fn_710032A1FC calls it
+    // among GfGameManager's functions. What it does: when PtrSingleton<TUnk_B54858> exists, passes it and its bool to
+    // TUnk_B54858::fn_71002A7430 (as GfGameManager::setupGame does); GfManager::fn_710032A1FC calls it
     static void fn_71002AC558(bool flag);
     static void build(const GfSetupParam& param);
     void initialize(const GfSetupParam& param);
@@ -165,8 +165,8 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in this
     // file among GfGameManager's functions (every named function of the unit is GfGameManager's or IQuestEvent's
     // inline virtuals). What it does: whether the game runs in the mode the title screen switches on: true when
-    // gf_game_env.cpp's 3.0.1 singleton (lbl_7100C23300: 0x10 bytes, class tables lbl_7100B54858/lbl_7100B54878,
-    // created by fn_71002A752C from initialize) exists and its int at 0x8 is 1. Only fn_71002AC558(flag & 1)
+    // gf_game_env.cpp's 3.0.1 singleton (TUnk_B54858: 0x10 bytes, created by fn_71002A752C from
+    // initialize) exists and its int at 0x8 is 1. Only fn_71002AC558(flag & 1)
     // writes that int; it is reached from title_main.cpp's fn_7100156288 through fn_710014FDB8 and gf_manager.cpp's
     // fn_710032A1FC, which hands the same flag to fw::Framework (byte 0x459), fw::EffectManager (0x2FD8),
     // fw::SoundManager (0x44C8), the render DrSys parameters and GfDataGame (bit 0 of 0xFD6D0). GfMenuManager's
@@ -186,7 +186,7 @@ public:
     static void fn_71002AC6A8();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // gf_game_manager's unit among GfGameManager's functions. What it does: false when gf_game_env.cpp's 3.0.1
-    // singleton (lbl_7100C23300) does not exist, else tail-calls fn_71002A75DC(singleton, 0x01010003) (an add-on
+    // singleton (TUnk_B54858) does not exist, else tail-calls fn_71002A75DC(singleton, 0x30101) (an add-on
     // content check). GfMenuObjUtil::fn_710048FD30 answers its add-on menu layer 1 with it; GfMenuManager's
     // constructor and GfGameScene::setEnemyDead call it too.
     static bool fn_71002AC598();
@@ -229,7 +229,7 @@ public:
     virtual void gevReloadBdat(gf::RELOAD_BDAT, unsigned int);  // slot 27
     virtual void gevSalvageStateChange(unsigned int);  // slot 28
     virtual void gevChangeScenarioFlag(unsigned int, unsigned int);  // slot 29
-    virtual void fn_710000FAB8();  // slot 30 (forwards to a gf_game_env function; placeholder name: see IGfEvent)
+    virtual void fn_710000FAB8(unsigned int id);  // slot 30 (forwards the id to TUnk_B54858::fn_71002A7734; placeholder name: see IGfEvent)
     virtual void gevChangeWeather(unsigned int, unsigned int);  // slot 31
     virtual void gevChangeTimeRange(unsigned int);  // slot 32
     virtual void gevGameState(gf::GF_STATE, gf::GF_STATE);  // slot 33

@@ -113,6 +113,10 @@ public:
     static bool isPlayerWalkAndRun();  // the controlled mover's target property is in state 0
     bool isMaskMainMenu() const;
     bool isMoverGetFieldDamage() const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // gf_game_scene's unit and GfGameManager::isEnableOpenMainMenu passes the scene. What it does: whether the int at
+    // 0x690 is below 30; isEnableOpenMainMenu answers false while it holds.
+    bool fn_71002C4A14();
     void refreshGimmickFlag();
     bool isRide(unsigned int id) const;
     // GfGameParty::gevPartyIDMemberOK passes the party id it is told about (1.0.0's symbol)
@@ -191,7 +195,13 @@ public:
     unsigned char pad_1E1[0x7];
     // setPlayerStopFlag's requests: a PLSTOP, with 0x80 when it stops
     mm::mtl::FixedQueue<unsigned char, 64> m_playerStopQueue;
-    unsigned char pad_238[0x48];
+    unsigned char pad_238[0x1C];
+    // GfGameManager::isEnableOpenMainMenu opens the main menu only while it is 0 or 1 (the name is not the original's)
+    int m_openMainMenuState;
+    unsigned char pad_258[0x5];
+    // GfGameManager::isEnableOpenMainMenu answers false while it is set (the name is not the original's)
+    bool m_disableOpenMainMenu;
+    unsigned char pad_25E[0x22];
     bool m_validCollisionVelocity;
     // 0x2D0: seven positions getEnableSavePos returns the first enabled of (an enable flag, then the position at
     // 0x10, 0x20 bytes each); not laid out yet, as an mm::Vec3 there would make the class 16-aligned and build

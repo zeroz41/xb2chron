@@ -33,6 +33,9 @@ public:
     // an event fade is running: GfPlayComEventFade's update sets it as it starts the fade, its end() clears it
     // (the name is not the original's)
     bool m_eventFade;
+    unsigned char pad_F4AD[0x9C4];
+    // GfGameManager::isEnableOpenMainMenu answers false while it is clear (the name is not the original's)
+    bool m_enableOpenMainMenu;
 };
 }  // namespace gf
 
