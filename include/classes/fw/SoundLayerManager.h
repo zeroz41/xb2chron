@@ -11,6 +11,7 @@ namespace fw {
 class SoundLayerManager : public ::mm::mtl::PtrSingleton< ::fw::SoundLayerManager> {
 public:
     virtual ~SoundLayerManager();  // slot 0
+    void update(unsigned int layerMask);  // Framework::update runs it per layer
     // the components of each layer (GfComSound links its node into its layer's; the count is Ghidra's reading of
     // the constructor's 31 constructions, unverified; the name is not the original's)
     mm::mtl::IntrusiveList<mm::mtl::IntrusiveListNodeBase> m_layers[31];

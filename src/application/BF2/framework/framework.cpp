@@ -1,3 +1,9 @@
+#include "fw/FrameworkConfig.h"
+#include "classes/fw/Framework.h"
+#include "classes/fw/TransformManager.h"
+#include "classes/fw/SoundLayerManager.h"
+#include "classes/ml/DevSettingNx.h"
+#include "classes/ml/DevFileTh.h"
 #include "mm/mtl/Map.h"
 #include "classes/fw/Framework.h"
 #include "classes/fw/Applet.h"
@@ -27,21 +33,108 @@
 #include "classes/fw/TransformManager.h"
 #include "classes/ml/Thread.h"
 #include "classes/ml/WorkCpu.h"
+#include "classes/fw/AnimationManager.h"
+#include "classes/fw/AssetManager.h"
+#include "classes/fw/DyanmicsManager.h"
+#include "classes/fw/MessageManager.h"
+#include "classes/fw/ModelManager.h"
+#include "classes/fw/MovieManager.h"
+#include "classes/fw/ScriptManager.h"
+#include "classes/fw/SensorManager.h"
+#include "classes/fw/WindManager.h"
+#include "classes/ml/DevClock.h"
+#include "classes/ml/DevSetting.h"
+#include "fw/LangUtil.h"
+#include "fw/ObjectEvent.h"
+#include "fw/RenderParam.h"
+#include "ml/MTRand.h"
+#include "ml/MlMem.h"
+#include "classes/ml/Scn.h"
+#include "math.h"
 
 namespace fw {
 
+Framework::Framework()
+    : m_applet(nullptr), pad_50(0), m_scn(nullptr), pad_60(0), m_memHandle(), pad_70(0), m_state(0), pad_88(false),
+      pad_89(false), m_updated(false), m_updateSpeed(1.0f) {}
+
 Framework::~Framework() {
-    m_threadExit = true;
-    m_threadEvent.setSignal(true);
-    while (!m_thread->isTerminated()) {
+    m_postUpdateThread.m_threadExit = true;
+    m_postUpdateThread.m_threadEvent.setSignal(true);
+    while (!m_postUpdateThread.m_thread->isTerminated()) {
     }
-    if (m_thread != nullptr) {
-        m_thread->release();
-        m_thread = nullptr;
+    if (m_postUpdateThread.m_thread != nullptr) {
+        m_postUpdateThread.m_thread->release();
+        m_postUpdateThread.m_thread = nullptr;
     }
     destroyManager();
 }
 
+
+void Framework::createMemorySection() {
+    MemorySectionInfo info;
+    info.m_kind = 6;
+    info.m_parent = ml::MlMem::getProductMem();
+    info.m_size = 0x2600000;
+    info.m_alignment = 0x1000;
+    info.m_flag = true;
+    info.m_name = "fw::SoundCommon";
+    info.m_type = mtl::AllocatorType(1);
+    FrameworkMemory::getPtr()->createSection(info);
+    info.m_kind = 8;
+    info.m_parent = ml::MlMem::getProductMem();
+    info.m_size = 0x2800000;
+    info.m_alignment = 0x1000;
+    info.m_flag = true;
+    info.m_name = "fw::SoundPool";
+    info.m_type = mtl::AllocatorType(1);
+    FrameworkMemory::getPtr()->createSection(info);
+    info.m_kind = 7;
+    info.m_parent = ml::MlMem::getProductMem();
+    info.m_size = 0x4900000;
+    info.m_alignment = 0x20;
+    info.m_flag = true;
+    info.m_name = "fw::SoundProc";
+    info.m_type = mtl::AllocatorType(1);
+    FrameworkMemory::getPtr()->createSection(info);
+    info.m_kind = 9;
+    info.m_parent = ml::MlMem::getProductMem();
+    info.m_size = 0x4400000;
+    info.m_alignment = 0x1000;
+    info.m_flag = false;
+    info.m_name = "fw::Movie";
+    info.m_type = mtl::AllocatorType(1);
+    FrameworkMemory::getPtr()->createSection(info);
+}
+
+void Framework::destroyManager() {
+    delete SensorManager::get();
+    delete SoundLayerManager::get();
+    delete WindManager::get();
+    delete ParamManager::get();
+    delete MovieManager::get();
+    delete EffectManager::get();
+    delete ScriptManager::get();
+    delete UpdatableObjectManager::get();
+    delete MessageManager::get();
+    delete ResourceManager::get();
+    delete mm::mtl::PtrSingleton<ColiManager>::get();
+    delete LayerSetManager::get();
+    delete LightManager::get();
+    delete DyanmicsManager::get();
+    delete AnimationManager::get();
+    delete ModelManager::get();
+    delete NaviManager::get();
+    delete CameraManager::get();
+    delete AssetManager::get();
+    delete TransformManager::get();
+    delete PadManager::get();
+    delete BdatManager::get();
+    delete SoundManager::get();
+    RenderParam::finalize();
+    delete ManagerRegister::get();
+    get()->m_scn->renderStop();
+}
 
 CameraManager::CameraManager(ml::Scn* scn) : m_pViewer(nullptr), m_listener(this) {
     for (unsigned int i = 0; i < 4; i++) {
@@ -111,7 +204,7 @@ void Framework::postUpdate() {
     if (m_applet != nullptr) {
         m_applet->postUpdate(m_updateInfo);
     }
-    if (!m_threadFlag) {
+    if (!m_postUpdateThread.m_threadFlag) {
         if (ColiManager* coli = mm::mtl::PtrSingleton<ColiManager>::get()) {
             coli->postUpdate();
         }
@@ -120,16 +213,16 @@ void Framework::postUpdate() {
 }
 
 void Framework::fn_710018369C(const fw::UpdateInfo& info) {
-    m_threadEvent.setSignal(true);
+    m_postUpdateThread.m_threadEvent.setSignal(true);
 }
 
 void Framework::fn_71001836A8() {
-    while (m_threadEvent.isSignal()) {
+    while (m_postUpdateThread.m_threadEvent.isSignal()) {
     }
 }
 
 void Framework::fn_71001836D0(bool flag) {
-    m_threadFlag = flag;
+    m_postUpdateThread.m_threadFlag = flag;
 }
 
 void Framework::tail(const UpdateState& state) {

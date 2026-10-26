@@ -10,7 +10,7 @@ public:
     FrameworkConfig()
         : pad_0(0xffffff), m_frameRate(30.0f), m_memorySize(0x400), m_procMemSize(0x1d00000), m_procMemAlignment(0x20),
           pad_1c(0x400), pad_20(0x400), pad_24(0x400), pad_28(0x800), pad_2c(0x600), pad_30(0x1000), pad_34(0x4a),
-          pad_38(0), pad_3c(false) {}
+          m_lang(0), m_flag(false) {}
 
     unsigned int pad_0;
     float m_frameRate;  // 0x04 30 by default (the name is not the original's)
@@ -27,8 +27,11 @@ public:
     unsigned int pad_2c;
     unsigned int pad_30;
     unsigned int pad_34;
-    unsigned int pad_38;
-    bool pad_3c;
+    // 0x38 the language Framework::initialize selects when "bdat/jp.bin" is there (the name is not the original's)
+    unsigned int m_lang;
+    // 0x3C set: Framework::initialize selects the device's language (DevSettingNx's mode 2) and its update thread runs
+    // ColiManager::postUpdate (the name is not the original's)
+    bool m_flag;
 };
 }  // namespace fw
 

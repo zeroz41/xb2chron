@@ -10,6 +10,7 @@ namespace fw {
 class TransformManager : public ::mm::mtl::PtrSingleton< ::fw::TransformManager> {
 public:
     virtual ~TransformManager();  // slot 0
+    void update(unsigned int layerMask);  // Framework::update runs it per layer
 };
 }  // namespace fw
 

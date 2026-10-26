@@ -18,6 +18,10 @@ public:
     virtual void setAutoSleepExtended(SleepExtendType type);  // slot 6
     virtual bool isAutoSleepExtended() const;  // slot 7
 };
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100ECA000). th_dev_file_nx.cpp's .bss
+// byte: which language DevSettingNx::getLang reports, 0 the device's, 1 Japanese (Framework::initialize: when
+// "bdat/jp.bin" is there), 2 (Framework::initialize: the config's flag at 0x3C).
+extern unsigned char g_devLangMode;
 }  // namespace ml
 
 #endif

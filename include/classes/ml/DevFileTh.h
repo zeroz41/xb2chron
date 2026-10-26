@@ -40,6 +40,9 @@ public:
     // asks whether a file exists; the answer comes to listener's OnFileEvent (fw::LocalizeResource's update). What
     // it returns is a pointer or none (unused by its callers seen so far); the parameter names are not the original's
     static void* checkValidFile(const char* path, ml::IWorkEvent* listener);
+    // whether the file at path can be read (Framework::initialize: "bdat/jp.bin"; 1.0.0's name, static: called with
+    // the path only)
+    static bool checkValidFileBlock(const char* path);
     // a file's size, negative when it has none (GfFileSizePool::execFileSizeJob passes no VAL64)
     static int getFileSize(const char* path, mm::VAL64*);
     // starts reading the file a parameter names; the handle the answer to its listener's OnFileEvent carries, none
