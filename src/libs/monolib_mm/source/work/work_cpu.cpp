@@ -1,4 +1,5 @@
 #define MM_LIB_FROM_MONOLIB_MM
+#include "/home/td/.local/share/xc2-session-tools/session19/fixedlist/include/mm/mtl/FixedList.h"
 #include "mm/mtl/FixedList.h"
 #include "mm/Col3.h"
 #include "classes/ml/WorkObj.h"
@@ -494,6 +495,42 @@ WorkCpuThread::~WorkCpuThread() {
     if (m_jobLock != nullptr) {
         delete m_jobLock;
         m_jobLock = nullptr;
+    }
+}
+
+void WorkCpu::addBackgroundListener(IWorkBackground* listener) {
+    if (WorkCpu* cpu = get()) {
+        CS lock(_mlwcpu::getListenerCriticalSection());
+        cpu->m_backgroundListener.push_back(listener);
+    }
+}
+
+void WorkCpu::removeBackgroundListener(IWorkBackground* listener) {
+    WorkCpu* cpu = get();
+    if (cpu != nullptr && !isShutdown()) {
+        CS lock(_mlwcpu::getListenerCriticalSection());
+        mm::mtl::FixedList<IWorkBackground*, 32>::iterator it = cpu->m_backgroundListener.find(listener);
+        if (it != cpu->m_backgroundListener.end()) {
+            cpu->m_backgroundListener.erase(it);
+        }
+    }
+}
+
+void WorkCpu::addSystemInfoListener(IWorkInfomation* listener) {
+    if (WorkCpu* cpu = get()) {
+        CS lock(_mlwcpu::getListenerCriticalSection());
+        cpu->m_systemInfoListener.push_back(listener);
+    }
+}
+
+void WorkCpu::removeSystemInfoListener(IWorkInfomation* listener) {
+    WorkCpu* cpu = get();
+    if (cpu != nullptr && !isShutdown()) {
+        CS lock(_mlwcpu::getListenerCriticalSection());
+        mm::mtl::FixedList<IWorkInfomation*, 32>::iterator it = cpu->m_systemInfoListener.find(listener);
+        if (it != cpu->m_systemInfoListener.end()) {
+            cpu->m_systemInfoListener.erase(it);
+        }
     }
 }
 

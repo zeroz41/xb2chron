@@ -18,6 +18,27 @@
 
 namespace mm { namespace mtl {
 
+// the word a FixedList's node storage is declared in: an unsigned integer as wide as the node's alignment, up to
+// eight bytes (the name is not the original's). The original's storage is no byte array: its end node's links,
+// which sit inside such a word, are addressed from the list's storage register while its index, at a word's start,
+// is folded to the owner's base + constant (GfGameObj::addInObj, WorkCpu::addBackgroundListener)
+template <unsigned long Align>
+struct FixedListWord {
+    typedef unsigned long type;
+};
+template <>
+struct FixedListWord<1> {
+    typedef unsigned char type;
+};
+template <>
+struct FixedListWord<2> {
+    typedef unsigned short type;
+};
+template <>
+struct FixedListWord<4> {
+    typedef unsigned int type;
+};
+
 // the type of a FixedList's node indices (the name is not the original's)
 template <bool Wide>
 struct FixedListIndex {
@@ -106,6 +127,20 @@ public:
     const_iterator end() const {
         FixedList* self = const_cast<FixedList*>(this);
         return const_iterator(self->node(0), self);
+    }
+    // the first element equal to value, or end() (WorkCpu::removeBackgroundListener and unregistErrorCB walk with
+    // the iterator's assertion and hand erase whichever of the two iterators the walk stopped on) (the name is not
+    // the original's)
+    template <typename U>
+    iterator find(const U& value) {
+        iterator it = begin();
+        iterator last = end();
+        for (; it != last; ++it) {
+            if (*it == value) {
+                return it;
+            }
+        }
+        return last;
     }
     bool empty() const { return m_num_nodes == 0; }
     unsigned long size() const { return m_num_nodes; }
@@ -209,7 +244,9 @@ private:
     }
 
 public:
-    alignas(ListNode) unsigned char m_nodes[sizeof(ListNode) * (N + 1)];  // N + 1 ListNodes
+    // N + 1 ListNodes, in words of the node's alignment (the name is not the original's)
+    typedef typename FixedListWord<alignof(ListNode)>::type word_type;
+    alignas(ListNode) word_type m_nodes[sizeof(ListNode) * (N + 1) / sizeof(word_type)];
     index_type m_free_index[N + 1];
     int m_free_index_top;
     int m_num_nodes;

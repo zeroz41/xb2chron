@@ -1,3 +1,4 @@
+#include "mm/mtl/FixedList.h"
 #include "classes/gf/GfGameObj.h"
 #include "classes/gf/GfGameObjEnemy.h"
 #include "classes/gf/GfGameEvent.h"
@@ -16,6 +17,10 @@ namespace gf {
 GfGameObj::GfGameObj(const GfSetupParam& param) : m_enemy(nullptr), pad_55c70(false) {
     initialize(param);
     GfObjManager::addListener(this, static_cast<IGfObjListener::OBJEVT>(0));
+}
+
+GfGameObj::~GfGameObj() {
+    GfObjManager::removeListener(this);
 }
 
 void GfGameObj::build(const GfSetupParam& param) {
@@ -39,6 +44,17 @@ void GfGameObj::listenerGfObj(IGfObjListener::OBJEVT evt, GF_OBJ_HANDLE* handle,
     case 3:
         self->removeGameObj(handle);
         break;
+    }
+}
+
+void GfGameObj::addInObj(GF_OBJ_HANDLE* handle, float fadeTime) {
+    GfGameEvent::applySetDispObject(handle);
+    GfObjAcc acc(handle);
+    float alpha = acc.getAlphaLife();
+    m_inList.push_back(INOUT(handle, fadeTime, alpha));
+    acc.setFlag(15, true);
+    if (acc.getType() == 5) {
+        acc.getObj()->setUpdateComponent(true);
     }
 }
 
