@@ -12,6 +12,7 @@ enum GmkType : int {};
 }  // namespace gmk
 
 namespace gmk {
+class IGmkList;
 // table 0x7100B6BE18
 class AGmkBase {
 public:
@@ -31,11 +32,19 @@ public:
     void getMatrix(mm::Mat44& mtx, bool world) const;
     // whether pos lies inside the gimmick's shape (GfGameInsideBattleLock::isInside asks a battle lock's with 0)
     bool isInsideShape(const mm::Vec3& pos, float margin) const;  // the BDAT table of the gimmick's kind
-    unsigned char pad_8[0x8];
+    // the list holding it (TGmkList::createGmk stores the list there; isValid tests it, the destructor clears it;
+    // the name is not the original's)
+    IGmkList* m_list;
     // the gimmick's position: gf_field_locator's locators copy its x, y, z (LocatorTbox::update and its kin); the
     // name is not the original's
     const mm::Vec3* m_pos;
-    unsigned char pad_18[0x10];
+    // its INFO entry in the gimmick section, none when its list has none (TGmkList::createGmk; the destructor clears
+    // it; the name is not the original's)
+    const unsigned char* m_info;
+    // the gimmick section's version: create copies it with m_data (one 8-byte copy of 0x20..0x27), dispose clears
+    // it (the name is not the original's)
+    unsigned int m_version;
+    unsigned char pad_24[0x4];
     // data the gimmick keeps; GfComBehaviorGmk tests a salvage locator's (kind 0x20) first byte against 2 to
     // answer the PC's access query (the name is not the original's)
     const unsigned char* m_data;

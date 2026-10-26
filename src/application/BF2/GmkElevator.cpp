@@ -1,6 +1,10 @@
+#include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/GmkGrave.h"
+#include "classes/gmk/GmkBlade.h"
+#include "classes/gmk/GmkKizunaTalk.h"
+#include "classes/gmk/GmkTbox.h"
 #include "classes/gmk/GmkAreaWeather.h"
 #include "classes/gmk/GmkBattleLock.h"
-#include "classes/gmk/GmkBlade.h"
 #include "classes/gmk/GmkClimbing.h"
 #include "classes/gmk/GmkDmgGimmick.h"
 #include "classes/gmk/GmkDoor.h"
@@ -9,8 +13,6 @@
 #include "classes/gmk/GmkEvent.h"
 #include "classes/gmk/GmkFieldLock.h"
 #include "classes/gmk/GmkFieldVolume.h"
-#include "classes/gmk/GmkGrave.h"
-#include "classes/gmk/GmkKizunaTalk.h"
 #include "classes/gmk/GmkLandmark.h"
 #include "classes/gmk/GmkMapJump.h"
 #include "classes/gmk/GmkMapObj.h"
@@ -38,6 +40,11 @@
 #include "classes/gmk/TUnk_B6ED38.h"
 #include "classes/gmk/TUnk_B6EE88.h"
 #include "classes/gf/GfGameManager.h"
+#include "gf/GfObjAcc.h"
+#include "gf/GfObjUtil.h"
+#include "classes/gmk/GmkEnemy.h"
+#include "classes/gmk/GmkRoutedEnemy.h"
+#include "classes/gmk/GmkSalvage.h"
 #include "classes/gmk/IGmkList.h"
 #include "classes/gmk/GmkGobEventListener.h"
 #include "classes/gmk/GmkSalvageLocator.h"
@@ -90,7 +97,6 @@
 #include "classes/gmk/GmkMapGimmick.h"
 #include "classes/gmk/GmkRoute.h"
 #include "classes/gmk/GmkRoutePoint.h"
-#include "classes/gmk/GmkTbox.h"
 #include "classes/gmk/GmkTrigger.h"
 #include "classes/gmk/GmkWarp.h"
 
@@ -449,5 +455,186 @@ void GmkSet::createGmkLists(int id) {
         list->create(info);
     }
 }
+
+// ---- each kind's type (its TYPE constant)
+gmk::GmkType GmkAreaBgm::getGmkType() const { return TYPE; }
+gmk::GmkType GmkPrecious::getGmkType() const { return TYPE; }
+gmk::GmkType GmkSe::getGmkType() const { return TYPE; }
+gmk::GmkType GmkSeLine::getGmkType() const { return TYPE; }
+gmk::GmkType GmkEvent::getGmkType() const { return TYPE; }
+gmk::GmkType GmkTutorial::getGmkType() const { return gmk::GmkType(57); }
+gmk::GmkType GmkTrigger::getGmkType() const { return gmk::GmkType(52); }
+gmk::GmkType GmkEnemy::getGmkType() const { return TYPE; }
+gmk::GmkType GmkRoute::getGmkType() const { return TYPE; }
+gmk::GmkType GmkRoutedEnemy::getGmkType() const { return TYPE; }
+gmk::GmkType GmkRoutePoint::getGmkType() const { return gmk::GmkType(23); }
+gmk::GmkType GmkNpc::getGmkType() const { return TYPE; }
+gmk::GmkType GmkRoutedNpc::getGmkType() const { return TYPE; }
+gmk::GmkType GmkMapObj::getGmkType() const { return TYPE; }
+gmk::GmkType GmkRoutedMapObj::getGmkType() const { return TYPE; }
+gmk::GmkType GmkTbox::getGmkType() const { return TYPE; }
+gmk::GmkType GmkBattleLock::getGmkType() const { return TYPE; }
+gmk::GmkType GmkFieldLock::getGmkType() const { return TYPE; }
+gmk::GmkType GmkEffect::getGmkType() const { return TYPE; }
+gmk::GmkType GmkMob::getGmkType() const { return gmk::GmkType(18); }
+gmk::GmkType GmkRoutedMob::getGmkType() const { return TYPE; }
+gmk::GmkType GmkLandmark::getGmkType() const { return TYPE; }
+gmk::GmkType GmkCollection::getGmkType() const { return gmk::GmkType(28); }
+gmk::GmkType GmkAreaWeather::getGmkType() const { return TYPE; }
+gmk::GmkType GmkSalvage::getGmkType() const { return gmk::GmkType(31); }
+gmk::GmkType GmkSalvageLocator::getGmkType() const { return gmk::GmkType(32); }
+gmk::GmkType GmkMapGimmick::getGmkType() const { return gmk::GmkType(33); }
+gmk::GmkType GmkGrave::getGmkType() const { return TYPE; }
+gmk::GmkType GmkKizunaTalk::getGmkType() const { return TYPE; }
+gmk::GmkType GmkJump::getGmkType() const { return TYPE; }
+gmk::GmkType GmkWarp::getGmkType() const { return TYPE; }
+gmk::GmkType GmkDoor::getGmkType() const { return TYPE; }
+gmk::GmkType GmkElevator::getGmkType() const { return TYPE; }
+gmk::GmkType GmkMapJump::getGmkType() const { return TYPE; }
+gmk::GmkType GmkFieldVolume::getGmkType() const { return TYPE; }
+gmk::GmkType GmkClimbing::getGmkType() const { return TYPE; }
+gmk::GmkType GmkBlade::getGmkType() const { return TYPE; }
+gmk::GmkType GmkDmgGimmick::getGmkType() const { return TYPE; }
+gmk::GmkType GmkDmgPhantom::getGmkType() const { return gmk::GmkType(49); }
+gmk::GmkType GmkDmgEffect::getGmkType() const { return gmk::GmkType(50); }
+gmk::GmkType GmkDmgSe::getGmkType() const { return gmk::GmkType(51); }
+gmk::GmkType GmkRoutedFootPrint::getGmkType() const { return TYPE; }
+gmk::GmkType GmkRoutedFootPrintPoint::getGmkType() const { return gmk::GmkType(55); }
+gmk::GmkType GmkAntiBladeArea::getGmkType() const { return TYPE; }
+gmk::GmkType GmkEffectLocator::getGmkType() const { return TYPE; }
+gmk::GmkType GmkSeLinePoint::getGmkType() const { return TYPE; }
+gmk::GmkType GmkSquadLeader::getGmkType() const { return TYPE; }
+gmk::GmkType GmkSquadMember::getGmkType() const { return TYPE; }
+gmk::GmkType GmkElevatorLocator::getGmkType() const { return TYPE; }
+gmk::GmkType GmkTargetPoint::getGmkType() const { return TYPE; }
+gmk::GmkType GmkRoutedEnemyPoint::getGmkType() const { return gmk::GmkType(2); }
+
+// ---- AGmkBase: its destructor is the key function (the table and its inline slots come out here)
+AGmkBase::~AGmkBase() {
+    m_list = nullptr;
+    m_pos = nullptr;
+    m_info = nullptr;
+}
+
+bool AGmkBase::isValid() const {
+    return m_list != nullptr && m_data != nullptr && m_bdatInfo != nullptr;
+}
+
+void AGmkBase::dispose() {
+    m_version = 0;
+    m_data = nullptr;
+    m_bdatInfo = nullptr;
+}
+
+// the original calls debugUpdateMmf here (its table's slot 10)
+void AGmkBase::update(float) {
+    debugUpdateMmf();
+}
+
+// asks isValid and drops the answer (the drawing itself is not in this build)
+void AGmkBase::debugDraw() const {
+    isValid();
+}
+
+// on event 3 the object's user data is cleared
+void AGmkBase::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    if (evt == gf::IGfObjListener::OBJEVT(3) && handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+    }
+}
+
+// ---- kinds whose isValid/dispose/destructor are the base pattern
+bool GmkTutorial::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkTrigger::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkRoutePoint::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkBattleLock::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkAreaWeather::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkSalvageLocator::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkFieldVolume::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkDmgPhantom::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkDmgEffect::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkDmgSe::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkRoutedFootPrintPoint::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkEffectLocator::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkSeLinePoint::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkSquadLeader::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkSquadMember::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkElevatorLocator::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkTargetPoint::isValid() const { return m_list != nullptr && m_data != nullptr; }
+void GmkRoute::dispose() { AGmkBase::dispose(); }
+void GmkRoutePoint::dispose() { AGmkBase::dispose(); }
+void GmkSquadLeader::dispose() { AGmkBase::dispose(); }
+void GmkSquadMember::dispose() { AGmkBase::dispose(); }
+GmkRoute::~GmkRoute() { dispose(); }
+GmkRoutePoint::~GmkRoutePoint() { dispose(); }
+GmkFieldVolume::~GmkFieldVolume() { dispose(); }
+GmkSquadLeader::~GmkSquadLeader() { dispose(); }
+GmkSquadMember::~GmkSquadMember() { dispose(); }
+GmkElevatorLocator::~GmkElevatorLocator() { dispose(); }
+GmkTargetPoint::~GmkTargetPoint() { dispose(); }
+GmkRoutedEnemyPoint::~GmkRoutedEnemyPoint() { dispose(); }
+
+// ---- kinds holding one game object
+void GmkTbox::dispose() {
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    AGmkBase::dispose();
+}
+
+void GmkKizunaTalk::dispose() {
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    AGmkBase::dispose();
+}
+
+void GmkBlade::dispose() {
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    AGmkBase::dispose();
+}
+
+void GmkGrave::dispose() {
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    AGmkBase::dispose();
+}
+
+GmkTbox::~GmkTbox() { dispose(); }
+
+GmkKizunaTalk::~GmkKizunaTalk() { dispose(); }
+
+GmkBlade::~GmkBlade() { dispose(); }
+
+// destructors whose original D2 is AGmkBase's (the table's slot 0 holds AGmkBase::~AGmkBase: clang emits the empty
+// body as an alias of the base's)
+GmkEffectLocator::~GmkEffectLocator() {}
+GmkSeLinePoint::~GmkSeLinePoint() {}
 
 }  // namespace gmk

@@ -25,7 +25,8 @@ public:
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(47);
-    unsigned char pad_48[0x8];  // fields: size from TGmkList::getInst's stride
+    // its game object (dispose clears its user data, destroys it and stores -1; the name is not the original's)
+    gf::GF_OBJ_HANDLE* m_gob;  // fields: size from TGmkList::getInst's stride
     // GfGmkBladeTraverser::onTraverse compares it with its id, or with 1001 and 1002 (the name is not the original's)
     int m_bladeId;  // 0x50
     unsigned char pad_54[0x4];

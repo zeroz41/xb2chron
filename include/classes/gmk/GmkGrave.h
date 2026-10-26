@@ -31,7 +31,10 @@ public:
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*) {}  // slot 9
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(35);
-    unsigned char pad_48[0x58];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_48[0x8];
+    // its game object (dispose clears its user data, destroys it and stores -1; the name is not the original's)
+    gf::GF_OBJ_HANDLE* m_gob;
+    unsigned char pad_58[0x48];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 
