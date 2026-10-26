@@ -12,6 +12,8 @@ public:
 // table 0x7100B759D8; base at 0x1A8 unknown (TUnk_B75A80)
 class Device : public ::ml::WorkObj, public TUnk_B75A80 {
 public:
+    // every device ready (WinViewRoot::wkStandbyLogin waits on it)
+    static bool isAllReady();
     virtual ~Device();  // slot 0
     virtual bool wkStandbyLogin();  // slot 14
     virtual bool wkStandbyLogout();  // slot 15

@@ -1,10 +1,28 @@
 #define MM_LIB_FROM_MONOLIB_MM
+#include "classes/ml/Device.h"
+#include "classes/ml/WinProc.h"
+#include "classes/ml/ProcDesktop.h"
+#include "classes/ml/WinView.h"
+#include "classes/ml/WinProcRoot.h"
+#include "classes/ml/WinViewRoot.h"
+#include "classes/ml/_dsk/ProcDesktopBackGround.h"
+#include "classes/ml/_dsk/ProcDesktopException.h"
 #include "classes/ml/ProcDesktop.h"
 #include "classes/ml/WinView.h"
 #include "classes/ml/ProcDesktop.h"
 #include "classes/ml/WinView.h"
 #include "mm/mtl/FixStr.h"
 #include "ml/CriticalSection.h"
+#include "classes/ml/Device.h"
+#include "classes/ml/DevGraph.h"
+#include "classes/ml/LibMain.h"
+#include "classes/ml/WinProcRoot.h"
+#include "classes/ml/WinViewRoot.h"
+#include "classes/ml/_dsk/ProcDesktopBackGround.h"
+#include "classes/ml/_dsk/ProcDesktopException.h"
+#include "ml/WorkRoot.h"
+#include "ml/WorkRootState.h"
+#include "ml/WorkUtil.h"
 
 // the lock both conversions hold (inline in both: its static and guard are unnamed in the symbols)
 static const ml::CriticalSection& getCriticalSection() {
@@ -1310,5 +1328,95 @@ void ProcDesktop::setBuildRevision(const char* revision) {
 bool WinView::evtFocusOn() {
     return true;
 }
+
+WinProc::WinProc(const char* name, WorkObj* parent, short childCapacity)
+    : WorkObj(name, parent, childCapacity), m_viewWid(-1), m_focusMode(2) {
+    m_viewList.create(16, m_mem);
+}
+
+WinProc::~WinProc() {}
+
+bool WinProc::wkStandbyLogout() {
+    pssDetachView();
+    WinViewRoot* views = mm::mtl::PtrSingleton<WinViewRoot>::get();
+    if (views != nullptr) {
+        views->invalidProc(this);
+    }
+    return WorkObj::wkStandbyLogout();
+}
+
+WinProcRoot::~WinProcRoot() {}
+
+bool WinProcRoot::wkStandbyLogin() {
+    if ((m_flags & 1) | m_updateStop) {
+        return WorkObj::wkStandbyLogin();
+    }
+    if (!LibMain::isInitialized()) {
+        return false;
+    }
+    WinViewRoot* views = mm::mtl::PtrSingleton<WinViewRoot>::get();
+    if (views == nullptr || !views->isLoggedIn()) {
+        return false;
+    }
+    ProcDesktop* desktop = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) ProcDesktop("ProcDesktop", this);
+    WorkRootState::entryWork(desktop, this, false);
+    return WorkObj::wkStandbyLogin();
+}
+
+bool WinProcRoot::wkStandbyLogout() {
+    if (m_child.size() != 0) {
+        return false;
+    }
+    return WorkObj::wkStandbyLogout();
+}
+
+WinProcRoot* WinProcRoot::create(WorkObj* parent) {
+    WinProcRoot* root = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) WinProcRoot("WinProcRoot", parent);
+    WorkRootState::entryWork(root, parent, false);
+    return root;
+}
+
+WinViewRoot::~WinViewRoot() {}
+
+bool WinViewRoot::wkStandbyLogin() {
+    if (Device::isAllReady() && LibMain::isInitialized() &&
+        (WorkRoot::isWinDestroy() || DevGraph::isIgnore() || DevGraph::getRootWidth() != 0)) {
+        return WorkObj::wkStandbyLogin();
+    }
+    return false;
+}
+
+bool WinViewRoot::wkStandbyLogout() {
+    if (m_child.size() == 0 && mm::mtl::PtrSingleton<WinProcRoot>::get() == nullptr) {
+        return WorkObj::wkStandbyLogout();
+    }
+    return false;
+}
+
+namespace _dsk {
+
+ProcDesktopBackGround::ProcDesktopBackGround(const char* name, WorkObj* parent) : WinProc(name, parent, 8) {}
+
+ProcDesktopBackGround::~ProcDesktopBackGround() {}
+
+bool ProcDesktopBackGround::wkStandbyLogout() {
+    if (m_child.size() != 0) {
+        return false;
+    }
+    return WinProc::wkStandbyLogout();
+}
+
+ProcDesktopException::ProcDesktopException(const char* name, WorkObj* parent) : WinProc(name, parent, 64) {}
+
+ProcDesktopException::~ProcDesktopException() {}
+
+bool ProcDesktopException::wkStandbyLogout() {
+    if (m_child.size() != 0) {
+        return false;
+    }
+    return WinProc::wkStandbyLogout();
+}
+
+}  // namespace _dsk
 
 }  // namespace ml

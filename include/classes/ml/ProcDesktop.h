@@ -11,6 +11,8 @@ namespace ml {
 class ProcDesktop : public ::ml::WinProc, public mm::mtl::PtrSingleton<ProcDesktop> {
 public:
     struct DESKTOP_ICON_DEF;
+    // named name under parent (WinProcRoot::wkStandbyLogin makes it; the parameter names are not the original's)
+    ProcDesktop(const char* name, WorkObj* parent);
     // the desktop's own view (WinView.cpp)
     static WinView* getView();
     static void entryTable(DESKTOP_ICON_DEF* table, bool flag);
@@ -29,6 +31,7 @@ public:
     virtual bool wkStandbyLogout();  // slot 15
     unsigned char pad_1F8[0x10];
     WinView* m_view;  // 0x208 getView returns it; the constructor clears it (the name is not the original's)
+    unsigned char pad_210[0x68];  // the object is 0x278 bytes (WinProcRoot::wkStandbyLogin allocates it so)
 };
 }  // namespace ml
 
