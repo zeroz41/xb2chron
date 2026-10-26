@@ -111,6 +111,10 @@ public:
     static bool getImageParam(unsigned int type, unsigned int id, ImageParam& param, unsigned int);
     // the slot of the control it starts on the handle (or its child of that name), -1 for none
     static int startCtrl(unsigned int handle, const CtrlParam& param, const char* child);
+    // shows count children named by format (from @01) in a column centred on pos, spacing apart (GfMenuObjSalvage's
+    // record lays out its LAY_result@%02d rows so)
+    static void placeObjectV(unsigned int handle, const char* format, unsigned int count, const mm::Pnt<short>& pos,
+                             unsigned int spacing);
     // how createFitPlugin's UIObjectFitPlugin fits: its flags and sizes (the names are UIObjectFitPlugin's fields')
     struct FitOption {
         FitOption()
