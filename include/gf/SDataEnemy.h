@@ -31,7 +31,9 @@ public:
     unsigned char m_linkRadius;  // getLinkRadius
     unsigned char pad_20[0x14];
     unsigned short m_paramId;  // its GfBdatChrEnParam row (the stat getters' revisions)
-    unsigned char pad_36[0xC];
+    unsigned char pad_36[0xB];
+    // GfObjSetup::createSetupParam(GfInitParamEnemy) copies it from the enemy's owner's data when set
+    unsigned char pad_41;
     unsigned char m_extraPartsMask;  // bits of the extra parts shown at first (isDispInitExtraParts)
     unsigned char pad_43[0x1];
     unsigned short m_rscId;  // its GfBdatRsc enemy row

@@ -28,6 +28,12 @@
 #include "classes/gf/GfInitParamBlade.h"
 #include "gf/GfDataBlade.h"
 #include "classes/gf/GfInitParamEnemy.h"
+#include "classes/gf/GfInitParamDriver.h"
+#include "classes/gf/DataObjEnemy.h"
+#include "gf/SDataBlade.h"
+#include "classes/gf/GfBdatChrEnArrange.h"
+#include "classes/gf/GfBdatChrEnParam.h"
+#include "gf/GfDataDriver.h"
 
 namespace gf {
 
@@ -249,6 +255,17 @@ void GfInitParamWeapon::setupBladeForEventLeftCS(unsigned int bladeId) {
     pad_1e1 = true;
 }
 
+GfObjSetupEnemy::GfObjSetupEnemy(const GfInitParamEnemy& param)
+    : GfObjSetup(5, param), pad_6c(param.m_arrangeId), m_enArrangeId(param.m_paramId), m_stateName(), pad_98(false),
+      m_sdata(nullptr), m_actMoveId(0), pad_ac(0), pad_b0(0), pad_b2(0), pad_b4(0), m_bladeId(param.m_bladeId), pad_c0(nullptr) {
+    m_stateName = "S_idle";
+    if (m_bladeId != 0) {
+#line 662
+        pad_c0 = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SDataBlade;
+        GfDataBlade::setupSDataBlade(*pad_c0, m_bladeId, false);
+    }
+}
+
 GfObjSetupEnemy::~GfObjSetupEnemy() {
     if (m_sdata != nullptr) {
         delete m_sdata;
@@ -258,6 +275,64 @@ GfObjSetupEnemy::~GfObjSetupEnemy() {
         delete pad_c0;
         pad_c0 = nullptr;
     }
+}
+
+void GfObjSetupEnemy::validateBy_pop_act_type(unsigned char type) {
+    switch (type) {
+    case 0:
+        m_stateName = "S_idle";
+        break;
+    case 1:
+        m_stateName = "S_specialA_01";
+        break;
+    case 2:
+        m_stateName = "S_specialB_01";
+        break;
+    case 3:
+    case 5:
+        m_stateName = "S_specialC_00";
+        break;
+    case 4:
+    case 6:
+        m_stateName = "S_specialD_00";
+        break;
+    default:
+        m_stateName = "S_idle";
+        break;
+    }
+    pad_98 = !(type == 3 || type == 4 || type == 5 || type == 6);
+}
+
+void GfInitParamEnemy::setupForEvent(unsigned int arrangeId) {
+    m_createType = 2;
+    m_arrangeId = arrangeId;
+    m_paramId = GfBdatChrEnArrange::get()->getChrEnArrangeParamID(arrangeId);
+    m_objId = GfBdatChrEnParam::get()->getChrEnParamResourceID(m_paramId);
+    pad_a4 = GfBdatChrEnParam::get()->getChrEnParamResourceID(m_paramId);
+    pad_40 = 8;
+    pad_81 = false;
+    pad_82 = 0;
+}
+
+void GfInitParamEnemy::setupBlade(const GfInitParamEnemy& param) {
+    GfBdatChrEnArrange* arrange = GfBdatChrEnArrange::get();
+    m_createType = 5;
+    m_arrangeId = arrange->getChrEnArrangeEnemyBladeID(param.m_arrangeId);
+    m_paramId = arrange->getChrEnArrangeParamID(m_arrangeId);
+    pad_a8 = 1;
+    m_objId = GfBdatChrEnParam::get()->getChrEnParamResourceID(m_paramId);
+    pad_40 = 5;
+    m_bladeId = arrange->getChrEnArrangeBladeID(m_arrangeId);
+}
+
+void GfInitParamEnemy::setupForUi(unsigned int arrangeId, VIEWCAM camera) {
+    m_createType = 6;
+    m_arrangeId = arrangeId;
+    m_paramId = GfBdatChrEnArrange::get()->getChrEnArrangeParamID(arrangeId);
+    m_objId = GfBdatChrEnParam::get()->getChrEnParamResourceID(m_paramId);
+    pad_40 = 11;
+    pad_24 = camera;
+    pad_81 = false;
 }
 
 void GfInitParamBlade::setupForParty(unsigned int partyId, int pad98, unsigned int bladeId, GF_OBJ_HANDLE* handle,
@@ -289,6 +364,18 @@ void GfInitParamBlade::setupForUi(unsigned int bladeId, VIEWCAM camera) {
     pad_40 = 10;
     m_scale = GfDataBlade::getScale(bladeId);
     pad_81 = false;
+}
+
+void GfInitParamDriver::fn_710054E050(unsigned int driverId, unsigned int bladeId) {
+    pad_40 = 7;
+    m_objId = driverId;
+    pad_81 = false;
+    m_createType = 3;
+    m_bladeId = bladeId;
+    pad_82 = 0;
+    if (GfDataDriver::fn_710023F9A8(driverId)) {
+        m_bladeId = GfDataBlade::fn_7100237B70(driverId, -1);
+    }
 }
 
 }  // namespace gf

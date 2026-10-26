@@ -253,6 +253,7 @@ public:
     static const char* getResourceNameAddMotion(unsigned int blade);
     static unsigned int getRace(unsigned int blade);
     static float getScale(unsigned int blade);
+    static void setupSDataBlade(SDataBlade& data, unsigned int blade, bool flag);
     static unsigned int getSize(unsigned int blade);
     static unsigned int getEquipOrbMax(unsigned int blade);
     // the orb in a blade's slot (GfEquipUtil::getEquipBladeOrb returns it, zero-extended)
