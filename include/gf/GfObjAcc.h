@@ -94,6 +94,11 @@ public:
     bool getBoneTransform(fw::Transform& transform, const char* bone);
     bool getBoneTransform(fw::Transform& transform, int bone);
     unsigned int getBdatId() const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies in GfObjAcc's unit
+    // and its callers pass a GfObjAcc as this. What it does: returns getBdatId() (a tail call). Callers:
+    // GfMenuGfObjAdapter::fn_7100340094 (hands it to GfDataBlade::fn_710024DD94), fn_71003601DC,
+    // GfMenuObjTargetInfo::openOther.
+    unsigned int fn_7100523B74() const;
     unsigned int getDriverId() const;  // the driver object's row (DataObjDriver)
     unsigned int getBladeId() const;  // the blade object's row (DataObjBlade)
     bool isEnemyBlade() const;

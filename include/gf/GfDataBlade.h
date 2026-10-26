@@ -163,6 +163,12 @@ public:
     static bool isUnselect(unsigned int blade);
     // the driver the blade is set to, 0 for none
     static unsigned int getSetDriver(unsigned int blade);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies in
+    // GfDataBlade's unit and it takes no object. What it does: 0 for ids below 2001; else the game flag number
+    // GfBdatRsc::fn_7100219C58(id) gives (the PtrSingleton<GfBdatRsc> instance) and, when that is nonzero, the
+    // local game flag GfGameFlag::getLocal(2, flag). GfMenuGfObjAdapter::fn_7100340094 passes a type-6 object's
+    // BDAT id (GfObjAcc::fn_7100523B74) and switches on 0..3.
+    static unsigned int fn_710024DD94(unsigned int id);
     // the driver's slot (0..4) the blade is set in; SCOM_CURRENT_BLADE::exec passes it to GfDataDriver::setEquipBlade
     static unsigned int getDriverSetID(unsigned int blade);
     static AchievInfo* getAchievInfo(unsigned int blade, unsigned int line);

@@ -19,7 +19,7 @@ public:
     };
 
     GfObjPropertyCharacter() {
-        memset(pad_0, 0, sizeof(pad_0));
+        memset(pad_0, 0, 0xE);  // pad_0 to pad_C
         pad_28 = -1;
         pad_30 = false;
         unsigned char* fp = Bdat::getFP("BTL_Buff");
@@ -32,7 +32,7 @@ public:
     // clears what the constructor clears and every entry of m_buffs (the constructors of the three properties
     // that hold one call it again)
     void reset() {
-        memset(pad_0, 0, sizeof(pad_0));
+        memset(pad_0, 0, 0xE);  // pad_0 to pad_C
         pad_28 = -1;
         for (Buff* it = m_buffs.begin(); it != m_buffs.end(); ++it) {
             it->pad_0 = 0;
@@ -40,7 +40,11 @@ public:
         }
     }
 
-    unsigned char pad_0[0xE];  // cleared (as one 14-byte block) by the constructor and reset
+    // 0x0..0xE: cleared (as one 14-byte block) by the constructor and reset
+    unsigned char pad_0[0x8];
+    // added to the UI HP (GfGameUtil::getNowHpForUi) by GfMenuGfObjAdapter::fn_7100340154
+    int pad_8;
+    unsigned char pad_C[0x2];
     mm::mtl::Array<Buff> m_buffs;  // 0x10
     long pad_28;  // -1 from the constructor and reset
     bool pad_30;  // false from the constructor

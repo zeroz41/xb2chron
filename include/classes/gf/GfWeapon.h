@@ -27,6 +27,13 @@ public:
 // create type == 3), GfAssetSetupNpc::getMdlFile (id, false, create type == 3) for ids below 26.
 const char* fn_71002DF39C(unsigned int driverId, bool createTypeIn2311, bool createType3);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit and it takes only a handle (no this). What it does: false for handle -1, a GfObjAcc with no
+// object, a destroyed object (isDestroy) or one with flag 0x11 (testFlag); for an object of type 6 whose bound
+// gimmick (gmk::getBindedGmkInst) has type 3 (its slot 2), whether the "flag" column of the gimmick's BDAT row
+// (getBindedBdatFp, its row at 0x38) holds the flag named "HITONOWAGET" (Bdat::getFlagVal) is nonzero.
+// GfMenuGfObjAdapter::fn_7100340094 calls it.
+bool fn_71002D9B5C(GF_OBJ_HANDLE* handle);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfWeapon's unit next to fn_71002EEB14 (no object: it takes nothing). What it does: returns the int at .bss
 // 0x7100EA4890, which fn_71002EEB14 (called by tl::TitleStatePlayGame::enter) stores from its first argument before
 // running the "aoc_boot" script (GfScriptManager slot 0x46) and clears afterwards. The sys plugin's getBootType

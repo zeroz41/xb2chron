@@ -19,6 +19,8 @@
 #include "gf/GfObjUtil.h"
 #include "gf/GfMenuBdat.h"
 #include "gf/GfDataBlade.h"
+#include "classes/gf/GfWeapon.h"
+#include "classes/gf/GfObjPropertyCharacter.h"
 #include "ui/UIStr.h"
 #include "mm/mtl/FixStr.h"
 #include "classes/gf/GfAllocator.h"
@@ -98,6 +100,14 @@ inline GfObjPropertyEnemy* getEnemy(GF_OBJ_HANDLE* handle) {
     }
     return property->getEnemy();
 }
+// inline (the name is not the original's): the object's property as a blade's, without checking its type
+inline GfObjPropertyBlade* getBlade(GF_OBJ_HANDLE* handle) {
+    GfObjProperty* property = GfObjUtil::getProperty(handle);
+    if (property == nullptr) {
+        return nullptr;
+    }
+    return property->getBlade();
+}
 }  // namespace
 
 GfMenuGfObjAdapter::~GfMenuGfObjAdapter() {
@@ -105,6 +115,26 @@ GfMenuGfObjAdapter::~GfMenuGfObjAdapter() {
         delete m_converter;
         m_converter = nullptr;
     }
+}
+
+GfMenuGfObjAdapter* GfMenuGfObjAdapter::create(unsigned int handle, unsigned int type, GF_OBJ_HANDLE* obj,
+                                               bool changed) {
+    const TypeSetup& setup = s_typeSetups[type];
+    ui::UIObjectPlugin* plugin = createPlugin(handle, setup.plugin);
+    if (plugin == nullptr) {
+        return nullptr;
+    }
+    bool managerFlag = !(type == 2 || type == 3);
+#line 266
+    GfMenuGfObjAdapter* adapter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        GfMenuGfObjAdapter(plugin, managerFlag, changed);
+    if (adapter == nullptr) {
+        return nullptr;
+    }
+    adapter->m_update.set(adapter, setup.func);
+    adapter->m_handle = obj;
+    plugin->release();
+    return adapter;
 }
 
 bool GfMenuGfObjAdapter::update_NowHp(GF_OBJ_HANDLE* handle) {
@@ -224,6 +254,20 @@ bool GfMenuGfObjAdapter::update_EN_ArtsID(GF_OBJ_HANDLE* handle) {
     return true;
 }
 
+bool GfMenuGfObjAdapter::update_EN_ElemComboName(GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    if (acc.getType() != 5) {
+        return false;
+    }
+    GfObjPropertyEnemy* enemy = getEnemy(handle);
+    if (enemy == nullptr || enemy->m_elementComboId == 0) {
+        return false;
+    }
+    ui::UIStr name = GfMenuObjUtil::getElementComboName(enemy->m_elementComboId);
+    setText(name);
+    return true;
+}
+
 bool GfMenuGfObjAdapter::update_EN_Aggressive(GF_OBJ_HANDLE* handle) {
     GfObjAcc acc(handle);
     if (acc.getType() != 5) {
@@ -266,6 +310,16 @@ bool GfMenuGfObjAdapter::update_EN_FightComboIcon(GF_OBJ_HANDLE* handle) {
         return false;
     }
     setNumber(enemy->m_fightCombo - 1);
+    return true;
+}
+
+bool GfMenuGfObjAdapter::update_EN_FightComboName(GF_OBJ_HANDLE* handle) {
+    GfObjPropertyEnemy* enemy = getEnemy(handle);
+    if (enemy == nullptr || enemy->m_fightCombo == 0) {
+        return false;
+    }
+    unsigned int id = GfMenuObjUtil::getMsgIDFromList(0x13F, enemy->m_fightCombo);
+    setText(ui::UIStr(GfDataBdat::getFP(0x120), id));
     return true;
 }
 
@@ -438,6 +492,23 @@ bool GfMenuGfObjAdapter::update_EN_ResAttrBurst(GF_OBJ_HANDLE* handle) {
     return false;
 }
 
+bool GfMenuGfObjAdapter::update_EN_ResAttrHP(GF_OBJ_HANDLE* handle) {
+    GfObjPropertyEnemy* enemy = getEnemyProperty(handle);
+    if (enemy == nullptr) {
+        return false;
+    }
+    if (enemy->m_resAttrCount > m_index) {
+        unsigned int attr = enemy->m_resAttrList[m_index];
+        if (attr >= 1 && attr <= 8) {
+            const GfObjPropertyEnemy::ResAttr& res = enemy->m_resAttrs[attr];
+            int level = res.m_level;
+            setNumber(attr * 4 - 1 - level);
+            return true;
+        }
+    }
+    return false;
+}
+
 bool GfMenuGfObjAdapter::update_EN_ElemEffID(GF_OBJ_HANDLE* handle) {
     GfObjPropertyEnemy* enemy = getEnemyProperty(handle);
     if (enemy == nullptr) {
@@ -471,11 +542,216 @@ bool GfMenuGfObjAdapter::update_EN_Scout(GF_OBJ_HANDLE* handle) {
     return true;
 }
 
+bool GfMenuGfObjAdapter::fn_710033FB0C(GF_OBJ_HANDLE* handle) {
+    GfObjPropertyEnemy* enemy = getEnemyProperty(handle);
+    if (enemy == nullptr) {
+        return false;
+    }
+    return enemy->pad_154;
+}
+
+bool GfMenuGfObjAdapter::fn_710033FB70(GF_OBJ_HANDLE* handle) {
+    if (!GfMenuObjUtil::fn_710048FD30(1) && !GfMenuObjUtil::fn_710048FD30(3)) {
+        return false;
+    }
+    GfObjPropertyEnemy* enemy = getEnemyProperty(handle);
+    if (enemy == nullptr) {
+        return false;
+    }
+    return enemy->pad_155;
+}
+
+bool GfMenuGfObjAdapter::update_BL_Kizuna(GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    if (acc.getType() != 4) {
+        return false;
+    }
+    GfObjPropertyBlade* blade = getBlade(handle);
+    if (blade == nullptr) {
+        return false;
+    }
+    setNumber(btl::Misc::GetKizunaStage(blade->m_kizuna, nullptr) + 1);
+    return true;
+}
+
+bool GfMenuGfObjAdapter::update_BL_Special(GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    if (acc.getType() != 4) {
+        return false;
+    }
+    GfObjPropertyBlade* blade = getBlade(handle);
+    if (blade == nullptr) {
+        return false;
+    }
+    int number;
+    if (m_index == blade->m_specialLv) {
+        number = blade->m_specialGauge * 100.0f;
+    } else if (m_index > blade->m_specialLv) {
+        number = 0;
+    } else {
+        number = getNumberMax();
+    }
+    setNumber(number);
+    return number > 0;
+}
+
+bool GfMenuGfObjAdapter::update_BL_SpecialLv(GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    if (acc.getType() != 4) {
+        return false;
+    }
+    GfObjPropertyBlade* blade = getBlade(handle);
+    if (blade == nullptr) {
+        return false;
+    }
+    setNumber(blade->m_specialLv);
+    return true;
+}
+
+bool GfMenuGfObjAdapter::update_BL_ChangeRecast(GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    if (acc.getType() != 4) {
+        return false;
+    }
+    if (GfMenuManager::isBattleState(5)) {
+        DataParamAcc param(handle);
+        if (!param.isValid()) {
+            return false;
+        }
+        if (param.isValid() && param.getBdatId() == 1003) {
+            if (GfMenuManager::isBattleState(3)) {
+                setNumber(100);
+                return true;
+            }
+        } else if (GfDataBlade::getSetDriver(1003) ==
+                   GfDataBlade::getSetDriver(param.isValid() ? param.getBdatId() : 0)) {
+            setNumber(0);
+            return false;
+        }
+    }
+    GfObjPropertyBlade* blade = getBlade(handle);
+    if (blade == nullptr) {
+        return false;
+    }
+    setNumber(blade->m_changeRecast * 100.0f);
+    return blade->m_changeRecast > 0.0f;
+}
+
+bool GfMenuGfObjAdapter::update_BL_ChangeRecast2(GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    if (acc.getType() != 4) {
+        return false;
+    }
+    if (GfMenuManager::isBattleState(5)) {
+        DataParamAcc param(handle);
+        if (!param.isValid()) {
+            return false;
+        }
+        if (param.isValid() && param.getBdatId() == 1003) {
+            if (GfMenuManager::isBattleState(3)) {
+                return false;
+            }
+            setNumber(GfMenuReference::getAwakeningRestTimeRatio() * 100.0f);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GfMenuGfObjAdapter::update_BL_DispCurrent(GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    if (acc.getType() != 4) {
+        return false;
+    }
+    if (GfMenuManager::isBattleState(3)) {
+        int id = GfMenuReference::getChainAttackActionPartyID();
+        if (id >= 0 && static_cast<unsigned int>(id) < 3) {
+            return false;
+        }
+    }
+    return GfMenuObjUtil::getLeaderBladeHandle(true) == handle;
+}
+
+bool GfMenuGfObjAdapter::update_BL_DispComboReady(GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    if (acc.getType() != 4 || GfMenuManager::isBattleState(3)) {
+        return false;
+    }
+    GfObjPropertyBlade* blade = getBlade(handle);
+    if (blade == nullptr) {
+        return false;
+    }
+    if (blade->m_comboReady & 1) {
+        return true;
+    }
+    return (blade->m_comboReady & 2) != 0;
+}
+
+bool GfMenuGfObjAdapter::fn_7100340094(GF_OBJ_HANDLE* handle) {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return false;
+    }
+    GfObjAcc acc(handle);
+    if (acc.getType() != 6) {
+        return false;
+    }
+    switch (GfDataBlade::fn_710024DD94(acc.fn_7100523B74())) {
+    case 0:
+    case 2:
+        if (!fn_71002D9B5C(handle)) {
+            return false;
+        }
+        setNumber(0);
+        return true;
+    case 1:
+    case 3:
+        setNumber(1);
+        return true;
+    default:
+        return true;
+    }
+}
+
+bool GfMenuGfObjAdapter::fn_7100340154(GF_OBJ_HANDLE* handle) {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return false;
+    }
+    GfObjProperty* property = GfObjUtil::getProperty(handle);
+    if (property == nullptr) {
+        return false;
+    }
+    GfObjPropertyCharacter* character = property->m_character;
+    if (character == nullptr) {
+        return false;
+    }
+    unsigned int hp;
+    unsigned int maxHp;
+    if (!GfGameUtil::getNowHpForUi(handle, &hp) || !GfGameUtil::getMaxHpForUi(handle, &maxHp)) {
+        return false;
+    }
+    setNumber(character->pad_8 + hp);
+    setNumberMax(maxHp);
+    return true;
+}
+
 GfMenuGfObjAdapter* GfMenuGfObjAdapter::createFromPartyDriver(unsigned int handle, unsigned int type,
                                                               unsigned char driver, bool changed) {
     PartyDriverConverter* converter =
 #line 294
         new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) PartyDriverConverter(driver);
+    GfMenuGfObjAdapter* adapter = create(handle, type, converter->getGfObjHandle(), changed);
+    if (adapter != nullptr) {
+        adapter->m_converter = converter;
+    }
+    return adapter;
+}
+
+GfMenuGfObjAdapter* GfMenuGfObjAdapter::createFromPartyBlade(unsigned int handle, unsigned int type,
+                                                             unsigned char driver, int blade, bool changed,
+                                                             bool flag) {
+    PartyBladeConverter* converter =
+#line 301
+        new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) PartyBladeConverter(driver, blade, flag);
     GfMenuGfObjAdapter* adapter = create(handle, type, converter->getGfObjHandle(), changed);
     if (adapter != nullptr) {
         adapter->m_converter = converter;
@@ -509,6 +785,13 @@ void GfMenuGfObjAdapter::changeGfObj(GF_OBJ_HANDLE* handle) {
     if (m_handle != handle) {
         m_handle = handle;
         setChange();
+    }
+}
+
+void GfMenuGfObjAdapter::changePartyDriver(unsigned char driver) {
+    if (m_converter != nullptr && m_converter->fromPartyDriver() != nullptr) {
+        PartyDriverConverter* converter = m_converter->fromPartyDriver();
+        converter->m_driver = driver;
     }
 }
 

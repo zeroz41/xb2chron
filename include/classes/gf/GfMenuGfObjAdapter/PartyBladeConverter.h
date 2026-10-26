@@ -22,7 +22,7 @@ public:
         if (driver == 0) {
             if (GfMenuManager::isBattleState(3)) {
                 int id = GfMenuReference::getChainAttackActionPartyID();
-                driver = id < 3 && id > -1 ? id : 0;
+                driver = id >= 0 && static_cast<unsigned int>(id) < 3 ? id : 0;
             } else {
                 driver = 0;
             }
