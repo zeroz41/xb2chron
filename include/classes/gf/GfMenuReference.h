@@ -77,6 +77,12 @@ public:
     // GfMenuObjUtil::fn_710048FD30(3) holds and the singleton exists, the first of the three records at 0x4CF28
     // (0x10 apart) whose blade (+4) is the argument, else nullptr.
     static const BladeOwner* fn_7100367BD8(unsigned int blade);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
+    // GfMenuReference's accessors (after fn_7100367BD8) and reads its singleton. What it does: -1 unless
+    // GfMenuObjUtil::fn_710048FD30(3) holds and the singleton exists; else the +4 word of the first of the three
+    // records at 0x4CF28 (0x10 apart) whose +0 word is the argument, 0xFF when none is. GfMenuCharDataAdapter's
+    // fn_71003391AC / fn_7100339224 / fn_710033929C pass it a driver id and compare the answer with 0, 1 and 2.
+    static int fn_7100367EF4(unsigned int driver);
     // GfMenuFieldSkill::start sets slot 5 to 0 (the parameter names are not the original's)
     static void setReferenceBladeID(unsigned int index, unsigned int blade);
     static unsigned int getReferenceTeamID();  // GfMenuMercenariesAdapter::ReferenceTeamConverter's team

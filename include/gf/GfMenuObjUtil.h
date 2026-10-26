@@ -201,6 +201,8 @@ public:
     // the blade id in that slot (back slot) of the party driver's (GfMenuCharDataAdapter::PartyBladeConverter)
     static unsigned int getBladeIDFromPartySlot(unsigned int driver, int slot, bool);
     static unsigned int getBladeIDFromPartyBackSlot(unsigned int driver, int slot, bool);
+    // the blade id the driver has in that slot (GfMenuCharDataAdapter's TUnk_B5B908)
+    static unsigned int getBladeIDFromDriverSlot(unsigned int driver, int slot);
     // a combo's effect text, and its effect (3.0.1's always 1) (GfMenuElementComboAdapter's update_*)
     static ui::UIStr getElementComboEffectName(unsigned int combo);
     static unsigned char getElementComboEffect(unsigned int combo);

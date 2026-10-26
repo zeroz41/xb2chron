@@ -26,6 +26,11 @@ public:
     // does, and 1.0.0's GfMenuObjUtil::isBladeEnableOffset calls it where 3.0.1's calls fn_7100238EC8 (3.0.1 added the
     // second parameter, as for getPartyMember; its name is not the original's)
     static unsigned int getDriver(unsigned int index, unsigned int party);
+    // the party index of a driver (0.., -1 for 0 or a driver not in the party). The symbols spell it fn_710023B1D8:
+    // 1.0.0's GfDataParty::getDriverPartyID(unsigned int) sits right after GfDataBlade::isActivateParty as this does,
+    // has the same shape (0 -> -1, then the game data's party records from 0xE9884 compared one by one) and the same
+    // callers (GfAssetSetupBlade::setup, DataObjBlade::getBladeSet, GfDataBlade's party lists)
+    static int getDriverPartyID(unsigned int driver);
     static bool isRideChar(unsigned int chara);
     static SDataParty* getSDataParty();
     // GfGameScene::isRide and isRideParty ask it about a party id

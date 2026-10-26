@@ -34,6 +34,12 @@ public:
     // does: for a DLC driver row (0x11-0x19) whose CHR_Ir "Type" is set, finds the first CHR_Ir row of the same
     // "GroupID" whose Type is 0 and returns its "driverID" (0x11 when there is none); any other row comes back as is.
     static unsigned int fn_71002417DC(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among GfDataDriver's
+    // functions (right before fn_71002417DC) and takes a driver row. What it does: for a DLC driver row (0x11-0x19)
+    // collects every GfBdatChrDr row of type 1 whose group (fn_71001F172C) equals the driver's into the list
+    // (fn_71001F161C's 16-bit ids) and answers whether the list is non-empty; any other row: false. Callers include
+    // GfDataBlade::fn_7100237B70, getListPartyAll and GfMenuCharDataAdapter's TUnk_B5B908::getCharData.
+    static bool fn_71002416B4(mm::mtl::FixedVector<unsigned short, 32>& list, unsigned int driver);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfDataBlade::isActivateDriver before
     // isActivateParty is other code). A member because it lies among GfDataDriver's functions (right before
     // isActivateParty) and its callers pass it a driver id. What it does: true for a driver outside the DLC rows

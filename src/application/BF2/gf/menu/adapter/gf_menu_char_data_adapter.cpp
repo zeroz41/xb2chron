@@ -11,7 +11,15 @@
 #include "classes/gf/GfMenuCharDataAdapter/ReferenceDriverConverter.h"
 #include "classes/gf/GfMenuCharDataAdapter/ReferenceBladeConverter.h"
 #include "classes/gf/GfMenuCharDataAdapter/ReferenceBladeOwnerDriverConverter.h"
+#include "classes/gf/TUnk_B5B878.h"
+#include "classes/gf/TUnk_B5B908.h"
 #include "classes/gf/TUnk_B5B938.h"
+#include "classes/gf/TUnk_B5B968.h"
+#include "classes/gf/TUnk_B5B9C8.h"
+#include "classes/gf/TUnk_B5B9F8.h"
+#include "classes/gf/GfGameManager.h"
+#include "gf/GfDataParty.h"
+#include "mm/mtl/FixedVector.h"
 #include "classes/gf/GfGameParty.h"
 #include "classes/gf/GfBdatChrEnArrange.h"
 #include "gf/GfObjAcc.h"
@@ -658,6 +666,17 @@ bool GfMenuCharDataAdapter::update_BL_Selectable(const DataParamAcc& acc) {
     return true;
 }
 
+bool GfMenuCharDataAdapter::update_BL_Selectable2(const DataParamAcc& acc) {
+    if (acc.getObjType() == 4) {
+        if (GfMenuReference::getReferenceDriverID(0) == 1) {
+            setMulColor("white");
+        } else {
+            setMulColor(GfDataBlade::isEnableEngageRex(getBladeId(acc)) ? "unuse" : "white");
+        }
+    }
+    return true;
+}
+
 bool GfMenuCharDataAdapter::update_BL_Releasable(const DataParamAcc& acc) {
     if (acc.getObjType() == 4) {
         setMulColor(GfMenuObjUtil::isBladeReleasable(getBladeId(acc), m_slotList) ? nullptr : "unuse");
@@ -673,6 +692,15 @@ bool GfMenuCharDataAdapter::update_BL_AffinityIcon(const DataParamAcc& acc) {
     if (rank >= 2) {
         setNumber(rank - 1);
     }
+    return rank != 0;
+}
+
+bool GfMenuCharDataAdapter::update_BL_AffinityText(const DataParamAcc& acc) {
+    if (acc.getObjType() != 4) {
+        return false;
+    }
+    unsigned int rank = GfDataBlade::getTrustRank(getBladeId(acc));
+    setText(ui::UIStr(GfDataBdat::getFP(0x128), rank));
     return rank != 0;
 }
 
@@ -747,6 +775,14 @@ bool GfMenuCharDataAdapter::update_EN_BookID(const DataParamAcc& acc) {
     return true;
 }
 
+bool GfMenuCharDataAdapter::fn_7100338D80(const DataParamAcc& acc) {
+    if (acc.getObjType() != 5) {
+        return false;
+    }
+    setNumber(mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys()->getChrEnArrangeLv(getBladeId(acc)));
+    return true;
+}
+
 bool GfMenuCharDataAdapter::update_EN_RewardExp(const DataParamAcc& acc) {
     if (acc.getObjType() == 5) {
         setNumber(acc.getLevelExp());
@@ -761,6 +797,60 @@ bool GfMenuCharDataAdapter::update_EN_RewardGold(const DataParamAcc& acc) {
         return true;
     }
     return false;
+}
+
+bool GfMenuCharDataAdapter::fn_71003391AC(const DataParamAcc& acc) {
+    if (GfMenuObjUtil::fn_710048FD30(3) && acc.getObjType() == 3) {
+        return GfMenuReference::fn_7100367EF4(getDriverId(acc)) == 0;
+    }
+    return false;
+}
+
+bool GfMenuCharDataAdapter::fn_7100339224(const DataParamAcc& acc) {
+    if (GfMenuObjUtil::fn_710048FD30(3) && acc.getObjType() == 3) {
+        return GfMenuReference::fn_7100367EF4(getDriverId(acc)) == 1;
+    }
+    return false;
+}
+
+bool GfMenuCharDataAdapter::fn_710033929C(const DataParamAcc& acc) {
+    if (GfMenuObjUtil::fn_710048FD30(3) && acc.getObjType() == 3) {
+        return GfMenuReference::fn_7100367EF4(getDriverId(acc)) != 2;
+    }
+    return false;
+}
+
+bool GfMenuCharDataAdapter::fn_71003396C4(const DataParamAcc& acc) {
+    if (GfMenuObjUtil::fn_710048FD30(3) && acc.getObjType() == 3) {
+        return !GfDataDriver::fn_7100237A94(getDriverId(acc));
+    }
+    return false;
+}
+
+bool GfMenuCharDataAdapter::fn_7100339800(const DataParamAcc& acc) {
+    if (GfMenuObjUtil::fn_710048FD30(3) && acc.getObjType() == 6) {
+        unsigned int value = GfDataBlade::fn_710024DA88(getBladeId(acc));
+        if (value != 0) {
+            setNumber(value - 0xED03);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GfMenuCharDataAdapter::fn_71003399DC(const DataParamAcc& acc) {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return false;
+    }
+    int icon = GfMenuObjUtil::getFaceIconID(acc);
+    if (icon == 0) {
+        return false;
+    }
+    if (icon == 0x149) {
+        icon = 0x143;
+    }
+    setNumber(GfMenuBdat::getIconImageIndex(icon));
+    return true;
 }
 
 GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromCoverter(unsigned int handle, unsigned int kind,
@@ -838,6 +928,13 @@ GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromEnBookList(unsigned int 
     return createFromCoverter(handle, kind, converter, changed);
 }
 
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::fn_710033A1F0(unsigned int handle, unsigned int kind,
+                                                            const GfMenuIDList* list, int index, bool changed) {
+#line 1013
+    TUnk_B5B878* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5B878(list, index);
+    return createFromCoverter(handle, kind, converter, changed);
+}
+
 GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromReferenceDriver(unsigned int handle, unsigned int kind,
                                                                         unsigned int index, bool changed) {
 #line 1020
@@ -854,10 +951,24 @@ GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromReferenceBlade(unsigned 
     return createFromCoverter(handle, kind, converter, changed);
 }
 
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::fn_710033A3D4(unsigned int handle, unsigned int kind,
+                                                            unsigned int index, int slot, bool changed) {
+#line 1041
+    TUnk_B5B908* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5B908(index, slot);
+    return createFromCoverter(handle, kind, converter, changed);
+}
+
 GfMenuCharDataAdapter* GfMenuCharDataAdapter::fn_710033A480(unsigned int handle, unsigned int kind,
                                                             const GfMenuBladeList* list, int index, bool changed) {
 #line 1055
     TUnk_B5B938* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5B938(list, index);
+    return createFromCoverter(handle, kind, converter, changed);
+}
+
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::fn_710033A5D0(unsigned int handle, unsigned int kind,
+                                                            const GfMenuBladeList* list, int index, bool changed) {
+#line 1062
+    TUnk_B5B968* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5B968(list, index);
     return createFromCoverter(handle, kind, converter, changed);
 }
 
@@ -870,6 +981,27 @@ GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromReferenceBladeOwnerDrive
 #line 1082
     ReferenceBladeOwnerDriverConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
         ReferenceBladeOwnerDriverConverter(blade);
+    return createFromCoverter(handle, kind, converter, changed);
+}
+
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::fn_710033A7EC(unsigned int handle, unsigned int kind,
+                                                            const GfMenuDriverList* list, unsigned int index,
+                                                            unsigned int party, bool changed) {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return nullptr;
+    }
+#line 1092
+    TUnk_B5B9C8* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5B9C8(list, index, party);
+    return createFromCoverter(handle, kind, converter, changed);
+}
+
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::fn_710033A940(unsigned int handle, unsigned int kind,
+                                                            const GfMenuIDList* list, int index, bool changed) {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return nullptr;
+    }
+#line 1102
+    TUnk_B5B9F8* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5B9F8(list, index);
     return createFromCoverter(handle, kind, converter, changed);
 }
 
@@ -1023,6 +1155,22 @@ void GfMenuCharDataAdapter::EnBookListConverter::getCharData(unsigned char& objT
     }
 }
 
+void TUnk_B5B878::getCharData(unsigned char& objType, unsigned int& objId) {
+    int index = m_index;
+    if (index == -1) {
+        index = m_list->getIndex(true);
+    }
+    if (index != -1 && index < m_list->getSize()) {
+        unsigned int id = m_list->getContents(m_list->getPageIndex(index)).m_id;
+        objType = 5;
+        if (GfGameManager::fn_71002A9E68()) {
+            objId = mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys()->fn_71001F4EB8(id);
+        } else {
+            objId = mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys()->fn_71001F4DE8(id);
+        }
+    }
+}
+
 void GfMenuCharDataAdapter::ReferenceDriverConverter::getCharData(unsigned char& objType, unsigned int& objId) {
     objType = 3;
     objId = GfMenuReference::getReferenceDriverID(m_index);
@@ -1031,6 +1179,24 @@ void GfMenuCharDataAdapter::ReferenceDriverConverter::getCharData(unsigned char&
 void GfMenuCharDataAdapter::ReferenceBladeConverter::getCharData(unsigned char& objType, unsigned int& objId) {
     objType = 4;
     objId = GfMenuReference::getReferenceBladeID(m_index);
+}
+
+void TUnk_B5B908::getCharData(unsigned char& objType, unsigned int& objId) {
+    DataParamAcc acc(3, GfMenuReference::getReferenceDriverID(m_index), static_cast<GimmickType>(0));
+    if (acc.isValid()) {
+        if (GfMenuObjUtil::fn_710048FD30(3)) {
+            mm::mtl::FixedVector<unsigned short, 32> drivers;
+            GfDataDriver::fn_71002416B4(drivers, getDriverId(acc));
+            if (static_cast<unsigned long>(m_slot) < drivers.size()) {
+                objType = 4;
+                objId = GfDataDriver::isActivateUnuse(drivers[m_slot]) ? 0 : GfDataBlade::fn_7100237B70(drivers[m_slot], -1);
+            }
+        } else {
+            unsigned int blade = GfMenuObjUtil::getBladeIDFromDriverSlot(getDriverId(acc), m_slot);
+            objType = 4;
+            objId = blade;
+        }
+    }
 }
 
 void TUnk_B5B938::getCharData(unsigned char& objType, unsigned int& objId) {
@@ -1044,6 +1210,17 @@ void TUnk_B5B938::getCharData(unsigned char& objType, unsigned int& objId) {
     }
 }
 
+void TUnk_B5B968::getCharData(unsigned char& objType, unsigned int& objId) {
+    int index = m_index;
+    if (index == -1) {
+        index = m_list->getIndex(true);
+    }
+    if (index != -1 && index < m_list->getSize()) {
+        objType = 3;
+        objId = GfDataBlade::getSetDriver(m_list->getContents(m_list->getPageIndex(index)).m_blade);
+    }
+}
+
 void GfMenuCharDataAdapter::ReferenceBladeOwnerDriverConverter::getCharData(unsigned char& objType,
                                                                             unsigned int& objId) {
     objType = 3;
@@ -1054,6 +1231,32 @@ void GfMenuCharDataAdapter::ReferenceBladeOwnerDriverConverter::getCharData(unsi
             objType = 3;
             objId = owner->m_driver;
         }
+    }
+}
+
+void TUnk_B5B9C8::getCharData(unsigned char& objType, unsigned int& objId) {
+    objType = 3;
+    objId = 0;
+    if (GfMenuObjUtil::fn_710048FD30(3)) {
+        unsigned int driver = m_list->getContents(m_index).m_driver;
+        if (driver != 0) {
+            int partyId = GfDataParty::getDriverPartyID(driver);
+            if (partyId != -1) {
+                objId = GfDataParty::getDriver(partyId, m_party);
+            }
+        }
+    }
+}
+
+void TUnk_B5B9F8::getCharData(unsigned char& objType, unsigned int& objId) {
+    int index = m_index;
+    if (index == -1) {
+        index = m_list->getIndex(true);
+    }
+    if (index != -1 && index < m_list->getSize()) {
+        unsigned int id = m_list->getContents(m_list->getPageIndex(index)).m_id;
+        objType = 6;
+        objId = id;
     }
 }
 
