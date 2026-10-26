@@ -63,6 +63,8 @@ void makeMenuFontDataFileName(mm::mtl::FixStr<128>& path, const char* name);
 void makeMenuFontStyleFileName(mm::mtl::FixStr<128>& path, const char* name);
 void makeMSProjFileName(mm::mtl::FixStr<128>& path, const char* name);
 UIObject* getObject(unsigned int handle);
+// drops a handle: a duplicate's input goes back, its event listener and its handle's map entry go
+void releaseObject(unsigned int handle);
 unsigned int searchChild(unsigned int handle, const char* name);
 void setDispChild(unsigned int handle, bool disp, const char* child);
 const fw::PadData* getPadData();  // the UI's pad (the UI manager's input's, else fw::PadManager's control pad)

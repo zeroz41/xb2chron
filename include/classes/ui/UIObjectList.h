@@ -11,6 +11,7 @@ class UIObjectList {
 public:
     UIObjectList();
     virtual ~UIObjectList();  // slot 0
+    void clear();  // releases every object (the destructor's)
     void update();
     unsigned int regist(UIObject* object, const char* name);  // the object's handle; 0 when it is null or listed
     void release(UIObject* object);
