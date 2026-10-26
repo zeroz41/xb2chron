@@ -593,6 +593,72 @@ void BattleCharacter::FluctuatePartyGauge(int value) {
     int group = GetGroupIndex();
     mm::mtl::PtrSingleton<DataManager>::sys()->FluctuatePartyGauge(value, group);
 }
+
+bool BattleCharacter::CheckAttackAction(ACTION_ID id, bool flag) const {
+    switch (id) {
+    case ACTION_ARTS:
+    case 7:
+    case ACTION_BLADE_ARTS:
+    case 12:
+        return true;
+    case ACTION_BLADE_CHANGE: {
+        bool result = false;
+        if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
+            result = param->fn_7100085314(0);
+        }
+        return result || flag;
+    }
+    default:
+        return false;
+    }
+}
+
+int BattleCharacter::GetDriverType() const {
+    if (m_isPlayer) {
+        return 4;
+    }
+    if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
+        if (param->fn_7100085314(0) && !param->m_flags622_6) {
+            if (const BattleCharacter* driver =
+                    mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(param->m_driverHandle)) {
+                return driver->m_driverType;
+            }
+        }
+    }
+    return m_driverType;
+}
+
+void BattleCharacter::TurnTarget(bool sub, bool flag0, bool flag1) {
+    gf::GF_OBJ_HANDLE* handle = sub ? m_subTargetHandle : m_targetHandle;
+    if (handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        handle = m_targetHandle;
+    }
+    mm::Vec3 pos;
+    if (Misc::GetObjectTransform(handle, pos, Misc::TRANS_TYPE_POS)) {
+        m_flagEFF_5 = false;
+        mm::Vec3 dir;
+        if (Misc::CalcDirectionXZ(m_pos, pos, dir)) {
+            TurnDirection(dir, flag0, flag1);
+        }
+    }
+}
+
+int BattleCharacter::GetArtsSlotIndex(int artsID) const {
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr) {
+        return -1;
+    }
+    const ARTS_PALETTE_DATA* palette = param->GetArtsPaletteDataConst(-1);
+    int index = -1;
+    unsigned char found = false;
+    for (int i = 0; i < 3 && !found; i++) {
+        if (palette->GetSlotDataConst(i, false)->m_artsID == artsID) {
+            index = i;
+            found = true;
+        }
+    }
+    return index;
+}
 void BattleCharacter::ActionCommandEndIdle() {}
 
 void BattleCharacter::ActionCommandPutOutWeapon(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}

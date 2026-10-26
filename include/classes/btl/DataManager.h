@@ -10,8 +10,21 @@ namespace gf { class GF_OBJ_HANDLE; }
 
 namespace btl {
 // an art's data as DataManager::GetArtsData fills it (layout not recovered yet)
+// DataManager::GetArtsData fills it; only what BattleCharacter reads is recovered (two runs of unsigned int
+// bitfields at 0x8 and 0x18: clang reads each as one 64-bit unit)
 struct ARTS_DATA {
     enum DATA_TYPE : int;
+    unsigned char pad_0[0x8];
+    unsigned int pad_8_0 : 5;
+    // unknown: GetArtsAttackDistance adds enhance 195's value for 12 (the name is not the original's)
+    unsigned int m_category : 6;
+    unsigned int pad_8_11 : 21;
+    unsigned int pad_C : 32;
+    unsigned char pad_10[0x8];
+    unsigned int pad_18 : 32;
+    // the distance GetArtsAttackDistance starts from (the name is not the original's)
+    unsigned int m_distance : 12;
+    unsigned int pad_1C_12 : 20;
 };
 
 // table 0x7100B3BAF8

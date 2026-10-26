@@ -6,7 +6,12 @@ namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 
 namespace btl {
-struct ARTS_SLOT_DATA;
+// one palette slot (ARTS_PALETTE_DATA::GetSlotDataConst); only the arts id is recovered
+struct ARTS_SLOT_DATA {
+    // BattleCharacter::GetArtsSlotIndex looks the slot holding an arts up by it (the name is not the original's)
+    unsigned int m_artsID : 11;
+    unsigned int pad_0_11 : 21;
+};
 // what CharacterParameter's slot 16 (1.0.0's GetArtsPaletteDataConst) returns; the layout is not recovered
 // (EnemyParameter holds one at 0x628, up to its hate data)
 struct ARTS_PALETTE_DATA {
@@ -22,6 +27,7 @@ public:
         unsigned char pad_4[0x4];
     };
     bool GetAdditionalEnhanceEffect(ENHANCE_DATA& data, int id, int* out) const;
+    bool GetEnhanceEffect(ENHANCE_DATA& data, int id) const;
     typedef ::btl::ARTS_PALETTE_DATA ARTS_PALETTE_DATA;
     virtual void Reset();  // slot 0
     virtual void Initialize(gf::GF_OBJ_HANDLE*);  // slot 1
@@ -150,7 +156,9 @@ public:
     unsigned char pad_18[0x4];
     // BattleCharacter::GetGroupIndex returns it (the name is not the original's)
     int m_groupIndex;
-    unsigned char pad_20[0xC];
+    unsigned char pad_20[0x8];
+    // BattleCharacter::GetArtsAttackDistance scales an arts' distance by it (the name is not the original's)
+    float m_distanceScale;
     // EnemyParameter::AngryInfection widens its range by each character's (the name is not the original's)
     float m_radius;
     unsigned char pad_30[0x3F8];
@@ -163,7 +171,11 @@ public:
     unsigned short m_flags622_0 : 1;  // unknown
     // GetHateTarget answers -1 while it is clear (the name is not the original's)
     bool m_hasHateTarget : 1;
-    unsigned short m_flags622_2 : 11;  // unknown
+    unsigned short m_flags622_2 : 4;  // unknown
+    // a blade that GetDriverType does not answer its driver's type for (bit 6; unknown, the name is not the
+    // original's)
+    unsigned short m_flags622_6 : 1;
+    unsigned short m_flags622_7 : 6;  // unknown
     // set for a character that is not a blade: BattleCharacter::IsBlade answers its negation (the name is not the
     // original's)
     unsigned short m_isNotBlade : 1;

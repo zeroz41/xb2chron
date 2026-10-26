@@ -5,7 +5,7 @@
 #include "mm/Vec3.h"
 
 namespace btl { class CharacterParameter; }
-namespace btl { struct ARTS_SLOT_DATA; }
+namespace btl { struct ARTS_SLOT_DATA; struct ARTS_DATA; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfObj; }
@@ -90,7 +90,7 @@ public:
 
     // the index into m_aActionFuncList (its Action/ActionCommand/ActionCommandEnd triples); the enumerator names
     // follow 1.0.0's function names in that table, they are not the original's. 7 and 10 are 3.0.1's new actions.
-    enum ACTION_ID : int {
+    enum ACTION_ID : unsigned char {
         ACTION_IDLE = 0,
         ACTION_PUT_OUT_WEAPON = 1,
         ACTION_PUT_AWAY_WEAPON = 2,
@@ -243,6 +243,11 @@ public:
     void fn_710005F554(int slot, bool, bool, float value);
     // fn_710005F554(~(slot < 0 ? 16 : slot), flag0, flag1, value). Caller: Utility::AI_AddBladeArtsRecast.
     void fn_710003D114(bool flag0, int slot, bool flag1, float value);
+    bool CheckAttackAction(ACTION_ID id, bool flag) const;
+    int GetDriverType() const;
+    int GetArtsSlotIndex(int artsID) const;
+    float GetArtsAttackDistance(const ARTS_DATA& arts) const;
+    void TurnDirection(const mm::Vec3& dir, bool, bool);
 
     unsigned char pad_8[0x8];
     // where the character stands: EnemyParameter::AngryInfection measures from it (the name is not the original's)
@@ -256,7 +261,10 @@ public:
     // the object the character targets, (GF_OBJ_HANDLE*)-1 for none: Utility::AI_GetTargetCharacterID reads it
     // (the name is not the original's)
     gf::GF_OBJ_HANDLE* m_targetHandle;
-    unsigned char pad_128[0x28];
+    // the other object TurnTarget turns to when asked, (GF_OBJ_HANDLE*)-1 for none: then it turns to m_targetHandle
+    // (the name is not the original's)
+    gf::GF_OBJ_HANDLE* m_subTargetHandle;
+    unsigned char pad_130[0x20];
     // the angry aura's effect, NotifyAngryEnd ends it (the name is not the original's)
     unsigned int m_angryEffect;
     // the effect fn_7100042460 ends the same way (the name is not the original's)
@@ -287,7 +295,9 @@ public:
     // original's)
     short m_chrID;
     unsigned char pad_EDC[0xC];
-    unsigned int pad_EE8 : 9;
+    // GetDriverType answers it (a blade answers its driver's; the name is not the original's)
+    unsigned int m_driverType : 3;
+    unsigned int pad_EE8_3 : 6;
     // the BLADE_TIMER_MODE m_bladeTimer runs for (the name is not the original's)
     unsigned int m_bladeTimerMode : 3;
     unsigned int pad_EE8_12 : 20;
@@ -304,7 +314,10 @@ public:
     // IsControlCharacter's cached answer and whether it is cached (the names are not the original's)
     mutable unsigned int m_isControlChara : 1;
     mutable unsigned int m_isControlCharaCached : 1;
-    unsigned int pad_EFF_2 : 5;
+    unsigned int pad_EFF_2 : 3;
+    // unknown: TurnTarget clears it once the target's position is known (the name is not the original's)
+    unsigned int m_flagEFF_5 : 1;
+    unsigned int pad_EFF_6 : 1;
     // a player-side character (GetAiChrID, IsEnableBattleFace; the name is not the original's)
     unsigned int m_isPlayer : 1;
     // IsBattle returns it (the name is not the original's)
