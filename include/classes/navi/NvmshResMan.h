@@ -13,6 +13,8 @@ public:
     virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
     void setupResource(const unsigned char* resource, const char* name);
     void releaseResource();
+    // NvmshManager::jobUpdate's per-frame step
+    void update();
 };
 }  // namespace navi
 

@@ -5,6 +5,7 @@
 #include "mtl/AllocHandle.h"
 
 namespace mm { class Vec3; }
+namespace idcoli { class IDColiTreeTop; }
 
 namespace idcoli {
 // table 0x7100B7F5A0
@@ -18,7 +19,13 @@ public:
     // builds the grand collision from its data (IDColiManager::createColiGrand; the parameter names are not the
     // original's)
     void createGrand(mtl::ALLOC_HANDLE handle, const void* data);
-    unsigned char pad_50[0xB0];  // 0x100 bytes: IDColiManager::createColiGrand allocates it so
+    unsigned char pad_50[0x90];
+    // the destructor destroys both (without freeing them) while m_memBlock is set, then frees m_memBlock; the
+    // names are not the original's
+    IDColiTreeTop* m_treeTops[2];  // 0xE0
+    unsigned char pad_f0[8];
+    void* m_memBlock;  // 0xF8, the constructor clears it
+    // 0x100 bytes: IDColiManager::createColiGrand allocates it so
 };
 }  // namespace idcoli
 

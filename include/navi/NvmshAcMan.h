@@ -11,6 +11,9 @@ namespace navi {
 // the navigation mesh's access objects (no table; NvmshManager holds one at 0x58 and forwards to it)
 class NvmshAcMan {
 public:
+    ~NvmshAcMan();
+    // NvmshManager::jobUpdate's per-frame step, after NvmshResMan::update
+    void update(NvmshResMan* resMan);
     NvmshAcObjBase* createObj(mtl::ALLOC_HANDLE handle, NvmshResMan* resMan);
     void releaseObj(NvmshAcObjBase* object);
 };

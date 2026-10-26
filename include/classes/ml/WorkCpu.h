@@ -25,6 +25,9 @@ public:
     // starts a job group's threads (DrCalcTexStreamMan::entryJob) and waits for them (DrCalcTexStreamMan::jobWait)
     static void wakeup(int group);
     static void sync(int group, WKCPU_SYNC sync, CPUID cpu);
+    // the undoing of a job group's entryAutoExecGrp and createGroupHandle (navi::NvmshManager's destructor)
+    static void removeAutoExecGrp(int group);
+    static void releaseGroupHandle(int group);
     static const unsigned int& getFrameCount();  // the work CPU's frame counter (fw::Framework::getFrameCount)
     // a listener told of the HOME menu no more (fw::MovieManager's destructor)
     static void addBackgroundListener(IWorkBackground* listener);

@@ -13,7 +13,19 @@ enum IdSweepAxisType {};
 // a component of a vector (x, y, z)
 enum IdVectorAxisType {};
 // a shape's base type (the IDColiPrimitive creators write it; 0 a sphere)
-enum IDColiBaseType {};
+// an object's base shape kind: the index of the IDColiUtilColi tables (their entries name the shape each index
+// tests against: sphere, box, capsule, capsule, sphere, poli, in-box, in-capsule) and the value the IDColiPrimitive
+// creators store. The enumerator names are not the original's.
+enum IDColiBaseType {
+    IDCOLI_BASE_SPHERE,
+    IDCOLI_BASE_BOX,
+    IDCOLI_BASE_CAPSULE,
+    IDCOLI_BASE_CHARACTER,
+    IDCOLI_BASE_SUB_CHARACTER,
+    IDCOLI_BASE_POLI,
+    IDCOLI_BASE_IN_BOX,
+    IDCOLI_BASE_IN_CAPSULE,
+};
 
 // an object's link in a cell list of its IDColiTreeTop (the names are not the original's)
 class IDColiTreeObj {

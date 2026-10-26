@@ -1,7 +1,7 @@
 #ifndef IDCOLI_IDCOLIGRANDOBJ_H
 #define IDCOLI_IDCOLIGRANDOBJ_H
 
-namespace mm { class Mat44; }
+#include "mm/Mat44.h"
 
 namespace idcoli {
 
@@ -11,10 +11,13 @@ class IDColiGrdMoveObj {
 public:
     void setMat(const mm::Mat44& matrix);
 
-    unsigned char pad_0[0x1B0];
+    // the matrix per frame half (setMat writes [IDColiManager::s_nStkIdx] and marks that half in m_matRequest)
+    mm::Mat44 m_mats[2];  // 0x0
+    unsigned char pad_80[0x130];
     const char* m_name;  // 0x1B0, IDColiParmsGrand::getMoveObjIdx compares it
     void* m_userData;  // 0x1B8, IDColiPartsMoveGrand::setUserData
-    unsigned char pad_1c0[0x40];
+    unsigned short m_matRequest;  // 0x1C0, 1 << s_nStkIdx per half setMat wrote
+    unsigned char pad_1c2[0x3E];
 };
 
 // the destructor (its owners' destructors call it; its body is empty) and the fields IDColiParmsGrand reads; the

@@ -42,6 +42,10 @@ public:
     static bool isLinePoli(IDColiResult& result, const IDColiInput& input, const void* pOther);
     static bool isLineInBox(IDColiResult& result, const IDColiInput& input, const void* pOther);
     static bool isLineInCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool isRayBox(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool isRayInBox(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool isRayCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool isRayInCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther);
     static bool isRayPoli(IDColiResult& result, const IDColiInput& input, const void* pOther);
 };
 
@@ -67,6 +71,11 @@ public:
     static bool isLineCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther);
     static bool isLineInCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther);
     static bool isLinePoli(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool isRaySphere(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool isRayBox(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool isRayInBox(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool isRayCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther);
+    static bool isRayInCapsule(IDColiResult& result, const IDColiInput& input, const void* pOther);
     static bool isRayPoli(IDColiResult& result, const IDColiInput& input, const void* pOther);
 };
 

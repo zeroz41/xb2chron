@@ -23,6 +23,8 @@ public:
     NvmshAcObj* createObj();
     void releaseObj(NvmshAcObj* object);
     void tail();
+    // the job its constructor enters into its job group (WorkCpu::entryJobThread): man is the manager
+    static unsigned int jobUpdate(void* man, void* arg);
     // fw::NaviManager::update's store, inline (the name is not the original's)
     void setPos(const mm::Vec3& pos) { m_pos[m_posBank] = pos; }
 
@@ -37,7 +39,12 @@ public:
     NvmshAcMan* m_pAcMan;  // 0x58
     mtl::ALLOC_HANDLE m_hAlloc;  // 0x60
     int m_posBank;
-    unsigned char pad_68[0x18];  // fields: size from fw::NaviManager::initialize's allocation (0x80)
+    // jobUpdate sets 0x20000 while it runs and skips the update when the bit 0x4 selects (0x8 if set, else
+    // 0x1) is set (the name is not the original's)
+    unsigned int m_flags;  // 0x68
+    unsigned char pad_6c[4];
+    int m_jobGroup;  // 0x70, the WorkCpu job group the constructor creates (the name is not the original's)
+    unsigned char pad_74[0xC];  // fields: size from fw::NaviManager::initialize's allocation (0x80)
 };
 }  // namespace navi
 
