@@ -46,7 +46,7 @@ public:
     unsigned int m_pointCount;
     unsigned int m_layer;  // the constructor's, changeLayer's (the name is not the original's)
     bool m_isDead;  // tail deletes the casters that have it set (the name is not the original's)
-    unsigned char pad_41[0xF];
+    // (no more fields: gf::EffectCaster's constructor zeroes its own fields from 0x44, in this class's tail padding)
 
     // every caster (the file's static initializer constructs it, tail walks it)
     static mm::mtl::FixedVector<EffectCasterBase*, 256> s_casterList;

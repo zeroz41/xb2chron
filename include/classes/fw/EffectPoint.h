@@ -6,6 +6,7 @@
 #endif
 
 #include "mm/MMStdBase.h"
+#include "mm/Mat44.h"
 
 namespace fw {
 // table 0x7100B41648
@@ -14,6 +15,10 @@ public:
     virtual ~EffectPoint();  // slot 0
 
     unsigned int getPointCount() const;
+    // GfComEffectCaster::getEfpData returns the first and copies out the second for a point name (the names of the
+    // parameters are not the original's)
+    const char* getParentName(const char* name);
+    mm::Mat44 getOffset(const char* name);
     void addRef() { ++m_RefCount; }
     // effect_point.h asserts `m_RefCount >= 0` before it drops one (EffectCasterBase's destructor)
     void release() {

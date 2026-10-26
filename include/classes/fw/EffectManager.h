@@ -3,6 +3,7 @@
 #define CLASSES_FW_EFFECTMANAGER_H
 
 #include "classes/fw/ManagerObject.h"
+#include "mm/Mat44.h"
 #include "classes/ml/IScnRender.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "fw/VolumeFadeParams.h"
@@ -131,6 +132,8 @@ public:
     void setParamPosOnly(unsigned int handle, const effect::SendParam* param);
     void setParamPosOnly2(unsigned int handle, const effect::SendParam* param);
     void setParam(unsigned int handle, const effect::SendParam* param);
+    // GfComEffectCaster::setCaster passes its caster and 1.0f (the names of the parameters are not the original's)
+    void setParam(unsigned int handle, EffectCasterBase* caster, float rate);
     int getDeadFlag(unsigned int handle);
     bool isLoop(void* data) const;
     bool containsCamAxis(void* data) const;
@@ -152,7 +155,10 @@ public:
     mtl::ALLOC_HANDLE m_resHandle;
     unsigned char pad_34[0x14];
     mm::mtl::FixedArray<CasterGroup, 32> m_casterGroups;  // by layer (changeLayerCaster moves a send between them)
-    unsigned char pad_348[0x1c70];
+    unsigned char pad_348[0x418];
+    // gf::EffectCaster::postUpdate copies the party leader's caster matrix in (the name is not the original's)
+    mm::Mat44 m_leaderMtx;
+    unsigned char pad_7a0[0x1818];
     // one of the common effect packs commonLoaded requests: its resource and, once loaded, its pack (the names are not
     // the original's)
     struct CommonPack {
