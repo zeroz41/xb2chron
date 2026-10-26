@@ -41,6 +41,8 @@ public:
     static void callEventPlay(GEV gev, unsigned int id);
     virtual ~GfEvent();  // slot 0
     static void callCameraControl(int type);
+    // a mercenary mission's flag changed (GfGameMercenaries::setMissionFlag passes the mission, new and old flag)
+    static void callMercenariesMissionFlag(unsigned int mission, unsigned int flag, unsigned int old);
     // listener joins (leaves) the ones GfEvent's calls reach
     static void addEventCallback(IGfEvent* listener);
     static void removeEventCallback(IGfEvent* listener);

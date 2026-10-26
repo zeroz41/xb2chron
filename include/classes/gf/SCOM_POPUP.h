@@ -19,6 +19,11 @@ public:
     static unsigned long createCrystalOK(unsigned int);
     static unsigned long createMercenaryReturn(unsigned int, unsigned int);
     static unsigned long createMercenaryAdd(unsigned int);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address sits among
+    // SCOM_POPUP's create functions in gf_req_scom. What it does: queues popup type 8 with the map id, the team and
+    // the team's leader (GfDataMercenaries::getTeamLeader); GfGameMercenaries::cancelMission passes the mission's map
+    // id and the team when it cancels a mission whose flag is 3.
+    static unsigned long fn_7100569D44(unsigned int mapId, unsigned int teamId);
     static unsigned long createArts(unsigned int, unsigned int);
     // queues an affinity chart achievement popup for a blade's skill line and level; the request's ID
     static unsigned long createAchievement(unsigned int blade, unsigned int line, unsigned int level);

@@ -23,12 +23,21 @@ public:
     // a team, as the game data keeps them (0x28 bytes); the name is not the original's
     struct Team {
         unsigned short m_members[6];  // its blades (getTeamMember; getTeamLeader reads the first)
-        unsigned char pad_c[0x4];
+        // the mission's quest (GfGameMercenaries::orderMission stores getMissionQuestID; the name is not the original's)
+        QuestID m_quest;
         unsigned int m_teamId;  // what the functions that take a team id are given for it
         unsigned int m_mission;  // the mission it is on, 0 for none (getTeamMission; the name is not the original's)
-        unsigned char pad_18[0x4];
+        // the seconds decTeamMissionTime counts toward m_missionTime (orderMission zeroes it; the name is not the
+        // original's)
+        float m_secondCount;
         ElapseTime m_missionTime;  // getTeamMissionTime(teamId) (the name is not the original's)
-        unsigned char pad_20[0x8];
+        // the mission's whole time (GfGameMercenaries::orderMission stores it with m_missionTime; the name is not
+        // the original's)
+        ElapseTime m_missionTimeTotal;
+        // GfGameMercenaries::checkTeamMissionComplete clears it as it completes the mission (the name is not the
+        // original's)
+        bool m_missionEnd;
+        unsigned char pad_25[0x3];
     };
     static int getLevel();  // up to 5 (GfMenuGameAdapter::update_MercenariesPoint shows no points at 5)
     static int getPoint();
@@ -84,6 +93,13 @@ public:
     static unsigned int getEndMissionID();  // QuestListAcc::getFLD_MercenariesMissionEnd
     static bool getReserver(mm::mtl::FixedVector<unsigned short, 422>& list);  // false for none
     static unsigned int getTeamMax();
+    static void addTeam();
+    static void decTeamMissionTime(unsigned int teamId, float time);
+    static void setMissionFlag(unsigned int mission, unsigned int flag);
+    static int getMissionTaskType(unsigned int mission);
+    // the time (minutes) the team would take for the mission
+    static unsigned int getTeamMissionTime(unsigned int teamId, unsigned int mission);
+    static unsigned int getMissionByQuestID(QuestID quest);  // 0 for none
     // a team preset (12 bytes: GfMenuObjMercenaryForm::seqPresetSave stores six blades, steps by 12); the name is not
     // the original's
     struct Preset {
