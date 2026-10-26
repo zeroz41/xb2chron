@@ -1,3 +1,6 @@
+#include "classes/btl/CharacterParameter.h"
+#include "classes/btl/EnemyParameter.h"
+#include "classes/btl/PlayerParameter.h"
 #include "classes/btl/DataManager.h"
 #include "classes/btl/CharacterParameter.h"
 #include "classes/btl/PlayerParameter.h"
@@ -20,6 +23,14 @@
 #include "classes/btl/DataManager.h"
 #include "classes/gf/DataParamAcc.h"
 #include "gf/SDataEnemy.h"
+#include "classes/gf/GfMountManager.h"
+#include "classes/gf/GfBdatChrEnArrange.h"
+#include "gf/GfDataBlade.h"
+#include "classes/gf/GfGameParty.h"
+#include "gf/GfObjAcc.h"
+#include "classes/gf/GfDataBdat.h"
+#include "plugin/Bdat.h"
+#include "ml/MTRand.h"
 
 namespace btl {
 
@@ -442,4 +453,70 @@ int CharacterParameter::GetDeadSEID() const {
     return 0;
 }
 
+}  // namespace btl
+
+namespace btl {
+void EnemyParameter::fn_7100085B24() {
+    gf::GF_OBJ_HANDLE* handle = m_handle;
+    gf::GF_OBJ_HANDLE* mount = gf::GfMountManager::getHandle(handle, static_cast<gf::GFATTACH>(0),
+                                                             static_cast<gf::OPTMNT>(fn_7100085314(0) ? 1 : 3));
+    bool dummy = true;
+    if (mount != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        dummy = false;
+        if (fn_710008527C(false)) {
+            dummy = gf::GfDataBlade::isDummyBlade(gf::GfBdatChrEnArrange::sys()->getChrEnArrangeBladeID(m_enArrangeID));
+        }
+    }
+    bool self = mount == handle;
+    SetBuddy(self ? reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) : mount, self || dummy);
+}
+}  // namespace btl
+
+namespace btl {
+int fn_7100087A34(unsigned int party) {
+    // the BDAT 0xB0 row each of the blades 0x452..0x457 brings, -1 for none. Proposed name, not the original's:
+    // the symbols leave it unnamed (lbl_71009B7530)
+    static const int s_bgmRows[6] = {0x52, 0x52, -1, -1, -1, 0x54};
+    if (gf::GfGameParty::getHandleDriver(party, 0) != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        int count = 0;
+        int rows[5];
+        for (int i = 0; i != 5; i++) {
+            gf::GF_OBJ_HANDLE* blade = gf::GfGameParty::getHandleBlade(party, i);
+            if (blade == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+                continue;
+            }
+            gf::GfObjAcc acc(blade);
+            int index = acc.getBdatId() - 0x452;
+            if (index < 0 || index >= 6) {
+                continue;
+            }
+            int row = s_bgmRows[index];
+            if (row == -1) {
+                continue;
+            }
+            const char* name = Bdat::getValCheck(gf::GfDataBdat::getFP(0xB0), "filename", row, 7);
+            if (name != nullptr && *name != '\0') {
+                rows[count++] = row;
+            }
+        }
+        if (count > 0) {
+            if (count == 1) {
+                return rows[0];
+            }
+            return rows[ml::mtRand(count)];
+        }
+    }
+    return -1;
+}
+}  // namespace btl
+
+namespace btl {
+EnemyParameter::EnemyParameter()
+    : m_hateTarget(-1), pad_894(0), pad_898(-1.0f), pad_89c(0), m_angryAuraID(0), m_angryAttr(0xFF), pad_8a3_0(0), pad_8a3_4(0), pad_8a4(0), pad_8a6(0),
+      pad_8a8(0), pad_8aa(0), pad_8ac(0), pad_8ae(0), m_deadSEID(0), m_overwriteAttr(9), m_notifiedAttr(9),
+      m_eatNum(0), pad_8b4(0), pad_8b5(0xFF), m_isAngry(false), pad_bit1(false), pad_bit2(false), pad_bit3(false),
+      m_isEatTarget(false), m_isChild(false), m_isInvalidHikariSp(false), m_isAlwaysKakusei(false),
+      m_isInvalidWarp(false), pad_bit9(false), pad_bit10(true), m_isFallDeadDrop(true), pad_bit12(false),
+      pad_bit13(false), pad_bit14(false), pad_bit15(false) {
+}
 }  // namespace btl

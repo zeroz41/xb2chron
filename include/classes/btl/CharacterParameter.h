@@ -6,18 +6,28 @@ namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 
 namespace btl {
-// one palette slot (ARTS_PALETTE_DATA::GetSlotDataConst); only the arts id is recovered
+// one palette slot (ARTS_PALETTE_DATA::GetSlotDataConst); 0x18 bytes (EnemyParameter's constructor, ResetAllRecast)
 struct ARTS_SLOT_DATA {
+    ARTS_SLOT_DATA() : m_artsID(0), pad_0_11(0), m_recast(0), pad_8(1.0f) {}
     // BattleCharacter::GetArtsSlotIndex looks the slot holding an arts up by it (the name is not the original's)
     unsigned int m_artsID : 11;
     unsigned int pad_0_11 : 21;
+    // ResetAllRecast clears it in every slot holding an arts (the name is not the original's)
+    unsigned int m_recast;
+    float pad_8;  // 1 after construction; meaning unknown
+    unsigned char pad_c[0xC];
 };
-// what CharacterParameter's slot 16 (1.0.0's GetArtsPaletteDataConst) returns; the layout is not recovered
-// (EnemyParameter holds one at 0x628, up to its hate data)
+// what CharacterParameter's slot 16 (1.0.0's GetArtsPaletteDataConst) returns (EnemyParameter holds one at 0x628,
+// up to its hate data). GetSlotDataConst answers m_slots[slot] (slot + 16 for its bool), m_slots[19] for slot 15;
+// ResetAllRecast walks all 23
 struct ARTS_PALETTE_DATA {
+    ARTS_PALETTE_DATA() : pad_0(-1), pad_230(0) {}
     const ARTS_SLOT_DATA* GetSlotDataConst(int slot, bool) const;
     void ResetAllRecast();
-    unsigned char pad_0[0x238];
+    long long pad_0;  // -1 after construction; meaning unknown
+    ARTS_SLOT_DATA m_slots[23];
+    unsigned int pad_230;  // 0 after construction; meaning unknown
+    unsigned char pad_234[0x4];
 };
 // table 0x7100B3B2F0
 class CharacterParameter {
@@ -41,7 +51,10 @@ public:
     virtual void PreUpdate(fw::UpdateInfo const&);  // slot 7
     virtual void Update(fw::UpdateInfo const&, bool);  // slot 8
     virtual void PostUpdate(fw::UpdateInfo const&);  // slot 9
-    virtual void vf10() = 0;  // slot 10
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's slot 10 is a different, pure
+    // function). A member because it is slot 10 of this table. What it does (EnemyParameter's, 0x7100085B24): asks
+    // GfMountManager::getHandle for the object mounted at point 0 of m_handle and passes it to SetBuddy.
+    virtual void fn_7100085B24() = 0;  // slot 10
     virtual int GetAttribute() const;  // slot 11
     virtual int GetBladeIndex() const;  // slot 12
     virtual unsigned int GetWeaponID(int) const = 0;  // slot 13
@@ -172,6 +185,7 @@ public:
     virtual int ApplyStatusEnhance(int, int, int) const;  // slot 78
     virtual void InitializeAttackParam();  // slot 79
     virtual unsigned int CalcDamageArmorEx(unsigned int);  // slot 80
+    CharacterParameter();  // out of line (0x710007D674, unit battle/character/CharacterParameter)
     // inline: its body is part of both EnemyParameter destructors (the D0 drops the dead store)
     virtual ~CharacterParameter() {
         if (pad_428 != nullptr) {
@@ -188,7 +202,9 @@ public:
     unsigned char pad_18[0x4];
     // BattleCharacter::GetGroupIndex returns it (the name is not the original's)
     int m_groupIndex;
-    unsigned char pad_20[0x8];
+    unsigned char pad_20[0x4];
+    // the enemy's ChrEnArrange row: EnemyParameter asks GfBdatChrEnArrange for its blade (the name is not the original's)
+    unsigned int m_enArrangeID;
     // BattleCharacter::GetArtsAttackDistance scales an arts' distance by it (the name is not the original's)
     float m_distanceScale;
     // EnemyParameter::AngryInfection widens its range by each character's (the name is not the original's)

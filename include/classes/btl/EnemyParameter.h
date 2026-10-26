@@ -20,7 +20,7 @@ public:
     virtual void PreUpdate(fw::UpdateInfo const&);  // slot 7
     virtual void Update(fw::UpdateInfo const&, bool);  // slot 8
     virtual void PostUpdate(fw::UpdateInfo const&);  // slot 9
-    virtual void vf10();  // slot 10
+    virtual void fn_7100085B24();  // slot 10
     virtual int GetAttribute() const;  // slot 11
     virtual unsigned int GetWeaponID(int) const;  // slot 13
     virtual const ARTS_PALETTE_DATA* GetArtsPaletteDataConst(int) const;  // slot 16
@@ -70,12 +70,14 @@ public:
     virtual void InitializeAttackParam();  // slot 79
     virtual ~EnemyParameter();  // slot 81
 
+    EnemyParameter();
     const gf::SDataEnemy* GetEnemyData() const;
     int GetHateTarget() const;
 
     // 1.0.0's GetHateDataConst(int) returns one of three (index 0 for one out of range); the field names are not
     // the original's
     struct HATE_DATA {
+        HATE_DATA() { Reset(); }
         float m_hate[2];
         float m_rate;
         bool m_isReset;  // set by Reset, cleared by Set
@@ -109,7 +111,9 @@ public:
     ARTS_PALETTE_DATA m_artsPaletteData;  // GetArtsPaletteDataConst (the name is not the original's)
     HATE_DATA m_hateData[3];
     int m_hateTarget;  // GetHateTarget (the name is not the original's)
-    unsigned char pad_894[0xC];
+    int pad_894;  // 0 after construction; meaning unknown
+    float pad_898;  // -1 after construction; meaning unknown
+    int pad_89c;  // 0 after construction; meaning unknown
     unsigned short m_angryAuraID;  // GetAngryAuraID (the name is not the original's)
     unsigned char m_angryAttr;  // GetAngryAttr answers it without a driver to ask (the name is not the original's)
     unsigned char pad_8a3_0 : 4;  // slot 38 (fn_7100088F20) answers it; meaning unknown
@@ -147,6 +151,12 @@ public:
     bool pad_bit14 : 1;  // slot 74 (fn_7100088FEC)
     bool pad_bit15 : 1;  // slot 76 (fn_7100088FFC)
 };
+
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function in btl because it takes no
+// object: only GetBGMID (slot 57, 0x7100087900) calls it, with the party indices 0, 1 and 2. What it does: when the
+// party has a driver, maps each of its five blades' BDAT ids (0x452/0x453 -> 0x52, 0x457 -> 0x54) to a row of BDAT
+// table 0xB0 whose "filename" is not empty, and answers one of those rows at random (ml::mtRand), else -1.
+int fn_7100087A34(unsigned int party);
 }  // namespace btl
 
 #endif

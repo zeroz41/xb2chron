@@ -19,7 +19,7 @@ public:
     virtual void BattleEndInitialize();  // slot 6
     virtual void PreUpdate(fw::UpdateInfo const&);  // slot 7
     virtual void Update(fw::UpdateInfo const&, bool);  // slot 8
-    virtual void vf10();  // slot 10
+    virtual void fn_7100085B24();  // slot 10
     virtual int GetBladeIndex() const;  // slot 12
     virtual unsigned int GetWeaponID(int) const;  // slot 13
     virtual int GetEquipAccessory() const;  // slot 14
