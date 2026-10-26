@@ -73,6 +73,7 @@ public:
     static void createFromDriverList(unsigned int handle, unsigned int kind, const GfMenuDriverList* list, int index,
                                      bool);
     static void createFromReferenceBlade(unsigned int handle, unsigned int, unsigned int index, bool);
+    static void createFromReferenceDriver(unsigned int handle, unsigned int, unsigned int index, bool);
     unsigned int getBL_FieldSkillIndex(const DataParamAcc& acc);
     unsigned int getBL_SkillIndex(const DataParamAcc& acc);
     // the type table's update_*, in its order

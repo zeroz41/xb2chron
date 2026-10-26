@@ -2,15 +2,20 @@
 #define CLASSES_GF_GFMENUOBJDRKIZUNARING_DRIVERSTOCKSPLISTENER_H
 
 #include "classes/gf/GfMenuObjDrKizunaRing.h"
+#include "classes/ui/UIObjectListener.h"
 
-namespace ui { class EventData; }
+namespace ui { struct EventData; }
 
 namespace gf {
 // table 0x7100B61C38
-class GfMenuObjDrKizunaRing::DriverStockSPListener {
+class GfMenuObjDrKizunaRing::DriverStockSPListener : public ::ui::UIObjectListener {
 public:
-    virtual ~DriverStockSPListener();  // slot 0
+    // initialize news it (0x28 bytes): its code zeroes 0xC-0x1B after storing its table, then stores the owner
+    DriverStockSPListener(GfMenuObjDrKizunaRing* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~DriverStockSPListener() {}  // slot 0: weak in the original (its D0 is in the unit's tail)
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
+    unsigned char pad_0C[0x10];
+    GfMenuObjDrKizunaRing* m_owner;  // what initialize makes it for
 };
 }  // namespace gf
 

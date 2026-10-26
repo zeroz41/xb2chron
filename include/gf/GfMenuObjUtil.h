@@ -11,7 +11,7 @@ namespace gf { class GfMenuCallContext; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class DataParamAcc; }
 namespace gf { class GfMenuBladeList; }
-namespace ui { class UIListInfoBase; }
+namespace ui { class UIListInfoBase; class UIObjectAcc; }
 namespace fw { enum SoundCategory : int; }
 namespace fw { enum VibrationID : int; }
 namespace gf { class QuestID; }
@@ -132,6 +132,7 @@ public:
     static unsigned int playSE(unsigned int se);
     static unsigned int playSE(const char* se);  // a sound by its name
     static int startPresetCtrl(unsigned int handle, const PresetCtrlParam& param);  // startCtrl's slot
+    static void setPointSpeedRate(ui::UIObjectAcc acc, float rate);  // the pointer's speed over the object
     static short getBtnIconNumber(unsigned int button);  // the icon number of a button
     static short getPadSelectIconNumber(unsigned int select);  // the icon number of a pad selection, 0xFFFF for none
     static unsigned int playBGM(unsigned int bgm, bool, fw::SoundCategory category);  // the handle stopBGM takes

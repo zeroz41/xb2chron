@@ -35,6 +35,7 @@ public:
     // SCOM_POPUP::createAchievement passes its blade, line and level; when it returns true no popup is queued
     static bool setupSaveAchievementPopup(unsigned int, unsigned int, unsigned int);
     static bool isCondDriverModel(unsigned int);
+    static void execDriverSkillLevelUp(unsigned int driver, unsigned int line, unsigned int level, bool round);
     // the blade's model condition holds (GfGameCond), outside battle (no forced normal Homura, its driver of party
     // 4 not in battle)
     static bool isCondBladeModel(unsigned int blade);
