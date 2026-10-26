@@ -46,10 +46,17 @@ public:
     void FluctuatePartyGauge(int value, int groupIndex);
     // BattleCharacter::AddPartyGauge passes its value, its group index and true
     void AddPartyGauge(float value, int groupIndex, bool);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because Utility::fn_7100010DBC
+    // calls it on DataManager::sys() and it sits in DataManager's unit. What it does: KIZUNA_GAUGE_DATA::
+    // SetKizunaStage(stage, 0.5, true) on GROUP_DATA::GetBladeDataConst of every blade (0-4) of the three groups at
+    // +0x12E30, +0x12F50 and +0x13070, or, with engagedOnly, only on each group's engaged blade (index -1).
+    void fn_71000968B8(int stage, bool engagedOnly);
 
     unsigned char pad_8[0x15D0B];
     // Utility::GetElementalEffectID returns it (the name is not the original's)
     unsigned char m_elementalEffectID;
+    unsigned char pad_15D14[0x6];
+    unsigned char pad_15D1A;  // Utility::fn_7100010D84 sets it to 1
 };
 }  // namespace btl
 

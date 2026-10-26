@@ -11,7 +11,8 @@ class TalkManager : public ::mm::mtl::PtrSingleton< ::btl::TalkManager> {
 public:
     enum NARRATION_TYPE : int;
     void PlayNarrationVoice(NARRATION_TYPE type, int, int);
-    void PlayVoice(int, int);
+    // the entry's 64-bit value, 0 when none plays (Utility::AI_PlayVoice returns it)
+    unsigned long PlayVoice(int, int);
     int GetPlayVoiceID(int) const;
     bool IsPlayingEnemyWinVoice() const;
     virtual ~TalkManager();  // slot 0

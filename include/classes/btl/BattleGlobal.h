@@ -33,6 +33,8 @@ public:
     bool IsGameOver() const;
     // whether the battle is paused for kind (GfGameTarget's selectRight/selectLeft pass -1: any)
     bool IsPause(int kind) const;
+    // the enemy linked to join at the position, (GF_OBJ_HANDLE*)-1 for none (Utility::AI_GetLinkCharacterID)
+    gf::GF_OBJ_HANDLE* GetLinkJoinEnemyHandle(const mm::Vec3& pos);
     int GetElementalComboStage(int) const;
     // GfGameTarget::updateImpl calls it once its near-target hold outlasts its parameter's time
     void NotifyShiftTimeOver();
@@ -241,7 +243,8 @@ public:
     unsigned char pad_738[0x180];
     // the slow-motion requests (the name is not the original's)
     ::mm::mtl::FixedVector<SLOW_PROC_DATA, 20> m_slowProc;
-    unsigned char pad_a50[0x58];
+    float pad_a50;  // Utility::fn_710000FB7C holds while it is <= 0
+    unsigned char pad_a54[0x54];
     unsigned int m_nextAttackId;  // CreateAttackData's next id, never 0 (the name is not the original's)
     unsigned char pad_aac[0x4];
     // the attack records (the name is not the original's); full, AddAttackDamage drops the oldest
@@ -279,7 +282,11 @@ public:
     float pad_5db8;  // fn_710000D468 tests it for >= 0
     float pad_5dbc;  // fn_710000D4BC tests it for >= 0
     float pad_5dc0;  // fn_710000DDB0 tests it for >= 0
-    unsigned char pad_5dc4[0x30];
+    unsigned char pad_5dc4[0x14];
+    float pad_5dd8;  // Utility::fn_7100010DA4 stores it
+    unsigned char pad_5ddc[0x16];
+    // Utility::AI_EnemyKillNum returns it (the name is not the original's)
+    unsigned short m_enemyKillNum;
     // each normal attack's arts id by [character][weapon][combo step]; row 0 is the default (GetNormalAttackArtsID;
     // the name is not the original's; the meaning of the indices is inferred from 1.0.0's InitializeNormalAttackArtsID)
     unsigned short m_normalAttackArtsID[32][50][3];
@@ -302,7 +309,8 @@ public:
     bool pad_bit2 : 1;
     bool m_challengeAnySuccess : 1;  // ButtonChallenge's results 1-3 (not only 3) achieve its condition 0xC
     // the rest of the unit: fn_710000A724 reads bits 35, 49 and 50, fn_71000068F8 bits 49 and 50
-    unsigned char : 4;
+    unsigned char : 3;
+    bool pad_bit7 : 1;  // Utility::fn_71000100F0 sets it
     unsigned char : 8;
     bool pad_bit16 : 1;  // fn_710000D468 holds while it is set
     bool pad_bit17 : 1;  // EnemyParameter::MulHate changes no hate while it is set
@@ -315,7 +323,10 @@ public:
     // while set, IsGameOver holds without asking GfGameManager (the name is not the original's)
     bool m_gameOver : 1;
     unsigned char : 7;
-    unsigned char : 3;
+    unsigned char : 1;
+    // Utility::AI_IsKillChild returns it (the name is not the original's)
+    bool m_killChild : 1;
+    unsigned char : 1;
     bool pad_bit35 : 1;  // fn_710000A724 holds while it is set
     unsigned char : 4;
     // GfGameTarget's selectRight/selectLeft change no target while it is clear (the name is not the original's)
@@ -328,6 +339,8 @@ public:
     bool pad_bit48 : 1;
     bool pad_bit49 : 1;  // fn_710000A6CC returns it; fn_71000068F8 asks for it with pad_bit50
     bool pad_bit50 : 1;
+    unsigned char : 4;
+    bool pad_bit55 : 1;  // Utility::fn_71000151EC returns it
 };
 }  // namespace btl
 

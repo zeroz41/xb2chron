@@ -69,6 +69,10 @@ void AI_SetScout(gf::GF_OBJ_HANDLE* handle, bool);
 void AI_SetSuperArmor(gf::GF_OBJ_HANDLE* handle, float time);
 // StateFieldOnGround::update asks it for the PC's handle before starting a field battle (by its symbol)
 bool IsBattleStart(gf::GF_OBJ_HANDLE* handle);
+// which SCOM_ENBOOK_* command RegisterEnemyBook creates: 0 IN_BATTLE, 1 BOSS_TIME, 2 DEFEAT_ENEMY, 3 DEAD_PLAYER
+enum ENBOOK_TYPE : int;
+void RegisterEnemyBook(ENBOOK_TYPE type, gf::GF_OBJ_HANDLE* handle, int value);
+int AI_GetDeadCharacterNum(gf::GF_OBJ_HANDLE* handle, CHECK_CHR_NUM_MODE mode);
 // read by the btl_ai script plugin (ScriptCamMotion's unit)
 int AI_GetTargetedCharacterID(gf::GF_OBJ_HANDLE* handle);
 int AI_GetAimCharacterNum(gf::GF_OBJ_HANDLE* handle);
@@ -122,7 +126,8 @@ int AI_GetElementalComboID(gf::GF_OBJ_HANDLE* handle);
 int AI_GetCharacterAIID(gf::GF_OBJ_HANDLE* handle);
 int AI_SearchVoiceCodeCharacter(int voiceCode);
 int AI_GetBackAttackerCharacterID(gf::GF_OBJ_HANDLE* handle);
-int AI_GetTargetDirection(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* target);
+// the second handle's character answers where the first stands (CheckAttackPosition)
+int AI_GetTargetDirection(gf::GF_OBJ_HANDLE* target, gf::GF_OBJ_HANDLE* handle);
 int AI_CheckCharacterNum(gf::GF_OBJ_HANDLE* handle, int, CHECK_CHR_NUM_MODE mode);
 int AI_CheckHpRateCharacterNum(gf::GF_OBJ_HANDLE* handle, int, CHECK_CHR_NUM_MODE mode);
 int AI_GetSpAttackLevel(gf::GF_OBJ_HANDLE* handle);

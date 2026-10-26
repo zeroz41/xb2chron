@@ -39,6 +39,9 @@ public:
     };
     CharacterParameter* GetCharacterParameter(bool);
     CharacterParameter* GetCharacterParameterConst(bool) const;
+    // where the character stands to the target, 0-3 (Utility::AI_GetTargetDirection answers it plus 1); the bool
+    // it sets makes the answer void
+    unsigned char CheckAttackPosition(gf::GF_OBJ_HANDLE* target, bool, bool* out) const;
     // what the enemy's battle states hand an animation annotation to (1.0.0's name)
     void AsmCallback(const gf::MsgObjectNotifyAsmCallback& msg);
     void NotifyChangeAttr(gf::GF_OBJ_HANDLE* handle, unsigned int attr, unsigned int prevAttr);
@@ -56,11 +59,7 @@ public:
     // the id the AI scripts know the character by: its index for a player character, 100 more for an enemy (the
     // Utility::AI_ getters compute it so; the name is not the original's)
     int GetAiChrID() const {
-        int id = m_index + 100;
-        if (m_isPlayer) {
-            id = m_index;
-        }
-        return id;
+        return m_isPlayer ? m_index : m_index + 100;
     }
     bool SetAngry(bool, float);
     int GetKizunaStage(float*) const;
@@ -272,7 +271,10 @@ public:
     unsigned char pad_158[0x28];
     // GetCharacterParameter's cache of DataManager's parameter for m_chrID (the name is not the original's)
     mutable CharacterParameter* m_param;
-    unsigned char pad_188[0xB68];
+    unsigned char pad_188[0xB60];
+    // Utility::AI_GetBdatID returns it (the name is not the original's)
+    int m_bdatID;
+    unsigned char pad_CEC[0x4];
     // the blade timer StartBladeTimer sets for its mode and EndBladeTimer clears (the name is not the original's)
     float m_bladeTimer;
     unsigned char pad_CF4[0xE4];
@@ -303,7 +305,10 @@ public:
     unsigned int pad_EE8_12 : 20;
     // SetRimBloom's: bit 0 for RIMBLOOM_ID 0, one of bits 1-8 for the ids 1-8 (the name is not the original's)
     unsigned short m_rimBloomFlags;
-    unsigned char pad_EEE[0x2];
+    unsigned char pad_EEE;
+    // the index TalkManager's PlayVoice and GetPlayVoiceID take for the character (Utility::AI_PlayVoice; the name
+    // is not the original's)
+    signed char m_voiceIndex;
     // the character's index on its side (GetAiChrID; the name is not the original's)
     signed char m_index;
     // GetWeaponType returns it (the name is not the original's)
@@ -361,7 +366,9 @@ public:
     // the name is not the original's: SetAction's float argument
     float m_actionValue;
     unsigned char pad_1010[0x60];
-    unsigned int pad_1070 : 21;
+    unsigned int pad_1070 : 16;
+    // Utility::AI_GetReactionID returns it (the name is not the original's)
+    unsigned int m_reactionID : 5;
     // IsBladeArtsEnd holds while it is not 1 (the name is not the original's)
     unsigned int m_bladeArtsState : 3;
     // a 3-byte run: IsBladeArtsEnd loads the byte at 0x1072 shifted, the byte at 0x1073 is a counter of its own
@@ -369,7 +376,18 @@ public:
     unsigned char pad_1074[0x1C];
     // SetSuperArmorTime keeps the longer time (the name is not the original's)
     float m_superArmorTime;
-    unsigned char pad_1094[0x8C];
+    unsigned char pad_1094[0x13];
+    // Utility::AI_GetAutoAttackState answers it plus 1, kept in 0-3 (the name is not the original's)
+    signed char m_autoAttackStep;
+    unsigned char pad_10A8[0x6];
+    // the character index of the one attacking from behind (Utility::AI_GetBackAttackerCharacterID; the name is not
+    // the original's)
+    short m_backAttacker;
+    unsigned char pad_10B0[0x9];
+    // Utility::AI_GetAutoAttackState answers m_autoAttackStep only while it is set (the name is not the original's)
+    unsigned char m_isAutoAttack : 1;
+    unsigned char pad_10B9_1 : 7;
+    unsigned char pad_10BA[0x66];
     // one 8-byte bitfield run (GetRescueTarget loads it whole): the moving kind's own state, 0x14 while it rescues
     // m_moveRescueTarget (IsRescue, GetRescueTarget, MoveStop; the names are not the original's). An unsigned char
     // bitfield: IsRescue and MoveStop compare it as a 32-bit value, GetRescueTarget as the 64-bit run.

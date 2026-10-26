@@ -48,6 +48,14 @@ public:
     };
     bool GetAdditionalEnhanceEffect(ENHANCE_DATA& data, int id, int* out) const;
     bool GetEnhanceEffect(ENHANCE_DATA& data, int id) const;
+    // the fight combo the character is in; Utility::AI_GetFightComboID returns its first byte (the struct's and
+    // the field's names are not the original's)
+    struct FIGHT_COMBO_DATA {
+        unsigned char m_id;
+    };
+    const FIGHT_COMBO_DATA* GetFightComboDataConst() const;
+    bool IsBuff(int buff) const;
+    int GetLevel() const;
     typedef ::btl::ARTS_PALETTE_DATA ARTS_PALETTE_DATA;
     virtual void Reset();  // slot 0
     virtual void Initialize(gf::GF_OBJ_HANDLE*);  // slot 1
@@ -220,7 +228,12 @@ public:
     float m_radius;
     unsigned char pad_30[0x3F8];
     void* pad_428;  // cleared by the destructor when set; meaning unknown
-    unsigned char pad_430[0x1B9];
+    unsigned char pad_430[0x1A8];
+    unsigned short pad_5d8;  // Utility::fn_71000126C0 passes it on
+    unsigned char pad_5da[0x6];
+    // Utility::AI_GetElementalComboID returns it (the name is not the original's)
+    unsigned char m_elementalComboID;
+    unsigned char pad_5e1[0x8];
     // CharacterManager::GetCharacterConst's index of the character this parameter belongs to (AngryInfection
     // measures from it; the name is not the original's)
     unsigned char m_charaIndex;
