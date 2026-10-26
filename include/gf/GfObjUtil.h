@@ -3,7 +3,10 @@
 
 #include "mm/mtl/FixedVector.h"
 
+#include "mm/mtl/FixedList.h"
+
 namespace fw { class Transform; }
+namespace mm { class Vec3; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GF_MOUNT_HANDLE; }
 #include "gf/GFATTACH.h"
@@ -17,6 +20,7 @@ namespace gf { class GfAppend; }
 namespace gf { class GfAppendInfo; }
 namespace gf { enum OPTMNT : int; }
 namespace gf { class GF_ASSET_HANDLE; }
+namespace gf { class GF_SLOT_HANDLE; }
 namespace gf { class GfComModel; }
 namespace gf { class GfVolumeFade; }
 
@@ -76,8 +80,9 @@ public:
     static unsigned int getHp(gf::GF_OBJ_HANDLE* handle);  // the object's current HP (DataObjEnemy::getHp)
     // whether the object plays the DLC versions of its sounds (WaterInPlugin::onEvent prefixes their names with
     // "dlc_"): a blade-type object (DataParamAcc's type 3) whose bdat id GfDataBlade's fn_710023F9A8 accepts.
-    // The name is not the original's (the symbols call it fn_7100552DF4).
-    static bool isDlcSound(gf::GF_OBJ_HANDLE* handle);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (an earlier header called it isDlcSound, an
+    // inferred name). A member because it sits in this unit's GfObjUtil functions.
+    static bool fn_7100552DF4(gf::GF_OBJ_HANDLE* handle);
     // the object's motion resource name (its data's), none without one
     static const char* getMotionResourceName(gf::GF_OBJ_HANDLE* handle);
     // reads a fade annotation's text into info: false when it is not one
@@ -108,6 +113,8 @@ public:
     // has the object rebuilt: destroyed outright when it carries user data 0, else flagged (6) and queued
     static void rebuild(gf::GF_OBJ_HANDLE* handle);
     static const char* getResourceName(gf::GF_OBJ_HANDLE* handle);  // the object's model resource name
+    // an enemy's (type 5) arrange id (GfObjSetupEnemy's), else the setup's bdat id; -1 without a setup
+    static unsigned int getGameObjectID(gf::GF_OBJ_HANDLE* handle);
     static void setLimitHP(gf::GF_OBJ_HANDLE* handle, unsigned int hp);
     static void setInvincible(gf::GF_OBJ_HANDLE* handle, bool on, bool);
     static void setDisableAutoHeal(gf::GF_OBJ_HANDLE* handle, bool on);
@@ -126,7 +133,35 @@ public:
     static unsigned int getSoundCategoryNormal(gf::GF_OBJ_HANDLE* handle);
     static unsigned int getSoundCategoryWithoutSlow(gf::GF_OBJ_HANDLE* handle);
     // gives dst's setup src's world transform as its initial one
+    static bool isSearchEmptyResource(gf::GF_OBJ_HANDLE* handle);
+    static bool isStanbyTalkingPlayer(gf::GF_OBJ_HANDLE* handle);
+    static unsigned int getEyeRotControl(gf::GF_OBJ_HANDLE* handle);
+    static void setEnableAllIK(gf::GF_OBJ_HANDLE* handle, bool enable, float time);
+    static void setEnableBodyIK(gf::GF_OBJ_HANDLE* handle, bool enable, float time);
+    static void setEnableBlowRotateIK(gf::GF_OBJ_HANDLE* handle, bool enable, float time);
+    static void setEnableLookIK(gf::GF_OBJ_HANDLE* handle, bool enable, float time);
+    static void setEnableFootIK(gf::GF_OBJ_HANDLE* handle, bool enable);
+    static void setEnableSPCIK(gf::GF_OBJ_HANDLE* handle, bool enable);
+    static void setEnableEyeIK(gf::GF_OBJ_HANDLE* handle, bool enable, float time);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in this unit
+    // between getSetupObjNumberByEnArrangeId (its only caller) and the unit's other functions. What it does: counts
+    // the list's objects of type 5 (DataParamAcc::getObjType) whose BDAT id (0 for an invalid one) is arrangeId;
+    // getSetupObjNumberByEnArrangeId passes GfObjManager's loading and destroy lists.
+    static int fn_7100552C18(const mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 4096>& list, unsigned int arrangeId);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in this unit's
+    // GfObjUtil functions. What it does: true unless the object is displayed for both GfObjAcc::isDisp 0x40 and
+    // 2 (GfComSound, GfComEffectCaster and FootStepPlugin call it).
+    static bool fn_7100552E7C(gf::GF_OBJ_HANDLE* handle);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in this unit's
+    // GfObjUtil functions. What it does: true when the object is of type 11 and has no asset handle (-1); no
+    // caller in 3.0.1.
+    static bool fn_7100552ED0(gf::GF_OBJ_HANDLE* handle);
+    static void applyExecUpdate(gf::GF_OBJ_HANDLE* handle);
+    // fills slots with the asset's slot handles for a type 7 object (GfAssetManager::getSlotHandle); whether any
+    static bool getMobSlotHandle(mm::mtl::FixedVector<gf::GF_SLOT_HANDLE*, 88>& slots, gf::GF_OBJ_HANDLE* handle);
     static void copyTransformToSetup(gf::GF_OBJ_HANDLE* src, gf::GF_OBJ_HANDLE* dst);
+    // the setup's initial position and rotation (its 0x30)
+    static void copyTransformToSetup(gf::GF_OBJ_HANDLE* handle, const mm::Vec3& pos, const mm::Vec3& rot);
 };
 
 }  // namespace gf

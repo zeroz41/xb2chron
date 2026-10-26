@@ -1,3 +1,4 @@
+#include "gf/GfObjUtil.h"
 #include "mm/mtl/Bitflag.h"
 #include "classes/gf/GfObjManager.h"
 #include "classes/gf/GfGameParty.h"
@@ -22,8 +23,29 @@
 #include "gf/MsgUnk_1000048.h"
 #include "gf/MsgUnk_1000046.h"
 #include "classes/gf/GfComModel.h"
+#include "classes/gf/GfGamePlayerFormation.h"
+#include "classes/gf/GfObjProperty.h"
+#include "classes/gf/GfObjPropertyCharacter.h"
+#include "gf/GfTargetProperty.h"
+#include "classes/gf/GfManager.h"
+#include "gf/GfDataDriver.h"
+#include "classes/gf/GfObjSetupEnemy.h"
+#include "classes/fw/PadResEventManager.h"
 
 namespace gf {
+
+namespace {
+// an object's info and its mount at one of its points (the name is not the original's)
+struct MountAcc {
+    MountAcc(GF_OBJ_HANDLE* handle, GFATTACH attach) {
+        m_info = GfObjManager::getObjInfo(handle);
+        m_mount = m_info != nullptr ? &m_info->m_mounts[attach] : nullptr;
+    }
+
+    GFOBJ_INFO* m_info;
+    GFOBJ_MOUNT* m_mount;
+};
+}  // namespace
 
 int GfObjUtil::getObjType(GF_OBJ_HANDLE* handle) {
     if (GfObj* obj = getObj(handle)) {
@@ -149,6 +171,20 @@ GF_MOUNT_HANDLE* GfObjUtil::getMountHandle(GF_OBJ_HANDLE* handle, GFATTACH attac
     return info->m_mounts[attach].m_handle;
 }
 
+unsigned int GfObjUtil::getGameObjectID(GF_OBJ_HANDLE* handle) {
+    GfObjSetup* setup = getObjSetup(handle);
+    if (setup == nullptr) {
+        return -1;
+    }
+    if (getObjType(handle) == 5) {
+        if (GfObjSetupEnemy* enemy = mm::mtl::rttiCast<GfObjSetupEnemy>(setup)) {
+            return enemy->m_enArrangeId;
+        }
+        return -1;
+    }
+    return setup->m_bdatId;
+}
+
 void GfObjUtil::setLimitHP(GF_OBJ_HANDLE* handle, unsigned int hp) {
     if (GfObj* obj = getObj(handle)) {
         MsgUnk_1000048 msg(hp);
@@ -220,6 +256,19 @@ bool GfObjUtil::isValid(GF_OBJ_HANDLE* handle) {
     return getObj(handle) != nullptr;
 }
 
+GfAppendInfo* GfObjUtil::getAppendInfo(GF_OBJ_HANDLE* handle, GFATTACH attach) {
+    MountAcc acc(handle, attach);
+    return acc.m_info == nullptr ? nullptr : &acc.m_mount->m_appendInfo;
+}
+
+GF_OBJ_HANDLE* GfObjUtil::fn_710054FCB4(GF_OBJ_HANDLE* handle) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (info == nullptr) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    return info->m_subHandle;
+}
+
 bool GfObjUtil::isLoading(GF_OBJ_HANDLE* handle) {
     GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
     if (info == nullptr) {
@@ -273,6 +322,19 @@ void GfObjUtil::copyTransformToSetup(GF_OBJ_HANDLE* src, GF_OBJ_HANDLE* dst) {
     }
 }
 
+void GfObjUtil::copyTransformToSetup(GF_OBJ_HANDLE* handle, const mm::Vec3& pos, const mm::Vec3& rot) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (info != nullptr && info->m_setup != nullptr) {
+        GfObjSetup* setup = info->m_setup;
+        setup->m_initialPos.x = pos.x;
+        setup->m_initialPos.y = pos.y;
+        setup->m_initialPos.z = pos.z;
+        setup->pad_30.x = rot.x;
+        setup->pad_30.y = rot.y;
+        setup->pad_30.z = rot.z;
+    }
+}
+
 bool GfObjUtil::isEnemyBlade(GF_OBJ_HANDLE* handle) {
     GfObjAcc acc(handle);
     if (acc.getType() != 5) {
@@ -320,6 +382,20 @@ const char* GfObjUtil::getAssetMotionName(GF_OBJ_HANDLE* handle) {
     return GfAssetManager::getMotionInfo(getAssetHandle(handle));
 }
 
+void GfObjUtil::setEnableAllIK(GF_OBJ_HANDLE* handle, bool enable, float time) {
+    setEnableBodyIK(handle, enable, time);
+    setEnableBlowRotateIK(handle, enable, time);
+    setEnableLookIK(handle, enable, time);
+    setEnableFootIK(handle, enable);
+    setEnableSPCIK(handle, enable);
+    setEnableEyeIK(handle, enable, time);
+}
+
+unsigned int GfObjUtil::getEyeRotControl(GF_OBJ_HANDLE* handle) {
+    DataParamAcc acc(handle);
+    return acc.getEyeRotControl();
+}
+
 GfComModel* GfObjUtil::getComModel(GF_OBJ_HANDLE* handle) {
     if (GfObj* obj = getObj(handle)) {
         return obj->getComponent<GfComModel>(1);
@@ -346,6 +422,35 @@ void GfObjUtil::setVolumeFadeUserFlag(GF_OBJ_HANDLE* handle, bool on) {
     }
 }
 
+bool GfObjUtil::isSearchEmptyResource(GF_OBJ_HANDLE* handle) {
+    GF_ASSET_HANDLE* asset = getAssetHandle(handle);
+    if (GfAssetManager* manager = GfAssetManager::sys()) {
+        return manager->isFullResource(asset);
+    }
+    return false;
+}
+
+bool GfObjUtil::isStanbyTalkingPlayer(GF_OBJ_HANDLE* handle) {
+    GfGamePlayerFormation* formation = GfGamePlayerFormation::sys();
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (info == nullptr) {
+        return false;
+    }
+    GfObjProperty* property = info->m_property;
+    if (formation == nullptr || property == nullptr) {
+        return false;
+    }
+    GfTargetProperty* target = property->m_target;
+    if (target == nullptr) {
+        return false;
+    }
+    if (target->m_isMoving) {
+        return false;
+    }
+    return !formation->isFarRandomTalk(handle);
+}
+
+
 void GfObjUtil::setTalking(GF_OBJ_HANDLE* handle, bool on) {
     GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
     if (info != nullptr) {
@@ -357,6 +462,14 @@ bool GfObjUtil::isTalking(GF_OBJ_HANDLE* handle) {
     return testFlag(GfObjManager::getObjInfo(handle), 21);
 }
 
+bool GfObjUtil::getMobSlotHandle(mm::mtl::FixedVector<GF_SLOT_HANDLE*, 88>& slots, GF_OBJ_HANDLE* handle) {
+    slots.clear();
+    if (getObjType(handle) == 7) {
+        GfAssetManager::getSlotHandle(slots, getAssetHandle(handle));
+    }
+    return !slots.empty();
+}
+
 bool GfObjUtil::isTrinityBlade(GF_OBJ_HANDLE* handle) {
     GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
     if (info == nullptr) {
@@ -366,6 +479,63 @@ bool GfObjUtil::isTrinityBlade(GF_OBJ_HANDLE* handle) {
         return false;
     }
     return info->m_setup->m_createType == 8;
+}
+
+void GfObjUtil::applyExecUpdate(GF_OBJ_HANDLE* handle) {
+    applyExecUpdate(getObj(handle));
+}
+
+int GfObjUtil::getSetupObjNumberByEnArrangeId(unsigned int arrangeId) {
+    if (GfObjManager* manager = GfObjManager::sys()) {
+        int loading = fn_7100552C18(manager->getLoadingObj(), arrangeId);
+        return fn_7100552C18(manager->getDestroyObj(), arrangeId) + loading;
+    }
+    return 0;
+}
+
+int GfObjUtil::fn_7100552C18(const GfObjManager::HandleList& list, unsigned int arrangeId) {
+    int count = 0;
+    for (GfObjManager::HandleList::const_iterator it = list.begin(); it != list.end(); ++it) {
+        DataParamAcc acc(*it);
+        if (acc.getObjType() == 5) {
+            unsigned int bdatId = acc.isValid() ? acc.getBdatId() : 0;
+            if (bdatId == arrangeId) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+bool GfObjUtil::fn_7100552DF4(GF_OBJ_HANDLE* handle) {
+    DataParamAcc acc(handle);
+    if (acc.getObjType() == 3) {
+        unsigned int id = acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0;
+        return GfDataDriver::fn_710023F9A8(id);
+    }
+    return false;
+}
+
+bool GfObjUtil::fn_7100552E7C(GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    return !acc.isDisp(OBJDISP(0x40)) || !acc.isDisp(OBJDISP(2));
+}
+
+bool GfObjUtil::fn_7100552ED0(GF_OBJ_HANDLE* handle) {
+    GfObj* obj = getObj(handle);
+    if (obj != nullptr && obj->m_type == 11) {
+        return getAssetHandle(handle) == reinterpret_cast<GF_ASSET_HANDLE*>(-1);
+    }
+    return false;
+}
+
+void unbindPadResource() {
+    if (fw::PadResEventManager* manager = fw::PadResEventManager::sys()) {
+        for (unsigned int i = 0; i < 5; i++) {
+            fw::PadResEventManager::setResource(i, nullptr);
+        }
+        manager->cleanup();
+    }
 }
 
 }  // namespace gf
