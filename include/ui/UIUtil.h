@@ -6,6 +6,7 @@
 #include "classes/fw/PointerMap.h"
 
 namespace mm { namespace mtl { class IAllocator; } }
+namespace mtl { class ALLOC_HANDLE; }
 
 namespace fw { struct PadData; }
 namespace ui { class UIObject; }
@@ -40,6 +41,8 @@ extern unsigned int s_SafeMarginW;                 // setSafeMergin's
 extern unsigned int s_SafeMarginH;
 void initLayerLib();
 void termLayerLib();
+void initBdatFP();  // opens the menu's BDAT tables into s_BdatFPs (UIManager::resetData first)
+void setupAllocator(mtl::ALLOC_HANDLE handle);  // the menu's program and resource allocators (UIManager's constructor)
 void initObjectMap(unsigned int count);
 void termObjectMap();
 UIImageObject* getImageObject(unsigned int handle);  // null when the handle is no image object's
@@ -85,6 +88,12 @@ void setDockPos(unsigned int handle, unsigned int target, unsigned char side, bo
 // set (1 << bit tested against the word). GfMenuObjUtil::fn_710048FD30 passes its add-on menu layer, and
 // ui::UIManager::createLayer/terminateLayer/releaseLayer call it too.
 bool fn_7100696970(unsigned int bit);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free UIUtil function because its address is
+// in ui/UIUtil's unit next to fn_7100696970. What it does: the layer BDAT of an add-on: for 0 the menu's own layer
+// table (s_BdatFPs[6], getBdatFP(6)); while bit `dlc` of the layer mask lbl_7100B75878 is set, the table
+// "MNU_Layer_Dlc%02d" names (Bdat::getFP); otherwise null. ui::UIManager::createLayer/terminateLayer/releaseLayer
+// pass a layer id / 100, GfMenuHUD::initialize calls it too.
+unsigned char* fn_7100696A28(unsigned int dlc);
 const fw::PadData* getPadData();  // the pad the UI reads this frame (UIManager's, else the control pad's)
 unsigned int convUIPadToFWPad(int pad, bool);  // a UI pad button's fw::PadData bits
 }}  // namespace ui::UIUtil
