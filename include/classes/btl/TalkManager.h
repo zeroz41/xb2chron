@@ -15,6 +15,10 @@ public:
     unsigned long PlayVoice(int, int);
     int GetPlayVoiceID(int) const;
     bool IsPlayingEnemyWinVoice() const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because the siren battle manager
+    // passes the TalkManager singleton and it sits in talk_manager_battle's range. What it does: true when one of
+    // the entries (count at +0xB50, 0x20 bytes apart from +0x24) has bit 5 of its first byte set.
+    bool fn_71000AA39C() const;
     virtual ~TalkManager();  // slot 0
     static void Create();
     static void Destroy();
