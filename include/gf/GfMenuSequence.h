@@ -4,6 +4,7 @@
 #include "mm/mtl/Delegate.h"
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedVector.h"
+#include "classes/ui/UIObjectAcc.h"
 
 namespace gf {
 
@@ -17,6 +18,8 @@ class GfMenuSequence {
 public:
     // an animation addAnimJob queues for wait_anim: the object and the animation's name
     struct AnimJob {
+        // addAnimJob builds one from its arguments: the handle is stored before the name is copied
+        AnimJob(unsigned int handle, const char* name) : m_handle(handle), m_name(name) {}
         unsigned int m_handle;
         mm::mtl::FixStr<32> m_name;
     };
@@ -55,6 +58,11 @@ public:
     }
     // the job addWait queues: counts the first wait's frames down, then drops it
     bool wait();
+    // queues an animation of a UI object: the object and the animation's name for wait_anim, and a job of the
+    // sequence's own that runs it
+    void addAnimJob(unsigned int handle, const char* name);
+    // the job addAnimJob queues: starts the first animation, then drops it once it has stopped playing
+    bool wait_anim();
 
     mm::mtl::FixedVector<mm::mtl::Delegate<bool()>, N> m_jobs;
     mm::mtl::FixedVector<int, N> m_waits;  // the frame counts wait() counts down, first to last
@@ -65,8 +73,16 @@ public:
     bool m_animStarted;   // wait_anim(): the first animation has started
 };
 
-// wait() is out of line in both versions (gf_menu_obj_blade_name emits GfMenuSequence<GfMenuObjBladeName, 8>'s);
-// its body is not here yet: no candidate compiles identical (see the report)
+// wait(), addAnimJob and wait_anim are out of line in both versions (gf_menu_obj_quest_log emits them for
+// GfMenuSequence<GfMenuObjQuestLog, 8> and wait for <GfMenuObjQuestLog, 12>). wait and wait_anim's bodies are not
+// here yet: wait_anim's erase of an AnimJob compiles a few registers off (see gf_menu_obj_quest_log's report)
+template <typename T, int N>
+void GfMenuSequence<T, N>::addAnimJob(unsigned int handle, const char* name) {
+    m_anims.push_back(AnimJob(handle, name));
+    mm::mtl::Delegate<bool()> delegate;
+    delegate.set(this, &GfMenuSequence::wait_anim);
+    m_jobs.push_back(delegate);
+}
 
 }  // namespace gf
 
