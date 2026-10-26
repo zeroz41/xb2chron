@@ -1,12 +1,15 @@
 #ifndef CLASSES_BTL_DATAMANAGER_H
 #define CLASSES_BTL_DATAMANAGER_H
 
+#include "classes/btl/PlayerParameter.h"
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "ml/CriticalSection.h"
 
 namespace btl { class CharacterParameter; }
 namespace btl { class DataManager; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GfMenuCallContext; }
 
 namespace btl {
 // an art's data as DataManager::GetArtsData fills it (layout not recovered yet)
@@ -27,10 +30,43 @@ struct ARTS_DATA {
     unsigned int pad_1C_12 : 20;
 };
 
+// an enemy group: RegisterEnemyGroup fills a free one with its two objects, ReleaseEnemyGroup marks each released
+// and frees the group once both are; GetEnemyGroupIndex answers its index + 3 (the names are not the original's)
+struct ENEMY_GROUP {
+    gf::GF_OBJ_HANDLE* m_first;
+    gf::GF_OBJ_HANDLE* m_second;
+    bool m_firstReleased;
+    bool m_secondReleased;
+    unsigned char pad_12[0x6];
+};
+
+// a party group's item pouch buff: GetPouchBuffParam reads a parameter, IsPouchBuffTiming the flag at 0x3B (the
+// names are not the original's)
+struct POUCH_BUFF {
+    float m_params[14];
+    unsigned char pad_38[0x3];
+    unsigned char m_isTiming;
+};
+
 // table 0x7100B3BAF8
 class DataManager : public ::mm::mtl::PtrSingleton< ::btl::DataManager> {
 public:
+    DataManager();
     virtual ~DataManager();  // slot 0
+    static void PreUpdate(const fw::UpdateInfo& info);
+    static void Update(const fw::UpdateInfo& info);
+    void UpdateProc(const fw::UpdateInfo& info);
+    void InitializeComboRequestUI();
+    int GetPartyGauge() const;
+    float GetPouchBuffParam(int param, int groupIndex) const;
+    bool IsPouchBuffTiming(int groupIndex) const;
+    void SetSpecialEffects(int effect, bool enable);
+    static bool IsValidDeadEnhance(int enhance);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because Create calls it on the
+    // new instance and fn_710009673C forwards to it. What it does: when m_criticalSection is enabled calls the
+    // unnamed 0x71008B2B70 on it, empties the four arts caches (the counts at 0x73D8, 0xCEB0, 0xF7A0, 0x112F8, as the
+    // destructor does) and resets their entries' bitfields.
+    void fn_7100090384();
     void SetPartyGauge(int value, bool flag);  // GfGameUtil::setMaxPartyGauge passes (300, false)
     // Create: 1.0.0's name (fn_710009028C in 3.0.1): 1.0.0's BattleManager::Initialize calls it fourth, as 3.0.1's does
     static void Create();
@@ -52,10 +88,23 @@ public:
     // +0x12E30, +0x12F50 and +0x13070, or, with engagedOnly, only on each group's engaged blade (index -1).
     void fn_71000968B8(int stage, bool engagedOnly);
 
-    unsigned char pad_8[0x15D0B];
+    ml::CriticalSection m_criticalSection;  // the destructor destroys it (the name is not the original's)
+    // GetCharacterParameterConst answers ids below 1000 from here (the name is not the original's)
+    PlayerParameter m_playerParameters[18];
+    // GetCharacterParameterConst answers ids from 1000 from here (the name is not the original's)
+    CharacterParameter* m_enemyParameters[70];
+    unsigned char pad_7370[0xBAC0];
+    unsigned char pad_12E30[0x2AC0];  // GROUP_DATA[38] (fn_71000968B8, ReleaseEnemyGroup)
+    ENEMY_GROUP m_enemyGroups[35];   // the name is not the original's
+    POUCH_BUFF m_pouchBuffs[3];      // indexed by group (the name is not the original's)
+    unsigned char pad_15CEC[0x14];
+    // InitializeComboRequestUI creates it, Destroy releases it (the name is not the original's)
+    gf::GfMenuCallContext* m_comboRequestContext;
+    unsigned char pad_15D08[0xB];
     // Utility::GetElementalEffectID returns it (the name is not the original's)
     unsigned char m_elementalEffectID;
-    unsigned char pad_15D14[0x6];
+    unsigned char pad_15D14;
+    bool m_specialEffects[5];  // SetSpecialEffects, IsSpecialEffects (the name is not the original's)
     unsigned char pad_15D1A;  // Utility::fn_7100010D84 sets it to 1
 };
 }  // namespace btl
