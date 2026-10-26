@@ -1,6 +1,9 @@
 #ifndef GF_PC_MOVEUTILFIELD_H
 #define GF_PC_MOVEUTILFIELD_H
 
+#include "classes/gf/GfMoveJumpControler.h"
+#include "classes/gf/GfMoveRunControler.h"
+
 namespace fw { class UpdateInfo; }
 namespace mm { class Vec3; }
 namespace gf { class GfComPropertyPc; }
@@ -28,6 +31,12 @@ public:
     static void updateMoveWaterHoleRise(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
     static void updateMoveWaterTurn(const fw::UpdateInfo& info, gf::GfComPropertyPc& property, const mm::Vec3& dir);
 };
+
+// the run controler's packet from the property and its param list (on the ground / in water)
+void setMoveRunPacket(gf::GfComPropertyPc& property, gf::GfMoveRunControler::Packet* packet);
+void setMoveSwimPacket(gf::GfComPropertyPc& property, gf::GfMoveRunControler::Packet* packet);
+// the jump controler's packet from the property (its velocity, turning speed and param list entry)
+void setMoveJumpPacket(gf::GfComPropertyPc& property, gf::GfMoveJumpControler::Packet* packet);
 
 }}  // namespace gf::pc
 

@@ -97,6 +97,10 @@ bool AI_IsKillChild();
 // functions (0x710000FB7C..0x710001535C) and only the btl_ai script plugin calls them.
 // What it does: true when BattleGlobal::IsPause(-1) or BattleGlobal's float at +0xA50 is <= 0 (btl_ai.isPause).
 bool fn_710000FB7C();
+// What it does: true unless TUnk_B3A9C8::fn_7100026E64 (true without a challenge battle) holds and fn_71000A6E5C on
+// the siren battle singleton (lbl_7100B939D0) returns true; PadField's action and axis handlers ignore the pad
+// while it is true (3.0.1's PadField::decideAction etc. call it where 1.0.0's had nothing).
+bool fn_710000FBC4();
 // What it does: sets btl::DataManager's byte at +0x15D1A to 1 (the btl_ai entry after setKizunaStage).
 void fn_7100010D84();
 // What it does: stores its argument at BattleGlobal +0x5DD8 (the last btl_ai entry; the script passes an int).

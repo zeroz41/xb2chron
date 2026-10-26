@@ -21,6 +21,10 @@ public:
         float m_maxAngularSpeed;  // the limit when it points behind
     };
     struct Packet {
+        // MoveUtilField::updateMoveRun and updateMoveSwim build it so before their packet functions fill it
+        Packet()
+            : m_velocity(mm::Vec3::zero), m_angularVelocity(0.0f), m_inputRate(0.0f), m_inputDirection(mm::Vec3::zero),
+              m_direction(mm::Vec3::zero), m_speedRate(1.0f), m_speedBonus(0.0f) {}
         mm::Vec3 m_velocity;
         float m_angularVelocity;  // radians per second about the up axis
         fw::ParamAdapter m_param;

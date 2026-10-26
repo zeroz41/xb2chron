@@ -20,6 +20,14 @@ public:
         m_func = reinterpret_cast<R (Delegate::*)(Args...)>(func);
         m_invoker = &memberFuncInvoker<T>;
     }
+    // a const member function (PadField's actions: PadRelay::bindAction<PadField, void (PadField::*)() const>), called
+    // through the same invoker
+    template <typename T>
+    void set(T* object, R (T::*func)(Args...) const) {
+        m_object = object;
+        m_func = reinterpret_cast<R (Delegate::*)(Args...)>(func);
+        m_invoker = &memberFuncInvoker<T>;
+    }
     // a plain function in place of a member function (MicroUpdater's: tl::TitleMain::initialize stores
     // staticFuncInvoker and the function, the function in the member function's first word)
     void set(R (*func)(Args...)) {

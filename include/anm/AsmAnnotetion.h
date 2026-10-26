@@ -12,6 +12,7 @@ public:
     union {
         const void* m_data;
         const char* m_text;  // kind 1's (GfComBehaviorExtra queues it as a command)
+        int m_value;  // a number (gf::pc::registerAsmCallbackField's "look": 0 entering, 1 leaving)
     };
 };
 }  // namespace anm
