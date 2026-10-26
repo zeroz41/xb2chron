@@ -41,7 +41,9 @@ enum ColiType {};
 
 namespace fw {
 // table 0x7100B41180; counted (ColiMoveObject::createColiCharacter adds the first reference)
-class ColiObject : public mm::mtl::ReferenceObject {
+// its links at 0x10 are a base: ColiManager::Impl's IntrusiveList<ColiObject> converts between the two with a null
+// check (registObject's push_back, the walks in finalize and update)
+class ColiObject : public mm::mtl::ReferenceObject, public mm::mtl::IntrusiveListNodeBase {
 public:
     ColiObject();
     virtual ~ColiObject();  // slot 0
@@ -88,8 +90,6 @@ public:
     void setUserData(fw::ColiUserData* userData) { m_userData = userData; }
     static mm::mtl::RTTI m_rtti;
 
-    // its links (the constructor points both at itself; the name is not the original's)
-    mm::mtl::IntrusiveListNodeBase m_node;
     idcoli::IDColiObj* m_coliObj;                       // setColiObject's
     mm::mtl::IntrusivePtr<fw::ReferenceFrame> m_frame;  // setupColiCharacter's; postUpdate follows it
     // setupColiCharacter's, from ColiCharacterInfo (at 4); at 0 it flags one sync (bit 0 of m_flags);

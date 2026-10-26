@@ -24,7 +24,8 @@ public:
     void addDelUpdate();
     void consistentUpdate();
     void updateConsistentList(ColiLinkList<IDColiObj>& list);
-    static void tail();
+    // a member: fw::ColiManager::tail hands it its collision system in x0
+    void tail();
     IDColiObj* createColiGrand(const void* data);
     IDColiObj* createColiCharacter();
     IDColiObj* createColiPhantom();

@@ -10,7 +10,9 @@ public:
     virtual bool initialize() { return true; }  // slot 2
     virtual bool finalize() { return true; }  // slot 3
     virtual void enterFinalizeApplet() {}  // slot 4
-    virtual const char* getName() const;  // slot 5: the manager's name (SensorManager's returns "SensorManager")
+    // slot 5: the manager's name (SensorManager's returns "SensorManager"); inline: 3.0.1 keeps one copy, in
+    // coli_manager.cpp (0x71001677C4, after ColiManager's functions), which returns "undefined"
+    virtual const char* getName() const { return "undefined"; }
     virtual bool isInitialized() const { return m_flags & 1; }  // slot 6
     virtual bool isFinalized() const { return (m_flags >> 1) & 1; }  // slot 7
     ManagerObject();  // registers it with ManagerRegister
