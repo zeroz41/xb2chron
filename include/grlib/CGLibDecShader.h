@@ -14,8 +14,18 @@ struct CGLibDecShaderData {
 };
 
 // a shader with declarations (0x68 bytes): its programs by the declarations' current values
+class CGLibVtlMemPool;
+
 class CGLibDecShader {
 public:
+    CGLibDecShader();
+    ~CGLibDecShader();
+    // the work bytes createMemPoolShader takes for the shader data (the parameter names are not the original's)
+    static unsigned int calcWorkSize(const void* data, bool flag);
+    // builds the shader in work from its data and the programs, its code in pool; returns the work bytes it took
+    // (the parameter names are not the original's)
+    unsigned int createMemPoolShader(void* work, const unsigned char* data, const unsigned char* programs,
+                                     CGLibVtlMemPool* pool, bool flag);
     // the declarations' count, the size of a CGLibDecShdExtTbl table, of data (0 when it is no declared shader)
     static unsigned int calcTblSize(const void* data);
     unsigned int getDeclarationMax() const;

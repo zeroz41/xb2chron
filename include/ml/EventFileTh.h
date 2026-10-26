@@ -10,6 +10,8 @@ class FileHandleTh;
 // finished read). The names of the fields are not the original's.
 class EventFileTh {
 public:
+    // hands over the read's data (the receiver frees it)
+    void* moveFileData();
     int m_kind;
     unsigned char pad_4[0x4];
     FileHandleTh* m_handle;  // the read's (DevFileTh::readFile returned it)
