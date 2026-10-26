@@ -8,8 +8,8 @@ namespace event {
 // table 0x7100B3E990
 class SeqManager::start_capture_wait : public ::event::ICmd {
 public:
-    virtual ~start_capture_wait();  // slot 0
-    virtual void update(event::ICmd::Param const&);  // slot 3
+    virtual ~start_capture_wait() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
+    virtual bool update(event::ICmd::Param const&);  // slot 3
 };
 }  // namespace event
 

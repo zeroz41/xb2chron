@@ -44,6 +44,8 @@ public:
     GfGameParty(const GfSetupParam& param);
     static void build(const GfSetupParam& param);
     static void destroy();
+    // the return type is not proven (its only caller, RandPlayer::Warp::update, ignores it)
+    static void judgeRandomTalkWarp();
     void update(const fw::UpdateInfo& info);
     // 1.0.0's (3.0.1 inlines them in the constructor and destroy)
     void initialize(const GfSetupParam&) {

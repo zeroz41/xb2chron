@@ -1,3 +1,17 @@
+#include "classes/event/ICmd/Param.h"
+#include "classes/gf/GfEvent.h"
+#include "classes/gf/GfGameParty.h"
+#include "gf/GfObjUtil.h"
+#include "classes/event/RandPlayer/Warp.h"
+#include "classes/event/CharaStopHead.h"
+#include "classes/event/StmPackMemory.h"
+#include "classes/event/SeqManager/start.h"
+#include "classes/event/SeqManager/end.h"
+#include "classes/event/SeqManager/end_fadein.h"
+#include "classes/event/SeqManager/start_streaming1.h"
+#include "classes/event/SeqManager/start_capture_wait.h"
+#include "classes/event/SeqManager/start_notice.h"
+#include "classes/event/SeqManager/end_notice.h"
 #include "gf/FileStaticVec3.h"
 #include "mm/mtl/FixStr.h"
 #include "mm/Vec2.h"
@@ -1297,5 +1311,85 @@ void LightManager::OnEventProc(event::MSG_TYPE msg) {
         break;
     }
 }
+
+}  // namespace event
+
+namespace event {
+
+bool SeqManager::start::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        manager->m_seqName = "start";
+    }
+    return true;
+}
+
+bool SeqManager::end::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        manager->m_flags |= 2;
+        manager->m_seqName = "end";
+    }
+    return true;
+}
+
+bool SeqManager::end_fadein::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        manager->m_seqName = "end fadein";
+    }
+    return true;
+}
+
+bool SeqManager::start_streaming1::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        manager->m_seqName = "start stream1";
+    }
+    return true;
+}
+
+bool SeqManager::start_capture_wait::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        manager->m_seqName = "start capture wait";
+    }
+    return param.m_frame >= 30;
+}
+
+bool SeqManager::start_notice::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        manager->m_seqName = "start notice";
+    }
+    unsigned int id = param.m_param.val(1).getS32();
+    if (id != 0) gf::GfEvent::callEventPlay(static_cast<gf::GEV>(10), id);
+    return true;
+}
+
+bool SeqManager::end_notice::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        manager->m_seqName = "end notice";
+    }
+    unsigned int id = param.m_param.val(1).getS32();
+    if (id != 0) gf::GfEvent::callEventPlay(static_cast<gf::GEV>(11), id);
+    return true;
+}
+
+bool RandPlayer::Warp::update(const ICmd::Param& param) {
+    if (param.m_frame == 0) {
+        gf::GfGameParty::judgeRandomTalkWarp();
+    }
+    return true;
+}
+
+// the looked-up character is unused (1.0.0 0x71000D4630 is the same)
+bool CharaStopHead::update(const ICmd::Param& param) {
+    gf::GfObjUtil::getObj(m_handle);
+    return true;
+}
+
+void StmPackMemory::render(const mm::Rect<int>& rect, float alpha) {}
 
 }  // namespace event

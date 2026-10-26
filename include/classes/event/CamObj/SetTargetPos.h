@@ -9,7 +9,7 @@ namespace event {
 class CamObj::SetTargetPos : public ::event::ICmd {
 public:
     virtual ~SetTargetPos();  // slot 0
-    virtual void update(event::ICmd::Param const&);  // slot 3
+    virtual bool update(event::ICmd::Param const&);  // slot 3
 };
 }  // namespace event
 

@@ -9,7 +9,7 @@ namespace event {
 class CamObj::SetNearfar : public ::event::ICmd {
 public:
     virtual ~SetNearfar();  // slot 0
-    virtual void update(event::ICmd::Param const&);  // slot 3
+    virtual bool update(event::ICmd::Param const&);  // slot 3
 };
 }  // namespace event
 

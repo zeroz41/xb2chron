@@ -8,6 +8,8 @@ namespace event {
 class RandPlayer {
 public:
     class Reset;
+    class Wait;
+    class Warp;
     virtual ~RandPlayer();  // slot 0
     // 1.0.0's RandPlayer::clear/update/isPlaying (out of line there; 3.0.1 inlines them)
     void clear() {

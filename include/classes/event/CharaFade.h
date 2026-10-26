@@ -8,7 +8,7 @@ namespace event {
 class CharaFade : public ::event::ICmd {
 public:
     virtual ~CharaFade();  // slot 0
-    virtual void update(event::ICmd::Param const&);  // slot 3
+    virtual bool update(event::ICmd::Param const&);  // slot 3
 };
 }  // namespace event
 

@@ -1,6 +1,8 @@
 #ifndef CLASSES_EVENT_SEQMANAGER_H
 #define CLASSES_EVENT_SEQMANAGER_H
 
+#include "mm/mtl/FixStr.h"
+
 namespace event { enum MSG_TYPE : int; }
 
 namespace event {
@@ -48,6 +50,10 @@ public:
     class start_weather;
     virtual ~SeqManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    unsigned char pad_10[0x168];
+    unsigned int m_flags;  // 0x178: cleared by clear(); end sets bit 1 (the name is not the original's)
+    unsigned int m_dispFlags;  // 0x17C: setDisp/isDisp's bit 0 (1.0.0; the name is not the original's)
+    mm::mtl::FixStr<128> m_seqName;  // 0x180: the running state's name (each state's update sets it; the name is not the original's)
 };
 }  // namespace event
 

@@ -9,7 +9,7 @@ class CharaMount {
 public:
     virtual ~CharaMount();  // slot 0
     virtual void init();  // slot 2
-    virtual void update(event::ICmd::Param const&);  // slot 3
+    virtual bool update(event::ICmd::Param const&);  // slot 3
     virtual void term();  // slot 4
 };
 }  // namespace event

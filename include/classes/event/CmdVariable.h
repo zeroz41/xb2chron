@@ -6,6 +6,20 @@ namespace event {
 class CmdVariable {
 public:
     virtual ~CmdVariable();  // slot 0
+    // the value converted when it holds the other number type (1.0.0 0x710009360C; 3.0.1 inlines it)
+    int getS32() const { return m_type == 2 ? (int)m_value.floatValue : m_value.intValue; }
+    // the stored pointer (1.0.0 0x71000936A0; 3.0.1 inlines it)
+    void* getUserdata() const { return m_value.userdata; }
+    // what the value holds (the field names are not the original's; the layout is CmdParam's: 1.0.0
+    // CmdParam::CmdParam zeroes +0x8 and +0x10 of each of its 0x18-byte values)
+    int m_type;  // 0x8
+    union {
+        int intValue;
+        float floatValue;
+        bool boolValue;
+        const char* strValue;
+        void* userdata;
+    } m_value;  // 0x10
 };
 }  // namespace event
 

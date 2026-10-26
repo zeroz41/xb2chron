@@ -8,7 +8,7 @@ namespace event {
 class CharaSetPos : public ::event::ICmd {
 public:
     virtual ~CharaSetPos();  // slot 0
-    virtual void update(event::ICmd::Param const&);  // slot 3
+    virtual bool update(event::ICmd::Param const&);  // slot 3
 };
 }  // namespace event
 

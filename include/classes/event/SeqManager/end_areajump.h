@@ -8,8 +8,8 @@ namespace event {
 // table 0x7100B3EDF0
 class SeqManager::end_areajump : public ::event::ICmd {
 public:
-    virtual ~end_areajump();  // slot 0
-    virtual void update(event::ICmd::Param const&);  // slot 3
+    virtual ~end_areajump() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
+    virtual bool update(event::ICmd::Param const&);  // slot 3
 };
 }  // namespace event
 

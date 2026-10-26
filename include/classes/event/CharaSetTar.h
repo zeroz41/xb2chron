@@ -9,7 +9,7 @@ namespace event {
 class CharaSetTar : public ::event::ICmd {
 public:
     virtual ~CharaSetTar() {}  // slot 0
-    virtual void update(event::ICmd::Param const&);  // slot 3
+    virtual bool update(event::ICmd::Param const&);  // slot 3
     virtual void term();  // slot 4
     static const mm::Vec2 LENS_LIMIT;  // calcLensUV's bounds
     static const mm::Vec2 JOY_LIMIT;
