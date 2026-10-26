@@ -19,6 +19,9 @@ int GetKizunaStage(int kizuna, float* ratio);
 
 bool CheckInRange(const mm::Vec3& pos, BattleCharacter* chr, float range, bool flag);
 
+// the party the object belongs to, -1 for none (PlayerParameter::Update keeps its m_groupIndex then)
+int GetPartyID(gf::GF_OBJ_HANDLE* handle);
+
 // which way GetCrossDirection turns: 0 one side, any other the opposite (the names are not the original's)
 enum CROSS_MODE {
     CROSS_MODE_0 = 0,

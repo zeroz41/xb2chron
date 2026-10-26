@@ -136,14 +136,23 @@ public:
     // What it does: does nothing.
     virtual void fn_7100088F48();  // slot 43
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 44 of this table.
-    // What it does: does nothing.
-    virtual void fn_7100088F4C();  // slot 44
-    virtual void vf45();  // slot 45
-    virtual void vf46();  // slot 46
-    virtual void vf47();  // slot 47
-    virtual void vf48();  // slot 48
+    // What it does: does nothing; PlayerParameter's ends its timer at 0x634 (its PreUpdate passes true when the
+    // timer ran out, false when the character lost its hate target) and, with true, has the driver's character run
+    // BattleCharacter::fn_71000424D8.
+    virtual void fn_7100088F4C(bool);  // slot 44
+    // Placeholder names (slots 45-48, 50): new in 3.0.1 (1.0.0's table has 51 slots), nothing in 1.0.0's place
+    // names them; members as slots of this table, the bases defined in battle/character/character_parameter_battle.
+    // What slots 45-48 do: return 1.0f; PlayerParameter's return a BtlSystemBalanceAccess rate in percent (slot 45
+    // its 16-bit field at 0x110 while slot 64 holds and the 0x634 timer runs; slots 46-48 the fields at 0x112, 0x114
+    // and 0x116 while slot 50 holds, a blade asking its driver's parameter instead), else 1.0f.
+    virtual float fn_7100084F30() const;  // slot 45
+    virtual float fn_7100084FD8() const;  // slot 46
+    virtual float fn_7100085080() const;  // slot 47
+    virtual float fn_7100085128() const;  // slot 48
     virtual float GetUseWeaponRate(int) const;  // slot 49
-    virtual void vf50();  // slot 50
+    // What it does: returns false; PlayerParameter's returns whether its 0x634 timer runs (a blade asks its
+    // driver's parameter).
+    virtual bool fn_71000851B4() const;  // slot 50
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 51 of this table.
     // What it does: does nothing; PlayerParameter's clears its 32-bit field at 0x638.
     virtual void fn_7100088F58();  // slot 51
@@ -178,7 +187,7 @@ public:
     // bit 2 of the flags at 0x622 directly where 3.0.1's calls this slot with 0). A member because it is slot 65 of
     // this class's table. What it does: returns bit 2 of the 16-bit flags at 0x622 and ignores its argument;
     // EnemyParameter::GetWeaponID reads the weapon from m_driverHandle when it is set, else from m_handle.
-    virtual bool fn_7100085314(int) const;  // slot 65
+    virtual bool fn_7100085314(bool) const;  // slot 65
     virtual bool IsBoss() const;  // slot 66
     virtual bool IsNamed() const;  // slot 67
     virtual bool IsBossOrNamed() const;  // slot 68
@@ -241,7 +250,9 @@ public:
     unsigned short m_flags622_0 : 1;  // unknown
     // GetHateTarget answers -1 while it is clear (the name is not the original's)
     bool m_hasHateTarget : 1;
-    unsigned short m_flags622_2 : 4;  // unknown
+    // slot 65 (fn_7100085314) returns it (unknown)
+    unsigned short m_flags622_2 : 1;
+    unsigned short m_flags622_3 : 3;  // unknown
     // a blade that GetDriverType does not answer its driver's type for (bit 6; unknown, the name is not the
     // original's)
     unsigned short m_flags622_6 : 1;

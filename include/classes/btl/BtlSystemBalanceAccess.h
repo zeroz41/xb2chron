@@ -31,6 +31,14 @@ public:
     // the HP rate below which a character counts as dying: Utility::GetDyingHpRate reads it (the name is not
     // the original's)
     float m_dyingHpRate;
+    unsigned char pad_f0[0x4];
+    // PlayerParameter's slot 52 starts its 0x638 timer at this many thirtieths of a second; meaning unknown
+    unsigned short pad_f4;
+    unsigned char pad_f6[0x16];
+    float pad_10c;  // PlayerParameter's slot 43 starts its 0x634 timer at it; meaning unknown
+    // PlayerParameter's slots 45-48 answer them as percentages; meaning unknown
+    unsigned short pad_110[4];
+    unsigned char pad_118[0x28];  // Create allocates 0x140 bytes
 };
 }  // namespace btl
 

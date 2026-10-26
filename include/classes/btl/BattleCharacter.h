@@ -75,6 +75,12 @@ public:
     // A member: called on CharacterManager::GetCharacterConst's character. What it does: ButtonChallenge asks it
     // with true; when it holds, the challenge's character is a blade and its driver (the parameter's handle) acts.
     bool fn_7100028D0C(bool);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: PlayerParameter's slot 44
+    // (fn_7100088F4C) calls it on CharacterManager::GetCharacterConst's character for its m_charaIndex. What it
+    // does: with true, unless CheckResistReaction(2, nullptr, true) resists, blows the character back (strength from
+    // BDAT table 0x3A's "PowLv%d_%s" row), sets its action 0x10 and notifies TalkManager trigger 0x31; then fades out
+    // (or, with BattleGlobal's flag bit 0, removes) the effect whose id it keeps at 0x15C and clears the id.
+    void fn_71000424D8(bool);
     // Placeholder name: 1.0.0's ResultProc calls GetWeaponAttack(bool, bool) const in its place, with one argument
     // fewer. A member: as fn_7100028D0C. What it does: gives the attack ButtonChallenge adds to the stat for its
     // damage; ButtonChallenge passes its param's flag, false, false.

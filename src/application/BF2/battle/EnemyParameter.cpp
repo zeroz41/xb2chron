@@ -417,7 +417,7 @@ bool CharacterParameter::fn_7100088F40() const {
 
 void CharacterParameter::fn_7100088F48() {}
 
-void CharacterParameter::fn_7100088F4C() {}
+void CharacterParameter::fn_7100088F4C(bool) {}
 
 float CharacterParameter::GetUseWeaponRate(int) const {
     return 0.0f;
