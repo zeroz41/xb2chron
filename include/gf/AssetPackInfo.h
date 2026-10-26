@@ -37,6 +37,22 @@ public:
     void setupStreamObject();
     // marks the pack destroyed once and hands its handle to GfAssetUtil::addDestroyObject (1.0.0's symbols name it)
     void setDestroy();
+    // GfAssetManager::enableGameResource/disableGameResource call it with true/false (1.0.0's symbols name it)
+    void setUsingGame(bool usingGame);
+    // GfAssetManager::destroyExtResource forwards to it (3.0.1's symbols name it)
+    void releaseExtResource();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because GfAssetManager::
+    // fn_71001AE8A8 calls it on the handle's AssetPackInfo. What it does: walks the packs' resources and appends to
+    // `names` the asset name of each resource whose name contains `name` (strstr); returns !names.empty().
+    bool fn_71001B1840(mm::mtl::FixedVector<const char*, 128>& names, const char* name);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because GfAssetManager::
+    // fn_71001AE9D0 calls it on the handle's AssetPackInfo. What it does: walks the packs' resources and returns the
+    // first whose asset name equals `name` (strcmp), else nullptr.
+    GfAssetResource* fn_71001B1B30(const char* name);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because GfAssetManager::
+    // fn_71001AF824 calls it on the handle's AssetPackInfo. What it does: walks the packs' resources and returns
+    // true when one's asset name contains `name` (strstr).
+    bool fn_71001B3624(const char* name);
 
     unsigned char pad_0[0x8];
     GF_ASSET_HANDLE* m_handle;  // setDestroy hands it to GfAssetUtil::addDestroyObject (the name is not the original's)
@@ -47,7 +63,7 @@ public:
     GfExtendResource* m_extendResources[4];
     unsigned char pad_60[0x4];
     bool m_destroy;  // GfAssetManager::isDestroy reads it (the name is not the original's)
-    unsigned char pad_65[0x1];
+    bool m_usingGame;  // setUsingGame's state: enableGameResource/disableGameResource test it (the name is not the original's)
     bool m_retargetLoad;  // GfAssetUtil::setRetargetLoad sets it, isRetargetLoad reads it
     bool m_reload;  // GfAssetManager::isReload reads it (the name is not the original's)
     unsigned char pad_68[0x4];

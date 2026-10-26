@@ -1,6 +1,3 @@
-#include "gf/AssetPackInfo.h"
-#include "gf/GfSlotMapping.h"
-#include "classes/gf/GfAssetPack.h"
 #include "classes/gf/GfAssetManager.h"
 #include "classes/gf/GfAssetManager.h"
 #include "classes/gf/GfAssetPack.h"
@@ -10,8 +7,21 @@
 #include "gf/AssetPackInfo.h"
 #include "gf/GfSetupParam.h"
 #include "gf/GfSlotMapping.h"
+#include "mm/mtl/FixedVector.h"
+#include "classes/ml/WinView.h"
+#include "mtl/MemManager.h"
 
 namespace gf {
+
+void GfAssetManager::initialize(const GfSetupParam& param) {
+#line 101
+    m_slotMapping = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfSlotMapping();
+    param.m_view->attachWorkEvent(this, false);
+    unsigned long size = mtl::MemManager::maxAllocSize(getAllocator(ALLOCATOR(3))->getMemHandle()) & ~0x1FFFUL;
+    m_slotMapping->setup(param, getAllocator(ALLOCATOR(3)), size);
+    GfFileSizePool::build(param);
+    m_initialized = true;
+}
 
 void GfAssetManager::build(const GfSetupParam& param) {
 #line 69
@@ -24,6 +34,8 @@ void GfAssetManager::destroy() {
     delete self;
 }
 
+GfAssetManager::~GfAssetManager() {}
+
 AssetPackInfo* GfAssetManager::getAssetPackInfo(GF_ASSET_HANDLE* handle) {
     unsigned int index = static_cast<unsigned int>(reinterpret_cast<unsigned long>(handle));
     ml::fixed_size_alloc_inside<AssetPackInfo, 1024>& infos = get()->m_packInfos;
@@ -32,6 +44,20 @@ AssetPackInfo* GfAssetManager::getAssetPackInfo(GF_ASSET_HANDLE* handle) {
     unsigned int word = slot >> 5;
     unsigned int mask = 1u << (index & 0x1F);
     return (infos.m_pBits[word] & mask) != 0 ? info : nullptr;
+}
+
+void GfAssetManager::enableGameResource(GF_ASSET_HANDLE* handle) {
+    AssetPackInfo* info = getAssetPackInfo(handle);
+    if (info != nullptr && !info->m_usingGame) {
+        info->setUsingGame(true);
+    }
+}
+
+void GfAssetManager::disableGameResource(GF_ASSET_HANDLE* handle) {
+    AssetPackInfo* info = getAssetPackInfo(handle);
+    if (info != nullptr && info->m_usingGame) {
+        info->setUsingGame(false);
+    }
 }
 
 void GfAssetManager::loadStart(GfAssetPack* pack, mm::mtl::IAllocator* allocator) {
@@ -58,6 +84,17 @@ GfSlotMapping* GfAssetManager::getSlotMapping() {
     return nullptr;
 }
 
+bool GfAssetManager::fn_71001AE8A8(mm::mtl::FixedVector<const char*, 128>& names, GF_ASSET_HANDLE* handle,
+                                   const char* name) {
+    if (handle != reinterpret_cast<GF_ASSET_HANDLE*>(-1) && name != nullptr) {
+        AssetPackInfo* info = getAssetPackInfo(handle);
+        if (info != nullptr) {
+            return info->fn_71001B1840(names, name);
+        }
+    }
+    return !names.empty();
+}
+
 GfAssetResource* GfAssetManager::getResource(GF_ASSET_HANDLE* handle, GfFileIdx file, GfAssetType type) {
     GfAssetResource* resource = nullptr;
     if (handle != reinterpret_cast<GF_ASSET_HANDLE*>(-1) && file != static_cast<GfFileIdx>(-1)) {
@@ -70,6 +107,14 @@ GfAssetResource* GfAssetManager::getResource(GF_ASSET_HANDLE* handle, GfFileIdx 
         }
     }
     return resource;
+}
+
+GfAssetResource* GfAssetManager::fn_71001AE9D0(GF_ASSET_HANDLE* handle, const char* name) {
+    AssetPackInfo* info = getAssetPackInfo(handle);
+    if (info != nullptr) {
+        return info->fn_71001B1B30(name);
+    }
+    return nullptr;
 }
 
 bool GfAssetManager::isLoaded(GF_ASSET_HANDLE* handle, mm::mtl::FixStr<128>* name) {
@@ -133,6 +178,24 @@ GfExtendResource* GfAssetManager::getExtentResource(GF_ASSET_HANDLE* handle, uns
         return info->m_extendResources[index];
     }
     return nullptr;
+}
+
+void GfAssetManager::destroyExtResource(GF_ASSET_HANDLE* handle) {
+    AssetPackInfo* info = getAssetPackInfo(handle);
+    if (info != nullptr) {
+        info->releaseExtResource();
+    }
+}
+
+bool GfAssetManager::isExistSameAsset(GfAssetPack* pack) {
+    mm::mtl::FixedList<GfAssetPack*, 2048>& packs = get()->m_assetPacks;
+    for (mm::mtl::FixedList<GfAssetPack*, 2048>::iterator it = packs.begin(); it != packs.end(); ++it) {
+        GfAssetPack* other = *it;
+        if (other != pack && other->m_value == pack->m_value && other->isExistSameAsset(*pack)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void GfAssetManager::clear() {
@@ -201,11 +264,27 @@ const char* GfAssetManager::getMotionInfo(GF_ASSET_HANDLE* handle) {
     return "";
 }
 
+void GfAssetManager::releaseRefResource(void* resource) {
+    for (mm::mtl::FixedList<GfAssetPack*, 2048>::iterator it = m_assetPacks.begin(); it != m_assetPacks.end(); ++it) {
+        if ((*it)->releaseRefResource(resource)) {
+            break;
+        }
+    }
+}
+
 void GfAssetManager::setupLoadStart(GF_ASSET_HANDLE* handle) {
     AssetPackInfo* info = getAssetPackInfo(handle);
     if (info != nullptr) {
         info->setupLoadStart();
     }
+}
+
+bool GfAssetManager::fn_71001AF824(GF_ASSET_HANDLE* handle, const char* name) {
+    AssetPackInfo* info = getAssetPackInfo(handle);
+    if (info != nullptr) {
+        return info->fn_71001B3624(name);
+    }
+    return false;
 }
 
 void GfAssetManager::lockEnterRersource(GF_ASSET_HANDLE* handle) {

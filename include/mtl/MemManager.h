@@ -27,6 +27,8 @@ public:
     // the first address of the handle's allocator's memory and its size (CGLibMemPoolAdder::addAdder pools them)
     static void* getTopAdr(const ALLOC_HANDLE& handle);
     static unsigned long getTotalSize(ALLOC_HANDLE handle);
+    // the largest block the handle's memory can still give (GfAssetManager::initialize sizes the slots with it)
+    static unsigned long maxAllocSize(ALLOC_HANDLE handle);
     static void deallocate_section(void* p, unsigned long size, bool flag);
     // p's memory resized to size (MultimediaReallocate's, flag false)
     static void* reallocate(void* p, unsigned long size, bool flag);

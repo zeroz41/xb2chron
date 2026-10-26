@@ -5,6 +5,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/ml/fixed_size_alloc_inside.h"
 #include "gf/AssetPackInfo.h"
+#include "mm/mtl/FixedList.h"
 
 namespace gf { class GfSetupParam; }
 namespace gf { class GfExtendResource; }
@@ -18,6 +19,8 @@ namespace gf { class GfInitParam; }
 namespace gf { class GfAssetResource; }
 namespace gf { class GfAssetPack; }
 namespace gf { class GfSlotMapping; }
+// 1.0.0's GfAssetManager::addEvent(gf::IGfAssetEvent*) names it; no table in 3.0.1 (nothing implements it)
+namespace gf { class IGfAssetEvent; }
 namespace mm { namespace mtl { class IAllocator; } }
 namespace mm { namespace mtl { template <int> class FixStr; } }
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
@@ -78,13 +81,53 @@ public:
     // the asset's motion name (GfObjUtil::getAssetMotionName returns it)
     static const char* getMotionInfo(GF_ASSET_HANDLE* handle);
     static GfExtendResource* getExtentResource(GF_ASSET_HANDLE* handle, unsigned int index);
+    static void enableGameResource(GF_ASSET_HANDLE* handle);
+    static void disableGameResource(GF_ASSET_HANDLE* handle);
+    static void destroyExtResource(GF_ASSET_HANDLE* handle);
+    // whether another loaded pack with the same key holds the same asset (GfAssetPack::isExistSameAsset)
+    static bool isExistSameAsset(GfAssetPack* pack);
+    // hands a resource to the loaded packs until one releases its reference to it
+    void releaseRefResource(void* resource);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
+    // GfAssetManager's functions and reads its singleton's pack records. What it does: for a valid handle and a
+    // non-null name, collects the names of the asset's resources containing `name` (AssetPackInfo::fn_71001B1840);
+    // returns !names.empty(). Callers: GfComEffectCaster::setup, setupEfTail, fn_7100540E78.
+    static bool fn_71001AE8A8(mm::mtl::FixedVector<const char*, 128>& names, GF_ASSET_HANDLE* handle,
+                              const char* name);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does:
+    // the asset's resource whose asset name equals `name` (AssetPackInfo::fn_71001B1B30), nullptr for an unknown
+    // handle. Callers: GfComEffectCaster::setup, setupEfTail, fn_7100540E78.
+    static GfAssetResource* fn_71001AE9D0(GF_ASSET_HANDLE* handle, const char* name);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does:
+    // whether one of the asset's resource names contains `name` (AssetPackInfo::fn_71001B3624), false for an
+    // unknown handle. Callers: fn_71002C5208, GfGameScene::fn_71002C56D4.
+    static bool fn_71001AF824(GF_ASSET_HANDLE* handle, const char* name);
 
     // the asset packs' records, one per handle: a handle's low ten bits index them (the name is not the original's)
     ml::fixed_size_alloc_inside<AssetPackInfo, 1024> m_packInfos;
-    unsigned char pad_260B8[0x169C0];
+    // handles updateCheckLoading walks (it moves them to m_loadedHandles; updateCheckCacheReload moves them back)
+    // (the name is not the original's)
+    mm::mtl::FixedList<GF_ASSET_HANDLE*, 1024> m_loadingHandles;
+    // a third list of 1024 eight-byte elements, its element type not yet read from finalize (the name is not the
+    // original's)
+    mm::mtl::FixedList<GF_ASSET_HANDLE*, 1024> m_handles2A8D8;
+    // handles updateCheckLoading has finished loading (updateCheckCacheReload walks them) (the name is not the
+    // original's)
+    mm::mtl::FixedList<GF_ASSET_HANDLE*, 1024> m_loadedHandles;
+    unsigned char pad_33918[0x8];
+    // the loaded asset packs (releaseRefResource and isExistSameAsset walk them; updateCheckDestroy and
+    // updateCheckCacheReload erase from them: the erase's offsets prove 2048 nodes) (the name is not the original's)
+    mm::mtl::FixedList<GfAssetPack*, 2048> m_assetPacks;
+    // 32 four-byte elements updateCheckDestroy walks and clears, element type not yet read (the name is not the
+    // original's)
+    mm::mtl::FixedList<unsigned int, 32> m_list3C940;
     // made by the constructor (the name is not the original's)
     GfSlotMapping* m_slotMapping;
-    unsigned char pad_3CA80[0x248];
+    // the listeners callEventAssetPack calls (1.0.0's addEvent/removeEvent fill it; 3.0.1 dropped both) (the name is
+    // not the original's)
+    mm::mtl::FixedList<IGfAssetEvent*, 32> m_events;
+    bool m_initialized;  // initialize sets it last (1.0.0 has isInitialized()) (the name is not the original's)
+    unsigned char pad_3CCC1[0x7];
 };
 }  // namespace gf
 

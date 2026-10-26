@@ -33,6 +33,8 @@ public:
 class WinView : public ::ml::WorkObj, public ::ml::FontLayer {
 public:
     static WinView* getView(bool sub);
+    // registers a work-event listener with the view (GfAssetManager::initialize registers itself, false)
+    void attachWorkEvent(IWorkEvent* event, bool flag);
     // what each bank of m_renderInfo holds (the field names are not the original's)
     struct RENDER_INFO {
         mm::Pnt<int> m_size;      // 0x00 the constructor sets the root's width and height

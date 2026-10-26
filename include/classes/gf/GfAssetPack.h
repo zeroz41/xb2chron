@@ -31,8 +31,15 @@ public:
 // a pack's key: its type and its name's CRC (1.0.0's AssetPackInfo::isExistAssetPack(AssetPackValue) names the type;
 // the field names are not the original's)
 struct AssetPackValue {
-    GfAssetType m_type;
-    unsigned int m_hash;
+    bool operator==(const AssetPackValue& other) const { return m_key == other.m_key; }
+
+    union {
+        struct {
+            GfAssetType m_type;
+            unsigned int m_hash;
+        };
+        unsigned long m_key;
+    };
 };
 
 // the files of one asset pack (1.0.0's symbols name the class and its methods; the field names are not the
@@ -106,6 +113,9 @@ public:
     void updateCacheCount();
     void setTimeout();
     bool isExistSameAsset(const GfAssetPack& other) const;
+    // drops the pack's reference to a resource; true when the pack held it (GfAssetManager::releaseRefResource stops
+    // at the first such pack)
+    bool releaseRefResource(void* resource);
 
     unsigned char pad_c[0x4];
     AssetPackValue m_value;  // calcAssetPackValue's for the pack's name and type
