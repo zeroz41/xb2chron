@@ -86,15 +86,16 @@ bool GfMenuElementComboAdapter::update_ComboRouteAttrPtn() {
     return true;
 }
 
-// update_ComboRoutePassedDisp (0x710033C3F8): not identical yet (session12 w4 wip: the switch's cases 1 and 2 come
-// out as selects, the original branches to its shared "false")
+// update_ComboRoutePassedDisp (0x710033C3F8): not identical yet: the inner route tests of cases 1 and 2 come out
+// as returned bitmap values, the original branches on them to its shared true/false
 
 bool GfMenuElementComboAdapter::update_ComboRouteCurrentDisp() {
     int current = GfMenuReference::getElementComboRootCurrent();
     return m_routeNo == current;
 }
 
-// createReferenceRoute (0x710033C4F8): not identical yet (the inlined ReferenceRouteConverter::getElementComboId, below)
+// createReferenceRoute (0x710033C4F8): not identical yet (3 words: the inlined getElementComboId's zero for an
+// invalid target handle is set before the compare, the original sets it in the shared zero block)
 
 void GfMenuElementComboAdapter::update(const fw::UpdateInfo& info) {
     if (m_converter != nullptr) {
@@ -119,7 +120,24 @@ unsigned int GfMenuElementComboAdapter::ReferenceRouteConverter::getElementCombo
     return m_routeNo;
 }
 
-// ReferenceRouteConverter::getElementComboId (0x710033C6C8): not identical yet (session12 w4 wip: one branch -
-// the enemy-less case returns through its own zero, the build reuses the null pointer)
+// inline: createReferenceRoute inlines it (devirtualized; its cost needs the inline hint's threshold); the
+// table keeps the out-of-line copy
+inline unsigned int GfMenuElementComboAdapter::ReferenceRouteConverter::getElementComboId() {
+    const GfMenuReference::ElemComboRoot* root = GfMenuReference::getElementComboRootInfo(m_routeNo);
+    GF_OBJ_HANDLE* handle = GfMenuManager::getTargetObjHandle();
+    if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        GfObjAcc acc(handle);
+        if (acc.getType() == 5) {
+            GfObjProperty* property = GfObjUtil::getProperty(handle);
+            if (property != nullptr) {
+                GfObjPropertyEnemy* enemy = property->getEnemy();
+                if (enemy != nullptr && enemy->m_elementComboId != 0 && enemy->m_elementComboLv != 0) {
+                    return root->m_comboId;
+                }
+            }
+        }
+    }
+    return 0;
+}
 
 }  // namespace gf
