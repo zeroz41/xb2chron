@@ -29,6 +29,7 @@ public:
         float m_infoWait;   // seconds StateDispInfo waits after a skill
         unsigned char pad_8[0xC];
         float m_totalWait;  // seconds StateTotalNext waits
+        float m_chainAttackWait;  // GfMenuObjBladeChange::startChainAttack's event delay (the name is not the original's)
     };
     static const ParamMenu* getParamMenu();
     // what startCtrl hands UICtrlManager: the methods to add (m_methods' bits) and how long they run
