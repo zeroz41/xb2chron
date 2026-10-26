@@ -155,6 +155,9 @@ public:
     void setMatrix(unsigned int handle, const mm::Mat44& mtx);
     // GfComEffectCaster::setCaster passes its caster and 1.0f (the names of the parameters are not the original's)
     void setParam(unsigned int handle, EffectCasterBase* caster, float rate);
+    // BladeChangeManager::UpdateProc passes the blade's position and mm::Vec3::unit (the names of the parameters are
+    // not the original's)
+    void setParam(unsigned int handle, const mm::Vec3& pos, const mm::Vec3& scale);
     int getDeadFlag(unsigned int handle);
     bool isLoop(void* data) const;
     bool containsCamAxis(void* data) const;
