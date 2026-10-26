@@ -16,7 +16,8 @@ public:
     virtual ~IQuestEvent() {}  // slot 0 (inline: no unit has an out-of-line copy; GfGameManager's destructor calls none)
     virtual void qevAchievementCount(gf::QuestOrderParam const&) {}  // slot 2
     virtual void qevOrderQuest(gf::QuestOrderParam const&) = 0;  // slot 3
-    virtual void qevCompleteQuest(gf::QuestCompleteParam const&);  // slot 4
+    // inline: GfQuestTarget's table holds the one copy, among that unit's weak functions
+    virtual void qevCompleteQuest(gf::QuestCompleteParam const&) {}  // slot 4
     virtual void qevPreCompleteQuest(gf::QuestPreCompleteParam const&) {}  // slot 5
     virtual void qevChangeTaskState(gf::QuestTaskParam const&) {}  // slot 6
     virtual void qevLoadTaskState(unsigned int) {}  // slot 7
