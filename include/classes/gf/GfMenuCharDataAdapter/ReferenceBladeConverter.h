@@ -8,7 +8,9 @@ namespace gf {
 // table 0x7100B5B8D8
 class GfMenuCharDataAdapter::ReferenceBladeConverter : public ::gf::GfMenuCharDataAdapter::IConverter {
 public:
-    virtual void getCharData(unsigned char&, unsigned int&);  // slot 0
+    ReferenceBladeConverter(unsigned int index) : m_index(index) {}
+    virtual void getCharData(unsigned char& objType, unsigned int& objId);  // slot 0
+    unsigned int m_index;  // GfMenuReference::getReferenceBladeID's (the name is not the original's)
 };
 }  // namespace gf
 

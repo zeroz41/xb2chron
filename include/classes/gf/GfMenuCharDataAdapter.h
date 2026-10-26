@@ -11,6 +11,7 @@ namespace gf { class GfMenuBladeList; }
 namespace gf { class GfMenuDriverList; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfMenuEnemyList; }
+namespace gf { class GfMenuIDList; }
 
 namespace gf {
 // a base of gf::GfMenuCharDataAdapter no evidence names yet
@@ -66,11 +67,22 @@ public:
     void setSlotList(GfMenuBladeList* list);
     static GfMenuCharDataAdapter* create(unsigned int handle, unsigned int type, unsigned char objType,
                                          unsigned int objId, bool changed);
+    // an adapter on the handle for the object the converter names; the adapter owns the converter (1.0.0 has it
+    // out of line, 3.0.1's createFrom* inline it)
+    static GfMenuCharDataAdapter* createFromCoverter(unsigned int handle, unsigned int kind, IConverter* converter,
+                                                     bool changed);
+    static GfMenuCharDataAdapter* createFromGfObj(unsigned int handle, unsigned int kind, GF_OBJ_HANDLE* object,
+                                                  bool changed);
+    static GfMenuCharDataAdapter* createFromPartyDriver(unsigned int handle, unsigned int kind, unsigned char party,
+                                                        bool changed);
+    // the blade in that (back) slot of the party driver's; flag: the slot getters'
+    static GfMenuCharDataAdapter* createFromPartyBlade(unsigned int handle, unsigned int kind, unsigned char party,
+                                                       int slot, bool changed, bool back, bool flag);
     // an adapter on the handle for an enemy list's entry at an index
-    static void createFromEnemyList(unsigned int handle, unsigned int kind, const GfMenuEnemyList* list, int index,
+    static GfMenuCharDataAdapter* createFromEnemyList(unsigned int handle, unsigned int kind, const GfMenuEnemyList* list, int index,
                                     bool);
     // an adapter on the handle for a driver list's entry at an index
-    static void createFromDriverList(unsigned int handle, unsigned int kind, const GfMenuDriverList* list, int index,
+    static GfMenuCharDataAdapter* createFromDriverList(unsigned int handle, unsigned int kind, const GfMenuDriverList* list, int index,
                                      bool);
     // an adapter on the handle for a blade list's entry at an index
     static GfMenuCharDataAdapter* createFromBladeList(unsigned int handle, unsigned int kind, const GfMenuBladeList* list,
@@ -81,9 +93,18 @@ public:
     // reads the entry's GfDataBlade::getCreator, creates the adapter (create(handle, kind, 3, ..)) and stores the
     // object at the adapter's 0x70. Callers: GfMenuObjBladeRelease::initialize ("IMG_list_bl_info_dr@%02d", kind 3),
     // GfMenuObjBladeSet2::setupBldeList, GfMenuObjMercenaryForm::initialize.
-    static void fn_710033A480(unsigned int handle, unsigned int kind, const GfMenuBladeList* list, int index, bool);
-    static void createFromReferenceBlade(unsigned int handle, unsigned int, unsigned int index, bool);
-    static void createFromReferenceDriver(unsigned int handle, unsigned int, unsigned int index, bool);
+    static GfMenuCharDataAdapter* fn_710033A480(unsigned int handle, unsigned int kind, const GfMenuBladeList* list,
+                                                int index, bool changed);
+    // an adapter on the handle for an enemy book list's entry at an index (its base enemy)
+    static GfMenuCharDataAdapter* createFromEnBookList(unsigned int handle, unsigned int kind, const GfMenuIDList* list,
+                                                       int index, bool changed);
+    static GfMenuCharDataAdapter* createFromReferenceBlade(unsigned int handle, unsigned int kind, unsigned int index,
+                                                           bool changed);
+    static GfMenuCharDataAdapter* createFromReferenceDriver(unsigned int handle, unsigned int kind, unsigned int index,
+                                                            bool changed);
+    // the driver that owns the referenced blade (3.0.1: GfMenuReference::fn_7100367BD8's record)
+    static GfMenuCharDataAdapter* createFromReferenceBladeOwnerDriver(unsigned int handle, unsigned int kind,
+                                                                      unsigned int blade, bool changed);
     unsigned int getBL_FieldSkillIndex(const DataParamAcc& acc);
     unsigned int getBL_SkillIndex(const DataParamAcc& acc);
     // the type table's update_*, in its order

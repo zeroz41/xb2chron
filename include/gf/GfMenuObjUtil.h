@@ -197,6 +197,9 @@ public:
     static bool isEnemyBoss(gf::GF_OBJ_HANDLE* handle);
     static gf::GF_OBJ_HANDLE* getLeaderBladeHandle(bool);
     static gf::GF_OBJ_HANDLE* getBladeHandleFromPartySlot(unsigned int driver, int slot, bool);
+    // the blade id in that slot (back slot) of the party driver's (GfMenuCharDataAdapter::PartyBladeConverter)
+    static unsigned int getBladeIDFromPartySlot(unsigned int driver, int slot, bool);
+    static unsigned int getBladeIDFromPartyBackSlot(unsigned int driver, int slot, bool);
     // a combo's effect text, and its effect (3.0.1's always 1) (GfMenuElementComboAdapter's update_*)
     static ui::UIStr getElementComboEffectName(unsigned int combo);
     static unsigned char getElementComboEffect(unsigned int combo);

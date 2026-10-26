@@ -4,6 +4,18 @@
 #include "classes/gf/GfMenuCharDataAdapter/GfObjConverter.h"
 #include "classes/gf/GfMenuCharDataAdapter/PartyDriverConverter.h"
 #include "classes/gf/GfMenuCharDataAdapter/PartyBladeConverter.h"
+#include "classes/gf/GfMenuCharDataAdapter/DriverListConverter.h"
+#include "classes/gf/GfMenuCharDataAdapter/BladeListConverter.h"
+#include "classes/gf/GfMenuCharDataAdapter/EnemyListConverter.h"
+#include "classes/gf/GfMenuCharDataAdapter/EnBookListConverter.h"
+#include "classes/gf/GfMenuCharDataAdapter/ReferenceDriverConverter.h"
+#include "classes/gf/GfMenuCharDataAdapter/ReferenceBladeConverter.h"
+#include "classes/gf/GfMenuCharDataAdapter/ReferenceBladeOwnerDriverConverter.h"
+#include "classes/gf/TUnk_B5B938.h"
+#include "classes/gf/GfGameParty.h"
+#include "classes/gf/GfBdatChrEnArrange.h"
+#include "gf/GfObjAcc.h"
+#include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/gf/DataParamAcc.h"
 #include "classes/gf/GfMenuBladeList.h"
 #include "classes/gf/GfAllocator.h"
@@ -751,6 +763,116 @@ bool GfMenuCharDataAdapter::update_EN_RewardGold(const DataParamAcc& acc) {
     return false;
 }
 
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromCoverter(unsigned int handle, unsigned int kind,
+                                                                 IConverter* converter, bool changed) {
+    unsigned char objType;
+    unsigned int objId;
+    converter->getCharData(objType, objId);
+    GfMenuCharDataAdapter* adapter = create(handle, kind, objType, objId, changed);
+    if (adapter != nullptr) {
+        adapter->m_converter = converter;
+    }
+    return adapter;
+}
+
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromGfObj(unsigned int handle, unsigned int kind,
+                                                              GF_OBJ_HANDLE* object, bool changed) {
+#line 962
+    GfObjConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfObjConverter(object);
+    return createFromCoverter(handle, kind, converter, changed);
+}
+
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromPartyDriver(unsigned int handle, unsigned int kind,
+                                                                    unsigned char party, bool changed) {
+#line 969
+    PartyDriverConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        PartyDriverConverter(party);
+    return createFromCoverter(handle, kind, converter, changed);
+}
+
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromPartyBlade(unsigned int handle, unsigned int kind,
+                                                                   unsigned char party, int slot, bool changed,
+                                                                   bool back, bool flag) {
+#line 976
+    PartyBladeConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        PartyBladeConverter(party, slot, back, flag);
+    return createFromCoverter(handle, kind, converter, changed);
+}
+
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromDriverList(unsigned int handle, unsigned int kind,
+                                                                   const GfMenuDriverList* list, int index,
+                                                                   bool changed) {
+    if (handle == 0) {
+        return nullptr;
+    }
+#line 985
+    DriverListConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        DriverListConverter(list, index);
+    return createFromCoverter(handle, kind, converter, changed);
+}
+
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromBladeList(unsigned int handle, unsigned int kind,
+                                                                  const GfMenuBladeList* list, int index,
+                                                                  bool changed) {
+#line 992
+    BladeListConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        BladeListConverter(list, index);
+    return createFromCoverter(handle, kind, converter, changed);
+}
+
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromEnemyList(unsigned int handle, unsigned int kind,
+                                                                  const GfMenuEnemyList* list, int index,
+                                                                  bool changed) {
+#line 999
+    EnemyListConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        EnemyListConverter(list, index);
+    return createFromCoverter(handle, kind, converter, changed);
+}
+
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromEnBookList(unsigned int handle, unsigned int kind,
+                                                                   const GfMenuIDList* list, int index,
+                                                                   bool changed) {
+#line 1006
+    EnBookListConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        EnBookListConverter(list, index);
+    return createFromCoverter(handle, kind, converter, changed);
+}
+
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromReferenceDriver(unsigned int handle, unsigned int kind,
+                                                                        unsigned int index, bool changed) {
+#line 1020
+    ReferenceDriverConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        ReferenceDriverConverter(index);
+    return createFromCoverter(handle, kind, converter, changed);
+}
+
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromReferenceBlade(unsigned int handle, unsigned int kind,
+                                                                       unsigned int index, bool changed) {
+#line 1027
+    ReferenceBladeConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        ReferenceBladeConverter(index);
+    return createFromCoverter(handle, kind, converter, changed);
+}
+
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::fn_710033A480(unsigned int handle, unsigned int kind,
+                                                            const GfMenuBladeList* list, int index, bool changed) {
+#line 1055
+    TUnk_B5B938* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5B938(list, index);
+    return createFromCoverter(handle, kind, converter, changed);
+}
+
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromReferenceBladeOwnerDriver(unsigned int handle,
+                                                                                  unsigned int kind,
+                                                                                  unsigned int blade, bool changed) {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return nullptr;
+    }
+#line 1082
+    ReferenceBladeOwnerDriverConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        ReferenceBladeOwnerDriverConverter(blade);
+    return createFromCoverter(handle, kind, converter, changed);
+}
+
 void GfMenuCharDataAdapter::changeCharData(unsigned char objType, unsigned int objId) {
     if (m_objType != objType) {
         m_objType = objType;
@@ -807,6 +929,132 @@ unsigned int GfMenuCharDataAdapter::getBL_SkillIndex(const DataParamAcc& acc) {
         }
     }
     return 3;
+}
+
+void GfMenuCharDataAdapter::GfObjConverter::getCharData(unsigned char& objType, unsigned int& objId) {
+    GfObjAcc acc(m_handle);
+    objType = acc.getType();
+    objId = acc.getBdatId();
+}
+
+GfMenuCharDataAdapter::GfObjConverter* GfMenuCharDataAdapter::GfObjConverter::fromGfObj() {
+    return this;
+}
+
+GfMenuCharDataAdapter::PartyDriverConverter* GfMenuCharDataAdapter::IConverter::fromPartyDriver() {
+    return nullptr;
+}
+
+GfMenuCharDataAdapter::PartyBladeConverter* GfMenuCharDataAdapter::IConverter::fromPartyBlade() {
+    return nullptr;
+}
+
+GfMenuCharDataAdapter::GfObjConverter* GfMenuCharDataAdapter::IConverter::fromGfObj() {
+    return nullptr;
+}
+
+void GfMenuCharDataAdapter::PartyDriverConverter::getCharData(unsigned char& objType, unsigned int& objId) {
+    GfObjAcc acc(GfGameParty::getHandleDriver(m_party, 0));
+    objType = acc.getType();
+    objId = acc.getBdatId();
+}
+
+GfMenuCharDataAdapter::PartyDriverConverter* GfMenuCharDataAdapter::PartyDriverConverter::fromPartyDriver() {
+    return this;
+}
+
+void GfMenuCharDataAdapter::PartyBladeConverter::getCharData(unsigned char& objType, unsigned int& objId) {
+    unsigned int party = getParty();
+    bool back = m_back;
+    objType = 4;
+    if (back) {
+        objId = GfMenuObjUtil::getBladeIDFromPartyBackSlot(party, m_slot, m_flag);
+    } else {
+        objId = GfMenuObjUtil::getBladeIDFromPartySlot(party, m_slot, m_flag);
+    }
+}
+
+GfMenuCharDataAdapter::PartyBladeConverter* GfMenuCharDataAdapter::PartyBladeConverter::fromPartyBlade() {
+    return this;
+}
+
+void GfMenuCharDataAdapter::DriverListConverter::getCharData(unsigned char& objType, unsigned int& objId) {
+    int index = m_index;
+    if (index == -1) {
+        index = m_list->getIndex(true);
+    }
+    if (index != -1 && index < m_list->getSize()) {
+        objType = 3;
+        objId = m_list->getContents(m_list->getPageIndex(index)).m_driver;
+    }
+}
+
+void GfMenuCharDataAdapter::BladeListConverter::getCharData(unsigned char& objType, unsigned int& objId) {
+    int index = m_index;
+    if (index == -1) {
+        index = m_list->getIndex(true);
+    }
+    if (index != -1 && index < m_list->getSize()) {
+        objType = 4;
+        objId = m_list->getContents(m_list->getPageIndex(index)).m_blade;
+    }
+}
+
+void GfMenuCharDataAdapter::EnemyListConverter::getCharData(unsigned char& objType, unsigned int& objId) {
+    int index = m_index;
+    if (index == -1) {
+        index = m_list->getIndex(true);
+    }
+    if (index != -1 && index < m_list->getSize()) {
+        objType = 5;
+        objId = m_list->getContents(m_list->getPageIndex(index)).m_enemyId;
+    }
+}
+
+void GfMenuCharDataAdapter::EnBookListConverter::getCharData(unsigned char& objType, unsigned int& objId) {
+    int index = m_index;
+    if (index == -1) {
+        index = m_list->getIndex(true);
+    }
+    if (index != -1 && index < m_list->getSize()) {
+        unsigned int id = m_list->getContents(m_list->getPageIndex(index)).m_id;
+        objType = 5;
+        objId = mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys()->getBTL_EnBookBaseEnemyID(id);
+    }
+}
+
+void GfMenuCharDataAdapter::ReferenceDriverConverter::getCharData(unsigned char& objType, unsigned int& objId) {
+    objType = 3;
+    objId = GfMenuReference::getReferenceDriverID(m_index);
+}
+
+void GfMenuCharDataAdapter::ReferenceBladeConverter::getCharData(unsigned char& objType, unsigned int& objId) {
+    objType = 4;
+    objId = GfMenuReference::getReferenceBladeID(m_index);
+}
+
+void TUnk_B5B938::getCharData(unsigned char& objType, unsigned int& objId) {
+    int index = m_index;
+    if (index == -1) {
+        index = m_list->getIndex(true);
+    }
+    if (index != -1 && index < m_list->getSize()) {
+        objType = 3;
+        objId = GfDataBlade::getCreator(m_list->getContents(m_list->getPageIndex(index)).m_blade);
+    }
+}
+
+void GfMenuCharDataAdapter::ReferenceBladeOwnerDriverConverter::getCharData(unsigned char& objType,
+                                                                            unsigned int& objId) {
+    objType = 3;
+    objId = 0;
+    if (GfMenuObjUtil::fn_710048FD30(3)) {
+        const GfMenuReference::BladeOwner* owner = GfMenuReference::fn_7100367BD8(m_blade);
+        if (owner != nullptr) {
+            objType = 3;
+            objId = owner->m_driver;
+        }
+    }
 }
 
 }  // namespace gf

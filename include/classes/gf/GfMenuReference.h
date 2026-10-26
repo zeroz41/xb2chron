@@ -64,6 +64,19 @@ public:
     static const ui::UIStr& getReferenceString(unsigned short index);
     static unsigned int getReferenceDriverID(unsigned int index);
     static unsigned int getReferenceBladeID(unsigned int index);
+    // a 0x10-byte record of the three at 0x4CF28 of the instance: a driver and a blade (the names are not the
+    // original's; GfMenuCharDataAdapter::ReferenceBladeOwnerDriverConverter shows the driver)
+    struct BladeOwner {
+        unsigned int m_driver;
+        unsigned int m_blade;
+        unsigned char pad_8[0x8];
+    };
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's
+    // ReferenceBladeOwnerDriverConverter::getCharData read GfDataBlade::getSetDriver(getReferenceBladeID(index)) there).
+    // A member because it sits among GfMenuReference's accessors and reads its singleton. What it does: when
+    // GfMenuObjUtil::fn_710048FD30(3) holds and the singleton exists, the first of the three records at 0x4CF28
+    // (0x10 apart) whose blade (+4) is the argument, else nullptr.
+    static const BladeOwner* fn_7100367BD8(unsigned int blade);
     // GfMenuFieldSkill::start sets slot 5 to 0 (the parameter names are not the original's)
     static void setReferenceBladeID(unsigned int index, unsigned int blade);
     static unsigned int getReferenceTeamID();  // GfMenuMercenariesAdapter::ReferenceTeamConverter's team

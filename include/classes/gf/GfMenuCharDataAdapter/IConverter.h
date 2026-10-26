@@ -9,9 +9,9 @@ namespace gf {
 class GfMenuCharDataAdapter::IConverter {
 public:
     virtual void getCharData(unsigned char& objType, unsigned int& objId) = 0;  // slot 0
-    virtual GfObjConverter* fromGfObj() { return nullptr; }  // slot 1
-    virtual PartyDriverConverter* fromPartyDriver() { return nullptr; }  // slot 2
-    virtual PartyBladeConverter* fromPartyBlade() { return nullptr; }  // slot 3
+    virtual GfObjConverter* fromGfObj();  // slot 1
+    virtual PartyDriverConverter* fromPartyDriver();  // slot 2
+    virtual PartyBladeConverter* fromPartyBlade();  // slot 3
 };
 }  // namespace gf
 
