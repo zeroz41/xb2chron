@@ -117,6 +117,14 @@ public:
     static unsigned int getExpUsed(unsigned int driver);  // (appended by chardata)
     // takes the blade off the driver it is set to (GfGameUtil::execActivateReserverForBlade)
     static void unsetBlade(unsigned int blade);
+    // 1.0.0's setScenarioMask (0x71002A9D44, called by 1.0.0's pt setDriverAway with its two script arguments):
+    // the flag byte at 0x59C of the driver's SDataDriver (3.0.1 adds drivers 0x11-0x19)
+    static void setScenarioMask(unsigned int driver, bool mask);
+    // Placeholder name: 1.0.0's pt setDriverEnable calls GfDataDriver::setActivateReserver(driver, x) here, 3.0.1
+    // passes three arguments, so the name is not proven. A GfDataDriver member because its address lies among
+    // GfDataDriver's functions. What it does: ScriptPlayText's pt setDriverEnable passes (2, -1, false) when
+    // driver 2 is activate-unuse. The types of the last two are inferred from the constants.
+    static void fn_7100243934(unsigned int driver, int blade, bool flag);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
     // GfDataDriver's functions and it reads a driver's data the way getSDataDriver finds it (DLC rows 0x11-0x19 from
     // GfDataManager::fn_7100224A10, else the game data's rows). What it does: false for driver 0, else whether the

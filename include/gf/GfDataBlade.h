@@ -42,6 +42,9 @@ public:
     }
     // the blade's creator (a 16-bit field of its SDataGame entry, 0x8A4 bytes each, at 0x5A2E)
     static int getCreator(unsigned int blade);
+    // 1.0.0's setCreator (0x71002959B0, called by 1.0.0's pt setBladeCreator with its two script arguments); it
+    // sits next to getCreator and stores that 16-bit field (and a second copy for blade 1050)
+    static void setCreator(unsigned int blade, unsigned int creator);
     static unsigned int getBladeID(unsigned int index);  // the blade in list slot index (0..421), 0 for none
     // fills list with the party's blades (SCOM_ACHIEV_INC::createParty and createCrystal)
     static void getListPartyAll(mm::mtl::FixedVector<unsigned short, 422>& list);
@@ -115,6 +118,12 @@ public:
     static void setHomuriNameHikari(bool hikari);
     static bool isHomuriNameHikari();  // the flag setHomuriNameHikari sets (local flag 0x89FB, 1 bit)
     static bool isActivateUnuse(unsigned int blade);
+    static void setActivateUnuse(unsigned int blade);  // (symbols)
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A GfDataBlade member because its address
+    // lies in GfDataBlade's unit. What it does: returns one of three blade ids (a table at 0x71009BA374) by which
+    // of three SDataGame shorts (0x7CBC, 0x8560, 0x8E04) is 2, else 0; ScriptPlayText's pt setDriverEnable takes
+    // the returned blade's mercenary team off its mission for driver 4.
+    static unsigned int fn_7100253C98();  // (it loads the table's 16-bit id; callers use all 32 bits)
     static bool isUnselect(unsigned int blade);
     // the driver the blade is set to, 0 for none
     static unsigned int getSetDriver(unsigned int blade);

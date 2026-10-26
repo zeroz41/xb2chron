@@ -1,5 +1,5 @@
 // Script VM plugins of this unit (their tables, entries and Regist functions). The entries are static and nothing
-// names them: they keep placeholder fn_ names. Plugins not written yet: pt (and
+// names them: they keep placeholder fn_ names. Not written yet: pt.setDriverEnable (declared only) (and
 // ocThreadRegist).
 #include "vm/yvm2.h"
 #include "classes/mm/mtl/Singleton.h"
@@ -28,6 +28,7 @@
 #include "classes/event/UIManager.h"
 #include "classes/event/VoiceManager.h"
 #include "classes/event/VolumeManager.h"
+#include "classes/gf/GfBdatChrDr.h"
 #include "classes/gf/GfEvent.h"
 #include "classes/gf/GfFieldGmkTutorial.h"
 #include "classes/gf/GfFieldTime.h"
@@ -36,6 +37,8 @@
 #include "classes/gf/GfGameEvent.h"
 #include "classes/gf/GfGameFlag.h"
 #include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfGameMercenaries.h"
+#include "classes/gf/GfGameParty.h"
 #include "classes/gf/GfGameScene.h"
 #include "classes/gf/GfManager.h"
 #include "classes/gf/GfMenuFade.h"
@@ -51,12 +54,19 @@
 #include "classes/gf/GfSequentialPlay.h"
 #include "classes/gf/GfWeapon.h"
 #include "classes/gf/SCOM_ADD_MONEY.h"
+#include "classes/gf/SCOM_CURRENT_BLADE.h"
+#include "classes/gf/SCOM_PARTY_ADD.h"
 #include "classes/gf/SCOM_SET_FLAG.h"
+#include "classes/gf/SCOM_SOLO_REX.h"
 #include "classes/gf/ScriptCamera.h"
 #include "classes/gf/ShipRollPlugin.h"
 #include "classes/gmk/GmkElevator.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "gf/GfDataBlade.h"
+#include "gf/GfDataDriver.h"
+#include "gf/GfDataHana.h"
+#include "gf/GfDataMercenaries.h"
+#include "gf/GfGameUtil.h"
 #include "gf/GfItemUtil.h"
 #include "gf/GfMenuObjUtil.h"
 #include "gf/GfPlayFactory.h"
@@ -1402,6 +1412,185 @@ static VMPluginFunc s_gmkPlugin[] = {
 
 void pluginGmkRegist() {
     vmPluginRegist("gmk", s_gmkPlugin);
+}
+
+// pt.setBladeEnable
+static int fn_7100669814(VMThread* pThread) {
+    unsigned int blade = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    unsigned int driver = 0;
+    if (!vmArgOmitChk(pThread, 2)) {
+        driver = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    }
+    if (driver == 11) {
+        driver = 1;
+    }
+    int slot = -1;
+    if (!gf::GfGameManager::isClearGame() && gf::GfDataBlade::isRegularBlade(blade)) {
+        bool regular = gf::GfDataBlade::isRegularBlade(gf::GfDataDriver::getBlade(driver, 0));
+        if (blade == 1003) {
+            slot = 4;
+        } else {
+            slot = regular ? -1 : 0;
+        }
+    }
+    unsigned int creator = gf::GfDataBlade::getCreator(blade);
+    if ((gf::GfDataBlade::isRareBlade(blade) && !gf::GfDataBlade::isDummyBlade(blade) && creator != 0 &&
+         gf::GfDataDriver::isActivateUnuse(creator) && !gf::GfDataBlade::isEnableEngageRex(blade) &&
+         !(blade == 1042 && creator == 8 && gf::GfDataBlade::fn_7100231884() == 1021)) ||
+        (gf::GfDataHana::isValid(blade) &&
+         (gf::GfDataBlade::fn_71002383C8(1005) || gf::GfDataBlade::fn_71002383C8(1006) ||
+          gf::GfDataBlade::fn_71002383C8(1007)))) {
+        gf::SCOM_PARTY_ADD::removeBlade(blade, true, true);
+    } else {
+        gf::SCOM_PARTY_ADD::addBlade(blade, driver, slot);
+    }
+    return 0;
+}
+
+// pt.setBladeDisable
+static int fn_7100669984(VMThread* pThread) {
+    unsigned int blade = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    // an omitted second argument counts as true
+    if (vmArgOmitChk(pThread, 2) || vmArgBoolGet(2, vmArgPtrGet(pThread, 2))) {
+        gf::SCOM_PARTY_ADD::removeBlade(blade, true, true);
+    } else {
+        gf::SCOM_PARTY_ADD::removeBlade(blade, false, true);
+    }
+    return 0;
+}
+
+// pt.setDriverEnable: not identical yet (wip/pt_full.cpp; the original hoists `mov w0, w19` above `cbz w20`)
+static int fn_7100669A08(VMThread* pThread);
+
+// pt.setDriverDisable
+static int fn_7100669BA4(VMThread* pThread) {
+    unsigned int driver = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    // an omitted second argument counts as true
+    if (vmArgOmitChk(pThread, 2) || vmArgBoolGet(2, vmArgPtrGet(pThread, 2))) {
+        gf::SCOM_PARTY_ADD::removeDriver(driver, true);
+    } else {
+        gf::SCOM_PARTY_ADD::removeDriver(driver, false);
+    }
+    return 0;
+}
+
+// pt.setDriverAway
+static int fn_7100669C20(VMThread* pThread) {
+    unsigned int driver = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    bool mask = vmArgBoolGet(2, vmArgPtrGet(pThread, 2));
+    gf::GfDataDriver::setScenarioMask(driver, mask);
+    return 0;
+}
+
+// pt.startBattle
+static int fn_7100669C80(VMThread* pThread) {
+    bool flag = true;
+    if (!vmArgOmitChk(pThread, 1)) {
+        flag = vmArgBoolGet(1, vmArgPtrGet(pThread, 1));
+    }
+    gf::GfPlayFactory::createBattleStart(flag);
+    return 0;
+}
+
+// pt.setBladeCreator
+static int fn_7100669CD8(VMThread* pThread) {
+    unsigned int blade = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    unsigned int creator = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+    gf::GfDataBlade::setCreator(blade, creator);
+    return 0;
+}
+
+// pt.setCurrentBlade
+static int fn_7100669D34(VMThread* pThread) {
+    unsigned int blade = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    // Pyra and Mythra (1001, 1002) stay as they are once the game is cleared
+    if (gf::GfGameManager::isClearGame() && blade >= 1001 && blade <= 1003 &&
+        (gf::GfDataBlade::fn_71002383C8(1001) || gf::GfDataBlade::fn_71002383C8(1002))) {
+        return 0;
+    }
+    gf::SCOM_CURRENT_BLADE::create(blade);
+    return 0;
+}
+
+// pt.setHomuraHikari
+static int fn_7100669D9C(VMThread* pThread) {
+    bool homura = vmArgBoolGet(1, vmArgPtrGet(pThread, 1));
+    gf::GfGameUtil::changeHikariCurrent(!homura);
+    return 0;
+}
+
+// pt.setMaxGauge
+static int fn_7100669DD0(VMThread* pThread) {
+    gf::GfGameUtil::setMaxPartyGauge();
+    return 0;
+}
+
+// pt.setSoloRex
+static int fn_7100669DE8(VMThread* pThread) {
+    bool solo = vmArgBoolGet(1, vmArgPtrGet(pThread, 1));
+    gf::SCOM_SOLO_REX::create(solo);
+    return 0;
+}
+
+// pt.setPartyChange10010
+static int fn_7100669E1C(VMThread* pThread) {
+    gf::GfGameUtil::setPartyChange10010();
+    return 0;
+}
+
+// pt.setPartyChange10020
+static int fn_7100669E34(VMThread* pThread) {
+    gf::GfGameUtil::setPartyChange10020();
+    return 0;
+}
+
+// pt.changeKubira
+static int fn_7100669E4C(VMThread* pThread) {
+    gf::GfGameUtil::fn_71002EBC90();
+    return 0;
+}
+
+// pt.setBladeLeader
+static int fn_7100669E64(VMThread* pThread) {
+    unsigned int blade = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    if (gf::GfDataBlade::isActivateUnuse(blade)) {
+        unsigned int driver = gf::GfGameParty::getDriverBdatId(0, 0);
+        gf::GfDataBlade::setCreator(blade, driver);
+        gf::GfDataBlade::setEnableEngageRex(blade, false);
+        gf::SCOM_PARTY_ADD::addBlade(blade, driver, -1);
+    }
+    return 0;
+}
+
+// pt.setIraParty
+static int fn_7100669ED8(VMThread* pThread) {
+    int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
+    gf::SCOM_PARTY_ADD::fn_7100562048(id);
+    return 0;
+}
+
+static VMPluginFunc s_ptPlugin[] = {
+    {"setBladeEnable", fn_7100669814},
+    {"setBladeDisable", fn_7100669984},
+    {"setDriverEnable", fn_7100669A08},
+    {"setDriverDisable", fn_7100669BA4},
+    {"setDriverAway", fn_7100669C20},
+    {"startBattle", fn_7100669C80},
+    {"setBladeCreator", fn_7100669CD8},
+    {"setCurrentBlade", fn_7100669D34},
+    {"setHomuraHikari", fn_7100669D9C},
+    {"setMaxGauge", fn_7100669DD0},
+    {"setSoloRex", fn_7100669DE8},
+    {"setPartyChange10010", fn_7100669E1C},
+    {"setPartyChange10020", fn_7100669E34},
+    {"changeKubira", fn_7100669E4C},
+    {"setBladeLeader", fn_7100669E64},
+    {"setIraParty", fn_7100669ED8},
+    {nullptr, nullptr},
+};
+
+void pluginPartyRegist() {
+    vmPluginRegist("pt", s_ptPlugin);
 }
 
 // sys.getStartId

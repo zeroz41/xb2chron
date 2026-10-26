@@ -23,6 +23,7 @@ public:
     static void execMissionRewardAchievementBonusForBlade(unsigned int mission);
     static void execMissionAchievementForBlade(unsigned int mission);
     static void clearTeamMember(unsigned int team);
+    static void cancelMission(unsigned int mission);  // (symbols)
     virtual ~GfGameMercenaries();  // slot 0
     static void qevOrderQuest(const gf::QuestOrderParam&);
     // a mission's rewards (team: GfDataMercenaries::isMissionOrderTeam), the bonus parts ("Hosei") on their own

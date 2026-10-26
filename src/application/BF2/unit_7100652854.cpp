@@ -211,8 +211,34 @@ static int fn_7100653088(VMThread* th, ai::AiData* data) {
     return 1;
 }
 
-// aiData.getTargetDirectionCount: not identical yet (wip/unit_7100652854.scratch_all90.cpp)
-static int fn_7100653104(VMThread* th, ai::AiData* data);
+// aiData.getTargetDirectionCount
+static int fn_7100653104(VMThread* th, ai::AiData* data) {
+    int num = argInt(th, 1);
+    gf::GfObjAcc acc(data->getHandle());
+    gf::GfObjAcc accTarget(data->getHandleTarget());
+    int count;
+    if (accTarget.m_obj == NULL) {
+        count = 0;
+    } else {
+        int mode;
+        int type = acc.getType();
+        if (type == 3) {
+            int typeTarget = accTarget.getType();
+            mode = typeTarget == 3 ? 1 : typeTarget != 5;
+        } else if (type == 5) {
+            mode = accTarget.getType() != 3;
+        } else {
+            mode = 1;
+        }
+        count = Utility::AI_CheckCharacterNum(accTarget.getHandle(), num, static_cast<Utility::CHECK_CHR_NUM_MODE>(mode));
+    }
+    int value = count;
+    VMData ret;
+    ret.type = VMDATA_INT;
+    ret.v.i = value;
+    vmRetValSet(th, &ret);
+    return 1;
+}
 
 // aiData.getDirectionCount
 static int fn_7100653204(VMThread* th, ai::AiData* data) {
@@ -368,8 +394,45 @@ static int fn_710065396C(VMThread* th, ai::AiData* data) {
     return 1;
 }
 
-// aiData.getIdByBuffId: not identical yet (wip/unit_7100652854.scratch_all90.cpp)
-static int fn_71006539F8(VMThread* th, ai::AiData* data);
+// aiData.getIdByBuffId
+static int fn_71006539F8(VMThread* th, ai::AiData* data) {
+    int buff = argInt(th, 1);
+    int enemy = 1;
+    if (!vmArgOmitChk(th, 2)) {
+        enemy = vmArgBoolGet(2, vmArgPtrGet(th, 2));
+    }
+    gf::GfObjAcc acc(data->getHandle());
+    mm::Vec3 pos = data->getPosition();
+    int mode;
+    int type = acc.getType();
+    if (type == 3) {
+        mode = enemy > 0;
+    } else if (type == 5) {
+        mode = enemy < 1;
+    } else {
+        mode = 1;
+    }
+    mm::mtl::FixedVector<unsigned char, 90> list;
+    Utility::GetCharacterList(list, data->getHandle(), static_cast<Utility::CHECK_CHR_NUM_MODE>(mode), 75);
+    int id = -1;
+    float nearest = -1.0f;
+    for (unsigned char index : list) {
+        gf::GF_OBJ_HANDLE* handle = Utility::AI_GetCharacterHandle(index);
+        if (handle != INVALID_HANDLE && Utility::AI_IsBuff(handle, buff)) {
+            mm::Vec3 target = data->getPosition(handle);
+            float distance = (target - pos).length();
+            if (nearest <= -1.0f || distance < nearest) {
+                nearest = distance;
+                id = index;
+            }
+        }
+    }
+    VMData ret;
+    ret.type = VMDATA_INT;
+    ret.v.i = id;
+    vmRetValSet(th, &ret);
+    return 1;
+}
 
 // aiData.getScoutStartHp
 static int fn_7100653BF8(VMThread* th, ai::AiData* data) {
@@ -730,8 +793,26 @@ static int fn_7100654E18(VMThread* th, ai::AiData* data) {
     return 1;
 }
 
-// aiData.isTargetArts: not identical yet (wip/unit_7100652854.scratch_all90.cpp)
-static int fn_7100654E94(VMThread* th, ai::AiData* data);
+// aiData.isTargetArts
+// The helper's name is inferred, not the original's: the target is in state 1 or state 5. Written as an inline
+// helper with two early returns: its phi of constants folds into the type store (a select or || does not match).
+static inline bool isArtsState(int targetId) {
+    if (Utility::AI_CheckState(Utility::AI_GetCharacterHandle(targetId), static_cast<Utility::CHECK_STATE>(1), 0)) {
+        return true;
+    }
+    if (Utility::AI_CheckState(Utility::AI_GetCharacterHandle(targetId), static_cast<Utility::CHECK_STATE>(5), 0)) {
+        return true;
+    }
+    return false;
+}
+
+static int fn_7100654E94(VMThread* th, ai::AiData* data) {
+    int targetId = Utility::AI_GetTargetCharacterID(data->getHandle());
+    VMData ret;
+    ret.type = isArtsState(targetId) ? VMDATA_TRUE : VMDATA_FALSE;
+    vmRetValSet(th, &ret);
+    return 1;
+}
 
 // aiData.isWater
 static int fn_7100654F14(VMThread* th, ai::AiData* data) {

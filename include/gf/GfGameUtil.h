@@ -101,6 +101,21 @@ public:
     // the objects of an enemy arrange id: live ones plus ones still set up
     static int getObjNumberByEnArrangeId(unsigned int arrangeId);
     static void setMaxPartyGauge();  // the battle party gauge to 300
+    static void setPartyChange10010();  // (symbols; the pt plugin's setPartyChange10010)
+    static void setPartyChange10020();  // (symbols; the pt plugin's setPartyChange10020)
+    // 3.0.1's takes a third argument (it tests bit 0 of w2; the symbols' Ejj is 1.0.0's two-argument signature);
+    // ScriptPlayText's pt setDriverEnable passes (0, 1011, false). The third's name and type are inferred.
+    static void execEquipMercenariesBlade(unsigned int driver, unsigned int blade, bool flag);
+    // Placeholder name: new in 3.0.1's shape, its address lies between GfGameUtil::execActivateMercenaryTeamForBlade
+    // and execEquipMercenariesBlade (so a GfGameUtil member). What it does: 1.0.0's pt setDriverEnable calls
+    // GfDataDriver::equipDriverBladeFromReserverBlade(driver) at the same place; 3.0.1's calls this with driver 2
+    // when blade 1011 is not activate-unuse, and it calls execEquipMercenariesBlade.
+    static void fn_71002E16F4(unsigned int driver);
+    // Placeholder name: new in 3.0.1 (1.0.0's pt has no changeKubira). A GfGameUtil member because its address
+    // follows setPartyChange10020's. What it does: ScriptPlayText's pt changeKubira calls it with nothing; it
+    // reworks blades' drivers, orbs, weapons and engage flags (GfDataBlade/GfEquipUtil) and calls
+    // SCOM_PARTY_ADD::removeBlade and SCOM_CURRENT_BLADE::create.
+    static void fn_71002EBC90();
     static int getAntiBladeAreaBdatId();
     // the blade joins its mercenary team (false when it already is on one)
     static bool execActivateMercenaryTeamForBlade(unsigned int blade);
