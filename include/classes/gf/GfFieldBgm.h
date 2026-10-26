@@ -5,13 +5,18 @@
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedVector.h"
 
+namespace fw { class UpdateInfo; }
 namespace gf { class GfFieldBgm; class BgmTrack; class MapjumpCallbackInfo; enum GEV : int; }
 
 namespace gf {
 // table 0x7100B511B8
 class GfFieldBgm : public ::mm::mtl::PtrSingleton< ::gf::GfFieldBgm> {
 public:
+    GfFieldBgm();  // GfFieldSound::initialize creates it
     virtual ~GfFieldBgm();  // slot 0
+    void update(const fw::UpdateInfo& info);  // GfFieldSound::update forwards to it
+    // stops every track and resets its volumes (1.0.0's symbol, called from the same place: GfFieldSound::clear)
+    void destroy();
     void stopBgmForDebug(bool stop);
     void setGimmickBgmID(unsigned int id);
     void setRscBattleBgmID(unsigned int id);

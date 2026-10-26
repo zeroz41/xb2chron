@@ -32,6 +32,12 @@ const char* fn_71002DF39C(unsigned int driverId, bool createTypeIn2311, bool cre
 // running the "aoc_boot" script (GfScriptManager slot 0x46) and clears afterwards. The sys plugin's getBootType
 // returns it to scripts.
 int fn_71002EEBE4();
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit and it takes nothing. What it does: false unless GfGameManager::fn_71002AC598 is true; then true
+// when GfItemUtil::getItemBoxCount(25497) is non-zero, else whether any of the five ints at
+// GfDataManager::getDataGame()+0x11AF18/0x11AF0C/0x11AF24/0x11AF30/0x11AF3C is non-zero. GfFieldSound::createMapSound
+// loads the "dlc_se_btl_spskill" sound pack when it is true.
+bool fn_71002ED330();
 }  // namespace gf
 
 #endif

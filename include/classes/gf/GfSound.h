@@ -106,6 +106,7 @@ public:
     // a category's volume under that handle, reached over time (GfMenuSoundManager's fades pass 1.0 or 0.0 and their
     // time)
     void setCategoryVolume(GF_SE_CATEGORY_HANDLE* handle, fw::SoundCategory category, float volume, float time);
+    void destroyCategorySe(fw::SoundCategory category);  // GfFieldSound::destroyCategorySeForMapjump's
     float getCategoryVolume(GF_SE_CATEGORY_HANDLE* handle, fw::SoundCategory category) const;  // GfGameEvent's
     void stopBgm(SoundHandle handle, float time);  // TitleMain::stopTitleBGM passes its BGM and fade time
     SoundHandle playVoice(const char* path, float volume, bool loop, fw::SoundCategory category);
