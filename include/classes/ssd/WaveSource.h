@@ -41,7 +41,9 @@ public:
     unsigned char formatType_ = 0;
     AudioFormat format_;
     AudioFormatExtra extra_;
-    unsigned int pad_6c = 0;
+    // how many sounds use the source: SoundBank::GetReferenceCounter adds it up over the bank's entries (the
+    // name is not the original's)
+    unsigned int referenceCount_ = 0;
     // the memory Init was given, the audio data in it (or in buffer_, when it is not 64-byte aligned), the
     // ADPCM headers (format 3) and the copy PreLoad allocates
     AudioContents* contents_ = nullptr;

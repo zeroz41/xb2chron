@@ -12,6 +12,8 @@ class SoundParam {
 public:
     // a name: up to 31 UTF-16 characters and the text's hash
     struct Name {
+        // the SoundEntry constructor zeroes only the hash
+        Name() : hash_() {}
         Name& operator=(const TextRef& text);
 
         char16_t text_[0x20];
@@ -23,7 +25,8 @@ public:
     Name name_;
     unsigned char pad_48[4];
     bool flag4c_;
-    bool flag4d_;
+    // the group the sound belongs to: SoundEntry::GetSoundGroup finds the bank's SoundGroup with this id
+    unsigned char groupId_;
     bool flag4e_;
     bool flag4f_;
     float value50_;

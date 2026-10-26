@@ -47,7 +47,7 @@ public:
     mm::mtl::IntrusivePtr<SoundSsdSource> addWave(const WaveInfo& info);
 
     ssd::SoundBank m_bank;  // 0x10 (stopAll stops it; the name is not the original's)
-    unsigned char pad_30[0x124];
+    unsigned char pad_130[0x24];
     // the bank's name and its mm::mtl::hashStrCrc (fw::SoundSsdDriver::findBank compares both; the names are not
     // the original's)
     mm::mtl::FixStr<256> m_name;  // 0x154

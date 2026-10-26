@@ -38,7 +38,8 @@ public:
     Block* NewStreamImpl(unsigned long size, unsigned long alignment);
     void DeleteStreamImpl(Block* block);
 
-    // count instances of T constructed in one instance block, or null
+    // count instances of T default-initialized in one instance block (Array<T*>::SetArraySize leaves the
+    // pointers unset), or null
     template <typename T>
     T* NewInstance(unsigned long count = 1, unsigned long alignment = 0x10) {
         Block* block = NewInstanceImpl(sizeof(T), count, alignment);
@@ -47,7 +48,7 @@ public:
         }
         T* instances = static_cast<T*>(block->data);
         for (unsigned long i = 0; i < count; i++) {
-            new (&instances[i]) T();
+            new (&instances[i]) T;
         }
         return instances;
     }

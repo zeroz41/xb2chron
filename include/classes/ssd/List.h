@@ -22,9 +22,17 @@ public:
     };
 
     List() : count_(0) {}
+    // gives every node back as Delete does, written out here: ~List<SoundEntry> (SoundBank) has the loop in
+    // its own body, which keeps it out of SoundBank's destructor
     virtual ~List() {  // slot 0
         if (count_ != 0) {
-            Delete();
+            T0* item = static_cast<T0*>(head_.next);
+            while (item != static_cast<T0*>(&head_)) {
+                T0* next = static_cast<T0*>(static_cast<Node*>(item)->next);
+                Remove(item);
+                SoundMemory::allocator_->DeleteInstance(item);
+                item = next;
+            }
         }
     }
 
@@ -57,23 +65,21 @@ public:
     }
 
     // unlinks every node and gives it back to SoundMemory::allocator_ (each one heads an instance block)
-    List* Delete();
+    List* Delete() {
+        T0* item = static_cast<T0*>(head_.next);
+        while (item != static_cast<T0*>(&head_)) {
+            T0* next = static_cast<T0*>(static_cast<Node*>(item)->next);
+            Remove(item);
+            SoundMemory::allocator_->DeleteInstance(item);
+            item = next;
+        }
+        return this;
+    }
 
     Node head_;
     int count_;
 };
 
-template <typename T0>
-List<T0>* List<T0>::Delete() {
-    T0* item = static_cast<T0*>(head_.next);
-    while (item != static_cast<T0*>(&head_)) {
-        T0* next = static_cast<T0*>(static_cast<Node*>(item)->next);
-        Remove(item);
-        SoundMemory::allocator_->DeleteInstance(item);
-        item = next;
-    }
-    return this;
-}
 }  // namespace ssd
 
 #endif

@@ -64,7 +64,7 @@ void SoundListener::Vec3Transform(const Vec3* v, Vec3* out) {
 void SoundParam::Init() {
     name_.text_[0] = 0;
     flag4c_ = false;
-    flag4d_ = true;
+    groupId_ = 1;
     flag4e_ = true;
     value54_ = 0.0f;
     flag4f_ = false;

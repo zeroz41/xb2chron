@@ -8,6 +8,7 @@
 #include "ssd/Mutex.h"
 
 namespace ssd { class SoundActor; }
+namespace ssd { class SoundBank; }
 namespace ssd { class SoundEffecter; }
 namespace ssd { class SoundHandle; }
 namespace ssd { template <typename T0> class Array; }
@@ -52,6 +53,10 @@ public:
     // fills handles with the sounds actor plays and returns how many
     int GetPlaySoundHandleFromActor(const SoundActor* actor, Array<SoundHandle*>* handles) const;
     void ConnectActor(SoundActor* actor);
+    // the banks SoundBank::Init adds and Quit removes; StopBank stops every sound of the bank's entries
+    void AddBank(SoundBank* bank);
+    void RemoveBank(SoundBank* bank);
+    void StopBank(SoundBank* bank, float fadeTime);
     void DisconnectActor(SoundActor* actor);
     void UpdateGameFrame(float frameTime);
     void StopSound(float fadeTime);

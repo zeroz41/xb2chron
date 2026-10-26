@@ -8,6 +8,7 @@ namespace ssd {
 // copies into
 class TextFixedBase : public ::ssd::TextRef {
 public:
+    TextFixedBase(unsigned long capacity) : capacity_(capacity) {}
     virtual void Set(const TextRef& text);  // slot 0
     virtual void Set(const char* text);  // slot 1
     virtual void Set(const char16_t* text);  // slot 2

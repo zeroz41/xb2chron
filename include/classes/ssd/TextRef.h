@@ -10,6 +10,8 @@ namespace ssd {
 // table 0x7100B82098: a reference to a text in either encoding, with its hash; a reference cannot be Set
 class TextRef {
 public:
+    // an empty reference: TextFixed<N>'s constructor zeroes these before pointing the reference at its buffer
+    TextRef() : hash_(), utf8_(nullptr), type_() {}
     TextRef(const char* text);
     TextRef(const char16_t* text) {
         InitImpl(text);
