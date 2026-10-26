@@ -109,6 +109,7 @@ public:
     // Quit has not yet (the names are not the original's)
     Result result_;
     bool initialized_;
+    bool pad_11;  // VoiceHandle::Start leaves a voice waiting (state 4) instead of starting it while it is set
 };
 }  // namespace ssd
 

@@ -76,6 +76,23 @@ Result AddDeviceSink(AudioRendererConfig* config, DeviceSinkType* sink, FinalMix
                      const signed char* input, int inputCount, const char* name);
 int ListAudioDeviceName(AudioDeviceName* names, int count);
 
+// a voice's source buffer (the SDK's field names)
+struct WaveBuffer {
+    void* buffer;
+    unsigned long size;
+    int startSampleOffset;
+    int endSampleOffset;
+    bool loop;
+    bool isEndOfStream;
+    const void* pContext;
+    unsigned long contextSize;
+};
+struct VoiceType {
+    void* _pVoiceInfo;
+};
+// the oldest buffer the renderer has finished with, or null
+const WaveBuffer* GetReleasedWaveBuffer(VoiceType* voice);
+
 }}  // namespace nn::audio
 
 #endif

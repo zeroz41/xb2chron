@@ -62,6 +62,8 @@ public:
     void StopSound(float fadeTime);
 
     VoiceHandle* GetVoiceHandle(unsigned int id) const;  // 0 when no voice has the id
+    // gives a voice back (VoiceHandle::FreeVoice)
+    void FreeVoiceHandle(VoiceHandle* voice);
     void MasterVolumeBehavior(float frameTime);
     void MasterPitchBehavior(float frameTime);
 
