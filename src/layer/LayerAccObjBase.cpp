@@ -1,3 +1,11 @@
+#define MM_LIB_FROM_LAYER
+#include "classes/layer/LayerTag.h"
+#include "classes/layer/LayerMemHandleAllocator.h"
+#include "classes/layer/LayerShdManager.h"
+#include "classes/layer/LayerObjManager.h"
+#include "classes/layer/LayerFontManager.h"
+#include "classes/mm/mtl/PtrSingleton.h"
+#include "classes/layer/LayerManager.h"
 #include "layer/LayerAccManager.h"
 #include "classes/layer/LayerShdManager.h"
 #include "classes/layer/LayerManager.h"
@@ -34,6 +42,12 @@
 #include "classes/layer/LayerObjSortPolyObj.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/layer/LayerTagStr.h"
+#include "classes/ml/IDrDrawWorkInfo.h"
+#include "classes/ml/Scn.h"
+#include "classes/ml/ScnRenderDrSys.h"
+#include "layer/LayerRceManager.h"
+#include "layer/LayerStrInfo.h"
+#include "mtl/MemManager.h"
 
 namespace layer {
 
@@ -438,6 +452,67 @@ int LayerManager::s_nDebIdx;
 
 int LayerManager::s_nTriIdx;
 
+void* LayerMemHandleAllocator::allocate(unsigned long size, unsigned long alignment) {
+    return mtl::MemManager::allocate(m_memHandle, size, alignment, false, "no name", 0);
+}
+
+void LayerMemHandleAllocator::deallocate(void* memory) {
+    if (memory != nullptr) {
+        mtl::MemManager::deallocate(memory, 0, false);
+    }
+}
+
+void LayerManager::beginFastSetup() {
+    m_flags |= FLAG_LOADING;
+    m_shdManager->readShader();
+    m_setupFunc = &LayerManager::loadWait;
+}
+
+LayerManager::~LayerManager() {
+    ml::ScnRenderDrSys* renderDrSys = m_scn->m_renderDrSys;
+    if (renderDrSys != nullptr) {
+        renderDrSys->releaseCallBack(this);
+    }
+    if (m_objManager != nullptr) {
+        delete m_objManager;
+        m_objManager = nullptr;
+    }
+    if (m_fontManager != nullptr) {
+        delete m_fontManager;
+        m_fontManager = nullptr;
+    }
+    if (m_rceManager != nullptr) {
+        delete m_rceManager;
+        m_rceManager = nullptr;
+    }
+    if (m_shdManager != nullptr) {
+        delete m_shdManager;
+        m_shdManager = nullptr;
+    }
+    if (m_gxHandle.m_handle != 0) {
+        mtl::MemManager::erase(m_gxHandle);
+        m_gxHandle = mtl::ALLOC_HANDLE();
+    }
+    if (m_workHandle.m_handle != 0) {
+        mtl::MemManager::erase(m_workHandle);
+        m_workHandle = mtl::ALLOC_HANDLE();
+    }
+    if (m_dataHandle.m_handle != 0) {
+        mtl::MemManager::erase(m_dataHandle);
+        m_dataHandle = mtl::ALLOC_HANDLE();
+    }
+    if (m_topHandle.m_handle != 0) {
+        mtl::MemManager::erase(m_topHandle);
+        m_topHandle = mtl::ALLOC_HANDLE();
+    }
+}
+
+void LayerManager::tail() {
+    s_nDebIdx = s_nDebIdx == 0 ? 1 : 0;
+    s_nStkIdx = s_nDebIdx == 0 ? 1 : 0;
+    s_nTriIdx = s_nTriIdx > 1 ? 0 : s_nTriIdx + 1;
+}
+
 float LayerManager::getScreenDivWidth() const { return m_shdManager->m_screenDivWidth; }
 
 float LayerManager::getScreenCalcSclWidth() const { return m_shdManager->m_screenCalcSclWidth; }
@@ -447,6 +522,45 @@ float LayerManager::getScreenCalcSclHeight() const { return m_shdManager->m_scre
 float LayerManager::getScreenCalcPosWidth() const { return m_shdManager->m_screenCalcPosWidth; }
 
 float LayerManager::getScreenCalcPosHeight() const { return m_shdManager->m_screenCalcPosHeight; }
+
+void LayerManager::begin() { (this->*m_setupFunc)(); }
+
+void LayerManager::end() {
+    if (!(m_flags & FLAG_LOADING)) {
+        m_objManager->end();
+    }
+}
+
+void LayerManager::apply(const ml::IDrDrawWorkInfo* info) {
+    if (!(m_flags & FLAG_LOADING) && info->m_subPass == 0) {
+        m_objManager->apply(info);
+    }
+}
+
+void LayerManager::finalRender(const ml::IDrDrawWorkInfo* info) {
+    if (!(m_flags & FLAG_LOADING) && info->m_subPass == 0) {
+        m_shdManager->beginShader(info);
+        m_objManager->finalRender(info);
+        m_shdManager->endShader(info);
+    }
+}
+
+void LayerManager::loadWait() {
+    m_flags |= FLAG_LOADING;
+    if (m_shdManager->setupUpdate()) {
+        defSetup();
+        m_setupFunc = &LayerManager::defSetup;
+    }
+}
+
+void LayerManager::defSetup() {
+    m_flags &= ~FLAG_LOADING;
+    m_fontManager->update();
+    m_rceManager->update();
+    m_objManager->begin();
+}
+
+LayerStrInfo::LayerStrInfo() {}
 
 LayerTagStr::LayerTagStr() : m_stockTbl(nullptr), m_stockSize(0), m_stockCount(0) {}
 

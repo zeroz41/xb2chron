@@ -13,6 +13,10 @@
 // grlib's (CGLibManager's constructor cites it so)
 #define MM_MTL_SINGLETON_PATH \
     "D:/Monolithsoft/BF2/prog/libs/grlib/proj/windows/../../../mcl/mm_lib/source\\mm_mtl/singleton.h"
+#elif defined(MM_LIB_FROM_LAYER)
+// layer's (LayerManager's constructor cites it so)
+#define MM_MTL_SINGLETON_PATH \
+    "D:/Monolithsoft/BF2/prog/libs/layer/proj/windows/../../../mcl/mm_lib/source\\mm_mtl/singleton.h"
 #elif defined(MM_LIB_FROM_IDCOLI)
 // idcoli's (IDColiManager's constructor cites it so)
 #define MM_MTL_SINGLETON_PATH \

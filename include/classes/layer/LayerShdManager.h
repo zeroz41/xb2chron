@@ -57,7 +57,7 @@ public:
 
     void shaderRelease();
     void readShader();
-    void setupUpdate();
+    bool setupUpdate();  // whether the shaders are ready (LayerManager::loadWait waits for it)
     void createRenderWork();
     void beginShader(const ml::IDrDrawWorkInfo* info);
     void resetViewPort();

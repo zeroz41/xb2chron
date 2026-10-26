@@ -6,9 +6,13 @@ namespace layer { class LayerFontIconObj; }
 namespace layer { class LayerFontStyleObj; }
 
 namespace layer {
+class LayerManager;
 // makes the font objects (LayerAccManager's font create functions forward to it); no table
 class LayerFontManager {
 public:
+    LayerFontManager(LayerManager* manager);
+    ~LayerFontManager();
+    void update();
     LayerBase* createFontResObj(const void* data);
     LayerBase* createFontIconObj(const void* data);
     LayerBase* createStyleObj(const void* data);

@@ -21,8 +21,8 @@ public:
     virtual void parseNotTag(unsigned char const*, unsigned int&) = 0;  // slot 4
     virtual void parseNotTag(wchar_t const*, unsigned int&) = 0;  // slot 5
     // whether the tag was taken (LayerTag::callTagEnd returns false)
-    virtual bool callTagStart(char const*, layer::LayerTagTbl const*, unsigned int);  // slot 6
-    virtual bool callTagEnd(char const*);  // slot 7
+    virtual bool callTagStart(char const*, layer::LayerTagTbl const*, unsigned int) { return false; }  // slot 6
+    virtual bool callTagEnd(char const*) { return false; }  // slot 7
     void calcParseString(const unsigned char* text);      // reads text's tags, calling callTagStart and callTagEnd
     void calcUTF8ParseString(const unsigned char* text);  // the same for UTF-8 text
 };
