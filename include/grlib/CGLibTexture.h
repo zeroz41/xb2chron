@@ -28,6 +28,10 @@ public:
     static unsigned int getMipMapCnt(unsigned int width, unsigned int height);
     // the texture's first texel, into pValue (the return type is not known)
     static void get1PixelTextureInfo(float* pValue, CGLibTextureBuffer& buffer);
+    // the bytes and the alignment a width by height texture of the format takes (the parameter names are not the
+    // original's)
+    static void getDefPixelSize(unsigned int& size, unsigned int& align, unsigned int width, unsigned int height,
+                                unsigned int mip, GrlSurfaceFormat format);
 };
 
 }  // namespace grlib

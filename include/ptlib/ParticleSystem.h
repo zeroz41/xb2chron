@@ -57,7 +57,9 @@ public:
         m_value14 = 1;
     }
 
-    unsigned char pad_0[0xd];
+    unsigned char pad_0[0x4];
+    int m_drawCount;  // 0x4: RenderGrObj::draw counts the view-0 draws (the name is not the original's)
+    unsigned char pad_8[0x5];
     bool m_paused;  // the pause state update_pause applied (the name is not the original's)
     bool m_pause;   // set_pause's request (the name is not the original's)
     bool m_flagF;

@@ -82,6 +82,8 @@ public:
     void releaseWork();
     void release();
     void releaseTexture();
+    // the texture's size and format, its pixels at offset in the pool (the parameter names are not the original's)
+    void setTextureInfo(float width, float height, GrlSurfaceFormat format, bool flag, unsigned int offset);
     // makes this target current, with up to two more (the other colour buffers)
     void setRenderTarget();
     void setRenderTarget(CGLibRenderTarget& target1);

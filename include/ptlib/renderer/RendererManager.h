@@ -3,7 +3,7 @@
 
 namespace ptlib { class DrDrawWorkInfoEF; class FxParam; class StaticAllocObj; }
 namespace ptlib { namespace renderer { class EffStateManager; class RenderGrObj; } }
-namespace ptlib { namespace emitter { class EmitterObj; class EmitterArg; } }
+namespace ptlib { namespace emitter { class EmitterObj; class EmitterArg; class EmitterManager; } }
 
 namespace ptlib { namespace renderer {
 
@@ -20,6 +20,11 @@ public:
     RenderGrObj* getRenderGrObj();
     void fxcore_setup_target();
     void setEmitterDraw(emitter::EmitterObj* pObj, emitter::EmitterArg* pArg);
+    void draw(emitter::EmitterManager& manager, FxParam& param, int view, int pass);
+    // a texture material of the key from data (the parameter names are not the original's)
+    void* tex_loadmem(int key, void* data, int size, int format, unsigned char* param, bool permanent, void* owner);
+    void tex_freemem(int key, void* owner);
+    const DrDrawWorkInfoEF* getDrInfo();
 
     FxParam* m_pFxParam;
     RenderGrObj* m_pGrObj;
