@@ -41,6 +41,7 @@ public:
     // entry of the GfEvent's ring of up to 32 listeners (count at 0x108, start index at 0x110, "index < N").
     // Caller: the gmk plugin's openPortal (no arguments).
     static void fn_7100328774();  // GfGameParty::update: the party's objects are ready (or not any more)
+    static void callChangeTimeRange(unsigned int range);  // GfFieldTime::update: the time of day's range changed
     static void callChangeLeader(GF_OBJ_HANDLE* leader);  // GfGameParty::update: the party leader changed
     static void callPartyIDMemberOK(bool ok, unsigned int partyId);
     // GfPlayComCallbackEventSequence::start passes 12 (begin) or 13 and its id

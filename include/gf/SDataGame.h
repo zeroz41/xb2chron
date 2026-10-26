@@ -1,6 +1,7 @@
 #ifndef GF_SDATAGAME_H
 #define GF_SDATAGAME_H
 
+#include "classes/gf/GfFieldTime.h"
 #include "gf/GameFlag.h"
 #include "gf/SDataBlade.h"
 #include "gf/SDataDriver.h"
@@ -28,7 +29,8 @@ public:
     unsigned char pad_8[0x8];
     mm::Vec3 m_landmarkPos;
     float m_landmarkRotY;
-    unsigned char pad_24[0x2];
+    // 0x24: GfFieldTime::setupGame stops the time of day when it is not 0 (the name is not the original's)
+    unsigned short m_timeStop;
     // 0x26: GfDataUtil::setChapterSave's second argument (stored before m_eventChapterSave, its first; the name
     // is not the original's)
     unsigned short m_chapterSaveValue;
@@ -54,7 +56,11 @@ public:
     mm::Vec3 m_saveRot[3];
     mm::Vec3 m_saveRot2[3];
     unsigned int m_skipTravelID;  // 0x1098B0 (named after its accessors; the name is not the original's)
-    unsigned char pad_1098B4[0x14];
+    unsigned char pad_1098B4[0xC];
+    // 0x1098C0: the time of day (GfFieldTime::clear stores it, setupGame reads it; the name is not the original's)
+    GameTime m_gameTime;
+    // 0x1098C4: the play time (GfFieldTime::setupGame reads it; the name is not the original's)
+    ElapseTime m_playTime;
     // 0x1098C8: the mercenary teams (GfDataMercenaries' team functions search them; getTeamByIndex asserts in
     // fixed_vector.h's operator[]; the capacity is the room before the count at 0x109940; the name is not the original's)
     mm::mtl::FixedVector<GfDataMercenaries::Team, 3> m_teams;
