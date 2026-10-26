@@ -10,7 +10,8 @@ namespace gf {
 // GfMenuReference's numbers at indices hold
 class GfMenuAchievementAdapter::ReferenceBladeLineLevelConverter : public ::gf::GfMenuAchievementAdapter::IConverter {
 public:
-    ReferenceBladeLineLevelConverter(unsigned int reference, unsigned short kizunaLine, unsigned short kizunaLevel);
+    ReferenceBladeLineLevelConverter(unsigned int reference, unsigned int kizunaLine, unsigned int kizunaLevel)
+        : m_reference(reference), m_kizunaLine(kizunaLine), m_kizunaLevel(kizunaLevel) {}
     virtual ~ReferenceBladeLineLevelConverter() {}  // slot 0; its D2 folds into IConverter's
     virtual unsigned int getBladeId();  // slot 2
     virtual unsigned int getKizunaLine();  // slot 3

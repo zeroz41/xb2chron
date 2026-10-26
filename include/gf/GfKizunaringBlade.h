@@ -15,6 +15,11 @@ public:
     static unsigned int getAchievementAfterVoice(unsigned int blade, unsigned int line, unsigned int level);
     static unsigned int getAchievementDifficulty(unsigned int blade, unsigned int line, unsigned int level);
     static unsigned int getAchievementQuest(unsigned int blade, unsigned int line, unsigned int level);
+    // the chart achievement's result caption: the enhanced art's/skill's enhance caption or the field skill's caption
+    static bool getAchievementResultMsg(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line,
+                                        unsigned int level);
+    // the enhance value of the chart achievement's art or skill at that level (0 for other achievement types)
+    static unsigned int getAchievementResultEnhance(unsigned int blade, unsigned int line, unsigned int level);
     static unsigned int getAchievementSetCategory(unsigned int blade, unsigned int line);
     static unsigned int getAchievementSetAbilityLevel(unsigned int blade, unsigned int line);
     // orders the quests of every chart line the player can take next

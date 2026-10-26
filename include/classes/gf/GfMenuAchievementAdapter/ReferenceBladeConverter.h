@@ -9,7 +9,8 @@ namespace gf {
 // table 0x7100B59C10; the blade GfMenuReference has at a reference index, a fixed line and level
 class GfMenuAchievementAdapter::ReferenceBladeConverter : public ::gf::GfMenuAchievementAdapter::IConverter {
 public:
-    ReferenceBladeConverter(unsigned int reference, unsigned short kizunaLine, unsigned short kizunaLevel);
+    ReferenceBladeConverter(unsigned int reference, unsigned int kizunaLine, unsigned int kizunaLevel)
+        : m_reference(reference), m_kizunaLine(kizunaLine), m_kizunaLevel(kizunaLevel) {}
     virtual ~ReferenceBladeConverter() {}  // slot 0; its D2 folds into IConverter's
     virtual unsigned int getBladeId();  // slot 2
     virtual unsigned int getKizunaLine();  // slot 3

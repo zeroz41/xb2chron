@@ -140,6 +140,11 @@ public:
     // first time.
     static void fn_71002355AC();
     static bool getTaskSkillMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line);
+    static bool getTaskTitleMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line,
+                                    unsigned int level);
+    // reads the blade's u16 game-data value (row stride 0x8A4, +0x6276) and, when set, a u16 column of GfBdatBtl's
+    // table at 0x80 for that row
+    static unsigned int getLinkChNum(unsigned int blade);
     static bool getTaskResultMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line,
                                      unsigned int level);
     static unsigned int getSkillLineId(unsigned int blade, unsigned int line);
