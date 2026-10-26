@@ -52,7 +52,7 @@ namespace {
 inline unsigned int playMenuSe(unsigned int row) {
     if (mm::mtl::PtrSingleton<fw::SoundManager>::get() != nullptr) {
         unsigned short id = static_cast<unsigned short>(
-            reinterpret_cast<unsigned long>(Bdat::getVal(GfDataBdat::getFP(0x187), "resource_id", row)));
+            Bdat::getVal(GfDataBdat::getFP(0x187), "resource_id", row));
         if (id != 0) {
             return mm::mtl::PtrSingleton<fw::SoundManager>::get()->playSe(id, nullptr, 1.0f,
                                                                            static_cast<fw::SoundCategory>(0));
@@ -461,7 +461,7 @@ bool GfMenuObjUtil::hasHomura(unsigned int driver) {
 
 unsigned short GfMenuObjUtil::getMsgIDFromList(unsigned int list, unsigned short index) {
     if (unsigned char* fp = GfDataBdat::getFP(list)) {
-        return static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getVal(fp, "name", index)));
+        return static_cast<unsigned short>(Bdat::getVal(fp, "name", index));
     }
     return 0;
 }
@@ -580,7 +580,7 @@ unsigned char GfMenuObjUtil::getElementComboAtr(unsigned int combo) {
     if (!GfMenuBdat::isValidBdatID(fp, combo)) {
         return 0;
     }
-    return static_cast<unsigned char>(reinterpret_cast<unsigned long>(Bdat::getVal(fp, "Atr", combo)));
+    return static_cast<unsigned char>(Bdat::getVal(fp, "Atr", combo));
 }
 
 unsigned char GfMenuObjUtil::getElementComboEffect(unsigned int combo) {

@@ -206,11 +206,11 @@ bool TUnk_B60AA8::fn_71003BE7EC(unsigned int driver, unsigned short* shop) {
     if (fp != nullptr) {
         for (int i = 0; i < Bdat::getIdCount(fp); i++) {
             unsigned short id = Bdat::getIdTop(fp) + i;
-            if (static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getVal(fp, "driver_id", id))) ==
+            if (static_cast<unsigned short>(Bdat::getVal(fp, "driver_id", id)) ==
                 driver) {
-                shop[0] = static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getVal(fp, "shop_id", id)));
+                shop[0] = static_cast<unsigned short>(Bdat::getVal(fp, "shop_id", id));
                 shop[1] =
-                    static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getVal(fp, "summary_msg", id)));
+                    static_cast<unsigned short>(Bdat::getVal(fp, "summary_msg", id));
                 return true;
             }
         }

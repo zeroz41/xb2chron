@@ -119,7 +119,7 @@ bool GfMenuHanaAdapter::update_equipIcon() {
     if (m_partsId == 0) {
         return false;
     }
-    setNumber((unsigned short)(unsigned long)Bdat::getVal(GfDataBdat::getFP(0x17C), "icon", m_partsId));
+    setNumber((unsigned short)Bdat::getVal(GfDataBdat::getFP(0x17C), "icon", m_partsId));
     return true;
 }
 

@@ -46,7 +46,7 @@ namespace gf {
 namespace {
 // a float column's value: the low 32 bits of what getVal returns
 inline float bdatFloat(unsigned char* fp, const char* column, int id) {
-    unsigned int bits = static_cast<unsigned int>(reinterpret_cast<unsigned long>(Bdat::getVal(fp, column, id)));
+    unsigned int bits = static_cast<unsigned int>(Bdat::getVal(fp, column, id));
     float value;
     memcpy(&value, &bits, sizeof(value));
     return value;

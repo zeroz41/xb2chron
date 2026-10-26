@@ -2089,7 +2089,7 @@ int GfDataEvent::getEventType(unsigned int eventId) {
     if (fp == nullptr) {
         return 0;
     }
-    return static_cast<unsigned char>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "category", eventId, 1)));
+    return static_cast<unsigned char>(Bdat::getValCheck(fp, "category", eventId, 1));
 }
 
 int GfDataEvent::getEventAfterScriptStartID(unsigned int event) {
@@ -2097,7 +2097,15 @@ int GfDataEvent::getEventAfterScriptStartID(unsigned int event) {
     if (fp == nullptr) {
         return 0;
     }
-    return static_cast<int>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "scriptStartId", event, 6)));
+    return static_cast<int>(Bdat::getValCheck(fp, "scriptStartId", event, 6));
+}
+
+const char* GfDataEvent::getEventAfterScriptName(unsigned int event) {
+    unsigned char* fp = GfDataBdat::getFP(fn_710024EBD8(event));
+    if (fp == nullptr) {
+        return nullptr;
+    }
+    return reinterpret_cast<const char*>(Bdat::getValCheck(fp, "scriptName", event, 7));
 }
 
 

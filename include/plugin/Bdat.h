@@ -13,6 +13,7 @@ union uVal {
     short sshort;
     int sint;
     char* str;
+    unsigned long ulong;  // all 8 bytes, as the getters return them
     float real;
 };
 // the registered BDAT files, one per slot (regist stores, unregist clears, getFP searches them all)
@@ -34,27 +35,30 @@ int getIdCount(unsigned char* fp);
 unsigned short getMemberSize(unsigned char* fp);  // the table's number of columns
 // the named member (column) of a table; null when the table has none
 unsigned char* getMember(unsigned char* fp, const char* name);
-// a row's value of the named column, in 64 bits: a string column's text, a number column's value (0 when there is no
-// such member; 1.0.0's ui::UIManager::createLayer tests bits of it above 16)
-char* getVal(unsigned char* fp, const char* column, int id);
+// a row's value of the named column, in 64 bits: a string column's text address, a number column's value (0 when
+// there is no such member; 1.0.0's ui::UIManager::createLayer tests bits of it above 16). The getters return the
+// value as an integer, not a pointer: the original's getMSText/getMSLabel, GfMenuTagHomuriName::convBegin and
+// GfDataBlade's getters call them without a tail call (the integer-to-pointer conversion after the call), and
+// getValCheck returns all 64 bits of the converted value (ldr x0)
+unsigned long getVal(unsigned char* fp, const char* column, int id);
 // the index-th value of an array column (the bdat script class's getArrayVal hands it on like getVal's)
-char* getArrayVal(unsigned char* fp, const char* column, int id, int index);
+unsigned long getArrayVal(unsigned char* fp, const char* column, int id, int index);
 int getArrayCount(unsigned char* fp, const char* column);
 // a column's value type: 1 u8, 2 u16, 3 u32, 4 s8, 5 s16, 6 s32, 7 string, 8 float (the bdat script class's getVal
 // converts by it)
 int getVarType(unsigned char* fp, const char* column);
 // getVal for a column of that value type (7: a string; ai::AiScriptDataManager reads its Script column so)
-char* getValCheck(unsigned char* fp, const char* column, int id, int type);
+unsigned long getValCheck(unsigned char* fp, const char* column, int id, int type);
 // a row's text in a message table
 const char* getMSText(unsigned char* fp, int id);
 // a row's style in a message table (its 16 bits: the code masks them into the int it returns)
 int getMSStyle(unsigned char* fp, int id);
 // a row's value of a member getMember found, unconverted (the value type's bytes; 0 when the id is out of range or
 // the member is not a scalar)
-char* getVal(unsigned char* fp, unsigned char* member, int id);
+unsigned long getVal(unsigned char* fp, unsigned char* member, int id);
 // the value of the member at that index
-char* getVal(unsigned char* fp, int member, int id);
-char* getArrayVal(unsigned char* fp, unsigned char* member, int id, int index);
+unsigned long getVal(unsigned char* fp, int member, int id);
+unsigned long getArrayVal(unsigned char* fp, unsigned char* member, int id, int index);
 // the table's scramble undone in place (regist calls it on each table of a file it registers)
 void decodeScramble(void* data);
 // a value converted from the member's value type to another (an integer widened or narrowed, 0 for strings
@@ -67,7 +71,7 @@ unsigned long getValCheck(unsigned char* fp, unsigned char* member, int id, int 
 // the named table when it is loaded, else null (GfFobjManager::update polls for RSC_dropitemList so)
 unsigned char* isExistFP(const char* name);
 // a row's value of the member at that index, as the given value type (8: a float's 32 bits)
-unsigned int getValCheck(unsigned char* fp, int member, int id, int type);
+unsigned long getValCheck(unsigned char* fp, int member, int id, int type);
 // a row's flag: the flag word member's bit that the bit member names (nonzero when set)
 int getFlagVal(unsigned char* fp, unsigned char* member, int id, unsigned char* bitMember);
 // getFlagVal by the columns' names (gf::GfFieldMapGimmick::BdatInfo::create reads its row's "flag" bits so; the

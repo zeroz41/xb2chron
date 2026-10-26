@@ -35,7 +35,7 @@ typedef mm::mtl::FixedVector<mm::mtl::MapPair<const char*, const char*>, 8> TagP
 namespace {
 // a float column's value: the low 32 bits of what getVal returns (the name is not the original's)
 inline float bdatFloat(unsigned char* fp, const char* column, int id) {
-    unsigned int bits = static_cast<unsigned int>(reinterpret_cast<unsigned long>(Bdat::getVal(fp, column, id)));
+    unsigned int bits = static_cast<unsigned int>(Bdat::getVal(fp, column, id));
     float value;
     memcpy(&value, &bits, sizeof(value));
     return value;
@@ -77,8 +77,8 @@ const char* GfMenuTagEnhance::convBegin(const TagParams& params, unsigned short 
     if (id != 0) {
         switch (kind) {
         case 0: {
-            unsigned short effect = reinterpret_cast<unsigned long>(Bdat::getVal(fp, "EnhanceEffect", id));
-            unsigned short param = reinterpret_cast<unsigned long>(Bdat::getVal(effectFp, "Param", effect));
+            unsigned short effect = Bdat::getVal(fp, "EnhanceEffect", id);
+            unsigned short param = Bdat::getVal(effectFp, "Param", effect);
             s_text.format("%d", param);
             break;
         }

@@ -106,8 +106,8 @@ bool GetNodePosition(gf::GF_OBJ_HANDLE* handle, const char* node, mm::Vec3& out)
 void GetKizunaMinMax(int stage, int& min, int& max) {
     int id = CovertKizunaStageToID(stage);
     unsigned char* fp = gf::GfDataBdat::getFP(51);
-    min = static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "KizunaMin", id, 2)));
-    max = static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "KizunaMax", id, 2)));
+    min = static_cast<unsigned short>(Bdat::getValCheck(fp, "KizunaMin", id, 2));
+    max = static_cast<unsigned short>(Bdat::getValCheck(fp, "KizunaMax", id, 2));
 }
 
 int CovertKizunaStageToID(int stage) {

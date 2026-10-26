@@ -170,7 +170,7 @@ void GfMenuObjMainMenu2::execMapJump() {
 bool SelectionChecker::isEnableSelect(unsigned int id, int select) {
     unsigned char* bdat = GfDataBdat::getFP(GfMenuObjUtil::fn_710048FD30(3) ? 0x180 : 0x17F);
     return GfMenuObjUtil::getMenuCondition(static_cast<unsigned short>(
-        reinterpret_cast<unsigned long>(Bdat::getVal(bdat, "useCond", Bdat::getIdTop(bdat) + select))));
+        Bdat::getVal(bdat, "useCond", Bdat::getIdTop(bdat) + select)));
 }
 
 }  // namespace gf

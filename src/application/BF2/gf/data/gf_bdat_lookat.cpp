@@ -139,7 +139,7 @@ void GfBdatLookAt::Impl::build() {
             unsigned int maxRefId = 0;
             for (unsigned int id = top; id < top + count; ++id) {
                 unsigned int refId = static_cast<unsigned short>(
-                    reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "RefID", id, 2)));
+                    Bdat::getValCheck(fp, "RefID", id, 2));
                 minRefId = refId < minRefId ? refId : minRefId;
                 maxRefId = refId > maxRefId ? refId : maxRefId;
             }
@@ -148,13 +148,13 @@ void GfBdatLookAt::Impl::build() {
             table.m_valid = true;
             for (unsigned int id = top; id < top + count; ++id) {
                 unsigned int refId = static_cast<unsigned short>(
-                    reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "RefID", id, 2)));
+                    Bdat::getValCheck(fp, "RefID", id, 2));
                 CharactorInfo& info = table.m_infos[refId - table.m_minRefId];
                 info.m_charaType =
-                    static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "Chara", id, 2)));
+                    static_cast<unsigned short>(Bdat::getValCheck(fp, "Chara", id, 2));
                 if (i >= 2 && i <= 3) {
                     info.m_lookType = static_cast<unsigned short>(
-                        reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "LookType", id, 2)));
+                        Bdat::getValCheck(fp, "LookType", id, 2));
                 }
             }
         }
@@ -165,24 +165,24 @@ void GfBdatLookAt::Impl::build() {
         int count = Bdat::getIdCount(fp);
         for (unsigned int id = top; id < top + count; ++id) {
             unsigned short chara =
-                static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "Chara", id, 2)));
+                static_cast<unsigned short>(Bdat::getValCheck(fp, "Chara", id, 2));
             LookInfo& info = m_lookInfos[bdatId - 0x1D8][chara];
             union {
                 unsigned int bits;
                 float value;
             } radius, upper, lower, lookTime, interval;
-            radius.bits = static_cast<unsigned int>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "Radius", id, 8)));
+            radius.bits = static_cast<unsigned int>(Bdat::getValCheck(fp, "Radius", id, 8));
             info.m_radius = radius.value;
-            upper.bits = static_cast<unsigned int>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "UpperHeight", id, 8)));
+            upper.bits = static_cast<unsigned int>(Bdat::getValCheck(fp, "UpperHeight", id, 8));
             info.m_upperHeight = upper.value;
-            lower.bits = static_cast<unsigned int>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "LowerHeight", id, 8)));
+            lower.bits = static_cast<unsigned int>(Bdat::getValCheck(fp, "LowerHeight", id, 8));
             info.m_lowerHeight = lower.value;
-            lookTime.bits = static_cast<unsigned int>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "LookTime", id, 8)));
+            lookTime.bits = static_cast<unsigned int>(Bdat::getValCheck(fp, "LookTime", id, 8));
             info.m_lookTime = lookTime.value;
-            interval.bits = static_cast<unsigned int>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "Interval", id, 8)));
+            interval.bits = static_cast<unsigned int>(Bdat::getValCheck(fp, "Interval", id, 8));
             info.m_interval = interval.value;
             info.m_priority =
-                static_cast<unsigned char>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "Priority", id, 4)));
+                static_cast<unsigned char>(Bdat::getValCheck(fp, "Priority", id, 4));
             m_maxRadius = m_maxRadius > info.m_radius ? m_maxRadius : info.m_radius;
             m_maxUpper = m_maxUpper > info.m_upperHeight ? m_maxUpper : info.m_upperHeight;
             m_maxLower = m_maxLower > info.m_lowerHeight ? m_maxLower : info.m_lowerHeight;

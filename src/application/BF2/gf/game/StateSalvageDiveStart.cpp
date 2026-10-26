@@ -99,7 +99,7 @@ void StateSalvageErrorMessage::update(GfGameSalvage* salvage, const fw::UpdateIn
 
 void StateSalvageItemSelect::enter(GfGameSalvage* salvage, ai::State* prev) {
     unsigned int item = static_cast<unsigned short>(
-        reinterpret_cast<unsigned long>(Bdat::getValCheck(salvage->getBindedBdatFp(), "SpecialItem", salvage->getBindedBdatId(), 2)));
+        Bdat::getValCheck(salvage->getBindedBdatFp(), "SpecialItem", salvage->getBindedBdatId(), 2));
     m_pContext = GfMenuCallContext::create();
     GfMenuObjCylinderSelect::open(m_pContext, item);
     GfGameUtil::setDispByGmkType(static_cast<gmk::GmkType>(31), false);

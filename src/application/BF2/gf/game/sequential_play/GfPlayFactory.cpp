@@ -672,7 +672,7 @@ bool GfPlayFactory::createResetBladeForBladeSwitch(unsigned int slot, int setId)
 
 bool GfPlayFactory::fn_7100321258() {
     if (!GfGameCond::isGameCond(
-            static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getValCheck(GfDataBdat::getFP(0x17E), "cond", 0x2F, 2))))) {
+            static_cast<unsigned short>(Bdat::getValCheck(GfDataBdat::getFP(0x17E), "cond", 0x2F, 2)))) {
         return false;
     }
     for (unsigned int i = 0; i < 3; i++) {

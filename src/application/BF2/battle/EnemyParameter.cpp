@@ -494,7 +494,7 @@ int fn_7100087A34(unsigned int party) {
             if (row == -1) {
                 continue;
             }
-            const char* name = Bdat::getValCheck(gf::GfDataBdat::getFP(0xB0), "filename", row, 7);
+            const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(gf::GfDataBdat::getFP(0xB0), "filename", row, 7));
             if (name != nullptr && *name != '\0') {
                 rows[count++] = row;
             }

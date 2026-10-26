@@ -162,7 +162,7 @@ bool GfMenuZoneAdapter::update_ZoneNotice() {
         }
         row = 0x12;
     }
-    ui::UIStr text(message, (unsigned short)(unsigned long)Bdat::getVal(notice, "name", row));
+    ui::UIStr text(message, (unsigned short)Bdat::getVal(notice, "name", row));
     setText(text);
     return true;
 }

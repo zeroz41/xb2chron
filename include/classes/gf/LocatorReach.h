@@ -29,9 +29,9 @@ public:
         dispose();
         m_questId = questId;
         unsigned char* fp = GfDataBdat::getFP(0xce);
-        m_category = static_cast<unsigned char>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "Category", row, 1)));
-        m_placeId = static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "PlaceID", row, 2)));
-        m_mapBdatId = static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "MapID", row, 2)));
+        m_category = static_cast<unsigned char>(Bdat::getValCheck(fp, "Category", row, 1));
+        m_placeId = static_cast<unsigned short>(Bdat::getValCheck(fp, "PlaceID", row, 2));
+        m_mapBdatId = static_cast<unsigned short>(Bdat::getValCheck(fp, "MapID", row, 2));
         // read and unused (1.0.0 has the same call): the table isIconIdPreorder reads
         unsigned char* iconFp = GfDataBdat::getFP(0x7b);
         (void)iconFp;

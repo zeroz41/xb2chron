@@ -25,12 +25,12 @@ public:
         // reads row id of the table (inline here: 3.0.1 has no copy of it, 1.0.0 one out of line)
         void create(const CBdatWrapper& bdat, int id) {
             m_id = 0;
-            m_condition = (unsigned short)(unsigned long)Bdat::getValCheck(bdat.m_fp, "Condition", id, 2);
-            m_id = (unsigned short)(unsigned long)Bdat::getValCheck(bdat.m_fp, "attributeID", id, 2);
-            unsigned int interval = (unsigned int)(unsigned long)Bdat::getValCheck(bdat.m_fp, "DMG_interval", id, 8);
+            m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Condition", id, 2);
+            m_id = (unsigned short)Bdat::getValCheck(bdat.m_fp, "attributeID", id, 2);
+            unsigned int interval = (unsigned int)Bdat::getValCheck(bdat.m_fp, "DMG_interval", id, 8);
             memcpy(&m_interval, &interval, sizeof(m_interval));  // a float column's bits
-            m_damage = (unsigned char)(unsigned long)Bdat::getValCheck(bdat.m_fp, "Pc_dmg", id, 1);
-            m_enemyDamage = (unsigned char)(unsigned long)Bdat::getValCheck(bdat.m_fp, "EN_dmg", id, 1);
+            m_damage = (unsigned char)Bdat::getValCheck(bdat.m_fp, "Pc_dmg", id, 1);
+            m_enemyDamage = (unsigned char)Bdat::getValCheck(bdat.m_fp, "EN_dmg", id, 1);
         }
 
         unsigned short m_condition;

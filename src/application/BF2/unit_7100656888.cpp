@@ -26,37 +26,37 @@ static int fn_7100656894(VMThread* th, void* unused, unsigned long ocId) {
 static int fn_71006568F4(VMThread* th, unsigned char* fp) {
     const char* column = vmArgStringGet(1, vmArgPtrGet(th, 1));
     int id = vmArgIntGet(2, vmArgPtrGet(th, 2));
-    char* value = Bdat::getVal(fp, column, id);
+    unsigned long value = Bdat::getVal(fp, column, id);
     int type = Bdat::getVarType(fp, column);
     VMData ret;
     int v = 0;
     switch (type) {
     case 1:
-        v = (unsigned char)(unsigned long)value;
+        v = (unsigned char)value;
         break;
     case 2:
-        v = (unsigned short)(unsigned long)value;
+        v = (unsigned short)value;
         break;
     case 3:
-        v = (unsigned int)(unsigned long)value;
+        v = (unsigned int)value;
         break;
     case 4:
-        v = (signed char)(unsigned long)value;
+        v = (signed char)value;
         break;
     case 5:
-        v = (short)(unsigned long)value;
+        v = (short)value;
         break;
     case 6:
-        v = (int)(unsigned long)value;
+        v = (int)value;
         break;
     case 7:
         ret.type = VMDATA_STRING;
-        ret.hi = strlen(value);
-        ret.v.str = value;
+        ret.hi = strlen(reinterpret_cast<char*>(value));
+        ret.v.str = reinterpret_cast<char*>(value);
         break;
     case 8:
         ret.type = VMDATA_FIXED;
-        ret.v.i = (int)(unsigned long)value;
+        ret.v.i = (int)value;
         break;
     }
     if (type != 7 && type != 8) {
@@ -72,37 +72,37 @@ static int fn_7100656A04(VMThread* th, unsigned char* fp) {
     const char* column = vmArgStringGet(1, vmArgPtrGet(th, 1));
     int id = vmArgIntGet(2, vmArgPtrGet(th, 2));
     int index = vmArgIntGet(3, vmArgPtrGet(th, 3));
-    char* value = Bdat::getArrayVal(fp, column, id, index);
+    unsigned long value = Bdat::getArrayVal(fp, column, id, index);
     int type = Bdat::getVarType(fp, column);
     VMData ret;
     int v = 0;
     switch (type) {
     case 1:
-        v = (unsigned char)(unsigned long)value;
+        v = (unsigned char)value;
         break;
     case 2:
-        v = (unsigned short)(unsigned long)value;
+        v = (unsigned short)value;
         break;
     case 3:
-        v = (unsigned int)(unsigned long)value;
+        v = (unsigned int)value;
         break;
     case 4:
-        v = (signed char)(unsigned long)value;
+        v = (signed char)value;
         break;
     case 5:
-        v = (short)(unsigned long)value;
+        v = (short)value;
         break;
     case 6:
-        v = (int)(unsigned long)value;
+        v = (int)value;
         break;
     case 7:
         ret.type = VMDATA_STRING;
-        ret.hi = strlen(value);
-        ret.v.str = value;
+        ret.hi = strlen(reinterpret_cast<char*>(value));
+        ret.v.str = reinterpret_cast<char*>(value);
         break;
     case 8:
         ret.type = VMDATA_FIXED;
-        ret.v.i = (int)(unsigned long)value;
+        ret.v.i = (int)value;
         break;
     }
     if (type != 7 && type != 8) {

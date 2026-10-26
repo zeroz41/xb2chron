@@ -56,7 +56,7 @@ bool GfMenuHanaPartsAdapter::update_partsText() {
         return false;
     }
     unsigned char* message = GfDataBdat::getFP(0xF5);
-    unsigned short name = (unsigned short)(unsigned long)Bdat::getVal(GfDataBdat::getFP(0x17C), "name", m_partsId);
+    unsigned short name = (unsigned short)Bdat::getVal(GfDataBdat::getFP(0x17C), "name", m_partsId);
     if (name == 0) {
         return false;
     }
@@ -69,7 +69,7 @@ bool GfMenuHanaPartsAdapter::update_partsIcon() {
     if (m_partsId == 0) {
         return false;
     }
-    unsigned short icon = (unsigned short)(unsigned long)Bdat::getVal(GfDataBdat::getFP(0x17C), "icon", m_partsId);
+    unsigned short icon = (unsigned short)Bdat::getVal(GfDataBdat::getFP(0x17C), "icon", m_partsId);
     if (icon == 0) {
         return false;
     }

@@ -55,7 +55,7 @@ bool GfMenuExcTaskAdapter::update_Name(unsigned int taskId) {
     if (!GfMenuBdat::isValidBdatID(fp, taskId)) {
         return false;
     }
-    unsigned short name = (unsigned short)(unsigned long)Bdat::getVal(fp, "Name", taskId);
+    unsigned short name = (unsigned short)Bdat::getVal(fp, "Name", taskId);
     ui::UIStr text(GfDataBdat::getFP(0x1BF), name);
     setText(text);
     return true;

@@ -79,15 +79,15 @@ void UIManager::resetData() {
     if (fp != nullptr) {
         for (int i = 0; i < Bdat::getIdCount(fp); ++i) {
             int id = Bdat::getIdTop(fp) + i;
-            const char* name = Bdat::getVal(fp, "name", id);
+            const char* name = reinterpret_cast<const char*>(Bdat::getVal(fp, "name", id));
             if (name != nullptr && *name != '\0') {
                 // the components are bytes (0-255)
                 mm::Col4 color;
-                unsigned int r = (unsigned char)(unsigned long)Bdat::getVal(fp, "col_r", id);
+                unsigned int r = (unsigned char)Bdat::getVal(fp, "col_r", id);
                 color.r = r / 255.0f;
-                unsigned int g = (unsigned char)(unsigned long)Bdat::getVal(fp, "col_g", id);
+                unsigned int g = (unsigned char)Bdat::getVal(fp, "col_g", id);
                 color.g = g / 255.0f;
-                unsigned int b = (unsigned char)(unsigned long)Bdat::getVal(fp, "col_b", id);
+                unsigned int b = (unsigned char)Bdat::getVal(fp, "col_b", id);
                 color.b = b / 255.0f;
                 color.a = 1.0f;
                 UIColorLibrary::get()->add(name, color);
@@ -98,7 +98,7 @@ void UIManager::resetData() {
     fp = UIUtil::getBdatFP(14);
     if (fp != nullptr) {
         for (int i = 0; i < Bdat::getIdCount(fp); ++i) {
-            const char* file = Bdat::getVal(fp, "file", i + 1);
+            const char* file = reinterpret_cast<const char*>(Bdat::getVal(fp, "file", i + 1));
             UIMotionLibrary::get()->add(file);
         }
     }
@@ -106,7 +106,7 @@ void UIManager::resetData() {
     fp = UIUtil::getBdatFP(15);
     if (fp != nullptr) {
         for (int id = Bdat::getIdTop(fp); id <= Bdat::getIdEnd(fp); ++id) {
-            const char* file = Bdat::getVal(fp, "file", id);
+            const char* file = reinterpret_cast<const char*>(Bdat::getVal(fp, "file", id));
             UIUioLibrary::get()->add(file);
         }
     }
@@ -220,13 +220,13 @@ void UIManager::fn_710068F58C(unsigned char* bdat, unsigned int id, bool release
     if (!isLayerCreated(id) || bdat == nullptr) {
         return;
     }
-    unsigned char group = (unsigned char)(unsigned long)Bdat::getVal(bdat, "group", id);
+    unsigned char group = (unsigned char)Bdat::getVal(bdat, "group", id);
     // the columns after "group" come in pairs: a sheet's object and its priority
     int sheets = (Bdat::getMemberSize(bdat) - 1) / 2;
     mm::mtl::FixStr<32> column;
     for (unsigned int i = 0; i < sheets; ++i) {
         column.format("sheet%02d", i + 1);
-        const char* name = Bdat::getVal(bdat, column.m_str, id);
+        const char* name = reinterpret_cast<const char*>(Bdat::getVal(bdat, column.m_str, id));
         if (name != nullptr && *name != '\0' && m_groups[group].isAssignedLayer(name, id)) {
             m_groups[group].terminateObject(name, release);
         }
@@ -250,13 +250,13 @@ void UIManager::fn_710068F744(unsigned char* bdat, unsigned int id) {
     if (!isLayerCreated(id) || bdat == nullptr) {
         return;
     }
-    unsigned char group = (unsigned char)(unsigned long)Bdat::getVal(bdat, "group", id);
+    unsigned char group = (unsigned char)Bdat::getVal(bdat, "group", id);
     // the columns after "group" come in pairs: a sheet's object and its priority
     int sheets = (Bdat::getMemberSize(bdat) - 1) / 2;
     mm::mtl::FixStr<32> column;
     for (unsigned int i = 0; i < sheets; ++i) {
         column.format("sheet%02d", i + 1);
-        const char* name = Bdat::getVal(bdat, column.m_str, id);
+        const char* name = reinterpret_cast<const char*>(Bdat::getVal(bdat, column.m_str, id));
         if (name != nullptr && *name != '\0') {
             m_groups[group].releaseObject(name);
         }
@@ -277,7 +277,7 @@ bool UIManager::preloadLayer(unsigned int id) {
         if (Bdat::getMember(bdat, column.m_str) == nullptr) {
             continue;
         }
-        const char* name = Bdat::getVal(bdat, column.m_str, id);
+        const char* name = reinterpret_cast<const char*>(Bdat::getVal(bdat, column.m_str, id));
         if (name != nullptr && *name != '\0') {
             UIObjFactory::get()->registPreloadResource(1, name);
         }

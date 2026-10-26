@@ -59,8 +59,8 @@ const char* GfMenuScriptManager::getScriptName(unsigned int handle) {
     const char* name = acc.getName();
     unsigned char* fp = Bdat::getFP("MNU_ScriptList");
     for (int id = Bdat::getIdTop(fp); id <= Bdat::getIdEnd(fp); id++) {
-        if (strcmp(Bdat::getVal(fp, "name", id), name) == 0) {
-            return Bdat::getVal(fp, "script", id);
+        if (strcmp(reinterpret_cast<const char*>(Bdat::getVal(fp, "name", id)), name) == 0) {
+            return reinterpret_cast<const char*>(Bdat::getVal(fp, "script", id));
         }
     }
     return nullptr;

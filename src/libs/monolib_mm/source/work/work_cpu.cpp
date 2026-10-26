@@ -1,5 +1,5 @@
 #define MM_LIB_FROM_MONOLIB_MM
-#include "/home/td/.local/share/xc2-session-tools/session19/fixedlist/include/mm/mtl/FixedList.h"
+#include "mm/mtl/FixedList.h"
 #include "mm/mtl/FixedList.h"
 #include "mm/Col3.h"
 #include "classes/ml/WorkObj.h"

@@ -63,7 +63,7 @@ void GfMenuSoundManager::postUpdate(const fw::UpdateInfo& info) {
     unsigned char* fp = GfDataBdat::getFP(JINGLE_BDAT);
     for (JingleInfo* it = manager->m_jingles.begin(); it != manager->m_jingles.end();) {
         // a float column: its value is the low 32 bits of what getVal returns
-        unsigned int timeBits = static_cast<unsigned int>(reinterpret_cast<unsigned long>(Bdat::getVal(fp, "time", it->m_id)));
+        unsigned int timeBits = static_cast<unsigned int>(Bdat::getVal(fp, "time", it->m_id));
         float time;
         memcpy(&time, &timeBits, sizeof(time));
         float playTime = 0.0f;
@@ -102,7 +102,7 @@ SoundHandle GfMenuSoundManager::playJingle(unsigned int id) {
         return SoundHandle(0);
     }
     unsigned char* fp = GfDataBdat::getFP(JINGLE_BDAT);
-    unsigned short resource = static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getVal(fp, "resource", id)));
+    unsigned short resource = static_cast<unsigned short>(Bdat::getVal(fp, "resource", id));
     const char* name;
     if (resource == 0 || (name = GfBdatBgm::get()->getBgmListfilename(resource)) == nullptr || name[0] == '\0') {
         return SoundHandle(0);

@@ -342,7 +342,7 @@ bool GfMenuArtsAdapter::update_ArtsEnhanceDescription() {
     }
     unsigned int enhance = GfDataDriverArts::getEnhance(m_artsId, m_level);
     if (enhance == 0) {
-        unsigned int id = (unsigned short)(unsigned long)Bdat::getVal(GfDataBdat::getFP(0x15A), "name", 4);
+        unsigned int id = (unsigned short)Bdat::getVal(GfDataBdat::getFP(0x15A), "name", 4);
         ui::UIStr text(GfDataBdat::getFP(0xF5), id);
         setText(text);
     } else {
@@ -411,7 +411,7 @@ bool GfMenuArtsAdapter::update_ArtsEnhanceDescriptionNextLv() {
     }
     unsigned int enhance = GfDataDriverArts::getEnhance(m_artsId, level);
     if (enhance == 0) {
-        unsigned int id = (unsigned short)(unsigned long)Bdat::getVal(GfDataBdat::getFP(0x15A), "name", 4);
+        unsigned int id = (unsigned short)Bdat::getVal(GfDataBdat::getFP(0x15A), "name", 4);
         ui::UIStr text(GfDataBdat::getFP(0xF5), id);
         setText(text);
     } else {

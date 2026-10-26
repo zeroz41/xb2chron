@@ -152,8 +152,8 @@ LocatorTbox::LocatorTbox(QuestID questId, unsigned short tboxId) : m_tboxId(0), 
 
 LocatorTalk_NpcID::LocatorTalk_NpcID(QuestID questId, unsigned char* bdat, int row)
     : m_gmkSetId(0), m_npcId(0), m_posNum(0), m_pos(mm::Vec3::zero) {
-    unsigned short mapId = static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getValCheck(bdat, "MapID", row, 2)));
-    unsigned short npcId = static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getValCheck(bdat, "NpcID", row, 2)));
+    unsigned short mapId = static_cast<unsigned short>(Bdat::getValCheck(bdat, "MapID", row, 2));
+    unsigned short npcId = static_cast<unsigned short>(Bdat::getValCheck(bdat, "NpcID", row, 2));
     if (mapId && npcId) {
         create(questId, mapId, npcId);
     }

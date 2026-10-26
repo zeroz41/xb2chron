@@ -121,7 +121,7 @@ void GfFieldDmgManager::gevMapjump(GEV gev, const MapjumpCallbackInfo& info) {
         int count = Bdat::getIdCount(bdat.m_fp);
         for (int i = 0; i < count; i++) {
             int id = Bdat::getIdTop(bdat.m_fp) + i;
-            if ((unsigned short)(unsigned long)Bdat::getValCheck(bdat.m_fp, "MAPID", id, 2) == info.m_mapId) {
+            if ((unsigned short)Bdat::getValCheck(bdat.m_fp, "MAPID", id, 2) == info.m_mapId) {
                 m_bdatInfos.push_back(BdatInfo());
                 m_bdatInfos.back().create(bdat, id);
             }

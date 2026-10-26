@@ -63,7 +63,7 @@ GfMenuWorldMapAdapter* GfMenuWorldMapAdapter::create(unsigned int handle, unsign
 }
 
 bool GfMenuWorldMapAdapter::update_WorldMapName() {
-    unsigned int name = (unsigned short)(unsigned long)Bdat::getVal(GfDataBdat::getFP(0x5D), "nameID", m_mapId);
+    unsigned int name = (unsigned short)Bdat::getVal(GfDataBdat::getFP(0x5D), "nameID", m_mapId);
     ui::UIStr text(GfDataBdat::getFP(0x1B4), name);
     setText(text);
     return true;

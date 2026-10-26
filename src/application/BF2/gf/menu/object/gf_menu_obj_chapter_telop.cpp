@@ -100,7 +100,7 @@ void GfMenuObjChapterTelop::ListListener::reciveEvent(const ui::EventData& event
                 if (index.m_object == nullptr) {
                     return;
                 }
-                unsigned short id = (unsigned short)(unsigned long)Bdat::getVal(bdat, "index", chapter);
+                unsigned short id = (unsigned short)Bdat::getVal(bdat, "index", chapter);
                 if (id == 0) {
                     return;
                 }
@@ -122,7 +122,7 @@ void GfMenuObjChapterTelop::ListListener::reciveEvent(const ui::EventData& event
                 if (title.m_object == nullptr) {
                     return;
                 }
-                unsigned short id = (unsigned short)(unsigned long)Bdat::getVal(bdat, "title", chapter);
+                unsigned short id = (unsigned short)Bdat::getVal(bdat, "title", chapter);
                 if (id == 0) {
                     return;
                 }
@@ -169,14 +169,14 @@ void GfMenuObjChapterTelop::ListListener::reciveEvent(const ui::EventData& event
                     if (chapter == 10) {
                         chapter = 11;
                     }
-                    unsigned short id = (unsigned short)(unsigned long)Bdat::getVal(bdat, "index", chapter);
+                    unsigned short id = (unsigned short)Bdat::getVal(bdat, "index", chapter);
                     if (id != 0) {
                         {
                             ui::UIStr str(GfDataBdat::getFP(0x123), id);
                             index.setSlopeRot(-12.0f);
                             index.setText(str);
                         }
-                        id = (unsigned short)(unsigned long)Bdat::getVal(bdat, "title", chapter);
+                        id = (unsigned short)Bdat::getVal(bdat, "title", chapter);
                         if (id != 0) {
                             name.setText(ui::UIStr(GfDataBdat::getFP(0x123), id));
                             name.setSlopeRot(-12.0f);

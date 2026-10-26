@@ -341,7 +341,7 @@ const char* GfAssetSetupEnemy::getStpFile(GfAssetType type) {
         unsigned char* fp = GfDataBdat::getFP(165);
         unsigned char** table = m_paramCopy != nullptr ? m_paramCopy : &fp;
         unsigned int id = m_objId;
-        const char* name = Bdat::getValCheck(*table, "Motion", id, 7);
+        const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(*table, "Motion", id, 7));
         if (name == nullptr || *name == '\0') {
             return nullptr;
         }
@@ -367,7 +367,7 @@ const char* GfAssetSetupEventEnemy::getEvtMotFile(GfAssetType type) {
             unsigned char* fp = GfDataBdat::getFP(165);
             unsigned char** table = m_paramCopy != nullptr ? m_paramCopy : &fp;
             unsigned int id = m_objId;
-            const char* name = Bdat::getValCheck(*table, "Motion", id, 7);
+            const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(*table, "Motion", id, 7));
             if (name == nullptr || *name == '\0') {
                 return nullptr;
             }
@@ -383,7 +383,7 @@ const char* GfAssetSetupEventEnemy::getEvtStpFile(GfAssetType type) {
         unsigned char* fp = GfDataBdat::getFP(165);
         unsigned char** table = m_paramCopy != nullptr ? m_paramCopy : &fp;
         unsigned int id = m_objId;
-        const char* name = Bdat::getValCheck(*table, "Model", id, 7);
+        const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(*table, "Model", id, 7));
         if (name == nullptr || *name == '\0') {
             return nullptr;
         }
@@ -531,7 +531,7 @@ const char* GfAssetSetupMob::getMdlFile(GfAssetType type) {
         unsigned char* fp = GfDataBdat::getFP(170);
         unsigned char** table = m_paramCopy != nullptr ? m_paramCopy : &fp;
         unsigned int id = m_objId;
-        const char* name = Bdat::getValCheck(*table, "Model", id, 7);
+        const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(*table, "Model", id, 7));
         if (name == nullptr || *name == '\0') {
             return nullptr;
         }
@@ -551,7 +551,7 @@ const char* GfAssetSetupMob::getMotFile(GfAssetType type) {
             unsigned char* fp = GfDataBdat::getFP(170);
             unsigned char** table = m_paramCopy != nullptr ? m_paramCopy : &fp;
             unsigned int id = m_objId;
-            const char* name = Bdat::getValCheck(*table, "Motion", id, 7);
+            const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(*table, "Motion", id, 7));
             if (name == nullptr || *name == '\0') {
                 return nullptr;
             }
@@ -605,7 +605,7 @@ const char* GfAssetSetupEventMob::getEvtStpFile(GfAssetType type) {
         unsigned char* fp = GfDataBdat::getFP(170);
         unsigned char** table = m_paramCopy != nullptr ? m_paramCopy : &fp;
         unsigned int id = m_objId;
-        const char* name = Bdat::getValCheck(*table, "Motion", id, 7);
+        const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(*table, "Motion", id, 7));
         if (name == nullptr || *name == '\0') {
             return nullptr;
         }
@@ -625,7 +625,7 @@ const char* GfAssetSetupGimmick::getMdlFile(GfAssetType type) {
     if (resource == nullptr || resource->m_name.m_nLen == 0) {
         unsigned char** table = m_paramCopy;
         unsigned int id = m_objId;
-        const char* name = Bdat::getValCheck(*table, "Model", id, 7);
+        const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(*table, "Model", id, 7));
         if (name == nullptr || *name == '\0') {
             return nullptr;
         }
@@ -644,7 +644,7 @@ const char* GfAssetSetupGimmick::getMotFile(GfAssetType type) {
         if (resource == nullptr || resource->m_name.m_nLen == 0) {
             unsigned char** table = m_paramCopy;
             unsigned int id = m_objId;
-            const char* name = Bdat::getValCheck(*table, "Motion", id, 7);
+            const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(*table, "Motion", id, 7));
             if (name == nullptr || *name == '\0') {
                 return nullptr;
             }
@@ -670,7 +670,7 @@ const char* GfAssetSetupGimmick::getStpFile(GfAssetType type) {
     if (getAssetType() == type) {
         unsigned char** table = m_paramCopy;
         unsigned int id = m_objId;
-        const char* name = Bdat::getValCheck(*table, "Motion", id, 7);
+        const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(*table, "Motion", id, 7));
         if (name == nullptr || *name == '\0') {
             return nullptr;
         }
@@ -690,7 +690,7 @@ const char* GfAssetSetupFobj::getMdlFile(GfAssetType type) {
     if (resource == nullptr || resource->m_name.m_nLen == 0) {
         unsigned char** table = m_paramCopy;
         unsigned int id = m_objId;
-        const char* name = Bdat::getValCheck(*table, "mdo", id, 7);
+        const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(*table, "mdo", id, 7));
         if (name == nullptr || *name == '\0') {
             return nullptr;
         }

@@ -168,7 +168,7 @@ static int fn_7100657B48(VMThread* pThread) {
     int count = Bdat::getIdCount(bdat);
     int value = -1;
     if (top <= id && id < top + count) {
-        value = (unsigned char)(unsigned long)Bdat::getValCheck(bdat, "ComboStage", id, 1);
+        value = (unsigned char)Bdat::getValCheck(bdat, "ComboStage", id, 1);
     }
     vmRetIntSet(pThread, value);
     return 1;
@@ -182,7 +182,7 @@ static int fn_7100657BF8(VMThread* pThread) {
     int count = Bdat::getIdCount(bdat);
     int value = -1;
     if (top <= id && id < top + count) {
-        value = (unsigned char)(unsigned long)Bdat::getValCheck(bdat, "Atr", id, 1);
+        value = (unsigned char)Bdat::getValCheck(bdat, "Atr", id, 1);
     }
     vmRetIntSet(pThread, value);
     return 1;

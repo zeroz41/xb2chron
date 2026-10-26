@@ -405,7 +405,7 @@ void GfMenuObject::closeFSLayer(unsigned int handle, bool flag0, bool flag1) {
 unsigned int GfMenuObject::getMenuLayerID(unsigned int menuId) {
     unsigned char* bdat = GfDataBdat::getFP(0x173);
     if (bdat != nullptr && GfMenuBdat::isValidBdatID(bdat, menuId)) {
-        return static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getVal(bdat, "layer_id", menuId)));
+        return static_cast<unsigned short>(Bdat::getVal(bdat, "layer_id", menuId));
     }
     return 1;
 }
@@ -413,7 +413,7 @@ unsigned int GfMenuObject::getMenuLayerID(unsigned int menuId) {
 unsigned int GfMenuObject::getMenuIconID(unsigned int menuId) {
     unsigned char* bdat = GfDataBdat::getFP(0x173);
     if (bdat != nullptr && GfMenuBdat::isValidBdatID(bdat, menuId)) {
-        return static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getVal(bdat, "icon", menuId)));
+        return static_cast<unsigned short>(Bdat::getVal(bdat, "icon", menuId));
     }
     return 0;
 }
@@ -421,7 +421,7 @@ unsigned int GfMenuObject::getMenuIconID(unsigned int menuId) {
 bool GfMenuObject::getMenuText(unsigned int menuId, unsigned char*& file, unsigned int& msgId) {
     unsigned char* bdat = GfDataBdat::getFP(0x173);
     if (bdat != nullptr && GfMenuBdat::isValidBdatID(bdat, menuId)) {
-        msgId = static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getVal(bdat, "text", menuId)));
+        msgId = static_cast<unsigned short>(Bdat::getVal(bdat, "text", menuId));
         file = GfDataBdat::getFP(0x119);
         return true;
     }
@@ -431,7 +431,7 @@ bool GfMenuObject::getMenuText(unsigned int menuId, unsigned char*& file, unsign
 bool GfMenuObject::getMenuDesc(unsigned int menuId, unsigned char*& file, unsigned int& msgId) {
     unsigned char* bdat = GfDataBdat::getFP(0x173);
     if (bdat != nullptr && GfMenuBdat::isValidBdatID(bdat, menuId)) {
-        msgId = GfMenuObjUtil::getMsgIDFromList(0x164, static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getVal(bdat, "desc", menuId))));
+        msgId = GfMenuObjUtil::getMsgIDFromList(0x164, static_cast<unsigned short>(Bdat::getVal(bdat, "desc", menuId)));
         file = GfDataBdat::getFP(0x119);
         return true;
     }

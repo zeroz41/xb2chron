@@ -943,8 +943,8 @@ void ScriptCamNearfar::doit(const event::Param& param) {
             unsigned int bits;
             float value;
         } nearVal, farVal;
-        nearVal.bits = (unsigned int)(unsigned long)Bdat::getValCheck(Bdat::getFP("EVT_nearfar"), "near", id, 8);
-        farVal.bits = (unsigned int)(unsigned long)Bdat::getValCheck(Bdat::getFP("EVT_nearfar"), "far", id, 8);
+        nearVal.bits = (unsigned int)Bdat::getValCheck(Bdat::getFP("EVT_nearfar"), "near", id, 8);
+        farVal.bits = (unsigned int)Bdat::getValCheck(Bdat::getFP("EVT_nearfar"), "far", id, 8);
         cam->m_hands.m_near = nearVal.value;
         cam->m_hands.m_far = farVal.value;
     }

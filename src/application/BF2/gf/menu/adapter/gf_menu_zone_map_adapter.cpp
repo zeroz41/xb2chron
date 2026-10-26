@@ -54,7 +54,7 @@ bool GfMenuZoneMapAdapter::update_ZoneMapName() {
     } else {
         table = GfDataBdat::getFP(0x17A);
     }
-    unsigned int name = (unsigned short)(unsigned long)Bdat::getVal(table, "disp_name", m_mapId);
+    unsigned int name = (unsigned short)Bdat::getVal(table, "disp_name", m_mapId);
     ui::UIStr text(GfDataBdat::getFP(0x12E), name);
     setText(text);
     return true;

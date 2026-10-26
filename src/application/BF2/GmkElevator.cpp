@@ -219,7 +219,7 @@ const char* GmkManager::getSheetnameByType(int id, GmkType type) const {
     mm::mtl::FixStr<256> column;
     column.format("%s_bdat", getGmkKindName(s_gmkKindNames, type));
     unsigned char* setFp = m_gmkSetBdatFp;
-    return Bdat::getMember(setFp, column.m_str) != nullptr ? Bdat::getValCheck(setFp, column.m_str, id, 7) : nullptr;
+    return Bdat::getMember(setFp, column.m_str) != nullptr ? reinterpret_cast<const char*>(Bdat::getValCheck(setFp, column.m_str, id, 7)) : nullptr;
 }
 
 int GmkManager::getMapBdatId(int id) const {
@@ -229,7 +229,7 @@ int GmkManager::getMapBdatId(int id) const {
     if (id < top || id >= top + count) {
         return -1;
     }
-    return static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getValCheck(fp, "mapId", id, 2)));
+    return static_cast<unsigned short>(Bdat::getValCheck(fp, "mapId", id, 2));
 }
 
 GmkCollectionList::~GmkCollectionList() {
@@ -289,7 +289,7 @@ void GmkSetOfSalvageChildren::createGmkLists(int id) {
     if (Bdat::getMember(fp, "salvage") == nullptr) {
         return;
     }
-    const char* name = Bdat::getValCheck(fp, "salvage", id, 7);
+    const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "salvage", id, 7));
     if (name == nullptr || *name == '\0') {
         return;
     }
@@ -312,7 +312,7 @@ void GmkSetOfSalvageChildren::createGmkLists(int id) {
             mm::mtl::FixStr<256> column;
             column.format("%s_bdat", getGmkKindName(s_gmkKindNames, i));
             unsigned char* setFp = manager->m_gmkSetBdatFp;
-            bdatName = Bdat::getMember(setFp, column.m_str) != nullptr ? Bdat::getValCheck(setFp, column.m_str, id, 7) : nullptr;
+            bdatName = Bdat::getMember(setFp, column.m_str) != nullptr ? reinterpret_cast<const char*>(Bdat::getValCheck(setFp, column.m_str, id, 7)) : nullptr;
         }
         IGmkList::CreateInfo info;
         info.m_allocHandle = m_allocHandle;
@@ -423,7 +423,7 @@ void GmkSet::createGmkLists(int id) {
         if (Bdat::getMember(fp, kindName) == nullptr) {
             continue;
         }
-        const char* name = Bdat::getValCheck(fp, kindName, id, 7);
+        const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(fp, kindName, id, 7));
         if (name == nullptr || *name == '\0') {
             continue;
         }
@@ -433,7 +433,7 @@ void GmkSet::createGmkLists(int id) {
             mm::mtl::FixStr<256> column;
             column.format("%s_bdat", kindName);
             unsigned char* setFp = manager->m_gmkSetBdatFp;
-            bdatName = Bdat::getMember(setFp, column.m_str) != nullptr ? Bdat::getValCheck(setFp, column.m_str, id, 7) : nullptr;
+            bdatName = Bdat::getMember(setFp, column.m_str) != nullptr ? reinterpret_cast<const char*>(Bdat::getValCheck(setFp, column.m_str, id, 7)) : nullptr;
         }
         IGmkList::CreateInfo info;
         info.m_allocHandle = m_allocHandle;

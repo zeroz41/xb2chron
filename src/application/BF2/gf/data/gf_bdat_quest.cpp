@@ -34,7 +34,7 @@ inline void addTaskCategories(QuestListAcc* acc, CBdatWrapper* list, CBdatWrappe
     unsigned int id = list->getIdTop();
     unsigned int end = list->getIdTop() + list->getIdCount();
     for (; id < end; id++) {
-        if (unsigned short purposeId = (unsigned short)(unsigned long)Bdat::getValCheck(list->m_fp, "PurposeID", id, 2)) {
+        if (unsigned short purposeId = (unsigned short)Bdat::getValCheck(list->m_fp, "PurposeID", id, 2)) {
             acc->addTaskCategory(purposeId, category, task);
         }
     }

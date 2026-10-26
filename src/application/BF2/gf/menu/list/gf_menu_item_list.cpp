@@ -111,8 +111,8 @@ bool GfMenuItemList::sortNameDescending(const MenuItemInfo& a, const MenuItemInf
     unsigned int keyA;
     unsigned int keyB;
     if (key != nullptr) {
-        keyA = (unsigned int)(unsigned long)Bdat::getVal(GfMenuBdat::getItemDataFP(a.m_type, a.m_id), key, a.m_id);
-        keyB = (unsigned int)(unsigned long)Bdat::getVal(GfMenuBdat::getItemDataFP(b.m_type, b.m_id), key, b.m_id);
+        keyA = (unsigned int)Bdat::getVal(GfMenuBdat::getItemDataFP(a.m_type, a.m_id), key, a.m_id);
+        keyB = (unsigned int)Bdat::getVal(GfMenuBdat::getItemDataFP(b.m_type, b.m_id), key, b.m_id);
     } else {
         keyA = a.m_id;
         keyB = b.m_id;
@@ -128,8 +128,8 @@ bool GfMenuItemList::sortNameAscending(const MenuItemInfo& a, const MenuItemInfo
     unsigned int keyA;
     unsigned int keyB;
     if (key != nullptr) {
-        keyA = (unsigned int)(unsigned long)Bdat::getVal(GfMenuBdat::getItemDataFP(a.m_type, a.m_id), key, a.m_id);
-        keyB = (unsigned int)(unsigned long)Bdat::getVal(GfMenuBdat::getItemDataFP(b.m_type, b.m_id), key, b.m_id);
+        keyA = (unsigned int)Bdat::getVal(GfMenuBdat::getItemDataFP(a.m_type, a.m_id), key, a.m_id);
+        keyB = (unsigned int)Bdat::getVal(GfMenuBdat::getItemDataFP(b.m_type, b.m_id), key, b.m_id);
     } else {
         keyA = a.m_id;
         keyB = b.m_id;
@@ -461,8 +461,8 @@ bool GfMenuItemList::sortGetAreaAscending(const MenuItemInfo& a, const MenuItemI
     unsigned int areaB;
     if (a.m_type == 8) {
         unsigned char* fp = GfDataBdat::getFP(0x94);
-        areaA = (unsigned short)(unsigned long)Bdat::getVal(fp, "Zone", a.m_id);
-        areaB = (unsigned short)(unsigned long)Bdat::getVal(fp, "Zone", b.m_id);
+        areaA = (unsigned short)Bdat::getVal(fp, "Zone", a.m_id);
+        areaB = (unsigned short)Bdat::getVal(fp, "Zone", b.m_id);
     } else {
         areaA = a.m_id;
         areaB = b.m_id;
@@ -478,8 +478,8 @@ bool GfMenuItemList::sortGetAreaDescending(const MenuItemInfo& a, const MenuItem
     unsigned int areaB;
     if (a.m_type == 8) {
         unsigned char* fp = GfDataBdat::getFP(0x94);
-        areaA = (unsigned short)(unsigned long)Bdat::getVal(fp, "Zone", a.m_id);
-        areaB = (unsigned short)(unsigned long)Bdat::getVal(fp, "Zone", b.m_id);
+        areaA = (unsigned short)Bdat::getVal(fp, "Zone", a.m_id);
+        areaB = (unsigned short)Bdat::getVal(fp, "Zone", b.m_id);
     } else {
         areaA = a.m_id;
         areaB = b.m_id;

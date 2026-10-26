@@ -66,15 +66,15 @@ void UIFontManager::update(const fw::UpdateInfo& info) {
         unsigned char* imageFp = UIUtil::getBdatFP(0);
         for (int i = 0; i < Bdat::getIdCount(fp); ++i) {
             int id = Bdat::getIdTop(fp) + i;
-            unsigned char type = (unsigned char)(unsigned long)Bdat::getVal(fp, "type", id);
-            unsigned short resource = (unsigned short)(unsigned long)Bdat::getVal(fp, "resource", id);
+            unsigned char type = (unsigned char)Bdat::getVal(fp, "type", id);
+            unsigned short resource = (unsigned short)Bdat::getVal(fp, "resource", id);
             switch (type) {
             case 6: {
-                const char* file = Bdat::getVal(imageFp, "file", resource);
+                const char* file = reinterpret_cast<const char*>(Bdat::getVal(imageFp, "file", resource));
                 UIUtil::makeMenuImageFileName(path, file);
                 fw::CommonResource* res = m_resource->search(path.m_str);
                 if (res != nullptr) {
-                    unsigned char imageType = (unsigned char)(unsigned long)Bdat::getVal(fp, "image_type", id);
+                    unsigned char imageType = (unsigned char)Bdat::getVal(fp, "image_type", id);
                     if (imageType == 1) {
                         if (m_colorMap == nullptr) {
                             m_colorMap = acc.createFontColorMapObj(res->getAssetData());
@@ -86,7 +86,7 @@ void UIFontManager::update(const fw::UpdateInfo& info) {
                 break;
             }
             case 8: {
-                const char* file = Bdat::getVal(fontFp, "file", resource);
+                const char* file = reinterpret_cast<const char*>(Bdat::getVal(fontFp, "file", resource));
                 UIUtil::makeMenuFontDataFileName(path, file);
                 fw::CommonResource* res = m_resource->search(path.m_str);
                 if (res != nullptr) {
@@ -99,7 +99,7 @@ void UIFontManager::update(const fw::UpdateInfo& info) {
                 break;
             }
             case 9: {
-                const char* file = Bdat::getVal(styleFp, "file", resource);
+                const char* file = reinterpret_cast<const char*>(Bdat::getVal(styleFp, "file", resource));
                 UIUtil::makeMenuFontStyleFileName(path, file);
                 fw::CommonResource* res = m_resource->search(path.m_str);
                 if (res != nullptr) {
@@ -110,7 +110,7 @@ void UIFontManager::update(const fw::UpdateInfo& info) {
                 break;
             }
             case 10: {
-                const char* file = Bdat::getVal(styleFp, "file", resource);
+                const char* file = reinterpret_cast<const char*>(Bdat::getVal(styleFp, "file", resource));
                 UIUtil::makeMSProjFileName(path, file);
                 fw::CommonResource* res = m_resource->search(path.m_str);
                 if (res != nullptr) {
@@ -124,10 +124,10 @@ void UIFontManager::update(const fw::UpdateInfo& info) {
         if (faceFp != nullptr) {
             for (int i = 0; i < Bdat::getIdCount(faceFp); ++i) {
                 int id = Bdat::getIdTop(faceFp) + i;
-                const char* name = Bdat::getVal(faceFp, "name", id);
+                const char* name = reinterpret_cast<const char*>(Bdat::getVal(faceFp, "name", id));
                 if (name != nullptr && *name != '\0') {
                     m_facePatterns.push_back(FacePattern(
-                        mm::mtl::hashStrCrc(name), (unsigned char)(unsigned long)Bdat::getVal(faceFp, "image_no", id)));
+                        mm::mtl::hashStrCrc(name), (unsigned char)Bdat::getVal(faceFp, "image_no", id)));
                 }
             }
         }

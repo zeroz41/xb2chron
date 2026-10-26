@@ -106,8 +106,8 @@ void GfMenuObjEvTheater::fn_7100404720(unsigned int index) {
     ui::UIObjectAcc acc(m_capHandle);
     if (acc.m_object != nullptr) {
         unsigned char* messages = GfDataBdat::getFP(0x136);
-        ui::UIStr text(messages, static_cast<unsigned short>(reinterpret_cast<unsigned long>(
-                                     Bdat::getVal(m_capBdat, "cap_id", s_capRows[index]))));
+        ui::UIStr text(messages, static_cast<unsigned short>(
+                                     Bdat::getVal(m_capBdat, "cap_id", s_capRows[index])));
         acc.setText(text);
     }
 }

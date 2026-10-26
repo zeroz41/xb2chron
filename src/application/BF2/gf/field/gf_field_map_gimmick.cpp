@@ -97,7 +97,7 @@ void AFieldSeq::seqCheckFs(float) {
         return;
     }
     unsigned short fsId = static_cast<unsigned short>(
-        reinterpret_cast<unsigned long>(Bdat::getValCheck(gmk->getBindedBdatFp(), "FSID", gmk->m_bdatId, 2)));
+        Bdat::getValCheck(gmk->getBindedBdatFp(), "FSID", gmk->m_bdatId, 2));
     unsigned int nameMsId = 0;
     GfGameUtil::getNameMsId(nameMsId, m_handle);
     if (fsId) {
@@ -307,7 +307,7 @@ void GfFieldMapGimmick::seqLod_init(float) {
     int row = gmk->m_bdatId;
     mm::mtl::FixStr<32> name;
     name.format("G%d_LODmodel", m_lodStep);
-    m_lodAnim = (unsigned short)(unsigned long)Bdat::getValCheck(fp, name.m_str, row, 2);
+    m_lodAnim = (unsigned short)Bdat::getValCheck(fp, name.m_str, row, 2);
     if (m_lodAnim == 0) {
         m_seqLod = nullptr;
         if (m_bdatInfo.m_nowaitGmkCam && m_isFsSucceeded) {
@@ -323,7 +323,7 @@ void GfFieldMapGimmick::seqLod_init(float) {
     bool reverse = false;
     bool fade = false;
     unsigned int switchId = 1;
-    unsigned char mode = (unsigned char)(unsigned long)Bdat::getValCheck(fp, name.m_str, row, 1);
+    unsigned char mode = (unsigned char)Bdat::getValCheck(fp, name.m_str, row, 1);
     switch (mode) {
     case 0:
         mm::mtl::PtrSingleton<GfFieldLod>::get()->setFade(m_lodAnim, false, false);
@@ -356,10 +356,10 @@ void GfFieldMapGimmick::seqLod_init(float) {
         break;
     }
     name.format("nextwait%d", m_lodStep);
-    m_waitTime = (short)(unsigned long)Bdat::getValCheck(fp, name.m_str, row, 5);
+    m_waitTime = (short)Bdat::getValCheck(fp, name.m_str, row, 5);
     m_elapsedTime = 0.0f;
     name.format("G%d_LOD_SE", m_lodStep);
-    unsigned short seId = (unsigned short)(unsigned long)Bdat::getValCheck(fp, name.m_str, row, 2);
+    unsigned short seId = (unsigned short)Bdat::getValCheck(fp, name.m_str, row, 2);
     if (seId) {
         gmk::GmkCtrlVolSe::CreateInfo info;
         name.format("G%d_LOD_SE_type", m_lodStep);
@@ -367,7 +367,7 @@ void GfFieldMapGimmick::seqLod_init(float) {
                           ? mm::mtl::PtrSingleton<GfFieldSound>::get()->getMapPack()
                           : mm::mtl::PtrSingleton<GfFieldSound>::get()->getCommonPack();
         name.format("G%d_LOD_size", m_lodStep);
-        float size = (unsigned char)(unsigned long)Bdat::getValCheck(fp, name.m_str, row, 1);
+        float size = (unsigned char)Bdat::getValCheck(fp, name.m_str, row, 1);
         info.m_seId = seId;
         info.m_minDist = size;
         info.m_maxDist = size;
@@ -398,13 +398,13 @@ void GfFieldMapGimmick::seqMapObj_nextwait(float dt) {
 }
 
 void GfFieldMapGimmick::BdatInfo::create(CBdatWrapper bdat, int row) {
-    m_opCondition = (unsigned short)(unsigned long)Bdat::getValCheck(bdat.m_fp, "OP_Condition", row, 2);
+    m_opCondition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "OP_Condition", row, 2);
     m_bootedGmk = gmk::BootedGmkCond(bdat, row, "OP_");
     m_scenarioFlag = gmk::ScenarioFlagCond(bdat, row, "OP_");
     m_questFlag = gmk::QuestFlagCond(bdat, row, "OP_");
-    m_time.m_time = (unsigned short)(unsigned long)Bdat::getValCheck(bdat.m_fp, "OP_Time", row, 2);
-    m_weather.m_weather = (unsigned char)(unsigned long)Bdat::getValCheck(bdat.m_fp, "OP_weather", row, 1);
-    m_camGimAtr = (unsigned char)(unsigned long)Bdat::getValCheck(bdat.m_fp, "camGim_ATR", row, 1);
+    m_time.m_time = (unsigned short)Bdat::getValCheck(bdat.m_fp, "OP_Time", row, 2);
+    m_weather.m_weather = (unsigned char)Bdat::getValCheck(bdat.m_fp, "OP_weather", row, 1);
+    m_camGimAtr = (unsigned char)Bdat::getValCheck(bdat.m_fp, "camGim_ATR", row, 1);
     m_gmkCamPos = Bdat::getFlagVal(bdat.m_fp, "flag", row, "gmkCamPos") != 0;
     m_nowaitGmkCam = Bdat::getFlagVal(bdat.m_fp, "flag", row, "nowaitGmkCam") != 0;
 }
@@ -445,7 +445,7 @@ void GfFieldMapGimmick::create(GF_OBJ_HANDLE* handle) {
                 accInfo.validate(*gmk);
                 m_gmkAcc.create(accInfo);
             }
-            const char* name = Bdat::getValCheck(fp, "gmkCamName", row, 7);
+            const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "gmkCamName", row, 7));
             if (name == nullptr || name[0] == '\0') {
                 return;
             }
@@ -468,7 +468,7 @@ void GfFieldMapGimmick::create(GF_OBJ_HANDLE* handle) {
         }
         MenuCommonWindowParam param;
         param.m_bdat = GfDataBdat::getFP(0x1b1);
-        param.m_msgId = (unsigned short)(unsigned long)Bdat::getValCheck(fp, "missMSG_ID", row, 2);
+        param.m_msgId = (unsigned short)Bdat::getValCheck(fp, "missMSG_ID", row, 2);
         GfPlayFactory::createCommonMessage(param);
     }
     dispose();

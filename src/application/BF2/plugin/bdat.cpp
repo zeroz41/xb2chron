@@ -219,7 +219,7 @@ unsigned short getMemberSize(unsigned char* fp) {
     return getHeader(fp)->memberCount;
 }
 
-char* getVal(unsigned char* fp, const char* column, int id) {
+unsigned long getVal(unsigned char* fp, const char* column, int id) {
     unsigned char* member = getMember(fp, column);
     if (member == 0) {
         return 0;
@@ -288,7 +288,7 @@ static inline uVal getVar(unsigned char* fp, unsigned char* member, int idx) {
     return getVarVal(fp, row + info->ofs, info->type);
 }
 
-char* getVal(unsigned char* pBdat, unsigned char* pVarName, int id) {
+unsigned long getVal(unsigned char* pBdat, unsigned char* pVarName, int id) {
 #line 206
     assert(pVarName != 0L);
     uVal val;
@@ -296,16 +296,16 @@ char* getVal(unsigned char* pBdat, unsigned char* pVarName, int id) {
 #line 209
     assert(pBdat != 0L);
     if (!calcId(pBdat, &id)) {
-        return val.str;
+        return val.ulong;
     }
-    return getVar(pBdat, pVarName, id).str;
+    return getVar(pBdat, pVarName, id).ulong;
 }
 
-char* getVal(unsigned char* fp, int member, int id) {
+unsigned long getVal(unsigned char* fp, int member, int id) {
     return getVal(fp, getMember(fp, member), id);
 }
 
-char* getArrayVal(unsigned char* fp, const char* column, int id, int index) {
+unsigned long getArrayVal(unsigned char* fp, const char* column, int id, int index) {
     unsigned char* member = getMember(fp, column);
     if (member == 0) {
         return 0;
@@ -336,7 +336,7 @@ static inline unsigned char* getArray(unsigned char* fp, unsigned char* member, 
     return ptr;
 }
 
-char* getArrayVal(unsigned char* pBdat, unsigned char* pVarName, int id, int index) {
+unsigned long getArrayVal(unsigned char* pBdat, unsigned char* pVarName, int id, int index) {
 #line 243
     assert(pVarName != 0L);
     uVal val;
@@ -344,16 +344,16 @@ char* getArrayVal(unsigned char* pBdat, unsigned char* pVarName, int id, int ind
 #line 246
     assert(pBdat != 0L);
     if (!calcId(pBdat, &id)) {
-        return val.str;
+        return val.ulong;
     }
     BdatVarInfo* info = getVarInfo(pBdat, pVarName);
     if (info->kind != 2) {
-        return val.str;
+        return val.ulong;
     }
     if (index >= info->count) {
-        return val.str;
+        return val.ulong;
     }
-    return getVarVal(pBdat, getArray(pBdat, pVarName, id, index), info->type).str;
+    return getVarVal(pBdat, getArray(pBdat, pVarName, id, index), info->type).ulong;
 }
 
 static int getArrayCount(unsigned char* pBdat, unsigned char* member) {
@@ -545,8 +545,16 @@ void convertType(unsigned char* fp, unsigned char* member, int type, uVal* val) 
     }
 }
 
+const char* getMSText(unsigned char* fp, int id) {
+    return reinterpret_cast<const char*>(getVal(fp, "name", id));
+}
+
 int getMSStyle(unsigned char* fp, int id) {
-    return static_cast<unsigned short>(reinterpret_cast<unsigned long>(getVal(fp, "style", id)));
+    return static_cast<unsigned short>(getVal(fp, "style", id));
+}
+
+const char* getMSLabel(unsigned char* fp, int id) {
+    return reinterpret_cast<const char*>(getVal(fp, "label", id));
 }
 
 }  // namespace Bdat

@@ -570,7 +570,7 @@ void GfPlayComStartTutorial::start() {
         }
     }
     if (fp != nullptr && m_id >= Bdat::getIdTop(fp) && m_id - Bdat::getIdTop(fp) < Bdat::getIdCount(fp)) {
-        GfScriptManager::loadScript(4, Bdat::getVal(fp, "script_file", m_id));
+        GfScriptManager::loadScript(4, reinterpret_cast<const char*>(Bdat::getVal(fp, "script_file", m_id)));
         GfScriptManager::startScript(4);
         s_activateCount++;
     }

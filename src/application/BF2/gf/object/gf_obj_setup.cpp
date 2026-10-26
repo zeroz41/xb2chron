@@ -135,7 +135,7 @@ GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitPara
     info->m_setup = setup;
     if (setup->m_bdatId != 0) {
         switch (static_cast<unsigned char>(
-            reinterpret_cast<unsigned long>(Bdat::getValCheck(GfDataBdat::getFP(0xAA), "Race", param.m_objId, 1)))) {
+            Bdat::getValCheck(GfDataBdat::getFP(0xAA), "Race", param.m_objId, 1))) {
         case 1:
             setup->pad_68 = 0;
             break;
@@ -174,7 +174,7 @@ GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitPara
     unsigned char** table = param.pad_18;
     unsigned int id = param.m_objId;
     setup->pad_6c =
-        static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getValCheck(*table, column.m_str, id, 2)));
+        static_cast<unsigned short>(Bdat::getValCheck(*table, column.m_str, id, 2));
     setup->m_bdatId = param.m_objId;
     return setup;
 }

@@ -58,7 +58,7 @@ bool GfMenuShopAdapter::update_Name(unsigned int shopId) {
     if (shop == nullptr) {
         return false;
     }
-    unsigned short name = (unsigned short)(unsigned long)Bdat::getVal(shop, "Name", shopId);
+    unsigned short name = (unsigned short)Bdat::getVal(shop, "Name", shopId);
     if (name == 0) {
         return false;
     }
@@ -72,7 +72,7 @@ bool GfMenuShopAdapter::update_CategoryName(unsigned int shopId) {
     if (shop == nullptr) {
         return false;
     }
-    unsigned short icon = (unsigned short)(unsigned long)Bdat::getVal(shop, "ShopIcon", shopId);
+    unsigned short icon = (unsigned short)Bdat::getVal(shop, "ShopIcon", shopId);
     if (icon == 0) {
         return false;
     }
@@ -84,8 +84,8 @@ bool GfMenuShopAdapter::update_CategoryName(unsigned int shopId) {
     int i = 0;
     unsigned short name = 0;
     for (; i < Bdat::getIdCount(category); i++) {
-        if ((unsigned short)(unsigned long)Bdat::getVal(category, "icon_id", top + i) == icon) {
-            name = (unsigned short)(unsigned long)Bdat::getVal(category, "name", top + i);
+        if ((unsigned short)Bdat::getVal(category, "icon_id", top + i) == icon) {
+            name = (unsigned short)Bdat::getVal(category, "name", top + i);
         }
     }
     if (name == 0) {
@@ -101,11 +101,11 @@ bool GfMenuShopAdapter::update_Icon(unsigned int shopId) {
     if (shop == nullptr) {
         return false;
     }
-    unsigned short shopType = (unsigned short)(unsigned long)Bdat::getVal(shop, "ShopType", shopId);
+    unsigned short shopType = (unsigned short)Bdat::getVal(shop, "ShopType", shopId);
     if (shopType == 1 || shopType == 2) {
         return false;
     }
-    unsigned short icon = (unsigned short)(unsigned long)Bdat::getVal(shop, "ShopIcon", shopId);
+    unsigned short icon = (unsigned short)Bdat::getVal(shop, "ShopIcon", shopId);
     if (icon == 0) {
         return false;
     }
@@ -127,8 +127,8 @@ bool GfMenuShopAdapter::update_CategoryIcon(unsigned int shopId) {
     if (shop == nullptr) {
         return false;
     }
-    unsigned short icon = (unsigned short)(unsigned long)Bdat::getVal(shop, "ShopIcon", shopId);
-    unsigned short shopType = (unsigned short)(unsigned long)Bdat::getVal(shop, "ShopType", shopId);
+    unsigned short icon = (unsigned short)Bdat::getVal(shop, "ShopIcon", shopId);
+    unsigned short shopType = (unsigned short)Bdat::getVal(shop, "ShopType", shopId);
     // the image index per ShopType (0 shows only the 0x1A4 icon's, 3 nothing; the name is not the original's)
     static const int s_numbers[] = {0, 2, 3, 1};
     if (shopType >= sizeof(s_numbers) / sizeof(s_numbers[0])) {
@@ -147,14 +147,14 @@ bool GfMenuShopAdapter::update_CategoryIcon(unsigned int shopId) {
         if (quest == nullptr) {
             return false;
         }
-        unsigned short tableId = (unsigned short)(unsigned long)Bdat::getVal(shop, "TableID", shopId);
+        unsigned short tableId = (unsigned short)Bdat::getVal(shop, "TableID", shopId);
         if (tableId == 0) {
             return false;
         }
-        if ((unsigned short)(unsigned long)Bdat::getVal(quest, "LinkQuestTask", tableId) != 0) {
+        if ((unsigned short)Bdat::getVal(quest, "LinkQuestTask", tableId) != 0) {
             number = 4;
         } else {
-            unsigned short shopIcon = (unsigned short)(unsigned long)Bdat::getVal(shop, "ShopIcon", shopId);
+            unsigned short shopIcon = (unsigned short)Bdat::getVal(shop, "ShopIcon", shopId);
             if (shopIcon == 0x1AA) {
                 number = 6;
             } else if (shopIcon == 0x1AB) {
@@ -177,14 +177,14 @@ bool GfMenuShopAdapter::update_Owner(unsigned int shopId) {
     if (table == nullptr) {
         return false;
     }
-    if ((unsigned short)(unsigned long)Bdat::getVal(shop, "ShopType", shopId) != 0) {
+    if ((unsigned short)Bdat::getVal(shop, "ShopType", shopId) != 0) {
         return false;
     }
-    unsigned short tableId = (unsigned short)(unsigned long)Bdat::getVal(shop, "TableID", shopId);
+    unsigned short tableId = (unsigned short)Bdat::getVal(shop, "TableID", shopId);
     if (tableId == 0) {
         return false;
     }
-    unsigned short item = (unsigned short)(unsigned long)Bdat::getVal(table, "PrivilegeItem", tableId);
+    unsigned short item = (unsigned short)Bdat::getVal(table, "PrivilegeItem", tableId);
     if (item == 0) {
         return false;
     }

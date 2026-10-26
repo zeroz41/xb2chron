@@ -50,7 +50,7 @@ bool GfMenuEvTherterAdapter::update_Title(unsigned int theaterId) {
     if (fp == nullptr) {
         return false;
     }
-    unsigned short title = (unsigned short)(unsigned long)Bdat::getVal(fp, "title", theaterId);
+    unsigned short title = (unsigned short)Bdat::getVal(fp, "title", theaterId);
     ui::UIStr text(GfDataBdat::getFP(300), title);
     setText(text);
     return true;
@@ -61,7 +61,7 @@ bool GfMenuEvTherterAdapter::update_Thumb(unsigned int theaterId) {
     if (fp == nullptr) {
         return false;
     }
-    unsigned short thumbnail = (unsigned short)(unsigned long)Bdat::getVal(fp, "thumbnail", theaterId);
+    unsigned short thumbnail = (unsigned short)Bdat::getVal(fp, "thumbnail", theaterId);
     if (thumbnail == 0) {
         return false;
     }

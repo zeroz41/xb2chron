@@ -135,7 +135,7 @@ bool GfMenuMercenariesAdapter::update_TeamStat() {
     } else {
         row = 0xB;
     }
-    ui::UIStr text(message, (unsigned short)(unsigned long)Bdat::getVal(stat, "name", row));
+    ui::UIStr text(message, (unsigned short)Bdat::getVal(stat, "name", row));
     setText(text);
     return true;
 }
@@ -370,7 +370,7 @@ bool GfMenuMercenariesAdapter::update_TeamNameRes() {
         }
         setText(GfMenuObjUtil::getName(acc));
     } else if (reference == 1) {
-        unsigned int id = (unsigned short)(unsigned long)Bdat::getVal(GfDataBdat::getFP(0x13D), "name", index + 1);
+        unsigned int id = (unsigned short)Bdat::getVal(GfDataBdat::getFP(0x13D), "name", index + 1);
         ui::UIStr text(GfDataBdat::getFP(0xF5), id);
         setText(text);
     } else {

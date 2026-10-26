@@ -52,7 +52,7 @@ const char* GfMenuTagLink::convBegin(const TagParams& params, unsigned short id)
             int top = Bdat::getIdTop(fp);
             for (int i = 0; i < Bdat::getIdCount(fp); i++) {
                 int row = top + i;
-                if (static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getVal(fp, "Name", row))) == linkId) {
+                if (static_cast<unsigned short>(Bdat::getVal(fp, "Name", row)) == linkId) {
                     if (row != 0) {
                         GfMenuReference::addEnemyLink(row);
                     }
@@ -64,7 +64,7 @@ const char* GfMenuTagLink::convBegin(const TagParams& params, unsigned short id)
             int top = Bdat::getIdTop(fp);
             for (int i = 0; i < Bdat::getIdCount(fp); i++) {
                 int row = top + i;
-                if (static_cast<unsigned short>(reinterpret_cast<unsigned long>(Bdat::getVal(fp, "Name", row))) == linkId) {
+                if (static_cast<unsigned short>(Bdat::getVal(fp, "Name", row)) == linkId) {
                     if (row != 0) {
                         MenuItemInfo item;
                         item.m_type = 7;

@@ -93,7 +93,7 @@ bool GfAutoTalkManager::createAutoTalkList(int id) {
     GfAutoTalkList::CreateInfo info;
     info.m_id = id;
     unsigned char* fp = gmk::GmkManager::get()->m_gmkSetBdatFp;
-    const char* name = Bdat::getValCheck(fp, "autoTalk", id, 7);
+    const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "autoTalk", id, 7));
     if (name == nullptr || *name == '\0') {
         return false;
     }
@@ -101,7 +101,7 @@ bool GfAutoTalkManager::createAutoTalkList(int id) {
     if (info.m_fp == nullptr) {
         return false;
     }
-    name = Bdat::getValCheck(fp, "autoTalk_ms", id, 7);
+    name = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "autoTalk_ms", id, 7));
     if (name == nullptr || *name == '\0') {
         return false;
     }

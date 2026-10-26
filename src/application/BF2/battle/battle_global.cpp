@@ -593,7 +593,7 @@ bool BattleGlobal::fn_7100009618(unsigned int id) {
     bool taken = false;
     if (id != 0) {
         unsigned char priority = static_cast<unsigned char>(
-            reinterpret_cast<unsigned long>(Bdat::getValCheck(gf::GfDataBdat::getFP(0xB1), "Priority", id, 1)));
+            Bdat::getValCheck(gf::GfDataBdat::getFP(0xB1), "Priority", id, 1));
         if (priority > pad_83b4 || pad_83b4 == 0xFF) {
             pad_83b2 = id;
             pad_83b4 = priority;

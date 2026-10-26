@@ -29,8 +29,20 @@
 
 namespace gf {
 
+// a tag's parameters: (name, value) pairs
+typedef mm::mtl::FixedVector<mm::mtl::MapPair<const char*, const char*>, 8> TagParams;
+
 const char* GfMenuTagHomuriName::getTagName() {
     return "ML:HomuriName";
+}
+
+const char* GfMenuTagHomuriName::convBegin(const TagParams& params, unsigned short id) {
+    unsigned char* fp = GfDataBdat::getFP(425);
+    if (fp == nullptr) {
+        return nullptr;
+    }
+    return reinterpret_cast<const char*>(
+        Bdat::getVal(fp, "name", GfDataBlade::isHomuriNameHikari() + Bdat::getIdTop(fp)));
 }
 
 }  // namespace gf

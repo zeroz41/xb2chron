@@ -46,8 +46,8 @@ bool GfMenuBladeList::sortNameDescending(const MenuBladeInfo& a, const MenuBlade
     unsigned int keyA;
     unsigned int keyB;
     if (idA != 0 && idB != 0 && fpB != nullptr && fpA != nullptr && key != nullptr) {
-        keyA = (unsigned int)(unsigned long)Bdat::getVal(fpA, key, idA);
-        keyB = (unsigned int)(unsigned long)Bdat::getVal(fpB, key, idB);
+        keyA = (unsigned int)Bdat::getVal(fpA, key, idA);
+        keyB = (unsigned int)Bdat::getVal(fpB, key, idB);
     } else {
         keyA = a.m_blade;
         keyB = b.m_blade;
@@ -67,8 +67,8 @@ bool GfMenuBladeList::sortNameAscending(const MenuBladeInfo& a, const MenuBladeI
     unsigned int keyA;
     unsigned int keyB;
     if (idA != 0 && idB != 0 && fpB != nullptr && fpA != nullptr && key != nullptr) {
-        keyA = (unsigned int)(unsigned long)Bdat::getVal(fpA, key, idA);
-        keyB = (unsigned int)(unsigned long)Bdat::getVal(fpB, key, idB);
+        keyA = (unsigned int)Bdat::getVal(fpA, key, idA);
+        keyB = (unsigned int)Bdat::getVal(fpB, key, idB);
     } else {
         keyA = a.m_blade;
         keyB = b.m_blade;

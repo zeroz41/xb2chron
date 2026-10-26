@@ -17,7 +17,7 @@ void AiScriptDataManager::_init() {
         num = 512;
     }
     for (int i = 0; i < num; i++) {
-        const char* name = Bdat::getValCheck(fp, "Script", top + i, 7);
+        const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "Script", top + i, 7));
         if (name != nullptr && *name != '\0') {
             ScriptData data;
             data.m_id = top + i;
