@@ -1,4 +1,11 @@
 #include "nvn/nvn.h"
+#include "nn/diag.h"
+#include "grlib/CGLibTexDescriptor.h"
+#include "grlib/CGLibSamplerDescriptor.h"
+#include "grlib/CGLibTextureBuffer.h"
+#include "nn/vi.h"
+#include "nv/nv_MemoryManagement.h"
+#include <stdlib.h>
 #include "grlib/CGLibVtlMemPool.h"
 #include "grlib/CGLibMemHandle.h"
 #include "grlib/CGLibBuffReleaseTbl.h"
@@ -117,6 +124,20 @@ CGLibVtxStmOut::CGLibVtxStmOut() {}
 CGLibVtxStmOut::~CGLibVtxStmOut() { CGLibMemHandle::free(m_mem); }
 
 void CGLibVtxStmOut::release() { CGLibMemHandle::free(m_mem); }
+
+void CGLibVtxStmOut::setStorageBuffer(unsigned int location) {
+    if (location != 0xFFFFFFFF) {
+        context::CGLibSystemContext* pSys = context::CGLibSystemContext::sys();
+        pSys->m_pipeline.m_pShader->setStorageBuffer(location, pSys->m_pipeline.m_pCmdBuf, m_gpuAddress, m_size);
+    }
+}
+
+void CGLibVtxStmOut::setStorageBuffer(unsigned int location, unsigned int offset, unsigned int size) {
+    if (location != 0xFFFFFFFF) {
+        context::CGLibSystemContext* pSys = context::CGLibSystemContext::sys();
+        pSys->m_pipeline.m_pShader->setStorageBuffer(location, pSys->m_pipeline.m_pCmdBuf, m_gpuAddress + offset, size);
+    }
+}
 
 unsigned int CGLibVtxStmOut::getSize() { return m_size; }
 
@@ -550,6 +571,152 @@ void CGLibReleaseObj_plf::release_vertex(wrkRelease& work) { CGLibMemHandle::fre
 
 void (*CGLibReleaseObj_plf::s_callRelease[4])(wrkRelease& work) = {release_mempool, release_textrue, release_sampler,
                                                                    release_vertex};
+
+CGLibTexDescriptor::CGLibTexDescriptor() {}
+
+CGLibTexDescriptor::~CGLibTexDescriptor() { release(); }
+
+void CGLibTexDescriptor::release() {
+    nvnTexturePoolFinalize(&m_texPool);
+    m_pool.release();
+    releaseTbl();
+}
+
+CGLibTexDescriptor_plf::~CGLibTexDescriptor_plf() {}
+
+unsigned int CGLibTexDescriptor::setup(CGLibMemPool& pool, unsigned int offset, unsigned int num) {
+    unsigned int size = context::CGLibSystemContext::s_nvTextureSize * num;
+    nvnTexturePoolInitialize(&m_texPool, pool.m_pPool, offset, num);
+    return size;
+}
+
+void CGLibTexDescriptor::bind() {
+    nvnCommandBufferSetTexturePool(context::CGLibSystemContext::sys()->m_pipeline.m_pCmdBuf, &m_texPool);
+}
+
+void CGLibTexDescriptor_plf::bindTexture(const CGLibTextureBuffer& texture, int textureId, int imageId) {
+    nvnTexturePoolRegisterTexture(&m_texPool, context::CGLibSystemContext::s_nNnumReservedTextures + textureId,
+                                  texture.m_pNvnTexture, nullptr);
+    if (imageId != -1) {
+        nvnTexturePoolRegisterImage(&m_texPool, context::CGLibSystemContext::s_nNnumReservedTextures + imageId,
+                                    texture.m_pNvnTexture, nullptr);
+    }
+}
+
+int CGLibTexDescriptor_plf::setTexture(const CGLibTextureBuffer& texture) {
+    return texture.m_textureId + context::CGLibSystemContext::s_nNnumReservedTextures;
+}
+
+int CGLibTexDescriptor_plf::setImage(const CGLibTextureBuffer& texture) {
+    return texture.m_samplerId + context::CGLibSystemContext::s_nNnumReservedTextures;
+}
+
+CGLibSamplerDescriptor::CGLibSamplerDescriptor() {}
+
+CGLibSamplerDescriptor::~CGLibSamplerDescriptor() { release(); }
+
+void CGLibSamplerDescriptor::release() {
+    nvnSamplerPoolFinalize(&m_samplerPool);
+    m_pool.release();
+    releaseTbl();
+}
+
+unsigned int CGLibSamplerDescriptor::setup(CGLibMemPool& pool, unsigned int offset, unsigned int num) {
+    unsigned int size = context::CGLibSystemContext::s_nvSamplerSize * num;
+    nvnSamplerPoolInitialize(&m_samplerPool, pool.m_pPool, offset, num);
+    return size;
+}
+
+void CGLibSamplerDescriptor::bind() {
+    nvnCommandBufferSetSamplerPool(context::CGLibSystemContext::sys()->m_pipeline.m_pCmdBuf, &m_samplerPool);
+}
+
+void CGLibSamplerDescriptor_plf::bindSampler(const CGLibSamplerParam& param, int samplerId) {
+    nvnSamplerPoolRegisterSampler(&m_samplerPool, context::CGLibSystemContext::s_nNumReservedSamplers + samplerId,
+                                  &param.m_sampler);
+}
+
+int CGLibSamplerDescriptor_plf::setSampler(const CGLibSampler& sampler) {
+    return context::CGLibSystemContext::s_nNumReservedSamplers + sampler.m_pSamObj->m_samplerId;
+}
+
+
+}  // namespace grlib
+
+// The graphics driver's allocator callbacks (CGLibDeviceObj::init hands them over): the C library's heap.
+// Placeholder names: static functions, the symbols leave them unnamed.
+static void* fn_7100708CBC(size_t size, size_t alignment, void*) { return aligned_alloc(alignment, size); }
+
+static void fn_7100708CCC(void* addr, void*) { free(addr); }
+
+static void* fn_7100708CD0(void* addr, size_t newSize, void*) { return realloc(addr, newSize); }
+
+// the same three for the driver's developer tools
+static void* fn_7100708CD4(size_t size, size_t alignment, void*) { return aligned_alloc(alignment, size); }
+
+static void fn_7100708CE4(void* addr, void*) { free(addr); }
+
+static void* fn_7100708CE8(void* addr, size_t newSize, void*) { return realloc(addr, newSize); }
+
+namespace grlib {
+CGLibDeviceObj::CGLibDeviceObj() {}
+
+bool CGLibDeviceObj::init() {
+    nv::SetGraphicsAllocator(fn_7100708CBC, fn_7100708CCC, fn_7100708CD0, nullptr);
+    nv::SetGraphicsDevtoolsAllocator(fn_7100708CD4, fn_7100708CE4, fn_7100708CE8, nullptr);
+    nv::InitializeGraphics(malloc(0x800000), 0x800000);
+    m_vi.init();
+    PFNNVNDEVICEGETPROCADDRESSPROC getProcAddress =
+        reinterpret_cast<PFNNVNDEVICEGETPROCADDRESSPROC>(nvnBootstrapLoader("nvnDeviceGetProcAddress"));
+    nvnLoadCProcs(nullptr, getProcAddress);
+    {
+        NVNdeviceBuilder builder;
+        nvnDeviceBuilderSetDefaults(&builder);
+        nvnDeviceBuilderSetFlags(&builder, 0);
+        nvnDeviceInitialize(&m_device, &builder);
+    }
+    nvnLoadCProcs(&m_device, getProcAddress);
+    int majorVersion;
+    int minorVersion;
+    nvnDeviceGetInteger(&m_device, static_cast<NVNdeviceInfo>(0), &majorVersion);
+    nvnDeviceGetInteger(&m_device, static_cast<NVNdeviceInfo>(1), &minorVersion);
+    NVNqueueBuilder builder;
+    nvnQueueBuilderSetDevice(&builder, &m_device);
+    nvnQueueBuilderSetDefaults(&builder);
+    majorVersion = 0;
+    nvnDeviceGetInteger(&m_device, static_cast<NVNdeviceInfo>(0x51), &majorVersion);
+    majorVersion *= 2;
+    nvnQueueBuilderSetCommandMemorySize(&builder, majorVersion);
+    nvnQueueBuilderSetCommandFlushThreshold(&builder, majorVersion);
+    if (!nvnQueueInitialize(&m_queue, &builder)) {
+        return false;
+    }
+    nvnDeviceSetDepthMode(&m_device, static_cast<NVNdepthMode>(0));
+    nvnDeviceSetWindowOriginMode(&m_device, static_cast<NVNwindowOriginMode>(1));
+    return true;
+}
+
+void CGLibDeviceVI::init() {
+    m_width = 1280;
+    m_height = 720;
+    nn::vi::Initialize();
+    nn::vi::OpenDefaultDisplay(&m_display);
+    NN_ASSERT(nn::vi::CreateLayer(&m_layer, m_display).IsSuccess());
+    nn::vi::SetLayerScalingMode(m_layer, static_cast<nn::vi::ScalingMode>(2));
+    NN_ASSERT(nn::vi::GetNativeWindow(&m_nativeWindow, m_layer).IsSuccess());
+}
+
+void CGLibDeviceObj::release() {
+    nvnQueueFinalize(&m_queue);
+    nvnDeviceFinalize(&m_device);
+    nn::vi::DestroyLayer(m_vi.m_layer);
+    nn::vi::CloseDisplay(m_vi.m_display);
+    nn::vi::Finalize();
+}
+
+void CGLibDeviceObj::swapChain() { context::CGLibSystemContext::sys()->m_display.swapChain(&m_queue); }
+
+CGLibDeviceVI::~CGLibDeviceVI() {}
 
 }  // namespace grlib
 

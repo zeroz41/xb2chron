@@ -11,6 +11,8 @@ public:
     CGLibVtxStmOut();
     ~CGLibVtxStmOut();
     void setStorageBuffer(unsigned int location);
+    // binds `size` bytes from `offset` into the buffer (the parameter names are not the original's)
+    void setStorageBuffer(unsigned int location, unsigned int offset, unsigned int size);
     void release();
     unsigned int getSize();
 

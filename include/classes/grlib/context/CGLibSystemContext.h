@@ -41,6 +41,12 @@ public:
     bool isRelease();
     // the bytes of one counter report (CGLibOcclusionQuery double-buffers its reports)
     static unsigned int s_nvReportCounterSize;
+    // the device's texture and sampler descriptor sizes and the descriptors it reserves at the start of each pool
+    // (CGLibTexDescriptor/CGLibSamplerDescriptor::setup and the _plf register calls)
+    static unsigned int s_nvTextureSize;
+    static unsigned int s_nvSamplerSize;
+    static int s_nNnumReservedTextures;
+    static int s_nNumReservedSamplers;
     // the GPU address of a block's memory, into address
     void getVertexGpuAddress(unsigned long& address, const CGLibMemType& mem);
     // the GPU address of a uniform block's memory, into address

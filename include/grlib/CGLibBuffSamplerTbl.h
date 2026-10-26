@@ -25,7 +25,12 @@ struct CGLibWkrSamplerParams {
     float m_lod;                   // 0x14: setLOD
 };
 
-class CGLibBuffResSamObj;
+// a sampler the table hands out (only the field the descriptors read is known)
+class CGLibBuffResSamObj {
+public:
+    unsigned char pad_0[0x8C];
+    int m_samplerId;  // 0x8C: its slot in the sampler descriptor pool (CGLibSamplerDescriptor_plf::setSampler)
+};
 
 // the shared sampler objects (CGLibSystemContext holds one at 0x608; the size, 0x830, is the room to the next
 // field the context's constructor builds)

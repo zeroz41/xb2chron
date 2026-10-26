@@ -222,4 +222,92 @@ typedef uint64_t (*PFNNVNDEVICEGETTIMESTAMPINNANOSECONDSPROC)(const NVNdevice* d
 extern PFNNVNDEVICEGETTIMESTAMPINNANOSECONDSPROC pfnc_nvnDeviceGetTimestampInNanoseconds;
 static inline uint64_t nvnDeviceGetTimestampInNanoseconds(const NVNdevice* device, const NVNcounterData* counterData) { return pfnc_nvnDeviceGetTimestampInNanoseconds(device, counterData); }
 
+typedef void (*PFNNVNDEVICEBUILDERSETDEFAULTSPROC)(NVNdeviceBuilder* builder);
+extern PFNNVNDEVICEBUILDERSETDEFAULTSPROC pfnc_nvnDeviceBuilderSetDefaults;
+static inline void nvnDeviceBuilderSetDefaults(NVNdeviceBuilder* builder) { pfnc_nvnDeviceBuilderSetDefaults(builder); }
+
+typedef void (*PFNNVNDEVICEBUILDERSETFLAGSPROC)(NVNdeviceBuilder* builder, int flags);
+extern PFNNVNDEVICEBUILDERSETFLAGSPROC pfnc_nvnDeviceBuilderSetFlags;
+static inline void nvnDeviceBuilderSetFlags(NVNdeviceBuilder* builder, int flags) { pfnc_nvnDeviceBuilderSetFlags(builder, flags); }
+
+typedef NVNboolean (*PFNNVNDEVICEINITIALIZEPROC)(NVNdevice* device, const NVNdeviceBuilder* builder);
+extern PFNNVNDEVICEINITIALIZEPROC pfnc_nvnDeviceInitialize;
+static inline NVNboolean nvnDeviceInitialize(NVNdevice* device, const NVNdeviceBuilder* builder) { return pfnc_nvnDeviceInitialize(device, builder); }
+
+typedef void (*PFNNVNDEVICEFINALIZEPROC)(NVNdevice* device);
+extern PFNNVNDEVICEFINALIZEPROC pfnc_nvnDeviceFinalize;
+static inline void nvnDeviceFinalize(NVNdevice* device) { pfnc_nvnDeviceFinalize(device); }
+
+typedef void (*PFNNVNDEVICEGETINTEGERPROC)(const NVNdevice* device, NVNdeviceInfo pname, int* v);
+extern PFNNVNDEVICEGETINTEGERPROC pfnc_nvnDeviceGetInteger;
+static inline void nvnDeviceGetInteger(const NVNdevice* device, NVNdeviceInfo pname, int* v) { pfnc_nvnDeviceGetInteger(device, pname, v); }
+
+typedef void (*PFNNVNDEVICESETWINDOWORIGINMODEPROC)(NVNdevice* device, NVNwindowOriginMode windowOriginMode);
+extern PFNNVNDEVICESETWINDOWORIGINMODEPROC pfnc_nvnDeviceSetWindowOriginMode;
+static inline void nvnDeviceSetWindowOriginMode(NVNdevice* device, NVNwindowOriginMode windowOriginMode) { pfnc_nvnDeviceSetWindowOriginMode(device, windowOriginMode); }
+
+typedef void (*PFNNVNDEVICESETDEPTHMODEPROC)(NVNdevice* device, NVNdepthMode depthMode);
+extern PFNNVNDEVICESETDEPTHMODEPROC pfnc_nvnDeviceSetDepthMode;
+static inline void nvnDeviceSetDepthMode(NVNdevice* device, NVNdepthMode depthMode) { pfnc_nvnDeviceSetDepthMode(device, depthMode); }
+
+typedef void (*PFNNVNQUEUEBUILDERSETDEVICEPROC)(NVNqueueBuilder* builder, NVNdevice* device);
+extern PFNNVNQUEUEBUILDERSETDEVICEPROC pfnc_nvnQueueBuilderSetDevice;
+static inline void nvnQueueBuilderSetDevice(NVNqueueBuilder* builder, NVNdevice* device) { pfnc_nvnQueueBuilderSetDevice(builder, device); }
+
+typedef void (*PFNNVNQUEUEBUILDERSETDEFAULTSPROC)(NVNqueueBuilder* builder);
+extern PFNNVNQUEUEBUILDERSETDEFAULTSPROC pfnc_nvnQueueBuilderSetDefaults;
+static inline void nvnQueueBuilderSetDefaults(NVNqueueBuilder* builder) { pfnc_nvnQueueBuilderSetDefaults(builder); }
+
+typedef void (*PFNNVNQUEUEBUILDERSETCOMMANDMEMORYSIZEPROC)(NVNqueueBuilder* builder, size_t size);
+extern PFNNVNQUEUEBUILDERSETCOMMANDMEMORYSIZEPROC pfnc_nvnQueueBuilderSetCommandMemorySize;
+static inline void nvnQueueBuilderSetCommandMemorySize(NVNqueueBuilder* builder, size_t size) { pfnc_nvnQueueBuilderSetCommandMemorySize(builder, size); }
+
+typedef void (*PFNNVNQUEUEBUILDERSETCOMMANDFLUSHTHRESHOLDPROC)(NVNqueueBuilder* builder, size_t threshold);
+extern PFNNVNQUEUEBUILDERSETCOMMANDFLUSHTHRESHOLDPROC pfnc_nvnQueueBuilderSetCommandFlushThreshold;
+static inline void nvnQueueBuilderSetCommandFlushThreshold(NVNqueueBuilder* builder, size_t threshold) { pfnc_nvnQueueBuilderSetCommandFlushThreshold(builder, threshold); }
+
+typedef NVNboolean (*PFNNVNQUEUEINITIALIZEPROC)(NVNqueue* queue, const NVNqueueBuilder* builder);
+extern PFNNVNQUEUEINITIALIZEPROC pfnc_nvnQueueInitialize;
+static inline NVNboolean nvnQueueInitialize(NVNqueue* queue, const NVNqueueBuilder* builder) { return pfnc_nvnQueueInitialize(queue, builder); }
+
+typedef void (*PFNNVNQUEUEFINALIZEPROC)(NVNqueue* queue);
+extern PFNNVNQUEUEFINALIZEPROC pfnc_nvnQueueFinalize;
+static inline void nvnQueueFinalize(NVNqueue* queue) { pfnc_nvnQueueFinalize(queue); }
+
+typedef NVNboolean (*PFNNVNTEXTUREPOOLINITIALIZEPROC)(NVNtexturePool* pool, const NVNmemoryPool* memoryPool, ptrdiff_t offset, int numDescriptors);
+extern PFNNVNTEXTUREPOOLINITIALIZEPROC pfnc_nvnTexturePoolInitialize;
+static inline NVNboolean nvnTexturePoolInitialize(NVNtexturePool* pool, const NVNmemoryPool* memoryPool, ptrdiff_t offset, int numDescriptors) { return pfnc_nvnTexturePoolInitialize(pool, memoryPool, offset, numDescriptors); }
+
+typedef void (*PFNNVNTEXTUREPOOLFINALIZEPROC)(NVNtexturePool* pool);
+extern PFNNVNTEXTUREPOOLFINALIZEPROC pfnc_nvnTexturePoolFinalize;
+static inline void nvnTexturePoolFinalize(NVNtexturePool* pool) { pfnc_nvnTexturePoolFinalize(pool); }
+
+typedef void (*PFNNVNTEXTUREPOOLREGISTERTEXTUREPROC)(const NVNtexturePool* pool, int id, const NVNtexture* texture, const NVNtextureView* view);
+extern PFNNVNTEXTUREPOOLREGISTERTEXTUREPROC pfnc_nvnTexturePoolRegisterTexture;
+static inline void nvnTexturePoolRegisterTexture(const NVNtexturePool* pool, int id, const NVNtexture* texture, const NVNtextureView* view) { pfnc_nvnTexturePoolRegisterTexture(pool, id, texture, view); }
+
+typedef void (*PFNNVNTEXTUREPOOLREGISTERIMAGEPROC)(const NVNtexturePool* pool, int id, const NVNtexture* texture, const NVNtextureView* view);
+extern PFNNVNTEXTUREPOOLREGISTERIMAGEPROC pfnc_nvnTexturePoolRegisterImage;
+static inline void nvnTexturePoolRegisterImage(const NVNtexturePool* pool, int id, const NVNtexture* texture, const NVNtextureView* view) { pfnc_nvnTexturePoolRegisterImage(pool, id, texture, view); }
+
+typedef NVNboolean (*PFNNVNSAMPLERPOOLINITIALIZEPROC)(NVNsamplerPool* pool, const NVNmemoryPool* memoryPool, ptrdiff_t offset, int numDescriptors);
+extern PFNNVNSAMPLERPOOLINITIALIZEPROC pfnc_nvnSamplerPoolInitialize;
+static inline NVNboolean nvnSamplerPoolInitialize(NVNsamplerPool* pool, const NVNmemoryPool* memoryPool, ptrdiff_t offset, int numDescriptors) { return pfnc_nvnSamplerPoolInitialize(pool, memoryPool, offset, numDescriptors); }
+
+typedef void (*PFNNVNSAMPLERPOOLFINALIZEPROC)(NVNsamplerPool* pool);
+extern PFNNVNSAMPLERPOOLFINALIZEPROC pfnc_nvnSamplerPoolFinalize;
+static inline void nvnSamplerPoolFinalize(NVNsamplerPool* pool) { pfnc_nvnSamplerPoolFinalize(pool); }
+
+typedef void (*PFNNVNSAMPLERPOOLREGISTERSAMPLERPROC)(const NVNsamplerPool* pool, int id, const NVNsampler* sampler);
+extern PFNNVNSAMPLERPOOLREGISTERSAMPLERPROC pfnc_nvnSamplerPoolRegisterSampler;
+static inline void nvnSamplerPoolRegisterSampler(const NVNsamplerPool* pool, int id, const NVNsampler* sampler) { pfnc_nvnSamplerPoolRegisterSampler(pool, id, sampler); }
+
+typedef void (*PFNNVNCOMMANDBUFFERSETTEXTUREPOOLPROC)(NVNcommandBuffer* cmdBuf, const NVNtexturePool* texturePool);
+extern PFNNVNCOMMANDBUFFERSETTEXTUREPOOLPROC pfnc_nvnCommandBufferSetTexturePool;
+static inline void nvnCommandBufferSetTexturePool(NVNcommandBuffer* cmdBuf, const NVNtexturePool* texturePool) { pfnc_nvnCommandBufferSetTexturePool(cmdBuf, texturePool); }
+
+typedef void (*PFNNVNCOMMANDBUFFERSETSAMPLERPOOLPROC)(NVNcommandBuffer* cmdBuf, const NVNsamplerPool* samplerPool);
+extern PFNNVNCOMMANDBUFFERSETSAMPLERPOOLPROC pfnc_nvnCommandBufferSetSamplerPool;
+static inline void nvnCommandBufferSetSamplerPool(NVNcommandBuffer* cmdBuf, const NVNsamplerPool* samplerPool) { pfnc_nvnCommandBufferSetSamplerPool(cmdBuf, samplerPool); }
+
 #endif

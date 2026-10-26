@@ -23,6 +23,9 @@ typedef enum NVNtiledCacheAction { NVN_TILED_CACHE_ACTION_LARGE = 0x7FFFFFFF } N
 typedef enum NVNcounterType { NVN_COUNTER_TYPE_LARGE = 0x7FFFFFFF } NVNcounterType;
 typedef enum NVNindexType { NVN_INDEX_TYPE_LARGE = 0x7FFFFFFF } NVNindexType;
 typedef enum NVNformat { NVN_FORMAT_LARGE = 0x7FFFFFFF } NVNformat;
+typedef enum NVNdeviceInfo { NVN_DEVICE_INFO_LARGE = 0x7FFFFFFF } NVNdeviceInfo;
+typedef enum NVNdepthMode { NVN_DEPTH_MODE_LARGE = 0x7FFFFFFF } NVNdepthMode;
+typedef enum NVNwindowOriginMode { NVN_WINDOW_ORIGIN_MODE_LARGE = 0x7FFFFFFF } NVNwindowOriginMode;
 
 typedef struct NVNblendState { char reserved[8]; } NVNblendState;
 typedef struct NVNchannelMaskState { char reserved[4]; } NVNchannelMaskState;
@@ -30,16 +33,28 @@ typedef struct NVNcolorState { char reserved[4]; } NVNcolorState;
 typedef struct NVNcounterData { uint64_t counter; uint64_t timestamp; } NVNcounterData;
 typedef struct NVNcommandBuffer { char reserved[160]; } NVNcommandBuffer;
 typedef struct NVNdevice { char reserved[12288]; } NVNdevice;
+typedef struct NVNdeviceBuilder { char reserved[64]; } NVNdeviceBuilder;
 typedef struct NVNdepthStencilState { char reserved[8]; } NVNdepthStencilState;
 typedef struct NVNmemoryPool { char reserved[256]; } NVNmemoryPool;
 typedef struct NVNmemoryPoolBuilder { char reserved[64]; } NVNmemoryPoolBuilder;
 typedef struct NVNpolygonState { char reserved[4]; } NVNpolygonState;
 typedef struct NVNprogram { char reserved[192]; } NVNprogram;
 typedef struct NVNqueue { char reserved[8192]; } NVNqueue;
+typedef struct NVNqueueBuilder { char reserved[64]; } NVNqueueBuilder;
+typedef struct NVNsampler { char reserved[96]; } NVNsampler;
+typedef struct NVNsamplerPool { char reserved[32]; } NVNsamplerPool;
 typedef struct NVNsync { char reserved[64]; } NVNsync;
 typedef struct NVNtexture { char reserved[192]; } NVNtexture;
+typedef struct NVNtexturePool { char reserved[32]; } NVNtexturePool;
 typedef struct NVNtextureView { char reserved[40]; } NVNtextureView;
 typedef struct NVNvertexAttribState { char reserved[4]; } NVNvertexAttribState;
 typedef struct NVNvertexStreamState { char reserved[8]; } NVNvertexStreamState;
+
+// the loader's entry points: nvnBootstrapLoader hands out nvnDeviceGetProcAddress, nvnLoadCProcs (the SDK's
+// nvn_FuncPtrImpl.h) fills every pfnc_ pointer through it
+typedef void (*PFNNVNGENERICFUNCPTRPROC)(void);
+typedef PFNNVNGENERICFUNCPTRPROC (*PFNNVNDEVICEGETPROCADDRESSPROC)(const NVNdevice* device, const char* name);
+extern "C" PFNNVNGENERICFUNCPTRPROC nvnBootstrapLoader(const char* name);
+extern "C" void nvnLoadCProcs(NVNdevice* device, PFNNVNDEVICEGETPROCADDRESSPROC getProcAddress);
 
 #endif
