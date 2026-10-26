@@ -25,6 +25,15 @@ void DataManager::Destroy() {
     }
 }
 
+// The negated test is the original's form: written as `id >= 1000` (or `id < 1000`) clang puts the enemy block
+// first and compares against 1000 instead of 999.
+CharacterParameter* DataManager::GetCharacterParameterConst(int id) const {
+    if (!(id >= 1000)) {
+        return const_cast<PlayerParameter*>(&m_playerParameters[id]);
+    }
+    return m_enemyParameters[id - 1000];
+}
+
 void DataManager::InitializeComboRequestUI() {
     if (m_comboRequestContext == nullptr) {
         m_comboRequestContext = gf::GfMenuCallContext::create();
