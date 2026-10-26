@@ -1,3 +1,4 @@
+#include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UIDisplayInfo.h"
 #include "classes/ui/UITransform.h"
 #include "classes/ui/UIObjectBase.h"
@@ -9,6 +10,13 @@
 #include "classes/ui/UIImageObject.h"
 #include "classes/ui/UIColorLibrary.h"
 #include "mm/Rect.h"
+#include "mm/Mat44.h"
+#include "mm/Vec2.h"
+#include "layer/LayerAccObjBase.h"
+#include "classes/ui/UIFontManager.h"
+#include "classes/ui/UILayoutData.h"
+#include "classes/ui/UIScreenObject.h"
+#include "classes/ui/UIPolygonObject.h"
 
 namespace ui {
 
@@ -620,6 +628,176 @@ void UIObjectAcc::updateLayoutSize() {
             object->updateSize();
         }
     }
+}
+
+bool UIObjectAcc::fn_7100690ED4() const {
+    if (m_object != nullptr) {
+        return (m_object->m_flags & (1u << 18)) != 0;
+    }
+    return false;
+}
+
+void UIObjectAcc::setMatrix(const mm::Mat44& matrix) {
+    if (m_object != nullptr) {
+        layer::LayerAccObjBase acc(m_object->m_layer);
+        acc.setMatrix(matrix);
+    }
+}
+
+void UIObjectAcc::getMatrix(mm::Mat44& matrix) {
+    matrix = mm::Mat44::identity;
+    if (m_object != nullptr) {
+        layer::LayerAccObjBase acc(m_object->m_layer);
+        matrix = acc.getMatrix();
+    }
+}
+
+void UIObjectAcc::setTexFilterNearest() {
+    layer::LayerAccObjBase acc(m_object->m_layer);
+    acc.setTexFilterType(static_cast<layer::LayerTexFilterType>(0));
+}
+
+void UIObjectAcc::setTextFacePattern(const char* name) {
+    if (m_object != nullptr) {
+        UITextObject* object = mm::mtl::rttiCast<UITextObject>(m_object);
+        if (object != nullptr) {
+            if (m_object != nullptr && name != nullptr) {
+                unsigned int index;
+                if (mm::mtl::PtrSingleton<UIFontManager>::get()->findFacePattern(name, index)) {
+                    object->setTextFacePattern(index);
+                }
+            }
+        }
+    }
+}
+
+void UIObjectAcc::setTextFacePattern(unsigned int index) {
+    if (m_object != nullptr) {
+        UITextObject* object = mm::mtl::rttiCast<UITextObject>(m_object);
+        if (object != nullptr) {
+            if (m_object != nullptr) {
+                object->setTextFacePattern(index);
+            }
+        }
+    }
+}
+
+void UIObjectAcc::setMaskObject(unsigned int handle) {
+    if (m_object != nullptr) {
+        UIImageObject* object = mm::mtl::rttiCast<UIImageObject>(m_object);
+        if (object != nullptr) {
+            object->setMaskObject(UIUtil::getImageObject(handle));
+        }
+    }
+}
+
+void UIObjectAcc::setStreamImage2nd() {
+    if (m_object != nullptr) {
+        UIImageObject* object = mm::mtl::rttiCast<UIImageObject>(m_object);
+        if (object != nullptr) {
+            object->m_flags |= 0x20000;
+        }
+    }
+}
+
+void UIObjectAcc::fn_7100691FD0() {
+    if (m_object != nullptr) {
+        UIImageObject* object = mm::mtl::rttiCast<UIImageObject>(m_object);
+        if (object != nullptr) {
+            object->m_flags |= 0x40000;
+        }
+    }
+}
+
+void UIObjectAcc::fn_710069201C() {
+    if (m_object != nullptr) {
+        UIImageObject* object = mm::mtl::rttiCast<UIImageObject>(m_object);
+        if (object != nullptr) {
+            object->m_flags &= ~0x60000u;
+        }
+    }
+}
+
+void UIObjectAcc::setLayout(unsigned int handle, const char* name) {
+    if (m_object != nullptr) {
+        UILayoutObject* layout = mm::mtl::rttiCast<UILayoutObject>(m_object);
+        if (layout != nullptr) {
+            UILayoutData* data = layout->m_layoutData;
+            UIObject* object = UIUtil::getObject(handle);
+            if (data != nullptr && object != nullptr) {
+                data->attachLayout(name, object);
+            }
+        }
+    }
+}
+
+bool UIObjectAcc::getLayoutRect(const char* name, mm::Rect<short>& rect) {
+    if (m_object != nullptr) {
+        UILayoutObject* layout = mm::mtl::rttiCast<UILayoutObject>(m_object);
+        if (layout != nullptr && layout->m_layoutData != nullptr) {
+            return layout->m_layoutData->getLayoutRect(name, rect);
+        }
+    }
+    return false;
+}
+
+unsigned int UIObjectAcc::getRenderIndex() {
+    if (m_object != nullptr) {
+        UIScreenObject* object = mm::mtl::rttiCast<UIScreenObject>(m_object);
+        if (object != nullptr) {
+            return object->m_viewIndex;
+        }
+    }
+    return 0;
+}
+
+unsigned int UIObjectAcc::getOnMemoryPixelSize() {
+    if (m_object != nullptr) {
+        UIScreenObject* object = mm::mtl::rttiCast<UIScreenObject>(m_object);
+        if (object != nullptr) {
+            return object->getOnMemoryPixelSize();
+        }
+    }
+    return 0;
+}
+
+void* UIObjectAcc::getOnMemoryBuffer() {
+    if (m_object != nullptr) {
+        UIScreenObject* object = mm::mtl::rttiCast<UIScreenObject>(m_object);
+        if (object != nullptr) {
+            return object->getOnMemoryBuffer();
+        }
+    }
+    return nullptr;
+}
+
+void UIObjectAcc::swapOnMemoryBuffer() {
+    if (m_object != nullptr) {
+        UIScreenObject* object = mm::mtl::rttiCast<UIScreenObject>(m_object);
+        if (object != nullptr) {
+            object->swapOnMemoryBuffer();
+        }
+    }
+}
+
+bool UIObjectAcc::isShapeSimpleFace() {
+    if (m_object != nullptr) {
+        UIPolygonObject* object = mm::mtl::rttiCast<UIPolygonObject>(m_object);
+        if (object != nullptr) {
+            return object->m_info.m_shapeType == 1;
+        }
+    }
+    return false;
+}
+
+UIShape* UIObjectAcc::getShape() {
+    if (m_object != nullptr) {
+        UIPolygonObject* object = mm::mtl::rttiCast<UIPolygonObject>(m_object);
+        if (object != nullptr) {
+            return object->m_shape;
+        }
+    }
+    return nullptr;
 }
 
 }  // namespace ui

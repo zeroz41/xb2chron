@@ -105,6 +105,14 @@ public:
     bool isControl() const;
     bool isDuplicate() const;
     bool isStreamImage2nd() const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in UIObjectAcc's unit
+    // between the flag getters and reads m_object the same way. What it does: bit 18 of its object's flags at 0x98
+    // (false without an object), the bit fn_7100691FD0 sets and fn_710069201C clears. ui::UIStreamManager::start
+    // calls it.
+    bool fn_7100690ED4() const;
+    void setTexFilterNearest();  // its layer object's texture filter type 0 (on a fresh LayerAccObjBase)
+    void setTextFacePattern(const char* name);  // the face pattern UIFontManager has under that name
+    unsigned int getRenderIndex();  // its screen object's view index, 0 when it is not a screen
     unsigned short getDuplicateIndex() const;
     void saveDefColor();
     void loadDefColor();
@@ -119,7 +127,7 @@ public:
     void startAnimationFromID(unsigned int id, bool loop);
     void updateLayoutSize();
     // the rectangle of its layout's entry of that name (GfMenuObjMinimap2 reads "mini_map" and "mini_map2")
-    void getLayoutRect(const char* name, mm::Rect<short>& rect);
+    bool getLayoutRect(const char* name, mm::Rect<short>& rect);  // false when it has no such entry
     // masked by the image object of that handle (GfMenuObjMinimap2's icons by "IMG_map_mask")
     void setMaskObject(unsigned int handle);
     // its object's on-memory buffer (a UIScreenObject's: fw::MovieManager draws its movie there)
