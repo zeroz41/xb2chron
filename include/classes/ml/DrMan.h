@@ -11,6 +11,7 @@ namespace ml { class DrAPCache; }
 namespace ml { class DrCalcMan; }
 namespace ml { class DrShdMan; }
 namespace ml { class DrLightMan; }
+namespace ml { class DrGlobalIBLMan; }
 namespace ml { class DrCalcTexStreamMan; }
 namespace ml { class DrIniSys; }
 namespace ml { class DrPixlMan; }
@@ -115,11 +116,17 @@ public:
     unsigned char pad_90[0x10];
     // one per view: DrCreator::createClipObj takes the view's clip manager from it (the name is not the original's)
     DrCalcMan* m_viewCalcMan[4];        // 0xA0
-    unsigned char pad_C0[0x40];
+    // one per view: ScnObjLightDrSys's constructor releases the view's fast light with it (the name is not the
+    // original's)
+    DrLightMan* m_viewLightMan[4];      // 0xC0
+    unsigned char pad_E0[0x20];
     // the constructor makes one per view (index 0 here), after the DrLightMan/DrFogMan it is built from
     DrEnvironmentMan* m_envMan[4];
     DrPixlPostParm* m_postParm[4];      // the constructor makes them; ScnRenderDrSysParmAcc takes one per view
-    unsigned char pad_140[0x440];
+    unsigned char pad_140[0x20];
+    // one per view: ScnObjIBLDr makes and releases its IBL pack with it (the name is not the original's)
+    DrGlobalIBLMan* m_iblMan[4];        // 0x160
+    unsigned char pad_180[0x400];
     // the current view's DrCalcMan: beginSetup stores the one it makes at 0xA0 + index * 8 here too (the name is
     // not the original's)
     DrCalcMan* m_calcMan;               // 0x580

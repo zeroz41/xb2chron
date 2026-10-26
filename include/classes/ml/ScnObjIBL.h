@@ -14,7 +14,7 @@ public:
     bool isDisp() const;
     virtual ~ScnObjIBL();  // slot 0
     virtual void setReferencePos(mm::Vec3 const&) = 0;  // slot 8
-    virtual void getReferencePos() const = 0;  // slot 9
+    virtual const mm::Vec3& getReferencePos() const = 0;  // slot 9
     virtual void setFromCaptureTool() = 0;  // slot 10
     virtual void dispDebugWindow(bool, char const*, ml::WinProc*) {}  // slot 11
     virtual void setName(char const*) = 0;  // slot 12

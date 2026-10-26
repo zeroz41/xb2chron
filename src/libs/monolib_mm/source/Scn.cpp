@@ -98,8 +98,6 @@ bool ScnObjIBL::isDisp() const {
 
 void ScnObjModel::renderDebug(ml::DebDraw*) {}
 
-ScnObjLight::~ScnObjLight() {}
-
 ScnDebugManipuObj::~ScnDebugManipuObj() {}
 
 ScnRender::~ScnRender() {}

@@ -22,7 +22,9 @@ public:
     AttrTransform* getTrans(bool cpu);
     bool isDisp() const;
     bool isOfsMatrix() const;
-    virtual ~ScnObjLight();  // slot 0
+    explicit ScnObjLight(Scn* scn);
+    // inline: ScnObjLightDrSys's destructors inline it (Scn.cpp's copy is the one its table emits)
+    virtual ~ScnObjLight() {}  // slot 0
     virtual const char* getName() const;  // slot 6
     virtual bool isEnv() const { return false; }  // slot 8
     virtual float getFrame() const = 0;  // slot 9

@@ -11,6 +11,8 @@ namespace ml {
 // table 0x7100B7E750
 class ScnObjLightDrSys : public ::ml::ScnObjLight {
 public:
+    // inline: create's copy is the only one (no symbol of its own); defined in ScnObjLightDrSys.cpp
+    inline ScnObjLightDrSys(ml::Scn* scn, const void* res, int view);
     static ScnObjLightDrSys* create(ml::Scn* scn, const void* res, int view);  // ScnRenderDrSys::create* forward to it
     virtual ~ScnObjLightDrSys();  // slot 0
     virtual void apply();  // slot 4
@@ -29,8 +31,9 @@ public:
     virtual void setFromCaptureTool();  // slot 23
     virtual void setLocalIBLName(char const*);  // slot 24
 
-    unsigned char pad_318[0x8];
+    const void* m_pRes;  // 0x318, the light resource create passes (the name is not the original's)
     DrEnvironmentObj* m_pEnvObj;  // 0x320, the getters forward to it (the name is not the original's)
+    int m_view;  // 0x328, the view create passes (the name is not the original's)
 };
 }  // namespace ml
 

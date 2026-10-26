@@ -16,6 +16,8 @@ public:
     // the original's)
     bool isValidInsert(unsigned short num) const;
     void insert(ScnObj* item);
+    // ScnObjLightDrSys's constructor releases the view's fast light when this is false
+    bool isExistLgtEnv() const;
 };
 }  // namespace ml
 

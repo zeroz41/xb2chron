@@ -13,6 +13,8 @@ public:
     void releaseSptLight(DrLightObjSpt* light);
     void releaseInstantPntLight(DrLightObjPnt* light);
     void releaseInstantSptLight(DrLightObjSpt* light);
+    // ScnObjLightDrSys's constructor calls it when the pool holds no environment light yet
+    void releaseFastLight();
 
     unsigned char pad_0[0x108];
     // instant lights in use: releaseInstant*Light count them down, never below 0 (the names are not the original's)
