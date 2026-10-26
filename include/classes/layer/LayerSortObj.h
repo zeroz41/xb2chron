@@ -10,8 +10,10 @@ public:
     virtual ~LayerSortObj() {}  // slot 0
     virtual void alphaRender() {}  // slot 2
     virtual void lastRender() {}  // slot 3
+    virtual void finalRender() = 0;  // slot 4 (LayerSortMan::finalRender calls it down the list)
 
-    unsigned char pad_08[0x8];
+    // the next object in its LayerSortMan list (set2DSpace/set3DSpace chain it; the name is not the original's)
+    LayerSortObj* m_next;
     // the object it draws: the derived classes' finalRender draws it (the name is not the original's)
     LayerObj* m_obj;
 };

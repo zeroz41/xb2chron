@@ -17,6 +17,8 @@ namespace layer {
 class LayerManager;
 class LayerObjTopMaskObj;
 class LayerResSecTexture;
+class LayerTextureMan;
+class LayerVertexMan;
 class LayerResViewPortInfo;
 class LayerVertexObj;
 
@@ -123,7 +125,10 @@ public:
     static void (*s_CallBlend[8])();
 
     // Field names are not the original's: they follow the accessors and functions that read and write them.
-    unsigned char pad_08[0x40];
+    unsigned char pad_08[0x30];
+    // the constructor creates both (new, over the manager's work handle); the names are not the original's
+    LayerVertexMan* m_vertexMan;    // 0x38
+    LayerTextureMan* m_textureMan;  // 0x40: LayerResAddTexObj/LayerResSecTexture share its texture objects
     LayerShdDeclOfs* m_pDeclOfs;  // 0x48, one per shader (the init functions fill it)
     const LayerObjTopMaskObj* m_pMaskObj;  // 0x50, setShaderMaskMode
     unsigned char pad_58[0x18];  // 0x58, 0x60: setSecTexture stores the texture and the resource's +0x18
