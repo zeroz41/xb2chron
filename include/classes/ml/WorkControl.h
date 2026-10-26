@@ -25,6 +25,9 @@ public:
     static WorkControl* create(WorkObj* parent);
     // makes the flow setup work under the control work once (always true)
     static bool setFlowSetup();
+    // queues a pause request (pause on or off) under a name (ErrViewer's destructor lifts its "SYS:ERR" one) (the
+    // parameter names are not the original's)
+    static void pause(bool pause, const char* name);
 
     static int s_nPauseNum;
     static int s_nSysPauseNum;

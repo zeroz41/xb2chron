@@ -47,6 +47,9 @@ public:
     static void renderSync();
     static float getCost();
     static void setFrameSpd(float spd);
+    // a function drawn outside the scenes' rendering, and its removal (ErrViewer::standby hands it fnRender)
+    static void addOuterRender(void (*render)());
+    static void removeOuterRender(void (*render)());
     // the memory the graphics memory pools come from (gf::GfMemManager::initializeCore hands it the asset memory,
     // finalizeCore takes it back)
     static void setMemPoolMemHandle(mtl::ALLOC_HANDLE handle);
