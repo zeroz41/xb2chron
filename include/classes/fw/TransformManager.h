@@ -2,6 +2,8 @@
 #define CLASSES_FW_TRANSFORMMANAGER_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "mm/mtl/IntrusiveList.h"
+#include "classes/fw/TransformUpdater.h"
 
 namespace fw { class TransformManager; }
 
@@ -11,6 +13,17 @@ class TransformManager : public ::mm::mtl::PtrSingleton< ::fw::TransformManager>
 public:
     virtual ~TransformManager();  // slot 0
     void update(unsigned int layerMask);  // Framework::update runs it per layer
+
+    // updater linked last into layer's list (inline: GfComTransform::setup and changeLayer; the name is not the
+    // original's)
+    void addUpdater(unsigned int layer, TransformUpdater* updater) { m_layers[layer].push_back(updater); }
+    // updater unlinked from layer's list (inline: GfComTransform::cleanup and changeLayer; the name is not the
+    // original's)
+    void removeUpdater(unsigned int layer, TransformUpdater* updater) { m_layers[layer].remove(updater); }
+
+    // one list per layer (update walks all 32 against its mask; GfComTransform links its updater into its layer's;
+    // the name is not the original's)
+    mm::mtl::IntrusiveList<TransformUpdater> m_layers[32];
 };
 }  // namespace fw
 

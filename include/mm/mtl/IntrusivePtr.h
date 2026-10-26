@@ -87,6 +87,11 @@ template <typename T>
 inline bool operator==(const IntrusivePtr<T>& p, decltype(nullptr)) {
     return p.get() == nullptr;
 }
+// whether the two hold the same object (GfComTransform::removeReferenceFrame finds its frame with std::find so)
+template <typename T, typename U>
+inline bool operator==(const IntrusivePtr<T>& a, const IntrusivePtr<U>& b) {
+    return a.get() == b.get();
+}
 
 }}  // namespace mm::mtl
 

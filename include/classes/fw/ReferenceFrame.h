@@ -9,7 +9,14 @@ namespace fw {
 // table 0x7100B418F8; counted (its constructor clears the count at 8; WindProbe holds one by IntrusivePtr)
 class ReferenceFrame : public mm::mtl::ReferenceObject {
 public:
+    ReferenceFrame();
     virtual ~ReferenceFrame();  // slot 0
+    // child linked under this frame (GfComTransform::setup links its child frame so)
+    void addChild(ReferenceFrame& child);
+    // frame taken out of its parent's children (GfComTransform::cleanup)
+    static void unlinkParent(ReferenceFrame& frame);
+    // frame's children taken out from under it (GfComTransform::cleanup)
+    static void unlinkChild(ReferenceFrame& frame);
     void syncLocalTransform();
     void syncWorldTransform();
     // m_worldMatrix, rebuilt from the synced world transform when bit 2 of m_syncFlags is clear
@@ -42,6 +49,7 @@ public:
     // transform (getSyncedWorldTransform sets it and clears bit 2), bit 2 the world matrix; the constructor
     // sets all three
     unsigned int m_syncFlags;
+    unsigned char pad_a4[0x3c];  // to 0xe0, the size GfComTransform::setup allocates
 };
 }  // namespace fw
 
