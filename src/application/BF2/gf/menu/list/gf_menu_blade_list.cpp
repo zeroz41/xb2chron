@@ -3,6 +3,7 @@
 #include "classes/gf/GfAllocator.h"
 #include "gf/GfDataBlade.h"
 #include "gf/GfMenuObjUtil.h"
+#include "classes/gf/DataParamAcc.h"
 #include "gf/SDataBlade.h"
 #include "plugin/Bdat.h"
 
@@ -17,6 +18,73 @@ GfMenuBladeList* GfMenuBladeList::create() {
     GfMenuBladeList* list = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfMenuBladeList;
     list->addRef();
     return list;
+}
+
+void GfMenuBladeList::getBladeFromDriver(unsigned int driver, mm::mtl::FixedVector<unsigned short, 422>& list,
+                                         bool keepInvalid) {
+    DataParamAcc acc(3, driver, GimmickType(0));
+    if (acc.isValid()) {
+        unsigned int blade = acc.getBlade(-1, false);
+        unsigned int slotMax = GfMenuObjUtil::getBladeSlotMax();
+        if (GfMenuObjUtil::isValidBlade(blade)) {
+            list.push_back(blade);
+            for (unsigned int slot = 1; slot < slotMax; ++slot) {
+                unsigned int id = GfMenuObjUtil::getBladeIDFromDriverSlot(
+                    acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0, slot);
+                if (keepInvalid || GfMenuObjUtil::isValidBlade(id)) {
+                    list.push_back(id);
+                }
+            }
+        }
+    }
+}
+
+void GfMenuBladeList::sort(unsigned int type, bool descending) {
+    if (getSize() == 0) {
+        return;
+    }
+    std::function<bool(const MenuBladeInfo&, const MenuBladeInfo&)> compare;
+    switch (type) {
+    case 1:
+        compare = descending ? sortTimeAscending : sortTimeDescending;
+        break;
+    case 2:
+        compare = descending ? sortNameDescending : sortNameAscending;
+        break;
+    case 3:
+        compare = descending ? sortRarityAscending : sortRarityDescending;
+        break;
+    case 4:
+        compare = descending ? sortWeaponAscending : sortWeaponDescending;
+        break;
+    case 5:
+        compare = descending ? sortAttrAscending : sortAttrDescending;
+        break;
+    case 6:
+        compare = descending ? fn_710036DCE8 : fn_710036DDCC;
+        break;
+    case 11:
+        compare = descending ? sortGenderDescending : sortGenderAscending;
+        break;
+    case 18:
+        compare = fn_710036DF68;
+        break;
+    case 19:
+        compare = fn_710036DFF0;
+        break;
+    case 22:
+        compare = fn_710036E10C;
+        break;
+    case 23:
+        compare = fn_710036E078;
+        break;
+    default:
+        if (type > 100) {
+            fn_710036E1A0(type - 100);
+        }
+        return;
+    }
+    UIListInfo< ::gf::MenuBladeInfo>::sort(compare);
 }
 
 bool GfMenuBladeList::sortTimeAscending(const MenuBladeInfo& a, const MenuBladeInfo& b) {
@@ -297,6 +365,50 @@ bool GfMenuBladeList::fn_710036E10C(const MenuBladeInfo& a, const MenuBladeInfo&
         return rarityA > rarityB;
     }
     return trustA > trustB;
+}
+
+void GfMenuBladeList::fn_710036E1A0(unsigned int skill) {
+    unsigned int size = getSize();
+    bool* hasSkill = new (getAllocator(ALLOCATOR(0)), nullptr, 0, 8) bool[size];
+    for (unsigned int i = 0; i < getSize(); ++i) {
+        DataParamAcc acc(4, getContents(i).m_blade, GimmickType(0));
+        bool found = false;
+        unsigned short level = 0;
+        for (unsigned int slot = 0; slot < 3; ++slot) {
+            if (acc.getFieldSkill(slot, false) == skill && acc.getFieldSkillLevel(slot, false) != 0) {
+                level = acc.getFieldSkillLevel(slot, false);
+                found = true;
+            }
+        }
+        hasSkill[i] = found;
+        getContents(i).m_index = i;
+        getContents(i).m_skillLevel = level;
+    }
+    UIListInfo< ::gf::MenuBladeInfo>::sort([hasSkill](const MenuBladeInfo& a, const MenuBladeInfo& b) {
+        if (hasSkill[a.m_index] != hasSkill[b.m_index]) {
+            return hasSkill[a.m_index];
+        }
+        if (a.m_skillLevel == b.m_skillLevel) {
+            unsigned int orderA = getCreatorSortOrder(a.m_creator);
+            unsigned int orderB = getCreatorSortOrder(b.m_creator);
+            if (orderA == orderB) {
+                unsigned int rarityA = GfMenuObjUtil::getBladeRarity(a.m_blade);
+                unsigned int rarityB = GfMenuObjUtil::getBladeRarity(b.m_blade);
+                if (rarityA == rarityB) {
+                    unsigned int rankA = GfMenuObjUtil::getBladeRank(a.m_blade);
+                    unsigned int rankB = GfMenuObjUtil::getBladeRank(b.m_blade);
+                    if (rankA == rankB) {
+                        return a.m_blade < b.m_blade;
+                    }
+                    return rankA > rankB;
+                }
+                return rarityA > rarityB;
+            }
+            return orderA < orderB;
+        }
+        return a.m_skillLevel > b.m_skillLevel;
+    });
+    delete[] hasSkill;
 }
 
 void GfMenuBladeList::updateOwner() {

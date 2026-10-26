@@ -203,6 +203,9 @@ public:
     static unsigned int getBladeIDFromPartyBackSlot(unsigned int driver, int slot, bool);
     // the blade id the driver has in that slot (GfMenuCharDataAdapter's TUnk_B5B908)
     static unsigned int getBladeIDFromDriverSlot(unsigned int driver, int slot);
+    // how many blade slots a driver has: 1, 2 once local flag 0x89FF is 1, 3 once 0x8A00 is 1 (1.0.0's
+    // getBladeFromDriver calls getBladeSlotMax at the same place; 1.0.0's body is the same)
+    static unsigned int getBladeSlotMax();
     // a combo's effect text, and its effect (3.0.1's always 1) (GfMenuElementComboAdapter's update_*)
     static ui::UIStr getElementComboEffectName(unsigned int combo);
     static unsigned char getElementComboEffect(unsigned int combo);
