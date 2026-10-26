@@ -3,6 +3,7 @@
 
 namespace gf { class GF_OBJ_HANDLE; }
 namespace mm { class Vec3; }
+namespace mm { class Mat44; }
 #include "classes/gf/IGfObjListener.h"
 
 namespace gmk {
@@ -26,6 +27,8 @@ public:
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*) {}  // slot 9
     virtual void debugUpdateMmf() {}  // slot 10
     unsigned char* getBindedBdatFp() const;
+    // the gimmick's matrix (StateTalk turns its npc back to the gimmick's facing from row 2)
+    void getMatrix(mm::Mat44& mtx, bool world) const;
     // whether pos lies inside the gimmick's shape (GfGameInsideBattleLock::isInside asks a battle lock's with 0)
     bool isInsideShape(const mm::Vec3& pos, float margin) const;  // the BDAT table of the gimmick's kind
     unsigned char pad_8[0x8];

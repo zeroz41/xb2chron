@@ -14,7 +14,10 @@ namespace gf { namespace npc {
 // table 0x7100B669F0
 class StateApproachPc : public ::gf::GfStateBase {
 public:
-    StateApproachPc() : pad_50(nullptr), pad_58(nullptr) {}
+    // a step of the state: the sequence update runs, none when null
+    typedef void (StateApproachPc::*Seq)(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
+
+    StateApproachPc() : m_seq(nullptr) {}
     // what GfComBehaviorNpc::createFsm registers with its Hfsm: the state made in a state buffer
     static ai::State* create(void* buffer) { return new (buffer) StateApproachPc; }
     virtual ~StateApproachPc() {}  // slot 0: inline (emitted with the table by the registering unit)
@@ -28,9 +31,14 @@ public:
     void enter(GfComBehaviorNpc* owner, ai::State* prev);
     void leave(GfComBehaviorNpc* owner, ai::State* next);
     void update(GfComBehaviorNpc* owner, const fw::UpdateInfo& info);
+    // whether the player is near enough for the npc to approach it
+    static bool isCondMatch(const GfComBehaviorNpc& owner);
+    void seqTurnPc(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
+    void seqWaitTurnEnd(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
+    void seqApproachPc(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
+    void seqApproachPcIdle(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
     TFieldExecCmd<GfComAsm> m_execCmd;
-    void* pad_50;
-    void* pad_58;
+    Seq m_seq;
 };
 }}  // namespace gf::npc
 
