@@ -22,7 +22,7 @@ public:
     GrlSurfaceFormat getFormat() const;
     // the texture's first texel (CGLibTexture::get1PixelTextureInfo)
     float get1PixelTextureInfo();
-    unsigned int getMipmap() const;
+    unsigned short getMipmap() const;  // ml::DrAPCache::setMipMapOn tests only its low 16 bits
     // frees the texture, its memory and its descriptor ids now / once the GPU is done with them
     void release();
     void delayRelease();

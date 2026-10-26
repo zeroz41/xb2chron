@@ -246,7 +246,7 @@ void CGLibAccUtilTexture::setup2DTexutreInfo(CGLibTextureBuffer& buffer, unsigne
     m_isLinear = (buffer.m_flags & 0x20) != 0;
 }
 
-unsigned int CGLibTextureBuffer::getMipmap() const {
+unsigned short CGLibTextureBuffer::getMipmap() const {
     return m_mipmap;
 }
 

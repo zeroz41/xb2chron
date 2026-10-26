@@ -7,6 +7,7 @@ namespace ml {
 // table 0x7100B7E948
 class DrAPCacheNx : public ::ml::DrAPCache {
 public:
+    DrAPCacheNx();
     virtual ~DrAPCacheNx();  // slot 0
 };
 }  // namespace ml

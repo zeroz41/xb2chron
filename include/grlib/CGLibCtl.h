@@ -78,6 +78,11 @@ public:
     // depth test on/off, depth write on/off, the comparison (layer::LayerShdManager::setDepthBufferCheckOn/Off;
     // the parameter names are not the original's)
     static void setDepthControl(unsigned char test, unsigned char write, GrlCompare compare);
+    // the depth then the stencil state (ml::DrAPGxType::setupStencilTest; the parameter names are not the original's)
+    static void setDepthStencilControl(unsigned char depthTest, unsigned char depthWrite, GrlCompare depthCompare,
+                                       unsigned char stencilTest, GrlCompare stencilCompare, unsigned int ref,
+                                       unsigned int mask, unsigned int writeMask, GrlStencil fail,
+                                       GrlStencil depthFail, GrlStencil pass);
     static void clearColorBuffer(CGLibColorBuffer& buffer, const mm::Col4& color, GrlClaerMask mask);
     static void clearIntColorBuffer(CGLibColorBuffer& buffer, const int* values, GrlClaerMask mask);
     // clears the depth buffer (what the flag selects is not known)
