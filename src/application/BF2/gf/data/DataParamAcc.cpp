@@ -194,6 +194,16 @@ const char* DataParamAcc::getName() const {
     return "";
 }
 
+const char* DataParamAcc::getVoiceStr() const {
+    if (isValid()) {
+        if (const char* voice = m_obj->getVoiceStr()) {
+            return voice;
+        }
+        return "";
+    }
+    return "";
+}
+
 unsigned int DataParamAcc::getBdatId() const {
     if (isValid()) {
         return m_obj->getBdatId();
