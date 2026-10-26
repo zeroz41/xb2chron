@@ -228,12 +228,12 @@ unsigned int GfDataDriverArts::getNameID(unsigned int arts) {
     return GfBdatBtl::get()->getArtsDrName(arts);
 }
 
-unsigned short GfDataDriverArts::getIconID(unsigned int arts) {
-    return GfBdatBtl::get()->getArtsDrUI(arts);
+unsigned int GfDataDriverArts::getIconID(unsigned int arts) {
+    return GfBdatBtl::get()->fn_71001E6BDC(arts);
 }
 
-unsigned short GfDataDriverArts::getDebugName(unsigned int arts) {
-    return GfBdatBtl::get()->getArtsDrDebugName(arts);
+unsigned int GfDataDriverArts::getDebugName(unsigned int arts) {
+    return GfBdatBtl::get()->fn_71001E6B54(arts);
 }
 
 unsigned int GfDataDriverArts::getWpnType(unsigned int arts) {

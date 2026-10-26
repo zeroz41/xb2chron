@@ -10,8 +10,10 @@ public:
     static unsigned char* getCaptionFP();  // the table of the arts' captions
     static unsigned int getNameID(unsigned int arts);
     static unsigned int getCaptionID(unsigned int arts);
-    static unsigned short getIconID(unsigned int arts);     // GfBdatBtl::getArtsDrUI
-    static unsigned short getDebugName(unsigned int arts);  // GfBdatBtl::getArtsDrDebugName
+    // getIconID and getDebugName tail-call GfBdatBtl::fn_71001E6BDC and fn_71001E6B54 (BTL_Arts_Dr TalentCap and
+    // CondCap, 16-bit columns the callee masks), so they return the callee's unsigned int
+    static unsigned int getIconID(unsigned int arts);
+    static unsigned int getDebugName(unsigned int arts);
     static unsigned int getEnhance(unsigned int arts, unsigned int level);
     static int getArtsType(unsigned int arts);
     static unsigned int getLevelMax(unsigned int arts);

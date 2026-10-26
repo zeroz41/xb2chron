@@ -329,7 +329,7 @@ bool GfMenuArtsAdapter::update_ArtsNumDamage() {
 
 bool GfMenuArtsAdapter::update_ArtsNumRecast() {
     if (m_driverId == 0 || m_artsId == 0 ||
-        (GfMenuObjUtil::fn_710048FD30(3) && GfBdatBtl::get()->getArtsDrActNo(m_artsId) == 2) || m_level == 0) {
+        (GfMenuObjUtil::fn_710048FD30(3) && GfBdatBtl::get()->fn_71001E6D74(m_artsId) == 2) || m_level == 0) {
         return false;
     }
     setNumber(GfDataDriverArts::getRecast(m_artsId, m_level));
@@ -390,7 +390,7 @@ bool GfMenuArtsAdapter::update_ArtsNumDamageNextLv() {
 
 bool GfMenuArtsAdapter::update_ArtsNumRecastNextLv() {
     if (m_driverId == 0 || m_artsId == 0 ||
-        (GfMenuObjUtil::fn_710048FD30(3) && GfBdatBtl::get()->getArtsDrActNo(m_artsId) == 2)) {
+        (GfMenuObjUtil::fn_710048FD30(3) && GfBdatBtl::get()->fn_71001E6D74(m_artsId) == 2)) {
         return false;
     }
     unsigned int level = m_level + 1;
