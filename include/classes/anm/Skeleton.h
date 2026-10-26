@@ -52,6 +52,10 @@ public:
     // per bone, its transform in the reference pose (BlendUtil::normalizePoseMS; the name is not the original's)
     Array<QsTransform> m_referencePose;
     Array<ExtraTruckSlot> m_extraTruckSlots;  // getExtraTruckSlotID's (the name is not the original's)
+    unsigned char pad_60[0x10];
+    // names searched with strcmp for GfDataDriver::getBelongingMountBone ("MT_wire") by GfAppendWire's constructor,
+    // which keeps the index (the name is not the original's)
+    Array<const char*> m_mountNames;
 };
 }  // namespace anm
 
