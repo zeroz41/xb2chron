@@ -19,6 +19,12 @@ bool IsUserInactivityDetectionTimeExtended();
 void EnableScreenShot();
 void DisableScreenShot();
 
+// the application's display version string (the SDK's)
+struct DisplayVersion {
+    char value[16];
+};
+void GetDisplayVersion(DisplayVersion* outValue);
+
 }}  // namespace nn::oe
 
 #endif

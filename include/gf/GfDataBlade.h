@@ -91,6 +91,10 @@ public:
     // plugin's setNpcMeet (before and after fn_710024DDDC), GfMenuManager::fn_710035A764.
     static bool fn_710024DE6C(unsigned int id);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit next to fn_710024DA88 (same ids). What it does: 0 for an id up to 2000, else
+    // GfBdatRsc::fn_7100219CE0(id). Caller: GfMenuManager::fn_710035A764 (before fn_710024DE6C on the same id).
+    static unsigned int fn_710024DAB0(unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit, next to fn_710024DDDC and fn_710024DE6C (same ids). What it does: 0 for an id up to 2000,
     // else GfBdatRsc::fn_7100219C58(id) (fn_710024DDDC records that value - 0xED02). Callers:
     // GfMenuCharDataAdapter::fn_7100339800 (an NPC object's id; shows the value - 0xED03), gf_menu_obj_hitonowa.

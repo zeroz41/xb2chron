@@ -7,6 +7,8 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/ml/fixed_size_alloc_inside.h"
 #include "classes/ui/UIUpdateCallback.h"
+#include "classes/gf/GfGmkLocatorAtlas.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace mm { struct Col4; }
 namespace gf { class GfSetupParam; }
@@ -92,7 +94,7 @@ public:
     static bool fn_710035A6CC();  // m_battleStateEnable (GfGamePad::eventInGameOpenSkipTravelMenu)
     static bool fn_710035A6F8();  // GfMenuFlag::get1(31) == 0 (GfGamePad::eventInGameOpenSkipTravelMenu)
     static void fn_710035A718(bool flag);  // stores m_evTheaterFlag (GfMenuObjEvTheater::finalize)
-    static bool fn_710035A800();  // calls GfMenuObjUtil::fn_710048FD30(3), then m_attachedObj != nullptr
+    static bool fn_710035A800();  // calls GfMenuObjUtil::fn_710048FD30(3), then whether m_npcMeetIds has elements
     static bool fn_710035DE04();  // m_hideAll, false without a manager or while m_locked
     static bool fn_7100359570();  // m_baseGameFlag, false without a manager or when GfGameManager::fn_71002A9E68()
     static void fn_710035DB2C();  // with GfMenuObjUtil::fn_710048FD30(1): creates ui layer 101, sets m_layer101Open
@@ -164,6 +166,27 @@ public:
     // a bool, false without a manager; GfMenuObjOpeningTelop's open/close calls send nothing while it holds, and
     // GfMenuObjStaffroll::update tests it.
     static bool fn_710035A738();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfMenuObjTitle::initialize shows
+    // no version). A member because it reads the manager's own singleton and lives in its unit. What it does:
+    // "2.0.1" when GfGameManager::fn_71002A9E68() answers true and the manager is missing or not m_regionJP, else
+    // the application's display version (nn::oe::GetDisplayVersion into a file static). Caller:
+    // GfMenuObjTitle::initialize.
+    static const char* fn_710035A660();
+    // Placeholder name: the symbols leave it unnamed. A member because it reads the manager's own singleton and
+    // lives in its unit. What it does: when GfMenuObjUtil::fn_710048FD30(3) answers true and the manager's
+    // m_optionFlag holds, sets the option's m_soundUi.m_byte1E to whether fw::LangUtil::getLangType() is 0, 6 or 11.
+    // Caller: tl::TitleStateMainScreen::loadSaveDataForTitle, on the title's option buffer after
+    // GfGameUtilSaveData::setupOptionSaveData.
+    static void fn_710035964C(SDataOption& option);
+    // Placeholder name: the symbols leave it unnamed. A member because it reads the manager's own singleton and
+    // lives in its unit. What it does: with a manager and GfMenuObjUtil::fn_710048FD30(1) true, creates ui layer
+    // 103, then runs fn_710035A460 (layer 102), sets m_titleCount to 1 and answers true; false otherwise.
+    // Caller: fn_71003AF9CC.
+    static bool fn_710035A4A0();
+    // Placeholder name: the symbols leave it unnamed. A member because it writes the manager's own singleton and
+    // lives in its unit. What it does: during a map jump (GfGameManager::isMapjump) copies the atlas setup into
+    // m_mapjumpAtlasInfo. Caller: GfMenuMapInfo::postUpdate, in place of GfGmkLocatorAtlas::create.
+    static void fn_710035A844(const GfGmkLocatorAtlas::CreateInfo& info);
     static void getFadeColor(unsigned int layer, mm::Col4& color);
     static void initOptionData(SDataOption& option);
     static bool isRegionJP();  // the constructor sets it when menu_ira/font/bf2.wisty exists
@@ -223,11 +246,15 @@ public:
     bool m_bladeBookFlag : 1;  // 0x4114 fn_710035A634 reads its low bit (GfMenuBladeList::setupFromBook) (the name is not the original's)
     unsigned char pad_4115[0x4F];
     unsigned int m_latestCommonWinID;  // 0x4164 getLatestCommonWinID, openCommonWindow
-    unsigned char pad_4168[0x38];
+    unsigned char pad_4168[0x8];
+    // 0x4170 fn_710035A844 copies GfMenuMapInfo::postUpdate's atlas setup here during a map jump (the name is not
+    // the original's)
+    GfGmkLocatorAtlas::CreateInfo m_mapjumpAtlasInfo;
     int m_titleValue;  // 0x41A0 fn_710035A364 returns it (the name is not the original's)
     int m_titleCount;  // 0x41A4 fn_710035A524 tests it against 0 (TitleStateWarning) (the name is not the original's)
-    unsigned char pad_41A8[0x200];
-    void* m_attachedObj;  // 0x43A8 the destructor clears it, fn_710035A800 tests it (what it points to and the name are not known)
+    // 0x41A8 fn_710035A764 appends the ids the fld plugin's setNpcMeet reports (fixed_vector.h's push_back asserts);
+    // fn_710035A800 tests it for elements, the destructor clears it (the name is not the original's)
+    mm::mtl::FixedVector<unsigned short, 256> m_npcMeetIds;
     unsigned char pad_43B0[0x10];
 };
 }  // namespace gf

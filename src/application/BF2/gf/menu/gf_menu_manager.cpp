@@ -71,19 +71,23 @@
 #include "classes/gf/GfMenuMnagerPadRead.h"
 #include "classes/gf/GfGamePad.h"
 #include "gf/gf_data_aoc.h"
+#include "gf/GfDataBlade.h"
+#include "gf/SDataOption.h"
+#include "fw/LangUtil.h"
+#include "nn/oe.h"
 
 namespace gf {
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EA6F48). fn_710035A660 reads the
+// application's display version into it.
+static nn::oe::DisplayVersion s_displayVersion;
 
 void GfMenuManager::build(const GfSetupParam& param) {
 #line 514
     new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfMenuManager(param);
 }
 
-GfMenuManager::~GfMenuManager() {
-    if (m_attachedObj != nullptr) {
-        m_attachedObj = nullptr;
-    }
-}
+GfMenuManager::~GfMenuManager() {}
 
 void GfMenuManager::destroy() {
     GfMenuManager* self = get();
@@ -703,13 +707,83 @@ void GfMenuManager::fn_710035A718(bool flag) {
     mgr->m_evTheaterFlag = flag;
 }
 
+void GfMenuManager::fn_710035964C(SDataOption& option) {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return;
+    }
+    GfMenuManager* mgr = GfMenuManager::get();
+    if (mgr == nullptr || !mgr->m_optionFlag) {
+        return;
+    }
+    if (fw::LangUtil::getLangType() == 0 || fw::LangUtil::getLangType() == 6 || fw::LangUtil::getLangType() == 11) {
+        option.m_soundUi.m_byte1E = 1;
+    } else {
+        option.m_soundUi.m_byte1E = 0;
+    }
+}
+
+bool GfMenuManager::fn_710035A4A0() {
+    GfMenuManager* mgr = GfMenuManager::get();
+    if (mgr == nullptr || !GfMenuObjUtil::fn_710048FD30(1)) {
+        return false;
+    }
+    ui::UIManager::get()->createLayer(103);
+    fn_710035A460();
+    mgr->m_titleCount = 1;
+    return true;
+}
+
+bool GfMenuManager::fn_710035A634(int index) {
+    GfMenuManager* mgr = GfMenuManager::get();
+    return index == 0 && mgr != nullptr && mgr->m_bladeBookFlag;
+}
+
+const char* GfMenuManager::fn_710035A660() {
+    GfMenuManager* mgr = GfMenuManager::get();
+    if ((mgr == nullptr || !mgr->m_regionJP) && GfGameManager::fn_71002A9E68()) {
+        return "2.0.1";
+    }
+    nn::oe::GetDisplayVersion(&s_displayVersion);
+    return s_displayVersion.value;
+}
+
+bool GfMenuManager::fn_710035A738() {
+    GfMenuManager* mgr = GfMenuManager::get();
+    if (mgr == nullptr) {
+        return false;
+    }
+    return mgr->m_evTheaterFlag;
+}
+
+void GfMenuManager::fn_710035A764(unsigned int id) {
+    GfMenuManager* mgr = GfMenuManager::get();
+    if (mgr == nullptr || !GfMenuObjUtil::fn_710048FD30(3)) {
+        return;
+    }
+    if (mgr->m_npcMeetIds.size() == mgr->m_npcMeetIds.capacity()) {
+        return;
+    }
+    if (GfDataBlade::fn_710024DAB0(id) == 0 || !GfDataBlade::fn_710024DE6C(id)) {
+        return;
+    }
+    mgr->m_npcMeetIds.push_back(id);
+}
+
+void GfMenuManager::fn_710035A844(const GfGmkLocatorAtlas::CreateInfo& info) {
+    GfMenuManager* mgr = GfMenuManager::get();
+    if (mgr == nullptr || !GfGameManager::isMapjump()) {
+        return;
+    }
+    mgr->m_mapjumpAtlasInfo = info;
+}
+
 bool GfMenuManager::fn_710035A800() {
     GfMenuManager* mgr = GfMenuManager::get();
     if (mgr == nullptr) {
         return false;
     }
     GfMenuObjUtil::fn_710048FD30(3);
-    return mgr->m_attachedObj != nullptr;
+    return !mgr->m_npcMeetIds.empty();
 }
 
 bool GfMenuManager::fn_710035DE04() {
