@@ -27,6 +27,17 @@
 #include "classes/fw/Framework.h"
 #include "gf/GfDataEnemy.h"
 #include "fw/Transform.h"
+#include "ml/ScnObjAccResMdlInfo.h"
+#include "classes/gf/GfComCollider.h"
+#include "classes/fw/ColiObject.h"
+#include "classes/anm/Skeleton.h"
+#include "classes/anm/Pose.h"
+#include "fw/TransformUtil.h"
+#include "classes/gf/GfObjSetupMap.h"
+#include "ml/ScnObjAccResSubMesh.h"
+#include "ml/ScnObjAccEtcParams.h"
+#include "classes/btl/CharacterManager.h"
+#include "classes/btl/CharacterParameter.h"
 
 namespace gf {
 
@@ -45,6 +56,7 @@ GfObjAcc::GfObjAcc(GF_OBJ_HANDLE* handle) {
 }
 
 const fw::Transform& GfObjAcc::getWorldTransform() const {
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EACE60, guard lbl_7100EACE80)
     static fw::Transform s_transform;
     if (m_obj != nullptr) {
         if (GfComTransform* transform = m_obj->getComponent<GfComTransform>(0)) {
@@ -60,6 +72,7 @@ const fw::Transform& GfObjAcc::getWorldTransform() const {
 }
 
 const fw::Transform& GfObjAcc::getWorldTransformNoSync() const {
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EACE90, guard lbl_7100EACEB0)
     static fw::Transform s_transform;
     if (m_obj != nullptr) {
         if (GfComTransform* transform = m_obj->getComponent<GfComTransform>(0)) {
@@ -323,6 +336,57 @@ unsigned int GfObjAcc::getAttribute() const {
     return m_obj != nullptr ? m_obj->pad_110 : 0;
 }
 
+float GfObjAcc::getModelRadius() const {
+    if (m_obj != nullptr) {
+        if (GfComModel* model = m_obj->getComponent<GfComModel>(1)) {
+            if (model->m_model != nullptr) {
+                if (ml::ScnObjModel* scn = model->m_model->getInterface()) {
+                    return scn->getLength();
+                }
+            }
+        }
+    }
+    return 0.0f;
+}
+
+float GfObjAcc::getModelAlpha() const {
+    if (m_obj != nullptr) {
+        if (GfComModel* model = m_obj->getComponent<GfComModel>(1)) {
+            if (model->m_model != nullptr) {
+                if (ml::ScnObjModel* scn = model->m_model->getInterface()) {
+                    return scn->getAlpha();
+                }
+            }
+        }
+    }
+    return 1.0f;
+}
+
+void GfObjAcc::applyClip() {
+    if (m_obj != nullptr) {
+        if (GfComModel* model = m_obj->getComponent<GfComModel>(1)) {
+            if (model->m_model != nullptr) {
+                if (ml::ScnObjModel* scn = model->m_model->getInterface()) {
+                    scn->setClip(GfObjUtil::testFlag(m_info, 2));
+                }
+            }
+        }
+    }
+}
+
+void GfObjAcc::applyClipGpu() {
+    if (m_obj != nullptr) {
+        if (GfComModel* model = m_obj->getComponent<GfComModel>(1)) {
+            if (model->m_model != nullptr) {
+                if (ml::ScnObjModel* scn = model->m_model->getInterface()) {
+                    ml::ScnObjAccResMdlInfo info(scn);
+                    info.setGpuClip(GfObjUtil::testFlag(m_info, 3));
+                }
+            }
+        }
+    }
+}
+
 bool GfObjAcc::isValidProperty() const {
     if (m_obj != nullptr && m_obj->m_components[5] != nullptr) {
         return m_obj->m_components[5]->getRTTI()->isKindOf(&GfComProperty::m_rtti);
@@ -367,6 +431,53 @@ void GfObjAcc::setUserData(GfObjUserData kind, unsigned long data) {
 void* GfObjAcc::getUserData(GfObjUserData kind) const {
     return m_info != nullptr ? reinterpret_cast<void*>(m_info->m_userData[kind]) : nullptr;
 }
+
+int GfObjAcc::getBoneIdx(const char* bone) {
+    if (m_obj == nullptr) {
+        return -1;
+    }
+    GfComModel* model = m_obj->getComponent<GfComModel>(1);
+    if (model == nullptr || model->m_skeleton == nullptr) {
+        return -1;
+    }
+    short index = -1;
+    if (bone != nullptr) {
+        index = model->m_skeleton->getBoneIndex(bone);
+    }
+    return index;
+}
+
+unsigned int GfObjAcc::getBdatId() const {
+    if (m_obj == nullptr) {
+        return 0;
+    }
+    switch (m_obj->m_type) {
+    case 3:
+    case 4:
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+    case 15:
+        return GfObjUtil::getObjSetup(getHandle())->m_bdatId;
+    case 1: {
+        GfObjSetup* setup = GfObjManager::getObjInfo(getHandle())->m_setup;
+        GfObjSetupMap* map =
+            setup->getRTTI()->isKindOf(&GfObjSetupMap::m_rtti) ? static_cast<GfObjSetupMap*>(setup) : nullptr;
+        return map->pad_6c;
+    }
+    case 5: {
+        GfObjSetup* setup = GfObjManager::getObjInfo(getHandle())->m_setup;
+        GfObjSetupEnemy* enemy =
+            setup->getRTTI()->isKindOf(&GfObjSetupEnemy::m_rtti) ? static_cast<GfObjSetupEnemy*>(setup) : nullptr;
+        return enemy->getEnArrangeID();
+    }
+    }
+    return 0;
+}
+
+unsigned int GfObjAcc::fn_7100523B74() const { return getBdatId(); }
 
 unsigned int GfObjAcc::getDriverId() const { return getBdatId(); }
 
@@ -421,5 +532,135 @@ unsigned int GfObjAcc::getView() const { return m_info != nullptr ? m_info->m_vi
 unsigned int GfObjAcc::getLayer() const { return m_obj != nullptr ? m_obj->m_updateBit : 4; }
 
 bool GfObjAcc::isLayerPause() const { return fw::Framework::isLayerPause(getLayer()); }
+
+void GfObjAcc::setExtMeshAlpha(unsigned int mesh, float alpha) {
+    if (m_obj != nullptr) {
+        if (GfComModel* model = m_obj->getComponent<GfComModel>(1)) {
+            if (model->m_model != nullptr) {
+                if (ml::ScnObjModel* scn = model->m_model->getInterface()) {
+                    ml::ScnObjAccResSubMesh acc(scn);
+                    if (acc.getExtMax() > 0) {
+                        acc.setExtAlpha(mesh, alpha);
+                    }
+                }
+            }
+        }
+    }
+}
+
+int GfObjAcc::getExtMeshMax() const {
+    if (m_obj != nullptr) {
+        if (GfComModel* model = m_obj->getComponent<GfComModel>(1)) {
+            if (model->m_model != nullptr) {
+                if (ml::ScnObjModel* scn = model->m_model->getInterface()) {
+                    ml::ScnObjAccResSubMesh acc(scn);
+                    return acc.getExtMax();
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+int GfObjAcc::getExtMeshIdx(const char* name) const {
+    if (m_obj != nullptr) {
+        if (GfComModel* model = m_obj->getComponent<GfComModel>(1)) {
+            if (model->m_model != nullptr) {
+                if (ml::ScnObjModel* scn = model->m_model->getInterface()) {
+                    ml::ScnObjAccResSubMesh acc(scn);
+                    return acc.getExtIdx(name);
+                }
+            }
+        }
+    }
+    return -1;
+}
+
+const char* GfObjAcc::getExtMeshName(int mesh) const {
+    if (m_obj != nullptr) {
+        if (GfComModel* model = m_obj->getComponent<GfComModel>(1)) {
+            if (model->m_model != nullptr) {
+                if (ml::ScnObjModel* scn = model->m_model->getInterface()) {
+                    ml::ScnObjAccResSubMesh acc(scn);
+                    return acc.getExtName(mesh);
+                }
+            }
+        }
+    }
+    return "";
+}
+
+const char* GfObjAcc::getDebugName() const { return ""; }
+
+bool GfObjAcc::isBattle() const {
+    btl::CharacterManager* manager = mm::mtl::PtrSingleton<btl::CharacterManager>::sys();
+    if (manager == nullptr) {
+        return false;
+    }
+    btl::BattleCharacter* chr = manager->GetCharacterConst(getHandle());
+    if (chr == nullptr) {
+        return false;
+    }
+    btl::CharacterParameter* param = chr->GetCharacterParameter(false);
+    return param != nullptr && param->m_hasHateTarget;
+}
+
+void GfObjAcc::setEtcParam(int index, float value) {
+    if (m_obj != nullptr) {
+        if (GfComModel* model = m_obj->getComponent<GfComModel>(1)) {
+            if (model->m_model != nullptr) {
+                if (ml::ScnObjModel* scn = model->m_model->getInterface()) {
+                    ml::ScnObjAccEtcParams params(scn);
+                    params.setInitParams(index, value);
+                }
+            }
+        }
+    }
+}
+
+int GfObjAcc::getEtcParamIndex(const char* name) const {
+    if (m_obj != nullptr) {
+        if (GfComModel* model = m_obj->getComponent<GfComModel>(1)) {
+            if (model->m_model != nullptr) {
+                if (ml::ScnObjModel* scn = model->m_model->getInterface()) {
+                    ml::ScnObjAccEtcParams params(scn);
+                    return params.getIndex(name);
+                }
+            }
+        }
+    }
+    return -1;
+}
+
+bool GfObjAcc::isPartyObj() const { return GfObjUtil::testFlag(m_info, 18); }
+
+unsigned int GfObjAcc::getPartyID() const { return GfObjUtil::getPartyID(getHandle()); }
+
+bool GfObjAcc::isCollideModelClip() const {
+    if (m_obj != nullptr) {
+        if (GfComModel* model = m_obj->getComponent<GfComModel>(1)) {
+            if (model->m_model != nullptr) {
+                if (ml::ScnObjModel* scn = model->m_model->getInterface()) {
+                    ml::ScnObjAccResMdlInfo info(scn);
+                    return info.isCamCheckResl();
+                }
+            }
+        }
+    }
+    return false;
+}
+
+void GfObjAcc::setEnableCollideModelClip(bool on) {
+    if (m_obj != nullptr) {
+        if (GfComModel* model = m_obj->getComponent<GfComModel>(1)) {
+            if (model->m_model != nullptr) {
+                if (ml::ScnObjModel* scn = model->m_model->getInterface()) {
+                    ml::ScnObjAccResMdlInfo info(scn);
+                    info.setCamCheckMode(on);
+                }
+            }
+        }
+    }
+}
 
 }  // namespace gf
