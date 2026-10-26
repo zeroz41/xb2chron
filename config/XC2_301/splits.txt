@@ -279,9 +279,13 @@ application/BF2/framework/anim/anim_manager.cpp:
 	.bss         start:0x00C23320 end:0x00C23328
 
 application/BF2/framework/AnimPoseModifier.cpp:
-	.text        start:0x0015A3C0 end:0x0015C4B0
+	.text        start:0x0015A3C0 end:0x0015B570
 	.rodata      start:0x009804BF end:0x0098052B
-	.data        start:0x00B40C80 end:0x00B40D70
+	.data        start:0x00B40C80 end:0x00B40CA8
+
+application/BF2/framework/AnimSinglePoseSamper.cpp:
+	.text        start:0x0015B570 end:0x0015C4B0
+	.data        start:0x00B40CA8 end:0x00B40D70
 
 application/BF2/framework/AnimResAsmResolver.cpp:
 	.text        start:0x0015C4B0 end:0x0015D8B4
