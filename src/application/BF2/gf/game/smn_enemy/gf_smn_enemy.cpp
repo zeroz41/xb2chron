@@ -1,0 +1,201 @@
+#include "classes/gf/GfRelSmnEnemy.h"
+#include "classes/gf/GfSmnEnemyManager.h"
+#include "classes/gf/GfRelSmnEnemy.h"
+#include "classes/gf/GfSmnEnemyManager.h"
+#include "classes/gf/GfAllocator.h"
+#include "classes/gf/GfGameObj.h"
+#include "classes/gf/SCOM_DESTROY_GAME_OBJ.h"
+#include "classes/gf/SCOM_DESTROY_GAME_OBJ.h"
+#include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/GmkEnemyInsts.h"
+#include "classes/gmk/GmkEnemyInsts.h"
+#include "classes/gmk/GmkEnemy.h"
+#include "classes/gmk/GmkRoutedEnemy.h"
+#include "classes/gf/DataParamAcc.h"
+#include "classes/gf/GfBdatRsc.h"
+#include "classes/gf/GfDataBdat.h"
+#include "gf/SDataEnemy.h"
+#include "ml/MTRand.h"
+#include "plugin/Bdat.h"
+#include "gf/GfObjAcc.h"
+#include "gf/GfObjUtil.h"
+
+#include <algorithm>
+
+namespace gf {
+
+GfRelSmnEnemy::~GfRelSmnEnemy() {
+    dispose();
+    GfObjManager::removeListener(this);
+}
+
+unsigned int GfRelSmnEnemy::getEnemyNum() const {
+    if (!isValid()) {
+        return 0;
+    }
+    return m_enemies.size();
+}
+
+GF_OBJ_HANDLE* GfRelSmnEnemy::getEnemy(unsigned int index) const {
+    if (!isValid()) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    return m_enemies[index];
+}
+
+void GfRelSmnEnemy::disposeEnemies(bool fade) {
+    disposeWaitEnemies();
+    if (m_enemies.size() != 0) {
+        for (GF_OBJ_HANDLE* enemy : m_enemies) {
+            if (enemy != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                if (fade) {
+                    SCOM_DESTROY_GAME_OBJ::create(enemy, 0.5f, 0);
+                } else {
+                    GfObjUtil::destroy(enemy);
+                }
+            }
+        }
+        m_enemies.destroy();
+    }
+}
+
+void GfRelSmnEnemy::update(float dt) {
+    if (!isValid()) {
+        return;
+    }
+    GfObjAcc acc(m_info.handle);
+    if (!acc.isDestroy() && !acc.testFlag(0x11) && acc.getObj() != nullptr) {
+        updatePopEnemy();
+        updateDepopEnemy();
+        validatePopPos();
+    } else {
+        disposeWaitEnemies();
+    }
+}
+
+void GfRelSmnEnemy::disposeWaitEnemies() {
+    if (m_waitEnemies.size() != 0) {
+        for (std::pair<PopInfo*, GF_OBJ_HANDLE*>& wait : m_waitEnemies) {
+            if (wait.second != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                GfObjUtil::destroy(wait.second);
+            }
+        }
+        m_waitEnemies.destroy();
+    }
+}
+
+void GfRelSmnEnemy::removeEnemy(GF_OBJ_HANDLE* handle) {
+    if (m_waitEnemies.size() != 0) {
+        for (std::pair<PopInfo*, GF_OBJ_HANDLE*>& wait : m_waitEnemies) {
+            if (wait.second == handle) {
+                m_waitEnemies.erase(&wait);
+                return;
+            }
+        }
+    }
+    if (m_enemies.size() != 0) {
+        GF_OBJ_HANDLE** it = std::find(m_enemies.begin(), m_enemies.end(), handle);
+        if (it != m_enemies.end()) {
+            m_enemies.erase(it);
+        }
+    }
+}
+
+void GfRelSmnEnemy::listenerGfObj(IGfObjListener::OBJEVT evt, GF_OBJ_HANDLE* handle, unsigned int) {
+    if (evt != OBJEVT(3)) {
+        return;
+    }
+    removeEnemy(handle);
+    if (!isValid()) {
+        return;
+    }
+    bool popped = true;
+    for (PopInfo& info : m_popInfos) {
+        EnemyInfo enemy = info.enemy;
+        if (enemy.isValid()) {
+            popped &= info.popped != 0;
+            if (!info.popped) {
+                break;
+            }
+        }
+    }
+    if (popped && m_waitEnemies.size() == 0 && m_enemies.size() == 0) {
+        dispose();
+    }
+}
+
+GfSmnEnemyManager::GfSmnEnemyManager() {
+    m_relSmnEnemies.setAllocator(getAllocator(ALLOCATOR(0)));
+    m_relSmnEnemies.reserve(40);
+}
+
+GfSmnEnemyManager::~GfSmnEnemyManager() {
+    clearSmnEnemies();
+    get()->m_relSmnEnemies.destroy();
+}
+
+void GfSmnEnemyManager::clearSmnEnemies() {
+    if (get() == nullptr) {
+        return;
+    }
+    if (get()->m_relSmnEnemies.size() != 0) {
+        for (GfRelSmnEnemy* rel : get()->m_relSmnEnemies) {
+            delete rel;
+        }
+        get()->m_relSmnEnemies.clear();
+    }
+    mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>& list = *GfGameObj::getList(5);
+    for (mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>::iterator it = list.begin(); it != list.end(); ++it) {
+        GF_OBJ_HANDLE* handle = *it;
+        gmk::AGmkBase* gmk = gmk::getBindedGmkInst(handle);
+        if (gmk != nullptr && gmk->getGmkType() == gmk::GmkEnemy::TYPE &&
+            static_cast<gmk::GmkEnemy*>(gmk)->m_insts.m_bdatInfo.m_smnGroups != 0) {
+            GfObjUtil::destroy(handle);
+        }
+    }
+}
+
+void GfSmnEnemyManager::create() {
+    if (get() != nullptr) {
+        delete get();
+    }
+#line 743
+    new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfSmnEnemyManager();
+}
+
+void GfSmnEnemyManager::dispose() {
+    if (get() != nullptr) {
+        delete get();
+    }
+}
+
+void GfSmnEnemyManager::update(float dt) {
+    if (get() == nullptr) {
+        return;
+    }
+    for (GfRelSmnEnemy** it = get()->m_relSmnEnemies.begin(); it != get()->m_relSmnEnemies.end(); ++it) {
+        GfRelSmnEnemy* rel = *it;
+        rel->update(dt);
+        if (!rel->isValid()) {
+            delete rel;
+            it = get()->m_relSmnEnemies.erase(it);
+            --it;
+        }
+    }
+}
+
+bool GfSmnEnemyManager::execRelSummon(const RelSmnInfo& info) {
+    if (get()->m_relSmnEnemies.capacity() > get()->m_relSmnEnemies.size()) {
+        GfRelSmnEnemy::CreateInfo createInfo;
+        createInfo.handle = info.handle;
+        createInfo.id = info.id;
+#line 955
+        GfRelSmnEnemy* rel = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfRelSmnEnemy();
+        rel->create(createInfo);
+        get()->m_relSmnEnemies.push_back(rel);
+        return true;
+    }
+    return false;
+}
+
+}  // namespace gf
