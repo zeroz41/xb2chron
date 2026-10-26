@@ -112,6 +112,30 @@ void GfGameManager::setState(GF_STATE state, bool flag) {
     GfGameState::setState(state, flag);
 }
 
+void GfGameManager::fn_710000FA68(unsigned int value, bool flag) {
+    if (GfGameScene* scene = GfGameScene::get()) {
+        scene->fn_71002C5200(value, flag);
+    }
+}
+
+void GfGameManager::fn_710000FA60(unsigned int value) {
+    if (GfGameScene* scene = GfGameScene::get()) {
+        scene->fn_71002C56CC(value);
+    }
+}
+
+void GfGameManager::fn_710000FA64(unsigned int value) {
+    if (GfGameScene* scene = GfGameScene::get()) {
+        scene->fn_71002C56D4(value);
+    }
+}
+
+void GfGameManager::fn_710000FA20() {
+    if (GfGameScene* scene = GfGameScene::get()) {
+        scene->fn_71002C5994();
+    }
+}
+
 void GfGameManager::gevExecBuy(unsigned int id, unsigned int value, unsigned int shop) {
     if (GfGameScene* scene = GfGameScene::get()) {
         scene->gevExecBuy(id, value, shop);
@@ -749,6 +773,18 @@ void GfGameManager::gevMercenariesMissionFlag(unsigned int a, unsigned int b, un
     }
     GfQuestManager::gevMercenariesMissionFlag(a, b, c);
     GfGameMercenaries::gevMercenariesMissionFlag(a, b, c);
+}
+
+void GfGameManager::fn_710000FA1C() {
+    if (GfGameScene* scene = GfGameScene::get()) {
+        scene->fn_71002C79B8();
+    }
+}
+
+void GfGameManager::fn_710000FA18() {
+    if (GfGameScene* scene = GfGameScene::get()) {
+        scene->fn_71002C7C44();
+    }
 }
 
 void GfGameManager::qevCompleteQuest(const QuestCompleteParam& param) {

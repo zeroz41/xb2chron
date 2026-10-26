@@ -15,14 +15,15 @@ namespace gf {
 // table 0x7100B55698: the game events a listener GfEvent::addEventCallback registers hears. Every slot is inline and
 // empty (the table and the destructors are GfGamePlayerCamera's unit's, the slots' bodies the first unit's that
 // needed them). Names: 1.0.0's, by the slot each override takes in 3.0.1's derived tables, and by 1.0.0's order
-// between those; the vfN slots are new in 3.0.1 and no override names them yet
+// between those. Slots 2-5, 21-23 and 46 are new in 3.0.1 (1.0.0's table has none of them): placeholder names, each
+// the address of this class's own empty body
 class IGfEvent {
 public:
     virtual ~IGfEvent() {}  // slot 0
-    virtual void vf2() {}  // slot 2
-    virtual void vf3() {}  // slot 3
-    virtual void vf4() {}  // slot 4
-    virtual void vf5() {}  // slot 5
+    virtual void fn_710000FA14() {}  // slot 2
+    virtual void fn_710000FA18() {}  // slot 3
+    virtual void fn_710000FA1C() {}  // slot 4
+    virtual void fn_710000FA20() {}  // slot 5
     virtual void gevPartyMover(gf::GF_OBJ_HANDLE*, bool) {}  // slot 6
     virtual void gevExecBuy(unsigned int, unsigned int, unsigned int) {}  // slot 7
     virtual void gevGetArts(unsigned int, unsigned int, bool) {}  // slot 8
@@ -38,9 +39,9 @@ public:
     virtual void gevPartyIDMemberOK(bool, unsigned int) {}  // slot 18
     virtual void gevPartyMemberOK(bool) {}  // slot 19
     virtual void gevItemAdd(unsigned int, int) {}  // slot 20
-    virtual void vf21(unsigned int) {}  // slot 21
-    virtual void vf22(unsigned int) {}  // slot 22
-    virtual void vf23(unsigned int, bool) {}  // slot 23
+    virtual void fn_710000FA60(unsigned int) {}  // slot 21
+    virtual void fn_710000FA64(unsigned int) {}  // slot 22
+    virtual void fn_710000FA68(unsigned int, bool) {}  // slot 23
     virtual void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int) {}  // slot 24
     virtual void gevMercenariesTeam(unsigned int) {}  // slot 25
     virtual void gevDriverLevel(unsigned int, unsigned int, unsigned int) {}  // slot 26
@@ -63,7 +64,7 @@ public:
     virtual void gevBattleStart() {}  // slot 43
     virtual void gevBattleEnd() {}  // slot 44
     virtual void gevChangeScenarioFlag(unsigned int, unsigned int) {}  // slot 45
-    virtual void vf46() {}  // slot 46
+    virtual void fn_710000FAB8() {}  // slot 46
     virtual void gevSalvageStateChange(unsigned int) {}  // slot 47
     virtual void gevGameMapModel(gf::GF_OBJ_HANDLE*, bool) {}  // slot 48
     virtual void gevChangeWeather(unsigned int, unsigned int) {}  // slot 49

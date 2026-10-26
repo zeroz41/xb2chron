@@ -196,10 +196,10 @@ public:
     static void clear();
     // takes fn_71002A9E68()'s answer in 3.0.1 (every caller passes it; the symbols still spell 1.0.0's setupGame())
     static void setupGame(bool flag);
-    virtual void vf23(unsigned int, bool);  // slot 2 (its code forwards a 32-bit value and a bool to GfGameScene; IGfEvent's slot 23 has no name yet)
-    virtual void vf21(unsigned int);  // slot 3 (forwards a 32-bit value to GfGameScene; IGfEvent's slot 21 has no name yet)
-    virtual void vf22(unsigned int);  // slot 4 (forwards a 32-bit value to GfGameScene; IGfEvent's slot 22 has no name yet)
-    virtual void vf5();  // slot 5 (forwards to GfGameScene; IGfEvent's slot 5 has no name yet)
+    virtual void fn_710000FA68(unsigned int, bool);  // slot 2 (its code forwards a 32-bit value and a bool to GfGameScene; placeholder name: see IGfEvent)
+    virtual void fn_710000FA60(unsigned int);  // slot 3 (forwards a 32-bit value to GfGameScene; placeholder name: see IGfEvent)
+    virtual void fn_710000FA64(unsigned int);  // slot 4 (forwards a 32-bit value to GfGameScene; placeholder name: see IGfEvent)
+    virtual void fn_710000FA20();  // slot 5 (forwards to GfGameScene; placeholder name: see IGfEvent)
     virtual void gevExecBuy(unsigned int, unsigned int, unsigned int);  // slot 6
     virtual void gevChangeParty();  // slot 7
     virtual void gevGetArts(unsigned int, unsigned int, bool);  // slot 8
@@ -224,14 +224,14 @@ public:
     virtual void gevReloadBdat(gf::RELOAD_BDAT, unsigned int);  // slot 27
     virtual void gevSalvageStateChange(unsigned int);  // slot 28
     virtual void gevChangeScenarioFlag(unsigned int, unsigned int);  // slot 29
-    virtual void vf46();  // slot 30 (forwards to a gf_game_env function; IGfEvent's slot 46 has no name yet)
+    virtual void fn_710000FAB8();  // slot 30 (forwards to a gf_game_env function; placeholder name: see IGfEvent)
     virtual void gevChangeWeather(unsigned int, unsigned int);  // slot 31
     virtual void gevChangeTimeRange(unsigned int);  // slot 32
     virtual void gevGameState(gf::GF_STATE, gf::GF_STATE);  // slot 33
     virtual void gevControllFree(bool);  // slot 34
     virtual void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int);  // slot 35
-    virtual void vf4();  // slot 36 (forwards to GfGameScene; IGfEvent's slot 4 has no name yet)
-    virtual void vf3();  // slot 37 (forwards to GfGameScene; IGfEvent's slot 3 has no name yet)
+    virtual void fn_710000FA1C();  // slot 36 (forwards to GfGameScene; placeholder name: see IGfEvent)
+    virtual void fn_710000FA18();  // slot 37 (forwards to GfGameScene; placeholder name: see IGfEvent)
     virtual void qevOrderQuest(gf::QuestOrderParam const&);  // slot 38
     virtual void qevCompleteQuest(gf::QuestCompleteParam const&);  // slot 39
     virtual void qevCompleteChildQuest(gf::QuestCompleteChildParam const&);  // slot 40

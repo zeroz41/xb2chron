@@ -131,8 +131,8 @@ public:
     void gevBattleStart();
     void gevBattleEnd();
     // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: they lie in gf_game_scene's
-    // unit and GfGameManager's IGfEvent overrides vf23, vf21, vf22, vf5, vf4 and vf3 (in that order) forward to
-    // them on PtrSingleton<GfGameScene>'s instance, passing their arguments on. What they do: fn_71002C5200 and
+    // unit and GfGameManager's IGfEvent overrides fn_710000FA68, fn_710000FA60, fn_710000FA64, fn_710000FA20,
+    // fn_710000FA1C and fn_710000FA18 (IGfEvent's slots 23, 21, 22, 5, 4 and 3, in that order) forward to them on PtrSingleton<GfGameScene>'s instance, passing their arguments on. What they do: fn_71002C5200 and
     // fn_71002C56CC hand the value to the same file function fn_71002C5208 (which, when
     // GfGameManager::isFullScreenMenu answers true, builds "%s%s" ".wimdo" model paths); fn_71002C56D4 does the
     // same kind of work with its value; fn_71002C5994 calls fn_71002E0F28 on every object of
