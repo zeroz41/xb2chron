@@ -3,6 +3,7 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 
+namespace gf { enum GEV : int; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfGameParty; }
 namespace gf { class GfComTransform; }
@@ -106,6 +107,17 @@ public:
     static void fn_71002BC840(unsigned int slot);
     static unsigned short getPartyGauge();  // GfMenuBattleAdapter shows it in hundreds (300 full)
     static bool isLeaderBlade();
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (1.0.0's GfGameManager::gevBattleStart
+    // and gevBattleEnd call only GfGameScene). Members: they lie in gf_game_party's unit and GfGameManager's
+    // gevBattleStart / gevBattleEnd call them on PtrSingleton<GfGameParty>'s instance. What they do:
+    // fn_71002B8D3C, unless the byte at 0x370 is set, stores getCurrentPartyInfo of the RQ_SETUP_PARTY at 0x130
+    // and sets that byte (a party snapshot taken once when a battle starts); fn_71002B8D70 is empty.
+    void fn_71002B8D3C();
+    void fn_71002B8D70();
+    // Placeholder name: new in 3.0.1 (1.0.0's GfGameManager::gevPlayEvent does not call it). A member: it lies in
+    // gf_game_party's unit and GfGameManager::gevPlayEvent passes PtrSingleton<GfGameParty>'s instance, the GEV and
+    // the id on. What it does: for GEV 10 only, hands the RQ_SETUP_PARTY at 0x130 to fn_71002B8D88.
+    void fn_71002B8D74(gf::GEV gev, unsigned int id);
 
     mm::mtl::FixedArray<GfMemberInfo, 3> m_members;  // by party slot
     bool m_initialized;  // 1.0.0's initialize sets it, finalize clears it, isInitialized reads it

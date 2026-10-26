@@ -78,6 +78,7 @@ public:
     static void destroyEvtModel(class GfEvtModel* model);
     static void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
     static void clear();
+    void gevPlayEvent(gf::GEV gev, unsigned int id);
 
     // build constructs it (no constructor of its own in the symbols)
     GfGameEvent(const GfSetupParam& param)

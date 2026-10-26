@@ -38,9 +38,9 @@ public:
     virtual void gevPartyIDMemberOK(bool, unsigned int) {}  // slot 18
     virtual void gevPartyMemberOK(bool) {}  // slot 19
     virtual void gevItemAdd(unsigned int, int) {}  // slot 20
-    virtual void vf21() {}  // slot 21
-    virtual void vf22() {}  // slot 22
-    virtual void vf23() {}  // slot 23
+    virtual void vf21(unsigned int) {}  // slot 21
+    virtual void vf22(unsigned int) {}  // slot 22
+    virtual void vf23(unsigned int, bool) {}  // slot 23
     virtual void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int) {}  // slot 24
     virtual void gevMercenariesTeam(unsigned int) {}  // slot 25
     virtual void gevDriverLevel(unsigned int, unsigned int, unsigned int) {}  // slot 26

@@ -196,9 +196,9 @@ public:
     static void clear();
     // takes fn_71002A9E68()'s answer in 3.0.1 (every caller passes it; the symbols still spell 1.0.0's setupGame())
     static void setupGame(bool flag);
-    virtual void vf23();  // slot 2 (its code forwards a pointer and a bool to GfGameScene; IGfEvent's slot 23 has no name yet)
-    virtual void vf21();  // slot 3 (forwards to GfGameScene; IGfEvent's slot 21 has no name yet)
-    virtual void vf22();  // slot 4 (forwards to GfGameScene; IGfEvent's slot 22 has no name yet)
+    virtual void vf23(unsigned int, bool);  // slot 2 (its code forwards a 32-bit value and a bool to GfGameScene; IGfEvent's slot 23 has no name yet)
+    virtual void vf21(unsigned int);  // slot 3 (forwards a 32-bit value to GfGameScene; IGfEvent's slot 21 has no name yet)
+    virtual void vf22(unsigned int);  // slot 4 (forwards a 32-bit value to GfGameScene; IGfEvent's slot 22 has no name yet)
     virtual void vf5();  // slot 5 (forwards to GfGameScene; IGfEvent's slot 5 has no name yet)
     virtual void gevExecBuy(unsigned int, unsigned int, unsigned int);  // slot 6
     virtual void gevChangeParty();  // slot 7
@@ -248,6 +248,29 @@ public:
     static bool isWaitGimmickPopForMapjump();
     static bool isBattleStop();
     static const mm::Vec3& getControlMoverPosition();
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Statics of GfGameManager: their
+    // addresses lie in gf_game_manager's unit among GfGameManager's functions and they use no instance.
+    // What they do: fn_71002AC310 and fn_71002AC328 (the same code) answer whether GfPlayComQuestCompleteUI::s_start
+    // is above 0; btl::BattleGlobal::PreUpdateProc calls both.
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static of GfGameManager (address among its
+    // functions in gf_game_manager's unit). What it does: stores the flag into s_disablePlayerCameraPause.
+    static void fn_71002AB4F8(bool flag);
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100D6CBE8). While it is set,
+    // isPlayerCameraPause answers false; clear() resets it and fn_71002AB4F8 sets it (reached through the GOT, so
+    // a class static rather than a file static)
+    static bool s_disablePlayerCameraPause;
+    // 1.0.0's isExecTutorial tail-called GfMenuObjTutorial::isWaiting from btl::BattleGlobal::PreUpdateProc;
+    // 3.0.1's PreUpdateProc calls this one at the same place (the symbols still spell it fn_71002AA6CC)
+    static bool isExecTutorial();
+    static bool fn_71002AC310();
+    static bool fn_71002AC328();
+    // fn_71002AC650 / fn_71002AC670: whether GfItemUtil::getItemBoxCount of item 25472 / 25541 is not 0;
+    // GfMenuBladeList::setupFromTeam, fn_710028DAB4 and fn_71002E2F4C call both.
+    static bool fn_71002AC650();
+    static bool fn_71002AC670();
+    // fn_71002AC6D8: GfGameScene::isPlayEvent() when there is a GfGameScene (the same code as isPlayEvent);
+    // gf::pc::StateUtil::playVibration calls it.
+    static bool fn_71002AC6D8();
 };
 }  // namespace gf
 

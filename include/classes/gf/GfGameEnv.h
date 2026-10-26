@@ -34,6 +34,7 @@ public:
     static void sendPlayerPositionToRender(const mm::Vec3& pos);
     static void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
     static void clear();
+    static void gevPlayEvent(gf::GEV gev, unsigned int id);
 };
 }  // namespace gf
 

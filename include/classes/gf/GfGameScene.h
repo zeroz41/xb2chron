@@ -129,6 +129,22 @@ public:
     void gevExecBuy(unsigned int, unsigned int, unsigned int shop);
     void gevChangeParty();
     void gevBattleStart();
+    void gevBattleEnd();
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: they lie in gf_game_scene's
+    // unit and GfGameManager's IGfEvent overrides vf23, vf21, vf22, vf5, vf4 and vf3 (in that order) forward to
+    // them on PtrSingleton<GfGameScene>'s instance, passing their arguments on. What they do: fn_71002C5200 and
+    // fn_71002C56CC hand the value to the same file function fn_71002C5208 (which, when
+    // GfGameManager::isFullScreenMenu answers true, builds "%s%s" ".wimdo" model paths); fn_71002C56D4 does the
+    // same kind of work with its value; fn_71002C5994 calls fn_71002E0F28 on every object of
+    // GfGameObj::getList(5); fn_71002C79B8 starts from the scene's byte at 0x6A0; fn_71002C7C44, unless
+    // GfGameManager::fn_71002A9E68 answers true, sets local game flag 52962 (type 1) once
+    // GfDataBlade::fn_7100231884 reaches 8003.
+    void fn_71002C5200(unsigned int value, bool flag);
+    void fn_71002C56CC(unsigned int value);
+    void fn_71002C56D4(unsigned int value);
+    void fn_71002C5994();
+    void fn_71002C79B8();
+    void fn_71002C7C44();
     void setCameraAvtivateOneTime();
     bool isPlayerCameraPause();
     void setPlayerCameraPause(bool pause);
@@ -197,6 +213,7 @@ public:
     unsigned char pad_8B9[0x17];  // build allocates 0x8D0 bytes
     void qevCompleteQuest(const gf::QuestCompleteParam& param);
     void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
+    void gevPlayEvent(gf::GEV gev, unsigned int id);
     void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int);
     void clear();
     bool isPlayEvent() const;
