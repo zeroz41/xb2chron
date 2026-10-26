@@ -8,7 +8,8 @@ struct SDataPouch {
     float remainTime;  // GfMenuPouchAdapter::update_PouchRemainTime shows it; the name is not the original's
     // 0 for an empty slot: update_PouchRemainTime shows no time then; the name is not the original's
     unsigned short itemId;
-    unsigned char pad_06[2];
+    bool m_open;  // the slot can hold an item: GfMenuObjPouch2::updateSlotList lists open slots only (the name is not the original's)
+    unsigned char pad_07[1];
 };
 
 }  // namespace gf
