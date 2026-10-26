@@ -4,7 +4,7 @@
 #include "mm/Vec3.h"
 #include "classes/gf/DataParamAcc.h"
 
-namespace gf { class GfAssetSetup; }
+namespace gf { class GfAssetSetup; class GF_OBJ_HANDLE; }
 
 namespace gf {
 // table none (its derived classes')
@@ -27,7 +27,10 @@ public:
     // GfObjSetup's constructor copies these two (the first into its m_partyId)
     unsigned int pad_20;
     unsigned int pad_24;
-    unsigned char pad_28[0x40 - 0x28];
+    unsigned char pad_28[0x30 - 0x28];
+    // the objects GfInitParamWeapon::setupForEventBlade and GfInitParamBlade::setupForParty are given
+    GF_OBJ_HANDLE* pad_30;
+    GF_OBJ_HANDLE* pad_38;
     // GfEvtModelDriver's constructor moves 7..9 to 10..12 in the theater or in full-screen menus of game
     // state 6; what the values mean is not known yet
     int pad_40;
@@ -38,7 +41,8 @@ public:
     // the object's uniform scale: GfObjSetup's constructor passes it to setInitialScale (the name is not the
     // original's)
     float m_scale;
-    unsigned int pad_50;
+    // GfObjSetup's constructor copies it into its pad_50 (a float)
+    float pad_50;
     unsigned char pad_54[0x60 - 0x54];
     // the object's position, used when m_hasTransform is set (GfObjSetup's constructor; the name is not the
     // original's)

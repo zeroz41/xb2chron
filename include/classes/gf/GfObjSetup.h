@@ -72,7 +72,8 @@ public:
     // the object's scale: 1.0.0's setInitialScale(float) and setInitialScale(const mm::Vec3&) set it (the name is
     // not the original's)
     mm::Vec3 m_initialScale;
-    unsigned int pad_50;
+    // the parameter's pad_50; a belonging's createSetupParam sets it to 1.0f or 0.0f (a float)
+    float pad_50;
     // the parameter's isAllWeapon() (the constructor stores it; the name is not the original's)
     bool m_isAllWeapon;
     unsigned int pad_58;

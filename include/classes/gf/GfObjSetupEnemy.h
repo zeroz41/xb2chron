@@ -13,10 +13,13 @@ public:
     virtual ~GfObjSetupEnemy();  // slot 1
     virtual unsigned int getFootStep() const;  // slot 3
     virtual unsigned int getFootStepEffect() const;  // slot 4
-    virtual unsigned int getEnArrangeID() const;  // slot 5
+    virtual unsigned int getEnArrangeID() const { return m_enArrangeId; }  // slot 5
     static mm::mtl::RTTI m_rtti;
 
-    unsigned char pad_6c[0xa0 - 0x6c];
+    unsigned char pad_6c[0x70 - 0x6c];
+    // what getEnArrangeID returns (the name is not the original's)
+    unsigned int m_enArrangeId;
+    unsigned char pad_74[0xa0 - 0x74];
     // the enemy's data: DataObjEnemy(GF_OBJ_HANDLE*) reads it (the name is not the original's)
     SDataEnemy* m_sdata;
     unsigned char pad_a8[0x10];

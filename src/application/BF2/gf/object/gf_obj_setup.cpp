@@ -24,6 +24,10 @@
 #include "gf/GfObjInfo.h"
 #include "plugin/Bdat.h"
 #include "classes/gf/GfInitParamMapSeamless.h"
+#include "classes/gf/GfInitParamWeapon.h"
+#include "classes/gf/GfInitParamBlade.h"
+#include "gf/GfDataBlade.h"
+#include "classes/gf/GfInitParamEnemy.h"
 
 namespace gf {
 
@@ -178,6 +182,73 @@ GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitPara
 GfObjSetupFieldObj::GfObjSetupFieldObj(const GfInitParamFobj& param)
     : GfObjSetup(9, param), pad_6c(-1), pad_70(), pad_90(false) {}
 
+#line 358
+GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamEnWeapon& param) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    GfObjSetupEnWeapon* setup = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfObjSetupEnWeapon(param);
+    info->m_setup = setup;
+    setup->m_mountIndex = param.m_append.getMountIndex();
+    return setup;
+}
+
+GfObjSetupEnWeapon::GfObjSetupEnWeapon(const GfInitParamEnWeapon& param) : GfObjSetup(12, param), m_mountIndex(-1) {}
+
+#line 373
+GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamBelonging& param) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    GfObjSetupBelonging* setup = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfObjSetupBelonging(param);
+    info->m_setup = setup;
+    setup->m_mountIndex = param.m_append.getMountIndex();
+    setup->pad_50 = param.pad_130 ? 1.0f : 0.0f;
+    return setup;
+}
+
+GfObjSetupBelonging::GfObjSetupBelonging(const GfInitParamBelonging& param)
+    : GfObjSetup(13, param), m_mountIndex(-1) {}
+
+#line 389
+GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamExtra& param) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    GfObjSetupExtra* setup = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfObjSetupExtra(param);
+    info->m_setup = setup;
+    setup->m_mountIndex = param.m_append.getMountIndex();
+    return setup;
+}
+
+GfObjSetupExtra::GfObjSetupExtra(const GfInitParamExtra& param) : GfObjSetup(14, param), m_mountIndex(-1) {}
+
+GfObjSetupEventObj::GfObjSetupEventObj(const GfInitParamEventObj& param) : GfObjSetup(11, param) {}
+
+GfObjSetupUiObj::GfObjSetupUiObj(const GfInitParamUiObj& param) : GfObjSetup(15, param), m_stateName("S_idle") {}
+
+void GfInitParamWeapon::setupForEventBlade(unsigned int weaponId, GF_OBJ_HANDLE* handle) {
+    m_createType = 2;
+    m_objId = weaponId;
+    pad_30 = handle;
+    pad_38 = handle;
+    pad_90 = false;
+}
+
+void GfInitParamWeapon::setupBladeForEventRightCS(unsigned int bladeId) {
+    unsigned int driverId = GfDataBlade::getSetDriver(bladeId);
+    if (driverId == 0) {
+        driverId = GfDataBlade::getCreator(bladeId);
+    }
+    setupForEvent(driverId, bladeId);
+    m_createType = 3;
+    pad_1e0 = true;
+}
+
+void GfInitParamWeapon::setupBladeForEventLeftCS(unsigned int bladeId) {
+    unsigned int driverId = GfDataBlade::getSetDriver(bladeId);
+    if (driverId == 0) {
+        driverId = GfDataBlade::getCreator(bladeId);
+    }
+    setupForEvent(driverId, bladeId);
+    m_createType = 3;
+    pad_1e1 = true;
+}
+
 GfObjSetupEnemy::~GfObjSetupEnemy() {
     if (m_sdata != nullptr) {
         delete m_sdata;
@@ -187,6 +258,37 @@ GfObjSetupEnemy::~GfObjSetupEnemy() {
         delete pad_c0;
         pad_c0 = nullptr;
     }
+}
+
+void GfInitParamBlade::setupForParty(unsigned int partyId, int pad98, unsigned int bladeId, GF_OBJ_HANDLE* handle,
+                                     bool flag) {
+    m_createType = 1;
+    pad_90 = true;
+    pad_20 = partyId;
+    m_objId = bladeId;
+    pad_98 = pad98;
+    pad_38 = handle;
+    pad_91 = flag;
+    m_scale = GfDataBlade::getScale(bladeId);
+}
+
+void GfInitParamBlade::setupForEvent(unsigned int bladeId, bool flag) {
+    m_createType = 2;
+    m_objId = bladeId;
+    pad_40 = 7;
+    m_scale = GfDataBlade::getScale(bladeId);
+    pad_a4 = (bladeId == 1001) & flag;
+    pad_81 = false;
+    pad_82 = 0;
+}
+
+void GfInitParamBlade::setupForUi(unsigned int bladeId, VIEWCAM camera) {
+    m_createType = 6;
+    m_objId = bladeId;
+    pad_24 = camera;
+    pad_40 = 10;
+    m_scale = GfDataBlade::getScale(bladeId);
+    pad_81 = false;
 }
 
 }  // namespace gf
