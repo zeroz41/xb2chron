@@ -151,6 +151,8 @@
 #include "classes/gf/GfPlayComMapjumpForBattleMapFromArena.h"
 #include "classes/gf/GfPlayComWaitArenaStateField.h"
 #include "classes/gf/GfPlayComStartChallengeBattle.h"
+#include "classes/gf/TUnk_B535D0.h"
+#include "gf/MsgUnk_1000034.h"
 #include "classes/gf/GfPlayComScriptTutorialSeq.h"
 #include "classes/gf/GfPlayCom.h"
 #include "classes/gf/GfPlayComEventFade.h"
@@ -957,6 +959,102 @@ GfPlayComMenuObjCommonText::~GfPlayComMenuObjCommonText() {
 GfPlayComMenuObjCommonText* GfPlayComMenuObjCommonText::create(GfMenuObjCommonText::OpenKizunaParam& param) {
 #line 3577
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComMenuObjCommonText(param);
+}
+
+void GfPlayComMapjumpForLeaveArena::start() {
+    m_started = true;
+    if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
+        MsgUnk_1000034 msg(9);
+        arena->recieveMessage(arena, msg);
+    }
+}
+
+void GfPlayComMapjumpForLeaveArena::end() {
+    if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
+        MsgUnk_1000034 msg(10);
+        arena->recieveMessage(arena, msg);
+    }
+}
+
+bool GfPlayComMapjumpForLeaveArena::update(const fw::UpdateInfo& info, bool flag) {
+    if (flag) {
+        return true;
+    }
+    TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys();
+    if (arena && !arena->fn_7100291CAC()) {
+        return false;
+    }
+    if (m_req == -1) {
+        m_req = GfReqCommand::reqMapjump(m_info);
+    }
+    return !GfReqManager::isValid(m_req);
+}
+
+GfPlayComMapjumpForLeaveArena* GfPlayComMapjumpForLeaveArena::create(const GfMapjumpInfo& info) {
+#line 3707
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComMapjumpForLeaveArena(info);
+}
+
+void GfPlayComMapjumpForBattleMapFromArena::start() {
+    m_started = true;
+    m_req = GfReqCommand::reqMapjump(m_info);
+}
+
+void GfPlayComMapjumpForBattleMapFromArena::end() {
+    if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
+        MsgUnk_1000034 msg(1);
+        arena->recieveMessage(arena, msg);
+    }
+}
+
+bool GfPlayComMapjumpForBattleMapFromArena::update(const fw::UpdateInfo& info, bool flag) {
+    if (flag) {
+        return true;
+    }
+    return !GfReqManager::isValid(m_req);
+}
+
+GfPlayComMapjumpForBattleMapFromArena* GfPlayComMapjumpForBattleMapFromArena::create(const GfMapjumpInfo& info) {
+#line 3753
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComMapjumpForBattleMapFromArena(info);
+}
+
+bool GfPlayComWaitArenaStateField::update(const fw::UpdateInfo& info, bool flag) {
+    if (!flag) {
+        TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys();
+        if (arena && !arena->fn_7100291DA0()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+GfPlayComWaitArenaStateField* GfPlayComWaitArenaStateField::create() {
+#line 3785
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComWaitArenaStateField();
+}
+
+void GfPlayComStartChallengeBattle::start() {
+    GfEvent::addEventCallback(this);
+    if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
+        MsgUnk_1000034 msg(13);
+        msg.m_param8 = m_param.pad_8;
+        msg.m_param0 = m_param.pad_0;
+        arena->recieveMessage(arena, msg);
+    }
+}
+
+void GfPlayComStartChallengeBattle::end() { GfEvent::removeEventCallback(this); }
+
+void GfPlayComStartChallengeBattle::gevMapjump(GEV gev, const MapjumpCallbackInfo& info) {
+    if (gev == 2) {
+        m_mapjumped = true;
+    }
+}
+
+GfPlayComStartChallengeBattle* GfPlayComStartChallengeBattle::create(const MsgUnk_1000034::Param& param) {
+#line 3851
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComStartChallengeBattle(param);
 }
 
 // hand5: end
