@@ -32,6 +32,8 @@ public:
 
     // what getControlPadData returns without a manager (0x7100B42630)
     static PadData m_nullPad;
+    // a stick counts as tilted past this (0.6f; minigame::tora::minigame::update_pad compares the squared length)
+    static const float ANALOG_TRIGGER_THRESHOLD;
 
     unsigned char pad_20[0x2B20];
     // the control pads' data for this frame (getControlPadData); the first one's pad gets the vibrations. The name
