@@ -112,6 +112,11 @@ public:
     // singleton's word at 0x4CCB8), 0 without the singleton; GfMenuGameAdapter's types 18 to 20, GfMenuObjItemList2's
     // and GfMenuObjHanaPartsMake's refreshItemList read it.
     static unsigned int fn_710036934C();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its unit is
+    // gf_menu_reference and it reads this class's singleton. What it does: the singleton's word at 0x4CCB4 (0 without
+    // the singleton); gf_menu_btlch_adapter's callbacks pass it to GfGameManager::fn_71002AC60C as the record's mode
+    // and its adapter's update marks itself changed when it changes.
+    static unsigned int fn_7100369304();
     // the battle's Homura/Hikari mode the menu shows (1.0.0's enum; its values are not known)
     enum HOMURA_MODE {};
     // a party member's elemental combo (8 bytes each, 2 of them; the names are not the original's)
