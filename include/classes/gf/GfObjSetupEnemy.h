@@ -22,7 +22,9 @@ public:
     unsigned char pad_74[0xa0 - 0x74];
     // the enemy's data: DataObjEnemy(GF_OBJ_HANDLE*) reads it (the name is not the original's)
     SDataEnemy* m_sdata;
-    unsigned char pad_a8[0x10];
+    // its actMove row (BDAT 0x6e): isFlyInsect/isFlyCircle read its actMove_Atr (the name is not the original's)
+    unsigned int m_actMoveId;
+    unsigned char pad_ac[0xc];
     // the enemy's blade row: DataObjEnemyBlade reads it (the name is not the original's)
     unsigned int m_bladeId;
     unsigned char pad_bc[0x4];
