@@ -807,9 +807,13 @@ application/BF2/gf/camera/gf_camera_player.cpp:
 	.init_array  start:0x00B8F910 end:0x00B8F918
 	.bss         start:0x00C24E50 end:0x00C24EA0
 
+application/BF2/gf/camera/CameraPadData.cpp:
+	.text        start:0x001D2BD4 end:0x001D3908
+	.rodata      start:0x00982EB5 end:0x00982EF9
+
 application/BF2/gf/camera/gf_camera_player_target.cpp:
-	.text        start:0x001D2BD4 end:0x001D404C
-	.rodata      start:0x00982EB5 end:0x00982F5B
+	.text        start:0x001D3908 end:0x001D404C
+	.rodata      start:0x00982EF9 end:0x00982F5B
 	.data        start:0x00B45B48 end:0x00B45E08
 	.init_array  start:0x00B8F918 end:0x00B8F920
 	.bss         start:0x00C24EA0 end:0x00C24EE0
