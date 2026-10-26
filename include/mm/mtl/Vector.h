@@ -151,6 +151,27 @@ private:
     IAllocator* m_allocator;
 };
 
+// constructs n value-initialized objects from first on. A function of its own: the loop is optimized before it is
+// inlined, so the caller's test of n against the old size does not fold its own n != 0 test (Vector<skd::Node>,
+// Vector<wnd::ConpoundWind>, Vector<skd::ShpereCollObj>'s extend: a `cbz` on the count, then a memset of
+// count * sizeof(T))
+template <typename T>
+inline void default_construct_n(T* first, size_t n) {
+    for (size_t i = 0; i < n; ++i) {
+        new (&first[i]) T();
+    }
+}
+
+// assigns [first, last) to result on, front to back, as std::copy does (erase's shift: the original keeps the source
+// and destination pointers apart, Vector<IntrusivePtr<fw::ReferenceFrame>>::erase)
+template <typename T>
+inline T* copy_forward(T* first, T* last, T* result) {
+    while (first != last) {
+        *result++ = *first++;
+    }
+    return result;
+}
+
 template <typename T>
 void Vector<T>::expand(size_t capacity, size_t alignment) {
     size_t size = m_size;
@@ -221,9 +242,7 @@ void Vector<T>::extend(size_t size, size_t alignment) {
     if (oldSize < size) {
         T* element = ptr + oldSize;
         if (!__has_trivial_constructor(T)) {  // a pointer or scalar is left as it is (skd::Dynamics' solvers, Vector<short>)
-            for (size_t i = 0; i < size - oldSize; ++i) {
-                new (&element[i]) T();
-            }
+            default_construct_n(element, size - oldSize);
         }
     }
     clear();
@@ -249,9 +268,7 @@ void Vector<T>::resize(size_t size) {
         m_capacity = size;
         T* element = begin();
         if (!__has_trivial_constructor(T)) {  // a pointer or scalar is left as it is (skd::Dynamics' solvers, Vector<short>)
-            for (size_t i = 0; i < size; ++i) {
-                new (&element[i]) T();
-            }
+            default_construct_n(element, size);
         }
         m_size += size;
         return;
@@ -268,9 +285,7 @@ void Vector<T>::resize(size_t size) {
     } else if (count != 0) {
         T* element = m_buffer + m_size;
         if (!__has_trivial_constructor(T)) {  // a pointer or scalar is left as it is (skd::Dynamics' solvers, Vector<short>)
-            for (size_t i = 0; i < static_cast<size_t>(count); ++i) {
-                new (&element[i]) T();
-            }
+            default_construct_n(element, static_cast<size_t>(count));
         }
         m_size += count;
     }
@@ -338,16 +353,13 @@ typename Vector<T>::iterator Vector<T>::erase(iterator it) {
             memcpy(it, it + 1, (last - (it + 1)) * sizeof(T));
         } else {
             // the ones after it assigned down one by one (Vector<ui::UIGroup::RootObjInfo>'s: a FixStr's copy)
-            if (it + 1 != last) {
-                iterator p = it;
-                do {
-                    *p = p[1];
-                    ++p;
-                } while (p != last - 1);
-            }
+            copy_forward(it + 1, last, it);
         }
         --m_size;
-        end()->~T();  // the last element's old place: a call of begin() with nothing to destroy
+        // the last element's old place: a call of begin(), and a null test of the slot before its destructor
+        if (T* element = end()) {
+            element->~T();
+        }
     }
     return it;
 }
