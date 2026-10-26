@@ -21,7 +21,9 @@ public:
     virtual int getMeshNum() const;  // slot 12
     virtual void setMoveSpd(float);  // slot 13
 
-    unsigned char pad_8[0x8];
+    // 1 while it holds a move vector to read (gf::canGetMoveVec); the name is not the original's
+    int m_state;
+    unsigned char pad_c[0x4];
     // bit 1: it holds a move vector (gf::canGetMoveVec requires it, TaskFieldFollowTarget::testCondition too)
     unsigned int m_flags;
     // The field names follow the accessors that read and write them (not the original's).

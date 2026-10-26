@@ -55,7 +55,7 @@ const mm::Quat& GfComBehaviorMob::getRot() const {
 void GfComBehaviorMob::execTurnCmdToPos(const mm::Vec3& pos) {
     const mm::Vec3& cur = getPos();
     float angle = atan2f(pos.x - cur.x, pos.z - cur.z);
-    float steer = m_localSteer.pad_0 != reinterpret_cast<GF_OBJ_HANDLE*>(-1) ? m_localSteer.getCurAngle() : 0.0f;
+    float steer = m_localSteer.m_info.m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) ? m_localSteer.getCurAngle() : 0.0f;
     TFieldExecCmdTurn<GfComAsm>::CreateInfo info(static_cast<GfObj*>(m_owner)->m_handle, angle + steer);
     m_turnCmd.create(info);
 }

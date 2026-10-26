@@ -10,6 +10,17 @@ public:
     TGfTween() : m_duration(0.5f), m_time(0.0f) {}
     virtual ~TGfTween() {}  // slot 0
 
+    // the value now: from towards to by time / duration (to when the duration is 0)
+    T0 getValue() const {
+        if (m_duration == 0.0f) {
+            return m_to;
+        }
+        float rate = m_time / m_duration;
+        rate = 1.0f < rate ? 1.0f : rate;
+        rate = rate < 0.0f ? 0.0f : rate;
+        return m_from + (m_to - m_from) * rate;
+    }
+
     T0 m_from;
     T0 m_to;
     float m_duration;
