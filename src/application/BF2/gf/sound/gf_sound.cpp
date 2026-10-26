@@ -35,6 +35,19 @@ bool SoundHandle::isValid() const {
     return m_id != 0;
 }
 
+// GfSound's constructor below inlines it; the out-of-line copy (0x7100570CC8) is another unit's
+inline GfMasterVolume::GfMasterVolume()
+    : m_eventVoiceVolume(0.7f), m_eventCsVolume(0.8f), m_eventBgmVolume(0.6f), m_eventSeVolume(0.7f),
+      m_gameBgmVolume(0.6f), m_gameEnvVolume(0.4f), m_gameWeatherVolume(0.4f), m_gameSeVolume(0.6f),
+      m_playerVoiceVolume(0.8f), m_enemyVoiceVolume(0.8f), m_nareVoiceVolume(0.8f), m_systemVolume(0.5f),
+      m_menuBgmVolume(0.5f) {
+    if (GfManager::fn_710032A1DC()) {
+        m_eventVoiceVolume = 0.75f;
+        m_eventBgmVolume = 0.8f;
+        m_gameBgmVolume = 0.8f;
+    }
+}
+
 void GfMasterVolume::initialize() {
     if (GfSound* sound = GfSound::get()) {
         m_handle = sound->createCategoryHandle();

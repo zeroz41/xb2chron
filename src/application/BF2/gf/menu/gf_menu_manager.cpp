@@ -502,7 +502,7 @@ void GfMenuManager::setDispAll(bool disp) {
 }
 
 void GfMenuManager::applyOptionData(const SDataOption& option) {
-    applyGammaCorrectValue(option.m_gamma / 255.0f);
+    applyGammaCorrectValue(option.m_soundUi.m_gamma / 255.0f);
 }
 
 void GfMenuManager::setBattleState(unsigned int state, bool on) {

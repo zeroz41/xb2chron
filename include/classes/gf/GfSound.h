@@ -23,18 +23,9 @@ namespace gf {
 // the master volumes GfSound applies to its categories (GfSound+0x6690; 1.0.0's setters name the volumes, in order)
 class GfMasterVolume {
 public:
-    // 1.0.0's is out of line (GfMasterVolume::GfMasterVolume()); 3.0.1 inlines it into GfSound's constructor
-    GfMasterVolume()
-        : m_eventVoiceVolume(0.7f), m_eventCsVolume(0.8f), m_eventBgmVolume(0.6f), m_eventSeVolume(0.7f),
-          m_gameBgmVolume(0.6f), m_gameEnvVolume(0.4f), m_gameWeatherVolume(0.4f), m_gameSeVolume(0.6f),
-          m_playerVoiceVolume(0.8f), m_enemyVoiceVolume(0.8f), m_nareVoiceVolume(0.8f), m_systemVolume(0.5f),
-          m_menuBgmVolume(0.5f) {
-        if (GfManager::fn_710032A1DC()) {
-            m_eventVoiceVolume = 0.75f;
-            m_eventBgmVolume = 0.8f;
-            m_gameBgmVolume = 0.8f;
-        }
-    }
+    // out of line in 1.0.0 and 3.0.1 (fn_7100570CC8, which 3.0.1's SSoundUiOption::clear calls where 1.0.0's calls
+    // GfMasterVolume::GfMasterVolume()); GfSound's constructor, in the same file, inlines it
+    GfMasterVolume();
     ~GfMasterVolume();
     inline void initialize();  // a category handle of its own (1.0.0's GfMasterVolume::initialize)
     inline void initialize(const GfSetupParam& param);  // 1.0.0's GfSound::initialize, inline in 3.0.1's constructor

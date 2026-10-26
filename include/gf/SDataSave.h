@@ -12,7 +12,10 @@ public:
     // 0x3A15B as made (the save buffer's readers in title_main check it before they read the game; the name is
     // not the original's)
     unsigned int m_version;
-    unsigned char pad_4[0xC];
+    unsigned char pad_4[0x4];
+    // a doubleword GfDataStore::clear zeroes and 1.0.0's setGameData copies; what it holds is not known (the name is
+    // not the original's)
+    unsigned long m_systemValue;
 };
 
 // a save: 0x137B10 bytes (createSaveBuffer allocates them). 1.0.0's was the system and the game only (0x1176A0);
