@@ -15,6 +15,13 @@ public:
     // GfFieldManager's forwards (its initialize, finalize, clear, update, postUpdate and gev* functions call them)
     static void build(const GfSetupParam& param);
     static void destroy();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfFobjSeManager::create passes the
+    // literal "se_fld_allmap" to SoundManager::findPack where 3.0.1 calls this). A static member of GfFieldSound
+    // because its unit is gf_field_sound and it reads that unit's file static flag (0x7100D6C918, which
+    // GfFieldSound::initialize stores and createMapSound reads); it takes no object. What it does: returns one of
+    // two sound pack names (the pointers at 0x7100B525B0 / 0x7100B525A8) by that flag; GfFobjSeManager::create and
+    // fn_7100282EA8 pass it to SoundManager::findPack.
+    static const char* fn_710027C7D4();
     void clear();
     void update(const fw::UpdateInfo& info);
     void postUpdate(const fw::UpdateInfo& info);

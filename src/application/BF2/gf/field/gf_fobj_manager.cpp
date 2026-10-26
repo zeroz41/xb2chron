@@ -39,8 +39,9 @@ void GfFobjManager::initialize(const GfSetupParam& param) {
     m_gottenEffect.create(effectInfo);
     unsigned char* fp = GfDataBdat::getFP(0x7B);
     GfFobjSeManager::CreateInfo seInfo;
-    seInfo.m_param0 = Bdat::getValCheck(fp, 0, 0x44, 8);
-    seInfo.m_param1 = (unsigned short)Bdat::getValCheck(fp, 1, 0x45, 2);
+    unsigned int interval = Bdat::getValCheck(fp, 0, 0x44, 8);
+    seInfo.m_interval = *reinterpret_cast<float*>(&interval);
+    seInfo.m_maxSe = (unsigned short)Bdat::getValCheck(fp, 1, 0x45, 2);
     m_seManager.create(seInfo);
     unsigned int value = Bdat::getValCheck(fp, 0, 0x49, 8);
     m_settingValue = *reinterpret_cast<float*>(&value);
