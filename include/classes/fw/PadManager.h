@@ -25,7 +25,7 @@ public:
     virtual void debugDraw(int, int);  // slot 8
     virtual void update(fw::UpdateInfo const&);  // slot 9
     virtual void viBeginFrame();  // slot 10
-    void initVibData();
+    static void initVibData();  // static: Framework::initializeManager calls it with no object
     static void playVibration(const ml::PadVibrationInfo& info);
     // the control pad's data of pad padNo for this frame (m_nullPad's without a manager)
     static const PadData& getControlPadData(int padNo);

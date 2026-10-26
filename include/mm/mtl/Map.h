@@ -163,7 +163,11 @@ public:
         if (n != &m_sentinel) {
 #line 661 MM_MTL_RED_BLACK_TREE_PATH
             MM_ASSERT(m_allocator != 0);
-            n->~node();
+            // the node is destroyed only when there is one (the original tests it: framework's ParamManager trees,
+            // whose values release a counted reference)
+            if (n != nullptr) {
+                n->~node();
+            }
             m_allocator->deallocate(n);
         }
     }

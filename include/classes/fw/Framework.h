@@ -78,7 +78,8 @@ public:
     static void setLayerPause(unsigned int layer, bool pause);
     static unsigned int getFrameCount();
     static bool isLayerPause(unsigned int layer);
-    unsigned char pad_8[0xC];
+    Applet* m_applet;  // getApplet returns it; destroyApplet finalizes and deletes it (the name is not the original's)
+    unsigned char pad_10[0x4];
     float m_frameRate;  // frames per second: beginFrame's frame time is 1 / it (the name is not the original's)
     unsigned char pad_18[0x40];
     ml::Scn* m_scn;  // what LayerSetManager gives layer::LayerManager; the name is not the original's

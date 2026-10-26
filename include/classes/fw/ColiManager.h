@@ -22,6 +22,10 @@ public:
     void removeObject(ColiObject* object);
     // what its Impl holds at 0x20; its type is not known yet: its one caller, ColiObject's destructor, discards it
     void* getInterface();
+    // the framework's per-frame calls (Framework::update, postUpdate, tail)
+    void update();
+    void postUpdate();
+    void tail();
 };
 }  // namespace fw
 

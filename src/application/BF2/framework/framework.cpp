@@ -1,3 +1,22 @@
+#include "mm/mtl/Map.h"
+#include "classes/fw/Framework.h"
+#include "classes/fw/Applet.h"
+#include "classes/fw/CameraLayer.h"
+#include "classes/fw/CameraManager.h"
+#include "classes/fw/ColiManager.h"
+#include "classes/fw/PadManager.h"
+#include "classes/fw/LightManager.h"
+#include "classes/fw/ParamManager.h"
+#include "classes/fw/ParamList.h"
+#include "fw/Reflection.h"
+#include "classes/fw/BdatManager.h"
+#include "classes/fw/EffectManager.h"
+#include "classes/fw/LayerSetManager.h"
+#include "classes/fw/NaviManager.h"
+#include "classes/fw/ResourceManager.h"
+#include "classes/fw/SoundManager.h"
+#include "classes/fw/UpdatableObjectManager.h"
+#include "fw/UpdateState.h"
 #include "classes/fw/Framework.h"
 #include "classes/fw/IPauseTrigger.h"
 #include "classes/ml/WorkCpu.h"
@@ -23,6 +42,37 @@ Framework::~Framework() {
     destroyManager();
 }
 
+
+CameraManager::CameraManager(ml::Scn* scn) : m_pViewer(nullptr), m_listener(this) {
+    for (unsigned int i = 0; i < 4; i++) {
+        m_layers[i].setup(scn, i);
+    }
+}
+bool Framework::initializeManager() {
+    UpdateInfo info = UpdateInfo();
+    BdatManager::get()->update(info);
+    ResourceManager::get()->update(info);
+    if (!ManagerRegister::get()->initialize()) {
+        return false;
+    }
+    if (!BdatManager::isEnableBdat(0)) {
+        return false;
+    }
+    if (BdatManager::isEnableBdat(1) && EffectManager::get()->isCommonLoaded() &&
+        SoundManager::get()->isCommonLoaded() && SoundManager::get()->isBattleLoaded()) {
+        PadManager::initVibData();
+        m_state = 2;
+        return true;
+    }
+    return false;
+}
+
+bool Framework::finalizeManager() {
+    bool finalized = ManagerRegister::get()->finalize();
+    m_state = finalized ? 5 : 4;
+    return finalized;
+}
+
 mm::mtl::IAllocator* Framework::getAllocator() {
     Framework* framework = get();
     return framework == nullptr ? nullptr : &framework->m_allocator;
@@ -46,6 +96,29 @@ void Framework::deactivate() {
     }
 }
 
+void Framework::endFrame(const UpdateState& state) {}
+
+void Framework::preUpdate() {
+    if (m_state - 2u < 3 && m_applet != nullptr) {
+        m_applet->preUpdate(m_updateInfo);
+    }
+}
+
+void Framework::postUpdate() {
+    if (m_state - 2u >= 3) {
+        return;
+    }
+    if (m_applet != nullptr) {
+        m_applet->postUpdate(m_updateInfo);
+    }
+    if (!m_threadFlag) {
+        if (ColiManager* coli = mm::mtl::PtrSingleton<ColiManager>::get()) {
+            coli->postUpdate();
+        }
+    }
+    PadManager::get()->debugDraw(0x80, 0x80);
+}
+
 void Framework::fn_710018369C(const fw::UpdateInfo& info) {
     m_threadEvent.setSignal(true);
 }
@@ -57,6 +130,58 @@ void Framework::fn_71001836A8() {
 
 void Framework::fn_71001836D0(bool flag) {
     m_threadFlag = flag;
+}
+
+void Framework::tail(const UpdateState& state) {
+    if (m_state - 2u >= 3) {
+        return;
+    }
+    if (m_applet != nullptr) {
+        Framework* framework = get();
+        if (framework != nullptr && framework->m_state == 3 && !state.m_pause) {
+            m_applet->tail(m_updateInfo);
+        }
+    }
+    if (UpdatableObjectManager* updatable = UpdatableObjectManager::get()) {
+        if (!state.m_pause) {
+            updatable->tail(m_updateInfo);
+        }
+    }
+    if (ColiManager* coli = mm::mtl::PtrSingleton<ColiManager>::get()) {
+        coli->tail();
+    }
+    if (NaviManager* navi = NaviManager::get()) {
+        navi->tail();
+    }
+    if (LayerSetManager* layerSet = LayerSetManager::get()) {
+        layerSet->tail();
+    }
+    if (EffectManager* effect = EffectManager::get()) {
+        effect->tail(m_updateInfo, state.m_pause);
+    }
+}
+
+void Framework::render() {}
+
+Applet* Framework::getApplet() const {
+    return m_applet;
+}
+
+bool Framework::isAppletClosed() {
+    if (m_applet != nullptr) {
+        return m_applet->m_closed;
+    }
+    return false;
+}
+
+void Framework::destroyApplet() {
+    if (m_applet != nullptr) {
+        m_applet->finalize(*this);
+        if (m_applet != nullptr) {
+            delete m_applet;
+            m_applet = nullptr;
+        }
+    }
 }
 
 void Framework::enterFinalizeApplet() {
@@ -155,6 +280,29 @@ IPauseTrigger::~IPauseTrigger() {
     Framework::removePauseCallback(this);
 }
 
+CameraManager::~CameraManager() {
+    for (int i = 0; i < 4; i++) {
+        m_layers[i].cleanup();
+    }
+}
+
+void CameraManager::update(const UpdateInfo& info) {
+    if (m_target) {
+        m_target->update(info);
+    }
+    for (int i = 0; i < 4; i++) {
+        m_layers[i].update(info);
+    }
+}
+
+void CameraManager::Listener::onWkStandbyLogout() {
+    m_owner->m_pViewer = nullptr;
+}
+
 TransformManager::~TransformManager() {}
+
+LightManager::~LightManager() {}
+
+ParamManager::~ParamManager() {}
 
 }  // namespace fw

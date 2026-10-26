@@ -7,12 +7,17 @@
 namespace fw { class Camera; }
 namespace fw { class CameraPlugin; }
 namespace fw { class UpdateInfo; }
+namespace ml { class Scn; }
 
 namespace fw {
 // table 0x7100B41038
 class CameraLayer {
 public:
+    CameraLayer();
+    ~CameraLayer();
     virtual void update(fw::UpdateInfo const&);  // slot 0
+    // fw::CameraManager's constructor sets each of its layers up on its scene, with the layer's index
+    void setup(ml::Scn* scn, unsigned int index);
     // where the layer's camera is (GfGameVisible::updateImpl asks the first layer)
     mm::Vec3 getCameraPosition() const;
     void push(mm::mtl::IntrusivePtr<Camera>& camera, float time);
