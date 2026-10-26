@@ -103,6 +103,10 @@ public:
     // whether a blade is one of the dummy blades (ids 1012-1013, 1073, 1110, 1124-1132); the symbols spell it
     // fn_7100237D28, 1.0.0's GfGameUtil::isDummyBlade calls GfDataBlade::isDummyBlade at the same place
     static bool isDummyBlade(unsigned int blade);
+    // the blade's voice actor (getMenuCastName) and illustrator (getMenuIlustName) name ids, in the messages of
+    // BDAT tables 0x137 and 0x138 (GfMenuCharDataAdapter::update_BL_CVName/update_BL_IlustName); 0 for none
+    static unsigned int getMenuCastName(unsigned int blade);
+    static unsigned int getMenuIlustName(unsigned int blade);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
     // unit among its functions (no this). What it does: stores (cloudSea != 0) at 0x1C of the record fn_710024E1C8
     // returns for the map; GfGameUtilCloudSea::setInnCloudSea passes (GfGameManager::getMapID(), its cloud sea),

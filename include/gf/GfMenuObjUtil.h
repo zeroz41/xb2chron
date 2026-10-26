@@ -223,6 +223,19 @@ public:
     // GfMenuObjMainSubmenu::ListListener, GfMenuObjWorldMap::MapSelectListener and GfMenuObjWorldMap::isEnterMap.
     static bool fn_7100492CBC();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // GfMenuObjUtil's functions (unit GfMenuObjUtil). What it does: whether blade is one of 1005..1007.
+    static bool fn_71004903E4(unsigned int blade);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // GfMenuObjUtil's functions (unit GfMenuObjUtil). What it does: false unless GfGameManager::isClearGame; then
+    // true when GfDataBlade::fn_71002383C8 holds for blade 1005 or 1006, else whether the game data's short at
+    // 0x8E04 is 2.
+    static bool fn_71004903F4();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // GfMenuObjUtil's functions (unit GfMenuObjUtil, right before fn_710048FD30). What it does: true when
+    // ui::UIUtil::fn_7100696970(3) and GfGameManager::fn_71002A9E68 hold and fn_71002EB3C0 does not;
+    // GfMenuCharDataAdapter::update_DR_BtlFace then shows face 0xB for driver 0x14.
+    static bool fn_710048FCF8();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
     // GfMenuObjUtil's functions (unit GfMenuObjUtil). What it does: true when bit 2 of byte 4 of
     // ui::UIUtil::getPadData() is set, else that byte's bit 1 (GfMenuObjFieldSkill::update stops its voice when this
     // and fn_710048FD30(3) hold).
@@ -250,6 +263,10 @@ public:
     static unsigned int convMenuDriverID(unsigned int driver);  // the driver's menu id (0 for none)
     static unsigned int convMenuBladeID(unsigned int blade);    // the blade's menu id
     static unsigned int getDriverClassBuffRatio(unsigned int driverClass, unsigned int index);
+    // the level (1-based; 0 for none) of a driver class's buff index (GfMenuCharDataAdapter::update_DR_ClassBuffLv)
+    static unsigned char getDriverClassBuffLv(unsigned int driverClass, unsigned int index);
+    // the name message (BDAT table 0x127) of a driver class's buff index; 0 for none
+    static unsigned int getDriverClassBuffType(unsigned int driverClass, unsigned int index);
     static unsigned short getBladeRareIconID(unsigned int blade);  // 0 for none
     static unsigned short getBladeAttributeID(unsigned int blade);
     static bool isBladeSelectable(unsigned int blade, const GfMenuBladeList* list);

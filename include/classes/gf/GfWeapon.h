@@ -56,6 +56,21 @@ bool fn_71002EE72C(unsigned int blade);
 // GfKizunaringUtil::getCompleteKizunaringReward when that gives one. GfMenuObjBlKizunaRing::procAchieve calls it
 // when fn_71002EE72C holds.
 void fn_71002EE640(unsigned int blade);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit (no this). What it does: -1 when fn_71002ED4F0(id) gives no record, else the int of that record
+// (0x14 bytes each in the game data) at 0x11B4CC/D0/D4/D8 for fn_71002AC57C() 0/1/2/4 (-1 for other values);
+// GfMenuCharDataAdapter::fn_7100339108 shows it as minutes and seconds for an enemy (objType 5).
+unsigned int fn_71002ED6B8(unsigned int enemy);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit (no this). What it does: fn_71002ED6B8 with the record column chosen by mode (0/1/2/4) instead
+// of fn_71002AC57C(); GfMenuCharDataAdapter::fn_7100339058 passes GfMenuReference::fn_7100369304().
+unsigned int fn_71002ED608(unsigned int enemy, unsigned int mode);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit (no this). What it does: a driver's class from the average trust rank (1..6) of the driver's
+// active party blades (GfDataDriver::fn_71002416B4, GfGameUtil::getTrustRank) through GfBdatChrDr::fn_71001F13E0,
+// fn_71001F172C and GfBdatBtl::fn_71001EA310; GfMenuCharDataAdapter::update_DR_ClassBuffLv uses it for the
+// add-on (fn_710048FD30(3)) driver class.
+unsigned int fn_71002DC130(unsigned int driver);
 }  // namespace gf
 
 #endif

@@ -34,6 +34,13 @@ public:
     // does: for a DLC driver row (0x11-0x19) whose CHR_Ir "Type" is set, finds the first CHR_Ir row of the same
     // "GroupID" whose Type is 0 and returns its "driverID" (0x11 when there is none); any other row comes back as is.
     static unsigned int fn_71002417DC(unsigned int driver);
+    // the experience a driver needs to reach level (GfMenuCharDataAdapter::update_DR_ExpNextVirtual)
+    static unsigned int getExpSetLevel(unsigned int driver, unsigned int level);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among GfDataDriver's placeholder functions (fn_71002416B4, fn_71002417DC; no this). What it does: 0 unless
+    // driver is a DLC driver row (0x11-0x19); then it walks fn_71002417DC(driver) and its fn_71002416B4 list and
+    // returns a driver id; GfMenuCharDataAdapter::fn_710033973C shows that driver's face icon.
+    static unsigned int fn_7100241A1C(unsigned int driver);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among GfDataDriver's
     // functions (right before fn_71002417DC) and takes a driver row. What it does: for a DLC driver row (0x11-0x19)
     // collects every GfBdatChrDr row of type 1 whose group (fn_71001F172C) equals the driver's into the list
