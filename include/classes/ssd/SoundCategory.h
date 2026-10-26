@@ -6,6 +6,10 @@ namespace ssd {
 class SoundCategory {
 public:
     virtual ~SoundCategory() {}  // slot 0
+
+    // what ssd::SoundCore::SetCategory copies (the names are not the original's)
+    int id_;  // 0x08 (0: unused)
+    float volume_;  // 0x0C
 };
 }  // namespace ssd
 

@@ -13,6 +13,7 @@ namespace fw { class SoundPack; }
 namespace fw { enum SoundVolumeType : int; }
 namespace ssd { class SoundListener; }
 
+namespace fw { enum SoundType : int; }
 namespace fw {
 // one playing sound of fw::SoundSsdDriver (its handle functions reach it through the driver's PointerMap).
 // 1.0.0 has its members out of line in sound_ssd_drv.cpp; 3.0.1 keeps none of them (inlined into the driver).
@@ -171,7 +172,9 @@ public:
     float m_pitch;  // 0xA0
     float m_pitchRate;  // 0xA4 (setPitch)
     float m_pan;  // 0xA8 (setPan)
-    unsigned char pad_ac[0xc];
+    unsigned char pad_ac[0x4];
+    fw::SoundType m_type;  // 0xB0 (fw::SoundSsdDriver::findSe looks for 3; the name is not the original's)
+    unsigned char pad_b4[0x4];
     // the handle the driver's PointerMap gave it, its top byte the SoundType (1.0.0's setHandle stores it; the
     // name is not the original's)
     unsigned int m_soundHandle;  // 0xB8

@@ -14,7 +14,7 @@ public:
     unsigned char pad_0[0x30];
 };
 }  // namespace fw
-namespace fw { class SoundOutputType; }
+namespace fw { enum SoundOutputType : int; }
 namespace fw { class SoundPack; }
 namespace fw { class SoundPlayInfo; }
 namespace fw { class SoundResult; }
@@ -37,7 +37,7 @@ public:
     virtual const mm::Mat44& getListeningPoint() const = 0;  // slot 6
     virtual void setMasterVolume(float) = 0;  // slot 7
     virtual void setCategoryVolume(fw::SoundCategory, float, float) = 0;  // slot 8
-    virtual void getCategoryVolume(fw::SoundCategory) const = 0;  // slot 9
+    virtual float getCategoryVolume(fw::SoundCategory) const = 0;  // slot 9
     virtual void setCategoryMute(fw::SoundCategory, bool, float) = 0;  // slot 10
     virtual void setCategoryPitch(fw::SoundCategory, float, float) = 0;  // slot 11
     virtual void setOutputMode(fw::SoundOutputType) = 0;  // slot 12
@@ -80,7 +80,7 @@ public:
     virtual void stopVoiceAll() = 0;  // slot 49
     virtual void stopSeAll() = 0;  // slot 50
     virtual void pauseAll(bool, float) = 0;  // slot 51
-    virtual void findSe(char const*) const = 0;  // slot 52
+    virtual bool findSe(char const*) const = 0;  // slot 52
     virtual void attachPoolMemory(void*, unsigned int);  // slot 53 (empty; the table's key function)
     virtual void detachPoolMemory(void*, unsigned int);  // slot 54 (empty)
 };

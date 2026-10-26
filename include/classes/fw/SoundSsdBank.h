@@ -4,6 +4,7 @@
 #include "classes/fw/SoundReferenceObject.h"
 #include "classes/ssd/SoundBank.h"
 #include "mm/mtl/IntrusivePtr.h"
+#include "mm/mtl/FixStr.h"
 
 namespace fw { enum SoundCategory : int; }
 namespace fw { enum SoundPriority : int; }
@@ -41,10 +42,16 @@ public:
 
     static SoundSsdBank* create(const char* name, SoundCategory category, unsigned int maxSound);
     void setMaxSound(int maxSound);
+    void destroy();
     void stopAll();
     mm::mtl::IntrusivePtr<SoundSsdSource> addWave(const WaveInfo& info);
 
     ssd::SoundBank m_bank;  // 0x10 (stopAll stops it; the name is not the original's)
+    unsigned char pad_30[0x124];
+    // the bank's name and its mm::mtl::hashStrCrc (fw::SoundSsdDriver::findBank compares both; the names are not
+    // the original's)
+    mm::mtl::FixStr<256> m_name;  // 0x154
+    unsigned int m_nameHash;  // 0x258
 };
 }  // namespace fw
 

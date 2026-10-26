@@ -1,3 +1,8 @@
+#include "classes/ssd/SoundCategory.h"
+#include "classes/fw/ISoundDriver.h"
+#include "classes/fw/SoundSsdPlayer.h"
+#include "classes/fw/SoundSsdBank.h"
+#include "classes/fw/SoundSsdDriver.h"
 #include "classes/fw/PointerMap.h"
 #include "classes/ssd/SoundHandle.h"
 #include "classes/ssd/SoundActor3D.h"
@@ -12,6 +17,7 @@
 #include "classes/fw/SoundSsdDriver/SoundAllocator.h"
 #include "classes/fw/SoundSsdPlayer.h"
 #include "classes/ssd/SoundBank.h"
+#include "classes/ssd/SoundCore.h"
 #include "classes/fw/SoundSsdBank.h"
 #include "classes/fw/SoundReferenceObject.h"
 #include "classes/fw/SoundPack.h"
@@ -338,6 +344,124 @@ void SoundSsdDriver::pauseAll(bool pause, float fadeTime) {
             player->pause(pause, fadeTime);
         }
     }
+}
+
+void SoundSsdDriver::stopAll() {
+    for (mm::mtl::List<SoundSsdBank*>::iterator it = m_banks.begin(); it != m_banks.end(); ++it) {
+        (*it)->stopAll();
+    }
+    if (m_core != nullptr) {
+        m_core->StopSound(0.0f);
+    }
+}
+
+void SoundSsdDriver::destroyResourceAll() {
+    while (m_banks.m_size != 0) {
+        SoundSsdBank* bank = *m_banks.begin();
+        bank->destroy();
+        if (bank != nullptr) {
+            bank->release();
+        }
+        m_banks.erase(m_banks.begin());
+    }
+}
+
+void SoundSsdDriver::setOutputMode(SoundOutputType type) {
+    if (m_core != nullptr) {
+        int mode;
+        if (type >= 1 && type <= 3) {
+            mode = type;
+        } else if (type == 0) {
+            mode = 0;
+        } else {
+            mode = 2;
+        }
+        m_core->SetOutputMode(static_cast<ssd::OutputMode::Type>(mode));
+    }
+}
+
+void SoundSsdDriver::setMasterVolume(float volume) {
+    if (m_core != nullptr) {
+        for (int i = 1; i < 18; i++) {
+            m_categories[i].masterVolume = volume;
+            m_core->SetCategory(m_categories[i].category);
+        }
+    }
+}
+
+void SoundSsdDriver::addCategory(SoundCategory category, float volume, const char* name) {
+    CategoryInfo& info = m_categories[static_cast<unsigned int>(category)];
+    info.baseVolume = volume;
+    info.active = 1;
+    info.name = name;
+    info.muteCount = 0;
+    info.category.id_ = category;
+    info.pitch = 1.0f;
+    info.category.volume_ = volume;
+    m_core->SetCategory(info.category);
+}
+
+void SoundSsdDriver::removeCategory(SoundCategory category) {
+    if (findCategory(category) != categoryEnd()) {
+        m_categories[static_cast<unsigned int>(category)].category.id_ = 0;
+        m_categories[static_cast<unsigned int>(category)].category.volume_ = 1.0f;
+        m_categories[static_cast<unsigned int>(category)].active = 0;
+        m_core->ResetCategory(category);
+    }
+}
+
+float SoundSsdDriver::getCategoryVolume(SoundCategory category) const {
+    float volume = 0.0f;
+    if (m_core != nullptr) {
+        const CategoryInfo* info = findCategory(category);
+        if (info != categoryEnd()) {
+            volume = info->volume.current;
+        }
+    }
+    return volume;
+}
+
+void SoundSsdDriver::setCategoryPitch(SoundCategory category, float pitch, float fadeTime) {
+    if (m_core == nullptr) {
+        return;
+    }
+    ml::CS lock(m_cs);
+    for (PtrMapIterator it = m_players.begin(); it != m_players.end(); ++it) {
+        SoundSsdPlayer* player = static_cast<SoundSsdPlayer*>(const_cast<void*>(it.m_param->m_ptr));
+        if (player != nullptr && player->m_category == category && player->isValid()) {
+            player->m_pitchRate = pitch;
+            player->m_handle->SetPitch(pitch, fadeTime);
+        }
+    }
+    CategoryInfo* info = findCategory(category);
+    if (info != categoryEnd()) {
+        info->pitch = pitch;
+    }
+}
+
+// the int is unused
+unsigned int SoundSsdDriver::playBgm(const char* name, float volume, bool loop, int, SoundCategory category) {
+    ml::CS lock(m_cs);
+    return playStream(name, volume, loop, category, static_cast<SoundPriority>(0xFF), findBank("SystemBgmBank"),
+                      static_cast<SoundType>(1));
+}
+
+unsigned int SoundSsdDriver::playVoice(const char* name, float volume, bool loop, SoundCategory category) {
+    ml::CS lock(m_cs);
+    return playStream(name, volume, loop, category, static_cast<SoundPriority>(0xFE), findBank("SystemVoiceBank"),
+                      static_cast<SoundType>(2));
+}
+
+bool SoundSsdDriver::findSe(const char* name) const {
+    ml::CS lock(m_cs);
+    for (PtrMapIterator it = m_players.begin(); it != m_players.end();) {
+        const SoundSsdPlayer* player = static_cast<const SoundSsdPlayer*>(it.m_param->m_ptr);
+        ++it;
+        if (player != nullptr && player->m_type == 3 && strcmp(player->m_source->m_label.m_str, name) == 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void ISoundDriver::attachPoolMemory(void*, unsigned int) {}

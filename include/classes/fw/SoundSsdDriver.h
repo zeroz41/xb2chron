@@ -4,15 +4,20 @@
 #include "classes/fw/ISoundDriver.h"
 #include "classes/fw/PointerMap.h"
 #include "classes/mm/mtl/IAllocator.h"
+#include "classes/mm/mtl/List.h"
+#include "classes/fw/SoundSsdBank.h"
+#include "mm/mtl/Hash.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/ssd/Allocator.h"
+#include "classes/ssd/SoundCategory.h"
+#include "mm/mtl/FixStr.h"
 #include "mm/Mat44.h"
 #include "ml/CriticalSection.h"
 
 namespace fw { enum SoundCategory : int; }
 namespace fw { class SoundCategoryDebugInfo; }
 namespace fw { class SoundHandleDebugInfo; }
-namespace fw { class SoundOutputType; }
+namespace fw { enum SoundOutputType : int; }
 namespace fw { class SoundPack; }
 namespace fw { class SoundPlayInfo; }
 namespace fw { class SoundResult; }
@@ -25,6 +30,7 @@ namespace mm { namespace mtl { template <typename, unsigned long> class FixedVec
 namespace fw {
 // the kinds stopSoundAll stops (stopBgmAll passes 1, stopVoiceAll 2, stopSeAll 3; the names are not known)
 enum SoundType : int;
+enum SoundPriority : int;
 class SoundSsdPlayer;
 }  // namespace fw
 namespace ssd { class SoundCore; class SoundListener; }
@@ -54,7 +60,7 @@ public:
     virtual const mm::Mat44& getListeningPoint() const;  // slot 6
     virtual void setMasterVolume(float);  // slot 7
     virtual void setCategoryVolume(fw::SoundCategory, float, float);  // slot 8
-    virtual void getCategoryVolume(fw::SoundCategory) const;  // slot 9
+    virtual float getCategoryVolume(fw::SoundCategory) const;  // slot 9
     virtual void setCategoryMute(fw::SoundCategory, bool, float);  // slot 10
     virtual void setCategoryPitch(fw::SoundCategory, float, float);  // slot 11
     virtual void setOutputMode(fw::SoundOutputType);  // slot 12
@@ -97,11 +103,60 @@ public:
     virtual void stopVoiceAll();  // slot 49
     virtual void stopSeAll();  // slot 50
     virtual void pauseAll(bool, float);  // slot 51
-    virtual void findSe(char const*) const;  // slot 52
+    virtual bool findSe(char const*) const;  // slot 52
     virtual void attachPoolMemory(void*, unsigned int);  // slot 53
     virtual void detachPoolMemory(void*, unsigned int);  // slot 54
 
+    // one category's state: the ssd::SoundCategory handed to ssd::SoundCore::SetCategory and the factors its
+    // volume is the product of (the names are not the original's; 1.0.0 has no symbol for the type)
+    struct CategoryInfo {
+        // a value moving from start to target over time seconds
+        struct Fade {
+            // starts a move to value over time (at once when time is not positive)
+            void set(float value, float time) {
+                if (time > 0.0f) {
+                    start = current;
+                } else {
+                    time = 0.0f;
+                    current = value;
+                    start = value;
+                }
+                target = value;
+                this->time = time;
+                elapsed = 0.0f;
+            }
+            float current;  // 0x00
+            float target;  // 0x04
+            float start;  // 0x08
+            float time;  // 0x0C
+            float elapsed;  // 0x10
+        };
+        void applyVolume() { category.volume_ = masterVolume * baseVolume * volume.current * mute.current; }
+
+        ssd::SoundCategory category;  // 0x00
+        float baseVolume;  // 0x10 (addCategory's volume)
+        Fade volume;  // 0x14 (setCategoryVolume; getCategoryVolume returns its current value)
+        Fade mute;  // 0x28 (setCategoryMute: 0 while muted, 1 otherwise)
+        float masterVolume;  // 0x3C (setMasterVolume)
+        int muteCount;  // 0x40
+        float pitch;  // 0x44 (setCategoryPitch; 1 from addCategory)
+        int active;  // 0x48 (1 from addCategory, 0 from removeCategory)
+        mm::mtl::FixStr<16> name;  // 0x4C
+        unsigned char pad_60[0x8];
+    };
+
     bool isValid() const { return m_core != nullptr; }
+    // the entry of a category, or categoryEnd() when no category of that id was added (1.0.0's findCategory)
+    CategoryInfo* findCategory(fw::SoundCategory category) {
+        CategoryInfo* info = &m_categories[static_cast<unsigned int>(category)];
+        return info->category.id_ == category ? info : categoryEnd();
+    }
+    const CategoryInfo* findCategory(fw::SoundCategory category) const {
+        const CategoryInfo* info = &m_categories[static_cast<unsigned int>(category)];
+        return info->category.id_ == category ? info : categoryEnd();
+    }
+    CategoryInfo* categoryEnd() { return m_categories + 18; }
+    const CategoryInfo* categoryEnd() const { return m_categories + 18; }
     // the player a handle names, null for an unknown handle (out of line in 1.0.0)
     SoundSsdPlayer* getPlayer(unsigned int handle) {
         return m_players.isValid(handle) ? static_cast<SoundSsdPlayer*>(m_players.getPtr(handle)) : nullptr;
@@ -110,7 +165,21 @@ public:
         return m_players.isValid(handle) ? static_cast<const SoundSsdPlayer*>(m_players.getPtr(handle)) : nullptr;
     }
     bool stopSound(unsigned int handle, float fadeTime);  // out of line in 1.0.0
+    unsigned int playStream(const char* name, float volume, bool loop, fw::SoundCategory category,
+                            fw::SoundPriority priority, SoundSsdBank* bank, fw::SoundType type);
+    // the bank registered under a name, null when none is (out of line in 1.0.0)
+    SoundSsdBank* findBank(const char* name) {
+        unsigned int hash = mm::mtl::hashStrCrc(name);
+        for (mm::mtl::List<SoundSsdBank*>::iterator it = m_banks.begin(); it != m_banks.end(); ++it) {
+            SoundSsdBank* bank = *it;
+            if (bank->m_nameHash == hash && strcmp(bank->m_name.m_str, name) == 0) {
+                return bank;
+            }
+        }
+        return nullptr;
+    }
     void stopSoundAll(fw::SoundType type, float fadeTime);
+    void destroyResourceAll();  // destroys and releases every bank
 
     // field names are not the original's
     ssd::SoundCore* m_core;  // 0x10 (ssd::SoundCore::NewInstance(&m_allocator))
@@ -120,7 +189,9 @@ public:
     ml::CriticalSection m_cs;  // 0x70 (every handle function holds it)
     ml::CriticalSectionNC m_csNC;  // 0x98
     ml::CriticalSection m_cs2;  // 0xC0
-    unsigned char pad_e8[0x7D0];  // 18 ssd::SoundCategory (0x68 each), List<SoundSsdBank*>, List<ssd::SoundHandle*>
+    CategoryInfo m_categories[18];  // 0xE8 (indexed by fw::SoundCategory; addCategory fills an entry)
+    mm::mtl::List<SoundSsdBank*> m_banks;  // 0x838 (stopAll stops each)
+    mm::mtl::List<ssd::SoundHandle*> m_handles;  // 0x878
     fw::PointerMap m_players;  // 0x8B8 (handle -> SoundSsdPlayer*)
 };
 }  // namespace fw
