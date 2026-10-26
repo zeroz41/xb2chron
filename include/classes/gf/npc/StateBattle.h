@@ -5,6 +5,7 @@
 #include "classes/gf/TFieldExecCmd.h"
 
 #include "fw/UpdateInfo.h"
+#include "mm/Vec3.h"
 #include <new>
 
 namespace ai { class State; }
@@ -34,6 +35,8 @@ public:
         }
     }
     static bool isCondMatch(const T& owner);
+    // where the owner goes in a battle; false for nowhere (seqTurnPc turns it there)
+    static bool findGoalPos(mm::Vec3& pos, const T& owner);
     void seqApplyBattleMot(T& owner, const fw::UpdateInfo& info);
     void seqTurnPc(T& owner, const fw::UpdateInfo& info);
     void seqUpdateBattleMot(T& owner, const fw::UpdateInfo& info);
@@ -41,7 +44,7 @@ public:
     void seqUpdateMove(T& owner, const fw::UpdateInfo& info);
     TFieldExecCmd<GfComAsm> m_execCmd;
     Seq m_seq;
-    unsigned int pad_60;
+    float pad_60;  // the time seqUpdateMove has moved for (it destroys the object after 2)
 };
 }}  // namespace gf::npc
 

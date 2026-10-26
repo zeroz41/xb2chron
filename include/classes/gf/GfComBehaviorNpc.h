@@ -5,6 +5,10 @@
 #include "ai/Hfsm.h"
 #include "mm/Quat.h"
 #include "classes/gf/GfComBehavior.h"
+#include "classes/gf/GfFieldLocalSteer.h"
+#include "classes/gf/TFieldExecCmdTurn.h"
+#include "mm/Vec3.h"
+#include "gf/GfFieldMoveSpeed.h"
 
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
@@ -33,14 +37,26 @@ public:
         // whether a talk with the npc earns a bonus, and marks it earned (StateTalk::seqWaitTalkEnd)
         bool isIconTalkBonus() const;
         void setTalkBonusFlag() const;
-        unsigned char pad_0[0x4];
-        // how near (squared) the player must come for the npc to approach it: StateApproachPc compares the
-        // player's squared distance with it, none when 0 (the name is not the original's)
+        // create reads each from the row's column of the same name ("ShopID", "CloseRange", ...); the field
+        // names follow the columns and are not the original's
+        unsigned short m_shopId;
+        unsigned char pad_2[0x2];
+        // how near (squared: CloseRange * CloseRange) the player must come for the npc to approach it:
+        // StateApproachPc compares the player's squared distance with it, none when 0
         float m_approachDistSq;
-        unsigned char pad_8[0x10];
-        // the talk StateTalk::enter starts with GfPlayFactory::createTalk (the name is not the original's)
+        float m_moveSpeed;
+        // ReactionRange squared: StateReaction keeps reacting while the player is within it
+        float m_reactionRangeSq;
+        // one 32-bit unit: StateReaction<T>::seqUpdateMove loads both halves at once
+        unsigned int m_reactionPercent : 16;
+        unsigned int m_reactionMot : 16;  // the FLD_NpcMobMotionId row StateReaction::beginReaction runs
+        unsigned short m_battleReaction;
+        unsigned short m_battleMot;  // the FLD_NpcMobMotionId row StateBattle::seqApplyBattleMot runs
+        // the talk StateTalk::enter starts with GfPlayFactory::createTalk ("EventID", or GfDataBlade's normal talk)
         unsigned short m_talkEventId;
-        unsigned char pad_1a[0x1e];
+        // set by create when m_talkEventId lies in BDAT sheet 0xeb's id range and m_shopId is 0
+        bool pad_1a;
+        unsigned char pad_1b[0x5];
     };
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfComBehaviorNpc();  // slot 1
@@ -56,6 +72,10 @@ public:
     void validateLocalSteer(npc::STATE_ID state);
     void execTurnCmdToPos(const mm::Vec3& pos);
     void execTurnCmd(float rotY, float speed, float threshold, float delay);
+    // turns the npc by rotY (plus its local steering's current angle)
+    void execTurnCmd(float rotY);
+    // where its object stands (its transform's world position)
+    const mm::Vec3& getPos() const;
     // the states call it as a command they started runs (StateApproachPc passes true once C_move ran); its unit
     // says what the flag selects
     void init(bool keep);
@@ -64,7 +84,11 @@ public:
     // the state its schedule asks for next, -1 for none (StateIdle requests it)
     int getNexStateId();
     static mm::mtl::RTTI m_rtti;
+    // its row's BDAT values (BdatInfo::create)
     BdatInfo m_bdatInfo;
+    void* pad_b8;  // the destructor hands it to fw::NaviManager::releaseObject (a navi::NvmshAcObj)
+    // where the npc walks to (setGoalPos; the name is not the original's)
+    mm::Vec3 m_goalPos;
     // StateReaction<GfComBehaviorNpc>::onLeave hands its saved rotation back to it (the name is not the original's)
     mm::Quat m_reactionRot;
     // the player's squared distance from the npc across (x, z) and up (y): StateApproachPc compares them with
@@ -79,17 +103,15 @@ public:
     bool m_buildingFsm;
     unsigned char pad_191[0x7];
     void* pad_198;  // its Listener clears it on a standby logout
-    unsigned char pad_1a0[0x140];
-    // the turn command execTurnCmd starts: StateTalk::seqWaitTalkEnd treats a command with no target (-1), an angle
-    // outside [0, pi] or no time as no turn (the names are not the original's)
-    void* pad_2e0;
-    unsigned char pad_2e8[0x4];
-    float pad_2ec;
-    float pad_2f0;
-    float pad_2f4;
-    unsigned char pad_2f8[0x54];
-    bool m_turnEnded;  // set once the turn the states start ends: they wait for it (the name is not the original's)
-    unsigned char pad_34d[0x3];
+    unsigned char pad_1a0[0xd0];
+    // its walking speed (StateBattle::seqUpdateMove sets it; the name is not the original's)
+    GfFieldMoveSpeed m_moveSpeed;
+    unsigned char pad_2a0[0x40];
+    // the turn command execTurnCmd starts; the states wait for its pad_6c (set once the turn ends) (the name is
+    // not the original's)
+    TFieldExecCmdTurn<GfComAsm> m_turnCmd;
+    // execTurnCmd adds its current angle to the turn (the name is not the original's)
+    GfFieldLocalSteer m_localSteer;
 };
 }  // namespace gf
 

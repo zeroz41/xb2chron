@@ -74,6 +74,17 @@ public:
     // GfDataBlade's unit. What it does: fn_7100232054's test on GfDataManager::getDataGame()'s flags; GfGameManager::
     // isClearGame tail-calls it.
     static bool fn_7100231FF8();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfComBehaviorNpc::BdatInfo::
+    // isIconTalkBonus called GfGameFlag::getLocal itself, with other arguments). A member because its address is in
+    // GfDataBlade's unit and it takes no object. What it does: whether local flag (type 1) id is set, an id above
+    // 43877 moved up by 11651 first (GfGameFlag::getLocal(1, id)). Caller: GfComBehaviorNpc::BdatInfo::
+    // isIconTalkBonus, with its talk event's row in BDAT sheet 0xeb + 41878.
+    static bool fn_710024D890(unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's caller called GfGameFlag::setLocal
+    // itself). A member for the same reason as fn_710024D890. What it does: sets local flag (type 1) id, moved as in
+    // fn_710024D890, to value (GfGameFlag::setLocal(1, id, value)). Caller: GfComBehaviorNpc::BdatInfo::
+    // setTalkBonusFlag, with fn_710024D890's id and 1.
+    static void fn_710024D86C(unsigned int id, unsigned int value);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's fld plugin has no setNpcMeet). A
     // member because its address is in GfDataBlade's unit. What it does: for an id above 2000, looks the id up with
     // GfBdatRsc::fn_7100219CE0 and answers whether that local flag (type 1) is set; false otherwise. Callers: the fld

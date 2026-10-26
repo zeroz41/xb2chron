@@ -70,7 +70,7 @@ inline void StateTalk::update(GfComBehaviorNpc* owner, const fw::UpdateInfo& inf
 }
 
 void StateTalk::seqWaitTurnEnd(GfComBehaviorNpc& owner, const fw::UpdateInfo&) {
-    if (owner.m_turnEnded) {
+    if (owner.m_turnCmd.pad_6c) {
         requestState(0);
     }
 }
