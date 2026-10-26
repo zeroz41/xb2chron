@@ -18,6 +18,10 @@ public:
     static int getBladeSet(unsigned int driver);
     // the blade in the driver's slot (GfMenuObjBladeSwitch::update asks GfMenuObjUtil::isValidBlade about it)
     static unsigned int getBlade(unsigned int driver, int slot);
+    // the weapon types of the driver's equipped arts (its data's list: GfDataDriver::getEquipWpnType(types,
+    // const SDataDriver&)). Room for 50 in 3.0.1: GfMenuObjDrArtsSet2 holds one with its count 0xC8 bytes past the
+    // room (1.0.0 named the type with 27)
+    static void getEquipWpnType(mm::mtl::FixedVector<unsigned int, 50>& types, unsigned int driver);
     // 1.0.0's names (the symbols still spell 3.0.1's copies fn_<address>: same call sites, same arguments; 3.0.1's
     // also cover the DLC drivers)
     static SDataDriver* getSDataDriver(unsigned int driver);  // fn_7100231C64
