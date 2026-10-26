@@ -60,6 +60,10 @@ public:
     static GfMenuItemList* s_pItemList;
     static GfMenuIDList* s_pSubMenuIDList;
     static GfMenuDriverList* s_pChangeDrList;
+    // set by fn_71003E1F60 once it has opened TUnk_B63860's dialog (TUnk_B63860::fn_71004451D0); MainListener's close
+    // event (0x22) closes that dialog (TUnk_B63860::fn_7100445258) and clears it. Proposed name, not the original's:
+    // the symbols leave it unnamed (lbl_7100EAA200)
+    static bool s_isNamedDialogOpen;
 };
 // openKizunaDialog registers the text UIStr(m_bdat, m_id) and sends it with m_value (the field names are not
 // the original's)
