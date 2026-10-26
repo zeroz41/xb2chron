@@ -26,8 +26,16 @@ public:
     gmk::AGmkBase* getBindedGmkInst() const;
     // (re)makes its state machine: the mob's 7 states, one level deep
     void createFsm();
+    // (re)starts its movement; the states pass true on entering, the approach state false
+    void init(bool);
+    bool isSquadMember() const;
+    void execTurnCmdToPos(const mm::Vec3& pos);
     static mm::mtl::RTTI m_rtti;
-    unsigned char pad_98[0x88];
+    unsigned char pad_98[0xc];
+    float pad_a4;  // mob::StateApproachPc's fn_71004D7468 compares it with pad_53d0
+    unsigned char pad_a8[0x10];
+    void* pad_b8;  // mob::StateMove::isCondMatch: the state may run while it is set
+    unsigned char pad_c0[0x60];
     // StateReaction<GfComBehaviorMob>::onLeave hands its saved rotation back to it (the name is not the original's)
     mm::Quat m_reactionRot;
     unsigned char pad_130[0x51F8];
@@ -36,6 +44,11 @@ public:
     bool m_buildingFsm;
     unsigned char pad_53b1[0x7];
     void* pad_53b8;  // its Listener clears it on a standby logout
+    unsigned char pad_53c0[0x10];
+    float pad_53d0;
+    float pad_53d4;  // mob::StateApproachPc's fn_71004D7468 needs it at most 4
+    unsigned char pad_53d8;
+    bool pad_53d9;  // mob::StateApproachPc sets it on entering
 };
 }  // namespace gf
 

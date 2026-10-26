@@ -14,7 +14,9 @@ namespace gf { namespace mob {
 // table 0x7100B66768
 class StateApproachPc : public ::gf::GfStateBase {
 public:
-    StateApproachPc() : pad_50(nullptr), pad_58(nullptr) {}
+    // a step of the state: the sequence the update runs, none when null
+    typedef void (StateApproachPc::*Seq)(GfComBehaviorMob& owner, const fw::UpdateInfo& info);
+    StateApproachPc() : m_seq(nullptr) {}
     // what GfComBehaviorMob::createFsm registers with its Hfsm: the state made in a state buffer
     static ai::State* create(void* buffer) { return new (buffer) StateApproachPc; }
     virtual ~StateApproachPc() {}  // slot 0: inline (emitted with the table by the registering unit)
@@ -38,8 +40,19 @@ public:
     // lies at the head of the text split as gf_com_model).
     void fn_71004D7154(GfComBehaviorMob* owner, const fw::UpdateInfo& info);
     TFieldExecCmd<GfComAsm> m_execCmd;
-    void* pad_50;
-    void* pad_58;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: the state's enter (its
+    // placeholder fn_71004D70EC) makes it the state's first sequence. What it does: once the player exists, turns
+    // the owner to the player's position and moves on to fn_71004D71C4.
+    void fn_71004D7108(GfComBehaviorMob& owner, const fw::UpdateInfo& info);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: fn_71004D7108 makes it the
+    // state's sequence. What it does: when the owner's flag at 0x2bc is set, starts the command "C_move" on the
+    // owner's object and moves on to fn_71004D723C.
+    void fn_71004D71C4(GfComBehaviorMob& owner, const fw::UpdateInfo& info);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits with the state's
+    // functions and takes the owner as the other states' isCondMatch do. What it does: true when the player exists,
+    // the owner's value at 0xa4 is above 0, its value at 0x53d4 is at most 4 and its 0xa4 at least its 0x53d0.
+    static bool fn_71004D7468(const GfComBehaviorMob& owner);
+    Seq m_seq;
 };
 }}  // namespace gf::mob
 

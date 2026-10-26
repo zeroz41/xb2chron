@@ -81,7 +81,7 @@ void GfVolumeFade::applyFadeRatio() {
         acc.setParams(m_params, -1);
         if (GfObj* obj = GfObjUtil::getObj(m_handle)) {
             if (GfComModel* model = obj->getComponent<GfComModel>(1)) {
-                model->m_partsAlpha[parts] = 1.0f - ratio;
+                model->m_volumeFade.m_partsAlpha[parts] = 1.0f - ratio;
             }
         }
     }

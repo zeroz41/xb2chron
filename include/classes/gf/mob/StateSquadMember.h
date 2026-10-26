@@ -14,7 +14,9 @@ namespace gf { namespace mob {
 // table 0x7100B66678
 class StateSquadMember : public ::gf::GfStateBase {
 public:
-    StateSquadMember() : pad_18(0.5f), pad_58(nullptr), pad_60(nullptr), pad_68(false) {}
+    // a step of the state: the sequence the update runs, none when null
+    typedef void (StateSquadMember::*Seq)(GfComBehaviorMob& owner, const fw::UpdateInfo& info);
+    StateSquadMember() : pad_18(0.5f), m_seq(nullptr), pad_68(false) {}
     // what GfComBehaviorMob::createFsm registers with its Hfsm: the state made in a state buffer
     static ai::State* create(void* buffer) { return new (buffer) StateSquadMember; }
     virtual ~StateSquadMember() {}  // slot 0: inline (emitted with the table by the registering unit)
@@ -30,8 +32,9 @@ public:
     void update(GfComBehaviorMob* owner, const fw::UpdateInfo& info);
     float pad_18;
     TFieldExecCmd<GfComAsm> m_execCmd;
-    void* pad_58;
-    void* pad_60;
+    // whether the state may run: the owner is a squad member
+    static bool isCondMatch(const GfComBehaviorMob& owner);
+    Seq m_seq;
     bool pad_68;
 };
 }}  // namespace gf::mob

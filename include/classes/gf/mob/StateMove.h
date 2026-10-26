@@ -14,7 +14,9 @@ namespace gf { namespace mob {
 // table 0x7100B665D8
 class StateMove : public ::gf::GfStateBase {
 public:
-    StateMove() : pad_50(nullptr), pad_58(nullptr), pad_60(0) {}
+    // a step of the state: the sequence the update runs, none when null
+    typedef void (StateMove::*Seq)(GfComBehaviorMob& owner, const fw::UpdateInfo& info);
+    StateMove() : m_seq(nullptr), pad_60(0) {}
     // what GfComBehaviorMob::createFsm registers with its Hfsm: the state made in a state buffer
     static ai::State* create(void* buffer) { return new (buffer) StateMove; }
     virtual ~StateMove() {}  // slot 0: inline (emitted with the table by the registering unit)
@@ -29,8 +31,9 @@ public:
     void leave(GfComBehaviorMob* owner, ai::State* next);
     void update(GfComBehaviorMob* owner, const fw::UpdateInfo& info);
     TFieldExecCmd<GfComAsm> m_execCmd;
-    void* pad_50;
-    void* pad_58;
+    // whether the state may run: the owner has its object at 0xb8
+    static bool isCondMatch(const GfComBehaviorMob& owner);
+    Seq m_seq;
     unsigned int pad_60;
 };
 }}  // namespace gf::mob

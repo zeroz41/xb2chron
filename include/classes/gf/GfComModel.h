@@ -5,6 +5,9 @@
 #include "classes/gf/GfComponent.h"
 #include "classes/fw/ReferenceFrame.h"
 #include "mm/mtl/IntrusivePtr.h"
+#include "mm/mtl/Vector.h"
+#include "classes/fw/AnimPoseModifier.h"
+#include "classes/fw/AnimVolumeFadeModifier.h"
 namespace anm { class ExtraTruckBuffer; }
 namespace anm { class Pose; }
 namespace fw { class Message; }
@@ -17,18 +20,34 @@ namespace gf {
 // table 0x7100B667B8
 class GfComModel : public ::gf::GfComponent {
 public:
-    class ViewerListener;
+    // table 0x7100B667F0: the viewer's standby-logout listener (GfComModel holds one at 0x1198)
+    class ViewerListener {
+    public:
+        ViewerListener() : m_pOwner(nullptr) {}
+        virtual void onWkStandbyLogout();  // slot 0
+        GfComModel* m_pOwner;  // (the name is not the original's)
+    };
+    // a reference frame made on a bone (the field names are not the original's)
+    struct BoneFrameInfo {
+        mm::mtl::IntrusivePtr<fw::ReferenceFrame> frame;
+        unsigned long pad_8;
+    };
+    GfComModel();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfComModel();  // slot 1
     virtual void changeLayer(unsigned int, unsigned int);  // slot 3
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     mm::mtl::IntrusivePtr<fw::ReferenceFrame> createBoneReferenceFrame(const char* bone);
     void destroyBoneReferenceFrame(const char* bone);
+    // whether its object's info asks for the volume fade
+    bool isVolumeFadeForUser() const;
+    bool isRender() const;
     // the model's scale, every axis the same (GfObjAcc::setModelScale forwards to it)
     void setModelScale(float scale);
     static mm::mtl::RTTI m_rtti;
 
-    unsigned char pad_10[0x8];
+    // setup copies its setup info's value at 0x18 here, cleanup sets it back to -1
+    long pad_10;
     // the model's object: GFOBJ_INFO::createVolumeFade fades its interface (the name is not the original's)
     fw::ModelObject* m_model;
     // the model's frame (GfComDynamics binds its dynamics to it) (the name is not the original's)
@@ -40,10 +59,15 @@ public:
     // its sampler to both (the names are not the original's)
     anm::Pose* m_pose;
     anm::ExtraTruckBuffer* m_extraTruckBuffer;
-    unsigned char pad_40[0x10a8];
-    // each gf::VFPARTS's opacity: GfVolumeFade::applyFadeRatio stores 1 - the part's fade ratio (the name is not
-    // the original's)
-    float m_partsAlpha[6];
+    fw::AnimPoseModifier m_poseModifier;  // (the name is not the original's)
+    // its volume fade: GfVolumeFade::applyFadeRatio writes its parts' opacity (the name is not the original's)
+    fw::AnimVolumeFadeModifier m_volumeFade;
+    // the frames createBoneReferenceFrame made, searched by name (the name is not the original's)
+    mm::mtl::Vector<BoneFrameInfo> m_boneFrames;
+    mm::mtl::Vector<BoneFrameInfo> pad_1168;
+    float m_scale;  // setModelScale stores it (the name is not the original's)
+    ViewerListener m_viewerListener;
+    void* m_pViewer;  // the viewer listener's onWkStandbyLogout clears it
 };
 }  // namespace gf
 
