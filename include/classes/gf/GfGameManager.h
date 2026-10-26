@@ -70,6 +70,11 @@ public:
     // among GfGameManager's functions. What it does: when PtrSingleton<TUnk_B54858> exists, passes it and its bool to
     // TUnk_B54858::fn_71002A7430 (as GfGameManager::setupGame does); GfManager::fn_710032A1FC calls it
     static void fn_71002AC558(bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in gf_game_manager's unit
+    // among GfGameManager's functions and takes no instance. What it does: tail-calls fn_710024DD88, which returns bits
+    // 16-19 of the u32 at 0x101D08 of GfDataManager::getDataGame(). Callers: fn_71002CBBD0 and gf_menu_obj_hitonowa's
+    // GfMenuObjHitonowa::fn_710041D544 (keeps it in a file static), initialize and fn_71004256F8.
+    static unsigned int fn_71002AC8E0();
     static void build(const GfSetupParam& param);
     void initialize(const GfSetupParam& param);
     static void destroy();

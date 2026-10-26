@@ -52,6 +52,16 @@ public:
     float getAnimationPlaybackLength();
     void setAnimationPlaybackTime(float time);
     bool isPlayingAnimation();
+    void setStreamImage2nd();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in UIObjectAcc's unit
+    // next to setStreamImage2nd and reads m_object the same way. What it does: when m_object is a ui::UIImageObject
+    // (RTTI isKindOf UIImageObject::m_rtti), sets bit 0x40000 of its u32 at 0x98. GfMenuObjHitonowa's fn_710041D268
+    // and fn_710041E90C call it.
+    void fn_7100691FD0();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member, as fn_7100691FD0. What it does:
+    // when m_object is a ui::UIImageObject, clears bits 0x60000 of its u32 at 0x98 (the bits setStreamImage2nd and
+    // fn_7100691FD0 set). The same two callers call it first.
+    void fn_710069201C();
     void stopAnimation();
     bool isPlaybackControl() const;
     void applyText(const char* text);
