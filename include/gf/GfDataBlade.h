@@ -97,6 +97,10 @@ public:
     // unit among its functions (no this). What it does: sets local game flag 0xBDCD (width 1) of the game data's
     // GameFlag (game + 0xFBBC4) to flag; GfGameUtil::incGameClearCount passes getDataGame() and true.
     static void fn_71002320AC(SDataGame* game, bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among its functions (no this). What it does: sets local game flag 0xD860 (width 1) of
+    // game's GameFlag (+0xFBBC4) to flag; TUnk_B54858::fn_71002A7430 passes getDataGame() and (mode == 1).
+    static void fn_71002324FC(SDataGame* game, bool flag);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
     // unit among its functions (no this). What it does: counts an enemy (arrange id) up by one: below 1500 local
     // flag type 0x10 (16 bits) index enemy + 0x2E, else the short at 0x11C084 + enemy * 2 of the game data; capped

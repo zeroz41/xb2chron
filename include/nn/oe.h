@@ -15,6 +15,9 @@ int GetUserInactivityDetectionTimeExtensionMode();
 void SetUserInactivityDetectionTimeExtended(bool isExtended);
 void SetUserInactivityDetectionTimeExtendedUnsafe(bool isExtended);
 bool IsUserInactivityDetectionTimeExtended();
+// whether the system's capture button may take screenshots
+void EnableScreenShot();
+void DisableScreenShot();
 
 }}  // namespace nn::oe
 
