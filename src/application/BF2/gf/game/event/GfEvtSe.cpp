@@ -45,8 +45,16 @@ void GfEvtSe::createSe(const char* name) {
     m_ses.push_back(se);
 }
 
-// isLoadedSe (0x71002A0498) is not written yet: its code keeps clang's cleanup-destination switch (null resource 3,
-// loaded 0, not loaded 1, loop end 2), which a plain range-for does not leave; a local with a non-trivial (empty)
-// destructor around the loop reproduces it, and what that local was is not known.
+bool GfEvtSe::isLoadedSe() const {
+    for (const SeInfo& se : m_ses) {
+        if (se.m_resource == nullptr) {
+            continue;
+        }
+        if (!se.m_resource->valid()) {
+            return false;
+        }
+    }
+    return true;
+}
 
 }  // namespace gf
