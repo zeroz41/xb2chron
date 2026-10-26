@@ -39,6 +39,10 @@ extern fw::MemHandlebaseAllocator s_ResAllocator;  // getResourceAllocator's ("M
 extern unsigned char* s_BdatFPs[17];          // the menu's BDAT tables (initBdatFP), by index
 extern unsigned int s_SafeMarginW;                 // setSafeMergin's
 extern unsigned int s_SafeMarginH;
+// Proposed names, not the original's: the symbols leave them unnamed (lbl_7100B75878, lbl_7100B75880, lbl_7100EC5458)
+extern unsigned int s_layerMask;     // the add-on layers usable (fn_7100696950 sets a bit, fn_7100696970 tests one)
+extern const char* s_menuDir;        // the menu's root folder ("menu"; fn_7100696930 sets it)
+extern unsigned int s_uioReplaceNo;  // MNU_UioReplace's replace column (fn_7100696920 sets it)
 void initLayerLib();
 void termLayerLib();
 void initBdatFP();  // opens the menu's BDAT tables into s_BdatFPs (UIManager::resetData first)
@@ -75,6 +79,8 @@ bool isValid(unsigned int handle);
 bool isTerm(unsigned int handle);
 UILayoutObject* getLayoutObject(unsigned int handle);  // null when the handle is no layout object's
 unsigned long timeSecToUITime(float sec);  // seconds in UI time units
+unsigned int getScreenWidth();   // the layer library's screen width
+unsigned int getScreenHeight();  // the layer library's screen height
 bool adjustScreen(mm::Rect<short>& rect);  // true when it had to move the rectangle onto the screen
 // true when it had to move rect into area (UIObjectDockPlugin's execute keeps its object inside its area)
 bool adjustRect(mm::Rect<short>& rect, mm::Rect<short>& area);
@@ -88,6 +94,27 @@ void setDockPos(unsigned int handle, unsigned int target, unsigned char side, bo
 // set (1 << bit tested against the word). GfMenuObjUtil::fn_710048FD30 passes its add-on menu layer, and
 // ui::UIManager::createLayer/terminateLayer/releaseLayer call it too.
 bool fn_7100696970(unsigned int bit);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free UIUtil function because its address is
+// in ui/UIUtil's unit among UIUtil's functions. What it does: stores its argument in s_uioReplaceNo, the column
+// number makeMenuUIOFileName reads MNU_UioReplace's "replace%02d" from (gf::GfMenuManager's constructor and
+// fn_71003597B0 call it).
+void fn_7100696920(unsigned int no);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free UIUtil function because its address is
+// in ui/UIUtil's unit among UIUtil's functions. What it does: stores the menu's root folder s_menuDir ("menu" until
+// set; the makeMenu*FileName paths start with it); gf::GfMenuManager's constructor calls it.
+void fn_7100696930(const char* dir);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free UIUtil function because its address is
+// in ui/UIUtil's unit next to fn_7100696930. What it does: returns s_menuDir (GfMenuMapInfo::setCurrentMap,
+// getMapInfoIndex and GfMenuObjStaffroll::initialize read it).
+const char* fn_7100696940();
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free UIUtil function because its address is
+// in ui/UIUtil's unit next to fn_7100696970. What it does: sets bit `bit` of the layer mask s_layerMask (the bit
+// fn_7100696970 tests); gf::GfMenuManager's constructor calls it.
+void fn_7100696950(unsigned int bit);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free UIUtil function because its address is
+// in ui/UIUtil's unit among UIUtil's functions. What it does: true when `file` is one of the "file" column's values
+// of MNU_UioReplace (s_BdatFPs[16]), compared by strcmp; fn_7100353A94 calls it.
+bool fn_7100696990(const char* file);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free UIUtil function because its address is
 // in ui/UIUtil's unit next to fn_7100696970. What it does: the layer BDAT of an add-on: for 0 the menu's own layer
 // table (s_BdatFPs[6], getBdatFP(6)); while bit `dlc` of the layer mask lbl_7100B75878 is set, the table
