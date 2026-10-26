@@ -7,6 +7,7 @@ public:
     static const char* getName(unsigned int skill);
     static bool getName(unsigned char*& bdat, unsigned int& id, unsigned int skill);
     static unsigned int getEnhance(unsigned int skill, unsigned int index);
+    static bool getEnhanceCaption(unsigned char*& bdat, unsigned int& id, unsigned int skill, unsigned int level);
 };
 }  // namespace gf
 

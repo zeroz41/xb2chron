@@ -77,6 +77,19 @@ public:
     // GfMenuObjUtil::fn_710048FD30(3) holds and the singleton exists, the first of the three records at 0x4CF28
     // (0x10 apart) whose blade (+4) is the argument, else nullptr.
     static const BladeOwner* fn_7100367BD8(unsigned int blade);
+    // what fn_7100367C78 answers: the 8 bytes after a record's driver word (+4 and +8 of the 0x10-byte records at
+    // 0x4CF28; the names are not the original's). GfMenuCharDataAdapter::fn_7100339574 shows m_rate times 100 in
+    // battle and, outside battle, maps m_type 2 / 1 to fn_7100368418(1) / fn_7100368418(0).
+    struct DriverGauge {
+        int m_type;
+        float m_rate;
+    };
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
+    // GfMenuReference's accessors (between fn_7100367BD8 and fn_7100367D1C) and reads its singleton. What it does:
+    // nullptr unless GfMenuObjUtil::fn_710048FD30(3) holds and the singleton exists; else the address of the +4 word
+    // of the first of the three records at 0x4CF28 (0x10 apart) whose +0 word is the argument (a driver id from
+    // GfMenuCharDataAdapter::fn_7100339574), nullptr when none is.
+    static const DriverGauge* fn_7100367C78(unsigned int driver);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
     // GfMenuReference's accessors (after fn_7100367BD8) and reads its singleton. What it does: -1 unless
     // GfMenuObjUtil::fn_710048FD30(3) holds and the singleton exists; else the +4 word of the first of the three

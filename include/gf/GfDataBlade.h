@@ -246,6 +246,7 @@ public:
     static unsigned int getEquipOrbMax(unsigned int blade);
     // the orb in a blade's slot (GfEquipUtil::getEquipBladeOrb returns it, zero-extended)
     static unsigned short getEquipOrb(unsigned int blade, unsigned int slot);
+    static void setEquipOrb(unsigned int blade, unsigned short orb, unsigned int slot);
     static unsigned int getCreateEvent(unsigned int blade);
     static unsigned int getNormalTalk(unsigned int blade);
     static unsigned int getTrustPoint(unsigned int blade);

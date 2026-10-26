@@ -18,6 +18,7 @@ public:
     static bool isValidBdatID(unsigned char* bdat, int id);
     static int getIconIDFromWeatherType(unsigned int type);  // GfFieldWeather::getCurrentWtrType's
     static int getIconImageIndex(int icon);
+    static int getValueLevel(unsigned char* bdat, unsigned int value);  // the level a table gives that value
     static unsigned short getIconIDFromArtsID(unsigned short arts);
     static void getMenuOffset(int id, MenuOffset& offset);  // the menu offset of that id (GfGameUtil::getUiOffsetId's)
 };
