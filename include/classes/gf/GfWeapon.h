@@ -38,6 +38,17 @@ int fn_71002EEBE4();
 // GfDataManager::getDataGame()+0x11AF18/0x11AF0C/0x11AF24/0x11AF30/0x11AF3C is non-zero. GfFieldSound::createMapSound
 // loads the "dlc_se_btl_spskill" sound pack when it is true.
 bool fn_71002ED330();
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit among free placeholders and it takes only a blade id. What it does: true when
+// GfGameManager::fn_71002A9E68 holds, the blade's trust rank (GfDataBlade::getTrustRank) is 5 and its
+// getKizunaringMax equals getKizunaringCompleteNum. GfMenuObjBlKizunaRing::procAchieve passes the reference blade.
+bool fn_71002EE72C(unsigned int blade);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function, placed as fn_71002EE72C.
+// What it does: under fn_71002EE72C's conditions (with max <= complete), clears the byte at 0x8A1 of the blade's
+// GfDataBlade::getSDataBlade, GfGameUtil::addTrustRankForKizunaRing, then GfQuestUtil::execReward of
+// GfKizunaringUtil::getCompleteKizunaringReward when that gives one. GfMenuObjBlKizunaRing::procAchieve calls it
+// when fn_71002EE72C holds.
+void fn_71002EE640(unsigned int blade);
 }  // namespace gf
 
 #endif
