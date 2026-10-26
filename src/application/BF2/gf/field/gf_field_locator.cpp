@@ -117,6 +117,26 @@ void LocatorEventPreorder::update() {
     }
     m_posNum = 1;
 }
+void LocatorPrecious::update() {
+    if (m_preciousId == 0) {
+        return;
+    }
+    m_posList.clear();
+    for (gmk::GmkAcc* it = m_accs.begin(); it != m_accs.end(); ++it) {
+        if (!it->isValid()) {
+            create(m_questId, m_preciousId);
+            return;
+        }
+        const gmk::GmkPrecious* precious = static_cast<const gmk::GmkPrecious*>(it->m_gmk);
+        if (precious->isObtained()) {
+            continue;
+        }
+        if (!precious->getBdatInfo()->isPopCondMatched()) {
+            continue;
+        }
+        m_posList.push_back(*it->m_gmk->m_pos);
+    }
+}
 void LocatorPrecious::onTraverse(const gmk::AGmkBase& gmk) {
     if (!gmk.isValid()) {
         return;
