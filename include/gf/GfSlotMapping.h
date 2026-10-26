@@ -3,6 +3,7 @@
 
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_SLOT_HANDLE; }
+namespace gf { class GfAssetPack; }
 
 namespace gf {
 // the asset slots' layout (application/BF2/gf/asset/gf_slot_mapping.cpp)
@@ -13,6 +14,8 @@ public:
     void update(const fw::UpdateInfo& info);
     // gives a slot GfAssetManager::releaseSlotHandle is handed back
     void releaseSlot(GF_SLOT_HANDLE* handle);
+    // whether a slot is requested for the pack (GfAssetPack::isCached: a requested pack is not cached)
+    bool isRequest(const GfAssetPack* pack) const;
 };
 }  // namespace gf
 

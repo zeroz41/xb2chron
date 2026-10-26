@@ -181,7 +181,7 @@ unsigned int GfAssetManager::getUsedAssetPackInfo() {
 const char* GfAssetManager::getModelInfo(GF_ASSET_HANDLE* handle) {
     AssetPackInfo* info = getAssetPackInfo(handle);
     if (info != nullptr) {
-        return info->m_modelName;
+        return info->m_modelName.m_str;
     }
     return "";
 }
@@ -196,7 +196,7 @@ void GfAssetManager::setMotionInfo(GF_ASSET_HANDLE* handle, const char* name) {
 const char* GfAssetManager::getMotionInfo(GF_ASSET_HANDLE* handle) {
     AssetPackInfo* info = getAssetPackInfo(handle);
     if (info != nullptr) {
-        return info->m_motionName;
+        return info->m_motionName.m_str;
     }
     return "";
 }

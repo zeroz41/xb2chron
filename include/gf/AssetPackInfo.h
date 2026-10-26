@@ -9,7 +9,10 @@ namespace gf { enum GfFileIdx : int; }
 namespace fw { class SoundPack; }
 namespace gf { class GfAssetResource; }
 namespace mm { namespace mtl { template <typename T, unsigned long N> class FixedVector; } }
-namespace mm { namespace mtl { template <int> class FixStr; } }
+
+#include "mm/mtl/FixStr.h"
+
+namespace gf { class GF_ASSET_HANDLE; }
 
 namespace gf {
 // one loaded asset pack: GfAssetManager keeps them 0x98 apart (getAssetPackInfo)
@@ -32,8 +35,12 @@ public:
     void lockEnterRersource();
     void setExtendResource(unsigned int index, GfExtendResource* resource);
     void setupStreamObject();
+    // marks the pack destroyed once and hands its handle to GfAssetUtil::addDestroyObject (1.0.0's symbols name it)
+    void setDestroy();
 
-    unsigned char pad_0[0x38];
+    unsigned char pad_0[0x8];
+    GF_ASSET_HANDLE* m_handle;  // setDestroy hands it to GfAssetUtil::addDestroyObject (the name is not the original's)
+    unsigned char pad_10[0x28];
     GF_OBJ_HANDLE* m_objHandle;  // the object GfAssetUtil::addDestroyObject destroys for the pack
     // GfAssetManager::getExtentResource reads them by index, destroyExtResource releases all four (the name is not
     // the original's)
@@ -46,8 +53,9 @@ public:
     unsigned char pad_68[0x4];
     // setModelName and setMotionName's names, GfAssetManager::getModelInfo and getMotionInfo read them (the names
     // are not the original's)
-    char m_modelName[0x14];
-    char m_motionName[0x18];
+    mm::mtl::FixStr<16> m_modelName;
+    mm::mtl::FixStr<16> m_motionName;
+    int m_loadState;  // setupLoadStart clears it (the name is not the original's)
 };
 }  // namespace gf
 
