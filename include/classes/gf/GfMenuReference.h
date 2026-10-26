@@ -64,19 +64,6 @@ public:
     static const ui::UIStr& getReferenceString(unsigned short index);
     static unsigned int getReferenceDriverID(unsigned int index);
     static unsigned int getReferenceBladeID(unsigned int index);
-    // a 0x10-byte record of the three at 0x4CF28 of the instance: a driver and a blade (the names are not the
-    // original's; GfMenuCharDataAdapter::ReferenceBladeOwnerDriverConverter shows the driver)
-    struct BladeOwner {
-        unsigned int m_driver;
-        unsigned int m_blade;
-        unsigned char pad_8[0x8];
-    };
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's
-    // ReferenceBladeOwnerDriverConverter::getCharData read GfDataBlade::getSetDriver(getReferenceBladeID(index)) there).
-    // A member because it sits among GfMenuReference's accessors and reads its singleton. What it does: when
-    // GfMenuObjUtil::fn_710048FD30(3) holds and the singleton exists, the first of the three records at 0x4CF28
-    // (0x10 apart) whose blade (+4) is the argument, else nullptr.
-    static const BladeOwner* fn_7100367BD8(unsigned int blade);
     // what fn_7100367C78 answers: the 8 bytes after a record's driver word (+4 and +8 of the 0x10-byte records at
     // 0x4CF28; the names are not the original's). GfMenuCharDataAdapter::fn_7100339574 shows m_rate times 100 in
     // battle and, outside battle, maps m_type 2 / 1 to fn_7100368418(1) / fn_7100368418(0).
@@ -84,6 +71,21 @@ public:
         int m_type;
         float m_rate;
     };
+    // a 0x10-byte record of the three at 0x4CF28 of the instance: a driver, then the gauge fn_7100367C78 answers
+    // (the names are not the original's; GfMenuCharDataAdapter::ReferenceBladeOwnerDriverConverter shows the
+    // driver; fn_7100367BD8 compares the gauge's first word, which it calls a blade, with its argument;
+    // fn_7100367D1C clears every m_rate)
+    struct BladeOwner {
+        unsigned int m_driver;
+        DriverGauge m_gauge;
+        unsigned char pad_C[0x4];
+    };
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's
+    // ReferenceBladeOwnerDriverConverter::getCharData read GfDataBlade::getSetDriver(getReferenceBladeID(index)) there).
+    // A member because it sits among GfMenuReference's accessors and reads its singleton. What it does: when
+    // GfMenuObjUtil::fn_710048FD30(3) holds and the singleton exists, the first of the three records at 0x4CF28
+    // (0x10 apart) whose blade (+4) is the argument, else nullptr.
+    static const BladeOwner* fn_7100367BD8(unsigned int blade);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
     // GfMenuReference's accessors (between fn_7100367BD8 and fn_7100367D1C) and reads its singleton. What it does:
     // nullptr unless GfMenuObjUtil::fn_710048FD30(3) holds and the singleton exists; else the address of the +4 word
@@ -149,6 +151,10 @@ public:
     // the singleton); gf_menu_btlch_adapter's callbacks pass it to GfGameManager::fn_71002AC60C as the record's mode
     // and its adapter's update marks itself changed when it changes.
     static unsigned int fn_7100369304();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among this
+    // class's accessors and writes its singleton. What it does: stores the word fn_7100369304 reads (0x4CCB4);
+    // callers fn_71003ADAD0, fn_71003AE838, fn_7100445830, fn_7100445F58.
+    static void fn_71003692E4(unsigned int mode);
     // the battle's Homura/Hikari mode the menu shows (1.0.0's enum; its values are not known)
     enum HOMURA_MODE {};
     // a party member's elemental combo (8 bytes each, 2 of them; the names are not the original's)
@@ -239,20 +245,36 @@ public:
     static void fn_71003673F0(float ratio);
     static float fn_710036742C();
     // Records the layer-3 battle menu reads (the names and their fields' names are not the original's).
+    // fn_7100366074's and fn_71003680AC's: four 12-byte records at 0x4CF70 of the instance (the names are not the
+    // original's): a value, 4 flags (fn_710036816C sets, fn_71003682D8 tests; fn_7100366074 starts them at 1) and a
+    // byte fn_7100366074 clears
+    struct LayerCommand {
+        unsigned int m_value;
+        ::mm::mtl::Bitflag<4> m_flags;
+        unsigned char m_state;
+        unsigned char pad_9[0x3];
+    };
     // fn_71003686A0's: two 8-byte records at 0x4CFA4 of the instance (a zeroed static one when the index is 2 or
     // more, there is no instance or menu layer 3 is not up).
     struct LayerGauge {
+        LayerGauge() : m_ratio(), m_count(), m_stateA(), m_stateB() {}
         float m_ratio;          // GfMenuBattleAdapter::fn_71003336A0 shows it in percent
         unsigned char m_count;  // GfMenuBattleAdapter::fn_7100333700/fn_7100333750 show it (0..5)
-        unsigned char pad_5[0x3];
+        // fn_7100368570's and fn_7100368600's flags: changing them sends the party gauge's "LAY_siren" (record 0)
+        // or "LAY_gauge" (record 1) events (GfMenuObjPartyGauge::fn_7100456EA0 etc.); the names are not the original's
+        bool m_stateA;
+        bool m_stateB;
+        unsigned char pad_7[0x1];
     };
     // fn_71003687B0's: three 8-byte records at 0x4CFB4 of the instance (a zeroed static one otherwise)
     struct LayerGimmick {
+        LayerGimmick() : m_gimmickId(), m_ratio() {}
         unsigned int m_gimmickId;  // a type-3 DataParamAcc's id (face icon, name, attribute icon)
         float m_ratio;             // GfMenuBattleAdapter::fn_710033383C shows it in percent
     };
     // fn_7100368B40's: the record at 0x4CFE4 of the instance (a zeroed static one without the instance)
     struct LayerResult {
+        LayerResult() : m_number(), m_ratio(), m_numbers() {}
         unsigned int m_number;      // GfMenuBattleAdapter::fn_71003339D0 (0..999)
         float m_ratio;              // GfMenuBattleAdapter::fn_7100333A00, in percent
         unsigned int m_numbers[3];  // GfMenuBattleAdapter::fn_7100333A40, by m_index
@@ -265,6 +287,29 @@ public:
     // it); fn_7100368418 tests bit `bit` (asserting bit < 32) of the word at 0x4CFA0 (GfMenuBattleAdapter
     // fn_7100333674 asks bit 3, fn_71003336A0/fn_7100333700/fn_7100333750 bit 4); fn_71003686A0, fn_71003687B0 and
     // fn_7100368B40 return the records above.
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because they sit among this
+    // class's accessors in gf_menu_reference and write its singleton's fields, only while
+    // GfMenuObjUtil::fn_710048FD30(3) holds. What they do (btl::UIManager::UpdateMenuData calls each):
+    // fn_7100367F98 stores the float at 0x4CF64 (fn_7100367FDC reads it); fn_7100368018 the int at 0x4CF68
+    // (fn_710036805C reads it); fn_710036810C the flag at 0x4CF6C, calling TUnk_B60E28::fn_71003C3550(flag) when
+    // it changes (also from fn_7100358F74); fn_7100368380 sets or clears bit `bit` (< 32) of the word at 0x4CFA0
+    // (also from GfMenuManager::gevPlayerControl, GfMenuObjMainMenu2::seqExecTerm); fn_7100368498 stores record
+    // `index`'s (< 2) ratio at 0x4CFA4 clamped to 0..1; fn_710036851C its count byte (+4).
+    // fn_71003680AC returns record `index`'s (< 4) value at 0x4CF70 (0 otherwise) and fn_71003682D8 tests its flag
+    // `flag` (both from fn_71003C662C).
+    static void fn_7100367F98(float ratio);
+    static void fn_7100368018(int index);
+    static void fn_710036810C(bool flag);
+    static void fn_7100368380(unsigned int bit, bool on);
+    static void fn_7100368498(float ratio, unsigned int index);
+    static void fn_710036851C(unsigned int index, unsigned char count);
+    // fn_7100368744 stores record `index`'s (< 3) gimmick id and ratio at 0x4CFB4; fn_7100368570 / fn_7100368600
+    // store record `index`'s (< 2) m_stateA / m_stateB, calling GfMenuObjPartyGauge's event senders when it changes.
+    static void fn_7100368744(unsigned int index, unsigned int gimmickId, float ratio);
+    static void fn_7100368570(unsigned int index, bool on);
+    static void fn_7100368600(unsigned int index, bool on);
+    static unsigned int fn_71003680AC(unsigned int index);
+    static bool fn_71003682D8(unsigned int index, unsigned int flag);
     static float fn_7100367FDC();
     static int fn_710036805C();
     static bool fn_7100368418(unsigned int bit);
@@ -314,7 +359,7 @@ public:
     unsigned int m_referenceMissionID;
     unsigned int m_referenceShopID;
     unsigned int m_referenceWorldMapID;
-    unsigned char pad_4CCB4[0x4];
+    unsigned int m_challengeBattleMode;  // fn_71003692E4/fn_7100369304 (the name is not the original's)
     unsigned int m_referenceItemType;  // fn_710036934C's item type (the name is not the original's)
     unsigned int m_driverVirtualLevel;
     unsigned int m_driverVirtualBladeID;
@@ -336,7 +381,20 @@ public:
     // fn_71003673F0/fn_710036742C's ratio, kept within 0..1 (the name is not the original's): set by
     // GfMenuObjButtonChallenge2's sequences, shown in percent by GfMenuBattleAdapter::fn_710033355C
     float m_challengeRatio;
-    unsigned char pad_4CF28[0xD0];
+    // the layer-3 battle menu's state (btl::UIManager::UpdateMenuData sets it through the accessors above; the
+    // names are not the original's)
+    BladeOwner m_bladeOwner[3];  // fn_7100367BD8, fn_7100367C78, fn_7100367EF4, fn_7100367D1C
+    unsigned char pad_4CF58[0xC];
+    float m_layerRatio;  // fn_7100367F98/fn_7100367FDC
+    int m_layerIndex;    // fn_7100368018/fn_710036805C
+    bool m_layerFlag;    // fn_710036810C
+    unsigned char pad_4CF6D[0x3];
+    LayerCommand m_layerCommand[4];
+    ::mm::mtl::Bitflag<32> m_layerBits;  // fn_7100368380/fn_7100368418
+    LayerGauge m_layerGauge[2];          // fn_7100368498, fn_710036851C, fn_71003686A0
+    LayerGimmick m_layerGimmick[3];      // fn_71003687B0
+    unsigned char pad_4CFCC[0x18];
+    LayerResult m_layerResult;  // fn_7100368B40
 };
 }  // namespace gf
 
