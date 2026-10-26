@@ -5,21 +5,37 @@
 #include "classes/ml/DrMdoCtlSeamAll.h"
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/DrMdoZSortObj.h"
+#include "classes/ml/DrShdLgtClustered.h"
+#include "classes/ml/DrShdLgtHybrid.h"
 #include "grlib/CGLibCtl.h"
+#include "grlib/CGLibDblUniformBlock.h"
+#include "grlib/CGLibOneUniformBlock.h"
+#include "grlib/CGLibTriUniformBlock.h"
+#include "grlib/CGLibUniformArray.h"
 #include "math.h"
-#include "mm/Math.h"
+#include "ml/DrCalcMan.h"
+#include "ml/DrCalcViewWork.h"
 #include "ml/DrEnvironmentAnim.h"
 #include "ml/DrIniSys.h"
 #include "ml/DrMdoAnim.h"
 #include "ml/DrMdoSetup.h"
+#include "ml/DrMdoZSortMan.h"
 #include "ml/DrPixlDeferred.h"
 #include "ml/DrPixlMan.h"
 #include "ml/DrPixlPostMan.h"
 #include "ml/DrPixlPostObjCubeMapIBL.h"
 #include "ml/DrPixlPostParm.h"
 #include "ml/DrResMdoMat.h"
+#include "ml/DrShdDataList.h"
+#include "ml/DrShdLgtMan.h"
+#include "ml/DrShdMan.h"
+#include "ml/DrShdMdoDecExtTbl.h"
 #include "ml/MdoWrkMatRes.h"
 #include "ml/MdsMatInfoHeader.h"
+#include "ml/MdsMatValShaderCate.h"
+#include "mm/Math.h"
+#include "mtl/MemManager.h"
+#include "string.h"
 
 namespace ml {
 
@@ -903,5 +919,248 @@ void (DrMdoSetup::*DrMdoSetup::s_pStaticImage[5])(const MdsMatInfoHeader*, unsig
     &DrMdoSetup::varStImg_Velocity,
     &DrMdoSetup::varStImg_ZBuff,
 };
+
+void DrMdoSetup::uniformBlock_no(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {}
+
+void DrMdoSetup::uniformBlock_Static(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    m_pDrMan->m_calcMan->m_pViewWork->m_staticBlock.setUniformBlock(m_pDecExtTbl->getValGlobalParam(paramIdx));
+}
+
+void DrMdoSetup::uniformBlock_Material(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    m_pWrkMatRes->m_pMatUniformArray->m_pArray[static_cast<unsigned int>(matIdx)].setUniformBlock(m_pDecExtTbl->getValGlobalParam(paramIdx));
+}
+
+void DrMdoSetup::uniformBlock_Light(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    m_pDrMan->m_calcMan->m_pViewWork->m_lightBlock.setUniformBlock(m_pDecExtTbl->getValGlobalParam(paramIdx));
+}
+
+void DrMdoSetup::uniformBlock_Mdl(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    m_pWrkMatRes->m_pTriUniformArray->m_pArray[static_cast<unsigned int>(mdlIdx)].setUniformBlock(m_pDecExtTbl->getValGlobalParam(paramIdx));
+}
+
+void DrMdoSetup::uniformBlock_Bone(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    m_pDrMan->m_shdMan->m_dataList->m_boneStmOut.setStorageBuffer(m_pDecExtTbl->getValGlobalParam(paramIdx));
+}
+
+void DrMdoSetup::uniformBlock_AvatarChar(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    m_pWrkMatRes->m_pAvatarTbl->m_charBlock->setUniformBlock(m_pDecExtTbl->getValGlobalParam(paramIdx));
+}
+
+void DrMdoSetup::uniformBlock_AvatarDoll(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    m_pWrkMatRes->m_pAvatarTbl->m_dollBlock->setUniformBlock(m_pDecExtTbl->getValGlobalParam(paramIdx));
+}
+
+void DrMdoSetup::uniformBlock_Fog(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    m_pDrMan->m_calcMan->m_pViewWork->m_fogBlock.setUniformBlock(m_pDecExtTbl->getValGlobalParam(paramIdx));
+}
+
+void DrMdoSetup::uniformBlock_Toon(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    m_pDrMan->m_calcMan->m_pViewWork->m_toonBlock.setUniformBlock(m_pDecExtTbl->getValGlobalParam(paramIdx));
+}
+
+void DrMdoSetup::uniformBlock_VolTexCalc(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    m_pWrkMatRes->m_pVolTexUniformArray->m_pArray[texIdx].setUniformBlock(m_pDecExtTbl->getValGlobalParam(paramIdx));
+}
+
+void DrMdoSetup::uniformBlock_GlobalIBL(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    m_pDrMan->m_pixlMan->m_objTbl->m_postMan->m_cubeMapIBL->setUniformBlock(m_pDecExtTbl->getValGlobalParam(paramIdx));
+}
+
+void DrMdoSetup::uniformBlock_ClusterParam(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    DrShdLgtClustered* clustered = m_pDrMan->m_shdMan->m_lgtMan->getHybridLight()->m_pClustered;
+    unsigned int location = m_pDecExtTbl->getValGlobalParam(paramIdx);
+    if (cate->m_flags & 1) {
+        clustered->setParamStorageBuffer(m_pDrMan->m_postParmIdx, location);
+    } else {
+        clustered->setParamUniformBlock(m_pDrMan->m_postParmIdx, location);
+    }
+}
+
+void DrMdoSetup::uniformBlock_ClusterPntList(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    DrShdLgtClustered* clustered = m_pDrMan->m_shdMan->m_lgtMan->getHybridLight()->m_pClustered;
+    unsigned int location = m_pDecExtTbl->getValGlobalParam(paramIdx);
+    if (cate->m_flags & 1) {
+        clustered->setPntLightStorageBuffer(m_pDrMan->m_postParmIdx, location);
+    } else {
+        clustered->setPntLightUniformBlock(m_pDrMan->m_postParmIdx, location);
+    }
+}
+
+void DrMdoSetup::uniformBlock_ClusterSptList(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    DrShdLgtClustered* clustered = m_pDrMan->m_shdMan->m_lgtMan->getHybridLight()->m_pClustered;
+    unsigned int location = m_pDecExtTbl->getValGlobalParam(paramIdx);
+    if (cate->m_flags & 1) {
+        clustered->setSptLightStorageBuffer(m_pDrMan->m_postParmIdx, location);
+    } else {
+        clustered->setSptLightUniformBlock(m_pDrMan->m_postParmIdx, location);
+    }
+}
+
+void DrMdoSetup::uniformBlock_ClusterIdxList(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    DrShdLgtClustered* clustered = m_pDrMan->m_shdMan->m_lgtMan->getHybridLight()->m_pClustered;
+    unsigned int location = m_pDecExtTbl->getValGlobalParam(paramIdx);
+    if (cate->m_flags & 1) {
+        clustered->setLightListStorageBuffer(m_pDrMan->m_postParmIdx, location);
+    } else {
+        clustered->setLightListUniformBlock(m_pDrMan->m_postParmIdx, location);
+    }
+}
+
+void DrMdoSetup::uniformBlock_ClusterAddressList(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    DrShdLgtClustered* clustered = m_pDrMan->m_shdMan->m_lgtMan->getHybridLight()->m_pClustered;
+    unsigned int location = m_pDecExtTbl->getValGlobalParam(paramIdx);
+    if (cate->m_flags & 1) {
+        clustered->setPointerListStorageBuffer(m_pDrMan->m_postParmIdx, location);
+    } else {
+        clustered->setPointerListUniformBlock(m_pDrMan->m_postParmIdx, location);
+    }
+}
+
+void DrMdoSetup::uniformBlock_RimBloomCalc(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    m_pWrkMatRes->m_pRimBloomUniformArray->m_pArray[static_cast<unsigned int>(mdlIdx)].setUniformBlock(m_pDecExtTbl->getValGlobalParam(paramIdx));
+}
+
+void DrMdoSetup::uniformBlock_Toon2(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    m_pDrMan->m_calcMan->m_pViewWork->m_toon2Block.setUniformBlock(m_pDecExtTbl->getValGlobalParam(paramIdx));
+}
+
+DrMdoZSortMan::DrMdoZSortMan(DrMan* drMan)
+    : m_pDrMan(drMan), m_pBuff(nullptr), m_pSpecial(nullptr), m_sortFar(300.0f), m_sortRate(0.8f) {
+    m_pBuff = mtl::MemManager::allocate(drMan->m_workHandle, sizeof(DrMdoZSortObj*) * SORT_MAX * 2 + SORT_MAX / 8, 0x20,
+                                        false, "no name", 0);
+    m_top = static_cast<DrMdoZSortObj**>(m_pBuff);
+    m_last = m_top + SORT_MAX;
+    m_useBits = reinterpret_cast<unsigned int*>(m_last + SORT_MAX);
+}
+
+DrMdoZSortMan::~DrMdoZSortMan() {
+    if (m_pBuff != nullptr) {
+        mtl::MemManager::deallocate(m_pBuff, 0, false);
+        m_pBuff = nullptr;
+    }
+}
+
+void DrMdoZSortMan::beginViewWorld() {
+    const mm::Vec3& viewPos = m_pDrMan->m_calcMan->m_pViewWork->m_viewPos;
+    memset(m_useBits, 0, SORT_MAX / 8);
+    m_viewPos.x = viewPos.x;
+    m_viewPos.y = viewPos.y;
+    m_viewPos.z = viewPos.z;
+    m_head = nullptr;
+    m_tail = nullptr;
+    m_pSpecial = nullptr;
+}
+
+void DrMdoZSortMan::setViewCloud(DrMdoZSortObj* obj) {
+    stockObj(obj, SORT_CLOUD);
+}
+
+void DrMdoZSortMan::endViewWorld() {
+    for (int i = 0; i < SORT_MAX; i++) {
+        if (m_useBits[i >> 5] & (1 << (i & 0x1F))) {
+            if (m_head != nullptr) {
+                m_tail->setNext(m_top[i]);
+                m_top[i]->setParent(m_tail);
+            } else {
+                m_head = m_top[i];
+            }
+            m_tail = m_last[i];
+        }
+    }
+}
+
+void DrMdoZSortMan::viewSetupRender() {
+    if (m_pSpecial != nullptr) {
+        m_pSpecial->SetupRender();
+    }
+    for (DrMdoZSortObj* obj = m_head; obj != nullptr; obj = obj->getNext()) {
+        obj->SetupRender();
+    }
+}
+
+void DrMdoZSortMan::viewZPrepassRender() {
+    if (m_pSpecial != nullptr) {
+        m_pSpecial->ZPrepassRender();
+    }
+    for (DrMdoZSortObj* obj = m_head; obj != nullptr; obj = obj->getNext()) {
+        obj->ZPrepassRender();
+    }
+}
+
+void DrMdoZSortMan::viewThicknessRenderFirst() {
+    if (m_pSpecial != nullptr) {
+        m_pSpecial->ThicknessRenderFirst();
+    }
+    for (DrMdoZSortObj* obj = m_head; obj != nullptr; obj = obj->getNext()) {
+        obj->ThicknessRenderFirst();
+    }
+}
+
+void DrMdoZSortMan::viewThicknessRenderSecond() {
+    if (m_pSpecial != nullptr) {
+        m_pSpecial->ThicknessRenderSecond();
+    }
+    for (DrMdoZSortObj* obj = m_head; obj != nullptr; obj = obj->getNext()) {
+        obj->ThicknessRenderSecond();
+    }
+}
+
+void DrMdoZSortMan::viewRender() {
+    for (DrMdoZSortObj* obj = m_head; obj != nullptr; obj = obj->getNext()) {
+        obj->render();
+    }
+    if (m_pSpecial != nullptr) {
+        m_pSpecial->render();
+    }
+}
+
+void DrMdoZSortMan::viewGBuffRender() {
+    for (DrMdoZSortObj* obj = m_head; obj != nullptr; obj = obj->getNext()) {
+        obj->GBuffRender();
+    }
+    if (m_pSpecial != nullptr) {
+        m_pSpecial->GBuffRender();
+    }
+}
+
+void DrMdoZSortMan::viewLightPrePassRender() {
+    if (m_pSpecial != nullptr) {
+        m_pSpecial->lightPrePassRender();
+    }
+    // back to front
+    for (DrMdoZSortObj* obj = m_tail; obj != nullptr; obj = obj->getParent()) {
+        obj->lightPrePassRender();
+    }
+}
+
+void DrMdoZSortMan::viewAlphaRender() {
+    if (m_pSpecial != nullptr) {
+        m_pSpecial->alphaRender();
+    }
+    // back to front
+    for (DrMdoZSortObj* obj = m_tail; obj != nullptr; obj = obj->getParent()) {
+        obj->alphaRender();
+    }
+}
+
+void DrMdoZSortMan::viewSpAlphaRender() {
+    if (m_pSpecial != nullptr) {
+        m_pSpecial->spAlphaRender();
+    }
+    // back to front
+    for (DrMdoZSortObj* obj = m_tail; obj != nullptr; obj = obj->getParent()) {
+        obj->spAlphaRender();
+    }
+}
+
+void DrMdoZSortMan::viewRefractionRender() {
+    if (m_pSpecial != nullptr) {
+        m_pSpecial->refractionRender();
+    }
+    // back to front
+    for (DrMdoZSortObj* obj = m_tail; obj != nullptr; obj = obj->getParent()) {
+        obj->refractionRender();
+    }
+}
 
 }  // namespace ml

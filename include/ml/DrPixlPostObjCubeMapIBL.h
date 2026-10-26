@@ -8,6 +8,7 @@ namespace ml {
 class DrPixlPostObjCubeMapIBL {
 public:
     grlib::CGLibTextureBuffer* getPremTexture() const;
+    void setUniformBlock(unsigned int location) const;
 };
 }  // namespace ml
 

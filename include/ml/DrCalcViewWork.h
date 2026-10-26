@@ -2,6 +2,7 @@
 #define ML_DRCALCVIEWWORK_H
 
 #include "classes/ml/DrCalcClipWorkViewPlane.h"
+#include "grlib/CGLibDblUniformBlock.h"
 #include "mm/Mat44.h"
 #include "mm/Vec3.h"
 #include "mm/Vec4.h"
@@ -101,7 +102,15 @@ public:
     DrMan* m_pDrMan;                // 0x700
     unsigned char pad_708[0x68];
     mm::Vec3 m_oldViewPos;          // 0x770
-    unsigned char pad_780[0x22A];
+    unsigned char pad_780[0x30];
+    // view uniform blocks DrMdoSetup's uniformBlock_ callbacks bind (names from those callbacks, not the original's)
+    grlib::CGLibDblUniformBlock m_staticBlock;  // 0x7B0
+    unsigned char pad_7E8[0x38];
+    grlib::CGLibDblUniformBlock m_fogBlock;     // 0x820
+    grlib::CGLibDblUniformBlock m_toonBlock;    // 0x858
+    grlib::CGLibDblUniformBlock m_toon2Block;   // 0x890
+    grlib::CGLibDblUniformBlock m_lightBlock;   // 0x8C8
+    unsigned char pad_900[0xAA];
     // DrGpuCheckObj::setWorldPos/update treat every check object as visible while it is set (the name is not the
     // original's)
     bool m_gpuCheckAllVisible;      // 0x9AA

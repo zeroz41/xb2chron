@@ -3,7 +3,10 @@
 
 #include "mm/Col3.h"
 
-namespace grlib { class CGLibTriUniformArray; }
+#include "grlib/CGLibUniformArray.h"
+
+namespace grlib { class CGLibDblUniformBlock; }
+namespace grlib { class CGLibOneUniformBlock; }
 
 namespace grlib { class CGLibTextureBuffer; }
 
@@ -37,6 +40,9 @@ struct MdoWrkAvatarTbl {
     grlib::CGLibTextureBuffer* m_faceTex[2];  // 0x8, varStTex_AvatarFaceMap1/2
     unsigned char pad_18[0x10];
     grlib::CGLibTextureBuffer* m_eyeTex;  // 0x28, varStTex_AvatarEyeTex
+    unsigned char pad_30[0x10];
+    grlib::CGLibOneUniformBlock* m_charBlock;  // 0x40, DrMdoSetup::uniformBlock_AvatarChar binds it
+    grlib::CGLibOneUniformBlock* m_dollBlock;  // 0x48, DrMdoSetup::uniformBlock_AvatarDoll binds it
 };
 
 // The model data MdoWrkMatRes+0x20 points to: ScnObjAccResSubMesh's constructor adds m_subMeshOfs to its address.
@@ -82,10 +88,17 @@ struct MdoWrkMatRes {
     unsigned char pad_34[0x4];
     float* m_pMatVal;  // 0x38, the material values the callbacks read
     const MdsMatCallBackTbl* m_pCallBackTbl;  // 0x40, read by DrMdoMat::updateMatCallBack
-    unsigned char pad_48[0x58];
+    unsigned char pad_48[0x48];
+    // 0x90, per-material blocks: DrMdoSetup::uniformBlock_Material binds the material's (the name is not the original's)
+    grlib::CGLibUniformArray<grlib::CGLibDblUniformBlock>* m_pMatUniformArray;
+    unsigned char pad_98[0x8];
     // 0xA0: DrResMdoSeamWrkEnv::setupWork hands it the triangle uniform array; the name is not the original's
     grlib::CGLibTriUniformArray* m_pTriUniformArray;
-    unsigned char pad_A8[0x18];
+    unsigned char pad_A8[0x8];
+    // 0xB0 and 0xB8: DrMdoSetup::uniformBlock_VolTexCalc and uniformBlock_RimBloomCalc bind one of their blocks
+    // (the names are not the original's)
+    grlib::CGLibUniformArray<grlib::CGLibDblUniformBlock>* m_pVolTexUniformArray;
+    grlib::CGLibUniformArray<grlib::CGLibDblUniformBlock>* m_pRimBloomUniformArray;
     DrResMdoMat* m_pResMat;  // 0xC0, DrMdlObj::getMaterialRes(int) returns &m_pResMat[i]
     unsigned char pad_C8[0x30];
     float* m_pUniformVal;  // 0xF8, the uniform values the callbacks write

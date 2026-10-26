@@ -10,6 +10,7 @@ class CGLibVtxStmOut {
 public:
     CGLibVtxStmOut();
     ~CGLibVtxStmOut();
+    void setStorageBuffer(unsigned int location);
     void release();
     unsigned int getSize();
 

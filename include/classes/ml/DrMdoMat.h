@@ -4,6 +4,7 @@
 #include "classes/ml/DrMdlBase.h"
 
 namespace ml { class DrMan; }
+namespace ml { class DrShdMdoDecExtTbl; }
 namespace ml { class DrMdoSmlShadowObj; }
 namespace ml { struct MdoWrkMatRes; }
 namespace ml { struct MdoVanishEffectWrk; }
@@ -66,7 +67,10 @@ public:
 
     DrMan* m_pDrMan;  // 0x28, set by 1.0.0's setDrMan(DrMan*) (the field name is not the original's)
     MdoWrkMatRes* m_pWrkMatRes;  // 0x30 (the field name is not the original's)
-    unsigned char pad_38[0x20];
+    // 0x38, the uniformBlock_ callbacks ask it for the location of their global parameter (the name is not the
+    // original's)
+    DrShdMdoDecExtTbl* m_pDecExtTbl;
+    unsigned char pad_40[0x18];
     // DrMdlObj::chageShadowObject hands it to DrMdoSmlShadowMan::changeViewNum (the name is not the original's)
     DrMdoSmlShadowObj* m_pSmlShadowObj;  // 0x58
     unsigned char pad_60[0x78];

@@ -14,6 +14,7 @@ class DrShdLgtMan {
 public:
     void stockBegin();
     void stockEnd();
+    DrShdLgtHybrid* getHybridLight();
     void renderDebugPnt(DrLightObjPnt* light);
     void renderDebugSpt(DrLightObjSpt* light);
 

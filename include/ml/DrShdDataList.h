@@ -2,6 +2,7 @@
 #define ML_DRSHDDATALIST_H
 
 #include "grlib/CGLibVtxIndex.h"
+#include "grlib/CGLibVtxStmOut.h"
 #include "grlib/CGLibVtxVertex.h"
 #include "ml/DrResFetch.h"
 
@@ -63,6 +64,9 @@ public:
     unsigned char pad_890[0x78];
     grlib::CGLibVtxIndex m_rainDropIndex; // 0x908
     grlib::CGLibVtxIndex m_effVtxIndex; // 0x930
+    // the bone matrices this frame and last frame: DrMdoSetup::uniformBlock_Bone/OldBone bind them (names inferred)
+    grlib::CGLibVtxStmOut m_boneStmOut; // 0x958
+    grlib::CGLibVtxStmOut m_oldBoneStmOut; // 0x980
 };
 }  // namespace ml
 

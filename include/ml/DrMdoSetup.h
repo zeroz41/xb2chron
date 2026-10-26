@@ -4,6 +4,7 @@
 #include "classes/ml/DrMdoMat.h"
 
 namespace ml { struct MdsMatInfoHeader; }
+namespace ml { struct MdsMatValShaderCate; }
 
 namespace ml {
 // A DrMdoMat that sets up a material's shader resources (1.0.0: DrMdoSetup(int) stores DrMdoMat's table, then
@@ -68,6 +69,28 @@ public:
     void varStImg_Normal(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
     void varStImg_Velocity(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
     void varStImg_ZBuff(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
+
+    // Uniform block callbacks: bind one uniform block (or storage buffer) at the location of global parameter
+    // paramIdx. The parameter names are not the original's.
+    void uniformBlock_no(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_Static(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_Material(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_Light(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_Mdl(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_Bone(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_AvatarChar(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_AvatarDoll(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_Fog(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_Toon(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_VolTexCalc(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_GlobalIBL(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_ClusterParam(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_ClusterPntList(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_ClusterSptList(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_ClusterIdxList(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_ClusterAddressList(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_RimBloomCalc(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
+    void uniformBlock_Toon2(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx);
 
     static void (DrMdoSetup::*s_pStaticTexture[46])(const MdsMatInfoHeader*, unsigned int, unsigned int);
     static void (DrMdoSetup::*s_pStaticImage[5])(const MdsMatInfoHeader*, unsigned int, unsigned int);

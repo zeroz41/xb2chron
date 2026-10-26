@@ -9,6 +9,7 @@ namespace cloud { class CloudMan; }
 namespace grlib { class CGLibTextureBuffer; }
 namespace ml { class DrAPCache; }
 namespace ml { class DrCalcMan; }
+namespace ml { class DrShdMan; }
 namespace ml { class DrLightMan; }
 namespace ml { class DrCalcTexStreamMan; }
 namespace ml { class DrIniSys; }
@@ -84,13 +85,15 @@ public:
     static bool s_bSRGBMode;
     static bool s_bFogSRGB;
 
-    unsigned char pad_8[0x8];
+    unsigned char pad_8[0x4];
+    // 0xC, DrMdoZSortMan's constructor allocates its buckets from it (the name is not the original's)
+    mtl::ALLOC_HANDLE m_workHandle;
     mtl::ALLOC_HANDLE m_resHandle;      // 0x10, DrResMpfSampler news its samplers from it (the name is not the original's)
     mtl::ALLOC_HANDLE m_allocHandle;    // 0x14, DrResOccUniformObj/DrResEtcUniformObj allocate from it (the name is not the original's)
     unsigned char pad_18[0x58];
     DrIniSys* m_iniSys;                 // the constructor makes it (0x1BA0 bytes)
     DrPixlMan* m_pixlMan;               // 0x78, DrMdoSetup::varStTex_* call DrPixlMan methods on it (the name is not the original's)
-    unsigned char pad_80[0x8];
+    DrShdMan* m_shdMan;                 // 0x80, DrMdoSetup::uniformBlock_Bone/Cluster* read it (the name is not the original's)
     DrMdlMan* m_mdlMan;                 // 0x88, DrCreator's model calls go to it
     unsigned char pad_90[0x70];
     // the constructor makes one per view (index 0 here), after the DrLightMan/DrFogMan it is built from

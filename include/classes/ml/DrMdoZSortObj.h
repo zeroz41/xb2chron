@@ -18,6 +18,16 @@ public:
     virtual void spAlphaRender() {}  // slot 10
     virtual void refractionRender() {}  // slot 11
 
+    // 1.0.0 has these four out of line (0x7100831500..); 3.0.1 inlines them
+    void setNext(DrMdoZSortObj* next) { m_next = next; }
+    void setParent(DrMdoZSortObj* parent) {
+        if (this != parent) {
+            m_parent = parent;
+        }
+    }
+    DrMdoZSortObj* getNext() { return m_next; }
+    DrMdoZSortObj* getParent() { return m_parent; }
+
     // 1.0.0's getNext() and getParent() return these; the field names are not the original's
     DrMdoZSortObj* m_next;  // 0x8
     DrMdoZSortObj* m_parent;  // 0x10
