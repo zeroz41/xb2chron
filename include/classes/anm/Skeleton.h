@@ -37,6 +37,10 @@ public:
         return 0xFFFF;
     }
 
+    // bone's parent's index, -1 for a root (inline: SpaceResolveUtil's loops and BlendUtil::normalizePoseMS pass
+    // it a 16-bit bone index, which they widen to 64 bits apart from the assertion's; the name is not the original's)
+    short getParentIndex(unsigned short bone) const { return m_parents[bone]; }
+
     // the index of the extra-track slot named `name`, -1 when none is
     short getExtraTruckSlotID(const char* name) const;
     // orders the extra-track slots by name (std::lower_bound's comparator in getExtraTruckSlotID)

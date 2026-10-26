@@ -112,49 +112,46 @@ void BlendUtil::normalizePose(const NormalizeSrc& src, QsTransform* pTransforms)
     }
 }
 
-// normalizePoseMS (0x7100883CF4) is not here yet: written as below it differs from the original in one instruction:
-// the original recomputes the parent table's index (i & 0xFFFF) in 64 bits for the load, where this reuses the
-// assertion's 32-bit one
-// void BlendUtil::normalizePoseMS(const NormalizeMSSrc& src, QsTransform* pTransforms) {
-//     const Skeleton* skeleton = src.pSkeleton;
-//     unsigned int count = skeleton->m_bones.size();
-//     for (unsigned int i = 0; i != count; i++) {
-//         float weight = src.pWeights[i];
-//         if (weight == 0.0f) {
-//             short parent = skeleton->m_parents[static_cast<unsigned short>(i)];
-//             if (parent == -1) {
-//                 pTransforms[i] = skeleton->m_referencePose[i];
-//             } else {
-//                 TransformUtil::mul(pTransforms[parent], skeleton->m_referencePose[i], &pTransforms[i]);
-//             }
-//         } else {
-//             float scale = 1.0f / weight;
-//             QsTransform& transform = pTransforms[i];
-//             transform.m_translation.x = scale * transform.m_translation.x;
-//             transform.m_translation.y = scale * transform.m_translation.y;
-//             transform.m_translation.z = scale * transform.m_translation.z;
-//             transform.m_translation.w = scale * transform.m_translation.w;
-//             transform.m_scale.x = scale * transform.m_scale.x;
-//             transform.m_scale.y = scale * transform.m_scale.y;
-//             transform.m_scale.z = scale * transform.m_scale.z;
-//             transform.m_scale.w = scale * transform.m_scale.w;
-//             mm::Quat& rotation = transform.m_rotation;
-//             float x = scale * rotation.x;
-//             rotation.x = x;
-//             float y = scale * rotation.y;
-//             rotation.y = y;
-//             float z = scale * rotation.z;
-//             rotation.z = z;
-//             float w = scale * rotation.w;
-//             rotation.w = w;
-//             float length = 1.0f / sqrtf(x * x + y * y + z * z + w * w);
-//             rotation.x = rotation.x * length;
-//             rotation.y = length * rotation.y;
-//             rotation.z = length * rotation.z;
-//             rotation.w = length * rotation.w;
-//         }
-//     }
-// }
+void BlendUtil::normalizePoseMS(const NormalizeMSSrc& src, QsTransform* pTransforms) {
+    const Skeleton* skeleton = src.pSkeleton;
+    unsigned int count = skeleton->m_bones.size();
+    for (unsigned int i = 0; i != count; i++) {
+        float weight = src.pWeights[i];
+        if (weight == 0.0f) {
+            short parent = skeleton->getParentIndex(i);
+            if (parent == -1) {
+                pTransforms[i] = skeleton->m_referencePose[i];
+            } else {
+                TransformUtil::mul(pTransforms[parent], skeleton->m_referencePose[i], &pTransforms[i]);
+            }
+        } else {
+            float scale = 1.0f / weight;
+            QsTransform& transform = pTransforms[i];
+            transform.m_translation.x = scale * transform.m_translation.x;
+            transform.m_translation.y = scale * transform.m_translation.y;
+            transform.m_translation.z = scale * transform.m_translation.z;
+            transform.m_translation.w = scale * transform.m_translation.w;
+            transform.m_scale.x = scale * transform.m_scale.x;
+            transform.m_scale.y = scale * transform.m_scale.y;
+            transform.m_scale.z = scale * transform.m_scale.z;
+            transform.m_scale.w = scale * transform.m_scale.w;
+            mm::Quat& rotation = transform.m_rotation;
+            float x = scale * rotation.x;
+            rotation.x = x;
+            float y = scale * rotation.y;
+            rotation.y = y;
+            float z = scale * rotation.z;
+            rotation.z = z;
+            float w = scale * rotation.w;
+            rotation.w = w;
+            float length = 1.0f / sqrtf(x * x + y * y + z * z + w * w);
+            rotation.x = rotation.x * length;
+            rotation.y = length * rotation.y;
+            rotation.z = length * rotation.z;
+            rotation.w = length * rotation.w;
+        }
+    }
+}
 
 void BlendUtil::blendAdd(const BlendSrc& src, BlendAddDst* pDst) {
     QsTransform* transforms = pDst->pTransforms;
