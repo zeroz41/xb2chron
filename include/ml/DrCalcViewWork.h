@@ -20,6 +20,8 @@ public:
 
     void begin(int);
     void end();
+    // the shadow pass's billboard: the light's matrix without its translation (DrCalcMan::shadowEnd restores it)
+    void shadowBegin(const mm::Mat44& mtx);
 
     int unistatic_view(float* pDst, bool bJitter);
     int unistatic_proj(float* pDst, bool bJitter);
@@ -76,12 +78,12 @@ public:
     unsigned char pad_80[0x40];
     mm::Mat44 m_billboard;          // 0xC0
     mm::Mat44 m_oldBillboard;       // 0x100
-    unsigned char pad_140[0x40];
+    mm::Mat44 m_saveBillboard;      // 0x140: DrCalcMan::shadowEnd restores m_billboard from it (the name is not the original's)
     mm::Mat44 m_proj;               // 0x180
     unsigned char pad_1C0[0x40];
     mm::Mat44 m_viewProj;           // 0x200
     mm::Mat44 m_billboardYVec;      // 0x240
-    unsigned char pad_280[0x40];
+    mm::Mat44 m_oldView;            // 0x280: m_view as DrCalcMan::renderEnd leaves it (the name is not the original's)
     mm::Mat44 m_oldViewProj;        // 0x2C0
     mm::Mat44 m_diffPreOrijMat;     // 0x300
     mm::Mat44 m_viewProjNonJitter;  // 0x340
@@ -98,7 +100,7 @@ public:
     float m_near;                   // 0x4C8: 0.1 from the constructor (the name is not the original's)
     unsigned char pad_4CC[0x14];
     DrCalcClipWorkViewPlane m_clipPlane;  // 0x4E0: set from m_proj by the constructor (the name is not the original's)
-    unsigned char pad_4E8[0x218];
+    unsigned char pad_4F0[0x210];
     DrMan* m_pDrMan;                // 0x700
     unsigned char pad_708[0x68];
     mm::Vec3 m_oldViewPos;          // 0x770
@@ -114,7 +116,9 @@ public:
     // DrGpuCheckObj::setWorldPos/update treat every check object as visible while it is set (the name is not the
     // original's)
     bool m_gpuCheckAllVisible;      // 0x9AA
-    unsigned char pad_9AB[0x135];
+    unsigned char pad_9AB[0x2];
+    bool m_renderReq;               // 0x9AD: DrCalcMan::renderEnd clears it (the name is not the original's)
+    unsigned char pad_9AE[0x132];
     float m_jitter[2];              // 0xAE0
     unsigned char pad_AE8[0x8];
     float m_oldJitter[2];           // 0xAF0

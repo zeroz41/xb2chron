@@ -6,6 +6,8 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 namespace ml {
 enum CPUID : int;
+// how WorkCpu::sync waits (enumerators not recovered: DrCalcTexStreamMan::jobWait passes 0)
+enum WKCPU_SYNC : int;
 class IWorkInfomation; class IWorkBackground; class IThreadValue; }
 
 namespace ml {
@@ -20,6 +22,9 @@ public:
 
     // its object made and every CPU thread logged in
     static bool isInitialized();
+    // starts a job group's threads (DrCalcTexStreamMan::entryJob) and waits for them (DrCalcTexStreamMan::jobWait)
+    static void wakeup(int group);
+    static void sync(int group, WKCPU_SYNC sync, CPUID cpu);
     static const unsigned int& getFrameCount();  // the work CPU's frame counter (fw::Framework::getFrameCount)
     // a listener told of the HOME menu no more (fw::MovieManager's destructor)
     static void removeBackgroundListener(IWorkBackground* listener);

@@ -1,3 +1,4 @@
+#define MM_LIB_FROM_XBRD
 #include "classes/ml/DrAPCache.h"
 #include "classes/ml/DrCalcClipWorkCone.h"
 #include "classes/ml/DrCalcClipWorkPlane.h"
@@ -19,7 +20,15 @@
 #include "idcoli/IDColiInput.h"
 #include "idcoli/IDColiTreeTop.h"
 #include "idcoli/IDColiUtilColi.h"
+#include "classes/ml/DrCalcStmListObj.h"
+#include "classes/ml/DrCalcTexStreamMan.h"
+#include "classes/ml/DrMan.h"
+#include "classes/ml/WorkCpu.h"
+#include "ml/DrLightMan.h"
+#include "ml/DrCalcClipObj.h"
+#include "ml/DrCalcCpPlaneObj.h"
 #include "ml/CriticalSection.h"
+#include "ml/EventFileTh.h"
 #include "ml/DrAPGxType.h"
 #include "ml/DrCalcClipMan.h"
 #include "ml/DrCalcGpuCost.h"
@@ -190,5 +199,163 @@ void DrCalcMan::begin() {
 }
 
 void DrCalcMan::end() { m_pViewWork->end(); }
+
+bool DrCalcClipMan::testObjectClip(const mm::Vec3& pos, float radius) {
+    for (DrCalcClipObj* pObj = m_pClipObj; pObj != nullptr; pObj = pObj->m_pNext) {
+        if (pObj->testObjectClip(pos, radius, m_pBitTbl)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool DrCalcClipMan::testPlaneClip(const mm::Vec3& pos, float radius) {
+    for (DrCalcCpPlaneObj* pObj = m_pCpPlaneObj; pObj != nullptr; pObj = pObj->m_pNext) {
+        if (!pObj->testClip(pos, radius)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void DrCalcClipObj::release() { m_relFlag |= 1 << DrMan::s_nDblStockIdx; }
+
+void DrCalcCpPlaneObj::release() {
+    m_relFlag |= 1 << DrMan::s_nDblStockIdx;
+    m_planeIdx = 0;
+}
+
+DrCalcClipWorkCone::DrCalcClipWorkCone() { m_type = 2; }
+
+DrCalcClipWorkPlane::DrCalcClipWorkPlane() {}
+
+DrCalcClipWorkShadowPlane::DrCalcClipWorkShadowPlane() {}
+
+void DrCalcMan::renderEnd() {
+    DrCalcViewWork* pWork = m_pViewWork;
+    if (pWork->m_renderReq) {
+        pWork->m_renderReq = false;
+    }
+    pWork->m_oldView = pWork->m_view;
+    pWork->m_oldBillboard = pWork->m_billboard;
+}
+
+void DrCalcMan::shadowEnd() { m_pViewWork->m_billboard = m_pViewWork->m_saveBillboard; }
+
+DrCalcTexStreamMan::~DrCalcTexStreamMan() { release(); }
+
+unsigned int DrCalcTexStreamMan::jobUpdate(void* man, void*) {
+    static_cast<DrCalcTexStreamMan*>(man)->update();
+    return 0;
+}
+
+void DrCalcTexStreamMan::entryJob() { WorkCpu::wakeup(m_jobGroup); }
+
+void DrCalcTexStreamMan::jobWait() { WorkCpu::sync(m_jobGroup, static_cast<WKCPU_SYNC>(0), static_cast<CPUID>(0)); }
+
+void DrCalcTexStreamMan::apiUpdate() {
+    unsigned int num = m_stockNum[DrMan::s_nDblStockIdx];
+    DrCalcStmListObj** pList = m_stock[DrMan::s_nDblStockIdx];
+    for (unsigned int i = 0; i < num; i++) {
+        pList[i]->apiUpdate();
+    }
+    m_stockNum[DrMan::s_nDblStockIdx] = 0;
+}
+
+bool DrCalcStmListObj::isResTex() const { return (m_flags & (FLAG_RESTEX << DrMan::s_nDblStockIdx)) != 0; }
+
+bool DrCalcStmListObj::isResSub() const { return (m_flags & (FLAG_RESSUB << DrMan::s_nDblStockIdx)) != 0; }
+
+void DrCalcStmListObj::setUseMode(DrTexUseMode mode) {
+    if (m_useMode[DrMan::s_nDblStockIdx] <= mode) {
+        m_flags |= FLAG_USEMODE << DrMan::s_nDblStockIdx;
+        m_useMode[DrMan::s_nDblStockIdx] = mode;
+    }
+}
+
+inline void DrCalcStmListObj::end() {
+    if (!(m_flags & FLAG_KEEPMEM)) {
+        if (m_pMemObj) {
+            DrCalcTexStreamMan::get()->clearMemObj(m_pMemObj);
+            m_pMemObj = nullptr;
+        }
+        m_func = m_endFunc;
+        m_flags |= FLAG_END;
+    }
+}
+
+inline bool DrCalcStmListObj::errWait(StmFunc retry) {
+    DrCalcTexStreamMan* pMan = DrCalcTexStreamMan::get();
+    pMan->m_errReadSize += m_readSize;
+    if (++m_errWait >= 60) {
+        m_errWait = 0;
+        m_func = retry;
+        return true;
+    }
+    return false;
+}
+
+bool DrCalcStmListObj::texstm_notfileWait() {
+    m_stateNo = 19;
+    m_flags |= FLAG_NOTFILE;
+    end();
+    return false;
+}
+
+bool DrCalcStmListObj::texstm_oldVerWait() {
+    m_stateNo = 4;
+    end();
+    return false;
+}
+
+bool DrCalcStmListObj::texstm_stmchk_setWait() {
+    m_stateNo = 3;
+    end();
+    return false;
+}
+
+bool DrCalcStmListObj::texstm_defErrWait() {
+    m_stateNo = 7;
+    return errWait(&DrCalcStmListObj::texstm_defRead);
+}
+
+bool DrCalcStmListObj::texstm_requestWait() {
+    m_stateNo = 19;
+    if (--m_reqWait <= 0) {
+        m_func = m_reqFunc;
+    }
+    return false;
+}
+
+bool DrCalcStmListObj::texstm_defMidtexErrWait() {
+    m_stateNo = 10;
+    return errWait(&DrCalcStmListObj::texstm_deTexCheck);
+}
+
+bool DrCalcStmListObj::texstm_fastErrWait() {
+    m_stateNo = 17;
+    return errWait(&DrCalcStmListObj::texstm_checkTexStm);
+}
+
+bool DrCalcStmListObj::OnFileEvent(EventFileTh* pEvent) {
+    if (pEvent->m_kind == 2) {
+        if (m_pFile == pEvent->m_handle) {
+            m_flags &= ~FLAG_READ;
+            m_pFile = nullptr;
+            return true;
+        }
+        return false;
+    }
+    m_flags = (m_flags & ~FLAG_READSTATE) | FLAG_READERR;
+    m_pFile = nullptr;
+    return false;
+}
+
+int DrCalcViewWork::unistatic_diffuseIBL(float* pDst) {
+    mm::Mat44 mtx[3];
+    memset(mtx, 0, sizeof(mtx));
+    grlib::ShdMat44TransposeMat44Array(pDst, mtx, 3);
+    return DrResMdoUniformBlock::s_nVarSizeTbl[58];
+}
 
 }  // namespace ml

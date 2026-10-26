@@ -9,6 +9,7 @@ namespace ml {
 // table 0x7100B7EA78
 class DrCalcClipWorkShadowPlane : public ::ml::DrCalcClipWork {
 public:
+    DrCalcClipWorkShadowPlane();
     ~DrCalcClipWorkShadowPlane();  // not virtual: no table slot; its owners' destructors call it
     virtual bool clipTest(mm::Vec3 const&, float) const;  // slot 0
     virtual bool clipTypeTest(mm::Vec3 const&, float) const;  // slot 4

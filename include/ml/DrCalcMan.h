@@ -11,6 +11,10 @@ class DrCalcMan {
 public:
     void begin();
     void end();
+    // the view's matrices kept as last frame's (m_oldView, m_oldBillboard)
+    void renderEnd();
+    // the view's billboard as it was before DrCalcViewWork::shadowBegin
+    void shadowEnd();
 
     unsigned char pad_0[0x8];
     int m_viewIdx;  // 0x8: begin passes it to DrCalcViewWork::begin

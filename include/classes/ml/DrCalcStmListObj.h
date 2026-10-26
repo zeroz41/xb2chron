@@ -4,11 +4,16 @@
 #include "classes/ml/IWorkEvent.h"
 
 namespace ml { class EventFileTh; }
+namespace ml { class FileHandleTh; }
+namespace ml { class DrCalcTexStmObj; }
 
 namespace ml {
 // table 0x7100B7EDE8
 class DrCalcStmListObj : public ::ml::IWorkEvent {
 public:
+    // a state of the stream (DrCalcTexStreamMan::update calls it until it returns false)
+    typedef bool (DrCalcStmListObj::*StmFunc)();
+
     virtual ~DrCalcStmListObj();  // slot 0
     virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
 
@@ -16,10 +21,68 @@ public:
     enum DrTexUseMode {};
 
     void release();
+    // the stream's graphics API work, once per frame stocked (DrCalcTexStreamMan::apiUpdate)
+    void apiUpdate();
+    // the stream's flag bits of the frame stocked (DrMan::s_nDblStockIdx)
+    bool isResTex() const;
+    bool isResSub() const;
     void setUseMode(DrTexUseMode mode);
     // the pointer at 0x18 of the object at 0x48 once the flag at 0x82 is set, else null (the return type is not
     // known)
     void* getAdder();
+
+    // inline in every state that ends the stream (texstm_notfileWait, texstm_oldVerWait, ...): its memory given
+    // back unless kept, the end state next (the name is not the original's)
+    void end();
+    // inline in the error waits: the frames counted, the retry state after 60 (the name is not the original's)
+    bool errWait(StmFunc retry);
+
+    bool texstm_checkTexStm();
+    bool texstm_defRead();
+    bool texstm_deTexCheck();
+    bool texstm_notfileWait();
+    bool texstm_oldVerWait();
+    bool texstm_stmchk_setWait();
+    bool texstm_defErrWait();
+    bool texstm_requestWait();
+    bool texstm_defMidtexErrWait();
+    bool texstm_fastErrWait();
+
+    // the flag bits (names not recovered): 0x1000 no file, 0x2000 the memory kept, 0x8000 ended,
+    // 0x40000 / 0x100000 << stock index isResSub / isResTex, 0x1000000 << stock index a use mode set,
+    // 0x4000000 a read pending, 0x8000000 a read failed
+    enum {
+        FLAG_NOTFILE = 0x1000,
+        FLAG_KEEPMEM = 0x2000,
+        FLAG_END = 0x8000,
+        FLAG_RESSUB = 0x40000,
+        FLAG_RESTEX = 0x100000,
+        FLAG_USEMODE = 0x1000000,
+        FLAG_READ = 0x4000000,
+        FLAG_READERR = 0x8000000,
+        FLAG_READSTATE = FLAG_READ | FLAG_READERR,
+    };  // the names are not the original's
+
+    // (field names are not the original's)
+    unsigned char pad_8[0x8];
+    DrCalcStmListObj* m_pNext;   // 0x10: DrCalcTexStreamMan::update walks the list from the manager's 0x28
+    unsigned char pad_18[0x28];
+    FileHandleTh* m_pFile;       // 0x40: the read OnFileEvent waits for
+    unsigned char pad_48[0x8];
+    DrCalcTexStmObj* m_pMemObj;  // 0x50: given back by DrCalcTexStreamMan::clearMemObj when the stream ends
+    unsigned char pad_58[0x28];
+    unsigned int m_flags;        // 0x80
+    int m_readSize;              // 0x84: added to the manager's m_errReadSize while an error waits
+    int m_stateNo;               // 0x88: the state running (each state stores its number)
+    unsigned char pad_8c[0x1C];
+    short m_errWait;             // 0xA8: frames an error waits (60 before the read is tried again)
+    short m_reqWait;             // 0xAA: frames texstm_requestWait waits
+    unsigned char pad_ac[0x20];
+    int m_useMode[2];            // 0xCC: by DrMan::s_nDblStockIdx
+    unsigned char pad_d4[0x10C];
+    StmFunc m_func;              // 0x1E0: the state DrCalcTexStreamMan::update runs
+    StmFunc m_endFunc;           // 0x1F0: the state after the stream ends
+    StmFunc m_reqFunc;           // 0x200: the state after texstm_requestWait
 };
 }  // namespace ml
 

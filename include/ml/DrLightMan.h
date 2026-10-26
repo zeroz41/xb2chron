@@ -18,6 +18,8 @@ public:
     // instant lights in use: releaseInstant*Light count them down, never below 0 (the names are not the original's)
     int m_instantPntNum;  // 0x108
     int m_instantSptNum;  // 0x10C
+    unsigned char pad_110[0x1C];
+    float m_ambColor[3];  // 0x12C: DrCalcViewWork::unistatic_lightAmb's colour (the name is not the original's)
 };
 }  // namespace ml
 
