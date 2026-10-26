@@ -63,6 +63,7 @@ public:
     // a mission's message ids: its title, its zone
     static bool getMsgTitleName(unsigned char*& bdat, unsigned int& id, unsigned int mission);
     static bool getMsgZoneName(unsigned char*& bdat, unsigned int& id, unsigned int mission);
+    static bool getMsgSummaryName(unsigned char*& bdat, unsigned int& id, unsigned int mission);
     static bool getFieldSkillInfo(unsigned char*& bdat, unsigned int& id, unsigned int mission, unsigned int slot);
     static unsigned int getFieldSkill(unsigned int mission, unsigned int slot);
     static unsigned int getFieldSkill1(unsigned int mission);

@@ -14,6 +14,8 @@ namespace gf {
 // the quests' game data (functions, by its symbols)
 class GfDataQuest {
 public:
+    // the quest's result message (its bdat and row id)
+    static bool getResult(unsigned char*& bdat, unsigned int& id, QuestID quest);
     // the blade an achievement belongs to (m_achieve2blade's entry)
     static unsigned int getAchievementBlade(unsigned int achieveId);
     static void registAchievementBlade(unsigned int achieveId, unsigned short blade);

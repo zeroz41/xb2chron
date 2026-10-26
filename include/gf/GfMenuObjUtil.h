@@ -11,6 +11,7 @@ namespace gf { class GfMenuCallContext; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class DataParamAcc; }
 namespace gf { class GfMenuBladeList; }
+namespace gf { struct GfRequestBladeData; }
 namespace ui { class UIListInfoBase; class UIObjectAcc; }
 namespace fw { enum SoundCategory : int; }
 namespace fw { enum VibrationID : int; }
@@ -295,6 +296,10 @@ public:
     static void createFollowDispPlugin(unsigned int handle, unsigned int follow);
     static void createSyncPlugin(unsigned int handle, unsigned int target, unsigned int flag);
     static unsigned int getFavoriteStat(unsigned int type, unsigned int id, FAVORITE favorite);
+    // the blades of the list that meet a mission's blade condition
+    static unsigned int getMissionCondBladeCount(const GfRequestBladeData& data, const GfMenuBladeList* list);
+    // the list's blades meet every blade condition of the mission
+    static bool checkMissionCond(unsigned int mission, const GfMenuBladeList* list);
 };
 }  // namespace gf
 

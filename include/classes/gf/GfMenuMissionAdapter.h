@@ -4,10 +4,11 @@
 #include "classes/gf/GfMenuAdapter.h"
 #include "mm/mtl/Delegate.h"
 #include "gf/GfDataMercenaries.h"
+#include "mm/mtl/IntrusivePtr.h"
 
 namespace fw { class UpdateInfo; }
 namespace ui { class UIObjectPlugin; }
-namespace gf { class GfMenuBladeList; }
+namespace gf { class GfMenuBladeList; class GfMenuIDList; class GfMenuReferenceNumber; }
 
 namespace gf {
 // table 0x7100B5D200; create constructs it as a GfMenuAdapter, then installs this table. A mercenary mission's
@@ -31,10 +32,17 @@ public:
     };
     GfMenuMissionAdapter(ui::UIObjectPlugin* plugin, bool changed)
         : GfMenuAdapter(plugin, false, changed), m_update(), m_converter(nullptr), m_missionId(0), m_stat(0),
-          pad_60(), m_condType(0), m_bladeList(nullptr), m_slot(0) {}
+          m_member(0), m_condType(0), m_bladeList(nullptr), m_slot(0) {}
     virtual ~GfMenuMissionAdapter();  // slot 0
     virtual void update(fw::UpdateInfo const&);  // slot 2
     static GfMenuMissionAdapter* create(unsigned int handle, unsigned int type, unsigned int mission, bool changed);
+    static GfMenuMissionAdapter* createFromList(unsigned int handle, unsigned int type, GfMenuIDList* list,
+                                                unsigned int index, GfMenuBladeList* bladeList, bool changed);
+    static GfMenuMissionAdapter* createFromReference(unsigned int handle, unsigned int type,
+                                                     mm::mtl::IntrusivePtr<GfMenuReferenceNumber> reference,
+                                                     bool changed);
+    static GfMenuMissionAdapter* createFromReferenceMission(unsigned int handle, unsigned int type, unsigned int slot,
+                                                            bool changed);
     // inline: 1.0.0 has it out of line (0x71003AE890, then complete was 2), 3.0.1 none. Where the mission stands:
     // 0 open, 1 a team (or with party, the party) is on it, 2 its team is back with the reward, 3 complete
     int getStat(unsigned int mission, bool party) {
@@ -101,7 +109,9 @@ public:
     IConverter* m_converter;  // owned
     unsigned int m_missionId;
     int m_stat;  // getStat(m_missionId, false) as update last saw it
-    unsigned char pad_60[0x4];
+    // the team member (index into GfDataMercenaries::getTeamMember) the MemberFieldSkill callbacks show; the name is
+    // not the original's
+    unsigned int m_member;
     int m_condType;  // update_MissionCondParamIcon shows the condition only when it is of this type
     GfMenuBladeList* m_bladeList;  // referenced; the blades the condition callbacks count
     int m_slot;  // the condition or field skill slot the callbacks show (0..2)
