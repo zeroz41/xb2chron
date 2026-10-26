@@ -101,10 +101,25 @@ public:
     bool setDoubleSide(bool doubleSide);
     bool setAlphaBlend(bool blend);
     bool setOrtho();
+    bool setMatrix(const mm::Mat44& mtx);
+    bool setCol(const mm::Col4& col);
+    bool setZComp(bool on);
+    bool renderRect(const mm::Rect<int>& rect);
+    bool renderRectFill(const mm::Rect<int>& rect);
+    bool renderCube(const mm::Vec3& min, const mm::Vec3& max);
+    bool renderCircle(const mm::Mat44& mtx, float radius, unsigned int div);
+    bool renderAxis(float length);
+    bool renderArrow(const mm::Vec3& start, const mm::Vec3& end);
+    bool renderRealSphere(float radius, unsigned int div);
+    bool renderCone(float radius, float height, unsigned int div);
+    bool renderCylinder(float radius, float height, unsigned int div);
+    bool renderCapsule(float radius, float height, unsigned int div);
+    bool renderSquare(float width, float height);
     bool renderLine(const mm::Vec3& a, const mm::Vec3& b);
     bool renderLine(const mm::Pnt<int>& a, const mm::Pnt<int>& b);
-    void fontColor(const mm::Col4& col);
-    void font(short x, short y, const char* text);
+    bool fontColor(const mm::Col4& col);
+    bool fontShadow(bool on);
+    bool font(short x, short y, const char* text);
 
     BUF m_buf[2];                         // 0x08
     mtl::ALLOC_HANDLE m_handle;           // 0x6048 the constructor's (the name is not the original's)

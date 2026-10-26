@@ -46,6 +46,8 @@ public:
     // 1.0.0 has it out of line; 3.0.1 inlines every use (defined inline in ml/CacheDraw.cpp): whether commands go to the cache (a debug draw exists and
     // the caller is not the render thread, or the cache is used there too)
     static bool isNotRender();
+    // the command cache the framework's debug drawing (fw::debug) records into
+    static CacheDraw* getCacheDraw();
 
     void setLineWidth(unsigned int width);
     void setAlphaBlend(bool blend);
