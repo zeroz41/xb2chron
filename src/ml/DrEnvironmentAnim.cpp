@@ -1,15 +1,41 @@
-#include "classes/ml/DrAPCache.h"
+#include "classes/ml/DrLightObj.h"
+#include "classes/ml/DrLightObjDir.h"
+#include "classes/ml/DrLightObjPnt.h"
+#include "classes/ml/DrLightObjSpt.h"
+#include "classes/ml/DrEnvironmentObj.h"
+#include "classes/ml/DrEnvironmentObjLgt.h"
+#include "ml/DrPixlMan.h"
+#include "ml/DrPixlShadowMan.h"
+#include "ml/DrAPGxType.h"
+#include "ml/DrShdLgtMan.h"
 #include "classes/ml/DrFogObjGbl.h"
+#include "classes/ml/DrGlobalIBLPack.h"
+#include "ml/DrFogMan.h"
+#include "ml/DrLightMan.h"
+#include "classes/ml/irrvol/MemHandlebaseAllocator.h"
+#include "classes/ml/DrAPCache.h"
+#include "classes/ml/DrEnvironmentObj.h"
+#include "classes/ml/DrEnvironmentObjLgt.h"
+#include "classes/ml/DrFogObjGbl.h"
+#include "classes/ml/DrGlobalIBLPack.h"
+#include "classes/ml/DrLightObj.h"
+#include "classes/ml/DrLightObjAmb.h"
+#include "classes/ml/DrLightObjDir.h"
+#include "classes/ml/DrLightObjPnt.h"
+#include "classes/ml/DrLightObjSpt.h"
 #include "classes/ml/DrMan.h"
 #include "classes/ml/DrMdoCtlDammy.h"
 #include "classes/ml/DrMdoCtlSeamAll.h"
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/DrMdoZSortObj.h"
+#include "classes/ml/irrvol/MemHandlebaseAllocator.h"
 #include "grlib/CGLibCtl.h"
 #include "math.h"
-#include "mm/Math.h"
+#include "ml/DrAPGxType.h"
 #include "ml/DrEnvironmentAnim.h"
+#include "ml/DrFogMan.h"
 #include "ml/DrIniSys.h"
+#include "ml/DrLightMan.h"
 #include "ml/DrMdoAnim.h"
 #include "ml/DrMdoSetup.h"
 #include "ml/DrPixlDeferred.h"
@@ -17,9 +43,13 @@
 #include "ml/DrPixlPostMan.h"
 #include "ml/DrPixlPostObjCubeMapIBL.h"
 #include "ml/DrPixlPostParm.h"
+#include "ml/DrPixlShadowMan.h"
 #include "ml/DrResMdoMat.h"
+#include "ml/DrShdLgtMan.h"
 #include "ml/MdoWrkMatRes.h"
 #include "ml/MdsMatInfoHeader.h"
+#include "mm/Math.h"
+#include "mtl/MemManager.h"
 
 namespace ml {
 
@@ -352,5 +382,229 @@ void (DrEnvironmentAnim::*DrEnvironmentAnim::s_pFogAnim[13])(DrFogObjGbl*, const
 DrFogObjGbl::~DrFogObjGbl() {}
 
 void DrFogObjGbl::update() {}
+
+// --- DrEnvironmentObj ---
+void DrEnvironmentObj::release() {
+    m_flags |= FLAG_RELEASE << DrMan::s_nDblStockIdx;
+}
+
+float DrEnvironmentObj::getFrame() const {
+    return m_frame;
+}
+
+float DrEnvironmentObj::getMaxFrame() const {
+    return m_maxFrame;
+}
+
+void DrEnvironmentObj::setFrameSpd(float spd) {
+    m_frameSpd = spd;
+}
+
+float DrEnvironmentObj::getFrameSpd() {
+    return m_frameSpd;
+}
+
+// --- DrEnvironmentObjLgt ---
+DrEnvironmentObjLgt::~DrEnvironmentObjLgt() {
+    releaseLgt();
+}
+
+bool DrEnvironmentObjLgt::callback_Chk_non(DrEnvironmentLgtList*, DrCalcViewWork*, const LgtObjData*) {
+    return false;
+}
+
+bool DrEnvironmentObjLgt::callback_Calc_Non(DrEnvironmentLgtList*, DrCalcViewWork*) {
+    return true;
+}
+
+bool DrEnvironmentObjLgt::callback_Calc_LocalIBL(DrEnvironmentLgtList*, DrCalcViewWork*) {
+    return true;
+}
+
+void DrEnvironmentObjLgt::callback_Ren_Non(DrLightObj*, DrShdLgtMan*) {}
+
+void DrEnvironmentObjLgt::callback_Ren2D_Non(DrLightObj*, DrShdLgtMan*) {}
+
+void DrEnvironmentObjLgt::callback_Relase_Non(DrLightObj*) {}
+
+// --- DrLightObj ---
+void DrLightObj::setSubtractOn(bool on) {
+    if (on) {
+        m_flags |= FLAG_SUBTRACT;
+    } else {
+        m_flags &= ~FLAG_SUBTRACT;
+    }
+}
+
+bool DrLightObj::isCullON() const {
+    return (m_flags & FLAG_CULL) != 0;
+}
+
+DrLightObj::DrLightObj() : m_prev(nullptr), m_next(nullptr), m_flags(0), m_pixlMan(nullptr), m_shadowObj(nullptr) {}
+
+bool DrLightObj::isPnt() const {
+    return m_type == TYPE_PNT;
+}
+
+bool DrLightObj::isCharShadow() const {
+    return (m_flags & FLAG_CHAR_SHADOW) != 0;
+}
+
+bool DrLightObj::isBaseMapShadow() const {
+    return (m_flags & FLAG_BASE_MAP_SHADOW) != 0;
+}
+
+bool DrLightObj::isInstMapShadow() const {
+    return (m_flags & FLAG_INST_MAP_SHADOW) != 0;
+}
+
+bool DrLightObj::isInstSelMapShadow() const {
+    return (m_flags & FLAG_INST_SEL_MAP_SHADOW) != 0;
+}
+
+bool DrLightObj::isCacheShadow() const {
+    return (m_flags & FLAG_CACHE_SHADOW) != 0;
+}
+
+DrLightObjAmb::~DrLightObjAmb() {
+    ;
+}
+
+void DrLightObjDir::deleteDirShadow() {
+    if (m_shadowObj != nullptr) {
+        DrPixlShadowMan* shadowMan = m_pixlMan->m_objTbl->m_shadowMan;
+        m_flags &= ~FLAG_SHADOW;
+        shadowMan->releaseShadow(m_shadowObj);
+        m_shadowObj = nullptr;
+    }
+}
+
+void DrLightObjDir::releaseDir() {
+    deleteDirShadow();
+}
+
+DrLightObjDir::~DrLightObjDir() {
+    releaseDir();
+}
+
+void DrLightObjPnt::deletePntShadow() {
+    if (m_shadowObj != nullptr) {
+        DrPixlShadowMan* shadowMan = m_pixlMan->m_objTbl->m_shadowMan;
+        m_flags &= ~FLAG_SHADOW;
+        shadowMan->releaseShadow(m_shadowObj);
+        m_shadowObj = nullptr;
+    }
+}
+
+void DrLightObjPnt::releasePnt() {
+    deletePntShadow();
+}
+
+DrLightObjPnt::~DrLightObjPnt() {
+    releasePnt();
+}
+
+void DrLightObjSpt::deleteSptShadow() {
+    if (m_shadowObj != nullptr) {
+        DrPixlShadowMan* shadowMan = m_pixlMan->m_objTbl->m_shadowMan;
+        m_flags &= ~FLAG_SHADOW;
+        shadowMan->releaseShadow(m_shadowObj);
+        m_shadowObj = nullptr;
+    }
+}
+
+void DrLightObjSpt::releaseSpt() {
+    deleteSptShadow();
+}
+
+DrLightObjSpt::~DrLightObjSpt() {
+    releaseSpt();
+}
+
+// --- irrvol::MemHandlebaseAllocator ---
+namespace irrvol {
+void* MemHandlebaseAllocator::allocate(unsigned long size, unsigned long alignment) {
+    return mtl::MemManager::allocate(m_handle, size, alignment, false, "no name", 0);
+}
+
+void MemHandlebaseAllocator::deallocate(void* memory) {
+    if (memory != nullptr) {
+        mtl::MemManager::deallocate(memory, 0, false);
+    }
+}
+}  // namespace irrvol
+
+// --- DrEnvironmentObjLgt render / release callbacks ---
+void DrEnvironmentObjLgt::callback_Ren_Point(DrLightObj* light, DrShdLgtMan* shdLgtMan) {
+    DrAPGxType::setupCullingFront();
+    DrAPGxType::setupDepthContl(1, 1, 3);
+    DrAPGxType::setupBlend(0);
+    shdLgtMan->renderDebugPnt(static_cast<DrLightObjPnt*>(light));
+}
+
+void DrEnvironmentObjLgt::callback_Ren_Spot(DrLightObj* light, DrShdLgtMan* shdLgtMan) {
+    DrAPGxType::setupCullingFront();
+    DrAPGxType::setupDepthContl(1, 1, 3);
+    DrAPGxType::setupBlend(0);
+    shdLgtMan->renderDebugSpt(static_cast<DrLightObjSpt*>(light));
+}
+
+void DrEnvironmentObjLgt::callback_Relase_Point(DrLightObj* light) {
+    if (light->m_flags & DrLightObj::FLAG_SHADOW) {
+        static_cast<DrLightObjPnt*>(light)->deletePntShadow();
+    }
+}
+
+void DrEnvironmentObjLgt::callback_Relase_Spot(DrLightObj* light) {
+    if (light->m_flags & DrLightObj::FLAG_SHADOW) {
+        static_cast<DrLightObjSpt*>(light)->deleteSptShadow();
+    }
+}
+
+// --- DrGlobalIBLPack ---
+bool DrGlobalIBLPack::checkFileType(const void* data) {
+    const GlobalIBLFileHeader* header = static_cast<const GlobalIBLFileHeader*>(data);
+    if (header->m_magic != 0x4C424947) {  // "GIBL"
+        return false;
+    }
+    return header->m_version == 10100 || header->m_version == 20000;
+}
+
+// --- DrFogMan ---
+DrFogMan::~DrFogMan() {
+    releaseAll();
+}
+
+void DrFogMan::releaseAll() {
+    DrFogObjGbl* obj = m_head;
+    while (obj != nullptr) {
+        DrFogObjGbl* next = obj->m_next;
+        delete obj;
+        obj = next;
+    }
+    m_head = nullptr;
+    m_tail = nullptr;
+}
+
+bool DrFogMan::isFogOn() const {
+    return m_fogOn;
+}
+
+// --- DrLightMan ---
+void DrLightMan::releaseInstantPntLight(DrLightObjPnt* light) {
+    light->m_flags |= DrLightObj::FLAG_RELEASE << DrMan::s_nDblIdx;
+    light->m_flags |= DrLightObj::FLAG_RELEASE << DrMan::s_nDblStockIdx;
+    if (--m_instantPntNum < 0) {
+        m_instantPntNum = 0;
+    }
+}
+
+void DrLightMan::releaseInstantSptLight(DrLightObjSpt* light) {
+    light->m_flags |= DrLightObj::FLAG_RELEASE << DrMan::s_nDblIdx;
+    light->m_flags |= DrLightObj::FLAG_RELEASE << DrMan::s_nDblStockIdx;
+    if (--m_instantSptNum < 0) {
+        m_instantSptNum = 0;
+    }
+}
 
 }  // namespace ml

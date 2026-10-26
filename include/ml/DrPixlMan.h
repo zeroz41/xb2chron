@@ -11,6 +11,7 @@ namespace ml { class DrPixlRenderTarget; }
 namespace ml { class DrPixlShadowObj; }
 namespace ml { class DrPixlOccQuery; }
 namespace ml { class DrPixlShadowCacheMan; }
+namespace ml { class DrPixlShadowMan; }
 namespace grlib { class CGLibDblUniformBlock; }
 
 namespace ml {
@@ -32,7 +33,7 @@ struct DrPixlObjTbl {
     grlib::CGLibRenderTarget* m_backFaceDepth;  // 0x148, getBackFaceDepthTexture
     unsigned char pad_150[0x20];
     DrPixlDeferred* m_deferred;  // 0x170
-    unsigned char pad_178[0x8];
+    DrPixlShadowMan* m_shadowMan;  // 0x178, the light objects release their shadow through it (the name is not the original's)
     DrPixlPostMan* m_postMan;  // 0x180
     // 0x188, DrPixlPostObjToneMap::updateByCompute stores the three; the constructor sets [1] = 1 (name inferred)
     float m_toneMapVal[3];

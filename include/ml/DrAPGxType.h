@@ -13,6 +13,9 @@ public:
     static void setupCullingOff();
     static void setupCullingFront();
     static void setupCullingBack();
+    // the depth test and write switches and the compare function (the light debug renders pass 1, 1, 3)
+    static void setupDepthContl(unsigned char, unsigned char, int);
+    static void setupBlend(int);
 };
 }  // namespace ml
 

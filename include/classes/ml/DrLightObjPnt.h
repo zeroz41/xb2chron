@@ -9,7 +9,12 @@ class DrLightObjPnt : public ::ml::DrLightObj {
 public:
     virtual ~DrLightObjPnt();  // slot 0
 
-    unsigned char pad_8[0x94];
+
+    // 1.0.0 has both out of line; 3.0.1 only inlines them into the destructor
+    void releasePnt();
+    void deletePntShadow();
+
+    unsigned char pad_30[0x6C];
     float m_size;  // 0x9C, set by DrEnvironmentAnim::envlgt_pnt_size (the name is not the original's)
     unsigned char pad_a0[0x10];
     float m_speIntensity;  // 0xB0, set by DrEnvironmentAnim::envlgt_pnt_spe_Intensity (the name is not the original's)

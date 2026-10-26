@@ -9,7 +9,12 @@ class DrLightObjSpt : public ::ml::DrLightObj {
 public:
     virtual ~DrLightObjSpt();  // slot 0
 
-    unsigned char pad_8[0xB4];
+
+    // 1.0.0 has both out of line; 3.0.1 only inlines them into the destructor
+    void releaseSpt();
+    void deleteSptShadow();
+
+    unsigned char pad_30[0x8C];
     float m_angle;  // 0xBC, set by DrEnvironmentAnim::envlgt_spt_angle (the name is not the original's)
     float m_size;  // 0xC0, set by DrEnvironmentAnim::envlgt_spt_size (the name is not the original's)
     unsigned char pad_c4[0x10];
