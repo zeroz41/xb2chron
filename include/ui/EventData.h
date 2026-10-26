@@ -45,6 +45,9 @@ struct EventData {
                     };
                 };
                 unsigned long m_param01;  // the first pair as one (the name is not the original's)
+                // the same, where a type passes an object: GfMenuObjBalloon's money selection open (0x21), its
+                // parameters (the name is not the original's)
+                void* m_paramPtr;
             };
             union {
                 struct {
