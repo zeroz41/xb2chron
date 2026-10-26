@@ -154,7 +154,10 @@ public:
     unsigned int* m_dispOffBits;  // 0x1D20: a bit per display index, set = hidden (ScnObjAccPartsEtcPos::isDisp; name inferred)
     unsigned char pad_1D28[0x8];
     mm::Vec3 m_globalWind[2];           // 0x1D30, by s_nDblNowIdx (getGlobalWind)
-    unsigned char pad_1D50[0x41];
+    unsigned char pad_1D50[0x3C];
+    // 0x1D8C: DrShdLgtHybrid::render skips the clustered lights' render while set (the name is not the original's)
+    bool m_clusteredRenderOff;
+    unsigned char pad_1D8D[0x4];
     bool m_iblSkip;                     // 0x1D91: isIBLSkip is true, isTemporalUPSToGlobalIBL false while set (name inferred)
     unsigned char pad_1D92[0x5];
     bool m_mdlDblPause;
@@ -165,12 +168,18 @@ public:
     // (the name is not the original's)
     bool m_seamCalc[2];
     bool m_cameraLight;
-    unsigned char pad_1DBF[0x51];
+    unsigned char pad_1DBF[0x1];
+    // 0x1DC0: DrShdLgtHybrid renders the tile-based lights for 0, the clustered ones for 1, none otherwise (the name
+    // is not the original's)
+    int m_shdLgtType;
+    unsigned char pad_1DC4[0x4C];
     cloud::CloudMan* m_cloudMan;        // setPlaneCloudNum hands it the cloud count
     bool m_toonDirLightScale;
     unsigned char pad_1E19[0x3];
     int m_toonAmbient;                  // 3 on, 0 off
-    unsigned char pad_1E20[0x10];
+    // 0x1E20: DrPixlPostObjUnbranchToDepth::render adds its quarter pass while set (the name is not the original's)
+    bool m_unbranchQuater;
+    unsigned char pad_1E21[0xF];
 };
 }  // namespace ml
 

@@ -5,6 +5,7 @@
 #include "grlib/CGLibDblUniformBlock.h"
 
 namespace ml { class DrLightMan; }
+namespace ml { class DrMan; }
 namespace ml { class DrLightObjPnt; }
 namespace ml { class DrLightObjSpt; }
 namespace ml { class DrShdLgtMan; }
@@ -13,6 +14,8 @@ namespace ml {
 // table 0x7100B7E450
 class DrShdLgtClustered : public ::ml::DrShdLgtDynamic {
 public:
+    // the bool is stored at 0x18 (its meaning is not proven)
+    DrShdLgtClustered(DrMan* drMan, bool flag);
     virtual ~DrShdLgtClustered();  // slot 0
     virtual void stockBegin();  // slot 2
     virtual void stockEnd();  // slot 3
@@ -47,8 +50,9 @@ public:
         unsigned char pad_150[0x40];
     };
 
-    unsigned char pad_8[0x18];
+    unsigned char pad_18[0x8];
     ViewWork m_viewWork[1];  // 0x20; the view count is not proven
+    unsigned char pad_1b0[0x500];  // to 0x6B0, the size DrShdLgtHybrid's constructor allocates
 };
 }  // namespace ml
 
