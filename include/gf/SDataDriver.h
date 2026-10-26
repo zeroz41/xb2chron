@@ -2,6 +2,7 @@
 #define GF_SDATADRIVER_H
 
 #include "gf/SDataBlade.h"
+#include "classes/gf/GfItemBox.h"
 
 namespace gf {
 // an accessory slot of a driver (GfDataDriver::getEquipAcce; the names are not the original's)
@@ -53,7 +54,11 @@ public:
 // DataObjDriver::setupVirtualParam allocates one). The type and field names are not the original's.
 struct SDataDriverDlc {
     SDataDriver m_driver;
-    unsigned char pad_5a0[0x80C];
+    // 0x5A0: an item handle and (0x5A4) a 16-bit item id, read and set by GfDataDriver::fn_71002474B0/fn_7100247534 and
+    // fn_7100247474/fn_71002474F4 (GfItemUtil::getEquipChar reads the handle; the names are not the original's)
+    GfItemHandle m_handle;
+    unsigned short m_item;
+    unsigned char pad_5a6[0x806];
 };
 }  // namespace gf
 

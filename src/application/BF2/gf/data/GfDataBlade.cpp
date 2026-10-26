@@ -2693,4 +2693,197 @@ unsigned char* GfDataItem::getItemBox() {
     return GfDataManager::getDataGame()->m_itemBox;
 }
 
+unsigned short GfDataBlade::fn_7100231EB8(const SDataGame& game) {
+    return GfGameFlag::getLocal(game.m_gameFlag, 0x10, 1);
+}
+
+bool GfDataBlade::fn_7100232244(const SDataGame& game) {
+    return GfGameFlag::getLocal(game.m_gameFlag, 1, 0xD791) != 0;
+}
+
+bool GfDataBlade::fn_7100235F94(const SDataGame& game) {
+    return GfGameFlag::getLocal(game.m_gameFlag, 1, 0x89FB) != 0;
+}
+
+bool GfDataBlade::fn_7100232054(const SDataGame& game) {
+    return GfGameFlag::getLocal(game.m_gameFlag, 1, 0xBDCD) != 0 || GfGameFlag::getLocal(game.m_gameFlag, 1, 0xD880) != 0;
+}
+
+bool GfDataBlade::fn_71002320C8(const SDataGame& game) {
+    return GfGameFlag::getLocal(game.m_gameFlag, 1, 0xD793) != 0 || GfGameFlag::getLocal(game.m_gameFlag, 1, 0xD882) != 0;
+}
+
+bool GfDataBlade::fn_710023217C(const SDataGame& game) {
+    return GfGameFlag::getLocal(game.m_gameFlag, 1, 0xD77E) != 0 || GfGameFlag::getLocal(game.m_gameFlag, 1, 0xD87E) != 0;
+}
+
+bool GfDataBlade::fn_7100231FF8() {
+    return fn_7100232054(*GfDataManager::getDataGame());
+}
+
+bool GfDataBlade::fn_7100232120() {
+    return fn_710023217C(*GfDataManager::getDataGame());
+}
+
+bool GfDataBlade::fn_7100232290() {
+    return GfGameFlag::getLocal(GfDataManager::getDataGame()->m_gameFlag, 1, 0xD795) != 0;
+}
+
+bool GfDataBlade::fn_71002324C8() {
+    return GfGameFlag::getLocal(GfDataManager::getDataGame()->m_gameFlag, 1, 0xD860) != 0;
+}
+
+bool GfDataBlade::fn_710023220C() {
+    return fn_7100231884() > 0xBE7;
+}
+
+bool GfDataBlade::fn_710024E91C() {
+    return fn_7100231884() > 0x1F64;
+}
+
+bool GfDataBlade::fn_710024E9A8() {
+    return GfGameFlag::getLocal(1, 0xD862) != 0;
+}
+
+bool GfDataBlade::fn_710024E9DC() {
+    return GfGameFlag::getLocal(1, 0xD863) != 0;
+}
+
+unsigned int GfDataBlade::fn_710024DD88() {
+    return GfGameFlag::getLocal(4, 652);
+}
+
+void GfDataBlade::fn_710024E9CC(bool flag) {
+    GfGameFlag::setLocal(1, 0xD862, flag);
+}
+
+void GfDataBlade::fn_710024EA00(bool flag) {
+    GfGameFlag::setLocal(1, 0xD863, flag);
+}
+
+void GfDataBlade::fn_71002321D4(bool flag) {
+    GfGameFlag::setLocal(1, 0xD77E, flag);
+    GfGameFlag::setLocal(1, 0xD87E, flag);
+}
+
+void GfDataBlade::fn_7100232274(SDataGame* game, bool flag) {
+    GfGameFlag::setLocal(game->m_gameFlag, 1, 0xD791, flag);
+}
+
+void GfDataBlade::fn_71002322C4(SDataGame* game, bool flag) {
+    GfGameFlag::setLocal(game->m_gameFlag, 1, 0xD795, flag);
+}
+
+void GfDataBlade::fn_71002324FC(SDataGame* game, bool flag) {
+    GfGameFlag::setLocal(game->m_gameFlag, 1, 0xD860, flag);
+}
+
+bool GfDataBlade::fn_710023182C() {
+    SDataGame* game = GfDataManager::getDataGame();
+    unsigned short value = game->m_chapterSaveValue;
+    bool same = value == fn_7100231884();
+    bool saved = game->m_eventChapterSave != 0;
+    return same && saved;
+}
+
+bool GfDataDriver::fn_7100238094(unsigned int driver) {
+    return driver != 0 && getSDataDriver(driver)->m_dataType == 1;
+}
+
+unsigned int GfDataDriver::fn_7100247E28(unsigned int driver) {
+    return getSkillPoint(*getSDataDriver(driver));
+}
+
+void GfDataDriver::setScenarioMask(unsigned int driver, bool mask) {
+    getSDataDriver(driver)->m_scenarioMask = mask;
+}
+
+unsigned int GfDataDriver::getEquipAcce(unsigned int driver, unsigned int slot) {
+    return getEquipAcce(*getSDataDriver(driver), slot);
+}
+
+unsigned int GfDataBlade::fn_7100231754() {
+    return 1397;
+}
+
+void GfDataBlade::fn_710023493C() {
+}
+
+bool GfDataBlade::fn_71002327B0(unsigned int id) {
+    return id - 25501 < 499;
+}
+
+bool GfDataBlade::fn_71002364B8(unsigned int blade) {
+    return blade - 1124 < 9;
+}
+
+unsigned int GfDataBlade::fn_7100236518(unsigned int blade) {
+    switch (blade) {
+    case 1124:
+        return 17;
+    case 1125:
+        return 18;
+    case 1126:
+        return 19;
+    case 1127:
+        return 20;
+    case 1128:
+        return 21;
+    case 1129:
+        return 22;
+    case 1130:
+        return 23;
+    case 1131:
+        return 24;
+    case 1132:
+        return 25;
+    default:
+        return 0;
+    }
+}
+
+bool GfDataBlade::fn_710024F258(unsigned int id) {
+    return id - 10001 < 744;
+}
+
+bool GfDataBlade::fn_710023384C(unsigned int id) {
+    switch (id) {
+    case 40260: case 40261: case 40262: case 40263: case 40264: case 40265: case 40266: case 40267: case 40268:
+    case 40312:
+        return true;
+    default:
+        return false;
+    }
+}
+
+unsigned int GfDataDriver::getDeathBlowEfbFileIdx(DBSLOT slot, int index) {
+    int idx = index >= 0 ? slot * 5 + index : slot + 1;
+    return idx + 0x881;
+}
+
+unsigned int GfDataDriver::getDeathBlowEabFileIdx(DBSLOT slot, int index) {
+    int idx = index >= 0 ? slot * 5 + index : slot + 1;
+    return idx + 0x498;
+}
+
+GfItemHandle GfDataDriver::fn_71002474B0(unsigned int driver) {
+    if (driver - 0x11 < 9) {
+        return GfDataManager::fn_7100224A10()[driver - 0x11].m_handle;
+    }
+    return GfItemHandle();
+}
+
+void GfDataDriver::fn_71002474F4(unsigned int driver, unsigned short item) {
+    if (driver - 0x11 < 9) {
+        GfDataManager::fn_7100224A10()[driver - 0x11].m_item = item;
+    }
+}
+
+unsigned int GfDataDriver::fn_7100247474(unsigned int driver) {
+    if (driver - 0x11 < 9) {
+        return GfDataManager::fn_7100224A10()[driver - 0x11].m_item;
+    }
+    return 0;
+}
+
 }  // namespace gf

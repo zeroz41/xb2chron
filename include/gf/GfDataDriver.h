@@ -1,7 +1,7 @@
 #ifndef GF_GFDATADRIVER_H
 #define GF_GFDATADRIVER_H
 
-namespace gf { class SDataDriver; enum DBSLOT : int; }
+namespace gf { class SDataDriver; enum DBSLOT : int; struct GfItemHandle; }
 namespace gf { struct SDataPouch; }
 namespace gf { struct SDataDriverDlc; }
 namespace gf { enum FAVORITE : int; }
@@ -220,6 +220,18 @@ public:
     // GfDataDriver::isEnableLevelUp, which hands it getSDataDriver's data. What it does: whether the driver can level
     // up: compares getExp(data) with the growth table (GfBdatBtl::getGrowEnd, GfBdatChrDr::fn_71001F13E0/fn_71001F16A4).
     static bool fn_7100245C98(const SDataDriver& data);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataDriver's functions. What it does: false for driver 0, else whether m_dataType (+0x20) of its data (found the getSDataDriver way) is 1.
+    static bool fn_7100238094(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataDriver's functions. What it does: getSkillPoint of the driver's data (found the getSDataDriver way); GfGameUtil::execDriverSkillLevelUp/checkDriverSkillLevelUp call it.
+    static unsigned int fn_7100247E28(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataDriver's functions. What it does: the item handle (+0x5A0) of the DLC driver (0x11-0x19) row of GfDataManager::fn_7100224A10's 0xDAC-byte table, else an empty handle (GfItemUtil::getEquipChar calls it).
+    static GfItemHandle fn_71002474B0(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataDriver's functions. What it does: sets the 16-bit item id (+0x5A4) of the DLC driver (0x11-0x19) row of GfDataManager::fn_7100224A10's 0xDAC-byte table (fn_7100247474 reads it).
+    static void fn_71002474F4(unsigned int driver, unsigned short item);
 };
 }  // namespace gf
 

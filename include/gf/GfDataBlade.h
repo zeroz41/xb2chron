@@ -291,6 +291,81 @@ public:
     static bool getMercenaryName(unsigned char*& bdat, unsigned int& id, unsigned int blade);
     // a common blade's name text ("" for none)
     static const char* getCommonBladeName(unsigned int blade);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: local flag 1 (type 16) of game's GameFlag (+0xFBBC4).
+    static unsigned short fn_7100231EB8(const SDataGame& game);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: whether local flag 0xD791 (type 1) of game's GameFlag is set.
+    static bool fn_7100232244(const SDataGame& game);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: whether local flag 0x89FB (type 1) of game's GameFlag is set (isHomuriNameHikari's flag).
+    static bool fn_7100235F94(const SDataGame& game);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: true when local flag 0xD793 (type 1) of game's GameFlag is set, else whether flag 0xD882 is.
+    static bool fn_71002320C8(const SDataGame& game);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: true when local flag 0xD77E (type 1) of game's GameFlag is set, else whether flag 0xD87E is.
+    static bool fn_710023217C(const SDataGame& game);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: fn_710023217C's test on GfDataManager::getDataGame()'s flags.
+    static bool fn_7100232120();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: whether local flag 0xD795 (type 1) of GfDataManager::getDataGame()'s GameFlag is set.
+    static bool fn_7100232290();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: whether local flag 0xD860 (type 1) of GfDataManager::getDataGame()'s GameFlag is set (fn_71002324FC sets it).
+    static bool fn_71002324C8();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: whether fn_7100231884 (local flag 1, type 16) is above 0xBE7.
+    static bool fn_710023220C();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: whether fn_7100231884 (local flag 1, type 16) is above 0x1F64.
+    static bool fn_710024E91C();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: whether local flag 0xD862 (type 1) is set (GfGameFlag::getLocal(1, 0xD862)); fn_710024E9CC sets it.
+    static bool fn_710024E9A8();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: whether local flag 0xD863 (type 1) is set; fn_710024EA00 sets it.
+    static bool fn_710024E9DC();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: local flag 652 (type 4) (GfGameFlag::getLocal(4, 652)).
+    static unsigned int fn_710024DD88();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: sets local flag 0xD862 (type 1) to flag.
+    static void fn_710024E9CC(bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: sets local flag 0xD863 (type 1) to flag.
+    static void fn_710024EA00(bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: sets local flags 0xD77E and 0xD87E (type 1) to flag (the two fn_710023217C tests).
+    static void fn_71002321D4(bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: sets local flag 0xD791 (type 1) of game's GameFlag to flag (fn_7100232244 reads it).
+    static void fn_7100232274(SDataGame* game, bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: sets local flag 0xD795 (type 1) of game's GameFlag to flag (fn_7100232290 reads it).
+    static void fn_71002322C4(SDataGame* game, bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: whether getDataGame()'s m_chapterSaveValue (+0x26) equals fn_7100231884 and m_eventChapterSave (+0x28) is not 0.
+    static bool fn_710023182C();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: returns 1397 (GfAchievManager::getBladeByAchievementSet calls it).
+    static unsigned int fn_7100231754();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: nothing (an empty body; GfGameManager::setupGame calls it).
+    static void fn_710023493C();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: whether id is in 25501-25999 (GfItemUtil::getCountByItemCategory, getEnableStock, getProperty pass an item id).
+    static bool fn_71002327B0(unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: whether blade is in 1124-1132 (DataObjBlade::getNorAtkDmgMin/Max pass a blade id).
+    static bool fn_71002364B8(unsigned int blade);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: whether id is in 10001-10744 (tl::TitleStatePlayEvent::enter passes an event id).
+    static bool fn_710024F258(unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: whether id is 40260-40268 or 40312.
+    static bool fn_710023384C(unsigned int id);
 };
 
 }  // namespace gf
