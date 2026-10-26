@@ -23,6 +23,12 @@ public:
     // whether an item (GfMenuItemAdapter::update_canStack) or an item type (GfMenuGameAdapter's type 19) counts its
     // stack
     static bool canCountStack(unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among this
+    // class's functions (between canEquipAcc and searchEquipOrb). What it does: whether an item is bound to a blade:
+    // by GfDataItem::getItemType (2: GfBdatItem::fn_7100203610, 3: fn_7100200FE4, 20: fn_7100206788, else false)
+    // the item row's blade/driver value, true when it is not 0 and equals blade. GfMenuHanaAdapter::isEquipParts
+    // passes a Hana part and Hana.
+    static bool fn_71003547CC(unsigned int item, unsigned int blade);
 };
 
 }  // namespace gf

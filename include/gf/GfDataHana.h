@@ -10,13 +10,24 @@ namespace gf {
 struct alignas(4) EquipHana {
     // an arts or n-arts part's slot (12 bytes)
     struct Parts {
+        // inline: SDataBlade's constructor and GfMenuHanaAdapter::getEquipParts store these values (0, 100, 0, 0, 0,
+        // 1, 0) in place; two single bytes at 6 and 7 (one halfword merges with m_item's store, which the original
+        // keeps apart)
+        Parts() : m_value(0), m_value2(100), m_item(0), pad_6(0), pad_7(0), pad_8(1), m_handle(0) {}
         // arts: GfBdatItem::getITM_HanaArtsEnhEnhance(m_item); n-arts: getITM_HanaNArtsSetNArts(m_item)
         unsigned short m_value;
         unsigned short m_value2;  // n-arts: GfBdatItem::getITM_HanaNArtsSetNArtsRecastRev(m_item)
         unsigned short m_item;  // the part's item (getEquipPower counts its need only when m_value is set)
-        unsigned char pad_6[0x4];
+        unsigned char pad_6;  // the constructor sets 0; nothing known reads it
+        unsigned char pad_7;  // the constructor sets 0; nothing known reads it
+        unsigned char pad_8;   // the constructor sets 1; nothing known reads it
+        unsigned char pad_9[0x1];
         unsigned short m_handle;  // the item handle setArtsParts/setNArtsParts store (GfGameUtilHana::execEquip*)
     };
+    // inline: SDataBlade's constructor and GfMenuHanaAdapter::getEquipParts zero every field and build the six Parts
+    EquipHana()
+        : m_roleParts(0), m_attributeParts(0), m_condenserParts(), m_roleHandle(0), m_attributeHandle(0),
+          m_condenserHandles() {}
     unsigned short m_roleParts;  // read by GfDataHana::getAutoHate/getArtsHate, GfDataBlade::getHpMaxRev
     unsigned short m_attributeParts;
     Parts m_artsParts[3];

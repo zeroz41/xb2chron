@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFMENUBLADELIST_H
 
 #include "classes/ui/UIListInfo.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace gf {
 // a GfMenuBladeList's content (0xC bytes): a blade and how the list shows it
@@ -22,6 +23,8 @@ class GfMenuBladeList : public ::ui::UIListInfo< ::gf::MenuBladeInfo> {
 public:
     virtual ~GfMenuBladeList();  // slot 0
     static GfMenuBladeList* create();
+    // the blades a driver has, added to list (GfMenuHanaAdapter::getHanaCount passes false)
+    static void getBladeFromDriver(unsigned int driver, mm::mtl::FixedVector<unsigned short, 422>& list, bool);
     // setupFromReleasble passes it on to setup as its SetupParam
     struct ReleasbleSetup : public ::ui::UIListInfoBase::SetupParam {};
     // the blades that can be released (GfMenuObjBladeRelease::initialize)

@@ -9,6 +9,8 @@
 #include "classes/ui/UIObjectPlugin.h"
 #include "gf/GfDataHana.h"
 #include "gf/GfGameUtilHana.h"
+#include "gf/GfItemUtil.h"
+#include "gf/GfMenuItemUtil.h"
 #include "plugin/Bdat.h"
 #include "ui/UIStr.h"
 
@@ -133,7 +135,8 @@ bool GfMenuHanaAdapter::update_maxRankPower() {
     return true;
 }
 
-// update_partsExpandIcon: not written yet (it inlines isOpenCircuit, whose candidate selects its result)
+// update_partsExpandIcon: not identical yet (it inlines isOpenCircuit: the original
+// branches to set 0/1 where ours selects)
 
 bool GfMenuHanaAdapter::update_equipColor() {
     if (m_partsId == 0) {
@@ -180,19 +183,97 @@ void GfMenuHanaAdapter::update(const fw::UpdateInfo& info) {
     }
 }
 
-// isOpenCircuit: not written yet (the original branches on the result where the candidate selects)
+// isOpenCircuit: not identical yet (flow identical; the original branches on the
+// result where ours uses cset)
 
-// getEquipParts: not written yet (the original stores each arts slot's two halfwords apart)
-// isEquipParts: not written yet (it calls fn_71003547CC, which no evidence names)
-// isMakeParts: not written yet (its callees fn_71002E7580, fn_71002E7930, fn_71002E80BC, fn_71002E84B4 and
-// fn_71002E7CE0 need their names)
+unsigned int GfMenuHanaAdapter::getEquipParts(unsigned int hana, unsigned int partsId) {
+    EquipHana equip;
+    GfGameUtilHana::getEquip(equip, hana);
+    switch (partsId) {
+    case 1:
+        return equip.m_roleParts;
+    case 2:
+        return equip.m_attributeParts;
+    case 3:
+    case 4:
+    case 5:
+        return equip.m_nArtsParts[partsId - 3].m_item;
+    case 6:
+    case 7:
+    case 8:
+        return equip.m_condenserParts[partsId - 6];
+    case 9:
+    case 10:
+    case 11:
+        return equip.m_artsParts[partsId - 9].m_item;
+    case 12:
+    case 13:
+    case 14:
+        return (&equip.m_condenserParts[3])[partsId - 12];
+    }
+    return 0;
+}
+
+bool GfMenuHanaAdapter::isEquipParts(unsigned int hana, unsigned int partsId, unsigned int item, RESULT_HANA& result) {
+    switch (partsId) {
+    case 1:
+        result = GfGameUtilHana::isEnableEquipRoleParts(hana, item);
+        break;
+    case 2:
+        result = GfGameUtilHana::isEnableEquipAttributeParts(hana, item);
+        break;
+    case 3:
+    case 4:
+    case 5:
+        result = GfGameUtilHana::isEnableEquipNArtsParts(hana, item, partsId - 3);
+        break;
+    case 6:
+    case 7:
+    case 8:
+        result = GfGameUtilHana::isEnableEquipCondenserParts(hana, item, partsId - 6);
+        break;
+    case 9:
+    case 10:
+    case 11:
+        result = GfGameUtilHana::isEnableEquipArtsParts(hana, item, partsId - 9);
+        break;
+    case 12:
+    case 13:
+    case 14:
+        result = GfGameUtilHana::isEnableEquipExtendCondenserParts(hana, item, partsId - 12);
+        break;
+    default:
+        return false;
+    }
+    int count = GfItemUtil::getItemBoxCount(item);
+    if (count == 0) {
+        result = RESULT_HANA(8);
+    }
+    if (GfMenuItemUtil::fn_71003547CC(item, hana)) {
+        // the condenser slots: another one with a part bound to Hana gives 14
+        static const unsigned int slots[] = {6, 7, 8, 12, 13, 14};
+        for (unsigned int i = 0; i < sizeof(slots) / sizeof(slots[0]); i++) {
+            if (slots[i] != partsId) {
+                unsigned int parts = getEquipParts(hana, slots[i]);
+                if (parts != 0 && GfMenuItemUtil::fn_71003547CC(parts, hana)) {
+                    result = RESULT_HANA(14);
+                }
+            }
+        }
+    }
+    return result == 0 && count != 0;
+}
+
+// isMakeParts: not identical yet (the default case's false is materialized in
+// its own block in the original)
 
 bool GfMenuHanaAdapter::isCrystalParts(unsigned int partsId, unsigned int item, RESULT_HANA& result) {
     result = RESULT_HANA(0);
     return true;
 }
 
-// getHanaCount: not written yet (GfMenuBladeList::getBladeFromDriver needs MenuBladeInfo, which no header defines)
+// getHanaCount: not identical yet (the original tests the vectors' sizes before
+// pointer loops)
 
 unsigned int GfMenuHanaAdapter::getSortTableId(unsigned int partsId) {
     for (unsigned int i = 0; i < sizeof(s_sortTableIds) / sizeof(s_sortTableIds[0]); i++) {
