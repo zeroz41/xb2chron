@@ -37,6 +37,8 @@ public:
     static void update(const fw::UpdateInfo& info);
     virtual ~GfManager();  // slot 0
     void finalize();
+    // makes the game manager from the setup parameters (tl::TitleApplet::initialize)
+    static void build(const GfSetupParam& param);
     static void destroy();
     static bool isDestroyNow();
     static bool isExecModeDebug();

@@ -3,11 +3,11 @@
 
 #include "classes/ml/FontLayer.h"
 #include "classes/ml/WorkObj.h"
+#include "mm/Col4.h"
 
 namespace ml { class IWorkEvent; }
 namespace ml { class WorkObj; }
 namespace mm { template <typename> class Rect; }
-namespace mm { struct Col4; }
 
 namespace ml {
 // table 0x7100B78828; base FontLayer at 0x1A8 (the font commands' flushes print through getView(false) + 0x1A8 as
@@ -28,6 +28,11 @@ public:
     virtual void destroyCtrlMemory();  // slot 21
     virtual void applyRect();  // slot 22
     virtual void getViewOfs(mm::Rect<int>&, bool);  // slot 23
+
+    unsigned char pad_1B8[0x35C];
+    // 0x514 the constructor copies setInitialBackCol's colour into it; tl::TitleApplet::initialize sets it black
+    // (the name is not the original's)
+    mm::Col4 m_backCol;
 };
 }  // namespace ml
 

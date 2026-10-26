@@ -19,15 +19,20 @@ namespace fw { class UpdateState; }
 namespace mm { namespace mtl { class IAllocator; } }
 
 namespace fw { class FrameworkConfig; }
+namespace ml { class WinView; }
 
 namespace fw {
 // what the framework runs in (Framework::initialize's second; it copies the fields one by one into its own at 0x50).
 // Only the fields Framework's code reads have names; none is the original's.
 class FrameworkEnv {
 public:
+    // fw::Applet's constructor zeroes its copy field by field
+    FrameworkEnv() : pad_0(0), m_scn(nullptr), m_view(nullptr), m_memHandle(), pad_20(0) {}
+
     unsigned long pad_0;
     ml::Scn* m_scn;  // 0x08 Framework's m_scn
-    unsigned long pad_10;
+    // 0x10 the launcher's view (apps::FrameworkLauncher::mlthFnBuild passes its m_view; the name is not the original's)
+    ml::WinView* m_view;
     mtl::ALLOC_HANDLE m_memHandle;  // 0x18 Framework's m_memHandle: its allocator's memory
     unsigned long pad_20;
 };

@@ -24,6 +24,8 @@ public:
     void initialize();
     // finalizes the title and deletes it
     static void destroy();
+    // steps the title's instance, if there is one, with the frame's update info (tl::TitleApplet::update calls it)
+    static void update(const fw::UpdateInfo& info);
     void finalize();
     void createSaveBuffer();
     // the micro thread's function: steps the state machine until it reaches state 9 (TitleStateDestroy)
