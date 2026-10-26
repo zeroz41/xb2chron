@@ -84,6 +84,11 @@ public:
     static void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
     static void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int);
     static void eventCheckTask(gf::QuestID id);
+    // GfQuestTask::setupOrderTask passes an affinity chart quest and updateQuestTask's state (2 or more) when its
+    // level is complete
+    // fn_710030EB68 passes a collect task whose count changed
+    static void eventChangeTaskState(const QuestTaskParam& param);
+    static void checkQuestComplete(gf::QuestID id, gf::QSTATE state);
 
     static GfQuestManager* s_pThis;
     static GfBdatQuest* s_bdat;

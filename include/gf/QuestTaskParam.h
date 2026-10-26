@@ -12,15 +12,20 @@ enum TASK_STATE {};
 class QuestTaskParam {
 public:
     QuestTaskParam(QuestID id, unsigned int task, TASK_STATE state);
+    // the same for a purpose already known (looked up when zero and the quest is set)
+    QuestTaskParam(QuestID id, unsigned int task, unsigned int purposeId, TASK_STATE state);
 
-    unsigned char pad_0[0x4];
+    unsigned int pad_0;  // the constructors zero it
     QuestID m_questId;
     unsigned int m_purposeId;  // the constructor's GfDataQuest::getListPurposeID
     unsigned int m_task;
     unsigned int m_taskType;  // the constructor's QuestListAcc::getTaskTaskType (3 collect, 4 use, 8 gimmick, 10 condition)
     unsigned int m_taskId;    // the constructor's QuestListAcc::getTaskTaskID: the row in the type's table
     TASK_STATE m_state;  // the constructor's state (GfMenuManager::qevChangeTaskState: 1 completes the task)
-    unsigned char pad_1C[0x4];
+    // QuestListAcc::getTaskTaskUI is not 1 (the constructors; false when the quest has no purpose). The name is not
+    // the original's.
+    bool m_taskUi;
+    unsigned char pad_1D[0x3];
 };
 
 }  // namespace gf

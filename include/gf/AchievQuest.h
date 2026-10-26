@@ -26,6 +26,11 @@ public:
     bool decleseCount(unsigned int count);
     void setCount(unsigned int count);
     bool isCountComplete() const;
+    // sets (set) or clears flag bit 2 (task true) or bit 3 (task false); GfQuestTask::isCompleteFlag tests bit 2 for
+    // a quest with no PRT quest, else bit 3
+    void setTaskComplete(bool task, bool set);
+    // raises the count to the count to reach and tells the achievement manager what it added
+    void setCountComplete();
 };
 
 }  // namespace gf

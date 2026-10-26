@@ -7,6 +7,8 @@ namespace gf {
 // the items' data, by their item id (functions, by its symbols)
 class GfDataItem {
 public:
+    // the item's category (fn_710030EB68 matches collect tasks by it)
+    static unsigned int getCategory(unsigned int item);
     static const char* getName(unsigned int item);
     static int getRarity(unsigned int item);  // GfMenuItemAdapter::update_RareIcon's icon
     // the message table and row of the item's name

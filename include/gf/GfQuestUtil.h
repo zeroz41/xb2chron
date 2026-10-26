@@ -31,6 +31,8 @@ struct GfQuestTaskLogResult {
 // the quests' helpers (functions, by their symbols)
 class GfQuestUtil {
 public:
+    // logs the task's item (fn_710030EB68 after a collect count changes, for a visible quest)
+    static void sendItemLog(const QuestTaskParam& param);
     static QuestID getLastOrderCategoryQuest(QTYPE type);
     static void clearOrderParentQuest();
     static void addOrderParentQuest(QuestID id);
