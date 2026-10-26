@@ -162,16 +162,6 @@ inline void default_construct_n(T* first, size_t n) {
     }
 }
 
-// assigns [first, last) to result on, front to back, as std::copy does (erase's shift: the original keeps the source
-// and destination pointers apart, Vector<IntrusivePtr<fw::ReferenceFrame>>::erase)
-template <typename T>
-inline T* copy_forward(T* first, T* last, T* result) {
-    while (first != last) {
-        *result++ = *first++;
-    }
-    return result;
-}
-
 template <typename T>
 void Vector<T>::expand(size_t capacity, size_t alignment) {
     size_t size = m_size;

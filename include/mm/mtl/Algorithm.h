@@ -92,6 +92,17 @@ inline void move_n(const T* from, size_t n, T* result) {
     }
 }
 
+// assigns [first, last) to result on, front to back, as std::copy does (Vector's and FixedVector's erase
+// shift: the original keeps the source and destination pointers apart, Vector<IntrusivePtr<fw::ReferenceFrame>>::erase
+// and GfMenuSequence<GfMenuObjQuestLog, 8>::wait_anim)
+template <typename T>
+inline T* copy_forward(T* first, T* last, T* result) {
+    while (first != last) {
+        *result++ = *first++;
+    }
+    return result;
+}
+
 }}  // namespace mm::mtl
 
 #endif
