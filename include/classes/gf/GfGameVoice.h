@@ -2,18 +2,144 @@
 #define CLASSES_GF_GFGAMEVOICE_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "mm/mtl/FixedList.h"
+#include "mm/mtl/FixedQueue.h"
+#include "mm/mtl/FixStr.h"
+#include "gf/ParamObj.h"
+#include "gf/SoundHandle.h"
 
-namespace gf { class GfGameVoice; class GAME_VOICE_HANDLE; class GF_OBJ_HANDLE; enum CV_RESULT : int; }
+namespace fw { class UpdateInfo; }
+namespace gf { class GfGameVoice; class GfSetupParam; class GAME_VOICE_HANDLE; class GF_OBJ_HANDLE; enum CV_RESULT : int; }
 namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
+namespace gf { enum CV_PRIO : int; }
 
 namespace gf {
+// a voice's name as GfGameVoice plays it: the name and two numbers its constructor reads from it (the voice
+// path's parts, see getVoicePath). The member names are not the original's.
+class GfVoiceName {
+public:
+    GfVoiceName(const char* name);
+    void getVoicePath(mm::mtl::FixStr<16>& path) const;
+
+    mm::mtl::FixStr<16> m_name;
+    int m_kind;
+    int m_number;
+};
+
+// one voice slot of GfGameVoice (200 bytes; GfGameVoice::initialize makes six): the voice it plays and a queue of
+// jobs (play, stop, wait) its update runs in order. The member names are not the original's.
+class VoiceInfo {
+public:
+    // a queued job: exec returns true when it is done (VoiceInfo::update then deletes it and runs the next)
+    // table none (its derived classes')
+    class PJOB {
+    public:
+        PJOB(VoiceInfo* info) : m_info(info) {}
+        virtual ~PJOB() {}  // slot 0
+        virtual bool exec() = 0;  // slot 2
+        virtual const char* getName() { return nullptr; }  // slot 3
+        virtual GAME_VOICE_HANDLE* getVoiceHandle() const { return nullptr; }  // slot 4
+
+        VoiceInfo* m_info;
+    };
+    // table 0x7100B56B60
+    class PJOB_PLAY : public PJOB {
+    public:
+        PJOB_PLAY(VoiceInfo* info, GAME_VOICE_HANDLE* voice, const ParamObj& obj, const GfVoiceName& name,
+                  CV_PRIO prio)
+            : PJOB(info), m_voice(voice), m_obj(obj), m_name(name), m_prio(prio) {}
+        virtual ~PJOB_PLAY() {}  // slot 0
+        virtual bool exec();  // slot 2
+        virtual const char* getName() { return m_name.m_name.m_str; }  // slot 3
+        virtual GAME_VOICE_HANDLE* getVoiceHandle() const { return m_voice; }  // slot 4
+
+        GAME_VOICE_HANDLE* m_voice;
+        ParamObj m_obj;
+        GfVoiceName m_name;
+        CV_PRIO m_prio;
+    };
+    // table 0x7100B56B98
+    class PJOB_STOP : public PJOB {
+    public:
+        PJOB_STOP(VoiceInfo* info, CV_PRIO prio) : PJOB(info), m_prio(prio) {}
+        virtual bool exec();  // slot 2
+
+        CV_PRIO m_prio;
+    };
+    // table 0x7100B56BD0
+    class PJOB_WAIT_STOP : public PJOB {
+    public:
+        PJOB_WAIT_STOP(VoiceInfo* info) : PJOB(info) {}
+        virtual bool exec();  // slot 2
+    };
+
+    VoiceInfo()
+        : m_isFree(true), m_state(0), m_time(0.0f), m_obj(0, 0), m_voice(nullptr), m_waitForOthers(false) {
+        clear();
+    }
+
+    void clear();
+    void checkInvalid(const fw::UpdateInfo& info);
+    void update(const fw::UpdateInfo& info);
+    void addPlay(GAME_VOICE_HANDLE* voice, const ParamObj& obj, const GfVoiceName& name, CV_PRIO prio);
+    void setPlayInfoStart(GAME_VOICE_HANDLE* voice, SoundHandle sound, const ParamObj& obj, CV_PRIO prio);
+    void setPlayInfoStop(CV_PRIO prio);
+    // queues a stop unless the queue is full or nothing plays (GfGameVoice::destroyVoiceAll; the name is not the
+    // original's)
+    inline void addStop(CV_PRIO prio);
+
+    bool m_isFree;  // clear sets it
+    int m_state;
+    CV_PRIO m_prio;
+    float m_time;  // seconds the voice has played (update); checkInvalid gives up past 60
+    ParamObj m_obj;
+    SoundHandle m_sound;
+    GAME_VOICE_HANDLE* m_voice;
+    // PJOB_PLAY::exec holds the voice while an object of type 3 or 4 has a voice playing
+    bool m_waitForOthers;
+    mm::mtl::FixedQueue<PJOB*, 16> m_jobs;
+};
+
 // table 0x7100B56B40
 class GfGameVoice : public ::mm::mtl::PtrSingleton< ::gf::GfGameVoice> {
 public:
+    // how a voice ended, kept for getResult (the names are not the original's)
+    struct Result {
+        Result(const ParamObj& obj, GAME_VOICE_HANDLE* voice, CV_RESULT result)
+            : m_obj(obj), m_voice(voice), m_result(result) {}
+
+        ParamObj m_obj;
+        GAME_VOICE_HANDLE* m_voice;
+        CV_RESULT m_result;
+    };
+
+    GfGameVoice() : m_isInitialized(false), m_voiceCount(0) {}
     virtual ~GfGameVoice();  // slot 0
-    static void gevLayerPause(unsigned int, bool);
+
+    static void build(const GfSetupParam& param);
+    static void destroy();
+    void initialize(const GfSetupParam& param);
+    void finalize();
+    static void update(const fw::UpdateInfo& info);
+    static void destroyVoiceAll();
+    static void gevLayerPause(unsigned int layer, bool pause);
     // SCOM_FIELD_VOICE::exec stops a voice it cuts short, then asks how it ended
     static void playStop(GAME_VOICE_HANDLE* voice);
+    // waitForOthers: the voice waits while an object of type 3 or 4 has a voice playing (3.0.1 added the
+    // parameter: 1.0.0's playVoice has three)
+    static GAME_VOICE_HANDLE* playVoice(const ParamObj& obj, const char* name, CV_PRIO prio, bool waitForOthers);
+    static GAME_VOICE_HANDLE* playVoice(GF_OBJ_HANDLE* handle, const char* name, CV_PRIO prio);
+    static GAME_VOICE_HANDLE* playVoice(unsigned int type, unsigned int id, const char* name, CV_PRIO prio);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
+    // GfGameVoice's playVoice overloads and only calls playVoice. What it does: plays a voice for the object of a
+    // kind and an ID (ParamObj(type, id)) that waits while another object's voice plays (playVoice's
+    // waitForOthers true); its one caller is fn_7100569264.
+    static GAME_VOICE_HANDLE* fn_71002F1D20(unsigned int type, unsigned int id, const char* name, CV_PRIO prio);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
+    // GfGameVoice's playVoice overloads and walks GfGameVoice's playing list. What it does: plays a voice for an
+    // object (playVoice(ParamObj(handle), name, prio, false)), then sets waitForOthers on the slot that plays it;
+    // its one caller is fn_7100568E1C.
+    static GAME_VOICE_HANDLE* fn_71002F1D5C(GF_OBJ_HANDLE* handle, const char* name, CV_PRIO prio);
     // plays the named voice ("702870101"), handing back its handle for getResult
     static GAME_VOICE_HANDLE* playVoice(const char* name);
     static CV_RESULT getResult(GAME_VOICE_HANDLE* voice);
@@ -21,6 +147,20 @@ public:
     bool isPlayEnemyVoice() const;
     static void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
     bool isPlayVoice(gf::GF_OBJ_HANDLE* handle) const;
+
+    // keeps how a voice ended, dropping the oldest when full (the name is not the original's)
+    void addResult(const ParamObj& obj, GAME_VOICE_HANDLE* voice, CV_RESULT result) {
+        if (m_results.full()) {
+            m_results.pop();
+        }
+        m_results.push_back(Result(obj, voice, result));
+    }
+
+    bool m_isInitialized;
+    mm::mtl::FixedList<VoiceInfo*, 6> m_freeList;   // the slots no voice uses
+    mm::mtl::FixedList<VoiceInfo*, 6> m_playList;   // the slots playing or queued
+    unsigned long m_voiceCount;  // the last GAME_VOICE_HANDLE value playVoice handed out
+    mm::mtl::FixedQueue<Result, 256> m_results;
 };
 }  // namespace gf
 
