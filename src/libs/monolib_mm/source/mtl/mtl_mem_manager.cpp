@@ -5,18 +5,16 @@
 #include "classes/mtl/DlAllocator.h"
 #include "classes/mtl/NullAllocator.h"
 #include "classes/mtl/MemHandlebaseAllocator.h"
-#include "new"
-#include "stdlib.h"
-#include "mm/mtl/FixStr.h"
-#include "mtl/MemManager.h"
-#include "classes/mtl/IMemAllocator.h"
-#include "classes/mtl/DlAllocator.h"
-#include "classes/mtl/NullAllocator.h"
-#include "classes/mtl/MemHandlebaseAllocator.h"
+#include "classes/mtl/AssetAllocator.h"
+#include "classes/mm/mtl/HeapAllocator.h"
 #include <new>
 #include <stdlib.h>
 
 namespace mtl {
+
+// the heap createAllocator makes the allocators in
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100ED26D0)
+static mm::mtl::HeapAllocator s_allocatorHeap;
 
 DlAllocator::~DlAllocator() {}
 
@@ -50,6 +48,22 @@ void MemManager::deallocate(void* p, unsigned long size, bool flag) {
     if (s_bInitialize) {
         deallocate_section(p, size, flag);
     }
+}
+
+IMemAllocator* MemManager::createAllocator(AllocatorType type) {
+    IMemAllocator* allocator = nullptr;
+    switch (type) {
+    case 1:
+        allocator = new (s_allocatorHeap.allocate(sizeof(DlAllocator), 8)) DlAllocator();
+        break;
+    case 2:
+        allocator = new (s_allocatorHeap.allocate(sizeof(AssetAllocator<1024>), 8)) AssetAllocator<1024>();
+        break;
+    case 0:
+        allocator = new (s_allocatorHeap.allocate(sizeof(NullAllocator), 8)) NullAllocator();
+        break;
+    }
+    return allocator;
 }
 
 void* MemHandlebaseAllocator::allocate(unsigned long size, unsigned long alignment) {
@@ -96,5 +110,39 @@ void operator delete[](void* p, const std::nothrow_t&) noexcept {
 namespace mtl {
 
 IMemAllocator::~IMemAllocator() {}
+
+}  // namespace mtl
+
+namespace mtl {
+
+void MemManager::setHaltAlloc(ALLOC_HANDLE handle, bool flag) {
+    if (handle.m_handle == 0) {
+        return;
+    }
+    Region* region = s_ptrMap.find(handle.m_handle);
+    if (region != nullptr) {
+        region->m_flags = !flag ? region->m_flags & ~Region::FLAG_HALT_ALLOC : region->m_flags | Region::FLAG_HALT_ALLOC;
+    }
+}
+
+void MemManager::setWarnAlloc(ALLOC_HANDLE handle, bool flag) {
+    if (handle.m_handle == 0) {
+        return;
+    }
+    Region* region = s_ptrMap.find(handle.m_handle);
+    if (region != nullptr) {
+        region->m_flags = !flag ? region->m_flags & ~Region::FLAG_WARN_ALLOC : region->m_flags | Region::FLAG_WARN_ALLOC;
+    }
+}
+
+void MemManager::setLogAlloc(ALLOC_HANDLE handle, bool flag) {
+    if (handle.m_handle == 0) {
+        return;
+    }
+    Region* region = s_ptrMap.find(handle.m_handle);
+    if (region != nullptr) {
+        region->m_flags = !flag ? region->m_flags & ~Region::FLAG_LOG_ALLOC : region->m_flags | Region::FLAG_LOG_ALLOC;
+    }
+}
 
 }  // namespace mtl
