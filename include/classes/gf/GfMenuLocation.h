@@ -12,6 +12,8 @@ public:
     virtual ~GfMenuLocation();  // slot 0
     // GfMenuManager's quest events refresh locators 0, 1 and 3
     static void refreshLocator(unsigned int kind);
+    // updates the menus' locators (GfMenuObjWorldMap::update calls it each frame)
+    static void updateLocator();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in gf_menu_location's
     // unit and it writes the PtrSingleton<GfMenuLocation> instance. What it does: when the instance exists, stores value
     // in its u32 at 0x8 (GfMenuObjHitonowa's fn_710041D544, initialize and fn_7100423960 pass it).

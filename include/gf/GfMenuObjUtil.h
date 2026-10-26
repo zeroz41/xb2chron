@@ -199,6 +199,11 @@ public:
     // ui::UIUtil::getPadData() is set, else that byte's bit 1 (GfMenuObjFieldSkill::update stops its voice when this
     // and fn_710048FD30(3) hold).
     static bool fn_7100492C88();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // GfMenuObjUtil's functions (unit GfMenuObjUtil). What it does: true when ui::UIUtil::fn_7100696970(1) holds,
+    // GfGameManager::fn_71002AC598 holds and the current map is 0x3A (GfMenuObjWorldMap::isEnterMap then skips the
+    // FLD_maplist enter checks when fn_710048FD30(1) also holds).
+    static bool fn_7100492CBC();
     // the icons of a driver's arts at a level (getArtsIconInfo zeroes it first); the names are not the original's
     struct ArtsIconInfo {
         unsigned int m_type;     // 0xC, 0xD, 0xE for the special kinds

@@ -4,6 +4,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/gf/IGfEvent.h"
 #include "classes/gf/IGfObjListener.h"
+#include "classes/gf/GfGmkLocatorAtlas.h"
 #include "classes/gmk/GmkManager.h"
 #include "classes/gmk/GmkAccManager.h"
 #include "classes/gmk/GmkDoorPhantomManager.h"
@@ -79,7 +80,10 @@ public:
     bool m_fadeViewReady;  // 0xF4AE
     unsigned char pad_F4AF[0x1];
     float m_fadeTime;  // 0xF4B0: the fade's time so far (update adds each frame's step)
-    unsigned char pad_F4B4[0x48C];
+    unsigned char pad_F4B4[0xC];
+    // the locator atlas of the menus' maps (GfMenuObjWorldMap::update updates it, finalize recreates it from its
+    // own CreateInfo; the name is not the original's). Its constructor runs at 0xF4C0 in GfFieldGimmick's.
+    GfGmkLocatorAtlas m_locatorAtlas;  // 0xF4C0
     GfMobSlotManager m_mobSlotMgr;  // 0xF940
     unsigned char pad_F941[0x530];
     // GfGameManager::isEnableOpenMainMenu answers false while it is clear; update sets it to whether the player's
