@@ -13,6 +13,7 @@ namespace ml {
 // table 0x7100B76DB8
 class FileResTh : public ::ml::BaseObjectM, public ::ml::IWorkEvent {
 public:
+    FileResTh();
     virtual ~FileResTh();  // slot 0
     virtual void setMem(void*, int, char const*, bool);  // slot 5
     // whether the read started (fw::BdatManager::Impl's loadBdat and reloadBdat test the result)
@@ -36,6 +37,7 @@ public:
     unsigned long m_timeStamp;
     unsigned char pad_e8[0x8];
     bool m_ownsData;  // cleared when fw::AssetData::AssignFromMemory takes the data over
+    unsigned char pad_f1[0xF];  // to 0x100, the size DrShdLgtMan::reloadShader allocates
 };
 }  // namespace ml
 

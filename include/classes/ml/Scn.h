@@ -4,6 +4,7 @@
 #include "classes/ml/IWorkEvent.h"
 #include "mtl/AllocHandle.h"
 
+namespace ml { class FileResTh; }
 namespace ml { class ScnObjCam; }
 namespace ml { class ScnObj; }
 namespace ml { class ScnObjModel; }
@@ -33,6 +34,8 @@ public:
     virtual ~Scn();  // slot 0
     // the frame's tail and drawing (FrameworkLauncher::wkTail and drawTask call them on the launcher's scene)
     void tail();
+    // the entry resource of the file (DrShdLgtMan::reloadShader takes its shader package from it)
+    FileResTh* allocEntryRes(const char* path);
     void draw();
     // a camera by index; -1 the current view's (fw::NaviManager::update's)
     ScnObjCam* getCam(int index);

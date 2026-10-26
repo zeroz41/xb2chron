@@ -20,6 +20,7 @@ class CGLibDecShader {
 public:
     CGLibDecShader();
     ~CGLibDecShader();
+    void release();
     // the work bytes createMemPoolShader takes for the shader data (the parameter names are not the original's)
     static unsigned int calcWorkSize(const void* data, bool flag);
     // builds the shader in work from its data and the programs, its code in pool; returns the work bytes it took

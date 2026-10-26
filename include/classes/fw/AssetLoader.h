@@ -17,7 +17,6 @@ public:
     static AssetLoader* Create(mm::mtl::IAllocator* allocator, const char* path, int prio, int arg);
 
     // the names are not the original's (AssetManager::searchLoader compares them with what it is asked for)
-    unsigned char pad_f1[0xF];
     mtl::ALLOC_HANDLE m_allocHandle;  // the memory it reads into (Create's handle)
     unsigned char pad_104[0x4];
     mm::mtl::IAllocator* m_allocator;  // the same, as an allocator

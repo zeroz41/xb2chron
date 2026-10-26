@@ -104,7 +104,10 @@ public:
     mtl::ALLOC_HANDLE m_workHandle;
     mtl::ALLOC_HANDLE m_resHandle;      // 0x10, DrResMpfSampler news its samplers from it (the name is not the original's)
     mtl::ALLOC_HANDLE m_allocHandle;    // 0x14, DrResOccUniformObj/DrResEtcUniformObj allocate from it (the name is not the original's)
-    unsigned char pad_18[0x58];
+    unsigned char pad_18[0x4];
+    // 0x1C, DrShdLgtMan::reloadShader reads its shader file into it (the name is not the original's)
+    mtl::ALLOC_HANDLE m_fileHandle;
+    unsigned char pad_20[0x50];
     DrIniSys* m_iniSys;                 // the constructor makes it (0x1BA0 bytes)
     DrPixlMan* m_pixlMan;               // 0x78, DrMdoSetup::varStTex_* call DrPixlMan methods on it (the name is not the original's)
     DrShdMan* m_shdMan;                 // 0x80, DrMdoSetup::uniformBlock_Bone/Cluster* read it (the name is not the original's)

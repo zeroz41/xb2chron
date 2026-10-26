@@ -12,7 +12,7 @@ struct CGLibShdPacHeader {
     unsigned char pad_0[0x8];
     unsigned int m_entryOfs;  // 0x8: CGLibShdPacEntry[m_num]
     int m_num;                // 0xC
-    unsigned char pad_10[0x4];
+    unsigned int m_extOfs;    // 0x10: CGLibShdPacExt[m_extNum]
     int m_extNum;             // 0x14
     unsigned int m_shdOfs;    // 0x18: the entries' shader data are relative to it
     unsigned char pad_1C[0x4];
@@ -21,6 +21,13 @@ struct CGLibShdPacHeader {
     unsigned int m_progOfs;   // 0x28
     unsigned char pad_2C[0x8];
     unsigned int m_version;   // 0x34
+};
+// an extension entry of a package: DrShdLgtMan::reloadShader takes the list entry of m_idx for each (the names
+// are not the original's)
+struct CGLibShdPacExt {
+    unsigned char pad_0[0x4];
+    unsigned int m_idx;  // 0x4
+    unsigned char pad_8[0x4];
 };
 // one shader of a package (the names are not the original's)
 struct CGLibShdPacEntry {

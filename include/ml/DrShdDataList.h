@@ -1,19 +1,28 @@
 #ifndef ML_DRSHDDATALIST_H
 #define ML_DRSHDDATALIST_H
 
+#include "grlib/CGLibOneUniformBlock.h"
+#include "grlib/CGLibUniformArray.h"
 #include "grlib/CGLibVtxIndex.h"
 #include "grlib/CGLibVtxStmOut.h"
 #include "grlib/CGLibVtxVertex.h"
 #include "ml/DrResFetch.h"
 
 namespace ml {
+class DrMan;
 class DrShdDataObj;
+class DrResShdMpf;
+class DrResShdPrePass;
+class DrResShdShw;
+class DrResShdStreamOut;
 
 // The renderer's shared shaders and its built-in geometry (vertex and index buffers). The layout covers the
 // buffers the bind/render functions use; the rest is not recovered yet. Field names are inferred from those
 // functions' names; they are not the original's.
 class DrShdDataList {
 public:
+    DrShdDataList(DrMan* drMan);
+    ~DrShdDataList();
     void createShader();
     void reloadShader(int);
     void bindShdVertex();
@@ -37,6 +46,11 @@ public:
     DrShdDataObj* getPostShdObj(int i);
     DrShdDataObj* getComputeObj(int i);
     DrResFetch* getFetchShader(int i);
+    DrResShdMpf* getMpfObj(int i);
+    DrResShdPrePass* getPrePassObj(int i);
+    DrResShdShw* getShwObj(int i);
+    DrResShdStreamOut* getStmOutObj(int i);
+    grlib::CGLibOneUniformBlock* getAlphaTestUniform(float alpha);
 
     unsigned char pad_0[0x18];
     // shader arrays the get*ShdObj getters index (the names are not the original's)
@@ -47,7 +61,11 @@ public:
     unsigned char pad_38[0x28];
     DrShdDataObj* m_pComputeObj;  // 0x60
     DrResFetch m_fetchShader[0x5B];  // 0x68: createWork sets each one's default vertex parameters
-    unsigned char pad_618[0x20];
+    unsigned char pad_618[0x8];
+    // the shader set-ups the get*Obj getters index (the names are not the original's)
+    DrResShdMpf* m_pMpfObj;  // 0x620
+    DrResShdPrePass* m_pPrePassObj;  // 0x628
+    DrResShdShw* m_pShwObj;  // 0x630
     grlib::CGLibVtxVertex m_shdVertex; // 0x638
     grlib::CGLibVtxVertex m_quadsTex; // 0x660
     grlib::CGLibVtxVertex m_triangle; // 0x688
@@ -67,6 +85,11 @@ public:
     // the bone matrices this frame and last frame: DrMdoSetup::uniformBlock_Bone/OldBone bind them (names inferred)
     grlib::CGLibVtxStmOut m_boneStmOut; // 0x958
     grlib::CGLibVtxStmOut m_oldBoneStmOut; // 0x980
+    // createAlphaTestBlock builds them: one per alpha test step of 0.1 (the name is not the original's)
+    grlib::CGLibUniformArray<grlib::CGLibOneUniformBlock> m_alphaTestBlock;  // 0x9A8
+    unsigned char pad_9c0[0x10];
+    DrResShdStreamOut* m_pStmOutObj;  // 0x9D0
+    unsigned char pad_9d8[0x8];
 };
 }  // namespace ml
 
