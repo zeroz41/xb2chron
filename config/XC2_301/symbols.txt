@@ -33975,7 +33975,7 @@ _ZN6effect13SystemManager16setUserAllocFuncEPFPvS1_jjPKcjEPFvS1_S1_ES5_S7_PFN3mt
 _ZN6effect13SystemManager15setUserFileFuncEPFPvPKcRiEPFvS1_E = .text:0x0083FEF8; // type:function size:0x4 scope:global
 _ZN6effect13SystemManager19setUserOutputStringEPFvPKcES4_ = .text:0x0083FEFC; // type:function size:0x4 scope:global
 _ZN6effect13SystemManager13setUserDrFuncEPFPvPKvPKciS3_iEPFvS1_EPFS1_jiEPFvjS1_EPFvS1_S1_ESF_SF_PFvS1_fESF_PFvjS1_S1_ESJ_SJ_S9_PFS1_iiES9_ = .text:0x0083FF00; // type:function size:0x24 scope:global
-fn_710083FF24 = .text:0x0083FF24; // type:function size:0x28 scope:global
+_ZN6effect13SystemManager13fn_710083FF24Eb = .text:0x0083FF24; // type:function size:0x28 scope:global
 _ZN6effect13SystemManager9updateCamEPKN5ptlib16DrDrawWorkInfoEFE = .text:0x0083FF4C; // type:function size:0x7F0 scope:global
 _ZN6effect13SystemManager8MainLoopEPKN5ptlib16DrDrawWorkInfoEFE = .text:0x0084073C; // type:function size:0xD8 scope:global
 _ZN6effect13SystemManager15es_command_coreEv = .text:0x00840814; // type:function size:0x8B8 scope:global

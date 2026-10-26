@@ -1,12 +1,44 @@
 #include "classes/fw/EffectCasterSend.h"
 #include "classes/effect/SystemManager.h"
 #include "classes/fw/EffectManager.h"
-#include "classes/effect/SystemManager.h"
-#include "classes/fw/EffectManager.h"
+#include "classes/fw/EffectCasterBase.h"
+#include "classes/ml/DrMdoMat.h"
 #include "classes/ml/DrMdlObj.h"
+#include "classes/ml/DrMdoGrpObj.h"
+#include "classes/ml/DrMan.h"
+#include "ml/DrCreator.h"
+#include "classes/fw/Framework.h"
+#include "classes/fw/EffectPack.h"
 #include "mtl/MemManager.h"
 
 namespace fw {
+
+void EffectCasterSend::sendDataStateName(const char* name) {
+    if (m_caster != nullptr && effect::SystemManager::getPtr() != nullptr) {
+        m_stateName[effect::SystemManager::getPtr()->m_secondBuffer ? 1 : 0] = name;
+    }
+}
+
+const char* EffectCasterSend::getStateName() {
+    return m_stateName[!effect::SystemManager::getPtr()->m_secondBuffer].m_str;
+}
+
+void* EffectCasterSend::getBindData(unsigned int& size) {
+    if (m_caster == nullptr) {
+        return nullptr;
+    }
+    void* data = m_caster->pad_20;
+    size = m_caster->pad_28;
+    return data;
+}
+
+float EffectCasterSend::getMdlFrame() {
+    return m_frame[!effect::SystemManager::getPtr()->m_secondBuffer];
+}
+
+float EffectCasterSend::getMdlScl() {
+    return m_scl[!effect::SystemManager::getPtr()->m_secondBuffer];
+}
 
 bool EffectManager::initialize() {
     return true;
@@ -28,6 +60,32 @@ void EffectManager::sendCaster(EffectCasterBase* caster, mm::Mat44& mtx, const c
         for (CasterGroup::iterator it = m_casterGroups[i].begin(); it != m_casterGroups[i].end(); ++it) {
             if (it->m_caster == caster) {
                 it->sendData(mtx, name, index);
+                return;
+            }
+        }
+    }
+}
+
+void EffectManager::sendCaster(EffectCasterBase* caster, float scl) {
+    for (unsigned long i = 0; i < 32; ++i) {
+        for (CasterGroup::iterator it = m_casterGroups[i].begin(); it != m_casterGroups[i].end(); ++it) {
+            if (it->m_caster == caster) {
+                if (caster != nullptr && effect::SystemManager::getPtr() != nullptr) {
+                    it->m_scl[effect::SystemManager::getPtr()->m_secondBuffer ? 1 : 0] = scl;
+                }
+                return;
+            }
+        }
+    }
+}
+
+void EffectManager::sendCasterFrame(EffectCasterBase* caster, float frame) {
+    for (unsigned long i = 0; i < 32; ++i) {
+        for (CasterGroup::iterator it = m_casterGroups[i].begin(); it != m_casterGroups[i].end(); ++it) {
+            if (it->m_caster == caster) {
+                if (caster != nullptr && effect::SystemManager::getPtr() != nullptr) {
+                    it->m_frame[effect::SystemManager::getPtr()->m_secondBuffer ? 1 : 0] = frame;
+                }
                 return;
             }
         }
@@ -191,6 +249,83 @@ void EffectManager::setMdlAlpha(void* mdl, float alpha) {
     }
 }
 
+void* EffectManager::search(const char* name, EffectPack* pack) {
+    if (pack != nullptr) {
+        if (void* efb = pack->searchEfb(name)) {
+            return efb;
+        }
+    }
+    for (CommonPack& entry : m_commonPacks) {
+        if (EffectPack* common = entry.m_pack.get()) {
+            if (void* efb = common->searchEfb(name)) {
+                return efb;
+            }
+        }
+    }
+    return nullptr;
+}
+
+unsigned int EffectManager::createHateRing() {
+    void* efb = nullptr;
+    for (CommonPack& entry : m_commonPacks) {
+        EffectPack* common = entry.m_pack.get();
+        if (common != nullptr && (efb = common->searchEfb("cmn_000_000")) != nullptr) {
+            break;
+        }
+    }
+    if (efb == nullptr || effect::SystemManager::getPtr() == nullptr) {
+        return 0;
+    }
+    return effect::SystemManager::getPtr()->es_create(efb, true);
+}
+
+unsigned int EffectManager::createHateRingVec() {
+    void* efb = nullptr;
+    for (CommonPack& entry : m_commonPacks) {
+        EffectPack* common = entry.m_pack.get();
+        if (common != nullptr && (efb = common->searchEfb("cmn_000_001")) != nullptr) {
+            break;
+        }
+    }
+    if (efb == nullptr || effect::SystemManager::getPtr() == nullptr) {
+        return 0;
+    }
+    return effect::SystemManager::getPtr()->es_create(efb, true);
+}
+
+unsigned int EffectManager::createHateArrow() {
+    void* efb = nullptr;
+    for (CommonPack& entry : m_commonPacks) {
+        EffectPack* common = entry.m_pack.get();
+        if (common != nullptr && (efb = common->searchEfb("cmn_000_002")) != nullptr) {
+            break;
+        }
+    }
+    if (efb == nullptr || effect::SystemManager::getPtr() == nullptr) {
+        return 0;
+    }
+    return effect::SystemManager::getPtr()->es_create(efb, true);
+}
+
+unsigned int EffectManager::createComboBall(unsigned int type) {
+    if (type == 0) {
+        return 0;
+    }
+    mm::mtl::FixStr<32> name;
+    name.format("cmn_010_%03d", type - 1);
+    void* efb = nullptr;
+    for (CommonPack& entry : m_commonPacks) {
+        EffectPack* common = entry.m_pack.get();
+        if (common != nullptr && (efb = common->searchEfb(name.m_str)) != nullptr) {
+            break;
+        }
+    }
+    if (efb == nullptr || effect::SystemManager::getPtr() == nullptr) {
+        return 0;
+    }
+    return effect::SystemManager::getPtr()->es_create(efb, true);
+}
+
 void EffectManager::destroyHateRing(unsigned int handle) {
     if (handle != 0) {
         effect::SystemManager::getPtr()->es_fade_core(nullptr, handle, -1);
@@ -213,6 +348,51 @@ void EffectManager::destroyComboBall(unsigned int handle) {
     if (handle != 0) {
         effect::SystemManager::getPtr()->es_fade_core(nullptr, handle, 1);
     }
+}
+
+void EffectManager::setMdlSpeed(void* mdl, void* speed) {
+    if (mdl != nullptr && speed != nullptr) {
+        static_cast<ml::DrMdlObj*>(mdl)->m_speed = *static_cast<const float*>(speed);
+    }
+}
+
+void* EffectManager::createGroup(int arg, int viewNum) {
+    if (mm::mtl::PtrSingleton<Framework>::sys() == nullptr) {
+        return nullptr;
+    }
+    return ml::DrCreator().createInstantGrp(arg, viewNum);
+}
+
+void EffectManager::destroyGroup(void* grp) {
+    if (grp != nullptr && mm::mtl::PtrSingleton<Framework>::sys() != nullptr) {
+        static_cast<ml::DrMdoGrpObj*>(grp)->setDeleteCall(ml::DrMan::s_nDblStockIdx);
+    }
+}
+
+void* EffectManager::createMdl(const void* res, const char* name, int index, const void* grp, int option) {
+    ml::DrMdlObj* mdl = nullptr;
+    if (grp != nullptr && mm::mtl::PtrSingleton<Framework>::sys() != nullptr) {
+        mdl = const_cast<ml::DrMdoGrpObj*>(static_cast<const ml::DrMdoGrpObj*>(grp))->createInstantMdl(res, name, option);
+        mdl->setMatrix(mm::Mat44::identity);
+        mdl->setDisp(true);
+        mdl->setOcclusionQuery(false);
+    }
+    return mdl;
+}
+
+void EffectManager::deleteMdl(void* mdl) {
+    if (mdl != nullptr && mm::mtl::PtrSingleton<Framework>::sys() != nullptr) {
+        static_cast<ml::DrMdlObj*>(mdl)->setDisp(false);
+        static_cast<ml::DrMdlObj*>(mdl)->setDeleteCall(ml::DrMan::s_nDblStockIdx);
+    }
+}
+
+void EffectManager::fn_7100179D30(bool flag) {
+    effect::SystemManager::getPtr()->fn_710083FF24(flag);
+}
+
+void EffectManager::fn_710017CB08(bool flag) {
+    m_gfManagerFlag = flag;
 }
 
 void EffectManager::begin() {

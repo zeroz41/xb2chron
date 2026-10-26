@@ -78,7 +78,8 @@ public:
     // original's)
     float m_alpha[2];
     float m_colorScale;  // 0xD8, 1.0f from the constructor; scales CalcBloom/CalcColor (name inferred)
-    unsigned char pad_DC[0x4];
+    // the effect library's model speed: fw::EffectManager::setMdlSpeed stores it (the name is not the original's)
+    float m_speed;
     // 0xE0: DrMdlObj::setAlpha/getAlpha while double-buffered alpha is off (the name is not the original's)
     float m_singleAlpha;
     // 0xE4, matCall_OutLineVal fades the outline between DrPixlPostParm::m_outLineNear and m_outLineFar by it

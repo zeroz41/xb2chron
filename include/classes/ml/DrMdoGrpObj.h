@@ -4,6 +4,7 @@
 #include "classes/ml/DrMdlBase.h"
 
 namespace ml { class DrPixlShadowCacheObj; }
+namespace ml { class DrMdlObj; }
 
 namespace ml {
 // table 0x7100B7AC78
@@ -18,6 +19,9 @@ public:
     virtual void shadowCacheOnlyRender();  // slot 9
     virtual void callShadowCacheUpdate(unsigned long);  // slot 11
     virtual void occRender();  // slot 12
+    // a model of the group from a model resource and its name (fw::EffectManager::createMdl hands on its resource,
+    // name and last argument; the parameter names are not the original's)
+    DrMdlObj* createInstantMdl(const void* res, const char* name, unsigned int option);
     void callNomSetupRender();
     void callZSortNomZpreePassRender();
     void callZSortThicknessRenderFirst();

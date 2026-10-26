@@ -57,6 +57,13 @@ public:
     void* es_regist(void* data, unsigned int size);
     void es_free(void* handle);
     void es_pause(bool pause);
+    // an effect from an effect resource (efb), its handle
+    unsigned int es_create(void* efb, bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because fw::EffectManager::fn_7100179D30
+    // calls it on getPtr()'s manager and its code sits in effect_update_manager's unit. What it does: hands the flag on to
+    // ptlib::ParticleManager::get()'s manager; GfMapManager (through fw::EffectManager::fn_7100179D30) passes false before
+    // building a map's data, true before destroying it.
+    void fn_710083FF24(bool flag);
     // the instance handle's effect fades out over `frames` (fw::EffectManager::kill passes 1, remove -1, dead 0)
     void es_fade_core(void* instance, unsigned int handle, int frames);
     void es_set_disp(unsigned int handle, int disp);
@@ -104,7 +111,8 @@ public:
     bool m_testRenderFlagB;  // testRender tests it
     unsigned char m_writeSide;
     // the stream renderers lock and unlock the second half of their double buffer while set
-    bool m_secondBuffer;
+    // a byte, not a bool: the readers compare it with 0 (cmp, cset), which a bool load would not need
+    unsigned char m_secondBuffer;
     unsigned char m_frameCount;     // MainLoop counts the main view's frames
     unsigned char m_clearAllCount;  // es_clearall starts it, tail counts it up, MainLoop clears everything at 3
 };

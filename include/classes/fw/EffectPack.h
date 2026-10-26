@@ -8,6 +8,8 @@ namespace fw {
 // `m_RefCount > 0`)
 class EffectPack : public ::mm::mtl::ReferenceObject {
 public:
+    // the pack's effect resource (efb) by name, null when it has none
+    void* searchEfb(const char* name) const;
     virtual ~EffectPack();  // slot 0
     // a pack made from a resource in memory (gf::MapEff::create passes the map's effect asset)
     static EffectPack* createFromMemory(void* data, unsigned int size, const char* name, bool flag);

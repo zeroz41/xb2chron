@@ -8,11 +8,14 @@
 #include "fw/VolumeFadeParams.h"
 #include "mtl/AllocHandle.h"
 #include "mm/mtl/FixedArray.h"
+#include "mm/mtl/FixedVector.h"
+#include "mm/mtl/IntrusivePtr.h"
 #include "classes/fw/EffectCasterSend.h"
 
 namespace effect { class SendParam; }
 namespace fw { class EffectData; }
 namespace fw { class EffectPack; }
+namespace fw { class RenderResource; }
 namespace fw { class EffectCasterBase; }
 namespace fw { class EffectManager; }
 namespace mm { class Mat44; }
@@ -93,6 +96,22 @@ public:
     static void setMdlPos(void* mdl, void* pos);
     static void setMdlMatrix(void* mdl, void* matrix);
     static void setMdlAlpha(void* mdl, float alpha);
+    static void setMdlSpeed(void* mdl, void* speed);
+    // the effect library's model hooks: a model group (an ml::DrMdoGrpObj) while there is a Framework, a model of a
+    // group shown with the identity matrix, each deleted with the frame's stock index (the parameter names are not the
+    // original's)
+    static void* createGroup(int arg, int viewNum);
+    static void destroyGroup(void* grp);
+    static void* createMdl(const void* res, const char* name, int index, const void* grp, int option);
+    static void deleteMdl(void* mdl);
+    // an effect resource (efb) by name: from pack first, else from the common packs (null for none)
+    void* search(const char* name, EffectPack* pack);
+    // the common packs' battle effects, by their efb names (cmn_000_000, cmn_000_001, cmn_000_002); 0 for none
+    unsigned int createHateRing();
+    unsigned int createHateRingVec();
+    unsigned int createHateArrow();
+    // combo ball type (1 on) from the common packs' cmn_010_<type - 1>; 0 for type 0 or none
+    unsigned int createComboBall(unsigned int type);
     void destroyHateRing(unsigned int handle);
     void destroyHateRingVec(unsigned int handle);
     void destroyHateArrow(unsigned int handle);
@@ -133,12 +152,24 @@ public:
     mtl::ALLOC_HANDLE m_resHandle;
     unsigned char pad_34[0x14];
     mm::mtl::FixedArray<CasterGroup, 32> m_casterGroups;  // by layer (changeLayerCaster moves a send between them)
-    unsigned char pad_348[0x2c8d];
+    unsigned char pad_348[0x1c70];
+    // one of the common effect packs commonLoaded requests: its resource and, once loaded, its pack (the names are not
+    // the original's)
+    struct CommonPack {
+        RenderResource* m_resource;
+        mm::mtl::IntrusivePtr<EffectPack> m_pack;
+    };
+    mm::mtl::FixedVector<CommonPack, 128> m_commonPacks;  // 0x1FB8 (the name is not the original's)
+    unsigned char pad_27c0[0x815];
     bool m_masterPause;  // what setMasterPause last handed effect::SystemManager::es_pause (the name is not the original's)
     // set when finalize starts, cleared once update's pending commonLoaded succeeds; update and the renders skip
     // while it is set (the name is not the original's)
     bool m_inactive;
-    unsigned char pad_2fd7[0x9];
+    unsigned char pad_2fd7[0x1];
+    // stored by fn_710017CB08 (GfManager::fn_710032A1FC hands it on), cleared by the constructor; nothing in this
+    // unit reads it (the name is not the original's)
+    bool m_gfManagerFlag;
+    unsigned char pad_2fd9[0x7];
     // the volume fade (vanish) parameters by gf::VFEFF, each from its effect/common/vanish/<VolumeName>.dprm
     // (BTL_VolumeFade's rows; gf::GfVolumeFade reads them)
     VolumeFadeParams* m_volumeFadeParams[32];
