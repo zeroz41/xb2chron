@@ -3,6 +3,20 @@
 
 // the BDAT tables (application/BF2/plugin/bdat.cpp)
 namespace Bdat {
+// a value read from a table, as the library hands it around (convertType rewrites it in place): 8 bytes, cleared
+// before one value type's bytes are written (the field names are not the original's)
+union uVal {
+    unsigned char ubyte;
+    unsigned short ushort;
+    unsigned int uint;
+    signed char sbyte;
+    short sshort;
+    int sint;
+    char* str;
+    float real;
+};
+// the registered BDAT files, one per slot (regist stores, unregist clears, getFP searches them all)
+extern unsigned char* m_pBin[16];
 // the BDAT file in a slot (fw::BdatManager's layers 0-15): its data registered, its tables' count and names, and the
 // slot released (fw::BdatManager::Impl registers a loaded file's data and indexes its tables by name)
 void regist(int slot, void* data);
@@ -35,6 +49,18 @@ char* getValCheck(unsigned char* fp, const char* column, int id, int type);
 const char* getMSText(unsigned char* fp, int id);
 // a row's style in a message table (its 16 bits: the code masks them into the int it returns)
 int getMSStyle(unsigned char* fp, int id);
+// a row's value of a member getMember found, unconverted (the value type's bytes; 0 when the id is out of range or
+// the member is not a scalar)
+char* getVal(unsigned char* fp, unsigned char* member, int id);
+// the value of the member at that index
+char* getVal(unsigned char* fp, int member, int id);
+char* getArrayVal(unsigned char* fp, unsigned char* member, int id, int index);
+// the table's scramble undone in place (regist calls it on each table of a file it registers)
+void decodeScramble(void* data);
+// a value converted from the member's value type to another (an integer widened or narrowed, 0 for strings
+// and floats)
+void convertType(unsigned char* fp, unsigned char* member, int type, uVal* val);
+const char* getMSLabel(unsigned char* fp, int id);
 // a row's value of a member getMember found, read as the given value type (2: 16 bits, 1: 8 bits, 7: a string), in
 // 64 bits (a string column's text address); 0 when the member is null
 unsigned long getValCheck(unsigned char* fp, unsigned char* member, int id, int type);
