@@ -61,10 +61,20 @@ public:
     // every object off its kind's queue, each handed to close first (when there is one) and disposed
     template <typename T>
     static void closeAll(unsigned int index, void (*close)(unsigned int));
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member template because it works on any
+    // kind's queue like remove and closeAll (its code checks index < 8 and reads m_queues[index]); its one instance
+    // (PopupInfo, kind 7) sits in gf_menu_obj_popup between that unit's callers of it. What it does: disposes and
+    // erases the element `position` places after the queue's first; answers false when the queue is missing or
+    // empty or holds fewer elements.
+    template <typename T>
+    static bool fn_710045D604(unsigned int index, int position);
     bool m_initialized;  // set by initialize, cleared by finalize
     // remove and closeAll (templates on the kind of object) index the first eight: each a queue of that kind's
     // open objects, or none
-    void* m_queues[9];
+    void* m_queues[8];
+    // per kind: set while the kind's opens wait (GfMenuObjPopup's reciveEvent sets kind 7's, seqExecContinue clears
+    // it and open holds a new popup back while it is set); the name is not the original's
+    bool m_hold[8];
 };
 
 template <typename T>
@@ -98,6 +108,23 @@ void GfMenuManyObjects::closeAll(unsigned int index, void (*close)(unsigned int)
             }
         }
     }
+}
+template <typename T>
+bool GfMenuManyObjects::fn_710045D604(unsigned int index, int position) {
+    if (index < 8) {
+        mm::mtl::Queue<T>* queue = getQueue<T>(index);
+        if (queue != nullptr && !queue->empty()) {
+            for (typename mm::mtl::Queue<T>::iterator it = queue->begin(); it != queue->end(); ++it) {
+                if (position == 0) {
+                    (*it).dispose();
+                    queue->erase(it);
+                    return true;
+                }
+                --position;
+            }
+        }
+    }
+    return false;
 }
 }  // namespace gf
 

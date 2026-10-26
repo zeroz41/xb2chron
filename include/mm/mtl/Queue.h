@@ -140,6 +140,12 @@ public:
         return m_buffer[index];
     }
     T& front() { return at(m_head); }
+    // the element n places after the first (queue.h asserts `index < m_capacity`; GfMenuObjPopup's searches)
+    T& operator[](size_t index) {
+#line 503 MM_MTL_QUEUE_PATH
+        MM_ASSERT(index < m_capacity);
+        return at((m_head + index) % m_capacity);
+    }
     void pop() {
 #line 781 MM_MTL_QUEUE_PATH
         MM_ASSERT(!empty());

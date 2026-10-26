@@ -10,7 +10,7 @@ GfMenuManyObjects::GfMenuManyObjects(const GfSetupParam& param) {
 
 void GfMenuManyObjects::initialize(const GfSetupParam& param) {
     m_initialized = true;
-    memset(m_queues, 0, sizeof(m_queues));
+    memset(m_queues, 0, sizeof(m_queues) + sizeof(m_hold));
 }
 
 GfMenuManyObjects::~GfMenuManyObjects() {}
