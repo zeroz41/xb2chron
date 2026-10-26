@@ -116,6 +116,10 @@ public:
     void setExtType(unsigned int type);
     void startAnimationFromID(unsigned int id, bool loop);
     void updateLayoutSize();
+    // the rectangle of its layout's entry of that name (GfMenuObjMinimap2 reads "mini_map" and "mini_map2")
+    void getLayoutRect(const char* name, mm::Rect<short>& rect);
+    // masked by the image object of that handle (GfMenuObjMinimap2's icons by "IMG_map_mask")
+    void setMaskObject(unsigned int handle);
     // its object's on-memory buffer (a UIScreenObject's: fw::MovieManager draws its movie there)
     unsigned int getOnMemoryPixelSize();
     void* getOnMemoryBuffer();

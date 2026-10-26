@@ -17,4 +17,11 @@ public:
 };
 }}  // namespace minigame::tora
 
+namespace ui { class UIObjectAcc; }
+
+namespace minigame { namespace tora { namespace factory {
+// a new minigame object on that UI object (registered with fw::UpdatableObjectManager; GfMenuObjMiniGame keeps it)
+MinigameUpdatableObject* create(ui::UIObjectAcc* acc);
+}}}  // namespace minigame::tora::factory
+
 #endif
