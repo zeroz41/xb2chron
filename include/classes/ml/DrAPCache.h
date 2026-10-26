@@ -18,6 +18,7 @@ public:
     void setRefractionRender();
     void endRefractionRender();
     void setTexture(const grlib::CGLibTextureBuffer& texture, const grlib::CGLibSampler& sampler, unsigned int location);
+    void begin();
     void beginTexSampling(int, int);
     void beginCubeTextureSampling(bool);
     void begin3DTextureSampling();

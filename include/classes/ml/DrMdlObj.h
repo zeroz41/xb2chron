@@ -4,6 +4,7 @@
 #include "classes/ml/DrMdoCtl.h"
 #include "mm/Vec3.h"
 #include "mm/Mat44.h"
+#include "mm/Col3.h"
 
 namespace ml { class DrMdoSmlShadowMan; }
 namespace ml { class DrResEtcParams; }
@@ -22,6 +23,9 @@ public:
     void setAlpha(float alpha);
     float getAlpha() const;
     void setWriteStencil(bool enable);
+    void getInitialVertexAABBMax(mm::Vec3& out, bool scaled) const;
+    void getInitialVertexAABBMin(mm::Vec3& out, bool scaled) const;
+    void setAceColor(int index, const mm::Col3& color);
     void setAlwaysTexStm(bool enable);
     void setDblBuffAlpha(bool enable);
     void setAlwaysMiddleTexStm(bool enable);
@@ -62,7 +66,8 @@ public:
     MdoRimBloomWrk* getRimBloomWrk(unsigned int bank);
 
     // the names are not the original's
-    unsigned char pad_E8[0x8];
+    float m_scale;  // 0xE8: getInitialVertexAABBMax/Min scale by it on request (the name is not the original's)
+    unsigned char pad_EC[0x4];
     bool m_gpuRender;  // 0xF0, isGpuRender
     unsigned char pad_F1[0x7];
     unsigned int m_stateFlags;  // 0xF8: DrMdoGrpObj's render passes skip an object without bit 7

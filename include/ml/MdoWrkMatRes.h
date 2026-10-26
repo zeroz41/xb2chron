@@ -78,6 +78,14 @@ struct MdoRimBloomWrk {
     unsigned int m_flags;  // 0x1C, which values were set: 1 color, 2 power, 4 black ratio, 8 emissive
 };
 
+// The initial vertex bounds MdoWrkMatRes+0x170 points to, unaligned float triples: DrMdlObj::getInitialVertexAABBMax
+// reads 0xC, getInitialVertexAABBMin 0x18. The type and field names are not the original's.
+struct MdoInitialVertexAABB {
+    unsigned char pad_0[0xC];
+    float m_max[3];  // 0xC
+    float m_min[3];  // 0x18
+};
+
 struct MdoWrkMatRes {
     unsigned char pad_0[0x10];
     const unsigned char* m_pMatData;  // 0x10, base of the offsets in m_pCallBackTbl
@@ -107,6 +115,9 @@ struct MdoWrkMatRes {
     MdoWrkMatAce* m_pAce;  // 0x118
     unsigned char pad_120[0x38];
     MdoVanishEffectWrk* m_pVanishEffectWrk;  // 0x158, three banks per material (DrMdoMat::getVanishEffectWrk)
+    MdoRimBloomWrk* m_pRimBloomWrk;  // 0x160, DrMdlObj::getRimBloomWrk (the name is not the original's)
+    unsigned char pad_168[0x8];
+    MdoInitialVertexAABB* m_pInitialAABB;  // 0x170 (the name is not the original's)
 };
 }  // namespace ml
 

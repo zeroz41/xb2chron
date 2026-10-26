@@ -61,6 +61,8 @@ public:
     void callFgShadowCacheUpdate();
     void setMainSRGBRenderTarget();
     void resetRenderTarget();
+    void alphaRenderTarget();
+    void callShadowCacheVariance();
     void selectGBuffRenderTarget();
     void selectGBuffRenderTarget(unsigned int target);
     grlib::CGLibRenderTarget* getResponsiveAAMask();

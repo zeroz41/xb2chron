@@ -1,3 +1,16 @@
+#include "classes/ml/DrMan.h"
+#include "ml/DrCreator.h"
+#include "ml/DrMdlMan.h"
+#include "ml/DrEnvironmentMan.h"
+#include "ml/DrEnvColiMan.h"
+#include "ml/DrCalcMan.h"
+#include "ml/DrCalcClipMan.h"
+#include "ml/DrShdLgtMan.h"
+#include "ml/DrShdLgtGlobalIBL.h"
+#include "ml/DrPixlMan.h"
+#include "classes/ml/DrAPCache.h"
+#include "ml/DrShdMan.h"
+#include "ml/CriticalSection.h"
 #include "classes/ml/DrMdlBase.h"
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/DrMdoCtl.h"
@@ -151,6 +164,53 @@ void DrMdlObj::setCamCheckMode(bool enable) {
 
 bool DrMdlObj::isCamCheckResl() const { return (m_ctlFlags >> 29) & 1; }
 
+void DrMdlObj::setAlpha(float alpha) {
+    if (m_ctlFlags2 & 0x40000) {
+        m_singleAlpha = alpha;
+    } else {
+        m_ctlFlags2 |= 0x10000 << DrMan::s_nDblStockIdx;
+        m_alpha[DrMan::s_nDblStockIdx] = alpha;
+    }
+}
+
+float DrMdlObj::getAlpha() const {
+    if (m_ctlFlags2 & 0x40000) {
+        return m_singleAlpha;
+    }
+    return m_alpha[DrMan::s_nDblStockIdx];
+}
+
+void DrMdlObj::setWriteStencil(bool enable) {
+    if (enable) {
+        if (m_ctlFlags & 0x10) {
+            return;
+        }
+        m_ctlFlags |= 0x10;
+    } else {
+        if (!(m_ctlFlags & 0x10)) {
+            return;
+        }
+        m_ctlFlags &= ~0x10;
+    }
+    m_dispFlags &= ~0x60;
+}
+
+MdoRimBloomWrk* DrMdlObj::getRimBloomWrk(unsigned int bank) {
+    if (m_pWrkMatRes == nullptr) {
+        return nullptr;
+    }
+    if (m_pWrkMatRes->m_pRimBloomWrk == nullptr) {
+        return nullptr;
+    }
+    return &m_pWrkMatRes->m_pRimBloomWrk[bank];
+}
+
+void DrMdlObj::setAceColor(int index, const mm::Col3& color) {
+    if (m_pWrkMatRes != nullptr && m_pWrkMatRes->m_pAce != nullptr) {
+        m_pWrkMatRes->m_pAce->m_color[index] = color;
+    }
+}
+
 void DrMdlObj::setAceVal(int index, float value) {
     if (m_pWrkMatRes != nullptr && m_pWrkMatRes->m_pAce != nullptr) {
         m_pWrkMatRes->m_pAce->m_val[index] = value;
@@ -289,4 +349,95 @@ void DrMemHandleAllocator::deallocate(void* memory) {
     }
 }
 
+}  // namespace ml
+
+namespace ml {
+CriticalSection* DrMan::getCriticalSection() {
+    // the name is not the original's: the symbols leave it unnamed (lbl_71015E95B8)
+    static CriticalSection s_criticalSection;
+    return &s_criticalSection;
+}
+
+void DrMan::setAlphaRenderTarget() {
+    m_apCache->begin();
+    m_pixlMan->resetRenderTarget();
+    m_pixlMan->alphaRenderTarget();
+}
+
+void DrMan::setGblIdx(int index) {
+    if ((m_dispOffBits[index >> 5] & (1 << (index & 0x1F))) == 0) {
+        m_pixlMan->callShadowCacheVariance();
+        m_dispOffBits[index >> 5] |= 1 << (index & 0x1F);
+    }
+}
+
+void DrMan::offGblIdx(int index) {
+    if ((m_dispOffBits[index >> 5] & (1 << (index & 0x1F))) != 0) {
+        m_pixlMan->callShadowCacheVariance();
+        m_dispOffBits[index >> 5] &= ~(1 << (index & 0x1F));
+    }
+}
+
+bool DrMan::isIBLSkip() const { return m_iblSkip || !m_shdMan->m_lgtMan->m_pGlobalIBL->isEnable(); }
+
+bool DrMan::isTemporalUPSToGlobalIBL() const {
+    if (m_iblSkip) {
+        return false;
+    }
+    return m_shdMan->m_lgtMan->m_pGlobalIBL->isEnable();
+}
+
+void DrMan::setTimeVal(float time) {
+    int idx = s_nDblStockIdx;
+    if (time > 1.0f) {
+        m_timeVal[idx] = 1.0f;
+    } else if (time < 0.0f) {
+        m_timeVal[idx] = 0.0f;
+    } else {
+        m_timeVal[idx] = time;
+    }
+}
+
+void DrMan::fn_710071E620() { m_weatherFrameReq[s_nDblStockIdx] = true; }
+
+bool DrMan::fn_710071E640() { return m_weatherFrameReq[s_nDblIdx]; }
+
+void DrMan::setGlobalWind(const mm::Vec3& power) {
+    mm::Vec3& wind = m_globalWind[s_nDblStockIdx];
+    wind.x = power.x;
+    wind.y = power.y;
+    wind.z = power.z;
+}
+
+void DrMan::setAllMiddelTexStmChk(bool check) { m_allMiddelTexStmChk[s_nDblIdx] |= check; }
+
+void DrMan::fn_710071E75C() { m_seamCalc[s_nDblIdx] = true; }
+
+bool DrMan::fn_710071E77C() { return m_seamCalc[s_nDblStockIdx]; }
+
+DrCreator::DrCreator() : m_pDrMan(DrMan::s_pTop) {}
+
+DrMdlObj* DrCreator::createMdl(const void* resource, const char* name, int arg) {
+    return m_pDrMan->m_mdlMan->createMdl(resource, name, arg);
+}
+
+DrMdoGrpObj* DrCreator::createInstantGrp(int arg, unsigned int viewNum) {
+    return m_pDrMan->m_mdlMan->createInstantGrp(arg, viewNum);
+}
+
+DrEnvironmentObj* DrCreator::createLgt(const void* resource, int view) {
+    return m_pDrMan->m_envMan[view]->createObj(resource);
+}
+
+DrEnvColiObj* DrCreator::createEnvColi(const void* resource, int view) {
+    return m_pDrMan->m_envMan[view]->m_envColiMan->createObj(resource);
+}
+
+DrCalcClipObj* DrCreator::createClipObj(const void* resource, int view) {
+    return m_pDrMan->m_viewCalcMan[view]->m_pClipMan->createClipObj(resource);
+}
+
+DrGpuCheckBase* DrCreator::createGpuCheckObj(int arg) { return m_pDrMan->m_mdlMan->createGpuCheckObj(arg); }
+
+DrStmReadCheck* DrCreator::createStmLoadObj(const char* name) { return m_pDrMan->m_mdlMan->createStmLoadObj(name); }
 }  // namespace ml

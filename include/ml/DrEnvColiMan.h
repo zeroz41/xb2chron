@@ -5,10 +5,12 @@ namespace mm { class Vec3; }
 
 namespace ml {
 class DrEnvColiResult;
+class DrEnvColiObj;
 
 // the environment collision of one view (DrEnvironmentMan's); ScnRenderDrEnvColi reads what a test hit
 class DrEnvColiMan {
 public:
+    DrEnvColiObj* createObj(const void* resource);
     bool testEnvColi(DrEnvColiResult* result, const mm::Vec3& pos, float range);
 
     // field names are not the original's
