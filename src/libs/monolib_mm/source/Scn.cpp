@@ -1,3 +1,8 @@
+#include "/home/td/.local/share/xc2-session-tools/session19/apcache2/include/mm/Mat44.h"
+#include "/home/td/.local/share/xc2-session-tools/session19/apcache2/include/ml/AttrTransform.h"
+#include "/home/td/.local/share/xc2-session-tools/session19/apcache2/include/classes/ml/Scn.h"
+#include "/home/td/.local/share/xc2-session-tools/session19/apcache2/include/classes/ml/ScnPoolObj.h"
+#include "/home/td/.local/share/xc2-session-tools/session19/apcache2/include/classes/ml/ScnObjModel.h"
 #include "ml/AttrTransform.h"
 #include "classes/ml/threadval.h"
 #include "classes/ml/ScnDebugManipuObj.h"
@@ -92,8 +97,6 @@ bool ScnObjIBL::isDisp() const {
 }
 
 void ScnObjModel::renderDebug(ml::DebDraw*) {}
-
-ScnObjModel::~ScnObjModel() {}
 
 ScnObjLight::~ScnObjLight() {}
 

@@ -2,6 +2,7 @@
 #define CLASSES_ML_SCN_H
 
 #include "classes/ml/IWorkEvent.h"
+#include "mtl/AllocHandle.h"
 
 namespace ml { class ScnObjCam; }
 namespace ml { class ScnObj; }
@@ -61,7 +62,10 @@ public:
     ScnCamMan* m_camMan;  // 0x28 setView's (the name is not the original's)
     unsigned char pad_30[0x8];
     ScnRenderDrSys* m_renderDrSys;  // what UIScreenObject gives ScnRenderDrSysParmAcc (the name is not the original's)
-    unsigned char pad_40[0x6C];
+    unsigned char pad_40[0x24];
+    // 0x64 ScnObjModelDrSysStandard::create news the model from it (the name is not the original's)
+    mtl::ALLOC_HANDLE m_allocHandle;
+    unsigned char pad_68[0x44];
     // 0xAC createMdl passes its negation to each new model's setAlwaysTexStm (the name is not the original's)
     bool m_noAlwaysTexStm;
     unsigned char pad_AD[0xD4C];

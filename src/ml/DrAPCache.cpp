@@ -1,3 +1,12 @@
+// xbrd's library (ScnObjModelDrSysStandard::apply's matrix copy asserts with xbrd's mcl path)
+#define MM_LIB_FROM_XBRD
+#include "mm/Mat44.h"
+#include "ml/AttrTransform.h"
+#include "classes/ml/Scn.h"
+#include "classes/ml/ScnPoolObj.h"
+#include "classes/ml/ScnObjModel.h"
+#include "classes/ml/ScnObjModelDrSys.h"
+#include "classes/ml/ScnObjModelDrSysStandard.h"
 #include "grlib/CGLibTextureBuffer.h"
 #include "grlib/CGLibCtl.h"
 #include "classes/ml/DrAPCache.h"
@@ -45,12 +54,122 @@
 #include "ml/DrShdDataObj.h"
 #include "ml/DrShdLgtMan.h"
 #include "navi/NvmshAcMan.h"
+#include "classes/ml/DrMan.h"
+#include "classes/ml/Scn.h"
+#include "classes/ml/ScnPoolObj.h"
+#include "ml/AttrTransform.h"
+#include "ml/DrCreator.h"
+#include "mm/Col4.h"
+#include "mtl/MemManager.h"
 
 namespace ml {
 
+ScnObjModelDrSysStandard::~ScnObjModelDrSysStandard() {
+    if (m_pMdlObj != nullptr) {
+        m_pMdlObj->setDisp(false);
+        m_pMdlObj->setDeleteCall(DrMan::s_nDblStockIdx);
+    }
+}
+
 void ScnObjModelDrSysStandard::update() { ScnObjModelDrSys::update(); }
 
+// the draw model takes the world matrix with the scale applied to its rows, and the offset
+void ScnObjModelDrSysStandard::apply() {
+    ScnObjModelDrSys::apply();
+    if (m_pMdlObj != nullptr) {
+        mm::Mat44 mat(getTrans(false)->m_worldMat);
+        const mm::Vec3& scl = static_cast<const ScnObjModel*>(this)->getTrans(false)->m_scl;
+        mat.m[0][0] = scl.x * mat.m[0][0];
+        mat.m[0][1] = scl.x * mat.m[0][1];
+        mat.m[0][2] = scl.x * mat.m[0][2];
+        mat.m[1][0] = scl.y * mat.m[1][0];
+        mat.m[1][1] = scl.y * mat.m[1][1];
+        mat.m[1][2] = scl.y * mat.m[1][2];
+        mat.m[2][0] = scl.z * mat.m[2][0];
+        mat.m[2][1] = scl.z * mat.m[2][1];
+        mat.m[2][2] = scl.z * mat.m[2][2];
+        m_pMdlObj->setMatrix(mat);
+        m_pMdlObj->setOffsetPos(getOffsetInfo(false));
+    }
+}
+
 void ScnObjModelDrSysStandard::tail() { ScnObjModel::tail(); }
+
+ScnObjModelDrSysStandard* ScnObjModelDrSysStandard::create(Scn* scn, const void* res, const char* name, int view) {
+    if (!scn->m_pool->isValidInsert(1)) {
+        return nullptr;
+    }
+    ScnObjModelDrSysStandard* mdl =
+        new (scn->m_allocHandle, nullptr, 0, 4, false) ScnObjModelDrSysStandard(scn, res, name, view);
+    scn->m_pool->insert(mdl);
+    return mdl;
+}
+
+// the clamp modes the first 64 samplers combine (the name is not the original's)
+static const int s_samplerClampTbl[4] = {0, 1, 2, 6};
+
+// 78 samplers: 64 combining min filter (mipmapped or not), mag filter and the s/t clamp modes, then single ones
+void DrAPCache::createSampler() {
+    m_pSampler = new (DrMan::getIns()->m_workHandle, nullptr, 0, 4, false) grlib::CGLibSampler[78];
+    int idx = 0;
+    for (int mip = 0; mip < 2; mip++) {
+        for (int mag = 0; mag < 2; mag++) {
+            for (int s = 0; s < 4; s++) {
+                for (int t = 0; t < 4; t++) {
+                    grlib::CGLibSampler& smp = m_pSampler[idx++];
+                    if (mag == 0) {
+                        smp.initSampler((GrlTexClamp)2, (GrlTexMagFilterType)0);
+                        if (mip == 1) {
+                            smp.setFilter((GrlTexMagFilterType)0, (GrlTexMinFilterType)2, (GrlTexTexAnisoRatio)0);
+                        } else {
+                            smp.setFilter((GrlTexMagFilterType)0, (GrlTexMinFilterType)0, (GrlTexTexAnisoRatio)0);
+                        }
+                    } else {
+                        smp.initSampler((GrlTexClamp)2, (GrlTexMagFilterType)1);
+                        if (mip == 1) {
+                            smp.setFilter((GrlTexMagFilterType)1, (GrlTexMinFilterType)5, (GrlTexTexAnisoRatio)0);
+                        } else {
+                            smp.setFilter((GrlTexMagFilterType)1, (GrlTexMinFilterType)1, (GrlTexTexAnisoRatio)0);
+                        }
+                    }
+                    smp.setClamp((GrlTexClamp)s_samplerClampTbl[s], (GrlTexClamp)s_samplerClampTbl[t], (GrlTexClamp)2);
+                }
+            }
+        }
+    }
+    m_pSampler[65].initSampler((GrlTexClamp)2, (GrlTexMagFilterType)1);
+    m_pSampler[65].setClamp((GrlTexClamp)2, (GrlTexClamp)2, (GrlTexClamp)2);
+    m_pSampler[66].initSampler((GrlTexClamp)2, (GrlTexMagFilterType)0);
+    m_pSampler[66].setClamp((GrlTexClamp)2, (GrlTexClamp)2, (GrlTexClamp)2);
+    m_pSampler[67].initSampler((GrlTexClamp)2, (GrlTexMagFilterType)1);
+    m_pSampler[67].setClamp((GrlTexClamp)0, (GrlTexClamp)0, (GrlTexClamp)0);
+    m_pSampler[68].initSampler((GrlTexClamp)2, (GrlTexMagFilterType)0);
+    m_pSampler[68].setClamp((GrlTexClamp)0, (GrlTexClamp)0, (GrlTexClamp)0);
+    m_pSampler[69].initSampler((GrlTexClamp)2, (GrlTexMagFilterType)1);
+    m_pSampler[69].setClamp((GrlTexClamp)2, (GrlTexClamp)2, (GrlTexClamp)2);
+    m_pSampler[70].initSampler((GrlTexClamp)2, (GrlTexMagFilterType)0);
+    m_pSampler[70].setClamp((GrlTexClamp)2, (GrlTexClamp)2, (GrlTexClamp)2);
+    m_pSampler[71].initSampler((GrlTexClamp)2, (GrlTexMagFilterType)1);
+    m_pSampler[71].setClamp((GrlTexClamp)2, (GrlTexClamp)2, (GrlTexClamp)2);
+    m_pSampler[71].setFilter((GrlTexMagFilterType)1, (GrlTexMinFilterType)5, (GrlTexTexAnisoRatio)0);
+    m_pSampler[72].initSampler((GrlTexClamp)2, (GrlTexMagFilterType)0);
+    m_pSampler[72].setClamp((GrlTexClamp)2, (GrlTexClamp)2, (GrlTexClamp)2);
+    m_pSampler[72].setFilter((GrlTexMagFilterType)0, (GrlTexMinFilterType)2, (GrlTexTexAnisoRatio)0);
+    m_pSampler[73].initSampler((GrlTexClamp)6, (GrlTexMagFilterType)1);
+    m_pSampler[73].setDepthCompare((GrlTexCompare)3);
+    m_pSampler[73].setBorderType((GrlTexBorderType)2);
+    m_pSampler[74].initSampler((GrlTexClamp)6, (GrlTexMagFilterType)1);
+    m_pSampler[74].setBorderType((GrlTexBorderType)2);
+    m_pSampler[75].initSampler((GrlTexClamp)6, (GrlTexMagFilterType)1);
+    m_pSampler[75].setBorderType((GrlTexBorderType)0);
+    m_pSampler[76].initSampler((GrlTexClamp)6, (GrlTexMagFilterType)1);
+    m_pSampler[76].setBorderColor(mm::Col4(8161.0f, 0.0f, 0.0f, 0.0f));
+    m_pSampler[77].initSampler((GrlTexClamp)6, (GrlTexMagFilterType)1);
+    m_pSampler[77].setBorderColor(mm::Col4(-8161.0f, 0.0f, 0.0f, 0.0f));
+    for (int i = 0; i < 78; i++) {
+        m_pSampler[i].updateData();
+    }
+}
 
 DrAPCache* DrAPCache::s_pIns;
 

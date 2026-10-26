@@ -36,7 +36,8 @@ public:
     void setDisp(bool on);  // GfObjAcc::applyDisp passes whether the object and its parent show
     bool isDisp() const;
     bool isClip() const;
-    virtual ~ScnObjModel();  // slot 0
+    // inline: subclass destructors inline its body (ScnObjModelDrSysStandard's, ScnObjModelDrSys's deleting one)
+    virtual ~ScnObjModel() {}  // slot 0
     virtual void renderDebug(ml::DebDraw*);  // slot 3
     virtual void tail();  // slot 5
     virtual const char* getName() const;  // slot 6
@@ -74,7 +75,9 @@ public:
     unsigned int m_clip : 1;      // isClip; setClip sets it (the name is not the original's)
     unsigned int pad_bits2 : 2;
     unsigned int m_warp : 1;      // setPosWarp sets it (the name is not the original's)
-    unsigned int pad_bits5 : 11;
+    // ScnObjModelDrSysStandard's constructor sets it when its draw model's m_mdlType is 3 (the name is not the original's)
+    unsigned int m_mdlType3 : 1;
+    unsigned int pad_bits6 : 10;
     unsigned int m_dispReq : 1;   // setDisp sets it (the name is not the original's)
     unsigned int pad_bits17 : 15;  // unknown flags: isDisp loads the whole 32-bit unit
 };

@@ -19,7 +19,10 @@ public:
     mm::Vec3 m_posGbl;
     mm::Vec3 m_scl;     // ScnObjModel::setScl's; clear sets (1, 1, 1)
     mm::Mat44 m_mat;    // ScnObjModel::setMat's; clear sets the identity
-    unsigned char pad_70[0x80];  // clear sets two identity matrices here
+    // ScnObjModelDrSysStandard::apply copies it and scales its rows by m_scl for the draw model (the name is not
+    // the original's)
+    mm::Mat44 m_worldMat;  // 0x70, clear sets the identity
+    unsigned char pad_B0[0x40];  // clear sets an identity matrix here
     mm::Vec3 m_rot;     // ScnObjModel::setRot's; clear zeroes it
     unsigned char pad_100[0x10];  // clear zeroes a Vec3 here
     mm::Quat m_quat;    // ScnObjModel::addRot(Quat)'s
