@@ -19,6 +19,8 @@ public:
     virtual void debugDraw() const;  // slot 7
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9
+    // pops the treasures the salvage's raffle drew (GfGameSalvage::execPop)
+    void popByRaffleResult();
 };
 }  // namespace gmk
 

@@ -3,6 +3,9 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "ai/Fsm.h"
+#include "mm/mtl/IntrusivePtr.h"
+#include "classes/fw/Camera.h"
+#include "classes/gf/GfAllocator.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfSetupParam; }
@@ -11,13 +14,14 @@ namespace gf { class GfComBehaviorSalvage; }
 namespace gf { class GfGameSalvage; }
 namespace mm { class Mat44; }
 namespace mm { class Vec3; }
+namespace gf { class GfEvtModelSalvage; class GAME_VOICE_HANDLE; }
 
 namespace gf {
 // table 0x7100B56ED8; the salvage mini-game: its states (StateSalvage*) drive it through these
 class GfGameSalvage : public ::mm::mtl::PtrSingleton< ::gf::GfGameSalvage> {
 public:
     // the salvager's animations, voices and sounds, by number (no value has a name yet)
-    enum AnimationType : int {};
+    enum AnimationType : unsigned int {};
     enum VoiceType : int {};
     enum SEID : int {};
     // what execRaffle draws the treasures from (the names are not the original's: StateSalvageDiveFadeWait passes
@@ -39,7 +43,13 @@ public:
         unsigned short m_unk8;
     };
 
+    // inline (1.0.0's is out of line at 0x710037A5CC; 3.0.1's build has it inline)
+    GfGameSalvage()
+        : m_fsm(getAllocator(ALLOCATOR(0))), m_initialized(false), m_challengePoint(0), m_skillLevel(0),
+          m_pModel(nullptr), m_pVoice(nullptr), m_climbAnimType(AnimationType(5)), m_climbResult(0), m_vibration(0) {}
     virtual ~GfGameSalvage();  // slot 0
+    // makes the game (the singleton) and sets it up
+    static void build(const GfSetupParam& param);
     // registers the 21 salvage states (StateSalvage*) with its state machine and starts in StateSalvageWait
     void initialize(const GfSetupParam& param);
     // 1.0.0's: frees the machine's state buffers (inline in 3.0.1: destroy has it)
@@ -77,7 +87,7 @@ public:
     void destroyCameraCut01();
     void playCameraCut01();
     bool isCameraCut01End();
-    void applyPartyForm() const;
+    bool applyPartyForm() const;
     void setPartyDisp(bool disp);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's StateSalvageSetupFadeIn::enter calls
     // setPartyDisp(false) where 3.0.1's calls this with false; StateSalvageResult::leave calls it with true). A member
@@ -113,7 +123,12 @@ public:
 
     // the states' machine: the states get the game as their owner (the name is not the original's)
     ai::Fsm m_fsm;
-    unsigned char pad_80[0x20];
+    // the gimmick cameras (GimmickCamera::create's; the names are not the original's): the dive's start, the dive's
+    // result (by AnimationType), the climb (by AnimationType) and the result cut
+    mm::mtl::IntrusivePtr<fw::Camera> m_camDiveStart;
+    mm::mtl::IntrusivePtr<fw::Camera> m_camDive;
+    mm::mtl::IntrusivePtr<fw::Camera> m_camClimb;
+    mm::mtl::IntrusivePtr<fw::Camera> m_camCut01;
     // set once initialize has set the machine up (the name is not the original's)
     bool m_initialized;
     unsigned char pad_A1[0x7];
@@ -122,6 +137,13 @@ public:
     int m_challengePoint;  // the button challenges' points (StateSalvageDiveStart adds them)
     unsigned int m_skillLevel;      // the levels of the field skills that worked (StateSalvageSkillCheck)
     unsigned int m_item;            // the cylinder chosen (StateSalvageItemSelect)
+    unsigned char pad_bc[0x4];
+    GfEvtModelSalvage* m_pModel;    // createModel's (GfGameEvent::createSalvage)
+    GAME_VOICE_HANDLE* m_pVoice;    // playVoice's
+    AnimationType m_climbAnimType;  // calcClimb's draw (getClimbAnimationType); 5 until then
+    int m_climbResult;              // calcClimb's draw: playClimb's result voice (CV_SALVAGE_RESULT)
+    unsigned int m_vibration;       // calcClimb's draw: playDiveVibration's pattern, 0 for none
+    unsigned char pad_dc[0x4];
 };
 }  // namespace gf
 

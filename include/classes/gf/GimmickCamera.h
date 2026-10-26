@@ -3,6 +3,8 @@
 
 #include "mm/mtl/RTTI.h"
 #include "classes/fw/Camera.h"
+#include "mm/mtl/IntrusivePtr.h"
+#include "mm/Vec3.h"
 
 namespace fw { class UpdateInfo; }
 
@@ -16,6 +18,13 @@ public:
     virtual void onActivate();  // slot 6
     virtual void update(fw::UpdateInfo const&);  // slot 8
     static mm::mtl::RTTI m_rtti;
+
+    // the camera file's entry of that name, placed at pos turned by rotY
+    static mm::mtl::IntrusivePtr<GimmickCamera> create(const char* name, const mm::Vec3& pos, float rotY);
+    void play();
+    bool isPlayEnd() const;
+    bool isLoaded() const;
+    void setAuto(bool on);
 };
 }  // namespace gf
 

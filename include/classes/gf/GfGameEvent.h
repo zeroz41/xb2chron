@@ -76,6 +76,8 @@ public:
     void initialize(const GfSetupParam& param);
     void finalize();
     static void destroyEvtModel(class GfEvtModel* model);
+    // a new salvage model (GfGameSalvage::createModel keeps it)
+    static class GfEvtModelSalvage* createSalvage();
     static void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
     static void clear();
     void gevPlayEvent(gf::GEV gev, unsigned int id);
