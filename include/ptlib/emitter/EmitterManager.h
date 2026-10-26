@@ -1,10 +1,14 @@
 #ifndef PTLIB_EMITTER_EMITTERMANAGER_H
 #define PTLIB_EMITTER_EMITTERMANAGER_H
 
+#include "ptlib/IntrusiveList.h"
+
 namespace ptlib { class FxHeader; }
 
 namespace ptlib { namespace emitter {
 class EmitterParam;
+class EmitterObj;
+class EmitterSetNode;
 
 // the emitters' manager: its per-category speeds (effect::SystemManager::setCategorySpd)
 class EmitterManager {
@@ -34,9 +38,19 @@ public:
     void emitter_set_fadeout(void* p, int frames);
     void emitter_pack_free(unsigned long pack);
     void emitter_set_free(FxHeader* pHeader, int frames);
+    void moveAfter();
+    // what it returns is not known yet
+    void emitter_update(unsigned int handle, float frames, bool flag);
+    bool emitter_set_check(FxHeader* pHeader);
+    IntrusiveList<EmitterObj>* getEmitterActiveList();
 
     unsigned char pad_0[0x1700];
     float m_categorySpeed[1];  // indexed by category; the count is not known yet
+    unsigned char pad_1704[0xA4];
+    IntrusiveList<EmitterObj> m_emitterActiveList;  // getEmitterActiveList's; the emitter_set_* setters walk it
+    unsigned char pad_17c0[0x30];
+    // the emitter sets' nodes (emitter_set_check walks it; the name is not the original's)
+    IntrusiveList<EmitterSetNode> m_emitterSetList;
 };
 }}  // namespace ptlib::emitter
 

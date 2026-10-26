@@ -123,6 +123,8 @@ public:
     static void destroyGrp(void* pGrp) { s_pDrFunc.destroyGrp(pGrp); }
     // the draw group <index> (0..3) init made, or null
     static void* getGrp(int index);
+    // what it returns is not known yet (EmitterManager's callers drop it)
+    void update_model_spd(emitter::EmitterObj* pEmitter, float speed);
     FxParam* getFxParam();
     void getCamParam();
     void set_pause(bool pause);
