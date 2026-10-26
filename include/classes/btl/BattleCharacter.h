@@ -48,6 +48,7 @@ public:
     void NotifyChangeAttr(gf::GF_OBJ_HANDLE* handle, unsigned int attr, unsigned int prevAttr);
     bool IsDead(unsigned int) const;
     bool IsControlCharacter() const;
+    bool IsControlCharacterGroup() const;
     void SetWeaponType(int type);
     void NotifyDirectDamage(const DIRECT_DAMAGE_DATA& data);
     void AddBladeArtsRecast(int, float);
@@ -153,6 +154,7 @@ public:
     int GetAlphaSetID(ALPHA_PROC_ID id);
     unsigned long GetAnimSpecialProcData(ANIM_SPDATA_TYPE type) const;
     void ResetAlphaRate(int id);
+    void RegisterAlphaAnimation(ALPHA_PROC_ID id, float, float, bool);
     ActionCommand* GetFreeCommand();
     int GetGroupIndex() const;
     bool CheckRandFriendEnhanceRate(int id) const;
@@ -326,7 +328,14 @@ public:
     signed char m_index;
     // GetWeaponType returns it (the name is not the original's)
     signed char m_weaponType;
-    unsigned char pad_EF2[0xC];
+    unsigned char pad_EF2[0x2];
+    // flags formation_change_manager's requests set while they run (the names are not the original's)
+    unsigned char pad_EF4_0 : 1;
+    unsigned char pad_EF4_1 : 1;  // a type 2 request's character (fn_710009E008)
+    unsigned char pad_EF4_2 : 2;
+    unsigned char pad_EF4_4 : 1;  // a type 1 request's characters (fn_710009DCAC)
+    unsigned char pad_EF4_5 : 3;
+    unsigned char pad_EF5[0x9];
     // one 16-byte bitfield run (StartBackHome loads and stores 0xEFE and 0xF06 as two 8-byte halves)
     unsigned int pad_EFE : 8;
     // IsControlCharacter's cached answer and whether it is cached (the names are not the original's)
@@ -425,7 +434,14 @@ public:
     // Utility::AI_GetStamp returns it while the character lives (the name is not the original's)
     int m_stamp;
     // CharacterManager's slots are 0x11D0 apart with their in-use flag at 0x11C0, after the character
-    unsigned char pad_11AC[0x14];
+    unsigned char pad_11AC[0x6];
+    // one bitfield run of 3 bytes (fn_710009ED18 reads it with a halfword load at 0x11B2, as a 3-byte unit loads)
+    unsigned char pad_11B2 : 8;
+    unsigned char pad_11B3_0 : 1;
+    unsigned char pad_11B3_1 : 1;  // formation_change_manager's fn_710009ED18 returns it
+    unsigned char pad_11B3_2 : 6;
+    unsigned char pad_11B4 : 8;
+    unsigned char pad_11B5[0xB];
 };
 }  // namespace btl
 
