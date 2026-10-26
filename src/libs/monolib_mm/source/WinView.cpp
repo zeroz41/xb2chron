@@ -1,4 +1,10 @@
 #define MM_LIB_FROM_MONOLIB_MM
+#include "classes/ml/_reslist_base.h"
+#include "classes/ml/threadval.h"
+#include "classes/ml/WinView.h"
+#include "classes/ml/WinViewRoot.h"
+#include "classes/ml/WinProc.h"
+#include "classes/ml/ProcDesktop.h"
 #include "classes/ml/Device.h"
 #include "classes/ml/WinProc.h"
 #include "classes/ml/ProcDesktop.h"
@@ -1418,5 +1424,128 @@ bool ProcDesktopException::wkStandbyLogout() {
 }
 
 }  // namespace _dsk
+
+WinView::~WinView() {}
+
+void WinView::getViewOfs(mm::Rect<int>& rect, bool) {
+    CS lock(m_cs);
+    rect.x = 0;
+    rect.y = 0;
+    rect.w = 0;
+    rect.h = 0;
+}
+
+void WinView::destroyCtrlMemory() {
+    for (reslist<WorkObj*>::iterator it = wkGetChild()->begin(); it != wkGetChild()->end(); ++it) {
+        static_cast<WinView*>(*it)->destroyCtrlMemory();
+    }
+}
+
+bool WinView::evtFocusOff() {
+    m_renderInfo.m_cpu->m_focusState = 8;
+    return true;
+}
+
+mm::Pnt<int> WinView::getClientSize(bool cpu) const {
+    if (m_fullScreen) {
+        return mm::Pnt<int>(DevGraph::getRootWidth(), DevGraph::getRootHeight());
+    }
+    const RENDER_INFO* info = cpu ? m_renderInfo.m_cpu : m_renderInfo.m_render;
+    return mm::Pnt<int>(info->m_size.x - info->m_viewOfs[0] - info->m_viewOfs[2],
+                        info->m_size.y - info->m_viewOfs[1] - info->m_viewOfs[3]);
+}
+
+void WinView::wkTail() {
+    applyRect();
+    updateMsg();
+    if (m_child.size() == 0 && m_renderWorks.size() == 0 && !isSplit(true)) {
+        wkSetEvent(EVT(0));
+    }
+    applyPrio();
+}
+
+WorkObj* WinProc::pssGetParentView() {
+    WorkObj* view = WorkRootState::getWork(m_viewWid);
+    if (view == nullptr) {
+        view = mm::mtl::PtrSingleton<WinViewRoot>::get();
+    }
+    return view;
+}
+
+WinView* WinViewRoot::getView(unsigned int wid) {
+    if (get() != nullptr) {
+        WorkObj* work = WorkRootState::getWork(wid);
+        if (work != nullptr) {
+            if (WorkRootState::getWork(get(), wid) != nullptr) {
+                return static_cast<WinView*>(work);
+            }
+            if (WorkRootState::isEntryWork(wid, get())) {
+                return static_cast<WinView*>(work);
+            }
+            return nullptr;
+        }
+        return static_cast<WinView*>(work);
+    }
+    return nullptr;
+}
+
+bool WinViewRoot::isCurrentChild(const WinView* parent, const WinView* view) {
+    if (view == nullptr || get() == nullptr) {
+        return false;
+    }
+    for (reslist<WorkObj*>::iterator it = parent->wkGetChild()->begin(); it != parent->wkGetChild()->end(); ++it) {
+        if (*it == view || isCurrentChild(static_cast<const WinView*>(*it), view)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool WinView::isSplit(bool cpu) const {
+    const RENDER_INFO* info = cpu ? m_renderInfo.m_cpu : m_renderInfo.m_render;
+    return WinViewRoot::getView(info->m_splitFrame.m_viewWid[0]) != nullptr &&
+           WinViewRoot::getView(info->m_splitFrame.m_viewWid[1]) != nullptr;
+}
+
+void ProcDesktop::OnPauseTrigger(bool pause, const char*) {
+    if (pause) {
+        _dsk::s_flg |= 0x20;
+    } else {
+        _dsk::s_flg &= ~0x20;
+    }
+    float spd = m_frameSpd;
+    m_frameSpd = 0.0f;
+    ProcDesktop* desktop = get();
+    if (desktop != nullptr) {
+        desktop->m_lastFrameSpd = spd;
+        if (desktop->m_frameSpd != spd) {
+            desktop->m_frameSpd = spd;
+            DevGraph::setFrameSpd(spd * ((_dsk::s_flg & 0x20) ? 0.0f : 1.0f));
+        }
+    }
+}
+
+mm::Rect<int> WinView::getClientScissorAbsRect(bool cpu) const {
+    mm::Rect<int> abs = getClientAbsRect(cpu);
+    mm::Rect<int> scissor = getClientScissorRect(cpu);
+    mm::Rect<int> rect;
+    rect.x = abs.x;
+    rect.y = abs.y;
+    rect.w = scissor.w;
+    rect.h = scissor.h;
+    if (rect.x + rect.w >= DevGraph::getRootWidth()) {
+        rect.w = DevGraph::getRootWidth() - rect.x;
+    }
+    if (rect.w < 0) {
+        rect.w = 0;
+    }
+    if (rect.y + rect.h >= DevGraph::getRootHeight()) {
+        rect.h = DevGraph::getRootHeight() - rect.y;
+    }
+    if (rect.h < 0) {
+        rect.h = 0;
+    }
+    return rect;
+}
 
 }  // namespace ml

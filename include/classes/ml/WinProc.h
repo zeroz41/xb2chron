@@ -16,6 +16,8 @@ public:
     virtual bool wkStandbyLogout();  // slot 15
     // the view an application process draws into, if any (WinView.cpp)
     WinView* pssGetApplicationView();
+    // the work its view id names, else the views' root (the return type is not in the symbol)
+    WorkObj* pssGetParentView();
     // detaches the process's views (wkStandbyLogout calls it first)
     void pssDetachView();
     // 0x1A8 room for 16 work ids (the constructor creates it; the name is not the original's)

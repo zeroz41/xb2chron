@@ -31,7 +31,13 @@ public:
     virtual bool wkStandbyLogout();  // slot 15
     unsigned char pad_1F8[0x10];
     WinView* m_view;  // 0x208 getView returns it; the constructor clears it (the name is not the original's)
-    unsigned char pad_210[0x68];  // the object is 0x278 bytes (WinProcRoot::wkStandbyLogin allocates it so)
+    // (the object is 0x278 bytes: WinProcRoot::wkStandbyLogin allocates it so)
+    unsigned char pad_210[0x4C];
+    // 0x25C the frame speed OnPauseTrigger last handed DevGraph::setFrameSpd (0 while paused); a trigger moves the
+    // trigger's own value here and clears it (the name is not the original's)
+    float m_frameSpd;
+    float m_lastFrameSpd;  // 0x260 OnPauseTrigger stores the value it moves (the name is not the original's)
+    unsigned char pad_264[0x14];
 };
 }  // namespace ml
 

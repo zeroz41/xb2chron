@@ -24,6 +24,10 @@ public:
             m_currentProc = nullptr;
         }
     }
+    // the view the work id wid names, if the root holds it (the parameter name is not the original's)
+    static WinView* getView(unsigned int wid);
+    // whether view is a child of parent, at any depth (the parameter names are not the original's)
+    static bool isCurrentChild(const WinView* parent, const WinView* view);
     virtual ~WinViewRoot();  // slot 0
     virtual bool wkStandbyLogin();  // slot 14
     virtual bool wkStandbyLogout();  // slot 15

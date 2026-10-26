@@ -36,8 +36,9 @@ public:
 
     T0* m_render;  // what tvSwap copies m_cpu into (the name is not the original's)
     T0* m_cpu;     // what ScnObjCam::setLookAt writes (the name is not the original's)
-    unsigned char pad_18[8];  // (alignment padding when T0 is 16-aligned, as RENDER_INFO is)
-    T0 m_buf[2];             // the two copies m_render and m_cpu point into (the name is not the original's)
+    // the two copies m_render and m_cpu point into, at 0x18, or 0x20 when T0 is 16-aligned (WinView's 8-aligned
+    // RENDER_INFO's are at 0x18) (the name is not the original's)
+    T0 m_buf[2];
     // the four bytes after the buffers. tvSwap's read of the copy flag is a 1-aligned bit test the next byte's
     // read is not merged with (no load widening), which a bitfield read through a 1-aligned type's own inline
     // accessor gives; a plain member of threadval does not (the struct and its names are not the original's)

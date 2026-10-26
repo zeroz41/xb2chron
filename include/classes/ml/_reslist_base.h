@@ -61,6 +61,9 @@ public:
 
     iterator begin() { return iterator(static_cast<Node*>(m_pEnd->m_next)); }
     iterator end() { return iterator(m_pEnd); }
+    // a const list's walk (WinViewRoot::isCurrentChild walks a const work's children)
+    iterator begin() const { return iterator(static_cast<Node*>(m_pEnd->m_next)); }
+    iterator end() const { return iterator(m_pEnd); }
     int size() const { return m_size; }
 
     void push_back(const T0& value) {
