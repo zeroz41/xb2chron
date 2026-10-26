@@ -13,13 +13,19 @@ struct MenuZoneMapInfo {
     unsigned int m_param;  // GfMenuZoneMapAdapter::ListConverter::getParam's (the name is not the original's)
     unsigned char pad_8[0xC];
     unsigned short m_priority;  // sortPriority's first key (the name is not the original's)
-    unsigned char pad_16[2];
+    // no member after m_priority: the sort's swaps assign 0x16 bytes (the tail padding is not copied)
 };
 
 // table 0x7100B5F7D0
 class GfMenuZoneMapList : public ::ui::UIListInfo< ::gf::MenuZoneMapInfo> {
 public:
+    GfMenuZoneMapList() : m_groupMode(false) {}
     virtual ~GfMenuZoneMapList();  // slot 0
+    static GfMenuZoneMapList* create();
+    // orders the list by sortPriority
+    void sortFromPriority();
+    // m_priority ascending, ties by m_mapId ascending
+    static bool sortPriority(const MenuZoneMapInfo& a, const MenuZoneMapInfo& b);
     // GfMenuZoneMapAdapter::ListConverter::isGroupMode's; 1.0.0's constructor clears it (the name is not the
     // original's)
     bool m_groupMode;
