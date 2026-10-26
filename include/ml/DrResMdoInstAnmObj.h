@@ -3,15 +3,25 @@
 
 namespace ml {
 class DrResMdoInstPartsObj;
-// a model's instanced parts (0x30: release clears six words). Field names are not the original's.
+class DrResMdoPos;
+// A model's instanced parts (0x30: release clears six words). Field names are not the original's.
 class DrResMdoInstAnmObj {
 public:
     struct Header {
         unsigned char pad_0[0x4];
         unsigned int partsMax;  // 0x4 (ScnObjAccSeamPos::getMax)
+        // Two runs of m_parts (first index, count) that setupLink links to their positions; the names are not
+        // the original's.
+        int linkTopB;           // 0x8
+        unsigned char pad_C[0xC];
+        int linkTopA;           // 0x18
+        int linkNumA;           // 0x1C
+        unsigned char pad_20[0x8];
+        int linkNumB;           // 0x28
     };
     DrResMdoInstAnmObj();
     void release();
+    void setupLink(DrResMdoPos* pos) const;
 
     const Header* m_header;           // 0x0
     DrResMdoInstPartsObj** m_parts;   // 0x8: partsMax objects

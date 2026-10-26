@@ -3,6 +3,8 @@
 
 #include "mm/Col3.h"
 
+namespace grlib { class CGLibTriUniformArray; }
+
 namespace grlib { class CGLibTextureBuffer; }
 
 namespace ml {
@@ -80,7 +82,10 @@ struct MdoWrkMatRes {
     unsigned char pad_34[0x4];
     float* m_pMatVal;  // 0x38, the material values the callbacks read
     const MdsMatCallBackTbl* m_pCallBackTbl;  // 0x40, read by DrMdoMat::updateMatCallBack
-    unsigned char pad_48[0x78];
+    unsigned char pad_48[0x58];
+    // 0xA0: DrResMdoSeamWrkEnv::setupWork hands it the triangle uniform array; the name is not the original's
+    grlib::CGLibTriUniformArray* m_pTriUniformArray;
+    unsigned char pad_A8[0x18];
     DrResMdoMat* m_pResMat;  // 0xC0, DrMdlObj::getMaterialRes(int) returns &m_pResMat[i]
     unsigned char pad_C8[0x30];
     float* m_pUniformVal;  // 0xF8, the uniform values the callbacks write

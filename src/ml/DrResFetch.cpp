@@ -60,6 +60,12 @@
 #include "ml/DrResShdObjMot.h"
 #include "ml/DrResShdMpf.h"
 #include "ml/DrShdDataObj.h"
+#include "ml/DrResMdoPos.h"
+#include "ml/DrResMdoSeamParmRead.h"
+#include "classes/ml/DrResMdoSeamWrkEnv.h"
+#include "ml/MdoWrkMatRes.h"
+#include <string.h>
+#include "ml/DrResMdoInstAnmObj.h"
 
 namespace ml {
 
@@ -3778,6 +3784,190 @@ void DrResMdoLight::release(DrResMdoLight*& obj) {
     }
     obj = nullptr;
 }
+
+
+DrResMdoPos::DrResMdoPos(const MdsPosKeepData* data) : m_owner(0), m_data(data), m_frame(0), m_alphaCnt(0), m_alphaMax(0xFF) {}
+
+DrResMdoPos::~DrResMdoPos() { release(); }
+
+void DrResMdoPos::copy(DrResMdoPos* src) {
+    m_frame = 0;
+    m_id = src->m_id;
+    m_data = src->m_data;
+    m_alphaCnt = src->m_alphaCnt;
+    m_alphaMax = src->m_alphaMax;
+}
+
+bool DrResMdoPos::clipTest(DrCalcViewWork* view, const mm::Vec3& pos, float radius) {
+    float dx = view->m_viewPos.x - pos.x;
+    float dy = view->m_viewPos.y - pos.y;
+    float dz = view->m_viewPos.z - pos.z;
+    if (dx * dx + dy * dy + dz * dz > radius * radius && !view->m_clipPlane.clipTest(pos, radius)) {
+        return false;
+    }
+    return true;
+}
+
+void DrResMdoPos::setAddAlphaCnt(int cnt) {
+    int alpha = m_alphaCnt + cnt;
+    if (alpha > 0xFF) {
+        m_alphaCnt = 0xFF;
+        return;
+    }
+    m_alphaCnt = alpha;
+}
+
+bool DrResMdoPos::setSubAlphaCnt(int cnt) {
+    int alpha = m_alphaCnt - cnt;
+    if (alpha < 0) {
+        m_alphaCnt = 0;
+        return false;
+    }
+    m_alphaCnt = alpha;
+    return true;
+}
+
+int DrResMdoPosAddList::createBuffSize() { return ADD_MAX * sizeof(DrResMdoPos); }
+
+int DrResMdoPosAddList::setupBuff(unsigned char* buff) {
+    m_buff = reinterpret_cast<DrResMdoPos*>(buff);
+    m_cnt = 0;
+    for (int i = 0; i < ADD_MAX; i++) {
+        new (&m_buff[i]) DrResMdoPos();
+    }
+    return createBuffSize();
+}
+
+void DrResMdoPosAddList::release() {
+    for (int i = 0; i < ADD_MAX; i++) {
+        m_buff[i].release();
+    }
+}
+
+void DrResMdoPosAddList::begin() { m_cnt = 0; }
+
+DrResMdoPos* DrResMdoPosAddList::createAdd() {
+    if (m_cnt >= ADD_MAX) {
+        return 0;
+    }
+    return &m_buff[m_cnt++];
+}
+
+DrResMdoInstAnmObj::DrResMdoInstAnmObj() : m_header(0), m_parts(0), pad_10() {}
+
+void DrResMdoInstAnmObj::setupLink(DrResMdoPos* pos) const {
+    if (m_header) {
+        for (int i = 0, idx = m_header->linkTopA; i < m_header->linkNumA; i++, idx++) {
+            pos[m_parts[idx]->m_info->posNo].m_id = idx;
+        }
+        for (int i = 0, idx = m_header->linkTopB; i < m_header->linkNumB; i++, idx++) {
+            pos[m_parts[idx]->m_info->posNo].m_id = idx;
+        }
+    }
+}
+
+DrResMdoSeamParmRead::DrResMdoSeamParmRead() : m_flags(0), pad_50(), pad_58(), pad_62C() { m_posCnt = 0; }
+
+DrResMdoSeamParmRead::~DrResMdoSeamParmRead() {}
+
+void DrResMdoSeamParmRead::setStockBaseMap(int no) {
+    if (m_stockBaseMapCnt < STOCK_BASE_MAP_MAX) {
+        m_stockBaseMap[m_stockBaseMapCnt++] = no;
+    }
+}
+
+void DrResMdoSeamParmRead::setStockInstMap(int no, DrResMdoSeamWrkInst* wrk) {
+    if (m_stockInstMapCnt < STOCK_INST_MAP_MAX) {
+        StockInst& stock = m_stockInstMap[m_stockInstMapCnt++];
+        stock.wrk = wrk;
+        stock.no = no;
+        stock.type = STOCK_TYPE_INST;
+    }
+}
+
+void DrResMdoSeamParmRead::setStockMpfMdl(int no) {
+    if (m_stockMpfMdlCnt < STOCK_MPF_MDL_MAX) {
+        m_stockMpfMdl[m_stockMpfMdlCnt++] = no;
+    }
+}
+
+void DrResMdoSeamParmRead::setStockEnvMdl(int no) { m_stockEnvMdl = no; }
+
+void DrResMdoSeamParmRead::setStockLowMdl(int no) {
+    if (m_stockLowMdlCnt < STOCK_LOW_MDL_MAX) {
+        m_stockLowMdl[m_stockLowMdlCnt++] = no;
+    }
+}
+
+void DrResMdoSeamParmRead::setStockLight(int no) {
+    if (m_stockLightCnt < STOCK_LIGHT_MAX) {
+        m_stockLight[m_stockLightCnt++] = no;
+    }
+}
+
+void DrResMdoSeamParmRead::resetHeightLvTexture() { m_heightLvTexCnt = 0; }
+
+void DrResMdoSeamParmRead::addPos(const mm::Vec3& pos) {
+    m_flags |= FLAG_POS;
+    m_pos[m_posCnt] = pos;
+    m_posCnt++;
+}
+
+void DrResMdoSeamWrkEnv::release() {
+    if (m_matRes) {
+        mtl::MemManager::deallocate(m_matRes, 0, false);
+        m_matRes = 0;
+    }
+    if (m_work0) {
+        mtl::MemManager::deallocate(m_work0, 0, false);
+        m_work0 = 0;
+    }
+    if (m_work1) {
+        mtl::MemManager::deallocate(m_work1, 0, false);
+        m_work1 = 0;
+    }
+    if (m_matBits) {
+        mtl::MemManager::deallocate(m_matBits, 0, false);
+        m_matBits = 0;
+    }
+    m_work2 = 0;
+    m_flags = 0;
+    m_ctl = 0;
+}
+
+void DrResMdoSeamWrkEnv::setupWork(MdoWrkMatRes* matRes, grlib::CGLibTriUniformArray* triArray, mtl::ALLOC_HANDLE handle,
+                                   const MdsSeamEnvMapHead* head, const MdsSeamEnvMapData* data) {
+    m_matRes = matRes;
+    m_head = head;
+    m_data = data;
+    m_flags = 0;
+    m_dispNum = data->dispNum;
+    m_work0 = 0;
+    m_work1 = 0;
+    m_work2 = 0;
+    matRes->m_pTriUniformArray = triArray;
+    // one bit per material, rounded up to 0x20 bytes
+    unsigned int size = (matRes->m_matNum / 32) * 4 + 4;
+    size = size + ((0x20 - (size & 0x1F)) & 0x1F);
+    m_matBits = m_matBitsTop = mtl::MemManager::allocate(handle, size, 0x20, false, "no name", 0);
+    memset(m_matBits, 0, size);
+}
+
+void DrResMdoSeamWrkEnv::changeMemCall(const MdsSeamEnvMapHead* head) {
+    m_head = head;
+    m_flags &= ~FLAG_MEM_MASK;
+}
+
+void DrResMdoSeamWrkEnv::setInfo(const mm::Vec3& pos0, const mm::Vec3& pos1, bool flag, unsigned int type) {
+    m_type = type;
+    m_infoFlag = flag;
+    m_pos0 = pos0;
+    m_pos1 = pos1;
+}
+
+unsigned int DrResMdoSeamWrkEnv::chkDispState() { return m_flags & (1 << DrMan::s_nDblNowIdx); }
+
+void DrResMdoSeamWrkEnv::setDispState() { m_flags |= 1 << DrMan::s_nDblNowIdx; }
 
 }  // namespace ml
 

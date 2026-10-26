@@ -30,7 +30,7 @@ public:
     // The record a part's object reads (0x18); type and field names are not the original's.
     struct Info {
         unsigned int nameOfs;      // 0x0: name string offset in the object's name block (ScnObjAccPartsPos::getName)
-        unsigned char pad_4[0x4];
+        unsigned int posNo;        // 0x4: the part's DrResMdoPos (DrResMdoInstAnmObj::setupLink)
         unsigned short id;         // 0x8 (ScnObjAccPartsPos::getID)
         unsigned short flags;      // 0xA: 0x20 = has a matrix (getMatrix), 0x80 = has switches (setSwitchID)
         unsigned char startFrame;  // 0xC: start frame in 1/255 of the max frame (get*StartFrame)
