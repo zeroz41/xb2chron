@@ -24,7 +24,7 @@ public:
     virtual int GetAttribute() const;  // slot 11
     virtual unsigned int GetWeaponID(int) const;  // slot 13
     virtual const ARTS_PALETTE_DATA* GetArtsPaletteDataConst(int) const;  // slot 16
-    virtual void InitializeEnhance() const;  // slot 21
+    virtual bool InitializeEnhance() const;  // slot 21
     virtual void fn_7100088B68();  // slot 22
     virtual bool IsEnemyParameter() const;  // slot 24
     virtual bool IsInvalidWarp() const;  // slot 25

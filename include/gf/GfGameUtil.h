@@ -151,6 +151,9 @@ public:
     // the HP the UI shows for an object and its maximum (false when it has none)
     static bool getNowHpForUi(gf::GF_OBJ_HANDLE* handle, unsigned int* hp);
     static bool getMaxHpForUi(gf::GF_OBJ_HANDLE* handle, unsigned int* hp);
+    // the object's HP (its property's, else its data's maximum) and maximum HP; type and id as DataParamAcc's
+    static unsigned int getNowHp(gf::GF_OBJ_HANDLE* handle, unsigned int type, unsigned int id);
+    static unsigned int getMaxHp(gf::GF_OBJ_HANDLE* handle, unsigned int type, unsigned int id);
     // whether the object is near enough for its name / info icon to show
     static bool isUiNameDistMatch(gf::GF_OBJ_HANDLE* handle);
     static bool isUiInfoIconDistMatch(gf::GF_OBJ_HANDLE* handle);

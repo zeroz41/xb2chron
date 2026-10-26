@@ -1167,7 +1167,7 @@ _ZN2fw13MessageObject14recieveMessageEPS0_RNS_7MessageE = .text:0x0007D62C; // t
 _ZN2mm3mtl12PtrSingletonIN3btl16CharacterManagerEED2Ev = .text:0x0007D634; // type:function size:0x20 scope:weak
 _ZN2mm3mtl12PtrSingletonIN3btl16CharacterManagerEED0Ev = .text:0x0007D654; // type:function size:0x20 scope:weak
 _ZN3btl18CharacterParameterC2Ev = .text:0x0007D674; // type:function size:0x31C scope:global
-fn_710007D990 = .text:0x0007D990; // type:function size:0x34 scope:global
+_ZNK3btl18CharacterParameter13fn_710007D990Ev = .text:0x0007D990; // type:function size:0x34 scope:global
 _ZN3btl18CharacterParameter5ResetEv = .text:0x0007D9C4; // type:function size:0x1B4 scope:global
 _ZN3btl18CharacterParameter12ResetEnhanceEb = .text:0x0007DB78; // type:function size:0x158 scope:global
 _ZN3btl18CharacterParameter10InitializeEPN2gf13GF_OBJ_HANDLEE = .text:0x0007DCD0; // type:function size:0x418 scope:global
@@ -1219,7 +1219,7 @@ _ZN3btl18CharacterParameter21SetSpecialEnhanceRateENS0_20SPECIAL_ENHANCE_TYPEEft
 _ZN3btl18CharacterParameter21AddSpecialEnhanceRateENS0_20SPECIAL_ENHANCE_TYPEEft = .text:0x00081B6C; // type:function size:0xA4 scope:global
 _ZN3btl18CharacterParameter21MinSpecialEnhanceRateENS0_20SPECIAL_ENHANCE_TYPEEft = .text:0x00081C10; // type:function size:0xB0 scope:global
 _ZNK3btl18CharacterParameter21GetSpecialEnhanceRateENS0_20SPECIAL_ENHANCE_TYPEEPi = .text:0x00081CC0; // type:function size:0xA4 scope:global
-fn_7100081D64 = .text:0x00081D64; // type:function size:0x68 scope:global
+_ZNK3btl18CharacterParameter13fn_7100081D64Ev = .text:0x00081D64; // type:function size:0x68 scope:global
 _ZN3btl18CharacterParameter13SetFightComboEiij = .text:0x00081DCC; // type:function size:0x3BC scope:global
 _ZN3btl18CharacterParameter15CheckUniteComboEib = .text:0x00082188; // type:function size:0x4F4 scope:global
 _ZN3btl18CharacterParameter19SetElementalComboIDEii = .text:0x0008267C; // type:function size:0x24C scope:global

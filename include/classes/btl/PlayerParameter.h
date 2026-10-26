@@ -29,7 +29,7 @@ public:
     virtual int GetArtsPaletteNum() const;  // slot 17
     virtual void ResetRecast();  // slot 18
     virtual void WritebackRecast(btl::GROUP_DATA*);  // slot 19
-    virtual void InitializeEnhance() const;  // slot 21
+    virtual bool InitializeEnhance() const;  // slot 21
     virtual bool IsPlayerParameter() const;  // slot 23
     virtual void fn_7100088F48();  // slot 43
     virtual void fn_7100088F4C(bool);  // slot 44 (placeholder name: see CharacterParameter)

@@ -3,6 +3,7 @@
 
 namespace btl { class GROUP_DATA; struct ARTS_DATA; }
 namespace fw { class UpdateInfo; }
+namespace mm { class Vec3; }
 namespace gf { class GF_OBJ_HANDLE; }
 
 namespace btl {
@@ -52,10 +53,45 @@ public:
     // the field's names are not the original's)
     struct FIGHT_COMBO_DATA {
         unsigned char m_id;
+        unsigned char pad_1[0x17];  // the stride: GetFightComboDataConst picks one of two at 0xF4 and 0x10C
+    };
+    // one buff the character carries (IsBuffInfinite walks m_buffNum of them; the names are not the original's)
+    struct BUFF_DATA {
+        unsigned short m_id;  // the buff (IsBuffInfinite compares it with its argument)
+        unsigned char pad_2[0x2];
+        float m_time;  // negative for a buff without end (IsBuffInfinite)
+        unsigned char pad_8[0x8];
     };
     const FIGHT_COMBO_DATA* GetFightComboDataConst() const;
     bool IsBuff(int buff) const;
     int GetLevel() const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_driverHandle and
+    // IsBuff/fn_7100081D64 inline it. What it does: the parameter of the character m_driverHandle names
+    // (CharacterManager::GetCharacterConst, BattleCharacter::GetCharacterParameterConst(true)), null for none.
+    CharacterParameter* fn_710007D990() const;
+    unsigned int GetHP() const;
+    void SetHP(unsigned int hp);
+    unsigned int GetMaxHP() const;
+    bool IsBuffInfinite(int buff) const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it walks this parameter's
+    // driver chain. What it does: from this parameter up through its drivers (fn_710007D990) while slot 65
+    // (fn_7100085314(false)) does not hold, answers the first holder's pad_5da (0 when the chain ends);
+    // BattleCharacter::NotifyBattleStart/AI_Move/GetBladeMovePos and DataManager::UpdateProc call it.
+    unsigned short fn_7100081D64() const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it works on this
+    // parameter's (or its driver's) counter pad_5df. What it does: walks to the first non-blade (m_isNotBlade) up the
+    // driver chain (stops when m_flags622_6 is set or a driver is missing) and adds the argument to its pad_5df,
+    // clamped to 0..255.
+    void fn_71000812C0(int count);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it counts this
+    // parameter's pad_5df down. What it does: while pad_5df is not zero, decrements it and answers true; else
+    // answers BattleGlobal::fn_710000DE34(IsPlayerParameter()) (BattleGlobal's per-side counters).
+    bool fn_7100081334();
+    bool GetBlowRotAxis(mm::Vec3& axis) const;
+    bool IsBlowRot() const;
+    float GetBlowRotSpeed() const;
+    bool IsProgressCoolTime() const;
+    unsigned int GetGender() const;
     typedef ::btl::ARTS_PALETTE_DATA ARTS_PALETTE_DATA;
     virtual void Reset();  // slot 0
     virtual void Initialize(gf::GF_OBJ_HANDLE*);  // slot 1
@@ -81,8 +117,8 @@ public:
     virtual int GetArtsPaletteNum() const;  // slot 17
     virtual void ResetRecast();  // slot 18
     virtual void WritebackRecast(btl::GROUP_DATA*);  // slot 19
-    virtual void GetWeakAttributeFlag() const;  // slot 20
-    virtual void InitializeEnhance() const;  // slot 21
+    virtual unsigned int GetWeakAttributeFlag() const;  // slot 20 (1 << the anti attribute of GetAttribute, 0 for none)
+    virtual bool InitializeEnhance() const;  // slot 21
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 22 of this table.
     // What it does: does nothing; EnemyParameter's override is fn_7100088A44.
     virtual void fn_7100088B68();  // slot 22
@@ -219,13 +255,24 @@ public:
         }
     }  // slots 81, 82
     int GetSTR() const;
+    int GetDEX() const;
+    int GetAGI() const;
+    int GetLUK() const;
     int GetEtherPower() const;
+    int GetPArmor() const;
+    int GetEArmor() const;
+    int GetCriticalPercent() const;
+    int GetGuardPercent() const;
+    int GetResistPowerAttack() const;
+    int GetResistEtherAttack() const;
 
     gf::GF_OBJ_HANDLE* m_handle;  // the character's own object (DataParamAcc reads it; the name is not the original's)
     // a blade's driver: ButtonChallenge gives a blade's challenge to the character it names (the name is not the
     // original's)
     gf::GF_OBJ_HANDLE* m_driverHandle;
-    unsigned char pad_18[0x4];
+    // the character's data id: GetHP/GetMaxHP hand it with m_objType to GfGameUtil::getNowHp/getMaxHp, which build a
+    // DataParamAcc(type, id) from them (the name is not the original's)
+    unsigned int m_objId;
     // BattleCharacter::GetGroupIndex returns it (the name is not the original's)
     int m_groupIndex;
     unsigned char pad_20[0x4];
@@ -235,14 +282,32 @@ public:
     float m_distanceScale;
     // EnemyParameter::AngryInfection widens its range by each character's (the name is not the original's)
     float m_radius;
-    unsigned char pad_30[0x3F8];
+    unsigned char pad_30[0xC4];
+    // GetFightComboDataConst answers the second while m_flags622_9 is set and its id is not 0 (the name is not the
+    // original's)
+    FIGHT_COMBO_DATA m_fightCombos[2];
+    unsigned char pad_124[0x304];
     void* pad_428;  // cleared by the destructor when set; meaning unknown
-    unsigned char pad_430[0x1A8];
+    unsigned char pad_430[0x60];
+    BUFF_DATA m_buffs[20];  // the names are not the original's; 20 fill the space up to m_buffNum
+    unsigned char m_buffNum;
+    // IsBuff tests bit (buff & 7) of byte buff >> 3 (the name is not the original's)
+    unsigned char m_buffFlags[7];
     unsigned short pad_5d8;  // Utility::fn_71000126C0 passes it on
-    unsigned char pad_5da[0x6];
+    unsigned short pad_5da;  // fn_7100081D64 answers it
+    unsigned char pad_5dc[0x3];
+    unsigned char pad_5df;  // a counter: fn_71000812C0 adds to it (0..255), fn_7100081334 counts it down
     // Utility::AI_GetElementalComboID returns it (the name is not the original's)
     unsigned char m_elementalComboID;
-    unsigned char pad_5e1[0x8];
+    unsigned char pad_5e1;
+    // the character's data type (see m_objId; the name is not the original's)
+    unsigned short m_objType : 6;
+    unsigned short pad_5e2_6 : 10;
+    unsigned char pad_5e4;
+    // the axis the character spins about when blown (GetBlowRotAxis normalises it; the name is not the original's)
+    signed char m_blowRotAxis[3];
+    // GetBlowRotSpeed's spin speed in degrees (the name is not the original's)
+    signed char m_blowRotSpeed;
     // CharacterManager::GetCharacterConst's index of the character this parameter belongs to (AngryInfection
     // measures from it; the name is not the original's)
     unsigned char m_charaIndex;
@@ -252,11 +317,15 @@ public:
     bool m_hasHateTarget : 1;
     // slot 65 (fn_7100085314) returns it (unknown)
     unsigned short m_flags622_2 : 1;
-    unsigned short m_flags622_3 : 3;  // unknown
+    unsigned short m_flags622_3 : 1;  // IsProgressCoolTime answers it (unknown)
+    unsigned short m_flags622_4 : 2;  // unknown
     // a blade that GetDriverType does not answer its driver's type for (bit 6; unknown, the name is not the
     // original's)
     unsigned short m_flags622_6 : 1;
-    unsigned short m_flags622_7 : 6;  // unknown
+    unsigned short m_flags622_7 : 2;  // unknown
+    unsigned short m_flags622_9 : 1;  // GetFightComboDataConst answers the second fight combo while set (unknown)
+    unsigned short m_flags622_10 : 2;  // unknown
+    mutable unsigned short m_flags622_12 : 1;  // InitializeEnhance sets it (unknown)
     // set for a character that is not a blade: BattleCharacter::IsBlade answers its negation (the name is not the
     // original's)
     unsigned short m_isNotBlade : 1;
