@@ -35,7 +35,10 @@ public:
     unsigned short m_mountIndex;  // getMountIndex
     unsigned short m_rscID;       // getRscID
     float m_scale;                // the constructor's scale (1 by default): GfGameMount::detach scales the model by it
-    unsigned char pad_80[0x8];    // the constructor's bool
+    // the constructor's bool: setupBelonging's appends set it when added to the second list (the name is not the
+    // original's)
+    bool m_secondList;
+    unsigned char pad_81[0x7];
 };
 
 // no table: an object's appends, in two lists (GfAppendUtil::setupWeapon adds to the one m_list names, then sets it
