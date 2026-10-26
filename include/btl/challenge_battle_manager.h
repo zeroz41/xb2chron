@@ -33,6 +33,15 @@ public:
     //   Utility::IsEnableEventStart, ...)
     bool fn_710002567C() const;
     // fn_710002575C: TalkManager::PlayNarrationVoice(0x30, 0, 0), then pad_1c = 2.75
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because x0 is this class's
+    // singleton (Utility's fn_710000FB3C/FB4C/FB5C pass TUnk_B3A9C8::sys()) and they read and reset its fields.
+    // What they do: release pad_8 and reset pad_10..pad_2d (GfMenuReference::fn_71003673A8(0), DataManager's
+    // SetPartyGauge(0, false), gf::TUnk_B60928::fn_71003B48B8); fn_71000255A8 only while pad_26 is 0 and then
+    // loads pad_20/pad_22 from lbl_7100EB7DBC and sets pad_26; fn_710002568C only while pad_26 is set, clears it
+    // and sets bit 15 of a halfword in each of DataManager's 18 entries; fn_710002579C only while pad_26 is set.
+    void fn_71000255A8();
+    void fn_710002568C();
+    void fn_710002579C();
     void fn_710002575C();
     // fn_7100026A48 / fn_7100026A58: pad_26 above 149 / above 199
     bool fn_7100026A48() const;

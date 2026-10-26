@@ -1,5 +1,10 @@
 #include "btl/Utility.h"
 #include "btl/Misc.h"
+#include "btl/challenge_battle_manager.h"
+#include "btl/siren_battle_manager.h"
+#include "classes/btl/ShakeCameraManager.h"
+#include "classes/gf/GfSmnEnemyManager.h"
+#include "btl/formation_change_manager.h"
 #include "classes/btl/BattleCharacter.h"
 #include "classes/btl/BattleGlobal.h"
 #include "classes/btl/BtlSystemBalanceAccess.h"
@@ -23,12 +28,32 @@
 
 namespace btl {
 
+void Utility::fn_710000FB3C() {
+    TUnk_B3A9C8::sys()->fn_71000255A8();
+}
+
+void Utility::fn_710000FB4C() {
+    TUnk_B3A9C8::sys()->fn_710002568C();
+}
+
+void Utility::fn_710000FB5C() {
+    TUnk_B3A9C8::sys()->fn_710002579C();
+}
+
+void Utility::fn_710000FB6C() {
+    TUnk_B3A9C8::sys()->fn_710002575C();
+}
+
 bool Utility::fn_710000FB7C() {
     BattleGlobal* global = BattleGlobal::sys();
     if (global->IsPause(-1)) {
         return true;
     }
     return global->pad_a50 <= 0.0f;
+}
+
+bool Utility::fn_710000FBC4() {
+    return !(TUnk_B3A9C8::sys()->fn_7100026E64() && TUnk_B3BD68::sys()->fn_71000A6E5C());
 }
 
 gf::GF_OBJ_HANDLE* Utility::GetLeader() {
@@ -48,6 +73,13 @@ gf::GF_OBJ_HANDLE* Utility::GetControlCharacterHandle() {
 
 bool Utility::IsSatisfyConditionFld(int condition) {
     return gf::GfGameCond::isGameCond(condition);
+}
+
+void Utility::fn_71000100A8(gf::GF_OBJ_HANDLE* handle, const gf::MsgObjectNotifyDead& msg) {
+    BattleCharacter* character = CharacterManager::sys()->GetCharacterConst(handle);
+    if (character) {
+        character->NotifyDead(msg);
+    }
 }
 
 void Utility::fn_71000100F0() {
@@ -82,6 +114,15 @@ int Utility::GetAttrSeType(int attr) {
     return 0;
 }
 
+int Utility::GetAntiAttribute(unsigned int attr) {
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009B5BBE)
+    static const signed char s_antiAttribute[] = {-1, 2, 1, 6, 5, 4, 3, 8, 7};
+    if (attr > 8) {
+        return -1;
+    }
+    return s_antiAttribute[attr];
+}
+
 int Utility::GetElementalEffectID() {
     return DataManager::sys()->m_elementalEffectID;
 }
@@ -97,12 +138,35 @@ int Utility::GetUniteComboID(int first, int second) {
     return stage - 1;
 }
 
+int Utility::GetDamageAttackerType(gf::GF_OBJ_HANDLE* object, gf::GF_OBJ_HANDLE* attacker, bool flag) {
+    BattleCharacter* character = CharacterManager::sys()->GetCharacterConst(attacker);
+    if (character) {
+        if (!character->m_isPlayer) {
+            return 0;
+        }
+        return character->IsControlCharacterGroup() ? 2 : 1;
+    }
+    bool isEnemy = gf::GfObjUtil::getObjType(object) == 5;
+    if (flag) {
+        return isEnemy ? 0 : 2;
+    }
+    return isEnemy ? 2 : 0;
+}
+
+void Utility::fn_7100010900(int value) {
+    TUnk_B3A9C8::sys()->fn_7100026CF0(value);
+}
+
 float Utility::GetDyingHpRate() {
     return BtlSystemBalanceAccess::sys()->m_dyingHpRate;
 }
 
 unsigned int Utility::GetTrustRank(int blade) {
     return gf::GfDataBlade::getTrustRank(blade);
+}
+
+unsigned int Utility::fn_7100010D3C(int blade) {
+    return gf::GfDataBlade::fn_7100237B70(fn_7100011638(blade), fn_710001165C(blade));
 }
 
 void Utility::fn_7100010D84() {
@@ -117,6 +181,29 @@ void Utility::fn_7100010DBC(int stage, bool engagedOnly) {
     DataManager::sys()->fn_71000968B8(stage, engagedOnly);
 }
 
+bool Utility::IsEnableFieldBladeChange() {
+    BattleCharacter* leader = CharacterManager::sys()->GetCharacterConst(gf::GfGameManager::getPartyLeaderDriver());
+    if (leader && leader->IsBattle() && leader->m_state != 3) {
+        return false;
+    }
+    if (!TalkManager::sys()->IsEnableFieldBladeChange()) {
+        return false;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess && TUnk_B3BC20::sys()->m_count > 0) {
+        return false;
+    }
+    return true;
+}
+
+void Utility::fn_7100010DD8(gf::GF_OBJ_HANDLE* handle, float radius, unsigned char group) {
+    gf::GfSmnEnemyManager::AbsSmnInfo info;
+    info.handle = handle;
+    info.flagBit = 0;
+    info.radius = radius;
+    info.group = group;
+    gf::GfSmnEnemyManager::execAbsSummon(info);
+}
+
 bool Utility::IsEnableDeadSequence() {
     return !TalkManager::sys()->IsPlayingEnemyWinVoice();
 }
@@ -127,6 +214,62 @@ bool Utility::IsThirdCharacter(gf::GF_OBJ_HANDLE* handle) {
 
 bool Utility::IsBladeArtsBuff(int buff) {
     return buff >= 1 && buff <= 9;
+}
+
+bool Utility::fn_7100011EA0(gf::GF_OBJ_HANDLE* handle) {
+    if (handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return false;
+    }
+    for (unsigned int group = 0; group < 3; group++) {
+        if (gf::GfGameParty::getHandleDriver(group, 0) == handle) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int Utility::fn_7100011638(int blade) {
+    switch (blade) {
+    case 17: return 17;
+    case 18: return 18;
+    case 19: return 19;
+    case 20: return 17;
+    case 21: return 17;
+    case 22: return 18;
+    case 23: return 18;
+    default: return 19;
+    }
+}
+
+int Utility::fn_710001165C(int blade) {
+    switch (blade) {
+    case 20: return 0;
+    case 21: return 1;
+    case 22: return 0;
+    case 23: return 1;
+    case 24: return 0;
+    case 25: return 1;
+    default: return -1;
+    }
+}
+
+bool Utility::fn_7100011E1C() {
+    if (BattleGlobal::sys()->IsEnableBattle()) {
+        return TUnk_B3A9C8::sys()->fn_7100026E84();
+    }
+    return false;
+}
+
+bool Utility::fn_7100011E58() {
+    return TUnk_B3A9C8::sys()->fn_7100026DF0();
+}
+
+bool Utility::fn_7100011E68(gf::GF_OBJ_HANDLE* handle) {
+    BattleCharacter* character = CharacterManager::sys()->GetCharacterConst(handle);
+    if (character) {
+        return character->fn_7100041728();
+    }
+    return true;
 }
 
 void Utility::RegisterEnemyBook(ENBOOK_TYPE type, gf::GF_OBJ_HANDLE* handle, int value) {
@@ -250,6 +393,20 @@ int Utility::AI_GetPlayerNum() {
     return num;
 }
 
+int Utility::AI_GetAimCharacterNum(gf::GF_OBJ_HANDLE* handle) {
+    int num = 0;
+    mm::mtl::FixedVector<unsigned char, 90> list;
+    if (GetCharacterList(list, handle, static_cast<CHECK_CHR_NUM_MODE>(0), 0x23) > 0) {
+        CharacterManager* manager = CharacterManager::sys();
+        for (unsigned char index : list) {
+            if (manager->GetCharacterConst(index)->m_targetHandle == handle) {
+                num++;
+            }
+        }
+    }
+    return num;
+}
+
 int Utility::AI_GetFightComboID(gf::GF_OBJ_HANDLE* handle) {
     BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
     if (chr) {
@@ -262,6 +419,14 @@ int Utility::AI_GetElementalComboID(gf::GF_OBJ_HANDLE* handle) {
     BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
     if (chr) {
         return chr->GetCharacterParameterConst(true)->m_elementalComboID;
+    }
+    return 0;
+}
+
+int Utility::fn_71000126C0(gf::GF_OBJ_HANDLE* handle) {
+    BattleCharacter* character = CharacterManager::sys()->GetCharacterConst(handle);
+    if (character) {
+        return fn_71000A2B74(character->GetCharacterParameterConst(true)->pad_5d8);
     }
     return 0;
 }
@@ -281,6 +446,25 @@ int Utility::AI_GetStamp(gf::GF_OBJ_HANDLE* handle) {
     }
     return 0;
 }
+
+float Utility::AI_GetHpPercent(gf::GF_OBJ_HANDLE* handle) {
+    float percent = 0.0f;
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (chr && !chr->IsDead(0)) {
+        const CharacterParameter* param = chr->GetCharacterParameterConst(true);
+        if (param) {
+            unsigned int hp = param->GetHP();
+            unsigned int maxHp = param->GetMaxHP();
+            if (maxHp != 0) {
+                float now = hp;
+                float max = maxHp;
+                percent = now >= max ? 100.0f : now / max * 100.0f;
+            }
+        }
+    }
+    return percent;
+}
+
 
 int Utility::AI_GetLevel(gf::GF_OBJ_HANDLE* handle) {
     BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);

@@ -12,6 +12,7 @@ namespace gf { class GfObj; }
 namespace gf { class GfComProperty; }
 namespace gf { class GfComEffectCaster; }
 namespace gf { class MsgObjectNotifyAsmCallback; }
+namespace gf { class MsgObjectNotifyDead; }
 
 namespace btl {
 // table 0x7100B3AA08
@@ -221,6 +222,7 @@ public:
     bool fn_710002F368() const;
     // m_isPlayer && !m_isBattle.
     bool fn_7100041728() const;
+    void NotifyDead(const gf::MsgObjectNotifyDead& msg);
     // m_actionID == 4 / m_actionID == 9.
     bool fn_7100059D0C() const;
     bool fn_7100059D1C() const;

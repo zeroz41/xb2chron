@@ -21,6 +21,12 @@ public:
     mm::mtl::FixedVector<ShakeCameraElement*, 20> m_elements;  // 0x8
     bool m_stopEternalShake;                                   // 0xB0: stops each element's eternal shake next Update
 };
+
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function of namespace btl: it sits in
+// ShakeCameraManager's unit and reads no object. What it does: returns the number of set bits of its argument (a
+// 32-bit population count); Utility::fn_71000126C0 passes CharacterParameter::pad_5d8, EnemyParameter::fn_71000865AC
+// calls it too.
+unsigned int fn_71000A2B74(unsigned int bits);
 }  // namespace btl
 
 #endif

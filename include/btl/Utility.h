@@ -4,6 +4,7 @@
 #include "classes/btl/DataManager.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class MsgObjectNotifyDead; }
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
 
 namespace mm { class Vec3; }
@@ -43,6 +44,9 @@ int AI_GetEnemyNum();
 int AI_GetPlayerNum();
 bool IsEnableDeadSequence();
 bool IsEnableEventStart();
+// false while the party leader fights outside state 3, while TalkManager forbids it, or while BattleGlobal::m_challengeAnySuccess
+// is set and TUnk_B3BC20 has requests queued
+bool IsEnableFieldBladeChange();
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfPlayComWaitBattleEnd::start has no
 // such call). In btl::Utility because its address sits between Utility functions (fn_71000100A8, GetArtsData) in
 // the unit that holds them. What it does: sets bit 7 of the 32-bit word at BattleGlobal+0x83CA (rewriting the
@@ -97,6 +101,39 @@ bool AI_IsKillChild();
 // functions (0x710000FB7C..0x710001535C) and only the btl_ai script plugin calls them.
 // What it does: true when BattleGlobal::IsPause(-1) or BattleGlobal's float at +0xA50 is <= 0 (btl_ai.isPause).
 bool fn_710000FB7C();
+// Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. In btl::Utility because they sit among its
+// functions. What they do: call TUnk_B3A9C8 (the challenge battle singleton) fn_71000255A8 (fn_710028F694 calls
+// it), fn_710002568C (fn_710028FFF4), fn_710002579C (fn_710028D330), fn_710002575C (fn_710028D128),
+// fn_7100026CF0(value) (GfFobjDropitem::applyGetItem) and fn_7100026DF0 (GfGameScene::updateAutoHeal).
+void fn_710000FB3C();
+void fn_710000FB4C();
+void fn_710000FB5C();
+void fn_710000FB6C();
+void fn_7100010900(int value);
+bool fn_7100011E58();
+// What it does: BattleCharacter::NotifyDead(msg) on the handle's character when it has one
+// (GfComBehaviorPc::procMsgObjectNotifyDead).
+void fn_71000100A8(gf::GF_OBJ_HANDLE* handle, const gf::MsgObjectNotifyDead& msg);
+// What it does: TUnk_B3A9C8::fn_7100026E84 while BattleGlobal::IsEnableBattle holds, else false
+// (BattleCharacter::UpdateHateRingData, GfComBehaviorEnemy::canChangeBattle).
+bool fn_7100011E1C();
+// What it does: BattleCharacter::fn_7100041728 on the handle's character, true without one
+// (GfGameScene::updateAutoHeal).
+bool fn_7100011E68(gf::GF_OBJ_HANDLE* handle);
+// What they do: fn_7100011638 maps ids 17-23 to a driver (17, 18, 19, 17, 17, 18, 18; else 19), fn_710001165C ids
+// 20-25 to a slot (0, 1, 0, 1, 0, 1; else -1); fn_7100010D3C passes both to GfDataBlade::fn_7100237B70.
+// What it does: when the second handle is a battle character, 0 for a non-player, 2 for one of the controlled group,
+// 1 for another; else 2 when the first handle is an enemy object (GfObjUtil::getObjType 5) and 0 otherwise, the
+// other way round when the flag is set (the parameter names are not the original's).
+int GetDamageAttackerType(gf::GF_OBJ_HANDLE* object, gf::GF_OBJ_HANDLE* attacker, bool);
+// Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. In btl::Utility because they sit among its
+// functions. fn_7100010DD8: GfSmnEnemyManager::execAbsSummon({handle, radius, group, 0}) (BattleCharacter::JoinProc,
+// fn_7100009F10). fn_7100011EA0: whether the handle is the driver of party group 0, 1 or 2 (none for -1;
+// CharacterParameter::PreUpdate, PlayerParameter::Initialize).
+void fn_7100010DD8(gf::GF_OBJ_HANDLE* handle, float radius, unsigned char group);
+bool fn_7100011EA0(gf::GF_OBJ_HANDLE* handle);
+int fn_7100011638(int blade);
+int fn_710001165C(int blade);
 // What it does: true unless TUnk_B3A9C8::fn_7100026E64 (true without a challenge battle) holds and fn_71000A6E5C on
 // the siren battle singleton (lbl_7100B939D0) returns true; PadField's action and axis handlers ignore the pad
 // while it is true (3.0.1's PadField::decideAction etc. call it where 1.0.0's had nothing).
