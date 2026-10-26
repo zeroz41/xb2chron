@@ -1,3 +1,5 @@
+#include "gf/GfItemUtil.h"
+#include "classes/gf/GfMenuItemList.h"
 #include "classes/gf/GfMenuItemList.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfDataBdat.h"
@@ -5,6 +7,9 @@
 #include "gf/GfItemUtil.h"
 #include "gf/GfMenuBdat.h"
 #include "gf/GfMenuItemUtil.h"
+#include "gf/GfMenuObjUtil.h"
+#include "classes/gf/GfBdatBtl.h"
+#include "classes/gf/GfBdatItem.h"
 #include "plugin/Bdat.h"
 
 namespace gf {
@@ -104,6 +109,278 @@ void GfMenuItemList::setupFromHanaParts(const HanaPartsSetup& setup) {
             addContents(item);
         }
     }
+}
+
+void GfMenuItemList::sort(unsigned int order, bool ascending) {
+    if (getSize() == 0) {
+        return;
+    }
+    std::function<bool(const MenuItemInfo&, const MenuItemInfo&)> compare;
+    switch (order) {
+    case 1: {
+        unsigned int* times = new (getAllocator(ALLOCATOR(0)), nullptr, 0, 8) unsigned int[static_cast<unsigned int>(getSize())];
+        for (unsigned int i = 0; i < getSize(); i++) {
+            times[i] = GfItemUtil::getItemTime(getContents(i).m_id, getContents(i).m_entry);
+            getContents(i).m_sortIndex = i;
+        }
+        if (ascending) {
+            UIListInfo<MenuItemInfo>::sort([times](const MenuItemInfo& a, const MenuItemInfo& b) {
+                unsigned int timeA = times[a.m_sortIndex];
+                unsigned int timeB = times[b.m_sortIndex];
+                if (timeA == timeB) {
+                    return a.m_id < b.m_id;
+                }
+                return timeA < timeB;
+            });
+        } else {
+            UIListInfo<MenuItemInfo>::sort([times](const MenuItemInfo& a, const MenuItemInfo& b) {
+                unsigned int timeA = times[a.m_sortIndex];
+                unsigned int timeB = times[b.m_sortIndex];
+                if (timeA == timeB) {
+                    return a.m_id < b.m_id;
+                }
+                return timeA > timeB;
+            });
+        }
+        delete[] times;
+        return;
+    }
+    case 2:
+        compare = ascending ? sortNameDescending : sortNameAscending;
+        break;
+    case 3:
+        compare = ascending ? sortRareAscending : sortRareDescending;
+        break;
+    case 5:
+        if (GfItemUtil::getType((m_list.size() != 0 ? m_list[0] : m_dummy).m_id) == 2 && GfMenuObjUtil::fn_710048FD30(3)) {
+            unsigned int i = 0;
+            for (; i < getSize(); i++) {
+                if (GfBdatItem::sys()->getPcEquipArmorType(getContents(i).m_id) != 2) {
+                    break;
+                }
+            }
+            if (i == getSize()) {
+                compare = ascending ? fn_710037749C : fn_7100377614;
+            }
+        }
+        break;
+    case 7:
+        compare = ascending ? sortSellPriceAscending : sortSellPriceDescending;
+        break;
+    case 8:
+        compare = ascending ? sortFavoriteTimeAscending : sortFavoriteTimeDescending;
+        break;
+    case 9:
+        switch (GfItemUtil::getType((m_list.size() != 0 ? m_list[0] : m_dummy).m_id)) {
+        case 2:
+            if (!GfMenuObjUtil::fn_710048FD30(3)) {
+                compare = ascending ? fn_710037777C : fn_71003778C0;
+            } else {
+                unsigned int i = 0;
+                for (; i < getSize(); i++) {
+                    if (GfBdatItem::sys()->getPcEquipArmorType(getContents(i).m_id) != 2) {
+                        break;
+                    }
+                }
+                if (i == getSize()) {
+                    compare = ascending ? fn_710037749C : fn_7100377614;
+                } else {
+                    compare = ascending ? fn_710037777C : fn_71003778C0;
+                }
+            }
+            break;
+        case 3:
+            compare = ascending ? sortTypeAsCoreEquipAscending : sortTypeAsCoreEquipDescending;
+            break;
+        case 7:
+            compare = ascending ? sortTypeCollectionAscending : sortTypeCollectionDescending;
+            break;
+        case 8:
+            compare = ascending ? sortTypeTreasureAscending : sortTypeTreasureDescending;
+            break;
+        case 9:
+            compare = ascending ? sortTypeAsCoreAscending : sortTypeAsCoreDescending;
+            break;
+        case 10:
+            compare = ascending ? sortTypeFavoriteAscending : sortTypeFavoriteDescending;
+            break;
+        case 12:
+            compare = ascending ? sortTypeBoosterAscending : sortTypeBoosterDescending;
+            break;
+        }
+        break;
+    case 10:
+        compare = ascending ? sortWpnRankAscending : sortWpnRankDescending;
+        break;
+    case 12:
+        compare = ascending ? sortGetAreaAscending : sortGetAreaDescending;
+        break;
+    case 13:
+        compare = ascending ? sortIdAscending : sortIdDescending;
+        break;
+    default:
+        if (order > 0x50) {
+            fn_7100377F28(order - 0x50);
+        } else if (order > 0x40) {
+            fn_7100378144(order - 0x40);
+        } else if (order > 0x20) {
+            fn_710037835C(order - 0x20);
+        }
+        return;
+    }
+    UIListInfo<MenuItemInfo>::sort(compare);
+}
+
+bool GfMenuItemList::fn_710037749C(const MenuItemInfo& a, const MenuItemInfo& b) {
+    ItemProperty propA;
+    ItemProperty propB;
+    GfItemUtil::getProperty(propA, a.m_id, 0);
+    GfItemUtil::getProperty(propB, b.m_id, 0);
+    if (propA.m_type != 2) {
+        return false;
+    }
+    if (propB.m_type != 2) {
+        return true;
+    }
+    unsigned int keyA = GfBdatItem::sys()->fn_7100202C3C(a.m_id);
+    unsigned int keyB = GfBdatItem::sys()->fn_7100202C3C(b.m_id);
+    if (keyA == keyB) {
+        GfBdatBtl* btl = GfBdatBtl::sys();
+        unsigned int effectA = btl->getBTL_EnhanceEnhanceEffect(propA.m_enhance2);
+        unsigned int effectB = btl->getBTL_EnhanceEnhanceEffect(propB.m_enhance2);
+        if (effectA == 0) {
+            return false;
+        }
+        if (effectB == 0) {
+            return true;
+        }
+        if (effectA == effectB) {
+            float paramA = btl->getBTL_EnhanceParam1(propA.m_enhance2);
+            float paramB = btl->getBTL_EnhanceParam1(propB.m_enhance2);
+            if (paramA == paramB) {
+                float param2A = btl->getBTL_EnhanceParam2(propA.m_enhance2);
+                float param2B = btl->getBTL_EnhanceParam2(propB.m_enhance2);
+                if (param2A == param2B) {
+                    return a.m_id < b.m_id;
+                }
+                return param2A > param2B;
+            }
+            return paramA > paramB;
+        }
+        return effectA > effectB;
+    }
+    return keyA > keyB;
+}
+
+bool GfMenuItemList::fn_7100377614(const MenuItemInfo& a, const MenuItemInfo& b) {
+    ItemProperty propA;
+    ItemProperty propB;
+    GfItemUtil::getProperty(propA, a.m_id, 0);
+    GfItemUtil::getProperty(propB, b.m_id, 0);
+    if (propA.m_type != 2) {
+        return false;
+    }
+    if (propB.m_type != 2) {
+        return true;
+    }
+    unsigned int keyA = GfBdatItem::sys()->fn_7100202C3C(a.m_id);
+    unsigned int keyB = GfBdatItem::sys()->fn_7100202C3C(b.m_id);
+    if (keyA == keyB) {
+        GfBdatBtl* btl = GfBdatBtl::sys();
+        unsigned int effectA = btl->getBTL_EnhanceEnhanceEffect(propA.m_enhance2);
+        unsigned int effectB = btl->getBTL_EnhanceEnhanceEffect(propB.m_enhance2);
+        if (effectA == 0) {
+            return false;
+        }
+        if (effectB == 0) {
+            return true;
+        }
+        if (effectA == effectB) {
+            float paramA = btl->getBTL_EnhanceParam1(propA.m_enhance2);
+            float paramB = btl->getBTL_EnhanceParam1(propB.m_enhance2);
+            if (paramA == paramB) {
+                float param2A = btl->getBTL_EnhanceParam2(propA.m_enhance2);
+                float param2B = btl->getBTL_EnhanceParam2(propB.m_enhance2);
+                if (param2A == param2B) {
+                    return a.m_id < b.m_id;
+                }
+                return param2A > param2B;
+            }
+            return paramA > paramB;
+        }
+        return effectA < effectB;
+    }
+    return keyA < keyB;
+}
+
+bool GfMenuItemList::fn_710037777C(const MenuItemInfo& a, const MenuItemInfo& b) {
+    GfBdatItem* item = GfBdatItem::sys();
+    if (GfItemUtil::getItemCategory(a.m_id) != 2) {
+        return false;
+    }
+    if (GfItemUtil::getItemCategory(b.m_id) != 2) {
+        return true;
+    }
+    GfBdatBtl* btl = GfBdatBtl::sys();
+    unsigned int enhanceA = item->getPcEquipEnhance1(a.m_id);
+    unsigned int enhanceB = item->getPcEquipEnhance1(b.m_id);
+    unsigned int effectA = btl->getBTL_EnhanceEnhanceEffect(enhanceA);
+    unsigned int effectB = btl->getBTL_EnhanceEnhanceEffect(enhanceB);
+    if (effectA == 0) {
+        return false;
+    }
+    if (effectB == 0) {
+        return true;
+    }
+    if (effectA == effectB) {
+        float paramA = btl->getBTL_EnhanceParam1(enhanceA);
+        float paramB = btl->getBTL_EnhanceParam1(enhanceB);
+        if (paramA == paramB) {
+            float param2A = btl->getBTL_EnhanceParam2(enhanceA);
+            float param2B = btl->getBTL_EnhanceParam2(enhanceB);
+            if (param2A == param2B) {
+                return a.m_id < b.m_id;
+            }
+            return param2A > param2B;
+        }
+        return paramA > paramB;
+    }
+    return effectA > effectB;
+}
+
+bool GfMenuItemList::fn_71003778C0(const MenuItemInfo& a, const MenuItemInfo& b) {
+    GfBdatItem* item = GfBdatItem::sys();
+    if (a.m_type != 2) {
+        return false;
+    }
+    if (b.m_type != 2) {
+        return true;
+    }
+    GfBdatBtl* btl = GfBdatBtl::sys();
+    unsigned int enhanceA = item->getPcEquipEnhance1(a.m_id);
+    unsigned int enhanceB = item->getPcEquipEnhance1(b.m_id);
+    unsigned int effectA = btl->getBTL_EnhanceEnhanceEffect(enhanceA);
+    unsigned int effectB = btl->getBTL_EnhanceEnhanceEffect(enhanceB);
+    if (effectA == 0) {
+        return false;
+    }
+    if (effectB == 0) {
+        return true;
+    }
+    if (effectA == effectB) {
+        float paramA = btl->getBTL_EnhanceParam1(enhanceA);
+        float paramB = btl->getBTL_EnhanceParam1(enhanceB);
+        if (paramA == paramB) {
+            float param2A = btl->getBTL_EnhanceParam2(enhanceA);
+            float param2B = btl->getBTL_EnhanceParam2(enhanceB);
+            if (param2A == param2B) {
+                return a.m_id < b.m_id;
+            }
+            return param2A > param2B;
+        }
+        return paramA > paramB;
+    }
+    return effectA < effectB;
 }
 
 bool GfMenuItemList::sortNameDescending(const MenuItemInfo& a, const MenuItemInfo& b) {

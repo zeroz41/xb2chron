@@ -45,7 +45,10 @@ struct ItemProperty {
     // original's, each named for the sort that reads it
     unsigned char pad_44[0x1];
     unsigned char m_boosterKey;     // type 12 (sortTypeBooster*)
-    unsigned char pad_46[0x6];
+    unsigned char pad_46[0x4];
+    // type 2: a second BTL_Enhance row (the enhance sorts GfMenuItemList::fn_710037749C / fn_7100377614 order by
+    // its effect and params); the name is not the original's
+    unsigned short m_enhance2;
     unsigned char m_coreKey;        // types 3 and 9 (sortTypeAsCoreEquip*, sortTypeAsCore* of the item m_enhance names)
     unsigned char m_collectionKey;  // type 7 (sortTypeCollection*)
     unsigned char m_favoriteKey;    // type 10 (sortTypeFavorite*)

@@ -1,6 +1,7 @@
 #ifndef CLASSES_GF_GFMENUITEMLIST_H
 #define CLASSES_GF_GFMENUITEMLIST_H
 
+#include "classes/gf/GfItemBox.h"
 #include "classes/ui/UIListInfo.h"
 #include "gf/GfDataItem.h"
 
@@ -9,19 +10,15 @@ namespace gf {
 // original's)
 class MenuItemInfo {
 public:
-    // the item box entry's third word (setupFromBox copies it); a copy copies it apart from the rest, so its type
-    // has a copy constructor of its own (GfMenuObjCylinderSelect's copy of a list item shows it)
-    struct EntryValue {
-        EntryValue() : m_value(0) {}
-        EntryValue(const EntryValue& other) : m_value(other.m_value) {}
-        unsigned int m_value;
-    };
     MenuItemInfo() : m_type(0), m_id(0), m_count(0) {}
     unsigned int m_type;     // its ItemType::Type
     unsigned int m_id;       // the item's id
     unsigned short m_count;
-    unsigned char pad_A[2];
-    EntryValue m_entry;
+    // the list position sort(1) stores, its time table's index (the name is not the original's)
+    unsigned short m_sortIndex;
+    // the item's handle in the box (setupFromBox copies the entry's third word; sort(1) passes it to
+    // GfItemUtil::getItemTime; a copy copies it apart from the rest: GfMenuObjCylinderSelect's copy of a list item)
+    GfItemHandle m_entry;
 };
 
 // table 0x7100B5F488
@@ -105,6 +102,20 @@ public:
     static bool sortGetAreaDescending(const MenuItemInfo& a, const MenuItemInfo& b);
     static bool sortIdAscending(const MenuItemInfo& a, const MenuItemInfo& b);
     static bool sortIdDescending(const MenuItemInfo& a, const MenuItemInfo& b);
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because sort(5/9) picks them as
+    // comparators for type 2 items (this class's sort orders). What they do: fn_710037749C / fn_7100377614 order
+    // by the enhance key GfBdatItem::fn_7100202C3C reads, asc/desc, then the item id; fn_710037777C /
+    // fn_71003778C0 the same for the other enhance key (see the bodies).
+    static bool fn_710037749C(const MenuItemInfo& a, const MenuItemInfo& b);
+    static bool fn_7100377614(const MenuItemInfo& a, const MenuItemInfo& b);
+    static bool fn_710037777C(const MenuItemInfo& a, const MenuItemInfo& b);
+    static bool fn_71003778C0(const MenuItemInfo& a, const MenuItemInfo& b);
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because sort(order) calls them
+    // with this and order - 0x50 (fn_7100377F28), order - 0x40 (fn_7100378144), order - 0x20 (fn_710037835C);
+    // each sorts the list with a comparator lambda of its own (tables 0x7100B5F660, 0x7100B5F618, 0x7100B5F5D0).
+    void fn_7100377F28(unsigned int order);
+    void fn_7100378144(unsigned int order);
+    void fn_710037835C(unsigned int order);
     // the rarity the rarity sorts read: none for types 6, 14 and 15 (1.0.0 has it out of line; 3.0.1 inlines it)
     static unsigned int getSortRarity(const MenuItemInfo& item) {
         switch (item.m_type) {
