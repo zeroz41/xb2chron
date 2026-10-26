@@ -42,11 +42,6 @@ public:
     // attached at 0x3C. What it does: sends event 0x22 (close) to the attached object's sibling "LAY_dr_solo" and
     // clears s_soloOpen. Caller: fn_7100359144.
     static void fn_71003923CC();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; its code is in
-    // gf_menu_obj_char_change's unit. A member because it drives the object attached at 0x3C, as this class's
-    // static functions do. What it does: sends event 0x10F with the flag as its first parameter to that object.
-    // Caller: dispInfo (when GfMenuObjUtil::fn_710048FD30(3) holds).
-    static void fn_71003C3648(bool disp);
     void ctrlAwakening(bool awake);
     void ctrlHomuri(bool on);
     void updateFace(unsigned int index);

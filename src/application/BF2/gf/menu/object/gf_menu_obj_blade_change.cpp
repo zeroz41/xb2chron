@@ -1,4 +1,5 @@
 #include "classes/gf/GfMenuObjBladeChange.h"
+#include "classes/gf/TUnk_B60E28.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfMenuObject.h"
 #include "classes/ui/UIObjectAcc.h"
@@ -96,7 +97,7 @@ void GfMenuObjBladeChange::dispInfo(bool disp) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x3C));
     if (acc.m_object != nullptr && !acc.isTerm()) {
         if (GfMenuObjUtil::fn_710048FD30(3)) {
-            fn_71003C3648(disp);
+            TUnk_B60E28::fn_71003C3648(disp);
         } else {
             acc.setDispChild(disp, "LAY_info");
         }
