@@ -1,3 +1,11 @@
+#include "gf/SDataPouch.h"
+#include "gf/GfDataBladeArts.h"
+#include "gf/GfKizunaringBlade.h"
+#include "gf/GfDataDriver.h"
+#include "gf/GfEquipUtil.h"
+#include "classes/gf/GfQuestManager.h"
+#include "gf/GfPouchUtil.h"
+#include "gf/GfRecipeOrbUtil.h"
 #include "classes/gf/GfItemBox.h"
 #include "gf/GfDataItem.h"
 #include "gf/GfItemUtil.h"
@@ -11,6 +19,19 @@
 #include "classes/gf/GfBdatShop.h"
 #include "classes/gf/GfGameManager.h"
 #include "gf/GfReqCommand.h"
+#include "gf/GfKizunaringBlade.h"
+#include "gf/GfQuestInfo.h"
+#include "gf/QuestListAcc.h"
+#include "gf/AchievQuest.h"
+#include "classes/gf/GfQuestManager.h"
+#include "gf/GfPouchUtil.h"
+#include "gf/GfRecipeOrbUtil.h"
+#include "gf/SDataPouch.h"
+#include "classes/gf/DataParamAcc.h"
+#include "gf/GfDataAchievement.h"
+#include "gf/GfDataBladeSkill.h"
+#include "gf/GfDataBladeArts.h"
+#include "gf/GfDataFieldSkill.h"
 
 namespace gf {
 
@@ -159,6 +180,12 @@ bool GfItemUtil::isValidCrystal(unsigned int item) {
     return true;
 }
 
+void GfItemUtil::setEquipFlag(unsigned int item, GfItemHandle handle, bool equip) {
+    // the copy comes first: the original reads the handle before the box singleton
+    GfItemHandle h(handle);
+    GfItemBox::get()->setEquipFlag(item, h, equip);
+}
+
 GfItemHandle GfItemUtil::getNoEquipItemHandle(unsigned int item) {
     return GfItemBox::get()->getNoEquipItemHandle(item);
 }
@@ -172,6 +199,18 @@ void GfEquipUtil::equipBladeChip(unsigned int blade, unsigned int chip) {
     GfReqCommand::reqRebuildPartyWeapon(blade);
 }
 
+bool GfEquipUtil::fn_71002FC38C(unsigned int driver) {
+    return GfDataDriver::fn_7100247BF0(driver);
+}
+
+void GfEquipUtil::fn_71002FC390(unsigned int driver, bool flag) {
+    GfDataDriver::fn_7100247B40(driver, flag);
+}
+
+unsigned int GfEquipUtil::getEquipDriverAcce(unsigned int driver, unsigned int slot) {
+    return GfDataDriver::getEquipAcce(driver, slot);
+}
+
 unsigned int GfEquipUtil::getEquipAcceResult(unsigned int driver, unsigned int slot, unsigned int accessory) {
     return getEquipAcceResult(*GfDataDriver::getSDataDriver(driver), slot, accessory);
 }
@@ -182,6 +221,194 @@ unsigned int GfEquipUtil::getEquipOrbMax(unsigned int blade) {
 
 unsigned int GfEquipUtil::getEquipBladeOrb(unsigned int blade, unsigned int slot) {
     return GfDataBlade::getEquipOrb(blade, slot);
+}
+
+unsigned int GfItemUtil::fn_71002FCD64(unsigned int driver) {
+    return GfDataDriver::fn_7100247474(driver);
+}
+
+unsigned int GfRecipeOrbUtil::getRecipeID(unsigned int item) {
+    return GfBdatItem::get()->getEmptyOrbRecipe(item);
+}
+
+unsigned int GfRecipeOrbUtil::getEquipOrb(unsigned int item) {
+    return GfBdatItem::get()->getEmptyOrbEquipItemID(item);
+}
+
+bool GfRecipeOrbUtil::isEnableRecipe(unsigned int recipe) {
+    ::mm::mtl::FixedVector<OrbRecipe, 128> items;
+    return getRecipeItemsByItemBox(items, recipe);
+}
+
+SDataPouch& GfPouchUtil::getPouch(unsigned int driver, unsigned int pouch) {
+    if (GfGameManager::fn_71002A9E68()) {
+        driver = GfDataDriver::fn_71002417DC(driver);
+    }
+    return *GfDataDriver::getPouchData(driver, pouch);
+}
+
+bool GfPouchUtil::isExistOpenItem() {
+    return GfItemBox::get()->countItem(25305) != 0;
+}
+
+unsigned int GfPouchUtil::getOpenCount(unsigned int driver) {
+    if (GfGameManager::fn_71002A9E68()) {
+        driver = GfDataDriver::fn_71002417DC(driver);
+    }
+    unsigned int count = 0;
+    for (unsigned int i = 0; i < 3; i++) {
+        if (GfDataDriver::getPouchData(driver, i)->m_open) {
+            count++;
+        }
+    }
+    return count;
+}
+
+// The helper is inferred (no symbol names it): the quests' resets come out as the original's only from an inlined
+// function (its argument copies start fresh each line). The name is not the original's.
+static inline void resetAchievQuests(AchievInfo* info) {
+    for (int i = 0; i < 5; i++) {
+        GfQuestManager::resetQuest(info->m_quests[i].m_questId);
+    }
+}
+
+void GfKizunaringBlade::removeAchievement(unsigned int blade) {
+    if (blade == 0) {
+        return;
+    }
+    for (unsigned int line = 0; line < 10; line++) {
+        AchievInfo* info = GfDataBlade::getAchievInfo(blade, line);
+        if (info->m_achievementId != 0) {
+            resetAchievQuests(info);
+        }
+    }
+}
+
+unsigned int GfKizunaringBlade::getAchievementCategory(unsigned int blade, unsigned int line, unsigned int level) {
+    if (blade != 0) {
+        unsigned int set = GfDataBlade::getAchievInfo(blade, line)->m_achievementId;
+        if (set != 0) {
+            unsigned int id = QuestListAcc::get()->getFLD_AchievementSetAchievementID(set, level - 1);
+            if (id != 0) {
+                return QuestListAcc::get()->getFLD_AchievementListCategory(id);
+            }
+        }
+    }
+    return 0;
+}
+
+bool GfKizunaringBlade::getAchievementResultMsg(unsigned char*& bdat, unsigned int& id, unsigned int blade,
+                                                unsigned int line, unsigned int level) {
+    DataParamAcc acc(4, blade, GimmickType(0));
+    ACHIEVEMENT_TYPE type;
+    unsigned int index;
+    GfDataAchievement::getAchievementType(type, index, line);
+    if (type == 0) {
+        return GfDataBladeArts::getEnhanceCaption(bdat, id, acc.getBladeArts(index, false), level);
+    } else if (type == 1) {
+        return GfDataBladeSkill::getEnhanceCaption(bdat, id, acc.getBladeSkill(index, false), level);
+    } else if (type == 2) {
+        return GfDataFieldSkill::getCaption(bdat, id, acc.getFieldSkill(index, false));
+    }
+    return false;
+}
+
+unsigned int GfKizunaringBlade::getAchievementResultEnhance(unsigned int blade, unsigned int line, unsigned int level) {
+    DataParamAcc acc(4, blade, GimmickType(0));
+    ACHIEVEMENT_TYPE type;
+    unsigned int index;
+    GfDataAchievement::getAchievementType(type, index, line);
+    if (type == 0) {
+        return GfDataBladeArts::getEnhance(acc.getBladeArts(index, false), level);
+    } else if (type == 1) {
+        return GfDataBladeSkill::getEnhance(acc.getBladeSkill(index, false), level);
+    }
+    return 0;
+}
+
+unsigned int GfKizunaringBlade::getAchievementIcon(unsigned int blade, unsigned int line, unsigned int level) {
+    if (blade != 0) {
+        unsigned int set = GfDataBlade::getAchievInfo(blade, line)->m_achievementId;
+        if (set != 0) {
+            unsigned int id = QuestListAcc::get()->getFLD_AchievementSetAchievementID(set, level - 1);
+            if (id != 0) {
+                return QuestListAcc::get()->getFLD_AchievementListIcon(id);
+            }
+        }
+    }
+    return 0;
+}
+
+unsigned int GfKizunaringBlade::getAchievementVoiceCategory(unsigned int blade, unsigned int line, unsigned int level) {
+    if (blade != 0) {
+        unsigned int set = GfDataBlade::getAchievInfo(blade, line)->m_achievementId;
+        if (set != 0) {
+            unsigned int id = QuestListAcc::get()->getFLD_AchievementSetAchievementID(set, level - 1);
+            if (id != 0) {
+                return QuestListAcc::get()->getFLD_AchievementListVoiceCategory(id);
+            }
+        }
+    }
+    return 0;
+}
+
+unsigned int GfKizunaringBlade::getAchievementAfterVoice(unsigned int blade, unsigned int line, unsigned int level) {
+    if (blade != 0) {
+        unsigned int set = GfDataBlade::getAchievInfo(blade, line)->m_achievementId;
+        if (set != 0) {
+            unsigned int id = QuestListAcc::get()->getFLD_AchievementSetAchievementID(set, level - 1);
+            if (id != 0) {
+                return QuestListAcc::get()->getFLD_AchievementListAfterVoice(id);
+            }
+        }
+    }
+    return 0;
+}
+
+unsigned int GfKizunaringBlade::getAchievementDifficulty(unsigned int blade, unsigned int line, unsigned int level) {
+    if (blade != 0) {
+        unsigned int set = GfDataBlade::getAchievInfo(blade, line)->m_achievementId;
+        if (set != 0) {
+            unsigned int id = QuestListAcc::get()->getFLD_AchievementSetAchievementID(set, level - 1);
+            if (id != 0) {
+                return QuestListAcc::get()->getFLD_AchievementListDifficulty(id);
+            }
+        }
+    }
+    return 0;
+}
+
+unsigned int GfKizunaringBlade::getAchievementQuest(unsigned int blade, unsigned int line, unsigned int level) {
+    if (blade != 0) {
+        unsigned int set = GfDataBlade::getAchievInfo(blade, line)->m_achievementId;
+        if (set != 0) {
+            unsigned int id = QuestListAcc::get()->getFLD_AchievementSetAchievementID(set, level - 1);
+            if (id != 0) {
+                return QuestListAcc::get()->getFLD_AchievementListTask(id);
+            }
+        }
+    }
+    return 0;
+}
+
+unsigned int GfKizunaringBlade::getAchievementSetCategory(unsigned int blade, unsigned int line) {
+    if (blade != 0) {
+        unsigned int set = GfDataBlade::getAchievInfo(blade, line)->m_achievementId;
+        if (set != 0) {
+            return QuestListAcc::get()->getFLD_AchievementSetCategory(set);
+        }
+    }
+    return 0;
+}
+
+unsigned int GfKizunaringBlade::getAchievementSetAbilityLevel(unsigned int blade, unsigned int line) {
+    if (blade != 0) {
+        unsigned int set = GfDataBlade::getAchievInfo(blade, line)->m_achievementId;
+        if (set != 0) {
+            return QuestListAcc::get()->getFLD_AchievementSetAbilityLevel(set);
+        }
+    }
+    return 0;
 }
 
 }  // namespace gf

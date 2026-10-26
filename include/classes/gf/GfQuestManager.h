@@ -29,6 +29,7 @@ public:
     GfQuestManager(const GfSetupParam& param);
     static void build(const GfSetupParam& param);
     static void destroy();
+    static void resetQuest(QuestID id);
     void destroyEvent();
     static void addEvent(IQuestEvent* event);
     static void removeEvent(IQuestEvent* event);

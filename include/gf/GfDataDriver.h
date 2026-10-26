@@ -2,6 +2,7 @@
 #define GF_GFDATADRIVER_H
 
 namespace gf { class SDataDriver; enum DBSLOT : int; }
+namespace gf { struct SDataPouch; }
 namespace gf { struct SDataDriverDlc; }
 namespace gf { enum FAVORITE : int; }
 namespace gf { struct SDataIdea; class GfInitParamDriver; }
@@ -61,6 +62,27 @@ public:
     static bool isScenarioMask(unsigned int driver);  // fn_71002465D0
     static unsigned int getEquipAcce(const SDataDriver& data, unsigned int slot);  // fn_7100247778
     static void setEquipAcce(SDataDriver& data, unsigned int slot, unsigned int accessory);  // fn_7100247A94
+    // 1.0.0's name: GfEquipUtil::getEquipDriverAcce(driver, slot) tail-calls it in both builds (1.0.0:
+    // GfDataDriver::getEquipAcce(unsigned int, unsigned int)); the symbols spell 3.0.1's copy fn_7100247794
+    static unsigned int getEquipAcce(unsigned int driver, unsigned int slot);
+    // 1.0.0's name: GfPouchUtil::getPouch calls it in both builds (1.0.0: GfDataDriver::getPouchData(unsigned int,
+    // unsigned int)); the symbols spell 3.0.1's copy fn_71002409CC
+    static SDataPouch* getPouchData(unsigned int driver, unsigned int pouch);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies in GfDataBlade's
+    // unit among GfDataDriver's accessory functions (getEquipAcce fn_7100247794, setEquipAcce fn_7100247A94) and
+    // takes a driver row. What it does: resolves the driver's row (a DLC row 0x11-0x19 from
+    // GfDataManager::fn_7100224A10's 0xDAC-byte table, else getDataGame's 0x5A0-byte records), then the row its
+    // u16 at +0x22 names, and returns bit 31 of that row's word at +0x2E8 (the word whose low 16 bits hold an
+    // accessory). Its one caller is GfEquipUtil::fn_71002FC38C.
+    static bool fn_7100247BF0(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason as
+    // fn_7100247BF0. What it does: resolves the same row and sets (flag true) or clears bit 31 of its word at
+    // +0x2E8. Its one caller is GfEquipUtil::fn_71002FC390.
+    static void fn_7100247B40(unsigned int driver, bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies in GfDataBlade's
+    // unit among GfDataDriver's functions and takes a driver row. What it does: for a DLC driver (0x11-0x19) the
+    // 16-bit item id at +0x5A4 of its row of GfDataManager::fn_7100224A10's driver table, else 0.
+    static unsigned int fn_7100247474(unsigned int driver);
     static void setEquipBlade(unsigned int driver, bool engage, int slot);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
     // GfDataDriver's functions and DataObjDriver passes it a driver's row. What it does: true for rows 0x11 to 0x19
