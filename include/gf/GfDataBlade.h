@@ -53,6 +53,18 @@ public:
     // + 0xFBBC4), width 16, index 1; TUnk_B64F08::fn_71004944B8 compares it with 2000.
     static unsigned short fn_7100231884();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit (its tail, before gf_game_flag). What it does: takes nothing; constructs (guarded, __cxa_atexit)
+    // two function-static lists (guards 0x7100C339F0/F8) and zeroes their counts (0x7100C33C68, 0x7100C33E70).
+    // GfDataManager's constructor calls it.
+    static void fn_71002550E8();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does: the
+    // same code as fn_71002550E8 (the same two lists, counts zeroed); GfDataManager::destroy calls it.
+    static void fn_7100255190();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does:
+    // walks GfBdatRsc's NPC list (getRscNpcListStart..End, fn_7100219C58) into the same function-static lists;
+    // GfDataManager::setupGame and gevReloadBdat (type 1) call it.
+    static void fn_7100255238();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit. What it does: true when local flag 0xBDCD (type 1) of game's flags (+0xFBBC4) is set, else
     // whether flag 0xD880 is; GfGameManager::isClearGame passes the title's save buffer's game data.
     static bool fn_7100232054(const SDataGame& game);

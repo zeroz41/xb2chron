@@ -27,20 +27,20 @@ void GfDataStore::initOptionData() {
     }
 }
 
-SDataGame* GfDataStore::getDataGame() {
-    return &get()->m_game;
+SDataGame& GfDataStore::getDataGame() {
+    return get()->m_game;
 }
 
-SDataSystem* GfDataStore::getDataSystem() {
-    return &get()->m_system;
+SDataSystem& GfDataStore::getDataSystem() {
+    return get()->m_system;
 }
 
-SDataDriverDlc* GfDataStore::fn_710022D440() {
+SDataDriverDlc (&GfDataStore::fn_710022D440())[16] {
     return get()->m_dlcDrivers;
 }
 
-SDataOption* GfDataStore::getDataOption() {
-    return &get()->m_option;
+SDataOption& GfDataStore::getDataOption() {
+    return get()->m_option;
 }
 
 void GfDataStore::setupOptionData(const SDataOption& option) {
