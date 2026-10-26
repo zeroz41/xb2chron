@@ -1,5 +1,6 @@
 #include "classes/btl/BattleGlobal.h"
 #include "classes/btl/BattleGlobal.h"
+#include "classes/btl/BattleGlobal.h"
 #include "classes/btl/CharacterParameter.h"
 #include "classes/btl/CharacterParameter.h"
 #include "classes/btl/CharacterManager.h"
@@ -16,6 +17,15 @@
 #include "classes/ai/AiScriptManager.h"
 #include "classes/gf/GfScriptManager.h"
 #include "classes/gf/GfGameManager.h"
+#include "classes/btl/TalkManager.h"
+#include "classes/btl/BattleCharacter.h"
+#include "btl/Misc.h"
+#include "classes/fw/EffectManager.h"
+#include "classes/gf/GfComEffectCaster.h"
+#include "classes/gf/GfObj.h"
+#include "classes/gf/GfComDynamics.h"
+#include "classes/btl/ShakeCameraElementRandom.h"
+#include "classes/btl/ShakeCameraElementCameraAxis.h"
 
 namespace btl {
 
@@ -611,4 +621,194 @@ gf::GF_OBJ_HANDLE* BattleGlobal::GetAttackMainTargetHandle(unsigned int id) cons
     return CharacterManager::sys()->GetCharacterHandle(data->charaIndex);
 }
 
+
+void BattleGlobal::AddChainCount(bool narrate) {
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009B5A0F)
+    static const unsigned char s_chainNarrationCount[] = {25, 50, 100};
+    if (m_chainCount.count != 0xFFFFFFF) {
+        m_chainCount.count++;
+    }
+    if (narrate) {
+        unsigned int level = m_chainCount.level;
+        if (level <= 2 && m_chainCount.count >= s_chainNarrationCount[level]) {
+            TalkManager::sys()->PlayNarrationVoice(static_cast<TalkManager::NARRATION_TYPE>(4), level + 5, 0);
+            m_chainCount.level = level + 1;
+        }
+    }
+}
+
+void BattleGlobal::NotifyLinkJoinBattle(gf::GF_OBJ_HANDLE* handle) {
+    const BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (chr == nullptr) {
+        return;
+    }
+    const CharacterParameter* param = chr->GetCharacterParameterConst(true);
+    if (param == nullptr || param->fn_7100085314(true)) {
+        return;
+    }
+    int level = param->GetLevel();
+    if (param->IsNamed()) {
+        level += 15;
+    }
+    if (level > m_linkJoinLevel) {
+        m_linkJoinLevel = level;
+    }
+    if (m_linkJoinEnemy.size() < 8) {
+        LinkJoinEnemy enemy;
+        enemy.handle = handle;
+        enemy.time = 30.0f;
+        m_linkJoinEnemy.push_back(enemy);
+    }
+}
+
+gf::GF_OBJ_HANDLE* BattleGlobal::GetLinkJoinEnemyHandle(const mm::Vec3& pos) {
+    gf::GF_OBJ_HANDLE* result = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    float nearest = 3.40282347e+38f;
+    for (LinkJoinEnemy& enemy : m_linkJoinEnemy) {
+        mm::Vec3 enemyPos;
+        if (Misc::GetObjectTransform(enemy.handle, enemyPos, Misc::TRANS_TYPE_POS)) {
+            float length = Misc::CalcSquareLength(enemyPos, pos);
+            if (length < nearest) {
+                result = enemy.handle;
+                nearest = length;
+            }
+        }
+    }
+    return result;
+}
+
+
+BattleGlobal::~BattleGlobal() {}
+
+void BattleGlobal::ShakeCameraRandom(const SHAKE_CAMERA_RANDOM_PARAM& param) {
+    if (m_shakeCamera == nullptr) {
+        return;
+    }
+#line 6430
+    ShakeCameraElementRandom* element = new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) ShakeCameraElementRandom;
+    if (element == nullptr) {
+        return;
+    }
+    int type = param.type;
+    float amplitude = param.amplitude;
+    float interval = param.interval;
+    bool useFrameTime = param.useFrameTime;
+    element->m_type = type;
+    element->m_amplitude = amplitude;
+    element->m_interval = fmaxf(interval, 1.0f / 30.0f);
+    element->m_useFrameTime = useFrameTime;
+    float fadeInTime = param.fadeInTime;
+    float duration = param.duration;
+    float fadeOutTime = param.fadeOutTime;
+    bool vertical = param.vertical;
+    element->m_fadeInTime = fadeInTime;
+    element->m_duration = duration;
+    element->m_fadeOutTime = fadeOutTime;
+    element->m_vertical = vertical;
+    m_shakeCamera->RegisterData(element);
+}
+
+void BattleGlobal::ShakeCameraAxis(const SHAKE_CAMERA_AXIS_PARAM& param) {
+    if (m_shakeCamera == nullptr) {
+        return;
+    }
+    ShakeCameraElement* element;
+    if (param.axisType == 0) {
+#line 6456
+        ShakeCameraElementAxis* axis = new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) ShakeCameraElementAxis;
+        if (axis == nullptr) {
+            return;
+        }
+        int stepCount = param.stepCount;
+        int repeat = param.repeat;
+        bool flag = param.flag;
+        axis->m_axis = param.axis;
+        axis->m_stepCount = stepCount;
+        axis->m_repeat = repeat;
+        axis->m_flag = flag;
+        element = axis;
+    } else {
+        ShakeCameraElementCameraAxis::SHAKE_AXIS cameraAxis;
+        switch (param.axisType) {
+        case 1:
+            cameraAxis = ShakeCameraElementCameraAxis::SHAKE_AXIS_X;
+            break;
+        case 2:
+            cameraAxis = ShakeCameraElementCameraAxis::SHAKE_AXIS_NEG_X;
+            break;
+        case 3:
+            cameraAxis = ShakeCameraElementCameraAxis::SHAKE_AXIS_Y;
+            break;
+        case 4:
+            cameraAxis = ShakeCameraElementCameraAxis::SHAKE_AXIS_NEG_Y;
+            break;
+        case 5:
+            cameraAxis = ShakeCameraElementCameraAxis::SHAKE_AXIS_NEG_Z;
+            break;
+        case 6:
+            cameraAxis = ShakeCameraElementCameraAxis::SHAKE_AXIS_Z;
+            break;
+        default:
+            return;
+        }
+#line 6476
+        ShakeCameraElementCameraAxis* axis = new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) ShakeCameraElementCameraAxis();
+        if (axis == nullptr) {
+            return;
+        }
+        axis->SetData(cameraAxis, param.stepCount, param.repeat, param.flag);
+        element = axis;
+    }
+    int type = param.type;
+    float amplitude = param.amplitude;
+    float interval = param.interval;
+    bool useFrameTime = param.useFrameTime;
+    element->m_type = type;
+    element->m_amplitude = amplitude;
+    element->m_interval = fmaxf(interval, 1.0f / 30.0f);
+    element->m_useFrameTime = useFrameTime;
+    m_shakeCamera->RegisterData(element);
+}
+
+void BattleGlobal::SetSlowDynamicsSpeed(unsigned int id, int chara, unsigned int speed) {
+    SLOW_PROC_DATA* data = GetSlowProcData(id);
+    if (data == nullptr) {
+        return;
+    }
+    const BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(chara);
+    if (chr == nullptr) {
+        return;
+    }
+    gf::GfComDynamics* dynamics = chr->GetObject()->getComponent<gf::GfComDynamics>(8);
+    if (dynamics == nullptr) {
+        return;
+    }
+    dynamics->m_updater.m_timeScale = speed * 0.01f;
+    data->dynamicsChara = chara;
+    data->dynamicsSpeed = speed;
+}
+
+void BattleGlobal::DeleteDelayElementalComboSlow(float delay) {
+    SLOW_PROC_DATA* data = GetSlowProcData(m_elementalComboSlowId);
+    if (data != nullptr) {
+        data->deleteDelay = delay;
+        data->pad_8 = 0;
+    }
+}
+
+void BattleGlobal::DeleteElementalComboSlow() {
+    DeleteSlow(m_elementalComboSlowId);
+    m_elementalComboSlowId = 0;
+    for (int i = 0; i < 2; i++) {
+        if (m_elementalComboSlowEffect[i] != 0) {
+            if (m_elementalComboSlowCaster[i] != nullptr) {
+                m_elementalComboSlowCaster[i]->setSpeed(m_elementalComboSlowEffect[i], 1.0f);
+            } else if (fw::EffectManager::sys() != nullptr) {
+                fw::EffectManager::sys()->setSpeed(m_elementalComboSlowEffect[i], 1.0f);
+            }
+            m_elementalComboSlowCaster[i] = nullptr;
+            m_elementalComboSlowEffect[i] = 0;
+        }
+    }
+}
 }  // namespace btl

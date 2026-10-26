@@ -3,8 +3,12 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/mtl/FixedVector.h"
+#include "mm/mtl/IntrusivePtr.h"
+#include "classes/btl/ButtonChallenge.h"
+#include "classes/fw/Camera.h"
 
 namespace btl { class BattleGlobal; }
+namespace gf { class GfComEffectCaster; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace mm { class Vec3; }
@@ -30,11 +34,21 @@ public:
     void SetElementalComboImmortal(gf::GF_OBJ_HANDLE* handle);
     void SetPause(int kind, bool pause);
     void DeleteSlow(unsigned int id);
+    // deletes the elemental combo's slow-motion request and sets its slowed effects back to speed 1
+    void DeleteElementalComboSlow();
+    // runs the character's dynamics (GfComDynamics, component 8) at speed percent while the slow-motion request lasts
+    void SetSlowDynamicsSpeed(unsigned int id, int chara, unsigned int speed);
     bool IsGameOver() const;
     // whether the battle is paused for kind (GfGameTarget's selectRight/selectLeft pass -1: any)
     bool IsPause(int kind) const;
     // the enemy linked to join at the position, (GF_OBJ_HANDLE*)-1 for none (Utility::AI_GetLinkCharacterID)
     gf::GF_OBJ_HANDLE* GetLinkJoinEnemyHandle(const mm::Vec3& pos);
+    // records an enemy that joined the battle through a link (CharacterManager's character for the handle), unless its
+    // parameter's slot 65 (fn_7100085314(true)) holds; raises m_linkJoinLevel to its level (+15 when named)
+    void NotifyLinkJoinBattle(gf::GF_OBJ_HANDLE* handle);
+    // counts one more chain (up to 0xFFFFFFF); when asked, plays narration voice 5 + level once the count reaches the
+    // level's threshold (25, 50, 100) and goes up a level
+    void AddChainCount(bool narrate);
     int GetElementalComboStage(int) const;
     // GfGameTarget::updateImpl calls it once its near-target hold outlasts its parameter's time
     void NotifyShiftTimeOver();
@@ -66,22 +80,53 @@ public:
         unsigned char pad_a;
         unsigned char stage : 3;  // GetElementalComboStage
         unsigned char pad_bit3 : 5;
+
     };
 
     // one slow-motion request (1.0.0's name: SLOW_PROC_DATA::Finalize); the field names are not the original's
+    // a random camera shake (1.0.0's name); the field names are not the original's: ShakeCameraRandom copies them
+    // into a ShakeCameraElementRandom
+    struct SHAKE_CAMERA_RANDOM_PARAM {
+        int type;
+        float amplitude;
+        float interval;  // at least 1/30
+        bool useFrameTime;
+        float fadeInTime;
+        float duration;
+        float fadeOutTime;
+        bool vertical;
+    };
+    void ShakeCameraRandom(const SHAKE_CAMERA_RANDOM_PARAM& param);
+    // a camera shake along an axis (1.0.0's name); the field names are not the original's: ShakeCameraAxis copies them
+    // into a ShakeCameraElementAxis (axisType 0) or a ShakeCameraElementCameraAxis (1-6)
+    struct SHAKE_CAMERA_AXIS_PARAM {
+        int type;
+        float amplitude;
+        float interval;  // at least 1/30
+        bool useFrameTime;
+        mm::Vec3 axis;  // axisType 0's
+        int axisType;  // 0 the axis above; 1-6 the camera's x, -x, y, -y, -z, z
+        int stepCount;
+        int repeat;
+        bool flag;
+    };
+    void ShakeCameraAxis(const SHAKE_CAMERA_AXIS_PARAM& param);
+
     struct SLOW_PROC_DATA {
         unsigned char pad_0[0x4];
         float deleteDelay;  // DeleteDelayElementalComboSlow sets it
         int pad_8;  // DeleteDelayElementalComboSlow clears it
         unsigned int id;  // IsSlowProc looks it up
-        unsigned char pad_10[0x4];
+        unsigned char dynamicsChara;  // SetSlowDynamicsSpeed's character
+        unsigned char pad_11;
+        unsigned short dynamicsSpeed;  // SetSlowDynamicsSpeed's speed, in percent
     };
     // the request with this id, or none (inline: no copy of its own in either version)
     SLOW_PROC_DATA* GetSlowProcData(unsigned int id) {
         if (id != 0) {
-            for (SLOW_PROC_DATA* it = m_slowProc.begin(); it != m_slowProc.end(); ++it) {
-                if (it->id == id) {
-                    return it;
+            for (SLOW_PROC_DATA& data : m_slowProc) {
+                if (data.id == id) {
+                    return &data;
                 }
             }
         }
@@ -240,7 +285,21 @@ public:
     gf::GF_OBJ_HANDLE* m_controlHandle;
     unsigned char pad_18[0x718];
     ShakeCameraManager* m_shakeCamera;  // ApplyBattleCameraAdjustment (the name is not the original's)
-    unsigned char pad_738[0x180];
+    // the button challenge in progress (the destructor destroys it in place; the name is not the original's)
+    ButtonChallenge m_buttonChallenge;
+    unsigned char pad_778[0x8];
+    // an enemy that joined through a link (NotifyLinkJoinBattle; the names are not the original's)
+    struct LinkJoinEnemy {
+        gf::GF_OBJ_HANDLE* handle;
+        float time;  // 30 when it joins
+    };
+    // the enemies that joined through a link, nearest first asked by GetLinkJoinEnemyHandle (the name is not the
+    // original's)
+    ::mm::mtl::FixedVector<LinkJoinEnemy, 8> m_linkJoinEnemy;
+    // two fixed vectors the destructor clears (element types unknown: only their byte sizes, 8 and 0x90, are known)
+    ::mm::mtl::FixedVector<unsigned int, 2> pad_808;
+    ::mm::mtl::FixedVector<unsigned int, 36> pad_818;
+    unsigned char pad_8b0[0x8];
     // the slow-motion requests (the name is not the original's)
     ::mm::mtl::FixedVector<SLOW_PROC_DATA, 20> m_slowProc;
     float pad_a50;  // Utility::fn_710000FB7C holds while it is <= 0
@@ -251,7 +310,10 @@ public:
     mutable ::mm::mtl::FixedVector<AttackDamageData, 1000> m_attackData;
     // the elemental combo flow, by combo id (the name is not the original's)
     ELEMENTAL_COMBO_FLOW_DATA m_elementalComboFlow[66];
-    unsigned char pad_5bf0[0x5C];
+    // by stage 1-2 and index, what ELEMENTAL_COMBO_FLOW_DATA::fn_71000054F4 returns for an empty step
+    unsigned char pad_5bf0[2][9];
+    unsigned char pad_5c02;  // ELEMENTAL_COMBO_FLOW_DATA::fn_71000054F4 reads pad_5bf0 while it is 2
+    unsigned char pad_5c03[0x49];
     // EnemyParameter::ApplyStatusEnhance scales every enhanced value by it (the name is not the original's)
     float m_statusEnhanceRate;
     // the challenge battle unit's fn_7100026D08 returns it; meaning unknown
@@ -259,12 +321,27 @@ public:
     unsigned char pad_5c54[0x24];
     // the playing jingle's sound handle, -1 when none plays (IsJinglePlaying; the name is not the original's)
     long m_jingleHandle;
-    unsigned char pad_5c80[0x58];
+    unsigned char pad_5c80[0x4C];
+    // the chain count and the narration level it reached (AddChainCount; the names are not the original's)
+    struct ChainCount {
+        unsigned int count : 28;
+        unsigned int level : 4;
+    };
+    ChainCount m_chainCount;
+    unsigned char pad_5cd0[0x8];
     gf::GF_OBJ_HANDLE* m_elementalComboImmortal;  // SetElementalComboImmortal (the name is not the original's)
-    unsigned char pad_5ce0[0x20];
+    // the elemental combo's camera (RegisterElementalComboCamera; the name is not the original's)
+    ::mm::mtl::IntrusivePtr<fw::Camera> m_elementalComboCamera;
+    // the effects slowed with the elemental combo, with their casters (none: EffectManager's); DeleteElementalComboSlow
+    // sets them back to speed 1 (the names are not the original's)
+    gf::GfComEffectCaster* m_elementalComboSlowCaster[2];
+    unsigned int m_elementalComboSlowEffect[2];
     // the elemental combo's slow-motion request (DeleteDelayElementalComboSlow; the name is not the original's)
     unsigned int m_elementalComboSlowId;
-    unsigned char pad_5d04[0x44];
+    unsigned char pad_5d04[0x14];
+    // the unite combo direction's camera (DeleteUniteComboDirection pops it; the name is not the original's)
+    ::mm::mtl::IntrusivePtr<fw::Camera> m_uniteComboCamera;
+    unsigned char pad_5d20[0x28];
     // fn_710000C624 compares its handle with it while pad_5d54 is non-zero
     gf::GF_OBJ_HANDLE* pad_5d48;
     unsigned char pad_5d50[0x4];
@@ -302,7 +379,11 @@ public:
     unsigned char pad_83bc[3];  // flags by index, 8 to a byte (fn_710000ACA4 sets)
     unsigned char pad_83bf[1];  // flags by index, 8 to a byte (fn_710000C440 tests and sets)
     unsigned char pad_83c0[2];  // two counters by side (fn_710000DE04 adds, fn_710000DE34 counts down)
-    unsigned char pad_83c2[0x8];
+    unsigned char pad_83c2[0x6];
+    // the highest level of an enemy that joined through a link, +15 for a named one (NotifyLinkJoinBattle; the name
+    // is not the original's)
+    unsigned char m_linkJoinLevel;
+    unsigned char pad_83c9[0x1];
     // flags (the names are not the original's): one storage unit of 7 bytes, as their reads load it
     // while set, BattleCharacter::NotifyAngryEnd removes the angry effect at once instead of fading it out (the name
     // is not the original's)
