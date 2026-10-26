@@ -1,3 +1,9 @@
+#include "classes/ui/UIPadRead.h"
+#include "classes/gf/GfMenuMnagerPadRead.h"
+#include "classes/gf/GfGamePad.h"
+#include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfMenuObjPartyGauge.h"
+#include "gf/gf_data_aoc.h"
 #include "classes/gf/GfMenuObjDamageValue.h"
 #include "classes/gf/GfMenuObjDamageBuff.h"
 #include "classes/gf/GfMenuObjExpGet.h"
@@ -62,12 +68,21 @@
 #include "classes/gf/GfMenuObjEnvironmentInfo.h"
 #include "classes/gf/GfMenuObjDropItem.h"
 #include "gf/GfDataItem.h"
+#include "classes/gf/GfMenuMnagerPadRead.h"
+#include "classes/gf/GfGamePad.h"
+#include "gf/gf_data_aoc.h"
 
 namespace gf {
 
 void GfMenuManager::build(const GfSetupParam& param) {
 #line 514
     new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfMenuManager(param);
+}
+
+GfMenuManager::~GfMenuManager() {
+    if (m_attachedObj != nullptr) {
+        m_attachedObj = nullptr;
+    }
 }
 
 void GfMenuManager::destroy() {
@@ -603,6 +618,10 @@ void GfMenuManager::qevChangeCurrentQuest(const QuestChangeParam&) {
     GfMenuLocation::refreshLocator(3);
 }
 
+const fw::PadData& GfMenuMnagerPadRead::uiGetControlPad() const {
+    return *GfGamePad::getPadPlayer();
+}
+
 void GfMenuManager::beginUpdate(const fw::UpdateInfo& info) {
     GfMenuAdapterManager::postUpdateAfter(info);
 }
@@ -654,6 +673,16 @@ bool GfMenuManager::fn_710035A6BC() {
     return true;
 }
 
+void GfMenuManager::fn_710035A460() {
+    if (get() != nullptr && GfMenuObjUtil::fn_710048FD30(1)) {
+        ui::UIManager::get()->createLayer(102);
+    }
+}
+
+int GfMenuManager::fn_710035A6C4() {
+    return fn_71002229C0(4);
+}
+
 bool GfMenuManager::fn_710035A6CC() {
     GfMenuManager* mgr = GfMenuManager::get();
     if (mgr == nullptr) {
@@ -689,6 +718,13 @@ bool GfMenuManager::fn_710035DE04() {
         return false;
     }
     return mgr->m_hideAll;
+}
+
+void GfMenuManager::fn_710035CE3C() {
+    if (get() != nullptr && GfMenuObjUtil::fn_710048FD30(1)) {
+        ui::UIManager::get()->terminateLayer(102, true);
+        GfMenuObjPartyGauge::fn_71004569F8();
+    }
 }
 
 void GfMenuManager::gevBattleEnd() {

@@ -99,6 +99,15 @@ public:
     static bool fn_710035DB80();  // m_layer101Open, false without a manager
     static void fn_710035DBAC();  // with GfGameManager::fn_71002AC64C(): creates ui layer 72, sets m_layer72Open
     static bool fn_710035DBFC();  // m_layer72Open, false without a manager
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because their addresses lie in
+    // this class's unit and they test the manager. What they do: with a manager and GfMenuObjUtil::fn_710048FD30(1),
+    // fn_710035A460 creates ui layer 102; fn_710035CE3C terminates it (terminateLayer(102, true)) and calls
+    // GfMenuObjPartyGauge::fn_71004569F8().
+    static void fn_710035A460();
+    static void fn_710035CE3C();
+    // Placeholder name: new in 3.0.1. What it does: returns gf::fn_71002229C0(4) (gf_data_aoc); callers are menu
+    // objects at 0x710040BF88..0x710040E1E0.
+    static int fn_710035A6C4();
     // with GfMenuObjUtil::fn_710048FD30(3): when m_layer300Open already holds calls gf::fn_71003BBB48 (camp menu),
     // else creates ui layer 300 and sets m_layer300Open
     static void fn_710035DC28();
