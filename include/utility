@@ -5,6 +5,47 @@
 // spells it).
 namespace std { inline namespace __1 {
 
+// The type utilities libc++ keeps in <type_traits>, as it writes them (std::function, std::sort).
+template <class _Tp> struct remove_reference { typedef _Tp type; };
+template <class _Tp> struct remove_reference<_Tp&> { typedef _Tp type; };
+template <class _Tp> struct remove_reference<_Tp&&> { typedef _Tp type; };
+
+template <bool, class _Tp = void> struct enable_if {};
+template <class _Tp> struct enable_if<true, _Tp> { typedef _Tp type; };
+
+template <class _Tp, class _Up> struct is_same { static const bool value = false; };
+template <class _Tp> struct is_same<_Tp, _Tp> { static const bool value = true; };
+
+template <class _Tp> struct is_trivially_copy_constructible {
+    static const bool value = __is_trivially_constructible(_Tp, const _Tp&);
+};
+template <class _Tp> struct is_trivially_copy_assignable {
+    static const bool value = __is_trivially_assignable(_Tp&, const _Tp&);
+};
+
+template <class _Tp>
+inline typename remove_reference<_Tp>::type&& move(_Tp&& __t) noexcept {
+    typedef typename remove_reference<_Tp>::type _Up;
+    return static_cast<_Up&&>(__t);
+}
+
+template <class _Tp>
+inline _Tp&& forward(typename remove_reference<_Tp>::type& __t) noexcept {
+    return static_cast<_Tp&&>(__t);
+}
+
+template <class _Tp>
+inline _Tp&& forward(typename remove_reference<_Tp>::type&& __t) noexcept {
+    return static_cast<_Tp&&>(__t);
+}
+
+template <class _Tp>
+inline void swap(_Tp& __x, _Tp& __y) {
+    _Tp __t(std::move(__x));
+    __x = std::move(__y);
+    __y = std::move(__t);
+}
+
 template <class T1, class T2>
 struct pair {
     pair() : first(), second() {}

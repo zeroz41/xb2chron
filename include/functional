@@ -1,0 +1,241 @@
+#ifndef FUNCTIONAL_H
+#define FUNCTIONAL_H
+
+// The C++ library's std::function, as the SDK's libc++ 3.9.1 writes it (std::__1, built without RTTI or exceptions:
+// no target()/target_type() slots, no bad_function_call). Only what the game's code instantiates. Layout: a 32-byte
+// 16-aligned buffer (aligned_storage<3 * sizeof(void*)>) then the pointer to the held callable (UIListInfo<T>::sort
+// reads it at 0x20). A callable of at most 24 bytes lives in the buffer, a larger one on the heap.
+#include <stddef.h>
+#include <new>
+#include <utility>
+
+namespace std { inline namespace __1 {
+
+// The default allocator (libc++'s <memory>): operator new / operator delete.
+template <class _Tp>
+class allocator {
+public:
+    allocator() noexcept {}
+    template <class _Up>
+    allocator(const allocator<_Up>&) noexcept {}
+    _Tp* allocate(size_t __n) { return static_cast<_Tp*>(::operator new(__n * sizeof(_Tp))); }
+    void deallocate(_Tp* __p, size_t) noexcept { ::operator delete((void*)__p); }
+};
+
+template <class _Fp>
+class function;
+
+namespace __function {
+
+template <class _Fp>
+class __base;
+
+template <class _Rp, class... _ArgTypes>
+class __base<_Rp(_ArgTypes...)> {
+    __base(const __base&);
+    __base& operator=(const __base&);
+
+public:
+    __base() {}
+    virtual ~__base() {}
+    virtual __base* __clone() const = 0;
+    virtual void __clone(__base*) const = 0;
+    virtual void destroy() noexcept = 0;
+    virtual void destroy_deallocate() noexcept = 0;
+    virtual _Rp operator()(_ArgTypes&&...) = 0;
+};
+
+// libc++ keeps the callable and the (empty) allocator in a __compressed_pair; the allocator takes no space, so the
+// callable alone is stored here.
+template <class _FD, class _Alloc, class _FB>
+class __func;
+
+template <class _Fp, class _Alloc, class _Rp, class... _ArgTypes>
+class __func<_Fp, _Alloc, _Rp(_ArgTypes...)> : public __base<_Rp(_ArgTypes...)> {
+    _Fp __f_;
+
+public:
+    explicit __func(_Fp&& __f) : __f_(std::move(__f)) {}
+    explicit __func(const _Fp& __f, const _Alloc&) : __f_(__f) {}
+    explicit __func(const _Fp& __f, _Alloc&&) : __f_(__f) {}
+    explicit __func(_Fp&& __f, _Alloc&&) : __f_(std::move(__f)) {}
+
+    virtual __base<_Rp(_ArgTypes...)>* __clone() const;
+    virtual void __clone(__base<_Rp(_ArgTypes...)>*) const;
+    virtual void destroy() noexcept;
+    virtual void destroy_deallocate() noexcept;
+    virtual _Rp operator()(_ArgTypes&&... __arg);
+};
+
+template <class _Fp, class _Alloc, class _Rp, class... _ArgTypes>
+__base<_Rp(_ArgTypes...)>* __func<_Fp, _Alloc, _Rp(_ArgTypes...)>::__clone() const {
+    allocator<__func> __a;
+    __func* __hold = __a.allocate(1);
+    ::new (__hold) __func(__f_, _Alloc(__a));
+    return __hold;
+}
+
+template <class _Fp, class _Alloc, class _Rp, class... _ArgTypes>
+void __func<_Fp, _Alloc, _Rp(_ArgTypes...)>::__clone(__base<_Rp(_ArgTypes...)>* __p) const {
+    ::new (__p) __func(__f_, _Alloc());
+}
+
+template <class _Fp, class _Alloc, class _Rp, class... _ArgTypes>
+void __func<_Fp, _Alloc, _Rp(_ArgTypes...)>::destroy() noexcept {
+    __f_.~_Fp();
+}
+
+template <class _Fp, class _Alloc, class _Rp, class... _ArgTypes>
+void __func<_Fp, _Alloc, _Rp(_ArgTypes...)>::destroy_deallocate() noexcept {
+    allocator<__func> __a;
+    __f_.~_Fp();
+    __a.deallocate(this, 1);
+}
+
+template <class _Fp, class _Alloc, class _Rp, class... _ArgTypes>
+_Rp __func<_Fp, _Alloc, _Rp(_ArgTypes...)>::operator()(_ArgTypes&&... __arg) {
+    return __f_(std::forward<_ArgTypes>(__arg)...);
+}
+
+template <class _Fp>
+inline bool __not_null(const _Fp&) {
+    return true;
+}
+
+template <class _Fp>
+inline bool __not_null(_Fp* __ptr) {
+    return __ptr;
+}
+
+}  // namespace __function
+
+template <class _Rp, class... _ArgTypes>
+class function<_Rp(_ArgTypes...)> {
+    typedef __function::__base<_Rp(_ArgTypes...)> __base;
+    struct alignas(16) __storage {
+        unsigned char __lx[3 * sizeof(void*)];
+    };
+    __storage __buf_;
+    __base* __f_;
+
+    static __base* __as_base(void* __p) { return reinterpret_cast<__base*>(__p); }
+
+public:
+    typedef _Rp result_type;
+
+    function() noexcept : __f_(0) {}
+    function(decltype(nullptr)) noexcept : __f_(0) {}
+    function(const function&);
+    function(function&&) noexcept;
+    template <class _Fp, class = typename enable_if<!is_same<_Fp, function>::value>::type>
+    function(_Fp);
+
+    function& operator=(const function& __f) {
+        function(__f).swap(*this);
+        return *this;
+    }
+    function& operator=(function&& __f) noexcept {
+        function(std::move(__f)).swap(*this);
+        return *this;
+    }
+    template <class _Fp, class = typename enable_if<
+                             !is_same<typename remove_reference<_Fp>::type, function>::value>::type>
+    function& operator=(_Fp&& __f) {
+        function(std::forward<_Fp>(__f)).swap(*this);
+        return *this;
+    }
+
+    ~function();
+
+    void swap(function&) noexcept;
+
+    explicit operator bool() const noexcept { return __f_; }
+
+    _Rp operator()(_ArgTypes... __arg) const;
+};
+
+template <class _Rp, class... _ArgTypes>
+function<_Rp(_ArgTypes...)>::function(const function& __f) {
+    if (__f.__f_ == 0)
+        __f_ = 0;
+    else if ((void*)__f.__f_ == &__f.__buf_) {
+        __f_ = __as_base(&__buf_);
+        __f.__f_->__clone(__f_);
+    } else
+        __f_ = __f.__f_->__clone();
+}
+
+template <class _Rp, class... _ArgTypes>
+function<_Rp(_ArgTypes...)>::function(function&& __f) noexcept {
+    if (__f.__f_ == 0)
+        __f_ = 0;
+    else if ((void*)__f.__f_ == &__f.__buf_) {
+        __f_ = __as_base(&__buf_);
+        __f.__f_->__clone(__f_);
+    } else {
+        __f_ = __f.__f_;
+        __f.__f_ = 0;
+    }
+}
+
+template <class _Rp, class... _ArgTypes>
+template <class _Fp, class>
+function<_Rp(_ArgTypes...)>::function(_Fp __f) : __f_(0) {
+    if (__function::__not_null(__f)) {
+        typedef __function::__func<_Fp, allocator<_Fp>, _Rp(_ArgTypes...)> _FF;
+        if (sizeof(_FF) <= sizeof(__buf_)) {
+            __f_ = ::new ((void*)&__buf_) _FF(std::move(__f));
+        } else {
+            allocator<_FF> __a;
+            _FF* __hold = __a.allocate(1);
+            ::new (__hold) _FF(std::move(__f), allocator<_Fp>(__a));
+            __f_ = __hold;
+        }
+    }
+}
+
+template <class _Rp, class... _ArgTypes>
+function<_Rp(_ArgTypes...)>::~function() {
+    if ((void*)__f_ == &__buf_)
+        __f_->destroy();
+    else if (__f_)
+        __f_->destroy_deallocate();
+}
+
+template <class _Rp, class... _ArgTypes>
+void function<_Rp(_ArgTypes...)>::swap(function& __f) noexcept {
+    if ((void*)__f_ == &__buf_ && (void*)__f.__f_ == &__f.__buf_) {
+        __storage __tempbuf;
+        __base* __t = __as_base(&__tempbuf);
+        __f_->__clone(__t);
+        __f_->destroy();
+        __f_ = 0;
+        __f.__f_->__clone(__as_base(&__buf_));
+        __f.__f_->destroy();
+        __f.__f_ = 0;
+        __f_ = __as_base(&__buf_);
+        __t->__clone(__as_base(&__f.__buf_));
+        __t->destroy();
+        __f.__f_ = __as_base(&__f.__buf_);
+    } else if ((void*)__f_ == &__buf_) {
+        __f_->__clone(__as_base(&__f.__buf_));
+        __f_->destroy();
+        __f_ = __f.__f_;
+        __f.__f_ = __as_base(&__f.__buf_);
+    } else if ((void*)__f.__f_ == &__f.__buf_) {
+        __f.__f_->__clone(__as_base(&__buf_));
+        __f.__f_->destroy();
+        __f.__f_ = __f_;
+        __f_ = __as_base(&__buf_);
+    } else
+        std::swap(__f_, __f.__f_);
+}
+
+template <class _Rp, class... _ArgTypes>
+_Rp function<_Rp(_ArgTypes...)>::operator()(_ArgTypes... __arg) const {
+    return (*__f_)(std::forward<_ArgTypes>(__arg)...);
+}
+
+}}  // namespace std::__1
+
+#endif
