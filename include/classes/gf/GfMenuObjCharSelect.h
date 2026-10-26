@@ -47,6 +47,8 @@ public:
     static bool getCharBusy();
     static void returnSubMenu();
     static void execCharPosScale(unsigned int);
+    // opens the blade customize menu for a blade over a layer group (GfMenuObjBladeRelease::seqSubMenuOpenCustomize)
+    static void openBladeCustomize(unsigned int handle, unsigned int blade, unsigned short layerGroup);
     bool seqConfSpecialWaitError();
     // 1.0.0's names, called where 3.0.1 calls fn_71003D0F84 and fn_71003D0FF8 (GfMenuObjHanaSubmenu's listeners)
     static void dispOnChar(unsigned int);

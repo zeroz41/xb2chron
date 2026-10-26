@@ -22,6 +22,10 @@ class GfMenuBladeList : public ::ui::UIListInfo< ::gf::MenuBladeInfo> {
 public:
     virtual ~GfMenuBladeList();  // slot 0
     static GfMenuBladeList* create();
+    // setupFromReleasble passes it on to setup as its SetupParam
+    struct ReleasbleSetup : public ::ui::UIListInfoBase::SetupParam {};
+    // the blades that can be released (GfMenuObjBladeRelease::initialize)
+    void setupFromReleasble(const ReleasbleSetup& setup);
     void updateOwner();
     static bool sortTimeAscending(const MenuBladeInfo& a, const MenuBladeInfo& b);
     static bool sortTimeDescending(const MenuBladeInfo& a, const MenuBladeInfo& b);

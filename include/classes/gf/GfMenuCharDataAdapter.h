@@ -72,6 +72,16 @@ public:
     // an adapter on the handle for a driver list's entry at an index
     static void createFromDriverList(unsigned int handle, unsigned int kind, const GfMenuDriverList* list, int index,
                                      bool);
+    // an adapter on the handle for a blade list's entry at an index
+    static GfMenuCharDataAdapter* createFromBladeList(unsigned int handle, unsigned int kind, const GfMenuBladeList* list,
+                                                      int index, bool);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
+    // GfMenuCharDataAdapter's functions with createFromBladeList's arguments, and its code ends in create. What it
+    // does: news a 0x18-byte object (table 0x7100B5B938) holding the blade list and index (-1: the list's index),
+    // reads the entry's GfDataBlade::getCreator, creates the adapter (create(handle, kind, 3, ..)) and stores the
+    // object at the adapter's 0x70. Callers: GfMenuObjBladeRelease::initialize ("IMG_list_bl_info_dr@%02d", kind 3),
+    // GfMenuObjBladeSet2::setupBldeList, GfMenuObjMercenaryForm::initialize.
+    static void fn_710033A480(unsigned int handle, unsigned int kind, const GfMenuBladeList* list, int index, bool);
     static void createFromReferenceBlade(unsigned int handle, unsigned int, unsigned int index, bool);
     static void createFromReferenceDriver(unsigned int handle, unsigned int, unsigned int index, bool);
     unsigned int getBL_FieldSkillIndex(const DataParamAcc& acc);

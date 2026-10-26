@@ -98,6 +98,8 @@ public:
     void setAddColor(const char* name);
     void setDispPriority(unsigned short priority);
     void setLayoutViewport(mm::Rect<short> rect);
+    // sets a layout of the object on another object (GfMenuObjBladeRelease::seqOpenImage: "bl_img01" on its image)
+    void setLayout(unsigned int handle, const char* name);
     UIObjectAcc(const UIObjectAcc& other);
     void getDisplayOffsCenter(mm::Pnt<short>& offs) const;
     bool isControl() const;

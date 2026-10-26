@@ -101,6 +101,14 @@ public:
     static bool checkCCNext(GfMenuCallContext* context, unsigned int id);  // a context running on that id
     static void setDockPos(unsigned int handle, unsigned int target, unsigned char pos, bool);
     static void addPos(unsigned int handle, short x, short y);
+    // a blade's or driver's image placement (GfMenuObjBladeRelease::seqOpenImage moves the image by it and scales
+    // it); the field names are not the original's
+    struct ImageParam {
+        short m_x;
+        short m_y;
+        float m_scale;
+    };
+    static bool getImageParam(unsigned int type, unsigned int id, ImageParam& param, unsigned int);
     // the slot of the control it starts on the handle (or its child of that name), -1 for none
     static int startCtrl(unsigned int handle, const CtrlParam& param, const char* child);
     // how createFitPlugin's UIObjectFitPlugin fits: its flags and sizes (the names are UIObjectFitPlugin's fields')
