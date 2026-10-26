@@ -15,7 +15,8 @@ public:
     virtual void vf5() = 0;  // slot 5
     virtual void getBindedBdatFp() const = 0;  // slot 6
     virtual void getBindedBdatId() const = 0;  // slot 7
-    virtual void findPopPosRot(mm::Vec3&, mm::Vec3&) const = 0;  // slot 8
+    // true when it found them (GmkNpc's returns 1; LocatorTalk_NpcID::update tests it)
+    virtual bool findPopPosRot(mm::Vec3& pos, mm::Vec3& rot) const = 0;  // slot 8
     virtual void bindToGameObj(gf::GF_OBJ_HANDLE*) const = 0;  // slot 9
     virtual void unbindToGameObj(gf::GF_OBJ_HANDLE*) const = 0;  // slot 10
     virtual void validateDisp() const = 0;  // slot 11

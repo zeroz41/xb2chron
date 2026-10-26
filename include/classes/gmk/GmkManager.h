@@ -18,6 +18,10 @@ public:
     AGmkBase* findFirstGmkInstByBdatId(GmkType type, int bdatId) const;
     // the RSC_GmkSetList row of the first gimmick set holding a gimmick of this type and id (<= 0: none)
     int findFirstBdatId_RSC_GmkSetList(GmkType type, int bdatId) const;
+    // the RSC_GmkSetList row of the first gimmick set of a FLD_maplist map (LocatorTalk_NpcID passes its "MapID")
+    int findFirstBdatId_RSC_GmkSetList(int mapId) const;
+    // the gimmick set of an RSC_GmkSetList row, none when it is not loaded
+    GmkSet* findGmkSet(int bdatId) const;
     // the BDAT table name the gimmick-set table's row id gives for a gimmick kind ("<kind>_bdat"), none when the
     // table has no such column
     const char* getSheetnameByType(int id, GmkType type) const;

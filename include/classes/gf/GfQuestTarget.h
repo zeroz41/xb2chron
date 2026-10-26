@@ -5,6 +5,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "gf/QuestID.h"
 
+namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfQuestTarget; }
 namespace fw { class UpdateInfo; }
 namespace gf { class QuestChangeParam; }
@@ -30,6 +31,14 @@ public:
     // LocatorPrecious: 2 and the item's id, then the quest, the map's FLD_maplist id, true)
     static unsigned int getIconTypeCollect(unsigned int kind, unsigned int id, QuestID questId, unsigned int mapId,
                                            bool flag);
+    // LocatorTalk_NpcID passes the NPC's id, the quest, the map's FLD_maplist id, true
+    // LocatorBat_EnemySpeciesID passes 3, the species id, the quest, no object ((GF_OBJ_HANDLE*)-1), true
+    static unsigned int getIconTypeBattle(unsigned int kind, unsigned int id, QuestID questId, GF_OBJ_HANDLE* handle,
+                                          bool flag);
+    // LocatorReach passes its "Category" and "PlaceID", the quest, its map's FLD_maplist id, true
+    static unsigned int getIconTypeReachPlace(unsigned int category, unsigned int placeId, QuestID questId,
+                                              unsigned int mapId, bool flag);
+    static unsigned int getIconTypeTalk(unsigned int npcId, QuestID questId, unsigned int mapId, bool flag);
 };
 }  // namespace gf
 

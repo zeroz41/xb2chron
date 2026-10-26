@@ -19,7 +19,7 @@ public:
     virtual void vf5();
     virtual void getBindedBdatFp() const = 0;
     virtual void getBindedBdatId() const = 0;
-    virtual void findPopPosRot(mm::Vec3&, mm::Vec3&) const = 0;
+    virtual bool findPopPosRot(mm::Vec3&, mm::Vec3&) const = 0;
     virtual void bindToGameObj(gf::GF_OBJ_HANDLE*) const = 0;
     virtual void unbindToGameObj(gf::GF_OBJ_HANDLE*) const = 0;
     virtual void validateDisp() const = 0;
@@ -43,7 +43,7 @@ public:
     virtual void vf14();  // slot 14
     virtual void getBindedBdatFp() const;  // slot 15
     virtual void getBindedBdatId() const;  // slot 16
-    virtual void findPopPosRot(mm::Vec3&, mm::Vec3&) const;  // slot 17
+    virtual bool findPopPosRot(mm::Vec3&, mm::Vec3&) const;  // slot 17
     virtual void bindToGameObj(gf::GF_OBJ_HANDLE*) const;  // slot 18
     virtual void unbindToGameObj(gf::GF_OBJ_HANDLE*) const;  // slot 19
     virtual void validateDisp() const;  // slot 20

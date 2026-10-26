@@ -11,7 +11,11 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
-        unsigned char pad_0[0xe];
+        unsigned char pad_0[0x4];
+        // 0x4: the quest-target icon's id LocatorEventPreorder::create gives its locator (the name is not the
+        // original's)
+        unsigned short m_iconBdatId;
+        unsigned char pad_6[0x8];
     };
     virtual ~GmkEvent();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
@@ -19,6 +23,10 @@ public:
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
     virtual void debugDraw() const;  // slot 7
+    // AGmkBase's row as this kind's BdatInfo; the name is not the original's
+    const BdatInfo* getBdatInfo() const {
+        return static_cast<const BdatInfo*>(m_bdatInfo);
+    }
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(10);
     unsigned char pad_48[0xa8];  // fields: size from TGmkList::getInst's stride

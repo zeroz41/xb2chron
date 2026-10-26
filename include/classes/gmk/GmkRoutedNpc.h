@@ -27,7 +27,7 @@ public:
     virtual void vf15();  // slot 15
     virtual void getBindedBdatFp() const;  // slot 16
     virtual void getBindedBdatId() const;  // slot 17
-    virtual void findPopPosRot(mm::Vec3&, mm::Vec3&) const;  // slot 18
+    virtual bool findPopPosRot(mm::Vec3&, mm::Vec3&) const;  // slot 18
     virtual void bindToGameObj(gf::GF_OBJ_HANDLE*) const;  // slot 19
     virtual void unbindToGameObj(gf::GF_OBJ_HANDLE*) const;  // slot 20
     virtual void validateDisp() const;  // slot 21

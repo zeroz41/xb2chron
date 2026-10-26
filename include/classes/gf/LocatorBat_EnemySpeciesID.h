@@ -2,6 +2,12 @@
 #define CLASSES_GF_LOCATORBAT_ENEMYSPECIESID_H
 
 #include "classes/gf/AFieldLocator.h"
+#include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfFieldGimmick.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfQuestTarget.h"
+#include "classes/gmk/GmkManager.h"
+#include "plugin/Bdat.h"
 #include "mm/mtl/FixedVector.h"
 
 namespace gf {
@@ -19,6 +25,17 @@ public:
         return &m_posList[index];
     }
     virtual void update();  // slot 6
+    // 1.0.0 has it out of line (3.0.1's constructor inlines it)
+    void create(QuestID questId, unsigned char speciesId) {
+        dispose();
+        m_questId = questId;
+        m_speciesId = speciesId;
+        m_mapBdatId = GfGameManager::getMapID();
+        m_gmkSetId = GfFieldGimmick::getBdatIdFrom_FLD_maplist_To_RSC_GmkSetList(m_mapBdatId);
+        int iconId = gmk::getBdatIdOfQuestTargetIcon(GfQuestTarget::getIconTypeBattle(
+            3, speciesId, questId, reinterpret_cast<GF_OBJ_HANDLE*>(-1), true));
+        m_iconBdatId = iconId < 0 ? 0x19f : iconId;
+    }
     // the destructor's clearing; 1.0.0's symbols name it dispose() (3.0.1 inlines it)
     void dispose() {
         m_posList.clear();
