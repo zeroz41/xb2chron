@@ -41,6 +41,8 @@ public:
     virtual void procAnimCallback(gf::GfComAsm*, gf::CallBackCache const&);  // slot 6
     // the field's animation callback: does nothing (defined in PadField's unit, as 1.0.0's)
     void callbackField(gf::GfComAsm* asmCom, const gf::CallBackCache& cache);
+    // the battle's animation callback: does nothing (defined in PadBattle's unit)
+    void callbackBattle(gf::GfComAsm* asmCom, const gf::CallBackCache& cache);
     // what the sound resources call back with: a footstep or movement pack (isAttenuationPack) of a PC whose
     // m_setupKind is 1 to 5 gets that kind's volume from param list 18's table
     void callbackSound(const fw::ResSoundData& data, fw::SoundResSourceManager::CustomInfo* info);

@@ -55,7 +55,8 @@ public:
     // PadField's), TaskFieldJump::update bit 2; PadAgent::update clears the whole word pair each frame
     struct InputFlags {
         unsigned int m_actions;
-        unsigned char pad_4[0x4];
+        // bits 32-63 of the action set: PadBattle's "spskill" sets bit 32 (the name is not the original's)
+        unsigned int m_actionsHigh;
     };
 
     // StateFieldOnGround::update: at 1 a battle start hands m_battle MsgPcBattleStart(0) and goes to state 0x3F,

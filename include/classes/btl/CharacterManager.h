@@ -34,6 +34,8 @@ public:
     static void Create();
     static void Destroy();
     int Register(gf::GF_OBJ_HANDLE* handle, bool isEnemy);
+    // frees the slot index Register gave handle (GfPropertyBattle::cleanup)
+    void Release(int index, gf::GF_OBJ_HANDLE* handle);
     int SearchCharacter(gf::GF_OBJ_HANDLE* handle) const;
     // 1.0.0's names: 1.0.0's BattleManager::update calls PreUpdate first and Update second, as 3.0.1's calls them
     static void PreUpdate(const fw::UpdateInfo& info);

@@ -13,7 +13,8 @@ public:
     virtual void cleanup(gf::GfComPropertyPc const&) = 0;  // slot 1
     virtual void flush(gf::GfComPropertyPc const&) = 0;  // slot 2
     virtual void flushOwner(gf::GfComPropertyPc&) {}  // slot 3
-    virtual void recieveMessage(gf::GfComPropertyPc const&, fw::MessageObject*, fw::Message&);  // slot 4
+    // slot 4: inline, emitted with GfPropertyBattle's table (returns false)
+    virtual bool recieveMessage(gf::GfComPropertyPc const&, fw::MessageObject*, fw::Message&) { return false; }
 };
 }}  // namespace gf::pc
 
