@@ -20,6 +20,12 @@ public:
     // the member at an index of a party: 0 is the game data's (1.0.0's one-argument function), 1 and 2 two other
     // parties' kept elsewhere (3.0.1 added the second parameter; its name is not the original's)
     static PartyMember* getPartyMember(unsigned int index, unsigned int party);
+    // the driver of the member at an index of a party (0: the game data's party at 0xE9884, 1 and 2 the other two
+    // parties GfDataManager::fn_7100224A10 keeps at 0x10D04 and 0x10D40). The symbols spell it fn_7100238EC8: 1.0.0's
+    // GfDataParty::getDriver(unsigned int) has the same body for party 0, sits next to GfDataDriver::getBlade as this
+    // does, and 1.0.0's GfMenuObjUtil::isBladeEnableOffset calls it where 3.0.1's calls fn_7100238EC8 (3.0.1 added the
+    // second parameter, as for getPartyMember; its name is not the original's)
+    static unsigned int getDriver(unsigned int index, unsigned int party);
     static bool isRideChar(unsigned int chara);
     static SDataParty* getSDataParty();
     // GfGameScene::isRide and isRideParty ask it about a party id

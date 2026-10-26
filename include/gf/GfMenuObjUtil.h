@@ -3,6 +3,9 @@
 
 #include "classes/ui/UICtrlCursorSelect.h"
 #include "mm/mtl/FixedArray.h"
+#include "mm/mtl/FixedVector.h"
+#include "mm/Pnt.h"
+#include "mm/Rect.h"
 
 namespace gf { class GfMenuCallContext; }
 namespace gf { class GF_OBJ_HANDLE; }
@@ -12,6 +15,7 @@ namespace ui { class UIListInfoBase; }
 namespace fw { enum SoundCategory : int; }
 namespace fw { enum VibrationID : int; }
 namespace gf { class QuestID; }
+namespace gf { enum FAVORITE : int; }
 namespace ui { class UIStr; }
 
 namespace gf {
@@ -226,6 +230,46 @@ public:
     static unsigned int getBladeRarity(unsigned int blade);
     static unsigned int getBladeCorrectiveType(unsigned int blade);  // 0 for none
     static unsigned int getBladeCorrectiveRatio(unsigned int blade);
+    // (appended by menuobjutil, session 19)
+    // the set (slot) of a driver's blade, -1 for none
+    static int getSetBladeID(unsigned int driver, int slot, bool);
+    // whether the blade slot can be used: always with add-on menu layer 3 usable, else whether the first party
+    // member's driver has a set blade that is not a dummy (3.0.1 ignores both arguments)
+    static bool isBladeEnableOffset(unsigned int driver, int offset);
+    static unsigned int getBladeAttributeIconID(unsigned int blade);  // 0x9E plus the blade's attribute
+    static bool isBladeDifferentImage(unsigned int blade, unsigned int other);  // their menu ids differ
+    static bool isScenarioBlade(unsigned int blade);  // a regular blade or blade 1014
+    // 0 when the blade can be removed, else why not (mode 1 also asks GfGameManager::isRexAwakening)
+    static int canRemoveBladeEx(unsigned int blade, unsigned int mode,
+                                const mm::mtl::FixedVector<unsigned short, 422>* list);
+    static bool canRemoveBlade(unsigned int blade, const mm::mtl::FixedVector<unsigned short, 422>* list);
+    static bool isCustomEnableDriver(unsigned int driver);
+    // whether the driver has Homura (blade 1001): its creator, and not unused
+    static bool hasHomura(unsigned int driver);
+    // the cursor's list becomes the handle's children that format names (from 1), or those of the names
+    static void changeCursorTarget(ui::UICtrlCursorSelect* cursor, unsigned int handle, const char* format);
+    static void changeCursorTarget(ui::UICtrlCursorSelect* cursor, unsigned int handle, const char** names,
+                                   unsigned short count);
+    // an enemy whose character property's flag at 0x30 is set (GfMenuGfObjAdapter::update_Battle reads it too)
+    static bool isInBattle(gf::GF_OBJ_HANDLE* handle);
+    // a driver's (type 3) or blade's (type 4) favorite: 2 when it has none (or for another type), 1 when it is not
+    // used yet, 0 when it is
+    // a follow-display plugin on the handle that follows the other object, and a sync plugin copying what flag
+    // names from the target
+    // how createDockPluginEx docks (the names follow the UIObjectDockPlugin fields they set; not the original's)
+    struct DockingOption {
+        int m_align;
+        mm::Pnt<short> m_offset;
+        mm::Rect<short> m_area;
+    };
+    // a dock plugin on the handle docking it to the target at a side (UIObjectDockPlugin::m_side)
+    static void createDockPlugin(unsigned int handle, unsigned int target, unsigned int side,
+                                 const mm::Pnt<short>& offset, unsigned int align);
+    static void createDockPluginEx(unsigned int handle, unsigned int target, unsigned int side,
+                                   const DockingOption& option);
+    static void createFollowDispPlugin(unsigned int handle, unsigned int follow);
+    static void createSyncPlugin(unsigned int handle, unsigned int target, unsigned int flag);
+    static unsigned int getFavoriteStat(unsigned int type, unsigned int id, FAVORITE favorite);
 };
 }  // namespace gf
 

@@ -98,7 +98,9 @@ public:
     unsigned char m_size;  // (named after its accessor; the name is not the original's)
     unsigned char m_weaponType;
     unsigned char m_equipOrbMax;  // (named after its accessor; the name is not the original's)
-    unsigned char pad_823[0x1];
+    // the blade's attribute (element) as the menus show it (GfMenuObjUtil::getBladeAttributeID reads it; the name
+    // is not the original's)
+    unsigned char m_attribute;
     unsigned char m_personality;
     unsigned char pad_825[0x1];
     unsigned char m_eyeRotControl;

@@ -64,6 +64,10 @@ public:
     static unsigned int getFootStepEffect(unsigned int driver);
     static const char* getVoiceStr(const SDataDriver& data);
     static unsigned int getFavorite(unsigned int driver, FAVORITE favorite);
+    // whether the favorite has been used (seen). The symbols spell it fn_7100248A84: 1.0.0's
+    // GfMenuObjUtil::getFavoriteStat calls GfDataDriver::isUsedFavorite(driver, favorite) where 3.0.1's calls
+    // fn_7100248A84 with the same arguments (3.0.1's body also handles drivers 17-25)
+    static bool isUsedFavorite(unsigned int driver, FAVORITE favorite);
 
     // Placeholder name: new in 3.0.1 (1.0.0's DataObjDriver called GfBdatChrDr::getChrDrOffsetID itself), nothing names it. A
     // member because its address lies among GfDataDriver's functions and it takes a driver's row like them. What it

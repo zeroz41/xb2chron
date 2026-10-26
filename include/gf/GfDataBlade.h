@@ -163,6 +163,7 @@ public:
     static unsigned int getArtsEnhance(unsigned int blade, unsigned int index);
     static const BladeArtsSlot* getNArts(unsigned int blade, unsigned int index);
     static unsigned int getFavorite(unsigned int blade, FAVORITE favorite);
+    static bool isUsedFavorite(unsigned int blade, FAVORITE favorite);  // whether the favorite has been used (seen)
     static int getOffsetID(unsigned int blade);  // its menu offset id
     static unsigned int getBladePower(unsigned int blade);
     static bool isMale(unsigned int blade);
