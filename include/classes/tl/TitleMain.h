@@ -84,7 +84,9 @@ public:
     // fn_710014F70C's sound category handle, made on first use (the name is not the original's)
     gf::GF_SE_CATEGORY_HANDLE* m_seCategorySub;
     bool m_isClear;  // GfMenuManager::isClearCheck returns it (the name is not the original's)
-    unsigned char pad_219[0x7];
+    // GfMenuObjTitle::isEnableNewGameAdv answers it when there is save data (the name is not the original's)
+    bool m_newGameAdv;
+    unsigned char pad_21A[0x6];
 };
 }  // namespace tl
 
