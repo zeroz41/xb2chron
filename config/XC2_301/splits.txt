@@ -3529,12 +3529,9 @@ application/BF2/minigame/tora/minigame_tora.cpp:
 	.rodata      start:0x009C6698 end:0x009C70F4
 
 application/BF2/unit_7100652854.cpp:
-	.text        start:0x00652854 end:0x00655310
-	.rodata      start:0x009C70F4 end:0x009C7104
-
-application/BF2/unit_7100655310.cpp:
-	.text        start:0x00655310 end:0x006554E0
+	.text        start:0x00652854 end:0x006554E0
 	.rodata      start:0x009A6840 end:0x009A6D54
+	.rodata      start:0x009C70F4 end:0x009C7104
 	.data        start:0x00B720C0 end:0x00B72968
 	.init_array  start:0x00B8FC28 end:0x00B8FC30
 	.bss         start:0x00EC1670 end:0x00EC1710
@@ -3546,13 +3543,13 @@ application/BF2/plugin/bdat.cpp:
 	.bss         start:0x00EC1710 end:0x00EC1790
 
 application/BF2/unit_7100656888.cpp:
-	.text        start:0x00656888 end:0x00656F38
+	.text        start:0x00656888 end:0x00657648
 	.rodata      start:0x009A6EA3 end:0x009A6F65
 	.rodata      start:0x009C723C end:0x009C727C
 	.data        start:0x00B72968 end:0x00B72C38
 
-application/BF2/unit_7100656F38.cpp:
-	.text        start:0x00656F38 end:0x006576E0
+application/BF2/unit_7100657648.cpp:
+	.text        start:0x00657648 end:0x006576E0
 
 application/BF2/ScriptCamMotion.cpp:
 	.text        start:0x006576E0 end:0x00661A54
