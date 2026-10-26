@@ -94,6 +94,20 @@ public:
     static void fn_710035A718(bool flag);  // stores m_evTheaterFlag (GfMenuObjEvTheater::finalize)
     static bool fn_710035A800();  // calls GfMenuObjUtil::fn_710048FD30(3), then m_attachedObj != nullptr
     static bool fn_710035DE04();  // m_hideAll, false without a manager or while m_locked
+    static bool fn_7100359570();  // m_baseGameFlag, false without a manager or when GfGameManager::fn_71002A9E68()
+    static void fn_710035DB2C();  // with GfMenuObjUtil::fn_710048FD30(1): creates ui layer 101, sets m_layer101Open
+    static bool fn_710035DB80();  // m_layer101Open, false without a manager
+    static void fn_710035DBAC();  // with GfGameManager::fn_71002AC64C(): creates ui layer 72, sets m_layer72Open
+    static bool fn_710035DBFC();  // m_layer72Open, false without a manager
+    // with GfMenuObjUtil::fn_710048FD30(3): when m_layer300Open already holds calls gf::fn_71003BBB48 (camp menu),
+    // else creates ui layer 300 and sets m_layer300Open
+    static void fn_710035DC28();
+    static bool fn_710035DC94();  // m_layer300Open, false without a manager
+    static bool fn_710035DCC0();  // gf::fn_71003BBB38() == 1 (camp menu)
+    static void fn_710035DD3C();  // with GfMenuObjUtil::fn_710048FD30(3): GfMenuObjMainMenu2::registOpenParam({0})
+    static void fn_710035DD6C();  // with GfMenuObjUtil::fn_710048FD30(3): GfMenuObjMainMenu2::registOpenParam({3})
+    static void setMainmenuOpenMap();
+    static void setMainmenuOpenSystem();
     static bool isBattleState(unsigned int);
     static void setBattleState(unsigned int state, bool on);
     static void applyOptionData(const SDataOption& option);
@@ -187,11 +201,16 @@ public:
     bool m_enableQuestOpen;  // 0x4101 isEnableQuestOpen, setEnableQuestOpen
     // 0x4102 fn_710035A718 stores it (GfMenuObjEvTheater::finalize), fn_710035A738 reads it (the name is not the original's)
     bool m_evTheaterFlag;
-    unsigned char pad_4103[0x9];
+    bool m_layer101Open;  // 0x4103 fn_710035DB2C sets it after creating ui layer 101 (the name is not the original's)
+    bool m_layer72Open;  // 0x4104 fn_710035DBAC sets it after creating ui layer 72 (the name is not the original's)
+    bool m_layer300Open;  // 0x4105 fn_710035DC28 sets it after creating ui layer 300 (the name is not the original's)
+    unsigned char pad_4106[0x6];
     unsigned int m_region;  // 0x410C getRegion; the constructor sets 1 without bdat/jp.bin (the name is not the original's)
     bool m_optionFlag;  // 0x4110 fn_71003596C0 reads it (GfMenuObjOption, flushOptionSaveData) (the name is not the original's)
     bool m_regionJP;  // 0x4111 isRegionJP
-    unsigned char pad_4112[0x2];
+    // 0x4112 fn_7100359570 returns it unless GfGameManager::fn_71002A9E68() answers true (the name is not the original's)
+    bool m_baseGameFlag;
+    unsigned char pad_4113[0x1];
     bool m_bladeBookFlag : 1;  // 0x4114 fn_710035A634 reads its low bit (GfMenuBladeList::setupFromBook) (the name is not the original's)
     unsigned char pad_4115[0x4F];
     unsigned int m_latestCommonWinID;  // 0x4164 getLatestCommonWinID, openCommonWindow

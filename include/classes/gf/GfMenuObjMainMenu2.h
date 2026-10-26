@@ -11,6 +11,13 @@ public:
     class CloseListener;
     class ContentsListener;
     class IndexListener;
+    // what registOpenParam keeps for the next open: GfMenuManager::setMainmenuOpenMap passes 1,
+    // setMainmenuOpenSystem 6 (5 in 3.0.1 when GfMenuObjUtil::fn_710048FD30(3) answers true)
+    // (the field name is not the original's)
+    struct OpenParam {
+        unsigned int m_page;
+    };
+    static void registOpenParam(const OpenParam& param);
     virtual ~GfMenuObjMainMenu2();  // slot 0
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3

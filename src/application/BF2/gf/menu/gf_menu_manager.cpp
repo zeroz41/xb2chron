@@ -1,3 +1,12 @@
+#include "classes/gf/GfMenuObjDamageValue.h"
+#include "classes/gf/GfMenuObjDamageBuff.h"
+#include "classes/gf/GfMenuObjExpGet.h"
+#include "classes/gf/GfMenuObjHanaPartsMake.h"
+#include "gf/gf_menu_obj_tips.h"
+#include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfGameManager.h"
+#include "gf/gf_menu_obj_camp_menu.h"
+#include "classes/gf/GfMenuObjMainMenu2.h"
 #include "mm/mtl/Bitflag.h"
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfMenuObjCommonText.h"
@@ -42,6 +51,17 @@
 #include "layer/LayerAccManager.h"
 #include "ml/ScnRenderDrSysParmAcc.h"
 #include "gf/GfMenuObjDummyTutorial.h"
+#include "classes/gf/GfGameManager.h"
+#include "gf/gf_menu_obj_camp_menu.h"
+#include "classes/gf/GfMenuObjMainMenu2.h"
+#include "classes/gf/GfMenuObjDamageValue.h"
+#include "classes/gf/GfMenuObjDamageBuff.h"
+#include "classes/gf/GfMenuObjExpGet.h"
+#include "classes/gf/GfMenuObjHanaPartsMake.h"
+#include "gf/gf_menu_obj_tips.h"
+#include "classes/gf/GfMenuObjEnvironmentInfo.h"
+#include "classes/gf/GfMenuObjDropItem.h"
+#include "gf/GfDataItem.h"
 
 namespace gf {
 
@@ -595,6 +615,220 @@ void GfMenuManager::openSave() {
     param.m_menuId = 0x35;
     GfMenuObjMainRoot::registOpenParam(param);
     GfMenuFullScreen::open(2, true, true);
+}
+
+bool GfMenuManager::fn_71003596C0() {
+    GfMenuManager* mgr = GfMenuManager::get();
+    if (mgr == nullptr) {
+        return false;
+    }
+    return mgr->m_optionFlag;
+}
+
+void GfMenuManager::fn_7100359EA0() {
+    GfMenuManager* mgr = GfMenuManager::get();
+    if (mgr == nullptr || !mgr->m_initialized) {
+        return;
+    }
+    mgr->m_latestCommonWinID = 0;
+}
+
+int GfMenuManager::fn_710035A364() {
+    GfMenuManager* mgr = GfMenuManager::get();
+    if (mgr == nullptr) {
+        return 0;
+    }
+    return mgr->m_titleValue;
+}
+
+bool GfMenuManager::fn_710035A524() {
+    GfMenuManager* mgr = GfMenuManager::get();
+    if (mgr == nullptr) {
+        return false;
+    }
+    return mgr->m_titleCount != 0;
+}
+
+
+bool GfMenuManager::fn_710035A6BC() {
+    return true;
+}
+
+bool GfMenuManager::fn_710035A6CC() {
+    GfMenuManager* mgr = GfMenuManager::get();
+    if (mgr == nullptr) {
+        return false;
+    }
+    return mgr->m_battleStateEnable;
+}
+
+bool GfMenuManager::fn_710035A6F8() {
+    return GfMenuFlag::get1(31) == 0;
+}
+
+void GfMenuManager::fn_710035A718(bool flag) {
+    GfMenuManager* mgr = GfMenuManager::get();
+    if (mgr == nullptr) {
+        return;
+    }
+    mgr->m_evTheaterFlag = flag;
+}
+
+bool GfMenuManager::fn_710035A800() {
+    GfMenuManager* mgr = GfMenuManager::get();
+    if (mgr == nullptr) {
+        return false;
+    }
+    GfMenuObjUtil::fn_710048FD30(3);
+    return mgr->m_attachedObj != nullptr;
+}
+
+bool GfMenuManager::fn_710035DE04() {
+    GfMenuManager* mgr = GfMenuManager::get();
+    if (mgr == nullptr || mgr->m_locked) {
+        return false;
+    }
+    return mgr->m_hideAll;
+}
+
+void GfMenuManager::gevBattleEnd() {
+    m_battleState.reset();
+    GfMenuReference::setChainNum(0);
+    GfMenuObjComboRoute::close();
+    GfMenuObjPartyGauge::close();
+    if (GfMenuObjUtil::fn_710048FD30(3)) {
+        GfMenuReference::fn_7100367D1C();
+    }
+}
+
+void GfMenuManager::fn_710035DB2C() {
+    GfMenuManager* mgr = get();
+    if (mgr == nullptr || !GfMenuObjUtil::fn_710048FD30(1)) {
+        return;
+    }
+    ui::UIManager::get()->createLayer(101);
+    mgr->m_layer101Open = true;
+}
+
+bool GfMenuManager::fn_7100359570() {
+    GfMenuManager* mgr = get();
+    if (mgr == nullptr || GfGameManager::fn_71002A9E68()) {
+        return false;
+    }
+    return mgr->m_baseGameFlag;
+}
+
+bool GfMenuManager::fn_710035DB80() {
+    GfMenuManager* mgr = get();
+    if (mgr == nullptr) {
+        return false;
+    }
+    return mgr->m_layer101Open;
+}
+
+void GfMenuManager::fn_710035DBAC() {
+    GfMenuManager* mgr = get();
+    if (mgr == nullptr || !GfGameManager::fn_71002AC64C()) {
+        return;
+    }
+    ui::UIManager::get()->createLayer(72);
+    mgr->m_layer72Open = true;
+}
+
+bool GfMenuManager::fn_710035DBFC() {
+    GfMenuManager* mgr = get();
+    if (mgr == nullptr) {
+        return false;
+    }
+    return mgr->m_layer72Open;
+}
+
+void GfMenuManager::fn_710035DC28() {
+    GfMenuManager* mgr = get();
+    if (mgr == nullptr || !GfMenuObjUtil::fn_710048FD30(3)) {
+        return;
+    }
+    if (mgr->m_layer300Open) {
+        fn_71003BBB48();
+        return;
+    }
+    ui::UIManager::get()->createLayer(300);
+    mgr->m_layer300Open = true;
+}
+
+bool GfMenuManager::fn_710035DC94() {
+    GfMenuManager* mgr = get();
+    if (mgr == nullptr) {
+        return false;
+    }
+    return mgr->m_layer300Open;
+}
+
+bool GfMenuManager::fn_710035DCC0() {
+    return fn_71003BBB38() == 1;
+}
+
+void GfMenuManager::setMainmenuOpenMap() {
+    GfMenuObjMainMenu2::OpenParam param;
+    param.m_page = 1;
+    GfMenuObjMainMenu2::registOpenParam(param);
+}
+
+void GfMenuManager::setMainmenuOpenSystem() {
+    GfMenuObjMainMenu2::OpenParam param;
+    param.m_page = GfMenuObjUtil::fn_710048FD30(3) ? 5 : 6;
+    GfMenuObjMainMenu2::registOpenParam(param);
+}
+
+void GfMenuManager::fn_710035DD3C() {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return;
+    }
+    GfMenuObjMainMenu2::OpenParam param;
+    param.m_page = 0;
+    GfMenuObjMainMenu2::registOpenParam(param);
+}
+
+void GfMenuManager::fn_710035DD6C() {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return;
+    }
+    GfMenuObjMainMenu2::OpenParam param;
+    param.m_page = 3;
+    GfMenuObjMainMenu2::registOpenParam(param);
+}
+
+void GfMenuManager::gevSalvageStateChange(unsigned int state) {
+    switch (state) {
+    case 3:
+        m_dispHud.set(1, false);
+        m_dispHud.set(2, false);
+        break;
+    case 4:
+        GfMenuObjEnvironmentInfo::close();
+        break;
+    case 6:
+        GfMenuObjDamageValue::closeAll();
+        GfMenuObjDamageBuff::closeAll();
+        GfMenuObjDropItem::closeAll();
+        GfMenuObjExpGet::closeAll();
+        break;
+    case 20:
+        m_dispHud.set(1, true);
+        m_dispHud.set(2, true);
+        break;
+    }
+}
+
+void GfMenuManager::gevItemAdd(unsigned int item, int num) {
+    if (num > 0) {
+        unsigned int type = GfDataItem::getItemType(item);
+        if (type >= 1 && type <= 20) {
+            GfMenuFlag::set1(type + 0x3A, 1);
+        }
+    } else {
+        GfMenuObjHanaPartsMake::fn_71004181A8();
+    }
 }
 
 }  // namespace gf

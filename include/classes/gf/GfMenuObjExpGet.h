@@ -9,6 +9,7 @@ class GfMenuObjExpGet : public ::gf::GfMenuObject {
 public:
     class ExpGetInfo;
     class ListListener;
+    static void closeAll();  // GfMenuManager::gevSalvageStateChange(6) calls it (1.0.0 symbol)
     virtual ~GfMenuObjExpGet();  // slot 0
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
