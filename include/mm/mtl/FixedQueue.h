@@ -102,6 +102,16 @@ public:
         MM_ASSERT(!empty());
         --m_size;
     }
+    // takes the last element off and returns it, asserting there is one like pop_back (GfSequentialPlay::pauseOff and
+    // execPopState inline it: the slot's index is taken before the count is stored, the element read after; the name
+    // is not the original's)
+    T take_back() {
+#line 485 MM_MTL_FIXED_QUEUE_PATH
+        MM_ASSERT(!empty());
+        unsigned long index = (m_head + m_size - 1) % N;
+        --m_size;
+        return at(index);
+    }
 
     // value before the first (fixed_queue.h asserts `!full()`; ai::Hfsm::update and setStateImpl inline it, gathering a
     // state chain from its leaf; the name is not the original's)

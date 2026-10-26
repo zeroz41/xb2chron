@@ -21,6 +21,8 @@ public:
 };
 }  // namespace gf
 namespace gf { class GfMapjumpInfo; }
+#include "gf/MsgUnk_1000034.h"
+#include "mm/mtl/FixedVector.h"
 namespace fw { class Camera; }
 #include "mm/mtl/IntrusivePtr.h"
 namespace gf { class GfSetupPfTalk; }
@@ -142,6 +144,29 @@ public:
     // add functions (GfPlayFactory::createTalk, createOneEvent, createQuestUIComplete). What it does: when
     // GfGameManager::fn_71002A9E68() holds, makes a command (fn_710031988C) and adds it (addCommand).
     static void fn_71003227E4();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member because it fills
+    // GfSequentialPlay's unit among the add functions and does what they do. What it does: when
+    // GfGameManager::fn_71002A9E68() holds, makes a GfPlayComIraCampSave (GfPlayComIraCampSave::fn_7100319900, the
+    // one that skips the request unless no other runs) and adds it (addCommand).
+    static void fn_7100322808();
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Static members because they fill
+    // GfSequentialPlay's unit among the add functions and do what they do. What they do: addCommand of
+    // GfPlayComMapjumpForLeaveArena::create(info), GfPlayComMapjumpForBattleMapFromArena::create(info),
+    // GfPlayComWaitArenaStateField::create(), GfPlayComStartChallengeBattle::create(param).
+    static void fn_7100322674(const GfMapjumpInfo& info);
+    static void fn_7100322688(const GfMapjumpInfo& info);
+    static void fn_710032269C();
+    static void fn_71003226B0(const MsgUnk_1000034::Param& param);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member because it fills
+    // GfSequentialPlay's unit after addMenuObjCommonText and does what the add functions do. What it does:
+    // addCommand(GfPlayComScriptTutorialSeq::fn_710031E044(name, startId)); its one caller is
+    // GfPlayFactory::fn_7100321924(const char*, unsigned int).
+    static void fn_7100322C64(const char* name, int startId);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member because it fills
+    // GfSequentialPlay's unit after addStartTutorial and does what the add functions do. What it does:
+    // addCommand(GfPlayComOpenNpcEntry::fn_7100319F34(entries)); its one caller is GfPlayFactory's fn_7100320D44
+    // (GfMenuManager::gevPlayerControl's), between pushState(6) and popState.
+    static void fn_7100322930(const mm::mtl::FixedVector<unsigned short, 256>& entries);
     // what GfPlayComPause and GfPlayComState run when they start
     static void pauseOn(unsigned int pause);
     static void pauseOff();

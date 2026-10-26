@@ -57,8 +57,18 @@
 #include "classes/gf/GfFieldJump.h"
 #include "classes/gf/GfFieldWarp.h"
 #include "classes/fw/Camera.h"
+#include "classes/gf/GfPlayComMapjumpForLeaveArena.h"
+#include "classes/gf/GfPlayComMapjumpForBattleMapFromArena.h"
+#include "classes/gf/GfPlayComWaitArenaStateField.h"
+#include "classes/gf/GfPlayComStartChallengeBattle.h"
+#include "classes/gf/GfPlayComIraCampSave.h"
+#include "classes/gf/GfPlayComScriptTutorialSeq.h"
+#include "classes/gf/GfPlayComOpenNpcEntry.h"
+#include "classes/gf/GfPlayComEventWeather.h"
 
 namespace gf {
+
+GfSequentialPlay::~GfSequentialPlay() {}
 
 void GfSequentialPlay::build(const GfSetupParam& param) {
 #line 52
@@ -75,6 +85,56 @@ bool GfSequentialPlay::isPlay() {
     return !get()->m_list.empty() || !get()->m_addList.empty();
 }
 
+void GfSequentialPlay::destroyCommand() {
+    if (!isPlay()) {
+        for (CommandList::iterator it = m_list.begin(); it != m_list.end(); ++it) {
+            if (*it != nullptr) {
+                delete *it;
+                *it = nullptr;
+            }
+        }
+        m_list.clear();
+        for (AddList::iterator it = m_addList.begin(); it != m_addList.end(); ++it) {
+            if (*it != nullptr) {
+                delete *it;
+                *it = nullptr;
+            }
+        }
+        m_addList.clear();
+    }
+}
+
+void GfSequentialPlay::postUpdate(const fw::UpdateInfo& info) {
+    GfSequentialPlay* self = get();
+    if (self == nullptr || !self->m_initialized) {
+        return;
+    }
+    if (self->m_addList.m_num_nodes > 0) {
+        for (AddList::iterator it = self->m_addList.begin(); it != self->m_addList.end(); ++it) {
+            self->m_list.push_front(*it);
+        }
+        self->m_addList.clear();
+    }
+    while (!self->m_list.empty()) {
+        CommandList::iterator it = self->m_list.begin();
+        GfPlayCom* com = *it;
+        if (com->pad_08) {
+            com->pad_08 = false;
+            com->start();
+        }
+        if (!com->update(info, GfManager::isDestroyNow())) {
+            return;
+        }
+        com->end();
+        bool next = com->pad_09;
+        delete com;
+        self->m_list.erase(it);
+        if (!next) {
+            break;
+        }
+    }
+}
+
 bool GfSequentialPlay::play() {
     get()->m_type = TYPE();
     return true;
@@ -84,9 +144,25 @@ void GfSequentialPlay::beginCommand(TYPE type) {
     get()->m_type = type;
 }
 
+void GfSequentialPlay::addCommand(GfPlayCom* com) {
+    if (com != nullptr) {
+        GfSequentialPlay* self = get();
+        if (self->m_type == TYPE(1)) {
+            self->m_addList.push_front(com);
+        } else {
+            self->m_list.push_back(com);
+        }
+    }
+}
+
 void GfSequentialPlay::pauseOn(unsigned int pause) {
     GfSequentialPlay* self = get();
     self->m_pauses.push_back(GfPause::reqPause(pause));
+}
+
+void GfSequentialPlay::pauseOff() {
+    GfSequentialPlay* self = get();
+    GfPause::destroyHandle(self->m_pauses.take_back());
 }
 
 GF_STATE GfSequentialPlay::execPushState(GF_STATE state) {
@@ -95,6 +171,13 @@ GF_STATE GfSequentialPlay::execPushState(GF_STATE state) {
     self->m_states.push_back(state);
     GfGameManager::setState(state, false);
     return prev;
+}
+
+GF_STATE GfSequentialPlay::execPopState() {
+    GfSequentialPlay* self = get();
+    GF_STATE state = self->m_states.take_back();
+    GfGameManager::setState(self->m_states.empty() ? GF_STATE(3) : self->m_states.at((self->m_states.m_size + self->m_states.m_head - 1) % 128), true);
+    return state;
 }
 
 void GfSequentialPlay::addWait(float time) {
@@ -107,6 +190,22 @@ void GfSequentialPlay::addWaitEvent(float time, GF_OBJ_HANDLE* handle) {
 
 void GfSequentialPlay::addMapjump(const GfMapjumpInfo& info) {
     addCommand(GfPlayComMapjump::create(info));
+}
+
+void GfSequentialPlay::fn_7100322674(const GfMapjumpInfo& info) {
+    addCommand(GfPlayComMapjumpForLeaveArena::create(info));
+}
+
+void GfSequentialPlay::fn_7100322688(const GfMapjumpInfo& info) {
+    addCommand(GfPlayComMapjumpForBattleMapFromArena::create(info));
+}
+
+void GfSequentialPlay::fn_710032269C() {
+    addCommand(GfPlayComWaitArenaStateField::create());
+}
+
+void GfSequentialPlay::fn_71003226B0(const MsgUnk_1000034::Param& param) {
+    addCommand(GfPlayComStartChallengeBattle::create(param));
 }
 
 void GfSequentialPlay::addWaitBattleEnd(unsigned int id) {
@@ -145,8 +244,26 @@ void GfSequentialPlay::addEventFade() {
     addCommand(GfPlayComEventFade::create());
 }
 
+// The symbols name it addEvent(int, ...) (1.0.0's overload at this place, called from createTheaterEvent there and
+// here); 3.0.1's body makes a GfPlayComEventWeather from the first argument and reads no other.
+void GfSequentialPlay::addEvent(int id, unsigned int, unsigned int, bool) {
+    addCommand(GfPlayComEventWeather::fn_7100318730(WEATYPE(id)));
+}
+
 void GfSequentialPlay::addCallbackEventSequence(int id, bool begin) {
     addCommand(GfPlayComCallbackEventSequence::create(id, begin));
+}
+
+void GfSequentialPlay::fn_71003227E4() {
+    if (GfGameManager::fn_71002A9E68()) {
+        addCommand(GfPlayComIraCampSave::fn_710031988C());
+    }
+}
+
+void GfSequentialPlay::fn_7100322808() {
+    if (GfGameManager::fn_71002A9E68()) {
+        addCommand(GfPlayComIraCampSave::fn_7100319900());
+    }
 }
 
 void GfSequentialPlay::addMenuPrecious(unsigned int id) {
@@ -195,6 +312,10 @@ void GfSequentialPlay::addOpenMenu2(unsigned int menu, MAINMENU main) {
 
 void GfSequentialPlay::addStartTutorial(unsigned int id) {
     addCommand(GfPlayComStartTutorial::create(id));
+}
+
+void GfSequentialPlay::fn_7100322930(const mm::mtl::FixedVector<unsigned short, 256>& entries) {
+    addCommand(GfPlayComOpenNpcEntry::fn_7100319F34(entries));
 }
 
 void GfSequentialPlay::addMiniGame() {
@@ -298,6 +419,10 @@ void GfSequentialPlay::addHoodHomuraBattou() {
 
 void GfSequentialPlay::addMenuObjCommonText(GfMenuObjCommonText::OpenKizunaParam& param) {
     addCommand(GfPlayComMenuObjCommonText::create(param));
+}
+
+void GfSequentialPlay::fn_7100322C64(const char* name, int startId) {
+    addCommand(GfPlayComScriptTutorialSeq::fn_710031E044(name, startId));
 }
 
 bool GfSequentialPlay::isExistResetBladeParty(unsigned int slot) {
