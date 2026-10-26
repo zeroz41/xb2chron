@@ -17,12 +17,13 @@ class LayerTag {
 public:
     virtual ~LayerTag() {}  // slot 0
     virtual void beginParseString() = 0;  // slot 2
-    virtual void endParseString() = 0;  // slot 3
+    virtual void endParseString() {}  // slot 3 (LayerFontDrawBuffer's table holds LayerTag's)
     virtual void parseNotTag(unsigned char const*, unsigned int&) = 0;  // slot 4
     virtual void parseNotTag(wchar_t const*, unsigned int&) = 0;  // slot 5
     // whether the tag was taken (LayerTag::callTagEnd returns false)
     virtual bool callTagStart(char const*, layer::LayerTagTbl const*, unsigned int) { return false; }  // slot 6
     virtual bool callTagEnd(char const*) { return false; }  // slot 7
+    virtual void callTagNoUse(unsigned char const*) {}  // slot 8 (LayerFontDrawBuffer's table holds LayerTag's)
     void calcParseString(const unsigned char* text);      // reads text's tags, calling callTagStart and callTagEnd
     void calcUTF8ParseString(const unsigned char* text);  // the same for UTF-8 text
 };

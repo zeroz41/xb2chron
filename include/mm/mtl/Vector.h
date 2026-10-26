@@ -11,6 +11,8 @@
 // mm_lib's vector.h, as the including file's include path named it (see mm/mtl/FixStr.h)
 #ifdef MM_LIB_FROM_LIBS
 #define MM_MTL_VECTOR_PATH "../../../mcl/mm_lib/source\\mm_mtl/vector.h"
+#elif defined(MM_LIB_FROM_LAYER)
+#define MM_MTL_VECTOR_PATH "D:/Monolithsoft/BF2/prog/libs/layer/proj/windows/../../../mcl/mm_lib/source\\mm_mtl/vector.h"
 #else
 #define MM_MTL_VECTOR_PATH "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/vector.h"
 #endif
