@@ -66,6 +66,17 @@ public:
     // index 0xDC0D); false otherwise. 23 callers (GfGameUtil::incEnemySuppress skips counting while it holds,
     // GfFieldWeather::updateWeather, GfGameScene::setEnemyDead, GfMenuBattleAdapter).
     static bool fn_71002AC580();
+    // The record fn_71002AC5D8 returns (the name and its field's name are not the original's): GfMenuBattleAdapter's
+    // callbacks read its short at 0x1C, ints at 0x28/0x2C and floats at 0xAD0; gf_menu_obj_btl_time reads m_kind.
+    struct BattleChallengeRecord {
+        unsigned char pad_00[6];
+        unsigned short m_kind;  // gf_menu_obj_btl_time's fn_71003B4CC0 opens LAY_score with 0 for 1, with 1 for 3
+    };
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in
+    // gf_game_manager's unit among GfGameManager's functions and takes no instance. What it does: returns the address
+    // 0xD8 bytes into the instance the pointer at 0x7100B94428 holds (the one fn_71002AC580 asks); 12 callers
+    // (GfMenuBattleAdapter, the battle challenge manager, gf_menu_obj_btl_time).
+    static BattleChallengeRecord* fn_71002AC5D8();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in gf_game_manager's unit
     // among GfGameManager's functions. What it does: when PtrSingleton<TUnk_B54858> exists, passes it and its bool to
     // TUnk_B54858::fn_71002A7430 (as GfGameManager::setupGame does); GfManager::fn_710032A1FC calls it
