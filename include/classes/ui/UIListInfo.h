@@ -28,6 +28,14 @@ public:
         }
         return *contents;
     }
+    // the same on a const list (GfMenuObjCommonText::openGetItem copies a const list's contents)
+    const T0& getContents(unsigned int index) const {
+        const T0* contents = &m_dummy;
+        if (index < m_list.size()) {
+            contents = &m_list[index];
+        }
+        return *contents;
+    }
     mm::mtl::Vector<T0> m_list;
     // what a read past the end gets (GfMenuCharDataAdapter::createFromEnemyList); the name is not the original's
     T0 m_dummy;
