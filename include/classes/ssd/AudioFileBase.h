@@ -1,6 +1,7 @@
 #ifndef CLASSES_SSD_AUDIOFILEBASE_H
 #define CLASSES_SSD_AUDIOFILEBASE_H
 
+#include "classes/ssd/AudioMarkerList.h"
 #include "ssd/Debug.h"
 
 namespace ssd { class IoStreamBase; }
@@ -63,25 +64,47 @@ struct AudioFormatExtra {
     unsigned int pad_0[6];
 };
 
-// table 0x7100B82210
+// table 0x7100B82210: a reader (or writer) of one kind of audio file, over a stream. The field names other than
+// format_'s are not the original's.
 class AudioFileBase {
 public:
-    virtual void Open(ssd::IoStreamBase*);  // slot 0
-    virtual void Close();  // slot 1
-    virtual void PreLoad();  // slot 2
+    AudioFileBase()
+        : stream_(nullptr), readBuffer_(nullptr), ownsReadBuffer_(false), heap_(false), ownsStream_(false),
+          writing_(false) {}
+
+    virtual Result Open(IoStreamBase* stream);  // slot 0
+    virtual Result Close();  // slot 1
+    virtual Result PreLoad();  // slot 2
     virtual void SetPositionBySample(unsigned long);  // slot 3
-    virtual void PreSave();  // slot 4
-    virtual void SaveAudioData(short const*, int);  // slot 5
+    virtual Result PreSave();  // slot 4
+    virtual Result SaveAudioData(const short* data, int count);  // slot 5
     virtual ~AudioFileBase();  // slot 6
 
-    // the reader for type, constructed in buffer, or null
+    // the reader for type, constructed in buffer (or allocated when buffer is null), or null
     static AudioFileBase* CreateFileBase(MediaFileType type, unsigned char* buffer);
-    // destroys the reader file points to
-    static void CloseFileBase(AudioFileBase** file);
+    // closes and destroys the reader file points to
+    static Result CloseFileBase(AudioFileBase** file);
 
-    unsigned char pad_8[0x14];
+    // frees the read buffer if this reader allocated it
+    void DeleteReadBuffer();
+    // allocates a read buffer of size bytes unless there is one
+    void NewReadBuffer(unsigned long size);
+    // writes count blocks from data to the stream
+    int WriteBySamples(const short* data, int count);
+
+    IoStreamBase* stream_;
+    void* readBuffer_;
+    // DeleteReadBuffer frees readBuffer_ only while it is set (NewReadBuffer sets it)
+    bool ownsReadBuffer_;
+    // CreateFileBase allocated the reader: CloseFileBase deletes it rather than only destroying it
+    bool heap_;
+    // CloseFileBase closes the stream while it is set
+    bool ownsStream_;
+    // AudioFileWave::Close writes the RIFF header while it is set
+    bool writing_;
     AudioFormat format_;
     AudioFormatExtra extra_;
+    AudioMarkerList markers_;
 };
 
 }  // namespace ssd
