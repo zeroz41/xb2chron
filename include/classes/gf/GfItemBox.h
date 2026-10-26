@@ -149,13 +149,14 @@ public:
     // passes the item and a copy of the handle to the singleton's GfItemBoxBase fn_71002F9634 and returns its
     // bool; GfItemUtil::fn_71002FA968 calls it when its handle is non-zero.
     static bool fn_71002FA2B0(unsigned int item, GfItemHandle handle);
-    // Placeholder name: the symbols call it GfItemInfo::getMaxStock() const, but it reads no object: it frees the
-    // singleton's 19 lists and clears its two SDataGame pointers (1.0.0's getMaxStock reads a type's max stock).
-    // GfItemManager::destroy calls it. Rename proposed.
-    static void fn_71002FA134();
-    // Placeholder name: new in 3.0.1. GfItemManager::initialize calls it with a type it passes on to
-    // GfDataItem::getFavoriteItemType; it hands the two SDataGame pointers to the singleton's fn_71002F3F98.
-    static void fn_71002FA0F4(unsigned int type);
+    // Placeholder name: the symbols call it GfItemInfo::getMaxStock() const, but it frees the singleton's 19 lists
+    // and clears its two SDataGame pointers (1.0.0's getMaxStock reads a type's max stock). A member: GfItemManager's
+    // finalize (inlined in destroy) calls it on GfItemBox::get(); its body reaches the object through get() again.
+    void fn_71002FA134();
+    // Placeholder name: new in 3.0.1. A member: GfItemManager's initialize (inlined in its constructor) calls it on
+    // GfItemBox::get() and passes nothing else. It hands GfDataItem::getFavoriteItemType() and getItemBox() (the two
+    // SDataGame pointers) to the singleton's fn_71002F3F98.
+    void fn_71002FA0F4();
 };
 }  // namespace gf
 

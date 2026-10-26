@@ -149,8 +149,8 @@ bool GfItemBox::addItem(unsigned int item, unsigned int count) {
     return true;
 }
 
-void GfItemBox::fn_71002FA0F4(unsigned int type) {
-    get()->fn_71002F3F98(GfDataItem::getFavoriteItemType(type), GfDataItem::getItemBox());
+void GfItemBox::fn_71002FA0F4() {
+    get()->fn_71002F3F98(GfDataItem::getFavoriteItemType(), GfDataItem::getItemBox());
 }
 
 void GfItemBox::fn_71002FA134() {

@@ -2685,7 +2685,7 @@ int GfDataDriver::getMaxSetBladeNum(unsigned int driver) {
     return getMaxSetBladeNum(*getSDataDriver(driver));
 }
 
-unsigned char* GfDataItem::getFavoriteItemType(unsigned int type) {
+unsigned char* GfDataItem::getFavoriteItemType() {
     return GfDataManager::getDataGame()->m_favoriteItemType;
 }
 
