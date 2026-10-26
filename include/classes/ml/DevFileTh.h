@@ -54,6 +54,10 @@ public:
     static void cancel(FileHandleTh* handle, bool flag);
     // path as the file system takes it (fw::SoundResource::update; the parameter names are not the original's)
     static void normalizeDvdFileName(mm::mtl::FixStr<256>& out, const char* path);
+    // named by the symbols: called once a save's write ended (GfGameSave::OnFileEvent)
+    static void flushSave();
+    // named by the symbols: starts writing size bytes of data to path, listener gets the end event (GfGameSave)
+    static FileHandleTh* writeFile(const char* path, IWorkEvent* listener, const void* data, int size, int);
 };
 }  // namespace ml
 

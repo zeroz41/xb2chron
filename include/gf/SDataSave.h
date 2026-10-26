@@ -25,6 +25,12 @@ public:
 class SDataSave {
 public:
     SDataSave();  // fn_710014F8F0
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's makeNewGameSaveData builds the
+    // save in place with SDataSave()'s code inline). A member because GfGameSave::makeNewGameSaveData calls it on
+    // its own s_SDataSave and its code (in title_main's unit) works on its argument as SDataSave() does on this.
+    // What it does: what SDataSave() does (the version 0x3A15B, SDataGame(), the DLC drivers and the block after
+    // them cleared), 0x210 bytes as SDataSave() is; TitleStateSaveData and TitleStateMainScreen call it too.
+    void fn_7100153694();
 
     SDataSystem m_system;
     SDataGame m_game;  // 0x10

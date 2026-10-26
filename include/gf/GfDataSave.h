@@ -11,6 +11,10 @@ class GfDataSave {
 public:
     static void getFileNameForLoad(mm::mtl::FixStr<256>& out, SAVESLOT slot);
     static void getFileNameForOption(mm::mtl::FixStr<256>& out);
+    // named by the symbols: GfGameSave::createOptionSaveData's file name, the Xml one when
+    // GfGameManager::fn_71002A9E68 was set
+    static void getFileNameForOptionXml(mm::mtl::FixStr<256>& out);
+    static void getFileNameForOptionBin(mm::mtl::FixStr<256>& out);
     static const char* getSaveDataExtNameForBin();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
     // GfDataSave's file-name functions (getFileNameForLoad 0x710022C114, getFileNameForOption 0x710022C82C) and does

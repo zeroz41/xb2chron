@@ -9,6 +9,8 @@ public:
     // the option data to compare with: TitleMain's option buffer in the theater or advertise mode (when TitleMain is
     // up), else GfDataManager::getDataOption
     static SDataOption* getValidOptionData();
+    // named by the symbols: fills the option data a save writes (GfGameSave::createOptionSaveData)
+    static void setupOptionSaveData(SDataOption& option);
     static void flushOptionSaveData();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address sits among
     // GfGameUtilSaveData's functions (GfWeapon.cpp's unit, after getValidOptionData) and it reads the save data the

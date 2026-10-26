@@ -22,6 +22,11 @@ public:
     static void build(const GfSetupParam& param);
     static void destroy();
     static void callTargetAccess(GF_OBJ_HANDLE*);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address sits in
+    // gf_event's unit among GfEvent's call* functions and it reads PtrSingleton<GfEvent>'s instance as they do.
+    // What it does: calls slot 5 (+0x28) of every listener in the instance's 32-entry ring (count at +0x108, start
+    // at +0x110), taking no argument; GfGameSave::execOptionSaveWithMicroThread calls it first.
+    static void fn_71003274A8();
     static void callGameObjEnter(GF_OBJ_HANDLE* handle);  // GfGameObj::flushEvent: an object entered the game
     static void callGameObjLeave(GF_OBJ_HANDLE* handle);  // GfGameObj::flushEvent: an object left the game
     static void callItemAdd(unsigned int item, int count);  // count of the item gained (or lost)
