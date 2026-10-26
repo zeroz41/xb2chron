@@ -11,7 +11,7 @@ namespace gf { class GfGameEvent; }
 namespace mm { class Vec3; }
 namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
 namespace gf { class GfSetupParam; class GfEvtModel; class EventBgmSetup; class GF_OBJ_HANDLE; class GF_SE_CATEGORY_HANDLE; }
-namespace gf { enum WEATHERID : int; enum WEATYPE : int; enum CFILTER_HANDLE : int; enum CLOUD_SEA_HANDLE : int; class GF_LP_HANDLE; }
+namespace gf { enum WEATHERID : int; enum WEATYPE : int; enum CFILTER_HANDLE : int; enum CLOUD_SEA_HANDLE : int; enum WEATHER_HANDLE : int; class GF_LP_HANDLE; }
 namespace gmk { enum GmkType : int; }
 namespace fw { enum SoundCategory : int; }
 
@@ -36,6 +36,38 @@ public:
     // and m_time (in s0).
     static void fn_71002A0CDC(unsigned int id, unsigned int, unsigned int, const mm::Vec3* pos, float time);
     static void gevPause(unsigned int, unsigned int);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its unit is gf_game_event and
+    // it reads GfGameEvent's instance. What it does: returns the int at +0x1914 (pad_1914), 0 without an instance
+    // (the same shape as getPlayBladeId one field later); gf::fn_71002DF39C, fn_71002DF624 and fn_71002E1E9C call it.
+    static int fn_71002A0FEC();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its unit is gf_game_event,
+    // next to setMapLodDisp's family. What it does: GfFieldLod::findBdatIdByLodId(lodId), then (when found)
+    // GfFieldLod::setLodSwitchId(bdatId, switchId); event::LodManager::OnEventProc calls it.
+    static void fn_71002A16EC(unsigned int lodId, unsigned int switchId);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its unit is gf_game_event,
+    // next to setMapLodDisp's family. What it does: GfFieldLod::findBdatIdByLodId(lodId), then (when found) returns
+    // GfFieldLod::fn_71002768BC(bdatId) (the model's switch id), else -1; event::LodManager::playAnm calls it.
+    static int fn_71002A1740(unsigned int lodId);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its unit is gf_game_event,
+    // between gevPause and playBgm. What it does: GfEvtBgm::get()->clear() when the instance exists;
+    // GfPlayComEventFade::update calls it.
+    static void fn_71002A19D4();
+    static float getPlayBgmTime();
+    static float getPlayBgmTotalTime();
+    // an event's color filter request (priority 2) to GfGameEnv; false drops it
+    static void setColorFilter(bool on, int num, int farNum, float time);
+    static class GfEvtModelDriver* createDriver(class GfInitParamDriver& param);
+    static class GfEvtModelBlade* createBlade(class GfInitParamBlade& param);
+    static class GfEvtModelNpc* createNpc(class GfInitParamNpc& param);
+    static class GfEvtModelEnemy* createEnemy(class GfInitParamEnemy& param);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its unit is gf_game_event,
+    // between createEnemy and createEventObj. What it does: GfEvtModelWeapon::create(param), first giving blade 1011
+    // (param+0x12c) its GfBdatChrBl::getChrBlDefWeapon(1011) as m_objId while event 10345 (m_playEventId) plays.
+    static class GfEvtModelWeapon* fn_71002A1FFC(class GfInitParamWeapon& param);
+    static class GfEvtModelEvent* createEventObj(class GfInitParamEventObj& param);
+    static void setMapWeather(WEATHERID weather);
+    static void setWeaType(WEATYPE type);
+    static void resetWeaType();
     virtual ~GfGameEvent();  // slot 0
     static void setCancelFlag(bool flag);
     static bool isCancelFlag();
@@ -88,7 +120,7 @@ public:
     GfGameEvent(const GfSetupParam& param)
         : m_flags(0), m_initialized(false), m_eventMem(), m_eventMem2(), m_afterEventStartID(0), m_mapjumped(0),
           m_layerPause(reinterpret_cast<GF_LP_HANDLE*>(-1)), m_colorFilter(CFILTER_HANDLE(0)), m_cloudSea(CLOUD_SEA_HANDLE(0)),
-          m_tempWeather(0), m_tempWeatherMapId(0), m_weaType(0), m_weaTypeWeather(5), pad_1908(0), m_playEventId(0),
+          m_tempWeather(WEATHER_HANDLE(0)), m_tempWeatherMapId(0), m_weaType(WEATYPE(0)), m_weaTypeWeather(WEATHERID(5)), pad_1908(0), m_playEventId(0),
           m_playBladeId(0), pad_1914(0), m_eventPhase(0), m_categoryHandle(reinterpret_cast<GF_SE_CATEGORY_HANDLE*>(-1)),
           m_csCategoryHandle(reinterpret_cast<GF_SE_CATEGORY_HANDLE*>(-1)), m_csEventMute(false), m_stop(false),
           m_fadeInWaitSec(0.0f), m_fadeInSec(0.0f) {
@@ -109,10 +141,10 @@ public:
     mm::mtl::FixedList<GfEvtModel*, 128> m_models;  // update runs each model
     CFILTER_HANDLE m_colorFilter;  // setColorFilter's GfGameEnv filter
     CLOUD_SEA_HANDLE m_cloudSea;  // setCloudSea's GfGameEnv cloud sea
-    int m_tempWeather;  // setMapWeather's GfGameEnv weather
+    WEATHER_HANDLE m_tempWeather;  // setMapWeather's GfGameEnv weather
     int m_tempWeatherMapId;  // the map setMapWeather set it on
-    int m_weaType;  // setWeaType's
-    int m_weaTypeWeather;  // the map weather setWeaType found
+    WEATYPE m_weaType;  // setWeaType's
+    WEATHERID m_weaTypeWeather;  // the map weather setWeaType found (resetWeaType goes back to it)
     int pad_1908;
     int m_playEventId;  // getPlayEventId's
     int m_playBladeId;  // getPlayBladeId's

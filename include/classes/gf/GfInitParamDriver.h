@@ -14,7 +14,10 @@ public:
     // bladeId; when GfDataDriver::fn_710023F9A8(driverId) accepts the driver, m_bladeId becomes
     // GfDataBlade::fn_7100237B70(driverId, -1) instead.
     void fn_710054E050(unsigned int driverId, unsigned int bladeId);
-    unsigned char pad_90[0x1AC - 0x90];
+    unsigned char pad_90[0x1A2 - 0x90];
+    // GfGameEvent::createDriver sets it for an event's driver unless GfGameManager::isInMetJIJI
+    bool pad_1a2;
+    unsigned char pad_1a3[0x1AC - 0x1A3];
     // the driver's blade: GfEvtModelDriver keeps it, reading the driver's own when it is 0 (the name is not the
     // original's)
     unsigned int m_bladeId;

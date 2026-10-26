@@ -49,6 +49,9 @@ public:
     // takes this model off model's mount (destroy hands each mounted model this one)
     void resetMount(GfEvtModel* model);
     bool isBusy(mm::mtl::FixStr<128>* name) const;
+    // the UI-layer counterpart of an init parameter's layer (GfGameEvent::createEventObj passes pad_40 while a
+    // full-screen menu is up)
+    static unsigned int changeLayerUI(unsigned int layer);
     static mm::mtl::RTTI m_rtti;
 
     // which model: 0 a driver, 1 a blade, 5 an enemy (what each constructor passes) (the name is not the original's)

@@ -18,6 +18,8 @@ public:
     static int getCurrentCloudSea();
     // the current map's weather (event::EnvManager::login passes false)
     static WEATHERID getCurrentMapWeatherID(bool);
+    // GfGameEvent::setMapWeather and resetWeaType hand it the weather to go back to
+    static void setMapWeatherID(WEATHERID id);
     static void setCloudSea(unsigned int map, CLOUD_SEA cloudSea);  // GfGameUtilCloudSea::getCloudSea forwards here
     // GfFieldManager's forwards (its initialize, finalize, clear, setupGame and gev* functions call them)
     static void build(const GfSetupParam& param);

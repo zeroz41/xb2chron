@@ -18,6 +18,27 @@
 #include "ml/MlMem.h"
 #include "mtl/MemManager.h"
 
+#include "classes/fw/EffectManager.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfFieldWeather.h"
+#include "classes/gf/GfEvtModel.h"
+#include "classes/gf/GfInitParamWeapon.h"
+#include "classes/gf/GfInitParamNpc.h"
+#include "classes/gf/GfInitParamEventObj.h"
+#include "classes/gf/GfEvtModelNpc.h"
+#include "classes/gf/GfEvtModelWeapon.h"
+#include "classes/gf/GfEvtModelEvent.h"
+#include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfBdatChrBl.h"
+#include "classes/gf/GfInitParamDriver.h"
+#include "classes/gf/GfInitParamBlade.h"
+#include "classes/gf/GfInitParamEnemy.h"
+#include "classes/gf/GfEvtModelDriver.h"
+#include "classes/gf/GfEvtModelBlade.h"
+#include "classes/gf/GfEvtModelEnemy.h"
+#include "gf/GfDataBlade.h"
+#include <math.h>
+
 namespace gf {
 
 namespace _gfgev {
@@ -354,6 +375,176 @@ bool GfGameEvent::isLeaderCharaNG(unsigned int chara) {
         return true;
     default:
         return false;
+    }
+}
+
+GfGameEvent::~GfGameEvent() {}
+
+int GfGameEvent::fn_71002A0FEC() {
+    if (get() != nullptr) {
+        return get()->pad_1914;
+    }
+    return 0;
+}
+
+void GfGameEvent::fn_71002A16EC(unsigned int lodId, unsigned int switchId) {
+    int bdatId = GfFieldLod::get()->findBdatIdByLodId(lodId);
+    if (bdatId != 0) {
+        GfFieldLod::get()->setLodSwitchId(bdatId, switchId);
+    }
+}
+
+int GfGameEvent::fn_71002A1740(unsigned int lodId) {
+    int bdatId = GfFieldLod::get()->findBdatIdByLodId(lodId);
+    if (bdatId != 0) {
+        return GfFieldLod::get()->fn_71002768BC(bdatId);
+    }
+    return -1;
+}
+
+// the parameter names are not the original's: bit 7 of each is the pause flag
+void GfGameEvent::gevPause(unsigned int prev, unsigned int now) {
+    bool isPaused = (now & 0x80) != 0;
+    bool wasPaused = (prev & 0x80) != 0;
+    if (!isPaused && !wasPaused) {
+        return;
+    }
+    bool pause = isPaused & !wasPaused;
+    fw::EffectManager* manager = fw::EffectManager::get();
+    manager->m_categorySpeed[3] = fmaxf(pause ? 0.0f : 1.0f, 1e-5f);
+    manager->setMasterPause(pause);
+}
+
+void GfGameEvent::fn_71002A19D4() {
+    if (GfEvtBgm* bgm = GfEvtBgm::get()) {
+        bgm->clear();
+    }
+}
+
+float GfGameEvent::getPlayBgmTime() {
+    GfEvtBgm* bgm = GfEvtBgm::get();
+    if (bgm != nullptr && bgm->isPlayBgm()) {
+        return bgm->getPlayBgmTime();
+    }
+    return 0.0f;
+}
+
+float GfGameEvent::getPlayBgmTotalTime() {
+    GfEvtBgm* bgm = GfEvtBgm::get();
+    if (bgm != nullptr && bgm->isPlayBgm()) {
+        return bgm->getTotalBgmTime();
+    }
+    return 0.0f;
+}
+
+void GfGameEvent::setMapWeather(WEATHERID weather) {
+    GfGameEvent* self = get();
+    if (self->m_tempWeather != 0) {
+        WEATHERID current = GfGameEnv::getTempWeather();
+        int mapId = self->m_tempWeatherMapId;
+        GfGameEnv::destroyTempWeather(self->m_tempWeather);
+        self->m_tempWeather = WEATHER_HANDLE(0);
+        self->m_tempWeatherMapId = 0;
+        if (mapId == GfGameManager::getMapID()) {
+            GfFieldWeather::setMapWeatherID(current);
+        }
+    }
+    self->m_tempWeather = GfGameEnv::createTempWeather(weather, WEATHER_PRIO(1));
+    self->m_tempWeatherMapId = GfGameManager::getMapID();
+}
+
+void GfGameEvent::setWeaType(WEATYPE type) {
+    GfGameEvent* self = get();
+    if (self != nullptr) {
+        self->m_weaType = type;
+        self->m_weaTypeWeather = GfFieldWeather::getCurrentMapWeatherID(false);
+        if (type != 0) {
+            GfFieldWeather::setWeatherForEvent(type, nullptr);
+        }
+    }
+}
+
+void GfGameEvent::resetWeaType() {
+    GfGameEvent* self = get();
+    if (self != nullptr && self->m_weaType != 0) {
+        self->m_weaType = WEATYPE(0);
+        GfFieldWeather::setMapWeatherID(self->m_weaTypeWeather);
+    }
+}
+
+void GfGameEvent::setColorFilter(bool on, int num, int farNum, float time) {
+    GfGameEvent* self = get();
+    if (self->m_colorFilter != 0) {
+        GfGameEnv::destroyColorFilter(self->m_colorFilter);
+        self->m_colorFilter = CFILTER_HANDLE(0);
+    }
+    if (on) {
+        ColorFilter filter = {};
+        filter.m_num = num;
+        filter.m_farNum = farNum;
+        filter.m_time = time;
+        filter.m_prio = 2;
+        self->m_colorFilter = GfGameEnv::createColorFilter(filter);
+    }
+}
+
+GfEvtModelDriver* GfGameEvent::createDriver(GfInitParamDriver& param) {
+    if (!param.pad_1a2 && !GfGameManager::isInMetJIJI()) {
+        param.pad_1a2 = true;
+    }
+    GfEvtModelDriver* model = GfEvtModelDriver::create(param);
+    get()->m_models.push_back(model);
+    return model;
+}
+
+GfEvtModelBlade* GfGameEvent::createBlade(GfInitParamBlade& param) {
+    if (param.getBladeID() == 1003 && GfDataBlade::isHomuriNameHikari()) {
+        param.m_objId = 1074;
+    }
+    GfEvtModelBlade* model = GfEvtModelBlade::create(param);
+    get()->m_models.push_back(model);
+    return model;
+}
+
+
+GfEvtModelNpc* GfGameEvent::createNpc(GfInitParamNpc& param) {
+    unsigned char* fp = GfDataBdat::getFP(0xA8);
+    if (param.pad_18 == nullptr) {
+        param.pad_18 = &fp;
+    }
+    return GfEvtModelNpc::create(param);
+}
+
+
+GfEvtModelEnemy* GfGameEvent::createEnemy(GfInitParamEnemy& param) {
+    unsigned char* fp = GfDataBdat::getFP(0xA5);
+    if (param.pad_18 == nullptr) {
+        param.pad_18 = &fp;
+    }
+    GfEvtModelEnemy* model = GfEvtModelEnemy::create(param);
+    get()->m_models.push_back(model);
+    return model;
+}
+
+GfEvtModelWeapon* GfGameEvent::fn_71002A1FFC(GfInitParamWeapon& param) {
+    if (param.pad_12c == 1011 && get() != nullptr && get()->m_playEventId == 10345) {
+        param.m_objId = GfBdatChrBl::get()->getChrBlDefWeapon(1011);
+    }
+    return GfEvtModelWeapon::create(param);
+}
+
+GfEvtModelEvent* GfGameEvent::createEventObj(GfInitParamEventObj& param) {
+    if (GfGameManager::isFullScreenMenu()) {
+        param.pad_40 = GfEvtModel::changeLayerUI(param.pad_40);
+    }
+    return GfEvtModelEvent::create(param);
+}
+
+void GfGameEvent::destroyEvtModel(GfEvtModel* model) {
+    GfGameEvent* self = get();
+    mm::mtl::FixedList<GfEvtModel*, 128>::iterator it = self->m_models.find(model);
+    if (it != self->m_models.end()) {
+        self->m_models.erase(it);
     }
 }
 
