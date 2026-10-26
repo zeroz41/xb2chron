@@ -10,6 +10,7 @@
 #include "classes/gf/GfMenuObjPartyStatus.h"
 #include "classes/gf/GfMenuObjPartyGauge.h"
 #include "classes/gf/TUnk_B60E28.h"
+#include "classes/gf/TUnk_B63AE0.h"
 #include "gf/GfMenuObjUtil.h"
 
 namespace gf {
@@ -439,6 +440,41 @@ void GfMenuReference::fn_7100368744(unsigned int index, unsigned int gimmickId, 
             self->m_layerGimmick[index].m_gimmickId = gimmickId;
             self->m_layerGimmick[index].m_ratio = ratio;
         }
+    }
+}
+
+void GfMenuReference::fn_7100368A44() {
+    TUnk_B63AE0::fn_7100448E58();
+}
+
+void GfMenuReference::fn_7100368A48() {
+    TUnk_B63AE0::fn_7100448ED4();
+}
+
+void GfMenuReference::fn_7100368A4C(const LayerResult& result) {
+    GfMenuReference* self = get();
+    if (self) {
+        LayerResult& current = self->m_layerResult;
+        float ratio = current.m_ratio;
+        current = result;
+        if (current.m_number > 999) current.m_number = 999;
+        for (int i = 0; i < 3; i++) {
+            if (current.m_numbers[i] > 999) current.m_numbers[i] = 999;
+        }
+        if (current.m_ratio > 1.0f) current.m_ratio = 1.0f;
+        if (result.m_ratio > ratio) TUnk_B63AE0::fn_7100448FFC();
+    }
+}
+
+void GfMenuReference::fn_7100368BAC(GfMenuCallContext* context, const ResultPair& pair) {
+    TUnk_B63AE0::fn_7100448F44(context, pair.m_first, pair.m_second);
+}
+
+void GfMenuReference::clearLinkList() {
+    GfMenuReference* self = get();
+    if (self) {
+        if (self->m_enemyLinkList) self->m_enemyLinkList->clear();
+        if (self->m_itemLinkList) self->m_itemLinkList->clear();
     }
 }
 

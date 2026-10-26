@@ -11,6 +11,7 @@ namespace gf { class GfMenuEnemyList; }
 namespace gf { class GfMenuItemList; }
 namespace gf { class MenuItemInfo; }
 namespace gf { class GfSetupParam; }
+namespace gf { class GfMenuCallContext; }
 
 namespace gf {
 // table 0x7100B5EF48
@@ -316,6 +317,47 @@ public:
     static const LayerGauge* fn_71003686A0(unsigned int index);
     static const LayerGimmick* fn_71003687B0(unsigned int index);
     static const LayerResult* fn_7100368B40();
+    // a 0x10-byte record at 0x4CFD4 of the instance (the names are not the original's): three words and two bytes
+    // the combo route display (gf_menu_obj_combo_route_simple, fn_71003DC6FC) reads through fn_71003689C0.
+    // fn_71003688E0 copies one in (an assignment copies its 14 data bytes), fn_7100368830 clears it; both refresh
+    // the display (TUnk_B61408::fn_71003DC56C) when it changed.
+    struct ComboRouteState {
+        ComboRouteState() : m_values(), m_stateA(), m_stateB() {}
+        bool operator==(const ComboRouteState& other) const {
+            return m_values[0] == other.m_values[0] && m_values[1] == other.m_values[1] &&
+                   m_values[2] == other.m_values[2] && m_stateA == other.m_stateA && m_stateB == other.m_stateB;
+        }
+        unsigned int m_values[3];
+        unsigned char m_stateA;
+        unsigned char m_stateB;
+    };
+    // the two words fn_7100368BAC forwards to TUnk_B63AE0::fn_7100448F44 (event 0x21 to LAY_result; the names are
+    // not the original's)
+    struct ResultPair {
+        unsigned int m_first;
+        unsigned int m_second;
+    };
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Static members: their addresses lie
+    // among this class's accessors (after fn_7100368830) and they read its singleton or forward to the menu objects
+    // the reference feeds.
+    // fn_7100368830: clears m_comboRoute (fn_71003688E0 with an empty record); caller btl::UIManager::UpdateMenuData.
+    static void fn_7100368830();
+    // fn_71003688E0: when fn_710048FD30(3) holds, copies state into m_comboRoute and, if it changed, tail-calls
+    // TUnk_B61408::fn_71003DC56C (event 0x100 to attached object 0x8E); caller btl::UIManager::UpdateMenuData.
+    static void fn_71003688E0(const ComboRouteState& state);
+    // fn_71003689C0: m_comboRoute when fn_710048FD30(3) holds and the singleton exists, else a zeroed static dummy;
+    // caller fn_71003DC6FC (gf_menu_obj_combo_route_simple).
+    static const ComboRouteState* fn_71003689C0();
+    // fn_7100368A44 / fn_7100368A48: tail-call TUnk_B63AE0::fn_7100448E58 (open LAY_special of object 0x90) /
+    // fn_7100448ED4 (close it); caller fn_7100008554 (A48 also fn_7100009484).
+    static void fn_7100368A44();
+    static void fn_7100368A48();
+    // fn_7100368A4C: copies result into m_layerResult, clamps its numbers to 999 and its ratio to 1.0 and, when
+    // the ratio rose, tail-calls TUnk_B63AE0::fn_7100448FFC (event 0x102 to LAY_special); caller
+    // btl::UIManager::UpdateMenuData.
+    static void fn_7100368A4C(const LayerResult& result);
+    // fn_7100368BAC: tail-calls TUnk_B63AE0::fn_7100448F44(context, pair's two words); caller fn_7100008554.
+    static void fn_7100368BAC(GfMenuCallContext* context, const ResultPair& pair);
 
     unsigned char pad_8[0x4CA38];
     bool m_initialized;  // isInitialized
@@ -393,7 +435,8 @@ public:
     ::mm::mtl::Bitflag<32> m_layerBits;  // fn_7100368380/fn_7100368418
     LayerGauge m_layerGauge[2];          // fn_7100368498, fn_710036851C, fn_71003686A0
     LayerGimmick m_layerGimmick[3];      // fn_71003687B0
-    unsigned char pad_4CFCC[0x18];
+    unsigned char pad_4CFCC[0x8];
+    ComboRouteState m_comboRoute;  // fn_7100368830, fn_71003688E0, fn_71003689C0
     LayerResult m_layerResult;  // fn_7100368B40
 };
 }  // namespace gf
