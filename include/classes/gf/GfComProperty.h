@@ -8,6 +8,7 @@
 #include "mm/mtl/IntrusivePtr.h"
 #include "mm/mtl/UniquePtr.h"
 namespace gf { class GfTargetProperty; }  // gf/GfTargetProperty.h
+namespace gf { class GfEnvProperty; }  // gf/GfEnvProperty.h
 #include "gf/GfAlphaProperty.h"
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
@@ -30,7 +31,9 @@ public:
     mm::mtl::UniquePtr<gf::GfTargetProperty> m_target;
     // the object's alphas by OBJ_ALPHA (1.0.0's symbols hold UniquePtr<GfAlphaProperty>; GfObjAcc reads it)
     mm::mtl::UniquePtr<gf::GfAlphaProperty> m_alpha;
-    unsigned char pad_28[0x8];  // one more UniquePtr
+    // the ground and water around the object (EnviromentSensor::writeBackProperty writes a GfEnvProperty;
+    // GfEffectGround reads it here; the name is not the original's)
+    mm::mtl::UniquePtr<gf::GfEnvProperty> m_env;
     mm::mtl::UniquePtr<gf::GfDebugStatusProperty> m_debugStatus;  // debug switches (procMsgObjectDamage's)
 };
 }  // namespace gf

@@ -74,10 +74,16 @@ public:
     // code and reads m_caster from `this`. What it does: hands the matrix to the caster's fn_71004B3B78 when there
     // is a caster; gf_game_scene's fn_71002C7DC0 calls it.
     void fn_71004B3B68(const mm::Mat44& mtx);
+    // an effect of the named file placed at the matrix (GfEffectGround's foot step and splashdown effects)
+    void createFromFileName(const mm::Mat44& mtx, const char* fileName) const;
 
     static mm::mtl::RTTI m_rtti;
 
-    unsigned char pad_10[0x40];
+    unsigned char pad_10[0x14];
+    // GfEffectGround emits no foot step effect and keeps the water material while the water at the object is at
+    // least this deep (the name is not the original's)
+    float m_waterDepthLimit;
+    unsigned char pad_28[0x28];
     mm::mtl::FixedVector<PackEntry, 100> m_packs;  // (the name is not the original's)
     EffectCaster* m_caster;  // setupCaster's (the name is not the original's)
     fw::EffectPoint* m_pPoint;  // getEffectPoint's (the name is not the original's)
