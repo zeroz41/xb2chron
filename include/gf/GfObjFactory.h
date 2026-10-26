@@ -12,6 +12,7 @@ public:
     static GF_OBJ_HANDLE* createDriver(GfInitParamDriver& param);
     static GF_OBJ_HANDLE* createBlade(GfInitParamBlade& param);
     static GF_OBJ_HANDLE* createEnemy(GfInitParamEnemy& param);
+    static void destroyObj(GF_OBJ_HANDLE* handle);
 };
 }  // namespace gf
 

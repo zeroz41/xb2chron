@@ -39,6 +39,8 @@ public:
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     mm::mtl::IntrusivePtr<fw::ReferenceFrame> createBoneReferenceFrame(const char* bone);
     void destroyBoneReferenceFrame(const char* bone);
+    // hangs frame on the model's bone (GfMenuModelView::attachObject passes another object's transform frame)
+    void addBoneReferenceFrame(const char* bone, mm::mtl::IntrusivePtr<fw::ReferenceFrame>& frame);
     // whether its object's info asks for the volume fade
     bool isVolumeFadeForUser() const;
     bool isRender() const;

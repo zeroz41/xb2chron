@@ -19,6 +19,8 @@ public:
     // parameters are not the original's)
     const char* getParentName(const char* name);
     mm::Mat44 getOffset(const char* name);
+    int getPointIndex(const char* name) const;  // -1 when it has no point of that name
+    const mm::Mat44& getPointTransform(int index) const;
     void addRef() { ++m_RefCount; }
     // effect_point.h asserts `m_RefCount >= 0` before it drops one (EffectCasterBase's destructor)
     void release() {

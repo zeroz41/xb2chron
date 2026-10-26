@@ -22,6 +22,7 @@ namespace fw { class EffectManager; }
 namespace mm { class Mat44; }
 namespace fw { class UpdateInfo; }
 namespace ml { class IDrDrawWorkInfo; }
+namespace ml { struct VolumeFadeParams; }
 
 namespace fw {
 // effect categories (setCategory hands one to effect::SystemManager::es_set_category)
@@ -83,6 +84,7 @@ public:
     void removeData(EffectData* data);
     // an effect by name, its handle (0 for none)
     unsigned int create(const char* name, EffectPack* pack, const effect::SendParam* param, bool flag);
+    unsigned int create(const char* name, EffectPack* pack, bool flag);
     // the effect library's callbacks: memory from the system and resource allocators ("no name", line 0), the
     // model and debug hooks
     static void* effectAllocSys(void* user, unsigned int size, unsigned int alignment, const char* name, unsigned int line);
@@ -124,6 +126,8 @@ public:
     void remove(EffectCasterBase* caster);
     void removeCaster(EffectCasterBase* caster);
     void dead(unsigned int handle);
+    // copies the volume fade parameters of type into params; false when there are none
+    bool getVolumeFadeParam(unsigned int type, ml::VolumeFadeParams& params);
     void fadeOutDead(unsigned int handle);
     void fadeOutDead(unsigned int handle, unsigned int frames);
     void setDisp(unsigned int handle, bool disp);

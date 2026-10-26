@@ -20,6 +20,18 @@ public:
         syncWorldTransform();
         return m_worldTransform;
     }
+    // m_localTransform to write: it becomes the current one, the world transform and matrix stale (inline: the
+    // name is not the original's; GfMenuModelView::getObjectTransformLocal)
+    Transform& getLocalTransformForWrite() {
+        m_syncFlags = (m_syncFlags & ~7u) | 1;
+        return m_localTransform;
+    }
+    // m_worldTransform to write: it becomes the current one, the local transform and matrix stale (inline: the
+    // name is not the original's; GfMenuModelView::getObjectTransform)
+    Transform& getWorldTransformForWrite() {
+        m_syncFlags = (m_syncFlags & ~7u) | 2;
+        return m_worldTransform;
+    }
 
     unsigned char pad_10[0x10];
     Transform m_localTransform;  // getSyncedWorldTransform copies it to m_worldTransform without a parent
