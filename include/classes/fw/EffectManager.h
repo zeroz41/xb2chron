@@ -4,6 +4,7 @@
 
 #include "classes/fw/ManagerObject.h"
 #include "mm/Mat44.h"
+#include "mm/Vec3.h"
 #include "classes/ml/IScnRender.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "fw/VolumeFadeParams.h"
@@ -72,6 +73,14 @@ public:
     virtual void lastRender(ml::IDrDrawWorkInfo const*);  // slot 13
     virtual void blurRender(ml::IDrDrawWorkInfo const*);  // slot 14
     virtual void finalRender(ml::IDrDrawWorkInfo const*);  // slot 15
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (1.0.0 has commonLoaded then finalize there)
+    // and nothing calls them. Members because they sit among EffectManager's functions and read only its flag bytes.
+    // What they do: fn_710017658C sets pad_2fdb and pad_2fd7 to 1 and pad_2fda to 0; fn_71001765AC is true while
+    // pad_2fdb is 0; fn_71001765C0 sets pad_2fdc to 1; fn_71001765D0 is true while pad_2fdc is 0.
+    void fn_710017658C();
+    bool fn_71001765AC();
+    void fn_71001765C0();
+    bool fn_71001765D0();
     virtual bool finalize();  // overrides a secondary base's (ManagerObject's)
     void addData(EffectData* data);
     // EffectCasterBase's setters hand their values on to these
@@ -85,6 +94,8 @@ public:
     // an effect by name, its handle (0 for none)
     unsigned int create(const char* name, EffectPack* pack, const effect::SendParam* param, bool flag);
     unsigned int create(const char* name, EffectPack* pack, bool flag);
+    // an effect from an effect resource (efb) while there is an effect::SystemManager, its handle (0 for none)
+    unsigned int create(void* efb, bool flag);
     // the effect library's callbacks: memory from the system and resource allocators ("no name", line 0), the
     // model and debug hooks
     static void* effectAllocSys(void* user, unsigned int size, unsigned int alignment, const char* name, unsigned int line);
@@ -93,6 +104,8 @@ public:
     static void effectFreeRes(void* user, void* p);
     static mtl::ALLOC_HANDLE effectSysHandle();
     static mtl::ALLOC_HANDLE effectResHandle();
+    // the effect library's debug file hook: reads path with the resource allocator (0x1000 aligned), its size into size
+    static void* debugReadFile(const char* path, int& size);
     static void debugReadFileEnd(void* data);
     static void debugOutputString(const char* text);
     static void warnOutputString(const char* text);
@@ -115,6 +128,8 @@ public:
     unsigned int createHateArrow();
     // combo ball type (1 on) from the common packs' cmn_010_<type - 1>; 0 for type 0 or none
     unsigned int createComboBall(unsigned int type);
+    // a bond line's ends and count (1..6, 0 counts as 1) by its handle (1..7); other handles do nothing
+    void updateKizunaLine(unsigned int handle, const mm::Vec3& start, const mm::Vec3& end, unsigned int count);
     void destroyHateRing(unsigned int handle);
     void destroyHateRingVec(unsigned int handle);
     void destroyHateArrow(unsigned int handle);
@@ -136,6 +151,8 @@ public:
     void setParamPosOnly(unsigned int handle, const effect::SendParam* param);
     void setParamPosOnly2(unsigned int handle, const effect::SendParam* param);
     void setParam(unsigned int handle, const effect::SendParam* param);
+    // the effect's matrix alone (es_set_param_pos_only with the default parameters)
+    void setMatrix(unsigned int handle, const mm::Mat44& mtx);
     // GfComEffectCaster::setCaster passes its caster and 1.0f (the names of the parameters are not the original's)
     void setParam(unsigned int handle, EffectCasterBase* caster, float rate);
     int getDeadFlag(unsigned int handle);
@@ -175,15 +192,36 @@ public:
     // set when finalize starts, cleared once update's pending commonLoaded succeeds; update and the renders skip
     // while it is set (the name is not the original's)
     bool m_inactive;
-    unsigned char pad_2fd7[0x1];
+    unsigned char pad_2fd7;  // fn_710017658C sets it (byte loads: not a bool)
     // stored by fn_710017CB08 (GfManager::fn_710032A1FC hands it on), cleared by the constructor; nothing in this
     // unit reads it (the name is not the original's)
     bool m_gfManagerFlag;
-    unsigned char pad_2fd9[0x7];
+    unsigned char pad_2fd9;
+    unsigned char pad_2fda;  // fn_710017658C clears it
+    unsigned char pad_2fdb;  // fn_710017658C sets it, fn_71001765AC tests it
+    unsigned char pad_2fdc;  // fn_71001765C0 sets it, fn_71001765D0 tests it
+    unsigned char pad_2fdd[0x3];
     // the volume fade (vanish) parameters by gf::VFEFF, each from its effect/common/vanish/<VolumeName>.dprm
     // (BTL_VolumeFade's rows; gf::GfVolumeFade reads them)
     VolumeFadeParams* m_volumeFadeParams[32];
-    unsigned char pad_30e0[0x34878];
+    unsigned char pad_30e0[0x32300];
+    // one bond (kizuna) line effect: createKizunaLine takes the first of works 1..7 whose byte at 0x459 is clear (work
+    // 0 stays unused: handle 0 is none); updateKizunaLine sets its two ends and its count (the names are not the
+    // original's)
+    struct KizunaWork {
+        void init();
+        void term();
+        void update();
+
+        unsigned char pad_0[0x4];
+        unsigned int m_count;  // updateKizunaLine keeps it within 1..6
+        unsigned char pad_8[0x8];
+        mm::Vec3 m_start;
+        mm::Vec3 m_end;
+        unsigned char pad_30[0x440];
+    };
+    KizunaWork m_kizunaWorks[8];  // 0x353E0, by handle (the name is not the original's)
+    unsigned char pad_37760[0x1F8];
     // an effect speed per category: apply hands each to effect::SystemManager::setCategorySpd, gf::MapEff::update
     // sets category 1's from the frame's update speed (the name is not the original's)
     float m_categorySpeed[8];

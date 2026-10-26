@@ -1,3 +1,5 @@
+#include "classes/effect/SystemManager.h"
+#include "classes/fw/EffectManager.h"
 #include "classes/fw/EffectCasterSend.h"
 #include "classes/effect/SystemManager.h"
 #include "classes/fw/EffectManager.h"
@@ -221,6 +223,44 @@ mtl::ALLOC_HANDLE EffectManager::effectResHandle() {
     return get()->m_resHandle;
 }
 
+void EffectManager::remove(EffectCasterBase* caster) {
+    effect::SystemManager* mgr = effect::SystemManager::getPtr();
+    EffectCasterSend* send = nullptr;
+    for (unsigned long i = 0; i < 32; ++i) {
+        for (CasterGroup::iterator it = m_casterGroups[i].begin(); it != m_casterGroups[i].end(); ++it) {
+            if (it->m_caster == caster) {
+                send = &*it;
+                goto found;
+            }
+        }
+    }
+found:
+    mgr->es_remove_cas(send);
+}
+
+unsigned int EffectManager::create(const char* name, EffectPack* pack, bool flag) {
+    void* efb = search(name, pack);
+    if (efb == nullptr) {
+        return 0;
+    }
+    return create(efb, flag);
+}
+
+unsigned int EffectManager::create(void* efb, bool flag) {
+    if (effect::SystemManager::getPtr() == nullptr) {
+        return 0;
+    }
+    return effect::SystemManager::getPtr()->es_create(efb, flag);
+}
+
+unsigned int EffectManager::create(const char* name, EffectPack* pack, const effect::SendParam* param, bool flag) {
+    void* efb = search(name, pack);
+    if (efb == nullptr) {
+        return 0;
+    }
+    return effect::SystemManager::getPtr()->es_create(efb, param, flag);
+}
+
 void EffectManager::debugReadFileEnd(void* data) {
     if (data != nullptr) {
         mtl::MemManager::deallocate(data, 0, false);
@@ -326,6 +366,17 @@ unsigned int EffectManager::createComboBall(unsigned int type) {
     return effect::SystemManager::getPtr()->es_create(efb, true);
 }
 
+void EffectManager::updateKizunaLine(unsigned int handle, const mm::Vec3& start, const mm::Vec3& end,
+                                     unsigned int count) {
+    if (handle - 1 < 7) {
+        KizunaWork& work = m_kizunaWorks[handle];
+        work.m_start = start;
+        unsigned int n = count == 0 ? 1 : count;
+        work.m_end = end;
+        work.m_count = n < 7 ? n : 6;
+    }
+}
+
 void EffectManager::destroyHateRing(unsigned int handle) {
     if (handle != 0) {
         effect::SystemManager::getPtr()->es_fade_core(nullptr, handle, -1);
@@ -389,6 +440,24 @@ void EffectManager::deleteMdl(void* mdl) {
 
 void EffectManager::fn_7100179D30(bool flag) {
     effect::SystemManager::getPtr()->fn_710083FF24(flag);
+}
+
+void EffectManager::fn_710017658C() {
+    pad_2fdb = 1;
+    pad_2fd7 = 1;
+    pad_2fda = 0;
+}
+
+bool EffectManager::fn_71001765AC() {
+    return pad_2fdb == 0;
+}
+
+void EffectManager::fn_71001765C0() {
+    pad_2fdc = 1;
+}
+
+bool EffectManager::fn_71001765D0() {
+    return pad_2fdc == 0;
 }
 
 void EffectManager::fn_710017CB08(bool flag) {
