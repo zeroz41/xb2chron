@@ -22,6 +22,8 @@ public:
     static void build(const GfSetupParam& param);
     static void destroy();
     static void callTargetAccess(GF_OBJ_HANDLE*);
+    static void callGameObjEnter(GF_OBJ_HANDLE* handle);  // GfGameObj::flushEvent: an object entered the game
+    static void callGameObjLeave(GF_OBJ_HANDLE* handle);  // GfGameObj::flushEvent: an object left the game
     static void callItemAdd(unsigned int item, int count);  // count of the item gained (or lost)
     static void callTargetChange(GF_OBJ_HANDLE*);
     // a party driver's object entering (true) or leaving (false) the game, with its setup's party id
