@@ -71,7 +71,9 @@ struct ItemProperty {
     // the game condition (GfGameCond::isGameCond) the item needs; 0: none (GfMenuHanaAdapter::isMakeParts; the name
     // is not the original's)
     unsigned short m_condition;
-    unsigned char pad_72[0x3];
+    // type 19: what GfMenuItemList::fn_7100377F28 sorts by (the name is not the original's)
+    unsigned short m_partsSortKey;
+    unsigned char pad_74[0x1];
     unsigned char m_role;    // update_roleText: the FP text row (0: none)
     unsigned char m_pArmor;  // update_PArmor
     unsigned char m_eArmor;  // update_EArmor

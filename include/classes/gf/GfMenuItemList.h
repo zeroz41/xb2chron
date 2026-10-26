@@ -116,6 +116,16 @@ public:
     void fn_7100377F28(unsigned int order);
     void fn_7100378144(unsigned int order);
     void fn_710037835C(unsigned int order);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because only fn_710037835C calls
+    // it, once per item. What it does: the key fn_710037835C sorts by: for items of types 2, 3, 18 and 20 (type 9:
+    // of the item its ItemProperty::m_enhance names) whose m_enhance2 row has an effect, that effect's
+    // GfBdatBtl::fn_71001E80D0 value (0 when it is s_firstEnhanceSortKey); else 24.
+    static unsigned int fn_7100378524(const MenuItemInfo& item);
+    // the key value fn_7100377F28 / fn_7100378144 / fn_710037835C put first (their order argument). Proposed names,
+    // not the original's: the symbols leave them unnamed (lbl_7100EA70C0, lbl_7100EA70BC, lbl_7100EA70B8)
+    static unsigned int s_firstEnhanceSortKey;
+    static unsigned int s_firstRole;
+    static unsigned int s_firstPartsSortKey;
     // the rarity the rarity sorts read: none for types 6, 14 and 15 (1.0.0 has it out of line; 3.0.1 inlines it)
     static unsigned int getSortRarity(const MenuItemInfo& item) {
         switch (item.m_type) {

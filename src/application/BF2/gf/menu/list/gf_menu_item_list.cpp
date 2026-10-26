@@ -775,4 +775,52 @@ bool GfMenuItemList::sortIdDescending(const MenuItemInfo& a, const MenuItemInfo&
     return a.m_id > b.m_id;
 }
 
+// Proposed names, not the original's: the symbols leave them unnamed (lbl_7100EA70B8, lbl_7100EA70BC, lbl_7100EA70C0)
+unsigned int GfMenuItemList::s_firstEnhanceSortKey;
+unsigned int GfMenuItemList::s_firstRole;
+unsigned int GfMenuItemList::s_firstPartsSortKey;
+
+void GfMenuItemList::fn_7100378144(unsigned int order) {
+    s_firstRole = order;
+    unsigned int* keys = new (getAllocator(ALLOCATOR(0)), nullptr, 0, 8) unsigned int[static_cast<unsigned int>(getSize())];
+    for (unsigned int i = 0; i < getSize(); i++) {
+        const MenuItemInfo& item = getContents(i);
+        ItemProperty prop;
+        GfItemUtil::getProperty(prop, item.m_id, 0);
+        unsigned int key = 4;
+        if (item.m_type == 16 && prop.m_role != 0) {
+            key = prop.m_role == s_firstRole ? 0 : prop.m_role;
+        }
+        keys[i] = key;
+        getContents(i).m_sortIndex = i;
+    }
+    UIListInfo<MenuItemInfo>::sort([keys](const MenuItemInfo& a, const MenuItemInfo& b) {
+        unsigned int keyA = keys[a.m_sortIndex];
+        unsigned int keyB = keys[b.m_sortIndex];
+        if (keyA == keyB) {
+            return sortNameAscending(a, b);
+        }
+        return keyA < keyB;
+    });
+    delete[] keys;
+}
+
+void GfMenuItemList::fn_710037835C(unsigned int order) {
+    s_firstEnhanceSortKey = order;
+    unsigned int* keys = new (getAllocator(ALLOCATOR(0)), nullptr, 0, 8) unsigned int[static_cast<unsigned int>(getSize())];
+    for (unsigned int i = 0; i < getSize(); i++) {
+        keys[i] = fn_7100378524(getContents(i));
+        getContents(i).m_sortIndex = i;
+    }
+    UIListInfo<MenuItemInfo>::sort([keys](const MenuItemInfo& a, const MenuItemInfo& b) {
+        unsigned int keyA = keys[a.m_sortIndex];
+        unsigned int keyB = keys[b.m_sortIndex];
+        if (keyA == keyB) {
+            return sortNameAscending(a, b);
+        }
+        return keyA < keyB;
+    });
+    delete[] keys;
+}
+
 }  // namespace gf
