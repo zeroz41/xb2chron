@@ -541,12 +541,9 @@ application/BF2/framework/ManagerRegister.cpp:
 	.data        start:0x00B41DE0 end:0x00B41E70
 
 application/BF2/framework/MemHandlebaseAllocator.cpp:
-	.text        start:0x0018FB4C end:0x0018FC64
-	.data        start:0x00B41E70 end:0x00B420C8
-
-application/BF2/framework/SysAllocator.cpp:
-	.text        start:0x0018FC64 end:0x0018FCA4
+	.text        start:0x0018FB4C end:0x0018FCA4
 	.rodata      start:0x009815AE end:0x00981601
+	.data        start:0x00B41E70 end:0x00B420C8
 
 application/BF2/framework/FrameworkMemory.cpp:
 	.text        start:0x0018FCA4 end:0x001907B4
