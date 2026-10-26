@@ -30,6 +30,7 @@ public:
 
     static const Vec4 zero;
     static const Vec4 unit;  // (1, 1, 1, 1): anm's samplers give a QsTransform it as its scale
+    static const Vec4 unitY;  // (0, 1, 0, 0): skd::PlaneCollObj starts as it
 } __attribute__((aligned(16)));
 
 }  // namespace mm

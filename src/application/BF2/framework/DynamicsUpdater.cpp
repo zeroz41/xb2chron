@@ -83,7 +83,7 @@ void DynamicsUpdater::update(const UpdateInfo& info) {
             m_transform = transform;
         }
         m_pDynamics->update(info.m_deltaTime * m_timeScale);
-        anm::Pose* pose = m_pDynamics->m_pPose;
+        anm::Pose* pose = m_pDynamics->m_packet.m_pBindPose;
         pose->syncLocalSpace();
         pose->syncModelSpace();
     }

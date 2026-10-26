@@ -68,7 +68,7 @@ void GfComDynamics::setup(const SetupInfo& info) {
 
     skd::Dynamics* dynamics =
         skd::Factory::createDynamics(colObj, *info.res->m_pSolvers, *pose, m_force.get(), getAllocator(ALLOCATOR(0)));
-    dynamics->m_level = info.level;
+    dynamics->m_packet.m_level = info.level;
 
     if (fw::DyanmicsManager* manager = fw::DyanmicsManager::get()) {
         unsigned int layer = getLayer();
@@ -103,7 +103,7 @@ void GfComDynamics::applyAttribute() {
         dynamics->m_paramA = 0.1f;
         dynamics->m_paramB = 0.0f;
     }
-    dynamics->m_level = (attribute & 0x40) != 0 || m_forceHighLevel ? 30 : m_level;
+    dynamics->m_packet.m_level = (attribute & 0x40) != 0 || m_forceHighLevel ? 30 : m_level;
 }
 
 void GfComDynamics::cleanup() {
