@@ -2,14 +2,21 @@
 #define CLASSES_GMK_GMKANTIBLADEAREAMANAGER_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "mm/mtl/IntrusiveList.h"
 
-namespace gmk { class GmkAntiBladeAreaManager; }
+namespace gmk { class GmkAntiBladeAreaManager; class GmkAntiBladeArea; }
 
 namespace gmk {
 // table 0x7100B519B8
 class GmkAntiBladeAreaManager : public ::mm::mtl::PtrSingleton< ::gmk::GmkAntiBladeAreaManager> {
 public:
     virtual ~GmkAntiBladeAreaManager();  // slot 0
+    void dispose();
+    // the areas addGmk registered (GfFieldGimmick's constructor builds it; the name is not the original's)
+    ::mm::mtl::IntrusiveListBase m_areas;
+    // the area the player is in, none outside every area (GfFieldGimmick::getBdatIdOfActiveGmkAntiBladeArea reads
+    // its row id; the name is not the original's)
+    GmkAntiBladeArea* m_active;
 };
 }  // namespace gmk
 

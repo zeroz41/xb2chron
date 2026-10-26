@@ -18,6 +18,8 @@ public:
     static void setDispByGmkTypeAndGmkIdx(gmk::GmkType type, unsigned int idx, bool flag);
     static void setDispByGmkTypeAndBdatId(gmk::GmkType type, int bdatId, bool flag);
     static bool getGmkTargetPointPos(mm::Vec3& pos, gf::GF_OBJ_HANDLE* handle);
+    // whether the game can be saved at a point (GfFieldGimmick::update asks it for the player's position)
+    static bool isPointSavable(const mm::Vec3& pos);
     static bool getGmkTargetPointPos(mm::Vec3& pos, unsigned int id);
     // SCOM_ADD_DEVELOP's request passes its second value, then its first
     static void addDevelopPoint(unsigned int, unsigned int);

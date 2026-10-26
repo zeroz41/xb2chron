@@ -49,6 +49,8 @@ AGmkBase* getBindedGmkInst(gf::GF_OBJ_HANDLE* handle);
 // whether the player's object exists (defined in GmkElevator.cpp's unit; StateFieldHome::isCondMatch is its tail
 // call)
 bool isPlayerExist();
+// the player's position (GfFieldGimmick::update hands it to GfGameUtil::isPointSavable)
+const mm::Vec3& getPlayerPos();
 // the current map's FLD_maplist id (defined in GmkElevator.cpp's unit)
 int getCurrentMapBdatId();
 // show or hide the gimmicks of a type: all of them, the one of a BDAT row, the one of a gimmick set's index (defined

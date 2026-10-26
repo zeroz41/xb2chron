@@ -18,8 +18,11 @@ public:
     // its size: the element size of Vector<BdatInfo>::resize 0x710062A048 (zero-filled)
     class BdatInfo {
     public:
-        unsigned char pad_0[0x2];
+        // its row's id (GfFieldGimmick::getBdatIdOfActiveGmkAntiBladeArea returns it; the name is not the
+        // original's)
+        unsigned short m_bdatId;
     };
+    const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_bdatInfo); }
     virtual ~GmkAntiBladeArea();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4

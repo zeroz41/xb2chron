@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKACCMANAGER_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "mm/mtl/IntrusiveList.h"
 
 namespace gmk { class GmkAccManager; }
 namespace gmk { class IGmkList; }
@@ -13,6 +14,10 @@ public:
     virtual ~GmkAccManager();  // slot 0
     // drops the accesses to a list's gimmicks (TGmkList::dispose calls it first)
     static void invalidateAccs(const IGmkList& list);
+    void update();
+    // two lists GfFieldGimmick's constructor builds (the names are not the original's)
+    ::mm::mtl::IntrusiveListBase m_list0;
+    ::mm::mtl::IntrusiveListBase m_list1;
 };
 }  // namespace gmk
 

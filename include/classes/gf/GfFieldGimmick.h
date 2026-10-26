@@ -2,15 +2,42 @@
 #define CLASSES_GF_GFFIELDGIMMICK_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "classes/gf/IGfEvent.h"
+#include "classes/gf/IGfObjListener.h"
+#include "classes/gmk/GmkManager.h"
+#include "classes/gmk/GmkAccManager.h"
+#include "classes/gmk/GmkDoorPhantomManager.h"
+#include "classes/gmk/GmkDmgPhantomManager.h"
+#include "classes/gmk/GmkAntiBladeAreaManager.h"
+#include "classes/gmk/GmkCtrlVolSeManager.h"
 
-namespace gf { class GfSetupParam; class MapjumpCallbackInfo; class GF_OBJ_HANDLE; enum GEV : int; enum RELOAD_BDAT : int; }
+namespace gf { class GfSetupParam; class MapjumpCallbackInfo; class GF_OBJ_HANDLE; enum GEV : int; enum RELOAD_BDAT : int; enum ActivateType : int; }
 namespace fw { class UpdateInfo; }
+
+namespace gf {
+// the mob slots (GfFieldGimmick holds one at 0xF940; its update and createMobInfos are gf_field_gimmick's)
+class GfMobSlotManager {
+public:
+    void update();
+};
+}  // namespace gf
 
 namespace gf {
 // static helpers of gf_field_gimmick.cpp (only the ones gf_field_locator calls are declared)
 // a PtrSingleton: GfPlayComEventFade reaches it through PtrSingleton<GfFieldGimmick>::sys()
-class GfFieldGimmick : public ::mm::mtl::PtrSingleton< ::gf::GfFieldGimmick> {
+// table 0x7100B51738; bases at 0x8 (IGfObjListener) and 0x10 (IGfEvent)
+class GfFieldGimmick : public ::mm::mtl::PtrSingleton< ::gf::GfFieldGimmick>, public ::gf::IGfObjListener, public ::gf::IGfEvent {
 public:
+    GfFieldGimmick(const GfSetupParam& param);
+    virtual ~GfFieldGimmick();  // slot 0
+    virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 2
+    virtual void gevMapjump(gf::GEV, gf::MapjumpCallbackInfo const&);  // slot 3
+    virtual void gevBladeActivate(unsigned int, gf::ActivateType, gf::ActivateType);  // slot 4
+    // IGfEvent's slot 36 (its thunk sits there in the IGfEvent part of the table); new in 3.0.1
+    virtual void gevPlayEvent(gf::GEV, unsigned int);  // slot 5
+    // 1.0.0's out-of-line members, inline in 3.0.1 (its constructor and destroy hold their code)
+    void initialize(const GfSetupParam& param);
+    void finalize();
     // the FLD_maplist id of the map an RSC_GmkSetList row belongs to
     static int getBdatIdFrom_RSC_GmkSetList_To_FLD_maplist(int gmkSetId);
     static int getBdatIdFrom_FLD_maplist_To_RSC_GmkSetList(int mapId);
@@ -18,7 +45,7 @@ public:
     // whether the map's gimmick sets are ready (GfAutoTalkManager::seqInit waits for it)
     static bool isGmkSetReady();
     // SCOM_CREATE_GMK_SET / SCOM_DESTROY_GMK_SET's exec pass their gimmick set id
-    static void createGmkSet(int gmkSetId);
+    static bool createGmkSet(int gmkSetId);
     static void disposeGmkSet(int gmkSetId);
     // GfFieldManager's forwards (its initialize, finalize and update call them)
     static void build(const GfSetupParam& param);
@@ -29,13 +56,36 @@ public:
     // (it sits before createGmkSet). What it does: nothing (a bare return); GfFieldManager::postUpdate calls it last,
     // passing its fw::UpdateInfo.
     static void fn_710026B74C(const fw::UpdateInfo& info);
-    unsigned char pad_8[0xF4A4];
+    unsigned char pad_18[0x8];
+    gmk::GmkManager m_gmkMgr;  // 0x20 (the name is not the original's)
+    unsigned char pad_F3A0[0x10];
+    gmk::GmkAccManager m_accMgr;  // 0xF3B0 (the names of the managers are not the original's)
+    gmk::GmkDoorPhantomManager m_doorPhantomMgr;  // 0xF3E8
+    gmk::GmkDmgPhantomManager m_dmgPhantomMgr;  // 0xF418
+    unsigned char pad_F428[0x30];
+    gmk::GmkAntiBladeAreaManager m_antiBladeAreaMgr;  // 0xF458
+    gmk::GmkCtrlVolSeManager m_ctrlVolSeMgr;  // 0xF480
+    unsigned char pad_F4A0[0x8];
+    // set by initialize, cleared by finalize (1.0.0's isInitialized returns it; the name is not the original's)
+    bool m_initialized;  // 0xF4A8
+    unsigned char pad_F4A9[0x3];
     // an event fade is running: GfPlayComEventFade's update sets it as it starts the fade, its end() clears it
     // (the name is not the original's)
     bool m_eventFade;
-    unsigned char pad_F4AD[0x9C4];
-    // GfGameManager::isEnableOpenMainMenu answers false while it is clear (the name is not the original's)
+    // during an event fade: set once the gimmick manager's immediate update has gone through, then the view is
+    // waited for (update; the names are not the original's)
+    bool m_fadeGmkUpdated;  // 0xF4AD
+    // the view is valid, or 10 seconds of the fade have passed (update)
+    bool m_fadeViewReady;  // 0xF4AE
+    unsigned char pad_F4AF[0x1];
+    float m_fadeTime;  // 0xF4B0: the fade's time so far (update adds each frame's step)
+    unsigned char pad_F4B4[0x48C];
+    GfMobSlotManager m_mobSlotMgr;  // 0xF940
+    unsigned char pad_F941[0x530];
+    // GfGameManager::isEnableOpenMainMenu answers false while it is clear; update sets it to whether the player's
+    // position is savable (GfGameUtil::isPointSavable; the name is not the original's)
     bool m_enableOpenMainMenu;
+    unsigned char pad_FE72[0xE];
 };
 }  // namespace gf
 

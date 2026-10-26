@@ -14,7 +14,16 @@ namespace gmk {
 class GmkManager : public ::mm::mtl::PtrSingleton< ::gmk::GmkManager> {
 public:
     virtual ~GmkManager();  // slot 0
+    // whether create has run and dispose has not (GfFieldGimmick checks it before every call)
+    bool isValid() const;
+    void dispose();
+    // builds a gimmick set (an RSC_GmkSetList row) in that memory at a position and rotation
+    void createGmkSet(mtl::ALLOC_HANDLE handle, int bdatId, const mm::Vec3& pos, float rot);
+    void disposeGmkSet(int bdatId);
     bool isGmkSetsReady() const;
+    void update(float dt);
+    bool updateImmediate();
+    bool isValidView() const;
     AGmkBase* findFirstGmkInstByBdatId(GmkType type, int bdatId) const;
     // the RSC_GmkSetList row of the first gimmick set holding a gimmick of this type and id (<= 0: none)
     int findFirstBdatId_RSC_GmkSetList(GmkType type, int bdatId) const;
