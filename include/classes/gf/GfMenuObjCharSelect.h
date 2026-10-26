@@ -10,14 +10,11 @@ namespace gf { class GfMenuCallContext; class GfMenuDriverList; class GfMenuBlad
 namespace ui { class UIListInfoBase; class UIObjectAcc; struct EventData; }
 
 namespace gf {
-// the flags the character select shares with the status windows (proposed name, not the original's: the symbols
-// leave it unnamed, lbl_7100EAA1D8). The constructor clears the first two as one halfword; getCharBusy reads the
-// first; 1.0.0's GfMenuObjCmnStatus open/close/swapDrStatus use the second and open/close/swapBlStatus the third
+// the character select's move flags (proposed name, not the original's: the symbols leave it unnamed, lbl_7100EAA1D8).
+// The constructor clears both as one halfword (one object: the code reaches the second through the first's address)
 struct CharSelectFlags {
-    bool m_charBusy;      // a character move runs (the move listeners clear it when it ends)
-    bool m_drStatusOpen;  // the names are not the original's
-    bool m_blStatusOpen;
-    unsigned char pad_3;
+    bool m_charBusy;    // a character move runs (the move listeners clear it when it ends; getCharBusy)
+    bool m_selectBusy;  // 1.0.0 getSelectBusy (dropped in 3.0.1) reads it: seqWaitSelect waits while it is set
 };
 
 // table 0x7100B60F20; the party screen's character select (its object 0x61)
@@ -49,10 +46,14 @@ public:
     virtual void update();  // slot 4
     static bool getCharBusy();
     static void returnSubMenu();
+    static void execCharPosScale(unsigned int);
+    bool seqConfSpecialWaitError();
     // 1.0.0's names, called where 3.0.1 calls fn_71003D0F84 and fn_71003D0FF8 (GfMenuObjHanaSubmenu's listeners)
     static void dispOnChar(unsigned int);
     static void dispOffChar(unsigned int);
     static bool attach(GfMenuCallContext* context);
+    void updateSpecialOperation();
+    bool seqWaitSelect();
     bool seqStreamWaitStatDr();
     bool seqStreamWaitStatBl();
     bool seqStreamWaitStatDrBefore();

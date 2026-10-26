@@ -1,4 +1,5 @@
 #include "classes/gf/GfMenuObjCharSelect.h"
+#include "classes/gf/GfMenuObjCharSelect.h"
 #include "classes/gf/GfMenuObjCharSelect/MainListener.h"
 #include "classes/gf/GfMenuObjCharSelect/CharListener.h"
 #include "classes/gf/GfMenuObjCharSelect/SubMenuListener.h"
@@ -18,6 +19,7 @@
 #include "classes/gf/GfMenuBladeList.h"
 #include "classes/ui/UIManager.h"
 #include "classes/ui/UIObjectAcc.h"
+#include "classes/gf/GfMenuManager.h"
 
 namespace gf {
 
@@ -90,6 +92,15 @@ bool GfMenuObjCharSelect::seqStreamWaitStatBlBefore() {
     return true;
 }
 
+bool GfMenuObjCharSelect::seqConfSpecialWaitError() {
+    if (GfMenuManager::isOpenCommonWindow()) {
+        return false;
+    }
+    m_seq.addJob(&GfMenuObjCharSelect::seqReturn);
+    pad_6C0 = false;
+    return true;
+}
+
 bool GfMenuObjCharSelect::seqSpHomuraToHikari() {
     GfGameUtil::changeHikariCurrent(true);
     return true;
@@ -124,6 +135,15 @@ void GfMenuObjCharSelect::returnSubMenu() {
             ui::EventData event;
             event.m_type = 0x104;
             ui::UIManager::get()->requestObjectEvent(handle, event, 0.0f);
+        }
+    }
+}
+
+void GfMenuObjCharSelect::execCharPosScale(unsigned int param) {
+    unsigned int handle = GfMenuObject::getAttachedObject(0x61);
+    if (ui::UIObjectAcc(handle).m_object != nullptr) {
+        if (!ui::UIObjectAcc(handle).isTerm()) {
+            requestEvent(handle, 0x109, param);
         }
     }
 }
