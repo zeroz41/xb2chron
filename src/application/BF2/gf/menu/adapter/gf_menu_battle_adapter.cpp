@@ -1,4 +1,9 @@
+#include "classes/btl/DataManager.h"
 #include "classes/gf/GfMenuBattleAdapter.h"
+#include "btl/Utility.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/DataParamAcc.h"
+#include "ui/uiDateTime.h"
 #include "classes/gf/GfMenuReference.h"
 #include "classes/gf/GfGameParty.h"
 #include "gf/GfMenuBdat.h"
@@ -163,6 +168,21 @@ bool GfMenuBattleAdapter::update_ArtsSlotInfo() {
     return arts != 0;
 }
 
+bool GfMenuBattleAdapter::update_ArtsFightComboIcon() {
+    const GfMenuReference::ArtsPaletteInfo* info = GfMenuReference::getArtsPaletteInfo(m_index);
+    btl::ARTS_DATA data;
+    unsigned short arts = info->m_artsId;
+    if (arts == 0) {
+        return false;
+    }
+    btl::Utility::GetArtsData(static_cast<btl::ARTS_DATA::DATA_TYPE>(0), arts, data);
+    if (data.m_fightCombo == 0) {
+        return false;
+    }
+    setNumber(data.m_fightCombo - 1);
+    return true;
+}
+
 bool GfMenuBattleAdapter::update_ChainCount() {
     setNumber(GfMenuReference::getChainNum());
     return true;
@@ -196,6 +216,11 @@ bool GfMenuBattleAdapter::update_ChainAttackCount() {
 
 bool GfMenuBattleAdapter::update_ChainAttackDamageRatio() {
     setNumber(GfMenuReference::getChainAttackDamageRatio() * 100.0f);
+    return true;
+}
+
+bool GfMenuBattleAdapter::fn_71003331F8() {
+    setNumber(GfMenuReference::fn_7100367380());
     return true;
 }
 
@@ -243,6 +268,177 @@ bool GfMenuBattleAdapter::update_ReverseIconCol() {
     } else {
         setColor("gray");
     }
+    return true;
+}
+
+bool GfMenuBattleAdapter::fn_7100333434() {
+    if (!GfGameManager::fn_71002AC580()) {
+        return false;
+    }
+    setNumber(GfGameManager::fn_71002AC5D8()->m_value2C);
+    return true;
+}
+
+bool GfMenuBattleAdapter::fn_7100333474() {
+    if (!GfGameManager::fn_71002AC580()) {
+        return false;
+    }
+    setNumber(GfGameManager::fn_71002AC5D8()->m_value28);
+    return true;
+}
+
+bool GfMenuBattleAdapter::fn_71003334B4() {
+    if (!GfGameManager::fn_71002AC580()) {
+        return false;
+    }
+    setNumber(GfGameManager::fn_71002AC5D8()->m_value1C);
+    return true;
+}
+
+bool GfMenuBattleAdapter::fn_71003334F4() {
+    if (!GfGameManager::fn_71002AC580()) {
+        return false;
+    }
+    unsigned int index = m_index;
+    GfGameManager::fn_71002AC5D8();
+    if (index < 3) {
+        const GfGameManager::BattleChallengeRecord* record = GfGameManager::fn_71002AC5D8();
+        setNumber(record->m_ratios[m_index] * 100.0f);
+        return true;
+    }
+    return false;
+}
+
+bool GfMenuBattleAdapter::fn_710033355C() {
+    if (!GfMenuObjUtil::fn_710048FD30(1)) {
+        return false;
+    }
+    setNumber(GfMenuReference::fn_710036742C() * 100.0f);
+    return true;
+}
+
+bool GfMenuBattleAdapter::fn_71003335AC() {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return false;
+    }
+    int number;
+    int current = GfMenuReference::fn_710036805C();
+    if (m_index == current) {
+        number = GfMenuReference::fn_7100367FDC() * 100.0f;
+    } else if (m_index > current) {
+        number = 0;
+    } else {
+        number = getNumberMax();
+    }
+    setNumber(number);
+    return number > 0;
+}
+
+bool GfMenuBattleAdapter::fn_7100333630() {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return false;
+    }
+    setNumber(GfMenuReference::fn_710036805C());
+    return true;
+}
+
+bool GfMenuBattleAdapter::fn_7100333674() {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return false;
+    }
+    return GfMenuReference::fn_7100368418(3);
+}
+
+bool GfMenuBattleAdapter::fn_71003336A0() {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return false;
+    }
+    setNumber(GfMenuReference::fn_71003686A0(0)->m_ratio * 100.0f);
+    return GfMenuReference::fn_7100368418(4);
+}
+
+bool GfMenuBattleAdapter::fn_7100333700() {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return false;
+    }
+    setNumber(GfMenuReference::fn_71003686A0(1)->m_count);
+    return GfMenuReference::fn_7100368418(4);
+}
+
+bool GfMenuBattleAdapter::fn_7100333750() {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return false;
+    }
+    setNumber(GfMenuReference::fn_71003686A0(0)->m_count);
+    return GfMenuReference::fn_7100368418(4);
+}
+
+bool GfMenuBattleAdapter::fn_71003337A0() {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return false;
+    }
+    unsigned int id = GfMenuReference::fn_71003687B0(m_index)->m_gimmickId;
+    if (id == 0) {
+        return false;
+    }
+    DataParamAcc acc(3, id, static_cast<GimmickType>(0));
+    if (!acc.isValid()) {
+        return false;
+    }
+    int face = GfMenuObjUtil::getFaceIconID(acc);
+    if (face == 0) {
+        return false;
+    }
+    setNumber(GfMenuBdat::getIconImageIndex(face));
+    return true;
+}
+
+bool GfMenuBattleAdapter::fn_710033383C() {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return false;
+    }
+    const GfMenuReference::LayerGimmick* gimmick = GfMenuReference::fn_71003687B0(m_index);
+    setNumber(gimmick->m_ratio * 100.0f);
+    return gimmick->m_ratio > 0.0f;
+}
+
+bool GfMenuBattleAdapter::fn_71003338A0() {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return false;
+    }
+    DataParamAcc acc(3, GfMenuReference::fn_71003687B0(m_index)->m_gimmickId, static_cast<GimmickType>(0));
+    if (!acc.isValid()) {
+        return false;
+    }
+    setText(GfMenuObjUtil::getName(acc));
+    return true;
+}
+
+bool GfMenuBattleAdapter::fn_7100333934() {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return false;
+    }
+    DataParamAcc acc(3, GfMenuReference::fn_71003687B0(m_index)->m_gimmickId, static_cast<GimmickType>(0));
+    if (!acc.isValid()) {
+        return false;
+    }
+    setNumber(GfMenuBdat::getIconImageIndex(static_cast<unsigned short>(acc.getAttribute(-1, false) + 158)));
+    return true;
+}
+
+bool GfMenuBattleAdapter::fn_71003339D0() {
+    setNumber(GfMenuReference::fn_7100368B40()->m_number);
+    return true;
+}
+
+bool GfMenuBattleAdapter::fn_7100333A00() {
+    setNumber(GfMenuReference::fn_7100368B40()->m_ratio * 100.0f);
+    return true;
+}
+
+bool GfMenuBattleAdapter::fn_7100333A40() {
+    const GfMenuReference::LayerResult* result = GfMenuReference::fn_7100368B40();
+    setNumber(static_cast<unsigned int>(m_index) < 3 ? result->m_numbers[m_index] : 0);
     return true;
 }
 

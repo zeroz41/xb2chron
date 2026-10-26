@@ -219,6 +219,39 @@ public:
     static float fn_71003673C8();
     static void fn_71003673F0(float ratio);
     static float fn_710036742C();
+    // Records the layer-3 battle menu reads (the names and their fields' names are not the original's).
+    // fn_71003686A0's: two 8-byte records at 0x4CFA4 of the instance (a zeroed static one when the index is 2 or
+    // more, there is no instance or menu layer 3 is not up).
+    struct LayerGauge {
+        float m_ratio;          // GfMenuBattleAdapter::fn_71003336A0 shows it in percent
+        unsigned char m_count;  // GfMenuBattleAdapter::fn_7100333700/fn_7100333750 show it (0..5)
+        unsigned char pad_5[0x3];
+    };
+    // fn_71003687B0's: three 8-byte records at 0x4CFB4 of the instance (a zeroed static one otherwise)
+    struct LayerGimmick {
+        unsigned int m_gimmickId;  // a type-3 DataParamAcc's id (face icon, name, attribute icon)
+        float m_ratio;             // GfMenuBattleAdapter::fn_710033383C shows it in percent
+    };
+    // fn_7100368B40's: the record at 0x4CFE4 of the instance (a zeroed static one without the instance)
+    struct LayerResult {
+        unsigned int m_number;      // GfMenuBattleAdapter::fn_71003339D0 (0..999)
+        float m_ratio;              // GfMenuBattleAdapter::fn_7100333A00, in percent
+        unsigned int m_numbers[3];  // GfMenuBattleAdapter::fn_7100333A40, by m_index
+    };
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because they sit among this
+    // class's accessors in gf_menu_reference and read its singleton's fields (all but fn_7100368B40 only while
+    // GfMenuObjUtil::fn_710048FD30(3), menu layer 3, holds). What they do: fn_7100367FDC returns the float at
+    // 0x4CF64 (0 otherwise; GfMenuBattleAdapter::fn_71003335AC shows it in percent); fn_710036805C returns the int
+    // at 0x4CF68 (0 otherwise; GfMenuBattleAdapter::fn_7100333630 shows it, fn_71003335AC compares m_index with
+    // it); fn_7100368418 tests bit `bit` (asserting bit < 32) of the word at 0x4CFA0 (GfMenuBattleAdapter
+    // fn_7100333674 asks bit 3, fn_71003336A0/fn_7100333700/fn_7100333750 bit 4); fn_71003686A0, fn_71003687B0 and
+    // fn_7100368B40 return the records above.
+    static float fn_7100367FDC();
+    static int fn_710036805C();
+    static bool fn_7100368418(unsigned int bit);
+    static const LayerGauge* fn_71003686A0(unsigned int index);
+    static const LayerGimmick* fn_71003687B0(unsigned int index);
+    static const LayerResult* fn_7100368B40();
 
     unsigned char pad_8[0x4CA38];
     bool m_initialized;  // isInitialized

@@ -15,19 +15,32 @@ namespace btl {
 // an art's data as DataManager::GetArtsData fills it (layout not recovered yet)
 // DataManager::GetArtsData fills it; only what BattleCharacter reads is recovered (two runs of unsigned int
 // bitfields at 0x8 and 0x18: clang reads each as one 64-bit unit)
-struct ARTS_DATA {
+// 16-byte aligned, 0xE8 bytes of data in 0xF0: DataManager::GetArtsData's assignment copies 0xE8 bytes (clang copies
+// a non-POD's data size), and the frames that hold one put it at sp+0 of 0xF0 bytes (a 16-aligned member, perhaps an
+// mm::Vec3, is not recovered yet)
+struct alignas(16) ARTS_DATA {
     enum DATA_TYPE : int;
+    // clears the bit fields (the first 0x20 bytes) only
+    ARTS_DATA()
+        : pad_0(), pad_8_0(0), m_category(0), pad_8_11(0), m_fightCombo(0), pad_C_3(0), pad_10(), pad_18(0),
+          m_distance(0), pad_1C_12(0) {}
     unsigned char pad_0[0x8];
     unsigned int pad_8_0 : 5;
     // unknown: GetArtsAttackDistance adds enhance 195's value for 12 (the name is not the original's)
     unsigned int m_category : 6;
     unsigned int pad_8_11 : 21;
-    unsigned int pad_C : 32;
+    // the fight combo it starts, 0 for none (GfMenuBattleAdapter::update_ArtsFightComboIcon shows it less 1; the
+    // name is not the original's)
+    unsigned int m_fightCombo : 3;
+    unsigned int pad_C_3 : 29;
     unsigned char pad_10[0x8];
     unsigned int pad_18 : 32;
     // the distance GetArtsAttackDistance starts from (the name is not the original's)
     unsigned int m_distance : 12;
     unsigned int pad_1C_12 : 20;
+    // GfMenuBattleAdapter::update_ArtsFightComboIcon and GfMenuObjUtil::getArtsIconInfo construct one, clearing only
+    // the first 0x20 bytes
+    unsigned char pad_20[0xC8];
 };
 
 // an enemy group: RegisterEnemyGroup fills a free one with its two objects, ReleaseEnemyGroup marks each released
