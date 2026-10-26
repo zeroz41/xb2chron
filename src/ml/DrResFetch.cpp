@@ -38,6 +38,12 @@
 #include "classes/ml/DrLightObjSpt.h"
 #include <new>
 #include "classes/ml/DrStmReadCheck.h"
+#include "ml/DrResMdoVertex.h"
+#include "grlib/CGLibVtxVertex.h"
+#include "grlib/CGLibVtxIndex.h"
+#include "classes/ml/DrResMdoSeamRead.h"
+#include "classes/ml/DrResMdoSeamWrkInst.h"
+#include "classes/ml/DrResMdoSeamWrkBase.h"
 #include "classes/ml/DrCalcStmListObj.h"
 #include "classes/ml/DrCalcTexStreamMan.h"
 #include "ml/MdsMpfMatInfoHeader.h"
@@ -3968,6 +3974,66 @@ void DrResMdoSeamWrkEnv::setInfo(const mm::Vec3& pos0, const mm::Vec3& pos1, boo
 unsigned int DrResMdoSeamWrkEnv::chkDispState() { return m_flags & (1 << DrMan::s_nDblNowIdx); }
 
 void DrResMdoSeamWrkEnv::setDispState() { m_flags |= 1 << DrMan::s_nDblNowIdx; }
+
+
+
+DrResMdoSeamRead::~DrResMdoSeamRead() { release(); }
+
+DrResMdoSeamWrkBase::~DrResMdoSeamWrkBase() { release(); }
+
+DrResMdoSeamWrkInst::~DrResMdoSeamWrkInst() { release(); }
+
+
+void DrResMdoSeamWrkBase::beginRender() {
+    m_selectVertex = -1;
+    m_matRes->m_pVertex = nullptr;
+}
+
+void DrResMdoSeamWrkBase::endRender() { m_matRes->m_pVertex = nullptr; }
+
+void DrResMdoSeamWrkBase::selectVertex(int index) {
+    if (m_selectVertex != index) {
+        m_matRes->m_pVertex = m_vertexList[index].vertex;
+        m_matRes->m_pVertex->beginVertexSetup();
+        m_selectVertex = index;
+    }
+}
+
+void DrResMdoVertex::beginVertexSetup() { m_bindVertex = -1; }
+
+DrResMdoVertex::DrResMdoVertex(const unsigned char* data)
+    : m_link0(nullptr), m_link1(nullptr), m_resData(data), m_state(1), m_work(nullptr), m_stream(nullptr) {
+    setupVertex(data);
+}
+
+DrResMdoVertex::~DrResMdoVertex() { vertexRelease(); }
+
+int DrResMdoVertex::getVertexMax(int index) const { return m_vertex[index].m_num; }
+
+void DrResMdoVertex::render(int index) { m_index[index].drawIndex(); }
+
+void DrResMdoVertex::renderIns(int index, int instances) { m_index[index].drawInsIndex(instances); }
+
+grlib::CGLibVtxVertex* DrResMdoVertex::getWeightVertex() { return &m_vertex[m_weight->vertexNo]; }
+
+const DrResMdoVertex::WeightInfo* DrResMdoVertex::getWeightVertexInfo(int no, int lv) {
+    const unsigned short* table = reinterpret_cast<const unsigned short*>(m_vtxData + m_weight->tableOffset);
+    unsigned int info = table[lv * 9 + no];
+    if (info == 0) return nullptr;
+    return reinterpret_cast<const WeightInfo*>(m_vtxData + m_weight->infoOffset + (info - 1) * sizeof(WeightInfo));
+}
+
+void DrResMdoVertex::setEtcVertexBind(int index, int slot) {
+    m_bindVertex = -1;
+    grlib::CGLibCtlVertex::setAddVertex(m_etcVertex[m_bindTbl[index].vertexNo], 0, slot, 0);
+}
+
+void DrResMdoVertex::setVertexBind(int index) {
+    if (m_bindVertex != index) {
+        grlib::CGLibCtlVertex::setVertex(m_vertex[index]);
+        m_bindVertex = index;
+    }
+}
 
 }  // namespace ml
 

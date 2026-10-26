@@ -12,6 +12,7 @@ namespace grlib { class CGLibTextureBuffer; }
 
 namespace ml {
 class DrResMdoMat;
+class DrResMdoVertex;
 struct MdsMatInfoHeader;
 
 // The material callback list DrMdoMat::updateMatCallBack walks; offsets are from MdoWrkMatRes::m_pMatData. The
@@ -108,7 +109,10 @@ struct MdoWrkMatRes {
     grlib::CGLibUniformArray<grlib::CGLibDblUniformBlock>* m_pVolTexUniformArray;
     grlib::CGLibUniformArray<grlib::CGLibDblUniformBlock>* m_pRimBloomUniformArray;
     DrResMdoMat* m_pResMat;  // 0xC0, DrMdlObj::getMaterialRes(int) returns &m_pResMat[i]
-    unsigned char pad_C8[0x30];
+    // 0xC8: the vertex resource being set up; DrResMdoSeamWrkBase::selectVertex switches it (the name is not the
+    // original's)
+    DrResMdoVertex* m_pVertex;
+    unsigned char pad_D0[0x28];
     float* m_pUniformVal;  // 0xF8, the uniform values the callbacks write
     unsigned char pad_100[0x10];
     MdoWrkAvatarTbl* m_pAvatarTbl;  // 0x110, DrMdoSetup::varStTex_Avatar* bind its textures

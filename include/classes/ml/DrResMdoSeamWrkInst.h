@@ -6,6 +6,7 @@ namespace ml {
 class DrResMdoSeamWrkInst {
 public:
     virtual ~DrResMdoSeamWrkInst();  // slot 0
+    void release();
 };
 }  // namespace ml
 
