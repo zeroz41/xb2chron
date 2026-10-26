@@ -41,7 +41,7 @@ void VoiceHandle::Init(int index) {
     pad_660 = 0;
     state_ = 0;
     pad_48 = 0;
-    pad_54 = 0;
+    id_ = 0;
     handle_ = nullptr;
     entry_ = nullptr;
     stream_ = nullptr;

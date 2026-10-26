@@ -63,7 +63,7 @@ public:
     // AllocAdpcmSplitBuffer's 0x10000 bytes
     static unsigned char* adpcmSplitBuffer_;
 
-    unsigned char pad_30;
+    unsigned char allocated_;  // 0x30: SystemCore::AllocVoiceHandle sets it
     bool pad_31;  // Start sets it
     bool pad_32;  // Pause resumes only while it is set; Stop and ForceStop clear it
     bool pad_33;
@@ -83,7 +83,7 @@ public:
     int pad_48;
     int channelCount_;  // 0x4C: StreamingBufferProcess's channel count
     int index_;  // 0x50: Init's index, -1 before
-    int pad_54;
+    unsigned int id_;  // 0x54: the id SystemCore::GetVoiceHandle looks a voice up by (0: none)
     SoundHandle* handle_;  // 0x58
     const SoundEntry* entry_;  // 0x60
     WaveSource* source_;  // 0x68: FreeVoice drops its reference

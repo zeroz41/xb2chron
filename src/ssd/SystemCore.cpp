@@ -11,6 +11,11 @@
 #include "classes/ssd/SoundEntry.h"
 #include "classes/ssd/SoundHandle.h"
 #include "classes/ssd/SystemCore.h"
+#include "classes/ssd/VoiceHandle.h"
+#include "classes/ssd/SoundBank.h"
+#include "classes/ssd/StreamController.h"
+#include "classes/ssd/SoundActor.h"
+#include "ssd/Debug.h"
 
 namespace ssd {
 
@@ -159,6 +164,89 @@ void SystemCore::UnlockAudio() const {
 
 const SoundCore::DebugInfo* SystemCore::GetDebugInfo() const {
     return &debugInfo_;
+}
+
+SoundCategory* SystemCore::GetCategory(int id) const {
+    SoundCategory* category = categories_.data_;
+    if (id != 0) {
+        for (SoundCategory* it = categories_.data_; it != categories_.data_ + categories_.size_; ++it) {
+            if (it->id_ == id) {
+                return it;
+            }
+        }
+    }
+    return category;
+}
+
+void SystemCore::FreeVoiceHandle(VoiceHandle* voice) {
+    playVoices_.Remove(voice);
+    freeVoices_.PushBack(voice);
+    voice->state_ = 0;
+    voice->handle_ = nullptr;
+    voice->id_ = 0;
+    set_result(Result(0));
+}
+
+void SystemCore::RemoveBank(SoundBank* bank) {
+    ScopedLock lock(audioLock_);
+    banks_.Remove(bank);
+    set_result(Result(0));
+}
+
+void SystemCore::StreamThreadEntry(SystemCore* core, void* userData) {
+    core->StreamThreadImpl();
+}
+
+void SystemCore::AudioThreadEntry(SystemCore* core, void* userData) {
+    core->startTime_ = core->GetSystemTime();
+    core->frameStartTime_ = core->startTime_;
+    while (!core->audioThread_.closing_) {
+        nn::os::WaitSystemEvent(core->systemEvent_.GetBase());
+        double time = core->audioFrameCount_ / core->audioFrameRate_;
+        core->appliedFrameRate_ = core->audioFrameRate_;
+        core->audioTime_ = time;
+        core->AudioFrameProcess();
+        core->audioFrameCount_++;
+    }
+}
+
+void SystemCore::AddStreamController(StreamController* controller) {
+    ScopedLock lock(audioLock_);
+    streams_.PushBack(controller);
+}
+
+void SystemCore::RemoveStreamController(StreamController* controller) {
+    ScopedLock lock(audioLock_);
+    streams_.Remove(controller);
+}
+
+Result SystemCore::GetSoundEffectList(int max, SoundEffecter** effects, int* count) {
+    ScopedLock lock(audioLock_);
+    int n = 0;
+    for (int i = 0; i < 2; i++) {
+        if (effectBus_[i].effect != nullptr && n < max) {
+            n++;
+            effects[i] = effectBus_[i].effect;
+        }
+    }
+    return Result(0);
+}
+
+bool SystemCore::IsActiveEffect(unsigned char bus) {
+    if (bus >= 2) {
+        return false;
+    }
+    return effectBus_[bus].effect != nullptr || effectBus_[bus].activeFlags[0] || effectBus_[bus].activeFlags[1];
+}
+
+Result SystemCore::AddSoundEffecter(unsigned char bus, SoundEffecter* effect) {
+    ScopedLock lock(audioLock_);
+    return InitEffect(bus, effect);
+}
+
+Result SystemCore::RemoveSoundEffecter(SoundEffecter* effect) {
+    ScopedLock lock(audioLock_);
+    return QuitEffect(effect);
 }
 
 SoundCore::DebugInfo SystemCore::debugInfo_;

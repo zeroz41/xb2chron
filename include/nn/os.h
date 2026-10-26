@@ -95,6 +95,7 @@ struct alignas(8) SystemEventType {
     unsigned char pad_29[0x7];
 };
 void DestroySystemEvent(SystemEventType* event);
+void WaitSystemEvent(SystemEventType* event);
 
 class SystemEvent {
 public:

@@ -25,9 +25,9 @@ public:
     virtual void SetMasterPitch(float, float) = 0;  // slot 5
     virtual void AddSoundListener(ssd::SoundListener*) = 0;  // slot 6
     virtual void RemoveSoundListener(ssd::SoundListener*) = 0;  // slot 7
-    virtual void GetSoundEffectList(int, ssd::SoundEffecter**, int*) = 0;  // slot 8
-    virtual void AddSoundEffecter(unsigned char, ssd::SoundEffecter*) = 0;  // slot 9
-    virtual void RemoveSoundEffecter(ssd::SoundEffecter*) = 0;  // slot 10
+    virtual Result GetSoundEffectList(int, ssd::SoundEffecter**, int*) = 0;  // slot 8
+    virtual Result AddSoundEffecter(unsigned char, ssd::SoundEffecter*) = 0;  // slot 9
+    virtual Result RemoveSoundEffecter(ssd::SoundEffecter*) = 0;  // slot 10
     virtual bool IsActiveEffect(unsigned char) = 0;  // slot 11
     virtual int GetNumPlaySound() const = 0;  // slot 12
     virtual float GetSpeedOfSound() const = 0;  // slot 13
@@ -42,18 +42,23 @@ public:
     // an effect's bus: the effect, its buffer mixer and their channels (the field names are not the original's;
     // InitAudioDevice sets up two, on channels 6/7 and 8/9 after the six main ones)
     struct EffectBusInfo {
-        unsigned char pad_0[0x2];
+        bool activeFlags[2];  // the bus counts as active while either is set (SystemCore::IsActiveEffect)
         unsigned char busNumber;  // 0xFF: none
         signed char input;
         signed char output;
         unsigned char pad_5[0x3];
         float volume;
         unsigned char pad_c[0x4];
-        void* pad_10[0x4];
+        SoundEffecter* effect;  // 0x10: InitEffect's effect (none: 0)
+        void* pad_18[0x3];
         unsigned char pad_30[0x8];
     };
 
     void InitPlatform(const SoundCore::InitParam& param);
+    // sets up effect bus bus for effect / takes effect's bus down (SystemCore's AddSoundEffecter and
+    // RemoveSoundEffecter call them under the audio lock)
+    Result InitEffect(unsigned char bus, SoundEffecter* effect);
+    Result QuitEffect(SoundEffecter* effect);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because SystemCore::Init, which
     // runs SystemCorePlatform's InitPlatform and InitAudioDevice, calls it between them and it sits in this
     // unit's code. What it does: returns 0x400 (1024, InitAudioDevice's voice-count ceiling); reads nothing.

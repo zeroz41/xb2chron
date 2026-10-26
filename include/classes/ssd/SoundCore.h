@@ -58,9 +58,9 @@ public:
     virtual void SetMasterPitch(float, float) = 0;  // slot 5
     virtual void AddSoundListener(ssd::SoundListener*) = 0;  // slot 6
     virtual void RemoveSoundListener(ssd::SoundListener*) = 0;  // slot 7
-    virtual void GetSoundEffectList(int, ssd::SoundEffecter**, int*) = 0;  // slot 8
-    virtual void AddSoundEffecter(unsigned char, ssd::SoundEffecter*) = 0;  // slot 9
-    virtual void RemoveSoundEffecter(ssd::SoundEffecter*) = 0;  // slot 10
+    virtual Result GetSoundEffectList(int, ssd::SoundEffecter**, int*) = 0;  // slot 8
+    virtual Result AddSoundEffecter(unsigned char, ssd::SoundEffecter*) = 0;  // slot 9
+    virtual Result RemoveSoundEffecter(ssd::SoundEffecter*) = 0;  // slot 10
     virtual bool IsActiveEffect(unsigned char) = 0;  // slot 11
     virtual int GetNumPlaySound() const = 0;  // slot 12
     virtual float GetSpeedOfSound() const = 0;  // slot 13
