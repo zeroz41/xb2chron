@@ -20,6 +20,8 @@ public:
     void setVariable(const char* name, float value);
     void setVariable(const char* name, int value);
     void getVariable(const char* name, float* value) const;
+    // fw::AnimAsmUpdater::update passes it UpdateInfo::m_deltaTime
+    void updateFrame(float dt);
     // the blender's sampling, forwarded (inline: the fw ASM pose samplers compute the blender's address after
     // their arguments; the names are not the original's)
     void sampleTrucks(unsigned int count, QsTransform* pOut) { m_blender.sampleTrucks(count, pOut); }

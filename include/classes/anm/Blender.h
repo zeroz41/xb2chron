@@ -20,6 +20,8 @@ public:
     void sampleExtraTrucks(unsigned short slot, unsigned int count, float* pOut);
     bool addControl(Control* pControl);
     bool removeControl(Control* pControl);
+    // fw::AnimBlenderUpdater::update passes it UpdateInfo::m_deltaTime
+    void update(float dt);
 
     unsigned char pad_18[0x28];  // Factory::createBlender allocates 0x50 bytes
     const Skeleton* m_pSkeleton;  // the constructor's (the name is not the original's)
