@@ -263,9 +263,14 @@ application/BF2/execute/title/title_theater.cpp:
 	.rodata      start:0x009B9548 end:0x009B95BC
 
 application/BF2/AnimColPoseModifier.cpp:
-	.text        start:0x00157C60 end:0x00159104
-	.rodata      start:0x009802A1 end:0x0098031D
-	.data        start:0x00B40B20 end:0x00B40BE8
+	.text        start:0x00157C60 end:0x00158930
+	.rodata      start:0x009802A1 end:0x009802AD
+	.data        start:0x00B40B20 end:0x00B40B70
+
+application/BF2/AnimControlUpdater.cpp:
+	.text        start:0x00158930 end:0x00159104
+	.rodata      start:0x009802AD end:0x0098031D
+	.data        start:0x00B40B70 end:0x00B40BE8
 
 application/BF2/framework/anim/anim_manager.cpp:
 	.text        start:0x00159104 end:0x0015A3C0
@@ -2789,7 +2794,10 @@ application/BF2/gf/object/component/Plugin.cpp:
 	.bss         start:0x00EABD18 end:0x00EABD30
 
 application/BF2/gf/object/component/PluginManager.cpp:
-	.text        start:0x004AAA94 end:0x004ACB7C
+	.text        start:0x004AAA94 end:0x004ABF4C
+
+application/BF2/gf/object/component/GfEffectGround.cpp:
+	.text        start:0x004ABF4C end:0x004ACB7C
 
 application/BF2/gf/object/component/effect/gf_com_effect_caster.cpp:
 	.text        start:0x004ACB7C end:0x004B4D44
@@ -4525,11 +4533,15 @@ libs/anmlib/src/anmlib/anm_factory.cpp:
 	.bss         start:0x015EB850 end:0x015EB868
 
 libs/anmlib/src/anmlib/anm_util.cpp:
-	.text        start:0x00866FAC end:0x008692BC
-	.rodata      start:0x009AEDEC end:0x009AEFA5
+	.text        start:0x00866FAC end:0x0086898C
+	.rodata      start:0x009AEDEC end:0x009AEF34
 	.rodata      start:0x009D58CC end:0x009D58D0
 	.init_array  start:0x00B8FDC0 end:0x00B8FDC8
 	.bss         start:0x015EB868 end:0x015EB8A0
+
+libs/anmlib/src/anmlib/SpaceResolveUtil.cpp:
+	.text        start:0x0086898C end:0x008692BC
+	.rodata      start:0x009AEF70 end:0x009AEFA5
 
 libs/anmlib/src/anmlib/base/anm_thread_pool.cpp:
 	.text        start:0x008692BC end:0x00869ABC
@@ -4701,9 +4713,12 @@ libs/skdlib/src/skdlib/importer/skd_importer.cpp:
 	.data        start:0x00B81628 end:0x00B81648
 
 libs/skdlib/src/skdlib/skd_dynamics.cpp:
-	.text        start:0x008880F8 end:0x0088B628
+	.text        start:0x008880F8 end:0x00889134
 	.rodata      start:0x009B0371 end:0x009B0449
 	.data        start:0x00B81648 end:0x00B81688
+
+libs/skdlib/src/skdlib/CollionArray.cpp:
+	.text        start:0x00889134 end:0x0088B628
 
 libs/skdlib/src/skdlib/composite/skd_solver.cpp:
 	.text        start:0x0088B628 end:0x0088C010
@@ -4720,8 +4735,12 @@ libs/skdlib/src/skdlib/composite/Packet.cpp:
 	.rodata      start:0x009B0562 end:0x009B05A1
 
 libs/skdlib/src/skdlib/composite/skd_calc_util.cpp:
-	.text        start:0x0088C648 end:0x00890F80
-	.rodata      start:0x009B05A1 end:0x009B066F
+	.text        start:0x0088C648 end:0x00890948
+	.rodata      start:0x009B05A1 end:0x009B0641
+
+skd/DetectCapsuleJob.cpp:
+	.text        start:0x00890948 end:0x00890F80
+	.rodata      start:0x009B0641 end:0x009B066F
 	.data        start:0x00B816C0 end:0x00B816D0
 
 skt/CommandManager.cpp:
@@ -4962,3 +4981,4 @@ libs/mcl/mm_lib/source/mm_thread/mm_thread_nx.cpp:
 	.text        start:0x008B25B0 end:0x008B29EC
 	.rodata      start:0x009B5006 end:0x009B50EE
 	.data        start:0x00B82570 end:0x00B825E0
+
