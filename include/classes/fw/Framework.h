@@ -55,6 +55,8 @@ public:
     void enterFinalizeApplet();
     // the applet the framework runs (its object at 0x8), none before one is created
     Applet* getApplet() const;
+    void tail(const UpdateState& state);
+    void render();
     static mtl::ALLOC_HANDLE getMemHandle();  // the memory resources are made in (ResourceManager::getMemSYS)
     static void setUpdateSpeed(float speed);
     static void setLayerUpdateSpeed(unsigned int layer, float speed);

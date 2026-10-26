@@ -15,7 +15,7 @@ public:
     virtual void OnPauseTrigger(bool, char const*) {}  // slot 5
     virtual void OnViewResize(ml::EventView*) {}  // slot 6
     // whether it took the event (the base takes none: FrameworkLauncher's copy returns false)
-    virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
+    virtual bool OnFileEvent(ml::EventFileTh*) { return false; }  // slot 7
 };
 }  // namespace ml
 

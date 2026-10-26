@@ -2,6 +2,7 @@
 #define CLASSES_APPS_LAUNCHERAPP_H
 
 #include "classes/ml/WinProc.h"
+#include "classes/apps/FrameworkLauncher.h"
 
 namespace ml { class EventButton; }
 namespace ml { class EventFileTh; }
@@ -36,7 +37,12 @@ public:
     virtual bool OnFMenuSelect(ml::EventFloatingMenu*);  // slot 19
     virtual bool OnCButtonSelect(ml::EventButton*);  // slot 20
     virtual void errcbCallback(ml::CPUID, unsigned long);  // slot 21
-    unsigned char pad_1F8[0x568];  // fields: size from its derived classes
+    unsigned char pad_1F8[0x609 - 0x1F8];
+    // 0x609: a closing FrameworkLauncher handed it m_appletParam (the launcher's destructor sets it, then sends
+    // event 0; the name is not the original's)
+    bool m_appletPending;
+    unsigned char pad_60a[0x6];
+    FrameworkLauncher::AppletCreateParam m_appletParam;  // 0x610 the closing launcher's copy (the name is not the original's)
 };
 }  // namespace apps
 

@@ -11,7 +11,6 @@ public:
     DevClockNx(const char* name, WorkObj* parent)
         : DevClock(name, parent), m_powerOnClock(nn::os::GetSystemTick().GetInt64Value()) {}
     virtual ~DevClockNx() {}  // slot 0
-    virtual void wkStandbyExceptionRetry(unsigned int);  // slot 16
     virtual float getPowerOnTimeSys() const;  // slot 17
     virtual void getClockNowSys(long& clock) const;  // slot 18
     virtual void getSec2ClockSys(long& clock, float sec) const;  // slot 19

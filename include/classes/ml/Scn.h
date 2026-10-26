@@ -30,6 +30,9 @@ public:
 class Scn : public ::ml::IWorkEvent, public TUnk_B77B18, public TUnk_B77B38 {
 public:
     virtual ~Scn();  // slot 0
+    // the frame's tail and drawing (FrameworkLauncher::wkTail and drawTask call them on the launcher's scene)
+    void tail();
+    void draw();
     // a camera by index; -1 the current view's (fw::NaviManager::update's)
     ScnObjCam* getCam(int index);
     // a light or image-based light made from a resource, by the scene's renderer (gf::MapLIBL and MapGIBL keep

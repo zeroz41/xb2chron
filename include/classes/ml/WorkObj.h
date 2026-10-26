@@ -26,7 +26,8 @@ public:
     virtual bool wkStandbyLogin();  // slot 14
     // logs out: always true (WorkObj's own sets m_state to 4)
     virtual bool wkStandbyLogout();  // slot 15
-    virtual void wkStandbyExceptionRetry(unsigned int);  // slot 16
+    // retries after a standby exception: the base always succeeds (inline: FrameworkLauncher's unit holds the weak copy)
+    virtual bool wkStandbyExceptionRetry(unsigned int) { return true; }  // slot 16
 
     // reports message unless done within timeout (the parameter names are not the original's)
     void wkCheckTimeout(unsigned int timeout, bool done, const char* message);
