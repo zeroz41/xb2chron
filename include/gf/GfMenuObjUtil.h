@@ -56,8 +56,9 @@ public:
         int m_distance;        // how far the position methods move
         unsigned char pad_24[2];
         short m_pos[2];        // where bit 7's position method moves to
-        float m_scale;         // added to the scale
-        unsigned char pad_30[4];
+        float m_scale;         // added to the scale (bit 20's method: to its x only)
+        // bit 20's method adds it to the scale's y (the name is not the original's; startCtrl's addScaleMethod)
+        float m_scaleY;
         float m_rot;           // added to the rotation
         float m_bright;        // the brightness method's target
         float m_alpha;
