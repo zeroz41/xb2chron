@@ -16,6 +16,7 @@ struct ARTS_SLOT_DATA {
 // (EnemyParameter holds one at 0x628, up to its hate data)
 struct ARTS_PALETTE_DATA {
     const ARTS_SLOT_DATA* GetSlotDataConst(int slot, bool) const;
+    void ResetAllRecast();
     unsigned char pad_0[0x238];
 };
 // table 0x7100B3B2F0
@@ -32,30 +33,35 @@ public:
     virtual void Reset();  // slot 0
     virtual void Initialize(gf::GF_OBJ_HANDLE*);  // slot 1
     virtual void InitializeArtsPalette(int);  // slot 2
-    virtual void vf3();  // slot 3
-    virtual void vf4();  // slot 4
+    // 1.0.0's slot 3, first of the same out-of-line block at EnemyParameter.cpp's end
+    virtual void CheckChangeArtsPalette();  // slot 3
+    virtual void BattleStart(int);  // slot 4
     virtual void BattleEnd();  // slot 5
-    virtual void vf6();  // slot 6
-    virtual void vf7();  // slot 7
+    virtual void BattleEndInitialize();  // slot 6
+    virtual void PreUpdate(fw::UpdateInfo const&);  // slot 7
     virtual void Update(fw::UpdateInfo const&, bool);  // slot 8
     virtual void PostUpdate(fw::UpdateInfo const&);  // slot 9
     virtual void vf10() = 0;  // slot 10
     virtual int GetAttribute() const;  // slot 11
-    virtual void GetBladeIndex() const;  // slot 12
+    virtual int GetBladeIndex() const;  // slot 12
     virtual unsigned int GetWeaponID(int) const = 0;  // slot 13
-    virtual void GetEquipAccessory() const;  // slot 14
-    virtual void GetIdeaLevel(int) const;  // slot 15
+    virtual int GetEquipAccessory() const;  // slot 14
+    virtual int GetIdeaLevel(int) const;  // slot 15
     virtual const ARTS_PALETTE_DATA* GetArtsPaletteDataConst(int) const = 0;  // slot 16
     virtual int GetArtsPaletteNum() const;  // slot 17
     virtual void ResetRecast();  // slot 18
     virtual void WritebackRecast(btl::GROUP_DATA*);  // slot 19
     virtual void GetWeakAttributeFlag() const;  // slot 20
     virtual void InitializeEnhance() const;  // slot 21
-    virtual void vf22();  // slot 22
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 22 of this table.
+    // What it does: does nothing; EnemyParameter's override is fn_7100088A44.
+    virtual void fn_7100088B68();  // slot 22
     virtual bool IsPlayerParameter() const;  // slot 23
     virtual bool IsEnemyParameter() const;  // slot 24
     virtual bool IsInvalidWarp() const;  // slot 25
-    virtual void vf26();  // slot 26
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 26 of this table.
+    // What it does: does nothing; EnemyParameter's override is fn_7100088568.
+    virtual void fn_7100088ECC();  // slot 26
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 27 of this table.
     // What it does: returns false; EnemyParameter's returns bit 12 of its flags at 0x8B6.
     virtual bool fn_7100088ED0() const;  // slot 27
@@ -65,45 +71,71 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 29 of this table.
     // What it does: returns false; EnemyParameter's returns bit 10 of its flags at 0x8B6.
     virtual bool fn_7100088EE0() const;  // slot 29
-    virtual bool IsFallDeadDrop() const { return true; }  // slot 30
+    virtual bool IsFallDeadDrop() const;  // slot 30
     virtual bool SetAngry(bool, float);  // slot 31 (BattleCharacter::SetAngry tail-calls it and returns its result)
     virtual int GetAngryAuraID() const;  // slot 32
     // 1.0.0 had GetAngryAttr here; 3.0.1's GetAttribute calls this slot where 1.0.0's read the angry attribute
     virtual int GetAngryAttr() const;  // slot 33
-    virtual void vf34();  // slot 34
-    virtual void vf35();  // slot 35
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 34 of this table.
+    // What it does: returns false; EnemyParameter's override is fn_71000882DC.
+    virtual bool fn_7100088F08() const;  // slot 34
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 35 of this table.
+    // What it does: does nothing; EnemyParameter's override is fn_7100088350.
+    virtual void fn_7100088F10();  // slot 35
     // 1.0.0 had IsAngry here; 3.0.1's GetAttribute calls this slot where 1.0.0's called IsAngry
     virtual bool IsAngry() const;  // slot 36
-    virtual void vf37();  // slot 37
-    virtual void vf38();  // slot 38
-    virtual void vf39();  // slot 39
-    virtual void vf40();  // slot 40
-    virtual void vf41();  // slot 41
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 37 of this table.
+    // What it does: does nothing; EnemyParameter's override is fn_7100088B6C.
+    virtual void fn_7100088F1C();  // slot 37
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 38 of this table.
+    // What it does: returns 0; EnemyParameter's override is fn_7100088BD0.
+    virtual int fn_7100088F20() const;  // slot 38
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 39 of this table.
+    // What it does: returns 1.0f; EnemyParameter's override is fn_7100088C40.
+    virtual float fn_7100088F28() const;  // slot 39
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 40 of this table.
+    // What it does: returns 1.0f; EnemyParameter's override is fn_7100088CD8.
+    virtual float fn_7100088F30() const;  // slot 40
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 41 of this table.
+    // What it does: returns 0.0f; EnemyParameter's override is fn_7100088D70.
+    virtual float fn_7100088F38() const;  // slot 41
     // what the base (fn_7100088F40) gives: false; BattleCharacter::fn_7100041CA4 answers it
     // Placeholder name: new in 3.0.1 (1.0.0's table has 51 slots). Slot 42; the base returns false.
     virtual bool fn_7100088F40() const;  // slot 42
-    virtual void vf43();  // slot 43
-    virtual void vf44();  // slot 44
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 43 of this table.
+    // What it does: does nothing.
+    virtual void fn_7100088F48();  // slot 43
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 44 of this table.
+    // What it does: does nothing.
+    virtual void fn_7100088F4C();  // slot 44
     virtual void vf45();  // slot 45
     virtual void vf46();  // slot 46
     virtual void vf47();  // slot 47
     virtual void vf48();  // slot 48
-    virtual void GetUseWeaponRate(int) const;  // slot 49
+    virtual float GetUseWeaponRate(int) const;  // slot 49
     virtual void vf50();  // slot 50
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 51 of this table.
     // What it does: does nothing; PlayerParameter's clears its 32-bit field at 0x638.
     virtual void fn_7100088F58();  // slot 51
-    virtual void vf52();  // slot 52
-    virtual void vf53();  // slot 53
-    virtual void vf54();  // slot 54
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 52 of this table.
+    // What it does: does nothing.
+    virtual void fn_7100088F5C();  // slot 52
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 53 of this table.
+    // What it does: returns 0.
+    virtual int fn_7100088F60() const;  // slot 53
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 54 of this table.
+    // What it does: returns 0.
+    virtual int fn_7100088F68() const;  // slot 54
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 55 of this table.
     // What it does: returns 0; EnemyParameter's returns its 16-bit field at 0x8AA.
     virtual int fn_7100088F70() const;  // slot 55
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 56 of this table.
     // What it does: returns 0; EnemyParameter's returns its 16-bit field at 0x8AC.
     virtual int fn_7100088F78() const;  // slot 56
-    virtual void vf57();  // slot 57
-    virtual void vf58();  // slot 58
+    // 1.0.0's GetBGMID/SetupBGM: EnemyParameter's slot 58 passes slot 57's result to BattleGlobal as 1.0.0's
+    // SetupBGM passed GetBGMID's to BattleGlobal::SetBGM; both sit before GetDeadSEID as in 1.0.0
+    virtual int GetBGMID() const;  // slot 57
+    virtual void SetupBGM();  // slot 58
     virtual int GetDeadSEID() const;  // slot 59
     virtual void SetOverwriteAttr(int);  // slot 60
     virtual int GetEatNum() const;  // slot 61
