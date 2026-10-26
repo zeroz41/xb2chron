@@ -8,6 +8,7 @@
 #include "ssd/Mutex.h"
 
 namespace ssd { class SoundActor; }
+namespace ssd { class SoundCategory; }
 namespace ssd { class SoundBank; }
 namespace ssd { class SoundEffecter; }
 namespace ssd { class SoundHandle; }
@@ -61,6 +62,11 @@ public:
     void UpdateGameFrame(float frameTime);
     void StopSound(float fadeTime);
 
+    // the category with the id (SoundHandle::Start and SetCategoryId copy it)
+    SoundCategory* GetCategory(int id) const;
+    // a free voice in *voice (SoundHandle::Prepare passes 0 for kind, whose meaning is unknown, and checks only
+    // *voice)
+    Result AllocVoiceHandle(int kind, VoiceHandle** voice);
     VoiceHandle* GetVoiceHandle(unsigned int id) const;  // 0 when no voice has the id
     // gives a voice back (VoiceHandle::FreeVoice)
     void FreeVoiceHandle(VoiceHandle* voice);

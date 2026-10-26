@@ -1,44 +1,56 @@
 #ifndef CLASSES_SSD_SOUNDHANDLE_H
 #define CLASSES_SSD_SOUNDHANDLE_H
 
+#include "classes/ssd/Array.h"
+#include "classes/ssd/Delegate/MultiCast.h"
+#include "classes/ssd/List.h"
+#include "classes/ssd/Object.h"
+#include "classes/ssd/SoundCategory.h"
+#include "ssd/Debug.h"
+
 namespace ssd { class SoundActor; }
 namespace ssd { class SoundEntry; }
+namespace ssd { class VoiceHandle; }
 namespace ssd {
-// a base of ssd::SoundHandle no evidence names yet
-class TUnk_B81C50 {
-public:
-    virtual ~TUnk_B81C50();
-    unsigned char pad_8[0x10];  // fields: size from where the next base starts
-};
-// a base of ssd::SoundHandle no evidence names yet
-class TUnk_B81C70 {
-public:
-    virtual ~TUnk_B81C70();
-};
-// table 0x7100B81C50; base at 0x0 unknown (TUnk_B81C50), base at 0x18 unknown (TUnk_B81C70)
-class SoundHandle : public TUnk_B81C50, public TUnk_B81C70 {
+// table 0x7100B81C50: a sound as the game holds it (SoundActor::Play's handle): the entry it plays, the voice it
+// plays on (voiceId_, SystemCore::GetVoiceHandle) and the values the voice reads. sizeof 0x140. The field names
+// are not the original's.
+class SoundHandle : public Object, public List<SoundHandle>::Node {
 public:
     class Notify;
+    SoundHandle();
     virtual ~SoundHandle();  // slot 0
+    // stops the voice and gives every delegate back
+    void Delete();
+    // drops the voice and the entry and gives the delegates back; the handle is invalid until Init
+    void Quit();
+    // resets the values and makes the handle valid (Play and Prepare call it on an invalid handle)
+    void Init();
+    // gives every delegate back, under the audio lock
+    void ClearDelegate();
+    Result AddDelegateInternal(Delegate::Handle* handle);
+    Result RemoveDelegateInternal(Delegate::Handle* handle);
+    // takes a voice for entry (fails with -33 while the handle holds an entry)
+    Result Prepare(const SoundEntry* entry);
     bool IsValidHandle() const;
     bool IsPlay() const;
     int GetState() const;  // 8 once ready to start; 5, 6 and 7 while preparing
-    long Play(const SoundEntry* entry, SoundActor* actor, float volume, float pitch);  // SoundActor::Play's
-    long Start(SoundActor* actor, float volume, float pitch);  // negative on failure
-    long Stop(float fadeTime);
+    Result Play(const SoundEntry* entry, SoundActor* actor, float volume, float fadeTime);  // SoundActor::Play's
+    Result Start(SoundActor* actor, float volume, float fadeTime);  // negative on failure
+    Result Stop(float fadeTime);
     void SetCategoryId(int id);
-    long GetPlayTime(float* time) const;
-    long SetPlayTime(float time);
-    long GetDataTime(float* time) const;
-    long SetRemainLoopCount(int count);
-    long GetRemainLoopCount(int* count) const;
+    Result GetPlayTime(float* time) const;
+    Result SetPlayTime(float time);
+    Result GetDataTime(float* time) const;
+    Result SetRemainLoopCount(int count);
+    Result GetRemainLoopCount(int* count) const;
     // set a value now (fadeTime 0) or over fadeTime: 1.0.0's SetPitch, SetVolume and SetPan (0x7100990D48,
     // 0x7100990D74, 0x7100990DA0, in that order) write the same fields as these
     void SetPitch(float pitch, float fadeTime);
     void SetVolume(float volume, float fadeTime);
     void SetPan(float pan, float fadeTime);
     float GetDistanceVolume() const;
-    long Pause(bool pause, float fadeTime);
+    Result Pause(bool pause, float fadeTime);
     void UpdateAudioFrame(float frameTime);
 
     // a value Set* moves to its target over a fade time (the type's and the field names are not the original's)
@@ -75,16 +87,28 @@ public:
         float start;
         float target;
     };
-    unsigned char pad_20[0x38];
-    bool valid_;  // 0x58: IsValidHandle asks the voice only while it is set (the name is not the original's)
-    unsigned char pad_59[0x13];
+    const SoundEntry* entry_;  // 0x30: Prepare's entry
+    SoundActor* actor_;  // 0x38: Start's actor (SystemCore::defaultActor_ when none)
+    int groupId_;  // 0x40: the entry's group's id (SystemCore::defaultGroup_'s when none)
+    SoundCategory category_;  // 0x48: a copy of the entry's category (SetCategoryId)
+    bool valid_;  // 0x58: IsValidHandle asks the voice only while it is set
+    bool pad_59;
+    bool pad_5a;
+    double startTime_;  // 0x60: SystemCorePlatform::GetSystemTime when Start ran
+    float pad_68;  // Start asks the voice to start with its flag set when this is not 0
     FadeValue pitch_;  // 0x6C
     FadeValue volume_;  // 0x84 (fw::SoundSsdDriver::getVolume type 0 reads its current value)
     FadeValue pan_;  // 0x9C
-    unsigned char pad_b4[0x4];
-    float volume2_;  // 0xB8: fw::SoundSsdDriver::getVolume type 2 reads it (the name is not the original's)
-    unsigned char pad_bc[0x3c];
-    unsigned int voiceId_;  // 0xF8: SystemCore::GetVoiceHandle's id (the name is not the original's)
+    float pad_b4;
+    float volume2_;  // 0xB8: fw::SoundSsdDriver::getVolume type 2 reads it
+    float pad_bc;
+    bool pad_c0;
+    FadeValue pad_c4;
+    bool pad_dc;
+    FadeValue pad_e0;
+    unsigned int voiceId_;  // 0xF8: SystemCore::GetVoiceHandle's id
+    Delegate::MultiCast notify_;  // 0x100: VoiceHandle::FreeVoice notifies it
+    Array<Delegate::Handle*> delegates_;  // 0x128: AddDelegateInternal's handles, given back by ClearDelegate
 };
 }  // namespace ssd
 

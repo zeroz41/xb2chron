@@ -11,7 +11,10 @@ public:
     void QuitStream();
     void ResetStream();
 
-    unsigned char pad_8[0xed];
+    unsigned char pad_8[0x60];
+    // SoundHandle::SetRemainLoopCount refuses (-1) while it is clear (the name is not the original's)
+    bool pad_68;
+    unsigned char pad_69[0x8c];
     bool streaming_;  // 0xF5: VoiceHandle::Stop clears it
     unsigned char pad_f6[0x15a];
     int remainLoopCount_;  // 0x250: VoiceHandle::GetRemainLoopCount / SetRemainLoopCount
