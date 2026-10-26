@@ -3,16 +3,45 @@
 
 #include "anm/Array.h"
 
-namespace skd { struct ResHingeConstraint; }
 namespace skd { struct ResSpringConstraint; }
-namespace skd { struct ResStickConstraint; }
 
 namespace skd {
+// a constraint between two nodes of a solver resource (0x10 bytes): the distance limitDistance keeps between them
+// (the names are not the original's)
+struct ResConstraint {
+    unsigned char pad_0[0x8];
+    float m_length;
+    unsigned short m_node0;
+    unsigned short m_node1;
+};
+
+// the cone a stick constraint's node stays in (limitCone's; 8 bytes)
+struct ResConeLimit {
+    unsigned char pad_0[0x8];
+};
+
+// a stick constraint of a solver resource (0x18 bytes, the stride applyStickConstraints walks): its two nodes'
+// constraint and the cone (applyStickConstraints passes both to limitCone, then the constraint to limitDistance)
+struct ResStickConstraint {
+    ResConstraint m_constraint;
+    ResConeLimit m_cone;
+};
+
+// a hinge constraint of a solver resource (0x30 bytes, the stride applyHingeConstraints walks), its two nodes'
+// constraint first (applyHingeConstraints passes it to limitDistance)
+struct ResHingeConstraint {
+    ResConstraint m_constraint;
+    unsigned char pad_10[0x20];
+};
+
 // one node of a solver resource (0x28 bytes, the stride anm::Array<ResNode> indexes with). Only what the detection
 // jobs read is named, and the name is not the original's: bit 0 of m_flags set means the node takes no
 // collision response (addDetectSphereJob gives it no DetectInfo).
 struct ResNode {
-    unsigned char pad_0[0x24];
+    unsigned char pad_0[0x18];
+    float m_damping;  // integrate keeps (1 - m_damping) of the node's velocity (the name is not the original's)
+    unsigned char pad_1C[0x4];
+    float m_mass;  // applyAccel divides the node's force by it (the name is not the original's)
     unsigned char m_flags;
     unsigned char pad_25[0x3];
 

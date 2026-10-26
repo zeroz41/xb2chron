@@ -10,7 +10,10 @@ namespace mm { namespace mtl { template <typename> class Vector; }}
 namespace skd { class CollionArray; }
 namespace skd { class DetectInfoBuffer; }
 namespace skd { class NodeArray; }
+namespace skd { struct ResConeLimit; }
+namespace skd { struct ResConstraint; }
 namespace skd { struct ResHingeConstraint; }
+namespace skd { struct ResNodeCollision; }
 namespace skd { struct ResSpringConstraint; }
 namespace skd { struct ResStickConstraint; }
 
@@ -37,6 +40,19 @@ public:
     static void writeBackNode(anm::Pose& pose, NodeArray* nodes);
     static void convertCoordinateSystem(const anm::QsTransform& transform, NodeArray* nodes);
 };
+
+// skd_calc_util.cpp's single steps: a stick constraint's cone and a constraint's distance (applyStickConstraints),
+// a hinge (applyHingeConstraints), and one collision pair against each shape of the collision array
+// (detectCollision passes 0 as the third argument)
+void limitCone(const ResConstraint& constraint, const ResConeLimit& cone, NodeArray* nodes);
+void limitDistance(const ResConstraint& constraint, NodeArray* nodes);
+void limitHinge(const ResHingeConstraint& constraint, NodeArray* nodes);
+void detectCollisionSpheres(const ResNodeCollision& collision, const CollionArray& collisions, unsigned int index,
+                            NodeArray* nodes);
+void detectCollisionCapsules(const ResNodeCollision& collision, const CollionArray& collisions, unsigned int index,
+                             NodeArray* nodes);
+void detectCollisionPlanes(const ResNodeCollision& collision, const CollionArray& collisions, unsigned int index,
+                           NodeArray* nodes);
 
 // skd_calc_util.cpp's: the functions the queue runs each shape's detection jobs with, registered (skd::Packet's
 // constructor). registerDetectSphereJobExecuter's address is split into skt/CommandManager.

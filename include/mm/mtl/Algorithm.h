@@ -16,6 +16,24 @@
 
 namespace mm { namespace mtl {
 
+// a type for each value of N, to pick an overload by a compile-time value (mtl_detail::copy_construct_n's last
+// parameter)
+template <int N>
+struct int_to_type {
+    enum { value = N };
+};
+
+namespace mtl_detail {
+// constructs n copies of first's elements at result, one by one (int_to_type<0>: a type not copied bit for bit).
+// Out of line where the copies are long: Vector<skd::Node>::extend calls 3.0.1's copy.
+template <typename T>
+void copy_construct_n(const T* first, size_t n, T* result, int_to_type<0>) {
+    for (size_t i = 0; i < n; ++i) {
+        new (&result[i]) T(first[i]);
+    }
+}
+}  // namespace mtl_detail
+
 // constructs n copies of first's elements at result: a block copy for types copied bit for bit, which must not
 // overlap the source ahead of it
 template <typename T>

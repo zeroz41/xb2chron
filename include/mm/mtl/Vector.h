@@ -215,11 +215,8 @@ void Vector<T>::extend(size_t size, size_t alignment) {
         // a block copy (GfFieldDmgManager's BdatInfo rows)
         uninitialized_copy_n(begin(), oldSize, ptr);
     } else {
-        // by index (wnd::ConpoundWind's)
-        T* source = begin();
-        for (size_t i = 0; i < oldSize; ++i) {
-            new (&ptr[i]) T(source[i]);
-        }
+        // by index (wnd::ConpoundWind's inline; skd::Node's out of line)
+        mtl_detail::copy_construct_n(begin(), oldSize, ptr, int_to_type<0>());
     }
     if (oldSize < size) {
         T* element = ptr + oldSize;

@@ -28,9 +28,9 @@ void executeApplyDetectJob(anm::Job& job) {
         mm::Vec3 mean = push * (1.0f / count);
         Node& node = applyJob.m_pNodes->m_nodes[applyJob.m_node];
         // by component: each sum loads the mean first, as mm::Vec3's operator+= does not
-        node.m_push.x += mean.x;
-        node.m_push.y += mean.y;
-        node.m_push.z += mean.z;
+        node.m_nextPos.x += mean.x;
+        node.m_nextPos.y += mean.y;
+        node.m_nextPos.z += mean.z;
     }
 }
 
