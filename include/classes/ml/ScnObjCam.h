@@ -4,6 +4,7 @@
 #include "classes/ml/ScnObj.h"
 #include "classes/ml/threadval.h"
 #include "mm/mtl/FixStr.h"
+#include "mm/Plane.h"
 #include "ml/AttrTransform.h"  // tree: ml/AttrTransform.h (new)
 
 namespace ml { class DebDraw; }
@@ -15,7 +16,12 @@ public:
     // what a camera keeps per thread (0x380 bytes: threadval's tvSwap copies that much)
     struct RENDER_INFO {
         AttrTransform m_transform;  // setLookAt updates it (the name is not the original's)
+        unsigned char pad_140[0x180];
+        mm::Plane m_planeGbl[6];  // 0x2C0 getPlaneGbl's (the name is not the original's)
     };
+    // one of the six planes of the calculation thread's (true) or the render thread's (false) information
+    const mm::Plane& getPlaneGbl(unsigned int index, bool cpu) const;
+    void setCopydataCam(bool);
     virtual ~ScnObjCam();  // slot 0
     virtual void update();  // slot 2
     virtual void renderDebug(ml::DebDraw*);  // slot 3

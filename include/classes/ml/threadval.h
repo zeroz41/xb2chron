@@ -1,6 +1,8 @@
 #ifndef CLASSES_ML_THREADVAL_H
 #define CLASSES_ML_THREADVAL_H
 
+#include <string.h>
+
 #include "classes/ml/WorkCpu.h"
 
 namespace ml {
@@ -21,7 +23,9 @@ public:
     virtual ~threadval() { WorkCpu::removeSwap(this); }  // slot 0
     virtual void tvSwap() {  // slot 2
         if (m_state.isCopy()) {
-            *m_render = *m_cpu;
+            // a byte copy (threadval<ScnObjCam::RENDER_INFO> copies its 0x380 bytes with memcpy although the
+            // camera's information holds mm::Vec3s, whose own copies skip their padding)
+            memcpy(m_render, m_cpu, sizeof(T0));
         }
         m_state.m_bank = 1 - m_state.m_bank;
         m_render = &m_buf[m_state.m_bank];

@@ -2,6 +2,10 @@
 #define CLASSES_ML_SCNDEBUGMANIPU_H
 
 #include "classes/ml/IWorkEvent.h"
+#include "ml/CriticalSection.h"
+
+namespace ml { class AttrTransform; }
+namespace ml { class ScnDebugManipuObj; }
 
 namespace mm { class Mat44; }
 namespace mm { class Vec3; }
@@ -13,6 +17,17 @@ public:
     void createTrans(const mm::Mat44* mtx, const mm::Vec3* pos);
     void createRot(const mm::Mat44* mtx, const mm::Vec3* pos);
     virtual ~ScnDebugManipu();  // slot 0
+    // the manipulator given up (1.0.0 keeps it out of line; 3.0.1's ScnDebug::clrManipulator inlines it)
+    void clear();
+    // whether the manipulator is picked (1.0.0 keeps it out of line; 3.0.1's ScnDebug::isPickManipu inlines it)
+    bool isPick() const;
+    // the manipulator's transform: the calculation thread's (true) or the render thread's (false); none without one
+    const AttrTransform* getTrans(bool cpu) const;
+
+    CriticalSection m_cs;  // 0x8 (the name is not the original's)
+    unsigned char pad_30[0x8];
+    ScnDebugManipuObj* m_obj;  // 0x38 the manipulator createTrans/createRot make (the name is not the original's)
+    bool m_disp;  // 0x40 1.0.0's setDisp writes it (the name is not the original's)
 };
 }  // namespace ml
 

@@ -11,6 +11,8 @@ namespace ml { class ScnRenderDrSys; }
 namespace ml { class ScnPoolObj; }
 namespace ml { class ScnCamMan; }
 namespace ml { class WinView; }
+namespace ml { enum SCNCAM : int; }
+namespace ml { enum SCNPRIO_CB : int; }
 
 namespace ml {
 // a base of ml::Scn no evidence names yet
@@ -40,6 +42,17 @@ public:
     WinView* getView(int index);
     // a model made from a resource (fw::ModelObject::create's)
     ScnObjModel* createMdl(const void* resource, const char* name, int arg);
+    void setDebDraw(SCNCAM cam, SCNPRIO_CB prio);
+    void renderStop();
+    // a job thread's function (WorkCpu::entryJobThread's type): deletes the scene's renderer
+    static unsigned int thRenderKillTerminate(void* scn, void* arg);
+
+    // one per camera: the priority the debug drawing renders at (the struct and its names are not the original's)
+    struct DEBDRAW {
+        SCNPRIO_CB m_prio;  // setDebDraw's
+        int pad_4;          // the constructor numbers them 1 to 9
+    };
+
     ScnPoolObj* m_pool;  // 0x20 releaseItem gives items back to it (the name is not the original's)
     ScnCamMan* m_camMan;  // 0x28 setView's (the name is not the original's)
     unsigned char pad_30[0x8];
@@ -47,6 +60,11 @@ public:
     unsigned char pad_40[0x6C];
     // 0xAC createMdl passes its negation to each new model's setAlwaysTexStm (the name is not the original's)
     bool m_noAlwaysTexStm;
+    unsigned char pad_AD[0xD4C];
+    bool m_renderStop;  // 0xDF9 renderStop sets it (the name is not the original's)
+    unsigned char pad_DFA[0x6];
+    DEBDRAW m_debDraw[9];  // 0xE00 setDebDraw's (the name is not the original's)
+    unsigned char pad_E48[0x8];
 };
 }  // namespace ml
 

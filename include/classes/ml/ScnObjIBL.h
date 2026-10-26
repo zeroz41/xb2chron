@@ -10,6 +10,7 @@ namespace ml {
 // table 0x7100B78000
 class ScnObjIBL : public ::ml::ScnObj {
 public:
+    explicit ScnObjIBL(Scn* scn);
     bool isDisp() const;
     virtual ~ScnObjIBL();  // slot 0
     virtual void setReferencePos(mm::Vec3 const&) = 0;  // slot 8

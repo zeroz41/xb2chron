@@ -3,6 +3,7 @@
 
 #include "classes/ml/ScnObj.h"
 #include "classes/ml/threadval.h"
+#include "ml/AttrTransform.h"
 #include "mm/mtl/FixStr.h"
 
 namespace mm { class Mat44; }
@@ -12,10 +13,13 @@ namespace ml {
 // table 0x7100B77D88
 class ScnObjLight : public ::ml::ScnObj {
 public:
-    // what a light keeps per thread (0x140 bytes: threadval's tvSwap copies that much)
-    struct alignas(16) RENDER_INFO {
-        unsigned char pad_0[0x140];
+    // what a light keeps per thread (0x140 bytes: threadval's tvSwap copies that much): its transform (getTrans
+    // returns a bank's)
+    struct RENDER_INFO {
+        AttrTransform m_trans;  // (the name is not the original's)
     };
+    // the calculation thread's transform (true) or the render thread's (false)
+    AttrTransform* getTrans(bool cpu);
     bool isDisp() const;
     bool isOfsMatrix() const;
     virtual ~ScnObjLight();  // slot 0

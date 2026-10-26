@@ -3,6 +3,7 @@
 
 #include "classes/ml/ScnObj.h"
 #include "classes/ml/threadval.h"
+#include "ml/AttrTransform.h"
 #include "mm/mtl/FixStr.h"
 
 namespace ml { class DebDraw; }
@@ -15,9 +16,10 @@ namespace ml {
 // table 0x7100B77F00
 class ScnObjModel : public ::ml::ScnObj {
 public:
-    // what a model keeps per thread (0x140 bytes: threadval's tvSwap copies that much)
-    struct alignas(16) RENDER_INFO {
-        unsigned char pad_0[0x140];
+    // what a model keeps per thread (0x140 bytes: threadval's tvSwap copies that much): its transform (getTrans
+    // returns a bank's)
+    struct RENDER_INFO {
+        AttrTransform m_trans;  // (the name is not the original's)
     };
     // the offset its render applies, kept per thread (0x10 bytes)
     struct alignas(16) RENDER_OFFSET_INFO {
@@ -27,6 +29,10 @@ public:
     // not in the symbol)
     mm::Vec3& getOffsetInfo(bool);
     void setFrameSpd(float spd);
+    // the calculation thread's transform (true) or the render thread's (false)
+    AttrTransform* getTrans(bool cpu);
+    const AttrTransform* getTrans(bool cpu) const;
+    void setClip(bool on);
     void setDisp(bool on);  // GfObjAcc::applyDisp passes whether the object and its parent show
     bool isDisp() const;
     bool isClip() const;
@@ -65,8 +71,12 @@ public:
     float m_frameSpd;             // setFrameSpd (the name is not the original's)
     unsigned char pad_348[0x4];
     unsigned int m_disp : 1;      // isDisp (the name is not the original's)
-    unsigned int m_clip : 1;      // isClip (the name is not the original's)
-    unsigned int pad_bits : 30;  // unknown flags: isDisp loads the whole 32-bit unit
+    unsigned int m_clip : 1;      // isClip; setClip sets it (the name is not the original's)
+    unsigned int pad_bits2 : 2;
+    unsigned int m_warp : 1;      // setPosWarp sets it (the name is not the original's)
+    unsigned int pad_bits5 : 11;
+    unsigned int m_dispReq : 1;   // setDisp sets it (the name is not the original's)
+    unsigned int pad_bits17 : 15;  // unknown flags: isDisp loads the whole 32-bit unit
 };
 }  // namespace ml
 

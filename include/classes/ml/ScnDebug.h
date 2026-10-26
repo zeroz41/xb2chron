@@ -18,6 +18,8 @@ public:
     virtual ~ScnDebug();  // slot 0
     virtual void cbRenderAfter(ml::Scn*, ml::SCNPRIO_CB);  // slot 8
     ScnDebugManipu* getManipulator();
+    bool isPickManipu() const;
+    void clrManipulator();
     // a translation or rotation manipulator on the matrix and position given, by the manipulator owner
     void setManipulatorTrans(const mm::Mat44* mtx, const mm::Vec3* pos);
     void setManipulatorRot(const mm::Mat44* mtx, const mm::Vec3* pos);
