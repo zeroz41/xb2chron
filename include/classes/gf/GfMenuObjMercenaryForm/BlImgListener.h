@@ -2,15 +2,20 @@
 #define CLASSES_GF_GFMENUOBJMERCENARYFORM_BLIMGLISTENER_H
 
 #include "classes/gf/GfMenuObjMercenaryForm.h"
+#include "classes/ui/UIObjectListener.h"
 
-namespace ui { class EventData; }
+namespace ui { struct EventData; }
 
 namespace gf {
 // table 0x7100B634D8
-class GfMenuObjMercenaryForm::BlImgListener {
+class GfMenuObjMercenaryForm::BlImgListener : public ::ui::UIObjectListener {
 public:
-    virtual ~BlImgListener();  // slot 0
+    // initialize news it (0x28 bytes): its code zeroes 0xC-0x1B after storing its table, then stores the owner
+    BlImgListener(GfMenuObjMercenaryForm* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~BlImgListener() {}  // slot 0: weak in the original (its D0 is in the unit's tail)
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
+    unsigned char pad_0C[0x10];
+    GfMenuObjMercenaryForm* m_owner;  // what initialize makes it for
 };
 }  // namespace gf
 

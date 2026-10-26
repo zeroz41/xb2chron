@@ -1,0 +1,196 @@
+#include "classes/gf/GfMenuObjMercenaryForm.h"
+#include "classes/gf/GfGameVoice.h"
+#include "classes/gf/GfMenuBladeList.h"
+#include "classes/gf/GfMenuCallContext.h"
+#include "classes/gf/GfMenuIDList.h"
+#include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfMenuReference.h"
+#include "classes/gf/SCOM_FIELD_VOICE.h"
+#include "classes/gf/GfMenuObjMercenaryForm/MainListener.h"
+#include "classes/gf/GfMenuReferenceNumber.h"
+#include "classes/ui/UICtrlCursorSelect.h"
+#include "classes/ui/UISelectObjList.h"
+#include "gf/GfMenuObjUtil.h"
+#include "mm/Pnt.h"
+#include "mm/Rect.h"
+#include "ui/EventData.h"
+
+namespace gf {
+
+GfMenuObjMercenaryForm::GfMenuObjMercenaryForm(unsigned int handle)
+    : GfMenuObject(handle), m_teamId(0), m_unitBlades(nullptr), m_listBlades(nullptr), m_unitSelect(nullptr),
+      m_unitCursor(nullptr), m_listSelect(nullptr), m_listCursor(nullptr), m_presetSelect(nullptr),
+      m_presetCursor(nullptr), m_context(nullptr), m_numbers(), pad_100(0), m_waitFrames(0), m_seq(this),
+      m_seqStep(false), m_subSeq(this), m_bladeIds(), pad_8F0(false), m_voice(nullptr), m_leaveVoice(-1),
+      m_leaveRequest(false), m_voiceStopped(false) {
+    for (int i = 0; i < 8; i++) {
+        m_numbers[i] = GfMenuReferenceNumber::create();
+    }
+    m_context = GfMenuCallContext::create();
+}
+
+GfMenuObjMercenaryForm::~GfMenuObjMercenaryForm() {
+    for (int i = 0; i < 8; i++) {
+        m_numbers[i] = nullptr;
+    }
+    for (int i = 0; i < 3; i++) {
+        if (m_presetBlades[i] != nullptr) {
+            m_presetBlades[i]->release();
+            m_presetBlades[i] = nullptr;
+        }
+    }
+    if (m_context != nullptr) {
+        m_context->release();
+        m_context = nullptr;
+    }
+    if (m_presetCursor != nullptr) {
+        m_presetCursor->release();
+        m_presetCursor = nullptr;
+    }
+    if (m_presetSelect != nullptr) {
+        m_presetSelect->release();
+        m_presetSelect = nullptr;
+    }
+    if (m_listCursor != nullptr) {
+        m_listCursor->release();
+        m_listCursor = nullptr;
+    }
+    if (m_listSelect != nullptr) {
+        m_listSelect->release();
+        m_listSelect = nullptr;
+    }
+    if (m_unitCursor != nullptr) {
+        m_unitCursor->release();
+        m_unitCursor = nullptr;
+    }
+    if (m_unitSelect != nullptr) {
+        m_unitSelect->release();
+        m_unitSelect = nullptr;
+    }
+    if (m_listBlades != nullptr) {
+        m_listBlades->release();
+        m_listBlades = nullptr;
+    }
+    if (m_unitBlades != nullptr) {
+        m_unitBlades->release();
+        m_unitBlades = nullptr;
+    }
+    if (m_formSelect != nullptr) {
+        m_formSelect->release();
+        m_formSelect = nullptr;
+    }
+    if (m_formCursor != nullptr) {
+        m_formCursor->release();
+        m_formCursor = nullptr;
+    }
+    if (m_idList != nullptr) {
+        m_idList->release();
+        m_idList = nullptr;
+    }
+    for (int i = 0; i < 3; i++) {
+        if (m_refs[i] != nullptr) {
+            m_refs[i]->release();
+            m_refs[i] = nullptr;
+        }
+    }
+}
+
+void GfMenuObjMercenaryForm::finalize() {
+    GfMenuObject::finalize();
+}
+
+void GfMenuObjMercenaryForm::update() {
+    if (!m_seq.m_jobs.empty()) {
+        if (m_leaveRequest && GfMenuObjUtil::fn_7100492C88()) {
+            m_seqStep = false;
+            m_seq.clear();
+            m_seq.addJob(&GfMenuObjMercenaryForm::seqLeaveBlade);
+            if (m_leaveVoice != -1) {
+                GfGameVoice::fn_71002F1F64(m_leaveVoice);
+                m_leaveVoice = -1;
+            }
+            m_leaveRequest = false;
+        }
+    }
+    m_seq.update();
+    m_subSeq.update();
+    if (m_waitFrames != 0) {
+        m_waitFrames--;
+    }
+    GfMenuObject::update();
+}
+
+
+// seqLeaveBlade is not here yet
+
+void GfMenuObjMercenaryForm::setDetailBladePos(unsigned int handle) {
+    ui::UIObjectAcc detail(m_handle, "LAY_form_bl_detail_bl");
+    if (handle == 0) {
+        detail.setDisp(false);
+    } else {
+        ui::UIObjectAcc blade(handle);
+        mm::Rect<short> rect;
+        blade.getRect(rect, 1);
+        mm::Pnt<short> pos;
+        pos.x = rect.x;
+        pos.y = rect.y;
+        detail.setPos(pos);
+        detail.setDisp(true);
+    }
+}
+
+void GfMenuObjMercenaryForm::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 0;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        break;
+    }
+    case 2: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_out = 1;
+        param.m_preset = 6;
+        param.m_startFlag1 = true;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+// seqReturnMissionSelect, the Apply/Preset listeners, seqPresetSave, seqPresetLoad and LeaderListener are not here
+// yet
+
+// seqConfirmStart (wip/seqConfirmStart.cpp, 4 words off) is not here yet
+
+bool GfMenuObjMercenaryForm::seqDepartureStart() {
+    m_seqStep = false;
+    m_seq.addJob(&GfMenuObjMercenaryForm::seqApperBlade);
+    m_voice = SCOM_FIELD_VOICE::createMercenariesLeader(GfMenuReference::getReferenceBladeID(0));
+    m_voiceStopped = false;
+    return true;
+}
+
+bool GfMenuObjMercenaryForm::seqRevertBladeSet() {
+    ui::UIObjectAcc acc(m_handle, "LAY_main");
+    bool done;
+    if (!m_seqStep) {
+        GfMenuManager::openCommonWindow(200);
+        done = false;
+        m_seqStep = true;
+    } else if (GfMenuManager::isOpenCommonWindow()) {
+        done = false;
+    } else {
+        GfMenuObject::returnFSSubLayer(this);
+        done = true;
+        m_seqStep = false;
+    }
+    return done;
+}
+
+}  // namespace gf

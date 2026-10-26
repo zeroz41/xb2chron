@@ -125,6 +125,12 @@ public:
     static void gevLayerPause(unsigned int layer, bool pause);
     // SCOM_FIELD_VOICE::exec stops a voice it cuts short, then asks how it ended
     static void playStop(GAME_VOICE_HANDLE* voice);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfMenuObjMercenaryForm::update makes
+    // no such call). A member because its code sits in gf_game_voice's unit between playStop and getResult. What it
+    // does: forwards its one argument to fn_7100566E60 (gf_req_scom), which searches GfReqSmallCom's list for the
+    // entry holding that value. Callers: GfMenuObjMercenaryForm::update and seqLeaveBlade (a long kept as -1 for
+    // none), GfMenuObjMercenaryReport::update, GfMenuObjBlKizunaRing::finalize and its RingListener.
+    static void fn_71002F1F64(long voice);
     // waitForOthers: the voice waits while an object of type 3 or 4 has a voice playing (3.0.1 added the
     // parameter: 1.0.0's playVoice has three)
     static GAME_VOICE_HANDLE* playVoice(const ParamObj& obj, const char* name, CV_PRIO prio, bool waitForOthers);
