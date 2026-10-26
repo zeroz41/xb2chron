@@ -61,7 +61,10 @@ public:
     void rebuild();
     void addListCategory(unsigned short id, unsigned int category, CBdatWrapper* bdat);
     void addTaskCategory(unsigned short id, unsigned int category, CBdatWrapper* bdat);
-    void makeQuestTaskInfo();
+    // 3.0.1 passes GfBdatQuest::m_useIra (bdatRefresh loads it into w1 for the tail call; the body never reads it:
+    // its first call overwrites w1). The symbols spell 1.0.0's parameterless name; the parameter name is not the
+    // original's.
+    void makeQuestTaskInfo(bool useIra);
     bool getQuestListByIndex(CBdatWrapper*& bdat, unsigned short& id, unsigned int index) const;
     // the game flag a task of a purpose counts in (getTaskFlag's per-category bases)
     unsigned int getTaskFlag(unsigned int purposeId, unsigned int task) const;
