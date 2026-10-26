@@ -21,10 +21,13 @@ typedef enum NVNlogicOp { NVN_LOGIC_OP_LARGE = 0x7FFFFFFF } NVNlogicOp;
 typedef enum NVNsyncWaitResult { NVN_SYNC_WAIT_RESULT_LARGE = 0x7FFFFFFF } NVNsyncWaitResult;
 typedef enum NVNtiledCacheAction { NVN_TILED_CACHE_ACTION_LARGE = 0x7FFFFFFF } NVNtiledCacheAction;
 typedef enum NVNcounterType { NVN_COUNTER_TYPE_LARGE = 0x7FFFFFFF } NVNcounterType;
+typedef enum NVNindexType { NVN_INDEX_TYPE_LARGE = 0x7FFFFFFF } NVNindexType;
+typedef enum NVNformat { NVN_FORMAT_LARGE = 0x7FFFFFFF } NVNformat;
 
 typedef struct NVNblendState { char reserved[8]; } NVNblendState;
 typedef struct NVNchannelMaskState { char reserved[4]; } NVNchannelMaskState;
 typedef struct NVNcolorState { char reserved[4]; } NVNcolorState;
+typedef struct NVNcounterData { uint64_t counter; uint64_t timestamp; } NVNcounterData;
 typedef struct NVNcommandBuffer { char reserved[160]; } NVNcommandBuffer;
 typedef struct NVNdevice { char reserved[12288]; } NVNdevice;
 typedef struct NVNdepthStencilState { char reserved[8]; } NVNdepthStencilState;

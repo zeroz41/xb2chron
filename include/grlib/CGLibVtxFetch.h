@@ -7,9 +7,9 @@ namespace grlib {
 
 // one vertex attribute of a fetch object (the field names are not the original's)
 struct CGLibVtxAttr {
-    unsigned int format;
-    unsigned int location;
-    unsigned int offset;  // in the vertex
+    unsigned int format;  // an NVNformat
+    int location;
+    int offset;  // in the vertex
     unsigned int stream;
 };
 
@@ -18,16 +18,17 @@ class CGLibVtxFetch {
 public:
     CGLibVtxFetch();
     ~CGLibVtxFetch();
-    // the fetch object in memory, for count attributes
-    // builds the fetch object for count attributes
+    // builds the fetch object for count attributes, in memory of its own
     void createFetchObj(CGLibVtxAttr* attributes, int count);
-    void createMemFetchObj(void* memory, CGLibVtxAttr* attributes, int count);
+    // the same in the caller's memory; returns the bytes it takes
+    int createMemFetchObj(void* memory, CGLibVtxAttr* attributes, int count);
     void release();
 
     // the NVN attribute states CGLibCtlShader::setShader binds and their count (the names are not the original's)
-    const NVNvertexAttribState* m_pAttribs;  // 0x0
+    NVNvertexAttribState* m_pAttribs;  // 0x0
     unsigned short m_attribNum;  // 0x8
-    unsigned char pad_A[0x6];
+    unsigned short m_isAlloc;  // 0xA: m_pAttribs is its own (createFetchObj's)
+    unsigned char pad_C[0x4];
 };
 
 }  // namespace grlib

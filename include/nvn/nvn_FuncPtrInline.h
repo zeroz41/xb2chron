@@ -197,4 +197,29 @@ typedef void (*PFNNVNMEMORYPOOLFINALIZEPROC)(NVNmemoryPool* pool);
 extern PFNNVNMEMORYPOOLFINALIZEPROC pfnc_nvnMemoryPoolFinalize;
 static inline void nvnMemoryPoolFinalize(NVNmemoryPool* pool) { pfnc_nvnMemoryPoolFinalize(pool); }
 
+
+typedef void (*PFNNVNCOMMANDBUFFERDRAWELEMENTSPROC)(NVNcommandBuffer* cmdBuf, NVNdrawPrimitive mode, NVNindexType type, int count, NVNbufferAddress indexBuffer);
+extern PFNNVNCOMMANDBUFFERDRAWELEMENTSPROC pfnc_nvnCommandBufferDrawElements;
+static inline void nvnCommandBufferDrawElements(NVNcommandBuffer* cmdBuf, NVNdrawPrimitive mode, NVNindexType type, int count, NVNbufferAddress indexBuffer) { pfnc_nvnCommandBufferDrawElements(cmdBuf, mode, type, count, indexBuffer); }
+
+typedef void (*PFNNVNCOMMANDBUFFERDRAWELEMENTSINSTANCEDPROC)(NVNcommandBuffer* cmdBuf, NVNdrawPrimitive mode, NVNindexType type, int count, NVNbufferAddress indexBuffer, int baseVertex, int baseInstance, int instanceCount);
+extern PFNNVNCOMMANDBUFFERDRAWELEMENTSINSTANCEDPROC pfnc_nvnCommandBufferDrawElementsInstanced;
+static inline void nvnCommandBufferDrawElementsInstanced(NVNcommandBuffer* cmdBuf, NVNdrawPrimitive mode, NVNindexType type, int count, NVNbufferAddress indexBuffer, int baseVertex, int baseInstance, int instanceCount) { pfnc_nvnCommandBufferDrawElementsInstanced(cmdBuf, mode, type, count, indexBuffer, baseVertex, baseInstance, instanceCount); }
+
+typedef void (*PFNNVNVERTEXATTRIBSTATESETDEFAULTSPROC)(NVNvertexAttribState* attrib);
+extern PFNNVNVERTEXATTRIBSTATESETDEFAULTSPROC pfnc_nvnVertexAttribStateSetDefaults;
+static inline void nvnVertexAttribStateSetDefaults(NVNvertexAttribState* attrib) { pfnc_nvnVertexAttribStateSetDefaults(attrib); }
+
+typedef void (*PFNNVNVERTEXATTRIBSTATESETFORMATPROC)(NVNvertexAttribState* attrib, NVNformat format, ptrdiff_t relativeOffset);
+extern PFNNVNVERTEXATTRIBSTATESETFORMATPROC pfnc_nvnVertexAttribStateSetFormat;
+static inline void nvnVertexAttribStateSetFormat(NVNvertexAttribState* attrib, NVNformat format, ptrdiff_t relativeOffset) { pfnc_nvnVertexAttribStateSetFormat(attrib, format, relativeOffset); }
+
+typedef void (*PFNNVNVERTEXATTRIBSTATESETSTREAMINDEXPROC)(NVNvertexAttribState* attrib, int streamIndex);
+extern PFNNVNVERTEXATTRIBSTATESETSTREAMINDEXPROC pfnc_nvnVertexAttribStateSetStreamIndex;
+static inline void nvnVertexAttribStateSetStreamIndex(NVNvertexAttribState* attrib, int streamIndex) { pfnc_nvnVertexAttribStateSetStreamIndex(attrib, streamIndex); }
+
+typedef uint64_t (*PFNNVNDEVICEGETTIMESTAMPINNANOSECONDSPROC)(const NVNdevice* device, const NVNcounterData* counterData);
+extern PFNNVNDEVICEGETTIMESTAMPINNANOSECONDSPROC pfnc_nvnDeviceGetTimestampInNanoseconds;
+static inline uint64_t nvnDeviceGetTimestampInNanoseconds(const NVNdevice* device, const NVNcounterData* counterData) { return pfnc_nvnDeviceGetTimestampInNanoseconds(device, counterData); }
+
 #endif

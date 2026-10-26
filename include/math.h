@@ -8,6 +8,7 @@ extern "C" {
 #endif
 
 float sqrtf(float x);
+double sqrt(double x);
 float sinf(float x);
 float cosf(float x);
 float acosf(float x);
