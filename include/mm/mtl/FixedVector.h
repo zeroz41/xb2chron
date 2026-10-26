@@ -124,6 +124,21 @@ public:
             }
         }
     }
+    // inserts value before it (gf::GfMobSlotManager::addFailedPopDistSq inlines it)
+    iterator insert(iterator it, const T& value) {
+#line 307 MM_MTL_FIXED_VECTOR_PATH
+        MM_ASSERT(validate_iterator(it));
+        size_type prevSize = m_size;
+#line 311 MM_MTL_FIXED_VECTOR_PATH
+        MM_ASSERT(prevSize < N);
+        size_type index = it - begin();
+        if (it != end()) {
+            move_n(it, prevSize - index, it + 1);
+        }
+        *it = value;
+        ++m_size;
+        return it;
+    }
     iterator erase(iterator it) {
 #line 345 MM_MTL_FIXED_VECTOR_PATH
         MM_ASSERT(validate_iterator(it));

@@ -9,6 +9,7 @@ namespace gmk {
 class GmkDoorPhantomManager {
 public:
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 0
+    GmkDoorPhantomManager();
     virtual ~GmkDoorPhantomManager();  // slot 1
     void update(float dt);
     unsigned char pad_8[0x28];  // fields: size from GfFieldGimmick, where GmkDmgPhantomManager follows it at +0x30

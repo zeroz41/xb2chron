@@ -390,7 +390,7 @@ void GfPlayComEventFade::end() {
         if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
             scene->setPlayerTalkForce(false);
         }
-        mm::mtl::PtrSingleton<GfFieldGimmick>::sys()->m_eventFade = false;
+        mm::mtl::PtrSingleton<GfFieldGimmick>::sys()->m_eventFade.m_active = false;
     }
     s_start--;
 }

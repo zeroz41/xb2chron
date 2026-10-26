@@ -6,6 +6,7 @@
 #include "classes/gmk/GmkSet.h"
 #include "classes/gmk/IGmkList.h"
 #include "mm/mtl/Vector.h"
+#include "mm/mtl/FixStr.h"
 
 namespace gmk { class GmkManager; }
 
@@ -13,7 +14,18 @@ namespace gmk {
 // table 0x7100B6BBD0
 class GmkManager : public ::mm::mtl::PtrSingleton< ::gmk::GmkManager> {
 public:
+    // what create reads (GfFieldGimmick's constructor fills one on the stack: allocator 9's memory,
+    // "bdat/common_gmk.bdat", "RSC_GmkSetList", 1; the names are not the original's)
+    struct CreateInfo {
+        mtl::ALLOC_HANDLE m_handle;
+        ::mm::mtl::FixStr<32> m_bdatPath;
+        ::mm::mtl::FixStr<32> m_tableName;
+        int m_param;
+    };
+
+    GmkManager();
     virtual ~GmkManager();  // slot 0
+    void create(const CreateInfo& info);
     // whether create has run and dispose has not (GfFieldGimmick checks it before every call)
     bool isValid() const;
     void dispose();

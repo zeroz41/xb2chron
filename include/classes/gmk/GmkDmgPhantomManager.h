@@ -18,6 +18,7 @@ public:
 class GmkDmgPhantomManager : public TUnk_B6CF98, public ::gf::IGfEvent {
 public:
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 0
+    GmkDmgPhantomManager();
     virtual ~GmkDmgPhantomManager();  // slot 1
     void update(float dt);
     virtual void gevPartyMover(gf::GF_OBJ_HANDLE*, bool);  // slot 3

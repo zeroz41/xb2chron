@@ -14,6 +14,9 @@
 #include "classes/gmk/GmkCtrlVolSeManager.h"
 #include "mm/Math.h"
 #include "fw/UpdateInfo.h"
+#include "classes/gf/GfObjManager.h"
+#include "classes/gf/GfGmkBladeTraverser.h"
+#include "classes/gmk/GmkBlade.h"
 
 namespace gmk {
 
@@ -24,6 +27,32 @@ GmkAntiBladeAreaManager::~GmkAntiBladeAreaManager() {
 }  // namespace gmk
 
 namespace gf {
+
+inline void GfFieldGimmick::initialize(const GfSetupParam& param) {
+    gmk::GmkManager::CreateInfo info;
+    info.m_handle = getAllocator(ALLOCATOR(9))->getMemHandle();
+    info.m_bdatPath = "bdat/common_gmk.bdat";
+    info.m_tableName = "RSC_GmkSetList";
+    info.m_param = 1;
+    m_gmkMgr.create(info);
+    m_initialized = true;
+    GfObjManager::addListener(this, IGfObjListener::OBJEVT(0));
+}
+
+GfFieldGimmick::GfFieldGimmick(const GfSetupParam& param)
+    : m_unknownFlag0(false),
+      m_initialized(false),
+      m_locatorAtlas(nullptr),
+      m_unknownFlag1(false),
+      m_enableOpenMainMenu(true),
+      m_unknownFlag2(true),
+      m_unknownFlag3(true) {
+    initialize(param);
+}
+
+GfFieldGimmick::~GfFieldGimmick() {
+    GfObjManager::removeListener(this);
+}
 
 void GfFieldGimmick::listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int) {}
 
@@ -55,16 +84,16 @@ void GfFieldGimmick::update(const fw::UpdateInfo& info) {
     gimmick->m_doorPhantomMgr.update(info.m_deltaTime);
     gimmick->m_dmgPhantomMgr.update(info.m_deltaTime);
     gimmick->m_ctrlVolSeMgr.update(info.m_deltaTime);
-    if (gimmick->m_eventFade) {
+    if (gimmick->m_eventFade.m_active) {
         float dt = info.m_deltaTime;
-        if (!gimmick->m_fadeGmkUpdated) {
-            gimmick->m_fadeGmkUpdated = gmk::GmkManager::get()->updateImmediate();
+        if (!gimmick->m_eventFade.m_gmkUpdated) {
+            gimmick->m_eventFade.m_gmkUpdated = gmk::GmkManager::get()->updateImmediate();
         } else {
-            gimmick->m_fadeViewReady = gmk::GmkManager::get()->isValidView();
+            gimmick->m_eventFade.m_viewReady = gmk::GmkManager::get()->isValidView();
         }
-        gimmick->m_fadeTime += dt;
-        if (gimmick->m_fadeTime > 10.0f) {
-            gimmick->m_fadeViewReady = true;
+        gimmick->m_eventFade.m_time += dt;
+        if (gimmick->m_eventFade.m_time > 10.0f) {
+            gimmick->m_eventFade.m_viewReady = true;
         }
     }
     gimmick->m_mobSlotMgr.update();
@@ -127,6 +156,21 @@ int GfFieldGimmick::getBdatIdOfActiveGmkAntiBladeArea() {
         return 0;
     }
     return area->getBdatInfo()->m_bdatId;
+}
+
+void GfGmkBladeTraverser::onTraverse(const gmk::AGmkBase& base) {
+    const gmk::GmkBlade& blade = static_cast<const gmk::GmkBlade&>(base);
+    bool found;
+    if (m_bladeId == 0) {
+        found = static_cast<const gmk::GmkBlade::BdatInfo*>(blade.m_bdatInfo)->m_kind == m_kind && blade.m_bladeId == 0;
+    } else if (m_rareOnly) {
+        found = blade.m_bladeId == 1001 || blade.m_bladeId == 1002;
+    } else {
+        found = blade.m_bladeId == m_bladeId;
+    }
+    if (found) {
+        m_result = &blade;
+    }
 }
 
 }  // namespace gf

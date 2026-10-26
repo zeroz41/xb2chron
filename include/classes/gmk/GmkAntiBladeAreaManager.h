@@ -10,6 +10,7 @@ namespace gmk {
 // table 0x7100B519B8
 class GmkAntiBladeAreaManager : public ::mm::mtl::PtrSingleton< ::gmk::GmkAntiBladeAreaManager> {
 public:
+    GmkAntiBladeAreaManager() : m_active(nullptr) {}
     virtual ~GmkAntiBladeAreaManager();  // slot 0
     void dispose();
     // the areas addGmk registered (GfFieldGimmick's constructor builds it; the name is not the original's)

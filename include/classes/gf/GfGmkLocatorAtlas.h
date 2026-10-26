@@ -19,6 +19,7 @@ public:
     };
 
     GfGmkLocatorAtlas(const CreateInfo* info);
+    ~GfGmkLocatorAtlas();
     void create(const CreateInfo& info);
     void update(float delta);
 
