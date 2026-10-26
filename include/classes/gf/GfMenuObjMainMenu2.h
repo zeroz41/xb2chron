@@ -33,6 +33,10 @@ public:
     static void setCloseKeyEnable(bool enable);
     static void setSystemKeyEnable(bool enable);
     static void closeCharChange();
+    // GfMenuObjBlWeapon2::openCharChange passes its LAY_chips handle, 1 and false (the parameter names are not the
+    // original's)
+    static void openCharChange(unsigned int handle, unsigned int kind, bool flag);
+    static void disableCharChange();
     static void cancelEnableMainMenu(bool enable);
     static void setSubIndexText(unsigned int text);
     static bool isOpenCharMenu();

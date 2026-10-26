@@ -126,6 +126,8 @@ public:
     static int getCtrlID(unsigned int handle);  // the slot of the control running on the handle, -1 for none
     static void stopCtrl(int slot);  // nothing for -1
     static bool isBusyCtrl(int slot);
+    // the length of that motion library's motion (GfMenuObjBlWeapon2::seqSrcLeave times a fade by it)
+    static float getCtrlMotionTime(const char* motionLib, const char* motion);
     // the sound of a menu sound table row (BDAT 0x187's resource_id), and its handle (0 when nothing plays)
     static unsigned int playSE(unsigned int se);
     static unsigned int playSE(const char* se);  // a sound by its name

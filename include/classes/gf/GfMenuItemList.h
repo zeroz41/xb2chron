@@ -49,7 +49,12 @@ public:
         unsigned int pad_2B : 8;
         bool pad_2C;
     };
-    struct ItemShopSetup;
+    // what setupFromShop lists: a shop's goods (GfMenuObjBlWeapon2::seqSrcAppear fills one; the names are not the
+    // original's)
+    struct ItemShopSetup {
+        ui::UIListInfoBase::SetupParam m_setup;  // the list's
+        unsigned int m_shop;                     // the shop
+    };
     struct ItemShopExcSetup;
     struct QuestRewardSetup;
     struct MissionRewardSetup;
@@ -69,6 +74,7 @@ public:
     void updateCount();
     void setupFromHanaParts(const HanaPartsSetup& setup);  // every part of the type that needs ether  // the stackable items' counts from the item box
     void decItem(const MenuItemInfo& item, bool);
+    void setupFromShop(const ItemShopSetup& setup);
     void sort(unsigned int order, bool);
     // the sort orders (comparators for UIListInfo::sort): each orders by its key, then by item id
     static bool sortNameDescending(const MenuItemInfo& a, const MenuItemInfo& b);
