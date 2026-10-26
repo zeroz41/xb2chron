@@ -2,6 +2,8 @@
 #include "classes/ml/DrFogObjGbl.h"
 #include "classes/ml/DrMan.h"
 #include "classes/ml/DrMdoCtlDammy.h"
+#include "classes/ml/DrMdoCtlNom.h"
+#include "classes/ml/DrMdoCtlPos.h"
 #include "classes/ml/DrMdoCtlSeamAll.h"
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/DrMdoZSortObj.h"
@@ -920,6 +922,73 @@ void (DrMdoSetup::*DrMdoSetup::s_pStaticImage[5])(const MdsMatInfoHeader*, unsig
     &DrMdoSetup::varStImg_ZBuff,
 };
 
+// m_stateFlags bits 0..5 select the passes an object draws in (bit 3 light pre-pass, bit 1 GBuff, bit 2
+// refraction, bit 5 special alpha, bit 6 thickness, bit 20 z pre-pass, bits 25..27 last/fast/cloud-back alpha).
+void DrMdoCtlNom::callShadowCacheUpdate(unsigned long bits) {
+    m_shadowCacheBits &= ~bits;
+}
+
+void DrMdoCtlNom::callZSortGBuffRender() {
+    if (m_stateFlags & 0x2) {
+        nomCallRender(1);
+    }
+}
+
+void DrMdoCtlNom::callZSortNomRefractionRender() {
+    if (m_stateFlags & 0x4) {
+        nomCallRender(2);
+    }
+}
+
+void DrMdoCtlNom::callZSortLightPrePassRender() {
+    if (m_stateFlags & 0x8) {
+        nomCallRender(3);
+    }
+}
+
+void DrMdoCtlNom::callZSortNomSpAlphaRender() {
+    if (m_stateFlags & 0x20) {
+        nomCallRender(5);
+    }
+}
+
+void DrMdoCtlNom::callLastAlphaNomRender() {
+    if (m_stateFlags & 0x2000000) {
+        lastAlphaCallRender();
+    }
+}
+
+void DrMdoCtlNom::callFastAlphaNomRender() {
+    if (m_stateFlags & 0x4000000) {
+        fastAlphaCallRender();
+    }
+}
+
+void DrMdoCtlNom::callCldBackAlphaNomRender() {
+    if (m_stateFlags & 0x8000000) {
+        cldBackAlphaCallRender();
+    }
+}
+
+void DrMdoCtlPos::callZpreePassRenderPosAll() {
+    if (m_stateFlags & 0x100000) {
+        createZBuffRenderDisplayList();
+    }
+}
+
+void DrMdoCtlPos::callThicknessRenderFirstPosAll() {
+    if (m_stateFlags & 0x40) {
+        createThicknessRenderDisplayListSub(true);
+    }
+}
+
+void DrMdoCtlPos::callThicknessRenderSecondPosAll() {
+    if (m_stateFlags & 0x40) {
+        createThicknessRenderDisplayListSub(false);
+    }
+}
+
+
 void DrMdoSetup::uniformBlock_no(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {}
 
 void DrMdoSetup::uniformBlock_Static(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
@@ -1022,6 +1091,21 @@ void DrMdoSetup::uniformBlock_RimBloomCalc(const MdsMatValShaderCate* cate, int 
 
 void DrMdoSetup::uniformBlock_Toon2(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
     m_pDrMan->m_calcMan->m_pViewWork->m_toon2Block.setUniformBlock(m_pDecExtTbl->getValGlobalParam(paramIdx));
+}
+// Last alpha objects: buckets 0..3.
+void DrMdoZSortMan::setViewWorldPosLastAlpha(DrMdoZSortObj* obj, const mm::Vec3& pos) {
+    float dx = pos.x - m_viewPos.x;
+    float dy = pos.y - m_viewPos.y;
+    float dz = pos.z - m_viewPos.z;
+    float dist = sqrtf(dx * dx + dy * dy + dz * dz) / m_sortFar;
+    if (dist >= 1.0f) {
+        stockObj(obj, 3);
+    } else if (dist <= 0.001f) {
+        stockObj(obj, 0);
+    } else {
+        int idx = static_cast<int>(powf(dist, m_sortRate) * 4.0f);
+        stockObj(obj, idx > 3 ? 3 : (idx < 0 ? 0 : idx));
+    }
 }
 
 DrMdoZSortMan::DrMdoZSortMan(DrMan* drMan)

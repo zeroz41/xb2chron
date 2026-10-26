@@ -29,6 +29,8 @@ public:
     void callSpAlphaRenderPosAll();
     void callLightPrePassRenderPosAll();
     void callRefractionRenderPosAll();
+    void createZBuffRenderDisplayList();
+    void createThicknessRenderDisplayListSub(bool first);
 
     // the names are not the original's
     unsigned char pad_182[0x66];

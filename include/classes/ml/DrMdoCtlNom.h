@@ -41,6 +41,10 @@ public:
     void createAfterImage(float, float, float, const mm::Col3&, float, float, float, const mm::Col3&, float, float,
                           float);
     void releaseAfterImage();
+    void nomCallRender(int pass);
+    void lastAlphaCallRender();
+    void fastAlphaCallRender();
+    void cldBackAlphaCallRender();
 
     // the ScnObjAcc* accessors read these when DrMdoMat::m_mdlType is 0 (the names are not the original's)
     unsigned char pad_182[0x56];  // DrMdlObj ends at 0x182 (m_nodeMax)
@@ -49,6 +53,9 @@ public:
     DrResMdoMeshObj* m_mesh;  // 0x1E8, ScnObjAccResSubMesh's
     unsigned char pad_1F0[0x10];
     EtcParamsTable* m_etcParams;  // 0x200, ScnObjAccEtcParams's
+    unsigned char pad_208[0x28];
+    // 0x230, callShadowCacheUpdate clears the bits it is given (the name is not the original's)
+    unsigned long m_shadowCacheBits;
 };
 }  // namespace ml
 
