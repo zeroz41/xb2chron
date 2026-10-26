@@ -254,7 +254,9 @@ public:
     unsigned char pad_5bf0[0x5C];
     // EnemyParameter::ApplyStatusEnhance scales every enhanced value by it (the name is not the original's)
     float m_statusEnhanceRate;
-    unsigned char pad_5c50[0x28];
+    // the challenge battle unit's fn_7100026D08 returns it; meaning unknown
+    float pad_5c50;
+    unsigned char pad_5c54[0x24];
     // the playing jingle's sound handle, -1 when none plays (IsJinglePlaying; the name is not the original's)
     long m_jingleHandle;
     unsigned char pad_5c80[0x58];

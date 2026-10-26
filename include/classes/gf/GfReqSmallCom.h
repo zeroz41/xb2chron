@@ -45,4 +45,15 @@ public:
 };
 }  // namespace gf
 
+namespace gf {
+// Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions: they fill
+// gf/request/gf_req_scom.cpp next to the SCOM_*::create functions, but the requests they make have classes nothing
+// names. What they do: without value -1; else they allocate a 0x20-byte request (fn_7100558D28: table
+// 0x7100B6AFA0, fn_7100558BAC: table 0x7100B6AF70; the new cites "gf/request/gf_req_scom.cpp"), keep value at 0x1C,
+// queue it with a new handle and return the handle. Their only callers are the challenge battle unit's
+// TUnk_B3A9C8::fn_7100026CBC / fn_7100026C28 (a BDAT 78 "Score" value) and fn_7100026CF0.
+unsigned long fn_7100558D28(int value);
+unsigned long fn_7100558BAC(int value);
+}  // namespace gf
+
 #endif

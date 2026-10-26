@@ -23,6 +23,7 @@ public:
     // the character index of an AI script's character id (Utility::AI_GetCharacterHandle passes the id less 100
     // and false for an enemy)
     int GetCharacterIDByAiChrID(int id, bool isPlayer) const;
+    bool IsExistBattleEnemy(bool* result, gf::GF_OBJ_HANDLE* handle, bool flag) const;
 };
 }  // namespace btl
 
