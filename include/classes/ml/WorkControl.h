@@ -13,6 +13,23 @@ public:
     virtual void wkTail();  // slot 12
     virtual bool wkStandbyLogin();  // slot 14
     virtual bool wkStandbyLogout();  // slot 15
+
+    // inline: WorkUtil::createWork<WorkControl> builds it in place (32 children, the pause counts reset; the
+    // parameter names are not the original's)
+    WorkControl(const char* name, WorkObj* parent) : WorkObj(name, parent, 32) {
+        s_nPauseNum = 0;
+        s_nSysPauseNum = 0;
+        m_pauseState = 0;
+    }
+    // makes the control work under parent
+    static WorkControl* create(WorkObj* parent);
+    // makes the flow setup work under the control work once (always true)
+    static bool setFlowSetup();
+
+    static int s_nPauseNum;
+    static int s_nSysPauseNum;
+
+    int m_pauseState;  // 0x1B0 the constructor clears it (the name is not the original's)
 };
 }  // namespace ml
 

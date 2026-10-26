@@ -17,6 +17,10 @@ public:
         return ::fabsf(other.r - r) <= 1e-6f && ::fabsf(other.g - g) <= 1e-6f && ::fabsf(other.b - b) <= 1e-6f;
     }
 
+    // the named colours (mm_lib's; their symbols name them)
+    static const Col3 yellow;
+    static const Col3 salmon;
+
     float r;
     float g;
     float b;

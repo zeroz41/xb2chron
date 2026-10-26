@@ -30,7 +30,7 @@ public:
     virtual bool wkStandbyExceptionRetry(unsigned int) { return true; }  // slot 16
 
     // reports message unless done within timeout (the parameter names are not the original's)
-    void wkCheckTimeout(unsigned int timeout, bool done, const char* message);
+    bool wkCheckTimeout(unsigned int timeout, bool done, const char* message);
     // the children list (WorkRootState's walks call it for begin and end alike)
     reslist<WorkObj*>* wkGetChild();
     const reslist<WorkObj*>* wkGetChild() const;
