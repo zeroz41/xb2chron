@@ -59,14 +59,18 @@ struct ItemProperty {
     unsigned char m_treasureKey;    // type 8 (sortTypeTreasure*)
     unsigned char pad_5E[0x6];
     unsigned char m_weaponRank;     // type 1 (sortWpnRank*)
-    unsigned char pad_65[0x3];
+    // type 2: update_IconAll shows it + 1 (the name is not the original's)
+    unsigned char m_iconIndex;
+    unsigned char pad_66[0x2];
     // what GfMenuItemAdapter's Hana part callbacks show (the names are not the original's)
     int m_needEther;   // update_needEther
     int m_dustEther;   // update_dustEther
-    unsigned char pad_70[0x6];
+    unsigned char pad_70[0x5];
+    unsigned char m_role;    // update_roleText: the FP text row (0: none)
     unsigned char m_pArmor;  // update_PArmor
     unsigned char m_eArmor;  // update_EArmor
-    unsigned char pad_78[0x8];
+    unsigned char m_revise[6];  // update_revise shows the first that is not 0
+    unsigned char pad_7E[0x2];
 };
 
 // the items' helpers (functions, by their symbols)
@@ -102,6 +106,11 @@ public:
     static bool isValidCrystal(unsigned int item);
     static void setEquipFlag(unsigned int item, GfItemHandle handle, bool equip);
     static GfItemHandle getNoEquipItemHandle(unsigned int item);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies among GfItemUtil's
+    // functions (its unit). What it does: forwards to fn_7100247474, which for a DLC driver (0x11-0x19) gives the
+    // 16-bit item id at +0x5A4 of its row of GfDataManager::fn_7100224A10's driver table, else 0.
+    // GfMenuItemAdapter::ReferenceDriverEquipConverter shows it as slot 0's accessory of such a driver on menu layer 3.
+    static unsigned int fn_71002FCD64(unsigned int driver);
 };
 
 }  // namespace gf

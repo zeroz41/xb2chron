@@ -4,10 +4,12 @@
 #include "classes/gf/GfMenuAdapter.h"
 #include "classes/gf/GfMenuItemList.h"
 #include "mm/mtl/Delegate.h"
+#include "mm/mtl/IntrusivePtr.h"
 
 namespace fw { class UpdateInfo; }
 namespace ui { class UIObjectPlugin; }
 namespace gf { class GfMenuItemList; }
+namespace gf { class IGfMenuReferenceItem; }
 
 namespace gf {
 // a base of gf::GfMenuItemAdapter no evidence names yet
@@ -21,8 +23,11 @@ class GfMenuItemAdapter : public ::gf::GfMenuAdapter, public TUnk_B5CA50 {
 public:
     class IConverter;
     class ListConverter;
+    class MissionConverter;  // 1.0.0's (3.0.1 has none; fromMission's type)
+    class PouchConverter;    // 1.0.0's (3.0.1 has none; fromPouch's type)
     class PouchReferenceDriverConverter;
     class ReferenceBladeEquipConverter;
+    class ReferenceDriverEquipConverter;
     class ReferenceItemConverter;
     // a display callback and the plugin create makes for it (the table at 0x7100B5CA68, in create's type order)
     struct TypeSetup {
@@ -37,8 +42,23 @@ public:
     static GfMenuItemAdapter* create(unsigned int handle, unsigned int type, const MenuItemInfo& item, bool changed);
     // an adapter of the list's item at that index (-1: the selected one's) on the handle's object, kind picking
     // its plugin
+    // an adapter that takes its item from the converter (owned) on each update; 3.0.1 inlines it into every caller
+    static GfMenuItemAdapter* createFromCoverter(unsigned int handle, unsigned int type, IConverter* converter,
+                                                 bool changed);
     static GfMenuItemAdapter* createFromList(unsigned int handle, unsigned int kind, GfMenuItemList* list, int index,
-                                             bool);
+                                             bool changed);
+    static GfMenuItemAdapter* createFromReference(unsigned int handle, unsigned int type,
+                                                  mm::mtl::IntrusivePtr<IGfMenuReferenceItem> reference, bool changed);
+    // the item in a pouch slot of the referenced driver
+    static GfMenuItemAdapter* createFromPouchReferenceDriver(unsigned int handle, unsigned int type, unsigned int pouch,
+                                                             unsigned int reference, bool changed);
+    // the accessory the referenced driver has in a slot (fn_71003432DC in the symbols: 1.0.0's function of this name
+    // has the same code, line aside, and builds the same converter)
+    static GfMenuItemAdapter* createFromReferenceDriverEquip(unsigned int handle, unsigned int type,
+                                                             unsigned int reference, unsigned int slot, bool changed);
+    // the aux core (orb) the referenced blade has in a slot
+    static GfMenuItemAdapter* createFromReferenceBladeEquip(unsigned int handle, unsigned int type,
+                                                            unsigned int reference, unsigned int slot, bool changed);
     bool update_Name(const MenuItemInfo& item);
     bool update_Icon(const MenuItemInfo& item);
     bool update_IconAll(const MenuItemInfo& item);
