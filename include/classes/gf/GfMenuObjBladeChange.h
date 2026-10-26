@@ -10,6 +10,8 @@ public:
     // what GfMenuObjChainAttack::openStatus (with its context) and closeStatus call
     static void startChainAttack(GfMenuCallContext* context);
     static void exitChainAttack();
+    // btl::UIManager::NotifyInput passes 0, 1, 3 or its second argument (the parameter name is not the original's)
+    static void pushBladeChange(unsigned int index);
     class BladeListener;
     virtual ~GfMenuObjBladeChange();  // slot 0
     virtual void initialize();  // slot 2

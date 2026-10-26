@@ -24,6 +24,11 @@ public:
     // gf_menu_reference's unit, between GfMenuReference's functions. What it does: GfMenuManager::gevBattleEnd
     // tail-calls it, without arguments, after GfMenuObjPartyGauge::close when GfMenuObjUtil::fn_710048FD30(3) holds.
     static void fn_7100367D1C();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its address lies in
+    // gf_menu_reference's unit and it reads PtrSingleton<GfMenuReference>::sys() only. What it does: copies four
+    // values into the four 12-byte records at 0x4CF70 of the instance (each record: the value, 1, a cleared byte);
+    // its one caller, btl::UIManager::Create, passes {0, 3, 1, 2}.
+    static void fn_7100366074(const unsigned int* values);
     class REFLIST;
     // a route of the elemental combo the menu shows (8 bytes each, 7 of them; 1.0.0's setElemComboRootInfo names
     // the type, the field names are not the original's)
