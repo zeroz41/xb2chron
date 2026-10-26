@@ -174,8 +174,8 @@ void GfMovieManager::open(mm::mtl::IAllocator* allocator, int width, int height)
     }
 }
 
-void GfMovieManager::set_file(const char* file) {
-    fw::MovieManager::get()->set_file(file);
+bool GfMovieManager::set_file(const char* file) {
+    return fw::MovieManager::get()->set_file(file);
 }
 
 float GfMovieManager::get_length() {

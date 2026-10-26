@@ -18,7 +18,7 @@ public:
     // a 1280x720 movie layer
     void open(mm::mtl::IAllocator* allocator);
     void open(mm::mtl::IAllocator* allocator, int width, int height);
-    void set_file(const char* file);
+    bool set_file(const char* file);  // fw::MovieManager::set_file's: true when the movie takes the file
     float get_length();
     void play();
     void pause();
