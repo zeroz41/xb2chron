@@ -3603,11 +3603,17 @@ application/BF2/unit_710066232C.cpp:
 	.bss         start:0x00EC19A0 end:0x00EC1A98
 
 application/BF2/ScriptPlayText.cpp:
-	.text        start:0x00663318 end:0x0066AC34
-	.rodata      start:0x009A7577 end:0x009A7DCC
+	.text        start:0x00663318 end:0x006665E4
+	.rodata      start:0x009A7577 end:0x009A76A5
 	.rodata      start:0x009C727C end:0x009C731C
-	.data        start:0x00B73698 end:0x00B74320
-	.bss         start:0x00EC1A98 end:0x00EC1AB8
+	.data        start:0x00B73698 end:0x00B739A8
+	.bss         start:0x00EC1A98 end:0x00EC1AA0
+
+application/BF2/unit_71006665E4.cpp:
+	.text        start:0x006665E4 end:0x0066AC34
+	.rodata      start:0x009A76A5 end:0x009A7DCC
+	.data        start:0x00B739A8 end:0x00B74320
+	.bss         start:0x00EC1AA0 end:0x00EC1AB8
 
 application/BF2/ui/animation/ui_animation_manager.cpp:
 	.text        start:0x0066AC34 end:0x0066B218
