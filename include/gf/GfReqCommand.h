@@ -1,7 +1,7 @@
 #ifndef GF_GFREQCOMMAND_H
 #define GF_GFREQCOMMAND_H
 
-namespace gf { class GF_OBJ_HANDLE; class GfMapjumpInfo; }
+namespace gf { class GF_OBJ_HANDLE; class GfMapjumpInfo; enum SAVESLOT : int; }
 namespace gf {
 // the requests GfReqManager queues (GfReqManager's table comment names them gf::GfReqCommand's): only the ones
 // called so far are declared
@@ -20,6 +20,9 @@ public:
     // the fld script plugin's startScript passes (0, name, true); the name is the symbol's, the result (if any) is
     // ignored by its caller
     static void reqStartScript(unsigned int, const char* name, bool);
+    // a save request: returns its handle (GfMenuObjBladeCreate::seqSave passes slot 22 and waits on
+    // GfReqManager::isValid)
+    static unsigned int reqSave(SAVESLOT slot);
     static void reqDestroyGf();  // GfManager::finalize's: the game framework's teardown
 };
 }  // namespace gf

@@ -6,6 +6,8 @@ namespace gf {
 class GfMenuModelView {
 public:
     virtual ~GfMenuModelView();  // slot 0
+    void update();
+    bool isLoading() const;  // its models still load (GfMenuObjBladeCreate::seqWaitLoading waits for false)
 };
 }  // namespace gf
 
