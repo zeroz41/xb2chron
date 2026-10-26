@@ -31,6 +31,8 @@ public:
     // (fn_7100262E70) when there is one; its only caller passes GfPlayComEvent's BGM name on GEV 14.
     void fn_7100262E58(const mm::mtl::FixStr<64>& name);
     bool isBossBgmCopied() const;  // 1.0.0's symbol at the same place, with the same caller (GfFieldSound::gevBattleEnd)
+    // the playing track with the highest volume (1.0.0's symbol), none when nothing plays
+    BgmTrack* getCurrentPlayBgmTrack();
     // 1.0.0's out-of-line getters (3.0.1 inlines them)
     unsigned int getRscFieldBgmID() const;
     unsigned int getRscGimmickBgmID() const { return m_rscGimmickBgmID; }
@@ -42,12 +44,14 @@ public:
     mm::mtl::FixedVector<BgmTrack*, 16> m_tracks;
     unsigned int m_rscBossBattleBgmID;  // 1.0.0's getRscBossBattleBgmID reads it
     // cleared when setRscBattleBgmID sets a boss battle BGM id (the name is not the original's)
-    unsigned int m_bossBattleBgmWait;
+    // update counts it up (signed) while the boss BGM waits to play and drops the boss id after 300 frames
+    int m_bossBattleBgmWait;
     unsigned int m_rscBattleBgmID;  // 1.0.0's getRscBattleBgmID reads it
     unsigned int m_rscGimmickBgmID;  // 1.0.0's getRscGimmickBgmID reads it
     unsigned int m_gimmickBgmID;  // setGimmickBgmID stores it
     // set to 30 when setGimmickBgmID clears a set gimmick BGM (the name is not the original's)
-    unsigned int m_gimmickBgmClearWait;
+    // update counts it down as signed and applies m_gimmickBgmID when it reaches 0
+    int m_gimmickBgmClearWait;
     bool m_disableFieldBgmChange;  // 1.0.0's isDisableFieldBgmChange reads it
     // bgmvolFadeDeadSequence fades out while it is set (the name is not the original's)
     bool m_deadSequence;

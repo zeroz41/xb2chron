@@ -16,6 +16,11 @@
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfManager.h"
 #include "classes/gf/GfSound.h"
+#include "classes/gf/GfPause.h"
+#include "classes/mm/mtl/Singleton.h"
+#include "classes/event/SkipManager.h"
+#include "gf/GfDataBlade.h"
+#include "classes/gf/GfPlayComEventFade.h"
 
 namespace gf {
 namespace _gffsn {
@@ -51,6 +56,40 @@ float bgmvolStop(ExecFadeParam& param) {
 }
 
 
+float bgmvolCondition(ExecFadeParam& param) {
+    bool fadeOut = !GfGameCond::isGameCond(
+        param.m_track->getBgmConditionConditionID(param.m_track->m_bgmCondID, param.m_cond->m_conditionNo));
+    return bgmvolControlFade(*param.m_updateInfo,
+                             fadeOut ? param.m_fade->m_fadeOutTime : param.m_fade->m_fadeInTime, fadeOut);
+}
+
+}  // namespace _gffsn
+
+unsigned int BgmTrack::getBgmConditionConditionID(unsigned int id, unsigned int index) const {
+    GfBdatBgm* bdat = GfBdatBgm::sys();
+    unsigned int count = 0;
+    for (unsigned int i = 0; i < 4; i++) {
+        unsigned int cond = bdat->getBgmConditionCondition(id, i);
+        if (cond == 0) {
+            continue;
+        }
+        if (count == index) {
+            return cond;
+        }
+        count++;
+    }
+    return 0;
+}
+
+namespace _gffsn {
+
+float bgmvolBossCondition(ExecFadeParam& param) {
+    bool fadeOut = !(GfGameCond::isGameCond(param.m_track->getBgmConditionConditionID(
+                         param.m_track->m_bgmCondID, param.m_cond->m_conditionNo)) ||
+                     GfGameManager::isForceBossBattleBgm());
+    return bgmvolControlFade(*param.m_updateInfo,
+                             fadeOut ? param.m_fade->m_fadeOutTime : param.m_fade->m_fadeInTime, fadeOut);
+}
 
 float bgmvolMapMatch(ExecFadeParam& param) {
     bool fadeOut = param.m_track->m_fieldBgm->getRscFieldBgmID() != param.m_track->getBgmCondID();
@@ -130,7 +169,46 @@ float bgmvolFadeDisableEventBgm(ExecFadeParam& param) {
                              fadeOut ? param.m_fade->m_fadeOutTime : param.m_fade->m_fadeInTime, fadeOut);
 }
 
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has no bgmvol check in its place). What it
+// does: a volume fade check like the others: fades out while the game data's local flag (GfDataBlade::fn_7100231884)
+// is 11091 or 11116 and GfPlayComEventFade::s_start is set, else fades in.
+float fn_7100261C30(ExecFadeParam& param) {
+    bool fadeOut = (GfDataBlade::fn_7100231884() == 11091 || GfDataBlade::fn_7100231884() == 11116) &&
+                   GfPlayComEventFade::s_start != 0;
+    return bgmvolControlFade(*param.m_updateInfo,
+                             fadeOut ? param.m_fade->m_fadeOutTime : param.m_fade->m_fadeInTime, fadeOut);
+}
+
 }  // namespace _gffsn
+
+void GfFieldBgm::destroy() {
+    for (BgmTrack* track : m_tracks) {
+        track->stopBGM(2.0f);
+        track->m_baseVolume = 1.0f;
+        track->m_fadeVolume = 1.0f;
+        track->m_fadeScale = 1.0f;
+        track->m_category = 1;
+    }
+}
+
+void GfFieldBgm::update(const fw::UpdateInfo& info) {
+    if (m_rscBossBattleBgmID != 0 && m_rscBossBattleBgmID != 0xFF && !BgmBattleBoss::get()->isPlaying() &&
+        !GfPause::isPause(0x59)) {
+        if (m_bossBattleBgmWait++ >= 299) {
+            m_rscBossBattleBgmID = 0;
+            m_bossBattleBgmWait = 0;
+        }
+    }
+    if (--m_gimmickBgmClearWait <= 0 && m_gimmickBgmID != 0xFFFFFFFF) {
+        m_rscGimmickBgmID = m_gimmickBgmID;
+        m_gimmickBgmID = 0xFFFFFFFF;
+    }
+    if (!m_disableFieldBgmChange) {
+        for (BgmTrack* track : m_tracks) {
+            track->update(info);
+        }
+    }
+}
 
 void GfFieldBgm::stopBgmForDebug(bool stop) {
     _gffsn::s_bStopBGM = stop;
@@ -254,6 +332,18 @@ void BgmBattle::update(const fw::UpdateInfo& info) {
     BgmTrack::update(info);
 }
 
+void BgmTrack::stopBGM(float time) {
+    for (unsigned long i = 0; i < 4; ++i) {
+        stopCondBGM(time, m_conds[i]);
+    }
+    m_fadeVolume = 0.0f;
+    m_fadeScale = 1.0f;
+    if (!m_keepBgmCondID) {
+        m_bgmCondID = 0;
+    }
+    m_conds[0].m_bgmFileName = "";
+}
+
 bool BgmTrack::isPlaying() const {
     for (unsigned long i = 0; i < 4; ++i) {
         const BGMCOND& cond = m_conds[i];
@@ -282,6 +372,12 @@ bool BgmEvent::isPlaying() const {
 
 void BgmEvent::cancelOverTime() {
     m_overTime = 0.0f;
+}
+
+void BgmEvent::fn_7100265440() {
+    if (GfGameManager::fn_71002A9E68() && m_overTime < 0.0f) {
+        m_overTimeStop = true;
+    }
 }
 
 void BgmEvent::update(const fw::UpdateInfo& info) {
@@ -317,6 +413,58 @@ float BgmTrack::getTotalTime() const {
         }
     }
     return result;
+}
+
+void BgmField::update(const fw::UpdateInfo& info) {
+    unsigned int id = m_fieldBgm->getRscFieldBgmID();
+    if (getBgmCondID() != id) {
+        if (getBgmCondID() != 0) {
+            stopBGM(4.0f);
+        }
+        m_bgmCondID = id;
+    }
+    BgmTrack::update(info);
+}
+
+void BgmGimmick::update(const fw::UpdateInfo& info) {
+    unsigned int id = m_fieldBgm->getRscGimmickBgmID();
+    if (getBgmCondID() != id) {
+        if (getBgmCondID() != 0) {
+            stopBGM(4.0f);
+        }
+        m_bgmCondID = id;
+    }
+    BgmTrack::update(info);
+}
+
+void BgmTrack::stopCondBGM(float time, BGMCOND& cond) {
+    GfSound* sound = GfSound::sys();
+    if (sound != nullptr && cond.m_handle.isValid()) {
+        if (time > 1.0f) {
+            event::SkipManager* skip = mm::mtl::Singleton<event::SkipManager>::getPtr();
+            if (GfManager::isExecModeThater() && skip->isSkip()) {
+                time = 1.0f;
+            }
+        }
+        sound->stopBgm(cond.m_handle, time);
+    }
+    cond.clear();
+}
+
+unsigned int BgmTrack::getBgmConditionBgmID(unsigned int id, unsigned int index) const {
+    GfBdatBgm* bdat = GfBdatBgm::sys();
+    unsigned int count = 0;
+    for (unsigned int i = 0; i < 4; i++) {
+        unsigned int bgm = bdat->getBgmConditionBgmID(id, i);
+        if (bgm == 0) {
+            continue;
+        }
+        if (count == index) {
+            return bgm;
+        }
+        count++;
+    }
+    return 0;
 }
 
 BgmTrack::~BgmTrack() {}

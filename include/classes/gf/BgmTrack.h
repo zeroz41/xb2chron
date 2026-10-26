@@ -17,15 +17,36 @@ struct ExecFadeParam;
 // a BGM condition entry (1.0.0's BGMCOND::BGMCOND clears +0, constructs the SoundHandle at +4, clears +0xC, +0x10,
 // +0x14 and +0x54/+0x58); size 0x5C
 struct BGMCOND {
-    unsigned char pad_0[0x4];
+    // the values 1.0.0's BGMCOND::clear zeroes besides the handle and the name: the volume (BgmTrack::getVolume
+    // returns the first entry's with a valid handle), +0xC (unproven), +0x10/+0x11 (1.0.0's isInvalidPlay counts an
+    // entry with no handle as invalid unless +0x11 is set); the names are not the original's
+    float m_volume;
     SoundHandle m_handle;
-    unsigned char pad_C[0x8];
+    unsigned int m_playNo;
+    bool m_playing;
+    bool m_requested;
+    unsigned char pad_12[0x2];
     // the BGM file it plays (1.0.0's BGMCOND::isSilentPlay compares it with "SilentBgm"; BgmTrack::isPlaying
     // counts an entry with a name as playing; the name is not the original's)
     mm::mtl::FixStr<64> m_bgmFileName;
     // which of the BGM condition row's set conditions plays (the bgmvol checks hand it to
     // BgmTrack::getBgmConditionConditionID as the index; the name is not the original's)
     unsigned int m_conditionNo;
+
+    // 1.0.0's out-of-line BGMCOND::clear (3.0.1 inlines it into BgmTrack::stopCondBGM): the name emptied when set,
+    // the handle cleared when valid, the values zeroed
+    void clear() {
+        if (m_bgmFileName.length() != 0) {
+            m_bgmFileName = "";
+        }
+        if (m_handle.isValid()) {
+            m_handle.clear();
+        }
+        m_volume = 0.0f;
+        m_playing = false;
+        m_requested = false;
+        m_playNo = 0;
+    }
 };
 
 // one volume fade of a track (1.0.0's BgmTrack::addVolumeFade(func, out, in, flag) stores the invoker and the
@@ -67,6 +88,22 @@ public:
     // with the field BGM's battle BGM id when the track's condition id differs (it sits where 1.0.0's
     // BgmTrack::play(unsigned int) sat, after the constructor; the BgmBattle constructor calls it too)
     void fn_7100263490(unsigned int id);
+    // 1.0.0's symbol: 3.0.1's fn_7100263FF0 has the body of 1.0.0's BgmTrack::stopBGM(float) (each entry stopped,
+    // the fade pair set to 0/1, the condition id cleared unless m_keepBgmCondID, entry 0's name emptied)
+    void stopBGM(float time);
+    // 1.0.0's out-of-line symbol (3.0.1 inlines it): the volume of the first entry with a valid handle, else 0
+    float getVolume() const {
+        for (unsigned long i = 0; i < 4; ++i) {
+            if (m_conds[i].m_handle.isValid()) {
+                return m_conds[i].m_volume;
+            }
+        }
+        return 0.0f;
+    }
+    // 1.0.0's symbol: 3.0.1's fn_7100266B18 has the body of 1.0.0's BgmTrack::stopCondBGM(float, BGMCOND&) (the
+    // entry's BGM stopped over time when GfSound exists and the handle is valid, then BGMCOND::clear), with the
+    // fade time cut to 1 while a theater-mode event is skipped
+    void stopCondBGM(float time, BGMCOND& cond);
 
     // the four condition entries (1.0.0 has FixedArray<BGMCOND, 4>::assign; isPlaying reads 4 entries of 0x5C
     // from +8)
@@ -76,7 +113,16 @@ public:
     // element type unproven (its size fits 0x170 = 4 x BGMCOND); ~BgmTrack clears its count at +0x600
     mm::mtl::FixedVector<BGMCOND, 4> m_bgmConds;
     unsigned int m_bgmCondID;  // 1.0.0's getBgmCondID reads it
-    unsigned char pad_60C[0x14];
+    unsigned char pad_60C[0x2];
+    // stopBGM keeps m_bgmCondID while it is set (the name is not the original's)
+    bool m_keepBgmCondID;
+    unsigned char pad_60F[0x1];
+    // GfFieldBgm::destroy resets it to 1 with the fade pair (the name is not the original's)
+    float m_baseVolume;
+    // stopBGM sets them to 0 and 1, GfFieldBgm::destroy both to 1 (the names are not the original's)
+    float m_fadeVolume;
+    float m_fadeScale;
+    unsigned char pad_61C[0x4];
     GfFieldBgm* m_fieldBgm;  // the owner (the constructors take it)
     bool m_pause;  // setPause stores it (1.0.0's symbol names the setter)
     // GfFieldBgm::isBossBgmCopied reads it on the boss track (the name is not the original's)
