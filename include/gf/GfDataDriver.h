@@ -30,6 +30,12 @@ public:
     // does: for a DLC driver row (0x11-0x19) whose CHR_Ir "Type" is set, finds the first CHR_Ir row of the same
     // "GroupID" whose Type is 0 and returns its "driverID" (0x11 when there is none); any other row comes back as is.
     static unsigned int fn_71002417DC(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfDataBlade::isActivateDriver before
+    // isActivateParty is other code). A member because it lies among GfDataDriver's functions (right before
+    // isActivateParty) and its callers pass it a driver id. What it does: true for a driver outside the DLC rows
+    // 0x11-0x19; for those, whether GfBdatChrDr::fn_71001F16A4 of the row GfBdatChrDr::fn_71001F13E0 gives is 0.
+    // Caller here: gf_menu_obj_char_select_ira's fn_71003D273C (driver 0 and 1 references both set to it when true).
+    static bool fn_7100237A94(unsigned int driver);
     static unsigned int getExp(const SDataDriver& data);  // fn_7100245AB4
     static unsigned int getBattleExp(const SDataDriver& data);  // fn_7100245B7C
     static unsigned int getExpNextLevel(const SDataDriver& data);  // fn_710024618C

@@ -76,6 +76,11 @@ public:
     // (slot other than 0/1), or of the first (slot 0) / second (slot 1) id fn_71002416B4 lists for it, 0 when the
     // list is too short. GfGameUtil::setTrustPointForDebug passes (driver, -1) and adds the trust to the result.
     static unsigned int fn_7100237B70(unsigned int driver, int slot);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among its functions (between GfDataDriver::getName and GfDataBlade::getName, no this) and its callers pass
+    // it a blade id (GfMenuReference::getReferenceBladeID, GfGameUtil::getTrustRank). What it does: for the blades
+    // 0x464-0x46C returns blade - 0x453 (the DLC drivers 0x11-0x19), 0 for any other blade.
+    static unsigned int fn_7100236518(unsigned int blade);
     // whether a blade is one of the dummy blades (ids 1012-1013, 1073, 1110, 1124-1132); the symbols spell it
     // fn_7100237D28, 1.0.0's GfGameUtil::isDummyBlade calls GfDataBlade::isDummyBlade at the same place
     static bool isDummyBlade(unsigned int blade);
