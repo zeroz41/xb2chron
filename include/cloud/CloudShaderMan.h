@@ -12,6 +12,10 @@ enum CloudShaderType {};
 // CloudMan's shader list (no virtual table: its destructor is not in any table)
 class CloudShaderMan {
 public:
+    CloudShaderMan();
+    ~CloudShaderMan();
+    void createShader();
+    void update();
     grlib::CGLibDecShader* selectRenderPlane(CloudShaderType type, unsigned int lvNum, unsigned int holeMode,
                                              unsigned int blndMode);
     grlib::CGLibDecShader* selectDebug(CloudShaderType type, unsigned int debugMode, unsigned int, unsigned int);
@@ -35,6 +39,7 @@ public:
     grlib::CGLibDecShader* m_pShaders;  // 0x48, one per CloudShaderType
     unsigned char pad_50[0x18];
     grlib::CGLibVtxFetch m_vtxFetch[4];  // 0x68, by s_reShdFtxTbl
+    unsigned char pad_A8[0x100];  // CloudMan::beginSetup allocates 0x1A8
 };
 }  // namespace cloud
 

@@ -102,8 +102,11 @@ application/BF2/battle/challenge_battle_manager.cpp:
 application/BF2/battle/ActionCommand.cpp:
 	.text        start:0x00026F70 end:0x00026FA4
 
+application/BF2/battle/MOVE_DIR_RATE.cpp:
+	.text        start:0x00026FA4 end:0x0002715C
+
 application/BF2/battle/BattleCharacter.cpp:
-	.text        start:0x00026FA4 end:0x0007ABD4
+	.text        start:0x0002715C end:0x0007ABD4
 	.rodata      start:0x0097C613 end:0x0097D0F8
 	.rodata      start:0x009B5204 end:0x009B5358
 	.rodata      start:0x009B57BC end:0x009B581C
@@ -3363,11 +3366,16 @@ application/BF2/gf/object/GfObj.cpp:
 	.bss         start:0x00EACD48 end:0x00EACE60
 
 application/BF2/gf/object/GfObjAcc.cpp:
-	.text        start:0x00522090 end:0x00524970
-	.rodata      start:0x009A3903 end:0x009A3957
+	.text        start:0x00522090 end:0x0052478C
+	.rodata      start:0x009A3903 end:0x009A394B
 	.data        start:0x00B69E80 end:0x00B69EE0
+	.bss         start:0x00EACE60 end:0x00EACEB8
+
+application/BF2/gf/object/GfObjAlpha.cpp:
+	.text        start:0x0052478C end:0x00524970
+	.rodata      start:0x009A394B end:0x009A3957
 	.init_array  start:0x00B8FBE8 end:0x00B8FBF0
-	.bss         start:0x00EACE60 end:0x00EACED0
+	.bss         start:0x00EACEB8 end:0x00EACED0
 
 application/BF2/gf/object/GfExtendPacking.cpp:
 	.text        start:0x00524970 end:0x00524D14
@@ -3964,9 +3972,14 @@ application/BF2/ui/UIObject.cpp:
 	.bss         start:0x00EC1E80 end:0x00EC1E98
 
 application/BF2/ui/UIObjectAcc.cpp:
-	.text        start:0x006909C8 end:0x00693158
-	.rodata      start:0x009A9103 end:0x009A9118
-	.data        start:0x00B75718 end:0x00B757F8
+	.text        start:0x006909C8 end:0x006923EC
+	.rodata      start:0x009A9103 end:0x009A9109
+	.data        start:0x00B75718 end:0x00B75738
+
+application/BF2/ui/UIObjectList.cpp:
+	.text        start:0x006923EC end:0x00693158
+	.rodata      start:0x009A9109 end:0x009A9118
+	.data        start:0x00B75738 end:0x00B757F8
 	.init_array  start:0x00B8FD08 end:0x00B8FD10
 	.bss         start:0x00EC1E98 end:0x00EC1EB0
 
@@ -4156,10 +4169,16 @@ grlib/CGLibVtxIndex.cpp:
 	.data        start:0x00B79EC0 end:0x00B79FE0
 
 ml/ScnRenderDrSysParmAcc.cpp:
-	.text        start:0x007049C0 end:0x0070A944
-	.rodata      start:0x009AAD24 end:0x009AADFF
-	.data        start:0x00B79FE0 end:0x00B7A170
-	.bss         start:0x015E92E0 end:0x015E9378
+	.text        start:0x007049C0 end:0x0070A31C
+	.rodata      start:0x009AAD24 end:0x009AAD84
+	.data        start:0x00B79FE0 end:0x00B7A0F0
+	.bss         start:0x015E92E0 end:0x015E9368
+
+cloud/CloudMan.cpp:
+	.text        start:0x0070A31C end:0x0070A944
+	.rodata      start:0x009AAD84 end:0x009AADFF
+	.data        start:0x00B7A0F0 end:0x00B7A170
+	.bss         start:0x015E9368 end:0x015E9378
 
 cloud/CloudUniform.cpp:
 	.text        start:0x0070A944 end:0x00713F60

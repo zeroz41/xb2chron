@@ -15,7 +15,7 @@ public:
     virtual void changeLayer(unsigned int, unsigned int) = 0;  // slot 3
     // slot 4: inline (gf_movie_manager.cpp holds the copy the linker kept, from GfComAnimation's table)
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&) { return false; }
-    static mm::mtl::RTTI m_rtti;  // the base every component's m_rtti names (defined by GfObjAcc's unit)
+    static mm::mtl::RTTI m_rtti;  // the base every component's m_rtti names (defined by GfObjAlpha's unit)
 };
 }  // namespace gf
 

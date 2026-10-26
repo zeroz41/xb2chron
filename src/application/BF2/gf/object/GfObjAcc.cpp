@@ -422,6 +422,4 @@ unsigned int GfObjAcc::getLayer() const { return m_obj != nullptr ? m_obj->m_upd
 
 bool GfObjAcc::isLayerPause() const { return fw::Framework::isLayerPause(getLayer()); }
 
-mm::mtl::RTTI GfComponent::m_rtti("GfComponent", &fw::ComponentObject::m_rtti, nullptr);
-
 }  // namespace gf

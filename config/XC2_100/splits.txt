@@ -67,8 +67,11 @@ application/BF2/battle/chain_attack_manager.cpp:
 application/BF2/battle/ActionCommand.cpp:
 	.text        start:0x0001DEC8 end:0x0001DF18
 
+application/BF2/battle/MOVE_DIR_RATE.cpp:
+	.text        start:0x0001DF18 end:0x0001E0E4
+
 application/BF2/battle/BattleCharacter.cpp:
-	.text        start:0x0001DF18 end:0x000612BC
+	.text        start:0x0001E0E4 end:0x000612BC
 	.data        start:0x01171970 end:0x01171E88
 	.bss         start:0x011CD3D8 end:0x011CD408
 
@@ -2525,7 +2528,10 @@ application/BF2/gf/object/GfObj.cpp:
 	.bss         start:0x014A2060 end:0x014A2178
 
 application/BF2/gf/object/GfObjAcc.cpp:
-	.text        start:0x005819E0 end:0x00584628
+	.text        start:0x005819E0 end:0x005844B8
+
+application/BF2/gf/object/GfObjAlpha.cpp:
+	.text        start:0x005844B8 end:0x00584628
 	.bss         start:0x014A21D8 end:0x014A21F0
 
 application/BF2/gf/object/GfExtendPacking.cpp:
@@ -3030,8 +3036,12 @@ application/BF2/ui/UIObject.cpp:
 	.bss         start:0x014AEFA0 end:0x014AEFB8
 
 application/BF2/ui/UIObjectAcc.cpp:
-	.text        start:0x006F30AC end:0x006F6098
-	.data        start:0x011AAD98 end:0x011AAE78
+	.text        start:0x006F30AC end:0x006F5264
+	.data        start:0x011AAD98 end:0x011AADB8
+
+application/BF2/ui/UIObjectList.cpp:
+	.text        start:0x006F5264 end:0x006F6098
+	.data        start:0x011AADB8 end:0x011AAE78
 	.bss         start:0x014AEFB8 end:0x014AEFD0
 
 application/BF2/ui/ui_resource.cpp:
@@ -3174,9 +3184,14 @@ grlib/CGLibVtxIndex.cpp:
 	.data        start:0x011B1050 end:0x011B1170
 
 ml/ScnRenderDrSysParmAcc.cpp:
-	.text        start:0x007AE394 end:0x007B68B4
-	.data        start:0x011B1170 end:0x011B1300
-	.bss         start:0x01BD6AB0 end:0x01BD6B18
+	.text        start:0x007AE394 end:0x007B6278
+	.data        start:0x011B1170 end:0x011B1280
+	.bss         start:0x01BD6AB0 end:0x01BD6AD4
+
+cloud/CloudMan.cpp:
+	.text        start:0x007B6278 end:0x007B68B4
+	.data        start:0x011B1280 end:0x011B1300
+	.bss         start:0x01BD6B08 end:0x01BD6B18
 
 cloud/CloudUniform.cpp:
 	.text        start:0x007B68B4 end:0x007C1694
@@ -3251,9 +3266,13 @@ ml/DrCalcViewWork.cpp:
 	.data        start:0x011B66A8 end:0x011B6BD8
 	.bss         start:0x01BD7458 end:0x01BD7460
 
+ml/DrPixlPostObjCubeMapMultiIBL.cpp:
+	.text        start:0x008B7F8C end:0x008BA928
+	.data        start:0x011B6BD8 end:0x011B6C00
+
 ml/DrPixlPostObjTSSAO.cpp:
-	.text        start:0x008B7F8C end:0x008C7B10
-	.data        start:0x011B6BD8 end:0x011B6DA8
+	.text        start:0x008BA928 end:0x008C7B10
+	.data        start:0x011B6C38 end:0x011B6DA8
 
 idcoli/IDColiManager.cpp:
 	.text        start:0x008C7B10 end:0x008D2F44
