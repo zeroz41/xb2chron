@@ -2,6 +2,7 @@
 #define GF_ENVIROMENTSENSOR_H
 
 #include "mm/Vec3.h"
+#include "mm/Col4.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 
@@ -19,21 +20,29 @@ public:
         mm::Vec3 m_pos;          // the point found (the constructor: zero)
         mm::Vec3 m_normal;       // the ground's plane: its normal (the constructor: unit Y)
         float m_planeDist;       // and the plane's distance term, -m_normal.dot(m_pos)
-        unsigned char pad_24[0x14];
+        unsigned char pad_24[0xC];
+        unsigned long pad_30;  // the constructor: 0
         // the object the ground belongs to, -1 for none (AttachPlugin::update attaches the PC to it; the name is
         // not the original's)
         gf::GF_OBJ_HANDLE* m_obj;
         mm::Vec3 m_velocity;     // the ground's own movement (the constructor: zero)
-        unsigned char pad_50[0x20];
+        mm::Col4 pad_50;         // the constructor: white
+        unsigned int pad_60;     // the constructor: 0
+        unsigned char pad_64[0xC];
     };
     // the water around the object; the name is not the original's (StateUtil::getWaterInfo returns it)
     struct WaterInfo {
         float m_height;          // the water surface's height
-        unsigned char pad_4[0x2C];
+        unsigned char pad_4[0xC];
+        // the water surface's plane: its normal and distance term (the names are not the original's)
+        mm::Vec3 m_normal;
+        float m_planeDist;
+        unsigned char pad_24[0xC];
         unsigned int m_damageId; // the terrain damage the water deals (GfFieldDmgManager::findBdatInfo's)
         // what kind of water it is: 11 is the cloud sea (StateUtilField::testCloud; the name is not the original's)
         unsigned int m_kind;
-        unsigned char pad_38[0x8];
+        unsigned int pad_38;  // VerticalData's constructor: 0
+        unsigned char pad_3c[0x4];
     };
     // the plane below which the object dies; the name is not the original's (StateUtil::getDeadPlaneInfo)
     struct DeadPlaneInfo {
@@ -59,7 +68,13 @@ public:
         // with m_flags bit 3: the height of what is above the object (TaskFieldSensor::update allows no jump while it
         // is within the AI's enableJumpCeil above the PC; the name is not the original's)
         float m_ceilHeight;
-        unsigned char pad_e4[0x3C];
+        unsigned char pad_e4[0xC];
+        // what is above the object: its plane's normal and distance term (the names are not the original's)
+        mm::Vec3 m_ceilNormal;
+        float m_ceilPlaneDist;
+        unsigned char pad_104[0xC];
+        unsigned int pad_110;  // the constructor: 0
+        unsigned char pad_114[0xC];
     };
 
     // a search along a direction from a position (searchVertical's): what to look for, which way and how far, and
@@ -97,6 +112,10 @@ public:
     // (the name is not the original's)
     gf::GF_OBJ_HANDLE* m_wallObj;
     unsigned char pad_1e8[0x8];
+    // a second ground the constructor builds (what it holds is not known yet; the name is not the original's)
+    GroundInfo m_ground2;
+    unsigned char pad_260[0x30];
+    float pad_290;  // the constructor: 1
 };
 
 }  // namespace gf

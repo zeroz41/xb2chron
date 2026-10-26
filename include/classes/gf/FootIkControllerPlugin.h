@@ -2,6 +2,7 @@
 #define CLASSES_GF_FOOTIKCONTROLLERPLUGIN_H
 
 #include "classes/gf/Plugin.h"
+#include "classes/gf/GfAllocator.h"
 
 namespace fw { class UpdateInfo; }
 namespace gf { class GfComBehavior; }
@@ -23,6 +24,10 @@ public:
     enum { PLUGIN_ID = 3 };
 
     FootIkControllerPlugin();
+    static Plugin* create() {
+#line 24 "D:/Monolithsoft/BF2/prog/application/BF2\\gf/object/component/behavior/plugin/gf_foot_ik_controller_plugin.h"
+        return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) FootIkControllerPlugin;
+    }
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~FootIkControllerPlugin() {}  // slot 1
     virtual void onActivate();  // slot 3
