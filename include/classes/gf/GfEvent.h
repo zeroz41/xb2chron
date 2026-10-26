@@ -66,6 +66,12 @@ public:
     static void callBladeUnselect(unsigned int blade, bool unselect);  // GfDataBlade::setUnselect
     // GfDataBlade::setTrustPoint passes 4, the blade, 0, 0
     static void callDebugChangeIdea(unsigned int, unsigned int, unsigned int, unsigned int);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // gf_event's unit and it works on PtrSingleton<GfEvent>. What it does: calls virtual slot 23 (+0xB8) of every entry
+    // of the GfEvent's ring of up to 32 listeners (count at 0x108, start index at 0x110, "index < N") with its three
+    // arguments. Callers: GfGameUtilHana::execEquipCondenserParts (false) and execEquipExtendCondenserParts (true),
+    // after Hana's equipment is stored, with Hana's id and the slot.
+    static void fn_71003286B0(unsigned int hana, bool extend, unsigned int slot);
 };
 }  // namespace gf
 

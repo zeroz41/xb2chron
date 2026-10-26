@@ -22,10 +22,26 @@ struct alignas(4) EquipHana {
     Parts m_artsParts[3];
     Parts m_nArtsParts[3];
     unsigned short m_condenserParts[6];
-    unsigned char pad_58[0x20];
+    // the item handles of the equipped parts (GfGameUtilHana::execEquip*Parts store them next to the items; 0 when the
+    // part came from no box entry)
+    unsigned int m_roleHandle;
+    unsigned int m_attributeHandle;
+    unsigned int m_condenserHandles[6];
 
     void setArtsParts(unsigned int item, unsigned int handle, unsigned int slot);
     void setNArtsParts(unsigned int item, unsigned int handle, unsigned int slot);
+    // inline: GfGameUtilHana::isEnableEquipCondenserParts/execEquipCondenserParts load the handle before the slot
+    // address (the name is not the original's)
+    void setCondenserParts(unsigned int item, unsigned int handle, unsigned int slot) {
+        m_condenserParts[slot] = item;
+        m_condenserHandles[slot] = handle;
+    }
+    // the three condensers after the first three (the name is not the original's): the original indexes from the
+    // fourth slot (no 32-bit slot + 3)
+    void setExtendCondenserParts(unsigned int item, unsigned int handle, unsigned int slot) {
+        (&m_condenserParts[3])[slot] = item;
+        (&m_condenserHandles[3])[slot] = handle;
+    }
 };
 
 // Hana's (the artificial blade's) data (functions, by their symbols)
@@ -54,6 +70,7 @@ public:
     static unsigned int getOpenCircuitEther(unsigned int hana, unsigned int index);
     static void setEther(unsigned int value);
     static bool isOpenCircuit(unsigned int hana, unsigned int circuit);
+    static void setOpenCircuit(unsigned int hana, unsigned int circuit, bool open);
     static const EquipHana* getEquipParts(unsigned int hana);
     static void setEquipParts(unsigned int hana, const EquipHana& equip);
     static int getEquipPower(const EquipHana& equip);  // the energy its parts need
@@ -63,6 +80,9 @@ public:
     static bool isEquipArtsParts(unsigned int hana, unsigned int item);  // GfBdatItem::isITM_HanaArtsEnhFlag{JS,JK,JD}
     static bool isEquipNArtsParts(unsigned int hana, unsigned int item);  // GfBdatItem::isITM_HanaNArtsSetFlag{JS,JK,JD}
     static bool isEquipCondenserParts(unsigned int hana, unsigned int item);  // GfBdatItem::isITM_HanaAssistFlag{JS,JK,JD}
+    // whether another condenser slot holds a part with the same effect (extend: the slots after the first three)
+    static bool isExistSameEffectCondenserParts(unsigned int hana, unsigned int item, unsigned int slot, bool extend);
+    static bool isExistSameEffectNArtsParts(unsigned int hana, unsigned int item, unsigned int slot);
     static void setEquipPowerRank(unsigned int hana, unsigned int rank);
 };
 
