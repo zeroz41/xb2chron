@@ -13,6 +13,7 @@ public:
     virtual ~BladeChangeManager();  // slot 0
     static void Create();
     static void Destroy();
+    bool IsRegister(gf::GF_OBJ_HANDLE* handle) const;
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's StateField::onDead has no such call).
     // A member because its address is in blade_change_manager's unit and StateField::onDead calls it on
     // PtrSingleton<BladeChangeManager>::sys(). What it does: walks the manager's 0x40-byte entries (count at +0x288)

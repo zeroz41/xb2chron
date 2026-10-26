@@ -57,6 +57,8 @@ public:
     bool IsAngry() const;
     bool IsBlade() const;
     bool IsBattle() const;
+    // the arts slot a blade art would use (BladeArtsManager::RegisterBladeArts registers none below 0)
+    int IsActBladeArts(int, bool) const;
     // CharacterManager::Register gives the character its handle and its slot index
     void Initialize(gf::GF_OBJ_HANDLE* handle, int index);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: CharacterManager::fn_710007C1E0

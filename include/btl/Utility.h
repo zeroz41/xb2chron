@@ -117,7 +117,7 @@ float fn_710001530C();
 // What it does: what btl_ai.addEnemySirenGaugeRatio does with its fixed argument.
 void fn_7100015320(float ratio);
 // What it does: btl_ai.getWhiteSirenLevel passes 1, getBlackSirenLevel 0; returns the level.
-int fn_7100015334(int white);
+int fn_7100015334(bool white);
 // What it does: the int btl_ai.getChallengeID returns.
 int fn_710001535C();
 // The ones below are what the aiData script methods (application/BF2/unit_7100652854) call; the return types are what those test.
