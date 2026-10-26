@@ -173,7 +173,7 @@ public:
     static bool isMale(unsigned int blade);
     static bool isFemale(unsigned int blade);
     static bool isAnimal(unsigned int blade);
-    static unsigned int getAttribute(unsigned int blade);
+    static unsigned char getAttribute(unsigned int blade);
     static bool getExtraParts(const SDataBlade& data, unsigned int part);
     static unsigned int getBladePower(SDataBlade& data);
     static unsigned int getRoleByWpnType(unsigned int wpnType);
