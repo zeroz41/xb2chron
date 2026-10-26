@@ -172,6 +172,13 @@ bool fn_7100014958(gf::GF_OBJ_HANDLE* handle, int);
 // fn_7100014DC0: aiData's getTargetBladeId calls it on the target (getTargetDriverId calls AI_GetBdatID the same
 // way) and returns its int, -1 for 0.
 int fn_7100014DC0(gf::GF_OBJ_HANDLE* handle);
+// GROUP_BLADE_DATA::Initialize and InitializeCoolTime pass the blade's id
+float GetBladeCoolTime(int blade);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function of the Utility namespace: it
+// sits in Utility's unit among its functions (no this). What it does: maps an id through the tables at
+// 0x71009B5BD0 (ids 17-23) and 0x71009B5BF0 (ids 20-25) to a blade id; GROUP_BLADE_DATA::GetTrustRank passes its
+// blade's id when BattleGlobal::pad_bit35 is set and asks the trust rank of the result.
+unsigned int fn_7100010D3C(int blade);
 }}  // namespace btl::Utility
 
 #endif
