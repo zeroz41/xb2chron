@@ -2,26 +2,59 @@
 #define CLASSES_GF_GFMENUOBJCHAINATTACK_H
 
 #include "classes/gf/GfMenuObject.h"
+#include "classes/ui/IUIInputSelectionChecker.h"
 
 namespace gf {
-// a base of gf::GfMenuObjChainAttack no evidence names yet
-class TUnk_B60C10 {
-public:
-    virtual void isEnableSelect(unsigned int, int) = 0;
-};
-// table 0x7100B60BC0; base at 0x28 unknown (TUnk_B60C10)
-class GfMenuObjChainAttack : public ::gf::GfMenuObject, public TUnk_B60C10 {
+class GfMenuCallContext;
+
+// table 0x7100B60BC0; the chain attack's HUD (attached object 0x54: LAY_start, LAY_status, LAY_result, LAY_full_burst,
+// LAY_extend, LAY_ovk_start, LAY_turn_sel). The checker base at 0x28 is ui::IUIInputSelectionChecker (table
+// 0x7100B60C10: offset -0x28, its slot 0 the isEnableSelect thunk).
+class GfMenuObjChainAttack : public ::gf::GfMenuObject, public ui::IUIInputSelectionChecker {
 public:
     class ExtendListener;
     class FullBurstListener;
     class ResultListener;
     class StartListener;
     class StatusListener;
+
+    // what openResult sends LAY_result with its open event (0x21): the byte as the event's 16-bit first parameter,
+    // the int as its second (what they hold is not known yet)
+    struct ResultParam {
+        unsigned char pad_0;
+        int pad_4;
+    };
+
+    GfMenuObjChainAttack(unsigned int handle);
     virtual ~GfMenuObjChainAttack();  // slot 0
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
-    virtual void isEnableSelect(unsigned int, int);  // slot 7
+    // a selection of LAY_turn_sel can be chosen when its reference number is 0; any other layer's always
+    virtual bool isEnableSelect(unsigned int id, int select);  // slot 7
+
+    static void openStart(GfMenuCallContext* context);
+    static void openStatus(GfMenuCallContext* context);
+    static void closeStatus();
+    static void openResult(const ResultParam& param);
+    static void closeResult();
+    static void openFullBurst(GfMenuCallContext* context);
+    static void openRoundExtend();
+    static void closeRoundExtend();
+    static void changeCharacter(unsigned int character);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's changeCharacter is followed by
+    // StartListener::reciveEvent). A static member because it sits among the class's open/close functions and works
+    // on the same attached object (0x54). What it does: sends LAY_ovk_start the open event (0x21), then, given a
+    // context that has not started (GfMenuObjUtil::checkCCStart), starts it on object 0x54 with LAY_ovk_start's
+    // handle. No code or data reference to it in the module.
+    static void fn_71003BF974(GfMenuCallContext* context);
+
+    // zeroed by the constructor; what they hold is not known yet
+    void* pad_30;
+    void* pad_38;
+    void* pad_40;
+    void* pad_48;
+    void* pad_50;
 };
 }  // namespace gf
 

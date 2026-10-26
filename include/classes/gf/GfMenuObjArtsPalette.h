@@ -11,6 +11,9 @@ public:
     // 1.0.0 symbol (GfMenuReference::setReversePaletteBtnState calls it with the slot; the parameter name is not
     // the original's)
     static void pushReverseBtn(unsigned int slot);  // 1.0.0 symbol (GfMenuReference::setPaletteModeReverse calls it)
+    // what GfMenuObjChainAttack::openStatus and closeStatus call when a chain attack's status opens and closes
+    static void startChainAttack();
+    static void exitChainAttack();
     class MainListener;
     class ReverseListener;
     virtual ~GfMenuObjArtsPalette();  // slot 0
