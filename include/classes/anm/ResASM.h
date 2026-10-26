@@ -7,6 +7,7 @@
 #include "mm/mtl/Vector.h"
 
 namespace anm { class AsmAnnotetion; }
+namespace anm { enum InterpolateType : int; enum InterpolateCurve : int; }
 namespace anm { class Binding; }
 namespace anm { class ResResolver; }
 namespace anm { class Skeleton; }
@@ -23,16 +24,49 @@ struct ResClipInfo {
 
 // a state's loop count: at least m_min, up to m_range more at random (AsmState::initLoopCount; the names are not the
 // original's)
+// how a transition picks the new state's start frame (StateMachine::doTrans; the names of the fields are not the
+// original's)
+struct TransInfo {
+    int m_type;  // 0: m_frame on from the caller's frame, 1: the old state's time, 2: random in m_frame + m_range, 3:
+                 // the old state's time less the caller's time
+    float m_frame;
+    float m_range;
+};
+
+// how a transition blends the old state out (StateMachine::doTrans keeps it while it blends; the names of the
+// fields are not the original's, the order follows AdditiveInfo's)
+struct InterpolateInfo {
+    float m_time;  // none (epsilon or less): the old state goes at once
+    InterpolateCurve m_curve;
+    InterpolateType m_type;  // 1: StateMachine::updateFrame keeps updating the old state
+};
+
 struct ResLoopCount {
-    unsigned char pad_0[0x8];
+    const char* m_pNextState;  // StateMachine::updateFrame moves to it when the loops are done (the name is not the
+                               // original's)
     int m_min;
     unsigned int m_range;
+    TransInfo m_trans;
+    InterpolateInfo m_interpolate;
 };
 
 // a state's settings (the names are not the original's)
+// a blend tree resource: its type picks the tree (StateMachine::createState: 0 LerpBlendTree, 2 SpeedLerpBlendTree,
+// 3 AddBlendTree, 4 LerpAddBlendTree; the names are not the original's)
+struct ResBlendTree {
+    int m_type;
+};
+
 struct ResStateInfo {
-    unsigned char pad_0[0x30];
+    int m_type;  // StateMachine::createState: 0 SimplexState, 1 FrozenState, 2 m_pTree's blend tree
+    unsigned char pad_4[0x4];
+    const char* m_name;  // StateMachine::getStateName's
+    unsigned long m_attribute;  // StateMachine::getAttribute's category 0 (the name is not the original's)
+    unsigned int m_layer;  // the StateMachine (ASMControl layer) that plays it (the name is not the original's)
+    unsigned char pad_1c[0x14];
     const ResLoopCount* m_pLoopCount;  // none: one loop for a clip that plays once, else none
+    unsigned char pad_38[0x30];
+    const ResBlendTree* m_pTree;  // type 2's (the name is not the original's)
 };
 
 // one clip of a state: 0xE8 bytes (the fields' names are not the original's)
@@ -61,8 +95,7 @@ struct ResLerpNode {
 };
 
 // a lerp blend tree's resource: the variable it follows and its points, one per clip (the names are not the original's)
-struct ResLerpTree {
-    unsigned char pad_0[0x4];
+struct ResLerpTree : ResBlendTree {
     unsigned int m_variableIndex;  // in the state machine's variables
     Array<ResLerpNode> m_nodes;
 };
@@ -75,8 +108,8 @@ struct ResAddNode {
 
 // an add blend tree's resource: its base clips first, then one added clip per node (the names are not the
 // original's)
-struct ResAddTree {
-    unsigned char pad_0[0x10];
+struct ResAddTree : ResBlendTree {
+    unsigned char pad_4[0xC];
     unsigned int m_baseCount;
     unsigned char pad_14[0x4];
     Array<ResAddNode> m_nodes;
@@ -89,8 +122,7 @@ struct ResSpeedLerpNode {
 };
 
 // a speed lerp blend tree's resource, as ResLerpTree (the names are not the original's)
-struct ResSpeedLerpTree {
-    unsigned char pad_0[0x4];
+struct ResSpeedLerpTree : ResBlendTree {
     unsigned int m_variableIndex;
     Array<ResSpeedLerpNode> m_nodes;
 };
@@ -112,8 +144,7 @@ struct ResLerpAddNode {
 
 // a lerp add blend tree's resource: the variable it follows, its base clips first, then one added clip per point
 // (the names are not the original's)
-struct ResLerpAddTree {
-    unsigned char pad_0[0x4];
+struct ResLerpAddTree : ResBlendTree {
     unsigned int m_variableIndex;  // in the state machine's variables
     unsigned char pad_8[0x8];
     unsigned int m_baseCount;
@@ -149,7 +180,7 @@ struct ResStateData {
 
     const ResStateInfo* m_pInfo;
     mm::mtl::Vector<ResClipData> m_clips;
-    unsigned char pad_30[0x20];
+    unsigned long m_attributes[4];  // StateMachine::getAttribute's categories 1 to 4 (the name is not the original's)
     mm::mtl::Vector<AsmAnnotetion> m_enterAnnotations[5];  // per kind (AsmState::notifyEnter)
     mm::mtl::Vector<AsmAnnotetion> m_leaveAnnotations[5];  // per kind (AsmState::notifyLeave)
 };

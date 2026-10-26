@@ -33,6 +33,8 @@ public:
             ++m_refCount;
         }
     }
+    // the references counted (anm_state_machine.cpp asserts `pState->getRefCount() == 1`)
+    short getRefCount() const { return m_refCount; }
     void release() const {
         if (m_refEnable != 0) {
             if (--m_refCount <= 0) {

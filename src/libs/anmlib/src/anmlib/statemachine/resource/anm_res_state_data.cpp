@@ -6,7 +6,7 @@
 namespace anm {
 
 ResStateData::ResStateData() : m_pInfo(nullptr) {
-    memset(pad_30, 0, sizeof(pad_30));
+    memset(m_attributes, 0, sizeof(m_attributes));
 }
 
 void ResStateData::sortAnnotation(unsigned int kind) {
