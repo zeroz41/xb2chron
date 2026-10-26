@@ -7,6 +7,30 @@ namespace fw {
 // ones pressed and released this frame, the double presses, then the sticks' axes as its pad maps them; 0x48
 // bytes apart in the manager). The names are not the original's.
 struct PadData {
+    // what a holder that is not a pad's own starts with (GfGamePad's constructor, as 1.0.0's): no pad, no buttons,
+    // the sticks centred, the four 0.2f m_nullPad holds (inline: no copy in the symbols; the assignment order is the
+    // one whose stores match GfGamePad::build)
+    PadData() {
+        m_style = 0;
+        m_isConnect = false;
+        m_padNo = -1;
+        m_btn = 0;
+        m_down = 0;
+        m_up = 0;
+        m_repeat = 0;
+        m_dbl = 0;
+        pad_14 = 0;
+        pad_18 = 0;
+        m_lx = 0.0f;
+        m_ly = 0.0f;
+        m_rx = 0.0f;
+        m_ry = 0.0f;
+        pad_2C[0] = 0.2f;
+        pad_2C[1] = 0.2f;
+        pad_2C[2] = 0.2f;
+        pad_2C[3] = 0.2f;
+    }
+
     unsigned int m_btn;     // ml::DevPad::getBtn: held
     unsigned int m_down;    // ml::DevPad::getDown: pressed this frame
     unsigned int m_up;      // ml::DevPad::getUp: released this frame

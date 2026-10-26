@@ -31,6 +31,12 @@ public:
     static void callPartyDriver(GF_OBJ_HANDLE* handle, unsigned int partyId, bool enter);
     static void callPartyMemberOK(bool ok);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // gf_event's unit and it works on PtrSingleton<GfEvent>. What it does: calls virtual slot 3 (+0x18,
+    // IGfEvent::fn_710000FA18) of every entry of the GfEvent's ring of up to 32 listeners (count at 0x108, start
+    // index at 0x110, "index < N"). Callers: GfGamePad's eventInGameOpenMainMenu, eventInGameOpenSystemMenu and
+    // eventInGameOpenSkipTravelMenu, before they open the menu (no arguments).
+    static void fn_7100328568();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // gf_event's unit and it works on PtrSingleton<GfEvent>. What it does: calls virtual slot 4 (+0x20) of every
     // entry of the GfEvent's ring of up to 32 listeners (count at 0x108, start index at 0x110, "index < N").
     // Caller: the gmk plugin's openPortal (no arguments).
