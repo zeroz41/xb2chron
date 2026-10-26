@@ -19,6 +19,7 @@ public:
     static void PostUpdate(const fw::UpdateInfo& info);
     BattleCharacter* GetCharacterConst(int index) const;
     BattleCharacter* GetCharacterConst(gf::GF_OBJ_HANDLE* handle) const;
+    gf::GF_OBJ_HANDLE* GetCharacterHandle(int index) const;  // the handle of the character at index
     // the character index of an AI script's character id (Utility::AI_GetCharacterHandle passes the id less 100
     // and false for an enemy)
     int GetCharacterIDByAiChrID(int id, bool isPlayer) const;

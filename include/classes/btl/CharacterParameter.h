@@ -1,19 +1,23 @@
 #ifndef CLASSES_BTL_CHARACTERPARAMETER_H
 #define CLASSES_BTL_CHARACTERPARAMETER_H
 
-namespace btl { class GROUP_DATA; }
+namespace btl { class GROUP_DATA; struct ARTS_DATA; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 
 namespace btl {
-// one palette slot (ARTS_PALETTE_DATA::GetSlotDataConst); 0x18 bytes (EnemyParameter's constructor, ResetAllRecast)
+// one palette slot (ARTS_PALETTE_DATA::GetSlotDataConst); 0x18 bytes (the palette's stride; EnemyParameter's
+// constructor, ResetAllRecast)
 struct ARTS_SLOT_DATA {
-    ARTS_SLOT_DATA() : m_artsID(0), pad_0_11(0), m_recast(0), pad_8(1.0f) {}
+    ARTS_SLOT_DATA() : m_artsID(0), m_dataType(0), pad_0_14(0), m_recast(0), pad_8(1.0f) {}
+    // DataManager's arts data for the slot's arts
+    void GetArtsData(ARTS_DATA& data) const;
+
     // BattleCharacter::GetArtsSlotIndex looks the slot holding an arts up by it (the name is not the original's)
     unsigned int m_artsID : 11;
-    unsigned int pad_0_11 : 21;
-    // ResetAllRecast clears it in every slot holding an arts (the name is not the original's)
-    unsigned int m_recast;
+    unsigned int m_dataType : 3;  // the arts data's ARTS_DATA::DATA_TYPE (GetArtsData; the name is not the original's)
+    unsigned int pad_0_14 : 18;
+    float m_recast;  // ARTS_PALETTE_DATA::ResetAllRecast clears it (the name is not the original's)
     float pad_8;  // 1 after construction; meaning unknown
     unsigned char pad_c[0xC];
 };
@@ -22,10 +26,15 @@ struct ARTS_SLOT_DATA {
 // ResetAllRecast walks all 23
 struct ARTS_PALETTE_DATA {
     ARTS_PALETTE_DATA() : pad_0(-1), pad_230(0) {}
+    // slot 15 is the talent slot; with the flag, slots 0-2 read entries 16-18 instead
     const ARTS_SLOT_DATA* GetSlotDataConst(int slot, bool) const;
+    const ARTS_SLOT_DATA* GetSupportSlotDataConst(int slot) const;
     void ResetAllRecast();
     long long pad_0;  // -1 after construction; meaning unknown
-    ARTS_SLOT_DATA m_slots[23];
+    // the field names are not the original's
+    ARTS_SLOT_DATA m_slots[19];
+    ARTS_SLOT_DATA m_talentSlot;  // GetSlotDataConst's slot 15
+    ARTS_SLOT_DATA m_supportSlots[3];  // GetSupportSlotDataConst
     unsigned int pad_230;  // 0 after construction; meaning unknown
     unsigned char pad_234[0x4];
 };
