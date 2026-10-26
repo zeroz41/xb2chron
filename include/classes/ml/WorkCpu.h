@@ -27,6 +27,7 @@ public:
     static void sync(int group, WKCPU_SYNC sync, CPUID cpu);
     static const unsigned int& getFrameCount();  // the work CPU's frame counter (fw::Framework::getFrameCount)
     // a listener told of the HOME menu no more (fw::MovieManager's destructor)
+    static void addBackgroundListener(IWorkBackground* listener);
     static void removeBackgroundListener(IWorkBackground* listener);
     // a listener of system information (operation and performance mode) no more (ml::DevPerfNx's destructor)
     static void removeSystemInfoListener(IWorkInfomation* listener);

@@ -17,6 +17,8 @@ public:
     virtual void initializeResource(const Framework& framework);  // slot 8 (1.0.0's name for an empty base slot)
     virtual void initialize(const Framework& framework);  // slot 9 (tl::TitleApplet::initialize)
     virtual void finalize(const Framework& framework);  // slot 10 (tl::TitleApplet::finalize)
+    virtual bool isInitialized();  // slot 11 (1.0.0's name; the launcher waits for it after initialize)
+    virtual void enter();  // slot 12 (1.0.0's name; the launcher calls it once the applet is initialized)
 };
 }  // namespace fw
 

@@ -17,6 +17,7 @@ namespace ml { class Thread; }
 namespace fw { class UpdateState; }
 namespace mm { namespace mtl { class IAllocator; } }
 
+namespace fw { class FrameworkConfig; class FrameworkEnv; }
 namespace fw {
 // table 0x7100B41668
 class Framework : public ::mm::mtl::PtrSingleton< ::fw::Framework> {
@@ -57,6 +58,19 @@ public:
     Applet* getApplet() const;
     void tail(const UpdateState& state);
     void render();
+    // the launcher's frame: beginFrame, preUpdate, update and postUpdate (unless paused), endFrame
+    void beginFrame(const UpdateState& state);
+    void preUpdate();
+    void update();
+    void postUpdate();
+    void endFrame(const UpdateState& state);
+    // the applet asked to close (the launcher then ends its process)
+    bool isAppletClosed();
+    void initialize(const FrameworkConfig& config, const FrameworkEnv& env);
+    // true once every manager is up (the build thread waits for it) / down (the terminating thread)
+    bool initializeManager();
+    bool finalizeManager();
+    void destroyApplet();
     static mtl::ALLOC_HANDLE getMemHandle();  // the memory resources are made in (ResourceManager::getMemSYS)
     static void setUpdateSpeed(float speed);
     static void setLayerUpdateSpeed(unsigned int layer, float speed);

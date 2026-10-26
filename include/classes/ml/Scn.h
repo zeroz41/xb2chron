@@ -41,6 +41,7 @@ public:
     ScnObjIBL* createIBL(const void* resource, int arg);
     void releaseItem(ScnObj* item);
     void setView(WinView* view, int index);
+    void move();
     // a view by index; -1 the current one (event::BouManager detaches itself from it)
     WinView* getView(int index);
     // a model made from a resource (fw::ModelObject::create's)
