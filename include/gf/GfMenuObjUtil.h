@@ -18,6 +18,7 @@ namespace fw { enum VibrationID : int; }
 namespace gf { class QuestID; }
 namespace gf { enum FAVORITE : int; }
 namespace ui { class UIStr; }
+namespace mm { class Vec3; class Col3; }
 
 namespace gf {
 // the menu objects' shared helpers; its functions take no object
@@ -26,7 +27,7 @@ public:
     // the menu's parameters fw::ParamManager holds (getParamMenu; null without them). Only the two times
     // GfMenuFieldSkill reads are known (the names are not the original's).
     struct ParamMenu {
-        unsigned char pad_0[4];
+        float m_presetCtrlTime;  // getPresetCtrlTime's for presets 0-5 (the name is not the original's)
         float m_infoWait;   // seconds StateDispInfo waits after a skill
         unsigned char pad_8[0xC];
         float m_totalWait;  // seconds StateTotalNext waits
@@ -146,7 +147,7 @@ public:
     static unsigned int playSE(unsigned int se);
     static unsigned int playSE(const char* se);  // a sound by its name
     static int startPresetCtrl(unsigned int handle, const PresetCtrlParam& param);  // startCtrl's slot
-    static void setPointSpeedRate(ui::UIObjectAcc acc, float rate);  // the pointer's speed over the object
+    static bool setPointSpeedRate(ui::UIObjectAcc acc, float rate);  // the pointer's speed over the object
     static short getBtnIconNumber(unsigned int button);  // the icon number of a button
     static short getPadSelectIconNumber(unsigned int select);  // the icon number of a pad selection, 0xFFFF for none
     static unsigned int playBGM(unsigned int bgm, bool, fw::SoundCategory category);  // the handle stopBGM takes
@@ -172,6 +173,10 @@ public:
     static int getPresetCtrlCurve(unsigned int preset);  // 3.0.1's always 1
     // the time of that preset control (GfMenuObjCharSelect::seqStreamWaitStatDr passes 6)
     static float getPresetCtrlTime(unsigned int preset);
+    // the colour ui::UIColorLibrary names (r, g, b; black without one), in a function-local static
+    static const mm::Col3& getPresetColor(const char* name);
+    // a world position in view space (out = GfInfo::m_viewMat applied to in)
+    static void convViewSpace(mm::Vec3& out, const mm::Vec3& in);
     static unsigned int getLeaderPartyID();  // always 0
     static bool isExitDriver(unsigned int index);  // a driver in that party slot (index modulo 3)
     // the other common sounds (BDAT 0x187 rows 5, 0xB, 0xC, 0xE)

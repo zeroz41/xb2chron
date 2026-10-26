@@ -1,3 +1,4 @@
+#include "gf/GfMenuObjUtil.h"
 #include "gf/GfDataBlade.h"
 #include "gf/GfDataDriver.h"
 #include "gf/GfMenuObjUtil.h"
@@ -38,12 +39,42 @@
 #include "classes/fw/SoundManager.h"
 #include "classes/fw/PadManager.h"
 #include "gf/GfMenuBdat.h"
+#include "classes/gf/GfGameFlag.h"
 #include "gf/GfQuestInfo.h"
 #include "gf/QuestID.h"
 #include "ui/UIUtil.h"
 #include "plugin/Bdat.h"
 #include "mm/mtl/FixStr.h"
 #include "mm/Pnt.h"
+#include "classes/fw/ParamManager.h"
+#include "classes/fw/ParamList.h"
+#include "classes/ui/UIMotionData.h"
+#include "classes/ui/UIMotionLibrary.h"
+#include "classes/ui/UIInputManager.h"
+#include "classes/ui/UIInputPointer.h"
+#include "classes/gf/GfGameCond.h"
+#include "classes/gf/GfInfo.h"
+#include "classes/ui/UIColorLibrary.h"
+#include "mm/Col3.h"
+#include "mm/Col4.h"
+
+namespace gf {
+namespace {
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B64EB8). The driver class BDAT's
+// (table 0x18) buff columns, in the order the buff types number them.
+const char* s_classBuffColumns[5] = {"DamageDown", "DamageUP", "HealUP", "AutoHate", "ArtsHate"};
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B64EE0)
+const char* s_classBuffNumColumns[5] = {"DamageDownNum", "DamageUPNum", "HealUPNum", "AutoHateNum",
+                                        "ArtsHateNum"};
+
+// a driver class's value in a buff column (the two hate columns are signed; the name is not the original's)
+inline int getClassBuffValue(unsigned char* fp, const char** columns, unsigned int column, unsigned int driverClass) {
+    unsigned long value = Bdat::getVal(fp, columns[column], driverClass);
+    return column - 3 < 2 ? static_cast<int>(static_cast<signed char>(value))
+                          : static_cast<int>(static_cast<unsigned char>(value));
+}
+}  // namespace
+}  // namespace gf
 
 namespace gf {
 namespace {
@@ -160,11 +191,54 @@ void GfMenuObjUtil::addPos(unsigned int handle, short x, short y) {
     }
 }
 
+void GfMenuObjUtil::convViewSpace(mm::Vec3& out, const mm::Vec3& in) {
+    const mm::Mat44& view = GfInfo::m_viewMat;
+    float x = view.m[3][0] + (in.x * view.m[0][0] + in.y * view.m[1][0] + in.z * view.m[2][0]);
+    float y = view.m[3][1] + (in.x * view.m[0][1] + in.y * view.m[1][1] + in.z * view.m[2][1]);
+    float z = (in.x * view.m[0][2] + in.y * view.m[1][2] + in.z * view.m[2][2]) + view.m[3][2];
+    out.x = x;
+    out.y = y;
+    out.z = z;
+}
+
 bool GfMenuObjUtil::isMenuObjectFull() {
     if (ui::UIEventManager::get()->isObjectListenerFull()) {
         return true;
     }
     return GfMenuAdapterManager::isAdapterFull();
+}
+
+float GfMenuObjUtil::getPresetCtrlTime(unsigned int preset) {
+    float time = 0.5f;
+    if (const ParamMenu* param = getParamMenu()) {
+        switch (preset) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+            time = param->m_presetCtrlTime;
+            break;
+        case 6:
+            time = param->m_infoWait;
+            break;
+        }
+    }
+    return time;
+}
+
+const mm::Col3& GfMenuObjUtil::getPresetColor(const char* name) {
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB958)
+    static mm::Col3 s_presetColor;
+    s_presetColor = mm::Col3(0.0f, 0.0f, 0.0f);
+    mm::Col4 color;
+    if (ui::UIColorLibrary::get()->find(name, color)) {
+        s_presetColor.r = color.r;
+        s_presetColor.g = color.g;
+        s_presetColor.b = color.b;
+    }
+    return s_presetColor;
 }
 
 void GfMenuObjUtil::setColMulandAdd(unsigned int handle, const char* name) {
@@ -284,6 +358,13 @@ void GfMenuObjUtil::setCtrlSpeedFactor(int slot, float factor) {
     }
 }
 
+const GfMenuObjUtil::ParamMenu* GfMenuObjUtil::getParamMenu() {
+    if (fw::ParamManager* manager = fw::ParamManager::get()) {
+        return manager->m_paramLists[20]->getAdapter(0).get<ParamMenu>();
+    }
+    return nullptr;
+}
+
 int GfMenuObjUtil::getPresetCtrlCurve(unsigned int preset) {
     return 1;
 }
@@ -323,6 +404,17 @@ void GfMenuObjUtil::changeCursorTarget(ui::UICtrlCursorSelect* cursor, unsigned 
     list->getSize();  // the count is not used (the call is the original's)
 }
 
+float GfMenuObjUtil::getCtrlMotionTime(const char* motionLib, const char* motion) {
+    if (motionLib == nullptr || motion == nullptr) {
+        return 0.0f;
+    }
+    ui::UIMotionData* data = ui::UIMotionLibrary::get()->find(motionLib);
+    if (data == nullptr) {
+        return -1.0f;
+    }
+    return data->getMotionLength(data->searchMotion(motion));
+}
+
 const char* GfMenuObjUtil::getMenuMS(unsigned int id) {
     if (id == 0) {
         return nullptr;
@@ -358,8 +450,47 @@ bool GfMenuObjUtil::fn_710048FD30(unsigned int layer) {
     return false;
 }
 
+unsigned int GfMenuObjUtil::getDriverClassBuffRatio(unsigned int driverClass, unsigned int index) {
+    if (driverClass == 0) {
+        return 0;
+    }
+    unsigned char* fp = GfDataBdat::getFP(0x18);
+    if (fp == nullptr) {
+        return 0;
+    }
+    unsigned int count = 0;
+    unsigned int column = 0;
+    unsigned int found;
+    int value;
+    do {
+        do {
+            if (column >= 5) {
+                return 0;
+            }
+            found = column;
+            value = getClassBuffValue(fp, s_classBuffColumns, column, driverClass);
+            column++;
+        } while (value == 0);
+    } while (count++ != index);
+    return value < 0 ? 0 : value;
+}
+
 bool GfMenuObjUtil::isValidBlade(unsigned int blade) {
     return blade != 0 && !GfDataBlade::isDummyBlade(blade);
+}
+
+bool GfMenuObjUtil::fn_71004903E4(unsigned int blade) {
+    return blade - 1005 < 3;
+}
+
+bool GfMenuObjUtil::fn_71004903F4() {
+    if (!GfGameManager::isClearGame()) {
+        return false;
+    }
+    if (GfDataBlade::fn_71002383C8(1005) || GfDataBlade::fn_71002383C8(1006)) {
+        return true;
+    }
+    return GfDataBlade::fn_71002383C8(1007);
 }
 
 bool GfMenuObjUtil::isBladeEnableOffset(unsigned int driver, int offset) {
@@ -392,6 +523,17 @@ gf::GF_OBJ_HANDLE* GfMenuObjUtil::getBladeHandleFromPartySlot(unsigned int drive
     return GfGameParty::getHandleBlade(driver, set);
 }
 
+unsigned int GfMenuObjUtil::getBladeSlotMax() {
+    unsigned int max = 1;
+    if (GfGameFlag::getLocal(1, 0x89FF) == 1) {
+        max = 2;
+    }
+    if (GfGameFlag::getLocal(1, 0x8A00) == 1) {
+        max = 3;
+    }
+    return max;
+}
+
 unsigned int GfMenuObjUtil::getBladeAttributeIconID(unsigned int blade) {
     if (!GfDataBlade::isValid(blade)) {
         return 0x9E;
@@ -405,6 +547,10 @@ unsigned short GfMenuObjUtil::getBladeRareIconID(unsigned int blade) {
         icon = GfDataBlade::isRareBlade(blade) ? 0x8A : 0x89;
     }
     return icon;
+}
+
+bool GfMenuObjUtil::fn_7100490CE0(unsigned int blade) {
+    return blade - 1124 < 9;
 }
 
 unsigned short GfMenuObjUtil::getBladeAttributeID(unsigned int blade) {
@@ -568,6 +714,16 @@ bool GfMenuObjUtil::fn_7100492C88() {
     return (ui::UIUtil::getPadData()->m_down & 2) != 0;
 }
 
+bool GfMenuObjUtil::fn_7100492CBC() {
+    if (!ui::UIUtil::fn_7100696970(1)) {
+        return false;
+    }
+    if (!GfGameManager::fn_71002AC598()) {
+        return false;
+    }
+    return GfGameManager::getMapID() == 0x3A;
+}
+
 void GfMenuObjUtil::playVibration(fw::VibrationID id, float scale) {
     ml::PadVibrationInfo info(id);
     info.m_scale0 = scale;
@@ -605,6 +761,14 @@ bool GfMenuObjUtil::isQuestCompleted(QuestID id) {
     return GfQuestInfo::isQuestFin(id);
 }
 
+bool GfMenuObjUtil::getMenuCondition(unsigned int condition) {
+    unsigned char* fp = GfDataBdat::getFP(0x17E);
+    if (condition < Bdat::getIdTop(fp) || condition > Bdat::getIdEnd(fp)) {
+        return false;
+    }
+    return GfGameCond::isGameCond(static_cast<unsigned short>(Bdat::getVal(fp, "cond", condition)));
+}
+
 unsigned int GfMenuObjUtil::getFavoriteStat(unsigned int type, unsigned int id, FAVORITE favorite) {
     switch (type) {
     case 3:
@@ -619,6 +783,36 @@ unsigned int GfMenuObjUtil::getFavoriteStat(unsigned int type, unsigned int id, 
         return !GfDataBlade::isUsedFavorite(id, favorite);
     }
     return 2;
+}
+
+bool GfMenuObjUtil::setPointSpeedRate(ui::UIObjectAcc acc, float rate) {
+    unsigned int input = ui::UIInputManager::get()->searchInputHandle(acc.m_handle);
+    if (input == 0) {
+        return false;
+    }
+    ui::UIInputLayer* layer = ui::UIInputManager::get()->getInputLayer(input);
+    if (layer == nullptr) {
+        return false;
+    }
+    ui::UIInputPointer* pointer = layer->castUIInputPointer();
+    if (pointer == nullptr) {
+        return false;
+    }
+    pointer->m_speedScale = rate;
+    return true;
+}
+
+bool GfMenuObjUtil::isCustomEnableDriver(unsigned int driver) {
+    if (GfDataDriver::isDriver(driver) && driver - 7 < 3) {
+        return false;
+    }
+    if (GfDataBlade::fn_7100231884() > 2000) {
+        return true;
+    }
+    if (driver == 1) {
+        return true;
+    }
+    return false;
 }
 
 }  // namespace gf
