@@ -18,6 +18,7 @@ namespace btl {
 class BattleCharacter {
 public:
     enum ANIM_ID : int;
+    BattleCharacter();
     virtual ~BattleCharacter();  // slot 0
     // 1.0.0's names, from its table (same slots); StateBattleActionBase::BeforeUpdate forwards to the first
     virtual void BeforeUpdate(fw::UpdateInfo const&);  // slot 2
@@ -55,6 +56,12 @@ public:
     bool IsAngry() const;
     bool IsBlade() const;
     bool IsBattle() const;
+    // CharacterManager::Register gives the character its handle and its slot index
+    void Initialize(gf::GF_OBJ_HANDLE* handle, int index);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: CharacterManager::fn_710007C1E0
+    // calls it on every enemy slot in use. What it does: while BattleGlobal's flags allow and the character lives,
+    // looks m_bdatID up in BDAT table 0x100 (GfDataBdat::getFP) and updates the character from it.
+    void fn_710002B868();
     gf::GF_OBJ_HANDLE* GetRescueTarget() const;
     // the id the AI scripts know the character by: its index for a player character, 100 more for an enemy (the
     // Utility::AI_ getters compute it so; the name is not the original's)
@@ -417,6 +424,8 @@ public:
     unsigned char pad_1144[0x64];
     // Utility::AI_GetStamp returns it while the character lives (the name is not the original's)
     int m_stamp;
+    // CharacterManager's slots are 0x11D0 apart with their in-use flag at 0x11C0, after the character
+    unsigned char pad_11AC[0x14];
 };
 }  // namespace btl
 
