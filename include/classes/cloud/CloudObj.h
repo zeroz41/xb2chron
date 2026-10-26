@@ -8,11 +8,11 @@ class CloudObj;
 // as a base's constructor does). The names are not the original's.
 class CloudObjLink {
 public:
-    CloudObjLink() : m_pPrev(nullptr), m_pNext(nullptr), m_pUser(nullptr) {}
+    CloudObjLink() : m_pPrev(nullptr), m_pNext(nullptr), m_pList(nullptr) {}
 
     CloudObj* m_pPrev;  // 0x8
     CloudObj* m_pNext;  // 0x10, CloudObjMan::update walks its objects through it
-    void* m_pUser;      // 0x18, only zeroed by the constructor (its use is not known)
+    void* m_pList;      // 0x18, the CloudList holding it (CloudObjMan's object list)
 };
 
 // table 0x7100B7A118. The constructor is out of line (the derived constructors call it); the destructor is
