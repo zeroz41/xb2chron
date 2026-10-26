@@ -226,6 +226,10 @@ public:
     // GfMenuObjUtil's functions (unit GfMenuObjUtil). What it does: whether blade is one of 1005..1007.
     static bool fn_71004903E4(unsigned int blade);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // GfMenuObjUtil's functions (unit GfMenuObjUtil). What it does: whether blade is one of 1124..1132
+    // (GfMenuCharDataAdapter::update shows a blade object only when this or isValidBlade holds).
+    static bool fn_7100490CE0(unsigned int blade);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
     // GfMenuObjUtil's functions (unit GfMenuObjUtil). What it does: false unless GfGameManager::isClearGame; then
     // true when GfDataBlade::fn_71002383C8 holds for blade 1005 or 1006, else whether the game data's short at
     // 0x8E04 is 2.

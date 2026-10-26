@@ -1894,6 +1894,83 @@ GfMenuCharDataAdapter* GfMenuCharDataAdapter::fn_710033A940(unsigned int handle,
     return createFromCoverter(handle, kind, converter, changed);
 }
 
+void GfMenuCharDataAdapter::update(fw::UpdateInfo const&) {
+    if (m_converter != nullptr) {
+        unsigned char objType = 0;
+        unsigned int objId = 0;
+        m_converter->getCharData(objType, objId);
+        changeCharData(objType, objId);
+    }
+    if ((m_flags & 3) != 0 && m_update.isValid()) {
+        DataParamAcc acc(m_objType, m_objId, GimmickType(0));
+        bool disp = false;
+        if (acc.isValid()) {
+            acc.setMenuParam();
+            if (m_virtualMode != 0) {
+                switch (m_objType) {
+                case 3:
+                    if (GfMenuReference::getDriverVirtualLevel() != 0) {
+                        acc.setVirtualLevel(GfMenuReference::getDriverVirtualLevel());
+                    }
+                    if (GfMenuReference::getDriverVirtualBladeID() != 0) {
+                        unsigned int blade = GfMenuReference::getDriverVirtualBladeID();
+                        int slot = GfMenuReference::getDriverVirtualBladeSlot();
+                        if (getDriverId(acc) == GfDataBlade::getSetDriver(blade)) {
+                            slot = GfDataBlade::getDriverSetID(blade);
+                        }
+                        acc.setVirtualSetBlade(GfMenuReference::getDriverVirtualBladeID(), slot);
+                    }
+                    // the original asks fn_710048FD30(3) up to three times on one path (its code has the three
+                    // separate calls); with layer 3, slot 0 is the extra accessory (fn_7100221F88), slot n index n - 1
+                    if (GfMenuReference::getDriverVirtualEquipAcc() != 0) {
+                        if (GfMenuObjUtil::fn_710048FD30(3)) {
+                            unsigned int slot = GfMenuReference::getDriverVirtualEquipAccSlot();
+                            if (slot == 0) {
+                                acc.fn_7100221F88(GfMenuReference::getDriverVirtualEquipAcc());
+                            } else {
+                                acc.setVirtualEquipAcc(slot - 1, GfMenuReference::getDriverVirtualEquipAcc());
+                            }
+                        } else if (GfMenuObjUtil::fn_710048FD30(3)) {
+                            unsigned int slot = GfMenuReference::getDriverVirtualEquipAccSlot();
+                            if (slot != 0) {
+                                acc.setVirtualEquipAcc(slot - 1, GfMenuReference::getDriverVirtualEquipAcc());
+                            }
+                        } else {
+                            bool layer = GfMenuObjUtil::fn_710048FD30(3);
+                            unsigned int slot = GfMenuReference::getDriverVirtualEquipAccSlot();
+                            if (layer) {
+                                if (slot != 0) {
+                                    acc.setVirtualEquipAcc(slot - 1, GfMenuReference::getDriverVirtualEquipAcc());
+                                }
+                            } else {
+                                acc.setVirtualEquipAcc(slot, GfMenuReference::getDriverVirtualEquipAcc());
+                            }
+                        }
+                    }
+                    break;
+                case 4:
+                    if (GfMenuReference::getBladeVirtualEquipWpnChip() != 0) {
+                        acc.setVirtualEquipWpnChip(GfMenuReference::getBladeVirtualEquipWpnChip());
+                    }
+                    if (GfMenuReference::getBladeVirtualEquipOrb() != 0) {
+                        unsigned int slot = GfMenuReference::getBladeVirtualEquipOrbSlot();
+                        acc.setVirtualEquipOrb(GfMenuReference::getBladeVirtualEquipOrb(), slot);
+                    }
+                    break;
+                }
+            }
+            if (acc.getObjType() == 4 && !GfMenuObjUtil::fn_7100490CE0(getBladeId(acc)) &&
+                !GfMenuObjUtil::isValidBlade(getBladeId(acc))) {
+                disp = false;
+            } else {
+                disp = m_update(acc);
+            }
+        }
+        setDisp(disp);
+        m_flags &= ~1;
+    }
+}
+
 void GfMenuCharDataAdapter::changeCharData(unsigned char objType, unsigned int objId) {
     if (m_objType != objType) {
         m_objType = objType;
