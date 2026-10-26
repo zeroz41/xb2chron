@@ -41,11 +41,13 @@ inline void uninitialized_fill_n(T* first, size_t n, const T& value) {
     }
 }
 
-// destroys the n objects from first on
+// destroys the n objects from first on. Indexed: a destructor that only stores (gf::GfFieldLod::BdatInfo's, in
+// GfFieldLod's destructor and destroy) comes out interleaved by 4 with the remainder after, as the original's does;
+// the pointer-walking form gave a runtime-unrolled loop with the remainder first
 template <typename T>
 inline void destroy_n(T* first, size_t n) {
-    for (; n != 0; --n, ++first) {
-        first->~T();
+    for (size_t i = 0; i < n; ++i) {
+        first[i].~T();
     }
 }
 
