@@ -1,5 +1,6 @@
 #include "classes/gf/GfQuestTarget.h"
 #include "classes/gf/GfQuestManager.h"
+#include "classes/gf/DataParamAcc.h"
 #include "gf/GfDataQuest.h"
 #include "gf/QuestChangeParam.h"
 #include "gf/QuestCompleteChildParam.h"
@@ -9,6 +10,12 @@
 
 namespace gf {
 
+// Placeholder name: 1.0.0's copy (0x7100371C58) is unnamed as well, a file-local function. What it does: the icon
+// type of a talk target: walks the quest's task list (fn_710030A840), and for talk tasks (6) compares
+// QuestListAcc's getTalkMapID/getTalkNpcID with the info's map and id, for condition tasks (10) getConditionMapID/
+// getConditionNpcID, collect tasks (3) go to fn_710030AB00; it reads GfQuestInfo::getState/isParent and
+// GfQuestUtil::getDummyTalkGroup.
+static unsigned int fn_710030B16C(TargetInfo* info);
 
 GfQuestTarget::GfQuestTarget() {
     GfQuestManager::addEvent(this);
@@ -77,6 +84,27 @@ void GfQuestTarget::qevChangeCurrentQuest(const QuestChangeParam& param) {
 
 void GfQuestTarget::qevChangeTaskCondition(const QuestTaskParam& param) {
     destroyTargetQuest(param.m_questId);
+}
+
+unsigned int GfQuestTarget::getIconTypeTalk(unsigned int npcId, QuestID questId, unsigned int mapId, bool flag) {
+    TargetInfo info;
+    // no map means the current one
+    if (mapId == 0) {
+        mapId = GfGameManager::getMapID();
+    }
+    info.setupForTalk(questId, npcId, reinterpret_cast<GF_OBJ_HANDLE*>(-1), mapId, flag);
+    return fn_710030B16C(&info);
+}
+
+unsigned int GfQuestTarget::getIconTypeTalk(GF_OBJ_HANDLE* handle, QuestID questId, unsigned int mapId, bool flag) {
+    DataParamAcc acc(handle);
+    TargetInfo info;
+    unsigned int npcId = acc.isValid() ? acc.getBdatId() : 0;
+    if (mapId == 0) {
+        mapId = GfGameManager::getMapID();
+    }
+    info.setupForTalk(questId, npcId, handle, mapId, flag);
+    return fn_710030B16C(&info);
 }
 
 }  // namespace gf

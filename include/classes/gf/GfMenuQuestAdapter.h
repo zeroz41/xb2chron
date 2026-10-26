@@ -37,6 +37,9 @@ public:
     bool getParamIcon(QuestID id, unsigned int type, unsigned int& icon);
     bool getParamRewardText(QuestID id, unsigned int type, mm::mtl::FixStr<64>& text);
     bool getParamDisp(QuestID id, unsigned int type);
+    // takes the quest by value: create's stores extract its high half from the 64-bit argument register (ubfx x),
+    // which only a by-value copy gives. The name is not the original's
+    void setQuestID(QuestID id) { m_questId = id; }
     QuestID m_questId;
     unsigned int m_type;  // create's: which parameter
     // what update shows it as (s_paramKinds' entry for m_type): 0 text, 1 number, 2 icon, 3 a task's log, 4 a

@@ -5,6 +5,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/mtl/FixedList.h"
 #include "gf/QuestID.h"
+#include "classes/gf/GfGameManager.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfQuestTarget; }
@@ -18,6 +19,35 @@ namespace gf { class MapjumpCallbackInfo; }
 namespace gf { enum GEV : int; }
 
 namespace gf {
+// what the icon type of a quest target is worked out from (1.0.0's gf::TargetInfo with setupForFieldObj,
+// setupForGimmick, setupForCollect out of line; 3.0.1 inlines them all). The field names are not the original's.
+class TargetInfo {
+public:
+    TargetInfo()
+        : m_handle(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), m_id(0), m_mapId(0), m_flag(false), m_type(0),
+          m_category(0), pad_20(0), m_gmkValue(0x41) {}
+    // the talk targets' setup (getIconTypeTalk's two forms; the name is not the original's). Takes the quest by
+    // value and the map already resolved, as 1.0.0's out-of-line setupForCollect(QuestID, COLLECT_CATEGORY, ...) does
+    void setupForTalk(QuestID questId, unsigned int npcId, GF_OBJ_HANDLE* handle, unsigned int mapId, bool flag) {
+        m_type = 4;
+        m_id = npcId;
+        m_questId = questId;
+        m_mapId = mapId;
+        m_handle = handle;
+        m_flag = flag;
+    }
+
+    GF_OBJ_HANDLE* m_handle;  // 0x0: the object, or -1
+    unsigned int m_id;        // 0x8: the NPC, item or gimmick id
+    QuestID m_questId;        // 0xC
+    unsigned int m_mapId;     // 0x10: the map's FLD_maplist id
+    bool m_flag;              // 0x14: what the getIconType functions' last argument passes
+    unsigned int m_type;      // 0x18: 1 collect or field object, 4 talk, 5 gimmick
+    unsigned int m_category;  // 0x1C: setupForCollect's COLLECT_CATEGORY
+    unsigned long pad_20;     // 0x20: zeroed by the constructor
+    unsigned int m_gmkValue;  // 0x28: 0x41, or what setupForGimmick's gimmick's slot 2 returns
+};
+
 // table 0x7100B56DF8
 class GfQuestTarget : public ::mm::mtl::PtrSingleton< ::gf::GfQuestTarget>, public ::gf::IQuestEvent {
 public:
