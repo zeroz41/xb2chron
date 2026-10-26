@@ -1,0 +1,67 @@
+#ifndef CLASSES_GF_TUNK_B625A0_H
+#define CLASSES_GF_TUNK_B625A0_H
+
+#include "classes/gf/GfMenuObject.h"
+#include "gf/GfMenuSequence.h"
+#include "mm/mtl/IntrusivePtr.h"
+#include "mm/mtl/Vector.h"
+
+namespace gf { class GfMenuIDList; }
+namespace gf { class GfMenuMsgList; }
+namespace gf { class GfMenuReferenceItem; }
+namespace gf { class GfMenuReferenceNumber; }
+
+namespace gf {
+// table 0x7100B625A0. The gift box menu object (its file is gf_menu_obj_gift_box.cpp, the assertion path of its
+// listeners' news; its UI object is "mnu104_gift_box", GfMenuManager::reciveEvent news 0x3E0 bytes for it). 1.0.0
+// has no such class and the symbols leave it unnamed, so it is named after its table. The field names are inferred.
+class TUnk_B625A0 : public ::gf::GfMenuObject {
+public:
+    // its UI listeners (tables 0x7100B625E8, 0x7100B62610, 0x7100B62638, 0x7100B62660; nothing names them)
+    class TUnk_B625E8;
+    class TUnk_B62610;
+    class TUnk_B62638;
+    class TUnk_B62660;
+    TUnk_B625A0(unsigned int handle);
+    virtual ~TUnk_B625A0();  // slot 0
+    virtual void initialize();  // slot 2
+    virtual void finalize();  // slot 3
+    virtual void update();  // slot 4
+    // Placeholder names: new after 1.0.0, nothing names them. fn_7100383310 calls them; each registers the gift
+    // box's full-screen layer (0x46) with menu id 1 / 2, which initialize reads back into m_menuId.
+    static void fn_710040C444();
+    static void fn_710040C474();
+    // Placeholder names: its sequence's jobs (address-taken into m_seq). fn_7100410158 waits for the common window
+    // to close; fn_7100410174 / fn_7100410848 open "LAY_top_list" / "LAY_sub_list" (event 0x100);
+    // fn_7100410788 acts on the top list's selected id, refreshes and opens common window 0xE8.
+    bool fn_7100410158();
+    bool fn_7100410174();
+    bool fn_7100410788();
+    bool fn_7100410848();
+    // Placeholder names: BDAT 0x10A (the gift rows: "getflag", "condition", "releasecount") checks.
+    // fn_710040C16C: the row's local flag (type 1) is clear, its game condition holds and fn_710040EF7C(row, arg)
+    // is false. fn_710040C3B4: add-on 5 is present (gf::fn_71002229C0(5) >= 0) and some row's "releasecount" has
+    // bit 7 set. fn_710040EF7C (not written yet) is called with the row and the caller's second argument.
+    static bool fn_710040C16C(unsigned int row, unsigned int arg);
+    static bool fn_710040C3B4();
+    static bool fn_710040EF7C(unsigned int row, unsigned int arg);
+    // Placeholder names: the gift box's own helpers (not written yet)
+    static void fn_710040F0B8(unsigned int id);
+    void fn_710040E388(bool);
+    void fn_710040E88C();
+
+    GfMenuMsgList* m_topList;  // 0x28: "LAY_top_list"'s list (initialize: setBdat(0, 0x139))
+    GfMenuIDList* m_subList;   // 0x30: fn_7100410788 reads its selected id
+    mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_numbers[22];  // 0x38
+    GfMenuSequence<TUnk_B625A0, 8> m_seq;  // 0xE8: update runs it
+    unsigned int pad_378;
+    mm::mtl::IntrusivePtr<GfMenuReferenceItem> m_refItem;  // 0x380
+    mm::mtl::Vector<unsigned int> m_ids;      // 0x388: compared with the BDAT rows' ids
+    mm::mtl::Vector<unsigned int> m_counts;   // 0x3B0: compared with the BDAT rows' "releasecount"
+    unsigned int m_menuId;  // 0x3D8: the layer parameter's menu id (fn_710040C444 / fn_710040C474)
+    bool m_hasMenuId;       // 0x3DC: initialize found a layer parameter
+    bool m_noMenuId;        // 0x3DD: !m_hasMenuId
+};
+}  // namespace gf
+
+#endif
