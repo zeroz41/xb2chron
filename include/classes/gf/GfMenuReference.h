@@ -3,6 +3,7 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "ui/UIStr.h"
+#include "mm/mtl/Bitflag.h"
 
 namespace ui { class UIStr; }
 namespace gf { class GfMenuReference; }
@@ -24,14 +25,19 @@ public:
     // tail-calls it, without arguments, after GfMenuObjPartyGauge::close when GfMenuObjUtil::fn_710048FD30(3) holds.
     static void fn_7100367D1C();
     class REFLIST;
-    // a route of the elemental combo the menu shows (8 bytes each, 7 of them; the names are not the original's)
-    struct ElementComboRoot {
+    // a route of the elemental combo the menu shows (8 bytes each, 7 of them; 1.0.0's setElemComboRootInfo names
+    // the type, the field names are not the original's)
+    struct ElemComboRoot {
+        // getElementComboRootInfo's dummy is zeroed when first used
+        ElemComboRoot() : m_comboId(), pad_4() {}
         unsigned int m_comboId;  // GfMenuElementComboAdapter::ReferenceRouteConverter's combo
         unsigned char pad_4[0x4];
     };
     // an arts palette slot's arts (the first fields of a 0x28-byte record; the names are not the original's):
     // GfMenuBattleAdapter's arts slot callbacks read them
     struct ArtsPaletteInfo {
+        // getArtsPaletteInfo's dummy is zeroed when first used
+        ArtsPaletteInfo() : m_artsId(), pad_2(), m_recast() {}
         unsigned short m_artsId;  // 0 for an empty slot
         unsigned char pad_2[0x2];
         float m_recast;  // update_ArtsSlotRecast shows it in percent and the slot while it is above 0
@@ -39,6 +45,8 @@ public:
     // the icons of an arts palette slot (from 8 in the same record; the names are not the original's, they follow
     // the GfMenuBattleAdapter callbacks that show them)
     struct ArtsPaletteIconInfo {
+        // getArtsPaletteIconInfo's dummy is zeroed when first used
+        ArtsPaletteIconInfo() : m_type(), m_enhance(), m_reaction(), pad_C(), m_range() {}
         int m_type;      // update_ArtsSlotIconType
         int m_enhance;   // update_ArtsSlotIconEnhance
         int m_reaction;  // update_ArtsSlotIconReaction
@@ -61,7 +69,7 @@ public:
     static int getReferenceNumber(unsigned int index);
     static int getReferenceNumberMin(unsigned int index);
     static int getReferenceNumberMax(unsigned int index);
-    static const ElementComboRoot* getElementComboRootInfo(unsigned int route);  // a dummy past the 7th
+    static const ElemComboRoot* getElementComboRootInfo(unsigned int route);  // a dummy past the 7th
     static int getElementComboRootCurrent();
     // the lists the link-jump menu shows (null without the singleton): its enemies and its items; clearLinkList
     // clears both (their slot 2)
@@ -90,6 +98,9 @@ public:
     static float getElementComboPartyTimeLeft(unsigned int index);
     static bool isWeaponJustRange();
     static bool isReversePaletteBtnState(unsigned int slot, unsigned int state);
+    // 1.0.0 symbols; the parameter names are not the original's
+    static void setReversePaletteBtnState(unsigned int slot, unsigned int state, bool on);
+    static void postReset();  // clears state 2 of every slot's reverse palette button
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfMenuObjItemList2::refreshItemList
     // has no call where 3.0.1's calls it). A member because its unit is gf_menu_reference and it reads this class's
     // singleton. What it does: the item type the menu references (an ItemType::Type, valid from 1 to 20: the
@@ -170,6 +181,21 @@ public:
     static void setBladeVirtualEquipOrbSlot(unsigned int slot);
     static unsigned int getBladeVirtualEquipOrbSlot();
     static void clearPartyStatusLock();
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (1.0.0 goes from
+    // getChainAttackBurstCount to setElemComboRootInfo). Members because they sit between this class's accessors
+    // and read or write its singleton's fields. What they do: fn_7100367360 stores m_chainAttackExtraNumber
+    // (btl::UIManager::UpdateMenuData passes ChainAttackManager's halfword at 0x19FE), fn_7100367380 returns it
+    // (0 without the singleton; GfMenuBattleAdapter::fn_71003331F8 shows it); fn_71003673A8 stores m_timeSeconds
+    // (fn_71000255A8, fn_710002568C, fn_710002579C, fn_71000B233C), fn_71003673C8 returns it
+    // (GfMenuBattleAdapter::fn_71003333D0); fn_71003673F0 stores m_challengeRatio clamped to 0..1
+    // (GfMenuObjButtonChallenge2::seqRunningV2, seqMovePush, seqWaitMashingV2), fn_710036742C returns it
+    // (GfMenuBattleAdapter::fn_710033355C).
+    static void fn_7100367360(unsigned int number);
+    static unsigned int fn_7100367380();
+    static void fn_71003673A8(float seconds);
+    static float fn_71003673C8();
+    static void fn_71003673F0(float ratio);
+    static float fn_710036742C();
 
     unsigned char pad_8[0x4CA38];
     bool m_initialized;  // isInitialized
@@ -186,16 +212,23 @@ public:
     float m_chainAttackExpRatio;
     unsigned int m_chainAttackTotalDamage;
     unsigned int m_chainAttackBurstCount;
-    unsigned char pad_4CB60[0x10];
+    // fn_7100367360/fn_7100367380's number (the name is not the original's): btl::UIManager::UpdateMenuData sets
+    // it from ChainAttackManager's halfword at 0x19FE after setChainAttackBurstCount; GfMenuBattleAdapter's entry
+    // 17, between the chain attack ratios, shows it
+    unsigned int m_chainAttackExtraNumber;
+    unsigned char pad_4CB64[0xC];
     unsigned short m_chainNum;
     unsigned char pad_4CB72[0xE];
     HOMURA_MODE m_homuraModeInBattle;
     unsigned char pad_4CB84[0x4];
     bool m_paletteModeReverse;  // 1.0.0's isPaletteModeReverse reads it
-    unsigned char pad_4CB89[0x17];
+    unsigned char pad_4CB89[0x3];
+    // every arts palette's reverse button states (is/setReversePaletteBtnState; the name is not the original's)
+    ::mm::mtl::Bitflag<8> m_reversePaletteBtnState[4];
+    unsigned char pad_4CB9C[0x4];
     GfMenuEnemyList* m_enemyLinkList;
     GfMenuItemList* m_itemLinkList;
-    unsigned char pad_4CBB0[0x38];
+    ElemComboRoot m_elemComboRoot[7];  // getElementComboRootInfo
     ElementComboParty m_elementComboParty[2];
     unsigned char pad_4CBF8[0x8];
     unsigned int m_referenceDriverID[8];
@@ -221,7 +254,14 @@ public:
     ui::UIStr m_referenceString[13];  // getReferenceString/setReferenceString
     ArtsPaletteSlot m_artsPaletteEx[6];  // slots 3..8
     unsigned int m_partyStatusLock;  // setPartyStatusLock's locks; clearPartyStatusLock clears them
-    unsigned char pad_4CF1C[0xDC];
+    unsigned char pad_4CF1C[0x4];
+    // fn_71003673A8/fn_71003673C8's seconds (the name is not the original's): GfMenuBattleAdapter::fn_71003333D0
+    // shows them as minutes and seconds
+    float m_timeSeconds;
+    // fn_71003673F0/fn_710036742C's ratio, kept within 0..1 (the name is not the original's): set by
+    // GfMenuObjButtonChallenge2's sequences, shown in percent by GfMenuBattleAdapter::fn_710033355C
+    float m_challengeRatio;
+    unsigned char pad_4CF28[0xD0];
 };
 }  // namespace gf
 

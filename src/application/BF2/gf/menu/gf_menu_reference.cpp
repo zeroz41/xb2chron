@@ -43,6 +43,15 @@ void GfMenuReference::resetDriverVirtual() {
     }
 }
 
+void GfMenuReference::postReset() {
+    GfMenuReference* self = get();
+    if (self) {
+        for (unsigned int i = 0; i < 4; i++) {
+            self->m_reversePaletteBtnState[i].set(2, false);
+        }
+    }
+}
+
 int GfMenuReference::getArtsPaletteElementType(unsigned char slot) {
     GfMenuReference* self = get();
     if (self) {
@@ -163,6 +172,34 @@ int GfMenuReference::getChainAttackBurstCount() {
     GfMenuReference* self = get();
     if (self) return self->m_chainAttackBurstCount;
     return 0;
+}
+
+void GfMenuReference::fn_7100367360(unsigned int number) {
+    GfMenuReference* self = get();
+    if (self) self->m_chainAttackExtraNumber = number;
+}
+
+unsigned int GfMenuReference::fn_7100367380() {
+    GfMenuReference* self = get();
+    if (self) return self->m_chainAttackExtraNumber;
+    return 0;
+}
+
+void GfMenuReference::fn_71003673A8(float seconds) {
+    GfMenuReference* self = get();
+    if (self) self->m_timeSeconds = seconds;
+}
+
+float GfMenuReference::fn_71003673C8() {
+    GfMenuReference* self = get();
+    if (self) return self->m_timeSeconds;
+    return 0.0f;
+}
+
+float GfMenuReference::fn_710036742C() {
+    GfMenuReference* self = get();
+    if (self) return self->m_challengeRatio;
+    return 0.0f;
 }
 
 void GfMenuReference::setElementComboParty(unsigned int index, unsigned int party, float timeLeft) {

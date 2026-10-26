@@ -7,7 +7,10 @@ namespace gf {
 // table 0x7100B5FAF8
 class GfMenuObjArtsPalette : public ::gf::GfMenuObject {
 public:
-    static void reverse(bool reverse);  // 1.0.0 symbol (GfMenuReference::setPaletteModeReverse calls it)
+    static void reverse(bool reverse);
+    // 1.0.0 symbol (GfMenuReference::setReversePaletteBtnState calls it with the slot; the parameter name is not
+    // the original's)
+    static void pushReverseBtn(unsigned int slot);  // 1.0.0 symbol (GfMenuReference::setPaletteModeReverse calls it)
     class MainListener;
     class ReverseListener;
     virtual ~GfMenuObjArtsPalette();  // slot 0
