@@ -18,6 +18,8 @@
 #include "mm/Col3.h"
 #include "mm/Pnt.h"
 #include "mm/Vec3.h"
+#include "ui/uiDateTime.h"
+#include "classes/gf/GfFieldTime.h"
 #include <string.h>
 
 namespace gf {
@@ -46,6 +48,10 @@ void GfMenuAdapter::setChange() {
     if (m_plugin != nullptr) {
         m_plugin->m_updateFlags |= 2;
     }
+}
+
+void GfMenuAdapter::setUpdateAfter() {
+    GfMenuAdapterManager::get()->setAfterUpdate(this);
 }
 
 ui::UIObjectPlugin* GfMenuAdapter::createPlugin(unsigned int handle, const PluginSetup& setup) {
@@ -101,6 +107,32 @@ ui::UIObjectPlugin* GfMenuAdapter::createPlugin(unsigned int handle, const Plugi
         }
     }
     return plugin;
+}
+
+int GfMenuAdapter::compare(GfMenuAdapter* lhs, GfMenuAdapter* rhs) {
+    ui::UIObjectNumberPlugin* lhsNumber = lhs->getPlugin<ui::UIObjectNumberPlugin>();
+    ui::UIObjectNumberPlugin* rhsNumber = rhs->getPlugin<ui::UIObjectNumberPlugin>();
+    if (lhsNumber != nullptr && rhsNumber != nullptr) {
+        if (lhsNumber->m_number == rhsNumber->m_number) {
+            return 0;
+        }
+        if (lhsNumber->m_number < rhsNumber->m_number) {
+            return 1;
+        }
+        if (lhsNumber->m_number > rhsNumber->m_number) {
+            return 2;
+        }
+    }
+    ui::UIObjectTextPlugin* lhsText = lhs->getPlugin<ui::UIObjectTextPlugin>();
+    ui::UIObjectTextPlugin* rhsText = rhs->getPlugin<ui::UIObjectTextPlugin>();
+    int result = 0;
+    if (lhsText != nullptr && rhsText != nullptr) {
+        result = strcmp(lhsText->m_text.c_str(), rhsText->m_text.c_str());
+        if (result != 0) {
+            return result < 0 ? 1 : 2;
+        }
+    }
+    return result;
 }
 
 void GfMenuAdapter::setDispAlphaMode(bool on) {
@@ -251,6 +283,26 @@ bool GfMenuAdapter::isPosScreenAdjust() const {
         return plugin->m_screenAdjust;
     }
     return false;
+}
+
+void GfMenuAdapter::setTime(const ui::uiDateTime& time) {
+    if (ui::UIObjectTimePlugin* plugin = getPlugin<ui::UIObjectTimePlugin>()) {
+        plugin->setYear(time.year);
+        plugin->setMonth(time.month);
+        plugin->setDay(time.day);
+        plugin->setHour(time.hour);
+        plugin->setMin(time.minute);
+        plugin->setSec(time.sec);
+        plugin->setMSec(time.msec);
+    }
+}
+
+void GfMenuAdapter::setElapseTime(const ElapseTime& time) {
+    if (ui::UIObjectTimePlugin* plugin = getPlugin<ui::UIObjectTimePlugin>()) {
+        plugin->setElapseHour(time.hour);
+        plugin->setMin(time.min);
+        plugin->setSec(time.sec);
+    }
 }
 
 void GfMenuAdapter::setMulColor(const char* color) {
