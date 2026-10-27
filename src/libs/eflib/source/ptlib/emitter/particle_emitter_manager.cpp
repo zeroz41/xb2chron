@@ -30,6 +30,17 @@ float EmitterObj::getCateSpd() {
     return speeds[m_category];
 }
 
+float EmitterObj::getEmitterScale() {
+    float scale = m_pCas != nullptr ? m_pCas->getScale() : 1.0f;
+    return scale * m_casScale;
+}
+
+void EmitterObj::remove_particle_free_tbl(ParticleObj* pParticle) {
+    m_particleList.unlinkCount(pParticle);
+    pParticle->particle_clear_union();
+    EmitterManager::get()->m_particleFreeList.push_front(pParticle);
+}
+
 EmitterManager* EmitterManager::get() {
 #line 21 "D:/Monolithsoft/BF2/prog/libs/eflib/proj/windows/../../../eflib/source\\ptlib/emitter/particle_emitter_manager.cpp"
     MM_ASSERT(getPtr());
@@ -79,6 +90,16 @@ void ComputeManager::term() {
     getPtr() = nullptr;
 }
 
+EmitterObj* EmitterManager::getEmitterFree() {
+    if (m_emitterFreeList.m_size == 0) {
+        return nullptr;
+    }
+    IntrusiveList<EmitterObj>::iterator it = m_emitterFreeList.begin();
+    EmitterObj* pEmitter = it.get();
+    m_emitterFreeList.erase(it);
+    return pEmitter;
+}
+
 void EmitterManager::emitter_set_param_pos_only(unsigned int handle, EmitterParam* pParam) {
     for (IntrusiveList<EmitterObj>::iterator it = m_emitterActiveList.begin(); it != m_emitterActiveList.end(); ++it) {
         if (it->m_handle == handle) {
@@ -112,6 +133,16 @@ void EmitterManager::emitter_set_param(unsigned int handle, EmitterParam* pParam
 void EmitterManager::emitter_set_param(FxHeader* pHeader, EmitterParam* pParam) {
     for (IntrusiveList<EmitterObj>::iterator it = m_emitterActiveList.begin(); it != m_emitterActiveList.end(); ++it) {
         if (it->m_pHeader == pHeader) {
+            it->emitter_set_param_sub(pParam);
+        }
+    }
+}
+
+void EmitterManager::emitter_set_casparam(unsigned int handle, const void* pModel, EmitterParam* pParam) {
+    for (IntrusiveList<EmitterObj>::iterator it = m_emitterActiveList.begin(); it != m_emitterActiveList.end(); ++it) {
+        if (it->m_handle == handle && it->m_pAttach == nullptr) {
+            it->m_pCas->m_pModel = pModel;
+            it->m_pCas->m_name[0] = '\0';
             it->emitter_set_param_sub(pParam);
         }
     }
@@ -170,6 +201,23 @@ void EmitterManager::moveAfter() {}
 
 IntrusiveList<EmitterObj>* EmitterManager::getEmitterActiveList() {
     return &m_emitterActiveList;
+}
+
+void EmitterManager::removeEmitterActive(EmitterObj* pEmitter) {
+    if (pEmitter->m_pStream != nullptr) {
+        pEmitter->m_pStream->release();
+    }
+    pEmitter->releaseParticleAll();
+    m_emitterActiveList.remove(pEmitter);
+}
+
+bool EmitterManager::emitter_set_check(FxHeader* pHeader) {
+    for (IntrusiveList<EmitterSetNode>::iterator it = m_emitterSetList.begin(); it != m_emitterSetList.end(); ++it) {
+        if (pHeader != nullptr) {
+            return true;
+        }
+    }
+    return false;
 }
 
 ComputeManager*& ComputeManager::getPtr() {

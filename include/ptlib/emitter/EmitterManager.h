@@ -9,6 +9,7 @@ namespace ptlib { namespace emitter {
 class EmitterParam;
 class EmitterObj;
 class EmitterSetNode;
+class ParticleObj;
 
 // the emitters' manager: its per-category speeds (effect::SystemManager::setCategorySpd)
 class EmitterManager {
@@ -43,12 +44,19 @@ public:
     void emitter_update(unsigned int handle, float frames, bool flag);
     bool emitter_set_check(FxHeader* pHeader);
     IntrusiveList<EmitterObj>* getEmitterActiveList();
+    // takes an emitter off the free list, nullptr when none is left
+    EmitterObj* getEmitterFree();
+    // releases an emitter's stream and particles and takes it off the active list
+    void removeEmitterActive(EmitterObj* pEmitter);
 
     unsigned char pad_0[0x1700];
     float m_categorySpeed[1];  // indexed by category; the count is not known yet
     unsigned char pad_1704[0xA4];
     IntrusiveList<EmitterObj> m_emitterActiveList;  // getEmitterActiveList's; the emitter_set_* setters walk it
-    unsigned char pad_17c0[0x30];
+    // the emitters not in use (getEmitterFree takes them; the name is not the original's)
+    IntrusiveList<EmitterObj> m_emitterFreeList;
+    // the particles not in use (EmitterObj::remove_particle_free_tbl gives them back; the name is not the original's)
+    IntrusiveList<ParticleObj> m_particleFreeList;
     // the emitter sets' nodes (emitter_set_check walks it; the name is not the original's)
     IntrusiveList<EmitterSetNode> m_emitterSetList;
 };
