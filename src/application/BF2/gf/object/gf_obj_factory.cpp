@@ -1,3 +1,6 @@
+#include "classes/gf/GfInitParamNpc.h"
+#include "gf/GfDataNpc.h"
+#include "mm/mtl/FixStr.h"
 #include "classes/gf/GfInitParam.h"
 #include "classes/gf/GfInitParamGimmick.h"
 #include "classes/gf/GfInitParamMapLodAnim.h"
@@ -35,6 +38,11 @@
 #include "classes/gf/GfObjManager.h"
 #include "classes/gf/GfObjSetup.h"
 #include "classes/fw/UpdatableObject.h"
+#include "classes/gf/GfInitParamNpc.h"
+#include "classes/gf/GfObjSetupNpc.h"
+#include "classes/gf/GfObjSetupGimmick.h"
+#include "gf/GfDataNpc.h"
+#include "mm/mtl/FixStr.h"
 
 #define GF_OBJ_FACTORY_PATH "D:/Monolithsoft/BF2/prog/application/BF2/gf/object/gf_obj_factory.cpp"
 
@@ -56,6 +64,20 @@ inline void setupObjInfo(GF_OBJ_HANDLE* handle, GF_ASSET_HANDLE* asset, const Gf
             pack->m_objHandle = handle;
         }
     }
+}
+// an object's setup as T when the setup and the object are of the given type, null otherwise (the name is not
+// the original's; the original's code is inline in each caller)
+template <class T>
+inline T* getSetupOf(GFOBJ_INFO* info, int type) {
+    if (info == nullptr || info->m_setup == nullptr) {
+        return nullptr;
+    }
+    GfObjSetup* setup = info->m_setup;
+    GfObj* obj = info->m_obj;
+    if (setup->m_type == static_cast<int>(obj->m_type) && type == static_cast<int>(obj->m_type)) {
+        return setup->getRTTI()->isKindOf(&T::m_rtti) ? static_cast<T*>(setup) : nullptr;
+    }
+    return nullptr;
 }
 // the create types GfAssetFactory makes event setups for (the name is not the original's)
 inline bool isEventCreateType(int type) {
@@ -110,6 +132,28 @@ GF_OBJ_HANDLE* GfObjFactory::createMapLodAnim() {
     return handle;
 }
 
+GF_OBJ_HANDLE* GfObjFactory::createGmkMapObj(const CBdatWrapper& bdat, int row) {
+    unsigned char* fp = GfDataBdat::getFP(0xAB);
+    unsigned short rscId = Bdat::getValCheck(bdat.m_fp, "RSC_ID", row, 2);
+    GfInitParamGimmick param;
+    param.m_objId = rscId;
+    param.m_gimmickType = GimmickType(0);
+    param.pad_18 = &fp;
+    param.pad_44 = static_cast<unsigned char>(Bdat::getValCheck(bdat.m_fp, "Priority", row, 1));
+    param.pad_90 = reinterpret_cast<void*>(Bdat::getValCheck(bdat.m_fp, "name", row, 7));
+    param.pad_98 = Bdat::getFlagVal(fp, "flag", rscId, "BigObj") != 0;
+    GF_OBJ_HANDLE* handle = createMapObj(param);
+    GfObjSetupGimmick* setup = getSetupOf<GfObjSetupGimmick>(GfObjManager::getObjInfo(handle), 8);
+    const char* state = reinterpret_cast<const char*>(Bdat::getValCheck(bdat.m_fp, "StateName", row, 7));
+    if (state != nullptr && state[0] != '\0') {
+        setup->m_stateName = state;
+    }
+    if (Bdat::getMember(bdat.m_fp, "mapobjcol") != nullptr) {
+        setup->pad_a0 = Bdat::getFlagVal(bdat.m_fp, "flag", row, "mapobjcol") == 0;
+    }
+    return handle;
+}
+
 GF_OBJ_HANDLE* GfObjFactory::createMapObj(const GfInitParamGimmick& param) {
     GfObjManager* manager = GfObjManager::sys();
     if (manager == nullptr) {
@@ -135,6 +179,49 @@ GF_OBJ_HANDLE* GfObjFactory::createGmkTbox(const CBdatWrapper& bdat, int row) {
     param.pad_18 = &fp;
     param.m_gimmickType = GimmickType(1);
     return createMapObj(param);
+}
+
+GF_OBJ_HANDLE* GfObjFactory::createGmkNpc(const CBdatWrapper& bdat, int row) {
+    if (GfObjManager::sys() == nullptr) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    unsigned short npcId = Bdat::getValCheck(bdat.m_fp, "NpcID", row, 2);
+    unsigned char* fp = GfDataNpc::getRscBdatFp(npcId);
+    GfInitParamNpc param;
+    param.m_objId = npcId;
+    param.pad_18 = &fp;
+    param.pad_a0[0] = Bdat::getValCheck(bdat.m_fp, "MountPoint", row, 2);
+    param.pad_a0[1] = Bdat::getValCheck(bdat.m_fp, "MountObject", row, 2);
+    if (GfGameManager::fn_71002A9E68()) {
+        param.pad_a0[2] = Bdat::getValCheck(bdat.m_fp, "MountPoint2", row, 2);
+        param.pad_a0[3] = Bdat::getValCheck(bdat.m_fp, "MountObject2", row, 2);
+    }
+    param.pad_90 = true;
+    param.pad_98 = reinterpret_cast<void*>(Bdat::getValCheck(bdat.m_fp, "name", row, 7));
+    GF_OBJ_HANDLE* handle = createNpc(param);
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    GfObjSetupNpc* setup = getSetupOf<GfObjSetupNpc>(GfObjManager::getObjInfo(handle), 6);
+    unsigned short mot = Bdat::getValCheck(bdat.m_fp, "Mot", row, 2);
+    if (mot) {
+        int id = mot;
+        const char* name = reinterpret_cast<const char*>(
+            Bdat::getValCheck(Bdat::getFP("FLD_NpcMobMotionId"), "cmdName", id, 7));
+        setup->m_stateName = name;
+        if (setup->m_stateName.length() != 0) {
+            setup->m_stateName[0] = 'S';
+        }
+    }
+    unsigned short group = Bdat::getValCheck(bdat.m_fp, "Group", row, 2);
+    if (group != 0) {
+        unsigned char num = Bdat::getValCheck(Bdat::getFP("FLD_NpcGroupId"), "memberNum", group, 1);
+        if (num) {
+            unsigned int count = num;
+            GfObjManager::sys()->setMultiBind(handle, group, count, false);
+        }
+    }
+    return handle;
 }
 
 GF_OBJ_HANDLE* GfObjFactory::createGmkMob(int id, unsigned short a, unsigned short b, unsigned short c,

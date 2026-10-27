@@ -9,6 +9,8 @@ public:
     // the message table and row of the NPC's name
     static bool getName(unsigned char*& bdat, unsigned int& id, unsigned int npc);
     static const char* getModelName(unsigned int npc);
+    // the BDAT file of the NPC's resources (GfObjFactory::createGmkNpc passes its row's "NpcID")
+    static unsigned char* getRscBdatFp(int npc);
     static const char* getMotionName(unsigned int npc);
     static const char* getEffectName(unsigned int npc);
     static bool isNeedResourceEvent(unsigned int npc);

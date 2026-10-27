@@ -124,6 +124,12 @@ public:
     // the text's length (the name is not the original's: SCOM_SCRIPT::exec reads it through the string, as a
     // 4-byte-aligned load the next field's load is not merged with)
     int length() const { return m_nLen; }
+    // the character at nIdx (GfObjFactory::createGmkNpc inlines it; fixstr.h asserts `nIdx < m_nLen` at line 302)
+    char& operator[](int nIdx) {
+#line 302 MM_MTL_FIXSTR_H_FILE
+        MM_ASSERT(nIdx < m_nLen);
+        return m_str[nIdx];
+    }
     // the index of the first `s`, -1 when there is none (gf::fn_71001C0EE0 inlines it; the name is not the
     // original's)
     int find(const char* s) const {
