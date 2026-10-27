@@ -11,7 +11,12 @@ public:
         // position and rotation; the names are not the original's)
         float m_pos[3];
         float m_rot[3];
-        unsigned char pad_18[0x14];
+        // GimmickCamera::setReadFile copies these into its keys (the names are not the original's)
+        float m_fov;
+        float m_keyValueA;
+        float m_keyValueB;
+        int m_speedType;
+        float m_duration;
     };
     // the header setup checks (the names are not the original's)
     struct Header {
