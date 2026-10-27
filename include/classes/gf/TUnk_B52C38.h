@@ -23,6 +23,10 @@ public:
     // fn_710028D584: TUnk_B53118::gevMapjump calls it for GEV 4.
     void fn_710028D4A4();
     void fn_710028D584();
+    // fn_710028CF40: TUnk_B53720's step calls it when m_partySetup's fn_710028E4E8 accepts m_key, before asking for
+    // state 5; fn_710028CFF8: TUnk_B53768's step calls it with its step argument, before asking for state 7.
+    void fn_710028CF40();
+    void fn_710028CFF8(void const* arg);
 
     unsigned char pad_18[0x8];
     // the challenge TUnk_B535D0::fn_7100291E14 passes on and fn_710028D330 looks up a rule for (the name is not

@@ -9,6 +9,12 @@ namespace gf { class GfReqSmallCom; class SCOM; class GF_SCOM_HANDLE; enum SCOM_
 namespace fw { class UpdateInfo; }
 
 namespace gf {
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x710056A3FC, gf_req_scom's unit). A
+// free function: its callers (TUnk_B535D0::RuleTable::fn_7100290598, fn_7100290BAC) pass a rule row's id, which it
+// does not read. What it does: unless GfGameManager::isStartGame, when fn_71002AC598 holds, item 0x6363 is in the
+// item box and the local flag 0x8A09 is set, goes on to request work (not recovered).
+void fn_710056A3FC(unsigned int id);
+
 // table 0x7100B6AF20; GfReqManager makes one (0x1B078 bytes, 3.0.1's new) and updates it after its own commands
 class GfReqSmallCom : public ::mm::mtl::PtrSingleton< ::gf::GfReqSmallCom> {
 public:

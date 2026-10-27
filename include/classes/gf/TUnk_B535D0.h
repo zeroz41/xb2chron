@@ -79,6 +79,11 @@ public:
         // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code in the neighbour
         // range: unit_710028EBB0's). A member: TUnk_B535D0::fn_7100291CC0 calls it on SDataGame's table with the arena's m_ids.
         void fn_7100290510(const ::mm::mtl::FixedVector<unsigned short, 128>& ids);
+        // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code in unit_710028EBB0's range). A
+        // member: StateArenaField's (TUnk_B52EC0) onEnter calls it on SDataGame's table with the arena's m_ids. What it
+        // does: for each id's row, sets m_flag3E once GfGameCond::isGameCond(GfBdatBtl::fn_71001E9CEC(id)) holds; a
+        // row without m_flag3C gets m_flag3C and m_flag3E then and the id goes to fn_710056A3FC.
+        void fn_7100290598(const ::mm::mtl::FixedVector<unsigned short, 128>& ids);
         RuleRow m_rows[48];
     };
 

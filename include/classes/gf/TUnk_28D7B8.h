@@ -22,6 +22,17 @@ public:
     // fn_7100290AE4 for the blade of the handle (DataParamAcc(handle).getBlade(-1, false)); it reads nothing of this.
     unsigned int fn_710028E5BC(const GfGameManager::BattleChallengeRecord::Key& key, GF_OBJ_HANDLE* handle);
 
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (code at 0x710028DA24 / 0x710028DAB4,
+    // GfAppendWire's unit range). Members: the arena states call them on the arena's +0xB8 object (StateArenaField's
+    // onEnter fn_710028DA24; StateArenaWait's onEnter and TUnk_B53690's enter fn_710028DAB4). What they do: walk
+    // this object's party entries; fn_710028DAB4 ends with fn_71002EC268(0, 1).
+    void fn_710028DA24();
+    void fn_710028DAB4();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x710028E4E8, GfAppendWire's unit
+    // range). A member: TUnk_B53720's step calls it on the arena's +0xB8 object with the +0xC0 object's m_key and
+    // goes to state 5 when it answers true, else to 3.
+    bool fn_710028E4E8(const GfGameManager::BattleChallengeRecord::Key& key);
+
     TUnk_B535D0* m_owner;  // (the name is not the original's)
     unsigned char pad_8[0xCE8];
 };
