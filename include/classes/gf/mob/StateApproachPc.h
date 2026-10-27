@@ -52,6 +52,14 @@ public:
     // functions and takes the owner as the other states' isCondMatch do. What it does: true when the player exists,
     // the owner's value at 0xa4 is above 0, its value at 0x53d4 is at most 4 and its 0xa4 at least its 0x53d0.
     static bool fn_71004D7468(const GfComBehaviorMob& owner);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: fn_71004D71C4 makes it the
+    // state's sequence. What it does: runs the "C_move" command started by fn_71004D71C4 and moves on to
+    // fn_71004D74D0 (see its body).
+    void fn_71004D723C(GfComBehaviorMob& owner, const fw::UpdateInfo& info);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: fn_71004D723C makes it the
+    // state's sequence. What it does: re-inits the owner once the command ran (m_execCmd.m_executed); when
+    // fn_71004D7468's test fails, clears the owner's pad_53d9 and requests state 1.
+    void fn_71004D74D0(GfComBehaviorMob& owner, const fw::UpdateInfo& info);
     Seq m_seq;
 };
 }}  // namespace gf::mob

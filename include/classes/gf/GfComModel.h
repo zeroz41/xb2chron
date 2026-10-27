@@ -40,7 +40,12 @@ public:
     mm::mtl::IntrusivePtr<fw::ReferenceFrame> createBoneReferenceFrame(const char* bone);
     void destroyBoneReferenceFrame(const char* bone);
     // hangs frame on the model's bone (GfMenuModelView::attachObject passes another object's transform frame)
-    void addBoneReferenceFrame(const char* bone, mm::mtl::IntrusivePtr<fw::ReferenceFrame>& frame);
+    // false when no frame could be made on the bone
+    bool addBoneReferenceFrame(const char* bone, mm::mtl::IntrusivePtr<fw::ReferenceFrame>& frame);
+    // the frame made on the bone, none when there is none
+    mm::mtl::IntrusivePtr<fw::ReferenceFrame> getBoneReferenceFrame(const char* bone);
+    // takes frame out from under the bone's frame and destroys the bone's frame
+    void removeBoneReferenceFrame(const char* bone, mm::mtl::IntrusivePtr<fw::ReferenceFrame>& frame);
     // whether its object's info asks for the volume fade
     bool isVolumeFadeForUser() const;
     bool isRender() const;

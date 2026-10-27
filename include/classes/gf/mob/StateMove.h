@@ -30,6 +30,15 @@ public:
     void enter(GfComBehaviorMob* owner, ai::State* prev);
     void leave(GfComBehaviorMob* owner, ai::State* next);
     void update(GfComBehaviorMob* owner, const fw::UpdateInfo& info);
+    void seqUpdateMove(GfComBehaviorMob& owner, const fw::UpdateInfo& info);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: seqUpdateMove makes it the
+    // state's sequence. What it does: runs m_execCmd; once done, reads the bound gmk's rotation (half angles,
+    // sin/cos) and moves on to fn_71004D8530.
+    void fn_71004D82FC(GfComBehaviorMob& owner, const fw::UpdateInfo& info);
+    void seqWaitTurnEnd(GfComBehaviorMob& owner, const fw::UpdateInfo& info);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: fn_71004D82FC makes it the
+    // state's sequence.
+    void fn_71004D8530(GfComBehaviorMob& owner, const fw::UpdateInfo& info);
     TFieldExecCmd<GfComAsm> m_execCmd;
     // whether the state may run: the owner has its object at 0xb8
     static bool isCondMatch(const GfComBehaviorMob& owner);

@@ -48,7 +48,9 @@ public:
     float pad_a4;  // mob::StateApproachPc's fn_71004D7468 compares it with pad_53d0
     unsigned char pad_a8[0x10];
     void* pad_b8;  // mob::StateMove::isCondMatch: the state may run while it is set
-    unsigned char pad_c0[0x60];
+    unsigned char pad_c0[0x50];
+    // mob::StateSquadMember::seqUpdateIdle starts moving once the owner is pad_18 away from it on the ground plane
+    mm::Vec3 pad_110;
     // StateReaction<GfComBehaviorMob>::onLeave hands its saved rotation back to it (the name is not the original's)
     mm::Quat m_reactionRot;
     unsigned char pad_130[0x120];

@@ -72,6 +72,12 @@ public:
     }
 
     T* get() const { return _ptr; }
+    // the object, asserted held (GfComModel::removeBoneReferenceFrame: line 111, operator->'s 112)
+    T& operator*() const {
+#line 111 MM_MTL_INTRUSIVE_PTR_PATH
+        MM_ASSERT(_ptr != 0);
+        return *_ptr;
+    }
     T* operator->() const {
 #line 112 MM_MTL_INTRUSIVE_PTR_PATH
         MM_ASSERT(_ptr != 0);

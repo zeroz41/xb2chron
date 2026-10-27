@@ -30,6 +30,8 @@ public:
     void enter(GfComBehaviorMob* owner, ai::State* prev);
     void leave(GfComBehaviorMob* owner, ai::State* next);
     void update(GfComBehaviorMob* owner, const fw::UpdateInfo& info);
+    void seqUpdateMove(GfComBehaviorMob& owner, const fw::UpdateInfo& info);
+    void seqUpdateIdle(GfComBehaviorMob& owner, const fw::UpdateInfo& info);
     float pad_18;
     TFieldExecCmd<GfComAsm> m_execCmd;
     // whether the state may run: the owner is a squad member

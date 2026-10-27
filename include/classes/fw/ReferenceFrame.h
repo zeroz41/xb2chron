@@ -13,6 +13,8 @@ public:
     virtual ~ReferenceFrame();  // slot 0
     // child linked under this frame (GfComTransform::setup links its child frame so)
     void addChild(ReferenceFrame& child);
+    // child taken out from under this frame (GfComModel::removeBoneReferenceFrame)
+    void removeChild(ReferenceFrame& child);
     // frame taken out of its parent's children (GfComTransform::cleanup)
     static void unlinkParent(ReferenceFrame& frame);
     // frame's children taken out from under it (GfComTransform::cleanup)
