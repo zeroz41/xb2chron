@@ -55,7 +55,10 @@ public:
 struct SDataParty {
     // its first members (GfDataParty::empty tests the first three's drivers; the count is not known)
     GfDataParty::PartyMember m_members[3];
-    unsigned char pad_12[0x2E];
+    unsigned char pad_12[0x2A];
+    // 0x3C: the kind of id m_leader holds (GfGameParty::getLeaderLevel: 4 looks the member up with getPartyId(4, id),
+    // 3 takes it as the driver id); the name is not the original's
+    unsigned int m_leaderType;
     unsigned int m_leader;  // 0x40: GfDataParty::isLeader compares a character with it (the name is not the original's)
     unsigned char pad_44[0x8];
     unsigned short m_partyGauge;  // GfGameParty::getPartyGauge and setPartyGauge (300 full)

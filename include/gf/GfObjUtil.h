@@ -156,6 +156,11 @@ public:
     // GfObjUtil functions. What it does: true when the object is of type 11 and has no asset handle (-1); no
     // caller in 3.0.1.
     static bool fn_7100552ED0(gf::GF_OBJ_HANDLE* handle);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in this unit's
+    // GfObjUtil functions after fn_710054FCB4. What it does: for a type 10 object, repeats on the handle at its
+    // GfObjManager info's +0x88; for a type 3 (driver) returns fn_710024198C of its GfObjAcc::getDriverId (the
+    // party index; GfGameParty's listenerGfObj compares it with 2).
+    static unsigned int fn_710054FCDC(gf::GF_OBJ_HANDLE* handle);
     static void applyExecUpdate(gf::GF_OBJ_HANDLE* handle);
     // fills slots with the asset's slot handles for a type 7 object (GfAssetManager::getSlotHandle); whether any
     static bool getMobSlotHandle(mm::mtl::FixedVector<gf::GF_SLOT_HANDLE*, 88>& slots, gf::GF_OBJ_HANDLE* handle);

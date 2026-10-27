@@ -16,7 +16,7 @@ namespace gf { class GfComTransform; }
 #include "mm/mtl/IntrusivePtr.h"
 
 namespace fw { class UpdateInfo; }
-namespace gf { class GfObj; class GfSetupParam; }
+namespace gf { class GfObj; class GfSetupParam; class GfWeapon; struct GfPartyPosInfo; }
 
 namespace gf {
 // a party member's objects (0x50 bytes; GfGameParty holds three, by party slot). Its constructor and destructor
@@ -80,6 +80,7 @@ public:
     static gf::GF_OBJ_HANDLE* getLeader();  // the party's leader, -1 for none
     // the leader's level (getLevel of its DataParamAcc; GfMenuObjTargetCursor::update compares a target's with it)
     static unsigned int getLeaderLevel();
+    static void getCurrentPartyInfo(RQ_SETUP_PARTY& info);
     static bool isBtlLeaderDirver();
     static bool isLeaderDriver(gf::GF_OBJ_HANDLE* handle);
     // the bdat ID of the party member driver at an index, and of the blade in a slot of its driver
@@ -122,6 +123,44 @@ public:
     // gf_game_party's unit and GfGameManager::gevPlayEvent passes PtrSingleton<GfGameParty>'s instance, the GEV and
     // the id on. What it does: for GEV 10 only, hands the RQ_SETUP_PARTY at 0x130 to fn_71002B8D88.
     void fn_71002B8D74(gf::GEV gev, unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: it lies in
+    // gf_game_party's unit and fn_71002B8D74 hands it the RQ_SETUP_PARTY at 0x130. What it does: fills a local
+    // RQ_SETUP_PARTY with getCurrentPartyInfo and compares it with the one given, working on the members'
+    // objects through GfObjUtil::getObj.
+    static void fn_71002B8D88(RQ_SETUP_PARTY& party);
+    // 1.0.0's listenerGfObj hands these an object event's handle
+    void entryHandle(gf::GF_OBJ_HANDLE* handle, unsigned int type);
+    void destroyedObject(gf::GF_OBJ_HANDLE* handle);
+    void removeHandle(gf::GF_OBJ_HANDLE* handle);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: it lies in
+    // gf_game_party's unit, and listenerGfObj calls it with an object handle. What it does: through the object's
+    // GfComCollider sets or clears collider states, GfObjAcc::setDisp / setAlphaNormal by the flag, then repeats
+    // for the object's followers (GfObjManager::getFollowObj); BattleCharacter::SetAction and
+    // ChainAttackManager::UpdateProc call it too.
+    static void fn_71002BC46C(gf::GF_OBJ_HANDLE* handle, bool flag);
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Static members: they lie in
+    // gf_game_party's unit and read PtrSingleton<GfGameParty>'s instance. What they do: fn_71002BC6D0 returns
+    // m_currentPartyValid (false without an instance), fn_71002BC6F8 returns m_warpObj (-1 without one).
+    static bool fn_71002BC6D0();
+    static gf::GF_OBJ_HANDLE* fn_71002BC6F8();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: it lies in
+    // gf_game_party's unit and reads the members through getHandleDriver. What it does: counts the party slots
+    // 0-2 whose driver handle GfObjUtil::isValid accepts.
+    static unsigned int fn_71002BC338();
+    // 1.0.0's getHierarchyMax (same place, after getBladeBdatId; it took the largest m_hierarchyDriver /
+    // m_hierarchyBlade of the members 0-2, 3.0.1 does so over every party in m_hierarchy)
+    static unsigned int getHierarchyMax();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it lies in gf_game_party's
+    // unit and GfGameManager::setupGame passes PtrSingleton<GfGameParty>'s instance. What it does: resets
+    // m_hierarchy to {0}, adding 1 and 2 when GfGameManager::fn_71002A9E68 answers true.
+    void fn_71002BC3B4();
+    static void setupPartyPositionByPartyPosition(const GfPartyPosInfo& info);
+    static gf::GfWeapon* getHandleWeapon(unsigned int index, int set);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: it lies in
+    // gf_game_party's unit and calls getHandleWeapon. What it does: for a driver object, its weapon: its own
+    // mount (GfMountManager::getGfWeapon) when GfDataDriver::fn_710023F9A8 accepts its driver id, else its party
+    // slot's (getHandleWeapon with set -1); null for others (BattleCharacter::AttackTimingProc calls it).
+    static gf::GfWeapon* fn_71002B7C34(gf::GF_OBJ_HANDLE* handle);
 
     mm::mtl::FixedArray<GfMemberInfo, 3> m_members;  // by party slot
     bool m_initialized;  // 1.0.0's initialize sets it, finalize clears it, isInitialized reads it
@@ -143,7 +182,7 @@ public:
     // leaves); the name is not the original's
     int m_partyIdMemberOK[3];
     unsigned char pad_39c[0x4];
-    mm::mtl::FixedVector<unsigned int, 4> m_hierarchy;  // party slots in hierarchy order (getHandleByHierarchy)
+    mm::mtl::FixedVector<unsigned int, 3> m_hierarchy;  // party slots in hierarchy order (getHandleByHierarchy)
     // the object update warps to the controlled mover's position each frame, -1 for none (fn_71002BC6F8 returns
     // it); the name is not the original's
     GF_OBJ_HANDLE* m_warpObj;

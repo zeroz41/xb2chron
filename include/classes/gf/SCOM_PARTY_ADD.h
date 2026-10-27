@@ -13,9 +13,10 @@ namespace gf {
 // not the original's: the constructor sets the position to mm::Vec3::zero and the rest to zero)
 struct GfPartyPosInfo {
     struct Pos {
-        Pos() : m_pos(mm::Vec3::zero), m_value(0), m_isValid(false) {}
+        Pos() : m_pos(mm::Vec3::zero), m_rotY(0), m_isValid(false) {}
         mm::Vec3 m_pos;
-        int m_value;
+        // the y rotation setupPartyPositionByPartyPosition gives the slot's object setup (GfObjSetup::pad_30.y)
+        float m_rotY;
         bool m_isValid;
     };
     Pos m_pos[9];

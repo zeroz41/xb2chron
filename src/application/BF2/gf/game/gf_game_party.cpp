@@ -1,3 +1,8 @@
+#include "classes/gf/GfMountManager.h"
+#include "classes/gf/GfGameParty.h"
+#include "gf/GfObjUtil.h"
+#include "gf/GfDataParty.h"
+#include "classes/gf/GfPause.h"
 #include "gf/GfDataParty.h"
 #include "gf/GfReqParam.h"
 #include "classes/gf/GfEvent.h"
@@ -228,6 +233,113 @@ void GfSelectBlade::resetStartBattleSetId(unsigned int slot) {
     if (slot <= 2 && s_pThis != nullptr) {
         s_pThis->m_startBattleSetId[slot] = -1;
     }
+}
+
+
+void GfGameParty::listenerGfObj(IGfObjListener::OBJEVT evt, GF_OBJ_HANDLE* handle, unsigned int type) {
+    if (type != 3 && type != 4 && type != 10 && type != 11) {
+        return;
+    }
+    switch (static_cast<int>(evt)) {
+    case 1:
+        entryHandle(handle, type);
+        break;
+    case 2:
+        if (GfPause::isPause(1) && getHandleByHierarchy(1) == handle) {
+            GfGameScene* scene = GfGameScene::get();
+            if (scene != nullptr) {
+                scene->setCameraAvtivateOneTime();
+            }
+        }
+        if (GfGameManager::fn_71002A9E68() && GfObjUtil::fn_710054FCDC(handle) == 2) {
+            fn_71002BC46C(handle, false);
+        }
+        break;
+    case 3:
+        destroyedObject(handle);
+        break;
+    case 4:
+        removeHandle(handle);
+        break;
+    }
+}
+
+void GfGameParty::fn_71002B8D3C() {
+    if (!m_currentPartyValid) {
+        getCurrentPartyInfo(m_currentParty);
+        m_currentPartyValid = true;
+    }
+}
+
+void GfGameParty::fn_71002B8D70() {}
+
+void GfGameParty::fn_71002B8D74(GEV gev, unsigned int) {
+    if (gev == GEV(10)) {
+        fn_71002B8D88(m_currentParty);
+    }
+}
+
+unsigned int GfGameParty::getLeaderLevel() {
+    SDataParty* data = GfDataParty::getSDataParty();
+    unsigned int driver = 0;
+    if (data->m_leaderType == 3) {
+        driver = data->m_leader;
+    } else if (data->m_leaderType == 4) {
+        unsigned int id = getPartyId(4, data->m_leader);
+        driver = id != static_cast<unsigned int>(-1) ? GfDataParty::getPartyMember(id, 0)->m_driver : 0;
+    }
+    DataParamAcc acc(3, driver, GimmickType(0));
+    return acc.getLevel(false);
+}
+
+GfWeapon* GfGameParty::getHandleWeapon(unsigned int index, int set) {
+    GF_OBJ_HANDLE* handle;
+    if (GfDataDriver::fn_710023F9A8(getDriverBdatId(index, 0))) {
+        handle = getHandleDriver(index, 0);
+    } else {
+        handle = getHandleBlade(index, getBladeSetId(index, set));
+    }
+    return GfMountManager::getGfWeapon(handle, GFATTACH(0));
+}
+
+GfWeapon* GfGameParty::fn_71002B7C34(GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    if (acc.getType() == 3) {
+        if (GfDataDriver::fn_710023F9A8(acc.getDriverId())) {
+            return GfMountManager::getGfWeapon(handle, GFATTACH(0));
+        }
+        if (acc.getPartyID() != static_cast<unsigned int>(-1)) {
+            return getHandleWeapon(acc.getPartyID(), -1);
+        }
+    }
+    return nullptr;
+}
+
+void GfGameParty::fn_71002BC3B4() {
+    m_hierarchy.clear();
+    m_hierarchy.push_back(0);
+    if (GfGameManager::fn_71002A9E68()) {
+        m_hierarchy.push_back(1);
+        m_hierarchy.push_back(2);
+    }
+}
+
+unsigned int GfGameParty::fn_71002BC338() {
+    unsigned int count = 0;
+    for (unsigned int i = 0; i < 3; ++i) {
+        count += GfObjUtil::isValid(getHandleDriver(i, 0));
+    }
+    return count;
+}
+
+bool GfGameParty::fn_71002BC6D0() {
+    GfGameParty* party = get();
+    return party != nullptr ? party->m_currentPartyValid : false;
+}
+
+GF_OBJ_HANDLE* GfGameParty::fn_71002BC6F8() {
+    GfGameParty* party = get();
+    return party != nullptr ? party->m_warpObj : reinterpret_cast<GF_OBJ_HANDLE*>(-1);
 }
 
 }  // namespace gf
