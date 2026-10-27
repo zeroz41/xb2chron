@@ -20,6 +20,9 @@ public:
     static void add(unsigned int handle, unsigned int, unsigned int, unsigned int);
     static void remove(unsigned int handle, unsigned int, unsigned int, unsigned int);
     static void setGuideText(unsigned int text, unsigned int);
+    // enables or disables an action of the operation guide for the object of that handle (the parameter names are
+    // not the original's: GfMenuObjDrEquip2 passes action 10)
+    static void setActionEnable(unsigned int handle, unsigned int action, bool enable);
 };
 }  // namespace gf
 
