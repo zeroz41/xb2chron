@@ -2,6 +2,7 @@
 #define CLASSES_ANM_SKELETON_H
 
 #include <string.h>
+#include <algorithm>
 #include "anm/Array.h"
 #include "anm/QsTransform.h"
 #include "classes/anm/ReferenceObject.h"
@@ -20,6 +21,17 @@ struct ExtraTruckSlot {
     unsigned char pad_8[0x18];
     unsigned int m_count;  // its values: Factory::createExtraTruckBuffer makes no buffer for a slot without any
     unsigned char pad_24[0x14];
+};
+
+// a label's kind (1.0.0's name; its values' names are not known: GfComEnvSensor::setup asks for kinds 0 and 1 for
+// the feet, 15 for the root)
+enum LabelType {};
+
+// one of a skeleton's labels, kept sorted by kind then index (1.0.0's name; the field names are not the original's)
+struct SkelLabel {
+    LabelType m_type;
+    unsigned short m_index;
+    unsigned short m_bone;  // the bone it names
 };
 
 // table 0x7100B810B8
@@ -45,6 +57,30 @@ public:
 
     // the index of the extra-track slot named `name`, -1 when none is
     short getExtraTruckSlotID(const char* name) const;
+    // what getBoneFromLabel searches m_labels for (1.0.0's names)
+    struct LabelKey {
+        LabelType m_type;
+        unsigned short m_index;
+    };
+    struct CompLable {
+        bool operator()(const SkelLabel& label, const LabelKey& key) const {
+            if (label.m_type == key.m_type) {
+                return label.m_index < key.m_index;
+            }
+            return label.m_type < key.m_type;
+        }
+    };
+    // the bone a label names, 0xFFFF when none does (1.0.0's; inline: GfComEnvSensor::setup inlines it)
+    unsigned short getBoneFromLabel(LabelType type, unsigned short index) const {
+        if (m_labels.size() != 0) {
+            LabelKey key = {type, index};
+            ArrayIterartor<const SkelLabel> it = std::lower_bound(m_labels.begin(), m_labels.end(), key, CompLable());
+            if (it != m_labels.end() && it.m_pData->m_type == type && it.m_pData->m_index == index) {
+                return it.m_pData->m_bone;
+            }
+        }
+        return 0xFFFF;
+    }
     // orders the extra-track slots by name (std::lower_bound's comparator in getExtraTruckSlotID)
     struct CompTruck {
         bool operator()(const ExtraTruckSlot& slot, const char* name) const { return strcmp(slot.m_name, name) < 0; }
@@ -66,6 +102,7 @@ public:
     // per mount, its transform against the bone it hangs on (GfComModel::createMountReferenceFrameImpl makes it the
     // mount frame's local transform; the name is not the original's)
     Array<QsTransform> m_mountTransforms;
+    Array<SkelLabel> m_labels;  // getBoneFromLabel searches them (the name is not the original's)
 };
 }  // namespace anm
 

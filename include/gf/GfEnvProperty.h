@@ -11,6 +11,8 @@ namespace gf {
 // GfEffectGround reads the fields below; the names are not the original's, and the size past m_flags is not known.
 class GfEnvProperty {
 public:
+    // which of m_grounds (1.0.0's name; its values' names are not known: GfComEnvSensor's feet use 1-6, its root 7)
+    enum GROUND_INDEX {};
     // one ground under the object (1.0.0's FootStepPlugin takes a GROUND_INDEX; m_grounds holds them by it)
     struct Ground {
         mm::Vec3 m_position;  // where the ground was found (GfEffectGround places its effect there)

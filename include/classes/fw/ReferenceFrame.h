@@ -29,6 +29,19 @@ public:
         syncWorldTransform();
         return m_worldTransform;
     }
+    // m_worldTransform, computed first when stale: the parent's times m_localTransform, or m_localTransform without
+    // a parent (inline: GfComEnvSensor::resolveTransform inlines it and syncs the parent out of line)
+    const Transform& getSyncedWorldTransform() {
+        if ((m_syncFlags & 2) == 0) {
+            if (m_parent == nullptr) {
+                m_worldTransform = m_localTransform;
+            } else {
+                Transform::mul(m_parent->getWorldTransform(), m_localTransform, &m_worldTransform);
+            }
+            m_syncFlags = (m_syncFlags & ~6u) | 2;
+        }
+        return m_worldTransform;
+    }
     // m_localTransform to write: it becomes the current one, the world transform and matrix stale (inline: the
     // name is not the original's; GfMenuModelView::getObjectTransformLocal)
     Transform& getLocalTransformForWrite() {

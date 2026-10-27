@@ -15,6 +15,7 @@ namespace fw {
 // what SensorManager's groups keep: a call its jobs make (the names are not the original's)
 class SensorUpdater : public mm::mtl::IntrusiveListNodeBase {
 public:
+    SensorUpdater() : m_registered(false) {}  // inline (GfComEnvSensor's constructor has it)
     mm::mtl::Delegate<void()> m_delegate;  // SensorUpdateJob::exec calls it
     bool m_registered;                     // the add functions set it, the remove functions clear it
 };
