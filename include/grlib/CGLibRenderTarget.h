@@ -128,7 +128,10 @@ public:
 // original's)
 class CGLibRenderCubeMapMipMap : public CGLibRenderTargetBase {
 public:
+    CGLibRenderCubeMapMipMap();
     ~CGLibRenderCubeMapMipMap();
+    // the faces' size and format, the pixels at offset in the pool (the parameter names are not the original's)
+    void setTextureInfo(float width, float height, GrlSurfaceFormat format, bool flag, unsigned int offset);
     void releaseWork();
     void setRenderTarget(GrlCubeMapFace face, unsigned int mip);
 
