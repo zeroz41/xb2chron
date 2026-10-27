@@ -10,6 +10,8 @@ namespace gmk {
 class GmkSquadManager : public ::mm::mtl::PtrSingleton< ::gmk::GmkSquadManager> {
 public:
     virtual ~GmkSquadManager();  // slot 0
+    // not virtual: the destructor calls it directly
+    void clearGmkSquads();
 };
 }  // namespace gmk
 

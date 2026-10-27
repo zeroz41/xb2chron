@@ -38,6 +38,9 @@
 #include "classes/gmk/GmkSalvageList.h"
 #include "classes/gmk/TUnk_B6E340.h"
 #include "classes/gmk/TUnk_B6ED38.h"
+#include "classes/gmk/GmkBdat.h"
+#include "classes/gmk/GmkLandmarkManager.h"
+#include "classes/gmk/GmkSquadManager.h"
 #include "classes/gmk/TUnk_B6EE88.h"
 #include "classes/gf/GfGameManager.h"
 #include "gf/GfObjAcc.h"
@@ -636,5 +639,27 @@ GmkBlade::~GmkBlade() { dispose(); }
 // body as an alias of the base's)
 GmkEffectLocator::~GmkEffectLocator() {}
 GmkSeLinePoint::~GmkSeLinePoint() {}
+
+GmkNpc::~GmkNpc() { dispose(); }
+
+GmkNpcList::~GmkNpcList() {
+    dispose();
+}
+
+GmkRoutedNpcList::~GmkRoutedNpcList() {
+    dispose();
+}
+
+GmkBdat::~GmkBdat() {
+    dispose();
+}
+
+GmkLandmarkManager::~GmkLandmarkManager() {
+    dispose();
+}
+
+GmkSquadManager::~GmkSquadManager() {
+    clearGmkSquads();
+}
 
 }  // namespace gmk

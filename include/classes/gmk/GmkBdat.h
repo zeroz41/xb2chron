@@ -6,6 +6,8 @@ namespace gmk {
 class GmkBdat {
 public:
     virtual ~GmkBdat();  // slot 0
+    // not virtual: the destructor and its callers call it directly
+    void dispose();
 };
 }  // namespace gmk
 
