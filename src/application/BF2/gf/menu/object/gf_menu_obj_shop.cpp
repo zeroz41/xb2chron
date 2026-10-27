@@ -1,4 +1,15 @@
 #include "classes/gf/GfMenuObjShop.h"
+#include "classes/gf/GfMenuObjShop.h"
+#include "classes/gf/SCOM_FIELD_VOICE.h"
+#include "classes/gf/SCOM_FIELD_VOICE.h"
+#include "classes/gf/SCOM_ACHIEV_INC.h"
+#include "classes/gf/SCOM_RANDOM_INN.h"
+#include "classes/gf/GfMenuItemList.h"
+#include "classes/gf/GfMenuObjCommonText.h"
+#include "gf/GfItemUtil.h"
+#include "classes/gf/GfAllocator.h"
+#include "classes/gf/GfMenuObjShop/SellFilterListener.h"
+#include "classes/gf/GfMenuObjShop/SellFilterListener.h"
 #include "classes/gf/GfMenuObjBlWeapon2.h"
 #include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfMenuAdapterManager.h"
@@ -12,8 +23,16 @@
 #include "gf/GfMenuObjUtil.h"
 #include "mm/Col4.h"
 #include "ui/EventData.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfGameUtilCloudSea.h"
+#include "mm/mtl/FixStr.h"
+#include "plugin/Bdat.h"
 
 namespace gf {
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_71009C4748). The item type of each sell
+// filter (m_filters' values index it).
+static const unsigned int s_filterItemType[13] = {0, 12, 7, 11, 10, 14, 9, 3, 2, 1, 6, 5, 8};
 
 void GfMenuObjShop::finalize() {
     for (int i = 0; i < 26; ++i) {
@@ -112,9 +131,9 @@ void GfMenuObjShop::setFilterIndex() {
 }
 
 bool GfMenuObjShop::seqWaitSleepFade() {
-    if (!m_sleepFadeStarted) {
+    if (!m_seqStarted) {
         GfMenuFade::setFade(2, 30, mm::Col4::black);
-        m_sleepFadeStarted = true;
+        m_seqStarted = true;
         return false;
     }
     return !GfMenuManager::isFading();
@@ -161,6 +180,147 @@ bool GfMenuObjShop::seqWaitEndBlWeapon() {
     }
     ui::UIObjectAcc main(m_handle, "LAY_main");
     sendEnableEvent(main.searchChild("LAY_store_action"));
+    return true;
+}
+
+void GfMenuObjShop::fn_710047688C() {
+    ui::UIObjectAcc stock(m_handle, "LAY_stock_num");
+    unsigned int type = GfMenuReference::fn_710036934C();
+    bool disp = false;
+    if (m_mode == 0) {
+        if (type != 0 && m_useFilterItemType && m_filterIndex != 0) {
+            type = s_filterItemType[m_filters[m_filterIndex]];
+        }
+        disp = type == 2 || type == 3;
+    } else if (m_mode == 3) {
+        disp = type == 3;
+    }
+    stock.setDisp(disp);
+    mm::Pnt<short> pos;
+    stock.getPos(pos);
+    pos.y = m_stockNumOffsetY + (m_mode == 3 ? -39 : 0);
+    stock.setPos(pos);
+}
+
+int GfMenuObjShop::getSpecialShop(unsigned int shopId) {
+    if (shopId != 0) {
+        unsigned char* fp = GfDataBdat::getFP(0xF4);
+        if (fp != nullptr) {
+            unsigned short scenario = GfDataBlade::fn_7100231884();
+            int top = Bdat::getIdTop(fp);
+            for (int i = 0; i < Bdat::getIdCount(fp); ++i) {
+                int id = top + i;
+                unsigned short flag = Bdat::getVal(fp, "scenario_flag", id);
+                if (flag == 0 || flag == scenario) {
+                    unsigned short shop = Bdat::getVal(fp, "shop_id", id);
+                    if (shop != 0 && shop == shopId) {
+                        return id;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+void GfMenuObjShop::refreshFilterIcon() {
+    ui::UIObjectAcc filter(m_handle, "LAY_store_sell_filter");
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < m_filters.size(); ++i) {
+        bool select = i == m_filterIndex;
+        name.format("IMG_store_sell_filter_icon@%02d", i + 1);
+        ui::UIObjectAcc icon(filter.searchChild(name.m_str));
+        if (select) {
+            icon.setMulColor("sys_select");
+        } else {
+            icon.loadDefColor();
+        }
+    }
+}
+
+bool GfMenuObjShop::seqStartLevelUp() {
+    if (m_switchInnCloudSea) {
+        GfGameUtilCloudSea::setInnCloudSea(static_cast<CLOUD_SEA>(GfGameUtilCloudSea::getCloudSea() == 0));
+        m_switchInnCloudSea = false;
+    }
+    GfMenuManager::openFullScreen(5, true, true);
+    m_seq.addJob(&GfMenuObjShop::seqWaitFSClose);
+    m_seq.addJob(&GfMenuObjShop::seqEnd);
+    return true;
+}
+
+void GfMenuObjShop::setGuideText(unsigned int id) {
+    if (m_guideTextId != id) {
+        ui::UIObjectAcc guide(m_handle, "TXT_common_guide");
+        unsigned int name = static_cast<unsigned short>(Bdat::getVal(GfDataBdat::getFP(0x146), "name", id));
+        guide.setText(ui::UIStr(GfDataBdat::getFP(0x118), name));
+        guide.setDisp(true);
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_in_l";
+        param.m_startFlags = 8;
+        param.m_setDefault = true;
+        param.m_time = 0.2f;
+        GfMenuObjUtil::startCtrl(guide.m_handle, param, nullptr);
+        m_guideTextId = id;
+    }
+}
+
+bool GfMenuObjShop::seqStartSleepFade() {
+    GfSequentialPlay::pauseOn(0x59);
+    SCOM_ACHIEV_INC::addTotalCount(0x23, 1);
+    SCOM_ACHIEV_INC::create(0x23, 1, 0);
+    SCOM_FIELD_VOICE::createExitInn();
+    SCOM_RANDOM_INN::setRandom();
+    m_seq.addJob(&GfMenuObjShop::seqWaitSleepFade);
+    m_seq.addJob(&GfMenuObjShop::seqIntervalSleep);
+    m_seq.addJob(&GfMenuObjShop::seqStartLevelUp);
+    m_sleepInterval = 0;
+    m_seqStarted = false;
+    return true;
+}
+
+bool GfMenuObjShop::seqItemGet() {
+    if (m_itemGetState != 1) {
+        return true;
+    }
+    if (!m_seqStarted) {
+        m_callContext->reset();
+        if (m_mode == 3) {
+            if (m_getItemId != 0) {
+                ui::UIListInfoBase::SetupParam param;
+                m_itemList->setup(getAllocator(ALLOCATOR(0)), param);
+                MenuItemInfo info;
+                info.m_id = m_getItemId;
+                info.m_type = GfItemUtil::getType(m_getItemId);
+                info.m_count = 1;
+                m_itemList->addItem(info, false);
+                m_callContext->reset();
+                GfMenuObjCommonText::openGetItem(m_callContext, m_itemList);
+                m_getItemId = 0;
+            }
+        } else if (m_mode == 1) {
+            if (m_itemList->getSize() != 0) {
+                m_callContext->reset();
+                GfMenuObjCommonText::openGetItem(m_callContext, m_itemList);
+            }
+        }
+        if (!m_callContext->isActive()) {
+            m_seqStarted = false;
+            return true;
+        }
+        GfMenuObjUtil::playSE(10);
+        m_seqStarted = true;
+    }
+    if (!m_callContext->isTerm()) {
+        return false;
+    }
+    m_seqStarted = false;
+    if (m_mode == 1) {
+        m_refreshItemList = true;
+        m_stockNumDirty = false;
+    }
     return true;
 }
 

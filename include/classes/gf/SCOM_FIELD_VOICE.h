@@ -43,6 +43,9 @@ public:
     // and ignore what they return, so the return type is not established)
     static void createBadWeather();
     static void createTime(CV_FIELD field);
+    // the voice for leaving an inn (GfMenuObjShop::seqStartSleepFade calls it and ignores what it returns, so the
+    // return type is not established)
+    static void createExitInn();
     // plays at once for obj, or for the object the player controls when obj names nothing (1.0.0 has it out of line;
     // 3.0.1 inlines every call)
     static GAME_VOICE_HANDLE* create(const ParamObj& obj, CV_FIELD field, CV_PRIO prio);
