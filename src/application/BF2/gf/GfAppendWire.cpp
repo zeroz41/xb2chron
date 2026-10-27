@@ -1,6 +1,13 @@
-#include "classes/gf/GfAppendWire.h"
-#include "classes/anm/Skeleton.h"
-#include "gf/GfUtil.h"
+#include "classes/gf/GfSound.h"
+#include "classes/gf/GfWeapon.h"
+#include "classes/gf/TUnk_B52C38.h"
+#include "classes/gf/TUnk_28D5BC.h"
+#include "classes/gf/TUnk_28D7B8.h"
+#include "gf/GfItemUtil.h"
+#include "classes/gf/GfBdatChrBl.h"
+#include "classes/gf/GfEvent.h"
+#include "gf/GfDataBlade.h"
+#include "classes/gf/TUnk_B535D0.h"
 #include "classes/gf/GfAppendWire.h"
 #include "classes/anm/Skeleton.h"
 #include "classes/fw/ModelObject.h"
@@ -179,6 +186,88 @@ void GfAppendWire::updateState(const fw::UpdateInfo& info) {
             resetWire();
         }
         break;
+    }
+}
+
+
+bool TUnk_B52C38::recieveMessage(fw::MessageObject* sender, fw::Message& msg) {
+    if (msg.m_id == 0x1000034) {
+        fn_710028C9CC(sender, static_cast<MsgUnk_1000034&>(msg));
+        return true;
+    }
+    return false;
+}
+
+TUnk_B52C38::~TUnk_B52C38() {
+    if (m_ref != nullptr) {
+        m_ref->release();
+        m_ref = nullptr;
+    }
+}
+
+void TUnk_B52C38::fn_710028D584() {
+    m_owner->m_partySetup->fn_710028E15C();
+    memcpy(fn_71002EE8C4(), m_option, sizeof(m_option));
+    GfEvent::fn_71003274A8();
+}
+
+TUnk_28D5BC::TUnk_28D5BC()
+    : m_category(reinterpret_cast<GF_SE_CATEGORY_HANDLE*>(-1)), m_delay(0.0f), m_fadeTime(0.0f), m_bgm(0) {}
+
+TUnk_28D5BC::~TUnk_28D5BC() {}
+
+void TUnk_28D5BC::fn_710028D5F0() {
+    if (GfSound* sound = GfSound::get()) {
+        m_category = sound->createCategoryHandle();
+    }
+}
+
+void TUnk_28D5BC::fn_710028D624() {
+    if (GfSound* sound = GfSound::get()) {
+        sound->releaseCategoryHandle(m_category);
+    }
+}
+
+void TUnk_28D5BC::fn_710028D644(const fw::UpdateInfo& info) {
+    GfSound* sound = GfSound::get();
+    if (sound == nullptr) {
+        return;
+    }
+    if (m_delay > 0.0f) {
+        m_delay -= info.m_deltaTime;
+        if (m_delay <= 0.0f) {
+            m_delay = 0.0f;
+            m_handle = sound->playBgm(m_bgm, m_fadeTime, false, 0, static_cast<fw::SoundCategory>(3));
+            m_fadeTime = 0.0f;
+            m_bgm = 0;
+        }
+    }
+    if (m_handle.isValid() && !sound->isPlaying(m_handle)) {
+        stop();
+    }
+}
+
+TUnk_28D7B8::TUnk_28D7B8(TUnk_B535D0* owner) : m_owner(owner), pad_2F0(nullptr), pad_CE0(nullptr) {}
+
+TUnk_28D7B8::~TUnk_28D7B8() {
+    if (pad_CE0 != nullptr) {
+        pad_CE0 = nullptr;
+    }
+    if (pad_2F0 != nullptr) {
+        pad_2F0 = nullptr;
+    }
+}
+
+
+void TUnk_28D7B8::fn_710028DA24() {
+    GfBdatChrBl* bdat = GfBdatChrBl::get();
+    unsigned int start = bdat->getChrBlStart();
+    unsigned int end = bdat->getChrBlEnd();
+    for (unsigned int blade = start; blade < end; blade++) {
+        if (bdat->fn_71001ED40C(blade) && fn_71002EDAD4(blade) && GfDataBlade::isActivateUnuse(blade)) {
+            GfDataBlade::setActivateReserver(blade);
+            fn_71002FE418(blade);
+        }
     }
 }
 

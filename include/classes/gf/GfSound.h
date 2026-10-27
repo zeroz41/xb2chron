@@ -108,6 +108,9 @@ public:
     void setCategoryVolume(GF_SE_CATEGORY_HANDLE* handle, fw::SoundCategory category, float volume, float time);
     void destroyCategorySe(fw::SoundCategory category);  // GfFieldSound::destroyCategorySeForMapjump's
     float getCategoryVolume(GF_SE_CATEGORY_HANDLE* handle, fw::SoundCategory category) const;  // GfGameEvent's
+    // a BGM by its ID (TUnk_28D5BC::fn_710028D644 passes its ID, fade time, false, 0 and category 3; the names of the
+    // parameters are not the original's)
+    SoundHandle playBgm(unsigned int id, float time, bool loop, int param, fw::SoundCategory category);
     void stopBgm(SoundHandle handle, float time);  // TitleMain::stopTitleBGM passes its BGM and fade time
     SoundHandle playVoice(const char* path, float volume, bool loop, fw::SoundCategory category);
     void stopVoice(SoundHandle handle, float time);

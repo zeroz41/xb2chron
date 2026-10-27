@@ -121,6 +121,12 @@ public:
     static unsigned int fn_71002FCD64(unsigned int driver);
 };
 
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfItemUtil's unit (no this). What it does: for a nonzero blade, walks its GfDataBlade::getAchievInfo entries 0..9
+// (stops at one whose first short is 0) and runs GfQuestTask::refreshTaskParam on GfDataQuest::getListNextQuestA of
+// each of the entry's five quest IDs. TUnk_28D7B8::fn_710028DA24 calls it after GfDataBlade::setActivateReserver.
+void fn_71002FE418(unsigned int blade);
+
 }  // namespace gf
 
 #endif
