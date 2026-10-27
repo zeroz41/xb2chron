@@ -15,7 +15,12 @@ public:
     static void Initialize();
     static void Finalize();
 
-    virtual ~FileStream();  // slot 0
+    // inline: StreamController's destructor has it inline (IsOpen, then Close, through the table)
+    virtual ~FileStream() {
+        if (IsOpen()) {
+            Close();
+        }
+    }  // slot 0
     virtual bool IsOpen() const;  // slot 2
     virtual Result Open(const TextRef& path, OpenMode mode);  // slot 3
     virtual Result Close();  // slot 5

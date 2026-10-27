@@ -1,11 +1,13 @@
 #ifndef CLASSES_SSD_STRING_H
 #define CLASSES_SSD_STRING_H
 
-namespace ssd { class TextRef; }
+#include "classes/ssd/TextRef.h"
 
 namespace ssd {
-// table 0x7100B823C8
-class String {
+// table 0x7100B823C8: a TextRef that owns a copy of its text. sizeof 0x30: StreamController's fields follow a
+// WaveSource's path_ 0x30 bytes on; String() sets the encoding to 3 and zeroes the copy (the field names are not
+// the original's).
+class String : public ::ssd::TextRef {
 public:
     virtual void Set(ssd::TextRef const&);  // slot 0
     virtual void Set(char const*);  // slot 1
@@ -21,6 +23,10 @@ public:
         Set(text);
         return *this;
     }
+
+    // the copy FreeImpl gives back to SoundMemory::allocator_, and its size
+    void* buffer_;
+    unsigned long bufferSize_;
 };
 }  // namespace ssd
 

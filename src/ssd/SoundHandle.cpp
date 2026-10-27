@@ -171,7 +171,7 @@ Result SoundHandle::SetRemainLoopCount(int count) {
     if (voice->stream_ == nullptr) {
         return Result(-44);
     }
-    if (!voice->stream_->pad_68) {
+    if (!voice->stream_->source_.format_.loop.loop) {
         return Result(-1);
     }
     return set_result(voice->SetRemainLoopCount(count));

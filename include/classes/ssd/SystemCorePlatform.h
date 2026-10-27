@@ -66,7 +66,8 @@ public:
     void InitAudioDevice(const SoundCore::InitParam& param);
     void QuitAudioDevice();
     void UpdateDevice();
-    double GetSystemTime();
+    // static: StreamController::ExecOpusDecode calls it without setting x0, and it reads no member
+    static double GetSystemTime();
     // audio data memory from the platform's allocator (nn::mem::StandardAllocator::Allocate / Free)
     void* AllocAudioDataBuffer(unsigned long size);
     void FreeAudioDataBuffer(void* buffer);

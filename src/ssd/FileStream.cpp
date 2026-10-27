@@ -89,10 +89,6 @@ Result FileStream::Close() {
     return Result(0);
 }
 
-FileStream::~FileStream() {
-    Close();
-}
-
 Result FileStream::Write(unsigned long, const void*, unsigned long*) {
     if (!IsOpen()) {
         return Result(-1);
