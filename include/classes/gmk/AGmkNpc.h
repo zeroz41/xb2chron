@@ -13,8 +13,8 @@ public:
     virtual void isDepopCondMatched() const = 0;  // slot 3
     virtual void vf4() = 0;  // slot 4
     virtual void vf5() = 0;  // slot 5
-    virtual void getBindedBdatFp() const = 0;  // slot 6
-    virtual void getBindedBdatId() const = 0;  // slot 7
+    virtual unsigned char* getBindedBdatFp() const = 0;  // slot 6: its list's BDAT table
+    virtual int getBindedBdatId() const = 0;  // slot 7: its BDAT row
     // true when it found them (GmkNpc's returns 1; LocatorTalk_NpcID::update tests it)
     virtual bool findPopPosRot(mm::Vec3& pos, mm::Vec3& rot) const = 0;  // slot 8
     virtual void bindToGameObj(gf::GF_OBJ_HANDLE*) const = 0;  // slot 9

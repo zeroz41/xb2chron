@@ -46,7 +46,16 @@ public:
     static mm::mtl::RTTI m_rtti;
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(48);
-    unsigned char pad_50[0x38];  // fields: size from TGmkList::getInst's stride
+    // the steps update runs through m_seq (symbols name them)
+    void seqWaitToCreateChild(float dt);
+    void seqUpdatePopDepop(float dt);
+    unsigned char pad_50[0x8];
+    void* pad_58;  // dispose clears it
+    unsigned char pad_60[0x8];
+    // the step update calls while the gimmick is valid (seqWaitToCreateChild installs seqUpdatePopDepop; dispose
+    // clears it; the name is not the original's)
+    void (GmkDmgGimmick::*m_seq)(float dt);
+    unsigned char pad_78[0x10];  // fields: size from TGmkList::getInst's stride (0x88)
 };
 }  // namespace gmk
 

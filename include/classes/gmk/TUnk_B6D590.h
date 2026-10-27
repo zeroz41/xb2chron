@@ -29,7 +29,11 @@ public:
     class BdatInfo {};
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x3c);
-    unsigned char pad_48[0x30];  // fields: size from the stride 0x78: Vector<TUnk_B6D590>::resize fn_71005D107C/fn_71005D15A4
+    // the step update calls (the name is not the original's)
+    void (TUnk_B6D590::*m_seq)(float dt);
+    gf::GF_OBJ_HANDLE* m_gob;  // dispose destroys it unless it is -1 (the name is not the original's)
+    bool m_isAccessed;  // onPlayerAccessed sets it, dispose clears it (the name is not the original's)
+    unsigned char pad_61[0x17];  // fields: size from the stride 0x78: Vector<TUnk_B6D590>::resize fn_71005D107C/fn_71005D15A4
 };
 }  // namespace gmk
 

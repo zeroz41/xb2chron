@@ -26,8 +26,8 @@ public:
     virtual void isDepopCondMatched() const;  // slot 13
     virtual void vf4();  // slot 14 (AGmkNpc slot 4; its override, fn_7100590868)
     virtual void vf5();  // slot 15 (AGmkNpc slot 5; its override, fn_71005909C0)
-    virtual void getBindedBdatFp() const;  // slot 16
-    virtual void getBindedBdatId() const;  // slot 17
+    virtual unsigned char* getBindedBdatFp() const;  // slot 16
+    virtual int getBindedBdatId() const;  // slot 17
     virtual bool findPopPosRot(mm::Vec3&, mm::Vec3&) const;  // slot 18
     virtual void bindToGameObj(gf::GF_OBJ_HANDLE*) const;  // slot 19
     virtual void unbindToGameObj(gf::GF_OBJ_HANDLE*) const;  // slot 20

@@ -615,6 +615,94 @@ GmkElevatorLocator::~GmkElevatorLocator() { dispose(); }
 GmkTargetPoint::~GmkTargetPoint() { dispose(); }
 GmkRoutedEnemyPoint::~GmkRoutedEnemyPoint() { dispose(); }
 
+// ---- GmkDmgGimmick
+void GmkDmgGimmick::seqWaitToCreateChild(float) {
+    m_seq = &GmkDmgGimmick::seqUpdatePopDepop;
+}
+
+void GmkDmgGimmick::dispose() {
+    pad_58 = nullptr;
+    AGmkBase::dispose();
+    m_seq = nullptr;
+}
+
+void GmkDmgGimmick::update(float dt) {
+    AGmkBase::update(dt);
+    if (isValid() && m_seq) {
+        (this->*m_seq)(dt);
+    }
+}
+
+void GmkDmgGimmick::debugDraw() const {
+    AGmkBase::debugDraw();
+    isValid();
+}
+
+GmkDmgGimmick::~GmkDmgGimmick() { dispose(); }
+
+// ---- GmkSalvageLocator
+GmkSalvageLocator::~GmkSalvageLocator() { dispose(); }
+
+void GmkSalvageLocator::onPlayerAccessed(gf::GF_OBJ_HANDLE*) {
+    m_isAccessed = true;
+}
+
+// ---- TUnk_B6D590 (placeholder slot symbols: see its header)
+void TUnk_B6D590::dispose() {
+    m_isAccessed = false;
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    AGmkBase::dispose();
+}
+
+void TUnk_B6D590::update(float dt) {
+    AGmkBase::update(dt);
+    if (m_seq) {
+        (this->*m_seq)(dt);
+    }
+}
+
+TUnk_B6D590::~TUnk_B6D590() { dispose(); }
+
+gmk::GmkType TUnk_B6D590::getGmkType() const { return TYPE; }
+
+bool TUnk_B6D590::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+
+void TUnk_B6D590::onPlayerAccessed(gf::GF_OBJ_HANDLE*) {
+    m_isAccessed = true;
+}
+
+// ---- TUnk_B6D5F8 (placeholder slot symbols: see its header)
+void TUnk_B6D5F8::update(float dt) {
+    if (isValid()) {
+        AGmkBase::update(dt);
+        if (m_seq) {
+            (this->*m_seq)(dt);
+        }
+    }
+}
+
+TUnk_B6D5F8::~TUnk_B6D5F8() { dispose(); }
+
+gmk::GmkType TUnk_B6D5F8::getGmkType() const { return TYPE; }
+
+bool TUnk_B6D5F8::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+
+// ---- TUnk_B6D660, TUnk_B6D6C8 (placeholder slot symbols: see their headers)
+void TUnk_B6D660::debugDraw() const { AGmkBase::debugDraw(); }
+
+gmk::GmkType TUnk_B6D660::getGmkType() const { return TYPE; }
+
+void TUnk_B6D6C8::debugDraw() const { AGmkBase::debugDraw(); }
+
+gmk::GmkType TUnk_B6D6C8::getGmkType() const { return TYPE; }
+
 // ---- kinds holding one game object
 void GmkTbox::dispose() {
     if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
@@ -676,6 +764,24 @@ GmkEffectLocator::~GmkEffectLocator() {}
 GmkSeLinePoint::~GmkSeLinePoint() {}
 
 GmkNpc::~GmkNpc() { dispose(); }
+
+unsigned char* GmkNpc::getBindedBdatFp() const { return m_list->getBindedBdatFp(); }
+
+int GmkNpc::getBindedBdatId() const { return m_createInfo.m_bdatId; }
+
+// clears the game object's user data (the object stays)
+void GmkNpc::unbindToGameObj(gf::GF_OBJ_HANDLE* handle) const {
+    if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+    }
+}
+
+unsigned char* GmkRoutedNpc::getBindedBdatFp() const { return m_list->getBindedBdatFp(); }
+
+int GmkRoutedNpc::getBindedBdatId() const { return m_createInfo.m_bdatId; }
 
 GmkNpcList::~GmkNpcList() {
     dispose();

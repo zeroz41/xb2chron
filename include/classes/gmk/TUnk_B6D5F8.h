@@ -28,7 +28,9 @@ public:
     class BdatInfo {};
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x3d);
-    unsigned char pad_48[0x38];  // fields: size from the stride 0x80: Vector<TUnk_B6D5F8>::resize fn_71005D3180
+    // the step update calls while the gimmick is valid (the name is not the original's)
+    void (TUnk_B6D5F8::*m_seq)(float dt);
+    unsigned char pad_58[0x28];  // fields: size from the stride 0x80: Vector<TUnk_B6D5F8>::resize fn_71005D3180
 };
 }  // namespace gmk
 
