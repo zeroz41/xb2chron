@@ -27,6 +27,17 @@ public:
     static void incGameClearCount();
     // whether the object's weapon (mount 2) holds an object in slot 1 or 2 of its set in use
     static bool hasBelonging(gf::GF_OBJ_HANDLE* handle, unsigned int slot);
+    // a turn of an object: execTurnCmd hands the four floats to the object's behavior component's
+    // execTurnCmd(float, float, float, float) (the field names are not the original's)
+    struct ExecTurnCmdInfo {
+        gf::GF_OBJ_HANDLE* m_handle;
+        float m_rotY;  // the angle turned to
+        float m_arg1;
+        float m_arg2;
+        float m_arg3;
+    };
+    static void execTurnCmd(const ExecTurnCmdInfo& info);
+    static bool isTurnEnd(gf::GF_OBJ_HANDLE* handle);
     static bool execActivateReserverForBlade(unsigned int blade);
     // the blade's kizuna link row (DataObjBlade::getLinkNum and its neighbours read BTL_Bl_KizunaLink by it)
     static unsigned int getKizunaLink(unsigned int blade);

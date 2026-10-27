@@ -1393,3 +1393,163 @@ bool CharaStopHead::update(const ICmd::Param& param) {
 void StmPackMemory::render(const mm::Rect<int>& rect, float alpha) {}
 
 }  // namespace event
+
+#include <math.h>
+#include <string.h>
+#include "classes/event/Scheduler.h"
+#include "gf/GfGameUtil.h"
+#include "classes/gf/GfComTransform.h"
+#include "classes/gf/GfComAsm.h"
+#include "classes/gf/GfPause.h"
+#include "classes/gf/GfGameParty.h"
+
+namespace event {
+
+void Scheduler::func_stanby(gf::GfObj* obj) {}
+
+void Scheduler::setup() {
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    if (obj == nullptr) {
+        return;
+    }
+    if (obj->m_type == 3) {
+        m_flags |= 0x30;
+    } else if (obj->m_type == 6) {
+        if (m_type == 0) {
+            m_flags |= 0x3C;
+            if (gf::GfObjUtil::getObj(m_item.m_handle) != nullptr &&
+                (gf::GfGameUtil::hasBelonging(m_item.m_handle, 2) || gf::GfGameUtil::hasBelonging(m_item.m_handle, 1))) {
+                m_flags |= 0xC0;
+            }
+        } else if (m_type == 1) {
+            m_flags |= 0x30;
+            m_aimType = static_cast<EVT_aimtype>(1);
+        } else if (m_type == 2) {
+            m_flags |= 0x3C;
+        }
+    }
+}
+
+Scheduler::~Scheduler() {
+    m_item.clear();
+}
+
+void Scheduler::func_fld2evt(gf::GfObj* obj) {
+    if (m_flags & 0x40) {
+        if (gf::GfObjUtil::getObj(m_item.m_handle) != nullptr &&
+            (gf::GfGameUtil::hasBelonging(m_item.m_handle, 2) || gf::GfGameUtil::hasBelonging(m_item.m_handle, 1))) {
+            m_item.m_alpha = 1.0f;
+            m_item.m_func = &ScheduleItem::func_fadeout;
+        } else {
+            m_item.m_alpha = 0.0f;
+            m_item.m_func = nullptr;
+        }
+    }
+    m_turnFunc = obj->m_type == 3 ? nullptr : &Scheduler::func_motionEnd;
+}
+
+void Scheduler::func_evt2idle(gf::GfObj* obj) {
+    m_state |= 1;
+    m_lookFunc = &Scheduler::func_look;
+}
+
+void Scheduler::func_evt2fld(gf::GfObj* obj) {
+    if (m_flags & 0x20) {
+        lookTo(false, obj, nullptr, static_cast<EVT_aimtype>(0), true);
+    }
+    m_actFunc = &Scheduler::func_return;
+}
+
+void Scheduler::func_motionEnd(gf::GfObj* obj) {
+    m_turnFunc = &Scheduler::func_motionEnd_loop;
+}
+
+void Scheduler::func_motionEnd_loop(gf::GfObj* obj) {
+    m_turnFunc = &Scheduler::func_turn;
+}
+
+void Scheduler::func_turn(gf::GfObj* obj) {
+    if (gf::GfPause::isPause(1)) {
+        return;
+    }
+    if (m_flags & 0x4) {
+        float rotY = getRotY(obj, gf::GfGameParty::getLeaderTransformObj());
+        gf::GfGameUtil::ExecTurnCmdInfo info;
+        info.m_handle = m_handle;
+        info.m_rotY = rotY;
+        info.m_arg1 = 1.0f;
+        info.m_arg2 = 0.7853982f;
+        info.m_arg3 = 0.0f;
+        gf::GfGameUtil::execTurnCmd(info);
+    }
+    m_turnFunc = &Scheduler::func_turn_loop;
+}
+
+float Scheduler::getRotY(gf::GfObj* obj, gf::GfObj* target) {
+    gf::GfComTransform* targetTransform = target->getComponent<gf::GfComTransform>(0);
+    gf::GfComTransform* transform = obj->getComponent<gf::GfComTransform>(0);
+    const mm::Vec3& pos = transform->getPosition();
+    const mm::Vec3& targetPos = targetTransform->getPosition();
+    return -atan2f(pos.x - targetPos.x, -(pos.z - targetPos.z));
+}
+
+void Scheduler::func_turn_loop(gf::GfObj* obj) {
+    if (!(m_flags & 0x4) || gf::GfGameUtil::isTurnEnd(m_handle)) {
+        m_turnFunc = nullptr;
+    }
+}
+
+void Scheduler::func_return(gf::GfObj* obj) {
+    if (m_flags & 0x8) {
+        m_frame = 360;
+    }
+    m_actFunc = &Scheduler::func_return_loop;
+}
+
+void Scheduler::func_return_loop(gf::GfObj* obj) {
+    m_actFunc = &Scheduler::func_motion;
+}
+
+void Scheduler::func_motion(gf::GfObj* obj) {
+    m_actFunc = &Scheduler::func_motion_loop;
+}
+
+void Scheduler::func_motion_loop(gf::GfObj* obj) {
+    if (m_flags & 0x80) {
+        gf::GfComAsm* com = obj->getComponent<gf::GfComAsm>(2);
+        int frame = m_frame--;
+        if (com != nullptr && frame > 0) {
+            bool loop = com->isLoop(static_cast<gf::AnimLayer>(0));
+            const char* state = com->getStateName(static_cast<gf::AnimLayer>(0));
+            if (!loop || strcmp(state, "S_idle") == 0) {
+                return;
+            }
+        }
+    }
+    m_actFunc = &Scheduler::func_item;
+}
+
+void Scheduler::func_item(gf::GfObj* obj) {
+    if (m_flags & 0x80) {
+        if (gf::GfObjUtil::getObj(m_item.m_handle) != nullptr &&
+            (gf::GfGameUtil::hasBelonging(m_item.m_handle, 2) || gf::GfGameUtil::hasBelonging(m_item.m_handle, 1))) {
+            m_item.m_alpha = 0.0f;
+            m_item.m_func = &ScheduleItem::func_fadein;
+        } else {
+            m_item.m_alpha = 1.0f;
+            m_item.m_func = nullptr;
+        }
+    }
+    m_actFunc = &Scheduler::func_item_loop;
+}
+
+void Scheduler::func_item_loop(gf::GfObj* obj) {
+    if (m_flags & 0x80) {
+        if (m_item.m_func == &ScheduleItem::func_fadeout || m_item.m_func == &ScheduleItem::func_fadein) {
+            return;
+        }
+    }
+    m_actFunc = nullptr;
+}
+
+}  // namespace event
