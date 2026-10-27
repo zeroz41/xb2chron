@@ -12,6 +12,9 @@ class TextRef {
 public:
     // an empty reference: TextFixed<N>'s constructor zeroes these before pointing the reference at its buffer
     TextRef() : hash_(), utf8_(nullptr), type_() {}
+    // an empty reference in encoding type (String() sets 3 before its own fields: the constructor is not
+    // known to be the original's)
+    explicit TextRef(TextEncodeType type) : hash_(), utf8_(nullptr), type_(type) {}
     TextRef(const char* text);
     TextRef(const char16_t* text) {
         InitImpl(text);
@@ -37,10 +40,11 @@ public:
     static const char16_t* EmptyText;
 
     Hash hash_;
-    // the text, in the encoding type_ names (the names are not the original's)
+    // the text, in the encoding type_ names (tchar_ is string.cpp's assertions' name; utf8_ is not the
+    // original's)
     union {
         const char* utf8_;
-        const char16_t* utf16_;
+        const char16_t* tchar_;
     };
     TextEncodeType type_;
 };

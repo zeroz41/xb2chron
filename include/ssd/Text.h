@@ -3,6 +3,9 @@
 
 namespace ssd { struct MemoryBlock; }
 
+// the library's character type (string.cpp's assertion "tchar_ == data_.GetAdrs<ssd_tchar>()")
+typedef char16_t ssd_tchar;
+
 namespace ssd {
 
 // how a text is encoded: TextRef(const char*) sets 2, InitImpl(const char16_t*) 3

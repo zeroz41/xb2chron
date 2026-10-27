@@ -26,7 +26,7 @@ TextRef::TextRef(const char* text) {
 }
 
 void TextRef::InitImpl(const char16_t* text) {
-    utf16_ = text;
+    tchar_ = text;
     type_ = TextEncodeType_Utf16;
     hash_.Clear();
     hash_.CalcTextHash(text);
@@ -54,7 +54,7 @@ void TextRef::GetText(MemoryBlock* block, TextEncodeType type) const {
             buffer = text;
         } else {
             char16_t* text = SoundMemory::allocator_->NewBuffer<char16_t>(length + 1);
-            CopyText(text, utf16_, (length + 1) * sizeof(char16_t));
+            CopyText(text, tchar_, (length + 1) * sizeof(char16_t));
             buffer = text;
         }
         block->address = buffer;
@@ -64,30 +64,30 @@ void TextRef::GetText(MemoryBlock* block, TextEncodeType type) const {
     if (type_ == TextEncodeType_Utf8) {
         Utf8ToUTF16(utf8_, block);
     } else {
-        Utf16ToUTF8(utf16_, block);
+        Utf16ToUTF8(tchar_, block);
     }
 }
 
 void TextFixedBase::Set(const TextRef& text) {
     if (text.type_ == TextEncodeType_Utf8) {
-        Utf8ToUTF16(text.utf8_, const_cast<char16_t*>(utf16_), capacity_);
+        Utf8ToUTF16(text.utf8_, const_cast<char16_t*>(tchar_), capacity_);
     } else {
-        CopyText(const_cast<char16_t*>(utf16_), text.utf16_, capacity_);
+        CopyText(const_cast<char16_t*>(tchar_), text.tchar_, capacity_);
     }
     hash_.Clear();
-    hash_.CalcTextHash(utf16_);
+    hash_.CalcTextHash(tchar_);
 }
 
 void TextFixedBase::Set(const char* text) {
-    Utf8ToUTF16(text, const_cast<char16_t*>(utf16_), capacity_);
+    Utf8ToUTF16(text, const_cast<char16_t*>(tchar_), capacity_);
     hash_.Clear();
-    hash_.CalcTextHash(utf16_);
+    hash_.CalcTextHash(tchar_);
 }
 
 void TextFixedBase::Set(const char16_t* text) {
-    CopyText(const_cast<char16_t*>(utf16_), text, capacity_);
+    CopyText(const_cast<char16_t*>(tchar_), text, capacity_);
     hash_.Clear();
-    hash_.CalcTextHash(utf16_);
+    hash_.CalcTextHash(tchar_);
 }
 
 }  // namespace ssd

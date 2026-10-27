@@ -83,11 +83,11 @@ Result StreamController::ResetStream() {
 
 void StreamController::ExecAdpcmDecode() {}
 
-unsigned int StreamBuffer::GetDataSize() const {
+unsigned long StreamBuffer::GetDataSize() const {
     return dataSize_;
 }
 
-unsigned int StreamBuffer::GetFreeSize() const {
+unsigned long StreamBuffer::GetFreeSize() const {
     return bufferSize_ - dataSize_;
 }
 
@@ -100,7 +100,7 @@ void StreamController::SetReadPosition(unsigned long position) {
     }
 }
 
-unsigned int StreamBuffer::GetBufferSize() const {
+unsigned long StreamBuffer::GetBufferSize() const {
     return bufferSize_;
 }
 

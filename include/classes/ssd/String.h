@@ -2,11 +2,11 @@
 #define CLASSES_SSD_STRING_H
 
 #include "classes/ssd/TextRef.h"
+#include "ssd/MemoryBlock.h"
 
 namespace ssd {
 // table 0x7100B823C8: a TextRef that owns a copy of its text. sizeof 0x30: StreamController's fields follow a
-// WaveSource's path_ 0x30 bytes on; String() sets the encoding to 3 and zeroes the copy (the field names are not
-// the original's).
+// WaveSource's path_ 0x30 bytes on; String() sets the encoding to 3 and zeroes the copy (D:/ssd/ssd51/ssd/sources/util/string.cpp).
 class String : public ::ssd::TextRef {
 public:
     virtual void Set(ssd::TextRef const&);  // slot 0
@@ -24,9 +24,9 @@ public:
         return *this;
     }
 
-    // the copy FreeImpl gives back to SoundMemory::allocator_, and its size
-    void* buffer_;
-    unsigned long bufferSize_;
+    // the copy of the text tchar_ points at (FreeImpl gives it back to SoundMemory::allocator_): the name is
+    // string.cpp's assertions' ("data_.GetAdrs() != ssd_null")
+    MemoryBlock data_;
 };
 }  // namespace ssd
 

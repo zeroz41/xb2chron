@@ -1,6 +1,9 @@
 #ifndef SSD_DEBUG_H
 #define SSD_DEBUG_H
 
+// the library's null pointer (string.cpp's assertion "data_.GetAdrs() != ssd_null")
+#define ssd_null nullptr
+
 // the sound library's results and logging: the result code the library's calls return (negative on failure,
 // set_result keeps the last one in SoundCore::instance_), the log message and time-stamp kinds, and the logging
 // state Debug::Init sets up

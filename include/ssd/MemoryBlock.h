@@ -6,6 +6,11 @@
 namespace ssd {
 // clears size bytes at address (AudioFileBase.cpp's; the converted texts' buffers are cleared so)
 void ClearMemory16(void* address, unsigned long size);
+// copy size bytes from source to destination in 8- to 64-bit units (StreamBuffer::InData*/OutData* call them)
+void CopyMemory8(const void* source, void* destination, unsigned long size);
+void CopyMemory16(const void* source, void* destination, unsigned long size);
+void CopyMemory32(const void* source, void* destination, unsigned long size);
+void CopyMemory64(const void* source, void* destination, unsigned long size);
 
 
 // a buffer the library allocated for a caller (TextRef::GetText fills one: the text and its length); the
@@ -19,6 +24,16 @@ struct MemoryBlock {
         SoundMemory::allocator_->DeleteBuffer(buffer);
         address = nullptr;
         size = 0;
+    }
+
+    // the buffer (string.cpp's assertions name the accessor: "data_.GetAdrs() != ssd_null",
+    // "tchar_ == data_.GetAdrs<ssd_tchar>()")
+    void* GetAdrs() const {
+        return address;
+    }
+    template <typename T>
+    T* GetAdrs() const {
+        return static_cast<T*>(address);
     }
 
     void* address;

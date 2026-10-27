@@ -52,7 +52,7 @@ Result FileStream::Open(const TextRef& path, OpenMode) {
     nn::Result result = nn::fs::OpenFile(&handle_, static_cast<const char*>(name.address), nn::fs::OpenMode_Read);
     name.Free();
     if (result.IsFailure()) {
-        log_error(Result(-0x41), Debug::LogFlag::Type(0x30), u"ファイルが開けませんでした。: file=\"%s\"", path.utf16_);
+        log_error(Result(-0x41), Debug::LogFlag::Type(0x30), u"ファイルが開けませんでした。: file=\"%s\"", path.tchar_);
         return Result(-0x41);
     }
     long size;

@@ -2,23 +2,24 @@
 #define CLASSES_SSD_STREAMBUFFER_H
 
 #include "ssd/Debug.h"
-
-namespace ssd { class Allocator; }
+#include "classes/ssd/Allocator.h"
 
 namespace ssd {
 // table 0x7100B82380: a ring buffer streamed audio data is written into (InData*) and read out of (OutData*), in
-// 8- to 64-bit units. The field names are not the original's.
+// 8- to 64-bit units (D:/ssd/ssd51/ssd/sources/stream_buffer.cpp). The getters return 64 bits: InData* compare
+// GetFreeSize() with x registers. The field names are not the original's.
 class StreamBuffer {
 public:
-    StreamBuffer() : allocator_(nullptr), buffer_(nullptr), pad_28(0) {}
+    StreamBuffer() : allocator_(nullptr), buffer_(nullptr), loopPosition_(0) {}
 
-    virtual unsigned int GetBufferSize() const;  // slot 0
-    virtual unsigned int GetDataSize() const;  // slot 1
-    virtual unsigned int GetFreeSize() const;  // slot 2
+    virtual unsigned long GetBufferSize() const;  // slot 0
+    virtual unsigned long GetDataSize() const;  // slot 1
+    virtual unsigned long GetFreeSize() const;  // slot 2
 
-    Result Alloc(unsigned long size, Allocator* allocator);
+    // Alloc and Free return a 32-bit code (w0): Alloc -8 when the stream block cannot be had
+    int Alloc(unsigned long size, Allocator* allocator);
     void Clear();
-    void Free();
+    int Free();
     Result InData8(const void* data, unsigned long size, bool loop);
     Result InData16(const void* data, unsigned long size, bool loop);
     Result InData32(const void* data, unsigned long size, bool loop);
@@ -34,7 +35,8 @@ public:
     // the write and read positions (Clear zeroes them with the data size)
     unsigned int writePosition_;
     unsigned int readPosition_;
-    unsigned int pad_28;
+    // the write position InData* records when its loop flag is set (the name is not the original's)
+    unsigned int loopPosition_;
 };
 }  // namespace ssd
 
