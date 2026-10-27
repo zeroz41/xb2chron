@@ -7,7 +7,7 @@ class IBouCallback {
 public:
     class RenderParam;
     class SelectParam;
-    virtual ~IBouCallback();  // slot 0
+    virtual ~IBouCallback() {}  // slot 0: inline (no copy in the module; event::Object's destructor stores no base table)
     virtual void OnBouRectSelect(event::IBouCallback::SelectParam const&);  // slot 2
     virtual void OnBouRender(event::IBouCallback::RenderParam const&) {}  // slot 3
 };

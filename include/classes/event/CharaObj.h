@@ -2,6 +2,7 @@
 #define CLASSES_EVENT_CHARAOBJ_H
 
 #include "classes/event/CharaEffectPlayer.h"
+#include "classes/event/CmdQueue.h"
 
 namespace mm { class Vec3; }
 namespace event { class AttachActorBase; }
@@ -27,6 +28,14 @@ public:
     void setExtDisp(const char* name, bool disp);
     void setExtParam(const char* name, float value);
     void setHideWeapon(WPNHIDEID id, bool hide, bool flag);
+    // empties the command queues (1.0.0 has it out of line; ObjectChara::clear inlines it)
+    void clear() {
+        m_cmdQueue0.eraseAll();
+        m_cmdQueue1.eraseAll();
+        m_cmdQueue2.eraseAll();
+    }
+    void start();
+    void end();
 
     unsigned char pad_8[0xc98];
     // bit 5: playFade's flag (it sets or clears it); the name is not the original's
@@ -34,6 +43,11 @@ public:
     unsigned char pad_ca4[0xb4];
     // initModel stores a new AttachActorGf here (the destructor deletes it); the name is not the original's
     AttachActorBase* m_attach;  // 0xd58
+    unsigned char pad_d60[0x9d8];
+    // three command queues ObjectChara::clear empties (1.0.0's CharaObj::clear); the names are not the original's
+    CmdQueue<8, 0> m_cmdQueue0;  // 0x1738
+    CmdQueue<8, 0> m_cmdQueue1;  // 0x2088
+    CmdQueue<5, 0> m_cmdQueue2;  // 0x29d8
 };
 }  // namespace event
 

@@ -8,7 +8,7 @@ public:
     class RenderParam;
     class SetParam;
     class StartParam;
-    virtual ~IManiCallback();  // slot 0
+    virtual ~IManiCallback() {}  // slot 0: inline (no copy in the module; event::Object's destructor stores no base table)
     virtual void OnManiStartPos(event::IManiCallback::StartParam&);  // slot 2
     virtual void OnManiSetPos(event::IManiCallback::SetParam&) {}  // slot 3
     virtual void OnManiStartRot(event::IManiCallback::StartParam&);  // slot 4

@@ -1,3 +1,16 @@
+#include "string.h"
+#include "classes/event/EffectCtrl.h"
+#include "classes/event/IBouCallback.h"
+#include "classes/event/IManiCallback.h"
+#include "classes/event/CmdItem.h"
+#include "classes/event/CmdQueue.h"
+#include "classes/event/CharaObj.h"
+#include "classes/event/Object.h"
+#include "classes/event/ObjectChara.h"
+#include "classes/event/ObjectCamera.h"
+#include "classes/event/ObjectEffect.h"
+#include "classes/event/ObjectList.h"
+#include "classes/event/ObjectManager.h"
 #include "classes/event/CmdVariable.h"
 #include "classes/event/ICmd/Param.h"
 #include "classes/gf/GfEvent.h"
@@ -333,6 +346,179 @@ void ObjectLight::play(const char* name, float frame) {
 
 void ObjectCamera::tail() {
     m_cam->tail();
+}
+
+Object::~Object() {
+    Object* child = m_child;
+    while (child) {
+        Object* next = child->m_next;
+        delete child;
+        child = next;
+    }
+}
+
+Object* Object::searchByPath(const char* path) {
+    unsigned long len = strlen(m_name.m_str);
+    if (len <= strlen(path) && memcmp(path, m_name.m_str, len) == 0) {
+        if (strcmp(path, m_name.m_str) == 0) {
+            return this;
+        }
+        char buf[512];
+        char* rest = nullptr;
+        strcpy(buf, path);
+        strtok_r(buf, "/", &rest);
+        for (Object* child = m_child; child; child = child->m_next) {
+            Object* found = child->searchByPath(rest);
+            if (found) {
+                return found;
+            }
+        }
+    }
+    return nullptr;
+}
+
+void ObjectChara::clear() {
+    if (m_chara) {
+        m_chara->clear();
+    }
+}
+
+void Object::clear() {}
+
+void ObjectChara::start() {
+    if (m_chara) {
+        m_chara->start();
+    }
+}
+
+void Object::start() {}
+
+void ObjectChara::end() {
+    if (m_chara) {
+        m_chara->end();
+    }
+}
+
+void Object::end() {}
+
+void Object::update() {}
+
+void Object::render(const mm::Col4&) {}
+
+void Object::tail() {}
+
+bool ObjectChara::isLoading() const {
+    return !(m_chara->m_flags & 8);
+}
+
+void ObjectEffect::tail() {
+    m_effect->m_ctrl.update();
+}
+
+void ObjectList::clearSub(Object* obj) {
+    obj->clear();
+    for (Object* child = obj->m_child; child; child = child->m_next) {
+        clearSub(child);
+    }
+}
+
+void ObjectList::startSceneSub(Object* obj) {
+    obj->start();
+    for (Object* child = obj->m_child; child; child = child->m_next) {
+        startSceneSub(child);
+    }
+}
+
+void ObjectList::endSceneSub(Object* obj) {
+    obj->end();
+    for (Object* child = obj->m_child; child; child = child->m_next) {
+        endSceneSub(child);
+    }
+}
+
+void ObjectList::updateSub(Object* obj) {
+    obj->update();
+    for (Object* child = obj->m_child; child; child = child->m_next) {
+        updateSub(child);
+    }
+}
+
+void ObjectList::renderSub(Object* obj) {
+    if (obj->isLoading()) {
+        obj->render(mm::Col4(0.5f, 0.5f, 0.5f, 0.5f));
+    } else {
+        obj->render(mm::Col4(1.0f, 1.0f, 1.0f, 0.5f));
+    }
+    for (Object* child = obj->m_child; child; child = child->m_next) {
+        renderSub(child);
+    }
+}
+
+void ObjectList::tailSub(Object* obj) {
+    obj->tail();
+    for (Object* child = obj->m_child; child; child = child->m_next) {
+        tailSub(child);
+    }
+}
+
+bool ObjectList::isLoadingSub(Object* obj) const {
+    if (obj->isLoading()) {
+        return true;
+    }
+    for (Object* child = obj->m_child; child; child = child->m_next) {
+        if (isLoadingSub(child)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+Object* ObjectList::searchByNameSub(Object* obj, const char* name) {
+    if (strcmp(name, obj->m_name.m_str) == 0) {
+        return obj;
+    }
+    for (Object* child = obj->m_child; child; child = child->m_next) {
+        Object* found = searchByNameSub(child, name);
+        if (found) {
+            return found;
+        }
+    }
+    return nullptr;
+}
+
+Object* ObjectManager::createCamera(const char* name, unsigned int id) {
+    updateCurrent();
+    return m_current->createCamera(name, id);
+}
+
+Object* ObjectManager::createEffect(const char* name) {
+    updateCurrent();
+    return m_current->createEffect(name);
+}
+
+Object* ObjectManager::createLight(const char* name, unsigned int id) {
+    updateCurrent();
+    return m_current->createLight(name, id);
+}
+
+Object* ObjectManager::searchByName(const char* name) {
+    ObjectList* list = m_current;
+    if (list) {
+        Object* root = list->m_root;
+        if (root) {
+            Object* obj = ObjectList::searchByNameSub(root, name);
+            if (!obj || obj == root) {
+                return nullptr;
+            }
+            for (int i = 0; i < 4; ++i) {
+                if (obj == list->m_categories[i]) {
+                    return nullptr;
+                }
+            }
+            return obj;
+        }
+    }
+    return nullptr;
 }
 
 }  // namespace event

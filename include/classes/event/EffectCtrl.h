@@ -7,6 +7,7 @@ class EffectCtrl {
 public:
     virtual ~EffectCtrl();  // slot 0
     void kill();
+    void update();
 };
 }  // namespace event
 

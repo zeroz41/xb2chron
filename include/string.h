@@ -26,6 +26,7 @@ char* strrchr(const char* text, int c);
 char* strstr(const char* text, const char* part);
 char* strcasestr(const char* text, const char* part);
 char* strtok(char* text, const char* separators);
+char* strtok_r(char* text, const char* separators, char** rest);
 
 #ifdef __cplusplus
 }
