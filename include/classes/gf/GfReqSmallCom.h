@@ -14,6 +14,11 @@ namespace gf {
 // does not read. What it does: unless GfGameManager::isStartGame, when fn_71002AC598 holds, item 0x6363 is in the
 // item box and the local flag 0x8A09 is set, goes on to request work (not recovered).
 void fn_710056A3FC(unsigned int id);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x7100569228, gf_req_scom's unit). A
+// free function: it takes nothing and reads no object. What it does: passes fn_7100568E1C a stack list of the two
+// strings "670105" and "670106" (count 2). Callers: TUnk_B62AA0::fn_710042537C (when the Hitonowa menu's result
+// is closed) and fn_7100447D88.
+void fn_7100569228();
 
 // table 0x7100B6AF20; GfReqManager makes one (0x1B078 bytes, 3.0.1's new) and updates it after its own commands
 class GfReqSmallCom : public ::mm::mtl::PtrSingleton< ::gf::GfReqSmallCom> {

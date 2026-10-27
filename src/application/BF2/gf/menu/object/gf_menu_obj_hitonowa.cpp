@@ -1,4 +1,7 @@
 #include "classes/gf/TUnk_B62AA0.h"
+#include "classes/gf/GfReqSmallCom.h"
+#include "gf/GfMenuObjUtil.h"
+#include "classes/gf/TUnk_B62AA0.h"
 #include "classes/gf/GfGameVoice.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfMenuLocation.h"
@@ -8,6 +11,12 @@
 #include "gf/GfMenuObjUtil.h"
 #include "classes/gf/GfMenuFullScreen.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
+#include "classes/gf/GfReqSmallCom.h"
+#include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfGameCond.h"
+#include "classes/ui/UISelectObjList.h"
+#include "mm/Pnt.h"
+#include "plugin/Bdat.h"
 
 namespace gf {
 
@@ -39,6 +48,40 @@ void TUnk_B62AA0::finalize() {
     GfMenuObject::finalize();
 }
 
+unsigned int TUnk_B62AA0::fn_710041E870(unsigned int id) {
+    unsigned char* fp = GfDataBdat::getFP(0xA8);
+    unsigned short cond = Bdat::getVal(fp, "Condition2", id);
+    if (cond != 0 && GfGameCond::isGameCond(cond)) {
+        return static_cast<unsigned short>(Bdat::getVal(fp, "AreaNumber3", id));
+    }
+    cond = Bdat::getVal(fp, "Condition1", id);
+    if (cond != 0 && GfGameCond::isGameCond(cond)) {
+        return static_cast<unsigned short>(Bdat::getVal(fp, "AreaNumber2", id));
+    }
+    return static_cast<unsigned short>(Bdat::getVal(fp, "AreaNumber1", id));
+}
+
+void TUnk_B62AA0::update() {
+    m_seq.update();
+    m_seq2.update();
+    GfMenuObject::update();
+}
+
+void TUnk_B62AA0::fn_710041F864() {
+    ui::UIObjectAcc level(m_handle, "LAY_level");
+    level.setDisp(true);
+    GfMenuObjUtil::CtrlParam param;
+    GfMenuObjUtil::setPresetCtrl_Fadein(3, param, -1);
+    param.m_setDefault = true;
+    param.m_startFlags = 8;
+    GfMenuObjUtil::startCtrl(level.m_handle, param, nullptr);
+    bool max = s_gameValue == 6;
+    level.setDispChild(true, "TXT_level_num");
+    ui::UIObjectAcc(level.m_handle, "TXT_level_num").setAlpha(max ? 0.0f : 1.0f);
+    level.setDispChild(true, "TXT_level_max");
+    ui::UIObjectAcc(level.m_handle, "TXT_level_max").setAlpha(max ? 1.0f : 0.0f);
+}
+
 bool TUnk_B62AA0::fn_71004238EC() {
     m_seq.addJob(&TUnk_B62AA0::fn_7100426B44);
     return true;
@@ -65,6 +108,20 @@ void TUnk_B62AA0::TUnk_B62B10::reciveEvent(const ui::EventData& event, unsigned 
     }
 }
 
+bool TUnk_B62AA0::fn_7100424978() {
+    ui::UIObjectAcc image(m_handle, "IMG_image@01");
+    if (image.isStreaming()) {
+        return false;
+    }
+    ui::UIObjectAcc layout(m_handle, "LAY_image");
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 1;
+    param.m_curve = 1;
+    param.m_time = GfMenuObjUtil::getPresetCtrlTime(6);
+    m_busyCtrl = GfMenuObjUtil::startCtrl(layout.m_handle, param, nullptr);
+    return true;
+}
+
 bool TUnk_B62AA0::fn_7100424A40() {
     if (m_busyCtrl != -1) {
         if (GfMenuObjUtil::isBusyCtrl(m_busyCtrl)) {
@@ -80,6 +137,22 @@ bool TUnk_B62AA0::fn_7100424A84() {
     ui::EventData event;
     event.m_type = 0x101;
     GfMenuObject::sendEvent(acc.m_handle, event, 0.0f);
+    return true;
+}
+
+bool TUnk_B62AA0::fn_7100424AD8() {
+    ui::UIObjectAcc image(m_handle, "IMG_image@01");
+    if (image.isStreaming()) {
+        return false;
+    }
+    {
+        ui::UIObjectAcc telop(m_handle, "TXT_telop@04");
+        telop.setDisp(false);
+        ui::UIObjectAcc base(m_handle, "IMG_telop_base");
+        base.startAnimation("end_max", false);
+    }
+    ui::UIObjectAcc layout(m_handle, "LAY_image");
+    layout.setDisp(true);
     return true;
 }
 
@@ -133,6 +206,50 @@ void TUnk_B62AA0::TUnk_B62B88::reciveEvent(const ui::EventData& event, unsigned 
     }
 }
 
+bool TUnk_B62AA0::fn_7100424D68() {
+    int ctrl;
+    {
+        ui::UIObjectAcc telop(m_handle, "LAY_telop");
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 2;
+        param.m_time = 0.2f;
+        ctrl = GfMenuObjUtil::startCtrl(telop.m_handle, param, nullptr);
+    }
+    m_busyCtrl = ctrl;
+    return true;
+}
+
+bool TUnk_B62AA0::fn_710042537C() {
+    ui::UIObjectAcc object(m_list->getObject(m_cursor));
+    unsigned int id = m_ids[m_cursor];
+    fn_710041F998(object.m_handle, id);
+    ui::UIObjectAcc result(m_handle, "LAY_result");
+    GfMenuObject::enableInput(result.m_handle);
+    GfMenuObjOperationInfo::add(result.m_handle, 0, 0, 0);
+    m_resultDone = false;
+    fn_7100569228();
+    return true;
+}
+
+bool TUnk_B62AA0::fn_7100425440() {
+    if (!m_resultDone) {
+        return false;
+    }
+    ui::UIObjectAcc result(m_handle, "LAY_result");
+    if (m_resultFadeOut) {
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_out_l";
+        param.m_setDefault = true;
+        param.m_startFlags = 10;
+        param.m_eventId = 2;
+        GfMenuObjUtil::startCtrl(result.m_handle, param, nullptr);
+        m_resultFadeOut = false;
+    }
+    return true;
+}
+
 bool TUnk_B62AA0::fn_7100425E60() {
     m_busyCtrl = fn_710041FBC8(3);
     return true;
@@ -181,6 +298,26 @@ bool TUnk_B62AA0::fn_710042621C() {
     ui::EventData event;
     event.m_type = 0x100;
     GfMenuObject::sendEvent(acc.m_handle, event, 0.0f);
+    return true;
+}
+
+bool TUnk_B62AA0::fn_7100426A30() {
+    fn_710041F0A8(0, m_ids[m_cursor]);
+    fn_710041EB48();
+    if (++m_cursor < m_list->getSize()) {
+        m_seq.addJob(&TUnk_B62AA0::fn_7100426270);
+    } else {
+        m_seq.addJob(&TUnk_B62AA0::fn_7100425F78);
+    }
+    return true;
+}
+
+bool TUnk_B62AA0::fn_7100427230() {
+    if (++m_cursor < m_list->getSize()) {
+        m_seq.addJob(&TUnk_B62AA0::fn_7100426B44);
+    } else {
+        m_seq.addJob(&TUnk_B62AA0::fn_7100425F78);
+    }
     return true;
 }
 

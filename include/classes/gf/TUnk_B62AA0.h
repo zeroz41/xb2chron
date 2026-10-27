@@ -4,9 +4,11 @@
 #include "classes/gf/GfMenuObject.h"
 #include "classes/ui/UIObjectListener.h"
 #include "gf/GfMenuSequence.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace gf { class GAME_VOICE_HANDLE; }
-namespace ui { class UIObjectAcc; struct EventData; }
+namespace mm { template <typename T> class Pnt; }
+namespace ui { class UIObjectAcc; struct EventData; class UISelectObjList; }
 
 namespace gf {
 // table 0x7100B62AA0; the "Hitonowa" (circle of people) menu evt_ui openHitonowa opens (gf_menu_obj_hitonowa.cpp).
@@ -48,6 +50,31 @@ public:
     // it unnamed (lbl_7100EAB87C); this unit's code reaches it through the GOT, so it is not a file static
     static unsigned int s_gameValue;
 
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in this unit, after
+    // finalize. What it does: reads BDAT table 0xA8's row id: "AreaNumber3" when its "Condition2" is set and holds
+    // (GfGameCond::isGameCond), else "AreaNumber2" when "Condition1" is set and holds, else "AreaNumber1". Callers:
+    // initialize (fn_710041D568) and fn_7100426D60.
+    static unsigned int fn_710041E870(unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in this unit, after
+    // fn_710041EB48. What it does: places list's objects on a grid of columns columns from origin, each cell
+    // width - 14 wide and height - 14 high (setPosCenter).
+    static void fn_710041EE6C(ui::UISelectObjList* list, const mm::Pnt<short>& origin, int width, int height,
+                              unsigned int columns);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in this unit and it
+    // reads this's m_handle. What it does: shows LAY_level and fades it in (preset 3), then shows TXT_level_num and
+    // TXT_level_max, only the latter opaque when s_gameValue is 6.
+    void fn_710041F864();
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: their code is in this unit and
+    // fn_7100426A30 passes this. What they do (not written yet): fn_710041F0A8 sets the list up for an id (its
+    // second argument 0 there); fn_710041EB48 refreshes the menu after it.
+    void fn_710041F0A8(int kind, unsigned int id);
+    void fn_710041EB48();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in this unit and its
+    // callers (fn_710042537C, the LAY_list listener's fn_7100423BD0) pass this. What it does (not written yet): sets
+    // up the list object handle for id (an NPC's or blade's name text, dock position, a control). Its return value
+    // is unused by fn_710042537C.
+    void fn_710041F998(unsigned int handle, unsigned int id);
+
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: the jobs below store what it returns
     // in m_busyCtrl (with 3 and 2), and fn_7100424A40 waits on that control. What it does: starts a control of kind
     // and returns its slot (GfMenuObjUtil::isBusyCtrl's argument).
@@ -84,6 +111,26 @@ public:
     bool fn_7100425F4C();
     // adds fn_710042603C and fn_710042621C to m_seq
     bool fn_7100425F78();
+    // unless IMG_image@01 is still streaming: fades LAY_image in (preset time 6) into m_busyCtrl
+    bool fn_7100424978();
+    // unless IMG_image@01 is still streaming: hides TXT_telop@04, plays IMG_telop_base's "end_max" and shows
+    // LAY_image
+    bool fn_7100424AD8();
+    // fades LAY_telop out (0.2) into m_busyCtrl
+    bool fn_7100424D68();
+    // sets up the list object at m_cursor with m_ids[m_cursor] (fn_710041F998), enables LAY_result's input and its
+    // operation info, clears m_resultDone and calls fn_7100569228
+    bool fn_710042537C();
+    // waits for m_resultDone; then, when m_resultFadeOut is set, slides LAY_result out ("cmn_fade_motion_lr"
+    // "fade_out_l") and clears it
+    bool fn_7100425440();
+    // moves m_cursor on: adds fn_7100426B44 while it is inside m_list, else fn_7100425F78
+    bool fn_7100427230();
+    // sets up m_ids[m_cursor] (fn_710041F0A8 with 0, fn_710041EB48), then moves m_cursor on: adds fn_7100426270
+    // while it is inside m_list, else fn_7100425F78
+    bool fn_7100426A30();
+    // m_seq's job fn_7100426A30 adds (not written yet)
+    bool fn_7100426270();
     // m_seq's job fn_7100425F78 adds first (not written yet)
     bool fn_710042603C();
     // sends LAY_main event 0x100
@@ -91,18 +138,27 @@ public:
     // m_seq's job fn_71004238EC adds (not written yet)
     bool fn_7100426B44();
 
-    unsigned char pad_24[0x78];
+    unsigned char pad_24[0x74];
+    // the m_list entry the jobs work on, fn_7100427230 moves it on (the name is not the original's)
+    unsigned int m_cursor;
     // TUnk_B62B10 sets it when LAY_result reports event 8 with 1; fn_7100425EF8 clears it (the name is not the
     // original's)
     bool m_resultDone;
-    unsigned char pad_9D[0x23];
+    unsigned char pad_9D[0x3];
+    // the ids fn_710042537C sets up m_list's entries with, by m_cursor (the name is not the original's)
+    mm::mtl::FixedVector<unsigned int, 4> m_ids;
+    // the list m_cursor walks (the name is not the original's)
+    ui::UISelectObjList* m_list;
     GfMenuSequence<TUnk_B62AA0, 16> m_seq;
     GfMenuSequence<TUnk_B62AA0, 16> m_seq2;
     // the control fn_710041FBC8 started, -1 none (the name is not the original's)
     int m_busyCtrl;
     // the object whose animation fn_7100425E94 waits for, 0 none (the name is not the original's)
     unsigned int m_animObject;
-    unsigned char pad_AA8[0x450];
+    unsigned char pad_AA8[0x429];
+    // fn_7100425440 slides LAY_result out when it is set, and clears it (the name is not the original's)
+    bool m_resultFadeOut;
+    unsigned char pad_ED2[0x26];
     // the voice the voice jobs play (the name is not the original's)
     GAME_VOICE_HANDLE* m_voice;
 };

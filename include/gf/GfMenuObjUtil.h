@@ -179,6 +179,9 @@ public:
     static int getPresetCtrlCurve(unsigned int preset);  // 3.0.1's always 1
     // the time of that preset control (GfMenuObjCharSelect::seqStreamWaitStatDr passes 6)
     static float getPresetCtrlTime(unsigned int preset);
+    // sets param up as that preset's fade-in control, with slot as its m_slot (TUnk_B62AA0::fn_710041F864 passes
+    // 3 and -1)
+    static void setPresetCtrl_Fadein(unsigned int preset, CtrlParam& param, int slot);
     // the colour ui::UIColorLibrary names (r, g, b; black without one), in a function-local static
     static const mm::Col3& getPresetColor(const char* name);
     // a world position in view space (out = GfInfo::m_viewMat applied to in)
