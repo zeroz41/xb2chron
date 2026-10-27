@@ -55,6 +55,16 @@ public:
     static GAME_VOICE_HANDLE* createAchievement(unsigned int id, unsigned int);
     static GAME_VOICE_HANDLE* createEngage(unsigned int id);
     static unsigned long createMercenariesStart(unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's createQuest(CV_FIELD) has the same
+    // size but plays a voice through GfFieldVoice::playVoice; this takes no argument). A member because it sits among
+    // this class's create functions in gf_req_scom (after createDriverKizuna). What it does: passes the voice pair
+    // "670101"/"670102" (count 2) to fn_7100568E1C. Its one caller is GfMenuObjQuestLog::seqOrderWaitCtrl, after a
+    // quest's order window when GfMenuObjUtil::fn_710048FD30(3) holds.
+    static void fn_71005691B0();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason (right after
+    // fn_71005691B0). What it does: passes the voice pair "670103"/"670104" (count 2) to fn_7100568E1C. Its one
+    // caller is GfMenuObjQuestLog::seqCompleteWait, after a quest's complete window when fn_710048FD30(3) holds.
+    static void fn_71005691EC();
     static unsigned long createMercenariesEnd(unsigned int id);
     static unsigned long createMercenariesResult(unsigned int id);
     static unsigned long createLandmark();

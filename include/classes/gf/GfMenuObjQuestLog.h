@@ -3,6 +3,8 @@
 
 #include "classes/gf/GfMenuObject.h"
 #include "classes/gf/GfMenuReferenceQuest.h"
+#include "classes/gf/GfMenuReferenceNumber.h"
+#include "classes/gf/GfMenuReferenceItem.h"
 #include "gf/GfMenuSequence.h"
 #include "mm/mtl/IntrusivePtr.h"
 
@@ -45,11 +47,41 @@ public:
     bool seqLogNextWaitInfo();
     bool seqLogNextEnd();
     bool seqOrderWait();
+    void setupLogClear();
+    bool seqLogOut();
+    bool seqTitleFadeInText();
+    bool seqTitleFadeInScenario();
+    bool seqTitleFadeOutScenario();
+    bool seqTitleFadeInNormal();
+    bool seqTitleFadeOutNormal();
+    bool seqLogIn();
+    bool seqOrderStart();
+    bool seqLogNext();
+    void setupLog();
+    void setupLogItem();
+    bool seqLogClose();
+    bool seqLogCloseEnd();
+    bool seqOrderActivation();
+    bool seqOrderWaitCtrl();
+    bool seqCompleteWaitCtrl();
+    bool seqCompleteWait();
 
     unsigned char pad_24[4];
-    // the quests the log shows: created in initialize (GfMenuReferenceQuest), released first in the destructor
-    mm::mtl::IntrusivePtr<GfMenuReferenceQuest> m_quests[6];
-    unsigned char pad_58[4];  // cleared by the constructor
+    // the references the log's UI shows, created in initialize and released first in the destructor (one loop):
+    // 0-2 GfMenuReferenceQuest, 3-4 GfMenuReferenceNumber, 5 GfMenuReferenceItem (the name is not the original's)
+    mm::mtl::IntrusivePtr<mm::mtl::ReferenceObject> m_refs[6];
+    // the reference at that index as its class (operator->'s assert; the name is not the original's)
+    template <typename R>
+    R* getRef(int index) const {
+        return static_cast<R*>(m_refs[index].operator->());
+    }
+    unsigned char pad_58;  // cleared by the constructor
+    // the log is open: set by seqLogOpen once its animation ends, cleared by seqLogCloseEnd (setupLog then updates
+    // LAY_log_to_detail; the name is not the original's)
+    bool m_logOpened;
+    bool pad_5A;           // cleared by the constructor; seqLogCloseEnd queues seqLogOut when set
+    // setupLog: the quest is visible in the quest list (shows LAY_log_to_detail; the name is not the original's)
+    bool m_listVisible;
     // the sequences' names are not the original's: seqTitleStart's (12 jobs), the log's (seqLogTaskComplete,
     // seqLogCloseEnd) and the order/complete windows' (seqOrderWaitCtrl, seqCompleteWaitCtrl)
     GfMenuSequence<GfMenuObjQuestLog, 12> m_titleSeq;
@@ -60,7 +92,9 @@ public:
     bool pad_948;  // cleared by the constructor; seqTitleFadeInText tests it
     // released (and cleared) by the destructor; the type is not known yet
     mm::mtl::ReferenceObject* pad_950;
-    void* pad_958;  // cleared by the constructor
+    // setupLog: the quest's task count (GfQuestInfo::getQuestTaskInfo; the name is not the original's)
+    unsigned int m_taskCount;
+    unsigned char pad_95C[4];
 };
 }  // namespace gf
 
