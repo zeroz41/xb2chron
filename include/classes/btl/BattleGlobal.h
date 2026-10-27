@@ -402,7 +402,9 @@ public:
     bool pad_bit20 : 1;  // fn_710000D4BC holds while it is set
     bool pad_bit21 : 1;  // fn_710000CF04 returns it
     bool pad_bit22 : 1;  // fn_710000DDB0 holds while it is set
-    unsigned char : 1;
+    // set when the controlled character is told of its death of kind 3 or 4 (pc::StateBattleBase::
+    // procMsgObjectNotifyDead; the name is not the original's)
+    bool m_controlCharacterDead : 1;
     // while set, IsGameOver holds without asking GfGameManager (the name is not the original's)
     bool m_gameOver : 1;
     unsigned char : 7;

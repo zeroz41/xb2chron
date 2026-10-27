@@ -13,6 +13,7 @@ namespace gf { class GfComProperty; }
 namespace gf { class GfComEffectCaster; }
 namespace gf { class MsgObjectNotifyAsmCallback; }
 namespace gf { class MsgObjectNotifyDead; }
+namespace gf { class MsgObjectNotifyDamage; }
 
 namespace btl {
 // table 0x7100B3AA08
@@ -46,6 +47,10 @@ public:
     unsigned char CheckAttackPosition(gf::GF_OBJ_HANDLE* target, bool, bool* out) const;
     // what the enemy's battle states hand an animation annotation to (1.0.0's name)
     void AsmCallback(const gf::MsgObjectNotifyAsmCallback& msg);
+    // the PC's battle states hand it the damage message 0x100003A they receive
+    void NotifySufferDamage(const gf::MsgObjectNotifyDamage& msg);
+    // the PC's battle action states call it (true, false) on message 0x100000B
+    void SetExitBattle(bool, bool);
     void NotifyChangeAttr(gf::GF_OBJ_HANDLE* handle, unsigned int attr, unsigned int prevAttr);
     bool IsDead(unsigned int) const;
     bool IsControlCharacter() const;

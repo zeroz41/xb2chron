@@ -448,7 +448,7 @@ void PadBattle::update(const fw::UpdateInfo& info, GfComPropertyPc& property) {
     m_property = nullptr;
 }
 
-GfPropertyBattle::GfPropertyBattle() : m_registerId(-1), pad_c(0), pad_10(1.0f), m_startValue(0), pad_17(0), pad_18(0) {}
+GfPropertyBattle::GfPropertyBattle() : m_registerId(-1), m_actionParam(0), pad_10(1.0f), m_startValue(0), pad_17(0), pad_18(0) {}
 
 void GfPropertyBattle::setup(const GfComPropertyPc& property) {
     m_registerId = btl::CharacterManager::sys()->Register(static_cast<GfObj*>(property.m_owner)->m_handle, false);

@@ -289,7 +289,7 @@ bool StateField::recieveMessage(void* owner, fw::MessageObject* from, fw::Messag
         return true;
     }
     case 0x100003A: {
-        const MsgObjectDamage* damage = static_cast<MsgUnk_100003A&>(msg).m_damage;
+        const MsgObjectDamage* damage = static_cast<MsgObjectNotifyDamage&>(msg).m_damage;
         if (damage != nullptr && damage->m_type == 0) {
             unsigned char type = damage->m_battleStartType;
             if (type != 0) {

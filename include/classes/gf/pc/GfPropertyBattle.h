@@ -20,7 +20,9 @@ public:
     // (the names below are not the original's)
     // setup's CharacterManager::Register id for the owner's handle, -1 while none (cleanup releases it)
     int m_registerId;
-    int pad_c;  // the constructor zeroes it
+    // the argument the last battle state change took (pc::StateBattleBase::ChangeState); StateBattleActionBase::Enter
+    // hands it to the action of states 1 and 0x13 and clears it (the name is not the original's)
+    int m_actionParam;
     float pad_10;  // the constructor sets 1.0
     // SetStartCondition's: the message's m_value, m_param0, m_param1 (the constructor zeroes the first only)
     unsigned char m_startValue;

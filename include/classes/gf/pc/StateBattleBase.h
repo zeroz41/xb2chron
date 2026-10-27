@@ -9,6 +9,9 @@ namespace fw { class Message; }
 namespace fw { class MessageObject; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GfComBehaviorPc; }
+namespace gf { class GfComPropertyPc; }
+namespace gf { class MsgObjectNotifyDead; }
+namespace gf { namespace pc { class GfPropertyBattle; } }
 
 namespace gf { namespace pc {
 // a player state's ID (the Hfsm's state IDs)
@@ -32,12 +35,22 @@ public:
     void leave(gf::GfComBehaviorPc* behavior, ai::State* next);
     void update(gf::GfComBehaviorPc* behavior, const fw::UpdateInfo& info);
     btl::BattleCharacter* GetBattleCharacter();
+    // asks the machine for state (once per step: ai_state.h's assertion) and keeps arg in the battle property's
+    // m_actionParam (the PC's battle property); nothing when already in it
     void ChangeState(STATE_ID state, int arg);
+    // the owner's property component (none when slot 5 holds another kind)
+    GfComPropertyPc* GetProperty();
+    const GfPropertyBattle* GetBattlePropertyConst() const;
+    // a death the PC's battle character was told of: a controlled character's dead kinds 3 and 4 set the battle's
+    // flag; relayed to the buddy while the character is a blade (fn_710002F1F8)
+    void procMsgObjectNotifyDead(gf::GfComBehaviorPc* behavior, fw::MessageObject* from, gf::MsgObjectNotifyDead& msg);
 
-    // the constructor (0x71004E6174) clears 0x18..0x22; enter (0x71004E6198) keeps the behavior at 0x18 while it
-    // calls Enter and stores Enter's result at 0x20. Every battle state is 0x28 bytes (registerBattleStates' sizes)
-    unsigned char pad_18[0x8];
-    unsigned char pad_20[0x1];
+    // Every battle state is 0x28 bytes (registerBattleStates' sizes)
+    // the owner while a slot runs (enter/leave/update/recieveMessage set it and clear it after; the name is not the
+    // original's)
+    gf::GfComBehaviorPc* m_owner;
+    // what Enter answered: update runs the update slots only when set (the name is not the original's)
+    bool m_entered;
     // set with each state change the battle state requests (StateBattleActionBase::Update sets it with m_reqState);
     // the name is not the original's
     bool m_stateChangeRequested;
