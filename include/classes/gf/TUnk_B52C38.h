@@ -34,7 +34,17 @@ public:
     GfGameManager::BattleChallengeRecord::Key m_key;
     // 5 sends TUnk_B53118 to arena state 3, anything else to 6 (the name is not the original's)
     int m_result;
-    unsigned char pad_30[0x7D];
+    unsigned char pad_30[0x54];
+    // what TUnk_B537B0's steps pass to TUnk_28E618's placeholders fn_710028E7DC / fn_710028E69C / fn_710028E878 /
+    // fn_710028EF70 / fn_710028F0A4 (the names are not the original's): m_id is a BTL_ChBtl row (GfBdatBtl's
+    // fn_71001EA2E8 / fn_71001EA1C4 take it), m_value is compared with that row's TresureNeed1..3 values
+    struct Score {
+        unsigned int m_id;
+        unsigned char pad_4[4];
+        unsigned int m_value;
+    };
+    Score m_score;
+    unsigned char pad_90[0x1D];
     bool m_isDone;  // TUnk_B535D0::fn_7100291DD8 answers true while it is set (the name is not the original's)
     unsigned char pad_AE[0x4A];  // sizeof 0xF8 (the arena's setup allocates it)
 };
