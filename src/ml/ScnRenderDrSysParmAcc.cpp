@@ -1187,9 +1187,9 @@ bool ScnRenderDrEnvColi::testEnvColi(const mm::Vec3& pos, float range) {
     return m_envColi->testEnvColi(nullptr, pos, range);
 }
 
-int ScnRenderDrEnvColi::getWindId() const { return m_envColi->m_windId; }
+int ScnRenderDrEnvColi::getWindId() const { return m_envColi->m_result.m_windId; }
 
-bool ScnRenderDrEnvColi::isRoom() const { return (m_envColi->m_flags >> 2) & 1; }
+bool ScnRenderDrEnvColi::isRoom() const { return (m_envColi->m_result.m_flags >> 2) & 1; }
 
 ScnRenderDrSysParmAcc::ScnRenderDrSysParmAcc() : m_drMan(nullptr), m_postParm(nullptr), m_view(0) {
     m_drMan = DrMan::get();

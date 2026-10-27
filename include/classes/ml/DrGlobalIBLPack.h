@@ -18,7 +18,9 @@ public:
     enum {
         FLAG_HIDE = 0x1,  // ScnObjIBLDr::apply sets it while the IBL is not displayed (the name is not the original's)
     };
-    unsigned char pad_8[0x48];
+    DrGlobalIBLPack* m_prev;  // 0x8, DrGlobalIBLMan's list links (the names are not the original's)
+    DrGlobalIBLPack* m_next;  // 0x10
+    unsigned char pad_18[0x38];
     unsigned int m_flags;  // 0x50 (the name is not the original's)
     unsigned char pad_54[0x4];
     // 0x58, ScnObjIBLDr::setFromCaptureTool sets 2 (the name is not the original's)
