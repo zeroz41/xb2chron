@@ -3,6 +3,7 @@
 #include "classes/ml/DevBase.h"
 #include "classes/ml/DevClock.h"
 #include "classes/ml/DevClockNx.h"
+#include "classes/ml/DevFileNxTh.h"
 #include "classes/ml/DevFileTh.h"
 #include "classes/ml/DevGraphNx.h"
 #include "classes/ml/DevGraphQue.h"
@@ -387,6 +388,8 @@ bool DevPadNx::createDevice() {
 void device_detail::deallocateFile(void* ptr, unsigned long) {
     mtl::MemManager::deallocate(ptr, 0, false);
 }
+
+DevFileNxTh::~DevFileNxTh() {}
 
 void DevFileUtilNx::zlibFree(void*, void* ptr) {
     mtl::MemManager::deallocate(ptr, 0, false);

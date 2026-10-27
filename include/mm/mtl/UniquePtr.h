@@ -6,6 +6,10 @@
 // mm_lib's unique_ptr.h, as the including file's include path named it (see mm/mtl/FixStr.h)
 #ifdef MM_LIB_FROM_LIBS
 #define MM_MTL_UNIQUE_PTR_PATH "../../../mcl/mm_lib/source\\mm_mtl/unique_ptr.h"
+#elif defined(MM_LIB_FROM_MONOLIB_MM)
+// monolib_mm's own files (ml::DevFileNxTh's constructor cites it so)
+#define MM_MTL_UNIQUE_PTR_PATH \
+    "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../../MCL/mm_lib/source\\mm_mtl/unique_ptr.h"
 #else
 #define MM_MTL_UNIQUE_PTR_PATH \
     "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/unique_ptr.h"
