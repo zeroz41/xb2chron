@@ -1,7 +1,5 @@
 #include "classes/gf/GfMenuObjTargetInfo.h"
-#include "classes/gf/GfMenuObjTargetInfo/EnemyListener.h"
-#include "classes/gf/GfMenuObjTargetInfo/OtherListener.h"
-#include "classes/gf/GfMenuObjTargetInfo/SymbolListener.h"
+#include "gf/GfDataBlade.h"
 #include "classes/gf/GfMenuObjTargetInfo.h"
 #include "classes/gf/GfMenuObjTargetInfo/EnemyListener.h"
 #include "classes/gf/GfMenuObjTargetInfo/OtherListener.h"
@@ -15,6 +13,17 @@
 #include "classes/gf/GfMenuGfObjAdapter.h"
 #include "classes/gf/GfMenuPosAdapter.h"
 #include "classes/ui/UIObjectDockPlugin.h"
+#include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfMenuShopAdapter.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfDataItem.h"
+#include "gf/GfItemUtil.h"
+#include "gf/GfMenuBdat.h"
+#include "gf/GfMenuItemUtil.h"
+#include "gf/GfObjAcc.h"
+#include "mm/Col3.h"
+#include "plugin/Bdat.h"
+#include "ui/UIStr.h"
 #include "gf/GfMenuObjUtil.h"
 #include "gf/MenuOffset.h"
 #include "mm/Pnt.h"
@@ -289,6 +298,258 @@ void GfMenuObjTargetInfo::openEnemy(GfMenuCallContext* context, const OpenEnemyP
                 }
                 GfMenuObject::startCallContext(context, 0xC, main.m_handle);
             }
+        }
+    }
+}
+
+// the colors openOther and openSymbol give the access copy of the name. Proposed names, not the original's: the
+// symbols leave them unnamed (lbl_71009C4990, lbl_71009C499C)
+static const mm::Col3 s_accessMulColor(1.0f, 176.0f / 255.0f, 222.0f / 255.0f);
+static const mm::Col3 s_accessAddColor(131.0f / 255.0f, 48.0f / 255.0f, 146.0f / 255.0f);
+
+// the text a blade object (type 6) has for its shop name: a helper so its object takes the stack slot the original
+// gives it (the name is not the original's)
+static inline bool getBladeShopName(unsigned char*& bdat, unsigned int& id, GF_OBJ_HANDLE* handle) {
+    GfObjAcc obj(handle);
+    if (obj.getType() != 6) {
+        return false;
+    }
+    if (!GfDataBlade::fn_710024D8C4(bdat, id, obj.fn_7100523B74())) {
+        bdat = nullptr;
+        id = 0;
+        return false;
+    }
+    return true;
+}
+
+// tells the root that a duplicated menu opened (0x100 with the duplicate's index): a helper so its objects take
+// the stack slots the original gives them (the name is not the original's)
+static inline void requestOpenEvent(unsigned int root, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    if (acc.isDuplicate()) {
+        ui::EventData event(0x100);
+        event.m_param2 = acc.getDuplicateIndex();
+        ui::UIManager::get()->requestObjectEvent(root, event, 0.0f);
+    }
+}
+
+void GfMenuObjTargetInfo::openOther(GfMenuCallContext* context, const OpenOtherParam& param) {
+    if (param.m_symbol) {
+        OpenSymbolParam symbol;
+        symbol.m_nameBdat = param.m_nameBdat;
+        symbol.m_nameId = param.m_nameId;
+        symbol.m_pointBdat = param.m_pointBdat;
+        symbol.m_pointId = param.m_pointId;
+        symbol.m_obj = param.m_obj;
+        symbol.m_offset = param.m_offset;
+        symbol.m_icon = param.m_shopId;
+        if (GfMenuObjUtil::fn_710048FD30(3)) {
+            symbol.m_collect = param.m_collect;
+        }
+        openSymbol(context, symbol);
+        return;
+    }
+    ui::UIObjectAcc root(GfMenuObject::getAttachedObject(0xD));
+    if (root.m_object != nullptr && !root.isTerm()) {
+        ui::UIObjectAcc main(root.duplicateChild("LAY_other_main"));
+        if (main.m_object != nullptr) {
+            {
+                ui::UIObjectAcc self(main.m_handle);
+                if (self.m_object != nullptr) {
+                    GfMenuPosAdapter::create(self.m_handle, param.m_obj, &param.m_offset)->setPosOffsMode(1);
+                    GfMenuGfObjAdapter* adapter = GfMenuGfObjAdapter::create(self.m_handle, 3, param.m_obj, true);
+                    adapter->setDispFadeMode(0.25f);
+                    adapter->setDispSuspendMode(true);
+                }
+            }
+            {
+                ui::UIObjectAcc info(main.searchChild("LAY_other_info"));
+                if (info.m_object != nullptr) {
+                    GfMenuGfObjAdapter::create(info.m_handle, 2, param.m_obj, true)->setDispFadeMode(0.25f);
+                }
+                ui::UIObjectAcc base(main.searchChild("IMG_other_base"));
+                if (base.m_object != nullptr) {
+                    GfMenuGfObjAdapter* adapter = GfMenuGfObjAdapter::create(base.m_handle, 2, param.m_obj, true);
+                    adapter->setDispReverseMode(true);
+                    adapter->setDispFadeMode(0.25f);
+                }
+                ui::UIObjectAcc active(main.searchChild("IMG_other_active"));
+                if (active.m_object != nullptr) {
+                    GfMenuGfObjAdapter::create(active.m_handle, 6, param.m_obj, true)->setDispReverseMode(true);
+                    {
+                        ui::UIObjectAcc name(main.m_handle, "TXT_other_name");
+                        GfMenuObjUtil::createSyncPlugin(name.m_handle, active.m_handle, 0x20);
+                    }
+                    ui::UIObjectAcc access(main.searchChild("IMG_other_access"));
+                    if (access.m_object != nullptr) {
+                        GfMenuGfObjAdapter::create(access.m_handle, 6, param.m_obj, true);
+                        GfMenuObjUtil::createSyncPlugin(access.m_handle, active.m_handle, 1);
+                        GfMenuObjUtil::createSyncPlugin(ui::UIObjectAcc(main.m_handle, "TXT_other_name_access").m_handle,
+                                                        access.m_handle, 0x20);
+                    }
+                }
+            }
+            if (param.m_nameBdat != nullptr && param.m_nameId != 0) {
+                ui::UIObjectAcc name(main.m_handle, "TXT_other_name");
+                ui::UIObjectAcc access(main.m_handle, "TXT_other_name_access");
+                name.setText(ui::UIStr(param.m_nameBdat, param.m_nameId));
+                name.saveDefColor();
+                access.setText(ui::UIStr(param.m_nameBdat, param.m_nameId));
+                access.setMulColor(s_accessMulColor);
+                access.setAddColor(s_accessAddColor);
+            }
+            bool layer3 = GfMenuObjUtil::fn_710048FD30(3);
+            if (!layer3) {
+                if (param.m_shopId != 0) {
+                    ui::UIObjectAcc shop(main.m_handle, "TXT_other_shop_name");
+                    ui::UIObjectAcc owner(main.m_handle, "IMG_other_owner_icon");
+                    GfMenuShopAdapter::create(shop.m_handle, 0, param.m_shopId, false);
+                    GfMenuShopAdapter::create(owner.m_handle, 4, param.m_shopId, true);
+                    GfMenuObjUtil::createDockPlugin(owner.m_handle, shop.m_handle, 1, mm::Pnt<short>(0, 0), 0);
+                } else {
+                    main.setDispChild(false, "TXT_other_shop_name");
+                }
+            } else {
+                ui::UIObjectAcc shop(main.m_handle, "TXT_other_shop_name");
+                unsigned char* bdat = nullptr;
+                unsigned int id = 0;
+                if (getBladeShopName(bdat, id, param.m_obj) && bdat != nullptr && id != 0) {
+                    shop.setText(ui::UIStr(bdat, id));
+                    shop.setDisp(true);
+                } else {
+                    shop.setDisp(false);
+                }
+                main.setDispChild(false, "IMG_other_owner_icon");
+            }
+            {
+                ui::UIObjectAcc icon(main.searchChild("IMG_other_icon"));
+                if (icon.m_object != nullptr) {
+                    GfMenuGfObjAdapter::create(icon.m_handle, 4, param.m_obj, true);
+                }
+            }
+            if (layer3) {
+                ui::UIObjectAcc status(main.m_handle, "LAY_other_status");
+                if (status.m_object != nullptr) {
+                    status.setDisp(true);
+                    ui::UIObjectAcc image(status.m_handle, "IMG_other_status");
+                    if (image.m_object != nullptr) {
+                        image.setDisp(false);
+                        GfMenuGfObjAdapter::create(image.m_handle, 0x2B, param.m_obj, true);
+                    }
+                }
+            }
+            requestOpenEvent(root.m_handle, main.m_handle);
+            GfMenuObject::startCallContext(context, 0xD, main.m_handle);
+        }
+    }
+}
+
+void GfMenuObjTargetInfo::openSymbol(GfMenuCallContext* context, const OpenSymbolParam& param) {
+    ui::UIObjectAcc root(GfMenuObject::getAttachedObject(0xE));
+    if (root.m_object != nullptr && !root.isTerm()) {
+        ui::UIObjectAcc main(root.duplicateChild("LAY_symbol_main"));
+        if (main.m_object != nullptr) {
+            {
+                ui::UIObjectAcc self(main.m_handle);
+                if (self.m_object != nullptr) {
+                    GfMenuPosAdapter::create(self.m_handle, param.m_obj, &param.m_offset)->setPosOffsMode(1);
+                    GfMenuGfObjAdapter* adapter = GfMenuGfObjAdapter::create(self.m_handle, 3, param.m_obj, true);
+                    adapter->setDispFadeMode(0.25f);
+                    adapter->setDispSuspendMode(true);
+                }
+            }
+            {
+                ui::UIObjectAcc info(main.searchChild("LAY_symbol_info"));
+                if (info.m_object != nullptr) {
+                    GfMenuGfObjAdapter::create(info.m_handle, 2, param.m_obj, true)->setDispFadeMode(0.25f);
+                }
+                ui::UIObjectAcc base(main.searchChild("IMG_symbol_base"));
+                if (base.m_object != nullptr) {
+                    GfMenuGfObjAdapter* adapter = GfMenuGfObjAdapter::create(base.m_handle, 2, param.m_obj, true);
+                    adapter->setDispReverseMode(true);
+                    adapter->setDispFadeMode(0.25f);
+                }
+                ui::UIObjectAcc active(main.searchChild("IMG_symbol_active"));
+                if (active.m_object != nullptr) {
+                    GfMenuGfObjAdapter::create(active.m_handle, 6, param.m_obj, true)->setDispReverseMode(true);
+                    {
+                        ui::UIObjectAcc name(main.m_handle, "TXT_symbol_name");
+                        GfMenuObjUtil::createSyncPlugin(name.m_handle, active.m_handle, 0x20);
+                    }
+                    ui::UIObjectAcc access(main.searchChild("IMG_symbol_access"));
+                    if (access.m_object != nullptr) {
+                        GfMenuGfObjAdapter::create(access.m_handle, 6, param.m_obj, true);
+                        GfMenuObjUtil::createSyncPlugin(access.m_handle, active.m_handle, 1);
+                        GfMenuObjUtil::createSyncPlugin(
+                            ui::UIObjectAcc(main.m_handle, "TXT_symbol_name_access").m_handle, access.m_handle, 0x20);
+                    }
+                }
+            }
+            if (param.m_nameBdat != nullptr && param.m_nameId != 0) {
+                ui::UIObjectAcc name(main.m_handle, "TXT_symbol_name");
+                ui::UIObjectAcc access(main.m_handle, "TXT_symbol_name_access");
+                name.setText(ui::UIStr(param.m_nameBdat, param.m_nameId));
+                name.saveDefColor();
+                access.setText(ui::UIStr(param.m_nameBdat, param.m_nameId));
+                access.setMulColor(s_accessMulColor);
+                access.setAddColor(s_accessAddColor);
+            }
+            if (param.m_pointBdat != nullptr && param.m_pointId != 0) {
+                ui::UIObjectAcc point(main.m_handle, "TXT_symbol_point_name");
+                ui::UIStr text(param.m_pointBdat, param.m_pointId);
+                if (text.isValid()) {
+                    point.setText(text);
+                    point.setDisp(true);
+                }
+            }
+            {
+                ui::UIObjectAcc icon(main.searchChild("IMG_symbol_icon"));
+                if (icon.m_object != nullptr) {
+                    icon.setImageIndex(param.m_icon);
+                }
+            }
+            {
+                ui::UIObjectAcc eff(main.searchChild("IMG_symbol_eff"));
+                if (eff.m_object != nullptr) {
+                    eff.startAnimationFromID(1, false);
+                }
+            }
+            if (GfMenuObjUtil::fn_710048FD30(3) && param.m_icon == 2 && param.m_collect != 0) {
+                unsigned char* bdat = GfDataBdat::getFP(0x1E0);
+                if (GfMenuBdat::isValidBdatID(bdat, param.m_collect)) {
+                    unsigned short item = Bdat::getVal(bdat, "itm1ID", param.m_collect);
+                    if (item != 0) {
+                        ui::UIObjectAcc collect(main.searchChild("LAY_symbol_collect"));
+                        if (collect.m_object != nullptr) {
+                            unsigned int type = GfDataItem::getItemType(item);
+                            unsigned int id;
+                            if (type == 10) {
+                                ItemProperty property;
+                                GfItemUtil::getProperty(property, item, 0);
+                                id = property.m_favoriteKey;
+                            } else if (type == 7) {
+                                ItemProperty property;
+                                GfItemUtil::getProperty(property, item, 0);
+                                id = property.m_collectionKey;
+                            } else if (type == 2) {
+                                ItemProperty property;
+                                GfItemUtil::getProperty(property, item, 0);
+                                id = property.m_iconIndex + 1;
+                            } else {
+                                id = 0;
+                            }
+                            unsigned int number;
+                            if (GfMenuItemUtil::getIconNumber(static_cast<ItemType::Type>(type), id, number, false)) {
+                                ui::UIObjectAcc image(collect.m_handle, "IMG_symbol_collect_item");
+                                collect.setDisp(true);
+                                image.setImageIndex(number);
+                            }
+                        }
+                    }
+                }
+            }
+            requestOpenEvent(root.m_handle, main.m_handle);
+            GfMenuObject::startCallContext(context, 0xE, main.m_handle);
         }
     }
 }
