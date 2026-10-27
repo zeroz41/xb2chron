@@ -23,6 +23,9 @@ public:
     // enables or disables an action of the operation guide for the object of that handle (the parameter names are
     // not the original's: GfMenuObjDrEquip2 passes action 10)
     static void setActionEnable(unsigned int handle, unsigned int action, bool enable);
+    // switches an action of the handle's operation guide between its two texts (the parameter names are not the
+    // original's: GfMenuObjHanaPartsMake's parts list passes action 9 with its list mode)
+    static void changeText(unsigned int handle, unsigned int action, bool alternate);
 };
 }  // namespace gf
 
