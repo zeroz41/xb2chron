@@ -358,22 +358,23 @@ void TGmkList<T0, T1, T2, T3, T4>::createGmk(void* data) {
         // AGmkBase::create, e.g. GmkNpc/GmkMapObj, call it with the same pointer as those that do)
         AGmkBase& gmk = m_gmks[i];
         const T1* bdatInfo = nullptr;
-        int bdatId;
-        if (m_gmkSection->m_flags & 1) {
+        bool noInfo = (m_gmkSection->m_flags & 1) != 0;
+        if (noInfo) {
             gmk.m_list = this;
             gmk.m_pos = nullptr;
             gmk.m_info = nullptr;
-            bdatId = -1;
         } else {
             const LvlbInfo* info = &m_infos[i + m_gmkSection->m_infoIndex];
             const mm::Vec3* pos = info != nullptr ? &m_xforms[info->m_xformIndex].m_pos : nullptr;
             gmk.m_list = this;
             gmk.m_pos = pos;
             gmk.m_info = info;
-            bdatId = -1;
-            if (m_createInfo.m_bdatName.m_nLen != 0 && initGmkBdatInfo(m_bdatInfos[i], bdatId, gmk)) {
-                bdatInfo = &m_bdatInfos[i];
-            }
+        }
+        // one store of -1 after the if/else (not one per branch): where initGmkBdatInfo is inlined away (the empty
+        // kinds) bdatId then has a single store, and that sets the order of the placement matrix's spill slots above
+        int bdatId = -1;
+        if (!noInfo && m_createInfo.m_bdatName.m_nLen != 0 && initGmkBdatInfo(m_bdatInfos[i], bdatId, gmk)) {
+            bdatInfo = &m_bdatInfos[i];
         }
         AGmkBase::CreateInfo info;
         info.m_version = m_gmkSection->m_version;
