@@ -1,6 +1,7 @@
 #ifndef GF_GFMENUOBJUTIL_H
 #define GF_GFMENUOBJUTIL_H
 
+#include "mm/Col3.h"
 #include "classes/ui/UICtrlCursorSelect.h"
 #include "mm/mtl/FixedArray.h"
 #include "mm/mtl/FixedVector.h"
@@ -63,7 +64,10 @@ public:
         float m_rot;           // added to the rotation
         float m_bright;        // the brightness method's target
         float m_alpha;
-        unsigned char pad_40[0x10];
+        // the colour bit 25's method multiplies by and bit 26's adds (startCtrl's addMulColorMethod /
+        // addAddColorMethod; the name is not the original's)
+        ::mm::Col3 m_color;
+        unsigned char pad_4C[0x4];
         const char* m_motionLib;  // the motion method's library and motion
         const char* m_motion;
     };
