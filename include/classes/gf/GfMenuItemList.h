@@ -39,11 +39,12 @@ public:
         unsigned int m_type;                     // the items' ItemType::Type
         const FiltertInfo* m_filter;             // its first word's bits pick the filters setupFromBox applies
         unsigned char pad_20[8];
-        // one word of byte fields (stored as one): setupFromBox reads 0x29, and 0x2A-0x2B as a 16-bit pair
-        unsigned int pad_28 : 8;
-        unsigned int pad_29 : 8;
-        unsigned int pad_2A : 8;
-        unsigned int pad_2B : 8;
+        // byte fields (plain bytes: GfMenuObjHanaPartsCrystal::makeCategoryItemList zeroes 0x28-0x29 as one halfword
+        // apart from 0x2A-0x2B); setupFromBox reads 0x29, and 0x2A-0x2B as a 16-bit pair
+        unsigned char pad_28;
+        unsigned char pad_29;
+        unsigned char pad_2A;
+        unsigned char pad_2B;
         bool pad_2C;
     };
     // what setupFromShop lists: a shop's goods (GfMenuObjBlWeapon2::seqSrcAppear fills one; the names are not the
