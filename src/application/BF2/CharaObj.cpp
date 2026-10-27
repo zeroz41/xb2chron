@@ -1376,6 +1376,11 @@ void BouManager::OnEventProc(event::MSG_TYPE msg) {
     }
 }
 
+// EnvManager's bases' destructors are defined in this file, not inline in the header: here they fold into
+// EnvManager's `ret` destructor, while other files (ScriptSetActive) see a non-empty destructor and register it at exit
+TUnk_B3C730::~TUnk_B3C730() {}
+TUnk_B3C758::~TUnk_B3C758() {}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void EnvManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
@@ -1500,6 +1505,114 @@ void LightManager::OnEventProc(event::MSG_TYPE msg) {
         update();
         break;
     }
+}
+
+}  // namespace event
+
+#include "classes/event/Manager.h"
+#include "classes/ml/ProcDesktop.h"
+#include "classes/gf/GfGameEvent.h"
+#include "fw/LangUtil.h"
+#include "mtl/MemManager.h"
+#include "classes/event/EnvManager.h"
+#include "classes/ml/Scn.h"
+#include "ml/ScnRenderDrSysParmAcc.h"
+#include "classes/gf/GfFieldTime.h"
+
+namespace event {
+
+void Manager::render() {
+    ml::ProcDesktop::isDispInfo();
+}
+
+void Manager::tail() {
+    if (m_flags & 1) {
+        sendMessage(static_cast<MSG_TYPE>(18));
+    }
+    sendMessage(static_cast<MSG_TYPE>(19));
+}
+
+void Manager::post() {}
+
+void Manager::setLanguageMode(bool enable, LANGUAGE_MODE mode) {
+    m_languageMode = enable ? mode : LANGUAGE_MODE_NONE;
+}
+
+bool Manager::checkLanguageMode() const {
+    switch (m_languageMode) {
+    case LANGUAGE_MODE_JP:
+        return fw::LangUtil::getVoiceType() == 0;
+    case LANGUAGE_MODE_US:
+        return fw::LangUtil::getVoiceType() == 1;
+    default:
+        return true;
+    }
+}
+
+Manager* Manager::create(ml::Scn* scn) {
+    if (get()) {
+        delete get();
+    }
+    mtl::ALLOC_HANDLE mem = gf::GfGameEvent::getEventMem();
+    return new (mem, nullptr, 0, 4, false) Manager(scn);
+}
+
+void Manager::destroy() {
+    if (get()) {
+        delete get();
+    }
+}
+
+void EnvManager::setMotBlur(bool enable) {
+    if (((m_flags >> 4) & 1) == enable) {
+        ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+        acc.setMotBlurOverride(true);
+        acc.setMotBlur(enable);
+        m_flags = enable ? (m_flags & ~0x10) : (m_flags | 0x10);
+    }
+}
+
+void EnvManager::setToneMap(bool enable, float value) {
+    if (((m_flags >> 5) & 1) != enable) {
+        if (enable) {
+            ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+            acc.setOverrideToneMap(value);
+            m_flags |= 0x20;
+        } else {
+            m_flags &= ~0x20;
+        }
+        m_toneMap = value;
+    }
+}
+
+void EnvManager::setClockStop(bool stop) {
+    if (((m_flags & 1) != 0) != stop) {
+        if (gf::GfFieldTime* time = mm::mtl::PtrSingleton<gf::GfFieldTime>::sys()) {
+            time->setTimeStop(stop);
+        }
+        if (stop) {
+            m_flags |= 1;
+        } else {
+            m_flags &= ~1;
+        }
+    }
+}
+
+void EnvManager::setMapWeatherID(gf::WEATHERID id, float frame) {
+    gf::GfFieldWeather::getCurrentMapWeatherID(false);
+    gf::GfGameEvent::setMapWeather(id);
+    ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+    acc.setWeatherFrame(frame);
+}
+
+void EnvManager::setWeatherType(gf::WEATYPE type) {
+    gf::GfGameEvent::setWeaType(type);
+    m_flags |= 4;
+}
+
+void EnvManager::resetScene() {
+    ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+    acc.resetScene();
 }
 
 }  // namespace event

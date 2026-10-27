@@ -53,7 +53,12 @@ public:
             m_cloudSea = gf::GfFieldWeather::getCurrentCloudSea();
         }
     }
-    unsigned char pad_10[0x58];
+    // bit 0: setClockStop's state; bit 2: setWeatherType sets it; bit 4: setMotBlur's (set while disabled); bit 5:
+    // setToneMap's (the name is not the original's)
+    unsigned int m_flags;  // 0x10
+    unsigned char pad_14[0x28];
+    float m_toneMap;  // 0x3c setToneMap's value (the name is not the original's)
+    unsigned char pad_40[0x28];
     unsigned int m_hour;  // 0x68 (the name is not the original's)
     unsigned int m_min;  // 0x6c (the name is not the original's)
     gf::WEATHERID m_weatherID;  // 0x70 (the name is not the original's)
