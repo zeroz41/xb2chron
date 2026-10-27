@@ -78,16 +78,21 @@ public:
         return *this;
     }
     // the index of the last `c`, -1 when there is none (inline: ml::PathUtil::getFsaPath inlines it; the name is
-    // not the original's)
+    // not the original's). The text's start minus one is formed as an integer: its users (ScriptManager::
+    // makeFullPath, PathUtil::getNoExtName, LocalizeResource::makeLocalizeFilePath, getFsaPath) keep that address
+    // in a register and index it with the count (ldrb [base, count]); a pointer form (m_str - 1, m_str + i - 1, a
+    // stepped pointer) lets loop strength reduction fold the -1 into the load (ldurb [x, #-1]) instead
     int findLast(char c) const {
-        if (m_nLen != 0) {
-            const char* p = m_str + m_nLen - 1;
-            do {
-                if (*p == c) {
-                    return p - m_str;
-                }
-            } while (p-- != m_str);
+        if (m_nLen == 0) {
+            return -1;
         }
+        const char* top = reinterpret_cast<const char*>(reinterpret_cast<unsigned long>(m_str) - 1);
+        long i = m_nLen;
+        do {
+            if (top[i] == c) {
+                return &top[i] - m_str;
+            }
+        } while (--i != 0);
         return -1;
     }
 

@@ -65,20 +65,16 @@ void LocalizeResource::update() {
     }
 }
 
-// makeLocalizeFilePath (0x710019A51C) is 11 instructions off as written below, all in the inlined search for the
-// last '.': the original keeps the name's address minus one and indexes it with the count (ldrb [x9, x10]), letting
-// the name's address die (one callee-saved register fewer); FixStr::findLast and the index/pointer loops tried here
-// (int/long counters, >= 0, != 0, do/while) keep it live (zkit sweep found no rewrite). The rest is identical.
-// void LocalizeResource::makeLocalizeFilePath(mm::mtl::FixStr<128>& path, const mm::mtl::FixStr<16>& lang) {
-//     mm::mtl::FixStr<128> name;
-//     mm::mtl::FixStr<128> ext;
-//     name = m_localizePath;
-//     int dot = name.findLast('.');
-//     name.cutBack(name.m_nLen - dot);
-//     ext = m_localizePath;
-//     ext = ext.substr(dot, ext.m_nLen - name.m_nLen);
-//     path.format("%s_%s%s", name.m_str, lang.m_str, ext.m_str);
-// }
+void LocalizeResource::makeLocalizeFilePath(mm::mtl::FixStr<128>& path, const mm::mtl::FixStr<16>& lang) {
+    mm::mtl::FixStr<128> name;
+    mm::mtl::FixStr<128> ext;
+    name = m_localizePath;
+    int dot = name.findLast('.');
+    name.cutBack(name.m_nLen - dot);
+    ext = m_localizePath;
+    ext = ext.substr(dot, ext.m_nLen - name.m_nLen);
+    path.format("%s_%s%s", name.m_str, lang.m_str, ext.m_str);
+}
 
 bool LocalizeResource::OnFileEvent(ml::EventFileTh* event) {
     if (event == nullptr) {
