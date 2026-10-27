@@ -2,6 +2,7 @@
 #define CLASSES_GF_TUNK_B53118_H
 
 #include "classes/ai/State.h"
+#include <new>
 #include "classes/gf/IGfEvent.h"
 #include "classes/gf/GfEvent.h"
 #include "classes/gf/GfMenuManager.h"
@@ -22,6 +23,8 @@ void fn_71005661C0();
 // it); its owner is TUnk_B535D0
 class TUnk_B53118 : public ::ai::State, public ::gf::IGfEvent {
 public:
+    // what the arena's Fsm registers: the state made in a state buffer
+    static ai::State* create(void* buffer) { return new (buffer) TUnk_B53118(); }
     virtual ~TUnk_B53118() {}  // slot 0
     virtual const char* getName() const { return "StateArenaReturnBattle"; }  // slot 2
     virtual void onEnter(void*, ai::State*) { GfEvent::addEventCallback(this); }  // slot 3

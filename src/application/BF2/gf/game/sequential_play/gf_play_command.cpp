@@ -965,14 +965,14 @@ void GfPlayComMapjumpForLeaveArena::start() {
     m_started = true;
     if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
         MsgUnk_1000034 msg(9);
-        arena->recieveMessage(arena, msg);
+        static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
     }
 }
 
 void GfPlayComMapjumpForLeaveArena::end() {
     if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
         MsgUnk_1000034 msg(10);
-        arena->recieveMessage(arena, msg);
+        static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
     }
 }
 
@@ -1003,7 +1003,7 @@ void GfPlayComMapjumpForBattleMapFromArena::start() {
 void GfPlayComMapjumpForBattleMapFromArena::end() {
     if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
         MsgUnk_1000034 msg(1);
-        arena->recieveMessage(arena, msg);
+        static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
     }
 }
 
@@ -1040,7 +1040,7 @@ void GfPlayComStartChallengeBattle::start() {
         MsgUnk_1000034 msg(13);
         msg.m_param8 = m_param.pad_8;
         msg.m_param0 = m_param.pad_0;
-        arena->recieveMessage(arena, msg);
+        static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
     }
 }
 

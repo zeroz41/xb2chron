@@ -2,6 +2,7 @@
 #define CLASSES_GF_TUNK_B53370_H
 
 #include "classes/ai/State.h"
+#include <new>
 #include "classes/gf/IGfEvent.h"
 #include "classes/gf/GfEvent.h"
 
@@ -11,6 +12,8 @@ namespace gf {
 // table 0x7100B53370 (no RTTI): an arena state (getName "StateArenaEvent"; TUnk_B535D0's setup registers it)
 class TUnk_B53370 : public ::ai::State, public ::gf::IGfEvent {
 public:
+    // what the arena's Fsm registers: the state made in a state buffer
+    static ai::State* create(void* buffer) { return new (buffer) TUnk_B53370; }
     virtual ~TUnk_B53370() {}  // slot 0
     virtual const char* getName() const { return "StateArenaEvent"; }  // slot 2
     virtual void onEnter(void* owner, ai::State* prev) { fn_710028FBC0(owner, prev); }  // slot 3
