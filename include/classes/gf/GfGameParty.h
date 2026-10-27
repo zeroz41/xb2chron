@@ -78,6 +78,8 @@ public:
     virtual void listenerGfObj(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*, unsigned int);  // slot 2
     static gf::GfComTransform* getLeaderTransform();  // the leader's transform, null for none
     static gf::GF_OBJ_HANDLE* getLeader();  // the party's leader, -1 for none
+    // the leader's level (getLevel of its DataParamAcc; GfMenuObjTargetCursor::update compares a target's with it)
+    static unsigned int getLeaderLevel();
     static bool isBtlLeaderDirver();
     static bool isLeaderDriver(gf::GF_OBJ_HANDLE* handle);
     // the bdat ID of the party member driver at an index, and of the blade in a slot of its driver
