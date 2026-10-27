@@ -64,6 +64,35 @@ public:
         }
         return nullptr;
     }
+    // allocate, also giving the element's index (0 when all T1 are in use) (GfGameSearchObj::createObj inlines
+    // it: the handle carries the index; the name is not the original's)
+    T0* allocate(unsigned int& index) {
+        index = 0;
+        if (static_cast<unsigned int>(m_count) >= T1) {
+            return nullptr;
+        }
+        unsigned int* bits = m_pBits;
+        for (unsigned int i = 0; i < m_words; ++i, ++bits) {
+            unsigned int word = *bits;
+            if (word != 0xFFFFFFFF) {
+                unsigned int bit = (word & 0xFFFF) == 0xFFFF ? 16 : 0;
+                for (unsigned int mask = 1u << bit; bit < 32; ++bit, mask <<= 1) {
+                    if ((mask & word) == 0) {
+                        ++m_count;
+                        *bits |= mask;
+                        index = i * 32 + bit;
+                        return &m_pData[index];
+                    }
+                }
+            }
+        }
+        return nullptr;
+    }
+    // whether the element of index is in use
+    bool isUsed(unsigned int index) const {
+        unsigned int mask = 1u << (index & 31);
+        return (m_pBits[index >> 5] & mask) != 0;
+    }
     // gives an element allocate returned back (~DataParamAcc)
     void deallocate(T0* p) {
         free(static_cast<unsigned long>(reinterpret_cast<char*>(p) - reinterpret_cast<char*>(m_pData)) / sizeof(T0));

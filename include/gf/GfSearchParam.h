@@ -3,6 +3,7 @@
 
 #include "mm/Quat.h"
 #include "mm/Vec3.h"
+#include "classes/fw/ReferenceFrame.h"
 #include "mm/mtl/IntrusivePtr.h"
 
 namespace fw { class ReferenceFrame; }
@@ -22,8 +23,10 @@ public:
         CHECK_VISIBLE = 1 << 3,  // calcVisible: GfGameVisible's verdict
     };
 
-    GfSearchParam()
-        : m_checks(0), m_listTypes(0x20), m_pos(mm::Vec3::zero), m_rot(mm::Quat::identity), m_heightUp(0.0f),
+    // listTypes: callers take the default; GfGameSearchObj::GFSEARCH_INFO starts its copy from 0 (createObj zeroes
+    // both words at once) (the parameter is inferred)
+    GfSearchParam(unsigned int listTypes = 0x20)
+        : m_checks(0), m_listTypes(listTypes), m_pos(mm::Vec3::zero), m_rot(mm::Quat::identity), m_heightUp(0.0f),
           m_heightDown(0.0f), m_angle(0.0f), m_radius(0.0f), m_baseObj(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)),
           m_frame(), m_matchAll(true), pad_58(0), m_ignoreObj(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {}
 
