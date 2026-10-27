@@ -10,13 +10,6 @@ namespace gf { class GfMenuCallContext; class GfMenuDriverList; class GfMenuBlad
 namespace ui { class UIListInfoBase; class UIObjectAcc; struct EventData; }
 
 namespace gf {
-// the character select's move flags (proposed name, not the original's: the symbols leave it unnamed, lbl_7100EAA1D8).
-// The constructor clears both as one halfword (one object: the code reaches the second through the first's address)
-struct CharSelectFlags {
-    bool m_charBusy;    // a character move runs (the move listeners clear it when it ends; getCharBusy)
-    bool m_selectBusy;  // 1.0.0 getSelectBusy (dropped in 3.0.1) reads it: seqWaitSelect waits while it is set
-};
-
 // table 0x7100B60F20; the party screen's character select (its object 0x61)
 class GfMenuObjCharSelect : public ::gf::GfMenuObject {
 public:
@@ -29,9 +22,11 @@ public:
     class DetailListener;
     class StatusListener;
     class SubMenuListener;
-    // a party member as setPartyData fills it (the layout is not known yet)
+    // a party member as setPartyData fills it: the driver and the blades in its three slots (getEquipBladeNum,
+    // setCharOffset; the names are not the original's)
     struct DriverData {
-        unsigned char pad_0[0x10];
+        unsigned int m_driver;
+        unsigned int m_blades[3];
     };
     // two indices the code copies as one doubleword (the names are not the original's)
     struct IndexPair {
@@ -56,6 +51,20 @@ public:
     static bool attach(GfMenuCallContext* context);
     void updateSpecialOperation();
     bool seqWaitSelect();
+    bool seqStreamWaitSelect();
+    bool seqStreamWaitSelectBefore();
+    // the copied driver's (blade 0) or blade's (otherwise) move layout: fades it in or out with the common motion and
+    // opens or closes the common status window with it
+    static void dispOnCopyChar(ui::UIObjectAcc& acc, unsigned int blade);
+    static void dispOffCopyChar(ui::UIObjectAcc& acc, unsigned int blade);
+    // places a driver (kind 0, slot 0) or blade (kind 1, slots 1-3) model; solo when the driver has no blade
+    static void setCharPosScale(unsigned int kind, unsigned int id, unsigned int slot, bool solo);
+    // shows the driver's layout with blades or the solo one and lays its status out to match; returns the driver's
+    // blade count
+    static unsigned int setDriverPos(ui::UIObjectAcc& acc, mm::mtl::FixedArray<DriverData, 5>& drivers, unsigned int driver);
+    static void setCharOffset(ui::UIObjectAcc& acc, const mm::mtl::FixedArray<DriverData, 5>& drivers, unsigned int driver);
+    // how many blades the driver has equipped, from the party data setPartyData filled
+    static unsigned int getEquipBladeNum(unsigned int driver, const mm::mtl::FixedArray<DriverData, 5>& drivers);
     bool seqStreamWaitStatDr();
     bool seqStreamWaitStatBl();
     bool seqStreamWaitStatDrBefore();
