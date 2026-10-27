@@ -1,4 +1,16 @@
+#include "classes/gf/TUnk_B607D8.h"
 #include "classes/gf/TUnk_B60848.h"
+#include "classes/gf/GfAllocator.h"
+#include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfGameCond.h"
+#include "classes/gf/GfMenuObjOperationInfo.h"
+#include "classes/ui/UIEventManager.h"
+#include "gf/GfMenuObjUtil.h"
+#include "mm/mtl/FixStr.h"
+#include "plugin/Bdat.h"
+#include "ui/EventData.h"
+#include "ui/UIStr.h"
+#include "ui/UIUtil.h"
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuFullScreen.h"
 #include "classes/gf/GfMenuIDList.h"
@@ -13,8 +25,8 @@ namespace gf {
 bool TUnk_B60848::s_exists;
 
 TUnk_B60848::TUnk_B60848(unsigned int handle)
-    : GfMenuObject(handle), m_seq(this), m_mainSeq(this), m_context(nullptr), pad_388(0), m_idList(nullptr),
-      pad_398(false) {
+    : GfMenuObject(handle), m_seq(this), m_mainSeq(this), m_context(nullptr), m_telopParam(), m_idList(nullptr),
+      m_fromLayer(false) {
     m_context = GfMenuCallContext::create();
     m_idList = GfMenuIDList::create();
     s_exists = true;
@@ -50,6 +62,61 @@ bool TUnk_B60848::fn_71003B2B30() {
     return s_exists;
 }
 
+void TUnk_B60848::initialize() {
+    {
+        ui::UIObjectAcc acc(m_handle);
+        acc.setDispPriority(ui::UIUtil::getGroupPriority(0));
+    }
+    ui::UIObjectAcc main(m_handle, "LAY_main");
+    GfMenuObject::attachExternalCall(0x89, main.m_handle);
+    {
+        ui::UIObjectAcc tutorial(main.m_handle, "LAY_tutorial");
+#line 111
+        TUnk_B608B8* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B608B8(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(tutorial.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+        GfMenuObjUtil::createFitPlugin(main.searchChild("IMG_text_bg"), main.searchChild("LAY_text"), 0, 0,
+                                       GfMenuObjUtil::FitOption());
+        GfMenuObject::disableInput(tutorial.m_handle);
+    }
+    {
+        ui::UIObjectAcc list(main.m_handle, "LAY_list");
+        ui::UIListInfoBase::SetupParam setup;
+        setup.m_pageRowSize = list.countChild("LAY_list_item@%02d", 1);
+        setup.m_pageScroll = true;
+        m_idList->setup(getAllocator(ALLOCATOR(0)), setup);
+        GfMenuObjUtil::createVScrollBarPlugin(list.searchChild("IMG_list_scroll_bar"), m_idList, "IMG_list_scroll_base",
+                                              true);
+#line 145
+        TUnk_B60890* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B60890(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(list.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    int index = 0;
+    {
+        GfMenuTypes::Param param;
+        if (GfMenuObject::getFSLayerParam(m_fsLayer, param)) {
+            index = param.m_menuId;
+            GfMenuObject::removeFSLayerParam(m_fsLayer);
+            m_fromLayer = true;
+        }
+    }
+    if (m_fromLayer) {
+        ui::UIObjectAcc tutorial(main.m_handle, "LAY_tutorial");
+        GfMenuObject::sendOpenEvent(tutorial.m_handle, index, 0.0f);
+    } else {
+        ui::UIObjectAcc list(main.m_handle, "LAY_list");
+        GfMenuObject::sendOpenEvent(list.m_handle, index, 0.0f);
+    }
+    GfMenuObject::initialize();
+}
+
 void TUnk_B60848::finalize() {
     GfMenuObject::finalize();
 }
@@ -58,6 +125,52 @@ void TUnk_B60848::update() {
     m_mainSeq.update();
     m_seq.update();
     GfMenuObject::update();
+}
+
+void TUnk_B60848::fn_71003B2F98() {
+    ui::UIObjectAcc list(m_handle, "LAY_list");
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < m_idList->getPageRowSize(); i++) {
+        unsigned int id = m_idList->getContents(m_idList->getPageIndex(i)).m_id;
+        bool exists = id != 0;
+        name.format("LAY_list_item@%02d", i + 1);
+        ui::UIObjectAcc item(list.m_handle, name.m_str);
+        item.setDisp(exists);
+        if (exists) {
+            unsigned char* fp = GfDataBdat::getFP(0x101);
+            if (fp == nullptr) {
+                break;
+            }
+            unsigned char* message = GfDataBdat::getFP(299);
+            if (message == nullptr) {
+                break;
+            }
+            name.format("TXT_list_item_text@%02d", i + 1);
+            ui::UIObjectAcc text(item.m_handle, name.m_str);
+            ui::UIStr str(message, (unsigned short)Bdat::getVal(fp, "title", id));
+            text.setText(str);
+        }
+        name.format("IMG_list_item_cursor@%02d", i + 1);
+        item.setDispChild(i == m_idList->getIndex(false) - m_idList->getRowOffset(), name.m_str);
+    }
+}
+
+// TUnk_B60890::reciveEvent (0x71003B31C8) is not here yet: block placement differs (see the notes)
+
+bool TUnk_B60848::fn_71003B3EF4() {
+    m_context->reset();
+    TUnk_B607D8::fn_71003B0CE4(m_context, m_telopParam);
+    m_mainSeq.addJob(&TUnk_B60848::fn_71003B3F7C);
+    return true;
+}
+
+bool TUnk_B60848::fn_71003B3F7C() {
+    if (!m_context->isTerm()) {
+        return false;
+    }
+    m_mainSeq.addWait(4);
+    m_mainSeq.addJob(&TUnk_B60848::fn_71003B3EF4);
+    return true;
 }
 
 bool TUnk_B60848::fn_71003B3ECC() {
