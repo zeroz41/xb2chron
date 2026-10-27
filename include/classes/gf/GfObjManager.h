@@ -88,6 +88,13 @@ public:
     // whether a multi-bind id is still valid for the handle (GfObjAcc::isMultiBindWaiting)
     bool isValidMultiBind(GF_OBJ_HANDLE* handle, unsigned int id) const;
     void setStateDestroy(GF_OBJ_HANDLE* handle);
+    // the handle's info (its pool slot, without the in-use test) set to state (setStateLoading 1, setStateUpdate
+    // 2, setStateDestroy 3 inline it) (the name is not the original's)
+    static void setObjState(GF_OBJ_HANDLE* handle, unsigned short state) {
+        GFOBJ_INFO* info = &s_pThis->m_objInfo.m_pData[reinterpret_cast<unsigned long>(handle) & 0xFFF];
+        info = info->m_handle == handle ? info : nullptr;
+        info->m_state = state;
+    }
     void setStateUpdate(GF_OBJ_HANDLE* handle);
     void callGfObjListener(IGfObjListener::OBJEVT evt, GF_OBJ_HANDLE* handle);
     // a listener called for the objects' events, and its removal
