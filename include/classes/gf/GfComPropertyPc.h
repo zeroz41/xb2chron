@@ -15,13 +15,18 @@ namespace fw { class Message; }
 namespace fw { class MessageObject; }
 namespace gf { class EnviromentSensor; }
 namespace anm { class QsTransform; }
+namespace gf { class MsgObjectFlushProperty; }
+namespace gf { class MsgObjectGetVelocity; }
+namespace gf { class MsgPcFieldNotifyChangePlayerID; }
+namespace gf { class MsgDebugActivateComponentWindow; }
 
 namespace gf {
 // table 0x7100B69448
 class GfComPropertyPc : public ::gf::GfComProperty {
 public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfComPropertyPc();  // slot 1
+    // inline (its deleting destructor inlines the body), so recieveMessage is the key function
+    virtual inline ~GfComPropertyPc();  // slot 1
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     const gf::EnviromentSensor* getEnvSensor() const;
     // sets (on) or clears (off) the given bits of its GfComEnvSensor's sensor's m_checkFlags
@@ -29,13 +34,33 @@ public:
     void setInputDirPow(const mm::Vec3& dir, float pow);
     bool existInputXY() const;  // (by its symbol)
     void setLocomotion(const anm::QsTransform& locomotion);
-    // what setLocomotion keeps (pad_a0, its translation and rotation) while m_stateFlags bit 2 is set, else a static
+    // what setLocomotion keeps (m_locomotion, its translation and rotation) while m_stateFlags bit 2 is set, else a static
     // zero translation and identity rotation (by its symbol; the struct's names are not the original's)
     struct Locomotion {
         mm::Vec3 m_translation;
         mm::Quat m_rotation;
     };
     const Locomotion* getLocomotion() const;
+    // the gravity it falls with: minus the parameters' entry 1 while m_stateFlags bit 3 is set, else none
+    float getGravity() const;
+    // m_stateFlags bit 10 set (on) or cleared, then the parameters re-picked and m_field's status reset
+    void setPadControl(bool on);
+    // m_paramList from ParamManager's list 13, m_field's from list 14 while m_stateFlags bit 10 is set, else 15
+    void resetParams();
+    void cleanup();
+    // m_pos and m_rot written to the transform's frame (its local transform synced under a parent, its child
+    // frame's world transform), then m_lastPos and m_lastRot kept as m_prevPos and m_prevRot
+    void writeBack();
+    void procMsgObjectFlushProperty(fw::MessageObject* sender, gf::MsgObjectFlushProperty& msg);
+    // 1.0.0's message handlers (3.0.1 inlines them into recieveMessage)
+    void procMsgActivateComponentDebugWindow(fw::MessageObject* sender, gf::MsgDebugActivateComponentWindow& msg);
+    void procMsgPcFieldNotifyChangePlayerID(fw::MessageObject* sender, gf::MsgPcFieldNotifyChangePlayerID& msg);
+    void procMsgObjectGetVelocity(fw::MessageObject* sender, gf::MsgObjectGetVelocity& msg);
+    // m_paramList's entry index, read without a bounds check (inline: the name is not the original's)
+    template <typename T>
+    const T* getParam(unsigned int index) const {
+        return static_cast<const T*>(m_paramList->m_entries[index].m_data);
+    }
     // by its symbol: the water states call it after turning m_rot
     void syncDirection();
 
@@ -76,7 +101,7 @@ public:
     // velocity or the locomotion) is not zero; isFollowBuddyPc keeps following while m_moveVec2.y is not, the
     // follow tests while m_moveSpeed is above 0 (the names are not the original's)
     mm::Vec2 m_moveVec2;
-    unsigned char pad_a0[0x20];  // setLocomotion's translation and rotation
+    Locomotion m_locomotion;  // setLocomotion's translation and rotation
     float m_moveSpeed;
     unsigned char pad_c4[0x3C];
     mm::Vec3 m_colVel;          // ColVelCalculatorPlugin::update's: the ground's movement it carries the PC with
@@ -103,7 +128,11 @@ public:
     mm::Quat m_rot;             // the PC's facing: isActiveRange and isActiveRangeLure turn their reach's offset by it
                                 // (the name is not the original's)
     mm::Vec3 m_prevPos;         // DeadColCheckPlugin::testDead: falling from above a dead plane's height to it
-    unsigned char pad_190[0x30];
+    mm::Quat m_prevRot;         // writeBack's: m_lastRot, kept with m_prevPos (the name is not the original's)
+    // what writeBack hands on to m_prevPos and m_prevRot after writing m_pos and m_rot to the transform (the names
+    // are not the original's)
+    mm::Vec3 m_lastPos;
+    mm::Quat m_lastRot;
     mm::Vec3 m_frontDir;        // StateFieldIdle::checkSpace starts its capsule 0.6 along it from m_pos
                                 // (the name is not the original's)
     unsigned char pad_1d0[0x10];

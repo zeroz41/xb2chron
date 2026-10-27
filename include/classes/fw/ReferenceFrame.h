@@ -49,7 +49,12 @@ public:
     // transform (getSyncedWorldTransform sets it and clears bit 2), bit 2 the world matrix; the constructor
     // sets all three
     unsigned int m_syncFlags;
-    unsigned char pad_a4[0x3c];  // to 0xe0, the size GfComTransform::setup allocates
+    unsigned char pad_a4[0x4];
+    // the frame it hangs under: syncLocalTransform computes m_localTransform against its world transform, without
+    // one it copies (GfComPropertyPc::writeBack syncs the local transform only with one; the name is not the
+    // original's)
+    ReferenceFrame* m_parent;
+    unsigned char pad_b0[0x30];  // to 0xe0, the size GfComTransform::setup allocates
 };
 }  // namespace fw
 
