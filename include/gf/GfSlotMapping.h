@@ -6,6 +6,10 @@ namespace gf { class GF_SLOT_HANDLE; }
 namespace gf { class GfAssetPack; }
 namespace gf { class GfSetupParam; }
 namespace gf { class GfAllocator; }
+namespace gf { class GfSlotAllocator; }
+namespace gf { class GfSlotAll; }
+
+#include "mm/mtl/FixedVector.h"
 
 namespace gf {
 // the asset slots' layout (application/BF2/gf/asset/gf_slot_mapping.cpp)
@@ -22,8 +26,28 @@ public:
     void releaseSlot(GF_SLOT_HANDLE* handle);
     // whether a slot is requested for the pack (GfAssetPack::isCached: a requested pack is not cached)
     bool isRequest(const GfAssetPack* pack) const;
+    ~GfSlotMapping();
+    void destroy();
+    void updateSlotRequest(const fw::UpdateInfo& info);
+    // from the slot allocator's memory (type 18 of m_slotAll's)
+    void* allocateSize(unsigned long size, unsigned long alignment);
+    // false when memory is outside the asset memory [m_memTop, m_memEnd)
+    bool deallocateSize(void* memory);
+    void createMapping(const GfSetupParam& param);
 
-    unsigned char pad_0[0x1828];  // GfAssetManager::initialize allocates 0x1828 bytes
+    // a requested slot load (the names are not the original's: updateSlotRequest shows what each does)
+    struct REQ {
+        void* m_handle;
+        GfAssetPack* m_pack;
+        unsigned int m_prio;
+        float m_timeout;  // seconds left; at 0 the pack changes to its backup asset type or times out
+    };
+
+    GfSlotAllocator* m_slotAllocator;  // the slots' memory (not the original's)
+    GfSlotAll* m_slotAll;               // (not the original's)
+    mm::mtl::FixedVector<REQ, 256> m_requests;  // (not the original's)
+    unsigned long m_memTop;  // allocator 3's memory: its start (not the original's)
+    unsigned long m_memEnd;  // and its end (not the original's)
 };
 }  // namespace gf
 

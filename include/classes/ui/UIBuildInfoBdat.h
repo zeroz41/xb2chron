@@ -10,10 +10,10 @@ public:
     // the build information of a BDAT table of that name (UIFontManager::loadFontSet builds its resource so)
     UIBuildInfoBdat(const char* name);
     virtual ~UIBuildInfoBdat();  // slot 0
-    virtual void getObjectNum() const;  // slot 5
-    virtual void getObjectData(unsigned int, ui::UIBuildInfo::ObjectData&) const;  // slot 6
-    virtual void getName() const;  // slot 7
-    unsigned char pad_08[0x8];  // a 0x10-byte object: UIFontManager::loadFontSet's frame holds one so
+    virtual unsigned int getObjectNum() const;  // slot 5
+    virtual void getObjectData(unsigned int index, ui::UIBuildInfo::ObjectData& data) const;  // slot 6
+    virtual const char* getName() const { return m_name; }  // slot 7
+    const char* m_name;  // the BDAT table's name
 };
 }  // namespace ui
 
