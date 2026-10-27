@@ -331,9 +331,9 @@ public:
     static void clear();
     // takes fn_71002A9E68()'s answer in 3.0.1 (every caller passes it; the symbols still spell 1.0.0's setupGame())
     static void setupGame(bool flag);
-    virtual void fn_710000FA68(unsigned int, bool);  // slot 2 (its code forwards a 32-bit value and a bool to GfGameScene; placeholder name: see IGfEvent)
-    virtual void fn_710000FA60(unsigned int);  // slot 3 (forwards a 32-bit value to GfGameScene; placeholder name: see IGfEvent)
-    virtual void fn_710000FA64(unsigned int);  // slot 4 (forwards a 32-bit value to GfGameScene; placeholder name: see IGfEvent)
+    virtual void fn_710000FA68(unsigned int, bool, unsigned int);  // slot 2 (its code forwards the 32-bit value and the bool to GfGameScene, not the third; placeholder name: see IGfEvent)
+    virtual void fn_710000FA60(unsigned int, unsigned int);  // slot 3 (forwards the first 32-bit value to GfGameScene; placeholder name: see IGfEvent)
+    virtual void fn_710000FA64(unsigned int, unsigned int);  // slot 4 (forwards the first 32-bit value to GfGameScene; placeholder name: see IGfEvent)
     virtual void fn_710000FA20();  // slot 5 (forwards to GfGameScene; placeholder name: see IGfEvent)
     virtual void gevExecBuy(unsigned int, unsigned int, unsigned int);  // slot 6
     virtual void gevChangeParty();  // slot 7

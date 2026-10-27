@@ -122,19 +122,19 @@ void GfGameManager::setState(GF_STATE state, bool flag) {
     GfGameState::setState(state, flag);
 }
 
-void GfGameManager::fn_710000FA68(unsigned int value, bool flag) {
+void GfGameManager::fn_710000FA68(unsigned int value, bool flag, unsigned int) {
     if (GfGameScene* scene = GfGameScene::get()) {
         scene->fn_71002C5200(value, flag);
     }
 }
 
-void GfGameManager::fn_710000FA60(unsigned int value) {
+void GfGameManager::fn_710000FA60(unsigned int value, unsigned int) {
     if (GfGameScene* scene = GfGameScene::get()) {
         scene->fn_71002C56CC(value);
     }
 }
 
-void GfGameManager::fn_710000FA64(unsigned int value) {
+void GfGameManager::fn_710000FA64(unsigned int value, unsigned int) {
     if (GfGameScene* scene = GfGameScene::get()) {
         scene->fn_71002C56D4(value);
     }

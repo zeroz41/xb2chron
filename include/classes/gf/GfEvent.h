@@ -2,9 +2,11 @@
 #define CLASSES_GF_GFEVENT_H
 
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "mm/mtl/FixedQueue.h"
 
 namespace gf { enum GEV : int; }  // as IGfEvent.h declares it
 namespace gf { class GF_OBJ_HANDLE; enum ActivateType : int; }
+namespace gf { class GfAchievementRelease; }
 namespace gf { class GfSetupParam; }
 namespace gf { class GfEvent; }
 namespace gf { class IGfEvent; }
@@ -15,6 +17,7 @@ namespace gf {
 // table 0x7100B591E8
 class GfEvent : public ::mm::mtl::PtrSingleton< ::gf::GfEvent> {
 public:
+    GfEvent() : m_initialized(true) {}
     // the event for a driver changing its engaged blade from one slot to another
     static void callBladeChange(GF_OBJ_HANDLE* handle, int from, int to);
     static void callHikariCurrent(bool hikari);
@@ -77,6 +80,46 @@ public:
     // arguments. Callers: GfGameUtilHana::execEquipCondenserParts (false) and execEquipExtendCondenserParts (true),
     // after Hana's equipment is stored, with Hana's id and the slot.
     static void fn_71003286B0(unsigned int hana, bool extend, unsigned int slot);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address sits in
+    // gf_event's unit among GfEvent's call* functions and it walks PtrSingleton<GfEvent>'s listener ring as they do.
+    // What it does: calls IGfEvent slot 46 (fn_710000FAB8) of every listener with its arguments.
+    // Caller: GfGameFlag::setLocal.
+    static void fn_7100326D4C(unsigned int);
+    static void callBattleStart();  // each listener's gevBattleStart
+    static void callBattleEnd();  // each listener's gevBattleEnd
+    static void callPartyChange();  // each listener's gevChangeParty
+    static void callAchievmentRelease(const GfAchievementRelease&);  // each listener's gevReleaseAchievment
+    static void callDriverActivate(unsigned int, ActivateType, ActivateType);  // each listener's gevDriverActivate
+    static void callBladeEnable(unsigned int);  // each listener's gevBladeEnable
+    static void callDriverLevel(unsigned int, unsigned int, unsigned int);  // each listener's gevDriverLevel
+    static void callMercenariesTeam(unsigned int);  // each listener's gevMercenariesTeam
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address sits in
+    // gf_event's unit among GfEvent's call* functions and it walks PtrSingleton<GfEvent>'s listener ring as they do.
+    // What it does: calls IGfEvent slot 21 (fn_710000FA60) of every listener with its arguments.
+    // Caller: GfEquipUtil::equipBladeOrb.
+    static void fn_7100327DC4(unsigned int, unsigned int);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address sits in
+    // gf_event's unit among GfEvent's call* functions and it walks PtrSingleton<GfEvent>'s listener ring as they do.
+    // What it does: calls IGfEvent slot 22 (fn_710000FA64) of every listener with its arguments.
+    // Caller: GfEquipUtil::equipDriverAcce.
+    static void fn_7100327E78(unsigned int, unsigned int);
+    static void callPartyReturnFieldState(unsigned int);  // each listener's gevPartyReturnFieldState
+    static void callPlayerControl(GEV);  // each listener's gevPlayerControl
+    static void callPartyMover(GF_OBJ_HANDLE*, bool);  // each listener's gevPartyMover
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address sits in
+    // gf_event's unit among GfEvent's call* functions and it walks PtrSingleton<GfEvent>'s listener ring as they do.
+    // What it does: calls IGfEvent slot 2 (fn_710000FA14) of every listener with its arguments.
+    // Caller: fn_710024DAD8.
+    static void fn_7100328604(unsigned int);
+    static void callExecBuy(unsigned int, unsigned int, unsigned int);  // each listener's gevExecBuy
+    static void callGetArts(unsigned int, unsigned int, bool);  // each listener's gevGetArts
+    static void callChangeWeather(unsigned int, unsigned int);  // each listener's gevChangeWeather
+
+private:
+    // the listeners each call* reaches in turn (addEventCallback, removeEventCallback)
+    ::mm::mtl::FixedQueue<IGfEvent*, 32> m_listeners;  // 0x8
+    // set when build constructs the instance, cleared by destroy (the name is not the original's)
+    bool m_initialized;  // 0x118
 };
 }  // namespace gf
 
