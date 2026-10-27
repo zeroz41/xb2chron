@@ -1,3 +1,5 @@
+#include "classes/fw/AnimPoseModifier.h"
+#include "classes/gf/GfComModel.h"
 #include "mm/mtl/IntrusivePtr.h"
 #include "classes/fw/ReferenceFrame.h"
 #include "classes/gf/GfComModel.h"
@@ -23,6 +25,9 @@
 #include "fw/Message.h"
 #include "fw/UpdateInfo.h"
 #include "math.h"
+#include "classes/gf/GfComTransform.h"
+#include "classes/gf/GfAllocator.h"
+#include "classes/anm/Skeleton.h"
 
 namespace gf {
 namespace mob {
@@ -135,6 +140,167 @@ void GfComModel::setModelScale(float scale) {
 void GfComModel::ViewerListener::onWkStandbyLogout() {
     if (m_pOwner != nullptr) {
         m_pOwner->m_pViewer = nullptr;
+    }
+}
+
+namespace {
+// the index of the skeleton's mount named name, 0xFFFF when none is (the name is not the original's)
+inline unsigned short getMountIndex(const anm::Skeleton* skeleton, const char* name) {
+    for (unsigned int i = 0; i < skeleton->m_mountNames.size(); i++) {
+        if (strcmp(name, skeleton->m_mountNames[i]) == 0) {
+            return i;
+        }
+    }
+    return 0xFFFF;
+}
+
+// the first of model's bone frames made on bone, the end when none is (the name is not the original's)
+inline GfComModel::BoneFrameInfo* findBoneFrame(GfComModel& model, unsigned short bone) {
+    GfComModel::BoneFrameInfo* it = model.m_boneFrames.begin();
+    GfComModel::BoneFrameInfo* end = model.m_boneFrames.end();
+    for (; it != end; ++it) {
+        if (it->bone == bone) {
+            break;
+        }
+    }
+    return it;
+}
+
+// the first of model's mount frames made on mount, the end when none is (the name is not the original's)
+inline GfComModel::BoneFrameInfo* findMountFrame(GfComModel& model, unsigned short mount) {
+    GfComModel::BoneFrameInfo* it = model.pad_1168.begin();
+    GfComModel::BoneFrameInfo* end = model.pad_1168.end();
+    for (; it != end; ++it) {
+        if (it->bone == mount) {
+            break;
+        }
+    }
+    return it;
+}
+// the frame its object's transform places it by (the name is not the original's)
+inline fw::ReferenceFrame* getTransformFrame(GfComModel& model) {
+    GfComTransform* com_trans = model.m_owner->getComponent<GfComTransform>(0);
+#line 618
+    MM_ASSERT(com_trans != NULL);
+    return com_trans->getFrame().get();
+}
+}  // namespace
+
+mm::mtl::IntrusivePtr<fw::ReferenceFrame> GfComModel::createBoneReferenceFrame(const char* bone) {
+    mm::mtl::IntrusivePtr<fw::ReferenceFrame> frame;
+    if (m_skeleton == nullptr) {
+        return frame;
+    }
+    unsigned short index = 0xFFFF;
+    if (bone != nullptr) {
+        index = m_skeleton->getBoneIndex(bone);
+    }
+    if (index != 0xFFFF) {
+        BoneFrameInfo* it = findBoneFrame(*this, index);
+        if (it != m_boneFrames.end()) {
+            it->count++;
+            frame = it->frame;
+        } else {
+            frame = createBoneReferenceFrameImpl(index);
+            BoneFrameInfo info;
+            info.bone = index;
+            info.frame = frame;
+            info.count = 1;
+            m_boneFrames.push_back(info);
+        }
+        return frame;
+    }
+    const anm::Skeleton* skeleton = m_skeleton;
+    index = getMountIndex(skeleton, bone);
+    if (index == 0xFFFF) {
+        return frame;
+    }
+    unsigned short parent = skeleton->m_mountBones[index];
+    mm::mtl::IntrusivePtr<fw::ReferenceFrame> parentFrame;
+    if (parent != 0xFFFF) {
+        BoneFrameInfo* it = findBoneFrame(*this, parent);
+        if (it != m_boneFrames.end()) {
+            it->count++;
+            parentFrame = it->frame;
+        } else {
+            parentFrame = createBoneReferenceFrameImpl(parent);
+            BoneFrameInfo info;
+            info.bone = parent;
+            info.frame = parentFrame;
+            info.count = 1;
+            m_boneFrames.push_back(info);
+        }
+    }
+    BoneFrameInfo* it = findMountFrame(*this, index);
+    if (it != pad_1168.end()) {
+        it->count++;
+        frame = it->frame;
+    } else {
+        frame = createMountReferenceFrameImpl(index);
+        BoneFrameInfo info;
+        info.bone = index;
+        info.frame = frame;
+        info.count = 1;
+        pad_1168.push_back(info);
+    }
+    if (parentFrame) {
+        parentFrame->addChild(*frame);
+    }
+    return frame;
+}
+
+mm::mtl::IntrusivePtr<fw::ReferenceFrame> GfComModel::createBoneReferenceFrameImpl(unsigned short index) {
+#line 544
+    mm::mtl::IntrusivePtr<fw::ReferenceFrame> frame(new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) fw::ReferenceFrame);
+    m_poseModifier.bindReferenceFrameToBone(index, frame);
+    getTransformFrame(*this)->addChild(*frame.get());
+    GfComTransform* com_trans = m_owner->getComponent<GfComTransform>(0);
+#line 549
+    MM_ASSERT(com_trans != NULL);
+    com_trans->addReferenceFrame(frame);
+    return frame;
+}
+
+mm::mtl::IntrusivePtr<fw::ReferenceFrame> GfComModel::getBoneReferenceFrame(const char* bone) {
+    if (m_skeleton == nullptr) {
+        return nullptr;
+    }
+    unsigned short index = 0xFFFF;
+    if (bone != nullptr) {
+        index = m_skeleton->getBoneIndex(bone);
+    }
+    if (index != 0xFFFF) {
+        BoneFrameInfo* it = findBoneFrame(*this, index);
+        if (it == m_boneFrames.end()) {
+            return nullptr;
+        }
+        return it->frame;
+    }
+    index = getMountIndex(m_skeleton, bone);
+    if (index != 0xFFFF) {
+        BoneFrameInfo* it = findMountFrame(*this, index);
+        if (it == pad_1168.end()) {
+            return nullptr;
+        }
+        return it->frame;
+    }
+    return nullptr;
+}
+
+bool GfComModel::addBoneReferenceFrame(const char* bone, mm::mtl::IntrusivePtr<fw::ReferenceFrame>& frame) {
+    mm::mtl::IntrusivePtr<fw::ReferenceFrame> boneFrame = createBoneReferenceFrame(bone);
+    if (boneFrame) {
+        boneFrame->addChild(*frame.get());
+        return true;
+    }
+    return false;
+}
+
+void GfComModel::removeBoneReferenceFrame(const char* bone, mm::mtl::IntrusivePtr<fw::ReferenceFrame>& frame) {
+    mm::mtl::IntrusivePtr<fw::ReferenceFrame> boneFrame = getBoneReferenceFrame(bone);
+    if (boneFrame) {
+        boneFrame->removeChild(*frame);
+        destroyBoneReferenceFrame(bone);
     }
 }
 

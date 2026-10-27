@@ -29,8 +29,12 @@ public:
     };
     // a reference frame made on a bone (the field names are not the original's)
     struct BoneFrameInfo {
+        BoneFrameInfo() : count(0) {}
         mm::mtl::IntrusivePtr<fw::ReferenceFrame> frame;
-        unsigned long pad_8;
+        // the bone's index (the skeleton's bone, or its mount for pad_1168's; getBoneReferenceFrame searches by it)
+        short bone;
+        // how many createBoneReferenceFrame calls share the frame (the name is not the original's)
+        int count;
     };
     GfComModel();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
@@ -39,6 +43,11 @@ public:
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     mm::mtl::IntrusivePtr<fw::ReferenceFrame> createBoneReferenceFrame(const char* bone);
     void destroyBoneReferenceFrame(const char* bone);
+    // a new frame on the skeleton's bone index, bound to the pose and hung under the transform's frame
+    mm::mtl::IntrusivePtr<fw::ReferenceFrame> createBoneReferenceFrameImpl(unsigned short index);
+    // a new frame on the skeleton's mount index
+    mm::mtl::IntrusivePtr<fw::ReferenceFrame> createMountReferenceFrameImpl(unsigned short index);
+    void destroyBoneReferenceFrameImpl(mm::mtl::IntrusivePtr<fw::ReferenceFrame> frame);
     // hangs frame on the model's bone (GfMenuModelView::attachObject passes another object's transform frame)
     // false when no frame could be made on the bone
     bool addBoneReferenceFrame(const char* bone, mm::mtl::IntrusivePtr<fw::ReferenceFrame>& frame);
