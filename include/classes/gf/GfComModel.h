@@ -41,6 +41,9 @@ public:
     virtual ~GfComModel();  // slot 1
     virtual void changeLayer(unsigned int, unsigned int);  // slot 3
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
+    // undoes setup (GfObjFactory::destroyComponent): frees the bone frames, unbinds the modifiers, releases the
+    // model, frame, skeleton, pose and extra truck buffer
+    void cleanup();
     mm::mtl::IntrusivePtr<fw::ReferenceFrame> createBoneReferenceFrame(const char* bone);
     void destroyBoneReferenceFrame(const char* bone);
     // a new frame on the skeleton's bone index, bound to the pose and hung under the transform's frame
@@ -48,6 +51,8 @@ public:
     // a new frame on the skeleton's mount index
     mm::mtl::IntrusivePtr<fw::ReferenceFrame> createMountReferenceFrameImpl(unsigned short index);
     void destroyBoneReferenceFrameImpl(mm::mtl::IntrusivePtr<fw::ReferenceFrame> frame);
+    // frame taken off the transform's after-frames (1.0.0's symbol; 3.0.1 inlines it into destroyBoneReferenceFrame)
+    void destroyMountReferenceFrameImpl(mm::mtl::IntrusivePtr<fw::ReferenceFrame> frame);
     // hangs frame on the model's bone (GfMenuModelView::attachObject passes another object's transform frame)
     // false when no frame could be made on the bone
     bool addBoneReferenceFrame(const char* bone, mm::mtl::IntrusivePtr<fw::ReferenceFrame>& frame);

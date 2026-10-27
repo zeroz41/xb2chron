@@ -4,6 +4,7 @@
 #include <string.h>
 #include "anm/Array.h"
 #include "anm/QsTransform.h"
+#include "classes/anm/ReferenceObject.h"
 
 namespace anm {
 // one of a skeleton's bones (getBoneFromLabel returns one): 16 bytes, its name first
@@ -22,7 +23,8 @@ struct ExtraTruckSlot {
 };
 
 // table 0x7100B810B8
-class Skeleton {
+// counted: GfComModel::cleanup releases its skeleton as the pose and extra truck buffer
+class Skeleton : public ::anm::ReferenceObject {
 public:
     virtual ~Skeleton();  // slot 0
 
@@ -48,7 +50,6 @@ public:
         bool operator()(const ExtraTruckSlot& slot, const char* name) const { return strcmp(slot.m_name, name) < 0; }
     };
 
-    unsigned char pad_8[0x10];
     const char* m_name;  // Factory::createASMResource prints it (the name is not the original's)
     // per bone, its parent's index, -1 for a root (BlendUtil::normalizePoseMS; the name is not the original's)
     Array<short> m_parents;
@@ -62,6 +63,9 @@ public:
     // names searched with strcmp for GfDataDriver::getBelongingMountBone ("MT_wire") by GfAppendWire's constructor,
     // which keeps the index (the name is not the original's)
     Array<const char*> m_mountNames;
+    // per mount, its transform against the bone it hangs on (GfComModel::createMountReferenceFrameImpl makes it the
+    // mount frame's local transform; the name is not the original's)
+    Array<QsTransform> m_mountTransforms;
 };
 }  // namespace anm
 
