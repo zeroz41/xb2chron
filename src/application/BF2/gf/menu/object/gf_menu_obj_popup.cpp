@@ -46,7 +46,7 @@ GfMenuObjPopup::~GfMenuObjPopup() {
         m_number11->release();
         m_number11 = nullptr;
     }
-    GfMenuManyObjects::destroyQueue<PopupInfo>(7);
+    GfMenuManyObjects::destroy<PopupInfo>(7);
 }
 
 void GfMenuObjPopup::finalize() {

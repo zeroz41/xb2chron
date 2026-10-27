@@ -24,7 +24,7 @@ void termIcon(ui::UIObjectAcc icon) {
 GfMenuObjChainIcon::GfMenuObjChainIcon(unsigned int handle) : GfMenuObject(handle) {}
 
 GfMenuObjChainIcon::~GfMenuObjChainIcon() {
-    GfMenuManyObjects::destroyQueue<ChainIconInfo>(2);
+    GfMenuManyObjects::destroy<ChainIconInfo>(2);
 }
 
 void GfMenuObjChainIcon::initialize() {

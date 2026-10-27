@@ -9,6 +9,8 @@ class GfMenuObjPartyStatus2 : public ::gf::GfMenuObject {
 public:
     static void open();   // 3.0.1 symbol (GfMenuObjPartyStatus::openPartyStatus calls it)
     static void close();  // 3.0.1 symbol (GfMenuObjPartyStatus::closePartyStatus calls it)
+    // 3.0.1 symbol: GfMenuObjExpGet::open passes a driver's party place (GfDataParty::getDriverPartyID) for its level up
+    static void levelup(unsigned int party);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it is in this class's
     // unit. What it does: sends the object attached as 0x5D (unless it is missing or terminating) an event 0xD with
     // parameters 3, 0, the value, 0 (GfMenuObjPartyStatus::MainListener's member change (0x109) passes the member

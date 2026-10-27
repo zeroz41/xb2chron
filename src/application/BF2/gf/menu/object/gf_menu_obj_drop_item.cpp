@@ -41,7 +41,7 @@ PluginInfo s_plugins[] = {
 GfMenuObjDropItem::GfMenuObjDropItem(unsigned int handle) : GfMenuObject(handle) {}
 
 GfMenuObjDropItem::~GfMenuObjDropItem() {
-    GfMenuManyObjects::destroyQueue<DropItemInfo>(3);
+    GfMenuManyObjects::destroy<DropItemInfo>(3);
 }
 
 void GfMenuObjDropItem::initialize() {

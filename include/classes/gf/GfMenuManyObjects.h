@@ -44,15 +44,18 @@ public:
             }
         }
     }
-    // closes a kind's objects and drops its queue (its menu object's destructor; the name is not the original's)
+    // closes a kind's objects and drops its queue (its menu object's destructor; 1.0.0's and 3.0.1's
+    // destroy<GfMenuObjExpGet::ExpGetInfo>(unsigned int) name it and check the index as remove does)
     template <typename T>
-    static void destroyQueue(unsigned int index) {
-        GfMenuManyObjects* objects = get();
-        mm::mtl::Queue<T>* queue = static_cast<mm::mtl::Queue<T>*>(objects->m_queues[index]);
-        if (queue != nullptr) {
-            closeAll<T>(index, nullptr);
-            delete queue;
-            objects->m_queues[index] = nullptr;
+    static void destroy(unsigned int index) {
+        if (index < 8) {
+            GfMenuManyObjects* objects = get();
+            mm::mtl::Queue<T>* queue = static_cast<mm::mtl::Queue<T>*>(objects->m_queues[index]);
+            if (queue != nullptr) {
+                closeAll<T>(index, nullptr);
+                delete queue;
+                objects->m_queues[index] = nullptr;
+            }
         }
     }
     // the object of that handle off its kind's queue (disposed)
