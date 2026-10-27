@@ -124,6 +124,8 @@ void GfMenuObjSpecialGauge::MainListener::reciveEvent(const ui::EventData& event
             if (m_state.m_shown == 0 && m_state.m_enabled == 1) {
                 int slot = m_state.m_ctrl;
                 GfMenuObjUtil::PresetCtrlParam param;
+                param.m_preset = 0;
+                param.m_out = 0;
                 param.m_startFlag4 = true;
                 param.m_slot = slot;
                 int ctrl = GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);

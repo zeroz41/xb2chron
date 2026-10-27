@@ -93,6 +93,8 @@ void GfMenuObjEnvironmentInfo::ListListener::reciveEvent(const ui::EventData& ev
         m_state.m_enabled = disabled == 0;
         if (disabled == 0 && m_state.m_open == 0) {
             GfMenuObjUtil::PresetCtrlParam param;
+            param.m_preset = 0;
+            param.m_out = 0;
             param.m_startFlag4 = true;
             param.m_slot = m_state.m_ctrl;
             int ctrl = GfMenuObjUtil::startPresetCtrl(handle, param);

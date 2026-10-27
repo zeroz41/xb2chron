@@ -18,7 +18,7 @@ namespace fw { enum SoundCategory : int; }
 namespace fw { enum VibrationID : int; }
 namespace gf { class QuestID; }
 namespace gf { enum FAVORITE : int; }
-namespace ui { class UIStr; }
+namespace ui { class UIStr; class UISelectObjList; }
 namespace mm { class Vec3; class Col3; }
 
 namespace gf {
@@ -73,12 +73,12 @@ public:
     };
     // what startPresetCtrl turns into a CtrlParam: one of its preset fades, in or out
     struct PresetCtrlParam {
-        // m_startFlag4 is the callers' (GfMenuObjEnvironmentInfo's and GfMenuObjSpecialGauge's set it), and the
-        // order of the stores is the original's
-        PresetCtrlParam() : m_slot(-1), m_startFlag1(false), m_startFlag4(false), m_eventId(0), m_delay(0.0f), m_child(nullptr) {
-            m_preset = 0;
-            m_out = 0;
-        }
+        // m_startFlag4 is the callers' (GfMenuObjEnvironmentInfo's and GfMenuObjSpecialGauge's set it). The order
+        // of the stores is the original's: GfMenuObjPartyGauge's listener keeps the dead m_slot store (a branch
+        // follows), after the m_preset/m_out and flag stores; callers that fade in still set m_preset and m_out
+        PresetCtrlParam()
+            : m_preset(0), m_out(0), m_slot(-1), m_startFlag1(false), m_startFlag4(false), m_eventId(0), m_delay(0.0f),
+              m_child(nullptr) {}
         unsigned int m_preset;  // 0-3 also move the object (CtrlParam methods bits 8-11 in, 12-15 out), 5 scales
         unsigned int m_out;     // 0 fades in, 1 fades out (startPresetCtrl does nothing for others)
         int m_slot;             // CtrlParam::m_slot
@@ -150,6 +150,8 @@ public:
     // the sound of a menu sound table row (BDAT 0x187's resource_id), and its handle (0 when nothing plays)
     static unsigned int playSE(unsigned int se);
     static unsigned int playSE(const char* se);  // a sound by its name
+    // places the list's objects in a row around center, width apart (GfMenuObjNpcTelop's listener)
+    static void placeObjectH(ui::UISelectObjList* list, const mm::Pnt<short>& center, unsigned int width);
     static int startPresetCtrl(unsigned int handle, const PresetCtrlParam& param);  // startCtrl's slot
     static bool setPointSpeedRate(ui::UIObjectAcc acc, float rate);  // the pointer's speed over the object
     static short getBtnIconNumber(unsigned int button);  // the icon number of a button
