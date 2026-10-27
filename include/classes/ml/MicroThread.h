@@ -19,6 +19,7 @@ public:
     virtual void switchThread(ml::MicroThread::MTHREAD*, ml::MicroThread::MTHREAD*) = 0;  // slot 4
     virtual void setupThread(ml::MicroThread::MTHREAD*, nn::os::FiberType* (*)(void*)) = 0;  // slot 5
     MLTHG* createGroup();
+    void releaseThread(MLTH* thread);
     void releaseGroup(MLTHG* group);
     MLTH* createThread(MLTHG* group, nn::os::FiberType* (*func)(void*), void* arg);
     void sleep(unsigned int frames, bool wait);

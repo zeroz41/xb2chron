@@ -24,6 +24,27 @@ public:
         }
     }
 
+    // (the original releases the thread only when it has ended: m_thread is -1 then)
+    ~MicroUpdater() {
+        if (m_thread == reinterpret_cast<ml::MLTH*>(-1)) {
+            ml::MicroThread::sys()->releaseThread(m_thread);
+        }
+        if (m_group != reinterpret_cast<ml::MLTHG*>(-1)) {
+            ml::MicroThread::sys()->releaseGroup(m_group);
+        }
+    }
+
+    // runs the group a frame; once the thread has ended, releases the group (the name is not the original's)
+    void update() {
+        if (m_group != reinterpret_cast<ml::MLTHG*>(-1)) {
+            ml::MicroThread::sys()->update(m_group);
+            if (m_thread == reinterpret_cast<ml::MLTH*>(-1)) {
+                ml::MicroThread::sys()->releaseGroup(m_group);
+                m_group = reinterpret_cast<ml::MLTHG*>(-1);
+            }
+        }
+    }
+
     // the thread's function: runs the delegate on the object, then ends the thread
     static nn::os::FiberType* fnMicroUpdate(void*) {
         MicroUpdater* self = static_cast<MicroUpdater*>(ml::MicroThread::sys()->getCurrentUserData());

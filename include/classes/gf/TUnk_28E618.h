@@ -12,6 +12,8 @@ public:
     // Placeholder name (constructor): new in 3.0.1, nothing in 1.0.0's place names it; its code (fn_710028E618) is in
     // unit_710028E5BC's range.
     explicit TUnk_28E618(TUnk_B535D0* owner);
+    // fn_710028E624 (placeholder code address; TUnk_B535D0::fn_7100291B64 runs it before freeing the object)
+    ~TUnk_28E618();
 
     TUnk_B535D0* m_owner;  // (the name is not the original's)
     unsigned char pad_8[0x50];

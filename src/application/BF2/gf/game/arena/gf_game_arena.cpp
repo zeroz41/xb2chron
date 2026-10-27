@@ -21,6 +21,10 @@
 #include "classes/gf/GfManager.h"
 #include "classes/ml/MicroThread.h"
 #include "classes/gf/GfPlayComStartChallengeBattle.h"
+#include "classes/gf/GfInfo.h"
+#include "classes/fw/SoundResource.h"
+#include "classes/fw/SoundManager.h"
+#include "gf/GfDataSound.h"
 
 namespace gf {
 
@@ -32,7 +36,7 @@ bool TUnk_B535D0::recieveMessage(fw::MessageObject* sender, fw::Message& msg) {
     return false;
 }
 
-void TUnk_B535D0::fn_7100291100() {
+void TUnk_B535D0::fn_7100291100(const GfSetupParam& param) {
 #line 109
     m_partySetup = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) TUnk_28D7B8(this);
     m_msgObj = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) TUnk_B52C38(this);
@@ -60,9 +64,22 @@ void TUnk_B535D0::fn_7100291100() {
     m_isSetUp = true;
 }
 
+TUnk_B535D0::~TUnk_B535D0() {}
+
+void TUnk_B535D0::fn_7100291AD8(const GfSetupParam& param) {
+#line 89
+    new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) TUnk_B535D0(param);
+}
+
+void TUnk_B535D0::fn_7100291B1C() {
+    TUnk_B535D0* self = sys();
+    self->fn_7100291B64();
+    delete self;
+}
+
 void TUnk_B535D0::fn_7100291C6C(TUnk_B535D0* self) {
     for (;;) {
-        self->m_fsm.update(self->m_stepInfo);
+        self->m_fsm.update(&self->m_updateInfo);
         ml::MicroThread::sys()->sleep(0, true);
     }
 }
@@ -103,6 +120,39 @@ bool TUnk_B535D0::fn_7100291E00() {
 
 void TUnk_B535D0::fn_7100291E2C(unsigned int frames) {
     ml::MicroThread::sys()->sleep(frames, true);
+}
+
+void TUnk_B535D0::fn_7100291F2C() {
+    fw::SoundResource::SetupInfo info;
+    info.pad_8 = 0x80;
+    info.pad_0 = 5;
+    info.pad_4 = 0;
+    mm::mtl::FixStr<128> path;
+    GfDataSound::getFullPath(path, "dlc_se_btl_chbtl");
+    m_soundResource = fw::SoundResource::request(fw::FrameworkMemory::getAllocator(8), path.m_str, info,
+                                                 static_cast<fw::LOAD_PRIO>(10));
+    while (!m_soundResource->valid()) {
+        ml::MicroThread::sys()->sleep(0, true);
+    }
+    m_soundPack = fw::SoundManager::sys()->findPack("dlc_se_btl_chbtl", nullptr);
+}
+
+void TUnk_B535D0::fn_7100291FF0() {
+    fw::SoundResource* resource = m_soundResource;
+    m_soundPack = nullptr;
+    if (resource != nullptr) {
+        resource->release();
+        m_soundResource = nullptr;
+    }
+}
+
+unsigned int TUnk_B535D0::fn_7100292060(const fw::UpdateInfo& info) {
+    m_updateInfo = info;
+    m_updater->update();
+    if (m_sound != nullptr) {
+        m_sound->fn_710028D644(info);
+    }
+    return GfGameFlag::getLocal(1, 0xDC0D);
 }
 
 bool fn_71002920F0() {

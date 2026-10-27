@@ -13,6 +13,8 @@ public:
     // Placeholder name (constructor): new in 3.0.1, nothing in 1.0.0's place names it; its code (fn_710028D7B8) is in
     // GfAppendWire's unit range.
     explicit TUnk_28D7B8(TUnk_B535D0* owner);
+    // fn_710028DA08 (placeholder code address; TUnk_B535D0::fn_7100291B64 runs it before freeing the object)
+    ~TUnk_28D7B8();
 
     TUnk_B535D0* m_owner;  // (the name is not the original's)
     unsigned char pad_8[0xCE8];
