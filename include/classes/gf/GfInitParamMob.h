@@ -7,6 +7,15 @@ namespace gf {
 // table 0x7100B69FA8
 class GfInitParamMob : public ::gf::GfInitParam {
 public:
+    // inline: no copy of it exists (GfObjFactory's createGmkMob and createMobNull build it on the stack)
+    GfInitParamMob() : GfInitParam(7), pad_90() {
+        m_assetSetup = nullptr;
+        pad_82 = 1;
+    }
+
+    // GfObjFactory::createGmkMob stores its four unsigned short arguments here; createMob passes them on to
+    // the unnamed file-local helper of gf_obj_factory.cpp that sets up the mob's belongings (GfAppendUtil::setupBelonging)
+    unsigned short pad_90[4];
 };
 }  // namespace gf
 

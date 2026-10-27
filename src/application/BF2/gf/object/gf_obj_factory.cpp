@@ -1,3 +1,7 @@
+#include "classes/gf/GfInitParam.h"
+#include "classes/gf/GfInitParamGimmick.h"
+#include "classes/gf/GfInitParamMapLodAnim.h"
+#include "classes/gf/GfInitParamMob.h"
 #include "gf/GfObjFactory.h"
 #include "gf/GfAppendUtil.h"
 #include "plugin/Bdat.h"
@@ -18,6 +22,13 @@
 #include "classes/gf/GfInitParamEnWeapon.h"
 #include "classes/gf/GfInitParamFobj.h"
 #include "classes/gf/GfInitParamGimmick.h"
+#include "classes/gf/GfInitParamMapLodAnim.h"
+#include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfInitParamMob.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/DataParamAcc.h"
+#include "classes/gf/GfObjSetupEnemy.h"
+#include "gf/SDataEnemy.h"
 #include "classes/gf/GfInitParamMapSeamless.h"
 #include "classes/gf/GfMapManager.h"
 #include "classes/gf/GfObj.h"
@@ -83,6 +94,22 @@ GF_OBJ_HANDLE* GfObjFactory::createMap(const GfInitParamMapSeamless& param) {
     return handle;
 }
 
+GF_OBJ_HANDLE* GfObjFactory::createMapLodAnim() {
+    GfObjManager* manager = GfObjManager::sys();
+    if (manager == nullptr) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    GfInitParamMapLodAnim param;
+    param.pad_40 = 0;
+    GF_OBJ_HANDLE* handle = manager->createGfObj(2, param);
+    GfObjSetup::createSetupParam(handle, param);
+    manager->addHandle(handle);
+    GfObjAcc acc(handle);
+    acc.setCameraFade(false);
+    manager->callGfObjListener(IGfObjListener::OBJEVT(1), handle);
+    return handle;
+}
+
 GF_OBJ_HANDLE* GfObjFactory::createMapObj(const GfInitParamGimmick& param) {
     GfObjManager* manager = GfObjManager::sys();
     if (manager == nullptr) {
@@ -96,6 +123,111 @@ GF_OBJ_HANDLE* GfObjFactory::createMapObj(const GfInitParamGimmick& param) {
     GfObjUtil::addDebugName(handle);
     GfObjAcc acc(handle);
     acc.setCameraFade(false);
+    manager->callGfObjListener(IGfObjListener::OBJEVT(1), handle);
+    return handle;
+}
+
+GF_OBJ_HANDLE* GfObjFactory::createGmkTbox(const CBdatWrapper& bdat, int row) {
+    unsigned char* fp = GfDataBdat::getFP(0xAC);
+    unsigned short rscId = Bdat::getValCheck(bdat.m_fp, "RSC_ID", row, 2);
+    GfInitParamGimmick param;
+    param.m_objId = rscId;
+    param.pad_18 = &fp;
+    param.m_gimmickType = GimmickType(1);
+    return createMapObj(param);
+}
+
+GF_OBJ_HANDLE* GfObjFactory::createGmkMob(int id, unsigned short a, unsigned short b, unsigned short c,
+                                          unsigned short d) {
+    unsigned char* fp = GfDataBdat::getFP(0xAA);
+    GfInitParamMob param;
+    param.m_objId = id;
+    param.pad_18 = &fp;
+    param.pad_90[0] = a;
+    param.pad_90[1] = b;
+    param.pad_90[2] = c;
+    param.pad_90[3] = d;
+    return createMob(param);
+}
+
+GF_OBJ_HANDLE* GfObjFactory::createMobNull() {
+    GfInitParamMob param;
+    GfObjManager* manager = GfObjManager::sys();
+    if (manager == nullptr || GfGameManager::isAssetNumberInvalid()) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    GF_OBJ_HANDLE* handle = manager->createGfObj(7, param);
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    manager->addHandle(handle);
+    GfObjSetup::createSetupParam(handle, param);
+    manager->callGfObjListener(IGfObjListener::OBJEVT(1), handle);
+    return handle;
+}
+
+GF_OBJ_HANDLE* GfObjFactory::createSmnEnemy(int id, const mm::Vec3& pos, const mm::Vec3& rot, bool flag) {
+    GF_OBJ_HANDLE* handle = createGmkEnemy(id, 0, 0, pos, rot, flag);
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    {
+        DataParamAcc acc(handle);
+        if (acc.getSDataEnemy()->m_named) {
+            GfObjUtil::destroy(handle);
+            return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+        }
+    }
+    GfObjSetupEnemy* setup = mm::mtl::rttiCast<GfObjSetupEnemy>(GfObjManager::getObjInfo(handle)->m_setup);
+    setup->pad_b2 = 1;
+    return handle;
+}
+
+GF_OBJ_HANDLE* GfObjFactory::createGmkEvent(const CBdatWrapper& bdat, int row) {
+    GfObjManager* manager = GfObjManager::sys();
+    if (manager == nullptr) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    GfInitParamGimmick param;
+    param.m_objId = row;
+    param.pad_90 = reinterpret_cast<void*>(Bdat::getValCheck(bdat.m_fp, "name", row, 7));
+    GF_OBJ_HANDLE* handle = manager->createGfObj(8, param);
+    manager->addHandle(handle);
+    GfObjSetup::createSetupParam(handle, param);
+    GfObjUtil::addDebugName(handle);
+    manager->callGfObjListener(IGfObjListener::OBJEVT(1), handle);
+    return handle;
+}
+
+GF_OBJ_HANDLE* GfObjFactory::createGmkCollection(const CBdatWrapper& bdat, int row) {
+    GfObjManager* manager = GfObjManager::sys();
+    if (manager == nullptr) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    GfInitParamGimmick param;
+    param.m_objId = row;
+    param.pad_90 = reinterpret_cast<void*>(Bdat::getValCheck(bdat.m_fp, "name", row, 7));
+    GF_OBJ_HANDLE* handle = manager->createGfObj(8, param);
+    manager->addHandle(handle);
+    GfObjSetup::createSetupParam(handle, param);
+    GfObjUtil::addDebugName(handle);
+    manager->callGfObjListener(IGfObjListener::OBJEVT(1), handle);
+    return handle;
+}
+
+GF_OBJ_HANDLE* GfObjFactory::createGmkMapGimmick(const CBdatWrapper& bdat, int row) {
+    GfObjManager* manager = GfObjManager::sys();
+    if (manager == nullptr) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    GfInitParamGimmick param;
+    param.m_objId = row;
+    param.pad_90 = reinterpret_cast<void*>(Bdat::getValCheck(bdat.m_fp, "name", row, 7));
+    param.pad_40 = 0;
+    GF_OBJ_HANDLE* handle = manager->createGfObj(8, param);
+    manager->addHandle(handle);
+    GfObjSetup::createSetupParam(handle, param);
+    GfObjUtil::addDebugName(handle);
     manager->callGfObjListener(IGfObjListener::OBJEVT(1), handle);
     return handle;
 }
