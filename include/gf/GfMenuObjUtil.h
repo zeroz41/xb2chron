@@ -259,6 +259,12 @@ public:
     // ui::UIUtil::getPadData() is set, else that byte's bit 1 (GfMenuObjFieldSkill::update stops its voice when this
     // and fn_710048FD30(3) hold).
     static bool fn_7100492C88();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // GfMenuObjUtil's functions (unit GfMenuObjUtil). What it does: spaces the count children of handle named by
+    // format (format % 1.., a FixStr) evenly, centred, by the width of the child it names with name (asserts
+    // "pszName != 0"); gf_menu_obj_btlch_order's LAY_limit listener lays out "LAY_limit_dr@%02d" by "limit_driver"
+    // and "LAY_limit_bl@%02d" by "limit_blade" with it.
+    static void fn_7100493D2C(unsigned int handle, const char* format, unsigned int count, const char* name);
     // the icons of a driver's arts at a level (getArtsIconInfo zeroes it first); the names are not the original's
     struct ArtsIconInfo {
         unsigned int m_type;     // 0xC, 0xD, 0xE for the special kinds
