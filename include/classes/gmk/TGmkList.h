@@ -354,7 +354,9 @@ void TGmkList<T0, T1, T2, T3, T4>::createGmk(void* data) {
     m_gmks.reserve(num);
     m_gmks.resize(num);
     for (unsigned int i = 0; i < num; ++i) {
-        T0& gmk = m_gmks[i];
+        // the gimmick is used as its AGmkBase: create is called on the base (the 10 kinds that do not override
+        // AGmkBase::create, e.g. GmkNpc/GmkMapObj, call it with the same pointer as those that do)
+        AGmkBase& gmk = m_gmks[i];
         const T1* bdatInfo = nullptr;
         int bdatId;
         if (m_gmkSection->m_flags & 1) {

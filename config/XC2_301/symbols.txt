@@ -25634,7 +25634,7 @@ _ZN3gmk8TGmkListINS_8GmkBladeENS1_8BdatInfoELj1145130050ELj4ENS_11GmkBladeGobEE9
 _ZN2mm3mtl6VectorIN3gmk8GmkBlade8BdatInfoEE6resizeEm = .text:0x006219A0; // type:function size:0x288 scope:weak
 _ZN2mm3mtl6VectorIN3gmk8GmkBladeEE6resizeEm = .text:0x00621C28; // type:function size:0x228 scope:weak
 _ZN3gmk8TGmkListINS_8GmkBladeENS1_8BdatInfoELj1145130050ELj4ENS_11GmkBladeGobEE15initGmkBdatInfoERS2_RiRKNS_8AGmkBaseE = .text:0x00621E50; // type:function size:0x108 scope:weak
-fn_7100621F58 = .text:0x00621F58; // type:function size:0x130 scope:global
+_ZN2mm3mtl6VectorIN3gmk8GmkBlade8BdatInfoEE6expandEmm = .text:0x00621F58; // type:function size:0x130 scope:weak
 _ZN2mm3mtl6VectorIN3gmk8GmkBlade8BdatInfoEE6extendEmm = .text:0x00622088; // type:function size:0x1D0 scope:weak
 _ZN2mm3mtl6VectorIN3gmk8GmkBladeEE6expandEmm = .text:0x00622258; // type:function size:0x174 scope:weak
 _ZN2mm3mtl6VectorIN3gmk8GmkBladeEE6extendEmm = .text:0x006223CC; // type:function size:0x1DC scope:weak
