@@ -25,6 +25,10 @@
 #include "classes/layer/LayerFontResObj.h"
 #include "classes/layer/LayerFontManager.h"
 #include "classes/navi/NvmshAcObjBase.h"
+#include "classes/navi/NvmshAcObjBaseDef.h"
+#include "classes/navi/NvmshResMan.h"
+#include "navi/NvmshAcMan.h"
+#include "mtl/MemManager.h"
 #include "classes/layer/LayerSortObj.h"
 #include "classes/layer/LayerObjTopFont.h"
 #include "classes/layer/LayerObjTopTexObj.h"
@@ -67,6 +71,37 @@
 
 namespace navi {
 
+NvmshAcMan::~NvmshAcMan() {
+    for (int i = 0; i < 256; i++) {
+        m_objs[i]->~NvmshAcObjBaseDef();
+    }
+    if (m_gbl != nullptr) {
+        delete m_gbl;
+        m_gbl = nullptr;
+    }
+    if (m_objBuf != nullptr) {
+        mtl::MemManager::deallocate(m_objBuf, 0, false);
+        m_objBuf = nullptr;
+    }
+}
+
+void NvmshAcMan::tail() { m_entryList = m_entryList == 0; }
+
+void NvmshAcMan::releaseObj(NvmshAcObjBase* object) { object->m_request |= 1; }
+
+void NvmshAcMan::update(NvmshResMan* resMan) {
+    m_updateList = m_entryList == 0;
+    NvmshAcObjBase* obj = m_entryLists[m_updateList].m_head;
+    while (obj != nullptr) {
+        NvmshAcObjBase* next = obj->m_next;
+        m_activeList.pushBack(obj);
+        obj = next;
+    }
+    m_entryLists[m_updateList].clear();
+    objectUpdate(resMan);
+}
+
+
 void NvmshAcObjBase::setMeshNum(int num) { m_isMeshNum = num > 0; }
 
 NvmshAcObjBaseGbl::~NvmshAcObjBaseGbl() {}
@@ -98,5 +133,18 @@ void NvmshAcObjBase::setEndHeight(float a, float b) {
 int NvmshAcObjBase::getMeshNum() const { return m_meshNum; }
 
 void NvmshAcObjBase::setMoveSpd(float spd) { m_moveSpd = spd; }
+
+NvmshAcObjBaseDef::~NvmshAcObjBaseDef() { release(); }
+
+void NvmshAcObjBaseDef::release() { m_flags = 0; }
+
+bool NvmshAcObjBaseGbl::update(bool& searched, NvmshResMan* resMan, bool canSearch) {
+    m_meshNum = m_isMeshNum;
+    if (m_request & 1) {
+        m_request = 0;
+        return true;
+    }
+    return false;
+}
 
 }  // namespace navi

@@ -9,9 +9,12 @@ namespace navi {
 // table 0x7100B7F750
 class NvmshAcObjBaseGbl : public ::navi::NvmshAcObjBase {
 public:
+    // empty: the base destructor is inline
     virtual ~NvmshAcObjBaseGbl();  // slot 0
     virtual void release();  // slot 14
-    virtual void update(bool&, navi::NvmshResMan*, bool);  // slot 15
+    // returns whether the object asked for its release (NvmshAcMan::objectUpdate then unlinks and resets it); the
+    // first parameter is set when it searched this frame (objectUpdate counts those)
+    virtual bool update(bool&, navi::NvmshResMan*, bool);  // slot 15
 };
 }  // namespace navi
 
