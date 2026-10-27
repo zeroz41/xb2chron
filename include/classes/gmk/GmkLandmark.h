@@ -20,17 +20,16 @@ public:
     // its size: the element size of Vector<BdatInfo>::resize 0x71005F51B8 (whose constructor sets its fields; their defaults are not written yet)
     class BdatInfo {
     public:
+        BdatInfo() {}  // user-provided: Vector<BdatInfo>::resize stores only the defaults (pads left)
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
         bool isCondMatched() const;
         // the row's "MSGID": the landmark's name in BDAT 0x1B3's messages (GfFieldManager::getLandmarkNameId hands it out; the name is
         // not the original's)
-        unsigned short m_nameId;
-        unsigned char m_category;  // the row's "category"
-        unsigned char pad_3;
-        unsigned short m_cndId;  // the row's "cndID" (a GfGameCond id; 0: none)
-        bool m_noTelop;  // the row's "flag" bit "noTelop"
-        unsigned char pad_7;
-        const char* m_name;  // m_nameId's text in BDAT 0x1B3 (set when m_nameId is nonzero)
+        unsigned short m_nameId = 0;
+        unsigned char m_category = 0;  // the row's "category"
+        unsigned short m_cndId = 0;  // the row's "cndID" (a GfGameCond id; 0: none)
+        bool m_noTelop = false;  // the row's "flag" bit "noTelop"
+        const char* m_name = nullptr;  // m_nameId's text in BDAT 0x1B3 (set when m_nameId is nonzero)
     };
     virtual ~GmkLandmark();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

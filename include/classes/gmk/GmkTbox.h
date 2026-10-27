@@ -17,8 +17,16 @@ public:
         // out of line: initGmkBdatInfo calls it with the table itself (symbol 0x7100592E90)
         void create(unsigned char* fp, int row, const AGmkBase& gmk);
         bool isPopCondMatchedExceptDist() const;
-        unsigned short m_condition;  // the row's "Condition" (a GfGameCond id; 0: none)
-        unsigned char pad_2[0xE];
+        unsigned short m_condition = 0;  // the row's "Condition" (a GfGameCond id; 0: none)
+        // the fields its create stores (names from the columns/flags it reads, not the original's)
+        bool m_dig = false;                  // 0x2: "flag" bit "Digflg"
+        unsigned char m_msgVisible = 0;      // 0x3: "msgVisible"
+        unsigned char m_msgdigVisible = 0;   // 0x4: "msgdigVisible"
+        bool m_category = false;             // 0x5: its RSC_ID row's "flag" bit "TBOX_category" (BDAT 0xAC)
+        bool m_digPop = false;               // 0x6: "flag" bit "DigPopflg" (when the table has it)
+        bool m_noponBarrel = false;          // 0x7: "flag" bit "NoponBarrel" (when the table has it)
+        float m_visibleRadiusSq = 0.0f;      // 0x8: its RSC_ID row's "visible_Radius", squared
+        float m_invisibleRadiusSq = 0.0f;    // 0xC: its RSC_ID row's "invisible_Radius", squared
     };
     virtual ~GmkTbox();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

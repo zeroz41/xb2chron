@@ -21,11 +21,9 @@ public:
         // GfGmkBladeTraverser::onTraverse compares it with its own; the row's "BladeSizeCheck" (the field names are
         // not the original's: the row's column names)
         unsigned char m_kind;  // 0x0
-        unsigned char pad_1;
         unsigned short m_condition;       // 0x2: "Condition"
         unsigned short m_battleReaction;  // 0x4: "BattleReaction" (1: not in a battle)
         ScenarioFlagCond m_scenarioFlag;  // 0x6
-        unsigned char pad_a[0x6];
         TimeCond m_timeRange;    // 0x10: "TimeRange"
         float m_visibleXZSq;     // 0x20: "Visible_XZ" squared
         float m_visibleYSq;      // 0x24: "Visible_Y" squared

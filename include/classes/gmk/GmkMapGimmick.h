@@ -26,7 +26,6 @@ public:
         unsigned short m_mapobjId = 0;    // the row's "mapobjID"
         unsigned short m_effectId = 0;    // the row's "effectID" (only when GfGameManager::fn_71002A9E68())
         bool m_msgRay = false;            // flag "MSG_ray"
-        unsigned char pad_9[0x7];
         TimeCond m_popTime;        // the row's "popTime"
         WeatherCond m_popWeather;  // the row's "popWeather"
         BootedGmkCond m_bootedGmk;  // the row's OP_gimmickType/ID

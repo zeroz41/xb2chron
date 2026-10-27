@@ -30,7 +30,6 @@ public:
         unsigned short m_questId = 0;    // the row's "QuestID"
         ScenarioFlagCond m_scenarioFlag;  // the row's ScenarioFlagMin/Max
         QuestFlagCond m_questFlag;        // the row's QuestFlag/Min/Max
-        unsigned char pad_e[0x2];
         TimeCond m_popTime;        // the row's "POP_TIME"
         WeatherCond m_popWeather;  // the row's "popWeather"
     };

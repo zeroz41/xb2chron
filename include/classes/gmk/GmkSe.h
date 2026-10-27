@@ -32,7 +32,6 @@ public:
         unsigned char pad_9;
         ScenarioFlagCond m_scenarioFlag;    // the row's ScenarioFlagMin/Max
         QuestFlagCond m_questFlag;          // the row's QuestFlag/Min/Max
-        unsigned char pad_12[0x6];
         TimeCond m_popTime;                 // the row's "SEpopTime"
         WeatherCond m_weather;              // the row's "wtrSEType"
         BootedGmkCond m_bootedGmk;          // the row's OP_gimmickType/ID (must be booted)

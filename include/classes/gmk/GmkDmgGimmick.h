@@ -3,6 +3,7 @@
 
 #include "mm/mtl/RTTI.h"
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/BootedGmkCond.h"
 #include "plugin/Bdat.h"
 namespace gmk { class GmkDmgGimmickGobCustom; }
 
@@ -20,7 +21,20 @@ public:
     public:
         // out of line: initGmkBdatInfo calls it (symbol 0x71005AFF0C)
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
-        unsigned char pad_0[0x28];
+        BdatInfo() {}  // user-provided: Vector<BdatInfo>::resize stores only the defaults (pads left)
+        // the fields its create stores (names from the columns it reads, not the original's)
+        unsigned short m_condition = 0;       // 0x0: "Condition" (a GfGameCond id; 0: none)
+        unsigned short m_depopCondition = 0;  // 0x2: "DEPOP_Condition"
+        float m_dmgInterval = 0.0f;           // 0x4: "DMG_interval"
+        unsigned char m_pcDmg = 0;            // 0x8: "Pc_dmg"
+        unsigned char m_enDmg = 0;            // 0x9: "EN_dmg"
+        const char* m_effectName = nullptr;   // 0x10: "effect_name"
+        unsigned char m_seName = 0;           // 0x18: "SE_name"
+        unsigned char m_volumeMax = 0;        // 0x19: "volumeMAX"
+        unsigned char m_volumeMin = 0;        // 0x1A: "volumeMIN"
+        BootedGmkCond m_bootedGmk;            // 0x1C: <prefix>gimmickType/ID
+        float m_effectDispRSq = 0.0f;         // 0x20: "effect_disp_r" squared
+        float m_effectReleaseRSq = 0.0f;      // 0x24: from "effect_release_r"
     };
     virtual ~GmkDmgGimmick();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

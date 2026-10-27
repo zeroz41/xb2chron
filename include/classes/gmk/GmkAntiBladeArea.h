@@ -22,7 +22,7 @@ public:
     public:
         // its row's id (GfFieldGimmick::getBdatIdOfActiveGmkAntiBladeArea returns it; the name is not the
         // original's)
-        unsigned short m_bdatId;  // read from its "BTL_MapRevId" column
+        unsigned short m_bdatId = 0;  // read from its "BTL_MapRevId" column
         // inline: initGmkBdatInfo inlines it (no symbol); the column names are the original's, the field names not
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
             m_bdatId = 0;  // the original stores 0 before reading the column

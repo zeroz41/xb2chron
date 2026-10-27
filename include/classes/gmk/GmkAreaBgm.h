@@ -25,7 +25,7 @@ public:
             m_bgmCondition = 0;  // the original stores 0 before reading the column
             m_bgmCondition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "bgmCondition", row, 2);
         }
-        unsigned short m_bgmCondition;  // its "bgmCondition" column
+        unsigned short m_bgmCondition = 0;  // its "bgmCondition" column
     };
     virtual ~GmkAreaBgm();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
