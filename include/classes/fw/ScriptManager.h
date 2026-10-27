@@ -1,12 +1,14 @@
 #ifndef CLASSES_FW_SCRIPTMANAGER_H
 #define CLASSES_FW_SCRIPTMANAGER_H
 
+#include "classes/fw/IScriptEvent.h"
 #include "classes/fw/ManagerObject.h"
 #include "classes/fw/ScriptInfo.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/ml/IWorkEvent.h"
 #include "mm/mtl/Array.h"
 #include "mm/mtl/FixStr.h"
+#include "mm/mtl/FixedQueue.h"
 
 namespace fw { class UpdateInfo; }
 namespace fw { class ScriptManager; }
@@ -29,6 +31,8 @@ class ScriptManager : public ::fw::ManagerObject,
                       public ::mm::mtl::PtrSingleton< ::fw::ScriptManager>,
                       public ::ml::IWorkEvent {
 public:
+    // size scripts, their elements from the allocator
+    ScriptManager(mm::mtl::IAllocator* allocator, unsigned long size);
     virtual ~ScriptManager();  // slot 0
     virtual bool initialize();  // slot 2
     virtual bool finalize();  // slot 3
@@ -37,6 +41,8 @@ public:
     void destroyScript(int id, bool);
     bool isScriptLoaded(int id) const;
     void loadScript(int id, const char* name, ml::FILE_PRIO prio);
+    // m_rootPath + name with its extension (".sb" when it has none), the file name lower case when it is ASCII
+    void makeFullPath(mm::mtl::FixStr<256>& path, const char* name);
     // tells the listeners about a script (ScriptInfo's reads, starts and ends)
     void notifyEvent(int id, ScriptEventParam::State state);
     // the script under an id (inline: gf::GfScriptManager's accessors; the name is not the original's)
@@ -44,6 +50,8 @@ public:
     const ScriptInfo& getScript(int id) const { return m_scripts[id]; }
 
     mm::mtl::Array<ScriptInfo> m_scripts;  // reserve(size) in the constructor; createScript initializes one
+    // notifyEvent's listeners (1.0.0's addEvent and removeEvent queue them; the name is not the original's)
+    mm::mtl::FixedQueue<IScriptEvent*, 32> m_events;
     static mm::mtl::FixStr<256> m_rootPath;  // setScriptPath stores it, makeFullPath reads it
 };
 }  // namespace fw

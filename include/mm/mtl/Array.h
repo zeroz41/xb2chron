@@ -23,10 +23,18 @@ template <typename T>
 class Array {
 public:
     Array() : m_element(nullptr), m_size(0), m_allocator(nullptr) {}
+    // empty, its elements to come from allocator (fw::ScriptManager's constructor)
+    explicit Array(IAllocator* allocator) : m_element(nullptr), m_size(0), m_allocator(allocator) {}
     ~Array() { clear(); }
-    // gives the elements back to the allocator (the name is not the original's)
+    // destroys the elements and gives them back to the allocator (fw::ScriptManager's destructor calls each
+    // element's virtual destructor; the name is not the original's)
     void clear() {
         if (m_element != nullptr) {
+            for (size_t i = 0; i < m_size; i++) {
+                if (T* element = &m_element[i]) {
+                    element->~T();
+                }
+            }
             m_allocator->deallocate(m_element);
             m_size = 0;
             m_allocator = nullptr;

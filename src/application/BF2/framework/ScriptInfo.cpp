@@ -129,7 +129,7 @@ SoundPack* SoundResource::getSoundPack() {
 }
 
 ScriptInfo::ScriptInfo()
-    : m_buffer(nullptr), m_size(0), m_id(-1), m_handle(nullptr), m_state(0), m_flags(0), pad_230(),
+    : m_buffer(nullptr), m_size(0), m_id(-1), m_handle(nullptr), m_state(0), m_flags(0), m_allocator(nullptr),
       m_manager(nullptr) {}
 
 ScriptInfo::~ScriptInfo() {

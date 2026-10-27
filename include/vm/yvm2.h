@@ -102,6 +102,8 @@ void splitFixed(float value, int* pSign, int* pInt, int* pFrac);
 int vmLink(void* program);
 int vmUnlink(void* program);
 void vmStart(void* program);
+// runs the started threads one step (fw::ScriptManager::update calls it each frame)
+void vmExec(void);
 int vmThreadIsFinish(void* program);
 
 // Reports an argument of the wrong type for the current thread (s_vmWork.pCurThread).

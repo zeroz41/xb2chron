@@ -33,7 +33,11 @@ public:
     class WorldMapListener;
     class ZoneMapListener;
     class ZoneSelectListener;
-    struct MapJumpInfo;
+    // 0x18 bytes: Array<MapJumpInfo>::erase (fn_710049FDF4) steps 0x18; trivially destructible (the destructor
+    // frees the array without destroying elements). Fields not known yet.
+    struct MapJumpInfo {
+        unsigned char pad_0[0x18];
+    };
 
     GfMenuObjWorldMap(unsigned int handle);
     virtual ~GfMenuObjWorldMap();  // slot 0

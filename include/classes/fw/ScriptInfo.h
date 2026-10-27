@@ -8,6 +8,7 @@ namespace ml { class EventFileTh; }
 namespace ml { class FileHandleTh; }
 namespace ml { enum FILE_PRIO : int; }
 namespace fw { class ScriptManager; }
+namespace mm { namespace mtl { class IAllocator; } }
 
 namespace fw {
 // table 0x7100B42B78; 0x240 bytes (mm::mtl::Array<ScriptInfo>::reserve's stride): a script ScriptManager reads into
@@ -53,7 +54,9 @@ public:
     ml::FileHandleTh* m_handle;  // the read DevFileTh::readFile started, until OnFileEvent
     int m_state;  // 0: none, 1: read (waiting for start), 2: running, 3: finished
     unsigned int m_flags;  // FLAG_*
-    unsigned char pad_230[0x8];  // zeroed by the constructor
+    // ScriptManager::createScript's: the buffer's, which finalize and destroyScript give it back to (mtl::MemManager
+    // when there is none; the name is not the original's)
+    mm::mtl::IAllocator* m_allocator;
     ScriptManager* m_manager;  // initialize's
 };
 }  // namespace fw
