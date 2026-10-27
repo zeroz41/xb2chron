@@ -16,7 +16,7 @@ void SoundParam::clear() {
     m_volume = 1.0f;
     m_kind = 0;
     m_transform = 0;
-    pad_3a = 0;
+    m_packKind = 0;
     m_obj = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
 }
 

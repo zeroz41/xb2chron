@@ -178,6 +178,18 @@ public:
         MM_ASSERT(index < size());
         return *at(index);
     }
+    // the last element, then its index check (fixed_vector.h lines 165 and 192: GfFieldMapSe::
+    // updateSeObjDataForActivate inlines them; the names are not the original's)
+    T& back() {
+#line 165 MM_MTL_FIXED_VECTOR_PATH
+        MM_ASSERT(0 < m_size);
+        return element(m_size - 1);
+    }
+    T& element(unsigned long index) {
+#line 192 MM_MTL_FIXED_VECTOR_PATH
+        MM_ASSERT(index < size());
+        return *at(index);
+    }
     const T* at(unsigned long index) const {
         return reinterpret_cast<const T*>(m_buffer + index * sizeof(T));
     }

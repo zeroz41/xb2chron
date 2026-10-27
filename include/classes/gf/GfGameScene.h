@@ -206,7 +206,11 @@ public:
     // 0x2D0: seven positions getEnableSavePos returns the first enabled of (an enable flag, then the position at
     // 0x10, 0x20 bytes each); not laid out yet, as an mm::Vec3 there would make the class 16-aligned and build
     // allocates it 8-aligned
-    unsigned char pad_281[0x19F];
+    unsigned char pad_281[0xF];
+    // the point GfFieldMapSe measures its map sounds' distances from (x, y, z; floats, not an mm::Vec3, see above;
+    // the name is not the original's)
+    float m_listenerPos[3];
+    unsigned char pad_29C[0x184];
     bool m_maskMainMenu;  // isMaskMainMenu's
     bool m_playEvent;  // isPlayEvent's
     unsigned char pad_422[0x216];

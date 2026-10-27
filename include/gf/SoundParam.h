@@ -18,6 +18,13 @@ public:
         m_name = name;
     }
 
+    // a sound by id, the name emptied (GfFieldMapSe::createSeObj inlines it; the name is not the original's)
+    void setId(unsigned int id) {
+        m_id = id;
+        if (m_name.m_nLen != 0) {
+            m_name.clear();
+        }
+    }
     unsigned int m_id;  // a sound by id (GfFieldMapSe's), 0 when by name
     mm::mtl::FixStr<32> m_name;  // a sound by name
     float m_volume;  // clear() makes it 1 (GfFieldMapSe passes its getVolume)
@@ -29,7 +36,9 @@ public:
     unsigned char m_kind;
     // 1 global, 2 object, 3 bone (1.0.0's setupTransformGlobal/Obj/Bone; the name is not the original's)
     unsigned char m_transform;
-    unsigned char pad_3a;  // clear() zeroes it
+    // clear() zeroes it; GfFieldMapSe::createSeObj sets 3 for an FLD_actorSE row with an se_type while the field
+    // has a map sound pack, else 2 (the name is not the original's)
+    unsigned char m_packKind;
     unsigned char pad_3b[0x40 - 0x3b];
     mm::Vec3 m_pos;  // where it plays (GfFieldMapSe's)
     const char* m_bone;  // 1.0.0's setupTransformBone's bone name (the name is not the original's)
