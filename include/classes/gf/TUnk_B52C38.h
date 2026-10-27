@@ -2,6 +2,7 @@
 #define CLASSES_GF_TUNK_B52C38_H
 
 #include "classes/fw/MessageObject.h"
+#include "classes/gf/GfGameManager.h"
 
 namespace gf { class TUnk_B535D0; }
 
@@ -23,7 +24,10 @@ public:
     void fn_710028D4A4();
     void fn_710028D584();
 
-    unsigned char pad_18[0x14];
+    unsigned char pad_18[0x8];
+    // the challenge TUnk_B535D0::fn_7100291E14 passes on and fn_710028D330 looks up a rule for (the name is not
+    // the original's)
+    GfGameManager::BattleChallengeRecord::Key m_key;
     // 5 sends TUnk_B53118 to arena state 3, anything else to 6 (the name is not the original's)
     int m_result;
     unsigned char pad_30[0x7D];

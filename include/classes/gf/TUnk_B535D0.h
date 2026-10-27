@@ -56,6 +56,10 @@ public:
     bool fn_7100291D54();
     bool fn_7100291DD8();
     void fn_7100291E2C(unsigned int frames);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: fn_71002EC674 calls it on
+    // PtrSingleton<TUnk_B535D0>'s instance while fn_7100291D54 holds. What it does: passes m_msgObj's key and the
+    // handle to m_partySetup's fn_710028E5BC.
+    unsigned int fn_7100291E14(GF_OBJ_HANDLE* handle);
 
     // one row of the challenge rules (the arena keeps 48, SDataGame another 48 at 0x11A8CC; fn_7100291E40 copies
     // m_rules[mode] of row id into a record, fn_7100291CC0 sets the flags; the names are not the original's)
@@ -72,6 +76,9 @@ public:
         // row's five rules (copies of a zeroed array) and flags.
         RuleTable() { fn_71001528A0(); }
         void fn_71001528A0();
+        // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code in the neighbour
+        // range: unit_710028EBB0's). A member: TUnk_B535D0::fn_7100291CC0 calls it on SDataGame's table with the arena's m_ids.
+        void fn_7100290510(const ::mm::mtl::FixedVector<unsigned short, 128>& ids);
         RuleRow m_rows[48];
     };
 
@@ -91,6 +98,13 @@ public:
     // SDataGame's rule table once; fn_7100292060 keeps the frame's update info, runs the updater and m_sound, and
     // returns GfGameFlag::getLocal(1, 0xDC0D).
     void fn_7100291CC0();
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (the symbols' GfDataMap::getSDataMap /
+    // setCloudType are wrong donor matches: the callers pass the arena as this). Members: fn_7100290130 and
+    // fn_7100290BAC call fn_7100291CF4 on PtrSingleton<TUnk_B535D0>'s instance, TUnk_B52C38::fn_710028D330 calls
+    // fn_7100291D14 on its arena. What they do: fn_7100291CF4 returns SDataGame's rule table, fn_7100291D14 the
+    // rule for mode of its row id (neither reads the arena).
+    RuleTable* fn_7100291CF4();
+    GfGameManager::BattleChallengeRecord::Rule* fn_7100291D14(unsigned int id, unsigned int mode);
     unsigned int fn_7100292060(const ::fw::UpdateInfo& info);
     // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: the arena states call them.
     // fn_7100291F2C loads the sound resource "dlc_se_btl_chbtl" and finds its pack; fn_7100291FF0 releases both.

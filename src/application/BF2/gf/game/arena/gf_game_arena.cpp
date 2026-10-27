@@ -1,6 +1,8 @@
 // the arena (challenge battle) game mode: its singleton TUnk_B535D0, its state machine and the simple states
 
+#include "classes/gf/GfGameManager.h"
 #include "classes/gf/TUnk_B535D0.h"
+#include "gf/SDataGame.h"
 #include "classes/gf/TUnk_B52C38.h"
 #include "classes/gf/TUnk_28D7B8.h"
 #include "classes/gf/TUnk_28E618.h"
@@ -25,6 +27,9 @@
 #include "classes/fw/SoundResource.h"
 #include "classes/fw/SoundManager.h"
 #include "gf/GfDataSound.h"
+#include "classes/gf/GfDataManager.h"
+#include "classes/gf/GfBdatBtl.h"
+#include "gf/SDataGame.h"
 
 namespace gf {
 
@@ -122,6 +127,10 @@ void TUnk_B535D0::fn_7100291E2C(unsigned int frames) {
     ml::MicroThread::sys()->sleep(frames, true);
 }
 
+unsigned int TUnk_B535D0::fn_7100291E14(GF_OBJ_HANDLE* handle) {
+    return m_partySetup->fn_710028E5BC(m_msgObj->m_key, handle);
+}
+
 void TUnk_B535D0::fn_7100291F2C() {
     fw::SoundResource::SetupInfo info;
     info.pad_8 = 0x80;
@@ -144,6 +153,19 @@ void TUnk_B535D0::fn_7100291FF0() {
         resource->release();
         m_soundResource = nullptr;
     }
+}
+
+void TUnk_B535D0::fn_7100291CC0() {
+    GfDataManager::getDataGame()->m_ruleTable.fn_7100290510(m_ids);
+}
+
+TUnk_B535D0::RuleTable* TUnk_B535D0::fn_7100291CF4() {
+    return &GfDataManager::getDataGame()->m_ruleTable;
+}
+
+GfGameManager::BattleChallengeRecord::Rule* TUnk_B535D0::fn_7100291D14(unsigned int id, unsigned int mode) {
+    RuleRow* rows = GfDataManager::getDataGame()->m_ruleTable.m_rows;
+    return &rows[id].m_rules[mode];
 }
 
 unsigned int TUnk_B535D0::fn_7100292060(const fw::UpdateInfo& info) {

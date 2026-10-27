@@ -146,8 +146,34 @@ public:
         unsigned int m_value2C;
         unsigned int m_value30;  // seconds
         unsigned char pad_34[0x4];
-        mm::mtl::FixedVector<Entry38, 20> m_list38;
-        mm::mtl::FixedVector<EntryE0, 1> m_listE0;
+        // the challenge id and mode the lists are built for (gf_game_arena's fn_7100291E40 builds one on the stack,
+        // TUnk_B52C38 keeps one at +0x20; the names are not the original's)
+        struct Key {
+            unsigned int m_id;
+            unsigned int m_mode;
+            bool m_flag8;  // fn_7100291E40 clears it
+            // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code in unit_710028EBB0's range).
+            // A member: fn_71002908DC and TUnk_28D7B8::fn_710028E5BC call it on a key with a blade ID. What it does:
+            // reads GfBdatBtl's rows for m_id against the blade's weapon rank and weapon type.
+            unsigned int fn_7100290AE4(unsigned int blade) const;
+        };
+        // the two lists gf_game_arena's fn_7100291E40 fills (both helpers take this object; the name is not the
+        // original's)
+        struct Lists {
+            // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (code in unit_710028EBB0's
+            // range). Members: fn_7100291E40 calls both on the record's lists with its key. What they do:
+            // fn_71002907A0 clears m_list38 and fills it from GfBdatBtl's rows for the key's id, fn_71002908DC
+            // the same for m_listE0.
+            void fn_71002907A0(const Key& key);
+            void fn_71002908DC(const Key& key);
+            mm::mtl::FixedVector<Entry38, 20> m_list38;
+            mm::mtl::FixedVector<EntryE0, 1> m_listE0;
+        };
+        // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code in unit_710028EBB0's range). A
+        // member: fn_7100291E40 calls it on the record with the challenge id. What it does: clears the record and
+        // fills its header from GfBdatBtl's row for the id.
+        void fn_7100290130(unsigned int id);
+        Lists m_lists;
         float m_ratios[3];
         Rule m_rule;
         Rule getRule() const { return m_rule; }

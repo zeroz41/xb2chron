@@ -168,7 +168,7 @@ bool TUnk_B5A648::fn_7100334404(unsigned int id) {
     if (record.m_kind == 3) {
         return false;
     }
-    return !record.m_listE0.empty();
+    return !record.m_lists.m_listE0.empty();
 }
 
 bool TUnk_B5A648::fn_71003344C0(unsigned int id) {

@@ -2,6 +2,7 @@
 #define GF_SDATAGAME_H
 
 #include "classes/gf/GfFieldTime.h"
+#include "classes/gf/TUnk_B535D0.h"
 #include "gf/GameFlag.h"
 #include "gf/SDataBlade.h"
 #include "gf/SDataDriver.h"
@@ -100,7 +101,12 @@ public:
     unsigned char m_cameraSide;  // 0x10AE82 (named after its accessors; the name is not the original's)
     // to 0x126D80: SDataGame::SDataGame's last store (a 0x8000-byte clear at 0x11ED80); GfDataStore keeps its
     // SDataOption right after its SDataGame (0x20 + 0x126D80 = getDataOption's 0x126DA0)
-    unsigned char pad_10AE83[0x123F9];
+    unsigned char pad_10AE83[0xFA49];
+    // 0x11A8CC: the challenge battle rule table (TUnk_B535D0::fn_7100291CF4 returns it, fn_7100291D14 a rule of
+    // it, fn_7100291CC0 / fn_7100291E40 read and mark its rows; the constructor runs its fn_71001528A0; the name is
+    // not the original's)
+    TUnk_B535D0::RuleTable m_ruleTable;
+    unsigned char pad_11B4CC[0x1DB0];
     // 0x11D27C: GfDataItem::getItemBox returns it; GfItemBox::fn_71002FA0F4 keeps it at +0x310 and clears its 0x1B04
     // bytes (named after its accessor; the type and name are not the original's)
     unsigned char m_itemBox[0x1B04];
