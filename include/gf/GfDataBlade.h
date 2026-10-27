@@ -4,7 +4,7 @@
 #include "gf/AchievQuest.h"
 #include "mm/mtl/FixedVector.h"
 
-namespace gf { class SDataBlade; enum ActivateType : int; enum CLOUD_SEA : int; }
+namespace gf { class SDataBlade; enum ActivateType : int; enum CLOUD_SEA : int; enum WEATYPE : int; enum WEATHERID : int; }
 namespace gf { struct BladeArtsSlot; }
 namespace gf { struct BladeSkillSlot; }
 namespace gf { struct SDataIdea; }
@@ -23,6 +23,18 @@ struct AchievInfo {
 };
 
 // the blades' game data (functions, by its symbols)
+// a map's record in the game data (0x20 bytes; GfDataBlade's fn_710024E1C8 finds it by m_mapId; GfFieldWeather keeps
+// each map's weather in it). The names are not the original's.
+struct MapEnvData {
+    char m_resource[8];  // GfBdatMaplist::getMaplistresource's name (GfFieldWeather::setupGame copies it in)
+    WEATYPE m_type;  // the map's weather, its id, time and length (GfFieldWeather's fn_7100280F84 saves them)
+    WEATHERID m_id;
+    float m_time;
+    float m_timeMax;
+    unsigned int m_mapId;
+    unsigned int m_cloudSea;  // fn_710024E8F4 stores (cloudSea != 0); GfFieldWeather::getCloudSea reads it
+};
+
 class GfDataBlade {
 public:
     // fills an affinity chart quest from its chart (GfQuestTask::setupOrderTask passes GfDataQuest::getAchievQuest's)
@@ -129,6 +141,21 @@ public:
     // returns for the map; GfGameUtilCloudSea::setInnCloudSea passes (GfGameManager::getMapID(), its cloud sea),
     // GfPlayComPlayerDead::update calls it too.
     static void fn_710024E8F4(unsigned int map, CLOUD_SEA cloudSea);
+    // Placeholder name: new in 3.0.1 (1.0.0's GfFieldWeather::getCloudSea and setupGame search the game data's map
+    // records inline). A member because it lives in GfDataBlade's unit among its functions (no this). What it does:
+    // the game data's record for the map (two 64-record arrays searched by m_mapId, the first in
+    // GfDataManager::getDataGame() + 0x10A53C, each only when GfBdatMaplist::getMaplistresource(map) is set), else a
+    // zeroed function-static record. Callers: GfFieldWeather (getCloudSea, setupGame, createWeather, updateEvent,
+    // updateWeather, applyNowMapWeather), fn_710024E8F4, GfDataStore::initGameData.
+    static MapEnvData* fn_710024E1C8(unsigned int map);
+    // Placeholder name: new in 3.0.1 (1.0.0's GfFieldWeather::setupGame strcpys into the first free record inline).
+    // A member for the same reason as fn_710024E1C8. What it does: a game data map record whose m_mapId is 0 (a free
+    // one); GfFieldWeather::setupGame copies a map's resource name into it and sets its m_mapId.
+    static MapEnvData* fn_710024E0D0();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason as fn_710024E1C8.
+    // What it does: whether the map's record (fn_710024E1C8) has its cloud sea on (m_cloudSea != 0). Caller:
+    // GfFieldWeather::applyNowMapWeather, which hands it on as the cloud sea to set (it tests the whole word).
+    static CLOUD_SEA fn_710024E8D4(unsigned int map);
     // Placeholder name: nothing names it (1.0.0's GfGameUtil::execActivateMercenaryTeamForBlade calls
     // isActivateMercenaryTeam at its place, but 3.0.1 keeps that function at 0x71002398D8, reading another field).
     // A member because it lives in GfDataBlade's unit among its functions (no this). What it does: false for blade 0,
