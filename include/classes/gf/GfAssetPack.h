@@ -10,12 +10,22 @@
 namespace mm { namespace mtl { class IAllocator; } }
 namespace gf { enum GfAssetType : int; }
 namespace gf { enum GfFileIdx : int; }
-namespace gf { class GfAssetFilesInfo; }
 namespace gf { class GfAssetResource; }
 namespace gf { class GF_SLOT_HANDLE; }
 namespace fw { class SoundPack; }
 
 namespace gf {
+// what a pack is made from: GfAssetPack's constructor and GfAssetFiles::setInitializeParam read it (1.0.0's symbols
+// name the class; the field names are not the original's; the size is not proven)
+class GfAssetFilesInfo {
+public:
+    unsigned char pad_0[0x8];
+    GfAssetType m_type;  // the pack's asset type
+    unsigned char pad_c[0x24];
+    const char* m_name;  // the pack's name (its CRC is the pack's key)
+    unsigned char pad_38[0x10];
+};
+
 // an asset's name split from its path: the file name, the folder before it (set), and a third name the constructor
 // clears (1.0.0's symbols name the class and its methods; the field names are not the original's)
 class GfAssetName {
@@ -69,6 +79,10 @@ public:
         }
     }
     bool isExistSameAsset(const GfAssetFiles& other) const;
+    // the type and name from info, the files deleted and the lists emptied (1.0.0's symbols name it)
+    void setInitializeParam(const GfAssetFilesInfo& info);
+    // the file's path, an empty name for a file the pack does not have (1.0.0's symbols name it)
+    const mm::mtl::FixStr<128>& getFileName(GfFileIdx idx) const;
 
     GfAssetType m_type;
     unsigned int m_nameHash;  // m_name's CRC (setInitializeParam)
@@ -116,6 +130,11 @@ public:
     // drops the pack's reference to a resource; true when the pack held it (GfAssetManager::releaseRefResource stops
     // at the first such pack)
     bool releaseRefResource(void* resource);
+    // the resource loaded for a file, looked up by its index, else through the file map's replacement index
+    // (1.0.0's symbols name it)
+    GfAssetResource* getResource(GfFileIdx file) const;
+    bool isLoaded(mm::mtl::FixStr<128>* name) const;
+    void releaseEmptySlot();
 
     unsigned char pad_c[0x4];
     AssetPackValue m_value;  // calcAssetPackValue's for the pack's name and type
@@ -126,9 +145,12 @@ public:
     };
     mm::mtl::FixedVector<Resource, 16> m_resources;  // releaseResource releases them
     GfAssetFiles m_files;
-    unsigned char pad_220[0x10];
+    unsigned char pad_220[0x8];
+    bool m_enterLocked;  // AssetPackInfo::lockEnterRersource sets it (the name is not the original's)
+    unsigned char pad_229[0x7];
     GF_SLOT_HANDLE* m_slotHandle;  // -1 while it has none
-    unsigned char pad_238[0x3];
+    unsigned char pad_238[0x2];
+    bool m_full;  // AssetPackInfo::isFullResource asks whether any pack has it (the name is not the original's)
     bool m_timeout;  // setTimeout sets it
     unsigned char pad_23c[0x18];
     // the AssetPackInfos holding the pack (AssetPackInfo's destructor drops one); a used pack is not cached (the
@@ -137,11 +159,16 @@ public:
     unsigned char pad_258[0x24];
     // updateCacheCount counts the updates the pack goes unused, up to 99 (the name is not the original's)
     unsigned int m_cacheCount;
-    unsigned char pad_280[0x28];
+    // fn_71001B2904 counts the updates the pack goes with no reference besides its users', up to 99 (the name is not
+    // the original's)
+    unsigned int m_refCacheCount;
+    unsigned char pad_284[0x24];
     fw::SoundPack* m_sePack;  // createSoundPack's; GfSound::destroyObjSePack destroys it
     int m_sePackId;  // -1 for a pack with no sound pack
     int m_sePackRef;  // destroySoundPack drops one, the last destroys the sound pack
-    unsigned char pad_2b8[0x8];
+    // AssetPackInfo::lockEnterRersource sets it with m_enterLocked (the name is not the original's)
+    bool m_resourceLocked;
+    unsigned char pad_2b9[0x7];
 };
 }  // namespace gf
 

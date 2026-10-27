@@ -74,6 +74,8 @@ public:
     static void setExtendResource(GF_ASSET_HANDLE* handle, unsigned int index, GfExtendResource* resource);
     static void loadStart(GfAssetPack* pack, mm::mtl::IAllocator* allocator);
     static void releaseSlotHandle(GF_SLOT_HANDLE* handle);
+    // tells the listeners about a pack AssetPackInfo's destructor lets go of (1.0.0's symbols name it)
+    static void callEventAssetPack(GfAssetPack* pack);
     static GfSlotMapping* getSlotMapping();
     // an asset's loaded file, none while it is not loaded
     static GfAssetResource* getResource(GF_ASSET_HANDLE* handle, GfFileIdx file, GfAssetType type);

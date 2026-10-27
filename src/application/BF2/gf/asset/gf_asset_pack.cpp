@@ -1,3 +1,6 @@
+#include "gf/AssetPackInfo.h"
+#include "classes/gf/GfAssetManager.h"
+#include "classes/gf/GfAssetPack.h"
 #include "gf/GfSlotMapping.h"
 #include "gf/AssetPackInfo.h"
 #include "classes/gf/GfAssetPack.h"
@@ -36,6 +39,92 @@ GfAssetType GfAssetPack::getAssetType() const {
 }
 
 void GfAssetPack::dispAssetLogForDebug() {}
+
+AssetPackInfo::~AssetPackInfo() {
+    for (GfAssetPack*& slot : m_packs) {
+        GfAssetPack* pack = slot;
+        --pack->m_useCount;
+        slot = nullptr;
+        GfAssetManager::callEventAssetPack(pack);
+        if (pack != nullptr) {
+            pack->release();
+        }
+    }
+}
+
+bool AssetPackInfo::getSlotHandle(mm::mtl::FixedVector<GF_SLOT_HANDLE*, 88>& handles) const {
+    for (GfAssetPack* pack : m_packs) {
+        GF_SLOT_HANDLE* handle = pack->m_slotHandle;
+        if (handle != reinterpret_cast<GF_SLOT_HANDLE*>(-1)) {
+            handles.push_back(handle);
+        }
+    }
+    return !handles.empty();
+}
+
+void AssetPackInfo::releaseEmptySlot() {
+    for (GfAssetPack** it = m_packs.begin(); it != m_packs.end(); ++it) {
+        (*it)->releaseEmptySlot();
+    }
+}
+
+void AssetPackInfo::fn_71001B2418() {
+    m_reload = false;
+    for (GfAssetPack* pack : m_packs) {
+        (void)pack;
+    }
+}
+
+void AssetPackInfo::fn_71001B2904() {
+    for (GfAssetPack** it = m_packs.begin(); it != m_packs.end(); ++it) {
+        GfAssetPack* pack = *it;
+        int users = pack->m_useCount;
+        if (pack->m_RefCount - users == 1) {
+            if (pack->m_refCacheCount < 99) {
+                pack->m_refCacheCount++;
+            }
+        } else if (pack->m_refCacheCount != 0) {
+            pack->m_refCacheCount = 0;
+        }
+    }
+}
+
+bool AssetPackInfo::fn_71001B29DC(const GfAssetPack* pack) const {
+    if (pack == nullptr) {
+        return false;
+    }
+    for (GfAssetPack* const* it = m_packs.begin(); it != m_packs.end(); ++it) {
+        if (*it == pack) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool AssetPackInfo::fn_71001B3040() const {
+    for (GfAssetPack* pack : m_packs) {
+        if (!pack->isPreSizeSizeValid()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool AssetPackInfo::isFullResource() const {
+    for (GfAssetPack* pack : m_packs) {
+        if (pack->m_full) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void AssetPackInfo::lockEnterRersource() {
+    for (GfAssetPack* pack : m_packs) {
+        pack->m_resourceLocked = true;
+        pack->m_enterLocked = true;
+    }
+}
 
 bool GfAssetPack::isCached() const {
     if (GfAssetManager::getSlotMapping()->isRequest(this)) {
@@ -132,6 +221,25 @@ GfAssetPack::~GfAssetPack() {
 
 bool GfAssetPack::isExistSameAsset(const GfAssetPack& other) const {
     return m_files.isExistSameAsset(other.m_files);
+}
+
+void GfAssetFiles::setInitializeParam(const GfAssetFilesInfo& info) {
+    m_type = info.m_type;
+    if (info.m_name != nullptr) {
+        m_name = info.m_name;
+        m_nameHash = mm::mtl::hashStrCrc(info.m_name);
+    } else {
+        m_name = "";
+        m_nameHash = 0;
+    }
+    for (AssetFile*& file : m_files) {
+        if (file != nullptr) {
+            delete file;
+            file = nullptr;
+        }
+    }
+    m_fileMap.clear();
+    m_files.clear();
 }
 
 }  // namespace gf
