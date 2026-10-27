@@ -9,6 +9,8 @@ namespace gmk {
 class ScenarioFlagCond {
 public:
     ScenarioFlagCond() : m_scenarioFlagMin(0), m_scenarioFlagMax(0) {}
+    // the two values as they are (the gimmick sheets' BdatInfo::create read the row's ScenarioFlagMin/Max so)
+    ScenarioFlagCond(unsigned short min, unsigned short max) : m_scenarioFlagMin(min), m_scenarioFlagMax(max) {}
     ScenarioFlagCond(const CBdatWrapper& bdat, int row, const char* prefix);
     bool isMatch() const;
     // the row's <prefix>ScenarioFlagMin and ScenarioFlagMax, kept when min <= max (the constructor reads those

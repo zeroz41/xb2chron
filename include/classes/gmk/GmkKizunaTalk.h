@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKKIZUNATALK_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "plugin/Bdat.h"
 namespace gmk { class GmkKizunaTalkGob; }
 
 namespace gf { class GF_OBJ_HANDLE; }
@@ -13,7 +14,16 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
-        unsigned char pad_0[0x6];
+        // inline: TGmkList::initGmkBdatInfo has no call of it
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+            m_conditionId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "ConditionID", row, 2);
+            m_title = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Title", row, 2);
+            m_evCondition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "EVCondition", row, 2);
+        }
+        bool isCondMatched() const;
+        unsigned short m_conditionId;  // the row's "ConditionID" (a GfGameCond id; 0: none)
+        unsigned short m_title;        // the row's "Title"
+        unsigned short m_evCondition;  // the row's "EVCondition"
     };
     virtual ~GmkKizunaTalk();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

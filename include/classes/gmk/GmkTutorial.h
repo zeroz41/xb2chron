@@ -2,6 +2,9 @@
 #define CLASSES_GMK_GMKTUTORIAL_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/ScenarioFlagCond.h"
+#include "classes/gmk/QuestFlagCond.h"
+#include "plugin/Bdat.h"
 
 namespace gmk {
 // table 0x7100B6D308
@@ -10,7 +13,11 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
-        unsigned char pad_0[0xa];
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
+        unsigned char m_sysMultiFlag;  // the row's "SysMultiFlag"
+        unsigned char pad_1;
+        ScenarioFlagCond m_scenarioFlag;  // the row's ScenarioFlagMin (up to 0xFFFF when set)
+        QuestFlagCond m_questFlag;        // the row's QuestFlag/Min/Max
     };
     virtual ~GmkTutorial();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

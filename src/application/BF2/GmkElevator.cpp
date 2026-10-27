@@ -28,6 +28,11 @@
 #include "classes/gmk/GmkSquadLeader.h"
 #include "classes/gmk/GmkSquadMember.h"
 #include "classes/gmk/GmkTargetPoint.h"
+#include "classes/gmk/GmkJump.h"
+#include "classes/gf/GfGameCond.h"
+#include "classes/gf/GfDataBdat.h"
+#include "gf/GfItemUtil.h"
+#include "classes/gmk/GmkTutorial.h"
 #include "classes/gmk/TUnk_B6D590.h"
 #include "classes/gmk/TUnk_B6D5F8.h"
 #include "classes/gmk/TUnk_B6D660.h"
@@ -97,6 +102,10 @@
 #include "classes/gmk/GmkEffect.h"
 #include "classes/gmk/GmkElevator.h"
 #include "classes/gmk/GmkJump.h"
+#include "classes/gf/GfGameCond.h"
+#include "classes/gf/GfDataBdat.h"
+#include "gf/GfItemUtil.h"
+#include "classes/gmk/GmkTutorial.h"
 #include "classes/gmk/GmkMapGimmick.h"
 #include "classes/gmk/GmkRoute.h"
 #include "classes/gmk/GmkRoutePoint.h"
@@ -660,6 +669,125 @@ GmkLandmarkManager::~GmkLandmarkManager() {
 
 GmkSquadManager::~GmkSquadManager() {
     clearGmkSquads();
+}
+
+bool GmkTbox::BdatInfo::isPopCondMatchedExceptDist() const {
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return false;
+    }
+    return true;
+}
+
+bool GmkLandmark::BdatInfo::isCondMatched() const {
+    if (m_cndId != 0 && !gf::GfGameCond::isGameCond(m_cndId)) {
+        return false;
+    }
+    return true;
+}
+
+bool GmkSalvage::BdatInfo::isCondMatched() const {
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return false;
+    }
+    return true;
+}
+
+bool GmkKizunaTalk::BdatInfo::isCondMatched() const {
+    if (m_conditionId != 0 && !gf::GfGameCond::isGameCond(m_conditionId)) {
+        return false;
+    }
+    return true;
+}
+
+bool GmkJump::BdatInfo::isPopCondMatched() const {
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return false;
+    }
+    return true;
+}
+
+void GmkLandmark::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+    m_nameId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "MSGID", row, 2);
+    m_category = (unsigned char)Bdat::getValCheck(bdat.m_fp, "category", row, 1);
+    m_cndId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "cndID", row, 2);
+    m_noTelop = Bdat::getFlagVal(bdat.m_fp, "flag", row, "noTelop") != 0;
+    if (m_nameId != 0) {
+        m_name = Bdat::getMSText(gf::GfDataBdat::getFP(0x1B3), m_nameId);
+    }
+}
+
+void GmkEvent::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+    m_scenarioFlag = ScenarioFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMin", row, 2),
+                                      (unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMax", row, 2));
+    m_questFlag = QuestFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "QuestFlag", row, 2),
+                                (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMin", row, 1),
+                                (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMax", row, 1));
+    m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Condition", row, 2);
+    m_eventId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "EventID", row, 2);
+    m_iconBdatId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Icon", row, 2);
+}
+
+void GmkFieldLock::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+    m_scenarioFlag = ScenarioFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMin", row, 2),
+                                      (unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMax", row, 2));
+    m_questFlag = QuestFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "QuestFlag", row, 2),
+                                (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMin", row, 1),
+                                (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMax", row, 1));
+    m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Condition", row, 2);
+    m_rockType = (unsigned char)Bdat::getValCheck(bdat.m_fp, "rockTYPE", row, 1);
+    m_txtId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "txtID", row, 2);
+}
+
+void GmkPrecious::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+    m_itmId = 0;
+    m_itmId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "itmID", row, 2);
+    gf::GfItemUtil::isPrecious(m_itmId);
+    m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Condition", row, 2);
+    m_questId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "QuestID", row, 2);
+    m_scenarioFlag = ScenarioFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMin", row, 2),
+                                      (unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMax", row, 2));
+    m_questFlag = QuestFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "QuestFlag", row, 2),
+                                (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMin", row, 1),
+                                (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMax", row, 1));
+    m_popTime.m_time = (unsigned int)Bdat::getValCheck(bdat.m_fp, "POP_TIME", row, 3);
+    m_popWeather.m_weather = (unsigned char)Bdat::getValCheck(bdat.m_fp, "popWeather", row, 1);
+}
+
+void GmkTutorial::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+    ScenarioFlagCond scenarioFlag((unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMin", row, 2), 0xFFFF);
+    if (scenarioFlag.m_scenarioFlagMin != 0) {
+        m_scenarioFlag = scenarioFlag;
+    }
+    m_questFlag = QuestFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "QuestFlag", row, 2),
+                                (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMin", row, 1),
+                                (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMax", row, 1));
+    m_sysMultiFlag = (unsigned char)Bdat::getValCheck(bdat.m_fp, "SysMultiFlag", row, 1);
+}
+
+void GmkElevator::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+    m_opCondition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "OP_Condition", row, 2);
+    m_callnameRadius = (unsigned short)Bdat::getValCheck(bdat.m_fp, "callnameRadius", row, 2);
+    m_liftnameRadius = (unsigned short)Bdat::getValCheck(bdat.m_fp, "liftnameRadius", row, 2);
+    m_liftLod = (unsigned short)Bdat::getValCheck(bdat.m_fp, "LIFTLOD", row, 2);
+    m_shtALod = (unsigned short)Bdat::getValCheck(bdat.m_fp, "shtALOD", row, 2);
+    m_shtBLod = (unsigned short)Bdat::getValCheck(bdat.m_fp, "shtBLOD", row, 2);
+    m_switchALod = (unsigned short)Bdat::getValCheck(bdat.m_fp, "switchALOD", row, 2);
+    m_switchBLod = (unsigned short)Bdat::getValCheck(bdat.m_fp, "switchBLOD", row, 2);
+    m_switchSe = (unsigned short)Bdat::getValCheck(bdat.m_fp, "switchSE", row, 2);
+    m_shutterSe = (unsigned short)Bdat::getValCheck(bdat.m_fp, "shutterSE", row, 2);
+    m_liftStartSe = (unsigned short)Bdat::getValCheck(bdat.m_fp, "LiftStartSE", row, 2);
+    m_liftLoopSe = (unsigned short)Bdat::getValCheck(bdat.m_fp, "LiftLoopSE", row, 2);
+    m_liftStopSe = (unsigned short)Bdat::getValCheck(bdat.m_fp, "LiftStopSE", row, 2);
+    m_liftMinVolDist = (unsigned char)Bdat::getValCheck(bdat.m_fp, "LiftMinVolDist", row, 1);
+    m_liftMaxVolDist = (unsigned char)Bdat::getValCheck(bdat.m_fp, "LiftMaxVolDist", row, 1);
+    m_liftReverse = Bdat::getFlagVal(bdat.m_fp, "flag", row, "lift_reverse") != 0;
+    Bdat::uVal liftspeed;
+    liftspeed.uint = (unsigned int)Bdat::getValCheck(bdat.m_fp, "call_liftspeed", row, 8);
+    m_callLiftspeed = liftspeed.real;
+    m_missMsgId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "missMSG_ID", row, 2);
+    m_elevatorNextwait = (short)Bdat::getValCheck(bdat.m_fp, "elevator_nextwait", row, 5);
+    m_liftAMapJumpId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "liftAMapJumpId", row, 2);
+    m_liftBMapJumpId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "liftBMapJumpId", row, 2);
 }
 
 }  // namespace gmk

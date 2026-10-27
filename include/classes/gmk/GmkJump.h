@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKJUMP_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "plugin/Bdat.h"
 #include "mm/Vec3NA.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
@@ -15,11 +16,19 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
-        unsigned char pad_0[0x2];
+        // inline: TGmkList::initGmkBdatInfo has no call of it
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+            m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Condition", row, 2);
+            m_type = (unsigned char)Bdat::getValCheck(bdat.m_fp, "jumpType", row, 1);
+            m_nameRadius = (unsigned short)Bdat::getValCheck(bdat.m_fp, "nameRadius", row, 2);
+        }
+        bool isPopCondMatched() const;
+        unsigned short m_condition;  // the row's "Condition" (a GfGameCond id; 0: none)
         // which message GfFieldJump::onFsSucceeded sends (0: MsgPcFieldNotifyWallJump, 1: MsgPcFieldNotifyBigJump, which also plays
         // fn_71005A7770's effect; the name is not the original's)
-        unsigned char m_type;
-        unsigned char pad_3[0x3];
+        unsigned char m_type;  // the row's "jumpType"
+        unsigned char pad_3;
+        unsigned short m_nameRadius;  // the row's "nameRadius"
     };
     // what AGmkBase::m_data points at for a jump gimmick (GfFieldJump::onFsSucceeded reads it; the struct and field
     // names are not the original's)

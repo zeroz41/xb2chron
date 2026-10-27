@@ -15,7 +15,8 @@ public:
     class BdatInfo {
     public:
         bool isPopCondMatchedExceptDist() const;
-        unsigned char pad_0[0x10];
+        unsigned short m_condition;  // the row's "Condition" (a GfGameCond id; 0: none)
+        unsigned char pad_2[0xE];
     };
     virtual ~GmkTbox();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

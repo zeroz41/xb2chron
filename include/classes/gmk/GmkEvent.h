@@ -2,6 +2,9 @@
 #define CLASSES_GMK_GMKEVENT_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/ScenarioFlagCond.h"
+#include "classes/gmk/QuestFlagCond.h"
+#include "plugin/Bdat.h"
 namespace gmk { class GmkEventGob; }
 
 namespace gmk {
@@ -11,11 +14,14 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
-        unsigned char pad_0[0x4];
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
+        unsigned short m_condition;  // the row's "Condition" (a GfGameCond id; 0: none)
+        unsigned short m_eventId;    // the row's "EventID"
         // 0x4: the quest-target icon's id LocatorEventPreorder::create gives its locator (the name is not the
         // original's)
-        unsigned short m_iconBdatId;
-        unsigned char pad_6[0x8];
+        unsigned short m_iconBdatId;  // the row's "Icon"
+        ScenarioFlagCond m_scenarioFlag;  // the row's ScenarioFlagMin/Max
+        QuestFlagCond m_questFlag;        // the row's QuestFlag/Min/Max
     };
     virtual ~GmkEvent();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

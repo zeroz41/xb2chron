@@ -2,6 +2,11 @@
 #define CLASSES_GMK_GMKPRECIOUS_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/ScenarioFlagCond.h"
+#include "classes/gmk/QuestFlagCond.h"
+#include "plugin/Bdat.h"
+#include "classes/gmk/TimeCond.h"
+#include "classes/gmk/WeatherCond.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
@@ -14,11 +19,18 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
         bool isPopCondMatched() const;
         // the precious item's id: LocatorPrecious::onTraverse compares it with its id, which create() looks up in
         // the gimmick sheets' "itmID" column. The name is not the original's.
         unsigned short m_itmId;
-        unsigned char pad_2[0x2e];
+        unsigned short m_condition;  // the row's "Condition" (a GfGameCond id; 0: none)
+        unsigned short m_questId;    // the row's "QuestID"
+        ScenarioFlagCond m_scenarioFlag;  // the row's ScenarioFlagMin/Max
+        QuestFlagCond m_questFlag;        // the row's QuestFlag/Min/Max
+        unsigned char pad_e[0x2];
+        TimeCond m_popTime;        // the row's "POP_TIME"
+        WeatherCond m_popWeather;  // the row's "popWeather"
     };
     virtual ~GmkPrecious();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

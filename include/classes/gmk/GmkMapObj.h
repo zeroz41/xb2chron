@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKMAPOBJ_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "plugin/Bdat.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
@@ -14,7 +15,16 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
-        unsigned char pad_0[0x14];
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
+        unsigned short m_condition;  // the row's "Condition" (a GfGameCond id; 0: none)
+        unsigned char m_priority;    // the row's "Priority" (when the sheet has that column)
+        unsigned char pad_3;
+        // squared distances from the row's Visible_XZ, Visible_Y, Invisible_XZ, Invisible_Y (an Invisible one
+        // at most its Visible one becomes Visible + 1)
+        float m_visibleXZSq;
+        float m_visibleYSq;
+        float m_invisibleXZSq;
+        float m_invisibleYSq;
     };
     virtual ~GmkMapObj();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

@@ -13,6 +13,7 @@ enum GmkType : int {};
 
 namespace gmk {
 class IGmkList;
+class LvlbInfo;
 // table 0x7100B6BE18
 class AGmkBase {
 public:
@@ -40,7 +41,7 @@ public:
     const mm::Vec3* m_pos;
     // its INFO entry in the gimmick section, none when its list has none (TGmkList::createGmk; the destructor clears
     // it; the name is not the original's)
-    const unsigned char* m_info;
+    const LvlbInfo* m_info;
     // the gimmick section's version: create copies it with m_data (one 8-byte copy of 0x20..0x27), dispose clears
     // it (the name is not the original's)
     unsigned int m_version;

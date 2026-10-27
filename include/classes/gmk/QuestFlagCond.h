@@ -9,6 +9,9 @@ namespace gmk {
 class QuestFlagCond {
 public:
     QuestFlagCond() : m_questFlag(0), m_questFlagMin(0), m_questFlagMax(0) {}
+    // the three values as they are (the gimmick sheets' BdatInfo::create read the row's QuestFlag/Min/Max so)
+    QuestFlagCond(unsigned short flag, unsigned char min, unsigned char max)
+        : m_questFlag(flag), m_questFlagMin(min), m_questFlagMax(max) {}
     QuestFlagCond(const CBdatWrapper& bdat, int row, const char* prefix);
     bool isMatch() const;
     // the row's <prefix>QuestFlag, QuestFlagMin and QuestFlagMax (the constructor reads those columns; the names

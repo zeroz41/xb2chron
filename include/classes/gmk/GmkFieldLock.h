@@ -2,6 +2,9 @@
 #define CLASSES_GMK_GMKFIELDLOCK_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/ScenarioFlagCond.h"
+#include "classes/gmk/QuestFlagCond.h"
+#include "plugin/Bdat.h"
 namespace gmk { class GmkFieldLockGob; }
 
 namespace gmk {
@@ -11,7 +14,13 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
-        unsigned char pad_0[0xe];
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
+        unsigned short m_condition;  // the row's "Condition" (a GfGameCond id; 0: none)
+        unsigned char m_rockType;    // the row's "rockTYPE"
+        unsigned char pad_3;
+        unsigned short m_txtId;      // the row's "txtID"
+        ScenarioFlagCond m_scenarioFlag;  // the row's ScenarioFlagMin/Max
+        QuestFlagCond m_questFlag;        // the row's QuestFlag/Min/Max
     };
     virtual ~GmkFieldLock();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

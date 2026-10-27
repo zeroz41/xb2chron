@@ -7,6 +7,7 @@
 #include "classes/gmk/GmkAccManager.h"
 #include "classes/gmk/GmkGobEventListener.h"
 #include "classes/gmk/IGmkList.h"
+#include "classes/gmk/Lvlb.h"
 #include "mm/mtl/Vector.h"
 #include "classes/ml/Scn.h"
 #include "plugin/Bdat.h"
@@ -47,6 +48,9 @@ public:
     virtual void onResetUpdateGmkIndex();  // slot 18
     // the sequences update runs: wait for the resource, then update a share of the gimmicks each frame
     void seqWaitResourceLoaded(float dt);
+    // finds the BDAT row whose "name" is the gimmick's INFO name and fills bdatInfo from it (createGmk calls it
+    // for each gimmick)
+    bool initGmkBdatInfo(T1& bdatInfo, int& bdatId, const gmk::AGmkBase& gmk);
     void seqUpdate(float dt);
 
     unsigned char pad_8[0x8];
@@ -269,6 +273,36 @@ void TGmkList<T0, T1, T2, T3, T4>::seqUpdate(float dt) {
         }
         m_gmks[m_updateGmkIndex].update(frameDt);
     }
+}
+
+template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
+bool TGmkList<T0, T1, T2, T3, T4>::initGmkBdatInfo(T1& bdatInfo, int& bdatId, const gmk::AGmkBase& gmk) {
+    if (m_createInfo.m_bdatName.m_nLen == 0) {
+        return false;
+    }
+    const char* name = gmk.m_info->m_name;
+    if (name == nullptr || *name == '\0') {
+        return false;
+    }
+    unsigned char* fp = getBindedBdatFp();
+    int top = Bdat::getIdTop(fp);
+    int count = Bdat::getIdCount(fp);
+    int found = -1;
+    for (int id = top; id < top + count; ++id) {
+        const char* rowName = (const char*)Bdat::getValCheck(fp, "name", id, 7);
+        if (rowName == nullptr || ::strcmp(rowName, name) != 0) {
+            continue;
+        }
+        found = id;
+        break;
+    }
+    if (found >= 0) {
+        bdatId = found;
+        // T1::create takes a CBdatWrapper (made from the table) or the table itself (GmkTbox, GmkGrave)
+        bdatInfo.create(getBindedBdatFp(), found, gmk);
+        return true;
+    }
+    return false;
 }
 
 }  // namespace gmk

@@ -3,6 +3,7 @@
 
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/IGmkPhantomEventListener.h"
+#include "plugin/Bdat.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
@@ -20,10 +21,37 @@ public:
 // table 0x7100B6CE10; base at 0x48 unknown (TUnk_B6CE88)
 class GmkElevator : public ::gmk::AGmkBase, public TUnk_B6CE88 {
 public:
-    // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
+    // its size: the element size of its Vector<BdatInfo>::resize (0x7100617494); field names from the BDAT columns
+    // create reads (the names are not the original's); the defaults are what Vector<BdatInfo>::resize constructs
     class BdatInfo {
     public:
-        unsigned char pad_0[0x30];
+        // user-provided: Vector<BdatInfo>::resize stores the defaults only (no zeroing of the pads first)
+        BdatInfo() {}
+        // fills it from the gimmick's BDAT row (0x71005AC88C)
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
+        unsigned short m_opCondition = 0;
+        unsigned short m_callnameRadius = 10;
+        unsigned short m_liftnameRadius = 5;
+        unsigned short m_liftLod = 0;
+        unsigned short m_shtALod = 0;
+        unsigned short m_shtBLod = 0;
+        unsigned short m_switchALod = 0;
+        unsigned short m_switchBLod = 0;
+        unsigned short m_switchSe = 0;
+        unsigned short m_shutterSe = 0;
+        unsigned short m_liftStartSe = 0;
+        unsigned short m_liftLoopSe = 0;
+        unsigned short m_liftStopSe = 0;
+        unsigned char m_liftMinVolDist = 0;
+        unsigned char m_liftMaxVolDist = 0;
+        bool m_liftReverse = false;  // flag "lift_reverse"
+        unsigned char pad_1d[0x3];
+        float m_callLiftspeed = 2.0f;
+        unsigned short m_missMsgId = 0;
+        unsigned char pad_26[0x2];
+        float m_elevatorNextwait = 0.0f;
+        unsigned short m_liftAMapJumpId = 0;
+        unsigned short m_liftBMapJumpId = 0;
     };
     virtual ~GmkElevator();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

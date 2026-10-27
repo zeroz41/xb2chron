@@ -3,6 +3,7 @@
 
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/IGmkPhantomEventListener.h"
+#include "plugin/Bdat.h"
 namespace gmk { class GmkLandmarkGob; }
 
 namespace gmk {
@@ -18,11 +19,17 @@ public:
     // its size: the element size of Vector<BdatInfo>::resize 0x71005F51B8 (whose constructor sets its fields; their defaults are not written yet)
     class BdatInfo {
     public:
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
         bool isCondMatched() const;
-        // the landmark's name in BDAT 0x1B3's messages (GfFieldManager::getLandmarkNameId hands it out; the name is
+        // the row's "MSGID": the landmark's name in BDAT 0x1B3's messages (GfFieldManager::getLandmarkNameId hands it out; the name is
         // not the original's)
         unsigned short m_nameId;
-        unsigned char pad_2[0xE];
+        unsigned char m_category;  // the row's "category"
+        unsigned char pad_3;
+        unsigned short m_cndId;  // the row's "cndID" (a GfGameCond id; 0: none)
+        bool m_noTelop;  // the row's "flag" bit "noTelop"
+        unsigned char pad_7;
+        const char* m_name;  // m_nameId's text in BDAT 0x1B3 (set when m_nameId is nonzero)
     };
     virtual ~GmkLandmark();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
