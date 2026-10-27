@@ -93,18 +93,20 @@ public:
         }
     }
 
-    // the node of key, none without one
+    // the node of key, none without one (each step a `continue`: GfBdatUniqueMotion::getCharaInfo keeps the guard and
+    // latch compares apart only with this block order)
     node* find(const key_type& key) const {
         node* n = m_root;
         while (n != &m_sentinel) {
-            if (!(Traits::key(n->value) < key)) {
-                if (!(key < Traits::key(n->value))) {
-                    return n;
-                }
-                n = n->left;
-            } else {
+            if (Traits::key(n->value) < key) {
                 n = n->right;
+                continue;
             }
+            if (key < Traits::key(n->value)) {
+                n = n->left;
+                continue;
+            }
+            return n;
         }
         return nullptr;
     }
