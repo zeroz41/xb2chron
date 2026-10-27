@@ -5,12 +5,15 @@
 #include "classes/gf/GfGmkLocatorAtlas.h"
 #include "gf/GfMenuSequence.h"
 #include "mm/Aabb.h"
+#include "mm/Col3.h"
 #include "mm/Pnt.h"
+#include "mm/Vec2.h"
 #include "mm/mtl/Array.h"
 #include "mm/mtl/FixedArray.h"
 #include "mm/mtl/FixedVector.h"
 
-namespace ui { class UIListInfoBase; class UISelectObjList; class UICtrlCursorSelect; }
+namespace gmk { class AGmkBase; }
+namespace ui { class UIObjectAcc; class UIListInfoBase; class UISelectObjList; class UICtrlCursorSelect; }
 
 namespace gf {
 class GfMenuIDList;
@@ -43,6 +46,38 @@ public:
     // the point's name only then (else GfDataBdat 0xF5's row 0x67C). isEnableJump inlines it.
     static bool fn_7100495A98(unsigned int id);
     static bool isEnterMap(unsigned int mapId);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its code sits in
+    // gf_menu_obj_world_map's .text right after initialize, which calls it (as WorldMapListener::reciveEvent does).
+    // What it does: clears the list, then adds each map of the selectable-map table whose chkMapCond holds: maps 52
+    // and 53 when add-on menu layer 3 is usable (GfMenuObjUtil::fn_710048FD30(3)), else 3-6, 9-16, 18, 20 and 21.
+    static void fn_710049761C(GfMenuIDList* list);
+    static void refreshMapSelect(ui::UIObjectAcc& acc, GfMenuIDList* list, ui::UISelectObjList* selectList, int index);
+    static void setupPointSelect(ui::UIObjectAcc& acc, GfMenuZoneMapList* list);
+    static bool chkMapCond(unsigned int mapId, mm::Pnt<short>* pos);
+    static void setupMapSelect(ui::UIObjectAcc& acc, GfMenuIDList* list);
+    static void refreshPointSelect(ui::UIObjectAcc& acc, GfMenuZoneMapList* list, ui::UISelectObjList* selectList,
+                                   unsigned int mapId);
+    static void refreshPointText(ui::UIObjectAcc& acc, GfMenuZoneMapList* list, ui::UISelectObjList* selectList);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it reads m_handle and m_iconFilter
+    // through `this`. What it does: shows each of the 9 first icons of nd_lay_icon_node_tbl under "LAY_zonemap" when
+    // its m_iconFilter bit is set; with fadeFirst the first (LAY_icon_mapjump) stays shown and gets alpha 1 or 0
+    // instead. ZoneMapListener::reciveEvent, IconFilterListener::reciveEvent and seqGimik call it.
+    void fn_710049D2A4(bool fadeFirst);
+    // the floor shown: the zone list's selected map, or in group mode the selected point's "menuMapImage" (u16)
+    unsigned int getFloor();
+    // a copy of LAY_icon's IMG_zoneicon under the icon type's layout (nd_lay_icon_node_tbl), shown at pos with the
+    // type's image, added to icons; 0 when icons is full
+    static unsigned int setupIconTableSub(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 256>& icons,
+                                          unsigned int type, mm::Pnt<short> pos, mm::Vec2 scale);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its code sits in
+    // gf_menu_obj_world_map's .text among GfMenuObjWorldMap's functions (after getFieldSkillFromGimmik). What it does:
+    // true for a gimmick whose getGmkType() is 3 or 4 and whose bound bdat row's "ShopID" column (u16) is 222;
+    // GfMenuMapInfo::postUpdate and fn_71003601DC pass it gimmicks.
+    static bool fn_710049FB94(const gmk::AGmkBase* gmk);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its code sits in
+    // gf_menu_obj_world_map's .text after setupIconTableSub. What it does: returns entry id of a guarded function-static
+    // table of two colours, (1, 1, 1) and (0.78, 1, 0), entry 0 for an id past 1; GfMenuObjMinimap2::update calls it.
+    static mm::Col3 fn_710049FD30(unsigned int id);
     static bool isEnableJump(const MenuZoneMapInfo& info);
     static void getFloorAABB(unsigned int mapId, unsigned int floor, mm::Aabb& aabb, mm::Pnt<short>& center);
     int getTotalFieldSkillLv(unsigned int fieldSkill);

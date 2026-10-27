@@ -14,6 +14,9 @@
 #include "classes/gf/GfMenuIDList.h"
 #include "classes/gf/GfMenuLocation.h"
 #include "classes/gf/GfMenuZoneMapList.h"
+#include "classes/gf/GfMenuZoneMapAdapter.h"
+#include "classes/gf/GfMenuWorldMapAdapter.h"
+#include "classes/gmk/AGmkBase.h"
 #include "classes/ui/UICtrlCursorSelect.h"
 #include "classes/ui/UIListInfoBase.h"
 #include "classes/ui/UIObjectAcc.h"
@@ -27,6 +30,23 @@ namespace gf {
 bool GfMenuObjWorldMap::fn_7100495A98(unsigned int id) {
     return GfGameFlag::getLocal(1, id + 51161) == 1;
 }
+
+// the world map's icon layouts, in m_iconFilter's bit order (the symbols name it)
+const char* nd_lay_icon_node_tbl[10] = {
+    "LAY_icon_mapjump", "LAY_icon_area",     "LAY_icon_collect", "LAY_icon_kizuna",      "LAY_icon_salvage",
+    "LAY_icon_shop",    "LAY_icon_scenario", "LAY_icon_quest",   "LAY_icon_field_skill", "LAY_icon_player",
+};
+
+namespace {
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B65150; its second array is lbl_7100B65158).
+// The maps the map select lists: with add-on menu layer 3, then without it. One object: the code reaches the second
+// array as the first's address + 8.
+struct SelectMaps {
+    unsigned int layer3[2];
+    unsigned int normal[15];
+};
+SelectMaps sSelectMaps = {{52, 53}, {3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21}};
+}  // namespace
 
 GfMenuObjWorldMap::GfMenuObjWorldMap(unsigned int handle)
     : GfMenuObject(handle), m_mapList(nullptr), m_mapSelectList(nullptr), pad_38(true), m_zoneList(nullptr),
@@ -163,6 +183,130 @@ bool GfMenuObjWorldMap::seqTexLoadWait() {
     ui::UIObjectAcc main(ui::UIObjectAcc(m_handle).searchChild("LAY_main"));
     ui::UIObjectAcc floor(main.searchChild("LAY_floor"));
     return !floor.isStreaming();
+}
+
+void GfMenuObjWorldMap::fn_710049761C(GfMenuIDList* list) {
+    list->clear();
+    for (unsigned int i = 0; i < (GfMenuObjUtil::fn_710048FD30(3) ? 2u : 15u); i++) {
+        if (chkMapCond((GfMenuObjUtil::fn_710048FD30(3) ? sSelectMaps.layer3 : sSelectMaps.normal)[i], nullptr)) {
+            MenuID id = MenuID();
+            id.m_id = (GfMenuObjUtil::fn_710048FD30(3) ? sSelectMaps.layer3 : sSelectMaps.normal)[i];
+            list->addContents(id);
+        }
+    }
+}
+
+void GfMenuObjWorldMap::refreshMapSelect(ui::UIObjectAcc& acc, GfMenuIDList* list, ui::UISelectObjList* selectList,
+                                         int index) {
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < selectList->getSize(); i++) {
+        name.format("IMG_tagbg@%02d", i + 1);
+        ui::UIObjectAcc tag(selectList->getObject(i), name.m_str);
+        if (index == i) {
+            tag.startAnimation("select", false);
+        } else {
+            tag.startAnimation("normal", false);
+        }
+    }
+    if (index != -1) {
+        selectList->setIndex(index);
+    }
+}
+
+void GfMenuObjWorldMap::setupPointSelect(ui::UIObjectAcc& acc, GfMenuZoneMapList* list) {
+    mm::mtl::FixStr<32> name;
+    for (int i = 0; i < 9; i++) {
+        name.format("TXT_pointname_@%02d", i + 1);
+        GfMenuZoneMapAdapter* adapter = GfMenuZoneMapAdapter::createFromList(acc.searchChild(name.m_str), 1, list, i, true, false);
+        name.format("LAY_pointspot@%02d", i + 1);
+        if (adapter != nullptr) {
+            adapter->m_rowHandle = acc.searchChild(name.m_str);
+        }
+    }
+    GfMenuObjUtil::createVScrollBarPlugin(acc.searchChild("IMG_point_scroll_bar"), list, "IMG_point_scroll_bar_base", true);
+}
+
+void GfMenuObjWorldMap::setupMapSelect(ui::UIObjectAcc& acc, GfMenuIDList* list) {
+    mm::mtl::FixStr<32> name;
+    for (int i = 0; i < 9; i++) {
+        name.format("TXT_areaname@%02d", i + 1);
+        GfMenuWorldMapAdapter* adapter = GfMenuWorldMapAdapter::createFromList(acc.searchChild(name.m_str), 0, list, i, true, false);
+        if (adapter != nullptr) {
+            name.format("LAY_area_tag@%02d", i + 1);
+            adapter->m_rowHandle = acc.searchChild(name.m_str);
+        }
+        name.format("IMG_stayicon@%02d", i + 1);
+        GfMenuWorldMapAdapter::createFromList(acc.searchChild(name.m_str), 3, list, i, true, false);
+    }
+    GfMenuWorldMapAdapter::createFromList(acc.searchChild("TXT_areaname_select"), 0, list, -1, true, false);
+    GfMenuWorldMapAdapter::createFromList(acc.searchChild("IMG_stayicon_select"), 3, list, -1, true, false);
+    acc.setDispChild(false, "LAY_area_tag_select");
+    GfMenuObjUtil::createVScrollBarPlugin(acc.searchChild("IMG_area_scroll_bar"), list, "IMG_area_scroll_bar_base", true);
+}
+
+void GfMenuObjWorldMap::refreshPointSelect(ui::UIObjectAcc& acc, GfMenuZoneMapList* list,
+                                           ui::UISelectObjList* selectList, unsigned int mapId) {
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < selectList->getSize(); i++) {
+        unsigned int pointMapId = list->getContents(list->getPageIndex(i)).m_mapId;
+        name.format("IMG_point_base_@%02d", i + 1);
+        ui::UIObjectAcc base(acc.searchChild(name.m_str));
+        if (pointMapId == mapId) {
+            base.startAnimation("select", false);
+        } else {
+            base.startAnimation("normal", false);
+        }
+    }
+    refreshPointText(acc, list, selectList);
+}
+
+void GfMenuObjWorldMap::fn_710049D2A4(bool fadeFirst) {
+    ui::UIObjectAcc zoneMap(m_handle, "LAY_zonemap");
+    for (int i = 0; i < 9; i++) {
+        bool on = (m_iconFilter & (1 << i)) != 0;
+        ui::UIObjectAcc icon(zoneMap.searchChild(nd_lay_icon_node_tbl[i]));
+        if (fadeFirst && i == 0) {
+            icon.setAlpha(on ? 1.0f : 0.0f);
+            icon.setDisp(true);
+        } else {
+            icon.setDisp(on);
+        }
+    }
+}
+
+unsigned int GfMenuObjWorldMap::getFloor() {
+    if (!m_zoneList->m_groupMode) {
+        return m_zoneList->getContents(m_zoneList->getIndex(false)).m_mapId;
+    }
+    unsigned short pointId = m_pointList->getContents(m_pointList->getIndex(false)).m_mapId;
+    return static_cast<unsigned short>(Bdat::getVal(m_gmkBdat, "menuMapImage", pointId));
+}
+
+unsigned int GfMenuObjWorldMap::setupIconTableSub(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 256>& icons,
+                                                  unsigned int type, mm::Pnt<short> pos, mm::Vec2 scale) {
+    static const unsigned int imageIndex[10] = {1, 3, 4, 5, 6, 7, 8, 9, 10, 0};
+    if (icons.size() == 256) {
+        return 0;
+    }
+    const char* node = nd_lay_icon_node_tbl[type];
+    ui::UIObjectAcc layIcon(acc.searchChild("LAY_icon"));
+    unsigned int handle = ui::UIObjectAcc(layIcon.searchChild("IMG_zoneicon")).duplicate(layIcon.searchChild(node));
+    ui::UIObjectAcc icon(handle);
+    if (icon.m_object != nullptr) {
+        icon.setDisp(true);
+        icon.setPosCenter(pos);
+        icon.setImageIndex(imageIndex[type]);
+        icons.push_back(handle);
+    }
+    return handle;
+}
+
+mm::Col3 GfMenuObjWorldMap::fn_710049FD30(unsigned int id) {
+    static const mm::Col3 colors[2] = {mm::Col3(1.0f, 1.0f, 1.0f), mm::Col3(0.78f, 1.0f, 0.0f)};
+    if (id >= 2) {
+        return colors[0];
+    }
+    return colors[id];
 }
 
 }  // namespace gf
