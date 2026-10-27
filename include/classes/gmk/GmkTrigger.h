@@ -11,6 +11,7 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize (0x71005D9608 allocates count bytes); the fields are not read yet
     class BdatInfo {
     public:
+        BdatInfo() {}  // user-provided: Vector<BdatInfo>::resize/extend leave the byte as it is (no zero fill)
         unsigned char pad_0[0x1];
     };
     virtual ~GmkTrigger();  // slot 0

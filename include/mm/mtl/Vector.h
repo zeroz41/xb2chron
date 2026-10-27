@@ -231,7 +231,7 @@ void Vector<T>::extend(size_t size, size_t alignment) {
     }
     if (oldSize < size) {
         T* element = ptr + oldSize;
-        if (!__has_trivial_constructor(T)) {  // a pointer or scalar is left as it is (skd::Dynamics' solvers, Vector<short>)
+        if (!__is_scalar(T)) {  // a pointer or scalar is left as it is (skd::Dynamics' solvers, Vector<short>)
             default_construct_n(element, size - oldSize);
         }
     }
@@ -257,7 +257,7 @@ void Vector<T>::resize(size_t size) {
         m_buffer = static_cast<T*>(m_allocator->allocate(size * sizeof(T), m_alignment));
         m_capacity = size;
         T* element = begin();
-        if (!__has_trivial_constructor(T)) {  // a pointer or scalar is left as it is (skd::Dynamics' solvers, Vector<short>)
+        if (!__is_scalar(T)) {  // a pointer or scalar is left as it is (skd::Dynamics' solvers, Vector<short>)
             default_construct_n(element, size);
         }
         m_size += size;
@@ -274,7 +274,7 @@ void Vector<T>::resize(size_t size) {
         }
     } else if (count != 0) {
         T* element = m_buffer + m_size;
-        if (!__has_trivial_constructor(T)) {  // a pointer or scalar is left as it is (skd::Dynamics' solvers, Vector<short>)
+        if (!__is_scalar(T)) {  // a pointer or scalar is left as it is (skd::Dynamics' solvers, Vector<short>)
             default_construct_n(element, static_cast<size_t>(count));
         }
         m_size += count;

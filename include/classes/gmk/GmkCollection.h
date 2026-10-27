@@ -31,6 +31,7 @@ public:
         WeatherCond m_popWeather;    // 0x20
         float m_popDistSq = 0.0f;    // 0x30: BDAT 0x7B's row 1 member 0, squared
     };
+    GmkCollection() {}  // inline, user-provided: the defaults are stored by Vector<T>::resize/extend, no zero fill
     virtual ~GmkCollection();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
@@ -42,7 +43,12 @@ public:
     // takes the point's icon down (GfFieldCollect::seqWaitDrop passes true once every item has dropped)
     void disposeIcon(bool flag);
     static const gmk::GmkType TYPE = gmk::GmkType(0x1C);
-    unsigned char pad_48[0x25];  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
+    long pad_48 = -1;
+    void* pad_50 = nullptr;
+    void* pad_58 = nullptr;
+    void* pad_60 = nullptr;
+    unsigned int pad_68 = 0;
+    unsigned char pad_6c = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk
 

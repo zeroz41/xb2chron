@@ -12,6 +12,7 @@ class TGmkFormPc : public ::gmk::AGmkBase {
 public:
     // its row of the list's BDAT table: nothing of it is kept (Vector<BdatInfo>::resize allocates a byte an element)
     class BdatInfo {};
+    TGmkFormPc() : pad_48(nullptr) {}  // inline: resize/extend construct in place with these stores
     virtual ~TGmkFormPc();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3
@@ -22,7 +23,8 @@ public:
     virtual void getBindedFormPcnpcList() const;  // slot 11
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = T0;
-    unsigned char pad_48[0x8];  // fields: size from TGmkList::getInst's stride
+    // an 8-byte field the constructor clears (Vector<T>::resize stores 0 at 0x48); meaning unknown
+    void* pad_48;
 };
 }  // namespace gmk
 

@@ -14,13 +14,17 @@ public:
         // inline and empty: initGmkBdatInfo reads the table pointer (getBindedBdatFp) and stores nothing
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {}
     };
+    GmkRoutedFootPrintPoint() {}  // inline, user-provided: the defaults are stored by Vector<T>::resize/extend, no zero fill
     virtual ~GmkRoutedFootPrintPoint();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3
     virtual void dispose();  // slot 5
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x37);
-    unsigned char pad_48[0xd];  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
+    float pad_48 = 900.0f;
+    float pad_4c = 100.0f;
+    unsigned int pad_50 = 0;
+    unsigned char pad_54 = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk
 

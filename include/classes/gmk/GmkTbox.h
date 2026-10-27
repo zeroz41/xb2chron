@@ -17,17 +17,18 @@ public:
         // out of line: initGmkBdatInfo calls it with the table itself (symbol 0x7100592E90)
         void create(unsigned char* fp, int row, const AGmkBase& gmk);
         bool isPopCondMatchedExceptDist() const;
-        unsigned short m_condition = 0;  // the row's "Condition" (a GfGameCond id; 0: none)
+        unsigned short m_condition;  // the row's "Condition" (a GfGameCond id; 0: none)
         // the fields its create stores (names from the columns/flags it reads, not the original's)
-        bool m_dig = false;                  // 0x2: "flag" bit "Digflg"
-        unsigned char m_msgVisible = 0;      // 0x3: "msgVisible"
-        unsigned char m_msgdigVisible = 0;   // 0x4: "msgdigVisible"
-        bool m_category = false;             // 0x5: its RSC_ID row's "flag" bit "TBOX_category" (BDAT 0xAC)
-        bool m_digPop = false;               // 0x6: "flag" bit "DigPopflg" (when the table has it)
-        bool m_noponBarrel = false;          // 0x7: "flag" bit "NoponBarrel" (when the table has it)
-        float m_visibleRadiusSq = 0.0f;      // 0x8: its RSC_ID row's "visible_Radius", squared
-        float m_invisibleRadiusSq = 0.0f;    // 0xC: its RSC_ID row's "invisible_Radius", squared
+        bool m_dig;                  // 0x2: "flag" bit "Digflg"
+        unsigned char m_msgVisible;      // 0x3: "msgVisible"
+        unsigned char m_msgdigVisible;   // 0x4: "msgdigVisible"
+        bool m_category;             // 0x5: its RSC_ID row's "flag" bit "TBOX_category" (BDAT 0xAC)
+        bool m_digPop;               // 0x6: "flag" bit "DigPopflg" (when the table has it)
+        bool m_noponBarrel;          // 0x7: "flag" bit "NoponBarrel" (when the table has it)
+        float m_visibleRadiusSq;      // 0x8: its RSC_ID row's "visible_Radius", squared
+        float m_invisibleRadiusSq;    // 0xC: its RSC_ID row's "invisible_Radius", squared
     };
+    GmkTbox() {}  // inline, user-provided: the defaults are stored by Vector<T>::resize/extend, no zero fill
     virtual ~GmkTbox();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
@@ -45,8 +46,11 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(9);
     // its game object (dispose clears its user data, destroys it and stores -1; the name is not the original's)
-    gf::GF_OBJ_HANDLE* m_gob;
-    unsigned char pad_50[0xc];  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
+    gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE *>(-1);
+    unsigned char pad_50 = 1;
+    unsigned char pad_51[0x3];
+    unsigned int pad_54 = 0;
+    unsigned int pad_58 = 0;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk
 

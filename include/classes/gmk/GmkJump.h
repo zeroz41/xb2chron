@@ -39,6 +39,7 @@ public:
     };
     const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
+    GmkJump() {}  // inline, user-provided: the defaults are stored by Vector<T>::resize/extend, no zero fill
     virtual ~GmkJump();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
@@ -56,7 +57,16 @@ public:
     // sending MsgPcFieldNotifyBigJump (when fn_71002A9E68 answers true).
     void fn_71005A7770();
     static const gmk::GmkType TYPE = gmk::GmkType(37);
-    unsigned char pad_48[0x38];  // fields: size from TGmkList::getInst's stride
+    void* pad_48 = nullptr;
+    unsigned char pad_50 = 0;
+    unsigned char pad_51[0x7];
+    long pad_58 = -1;
+    void* pad_60 = nullptr;
+    void* pad_68 = nullptr;
+    unsigned char pad_70[0x4];
+    unsigned int pad_74 = 0;
+    unsigned char pad_78 = 0;
+    unsigned char pad_79 = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk
 

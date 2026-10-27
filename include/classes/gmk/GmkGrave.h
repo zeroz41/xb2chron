@@ -19,7 +19,7 @@ public:
         unsigned char pad_0[0x2];
         // what gf::GfFieldGrave::create passes the common window (fn_7100359CD8) with message 51; the name is not
         // the original's
-        unsigned short m_windowArg = 0;
+        unsigned short m_windowArg;
         unsigned char pad_4[0x10];
     };
     virtual ~GmkGrave();  // slot 0

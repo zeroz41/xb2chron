@@ -12,6 +12,7 @@ namespace gmk {
 // table 0x7100B6C340
 class GmkRoutedMapObj : public ::gmk::GmkRoute {
 public:
+    GmkRoutedMapObj() {}  // inline, user-provided: the defaults are stored by Vector<T>::resize/extend, no zero fill
     virtual ~GmkRoutedMapObj();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
@@ -21,7 +22,8 @@ public:
     virtual void getBindedRoutePointList() const;  // slot 11
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(7);
-    unsigned char pad_51[0x9];  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
+    long pad_50 = -1;
+    unsigned char pad_58 = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk
 

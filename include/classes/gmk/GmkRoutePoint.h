@@ -14,6 +14,7 @@ public:
         // inline and empty: initGmkBdatInfo reads the table pointer (getBindedBdatFp) and stores nothing
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {}
     };
+    GmkRoutePoint() : pad_48(nullptr) {}  // inline: resize/extend construct in place with these stores
     virtual ~GmkRoutePoint();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3
@@ -23,7 +24,8 @@ public:
     virtual void debugUpdateMmf();  // slot 10
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x17);
-    unsigned char pad_48[0x8];  // fields: size from TGmkList::getInst's stride
+    // an 8-byte field the constructor clears (Vector<T>::resize stores 0 at 0x48); meaning unknown
+    void* pad_48;
 };
 }  // namespace gmk
 

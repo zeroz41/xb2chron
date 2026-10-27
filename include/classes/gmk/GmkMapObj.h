@@ -26,6 +26,7 @@ public:
         float m_invisibleXZSq = 0.0f;
         float m_invisibleYSq = 0.0f;
     };
+    GmkMapObj() {}  // inline, user-provided: the defaults are stored by Vector<T>::resize/extend, no zero fill
     virtual ~GmkMapObj();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void dispose();  // slot 5
@@ -33,7 +34,13 @@ public:
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(6);
-    unsigned char pad_48[0x14];  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
+    long pad_48 = -1;
+    unsigned char pad_50 = 1;
+    unsigned char pad_51 = 0;
+    unsigned char pad_52 = 0;
+    unsigned char pad_53[0x1];
+    unsigned int pad_54 = 0;
+    unsigned int pad_58 = 0;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk
 

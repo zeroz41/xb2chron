@@ -10,6 +10,7 @@ class GmkSquadLeader : public ::gmk::AGmkBase {
 public:
     // empty: its Vector<BdatInfo>::resize is the empty-element form (no element stores)
     class BdatInfo {};
+    GmkSquadLeader() : pad_48(nullptr) {}  // inline: resize/extend construct in place with these stores
     virtual ~GmkSquadLeader();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3
@@ -20,7 +21,8 @@ public:
     virtual void getBindedSquadMemberList() const;  // slot 11
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(39);
-    unsigned char pad_48[0x8];  // fields: size from TGmkList::getInst's stride
+    // an 8-byte field the constructor clears (Vector<T>::resize stores 0 at 0x48); meaning unknown
+    void* pad_48;
 };
 }  // namespace gmk
 

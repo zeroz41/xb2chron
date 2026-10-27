@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKPRECIOUS_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "mm/mtl/IntrusiveList.h"
 #include "classes/gmk/ScenarioFlagCond.h"
 #include "classes/gmk/QuestFlagCond.h"
 #include "plugin/Bdat.h"
@@ -14,7 +15,9 @@ namespace gmk { class GmkPreciousGob; }
 
 namespace gmk {
 // table 0x7100B6CB70
-class GmkPrecious : public ::gmk::AGmkBase {
+// a second, non-polymorphic base at 0x48: Vector<T>::resize links its node to itself BEFORE storing GmkPrecious's
+// table (a base's construction), then stores the members
+class GmkPrecious : public ::gmk::AGmkBase, public ::mm::mtl::IntrusiveListNodeBase {
 public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
@@ -33,6 +36,7 @@ public:
         TimeCond m_popTime;        // the row's "POP_TIME"
         WeatherCond m_popWeather;  // the row's "popWeather"
     };
+    GmkPrecious() {}  // inline, user-provided: the defaults are stored by Vector<T>::resize/extend, no zero fill
     virtual ~GmkPrecious();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
@@ -47,7 +51,12 @@ public:
         return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
     }
     static const gmk::GmkType TYPE = gmk::GmkType(34);
-    unsigned char pad_48[0x30];  // fields: size from TGmkList::getInst's stride
+    long pad_58 = -1;
+    unsigned int pad_60 = 0;
+    unsigned char pad_64[0x4];
+    void* pad_68 = nullptr;
+    unsigned int pad_70 = 0;
+    unsigned char pad_74 = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk
 

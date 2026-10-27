@@ -9,6 +9,7 @@ class GmkDmgEffect : public ::gmk::AGmkBase {
 public:
     // empty: its Vector<BdatInfo>::resize is the empty-element form (no element stores)
     class BdatInfo {};
+    GmkDmgEffect() {}  // inline, user-provided: the defaults are stored by Vector<T>::resize/extend, no zero fill
     virtual ~GmkDmgEffect();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3
@@ -16,7 +17,9 @@ public:
     virtual void update(float);  // slot 6
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x32);
-    unsigned char pad_48[0x8];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_48 = 1;
+    unsigned char pad_49[0x3];
+    unsigned int pad_4c = 0;  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

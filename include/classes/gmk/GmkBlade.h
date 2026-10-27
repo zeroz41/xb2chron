@@ -30,6 +30,7 @@ public:
         float m_invisibleXZSq;   // 0x28: "Invisible_XZ" (at least Visible_XZ + 1) squared
         float m_invisibleYSq;    // 0x2C: "Invisible_Y" (at least Visible_Y + 1) squared
     };
+    GmkBlade() {}  // inline, user-provided: the defaults are stored by Vector<T>::resize/extend, no zero fill
     virtual ~GmkBlade();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void dispose();  // slot 5
@@ -38,10 +39,12 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(47);
     // its game object (dispose clears its user data, destroys it and stores -1; the name is not the original's)
-    gf::GF_OBJ_HANDLE* m_gob;  // fields: size from TGmkList::getInst's stride
+    gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE *>(-1);  // fields: size from TGmkList::getInst's stride
     // GfGmkBladeTraverser::onTraverse compares it with its id, or with 1001 and 1002 (the name is not the original's)
-    int m_bladeId;  // 0x50
-    unsigned char pad_54[0x4];
+    int m_bladeId = 0;  // 0x50
+    unsigned char pad_54 = 0;
+    unsigned char pad_55 = 1;
+    unsigned char pad_56[0x2];
 };
 }  // namespace gmk
 

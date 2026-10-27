@@ -28,6 +28,7 @@ public:
         QuestFlagCond m_questFlag;  // 0xe
         unsigned char pad_12[0x6];
     };
+    GmkRoutedFootPrint() {}  // inline, user-provided: the defaults are stored by Vector<T>::resize/extend, no zero fill
     virtual ~GmkRoutedFootPrint();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
@@ -36,7 +37,9 @@ public:
     virtual void debugDraw() const;  // slot 7
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(54);
-    unsigned char pad_48[0x18];  // fields: size from TGmkList::getInst's stride
+    void* pad_48 = nullptr;
+    void* pad_50 = nullptr;
+    void* pad_58 = nullptr;  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

@@ -13,6 +13,7 @@ public:
         // inline and empty: initGmkBdatInfo reads the table pointer (getBindedBdatFp) and stores nothing
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {}
     };
+    GmkRoutedEnemyPoint() {}  // user-provided: a defaulted one would zero-fill on value-initialization
     virtual ~GmkRoutedEnemyPoint();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)

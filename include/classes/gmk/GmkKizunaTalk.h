@@ -21,9 +21,9 @@ public:
             m_evCondition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "EVCondition", row, 2);
         }
         bool isCondMatched() const;
-        unsigned short m_conditionId = 0;  // the row's "ConditionID" (a GfGameCond id; 0: none)
-        unsigned short m_title = 0;        // the row's "Title"
-        unsigned short m_evCondition = 0;  // the row's "EVCondition"
+        unsigned short m_conditionId;  // the row's "ConditionID" (a GfGameCond id; 0: none)
+        unsigned short m_title;        // the row's "Title"
+        unsigned short m_evCondition;  // the row's "EVCondition"
     };
     GmkKizunaTalk() {}
     virtual ~GmkKizunaTalk();  // slot 0

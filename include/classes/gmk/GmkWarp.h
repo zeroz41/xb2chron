@@ -30,6 +30,11 @@ public:
         float m_eneReleaseRSq = 0.0f;
         float m_eneReleaseHSq = 0.0f;
     };
+    GmkWarp() {
+        m_firstHandle = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        pad_58 = -1;
+        pad_60 = nullptr;
+    }  // inline: Vector<T>::resize/extend construct in place
     virtual ~GmkWarp();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
@@ -48,11 +53,15 @@ public:
     };
     const Point* getPoints() const { return reinterpret_cast<const Point*>(m_createInfo.m_data); }
     static const gmk::GmkType TYPE = gmk::GmkType(38);
-    unsigned char pad_48[0x8];  // fields: size from TGmkList::getInst's stride
+    void* pad_48 = nullptr;  // fields: size from TGmkList::getInst's stride
     // the object at the first point (inferred): GfFieldWarp::onFsSucceeded sends the player to the second point when
     // the access came from it, to the first from any other (the name is not the original's)
-    gf::GF_OBJ_HANDLE* m_firstHandle;
-    unsigned char pad_58[0x16];  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
+    gf::GF_OBJ_HANDLE* m_firstHandle;  // -1, set in the constructor body (Vector<T>::resize stores 0x50..0x67 after 0x6D)
+    long pad_58;  // -1, set in the constructor body
+    void* pad_60;  // cleared in the constructor body
+    unsigned int pad_68 = 0;
+    unsigned char pad_6c = 0;
+    unsigned char pad_6d = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk
 
