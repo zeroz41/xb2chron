@@ -1,10 +1,12 @@
 #include "classes/gf/GfMenuObjCharSelect.h"
 #include "classes/gf/GfMenuObjCharSelect.h"
 #include "classes/gf/GfMenuObjCharSelect.h"
+#include "classes/gf/GfMenuObjCharSelect.h"
 #include "classes/gf/GfMenuObjCharSelect/MainListener.h"
 #include "classes/gf/GfMenuObjCharSelect/CharListener.h"
 #include "classes/gf/GfMenuObjCharSelect/SubMenuListener.h"
 #include "classes/gf/GfMenuObjCharSelect/DetailListener.h"
+#include "mm/Rect.h"
 #include "classes/gf/GfMenuObjCharSelect/DetailListener.h"
 #include "classes/gf/GfMenuObjCharSelect/StatusListener.h"
 #include "classes/gf/GfMenuObjCharSelect/CharDrListener.h"
@@ -66,6 +68,14 @@ bool s_selectBusy;
 // the character layouts seqStreamWaitSelect fades in: the driver, then the three blades
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B60FD0)
 const char* s_charLayouts[] = {"LAY_char_dr", "LAY_char_bl@01", "LAY_char_bl@02", "LAY_char_bl@03"};
+
+// a layout table's entry (the name is not the original's). The original's s_charLayouts (and lbl_7100B60FF0) are
+// writable data (.data): clang 3.9 makes a static table constant unless its address is passed on before inlining, so
+// their users handed the table to an inline helper like this one (gf_bdat_rsc's _gfbrs::getSlot).
+template <unsigned long N>
+inline const char* getLayoutName(const char* (&table)[N], unsigned int index) {
+    return table[index];
+}
 }  // namespace
 
 GfMenuObjCharSelect::GfMenuObjCharSelect(unsigned int handle)
@@ -201,7 +211,7 @@ bool GfMenuObjCharSelect::seqStreamWaitSelect() {
         return false;
     }
     for (int i = 0; i < 4; i++) {
-        ui::UIObjectAcc chr(acc.searchChild(i == 0 && bladeNum == 0 ? "LAY_char_dr_solo" : s_charLayouts[i]));
+        ui::UIObjectAcc chr(acc.searchChild(i == 0 && bladeNum == 0 ? "LAY_char_dr_solo" : getLayoutName(s_charLayouts, i)));
         GfMenuObject::hookCtrlEvent(chr.m_handle, startFadeIn(chr.m_handle, 1));
     }
     return true;
@@ -499,6 +509,48 @@ unsigned int GfMenuObjCharSelect::setDriverPos(ui::UIObjectAcc& acc, mm::mtl::Fi
         acc.setLayout(status.m_handle, "driver_index_layout_solo");
     }
     return bladeNum;
+}
+
+void GfMenuObjCharSelect::StatusListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    switch (event.m_type) {
+    case 1:
+        break;
+    case 0x105:
+        acc.getPos(m_owner->m_statusPos);
+        switch (event.m_param0) {
+        case 0x1D:
+        case 0x20: {
+            const char* name = event.m_param0 == 0x1D ? "drindex_atst" : "drindex_acs";
+            ui::UIObjectAcc main(owner.searchChild("LAY_main"));
+            mm::Rect<short> rect;
+            main.getLayoutRect(name, rect);
+            mm::Pnt<short> pos;
+            pos.x = rect.x;
+            pos.y = rect.y;
+            acc.setPos(pos);
+            break;
+        }
+        case 0x1E: {
+            ui::UIObjectAcc main(owner.searchChild("LAY_main"));
+            mm::Rect<short> rect;
+            main.getLayoutRect("drindex_atst", rect);
+            mm::Pnt<short> pos;
+            pos.x = -(m_owner->m_statusPos.x + rect.w);
+            pos.y = rect.y;
+            acc.setPos(pos);
+            break;
+        }
+        }
+        break;
+    case 0x106:
+        acc.setPos(m_owner->m_statusPos);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 }  // namespace gf
