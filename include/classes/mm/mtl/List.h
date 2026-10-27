@@ -45,6 +45,22 @@ public:
             this->m_capacity = this->m_size;
         }
     }
+    // inserts value before pos: the new element's iterator. Unlike push_back, the count is incremented before the
+    // most-held count is read (DrShdLgtGlobalIBL::addObj inserts at end()) (the name is not the original's)
+    iterator insert(iterator pos, const T0& value) {
+        NodeBase* at = pos.m_node;
+        Node* node = this->allocNode();
+        new (&node->m_value) T0(value);
+        node->m_next = at;
+        node->m_prev = at->m_prev;
+        at->m_prev->m_next = node;
+        at->m_prev = node;
+        ++this->m_size;
+        if (this->m_capacity < this->m_size) {
+            this->m_capacity = this->m_size;
+        }
+        return iterator(node);
+    }
     // removes the element at it: the next one's iterator
     iterator erase(iterator it) {
         iterator e = end();

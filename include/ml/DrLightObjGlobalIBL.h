@@ -13,10 +13,12 @@ class DrLightObjGlobalIBL {
 public:
     DrLightObjGlobalIBL();
     ~DrLightObjGlobalIBL();
+    unsigned int getPriority() const;
 
     unsigned char pad_0[0x8];
     unsigned int m_version;  // 0x8
-    unsigned char pad_c[0x8];
+    unsigned int m_priority;  // 0xC, getPriority (the name follows it)
+    unsigned char pad_10[0x4];
     unsigned int m_textureNum;  // 0x14
     unsigned char pad_18[0x60];
     grlib::CGLibTextureBuffer m_texture[7];  // 0x78, the constructor builds seven

@@ -138,7 +138,11 @@ public:
     unsigned char pad_FB4[0xC];
     float m_reductionScale[2];  // 0xFC0, width, height
     unsigned int m_ofsRenderCheck;  // 0xFC8, calcOfsRenderCheck: x * 100 | y * 100 << 8
-    unsigned char pad_FCC[0x58];
+    unsigned char pad_FCC[0x18];
+    // 0xFE4, DrShdLgtGlobalIBL::resetColorBuff resets the view's IBL colour buffer only when it is 3 (the name is not
+    // the original's)
+    int m_iblColorMode;
+    unsigned char pad_FE8[0x3C];
     bool m_shwRaytraceTemporal;  // 0x1024, isShwRaytraceTemporalWithOthers (with DrMan::isIBLHalfRes)
     unsigned char pad_1025[0x3C];
     bool m_iblSel;  // 0x1061, DrPixlMan::getSpecIBLObj/getDiffIBLObj pick the second IBL pair when set (name inferred)

@@ -126,7 +126,15 @@ public:
     unsigned char pad_140[0x20];
     // one per view: ScnObjIBLDr makes and releases its IBL pack with it (the name is not the original's)
     DrGlobalIBLMan* m_iblMan[4];        // 0x160
-    unsigned char pad_180[0x400];
+    unsigned char pad_180[0x2F8];
+    // 0x478: one 0x40-byte record per view; DrShdLgtGlobalIBL::update updates a view other than 0 only when bit 0 of
+    // its first byte is set (the type and names are not the original's)
+    struct ViewUpdate {
+        bool m_enable : 1;
+        unsigned char pad_1[0x3F];
+    };
+    ViewUpdate m_viewUpdate[4];
+    unsigned char pad_578[0x8];
     // the current view's DrCalcMan: beginSetup stores the one it makes at 0xA0 + index * 8 here too (the name is
     // not the original's)
     DrCalcMan* m_calcMan;               // 0x580
