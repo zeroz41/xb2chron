@@ -2,6 +2,8 @@
 #define CLASSES_GMK_GMKWARP_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/BootedGmkCond.h"
+class CBdatWrapper;
 #include "mm/Vec3NA.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
@@ -15,7 +17,18 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
-        unsigned char pad_0[0x18];
+        // user-provided: Vector<BdatInfo>::resize stores the defaults only (no zeroing of the pads first)
+        BdatInfo() {}
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
+        bool isPopCondCommonMatched() const;
+        unsigned short m_condition = 0;    // the row's "Condition" (a GfGameCond id; 0: none)
+        unsigned short m_nameRadius = 10;  // the row's "nameRadius"
+        BootedGmkCond m_bootedGmk;         // the row's OP_gimmickType/ID
+        // squared distances from the current map's row of BDAT 0x5D: ene_disp_r/h, and with ene_release_r/h added
+        float m_eneDispRSq = 0.0f;
+        float m_eneDispHSq = 0.0f;
+        float m_eneReleaseRSq = 0.0f;
+        float m_eneReleaseHSq = 0.0f;
     };
     virtual ~GmkWarp();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

@@ -19,13 +19,15 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
+        // user-provided: Vector<BdatInfo>::resize stores the defaults only (no zeroing of the pads first)
+        BdatInfo() {}
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
         bool isPopCondMatched() const;
         // the precious item's id: LocatorPrecious::onTraverse compares it with its id, which create() looks up in
         // the gimmick sheets' "itmID" column. The name is not the original's.
-        unsigned short m_itmId;
-        unsigned short m_condition;  // the row's "Condition" (a GfGameCond id; 0: none)
-        unsigned short m_questId;    // the row's "QuestID"
+        unsigned short m_itmId = 0;
+        unsigned short m_condition = 0;  // the row's "Condition" (a GfGameCond id; 0: none)
+        unsigned short m_questId = 0;    // the row's "QuestID"
         ScenarioFlagCond m_scenarioFlag;  // the row's ScenarioFlagMin/Max
         QuestFlagCond m_questFlag;        // the row's QuestFlag/Min/Max
         unsigned char pad_e[0x2];

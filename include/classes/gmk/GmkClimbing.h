@@ -2,6 +2,10 @@
 #define CLASSES_GMK_GMKCLIMBING_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/ScenarioFlagCond.h"
+#include "classes/gmk/QuestFlagCond.h"
+#include "classes/gmk/BootedGmkCond.h"
+class CBdatWrapper;
 namespace gmk { class GmkClimbingGob; }
 
 namespace gmk {
@@ -11,7 +15,15 @@ public:
     // its size: the element size of Vector<BdatInfo>::resize 0x710061F874 (whose constructor sets its fields; their defaults are not written yet)
     class BdatInfo {
     public:
-        unsigned char pad_0[0x10];
+        // user-provided: Vector<BdatInfo>::resize stores the defaults only (no zeroing of the pads first)
+        BdatInfo() {}
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
+        bool isPopCondMatched() const;
+        unsigned short m_condition = 0;       // the row's "Condition" (a GfGameCond id; 0: none)
+        unsigned short m_climiconRadius = 3;  // the row's "climiconRadius"
+        ScenarioFlagCond m_scenarioFlag;      // the row's ScenarioFlagMin/Max
+        QuestFlagCond m_questFlag;            // the row's QuestFlag/Min/Max
+        BootedGmkCond m_bootedGmk;            // the row's OP_gimmickType/ID
     };
     virtual ~GmkClimbing();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

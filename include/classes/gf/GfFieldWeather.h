@@ -36,7 +36,7 @@ public:
     static void gevPause(unsigned int flags0, unsigned int flags1);
     static void update(const fw::UpdateInfo& info);
     static void setDispWeather(bool disp);
-    // 1 << (getCurrentMapWeatherID(prev) - 1)
+    // 1 << (getCurrentMapWeatherID(prev) - 1): the current weather as a bit (WeatherCond::isMatch tests it)
     static unsigned int getCurrentMapWeatherBit(bool prev);
     // the cloud sea of a map (its record in the game data), the current one for map 0 (1.0.0's
     // GfGameCond::isGameEnv and GfPlayComPlayerDead::update call it)

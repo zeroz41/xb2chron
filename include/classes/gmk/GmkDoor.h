@@ -3,6 +3,8 @@
 
 #include "mm/mtl/RTTI.h"
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/BootedGmkCond.h"
+class CBdatWrapper;
 #include "classes/gmk/IGmkPhantomEventListener.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
@@ -27,7 +29,39 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
-        unsigned char pad_0[0x48];
+        // user-provided: Vector<BdatInfo>::resize stores the defaults only (no zeroing of the pads first)
+        BdatInfo() {}
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
+        bool isPopCondMatched() const;
+        unsigned short m_condition = 0;         // the row's "Condition" (a GfGameCond id; 0: none)
+        unsigned char m_responseType = 0;       // the row's "response_type"
+        unsigned char m_responseChr = 0;        // the row's "response_CHR"
+        unsigned short m_nameRadius = 0;        // the row's "nameRadius"
+        unsigned short m_lodModel = 0;          // the row's "LODmodel"
+        unsigned short m_missMsgId = 0;         // the row's "missMSG_ID"
+        bool m_openLodAnime = false;            // flag "open_LODanime"
+        bool m_openSeType = false;              // flag "open_SE_type"
+        unsigned short m_openSe = 0;            // the row's "open_SE"
+        unsigned char m_openSeSize = 10;        // the row's "open_SE_size"
+        unsigned char pad_f;
+        unsigned long m_openCamGimId = 0;       // the row's "open_camGim_ID" (column type 7)
+        unsigned char m_openCamGimAtr = 0;      // the row's "open_camGim_ATR"
+        bool m_closeLodAnime = false;           // flag "close_LODanime"
+        bool m_closeSeType = false;             // flag "close_SE_type"
+        unsigned char pad_1b;
+        unsigned short m_closeSe = 0;           // the row's "close_SE"
+        unsigned char m_closeSeSize = 10;       // the row's "close_SE_size"
+        unsigned char pad_1f;
+        unsigned long m_closeCamGimId = 0;      // the row's "close_camGim_ID" (column type 7)
+        unsigned char m_closeCamGimAtr = 0;     // the row's "close_camGim_ATR"
+        unsigned char pad_29[0x3];
+        float m_doorNextwait = 0.0f;            // the row's "door_nextwait"
+        unsigned long m_spCloseCamGimId = 0;    // the row's "sp_close_camGim_ID" (column type 7)
+        unsigned char m_spCloseCamGimAtr = 0;   // the row's "sp_close_camGim_ATR"
+        bool m_gmkCamPos = false;               // flag "gmkCamPos"
+        BootedGmkCond m_bootedGmk;   // the row's OP_gimmickType/ID (isPopCondMatched tests it)
+        BootedGmkCond m_bootedGmk2;  // two more <prefix>gimmickType/ID pairs (prefixes not read yet)
+        BootedGmkCond m_bootedGmk3;
     };
     virtual ~GmkDoor();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

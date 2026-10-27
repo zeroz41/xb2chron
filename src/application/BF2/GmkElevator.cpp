@@ -48,6 +48,11 @@
 #include "classes/gmk/GmkSquadManager.h"
 #include "classes/gmk/TUnk_B6EE88.h"
 #include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfFieldTime.h"
+#include "classes/gf/GfFieldWeather.h"
+#include "classes/gf/GfGameFlag.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfQuestInfo.h"
 #include "gf/GfObjAcc.h"
 #include "gf/GfObjUtil.h"
 #include "classes/gmk/GmkEnemy.h"
@@ -788,6 +793,149 @@ void GmkElevator::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& g
     m_elevatorNextwait = (short)Bdat::getValCheck(bdat.m_fp, "elevator_nextwait", row, 5);
     m_liftAMapJumpId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "liftAMapJumpId", row, 2);
     m_liftBMapJumpId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "liftBMapJumpId", row, 2);
+}
+
+bool ScenarioFlagCond::isMatch() const {
+    unsigned short flag = gf::GfDataBlade::fn_7100231884();
+    if (m_scenarioFlagMin > flag) {
+        return false;
+    }
+    return flag <= m_scenarioFlagMax;
+}
+bool QuestFlagCond::isMatch() const {
+    unsigned char state = gf::GfQuestInfo::getState(m_questFlag);
+    return (m_questFlagMin <= state) & (state <= m_questFlagMax);
+}
+bool TimeCond::isMatch() const {
+    bool match = false;
+    if (gf::GfFieldTime* time = mm::mtl::PtrSingleton<gf::GfFieldTime>::sys()) {
+        match = (time->getTimeRangeBits() & m_time) != 0;
+    }
+    return match;
+}
+bool WeatherCond::isMatch() const {
+    return (gf::GfFieldWeather::getCurrentMapWeatherBit(false) & m_weather) != 0;
+}
+bool GmkEvent::BdatInfo::isCondMatched() const {
+    if (m_scenarioFlag.m_scenarioFlagMax != 0 && !m_scenarioFlag.isMatch()) {
+        return false;
+    }
+    if (m_questFlag.m_questFlag != 0 && m_questFlag.m_questFlagMin <= m_questFlag.m_questFlagMax &&
+        !m_questFlag.isMatch()) {
+        return false;
+    }
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return false;
+    }
+    return true;
+}
+bool GmkTutorial::BdatInfo::isCondMatched() const {
+    if (m_scenarioFlag.m_scenarioFlagMax != 0 && !m_scenarioFlag.isMatch()) {
+        return false;
+    }
+    if (m_questFlag.m_questFlag != 0 && m_questFlag.m_questFlagMin <= m_questFlag.m_questFlagMax &&
+        !m_questFlag.isMatch()) {
+        return false;
+    }
+    if (m_sysMultiFlag != 0 && gf::GfGameFlag::getLocal(1, m_sysMultiFlag + 0x89FA) == 0) {
+        return false;
+    }
+    return true;
+}
+bool GmkPrecious::BdatInfo::isPopCondMatched() const {
+    if (m_scenarioFlag.m_scenarioFlagMax != 0 && !m_scenarioFlag.isMatch()) {
+        return false;
+    }
+    if (m_questFlag.m_questFlag != 0 && m_questFlag.m_questFlagMin <= m_questFlag.m_questFlagMax &&
+        !m_questFlag.isMatch()) {
+        return false;
+    }
+    if (m_popTime.m_time != 0 && !m_popTime.isMatch()) {
+        return false;
+    }
+    if (m_popWeather.m_weather != 0 && !m_popWeather.isMatch()) {
+        return false;
+    }
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return false;
+    }
+    return true;
+}
+
+bool GmkDoor::BdatInfo::isPopCondMatched() const {
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return false;
+    }
+    if (m_bootedGmk.isSet() && !m_bootedGmk.isMatch()) {
+        return false;
+    }
+    return true;
+}
+bool GmkWarp::BdatInfo::isPopCondCommonMatched() const {
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return false;
+    }
+    if (m_bootedGmk.isSet() && !m_bootedGmk.isMatch()) {
+        return false;
+    }
+    return true;
+}
+bool GmkClimbing::BdatInfo::isPopCondMatched() const {
+    if (m_scenarioFlag.m_scenarioFlagMax != 0 && !m_scenarioFlag.isMatch()) {
+        return false;
+    }
+    if (m_questFlag.m_questFlag != 0 && m_questFlag.m_questFlagMin <= m_questFlag.m_questFlagMax &&
+        !m_questFlag.isMatch()) {
+        return false;
+    }
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return false;
+    }
+    if (m_bootedGmk.isSet() && !m_bootedGmk.isMatch()) {
+        return false;
+    }
+    return true;
+}
+bool GmkMapGimmick::BdatInfo::isPopCondMatched() const {
+    if (m_popTime.m_time != 0 && !m_popTime.isMatch()) {
+        return false;
+    }
+    if (m_popWeather.m_weather != 0 && !m_popWeather.isMatch()) {
+        return false;
+    }
+    if (m_bootedGmk.isSet() && !m_bootedGmk.isMatch()) {
+        return false;
+    }
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return false;
+    }
+    return true;
+}
+
+bool GmkSe::BdatInfo::isPopCondMatched() const {
+    if (m_scenarioFlag.m_scenarioFlagMax != 0 && !m_scenarioFlag.isMatch()) {
+        return false;
+    }
+    if (m_questFlag.m_questFlag != 0 && m_questFlag.m_questFlagMin <= m_questFlag.m_questFlagMax &&
+        !m_questFlag.isMatch()) {
+        return false;
+    }
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return false;
+    }
+    if (m_popTime.m_time != 0 && !m_popTime.isMatch()) {
+        return false;
+    }
+    if (m_weather.m_weather != 0 && !m_weather.isMatch()) {
+        return false;
+    }
+    if (m_bootedGmk.isSet() && !m_bootedGmk.isMatch()) {
+        return false;
+    }
+    if (m_bootedGmkNot.isSet() && m_bootedGmkNot.isMatch()) {
+        return false;
+    }
+    return true;
 }
 
 }  // namespace gmk

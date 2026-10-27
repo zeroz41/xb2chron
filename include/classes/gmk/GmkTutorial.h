@@ -13,8 +13,11 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
+        // user-provided: Vector<BdatInfo>::resize stores the defaults only (no zeroing of the pads first)
+        BdatInfo() {}
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
-        unsigned char m_sysMultiFlag;  // the row's "SysMultiFlag"
+        bool isCondMatched() const;
+        unsigned char m_sysMultiFlag = 0;  // the row's "SysMultiFlag"
         unsigned char pad_1;
         ScenarioFlagCond m_scenarioFlag;  // the row's ScenarioFlagMin (up to 0xFFFF when set)
         QuestFlagCond m_questFlag;        // the row's QuestFlag/Min/Max

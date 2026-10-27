@@ -15,6 +15,7 @@ public:
     class BdatInfo {
     public:
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
+        bool isCondMatched() const;
         unsigned short m_condition;  // the row's "Condition" (a GfGameCond id; 0: none)
         unsigned short m_eventId;    // the row's "EventID"
         // 0x4: the quest-target icon's id LocatorEventPreorder::create gives its locator (the name is not the
