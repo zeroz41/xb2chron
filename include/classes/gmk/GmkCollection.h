@@ -2,6 +2,8 @@
 #define CLASSES_GMK_GMKCOLLECTION_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/TimeCond.h"
+#include "classes/gmk/WeatherCond.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 
@@ -9,10 +11,19 @@ namespace gmk {
 // table 0x7100B6C880
 class GmkCollection : public ::gmk::AGmkBase {
 public:
-    // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
+    // a gimmick row (its size: the element size of its Vector<BdatInfo>::resize)
     class BdatInfo {
     public:
-        unsigned char pad_0[0x38];
+        bool isPopCondMatchedExceptDist() const;
+        unsigned char pad_0[0x6];
+        // the item it gives: it does not pop once the box holds GfItemUtil::getEnableStock of it (the field names
+        // are not the original's)
+        unsigned short m_itemId;     // 0x6
+        unsigned short m_condition;  // 0x8: a GfGameCond id (0: none)
+        unsigned char pad_a[0x6];
+        TimeCond m_popTime;          // 0x10
+        WeatherCond m_popWeather;    // 0x20
+        unsigned char pad_30[0x8];
     };
     virtual ~GmkCollection();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

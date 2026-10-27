@@ -13,6 +13,14 @@ public:
     BootedGmkCond(unsigned char type, unsigned short id);
     BootedGmkCond(const CBdatWrapper& bdat, int row, const char* prefix);
     bool isMatch() const;
+    // keeps type and id when both are nonzero (both constructors end so; an inline member: the constructor from the
+    // row tests the values as its 8/16-bit arguments; the name is not the original's)
+    void set(unsigned char type, unsigned short id) {
+        if (type != 0 && id != 0) {
+            m_gimmickType = type;
+            m_gimmickId = id;
+        }
+    }
     // both set (the gimmick sheets test this before isMatch; an inline member: its loads keep the class's
     // 2-byte alignment, so they are not merged into one word load; the name is not the original's)
     bool isSet() const { return m_gimmickType != 0 && m_gimmickId != 0; }

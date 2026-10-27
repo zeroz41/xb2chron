@@ -58,6 +58,8 @@
 #include "classes/gmk/GmkEnemy.h"
 #include "classes/gmk/GmkRoutedEnemy.h"
 #include "classes/gmk/GmkSalvage.h"
+#include "classes/gmk/GameFlagCond.h"
+#include "classes/gf/GfManager.h"
 #include "classes/gmk/IGmkList.h"
 #include "classes/gmk/GmkGobEventListener.h"
 #include "classes/gmk/GmkSalvageLocator.h"
@@ -934,6 +936,177 @@ bool GmkSe::BdatInfo::isPopCondMatched() const {
     }
     if (m_bootedGmkNot.isSet() && m_bootedGmkNot.isMatch()) {
         return false;
+    }
+    return true;
+}
+
+ScenarioFlagCond::ScenarioFlagCond(const CBdatWrapper& bdat, int row, const char* prefix) {
+    unsigned short min;
+    unsigned short max;
+    if (prefix == nullptr) {
+        min = Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMin", row, 2);
+        max = Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMax", row, 2);
+    } else {
+        mm::mtl::FixStr<32> column;
+        column.format("%s%s", prefix, "ScenarioFlagMin");
+        min = Bdat::getValCheck(bdat.m_fp, column.m_str, row, 2);
+        column.format("%s%s", prefix, "ScenarioFlagMax");
+        max = Bdat::getValCheck(bdat.m_fp, column.m_str, row, 2);
+    }
+    if (max >= min) {
+        m_scenarioFlagMin = min;
+        m_scenarioFlagMax = max;
+    }
+}
+
+QuestFlagCond::QuestFlagCond(const CBdatWrapper& bdat, int row, const char* prefix) {
+    unsigned short flag;
+    unsigned char min;
+    unsigned char max;
+    if (prefix == nullptr) {
+        flag = Bdat::getValCheck(bdat.m_fp, "QuestFlag", row, 2);
+        min = Bdat::getValCheck(bdat.m_fp, "QuestFlagMin", row, 1);
+        max = Bdat::getValCheck(bdat.m_fp, "QuestFlagMax", row, 1);
+    } else {
+        mm::mtl::FixStr<32> column;
+        column.format("%s%s", prefix, "QuestFlag");
+        flag = Bdat::getValCheck(bdat.m_fp, column.m_str, row, 2);
+        column.format("%s%s", prefix, "QuestFlagMin");
+        min = Bdat::getValCheck(bdat.m_fp, column.m_str, row, 1);
+        column.format("%s%s", prefix, "QuestFlagMax");
+        max = Bdat::getValCheck(bdat.m_fp, column.m_str, row, 1);
+    }
+    if (max >= min) {
+        m_questFlag = flag;
+        m_questFlagMin = min;
+        m_questFlagMax = max;
+    }
+}
+
+bool GameFlagCond::isMatch(unsigned int value) const {
+    switch (m_flagType) {
+    case 1:
+        return gf::GfGameFlag::getLocal(0x1, m_flagIndex) == value;
+    case 2:
+        return gf::GfGameFlag::getLocal(0x2, m_flagIndex) == value;
+    case 3:
+        return gf::GfGameFlag::getLocal(0x4, m_flagIndex) == value;
+    case 4:
+        return gf::GfGameFlag::getLocal(0x8, m_flagIndex) == value;
+    case 5:
+        return gf::GfGameFlag::getLocal(0x10, m_flagIndex) == value;
+    case 6:
+        return gf::GfGameFlag::getLocal(0x20, m_flagIndex) == value;
+    default:
+        return false;
+    }
+}
+
+BootedGmkCond::BootedGmkCond(unsigned char type, unsigned short id) : m_gimmickType(0), m_gimmickId(0) {
+    set(type, id);
+}
+
+BootedGmkCond::BootedGmkCond(const CBdatWrapper& bdat, int row, const char* prefix) : m_gimmickType(0), m_gimmickId(0) {
+    mm::mtl::FixStr<32> column;
+    if (prefix == nullptr) {
+        column = "gimmickType";
+    } else {
+        column.format("%sgimmickType", prefix);
+    }
+    unsigned char type = Bdat::getValCheck(bdat.m_fp, column.m_str, row, 1);
+    if (prefix == nullptr) {
+        column = "gimmickID";
+    } else {
+        column.format("%sgimmickID", prefix);
+    }
+    unsigned short id = Bdat::getValCheck(bdat.m_fp, column.m_str, row, 2);
+    set(type, id);
+}
+
+bool GmkEnemyInsts::BdatInfo::isPopCondMatched() const {
+    if (m_smnGroups != 0) {
+        return false;
+    }
+    if (isInvincibleCondMatched()) {
+        return true;
+    }
+    if (m_scenarioFlag.m_scenarioFlagMax != 0 && !m_scenarioFlag.isMatch()) {
+        return false;
+    }
+    if (m_questFlag.isSet() && !m_questFlag.isMatch()) {
+        return false;
+    }
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return false;
+    }
+    if (!m_popTime.isMatch()) {
+        return false;
+    }
+    if (m_popWeather.m_weather != 0 && !m_popWeather.isMatch()) {
+        return false;
+    }
+    if (!m_popCloud.isMatch()) {
+        return false;
+    }
+    return !gf::GfManager::isExecModeThater();
+}
+
+bool GmkEnemyInsts::BdatInfo::isInvincibleCondMatched() const {
+    bool matched = false;
+    if (m_mutekiCondition != 0) {
+        if (!gf::GfGameCond::isGameCond(m_mutekiCondition)) {
+            return false;
+        }
+        matched = true;
+    }
+    if (m_mutekiQuestFlag.isSet()) {
+        if (!m_mutekiQuestFlag.isMatch()) {
+            return false;
+        }
+        matched = true;
+    }
+    return matched;
+}
+
+bool GmkEnemyInsts::BdatInfo::isPopCondMatchedOfSmn() const {
+    if (m_scenarioFlag.m_scenarioFlagMax != 0 && !m_scenarioFlag.isMatch()) {
+        return false;
+    }
+    return true;
+}
+
+bool GmkBlade::BdatInfo::isPopCommonCondMatched() const {
+    if (m_scenarioFlag.m_scenarioFlagMax != 0 && !m_scenarioFlag.isMatch()) {
+        return false;
+    }
+    if (m_timeRange.m_time != 0 && !m_timeRange.isMatch()) {
+        return false;
+    }
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return false;
+    }
+    if (gf::GfGameManager::isBattle() && m_battleReaction == 1) {
+        return false;
+    }
+    return true;
+}
+
+bool GmkCollection::BdatInfo::isPopCondMatchedExceptDist() const {
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return false;
+    }
+    if (m_popTime.m_time != 0 && !m_popTime.isMatch()) {
+        return false;
+    }
+    if (m_popWeather.m_weather != 0 && !m_popWeather.isMatch()) {
+        return false;
+    }
+    unsigned short itemId = m_itemId;
+    if (itemId != 0) {
+        unsigned int enableStock = gf::GfItemUtil::getEnableStock(itemId);
+        if ((unsigned int)gf::GfItemUtil::getItemBoxCount(itemId) >= enableStock) {
+            return false;
+        }
     }
     return true;
 }

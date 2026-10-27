@@ -14,6 +14,9 @@ public:
         : m_questFlag(flag), m_questFlagMin(min), m_questFlagMax(max) {}
     QuestFlagCond(const CBdatWrapper& bdat, int row, const char* prefix);
     bool isMatch() const;
+    // a quest is named and min <= max (GmkEnemyInsts::BdatInfo tests this before isMatch; an inline member: its
+    // loads keep the class's 2-byte alignment, the two bytes read as one halfword; the name is not the original's)
+    bool isSet() const { return m_questFlag != 0 && m_questFlagMin <= m_questFlagMax; }
     // the row's <prefix>QuestFlag, QuestFlagMin and QuestFlagMax (the constructor reads those columns; the names
     // are not the original's)
     unsigned short m_questFlag;
