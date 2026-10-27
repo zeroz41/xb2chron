@@ -339,7 +339,13 @@ public:
     unsigned char pad_EF4_2 : 2;
     unsigned char pad_EF4_4 : 1;  // a type 1 request's characters (fn_710009DCAC)
     unsigned char pad_EF4_5 : 3;
-    unsigned char pad_EF5[0x9];
+    // a separate bitfield run: the original reads and writes 0xEF5 as one byte, apart from 0xEF4
+    unsigned char : 0;
+    unsigned char pad_EF5_0 : 2;
+    // SpAttackManager::DeleteCamera clears it for its camera characters (the name is not the original's)
+    unsigned char m_spAttackCamera : 1;
+    unsigned char pad_EF5_3 : 5;
+    unsigned char pad_EF6[0x8];
     // one 16-byte bitfield run (StartBackHome loads and stores 0xEFE and 0xF06 as two 8-byte halves)
     unsigned int pad_EFE : 8;
     // IsControlCharacter's cached answer and whether it is cached (the names are not the original's)
