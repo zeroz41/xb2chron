@@ -559,7 +559,7 @@ application/BF2/framework/MessageObject.cpp:
 	.rodata      start:0x009816E7 end:0x009816F5
 	.data        start:0x00B421C8 end:0x00B421F8
 	.init_array  start:0x00B8F8A0 end:0x00B8F8A8
-	.bss         start:0x00C24138 end:0x00C24140
+	.bss         start:0x00C24138 end:0x00C24150
 
 application/BF2/framework/ModelManager.cpp:
 	.text        start:0x001913FC end:0x00191598
@@ -580,7 +580,7 @@ application/BF2/framework/NaviUtil.cpp:
 	.text        start:0x00192BBC end:0x00192D44
 	.rodata      start:0x00981796 end:0x009817A6
 	.init_array  start:0x00B8F8A8 end:0x00B8F8B0
-	.bss         start:0x00C24158 end:0x00C2415C
+	.bss         start:0x00C24158 end:0x00C24170
 
 application/BF2/framework/UpdatableGroup.cpp:
 	.text        start:0x00192D44 end:0x00193484
@@ -597,7 +597,7 @@ application/BF2/framework/UpdatableObject.cpp:
 	.rodata      start:0x0098180D end:0x0098181D
 	.data        start:0x00B425F0 end:0x00B42630
 	.init_array  start:0x00B8F8B0 end:0x00B8F8B8
-	.bss         start:0x00C24178 end:0x00C24180
+	.bss         start:0x00C24178 end:0x00C24190
 
 application/BF2/framework/PadManager.cpp:
 	.text        start:0x00193F08 end:0x00196B94
@@ -739,7 +739,7 @@ application/BF2/gf/asset/gf_asset_pack.cpp:
 	.text        start:0x001B11FC end:0x001B4E94
 	.rodata      start:0x00982194 end:0x009821D8
 	.data        start:0x00B43628 end:0x00B43668
-	.bss         start:0x00C24490 end:0x00C24498
+	.bss         start:0x00C24490 end:0x00C24520
 
 application/BF2/gf/asset/gf_asset_resource.cpp:
 	.text        start:0x001B4E94 end:0x001B535C
@@ -1157,11 +1157,12 @@ application/BF2/gf/GfAppendWire.cpp:
 	.data        start:0x00B52C38 end:0x00B52C68
 
 application/BF2/gf/unit_710028E5BC.cpp:
-	.text        start:0x0028E5BC end:0x0028EBB0
+	.text        start:0x0028E5BC end:0x0028F250
+	.rodata      start:0x0098A25A end:0x0098A268
 
 application/BF2/gf/unit_710028EBB0.cpp:
-	.text        start:0x0028EBB0 end:0x002906D0
-	.rodata      start:0x0098A25A end:0x0098A2AE
+	.text        start:0x0028F250 end:0x002906D0
+	.rodata      start:0x0098A268 end:0x0098A2AE
 	.data        start:0x00B52C68 end:0x00B535D0
 
 application/BF2/gf/data/GfDataBlade_71002906D0.cpp:
@@ -2971,7 +2972,7 @@ application/BF2/gf/object/component/GfComBehaviorNpc.cpp:
 	.rodata      start:0x009C57A4 end:0x009C58DC
 	.data        start:0x00B66840 end:0x00B66AE0
 	.init_array  start:0x00B8FAB8 end:0x00B8FAC0
-	.bss         start:0x00EABFF0 end:0x00EAC018
+	.bss         start:0x00EABFF0 end:0x00EAC024
 
 application/BF2/gf/object/component/StateTalk.cpp:
 	.text        start:0x004E0178 end:0x004E1238
@@ -3184,7 +3185,7 @@ application/BF2/gf/object/component/pc/gf_com_behavior_pc.cpp:
 	.rodata      start:0x009C5B2C end:0x009C5C78
 	.data        start:0x00B693E8 end:0x00B69448
 	.init_array  start:0x00B8FB00 end:0x00B8FB08
-	.bss         start:0x00EAC330 end:0x00EAC358
+	.bss         start:0x00EAC330 end:0x00EAC368
 
 application/BF2/gf/object/component/pc/GfComPropertyPc.cpp:
 	.text        start:0x00511F94 end:0x005144B4
@@ -3198,7 +3199,7 @@ application/BF2/gf/object/component/pc/Agent.cpp:
 	.text        start:0x005144B4 end:0x005144F4
 	.rodata      start:0x009A3111 end:0x009A3117
 	.init_array  start:0x00B8FB10 end:0x00B8FB18
-	.bss         start:0x00EAC3D8 end:0x00EAC3E0
+	.bss         start:0x00EAC3D8 end:0x00EAC3F0
 
 application/BF2/gf/object/component/pc/AIAgent.cpp:
 	.text        start:0x005144F4 end:0x005148D0
