@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKSELINEPOINT_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "plugin/Bdat.h"
 namespace gmk { class GmkSeLinePointGobCustom; }
 
 namespace gmk {
@@ -9,7 +10,11 @@ namespace gmk {
 class GmkSeLinePoint : public ::gmk::AGmkBase {
 public:
     // empty: its Vector<BdatInfo>::resize is the empty-element form (no element stores)
-    class BdatInfo {};
+    class BdatInfo {
+    public:
+        // inline and empty: initGmkBdatInfo reads the table pointer (getBindedBdatFp) and stores nothing
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {}
+    };
     virtual ~GmkSeLinePoint();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3

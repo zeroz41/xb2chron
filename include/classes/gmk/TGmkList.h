@@ -7,14 +7,41 @@
 #include "classes/gmk/GmkAccManager.h"
 #include "classes/gmk/GmkGobEventListener.h"
 #include "classes/gmk/IGmkList.h"
-#include "classes/gmk/Lvlb.h"
 #include "mm/mtl/Vector.h"
 #include "classes/ml/Scn.h"
 #include "plugin/Bdat.h"
+#include "classes/gmk/Lvlb.h"
+#include "classes/fw/FrameworkMemory.h"
+#include <string.h>
 #include "classes/ml/ScnObjCam.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gmk {
+// A kind's BdatInfo either reads a BDAT row (it has create(table, row, gmk), taking the table or a CBdatWrapper made
+// from it) or holds nothing (an empty class: Trigger, BattleLock, the form kinds, ...). For the empty kinds createGmk
+// still indexes m_bdatInfos, but initGmkBdatInfo is `return false` inlined away: 21 lists have no initGmkBdatInfo of
+// their own. This picks the case from the type (the original's mechanism is not known; the code is the same).
+template <typename T1>
+class GmkBdatRowTest {
+    template <typename U>
+    static char test(U* info, decltype(info->create(static_cast<unsigned char*>(nullptr), 0,
+                                                    *static_cast<const gmk::AGmkBase*>(nullptr)))* = nullptr);
+    template <typename U>
+    static long test(...);
+
+public:
+    static const bool HAS_ROW = sizeof(test<T1>(nullptr)) == 1;
+};
+template <typename T1, bool HAS = GmkBdatRowTest<T1>::HAS_ROW>
+struct GmkBdatRow {
+    static const bool HAS_ROW = true;
+    static void create(T1& info, unsigned char* fp, int row, const gmk::AGmkBase& gmk) { info.create(fp, row, gmk); }
+};
+template <typename T1>
+struct GmkBdatRow<T1, false> {
+    static const bool HAS_ROW = false;
+    static void create(T1&, unsigned char*, int, const gmk::AGmkBase&) {}
+};
 // the gimmicks of one kind (T0), read from a resource whose gimmick section carries the magic T2, with their rows
 // (T1) in a BDAT table; 55 instances in the module
 template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
@@ -24,8 +51,8 @@ public:
     // the count of gimmicks seqUpdate updates a frame comes from the creator (GmkSet::createGmkLists)
     // every list shares the gimmick object listener (GmkGobEventListener::addRef); the destructor releases it
     explicit TGmkList(unsigned int updateGmkNumPerFrame)
-        : m_resource(nullptr), m_assetData(nullptr), pad_180(nullptr), pad_188(nullptr), pad_190(nullptr), pad_198(nullptr), m_gmkSection(nullptr),
-          pad_1a8(nullptr), pad_1b0(nullptr), m_bdatFp(nullptr),
+        : m_resource(nullptr), m_assetData(nullptr), m_xformSection(nullptr), m_xforms(nullptr), m_infoSection(nullptr), m_infos(nullptr),
+          m_gmkSection(nullptr), m_gmkData(nullptr), m_strings(nullptr), m_bdatFp(nullptr),
           m_seq(nullptr), m_updateGmkNumPerFrame(updateGmkNumPerFrame), m_updateGmkIndex(0) {
         GmkGobEventListener::addRef();
     }
@@ -47,24 +74,23 @@ public:
     virtual void disposeGmk();  // slot 17
     virtual void onResetUpdateGmkIndex();  // slot 18
     // the sequences update runs: wait for the resource, then update a share of the gimmicks each frame
-    void seqWaitResourceLoaded(float dt);
-    // finds the BDAT row whose "name" is the gimmick's INFO name and fills bdatInfo from it (createGmk calls it
-    // for each gimmick)
+    // finds the BDAT row named as the gimmick's INFO entry and fills bdatInfo from it (the name is the original's)
     bool initGmkBdatInfo(T1& bdatInfo, int& bdatId, const gmk::AGmkBase& gmk);
+    void seqWaitResourceLoaded(float dt);
     void seqUpdate(float dt);
 
     unsigned char pad_8[0x8];
     CreateInfo m_createInfo;  // 0x10
     fw::CommonResource* m_resource;  // 0x170: the gimmick resource create requests
     void* m_assetData;  // 0x178: its data, createGmk's (the name is not the original's)
-    // 0x180..0x1a0 and 0x1a8: four and two words disposeGmk clears (not read yet)
-    void* pad_180;
-    void* pad_188;
-    void* pad_190;
-    void* pad_198;
-    const unsigned int* m_gmkSection;  // 0x1a0: the section whose first word is T2 (the name is not the original's)
-    void* pad_1a8;
-    void* pad_1b0;
+    // 0x180..0x1b0: the resource's sections createGmk finds, and their data (the names are not the original's)
+    const LvlbSection* m_xformSection;
+    Xform* m_xforms;
+    const LvlbSection* m_infoSection;
+    LvlbInfo* m_infos;
+    const LvlbSection* m_gmkSection;  // 0x1a0: the section whose magic is T2
+    const unsigned char* m_gmkData;
+    const char* m_strings;
     unsigned char* m_bdatFp;  // 0x1b8: the BDAT table of m_createInfo.m_bdatName
     SeqFunc m_seq;  // 0x1c0: what update runs, none when disposed
     mm::mtl::Vector<T1> m_bdatInfos;  // 0x1d0
@@ -90,7 +116,7 @@ bool TGmkList<T0, T1, T2, T3, T4>::isValid() const {
     if (m_gmkSection == nullptr) {
         return false;
     }
-    return *m_gmkSection == T2;
+    return m_gmkSection->m_magic == T2;
 }
 
 template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
@@ -182,13 +208,13 @@ void TGmkList<T0, T1, T2, T3, T4>::disposeGmk() {
     m_gmks.destroy();
     m_bdatInfos.destroy();
     m_assetData = nullptr;
-    pad_180 = nullptr;
-    pad_188 = nullptr;
-    pad_190 = nullptr;
-    pad_198 = nullptr;
+    m_xformSection = nullptr;
+    m_xforms = nullptr;
+    m_infoSection = nullptr;
+    m_infos = nullptr;
     m_gmkSection = nullptr;
-    pad_1a8 = nullptr;
-    pad_1b0 = nullptr;
+    m_gmkData = nullptr;
+    m_strings = nullptr;
 }
 
 template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
@@ -234,6 +260,129 @@ template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T
 void TGmkList<T0, T1, T2, T3, T4>::onResetUpdateGmkIndex() {}
 
 template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
+void TGmkList<T0, T1, T2, T3, T4>::createGmk(void* data) {
+    if (data == nullptr) {
+        return;
+    }
+    disposeGmk();
+    LvlbHeader* header = static_cast<LvlbHeader*>(data);
+    LvlbInfo* infos = nullptr;
+    if (header->m_magic != 0x424C564C || header->m_version != 3) {
+    fail:
+        dispose();
+        return;
+    }
+    for (const LvlbSection* section = reinterpret_cast<const LvlbSection*>(header + 1);
+         section < reinterpret_cast<const LvlbSection*>(static_cast<unsigned char*>(data) + header->m_size);
+         section = reinterpret_cast<const LvlbSection*>(reinterpret_cast<const unsigned char*>(section) + section->m_size)) {
+        switch (section->m_magic) {
+        case 0x4D524658: {  // XFRM
+            m_xformSection = section;
+            if (section->m_version != 2) {
+                goto fail;
+            }
+            Xform* xforms = reinterpret_cast<Xform*>(const_cast<LvlbSection*>(section + 1));
+            m_xforms = xforms;
+            if (m_createInfo.m_rotY != 0.0f || !m_createInfo.m_pos.isZero()) {
+                mm::Mat44 local;
+                mm::Mat44 world;
+                mm::Mat44 mat;
+                if (m_createInfo.m_rotY != 0.0f || !m_createInfo.m_pos.isZero()) {
+                    mat.setRotY(m_createInfo.m_rotY);
+                    mat.addTrans(mm::Vec3(m_createInfo.m_pos.x, m_createInfo.m_pos.y, m_createInfo.m_pos.z));
+                } else {
+                    mat = mm::Mat44::identity;
+                }
+                unsigned int count = m_xformSection->m_count;
+                for (unsigned int i = 0; i < count; ++i) {
+                    Xform& xform = xforms[i];
+                    xform.toMatrix(local, true);
+                    world.mul(local, mat);
+                    mm::Vec3 pos = world.getTrans();
+                    xform.m_pos.setV(pos);
+                    world.getRotXYZ(xform.m_rot);
+                    xform.m_rot.x = -xform.m_rot.x;
+                    xform.m_rot.y = -xform.m_rot.y;
+                    xform.m_rot.z = -xform.m_rot.z;
+                }
+            }
+            break;
+        }
+        case 0x47525453:  // STRG
+            m_strings = reinterpret_cast<const char*>(section + 1);
+            break;
+        case 0x4F464E49:  // INFO
+            m_infoSection = section;
+            if (section->m_version != 4) {
+                goto fail;
+            }
+            infos = reinterpret_cast<LvlbInfo*>(const_cast<LvlbSection*>(section + 1));
+            m_infos = infos;
+            break;
+        case T2:
+            m_gmkSection = section;
+            if (section->m_version != T3) {
+                goto fail;
+            }
+            m_gmkData = reinterpret_cast<const unsigned char*>(section + 1);
+            break;
+        }
+    }
+    if (m_gmkSection == nullptr) {
+        dispose();
+        return;
+    }
+    const LvlbSection* gmkSection = m_gmkSection;
+    if (m_strings != nullptr && (header->m_flags & 1) == 0) {
+        header->m_flags |= 1;
+        if (infos != nullptr) {
+            unsigned int count = m_infoSection->m_count;
+            for (unsigned int i = 0; i < count; ++i) {
+                infos[i].m_name += reinterpret_cast<unsigned long>(m_strings);
+            }
+        }
+        gmkSection = m_gmkSection;
+    }
+    m_assetData = data;
+    unsigned int num = gmkSection->m_count;
+    if (m_createInfo.m_bdatName.m_nLen != 0) {
+        m_bdatInfos.setAllocator(fw::FrameworkMemory::getAllocator(5));
+        m_bdatInfos.reserve(num);
+        m_bdatInfos.resize(num);
+    }
+    m_gmks.setAllocator(fw::FrameworkMemory::getAllocator(5));
+    m_gmks.reserve(num);
+    m_gmks.resize(num);
+    for (unsigned int i = 0; i < num; ++i) {
+        T0& gmk = m_gmks[i];
+        const T1* bdatInfo = nullptr;
+        int bdatId;
+        if (m_gmkSection->m_flags & 1) {
+            gmk.m_list = this;
+            gmk.m_pos = nullptr;
+            gmk.m_info = nullptr;
+            bdatId = -1;
+        } else {
+            const LvlbInfo* info = &m_infos[i + m_gmkSection->m_infoIndex];
+            const mm::Vec3* pos = info != nullptr ? &m_xforms[info->m_xformIndex].m_pos : nullptr;
+            gmk.m_list = this;
+            gmk.m_pos = pos;
+            gmk.m_info = info;
+            bdatId = -1;
+            if (m_createInfo.m_bdatName.m_nLen != 0 && initGmkBdatInfo(m_bdatInfos[i], bdatId, gmk)) {
+                bdatInfo = &m_bdatInfos[i];
+            }
+        }
+        AGmkBase::CreateInfo info;
+        info.m_version = m_gmkSection->m_version;
+        info.m_data = m_gmkData + m_gmkSection->m_stride * i;
+        info.m_bdatInfo = bdatInfo;
+        info.m_bdatId = bdatId;
+        gmk.create(info);
+    }
+}
+
+template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
 void TGmkList<T0, T1, T2, T3, T4>::seqWaitResourceLoaded(float dt) {
     if (m_resource->valid()) {
         void* data = m_resource->getAssetData();
@@ -277,6 +426,9 @@ void TGmkList<T0, T1, T2, T3, T4>::seqUpdate(float dt) {
 
 template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
 bool TGmkList<T0, T1, T2, T3, T4>::initGmkBdatInfo(T1& bdatInfo, int& bdatId, const gmk::AGmkBase& gmk) {
+    if (!GmkBdatRow<T1>::HAS_ROW) {
+        return false;
+    }
     if (m_createInfo.m_bdatName.m_nLen == 0) {
         return false;
     }
@@ -299,7 +451,7 @@ bool TGmkList<T0, T1, T2, T3, T4>::initGmkBdatInfo(T1& bdatInfo, int& bdatId, co
     if (found >= 0) {
         bdatId = found;
         // T1::create takes a CBdatWrapper (made from the table) or the table itself (GmkTbox, GmkGrave)
-        bdatInfo.create(getBindedBdatFp(), found, gmk);
+        GmkBdatRow<T1>::create(bdatInfo, getBindedBdatFp(), found, gmk);
         return true;
     }
     return false;

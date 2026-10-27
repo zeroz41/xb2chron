@@ -15,6 +15,15 @@ class TUnk_B6D590Gob;
 
 class TUnk_B6D590 : public ::gmk::AGmkBase {
 public:
+    // the overrides its table holds (slot functions still carry their placeholder symbols, given per slot)
+    virtual ~TUnk_B6D590();  // slot 0 (fn_71005C3E44)
+    virtual gmk::GmkType getGmkType() const;  // slot 2 (fn_71005C3F48)
+    virtual bool isValid() const;  // slot 3 (fn_71005C3F50)
+    virtual void dispose();  // slot 5 (fn_71005B7DAC)
+    virtual void update(float);  // slot 6 (fn_71005B7E18)
+    virtual void debugDraw() const;  // slot 7 (fn_71005B7E80)
+    virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8 (fn_71005B8360)
+    virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9 (fn_71005C3F70)
     // its bdat row: complete because TGmkList's inline constructor needs Vector<BdatInfo>; the size is not read
     // yet (placeholder: no fields declared)
     class BdatInfo {};

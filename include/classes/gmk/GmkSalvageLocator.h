@@ -8,7 +8,8 @@ namespace gf { class GF_OBJ_HANDLE; }
 
 namespace gmk {
 // table 0x7100B6CAA0
-class GmkSalvageLocator : public ::gmk::AGmkBase {
+// 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (the 16-aligned field is not typed yet)
+class alignas(16) GmkSalvageLocator : public ::gmk::AGmkBase {
 public:
     // its row of the list's BDAT table: nothing of it is kept (Vector<BdatInfo>::resize allocates a byte an element)
     class BdatInfo {};

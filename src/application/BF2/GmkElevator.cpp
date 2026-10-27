@@ -118,6 +118,8 @@
 #include "classes/gmk/GmkRoutePoint.h"
 #include "classes/gmk/GmkTrigger.h"
 #include "classes/gmk/GmkWarp.h"
+#include "mm/Mat44.h"
+#include "classes/gmk/Lvlb.h"
 
 // the gimmick kinds' names, by GmkType: the gimmick-set table's column of each (GmkSet::createGmkLists reads
 // "<name>" and "<name>_bdat"; GmkManager::getSheetnameByType returns them; the name is not the original's)
@@ -563,6 +565,23 @@ void AGmkBase::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* han
             acc.setUserData(gf::GfObjUserData(0), 0);
         }
     }
+}
+
+// the entry's matrix: rotation then translation, scaled first unless noScale (AGmkBase::getMatrix calls it,
+// TGmkList::createGmk inlines it)
+mm::Mat44& Xform::toMatrix(mm::Mat44& mat, bool noScale) const {
+    mm::Mat44 trans;
+    trans.setTrans(m_pos);
+    mm::Mat44 rot;
+    rot.setRotXYZ(m_rot);
+    if (noScale) {
+        mat = rot * trans;
+    } else {
+        mm::Mat44 scale;
+        scale.setScale(m_scale);
+        mat = scale * rot * trans;
+    }
+    return mat;
 }
 
 // ---- kinds whose isValid/dispose/destructor are the base pattern

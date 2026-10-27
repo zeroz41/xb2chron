@@ -14,6 +14,8 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
+        // out of line: initGmkBdatInfo calls it with the table itself (symbol 0x71005A5230)
+        void create(unsigned char* fp, int row, const AGmkBase& gmk);
         unsigned char pad_0[0x2];
         // what gf::GfFieldGrave::create passes the common window (fn_7100359CD8) with message 51; the name is not
         // the original's

@@ -19,7 +19,8 @@ public:
     virtual void onLeavePhantom(gmk::IGmkPhantomEventListener::OnLeaveInfo const&) = 0;
 };
 // table 0x7100B6CE10; base at 0x48 unknown (TUnk_B6CE88)
-class GmkElevator : public ::gmk::AGmkBase, public TUnk_B6CE88 {
+// 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (the 16-aligned field is not typed yet)
+class alignas(16) GmkElevator : public ::gmk::AGmkBase, public TUnk_B6CE88 {
 public:
     // its size: the element size of its Vector<BdatInfo>::resize (0x7100617494); field names from the BDAT columns
     // create reads (the names are not the original's); the defaults are what Vector<BdatInfo>::resize constructs

@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKNPC_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "plugin/Bdat.h"
 #include "classes/gmk/AGmkNpc.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
@@ -16,6 +17,8 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
+        // out of line: initGmkBdatInfo calls it (symbol 0x710058E934)
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
         unsigned char pad_0[0x30];
     };
     virtual ~GmkNpc();  // slot 0

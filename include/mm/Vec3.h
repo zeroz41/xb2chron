@@ -36,6 +36,14 @@ public:
     Vec3 operator*(float s) const { return Vec3(x * s, y * s, z * s); }
     friend Vec3 operator*(float s, const Vec3& v) { return Vec3(s * v.x, s * v.y, s * v.z); }
 
+    // this = -v (the name is not the original's)
+    void setV(Vec3 v) { *this = v; }
+    void setNeg(Vec3 v) {
+        x = -v.x;
+        y = -v.y;
+        z = -v.z;
+    }
+
     float dot(const Vec3& v) const { return x * v.x + y * v.y + z * v.z; }
     Vec3 cross(const Vec3& v) const { return Vec3(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x); }
     float length() const { return ::sqrtf(x * x + y * y + z * z); }

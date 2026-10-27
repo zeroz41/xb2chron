@@ -3,6 +3,7 @@
 
 #include "mm/mtl/RTTI.h"
 #include "classes/gmk/AGmkBase.h"
+#include "plugin/Bdat.h"
 namespace gmk { class GmkDmgGimmickGobCustom; }
 
 namespace gmk {
@@ -17,6 +18,8 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
+        // out of line: initGmkBdatInfo calls it (symbol 0x71005AFF0C)
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
         unsigned char pad_0[0x28];
     };
     virtual ~GmkDmgGimmick();  // slot 0

@@ -5,7 +5,8 @@
 
 namespace gmk {
 // table 0x7100B6E240
-class GmkDmgSe : public ::gmk::AGmkBase {
+// 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (the 16-aligned field is not typed yet)
+class alignas(16) GmkDmgSe : public ::gmk::AGmkBase {
 public:
     // empty: its Vector<BdatInfo>::resize is the empty-element form (no element stores)
     class BdatInfo {};

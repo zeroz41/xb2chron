@@ -2,6 +2,7 @@
 #define CLASSES_GMK_TUNK_B6D660_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gf/IGfObjListener.h"
 
 namespace gmk {
 // Placeholder name: the gimmick of kind 0x3E (GmkSet::createGmkLists' list slot 0x3E, bdat column "campPop"),
@@ -15,6 +16,14 @@ class TUnk_B6D660Gob;
 
 class TUnk_B6D660 : public ::gmk::AGmkBase {
 public:
+    // the overrides its table holds (slot functions still carry their placeholder symbols, given per slot)
+    virtual ~TUnk_B6D660();  // slot 0 (fn_71005C401C)
+    virtual gmk::GmkType getGmkType() const;  // slot 2 (fn_71005C4118)
+    virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4 (fn_71005B94D8)
+    virtual void dispose();  // slot 5 (fn_71005B9564)
+    virtual void update(float);  // slot 6 (fn_71005B95CC)
+    virtual void debugDraw() const;  // slot 7 (fn_71005B98F0)
+    virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9 (fn_71005B9928)
     // its bdat row: complete because TGmkList's inline constructor needs Vector<BdatInfo>; the size is not read
     // yet (placeholder: no fields declared)
     class BdatInfo {};

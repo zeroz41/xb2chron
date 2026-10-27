@@ -14,7 +14,8 @@ public:
     virtual void vf1();
 };
 // table 0x7100B6C738; base at 0x48 unknown (TUnk_B6C7B0)
-class GmkLandmark : public ::gmk::AGmkBase, public TUnk_B6C7B0 {
+// 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (the 16-aligned field is not typed yet)
+class alignas(16) GmkLandmark : public ::gmk::AGmkBase, public TUnk_B6C7B0 {
 public:
     // its size: the element size of Vector<BdatInfo>::resize 0x71005F51B8 (whose constructor sets its fields; their defaults are not written yet)
     class BdatInfo {

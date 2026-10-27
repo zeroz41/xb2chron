@@ -8,7 +8,8 @@ namespace gmk { class GmkBattleLockGob; }
 
 namespace gmk {
 // table 0x7100B6C480
-class GmkBattleLock : public ::gmk::AGmkBase {
+// 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (the 16-aligned field is not typed yet)
+class alignas(16) GmkBattleLock : public ::gmk::AGmkBase {
 public:
     // empty: its Vector<BdatInfo>::resize is the empty-element form (no element stores)
     class BdatInfo {};

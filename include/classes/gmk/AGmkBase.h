@@ -71,6 +71,17 @@ int getCurrentMapBdatId();
 void setDispByGmkType(GmkType type, bool disp);
 void setDispByGmkTypeAndBdatId(GmkType type, int bdatId, bool disp);
 void setDispByGmkTypeAndGmkIdx(int gmkSetId, GmkType type, unsigned int idx, bool disp);
+// what create takes: the gimmick section's version, the gimmick's data in it, its BDAT row's BdatInfo and the row
+// (TGmkList::createGmk builds it; AGmkBase::create keeps a copy; the names are not the original's)
+class AGmkBase::CreateInfo {
+public:
+    CreateInfo() : m_data(nullptr), m_bdatInfo(nullptr), m_bdatId(-1) {}
+    unsigned int m_version;
+    const unsigned char* m_data;
+    const void* m_bdatInfo;
+    int m_bdatId;
+};
+
 }  // namespace gmk
 
 #endif

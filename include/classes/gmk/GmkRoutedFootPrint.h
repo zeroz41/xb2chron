@@ -2,6 +2,9 @@
 #define CLASSES_GMK_GMKROUTEDFOOTPRINT_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "plugin/Bdat.h"
+#include "classes/gmk/QuestFlagCond.h"
+#include "classes/gmk/ScenarioFlagCond.h"
 namespace gmk { class GmkRoutedFootPrintGobCustom; }
 
 namespace gmk {
@@ -11,7 +14,19 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
-        unsigned char pad_0[0x18];
+        // inline: initGmkBdatInfo inlines it (no symbol); the column names are the original's, the field names not
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+            m_footEffect = reinterpret_cast<const char*>(Bdat::getValCheck(bdat.m_fp, "FootEffect", row, 7));
+            m_scenarioFlag = ScenarioFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMin", row, 2), (unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMax", row, 2));
+            m_questFlag = QuestFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "QuestFlag", row, 2), (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMin", row, 1),
+                                        (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMax", row, 1));
+            m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Condition", row, 2);
+        }
+        const char* m_footEffect;  // 0x0: "FootEffect"
+        unsigned short m_condition;  // 0x8: "Condition"
+        ScenarioFlagCond m_scenarioFlag;  // 0xa
+        QuestFlagCond m_questFlag;  // 0xe
+        unsigned char pad_12[0x6];
     };
     virtual ~GmkRoutedFootPrint();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

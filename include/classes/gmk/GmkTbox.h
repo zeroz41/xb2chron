@@ -14,6 +14,8 @@ public:
     // its size: the element size of Vector<BdatInfo>::resize 0x71005DFFBC (zero-filled)
     class BdatInfo {
     public:
+        // out of line: initGmkBdatInfo calls it with the table itself (symbol 0x7100592E90)
+        void create(unsigned char* fp, int row, const AGmkBase& gmk);
         bool isPopCondMatchedExceptDist() const;
         unsigned short m_condition;  // the row's "Condition" (a GfGameCond id; 0: none)
         unsigned char pad_2[0xE];

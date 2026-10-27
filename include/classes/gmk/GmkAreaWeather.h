@@ -6,7 +6,8 @@ namespace gmk { class GmkAreaWeatherGob; }
 
 namespace gmk {
 // table 0x7100B6DEC0
-class GmkAreaWeather : public ::gmk::AGmkBase {
+// 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (the 16-aligned field is not typed yet)
+class alignas(16) GmkAreaWeather : public ::gmk::AGmkBase {
 public:
     // empty: its Vector<BdatInfo>::resize is the empty-element form (no element stores)
     class BdatInfo {};

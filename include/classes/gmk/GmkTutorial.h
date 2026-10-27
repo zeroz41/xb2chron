@@ -8,7 +8,8 @@
 
 namespace gmk {
 // table 0x7100B6D308
-class GmkTutorial : public ::gmk::AGmkBase {
+// 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (the 16-aligned field is not typed yet)
+class alignas(16) GmkTutorial : public ::gmk::AGmkBase {
 public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {

@@ -35,6 +35,8 @@ public:
                 z = v.z;
                 return *this;
             }
+            // every component within 1e-6 of zero (as mm::Vec3::isZero; the name is not the original's)
+            bool isZero() const { return ::fabsf(x) <= 1e-6f && ::fabsf(y) <= 1e-6f && ::fabsf(z) <= 1e-6f; }
             float x;
             float y;
             float z;

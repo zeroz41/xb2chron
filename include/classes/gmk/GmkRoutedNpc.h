@@ -12,7 +12,8 @@ namespace mm { class Vec3; }
 
 namespace gmk {
 // table 0x7100B6DB80
-class GmkRoutedNpc : public ::gmk::GmkRoute, public ::gmk::AGmkNpc {
+// 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (the 16-aligned field is not typed yet)
+class alignas(16) GmkRoutedNpc : public ::gmk::GmkRoute, public ::gmk::AGmkNpc {
 public:
     virtual ~GmkRoutedNpc();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
@@ -23,8 +24,8 @@ public:
     virtual void getBindedRoutePointList() const;  // slot 11
     virtual bool isPopCondMatched() const;  // slot 12
     virtual void isDepopCondMatched() const;  // slot 13
-    virtual void vf14();  // slot 14
-    virtual void vf15();  // slot 15
+    virtual void vf4();  // slot 14 (AGmkNpc slot 4; its override, fn_7100590868)
+    virtual void vf5();  // slot 15 (AGmkNpc slot 5; its override, fn_71005909C0)
     virtual void getBindedBdatFp() const;  // slot 16
     virtual void getBindedBdatId() const;  // slot 17
     virtual bool findPopPosRot(mm::Vec3&, mm::Vec3&) const;  // slot 18
