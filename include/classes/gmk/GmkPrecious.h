@@ -44,7 +44,7 @@ public:
     bool isObtained() const;
     // AGmkBase's row as this kind's BdatInfo; the name is not the original's
     const BdatInfo* getBdatInfo() const {
-        return static_cast<const BdatInfo*>(m_bdatInfo);
+        return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
     }
     static const gmk::GmkType TYPE = gmk::GmkType(34);
     unsigned char pad_48[0x30];  // fields: size from TGmkList::getInst's stride

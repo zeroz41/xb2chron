@@ -41,7 +41,7 @@ public:
     virtual void onLeavePhantom(gmk::IGmkPhantomEventListener::OnLeaveInfo const&);  // slot 12
     // AGmkBase's row as this kind's BdatInfo; the name is not the original's
     const BdatInfo* getBdatInfo() const {
-        return static_cast<const BdatInfo*>(m_bdatInfo);
+        return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
     }
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(21);

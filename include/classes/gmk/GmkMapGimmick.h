@@ -33,7 +33,7 @@ public:
     virtual ~GmkMapGimmick();  // slot 0
     void setSolved() const;
     void validateEffectWithoutLodControl(int lodId, bool flag) const;
-    const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_bdatInfo); }
+    const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
     virtual void dispose();  // slot 5

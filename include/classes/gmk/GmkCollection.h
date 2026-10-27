@@ -42,7 +42,7 @@ public:
     // takes the point's icon down (GfFieldCollect::seqWaitDrop passes true once every item has dropped)
     void disposeIcon(bool flag);
     static const gmk::GmkType TYPE = gmk::GmkType(0x1C);
-    unsigned char pad_48[0x28];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_48[0x25];  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk
 

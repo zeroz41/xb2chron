@@ -46,13 +46,13 @@ public:
         mm::Vec3NA m_pos;
         float m_param;  // passed on in MsgPcFieldNotifyWarp (meaning not known)
     };
-    const Point* getPoints() const { return reinterpret_cast<const Point*>(m_data); }
+    const Point* getPoints() const { return reinterpret_cast<const Point*>(m_createInfo.m_data); }
     static const gmk::GmkType TYPE = gmk::GmkType(38);
     unsigned char pad_48[0x8];  // fields: size from TGmkList::getInst's stride
     // the object at the first point (inferred): GfFieldWarp::onFsSucceeded sends the player to the second point when
     // the access came from it, to the first from any other (the name is not the original's)
     gf::GF_OBJ_HANDLE* m_firstHandle;
-    unsigned char pad_58[0x18];
+    unsigned char pad_58[0x16];  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk
 

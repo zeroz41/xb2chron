@@ -97,7 +97,7 @@ void AFieldSeq::seqCheckFs(float) {
         return;
     }
     unsigned short fsId = static_cast<unsigned short>(
-        Bdat::getValCheck(gmk->getBindedBdatFp(), "FSID", gmk->m_bdatId, 2));
+        Bdat::getValCheck(gmk->getBindedBdatFp(), "FSID", gmk->m_createInfo.m_bdatId, 2));
     unsigned int nameMsId = 0;
     GfGameUtil::getNameMsId(nameMsId, m_handle);
     if (fsId) {
@@ -149,7 +149,7 @@ void GfFieldGrave::create(GF_OBJ_HANDLE* handle) {
     m_handle = handle;
     gmk::AGmkBase* gmk = gmk::getBindedGmkInst(handle);
     GfMenuManager::fn_7100359CD8(
-        51, gmk != nullptr ? static_cast<const gmk::GmkGrave::BdatInfo*>(gmk->m_bdatInfo)->m_windowArg : 0);
+        51, gmk != nullptr ? static_cast<const gmk::GmkGrave::BdatInfo*>(gmk->m_createInfo.m_bdatInfo)->m_windowArg : 0);
     m_seq = &GfFieldGrave::seqWaitToSelect;
 }
 
@@ -294,7 +294,7 @@ void GfFieldMapGimmick::seqLod_waitToElapseTime(float dt) {
     m_seqLod = nullptr;
     if (m_bdatInfo.m_nowaitGmkCam && m_isFsSucceeded) {
         if (gmk::GmkMapGimmick* gmk = static_cast<gmk::GmkMapGimmick*>(m_gmkAcc.m_gmk)) {
-            SCOM_QUEST_GIMMICK::createMapGimmick(gmk->m_bdatId, 0.0f);
+            SCOM_QUEST_GIMMICK::createMapGimmick(gmk->m_createInfo.m_bdatId, 0.0f);
             gmk->setSolved();
             m_solveState = 2;
         }
@@ -304,7 +304,7 @@ void GfFieldMapGimmick::seqLod_waitToElapseTime(float dt) {
 void GfFieldMapGimmick::seqLod_init(float) {
     gmk::AGmkBase* gmk = m_gmkAcc.m_gmk;
     unsigned char* fp = gmk->getBindedBdatFp();
-    int row = gmk->m_bdatId;
+    int row = gmk->m_createInfo.m_bdatId;
     mm::mtl::FixStr<32> name;
     name.format("G%d_LODmodel", m_lodStep);
     m_lodAnim = (unsigned short)Bdat::getValCheck(fp, name.m_str, row, 2);
@@ -312,7 +312,7 @@ void GfFieldMapGimmick::seqLod_init(float) {
         m_seqLod = nullptr;
         if (m_bdatInfo.m_nowaitGmkCam && m_isFsSucceeded) {
             if (gmk::GmkMapGimmick* gmk = static_cast<gmk::GmkMapGimmick*>(m_gmkAcc.m_gmk)) {
-                SCOM_QUEST_GIMMICK::createMapGimmick(gmk->m_bdatId, 0.0f);
+                SCOM_QUEST_GIMMICK::createMapGimmick(gmk->m_createInfo.m_bdatId, 0.0f);
                 gmk->setSolved();
                 m_solveState = 2;
             }
@@ -390,7 +390,7 @@ void GfFieldMapGimmick::seqMapObj_nextwait(float dt) {
     m_seqMapObj = nullptr;
     if (m_bdatInfo.m_nowaitGmkCam && m_isFsSucceeded) {
         if (gmk::GmkMapGimmick* gmk = static_cast<gmk::GmkMapGimmick*>(m_gmkAcc.m_gmk)) {
-            SCOM_QUEST_GIMMICK::createMapGimmick(gmk->m_bdatId, 0.0f);
+            SCOM_QUEST_GIMMICK::createMapGimmick(gmk->m_createInfo.m_bdatId, 0.0f);
             gmk->setSolved();
             m_solveState = 2;
         }
@@ -436,7 +436,7 @@ void GfFieldMapGimmick::create(GF_OBJ_HANDLE* handle) {
     AFieldSeq::create(handle);
     if (gmk::AGmkBase* gmk = gmk::getBindedGmkInst(handle)) {
         unsigned char* fp = gmk->getBindedBdatFp();
-        int row = gmk->m_bdatId;
+        int row = gmk->m_createInfo.m_bdatId;
         m_bdatInfo.create(fp, row);
         GfObj* obj = GfObjUtil::getObj(m_handle);
         if (obj == nullptr || (obj->pad_110 & 4) == 0 || m_bdatInfo.isCondMatched()) {
@@ -515,7 +515,7 @@ void GfFieldMapGimmick::update(float dt) {
     }
     if (!wasEnd && isEnd() && m_isFsSucceeded) {
         if (gmk::GmkMapGimmick* gmk = static_cast<gmk::GmkMapGimmick*>(m_gmkAcc.m_gmk)) {
-            SCOM_QUEST_GIMMICK::createMapGimmick(gmk->m_bdatId, 0.0f);
+            SCOM_QUEST_GIMMICK::createMapGimmick(gmk->m_createInfo.m_bdatId, 0.0f);
             gmk->setSolved();
             m_solveState = 2;
         }
@@ -555,8 +555,8 @@ void GfFieldJump::onFsSucceeded() {
                     msg.m_pos.y = data->m_pos.y;
                     msg.m_pos.z = data->m_pos.z;
                     msg.m_bdat = gmk->getBindedBdatFp();
-                    msg.m_bdatId = gmk->m_bdatId;
-                    msg.m_gmkId = gmk->m_bdatId;
+                    msg.m_bdatId = gmk->m_createInfo.m_bdatId;
+                    msg.m_gmkId = gmk->m_createInfo.m_bdatId;
                     static_cast<fw::MessageObject*>(mover)->recieveMessage(obj, msg);
                     return;
                 }
@@ -570,8 +570,8 @@ void GfFieldJump::onFsSucceeded() {
                     msg.m_param1 = data->m_param[1];
                     msg.m_param2 = data->m_param[2];
                     msg.m_bdat = gmk->getBindedBdatFp();
-                    msg.m_bdatId = gmk->m_bdatId;
-                    msg.m_gmkId = gmk->m_bdatId;
+                    msg.m_bdatId = gmk->m_createInfo.m_bdatId;
+                    msg.m_gmkId = gmk->m_createInfo.m_bdatId;
                     static_cast<fw::MessageObject*>(mover)->recieveMessage(obj, msg);
                     if (GfGameManager::fn_71002A9E68()) {
                         gmk->fn_71005A7770();
@@ -604,8 +604,8 @@ void GfFieldWarp::onFsSucceeded() {
                 msg.m_pos.z = pos.z;
                 msg.m_param = second ? points[1].m_param : points[0].m_param;
                 msg.m_bdat = gmk->getBindedBdatFp();
-                msg.m_bdatId = gmk->m_bdatId;
-                msg.m_gmkId = gmk->m_bdatId;
+                msg.m_bdatId = gmk->m_createInfo.m_bdatId;
+                msg.m_gmkId = gmk->m_createInfo.m_bdatId;
                 static_cast<fw::MessageObject*>(mover)->recieveMessage(obj, msg);
                 return;
             }

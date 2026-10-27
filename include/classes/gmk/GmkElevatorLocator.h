@@ -10,6 +10,7 @@ class GmkElevatorLocator : public ::gmk::AGmkBase {
 public:
     // empty: its Vector<BdatInfo>::resize is the empty-element form (no element stores)
     class BdatInfo {};
+    GmkElevatorLocator() {}
     virtual ~GmkElevatorLocator();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3

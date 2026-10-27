@@ -20,7 +20,7 @@ public:
     virtual void dispose();  // slot 5
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x37);
-    unsigned char pad_48[0x10];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_48[0xd];  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk
 

@@ -162,7 +162,7 @@ void GfGmkBladeTraverser::onTraverse(const gmk::AGmkBase& base) {
     const gmk::GmkBlade& blade = static_cast<const gmk::GmkBlade&>(base);
     bool found;
     if (m_bladeId == 0) {
-        found = static_cast<const gmk::GmkBlade::BdatInfo*>(blade.m_bdatInfo)->m_kind == m_kind && blade.m_bladeId == 0;
+        found = static_cast<const gmk::GmkBlade::BdatInfo*>(blade.m_createInfo.m_bdatInfo)->m_kind == m_kind && blade.m_bladeId == 0;
     } else if (m_rareOnly) {
         found = blade.m_bladeId == 1001 || blade.m_bladeId == 1002;
     } else {

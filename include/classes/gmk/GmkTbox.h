@@ -40,13 +40,13 @@ public:
     int getProgress() const;
     // AGmkBase's row as this kind's BdatInfo; the name is not the original's
     const BdatInfo* getBdatInfo() const {
-        return static_cast<const BdatInfo*>(m_bdatInfo);
+        return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
     }
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(9);
     // its game object (dispose clears its user data, destroys it and stores -1; the name is not the original's)
     gf::GF_OBJ_HANDLE* m_gob;
-    unsigned char pad_50[0x10];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_50[0xc];  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk
 

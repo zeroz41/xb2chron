@@ -20,7 +20,7 @@ public:
     // 1.0.0 has it out of line (3.0.1's callers inline it)
     void create(const gmk::GmkPrecious& precious) {
         dispose();
-        m_preciousId = precious.m_bdatId;
+        m_preciousId = precious.m_createInfo.m_bdatId;
         int gmkSetId = gmk::GmkManager::sys()->findFirstBdatId_RSC_GmkSetList(gmk::GmkPrecious::TYPE, m_preciousId);
         if (gmkSetId <= 0) {
             dispose();

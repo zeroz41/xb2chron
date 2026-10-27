@@ -538,13 +538,13 @@ AGmkBase::~AGmkBase() {
 }
 
 bool AGmkBase::isValid() const {
-    return m_list != nullptr && m_data != nullptr && m_bdatInfo != nullptr;
+    return m_list != nullptr && m_createInfo.m_data != nullptr && m_createInfo.m_bdatInfo != nullptr;
 }
 
 void AGmkBase::dispose() {
-    m_version = 0;
-    m_data = nullptr;
-    m_bdatInfo = nullptr;
+    m_createInfo.m_version = 0;
+    m_createInfo.m_data = nullptr;
+    m_createInfo.m_bdatInfo = nullptr;
 }
 
 // the original calls debugUpdateMmf here (its table's slot 10)
@@ -585,23 +585,23 @@ mm::Mat44& Xform::toMatrix(mm::Mat44& mat, bool noScale) const {
 }
 
 // ---- kinds whose isValid/dispose/destructor are the base pattern
-bool GmkTutorial::isValid() const { return m_list != nullptr && m_data != nullptr; }
-bool GmkTrigger::isValid() const { return m_list != nullptr && m_data != nullptr; }
-bool GmkRoutePoint::isValid() const { return m_list != nullptr && m_data != nullptr; }
-bool GmkBattleLock::isValid() const { return m_list != nullptr && m_data != nullptr; }
-bool GmkAreaWeather::isValid() const { return m_list != nullptr && m_data != nullptr; }
-bool GmkSalvageLocator::isValid() const { return m_list != nullptr && m_data != nullptr; }
-bool GmkFieldVolume::isValid() const { return m_list != nullptr && m_data != nullptr; }
-bool GmkDmgPhantom::isValid() const { return m_list != nullptr && m_data != nullptr; }
-bool GmkDmgEffect::isValid() const { return m_list != nullptr && m_data != nullptr; }
-bool GmkDmgSe::isValid() const { return m_list != nullptr && m_data != nullptr; }
-bool GmkRoutedFootPrintPoint::isValid() const { return m_list != nullptr && m_data != nullptr; }
-bool GmkEffectLocator::isValid() const { return m_list != nullptr && m_data != nullptr; }
-bool GmkSeLinePoint::isValid() const { return m_list != nullptr && m_data != nullptr; }
-bool GmkSquadLeader::isValid() const { return m_list != nullptr && m_data != nullptr; }
-bool GmkSquadMember::isValid() const { return m_list != nullptr && m_data != nullptr; }
-bool GmkElevatorLocator::isValid() const { return m_list != nullptr && m_data != nullptr; }
-bool GmkTargetPoint::isValid() const { return m_list != nullptr && m_data != nullptr; }
+bool GmkTutorial::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkTrigger::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkRoutePoint::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkBattleLock::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkAreaWeather::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkSalvageLocator::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkFieldVolume::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkDmgPhantom::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkDmgEffect::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkDmgSe::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkRoutedFootPrintPoint::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkEffectLocator::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkSeLinePoint::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkSquadLeader::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkSquadMember::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkElevatorLocator::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+bool GmkTargetPoint::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
 void GmkRoute::dispose() { AGmkBase::dispose(); }
 void GmkRoutePoint::dispose() { AGmkBase::dispose(); }
 void GmkSquadLeader::dispose() { AGmkBase::dispose(); }

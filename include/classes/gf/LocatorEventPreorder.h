@@ -20,7 +20,7 @@ public:
     // 1.0.0 has it out of line (3.0.1's callers inline it)
     void create(const gmk::GmkEvent& event) {
         dispose();
-        m_eventId = event.m_bdatId;
+        m_eventId = event.m_createInfo.m_bdatId;
         int gmkSetId = gmk::GmkManager::sys()->findFirstBdatId_RSC_GmkSetList(gmk::GmkEvent::TYPE, m_eventId);
         if (gmkSetId <= 0) {
             dispose();

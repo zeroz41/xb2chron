@@ -75,7 +75,7 @@ void GfFieldCollect::seqWaitUIEnd(float) {
     if (GfGameManager::fn_71002A9E68()) {
         if (gmk::AGmkBase* gmk = gmk::getBindedGmkInst(m_handle)) {
             gmk::GmkType type = gmk->getGmkType();
-            unsigned int id = gmk->m_bdatId;
+            unsigned int id = gmk->m_createInfo.m_bdatId;
             if (GfQuestUtil::getGimmickTaskEndCheck(type, id) == 2) {
                 SCOM_QUEST_GIMMICK::fn_710055F594(id, 0.0f);
             }

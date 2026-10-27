@@ -25,6 +25,7 @@ public:
         unsigned short m_title = 0;        // the row's "Title"
         unsigned short m_evCondition = 0;  // the row's "EVCondition"
     };
+    GmkKizunaTalk() {}
     virtual ~GmkKizunaTalk();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
@@ -35,8 +36,9 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(36);
     // its game object (dispose clears its user data, destroys it and stores -1; the name is not the original's)
-    gf::GF_OBJ_HANDLE* m_gob;
-    unsigned char pad_50[0x8];  // fields: size from TGmkList::getInst's stride
+    gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    float pad_50 = 0.0f;               // update reads it, meaning not known
+    unsigned char pad_54 = 1;          // meaning not known
 };
 }  // namespace gmk
 

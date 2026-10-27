@@ -15,6 +15,7 @@ public:
         // inline and empty: initGmkBdatInfo reads the table pointer (getBindedBdatFp) and stores nothing
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {}
     };
+    GmkSeLinePoint() {}
     virtual ~GmkSeLinePoint();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3

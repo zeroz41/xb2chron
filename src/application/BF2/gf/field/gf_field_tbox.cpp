@@ -61,7 +61,7 @@ void GfFieldTbox::seqWaitUIEnd(float) {
     m_isUIEnd = true;
     if (gmk::AGmkBase* gmk = gmk::getBindedGmkInst(m_handle)) {
         gmk::GmkType type = gmk->getGmkType();
-        unsigned int id = gmk->m_bdatId;
+        unsigned int id = gmk->m_createInfo.m_bdatId;
         if (GfQuestUtil::getGimmickTaskEndCheck(type, id) == 2) {
             SCOM_QUEST_GIMMICK::createTresure(id, 0.0f);
         }
@@ -102,7 +102,7 @@ void GfFieldTbox::seqWaitDropBegin(float) {
     }
     if (gmk::AGmkBase* gmk = gmk::getBindedGmkInst(m_handle)) {
         gmk::GmkType type = gmk->getGmkType();
-        unsigned int id = gmk->m_bdatId;
+        unsigned int id = gmk->m_createInfo.m_bdatId;
         if (GfQuestUtil::getGimmickTaskEndCheck(type, id) == 1) {
             SCOM_QUEST_GIMMICK::createTresure(id, 0.0f);
         }

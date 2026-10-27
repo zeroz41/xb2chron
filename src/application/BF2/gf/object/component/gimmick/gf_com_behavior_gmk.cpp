@@ -35,7 +35,7 @@ inline void GfComBehaviorGmk::procMsgPcFieldGetAccessType(fw::MessageObject* sen
         msg.m_salvage = true;
         break;
     case 0x20:
-        msg.m_type = *gmk->m_data == 2 ? 1 : 5;
+        msg.m_type = *gmk->m_createInfo.m_data == 2 ? 1 : 5;
         break;
     case 0x25:
         msg.m_type = 3;

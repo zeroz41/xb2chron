@@ -29,7 +29,7 @@ public:
             m_bdatId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "BTL_MapRevId", row, 2);
         }
     };
-    const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_bdatInfo); }
+    const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
     virtual ~GmkAntiBladeArea();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4

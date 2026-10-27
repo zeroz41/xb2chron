@@ -37,8 +37,8 @@ public:
         mm::Vec3NA m_pos;  // where the jump lands
         float m_param[3];  // passed on in MsgPcFieldNotifyBigJump (meaning not known)
     };
-    const Data* getData() const { return reinterpret_cast<const Data*>(m_data); }
-    const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_bdatInfo); }
+    const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
+    const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
     virtual ~GmkJump();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4

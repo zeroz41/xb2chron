@@ -231,7 +231,7 @@ unsigned char* GfGameSalvage::getBindedBdatFp() const {
 }
 
 unsigned int GfGameSalvage::getBindedBdatId() const {
-    return gmk::getBindedGmkInst(get()->m_pHandle)->m_bdatId;
+    return gmk::getBindedGmkInst(get()->m_pHandle)->m_createInfo.m_bdatId;
 }
 
 void GfGameSalvage::execPop() {

@@ -21,7 +21,7 @@ public:
     virtual void getBindedRoutePointList() const;  // slot 11
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(7);
-    unsigned char pad_51[0xf];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_51[0x9];  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk
 

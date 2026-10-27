@@ -33,7 +33,7 @@ public:
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(6);
-    unsigned char pad_48[0x18];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_48[0x14];  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk
 

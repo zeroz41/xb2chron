@@ -17,7 +17,19 @@ class LvlbInfo;
 // table 0x7100B6BE18
 class AGmkBase {
 public:
-    class CreateInfo;
+    // what create takes: the gimmick section's version, the gimmick's data in it, its BDAT row's BdatInfo and the
+    // row (TGmkList::createGmk builds it; AGmkBase::create keeps a copy in m_createInfo; the names are not the
+    // original's). Its constructor clears all four: the gimmicks' inline constructors store them in that order.
+    class CreateInfo {
+    public:
+        CreateInfo() : m_version(0), m_data(nullptr), m_bdatInfo(nullptr), m_bdatId(-1) {}
+        unsigned int m_version;
+        const unsigned char* m_data;
+        const void* m_bdatInfo;
+        int m_bdatId;
+    };
+    // inline (1.0.0 has an out-of-line copy; 3.0.1's Vector<T>::resize loops inline its stores)
+    AGmkBase() : m_list(nullptr), m_pos(nullptr), m_info(nullptr), pad_40(nullptr) {}
     virtual ~AGmkBase();  // slot 0
     virtual gmk::GmkType getGmkType() const = 0;  // slot 2
     virtual bool isValid() const;  // slot 3
@@ -42,20 +54,15 @@ public:
     // its INFO entry in the gimmick section, none when its list has none (TGmkList::createGmk; the destructor clears
     // it; the name is not the original's)
     const LvlbInfo* m_info;
-    // the gimmick section's version: create copies it with m_data (one 8-byte copy of 0x20..0x27), dispose clears
-    // it (the name is not the original's)
-    unsigned int m_version;
-    unsigned char pad_24[0x4];
-    // data the gimmick keeps; GfComBehaviorGmk tests a salvage locator's (kind 0x20) first byte against 2 to
-    // answer the PC's access query (the name is not the original's)
-    const unsigned char* m_data;
-    // its row's BdatInfo, of the derived class's type: GmkTbox::BdatInfo::isPopCondMatchedExceptDist and
-    // GmkPrecious::BdatInfo::isPopCondMatched are called on it (gf_field_locator); the name is not the original's
-    const void* m_bdatInfo;
-    // the gimmick's row in that table (GfFieldTbox reads its RSC_ID by it, and passes it as the quest gimmick id; the
-    // name is not the original's)
-    unsigned int m_bdatId;
-    unsigned char pad_3c[0xc];  // fields: size from its derived classes
+    // what create got (AGmkBase::create copies all four; dispose clears the version, the data and the BdatInfo; the
+    // name is not the original's). m_createInfo.m_data: data the gimmick keeps (GfComBehaviorGmk tests a salvage
+    // locator's (kind 0x20) first byte against 2 to answer the PC's access query); m_createInfo.m_bdatInfo: its row's
+    // BdatInfo, of the derived class's type (GmkTbox::BdatInfo::isPopCondMatchedExceptDist and
+    // GmkPrecious::BdatInfo::isPopCondMatched are called on it, gf_field_locator); m_createInfo.m_bdatId: the
+    // gimmick's row in that table (GfFieldTbox reads its RSC_ID by it, and passes it as the quest gimmick id)
+    CreateInfo m_createInfo;
+    // cleared by the constructor, meaning not known
+    const void* pad_40;
 };
 // the gimmick bound to an object, null for none
 AGmkBase* getBindedGmkInst(gf::GF_OBJ_HANDLE* handle);
@@ -71,17 +78,6 @@ int getCurrentMapBdatId();
 void setDispByGmkType(GmkType type, bool disp);
 void setDispByGmkTypeAndBdatId(GmkType type, int bdatId, bool disp);
 void setDispByGmkTypeAndGmkIdx(int gmkSetId, GmkType type, unsigned int idx, bool disp);
-// what create takes: the gimmick section's version, the gimmick's data in it, its BDAT row's BdatInfo and the row
-// (TGmkList::createGmk builds it; AGmkBase::create keeps a copy; the names are not the original's)
-class AGmkBase::CreateInfo {
-public:
-    CreateInfo() : m_data(nullptr), m_bdatInfo(nullptr), m_bdatId(-1) {}
-    unsigned int m_version;
-    const unsigned char* m_data;
-    const void* m_bdatInfo;
-    int m_bdatId;
-};
-
 }  // namespace gmk
 
 #endif
