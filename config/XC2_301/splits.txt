@@ -1048,7 +1048,7 @@ application/BF2/gf/field/gf_field_locator.cpp:
 	.text        start:0x0026C460 end:0x00272BC4
 	.rodata      start:0x00989669 end:0x009896ED
 	.rodata      start:0x009BA838 end:0x009BABB8
-	.data        start:0x00B51AA8 end:0x00B51E90
+	.data        start:0x00B51AA8 end:0x00B51EB0
 	.bss         start:0x00D6C8A8 end:0x00D6C8B0
 
 application/BF2/gf/field/gf_field_lod.cpp:
@@ -1162,6 +1162,7 @@ application/BF2/gf/unit_710028E5BC.cpp:
 application/BF2/gf/unit_710028EBB0.cpp:
 	.text        start:0x0028EBB0 end:0x002906D0
 	.rodata      start:0x0098A25A end:0x0098A2AE
+	.data        start:0x00B52C68 end:0x00B535D0
 
 application/BF2/gf/data/GfDataBlade_71002906D0.cpp:
 	.text        start:0x002906D0 end:0x00290CC4
@@ -1173,7 +1174,7 @@ application/BF2/gf/game/arena/gf_game_arena.cpp:
 	.text        start:0x00290D00 end:0x002923A4
 	.rodata      start:0x0098A2AE end:0x0098A401
 	.rodata      start:0x009BB0A0 end:0x009BB0F0
-	.data        start:0x00B52C68 end:0x00B537F8
+	.data        start:0x00B535D0 end:0x00B537F8
 
 application/BF2/gf/game/auto_talk/gf_auto_talk.cpp:
 	.text        start:0x002923A4 end:0x00294470
