@@ -5,6 +5,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 
 namespace gf {
+class TUnk_B52C38;
 // table 0x7100B535D0 (the fw::MessageObject base's at +0x38, offset 8); the base at 0 is
 // mm::mtl::PtrSingleton<TUnk_B535D0> (its table 0x7100B53628). No RTTI or 1.0.0 symbol names it: the arena manager
 // of gf_game_arena's unit (its constructor fn_7100290FA0 installs both tables; the arena play commands send it
@@ -19,6 +20,16 @@ public:
     bool fn_7100291CAC();
     bool fn_7100291DA0();
     bool fn_7100291E00();
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: their code is in
+    // gf_game_arena's unit and the arena states (unit_710028EBB0) call them on the state machine's owner or on
+    // PtrSingleton<TUnk_B535D0>'s instance. What they do: fn_7100291D68 answers isDestroyNow() || the bool at
+    // +0xB4; fn_7100291DB4 answers GfGameFlag::getLocal(1, 0xDC0D) != 0.
+    bool fn_7100291D68();
+    bool fn_7100291DB4();
+
+    unsigned char pad_20[0xA0];
+    // the 0xF8-byte object fn_7100291100 makes with fn_710028CDC0 (table 0x7100B52C38)
+    TUnk_B52C38* m_msgObj;
 };
 }  // namespace gf
 
