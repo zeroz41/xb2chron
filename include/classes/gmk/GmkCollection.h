@@ -22,6 +22,8 @@ public:
     virtual void debugDraw() const;  // slot 7
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
+    // takes the point's icon down (GfFieldCollect::seqWaitDrop passes true once every item has dropped)
+    void disposeIcon(bool flag);
     static const gmk::GmkType TYPE = gmk::GmkType(0x1C);
     unsigned char pad_48[0x28];  // fields: size from TGmkList::getInst's stride
 };

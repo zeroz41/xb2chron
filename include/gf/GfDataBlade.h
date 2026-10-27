@@ -27,6 +27,8 @@ class GfDataBlade {
 public:
     // fills an affinity chart quest from its chart (GfQuestTask::setupOrderTask passes GfDataQuest::getAchievQuest's)
     static void setupAchievQuest(AchievQuest& quest);
+    // the ids of the blades with field skills (GfFieldCollect::seqWaitDo checks each one's skills)
+    static void getListForFieldSkill(mm::mtl::FixedVector<unsigned short, 422>& list);
     // the blade's slot in the game data's blades (SDataGame::m_blades): the regular blades, then the rare ones,
     // then the common ones; 0 for any other id. Inline: every accessor carries its code (1.0.0's too), so the name
     // is not the original's.
