@@ -9,6 +9,7 @@ namespace ml { class IWorkEvent; }
 namespace ml { enum ERR_DECIDE : int; }
 namespace ml { class DevFileParamTh; }
 namespace ml { class FileHandleTh; }
+namespace ml { enum MEDIA : int; }
 namespace mm { namespace mtl { template <int LEN> class FixStr; } }
 
 namespace ml {
@@ -21,7 +22,7 @@ public:
 class TUnk_B76D88 {
 public:
     virtual ~TUnk_B76D88();
-    virtual void icbError(ml::CERR_STRUCT*) = 0;
+    virtual bool icbError(ml::CERR_STRUCT*) = 0;
     virtual void icbDecide(ml::CERR_STRUCT*, ml::ERR_DECIDE) = 0;
 };
 // table 0x7100B76CC0; base at 0x1B0 unknown (TUnk_B76D68), base at 0x1B8 unknown (TUnk_B76D88)
@@ -35,7 +36,7 @@ public:
 
     // its object logged in
     static bool isInitialized();
-    virtual void icbError(ml::CERR_STRUCT*);  // slot 17
+    virtual bool icbError(ml::CERR_STRUCT*);  // slot 17
     virtual void icbDecide(ml::CERR_STRUCT*, ml::ERR_DECIDE);  // slot 18
     // asks whether a file exists; the answer comes to listener's OnFileEvent (fw::LocalizeResource's update). What
     // it returns is a pointer or none (unused by its callers seen so far); the parameter names are not the original's
@@ -58,7 +59,19 @@ public:
     static void flushSave();
     // named by the symbols: starts writing size bytes of data to path, listener gets the end event (GfGameSave)
     static FileHandleTh* writeFile(const char* path, IWorkEvent* listener, const void* data, int size, int);
+    // adds a search path for a medium when path is not empty (forwards to dvfl_detail::addMediaPath; the parameter
+    // names are not the original's)
+    static void addMediaPath(MEDIA media, const char* path, int prio);
+    // whether its object is writing a save (the singleton's flag at 0x1C9)
+    static bool isNowSaving();
+
+    unsigned char pad_1c0[0x9];
+    bool m_nowSaving;  // 0x1C9 (isNowSaving reads it; the name is not the original's)
 };
+namespace dvfl_detail {
+// 0x71006B580C (this unit)
+void addMediaPath(MEDIA media, const char* path, int prio);
+}  // namespace dvfl_detail
 }  // namespace ml
 
 #endif

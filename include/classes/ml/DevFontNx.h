@@ -10,7 +10,7 @@ class DevFontNx : public ::ml::DevFont {
 public:
     virtual ~DevFontNx();  // slot 0
     virtual void wkUpdate();  // slot 4
-    virtual void createFont();  // slot 6
+    virtual bool createFont();  // slot 6
     virtual void releaseFont();  // slot 7
 };
 }  // namespace ml

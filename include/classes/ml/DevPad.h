@@ -25,7 +25,7 @@ public:
     virtual float getLocalARX(int pad) const = 0;  // slot 23
     virtual float getLocalARY(int pad) const = 0;  // slot 24
     virtual void updateDevice(float) = 0;  // slot 25
-    virtual void createDevice() = 0;  // slot 26
+    virtual bool createDevice() = 0;  // slot 26
     virtual void releaseDevice() = 0;  // slot 27
     virtual void setCaptureName(char const*) {}  // slot 28
     virtual void setCapture(bool) {}  // slot 29

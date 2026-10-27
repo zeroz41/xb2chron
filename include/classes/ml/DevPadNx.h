@@ -19,7 +19,7 @@ public:
     virtual float getLocalARX(int) const;  // slot 23
     virtual float getLocalARY(int) const;  // slot 24
     virtual void updateDevice(float);  // slot 25
-    virtual void createDevice();  // slot 26
+    virtual bool createDevice();  // slot 26
     virtual void releaseDevice();  // slot 27
     virtual void playLocalVibration(int, ml::PadVibrationInfo const&);  // slot 31
     virtual void stopLocalVibration(int);  // slot 32

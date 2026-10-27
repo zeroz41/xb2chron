@@ -36,6 +36,12 @@
 #include "classes/ml/CacheDraw/DFONT256.h"
 #include "classes/ml/WinView.h"
 #include "classes/ml/DevFont.h"
+#include "classes/ml/FileResTh.h"
+#include "classes/ml/DevFontNx.h"
+#include "grlib/CGLibCtl.h"
+#include "ml/WorkRoot.h"
+#include "classes/grlib/CGLibManager.h"
+#include "mtl/MemManager.h"
 
 namespace ml {
 
@@ -341,11 +347,50 @@ void DevPad::wkUpdate() {}
 
 void DevTouch::updateDevice() {}
 
+bool DevFontNx::createFont() {
+    return true;
+}
+
+int DevGraphNx::getRootWidthSys() {
+    return WorkRoot::getWidth();
+}
+
+int DevGraphNx::getRootHeightSys() {
+    return WorkRoot::getHeight();
+}
+
+void DevGraphNx::renderEndSys() {
+    if (get() != nullptr) {
+        setRenderState(static_cast<RSTAT>(1));
+    }
+}
+
 void DevGraphNx::resetSizeSys(short, short) {}
 
 void DevGraphNx::wkUpdate() {}
 
 void DevGraphNx::wkRender() {}
+
+int DevGraphNx::thInitialize(void*, void*) {
+    return initGL();
+}
+
+int DevGraphNx::thDestroy(void*, void*) {
+    mm::mtl::PtrSingleton<grlib::CGLibManager>::get()->deviceRelease();
+    return true;
+}
+
+bool DevPadNx::createDevice() {
+    return true;
+}
+
+void device_detail::deallocateFile(void* ptr, unsigned long) {
+    mtl::MemManager::deallocate(ptr, 0, false);
+}
+
+void DevFileUtilNx::zlibFree(void*, void* ptr) {
+    mtl::MemManager::deallocate(ptr, 0, false);
+}
 
 void DevPerfNx::resumeApplication() {}
 
@@ -379,6 +424,32 @@ void DeviceNx::createDevicePort(const char*) {}
 void DevFileTh::wkUpdate() {}
 
 void DevFileTh::icbDecide(ml::CERR_STRUCT*, ml::ERR_DECIDE) {}
+
+bool DevFileTh::icbError(ml::CERR_STRUCT*) {
+    return true;
+}
+
+bool DevFileTh::checkValidFileBlock(const char* path) {
+    return getFileSize(path, nullptr) >= 0;
+}
+
+void DevFileTh::addMediaPath(MEDIA media, const char* path, int prio) {
+    if (path != nullptr && path[0] != '\0') {
+        dvfl_detail::addMediaPath(media, path, prio);
+    }
+}
+
+bool DevFileTh::isNowSaving() {
+    DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
+    if (dev != nullptr) {
+        return dev->m_nowSaving;
+    }
+    return false;
+}
+
+bool FileResTh::isExist() const {
+    return m_data != nullptr;
+}
 
 int DevPad::getPadMax() {
     return 11;
@@ -576,6 +647,30 @@ void DevGraph::pushRect(const mm::Rect<int>& a, const mm::Rect<int>& b, const mm
 
 void DevGraph::popRect() {
     get()->m_que->popRect();
+}
+
+void DevGraph::setMemPoolMemHandle(mtl::ALLOC_HANDLE handle) {
+    grlib::CGLibGPUCache::setMemPoolMemHandle(handle);
+}
+
+void DevGraph::setMemPoolBuffer(void* buffer, unsigned int size) {
+    grlib::CGLibGPUCache::setMemPoolBuffer(buffer, size);
+}
+
+void DevGraph::releaseMemPoolMemHandle(mtl::ALLOC_HANDLE handle) {
+    grlib::CGLibGPUCache::releaseMemPoolMemHandle(handle);
+}
+
+void DevGraph::releaseMemPoolBuffer(void* buffer) {
+    grlib::CGLibGPUCache::releaseMemPoolBuffer(buffer);
+}
+
+void DevGraph::renderSync() {
+    DevGraph* dev = get();
+    if (dev != nullptr) {
+        dev->renderSyncSys();
+        DebDraw::swap();
+    }
 }
 
 void DevGraph::getPers(mm::Mat44& mtx, float fovy, float nearZ, float farZ) {

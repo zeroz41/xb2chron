@@ -33,6 +33,20 @@ public:
     virtual int fontGetWidthSys(char const*, ml::FONT_STYLE, float);  // slot 32
     virtual void fontGetHeightSys(ml::FONT_STYLE, float);  // slot 33
     virtual float getCostSys() const;  // slot 34
+
+    // the render thread's callbacks (their returns: nonzero when done)
+    static int thInitialize(void*, void*);
+    static int thDestroy(void*, void*);
+    static bool initGL();
+};
+// nn::fs's allocator hooks (0x71006AEF64 allocateFile, 0x71006AEFB0 deallocateFile)
+namespace device_detail {
+void deallocateFile(void* ptr, unsigned long size);
+}  // namespace device_detail
+// zlib's allocator hooks
+class DevFileUtilNx {
+public:
+    static void zlibFree(void* opaque, void* ptr);
 };
 }  // namespace ml
 

@@ -19,7 +19,7 @@ public:
     virtual bool wkStandbyLogout();  // slot 3
     virtual void wkUpdate();  // slot 4
     virtual void wkTail();  // slot 5
-    virtual void createFont() = 0;  // slot 6
+    virtual bool createFont() = 0;  // slot 6
     virtual void releaseFont() = 0;  // slot 7
 
     static void fontLayerStyle(const FontLayer* layer, FONT_STYLE style);

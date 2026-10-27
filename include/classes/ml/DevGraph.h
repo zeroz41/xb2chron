@@ -9,6 +9,7 @@
 
 #include "mtl/AllocHandle.h"
 
+namespace ml { enum RSTAT : int; }
 namespace ml { enum FONT_STYLE : int; }
 namespace mm { class Mat44; }
 namespace ml { class DevGraphQue; }
@@ -48,6 +49,8 @@ public:
     static mm::Rect<int>& getViewport();
     static float getScreenScaleW();
     static void renderSync();
+    // sets a render state (DevGraphNx::renderEndSys passes 1)
+    static void setRenderState(RSTAT state);
     static float getCost();
     static void setFrameSpd(float spd);
     // a function drawn outside the scenes' rendering, and its removal (ErrViewer::standby hands it fnRender)
@@ -56,7 +59,9 @@ public:
     // the memory the graphics memory pools come from (gf::GfMemManager::initializeCore hands it the asset memory,
     // finalizeCore takes it back)
     static void setMemPoolMemHandle(mtl::ALLOC_HANDLE handle);
+    static void setMemPoolBuffer(void* buffer, unsigned int size);
     static void releaseMemPoolMemHandle(mtl::ALLOC_HANDLE handle);
+    static void releaseMemPoolBuffer(void* buffer);
     virtual void wkStandby();  // slot 8
     virtual void wkUpdate();  // slot 9
     virtual void wkTail();  // slot 12

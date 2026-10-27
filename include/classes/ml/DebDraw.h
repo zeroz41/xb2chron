@@ -18,6 +18,8 @@ namespace ml {
 // table 0x7100B761D0
 class DebDraw : public ::ml::DevGraphCB {
 public:
+    // swaps the draw buffers once a frame rendered (DevGraph::renderSync calls it after renderSyncSys)
+    static void swap();
     enum PRM_DATA : int;
     virtual ~DebDraw();  // slot 0
     virtual void fastSetup() = 0;  // slot 7
