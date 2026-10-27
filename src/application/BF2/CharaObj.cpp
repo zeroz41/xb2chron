@@ -1,3 +1,4 @@
+#include "classes/event/CmdVariable.h"
 #include "classes/event/ICmd/Param.h"
 #include "classes/gf/GfEvent.h"
 #include "classes/gf/GfGameParty.h"
@@ -12,6 +13,9 @@
 #include "classes/event/SeqManager/start_capture_wait.h"
 #include "classes/event/SeqManager/start_notice.h"
 #include "classes/event/SeqManager/end_notice.h"
+#include "classes/event/SeqManager/play_start.h"
+#include "classes/gf/SCOM_SCRIPT.h"
+#include "classes/gf/GfScriptManager.h"
 #include "gf/FileStaticVec3.h"
 #include "mm/mtl/FixStr.h"
 #include "mm/Vec2.h"
@@ -1375,6 +1379,20 @@ bool SeqManager::end_notice::update(const ICmd::Param& param) {
     unsigned int id = param.m_param.val(1).getS32();
     if (id != 0) gf::GfEvent::callEventPlay(static_cast<gf::GEV>(11), id);
     return true;
+}
+
+bool SeqManager::play_start::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        gf::SCOM_SCRIPT::create(2, param.m_param.val(1).getStr(), false);
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        manager->m_flags &= ~4;
+        manager->m_seqName = "play start";
+    }
+    if (gf::GfScriptManager::isScriptLoadError(2)) {
+        gf::GfScriptManager::destroyScript(2);
+        static_cast<SeqManager*>(param.m_param.val(0).getUserdata())->m_flags |= 1;
+    }
+    return false;
 }
 
 bool RandPlayer::Warp::update(const ICmd::Param& param) {

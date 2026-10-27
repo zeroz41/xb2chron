@@ -10,6 +10,10 @@ public:
     int getS32() const { return m_type == 2 ? (int)m_value.floatValue : m_value.intValue; }
     // the stored pointer (1.0.0 0x71000936A0; 3.0.1 inlines it)
     void* getUserdata() const { return m_value.userdata; }
+    // the stored flag (1.0.0 0x7100093670; 3.0.1 inlines it)
+    bool getBool() const { return m_value.boolValue; }
+    // the stored string (1.0.0 0x7100093688; 3.0.1 inlines it)
+    const char* getStr() const { return m_value.strValue; }
     // what the value holds (the field names are not the original's; the layout is CmdParam's: 1.0.0
     // CmdParam::CmdParam zeroes +0x8 and +0x10 of each of its 0x18-byte values)
     int m_type;  // 0x8
