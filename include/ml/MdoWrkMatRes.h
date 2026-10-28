@@ -9,6 +9,7 @@ namespace grlib { class CGLibDblUniformBlock; }
 namespace grlib { class CGLibOneUniformBlock; }
 
 namespace grlib { class CGLibTextureBuffer; }
+namespace grlib { class CGLibSampler; }
 
 namespace ml {
 class DrResMdoMat;
@@ -87,7 +88,33 @@ struct MdoInitialVertexAABB {
     float m_min[3];  // 0x18
 };
 
+// The material data MdoWrkMatRes::m_pMatData points to; only the offset DrMdoShdSet::setOneTexShaderSet reads is
+// known. The type and field names are not the original's.
+struct MdsMatDataHeader {
+    unsigned char pad_0[0x3C];
+    unsigned int m_texEntryOfs;  // 0x3C, from the header's start: the MdsMatTexEntry array
+};
+// One texture entry of the material data, 8 bytes: DrMdoShdSet::setOneTexShaderSet binds texture m_texIdx with
+// sampler m_samplerMip when the texture has mipmaps, else m_samplerNoMip. The type and field names are not the
+// original's.
+struct MdsMatTexEntry {
+    unsigned short m_texIdx;        // 0x0, index into MdoWrkMatRes::m_ppTexture
+    unsigned short m_samplerMip;    // 0x2
+    unsigned short m_samplerNoMip;  // 0x4
+    unsigned short pad_6;
+};
+// What MdoWrkMatRes+0xD8 points to: only the sampler table DrMdoShdSet::setOneTexShaderSet indexes is known. The
+// type and field names are not the original's.
+struct MdoWrkSamplerTbl {
+    unsigned char pad_0[0x30];
+    grlib::CGLibSampler* m_pSampler;  // 0x30, by MdsMatTexEntry::m_samplerMip/m_samplerNoMip
+};
 struct MdoWrkMatRes {
+    const MdsMatTexEntry* getTexEntries() const {
+        return reinterpret_cast<const MdsMatTexEntry*>(
+            m_pMatData + reinterpret_cast<const MdsMatDataHeader*>(m_pMatData)->m_texEntryOfs);
+    }
+
     unsigned char pad_0[0x10];
     const unsigned char* m_pMatData;  // 0x10, base of the offsets in m_pCallBackTbl
     unsigned char pad_18[0x8];
@@ -112,7 +139,9 @@ struct MdoWrkMatRes {
     // 0xC8: the vertex resource being set up; DrResMdoSeamWrkBase::selectVertex switches it (the name is not the
     // original's)
     DrResMdoVertex* m_pVertex;
-    unsigned char pad_D0[0x18];
+    unsigned char pad_D0[0x8];
+    MdoWrkSamplerTbl* m_pSamplerTbl;  // 0xD8 (the name is not the original's)
+    unsigned char pad_E0[0x8];
     // 0xE8: one texture per index; DrMdoShdSetMpf::mpfshd_drw_* bind MdsMpfMatInfoHeader::m_texIdx's (the name is
     // not the original's)
     grlib::CGLibTextureBuffer** m_ppTexture;

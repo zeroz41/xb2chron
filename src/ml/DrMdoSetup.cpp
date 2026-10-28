@@ -27,6 +27,12 @@
 #include "ml/DrMdoMorphing.h"
 #include "ml/DrMdoSamplerMan.h"
 #include "ml/DrMdoShdSetMpf.h"
+#include "ml/DrMdoShdSet.h"
+#include "ml/DrResShdPrePass.h"
+#include "ml/DrResShdShw.h"
+#include "classes/ml/DrMdlObj.h"
+#include "grlib/CGLibEtcUniformBlock.h"
+#include "grlib/CGLibTextureBuffer.h"
 #include "ml/DrMdoTexSimpleMan.h"
 #include "ml/DrMdoTextureMan.h"
 #include "ml/DrMdoVertexMan.h"
@@ -1954,6 +1960,75 @@ void DrMdoMorphing::parmsUpdate() {
     }
 }
 
+const unsigned char DrMdoShdSetShadow::s_pShwUseShdader[30] = {0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4,
+                                                            0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4};
+const unsigned char DrMdoShdSetShadow::s_pShwFethcDef[30] = {13, 14, 14, 13, 14, 14, 15, 16, 16, 17, 18, 18, 73, 73, 73,
+                                                         13, 14, 14, 13, 14, 14, 15, 16, 16, 17, 18, 18, 73, 73, 73};
+// s_pShwFethcMof is 1.0.0's name (s_pShwFethcTbl[1]); the 3.0.1 symbols leave it unnamed (lbl_71009D4964).
+const unsigned char DrMdoShdSetShadow::s_pShwFethcMof[30] = {86, 87, 87, 86, 87, 87, 88, 89, 89, 17, 18, 18, 73, 73, 73,
+                                                         86, 87, 87, 86, 87, 87, 88, 89, 89, 17, 18, 18, 73, 73, 73};
+const unsigned char DrMdoShdSetShadow::s_pShwTypeDec[30] = {17, 33, 49, 17, 33, 49, 17, 33, 49, 17, 33, 49, 17, 33, 49,
+                                                        18, 34, 50, 18, 34, 50, 18, 34, 50, 18, 34, 50, 18, 34, 50};
+const unsigned char* DrMdoShdSetShadow::s_pShwFethcTbl[2] = {s_pShwFethcDef, s_pShwFethcMof};
+
+void DrMdoShdSetShadow::shwShd_Obj(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list) {
+    DrResShdShw* obj = list->getShwObj(s_pShwUseShdader[shd]);
+    DrMdlObj* mdl = m_pMdl;
+    if (info->m_shdFlags & 0x8000) {
+        if (mdl->m_bindFlags[1] != 1) {
+            mdl->m_bindFlags[1] = 1;
+            m_pMdl->m_curShaderIdx = -1;
+        }
+    } else if (mdl->m_bindFlags[1] != 0) {
+        mdl->m_bindFlags[1] = 0;
+        m_pMdl->m_curShaderIdx = -1;
+    }
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        unsigned char dec = s_pShwTypeDec[shd];
+        obj->setDecAType(dec >> 4);
+        obj->setDecBType(dec & 0xF);
+        obj->setupShader(list->getFetchShader(s_pShwFethcTbl[m_pMdl->m_bindFlags[1]][shd]));
+        m_pMdl->m_pDrMan->m_pixlMan->m_shadowUniform->setUniformBlock(obj->m_shaderSel[2]);
+        (m_pMdl->m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[1]);
+    } else if (m_pMdl->m_curTriBlockIdx != triIdx) {
+        (m_pMdl->m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[1]);
+    }
+    m_pMdl->m_curTriBlockIdx = triIdx;
+}
+
+void DrMdoShdSetShadow::shwShd_Inst(int shd, const MdsMatInfoHeader*, int, int, DrShdDataList* list) {
+    DrResShdShw* obj = list->getShwObj(s_pShwUseShdader[shd]);
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        unsigned char dec = s_pShwTypeDec[shd];
+        obj->setDecAType(dec >> 4);
+        obj->setDecBType(dec & 0xF);
+        obj->setupShader(list->getFetchShader(s_pShwFethcDef[shd]));
+        m_pMdl->m_pEtcBlock->setUniformBlock(obj->m_shaderSel[1]);
+    } else if (m_pMdl->m_bindFlags[0] & 2) {
+        m_pMdl->m_pEtcBlock->setUniformBlock(obj->m_shaderSel[1]);
+    }
+    m_pMdl->m_bindFlags[0] &= ~2;
+}
+
+void DrMdoShdSetShadow::shwShd_InstT(int shd, const MdsMatInfoHeader* info, int, int, DrShdDataList* list) {
+    DrResShdShw* obj = list->getShwObj(s_pShwUseShdader[shd]);
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        unsigned char dec = s_pShwTypeDec[shd];
+        obj->setDecAType(dec >> 4);
+        obj->setDecBType(dec & 0xF);
+        obj->setupShader(list->getFetchShader(s_pShwFethcDef[shd]));
+        list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[3]);
+        m_pMdl->m_pEtcBlock->setUniformBlock(obj->m_shaderSel[1]);
+    } else if (m_pMdl->m_bindFlags[0] & 2) {
+        m_pMdl->m_pEtcBlock->setUniformBlock(obj->m_shaderSel[1]);
+    }
+    setOneTexShaderSet(info->m_texEntryIdx, obj->m_shaderSel[0]);
+    m_pMdl->m_bindFlags[0] &= ~2;
+}
+
 void DrMdoShdSetMpf::mpfshd_stm_bill(DrResShdMpf* shd, DrShdDataList*, const MdsMpfMatInfoHeader*,
                                      const DrResMpfSampler*, bool) {
     shd->setupShader(0);
@@ -2132,5 +2207,51 @@ void DrMdoShdSetMpf::mpfshd_pre_Dithe_nuki(DrResShdMpf* shd, DrShdDataList* data
 
 void DrMdoShdSetMpf::mpfshd_cull_fade_mdl(DrResShdMpf*, DrShdDataList*, const MdsMpfMatInfoHeader*,
                                           const DrResMpfSampler*, bool) {}
+
+void DrMdoShdSetPrePass::preshd_Obj(int shd, const MdsMatInfoHeader* info, int triIdx, int, DrShdDataList* list,
+                                    PrePassType type) {
+    DrResShdPrePass* obj = list->getPrePassObj(shd);
+    DrMdlObj* mdl = m_pMdl;
+    if (info->m_shdFlags & 0x8000) {
+        if (mdl->m_bindFlags[1] != 1) {
+            mdl->m_bindFlags[1] = 1;
+            m_pMdl->m_curShaderIdx = -1;
+        }
+    } else if (mdl->m_bindFlags[1] != 0) {
+        mdl->m_bindFlags[1] = 0;
+        m_pMdl->m_curShaderIdx = -1;
+    }
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        obj->setupShader(m_pMdl->m_bindFlags[1], type);
+        (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+    } else if (m_pMdl->m_curTriBlockIdx != triIdx) {
+        (m_pWrkMatRes->m_pTriUniformArray->m_pArray + static_cast<unsigned int>(triIdx))->setUniformBlock(obj->m_shaderSel[5]);
+    }
+    m_pMdl->m_curTriBlockIdx = triIdx;
+}
+
+void DrMdoShdSetPrePass::preshd_Inst(int shd, const MdsMatInfoHeader*, int, int, DrShdDataList* list,
+                                     PrePassType type) {
+    DrResShdPrePass* obj = list->getPrePassObj(shd);
+    if (m_pMdl->m_curShaderIdx == shd) {
+        return;
+    }
+    m_pMdl->m_curShaderIdx = shd;
+    obj->setupShader(0, type);
+    DrMan::get()->m_calcMan->m_pViewWork->m_staticBlock.setUniformBlock(obj->m_shaderSel[6]);
+}
+
+void DrMdoShdSetPrePass::preshd_InstT(int shd, const MdsMatInfoHeader* info, int, int, DrShdDataList* list,
+                                      PrePassType type) {
+    DrResShdPrePass* obj = list->getPrePassObj(shd);
+    if (m_pMdl->m_curShaderIdx != shd) {
+        m_pMdl->m_curShaderIdx = shd;
+        obj->setupShader(0, type);
+        DrMan::get()->m_calcMan->m_pViewWork->m_staticBlock.setUniformBlock(obj->m_shaderSel[6]);
+    }
+    list->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(obj->m_shaderSel[8]);
+    setOneTexShaderSet(info->m_texEntryIdx, obj->m_shaderSel[0]);
+}
 
 }  // namespace ml

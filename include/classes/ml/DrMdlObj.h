@@ -6,6 +6,7 @@
 #include "mm/Mat44.h"
 #include "mm/Col3.h"
 
+namespace grlib { class CGLibEtcUniformBlock; }
 namespace ml { class DrMdoSmlShadowMan; }
 namespace ml { class DrResEtcParams; }
 namespace ml { struct MdoRimBloomWrk; }
@@ -86,11 +87,16 @@ public:
     mm::Vec3 m_center;  // 0x130
     unsigned char pad_140[0x20];
     float m_length;  // 0x160
-    unsigned char pad_164[0x14];
+    unsigned char pad_164[0xC];
+    // 0x170, the DrMdoShdSetShadow *Inst setters bind it while m_bindFlags[0] bit 1 is set (the name is not the
+    // original's)
+    grlib::CGLibEtcUniformBlock* m_pEtcBlock;
     // 0x178: partsDefRender's bind flags (bit 0: shader changed, bit 4: m_curBindIdx changed); every pass starts
     // with 0x10, 0 (the name is not the original's)
     unsigned char m_bindFlags[2];
-    unsigned char pad_17A[0x2];
+    // 0x17A: the triangle uniform block index the shadow and pre-pass shader setters last bound (the name is not
+    // the original's)
+    short m_curTriBlockIdx;
     // 0x17C/0x17E: the shader and bind index partsDefRender last set; -1 at the start of every pass (the names are
     // not the original's)
     short m_curShaderIdx;
