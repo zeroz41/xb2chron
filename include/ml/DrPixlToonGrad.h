@@ -9,6 +9,7 @@ class DrPixlToonGrad {
 public:
     grlib::CGLibTextureBuffer* getGradTex() const;
     grlib::CGLibTextureBuffer* getDarkGradTex() const;
+    void render();
 };
 }  // namespace ml
 

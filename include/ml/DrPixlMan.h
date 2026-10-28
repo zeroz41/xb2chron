@@ -63,6 +63,10 @@ public:
     void resetRenderTarget();
     void alphaRenderTarget();
     void callShadowCacheVariance();
+    void fastRender();
+    void pixelEndMode();
+    void setShadowDirRenderTarget(int index);
+    void setupShadowUnifrom(int index);
     void selectGBuffRenderTarget();
     void selectGBuffRenderTarget(unsigned int target);
     grlib::CGLibRenderTarget* getResponsiveAAMask();

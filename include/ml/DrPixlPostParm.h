@@ -144,7 +144,9 @@ public:
     int m_iblColorMode;
     unsigned char pad_FE8[0x3C];
     bool m_shwRaytraceTemporal;  // 0x1024, isShwRaytraceTemporalWithOthers (with DrMan::isIBLHalfRes)
-    unsigned char pad_1025[0x3C];
+    unsigned char pad_1025[0x19];
+    bool m_shadowAddObjPos;  // 0x103E, DrPixlShadowMan::setAddObjPos forwards only when set (name inferred)
+    unsigned char pad_103F[0x22];
     bool m_iblSel;  // 0x1061, DrPixlMan::getSpecIBLObj/getDiffIBLObj pick the second IBL pair when set (name inferred)
     unsigned char pad_1062[0x22];
     int m_weather;  // 0x1084

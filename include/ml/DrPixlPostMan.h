@@ -5,6 +5,7 @@
 
 namespace grlib { class CGLibTextureBuffer; }
 namespace ml { class DrPixlPostObjCubeMapIBL; }
+namespace ml { class DrPixlPostObjCubeMapMultiIBL; }
 namespace ml { class DrPixlSkyDome; }
 namespace ml { class DrPixlToonGrad; }
 namespace ml { class DrPixlPostObjCapture; }
@@ -22,7 +23,8 @@ public:
     grlib::CGLibTextureBuffer* getToonGradTex() const;
     grlib::CGLibTextureBuffer* getToonDarkGradTex() const;
 
-    unsigned char pad_0[0x48];
+    unsigned char pad_0[0x40];
+    DrPixlPostObjCubeMapMultiIBL* m_cubeMapMultiIBL;  // 0x40, DrPixlMan::fastRender renders it when set (name inferred)
     DrPixlPostObjCubeMapIBL* m_cubeMapIBL;  // 0x48, varStTex_SpecularIBLTex binds its premultiplied texture
     unsigned char pad_50[0x40];
     DrPixlSkyDome* m_skyDome;  // 0x90, DrPixlMan::renderSkyDome/renderSkyGodRay when set

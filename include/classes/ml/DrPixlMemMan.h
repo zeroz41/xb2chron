@@ -9,7 +9,9 @@ namespace ml {
 // table 0x7100B7CDE0
 class DrPixlMemMan : public ::mm::mtl::PtrSingleton< ::ml::DrPixlMemMan> {
 public:
+    DrPixlMemMan();
     virtual ~DrPixlMemMan();  // slot 0
+    void setupMemBuff();
 };
 }  // namespace ml
 

@@ -1,3 +1,4 @@
+#define MM_LIB_FROM_XBRD
 #include "classes/ml/DrPixlShadowObj.h"
 #include "classes/ml/DrAPCache.h"
 #include "grlib/CGLibRenderTarget.h"
@@ -10,6 +11,14 @@
 #include "ml/DrPixlPostObjCapture.h"
 #include "ml/DrPixlPostObj.h"
 #include "ml/DrPixlTileParm.h"
+#include "ml/DrPixlShadowMan.h"
+#include "ml/DrPixlShadowCacheMan.h"
+#include "ml/DrPixlPostObjCubeMapMultiIBL.h"
+#include "ml/DrPixlPostObjCubeMapIBL.h"
+#include "ml/DrCalcMan.h"
+#include "ml/DrPixlRenderTarget.h"
+#include "classes/ml/DrPixlShadowObjDir.h"
+#include "classes/ml/DrPixlMemMan.h"
 #include "classes/ml/DrPixlShadowObjSpt.h"
 #include "classes/ml/DrMan.h"
 #include "ml/DrAPGxType.h"
@@ -84,6 +93,35 @@ void DrPixlMan::shadowDirBegin() {
     DrAPGxType::beginShadow();
 }
 
+void DrPixlMan::setShadowDirRenderTarget(int index) {
+    m_shadowCacheMan->m_workTbl[index].m_dirDepth.setRenderTarget();
+}
+
+void DrPixlMan::fastRender() {
+    DrPixlPostMan* postMan = m_objTbl->m_postMan;
+    if (postMan->m_cubeMapMultiIBL) {
+        postMan->m_cubeMapMultiIBL->render();
+    }
+    if (postMan->m_cubeMapIBL) {
+        postMan->m_cubeMapIBL->render();
+    }
+    if (postMan->m_toonGrad) {
+        postMan->m_toonGrad->render();
+    }
+    if (m_cateIdx == 0) {
+        m_shadowCacheMan->shadowCacheRender();
+        m_shadowCacheMan->fastRender();
+    }
+}
+
+void DrPixlMan::callShadowCacheVariance() { m_shadowCacheMan->m_flags |= 0x400; }
+
+void DrPixlMan::pixelEndMode() { m_shadowCacheMan->m_flags |= 0x40; }
+
+void DrPixlMan::setupShadowUnifrom(int index) {
+    m_shadowUniform = &m_shadowCacheMan->m_uniforms[(unsigned int)index];
+}
+
 void DrPixlMan::callFgShadowCacheUpdate() {}
 
 void DrPixlMan::lastCapRender() {
@@ -115,6 +153,10 @@ grlib::CGLibRenderTarget* DrPixlPostMan::getDownDepth() { return m_downDepth[DrM
 grlib::CGLibRenderTarget* DrPixlPostMan::getOldDownDepth() { return m_downDepth[DrMan::s_nDblStockIdx]; }
 
 bool DrPixlPostMan::isDepthDown() { return (m_flags >> 19) & 1; }
+
+DrPixlMemMan::DrPixlMemMan() { setupMemBuff(); }
+
+DrPixlMemMan::~DrPixlMemMan() {}
 
 
 
@@ -206,6 +248,92 @@ bool DrPixlPostParm::getRainDropOn() const { return m_rainDrop; }
 
 bool DrPixlPostParm::getSSRWithTrans() const { return !DrMan::getIns()->m_autoResetScene; }
 
+
+DrPixlRenderTarget::DrPixlRenderTarget(DrMan* drMan) { m_drMan = drMan; }
+
+DrPixlRenderTarget::~DrPixlRenderTarget() { releaseWork(); }
+
+DrPixlRenderCubeMapMipMap::DrPixlRenderCubeMapMipMap(DrMan* drMan) { m_drMan = drMan; }
+
+DrPixlRenderCubeMapMipMap::~DrPixlRenderCubeMapMipMap() { releaseWork(); }
+
+void DrPixlShadowCacheMan::addShadowCacheUpdate(bool) {
+    m_updateCount++;
+    m_flags |= 0x80;
+}
+
+void DrPixlShadowCacheMan::delShadowCacheUpdate() {
+    m_updateCount--;
+    if (m_updateCount < 0) {
+        m_updateCount = 0;
+    }
+    m_flags |= 0x180;
+}
+
+void DrPixlShadowCacheMan::callSelectShadowCacheUpdate(unsigned long mask) { m_selectUpdate &= ~mask; }
+
+bool DrPixlShadowCacheObj::clipTest(mm::Vec3 const& pos, float radius) { return m_clip.clipTest(pos, radius); }
+
+bool DrPixlShadowMan::setAddObjPos(mm::Vec3 const& pos, float radius) {
+    DrMan* drMan = m_drMan;
+    if (drMan->m_postParm[drMan->m_postParmIdx]->m_shadowAddObjPos && m_dirShadow) {
+        return m_dirShadow->setAddObjPos(pos, radius);
+    }
+    return false;
+}
+
+bool DrPixlShadowObj::renderEnd() {
+    if (!(m_flags & 1)) {
+        return false;
+    }
+    grlib::CGLibGPUCache::depthInvalidate(*m_depthTarget->m_pDepthBuffer);
+    DrAPGxType::endShadow();
+    m_drMan->m_calcMan->shadowEnd();
+    return true;
+}
+
+void DrPixlShadowObj::setInstSelMapShadow(bool enable) {
+    if (enable) {
+        m_flags |= 4;
+    } else {
+        m_flags &= ~4;
+    }
+}
+
+DrPixlShadowObjDir::~DrPixlShadowObjDir() {
+    m_uniform.release();
+    delete m_next;
+}
+
+bool DrPixlShadowObjDir::dispChk() { return (m_flags >> 1) & 1; }
+
+bool DrPixlShadowObjDir::clipTypeChk(mm::Vec3 const& pos, float radius) {
+    if (!(m_flags & 8) || m_typeClipRange <= radius) {
+        return false;
+    }
+    return m_clip.clipTypeTest(pos, radius);
+}
+
+DrPixlShadowObjSpt::~DrPixlShadowObjSpt() {
+    m_uniform.release();
+    delete m_next;
+}
+
+bool DrPixlShadowObjSpt::clipChk(mm::Vec3 const& pos, float radius, bool) {
+    if (m_clipRange < radius) {
+        return false;
+    }
+    return m_clip.clipTest(pos, radius);
+}
+
+bool DrPixlShadowObjSpt::clipTypeChk(mm::Vec3 const& pos, float radius) {
+    if (m_clipRange < radius) {
+        return false;
+    }
+    return m_clip.clipTypeTest(pos, radius);
+}
+
+bool DrPixlShadowObjSpt::dispChk() { return (m_flags >> 1) & 1; }
 
 void DrPixlShadowObjSpt::renderLight() {}
 

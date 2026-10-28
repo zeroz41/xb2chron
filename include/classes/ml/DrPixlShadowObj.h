@@ -2,27 +2,52 @@
 #define CLASSES_ML_DRPIXLSHADOWOBJ_H
 
 #include "grlib/CGLibDblUniformBlock.h"
+#include "grlib/CGLibRenderTarget.h"
 
 namespace mm { class Vec3; }
 
 namespace ml {
+class DrMan;
+
 // table 0x7100B7CE08
 class DrPixlShadowObj {
 public:
-    virtual ~DrPixlShadowObj();  // slot 0
+    // every slot is inline: the original emits them all weak after DrPixlMan.cpp's own functions
+    virtual ~DrPixlShadowObj() {}  // slot 0
     virtual void update() {}  // slot 2
     virtual void afterUpdate() {}  // slot 3
-    virtual void dispChk();  // slot 4
-    virtual void clipChk(mm::Vec3 const&, float, bool);  // slot 5
-    virtual void clipTypeChk(mm::Vec3 const&, float);  // slot 6
-    virtual void setSptCalcPos(mm::Vec3 const&, float);  // slot 7
+    virtual bool dispChk() { return true; }  // slot 4
+    virtual bool clipChk(mm::Vec3 const&, float, bool) { return true; }  // slot 5
+    virtual bool clipTypeChk(mm::Vec3 const&, float) { return false; }  // slot 6
+    virtual bool setSptCalcPos(mm::Vec3 const&, float) { return true; }  // slot 7
     virtual void renderLight() {}  // slot 8
     virtual void stockTile() {}  // slot 9
     virtual void debugInfo() {}  // slot 10
-    virtual void getParmTbl() const;  // slot 11
+    virtual const float* getParmTbl() const { return m_parmTbl; }  // slot 11
+
+    bool renderEnd();
+    void setInstSelMapShadow(bool enable);
 
     // 0x8, the destructor destroys it; DrPixlMan::setShadowObj keeps its address (the name is not the original's)
     grlib::CGLibDblUniformBlock m_uniform;
+    // 0x40: the shadow depth target from DrPixlShadowMan's pool (create*Shadow set it up); renderEnd invalidates its
+    // depth buffer (the name is not the original's)
+    grlib::CGLibDepthTarget* m_depthTarget;
+    unsigned char pad_48[0x8];
+    // 0x50 flags (the name is not the original's): bit 0 set by renderSetup and tested by renderEnd, bit 1 tested by
+    // the derived dispChk, bit 2 set by setInstSelMapShadow, bit 3 gates DrPixlShadowObjDir::clipTypeChk
+    unsigned int m_flags;
+    unsigned char pad_54[0xC];
+    // 0x60: what getParmTbl returns; the uniform block is set up with 0x40 or 0x50 bytes, a 4x4 matrix plus a vector
+    // (the name and element type are not the original's)
+    float m_parmTbl[0x44];
+    unsigned char pad_170[0x8];
+    DrMan* m_drMan;  // 0x178: renderEnd ends the shadow pass of its DrCalcMan (the name is not the original's)
+    unsigned char pad_180[0x10];
+    // 0x190: the next object of a chain (DrPixlShadowMan::shadowRender walks it); the derived destructors delete it
+    // (the name is not the original's)
+    DrPixlShadowObj* m_next;
+    unsigned char pad_198[0x8];  // 0x198: the DrLightObj the object was created for
 };
 }  // namespace ml
 
