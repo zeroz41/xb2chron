@@ -22,9 +22,21 @@ struct OpenReadParam {
         void* m_ptr;
     };
 
+    // the block at 0x158: built by its own constructor (the original's zeroing order needs it); the name is not the
+    // original's
+    struct Block158 {
+        Block158() : m_ref(), pad_8(0), pad_14(0), pad_18(0) {}
+
+        Ref m_ref;
+        unsigned long pad_8;
+        int pad_10;
+        int pad_14;
+        unsigned long pad_18;
+    };
+
     OpenReadParam()
         : m_handle(), m_isOpen(false), pad_10D(), pad_110(0), pad_118(0), pad_120(0), pad_128(0), pad_130(0),
-          pad_158(), pad_160(0), pad_16C(0), pad_170(0), pad_178(1), pad_17C(0), pad_180(0), pad_188(10), pad_18C(true), pad_18D() {}
+          pad_158(), pad_178(1), pad_17C(0), pad_180(0), pad_188(10), pad_18C(true), pad_18D() {}
 
     nn::fs::FileHandle m_handle;
     mm::mtl::FixStr<256> m_path;
@@ -36,11 +48,7 @@ struct OpenReadParam {
     int pad_128;
     unsigned long pad_130;
     unsigned char pad_138[0x20];
-    Ref pad_158;
-    unsigned long pad_160;
-    int pad_168;
-    int pad_16C;
-    unsigned long pad_170;
+    Block158 pad_158;
     int pad_178;
     int pad_17C;
     unsigned long pad_180;

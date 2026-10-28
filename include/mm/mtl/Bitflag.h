@@ -6,6 +6,10 @@
 // mm_lib's bitflag.h, as the including file's include path named it (see mm/mtl/FixStr.h)
 #ifdef MM_LIB_FROM_LIBS
 #define MM_MTL_BITFLAG_PATH "../../../mcl/mm_lib/source\\mm_mtl/bitflag.h"
+#elif defined(MM_LIB_FROM_MONOLIB_MM)
+// monolib_mm's own files (ml::DevFileArchiveNx's destructor cites it so)
+#define MM_MTL_BITFLAG_PATH \
+    "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../../MCL/mm_lib/source\\mm_mtl/bitflag.h"
 #else
 #define MM_MTL_BITFLAG_PATH "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/bitflag.h"
 #endif
@@ -43,6 +47,15 @@ public:
         for (unsigned int i = 0; i < (Size + 31) / 32; i++) {
             m_flags[i] = 0;
         }
+    }
+
+    // clears one flag (mm::mtl::FixedObjectAllocator's destructor and deallocate inline it; one 32-bit word like
+    // set; the name is not the original's)
+    void reset(unsigned int index) {
+#line 181 MM_MTL_BITFLAG_PATH
+        MM_ASSERT(index < Size);
+        unsigned int mask = 1UL << index;
+        m_flags[0] &= ~mask;
     }
 
     // sets or clears a flag in its word (GfObjUtil::setFlag; the name is not the original's)

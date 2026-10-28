@@ -3,6 +3,7 @@
 #include "classes/ml/DevBase.h"
 #include "classes/ml/DevClock.h"
 #include "classes/ml/DevClockNx.h"
+#include "classes/ml/DevFileArchiveNx.h"
 #include "classes/ml/DevFileNxTh.h"
 #include "classes/ml/DevFileTh.h"
 #include "classes/ml/DevGraphNx.h"
@@ -389,10 +390,42 @@ void device_detail::deallocateFile(void* ptr, unsigned long) {
     mtl::MemManager::deallocate(ptr, 0, false);
 }
 
+DevFileNxTh::DevFileNxTh(mtl::ALLOC_HANDLE handle)
+    : m_alloc(handle), pad_18(0), m_impl(new (handle, nullptr, 0, 4, false) Impl()) {
+    __atomic_store_n(&m_impl->pad_17FC, 0, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&m_impl->pad_17F8, false, __ATOMIC_SEQ_CST);
+}
+
 DevFileNxTh::~DevFileNxTh() {}
+
+int DevFileNxTh::addressAlignment() {
+    return 0x10;
+}
+
+bool DevFileNxTh::rfIsUsedChannel(unsigned int channel) {
+    return m_impl->m_params[channel].m_isOpen;
+}
 
 void DevFileUtilNx::zlibFree(void*, void* ptr) {
     mtl::MemManager::deallocate(ptr, 0, false);
+}
+
+DevFileArchiveNx::DevFileArchiveNx(mtl::ALLOC_HANDLE handle)
+    : m_alloc(handle), pad_18(0), m_impl(new (handle, nullptr, 0, 4, false) Param()) {
+    __atomic_store_n(&m_impl->pad_17FC, 0, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&m_impl->pad_17F8, false, __ATOMIC_SEQ_CST);
+}
+
+DevFileArchiveNx::~DevFileArchiveNx() {
+    m_impl->finalize();
+}
+
+DevFileWriterTh* DevFileArchiveNx::createWriter(mtl::ALLOC_HANDLE) {
+    return nullptr;
+}
+
+bool DevFileArchiveNx::rfIsUsedChannel(unsigned int channel) {
+    return m_impl->m_params[channel].m_isOpen;
 }
 
 void DevPerfNx::resumeApplication() {}

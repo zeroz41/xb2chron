@@ -20,7 +20,9 @@ namespace mm { namespace mtl {
 template <typename T>
 class UniquePtrDefaultDeleter {
 public:
-    void operator()(T* ptr) const { delete ptr; }
+    // inline as declared: no unit of the original keeps a deleter out of line (ml::DevFileArchiveNx's Param, whose
+    // destructor costs 285, needs the hint's threshold)
+    inline void operator()(T* ptr) const { delete ptr; }
 };
 
 // the one owner of an object, which it deletes with its deleter

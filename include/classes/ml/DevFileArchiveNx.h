@@ -3,6 +3,14 @@
 
 #include "classes/ml/DevFileAccessor.h"
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "ml/CriticalSection.h"
+#include "ml/OpenReadParam.h"
+#include "mm/mtl/FixStr.h"
+#include "mm/mtl/FixedArray.h"
+#include "mm/mtl/FixedObjectAllocator.h"
+#include "mm/mtl/FixedQueue.h"
+#include "mm/mtl/UniquePtr.h"
+#include "mtl/MemManager.h"
 
 namespace ml { class DevFileParamTh; }
 namespace ml { class FileHandleTh; }
@@ -17,7 +25,7 @@ public:
     virtual bool initialize();  // slot 2
     virtual bool finalize();  // slot 3
     virtual void tail();  // slot 4
-    virtual int addressAlignment();  // slot 5
+    virtual int addressAlignment() { return 0x10; }  // slot 5 (weak: the original keeps it with the inline slots)
     virtual bool readBlockSlice(ml::FileHandleTh*, char const*, void*, unsigned int);  // slot 8
     virtual int getFileSize(char const*, mm::VAL64*, char const*);  // slot 9
     virtual ml::DevFileReaderTh* createLoader(mtl::ALLOC_HANDLE);  // slot 11
@@ -30,6 +38,35 @@ public:
     virtual bool rfIsUsedChannel(unsigned int);  // slot 18
     virtual bool getFilesBlock(char*&, int&, mtl::ALLOC_HANDLE, char const*, char const*);  // slot 19
     virtual const char* getMediaRootPath() const;  // slot 21
+
+    DevFileArchiveNx(mtl::ALLOC_HANDLE handle);
+
+    // the device's state (0x2A48), built by the constructor with the handle it is given; DevFileNxTh::Impl's
+    // members first
+    struct Param {
+        // a thread's file (0x118; Param::finalize passes pad_8 to the thread's release; the name is not the
+        // original's)
+        struct ThreadFile {
+            unsigned long pad_0;
+            void* pad_8;
+            unsigned char pad_10[0x108];
+        };
+
+        void finalize();
+        void addThreadFilehandle(unsigned long, mm::mtl::FixStr<256> const&);
+
+        mm::mtl::FixedArray<OpenReadParam, 13> m_params;  // the read channels
+        bool pad_17F8;  // stored atomically
+        int pad_17FC;  // stored atomically
+        CriticalSection m_cs;
+        mm::mtl::FixedObjectAllocator<ThreadFile, 16> m_threadFiles;  // the names are not the original's
+        mm::mtl::FixedQueue<ThreadFile*, 16> m_threadFileQueue;
+    };
+
+    unsigned char pad_10[4];
+    mtl::ALLOC_HANDLE m_alloc;  // the handle the constructor is given (the name is not the original's)
+    int pad_18;
+    mm::mtl::UniquePtr<Param> m_impl;
 };
 }  // namespace ml
 
