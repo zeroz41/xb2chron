@@ -11,6 +11,7 @@ class DrResMdoSeamRead : public ::ml::IWorkEvent {
 public:
     virtual ~DrResMdoSeamRead();  // slot 0
     void release();
+    void readCancel();
     virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
 };
 }  // namespace ml

@@ -84,6 +84,12 @@
 #include "ml/MdoWrkMatRes.h"
 #include <string.h>
 #include "ml/DrResMdoInstAnmObj.h"
+#include "classes/ml/DrResMdoSeamWrkMpf.h"
+#include "ml/DrMdoCtlMpfAuto.h"
+#include "ml/DrResMdoInstMdlInfo.h"
+#include "ml/DrResMdoVtxMeshObj.h"
+#include "ml/DrResMdoTexList.h"
+#include "ml/DrResMdoPntAlphaMan.h"
 
 namespace ml {
 
@@ -93,10 +99,20 @@ DrResMdoInstPartsGlbID::~DrResMdoInstPartsGlbID() {}
 
 DrResMdoSeamColi::~DrResMdoSeamColi() {}
 
+unsigned int DrResMdoLodObj::create(unsigned char* work, const unsigned char* data) {
+    return reinterpret_cast<DrResMdoLodObj*>(work)->setup(data, work + sizeof(DrResMdoLodObj));
+}
+
 void DrResMdoLodObj::release(DrResMdoLodObj*& obj) {
     if (obj != nullptr) {
         obj = nullptr;
     }
+}
+
+unsigned int DrResEtcPamObj::calcWorkSize(const unsigned char* mdo) {
+    const MdoHeader* header = reinterpret_cast<const MdoHeader*>(mdo);
+    const MdoEtcPams* pams = reinterpret_cast<const MdoEtcPams*>(mdo + header->m_etcPamOfs);
+    return pams->m_num * 0x18 + 0x20;
 }
 
 void DrResEtcPamObj::release(DrResEtcPamObj*& obj) {
@@ -109,6 +125,12 @@ void DrResMdoMeshObj::release(DrResMdoMeshObj*& obj) {
     if (obj != nullptr) {
         obj = nullptr;
     }
+}
+
+unsigned int DrResMdoMorpObj::calcWorkSize(const unsigned char* mdo) {
+    const MdoHeader* header = reinterpret_cast<const MdoHeader*>(mdo);
+    const MdoMorphs* morphs = reinterpret_cast<const MdoMorphs*>(mdo + header->m_morphOfs);
+    return morphs->m_num * sizeof(Target) + sizeof(DrResMdoMorpObj);
 }
 
 void DrResMdoMorpObj::release(DrResMdoMorpObj*& obj) {
@@ -418,6 +440,30 @@ DrResMdoPosInstAnm::AnmInsPosFunc DrResMdoPosInstAnm::s_pCallAnmInsPos[9] = {
     &DrResMdoPosInstAnm::anmInsPosParm_SclZ,
 };
 
+DrResMdoSeamWrkMpf::~DrResMdoSeamWrkMpf() {
+    if (m_matRes != nullptr) {
+        m_mpfAuto->autoMpfRelease();
+        m_mpfAuto->~DrMdoCtlMpfAuto();
+        m_mpfAuto = nullptr;
+        m_mpfInst = nullptr;
+        m_mpfWork = nullptr;
+        if (m_matRes != nullptr) {
+            mtl::MemManager::deallocate(m_matRes, 0, false);
+            m_matRes = nullptr;
+        }
+        if (m_workBuf != nullptr) {
+            mtl::MemManager::deallocate(m_workBuf, 0, false);
+            m_workBuf = nullptr;
+        }
+    }
+    m_readState = 0;
+    m_dispNum = 0;
+}
+
+unsigned int DrResMdoTexList::calcTextureMax(const unsigned char* data) {
+    return *reinterpret_cast<const unsigned int*>(data);
+}
+
 int DrResMdoUniformBlock::getStaticUniformBlockSize() {
     return 0x290;
 }
@@ -672,6 +718,8 @@ void DrResMdoInstPartsObj::getMatrix(mm::Mat44& m) const {
         }
     }
 }
+
+int DrResMdoPntAlphaMan::getWrkSize(int num) { return num * 0x18 + 0x18; }
 
 void DrResMdoInstPartsAnm::setNodeFrame(float frame) {
     m_nodeFrameStock[DrMan::s_nDblStockIdx] = frame;
@@ -3873,6 +3921,8 @@ DrResMdoPos* DrResMdoPosAddList::createAdd() {
 
 DrResMdoInstAnmObj::DrResMdoInstAnmObj() : m_header(0), m_parts(0), pad_10() {}
 
+void DrResMdoInstAnmObj::release() { *this = DrResMdoInstAnmObj(); }
+
 void DrResMdoInstAnmObj::setupLink(DrResMdoPos* pos) const {
     if (m_header) {
         for (int i = 0, idx = m_header->linkTopA; i < m_header->linkNumA; i++, idx++) {
@@ -3989,6 +4039,22 @@ void DrResMdoSeamWrkEnv::setDispState() { m_flags |= 1 << DrMan::s_nDblNowIdx; }
 
 
 
+unsigned int DrResMdoInstMdlInfo::calcWorkSize(const unsigned char* data) {
+    return reinterpret_cast<const Data*>(data)->m_num * 0x10 + sizeof(DrResMdoInstMdlInfo);
+}
+
+unsigned int DrResMdoInstMdlInfo::create(unsigned char* work, DrResMdoInstMdlInfo*& out, const unsigned char* data,
+                                         const char* name) {
+    DrResMdoInstMdlInfo* info = reinterpret_cast<DrResMdoInstMdlInfo*>(work);
+    out = info;
+    info->m_name[0] = '\0';
+    info->pad_110 = 0;
+    info->pad_120 = 0;
+    info->m_num = 0;
+    info->m_list = nullptr;
+    return out->setup(work + sizeof(DrResMdoInstMdlInfo), data, name);
+}
+
 DrResMdoSeamMemMan::DrResMdoSeamMemMan() {
     m_memList.m_head = nullptr;
     m_memList.m_tail = nullptr;
@@ -4077,6 +4143,8 @@ void DrResMdoSeamMemMan::releaseFreeObj(DrResMdoSeamMemObj* obj) {
 }
 
 DrResMdoSeamRead::~DrResMdoSeamRead() { release(); }
+
+void DrResMdoSeamRead::readCancel() {}
 
 int DrResMdoSeamTexList::SEAMRES_TEXLIST_CNTMAX = 0x3C;
 
@@ -4199,6 +4267,8 @@ DrResMdoSeamWrkLight::DrResMdoSeamWrkLight()
 
 DrResMdoSeamWrkLight::~DrResMdoSeamWrkLight() { release(); }
 
+void DrResMdoSeamWrkInst::beginMdl() { m_mdlCnt = 0; }
+
 void DrResMdoSeamWrkLight::release() {
     if (m_envObj != nullptr) {
         m_envObj->release();
@@ -4237,6 +4307,8 @@ void DrResMdoSeamWrkLow::release() {
     pad_30 = nullptr;
 }
 
+
+unsigned int DrResMdoVtxMeshObj::calcWorkSize(const unsigned char*) { return 0x140; }
 
 void DrResMdoSeamWrkBase::beginRender() {
     m_selectVertex = -1;

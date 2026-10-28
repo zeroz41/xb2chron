@@ -13,6 +13,16 @@ public:
         unsigned char pad_8[0x18];
     };
 
+    // the model data's header: its morph resource sits m_morphOfs bytes from it (names are not the original's)
+    struct MdoHeader {
+        unsigned char pad_0[0x80];
+        unsigned int m_morphOfs;  // 0x80
+    };
+    struct MdoMorphs {
+        unsigned char pad_0[0x4];
+        unsigned int m_num;  // 0x4: one Target each follows the object in its work buffer
+    };
+    static unsigned int calcWorkSize(const unsigned char* mdo);
     static void release(DrResMdoMorpObj*& obj);
 
     unsigned char pad_0[0x8];

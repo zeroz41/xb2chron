@@ -7,6 +7,7 @@ namespace ml {
 // links the rest after it). The field names are not the original's.
 class DrResMdoSeamMemObj {
 public:
+    DrResMdoSeamMemObj() : m_prev(nullptr), m_next(nullptr), m_pData(nullptr), m_size(0), m_flags(0) {}
     virtual ~DrResMdoSeamMemObj() {}  // slot 0
 
     DrResMdoSeamMemObj* m_prev;  // 0x08: DrResChankList links

@@ -6,6 +6,8 @@ namespace ml {
 class DrResMdoTexList {
 public:
     ~DrResMdoTexList();
+    // the texture count: the first word of the texture data
+    static unsigned int calcTextureMax(const unsigned char* data);
 
     unsigned char pad_0[0x8];
     DrResMdoTexList* m_pNext;  // 0x8: DrMdoTextureMan's list link (the name is not the original's)

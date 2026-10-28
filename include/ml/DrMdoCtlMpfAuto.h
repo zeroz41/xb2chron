@@ -8,7 +8,9 @@ namespace ml {
 // constructor stores no table). Field names are not the original's.
 class DrMdoCtlMpfAuto {
 public:
+    ~DrMdoCtlMpfAuto();
     void setBuffTbl(_wkMpfAutoBuff** buffTbl, int buffNum);
+    void autoMpfRelease();
 
     unsigned char pad_0[0x60];
     _wkMpfAutoBuff** m_pBuffTbl;  // 0x60

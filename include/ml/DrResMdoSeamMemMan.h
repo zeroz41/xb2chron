@@ -46,6 +46,19 @@ public:
         }
     }
 
+    // links obj at the end (inline: the name is not the original's)
+    void pushBack(T* obj) {
+        if (m_tail == nullptr) {
+            m_head = obj;
+            m_tail = obj;
+            obj->m_prev = nullptr;
+        } else {
+            m_tail->m_next = obj;
+            obj->m_prev = m_tail;
+            m_tail = obj;
+        }
+        obj->m_next = nullptr;
+    }
     T* m_head;  // 0x0
     T* m_tail;  // 0x8
 };
@@ -56,6 +69,8 @@ class DrResMdoSeamMemMan {
 public:
     DrResMdoSeamMemMan();
     ~DrResMdoSeamMemMan();
+    // takes num block objects and the memory mem (size bytes): the first block covers it all, the rest are spares
+    void setupMem(int num, unsigned char* mem, int size, unsigned int, unsigned int);
     void releaseMem();
     DrResMdoSeamMemObj* createFreeObj(unsigned int size);
     DrResMdoSeamMemObj* createBackFreeObj(unsigned int size);
@@ -65,9 +80,9 @@ public:
 
     DrResChankList<DrResMdoSeamMemObj> m_memList;    // 0x00
     DrResChankList<DrResMdoSeamMemObj> m_spareList;  // 0x10
-    unsigned char pad_20[0x4];
-    int pad_24;                                      // 0x24: zeroed by the constructor
-    int pad_28;                                      // 0x28
+    int m_memSize;                                   // 0x20: setupMem's size
+    int pad_24;                                      // 0x24: zeroed by the constructor, setupMem's 4th argument
+    int pad_28;                                      // 0x28: setupMem's 5th argument
     unsigned int m_flags;                            // 0x2C: 2 = releaseFreeObj clears the block from m_cache
     unsigned int m_objNum;                           // 0x30
     DrResMdoSeamMemObj* m_objs;                      // 0x38
