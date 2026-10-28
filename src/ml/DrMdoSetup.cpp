@@ -41,6 +41,7 @@
 #include "ml/DrMdoCtlMpfWork.h"
 #include "ml/DrMdoSetup.h"
 #include "ml/DrMdoMpfMan.h"
+#include "ml/DrMdlMan.h"
 #include "ml/DrMdoZSortMan.h"
 #include "ml/DrPixlDeferred.h"
 #include "ml/DrPixlMan.h"
@@ -1957,6 +1958,176 @@ void DrMdoShdSetMpf::mpfshd_stm_bill(DrResShdMpf* shd, DrShdDataList*, const Mds
                                      const DrResMpfSampler*, bool) {
     shd->setupShader(0);
     m_pMdo->m_pDrMan->m_calcMan->m_pViewWork->m_mpfBlock.setUniformBlock(shd->m_shaderSel[6]);
+}
+
+void DrMdoShdSetMpf::mpfshd_stm_bill_wind(DrResShdMpf* shd, DrShdDataList*, const MdsMpfMatInfoHeader*,
+                                     const DrResMpfSampler*, bool) {
+    shd->setupShader(0);
+    m_pMdo->m_pDrMan->m_calcMan->m_pViewWork->m_mpfBlock.setUniformBlock(shd->m_shaderSel[6]);
+    grlib::CGLibTriUniformBlock& wind = m_pMdo->m_pDrMan->m_mdlMan->m_mpfMan->m_windBlock;
+    wind.setUniformBlock(shd->m_shaderSel[3]);
+    wind.setOldUniformBlock(shd->m_shaderSel[4]);
+}
+
+void DrMdoShdSetMpf::mpfshd_stm_wind(DrResShdMpf* shd, DrShdDataList*, const MdsMpfMatInfoHeader*,
+                                     const DrResMpfSampler*, bool) {
+    shd->setupShader(0);
+    grlib::CGLibTriUniformBlock& wind = m_pMdo->m_pDrMan->m_mdlMan->m_mpfMan->m_windBlock;
+    wind.setUniformBlock(shd->m_shaderSel[3]);
+    wind.setOldUniformBlock(shd->m_shaderSel[4]);
+}
+
+void DrMdoShdSetMpf::mpfshd_pre_bill(DrResShdMpf* shd, DrShdDataList* dataList, const MdsMpfMatInfoHeader* info,
+                                     const DrResMpfSampler* sampler, bool dither) {
+    shd->setupShader(dither ? 2 : 0);
+    m_pMdo->m_pDrMan->m_calcMan->m_pViewWork->m_mpfBlock.setUniformBlock(shd->m_shaderSel[6]);
+    if (dither) {
+        dataList->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(shd->m_shaderSel[7]);
+        unsigned int location = shd->m_shaderSel[2];
+        DrAPCache* cache = DrMan::get()->m_apCache;
+        cache->beginTexSampling(2, 0);
+        cache->setTexture(DrMan::get()->m_iniSys->m_texture[1], location);
+    }
+}
+
+void DrMdoShdSetMpf::mpfshd_pre_bill_nuki(DrResShdMpf* shd, DrShdDataList* dataList, const MdsMpfMatInfoHeader* info,
+                                     const DrResMpfSampler* sampler, bool dither) {
+    shd->setupShader(dither ? 2 : 0);
+    m_pMdo->m_pDrMan->m_calcMan->m_pViewWork->m_mpfBlock.setUniformBlock(shd->m_shaderSel[6]);
+    DrAPCache* texCache = m_pMdo->m_pDrMan->m_apCache;
+    dataList->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(shd->m_shaderSel[7]);
+    texCache->setTexture(*m_pWrkMatRes->m_ppTexture[info->m_texIdx1], *sampler->m_sampler[1], shd->m_shaderSel[0]);
+    if (dither) {
+        unsigned int location = shd->m_shaderSel[2];
+        DrAPCache* cache = DrMan::get()->m_apCache;
+        cache->beginTexSampling(2, 0);
+        cache->setTexture(DrMan::get()->m_iniSys->m_texture[1], location);
+    }
+}
+
+void DrMdoShdSetMpf::mpfshd_pre_mdl(DrResShdMpf* shd, DrShdDataList* dataList, const MdsMpfMatInfoHeader* info,
+                                     const DrResMpfSampler* sampler, bool dither) {
+    shd->setupShader(dither ? 2 : 0);
+    m_pMdo->m_pDrMan->m_calcMan->m_pViewWork->m_mpfBlock.setUniformBlock(shd->m_shaderSel[6]);
+    if (dither) {
+        dataList->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(shd->m_shaderSel[7]);
+        unsigned int location = shd->m_shaderSel[2];
+        DrAPCache* cache = DrMan::get()->m_apCache;
+        cache->beginTexSampling(2, 0);
+        cache->setTexture(DrMan::get()->m_iniSys->m_texture[1], location);
+    }
+}
+
+void DrMdoShdSetMpf::mpfshd_pre_mdl_nuki(DrResShdMpf* shd, DrShdDataList* dataList, const MdsMpfMatInfoHeader* info,
+                                     const DrResMpfSampler* sampler, bool dither) {
+    shd->setupShader(dither ? 2 : 0);
+    m_pMdo->m_pDrMan->m_calcMan->m_pViewWork->m_mpfBlock.setUniformBlock(shd->m_shaderSel[6]);
+    dataList->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(shd->m_shaderSel[7]);
+    m_pMdo->m_pDrMan->m_apCache->setTexture(*m_pWrkMatRes->m_ppTexture[info->m_texIdx1], *sampler->m_sampler[1],
+                                            shd->m_shaderSel[0]);
+    if (dither) {
+        unsigned int location = shd->m_shaderSel[2];
+        DrAPCache* cache = DrMan::get()->m_apCache;
+        cache->beginTexSampling(2, 0);
+        cache->setTexture(DrMan::get()->m_iniSys->m_texture[1], location);
+    }
+}
+
+void DrMdoShdSetMpf::mpfshd_drw_bill(DrResShdMpf* shd, DrShdDataList*, const MdsMpfMatInfoHeader* info,
+                                    const DrResMpfSampler* sampler, bool) {
+    unsigned int flags = info->m_flags;
+    shd->setupShader((flags >> 8) & 1);
+    m_pMdo->m_pDrMan->m_calcMan->m_pViewWork->m_mpfBlock.setUniformBlock(shd->m_shaderSel[6]);
+    if (flags & 0x100) {
+        (m_pWrkMatRes->m_pMatUniformArray->m_pArray + info->m_matUniformIdx)->setUniformBlock(shd->m_shaderSel[5]);
+    }
+    m_pMdo->m_pDrMan->m_apCache->setTexture(*m_pWrkMatRes->m_ppTexture[info->m_texIdx], *sampler->m_sampler[0],
+                                            shd->m_shaderSel[0]);
+}
+
+void DrMdoShdSetMpf::mpfshd_drw_mdl(DrResShdMpf* shd, DrShdDataList*, const MdsMpfMatInfoHeader* info,
+                                    const DrResMpfSampler* sampler, bool) {
+    unsigned int flags = info->m_flags;
+    shd->setupShader((flags >> 8) & 1);
+    m_pMdo->m_pDrMan->m_calcMan->m_pViewWork->m_mpfBlock.setUniformBlock(shd->m_shaderSel[6]);
+    if (flags & 0x100) {
+        (m_pWrkMatRes->m_pMatUniformArray->m_pArray + info->m_matUniformIdx)->setUniformBlock(shd->m_shaderSel[5]);
+    }
+    m_pMdo->m_pDrMan->m_apCache->setTexture(*m_pWrkMatRes->m_ppTexture[info->m_texIdx], *sampler->m_sampler[0],
+                                            shd->m_shaderSel[0]);
+}
+
+void DrMdoShdSetMpf::mpfshd_drw_mdl_nonom(DrResShdMpf* shd, DrShdDataList*, const MdsMpfMatInfoHeader* info,
+                                    const DrResMpfSampler* sampler, bool) {
+    unsigned int flags = info->m_flags;
+    shd->setupShader((flags >> 8) & 1);
+    m_pMdo->m_pDrMan->m_calcMan->m_pViewWork->m_mpfBlock.setUniformBlock(shd->m_shaderSel[6]);
+    if (flags & 0x100) {
+        (m_pWrkMatRes->m_pMatUniformArray->m_pArray + info->m_matUniformIdx)->setUniformBlock(shd->m_shaderSel[5]);
+    }
+    m_pMdo->m_pDrMan->m_apCache->setTexture(*m_pWrkMatRes->m_ppTexture[info->m_texIdx], *sampler->m_sampler[0],
+                                            shd->m_shaderSel[0]);
+}
+
+void DrMdoShdSetMpf::mpfshd_drw_mdl_def(DrResShdMpf* shd, DrShdDataList*, const MdsMpfMatInfoHeader* info,
+                                    const DrResMpfSampler* sampler, bool) {
+    unsigned int flags = info->m_flags;
+    shd->setupShader((flags >> 8) & 1);
+    m_pMdo->m_pDrMan->m_calcMan->m_pViewWork->m_mpfBlock.setUniformBlock(shd->m_shaderSel[6]);
+    if (flags & 0x100) {
+        (m_pWrkMatRes->m_pMatUniformArray->m_pArray + info->m_matUniformIdx)->setUniformBlock(shd->m_shaderSel[5]);
+    }
+    m_pMdo->m_pDrMan->m_apCache->setTexture(*m_pWrkMatRes->m_ppTexture[info->m_texIdx], *sampler->m_sampler[0],
+                                            shd->m_shaderSel[0]);
+}
+
+void DrMdoShdSetMpf::mpfshd_drw_mdl_defnonom(DrResShdMpf* shd, DrShdDataList*, const MdsMpfMatInfoHeader* info,
+                                    const DrResMpfSampler* sampler, bool) {
+    unsigned int flags = info->m_flags;
+    shd->setupShader((flags >> 8) & 1);
+    m_pMdo->m_pDrMan->m_calcMan->m_pViewWork->m_mpfBlock.setUniformBlock(shd->m_shaderSel[6]);
+    if (flags & 0x100) {
+        (m_pWrkMatRes->m_pMatUniformArray->m_pArray + info->m_matUniformIdx)->setUniformBlock(shd->m_shaderSel[5]);
+    }
+    m_pMdo->m_pDrMan->m_apCache->setTexture(*m_pWrkMatRes->m_ppTexture[info->m_texIdx], *sampler->m_sampler[0],
+                                            shd->m_shaderSel[0]);
+}
+
+void DrMdoShdSetMpf::mpfshd_drw_mdl_normalmap(DrResShdMpf* shd, DrShdDataList* dataList, const MdsMpfMatInfoHeader* info,
+                                     const DrResMpfSampler* sampler, bool) {
+    unsigned int flags = info->m_flags;
+    shd->setupShader((flags >> 8) & 1);
+    m_pMdo->m_pDrMan->m_calcMan->m_pViewWork->m_mpfBlock.setUniformBlock(shd->m_shaderSel[6]);
+    if (flags & 0x100) {
+        (m_pWrkMatRes->m_pMatUniformArray->m_pArray + info->m_matUniformIdx)->setUniformBlock(shd->m_shaderSel[5]);
+    }
+    DrAPCache* cache = m_pMdo->m_pDrMan->m_apCache;
+    cache->setTexture(*m_pWrkMatRes->m_ppTexture[info->m_texIdx], *sampler->m_sampler[0], shd->m_shaderSel[0]);
+    cache->setTexture(*m_pWrkMatRes->m_ppTexture[info->m_texIdx2], *sampler->m_sampler[2], shd->m_shaderSel[1]);
+}
+
+void DrMdoShdSetMpf::mpfshd_pre_Dithe_nom(DrResShdMpf* shd, DrShdDataList* dataList, const MdsMpfMatInfoHeader* info,
+                                     const DrResMpfSampler*, bool) {
+    shd->setupShader(0);
+    dataList->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(shd->m_shaderSel[7]);
+    m_pMdo->m_pDrMan->m_calcMan->m_pViewWork->m_mpfBlock.setUniformBlock(shd->m_shaderSel[6]);
+    unsigned int location = shd->m_shaderSel[2];
+    DrAPCache* cache = DrMan::get()->m_apCache;
+    cache->beginTexSampling(2, 0);
+    cache->setTexture(DrMan::get()->m_iniSys->m_texture[1], location);
+}
+
+void DrMdoShdSetMpf::mpfshd_pre_Dithe_nuki(DrResShdMpf* shd, DrShdDataList* dataList, const MdsMpfMatInfoHeader* info,
+                                     const DrResMpfSampler* sampler, bool) {
+    shd->setupShader(0);
+    dataList->getAlphaTestUniform(info->m_alphaRef)->setUniformBlock(shd->m_shaderSel[7]);
+    m_pMdo->m_pDrMan->m_calcMan->m_pViewWork->m_mpfBlock.setUniformBlock(shd->m_shaderSel[6]);
+    m_pMdo->m_pDrMan->m_apCache->setTexture(*m_pWrkMatRes->m_ppTexture[info->m_texIdx1], *sampler->m_sampler[1],
+                                            shd->m_shaderSel[0]);
+    unsigned int location = shd->m_shaderSel[2];
+    DrAPCache* cache = DrMan::get()->m_apCache;
+    cache->beginTexSampling(2, 0);
+    cache->setTexture(DrMan::get()->m_iniSys->m_texture[1], location);
 }
 
 void DrMdoShdSetMpf::mpfshd_cull_fade_mdl(DrResShdMpf*, DrShdDataList*, const MdsMpfMatInfoHeader*,

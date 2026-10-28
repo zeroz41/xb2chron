@@ -4,6 +4,7 @@
 namespace ml {
 class DrMan;
 class DrMdoVertexMan;
+class DrMdoMpfMan;
 class DrGpuCheckBase;
 class DrGpuCheckRender;
 class DrMdlObj;
@@ -24,7 +25,9 @@ public:
 
     unsigned char pad_0[0x8];
     DrMdoVertexMan* m_vertexMan;  // 0x8, the constructor's first DrMdoVertexMan
-    unsigned char pad_10[0x38];
+    unsigned char pad_10[0x10];
+    DrMdoMpfMan* m_mpfMan;  // 0x20, addMpfObj news it on first use (the name is not the original's)
+    unsigned char pad_28[0x20];
     DrGpuCheckRender* m_gpuCheckRender;  // 0x48, the constructor's DrGpuCheckRender
 };
 }  // namespace ml

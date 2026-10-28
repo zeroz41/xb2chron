@@ -15,6 +15,17 @@ class DrResMpfSampler;
 class DrMdoShdSetMpf {
 public:
     void mpfshd_stm_bill(DrResShdMpf* shd, DrShdDataList*, const MdsMpfMatInfoHeader*, const DrResMpfSampler*, bool);
+    void mpfshd_stm_bill_wind(DrResShdMpf* shd, DrShdDataList*, const MdsMpfMatInfoHeader*, const DrResMpfSampler*,
+                              bool);
+    void mpfshd_stm_wind(DrResShdMpf* shd, DrShdDataList*, const MdsMpfMatInfoHeader*, const DrResMpfSampler*, bool);
+    void mpfshd_pre_bill(DrResShdMpf* shd, DrShdDataList* dataList, const MdsMpfMatInfoHeader* info,
+                         const DrResMpfSampler* sampler, bool);
+    void mpfshd_pre_bill_nuki(DrResShdMpf* shd, DrShdDataList* dataList, const MdsMpfMatInfoHeader* info,
+                              const DrResMpfSampler* sampler, bool);
+    void mpfshd_pre_mdl(DrResShdMpf* shd, DrShdDataList* dataList, const MdsMpfMatInfoHeader* info,
+                        const DrResMpfSampler* sampler, bool);
+    void mpfshd_pre_mdl_nuki(DrResShdMpf* shd, DrShdDataList* dataList, const MdsMpfMatInfoHeader* info,
+                             const DrResMpfSampler* sampler, bool);
     void mpfshd_drw_bill(DrResShdMpf* shd, DrShdDataList*, const MdsMpfMatInfoHeader* info,
                          const DrResMpfSampler* sampler, bool);
     void mpfshd_drw_mdl(DrResShdMpf* shd, DrShdDataList*, const MdsMpfMatInfoHeader* info,
@@ -25,6 +36,12 @@ public:
                             const DrResMpfSampler* sampler, bool);
     void mpfshd_drw_mdl_defnonom(DrResShdMpf* shd, DrShdDataList*, const MdsMpfMatInfoHeader* info,
                                  const DrResMpfSampler* sampler, bool);
+    void mpfshd_drw_mdl_normalmap(DrResShdMpf* shd, DrShdDataList* dataList, const MdsMpfMatInfoHeader* info,
+                                  const DrResMpfSampler* sampler, bool);
+    void mpfshd_pre_Dithe_nom(DrResShdMpf* shd, DrShdDataList* dataList, const MdsMpfMatInfoHeader* info,
+                              const DrResMpfSampler* sampler, bool);
+    void mpfshd_pre_Dithe_nuki(DrResShdMpf* shd, DrShdDataList* dataList, const MdsMpfMatInfoHeader* info,
+                               const DrResMpfSampler* sampler, bool);
     void mpfshd_cull_fade_mdl(DrResShdMpf*, DrShdDataList*, const MdsMpfMatInfoHeader*, const DrResMpfSampler*, bool);
 
     DrMdoMat* m_pMdo;            // 0x0: its m_pDrMan gives the view's blocks and the texture cache

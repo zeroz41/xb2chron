@@ -1,6 +1,8 @@
 #ifndef ML_DRMDOMPFMAN_H
 #define ML_DRMDOMPFMAN_H
 
+#include "grlib/CGLibTriUniformBlock.h"
+
 namespace ml { class DrMan; }
 
 namespace ml {
@@ -26,7 +28,10 @@ public:
 
     DrMan* m_pDrMan;  // 0x0
     int m_mpfObjNum;  // 0x8, counted by addMpfObj/delMpfObj
-    unsigned char pad_C[0xC4];
+    unsigned char pad_C[0xC];
+    // 0x18, the constructor sets it up (0x1800 bytes); mpfshd_stm_wind binds it (the name is not the original's)
+    grlib::CGLibTriUniformBlock m_windBlock;
+    unsigned char pad_60[0x70];
     int m_listCount;  // 0xD0, cleared by begin()
     unsigned char pad_D4[0x3C3C];
     char* m_pFrameWork;  // 0x3D10
