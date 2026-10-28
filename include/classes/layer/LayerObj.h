@@ -7,19 +7,24 @@
 #include "mm/Col4.h"
 #include "mm/Mat44.h"
 #include "classes/layer/LayerManager.h"
+#include "layer/LayerSortMan.h"
 
 namespace layer { class LayerRenderView; }
 namespace layer { class LayerResColor; }
 namespace layer { class LayerResMatrix; }
 namespace layer { class LayerResUpdateInfo; }
 namespace layer { class LayerSortMan; }
+namespace layer { class LayerSortObj; }
 
 namespace layer {
 // table 0x7100B7F9E8
 class LayerObj : public ::layer::LayerBase {
 public:
-    virtual ~LayerObj();  // slot 0
+    // inline: its deleting destructor sits in the unit's tail with the table's other inline slots
+    virtual ~LayerObj() {}  // slot 0
     virtual void release();  // slot 2
+    // the derived destructors' first step
+    void baseRelease();
     virtual void resourceInit() {}  // slot 3
     virtual void apply(layer::LayerSortMan*, layer::LayerRenderView const*);  // slot 4
     virtual void applyBegin(layer::LayerResUpdateInfo&, layer::LayerRenderView const*);  // slot 5
@@ -68,6 +73,10 @@ public:
         // LayerObjUtil::updatePosMatrixUniformBlock leaves the position unscaled by the LayerManager's screen
         // scale (LayerObjMesh::call_uniform_noImage passes it)
         STATE_RAW_POS = 0x800,
+        // setDrawList: puts the object in the 3D sort space when its caller asks for it
+        STATE_3D_SPACE = 0x400,
+        // setDrawList: either bit keeps the object out of the sort lists
+        STATE_NO_DRAW = 0x90000,
     };
     // what setPos/setRot/setScale/setMulCol/setAddCol write, one per m_flags entry and a third the getters fall
     // back to (the layout is not the original's)
@@ -89,9 +98,18 @@ public:
     bool isFlag(unsigned int index, unsigned int flag) const { return (m_flags[index] & flag) != 0; }
     void onFlag(unsigned int index, unsigned int flag) { m_flags[index] |= flag; }
     void offFlag(unsigned int index, unsigned int flag) { m_flags[index] &= ~flag; }
+    // setDrawList's 2D case: puts obj in sortMan's 2D space while the object is on screen (the name is not the
+    // original's)
+    void set2DSpace(LayerSortMan* sortMan, LayerSortObj* obj) const {
+        if (m_dispBounds[0] <= 0.0f || m_dispBounds[1] <= 0.0f || m_dispBounds[2] >= 1.0f || m_dispBounds[3] >= 1.0f) {
+            return;
+        }
+        sortMan->set2DSpace(obj, m_priority);
+    }
 
     // The field names follow the accessors that read and write them (not the original's).
-    unsigned char pad_1C[0x4];
+    unsigned char m_status;  // release sets 0x22 (the name is not the original's)
+    unsigned char pad_1D[0x3];
     mm::Mat44 m_matrix[2];  // setMatrix writes the one m_matrixIdx does not name
     unsigned int m_flags[2];  // FLAG_*, indexed by LayerManager::s_nStkIdx / s_nDebIdx
     unsigned int m_stateFlags;  // STATE_*
@@ -105,7 +123,10 @@ public:
     unsigned char m_texFilterType;  // setTexFilterType (a LayerTexFilterType)
     unsigned char pad_C7[0x1];
     Param m_params[3];
-    unsigned char pad_170[0x24];
+    // the screen bounds setDrawList tests: drawn only while [0] > 0, [1] > 0, [2] < 1 and [3] < 1 (the name is not
+    // the original's)
+    float m_dispBounds[4];
+    unsigned char pad_180[0x14];
     unsigned short m_pixelWidth;  // getPixelWidth
     unsigned short m_pixelHeight;  // getPixelHeight
     unsigned char m_centerType;  // set/getCenterType (a LayerCenterType)
@@ -117,7 +138,8 @@ public:
     // the z LayerObjUtil::updatePosMatrixUniformBlock writes into the position uniform (LayerObjMesh's
     // call_uniform_noImage; the name is not the original's)
     float m_posZ;
-    unsigned char pad_200[0x40];
+    float m_depth;  // setDrawList's set3DSpace distance (the name is not the original's)
+    unsigned char pad_204[0x3C];
     const LayerBase* m_maskObj;  // setMaskObj
 };
 inline const LayerObj::Param& LayerObj::getParam(unsigned int flag) const {

@@ -30,7 +30,7 @@ namespace layer {
 // table none (its derived classes')
 class LayerActBase : public ::layer::LayerObj {
 public:
-    virtual ~LayerActBase();  // slot 0
+    virtual ~LayerActBase() {}  // slot 0
     virtual void updatePartsAction(layer::LyrActionData const*) {}  // slot 10
     void actionEnd();
     // what an action's end type does when it ends (returns whether the action ends; the third argument, as its

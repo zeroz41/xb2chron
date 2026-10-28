@@ -8,7 +8,7 @@ namespace layer {
 // table 0x7100B7FCC8
 class LayerObjLayout : public ::layer::LayerActBase {
 public:
-    virtual ~LayerObjLayout();  // slot 0
+    virtual ~LayerObjLayout() {}  // slot 0: inline (its deleting destructor sits in the unit's tail)
 
     // The field names follow LayerAccLayoutObj's accessors (not the original's).
     unsigned char pad_258[0x58];

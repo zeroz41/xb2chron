@@ -1,10 +1,12 @@
 #ifndef CLASSES_LAYER_LAYEROBJMANAGER_H
 #define CLASSES_LAYER_LAYEROBJMANAGER_H
 #include "layer/LayerAccLayoutObj.h"
+#include "layer/LayerLinkList.h"
 
 namespace grlib { class CGLibTextureBuffer; }
 namespace layer { class LayerBase; }
 namespace layer { class LayerManager; }
+namespace layer { class LayerSortMan; }
 namespace ml { class IDrDrawWorkInfo; }
 
 namespace layer {
@@ -24,6 +26,15 @@ public:
     LayerBase* createMemObj(unsigned int width, unsigned int height, LayerMemType type);
     LayerBase* createPolyObj(unsigned int width, unsigned int height, unsigned short vertexCount,
                              unsigned short indexCount, LayerPrimitiveType type);
+
+    // The field names are not the original's.
+    const ml::IDrDrawWorkInfo* m_drawInfo;  // finalRender's (the constructor leaves it unset)
+    LayerManager* m_manager;  // the constructor's
+    LayerSortMan* m_sortMan;  // 0x10: made by the constructor (512 2D and 256 3D entries); setDrawList's 3D space
+    // its object lists, laid out as LayerFontManager's (the names are LayerFontManager's)
+    LayerLinkList<LayerBase> m_objList;
+    LayerLinkList<LayerBase> m_setupList[2];
+    LayerLinkList<LayerBase> m_deleteList;
 };
 }  // namespace layer
 

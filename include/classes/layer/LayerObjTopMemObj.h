@@ -2,6 +2,7 @@
 #define CLASSES_LAYER_LAYEROBJTOPMEMOBJ_H
 
 #include "classes/layer/LayerObj.h"
+#include "classes/layer/LayerObjSortMemObj.h"
 #include "grlib/CGLibOneUniformBlock.h"
 
 namespace grlib { class CGLibTextureBuffer; }
@@ -18,11 +19,14 @@ public:
     void* getBuffer();
     void updateBufer();
     void setRender(bool render);
+    void setupRender();
+    void lastRender();
     enum { RENDER_ON = 0x4 };  // the name is not the original's
 
     // The field names follow LayerAccMemObj's accessors that read them (not the original's).
     // The field names follow the functions that use them (not the original's).
-    unsigned char pad_248[0x28];
+    unsigned char pad_248[0x10];
+    LayerObjSortMemObj m_sortObj;  // 0x258: what setDrawList puts in the sort lists
     unsigned int m_renderFlags;  // setRender sets or clears RENDER_ON
     unsigned char pad_274[0x74];
     grlib::CGLibTextureBuffer* m_texture;  // getTexture

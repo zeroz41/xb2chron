@@ -1,3 +1,14 @@
+#include "layer/LayerObjUtil.h"
+#include "classes/layer/LayerObj.h"
+#include "classes/layer/LayerActBase.h"
+#include "classes/layer/LayerObjWork.h"
+#include "classes/layer/LayerObjLayout.h"
+#include "classes/layer/LayerObjManager.h"
+#include "classes/layer/LayerObjTopDef.h"
+#include "classes/layer/LayerObjTopMemObj.h"
+#include "classes/layer/LayerObjTopTexObj.h"
+#include "classes/layer/LayerObjTopPolyObj.h"
+#include "classes/layer/LayerObjTopMaskObj.h"
 #include "classes/layer/LayerObj.h"
 #include "classes/layer/LayerActDef.h"
 #include "classes/layer/LayerObjMesh.h"
@@ -60,9 +71,15 @@
 #include "classes/layer/LayerObjSortPolyObj.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/layer/LayerTagStr.h"
+#include "layer/LayerSortMan.h"
 
 namespace layer {
 
+void LayerObj::release() {
+    onFlag(LayerManager::s_nStkIdx, 1);
+    m_objType = 0;
+    m_status = 0x22;
+}
 void LayerObj::setInitPos(float x, float y) {
     m_params[1].m_posX = x;
     m_params[0].m_posX = x;
@@ -194,6 +211,10 @@ void LayerObjFont::setColorMap(const LayerFontIconObj* colorMap, unsigned int pa
 }
 void LayerObjFont::setSlopeRot(float rot) { m_slopeRot = rot; }
 float LayerObjFont::getSlopeRot() const { return m_slopeRot; }
+void LayerObjManager::finalRender(const ml::IDrDrawWorkInfo* info) {
+    m_drawInfo = info;
+    m_sortMan->finalRender();
+}
 void LayerObjManager::end() {}
 void LayerObjMesh::call_uniform_win_ga_X(LayerArgMdlRenInf& arg) { setUniformWinGaX(arg, false); }
 void LayerObjMesh::call_uniform_win_ga_Y(LayerArgMdlRenInf& arg) { setUniformWinGaY(arg, false); }
@@ -282,6 +303,22 @@ void LayerObjPlace::placeAnm_Blend(LayerResNode* node, const unsigned char* data
     node->m_blend = key;
     node->m_flags |= 0x2;
 }
+const unsigned short LayerObjUtil::UNIFORM_BLOCK_SIZE[12] = {
+    0x80, 0x180, 0x80, 0x50, 0x60, 0x80, 0x60, 0x50, 0x80, 0x120, 0x40, 0x20,
+};
+int LayerObjUtil::getUniformBlockSizeAlOff(LayerUniType type) { return UNIFORM_BLOCK_SIZE[type]; }
+void LayerObjTopDef::setDrawList(LayerSortMan* sortMan, bool use3D) {
+    if (m_stateFlags & STATE_NO_DRAW) return;
+    if (use3D) {
+        if (m_stateFlags & STATE_3D_SPACE) {
+            mm::mtl::PtrSingleton<LayerManager>::sys()->m_objManager->m_sortMan->set3DSpace(&m_sortObj, m_depth);
+        } else {
+            set2DSpace(sortMan, &m_sortObj);
+        }
+    } else {
+        set2DSpace(sortMan, &m_sortObj);
+    }
+}
 void* LayerObjTopMemObj::getBuffer() {
     unsigned int index = LayerManager::s_nDebIdx;
     return m_buffers[index].m_pBuff;
@@ -299,6 +336,34 @@ void LayerObjTopMemObj::setRender(bool render) {
         m_renderFlags |= RENDER_ON;
     } else {
         m_renderFlags &= ~RENDER_ON;
+    }
+}
+void LayerObjTopMemObj::setDrawList(LayerSortMan* sortMan, bool use3D) {
+    if (m_stateFlags & STATE_NO_DRAW) return;
+    if (use3D) {
+        if (m_stateFlags & STATE_3D_SPACE) {
+            mm::mtl::PtrSingleton<LayerManager>::sys()->m_objManager->m_sortMan->set3DSpace(&m_sortObj, m_depth);
+        } else {
+            set2DSpace(sortMan, &m_sortObj);
+        }
+    } else {
+        set2DSpace(sortMan, &m_sortObj);
+    }
+}
+LayerObjTopTexObj::~LayerObjTopTexObj() {
+    baseRelease();
+    m_uniform.release();
+}
+void LayerObjTopTexObj::setDrawList(LayerSortMan* sortMan, bool use3D) {
+    if (m_stateFlags & STATE_NO_DRAW) return;
+    if (use3D) {
+        if (m_stateFlags & STATE_3D_SPACE) {
+            mm::mtl::PtrSingleton<LayerManager>::sys()->m_objManager->m_sortMan->set3DSpace(&m_sortObj, m_depth);
+        } else {
+            set2DSpace(sortMan, &m_sortObj);
+        }
+    } else {
+        set2DSpace(sortMan, &m_sortObj);
     }
 }
 void LayerObjTopPolyObj::LockVertex() { m_locked = m_vertices[LayerManager::s_nStkIdx]; }
@@ -323,16 +388,56 @@ void LayerObjTopPolyObj::setIndexInfo(unsigned short start, unsigned short count
     m_indexStart[index] = start;
     m_indexCount[index] = count;
 }
+void LayerObjTopPolyObj::setDrawList(LayerSortMan* sortMan, bool use3D) {
+    if (m_stateFlags & STATE_NO_DRAW) return;
+    if (use3D) {
+        if (m_stateFlags & STATE_3D_SPACE) {
+            mm::mtl::PtrSingleton<LayerManager>::sys()->m_objManager->m_sortMan->set3DSpace(&m_sortObj, m_depth);
+        } else {
+            set2DSpace(sortMan, &m_sortObj);
+        }
+    } else {
+        set2DSpace(sortMan, &m_sortObj);
+    }
+}
 void LayerObjTopPolyObj::applyPartsSetup() { updateVertexBuffer(); }
 void LayerObjTopMaskObj::resourceInit() {
     if (m_texture != nullptr) {
         m_texture->setupResource();
     }
 }
+LayerObjTopMaskObj::~LayerObjTopMaskObj() {
+    baseRelease();
+    m_uniform.release();
+    if (m_texture != nullptr) {
+        m_texture->release();
+        m_texture = nullptr;
+    }
+}
 void LayerObjSortDef::finalRender() { static_cast<LayerObjTopDef*>(m_obj)->finalRender(); }
 void LayerObjSortFont::finalRender() { static_cast<LayerObjTopFont*>(m_obj)->finalRender(); }
 void LayerObjSortTexObj::finalRender() { static_cast<LayerObjTopTexObj*>(m_obj)->finalRender(); }
 void LayerObjSortPolyObj::finalRender() { static_cast<LayerObjTopPolyObj*>(m_obj)->finalRender(); }
+void LayerObjSortMemObj::finalRender() {
+    LayerObjTopMemObj* obj = static_cast<LayerObjTopMemObj*>(m_obj);
+    obj->setupRender();
+    if (obj->m_renderFlags & LayerObjTopMemObj::RENDER_ON) obj->lastRender();
+}
+void LayerObjUtil::calcMdlPos_Center_Up(float* pos, float* out, const float* size, const LayerBasePos& base) {
+    out[0] = base.m_alignX * size[0];
+    out[1] = base.m_alignY * size[1];
+}
+void LayerObjUtil::calcMdlPos_Center_Down(float* pos, float* out, const float* size, const LayerBasePos& base) {
+    out[0] = base.m_alignX * size[0];
+    out[1] = (base.m_alignY + 1.0f) * size[1];
+    pos[1] -= size[1];
+}
+void LayerObjUtil::calcMdlPos_Center_Center(float* pos, float* out, const float* size, const LayerBasePos& base) {
+    out[0] = (base.m_alignX + 0.5f) * size[0];
+    out[1] = (base.m_alignY + 0.5f) * size[1];
+    pos[0] -= size[0] * 0.5f;
+    pos[1] -= size[1] * 0.5f;
+}
 
 }  // namespace layer
 

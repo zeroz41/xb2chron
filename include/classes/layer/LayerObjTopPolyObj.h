@@ -2,6 +2,7 @@
 #define CLASSES_LAYER_LAYEROBJTOPPOLYOBJ_H
 
 #include "classes/layer/LayerObj.h"
+#include "classes/layer/LayerObjSortPolyObj.h"
 
 namespace grlib { class CGLibTextureBuffer; }
 namespace layer { struct LayerPolyVertex; }
@@ -40,7 +41,9 @@ public:
     // The field names follow the functions that use them (not the original's).
     unsigned char pad_248[0x8];
     unsigned int m_updateFlags;  // UPDATE_*
-    unsigned char pad_254[0xCC];
+    unsigned char pad_254[0xC];
+    LayerObjSortPolyObj m_sortObj;  // 0x260: what setDrawList puts in the sort lists (the name is not the original's)
+    unsigned char pad_278[0xA8];
     LayerPolyVertex* m_vertices[2];  // LockVertex, indexed by LayerManager::s_nStkIdx
     unsigned short* m_indices[2];  // LockIndex, indexed by LayerManager::s_nStkIdx
     unsigned char pad_340[0x4];
