@@ -62,6 +62,13 @@
 #include "classes/gf/SCOM_ENBOOK_DEAD_PLAYER.h"
 #include "classes/gf/SCOM_ENBOOK_BOSS_TIME.h"
 #include "classes/gf/SCOM_BC_PARTICLE.h"
+#include "classes/gf/SCOM_OBJ_ALPHA.h"
+#include "classes/gf/SCOM_OBJ_VFADE.h"
+#include "gf/GfDataBlade.h"
+#include "classes/gf/GfGameParty.h"
+#include "classes/gf/GfAppendHandles.h"
+#include "classes/gf/GfPause.h"
+#include "mm/Math.h"
 #include "classes/gf/SCOM_DEAD_PARTICLE.h"
 #include "classes/gf/GfComAsm.h"
 #include "classes/gf/GfObj.h"
@@ -103,6 +110,8 @@
 #include "classes/gf/SCOM_PARTY_ADD.h"
 #include "classes/gf/SCOM_PARTY_LEADER.h"
 #include "classes/gf/DataParamAcc.h"
+#include "gf/MsgObjectHealHp.h"
+#include "gf/MsgObjectMaxHp.h"
 #include "classes/gf/GfGameEvent.h"
 #include "gf/GfUtil.h"
 #include "classes/gf/SCOM_SCRIPT.h"
@@ -325,6 +334,23 @@ unsigned long SCOM_ADD_COIN::create(int a0) {
     return GfReqSmallCom::addRequest(request);
 }
 
+bool SCOM_MAXIMUM_HEAL::exec(fw::UpdateInfo const&) {
+    if (GfObj* obj = GfObjUtil::getObj(m_value)) {
+        DataParamAcc acc(m_value);
+        fw::MessageObject* object = obj;
+        {
+            MsgObjectMaxHp msg(acc.getHpMax(false));
+            object->recieveMessage(object, msg);
+        }
+        {
+            MsgObjectHealHp msg(0, 1);
+            msg.m_flags = MsgObjectHealHp::Flags();
+            object->recieveMessage(object, msg);
+        }
+    }
+    return true;
+}
+
 unsigned long SCOM_MAXIMUM_HEAL::create(GF_OBJ_HANDLE* a0) {
 #line 217
     SCOM_MAXIMUM_HEAL* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_MAXIMUM_HEAL(SCOM_TYPE(8));
@@ -495,6 +521,160 @@ unsigned long SCOM_CREATE_GMK_SET::create(unsigned int a0) {
     SCOM_CREATE_GMK_SET* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_CREATE_GMK_SET(SCOM_TYPE(39));
     request->m_value = a0;
     return GfReqSmallCom::addRequest(request);
+}
+
+bool SCOM_OBJ_ALPHA::exec(fw::UpdateInfo const& info) {
+    if (!m_isPauseStop || !GfPause::isPause(0x80)) {
+        GfObjAcc acc(m_obj);
+        if (acc.m_obj) {
+            float start = m_startAlpha;
+            if (start < 0.0f) {
+                start = acc.getAlphaNormal();
+                m_startAlpha = start;
+            }
+            if (m_time > 1e-6f && mm::fabs(m_alpha - start) >= 1e-6f) {
+                m_elapsed += info.m_deltaTime;
+                if (m_elapsed > m_time) {
+                    m_elapsed = m_time;
+                }
+                float ratio = m_elapsed / m_time;
+                acc.setAlphaNormal(m_alpha * ratio + start * (1.0f - ratio));
+                if (m_elapsed < m_time) {
+                    return false;
+                }
+            } else {
+                acc.setAlphaNormal(m_alpha);
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+unsigned long SCOM_OBJ_ALPHA::create(GF_OBJ_HANDLE* handle, float time, float alpha) {
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return -1;
+    }
+#line 1434
+    return GfReqSmallCom::addRequestParallel(new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_OBJ_ALPHA(GfReqSmallCom::sys()->newHandle(), handle, time, alpha));
+}
+
+unsigned long SCOM_OBJ_ALPHA::fn_710055D40C(GF_OBJ_HANDLE* handle, float time, float alpha) {
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return -1;
+    }
+#line 1442
+    SCOM_OBJ_ALPHA* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_OBJ_ALPHA(GfReqSmallCom::sys()->newHandle(), handle, time, alpha);
+    request->m_isPauseStop = true;
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+void SCOM_OBJ_ALPHA::createWeapon(GF_OBJ_HANDLE* handle, float time, float alpha) {
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    GfAppendHandles* weapons = GfMountManager::getAppendHandles(handle, static_cast<GFATTACH>(0));
+    if (!weapons) {
+        return;
+    }
+    for (int i = 0; i < 10; i++) {
+        GF_OBJ_HANDLE* weapon = weapons->getObjHandles()[i];
+        if (weapon != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+#line 1460
+            GfReqSmallCom::addRequestParallel(new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_OBJ_ALPHA(GfReqSmallCom::sys()->newHandle(), weapon, time, alpha));
+        }
+    }
+}
+
+SCOM_OBJ_VFADE::SCOM_OBJ_VFADE(GF_SCOM_HANDLE* handle, GF_OBJ_HANDLE* obj, float time, float ratio, VFPARTS parts,
+                               VFACC acc, VFEFF effect, bool useKeyFrame, bool isOtherPartsOff)
+    : SCOM(SCOM_TYPE(67), reinterpret_cast<unsigned long>(handle)), m_obj(obj), m_time(time), m_elapsed(0.0f),
+      m_ratio(ratio), m_startRatio(-1.0f), m_parts(parts), m_acc(acc), m_effect(effect), m_keys(),
+      m_isOtherPartsOff(isOtherPartsOff), pad_71(false) {
+    if (useKeyFrame) {
+        GfVolumeFade::setupKeyFrame(m_keys, effect);
+        m_time = m_keys.size() < 2 ? 0.0f : m_keys.at(m_keys.size() - 1)->m_time;
+    }
+    DataParamAcc param(obj);
+    if (GfDataBlade::fn_7100232660(param)) {
+        m_effect = VFEFF(16);
+    } else if (param.getObjType() == 10) {
+        unsigned int party = GfGameParty::getPartyId(obj);
+        DataParamAcc blade(GfGameParty::getHandleBlade(party, -1));
+        DataParamAcc driver(GfGameParty::getHandleDriver(party, 0));
+        if (GfDataBlade::fn_7100232660(blade) || GfDataBlade::fn_7100232660(driver)) {
+            m_effect = VFEFF(16);
+        }
+    }
+}
+
+void SCOM_OBJ_VFADE::applyPartsRatio(GfVolumeFade* fade, float ratio) {
+    fade->setFadeRatio(m_acc, m_parts, ratio);
+    if (GfGameManager::fn_71002A9E68()) {
+        return;
+    }
+    if (!m_isOtherPartsOff) {
+        return;
+    }
+    if (m_parts == VFPARTS(-1)) {
+        return;
+    }
+    for (int i = 0; i < 6; i++) {
+        if (i != m_parts) {
+            fade->setFadeRatio(m_acc, VFPARTS(i), 0.0f);
+        }
+    }
+}
+
+bool SCOM_OBJ_VFADE::updateFade(const fw::UpdateInfo& info) {
+    if (GfObjUtil::isValid(m_obj)) {
+        if (!GfObjUtil::isUpdate(m_obj)) {
+            return false;
+        }
+        if (GfVolumeFade* fade = GfObjUtil::getVolumeFade(m_obj)) {
+            GfObjUtil::setVolumeFadeUserFlag(m_obj, true);
+            m_elapsed += info.m_deltaTime;
+            if (m_elapsed > m_time) {
+                m_elapsed = m_time;
+            }
+            fade->setEffectType(m_effect);
+            if (m_keys.size() != 0) {
+                float ratio;
+                bool done = getRatioBySec(ratio, m_keys, m_elapsed);
+                applyPartsRatio(fade, ratio);
+                return done;
+            }
+            float start = m_startRatio;
+            if (start < 0.0f) {
+                start = fade->getFadeRatio(m_acc, m_parts);
+                m_startRatio = start;
+            }
+            if (m_time > 1e-6f && mm::fabs(m_ratio - start) >= 1e-6f) {
+                float r = m_elapsed / m_time;
+                applyPartsRatio(fade, m_ratio * r + start * (1.0f - r));
+                if (m_elapsed < m_time) {
+                    return false;
+                }
+            } else {
+                applyPartsRatio(fade, m_ratio);
+            }
+        }
+    }
+    return true;
+}
+
+bool SCOM_OBJ_VFADE::exec(fw::UpdateInfo const& info) {
+    if (!updateFade(info)) {
+        return false;
+    }
+    GF_OBJ_HANDLE* obj = m_obj;
+    if (obj != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+#line 1483
+        SCOM_OBJ_VFADE_OFF* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_OBJ_VFADE_OFF(SCOM_TYPE(67));
+        request->m_value = obj;
+        GfReqSmallCom::addRequestParallel(request);
+    }
+    return true;
 }
 
 unsigned long SCOM_QUEST_REACH::createArriveLandmark(unsigned int a0) {

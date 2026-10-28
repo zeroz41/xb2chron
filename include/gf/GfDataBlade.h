@@ -8,6 +8,7 @@ namespace gf { class SDataBlade; enum ActivateType : int; enum CLOUD_SEA : int; 
 namespace gf { struct BladeArtsSlot; }
 namespace gf { struct BladeSkillSlot; }
 namespace gf { struct SDataIdea; }
+namespace gf { class DataParamAcc; }
 namespace gf { class SDataGame; }
 namespace gf { enum FAVORITE : int; }
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedArray; }}
@@ -68,6 +69,10 @@ public:
     // unit among its functions. What it does: GfGameFlag::getLocal of the game data's flags (GfDataManager::getDataGame
     // + 0xFBBC4), width 16, index 1; TUnk_B64F08::fn_71004944B8 compares it with 2000.
     static unsigned short fn_7100231884();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among its functions. What it does: true for the enemy of BDAT ID 0x3F1 (object type 4) or the
+    // blade of BDAT ID 0x18 (object type 3), read through acc; SCOM_OBJ_VFADE's constructor then uses effect 16.
+    static bool fn_7100232660(const DataParamAcc& acc);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit (its tail, before gf_game_flag). What it does: takes nothing; constructs (guarded, __cxa_atexit)
     // two function-static lists (guards 0x7100C339F0/F8) and zeroes their counts (0x7100C33C68, 0x7100C33E70).
