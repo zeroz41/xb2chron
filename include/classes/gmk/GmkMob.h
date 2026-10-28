@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKMOB_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/GmkMobInsts.h"
 #include "plugin/Bdat.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
@@ -28,7 +29,7 @@ public:
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x12);
-    unsigned char pad_48[0xd0];  // fields: size from TGmkList::getInst's stride
+    GmkMobInsts m_insts;  // 0x48: dispose disposes it (the name is not the original's); size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

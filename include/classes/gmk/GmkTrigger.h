@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKTRIGGER_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/GmkPhantom.h"
 
 namespace gmk {
 // table 0x7100B6D1D0
@@ -23,7 +24,11 @@ public:
     virtual void debugDraw() const;  // slot 7
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x34);
-    unsigned char pad_48[0xa8];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_48[0x8];
+    GmkPhantom m_phantom;  // 0x50: the destructor destroys it, dispose disposes it (the name is not the original's)
+    unsigned char pad_d8[0x8];
+    void* pad_e0;  // dispose clears it
+    void* pad_e8;  // dispose clears it; fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

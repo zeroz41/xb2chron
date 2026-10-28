@@ -5,6 +5,10 @@
 #include "classes/gmk/GmkSquadManager.h"
 #include "classes/gmk/TGmkActiveList.h"
 #include "classes/gmk/GmkManager.h"
+#include "classes/fw/SoundManager.h"
+#include "classes/gf/GfFieldBgm.h"
+#include "classes/gf/GfComCollider.h"
+#include "classes/gf/GfObj.h"
 #include "classes/fw/EffectManager.h"
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkGrave.h"
@@ -784,6 +788,80 @@ GmkKizunaTalk::~GmkKizunaTalk() { dispose(); }
 
 GmkBlade::~GmkBlade() { dispose(); }
 
+// 1.0.0's out-of-line member; 3.0.1 inlines it (it reads m_current again through the singleton)
+inline void GmkBgmCondInfoManager::applyFieldBgm() const {
+    unsigned int bgmID = 0;
+    if (m_current != nullptr) {
+        bgmID = static_cast<const GmkAreaBgm::BdatInfo*>(sys()->m_current->m_owner->m_createInfo.m_bdatInfo)->m_bgmCondition;
+    }
+    mm::mtl::PtrSingleton<gf::GfFieldBgm>::sys()->setGimmickBgmID(bgmID);
+}
+
+inline void GmkBgmCondInfoManager::removeInfo(GmkBgmCondInfo* info) {
+    if (info != nullptr && info->intoNode()) {
+        if (sys() != nullptr) {
+            sys()->m_list.remove(info);
+            sys()->m_current = sys()->m_list.empty() ? nullptr : static_cast<GmkBgmCondInfo*>(sys()->m_list.m_root.m_next);
+            sys()->applyFieldBgm();
+        }
+    }
+}
+
+inline void GmkBgmCondInfo::dispose() { GmkBgmCondInfoManager::removeInfo(this); }
+
+// its address follows the template code's (0x71005D852C); kept next to its users
+GmkBgmCondInfo::~GmkBgmCondInfo() { dispose(); }
+
+void GmkAreaBgm::dispose() {
+    for (int i = 0; i < 4; i++) {
+        m_condInfos[i].dispose();
+    }
+    pad_160 = nullptr;
+    m_phantom.dispose();
+    AGmkBase::dispose();
+}
+
+void GmkSe::dispose() {
+    if (m_seHandle != 0) {
+        mm::mtl::PtrSingleton<fw::SoundManager>::sys()->stopSe(m_seHandle, 1.0f);
+        m_seHandle = 0;
+        TGmkActiveList<GmkSe>::removeGmk(this);
+    }
+    AGmkBase::dispose();
+}
+
+GmkSe::~GmkSe() { dispose(); }
+
+void GmkSeLine::dispose() {
+    if (m_seHandle != 0) {
+        mm::mtl::PtrSingleton<fw::SoundManager>::sys()->stopSe(m_seHandle, 1.0f);
+        m_seHandle = 0;
+        TGmkActiveList<GmkSeLine>::removeGmk(this);
+    }
+    AGmkBase::dispose();
+}
+
+GmkSeLine::~GmkSeLine() { dispose(); }
+
+void GmkTrigger::dispose() {
+    pad_e0 = nullptr;
+    pad_e8 = nullptr;
+    m_phantom.dispose();
+    AGmkBase::dispose();
+}
+
+GmkTrigger::~GmkTrigger() { dispose(); }
+
+void GmkEvent::disposeGmkPhantom() {
+    TGmkActiveList<GmkEvent>::removeGmk(this);
+    m_phantom.dispose();
+}
+
+void GmkTutorial::disposeGmkPhantom() {
+    TGmkActiveList<GmkTutorial>::removeGmk(this);
+    m_phantom.dispose();
+}
+
 void GmkEvent::dispose() {
     pad_f2 = false;
     pad_f1 = false;
@@ -829,6 +907,27 @@ void GmkFieldLock::dispose() {
 
 GmkFieldLock::~GmkFieldLock() { dispose(); }
 
+void GmkEffect::dispose() {
+    m_flags &= ~7ul;
+    if (m_effectHandle != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effectHandle);
+        m_effectHandle = 0;
+    }
+    AGmkBase::dispose();
+    pad_90 = nullptr;
+    pad_98 = nullptr;
+    pad_a0 = nullptr;
+}
+
+GmkEffect::~GmkEffect() { dispose(); }
+
+void GmkMob::dispose() {
+    m_insts.dispose();
+    AGmkBase::dispose();
+}
+
+GmkMob::~GmkMob() { dispose(); }
+
 void GmkLandmark::dispose() {
     disposeGmkPhantom();
     AGmkBase::dispose();
@@ -871,6 +970,35 @@ GmkRoutedNpcList::~GmkRoutedNpcList() {
 
 GmkManager::GmkManager() : m_seq(nullptr) {}
 
+void GmkCollision::enter(const fw::IColiEventListener::EnterInfo& info) {
+    fw::ColiUserData* userData = info.m_other->m_userData;
+    if (userData != nullptr && userData->getRTTI()->isKindOf(&gf::GfComCollider::UserData::m_rtti)) {
+        gf::GfComCollider* collider = static_cast<gf::GfComCollider::UserData*>(userData)->m_owner;
+        if (static_cast<gf::GfObj*>(collider->m_owner)->m_handle == gf::GfGameManager::getPartyLeader()) {
+            m_leaderEntered = true;
+            m_leaderInside = true;
+        }
+    }
+}
+
+void GmkCollision::leave(const fw::IColiEventListener::LeaveInfo& info) {
+    fw::ColiUserData* userData = info.m_other->m_userData;
+    if (userData != nullptr && userData->getRTTI()->isKindOf(&gf::GfComCollider::UserData::m_rtti)) {
+        gf::GfComCollider* collider = static_cast<gf::GfComCollider::UserData*>(userData)->m_owner;
+        if (static_cast<gf::GfObj*>(collider->m_owner)->m_handle == gf::GfGameManager::getPartyLeader()) {
+            m_leaderLeft = true;
+            m_leaderInside = false;
+        }
+    }
+}
+
+GmkPhantom::~GmkPhantom() {
+    if (GmkPhantomManager* manager = GmkPhantomManager::sys()) {
+        manager->m_phantoms.remove(this);
+    }
+    dispose();
+}
+
 GmkManager::~GmkManager() {
     dispose();
 }
@@ -891,8 +1019,8 @@ GmkSquadManager::~GmkSquadManager() {
 
 // the list emptied by its own loop (written out here: the list's clear() inlined lays the size check out the other way)
 GmkBgmCondInfoManager::~GmkBgmCondInfoManager() {
-    pad_20 = nullptr;
-    for (mm::mtl::IntrusiveList<mm::mtl::IntrusiveListNodeBase>::iterator it = m_list.begin(); it != m_list.end();) {
+    m_current = nullptr;
+    for (mm::mtl::IntrusiveList<GmkBgmCondInfo>::iterator it = m_list.begin(); it != m_list.end();) {
         it = m_list.erase(it);
     }
 }

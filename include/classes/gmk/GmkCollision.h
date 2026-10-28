@@ -42,6 +42,11 @@ public:
     void* pad_50;  // dispose clears it
     // the collision object it listens to, referenced while held (the name is not the original's)
     fw::ColiObject* m_coliObject;
+    // 0x60: the party leader's collider entered (enter sets it; the names are not the original's)
+    bool m_leaderEntered;
+    bool m_leaderLeft;  // 0x61: leave sets it
+    bool m_leaderInside;  // 0x62: enter sets it, leave clears it
+    unsigned char pad_63[0x5];
 };
 }  // namespace gmk
 

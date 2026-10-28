@@ -4,6 +4,7 @@
 #include "mm/mtl/RTTI.h"
 #include "mm/mtl/IntrusiveList.h"
 #include "classes/gmk/GmkPhantomManager.h"
+#include "classes/fw/ColiObject.h"
 namespace gmk {
 // table 0x7100B6BF68
 // its node (a non-polymorphic base, so at 0x8 after the table) links it into GmkPhantomManager's list
@@ -17,12 +18,29 @@ public:
         pad_58 = 0;
         pad_50 = nullptr;
         pad_80 = 0;
-        pad_78 = nullptr;
+        m_coliObject = nullptr;
         pad_70 = nullptr;
         GmkPhantomManager::get()->m_phantoms.push_back(this);
     }
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GmkPhantom();  // slot 1
+    // 1.0.0 has it out of line (gmk::GmkPhantom::dispose(), 0x94 bytes); 3.0.1 inlines it (the destructor, the
+    // gimmicks' disposeGmkPhantom and dispose): the collision object released, the flags at 0x80 cleared
+    void dispose() {
+        if (m_coliObject != nullptr) {
+            m_coliObject->setUserData(nullptr);
+            // the original reads the pointer once for these two (an inlined helper's this)
+            fw::ColiObject* coli = m_coliObject;
+            coli->m_eventMask = 0;
+            coli->m_listener = nullptr;
+        }
+        pad_83 = false;
+        if (m_coliObject != nullptr) {
+            m_coliObject->release();
+            m_coliObject = nullptr;
+        }
+        pad_70 = nullptr;
+    }
     static mm::mtl::RTTI m_rtti;
     // fields: 1.0.0's constructor clears each (0x50..0x80 in its body, in this order) (meaning unknown; the names are not the original's)
     unsigned char pad_18[0x8];
@@ -37,8 +55,16 @@ public:
     void* pad_60;
     bool pad_68;
     void* pad_70;
-    void* pad_78;
-    int pad_80;
+    // the collision object it listens to, referenced while held (the name is not the original's)
+    fw::ColiObject* m_coliObject;
+    // 0x80: the constructor clears these four bytes with one word store; dispose clears 0x83
+    union {
+        int pad_80;
+        struct {
+            unsigned char pad_80_0[3];
+            bool pad_83;
+        };
+    };
 };
 }  // namespace gmk
 

@@ -54,7 +54,7 @@ public:
     // fields the constructor clears (meaning unknown)
     unsigned short pad_f0 = 0;
     unsigned char pad_f2[0x2];
-    int pad_f4 = 0;
+    unsigned m_seHandle = 0;  // 0xf4: the playing sound (dispose stops it; the name is not the original's)
     int pad_f8 = 0;
     int pad_fc = 0;
     bool pad_100 = false;

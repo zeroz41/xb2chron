@@ -27,7 +27,7 @@ public:
     unsigned char pad_48[0x8];
     // its collision (1.0.0's GmkBattleLock::createGmkCollision creates it; the name is not the original's)
     GmkCollision m_collision;
-    unsigned char pad_b0[0x10];
+    unsigned char pad_b8[0x8];
     unsigned int m_effectHandle;  // dispose removes the effect it names (the name is not the original's)
     unsigned char pad_c4[0xc];  // fields: size from TGmkList::getInst's stride
 };

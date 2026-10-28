@@ -36,7 +36,7 @@ public:
     unsigned char pad_48[0x8];
     // its collision (1.0.0's GmkFieldLock::createGmkCollision creates it; the name is not the original's)
     GmkCollision m_collision;
-    unsigned char pad_b0[0x20];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_b8[0x18];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

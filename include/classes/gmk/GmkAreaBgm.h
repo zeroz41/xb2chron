@@ -4,6 +4,8 @@
 #include "classes/gmk/AGmkBase.h"
 #include "plugin/Bdat.h"
 #include "classes/gmk/IGmkPhantomEventListener.h"
+#include "classes/gmk/GmkPhantom.h"
+#include "classes/gmk/GmkBgmCondInfo.h"
 namespace gmk { class GmkAreaBgmGob; }
 
 namespace gmk {
@@ -37,7 +39,11 @@ public:
     virtual void onLeavePhantom(gmk::IGmkPhantomEventListener::OnLeaveInfo const&);  // slot 12
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(29);
-    unsigned char pad_50[0x120];  // fields: size from TGmkList::getInst's stride
+    GmkPhantom m_phantom;  // 0x50: dispose disposes it (the name is not the original's)
+    unsigned char pad_d8[0x8];
+    GmkBgmCondInfo m_condInfos[4];  // 0xe0: dispose disposes each (the name is not the original's)
+    void* pad_160;  // dispose clears it
+    unsigned char pad_168[0x8];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

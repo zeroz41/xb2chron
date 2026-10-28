@@ -19,7 +19,15 @@ public:
     virtual void debugUpdateMmf();  // slot 10
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(13);
-    unsigned char pad_48[0x80];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_48[0x48];
+    void* pad_90;  // dispose clears 0x90..0xa8
+    void* pad_98;
+    void* pad_a0;
+    unsigned char pad_a8[0x4];
+    unsigned m_effectHandle;  // 0xac: the playing effect (dispose removes it from EffectManager; the name is not the original's)
+    unsigned char pad_b0[0x8];
+    unsigned long m_flags;  // 0xb8: dispose clears its low 3 bits (the name is not the original's)
+    unsigned char pad_c0[0x8];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 
