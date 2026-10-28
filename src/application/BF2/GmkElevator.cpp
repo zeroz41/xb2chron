@@ -547,6 +547,12 @@ void AGmkBase::dispose() {
     m_createInfo.m_bdatInfo = nullptr;
 }
 
+// drops what it had and keeps a copy of what it is created with
+void AGmkBase::create(const CreateInfo& info) {
+    dispose();
+    m_createInfo = info;
+}
+
 // the original calls debugUpdateMmf here (its table's slot 10)
 void AGmkBase::update(float) {
     debugUpdateMmf();

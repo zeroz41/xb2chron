@@ -2,6 +2,8 @@
 #define CLASSES_GMK_GMKTUTORIAL_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/GmkPhantom.h"
+#include "mm/mtl/IntrusiveList.h"
 #include "classes/gmk/ScenarioFlagCond.h"
 #include "classes/gmk/QuestFlagCond.h"
 #include "plugin/Bdat.h"
@@ -9,7 +11,8 @@
 namespace gmk {
 // table 0x7100B6D308
 // 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (the 16-aligned field is not typed yet)
-class alignas(16) GmkTutorial : public ::gmk::AGmkBase {
+    // its node (a second, non-polymorphic base at 0x48) links it into TGmkActiveList<GmkTutorial>
+class alignas(16) GmkTutorial : public ::gmk::AGmkBase, public mm::mtl::IntrusiveListNodeBase {
 public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
@@ -23,6 +26,7 @@ public:
         ScenarioFlagCond m_scenarioFlag;  // the row's ScenarioFlagMin (up to 0xFFFF when set)
         QuestFlagCond m_questFlag;        // the row's QuestFlag/Min/Max
     };
+    GmkTutorial() {}  // inline: construct_n<GmkTutorial> constructs in place with these stores
     virtual ~GmkTutorial();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3
@@ -32,7 +36,11 @@ public:
     virtual void debugDraw() const;  // slot 7
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x39);
-    unsigned char pad_48[0xb8];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_58[0x8];
+    GmkPhantom m_phantom;  // 0x60 (the name is not the original's)
+    unsigned char pad_e8[0x8];
+    bool pad_f0 = false;  // the constructor clears it (meaning unknown)
+    unsigned char pad_f1[0xf];  // size from TGmkList::getInst's stride (0x100)
 };
 }  // namespace gmk
 

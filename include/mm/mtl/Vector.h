@@ -155,11 +155,22 @@ private:
 // inlined, so the caller's test of n against the old size does not fold its own n != 0 test (Vector<skd::Node>,
 // Vector<wnd::ConpoundWind>, Vector<skd::ShpereCollObj>'s extend: a `cbz` on the count, then a memset of
 // count * sizeof(T))
+namespace mtl_detail {
+// the loop itself (int_to_type<0>: a type with a constructor to run). 3.0.1 keeps it out of line where the
+// constructor is big (mtl_detail::construct_n<gmk::GmkAreaBgm>, <gmk::GmkEnemy>, <gmk::GmkSalvage>)
 template <typename T>
-inline void default_construct_n(T* first, size_t n) {
+inline void construct_n(T* first, size_t n, int_to_type<0>) {
     for (size_t i = 0; i < n; ++i) {
         new (&first[i]) T();
     }
+}
+}  // namespace mtl_detail
+
+// out of line for the gimmicks embedding a GmkPhantom (construct_n<gmk::GmkSe>, <gmk::GmkTrigger>, ...)
+// not declared inline: clang 3.9 then inlines it below cost 275, not 325 (construct_n<gmk::GmkSe> costs 295)
+template <typename T>
+void construct_n(T* first, size_t n) {
+    mtl_detail::construct_n(first, n, int_to_type<0>());
 }
 
 template <typename T>
@@ -232,7 +243,7 @@ void Vector<T>::extend(size_t size, size_t alignment) {
     if (oldSize < size) {
         T* element = ptr + oldSize;
         if (!__is_scalar(T)) {  // a pointer or scalar is left as it is (skd::Dynamics' solvers, Vector<short>)
-            default_construct_n(element, size - oldSize);
+            construct_n(element, size - oldSize);
         }
     }
     clear();
@@ -258,7 +269,7 @@ void Vector<T>::resize(size_t size) {
         m_capacity = size;
         T* element = begin();
         if (!__is_scalar(T)) {  // a pointer or scalar is left as it is (skd::Dynamics' solvers, Vector<short>)
-            default_construct_n(element, size);
+            construct_n(element, size);
         }
         m_size += size;
         return;
@@ -275,7 +286,7 @@ void Vector<T>::resize(size_t size) {
     } else if (count != 0) {
         T* element = m_buffer + m_size;
         if (!__is_scalar(T)) {  // a pointer or scalar is left as it is (skd::Dynamics' solvers, Vector<short>)
-            default_construct_n(element, static_cast<size_t>(count));
+            construct_n(element, static_cast<size_t>(count));
         }
         m_size += count;
     }

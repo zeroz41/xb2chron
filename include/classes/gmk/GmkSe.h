@@ -2,6 +2,8 @@
 #define CLASSES_GMK_GMKSE_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/GmkPhantom.h"
+#include "mm/mtl/IntrusiveList.h"
 #include "classes/gmk/ScenarioFlagCond.h"
 #include "classes/gmk/QuestFlagCond.h"
 #include "classes/gmk/TimeCond.h"
@@ -13,7 +15,8 @@ namespace gmk { class GmkSeGob; }
 namespace gmk {
 // table 0x7100B6C5B8
 // 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (the 16-aligned field is not typed yet)
-class alignas(16) GmkSe : public ::gmk::AGmkBase {
+// its node (a second, non-polymorphic base at 0x48) links it into TGmkActiveList<GmkSe>
+class alignas(16) GmkSe : public ::gmk::AGmkBase, public mm::mtl::IntrusiveListNodeBase {
 public:
     // its size: the element size of Vector<BdatInfo>::resize 0x71005EC9F4 (whose constructor sets its fields; their defaults are not written yet)
     class BdatInfo {
@@ -37,6 +40,7 @@ public:
         BootedGmkCond m_bootedGmk;          // the row's OP_gimmickType/ID (must be booted)
         BootedGmkCond m_bootedGmkNot;       // a second <prefix>gimmickType/ID pair (must NOT be booted)
     };
+    GmkSe() {}  // inline: construct_n<GmkSe> constructs in place with these stores
     virtual ~GmkSe();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void dispose();  // slot 5
@@ -44,7 +48,17 @@ public:
     virtual void debugDraw() const;  // slot 7
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(15);
-    unsigned char pad_48[0xc8];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_58[0x8];
+    GmkPhantom m_phantom;  // 0x60 (the name is not the original's)
+    unsigned char pad_e8[0x8];
+    // fields the constructor clears (meaning unknown)
+    unsigned short pad_f0 = 0;
+    unsigned char pad_f2[0x2];
+    int pad_f4 = 0;
+    int pad_f8 = 0;
+    int pad_fc = 0;
+    bool pad_100 = false;
+    unsigned char pad_101[0xf];  // size from TGmkList::getInst's stride (0x110)
 };
 }  // namespace gmk
 
