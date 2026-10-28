@@ -17,7 +17,7 @@ class Manager : public ::mm::mtl::PtrSingleton< ::event::Manager>, public ::ml::
 public:
     explicit Manager(ml::Scn* scn);  // 0x7100145A44 (create's)
     virtual ~Manager();  // slot 0
-    virtual void OnKeyDown(ml::EventView*);  // slot 2
+    virtual bool OnKeyDown(ml::EventView*);  // slot 2 (returns false)
     virtual void bkgHomeMenu(bool);  // slot 3
     // the language a scene's text follows (the evt plugin's beginJP/beginUS pass 1/2, endJP/endUS 0); the
     // enumerator names are not the original's

@@ -15,11 +15,11 @@ class TUnk_B3DA40 {
 public:
     virtual ~TUnk_B3DA40();
     virtual void OnEventProc(event::MSG_TYPE) = 0;
-    virtual void OnMouseButtonDown(ml::EventView*) = 0;
-    virtual void OnMouseMove(ml::EventView*) = 0;
-    virtual void OnMouseButtonUp(ml::EventView*) = 0;
-    virtual void OnKeyDown(ml::EventView*) = 0;
-    virtual void OnKeyUp(ml::EventView*) = 0;
+    virtual bool OnMouseButtonDown(ml::EventView*) = 0;
+    virtual bool OnMouseMove(ml::EventView*) = 0;
+    virtual bool OnMouseButtonUp(ml::EventView*) = 0;
+    virtual bool OnKeyDown(ml::EventView*) = 0;
+    virtual bool OnKeyUp(ml::EventView*) = 0;
 };
 // a base of event::BouManager no evidence names yet
 class TUnk_B3DA90 {
@@ -31,11 +31,11 @@ class BouManager : public TUnk_B3DA40, public TUnk_B3DA90, public ::ml::IWorkEve
 public:
     virtual ~BouManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
-    virtual void OnMouseButtonDown(ml::EventView*);  // slot 3
-    virtual void OnMouseMove(ml::EventView*);  // slot 4
-    virtual void OnMouseButtonUp(ml::EventView*);  // slot 5
-    virtual void OnKeyDown(ml::EventView*);  // slot 6
-    virtual void OnKeyUp(ml::EventView*);  // slot 7
+    virtual bool OnMouseButtonDown(ml::EventView*);  // slot 3
+    virtual bool OnMouseMove(ml::EventView*);  // slot 4
+    virtual bool OnMouseButtonUp(ml::EventView*);  // slot 5
+    virtual bool OnKeyDown(ml::EventView*);  // slot 6
+    virtual bool OnKeyUp(ml::EventView*);  // slot 7
     // 1.0.0's BouManager::render; out of line
     void render();
     // 1.0.0's BouManager::clear (0x7100105D5C) and endActive (0x7100105DD8); 3.0.1 inlines them into OnEventProc

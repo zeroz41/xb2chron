@@ -76,9 +76,17 @@ public:
         m_flags = 0;
     }
 
-    unsigned char pad_10[0x4];
+    // bit 14: startStaffrollUI opened the staff roll menu; the name is not the original's
+    unsigned int m_openFlags;  // 0x10
     // bit 0: logout() hides the loading display; the name is not the original's
     unsigned int m_flags;  // 0x14
+    unsigned char pad_18[0x38 - 0x18];
+    // evt_pay.getResult's value (getPayoffUI); the name is not the original's
+    int m_payoffResult;  // 0x38
+    unsigned char pad_3c[0x48 - 0x3C];
+    // evt_ex.getResult's value (fn_7100104AE8); the name is not the original's
+    int m_exResult;  // 0x48
+    unsigned char pad_4c[0x2B0 - 0x4C];  // Singleton<UIManager>'s instance is 0x2B0 bytes
 };
 }  // namespace event
 

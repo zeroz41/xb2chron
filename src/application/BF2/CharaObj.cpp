@@ -84,6 +84,30 @@ Param::Param() {}
 
 AttachActorGf::~AttachActorGf() {}
 
+const char* AttachActorBase::getName() const {
+    return m_name;
+}
+
+bool AttachActorBase::getMat(mm::Mat44& mat) const {
+    mat = m_mat;
+    return true;
+}
+
+bool AttachActorBase::hasMtp(const char* name) const {
+    mm::Mat44 mat;
+    return getMtpMat(mat, name);
+}
+
+bool AttachActorBase::hasEfp(const char* name) const {
+    mm::Mat44 mat;
+    return getEfpMat(mat, name);
+}
+
+bool AttachActorBase::hasBone(const char* name) const {
+    mm::Mat44 mat;
+    return getBoneMat(mat, name);
+}
+
 void CamFree::update(const event::FrameInfo&) {}
 
 void CamField::update(const event::FrameInfo&) {}
@@ -1261,6 +1285,10 @@ void TextManager::OnEventProc(event::MSG_TYPE msg) {
 
 }  // namespace event
 #include "classes/event/UIManager.h"
+#include "classes/event/SeManager.h"
+#include "classes/gf/GfMenuObjStaffroll.h"
+#include "classes/gf/GfMenuObjOpeningTelop.h"
+#include "classes/gf/GfMenuManager.h"
 #include "classes/event/ModelManager.h"
 #include "classes/event/DebugManager.h"
 #include "classes/event/FrameManager.h"
@@ -1275,6 +1303,55 @@ FrameManager::FrameManager()
     for (int i = 0; i < 22; i++) {
         pad_20[i] = reinterpret_cast<gf::GF_PAUSE_HANDLE*>(-1);
     }
+}
+
+void SeManager::load(const char* name) {
+    gf::GfGameEvent::createSe(name);
+    m_loadCount++;
+}
+
+void SeManager::changeVolume(int id, float volume, float frame) {
+    if (m_objs[id].m_flags & 1) {
+        m_objs[id].changeVolume(volume, frame);
+    }
+}
+
+void SeManager::pan(int id, float pan, float frame, CV_TYPE type) {
+    if (m_objs[id].m_flags & 1) {
+        m_objs[id].pan(pan, frame, type);
+    }
+}
+
+int UIManager::getPayoffUI() const {
+    return m_payoffResult;
+}
+
+int UIManager::fn_7100104AE8() {
+    return m_exResult;
+}
+
+void UIManager::closeOpeningTelopUI(OPTELOP_TYPE type) {
+    switch (type) {
+    case OPTELOP_C:
+        gf::GfMenuObjOpeningTelop::closeCenter();
+        break;
+    case OPTELOP_LB:
+        gf::GfMenuObjOpeningTelop::closeLeft();
+        break;
+    case OPTELOP_RT:
+        gf::GfMenuObjOpeningTelop::closeRight();
+        break;
+    case OPTELOP_LH:
+        gf::GfMenuObjOpeningTelop::fn_710044AC84();
+        break;
+    case OPTELOP_RH:
+        gf::GfMenuObjOpeningTelop::fn_710044AB90();
+        break;
+    }
+}
+
+void UIManager::endStaffroll() {
+    gf::GfMenuObjStaffroll::fadeout();
 }
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
@@ -1551,6 +1628,10 @@ namespace event {
 
 void Manager::render() {
     ml::ProcDesktop::isDispInfo();
+}
+
+bool Manager::OnKeyDown(ml::EventView*) {
+    return false;
 }
 
 void Manager::tail() {

@@ -2,6 +2,7 @@
 #define CLASSES_EVENT_SEMANAGER_H
 
 #include "event/CvType.h"
+#include "classes/event/SeObj.h"
 
 namespace event { enum MSG_TYPE : int; }
 
@@ -28,6 +29,13 @@ public:
     void changeVolume(int id, float volume, float frame);
     void pan(int id, float pan, float frame, CV_TYPE type);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+
+    unsigned char pad_10[0x4];
+    // load counts the sounds it asked GfGameEvent to create; the name is not the original's
+    int m_loadCount;  // 0x14
+    // the sound slots play/changeVolume/pan address by id; the name is not the original's
+    SeObj m_objs[32];  // 0x18
+    // more fields follow at 0x5318 (the constructor's); not known yet
 };
 }  // namespace event
 

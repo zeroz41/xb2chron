@@ -14,9 +14,9 @@ public:
     virtual ~AttachActorCS();  // slot 0
     virtual void setEffectCaster(bool, unsigned int);  // slot 3
     virtual void setEffectMount(bool, unsigned int, char const*, mm::Vec3 const&, bool, event::ATTACH_TYPE);  // slot 4
-    virtual void getMtpMat(mm::Mat44&, char const*) const;  // slot 7
-    virtual void getEfpMat(mm::Mat44&, char const*) const;  // slot 10
-    virtual void getBoneMat(mm::Mat44&, char const*) const;  // slot 13
+    virtual bool getMtpMat(mm::Mat44&, char const*) const;  // slot 7
+    virtual bool getEfpMat(mm::Mat44&, char const*) const;  // slot 10
+    virtual bool getBoneMat(mm::Mat44&, char const*) const;  // slot 13
 };
 }  // namespace event
 
