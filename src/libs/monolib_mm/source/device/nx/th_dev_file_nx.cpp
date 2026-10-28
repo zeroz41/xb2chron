@@ -18,6 +18,9 @@
 #include "classes/ml/DevTouchNx.h"
 #include "classes/ml/DeviceNx.h"
 #include "classes/ml/WorkCpu.h"
+#include "classes/ml/ErrViewer.h"
+#include "classes/ml/LibMain.h"
+#include "classes/ml/WorkSystem.h"
 #include "nn/oe.h"
 #include "nn/os.h"
 
@@ -620,11 +623,39 @@ void DevPad::loadVibration(unsigned int id, void* data, unsigned long size) {
     }
 }
 
+bool DevPad::wkStandbyLogin() {
+    if (!dg::s_bIgnore && !createDevice()) {
+        return false;
+    }
+    return WorkObj::wkStandbyLogin();
+}
+
+bool DevPad::wkStandbyLogout() {
+    if (m_child.size() == 0 && WorkSystem::get() == nullptr && LibMain::get() == nullptr) {
+        releaseDevice();
+        return WorkObj::wkStandbyLogout();
+    }
+    return false;
+}
+
+void DevPad::viBeginFrame() {
+    updateLocal();
+}
+
 namespace dg {
 int s_nVSync = -1;
 int s_nVSyncOld = -1;
 bool s_bIgnore;
 }  // namespace dg
+
+void DevGraph::wkStandby() {
+    WorkObj::wkStandby();
+    ErrViewer::standby();
+}
+
+void DevGraph::wkUpdate() {
+    ErrViewer::update();
+}
 
 int DevGraph::fontGetWidth(const char* text, FONT_STYLE style, float scale) {
     DevGraph* dev = get();
@@ -745,4 +776,28 @@ void DevGraph::setFrameSpd(float spd) {
 
 namespace ml {
 DevGraph::~DevGraph() {}
+}  // namespace ml
+
+namespace ml {
+DevGraphCB::DevGraphCB() {
+    DevGraph* dev = DevGraph::get();
+    if (dev != nullptr) {
+        dev->m_cbList.push_back(this);
+    }
+}
+
+DevGraphCB::~DevGraphCB() {
+    DevGraph* dev = DevGraph::get();
+    if (dev != nullptr) {
+        reslist<DevGraphCB*>& list = dev->m_cbList;
+        reslist<DevGraphCB*>::iterator end = list.end();
+        reslist<DevGraphCB*>::iterator it = list.begin();
+        while (it != end) {
+            reslist<DevGraphCB*>::iterator cur = it++;
+            if (*cur == this) {
+                list.erase(cur);
+            }
+        }
+    }
+}
 }  // namespace ml

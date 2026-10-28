@@ -27,6 +27,11 @@ public:
             m_node = static_cast<Node*>(m_node->m_next);
             return *this;
         }
+        iterator operator++(int) {
+            iterator old = *this;
+            m_node = static_cast<Node*>(m_node->m_next);
+            return old;
+        }
         bool operator==(const iterator& other) const { return m_node == other.m_node; }
         bool operator!=(const iterator& other) const { return m_node != other.m_node; }
         Node* m_node;

@@ -5,6 +5,8 @@ namespace ml {
 // table 0x7100B75E00
 class DevGraphCB {
 public:
+    // enters itself in DevGraph's callback list (m_cbList); the destructor removes it
+    DevGraphCB();
     virtual ~DevGraphCB();  // slot 0
     virtual void viBeginFrame() {}  // slot 2
     // inline: 3.0.1 keeps fw/PadManager.cpp's copies (0x7100196B04 on)

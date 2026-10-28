@@ -12,7 +12,8 @@ namespace ml {
 // table there and clears its instance)
 class DevPad : public ::ml::WorkObj, public ::mm::mtl::PtrSingleton<DevPad>, public ::ml::DevGraphCB {
 public:
-    virtual ~DevPad();  // slot 0
+    // inline: the original keeps its copies in the weak tail with the inline slots (wkUpdate is the key function)
+    virtual ~DevPad() {}  // slot 0
     virtual void wkUpdate();  // slot 9
     virtual bool wkStandbyLogin();  // slot 14
     virtual bool wkStandbyLogout();  // slot 15
@@ -34,6 +35,9 @@ public:
     virtual void stopLocalVibration(int) {}  // slot 32
     virtual void loadLocalVibration(unsigned int, void*, unsigned long) {}  // slot 33
     virtual void viBeginFrame();  // slot 34
+
+    // reads the pads into the button words (viBeginFrame runs it each frame)
+    void updateLocal();
 
     // whether the pad device is set up (fw::PadManager::isInitialized requires it)
     static bool isInitialized();
