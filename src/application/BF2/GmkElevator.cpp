@@ -871,6 +871,10 @@ GmkRoutedNpcList::~GmkRoutedNpcList() {
 
 GmkManager::GmkManager() : m_seq(nullptr) {}
 
+GmkManager::~GmkManager() {
+    dispose();
+}
+
 GmkPhantomManager::~GmkPhantomManager() {}
 
 GmkBdat::~GmkBdat() {
@@ -883,6 +887,14 @@ GmkLandmarkManager::~GmkLandmarkManager() {
 
 GmkSquadManager::~GmkSquadManager() {
     clearGmkSquads();
+}
+
+// the list emptied by its own loop (written out here: the list's clear() inlined lays the size check out the other way)
+GmkBgmCondInfoManager::~GmkBgmCondInfoManager() {
+    pad_20 = nullptr;
+    for (mm::mtl::IntrusiveList<mm::mtl::IntrusiveListNodeBase>::iterator it = m_list.begin(); it != m_list.end();) {
+        it = m_list.erase(it);
+    }
 }
 
 bool GmkTbox::BdatInfo::isPopCondMatchedExceptDist() const {
