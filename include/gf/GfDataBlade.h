@@ -222,6 +222,22 @@ public:
     // local game flag GfGameFlag::getLocal(2, flag). GfMenuGfObjAdapter::fn_7100340094 passes a type-6 object's
     // BDAT id (GfObjAcc::fn_7100523B74) and switches on 0..3.
     static unsigned int fn_710024DD94(unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (no callers left). A member because it sits in
+    // GfDataBlade's unit next to fn_710024DA88 and fn_710024D890 (same ids). What it does: false for an id up to
+    // 2000, else whether GfBdatRsc::fn_7100219574(id) is nonzero.
+    static bool fn_710024D82C(unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (no callers left). A member for the same
+    // reason as fn_710024D82C, next to fn_710024DE6C. What it does: for an id above 2000 reads local flag (type 2)
+    // GfBdatRsc::fn_7100219C58(id) and answers whether it is 1 or 3; false otherwise.
+    static bool fn_710024DED0(unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (no callers left). A member for the same
+    // reason as fn_710024D82C. What it does: sets local flag (type 1) 2160 + GfBdatRsc::fn_7100219CE0(id) (2160
+    // alone for an id up to 2000) to value.
+    static void fn_710024DF38(unsigned int id, bool value);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (no callers left). A member for the same
+    // reason as fn_710024D82C. What it does: whether local flag (type 1) 2160 + GfBdatRsc::fn_7100219CE0(id) is set
+    // (2160 alone for an id up to 2000); fn_710024DF38 sets it.
+    static bool fn_710024DF88(unsigned int id);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies in
     // GfDataBlade's unit and it takes no object. What it does: false for ids below 2001; else sets bdat to
     // GfDataBdat::getFP(0x1C3) and id to GfBdatRsc::fn_7100219BD0(blade) (the PtrSingleton<GfBdatRsc> instance) and

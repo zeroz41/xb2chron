@@ -635,6 +635,19 @@ unsigned int GfDataBlade::getEndCommonBlade() {
     return 1401;
 }
 
+ActivateType GfDataBlade::getBladeActivateType(const SDataBlade& blade) {
+    int type = 0;
+    switch (blade.m_dataType) {
+    case 1:
+        type = blade.m_setDriver != 0 ? 2 : 1;
+        break;
+    case 2:
+        type = 3;
+        break;
+    }
+    return ActivateType(type);
+}
+
 unsigned int GfDataBlade::getStartUiCommonBlade() {
     return 1397;
 }
@@ -884,6 +897,30 @@ bool GfDataBlade::isAnimal(unsigned int blade) {
     }
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
     return data.m_questRace == 2;
+}
+
+bool GfDataAchievement::getAchievementType(ACHIEVEMENT_TYPE& type, unsigned int& index, unsigned int line) {
+    if (line <= 2) {
+        type = ACHIEVEMENT_TYPE(0);
+        index = line;
+        return true;
+    }
+    if (line <= 5) {
+        type = ACHIEVEMENT_TYPE(1);
+        index = line - 3;
+        return true;
+    }
+    if (line <= 8) {
+        type = ACHIEVEMENT_TYPE(2);
+        index = line - 6;
+        return true;
+    }
+    if (line == 9) {
+        type = ACHIEVEMENT_TYPE(3);
+        index = 0;
+        return true;
+    }
+    return false;
 }
 
 float GfDataBlade::getWpnScale(unsigned int blade) {
@@ -1334,6 +1371,35 @@ unsigned int GfDataNpc::getEyeRotControl(unsigned int npc) {
         return data.m_eyeRotControl;
     }
     return GfBdatRsc::get()->getRscNpcListEyeRot(npc);
+}
+
+bool GfDataBlade::fn_710024D82C(unsigned int id) {
+    if (id <= 2000) {
+        return false;
+    }
+    return GfBdatRsc::get()->fn_7100219574(id) != 0;
+}
+
+void GfDataBlade::fn_710024D86C(unsigned int id, unsigned int value) {
+    GfGameFlag::setLocal(1, id > 43877 ? id + 11651 : id, value);
+}
+
+bool GfDataBlade::fn_710024D890(unsigned int id) {
+    return GfGameFlag::getLocal(1, id > 43877 ? id + 11651 : id) != 0;
+}
+
+unsigned int GfDataBlade::fn_710024DA88(unsigned int id) {
+    if (id <= 2000) {
+        return 0;
+    }
+    return GfBdatRsc::get()->fn_7100219C58(id);
+}
+
+unsigned int GfDataBlade::fn_710024DAB0(unsigned int id) {
+    if (id <= 2000) {
+        return 0;
+    }
+    return GfBdatRsc::get()->fn_7100219CE0(id);
 }
 
 float GfDataNpc::getScale(unsigned int npc) {
@@ -1789,6 +1855,14 @@ int GfDataMap::getWeatherType(unsigned int mapId, WEATHERID id) {
         return 0x15;
     }
     return GfBdatMaplist::get()->getMaplistw_type(mapId, index);
+}
+
+CLOUD_SEA GfDataBlade::fn_710024E8D4(unsigned int map) {
+    return CLOUD_SEA(fn_710024E1C8(map)->m_cloudSea != 0);
+}
+
+void GfDataBlade::fn_710024E8F4(unsigned int map, CLOUD_SEA cloudSea) {
+    fn_710024E1C8(map)->m_cloudSea = cloudSea != 0;
 }
 
 bool GfDataBlade::isNeedAttributeResource(unsigned int blade) {
@@ -2751,6 +2825,59 @@ bool GfDataBlade::fn_710024E9DC() {
 
 unsigned int GfDataBlade::fn_710024DD88() {
     return GfGameFlag::getLocal(4, 652);
+}
+
+unsigned int GfDataBlade::fn_710024DD94(unsigned int id) {
+    if (id > 2000) {
+        unsigned int flag = GfBdatRsc::get()->fn_7100219C58(id);
+        if (flag != 0) {
+            return GfGameFlag::getLocal(2, flag);
+        }
+    }
+    return 0;
+}
+
+bool GfDataBlade::fn_710024DE6C(unsigned int id) {
+    if (id <= 2000) {
+        return false;
+    }
+    unsigned int flag = GfBdatRsc::get()->fn_7100219CE0(id);
+    if (flag == 0) {
+        return false;
+    }
+    return GfGameFlag::getLocal(1, flag) != 0;
+}
+
+bool GfDataBlade::fn_710024DED0(unsigned int id) {
+    if (id <= 2000) {
+        return false;
+    }
+    unsigned int flag = GfBdatRsc::get()->fn_7100219C58(id);
+    if (flag == 0) {
+        return false;
+    }
+    unsigned int value = GfGameFlag::getLocal(2, flag);
+    return value == 1 || value == 3;
+}
+
+void GfDataBlade::fn_710024DF38(unsigned int id, bool value) {
+    unsigned int flag;
+    if (id <= 2000) {
+        flag = 0;
+    } else {
+        flag = GfBdatRsc::get()->fn_7100219CE0(id);
+    }
+    GfGameFlag::setLocal(1, flag + 2160, value);
+}
+
+bool GfDataBlade::fn_710024DF88(unsigned int id) {
+    unsigned int flag;
+    if (id <= 2000) {
+        flag = 0;
+    } else {
+        flag = GfBdatRsc::get()->fn_7100219CE0(id);
+    }
+    return GfGameFlag::getLocal(1, flag + 2160) != 0;
 }
 
 void GfDataBlade::fn_710024E9CC(bool flag) {
