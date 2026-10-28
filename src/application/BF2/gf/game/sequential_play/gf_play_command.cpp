@@ -2,6 +2,19 @@
 #include "classes/gf/GfFieldBgm.h"
 #include "classes/gf/GfPlayComEvent.h"
 #include "classes/gf/GfPlayComPlayerDead.h"
+#include "classes/gf/GfPlayComTalk.h"
+#include "gf/GfQuestUtil.h"
+#include "gf/GfAchievStats.h"
+#include "classes/gf/GfGameTalk.h"
+#include "gf/GfObjInfo.h"
+#include "classes/gf/GfObjManager.h"
+#include "classes/gf/GfObjSetupNpc.h"
+#include "classes/gf/GfManager.h"
+#include "gf/GfDataBlade.h"
+#include "classes/gf/GfDeadCamera.h"
+#include "classes/gf/SCOM_CHAR_DEAD.h"
+#include "gf/MsgObjectNotifyDead.h"
+#include "gf/ParamObj.h"
 #include "btl/Utility.h"
 #include "classes/gf/GfGameScene.h"
 #include "classes/gf/GfPlayComWaitBattleEnd.h"
@@ -854,6 +867,146 @@ void GfPlayComGmkTutorialSeq::end() {
 GfPlayComGmkTutorialSeq* GfPlayComGmkTutorialSeq::create(const char* name, unsigned int id) {
 #line 2458
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComGmkTutorialSeq(name, id);
+}
+
+bool GfPlayComPlayerDead::isDead() {
+    if (GfPlayComPlayerDead* dead = mm::mtl::PtrSingleton<GfPlayComPlayerDead>::sys()) {
+        return dead->m_dead;
+    }
+    return false;
+}
+
+inline void GfPlayComPlayerDead::setDeadType(GfPlayerDead dead) {
+    m_deadType = dead;
+#line 2562
+    m_camera = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfDeadCamera(m_deadType);
+    MsgObjectNotifyDead msg;
+    msg.m_deadType = m_deadType;
+    SCOM_CHAR_DEAD::create(GfGameManager::getControlMover(), msg);
+}
+
+bool GfPlayComPlayerDead::replaceDeadType(GfPlayerDead dead) {
+    if (dead == GfPlayerDead(4)) {
+        GfPlayComPlayerDead* com = mm::mtl::PtrSingleton<GfPlayComPlayerDead>::sys();
+        if (com && com->m_deadType != GfPlayerDead(4)) {
+            if (com->m_mapjumpReq) {
+                return false;
+            }
+            com->setDeadType(GfPlayerDead(4));
+            return true;
+        }
+    }
+    return false;
+}
+
+void GfPlayComPlayerDead::start() {
+    GfEvent::addEventCallback(this);
+    GfPlayerDead dead = m_deadType;
+    m_waitTime = 3.0f;
+    if (dead == GfPlayerDead(4)) {
+        setDeadType(GfPlayerDead(4));
+        SCOM_FIELD_VOICE::createFallDead(ParamObj(GfGameManager::getControlMover()));
+    }
+}
+
+void GfPlayComPlayerDead::end() {
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        scene->setDeadType(GfPlayerDead(0));
+    }
+    if (m_camera) {
+        delete m_camera;
+        m_camera = nullptr;
+    }
+    GfGameParty::setPartyGauge(0);
+    GfEvent::removeEventCallback(this);
+}
+
+void GfPlayComPlayerDead::gevMapjump(gf::GEV gev, gf::MapjumpCallbackInfo const&) {
+    if (gev == GEV(4)) {
+        m_dead = false;
+    } else if (gev == GEV(6)) {
+        m_mapjumpDone = true;
+    }
+}
+
+GfPlayComPlayerDead* GfPlayComPlayerDead::create(GfPlayerDead dead) {
+#line 2705
+    GfPlayComPlayerDead* com = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComPlayerDead(dead);
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        scene->setDeadType(dead);
+    }
+    return com;
+}
+
+unsigned int GfPlayComTalk::s_questTargetNpc;
+unsigned int GfPlayComTalk::s_questTargetCondID;
+
+unsigned int GfPlayComTalk::getQuestTargetNpc(unsigned int condId) {
+    return s_questTargetCondID == condId ? s_questTargetNpc : 0;
+}
+
+void GfPlayComTalk::start() {
+    m_quest = GfQuestManager::getProgressCurrentQuest(QTYPE(0));
+    m_lastOrder = GfQuestManager::getLastOrder();
+    GfGameTalk::play(m_setup);
+    if (GFOBJ_INFO* info = GfObjManager::getObjInfo(m_setup.m_handle)) {
+        if (GfObjSetup* setup = info->m_setup) {
+            if (setup->m_type == info->m_obj->m_type && info->m_obj->m_type == 6 &&
+                setup->getRTTI()->isKindOf(&GfObjSetupNpc::m_rtti)) {
+                m_npc = static_cast<GfObjSetupNpc*>(setup)->m_bdatId;
+                if (m_npc) {
+                    GfAchievStats::checkTalk(m_npc, m_setup.m_handle);
+                    unsigned int condId;
+                    if (GfQuestUtil::getTalkNpcInfo(condId, m_npc, m_quest)) {
+                        s_questTargetNpc = m_npc;
+                        s_questTargetCondID = condId;
+                    }
+                    if (!GfManager::isExecModeThater() && GfGameManager::fn_71002A9E68()) {
+                        bool met = GfDataBlade::fn_710024DE6C(m_npc);
+                        GfDataBlade::fn_710024DDDC(m_npc, true);
+                        if (met != GfDataBlade::fn_710024DE6C(m_npc)) {
+                            m_newMeet = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void GfPlayComTalk::end() {
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        scene->destroyPlayerPause(m_pause);
+    }
+    if (!GfGameEvent::isCancelFlag()) {
+        QuestID quest = m_lastOrder == GfQuestManager::getLastOrder() ? QuestID() : GfQuestManager::getLastOrder();
+        GfQuestUtil::finishTalkNpc(m_map, m_npc, quest);
+    }
+    if (!GfManager::isExecModeThater() && GfGameManager::fn_71002A9E68() && m_newMeet) {
+        GfMenuManager::fn_710035A764(m_npc);
+    }
+    s_questTargetNpc = 0;
+    s_questTargetCondID = 0;
+}
+
+bool GfPlayComTalk::update(const fw::UpdateInfo& info, bool flag) {
+    if (flag) {
+        GfGameTalk::end();
+        return true;
+    }
+    return !GfGameTalk::isPlaying();
+}
+
+GfPlayComTalk* GfPlayComTalk::create(const GfSetupPfTalk& talk) {
+#line 2844
+    GfPlayComTalk* com = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComTalk(talk);
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        com->m_pause = scene->createPlayerPause();
+    }
+    com->m_map = GfGameManager::getMapID();
+    s_questTargetNpc = 0;
+    s_questTargetCondID = 0;
+    return com;
 }
 
 // hand5: end

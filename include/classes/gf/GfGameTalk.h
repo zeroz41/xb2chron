@@ -5,6 +5,7 @@
 
 namespace fw { class UpdateInfo; }
 namespace gf { class GfSetupParam; }
+namespace gf { class GfSetupPfTalk; }
 
 namespace gf {
 // table 0x7100B591A8; its destructor is its singleton's
@@ -18,6 +19,8 @@ public:
     void finalize();
     static bool isInitialized();
     void update(const fw::UpdateInfo& info);
+    // starts the talk the setup describes (GfPlayComTalk::start)
+    static void play(const GfSetupPfTalk& talk);
     static bool isPlaying();
     static void end();
     bool m_initialized;  // set by initialize, cleared by finalize

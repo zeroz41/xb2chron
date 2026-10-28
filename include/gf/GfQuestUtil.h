@@ -37,6 +37,11 @@ public:
     static void clearOrderParentQuest();
     static void addOrderParentQuest(QuestID id);
     static QuestID getLastOrderParentQuest();
+    // whether the quest has a task for the NPC: its condition id into condId (GfPlayComTalk::start keeps both
+    // for GfPlayComTalk::getQuestTargetNpc)
+    static bool getTalkNpcInfo(unsigned int& condId, unsigned int npc, QuestID quest);
+    // a talk with the NPC on the map ended (GfPlayComTalk::end: the quest ordered during the talk, or none)
+    static void finishTalkNpc(unsigned int map, unsigned int npc, QuestID quest);
     static bool getDispCount(unsigned int& count, unsigned int& max, const struct AchievQuest& quest);
     static bool getResultIdea(unsigned int& idea, unsigned int& count, unsigned int blade, unsigned int line,
                               unsigned int level);
