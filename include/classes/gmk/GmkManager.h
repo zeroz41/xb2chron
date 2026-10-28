@@ -7,8 +7,15 @@
 #include "classes/gmk/IGmkList.h"
 #include "mm/mtl/Vector.h"
 #include "mm/mtl/FixStr.h"
+#include "classes/gmk/GmkBdat.h"
+#include "classes/gmk/GmkPhantomManager.h"
+#include "classes/gmk/GmkLandmarkManager.h"
+#include "classes/gmk/GmkBgmCondInfoManager.h"
+#include "classes/gmk/GmkSquadManager.h"
+#include "classes/gmk/TGmkActiveList.h"
 
 namespace gmk { class GmkManager; }
+namespace gmk { class GmkPrecious; class GmkSe; class GmkSeLine; class GmkEvent; class GmkTutorial; }
 
 namespace gmk {
 // table 0x7100B6BBD0
@@ -17,6 +24,8 @@ public:
     // what create reads (GfFieldGimmick's constructor fills one on the stack: allocator 9's memory,
     // "bdat/common_gmk.bdat", "RSC_GmkSetList", 1; the names are not the original's)
     struct CreateInfo {
+        // inline: GmkManager's constructor inlines it (no symbol); 2 is what it stores
+        CreateInfo() : m_param(2) {}
         mtl::ALLOC_HANDLE m_handle;
         ::mm::mtl::FixStr<32> m_bdatPath;
         ::mm::mtl::FixStr<32> m_tableName;
@@ -73,12 +82,23 @@ public:
         return true;
     }
 
-    unsigned char pad_8[0x188];
-    // the BDAT table of the map's gimmick sets: a row per set, a column per gimmick kind naming its resource and
-    // one ("<kind>_bdat") naming its BDAT table (GmkSet::createGmkLists reads it; the name is not the original's)
-    unsigned char* m_gmkSetBdatFp;  // 0x190
-    unsigned char pad_198[0xf1c0];
+    // what create copies (the member names below are not the original's)
+    CreateInfo m_createInfo;  // 0x8
+    // the BDAT file of the map's gimmick sets (its m_bdatFp: a row per set, a column per gimmick kind naming its
+    // resource and one ("<kind>_bdat") naming its BDAT table; GmkSet::createGmkLists reads it)
+    GmkBdat m_bdat;  // 0x58
+    GmkPhantomManager m_phantomManager;  // 0x1a0
+    GmkLandmarkManager m_landmarkManager;  // 0xf220
+    GmkBgmCondInfoManager m_bgmCondInfoManager;  // 0xf248
+    GmkSquadManager m_squadManager;  // 0xf270
+    TGmkActiveList<GmkPrecious> m_preciousActiveList;  // 0xf290
+    TGmkActiveList<GmkSe> m_seActiveList;  // 0xf2b8
+    TGmkActiveList<GmkSeLine> m_seLineActiveList;  // 0xf2e0
+    TGmkActiveList<GmkEvent> m_eventActiveList;  // 0xf308
+    TGmkActiveList<GmkTutorial> m_tutorialActiveList;  // 0xf330
     mm::mtl::Vector<GmkSet*> m_gmkSets;  // the gimmick sets (the name is not the original's)
+    // 0xf380: the step update runs (seqWaitValidateResDefBdatFp, then seqUpdate; the name is not the original's)
+    void (GmkManager::*m_seq)(float);
 };
 // a quest-target icon type's id in the icon sheet (< 0: none; the field locators then use 0x19f). A free
 // function among GmkManager's in the same unit (GmkElevator.cpp's range).

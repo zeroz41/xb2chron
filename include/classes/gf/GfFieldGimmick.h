@@ -90,7 +90,6 @@ public:
     static void fn_710026B74C(const fw::UpdateInfo& info);
     unsigned char pad_18[0x8];
     gmk::GmkManager m_gmkMgr;  // 0x20 (the name is not the original's)
-    unsigned char pad_F3A0[0x10];
     gmk::GmkAccManager m_accMgr;  // 0xF3B0 (the names of the managers are not the original's)
     gmk::GmkDoorPhantomManager m_doorPhantomMgr;  // 0xF3E8
     gmk::GmkDmgPhantomManager m_dmgPhantomMgr;  // 0xF418

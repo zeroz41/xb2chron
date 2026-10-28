@@ -1,3 +1,10 @@
+#include "classes/gmk/GmkBdat.h"
+#include "classes/gmk/GmkPhantomManager.h"
+#include "classes/gmk/GmkLandmarkManager.h"
+#include "classes/gmk/GmkBgmCondInfoManager.h"
+#include "classes/gmk/GmkSquadManager.h"
+#include "classes/gmk/TGmkActiveList.h"
+#include "classes/gmk/GmkManager.h"
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkGrave.h"
 #include "classes/gmk/GmkBlade.h"
@@ -245,12 +252,12 @@ gmk::AGmkBase* GmkSalvageLocatorList::getInst(unsigned int index) const {
 const char* GmkManager::getSheetnameByType(int id, GmkType type) const {
     mm::mtl::FixStr<256> column;
     column.format("%s_bdat", getGmkKindName(s_gmkKindNames, type));
-    unsigned char* setFp = m_gmkSetBdatFp;
+    unsigned char* setFp = m_bdat.m_bdatFp;
     return Bdat::getMember(setFp, column.m_str) != nullptr ? reinterpret_cast<const char*>(Bdat::getValCheck(setFp, column.m_str, id, 7)) : nullptr;
 }
 
 int GmkManager::getMapBdatId(int id) const {
-    unsigned char* fp = m_gmkSetBdatFp;
+    unsigned char* fp = m_bdat.m_bdatFp;
     int count = Bdat::getIdCount(fp);
     int top = Bdat::getIdTop(fp);
     if (id < top || id >= top + count) {
@@ -312,7 +319,7 @@ void GmkSetOfSalvageChildren::createGmkLists(int id) {
             m_gmkLists[i] = nullptr;
         }
     }
-    unsigned char* fp = GmkManager::sys()->m_gmkSetBdatFp;
+    unsigned char* fp = GmkManager::sys()->m_bdat.m_bdatFp;
     if (Bdat::getMember(fp, "salvage") == nullptr) {
         return;
     }
@@ -338,7 +345,7 @@ void GmkSetOfSalvageChildren::createGmkLists(int id) {
             GmkManager* manager = GmkManager::sys();
             mm::mtl::FixStr<256> column;
             column.format("%s_bdat", getGmkKindName(s_gmkKindNames, i));
-            unsigned char* setFp = manager->m_gmkSetBdatFp;
+            unsigned char* setFp = manager->m_bdat.m_bdatFp;
             bdatName = Bdat::getMember(setFp, column.m_str) != nullptr ? reinterpret_cast<const char*>(Bdat::getValCheck(setFp, column.m_str, id, 7)) : nullptr;
         }
         IGmkList::CreateInfo info;
@@ -446,7 +453,7 @@ void GmkSet::createGmkLists(int id) {
         }
         const char* kindName = getGmkKindName(s_gmkKindNames, i);
         GmkManager* manager = GmkManager::sys();
-        unsigned char* fp = manager->m_gmkSetBdatFp;
+        unsigned char* fp = manager->m_bdat.m_bdatFp;
         if (Bdat::getMember(fp, kindName) == nullptr) {
             continue;
         }
@@ -459,7 +466,7 @@ void GmkSet::createGmkLists(int id) {
             GmkManager* manager = GmkManager::sys();
             mm::mtl::FixStr<256> column;
             column.format("%s_bdat", kindName);
-            unsigned char* setFp = manager->m_gmkSetBdatFp;
+            unsigned char* setFp = manager->m_bdat.m_bdatFp;
             bdatName = Bdat::getMember(setFp, column.m_str) != nullptr ? reinterpret_cast<const char*>(Bdat::getValCheck(setFp, column.m_str, id, 7)) : nullptr;
         }
         IGmkList::CreateInfo info;
@@ -796,6 +803,10 @@ GmkNpcList::~GmkNpcList() {
 GmkRoutedNpcList::~GmkRoutedNpcList() {
     dispose();
 }
+
+GmkManager::GmkManager() : m_seq(nullptr) {}
+
+GmkPhantomManager::~GmkPhantomManager() {}
 
 GmkBdat::~GmkBdat() {
     dispose();
