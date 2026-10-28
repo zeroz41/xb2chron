@@ -140,6 +140,7 @@
 #include "gf/GfQuestTask.h"
 #include "classes/gf/SCOM_FADE.h"
 #include "classes/gf/GfMenuCallContext.h"
+#include "classes/gf/TUnk_B63A48.h"
 #include "classes/gf/GfQuestEvent.h"
 #include "gf/GfQuestInfo.h"
 #include "classes/gf/GfFieldGimmick.h"
@@ -600,6 +601,31 @@ GfPlayComStartTutorial* GfPlayComStartTutorial::create(unsigned int id) {
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComStartTutorial(id);
 }
 
+void GfPlayComOpenNpcEntry::start() {
+    TUnk_B63A48::OpenParam param;
+    for (unsigned int i = 0; i < m_entries.size(); i++) {
+        TUnk_B63A48::OpenParam::Entry entry;
+        entry.m_id = m_entries[i];
+        entry.m_bdat = nullptr;
+        entry.m_name = 0;
+        param.m_entries.push_back(entry);
+        if (param.m_entries.size() == param.m_entries.capacity()) {
+            break;
+        }
+    }
+    param.m_flag = 2;
+    TUnk_B63A48::fn_7100447644(m_context, param);
+}
+
+void GfPlayComOpenNpcEntry::end() {
+    if (m_context != nullptr) {
+        m_context->release();
+        m_context = nullptr;
+    }
+}
+
+bool GfPlayComOpenNpcEntry::update(const fw::UpdateInfo& info, bool flag) { return m_context->isTerm(); }
+
 void GfPlayComMenuChapterSave::start() {
     GfDataUtil::setChapterSave(m_id, GfDataBlade::fn_7100231884());
     m_open = false;
@@ -920,6 +946,7 @@ void GfPlayComPlayerDead::end() {
     GfGameParty::setPartyGauge(0);
     GfEvent::removeEventCallback(this);
 }
+
 
 void GfPlayComPlayerDead::gevMapjump(gf::GEV gev, gf::MapjumpCallbackInfo const&) {
     if (gev == GEV(4)) {
