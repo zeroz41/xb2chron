@@ -17,9 +17,9 @@ public:
     // inline: no copy of it exists. GfObjFactory's createGmk* and createMapLodAnim build their parameters on the
     // stack with these values (kind is pad_c's); m_assetSetup is left to the derived class
     // (GfInitParamGimmick's zeroing of it merges with its own members')
-    GfInitParam(int kind)
+    GfInitParam(int kind, int value40 = 4)
         : m_createType(0), pad_c(kind), m_objId(0), pad_18(nullptr), pad_20(-1), pad_24(0), pad_28(-1),
-          pad_30(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), pad_38(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), pad_40(4),
+          pad_30(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), pad_38(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), pad_40(value40),
           pad_44(0), m_gimmickType(GimmickType(0)), m_scale(1.0f), pad_50(1.0f), m_hasTransform(false), pad_81(true),
           pad_82(0), pad_83(false), pad_84(0) {}
 

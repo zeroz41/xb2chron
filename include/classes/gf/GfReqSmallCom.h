@@ -28,6 +28,7 @@ public:
     GfReqSmallCom();
     virtual ~GfReqSmallCom();  // slot 0
     void update(const fw::UpdateInfo& info);
+    bool updateParallel(const fw::UpdateInfo& info);  // runs every parallel request; returns true
     static bool isExistCommand();
     static bool isExistCommandWithoutParallel();  // a request is queued in m_list (the parallel lists not counted)
     static bool isExistCommand(SCOM_TYPE type);  // a request of that type is queued or running

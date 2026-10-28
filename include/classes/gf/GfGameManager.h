@@ -67,6 +67,12 @@ public:
     // index 0xDC0D); false otherwise. 23 callers (GfGameUtil::incEnemySuppress skips counting while it holds,
     // GfFieldWeather::updateWeather, GfGameScene::setEnemyDead, GfMenuBattleAdapter).
     static bool fn_71002AC580();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in
+    // gf_game_manager's unit among GfGameManager's functions and takes no instance. What it does: tail-calls
+    // fn_71002EC634, the byte 0x6F into the option data (tl::TitleMain's getOptionBuffer in advertize/theater mode,
+    // else GfDataManager::getDataOption()). Callers: btl::BattleGlobal::PreUpdateProc, gf::fn_71002ED6B8 (picks a
+    // record column 0/1/2/4 with it), SCOM_ENBOOK_BOSS_TIME::exec.
+    static unsigned int fn_71002AC57C();
     // The record fn_71002AC5D8 returns and fn_71002AC60C fills (the name and its fields' names are not the
     // original's): one battle challenge's data (gf_game_arena's fn_7100290130 clears it the way the constructor
     // does, then fills it from GfBdatBtl's row). GfMenuBattleAdapter's callbacks read its short at 0x1C, ints at

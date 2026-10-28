@@ -66,6 +66,13 @@ unsigned int fn_71002ED6B8(unsigned int enemy);
 // of fn_71002AC57C(); GfMenuCharDataAdapter::fn_7100339058 passes GfMenuReference::fn_7100369304().
 unsigned int fn_71002ED608(unsigned int enemy, unsigned int mode);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit (no this). What it does: unless GfGameManager::fn_71002AC64C fails or fn_71002AC580 holds, for
+// fn_71002ED4F0(enemy)'s record (0x14 bytes each in the game data) keeps the time in the column of mode (0/1/2/4,
+// 0x11B4CC..) when the record's flag byte at 0x11B4DC has bit mode, else counts local flag 8/0xFAF up (to 0xFF) when
+// GfGameManager::fn_71002A9E68 holds. SCOM_ENBOOK_BOSS_TIME::exec passes its enemy, its time and
+// GfGameManager::fn_71002AC57C() (1.0.0 called GfDataEnBook::setClearNamedTime(enemy, time) there).
+void fn_71002ED774(unsigned int enemy, unsigned int time, unsigned int mode);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfWeapon's unit (no this). What it does: the address 0x4C bytes into the option data: tl::TitleMain's
 // getOptionBuffer when GfManager::isExecModeAdvertize or isExecModeThater holds and TitleMain exists, else
 // GfDataManager::getDataOption(). TUnk_B52C38::fn_710028D584 / fn_710028CFF8 copy 0x3C bytes into it.

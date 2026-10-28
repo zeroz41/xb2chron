@@ -4,7 +4,10 @@
 #include "classes/gf/GfGameMercenaries.h"
 #include "classes/gf/GfFieldManager.h"
 #include "classes/gf/GfMapManager.h"
+#include "gf/GfObjFactory.h"
+#include "classes/gf/GfInitParamMapSeamless.h"
 #include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfManager.h"
 #include "gf/GfQuestTask.h"
 #include "classes/gf/GfGameCamera.h"
 #include "classes/gf/SCOM_ADD_MONEY.h"
@@ -57,6 +60,12 @@
 #include "classes/gf/SCOM_ENBOOK_IN_BATTLE.h"
 #include "classes/gf/SCOM_ENBOOK_DEFEAT_ENEMY.h"
 #include "classes/gf/SCOM_ENBOOK_DEAD_PLAYER.h"
+#include "classes/gf/SCOM_ENBOOK_BOSS_TIME.h"
+#include "classes/gf/SCOM_BC_PARTICLE.h"
+#include "classes/gf/SCOM_DEAD_PARTICLE.h"
+#include "classes/gf/GfComAsm.h"
+#include "classes/gf/GfObj.h"
+#include "classes/gf/GfWeapon.h"
 #include "classes/gf/SCOM_REFRESH_COMPASS.h"
 #include "classes/gf/SCOM_BATTLE_TASK_RESET.h"
 #include "gf/ParamObj.h"
@@ -215,6 +224,71 @@ bool SCOM_ENBOOK_DEAD_PLAYER::exec(fw::UpdateInfo const&) {
     return true;
 }
 
+bool SCOM_DEAD_PARTICLE::exec(fw::UpdateInfo const& info) {
+    GfObjAcc acc(m_obj);
+    GfObj* obj = acc.getObj();
+    if (!obj) {
+        return true;
+    }
+    GfComAsm* com = obj->getComponent<GfComAsm>(2);
+    if (m_step == 0) {
+        if (com && !com->isEnd(AnimLayer(0)) && !com->isLoop(AnimLayer(0))) {
+            return false;
+        }
+        m_step = 1;
+        GfObjUtil::setDeadParticle(m_obj, true, m_particle, acc.getAlpha());
+        GfObjUtil::setDeadParticle(GfMountManager::getHandle(m_obj, static_cast<GFATTACH>(0), static_cast<OPTMNT>(3)),
+                                   true, m_particle, 1.0f);
+        return false;
+    } else if (m_step == 1) {
+        if (m_time > 0.0f) {
+            float time = m_time - info.m_deltaTime;
+            if (time <= 0.0f) {
+                time = 0.0f;
+            }
+            m_time = time;
+            float ratio = m_time / m_totalTime;
+            GF_OBJ_HANDLE* mount = GfMountManager::getHandle(m_obj, static_cast<GFATTACH>(0), static_cast<OPTMNT>(3));
+            GfObjUtil::setDeadParticle(m_obj, ratio > 0.0f, m_particle, ratio);
+            GfObjUtil::setDeadParticle(mount, ratio > 0.0f, m_particle, ratio);
+        }
+        DataParamAcc param(m_obj);
+        if (param.getHp() != 0) {
+            GF_OBJ_HANDLE* mount = GfMountManager::getHandle(m_obj, static_cast<GFATTACH>(0), static_cast<OPTMNT>(3));
+            GfObjUtil::setDeadParticle(m_obj, false, m_particle, acc.getAlpha());
+            GfObjUtil::setDeadParticle(mount, false, m_particle, acc.getAlpha());
+            return true;
+        }
+        return false;
+    }
+    return true;
+}
+
+bool SCOM_BC_PARTICLE::exec(fw::UpdateInfo const& info) {
+    GfObjAcc acc(m_obj);
+    if (acc.getObj()) {
+        unsigned int particle = m_particle;
+        if (m_step == 0) {
+            m_step = 1;
+            GfObjUtil::setDeadParticle(m_obj, true, particle, acc.getAlpha());
+            return false;
+        } else if (m_step == 1) {
+            if (m_time > 0.0f) {
+                if (!m_isStop) {
+                    m_time -= info.m_deltaTime;
+                }
+                if (m_time <= 0.0f) {
+                    m_time = 0.0f;
+                }
+                float ratio = m_time / m_totalTime;
+                GfObjUtil::setDeadParticle(m_obj, ratio > 0.0f, particle, ratio);
+                return m_time <= 0.0f;
+            }
+        }
+    }
+    return true;
+}
+
 bool SCOM_REFRESH_COMPASS::exec(fw::UpdateInfo const&) {
     if (--m_wait > 0) {
         return false;
@@ -256,6 +330,16 @@ unsigned long SCOM_MAXIMUM_HEAL::create(GF_OBJ_HANDLE* a0) {
     SCOM_MAXIMUM_HEAL* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_MAXIMUM_HEAL(SCOM_TYPE(8));
     request->m_value = a0;
     return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long GfReqSmallCom::addRequestParallel(SCOM* request) {
+    GfReqSmallCom* self = sys();
+    if (!self->m_isSubParallel) {
+        self->m_parallelList.push_back(request);
+    } else {
+        self->m_subParallelList.push_back(request);
+    }
+    return request->m_handle;
 }
 
 unsigned long SCOM_ADD_EXP::createInnExp(unsigned int a0) {
@@ -365,6 +449,22 @@ unsigned long SCOM_DESTROY_MAP_OBJ::create() {
 #line 1055
     SCOM_DESTROY_MAP_OBJ* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_DESTROY_MAP_OBJ(SCOM_TYPE(25));
     return GfReqSmallCom::addRequest(request);
+}
+
+bool SCOM_CREATE_MAP_OBJ::exec(fw::UpdateInfo const&) {
+    if (GfMapManager::getMapJumpID() == m_value) {
+        if (m_value2 != 0) {
+            GfInitParamMapSeamless param;
+            param.m_objId = m_value2;
+            param.pad_90 = true;
+            GfObjFactory::createMap(param);
+        }
+    } else {
+        GfInitParamMapSeamless param;
+        param.m_objId = m_value;
+        GfObjFactory::createMap(param);
+    }
+    return true;
 }
 
 unsigned long SCOM_CREATE_MAP_OBJ::create(unsigned int a0, unsigned int a1) {
@@ -628,6 +728,17 @@ unsigned long SCOM_ENBOOK_DEAD_PLAYER::create(GF_OBJ_HANDLE* handle) {
     DataParamAcc acc(handle);
 #line 5510
     return GfReqSmallCom::addRequestParallel(new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ENBOOK_DEAD_PLAYER(SCOM_TYPE(73), GfReqSmallCom::sys()->newHandle(), acc.isValid() ? acc.getBdatId() : 0));
+}
+
+bool SCOM_ENBOOK_BOSS_TIME::exec(fw::UpdateInfo const&) {
+    fn_71002ED774(m_enemy, m_time, GfGameManager::fn_71002AC57C());
+    return true;
+}
+
+unsigned long SCOM_ENBOOK_BOSS_TIME::create(GF_OBJ_HANDLE* handle, unsigned int time) {
+    DataParamAcc acc(handle);
+#line 5480
+    return GfReqSmallCom::addRequestParallel(new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ENBOOK_BOSS_TIME(SCOM_TYPE(71), GfReqSmallCom::sys()->newHandle(), acc.isValid() ? acc.getBdatId() : 0, time));
 }
 
 bool SCOM_POPUP::exec(fw::UpdateInfo const&) {
@@ -1179,6 +1290,8 @@ unsigned long SCOM_FADE::create(unsigned int slot, unsigned int frames, const mm
 }
 
 mm::mtl::FixedQueue<SCOM_PARTY_ADD::Info, 16> SCOM_PARTY_ADD::s_info;
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EB6CE8)
+unsigned int SCOM_PARTY_ADD::s_party;
 
 void SCOM_PARTY_ADD::addBlade(unsigned int blade, unsigned int driver, int param) {
     if (blade == 0) {
@@ -1235,6 +1348,14 @@ void SCOM_PARTY_ADD::addDriver(unsigned int driver, unsigned int param) {
     create();
 }
 
+void SCOM_PARTY_ADD::fn_7100562048(unsigned int party) {
+    if (GfManager::isExecModeScenarioGame() && GfGameManager::isClearGame()) {
+        return;
+    }
+    s_party = party;
+    create();
+}
+
 bool SCOM_QUEST_REACH::exec(const fw::UpdateInfo&) {
     if (m_value != 3 || !GfGameManager::isInnerState(GF_STATE(20)) ||
         (GfGameEvent::get() != nullptr && GfGameEvent::get()->m_eventPhase >= 2)) {
@@ -1285,5 +1406,113 @@ GF_SCOM_HANDLE* SCOM_SCRIPT::create(unsigned int id, const char* name, bool flag
 }
 
 mm::Vec3 SCOM_PARTY_LEADER::s_pos = mm::Vec3::zero;
+
+GfReqSmallCom::GfReqSmallCom() {
+    m_handleCount = 0;
+    m_isSubParallel = false;
+    SCOM_PARTY_ADD::s_info.clear();
+    SCOM_PARTY_ADD::s_party = 0;
+}
+
+GfReqSmallCom::~GfReqSmallCom() {}
+
+bool GfReqSmallCom::isValid(GF_SCOM_HANDLE* handle) {
+    if (handle == reinterpret_cast<GF_SCOM_HANDLE*>(-1)) {
+        return false;
+    }
+    for (RequestList::iterator it = m_list.begin(); it != m_list.end(); ++it) {
+        if (reinterpret_cast<GF_SCOM_HANDLE*>((*it)->m_handle) == handle) {
+            return true;
+        }
+    }
+    for (RequestList::iterator it = m_parallelList.begin(); it != m_parallelList.end(); ++it) {
+        if (reinterpret_cast<GF_SCOM_HANDLE*>((*it)->m_handle) == handle) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GfReqSmallCom::isExistCommand(SCOM_TYPE type) {
+    RequestList& list = sys()->m_list;
+    for (RequestList::iterator it = list.begin(); it != list.end(); ++it) {
+        if ((*it)->m_type == type) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void GfReqSmallCom::update(const fw::UpdateInfo& info) {
+    m_isSubParallel = true;
+    RequestList::iterator it = m_list.begin();
+    for (it = m_list.begin(); it != m_list.end(); ++it) {
+        if ((*it)->m_state == 0) {
+            goto found;
+        }
+    }
+    for (it = m_list.begin(); it != m_list.end(); ++it) {
+        if ((*it)->m_state == 1) {
+            goto found;
+        }
+    }
+    for (it = m_list.begin(); it != m_list.end(); ++it) {
+        if ((*it)->m_state == 2) {
+            goto found;
+        }
+    }
+    goto parallel;
+found:
+    {
+        SCOM*& request = *it;
+        if (request->exec(info)) {
+            if (request) {
+                delete request;
+                request = 0;
+            }
+            m_list.erase(it);
+        }
+    }
+parallel:
+    updateParallel(info);
+    for (RequestList::iterator sub = m_subParallelList.begin(); sub != m_subParallelList.end(); ++sub) {
+        m_parallelList.push_back(*sub);
+    }
+    m_subParallelList.clear();
+    m_isSubParallel = false;
+}
+
+bool GfReqSmallCom::updateParallel(const fw::UpdateInfo& info) {
+    RequestList::iterator it = m_parallelList.begin();
+    while (it != m_parallelList.end()) {
+        SCOM* request = *it;
+        bool wait = false;
+        if (request->getObjHandle() != static_cast<unsigned long>(-1)) {
+            for (RequestList::iterator other = m_parallelList.begin(); other != m_parallelList.end(); ++other) {
+                SCOM* before = *other;
+                if (before == request) {
+                    break;
+                }
+                if (before->m_type == request->m_type && before->getObjHandle() == request->getObjHandle()) {
+                    wait = true;
+                    break;
+                }
+            }
+        }
+        if (!wait) {
+            SCOM*& done = *it;
+            if (done->exec(info)) {
+                if (done) {
+                    delete done;
+                    done = 0;
+                }
+                it = m_parallelList.erase(it);
+                continue;
+            }
+        }
+        ++it;
+    }
+    return true;
+}
 
 }  // namespace gf

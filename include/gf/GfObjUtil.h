@@ -37,6 +37,7 @@ struct GfFadeInfo {
 // helpers for the objects behind handles (functions, by its symbols)
 class GfObjUtil {
 public:
+    static void setDeadParticle(gf::GF_OBJ_HANDLE* handle, bool on, unsigned int particle, float alpha);
     static bool isTrinityBlade(gf::GF_OBJ_HANDLE* handle);
     // an info's flag bits (GfObjAcc's setFlag / testFlag forward to them)
     static bool setFlag(gf::GFOBJ_INFO* info, unsigned int flag, bool on);  // whether it changed
