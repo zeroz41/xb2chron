@@ -31,6 +31,7 @@ public:
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
+    void disposeGobInst(bool);
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(6);

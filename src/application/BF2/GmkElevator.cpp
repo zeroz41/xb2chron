@@ -5,6 +5,7 @@
 #include "classes/gmk/GmkSquadManager.h"
 #include "classes/gmk/TGmkActiveList.h"
 #include "classes/gmk/GmkManager.h"
+#include "classes/fw/EffectManager.h"
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkGrave.h"
 #include "classes/gmk/GmkBlade.h"
@@ -619,6 +620,18 @@ void GmkRoute::dispose() { AGmkBase::dispose(); }
 void GmkRoutePoint::dispose() { AGmkBase::dispose(); }
 void GmkSquadLeader::dispose() { AGmkBase::dispose(); }
 void GmkSquadMember::dispose() { AGmkBase::dispose(); }
+// kinds whose create is the base one
+void GmkRoute::create(const CreateInfo& info) { AGmkBase::create(info); }
+void GmkEvent::create(const CreateInfo& info) { AGmkBase::create(info); }
+void GmkBattleLock::create(const CreateInfo& info) { AGmkBase::create(info); }
+void GmkFieldLock::create(const CreateInfo& info) { AGmkBase::create(info); }
+void GmkRoutedMapObj::create(const CreateInfo& info) { GmkRoute::create(info); }
+void GmkLandmark::create(const CreateInfo& info) { AGmkBase::create(info); }
+void GmkRoutePoint::create(const CreateInfo& info) { AGmkBase::create(info); }
+void GmkFieldVolume::create(const CreateInfo& info) { AGmkBase::create(info); }
+void GmkTutorial::create(const CreateInfo& info) { AGmkBase::create(info); }
+void GmkSquadLeader::create(const CreateInfo& info) { AGmkBase::create(info); }
+void GmkSquadMember::create(const CreateInfo& info) { AGmkBase::create(info); }
 GmkRoute::~GmkRoute() { dispose(); }
 GmkRoutePoint::~GmkRoutePoint() { dispose(); }
 GmkFieldVolume::~GmkFieldVolume() { dispose(); }
@@ -770,6 +783,58 @@ GmkTbox::~GmkTbox() { dispose(); }
 GmkKizunaTalk::~GmkKizunaTalk() { dispose(); }
 
 GmkBlade::~GmkBlade() { dispose(); }
+
+void GmkEvent::dispose() {
+    pad_f2 = false;
+    pad_f1 = false;
+    m_isCondMatched = false;
+    disposeGmkPhantom();
+    AGmkBase::dispose();
+}
+
+GmkEvent::~GmkEvent() { dispose(); }
+
+void GmkTutorial::dispose() {
+    pad_f0 = 0;
+    disposeGmkPhantom();
+    AGmkBase::dispose();
+}
+
+GmkTutorial::~GmkTutorial() { dispose(); }
+
+void GmkMapObj::dispose() {
+    disposeGobInst(false);
+    AGmkBase::dispose();
+}
+
+GmkMapObj::~GmkMapObj() { dispose(); }
+
+GmkCollision::~GmkCollision() { dispose(); }
+
+void GmkBattleLock::dispose() {
+    if (m_effectHandle != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effectHandle);
+        m_effectHandle = 0;
+    }
+    m_collision.dispose();
+    AGmkBase::dispose();
+}
+
+GmkBattleLock::~GmkBattleLock() { dispose(); }
+
+void GmkFieldLock::dispose() {
+    m_collision.dispose();
+    AGmkBase::dispose();
+}
+
+GmkFieldLock::~GmkFieldLock() { dispose(); }
+
+void GmkLandmark::dispose() {
+    disposeGmkPhantom();
+    AGmkBase::dispose();
+}
+
+GmkLandmark::~GmkLandmark() { dispose(); }
 
 // destructors whose original D2 is AGmkBase's (the table's slot 0 holds AGmkBase::~AGmkBase: clang emits the empty
 // body as an alias of the base's)

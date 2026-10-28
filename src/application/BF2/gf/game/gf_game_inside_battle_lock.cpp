@@ -42,7 +42,7 @@ void GfGameInsideBattleLock::update(const fw::UpdateInfo& info) {
     self->m_hasLock = false;
     auto f = [self](const gmk::AGmkBase& gmk) {
         const gmk::GmkBattleLock& lock = static_cast<const gmk::GmkBattleLock&>(gmk);
-        if (lock.m_lockObject) {
+        if (lock.m_collision.m_coliObject != nullptr) {
             self->m_hasLock = true;
         }
     };
@@ -105,7 +105,7 @@ bool GfGameInsideBattleLock::isInside(const mm::Vec3& pos) {
     bool inside = false;
     auto f = [&inside, pos](const gmk::AGmkBase& gmk) {
         const gmk::GmkBattleLock& lock = static_cast<const gmk::GmkBattleLock&>(gmk);
-        if (lock.m_lockObject) {
+        if (lock.m_collision.m_coliObject != nullptr) {
             inside = lock.isInsideShape(pos, 0.0f);
         }
     };

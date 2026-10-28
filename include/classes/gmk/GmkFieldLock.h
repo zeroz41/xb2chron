@@ -1,6 +1,8 @@
 #ifndef CLASSES_GMK_GMKFIELDLOCK_H
 #define CLASSES_GMK_GMKFIELDLOCK_H
 
+#include "classes/gmk/GmkCollision.h"
+
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/ScenarioFlagCond.h"
 #include "classes/gmk/QuestFlagCond.h"
@@ -31,7 +33,10 @@ public:
     virtual void debugDraw() const;  // slot 7
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(12);
-    unsigned char pad_48[0x88];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_48[0x8];
+    // its collision (1.0.0's GmkFieldLock::createGmkCollision creates it; the name is not the original's)
+    GmkCollision m_collision;
+    unsigned char pad_b0[0x20];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

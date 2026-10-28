@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKLANDMARK_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/GmkPhantom.h"
 #include "classes/gmk/IGmkPhantomEventListener.h"
 #include "plugin/Bdat.h"
 namespace gmk { class GmkLandmarkGob; }
@@ -45,7 +46,10 @@ public:
     }
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(21);
-    unsigned char pad_50[0xb0];  // fields: size from TGmkList::getInst's stride
+    void disposeGmkPhantom();
+    unsigned char pad_50[0x10];
+    GmkPhantom m_phantom;  // 0x60: the destructor destroys it (the name is not the original's)
+    unsigned char pad_e8[0x18];  // fields: size from TGmkList::getInst's stride (0x100)
 };
 }  // namespace gmk
 

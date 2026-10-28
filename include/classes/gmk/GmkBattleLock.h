@@ -4,6 +4,7 @@
 #include "classes/gmk/AGmkBase.h"
 #include "classes/mm/mtl/ReferenceObject.h"
 #include "mm/mtl/IntrusivePtr.h"
+#include "classes/gmk/GmkCollision.h"
 namespace gmk { class GmkBattleLockGob; }
 
 namespace gmk {
@@ -23,11 +24,12 @@ public:
     // its kind (getGmkType's; GfGameInsideBattleLock walks the battle locks by it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(11);
 
-    unsigned char pad_48[0x60];
-    // what the lock holds while it is engaged, none otherwise: dispose clears three of its fields and releases it
-    // (its class is not known yet; the name is not the original's)
-    mm::mtl::IntrusivePtr<mm::mtl::ReferenceObject> m_lockObject;
-    unsigned char pad_b0[0x20];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_48[0x8];
+    // its collision (1.0.0's GmkBattleLock::createGmkCollision creates it; the name is not the original's)
+    GmkCollision m_collision;
+    unsigned char pad_b0[0x10];
+    unsigned int m_effectHandle;  // dispose removes the effect it names (the name is not the original's)
+    unsigned char pad_c4[0xc];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 
