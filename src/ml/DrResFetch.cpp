@@ -42,6 +42,18 @@
 #include "grlib/CGLibVtxVertex.h"
 #include "grlib/CGLibVtxIndex.h"
 #include "classes/ml/DrResMdoSeamRead.h"
+#include "classes/ml/DrResMdoSeamTexture.h"
+#include "classes/ml/DrResMdoSeamVertex.h"
+#include "classes/ml/DrResMdoSeamTexList.h"
+#include "classes/ml/DrResMdoSeamMemObj.h"
+#include "grlib/CGLibTexture.h"
+#include "grlib/CGLibTextureBuffer.h"
+#include "classes/ml/DrResMdoSeamWrkLight.h"
+#include "classes/ml/DrEnvironmentObj.h"
+#include "ml/DrEnvironmentMan.h"
+#include "classes/ml/DrMan.h"
+#include "ml/DrResMdoSeamMemMan.h"
+#include "classes/ml/DrResMdoSeamWrkLow.h"
 #include "classes/ml/DrResMdoSeamWrkInst.h"
 #include "classes/ml/DrResMdoSeamWrkBase.h"
 #include "classes/ml/DrCalcStmListObj.h"
@@ -3977,11 +3989,253 @@ void DrResMdoSeamWrkEnv::setDispState() { m_flags |= 1 << DrMan::s_nDblNowIdx; }
 
 
 
+DrResMdoSeamMemMan::DrResMdoSeamMemMan() {
+    m_memList.m_head = nullptr;
+    m_memList.m_tail = nullptr;
+    m_spareList.m_head = nullptr;
+    m_spareList.m_tail = nullptr;
+    pad_24 = 0;
+    pad_28 = 0;
+    m_flags = 0;
+    m_objNum = 0;
+    m_objs = nullptr;
+}
+
+DrResMdoSeamMemMan::~DrResMdoSeamMemMan() { releaseMem(); }
+
+void DrResMdoSeamMemMan::releaseMem() {
+    for (unsigned int i = 0; i < m_objNum; i++) {
+        m_objs[i].~DrResMdoSeamMemObj();
+    }
+    m_objNum = 0;
+    if (m_objs != nullptr) {
+        mtl::MemManager::deallocate(m_objs, 0, false);
+        m_objs = nullptr;
+    }
+    m_flags = 0;
+    m_spareList.m_head = nullptr;
+    m_spareList.m_tail = nullptr;
+    m_memList.m_head = nullptr;
+    m_memList.m_tail = nullptr;
+}
+
+DrResMdoSeamMemObj* DrResMdoSeamMemMan::createFreeObj(unsigned int size) {
+    for (DrResMdoSeamMemObj* obj = m_memList.m_head; obj != nullptr; obj = obj->m_next) {
+        if (!(obj->m_flags & 1) && size <= obj->m_size) {
+            unsigned int rest = obj->m_size - size;
+            if (rest == 0) {
+                obj->m_flags = 0;
+            } else {
+                DrResMdoSeamMemObj* spare = m_spareList.m_head;
+                if (spare == nullptr) return nullptr;
+                obj->m_size = size;
+                spare->m_pData = obj->m_pData + size;
+                spare->m_size = rest;
+                m_spareList.remove(spare);
+                spare->m_flags = 0;
+                m_memList.insertNext(obj, spare);
+            }
+            obj->m_flags |= 1;
+            return obj;
+        }
+    }
+    return nullptr;
+}
+
+DrResMdoSeamMemObj* DrResMdoSeamMemMan::createBackFreeObj(unsigned int size) {
+    DrResMdoSeamMemObj* ret = nullptr;
+    for (DrResMdoSeamMemObj* obj = m_memList.m_tail; obj != nullptr; obj = obj->m_prev) {
+        if (!(obj->m_flags & 1) && size <= obj->m_size) {
+            unsigned int rest = obj->m_size - size;
+            if (rest != 0) {
+                ret = m_spareList.m_head;
+                if (ret == nullptr) break;
+                obj->m_size = rest;
+                ret->m_size = size;
+                ret->m_pData = obj->m_pData + rest;
+                m_spareList.remove(ret);
+                ret->m_flags = 0;
+                m_memList.insertNext(obj, ret);
+            } else {
+                ret = obj;
+                obj->m_flags = 0;
+            }
+            ret->m_flags |= 1;
+            break;
+        }
+    }
+    return ret;
+}
+
+void DrResMdoSeamMemMan::releaseFreeObj(DrResMdoSeamMemObj* obj) {
+    clearMemObj(obj, m_memList);
+    if (m_flags & 2) {
+        for (int i = 0; i < m_cacheNum; i++) {
+            if (m_cache[i] == obj) m_cache[i] = nullptr;
+        }
+    }
+}
+
 DrResMdoSeamRead::~DrResMdoSeamRead() { release(); }
+
+int DrResMdoSeamTexList::SEAMRES_TEXLIST_CNTMAX = 0x3C;
+
+DrResMdoSeamTexList::DrResMdoSeamTexList(int no)
+    : m_prev(nullptr), m_next(nullptr), pad_18(nullptr), m_texture(nullptr), pad_28(nullptr), m_buf(nullptr),
+      m_no(no), pad_3A(0), pad_3C(0), pad_3D(0), m_num(0) {}
+
+DrResMdoSeamTexList::~DrResMdoSeamTexList() {
+    release();
+    pad_18 = nullptr;
+}
+
+void DrResMdoSeamTexList::release() {
+    if (m_buf != nullptr) {
+        for (int i = 0; i < m_num; i++) {
+            m_texture[i].release();
+        }
+        if (m_buf != nullptr) {
+            mtl::MemManager::deallocate(m_buf, 0, false);
+            m_buf = nullptr;
+        }
+    }
+    pad_28 = nullptr;
+    m_num = 0;
+}
+
+void DrResMdoSeamTexList::setListCnt(int cnt) { SEAMRES_TEXLIST_CNTMAX = cnt; }
+
+int DrResMdoSeamTexture::SEAMRES_NOM_CNTMAX = 0x78;
+int DrResMdoSeamTexture::SEAMRES_HEIGHT_CNTMAX = 0x3C;
+
+DrResMdoSeamTexture::DrResMdoSeamTexture(int no)
+    : m_prev(nullptr), m_next(nullptr), m_memObj(nullptr), m_heightMemObj(nullptr), m_heightOffset(0), m_no(no),
+      pad_9E(0), m_cnt(0), m_readIn(0), m_heightCnt(0), m_heightReady(0) {}
+
+void DrResMdoSeamTexture::release() {
+    m_texture.release();
+    m_heightMemObj = nullptr;
+    m_heightReady = 0;
+}
+
+bool DrResMdoSeamTexture::update() {
+    m_readIn = 0;
+    if (++m_cnt >= SEAMRES_NOM_CNTMAX) return true;
+    if (m_memObj->m_flags & 2) m_readIn = 1;
+    return false;
+}
+
+bool DrResMdoSeamTexture::updateHeight() { return ++m_heightCnt >= SEAMRES_HEIGHT_CNTMAX; }
+
+void DrResMdoSeamTexture::createTexture(int size) {
+    m_heightMemObj = nullptr;
+    grlib::CGLibTexture::createTextureImagePtrs(m_texture, m_memObj->m_pData, size, false, nullptr, false);
+    m_cnt = 0;
+    m_heightCnt = 0;
+    m_heightReady = 0;
+}
+
+void DrResMdoSeamTexture::createHeightMoveTexture(int offset, unsigned int size) {
+    grlib::CGLibTexture::changeTextureImagePtrs(m_texture, m_heightMemObj->m_pData + offset, size);
+    m_cnt = 0;
+    m_heightCnt = 0;
+    m_heightOffset = offset;
+}
+
+void DrResMdoSeamTexture::resetTexture(int size) {
+    m_heightReady = 0;
+    m_heightMemObj = nullptr;
+    grlib::CGLibTexture::createTextureImagePtrs(m_texture, m_memObj->m_pData, size, false, nullptr, false);
+}
+
+void DrResMdoSeamTexture::changeMemTexture(int size) {
+    grlib::CGLibTexture::changeTextureImagePtrs(m_texture, m_memObj->m_pData, size);
+}
+
+void DrResMdoSeamTexture::changeMemTexture(int size, int size2) {
+    grlib::CGLibTexture::changeMixTextureImagePtrs(m_texture, m_memObj->m_pData, size, size2);
+}
+
+DrResMdoSeamVertex::DrResMdoSeamVertex(int no)
+    : m_prev(nullptr), m_next(nullptr), m_memObj(nullptr), m_vertex(nullptr), m_no(no), m_cnt(0), pad_2C(0),
+      m_readIn(0) {}
+
+DrResMdoSeamVertex::~DrResMdoSeamVertex() { release(); }
+
+void DrResMdoSeamVertex::release() {
+    if (m_vertex != nullptr) {
+        delete m_vertex;
+        m_vertex = nullptr;
+    }
+}
+
+bool DrResMdoSeamVertex::update() {
+    m_readIn = 0;
+    if (++m_cnt >= SEAMRES_CNTMAX) return true;
+    if (m_memObj->m_flags & 2) m_readIn = 1;
+    return false;
+}
+
+void DrResMdoSeamVertex::createVertex() {
+    release();
+    m_vertex = new (DrMan::getIns()->m_resHandle, nullptr, 0, 4, false) DrResMdoVertex(m_memObj->m_pData);
+    m_cnt = 0;
+    m_readIn = 0;
+}
+
+void DrResMdoSeamVertex::changeMemVertex() {
+    if (m_vertex != nullptr) m_vertex->changeMemVertex(m_memObj->m_pData);
+}
+
+int DrResMdoSeamVertex::SEAMRES_CNTMAX = 0x3C;
 
 DrResMdoSeamWrkBase::~DrResMdoSeamWrkBase() { release(); }
 
 DrResMdoSeamWrkInst::~DrResMdoSeamWrkInst() { release(); }
+
+DrResMdoSeamWrkLight::DrResMdoSeamWrkLight()
+    : m_prev(nullptr), m_next(nullptr), m_envObj(nullptr), m_memObj(nullptr), pad_30(0), m_id(0), pad_38(0),
+      pad_3A(0) {}
+
+DrResMdoSeamWrkLight::~DrResMdoSeamWrkLight() { release(); }
+
+void DrResMdoSeamWrkLight::release() {
+    if (m_envObj != nullptr) {
+        m_envObj->release();
+        m_envObj = nullptr;
+    }
+    m_memObj = nullptr;
+    pad_3A = 0;
+}
+
+void DrResMdoSeamWrkLight::setupWork(const MdsSeamLgtMapData* data) {
+    m_envObj = DrMan::getIns()->m_curEnvMan->createObj(m_memObj->m_pData);
+    m_data = data;
+    pad_38 = 0;
+    pad_3A = 0;
+    m_id = data->id;
+}
+
+DrResMdoSeamWrkLow::~DrResMdoSeamWrkLow() { release(); }
+
+void DrResMdoSeamWrkLow::release() {
+    grlib::CGLibVtxInstans* instans = m_instans;
+    if (instans != nullptr) {
+        instans->release();
+        instans->~CGLibVtxInstans();
+        m_instans = nullptr;
+    }
+    if (m_buf != nullptr) {
+        mtl::MemManager::deallocate(m_buf, 0, false);
+        m_buf = nullptr;
+    }
+    if (m_buf2 != nullptr) {
+        mtl::MemManager::deallocate(m_buf2, 0, false);
+        m_buf2 = nullptr;
+    }
+    m_num = 0;
+    pad_30 = nullptr;
+}
 
 
 void DrResMdoSeamWrkBase::beginRender() {

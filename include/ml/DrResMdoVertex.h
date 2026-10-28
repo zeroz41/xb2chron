@@ -40,6 +40,7 @@ public:
     ~DrResMdoVertex();
     void setupVertex(const unsigned char* data);
     void vertexRelease();
+    void changeMemVertex(const unsigned char* data);
     void update();
     void beginVertexSetup();
     void render(int index);

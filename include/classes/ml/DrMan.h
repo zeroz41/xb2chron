@@ -146,7 +146,11 @@ public:
     // not the original's)
     DrCalcMan* m_calcMan;               // 0x580
     DrLightMan* m_lightMan;             // 0x588, DrResMdoLight makes and releases its lights with it (the name is not the original's)
-    unsigned char pad_590[0x20];
+    unsigned char pad_590[0x8];
+    // 0x598: the current view's DrEnvironmentMan (DrResMdoSeamWrkLight::setupWork makes its environment object with
+    // it; the name is not the original's)
+    DrEnvironmentMan* m_curEnvMan;
+    unsigned char pad_5A0[0x10];
     DrCalcTexStreamMan* m_texStreamMan;  // 0x5B0, DrStmReadCheck makes its stream lists with it (the name is not the original's)
     unsigned char pad_5B8[0x8];
     DrAPCache* m_apCache;               // 0x5C0, DrMdoSetup::varStTex_* bind textures through it (the name is not the original's)
