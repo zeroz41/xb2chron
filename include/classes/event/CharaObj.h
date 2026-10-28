@@ -3,8 +3,10 @@
 
 #include "classes/event/CharaEffectPlayer.h"
 #include "classes/event/CmdQueue.h"
+#include "classes/event/CharaSetPos.h"
+#include "classes/event/CharaSetRot.h"
+#include "mm/Vec3.h"
 
-namespace mm { class Vec3; }
 namespace event { class AttachActorBase; }
 
 namespace event {
@@ -18,6 +20,8 @@ public:
     void playFade(bool fade, float time);
     void playWink(int a, float b, bool c, float d, float e, int f, bool g, bool h);
     void playTalk(bool a, float b, bool c, bool d, float e, float f, float g, float h);
+    void setPos(const mm::Vec3& pos);
+    void setRot(const mm::Vec3& rot);
     void playVolumeFadeAnim(CharaEffectPlayer::VF_TYPE type, float time, float delay);
     void playVolumeFade(CharaEffectPlayer::VF_TYPE type, int a, const mm::Vec3& b, const mm::Vec3& c, float d, float e,
                         int f, float g);
@@ -37,17 +41,29 @@ public:
     void start();
     void end();
 
-    unsigned char pad_8[0xc98];
+    // the command setPos queues (CharaObj's constructor builds it); the name is not the original's
+    CharaSetPos m_setPos;  // 0x8
+    // the command setRot queues (CharaObj's constructor builds it); the name is not the original's
+    CharaSetRot m_setRot;  // 0x18
+    unsigned char pad_28[0xc78];
     // bit 5: playFade's flag (it sets or clears it); the name is not the original's
     unsigned int m_flags;  // 0xca0
     unsigned char pad_ca4[0xb4];
     // initModel stores a new AttachActorGf here (the destructor deletes it); the name is not the original's
     AttachActorBase* m_attach;  // 0xd58
-    unsigned char pad_d60[0x9d8];
+    unsigned char pad_d60[0x630];
+    // playVolumeFade/playRimBloom and their stops forward to it; the name is not the original's
+    CharaEffectPlayer m_effectPlayer;  // 0x1390
+    unsigned char pad_1398[0x3a0];
     // three command queues ObjectChara::clear empties (1.0.0's CharaObj::clear); the names are not the original's
     CmdQueue<8, 0> m_cmdQueue0;  // 0x1738
     CmdQueue<8, 0> m_cmdQueue1;  // 0x2088
     CmdQueue<5, 0> m_cmdQueue2;  // 0x29d8
+    // the position setPos stores before queueing its command; the name is not the original's
+    mm::Vec3 m_pos;  // 0x2fb0
+    unsigned char pad_2fc0[0x10];
+    // the rotation setRot stores before queueing its command; the name is not the original's
+    mm::Vec3 m_rot;  // 0x2fd0
 };
 }  // namespace event
 

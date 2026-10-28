@@ -9,6 +9,7 @@ class CharaSetRot : public ::event::ICmd {
 public:
     virtual ~CharaSetRot();  // slot 0
     virtual bool update(event::ICmd::Param const&);  // slot 3
+    long pad_8;  // CharaObj's constructor stores -1 here
 };
 }  // namespace event
 

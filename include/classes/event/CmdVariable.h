@@ -5,7 +5,14 @@ namespace event {
 // table 0x7100B3BF30
 class CmdVariable {
 public:
+    // 1.0.0 has it out of line (0x71000935D0); 3.0.1 inlines it
+    CmdVariable() : m_type(0) { m_value.intValue = 0; }
     virtual ~CmdVariable();  // slot 0
+    // 1.0.0 0x710009362C; 3.0.1 inlines it
+    void setF32(float value) {
+        m_type = 2;
+        m_value.floatValue = value;
+    }
     // the value converted when it holds the other number type (1.0.0 0x710009360C; 3.0.1 inlines it)
     int getS32() const { return m_type == 2 ? (int)m_value.floatValue : m_value.intValue; }
     // the stored pointer (1.0.0 0x71000936A0; 3.0.1 inlines it)

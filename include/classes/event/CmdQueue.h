@@ -2,6 +2,7 @@
 #define CLASSES_EVENT_CMDQUEUE_H
 
 #include "classes/event/CmdItem.h"
+#include "classes/event/ICmd.h"
 #include "mm/mtl/FixedVector.h"
 
 namespace event {
@@ -22,6 +23,8 @@ public:
             erase(m_items.begin()->m_cmd);
         }
     }
+    // queues cmd with its parameters, dropping the oldest while the queue is full (one instance per queue size)
+    void push_back(ICmd* cmd, const CmdParam& param);
     mm::mtl::FixedVector<CmdItem, T0> m_items;  // 0x8 (the name is not the original's)
 };
 }  // namespace event

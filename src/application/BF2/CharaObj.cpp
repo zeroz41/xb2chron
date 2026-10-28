@@ -1,3 +1,10 @@
+#include "classes/event/CharaSetRot.h"
+#include "classes/event/CmdVariable.h"
+#include "classes/event/CharaSetPos.h"
+#include "classes/event/CmdItem.h"
+#include "classes/event/CmdQueue.h"
+#include "classes/event/CharaEffectPlayer.h"
+#include "classes/event/CharaObj.h"
 #include "string.h"
 #include "classes/event/EffectCtrl.h"
 #include "classes/event/IBouCallback.h"
@@ -375,6 +382,27 @@ Object* Object::searchByPath(const char* path) {
         }
     }
     return nullptr;
+}
+
+void CharaObj::playVolumeFade(CharaEffectPlayer::VF_TYPE type, int a, const mm::Vec3& b, const mm::Vec3& c, float d,
+                              float e, int f, float g) {
+    m_effectPlayer.playVolumeFade(type, a, b, c, d, e, f, g);
+}
+
+void CharaObj::playVolumeFadeAnim(CharaEffectPlayer::VF_TYPE type, float time, float delay) {
+    m_effectPlayer.playVolumeFadeAnim(type, time, delay);
+}
+
+void CharaObj::stopVolumeFade(CharaEffectPlayer::VF_TYPE type) {
+    m_effectPlayer.stopVolumeFade(type);
+}
+
+void CharaObj::playRimBloom(int type) {
+    m_effectPlayer.playRimBloom(type);
+}
+
+void CharaObj::stopRimBloom() {
+    m_effectPlayer.stopRimBloom();
 }
 
 void ObjectChara::clear() {
