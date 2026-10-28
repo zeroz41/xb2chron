@@ -9,7 +9,9 @@ namespace gf {
 // no table in this version (its RTTI string and m_rtti remain); members from 1.0.0's gf::GfPlayComMoverSwitch symbols
 class GfPlayComMoverSwitch : public GfPlayCom {
 public:
-    static GfPlayComMoverSwitch* create();
+    // makes no GfPlayComMoverSwitch in this version: a GfPlayComResetBlade(3, -1) (blade 3 is no party slot, so its
+    // constructor pushes nothing), hence the base class return type
+    static GfPlayCom* create();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfPlayComMoverSwitch();  // slot 1
     virtual const char* getFuncName() const;  // slot 3

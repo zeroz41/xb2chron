@@ -2,6 +2,7 @@
 #define GF_GFQUESTUTIL_H
 
 #include "gf/QuestID.h"
+namespace gf { class GF_OBJ_HANDLE; }
 #include "gf/QuestListAcc.h"
 
 namespace gf { class QuestTaskParam; }
@@ -37,6 +38,8 @@ public:
     static void clearOrderParentQuest();
     static void addOrderParentQuest(QuestID id);
     static QuestID getLastOrderParentQuest();
+    // the quest a treasure box's object belongs to through an active task (GfPlayComFieldTbox's constructor keeps it)
+    static QuestID getCurrentTBoxWithEvent(GF_OBJ_HANDLE* handle);
     // whether the quest has a task for the NPC: its condition id into condId (GfPlayComTalk::start keeps both
     // for GfPlayComTalk::getQuestTargetNpc)
     static bool getTalkNpcInfo(unsigned int& condId, unsigned int npc, QuestID quest);

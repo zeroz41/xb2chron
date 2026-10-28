@@ -1,6 +1,16 @@
+#include "gf/GfQuestUtil.h"
+#include "classes/gf/GfPlayComChainAttack.h"
+#include "classes/gf/GfPlayComMoverSwitch.h"
+#include "classes/gf/GfPlayComFieldTbox.h"
 #include "classes/gf/GfGameEvent.h"
 #include "classes/gf/GfFieldBgm.h"
 #include "classes/gf/GfPlayComEvent.h"
+#include <string.h>
+#include "classes/gf/GfComAsm.h"
+#include "classes/tl/TitleMain.h"
+#include "gf/GfGameUtil.h"
+#include "classes/gmk/GmkTbox.h"
+#include "classes/gmk/GmkManager.h"
 #include "classes/gf/GfPlayComPlayerDead.h"
 #include "classes/gf/GfPlayComTalk.h"
 #include "gf/GfQuestUtil.h"
@@ -1105,6 +1115,11 @@ GfPlayComResetBlade::~GfPlayComResetBlade() {
     }
 }
 
+GfPlayCom* GfPlayComMoverSwitch::create() {
+#line 3355
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComResetBlade(3, -1);
+}
+
 bool GfPlayComResetBlade::isPlaying(unsigned int slot) {
     return std::find(s_execFlag.begin(), s_execFlag.end(), static_cast<signed char>(slot)) != s_execFlag.end();
 }
@@ -1270,6 +1285,30 @@ void GfPlayComChainAttack::start() { m_state = 3; }
 
 void GfPlayComChainAttack::end() { GfChainAttack::destroy(); }
 
+bool GfPlayComChainAttack::update(const fw::UpdateInfo& info, bool flag) {
+    switch (m_step) {
+    case 0:
+        if (--m_state > 0) {
+            return false;
+        }
+        if (GfSequentialPlay::isInnerState(GF_STATE(20))) {
+            return true;
+        }
+        if (GfChainAttack* chain = GfChainAttack::get()) {
+            chain->startSetup();
+        }
+        m_step = 1;
+        return false;
+    case 1:
+        if (GfChainAttack* chain = GfChainAttack::get()) {
+            chain->update(info);
+            return false;
+        }
+        return true;
+    }
+    return true;
+}
+
 GfPlayComChainAttack* GfPlayComChainAttack::create() {
 #line 3191
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComChainAttack();
@@ -1312,6 +1351,25 @@ GfPlayComExecuteSignal* GfPlayComExecuteSignal::create(bool start, GfSequentialP
 // generated: GfPlayComReturnTitle
 void GfPlayComReturnTitle::start() {
     GfMenuObjPopup::closeAll();
+}
+
+bool GfPlayComReturnTitle::update(const fw::UpdateInfo& info, bool flag) {
+    if (m_param.m_waitVoice) {
+        if (GfGameManager::isPlayEnemyVoice() || GfGameManager::isPartyMemberPlayVoice()) {
+            m_wait = 19;
+            return false;
+        }
+        if (m_wait > 0 && --m_wait > 0) {
+            return false;
+        }
+    }
+    if (m_param.m_gameClear) {
+        GfGameUtil::incGameClearCount();
+    }
+    if (mm::mtl::PtrSingleton<tl::TitleMain>::sys() != nullptr) {
+        tl::TitleMain::returnTitle(SAVESLOT(-1));
+    }
+    return true;
 }
 
 // hand4: begin GfPlayComReturnTitle* GfPlayComReturnTitle::create
@@ -1441,6 +1499,21 @@ GfPlayComCollect* GfPlayComCollect::create(GF_OBJ_HANDLE* handle) {
 // end generated: GfPlayComCollect
 
 // generated: GfPlayComFieldTbox
+GfPlayComFieldTbox::GfPlayComFieldTbox(GF_OBJ_HANDLE* handle)
+    : GfPlayCom(27, false), m_handle(handle), m_quest(), m_step(0), m_time(0.0f) {
+    if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+        m_pause = scene->createPlayerPause();
+    }
+    m_quest = GfQuestUtil::getCurrentTBoxWithEvent(handle);
+    gmk::AGmkBase* gmk = gmk::getBindedGmkInst(handle);
+    if (gmk != nullptr && gmk->getGmkType() == gmk::GmkTbox::TYPE) {
+        gmk::GmkTbox* tbox = static_cast<gmk::GmkTbox*>(gmk);
+        if (tbox->getBdatInfo()->m_dig && tbox->getProgress() == 0) {
+            m_quest = QuestID();
+        }
+    }
+}
+
 void GfPlayComFieldTbox::start() {
     GfFieldTbox::get()->start(m_handle);
     SCOM_FIELD_VOICE::create(CV_FIELD(3), CV_PRIO(1));
@@ -1450,6 +1523,60 @@ void GfPlayComFieldTbox::end() {
     if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
         scene->destroyPlayerPause(m_pause);
     }
+}
+
+bool GfPlayComFieldTbox::isOpenFinish() const {
+    GfFieldTbox* tbox = GfFieldTbox::get();
+    if (!tbox->m_seq) {
+        return true;
+    }
+    if (!tbox->m_isUIEnd) {
+        return false;
+    }
+    GfObj* obj = GfObjUtil::getObj(GfGameManager::getControlMover());
+    if (obj == nullptr) {
+        return true;
+    }
+    GfComAsm* com = obj->getComponent<GfComAsm>(2);
+    return strcmp(com->getStateName(AnimLayer(0)), "S_idle") == 0;
+}
+
+bool GfPlayComFieldTbox::update(const fw::UpdateInfo& info, bool flag) {
+    if (flag) {
+        return true;
+    }
+    switch (m_step) {
+    case 0:
+        if (!isOpenFinish()) {
+            return false;
+        }
+        if (GfFieldTbox* tbox = GfFieldTbox::get()) {
+            if (!tbox->m_isFsOK) {
+                return true;
+            }
+        }
+        m_step = m_quest.empty() ? 2 : 1;
+        return false;
+    case 1:
+        m_time += info.m_deltaTime;
+        if (m_time < 15.0f) {
+            if (!GfQuestInfo::isQuestFin(m_quest)) {
+                return false;
+            }
+        }
+        return true;
+    case 2:
+        if (GfFieldTbox* tbox = GfFieldTbox::get()) {
+            m_time += info.m_deltaTime;
+            if (m_time < 5.0f) {
+                if (!tbox->isDropitemsEmitted()) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    return true;
 }
 
 GfPlayComFieldTbox* GfPlayComFieldTbox::create(GF_OBJ_HANDLE* handle) {
@@ -1468,6 +1595,13 @@ void GfPlayComFieldSeq::end() {
     if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
         scene->destroyPlayerPause(m_pause);
     }
+}
+
+bool GfPlayComFieldSeq::update(const fw::UpdateInfo& info, bool flag) {
+    if (flag) {
+        return m_seq->cancel();
+    }
+    return m_seq->isEnd();
 }
 
 GfPlayComFieldSeq* GfPlayComFieldSeq::create(IFieldSeq* seq, GF_OBJ_HANDLE* handle) {
@@ -1523,6 +1657,13 @@ GfPlayComBattleStart* GfPlayComBattleStart::create(bool flag) {
 void GfPlayComOpenMenu2::start() {
     m_state = 3;
 }
+
+void GfPlayComOpenMenu2::end() {
+    if (gmk::GmkManager* manager = mm::mtl::PtrSingleton<gmk::GmkManager>::sys()) {
+        manager->updateImmediate();
+    }
+}
+
 // end generated: GfPlayComOpenMenu2
 
 // hand: begin mm::mtl::RTTI GfPlayCom::m_rtti(
