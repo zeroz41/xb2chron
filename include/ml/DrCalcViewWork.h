@@ -112,7 +112,9 @@ public:
     grlib::CGLibDblUniformBlock m_toonBlock;    // 0x858
     grlib::CGLibDblUniformBlock m_toon2Block;   // 0x890
     grlib::CGLibDblUniformBlock m_lightBlock;   // 0x8C8
-    unsigned char pad_900[0xAA];
+    // 0x900: DrMdoShdSetMpf::mpfshd_* bind it first for every mpf shader (the name is not the original's)
+    grlib::CGLibDblUniformBlock m_mpfBlock;
+    unsigned char pad_938[0x72];
     // DrGpuCheckObj::setWorldPos/update treat every check object as visible while it is set (the name is not the
     // original's)
     bool m_gpuCheckAllVisible;      // 0x9AA

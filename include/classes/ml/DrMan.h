@@ -9,6 +9,7 @@ namespace cloud { class CloudMan; }
 namespace grlib { class CGLibTextureBuffer; }
 namespace ml { class DrAPCache; }
 namespace ml { class DrPixlTileParm; }
+namespace ml { class DrPixlMdlSampler; }
 namespace ml { class DrCalcMan; }
 namespace ml { class DrShdMan; }
 namespace ml { class DrLightMan; }
@@ -130,7 +131,9 @@ public:
     // 0x180: DrMdoCtlSeamAll::callRenderSeamAll brackets the seam mpf display list with its begin/end (the name is
     // not the original's)
     DrPixlTileParm* m_tileParm;
-    unsigned char pad_188[0x2F0];
+    // 0x188: DrMdoSamplerMan::begin sets its samplers up when update reports a change (the name is not the original's)
+    DrPixlMdlSampler* m_pMdlSampler;
+    unsigned char pad_190[0x2E8];
     // 0x478: one 0x40-byte record per view; DrShdLgtGlobalIBL::update updates a view other than 0 only when bit 0 of
     // its first byte is set (the type and names are not the original's)
     struct ViewUpdate {

@@ -23,6 +23,20 @@
 #include "ml/DrEnvironmentAnim.h"
 #include "ml/DrIniSys.h"
 #include "ml/DrMdoAnim.h"
+#include "ml/DrMdoCtlMpfInst.h"
+#include "ml/DrMdoMorphing.h"
+#include "ml/DrMdoSamplerMan.h"
+#include "ml/DrMdoShdSetMpf.h"
+#include "ml/DrMdoTexSimpleMan.h"
+#include "ml/DrMdoTextureMan.h"
+#include "ml/DrMdoVertexMan.h"
+#include "ml/DrPixlMdlSampler.h"
+#include "ml/DrResMdoMorpObj.h"
+#include "grlib/CGLibVtxInstans.h"
+#include "ml/MdsMpfMatInfoHeader.h"
+#include "ml/DrResShdMpf.h"
+#include "ml/DrResMpfSampler.h"
+#include "grlib/CGLibUniformArray.h"
 #include "ml/DrMdoCtlMpfAuto.h"
 #include "ml/DrMdoCtlMpfWork.h"
 #include "ml/DrMdoSetup.h"
@@ -962,6 +976,12 @@ int DrMdoCtlMpfWork::getObjChk(int idx) {
     return m_pObjWork[idx].m_objChk;
 }
 
+void DrMdoCtlMpfInst::setupInstMpf(const unsigned char* data) {
+    m_pInstData = data + reinterpret_cast<const ResHeader*>(data)->m_instOfs;
+}
+
+DrMdoCtlMpfInst::DrMdoCtlMpfInst() {}
+
 void DrMdoCtlMpfAuto::setBuffTbl(_wkMpfAutoBuff** buffTbl, int buffNum) {
     m_pBuffTbl = buffTbl;
     m_buffNum = buffNum;
@@ -1695,6 +1715,56 @@ void DrMdoZSortMan::setViewWorldPosLastAlpha(DrMdoZSortObj* obj, const mm::Vec3&
     }
 }
 
+DrMdoTexSimpleMan::DrMdoTexSimpleMan(DrMan* drMan)
+    : m_pDrMan(drMan), m_list0(), m_list1(), m_list3(), m_list2() {}
+
+DrMdoTexSimpleMan::~DrMdoTexSimpleMan() {
+    m_list0.deleteAll();
+    m_list1.deleteAll();
+    m_list2.deleteAll();
+    m_list3.deleteAll();
+}
+
+DrMdoTextureMan::DrMdoTextureMan(DrMan* drMan) : m_pDrMan(drMan), m_texList(), m_etcTexList() {}
+
+DrMdoTextureMan::~DrMdoTextureMan() {
+    m_texList.deleteAll();
+    m_etcTexList.deleteAll();
+}
+
+grlib::CGLibTextureBuffer* DrMdoTextureMan::getTextureID(unsigned int id) {
+    for (DrResEtcTexList* list = m_etcTexList.m_pHead; list != nullptr; list = list->m_pNext) {
+        grlib::CGLibTextureBuffer* texture = list->getTextureID(id);
+        if (texture != nullptr) {
+            return texture;
+        }
+    }
+    return nullptr;
+}
+
+DrMdoVertexMan::DrMdoVertexMan() : m_vertexList(), m_instans(nullptr) {
+    m_instans = new (DrMan::getIns()->m_workHandle, nullptr, 0, 4, false) grlib::CGLibVtxInstans;
+    m_instans->createInstansBuffer(s_nInstansBuffSize);
+}
+
+DrMdoVertexMan::~DrMdoVertexMan() {
+    m_vertexList.deleteAll();
+    if (m_instans != nullptr) {
+        delete m_instans;
+        m_instans = nullptr;
+    }
+}
+
+void DrMdoVertexMan::update() {
+    for (DrResMdoVertex* vertex = m_vertexList.m_pHead; vertex != nullptr; vertex = vertex->m_pNext) {
+        vertex->update();
+    }
+}
+
+void DrMdoVertexMan::begin() { m_instans->beginInstansBuff(); }
+
+void DrMdoVertexMan::end() { m_instans->updateInstansBuff(); }
+
 DrMdoZSortMan::DrMdoZSortMan(DrMan* drMan)
     : m_pDrMan(drMan), m_pBuff(nullptr), m_pSpecial(nullptr), m_sortFar(300.0f), m_sortRate(0.8f) {
     m_pBuff = mtl::MemManager::allocate(drMan->m_workHandle, sizeof(DrMdoZSortObj*) * SORT_MAX * 2 + SORT_MAX / 8, 0x20,
@@ -1833,5 +1903,63 @@ void DrMdoZSortMan::viewRefractionRender() {
         obj->refractionRender();
     }
 }
+
+DrMdoSamplerMan::DrMdoSamplerMan(DrMan* drMan) : m_samplerList(), m_pDrMan(drMan) {}
+
+DrMdoSamplerMan::~DrMdoSamplerMan() { m_samplerList.deleteAll(); }
+
+void DrMdoSamplerMan::begin() {
+    if (DrMan::get()->m_pMdlSampler->update()) {
+        for (DrResMdoSampler* sampler = m_samplerList.m_pHead; sampler != nullptr; sampler = sampler->m_pNext) {
+            sampler->setup();
+        }
+    }
+}
+
+DrMdoMorphing::DrMdoMorphing(MdoWrkMatRes* wrkMatRes, DrResMdoMorpObj* morpObj, DrResEtcPamObj* pamObj)
+    : m_pWrkMatRes(wrkMatRes), m_pMorpObj(morpObj), m_pPamObj(pamObj) {}
+
+DrMdoMorphing::~DrMdoMorphing() {}
+
+int DrMdoMorphing::isBlendCheck() const {
+    int ret = 0;
+    int fixed = 0;
+    for (unsigned int i = 0; i < m_pMorpObj->m_targetNum; i++) {
+        const DrResMdoMorpObj::Target& target = m_pMorpObj->m_pTarget[i];
+        if (target.m_prevWeight == target.m_weight) {
+            if (target.m_weight != 0.0f) {
+                fixed = 2;
+                if (ret == 1) {
+                    return 2;
+                }
+            }
+        } else {
+            if (fixed == 2) {
+                return 2;
+            }
+            if (target.m_weight != 0.0f) {
+                return 2;
+            }
+            ret = 1;
+        }
+    }
+    return ret;
+}
+
+void DrMdoMorphing::parmsUpdate() {
+    for (unsigned int i = 0; i < m_pMorpObj->m_targetNum; i++) {
+        DrResMdoMorpObj::Target& target = m_pMorpObj->m_pTarget[i];
+        target.m_prevWeight = target.m_weight;
+    }
+}
+
+void DrMdoShdSetMpf::mpfshd_stm_bill(DrResShdMpf* shd, DrShdDataList*, const MdsMpfMatInfoHeader*,
+                                     const DrResMpfSampler*, bool) {
+    shd->setupShader(0);
+    m_pMdo->m_pDrMan->m_calcMan->m_pViewWork->m_mpfBlock.setUniformBlock(shd->m_shaderSel[6]);
+}
+
+void DrMdoShdSetMpf::mpfshd_cull_fade_mdl(DrResShdMpf*, DrShdDataList*, const MdsMpfMatInfoHeader*,
+                                          const DrResMpfSampler*, bool) {}
 
 }  // namespace ml

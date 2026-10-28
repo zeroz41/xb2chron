@@ -112,7 +112,11 @@ struct MdoWrkMatRes {
     // 0xC8: the vertex resource being set up; DrResMdoSeamWrkBase::selectVertex switches it (the name is not the
     // original's)
     DrResMdoVertex* m_pVertex;
-    unsigned char pad_D0[0x28];
+    unsigned char pad_D0[0x18];
+    // 0xE8: one texture per index; DrMdoShdSetMpf::mpfshd_drw_* bind MdsMpfMatInfoHeader::m_texIdx's (the name is
+    // not the original's)
+    grlib::CGLibTextureBuffer** m_ppTexture;
+    unsigned char pad_F0[0x8];
     float* m_pUniformVal;  // 0xF8, the uniform values the callbacks write
     unsigned char pad_100[0x10];
     MdoWrkAvatarTbl* m_pAvatarTbl;  // 0x110, DrMdoSetup::varStTex_Avatar* bind its textures

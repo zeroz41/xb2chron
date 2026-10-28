@@ -1,6 +1,9 @@
 #ifndef ML_DRMDOVERTEXMAN_H
 #define ML_DRMDOVERTEXMAN_H
 
+#include "ml/DrMdoResList.h"
+#include "ml/DrResMdoVertex.h"
+
 namespace grlib { class CGLibVtxInstans; }
 
 namespace ml {
@@ -8,8 +11,14 @@ namespace ml {
 class DrMdoVertexMan {
 public:
     DrMdoVertexMan();
+    ~DrMdoVertexMan();
+    void update();
+    void begin();
+    void end();
 
-    unsigned char pad_0[0x10];
+    static int s_nInstansBuffSize;
+
+    DrMdoResList<DrResMdoVertex> m_vertexList;  // 0x0: update updates each (the name is not the original's)
     grlib::CGLibVtxInstans* m_instans;  // 0x10, the instance ring DrGpuCheckRender takes its part of (the name is not the original's)
 };
 }  // namespace ml

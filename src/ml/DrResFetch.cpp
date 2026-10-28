@@ -4002,7 +4002,7 @@ void DrResMdoSeamWrkBase::selectVertex(int index) {
 void DrResMdoVertex::beginVertexSetup() { m_bindVertex = -1; }
 
 DrResMdoVertex::DrResMdoVertex(const unsigned char* data)
-    : m_link0(nullptr), m_link1(nullptr), m_resData(data), m_state(1), m_work(nullptr), m_stream(nullptr) {
+    : m_link0(nullptr), m_pNext(nullptr), m_resData(data), m_state(1), m_work(nullptr), m_stream(nullptr) {
     setupVertex(data);
 }
 

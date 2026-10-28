@@ -40,6 +40,7 @@ public:
     ~DrResMdoVertex();
     void setupVertex(const unsigned char* data);
     void vertexRelease();
+    void update();
     void beginVertexSetup();
     void render(int index);
     void renderIns(int index, int instances);
@@ -50,7 +51,7 @@ public:
     void setEtcVertexBind(int index, int slot);
 
     void* m_link0;  // 0x0: zeroed by the constructor
-    void* m_link1;  // 0x8: zeroed by the constructor
+    DrResMdoVertex* m_pNext;  // 0x8: zeroed by the constructor; DrMdoVertexMan's list link (the name is not the original's)
     const unsigned char* m_resData;  // 0x10: the constructor's data
     int m_state;  // 0x18: 1 after construction
     void* m_work;  // 0x20: allocated by setupVertex, freed by vertexRelease
