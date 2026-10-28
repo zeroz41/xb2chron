@@ -22,7 +22,10 @@ public:
     // 0xC7C: DrMdoCtlSeamRead::wait*Stream set bit 16 when a stream ends without its data (and bit 10 while
     // DrMan::m_seamReadErrMode >= 1); DrMdoCtlSeamAll::callRenderSeamAll tests bit 3
     unsigned int m_seamFlags;
-    unsigned char pad_C80[0x98];
+    unsigned char pad_C80[0x10];
+    // 0xC90: cleared by DrMdoCtlSeamRead::waitBaseVertexStream once the base vertex stream is in
+    void* m_pBaseVertexRead;
+    unsigned char pad_C98[0x80];
     // 0xD18: a bit per _wkSeamReadCall::m_readIdx, cleared when that stream is in (DrMdoCtlSeamRead::wait*Stream)
     unsigned short m_readWaitBits;
 };

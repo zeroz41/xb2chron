@@ -2,6 +2,8 @@
 #define CLASSES_ML_DRMDOMAT_H
 
 #include "classes/ml/DrMdlBase.h"
+#include "mm/Mat44.h"
+#include "mm/Vec3.h"
 
 namespace ml { class DrMan; }
 namespace ml { class DrShdMdoDecExtTbl; }
@@ -73,7 +75,10 @@ public:
     unsigned char pad_40[0x18];
     // DrMdlObj::chageShadowObject hands it to DrMdoSmlShadowMan::changeViewNum (the name is not the original's)
     DrMdoSmlShadowObj* m_pSmlShadowObj;  // 0x58
-    unsigned char pad_60[0x70];
+    unsigned char pad_60[0x10];
+    mm::Mat44 m_matrix;  // 0x70, DrMdoCtl::setMatrix (the name is not the original's)
+    mm::Vec3 m_offsetPos;  // 0xB0, DrMdoCtl::setOffsetPos (the name is not the original's)
+    unsigned char pad_C0[0x10];
     // 0xD0, by s_nDblStockIdx: DrMdlObj::setAlpha/getAlpha while double-buffered alpha is on (the name is not the
     // original's)
     float m_alpha[2];

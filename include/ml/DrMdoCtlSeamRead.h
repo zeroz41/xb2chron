@@ -22,6 +22,8 @@ struct _wkSeamReadCall {
     unsigned short m_cacheIdx;  // 0x18: the cache slot the work's set*Cache fills
     unsigned char pad_1A[0x2];
     unsigned short m_readIdx;  // 0x1C: its bit in m_readWaitBits
+    unsigned char pad_1E[0x2];
+    int m_cacheParam;  // 0x20: waitBaseVertexStream passes it to DrResMdoSeamWrkBase::setVertexCache
 };
 
 // One part of the seam model control: the DrMdoCtlSeam* classes have no table of their own and DrMdoCtlSeamAll's
@@ -35,6 +37,7 @@ public:
     void waitEnvMdlStream(_wkSeamReadCall* call, bool ok);
     void waitMpfEtcStream(_wkSeamReadCall* call, bool ok);
     void waitMpfPoliStream(_wkSeamReadCall* call, bool ok);
+    void waitBaseVertexStream(_wkSeamReadCall* call, bool ok);
 };
 }  // namespace ml
 

@@ -7,6 +7,7 @@
 #include "classes/ml/DrMdoCtlSeamAll.h"
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/DrMdoZSortObj.h"
+#include "classes/ml/DrResMdoSeamWrkBase.h"
 #include "classes/ml/DrResMdoSeamWrkMpf.h"
 #include "classes/ml/DrShdLgtClustered.h"
 #include "classes/ml/DrShdLgtHybrid.h"
@@ -16,12 +17,16 @@
 #include "grlib/CGLibTriUniformBlock.h"
 #include "grlib/CGLibUniformArray.h"
 #include "math.h"
+#include "stddef.h"
 #include "ml/DrCalcMan.h"
 #include "ml/DrCalcViewWork.h"
 #include "ml/DrEnvironmentAnim.h"
 #include "ml/DrIniSys.h"
 #include "ml/DrMdoAnim.h"
+#include "ml/DrMdoCtlMpfAuto.h"
+#include "ml/DrMdoCtlMpfWork.h"
 #include "ml/DrMdoSetup.h"
+#include "ml/DrMdoMpfMan.h"
 #include "ml/DrMdoZSortMan.h"
 #include "ml/DrPixlDeferred.h"
 #include "ml/DrPixlMan.h"
@@ -30,6 +35,7 @@
 #include "ml/DrPixlPostParm.h"
 #include "ml/DrPixlTileParm.h"
 #include "ml/DrResMdoMat.h"
+#include "ml/DrResMdoPntAlphaMan.h"
 #include "ml/DrResMdoVertex.h"
 #include "ml/DrShdDataList.h"
 #include "ml/DrShdLgtMan.h"
@@ -43,6 +49,14 @@
 #include "string.h"
 
 namespace ml {
+
+void DrMdoCtl::setMatrix(const mm::Mat44& matrix) {
+    m_matrix = matrix;
+}
+
+void DrMdoCtl::setOffsetPos(const mm::Vec3& pos) {
+    m_offsetPos = pos;
+}
 
 void DrMdoCtlDammy::resourceInit() {}
 
@@ -441,6 +455,20 @@ void DrMdoAnim::anmNodeParm_SclY(mm::Vec3* srt, float value) {
 
 void DrMdoAnim::anmNodeParm_SclZ(mm::Vec3* srt, float value) {
     srt[2].z = value;
+}
+
+void DrMdoMpfMan::begin() {
+    m_windScale = 1.0f;
+    m_frameWorkUsed = 0;
+    m_listCount = 0;
+}
+
+void DrMdoMpfMan::addMpfObj() {
+    m_mpfObjNum++;
+}
+
+bool DrMdoMpfMan::delMpfObj() {
+    return --m_mpfObjNum < 1;
 }
 
 void (*DrMdoAnim::s_pCallAnim[10])(DrResMdoMat*, float*, float) = {
@@ -925,6 +953,173 @@ void (DrMdoSetup::*DrMdoSetup::s_pStaticImage[5])(const MdsMatInfoHeader*, unsig
     &DrMdoSetup::varStImg_ZBuff,
 };
 
+int DrMdoCtlMpfWork::calcRenderListWork(int objNum, const MdsMpfObjData* objData) {
+    int size = objNum * 0x1D0;
+    return DrResMdoPntAlphaMan::getWrkSize(128) + size;
+}
+
+int DrMdoCtlMpfWork::getObjChk(int idx) {
+    return m_pObjWork[idx].m_objChk;
+}
+
+void DrMdoCtlMpfAuto::setBuffTbl(_wkMpfAutoBuff** buffTbl, int buffNum) {
+    m_pBuffTbl = buffTbl;
+    m_buffNum = buffNum;
+}
+
+DrMdoCtlMpfWork::DrMdoCtlMpfWork() {}
+
+void DrMdoCtlMpfWork::changeMemWork(const MdsMpfObjData* objData) {
+    m_pObjData = objData;
+}
+
+void DrMdoCtlMpfWork::auto_fastSet(_wkMpfObjBuff* buff, const _MPFWorkAutoInf* inf, int idx) {
+    buff->m_pAutoList = (const _MPFWorkAutoInf**)m_pMpfMan->getFrameWork(sizeof(_wkMpfObjList));
+    if (buff->m_pAutoList) {
+        buff->m_pAutoList[0] = inf;
+        buff->m_pAutoSet = &DrMdoCtlMpfWork::auto_countSet;
+        buff->m_num = 1;
+    } else {
+        m_pObjWork[idx].m_objChk--;
+        buff->m_num = 0;
+    }
+}
+
+void DrMdoCtlMpfWork::auto_alpha_fastSet(_wkMpfAlphaObjBuff* buff, const _MPFWorkAutoInf* inf, int idx) {
+    buff->m_pAutoList = (const _MPFWorkAutoInf**)m_pMpfMan->getFrameWork(offsetof(_wkMpfAlphaObjList, m_alpha));
+    if (buff->m_pAutoList) {
+        buff->m_pAutoList[0] = inf;
+        buff->m_pAutoSet = &DrMdoCtlMpfWork::auto_alpha_countSet;
+        buff->m_num = 1;
+    } else {
+        m_pObjWork[idx].m_objChk--;
+        buff->m_num = 0;
+    }
+}
+
+void DrMdoCtlMpfWork::mpf_fastSet(_wkMpfObjBuff* buff, const MdsMpfPosData* pos, int idx) {
+    buff->m_pPosList = (const MdsMpfPosData**)m_pMpfMan->getFrameWork(sizeof(_wkMpfObjList));
+    if (buff->m_pPosList) {
+        buff->m_pPosList[0] = pos;
+        buff->m_pPosSet = &DrMdoCtlMpfWork::mpf_countSet;
+        buff->m_num = 1;
+    } else {
+        m_pObjWork[idx].m_objChk--;
+        buff->m_num = 0;
+    }
+}
+
+void DrMdoCtlMpfWork::mpf_alpha_fastSet(_wkMpfAlphaObjBuff* buff, const MdsMpfPosData* pos, int idx, float alpha) {
+    _wkMpfAlphaObjList* list = (_wkMpfAlphaObjList*)m_pMpfMan->getFrameWork(sizeof(_wkMpfAlphaObjList));
+    buff->m_pPosList = list->m_pos;
+    buff->m_pAlpha = list->m_alpha;
+    if (buff->m_pPosList) {
+        buff->m_pPosList[0] = pos;
+        buff->m_pAlpha[0] = alpha * 255.0f;
+        buff->m_pPosSet = &DrMdoCtlMpfWork::mpf_alpha_countSet;
+        buff->m_num = 1;
+    } else {
+        m_pObjWork[idx].m_objChk--;
+        buff->m_num = 0;
+    }
+}
+
+
+void DrMdoCtlMpfWork::mpf_countSet(_wkMpfObjBuff* buff, const MdsMpfPosData* pos, int idx) {
+    buff->m_pPosList[buff->m_num] = pos;
+    if (buff->m_num++ >= 63) {
+        buff->m_pPosSet = &DrMdoCtlMpfWork::mpf_changeSet;
+    }
+}
+
+void DrMdoCtlMpfWork::mpf_changeSet(_wkMpfObjBuff* buff, const MdsMpfPosData* pos, int idx) {
+    _wkMpfObjChunk* next = (_wkMpfObjChunk*)m_pMpfMan->getFrameWork(sizeof(_wkMpfObjChunk));
+    if (next) {
+        next->m_head.m_pPosList = next->m_list.m_pos;
+        next->m_list.m_pos[0] = pos;
+        next->m_head.m_num = 1;
+        next->m_head.m_pPosSet = &DrMdoCtlMpfWork::mpf_countSet;
+        next->m_head.m_pNext = 0;
+        m_pObjWork[idx].m_pLastBuff = &next->m_head;
+        buff->m_pNext = &next->m_head;
+    } else {
+        m_pObjWork[idx].m_objChk--;
+        buff->m_num = 0;
+    }
+}
+
+void DrMdoCtlMpfWork::auto_countSet(_wkMpfObjBuff* buff, const _MPFWorkAutoInf* inf, int idx) {
+    buff->m_pAutoList[buff->m_num] = inf;
+    if (buff->m_num++ >= 63) {
+        buff->m_pAutoSet = &DrMdoCtlMpfWork::auto_changeSet;
+    }
+}
+
+void DrMdoCtlMpfWork::auto_changeSet(_wkMpfObjBuff* buff, const _MPFWorkAutoInf* inf, int idx) {
+    _wkMpfObjChunk* next = (_wkMpfObjChunk*)m_pMpfMan->getFrameWork(sizeof(_wkMpfObjChunk));
+    if (next) {
+        next->m_head.m_pAutoList = next->m_list.m_auto;
+        next->m_list.m_auto[0] = inf;
+        next->m_head.m_num = 1;
+        next->m_head.m_pAutoSet = &DrMdoCtlMpfWork::auto_countSet;
+        next->m_head.m_pNext = 0;
+        m_pObjWork[idx].m_pLastBuff = &next->m_head;
+        buff->m_pNext = &next->m_head;
+    } else {
+        m_pObjWork[idx].m_objChk--;
+        buff->m_num = 0;
+    }
+}
+
+void DrMdoCtlMpfWork::mpf_alpha_countSet(_wkMpfAlphaObjBuff* buff, const MdsMpfPosData* pos, int idx, float alpha) {
+    buff->m_pPosList[buff->m_num] = pos;
+    buff->m_pAlpha[buff->m_num] = alpha * 255.0f;
+    if (buff->m_num++ >= 15) {
+        buff->m_pPosSet = &DrMdoCtlMpfWork::mpf_alpha_changeSet;
+    }
+}
+
+void DrMdoCtlMpfWork::mpf_alpha_changeSet(_wkMpfAlphaObjBuff* buff, const MdsMpfPosData* pos, int idx, float alpha) {
+    _wkMpfAlphaObjChunk* next = (_wkMpfAlphaObjChunk*)m_pMpfMan->getFrameWork(sizeof(_wkMpfAlphaObjChunk));
+    if (next) {
+        next->m_head.m_pPosList = next->m_list.m_pos;
+        next->m_head.m_pAlpha = next->m_list.m_alpha;
+        next->m_list.m_pos[0] = pos;
+        next->m_list.m_alpha[0] = alpha * 255.0f;
+        next->m_head.m_num = 1;
+        next->m_head.m_pNext = 0;
+        next->m_head.m_pPosSet = &DrMdoCtlMpfWork::mpf_alpha_countSet;
+        m_pObjWork[idx].m_pLastAlphaBuff = &next->m_head;
+        buff->m_pNext = &next->m_head;
+    } else {
+        m_pObjWork[idx].m_objChk--;
+        buff->m_num = 0;
+    }
+}
+
+void DrMdoCtlMpfWork::auto_alpha_countSet(_wkMpfAlphaObjBuff* buff, const _MPFWorkAutoInf* inf, int idx) {
+    buff->m_pAutoList[buff->m_num] = inf;
+    if (buff->m_num++ >= 15) {
+        buff->m_pAutoSet = &DrMdoCtlMpfWork::auto_alpha_changeSet;
+    }
+}
+
+void DrMdoCtlMpfWork::auto_alpha_changeSet(_wkMpfAlphaObjBuff* buff, const _MPFWorkAutoInf* inf, int idx) {
+    _wkMpfAlphaObjChunk* next = (_wkMpfAlphaObjChunk*)m_pMpfMan->getFrameWork(offsetof(_wkMpfAlphaObjChunk, m_list.m_alpha));
+    if (next) {
+        next->m_head.m_pAutoList = next->m_list.m_auto;
+        next->m_list.m_auto[0] = inf;
+        next->m_head.m_num = 1;
+        next->m_head.m_pNext = 0;
+        next->m_head.m_pAutoSet = &DrMdoCtlMpfWork::auto_alpha_countSet;
+        m_pObjWork[idx].m_pLastAlphaBuff = &next->m_head;
+        buff->m_pNext = &next->m_head;
+    } else {
+        m_pObjWork[idx].m_objChk--;
+        buff->m_num = 0;
+    }
+}
+
 // m_stateFlags bits 0..5 select the passes an object draws in (bit 3 light pre-pass, bit 1 GBuff, bit 2
 // refraction, bit 5 special alpha, bit 6 thickness, bit 20 z pre-pass, bits 25..27 last/fast/cloud-back alpha).
 void DrMdoCtlNom::callShadowCacheUpdate(unsigned long bits) {
@@ -1329,6 +1524,21 @@ void DrMdoCtlSeamRead::waitEnvMdlStream(_wkSeamReadCall* call, bool ok) {
         initEnvMapParts(call->m_pEnv);
         m_readWaitBits &= ~(1 << call->m_readIdx);
     } else {
+        m_seamFlags |= 0x10000;
+        if (m_pDrMan->m_seamReadErrMode >= 1) {
+            m_seamFlags |= 0x400;
+        }
+    }
+}
+
+void DrMdoCtlSeamRead::waitBaseVertexStream(_wkSeamReadCall* call, bool ok) {
+    DrResMdoSeamWrkBase* wrk = call->m_pBase;
+    if (ok) {
+        wrk->setVertexCache(call->m_cacheIdx, call->m_pMemObj, call->m_cacheParam, this);
+        m_readWaitBits &= ~(1 << call->m_readIdx);
+        m_pBaseVertexRead = 0;
+    } else {
+        wrk->m_cacheFlags |= 0x10;
         m_seamFlags |= 0x10000;
         if (m_pDrMan->m_seamReadErrMode >= 1) {
             m_seamFlags |= 0x400;
