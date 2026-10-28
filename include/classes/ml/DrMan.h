@@ -152,13 +152,28 @@ public:
     DrEnvironmentMan* m_curEnvMan;
     unsigned char pad_5A0[0x10];
     DrCalcTexStreamMan* m_texStreamMan;  // 0x5B0, DrStmReadCheck makes its stream lists with it (the name is not the original's)
-    unsigned char pad_5B8[0x8];
+    // 0x5B8: the constructor points it at its record at 0x440 (0x40 bytes per view, the same records
+    // m_viewUpdate reads) and stores the main screen size in it; DrPixlMan::setMainViewPort makes the viewport from
+    // that size (the type and names are not the original's)
+    struct ViewInfo {
+        unsigned char pad_0[0x18];
+        int m_width;   // 0x18, DrAPGxType::getMainScreenSize
+        int m_height;  // 0x1C
+        // 0x20: the constructor copies the screen size here too; DrPixlMan::setMainRenderTarget's viewport uses it
+        int m_renderWidth;
+        int m_renderHeight;  // 0x24
+    };
+    ViewInfo* m_curViewInfo;
     DrAPCache* m_apCache;               // 0x5C0, DrMdoSetup::varStTex_* bind textures through it (the name is not the original's)
     bool* m_pAutoReduction;             // 0x5C8, setAutoReduction writes through it
     unsigned char pad_5D0[0x8];
     IDrDrawCallback* m_callBack[16];    // 0x5D8, setCallBack/releaseCallBack
     int m_callBackNum;                  // 0x658
-    unsigned char pad_65C[0x1614];
+    unsigned char pad_65C[0x1604];
+    // 0x1C60: DrPixlTileParm::update turns tiled caching on (table 1) while it is 0, and
+    // DrPixlPostParm::getTMAASharpness then reads its second table (the name is not the original's)
+    int m_qualityMode;
+    unsigned char pad_1C64[0xC];
     // the field names below are not the original's: each is named after the ScnRenderDrSys/ScnRenderDrSysParmAcc
     // setter that writes it
     mm::Vec3 m_seamMapReadPos;

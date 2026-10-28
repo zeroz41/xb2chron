@@ -8,6 +8,8 @@ namespace ml {
 class DrPixlPostObj {
 public:
     DrPixlPostObj(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan);
+    // rounds both sizes up to even (an odd value gains one)
+    static void calc1PixlOfs(float& width, float& height);
 
     DrMan* m_drMan;  // 0x0
     DrPixlMan* m_pixlMan;  // 0x8

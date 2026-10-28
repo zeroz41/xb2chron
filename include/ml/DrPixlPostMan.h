@@ -8,6 +8,9 @@ namespace ml { class DrPixlPostObjCubeMapIBL; }
 namespace ml { class DrPixlPostObjCubeMapMultiIBL; }
 namespace ml { class DrPixlSkyDome; }
 namespace ml { class DrPixlToonGrad; }
+namespace ml { class DrResUseQueryObj; }
+namespace ml { class DrPixlPostObjVolume; }
+namespace mm { class Vec3; }
 namespace ml { class DrPixlPostObjCapture; }
 
 namespace ml {
@@ -22,8 +25,11 @@ public:
     void renderRefractionMap(bool useTarget, bool useHalfTarget);
     grlib::CGLibTextureBuffer* getToonGradTex() const;
     grlib::CGLibTextureBuffer* getToonDarkGradTex() const;
+    void setVolumePos(const mm::Vec3& pos);
 
-    unsigned char pad_0[0x40];
+    unsigned char pad_0[0x28];
+    DrPixlPostObjVolume* m_volume;  // 0x28, the constructor creates it; setVolumePos writes its position (name inferred)
+    unsigned char pad_30[0x10];
     DrPixlPostObjCubeMapMultiIBL* m_cubeMapMultiIBL;  // 0x40, DrPixlMan::fastRender renders it when set (name inferred)
     DrPixlPostObjCubeMapIBL* m_cubeMapIBL;  // 0x48, varStTex_SpecularIBLTex binds its premultiplied texture
     unsigned char pad_50[0x40];
@@ -34,8 +40,9 @@ public:
     unsigned char pad_B8[0x8];
     grlib::CGLibRenderTarget* m_downDepth[2];  // 0xC0, getDownDepth by DrMan::s_nDblIdx, getOldDownDepth by s_nDblStockIdx
     grlib::CGLibRenderTarget* m_refraction;  // 0xD0, varStTex_RefractionMap/RefractionAfterTex bind it when set
-    unsigned char pad_D8[0x20];
-    unsigned int m_flags;  // 0xF8, setDownDepth sets 0x80000, isDepthDown tests it
+    unsigned char pad_D8[0x18];
+    DrResUseQueryObj* m_refractionQuery;  // 0xF0, DrPixlMan::renderRefractionEnd ends it when set (name inferred)
+    unsigned int m_flags;  // 0xF8, setDownDepth sets 0x80000, isDepthDown tests it; 0x10000: DrPixlMan::setupGodRay
     unsigned char pad_FC[0xC];
     float m_waterFog;  // 0x108, below 0.05 varStTex_DownBaseColorTex binds the dummy texture; matCall_WaterFog reads it
 };

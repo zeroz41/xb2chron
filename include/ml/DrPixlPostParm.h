@@ -84,15 +84,31 @@ public:
     void setColorFilterFrm(float frame);
     void setColorFilterFarNum(int num);
     void setGlassBrk(bool enable, unsigned int arg);
+    // one rain drop layer's values (the field names are not the original's: m_param3 is the table's fifth row)
+    struct stRainDropLayerInfo {
+        float m_param0;
+        float m_param1;
+        float m_param2;
+        float m_param3;
+        float m_param4;
+    };
+    void getRanDropLayerInfo(unsigned int layer, stRainDropLayerInfo& info) const;
+    float getTMAASharpness(unsigned int type) const;
 
     static DrPixlPostParm* s_pIns;  // setInst
 
     bool m_toneMap;
-    unsigned char pad_1[0x43];
+    unsigned char pad_1[0x3B];
+    bool m_godRay;  // 0x3C, DrPixlMan::setupGodRay clears the god ray target only when set (name inferred)
+    unsigned char pad_3D[0x7];
     float m_borderBlmMul;  // 0x44
     unsigned char pad_48[0xC9];
     bool m_tmaa;  // 0x111, getTMAAOn
-    unsigned char pad_112[0xB8];
+    unsigned char pad_112[0x2];
+    // by SHARPNESS_TYPE; getTMAASharpness reads m_tmaaSharpnessAlt while DrMan::m_qualityMode is 0 (names inferred)
+    float m_tmaaSharpness[6];  // 0x114
+    float m_tmaaSharpnessAlt[6];  // 0x12C
+    unsigned char pad_144[0x86];
     bool m_motBlur;  // 0x1CA
     unsigned char pad_1CB[0x4D];
     bool m_dofOverride;  // isDOF: either of these two
@@ -123,7 +139,10 @@ public:
     float m_outLineNear;
     unsigned char pad_2D4[0xE4];
     bool m_rainDrop;
-    unsigned char pad_3B9[0xA7];
+    unsigned char pad_3B9[0x53];
+    // 0x40C, five values per rain drop layer (three layers); getRanDropLayerInfo copies one layer (name inferred)
+    float m_rainDropLayer[5][3];
+    unsigned char pad_448[0x18];
     bool m_shwRaytrace;  // 0x460, isShwRaytrace
     unsigned char pad_461[0x6F];
     bool m_glassBr;  // 0x4D0

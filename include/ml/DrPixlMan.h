@@ -38,8 +38,11 @@ struct DrPixlObjTbl {
     // 0x188, DrPixlPostObjToneMap::updateByCompute stores the three; the constructor sets [1] = 1 (name inferred)
     float m_toneMapVal[3];
     unsigned char pad_194[0xC];
-    grlib::CGLibRenderTarget* m_depth[2];  // 0x1A0, getDepthObj: by DrMan::s_nDblIdx
-    unsigned char pad_1B0[0x20];
+    // 0x1A0, getDepthObj: by DrMan::s_nDblIdx; selectZprepassRenderTarget registers its depth buffer (+0x120)
+    grlib::CGLibDepthTarget* m_depth[2];
+    // 0x1B0, depCheckBegin(false) makes it the render target (name inferred)
+    grlib::CGLibDepthTarget* m_depthCheck;
+    unsigned char pad_1B8[0x18];
     grlib::CGLibRenderTarget* m_capture;  // 0x1D0, renderEnd invalidates its colour
     unsigned int m_flags;  // 0x1D8, updateShadowDisplayList clears 0x20
     unsigned char pad_1DC[0x1C];
@@ -62,13 +65,24 @@ public:
     void setMainSRGBRenderTarget();
     void resetRenderTarget();
     void alphaRenderTarget();
+    void setMainRenderTarget();
+    void setupGodRay();
+    void endGBuffRenderTarget();
+    void depCheckBegin(bool useDepth);
+    void renderRefractionEnd();
+    void selectZprepassRenderTarget();
+    void thicknessFirstBegin();
     void callShadowCacheVariance();
     void fastRender();
     void pixelEndMode();
     void setShadowDirRenderTarget(int index);
     void setupShadowUnifrom(int index);
     void selectGBuffRenderTarget();
-    void selectGBuffRenderTarget(unsigned int target);
+    // true when it switched the render target (alphaRenderTarget/skyGodRayRenderTarget then set the main viewport)
+    bool selectGBuffRenderTarget(unsigned int target);
+    void setMainViewPort();
+    void skyGodRayRenderTarget();
+    void shadowDirEnd();
     grlib::CGLibRenderTarget* getResponsiveAAMask();
     void displayUpdate();
     void thicknessFirstEnd();
@@ -80,7 +94,7 @@ public:
     void renderSkyGodRay();
     bool isRefractionMap();
     void lastCapRender();
-    grlib::CGLibRenderTarget* getDepthObj();
+    grlib::CGLibDepthTarget* getDepthObj();
     void changeHDRBuff(DrPixlRenderTarget* target);
     void setShadowObj(DrPixlShadowObj* obj);
     void updateShadowDisplayList();

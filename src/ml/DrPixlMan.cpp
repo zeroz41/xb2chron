@@ -15,6 +15,8 @@
 #include "ml/DrPixlShadowCacheMan.h"
 #include "ml/DrPixlPostObjCubeMapMultiIBL.h"
 #include "ml/DrPixlPostObjCubeMapIBL.h"
+#include "ml/DrPixlPostObjVolume.h"
+#include "ml/DrPixlMdlSampler.h"
 #include "ml/DrCalcMan.h"
 #include "ml/DrPixlRenderTarget.h"
 #include "classes/ml/DrPixlShadowObjDir.h"
@@ -23,6 +25,8 @@
 #include "classes/ml/DrMan.h"
 #include "ml/DrAPGxType.h"
 #include "grlib/CGLibCtl.h"
+#include "ml/DrResQueryObj.h"
+#include "mm/Col4.h"
 #include "grlib/CGLibState.h"
 #include <string.h>
 
@@ -30,9 +34,42 @@ namespace ml {
 
 DrPixlMan::~DrPixlMan() { releaseColorBuffer(); }
 
+void DrPixlMan::setMainViewPort() {
+    float width = m_drMan->m_curViewInfo->m_width;
+    float height = m_drMan->m_curViewInfo->m_height;
+    grlib::LibMainStateViewPort viewport;
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = width;
+    viewport.height = height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    grlib::CGLibState::setViewport(viewport);
+}
+
+void DrPixlMan::setMainRenderTarget() {
+    if (m_objTbl->m_capture != nullptr) {
+        grlib::CGLibState::beginRegisterRenderTarget();
+        grlib::CGLibState::setRegisterRenderTarget(*m_objTbl->m_capture, (grlib::GrlMrtType)0);
+        grlib::CGLibState::endRegisterRenderTarget();
+    } else {
+        grlib::CGLibState::setMainFrameBuffer();
+    }
+    float width = m_drMan->m_curViewInfo->m_renderWidth;
+    float height = m_drMan->m_curViewInfo->m_renderHeight;
+    grlib::LibMainStateViewPort viewport;
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = width;
+    viewport.height = height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    grlib::CGLibState::setViewport(viewport);
+}
+
 void DrPixlMan::resetRenderTarget() { m_renderTarget = 0; }
 
-grlib::CGLibRenderTarget* DrPixlMan::getDepthObj() { return m_objTbl->m_depth[DrMan::s_nDblIdx]; }
+grlib::CGLibDepthTarget* DrPixlMan::getDepthObj() { return m_objTbl->m_depth[DrMan::s_nDblIdx]; }
 
 grlib::CGLibTextureBuffer* DrPixlMan::getDammyWhiteTexObj() { return m_dammyWhiteObj->m_pTexture; }
 
@@ -52,7 +89,52 @@ void DrPixlMan::renderEnd(int) {
     }
 }
 
+void DrPixlMan::selectZprepassRenderTarget() {
+    m_renderTarget = 1;
+    m_renderTargetSub = 0;
+    grlib::CGLibState::beginRegisterRenderTarget();
+    grlib::CGLibState::setRegisterDepthTarget(*m_objTbl->m_depth[DrMan::s_nDblIdx]->m_pDepthBuffer);
+    grlib::CGLibState::endRegisterRenderTarget();
+}
+
+void DrPixlMan::thicknessFirstBegin() {
+    m_renderTarget = 13;
+    grlib::CGLibState::beginRegisterRenderTarget();
+    grlib::CGLibState::setRegisterRenderTarget(*m_objTbl->m_backFaceDepth, (grlib::GrlMrtType)0);
+    grlib::CGLibState::setRegisterDepthTarget(*m_objTbl->m_depth[DrMan::s_nDblIdx]->m_pDepthBuffer);
+    grlib::CGLibState::endRegisterRenderTarget();
+}
+
 void DrPixlMan::selectGBuffRenderTarget() { selectGBuffRenderTarget(0xFF); }
+
+void DrPixlMan::endGBuffRenderTarget() {
+    m_objTbl->m_gBuff[0][0]->setColorInvalidate();
+    m_objTbl->m_gBuff[1][0]->setColorInvalidate();
+    m_objTbl->m_gBuff[2][0]->setColorInvalidate();
+    m_objTbl->m_gBuff[3][0]->setColorInvalidate();
+    m_objTbl->m_gBuff[4][0]->setColorInvalidate();
+    m_objTbl->m_obj[8][0]->setColorInvalidate();
+    m_objTbl->m_obj[5][0]->setColorInvalidate();
+    m_objTbl->m_obj[6][0]->setColorInvalidate();
+}
+
+void DrPixlMan::setupGodRay() {
+    if (m_drMan->m_postParm[m_drMan->m_postParmIdx]->m_godRay && (m_objTbl->m_postMan->m_flags & 0x10000)) {
+        m_objTbl->m_obj[7][0]->clearTexture(mm::Col4(0.0f, 0.0f, 0.0f, 0.0f), (GrlClaerMask)0xF);
+    }
+}
+
+void DrPixlMan::alphaRenderTarget() {
+    if (selectGBuffRenderTarget(0x1C0)) {
+        setMainViewPort();
+    }
+}
+
+void DrPixlMan::skyGodRayRenderTarget() {
+    if (selectGBuffRenderTarget(0x100)) {
+        setMainViewPort();
+    }
+}
 
 void DrPixlMan::refractionGBuffInvalidate() {
     m_objTbl->m_gBuff[0][0]->setColorInvalidate();
@@ -63,6 +145,37 @@ void DrPixlMan::refractionGBuffInvalidate() {
 }
 
 void DrPixlMan::renderRefractionMap(bool useTarget, bool useHalfTarget) { m_objTbl->m_postMan->renderRefractionMap(useTarget, useHalfTarget); }
+
+void DrPixlTileParm::begin(TileType type) {
+    if (m_work[m_idx][0].m_on) {
+        if (type != 0) {
+            return;
+        }
+    } else if (!m_work[m_idx][type].m_on) {
+        return;
+    }
+    grlib::CGLibGPUCache::setTiledCacheSize(m_work[m_idx][type].m_width, m_work[m_idx][type].m_height);
+    grlib::CGLibGPUCache::setTiledCacheAction((GrlTiledCacheAction)1);
+}
+
+void DrPixlMan::renderRefractionEnd() {
+    m_drMan->m_tileParm->end((DrPixlTileParm::TileType)2);
+    if (m_objTbl->m_postMan->m_refractionQuery != nullptr) {
+        m_objTbl->m_postMan->m_refractionQuery->end();
+    }
+}
+
+void DrPixlTileParm::end(TileType type) {
+    if (m_work[m_idx][0].m_on) {
+        if (type != 0) {
+            return;
+        }
+    } else if (!m_work[m_idx][type].m_on) {
+        return;
+    }
+    grlib::CGLibGPUCache::setTiledCacheAction((GrlTiledCacheAction)3);
+    grlib::CGLibGPUCache::setTiledCacheAction((GrlTiledCacheAction)2);
+}
 
 void DrPixlMan::renderSkyDome() {
     if (m_objTbl->m_postMan->m_skyDome != nullptr) {
@@ -95,6 +208,27 @@ void DrPixlMan::shadowDirBegin() {
 
 void DrPixlMan::setShadowDirRenderTarget(int index) {
     m_shadowCacheMan->m_workTbl[index].m_dirDepth.setRenderTarget();
+}
+
+void DrPixlMan::depCheckBegin(bool useDepth) {
+    m_renderTarget = 0;
+    if (useDepth) {
+        grlib::CGLibState::beginRegisterRenderTarget();
+        grlib::CGLibState::setRegisterDepthTarget(*m_objTbl->m_depth[DrMan::s_nDblIdx]->m_pDepthBuffer);
+        grlib::CGLibState::endRegisterRenderTarget();
+    } else {
+        m_objTbl->m_depthCheck->setRenderTarget();
+    }
+    grlib::CGLibPolygon::setCullingOff();
+    grlib::CGLibColorCtl::setColorBufferOff();
+    grlib::CGLibDepthCtl::setDepthControl(1, 0, (GrlCompare)3);
+}
+
+void DrPixlMan::shadowDirEnd() {
+    DrAPGxType::endShadow();
+    m_renderTarget = 0;
+    selectGBuffRenderTarget();
+    setMainViewPort();
 }
 
 void DrPixlMan::fastRender() {
@@ -154,6 +288,12 @@ grlib::CGLibRenderTarget* DrPixlPostMan::getOldDownDepth() { return m_downDepth[
 
 bool DrPixlPostMan::isDepthDown() { return (m_flags >> 19) & 1; }
 
+void DrPixlPostMan::setVolumePos(const mm::Vec3& pos) {
+    if (m_volume != nullptr) {
+        m_volume->m_pos = pos;
+    }
+}
+
 DrPixlMemMan::DrPixlMemMan() { setupMemBuff(); }
 
 DrPixlMemMan::~DrPixlMemMan() {}
@@ -163,7 +303,35 @@ DrPixlMemMan::~DrPixlMemMan() {}
 DrPixlPostObj::DrPixlPostObj(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)
     : m_drMan(drMan), m_pixlMan(pixlMan), m_postMan(postMan) {}
 
+void DrPixlPostObj::calc1PixlOfs(float& width, float& height) {
+    int w = (int)width;
+    int h = (int)height;
+    width = (float)(w + (w & 1));
+    height = (float)(h + (h & 1));
+}
+
 DrPixlTileParm::~DrPixlTileParm() {}
+
+void DrPixlTileParm::update() { m_idx = DrMan::get()->m_qualityMode == 0; }
+
+DrPixlMdlSampler::DrPixlMdlSampler() {
+    m_cur.m_value0 = 4;
+    m_cur.m_value1 = 1;
+    m_cur.m_flag = false;
+    m_next.m_value0 = 4;
+    m_next.m_value1 = 1;
+    m_next.m_flag = false;
+}
+
+bool DrPixlMdlSampler::update() {
+    if (m_cur.m_value0 != m_next.m_value0 || m_cur.m_value1 != m_next.m_value1 || m_cur.m_flag != m_next.m_flag) {
+        m_cur.m_value0 = m_next.m_value0;
+        m_cur.m_value1 = m_next.m_value1;
+        m_cur.m_flag = m_next.m_flag;
+        return true;
+    }
+    return false;
+}
 
 DrPixlPostParm::DrPixlPostParm() { reset(); }
 
@@ -217,6 +385,14 @@ float DrPixlPostParm::getToonDirLightScale() const {
     return 1.0f;
 }
 
+void DrPixlPostParm::getRanDropLayerInfo(unsigned int layer, stRainDropLayerInfo& info) const {
+    info.m_param0 = m_rainDropLayer[0][layer];
+    info.m_param1 = m_rainDropLayer[1][layer];
+    info.m_param2 = m_rainDropLayer[2][layer];
+    info.m_param3 = m_rainDropLayer[4][layer];
+    info.m_param4 = m_rainDropLayer[3][layer];
+}
+
 void DrPixlPostParm::resetScene() { m_resetScene[DrMan::s_nDblStockIdx] = true; }
 
 void DrPixlPostParm::setWeatherFrame(float frame) { m_weatherFrame[DrMan::s_nDblStockIdx] = frame; }
@@ -245,6 +421,10 @@ void DrPixlPostParm::setColorFilterFrm(float value) { m_override[DrMan::s_nDblId
 void DrPixlPostParm::setColorFilterFarNum(int value) { m_override[DrMan::s_nDblIdx].m_colorFilterFarNum = value; }
 
 bool DrPixlPostParm::getRainDropOn() const { return m_rainDrop; }
+
+float DrPixlPostParm::getTMAASharpness(unsigned int type) const {
+    return DrMan::getIns()->m_qualityMode == 0 ? m_tmaaSharpnessAlt[type] : m_tmaaSharpness[type];
+}
 
 bool DrPixlPostParm::getSSRWithTrans() const { return !DrMan::getIns()->m_autoResetScene; }
 
