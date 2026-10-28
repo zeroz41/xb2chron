@@ -1,13 +1,13 @@
 #ifndef CLASSES_ML_DRMDOCTLSEAMALL_H
 #define CLASSES_ML_DRMDOCTLSEAMALL_H
 
-#include "classes/ml/DrMdoCtlSeam.h"
+#include "ml/DrMdoCtlSeamRead.h"
 
 namespace ml { class DrPixlShadowCacheObj; }
 
 namespace ml {
 // table 0x7100B7BAA8
-class DrMdoCtlSeamAll : public ::ml::DrMdoCtlSeam {
+class DrMdoCtlSeamAll : public ::ml::DrMdoCtlSeamRead {
 public:
     virtual ~DrMdoCtlSeamAll();  // slot 0
     virtual void update();  // slot 2

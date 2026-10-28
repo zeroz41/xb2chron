@@ -29,6 +29,7 @@ public:
     void callSpAlphaRenderPosAll();
     void callLightPrePassRenderPosAll();
     void callRefractionRenderPosAll();
+    void callPosRender(unsigned int pass);
     void createZBuffRenderDisplayList();
     void createThicknessRenderDisplayListSub(bool first);
 

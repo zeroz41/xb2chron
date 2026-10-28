@@ -8,6 +8,7 @@
 namespace cloud { class CloudMan; }
 namespace grlib { class CGLibTextureBuffer; }
 namespace ml { class DrAPCache; }
+namespace ml { class DrPixlTileParm; }
 namespace ml { class DrCalcMan; }
 namespace ml { class DrShdMan; }
 namespace ml { class DrLightMan; }
@@ -126,7 +127,10 @@ public:
     unsigned char pad_140[0x20];
     // one per view: ScnObjIBLDr makes and releases its IBL pack with it (the name is not the original's)
     DrGlobalIBLMan* m_iblMan[4];        // 0x160
-    unsigned char pad_180[0x2F8];
+    // 0x180: DrMdoCtlSeamAll::callRenderSeamAll brackets the seam mpf display list with its begin/end (the name is
+    // not the original's)
+    DrPixlTileParm* m_tileParm;
+    unsigned char pad_188[0x2F0];
     // 0x478: one 0x40-byte record per view; DrShdLgtGlobalIBL::update updates a view other than 0 only when bit 0 of
     // its first byte is set (the type and names are not the original's)
     struct ViewUpdate {
@@ -168,11 +172,18 @@ public:
     bool m_weatherFrameReq[2];
     bool m_homeMenu;                    // 0x1CC2, bkgHomeMenu(true) sets it
     bool m_autoResetScene;
-    unsigned char pad_1CC4[0x5C];
+    unsigned char pad_1CC4[0x38];
+    // 0x1CFC: while >= 1, DrMdoCtlSeamRead::wait*Stream also set bit 10 of a seam model's flags when its stream
+    // ends without data (the name is not the original's)
+    int m_seamReadErrMode;
+    unsigned char pad_1D00[0x20];
     unsigned int* m_dispOffBits;  // 0x1D20: a bit per display index, set = hidden (ScnObjAccPartsEtcPos::isDisp; name inferred)
     unsigned char pad_1D28[0x8];
     mm::Vec3 m_globalWind[2];           // 0x1D30, by s_nDblNowIdx (getGlobalWind)
-    unsigned char pad_1D50[0x3C];
+    unsigned char pad_1D50[0x2D];
+    // 0x1D7D: DrMdoCtlSeamAll's render passes return at once while set (the name is not the original's)
+    bool m_seamRenderOff;
+    unsigned char pad_1D7E[0xE];
     // 0x1D8C: DrShdLgtHybrid::render skips the clustered lights' render while set (the name is not the original's)
     bool m_clusteredRenderOff;
     unsigned char pad_1D8D[0x4];

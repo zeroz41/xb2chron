@@ -7,6 +7,7 @@
 #include "classes/ml/DrMdoCtlSeamAll.h"
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/DrMdoZSortObj.h"
+#include "classes/ml/DrResMdoSeamWrkMpf.h"
 #include "classes/ml/DrShdLgtClustered.h"
 #include "classes/ml/DrShdLgtHybrid.h"
 #include "grlib/CGLibCtl.h"
@@ -27,7 +28,9 @@
 #include "ml/DrPixlPostMan.h"
 #include "ml/DrPixlPostObjCubeMapIBL.h"
 #include "ml/DrPixlPostParm.h"
+#include "ml/DrPixlTileParm.h"
 #include "ml/DrResMdoMat.h"
+#include "ml/DrResMdoVertex.h"
 #include "ml/DrShdDataList.h"
 #include "ml/DrShdLgtMan.h"
 #include "ml/DrShdMan.h"
@@ -987,6 +990,380 @@ void DrMdoCtlPos::callThicknessRenderSecondPosAll() {
         createThicknessRenderDisplayListSub(false);
     }
 }
+
+void DrMdoCtlPos::callRenderPosAll() {
+    if (m_stateFlags & 0x1) {
+        m_renderPass = 0;
+        m_renderTech = 0;
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        callPosRender(0x1);
+    }
+}
+
+void DrMdoCtlPos::callRefractionRenderPosAll() {
+    if (m_stateFlags & 0x4) {
+        m_renderPass = 2;
+        m_renderTech = 8;
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        callPosRender(0x4);
+    }
+}
+
+void DrMdoCtlPos::callGBuffRenderPosAll() {
+    if (m_stateFlags & 0x2) {
+        m_renderPass = 1;
+        m_renderTech = 7;
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        callPosRender(0x8);
+    }
+}
+
+void DrMdoCtlPos::callLightPrePassRenderPosAll() {
+    if (m_stateFlags & 0x8) {
+        m_renderPass = 3;
+        m_renderTech = 4;
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        callPosRender(0x20);
+    }
+}
+
+void DrMdoCtlPos::callAlphaRenderPosAll() {
+    if (m_stateFlags & 0x10) {
+        m_renderPass = 4;
+        m_renderTech = 1;
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        callPosRender(0x2);
+    }
+}
+
+void DrMdoCtlPos::callSpAlphaRenderPosAll() {
+    if (m_stateFlags & 0x20) {
+        m_renderPass = 5;
+        m_renderTech = 1;
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        callPosRender(0x40);
+    }
+}
+
+void DrMdoCtlSeamAll::callZPrePassSeamAll() {
+    if (!(m_stateFlags & 0x100000) || m_pDrMan->m_seamRenderOff) {
+        return;
+    }
+    m_renderTech = 0;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    m_pDrMan->m_apCache->setupCulling(static_cast<DrApCullType>(2));
+    createBaseZPrePassDisplayList();
+    createInstZPrePassDisplayList();
+    createMpfZPrePassDisplayList();
+    createLowZPrePassDisplayList();
+}
+
+void DrMdoCtlSeamAll::callThicknessFirstSeamAll() {
+    if (!(m_stateFlags & 0x40) || m_pDrMan->m_seamRenderOff) {
+        return;
+    }
+    m_renderTech = 0;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    m_pDrMan->m_apCache->beginThicknessRenderFirst();
+    m_pDrMan->m_apCache->setupCulling(static_cast<DrApCullType>(1));
+    createBaseThicknesPassDisplayList(true);
+    createInstThicknessPassDisplayList(true);
+}
+
+void DrMdoCtlSeamAll::callThicknessSecondSeamAll() {
+    if (!(m_stateFlags & 0x40) || m_pDrMan->m_seamRenderOff) {
+        return;
+    }
+    m_renderTech = 0;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    m_pDrMan->m_apCache->beginThicknessRenderSecond();
+    m_pDrMan->m_apCache->setupCulling(static_cast<DrApCullType>(0));
+    createBaseThicknesPassDisplayList(false);
+    createInstThicknessPassDisplayList(false);
+}
+
+void DrMdoCtlSeamAll::callRenderSeamAll() {
+    if (!(m_stateFlags & 0x1) || m_pDrMan->m_seamRenderOff) {
+        return;
+    }
+    m_renderPass = 0;
+    m_renderTech = 0;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    renderSeamInstMap(0);
+    renderSeamBaseMap(0);
+    if (m_seamFlags & 0x8) {
+        DrMan::get()->m_tileParm->begin(static_cast<DrPixlTileParm::TileType>(3));
+        createMpfMapDisplayList();
+        DrMan::get()->m_tileParm->end(static_cast<DrPixlTileParm::TileType>(3));
+    }
+    renderSeamLowMap(0);
+}
+
+void DrMdoCtlSeamAll::callGBuffRenderSeamAll() {
+    if (!(m_stateFlags & 0x2) || m_pDrMan->m_seamRenderOff) {
+        return;
+    }
+    m_renderPass = 1;
+    m_renderTech = 7;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    renderSeamInstMap(1);
+    renderSeamBaseMap(1);
+    renderSeamLowMap(1);
+}
+
+void DrMdoCtlSeamAll::callLightPrePassRenderSeamAll() {
+    if (!(m_stateFlags & 0x8) || m_pDrMan->m_seamRenderOff) {
+        return;
+    }
+    m_renderPass = 3;
+    m_renderTech = 4;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    renderSeamBaseMap(3);
+    renderSeamInstMap(3);
+    renderSeamLowMap(3);
+}
+
+void DrMdoCtlSeamAll::callAlphaRenderSeamAll() {
+    if (!(m_stateFlags & 0x10) || m_pDrMan->m_seamRenderOff) {
+        return;
+    }
+    m_renderPass = 4;
+    m_renderTech = 1;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    renderSeamLowMap(4);
+    renderSeamBaseMap(4);
+    renderSeamInstMap(4);
+}
+
+void DrMdoCtlSeamAll::callSpAlphaRenderSeamAll() {
+    if (!(m_stateFlags & 0x20) || m_pDrMan->m_seamRenderOff) {
+        return;
+    }
+    m_renderPass = 5;
+    m_renderTech = 1;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    renderSeamLowMap(5);
+    renderSeamBaseMap(5);
+    renderSeamInstMap(5);
+}
+
+void DrMdoCtlSeamAll::callRefractionRenderSeamAll() {
+    if (!(m_stateFlags & 0x4) || m_pDrMan->m_seamRenderOff) {
+        return;
+    }
+    m_renderPass = 2;
+    m_renderTech = 8;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    renderSeamInstMap(2);
+    renderSeamBaseMap(2);
+    renderSeamLowMap(2);
+}
+
+void DrMdoCtlSeamAll::callRenderSeamEnvMap() {
+    if (!(m_stateFlags & 0x1) || m_pDrMan->m_seamRenderOff) {
+        return;
+    }
+    m_renderPass = 0;
+    m_renderTech = 0;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    DrMdoCtlSeamEnvMap::callRenderSeamEnvMap();
+}
+
+void DrMdoCtlSeamAll::callGBuffRenderSeamEnvMap() {
+    if (!(m_stateFlags & 0x2) || m_pDrMan->m_seamRenderOff) {
+        return;
+    }
+    m_renderPass = 1;
+    m_renderTech = 7;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    DrMdoCtlSeamEnvMap::callGBuffRenderSeamEnvMap();
+}
+
+void DrMdoCtlSeamAll::callLightPrePassRenderSeamEnvMap() {
+    if (!(m_stateFlags & 0x8) || m_pDrMan->m_seamRenderOff) {
+        return;
+    }
+    m_renderPass = 3;
+    m_renderTech = 4;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    DrMdoCtlSeamEnvMap::callLightPrePassRenderSeamEnvMap();
+}
+
+void DrMdoCtlSeamAll::callAlphaRenderSeamEnvMap() {
+    if (!(m_stateFlags & 0x10) || m_pDrMan->m_seamRenderOff) {
+        return;
+    }
+    m_renderPass = 4;
+    m_renderTech = 1;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    DrMdoCtlSeamEnvMap::callAlphaRenderSeamEnvMap();
+}
+
+void DrMdoCtlSeamAll::callSpAlphaRenderSeamEnvMap() {
+    if (!(m_stateFlags & 0x20) || m_pDrMan->m_seamRenderOff) {
+        return;
+    }
+    m_renderPass = 5;
+    m_renderTech = 1;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    DrMdoCtlSeamEnvMap::callSpAlphaRenderSeamEnvMap();
+}
+
+void DrMdoCtlSeamAll::callRefractionRenderSeamEnvMap() {
+    if (!(m_stateFlags & 0x4) || m_pDrMan->m_seamRenderOff) {
+        return;
+    }
+    m_renderPass = 2;
+    m_renderTech = 8;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    DrMdoCtlSeamEnvMap::callRefractionRenderSeamEnvMap();
+}
+
+void DrMdoCtlSeamRead::waitBaseMapStream(_wkSeamReadCall* call, bool ok) {
+    if (ok) {
+        initBaseMapParts(call->m_pBase);
+        m_readWaitBits &= ~(1 << call->m_readIdx);
+    } else {
+        m_seamFlags |= 0x10000;
+        if (m_pDrMan->m_seamReadErrMode >= 1) {
+            m_seamFlags |= 0x400;
+        }
+    }
+}
+
+void DrMdoCtlSeamRead::waitLowMdlStream(_wkSeamReadCall* call, bool ok) {
+    if (ok) {
+        initLowMapParts(call->m_pLow);
+        m_readWaitBits &= ~(1 << call->m_readIdx);
+    } else {
+        m_seamFlags |= 0x10000;
+        if (m_pDrMan->m_seamReadErrMode >= 1) {
+            m_seamFlags |= 0x400;
+        }
+    }
+}
+
+void DrMdoCtlSeamRead::waitInstMapStream(_wkSeamReadCall* call, bool ok) {
+    if (ok) {
+        initInstMapParts(call->m_pInst, call->m_pInst2);
+        m_readWaitBits &= ~(1 << call->m_readIdx);
+    } else {
+        m_seamFlags |= 0x10000;
+        if (m_pDrMan->m_seamReadErrMode >= 1) {
+            m_seamFlags |= 0x400;
+        }
+    }
+}
+
+void DrMdoCtlSeamRead::waitEnvMdlStream(_wkSeamReadCall* call, bool ok) {
+    if (ok) {
+        initEnvMapParts(call->m_pEnv);
+        m_readWaitBits &= ~(1 << call->m_readIdx);
+    } else {
+        m_seamFlags |= 0x10000;
+        if (m_pDrMan->m_seamReadErrMode >= 1) {
+            m_seamFlags |= 0x400;
+        }
+    }
+}
+
+void DrMdoCtlSeamRead::waitMpfEtcStream(_wkSeamReadCall* call, bool ok) {
+    DrResMdoSeamWrkMpf* wrk = call->m_pMpf;
+    if (ok) {
+        wrk->setEtcMpfCache(call->m_cacheIdx, call->m_pMemObj);
+        m_readWaitBits &= ~(1 << call->m_readIdx);
+    } else {
+        m_seamFlags |= 0x10000;
+        wrk->m_cacheFlags |= 1;
+        if (m_pDrMan->m_seamReadErrMode >= 1) {
+            m_seamFlags |= 0x400;
+        }
+    }
+}
+
+void DrMdoCtlSeamRead::waitMpfPoliStream(_wkSeamReadCall* call, bool ok) {
+    DrResMdoSeamWrkMpf* wrk = call->m_pMpf;
+    if (ok) {
+        wrk->setMpfPoliCache(call->m_cacheIdx, call->m_pMemObj);
+        m_readWaitBits &= ~(1 << call->m_readIdx);
+    } else {
+        m_seamFlags |= 0x10000;
+        wrk->m_cacheFlags |= 1;
+        if (m_pDrMan->m_seamReadErrMode >= 1) {
+            m_seamFlags |= 0x400;
+        }
+    }
+}
+
 
 
 void DrMdoSetup::uniformBlock_no(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {}
