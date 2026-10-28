@@ -13691,7 +13691,7 @@ _ZThn24_N2gf29GfPlayComStartChallengeBattle10gevMapjumpENS_3GEVERKNS_19MapjumpCa
 _ZN2gf29GfPlayComStartChallengeBattle6createERKNS_14MsgUnk_10000345ParamE = .text:0x0031DE54; // type:function size:0xE0 scope:global
 _ZN2gf26GfPlayComScriptTutorialSeqD1Ev = .text:0x0031DF34; // type:function size:0x28 scope:global
 _ZN2gf26GfPlayComScriptTutorialSeqD0Ev = .text:0x0031DF5C; // type:function size:0x28 scope:global
-fn_710031DF84 = .text:0x0031DF84; // type:function size:0x58 scope:global
+_ZN2gf26GfPlayComScriptTutorialSeq5startEv = .text:0x0031DF84; // type:function size:0x58 scope:global
 _ZN2gf26GfPlayComScriptTutorialSeq3endEv = .text:0x0031DFDC; // type:function size:0x1C scope:global
 _ZN2gf26GfPlayComScriptTutorialSeq6updateERKN2fw10UpdateInfoEb = .text:0x0031DFF8; // type:function size:0x4C scope:global
 _ZN2gf26GfPlayComScriptTutorialSeq13fn_710031E044EPKci = .text:0x0031E044; // type:function size:0xF8 scope:global
@@ -13782,7 +13782,7 @@ _ZNK2gf19GfPlayComPlayerDead11getFuncNameEv = .text:0x0031E6BC; // type:function
 _ZThn16_N2gf19GfPlayComPlayerDeadD1Ev = .text:0x0031E6CC; // type:function size:0x20 scope:weak
 _ZThn16_N2gf19GfPlayComPlayerDeadD0Ev = .text:0x0031E6EC; // type:function size:0x20 scope:weak
 _ZThn24_N2gf19GfPlayComPlayerDeadD1Ev = .text:0x0031E70C; // type:function size:0x20 scope:weak
-fn_710031E72C = .text:0x0031E72C; // type:function size:0x28 scope:global
+_ZThn24_N2gf19GfPlayComPlayerDeadD0Ev = .text:0x0031E72C; // type:function size:0x28 scope:global
 _ZNK2gf13GfPlayComTalk7getRTTIEv = .text:0x0031E754; // type:function size:0xC scope:weak
 _ZN2gf13GfPlayComTalkD2Ev = .text:0x0031E760; // type:function size:0x20 scope:weak
 _ZN2gf13GfPlayComTalkD0Ev = .text:0x0031E780; // type:function size:0x20 scope:weak

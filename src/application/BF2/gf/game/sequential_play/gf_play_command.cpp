@@ -1,3 +1,4 @@
+#include "classes/gf/GfPlayComIraCampSave.h"
 #include "gf/GfQuestUtil.h"
 #include "classes/gf/GfPlayComChainAttack.h"
 #include "classes/gf/GfPlayComMoverSwitch.h"
@@ -117,6 +118,7 @@
 #include "classes/gf/GfPlayComFieldTbox.h"
 #include "classes/gf/GfPlayComCollect.h"
 #include "classes/gf/GfPlayComHoodHomuraBattou.h"
+#include "classes/gf/GfGameObj.h"
 #include "classes/gf/GfPlayComReturnTitle.h"
 #include "classes/gf/GfPlayComOpenMenu.h"
 #include "classes/gf/GfPlayComMenuDummyTutorial.h"
@@ -397,6 +399,16 @@ bool GfPlayComIraCampSave::update(const fw::UpdateInfo& info, bool flag) {
     }
     m_req = -1;
     return true;
+}
+
+GfPlayComIraCampSave* GfPlayComIraCampSave::fn_710031988C() {
+#line 1006
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComIraCampSave(false);
+}
+
+GfPlayComIraCampSave* GfPlayComIraCampSave::fn_7100319900() {
+#line 1012
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComIraCampSave(true);
 }
 
 // hand: begin GfPlayComOpenMenu::~GfPlayComOpenMenu
@@ -1281,6 +1293,19 @@ void GfPlayComHoodHomuraBattou::start() {}
 
 void GfPlayComHoodHomuraBattou::end() {}
 
+bool GfPlayComHoodHomuraBattou::update(const fw::UpdateInfo& info, bool flag) {
+    GfObjAcc acc(GfGameParty::getHandleBlade(0, -1));
+    if (acc.m_obj) {
+        if (acc.isRebuild() || !GfGameObj::isValidGameObj(acc.getHandle(), true, nullptr)) {
+            return false;
+        }
+        if (GfGameManager::isEnableBattouWithHoodHomura(false)) {
+            GfGameUtil::enterPlayerBattle(false, reinterpret_cast<GF_OBJ_HANDLE*>(-1), false);
+        }
+    }
+    return true;
+}
+
 void GfPlayComChainAttack::start() { m_state = 3; }
 
 void GfPlayComChainAttack::end() { GfChainAttack::destroy(); }
@@ -1688,6 +1713,16 @@ GfPlayComWaitPlayerToStartGmkTuto* GfPlayComWaitPlayerToStartGmkTuto::create() {
 }
 
 GfPlayComScriptTutorialSeq::~GfPlayComScriptTutorialSeq() { s_activate--; }
+
+void GfPlayComScriptTutorialSeq::start() {
+    if (m_name.length() != 0) {
+        if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
+            scene->setEventPlayerStop(true);
+        }
+        GfGameEvent::setAfterEventStartID(m_startId);
+        m_script = SCOM_SCRIPT::create(3, m_name.m_str, true);
+    }
+}
 
 void GfPlayComScriptTutorialSeq::end() {
     if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
