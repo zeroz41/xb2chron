@@ -22,7 +22,10 @@ public:
     virtual void getBindedRoutePointList() const;  // slot 11
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(7);
-    long pad_50 = -1;
+    // its game object (GmkManager::collectGameObjs<GmkRoutedMapObj> reads it inline: none is -1; the names are
+    // not the original's)
+    gf::GF_OBJ_HANDLE* getGobInst() const { return m_gobInst; }
+    gf::GF_OBJ_HANDLE* m_gobInst = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     unsigned char pad_58 = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk

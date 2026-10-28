@@ -35,7 +35,10 @@ public:
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(6);
-    long pad_48 = -1;
+    // its game object (GmkManager::collectGameObjs<GmkMapObj> reads it inline: none is -1; the names are not the
+    // original's)
+    gf::GF_OBJ_HANDLE* getGobInst() const { return m_gobInst; }
+    gf::GF_OBJ_HANDLE* m_gobInst = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     unsigned char pad_50 = 1;
     unsigned char pad_51 = 0;
     unsigned char pad_52 = 0;

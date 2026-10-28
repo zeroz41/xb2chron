@@ -2,7 +2,7 @@
 #define GF_GFGAMEUTIL_H
 
 namespace gf { class GF_OBJ_HANDLE; }
-namespace mm { class Vec3; namespace mtl { template <int LEN> class FixStr; } }
+namespace mm { class Vec3; namespace mtl { template <int LEN> class FixStr; template <typename T, unsigned long N> class FixedList; } }
 namespace gmk { enum GmkType : int; }
 
 namespace gf {
@@ -105,11 +105,16 @@ public:
     static void makeWeaponStateIdle(mm::mtl::FixStr<32>& out, gf::GF_OBJ_HANDLE* owner, bool battle);
     // the same for a weapon id (GfEvtModelWeapon's states; the parameter names are not the original's)
     static void makeWeaponStateIdle(mm::mtl::FixStr<32>& out, unsigned int weaponId, bool battle);
-    // the name of a weapon's battle (or field) command for a weapon id (GfEvtModelWeapon's commands; the meaning of
-    // the last flag is not known)
-    static void makeWeaponCommandBattle(mm::mtl::FixStr<32>& out, unsigned int weaponId, bool battle, bool arg);
+    // the name of a weapon's battle (or field) command for a weapon id (GfEvtModelWeapon's commands);
+    // the last flag picks the motion resource's name over the model's (the parameter names are not the original's)
+    static void makeWeaponCommandBattle(mm::mtl::FixStr<32>& out, unsigned int weaponId, bool battle, bool motion);
+    // the same for the weapon's owner object
+    static void makeWeaponCommandBattle(mm::mtl::FixStr<32>& out, gf::GF_OBJ_HANDLE* owner, bool battle, bool motion);
     // shows or hides the gimmicks of a type
     static void setDispByGmkType(gmk::GmkType type, bool disp);
+    // adds the game objects of every gimmick of a type (enemies, mobs, NPCs, map objects and their routed kinds);
+    // false while there is no valid gimmick manager or for another type
+    static bool collectGfObjHandleByGmkType(mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 1024>& list, gmk::GmkType type);
     // the object's wire to target (GfAppendWire, through GfGameScene::getAppendControl)
     static void startWire(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* target, float time);
     static void startWireWithClose(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* target, float time, float, float);
@@ -144,7 +149,11 @@ public:
     static bool isDispHomuraCrystal();
     static bool isDispMetsuCrystal();
     static void dispRexCrystal(gf::GF_OBJ_HANDLE* handle, bool disp);
+    static void dispHomuraCrystal(gf::GF_OBJ_HANDLE* handle, bool disp);  // "cc_homu" shown, "cc_zohar" the opposite
     static void dispMetsuCrystal(gf::GF_OBJ_HANDLE* handle, bool disp);
+    // Kosmos (blade 0x40f, type 4): shows (or hides) and runs (or stops) the second (left) object of its first
+    // mounted weapon's first handle set
+    static void setKosmosArts3EnableBothWeapon(gf::GF_OBJ_HANDLE* handle, bool enable);
     // a driver's weapon objects (-1 for none): the mounted weapon's, else the one of attach slot 3
     static gf::GF_OBJ_HANDLE* getDriverWeaponRight(gf::GF_OBJ_HANDLE* handle);
     static gf::GF_OBJ_HANDLE* getDriverWeaponLeft(gf::GF_OBJ_HANDLE* handle);  // the active anti-blade area gimmick's row
@@ -160,6 +169,12 @@ public:
     };
     static void makeCommandBattle(mm::mtl::FixStr<32>& out, bool battle);
     static void makeStateBattle(mm::mtl::FixStr<32>& out, gf::GF_OBJ_HANDLE* handle, bool battle);
+    // the name of an object's idle state: "S_idle" out of battle, else by its blade's weapon type
+    static void makeStateIdle(mm::mtl::FixStr<32>& out, gf::GF_OBJ_HANDLE* handle, bool battle);
+    // the same for a blade id (its DataParamAcc's weapon type; the parameter names are not the original's)
+    static void makeStateBattleByBlade(mm::mtl::FixStr<32>& out, unsigned int blade, bool battle);
+    // the name of a blade's idle state: "S_idle" out of battle, else by its weapon type (nothing for blade 0)
+    static void makeStateIdleByBlade(mm::mtl::FixStr<32>& out, unsigned int blade, bool battle);
     static void debugHpZero(gf::GF_OBJ_HANDLE* handle);
     static void execSaveAchievementPopup(unsigned int blade);
     // the HP the UI shows for an object and its maximum (false when it has none)

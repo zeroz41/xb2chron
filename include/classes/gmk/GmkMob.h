@@ -29,6 +29,9 @@ public:
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x12);
+    // its game objects, as GmkManager::collectGameObjsUnbound<T> reads them inline (the names are not the original's)
+    unsigned int getGobInstNum() const { return m_insts.m_gobInsts->size(); }
+    gf::GF_OBJ_HANDLE* getGobInst(unsigned int index) const { return (*m_insts.m_gobInsts)[index]; }
     GmkMobInsts m_insts;  // 0x48: dispose disposes it (the name is not the original's); size from TGmkList::getInst's stride
 };
 }  // namespace gmk

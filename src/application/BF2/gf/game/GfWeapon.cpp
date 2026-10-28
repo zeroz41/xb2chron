@@ -1,3 +1,25 @@
+#include "gf/GfGameUtil.h"
+#include "classes/gmk/GmkMapObj.h"
+#include "classes/gmk/GmkRoutedMapObj.h"
+#include "classes/gmk/GmkNpc.h"
+#include "classes/gmk/GmkRoutedNpc.h"
+#include "classes/gmk/GmkManager.h"
+#include "classes/gmk/GmkEnemy.h"
+#include "classes/gmk/GmkRoutedEnemy.h"
+#include "classes/gmk/GmkMob.h"
+#include "classes/gmk/GmkRoutedMob.h"
+#include "gf/GfGameUtil.h"
+#include "classes/gmk/GmkMapObj.h"
+#include "classes/gmk/GmkRoutedMapObj.h"
+#include "classes/gmk/GmkNpc.h"
+#include "classes/gmk/GmkRoutedNpc.h"
+#include "classes/gmk/GmkManager.h"
+#include "classes/gmk/GmkEnemy.h"
+#include "classes/gmk/GmkRoutedEnemy.h"
+#include "classes/gmk/GmkMob.h"
+#include "classes/gmk/GmkRoutedMob.h"
+#include "mm/mtl/FixedList.h"
+#include "gf/GfUtil.h"
 #include "gf/GfDataHana.h"
 #include "gf/GfGameUtilHana.h"
 #include "classes/gf/GfEvent.h"
@@ -118,6 +140,42 @@ void GfGameUtil::addEther(int ether) {
     int value = GfDataHana::getEther() + ether;
     value = value < 0 ? 0 : (value > 999999999 ? 999999999 : value);
     GfDataHana::setEther(value);
+}
+
+bool GfGameUtil::collectGfObjHandleByGmkType(mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>& list, gmk::GmkType type) {
+    gmk::GmkManager* manager = gmk::GmkManager::sys();
+    if (manager == nullptr || !manager->isValid()) {
+        return false;
+    }
+    switch (type) {
+    case gmk::GmkEnemy::TYPE:
+        gmk::GmkManager::sys()->collectGameObjsUnbound<gmk::GmkEnemy>(list);
+        break;
+    case gmk::GmkRoutedEnemy::TYPE:
+        gmk::GmkManager::sys()->collectGameObjsUnbound<gmk::GmkRoutedEnemy>(list);
+        break;
+    case gmk::GmkNpc::TYPE:
+        gmk::GmkManager::sys()->collectGameObjs<gmk::GmkNpc>(list);
+        break;
+    case gmk::GmkRoutedNpc::TYPE:
+        gmk::GmkManager::sys()->collectGameObjs<gmk::GmkRoutedNpc>(list);
+        break;
+    case gmk::GmkMapObj::TYPE:
+        gmk::GmkManager::sys()->collectGameObjs<gmk::GmkMapObj>(list);
+        break;
+    case gmk::GmkRoutedMapObj::TYPE:
+        gmk::GmkManager::sys()->collectGameObjs<gmk::GmkRoutedMapObj>(list);
+        break;
+    case gmk::GmkMob::TYPE:
+        gmk::GmkManager::sys()->collectGameObjsUnbound<gmk::GmkMob>(list);
+        break;
+    case gmk::GmkRoutedMob::TYPE:
+        gmk::GmkManager::sys()->collectGameObjsUnbound<gmk::GmkRoutedMob>(list);
+        break;
+    default:
+        return false;
+    }
+    return true;
 }
 
 void GfGameUtil::setDispByGmkType(gmk::GmkType type, bool disp) {
@@ -287,6 +345,19 @@ void GfGameUtil::dispRexCrystal(GF_OBJ_HANDLE* handle, bool disp) {
     }
 }
 
+void GfGameUtil::dispHomuraCrystal(GF_OBJ_HANDLE* handle, bool disp) {
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) return;
+    GfObjAcc acc(handle);
+    int mesh = acc.getExtMeshIdx("cc_homu");
+    if (mesh >= 0) {
+        acc.setExtMeshAlpha(mesh, disp ? 1.0f : 0.0f);
+    }
+    mesh = acc.getExtMeshIdx("cc_zohar");
+    if (mesh >= 0) {
+        acc.setExtMeshAlpha(mesh, disp ? 0.0f : 1.0f);
+    }
+}
+
 void GfGameUtil::dispMetsuCrystal(GF_OBJ_HANDLE* handle, bool disp) {
     if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) return;
     GfObjAcc acc(handle);
@@ -294,6 +365,25 @@ void GfGameUtil::dispMetsuCrystal(GF_OBJ_HANDLE* handle, bool disp) {
     if (mesh >= 0) {
         acc.setExtMeshAlpha(mesh, disp ? 1.0f : 0.0f);
     }
+}
+
+void GfGameUtil::setKosmosArts3EnableBothWeapon(GF_OBJ_HANDLE* handle, bool enable) {
+    GfObjAcc acc(handle);
+    if (acc.getType() != 4 || acc.getBladeId() != 0x40f) {
+        return;
+    }
+    GfWeapon* weapon = GfMountManager::getGfWeapon(handle, static_cast<GFATTACH>(0));
+    if (weapon == nullptr) {
+        return;
+    }
+    bool useSecond = weapon->m_useSecond;
+    weapon->m_useSecond = false;
+    GfObjAcc weaponAcc(weapon->getObjHandles()[1]);
+    weaponAcc.setDisp(static_cast<OBJDISP>(0x20), enable);
+    if (GfObj* obj = weaponAcc.getObj()) {
+        obj->setUpdateComponent(enable);
+    }
+    weapon->m_useSecond = useSecond;
 }
 
 GF_OBJ_HANDLE* GfGameUtil::getDriverWeaponRight(GF_OBJ_HANDLE* handle) {
@@ -324,8 +414,122 @@ GF_OBJ_HANDLE* GfGameUtil::getDriverWeaponLeft(GF_OBJ_HANDLE* handle) {
 
 namespace gf {
 
+void GfGameUtil::makeWeaponStateIdle(mm::mtl::FixStr<32>& out, GF_OBJ_HANDLE* owner, bool battle) {
+    const char* name = util::getFilePtrFromPath(GfObjUtil::getMotionResourceName(owner));
+    out = "S_";
+    out += name;
+    out += "_";
+    out += battle ? "btidle" : "idle";
+}
+
+void GfGameUtil::makeWeaponStateIdle(mm::mtl::FixStr<32>& out, unsigned int weaponId, bool battle) {
+    const char* name = util::getFilePtrFromPath(GfDataDriver::getMotionResourceName(weaponId));
+    out = "S_";
+    out += name;
+    out += "_";
+    out += battle ? "btidle" : "idle";
+}
+
+// "S_<weapon type, two digits>_btidle" (inline: makeStateIdle and makeStateIdleByBlade inline it, its string
+// first on their stacks; the name is not the original's)
+static void makeStateIdleByWpnType(mm::mtl::FixStr<32>& out, unsigned int type) {
+    mm::mtl::FixStr<16> num;
+    if (type >= 10) {
+        num.format("%d_", type);
+    } else {
+        num.format("0%d_", type);
+    }
+    out = "S_";
+    out += num.m_str;
+    out += "btidle";
+}
+
+void GfGameUtil::makeStateIdle(mm::mtl::FixStr<32>& out, GF_OBJ_HANDLE* handle, bool battle) {
+    if (!battle) {
+        out = "S_idle";
+        return;
+    }
+    DataParamAcc param(handle);
+    if (param.getObjType() == 4 || param.getObjType() == 5) {
+        out = "S_btidle";
+        return;
+    }
+    unsigned int blade = param.getBlade(-1, false);
+    if (blade == 0) {
+        return;
+    }
+    if (GfGameManager::isEvent(false)) {
+        unsigned int type = GfDataBlade::getBladeWpnType(blade);
+        if (param.getObjType() == 3 && (type == 18 || type == 19)) {
+            out = "S_btidle";
+            return;
+        }
+    }
+    unsigned int type = GfDataBlade::getBladeWpnType(blade);
+    makeStateIdleByWpnType(out, type);
+}
+
+void GfGameUtil::makeStateIdleByBlade(mm::mtl::FixStr<32>& out, unsigned int blade, bool battle) {
+    if (!battle) {
+        out = "S_idle";
+        return;
+    }
+    if (blade == 0) {
+        return;
+    }
+    if (GfDataDriver::fn_710023F9A8(GfDataBlade::fn_7100236518(blade))) {
+        out = "S_01_btidle";
+        return;
+    }
+    unsigned int type = GfDataBlade::getBladeWpnType(blade);
+    if (GfGameManager::isEvent(false) && (type == 18 || type == 19)) {
+        out = "S_btidle";
+        return;
+    }
+    makeStateIdleByWpnType(out, type);
+}
+
+// the name of a weapon's battle (or field) command for its owner (motion: from the motion resource's name, else
+// the model's; the parameter names are not the original's)
+void GfGameUtil::makeWeaponCommandBattle(mm::mtl::FixStr<32>& out, GF_OBJ_HANDLE* owner, bool battle, bool motion) {
+    const char* name = util::getFilePtrFromPath(motion ? GfObjUtil::getMotionResourceName(owner)
+                                                       : GfObjUtil::getResourceName(owner));
+    out = "C_";
+    out += name;
+    out += "_";
+    out += battle ? "btstart" : "btend";
+}
+
+void GfGameUtil::makeWeaponCommandBattle(mm::mtl::FixStr<32>& out, unsigned int weaponId, bool battle, bool motion) {
+    const char* name = util::getFilePtrFromPath(motion ? GfDataDriver::getMotionResourceName(weaponId)
+                                                       : GfDataDriver::getModelResourceName(weaponId));
+    out = "C_";
+    out += name;
+    out += "_";
+    out += battle ? "btstart" : "btend";
+}
+
 void GfGameUtil::makeCommandBattle(mm::mtl::FixStr<32>& out, bool battle) {
     out = "C_";
+    out += battle ? "btstart" : "btend";
+}
+
+void GfGameUtil::makeStateBattle(mm::mtl::FixStr<32>& out, GF_OBJ_HANDLE* handle, bool battle) {
+    GfObjAcc acc(handle);
+    int type = acc.getType();
+    unsigned int bdatId = acc.getBdatId();
+    if (type == 3 && !(bdatId >= 7 && bdatId <= 9)) {
+        DataParamAcc param(handle);
+        out.format("S_%02d_", param.getWeaponType(-1, false));
+    } else {
+        out = "S_";
+    }
+    out += battle ? "btstart" : "btend";
+}
+
+void GfGameUtil::makeStateBattleByBlade(mm::mtl::FixStr<32>& out, unsigned int blade, bool battle) {
+    DataParamAcc param(4, blade, GimmickType(0));
+    out.format("S_%02d_", param.getWeaponType(-1, false));
     out += battle ? "btstart" : "btend";
 }
 

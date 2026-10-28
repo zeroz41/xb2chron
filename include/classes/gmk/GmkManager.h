@@ -7,6 +7,7 @@
 #include "classes/gmk/IGmkList.h"
 #include "mm/mtl/Vector.h"
 #include "mm/mtl/FixStr.h"
+#include "mm/mtl/FixedList.h"
 #include "classes/gmk/GmkBdat.h"
 #include "classes/gmk/GmkPhantomManager.h"
 #include "classes/gmk/GmkLandmarkManager.h"
@@ -80,6 +81,61 @@ public:
             }
         }
         return true;
+    }
+    // adds the game object of every valid gimmick of kind T (T::getGobInst; -1: none) in every gimmick set
+    template <typename T>
+    void collectGameObjs(mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 1024>& list) const {
+        size_t num = m_gmkSets.size();
+        for (size_t i = 0; i < num; ++i) {
+            const GmkSet* set = m_gmkSets[i];
+            if (set == nullptr) {
+                continue;
+            }
+            const IGmkList* gmkList = set->getGmkList(T::TYPE);
+            if (gmkList == nullptr) {
+                continue;
+            }
+            unsigned int instNum = gmkList->getInstNum();
+            for (unsigned int j = 0; j < instNum; ++j) {
+                const T* gmk = static_cast<const T*>(gmkList->getInst(j));
+                if (gmk == nullptr || !gmk->isValid()) {
+                    continue;
+                }
+                gf::GF_OBJ_HANDLE* handle = gmk->getGobInst();
+                if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+                    list.push_back(handle);
+                }
+            }
+        }
+    }
+    // the same for the kinds that pop several objects (T::getGobInstNum, T::getGobInst)
+    template <typename T>
+    void collectGameObjsUnbound(mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 1024>& list) const {
+        size_t num = m_gmkSets.size();
+        for (size_t i = 0; i < num; ++i) {
+            const GmkSet* set = m_gmkSets[i];
+            if (set == nullptr) {
+                continue;
+            }
+            const IGmkList* gmkList = set->getGmkList(T::TYPE);
+            if (gmkList == nullptr) {
+                continue;
+            }
+            unsigned int instNum = gmkList->getInstNum();
+            for (unsigned int j = 0; j < instNum; ++j) {
+                const T* gmk = static_cast<const T*>(gmkList->getInst(j));
+                if (gmk == nullptr || !gmk->isValid()) {
+                    continue;
+                }
+                unsigned int gobNum = gmk->getGobInstNum();
+                for (unsigned int k = 0; k < gobNum; ++k) {
+                    gf::GF_OBJ_HANDLE* handle = gmk->getGobInst(k);
+                    if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+                        list.push_back(handle);
+                    }
+                }
+            }
+        }
     }
 
     // what create copies (the member names below are not the original's)

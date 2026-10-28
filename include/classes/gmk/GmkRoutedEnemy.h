@@ -26,6 +26,10 @@ public:
     static const gmk::GmkType TYPE = gmk::GmkType(1);
 
     GmkEnemyInsts m_insts;  // (the name is not the original's)
+    // its game objects, as GmkManager::collectGameObjsUnbound<T> reads them inline (the names are not the
+    // original's)
+    unsigned int getGobInstNum() const { return m_insts.m_popInfo.getGobInstNum(); }
+    gf::GF_OBJ_HANDLE* getGobInst(unsigned int index) const { return m_insts.getGobInst(index); }
 };
 }  // namespace gmk
 

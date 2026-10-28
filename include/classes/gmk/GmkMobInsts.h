@@ -1,6 +1,9 @@
 #ifndef CLASSES_GMK_GMKMOBINSTS_H
 #define CLASSES_GMK_GMKMOBINSTS_H
 
+#include "mm/mtl/Vector.h"
+
+namespace gf { class GF_OBJ_HANDLE; }
 namespace gmk {
 // the game objects a mob gimmick spawns (GmkMob holds one at 0x48; GmkMob::create and GmkRoutedMob::create/dispose
 // call its functions). No table: a plain class. Size 0xd0 (GmkMob's stride 0x118 minus 0x48).
@@ -18,7 +21,9 @@ public:
     void disposeGobInsts(bool);
     unsigned char pad_0[0x90];
     void* pad_90;
-    unsigned char pad_98[0x38];
+    unsigned char pad_98[0x10];
+    mm::mtl::Vector<gf::GF_OBJ_HANDLE*>* m_gobInsts;  // 0xa8: GmkMob's game objects (the name is not the original's)
+    unsigned char pad_b0[0x20];
 };
 }  // namespace gmk
 

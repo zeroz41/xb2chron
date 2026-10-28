@@ -38,6 +38,7 @@ public:
     virtual void debugUpdate(float) {}  // slot 21
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(3);
+    gf::GF_OBJ_HANDLE* getGobInst() const;  // its game object (-1: none)
     unsigned char pad_50[0x20];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk

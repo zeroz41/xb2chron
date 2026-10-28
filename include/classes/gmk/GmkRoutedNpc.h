@@ -34,6 +34,7 @@ public:
     virtual void validateDisp() const;  // slot 21
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(4);
+    gf::GF_OBJ_HANDLE* getGobInst() const;  // its game object (-1: none)
     unsigned char pad_58[0x48];  // fields: size from TGmkList::getInst's stride (0xa0; AGmkNpc, vptr only, sits at 0x50)
 };
 }  // namespace gmk
