@@ -29,7 +29,9 @@ public:
         }
         unsigned short m_bgmCondition = 0;  // its "bgmCondition" column
     };
-    virtual ~GmkAreaBgm();  // slot 0
+    // inline: only an inline (linkonce) D2 lets clang defer inlining the four GmkBgmCondInfo destructors into it,
+    // as the original's D2 calls them while its D0 inlines them
+    virtual ~GmkAreaBgm() { dispose(); }  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
     virtual void dispose();  // slot 5

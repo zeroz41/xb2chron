@@ -752,6 +752,20 @@ void GmkTutorial::create(const CreateInfo& info) { AGmkBase::create(info); }
 void GmkSquadLeader::create(const CreateInfo& info) { AGmkBase::create(info); }
 void GmkSquadMember::create(const CreateInfo& info) { AGmkBase::create(info); }
 GmkRoute::~GmkRoute() { dispose(); }
+
+void GmkRoutedMapObj::dispose() {
+    if (m_gobInst != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gobInst);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gobInst);
+        m_gobInst = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    GmkRoute::dispose();
+}
+
+GmkRoutedMapObj::~GmkRoutedMapObj() { dispose(); }
 GmkRoutePoint::~GmkRoutePoint() { dispose(); }
 GmkFieldVolume::~GmkFieldVolume() { dispose(); }
 GmkSquadLeader::~GmkSquadLeader() { dispose(); }
@@ -784,6 +798,8 @@ void GmkDmgGimmick::debugDraw() const {
 }
 
 GmkDmgGimmick::~GmkDmgGimmick() { dispose(); }
+
+GmkAntiBladeArea::~GmkAntiBladeArea() { dispose(); }
 
 // ---- GmkSalvageLocator
 GmkSalvageLocator::~GmkSalvageLocator() { dispose(); }
@@ -1320,6 +1336,24 @@ bool GmkJump::BdatInfo::isPopCondMatched() const {
     }
     return true;
 }
+
+void GmkJump::dispose() {
+    if (m_effectHandle != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effectHandle);
+        m_effectHandle = 0;
+    }
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    AGmkBase::dispose();
+}
+
+GmkJump::~GmkJump() { dispose(); }
 
 void GmkLandmark::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
     m_nameId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "MSGID", row, 2);

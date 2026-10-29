@@ -60,10 +60,10 @@ public:
     void* pad_48 = nullptr;
     unsigned char pad_50 = 0;
     unsigned char pad_51[0x7];
-    long pad_58 = -1;
+    gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);  // dispose destroys it (-1: none; the name is not the original's)
     void* pad_60 = nullptr;
     void* pad_68 = nullptr;
-    unsigned char pad_70[0x4];
+    unsigned int m_effectHandle;  // dispose removes it from fw::EffectManager (the name is not the original's)
     unsigned int pad_74 = 0;
     unsigned char pad_78 = 0;
     unsigned char pad_79 = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
