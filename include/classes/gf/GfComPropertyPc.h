@@ -61,6 +61,8 @@ public:
     const T* getParam(unsigned int index) const {
         return static_cast<const T*>(m_paramList->m_entries[index].m_data);
     }
+    // by its symbol (GfComBehaviorPc's warps call it)
+    void flush();
     // by its symbol: the water states call it after turning m_rot
     void syncDirection();
 

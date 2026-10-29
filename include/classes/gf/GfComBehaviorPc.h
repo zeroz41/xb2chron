@@ -20,6 +20,9 @@ namespace gf { class GfComPropertyPc; }
 namespace gf { class MsgPcFieldSetFallMaxHeight; }
 namespace gf { class MsgPcFieldReqFallDeadMotion; }
 namespace gf { class MsgUnk_100001C; }
+namespace gf { class MsgObjectNotifyDead; }
+namespace gf { class MsgGameChangeTarget; }
+namespace gf { class MsgPcFieldChangeControlMode; }
 namespace gf { namespace pc { class Agent; } }
 
 namespace gf {
@@ -60,6 +63,17 @@ public:
     // the move of the property's integrate mode (its m_wallJumpState: 0 normal, 1 child height, 2 wall), none
     // while its m_stateFlags bit 16 is set
     void integrateMove(const fw::UpdateInfo& info);
+    // after a warp onto a wall: the frame synced, the environment and property flushed, the asm to
+    // "S_climbidle_base" (then state 0x2E), the movement reset and the PC faded in over the warp parameters' fadeTime
+    // after a warp: the frame synced, the environment and property flushed; a field battle start (field status
+    // bit 15 without m_stateFlags bit 11) restarts the battle (state 0x3F), else the asm goes to "S_wateridle"
+    // (state 0x14) in deep water or "S_idle" (state 3, a vehicle's riders told); the motion cleared, the fall
+    // heights reset, the PC faded in and the auto heal re-enabled (messages 0x1000046 and 0x100004B)
+    void onWarpNormal(gf::GfComPropertyPc& property);
+    void onWarpWall(gf::GfComPropertyPc& property);
+    // after a warp in battle: the frame synced, the environment and property flushed, m_stateFlags bit 7 and the
+    // move speed cleared, the movement reset and the fall damage and fall distance plugins' heights reset
+    void onWarpBattle(gf::GfComPropertyPc& property);
     void integrateMoveNormal(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
     void integrateMoveChildHeight(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
     void integrateMoveWall(const fw::UpdateInfo& info, gf::GfComPropertyPc& property);
@@ -75,6 +89,16 @@ public:
     // control and those plugins made again (TerrainDamage and DeadColCheck activated); with bit 0 the Hfsm goes to
     // state 3 and the asm to "S_idle".
     void fn_710050EF90(fw::MessageObject* sender, gf::MsgUnk_100001C& msg);
+    // the target IK plugin (none: nothing) switched off for no target (the look-at plugin on while the field
+    // property's status bit 1 is set), else the look-at off and target IK on (m_stateFlags bit 8); then its target
+    // faded to and kept
+    void procMsgGameChangeTarget(fw::MessageObject* sender, gf::MsgGameChangeTarget& msg);
+    void procMsgPcFieldChangeControlMode(fw::MessageObject* sender, gf::MsgPcFieldChangeControlMode& msg);
+    // a vehicle gets off and hands msg to its buddies; else a rider (m_stateFlags bit 9) gets off and the states
+    // get msg unless bit 11 is set (kind 4 always); for the party leader the battle global's controlled-character
+    // death flag is set (kind 4, or kind 3 from a MsgObjectDamage of at least the maximum HP), or the party gauge
+    // reset outside battle; then btl::Utility::fn_71000100A8
+    void procMsgObjectNotifyDead(fw::MessageObject* sender, gf::MsgObjectNotifyDead& msg);
     void calcHeadColiPos(float height, const fw::Transform& transform, mm::Vec3* pos);
     // switch the PC's agent's field and battle AI (StateUtil hands them on)
     void setEnableAgentField(bool enable);

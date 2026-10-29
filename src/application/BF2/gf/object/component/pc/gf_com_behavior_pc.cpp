@@ -34,6 +34,25 @@
 #include "gf/MsgUnk_100001C.h"
 #include "gf/MsgUnk_100001C.h"
 #include "fw/Allocator.h"
+#include "gf/MsgObjectNotifyDead.h"
+#include "gf/MsgObjectDamage.h"
+#include "gf/pc/StateUtilField.h"
+#include "gf/GfObjUtil.h"
+#include "gf/GfGameUtil.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/btl/BattleGlobal.h"
+#include "classes/btl/DataManager.h"
+#include "btl/Utility.h"
+#include "classes/gf/GfGameRide.h"
+#include "classes/gf/pc/GfPropertyBattle.h"
+#include "gf/MsgPcBattleStart.h"
+#include "gf/MsgUnk_1000046.h"
+#include "gf/MsgUnk_100004B.h"
+#include "classes/gf/GfComEnvSensor.h"
+#include "classes/gf/GfComDynamics.h"
+#include "classes/gf/SCOM_OBJ_ALPHA.h"
+#include "gf/pc/AgentUtilField.h"
+#include "gf/MsgGameChangeTarget.h"
 #include "classes/fw/ParamManager.h"
 #include "classes/fw/ParamList.h"
 #include <string.h>
@@ -206,6 +225,121 @@ void GfComBehaviorPc::integrateMove(const fw::UpdateInfo& info) {
     }
 }
 
+void GfComBehaviorPc::onWarpNormal(GfComPropertyPc& property) {
+    GfComTransform* transform = m_owner->findComponent<GfComTransform>(0);
+    const fw::Transform& world = transform->m_frame->getWorldTransform();
+    m_owner->getComponent<GfComEnvSensor>(11)->flushEnv(world);
+    property.flush();
+    GfComAsm* asmCom = m_owner->getComponent<GfComAsm>(2);
+    if (!((property.m_field.m_statusFlags & 0x8000) != 0 && (property.m_stateFlags & 0x800) == 0)) {
+        if (property.m_waterLevel == 3) {
+            if (asmCom && asmCom->setState("S_wateridle", AnimLayer(0))) {
+                m_hfsm.setState(0x14);
+                if (GfGameRide::isVehicle(static_cast<GfObj*>(m_owner)->m_handle)) {
+                    pc::StateUtilField::notifyRiderEvent(*this, pc::VehicleEvent(2));
+                }
+            }
+        } else {
+            if (asmCom && asmCom->setState("S_idle", AnimLayer(0))) {
+                m_hfsm.setState(3);
+                if (GfGameRide::isVehicle(static_cast<GfObj*>(m_owner)->m_handle)) {
+                    pc::StateUtilField::notifyRiderEvent(*this, pc::VehicleEvent(2));
+                }
+            }
+        }
+    } else {
+        if (GfGameManager::isBattle()) {
+            MsgPcBattleStart msg(2);
+            property.m_battle.SetStartCondition(msg);
+            m_hfsm.setState(0x3F);
+        }
+    }
+    property.m_velocity = mm::Vec3::zero;
+    property.m_moveVec2.x = 0.0f;
+    property.m_moveVec2.y = 0.0f;
+    property.m_moveSpeed = 0.0f;
+    property.m_stateFlags = (property.m_stateFlags & ~0x80) | 0x10;
+    if (GfComDynamics* dynamics = m_owner->getComponent<GfComDynamics>(8)) {
+        dynamics->resetMovement();
+    }
+    if (pc::FallDamagePlugin* plugin = getPlugin<pc::FallDamagePlugin>(pc::FallDamagePlugin::PLUGIN_ID)) {
+        plugin->cacheMaxHeight(true);
+    }
+    if (pc::FallDistancePlugin* plugin = getPlugin<pc::FallDistancePlugin>(pc::FallDistancePlugin::PLUGIN_ID)) {
+        plugin->cacheMaxHeight(true);
+    }
+    const pc::WarpParam* param = property.m_paramList->getAdapter(2).get<pc::WarpParam>();
+    SCOM_OBJ_ALPHA::create(static_cast<GfObj*>(m_owner)->m_handle, 0.0f, 0.0f);
+    SCOM_OBJ_ALPHA::create(static_cast<GfObj*>(m_owner)->m_handle, param->fadeTime, 1.0f);
+    if (GfObj* obj = GfObjUtil::getObj(static_cast<GfObj*>(m_owner)->m_handle)) {
+        MsgUnk_1000046 msg(false);
+        static_cast<GfObj*>(m_owner)->sendMessage(obj, msg);
+    }
+    if (GfObj* obj = GfObjUtil::getObj(static_cast<GfObj*>(m_owner)->m_handle)) {
+        MsgUnk_100004B msg;
+        static_cast<GfObj*>(m_owner)->sendMessage(obj, msg);
+    }
+}
+
+void GfComBehaviorPc::onWarpWall(GfComPropertyPc& property) {
+    GfComTransform* transform = m_owner->findComponent<GfComTransform>(0);
+    const fw::Transform& world = transform->m_frame->getWorldTransform();
+    m_owner->getComponent<GfComEnvSensor>(11)->flushEnv(world);
+    property.flush();
+    if (GfComAsm* asmCom = m_owner->getComponent<GfComAsm>(2)) {
+        if (asmCom->setState("S_climbidle_base", AnimLayer(0))) {
+            m_hfsm.setState(0x2E);
+        }
+    }
+    if (GfComDynamics* dynamics = m_owner->getComponent<GfComDynamics>(8)) {
+        dynamics->resetMovement();
+    }
+    const pc::WarpParam* param = property.m_paramList->getAdapter(2).get<pc::WarpParam>();
+    SCOM_OBJ_ALPHA::create(static_cast<GfObj*>(m_owner)->m_handle, 0.0f, 0.0f);
+    SCOM_OBJ_ALPHA::create(static_cast<GfObj*>(m_owner)->m_handle, param->fadeTime, 1.0f);
+}
+
+void GfComBehaviorPc::onWarpBattle(GfComPropertyPc& property) {
+    GfComTransform* transform = m_owner->findComponent<GfComTransform>(0);
+    const fw::Transform& world = transform->m_frame->getWorldTransform();
+    m_owner->getComponent<GfComEnvSensor>(11)->flushEnv(world);
+    property.flush();
+    property.m_moveSpeed = 0.0f;
+    property.m_stateFlags &= ~0x80;
+    if (GfComDynamics* dynamics = m_owner->getComponent<GfComDynamics>(8)) {
+        dynamics->resetMovement();
+    }
+    if (pc::FallDamagePlugin* plugin = getPlugin<pc::FallDamagePlugin>(pc::FallDamagePlugin::PLUGIN_ID)) {
+        plugin->cacheMaxHeight(true);
+    }
+    if (pc::FallDistancePlugin* plugin = getPlugin<pc::FallDistancePlugin>(pc::FallDistancePlugin::PLUGIN_ID)) {
+        plugin->cacheMaxHeight(true);
+    }
+}
+
+void GfComBehaviorPc::procMsgGameChangeTarget(fw::MessageObject* sender, MsgGameChangeTarget& msg) {
+    pc::TargetIKPlugin* targetIK = getPlugin<pc::TargetIKPlugin>(pc::TargetIKPlugin::PLUGIN_ID);
+    if (!targetIK) {
+        return;
+    }
+    pc::LookAtPlugin* lookAt = getPlugin<pc::LookAtPlugin>(pc::LookAtPlugin::PLUGIN_ID);
+    GfComPropertyPc* property = m_owner->getComponent<GfComPropertyPc>(5);
+    if (msg.m_target == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        targetIK->setActivate(false);
+        if (lookAt && (property->m_field.m_statusFlags & 2) != 0) {
+            lookAt->setActivate(true);
+        }
+    } else {
+        if (lookAt) {
+            lookAt->setActivate(false);
+        }
+        if ((property->m_stateFlags & 0x100) != 0) {
+            targetIK->setActivate(true);
+        }
+    }
+    targetIK->procMsgGameChangeTarget(sender, msg);
+}
+
 void GfComBehaviorPc::procMsgPcFieldSetFallMaxHeight(fw::MessageObject* sender, MsgPcFieldSetFallMaxHeight& msg) {
     if (pc::FallDamagePlugin* plugin = getPlugin<pc::FallDamagePlugin>(7)) {
         plugin->setActivate(true);
@@ -272,6 +406,45 @@ void GfComBehaviorPc::fn_710050EF90(fw::MessageObject*, MsgUnk_100001C& msg) {
             asmCom->setState("S_idle", AnimLayer(0));
         }
     }
+}
+
+void GfComBehaviorPc::procMsgObjectNotifyDead(fw::MessageObject* sender, MsgObjectNotifyDead& msg) {
+    if (pc::StateUtilField::testVechile(*this)) {
+        pc::StateUtilField::requestGetOffRider(*this);
+        pc::StateUtil::sendMessageToBuddy(*this, msg);
+    } else {
+        GfComPropertyPc* property = m_owner->getComponent<GfComPropertyPc>(5);
+        if ((property->m_stateFlags & 0x200) != 0) {
+            pc::StateUtilField::requestGetOffRider(*this);
+        }
+        if ((property->m_stateFlags & 0x800) == 0 || msg.m_deadType == 4) {
+            GfStateBase::MessageEvent event = {sender, &msg};
+            m_hfsm.execEvent(&event);
+        }
+    }
+    GF_OBJ_HANDLE* handle = static_cast<GfObj*>(m_owner)->m_handle;
+    if (GfGameManager::getPartyLeaderDriver() == handle) {
+        btl::BattleGlobal* global = btl::BattleGlobal::sys();
+        if (!global->pad_bit1) {
+            btl::DataManager::sys()->SetPartyGauge(0, true);
+        } else {
+            switch (msg.m_deadType) {
+            case 4:
+                global->m_controlCharacterDead = true;
+                break;
+            case 3:
+                if (msg.m_cause && msg.m_cause->m_id == 0x1000035) {
+                    unsigned int maxHp = GfGameUtil::getMaxHp(handle, GfObjUtil::getObjType(handle),
+                                                              GfObjUtil::getGameObjectID(handle));
+                    if (static_cast<const MsgObjectDamage*>(msg.m_cause)->m_damage >= maxHp) {
+                        btl::BattleGlobal::sys()->m_controlCharacterDead = true;
+                    }
+                }
+                break;
+            }
+        }
+    }
+    btl::Utility::fn_71000100A8(handle, msg);
 }
 
 void GfComBehaviorPc::procAnimCallback(GfComAsm* asmCom, const CallBackCache& cache) {
