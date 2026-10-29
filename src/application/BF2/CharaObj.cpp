@@ -1221,10 +1221,35 @@ void ScriptCharaMount::undo(const event::Param&) {
     }
 }
 
+void ScriptEffectPlay::doit(const event::Param& param) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        const char* name = param.val(0).getStr();
+        float a = param.val(1).getF32();
+        float b = param.val(2).getF32();
+        float c = param.val(3).getF32();
+        int d = param.val(4).getS32();
+        int e = param.val(5).getS32();
+        obj->play(name, a, b, c, d, e);
+    }
+}
+
 void ScriptEffectPlay::undo(const event::Param&) {
     ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
     if (obj != 0) {
         obj->m_effect->stop();
+    }
+}
+
+void ScriptEffectPlay::redo(const event::Param& param) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        const char* name = param.val(0).getStr();
+        float a = param.val(1).getF32();
+        float b = param.val(2).getF32();
+        float c = param.val(3).getF32();
+        int d = param.val(4).getS32();
+        obj->play(name, a, b, c, d, 0);
     }
 }
 
