@@ -18,6 +18,8 @@ public:
     static RESULT_HANA isOpenCondenserCircuit(unsigned int hana, unsigned int circuit);
     static int getEtherForOpenCondenserCircuit(unsigned int hana, unsigned int circuit);
     static unsigned int getPowerRank(unsigned int hana);
+    // GfGameManager::gevBladeEnable calls it with the enabled blade
+    static void setupDefaultParts(unsigned int blade);
     // opens a circuit for its ether: 4 when the blade is not Hana, 1 when it is open already, 2 when ether cannot
     // open it, 3 when there is not enough ether
     static RESULT_HANA openArtsCircuit(unsigned int hana, unsigned int circuit);

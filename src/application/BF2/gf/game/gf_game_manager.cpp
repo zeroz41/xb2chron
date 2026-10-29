@@ -1,3 +1,13 @@
+#include "gf/GfTargetProperty.h"
+#include "classes/gf/GfGameScene.h"
+#include "classes/gf/GfAchievManager.h"
+#include "gf/GfGameUtilHana.h"
+#include "classes/gf/GfGameManager.h"
+#include "gf/SDataBlade.h"
+#include "gf/GfTargetProperty.h"
+#include "gf/GfGameUtilHana.h"
+#include "classes/gf/GfObj.h"
+#include "classes/gf/GfObjProperty.h"
 #include "classes/gf/GfGameCamera.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfGameScene.h"
@@ -264,9 +274,34 @@ void GfGameManager::gevDriverActivate(unsigned int id, ActivateType from, Activa
     }
 }
 
+void GfGameManager::gevBladeActivate(unsigned int id, ActivateType from, ActivateType to) {
+    if (from == 0 && to != 0) {
+        GfKizunaringManager::orderAchievement(id);
+    }
+    if (GfAchievManager* achiev = GfAchievManager::get()) {
+        achiev->gevBladeActivate(id, from, to);
+    }
+    if (GfGameScene* scene = GfGameScene::get()) {
+        scene->gevBladeActivate(id, from, to);
+    }
+}
+
 void GfGameManager::gevBladeUnselect(unsigned int id, bool flag) {
     if (GfGameScene* scene = GfGameScene::get()) {
         scene->gevBladeUnselect(id, flag);
+    }
+}
+
+void GfGameManager::gevBladeEnable(unsigned int blade) {
+    GfGameUtilHana::setupDefaultParts(blade);
+    if (blade == 1050 && GfDataBlade::getCreator(1050) == 0) {
+        GfDataBlade::setCreator(1050, GfDataBlade::getCreator(1022));
+    }
+    if (GfFieldTime* time = GfFieldTime::get()) {
+        SDataBlade* data = GfDataBlade::getSDataBlade(blade);
+        if (data->m_bornTime == 0) {
+            data->m_bornTime = reinterpret_cast<const unsigned int&>(time->getElapseTime());
+        }
     }
 }
 
@@ -468,6 +503,36 @@ void GfGameManager::setGmkTutorialSequenceOK(bool ok) {
     }
 }
 
+bool GfGameManager::fn_71002AAA0C() {
+    if (fn_71002A9E68()) {
+        if (GfDataBlade::fn_7100231884() >= 11115 && GfDataBlade::fn_7100231884() < 11130) {
+            return true;
+        }
+        return false;
+    }
+    if (GfDataBlade::fn_7100231884() >= 10034 && GfDataBlade::fn_7100231884() / 64 < 157) {
+        return true;
+    }
+    return false;
+}
+
+bool GfGameManager::isEnemyChangeBattleOK() {
+    if (GfGameScene* scene = GfGameScene::get()) {
+        if (scene->isPlayerPauseForBattle()) {
+            return false;
+        }
+    }
+    bool ok = false;
+    if (GfObj* obj = GfObjUtil::getObj(getControlMover())) {
+        if (GfObjProperty* property = GfObjUtil::getProperty(obj->m_handle)) {
+            if (GfTargetProperty* target = property->m_target) {
+                ok = target->m_state != 3;
+            }
+        }
+    }
+    return ok;
+}
+
 bool GfGameManager::isFieldLockMsgOK() {
     if (isEnableFieldAccess()) {
         if (GfGameScene* scene = GfGameScene::get()) {
@@ -534,6 +599,26 @@ bool GfGameManager::isPartyCreateForMapjump() {
 
 bool GfGameManager::isInMetJIJI() {
     return GfGameCond::isGameCond(GfBdatRsc::get()->getDriverParamExtMountCond(1));
+}
+
+namespace _gfgm {
+
+// Inferred helper (its name is not the original's): getControlMoverPosition and fn_71002AB894 share one guarded
+// static Vec3, so it lives in a function both inline.
+static mm::Vec3& getMoverPosition() {
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100D6CBF0, guard lbl_7100D6CC00)
+    static mm::Vec3 s_pos = mm::Vec3::zero;
+    return s_pos;
+}
+
+}  // namespace _gfgm
+
+const mm::Vec3& GfGameManager::getControlMoverPosition() {
+    GfObjAcc acc(getControlMover());
+    if (acc.isValidTransform()) {
+        return acc.getWorldTransform().position;
+    }
+    return _gfgm::getMoverPosition();
 }
 
 float GfGameManager::getFieldSpeed(const fw::UpdateInfo& info) {
@@ -1276,6 +1361,10 @@ bool GfGameManager::isFadeClear() {
         }
     }
     return true;
+}
+
+void GfGameManager::fn_71002AB894(const mm::Vec3& pos) {
+    _gfgm::getMoverPosition() = pos;
 }
 
 bool GfGameManager::isPlayerFinishBattleState() {

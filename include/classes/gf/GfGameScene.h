@@ -47,6 +47,7 @@ public:
     void gevDriverLevel(unsigned int, unsigned int, unsigned int);
     void gevSelectHikari(bool);
     void gevDriverActivate(unsigned int, ActivateType, ActivateType);
+    void gevBladeActivate(unsigned int, ActivateType, ActivateType);
     void gevBladeUnselect(unsigned int, bool);
     void gevControllFree(bool);
     void gevChangeScenarioFlag(unsigned int, unsigned int);

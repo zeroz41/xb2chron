@@ -7,12 +7,14 @@
 
 namespace gf { class GfAchievManager; }
 namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
+namespace gf { enum ActivateType : int; }
 
 namespace gf {
 // table 0x7100B52BF0
 class GfAchievManager : public ::mm::mtl::PtrSingleton< ::gf::GfAchievManager> {
 public:
     void gevItemAdd(unsigned int, int);
+    void gevBladeActivate(unsigned int, ActivateType, ActivateType);
     // SCOM_ACHIEV_INC::exec adds its request's value to its achievement counter, for its blades when it has any
     void incAchiev(unsigned int type, int value);
     // AchievQuest::setCountComplete passes the quest, its count before and what it added

@@ -63,7 +63,7 @@ public:
     void fn_71002AC9C0(const fw::UpdateInfo& info);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in
     // gf_game_manager's unit among GfGameManager's functions and takes no instance. What it does: copies the Vec3 into
-    // a function-static Vec3 (guard 0x7100D6CC00, first set to mm::Vec3::zero); TitleStatePlayEvent::gevPlayEvent
+    // the static Vec3 getControlMoverPosition falls back on (guard 0x7100D6CC00, first set to mm::Vec3::zero); TitleStatePlayEvent::gevPlayEvent
     // passes gf::GfInfo::m_camPos (GEV 0xE) and mm::Vec3::zero (GEV 0xD).
     static void fn_71002AB894(const mm::Vec3& pos);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in
@@ -292,6 +292,13 @@ public:
     static bool isPlayEvent();
     static bool isScenarioGame();
     static bool isGmkTutorialOK();
+    static bool isEnemyChangeBattleOK();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in
+    // gf_game_manager's unit among GfGameManager's functions and takes no instance. What it does: with
+    // PtrSingleton<TUnk_B54858>'s instance in mode 1, whether GfDataBlade::fn_7100231884 (local flag 1, width 16) is
+    // in [11115, 11130); otherwise whether it is at least 10034 and its value / 64 is below 157. Callers:
+    // GfGameScene::checkFieldBladeChange / checkFieldBladeChangeForRide, GfPlayFactory::createPlayerDead, fn_71002B6A80.
+    static bool fn_71002AAA0C();
     static bool isTalkOK();
     static bool isEnablePlayerDeadSequence();
     static void setGmkTutorialSequenceOK(bool ok);

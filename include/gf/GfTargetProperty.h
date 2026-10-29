@@ -16,7 +16,10 @@ public:
     // the object's position: the PC's flush copies its transform's world position (GfEffectGround compares the
     // water's height with its y)
     float m_position[3];
-    unsigned char pad_3c[0x43];
+    unsigned char pad_3c[0x41];
+    // GfGameManager::isGmkTutorialOK answers it for a leader in state 1 (the name is not the original's)
+    bool m_gmkTutorialOK;
+    unsigned char pad_7e[0x1];
     // the PC's flush: any of its motion is not zero (velocity, m_moveVec2, locomotion, m_moveSpeed)
     bool m_isMoving;
     // the PC's flush: set while the PC's word at 0x120 is 1; TaskFieldCheckWarp::update warps no PC that follows a
