@@ -862,6 +862,14 @@ bool GfDataBlade::isValid(unsigned int blade) {
     return blade >= 1001 && blade < 1423;
 }
 
+bool GfDataDriver::fn_7100237A94(unsigned int driver) {
+    if (driver - 0x11 <= 8) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        return bdat->fn_71001F16A4(bdat->fn_71001F13E0(driver)) == 0;
+    }
+    return true;
+}
+
 bool GfDataBlade::isBladeID(unsigned int blade) {
     return blade >= 1001 && blade < 1423;
 }
@@ -890,6 +898,17 @@ unsigned int GfDataDriver::fn_71002419C8(unsigned int driver) {
         return 0;
     }
     return bdat->fn_71001F172C(row);
+}
+
+SDataDriverDlc* GfDataDriver::fn_7100241BB4(unsigned int driver) {
+    driver = driver - 0x11 < 9 ? driver : 0x11;
+    unsigned int index;
+    if (driver - 0x11 < 9) {
+        index = driver - 0x11;
+    } else {
+        index = driver - 1 < 16 ? driver - 1 : 1;
+    }
+    return &GfDataManager::fn_7100224A10()[index];
 }
 
 unsigned int GfDataBlade::getActBlade2CommonBlade(unsigned int blade) {
@@ -921,6 +940,10 @@ unsigned int GfDataDriver::getDebugAppendDeathBlowEabFileIdx(unsigned int index)
 
 unsigned int GfDataDriver::getWeaponEfbFileIdx(int index) {
     return (index < 0 ? 0 : index) + 1277;
+}
+
+bool GfDataDriver::fn_7100247580(mm::mtl::FixedVector<unsigned short, 64>& enhances, int driver) {
+    return fn_71002475DC(enhances, *getSDataDriver(driver));
 }
 
 unsigned int GfDataDriver::getWeaponEabFileIdx(int index) {
@@ -2845,6 +2868,18 @@ bool GfDataDriver::isEnableLevelUp(unsigned int driver) {
     return fn_7100245C98(*getSDataDriver(driver));
 }
 
+unsigned int GfDataDriver::fn_7100245EA8(unsigned int driver) {
+    return getExp(*getSDataDriver(driver));
+}
+
+unsigned int GfDataDriver::fn_7100245EFC(unsigned int driver) {
+    return getBattleExp(*getSDataDriver(driver));
+}
+
+unsigned int GfDataDriver::fn_7100245F50(unsigned int driver) {
+    return getBattleExpNextLevel(*getSDataDriver(driver));
+}
+
 unsigned int GfDataMap::getZoneIdForGameMap(unsigned int map) {
     unsigned int zone = getZoneIdForDevelopPoint(map);
     if (zone == 0) {
@@ -3158,6 +3193,22 @@ bool GfDataEvent::isSaveScenarioEvent(unsigned int event) {
     return false;
 }
 
+void GfDataEvent::fn_710024F2B8(unsigned int event) {
+    fn_710024F2DC(*GfDataManager::getDataGame(), event);
+}
+
+bool GfDataEvent::fn_710024F430(unsigned int event) {
+    return fn_710024F454(*GfDataManager::getDataGame(), event);
+}
+
+bool GfDataEvent::fn_710024F910(unsigned int event) {
+    unsigned char* fp = GfDataBdat::getFP(fn_710024EBD8(event));
+    if (fp == nullptr) {
+        return false;
+    }
+    return static_cast<bool>(static_cast<unsigned char>(Bdat::getValCheck(fp, "noRetarget", event, 1)));
+}
+
 
 unsigned int GfDataItem::getTypeByItemCategory(unsigned int category) {
     if (category < 4) {
@@ -3181,6 +3232,13 @@ unsigned int GfDataItem::getTypeByItemCategory(unsigned int category) {
 unsigned int GfDataMercenaries::getReserverMax() {
     unsigned int level = GfGameFlag::getLocal(4, 2);
     return level * 24 + (GfDataManager::getDataGame()->m_gameClearCount != 0 ? 48 : 0) + 24;
+}
+
+int GfDataBlade::fn_710023C478(const SDataGame& game, unsigned int blade) {
+    if (blade == 0) {
+        return 0;
+    }
+    return game.m_blades[getBladeIndex(blade)].m_creator;
 }
 
 
@@ -3659,6 +3717,14 @@ void GfDataBlade::fn_710024EA00(bool flag) {
     GfGameFlag::setLocal(1, 0xD863, flag);
 }
 
+unsigned int GfDataEvent::fn_710024ED1C(unsigned int event) {
+    unsigned char* fp = GfDataBdat::getFP(fn_710024EBD8(event));
+    if (fp == nullptr) {
+        return 0;
+    }
+    return static_cast<unsigned short>(Bdat::getValCheck(fp, "scenarioFlag", event, 2));
+}
+
 void GfDataBlade::fn_71002321D4(bool flag) {
     GfGameFlag::setLocal(1, 0xD77E, flag);
     GfGameFlag::setLocal(1, 0xD87E, flag);
@@ -3808,6 +3874,17 @@ GfItemHandle GfDataDriver::fn_71002474B0(unsigned int driver) {
 void GfDataDriver::fn_71002474F4(unsigned int driver, unsigned short item) {
     if (driver - 0x11 < 9) {
         GfDataManager::fn_7100224A10()[driver - 0x11].m_item = item;
+    }
+}
+
+void GfDataDriver::fn_710024752C(SDataDriverDlc& data, unsigned short item) {
+    data.m_item = item;
+}
+
+void GfDataDriver::fn_7100247534(unsigned int driver, GfItemHandle handle) {
+    if (driver - 0x11 < 9) {
+        SDataDriverDlc& data = GfDataManager::fn_7100224A10()[driver - 0x11];
+        data.m_handle.m_handle = handle.m_handle;
     }
 }
 

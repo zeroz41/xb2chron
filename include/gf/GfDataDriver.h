@@ -241,6 +241,31 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit among GfDataDriver's functions. What it does: sets the 16-bit item id (+0x5A4) of the DLC driver (0x11-0x19) row of GfDataManager::fn_7100224A10's 0xDAC-byte table (fn_7100247474 reads it).
     static void fn_71002474F4(unsigned int driver, unsigned short item);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataDriver's functions (next to fn_71002474F4/fn_7100247534, which set the same row's fields
+    // through the driver id). What it does: stores item into the DLC driver record's 16-bit item id (+0x5A4);
+    // fn_71002251B8 (a DataObjDriver function) passes its record when the item is of type 2.
+    static void fn_710024752C(SDataDriverDlc& data, unsigned short item);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataDriver's functions. What it does: copies handle into the item handle (+0x5A0) of the
+    // DLC driver (0x11-0x19) row of GfDataManager::fn_7100224A10's 0xDAC-byte table (fn_71002474B0 reads it back).
+    static void fn_7100247534(unsigned int driver, GfItemHandle handle);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataDriver's functions (after isEnableLevelUp, which has the same shape). What it does: getExp of the driver's row
+    // (getSDataDriver).
+    static unsigned int fn_7100245EA8(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataDriver's functions (after isEnableLevelUp, which has the same shape). What it does: getBattleExp of the driver's row
+    // (getSDataDriver).
+    static unsigned int fn_7100245EFC(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataDriver's functions (after isEnableLevelUp, which has the same shape). What it does: getBattleExpNextLevel of the driver's row
+    // (getSDataDriver).
+    static unsigned int fn_7100245F50(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because fn_7100247580 hands it its
+    // enhances and the driver's row (getSDataDriver) and its address follows fn_7100247580's. What it does: the work
+    // fn_7100247580's comment describes, on one driver's data.
+    static bool fn_71002475DC(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriver& data);
 };
 }  // namespace gf
 

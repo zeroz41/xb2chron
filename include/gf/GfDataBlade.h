@@ -455,6 +455,10 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit among GfDataBlade's functions. What it does: whether id is 40260-40268 or 40312.
     static bool fn_710023384C(unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions (before addRareBlade). What it does: getCreator on the given game
+    // data: the blade's 16-bit m_creator, 0 for blade 0 (tl::TitleStatePlayEvent::enter calls it).
+    static int fn_710023C478(const SDataGame& game, unsigned int blade);
 };
 
 }  // namespace gf
