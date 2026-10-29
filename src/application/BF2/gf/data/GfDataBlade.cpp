@@ -635,6 +635,12 @@ unsigned int GfDataBlade::getEndCommonBlade() {
     return 1401;
 }
 
+ActivateType GfDataBlade::getBladeActivateType(unsigned int blade) {
+    unsigned int index = getBladeIndex(blade);
+    SDataGame* game = GfDataManager::getDataGame();
+    return getBladeActivateType(game->m_blades[index]);
+}
+
 ActivateType GfDataBlade::getBladeActivateType(const SDataBlade& blade) {
     int type = 0;
     switch (blade.m_dataType) {
@@ -646,6 +652,15 @@ ActivateType GfDataBlade::getBladeActivateType(const SDataBlade& blade) {
         break;
     }
     return ActivateType(type);
+}
+
+unsigned int GfDataBlade::fn_710023982C(unsigned int blade) {
+    if (blade == 0) {
+        return 0;
+    }
+    unsigned int index = getBladeIndex(blade);
+    SDataGame* game = GfDataManager::getDataGame();
+    return game->m_blades[index].m_gender;
 }
 
 unsigned int GfDataBlade::getStartUiCommonBlade() {
@@ -899,6 +914,24 @@ bool GfDataBlade::isAnimal(unsigned int blade) {
     return data.m_questRace == 2;
 }
 
+bool GfDataBlade::isMale(unsigned int blade) {
+    if (blade == 0) {
+        return false;
+    }
+    unsigned int index = getBladeIndex(blade);
+    SDataGame* game = GfDataManager::getDataGame();
+    return game->m_blades[index].m_gender == 1 && game->m_blades[index].m_questRace == 1;
+}
+
+bool GfDataBlade::isFemale(unsigned int blade) {
+    if (blade == 0) {
+        return false;
+    }
+    unsigned int index = getBladeIndex(blade);
+    SDataGame* game = GfDataManager::getDataGame();
+    return game->m_blades[index].m_gender == 2 && game->m_blades[index].m_questRace == 1;
+}
+
 bool GfDataAchievement::getAchievementType(ACHIEVEMENT_TYPE& type, unsigned int& index, unsigned int line) {
     if (line <= 2) {
         type = ACHIEVEMENT_TYPE(0);
@@ -1021,6 +1054,23 @@ void GfDataBlade::setBladeWeapon(unsigned int blade, unsigned int weapon) {
 void GfDataBlade::setTrustPoint(unsigned int blade, unsigned int point) {
     GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_trustPoint = point;
     GfEvent::callDebugChangeIdea(4, blade, 0, 0);
+}
+
+bool GfDataBlade::isUsedFavorite(unsigned int blade, FAVORITE favorite) {
+    unsigned int index = getBladeIndex(blade);
+    SDataGame* game = GfDataManager::getDataGame();
+    SDataBlade& data = game->m_blades[index];
+    switch (favorite) {
+    case 0:
+        return data.m_favorites[0].m_categoryUsed != 0;
+    case 1:
+        return data.m_favorites[1].m_categoryUsed != 0;
+    case 2:
+        return data.m_favorites[0].m_itemUsed != 0;
+    case 3:
+        return data.m_favorites[1].m_itemUsed != 0;
+    }
+    return false;
 }
 
 
@@ -2588,6 +2638,12 @@ int GfDataBlade::getCreator(unsigned int blade) {
 
 bool GfDataBlade::isActivateMercenaryTeam(unsigned int blade) {
     return GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_activateMercenaryTeam != 0;
+}
+
+void GfDataBlade::fn_7100239934(unsigned int blade, bool flag) {
+    unsigned int index = getBladeIndex(blade);
+    SDataGame* game = GfDataManager::getDataGame();
+    game->m_blades[index].m_activateMercenaryTeam = flag;
 }
 
 const char* GfDataBlade::getCommonBladeName(unsigned int blade) {

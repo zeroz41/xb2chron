@@ -24,7 +24,8 @@ struct SDataIdea {
 struct BladeArtsSlot {
     unsigned short m_id;  // getBladeArts, getBladeArtsN, getBladeArtsEx...
     unsigned short m_h;  // getBladeArtsH, getBladeArtsNH, getBladeArtsExH...
-    unsigned char pad_4[0x3];
+    unsigned char pad_4[0x2];
+    unsigned char m_releaseLevel;  // GfDataBlade::getAchievReleaseLevel (named after it; the name is not the original's)
     unsigned char m_level;  // getBladeArtsLevel
     unsigned char pad_8[0x4];
 };
@@ -32,9 +33,17 @@ struct BladeArtsSlot {
 // one of a blade's skills (the name is not the original's)
 struct BladeSkillSlot {
     unsigned short m_id;  // getBladeSkill, getFieldSkill
-    unsigned char pad_2[0x1];
+    unsigned char m_releaseLevel;  // GfDataBlade::getAchievReleaseLevel (named after it; the name is not the original's)
     unsigned char m_level;  // getBladeSkillLevel, getFieldSkillLevel
     unsigned char pad_4[0x2];
+};
+
+// no table: one of a blade's two favorites (GfDataBlade::getFavorite, isUsedFavorite; the names are not the original's)
+struct BladeFavorite {
+    unsigned short m_category;  // getFavorite for FAVORITE 0 and 1
+    unsigned short m_item;  // getFavorite for FAVORITE 2 and 3
+    unsigned short m_categoryUsed;  // isUsedFavorite for FAVORITE 0 and 1
+    unsigned short m_itemUsed;  // isUsedFavorite for FAVORITE 2 and 3
 };
 
 // no table: a blade's data (GfDataBlade::getSDataBlade's). The field names are not the original's: each says what
@@ -67,7 +76,10 @@ public:
     AchievInfo m_fieldSkillAchievement[3];  // getFieldSkillAchievement, by line
     AchievInfo m_keyAchievement;  // getKeyAchievement
     unsigned short m_keyLevel;  // DataObjDriver::getKeyLevel
-    unsigned char pad_666[0x12];
+    // GfDataBlade::getFavorite / isUsedFavorite: FAVORITE 0 and 1 read entry 0 and 1's category, 2 and 3 entry 0 and
+    // 1's item
+    BladeFavorite m_favorites[2];
+    unsigned char pad_676[0x2];
     unsigned short m_equipOrbs[3];  // DataObjBlade::setVirtualEquipOrb sets one, by slot; the count is not known
     unsigned char pad_67e[0xE];
     EquipHana m_equipHana;  // Hana's equipment (GfDataHana::getEquipParts; the name is not the original's)

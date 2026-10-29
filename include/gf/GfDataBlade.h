@@ -168,6 +168,7 @@ public:
     // isActivateMercenaryTeam uses) is 2; execActivateMercenaryTeamForBlade does nothing when it holds.
     static bool fn_71002383C8(unsigned int blade);
     static ActivateType getBladeActivateType(const SDataBlade& blade);
+    static ActivateType getBladeActivateType(unsigned int blade);
     static bool isActivateReserver(unsigned int blade);
     static bool setActivateReserver(unsigned int blade);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
@@ -255,6 +256,17 @@ public:
     // the blades with an affinity chart
     static void getListForAchievement(mm::mtl::FixedVector<unsigned short, 422>& list);
     static unsigned int getKeyReleaseLevel(unsigned int blade);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among its blade accessors (no this). What it does: 0 for blade 0, else the blade's SDataBlade::m_gender
+    // (game data slot via getBladeIndex); fn_710028AF64 calls it.
+    static unsigned int fn_710023982C(unsigned int blade);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among its blade accessors (no this). What it does: stores the flag into the blade's
+    // SDataBlade::m_activateMercenaryTeam (the byte isActivateMercenaryTeam reads); GfGameUtil::fn_71002EBC90 and
+    // fn_71004922BC call it.
+    static void fn_7100239934(unsigned int blade, bool flag);
+    // the release level of a skill line: lines 0-2 the arts, 3-5 the skills, 6-8 the field skills, 9 the key
+    static unsigned int getAchievReleaseLevel(unsigned int blade, unsigned int line);
     static void setSkillLineLevel(unsigned int blade, unsigned int line, unsigned int level);
     static unsigned int getBladeWpnType(unsigned int blade);
     static const char* getName(unsigned int blade, unsigned int kind);
