@@ -5,6 +5,8 @@
 #include "classes/event/SeObj.h"
 #include "classes/event/IManager.h"
 #include "classes/mm/mtl/Singleton.h"
+#include "mm/mtl/FixedArray.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace event { enum MSG_TYPE : int; }
 
@@ -25,8 +27,10 @@ public:
     // load counts the sounds it asked GfGameEvent to create; the name is not the original's
     int m_loadCount;  // 0x14
     // the sound slots play/changeVolume/pan address by id; the name is not the original's
-    SeObj m_objs[32];  // 0x18
-    // more fields follow at 0x5318 (the constructor's); not known yet
+    // (the destructor calls FixedArray<SeObj, 32>'s out-of-line destructor)
+    mm::mtl::FixedArray<SeObj, 32> m_objs;  // 0x18
+    // play appends the slot it started unless it is already here; the name is not the original's
+    mm::mtl::FixedVector<SeObj*, 32> m_playObjs;  // 0x5318 (count at 0x5418)
 };
 }  // namespace event
 

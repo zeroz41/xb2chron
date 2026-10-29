@@ -3,6 +3,7 @@
 
 #include "mm/Mat44.h"
 #include "classes/event/IManager.h"
+#include "classes/event/Group.h"
 #include "classes/mm/mtl/Singleton.h"
 
 namespace event { enum MSG_TYPE : int; }
@@ -19,15 +20,13 @@ public:
     void clear() {
         m_mtx = mm::Mat44::identity;
         m_count = 0;
-        if (m_current != 0) {
-            m_current = 0;
-        }
+        m_group.clear();
     }
 
-    unsigned char pad_10[0x418];
-    // cleared by clear() when set; what it points to is not known yet; the name is not the original's
-    void* m_current;  // 0x428
-    unsigned char pad_430[0x20];
+    unsigned char pad_10[0x10];
+    // its own table at 0x20 (the destructor stores Group's); clear() clears its list; the name is not the original's
+    Group m_group;  // 0x20
+    unsigned char pad_448[0x8];
     // reset to the identity by clear(); the name is not the original's
     mm::Mat44 m_mtx;  // 0x450
     // zeroed by clear(); the name is not the original's

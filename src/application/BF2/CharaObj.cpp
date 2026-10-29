@@ -1677,6 +1677,8 @@ void GroupManager::OnEventProc(event::MSG_TYPE msg) {
     }
 }
 
+GroupManager::~GroupManager() {}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void TextManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
@@ -1741,6 +1743,8 @@ void SeManager::pan(int id, float pan, float frame, CV_TYPE type) {
         m_objs[id].pan(pan, frame, type);
     }
 }
+
+SeManager::~SeManager() {}
 
 int UIManager::getPayoffUI() const {
     return m_payoffResult;
@@ -1897,7 +1901,9 @@ LightManager::LightManager() : m_flags(0), m_modeFlags(0), m_offScrLights(), m_e
 
 LightManager::~LightManager() {}
 
-SeamlessManager::SeamlessManager() : pad_10(0), pad_520(0), pad_2540(0) {}
+SeamlessManager::SeamlessManager() : pad_10(0), m_firstKeys(), m_keys() {}
+
+SeamlessManager::~SeamlessManager() {}
 
 SkipManager::SkipManager() : m_flags(0), pad_14(0), m_endFrame(-1.0f) {}
 
@@ -1906,6 +1912,14 @@ BgmManager::BgmManager() : pad_10(0), pad_14(0), pad_7c(0) {}
 HideManager::HideManager() : pad_10(0), m_group(), m_firstList(), m_secondList(), m_objs() {}
 
 HideManager::~HideManager() {}
+
+}  // namespace event
+
+#include "classes/event/LodManager.h"
+
+namespace event {
+
+LodManager::~LodManager() {}
 
 DebugManager::DebugManager() : m_flags(0), pad_224(0) {}
 
