@@ -35,6 +35,9 @@ public:
     }
     // the value converted when it holds the other number type (1.0.0 0x710009360C; 3.0.1 inlines it)
     int getS32() const { return m_type == 2 ? (int)m_value.floatValue : m_value.intValue; }
+    // the value converted when it holds the other number type (CmdParam's float getter; 3.0.1 inlines it, the name
+    // follows ParamVariable::getF32)
+    float getF32() const { return m_type == 1 ? (float)m_value.intValue : m_value.floatValue; }
     // the stored pointer (1.0.0 0x71000936A0; 3.0.1 inlines it)
     void* getUserdata() const { return m_value.userdata; }
     // the stored flag (1.0.0 0x7100093670; 3.0.1 inlines it)

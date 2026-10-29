@@ -4,6 +4,10 @@
 #include "classes/event/CharaSetRot.h"
 #include "classes/event/CmdVariable.h"
 #include "classes/event/CharaSetPos.h"
+#include "classes/event/CharaStopAction.h"
+#include "classes/gf/GfComEvtAnim.h"
+#include "classes/gf/GfComTransform.h"
+#include "classes/gf/GfObj.h"
 #include "classes/event/CmdItem.h"
 #include "classes/event/CmdQueue.h"
 #include "classes/event/CharaEffectPlayer.h"
@@ -641,6 +645,33 @@ void CharaObj::playRimBloom(int type) {
 
 void CharaObj::stopRimBloom() {
     m_effectPlayer.stopRimBloom();
+}
+
+bool CharaSetPos::update(const ICmd::Param& param) {
+    if (m_handle == (gf::GF_OBJ_HANDLE*)-1) {
+        return true;
+    }
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    if (obj == nullptr) {
+        return false;
+    }
+    gf::GfComTransform* transform = obj->getComponent<gf::GfComTransform>(0);
+    transform->setPosition(mm::Vec3(param.m_param.val(0).getF32(), param.m_param.val(1).getF32(), param.m_param.val(2).getF32()));
+    return true;
+}
+
+bool CharaStopAction::update(const ICmd::Param&) {
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    if (obj != nullptr) {
+        gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2);
+        if (anim != nullptr) {
+            anim->execCmd("C_idle");
+            if (strcmp(anim->getStateName() ? anim->getStateName() : "", "S_idle") != 0) {
+                anim->setState("S_idle");
+            }
+        }
+    }
+    return true;
 }
 
 void ObjectChara::clear() {
@@ -2365,6 +2396,7 @@ void StmPackMemory::render(const mm::Rect<int>& rect, float alpha) {}
 #include "classes/event/Scheduler.h"
 #include "gf/GfGameUtil.h"
 #include "classes/gf/GfComTransform.h"
+#include "classes/gf/GfObj.h"
 #include "classes/gf/GfComAsm.h"
 #include "classes/gf/GfPause.h"
 #include "classes/gf/GfGameParty.h"
