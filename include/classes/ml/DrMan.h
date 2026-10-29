@@ -8,6 +8,7 @@
 namespace cloud { class CloudMan; }
 namespace grlib { class CGLibTextureBuffer; }
 namespace ml { class DrAPCache; }
+namespace ml { class DrResFilterData; }
 namespace ml { class DrPixlTileParm; }
 namespace ml { class DrPixlMdlSampler; }
 namespace ml { class DrCalcMan; }
@@ -115,7 +116,8 @@ public:
     DrPixlMan* m_pixlMan;               // 0x78, DrMdoSetup::varStTex_* call DrPixlMan methods on it (the name is not the original's)
     DrShdMan* m_shdMan;                 // 0x80, DrMdoSetup::uniformBlock_Bone/Cluster* read it (the name is not the original's)
     DrMdlMan* m_mdlMan;                 // 0x88, DrCreator's model calls go to it
-    unsigned char pad_90[0x10];
+    unsigned char pad_90[0x8];
+    DrResFilterData* m_filterData;  // 0x98, DrIniSys::loadFilterLutTexture hands it the filter LUT (name inferred)
     // one per view: DrCreator::createClipObj takes the view's clip manager from it (the name is not the original's)
     DrCalcMan* m_viewCalcMan[4];        // 0xA0
     // one per view: ScnObjLightDrSys's constructor releases the view's fast light with it (the name is not the
@@ -203,7 +205,10 @@ public:
     unsigned int* m_dispOffBits;  // 0x1D20: a bit per display index, set = hidden (ScnObjAccPartsEtcPos::isDisp; name inferred)
     unsigned char pad_1D28[0x8];
     mm::Vec3 m_globalWind[2];           // 0x1D30, by s_nDblNowIdx (getGlobalWind)
-    unsigned char pad_1D50[0x2D];
+    unsigned char pad_1D50[0x4];
+    // 0x1D54: 1 makes DrIniSys load the DLC toon gradients and filter LUT (the name is not the original's)
+    int m_dlcShaderMode;
+    unsigned char pad_1D58[0x25];
     // 0x1D7D: DrMdoCtlSeamAll's render passes return at once while set (the name is not the original's)
     bool m_seamRenderOff;
     unsigned char pad_1D7E[0x6];

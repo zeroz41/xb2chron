@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 int vsnprintf(char* buffer, size_t size, const char* format, va_list arguments);
+int snprintf(char* buffer, size_t size, const char* format, ...);
 
 #ifdef __cplusplus
 }

@@ -30,6 +30,21 @@
 #include "ml/DrMdoMpfMan.h"
 #include "classes/ml/FileResTh.h"
 #include "classes/ml/DrPixlShadowObj.h"
+#include "ml/DrMdoVertexMan.h"
+#include "ml/DrMdoTextureMan.h"
+#include "ml/DrMdoSamplerMan.h"
+#include "ml/DrMdoZSortMan.h"
+#include "ml/DrMdoTexSimpleMan.h"
+#include "ml/DrResOccUniformObj.h"
+#include "ml/DrResEtcUniformObj.h"
+#include "ml/DrGpuCheckRender.h"
+#include "ml/DrResFilterData.h"
+#include "ml/WorkUtil.h"
+#include "classes/ml/Scn.h"
+#include "classes/mm/mtl/PtrSingleton.h"
+#include <string.h>
+#include "stdio.h"
+#include "grlib/CGLibTexture.h"
 
 namespace cloud {
 using namespace grlib;
@@ -37,6 +52,117 @@ using namespace grlib;
 }  // namespace cloud
 
 namespace ml {
+// the shader library files DrIniSys reads (data of this file, in its order)
+const char* SYSTEM_INI_FILE = "/monolib/shader/lib_nx.ini";
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B7A478)
+const char* SYSTEM_DLC_INI_FILE = "/monolib/shader/lib_dlc_nx.ini";
+const char* DITHER_FILE01 = "dither1";
+const char* DITHER_FILE02 = "dither2";
+const char* DITHER_FILE03 = "dither3";
+const char* VOLUME_FILE = "volume";
+const char* AMBBRDF_FILE = "ambientbrdf";
+const char* TOON_GRAD_FILE = "toon_grad";  // 1.0.0's name (the symbols leave it unnamed, lbl_7100B7A4A8)
+const char* TOON_GRAD_NIGHT_FILE = "toon_grad_night";  // 1.0.0's name (lbl_7100B7A4B0)
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B7A4B8)
+const char* TOON_DLC_GRAD_FILE = "toon_dlc_grad";
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B7A4C0)
+const char* TOON_DLC_GRAD_NIGHT_FILE = "toon_dlc_grad_night";
+const char* TOON_RIM_FILE = "toon_rim";
+const char* DUMMY_CUBEMAP_FILE = "dummy_cube";
+const char* MIRROR_BALL_MDL_FILE = "mirror_ball";
+const char* WETNESS_CSVB_FILE = "wetness_param";
+const char* RAIN_DROP_FILE = "rain_drop";
+const char* RAIN_DROP_DEPTH_FILE = "rain_drop_depth";
+const char* GLASS_BREAKAGE = "glassbr.data";
+const char* CAM_LGT_FILE = "night_light";
+const char* ORIENTATION_FILE = "orientation";
+const char* FLAG_WAVE0_FILE = "flag_wave_0";
+const char* FLAG_WAVE1_FILE = "flag_wave_1";
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_71015E9398). The path DrIniSys formats
+// its file names into.
+static char s_pathBuf[0x200];
+
+FileResTh* DrIniSys::readTextureMapFile(const char* name) {
+    snprintf(s_pathBuf, sizeof(s_pathBuf), "/monolib/shader/%s.witex", name);
+    FileResTh* res = nullptr;
+    if (Scn* scn = mm::mtl::PtrSingleton<Scn>::sys()) {
+        res = scn->allocEntryRes(s_pathBuf);
+    }
+    if (res == nullptr) {
+        res = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) FileResTh();
+        res->loadBlock(m_pDrMan->m_fileHandle, s_pathBuf, 0x1000, 0);
+    }
+    return res;
+}
+
+void DrIniSys::loadIBLEnvTexture() {
+    FileResTh* res = nullptr;
+    if (Scn* scn = mm::mtl::PtrSingleton<Scn>::sys()) {
+        res = scn->allocEntryRes(m_iblEnvPath);
+    }
+    if (res != nullptr) {
+        return;
+    }
+    res = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) FileResTh();
+    if (res->loadBlock(m_pDrMan->m_fileHandle, m_iblEnvPath, 0x1000, 0)) {
+        if (m_texRes[12] != nullptr) {
+            m_texRes[12]->Release();
+            m_texRes[12] = nullptr;
+        }
+        m_texRes[12] = res;
+        grlib::CGLibTexture::createTextureImagePtrs(m_texture[12], res->m_data, res->m_size, false, nullptr, true);
+    }
+}
+
+void DrIniSys::loadGlassBreakage() {
+    snprintf(s_pathBuf, sizeof(s_pathBuf), "/monolib/shader/%s", GLASS_BREAKAGE);
+    FileResTh* res = nullptr;
+    if (Scn* scn = mm::mtl::PtrSingleton<Scn>::sys()) {
+        res = scn->allocEntryRes(s_pathBuf);
+    }
+    if (res == nullptr) {
+        res = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) FileResTh();
+        res->loadBlock(m_pDrMan->m_fileHandle, s_pathBuf, 0x1000, 0);
+    }
+    m_glassBreakage = res;
+}
+
+void DrIniSys::loadCameraLight() {
+    snprintf(s_pathBuf, sizeof(s_pathBuf), "/monolib/shader/%s.wilgt", CAM_LGT_FILE);
+    FileResTh* res = nullptr;
+    if (Scn* scn = mm::mtl::PtrSingleton<Scn>::sys()) {
+        res = scn->allocEntryRes(s_pathBuf);
+    }
+    if (res == nullptr) {
+        res = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) FileResTh();
+        res->loadBlock(m_pDrMan->m_fileHandle, s_pathBuf, 0x1000, 0);
+    }
+    m_camLight = res;
+}
+
+void DrIniSys::loadFilterLutTexture() {
+    if (m_pDrMan->m_dlcShaderMode == 1) {
+        snprintf(s_pathBuf, sizeof(s_pathBuf), "/monolib/shader/filterlut_dlc.%s", "wiltp");
+    } else {
+        snprintf(s_pathBuf, sizeof(s_pathBuf), "/monolib/shader/filterlut.%s", "wiltp");
+    }
+    if (m_filterLut != nullptr) {
+        m_filterLut->Release();
+        m_filterLut = nullptr;
+    }
+    FileResTh* res = nullptr;
+    if (Scn* scn = mm::mtl::PtrSingleton<Scn>::sys()) {
+        res = scn->allocEntryRes(s_pathBuf);
+    }
+    if (res == nullptr) {
+        res = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) FileResTh();
+        res->loadBlock(m_pDrMan->m_fileHandle, s_pathBuf, 0x1000, 0);
+    }
+    m_filterLut = res;
+    m_pDrMan->m_filterData->setFilterData(res->m_data);
+}
+
 const void* DrIniSys::getGlassBreakage() const { return m_glassBreakage->m_data; }
 
 DrMan* DrMan::getIns() { return s_pTop; }
