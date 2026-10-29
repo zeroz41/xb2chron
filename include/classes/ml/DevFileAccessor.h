@@ -29,7 +29,7 @@ public:
         result = DevFileResult();
         return false;
     }
-    virtual ml::DevFileReaderTh* createLoader(mtl::ALLOC_HANDLE) { return nullptr; }  // slot 11
+    virtual ml::DevFileJobTh* createLoader(mtl::ALLOC_HANDLE) { return nullptr; }  // slot 11
     virtual ml::DevFileWriterTh* createWriter(mtl::ALLOC_HANDLE) { return nullptr; }  // slot 12
     virtual ml::DevFileJobTh* createFileValid(mtl::ALLOC_HANDLE) { return nullptr; }  // slot 13
     virtual bool rfOpen(ml::FileHandleTh*, char const*) { return false; }  // slot 14

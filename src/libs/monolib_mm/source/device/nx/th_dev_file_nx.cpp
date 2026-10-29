@@ -6,6 +6,9 @@
 #include "classes/ml/DevFileArchiveNx.h"
 #include "classes/ml/DevFileNxTh.h"
 #include "classes/ml/DevFileTh.h"
+#include "classes/ml/DevFileJobValidArcNxTh.h"
+#include "classes/ml/DevFileJobValidNxTh.h"
+#include "classes/ml/DevFileWriterNx.h"
 #include "classes/ml/DevGraphNx.h"
 #include "classes/ml/DevGraphQue.h"
 #include "classes/ml/DevPad.h"
@@ -401,6 +404,18 @@ DevFileNxTh::DevFileNxTh(mtl::ALLOC_HANDLE handle)
 
 DevFileNxTh::~DevFileNxTh() {}
 
+DevFileJobTh* DevFileNxTh::createLoader(mtl::ALLOC_HANDLE handle) {
+    return new (handle, nullptr, 0, 4, false) DevFileJobTh();
+}
+
+DevFileWriterTh* DevFileNxTh::createWriter(mtl::ALLOC_HANDLE handle) {
+    return new (handle, nullptr, 0, 4, false) DevFileWriterNx;
+}
+
+DevFileJobTh* DevFileNxTh::createFileValid(mtl::ALLOC_HANDLE handle) {
+    return new (handle, nullptr, 0, 4, false) DevFileJobValidNxTh();
+}
+
 int DevFileNxTh::addressAlignment() {
     return 0x10;
 }
@@ -423,8 +438,16 @@ DevFileArchiveNx::~DevFileArchiveNx() {
     m_impl->finalize();
 }
 
+DevFileJobTh* DevFileArchiveNx::createLoader(mtl::ALLOC_HANDLE handle) {
+    return new (handle, nullptr, 0, 4, false) DevFileJobTh();
+}
+
 DevFileWriterTh* DevFileArchiveNx::createWriter(mtl::ALLOC_HANDLE) {
     return nullptr;
+}
+
+DevFileJobTh* DevFileArchiveNx::createFileValid(mtl::ALLOC_HANDLE handle) {
+    return new (handle, nullptr, 0, 4, false) DevFileJobValidArcNxTh();
 }
 
 bool DevFileArchiveNx::rfIsUsedChannel(unsigned int channel) {

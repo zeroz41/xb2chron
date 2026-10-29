@@ -28,7 +28,7 @@ public:
     virtual int addressAlignment() { return 0x10; }  // slot 5 (weak: the original keeps it with the inline slots)
     virtual bool readBlockSlice(ml::FileHandleTh*, char const*, void*, unsigned int);  // slot 8
     virtual int getFileSize(char const*, mm::VAL64*, char const*);  // slot 9
-    virtual ml::DevFileReaderTh* createLoader(mtl::ALLOC_HANDLE);  // slot 11
+    virtual ml::DevFileJobTh* createLoader(mtl::ALLOC_HANDLE);  // slot 11
     virtual ml::DevFileWriterTh* createWriter(mtl::ALLOC_HANDLE);  // slot 12
     virtual ml::DevFileJobTh* createFileValid(mtl::ALLOC_HANDLE);  // slot 13
     virtual bool rfOpen(ml::FileHandleTh*, char const*);  // slot 14
