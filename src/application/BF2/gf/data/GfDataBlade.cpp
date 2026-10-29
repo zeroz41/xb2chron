@@ -55,6 +55,7 @@
 #include "gf/GfDataSound.h"
 #include "classes/gf/GfDataBdat.h"
 #include "mm/mtl/FixStr.h"
+#include "mm/mtl/FixedArray.h"
 #include "mm/mtl/FixedVector.h"
 #include "gf/GfDataQuest.h"
 #include "gf/SDataGame.h"
@@ -996,6 +997,28 @@ unsigned int GfDataBlade::getEquipOrbMax(unsigned int blade) {
     return data.m_equipOrbMax;
 }
 
+bool GfDataBlade::getEquipOrb(mm::mtl::FixedArray<unsigned short, 3ul>& orbs, unsigned int blade) {
+    if (blade == 0) {
+        return false;
+    }
+    unsigned int index = getBladeIndex(blade);
+    SDataGame* game = GfDataManager::getDataGame();
+    SDataBlade& data = game->m_blades[index];
+    orbs = data.m_equipOrbs;
+    return true;
+}
+
+bool GfDataBlade::setEquipOrb(unsigned int blade, unsigned short orb, unsigned int slot) {
+    if (blade == 0) {
+        return false;
+    }
+    SDataBlade* data = getSDataBlade(blade);
+    // the original reads the orb count here without using it
+    getEquipOrbMax(blade);
+    data->m_equipOrbs[slot] = orb;
+    return true;
+}
+
 unsigned int GfDataBlade::getCreateEvent(unsigned int blade) {
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
     return data.m_createEvent;
@@ -1054,6 +1077,92 @@ void GfDataBlade::setBladeWeapon(unsigned int blade, unsigned int weapon) {
 void GfDataBlade::setTrustPoint(unsigned int blade, unsigned int point) {
     GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_trustPoint = point;
     GfEvent::callDebugChangeIdea(4, blade, 0, 0);
+}
+
+unsigned int GfDataBlade::getParmor(unsigned int blade) {
+    if (blade == 0) {
+        return 0;
+    }
+    if (GfDataHana::isValid(blade)) {
+        unsigned int index = getBladeIndex(blade);
+        SDataGame* game = GfDataManager::getDataGame();
+        unsigned int parts = game->m_blades[index].m_equipHana.m_roleParts;
+        return GfBdatItem::get()->getITM_HanaRolePArmor(parts);
+    }
+    return getSDataBlade(blade)->m_pArmor;
+}
+
+unsigned int GfDataBlade::getEarmor(unsigned int blade) {
+    if (blade == 0) {
+        return 0;
+    }
+    if (GfDataHana::isValid(blade)) {
+        unsigned int index = getBladeIndex(blade);
+        SDataGame* game = GfDataManager::getDataGame();
+        unsigned int parts = game->m_blades[index].m_equipHana.m_roleParts;
+        return GfBdatItem::get()->getITM_HanaRoleEArmor(parts);
+    }
+    return getSDataBlade(blade)->m_eArmor;
+}
+
+unsigned int GfDataBlade::getHpMaxRev(unsigned int blade) {
+    if (GfDataHana::isValid(blade)) {
+        unsigned int index = getBladeIndex(blade);
+        SDataGame* game = GfDataManager::getDataGame();
+        unsigned int parts = game->m_blades[index].m_equipHana.m_roleParts;
+        return GfBdatItem::get()->getITM_HanaRoleHpMaxRev(parts);
+    }
+    return getSDataBlade(blade)->m_hpMaxRev;
+}
+
+unsigned int GfDataBlade::getStrengthRev(unsigned int blade) {
+    if (GfDataHana::isValid(blade)) {
+        unsigned int index = getBladeIndex(blade);
+        SDataGame* game = GfDataManager::getDataGame();
+        unsigned int parts = game->m_blades[index].m_equipHana.m_roleParts;
+        return GfBdatItem::get()->getITM_HanaRoleStrengthRev(parts);
+    }
+    return getSDataBlade(blade)->m_strengthRev;
+}
+
+unsigned int GfDataBlade::getPowerEtherRev(unsigned int blade) {
+    if (GfDataHana::isValid(blade)) {
+        unsigned int index = getBladeIndex(blade);
+        SDataGame* game = GfDataManager::getDataGame();
+        unsigned int parts = game->m_blades[index].m_equipHana.m_roleParts;
+        return GfBdatItem::get()->getITM_HanaRolePowEtherRev(parts);
+    }
+    return getSDataBlade(blade)->m_powerEtherRev;
+}
+
+unsigned int GfDataBlade::getDexRev(unsigned int blade) {
+    if (GfDataHana::isValid(blade)) {
+        unsigned int index = getBladeIndex(blade);
+        SDataGame* game = GfDataManager::getDataGame();
+        unsigned int parts = game->m_blades[index].m_equipHana.m_roleParts;
+        return GfBdatItem::get()->getITM_HanaRoleDexRev(parts);
+    }
+    return getSDataBlade(blade)->m_dexRev;
+}
+
+unsigned int GfDataBlade::getAgilityRev(unsigned int blade) {
+    if (GfDataHana::isValid(blade)) {
+        unsigned int index = getBladeIndex(blade);
+        SDataGame* game = GfDataManager::getDataGame();
+        unsigned int parts = game->m_blades[index].m_equipHana.m_roleParts;
+        return GfBdatItem::get()->getITM_HanaRoleAgilityRev(parts);
+    }
+    return getSDataBlade(blade)->m_agilityRev;
+}
+
+unsigned int GfDataBlade::getLuckRev(unsigned int blade) {
+    if (GfDataHana::isValid(blade)) {
+        unsigned int index = getBladeIndex(blade);
+        SDataGame* game = GfDataManager::getDataGame();
+        unsigned int parts = game->m_blades[index].m_equipHana.m_roleParts;
+        return GfBdatItem::get()->getITM_HanaRoleLuckRev(parts);
+    }
+    return getSDataBlade(blade)->m_luckRev;
 }
 
 bool GfDataBlade::isUsedFavorite(unsigned int blade, FAVORITE favorite) {
@@ -2627,6 +2736,17 @@ bool GfDataMercenaries::getMsgZoneName(unsigned char*& bdat, unsigned int& id, u
     id = GfBdatMaplist::get()->getMaplistnameID(map);
     bdat = GfBdatMsg::getFpMapInfo();
     return id != 0;
+}
+
+void GfDataBlade::setCreator(unsigned int blade, unsigned int creator) {
+    if (blade == 0) {
+        return;
+    }
+    getSDataBlade(blade)->m_creator = creator;
+    // blade 1050 shares its creator with blade 1022
+    if (blade == 1050) {
+        getSDataBlade(1022)->m_creator = creator;
+    }
 }
 
 int GfDataBlade::getCreator(unsigned int blade) {

@@ -3,6 +3,7 @@
 
 #include "gf/GfDataBlade.h"
 #include "gf/GfDataHana.h"
+#include "mm/mtl/FixedArray.h"
 
 namespace gf {
 // what DataObjBlade::getIdea and DataObjDriver::getIdea point at (an SDataBlade's +0xC, an SDataDriver's start);
@@ -80,7 +81,7 @@ public:
     // 1's item
     BladeFavorite m_favorites[2];
     unsigned char pad_676[0x2];
-    unsigned short m_equipOrbs[3];  // DataObjBlade::setVirtualEquipOrb sets one, by slot; the count is not known
+    mm::mtl::FixedArray<unsigned short, 3> m_equipOrbs;  // DataObjBlade::setVirtualEquipOrb sets one, by slot; three slots (GfDataBlade::getEquipOrb(FixedArray<unsigned short, 3>&) copies them)
     unsigned char pad_67e[0xE];
     EquipHana m_equipHana;  // Hana's equipment (GfDataHana::getEquipParts; the name is not the original's)
     // 0x704: Hana's equipment power rank (GfDataHana::getEquipPowerRank/setEquipPowerRank; the name is not the

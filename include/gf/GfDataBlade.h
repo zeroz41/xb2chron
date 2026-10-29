@@ -274,6 +274,9 @@ public:
     static bool getName(unsigned char*& bdat, unsigned int& id, unsigned int blade);
     static unsigned int getQuestRace(unsigned int blade);
     static SDataBlade* getSDataBlade(unsigned int blade);
+    // the blade's physical and ether defense bonus (Hana's from her role part); 0 for no blade
+    static unsigned int getParmor(unsigned int blade);
+    static unsigned int getEarmor(unsigned int blade);
     static unsigned int getHpMaxRev(unsigned int blade);
     static unsigned int getStrengthRev(unsigned int blade);
     static unsigned int getPowerEtherRev(unsigned int blade);
@@ -330,7 +333,7 @@ public:
     static unsigned int getEquipOrbMax(unsigned int blade);
     // the orb in a blade's slot (GfEquipUtil::getEquipBladeOrb returns it, zero-extended)
     static unsigned short getEquipOrb(unsigned int blade, unsigned int slot);
-    static void setEquipOrb(unsigned int blade, unsigned short orb, unsigned int slot);
+    static bool setEquipOrb(unsigned int blade, unsigned short orb, unsigned int slot);
     static unsigned int getCreateEvent(unsigned int blade);
     static unsigned int getNormalTalk(unsigned int blade);
     static unsigned int getTrustPoint(unsigned int blade);
