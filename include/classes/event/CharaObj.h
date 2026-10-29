@@ -39,6 +39,9 @@ public:
     void setRot(const mm::Vec3& rot);
     // queues m_setIdle with this object and id, after erasing the idle and action commands
     void setIdle(int id);
+    // the id of the queued m_setIdle, 0 when none is queued (inlined by ScriptCharaSetIdle::doit); the name is not
+    // the original's
+    int getIdle() const { return m_cmdQueue0.contains(&m_setIdle) ? m_setIdle.m_id : 0; }
     void playAutoAction(float time);
     void playMotionABC(const char* a, const char* b, const char* c, float d, float e, float f, float g, float h, float i);
     void playFacial(int a, float b, int c, float d, int e, float f, int g, float h, float i, float j);

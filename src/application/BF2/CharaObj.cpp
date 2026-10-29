@@ -146,6 +146,15 @@ void CopydataManager::OnEventProc(event::MSG_TYPE) {}
 
 void ScriptCharaMotion::undo(const event::Param&) {}
 
+void ScriptCharaMotionABC::doit(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        obj->m_chara->playMotionABC(param.val(0).getStr(), param.val(1).getStr(), param.val(2).getStr(),
+                                    param.val(3).getF32(), param.val(4).getF32(), param.val(5).getF32(),
+                                    param.val(6).getF32(), param.val(7).getF32(), param.val(8).getF32());
+    }
+}
+
 void ScriptCharaMotionABC::undo(const event::Param&) {}
 
 SkipManager::~SkipManager() {}
@@ -1075,6 +1084,15 @@ event::ObjectManager::~ObjectManager() {}
 
 namespace event {
 
+void ScriptCharaWalkPos::doit(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        PosAxis axis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        m_prevPos = obj->m_pos;
+        obj->walkPosAxis(axis, static_cast<EVT_poscvtype>(param.val(4).getS32()), param.val(5).getBool());
+    }
+}
+
 void ScriptCharaWalkPos::undo(const event::Param&) {
     ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
     if (obj != 0) {
@@ -1110,6 +1128,15 @@ void ScriptCharaTgt::undo(const event::Param&) {
     mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2);
 }
 
+void ScriptCharaLinerPos::doit(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        PosAxis axis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        m_prevPos = obj->m_pos;
+        obj->linerPosAxis(axis, param.val(4).getBool(), param.val(5).getF32(), static_cast<CV_TYPE>(param.val(6).getS32()));
+    }
+}
+
 void ScriptCharaLinerPos::undo(const event::Param&) {
     ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
     if (obj != 0) {
@@ -1135,6 +1162,14 @@ void ScriptCharaLinerRot::redo(const event::Param& param) {
     ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
     if (obj != 0) {
         obj->setRotAxis(RotAxis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32()));
+    }
+}
+
+void ScriptCharaSetIdle::doit(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        pad_8 = obj->m_chara->getIdle();
+        obj->m_chara->setIdle(param.val(0).getS32());
     }
 }
 
