@@ -1,4 +1,20 @@
+#include "classes/gf/GfWeapon.h"
 #include "gf/GfGameUtil.h"
+#include "classes/gf/GfObjPropertyCharacter.h"
+#include "gf/GfGameUtil.h"
+#include "gf/GfMenuObjUtil.h"
+#include "classes/gf/GfFieldSound.h"
+#include "string.h"
+#include "gf/GfGameUtilSaveData.h"
+#include "gf/SDataOption.h"
+#include "classes/gf/GfInfo.h"
+#include "classes/gf/GfScriptManager.h"
+#include "mm/mtl/FixedVector.h"
+#include "classes/gf/GfStatusProperty.h"
+#include "classes/gf/GfObjPropertyCharacter.h"
+#include "classes/gf/GfObjProperty.h"
+#include "classes/gf/GfObj.h"
+#include "classes/gf/GfComProperty.h"
 #include "classes/gmk/GmkMapObj.h"
 #include "classes/gmk/GmkRoutedMapObj.h"
 #include "classes/gmk/GmkNpc.h"
@@ -263,6 +279,74 @@ const char* GfGameUtil::getSalvageDriverModel(unsigned int driver) {
                                                                                                         : "pc/pc000102";
     }
     return "";
+}
+
+unsigned int GfGameUtil::getNowHp(GF_OBJ_HANDLE* handle, unsigned int type, unsigned int id) {
+    fn_71002DF8B0(handle);
+    if (GfObj* obj = GfObjUtil::getObj(handle)) {
+        if (GfComProperty* property = obj->getComponent<GfComProperty>(5)) {
+            if (GfStatusProperty* status = property->m_status.get()) {
+                return status->m_hp;
+            }
+        }
+    }
+    DataParamAcc acc(type, id, GimmickType(0));
+    return acc.getHpMax(true);
+}
+
+void GfGameUtil::fn_71002DF8B0(GF_OBJ_HANDLE*& handle) {
+    DataParamAcc acc(handle);
+    if (GfObjUtil::isValid(handle) && acc.getObjType() == 3 &&
+        GfDataDriver::fn_710023F9A8(acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0)) {
+        mm::mtl::FixedVector<unsigned short, 32> drivers;
+        drivers.push_back(GfDataDriver::fn_71002417DC(acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0));
+        GfDataDriver::fn_71002416B4(drivers, acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0);
+        unsigned long num = drivers.size();
+        for (unsigned long i = 0; i < num; i++) {
+            GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriverByBdatID(drivers.begin()[i]);
+            if (GfObjUtil::isValid(driver)) {
+                handle = driver;
+                break;
+            }
+        }
+    }
+}
+
+unsigned int GfGameUtil::getMaxHp(GF_OBJ_HANDLE* handle, unsigned int type, unsigned int id) {
+    fn_71002DF8B0(handle);
+    if (GfObj* obj = GfObjUtil::getObj(handle)) {
+        if (GfComProperty* property = obj->getComponent<GfComProperty>(5)) {
+            if (GfStatusProperty* status = property->m_status.get()) {
+                return status->m_maxHp;
+            }
+        }
+    }
+    DataParamAcc acc(type, id, GimmickType(0));
+    return acc.getHpMax(true);
+}
+
+bool GfGameUtil::getNowHpForUi(GF_OBJ_HANDLE* handle, unsigned int* hp) {
+    fn_71002DF8B0(handle);
+    if (GfObjProperty* property = GfObjUtil::getProperty(handle)) {
+        if (property->m_character == nullptr) {
+            return false;
+        }
+        *hp = property->m_character->m_uiHp;
+        return true;
+    }
+    return false;
+}
+
+bool GfGameUtil::getMaxHpForUi(GF_OBJ_HANDLE* handle, unsigned int* hp) {
+    fn_71002DF8B0(handle);
+    if (GfObjProperty* property = GfObjUtil::getProperty(handle)) {
+        if (property->m_character == nullptr) {
+            return false;
+        }
+        *hp = property->m_character->m_uiMaxHp;
+        return true;
+    }
+    return false;
 }
 
 void GfGameUtil::requestFieldDamage(GF_OBJ_HANDLE* handle) {
@@ -793,6 +877,10 @@ const char* GfGameUtil::getBladeModel(unsigned int blade, bool flag) {
     return name;
 }
 
+const char* fn_71002DF344(unsigned int blade) {
+    return GfGameUtil::fn_71002DEFBC(blade);
+}
+
 const char* GfGameUtil::getBladeMotion(unsigned int blade, bool flag) {
     SDataBlade* data = GfDataBlade::getSDataBlade(blade);
     if (data->m_hasCondMotion != 0 && !flag && isCondBladeModel(blade)) {
@@ -1141,6 +1229,98 @@ RESULT_HANA GfGameUtilHana::isExecPowerRankup(unsigned int hana, unsigned int ra
         } while (now < 20);
     }
     return static_cast<RESULT_HANA>(6);
+}
+
+}  // namespace gf
+
+namespace gf {
+
+bool fn_71002EB3FC() {
+    unsigned short id = GfDataBlade::fn_7100231884();
+    return id >= 11100 && id <= 11130;
+}
+
+bool fn_71002EDC24(const char* name) {
+    return name != nullptr && strstr(name, "pc110601") != nullptr;
+}
+
+int fn_71002EDC4C(const char* name) {
+    if (name == nullptr) {
+        return 0;
+    }
+    return strstr(name, "pc110601") != nullptr ? 6 : 0;
+}
+
+void fn_71002EDD60() {
+    GfMenuObjUtil::playSE(0x2E);
+}
+
+fw::SoundPack* fn_71002EE5A0(const char* name) {
+    if (GfFieldSound* sound = mm::mtl::PtrSingleton<GfFieldSound>::sys()) {
+        return sound->fn_710027CE60(name);
+    }
+    return nullptr;
+}
+
+const char* fn_71002EE5C0(const char* name) {
+    if (GfFieldSound* sound = mm::mtl::PtrSingleton<GfFieldSound>::sys()) {
+        return sound->fn_710027CEA4(name);
+    }
+    return nullptr;
+}
+
+// inline: the option data in use (tl::TitleMain's in advertize or theater mode, else GfDataManager's); the name is
+// not the original's
+static inline SDataOption* getActiveOptionData() {
+    if (GfManager::isExecModeAdvertize() || GfManager::isExecModeThater()) {
+        if (tl::TitleMain* title = mm::mtl::PtrSingleton<tl::TitleMain>::sys()) {
+            return title->getOptionBuffer();
+        }
+    }
+    return GfDataManager::getDataOption();
+}
+
+void* fn_71002EE8C4() {
+    return &getActiveOptionData()->m_soundUi;
+}
+
+void fn_71002EE954(unsigned int type) {
+    fn_7100254EF0(&getActiveOptionData()->m_soundUi, type);
+}
+
+void SDataOption::fn_71002EEB0C() {
+    fn_7100254DF0(&m_soundUi);
+}
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EA4890). Not static: the original
+// reaches it through the GOT.
+int g_bootType;
+
+void fn_71002EEB14(int type, bool run) {
+    if (run) {
+        g_bootType = type;
+        if (mm::mtl::PtrSingleton<GfScriptManager>::sys() != nullptr) {
+            GfScriptManager::loadScript(0x46, "aoc_boot");
+            while (!GfScriptManager::isScriptLoaded(0x46)) {
+                if (GfScriptManager::isScriptLoadError(0x46)) {
+                    break;
+                }
+                GfSleep(1);
+            }
+            if (GfScriptManager::isScriptLoaded(0x46) && !GfScriptManager::isScriptLoadError(0x46)) {
+                GfScriptManager::startScript(0x46);
+                while (GfScriptManager::isScriptActive(0x46)) {
+                    GfSleep(1);
+                }
+            }
+            GfScriptManager::destroyScript(0x46);
+            g_bootType = 0;
+        }
+    }
+}
+
+int fn_71002EEBE4() {
+    return g_bootType;
 }
 
 }  // namespace gf

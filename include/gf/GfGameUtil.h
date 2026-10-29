@@ -183,6 +183,12 @@ public:
     // the object's HP (its property's, else its data's maximum) and maximum HP; type and id as DataParamAcc's
     static unsigned int getNowHp(gf::GF_OBJ_HANDLE* handle, unsigned int type, unsigned int id);
     static unsigned int getMaxHp(gf::GF_OBJ_HANDLE* handle, unsigned int type, unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // GfGameUtil's (right after getMaxHp) and its only callers are getNowHp, getMaxHp, getNowHpForUi and
+    // getMaxHpForUi. What it does: for a valid driver object whose driver row GfDataDriver::fn_710023F9A8 accepts,
+    // collects GfDataDriver::fn_71002417DC(driver) and GfDataDriver::fn_71002416B4's list of driver ids and replaces
+    // the handle with the first one GfGameParty::getHandleDriverByBdatID gives a valid object for.
+    static void fn_71002DF8B0(gf::GF_OBJ_HANDLE*& handle);
     // whether the object is near enough for its name / info icon to show
     static bool isUiNameDistMatch(gf::GF_OBJ_HANDLE* handle);
     static bool isUiInfoIconDistMatch(gf::GF_OBJ_HANDLE* handle);

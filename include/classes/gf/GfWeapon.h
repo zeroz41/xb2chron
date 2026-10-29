@@ -3,6 +3,7 @@
 
 #include "classes/gf/GfAppendHandles.h"
 
+namespace fw { class SoundPack; }
 namespace gf {
 // table 0x7100B54DE8: its slot 0 is GfAppendHandles's destructor, so the destructor is inline
 class GfWeapon : public ::gf::GfAppendHandles {
@@ -38,7 +39,17 @@ bool fn_71002D9B5C(GF_OBJ_HANDLE* handle);
 // 0x7100EA4890, which fn_71002EEB14 (called by tl::TitleStatePlayGame::enter) stores from its first argument before
 // running the "aoc_boot" script (GfScriptManager slot 0x46) and clears afterwards. The sys plugin's getBootType
 // returns it to scripts.
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit between GfGameUtil::isCondBladeModel and getBladeMotion and it takes only a blade id. What it
+// does: returns GfGameUtil::fn_71002DEFBC(blade) (a tail call); GfAssetSetup::setRefResource calls it.
+const char* fn_71002DF344(unsigned int blade);
 int fn_71002EEBE4();
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit next to fn_71002EEBE4 (no object). What it does: when run is set, stores type at .bss 0x7100EA4890
+// (fn_71002EEBE4's) and, when GfScriptManager is up, loads the "aoc_boot" script (slot 0x46), waits for it to load
+// (GfSleep(1)), runs it to its end unless its load failed, destroys it and clears that int again.
+// tl::TitleStatePlayGame::enter calls it.
+void fn_71002EEB14(int type, bool run);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfWeapon's unit and it takes nothing. What it does: false unless GfGameManager::fn_71002AC598 is true; then true
 // when GfItemUtil::getItemBoxCount(25497) is non-zero, else whether any of the five ints at
@@ -76,7 +87,24 @@ void fn_71002ED774(unsigned int enemy, unsigned int time, unsigned int mode);
 // GfWeapon's unit (no this). What it does: the address 0x4C bytes into the option data: tl::TitleMain's
 // getOptionBuffer when GfManager::isExecModeAdvertize or isExecModeThater holds and TitleMain exists, else
 // GfDataManager::getDataOption(). TUnk_B52C38::fn_710028D584 / fn_710028CFF8 copy 0x3C bytes into it.
+// Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions because their addresses are
+// in GfWeapon's unit (no object). What they do: fn_71002EB3FC: whether GfDataBlade::fn_7100231884() lies in
+// 11100..11130 (caller fn_7100543F98). fn_71002EDC24 / fn_71002EDC4C: whether a model name contains "pc110601"
+// (true / 6, else false / 0; GfAssetSetupEnemy::setup and GfAssetSetupNpc::setup call both). fn_71002EDD60: plays
+// menu sound effect 0x2E (GfMenuObjUtil::playSE; GfReqCommand::execChangeBladeWithBladeId calls it).
+// fn_71002EE5A0 / fn_71002EE5C0: GfFieldSound's fn_710027CE60 / fn_710027CEA4 for name when GfFieldSound is up
+// (none otherwise; GfComSound::playSe2D calls both).
+bool fn_71002EB3FC();
+bool fn_71002EDC24(const char* name);
+int fn_71002EDC4C(const char* name);
+void fn_71002EDD60();
+fw::SoundPack* fn_71002EE5A0(const char* name);
+const char* fn_71002EE5C0(const char* name);
 void* fn_71002EE8C4();
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit next to fn_71002EE8C4 (no object). What it does: calls fn_7100254EF0 with type on the same
+// SSoundUiOption fn_71002EE8C4 returns (TUnk_B52C38::fn_710028CFF8 calls it).
+void fn_71002EE954(unsigned int type);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfWeapon's unit (no this). What it does: whether a blade is available: true for most IDs; 0x451..0x453 and 0x457
 // depend on TUnk_B54858's content state and GfGameManager::fn_71002AC598. TUnk_28D7B8::fn_710028DA24 / fn_710028DAB4
