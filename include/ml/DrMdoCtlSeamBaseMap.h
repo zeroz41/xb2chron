@@ -18,7 +18,11 @@ public:
 
     // The fields below sit in the base-most part because the part that owns them is not proven (their names
     // are not the original's).
-    unsigned char pad_6D8[0x5A4];
+    unsigned char pad_6D8[0x460];
+    // 0xB38: DrMdoCtlSeamInstMap::beginResAll keeps the material resources it replaces here and endResAll puts them
+    // back (the name is not the original's)
+    MdoWrkMatRes* m_pSavedWrkMatRes;
+    unsigned char pad_B40[0x13C];
     // 0xC7C: DrMdoCtlSeamRead::wait*Stream set bit 16 when a stream ends without its data (and bit 10 while
     // DrMan::m_seamReadErrMode >= 1); DrMdoCtlSeamAll::callRenderSeamAll tests bit 3
     unsigned int m_seamFlags;

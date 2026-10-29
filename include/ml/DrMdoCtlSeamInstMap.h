@@ -15,6 +15,8 @@ public:
     void createInstZPrePassDisplayList();
     void createInstThicknessPassDisplayList(bool first);
     void renderSeamInstMap(int pass);
+    void beginResAll(MdoWrkMatRes* res);
+    void endResAll();
 };
 }  // namespace ml
 

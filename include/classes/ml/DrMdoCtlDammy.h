@@ -7,6 +7,7 @@ namespace ml {
 // table 0x7100B7B978
 class DrMdoCtlDammy : public ::ml::DrMdlObj {
 public:
+    DrMdoCtlDammy(const void* data, DrMan* drMan, int viewNum);
     virtual ~DrMdoCtlDammy();  // slot 0
     virtual void update();  // slot 2
     virtual void dispOffUpdate();  // slot 3

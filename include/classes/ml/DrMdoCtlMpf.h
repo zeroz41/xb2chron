@@ -10,6 +10,9 @@ public:
     virtual ~DrMdoCtlMpf();  // slot 0
     virtual void update();  // slot 2
     virtual void resourceInit();  // slot 5
+    void releaseMpf();
+    void defMpfrender();
+    void defMpfZPreRender();
     void callZPrepassRender();
     void callRenderMpf();
 };

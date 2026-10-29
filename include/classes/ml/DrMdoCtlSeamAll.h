@@ -18,6 +18,7 @@ public:
     virtual bool shadowCacheRender(ml::DrPixlShadowCacheObj&);  // slot 7
     virtual void shadowCacheAddRender(int);  // slot 8
     virtual void callShadowCacheUpdate(unsigned long);  // slot 11
+    void releaseSeamAll();
     virtual void occRender();  // slot 12
     virtual void setDeleteCall(int);  // slot 16
     virtual void debugRender();  // slot 17

@@ -7,6 +7,8 @@ namespace ml {
 // original's.
 class DrResMdoInstMdlInfo {
 public:
+    // DrMdoCtlPos::setDeleteCall calls it
+    void releaseCall();
     static unsigned int calcWorkSize(const unsigned char* data);
     static unsigned int create(unsigned char* work, DrResMdoInstMdlInfo*& out, const unsigned char* data,
                                const char* name);

@@ -63,6 +63,10 @@ public:
     void fn_7100777C88(const MdsMatInfoHeader* info, int slot, int matIdx);
 
     int getVanishEffectMax() const;
+    // DrMdoCtlDammy's destructor releases the material through it
+    void releaseMat();
+    // DrMdoCtlMpf::resourceInit
+    void setupMpfResource();
     MdoVanishEffectWrk* getVanishEffectWrk(unsigned int index, unsigned int bank);
 
     static void (DrMdoMat::*s_pCallMatVal[35])(const MdsMatInfoHeader*, int, int);
@@ -72,7 +76,9 @@ public:
     // 0x38, the uniformBlock_ callbacks ask it for the location of their global parameter (the name is not the
     // original's)
     DrShdMdoDecExtTbl* m_pDecExtTbl;
-    unsigned char pad_40[0x18];
+    unsigned char pad_40[0x10];
+    // 0x50: the resource data DrMdoCtlDammy's constructor is given (the name is not the original's)
+    const void* m_pResData;
     // DrMdlObj::chageShadowObject hands it to DrMdoSmlShadowMan::changeViewNum (the name is not the original's)
     DrMdoSmlShadowObj* m_pSmlShadowObj;  // 0x58
     unsigned char pad_60[0x10];

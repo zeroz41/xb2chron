@@ -12,6 +12,8 @@ public:
     void create(const void* data);
     // false once the data is no longer used (CloudObjMan::update then releases it)
     bool update();
+    // DrMdoCtlCldMdl::update/dispOffUpdate pass true/false
+    void setCallDisp(bool disp);
 
     CloudMdlDataObj* m_pPrev;  // 0x0
     CloudMdlDataObj* m_pNext;  // 0x8

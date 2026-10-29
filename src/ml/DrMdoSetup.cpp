@@ -1,7 +1,12 @@
 #include "classes/ml/DrAPCache.h"
 #include "classes/ml/DrFogObjGbl.h"
 #include "classes/ml/DrMan.h"
+#include "classes/ml/DrMdoCtlCldMdl.h"
 #include "classes/ml/DrMdoCtlDammy.h"
+#include "classes/ml/DrMdoCtlMpf.h"
+#include "classes/cloud/CloudMan.h"
+#include "cloud/CloudObjMan.h"
+#include "cloud/CloudMdlDataObj.h"
 #include "classes/ml/DrMdoCtlNom.h"
 #include "classes/ml/DrMdoCtlPos.h"
 #include "classes/ml/DrMdoCtlSeamAll.h"
@@ -56,8 +61,13 @@
 #include "ml/DrPixlPostParm.h"
 #include "ml/DrPixlTileParm.h"
 #include "ml/DrResMdoMat.h"
+#include "ml/DrPixlShadowCacheMan.h"
+#include "ml/DrCalcCpPlaneObj.h"
+#include "ml/DrResMdoInstMdlInfo.h"
+#include "ml/DrResMdoLight.h"
 #include "ml/DrResMdoPntAlphaMan.h"
 #include "ml/DrResMdoVertex.h"
+#include "ml/DrResMdoVtxMeshObj.h"
 #include "ml/DrShdDataList.h"
 #include "ml/DrShdLgtMan.h"
 #include "ml/DrShdMan.h"
@@ -84,6 +94,16 @@ void DrMdoCtlDammy::resourceInit() {}
 void DrMdoCtlDammy::update() {}
 
 void DrMdoCtlDammy::dispOffUpdate() {}
+
+DrMdoCtlDammy::DrMdoCtlDammy(const void* data, DrMan* drMan, int viewNum) : DrMdlObj(viewNum) {
+    m_pDrMan = drMan;
+    m_pResData = data;
+    m_mdlType = 6;
+}
+
+DrMdoCtlDammy::~DrMdoCtlDammy() {
+    releaseMat();
+}
 
 void DrMdoCtlSeamAll::debugRender() {}
 
@@ -974,6 +994,64 @@ void (DrMdoSetup::*DrMdoSetup::s_pStaticImage[5])(const MdsMatInfoHeader*, unsig
     &DrMdoSetup::varStImg_ZBuff,
 };
 
+DrMdoCtlCldMdl::DrMdoCtlCldMdl(const void* data, DrMan* drMan, int viewNum) : DrMdlObj(viewNum) {
+    m_mdlType = 4;
+    m_pCldMdlData = nullptr;
+    m_pCldData = data;
+    m_pDrMan = drMan;
+}
+
+DrMdoCtlCldMdl::~DrMdoCtlCldMdl() {
+    if (m_pCldMdlData != nullptr) {
+        cloud::CloudMan::sys()->m_pObjMan->releaseMdlData(m_pCldMdlData);
+        m_pCldMdlData = nullptr;
+        m_pCldData = nullptr;
+    }
+}
+
+void DrMdoCtlCldMdl::resourceInit() {
+    if (m_pCldMdlData == nullptr) {
+        m_pCldMdlData = cloud::CloudMan::sys()->m_pObjMan->createMdlData(m_pCldData);
+    }
+}
+
+void DrMdoCtlCldMdl::update() {
+    if (m_pCldMdlData != nullptr) {
+        m_pCldMdlData->setCallDisp(true);
+    }
+}
+
+void DrMdoCtlCldMdl::dispOffUpdate() {
+    if (m_pCldMdlData != nullptr) {
+        m_pCldMdlData->setCallDisp(false);
+    }
+}
+
+DrMdoCtlMpf::~DrMdoCtlMpf() {
+    releaseMpf();
+}
+
+void DrMdoCtlMpf::resourceInit() {
+    setupMpfResource();
+}
+
+void DrMdoCtlMpf::callZPrepassRender() {
+    if (m_stateFlags & 0x1) {
+        defMpfZPreRender();
+    }
+}
+
+void DrMdoCtlMpf::callRenderMpf() {
+    if (!(m_stateFlags & 0x1)) {
+        return;
+    }
+    DrMan::get()->m_tileParm->begin(static_cast<DrPixlTileParm::TileType>(3));
+    m_renderTech = 0;
+    m_renderPass = 0;
+    defMpfrender();
+    DrMan::get()->m_tileParm->end(static_cast<DrPixlTileParm::TileType>(3));
+}
+
 int DrMdoCtlMpfWork::calcRenderListWork(int objNum, const MdsMpfObjData* objData) {
     int size = objNum * 0x1D0;
     return DrResMdoPntAlphaMan::getWrkSize(128) + size;
@@ -1149,8 +1227,45 @@ void DrMdoCtlMpfWork::auto_alpha_changeSet(_wkMpfAlphaObjBuff* buff, const _MPFW
 
 // m_stateFlags bits 0..5 select the passes an object draws in (bit 3 light pre-pass, bit 1 GBuff, bit 2
 // refraction, bit 5 special alpha, bit 6 thickness, bit 20 z pre-pass, bits 25..27 last/fast/cloud-back alpha).
+DrMdoCtlNom::~DrMdoCtlNom() {
+    if ((m_ctlFlags & 0x100) && m_viewNum == 0) {
+        m_pDrMan->m_pixlMan->m_shadowCacheMan->delShadowCacheUpdate();
+    }
+    releaseNom();
+}
+
+void DrMdoCtlNom::setDeleteCall(int index) {
+    m_dispFlags |= 8 << index;
+    if (m_cldMdlData != nullptr) {
+        m_cldMdlData->setCallDisp(false);
+    }
+    if (m_light != nullptr) {
+        m_light->setDisp(false);
+    }
+}
+
+void DrMdoCtlNom::setDisp(bool disp) {
+    if (disp) {
+        m_dispFlags |= 0x1;
+    } else {
+        m_dispFlags &= ~0x1;
+    }
+    if (m_light != nullptr) {
+        m_light->setDisp(disp);
+    }
+}
+
 void DrMdoCtlNom::callShadowCacheUpdate(unsigned long bits) {
     m_shadowCacheBits &= ~bits;
+}
+
+void DrMdoCtlNom::callZSortNomAlphaRender() {
+    if (m_stateFlags & 0x10) {
+        nomCallRender(4);
+    }
+    if (m_vtxMesh != nullptr) {
+        m_vtxMesh->alpRender();
+    }
 }
 
 void DrMdoCtlNom::callZSortGBuffRender() {
@@ -1192,6 +1307,30 @@ void DrMdoCtlNom::callFastAlphaNomRender() {
 void DrMdoCtlNom::callCldBackAlphaNomRender() {
     if (m_stateFlags & 0x8000000) {
         cldBackAlphaCallRender();
+    }
+}
+
+DrMdoCtlPos::~DrMdoCtlPos() {
+    releasePos();
+    m_instAnm.release();
+}
+
+void DrMdoCtlPos::setDeleteCall(int index) {
+    m_dispFlags |= 8 << index;
+    if (m_instMdlInfo != nullptr) {
+        m_instMdlInfo->releaseCall();
+    }
+    if (m_cpPlane != nullptr) {
+        m_cpPlane->release();
+        m_cpPlane = nullptr;
+    }
+}
+
+void DrMdoCtlPos::callShadowCacheUpdate(unsigned long bits) {
+    m_shadowCacheBits &= ~bits;
+    if (m_shadowCacheReq & bits) {
+        m_shadowCacheReq = 0;
+        m_shadowCacheCount = 0;
     }
 }
 
@@ -1289,6 +1428,19 @@ void DrMdoCtlPos::callSpAlphaRenderPosAll() {
         m_pWrkMatRes->m_pVertex->beginVertexSetup();
         callPosRender(0x40);
     }
+}
+
+DrMdoCtlSeamAll::~DrMdoCtlSeamAll() {
+    releaseSeamAll();
+}
+
+void DrMdoCtlSeamInstMap::beginResAll(MdoWrkMatRes* res) {
+    m_pSavedWrkMatRes = m_pWrkMatRes;
+    m_pWrkMatRes = res;
+}
+
+void DrMdoCtlSeamInstMap::endResAll() {
+    m_pWrkMatRes = m_pSavedWrkMatRes;
 }
 
 void DrMdoCtlSeamAll::callZPrePassSeamAll() {
