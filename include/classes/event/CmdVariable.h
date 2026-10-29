@@ -18,6 +18,16 @@ public:
         m_type = 1;
         m_value.intValue = value;
     }
+    // 1.0.0 0x710009365C; 3.0.1 inlines it
+    void setBool(bool value) {
+        m_type = 3;
+        m_value.boolValue = value;
+    }
+    // 1.0.0 0x7100093678; 3.0.1 inlines it
+    void setStr(const char* value) {
+        m_type = 4;
+        m_value.strValue = value;
+    }
     // stores a pointer (type 5, what getUserdata returns; the name is not the original's)
     void setUserdata(void* value) {
         m_type = 5;

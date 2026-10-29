@@ -5,7 +5,7 @@
 
 namespace event {
 // table 0x7100B3E680
-class CharaPlayWink {
+class CharaPlayWink : public ::event::ICmd {
 public:
     virtual ~CharaPlayWink();  // slot 0
     virtual void init();  // slot 2
@@ -13,6 +13,7 @@ public:
     virtual void term();  // slot 4
     // set to 0 by init (the command's step; the name is not the original's)
     int m_step;  // 0x8
+    unsigned char pad_c[0x84];  // CharaObj holds one at 0xab0, the next table store (a CharaMount) at +0x90
 };
 }  // namespace event
 

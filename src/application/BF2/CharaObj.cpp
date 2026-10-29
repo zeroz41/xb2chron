@@ -67,6 +67,7 @@
 #include "classes/event/ScriptCharaMotion.h"
 #include "classes/event/ScriptCharaMotionABC.h"
 #include "classes/event/SkipManager.h"
+#include "classes/event/CharaManager.h"
 
 #include "classes/event/EvtxtManager.h"
 #include "classes/event/LipsyncManager.h"
@@ -408,6 +409,24 @@ Object* Object::searchByPath(const char* path) {
     return nullptr;
 }
 
+void CharaObj::playWink(int a, float b, bool c, float d, float e, int f, bool g, bool h) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    m_cmdQueue1.erase(&m_playWink);
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setS32(a);
+    param.val(2).setF32(b);
+    param.val(3).setBool(c);
+    param.val(4).setF32(d);
+    param.val(5).setF32(e);
+    param.val(6).setS32(f);
+    param.val(7).setBool(g);
+    param.val(8).setBool(h);
+    m_cmdQueue1.push_back(&m_playWink, param);
+}
+
 void CharaObj::setPos(const mm::Vec3& pos) {
     if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
         return;
@@ -445,6 +464,123 @@ void CharaObj::setIdle(int id) {
     param.val(0).setUserdata(this);
     param.val(1).setS32(id);
     m_cmdQueue0.push_back(&m_setIdle, param);
+}
+
+void CharaObj::playAutoAction(float a) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    if (!(mm::mtl::Singleton<CharaManager>::getPtr()->isAutoTalkMode())) {
+        return;
+    }
+    m_cmdQueue0.erase(&m_setIdle);
+    m_cmdQueue0.erase(&m_playActionAuto);
+    m_cmdQueue0.erase(&m_playAction);
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setF32(a);
+    m_cmdQueue0.push_back(&m_playActionAuto, param);
+}
+
+void CharaObj::playMotionABC(const char* a, const char* b, const char* c, float d, float e, float f, float g, float h, float i) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    m_cmdQueue1.erase(&m_playMotion);
+    m_cmdQueue1.erase(&m_playMotionABC);
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setStr(a);
+    param.val(2).setStr(b);
+    param.val(3).setStr(c);
+    param.val(4).setF32(d);
+    param.val(5).setF32(e);
+    param.val(6).setF32(f);
+    param.val(7).setF32(g);
+    param.val(8).setF32(h);
+    param.val(9).setF32(i);
+    m_cmdQueue1.push_back(&m_playMotionABC, param);
+}
+
+void CharaObj::playFacial(int a, float b, int c, float d, int e, float f, int g, float h, float i, float j) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    m_cmdQueue1.erase(&m_playFacial);
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setS32(a);
+    param.val(2).setF32(b);
+    param.val(3).setS32(c);
+    param.val(4).setF32(d);
+    param.val(5).setS32(e);
+    param.val(6).setF32(f);
+    param.val(7).setS32(g);
+    param.val(8).setF32(h);
+    param.val(9).setF32(i);
+    param.val(10).setF32(j);
+    m_cmdQueue1.push_back(&m_playFacial, param);
+}
+
+void CharaObj::playAutoTalk(float a) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    if (!(mm::mtl::Singleton<CharaManager>::getPtr()->isAutoTalkMode())) {
+        return;
+    }
+    m_cmdQueue1.erase(&m_playTalkAuto);
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setF32(a);
+    m_cmdQueue1.push_back(&m_playTalkAuto, param);
+}
+
+void CharaObj::playTalk(bool a, float b, bool c, bool d, float e, float f, float g, float h) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    ICmd* cmd = &m_playTalk;
+    if (!a) {
+        // a talk still queued with flag 8 keeps running
+        for (unsigned int i = 0; i < m_cmdQueue1.m_items.size(); i++) {
+            if (m_cmdQueue1.m_items[i].m_cmd == cmd) {
+                if (m_playTalk.m_flags & 8) {
+                    return;
+                }
+                break;
+            }
+        }
+    }
+    m_cmdQueue1.erase(cmd);
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setBool(a);
+    param.val(2).setF32(b);
+    param.val(3).setBool(c);
+    param.val(4).setBool(d);
+    param.val(5).setF32(e);
+    param.val(6).setF32(f);
+    param.val(7).setF32(g);
+    param.val(8).setF32(h);
+    m_cmdQueue1.push_back(cmd, param);
+}
+
+void CharaObj::playFade(bool a, float b) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    m_cmdQueue1.erase(&m_fade);
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setBool(a);
+    param.val(2).setF32(b);
+    m_cmdQueue1.push_back(&m_fade, param);
+    if (a) {
+        m_flags |= 0x20;
+    } else {
+        m_flags &= ~0x20;
+    }
 }
 
 void CharaObj::playVolumeFade(CharaEffectPlayer::VF_TYPE type, int a, const mm::Vec3& b, const mm::Vec3& c, float d,

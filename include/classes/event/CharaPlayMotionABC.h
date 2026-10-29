@@ -10,6 +10,7 @@ public:
     virtual ~CharaPlayMotionABC();  // slot 0
     virtual bool update(event::ICmd::Param const&);  // slot 3
     virtual void term();  // slot 4
+    unsigned char pad_8[0x78];  // CharaObj holds one at 0x6d0, the next command at +0x80
 };
 }  // namespace event
 

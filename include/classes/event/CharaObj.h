@@ -3,6 +3,16 @@
 
 #include "classes/event/CharaEffectPlayer.h"
 #include "classes/event/CmdQueue.h"
+#include "classes/event/CharaFade.h"
+#include "classes/event/CharaHideWpn.h"
+#include "classes/event/CharaPlayEva.h"
+#include "classes/event/CharaPlayEvaEff.h"
+#include "classes/event/CharaPlayFacial.h"
+#include "classes/event/CharaPlayMotion.h"
+#include "classes/event/CharaPlayMotionABC.h"
+#include "classes/event/CharaPlayTalk.h"
+#include "classes/event/CharaPlayTalkAuto.h"
+#include "classes/event/CharaPlayWink.h"
 #include "classes/event/CharaPlayAction.h"
 #include "classes/event/CharaPlayActionAuto.h"
 #include "classes/event/CharaSetIdle.h"
@@ -27,6 +37,10 @@ public:
     void setRot(const mm::Vec3& rot);
     // queues m_setIdle with this object and id, after erasing the idle and action commands
     void setIdle(int id);
+    void playAutoAction(float time);
+    void playMotionABC(const char* a, const char* b, const char* c, float d, float e, float f, float g, float h, float i);
+    void playFacial(int a, float b, int c, float d, int e, float f, int g, float h, float i, float j);
+    void playAutoTalk(float time);
     void playVolumeFadeAnim(CharaEffectPlayer::VF_TYPE type, float time, float delay);
     void playVolumeFade(CharaEffectPlayer::VF_TYPE type, int a, const mm::Vec3& b, const mm::Vec3& c, float d, float e,
                         int f, float g);
@@ -55,7 +69,22 @@ public:
     CharaSetIdle m_setIdle;  // 0x5e0
     CharaPlayActionAuto m_playActionAuto;  // 0x608
     CharaPlayAction m_playAction;  // 0x630
-    unsigned char pad_670[0x630];
+    unsigned char pad_670[0x10];
+    // the commands the play*/set* functions queue (CharaObj's constructor builds them); the names are not the original's
+    CharaPlayMotion m_playMotion;  // 0x680
+    CharaPlayMotionABC m_playMotionABC;  // 0x6d0
+    CharaPlayEva m_playEva;  // 0x750
+    unsigned char pad_790[0x150];
+    CharaPlayEvaEff m_playEvaEff;  // 0x8e0
+    unsigned char pad_910[0x28];
+    CharaHideWpn m_hideWpn;  // 0x938
+    unsigned char pad_950[0x50];
+    CharaPlayFacial m_playFacial;  // 0x9a0
+    CharaPlayTalkAuto m_playTalkAuto;  // 0xa10
+    CharaPlayTalk m_playTalk;  // 0xa38
+    CharaPlayWink m_playWink;  // 0xab0
+    unsigned char pad_b40[0x40];
+    CharaFade m_fade;  // 0xb80
     // bit 5: playFade's flag (it sets or clears it); the name is not the original's
     unsigned int m_flags;  // 0xca0
     unsigned char pad_ca4[0xb4];

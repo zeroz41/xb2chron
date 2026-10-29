@@ -20,6 +20,10 @@ public:
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     // 1.0.0's clear() (0x71000D7094): zeroes m_offscrID, m_reuseFlag, then m_modeFlags
     void clear();
+    // 1.0.0 0x71000BC388; 3.0.1 inlines it
+    bool isStreamMode() const { return m_modeFlags & 1; }
+    // 1.0.0 0x71000C5718; 3.0.1 inlines it
+    bool isAutoTalkMode() const { return m_modeFlags & 4; }
 
 private:
     // 1.0.0's accessors name the bits: 0 stream mode (isStreamMode), 1 offscreen mode (isOffscrMode), 2 auto talk

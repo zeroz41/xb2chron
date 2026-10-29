@@ -9,6 +9,7 @@ class CharaFade : public ::event::ICmd {
 public:
     virtual ~CharaFade();  // slot 0
     virtual bool update(event::ICmd::Param const&);  // slot 3
+    unsigned char pad_8[0x118];  // CharaObj holds one at 0xb80; update reaches +0xd0 (its CharaObj table store at +0x10 is an AnmF32 inside it), sized up to CharaObj's next known field at +0x120
 };
 }  // namespace event
 

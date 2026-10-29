@@ -10,6 +10,7 @@ public:
     virtual ~CharaPlayEva();  // slot 0
     virtual bool update(event::ICmd::Param const&);  // slot 3
     virtual void term();  // slot 4
+    unsigned char pad_8[0x38];  // CharaObj holds one at 0x750, the next table store (a CharaEvaPlayer) at +0x40
 };
 }  // namespace event
 
