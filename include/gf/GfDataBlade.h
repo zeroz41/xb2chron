@@ -426,6 +426,10 @@ public:
     // GfDataBlade's unit among GfDataBlade's functions. What it does: local flag 652 (type 4) (GfGameFlag::getLocal(4, 652)).
     static unsigned int fn_710024DD88();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions. What it does: true when local flag 0xD788 (type 1) is set, else
+    // when the pointer at 0x7100C294C0 is set and gf::fn_71002229C0(3) is above 0 (GfGameManager::fn_71002AC64C).
+    static bool fn_7100232754();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit among GfDataBlade's functions. What it does: sets local flag 0xD862 (type 1) to flag.
     static void fn_710024E9CC(bool flag);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in

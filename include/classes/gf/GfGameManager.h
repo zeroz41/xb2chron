@@ -26,6 +26,11 @@ namespace gf { enum GfPlayerDead : int; }
 
 namespace gf {
 // table 0x7100B54938; IGfEvent at 0x8 (1.0.0's table names the overrides), IQuestEvent at 0x10
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function (the symbols spell it in gf's
+// namespace) in gf_game_manager's unit. What it does: the int at 0x104 of PtrSingleton<TUnk_B535D0>'s instance (its
+// record's m_value2C), 0 when there is none.
+unsigned int fn_71002AC5B8();
+
 class GfGameManager : public ::mm::mtl::PtrSingleton< ::gf::GfGameManager>, public ::gf::IGfEvent, public ::gf::IQuestEvent {
 public:
     GfGameManager() : m_initialized(false), m_leaveGameForDebug(false) {}
@@ -334,6 +339,69 @@ public:
     // false when there is no GfGameScene. Its only caller is GfGamePlayerUniqueScheduler::update, which skips the
     // scheduler while it is true.
     static bool fn_71002AC70C();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
+    // GfGameManager's functions and takes no instance. What it does: tail-calls gf::fn_71002EE904(value) (GfWeapon's
+    // unit: the option data's SSoundUiOption at +0x4C gets value through fn_7100254FDC).
+    static void fn_71002AC578(unsigned int value);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
+    // GfGameManager's functions and takes no instance. What it does: the int at 0x100 of PtrSingleton<TUnk_B535D0>'s
+    // instance (its record's m_value28), 0 when there is none.
+    static unsigned int fn_71002AC5EC();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
+    // GfGameManager's functions and takes no instance. What it does: sets the byte at 0x8C0 of PtrSingleton<GfGameScene>'s
+    // instance when there is one.
+    static void fn_71002AC6F0();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
+    // GfGameManager's functions and takes no instance. What it does: GfGameScene::fn_71002C4BFC() when there is a
+    // GfGameScene, else false.
+    static bool fn_71002AC764();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
+    // GfGameManager's functions and takes no instance. What it does: when TUnk_B54858's instance exists with mode 1,
+    // whether any of the party's drivers 0..2 (GfGameParty::getHandleDriver(party, n)) is in battle; else whether
+    // driver 0 or the party's blade (getHandleBlade(party, -1)) is in battle, false without a driver.
+    static bool fn_71002AC77C(unsigned int party);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
+    // GfGameManager's functions and takes no instance. What it does: false unless TUnk_B54858's instance exists, its
+    // mode is not 1 and fn_71002A75DC(0x30101) holds; then gf::fn_71002EE9A4() (option byte 0x84 is 0).
+    static bool fn_71002AC89C();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
+    // GfGameManager's functions and takes no instance. What it does: whether id is 0 or one of 30255..30258.
+    static bool fn_71002AC8E4(unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
+    // GfGameManager's functions and takes no instance. What it does: the byte at 0x21B of PtrSingleton<tl::TitleMain>'s
+    // instance is set (false without one).
+    static bool fn_71002AC908();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
+    // GfGameManager's functions and takes no instance. What it does: whether the arena (TUnk_B535D0) is in state 5 and
+    // btl::TUnk_B3A9C8's instance exists and either its fn_7100026A48 holds or its fn_7100026814 holds with
+    // btl::Utility::AI_GetEnemyNum() == 0.
+    static bool fn_71002AC930();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
+    // GfGameManager's functions and takes no instance. What it does: tail-call gf::fn_71002EE9EC / fn_71002EEA34 /
+    // fn_71002EEA7C (GfWeapon's unit: the option data's bytes 0x7F / 0x80 / 0x81 are set).
+    static bool fn_71002AC99C();
+    static bool fn_71002AC9A0();
+    static bool fn_71002AC9A4();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
+    // GfGameManager's functions and takes no instance. What it does: true while GfPlayComQuestCompleteUI::s_active
+    // is above 0 or PtrSingleton<GfPlayComOpenNpcEntry>'s instance exists; else GfGameScene::fn_71002C4B38() when
+    // there is a GfGameScene, false otherwise. Caller: GfGameScene::isBattleStop.
+    static bool fn_71002AC340();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
+    // GfGameManager's functions and takes no instance. What it does: whether the int at 0x630 of PtrSingleton<GfGameScene>'s
+    // instance is above 0 (false without one). Caller: btl::BattleCharacter::IsProcAI.
+    static bool fn_71002AC384();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
+    // GfGameManager's functions and takes no instance. What it does: the handle of
+    // PtrSingleton<GfGamePlayerFormation>'s first player (m_players[0].m_handle) when there is a formation and it is
+    // not -1, else getPartyLeader() unless it is -1, else GfGameParty::fn_71002BC6F8(). Callers: gmk's
+    // getPlayerPos / isPlayerExist / getInterestPos and many gimmick updates.
+    static GF_OBJ_HANDLE* fn_71002AA074();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
+    // GfGameManager's functions and takes no instance. What it does: while there is a
+    // GfGameScene and it plays an event, whether the object is not displayed (GfObjAcc::isDisp(0) false); false
+    // otherwise. Caller: GfComBehaviorPc::update.
+    static bool fn_71002AA25C(GF_OBJ_HANDLE* handle);
     static void clear();
     // takes fn_71002A9E68()'s answer in 3.0.1 (every caller passes it; the symbols still spell 1.0.0's setupGame())
     static void setupGame(bool flag);

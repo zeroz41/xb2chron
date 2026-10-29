@@ -86,7 +86,9 @@ public:
     bool m_isClear;  // GfMenuManager::isClearCheck returns it (the name is not the original's)
     // GfMenuObjTitle::isEnableNewGameAdv answers it when there is save data (the name is not the original's)
     bool m_newGameAdv;
-    unsigned char pad_21A[0x6];
+    unsigned char pad_21A[0x1];
+    bool m_flag21B;  // GfGameManager::fn_71002AC908 answers it (the name is not the original's)
+    unsigned char pad_21C[0x4];
 };
 }  // namespace tl
 

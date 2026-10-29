@@ -110,6 +110,19 @@ void fn_71002EE954(unsigned int type);
 // depend on TUnk_B54858's content state and GfGameManager::fn_71002AC598. TUnk_28D7B8::fn_710028DA24 / fn_710028DAB4
 // test it for each blade of GfBdatChrBl's range.
 bool fn_71002EDAD4(unsigned int blade);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. Free functions because their addresses
+// are in GfWeapon's unit (no object). Each reads the option data (tl::TitleMain::getOptionBuffer in advertize/theater
+// mode, else GfDataManager::getDataOption()). What they do: fn_71002EC634: its byte 0x6F (as unsigned int); fn_71002EDA8C: byte 0x82
+// is set; fn_71002EE9A4: byte 0x84 is 0; fn_71002EE9EC / fn_71002EEA34 / fn_71002EEA7C: byte 0x7F / 0x80 / 0x81 is
+// set; fn_71002EE904: passes value to fn_7100254FDC on the SSoundUiOption at +0x4C. GfGameManager's statics
+// fn_71002AC57C, fn_71002AC6A8, fn_71002AC89C, fn_71002AC99C/9A0/9A4 and fn_71002AC578 call them.
+unsigned int fn_71002EC634();
+bool fn_71002EDA8C();
+bool fn_71002EE9A4();
+bool fn_71002EE9EC();
+bool fn_71002EEA34();
+bool fn_71002EEA7C();
+void fn_71002EE904(unsigned int value);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfWeapon's unit (no this). What it does: a driver's class from the average trust rank (1..6) of the driver's
 // active party blades (GfDataDriver::fn_71002416B4, GfGameUtil::getTrustRank) through GfBdatChrDr::fn_71001F13E0,

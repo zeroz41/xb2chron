@@ -16,7 +16,7 @@ namespace gf {
 // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions: no class is proven for
 // them; TUnk_B53118::onStep calls both each step with no arguments. fn_71002AC5B8 sits in gf_game_manager's unit,
 // fn_71005661C0 in gf_req_scom's.
-void fn_71002AC5B8();
+unsigned int fn_71002AC5B8();  // returns TUnk_B535D0 +0x104 (0 when absent)
 void fn_71005661C0();
 
 // table 0x7100B53118 (no RTTI): an arena state (getName "StateArenaReturnBattle"; TUnk_B535D0's setup registers

@@ -46,6 +46,9 @@ public:
     // fn_7100026A48 / fn_7100026A58: pad_26 above 149 / above 199
     bool fn_7100026A48() const;
     bool fn_7100026A58() const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: GfGameManager::fn_71002AC930
+    // passes the singleton. What it does: returns the byte at 0x8 of the .bss object 0x7100EB7DBC (this unused).
+    bool fn_7100026814() const;
     // fn_7100026C18: pad_24 = value while pad_26 is set (EnemyParameter's SetupBGM passes its BGM id)
     void fn_7100026C18(unsigned short value);
     // fn_7100026C28: while pad_26 is set, fn_7100026CBC(BDAT 78's "Score" of id, false), then character's

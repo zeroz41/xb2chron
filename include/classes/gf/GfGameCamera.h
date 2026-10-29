@@ -28,7 +28,7 @@ public:
     static void destroy();
     void createSubViewCamera();
     void destroySubViewCamera();
-    void clear();
+    static void clear();  // static: GfGameManager::clear calls it with no instance (its body is empty)
     static void setCameraControlType(int type);
 
     mm::mtl::FixedArray<mm::mtl::IntrusivePtr<fw::Camera>, 3> m_subViewCameras;  // VIEWCAM 1 to 3

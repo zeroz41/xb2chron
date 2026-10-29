@@ -117,6 +117,15 @@ public:
     // gf_game_scene's unit and GfGameManager::isEnableOpenMainMenu passes the scene. What it does: whether the int at
     // 0x690 is below 30; isEnableOpenMainMenu answers false while it holds.
     bool fn_71002C4A14();
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // gf_game_scene's unit and GfGameManager's statics pass the scene. What they do: fn_71002C4B38: whether the int
+    // at 0x698 is below 2 (GfGameManager::fn_71002AC340); fn_71002C4BFC: whether the int at 0x68C is not 0
+    // (GfGameManager::fn_71002AC764).
+    bool fn_71002C4B38();
+    bool fn_71002C4BFC();
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // gf_game_scene's unit and GfGameManager::fn_71002AC9C0 tail-calls it on the scene with its update info.
+    void fn_71002CC060(const ::fw::UpdateInfo& info);
     void refreshGimmickFlag();
     bool isRide(unsigned int id) const;
     // GfGameParty::gevPartyIDMemberOK passes the party id it is told about (1.0.0's symbol)
@@ -213,7 +222,11 @@ public:
     unsigned char pad_29C[0x184];
     bool m_maskMainMenu;  // isMaskMainMenu's
     bool m_playEvent;  // isPlayEvent's
-    unsigned char pad_422[0x216];
+    unsigned char pad_422[0x20E];
+    // GfGameManager::fn_71002AC384 answers whether it is above 0 (btl::BattleCharacter::IsProcAI asks; the name is
+    // not the original's)
+    int m_value630;
+    unsigned char pad_634[0x4];
     EvtPlayerStop m_eventPlayerStop;  // setEventPlayerStop's
     EvtPlayerStop m_resetBladePlayerStop;  // setResetBladePlayerStop's
     EvtPlayerStop m_gimmickPlayerStop;  // fn_71002C345C's (GfFieldMapGimmick::update calls it)
@@ -224,7 +237,9 @@ public:
     // GfPlayComIraCampSave::start clears it and requests solo party 22 (GfReqCommand::reqSoloParty) while it is set;
     // the name is not the original's
     bool m_iraCampSolo;
-    unsigned char pad_8B9[0x17];  // build allocates 0x8D0 bytes
+    unsigned char pad_8B9[0x7];
+    bool m_flag8C0;  // GfGameManager::fn_71002AC6F0 sets it (the name is not the original's)
+    unsigned char pad_8C1[0xF];  // build allocates 0x8D0 bytes
     void qevCompleteQuest(const gf::QuestCompleteParam& param);
     void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
     void gevPlayEvent(gf::GEV gev, unsigned int id);
