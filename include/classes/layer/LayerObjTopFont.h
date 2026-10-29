@@ -1,7 +1,7 @@
 #ifndef CLASSES_LAYER_LAYEROBJTOPFONT_H
 #define CLASSES_LAYER_LAYEROBJTOPFONT_H
 
-#include "classes/layer/LayerObj.h"
+#include "classes/layer/LayerObjFont.h"
 
 namespace layer { class LayerRenderView; }
 namespace layer { class LayerResColor; }
@@ -10,7 +10,9 @@ namespace layer { class LayerSortMan; }
 
 namespace layer {
 // table 0x7100B7FF00
-class LayerObjTopFont : public ::layer::LayerObj {
+// Derives LayerObjFont: its destructor and applyParams hand this unadjusted to LayerObjFont::workRelease and
+// LayerObjFont::updateShaderParms.
+class LayerObjTopFont : public ::layer::LayerObjFont {
 public:
     virtual ~LayerObjTopFont();  // slot 0
     void finalRender();

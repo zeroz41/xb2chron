@@ -230,14 +230,14 @@ void LayerAccObjBase::setDisp(bool disp) { static_cast<LayerObj*>(m_layer)->setD
 
 void LayerAccObjBase::setFlip(LayerFlipType type, bool flip) { static_cast<LayerObj*>(m_layer)->setFlip(type, flip); }
 
-unsigned short LayerAccObjBase::getPixelWidth() const { return static_cast<LayerObj*>(m_layer)->m_pixelWidth; }
+unsigned short LayerAccObjBase::getPixelWidth() const { return static_cast<LayerObj*>(m_layer)->m_renderInfo.m_pixelWidth; }
 
-unsigned short LayerAccObjBase::getPixelHeight() const { return static_cast<LayerObj*>(m_layer)->m_pixelHeight; }
+unsigned short LayerAccObjBase::getPixelHeight() const { return static_cast<LayerObj*>(m_layer)->m_renderInfo.m_pixelHeight; }
 
-void LayerAccObjBase::setCenterType(LayerCenterType type) { static_cast<LayerObj*>(m_layer)->m_centerType = type; }
+void LayerAccObjBase::setCenterType(LayerCenterType type) { static_cast<LayerObj*>(m_layer)->m_renderInfo.m_centerType = type; }
 
 LayerCenterType LayerAccObjBase::getCenterType() const {
-    return static_cast<LayerCenterType>(static_cast<LayerObj*>(m_layer)->m_centerType);
+    return static_cast<LayerCenterType>(static_cast<LayerObj*>(m_layer)->m_renderInfo.m_centerType);
 }
 
 void LayerAccObjBase::setMaskObj(const LayerBase* mask) { static_cast<LayerObj*>(m_layer)->m_maskObj = mask; }

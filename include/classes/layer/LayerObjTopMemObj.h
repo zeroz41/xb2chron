@@ -2,6 +2,7 @@
 #define CLASSES_LAYER_LAYEROBJTOPMEMOBJ_H
 
 #include "classes/layer/LayerObj.h"
+#include "grlib/CGLibDblUniformBlock.h"
 #include "classes/layer/LayerObjSortMemObj.h"
 #include "grlib/CGLibOneUniformBlock.h"
 
@@ -25,12 +26,15 @@ public:
 
     // The field names follow LayerAccMemObj's accessors that read them (not the original's).
     // The field names follow the functions that use them (not the original's).
-    unsigned char pad_248[0x10];
+    unsigned char pad_248[0x8];
+    const void* m_viewData;  // applyParams copies LayerRenderView::m_viewData (the name is not the original's)
     LayerObjSortMemObj m_sortObj;  // 0x258: what setDrawList puts in the sort lists
     unsigned int m_renderFlags;  // setRender sets or clears RENDER_ON
     unsigned char pad_274[0x74];
     grlib::CGLibTextureBuffer* m_texture;  // getTexture
-    unsigned char pad_2F0[0x3B0];
+    unsigned char pad_2F0[0x350];
+    grlib::CGLibDblUniformBlock m_uniform;  // 0x640: applyParams updates it (the name is not the original's)
+    unsigned char pad_678[0x28];
     grlib::CGLibOneUniformBlock m_buffers[2];  // getBuffer, indexed by LayerManager::s_nDebIdx
     grlib::CGLibOneUniformBlock m_clearBuffers[2];  // updateBufer zeroes its first 16 bytes before flushing
     unsigned int m_memWidth;  // getMemWidth

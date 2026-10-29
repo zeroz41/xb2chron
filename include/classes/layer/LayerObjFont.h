@@ -19,6 +19,10 @@ public:
     void setSlopeRot(float rot);
     float getBorderWeight() const;
     float getSlopeRot() const;
+    // releases the font's work (LayerObjTopFont's destructor, after LayerObj::baseRelease)
+    void workRelease();
+    // LayerObjTopFont::applyParams
+    void updateShaderParms(const LayerRenderView* view, const LayerResMatrix& matrix, const LayerResColor& color);
 
     unsigned char pad_248[0x30];
     // what setMsg(text) draws with (named after setMsg's parameters)
@@ -37,6 +41,12 @@ public:
     LayerFontDisplayArea m_displayArea;  // set/getDisplayArea
     LayerFontSetting m_dispSetting;  // setDispSetting
     float m_slopeRot;  // setSlopeRot
+    // setBorderWeight sets a bit per LayerManager::s_nStkIdx; getBorderWeight reads that slot, else the s_nDebIdx
+    // slot, else m_borderWeightDef (the names are not the original's)
+    unsigned short m_borderWeightFlags;
+    unsigned char pad_2BE[0x2];
+    float m_borderWeightDef;
+    float m_borderWeight[2];
 };
 }  // namespace layer
 

@@ -1,3 +1,12 @@
+#include "classes/layer/LayerObj.h"
+#include "classes/layer/LayerObjFont.h"
+#include "layer/LayerObjUtil.h"
+#include "classes/layer/LayerObjTopLayout.h"
+#include "classes/layer/LayerObjTopTexObj.h"
+#include "classes/layer/LayerObjTopMemObj.h"
+#include "classes/layer/LayerObjTopPolyObj.h"
+#include "layer/LayerRenderView.h"
+#include "classes/layer/LayerObjTopFont.h"
 #include "layer/LayerObjUtil.h"
 #include "classes/layer/LayerObj.h"
 #include "classes/layer/LayerActBase.h"
@@ -72,6 +81,9 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/layer/LayerTagStr.h"
 #include "layer/LayerSortMan.h"
+#include "layer/LayerRenderView.h"
+#include "classes/layer/LayerObjTopLayout.h"
+#include "classes/layer/LayerObjSortLayout.h"
 
 namespace layer {
 
@@ -143,6 +155,15 @@ void LayerObj::setDisp(bool disp) {
         onFlag(LayerManager::s_nStkIdx, FLAG_DISP_OFF);
     }
 }
+void LayerObj::setFlip(LayerFlipType type, bool flip) {
+    if (flip) {
+        onFlag(FLAG_FLIP_ON << type);
+        offFlag(FLAG_FLIP_OFF << type);
+    } else {
+        onFlag(FLAG_FLIP_OFF << type);
+        offFlag(FLAG_FLIP_ON << type);
+    }
+}
 void LayerActBase::actionIdx(unsigned int index) {
     int stkIdx = LayerManager::s_nStkIdx;
     onFlag(stkIdx, FLAG_ACTION_RUNNING);
@@ -208,6 +229,11 @@ bool LayerActLayout::actcmd_notcmd02(const unsigned char*& cmd) {
 void LayerObjFont::setColorMap(const LayerFontIconObj* colorMap, unsigned int pattern) {
     m_colorMap = colorMap;
     m_colorMapPattern = pattern;
+}
+void LayerObjFont::setBorderWeight(float weight) {
+    int index = LayerManager::s_nStkIdx;
+    m_borderWeight[index] = weight;
+    m_borderWeightFlags |= 1 << index;
 }
 void LayerObjFont::setSlopeRot(float rot) { m_slopeRot = rot; }
 float LayerObjFont::getSlopeRot() const { return m_slopeRot; }
@@ -319,6 +345,13 @@ void LayerObjTopDef::setDrawList(LayerSortMan* sortMan, bool use3D) {
         set2DSpace(sortMan, &m_sortObj);
     }
 }
+LayerObjTopFont::~LayerObjTopFont() {
+    baseRelease();
+    workRelease();
+}
+void LayerObjTopFont::applyParams(const LayerRenderView* view, const LayerResMatrix& matrix, const LayerResColor& color) {
+    updateShaderParms(view, matrix, color);
+}
 void* LayerObjTopMemObj::getBuffer() {
     unsigned int index = LayerManager::s_nDebIdx;
     return m_buffers[index].m_pBuff;
@@ -338,6 +371,13 @@ void LayerObjTopMemObj::setRender(bool render) {
         m_renderFlags &= ~RENDER_ON;
     }
 }
+void LayerObjTopMemObj::applyParams(const LayerRenderView* view, const LayerResMatrix& matrix, const LayerResColor& color) {
+    m_viewData = view->m_viewData;
+    m_dispInfo.m_minX = m_dispInfo.m_minY = -100000.0f;
+    m_dispInfo.m_maxX = m_dispInfo.m_maxY = 100000.0f;
+    LayerObjUtil::calcDispInfo(m_dispInfo, matrix, m_renderInfo);
+    if (!(m_stateFlags & STATE_NO_DRAW)) updateDefUniformBlock(m_uniform, matrix, color, nullptr);
+}
 void LayerObjTopMemObj::setDrawList(LayerSortMan* sortMan, bool use3D) {
     if (m_stateFlags & STATE_NO_DRAW) return;
     if (use3D) {
@@ -353,6 +393,13 @@ void LayerObjTopMemObj::setDrawList(LayerSortMan* sortMan, bool use3D) {
 LayerObjTopTexObj::~LayerObjTopTexObj() {
     baseRelease();
     m_uniform.release();
+}
+void LayerObjTopTexObj::applyParams(const LayerRenderView* view, const LayerResMatrix& matrix, const LayerResColor& color) {
+    m_viewData = view->m_viewData;
+    m_dispInfo.m_minX = m_dispInfo.m_minY = -100000.0f;
+    m_dispInfo.m_maxX = m_dispInfo.m_maxY = 100000.0f;
+    LayerObjUtil::calcDispInfo(m_dispInfo, matrix, m_renderInfo);
+    if (!(m_stateFlags & STATE_NO_DRAW)) updateDefUniformBlock(m_uniform, matrix, color, nullptr);
 }
 void LayerObjTopTexObj::setDrawList(LayerSortMan* sortMan, bool use3D) {
     if (m_stateFlags & STATE_NO_DRAW) return;
@@ -388,6 +435,13 @@ void LayerObjTopPolyObj::setIndexInfo(unsigned short start, unsigned short count
     m_indexStart[index] = start;
     m_indexCount[index] = count;
 }
+void LayerObjTopPolyObj::applyParams(const LayerRenderView* view, const LayerResMatrix& matrix, const LayerResColor& color) {
+    m_viewData = view->m_viewData;
+    m_dispInfo.m_minX = m_dispInfo.m_minY = -100000.0f;
+    m_dispInfo.m_maxX = m_dispInfo.m_maxY = 100000.0f;
+    LayerObjUtil::calcDispInfo(m_dispInfo, matrix, m_renderInfo);
+    if (!(m_stateFlags & STATE_NO_DRAW)) updateDefUniformBlock(m_uniform, matrix, color, nullptr);
+}
 void LayerObjTopPolyObj::setDrawList(LayerSortMan* sortMan, bool use3D) {
     if (m_stateFlags & STATE_NO_DRAW) return;
     if (use3D) {
@@ -418,6 +472,16 @@ void LayerObjSortDef::finalRender() { static_cast<LayerObjTopDef*>(m_obj)->final
 void LayerObjSortFont::finalRender() { static_cast<LayerObjTopFont*>(m_obj)->finalRender(); }
 void LayerObjSortTexObj::finalRender() { static_cast<LayerObjTopTexObj*>(m_obj)->finalRender(); }
 void LayerObjSortPolyObj::finalRender() { static_cast<LayerObjTopPolyObj*>(m_obj)->finalRender(); }
+void LayerObjSortLayout::finalRender() {
+    LayerObjTopLayout* obj = static_cast<LayerObjTopLayout*>(m_obj);
+    if (obj->m_sortMan) obj->m_sortMan->finalRender();
+    if ((obj->m_renderFlags & LayerObjTopLayout::RENDER_TEX_OBJ) != LayerObjTopLayout::RENDER_TEX_OBJ) return;
+    LayerShdManager* shdManager = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager;
+    shdManager->setShaderMaskOff();
+    shdManager->setupMainRenderTarget();
+    shdManager->resetViewPort();
+    if (!(obj->m_texObj->m_stateFlags & LayerObj::STATE_NO_DRAW)) obj->m_texObj->finalRender();
+}
 void LayerObjSortMemObj::finalRender() {
     LayerObjTopMemObj* obj = static_cast<LayerObjTopMemObj*>(m_obj);
     obj->setupRender();
@@ -437,6 +501,14 @@ void LayerObjUtil::calcMdlPos_Center_Center(float* pos, float* out, const float*
     out[1] = (base.m_alignY + 0.5f) * size[1];
     pos[0] -= size[0] * 0.5f;
     pos[1] -= size[1] * 0.5f;
+}
+void LayerObjUtil::calcPos_Pixel_Up(float* pos, const LayerBasePos& base) {
+    pos[0] = base.m_posX * mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcPosWidth();
+    pos[1] = base.m_posY * mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcPosHeight();
+}
+void LayerObjUtil::calcPos_Correction_Up(float* pos, const LayerBasePos& base) {
+    pos[0] = base.m_posX * mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcPosWidth();
+    pos[1] = base.m_posY * mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcPosHeight();
 }
 
 }  // namespace layer

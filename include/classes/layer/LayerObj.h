@@ -15,8 +15,27 @@ namespace layer { class LayerResMatrix; }
 namespace layer { class LayerResUpdateInfo; }
 namespace layer { class LayerSortMan; }
 namespace layer { class LayerSortObj; }
+namespace grlib { class CGLibDblUniformBlock; }
+namespace grlib { class CGLibRenderTarget; }
 
 namespace layer {
+// a layer object's screen bounds: the TopTexObj/TopMemObj/TopPolyObj applyParams reset them to +-100000, then
+// LayerObjUtil::calcDispInfo computes them (the field names are not the original's)
+class LayerResDispInfo {
+public:
+    float m_minX;
+    float m_minY;
+    float m_maxX;
+    float m_maxY;
+};
+// what LayerObjUtil::calcDispInfo reads the object's size from; only the fields LayerAccObjBase reads are known
+class LayerResRenderInfo {
+public:
+    unsigned char pad_0[0x14];
+    unsigned short m_pixelWidth;  // getPixelWidth
+    unsigned short m_pixelHeight;  // getPixelHeight
+    unsigned char m_centerType;  // set/getCenterType (a LayerCenterType)
+};
 // table 0x7100B7F9E8
 class LayerObj : public ::layer::LayerBase {
 public:
@@ -98,10 +117,17 @@ public:
     bool isFlag(unsigned int index, unsigned int flag) const { return (m_flags[index] & flag) != 0; }
     void onFlag(unsigned int index, unsigned int flag) { m_flags[index] |= flag; }
     void offFlag(unsigned int index, unsigned int flag) { m_flags[index] &= ~flag; }
+    // the LayerManager::s_nStkIdx entry's bits (setFlip computes the bits before it reads the index)
+    void onFlag(unsigned int flag);
+    void offFlag(unsigned int flag);
+    // updates the object's default uniform block from its matrix and color (the TopTexObj/TopMemObj/TopPolyObj
+    // applyParams)
+    void updateDefUniformBlock(grlib::CGLibDblUniformBlock& uniform, const LayerResMatrix& matrix,
+                               const LayerResColor& color, const grlib::CGLibRenderTarget* target);
     // setDrawList's 2D case: puts obj in sortMan's 2D space while the object is on screen (the name is not the
     // original's)
     void set2DSpace(LayerSortMan* sortMan, LayerSortObj* obj) const {
-        if (m_dispBounds[0] <= 0.0f || m_dispBounds[1] <= 0.0f || m_dispBounds[2] >= 1.0f || m_dispBounds[3] >= 1.0f) {
+        if (m_dispInfo.m_minX <= 0.0f || m_dispInfo.m_minY <= 0.0f || m_dispInfo.m_maxX >= 1.0f || m_dispInfo.m_maxY >= 1.0f) {
             return;
         }
         sortMan->set2DSpace(obj, m_priority);
@@ -125,12 +151,9 @@ public:
     Param m_params[3];
     // the screen bounds setDrawList tests: drawn only while [0] > 0, [1] > 0, [2] < 1 and [3] < 1 (the name is not
     // the original's)
-    float m_dispBounds[4];
-    unsigned char pad_180[0x14];
-    unsigned short m_pixelWidth;  // getPixelWidth
-    unsigned short m_pixelHeight;  // getPixelHeight
-    unsigned char m_centerType;  // set/getCenterType (a LayerCenterType)
-    unsigned char pad_199[0x3F];
+    LayerResDispInfo m_dispInfo;
+    LayerResRenderInfo m_renderInfo;  // 0x180
+    unsigned char pad_19A[0x3E];
     unsigned short m_runningActIdx[2];  // LayerAccAction::getRunningActIdx, indexed by LayerManager::s_nDebIdx
     unsigned char pad_1DC[0x18];
     float m_ctrlSpd;  // LayerActBase::actcmd_ctrlspd (the name is not the original's)
@@ -142,6 +165,8 @@ public:
     unsigned char pad_204[0x3C];
     const LayerBase* m_maskObj;  // setMaskObj
 };
+inline void LayerObj::onFlag(unsigned int flag) { onFlag(LayerManager::s_nStkIdx, flag); }
+inline void LayerObj::offFlag(unsigned int flag) { offFlag(LayerManager::s_nStkIdx, flag); }
 inline const LayerObj::Param& LayerObj::getParam(unsigned int flag) const {
     if (isFlag(LayerManager::s_nStkIdx, flag)) return m_params[LayerManager::s_nStkIdx];
     return isFlag(LayerManager::s_nDebIdx, flag) ? m_params[LayerManager::s_nDebIdx] : m_params[2];
