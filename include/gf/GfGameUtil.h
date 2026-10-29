@@ -1,7 +1,7 @@
 #ifndef GF_GFGAMEUTIL_H
 #define GF_GFGAMEUTIL_H
 
-namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GF_OBJ_HANDLE; struct OwnerBonus; }
 namespace mm { class Vec3; namespace mtl { template <int LEN> class FixStr; template <typename T, unsigned long N> class FixedList; } }
 namespace gmk { enum GmkType : int; }
 
@@ -43,6 +43,7 @@ public:
     static unsigned int getKizunaLink(unsigned int blade);
     // sends the driver's party object its maximum hit points again (DataParamAcc::getHpMax)
     static void refreshEnhanceState(unsigned int driver);
+    static void getOwnerBonus(OwnerBonus& bonus);  // GfGameScene::updateParam refreshes its owner bonus with it
     // hands a driver its default accessory once (CHR_Dr's DefAcce) and equips it in slot 0
     static void execEquipDriverDefaultAcce(unsigned int driver);
     // SCOM_POPUP::createAchievement passes its blade, line and level; when it returns true no popup is queued

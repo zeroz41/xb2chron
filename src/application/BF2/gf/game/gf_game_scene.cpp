@@ -1,3 +1,5 @@
+#include "classes/gf/GfGameScene.h"
+#include "gf/GfGameUtil.h"
 #include "mm/mtl/Bitflag.h"
 #include "classes/gf/GfGameScene.h"
 #include "gf/GfObjAcc.h"
@@ -28,6 +30,17 @@
 #include "gf/GfObjUtil.h"
 #include "gf/GfSelectBlade.h"
 #include "gf/GfTargetProperty.h"
+#include "classes/gf/GfEvent.h"
+#include "gf/GfPartySelect.h"
+#include "classes/gf/DataParamAcc.h"
+#include "classes/gf/GfObjSetup.h"
+#include "gf/GfDataEnemy.h"
+#include "classes/gf/GfGameRide.h"
+#include "classes/gf/GfSound.h"
+#include "classes/gf/GfSlowAttack.h"
+#include "classes/gf/GfTrinityAttack.h"
+#include "classes/gf/GfPlayComEventFade.h"
+#include "string.h"
 
 namespace gf {
 
@@ -60,6 +73,19 @@ void GfGameScene::EvtPlayerStop::setPlayerStop(bool stop) {
 void GfGameScene::build(const GfSetupParam& param) {
 #line 461
     new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfGameScene(param);
+}
+
+void GfGameScene::destroy() {
+    GfGameScene* scene = get();
+    if (GfSound* sound = GfSound::get()) {
+        sound->releaseCategoryHandle(scene->m_seCategoryHandles[0]);
+        sound->releaseCategoryHandle(scene->m_seCategoryHandles[1]);
+        sound->releaseCategoryHandle(scene->m_seCategoryHandles[2]);
+    }
+    GfSlowAttack::destroy();
+    GfTrinityAttack::destroy();
+    scene->m_alive = false;
+    delete scene;
 }
 
 bool GfGameScene::isPlayerSwimOnCloud() {
@@ -198,13 +224,91 @@ GfPlayerDead GfGameScene::getDeadType() {
     return m_deadType;
 }
 
+void GfGameScene::setDamageCharacter(GF_OBJ_HANDLE* handle) {
+    for (DamageCharacter& character : m_damageCharacters) {
+        if (character.m_handle == handle) {
+            character.m_time = 0;
+            return;
+        }
+    }
+}
+
+void GfGameScene::saveBattleHpForEnemy(GF_OBJ_HANDLE* handle) {
+    if (!GfGameManager::isScenarioGame()) {
+        return;
+    }
+    DataParamAcc acc(handle);
+    GfObjSetup* setup = GfObjUtil::getObjSetup(handle);
+    bool skip = false;
+    if (setup != nullptr) {
+        switch (setup->m_createType) {
+        case 2:
+        case 3:
+        case 11:
+            skip = true;
+            break;
+        default:
+            break;
+        }
+    }
+    if (!skip) {
+        unsigned int hp = acc.getHp();
+        if (hp != 0) {
+            unsigned int type = GfDataEnemy::getSavedHpType(acc.isValid() ? acc.getBdatId() : 0);
+            if (type >= 1 && type <= 3) {
+                GfDataEnemy::setSavedHp(type, hp);
+            }
+        }
+    }
+}
+
+bool GfGameScene::isDisableJumpForRide() const {
+    if (m_frameCount690 < 30) {
+        return true;
+    }
+    if (!m_rideActive) {
+        return false;
+    }
+    GfObjAcc acc(GfGameParty::getHandleDriver(0, 0));
+    if (isBattle() && !acc.isBattle() && m_openMainMenuState != 2) {
+        return false;
+    }
+    return m_rideActive;
+}
+
+bool GfGameScene::fn_71002C4A14() {
+    return m_frameCount690 < 30;
+}
+
 bool GfGameScene::isBattle() const {
     GfGameScene* scene = get();
     return scene != nullptr && scene->m_battle;
 }
 
+bool GfGameScene::fn_71002C4B38() {
+    return m_value698 < 2;
+}
+
 bool GfGameScene::isResetBladePlay() const {
     return GfPlayComResetBlade::isPlaying(0) || GfPlayComResetBlade::isPlaying(1) || GfPlayComResetBlade::isPlaying(2);
+}
+
+void GfGameScene::fn_71002C4B80(const char* name) {
+    if (strstr(name, "aoc_tut24") != nullptr || strstr(name, "aoc_tut04") != nullptr ||
+        strstr(name, "aoc_tut10") != nullptr) {
+        m_tutorialPlayerControl = true;
+    }
+}
+
+void GfGameScene::fn_71002C4BE4() {
+    if (m_tutorialPlayerControl) {
+        m_tutorialPlayerControl = false;
+        GfEvent::callPlayerControl(GEV(15));
+    }
+}
+
+bool GfGameScene::fn_71002C4BFC() {
+    return m_value68C != 0;
 }
 
 void GfGameScene::gevExecBuy(unsigned int, unsigned int, unsigned int shop) {
@@ -225,6 +329,13 @@ void GfGameScene::gevBladeUnselect(unsigned int blade, bool flag) {
     }
 }
 
+void GfGameScene::gevChangeWeather(unsigned int weather, unsigned int arg) {
+    int controlFree = GfGameManager::isControlFree();
+    if (weather - 3 <= 2 && arg == 0 && controlFree) {
+        SCOM_FIELD_VOICE::createBadWeather();
+    }
+}
+
 void GfGameScene::gevChangeTimeRange(unsigned int range) {
     if (GfGameManager::isControlFree()) {
         if (range == 3) {
@@ -238,7 +349,7 @@ void GfGameScene::gevChangeTimeRange(unsigned int range) {
 void GfGameScene::gevControllFree(bool) {}
 
 void GfGameScene::gevBattleStart() {
-    m_battleStarted = true;
+    m_battleAchievement.m_battleStarted = true;
     GfDataAchievement::clearTotalCount(146);
     if (m_forceBossBattleBgm) {
         if (GfGameManager::isExistBossEnemy() || GfFieldBgm::get()->isBossBgmCopied()) {
@@ -256,8 +367,26 @@ void GfGameScene::gevMercenariesMissionFlag(unsigned int mission, unsigned int f
     }
 }
 
+void GfGameScene::fn_71002C7C44() {
+    if (GfGameManager::fn_71002A9E68()) {
+        return;
+    }
+    if (GfDataBlade::fn_7100231884() >= 8003 && GfGameFlag::getLocal(1, 52962) == 0) {
+        GfGameFlag::setLocal(1, 52962, 1);
+    }
+}
+
 void GfGameScene::qevCompleteQuest(const QuestCompleteParam&) {
     m_completeQuest = true;
+}
+
+void GfGameScene::postUpdate(const fw::UpdateInfo& info) {
+    updateAppendModel(info);
+    if (GfPause::isPause(1) || GfPlayComEventFade::s_start != 0) {
+        m_frameCount690 = 0;
+    } else if (m_frameCount690 < 999) {
+        m_frameCount690++;
+    }
 }
 
 const OwnerBonus* GfGameScene::getOwnerBonus() const {
@@ -301,12 +430,47 @@ void GfGameScene::setForceStopBattle(bool stop) {
     }
 }
 
+void GfGameScene::addDamage(GF_OBJ_HANDLE* handle, const MsgObjectNotifyDamage& msg) {
+    m_battleAchievement.addDamage(handle, msg);
+    setDamageCharacter(handle);
+    if (GfObjUtil::getObjType(handle) == 5) {
+        saveBattleHpForEnemy(handle);
+    }
+}
+
 void GfGameScene::addMoneyLog() {
     m_moneyLogTime = 0.5f;
 }
 
 QuestID GfGameScene::getQuestIdForTaskLog() const {
     return m_questIdForTaskLog;
+}
+
+void GfGameScene::updateRideRequest(const fw::UpdateInfo&) {
+    if (!m_rideRequest) {
+        return;
+    }
+    if (!GfGameRide::testRideOn() && isRide(0)) {
+        if (isEnableRideCondition(0)) {
+            m_rideRequest = false;
+            GfGameRide::setRideOn(true);
+        }
+    } else {
+        m_rideRequest = false;
+    }
+}
+
+void GfGameScene::setRideOn(unsigned int id) {
+    if (id == 0xFFFFFFFF) {
+        return;
+    }
+    GfObjAcc acc(GfGameParty::getHandleDriver(id, 0));
+    if (GfDataParty::isNiaByakko(id) && !acc.isBattle()) {
+        m_rideRequest = false;
+        if (!GfGameRide::testRideOn()) {
+            m_rideRequest = true;
+        }
+    }
 }
 
 }  // namespace gf

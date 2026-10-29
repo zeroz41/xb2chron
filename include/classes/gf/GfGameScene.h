@@ -14,7 +14,7 @@ namespace gf { enum GfPlayerDead : int; }
 namespace gf { enum ActivateType : int; }
 namespace gf { struct OwnerBonus; }
 namespace fw { class UpdateInfo; }
-namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GF_OBJ_HANDLE; class MsgObjectNotifyDamage; class GF_SE_CATEGORY_HANDLE; }
 namespace gf { class GfSetupParam; }
 namespace gf {
 // which player stop a GfGameScene flag is (GfGameManager's gimmick tutorial uses 1 and 2; no names known)
@@ -62,6 +62,9 @@ public:
     bool isDisableJumpForRide() const;
     void setHomuriWeaponExtraMesh(bool, float);
     void updateParam(const fw::UpdateInfo&);
+    void updateRideRequest(const fw::UpdateInfo& info);
+    void updatePlayerState();
+    bool isEnableRideCondition(unsigned int id) const;
     bool isPlayerStopFlag(PLSTOP);
     void setPlayerStopFlag(PLSTOP, bool);
     bool isPlayerTalkForce();
@@ -110,6 +113,7 @@ public:
     };
     GfGameScene(const GfSetupParam& param);
     static void build(const GfSetupParam& param);  // makes the scene (0x8D0 bytes, allocator 1)
+    static void destroy();
     static bool isPlayerSwimOnCloud();  // the controlled mover's target property is in state 2
     static bool isPlayerWalkAndRun();  // the controlled mover's target property is in state 0
     bool isMaskMainMenu() const;
@@ -134,6 +138,9 @@ public:
     bool isRideObj(GF_OBJ_HANDLE* handle) const;
     bool isPlayerPauseForBattle() const;
     void setDamageCharacter(GF_OBJ_HANDLE* handle);
+    void addDamage(GF_OBJ_HANDLE* handle, const MsgObjectNotifyDamage& msg);
+    void saveBattleHpForEnemy(GF_OBJ_HANDLE* handle);
+    void updateAppendModel(const fw::UpdateInfo& info);
     // the object's wire, null for none (GfGameUtil's startWire/startWireWithClose/endWire call GfAppendWire's
     // members on it; the return type is inferred from that)
     GfAppendWire* getAppendControl(GF_OBJ_HANDLE* handle);
@@ -167,17 +174,28 @@ public:
     void setForceBossBattleBgm(bool force);
 
     // The field names below are not the original's: they follow the accessors that read and write them.
-    unsigned char pad_8[0x10];
+    bool m_alive;  // destroy clears it before deleting the scene (the name is not the original's)
+    unsigned char pad_9[0xF];
     float m_fieldBladeChangeTime;  // isEnableFieldBladeChange allows a change from 0.5
     unsigned char pad_1C[0x4];
     DamageCharacter m_damageCharacters[3];
-    unsigned char pad_50[0x4];
+    // updateParam clears it and refreshes m_ownerBonus (GfGameUtil::getOwnerBonus) while it is set (the name is not
+    // the original's)
+    bool m_ownerBonusDirty;
+    unsigned char pad_51[0x3];
     OwnerBonus m_ownerBonus;  // getOwnerBonus's
     unsigned char pad_72[0xAE];
     float m_moneyLogTime;  // addMoneyLog sets 0.5
     QuestID m_questIdForTaskLog;  // getQuestIdForTaskLog's
-    bool m_battleStarted;  // gevBattleStart sets it
-    unsigned char pad_129[0x7];
+    // the battle's achievement counts (1.0.0 symbol BattleAchievement::addDamage; the field names are not the
+    // original's)
+    struct BattleAchievement {
+        void addDamage(GF_OBJ_HANDLE* handle, const MsgObjectNotifyDamage& msg);
+        bool m_battleStarted;  // gevBattleStart sets it
+        unsigned char pad_1[0x3];
+        int m_damageCount;  // addDamage counts each damage of an object of type 3 or 5
+    };
+    BattleAchievement m_battleAchievement;
     float m_forceBattleTime;  // setForceBattleTime's
     bool m_forceStopBattle;  // setForceStopBattle's; gevMapjump clears it
     bool m_forceBossBattleBgm;  // setForceBossBattleBgm's; gevBattleStart clears it without a boss
@@ -234,11 +252,28 @@ public:
     // gf::_gffsn::bgmvolFadeBattleEvent fades its track out while it is set (+0x648 in 1.0.0; the name is not the
     // original's)
     bool m_battleEventBgm;
-    unsigned char pad_669[0x24F];
+    unsigned char pad_669[0x7];
+    GF_SE_CATEGORY_HANDLE* m_seCategoryHandles[3];  // destroy releases them (the name is not the original's)
+    // isDisableJumpForRide answers it (unless the battle allows the jump; the name is not the original's)
+    bool m_rideActive;
+    // setRideOn clears it for Nia's Byakko outside battle and sets it when GfGameRide::testRideOn refuses;
+    // updateRideRequest retries the ride while it is set (the name is not the original's)
+    bool m_rideRequest;
+    unsigned char pad_68A[0x2];
+    int m_value68C;  // fn_71002C4BFC answers whether it is not 0 (the name is not the original's)
+    // postUpdate counts it up to 999 each unpaused frame (0 while paused or an event fade runs); fn_71002C4A14
+    // answers whether it is below 30 (the name is not the original's)
+    int m_frameCount690;
+    unsigned char pad_694[0x4];
+    unsigned int m_value698;  // fn_71002C4B38 answers whether it is below 2 (the name is not the original's)
+    unsigned char pad_69C[0x21C];
     // GfPlayComIraCampSave::start clears it and requests solo party 22 (GfReqCommand::reqSoloParty) while it is set;
     // the name is not the original's
     bool m_iraCampSolo;
-    unsigned char pad_8B9[0x7];
+    // fn_71002C4B80 sets it for the "aoc_tut24", "aoc_tut04" and "aoc_tut10" scripts; fn_71002C4BE4 clears it and
+    // calls GfEvent::callPlayerControl(15) (the name is not the original's)
+    bool m_tutorialPlayerControl;
+    unsigned char pad_8BA[0x6];
     bool m_flag8C0;  // GfGameManager::fn_71002AC6F0 sets it (the name is not the original's)
     unsigned char pad_8C1[0xF];  // build allocates 0x8D0 bytes
     void qevCompleteQuest(const gf::QuestCompleteParam& param);
