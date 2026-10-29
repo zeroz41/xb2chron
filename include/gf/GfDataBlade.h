@@ -259,6 +259,16 @@ public:
     // unit among its blade accessors (no this). What it does: 0 for blade 0, else the blade's SDataBlade::m_gender
     // (game data slot via getBladeIndex); fn_710028AF64 calls it.
     static unsigned int fn_710023982C(unsigned int blade);
+    // GfBdatChrBl::fn_71001ED49C(blade) for a blade row below getChrBlEnd, else false (GfMenuBladeList, the blade
+    // set and release menus ask it)
+    static bool fn_710023978C(unsigned int blade);
+    // GfBdatChrBl::fn_71001ED52C(blade) for a blade row below getChrBlEnd, else false (btl::PlayerParameter::Initialize)
+    static bool fn_71002397DC(unsigned int blade);
+    // GfBdatBtl::fn_71001E77DC(id) while fn_71002324C8's flag (1, 0xD860) is set, else getGrowLevelExp(id)
+    static unsigned int fn_71002326F0(unsigned int id);
+    // a GfBdatRsc caption: bdat = GfDataBdat::getFP(452), id = GfBdatRsc::fn_710021A010(rsc); false for rows up to
+    // 2000 or no caption (TUnk_B62AA0::fn_710041F998)
+    static bool fn_710024DA20(unsigned char*& bdat, unsigned int& id, unsigned int rsc);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
     // unit among its blade accessors (no this). What it does: stores the flag into the blade's
     // SDataBlade::m_activateMercenaryTeam (the byte isActivateMercenaryTeam reads); GfGameUtil::fn_71002EBC90 and

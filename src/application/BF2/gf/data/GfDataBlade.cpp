@@ -100,6 +100,7 @@
 #include "gf/GfDataBladeArtsN.h"
 #include "gf/GfDataDriverSkill.h"
 #include "plugin/Bdat.h"
+#include "classes/gf/GfGameManager.h"
 
 namespace gf {
 
@@ -278,8 +279,40 @@ unsigned int GfDataBladeArts::getEnhance(unsigned int arts, unsigned int index) 
     return GfBdatBtl::get()->getArtsBlEnhance(arts, index - 1);
 }
 
+bool GfDataBladeArts::getEnhanceCaption(unsigned char*& bdat, unsigned int& id, unsigned int arts, unsigned int level) {
+    unsigned int enhance = GfBdatBtl::get()->getArtsBlEnhance(arts, level - 1);
+    if (enhance == 0) {
+        return false;
+    }
+    id = GfBdatBtl::get()->getBTL_EnhanceCaption(enhance);
+    if (GfGameManager::fn_71002A9E68()) {
+        unsigned int caption = GfBdatBtl::get()->fn_71001E7F28(enhance);
+        if (caption != 0) {
+            id = caption;
+        }
+    }
+    bdat = GfBdatMsg::getFpBtlEnhanceCap();
+    return id != 0;
+}
+
 unsigned int GfDataBladeSkill::getEnhance(unsigned int skill, unsigned int index) {
     return GfBdatBtl::get()->getBTL_Skill_BlEnhance(skill, index - 1);
+}
+
+bool GfDataBladeSkill::getEnhanceCaption(unsigned char*& bdat, unsigned int& id, unsigned int skill, unsigned int level) {
+    unsigned int enhance = GfBdatBtl::get()->getBTL_Skill_BlEnhance(skill, level - 1);
+    if (enhance == 0) {
+        return false;
+    }
+    id = GfBdatBtl::get()->getBTL_EnhanceCaption(enhance);
+    if (GfGameManager::fn_71002A9E68()) {
+        unsigned int caption = GfBdatBtl::get()->fn_71001E7F28(enhance);
+        if (caption != 0) {
+            id = caption;
+        }
+    }
+    bdat = GfBdatMsg::getFpBtlEnhanceCap();
+    return id != 0;
 }
 
 unsigned int GfDataMob::getRace(unsigned int mob) {
@@ -511,6 +544,16 @@ int GfDataMercenaries::getPoint() {
     return GfGameFlag::getLocal(16, 3);
 }
 
+int GfDataMercenaries::getPointMax() {
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BA368)
+    static const unsigned short s_pointMaxDatavalues[6] = {0, 0x3B, 0x3C, 0x3D, 0x3E, 0};
+    unsigned int level = getLevel();
+    if (level == 0 || level == 5) {
+        return 0;
+    }
+    return GfBdatBtl::get()->getWildcardDatavalueU2(s_pointMaxDatavalues[level]);
+}
+
 void GfDataMercenaries::setPoint(unsigned int point) {
     GfGameFlag::setLocal(16, 3, point);
 }
@@ -520,6 +563,23 @@ unsigned int GfDataMercenaries::getMissionFlag(unsigned int mission) {
         return 0;
     }
     return GfGameFlag::getLocal(4, mission + 5);
+}
+
+unsigned int GfDataMercenaries::getMissionMapID(unsigned int mission) {
+    if (mission != 0) {
+        QuestID quest = getMissionQuestID(mission);
+        if (!quest.empty()) {
+            unsigned int hints = GfDataQuest::getListHintsID(quest);
+            if (hints != 0) {
+                unsigned int zone = QuestListAcc::get()->getHintsZoneID(hints);
+                if (GfDataBlade::fn_7100231884() > 8036 && zone == 12) {
+                    return 14;
+                }
+                return zone;
+            }
+        }
+    }
+    return 0;
 }
 
 bool GfDataMercenaries::isMissionCompleteFlag(unsigned int mission) {
@@ -748,6 +808,22 @@ ActivateType GfDataBlade::getBladeActivateType(unsigned int blade) {
     return getBladeActivateType(game->m_blades[index]);
 }
 
+bool GfDataBlade::fn_710023978C(unsigned int blade) {
+    GfBdatChrBl* bdat = GfBdatChrBl::get();
+    if (blade >= bdat->getChrBlEnd()) {
+        return false;
+    }
+    return bdat->fn_71001ED49C(blade);
+}
+
+bool GfDataBlade::fn_71002397DC(unsigned int blade) {
+    GfBdatChrBl* bdat = GfBdatChrBl::get();
+    if (blade >= bdat->getChrBlEnd()) {
+        return false;
+    }
+    return bdat->fn_71001ED52C(blade);
+}
+
 ActivateType GfDataBlade::getBladeActivateType(const SDataBlade& blade) {
     int type = 0;
     switch (blade.m_dataType) {
@@ -792,6 +868,28 @@ bool GfDataBlade::isBladeID(unsigned int blade) {
 
 bool GfDataBlade::isNeedChangeWeapon(unsigned int blade) {
     return (blade >= 1043 && blade < 1051) || blade == 1039;
+}
+
+unsigned int GfDataDriver::fn_7100241640(unsigned int driver, unsigned int slot) {
+    return GfBdatChrDr::get()->getChrDrDefBlade(driver, slot);
+}
+
+bool GfDataDriver::fn_7100241660(unsigned int driver) {
+    GfBdatChrDr* bdat = GfBdatChrDr::get();
+    unsigned int row = bdat->fn_71001F13E0(driver);
+    if (row == 0) {
+        return false;
+    }
+    return bdat->fn_71001F183C(row);
+}
+
+unsigned int GfDataDriver::fn_71002419C8(unsigned int driver) {
+    GfBdatChrDr* bdat = GfBdatChrDr::get();
+    unsigned int row = bdat->fn_71001F13E0(driver);
+    if (row == 0) {
+        return 0;
+    }
+    return bdat->fn_71001F172C(row);
 }
 
 unsigned int GfDataBlade::getActBlade2CommonBlade(unsigned int blade) {
@@ -1360,12 +1458,53 @@ QuestID GfDataMercenaries::getMissionQuestID(unsigned int mission) {
     return QuestID(QuestListAcc::get()->getFLD_MercenariesMissionQuestID(mission));
 }
 
+unsigned int GfDataMercenaries::getMissionPurposeID(unsigned int mission) {
+    QuestID quest = getMissionQuestID(mission);
+    if (quest.empty()) {
+        return 0;
+    }
+    QuestID next = GfDataQuest::getListNextQuestA(quest);
+    if (next.empty()) {
+        return 0;
+    }
+    return GfDataQuest::getListPurposeID(next);
+}
+
 bool GfDataMercenaries::isOrderOnlyOne(unsigned int mission) {
     return QuestListAcc::get()->getFLD_MercenariesMissionRepeatable(mission) == 0;
 }
 
 unsigned int GfDataMercenaries::getMissionTime(unsigned int mission) {
     return QuestListAcc::get()->getFLD_MercenariesMissionRequestPerformance(mission);
+}
+
+bool GfDataMercenaries::getFieldSkillInfo(unsigned char*& bdat, unsigned int& id, unsigned int mission, unsigned int slot) {
+    unsigned int skill;
+    switch (slot) {
+    case 0:
+        skill = getFieldSkill1(mission);
+        if (skill == 0) {
+            return false;
+        }
+        break;
+    case 1:
+        skill = getFieldSkill2(mission);
+        if (skill == 0) {
+            return false;
+        }
+        break;
+    case 2:
+        skill = getFieldSkill3(mission);
+        if (skill == 0) {
+            return false;
+        }
+        break;
+    default:
+        return false;
+    }
+    id = QuestListAcc::get()->getFLD_FieldSkillListName(skill);
+    bdat = GfBdatMsg::getFpFieldSkill();
+    return id != 0;
 }
 
 GfDataMercenaries::Team* GfDataMercenaries::getTeamByTeamID(unsigned int teamId) {
@@ -1449,6 +1588,20 @@ bool GfDataMercenaries::isTeamStateExpedition(unsigned int teamId) {
         return false;
     }
     return GfGameFlag::getLocal(4, team->m_mission + 5) == 2;
+}
+
+int GfDataMercenaries::getMissionTaskType(unsigned int mission) {
+    int result = 0;
+    for (unsigned int i = 0; i < 4; i++) {
+        QuestListAcc* acc = QuestListAcc::get();
+        unsigned int purpose = getMissionPurposeID(mission);
+        int type = purpose == 0 ? 0 : acc->getTaskTaskType(purpose, i);
+        if (type != 9) {
+            result = type;
+            break;
+        }
+    }
+    return result;
 }
 
 unsigned int GfDataMercenaries::getTeamLeader(unsigned int teamId) {
@@ -1550,6 +1703,22 @@ bool GfDataBladeArtsN::getCaption(unsigned char*& bdat, unsigned int& id, unsign
 bool GfDataDriverSkill::getName(unsigned char*& bdat, unsigned int& id, unsigned int row) {
     id = GfBdatBtl::get()->getBTL_Skill_DrName(row);
     bdat = GfBdatMsg::getFpBtlSkillDr();
+    return id != 0;
+}
+
+bool GfDataDriverSkill::getEnhanceCaption(unsigned char*& bdat, unsigned int& id, unsigned int skill) {
+    unsigned int enhance = GfBdatBtl::get()->getBTL_Skill_DrEnhance(skill);
+    if (enhance == 0) {
+        return false;
+    }
+    id = GfBdatBtl::get()->getBTL_EnhanceCaption(enhance);
+    if (GfGameManager::fn_71002A9E68()) {
+        unsigned int caption = GfBdatBtl::get()->fn_71001E7F28(enhance);
+        if (caption != 0) {
+            id = caption;
+        }
+    }
+    bdat = GfBdatMsg::getFpBtlEnhanceCap();
     return id != 0;
 }
 
@@ -1723,6 +1892,15 @@ void GfDataBlade::fn_710024D86C(unsigned int id, unsigned int value) {
 
 bool GfDataBlade::fn_710024D890(unsigned int id) {
     return GfGameFlag::getLocal(1, id > 43877 ? id + 11651 : id) != 0;
+}
+
+bool GfDataBlade::fn_710024DA20(unsigned char*& bdat, unsigned int& id, unsigned int rsc) {
+    if (rsc <= 2000) {
+        return false;
+    }
+    bdat = GfDataBdat::getFP(452);
+    id = GfBdatRsc::get()->fn_710021A010(rsc);
+    return id != 0;
 }
 
 unsigned int GfDataBlade::fn_710024DA88(unsigned int id) {
@@ -2139,6 +2317,14 @@ unsigned int GfDataMercenaries::getEndMissionID() {
 
 int GfDataMercenaries::getMissionCategory(unsigned int mission) {
     return QuestListAcc::get()->getFLD_MercenariesMissionCategory(mission);
+}
+
+unsigned int GfDataMercenaries::getMissionRewardID(unsigned int mission) {
+    QuestListAcc* acc = QuestListAcc::get();
+    if (isMissionCompleteFlag(mission) && !isOrderOnlyOne(mission)) {
+        return acc->getListRewardSetB(getMissionQuestID(mission));
+    }
+    return acc->getListRewardSetA(getMissionQuestID(mission));
 }
 
 bool GfDataMercenaries::getReserver(mm::mtl::FixedVector<unsigned short, 422>& list) {
@@ -2740,6 +2926,19 @@ bool GfDataParty::isPartyBattleMember(unsigned int chara) {
 
 void GfDataDriver::openDriverArtsForLevelup(unsigned int driver) {
     fn_7100244A44(driver, 0, true);
+}
+
+unsigned int GfDataDriver::fn_7100244E78(const SDataDriver& data, int slot) {
+    if ((unsigned int)(data.m_id - 0x11) <= 8) {
+        return GfBdatChrDr::get()->getChrDrDefBlade1(data.m_id);
+    }
+    if (slot < 0) {
+        slot = data.m_bladeSet;
+    }
+    if (slot < 0) {
+        return 0;
+    }
+    return data.m_blades[slot];
 }
 
 unsigned int GfDataParty::getFixedHandleForBlade(unsigned int driver, int index) {
@@ -3475,6 +3674,14 @@ void GfDataBlade::fn_71002322C4(SDataGame* game, bool flag) {
 
 void GfDataBlade::fn_71002324FC(SDataGame* game, bool flag) {
     GfGameFlag::setLocal(game->m_gameFlag, 1, 0xD860, flag);
+}
+
+unsigned int GfDataBlade::fn_71002326F0(unsigned int id) {
+    GfBdatBtl* bdat = GfBdatBtl::get();
+    if (fn_71002324C8()) {
+        return bdat->fn_71001E77DC(id);
+    }
+    return bdat->getGrowLevelExp(id);
 }
 
 bool GfDataBlade::fn_710023182C() {

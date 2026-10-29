@@ -98,6 +98,10 @@ public:
     static void decTeamMissionTime(unsigned int teamId, float time);
     static void setMissionFlag(unsigned int mission, unsigned int flag);
     static int getMissionTaskType(unsigned int mission);
+    // the reward set of the mission's quest: B once the mission was completed and is repeatable, else A
+    static unsigned int getMissionRewardID(unsigned int mission);
+    // the purpose of the quest that follows the mission's quest (0 for none)
+    static unsigned int getMissionPurposeID(unsigned int mission);
     // the time (minutes) the team would take for the mission
     static unsigned int getTeamMissionTime(unsigned int teamId, unsigned int mission);
     static unsigned int getMissionByQuestID(QuestID quest);  // 0 for none

@@ -211,6 +211,15 @@ public:
     // What it does: opens the driver's arts (all of them when arts is 0, else the one whose id matches) and, per
     // opened art, calls GfEvent::callGetArts(driver, art, event).
     static void fn_7100244A44(unsigned int driver, unsigned int arts, bool event);
+    // GfBdatChrDr::getChrDrDefBlade(driver, slot) (title event, three unnamed callers)
+    static unsigned int fn_7100241640(unsigned int driver, unsigned int slot);
+    // GfBdatChrDr::fn_71001F183C of the driver's GfBdatChrDr::fn_71001F13E0 row, false for none
+    static bool fn_7100241660(unsigned int driver);
+    // GfBdatChrDr::fn_71001F172C of the driver's GfBdatChrDr::fn_71001F13E0 row, 0 for none
+    static unsigned int fn_71002419C8(unsigned int driver);
+    // the blade in a slot (slot < 0: the engaged one, m_bladeSet), 0 for none; DLC drivers (0x11-0x19) answer
+    // GfBdatChrDr::getChrDrDefBlade1 instead (DataObjDriver::getBlade)
+    static unsigned int fn_7100244E78(const SDataDriver& data, int slot);
     // "oj/oj300002" for create types 9 and 13, else "oj/oj300001", when the param's object id is 1; else none
     static const char* getBelongingModelName(const GfInitParamDriver& param);
     static bool isExistBlade(unsigned int driver);  // getListBlade finds any
