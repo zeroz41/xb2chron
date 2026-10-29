@@ -115,6 +115,9 @@
 #include "classes/gf/GfGameEvent.h"
 #include "gf/GfUtil.h"
 #include "classes/gf/SCOM_SCRIPT.h"
+#include "classes/gf/TUnk_B6AD28.h"
+#include "classes/gf/TUnk_B535D0.h"
+#include "gf/MsgUnk_1000034.h"
 #include "classes/gf/GfScriptManager.h"
 namespace gf {
 bool SCOM_ADD_MONEY::exec(fw::UpdateInfo const&) {
@@ -1100,6 +1103,60 @@ void SCOM_ACHIEV_INC::addTotalCount(unsigned int type, unsigned int value) {
     GfDataAchievement::addTotalCount(type, value);
 }
 
+void SCOM_ACHIEV_INC::fn_7100564354(GF_OBJ_HANDLE* handle) {
+    fn_7100564360(handle, 0x7D, 1);
+}
+
+void SCOM_ACHIEV_INC::fn_7100564360(GF_OBJ_HANDLE* handle, unsigned int type, unsigned int value) {
+    addTotalCount(type - 1, value);
+    create(type - 1, value, 0);
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    fn_7100563BB4(blades, handle, true);
+    if (!blades.empty()) {
+        unsigned short* it = blades.begin();
+        unsigned short* end = blades.end();
+        do {
+            create(type, value, *it);
+        } while (++it != end);
+    }
+}
+
+void SCOM_ACHIEV_INC::fn_71005645DC(GF_OBJ_HANDLE* handle) {
+    fn_7100564360(handle, 0x7F, 1);
+}
+
+void SCOM_ACHIEV_INC::fn_71005645E8(GF_OBJ_HANDLE* handle) {
+    fn_71005645F0(handle, 0x79);
+}
+
+void SCOM_ACHIEV_INC::fn_7100564920(GF_OBJ_HANDLE* handle) {
+    fn_71005645F0(handle, 0x7B);
+}
+
+void SCOM_ACHIEV_INC::fn_7100564ACC() {
+    fn_7100564360(GfGameManager::getPartyLeaderDriver(), 0x83, 1);
+}
+
+void SCOM_ACHIEV_INC::fn_7100564AE8(GF_OBJ_HANDLE* handle) {
+    fn_7100564360(handle, 0x85, 1);
+}
+
+void SCOM_ACHIEV_INC::fn_7100564AF4() {
+    fn_7100564360(GfGameManager::getPartyLeaderDriver(), 0x87, 1);
+}
+
+void SCOM_ACHIEV_INC::fn_7100564B10(GF_OBJ_HANDLE* handle) {
+    fn_7100564360(handle, 0x89, 1);
+}
+
+void SCOM_ACHIEV_INC::fn_7100564B1C(GF_OBJ_HANDLE* handle) {
+    fn_7100564360(handle, 0x8B, 1);
+}
+
+void SCOM_ACHIEV_INC::fn_7100564C9C(GF_OBJ_HANDLE* handle, unsigned int value) {
+    fn_7100564360(handle, 0x95, value);
+}
+
 void SCOM_ACHIEV_INC::createCrystal() {
     mm::mtl::FixedVector<unsigned short, 422> blades;
     GfDataBlade::getListPartyAll(blades);
@@ -1438,6 +1495,46 @@ bool SCOM_SOLO_REX::exec(fw::UpdateInfo const&) {
         GfDataBlade::setUnselect(blade, m_value);
     }
     return true;
+}
+
+bool TUnk_B6AD28::exec(fw::UpdateInfo const&) {
+    if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
+        unsigned int value = m_param;
+        MsgUnk_1000034 msg(m_type);
+        msg.m_param0.pad_0 = value;
+        static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
+    }
+    return true;
+}
+
+unsigned long TUnk_B6AD28::fn_710056B66C() {
+#line 6217
+    TUnk_B6AD28* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B6AD28(0x4);
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long TUnk_B6AD28::fn_710056B6F4() {
+#line 6225
+    TUnk_B6AD28* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B6AD28(0x3);
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long TUnk_B6AD28::fn_710056B77C() {
+#line 6233
+    TUnk_B6AD28* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B6AD28(0x6);
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long TUnk_B6AD28::fn_710056B804() {
+#line 6241
+    TUnk_B6AD28* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B6AD28(0x5);
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long TUnk_B6AD28::fn_710056B88C() {
+#line 6249
+    TUnk_B6AD28* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B6AD28(0x14);
+    return GfReqSmallCom::addRequestParallel(request);
 }
 
 SCOM_FADE::Fade SCOM_FADE::s_fades[3];

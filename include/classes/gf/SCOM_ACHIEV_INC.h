@@ -7,6 +7,7 @@
 namespace fw { class UpdateInfo; }
 
 namespace gf {
+class GF_OBJ_HANDLE;
 // table 0x7100B6AA60
 class SCOM_ACHIEV_INC : public ::gf::SCOM {
 public:
@@ -23,6 +24,21 @@ public:
     static unsigned long createParty(unsigned int type, int value);
     static void addTotalCount(unsigned int type, unsigned int value);
     static void createCrystal();
+    // placeholders (callers: one dispatch at 0x710000FDEC): fn_7100564360 counts type-1 once, then type for every
+    // blade fn_7100563BB4 lists for the handle; the wrappers pass a fixed type and value 1
+    static void fn_7100563BB4(mm::mtl::FixedVector<unsigned short, 422>&, GF_OBJ_HANDLE*, bool);
+    static void fn_7100564354(GF_OBJ_HANDLE*);
+    static void fn_7100564360(GF_OBJ_HANDLE*, unsigned int, unsigned int);
+    static void fn_71005645DC(GF_OBJ_HANDLE*);
+    static void fn_71005645E8(GF_OBJ_HANDLE*);
+    static void fn_71005645F0(GF_OBJ_HANDLE*, unsigned int);
+    static void fn_7100564920(GF_OBJ_HANDLE*);
+    static void fn_7100564ACC();
+    static void fn_7100564AE8(GF_OBJ_HANDLE*);
+    static void fn_7100564AF4();
+    static void fn_7100564B10(GF_OBJ_HANDLE*);
+    static void fn_7100564B1C(GF_OBJ_HANDLE*);
+    static void fn_7100564C9C(GF_OBJ_HANDLE*, unsigned int);
 
     // type-0x22 requests not yet counted: exec adds them as one (GfAchievManager::incAchiev(0x22, 1))
     static unsigned int s_countSalvageShop;
