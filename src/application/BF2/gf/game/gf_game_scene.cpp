@@ -1,4 +1,5 @@
 #include "classes/gf/GfGameScene.h"
+#include "classes/gf/GfGameScene.h"
 #include "gf/GfGameUtil.h"
 #include "mm/mtl/Bitflag.h"
 #include "classes/gf/GfGameScene.h"
@@ -41,6 +42,13 @@
 #include "classes/gf/GfTrinityAttack.h"
 #include "classes/gf/GfPlayComEventFade.h"
 #include "string.h"
+#include "classes/gf/GfMenuObjExpGet.h"
+#include "classes/gf/GfGameObj.h"
+#include "classes/gf/GfObj.h"
+#include "gf/MsgObjectHealHp.h"
+#include "gf/MapjumpCallbackInfo.h"
+#include "classes/gf/SCOM_ZONE.h"
+#include "classes/gf/GfWeapon.h"
 
 namespace gf {
 
@@ -262,6 +270,21 @@ void GfGameScene::saveBattleHpForEnemy(GF_OBJ_HANDLE* handle) {
     }
 }
 
+const mm::Vec3& GfGameScene::getEnableSavePos() const {
+    int i = 0;
+    for (;;) {
+        if (i < 7) {
+            if (m_savePos[i++].m_enable) {
+                break;
+            }
+        } else {
+            return GfGameManager::getControlMoverPosition();
+        }
+    }
+    i--;
+    return reinterpret_cast<const mm::Vec3&>(m_savePos[i].m_pos);
+}
+
 bool GfGameScene::isDisableJumpForRide() const {
     if (m_frameCount690 < 30) {
         return true;
@@ -311,6 +334,45 @@ bool GfGameScene::fn_71002C4BFC() {
     return m_value68C != 0;
 }
 
+void GfGameScene::applyMapjumpForStart(const MapjumpCallbackInfo&) {
+    for (unsigned int i = 0; i < 3; i++) {
+        GF_OBJ_HANDLE* handle = GfGameParty::getHandleDriver(i, 0);
+        if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            DataParamAcc acc(handle);
+            if (acc.isValid()) {
+                if (GfObj* obj = GfObjUtil::getObj(handle)) {
+                    MsgObjectHealHp msg(0, 1);
+                    msg.m_flags = MsgObjectHealHp::Flags();
+                    fw::MessageObject* object = obj;
+                    object->recieveMessage(object, msg);
+                }
+            }
+        }
+    }
+    reinterpret_cast<mm::Vec3&>(m_pos2C0) = mm::Vec3::zero;
+    for (int i = 0; i < 7; i++) {
+        m_savePos[i].m_enable = false;
+        reinterpret_cast<mm::Vec3&>(m_savePos[i].m_pos) = mm::Vec3::zero;
+    }
+    m_flag3B0 = false;
+}
+
+void GfGameScene::applyMapjumpForEnd(const MapjumpCallbackInfo& info) {
+    SCOM_ZONE::create(info.m_mapId);
+    if (GfSound* sound = mm::mtl::PtrSingleton<GfSound>::sys()) {
+        sound->setCategoryVolume(m_seCategoryHandles[1], static_cast<fw::SoundCategory>(8), 1.0f, 1.0f);
+        sound->setCategoryVolume(m_seCategoryHandles[1], static_cast<fw::SoundCategory>(1), 1.0f, 1.0f);
+        sound->setCategoryVolume(m_seCategoryHandles[1], static_cast<fw::SoundCategory>(10), 1.0f, 1.0f);
+        sound->setCategoryVolume(m_seCategoryHandles[1], static_cast<fw::SoundCategory>(5), 1.0f, 1.0f);
+        sound->setCategoryVolume(m_seCategoryHandles[1], static_cast<fw::SoundCategory>(6), 1.0f, 1.0f);
+        sound->setCategoryVolume(m_seCategoryHandles[1], static_cast<fw::SoundCategory>(7), 1.0f, 1.0f);
+    }
+    if (m_flag6A0) {
+        m_flag6A0 = false;
+        m_flag6A1 = true;
+    }
+}
+
 void GfGameScene::gevExecBuy(unsigned int, unsigned int, unsigned int shop) {
     if (shop == 39 && GfGameFlag::getLocal(1, 50547) == 0 && GfDataShop::getPrivilegeItem(39) != 0) {
         GfGameFlag::setLocal(1, 50547, 1);
@@ -323,9 +385,50 @@ void GfGameScene::gevChangeParty() {
     GfSelectBlade::resetStartBattleSetId(2);
 }
 
+void GfGameScene::fn_71002C5994() {
+    mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>& list = *GfGameObj::getList(5);
+    for (mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>::iterator it = list.begin(); it != list.end(); ++it) {
+        fn_71002E0F28(*it);
+    }
+}
+
 void GfGameScene::gevBladeUnselect(unsigned int blade, bool flag) {
     if (!flag && !GfDataBlade::isActivateUnuse(blade)) {
         GfGameUtil::execSaveAchievementPopup(blade);
+    }
+}
+
+void GfGameScene::gevDriverLevel(unsigned int driver, unsigned int level, unsigned int) {
+    GF_OBJ_HANDLE* handle = GfGameParty::getHandleDriverByBdatID(driver);
+    if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) && !GfGameManager::isStartGame()) {
+        GfMenuObjExpGet::OpenParam param;
+        param.m_extra = 0;
+        param.m_type = 0;
+        param.m_value = 0;
+        param.m_bonus = false;
+        param.m_type = 3;
+        param.m_value = level;
+        param.m_object = handle;
+        GfMenuObjExpGet::fn_7100406D3C(param);
+    }
+}
+
+void GfGameScene::gevMapjump(GEV gev, const MapjumpCallbackInfo& info) {
+    switch (gev) {
+    case 4:
+        m_forceStopBattle = false;
+        if (info.m_mapId != 0 && info.m_mapId != info.pad_8) {
+            m_forceBossBattleBgm = false;
+            m_bossBattleBgm = false;
+            m_forceEventBgm = 0.0f;
+        }
+        break;
+    case 1:
+        applyMapjumpForStart(info);
+        break;
+    case 7:
+        applyMapjumpForEnd(info);
+        break;
     }
 }
 

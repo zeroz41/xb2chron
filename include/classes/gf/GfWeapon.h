@@ -97,6 +97,9 @@ void fn_71002ED774(unsigned int enemy, unsigned int time, unsigned int mode);
 bool fn_71002EB3FC();
 bool fn_71002EDC24(const char* name);
 int fn_71002EDC4C(const char* name);
+// Placeholder name: GfWeapon's unit's function (callers GfGameObj::checkEnableGameObj, GfGameUtil::levelupForEnemy and
+// GfGameScene::fn_71002C5994, which calls it on every object of list 5). A free function: its class is not known.
+void fn_71002E0F28(GF_OBJ_HANDLE* handle);
 void fn_71002EDD60();
 fw::SoundPack* fn_71002EE5A0(const char* name);
 const char* fn_71002EE5C0(const char* name);

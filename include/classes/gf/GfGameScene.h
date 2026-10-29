@@ -148,6 +148,10 @@ public:
     bool isResetBladePlay() const;
     bool isNeedResetBladeForBattleEndForBattleEnd() const;
     bool isNeedResetBladeForBattleEndForMenuOpen() const;
+    // gevMapjump's: before the jump, every driver's hit points restored (MsgObjectHealHp 0, type 1) and the save
+    // positions cleared; after it, the zone script created for the new map and the sound categories reset
+    void applyMapjumpForStart(const gf::MapjumpCallbackInfo& info);
+    void applyMapjumpForEnd(const gf::MapjumpCallbackInfo& info);
     void gevExecBuy(unsigned int, unsigned int, unsigned int shop);
     void gevChangeParty();
     void gevBattleStart();
@@ -239,7 +243,20 @@ public:
     // the point GfFieldMapSe measures its map sounds' distances from (x, y, z; floats, not an mm::Vec3, see above;
     // the name is not the original's)
     float m_listenerPos[3];
-    unsigned char pad_29C[0x184];
+    unsigned char pad_29C[0x24];
+    // cleared with the save positions by applyMapjumpForStart (floats, see above; the name is not the original's)
+    float m_pos2C0[3];
+    unsigned char pad_2CC[0x4];
+    // a position getEnableSavePos may return (the names are not the original's)
+    struct SavePos {
+        bool m_enable;
+        unsigned char pad_1[0xF];
+        float m_pos[3];  // floats, not an mm::Vec3 (see above)
+        unsigned char pad_1C[0x4];
+    };
+    SavePos m_savePos[7];  // getEnableSavePos returns the first enabled one's position
+    bool m_flag3B0;  // cleared by applyMapjumpForStart (the name is not the original's)
+    unsigned char pad_3B1[0x6F];
     bool m_maskMainMenu;  // isMaskMainMenu's
     bool m_playEvent;  // isPlayEvent's
     unsigned char pad_422[0x20E];
@@ -267,7 +284,11 @@ public:
     int m_frameCount690;
     unsigned char pad_694[0x4];
     unsigned int m_value698;  // fn_71002C4B38 answers whether it is below 2 (the name is not the original's)
-    unsigned char pad_69C[0x21C];
+    unsigned char pad_69C[0x4];
+    // applyMapjumpForEnd moves it on to m_flag6A1 (the names are not the original's)
+    bool m_flag6A0;
+    bool m_flag6A1;
+    unsigned char pad_6A2[0x216];
     // GfPlayComIraCampSave::start clears it and requests solo party 22 (GfReqCommand::reqSoloParty) while it is set;
     // the name is not the original's
     bool m_iraCampSolo;
