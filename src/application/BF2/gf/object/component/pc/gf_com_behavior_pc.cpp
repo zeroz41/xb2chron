@@ -1,3 +1,5 @@
+#include "gf/PluginManager.h"
+#include "classes/gf/GfComBehaviorPc.h"
 #include "gf/FileStaticVec3.h"
 #include "classes/gf/GfComBehaviorPc.h"
 #include "classes/gf/pc/StateBattle.h"
@@ -29,10 +31,18 @@
 #include "classes/gf/pc/FallDamagePlugin.h"
 #include "classes/gf/GfComAsm.h"
 #include "gf/MsgPcFieldSetFallMaxHeight.h"
+#include "gf/MsgUnk_100001C.h"
+#include "gf/MsgUnk_100001C.h"
 #include "fw/Allocator.h"
 #include "classes/fw/ParamManager.h"
 #include "classes/fw/ParamList.h"
 #include <string.h>
+#include "stdlib.h"
+#include <stdlib.h>
+#include "classes/gf/GfStateBase.h"
+#include "gf/MsgObjectNotifyAsmCallback.h"
+#include "gf/CallBackCache.h"
+#include "anm/AsmAnnotetion.h"
 #include "classes/fw/UpdatableObject.h"
 #include "classes/gf/pc/PadField.h"
 #include "classes/gf/pc/PadBattle.h"
@@ -200,6 +210,82 @@ void GfComBehaviorPc::procMsgPcFieldSetFallMaxHeight(fw::MessageObject* sender, 
     if (pc::FallDamagePlugin* plugin = getPlugin<pc::FallDamagePlugin>(7)) {
         plugin->setActivate(true);
         plugin->procMsgPcFieldSetFallMaxHeight(sender, msg);
+    }
+}
+
+void GfComBehaviorPc::fn_710050EF90(fw::MessageObject*, MsgUnk_100001C& msg) {
+    GfComPropertyPc* property = m_owner->getComponent<GfComPropertyPc>(5);
+    GfComAsm* asmCom = m_owner->getComponent<GfComAsm>(2);
+    unsigned int flags = property->m_stateFlags;
+    bool pad = (flags & 0x400) != 0;
+    property->m_stateFlags = flags & ~0x4000000;
+    if ((flags & 1) != 0) {
+        m_hfsm.clearState();
+    }
+    if (!pad) {
+        if (m_agent) {
+            m_agent->cleanup(*property);
+            m_agent.reset();
+        }
+    } else {
+        if (m_agent) {
+            m_agent->cleanup(*property);
+            m_agent.reset();
+        }
+        m_pluginManager.destroyPlugin<pc::DeadColCheckPlugin>();
+        m_pluginManager.destroyPlugin<pc::TerrainDamagePlugin>();
+        m_pluginManager.destroyPlugin<pc::AccessPlugin>();
+        m_pluginManager.destroyPlugin<pc::FallIntoColiPlugin>();
+        m_pluginManager.destroyPlugin<pc::FallDamagePlugin>();
+        m_pluginManager.destroyPlugin<pc::FadePlugin>();
+        m_pluginManager.destroyPlugin<pc::LurePlugin>();
+        m_pluginManager.destroyPlugin<pc::FallDistanceAchievPlugin>();
+        property->setPadControl(false);
+    }
+    if (msg.m_mode == 0) {
+        m_agent.reset(new (getAllocator(ALLOCATOR(0)), __FILE__, 2320, 8) pc::PadAgent(0));
+        m_agent->setup(*property);
+        property->setPadControl(true);
+        m_pluginManager.createPlugin<pc::AccessPlugin>();
+        m_pluginManager.createPlugin<pc::FallIntoColiPlugin>();
+        m_pluginManager.createPlugin<pc::FallDamagePlugin>();
+        m_pluginManager.createPlugin<pc::FadePlugin>();
+        m_pluginManager.createPlugin<pc::LurePlugin>();
+        m_pluginManager.createPlugin<pc::TerrainDamagePlugin>();
+        m_pluginManager.createPlugin<pc::DeadColCheckPlugin>();
+        m_pluginManager.createPlugin<pc::FallDistanceAchievPlugin>();
+        if ((flags & 1) != 0) {
+            m_hfsm.setState(3);
+            asmCom->setState("S_idle", AnimLayer(0));
+        }
+        if (Plugin* plugin = m_pluginManager.m_plugins[pc::TerrainDamagePlugin::PLUGIN_ID]) {
+            plugin->setActivate(true);
+        }
+        if (Plugin* plugin = m_pluginManager.m_plugins[pc::DeadColCheckPlugin::PLUGIN_ID]) {
+            plugin->setActivate(true);
+        }
+    } else if (msg.m_mode == 1) {
+        m_agent.reset(new (getAllocator(ALLOCATOR(0)), __FILE__, 2357, 8) pc::AIAgent);
+        m_agent->setup(*property);
+        if ((flags & 1) != 0) {
+            m_hfsm.setState(3);
+            asmCom->setState("S_idle", AnimLayer(0));
+        }
+    }
+}
+
+void GfComBehaviorPc::procAnimCallback(GfComAsm* asmCom, const CallBackCache& cache) {
+    const char* name = cache.m_event->m_name;
+    if (strcmp(name, "look") == 0) {
+        pc::StateUtil::setEnableLookIK(*this, cache.m_event->m_value != 0);
+    } else if (strcmp(name, "changeLookAxis") == 0) {
+        if (pc::LookAxisPlugin* plugin = getPlugin<pc::LookAxisPlugin>(pc::LookAxisPlugin::PLUGIN_ID)) {
+            plugin->changeAxisYaw(atof(cache.m_event->m_text));
+        }
+    } else {
+        MsgObjectNotifyAsmCallback msg(asmCom, cache.m_event);
+        GfStateBase::MessageEvent event = {static_cast<GfObj*>(m_owner), &msg};
+        m_hfsm.execEvent(&event);
     }
 }
 

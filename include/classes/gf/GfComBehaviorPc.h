@@ -19,6 +19,7 @@ namespace gf { class GfComAsm; }
 namespace gf { class GfComPropertyPc; }
 namespace gf { class MsgPcFieldSetFallMaxHeight; }
 namespace gf { class MsgPcFieldReqFallDeadMotion; }
+namespace gf { class MsgUnk_100001C; }
 namespace gf { namespace pc { class Agent; } }
 
 namespace gf {
@@ -66,6 +67,14 @@ public:
     void procMsgPcFieldSetFallMaxHeight(fw::MessageObject* sender, gf::MsgPcFieldSetFallMaxHeight& msg);
     // the asm put in "S_fall" (unless it is there) and "C_falldead" run
     void procMsgPcFieldReqFallDeadMotion(fw::MessageObject* sender, gf::MsgPcFieldReqFallDeadMotion& msg);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because recieveMessage hands it
+    // the behavior's own message 0x100001C (new in 3.0.1). What it does: like procMsgPcFieldChangeControlMode, the
+    // property's m_stateFlags bit 26 cleared, the Hfsm cleared (bit 0), the agent cleaned up and dropped, the pad
+    // plugins (Access, FallIntoColi, FallDamage, Fade, Lure, TerrainDamage, DeadColCheck, FallDistanceAchiev)
+    // destroyed and pad control off for a pad PC (bit 10); then mode 1 makes an AIAgent, mode 0 a PadAgent with pad
+    // control and those plugins made again (TerrainDamage and DeadColCheck activated); with bit 0 the Hfsm goes to
+    // state 3 and the asm to "S_idle".
+    void fn_710050EF90(fw::MessageObject* sender, gf::MsgUnk_100001C& msg);
     void calcHeadColiPos(float height, const fw::Transform& transform, mm::Vec3* pos);
     // switch the PC's agent's field and battle AI (StateUtil hands them on)
     void setEnableAgentField(bool enable);

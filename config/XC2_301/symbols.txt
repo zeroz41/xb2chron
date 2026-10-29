@@ -21529,7 +21529,7 @@ _ZN2gf15GfComBehaviorPc29procMsgPcFieldDrawDebugAccessEPN2fw13MessageObjectERNS_
 _ZN2gf15GfComBehaviorPc23procMsgGameChangeTargetEPN2fw13MessageObjectERNS_19MsgGameChangeTargetE = .text:0x0050E46C; // type:function size:0x1DC scope:global
 _ZN2gf15GfComBehaviorPc30procMsgPcFieldSetFallMaxHeightEPN2fw13MessageObjectERNS_26MsgPcFieldSetFallMaxHeightE = .text:0x0050E648; // type:function size:0xD0 scope:global
 _ZN2gf15GfComBehaviorPc31procMsgPcFieldChangeControlModeEPN2fw13MessageObjectERNS_27MsgPcFieldChangeControlModeE = .text:0x0050E718; // type:function size:0x878 scope:global
-fn_710050EF90 = .text:0x0050EF90; // type:function size:0x438 scope:global
+_ZN2gf15GfComBehaviorPc13fn_710050EF90EPN2fw13MessageObjectERNS_14MsgUnk_100001CE = .text:0x0050EF90; // type:function size:0x438 scope:global
 _ZN2gf15GfComBehaviorPc23procMsgObjectNotifyDeadEPN2fw13MessageObjectERNS_19MsgObjectNotifyDeadE = .text:0x0050F3C8; // type:function size:0x1E8 scope:global
 _ZN2gf15GfComBehaviorPc31procMsgPcFieldReqFallDeadMotionEPN2fw13MessageObjectERNS_27MsgPcFieldReqFallDeadMotionE = .text:0x0050F5B0; // type:function size:0xB0 scope:global
 _ZN2gf15GfComBehaviorPc21procMsgPcFieldElvWarpEPN2fw13MessageObjectERNS_17MsgPcFieldElvWarpE = .text:0x0050F660; // type:function size:0x4A0 scope:global

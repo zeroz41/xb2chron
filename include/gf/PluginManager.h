@@ -45,6 +45,28 @@ public:
         m_creators[index] = creator;
         m_enabled[index] = enabled;
     }
+    // T's plugin made by its creator (when one is set) and set up on the behavior; GfComBehaviorPc makes the pad
+    // plugins this way when a PC goes back under pad control (inline template: proven by its instances' code)
+    template <typename T>
+    void createPlugin() {
+        if (m_creators[T::PLUGIN_ID]) {
+            m_plugins[T::PLUGIN_ID] = m_creators[T::PLUGIN_ID]();
+            if (m_plugins[T::PLUGIN_ID]) {
+                m_plugins[T::PLUGIN_ID]->onSetup(*m_behavior);
+            }
+        }
+    }
+    // T's plugin (when there is one) cleaned up on the behavior and deleted (inline template)
+    template <typename T>
+    void destroyPlugin() {
+        if (m_plugins[T::PLUGIN_ID]) {
+            m_plugins[T::PLUGIN_ID]->onCleanup(*m_behavior);
+            if (m_plugins[T::PLUGIN_ID]) {
+                delete m_plugins[T::PLUGIN_ID];
+                m_plugins[T::PLUGIN_ID] = nullptr;
+            }
+        }
+    }
     mm::mtl::Vector<Creator> m_creators;  // endSetup calls each set one
     mm::mtl::Vector<Plugin*> m_plugins;   // endSetup stores what the creators made
     mm::mtl::Vector<bool> m_enabled;      // endSetup skips a creator whose flag is clear
