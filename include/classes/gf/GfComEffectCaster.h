@@ -83,7 +83,9 @@ public:
     // GfEffectGround emits no foot step effect and keeps the water material while the water at the object is at
     // least this deep (the name is not the original's)
     float m_waterDepthLimit;
-    unsigned char pad_28[0x28];
+    // GfComBehaviorPc::setup sets it to the PC property's m_chestHeight (the name is not the original's)
+    float m_chestHeight;
+    unsigned char pad_2c[0x24];
     mm::mtl::FixedVector<PackEntry, 100> m_packs;  // (the name is not the original's)
     EffectCaster* m_caster;  // setupCaster's (the name is not the original's)
     fw::EffectPoint* m_pPoint;  // getEffectPoint's (the name is not the original's)

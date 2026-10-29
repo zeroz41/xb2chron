@@ -1,4 +1,26 @@
 #include "gf/FileStaticVec3.h"
+#include "classes/gf/GfComBehaviorPc.h"
+#include "classes/gf/pc/StateBattle.h"
+#include "classes/gf/pc/AccessPlugin.h"
+#include "classes/gf/pc/FallIntoColiPlugin.h"
+#include "classes/gf/pc/FadePlugin.h"
+#include "classes/gf/pc/LurePlugin.h"
+#include "classes/gf/pc/LookAtPlugin.h"
+#include "classes/gf/pc/TargetIKPlugin.h"
+#include "classes/gf/pc/FallDamagePlugin.h"
+#include "classes/gf/pc/TimerPlugin.h"
+#include "classes/gf/pc/SlidePlugin.h"
+#include "classes/gf/pc/AttachPlugin.h"
+#include "classes/gf/pc/ColVelCalculatorPlugin.h"
+#include "classes/gf/pc/TerrainDamagePlugin.h"
+#include "classes/gf/pc/FallDistancePlugin.h"
+#include "classes/gf/pc/WaterInPlugin.h"
+#include "classes/gf/pc/DeadColCheckPlugin.h"
+#include "classes/gf/pc/LookAxisPlugin.h"
+#include "classes/gf/pc/FallDistanceAchievPlugin.h"
+#include "classes/gf/pc/PadField.h"
+#include "classes/gf/GfComSound.h"
+#include "classes/gf/GfComEffectCaster.h"
 #include "classes/gf/GfComPropertyPc.h"
 #include "classes/gf/GfComBehaviorPc.h"
 #include "classes/gf/GfComPropertyPc.h"
@@ -12,6 +34,38 @@
 #include "classes/fw/ParamList.h"
 #include <string.h>
 #include "classes/fw/UpdatableObject.h"
+#include "classes/gf/pc/PadField.h"
+#include "classes/gf/pc/PadBattle.h"
+#include "classes/gf/pc/AIAgent.h"
+#include "classes/gf/pc/PadAgent.h"
+#include "classes/gf/pc/StateField.h"
+#include "classes/gf/pc/StateBattle.h"
+#include "classes/gf/GfComSound.h"
+#include "classes/gf/GfComEffectCaster.h"
+#include "classes/gf/GfComModel.h"
+#include "classes/gf/GfComTransform.h"
+#include "classes/gf/GfObj.h"
+#include "classes/gf/GfGamePlayerFormation.h"
+#include "classes/gf/FootStepPlugin.h"
+#include "classes/gf/EyeBlinkPlugin.h"
+#include "classes/gf/LipSyncPlugin.h"
+#include "classes/gf/FootIkControllerPlugin.h"
+#include "classes/gf/pc/AccessPlugin.h"
+#include "classes/gf/pc/FallIntoColiPlugin.h"
+#include "classes/gf/pc/FadePlugin.h"
+#include "classes/gf/pc/LurePlugin.h"
+#include "classes/gf/pc/LookAtPlugin.h"
+#include "classes/gf/pc/TargetIKPlugin.h"
+#include "classes/gf/pc/TimerPlugin.h"
+#include "classes/gf/pc/SlidePlugin.h"
+#include "classes/gf/pc/AttachPlugin.h"
+#include "classes/gf/pc/ColVelCalculatorPlugin.h"
+#include "classes/gf/pc/TerrainDamagePlugin.h"
+#include "classes/gf/pc/FallDistancePlugin.h"
+#include "classes/gf/pc/WaterInPlugin.h"
+#include "classes/gf/pc/DeadColCheckPlugin.h"
+#include "classes/gf/pc/LookAxisPlugin.h"
+#include "classes/gf/pc/FallDistanceAchievPlugin.h"
 
 namespace gf {
 
@@ -19,6 +73,91 @@ GfComBehaviorPc::GfComBehaviorPc() : m_agent(), m_hfsm(fw::Allocator::getProcAll
     pad_130(nullptr), m_listener(this) {}
 
 GfComBehaviorPc::~GfComBehaviorPc() {}
+
+void GfComBehaviorPc::setup(const SetupInfo& info) {
+    static_cast<GfObj*>(m_owner)->pad_110 |= 2;  // GfGameTarget targets it (bit 2)
+    if (GfComAsm* asmCom = m_owner->getComponent<GfComAsm>(2)) {
+        asmCom->m_callbacks[0].name = "system";
+        asmCom->m_callbacks[0].delegate.set(static_cast<GfComBehavior*>(this), &GfComBehavior::callbackAnim);
+        asmCom->m_callbacks[1].name = pc::ASM_CB_NAME_FIELD;
+        asmCom->m_callbacks[1].delegate.set(this, &GfComBehaviorPc::callbackField);
+        asmCom->m_callbacks[2].name = pc::ASM_CB_NAME_BATTLE;
+        asmCom->m_callbacks[2].delegate.set(this, &GfComBehaviorPc::callbackBattle);
+    }
+    if (GfComSound* sound = m_owner->getComponent<GfComSound>(10)) {
+        sound->m_customInfoCallback.set(this, &GfComBehaviorPc::callbackSound);
+    }
+    GfComPropertyPc* property = m_owner->getComponent<GfComPropertyPc>(5);
+    bool pad = (property->m_stateFlags & 0x400) != 0;
+    if (pad) {
+        m_agent.reset(new (getAllocator(ALLOCATOR(0)), __FILE__, 160, 8) pc::PadAgent(0));
+    } else {
+        m_agent.reset(new (getAllocator(ALLOCATOR(0)), __FILE__, 165, 8) pc::AIAgent);
+    }
+    m_agent->setup(*property);
+    GfGamePlayerFormation* formation = GfGamePlayerFormation::sys();
+    bool standalone = formation != nullptr && property->m_setupKind != 0xFFFFFFFF
+                          ? formation->m_players[property->m_setupKind].m_standalone
+                          : false;
+    m_pluginManager.beginSetup(*this, 22);
+    m_pluginManager.setCreator(FootStepPlugin::PLUGIN_ID, &FootStepPlugin::create, true);
+    m_pluginManager.setCreator(1, &EyeBlinkPlugin::create, info.m_eyeBlink);
+    m_pluginManager.setCreator(2, &LipSyncPlugin::create, true);
+    m_pluginManager.setCreator(FootIkControllerPlugin::PLUGIN_ID, &FootIkControllerPlugin::create, true);
+    m_pluginManager.setCreator(pc::AccessPlugin::PLUGIN_ID, &pc::AccessPlugin::create, pad);
+    m_pluginManager.setCreator(pc::FallIntoColiPlugin::PLUGIN_ID, &pc::FallIntoColiPlugin::create, pad);
+    m_pluginManager.setCreator(pc::FadePlugin::PLUGIN_ID, &pc::FadePlugin::create, pad);
+    m_pluginManager.setCreator(pc::LurePlugin::PLUGIN_ID, &pc::LurePlugin::create, pad);
+    m_pluginManager.setCreator(pc::LookAtPlugin::PLUGIN_ID, &pc::LookAtPlugin::create, true);
+    m_pluginManager.setCreator(pc::TargetIKPlugin::PLUGIN_ID, &pc::TargetIKPlugin::create, true);
+    m_pluginManager.setCreator(pc::FallDamagePlugin::PLUGIN_ID, &pc::FallDamagePlugin::create, standalone);
+    m_pluginManager.setCreator(pc::TimerPlugin::PLUGIN_ID, &pc::TimerPlugin::create, true);
+    m_pluginManager.setCreator(pc::SlidePlugin::PLUGIN_ID, &pc::SlidePlugin::create, true);
+    m_pluginManager.setCreator(pc::AttachPlugin::PLUGIN_ID, &pc::AttachPlugin::create, true);
+    m_pluginManager.setCreator(pc::ColVelCalculatorPlugin::PLUGIN_ID, &pc::ColVelCalculatorPlugin::create, true);
+    m_pluginManager.setCreator(pc::TerrainDamagePlugin::PLUGIN_ID, &pc::TerrainDamagePlugin::create, standalone);
+    m_pluginManager.setCreator(pc::FallDistancePlugin::PLUGIN_ID, &pc::FallDistancePlugin::create, true);
+    m_pluginManager.setCreator(pc::WaterInPlugin::PLUGIN_ID, &pc::WaterInPlugin::create, true);
+    m_pluginManager.setCreator(pc::DeadColCheckPlugin::PLUGIN_ID, &pc::DeadColCheckPlugin::create, standalone);
+    m_pluginManager.setCreator(pc::LookAxisPlugin::PLUGIN_ID, &pc::LookAxisPlugin::create, true);
+    m_pluginManager.setCreator(pc::FallDistanceAchievPlugin::PLUGIN_ID, &pc::FallDistanceAchievPlugin::create,
+                               standalone);
+    m_pluginManager.endSetup();
+    if (Plugin* plugin = m_pluginManager.m_plugins[pc::ColVelCalculatorPlugin::PLUGIN_ID]) {
+        plugin->setActivate(true);
+    }
+    if (Plugin* plugin = m_pluginManager.m_plugins[pc::TerrainDamagePlugin::PLUGIN_ID]) {
+        plugin->setActivate(true);
+    }
+    if (Plugin* plugin = m_pluginManager.m_plugins[2]) {
+        plugin->setActivate(true);
+    }
+    if (Plugin* plugin = m_pluginManager.m_plugins[FootIkControllerPlugin::PLUGIN_ID]) {
+        plugin->setActivate(true);
+    }
+    if (Plugin* plugin = m_pluginManager.m_plugins[pc::DeadColCheckPlugin::PLUGIN_ID]) {
+        plugin->setActivate(true);
+    }
+    if (Plugin* plugin = m_pluginManager.m_plugins[pc::LookAxisPlugin::PLUGIN_ID]) {
+        plugin->setActivate(true);
+    }
+    m_hfsm.beginSetup(this, 88, 8);
+    pc::registerFieldStates(m_hfsm);
+    pc::registerBattleStates(m_hfsm);
+    m_hfsm.endSetup();
+    m_hfsm.setState(info.m_state);
+    GfComModel* model = m_owner->getComponent<GfComModel>(1);
+    m_headFrame = model->createBoneReferenceFrame("JU_neck");
+    if (m_headFrame.get() == nullptr) {
+        m_headFrame = model->createBoneReferenceFrame("JU_spA");
+        if (m_headFrame.get() == nullptr) {
+            m_headFrame = m_owner->getComponent<GfComTransform>(0)->getFrame();
+        }
+    }
+    if (GfComEffectCaster* caster = m_owner->getComponent<GfComEffectCaster>(7)) {
+        caster->m_chestHeight = property->m_chestHeight;
+    }
+}
 
 void GfComBehaviorPc::callbackSound(const fw::ResSoundData& data, fw::SoundResSourceManager::CustomInfo* info) {
     GfComPropertyPc* property = m_owner->findComponent<GfComPropertyPc>(5);

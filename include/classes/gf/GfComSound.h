@@ -79,7 +79,9 @@ public:
     bool pad_120;  // the constructor clears it
     bool m_inLayer;  // whether m_layerNode is linked
     void* pad_128;  // the constructor clears it
-    mm::mtl::Delegate<void()> pad_130;  // the constructor clears its invoker; its signature is unknown
+    // what the sound resources call back with for a resource's custom info (GfComBehaviorPc::setup sets
+    // callbackSound; the name is not the original's)
+    mm::mtl::Delegate<void(const fw::ResSoundData&, fw::SoundResSourceManager::CustomInfo*)> m_customInfoCallback;
     bool m_isSetup;  // setup sets it, cleanup clears it
     ViewerListener m_viewerListener;
     void* m_pViewer;  // the viewer listener's onWkStandbyLogout clears it

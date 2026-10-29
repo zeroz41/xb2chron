@@ -33,12 +33,20 @@ public:
         GfComBehaviorPc* m_owner;  // the behavior it listens for (the name is not the original's)
     };
 
+    // what setup takes (the field names are not the original's)
+    struct SetupInfo {
+        unsigned int m_state;  // the Hfsm state the PC starts in
+        bool m_eyeBlink;       // whether the eye blink plugin is made
+    };
+
     GfComBehaviorPc();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfComBehaviorPc();  // slot 1
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     virtual void update(fw::UpdateInfo const&);  // slot 5
     virtual void procAnimCallback(gf::GfComAsm*, gf::CallBackCache const&);  // slot 6
+    // the asm and sound callbacks, the pad or AI agent, the plugins, the field and battle states and the head frame
+    void setup(const SetupInfo& info);
     // the field's animation callback: does nothing (defined in PadField's unit, as 1.0.0's)
     void callbackField(gf::GfComAsm* asmCom, const gf::CallBackCache& cache);
     // the battle's animation callback: does nothing (defined in PadBattle's unit)

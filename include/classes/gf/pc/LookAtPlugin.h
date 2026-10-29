@@ -1,6 +1,7 @@
 #ifndef CLASSES_GF_PC_LOOKATPLUGIN_H
 #define CLASSES_GF_PC_LOOKATPLUGIN_H
 
+#include "classes/gf/GfAllocator.h"
 #include "classes/gf/Plugin.h"
 #include "classes/gf/GfBdatLookAt.h"
 #include "classes/gf/GfComBehaviorPc.h"
@@ -30,6 +31,14 @@ public:
     };
 
     LookAtPlugin();
+    // its index in GfComBehaviorPc's plugins (setup sets its creator there)
+    enum { PLUGIN_ID = 5 };
+    // what GfComBehaviorPc's plugin manager makes it with (inline: gf_com_behavior_pc's unit emits it, citing
+    // this header)
+    static Plugin* create() {
+#line 39 "D:/Monolithsoft/BF2/prog/application/BF2\\gf/object/component/pc/plugin/gf_pc_lookat_plugin.h"
+        return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) LookAtPlugin;
+    }
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~LookAtPlugin();  // slot 1
     virtual void onActivate();  // slot 3

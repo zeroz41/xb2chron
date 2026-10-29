@@ -5,6 +5,7 @@
 #include <new>
 
 namespace ai { class State; }
+namespace ai { class Hfsm; }
 namespace btl { class BattleCharacter; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GfComBehaviorPc; }
@@ -24,6 +25,9 @@ public:
     virtual void Leave(gf::GfComBehaviorPc*, ai::State*);  // slot 9
     virtual void Update(btl::BattleCharacter*, gf::GfComBehaviorPc*, fw::UpdateInfo const&);  // slot 11
 };
+
+// the battle states, registered with the player's Hfsm (GfComBehaviorPc::setup)
+void registerBattleStates(ai::Hfsm& hfsm);
 }}  // namespace gf::pc
 
 #endif

@@ -38,6 +38,8 @@ public:
     gf::GfComPropertyPc* m_property;
 };
 
+// the field's animation callback name (GfComBehaviorPc::setup reads it)
+extern const char* ASM_CB_NAME_FIELD;
 void registerAsmCallbackField(gf::GF_OBJ_HANDLE* obj, anm::ResASM* res);
 }}  // namespace gf::pc
 
