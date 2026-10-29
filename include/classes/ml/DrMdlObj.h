@@ -62,7 +62,7 @@ public:
     int getNodeIdx(const char* name) const;
     const char* getNodeName(int index) const;
     void setResBoneMat(int index, const mm::Mat44& mat);
-    mm::Mat44 getResBoneMat(int index) const;
+    const mm::Mat44& getResBoneMat(int index) const;
     mm::Mat44* getResBoneMatPtr(int index);
     MdoRimBloomWrk* getRimBloomWrk(unsigned int bank);
 };

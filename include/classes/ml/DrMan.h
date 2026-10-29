@@ -191,7 +191,8 @@ public:
     unsigned char pad_1CAC[0x14];
     // 0x1CC0: fn_710071E620 (ScnRenderDrSysParmAcc::getWeatherFrame's call) sets [s_nDblStockIdx], fn_710071E640 reads
     // [s_nDblIdx] (the name is not the original's)
-    bool m_weatherFrameReq[2];
+    // a byte, not a bool: fn_710071E640 compares it with 0
+    unsigned char m_weatherFrameReq[2];
     bool m_homeMenu;                    // 0x1CC2, bkgHomeMenu(true) sets it
     bool m_autoResetScene;
     unsigned char pad_1CC4[0x38];
@@ -205,12 +206,17 @@ public:
     unsigned char pad_1D50[0x2D];
     // 0x1D7D: DrMdoCtlSeamAll's render passes return at once while set (the name is not the original's)
     bool m_seamRenderOff;
-    unsigned char pad_1D7E[0xE];
+    unsigned char pad_1D7E[0x6];
+    // 0x1D84: DrMdlMan::shadowRender renders nothing while set (the name is not the original's)
+    bool m_mdlShadowOff;
+    unsigned char pad_1D85[0x7];
     // 0x1D8C: DrShdLgtHybrid::render skips the clustered lights' render while set (the name is not the original's)
     bool m_clusteredRenderOff;
     unsigned char pad_1D8D[0x4];
     bool m_iblSkip;                     // 0x1D91: isIBLSkip is true, isTemporalUPSToGlobalIBL false while set (name inferred)
-    unsigned char pad_1D92[0x5];
+    unsigned char pad_1D92[0x4];
+    // 0x1D96: DrMdlMan::shadowRender renders nothing while set (the name is not the original's)
+    bool m_shadowRenderOff;
     bool m_mdlDblPause;
     unsigned char pad_1D98[0x20];
     bool m_allMiddelTexStmChk[2];       // 0x1DB8, by s_nDblStockIdx

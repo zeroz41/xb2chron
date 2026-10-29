@@ -10,9 +10,17 @@ namespace ml {
 class DrMdlBase {
 public:
     // inline in DrMdoCtl's and DrMdoGrpObj's constructors (no symbol of its own)
+    // assigned in the body: DrMdoGrpObj(int, unsigned int) stores m_pNext, m_viewNum, m_groups in this order
     explicit DrMdlBase(int viewNum)
-        : pad_8(), m_pNext(nullptr), m_groups(0), m_viewNum(viewNum), m_mdlType(0), pad_1D(0), pad_1E(0),
-          m_dispFlags(3) {}
+        : pad_8() {
+        m_pNext = nullptr;
+        m_viewNum = viewNum;
+        m_groups = 0;
+        m_mdlType = 0;
+        pad_1D = 0;
+        pad_1E = 0;
+        m_dispFlags = 3;
+    }
     virtual ~DrMdlBase() {}  // slot 0
     virtual void update() = 0;  // slot 2
     virtual void dispOffUpdate() {}  // slot 3

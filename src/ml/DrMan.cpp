@@ -25,6 +25,11 @@
 #include "classes/ml/IDrDrawCallback.h"
 #include "ml/MdoWrkMatRes.h"
 #include "cloud/CloudShaderMan.h"
+#include "ml/DrIniSys.h"
+#include "mtl/MemManager.h"
+#include "ml/DrMdoMpfMan.h"
+#include "classes/ml/FileResTh.h"
+#include "classes/ml/DrPixlShadowObj.h"
 
 namespace cloud {
 using namespace grlib;
@@ -32,6 +37,8 @@ using namespace grlib;
 }  // namespace cloud
 
 namespace ml {
+const void* DrIniSys::getGlassBreakage() const { return m_glassBreakage->m_data; }
+
 DrMan* DrMan::getIns() { return s_pTop; }
 
 DrMan* DrMan::get() { return s_pTop; }
@@ -92,6 +99,68 @@ void DrMdlObj::setDblBuffAlpha(bool enable) {
     }
 }
 
+bool DrMdlMan::shadowRender(DrPixlShadowObj* shadowObj) {
+    DrMan* man = m_pDrMan;
+    if (man->m_shadowRenderOff || man->m_mdlShadowOff) {
+        return false;
+    }
+    DrPixlMan* pixlMan = man->m_pixlMan;
+    pixlMan->setShadowObj(shadowObj);
+    shadowObj->m_flags &= ~1;
+    for (DrMdlBase* obj = m_pMdlList->m_pTop; obj != nullptr; obj = obj->m_pNext) {
+        if ((obj->m_dispFlags & 1) && (m_shadowViewMask & (1 << obj->m_groups))) {
+            obj->shadowRender();
+        }
+    }
+    if (shadowObj->renderEnd()) {
+        pixlMan->resetRenderTarget();
+        return true;
+    }
+    return false;
+}
+
+bool DrMdlMan::shadowCacheRender(DrPixlShadowCacheObj& cacheObj) {
+    for (DrMdlBase* obj = m_pMdlList->m_pTop; obj != nullptr; obj = obj->m_pNext) {
+        if ((obj->m_dispFlags & 1) && (m_shadowViewMask & (1 << obj->m_groups))) {
+            if (!obj->shadowCacheRender(cacheObj)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+void DrMdlMan::shadowCacheAddRender(int index) {
+    for (DrMdlBase* obj = m_pMdlList->m_pTop; obj != nullptr; obj = obj->m_pNext) {
+        if ((obj->m_dispFlags & 1) && (m_shadowViewMask & (1 << obj->m_groups))) {
+            obj->shadowCacheAddRender(index);
+        }
+    }
+}
+
+void DrMdlMan::callShadowCacheUpdate(unsigned long value) {
+    for (DrMdlBase* obj = m_pMdlList->m_pTop; obj != nullptr; obj = obj->m_pNext) {
+        obj->callShadowCacheUpdate(value);
+    }
+}
+
+void DrMdlMan::addMpfObj() {
+    if (m_mpfMan != nullptr) {
+        m_mpfMan->addMpfObj();
+    } else {
+        m_mpfMan = new (m_pDrMan->m_workHandle, nullptr, 0, 4, false) DrMdoMpfMan(m_pDrMan);
+    }
+}
+
+void DrMdlMan::delMpfObj() {
+    if (m_mpfMan != nullptr && m_mpfMan->delMpfObj()) {
+        if (m_mpfMan != nullptr) {
+            delete m_mpfMan;
+            m_mpfMan = nullptr;
+        }
+    }
+}
+
 DrMdlObj::DrMdlObj(int viewNum) : DrMdoCtl(viewNum) {}
 
 void DrMdlObj::chageShadowObject(DrMdoSmlShadowMan* shadowMan) {
@@ -99,6 +168,16 @@ void DrMdlObj::chageShadowObject(DrMdoSmlShadowMan* shadowMan) {
         shadowMan->changeViewNum(m_pSmlShadowObj, m_viewNum);
     }
 }
+
+int DrMdlObj::getNodeIdx(const char* name) const { return DrMdoNode::getNodeIdx(name); }
+
+const char* DrMdlObj::getNodeName(int index) const { return DrMdoNode::getNodeName(index); }
+
+void DrMdlObj::setResBoneMat(int index, const mm::Mat44& mat) { DrMdoNode::setNodeMatrix(index, mat); }
+
+const mm::Mat44& DrMdlObj::getResBoneMat(int index) const { return getNodeMatrix(index); }
+
+mm::Mat44* DrMdlObj::getResBoneMatPtr(int index) { return getNodeMatrixPtr(index); }
 
 void DrMdlObj::setMatrix(const mm::Mat44& matrix) { DrMdoCtl::setMatrix(matrix); }
 
@@ -216,6 +295,105 @@ void DrMdlObj::setAceColor(int index, const mm::Col3& color) {
 void DrMdlObj::setAceVal(int index, float value) {
     if (m_pWrkMatRes != nullptr && m_pWrkMatRes->m_pAce != nullptr) {
         m_pWrkMatRes->m_pAce->m_val[index] = value;
+    }
+}
+
+DrMdoGrpObj::DrMdoGrpObj(int viewNum, unsigned int listNum) : DrMdlBase(viewNum), m_sortGrp(this) {
+    m_mdlType = 5;
+    int num = listNum;
+    if (num < 0) {
+        num = 1;
+    }
+    if (num > 0xFF) {
+        num = 0xFF;
+    }
+    m_listMax = num;
+    m_listNum = 0;
+    m_pListBuf = mtl::MemManager::allocate(DrMan::s_pTop->m_resHandle, m_listMax * sizeof(MdlList) + m_listMax * sizeof(MdlList*),
+                                           0x10, false, "no name", 0);
+    m_pLists = static_cast<MdlList*>(m_pListBuf);
+    m_ppList = reinterpret_cast<MdlList**>(m_pLists + m_listMax);
+    for (long i = 0; i < m_listMax; i++) {
+        m_pLists[i].reset();
+    }
+    m_lists[0].reset();
+    m_lists[1].reset();
+    m_lists[2].reset();
+}
+
+DrMdoGrpObj::~DrMdoGrpObj() {
+    for (long i = 0; i < m_listMax; i++) {
+        m_pLists[i].deleteAll();
+    }
+    if (m_pListBuf != nullptr) {
+        mtl::MemManager::deallocate(m_pListBuf, 0, false);
+        m_pListBuf = nullptr;
+    }
+    m_lists[0].deleteAll();
+    m_lists[1].deleteAll();
+    m_lists[2].deleteAll();
+}
+
+void DrMdoGrpObj::dispOffUpdate() {
+    updateList();
+    for (long i = 0; i < m_listNum; i++) {
+        for (DrMdlBase* obj = m_ppList[i]->m_pTop; obj != nullptr; obj = obj->m_pNext) {
+            obj->dispOffUpdate();
+        }
+    }
+}
+
+void DrMdoGrpObj::shadowRender() {
+    unsigned int mask = DrMan::s_pTop->m_mdlMan->m_shadowViewMask;
+    for (long i = 0; i < m_listNum; i++) {
+        for (DrMdlBase* obj = m_ppList[i]->m_pTop; obj != nullptr; obj = obj->m_pNext) {
+            if ((obj->m_dispFlags & 1) && ((1 << obj->m_groups) & mask)) {
+                obj->shadowRender();
+            }
+        }
+    }
+}
+
+bool DrMdoGrpObj::shadowCacheRender(DrPixlShadowCacheObj& cacheObj) {
+    unsigned int mask = DrMan::s_pTop->m_mdlMan->m_shadowViewMask;
+    for (long i = 0; i < m_listNum; i++) {
+        for (DrMdlBase* obj = m_ppList[i]->m_pTop; obj != nullptr; obj = obj->m_pNext) {
+            if ((obj->m_dispFlags & 1) && ((1 << obj->m_groups) & mask)) {
+                if (!obj->shadowCacheRender(cacheObj)) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+void DrMdoGrpObj::shadowCacheOnlyRender() {
+    unsigned int mask = DrMan::s_pTop->m_mdlMan->m_shadowViewMask;
+    for (long i = 0; i < m_listNum; i++) {
+        for (DrMdlBase* obj = m_ppList[i]->m_pTop; obj != nullptr; obj = obj->m_pNext) {
+            if ((1 << obj->m_groups) & mask) {
+                obj->shadowCacheOnlyRender();
+            }
+        }
+    }
+}
+
+void DrMdoGrpObj::occRender() {
+    for (long i = 0; i < m_listNum; i++) {
+        for (DrMdlBase* obj = m_ppList[i]->m_pTop; obj != nullptr; obj = obj->m_pNext) {
+            if (static_cast<DrMdoCtlNom*>(obj)->m_stateFlags & 0x80) {
+                obj->occRender();
+            }
+        }
+    }
+}
+
+void DrMdoGrpObj::callShadowCacheUpdate(unsigned long value) {
+    for (long i = 0; i < m_listNum; i++) {
+        for (DrMdlBase* obj = m_ppList[i]->m_pTop; obj != nullptr; obj = obj->m_pNext) {
+            obj->callShadowCacheUpdate(value);
+        }
     }
 }
 
@@ -402,7 +580,7 @@ void DrMan::setTimeVal(float time) {
 
 void DrMan::fn_710071E620() { m_weatherFrameReq[s_nDblStockIdx] = true; }
 
-bool DrMan::fn_710071E640() { return m_weatherFrameReq[s_nDblIdx]; }
+bool DrMan::fn_710071E640() { return m_weatherFrameReq[s_nDblIdx] != 0; }
 
 void DrMan::setGlobalWind(const mm::Vec3& power) {
     mm::Vec3& wind = m_globalWind[s_nDblStockIdx];

@@ -2,7 +2,7 @@
 #define CLASSES_ML_DRRESMDOSORTGRP_H
 
 #include "classes/ml/DrMdoZSortObj.h"
-#include "classes/ml/DrMdoGrpObj.h"
+namespace ml { class DrMdoGrpObj; }
 
 namespace ml {
 // table 0x7100B7E270
@@ -22,5 +22,8 @@ public:
     virtual void refractionRender();  // slot 11
 };
 }  // namespace ml
+
+// DrMdoGrpObj holds one by value (its header includes this one); users of this header also get DrMdoGrpObj
+#include "classes/ml/DrMdoGrpObj.h"
 
 #endif

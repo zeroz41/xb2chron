@@ -38,7 +38,7 @@ public:
     unsigned char pad_3D18[0x8];
     int m_frameWorkUsed;  // 0x3D20, cleared by begin()
     float m_windScale;  // 0x3D24, 1.0f from begin(); update scales the wind by it
-    unsigned char pad_3D28[0x10];
+    unsigned char pad_3D28[0x18];  // to 0x3D40, the size DrMdlMan::addMpfObj allocates
 };
 }  // namespace ml
 
