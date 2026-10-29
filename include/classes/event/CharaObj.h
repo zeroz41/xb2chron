@@ -8,6 +8,8 @@
 #include "classes/event/CharaPlayEva.h"
 #include "classes/event/CharaPlayEvaEff.h"
 #include "classes/event/CharaPlayFacial.h"
+#include "classes/event/CharaPlayHead.h"
+#include "classes/event/CharaStopHead.h"
 #include "classes/event/CharaPlayMotion.h"
 #include "classes/event/CharaPlayMotionABC.h"
 #include "classes/event/CharaPlayTalk.h"
@@ -40,6 +42,13 @@ public:
     void playAutoAction(float time);
     void playMotionABC(const char* a, const char* b, const char* c, float d, float e, float f, float g, float h, float i);
     void playFacial(int a, float b, int c, float d, int e, float f, int g, float h, float i, float j);
+    // queues m_playHead (1.0.0 has playHead(int, float, bool, bool); 3.0.1 adds the two floats, -1 when unused)
+    void playHead(int id, float time, bool a, bool b, float c, float d);
+    // replaces a queued m_playHead with m_stopHead
+    void stopHead();
+    void playAction(int id, float time, bool a, bool b);
+    void stopAction();
+    void mount(CharaObj* parent, const char* name, const mm::Vec3& pos, const mm::Vec3& rot);
     void playAutoTalk(float time);
     void playVolumeFadeAnim(CharaEffectPlayer::VF_TYPE type, float time, float delay);
     void playVolumeFade(CharaEffectPlayer::VF_TYPE type, int a, const mm::Vec3& b, const mm::Vec3& c, float d, float e,
@@ -78,7 +87,9 @@ public:
     CharaPlayEvaEff m_playEvaEff;  // 0x8e0
     unsigned char pad_910[0x28];
     CharaHideWpn m_hideWpn;  // 0x938
-    unsigned char pad_950[0x50];
+    CharaPlayHead m_playHead;  // 0x950
+    CharaStopHead m_stopHead;  // 0x988
+    unsigned char pad_998[0x8];
     CharaPlayFacial m_playFacial;  // 0x9a0
     CharaPlayTalkAuto m_playTalkAuto;  // 0xa10
     CharaPlayTalk m_playTalk;  // 0xa38

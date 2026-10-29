@@ -505,6 +505,33 @@ void CharaObj::playMotionABC(const char* a, const char* b, const char* c, float 
     m_cmdQueue1.push_back(&m_playMotionABC, param);
 }
 
+void CharaObj::playHead(int id, float time, bool a, bool b, float c, float d) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    m_cmdQueue1.erase(&m_playHead);
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setS32(id);
+    param.val(2).setF32(time);
+    param.val(3).setBool(a);
+    param.val(4).setBool(b);
+    param.val(5).setF32(c);
+    param.val(6).setF32(d);
+    m_cmdQueue1.push_back(&m_playHead, param);
+}
+
+void CharaObj::stopHead() {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    if (m_cmdQueue1.contains(&m_playHead)) {
+        m_cmdQueue1.erase(&m_playHead);
+        CmdParam param;
+        m_cmdQueue1.push_back(&m_stopHead, param);
+    }
+}
+
 void CharaObj::playFacial(int a, float b, int c, float d, int e, float f, int g, float h, float i, float j) {
     if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
         return;
@@ -1022,6 +1049,12 @@ event::ObjectManager::ObjectManager() : m_flags(0), pad_14(0), m_sceneName("defa
 #include "classes/event/ScriptCharaWalkPos.h"
 #include "classes/event/ScriptCharaTurnRot.h"
 #include "classes/event/ScriptCharaTgt.h"
+#include "classes/event/ScriptCharaAction.h"
+#include "classes/event/ScriptCharaHead.h"
+#include "classes/event/ScriptCharaFacial.h"
+#include "classes/event/ScriptCharaMount.h"
+#include "classes/event/ScriptEffectPlay.h"
+#include "classes/event/ScriptEffectMount.h"
 #include "classes/event/ScriptCharaSetIdle.h"
 #include "classes/event/ScriptCharaLinerPos.h"
 #include "classes/event/ScriptCharaLinerRot.h"
@@ -1097,6 +1130,108 @@ void ScriptCharaSetIdle::undo(const event::Param&) {
     ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
     if (obj != 0) {
         obj->m_chara->setIdle(pad_8);
+    }
+}
+
+void ScriptCharaAction::undo(const event::Param&) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        if (pad_8 > 0) {
+            obj->m_chara->playAction(pad_8, 30.0f, true, true);
+        } else {
+            obj->m_chara->stopAction();
+        }
+    }
+}
+
+void ScriptCharaAction::redo(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        int id = param.val(0).getS32();
+        float time = param.val(1).getF32();
+        obj->m_chara->playAction(id, time, true, true);
+    }
+}
+
+void ScriptCharaHead::doit(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        int id = param.val(0).getS32();
+        float time = param.val(1).getF32();
+        bool a = param.val(2).getBool();
+        bool b = param.val(3).getBool();
+        float c = param.val(4).getF32();
+        float d = param.val(5).getF32();
+        CharaObj* chara = obj->m_chara;
+        pad_8 = chara->m_cmdQueue1.contains(&chara->m_playHead) ? chara->m_playHead.m_id : 0;
+        obj->m_chara->playHead(id, time, a, b, c, d);
+    }
+}
+
+void ScriptCharaHead::undo(const event::Param&) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        if (pad_8 > 0) {
+            obj->m_chara->playHead(pad_8, 30.0f, true, true, -1.0f, -1.0f);
+        } else {
+            obj->m_chara->stopHead();
+        }
+    }
+}
+
+void ScriptCharaHead::redo(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        int id = param.val(0).getS32();
+        float time = param.val(1).getF32();
+        obj->m_chara->playHead(id, time, true, true, -1.0f, -1.0f);
+    }
+}
+
+void ScriptCharaFacial::doit(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        int a = param.val(0).getS32();
+        float b = param.val(1).getF32();
+        int c = param.val(2).getS32();
+        float d = param.val(3).getF32();
+        int e = param.val(4).getS32();
+        float f = param.val(5).getF32();
+        int g = param.val(6).getS32();
+        float h = param.val(7).getF32();
+        float i = param.val(8).getF32();
+        float j = param.val(9).getF32();
+        CharaObj* chara = obj->m_chara;
+        pad_8 = chara->m_cmdQueue1.contains(&chara->m_playFacial) ? chara->m_playFacial.m_id : 0;
+        obj->m_chara->playFacial(a, b, c, d, e, f, g, h, i, j);
+    }
+}
+
+void ScriptCharaFacial::undo(const event::Param&) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        obj->m_chara->playFacial(pad_8, 30.0f, -1, -1.0f, -1, -1.0f, -1, -1.0f, -1.0f, -1.0f);
+    }
+}
+
+void ScriptCharaMount::undo(const event::Param&) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        obj->m_chara->mount(nullptr, "", mm::Vec3::zero, mm::Vec3::zero);
+    }
+}
+
+void ScriptEffectPlay::undo(const event::Param&) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        obj->m_effect->stop();
+    }
+}
+
+void ScriptEffectMount::undo(const event::Param&) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        obj->setMount(nullptr, "", mm::Vec3::zero, false, static_cast<ATTACH_TYPE>(0));
     }
 }
 

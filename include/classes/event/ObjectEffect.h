@@ -6,6 +6,7 @@
 #include "classes/event/Object.h"
 
 namespace mm { class Col4; }
+namespace event { class IAttachActor; enum ATTACH_TYPE : int; }
 #include "classes/event/EffectObj.h"
 #include "classes/event/PosAxis.h"
 #include "classes/event/RotAxis.h"
@@ -32,6 +33,7 @@ public:
     void setRotAxis(const RotAxis& rot);
     void linerPosAxis(const PosAxis& pos, float time, CV_TYPE type);
     void linerRotAxis(const RotAxis& rot, float time, CV_TYPE type);
+    void setMount(IAttachActor* actor, const char* name, const mm::Vec3& pos, bool flag, ATTACH_TYPE type);
 
     EffectObj* m_effect;  // 0x68; the effect the commands play, kill and animate; the name is not the original's
     // the position and rotation setPosAxis/setRotAxis store (the script commands save and restore them); the

@@ -13,7 +13,10 @@ public:
     virtual void term();  // slot 4
     // set to 0 by init (the command's step; the name is not the original's)
     int m_step;  // 0x8
-    unsigned char pad_c[0x64];  // CharaObj holds one at 0x9a0, the next command at +0x70
+    unsigned char pad_c[0x14];
+    // the facial id the running command plays (ScriptCharaFacial::doit saves it for undo); the name is not the original's
+    int m_id;  // 0x20
+    unsigned char pad_24[0x4c];  // CharaObj holds one at 0x9a0, the next command at +0x70
 };
 }  // namespace event
 

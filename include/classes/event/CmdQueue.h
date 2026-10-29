@@ -23,6 +23,15 @@ public:
             erase(m_items.begin()->m_cmd);
         }
     }
+    // whether cmd is queued (inlined by the event script commands and CharaObj::stopHead); the name is not the original's
+    bool contains(const ICmd* cmd) const {
+        for (unsigned int i = 0; i < m_items.size(); i++) {
+            if (m_items[i].m_cmd == cmd) {
+                return true;
+            }
+        }
+        return false;
+    }
     // queues cmd with its parameters, dropping the oldest while the queue is full (one instance per queue size)
     void push_back(ICmd* cmd, const CmdParam& param);
     mm::mtl::FixedVector<CmdItem, T0> m_items;  // 0x8 (the name is not the original's)
