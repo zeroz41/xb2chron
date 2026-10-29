@@ -2,6 +2,7 @@
 #define CLASSES_LAYER_LAYEROBJMANAGER_H
 #include "layer/LayerAccLayoutObj.h"
 #include "layer/LayerLinkList.h"
+#include "layer/LayerRenderView.h"
 
 namespace grlib { class CGLibTextureBuffer; }
 namespace layer { class LayerBase; }
@@ -35,6 +36,7 @@ public:
     LayerLinkList<LayerBase> m_objList;
     LayerLinkList<LayerBase> m_setupList[2];
     LayerLinkList<LayerBase> m_deleteList;
+    LayerRenderView m_view;  // 0x78: apply resets it and passes it to every object (the name is not the original's)
 };
 }  // namespace layer
 

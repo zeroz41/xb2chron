@@ -54,11 +54,15 @@ public:
     LayerFontManager* m_fontManager;  // LayerAccManager's font create functions
     LayerRceManager* m_rceManager;  // 0x70
     unsigned int m_flags;  // 0x78: FLAG_
-    float m_frameRate;  // 0x7C: 30 (the name is not the original's)
-    float m_frameTime;  // 0x80: 1/30 (the name is not the original's)
+    // A pair of floats the constructor sets with one doubleword store each, copied from a constant pair (the type and
+    // its name are not the original's).
+    struct FloatPair {
+        float x;
+        float y;
+    };
+    FloatPair m_frameRate;  // 0x7C: 30 and 1/30 (the name is not the original's)
     float m_timeScale;  // 0x84: 1, set last by the constructor (the name is not the original's)
-    // 0x88: 1, 1 and 1, 1, each pair set by one doubleword store (as m_frameRate; the names are not the original's)
-    float m_baseColor[4];  // 0x88: 1, 1, 1, 1 (the name is not the original's)
+    FloatPair m_baseColor[2];  // 0x88: 1, 1, 1, 1, a pair at a time (the name is not the original's)
     float m_pixelScale;  // 0x98: 0.003125 = 1/320 (the name is not the original's)
     LayerCoordinate m_coordinate;  // LayerAccManager::set/getCoordinate
     LayerMemHandleAllocator m_allocator;  // 0xA0: over m_workHandle

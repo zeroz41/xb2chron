@@ -1,4 +1,7 @@
 #define MM_LIB_FROM_LAYER
+#include "layer/LayerRenderView.h"
+#include "classes/layer/LayerObjManager.h"
+#include "classes/layer/LayerManager.h"
 #include "classes/layer/LayerTag.h"
 #include "classes/layer/LayerMemHandleAllocator.h"
 #include "classes/layer/LayerShdManager.h"
@@ -460,6 +463,44 @@ void LayerMemHandleAllocator::deallocate(void* memory) {
     if (memory != nullptr) {
         mtl::MemManager::deallocate(memory, 0, false);
     }
+}
+
+LayerManager::LayerManager(ml::Scn* scn, mtl::ALLOC_HANDLE handle, unsigned int size) : m_scn(scn) {
+    static const FloatPair frameRate = {30.0f, 1.0f / 30.0f};
+    static const FloatPair one = {1.0f, 1.0f};
+    m_topHandle = mtl::ALLOC_HANDLE();
+    m_dataHandle = mtl::ALLOC_HANDLE();
+    m_workHandle = mtl::ALLOC_HANDLE();
+    m_gxHandle = mtl::ALLOC_HANDLE();
+    m_setupFunc = &LayerManager::beginFastSetup;
+    m_topHandle = mtl::MemManager::create(handle, size + 0x1000, "LayerTop", false, "no name", 0);
+    m_dataHandle = mtl::MemManager::create(m_topHandle, 0x190000, "LayerData", false, "no name", 0);
+    m_frameRate = frameRate;
+    m_baseColor[0] = one;
+    m_baseColor[1] = one;
+    m_pixelScale = 0.003125f;
+    unsigned int restSize = size - 0x190000;
+    unsigned int gxSize = restSize / 5;
+    gxSize += (0x100 - (gxSize & 0xFF)) & 0xFF;
+    unsigned int workSize = restSize - gxSize;
+    m_workHandle = mtl::MemManager::create(m_topHandle, workSize, "LayerWork", true, "no name", 0);
+    m_gxHandle = mtl::MemManager::create(m_topHandle, gxSize, "LayerGx", true, "no name", 0);
+    m_workAllocator.setMemHandle(m_workHandle);
+    m_gxAllocator.setMemHandle(m_gxHandle);
+    m_allocator.m_memHandle = m_workHandle;
+    m_shdManager = new (m_workHandle, nullptr, 0, 4, false) LayerShdManager(this);
+    m_objManager = new (m_workHandle, nullptr, 0, 4, false) LayerObjManager(this);
+    m_fontManager = new (m_workHandle, nullptr, 0, 4, false) LayerFontManager(this);
+    m_rceManager = new (m_workHandle, nullptr, 0, 4, false) LayerRceManager(this);
+    m_flags = FLAG_LOADING;
+    if (m_scn->m_renderDrSys != nullptr) {
+        m_scn->m_renderDrSys->setCallBack(this);
+    }
+    s_nDebIdx = 0;
+    s_nStkIdx = 1;
+    s_nTriIdx = 0;
+    m_coordinate = static_cast<LayerCoordinate>(0);
+    m_timeScale = 1.0f;
 }
 
 void LayerManager::beginFastSetup() {
