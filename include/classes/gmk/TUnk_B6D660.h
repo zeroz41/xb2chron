@@ -30,7 +30,13 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x3e);
     gf::GF_OBJ_HANDLE* m_gob;  // 0x48: dispose destroys it unless it is -1 (the name is not the original's)
-    unsigned char pad_50[0x10];  // fields: size from the stride 0x60: Vector<TUnk_B6D660>::resize fn_710062C3CC
+    // fields: size from the stride 0x60: Vector<TUnk_B6D660>::resize fn_710062C3CC
+    // 0x50: create squares the float of BDAT table 0x7B's member 0 at row 0x58; update keeps the game object only while
+    // the interest point is that close (squared distance; the name is not the original's)
+    float m_popDistSq;
+    unsigned char pad_54[0x4];
+    float pad_58;  // create stores the float of BDAT table 0x7B's member 0 at row 0x5B
+    unsigned char pad_5c[0x4];
 };
 }  // namespace gmk
 

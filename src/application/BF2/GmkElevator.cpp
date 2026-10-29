@@ -72,6 +72,15 @@
 #include "classes/gmk/GmkSalvage.h"
 #include "classes/gmk/GameFlagCond.h"
 #include "classes/gf/GfManager.h"
+#include "arc/CArcData.h"
+#include "classes/fw/CommonResource.h"
+#include "classes/fw/SoundResSourceManager.h"
+#include "classes/gf/GfAllocator.h"
+#include "gf/GfSoundSource.h"
+#include "classes/gf/GfObjManager.h"
+#include "gf/GfStaticRes.h"
+#include "gf/GfUtil.h"
+#include "ml/PathUtil.h"
 #include "classes/gmk/IGmkList.h"
 #include "classes/gmk/GmkGobEventListener.h"
 #include "classes/gmk/GmkSalvageLocator.h"
@@ -132,6 +141,51 @@
 #include "classes/gmk/GmkWarp.h"
 #include "mm/Mat44.h"
 #include "classes/gmk/Lvlb.h"
+
+namespace gf {
+// the resident sound sources' files, by index (getSoundSourceFileName reads it; bindGFSoundSource loads each)
+extern const char* const SS_NAME_TABLE[3];
+const char* const SS_NAME_TABLE[3] = {
+    "/sound/tag/source/field.ssp",
+    "/sound/tag/source/battle.ssp",
+    "/sound/tag/source/event.ssp",
+};
+
+unsigned int getSoundSourceCount() { return 3; }
+
+const char* getSoundSourceFileName(unsigned int index) { return SS_NAME_TABLE[index]; }
+
+// pushes every sound source of the resident files into fw::SoundResSourceManager
+void bindGFSoundSource() {
+    if (fw::SoundResSourceManager::sys() == nullptr) {
+        return;
+    }
+    fw::SoundResSourceManager::beginPush(getSoundSourceCount(), getAllocator(ALLOCATOR(0)));
+    for (unsigned int i = 0; i < getSoundSourceCount(); i++) {
+        fw::CommonResource* res = GfStaticRes::search(getSoundSourceFileName(i));
+        if (res != nullptr) {
+            arc::CArcData arc(res->getAssetData());
+            unsigned int files = arc.getFiles();
+            for (unsigned int j = 0; j < files; j++) {
+                fw::SoundResSourceManager::pushResource(fw::SoundResSourceImporter::importBinary(arc.getFileAdr(j)));
+            }
+        }
+    }
+    fw::SoundResSourceManager::endPush();
+}
+
+void unrbindGFSoundSource() {
+    if (fw::SoundResSourceManager::sys() != nullptr) {
+        fw::SoundResSourceManager::clearAll();
+    }
+}
+
+namespace util {
+const char* getFilePtrFromPath(const char* path) { return ml::PathUtil::getFilePtrFromPath(path); }
+
+mm::mtl::FixStr<64> getNoPathExtName(const char* path) { return ml::PathUtil::getNoPathExtName(path); }
+}  // namespace util
+}  // namespace gf
 
 // the gimmick kinds' names, by GmkType: the gimmick-set table's column of each (GmkSet::createGmkLists reads
 // "<name>" and "<name>_bdat"; GmkManager::getSheetnameByType returns them; the name is not the original's)
@@ -420,6 +474,12 @@ void GmkSetOfSalvageChildren::createGmkLists(int id) {
     m_npcManager.dispose();
 }
 
+int getCurrentMapBdatId() { return gf::GfGameManager::getMapID(); }
+
+const IGmkList* GmkSet::getGmkList(GmkType type) const { return m_gmkLists[static_cast<unsigned int>(type)]; }
+
+IGmkList* GmkSet::getGmkList(GmkType type) { return m_gmkLists[static_cast<unsigned int>(type)]; }
+
 void GmkSet::createGmkLists(int id) {
     m_listParam = 0x20;
     for (int i = 0; i < GMK_LIST_NUM; ++i) {
@@ -539,6 +599,10 @@ void GmkSet::createGmkLists(int id) {
         list->create(info);
     }
 }
+
+unsigned char* AGmkBase::getBindedBdatFp() const { return m_list->getBindedBdatFp(); }
+
+GmkGobEventListener::~GmkGobEventListener() { gf::GfObjManager::removeListener(this); }
 
 // ---- each kind's type (its TYPE constant)
 gmk::GmkType GmkAreaBgm::getGmkType() const { return TYPE; }
@@ -776,6 +840,16 @@ gmk::GmkType TUnk_B6D5F8::getGmkType() const { return TYPE; }
 bool TUnk_B6D5F8::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
 
 // ---- TUnk_B6D660, TUnk_B6D6C8 (placeholder slot symbols: see their headers)
+void TUnk_B6D660::create(const CreateInfo& info) {
+    AGmkBase::create(info);
+    unsigned char* fp = gf::GfDataBdat::getFP(0x7B);
+    unsigned int dist = Bdat::getValCheck(fp, 0, 0x58, 8);
+    float popDist = *reinterpret_cast<float*>(&dist);
+    m_popDistSq = popDist * popDist;
+    unsigned int value = Bdat::getValCheck(fp, 0, 0x5B, 8);
+    pad_58 = *reinterpret_cast<float*>(&value);
+}
+
 void TUnk_B6D660::dispose() {
     if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         gf::GfObjAcc acc(m_gob);
@@ -794,6 +868,14 @@ TUnk_B6D660::~TUnk_B6D660() { dispose(); }
 
 gmk::GmkType TUnk_B6D660::getGmkType() const { return TYPE; }
 
+void TUnk_B6D6C8::create(const CreateInfo& info) {
+    AGmkBase::create(info);
+    gf::GfDataBdat::getFP(0x7B);
+    m_seq = &TUnk_B6D6C8::fn_71005B9BDC;
+}
+
+void TUnk_B6D6C8::fn_71005B9BDC(float) { m_seq = &TUnk_B6D6C8::fn_71005BA88C; }
+
 void TUnk_B6D6C8::dispose() {
     if (m_effectHandle != 0) {
         mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effectHandle);
@@ -805,11 +887,58 @@ void TUnk_B6D6C8::dispose() {
 
 void TUnk_B6D6C8::debugDraw() const { AGmkBase::debugDraw(); }
 
+void TUnk_B6D6C8::fn_71005BA88C(float) {}
+
+void TUnk_B6D6C8::onGobEvent(gf::IGfObjListener::OBJEVT event, gf::GF_OBJ_HANDLE* handle) {
+    if (event == gf::IGfObjListener::OBJEVT(3) && handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+    }
+    if (event == gf::IGfObjListener::OBJEVT(3)) {
+        fn_71005B9C38(false);
+    }
+}
+
 TUnk_B6D6C8::~TUnk_B6D6C8() { dispose(); }
 
 gmk::GmkType TUnk_B6D6C8::getGmkType() const { return TYPE; }
 
 // ---- TUnk_B6E340 (the list of kind 0x3F; placeholder slot symbols)
+void TUnk_B6E340::create(const IGmkList::CreateInfo& info) {
+    TGmkList::create(info);
+#line 641 "D:/Monolithsoft/BF2/prog/application/BF2\\gmk/gmk_sealed_stone/gmk_sealed_stone_impl.h"
+    m_effects = new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) EffectList();
+    m_effects->fn_71005BAA98();
+}
+
+void TUnk_B6E340::dispose() {
+    if (m_effects != nullptr) {
+        m_effects->fn_71005BAC78();
+        if (m_effects != nullptr) {
+            delete m_effects;
+            m_effects = nullptr;
+        }
+    }
+    if (pad_2a8 != nullptr) {
+        pad_2a8 = nullptr;
+    }
+    pad_2b8 = 0;
+    pad_2a8 = nullptr;
+    pad_2b0 = nullptr;
+    TGmkList::dispose();
+}
+
+void TUnk_B6E340::EffectList::fn_71005BAC78() {
+    if (m_entries.size() != 0) {
+        for (Entry& entry : m_entries) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->kill(entry.m_effectHandle);
+        }
+        m_entries.destroy();
+    }
+}
+
 TUnk_B6E340::~TUnk_B6E340() { dispose(); }
 
 // ---- kinds holding one game object

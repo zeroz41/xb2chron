@@ -32,7 +32,16 @@ public:
     // calls it with `this` (and 0). What it does: reads the game object handle at 0x48 (nothing when it is -1) and,
     // branches on the flag first (size 0x10C).
     void fn_71005B9C38(bool);
-    unsigned char pad_48[0x28];  // fields: size from the stride 0x78: Vector<TUnk_B6D6C8>::resize fn_7100637D9C
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because they are the steps m_seq
+    // holds (update calls m_seq with its dt). What they do: create installs fn_71005B9BDC, which installs fn_71005BA88C
+    // (an empty step).
+    void fn_71005B9BDC(float);
+    void fn_71005BA88C(float);
+    unsigned char pad_48[0x10];  // fields: size from the stride 0x78: Vector<TUnk_B6D6C8>::resize fn_7100637D9C
+    // 0x58: the step update runs while the gimmick is valid (create installs fn_71005B9BDC; the name is not the
+    // original's)
+    void (TUnk_B6D6C8::*m_seq)(float);
+    unsigned char pad_68[0x8];
     unsigned int m_effectHandle;  // 0x70: dispose removes it from fw::EffectManager when non-zero (the name is not the original's)
     unsigned char pad_74[0x4];
 };
