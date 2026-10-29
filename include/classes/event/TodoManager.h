@@ -2,23 +2,14 @@
 #define CLASSES_EVENT_TODOMANAGER_H
 
 #include "classes/event/Param.h"
+#include "classes/event/IManager.h"
+#include "classes/mm/mtl/Singleton.h"
 
 namespace event { enum MSG_TYPE : int; class ITodo; }
 
 namespace event {
-// a base of event::TodoManager no evidence names yet
-class TUnk_B3DBA8 {
-public:
-    virtual ~TUnk_B3DBA8() {}
-    virtual void OnEventProc(event::MSG_TYPE) = 0;
-};
-// a base of event::TodoManager no evidence names yet
-class TUnk_B3DBD0 {
-public:
-    virtual ~TUnk_B3DBD0() {}
-};
-// table 0x7100B3DBA8; base at 0x0 unknown (TUnk_B3DBA8), base at 0x8 unknown (TUnk_B3DBD0)
-class TodoManager : public TUnk_B3DBA8, public TUnk_B3DBD0 {
+// table 0x7100B3DBA8; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::TodoManager>
+class TodoManager : public IManager, public mm::mtl::Singleton<TodoManager> {
 public:
     // out of line (mm::mtl::Singleton<event::TodoManager>::getPtr's static calls it)
     TodoManager();

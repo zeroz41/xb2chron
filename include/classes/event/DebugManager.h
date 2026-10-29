@@ -4,21 +4,12 @@
 namespace event { enum MSG_TYPE : int; }
 
 #include "mm/mtl/FixStr.h"
+#include "classes/event/IManager.h"
+#include "classes/mm/mtl/Singleton.h"
 
 namespace event {
-// a base of event::DebugManager no evidence names yet
-class TUnk_B3BFD0 {
-public:
-    virtual ~TUnk_B3BFD0() {}
-    virtual void OnEventProc(event::MSG_TYPE) = 0;
-};
-// a base of event::DebugManager no evidence names yet
-class TUnk_B3BFF8 {
-public:
-    virtual ~TUnk_B3BFF8() {}
-};
-// table 0x7100B3BFD0; base at 0x0 unknown (TUnk_B3BFD0), base at 0x8 unknown (TUnk_B3BFF8)
-class DebugManager : public TUnk_B3BFD0, public TUnk_B3BFF8 {
+// table 0x7100B3BFD0; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::DebugManager>
+class DebugManager : public IManager, public mm::mtl::Singleton<DebugManager> {
 public:
     virtual ~DebugManager();  // slot 0
     // the constructor (out of line: the unit has it at its own address, Singleton<T>::getPtr calls it)

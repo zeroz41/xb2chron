@@ -1,25 +1,13 @@
 #ifndef CLASSES_EVENT_CHARAMANAGER_H
 #define CLASSES_EVENT_CHARAMANAGER_H
+#include "classes/event/IManager.h"
+#include "classes/mm/mtl/Singleton.h"
 
 namespace event { enum MSG_TYPE : int; enum CHARA_TYPE : int; }
 
 namespace event {
-
-// a base of event::CharaManager no evidence names yet
-class TUnk_B3CD30 {
-public:
-    virtual ~TUnk_B3CD30() {}
-    virtual void OnEventProc(event::MSG_TYPE) = 0;
-};
-
-// a base of event::CharaManager no evidence names yet
-class TUnk_B3CD58 {
-public:
-    virtual ~TUnk_B3CD58() {}
-};
-
-// table 0x7100B3CD30; base at 0x0 unknown (TUnk_B3CD30), base at 0x8 unknown (TUnk_B3CD58)
-class CharaManager : public TUnk_B3CD30, public TUnk_B3CD58 {
+// table 0x7100B3CD30; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::CharaManager>
+class CharaManager : public IManager, public mm::mtl::Singleton<CharaManager> {
 public:
     CharaManager();
     // out of line: Singleton<CharaManager>::getPtr in the evt_setup plugin registers it with __cxa_atexit (an inline

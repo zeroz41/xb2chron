@@ -3,23 +3,14 @@
 
 #include "classes/event/Shaker.h"
 #include "mm/mtl/FixStr.h"
+#include "classes/event/IManager.h"
+#include "classes/mm/mtl/Singleton.h"
 
 namespace event { enum MSG_TYPE : int; }
 
 namespace event {
-// a base of event::ShakeManager no evidence names yet
-class TUnk_B3D4F8 {
-public:
-    virtual ~TUnk_B3D4F8();
-    virtual void OnEventProc(event::MSG_TYPE) = 0;
-};
-// a base of event::ShakeManager no evidence names yet
-class TUnk_B3D520 {
-public:
-    virtual ~TUnk_B3D520();
-};
-// table 0x7100B3D4F8; base at 0x0 unknown (TUnk_B3D4F8), base at 0x8 unknown (TUnk_B3D520)
-class ShakeManager : public TUnk_B3D4F8, public TUnk_B3D520 {
+// table 0x7100B3D4F8; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::ShakeManager>
+class ShakeManager : public IManager, public mm::mtl::Singleton<ShakeManager> {
 public:
     virtual ~ShakeManager();  // slot 0
     ShakeManager();  // out of line (Singleton<ShakeManager>::getPtr calls it)

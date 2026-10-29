@@ -408,6 +408,45 @@ Object* Object::searchByPath(const char* path) {
     return nullptr;
 }
 
+void CharaObj::setPos(const mm::Vec3& pos) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    m_pos = pos;
+    m_cmdQueue2.erase(&m_setPos);
+    CmdParam param;
+    param.val(0).setF32(pos.x);
+    param.val(1).setF32(pos.y);
+    param.val(2).setF32(pos.z);
+    m_cmdQueue2.push_back(&m_setPos, param);
+}
+
+void CharaObj::setRot(const mm::Vec3& rot) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    m_rot = rot;
+    m_cmdQueue2.erase(&m_setRot);
+    CmdParam param;
+    param.val(0).setF32(rot.x);
+    param.val(1).setF32(rot.y);
+    param.val(2).setF32(rot.z);
+    m_cmdQueue2.push_back(&m_setRot, param);
+}
+
+void CharaObj::setIdle(int id) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    m_cmdQueue0.erase(&m_setIdle);
+    m_cmdQueue0.erase(&m_playActionAuto);
+    m_cmdQueue0.erase(&m_playAction);
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setS32(id);
+    m_cmdQueue0.push_back(&m_setIdle, param);
+}
+
 void CharaObj::playVolumeFade(CharaEffectPlayer::VF_TYPE type, int a, const mm::Vec3& b, const mm::Vec3& c, float d,
                               float e, int f, float g) {
     m_effectPlayer.playVolumeFade(type, a, b, c, d, e, f, g);
@@ -1480,11 +1519,6 @@ void BouManager::OnEventProc(event::MSG_TYPE msg) {
         break;
     }
 }
-
-// EnvManager's bases' destructors are defined in this file, not inline in the header: here they fold into
-// EnvManager's `ret` destructor, while other files (ScriptSetActive) see a non-empty destructor and register it at exit
-TUnk_B3C730::~TUnk_B3C730() {}
-TUnk_B3C758::~TUnk_B3C758() {}
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void EnvManager::OnEventProc(event::MSG_TYPE msg) {

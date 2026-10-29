@@ -6,24 +6,14 @@
 #include "classes/event/ObjectList.h"
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedVector.h"
+#include "classes/event/IManager.h"
 
 namespace event { enum MSG_TYPE : int; enum CHARA_TYPE : int; class ObjectChara; }
 
 namespace event {
-// a base of event::ObjectManager no evidence names yet
-class TUnk_B3E118 {
-public:
-    virtual ~TUnk_B3E118();
-    virtual void OnEventProc(event::MSG_TYPE) = 0;
-};
-// a base of event::ObjectManager no evidence names yet
-class TUnk_B3E140 {
-public:
-    virtual ~TUnk_B3E140();
-};
-// table 0x7100B3E118; base at 0x0 unknown (TUnk_B3E118), base at 0x8 unknown (TUnk_B3E140); the instance is
+// table 0x7100B3E118; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::ObjectManager>; the instance is
 // mm::mtl::Singleton<event::ObjectManager>::getPtr's static
-class ObjectManager : public TUnk_B3E118, public TUnk_B3E140 {
+class ObjectManager : public IManager, public mm::mtl::Singleton<ObjectManager> {
 public:
     // out of line (0x710012A11C; 1.0.0 0x710011C8C0): the evt_setup plugin's Singleton<ObjectManager>::getPtr calls it; the event unit
     // that defines it (application/BF2/CharaObj) inlines it into its own getPtr

@@ -7,27 +7,13 @@ namespace event { enum MSG_TYPE : int; }
 namespace ml { class EventView; }
 
 #include "mm/mtl/FixedVector.h"
+#include "classes/event/IManager.h"
+#include "classes/mm/mtl/Singleton.h"
 namespace event { class IBouCallback; }
 
 namespace event {
-// a base of event::BouManager no evidence names yet
-class TUnk_B3DA40 {
-public:
-    virtual ~TUnk_B3DA40();
-    virtual void OnEventProc(event::MSG_TYPE) = 0;
-    virtual bool OnMouseButtonDown(ml::EventView*) = 0;
-    virtual bool OnMouseMove(ml::EventView*) = 0;
-    virtual bool OnMouseButtonUp(ml::EventView*) = 0;
-    virtual bool OnKeyDown(ml::EventView*) = 0;
-    virtual bool OnKeyUp(ml::EventView*) = 0;
-};
-// a base of event::BouManager no evidence names yet
-class TUnk_B3DA90 {
-public:
-    virtual ~TUnk_B3DA90();
-};
-// table 0x7100B3DA40; base at 0x0 unknown (TUnk_B3DA40), base at 0x8 unknown (TUnk_B3DA90)
-class BouManager : public TUnk_B3DA40, public TUnk_B3DA90, public ::ml::IWorkEvent {
+// table 0x7100B3DA40; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::BouManager>
+class BouManager : public IManager, public mm::mtl::Singleton<BouManager>, public ::ml::IWorkEvent {
 public:
     virtual ~BouManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2

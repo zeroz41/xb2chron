@@ -4,23 +4,14 @@
 #include "mm/mtl/FixedVector.h"
 #include "classes/event/ModelObj.h"
 #include "classes/gf/GfEvtModel.h"
+#include "classes/event/IManager.h"
+#include "classes/mm/mtl/Singleton.h"
 
 namespace event { enum MSG_TYPE : int; }
 
 namespace event {
-// a base of event::ModelManager no evidence names yet
-class TUnk_B3C1D8 {
-public:
-    virtual ~TUnk_B3C1D8();
-    virtual void OnEventProc(event::MSG_TYPE) = 0;
-};
-// a base of event::ModelManager no evidence names yet
-class TUnk_B3C200 {
-public:
-    virtual ~TUnk_B3C200();
-};
-// table 0x7100B3C1D8; base at 0x0 unknown (TUnk_B3C1D8), base at 0x8 unknown (TUnk_B3C200)
-class ModelManager : public TUnk_B3C1D8, public TUnk_B3C200 {
+// table 0x7100B3C1D8; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::ModelManager>
+class ModelManager : public IManager, public mm::mtl::Singleton<ModelManager> {
 public:
     virtual ~ModelManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2

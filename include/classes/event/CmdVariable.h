@@ -13,6 +13,16 @@ public:
         m_type = 2;
         m_value.floatValue = value;
     }
+    // 1.0.0 has it out of line; 3.0.1 inlines it
+    void setS32(int value) {
+        m_type = 1;
+        m_value.intValue = value;
+    }
+    // stores a pointer (type 5, what getUserdata returns; the name is not the original's)
+    void setUserdata(void* value) {
+        m_type = 5;
+        m_value.userdata = value;
+    }
     // the value converted when it holds the other number type (1.0.0 0x710009360C; 3.0.1 inlines it)
     int getS32() const { return m_type == 2 ? (int)m_value.floatValue : m_value.intValue; }
     // the stored pointer (1.0.0 0x71000936A0; 3.0.1 inlines it)

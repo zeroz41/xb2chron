@@ -2,23 +2,14 @@
 #define CLASSES_EVENT_SEQMANAGER_H
 
 #include "mm/mtl/FixStr.h"
+#include "classes/event/IManager.h"
+#include "classes/mm/mtl/Singleton.h"
 
 namespace event { enum MSG_TYPE : int; }
 
 namespace event {
-// a base of event::SeqManager no evidence names yet
-class TUnk_B3E238 {
-public:
-    virtual ~TUnk_B3E238();
-    virtual void OnEventProc(event::MSG_TYPE) = 0;
-};
-// a base of event::SeqManager no evidence names yet
-class TUnk_B3E260 {
-public:
-    virtual ~TUnk_B3E260();
-};
-// table 0x7100B3E238; base at 0x0 unknown (TUnk_B3E238), base at 0x8 unknown (TUnk_B3E260)
-class SeqManager : public TUnk_B3E238, public TUnk_B3E260 {
+// table 0x7100B3E238; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::SeqManager>
+class SeqManager : public IManager, public mm::mtl::Singleton<SeqManager> {
 public:
     class end;
     class end_areajump;

@@ -3,23 +3,14 @@
 
 #include "classes/gf/GfMenuObjFade.h"
 #include "mm/mtl/FixedVector.h"
+#include "classes/event/IManager.h"
+#include "classes/mm/mtl/Singleton.h"
 
 namespace event { enum MSG_TYPE : int; }
 
 namespace event {
-// a base of event::UIManager no evidence names yet
-class TUnk_B3D5C8 {
-public:
-    virtual ~TUnk_B3D5C8();
-    virtual void OnEventProc(event::MSG_TYPE) = 0;
-};
-// a base of event::UIManager no evidence names yet
-class TUnk_B3D5F0 {
-public:
-    virtual ~TUnk_B3D5F0();
-};
-// table 0x7100B3D5C8; base at 0x0 unknown (TUnk_B3D5C8), base at 0x8 unknown (TUnk_B3D5F0)
-class UIManager : public TUnk_B3D5C8, public TUnk_B3D5F0 {
+// table 0x7100B3D5C8; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::UIManager>
+class UIManager : public IManager, public mm::mtl::Singleton<UIManager> {
 public:
     // the opening telop's positions; the names are not the original's: they follow the script entries
     // (ScriptPlayText's evt_ui openOpeningTelopC/LB/RT/LH/RH pass 0..4)

@@ -6,21 +6,12 @@ namespace gf { enum WEATHERID : int; enum WEATYPE : int; }
 
 #include "classes/gf/GfFieldTime.h"
 #include "classes/gf/GfFieldWeather.h"
+#include "classes/event/IManager.h"
+#include "classes/mm/mtl/Singleton.h"
 
 namespace event {
-// a base of event::EnvManager no evidence names yet
-class TUnk_B3C730 {
-public:
-    virtual ~TUnk_B3C730();
-    virtual void OnEventProc(event::MSG_TYPE) = 0;
-};
-// a base of event::EnvManager no evidence names yet
-class TUnk_B3C758 {
-public:
-    virtual ~TUnk_B3C758();
-};
-// table 0x7100B3C730; base at 0x0 unknown (TUnk_B3C730), base at 0x8 unknown (TUnk_B3C758)
-class EnvManager : public TUnk_B3C730, public TUnk_B3C758 {
+// table 0x7100B3C730; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::EnvManager>
+class EnvManager : public IManager, public mm::mtl::Singleton<EnvManager> {
 public:
     // the colour filter's switch (the evt_env plugin's setColorFilter passes 1 to set one, 2 to clear it); no
     // enumerator is named

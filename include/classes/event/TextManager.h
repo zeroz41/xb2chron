@@ -2,23 +2,14 @@
 #define CLASSES_EVENT_TEXTMANAGER_H
 
 #include <string.h>
+#include "classes/event/IManager.h"
+#include "classes/mm/mtl/Singleton.h"
 
 namespace event { enum MSG_TYPE : int; }
 
 namespace event {
-// a base of event::TextManager no evidence names yet
-class TUnk_B3D650 {
-public:
-    virtual ~TUnk_B3D650() {}
-    virtual void OnEventProc(event::MSG_TYPE) = 0;
-};
-// a base of event::TextManager no evidence names yet
-class TUnk_B3D678 {
-public:
-    virtual ~TUnk_B3D678() {}
-};
-// table 0x7100B3D650; base at 0x0 unknown (TUnk_B3D650), base at 0x8 unknown (TUnk_B3D678)
-class TextManager : public TUnk_B3D650, public TUnk_B3D678 {
+// table 0x7100B3D650; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::TextManager>
+class TextManager : public IManager, public mm::mtl::Singleton<TextManager> {
 public:
     virtual ~TextManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2

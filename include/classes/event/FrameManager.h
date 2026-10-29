@@ -2,24 +2,15 @@
 #define CLASSES_EVENT_FRAMEMANAGER_H
 
 #include "mm/mtl/FixStr.h"
+#include "classes/event/IManager.h"
+#include "classes/mm/mtl/Singleton.h"
 
 namespace gf { struct GF_PAUSE_HANDLE; }
 namespace event { enum MSG_TYPE : int; }
 
 namespace event {
-// a base of event::FrameManager no evidence names yet
-class TUnk_B3E1A8 {
-public:
-    virtual ~TUnk_B3E1A8();
-    virtual void OnEventProc(event::MSG_TYPE) = 0;
-};
-// a base of event::FrameManager no evidence names yet
-class TUnk_B3E1D0 {
-public:
-    virtual ~TUnk_B3E1D0();
-};
-// table 0x7100B3E1A8; base at 0x0 unknown (TUnk_B3E1A8), base at 0x8 unknown (TUnk_B3E1D0)
-class FrameManager : public TUnk_B3E1A8, public TUnk_B3E1D0 {
+// table 0x7100B3E1A8; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::FrameManager>
+class FrameManager : public IManager, public mm::mtl::Singleton<FrameManager> {
 public:
     virtual ~FrameManager();  // slot 0
     // called by the evt_setup script plugin (application/BF2/ScriptPlayText); a result its callers ignore is declared void

@@ -3,6 +3,8 @@
 
 #include "classes/ml/IWorkEvent.h"
 #include "mm/mtl/FixedVector.h"
+#include "classes/event/IManager.h"
+#include "classes/mm/mtl/Singleton.h"
 
 namespace event { enum MSG_TYPE : int; }
 // evt_status.judge's and evt_status.change's first argument (the script passes an int)
@@ -10,22 +12,8 @@ enum EVT_judge : int;
 enum EVT_change : int;
 
 namespace event {
-
-// a base of event::StatusManager no evidence names yet
-class TUnk_B3D790 {
-public:
-    virtual ~TUnk_B3D790() {}
-    virtual void OnEventProc(event::MSG_TYPE) = 0;
-};
-
-// a base of event::StatusManager no evidence names yet
-class TUnk_B3D808 {
-public:
-    virtual ~TUnk_B3D808() {}
-};
-
-// table 0x7100B3D790; base at 0x0 unknown (TUnk_B3D790), base at 0x10 unknown (TUnk_B3D808)
-class StatusManager : public TUnk_B3D790, public ::ml::IWorkEvent, public TUnk_B3D808 {
+// table 0x7100B3D790; base at 0x0 event::IManager, base at 0x10 mm::mtl::Singleton<event::StatusManager>
+class StatusManager : public IManager, public ::ml::IWorkEvent, public mm::mtl::Singleton<StatusManager> {
 public:
     // one row changeFromBdat reads from EVT_listList (0x20 bytes: five ints, then a pointer at 0x18); the name and
     // the layout's meaning are not the original's

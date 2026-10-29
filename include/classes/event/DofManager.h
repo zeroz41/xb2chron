@@ -1,22 +1,13 @@
 #ifndef CLASSES_EVENT_DOFMANAGER_H
 #define CLASSES_EVENT_DOFMANAGER_H
+#include "classes/event/IManager.h"
+#include "classes/mm/mtl/Singleton.h"
 
 namespace event { enum MSG_TYPE : int; }
 
 namespace event {
-// a base of event::DofManager no evidence names yet
-class TUnk_B3CDC0 {
-public:
-    virtual ~TUnk_B3CDC0() {}
-    virtual void OnEventProc(event::MSG_TYPE) = 0;
-};
-// a base of event::DofManager no evidence names yet
-class TUnk_B3CDE8 {
-public:
-    virtual ~TUnk_B3CDE8() {}
-};
-// table 0x7100B3CDC0; base at 0x0 unknown (TUnk_B3CDC0), base at 0x8 unknown (TUnk_B3CDE8)
-class DofManager : public TUnk_B3CDC0, public TUnk_B3CDE8 {
+// table 0x7100B3CDC0; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::DofManager>
+class DofManager : public IManager, public mm::mtl::Singleton<DofManager> {
 public:
     // out of line: Singleton<DofManager>::getPtr hands __cxa_atexit its D1 (an alias of a strong D2), which an inline empty
     // destructor would let the optimizer drop (evt_post's entries keep the call)

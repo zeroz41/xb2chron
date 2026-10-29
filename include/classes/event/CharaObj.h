@@ -3,6 +3,9 @@
 
 #include "classes/event/CharaEffectPlayer.h"
 #include "classes/event/CmdQueue.h"
+#include "classes/event/CharaPlayAction.h"
+#include "classes/event/CharaPlayActionAuto.h"
+#include "classes/event/CharaSetIdle.h"
 #include "classes/event/CharaSetPos.h"
 #include "classes/event/CharaSetRot.h"
 #include "mm/Vec3.h"
@@ -22,6 +25,8 @@ public:
     void playTalk(bool a, float b, bool c, bool d, float e, float f, float g, float h);
     void setPos(const mm::Vec3& pos);
     void setRot(const mm::Vec3& rot);
+    // queues m_setIdle with this object and id, after erasing the idle and action commands
+    void setIdle(int id);
     void playVolumeFadeAnim(CharaEffectPlayer::VF_TYPE type, float time, float delay);
     void playVolumeFade(CharaEffectPlayer::VF_TYPE type, int a, const mm::Vec3& b, const mm::Vec3& c, float d, float e,
                         int f, float g);
@@ -45,7 +50,12 @@ public:
     CharaSetPos m_setPos;  // 0x8
     // the command setRot queues (CharaObj's constructor builds it); the name is not the original's
     CharaSetRot m_setRot;  // 0x18
-    unsigned char pad_28[0xc78];
+    unsigned char pad_28[0x5b8];
+    // the commands setIdle erases from m_cmdQueue0 (CharaObj's constructor builds them); the names are not the original's
+    CharaSetIdle m_setIdle;  // 0x5e0
+    CharaPlayActionAuto m_playActionAuto;  // 0x608
+    CharaPlayAction m_playAction;  // 0x630
+    unsigned char pad_670[0x630];
     // bit 5: playFade's flag (it sets or clears it); the name is not the original's
     unsigned int m_flags;  // 0xca0
     unsigned char pad_ca4[0xb4];

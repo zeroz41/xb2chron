@@ -4,21 +4,12 @@
 namespace event { enum MSG_TYPE : int; }
 
 #include "classes/event/RandPlayer.h"
+#include "classes/event/IManager.h"
+#include "classes/mm/mtl/Singleton.h"
 
 namespace event {
-// a base of event::RandManager no evidence names yet
-class TUnk_B3D3C0 {
-public:
-    virtual ~TUnk_B3D3C0() {}
-    virtual void OnEventProc(event::MSG_TYPE) = 0;
-};
-// a base of event::RandManager no evidence names yet
-class TUnk_B3D3E8 {
-public:
-    virtual ~TUnk_B3D3E8() {}
-};
-// table 0x7100B3D3C0; base at 0x0 unknown (TUnk_B3D3C0), base at 0x8 unknown (TUnk_B3D3E8)
-class RandManager : public TUnk_B3D3C0, public TUnk_B3D3E8 {
+// table 0x7100B3D3C0; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::RandManager>
+class RandManager : public IManager, public mm::mtl::Singleton<RandManager> {
 public:
     virtual ~RandManager();  // slot 0
     RandManager();  // out of line (Singleton<RandManager>::getPtr calls it)
