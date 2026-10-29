@@ -17,6 +17,16 @@ public:
     enum CATE {};
     void changeCategoryVolume(CATE cate, float volume, float frame);
     void resetCategoryVolume(CATE cate, float frame);
+    void init();    // out of line
+    void clear();   // out of line
+    void render();  // out of line
+    void update();  // OnEventProc's update (inlined; the name is not the original's)
+    unsigned char pad_10[0x48];
+    // 0x58 bits 1 and 2: update counts m_timer down; bit 2 is cleared once it runs out (the name is not the original's)
+    unsigned int m_flags;
+    unsigned char pad_5c[0x40];
+    float m_timer;  // 0x9c frames left, update subtracts 1 each frame (the name is not the original's)
+    unsigned char pad_a0[0x50];
 };
 }  // namespace event
 

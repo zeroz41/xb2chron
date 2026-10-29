@@ -1,3 +1,6 @@
+#include "classes/event/VolumeManager.h"
+#include "classes/event/VolumePlayer.h"
+#include "classes/event/AgelogManager.h"
 #include "classes/event/DebugManager.h"
 #include "classes/event/Manager.h"
 #include "classes/event/UIManager.h"
@@ -54,6 +57,8 @@
 #include "classes/event/TodoManager.h"
 #include "classes/event/ObjectPartyList.h"
 #include "event/AgelogUtil.h"
+#include "classes/event/AgelogManager.h"
+#include "ml/DateName.h"
 #include "classes/event/AttachActorGf.h"
 #include "classes/event/BlurManager.h"
 #include "classes/event/BouRect.h"
@@ -162,6 +167,35 @@ void ScriptCharaMotionABC::doit(const event::Param& param) {
 void ScriptCharaMotionABC::undo(const event::Param&) {}
 
 SkipManager::~SkipManager() {}
+
+const char* AgelogManager::LOG_DIR = "C:/MonolithSoft/BF2/agelog";
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void AgelogManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 7:
+        if (m_flags.test(0) && !m_flags.test(1)) {
+            m_flags.set(1, true);
+            if (m_path.m_str[0] == '\0') {
+                char date[0x40];
+                mlGetDateName(date, sizeof(date));
+                m_path.format("%s/%s/agelog_%s.txt", LOG_DIR, "nx", date);
+            }
+        }
+        break;
+    case 10:
+        if (m_flags.test(1)) {
+            m_flags.set(1, false);
+        }
+        break;
+    case 12:
+        m_flags.set(1, false);
+        break;
+    case 17:
+        render();
+        break;
+    }
+}
 
 mm::mtl::FixStr<256> AgelogUtil::s_path;
 
@@ -2124,6 +2158,11 @@ void CpuManager::OnEventProc(event::MSG_TYPE msg) {
 #include "classes/event/LightManager.h"
 #include "classes/event/LightEvt.h"
 #include "classes/event/OutsiderManager.h"
+#include "classes/event/CsSndManager.h"
+#include "classes/fw/SoundManager.h"
+#include "classes/mm/mtl/PtrSingleton.h"
+#include "classes/event/VolumeManager.h"
+#include "classes/event/VolumePlayer.h"
 #include "classes/event/SkipManager.h"
 #include "classes/event/FrameManager.h"
 #include "classes/event/RandManager.h"
@@ -2175,6 +2214,137 @@ void LightManager::OnEventProc(event::MSG_TYPE msg) {
         break;
     case 18:
         update();
+        break;
+    }
+}
+
+// 1.0.0's OutsiderField::clear
+inline void OutsiderField::clear() {
+    m_type = static_cast<TYPE>(1);
+    m_pos = mm::Vec3::zero;
+    m_size = 0.0f;
+    m_hitPos = mm::Vec3::zero;
+    m_hitRate = 0.0f;
+}
+
+// 1.0.0's OutsiderManager::clear
+inline void OutsiderManager::clear() {
+    if (m_flags & 1) {
+        update(false);
+    }
+    m_field.clear();
+    m_flags = 0;
+    m_tgtType = static_cast<OBJ_TYPE>(0);
+}
+
+// 1.0.0's OutsiderManager::update()
+inline void OutsiderManager::update() {
+    if (m_flags & 1) {
+        m_field.update();
+        if (m_field.m_hitRate > 0.0f) {
+            update(true);
+        }
+    }
+}
+
+// 1.0.0's OutsiderManager::render
+inline void OutsiderManager::render() {
+    if (m_dispFlags.test(0) && (m_flags & 1)) {
+        m_field.draw();
+    }
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void OutsiderManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+    case 10:
+    case 12:
+        clear();
+        break;
+    case 14:
+        update();
+        break;
+    case 16:
+        render();
+        break;
+    default:
+        break;
+    }
+}
+
+inline void VolumeManager::update() {
+    if (m_flags & 6) {
+        if (m_timer >= 0.0f) {
+            m_timer -= 1.0f;
+        }
+        if ((m_flags & 4) && m_timer < 0.0f) {
+            m_flags &= ~4;
+        }
+    }
+    mm::mtl::Singleton<VolumePlayer>::getPtr()->update();
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void VolumeManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 1:
+        init();
+        break;
+    case 2:
+        clear();
+        break;
+    case 14:
+        update();
+        break;
+    case 17:
+        render();
+        break;
+    default:
+        break;
+    }
+}
+
+inline void CsSndManager::stop0() {
+    mm::mtl::PtrSingleton<fw::SoundManager>::sys()->stopBgm(m_bgmHandle0, 1.0f);
+    m_bgmHandle0 = 0;
+    m_bgmName0 = "";
+    m_flags &= ~1;
+}
+
+inline void CsSndManager::stop1() {
+    mm::mtl::PtrSingleton<fw::SoundManager>::sys()->stopBgm(m_bgmHandle1, 1.0f);
+    m_bgmHandle1 = 0;
+    m_bgmName1 = "";
+    m_flags &= ~0xe;
+}
+
+inline void CsSndManager::clear() {
+    if (m_flags & 1) {
+        stop0();
+    }
+    if (m_flags & 2) {
+        stop1();
+    }
+    m_flags = 0;
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void CsSndManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 4:
+        clear();
+        break;
+    case 14:
+        update();
+        break;
+    case 12:
+        clear();
+        break;
+    case 16:
+        render();
+        break;
+    default:
         break;
     }
 }
