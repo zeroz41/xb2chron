@@ -776,13 +776,41 @@ gmk::GmkType TUnk_B6D5F8::getGmkType() const { return TYPE; }
 bool TUnk_B6D5F8::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
 
 // ---- TUnk_B6D660, TUnk_B6D6C8 (placeholder slot symbols: see their headers)
+void TUnk_B6D660::dispose() {
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    AGmkBase::dispose();
+}
+
 void TUnk_B6D660::debugDraw() const { AGmkBase::debugDraw(); }
+
+TUnk_B6D660::~TUnk_B6D660() { dispose(); }
 
 gmk::GmkType TUnk_B6D660::getGmkType() const { return TYPE; }
 
+void TUnk_B6D6C8::dispose() {
+    if (m_effectHandle != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effectHandle);
+        m_effectHandle = 0;
+    }
+    fn_71005B9C38(false);
+    AGmkBase::dispose();
+}
+
 void TUnk_B6D6C8::debugDraw() const { AGmkBase::debugDraw(); }
 
+TUnk_B6D6C8::~TUnk_B6D6C8() { dispose(); }
+
 gmk::GmkType TUnk_B6D6C8::getGmkType() const { return TYPE; }
+
+// ---- TUnk_B6E340 (the list of kind 0x3F; placeholder slot symbols)
+TUnk_B6E340::~TUnk_B6E340() { dispose(); }
 
 // ---- kinds holding one game object
 void GmkTbox::dispose() {

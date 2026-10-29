@@ -13,7 +13,8 @@ class TUnk_B6EE88 : public ::gmk::TGmkList< ::gmk::TUnk_B6D5F8, ::gmk::TUnk_B6D5
 public:
     explicit TUnk_B6EE88(unsigned int updateGmkNumPerFrame)
         : TGmkList(updateGmkNumPerFrame) {}
-    virtual ~TUnk_B6EE88();  // slot 0
+    // slot 0: inline, so its D2 is the base's (the table's slot 0 is TGmkList's D2)
+    virtual ~TUnk_B6EE88() {}
 };
 }  // namespace gmk
 

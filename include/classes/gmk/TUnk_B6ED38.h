@@ -13,7 +13,10 @@ class TUnk_B6ED38 : public ::gmk::TGmkList< ::gmk::TUnk_B6D590, ::gmk::TUnk_B6D5
 public:
     explicit TUnk_B6ED38(unsigned int updateGmkNumPerFrame)
         : TGmkList(updateGmkNumPerFrame) {}
-    virtual ~TUnk_B6ED38();  // slot 0
+    // slot 0: inline, so its D2 is the base's (the table's slot 0 is TGmkList's D2)
+    virtual ~TUnk_B6ED38() {}
+    // slot 6 (fn_71005CF9E8): its own copy of the base's code (an inline override, like GmkEnemyList's)
+    virtual gmk::AGmkBase* getInst(unsigned int index) const { return TGmkList::getInst(index); }
 };
 }  // namespace gmk
 
