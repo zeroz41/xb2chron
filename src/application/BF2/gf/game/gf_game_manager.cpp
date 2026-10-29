@@ -1,3 +1,5 @@
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfGameScene.h"
 #include "gf/GfTargetProperty.h"
 #include "classes/gf/GfGameScene.h"
 #include "classes/gf/GfAchievManager.h"
@@ -113,6 +115,7 @@
 #include "btl/challenge_battle_manager.h"
 #include "classes/gf/GfWeapon.h"
 #include "classes/gf/TUnk_B535D0.h"
+#include "classes/gf/TUnk_B63A48.h"
 #include "classes/gf/GfPlayComOpenNpcEntry.h"
 #include "gf/GfDataDriver.h"
 #include "gf/GfQuestTask.h"
@@ -542,6 +545,28 @@ bool GfGameManager::isFieldLockMsgOK() {
     return false;
 }
 
+bool GfGameManager::isEnableFieldBattleTarget() {
+    GfObjAcc acc(getPartyLeaderDriver());
+    bool battle = acc.isBattle();
+    if (!battle && GfPlayComOpenNpcEntry::get() == nullptr) {
+        if (isInnerState(static_cast<GF_STATE>(6)) ||
+            isInnerState(static_cast<GF_STATE>(11)) ||
+            isInnerState(static_cast<GF_STATE>(21)) ||
+            isInnerState(static_cast<GF_STATE>(14)) ||
+            isInnerState(static_cast<GF_STATE>(12)) ||
+            isInnerState(static_cast<GF_STATE>(13)) ||
+            isInnerState(static_cast<GF_STATE>(4)) ||
+            isInnerState(static_cast<GF_STATE>(19)) ||
+            isInnerState(static_cast<GF_STATE>(16)) ||
+            isInnerState(static_cast<GF_STATE>(17)) ||
+            isInnerState(static_cast<GF_STATE>(18))) {
+            return false;
+        }
+        return !isInnerState(static_cast<GF_STATE>(20));
+    }
+    return true;
+}
+
 bool GfGameManager::isRoom() {
     return GfGameEnv::isRoom();
 }
@@ -625,6 +650,48 @@ float GfGameManager::getFieldSpeed(const fw::UpdateInfo& info) {
     float speed = GfGameSpeed::getLayerSpeed(0);
     float pause = GfLayerPause::isLayerPause(0) ? 0.0f : 1.0f;
     return info.m_speed * (speed * pause);
+}
+
+bool GfGameManager::isEnableOpenMainMenuSequence() {
+    if (isStartGame()) {
+        return false;
+    }
+    if (isMapjump()) {
+        return false;
+    }
+    if (isLeaveGameForDebug()) {
+        return false;
+    }
+    if (GfSequentialPlay::isInnerPause(0x40)) {
+        return false;
+    }
+    if (TUnk_B63A48::fn_71004477EC()) {
+        return false;
+    }
+    if (isBattle()) {
+        return false;
+    }
+    {
+        GfObjAcc acc(getControlMover());
+        if (acc.isBattle()) {
+            return false;
+        }
+    }
+    {
+        DataParamAcc param(getPartyLeaderDriver());
+        if (param.isValid() && param.getHp() == 0) {
+            return false;
+        }
+    }
+    if (isInnerState(static_cast<GF_STATE>(11))) {
+        return false;
+    }
+    if (GfGameScene* scene = GfGameScene::get()) {
+        if (scene->isNeedResetBladeForBattleEndForMenuOpen()) {
+            return false;
+        }
+    }
+    return true;
 }
 
 bool GfGameManager::isEnableOpenMainMenu() {
@@ -761,6 +828,20 @@ bool GfGameManager::fn_71002AC340() {
 bool GfGameManager::fn_71002AC384() {
     if (GfGameScene* scene = GfGameScene::get()) {
         return scene->m_value630 > 0;
+    }
+    return false;
+}
+
+bool GfGameManager::isPartyMemberPlayVoice() {
+    if (GfGameVoice* voice = GfGameVoice::get()) {
+        for (unsigned int i = 0; i < 3; i++) {
+            if (voice->isPlayVoice(GfGameParty::getHandleDriver(i, 0))) {
+                return true;
+            }
+            if (voice->isPlayVoice(GfGameParty::getHandleBlade(i, -1))) {
+                return true;
+            }
+        }
     }
     return false;
 }

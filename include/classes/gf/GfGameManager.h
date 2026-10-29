@@ -292,6 +292,10 @@ public:
     static bool isPlayEvent();
     static bool isScenarioGame();
     static bool isGmkTutorialOK();
+    static bool isPlayEventOK();
+    // the leader may show the landmark UI: control free and its target state 0/2/3/5 with no fade-out, state 1 the
+    // target's m_gmkTutorialOK
+    static bool isLandmarkUiOK();
     static bool isEnemyChangeBattleOK();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in
     // gf_game_manager's unit among GfGameManager's functions and takes no instance. What it does: with

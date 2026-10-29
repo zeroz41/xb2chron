@@ -147,6 +147,7 @@ public:
     const mm::Vec3& getEnableSavePos() const;
     bool isResetBladePlay() const;
     bool isNeedResetBladeForBattleEndForBattleEnd() const;
+    bool isNeedResetBladeForBattleEndForMenuOpen() const;
     void gevExecBuy(unsigned int, unsigned int, unsigned int shop);
     void gevChangeParty();
     void gevBattleStart();
