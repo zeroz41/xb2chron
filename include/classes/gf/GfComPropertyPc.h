@@ -61,6 +61,15 @@ public:
     const T* getParam(unsigned int index) const {
         return static_cast<const T*>(m_paramList->m_entries[index].m_data);
     }
+    // m_paramList's entry 4 (the names are not the original's)
+    struct SlideParam {
+        unsigned char pad_0[0x14];
+        float m_stopSpeed;  // StateUtilField::isSlideStop: the slide stops once m_moveSpeed is no more than it
+        unsigned char pad_18[0x8];
+        float m_landSpeed;  // StateUtilField::onLandSliding: the most speed a landing keeps
+        // StateUtilField::isFallFromSlideState: the PC falls once this far above the ground under it
+        float m_fallHeight;
+    };
     // by its symbol (GfComBehaviorPc's warps call it)
     void flush();
     // by its symbol: the water states call it after turning m_rot

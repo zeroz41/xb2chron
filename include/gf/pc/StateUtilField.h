@@ -51,6 +51,9 @@ inline const char* getASMCmdNameField(ASM_CMD_ID_FIELD id) {
 enum VehicleEvent : unsigned int {};
 
 // what the PC's field states share (functions, by its symbols)
+// the angle between the stick's direction and the PC's (by its symbol)
+float calcInputDiffAngleVel(gf::GfComPropertyPc& property);
+
 class StateUtilField {
 public:
     // when resetCameraForWall is called (the type is the symbols'; StateFieldWallAdsorptionGround::enter passes 1,
@@ -129,6 +132,15 @@ public:
     static bool testCloud(gf::GfComPropertyPc& property);
     // the climb command a wall move mode plays ("C_climbidle" for none of 0-7)
     static ASM_CMD_ID_FIELD getAsmID(gf::pc::GfPropertyField::WALL_MOVE_MODE mode);
+    // the wall the PC is on (GfPropertyField's, status bit 0x40), or while status bit 0x10000 is clear the sensor's
+    // own when it found one (by its symbol)
+    static const GfPropertyField::WallInfo* getWallInfoBase(gf::GfComPropertyPc& property);
+    static bool isSlideStop(gf::GfComPropertyPc& property);  // (by its symbol)
+    static bool isWallIdleMotion(gf::GfComAsm& comAsm);  // (by its symbol)
+    // no climbable wall (StateUtil::getClimbWallInfo) or the fall action asked for (m_actions bit 3; by its symbol)
+    static bool isWallFall(gf::GfComPropertyPc& property);
+    // off the ground, or slide parameter m_fallHeight above it (by its symbol)
+    static bool isFallFromSlideState(gf::GfComPropertyPc& property);
 };
 
 }}  // namespace gf::pc

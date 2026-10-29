@@ -7,6 +7,7 @@
 #include "gf/MsgPcFieldNotifyBigJump.h"
 #include "gf/MsgPcFieldNotifyWarp.h"
 #include "gf/MsgPcFieldNotifyWallJump.h"
+#include "gf/EnviromentSensor.h"
 
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
@@ -43,7 +44,10 @@ public:
         unsigned char pad_0[0x4];
         // StateUtilField::isStop: the PC stops once the stick has given nothing for this many frames
         unsigned int m_stopFrames;
-        unsigned char pad_8[0x10];
+        unsigned char pad_8[0xC];
+        // StateUtilField::isBackRangeAir: the stick turned at least this far from the PC's direction counts as back
+        // (the name is not the original's)
+        float m_backRangeAir;
         // StateUtilField::ignoreOnGroundJump: a jump ignores the ground until this time
         float m_groundIgnoreTime;
         unsigned char pad_1c[0x8];
@@ -68,16 +72,14 @@ public:
         unsigned char pad_10[0x8];
         float m_warpDiveTime;  // StateFieldWaterWarpDive: how long the dive into a warp lasts
         float m_maxSinkSpeed;  // StateFieldWaterDeadSink::enter limits the downward speed to it
+        // StateUtilField::isSwimFromAir: falling into water no faster than it (m_moveVec2.x at least it) swims on
+        // (the name is not the original's)
+        float m_swimFromAirSpeed;
     };
 
-    // the wall the PC is on (StateUtilField::getWallInfoBase returns it while status bit 0x40 is set; the names are
-    // not the original's)
-    struct WallInfo {
-        unsigned char pad_0[0x20];
-        float m_blend;         // StateFieldWall::enter copies it to m_wallBlend
-        unsigned int m_flags;  // bit 7: StateFieldWall::flushWallType's sound variable 2
-        unsigned char pad_28[0x8];
-    };
+    // the wall the PC is on: the sensor's kind (StateUtilField::getWallInfoBase returns it while status bit 0x40 is
+    // set, else the sensor's own while its m_flags bit 6 is)
+    typedef gf::EnviromentSensor::WallInfo WallInfo;
     // the kept wall jump notice, none while status bit 14 is clear (by its symbol): StateFieldWallJump::leave hands
     // its m_gmkId to SCOM_QUEST_GIMMICK::createJump, TaskFieldWallJumpWait::update waits while a player is near m_pos
     const gf::MsgPcFieldNotifyWallJump* getWallJumpInfo() const;

@@ -11,6 +11,9 @@ class MsgGameRideEvent : public ::fw::Message {
 public:
     static const unsigned int ID = 0x1000031;
 
+    // StateUtilField::requestGetOffRider sends one with type 2 and no category
+    explicit MsgGameRideEvent(int type) : fw::Message(ID, 0), m_type(type) {}
+
     // what to do: 0 ride on, 1 get down and drop the target, 2 get down (the name is not the original's)
     int m_type;
 };

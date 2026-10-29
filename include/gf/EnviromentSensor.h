@@ -2,6 +2,7 @@
 #define GF_ENVIROMENTSENSOR_H
 
 #include "mm/Vec3.h"
+#include "mm/Plane.h"
 #include "mm/Col4.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
@@ -107,7 +108,17 @@ public:
     unsigned char pad_28[0x8];
     VerticalData m_vertical;
     ObstacleInfo m_obstacle;  // with m_flags bit 4
-    unsigned char pad_170[0x70];
+    unsigned char pad_170[0x40];
+    // with m_flags bit 6, the wall found by the object (GfPropertyField keeps one; the names are not the original's)
+    struct WallInfo {
+        mm::Plane m_plane;     // the wall's plane (GfPropertyField::flashWallInfo hands it to the target property)
+        float m_blend;         // StateFieldWall::enter copies it to m_wallBlend
+        unsigned int m_flags;  // bit 7: StateFieldWall::flushWallType's sound variable 2
+        unsigned char pad_28[0x8];
+    };
+    WallInfo m_wallInfo;
+    // the wall a bit 6 in m_flags says it found (inline: the name is not the original's)
+    const WallInfo* getWallInfo() const { return (m_flags & 0x40) ? &m_wallInfo : nullptr; }
     // with m_flags bit 1, the object of a wall by the object: AttachPlugin::changeWallMode attaches the PC to it
     // (the name is not the original's)
     gf::GF_OBJ_HANDLE* m_wallObj;

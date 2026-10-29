@@ -1,6 +1,8 @@
 #ifndef GF_GFTARGETPROPERTY_H
 #define GF_GFTARGETPROPERTY_H
 
+#include "mm/Plane.h"
+
 namespace gf {
 
 // no table: what an object's property tells those who target or follow it (GfComProperty holds one through a
@@ -19,12 +21,17 @@ public:
     unsigned char pad_3c[0x41];
     // GfGameManager::isGmkTutorialOK answers it for a leader in state 1 (the name is not the original's)
     bool m_gmkTutorialOK;
-    unsigned char pad_7e[0x1];
+    // the PC's GfPropertyField::flashWallInfo: whether it is on a wall (the name is not the original's)
+    bool m_onWall;
     // the PC's flush: any of its motion is not zero (velocity, m_moveVec2, locomotion, m_moveSpeed)
     bool m_isMoving;
     // the PC's flush: set while the PC's word at 0x120 is 1; TaskFieldCheckWarp::update warps no PC that follows a
     // player with it (nor one in state 1 or 5)
     bool m_blocksFollowWarp;
+    unsigned char pad_81[0xF];
+    // the PC's GfPropertyField::flashWallInfo: the plane of the wall it is on, else facing up through the origin
+    // (the name is not the original's)
+    mm::Plane m_wallPlane;
 };
 
 }  // namespace gf

@@ -39,6 +39,8 @@ public:
     static bool isManualCamera();
     // the handle of the object the PC's property targets
     static gf::GF_OBJ_HANDLE* getTarget(const gf::GfComBehaviorPc& behavior);
+    // the sensor's wall (its m_flags bit 6) when that wall's m_flags bit 4 is set, else none (by its symbol)
+    static const gf::EnviromentSensor::WallInfo* getClimbWallInfo(gf::GfComBehaviorPc& behavior);
     static void setTargetLock(bool lock);
     static void setTarget(gf::GfComBehaviorPc& behavior, gf::GF_OBJ_HANDLE* target);  // (by its symbol)
     static void setEnableHeadDetectForSwitcher(gf::GfComBehaviorPc& behavior, bool enable);  // (by its symbol)
