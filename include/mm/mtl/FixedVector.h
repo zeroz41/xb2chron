@@ -11,6 +11,10 @@
 #if defined(MM_LIB_FROM_EFLIB)
 #define MM_MTL_FIXED_VECTOR_PATH \
     "D:/Monolithsoft/BF2/prog/libs/eflib/proj/windows/../../../mcl/mm_lib/source\\mm_mtl/fixed_vector.h"
+#elif defined(MM_LIB_FROM_MONOLIB_MM)
+// monolib_mm's (ml::DevTouch::itDown cites it so)
+#define MM_MTL_FIXED_VECTOR_PATH \
+    "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../../MCL/mm_lib/source\\mm_mtl/fixed_vector.h"
 #elif defined(MM_LIB_FROM_LIBS)
 #define MM_MTL_FIXED_VECTOR_PATH "../../../mcl/mm_lib/source\\mm_mtl/fixed_vector.h"
 #else

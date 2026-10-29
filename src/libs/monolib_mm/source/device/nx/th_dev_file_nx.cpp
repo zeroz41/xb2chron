@@ -24,6 +24,7 @@
 #include "classes/ml/ErrViewer.h"
 #include "classes/ml/LibMain.h"
 #include "classes/ml/WorkSystem.h"
+#include "nn/hid.h"
 #include "nn/oe.h"
 #include "nn/os.h"
 
@@ -353,7 +354,41 @@ void DevSetting::setAutoSleepExtended(SleepExtendType type) {
 
 void DevPad::wkUpdate() {}
 
+namespace dev_touch_detail {
+mm::Vec2 s_initPos(-1.0f, -1.0f);
+}  // namespace dev_touch_detail
+
 void DevTouch::updateDevice() {}
+
+void DevTouch::wkUpdate() {
+    updateDevice();
+    long clock;
+    if (DevClock::getClockNow(clock)) {
+        for (Touch* it = m_touch.begin(); it != m_touch.end(); ++it) {
+            if (it->m_clock != 0) {
+                long elapsed = clock - it->m_clock;
+                it->m_time = DevClock::getClock2Sec(elapsed);
+            } else {
+                it->m_clock = clock;
+            }
+        }
+    }
+}
+
+bool DevTouch::wkStandbyLogin() {
+    if (createDevice()) {
+        return WorkObj::wkStandbyLogin();
+    }
+    return false;
+}
+
+bool DevTouch::wkStandbyLogout() {
+    if (m_child.size() == 0 && WorkSystem::get() == nullptr && LibMain::get() == nullptr) {
+        releaseDevice();
+        return WorkObj::wkStandbyLogout();
+    }
+    return false;
+}
 
 bool DevFontNx::createFont() {
     return true;
@@ -455,6 +490,15 @@ bool DevFileArchiveNx::rfIsUsedChannel(unsigned int channel) {
 }
 
 void DevPerfNx::resumeApplication() {}
+
+void DevTouchNx::updateDevice() {
+    m_impl->update(this);
+}
+
+bool DevTouchNx::createDevice() {
+    nn::hid::InitializeTouchScreen();
+    return true;
+}
 
 void DevTouchNx::releaseDevice() {}
 
