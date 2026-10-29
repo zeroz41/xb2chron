@@ -4,6 +4,7 @@
 #include "mtl/AllocHandle.h"
 #include "classes/event/IManager.h"
 #include "classes/mm/mtl/Singleton.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace event { enum MSG_TYPE : int; }
 
@@ -26,8 +27,10 @@ public:
     long pad_28;
     long pad_30;
     unsigned int pad_38;
-    unsigned char pad_3c[0x1004];
-    long pad_1040;
+    unsigned char pad_3c[0x4];
+    // the buffers createTxtbuf allocates (login delete[]s each one and erases it; the destructor only clears the
+    // count); the name is not the original's
+    mm::mtl::FixedVector<char*, 512> m_txtbufs;  // 0x40 (count at 0x1040)
     long pad_1048;
     long pad_1050;
     unsigned int pad_1058;

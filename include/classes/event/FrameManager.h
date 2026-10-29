@@ -2,6 +2,7 @@
 #define CLASSES_EVENT_FRAMEMANAGER_H
 
 #include "mm/mtl/FixStr.h"
+#include "mm/mtl/FixedVector.h"
 #include "classes/event/IManager.h"
 #include "classes/mm/mtl/Singleton.h"
 
@@ -47,8 +48,13 @@ private:
     float m_maxFrame;  // 0x170
     unsigned char pad_174[0x10];
     int pad_184;
-    unsigned char pad_188[0x1008];
-    long pad_1190;
+    unsigned char pad_188[0x8];
+    // what addKeyFrame keeps sorted by frame (asserts `size() < capacity()`); the names are not the original's
+    struct KeyFrame {
+        float frame;
+        bool flag;
+    };
+    mm::mtl::FixedVector<KeyFrame, 512> m_keyFrames;  // 0x190 (count at 0x1190)
     long pad_1198;
     long pad_11a0;
     int pad_11a8;

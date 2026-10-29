@@ -1038,10 +1038,22 @@ void CaptureManager::OnEventProc(event::MSG_TYPE msg) {
 
 }  // namespace event
 
+#include "classes/event/ScheManager.h"
+
+namespace event {
+
+ScheManager::~ScheManager() {}
+
+CaptureManager::~CaptureManager() {}
+
+}  // namespace event
+
 // ---- script commands (session 19) ----
 #include "classes/event/ObjectManager.h"
 
 event::ObjectManager::ObjectManager() : m_flags(0), pad_14(0), m_sceneName("default") {}
+
+event::ObjectManager::~ObjectManager() {}
 #include "classes/event/ObjectChara.h"
 #include "classes/event/ObjectEffect.h"
 #include "classes/event/PosAxis.h"
@@ -1668,13 +1680,15 @@ namespace event {
 
 FrameManager::FrameManager()
     : pad_18(0), pad_d0(), m_frame(0.0f), pad_15c(0.0f), pad_160(0.0f), pad_164(0.0f), pad_16c(0),
-      m_maxFrame(1000.0f), pad_184(1), pad_1190(0), pad_1198(0), pad_11a0(0), pad_11a8(0) {
+      m_maxFrame(1000.0f), pad_184(1), m_keyFrames(), pad_1198(0), pad_11a0(0), pad_11a8(0) {
     pad_10 = 0;
     pad_14 = 2;
     for (int i = 0; i < 22; i++) {
         pad_20[i] = reinterpret_cast<gf::GF_PAUSE_HANDLE*>(-1);
     }
 }
+
+FrameManager::~FrameManager() {}
 
 void SeManager::load(const char* name) {
     gf::GfGameEvent::createSe(name);
@@ -1804,6 +1818,8 @@ void ModelManager::OnEventProc(event::MSG_TYPE msg) {
     }
 }
 
+ModelManager::~ModelManager() {}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void DebugManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
@@ -1852,7 +1868,9 @@ SkipManager::SkipManager() : m_flags(0), pad_14(0), m_endFrame(-1.0f) {}
 
 BgmManager::BgmManager() : pad_10(0), pad_14(0), pad_7c(0) {}
 
-HideManager::HideManager() : pad_10(0), m_group(), pad_1018(0), pad_2020(0), pad_2228(0) {}
+HideManager::HideManager() : pad_10(0), m_group(), m_firstList(), m_secondList(), m_objs() {}
+
+HideManager::~HideManager() {}
 
 DebugManager::DebugManager() : m_flags(0), pad_224(0) {}
 
@@ -1868,7 +1886,17 @@ TodoManager::TodoManager() : pad_10(0), pad_8c18(0), pad_8c20(0), pad_10e28(0) {
 
 DataManager::DataManager() : m_flags(0), m_sceneName("default"), m_current(0) {}
 
-MemoryManager::MemoryManager() : pad_10(0), pad_18(0), pad_24(0), pad_28(0), pad_30(0), pad_38(0), pad_1040(0), pad_1048(0), pad_1050(0), pad_1058(0) {}
+MemoryManager::MemoryManager() : pad_10(0), pad_18(0), pad_24(0), pad_28(0), pad_30(0), pad_38(0), m_txtbufs(), pad_1048(0), pad_1050(0), pad_1058(0) {}
+
+MemoryManager::~MemoryManager() {}
+
+}  // namespace event
+
+#include "classes/event/AlphaManager.h"
+
+namespace event {
+
+AlphaManager::~AlphaManager() {}
 
 EffectManager::~EffectManager() {}
 
@@ -1907,6 +1935,8 @@ void BouManager::OnEventProc(event::MSG_TYPE msg) {
         break;
     }
 }
+
+BouManager::~BouManager() {}
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void EnvManager::OnEventProc(event::MSG_TYPE msg) {
