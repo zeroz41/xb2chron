@@ -19,6 +19,8 @@ void CloseFile(FileHandle handle);
 Result GetFileSize(long* size, FileHandle handle);
 Result ReadFile(unsigned long* readSize, FileHandle handle, long offset, void* buffer, unsigned long size);
 
+// commits a mounted save data's writes (DevFileTh::flushSave passes "save")
+Result CommitSaveData(const char* name);
 }}  // namespace nn::fs
 
 #endif

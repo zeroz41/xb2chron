@@ -3,6 +3,7 @@
 
 #include "classes/ml/BaseObjectM.h"
 #include "classes/ml/IWorkEvent.h"
+#include "classes/ml/FileHandleTh.h"
 
 namespace ml { class EventFileTh; }
 namespace ml { enum FILE_PRIO : int; }
@@ -27,7 +28,7 @@ public:
     bool isExist() const;
 
     // the names are not the original's
-    void* m_handle;  // set while the file is being read (fw::SoundResource::update waits for it to clear)
+    FileHandleTh* m_handle;  // set while the file is being read (fw::SoundResource::update waits for it to clear)
     void* m_data;  // the file's data (isExist tests it)
     int m_size;  // the data's size; -2 when there is no file (fw::SoundResource::update skips the data then)
     unsigned char pad_d4[0xC];
@@ -35,9 +36,12 @@ public:
     // CommonResource::updateBlock hands it what DevFileTh::readFileBlock returned through its VAL64 (the name is
     // not the original's; 1.0.0's CommonResource has a getAssetTimeStamp)
     unsigned long m_timeStamp;
-    unsigned char pad_e8[0x8];
+    unsigned long m_extra;  // the handle's, set by OnFileEvent (the name is not the original's)
     bool m_ownsData;  // cleared when fw::AssetData::AssignFromMemory takes the data over
-    unsigned char pad_f1[0xF];  // to 0x100, the size DrShdLgtMan::reloadShader allocates
+    unsigned char pad_f1[0x3];
+    int m_state;  // 0 when built, 2 when a read ended, 3 when it failed (OnFileEvent; the name is not the original's)
+    unsigned long m_userValue;  // the handle's, set by OnFileEvent (the name is not the original's); to 0x100, the
+                                // size DrShdLgtMan::reloadShader allocates
 };
 }  // namespace ml
 

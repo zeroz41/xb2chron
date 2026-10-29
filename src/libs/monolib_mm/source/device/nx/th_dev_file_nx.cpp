@@ -47,6 +47,10 @@
 #include "classes/ml/DevFont.h"
 #include "classes/ml/FileResTh.h"
 #include "classes/ml/DevFontNx.h"
+#include "classes/ml/DevFileBlackListNxTh.h"
+#include "nn/fs.h"
+#include "ml/EventFileTh.h"
+#include "ml/PathUtil.h"
 #include "grlib/CGLibCtl.h"
 #include "ml/WorkRoot.h"
 #include "classes/grlib/CGLibManager.h"
@@ -459,6 +463,13 @@ bool DevFileNxTh::rfIsUsedChannel(unsigned int channel) {
     return m_impl->m_params[channel].m_isOpen;
 }
 
+DevFileBlackListNxTh::~DevFileBlackListNxTh() {
+    if (m_buffer != nullptr) {
+        mtl::MemManager::deallocate(m_buffer, 0, false);
+        m_buffer = nullptr;
+    }
+}
+
 void DevFileUtilNx::zlibFree(void*, void* ptr) {
     mtl::MemManager::deallocate(ptr, 0, false);
 }
@@ -527,12 +538,45 @@ bool DevSettingNx::isAutoSleepExtended() const {
 
 void DeviceNx::createDevicePort(const char*) {}
 
+// the flag is unused (the original passes only the handle on)
+void DevFileTh::cancel(FileHandleTh* handle, bool) {
+    DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
+    if (dev != nullptr) {
+        dev->m_impl->cancelRequest(handle);
+    }
+}
+
+DevFileTh::~DevFileTh() {}
+
 void DevFileTh::wkUpdate() {}
+
+void DevFileTh::wkTail() {
+    DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
+    if (dev != nullptr) {
+        dev->m_impl->tail();
+    }
+}
 
 void DevFileTh::icbDecide(ml::CERR_STRUCT*, ml::ERR_DECIDE) {}
 
 bool DevFileTh::icbError(ml::CERR_STRUCT*) {
     return true;
+}
+
+FileHandleTh* DevFileTh::readFile(const DevFileParamTh& param) {
+    DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
+    if (dev != nullptr) {
+        return dev->m_impl->readFile(param);
+    }
+    return nullptr;
+}
+
+void* DevFileTh::checkValidFile(const char* path, IWorkEvent* listener) {
+    DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
+    if (dev != nullptr) {
+        return dev->m_impl->checkValidFile(path, listener);
+    }
+    return nullptr;
 }
 
 bool DevFileTh::checkValidFileBlock(const char* path) {
@@ -545,6 +589,28 @@ void DevFileTh::addMediaPath(MEDIA media, const char* path, int prio) {
     }
 }
 
+FileHandleTh* DevFileTh::rfOpen(const DevFileParamTh& param) {
+    DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
+    if (dev != nullptr) {
+        return dev->m_impl->rfOpen(param);
+    }
+    return nullptr;
+}
+
+int DevFileTh::rfClose(FileHandleTh* handle) {
+    DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
+    if (dev != nullptr) {
+        dev->m_impl->rfClose(handle);
+    }
+    return 0;
+}
+
+void DevFileTh::flushSave() {
+    if (DevFileNxTh::m_mountSave) {
+        nn::fs::CommitSaveData("save");
+    }
+}
+
 bool DevFileTh::isNowSaving() {
     DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
     if (dev != nullptr) {
@@ -553,8 +619,51 @@ bool DevFileTh::isNowSaving() {
     return false;
 }
 
+void* EventFileTh::moveFileData() {
+    if (m_handle != nullptr) {
+        return m_handle->moveData();
+    }
+    return nullptr;
+}
+
+FileResTh::FileResTh()
+    : m_handle(nullptr), m_data(nullptr), m_size(-1), m_ownsData(true) {
+    m_state = 0;
+    m_userValue = 0;
+    m_timeStamp = 0;
+}
+
+FileResTh::~FileResTh() {
+    release();
+}
+
 bool FileResTh::isExist() const {
     return m_data != nullptr;
+}
+
+bool FileResTh::OnFileEvent(EventFileTh* event) {
+    int state;
+    if (event->m_kind == 2) {
+        m_data = m_handle->moveData();
+        m_size = m_handle->m_size;
+        m_extra = m_handle->m_extra;
+        m_timeStamp = m_handle->m_timeStamp;
+        m_userValue = m_handle->m_userValue;
+        state = 2;
+    } else {
+        m_size = -2;
+        state = 3;
+    }
+    m_state = state;
+    m_handle = nullptr;
+    return true;
+}
+
+void FileResTh::setMem(void* data, int size, const char* path, bool ownsData) {
+    m_ownsData = ownsData;
+    m_data = data;
+    m_size = size;
+    SetName(PathUtil::getFilePtrFromPath(path));
 }
 
 int DevPad::getPadMax() {

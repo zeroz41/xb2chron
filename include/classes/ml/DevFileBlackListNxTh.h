@@ -10,6 +10,8 @@ namespace ml {
 class DevFileBlackListNxTh : public ::mm::mtl::PtrSingleton< ::ml::DevFileBlackListNxTh> {
 public:
     virtual ~DevFileBlackListNxTh();  // slot 0
+
+    void* m_buffer;  // 0x8: the destructor frees it with mtl::MemManager (the name is not the original's)
 };
 }  // namespace ml
 

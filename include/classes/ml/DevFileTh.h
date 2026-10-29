@@ -2,6 +2,8 @@
 #define CLASSES_ML_DEVFILETH_H
 
 #include "classes/ml/DevBase.h"
+#include "classes/mm/mtl/PtrSingleton.h"
+#include "mm/mtl/UniquePtr.h"
 
 namespace mm { class VAL64; }
 namespace ml { class CERR_STRUCT; }
@@ -14,20 +16,29 @@ namespace mm { namespace mtl { template <int LEN> class FixStr; } }
 
 namespace ml {
 // a base of ml::DevFileTh no evidence names yet
-class TUnk_B76D68 {
-public:
-    virtual ~TUnk_B76D68();
-};
-// a base of ml::DevFileTh no evidence names yet
 class TUnk_B76D88 {
 public:
-    virtual ~TUnk_B76D88();
+    // inline: ~DevFileTh stores nothing at 0x1B8 after its own table
+    virtual ~TUnk_B76D88() {}
     virtual bool icbError(ml::CERR_STRUCT*) = 0;
     virtual void icbDecide(ml::CERR_STRUCT*, ml::ERR_DECIDE) = 0;
 };
-// table 0x7100B76CC0; base at 0x1B0 unknown (TUnk_B76D68), base at 0x1B8 unknown (TUnk_B76D88)
-class DevFileTh : public ::ml::DevBase, public TUnk_B76D68, public TUnk_B76D88 {
+// table 0x7100B76CC0; base at 0x1B0 mm::mtl::PtrSingleton<DevFileTh> (~DevFileTh stores its table there and clears
+// its s_instance), base at 0x1B8 unknown (TUnk_B76D88)
+class DevFileTh : public ::ml::DevBase, public ::mm::mtl::PtrSingleton<DevFileTh>, public TUnk_B76D88 {
 public:
+    // the thread's state (out of line in this unit: its destructor 0x71006B6B70)
+    class Impl {
+    public:
+        ~Impl();
+        void tail();
+        FileHandleTh* readFile(const DevFileParamTh& param);
+        void* checkValidFile(const char* path, IWorkEvent* listener);
+        FileHandleTh* rfOpen(const DevFileParamTh& param);
+        void rfClose(FileHandleTh* handle);
+        void cancelRequest(FileHandleTh* handle);
+    };
+
     virtual ~DevFileTh();  // slot 0
     virtual void wkUpdate();  // slot 9
     virtual void wkTail();  // slot 12
@@ -55,6 +66,11 @@ public:
     static void cancel(FileHandleTh* handle, bool flag);
     // path as the file system takes it (fw::SoundResource::update; the parameter names are not the original's)
     static void normalizeDvdFileName(mm::mtl::FixStr<256>& out, const char* path);
+    // opens the file a parameter names for reading in parts (forwards to its Impl; the parameter name is not the
+    // original's)
+    static FileHandleTh* rfOpen(const DevFileParamTh& param);
+    // closes a handle rfOpen returned; 0 (forwards to its Impl; the parameter name is not the original's)
+    static int rfClose(FileHandleTh* handle);
     // named by the symbols: called once a save's write ended (GfGameSave::OnFileEvent)
     static void flushSave();
     // named by the symbols: starts writing size bytes of data to path, listener gets the end event (GfGameSave)
@@ -65,7 +81,8 @@ public:
     // whether its object is writing a save (the singleton's flag at 0x1C9)
     static bool isNowSaving();
 
-    unsigned char pad_1c0[0x9];
+    mm::mtl::UniquePtr<Impl> m_impl;  // 0x1C0 (~DevFileTh deletes it; the name is not the original's)
+    unsigned char pad_1c8[0x1];
     bool m_nowSaving;  // 0x1C9 (isNowSaving reads it; the name is not the original's)
 };
 namespace dvfl_detail {

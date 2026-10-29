@@ -53,6 +53,8 @@ public:
     mtl::ALLOC_HANDLE m_alloc;  // the handle the constructor is given (the name is not the original's)
     int pad_18;
     mm::mtl::UniquePtr<Impl> m_impl;
+    // set while the save data is mounted (DevFileTh::flushSave commits it then; named by the symbols)
+    static bool m_mountSave;
 };
 }  // namespace ml
 
