@@ -193,6 +193,9 @@
           "-std=gnu++14",
           "-nostdlibinc"
         ],
+        "clang_plugins": [
+          "bare-return-atexit"
+        ],
         "includes": [
           "include",
           "src"
