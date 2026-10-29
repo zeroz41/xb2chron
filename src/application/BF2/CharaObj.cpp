@@ -221,6 +221,20 @@ void OffscrManager::OnEventProc(event::MSG_TYPE msg) {
     }
 }
 
+}  // namespace event
+
+#include "classes/event/StmManager.h"
+#include "classes/event/IStmMemory.h"
+
+namespace event {
+
+StmManager::~StmManager() {
+    if (m_stm != nullptr) {
+        delete m_stm;
+        m_stm = nullptr;
+    }
+}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void MdlstmManager::OnEventProc(event::MSG_TYPE msg) {
     if (msg == 14) {
@@ -229,6 +243,48 @@ void MdlstmManager::OnEventProc(event::MSG_TYPE msg) {
         clear();
     }
 }
+
+}  // namespace event
+
+#include "classes/event/MotstmManager.h"
+#include "classes/event/FrameManager.h"
+
+namespace event {
+
+// 1.0.0's StmManager::destroy
+inline void StmManager::destroy() {
+    if (m_stm != nullptr) {
+        delete m_stm;
+        m_stm = nullptr;
+    }
+    pad_8 = 0;
+}
+
+// 1.0.0's MotstmManager::clear
+inline void MotstmManager::clear() {
+    m_stmManager.destroy();
+    m_flags.reset();
+}
+
+// 1.0.0's MotstmManager::render: only the FrameManager lookup is left of it (what used it is compiled out)
+inline void MotstmManager::render() {
+    if (m_flags.test(0) && (m_dispFlags & 1)) {
+        mm::mtl::Singleton<FrameManager>::getPtr();
+    }
+}
+
+// the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
+void MotstmManager::OnEventProc(event::MSG_TYPE msg) {
+    if (msg == 14) {
+        update();
+    } else if (msg == 12) {
+        clear();
+    } else if (msg == 16) {
+        render();
+    }
+}
+
+MotstmManager::~MotstmManager() {}
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void MstxtManager::OnEventProc(event::MSG_TYPE msg) {
