@@ -73,6 +73,9 @@ public:
     unsigned char pad_24[0x14];
     BdatInfo m_bdatInfo;  // 0x38 (the name is not the original's)
     PopInfo m_popInfo;  // (the name is not the original's)
+    // fields (its destructor 0x71005D85E8 touches +0x150, +0x178); size 0x190: GmkEnemy (insts at 0x48) and
+    // GmkRoutedEnemy (insts at 0x50) getInst strides 0x1d8 and 0x200
+    unsigned char pad_a0[0xf0];
 };
 }  // namespace gmk
 

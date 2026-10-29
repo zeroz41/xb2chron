@@ -4,9 +4,11 @@
 #include "classes/gmk/GmkEnemy.h"
 #include "classes/gmk/IGmkList.h"
 #include "classes/gmk/TGmkList.h"
+#include "classes/gmk/GmkTrigger.h"
 
 namespace gmk { class GmkEnemy; }
 namespace gmk { class GmkEnemyGob; }
+namespace gmk { class GmkTriggerGob; }
 
 namespace gmk {
 // table 0x7100B6C050
@@ -27,7 +29,8 @@ public:
     };
     explicit GmkEnemyList(unsigned int);
     virtual ~GmkEnemyList();  // slot 0
-    virtual gmk::AGmkBase* getInst(unsigned int) const;  // slot 6
+    // slot 6: weak, the same body as TGmkList's (index * sizeof(GmkEnemy) 0x1d8)
+    virtual gmk::AGmkBase* getInst(unsigned int index) const { return TGmkList::getInst(index); }
     virtual void setUpdateGmkNumPerFrame(unsigned int);  // slot 8
     virtual void create(gmk::IGmkList::CreateInfo const&);  // slot 9
     virtual void dispose();  // slot 10
@@ -36,7 +39,10 @@ public:
     virtual void debugUpdateMmf();  // slot 13
     virtual void debugDraw() const;  // slot 14
     virtual void createGmk(void*);  // slot 16
-    unsigned char pad_228[0x6b8];  // fields: size from GmkSet::createGmkLists's new
+    unsigned char pad_228[0x18];
+    // the destructor's TGmkList<GmkTrigger> D2 at 0x240 (the name is not the original's)
+    TGmkList<GmkTrigger, GmkTrigger::BdatInfo, 1380405844u, 2u, GmkTriggerGob> m_triggerList;
+    unsigned char pad_470[0x470];  // fields: size from GmkSet::createGmkLists's new (0x8e0)
 };
 }  // namespace gmk
 
