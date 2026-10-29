@@ -37,6 +37,14 @@ public:
         FileHandleTh* rfOpen(const DevFileParamTh& param);
         void rfClose(FileHandleTh* handle);
         void cancelRequest(FileHandleTh* handle);
+
+        unsigned char pad_0[0x5CC18];
+        IWorkEvent* m_eventCb;  // 0x5CC18 (entryCb sets it, removeCb clears it; the name is not the original's)
+    };
+    // what setup copies for Impl's constructor (nnMain fills it)
+    struct SetupParam {
+        unsigned int m_loaderThreadNum;  // 0x0 (Impl() starts this many loader threads; the name is not the original's)
+        unsigned short pad_4;
     };
 
     virtual ~DevFileTh();  // slot 0
@@ -80,6 +88,13 @@ public:
     static void addMediaPath(MEDIA media, const char* path, int prio);
     // whether its object is writing a save (the singleton's flag at 0x1C9)
     static bool isNowSaving();
+    // named by the symbols: keeps the parameters for the Impl the object creates later
+    static void setup(const SetupParam& param);
+    // named by the symbols: sets the listener its Impl reports to; false when there is no object (the parameter
+    // name is not the original's)
+    static bool entryCb(IWorkEvent* listener);
+    // named by the symbols: clears the listener entryCb set; false when there is no object
+    static bool removeCb(IWorkEvent* listener);
 
     mm::mtl::UniquePtr<Impl> m_impl;  // 0x1C0 (~DevFileTh deletes it; the name is not the original's)
     unsigned char pad_1c8[0x1];

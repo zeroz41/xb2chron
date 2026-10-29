@@ -48,6 +48,9 @@
 #include "classes/ml/FileResTh.h"
 #include "classes/ml/DevFontNx.h"
 #include "classes/ml/DevFileBlackListNxTh.h"
+#include "classes/ml/DevFileReaderTh.h"
+#include "classes/ml/DevKeyboard.h"
+#include "classes/ml/FileHandleTh.h"
 #include "nn/fs.h"
 #include "ml/EventFileTh.h"
 #include "ml/PathUtil.h"
@@ -356,6 +359,26 @@ void DevSetting::setAutoSleepExtended(SleepExtendType type) {
     }
 }
 
+unsigned int DevKeyboard::getVkHold() {
+    DevKeyboard* dev = mm::mtl::PtrSingleton<DevKeyboard>::get();
+    if (dev != nullptr) {
+        return dev->m_vkHold;
+    }
+    return 0;
+}
+
+// clearKey's stores go to fields no other code of 3.0.1 reaches (their names are unknown)
+void DevKeyboard::clearKey() {
+    DevKeyboard* dev = mm::mtl::PtrSingleton<DevKeyboard>::get();
+    if (dev != nullptr) {
+        dev->m_vkHold = 0;
+        dev->pad_1c8 = 0;
+        dev->pad_1b8 = 0;
+        dev->pad_258 = 0;
+        dev->pad_250 = 0;
+    }
+}
+
 void DevPad::wkUpdate() {}
 
 namespace dev_touch_detail {
@@ -616,6 +639,59 @@ bool DevFileTh::isNowSaving() {
     if (dev != nullptr) {
         return dev->m_nowSaving;
     }
+    return false;
+}
+
+bool DevFileTh::entryCb(IWorkEvent* listener) {
+    DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
+    if (dev != nullptr) {
+        dev->m_impl->m_eventCb = listener;
+        return true;
+    }
+    return false;
+}
+
+bool DevFileTh::removeCb(IWorkEvent*) {
+    DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
+    if (dev != nullptr) {
+        dev->m_impl->m_eventCb = nullptr;
+        return true;
+    }
+    return false;
+}
+
+// reads the request's file from the first medium that has it, into a temporary buffer of 0x80000 bytes
+bool DevFileReaderTh::asyncUpdate() {
+    PathUtil::getFilePtrFromPath(m_handle->m_path);
+    void* buffer = mtl::MemManager::allocate(WorkRoot::getMemTMP(), 0x80000, 0x1000, false, "no name", 0);
+    bool read = false;
+    for (Entry* it = m_entries.begin(); it != m_entries.end(); ++it) {
+        m_handle->m_readSize = 0;
+        if (it->m_accessor->readBlockSlice(m_handle, it->m_path, buffer, 0x80000)) {
+            read = true;
+            break;
+        }
+        if (m_cancel) {
+            break;
+        }
+    }
+    if (buffer != nullptr) {
+        mtl::MemManager::deallocate(buffer, 0, false);
+    }
+    if (m_cancel) {
+        __atomic_store_n(&m_handle->m_canceled, true, __ATOMIC_SEQ_CST);
+        m_handle->m_state = 4;
+        return false;
+    }
+    if (read) {
+        __atomic_store_n(&m_handle->m_done, true, __ATOMIC_SEQ_CST);
+        m_handle->m_state = 2;
+        m_result = 2;
+        return true;
+    }
+    __atomic_store_n(&m_handle->m_failed, true, __ATOMIC_SEQ_CST);
+    m_handle->m_state = 4;
+    m_result = -1;
     return false;
 }
 
