@@ -5,6 +5,13 @@
 #include "mm/Vec3.h"
 
 namespace ml {
+// a 16-byte record of the light resource: DrEnvironmentObjLgt::setFrame clamps the frame to its m_endFrame (the
+// type and field names are not the original's)
+struct EnvFrameRange {
+    unsigned char pad_0[0xC];
+    float m_endFrame;  // 0xC
+};
+
 // table 0x7100B7B1F8
 class DrEnvironmentObj {
 public:
@@ -45,7 +52,22 @@ public:
     // 0x8C, release sets FLAG_RELEASE shifted by DrMan::s_nDblStockIdx (the names are not the original's)
     unsigned int m_flags;
     int m_group;  // 0x90
-    unsigned char pad_94[0x1A8];
+    unsigned char pad_94[0x4C];
+    // setFrame clamps the frame to each range's end into m_rangeFrame (the names are not the original's)
+    const EnvFrameRange* m_frameRange;  // 0xE0
+    unsigned char pad_e8[0x20];
+    int m_rangeNum;  // 0x108
+    unsigned char pad_10c[0x4];
+    float* m_rangeFrame;  // 0x110
+    unsigned char pad_118[0x38];
+    // DrEnvironmentObjLgt's (DrEnvironmentMan::createObj stores them in its inlined constructor; the names are
+    // not the original's)
+    int m_lgtArg;  // 0x150, DrEnvironmentMan's m_lgtArg; resourceInit passes it to setupLgt
+    unsigned char pad_154[0x8C];
+    int m_renderLgtNum;  // 0x1E0, renderLgt's light count
+    unsigned char pad_1e4[0x18];
+    int m_lgtNum;  // 0x1FC, setupLgt reads it from the resource; debugRenderLgt2D's light count
+    unsigned char pad_200[0x3C];
     // 0x23C, ScnObjLightDrSys::setFromCaptureTool sets 2 (the name is not the original's)
     unsigned char m_captureMode;
 };

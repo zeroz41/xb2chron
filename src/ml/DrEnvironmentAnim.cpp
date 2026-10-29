@@ -32,7 +32,9 @@
 #include "grlib/CGLibCtl.h"
 #include "math.h"
 #include "ml/DrAPGxType.h"
+#include "ml/DrEnvColiMan.h"
 #include "ml/DrEnvironmentAnim.h"
+#include "ml/DrEnvironmentMan.h"
 #include "ml/DrFogMan.h"
 #include "ml/DrIniSys.h"
 #include "ml/DrLightMan.h"
@@ -46,9 +48,11 @@
 #include "ml/DrPixlShadowMan.h"
 #include "ml/DrResMdoMat.h"
 #include "ml/DrShdLgtMan.h"
+#include "ml/DrShdMan.h"
 #include "ml/MdoWrkMatRes.h"
 #include "ml/MdsMatInfoHeader.h"
 #include "mm/Math.h"
+#include "mm/Vec3NA.h"
 #include "mtl/MemManager.h"
 
 namespace ml {
@@ -409,6 +413,24 @@ DrEnvironmentObjLgt::~DrEnvironmentObjLgt() {
     releaseLgt();
 }
 
+void DrEnvironmentObjLgt::resourceInit() {
+    setupLgt(m_lgtArg);
+}
+
+void DrEnvironmentObjLgt::setFrame(float frame) {
+    m_frame = frame;
+    for (int i = 0; i < m_rangeNum; i++) {
+        float end = m_frameRange[i].m_endFrame;
+        m_rangeFrame[i] = end < frame ? end : frame;
+    }
+}
+
+void DrEnvironmentObjLgt::debugRenderLgt() {
+    if (m_lgtNum != 0 && m_renderLgtNum != 0) {
+        renderLgt();
+    }
+}
+
 bool DrEnvironmentObjLgt::callback_Chk_non(DrEnvironmentLgtList*, DrCalcViewWork*, const LgtObjData*) {
     return false;
 }
@@ -535,6 +557,15 @@ void MemHandlebaseAllocator::deallocate(void* memory) {
 }  // namespace irrvol
 
 // --- DrEnvironmentObjLgt render / release callbacks ---
+DrEnvironmentMan::DrEnvironmentMan(DrMan* drMan, DrLightMan* lightMan, DrFogMan* fogMan, int lgtArg) {
+    m_drMan = drMan;
+    m_lightMan = lightMan;
+    m_fogMan = fogMan;
+    m_lgtArg = lgtArg;
+    memset(m_objList, 0, 0x48);
+    m_envColiMan = new (drMan->m_workHandle, nullptr, 0, 4, false) DrEnvColiMan(drMan);
+}
+
 void DrEnvironmentObjLgt::callback_Ren_Point(DrLightObj* light, DrShdLgtMan* shdLgtMan) {
     DrAPGxType::setupCullingFront();
     DrAPGxType::setupDepthContl(1, 1, 3);
@@ -591,6 +622,22 @@ bool DrFogMan::isFogOn() const {
 }
 
 // --- DrLightMan ---
+DrLightMan::~DrLightMan() {
+    releaseAll();
+}
+
+void DrLightMan::stockBegin() {
+    m_stockState = 0;
+    m_stockCount = 0;
+    m_drMan->m_shdMan->m_lgtMan->stockBegin();
+}
+
+void DrLightMan::stockEnd() {
+    updateAfterPnt();
+    updateAfterSpt();
+    m_drMan->m_shdMan->m_lgtMan->stockEnd();
+}
+
 void DrLightMan::releaseInstantPntLight(DrLightObjPnt* light) {
     light->m_flags |= DrLightObj::FLAG_RELEASE << DrMan::s_nDblIdx;
     light->m_flags |= DrLightObj::FLAG_RELEASE << DrMan::s_nDblStockIdx;
