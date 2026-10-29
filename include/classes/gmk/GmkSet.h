@@ -14,6 +14,8 @@ class GmkSet {
 public:
     virtual ~GmkSet();  // slot 0
     virtual void createGmkLists(int);  // slot 2
+    // whether the set is usable (gf_field_locator's collection locator tests it after GmkManager::findGmkSet)
+    bool isValid() const;
     // its list of the gimmicks of a kind, none when it has none
     const IGmkList* getGmkList(GmkType type) const;
     IGmkList* getGmkList(GmkType type);

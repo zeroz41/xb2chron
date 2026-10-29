@@ -1,3 +1,8 @@
+#include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/GmkSet.h"
+#include "classes/gmk/GmkCollection.h"
+#include "classes/gf/TUnk_B51DE0.h"
+#include "classes/gf/TUnk_B51E28.h"
 #include "classes/gmk/AGmkNpc.h"
 #include "classes/gmk/GmkNpcManager.h"
 #include "classes/gmk/GmkManager.h"
@@ -30,6 +35,10 @@
 #include "classes/gmk/GmkNpcManager.h"
 #include "classes/gmk/GmkSet.h"
 #include "gf/GfObjAcc.h"
+#include "gf/GfQuestInfo.h"
+#include "gf/GfGameUtil.h"
+#include "classes/gmk/GmkEnemy.h"
+#include "classes/gf/GfGameManager.h"
 #include "fw/Transform.h"
 #include "plugin/Bdat.h"
 #include "classes/gf/GfFieldLocator.h"
@@ -204,6 +213,48 @@ void LocatorTalk_NpcID::update() {
     mm::Vec3 rot;
     if (npc->findPopPosRot(m_pos, rot)) {
         m_posNum = 1;
+    }
+}
+TUnk_B51DE0::TUnk_B51DE0(QuestID questId, unsigned short row) {
+    if (!questId.empty() && row != 0) {
+        create(questId, row);
+    }
+}
+void TUnk_B51E28::fn_710026F0FC(QuestID questId, unsigned short collectionId) {
+    dispose();
+    m_questId = questId;
+    m_collectionId = collectionId;
+    unsigned short zoneId = Bdat::getValCheck(GfDataBdat::getFP(0x1e0), "ZoneID", m_collectionId, 2);
+    if (!zoneId) {
+        dispose();
+        return;
+    }
+    m_mapBdatId = zoneId;
+    int mapId = getMapBdatId();
+    m_gmkSetId = GfFieldGimmick::getBdatIdFrom_FLD_maplist_To_RSC_GmkSetList(mapId);
+    int iconId = gmk::getBdatIdOfQuestTargetIcon(GfQuestTarget::getIconTypeCollect(4, collectionId, m_questId, mapId, true));
+    m_iconBdatId = iconId < 0 ? 0x19f : iconId;
+}
+void TUnk_B51E28::update() {
+    if (m_collectionId == 0) {
+        return;
+    }
+    m_posList.clear();
+    const gmk::GmkSet* set = gmk::GmkManager::sys()->findGmkSet(m_gmkSetId);
+    if (set == nullptr || !set->isValid()) {
+        return;
+    }
+    const gmk::IGmkList* list = set->getGmkList(gmk::GmkCollection::TYPE);
+    if (list == nullptr) {
+        return;
+    }
+    unsigned int num = list->getInstNum();
+    for (unsigned int i = 0; i != num; i++) {
+        const gmk::GmkCollection* gmk = static_cast<const gmk::GmkCollection*>(list->getInst(i));
+        if (gmk->isValid() && gmk->fn_710059BFFC(m_collectionId) && gmk->getBdatInfo()->isPopCondMatchedExceptDist() &&
+            !gmk->isWaitRepop()) {
+            m_posList.push_back(*gmk->m_pos);
+        }
     }
 }
 GfFieldLocator::GfFieldLocator(const CreateInfoByQuest* info) : m_locator(nullptr) {

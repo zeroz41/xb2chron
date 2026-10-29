@@ -42,6 +42,15 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     // takes the point's icon down (GfFieldCollect::seqWaitDrop passes true once every item has dropped)
     void disposeIcon(bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it tests this gimmick
+    // (GmkElevator.cpp's unit, next to isWaitRepop). What it does: isValid() and its BdatInfo's CollectionTable
+    // (m_collectionTable) equals the given BDAT 0x1E0 row (gf_field_locator's collection locator update passes its row)
+    bool fn_710059BFFC(unsigned short collectionId) const;
+    bool isWaitRepop() const;
+    // AGmkBase's row as this kind's BdatInfo; the name is not the original's
+    const BdatInfo* getBdatInfo() const {
+        return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+    }
     static const gmk::GmkType TYPE = gmk::GmkType(0x1C);
     long pad_48 = -1;
     void* pad_50 = nullptr;
