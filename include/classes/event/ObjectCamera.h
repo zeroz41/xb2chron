@@ -13,16 +13,16 @@ namespace event {
 class ObjectCamera : public ::event::Object {
 public:
     virtual ~ObjectCamera();  // slot 0
-    virtual void OnBouRectSelect(event::IBouCallback::SelectParam const&);  // slot 2
+    virtual bool OnBouRectSelect(event::IBouCallback::SelectParam const&);  // slot 2
     virtual void OnBouRender(event::IBouCallback::RenderParam const&);  // slot 3
     virtual void start();  // slot 5
     virtual void end();  // slot 6
     virtual void update();  // slot 7
     virtual void render(mm::Col4 const&);  // slot 8
     virtual void tail();  // slot 9
-    virtual void OnManiStartPos(event::IManiCallback::StartParam&);  // slot 11
+    virtual bool OnManiStartPos(event::IManiCallback::StartParam&);  // slot 11
     virtual void OnManiSetPos(event::IManiCallback::SetParam&);  // slot 12
-    virtual void OnManiStartTar(event::IManiCallback::StartParam&);  // slot 13
+    virtual bool OnManiStartTar(event::IManiCallback::StartParam&);  // slot 13
     virtual void OnManiSetTar(event::IManiCallback::SetParam&);  // slot 14
     virtual void OnManiRender(event::IManiCallback::RenderParam&);  // slot 15
     // the camera the object drives (tail calls its slot 4, CamObj::tail); the name is not the original's

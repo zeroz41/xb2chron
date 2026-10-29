@@ -19,7 +19,7 @@ namespace event {
 class ObjectChara : public ::event::Object {
 public:
     virtual ~ObjectChara();  // slot 0
-    virtual void OnBouRectSelect(event::IBouCallback::SelectParam const&);  // slot 2
+    virtual bool OnBouRectSelect(event::IBouCallback::SelectParam const&);  // slot 2
     virtual void OnBouRender(event::IBouCallback::RenderParam const&);  // slot 3
     virtual void clear();  // slot 4
     virtual void start();  // slot 5
@@ -28,11 +28,11 @@ public:
     virtual void render(mm::Col4 const&);  // slot 8
     virtual void tail();  // slot 9
     virtual bool isLoading() const;  // slot 10
-    virtual void OnManiStartPos(event::IManiCallback::StartParam&);  // slot 11
+    virtual bool OnManiStartPos(event::IManiCallback::StartParam&);  // slot 11
     virtual void OnManiSetPos(event::IManiCallback::SetParam&);  // slot 12
-    virtual void OnManiStartRot(event::IManiCallback::StartParam&);  // slot 13
+    virtual bool OnManiStartRot(event::IManiCallback::StartParam&);  // slot 13
     virtual void OnManiSetRot(event::IManiCallback::SetParam&);  // slot 14
-    virtual void OnManiStartTar(event::IManiCallback::StartParam&);  // slot 15
+    virtual bool OnManiStartTar(event::IManiCallback::StartParam&);  // slot 15
     virtual void OnManiSetTar(event::IManiCallback::SetParam&);  // slot 16
     virtual void OnManiRender(event::IManiCallback::RenderParam&);  // slot 17
     void setPosAxis(const PosAxis& pos);

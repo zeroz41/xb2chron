@@ -1,3 +1,11 @@
+#include "classes/event/IBouCallback.h"
+#include "classes/event/IManiCallback.h"
+#include "classes/event/EffectObj.h"
+#include "classes/event/CamObj.h"
+#include "classes/event/ObjectChara.h"
+#include "classes/event/ObjectEffect.h"
+#include "classes/event/ObjectCamera.h"
+#include "classes/event/CamFree.h"
 #include "classes/event/VolumeManager.h"
 #include "classes/event/VolumePlayer.h"
 #include "classes/event/AgelogManager.h"
@@ -64,6 +72,8 @@
 #include "classes/event/BouRect.h"
 #include "classes/event/CamField.h"
 #include "classes/event/CamFree.h"
+#include "classes/ml/Scn.h"
+#include "classes/ml/WinView.h"
 #include "classes/event/CharaMount.h"
 #include "classes/event/CharaPlayAction.h"
 #include "classes/event/CharaPlayActionAuto.h"
@@ -119,6 +129,12 @@ bool AttachActorBase::hasEfp(const char* name) const {
 bool AttachActorBase::hasBone(const char* name) const {
     mm::Mat44 mat;
     return getBoneMat(mat, name);
+}
+
+CamFree::~CamFree() {
+    if (m_flags & 1) {
+        mm::mtl::PtrSingleton<Manager>::sys()->m_scn->getView(-1)->detachWorkEvent(this);
+    }
 }
 
 void CamFree::update(const event::FrameInfo&) {}
@@ -478,12 +494,29 @@ void CharaPlayWink::init() {
     m_step = 0;
 }
 
+ObjectLight::~ObjectLight() {
+    if (m_light) {
+        delete m_light;
+        m_light = nullptr;
+    }
+}
+
 void ObjectLight::play(const char* name, float frame) {
     m_light->play(name, frame);
 }
 
+void ObjectCamera::end() {
+    if (m_cam) {
+        m_cam->end();
+    }
+}
+
 void ObjectCamera::tail() {
     m_cam->tail();
+}
+
+bool ObjectCamera::OnBouRectSelect(const IBouCallback::SelectParam&) {
+    return false;
 }
 
 Object::~Object() {
@@ -764,6 +797,13 @@ bool CharaStopAction::update(const ICmd::Param&) {
     return true;
 }
 
+ObjectChara::~ObjectChara() {
+    if (m_chara) {
+        delete m_chara;
+        m_chara = nullptr;
+    }
+}
+
 void ObjectChara::clear() {
     if (m_chara) {
         m_chara->clear();
@@ -796,6 +836,13 @@ void Object::tail() {}
 
 bool ObjectChara::isLoading() const {
     return !(m_chara->m_flags & 8);
+}
+
+ObjectEffect::~ObjectEffect() {
+    if (m_effect) {
+        delete m_effect;
+        m_effect = nullptr;
+    }
 }
 
 void ObjectEffect::tail() {

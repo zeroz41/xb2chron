@@ -18,6 +18,9 @@ public:
     virtual void OnMouseButtonUp(ml::EventView*);  // slot 7
     virtual void OnKeyUp(ml::EventView*);  // slot 8
     virtual void OnKeyDown(ml::EventView*);  // slot 9
+    // bit 0 is set while the camera is attached to the scene's view: the destructor then detaches it (ml::WinView's
+    // detachWorkEvent); the name is not the original's
+    unsigned char m_flags;  // 0x48
 };
 }  // namespace event
 

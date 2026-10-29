@@ -2,6 +2,7 @@
 #define CLASSES_EVENT_CAMOBJ_H
 
 #include "classes/event/CamHands.h"
+#include "classes/event/CmdQueue.h"
 #include "classes/event/CamMotion.h"
 
 namespace event { class FrameInfo; }
@@ -29,6 +30,14 @@ public:
     // CamHands is bigger than declared (setFov writes m_hands+0x480): part of this space is its
     unsigned char pad_f8[0xab8];
     CamMotion m_motion;  // 0xbb0; ScriptCamMotion plays it; the name is not the original's
+    // 1.0.0's CamObj::end (0x71000B5748; 3.0.1 inlines it into ObjectCamera::end): the queued commands erased
+    // first to last, then the motion stopped
+    void end() {
+        m_cmdQueue.eraseAll();
+        m_motion.stop();
+    }
+    unsigned char pad_bf0[0x88];
+    CmdQueue<8, 0> m_cmdQueue;  // 0xc78; erased by end (CmdQueue<8,0>::erase); the name is not the original's
 
 };
 }  // namespace event
