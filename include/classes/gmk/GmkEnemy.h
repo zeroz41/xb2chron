@@ -3,6 +3,7 @@
 
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkEnemyInsts.h"
+#include "plugin/Bdat.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
@@ -11,7 +12,20 @@ namespace gmk {
 // table 0x7100B6D7F8
 class GmkEnemy : public ::gmk::AGmkBase {
 public:
-    class BdatInfo;
+    // its size: the element size of Vector<BdatInfo>::resize 0x710062CFB8 (8); create fills it
+    class BdatInfo {
+    public:
+        // Vector<BdatInfo>::resize zeroes every field but byte 3, one store each
+        BdatInfo() : m_targetPointName(0), m_smnGroups(0), m_dispR(0), m_dispH(0) {}
+        // out of line (0x7100586774; defined in the unit, so the unused gmk is passed undefined); reads the row's "tagetpoint_name", "ene_disp_r" and "ene_disp_h"
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
+        // the field names are not the original's: the columns create reads into them
+        unsigned short m_targetPointName;  // 0x0: "tagetpoint_name"
+        unsigned char m_smnGroups;  // 0x2: GmkEnemyInsts::BdatInfo::fn_710058356C's summon group bits
+        unsigned char pad_3;
+        unsigned short m_dispR;  // 0x4: "ene_disp_r"
+        unsigned short m_dispH;  // 0x6: "ene_disp_h"
+    };
     class PopXformFinder;
     virtual ~GmkEnemy();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

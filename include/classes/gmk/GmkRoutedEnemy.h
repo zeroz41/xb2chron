@@ -30,6 +30,8 @@ public:
     // original's)
     unsigned int getGobInstNum() const { return m_insts.m_popInfo.getGobInstNum(); }
     gf::GF_OBJ_HANDLE* getGobInst(unsigned int index) const { return m_insts.getGobInst(index); }
+
+    unsigned char pad_f0[0x110];  // size 0x200: TGmkList<GmkRoutedEnemy>::getInst's stride (index << 9)
 };
 }  // namespace gmk
 

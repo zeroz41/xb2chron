@@ -271,9 +271,56 @@ int GmkManager::getMapBdatId(int id) const {
     return static_cast<unsigned short>(Bdat::getValCheck(fp, "mapId", id, 2));
 }
 
+void GmkRoutedEnemyList::setUpdateGmkNumPerFrame(unsigned int num) {
+    TGmkList::setUpdateGmkNumPerFrame(num);
+    m_triggerList.setUpdateGmkNumPerFrame(num);
+}
+
+void GmkRoutedEnemyList::create(const IGmkList::CreateInfo& info) {
+    if (m_bdatInfo.create()) {
+        TGmkList::create(info);
+    } else {
+        dispose();
+    }
+}
+
+void GmkRoutedEnemyList::dispose() {
+    m_triggerList.dispose();
+    TGmkList::dispose();
+}
+
+void GmkRoutedEnemyList::update(float dt) {
+    m_triggerList.update(dt);
+    TGmkList::update(dt);
+}
+
+void GmkRoutedEnemyList::debugUpdateMmf() {
+    TGmkList::debugUpdateMmf();
+    m_triggerList.debugUpdateMmf();
+}
+
+void GmkRoutedEnemyList::debugDraw() const {
+    TGmkList::debugDraw();
+    m_triggerList.debugDraw();
+}
+
+GmkRoutedEnemyList::~GmkRoutedEnemyList() {
+    dispose();
+}
+
 GmkCollectionList::~GmkCollectionList() {
     dispose();
 }
+
+void GmkSalvageList::debugUpdateMmf() {
+    TGmkList::debugUpdateMmf();
+}
+
+void GmkSalvageList::debugDraw() const {
+    TGmkList::debugDraw();
+}
+
+GmkSalvageList::~GmkSalvageList() {}
 
 GmkTutorialList::~GmkTutorialList() {
     dispose();
@@ -1420,6 +1467,17 @@ bool GmkEnemyInsts::BdatInfo::isPopCondMatchedOfSmn() const {
         return false;
     }
     return true;
+}
+
+void GmkEnemy::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+    m_targetPointName = static_cast<unsigned short>(Bdat::getValCheck(bdat.m_fp, "tagetpoint_name", row, 2));
+    m_smnGroups = GmkEnemyInsts::BdatInfo::fn_710058356C(bdat, row);
+    m_dispR = Bdat::getVarType(bdat.m_fp, "ene_disp_r") == 2
+                  ? static_cast<unsigned short>(Bdat::getValCheck(bdat.m_fp, "ene_disp_r", row, 2))
+                  : static_cast<unsigned char>(Bdat::getValCheck(bdat.m_fp, "ene_disp_r", row, 1));
+    m_dispH = Bdat::getVarType(bdat.m_fp, "ene_disp_h") == 2
+                  ? static_cast<unsigned short>(Bdat::getValCheck(bdat.m_fp, "ene_disp_h", row, 2))
+                  : static_cast<unsigned char>(Bdat::getValCheck(bdat.m_fp, "ene_disp_h", row, 1));
 }
 
 bool GmkBlade::BdatInfo::isPopCommonCondMatched() const {

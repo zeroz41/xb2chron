@@ -29,8 +29,13 @@ public:
     virtual void debugDraw() const;  // slot 7
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9
+    // its kind (TGmkList<GmkSalvage>::getGmkType returns 31; GmkSet::createGmkLists puts GmkSalvageList at index 31; the
+    // name is not the original's)
+    static const gmk::GmkType TYPE = gmk::GmkType(31);
     // pops the treasures the salvage's raffle drew (GfGameSalvage::execPop)
     void popByRaffleResult();
+
+    unsigned char pad_48[0xe8];  // size 0x130: TGmkList<GmkSalvage>::getInst's stride
 };
 }  // namespace gmk
 
