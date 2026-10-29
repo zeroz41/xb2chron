@@ -16,6 +16,9 @@ public:
     DebugManager();
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     bool isMovieDebug() const;
+    // whether bit <bit> of m_flags is set (Manager::isDebugPlayOnetime tests bit 3, UIManager::startNewGameWait
+    // bit 12; 1.0.0 inlines these tests too); the name is not the original's
+    bool testFlag(unsigned int bit) const { return (m_flags >> bit) & 1; }
     void render();
     // 1.0.0's DebugManager::update (0x7100096898); 3.0.1 inlines it into OnEventProc
     void update() {

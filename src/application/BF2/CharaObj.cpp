@@ -1,3 +1,6 @@
+#include "classes/event/DebugManager.h"
+#include "classes/event/Manager.h"
+#include "classes/event/UIManager.h"
 #include "classes/event/CharaSetRot.h"
 #include "classes/event/CmdVariable.h"
 #include "classes/event/CharaSetPos.h"
@@ -1018,12 +1021,22 @@ event::ObjectManager::ObjectManager() : m_flags(0), pad_14(0), m_sceneName("defa
 #include "classes/event/RotAxis.h"
 #include "classes/event/ScriptCharaWalkPos.h"
 #include "classes/event/ScriptCharaTurnRot.h"
+#include "classes/event/ScriptCharaTgt.h"
+#include "classes/event/ScriptCharaSetIdle.h"
 #include "classes/event/ScriptCharaLinerPos.h"
 #include "classes/event/ScriptCharaLinerRot.h"
 #include "classes/event/ScriptEffectMove.h"
 #include "classes/event/ScriptEffectTurn.h"
 
 namespace event {
+
+void ScriptCharaWalkPos::undo(const event::Param&) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        PosAxis pos(m_prevPos);
+        obj->setPosAxis(pos);
+    }
+}
 
 void ScriptCharaWalkPos::redo(const event::Param& param) {
     ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
@@ -1032,11 +1045,24 @@ void ScriptCharaWalkPos::redo(const event::Param& param) {
     }
 }
 
+void ScriptCharaTurnRot::undo(const event::Param&) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        RotAxis rot(m_prevRot);
+        obj->setRotAxis(rot);
+    }
+}
+
 void ScriptCharaTurnRot::redo(const event::Param& param) {
     ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
     if (obj != 0) {
         obj->setRotAxis(RotAxis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32()));
     }
+}
+
+void ScriptCharaTgt::undo(const event::Param&) {
+    // nothing to restore: the active object is looked up and left as is
+    mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2);
 }
 
 void ScriptCharaLinerPos::undo(const event::Param&) {
@@ -1064,6 +1090,13 @@ void ScriptCharaLinerRot::redo(const event::Param& param) {
     ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
     if (obj != 0) {
         obj->setRotAxis(RotAxis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32()));
+    }
+}
+
+void ScriptCharaSetIdle::undo(const event::Param&) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        obj->m_chara->setIdle(pad_8);
     }
 }
 
@@ -1460,6 +1493,9 @@ void TextManager::OnEventProc(event::MSG_TYPE msg) {
 
 }  // namespace event
 #include "classes/event/UIManager.h"
+#include "classes/gf/GfMenuObjBladeCreate.h"
+#include "classes/gf/GfMenuObjChapterTelop.h"
+#include "classes/gf/GfMenuObjZoneTelop.h"
 #include "classes/event/SeManager.h"
 #include "classes/gf/GfMenuObjStaffroll.h"
 #include "classes/gf/GfMenuObjOpeningTelop.h"
@@ -1505,6 +1541,34 @@ int UIManager::fn_7100104AE8() {
     return m_exResult;
 }
 
+void UIManager::openBladeNameUI() {
+    if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkip()) {
+        if (m_bladeNameContext != nullptr) {
+            m_bladeNameContext->release();
+            m_bladeNameContext = nullptr;
+        }
+        m_bladeNameContext = gf::GfMenuCallContext::create();
+        gf::GfMenuObjBladeCreate::openCreatedBladeName(m_bladeNameContext);
+        m_openFlags |= 0x100;
+    }
+}
+
+void UIManager::openAvanTitleUI(unsigned int id) {
+    if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkip() && !(m_openFlags & 0x800)) {
+        m_avanTitleContext = gf::GfMenuCallContext::create();
+        gf::GfMenuObjChapterTelop::openAvanTitle(m_avanTitleContext, id);
+        m_openFlags |= 0x800;
+    }
+}
+
+void UIManager::openZoneTelopUI(unsigned int id) {
+    if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkip() && !(m_openFlags & 0x1000)) {
+        m_zoneTelopContext = gf::GfMenuCallContext::create();
+        gf::GfMenuObjZoneTelop::open(m_zoneTelopContext, id);
+        m_openFlags |= 0x1000;
+    }
+}
+
 void UIManager::closeOpeningTelopUI(OPTELOP_TYPE type) {
     switch (type) {
     case OPTELOP_C:
@@ -1525,8 +1589,36 @@ void UIManager::closeOpeningTelopUI(OPTELOP_TYPE type) {
     }
 }
 
+void UIManager::startStaffrollUI(float speed, int type) {
+    if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkip()) {
+        if (!(m_openFlags & 0x4000)) {
+            gf::GfMenuManager::openStaffroll();
+            m_openFlags |= 0x4000;
+        }
+        gf::GfMenuObjStaffroll::start(speed / 30.0f, type);
+    }
+}
+
 void UIManager::endStaffroll() {
     gf::GfMenuObjStaffroll::fadeout();
+}
+
+bool UIManager::startNewGameWait() {
+    if (!mm::mtl::Singleton<DebugManager>::getPtr()->testFlag(12)) {
+        unsigned int flags = m_openFlags;
+        if (!(flags & 0x40000)) {
+            flags |= 0x40000;
+            m_openFlags = flags;
+        }
+        FrameManager* frame = mm::mtl::Singleton<FrameManager>::getPtr();
+        if (!(flags & 0x80000)) {
+            frame->pause(static_cast<FrameManager::PAUSE_TYPE>(18), true);
+            return false;
+        }
+        frame->pause(static_cast<FrameManager::PAUSE_TYPE>(18), false);
+        m_openFlags &= ~0x40000;
+    }
+    return true;
 }
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
@@ -1826,6 +1918,10 @@ bool Manager::checkLanguageMode() const {
     default:
         return true;
     }
+}
+
+bool Manager::isDebugPlayOnetime() const {
+    return mm::mtl::Singleton<DebugManager>::getPtr()->testFlag(3);
 }
 
 Manager* Manager::create(ml::Scn* scn) {

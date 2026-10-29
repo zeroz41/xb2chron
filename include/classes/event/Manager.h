@@ -36,6 +36,8 @@ public:
     void setLanguageMode(bool enable, LANGUAGE_MODE mode);
     // 0x7100149334; evt_obj.select only queues its command when it returns true
     bool checkLanguageMode() const;
+    // GfGameEvent and GfGameTalk::play ask it: DebugManager's play-once debug flag
+    bool isDebugPlayOnetime() const;
     bool end();  // returns whether an event was playing
     // GfGameEvent's: initialize creates it on its scene when there is none, finalize destroys it
     static Manager* create(ml::Scn* scn);  // returns the new manager (its callers ignore it)

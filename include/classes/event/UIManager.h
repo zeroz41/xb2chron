@@ -2,6 +2,7 @@
 #define CLASSES_EVENT_UIMANAGER_H
 
 #include "classes/gf/GfMenuObjFade.h"
+#include "classes/gf/GfMenuCallContext.h"
 #include "mm/mtl/FixedVector.h"
 #include "classes/event/IManager.h"
 #include "classes/mm/mtl/Singleton.h"
@@ -41,6 +42,7 @@ public:
                       const mm::mtl::FixedVector<const char*, 16>& select, const char* cancel);
     // evt_pay.getResult's value (the int at 0x38)
     int getPayoffUI() const;
+    void openBladeNameUI();
     bool openChapTelopUI(unsigned int id);
     void openAvanTitleUI(unsigned int id);
     void closeAvanTitleUI(int frame);
@@ -53,6 +55,8 @@ public:
     void endStaffroll();
     bool openHomuraHikariUI();
     bool openMinigame();
+    // returns false while the new game's wait goes on (the frame stays paused)
+    bool startNewGameWait();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has no openHitonowa entry). A member
     // because ScriptPlayText's evt_ui openHitonowa calls it on Singleton<UIManager>. What it does: opens the
     // "Hitonowa" UI for the given ids (the script entry's 1st, 4th and 5th arguments, those above 0), with the
@@ -77,7 +81,15 @@ public:
     unsigned char pad_3c[0x48 - 0x3C];
     // evt_ex.getResult's value (fn_7100104AE8); the name is not the original's
     int m_exResult;  // 0x48
-    unsigned char pad_4c[0x2B0 - 0x4C];  // Singleton<UIManager>'s instance is 0x2B0 bytes
+    unsigned char pad_4c[0x58 - 0x4C];
+    // the call context openBladeNameUI releases and creates for GfMenuObjBladeCreate::openCreatedBladeName; the
+    // name is not the original's
+    gf::GfMenuCallContext* m_bladeNameContext;  // 0x58
+    unsigned char pad_60[0x70 - 0x60];
+    // the call contexts openAvanTitleUI and openZoneTelopUI create; the names are not the original's
+    gf::GfMenuCallContext* m_avanTitleContext;  // 0x70
+    gf::GfMenuCallContext* m_zoneTelopContext;  // 0x78
+    unsigned char pad_80[0x2B0 - 0x80];  // Singleton<UIManager>'s instance is 0x2B0 bytes
 };
 }  // namespace event
 
