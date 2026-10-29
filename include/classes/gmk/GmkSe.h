@@ -37,8 +37,8 @@ public:
         QuestFlagCond m_questFlag;          // the row's QuestFlag/Min/Max
         TimeCond m_popTime;                 // the row's "SEpopTime"
         WeatherCond m_weather;              // the row's "wtrSEType"
-        BootedGmkCond m_bootedGmk;          // the row's OP_gimmickType/ID (must be booted)
-        BootedGmkCond m_bootedGmkNot;       // a second <prefix>gimmickType/ID pair (must NOT be booted)
+        BootedGmkCond m_bootedGmk;          // 0x38: the row's gimmickType/ID, no prefix (must be booted)
+        BootedGmkCond m_bootedGmkNot;       // 0x3C: the row's OP_gimmickType/ID (must NOT be booted)
     };
     GmkSe() {}  // inline: construct_n<GmkSe> constructs in place with these stores
     virtual ~GmkSe();  // slot 0

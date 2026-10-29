@@ -1007,6 +1007,34 @@ void GmkNpc::unbindToGameObj(gf::GF_OBJ_HANDLE* handle) const {
     }
 }
 
+void GmkNpc::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+    m_group = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Group", row, 2);
+    m_battleReaction = (unsigned short)Bdat::getValCheck(bdat.m_fp, "BattleReaction", row, 2);
+    if (m_group == 0) {
+        m_scenarioFlag = ScenarioFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMin", row, 2),
+                                          (unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMax", row, 2));
+        m_questFlag = QuestFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "QuestFlag", row, 2),
+                                    (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMin", row, 1),
+                                    (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMax", row, 1));
+        m_timeRange.m_time = (unsigned short)Bdat::getValCheck(bdat.m_fp, "TimeRange", row, 2);
+        m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Condition", row, 2);
+    }
+    unsigned int visibleXZ = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Visible_XZ", row, 2);
+    unsigned short visibleY = Bdat::getValCheck(bdat.m_fp, "Visible_Y", row, 2);
+    m_visibleXZSq = (float)visibleXZ * (float)visibleXZ;
+    m_visibleYSq = (float)visibleY * (float)visibleY;
+    unsigned short invisibleXZ = Bdat::getValCheck(bdat.m_fp, "Invisible_XZ", row, 2);
+    if (invisibleXZ <= visibleXZ) {
+        invisibleXZ = visibleXZ + 1;
+    }
+    unsigned short invisibleY = Bdat::getValCheck(bdat.m_fp, "Invisible_Y", row, 2);
+    if (invisibleY <= visibleY) {
+        invisibleY = visibleY + 1;
+    }
+    m_invisibleXZSq = (float)invisibleXZ * (float)invisibleXZ;
+    m_invisibleYSq = (float)invisibleY * (float)invisibleY;
+}
+
 unsigned char* GmkRoutedNpc::getBindedBdatFp() const { return m_list->getBindedBdatFp(); }
 
 int GmkRoutedNpc::getBindedBdatId() const { return m_createInfo.m_bdatId; }
@@ -1073,6 +1101,31 @@ GmkBgmCondInfoManager::~GmkBgmCondInfoManager() {
     m_current = nullptr;
     for (mm::mtl::IntrusiveList<GmkBgmCondInfo>::iterator it = m_list.begin(); it != m_list.end();) {
         it = m_list.erase(it);
+    }
+}
+
+void GmkTbox::BdatInfo::create(unsigned char* fp, int row, const AGmkBase& gmk) {
+    m_condition = (unsigned short)Bdat::getValCheck(fp, "Condition", row, 2);
+    m_dig = Bdat::getFlagVal(fp, "flag", row, "Digflg") != 0;
+    m_msgVisible = (unsigned char)Bdat::getValCheck(fp, "msgVisible", row, 1);
+    m_msgdigVisible = (unsigned char)Bdat::getValCheck(fp, "msgdigVisible", row, 1);
+    {
+        unsigned short rscId = Bdat::getValCheck(fp, "RSC_ID", row, 2);
+        unsigned char* rscFp = gf::GfDataBdat::getFP(0xAC);
+        unsigned short visibleR = Bdat::getValCheck(rscFp, "visible_Radius", rscId, 2);
+        m_visibleRadiusSq = (float)visibleR * (float)visibleR;
+        unsigned short invisibleR = Bdat::getValCheck(rscFp, "invisible_Radius", rscId, 2);
+        m_invisibleRadiusSq = (float)invisibleR * (float)invisibleR;
+    }
+    {
+        unsigned short rscId = Bdat::getValCheck(fp, "RSC_ID", row, 2);
+        m_category = Bdat::getFlagVal(gf::GfDataBdat::getFP(0xAC), "flag", rscId, "TBOX_category") != 0;
+    }
+    if (Bdat::getMember(fp, "DigPopflg") != nullptr) {
+        m_digPop = Bdat::getFlagVal(fp, "flag", row, "DigPopflg") != 0;
+    }
+    if (Bdat::getMember(fp, "NoponBarrel") != nullptr) {
+        m_noponBarrel = Bdat::getFlagVal(fp, "flag", row, "NoponBarrel") != 0;
     }
 }
 
@@ -1271,6 +1324,36 @@ bool GmkDoor::BdatInfo::isPopCondMatched() const {
     }
     return true;
 }
+
+void GmkDoor::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+    m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Condition", row, 2);
+    m_bootedGmk = BootedGmkCond(bdat, row, nullptr);
+    m_bootedGmk2 = BootedGmkCond(bdat, row, "OP_");
+    m_responseType = (unsigned char)Bdat::getValCheck(bdat.m_fp, "response_type", row, 1);
+    m_responseChr = (unsigned char)Bdat::getValCheck(bdat.m_fp, "response_CHR", row, 1);
+    m_nameRadius = (unsigned short)Bdat::getValCheck(bdat.m_fp, "nameRadius", row, 2);
+    m_lodModel = (unsigned short)Bdat::getValCheck(bdat.m_fp, "LODmodel", row, 2);
+    m_missMsgId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "missMSG_ID", row, 2);
+    m_openLodAnime = Bdat::getFlagVal(bdat.m_fp, "flag", row, "open_LODanime") != 0;
+    m_openSeType = Bdat::getFlagVal(bdat.m_fp, "flag", row, "open_SE_type") != 0;
+    m_openSe = (unsigned short)Bdat::getValCheck(bdat.m_fp, "open_SE", row, 2);
+    m_openSeSize = (unsigned char)Bdat::getValCheck(bdat.m_fp, "open_SE_size", row, 1);
+    m_openCamGimId = Bdat::getValCheck(bdat.m_fp, "open_camGim_ID", row, 7);
+    m_openCamGimAtr = (unsigned char)Bdat::getValCheck(bdat.m_fp, "open_camGim_ATR", row, 1);
+    m_closeLodAnime = Bdat::getFlagVal(bdat.m_fp, "flag", row, "close_LODanime") != 0;
+    m_closeSeType = Bdat::getFlagVal(bdat.m_fp, "flag", row, "close_SE_type") != 0;
+    m_closeSe = (unsigned short)Bdat::getValCheck(bdat.m_fp, "close_SE", row, 2);
+    m_closeSeSize = (unsigned char)Bdat::getValCheck(bdat.m_fp, "close_SE_size", row, 1);
+    m_closeCamGimId = Bdat::getValCheck(bdat.m_fp, "close_camGim_ID", row, 7);
+    m_closeCamGimAtr = (unsigned char)Bdat::getValCheck(bdat.m_fp, "close_camGim_ATR", row, 1);
+    Bdat::uVal nextwait;
+    nextwait.ulong = Bdat::getValCheck(bdat.m_fp, "door_nextwait", row, 8);
+    m_doorNextwait = nextwait.real;
+    m_spCloseCamGimId = Bdat::getValCheck(bdat.m_fp, "sp_close_camGim_ID", row, 7);
+    m_spCloseCamGimAtr = (unsigned char)Bdat::getValCheck(bdat.m_fp, "sp_close_camGim_ATR", row, 1);
+    m_bootedGmk3 = BootedGmkCond(bdat, row, "SPOP_");
+    m_gmkCamPos = Bdat::getFlagVal(bdat.m_fp, "flag", row, "gmkCamPos") != 0;
+}
 void GmkMapGimmick::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
     m_popTime.m_time = (unsigned short)Bdat::getValCheck(bdat.m_fp, "popTime", row, 3);
     m_popWeather.m_weather = (unsigned char)Bdat::getValCheck(bdat.m_fp, "popWeather", row, 1);
@@ -1348,7 +1431,7 @@ void GmkBlade::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk)
     m_timeRange.m_time = (unsigned short)Bdat::getValCheck(bdat.m_fp, "TimeRange", row, 2);
     m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Condition", row, 2);
     m_battleReaction = (unsigned short)Bdat::getValCheck(bdat.m_fp, "BattleReaction", row, 2);
-    unsigned short visibleXZ = Bdat::getValCheck(bdat.m_fp, "Visible_XZ", row, 2);
+    unsigned int visibleXZ = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Visible_XZ", row, 2);
     unsigned short visibleY = Bdat::getValCheck(bdat.m_fp, "Visible_Y", row, 2);
     m_visibleXZSq = (float)visibleXZ * (float)visibleXZ;
     m_visibleYSq = (float)visibleY * (float)visibleY;
@@ -1401,7 +1484,7 @@ bool GmkMapGimmick::BdatInfo::isPopCondMatched() const {
 
 void GmkMapObj::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
     m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Condition", row, 2);
-    unsigned short visibleXZ = Bdat::getValCheck(bdat.m_fp, "Visible_XZ", row, 2);
+    unsigned int visibleXZ = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Visible_XZ", row, 2);
     unsigned short visibleY = Bdat::getValCheck(bdat.m_fp, "Visible_Y", row, 2);
     m_visibleXZSq = (float)visibleXZ * (float)visibleXZ;
     m_visibleYSq = (float)visibleY * (float)visibleY;

@@ -60,9 +60,9 @@ public:
         unsigned long m_spCloseCamGimId = 0;    // the row's "sp_close_camGim_ID" (column type 7)
         unsigned char m_spCloseCamGimAtr = 0;   // the row's "sp_close_camGim_ATR"
         bool m_gmkCamPos = false;               // flag "gmkCamPos"
-        BootedGmkCond m_bootedGmk;   // the row's OP_gimmickType/ID (isPopCondMatched tests it)
-        BootedGmkCond m_bootedGmk2;  // two more <prefix>gimmickType/ID pairs (prefixes not read yet)
-        BootedGmkCond m_bootedGmk3;
+        BootedGmkCond m_bootedGmk;   // the row's gimmickType/ID, no prefix (isPopCondMatched tests it)
+        BootedGmkCond m_bootedGmk2;  // the row's OP_gimmickType/ID
+        BootedGmkCond m_bootedGmk3;  // the row's SPOP_gimmickType/ID
     };
     virtual ~GmkDoor();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
