@@ -1081,6 +1081,7 @@ event::ObjectManager::~ObjectManager() {}
 #include "classes/event/ScriptCharaLinerRot.h"
 #include "classes/event/ScriptEffectMove.h"
 #include "classes/event/ScriptEffectTurn.h"
+#include "classes/event/ScriptEffectScale.h"
 
 namespace event {
 
@@ -1332,6 +1333,31 @@ void ScriptEffectTurn::redo(const event::Param& param) {
     ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
     if (obj != 0) {
         obj->setRotAxis(RotAxis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32()));
+    }
+}
+
+void ScriptEffectScale::undo(const event::Param&) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        EffectObj* effect = obj->m_effect;
+        if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+            effect->m_scale.x = m_prevScale.x;
+            effect->m_scale.y = m_prevScale.y;
+            effect->m_scale.z = m_prevScale.z;
+        }
+    }
+}
+
+void ScriptEffectScale::redo(const event::Param& param) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        float scale = param.val(0).getF32();
+        EffectObj* effect = obj->m_effect;
+        if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+            effect->m_scale.x = scale;
+            effect->m_scale.y = scale;
+            effect->m_scale.z = scale;
+        }
     }
 }
 
@@ -1599,6 +1625,15 @@ void ScriptCamMotion::doit(const event::Param& param) {
         CamObj* cam = obj->m_cam;
         cam->changeActive(&cam->m_motion);
         cam->m_motion.play(name, pos);
+    }
+}
+
+void ScriptCamMotion::undo(const event::Param&) {
+    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
+    if (obj != 0) {
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_motion);
+        cam->m_motion.stop();
     }
 }
 

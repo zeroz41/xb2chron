@@ -13,6 +13,7 @@ public:
     virtual ~CamMotion();  // slot 0
     virtual void update(event::FrameInfo const&);  // slot 2
     void play(const char* name, const mm::Vec3& pos);
+    void stop();
 };
 }  // namespace event
 
