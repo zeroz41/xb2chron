@@ -23,7 +23,7 @@ public:
     };
     // the offset its render applies, kept per thread (0x10 bytes)
     struct alignas(16) RENDER_OFFSET_INFO {
-        unsigned char pad_0[0x10];
+        mm::Vec3 m_ofs;  // getOffsetInfo returns it (the name is not the original's)
     };
     // the offset its render applies (fw::ModelObject::update copies its added offset there; the return type is
     // not in the symbol)

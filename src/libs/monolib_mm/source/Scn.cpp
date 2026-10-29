@@ -1,3 +1,14 @@
+#include "math.h"
+#include "classes/ml/WorkCpu.h"
+#include "classes/ml/ScnRender.h"
+#include "classes/ml/ScnRenderDrSys.h"
+#include "classes/ml/Scn.h"
+#include "classes/ml/ScnObjModel.h"
+#include "classes/ml/ScnObjCam.h"
+#include "classes/ml/DevGraph.h"
+#include "classes/ml/ScnRenderDrSys.h"
+#include "classes/ml/FileResTh.h"
+#include <math.h>
 #include "mm/Mat44.h"
 #include "ml/AttrTransform.h"
 #include "classes/ml/Scn.h"
@@ -102,6 +113,51 @@ ScnDebugManipuObj::~ScnDebugManipuObj() {}
 
 ScnRender::~ScnRender() {}
 
+Scn::~Scn() {
+    term();
+}
+
+void Scn::term() {
+    if (m_grpHandle != -1) {
+        WorkCpu::removeAutoExecGrp(m_grpHandle);
+        WorkCpu::releaseGroupHandle(m_grpHandle);
+        m_grpHandle = -1;
+    }
+    if (m_pool != nullptr) {
+        delete m_pool;
+        m_pool = nullptr;
+    }
+    WorkCpu::runThread(WorkCpu::getRenderCPUID(), thRenderKillTerminate, this, nullptr, nullptr, true,
+                       static_cast<WKCPU_SYNC>(0));
+    if (m_camMan != nullptr) {
+        delete m_camMan;
+        m_camMan = nullptr;
+    }
+    if (m_debug != nullptr) {
+        delete m_debug;
+        m_debug = nullptr;
+    }
+    for (FileResTh** it = m_entryRes.begin(); it != m_entryRes.end(); ++it) {
+        if (*it != nullptr) {
+            (*it)->Release();
+            *it = nullptr;
+        }
+    }
+    m_entryRes.clear();
+    if (m_cs != nullptr) {
+        delete m_cs;
+        m_cs = nullptr;
+    }
+    if (m_entryResCs != nullptr) {
+        delete m_entryResCs;
+        m_entryResCs = nullptr;
+    }
+    if (m_allocHandle.m_handle != 0) {
+        mtl::MemManager::erase(m_allocHandle);
+        m_allocHandle = mtl::ALLOC_HANDLE();
+    }
+}
+
 ScnObjModel* Scn::createMdl(const void* resource, const char* name, int arg) {
     ScnObjModel* mdl = m_renderDrSys->createMdl(this, resource, name, arg);
     if (mdl != nullptr) {
@@ -158,6 +214,11 @@ ScnObjModel* ScnRender::createMdl(Scn*, const void*, const char*, int) {
 
 ScnObj* ScnRender::createLgt(Scn*, const void*, int) {
     return nullptr;
+}
+
+// the base renderer has no loop count to wait for (ScnRenderDrSys asks DrMan::loopCnt)
+bool ScnRender::applyLoopCnt() {
+    return true;
 }
 
 const char* ScnObjLight::getName() const {
@@ -221,6 +282,10 @@ const AttrTransform* ScnObjModel::getTrans(bool cpu) const {
     return &(cpu ? m_info.m_cpu : m_info.m_render)->m_trans;
 }
 
+mm::Vec3& ScnObjModel::getOffsetInfo(bool cpu) {
+    return (cpu ? m_offsetInfo.m_cpu : m_offsetInfo.m_render)->m_ofs;
+}
+
 void ScnObjModel::setDisp(bool on) {
     if (on) {
         m_dispReq = true;
@@ -265,6 +330,39 @@ const mm::Plane& ScnObjCam::getPlaneGbl(unsigned int index, bool cpu) const {
 }
 
 void ScnObjCam::setCopydataCam(bool) {}
+
+// Proposed names, not the original's: the symbols leave them unnamed (lbl_71009C7E40, lbl_71009C7E50)
+static const mm::Vec3 s_defaultEye(0.0f, 5.0f, 20.0f);
+static const mm::Vec3 s_defaultTarget(0.0f, 0.0f, 0.0f);
+
+void ScnObjCam::setDefault() {
+    setLookAt(s_defaultEye, s_defaultTarget, 0.0f);
+    m_info.m_cpu->m_fov = 40.0f;
+    updateViewMatrix(false);
+}
+
+void ScnObjCam::updateFovNearFar() {
+    RENDER_INFO* info = m_info.m_cpu;
+    info->m_invTan = 1.0f / tanf(info->m_fov * 0.0174532924f * 0.5f);
+    float extent = -info->m_near / info->m_invTan;
+    info->m_nearExtent[0] = extent;
+    info->m_nearExtent[1] = -extent;
+    info->m_nearExtent[2] = extent * info->m_aspect;
+    info->m_nearExtent[3] = info->m_aspect * -extent;
+}
+
+void ScnObjCam::apply() {
+    RENDER_INFO* info = m_info.m_render;
+    const mm::Rect<int>& viewport = DevGraph::getViewport();
+    if (viewport.w != 0 && viewport.h != 0) {
+        info->m_aspect = static_cast<float>(viewport.w) / static_cast<float>(viewport.h);
+    } else {
+        info->m_aspect = 1.0f;
+    }
+    if (m_scn->m_renderDrSys != nullptr) {
+        m_scn->m_renderDrSys->applyCamera(this);
+    }
+}
 
 void Scn::setDebDraw(SCNCAM cam, SCNPRIO_CB prio) {
     m_debDraw[cam].m_prio = prio;

@@ -7,6 +7,7 @@
 #include "classes/ml/reslist.h"
 #include "ml/CriticalSection.h"
 #include "classes/mm/mtl/PtrSingleton.h"
+namespace mm { class Col3; }
 namespace ml {
 enum CPUID : int;
 // how WorkCpu::sync waits (enumerators not recovered: DrCalcTexStreamMan::jobWait passes 0)
@@ -69,6 +70,10 @@ public:
     static unsigned long getMainThreadId();
     static unsigned long getThreadId(CPUID cpu);
     static CPUID getRenderCPUID();
+    // runs a function on a CPU's thread (Scn::term runs Scn::thRenderKillTerminate on the render CPU's, passing the
+    // scene, no argument, no colour, true and sync 0); the return type is not in the symbols
+    static void runThread(CPUID cpu, unsigned int (*func)(void*, void*), void*, void*, const mm::Col3* col,
+                          bool, WKCPU_SYNC sync);
     static bool getOdd();
     // shutting down (false before the CPU work exists)
     static bool isShutdown();

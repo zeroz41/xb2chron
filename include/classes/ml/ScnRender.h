@@ -22,7 +22,7 @@ public:
     virtual void update() {}  // slot 10
     virtual void applyBegin() {}  // slot 11
     virtual void applyEnd() {}  // slot 12
-    virtual void applyLoopCnt();  // slot 13
+    virtual bool applyLoopCnt();  // slot 13
     virtual void applyUpdate(int) {}  // slot 14
     virtual void applyRender(int) {}  // slot 15
     virtual void tail() {}  // slot 16

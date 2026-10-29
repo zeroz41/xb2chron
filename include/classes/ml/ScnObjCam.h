@@ -16,12 +16,28 @@ public:
     // what a camera keeps per thread (0x380 bytes: threadval's tvSwap copies that much)
     struct RENDER_INFO {
         AttrTransform m_transform;  // setLookAt updates it (the name is not the original's)
-        unsigned char pad_140[0x180];
+        unsigned char pad_140[0x10];
+        // 0x150 the near plane's extents updateFovNearFar works out: -near * tan(fov / 2), its negation, and both
+        // times the aspect ratio (the name is not the original's)
+        float m_nearExtent[4];
+        unsigned char pad_160[0x88];
+        float m_fov;     // 0x1E8 degrees: 40 by default (setDefault) (the name is not the original's)
+        float m_invTan;  // 0x1EC 1 / tan(fov / 2) (updateFovNearFar) (the name is not the original's)
+        float m_aspect;  // 0x1F0 the viewport's width / height, else 1 (apply) (the name is not the original's)
+        float m_near;    // 0x1F4 0.1 from the constructor (the name is not the original's)
+        float m_far;     // 0x1F8 80000 from the constructor (the name is not the original's)
+        unsigned char pad_1FC[0xC4];
         mm::Plane m_planeGbl[6];  // 0x2C0 getPlaneGbl's (the name is not the original's)
     };
     // one of the six planes of the calculation thread's (true) or the render thread's (false) information
     const mm::Plane& getPlaneGbl(unsigned int index, bool cpu) const;
     void setCopydataCam(bool);
+    // the default view: looking from (0, 5, 20) at the origin with a 40 degree field of view
+    void setDefault();
+    void updateViewMatrix(bool);
+    void setLookAt(const mm::Vec3& eye, const mm::Vec3& target, float roll);
+    // the projection's derived values from the field of view, near distance and aspect ratio
+    void updateFovNearFar();
     virtual ~ScnObjCam();  // slot 0
     virtual void update();  // slot 2
     virtual void renderDebug(ml::DebDraw*);  // slot 3

@@ -1144,7 +1144,7 @@ void ScnRenderDrSys::applyBegin() { m_drMan->begin(); }
 
 void ScnRenderDrSys::applyEnd() { m_drMan->end(); }
 
-void ScnRenderDrSys::applyLoopCnt() { m_drMan->loopCnt(); }
+bool ScnRenderDrSys::applyLoopCnt() { return m_drMan->loopCnt(); }
 
 void ScnRenderDrSys::applyUpdate(int arg) { m_drMan->apply(arg); }
 
