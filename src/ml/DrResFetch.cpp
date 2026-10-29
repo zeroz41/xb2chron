@@ -460,6 +460,163 @@ DrResMdoSeamWrkMpf::~DrResMdoSeamWrkMpf() {
     m_dispNum = 0;
 }
 
+inline void DrResMdoTexList::releaseTexInfo() {
+    if (m_texNum != 0) {
+        for (int i = 0; i < m_texNum; i++) {
+            m_texBuf[i].~CGLibTextureBuffer();
+        }
+        m_texBuf = nullptr;
+        m_texNum = 0;
+    }
+    if (m_texAlloc != nullptr) {
+        mtl::MemManager::deallocate(m_texAlloc, 0, false);
+        m_texAlloc = nullptr;
+    }
+}
+
+DrResMdoTexList::DrResMdoTexList(const unsigned char* data)
+    : pad_0(nullptr), m_pNext(nullptr), m_res(data), pad_18(1), m_texBuf(nullptr), m_stmList(nullptr),
+      m_texAlloc(nullptr), m_texNum(0), m_flags(0), m_stmState(0), m_data(data), m_mem(data), pad_90(nullptr),
+      pad_98(nullptr) {
+    createTexInfoList();
+    createTexList(m_data, m_mem);
+}
+
+void DrResMdoTexList::createTexInfoList() {
+    releaseTexInfo();
+    m_pool.release();
+    m_flags = 0;
+    m_stmState = 0;
+    m_texNum = calcTextureMax(m_data);
+    unsigned int size = calcTextureMax(m_data) * 0x70;
+    m_texAlloc = mtl::MemManager::allocate(DrMan::get()->m_allocHandle, size, 0x10, false, "no name", 0);
+    m_texBuf = static_cast<grlib::CGLibTextureBuffer*>(m_texAlloc);
+    for (int i = 0; i < m_texNum; i++) {
+        new (&m_texBuf[i]) grlib::CGLibTextureBuffer();
+    }
+}
+
+void DrResMdoTexList::createTexList(const unsigned char* data, const unsigned char* mem) {
+    m_flags |= FLAG_CREATED;
+    const MdsTexInfo* info = reinterpret_cast<const MdsTexInfo*>(data + reinterpret_cast<const MdsTexHeader*>(data)->m_infoOfs);
+    if (!(m_flags & FLAG_MEM)) {
+        m_flags |= FLAG_MEM;
+        const MdsTexInfo* last = (info + m_texNum) - 1;
+        int size = last->m_ofs - info[0].m_ofs + last->m_size;
+        size += -size & 0xFFF;
+        m_pool.setupBuffer(const_cast<unsigned char*>(mem) + info[0].m_ofs, size);
+    }
+    int base = info[0].m_ofs;
+    for (int i = 0; i < m_texNum; i++) {
+        grlib::CGLibTexture::createTextureImagePtrs(m_texBuf[i], info[i].m_size, m_pool, info[i].m_ofs - base, false,
+                                                    nullptr, true);
+    }
+}
+
+DrResMdoTexList::DrResMdoTexList(const unsigned char* data, DrCalcStmListObj* stm, const unsigned char* mem,
+                                 const MdsTexHeader* stmTex)
+    : pad_0(nullptr), m_pNext(nullptr), m_res(data), pad_18(1), m_texBuf(nullptr), m_stmList(stm),
+      m_texAlloc(nullptr), m_texNum(0), m_flags(0), m_stmState(0), m_data(data), m_mem(mem), pad_90(nullptr),
+      pad_98(nullptr) {
+    createStmTexInfoList(stm, reinterpret_cast<const unsigned char*>(stmTex), true);
+    createTexList(m_data, m_mem);
+}
+
+void DrResMdoTexList::createStmTexInfoList(DrCalcStmListObj* stm, const unsigned char* stmTex, bool byName) {
+    releaseTexInfo();
+    m_pool.release();
+    m_flags = 0;
+    m_stmState = 0;
+    unsigned int num = calcTextureMax(m_data);
+    m_texNum = num;
+    unsigned long texSize = calcTextureMax(m_data) * 0x70;
+    unsigned int size = texSize + num * 2;
+    if (num & 1) {
+        size += 2;
+    }
+    m_texAlloc = mtl::MemManager::allocate(DrMan::get()->m_allocHandle, size, 0x10, false, "no name", 0);
+    m_texBuf = static_cast<grlib::CGLibTextureBuffer*>(m_texAlloc);
+    for (int i = 0; i < m_texNum; i++) {
+        new (&m_texBuf[i]) grlib::CGLibTextureBuffer();
+    }
+    m_flags |= FLAG_STM;
+    m_stmIdx = reinterpret_cast<unsigned short*>(static_cast<unsigned char*>(m_texAlloc) + texSize);
+    m_stmList = stm;
+    if (byName) {
+        const MdsTexHeader* header = reinterpret_cast<const MdsTexHeader*>(stmTex);
+        const MdsTexInfo* stmInfo = reinterpret_cast<const MdsTexInfo*>(stmTex + header->m_infoOfs);
+        const MdsTexHeader* texHeader = getHeader();
+        for (int i = 0; i < m_texNum; i++) {
+            const MdsTexInfo* info = reinterpret_cast<const MdsTexInfo*>(m_data + texHeader->m_infoOfs);
+            const char* name = reinterpret_cast<const char*>(m_data + info[i].m_nameOfs);
+            m_stmIdx[i] = 0;
+            for (int j = 0; j < header->m_num; j++) {
+                if (strcmp(name, reinterpret_cast<const char*>(stmTex + stmInfo[j].m_nameOfs)) == 0) {
+                    m_stmIdx[i] = j + 1;
+                    break;
+                }
+            }
+        }
+    } else {
+        for (int i = 0; i < m_texNum; i++) {
+            m_stmIdx[i] = 0;
+        }
+        const unsigned short* idx = reinterpret_cast<const unsigned short*>(stmTex);
+        for (int j = 0; j < m_stmList->m_texNum; j++) {
+            m_stmIdx[idx[j]] = j + 1;
+        }
+    }
+}
+
+DrResMdoTexList::DrResMdoTexList(const unsigned char* data, DrCalcStmListObj* stm, const unsigned char* mem,
+                                 const unsigned short* stmIdx)
+    : pad_0(nullptr), m_pNext(nullptr), m_res(data), pad_18(1), m_texBuf(nullptr), m_stmList(stm),
+      m_texAlloc(nullptr), m_texNum(0), m_flags(0), m_stmState(0), m_data(data), m_mem(mem), pad_90(nullptr),
+      pad_98(nullptr) {
+    createStmTexInfoList(stm, reinterpret_cast<const unsigned char*>(stmIdx), false);
+    createTexList(m_data, m_mem);
+}
+
+void DrResMdoTexList::update() {
+    texStmUpdate();
+    m_flags &= ~(FLAG_STM_READ | FLAG_STM_READ_ALL);
+}
+
+void DrResMdoTexList::callStmRead(int mode) {
+    if (mode != 0) {
+        m_flags |= FLAG_STM_READ;
+        if (mode == 2) {
+            m_flags |= FLAG_STM_READ_ALL;
+        }
+    }
+}
+
+grlib::CGLibTextureBuffer* DrResMdoTexList::getTexObj(unsigned int idx) {
+    return &m_texBuf[idx];
+}
+
+grlib::CGLibTextureBuffer* DrResMdoTexList::getStmTexObj(unsigned int idx) {
+    if (m_stmIdx[idx] != 0) {
+        return m_stmList->getTexObj(m_stmIdx[idx] - 1);
+    }
+    return getTexObj(idx);
+}
+
+void DrResMdoTexList::changeMemTexList(const unsigned char* mem) {
+    m_data = mem;
+    m_mem = mem;
+    const MdsTexInfo* info = getInfo();
+    int base = info[0].m_ofs;
+    m_flags |= FLAG_MEM;
+    const MdsTexInfo* last = (info + m_texNum) - 1;
+    int size = last->m_ofs - info[0].m_ofs + last->m_size;
+    size += -size & 0xFFF;
+    m_pool.setupBuffer(const_cast<unsigned char*>(m_mem) + info[0].m_ofs, size);
+    for (int i = 0; i < m_texNum; i++) {
+        grlib::CGLibTexture::changeTextureImagePtrs(m_texBuf[i], info[i].m_size, m_pool, info[i].m_ofs - base);
+    }
+}
+
 unsigned int DrResMdoTexList::calcTextureMax(const unsigned char* data) {
     return *reinterpret_cast<const unsigned int*>(data);
 }

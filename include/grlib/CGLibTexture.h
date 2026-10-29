@@ -4,6 +4,7 @@
 #include "grlib/GrlTypes.h"
 
 namespace grlib { class CGLibTextureBuffer; }
+namespace grlib { class CGLibVtlMemPool; }
 
 namespace grlib {
 
@@ -21,6 +22,13 @@ public:
     // buffer made from an image file's size bytes
     static void createTextureImagePtrs(CGLibTextureBuffer& buffer, const void* image, unsigned int size, bool flag,
                                        const CGLibTexSwizzle* swizzle, bool flag2);
+    // buffer made from the size bytes at offset of pool's memory (DrResMdoTexList; the parameter names are not the
+    // original's)
+    static void createTextureImagePtrs(CGLibTextureBuffer& buffer, unsigned int size, CGLibVtlMemPool& pool,
+                                       unsigned int offset, bool flag, const CGLibTexSwizzle* swizzle, bool flag2);
+    // the buffer's image moved to offset of pool's memory (DrResMdoTexList)
+    static void changeTextureImagePtrs(CGLibTextureBuffer& buffer, unsigned int size, CGLibVtlMemPool& pool,
+                                       unsigned int offset);
     // the buffer's image moved to new memory holding the same size bytes (DrResMdoSeamTexture::changeMemTexture)
     static void changeTextureImagePtrs(CGLibTextureBuffer& buffer, const void* image, unsigned int size);
     // as changeTextureImagePtrs for an image of two parts (the parameter names are not the original's)

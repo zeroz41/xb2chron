@@ -6,6 +6,7 @@
 namespace ml { class EventFileTh; }
 namespace ml { class FileHandleTh; }
 namespace ml { class DrCalcTexStmObj; }
+namespace grlib { class CGLibTextureBuffer; }
 
 namespace ml {
 // table 0x7100B7EDE8
@@ -30,6 +31,17 @@ public:
     // the pointer at 0x18 of the object at 0x48 once the flag at 0x82 is set, else null (the return type is not
     // known)
     void* getAdder();
+    // a low-resolution texture of the frame stocked: its memory and flags (the struct's and fields' names are not
+    // the original's; getResLowTexObj picks entry 0x78 of the 0x18-byte array at 0x30 by DrMan::s_nDblStockIdx)
+    struct ResTexObj {
+        const unsigned char* m_pData;  // 0x0: DrResMdoTexList::texStmUpdate moves its textures here
+        unsigned char pad_8[0x8];
+        unsigned char m_flags;         // 0x10: bit 0 = the memory is ready
+        unsigned char pad_11[0x7];
+    };
+    ResTexObj* getResLowTexObj();
+    // the stream's texture idx (0x70-byte entries at 0xB0)
+    grlib::CGLibTextureBuffer* getTexObj(unsigned int idx);
 
     // inline in every state that ends the stream (texstm_notfileWait, texstm_oldVerWait, ...): its memory given
     // back unless kept, the end state next (the name is not the original's)
@@ -74,7 +86,9 @@ public:
     unsigned int m_flags;        // 0x80
     int m_readSize;              // 0x84: added to the manager's m_errReadSize while an error waits
     int m_stateNo;               // 0x88: the state running (each state stores its number)
-    unsigned char pad_8c[0x1C];
+    unsigned char pad_8c[0x18];
+    short m_texNum;              // 0xA4: the stream's textures (DrResMdoTexList::createStmTexInfoList; the name is not the original's)
+    unsigned char pad_a6[0x2];
     short m_errWait;             // 0xA8: frames an error waits (60 before the read is tried again)
     short m_reqWait;             // 0xAA: frames texstm_requestWait waits
     unsigned char pad_ac[0x20];
