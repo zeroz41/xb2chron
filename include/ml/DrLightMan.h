@@ -10,6 +10,7 @@ class DrLightObjSpt;
 class DrLightMan {
 public:
     DrLightObjPnt* createInstantPntLight();
+    DrLightObjSpt* createInstantSptLight();
     void releasePntLight(DrLightObjPnt* light);
     void releaseSptLight(DrLightObjSpt* light);
     void releaseInstantPntLight(DrLightObjPnt* light);

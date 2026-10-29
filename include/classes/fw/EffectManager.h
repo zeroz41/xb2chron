@@ -5,6 +5,7 @@
 #include "classes/fw/ManagerObject.h"
 #include "mm/Mat44.h"
 #include "mm/Vec3.h"
+#include "mm/Col3.h"
 #include "classes/ml/IScnRender.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "fw/VolumeFadeParams.h"
@@ -112,6 +113,16 @@ public:
     static void setMdlPos(void* mdl, void* pos);
     static void setMdlMatrix(void* mdl, void* matrix);
     static void setMdlAlpha(void* mdl, float alpha);
+    // what the effect library hands setMdlColor for a model (the names are not the original's): the ace colour and
+    // values 0..2 go to the model's setAceColor/setAceVal, m_viewNum is stored as the model's view number and the model
+    // is shown while m_dispThreshold is above 0.01
+    struct MdlColorParam {
+        mm::Col3 m_color;
+        float m_aceVal[3];
+        float m_viewNum;
+        float m_dispThreshold;
+    };
+    static void setMdlColor(void* mdl, void* param);
     static void setMdlSpeed(void* mdl, void* speed);
     // the effect library's model hooks: a model group (an ml::DrMdoGrpObj) while there is a Framework, a model of a
     // group shown with the identity matrix, each deleted with the frame's stock index (the parameter names are not the
@@ -120,6 +131,13 @@ public:
     static void destroyGroup(void* grp);
     static void* createMdl(const void* res, const char* name, int index, const void* grp, int option);
     static void deleteMdl(void* mdl);
+    // the effect library's light hooks: an instant point (type 1) or spot (type 2) light of a view's DrLightMan while
+    // there is a Framework, released, placed or turned through DrMan's light manager (the parameter names are not the
+    // original's)
+    static void* createLgt(unsigned int type, int viewNum);
+    static void deleteLgt(unsigned int type, void* lgt);
+    static void setLgtPos(unsigned int type, void* lgt, void* pos);
+    static void setLgtMatrix(unsigned int type, void* lgt, void* matrix);
     // an effect resource (efb) by name: from pack first, else from the common packs (null for none)
     void* search(const char* name, EffectPack* pack);
     // the common packs' battle effects, by their efb names (cmn_000_000, cmn_000_001, cmn_000_002); 0 for none

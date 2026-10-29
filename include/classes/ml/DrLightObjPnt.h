@@ -3,6 +3,9 @@
 
 #include "classes/ml/DrLightObj.h"
 
+namespace mm { class Vec3; }
+namespace mm { class Mat44; }
+
 namespace ml {
 // table 0x7100B7B5A8
 class DrLightObjPnt : public ::ml::DrLightObj {
@@ -13,6 +16,8 @@ public:
     // 1.0.0 has both out of line; 3.0.1 only inlines them into the destructor
     void releasePnt();
     void deletePntShadow();
+    void setMat(const mm::Mat44& mtx);
+    void setPos(const mm::Vec3& pos);
 
     unsigned char pad_30[0x6C];
     float m_size;  // 0x9C, set by DrEnvironmentAnim::envlgt_pnt_size (the name is not the original's)

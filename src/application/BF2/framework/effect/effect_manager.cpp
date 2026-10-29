@@ -12,6 +12,9 @@
 #include "classes/fw/Framework.h"
 #include "classes/fw/EffectPack.h"
 #include "mtl/MemManager.h"
+#include "ml/DrLightMan.h"
+#include "classes/ml/DrLightObjPnt.h"
+#include "classes/ml/DrLightObjSpt.h"
 
 namespace fw {
 
@@ -401,6 +404,25 @@ void EffectManager::destroyComboBall(unsigned int handle) {
     }
 }
 
+void EffectManager::setMdlColor(void* mdl, void* param) {
+    if (mdl == nullptr || param == nullptr) {
+        return;
+    }
+    ml::DrMdlObj* obj = static_cast<ml::DrMdlObj*>(mdl);
+    const MdlColorParam* prm = static_cast<const MdlColorParam*>(param);
+    mm::Col3 color(prm->m_color.r, prm->m_color.g, prm->m_color.b);
+    obj->setAceColor(0, color);
+    obj->setAceVal(1, prm->m_aceVal[1]);
+    obj->setAceVal(2, prm->m_aceVal[2]);
+    obj->m_viewNum = prm->m_viewNum;
+    if (prm->m_dispThreshold > 0.01f) {
+        obj->setDisp(false);
+    } else {
+        obj->setDisp(true);
+    }
+    obj->setAceVal(0, prm->m_aceVal[0]);
+}
+
 void EffectManager::setMdlSpeed(void* mdl, void* speed) {
     if (mdl != nullptr && speed != nullptr) {
         static_cast<ml::DrMdlObj*>(mdl)->m_speed = *static_cast<const float*>(speed);
@@ -435,6 +457,24 @@ void EffectManager::deleteMdl(void* mdl) {
     if (mdl != nullptr && mm::mtl::PtrSingleton<Framework>::sys() != nullptr) {
         static_cast<ml::DrMdlObj*>(mdl)->setDisp(false);
         static_cast<ml::DrMdlObj*>(mdl)->setDeleteCall(ml::DrMan::s_nDblStockIdx);
+    }
+}
+
+void EffectManager::deleteLgt(unsigned int type, void* lgt) {
+    if (lgt == nullptr || mm::mtl::PtrSingleton<Framework>::sys() == nullptr) {
+        return;
+    }
+    ml::DrMan* dr = ml::DrMan::getIns();
+    if (dr == nullptr || dr->m_lightMan == nullptr) {
+        return;
+    }
+    switch (type) {
+    case 1:
+        dr->m_lightMan->releaseInstantPntLight(static_cast<ml::DrLightObjPnt*>(lgt));
+        break;
+    case 2:
+        dr->m_lightMan->releaseInstantSptLight(static_cast<ml::DrLightObjSpt*>(lgt));
+        break;
     }
 }
 
