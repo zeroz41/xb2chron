@@ -891,6 +891,13 @@ bool GfDataDriver::fn_7100241660(unsigned int driver) {
     return bdat->fn_71001F183C(row);
 }
 
+unsigned int GfDataDriver::fn_710024198C(unsigned int driver) {
+    if (driver - 0x11 <= 8) {
+        return GfDataManager::fn_7100224A10()[driver - 0x11].m_partyIndex;
+    }
+    return 0;
+}
+
 unsigned int GfDataDriver::fn_71002419C8(unsigned int driver) {
     GfBdatChrDr* bdat = GfBdatChrDr::get();
     unsigned int row = bdat->fn_71001F13E0(driver);
@@ -944,6 +951,37 @@ unsigned int GfDataDriver::getWeaponEfbFileIdx(int index) {
 
 bool GfDataDriver::fn_7100247580(mm::mtl::FixedVector<unsigned short, 64>& enhances, int driver) {
     return fn_71002475DC(enhances, *getSDataDriver(driver));
+}
+
+bool GfDataDriver::fn_71002475DC(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriver& data) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    for (int i = 0; i < 2; i++) {
+        unsigned int item = data.m_equipAcce[i].m_item;
+        if (item != 0) {
+            unsigned int enhance = bdat->getPcEquipEnhance1(item);
+            if (enhance != 0) {
+                enhances.push_back(enhance);
+            }
+        }
+    }
+    unsigned int item = static_cast<unsigned short>(data.m_equipAcceEx);
+    if (item != 0) {
+        unsigned int enhance = bdat->getPcEquipEnhance1(item);
+        if (enhance != 0) {
+            enhances.push_back(enhance);
+        }
+    }
+    unsigned int dlc = data.m_id - 0x11;
+    if (dlc < 9) {
+        unsigned int item = GfDataManager::fn_7100224A10()[dlc].m_item;
+        if (item != 0) {
+            unsigned int enhance = bdat->getPcEquipEnhance1(item);
+            if (enhance != 0) {
+                enhances.push_back(enhance);
+            }
+        }
+    }
+    return enhances.size() != 0;
 }
 
 unsigned int GfDataDriver::getWeaponEabFileIdx(int index) {
@@ -2233,6 +2271,17 @@ void GfDataDriver::addSkillPoint(SDataDriver& data, int point) {
     }
 }
 
+bool GfDataDriver::fn_7100248668(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriverDlc& data) {
+    unsigned int item = data.m_item;
+    if (item != 0) {
+        unsigned int enhance = GfBdatItem::get()->getPcEquipEnhance1(item);
+        if (enhance != 0) {
+            enhances.push_back(enhance);
+        }
+    }
+    return enhances.size() != 0;
+}
+
 int GfDataMercenaries::getTeamMaleNum(unsigned int teamId) {
     Team* team = getTeamByTeamID(teamId);
     if (team == nullptr) {
@@ -2401,6 +2450,45 @@ void fn_7100254DC4(SSoundUiOption* option, unsigned int index, unsigned char val
     option->m_keyD = 4;
     option->m_list[index - 1] = value;
     fn_7100254DF0(option);
+}
+
+unsigned char fn_71002550C0(const SSoundUiOption* option, unsigned int index) {
+    if (GfBdatBtl::get() == nullptr) {
+        return 0;
+    }
+    return option->m_list[index - 1];
+}
+
+unsigned int GfDataBlade::fn_71002557C8(unsigned int id) {
+    if (id <= 2000) {
+        return 0;
+    }
+    unsigned int rsc = GfBdatRsc::get()->fn_7100219C58(id);
+    if (rsc == 0) {
+        return 0;
+    }
+    for (unsigned int i = 0; i < 256; i++) {
+        if (GfGameFlag::getLocal(8, i + 0x10C4) == rsc - 0xED02) {
+            return i + 1;
+        }
+    }
+    return 0;
+}
+
+unsigned int GfDataBlade::fn_7100255848(unsigned int id) {
+    if (id <= 2000) {
+        return 0;
+    }
+    unsigned int rsc = GfBdatRsc::get()->fn_7100219C58(id);
+    if (rsc == 0) {
+        return 0;
+    }
+    for (unsigned int i = 0; i < 256; i++) {
+        if (GfGameFlag::getLocal(8, i + 0x11C5) == rsc - 0xED02) {
+            return i + 1;
+        }
+    }
+    return 0;
 }
 
 unsigned int GfDataMap::getFieldZoneId(unsigned int id) {
@@ -2835,6 +2923,21 @@ unsigned int GfDataDriver::getDriverBySetBlade(unsigned int blade) {
     return GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(blade)].m_setDriver;
 }
 
+unsigned int GfDataDriver::fn_710023A9C8(unsigned int driver) {
+    switch (driver) {
+    case 1:
+        return 0x3F4;
+    case 7:
+        return 0x3F5;
+    case 9:
+        return 0x431;
+    case 12:
+        return 0x456;
+    default:
+        return 0;
+    }
+}
+
 bool GfDataBlade::getCommonBladeName(const char* path) {
     if (path == nullptr || strlen(path) < 6) {
         return false;
@@ -3197,8 +3300,94 @@ void GfDataEvent::fn_710024F2B8(unsigned int event) {
     fn_710024F2DC(*GfDataManager::getDataGame(), event);
 }
 
+// the event theater row of event (0 when none; F2DC and F454 inline it)
+static inline unsigned int findEventTheaterRow(unsigned int event) {
+    GfBdatShop* bdat = GfBdatShop::get();
+    for (unsigned int i = bdat->getMNU_EventTheaterStart(), end = bdat->getMNU_EventTheaterEnd(); i < end; i++) {
+        if (bdat->getMNU_EventTheaterevent_id(i) == event) {
+            return i;
+        }
+    }
+    return 0;
+}
+
+// true when event's event theater row has category 2 (fn_710024F2DC inlines it)
+static inline bool isEventTheaterCategory2(GfBdatShop* bdat, unsigned int event) {
+    for (unsigned int i = bdat->getMNU_EventTheaterStart(), end = bdat->getMNU_EventTheaterEnd(); i < end; i++) {
+        if (bdat->getMNU_EventTheaterevent_id(i) == event) {
+            return bdat->getMNU_EventTheatercategory(i) == 2;
+        }
+    }
+    return false;
+}
+
+void GfDataEvent::fn_710024F2DC(SDataGame& game, unsigned int event) {
+    GfBdatShop* bdat = GfBdatShop::get();
+    if (event == 0x5461) {
+        event = 0x5462;
+    }
+    unsigned int base;
+    if (event - 0x50E3 < 0x1F8 || isEventTheaterCategory2(bdat, event)) {
+        base = 0xB6C2;
+    } else if (event - 0x4A39 <= 0x3C) {
+        base = 0xB78B;
+    } else {
+        return;
+    }
+    unsigned int row = findEventTheaterRow(event);
+    if (row == 0) {
+        return;
+    }
+    unsigned int index = bdat->getMNU_EventTheaterflag_index(row);
+    if (index == 0) {
+        return;
+    }
+    GfGameFlag::setLocal(game.m_gameFlag, 1, index + base, 1);
+}
+
 bool GfDataEvent::fn_710024F430(unsigned int event) {
     return fn_710024F454(*GfDataManager::getDataGame(), event);
+}
+
+bool GfDataEvent::fn_710024F454(const SDataGame& game, unsigned int event) {
+    GfBdatShop* bdat = GfBdatShop::get();
+    unsigned int base;
+    if (event - 0x50E3 < 0x1F8) {
+        base = 0xB6C2;
+    } else {
+        bool category2 = false;
+        for (unsigned int i = bdat->getMNU_EventTheaterStart(), end = bdat->getMNU_EventTheaterEnd(); i < end; i++) {
+            if (bdat->getMNU_EventTheaterevent_id(i) == event) {
+                category2 = bdat->getMNU_EventTheatercategory(i) == 2;
+                break;
+            }
+        }
+        if (category2) {
+            base = 0xB6C2;
+        } else if (event - 0x4A39 <= 0x3C) {
+            base = 0xB78B;
+        } else {
+            return false;
+        }
+    }
+    unsigned int row = findEventTheaterRow(event);
+    if (row == 0) {
+        return false;
+    }
+    unsigned int index = bdat->getMNU_EventTheaterflag_index(row);
+    if (index == 0) {
+        return false;
+    }
+    return game.m_gameFlag.m_flag1[index + base];
+}
+
+bool GfDataEvent::isSavedEvent(unsigned int event, const SDataGame& game) {
+    for (unsigned int i = 0; i < game.m_savedEventCount; i++) {
+        if (game.m_savedEvents[i].m_event == event) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool GfDataEvent::fn_710024F910(unsigned int event) {
@@ -3779,6 +3968,33 @@ unsigned int GfDataBlade::fn_7100231754() {
 }
 
 void GfDataBlade::fn_710023493C() {
+}
+
+unsigned int GfDataBlade::fn_7100234940(unsigned int enemy) {
+    if (enemy == 0) {
+        return 0;
+    }
+    if (enemy >= 1500) {
+        return GfDataManager::getDataGame()->m_enemySuppressCount[static_cast<int>(enemy) - 1500];
+    }
+    return GfGameFlag::getLocal(16, enemy + 0x2E);
+}
+
+bool GfDataBlade::fn_7100234998(unsigned int enemy) {
+    if (enemy == 0) {
+        return false;
+    }
+    unsigned int count = fn_7100234940(enemy);
+    if (count < 0xFFFF) {
+        count++;
+        if (enemy >= 1500) {
+            GfDataManager::getDataGame()->m_enemySuppressCount[static_cast<int>(enemy) - 1500] = count;
+        } else {
+            GfGameFlag::setLocal(16, enemy + 0x2E, count);
+        }
+        return true;
+    }
+    return false;
 }
 
 bool GfDataBlade::fn_71002327B0(unsigned int id) {

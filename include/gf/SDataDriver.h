@@ -58,7 +58,11 @@ struct SDataDriverDlc {
     // fn_7100247474/fn_71002474F4 (GfItemUtil::getEquipChar reads the handle; the names are not the original's)
     GfItemHandle m_handle;
     unsigned short m_item;
-    unsigned char pad_5a6[0x806];
+    unsigned char pad_5a6[0x802];
+    // 0xDA8: GfDataDriver::fn_710024198C returns it for a DLC driver; GfObjUtil::fn_710054FCDC passes it on as the
+    // driver's party index (GfGameParty's listenerGfObj compares it with 2). The name is not the original's.
+    unsigned short m_partyIndex;
+    unsigned char pad_daa[0x2];
 };
 }  // namespace gf
 

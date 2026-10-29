@@ -21,6 +21,12 @@ struct TaskAchieve {
 
 // the game's data, as GfDataManager::getDataGame hands it out (1.0.0's GfGameUtil::setupNewGameParam takes one;
 // that getDataGame's is one is inferred)
+// a saved event row of the game data, 0x64 bytes (GfDataEvent::isSavedEvent; the names are not the original's)
+struct SDataGameSavedEvent {
+    unsigned short m_event;
+    unsigned char pad_2[0x62];
+};
+
 class SDataGame {
 public:
     unsigned int m_money;  // 0x0 (named after its accessors; the name is not the original's)
@@ -101,12 +107,21 @@ public:
     unsigned char m_cameraSide;  // 0x10AE82 (named after its accessors; the name is not the original's)
     // to 0x126D80: SDataGame::SDataGame's last store (a 0x8000-byte clear at 0x11ED80); GfDataStore keeps its
     // SDataOption right after its SDataGame (0x20 + 0x126D80 = getDataOption's 0x126DA0)
-    unsigned char pad_10AE83[0xFA49];
+    unsigned char pad_10AE83[0x1];
+    // 0x10AE84: the saved events and (0x1171D4) their count (GfDataEvent::isSavedEvent searches the first count rows'
+    // event ids; the names are not the original's)
+    SDataGameSavedEvent m_savedEvents[500];
+    unsigned int m_savedEventCount;
+    unsigned char pad_1171D8[0x36F4];
     // 0x11A8CC: the challenge battle rule table (TUnk_B535D0::fn_7100291CF4 returns it, fn_7100291D14 a rule of
     // it, fn_7100291CC0 / fn_7100291E40 read and mark its rows; the constructor runs its fn_71001528A0; the name is
     // not the original's)
     TUnk_B535D0::RuleTable m_ruleTable;
-    unsigned char pad_11B4CC[0x1DB0];
+    unsigned char pad_11B4CC[0x1770];
+    // 0x11CC3C: the count GfDataBlade::fn_7100234998 raises for enemies (arrange ids) 1500 and up, at [enemy - 1500]
+    // (below 1500 the count is a 16-bit local flag; GfGameUtil::incEnemySuppress reads it through fn_7100234940). The
+    // name is not the original's.
+    unsigned short m_enemySuppressCount[800];
     // 0x11D27C: GfDataItem::getItemBox returns it; GfItemBox::fn_71002FA0F4 keeps it at +0x310 and clears its 0x1B04
     // bytes (named after its accessor; the type and name are not the original's)
     unsigned char m_itemBox[0x1B04];

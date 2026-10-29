@@ -156,8 +156,9 @@ public:
     static void fn_7100247FD0(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriver& data);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member for the same placement as
     // fn_7100247FD0. What it does: pushes onto enhances the equipment enhance (GfBdatItem::getPcEquipEnhance1) of the
-    // DLC driver record's item at +0x5A4, when it has one; DataObjDriver's stat getters use it for m_dlc.
-    static void fn_7100248668(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriverDlc& data);
+    // DLC driver record's item at +0x5A4, when it has one, and returns whether enhances holds any; DataObjDriver's stat
+    // getters use it for m_dlc.
+    static bool fn_7100248668(mm::mtl::FixedVector<unsigned short, 64>& enhances, const SDataDriverDlc& data);
     // the stat corrections (percent) DataObjDriver's stat getters apply
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (checked below). A static member because it
     // sits before getStrengthRev among GfDataDriver's functions and takes a driver's data. What it does: the HP
@@ -186,6 +187,10 @@ public:
     static unsigned int getExpUsed(unsigned int driver);  // (appended by chardata)
     // takes the blade off the driver it is set to (GfGameUtil::execActivateReserverForBlade)
     static void unsetBlade(unsigned int blade);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in GfDataBlade's unit
+    // after GfDataDriver::unsetBlade and its result goes to unsetBlade (fn_71002EC268 calls both in a row). What it
+    // does: a blade id for drivers 1, 7, 9 and 12 (0x3F4, 0x3F5, 0x431, 0x456), else 0.
+    static unsigned int fn_710023A9C8(unsigned int driver);
     // 1.0.0's setScenarioMask (0x71002A9D44, called by 1.0.0's pt setDriverAway with its two script arguments):
     // the flag byte at 0x59C of the driver's SDataDriver (3.0.1 adds drivers 0x11-0x19)
     static void setScenarioMask(unsigned int driver, bool mask);
@@ -216,6 +221,10 @@ public:
     // GfBdatChrDr::fn_71001F183C of the driver's GfBdatChrDr::fn_71001F13E0 row, false for none
     static bool fn_7100241660(unsigned int driver);
     // GfBdatChrDr::fn_71001F172C of the driver's GfBdatChrDr::fn_71001F13E0 row, 0 for none
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among GfDataDriver's
+    // functions (between fn_71002417DC and fn_71002419C8) and takes a driver id. What it does: the DLC driver record's
+    // m_partyIndex for drivers 0x11-0x19, else 0.
+    static unsigned int fn_710024198C(unsigned int driver);
     static unsigned int fn_71002419C8(unsigned int driver);
     // the blade in a slot (slot < 0: the engaged one, m_bladeSet), 0 for none; DLC drivers (0x11-0x19) answer
     // GfBdatChrDr::getChrDrDefBlade1 instead (DataObjDriver::getBlade)

@@ -20,6 +20,11 @@ void fn_7100254DC4(SSoundUiOption* option, unsigned int index, unsigned char val
 // GfBdatBtl is up, stores (GfBdatBtl::fn_71001E9520(11, 0) - fn_71001E91E8(11)) / fn_71001E92F8(11) (0 when that
 // divisor is 0) at the option's 0x2E, and the same for row 12 at 0x2F.
 void fn_7100254DF0(SSoundUiOption* option);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address sits in
+// GfDataBlade.cpp's unit after fn_7100254EF0 (before GfDataBlade's own functions), among no class of its own, and it
+// reads the bytes fn_7100254DC4 stores. What it does: when GfBdatBtl is up, the option's byte at 0x24 + index - 1
+// (m_list), else 0.
+unsigned char fn_71002550C0(const SSoundUiOption* option, unsigned int index);
 
 // the sound and screen part of the option settings, 0x3C bytes at SDataOption+0x4C (1.0.0's
 // SSoundUiOption::clear and isDirty)

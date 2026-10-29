@@ -85,6 +85,12 @@ public:
     // walks GfBdatRsc's NPC list (getRscNpcListStart..End, fn_7100219C58) into the same function-static lists;
     // GfDataManager::setupGame and gevReloadBdat (type 1) call it.
     static void fn_7100255238();
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because they sit in GfDataBlade's
+    // unit after its fn_7100255238 (no class of their own; no this). What they do: for an id above 2000 with a
+    // GfBdatRsc::fn_7100219C58 value v, the 1-based slot i of the 8-bit local flags 0x10C4 + i (fn_71002557C8) or
+    // 0x11C5 + i (fn_7100255848), i < 256, that holds v - 0xED02; 0 when none.
+    static unsigned int fn_71002557C8(unsigned int id);
+    static unsigned int fn_7100255848(unsigned int id);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit. What it does: true when local flag 0xBDCD (type 1) of game's flags (+0xFBBC4) is set, else
     // whether flag 0xD880 is; GfGameManager::isClearGame passes the title's save buffer's game data.

@@ -41,6 +41,8 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because fn_710024F430 passes
     // it the game data and an event. What it does: tests the GameFlag bit fn_710024F2DC sets for the event.
     static bool fn_710024F454(const SDataGame& game, unsigned int event);
+    // whether game's saved events (SDataGame::m_savedEvents) hold event (GfGameUtil::setWatchedEvent calls it)
+    static bool isSavedEvent(unsigned int event, const SDataGame& game);
 };
 }  // namespace gf
 
