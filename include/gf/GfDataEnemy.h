@@ -11,6 +11,7 @@ public:
     // the message table and row of the enemy's name
     static bool getName(unsigned char*& bdat, unsigned int& id, unsigned int arrange);
     static const char* getVoiceStr(unsigned int arrange);
+    static const char* getResourceNameModel(unsigned int arrange);  // its resource row's model name, nullptr for none
     static unsigned int getEquipBlade(unsigned int arrange);  // the enemy's blade, 0 for none
     static bool getExtraParts(unsigned int rsc, unsigned int part);
     static void setupSDataEnemy(SDataEnemy& data, unsigned int arrange, unsigned int arg);

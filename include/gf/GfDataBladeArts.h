@@ -5,6 +5,8 @@ namespace gf {
 class GfDataBladeArts {
 public:
     static bool getName(unsigned char*& bdat, unsigned int& id, unsigned int skill);
+    // its name's text, else its debug name
+    static const char* getName(unsigned int arts);
     static bool getCaption(unsigned char*& bdat, unsigned int& id, unsigned int skill);
     static bool getExName(unsigned char*& bdat, unsigned int& id, unsigned int skill);
     static bool getExCaption(unsigned char*& bdat, unsigned int& id, unsigned int skill);

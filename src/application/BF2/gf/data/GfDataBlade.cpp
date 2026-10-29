@@ -1,6 +1,7 @@
 #include "gf/SDataDriver.h"
 #include "classes/gf/GfBdatBlade.h"
 #include "classes/gf/GfBdatItem.h"
+#include "classes/gf/GfBdatShop.h"
 #include "gf/GfDataBlade.h"
 #include "gf/GfDataHana.h"
 #include "gf/GfDataMercenaries.h"
@@ -22,6 +23,7 @@
 #include "gf/GfDataNanakoori.h"
 #include "gf/GfDataParty.h"
 #include "gf/GfDataQuest.h"
+#include "gf/GfDataShop.h"
 #include "gf/GfDataUtil.h"
 #include "gf/SDataBlade.h"
 #include "gf/SDataGame.h"
@@ -114,6 +116,18 @@ unsigned int GfDataEnemy::getBladeID(unsigned int arrange) {
     return GfBdatChrEnArrange::get()->getChrEnArrangeBladeID(arrange);
 }
 
+unsigned int GfDataEnemy::getEquipBlade(unsigned int arrange) {
+    if (arrange == 0) {
+        return 0;
+    }
+    GfBdatChrEnArrange* bdat = GfBdatChrEnArrange::get();
+    unsigned int enemy = bdat->getChrEnArrangeEnemyBladeID(arrange);
+    if (bdat->getChrEnArrangeStart() > enemy || bdat->getChrEnArrangeEnd() <= enemy) {
+        return 0;
+    }
+    return GfBdatChrEnArrange::get()->getChrEnArrangeBladeID(enemy);
+}
+
 unsigned int GfDataEnemy::getEquipBladeEnArrangeID(unsigned int arrange) {
     if (arrange == 0) {
         return 0;
@@ -148,6 +162,14 @@ unsigned int GfDataBlade::getRoleByWpnType(unsigned int wpnType) {
 
 unsigned int GfDataHana::getCondenserNum(unsigned int hana) {
     return GfBdatBtl::get()->getBTL_HanaBaseNCondNum(hana - 1004);
+}
+
+unsigned int GfDataBlade::getBladeWeaponRank(unsigned int blade) {
+    unsigned int weapon = getSDataBlade(blade)->m_equipWeapon;
+    if (weapon == 0) {
+        return 0;
+    }
+    return GfBdatItem::get()->getPcWpnRank(weapon);
 }
 
 unsigned int GfDataDriver::fn_7100241C04(unsigned int driver) {
@@ -282,6 +304,33 @@ const char* GfDataMap::getMapResourceNameByMapID(unsigned int mapId) {
     return GfBdatMaplist::get()->getMaplistresource(mapId);
 }
 
+bool GfDataMap::getTimeRangeName(unsigned char*& bdat, unsigned int& id, unsigned int range) {
+    bool result = false;
+    if (range <= 8) {
+        GfBdatMaplist* maplist = GfBdatMaplist::get();
+        bdat = GfBdatMsg::getFpMapInfo();
+        id = maplist->getTimeInfomsg(range);
+        result = id != 0;
+    }
+    return result;
+}
+
+const char* GfDataMap::getWeatherName(WEATYPE type) {
+    if (type == 0) {
+        return "Default";
+    }
+    const char* name = nullptr;
+    if (type > 0) {
+        GfBdatMaplist* maplist = GfBdatMaplist::get();
+        unsigned char* bdat = GfBdatMsg::getFpMapInfo();
+        unsigned int id = maplist->getWeatherInfomsg(type);
+        if (id != 0) {
+            name = Bdat::getMSText(bdat, id);
+        }
+    }
+    return name == nullptr ? "" : name;
+}
+
 unsigned int GfDataMap::getWeatherForceConditionOn(unsigned int mapId, WEATHERID weather) {
     return GfBdatMaplist::get()->getMaplistw_ON_cndID(mapId, weather - 1);
 }
@@ -398,6 +447,21 @@ void GfDataUtil::setRandomInn() {
 
 void GfDataBlade::setHomuriNameHikari(bool hikari) {
     GfGameFlag::setLocal(1, 35323, hikari);
+}
+
+unsigned int GfDataBlade::makeNormalTalkByPersonality(unsigned int personality) {
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BA078)
+    static const unsigned short s_normalTalks[] = {
+        0xA235, 0xA235, 0xA236, 0xA237, 0xA238, 0xA238, 0xA239, 0xA239, 0xA23A, 0xA23A, 0xA23B,
+        0xA23B, 0xA23C, 0xA23C, 0xA23D, 0xA23D, 0xA23E, 0xA23E, 0xA23F, 0xA23F, 0xA240, 0xA240,
+        0xA241, 0xA241, 0xA242, 0xA242, 0xA243, 0xA243, 0xA244, 0xA244, 0xA245, 0xA246,
+    };
+    unsigned int voice = GfBdatBtl::get()->getBTL_Bl_PersonalityVoiceID(personality);
+    unsigned int index = voice == 0 ? 0 : voice - 61;
+    if (index < 32) {
+        return s_normalTalks[index];
+    }
+    return 0;
 }
 
 int GfDataDevelop::getPoint(unsigned int zone) {
@@ -1343,6 +1407,17 @@ bool GfDataBladeSkill::getName(unsigned char*& bdat, unsigned int& id, unsigned 
     return id != 0;
 }
 
+const char* GfDataBladeArts::getName(unsigned int arts) {
+    unsigned char* bdat;
+    unsigned int id;
+    if (getName(bdat, id, arts)) {
+        if (const char* name = Bdat::getMSText(bdat, id)) {
+            return name;
+        }
+    }
+    return GfBdatBtl::get()->getArtsBlDebugName(arts);
+}
+
 bool GfDataDriver::getName(unsigned char*& bdat, unsigned int& id, unsigned int row) {
     id = GfBdatChrDr::get()->getChrDrName(row);
     bdat = GfBdatMsg::getFpChrDr();
@@ -1387,6 +1462,16 @@ bool GfDataDriverSkill::getName(unsigned char*& bdat, unsigned int& id, unsigned
 
 bool GfDataWeapon::getWeaponTypeName(unsigned char*& bdat, unsigned int& id, unsigned int row) {
     id = GfBdatItem::get()->getPcWpnTypeName(row);
+    bdat = GfBdatMsg::getFpPcWpnType();
+    return id != 0;
+}
+
+bool GfDataWeapon::getWeaponTypeNameByItem(unsigned char*& bdat, unsigned int& id, unsigned int weapon) {
+    unsigned int type = GfBdatItem::get()->getPcWpnWpnType(weapon);
+    if (type == 0) {
+        return false;
+    }
+    id = GfBdatItem::get()->getPcWpnTypeName(type);
     bdat = GfBdatMsg::getFpPcWpnType();
     return id != 0;
 }
@@ -1723,9 +1808,26 @@ bool GfDataBlade::getExtraParts(unsigned int blade, unsigned int part) {
     return data.m_extraParts[part] != 0;
 }
 
+unsigned int GfDataBlade::getLinkChNum(unsigned int blade) {
+    unsigned int linkSet = getSDataBlade(blade)->m_kizunaLinkSet;
+    if (linkSet == 0) {
+        return 0;
+    }
+    return GfBdatBtl::get()->getBTL_Bl_KizunaLinkSetLinkChNum(linkSet);
+}
+
 const BladeArtsSlot* GfDataBlade::getArts(unsigned int blade, unsigned int index) {
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
     return &data.m_arts[index];
+}
+
+unsigned int GfDataBlade::getArtsEnhance(unsigned int blade, unsigned int index) {
+    if (GfDataHana::isValid(blade)) {
+        unsigned int bladeIndex = getBladeIndex(blade);
+        SDataGame* game = GfDataManager::getDataGame();
+        return GfBdatItem::get()->getITM_HanaArtsEnhEnhance(game->m_blades[bladeIndex].m_equipHana.m_artsParts[index].m_item);
+    }
+    return 0;
 }
 
 const BladeSkillSlot* GfDataBlade::getSkill(unsigned int blade, unsigned int index) {
@@ -2092,6 +2194,18 @@ const char* GfDataEnemy::getAddMotionName(unsigned int rsc) {
     return nullptr;
 }
 
+const char* GfDataEnemy::getResourceNameModel(unsigned int arrange) {
+    unsigned int param = GfBdatChrEnArrange::get()->getChrEnArrangeParamID(arrange);
+    if (param == 0) {
+        return nullptr;
+    }
+    unsigned int rsc = GfBdatChrEnParam::get()->getChrEnParamResourceID(param);
+    if (rsc == 0) {
+        return nullptr;
+    }
+    return GfBdatRsc::get()->getRscEnModel(rsc);
+}
+
 bool GfDataEnemy::fn_7100235424(unsigned int rsc, unsigned int part) {
     return GfBdatRsc::get()->getRscEnExtraParts(rsc, part) == 2;
 }
@@ -2306,6 +2420,36 @@ unsigned int GfDataEnBook::getDefeatNum(unsigned int arrange) {
     return GfGameFlag::getLocal(0x20, book + 0x142);
 }
 
+void GfDataEnBook::incDefeatNum(unsigned int arrange) {
+    if (arrange == 0) {
+        return;
+    }
+    unsigned int book = GfBdatChrEnArrange::get()->getChrEnArrangeBookID(arrange);
+    if (book == 0) {
+        return;
+    }
+    unsigned int num = GfGameFlag::getLocal(0x20, book + 0x142);
+    if (num == 0xFFFFFFFF) {
+        return;
+    }
+    GfGameFlag::setLocal(0x20, book + 0x142, num + 1);
+}
+
+void GfDataEnBook::incDeadNum(unsigned int arrange) {
+    if (arrange == 0) {
+        return;
+    }
+    unsigned int book = GfBdatChrEnArrange::get()->getChrEnArrangeBookID(arrange);
+    if (book == 0) {
+        return;
+    }
+    unsigned int num = GfGameFlag::getLocal(0x20, book + 0x52B);
+    if (num == 0xFFFFFFFF) {
+        return;
+    }
+    GfGameFlag::setLocal(0x20, book + 0x52B, num + 1);
+}
+
 bool GfDataEnemy::getExtraParts(unsigned int rsc, unsigned int part) {
     if (part > 3) {
         return true;
@@ -2395,6 +2539,26 @@ bool GfDataEnBook::isAttackFlag(unsigned int arrange) {
     return GfGameFlag::getLocal(1, book + 48590) != 0;
 }
 
+void GfDataEnBook::setAttackFlag(unsigned int arrange) {
+    if (arrange == 0) {
+        return;
+    }
+    unsigned int book = GfBdatChrEnArrange::get()->getChrEnArrangeBookID(arrange);
+    if (book == 0) {
+        return;
+    }
+    if (GfGameFlag::getLocal(1, book + 48590) != 0) {
+        return;
+    }
+    GfGameFlag::setLocal(1, book + 48590, 1);
+    for (unsigned int i = 1892; i < 2892; i++) {
+        if (GfGameFlag::getLocal(0x10, i) == 0) {
+            GfGameFlag::setLocal(0x10, i, (unsigned short)arrange);
+            return;
+        }
+    }
+}
+
 bool GfDataQuest::getTitle(unsigned char*& fp, unsigned int& id, QuestID quest) {
     id = QuestListAcc::get()->getListQuestTitle(quest);
     if (id == 0) {
@@ -2446,6 +2610,20 @@ mm::mtl::FixedVector<TaskAchieve, 128>* GfDataQuest::getTaskAchieve() {
 
 GfDataMercenaries::Preset* GfDataMercenaries::getPreset(unsigned int index) {
     return &GfDataManager::getDataGame()->m_mercenaryPresets[index];
+}
+
+unsigned int GfDataShop::getPrivilegeItem(unsigned int shop) {
+    unsigned int bit = getItemBit(shop);
+    if (bit == 0) {
+        return 0;
+    }
+    GfBdatShop* bdat = GfBdatShop::get();
+    unsigned int table = bdat->getShopListTableID(shop);
+    unsigned int flag = GfBdatShop::get()->getShopNormalPrivilegeFlag(table);
+    if (bit != GfGameFlag::getLocal(0x20, flag)) {
+        return 0;
+    }
+    return bdat->getShopNormalPrivilegeItem(table);
 }
 
 void GfDataUtil::setChapterSave(unsigned int id, unsigned short value) {
@@ -2545,6 +2723,18 @@ unsigned int GfDataEnemy::getRscIdByArrangeId(unsigned int arrange) {
         return 0;
     }
     return GfBdatChrEnParam::get()->getChrEnParamResourceID(param);
+}
+
+const char* GfDataEnemy::getVoiceStr(unsigned int arrange) {
+    unsigned int param = GfBdatChrEnArrange::get()->getChrEnArrangeParamID(arrange);
+    if (param == 0) {
+        return nullptr;
+    }
+    unsigned int rsc = GfBdatChrEnParam::get()->getChrEnParamResourceID(param);
+    if (rsc == 0) {
+        return nullptr;
+    }
+    return GfBdatRsc::get()->getRscEnVoice(rsc);
 }
 
 unsigned int GfDataQuest::getListQuestCategory(QuestID id) {
@@ -2726,6 +2916,14 @@ bool GfDataBlade::getMercenaryName(unsigned char*& bdat, unsigned int& id, unsig
     id = GfBdatChrBl::get()->getChrBlMerceName(blade);
     bdat = GfBdatMsg::getFpMerceName();
     return id != 0;
+}
+
+unsigned int GfDataBlade::getVoiceID(unsigned int blade) {
+    unsigned int personality = getSDataBlade(blade)->m_personality;
+    if (personality == 0) {
+        return 0;
+    }
+    return GfBdatBtl::get()->getBTL_Bl_PersonalityVoiceID(personality);
 }
 
 bool GfDataMercenaries::getMsgZoneName(unsigned char*& bdat, unsigned int& id, unsigned int mission) {

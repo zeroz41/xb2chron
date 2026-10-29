@@ -142,7 +142,9 @@ public:
     unsigned char m_releaseLock;  // (named after its accessor; the name is not the original's)
     unsigned char m_footStep;  // (named after its accessor; the name is not the original's)
     unsigned char m_footStepEffect;  // (named after its accessor; the name is not the original's)
-    unsigned char pad_84a[0x2];
+    // its BTL_Bl_KizunaLinkSet row (GfDataBlade::getLinkChNum passes it to GfBdatBtl::getBTL_Bl_KizunaLinkSetLinkChNum;
+    // the name is not the original's)
+    unsigned short m_kizunaLinkSet;
     unsigned short m_normalTalk;  // (named after its accessor; the name is not the original's)
     unsigned char pad_84e[0x2];
     unsigned int m_createEvent;  // (named after its accessor; the name is not the original's)

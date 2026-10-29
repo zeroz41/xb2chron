@@ -11,6 +11,7 @@ public:
     static unsigned int getZoneIdForGameMap(unsigned int map);
     static unsigned int getFieldZoneId(unsigned int id);  // SCOM_ADD_DEVELOP::createGmk passes its first argument
     static unsigned int getDevelopMapId(unsigned int zone);
+    static const char* getWeatherName(WEATYPE type);  // "Default" for none, "" when it has no name
     static const char* getWeatherEffName(WEATYPE type);  // the weather's effect, null or empty for none
     static const char* getWeatherSndName(WEATYPE type);  // the weather's loop sound, null or empty for none
     static const char* getWeatherSndBeginName(WEATYPE type);  // the sound it starts with, null or empty for none

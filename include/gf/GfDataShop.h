@@ -6,6 +6,7 @@ namespace gf {
 class GfDataShop {
 public:
     // the privilege item a shop grants, 0 for none (GfGameScene::gevExecBuy asks shop 39)
+    static unsigned int getItemBit(unsigned int shop);
     static unsigned int getPrivilegeItem(unsigned int shop);
 };
 }  // namespace gf

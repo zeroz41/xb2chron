@@ -196,8 +196,7 @@ public:
     static bool getTaskSkillMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line);
     static bool getTaskTitleMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line,
                                     unsigned int level);
-    // reads the blade's u16 game-data value (row stride 0x8A4, +0x6276) and, when set, a u16 column of GfBdatBtl's
-    // table at 0x80 for that row
+    // the LinkChNum of the blade's KizunaLinkSet row, 0 for none
     static unsigned int getLinkChNum(unsigned int blade);
     static bool getTaskResultMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line,
                                      unsigned int level);
@@ -290,6 +289,10 @@ public:
     static const char* getVoiceStr(unsigned int blade);
     static const BladeArtsSlot* getArts(unsigned int blade, unsigned int index);
     static unsigned int getArtsEnhance(unsigned int blade, unsigned int index);
+    static unsigned int getBladeWeaponRank(unsigned int blade);  // its weapon's rank, 0 for none
+    static unsigned int getVoiceID(unsigned int blade);  // its personality's voice id, 0 for none
+    // the normal-talk message for a personality's voice id (0 when the id is outside the table)
+    static unsigned int makeNormalTalkByPersonality(unsigned int personality);
     static const BladeArtsSlot* getNArts(unsigned int blade, unsigned int index);
     static unsigned int getFavorite(unsigned int blade, FAVORITE favorite);
     static bool isUsedFavorite(unsigned int blade, FAVORITE favorite);  // whether the favorite has been used (seen)
