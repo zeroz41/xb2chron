@@ -5,6 +5,8 @@
 #include "classes/fw/PadManager.h"
 #include "classes/ml/DevPad.h"
 #include "classes/fw/CommonResource.h"
+#include "classes/fw/PadFilterStd.h"
+#include "classes/fw/PadFilterStd.h"
 #include "ml/MlMem.h"
 #include "mm/mtl/FixStr.h"
 #include "ctype.h"
@@ -73,5 +75,7 @@ void PadManager::initVibData() {
         }
     }
 }
+
+PadFilterStd::~PadFilterStd() {}
 
 }  // namespace fw
