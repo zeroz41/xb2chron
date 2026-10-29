@@ -511,12 +511,20 @@ void ObjectCamera::end() {
     }
 }
 
+void ObjectCamera::render(const mm::Col4&) {
+    SeqManager::getPtr();
+}
+
 void ObjectCamera::tail() {
     m_cam->tail();
 }
 
 bool ObjectCamera::OnBouRectSelect(const IBouCallback::SelectParam&) {
     return false;
+}
+
+void ObjectCamera::OnManiRender(IManiCallback::RenderParam&) {
+    SeqManager::getPtr();
 }
 
 Object::~Object() {
@@ -1091,6 +1099,18 @@ void MovieManager::OnEventProc(event::MSG_TYPE msg) {
 #include "classes/event/CamManager.h"
 
 namespace event {
+
+CamManager::CamManager() : pad_10(0), pad_14(0), m_cur(nullptr) {}
+
+void CamManager::init() {
+    pad_10 = 0;
+    for (unsigned long i = 0; i < 4; i++) {
+        CamInterface* cam = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+            CamInterface(static_cast<fw::CAMERA_TYPE>(i));
+        cam->addRef();
+        m_interfaces.push_back(cam);
+    }
+}
 
 void CamManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
