@@ -10,6 +10,7 @@ namespace gf {
 // table 0x7100B511D8; its PtrSingleton at 0x630 (the destructors store PtrSingleton<BgmBattle>'s table there)
 class BgmBattle : public ::gf::BgmTrack, public ::mm::mtl::PtrSingleton< ::gf::BgmBattle> {
 public:
+    explicit BgmBattle(GfFieldBgm* fieldBgm);
     virtual ~BgmBattle();  // slot 0
     virtual const char* getTrackName() const;  // slot 2
     virtual void update(fw::UpdateInfo const&);  // slot 4

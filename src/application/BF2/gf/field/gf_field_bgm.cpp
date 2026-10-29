@@ -325,11 +325,56 @@ void GfFieldBgm::fn_7100262E58(const mm::mtl::FixStr<64>& name) {
     }
 }
 
+BgmBattle::BgmBattle(GfFieldBgm* fieldBgm) : BgmTrack(fieldBgm, true) {
+    addVolumeFade(_gffsn::bgmvolStop, 1.0f, 1.0f, true);
+    addVolumeFade(_gffsn::bgmvolCondition, 4.0f, 4.0f, true);
+    addVolumeFade(_gffsn::bgmvolBattleBoss, 2.0f, 8.0f, false);
+    addVolumeFade(_gffsn::bgmvolFadeNotBattle, 2.0f, 2.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeLeaveGame, 1.0f, 1.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeDeadSequence, 2.0f, 99.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeEnableEventBgm, 2.0f, 2.0f, true);
+    m_keepBgmCondID = true;
+    fn_7100263490(m_fieldBgm->getRscBattleBgmID());
+}
+
+BgmTrack::BgmTrack(GfFieldBgm* fieldBgm, bool battle)
+    : m_bgmCondID(0), m_battle(battle), m_keepBgmCondID(false), m_baseVolume(1.0f), m_fadeVolume(1.0f),
+      m_fadeScale(1.0f), pad_61C(0), m_fieldBgm(fieldBgm), m_copied(false), m_category(1) {
+    m_conds.assign(BGMCOND());
+    for (unsigned int i = 0; i < 4; i++) {
+        m_conds[i].m_conditionNo = i;
+    }
+}
+
+void BgmTrack::fn_7100263490(unsigned int id) {
+    if (m_bgmCondID != 0) {
+        for (unsigned long i = 0; i < 4; ++i) {
+            if (!(m_conds[i].m_volume <= 0.0f)) {
+                return;
+            }
+        }
+        stopBGM(0.0f);
+    }
+    m_bgmCondID = id;
+}
+
 void BgmBattle::update(const fw::UpdateInfo& info) {
     if (getBgmCondID() != m_fieldBgm->getRscBattleBgmID()) {
         fn_7100263490(m_fieldBgm->getRscBattleBgmID());
     }
     BgmTrack::update(info);
+}
+
+BgmBattleBoss::BgmBattleBoss(GfFieldBgm* fieldBgm) : BgmTrack(fieldBgm, true) {
+    addVolumeFade(_gffsn::bgmvolStop, 1.0f, 1.0f, true);
+    addVolumeFade(_gffsn::bgmvolBossCondition, 4.0f, 4.0f, true);
+    addVolumeFade(_gffsn::bgmvolNotBattleBoss, 8.0f, 2.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeEvent, 2.0f, 2.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeNotBattle, 2.0f, 2.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeLeaveGame, 1.0f, 1.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeDeadSequence, 2.0f, 99.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeEnableEventBgm, 2.0f, 2.0f, true);
+    fn_7100263490(m_fieldBgm->getRscBossBattleBgmID());
 }
 
 void BgmTrack::stopBGM(float time) {
@@ -415,6 +460,21 @@ float BgmTrack::getTotalTime() const {
     return result;
 }
 
+BgmField::BgmField(GfFieldBgm* fieldBgm) : BgmTrack(fieldBgm, false) {
+    addVolumeFade(_gffsn::bgmvolAdvertize, 1.0f, 1.0f, true);
+    addVolumeFade(_gffsn::bgmvolStop, 1.0f, 1.0f, true);
+    addVolumeFade(_gffsn::bgmvolCondition, 4.0f, 4.0f, true);
+    addVolumeFade(_gffsn::bgmvolMapMatch, 4.0f, 4.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeBattle, 2.0f, 2.0f, false);
+    addVolumeFade(_gffsn::bgmvolFadeLeaveGame, 1.0f, 1.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeGimmick, 1.0f, 1.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeEnableEventBgm, 2.0f, 2.0f, true);
+    addVolumeFade(_gffsn::bgmvolIsBattleDead, 2.0f, 2.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeBattleEvent, 2.0f, 2.0f, true);
+}
+
+BgmField::~BgmField() {}
+
 void BgmField::update(const fw::UpdateInfo& info) {
     unsigned int id = m_fieldBgm->getRscFieldBgmID();
     if (getBgmCondID() != id) {
@@ -424,6 +484,19 @@ void BgmField::update(const fw::UpdateInfo& info) {
         m_bgmCondID = id;
     }
     BgmTrack::update(info);
+}
+
+BgmGimmick::BgmGimmick(GfFieldBgm* fieldBgm) : BgmTrack(fieldBgm, false) {
+    addVolumeFade(_gffsn::bgmvolAdvertize, 1.0f, 1.0f, true);
+    addVolumeFade(_gffsn::bgmvolStop, 1.0f, 1.0f, true);
+    addVolumeFade(_gffsn::bgmvolCondition, 4.0f, 4.0f, true);
+    addVolumeFade(_gffsn::bgmvolGimmickMatch, 4.0f, 4.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeBattle, 2.0f, 2.0f, false);
+    addVolumeFade(_gffsn::bgmvolFadeLeaveGame, 1.0f, 1.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeEnableEventBgm, 2.0f, 2.0f, true);
+    addVolumeFade(_gffsn::bgmvolIsBattleDead, 2.0f, 2.0f, true);
+    addVolumeFade(_gffsn::bgmvolFadeBattleEvent, 2.0f, 2.0f, true);
+    addVolumeFade(_gffsn::fn_7100261C30, 2.0f, 2.0f, false);
 }
 
 void BgmGimmick::update(const fw::UpdateInfo& info) {
@@ -468,8 +541,11 @@ unsigned int BgmTrack::getBgmConditionBgmID(unsigned int id, unsigned int index)
 }
 
 BgmTrack::~BgmTrack() {}
+BgmGimmick::~BgmGimmick() {}
 const char* BgmGimmick::getTrackName() const { return "GimmickBGM"; }
+BgmBattle::~BgmBattle() {}
 const char* BgmBattle::getTrackName() const { return "BattleBGM"; }
+BgmBattleBoss::~BgmBattleBoss() {}
 const char* BgmBattleBoss::getTrackName() const { return "BossBGM"; }
 BgmEvent::~BgmEvent() {}
 const char* BgmEvent::getTrackName() const { return "EventBGM"; }

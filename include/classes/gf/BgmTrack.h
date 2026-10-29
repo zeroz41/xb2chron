@@ -25,13 +25,14 @@ struct BGMCOND {
     unsigned int m_playNo;
     bool m_playing;
     bool m_requested;
-    unsigned char pad_12[0x2];
     // the BGM file it plays (1.0.0's BGMCOND::isSilentPlay compares it with "SilentBgm"; BgmTrack::isPlaying
     // counts an entry with a name as playing; the name is not the original's)
     mm::mtl::FixStr<64> m_bgmFileName;
     // which of the BGM condition row's set conditions plays (the bgmvol checks hand it to
     // BgmTrack::getBgmConditionConditionID as the index; the name is not the original's)
     unsigned int m_conditionNo;
+    // BgmTrack's constructor builds one on the stack and inlines this into its four entries
+    BGMCOND() : m_volume(0.0f), m_playNo(0), m_playing(false), m_requested(false), m_conditionNo(0) {}
 
     // 1.0.0's out-of-line BGMCOND::clear (3.0.1 inlines it into BgmTrack::stopCondBGM): the name emptied when set,
     // the handle cleared when valid, the values zeroed
@@ -70,7 +71,18 @@ struct ExecFadeParam {
 // table 0x7100B51390
 class BgmTrack {
 public:
+    BgmTrack(GfFieldBgm* fieldBgm, bool battle);
     virtual ~BgmTrack();  // slot 0
+    // 1.0.0's out-of-line BgmTrack::addVolumeFade(func, out, in, flag) (3.0.1's constructors inline it): a check
+    // added to the volume fades
+    void addVolumeFade(float (*func)(ExecFadeParam&), float fadeOutTime, float fadeInTime, bool flag) {
+        BgmVolumeFade fade;
+        fade.m_func.set(func);
+        fade.m_fadeOutTime = fadeOutTime;
+        fade.m_fadeInTime = fadeInTime;
+        fade.m_flag = flag;
+        m_volumeFades.push_back(fade);
+    }
     virtual const char* getTrackName() const = 0;  // slot 2
     virtual bool isPlaying() const;  // slot 3
     virtual void update(fw::UpdateInfo const&);  // slot 4
@@ -113,7 +125,10 @@ public:
     // element type unproven (its size fits 0x170 = 4 x BGMCOND); ~BgmTrack clears its count at +0x600
     mm::mtl::FixedVector<BGMCOND, 4> m_bgmConds;
     unsigned int m_bgmCondID;  // 1.0.0's getBgmCondID reads it
-    unsigned char pad_60C[0x2];
+    // the constructor's flag: BgmBattle and BgmBattleBoss pass true, the other tracks false (the name is not the
+    // original's)
+    bool m_battle;
+    unsigned char pad_60D[0x1];
     // stopBGM keeps m_bgmCondID while it is set (the name is not the original's)
     bool m_keepBgmCondID;
     unsigned char pad_60F[0x1];
@@ -122,7 +137,7 @@ public:
     // stopBGM sets them to 0 and 1, GfFieldBgm::destroy both to 1 (the names are not the original's)
     float m_fadeVolume;
     float m_fadeScale;
-    unsigned char pad_61C[0x4];
+    unsigned int pad_61C;  // the constructor clears it
     GfFieldBgm* m_fieldBgm;  // the owner (the constructors take it)
     bool m_pause;  // setPause stores it (1.0.0's symbol names the setter)
     // GfFieldBgm::isBossBgmCopied reads it on the boss track (the name is not the original's)
