@@ -8,6 +8,7 @@ namespace nn { namespace mem {
 // says whether Initialize ran: the destructor finalizes only then
 class StandardAllocator {
 public:
+    StandardAllocator();
     ~StandardAllocator() {
         if (m_Initialized) {
             Finalize();

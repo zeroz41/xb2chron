@@ -16,7 +16,8 @@ void CopyMemory64(const void* source, void* destination, unsigned long size);
 // a buffer the library allocated for a caller (TextRef::GetText fills one: the text and its length); the
 // names are not the original's
 struct MemoryBlock {
-    MemoryBlock() : address(nullptr), size(0) {}
+    // no constructor: SystemCorePlatform's three blocks are left unset by its (inline) constructor; String's
+    // and Thread's constructors value-initialize theirs
 
     // gives the buffer back to SoundMemory::allocator_ (FileStream::Open frees the path text so)
     void Free() {

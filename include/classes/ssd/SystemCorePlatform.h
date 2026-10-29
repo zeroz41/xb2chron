@@ -36,7 +36,10 @@ public:
     virtual void LockAudio() const = 0;  // slot 16
     virtual void UnlockAudio() const = 0;  // slot 17
     virtual void* GetPlatformDataImpl(char const* name);  // slot 18
-    virtual ~SystemCorePlatform();  // slot 19
+    // inline: SystemCore's constructor and destructor inline both; the table's unit keeps a weak copy of the
+    // destructor after its own code
+    SystemCorePlatform() {}
+    virtual ~SystemCorePlatform() {}  // slot 19
     virtual const DebugInfo* GetDebugInfo() const = 0;  // slot 21
 
     // an effect's bus: the effect, its buffer mixer and their channels (the field names are not the original's;

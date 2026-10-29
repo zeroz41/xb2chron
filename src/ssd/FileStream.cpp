@@ -47,7 +47,7 @@ FileStream::FileStream() : IoStreamBase(ObjectType::Id(0xC)), position_(0), size
 
 Result FileStream::Open(const TextRef& path, OpenMode) {
     position_ = 0;
-    MemoryBlock name;
+    MemoryBlock name = {};
     path.GetText(&name, TextEncodeType_Utf8);
     nn::Result result = nn::fs::OpenFile(&handle_, static_cast<const char*>(name.address), nn::fs::OpenMode_Read);
     name.Free();

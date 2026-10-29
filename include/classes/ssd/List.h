@@ -14,7 +14,10 @@ public:
     // a link: the previous and the next node (a lone node links to itself)
     class Node {
     public:
-        Node() : prev(this), next(this) {}
+        // next first: SystemCore's constructor stores each node's next before its prev
+        Node() {
+            prev = next = this;
+        }
         virtual ~Node() {}  // slot 0
 
         Node* prev;

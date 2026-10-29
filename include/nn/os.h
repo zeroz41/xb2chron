@@ -99,6 +99,9 @@ void WaitSystemEvent(SystemEventType* event);
 
 class SystemEvent {
 public:
+    SystemEvent() {
+        m_SystemEvent._state = 0;
+    }
     ~SystemEvent() {
         if (m_SystemEvent._state == 0) {
             return;

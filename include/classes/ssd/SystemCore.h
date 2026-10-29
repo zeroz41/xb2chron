@@ -7,6 +7,7 @@
 #include "classes/ssd/XorShift128Random.h"
 #include "classes/ssd/Array.h"
 #include "classes/ssd/SoundCategory.h"
+#include "classes/ssd/SoundGroup.h"
 #include "ssd/Mutex.h"
 #include "ssd/Thread.h"
 
@@ -17,12 +18,14 @@ namespace ssd { class SoundHandle; }
 namespace ssd { class SoundListener; }
 namespace ssd { class VoiceHandle; }
 namespace ssd { class StreamController; }
+namespace ssd { namespace Delegate { class Handle; }}
 namespace ssd { namespace OutputMode { enum Type : int; }}  // the values are not known yet
 
 namespace ssd {
 // table 0x7100B81D10
 class SystemCore : public ::ssd::SystemCorePlatform {
 public:
+    // builds every member; Init sets them up
     SystemCore();
     virtual OutputMode::Type GetOutputMode() const;  // slot 0
     virtual void SetOutputMode(OutputMode::Type);  // slot 1
@@ -120,16 +123,21 @@ public:
     List<SoundBank> banks_;  // 0x418: AddBank / RemoveBank
     List<SoundActor> actors_;  // 0x440: ConnectActor / DisconnectActor
     Array<SoundCategory> categories_;  // 0x468: GetCategory (the first one is the default)
-    unsigned char pad_480[0x60];
+    SoundGroup group_;  // 0x480: the constructor builds it with the defaults (id 0, 256 sounds)
+    void* pad_4a0;  // the constructor zeroes it
+    unsigned char pad_4a8[0x8];
+    Array<SoundListener*> listeners_;  // 0x4B0
+    Array<SoundEffecter*> effecters_;  // 0x4C8
     float speedOfSound_;  // 0x4E0
     unsigned char pad_4e4[0x4];
     Thread audioThread_;  // 0x4E8: runs AudioThreadEntry
     mutable Mutex audioLock_;  // 0x708: LockAudio / UnlockAudio
     Thread streamThread_;  // 0x730: runs StreamThreadEntry
     List<StreamController> streams_;  // 0x950: AddStreamController / RemoveStreamController
-    unsigned char pad_978[0x28];
+    List<BehaviorControl> behaviors_;  // 0x978: the running BehaviorInstances (master volume and pitch)
     XorShift128Random random_;  // 0x9A0
-    unsigned char pad_9b8[0x40];
+    Mutex delegateLock_;  // 0x9B8
+    Array<Delegate::Handle*> delegates_;  // 0x9E0
     CpuLoad cpuLoad_[2];  // 0x9F8: GetAudioCpuLoad reads the one cpuLoadIndex_ does not select
     double frameStartTime_;  // 0xA18: AudioThreadEntry sets it with startTime_
     int cpuLoadIndex_;

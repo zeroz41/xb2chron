@@ -59,6 +59,4 @@ void SystemCorePlatform::FreeAudioDataBuffer(void* buffer) {
     audioDataAllocator_.Free(buffer);
 }
 
-SystemCorePlatform::~SystemCorePlatform() {}
-
 }  // namespace ssd

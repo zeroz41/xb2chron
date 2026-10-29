@@ -9,7 +9,7 @@
 
 namespace ssd {
 
-String::String() : TextRef(TextEncodeType_Utf16) {}
+String::String() : TextRef(TextEncodeType_Utf16), data_() {}
 
 String::~String() {
     FreeImpl();

@@ -106,6 +106,10 @@ void SoundParam::Init() {
     value90_ = 1.0f;
 }
 
+SystemCore::SystemCore() : pad_2e8(), pad_4a0(nullptr) {}
+
+SystemCore::~SystemCore() {}
+
 void SystemCore::SetMasterVolume(float volume, float fadeTime) {
     masterVolume_.Start(this, &SystemCore::MasterVolumeBehavior, volume, fadeTime);
 }
