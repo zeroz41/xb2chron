@@ -15,6 +15,11 @@ void fn_7100254EF0(SSoundUiOption* option, unsigned int type);
 // 4 at the option's 0x23 and value at 0x24 + index - 1, then calls fn_7100254DF0 on the option;
 // GfMenuObjOption::initOptionData passes each difficulty bdat row's default level - 1.
 void fn_7100254DC4(SSoundUiOption* option, unsigned int index, unsigned char value);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address sits in
+// GfDataBlade.cpp's unit next to fn_7100254DC4 (its only caller), among no class of its own. What it does: when
+// GfBdatBtl is up, stores (GfBdatBtl::fn_71001E9520(11, 0) - fn_71001E91E8(11)) / fn_71001E92F8(11) (0 when that
+// divisor is 0) at the option's 0x2E, and the same for row 12 at 0x2F.
+void fn_7100254DF0(SSoundUiOption* option);
 
 // the sound and screen part of the option settings, 0x3C bytes at SDataOption+0x4C (1.0.0's
 // SSoundUiOption::clear and isDirty)

@@ -95,6 +95,7 @@
 #include "classes/gf/GfEvent.h"
 #include "classes/gf/GfBdatMsg.h"
 #include "gf/QuestListAcc.h"
+#include "gf/SDataOption.h"
 #include "gf/GfDataNpc.h"
 #include "gf/GfDataBladeArtsN.h"
 #include "gf/GfDataDriverSkill.h"
@@ -544,6 +545,40 @@ void GfDataMercenaries::clearNewMission(unsigned int mission) {
     GfGameFlag::setLocal(1, mission + 39575, 1);
 }
 
+unsigned int GfDataMercenaries::getFieldSkill1(unsigned int mission) {
+    QuestID quest = getMissionQuestID(mission);
+    if (!quest.empty()) {
+        unsigned int hints = GfDataQuest::getListHintsID(quest);
+        if (hints != 0) {
+            return QuestListAcc::get()->getHintsFSkillID1(hints);
+        }
+    }
+    return 0;
+}
+
+unsigned int GfDataMercenaries::getFieldSkill2(unsigned int mission) {
+    QuestID quest = getMissionQuestID(mission);
+    if (!quest.empty()) {
+        unsigned int hints = GfDataQuest::getListHintsID(quest);
+        if (hints != 0) {
+            return QuestListAcc::get()->getHintsFSkillID2(hints);
+        }
+    }
+    return 0;
+}
+
+unsigned int GfDataMercenaries::getFieldSkill3(unsigned int mission) {
+    QuestID quest = getMissionQuestID(mission);
+    if (!quest.empty()) {
+        QuestListAcc* acc = QuestListAcc::get();
+        unsigned int hints = GfDataQuest::getListHintsID(quest);
+        if (hints != 0) {
+            return acc->getHintsFSkillID3(hints);
+        }
+    }
+    return 0;
+}
+
 unsigned int GfDataNanakoori::getVocalLevel() {
     return GfGameFlag::getLocal(8, 2127);
 }
@@ -690,6 +725,13 @@ unsigned char GfDataUtil::getCameraSide() {
 
 void GfDataUtil::setCameraSide(unsigned char value) {
     GfDataManager::getDataGame()->m_cameraSide = value;
+}
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B50BE8)
+static const char* s_attributeFileNames[] = {"none", "fire", "water", "wind", "earth", "volt", "ice", "light", "dark"};
+
+const char* GfDataUtil::getAttributeFileName(unsigned int attribute) {
+    return s_attributeFileNames[attribute];
 }
 
 unsigned int GfDataBlade::getStartCommonBlade() {
@@ -876,6 +918,45 @@ SDataIdea* GfDataBlade::getSDataIdea(unsigned int blade) {
     return &data.m_idea;
 }
 
+const char* GfDataBlade::getName(unsigned int blade, unsigned int kind) {
+    if (fn_71002364B8(blade)) {
+        unsigned int row = blade - 1107;
+        unsigned int id = GfBdatChrDr::get()->getChrDrName(row);
+        unsigned char* fp = GfBdatMsg::getFpChrDr();
+        if (id == 0) {
+            return nullptr;
+        }
+        return Bdat::getMSText(fp, id);
+    }
+    const char* name = nullptr;
+    if (blade != 0) {
+        unsigned int index = getBladeIndex(blade);
+        SDataGame* game = GfDataManager::getDataGame();
+        unsigned int id = game->m_blades[index].m_bladeId;
+        if (id != 0) {
+            unsigned int msg = kind;
+            unsigned char* fp;
+            if (kind != 0) {
+                if (id < GfBdatChrBl::get()->getChrBlEnd()) {
+                    fp = GfDataBdat::getFP(423);
+                } else {
+                    fp = GfDataBdat::getFP(396);
+                }
+            } else if (game->m_blades[index].m_nameMsg != 0) {
+                msg = game->m_blades[index].m_nameMsg;
+                fp = GfDataBdat::getFP(423);
+            } else {
+                msg = game->m_blades[index].m_nameMsgAlt;
+                fp = GfDataBdat::getFP(396);
+            }
+            if (msg != 0) {
+                name = Bdat::getMSText(fp, msg);
+            }
+        }
+    }
+    return name == nullptr ? "" : name;
+}
+
 bool GfDataBlade::isAttachedParty(unsigned int blade) {
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
     return data.m_attachedParty != 0;
@@ -953,6 +1034,18 @@ const char* GfDataBlade::getResourceNameMotion(unsigned int blade) {
 const char* GfDataBlade::getResourceNameAddMotion(unsigned int blade) {
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
     return data.m_addMotionName;
+}
+
+const char* GfDataBlade::getDebugName(unsigned int blade) {
+    if (isCommonBlade(blade)) {
+        unsigned int index = getBladeIndex(blade);
+        SDataGame* game = GfDataManager::getDataGame();
+        if (game->m_blades[index].m_hasDebugName != 0) {
+            return game->m_blades[index].m_debugName;
+        }
+        return getName(blade, 0);
+    }
+    return GfBdatChrBl::get()->getChrBlDebugName(blade);
 }
 
 unsigned int GfDataBlade::getRace(unsigned int blade) {
@@ -2021,6 +2114,21 @@ const char* GfDataDriver::getBelongingMountBoneB() {
     return "EX_wireB";
 }
 
+unsigned int GfDataDriver::getFavorite(unsigned int driver, FAVORITE favorite) {
+    if (driver == 0) {
+        return 0;
+    }
+    if (static_cast<unsigned int>(favorite) <= 1) {
+        return GfBdatChrDr::get()->getChrDrFavoriteCategory(driver, favorite);
+    }
+    switch (favorite) {
+    case 2:
+    case 3:
+        return GfBdatChrDr::get()->getChrDrFavoriteItem(driver, favorite - 2);
+    }
+    return 0;
+}
+
 bool GfDataDriver::fn_710023F9A8(unsigned int driver) {
     return driver - 0x11 < 9;
 }
@@ -2060,6 +2168,30 @@ unsigned short GfDataBlade::fn_7100231884() {
 
 void GfDataSound::getFullPath(mm::mtl::FixStr<128>& path, const char* name) {
     path.format("sound/se/%s%s", name, ".xsp");
+}
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B50E10)
+static const char* s_weaponTypeSeFiles[50] = {
+    "", "se_btl_dr_sworda", "se_btl_dr_lsword", "se_btl_dr_wring", "se_btl_dr_toraa", "se_btl_dr_torab",
+    "se_btl_dr_torac", "se_btl_dr_wsword", "se_btl_dr_gsword", "se_btl_dr_wsickle", "se_btl_dr_tomahawk",
+    "se_btl_dr_lance", "se_btl_dr_ecannon", "se_btl_dr_shammer", "se_btl_dr_katana", "se_btl_dr_bitball",
+    "se_btl_dr_kcrow", "se_btl_dr_swordd", "se_btl_dr_lkatana", "se_btl_dr_tonfa", "", "", "", "", "", "", "", "",
+    "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""};
+
+const char* GfDataSound::getSeFileByWeaponType(unsigned int type) {
+    if (type > 19) {
+        return "";
+    }
+    return s_weaponTypeSeFiles[type];
+}
+
+void fn_7100254DC4(SSoundUiOption* option, unsigned int index, unsigned char value) {
+    if (GfBdatBtl::get() == nullptr) {
+        return;
+    }
+    option->m_keyD = 4;
+    option->m_list[index - 1] = value;
+    fn_7100254DF0(option);
 }
 
 unsigned int GfDataMap::getFieldZoneId(unsigned int id) {
@@ -2501,6 +2633,24 @@ bool GfDataBlade::getCommonBladeName(const char* path) {
     return strncmp(path, "bl/bl2", 6) == 0;
 }
 
+unsigned int GfDataBlade::getFavorite(unsigned int blade, FAVORITE favorite) {
+    if (blade == 0) {
+        return 0;
+    }
+    unsigned int index = getBladeIndex(blade);
+    SDataGame* game = GfDataManager::getDataGame();
+    SDataBlade& data = game->m_blades[index];
+    switch (favorite) {
+    case 2:
+    case 3:
+        return data.m_favorites[favorite - 2].m_item;
+    }
+    if (static_cast<unsigned int>(favorite) <= 1) {
+        return data.m_favorites[favorite].m_category;
+    }
+    return 0;
+}
+
 SDataIdea* GfDataDriver::getSDataIdea(unsigned int driver) {
     return &getSDataDriver(driver)->m_idea;
 }
@@ -2658,6 +2808,13 @@ const char* GfDataDriver::getBelongingModelName(const GfInitParamDriver& param) 
 unsigned int GfDataMercenaries::getRewardAchievmentRatio() {
     unsigned int ratio = QuestListAcc::get()->getFLD_MercenariesConfigValue(16);
     return GfGameFlag::getLocal(4, 2) * 5 + ratio;
+}
+
+bool GfDataMercenaries::getMsgTitleName(unsigned char*& bdat, unsigned int& id, unsigned int mission) {
+    if (mission == 0) {
+        return false;
+    }
+    return GfDataQuest::getTitle(bdat, id, getMissionQuestID(mission));
 }
 
 bool GfDataNanakoori::isMissionComplete(unsigned int mission) {
@@ -2936,6 +3093,19 @@ bool GfDataMercenaries::getMsgZoneName(unsigned char*& bdat, unsigned int& id, u
     return id != 0;
 }
 
+bool GfDataMercenaries::getMsgSummaryName(unsigned char*& bdat, unsigned int& id, unsigned int mission) {
+    if (mission == 0) {
+        return false;
+    }
+    QuestID quest = getMissionQuestID(mission);
+    id = QuestListAcc::get()->getListSummary(quest);
+    if (id == 0) {
+        return false;
+    }
+    bdat = GfBdatMsg::getFpQuest(quest);
+    return true;
+}
+
 void GfDataBlade::setCreator(unsigned int blade, unsigned int creator) {
     if (blade == 0) {
         return;
@@ -2977,6 +3147,34 @@ unsigned int GfDataMercenaries::getMissionZoneID(unsigned int mission) {
         return 0;
     }
     return GfDataMap::getZoneIdForGameMap(map);
+}
+
+unsigned int GfDataMercenaries::getMissionByQuestID(QuestID quest) {
+    for (unsigned int mission = getStartMissionID(); mission < getEndMissionID(); mission++) {
+        if (quest == getMissionQuestID(mission)) {
+            return mission;
+        }
+    }
+    return 0;
+}
+
+bool GfDataMercenaries::isMissionOrderParty(unsigned int mission) {
+    if (mission == 0) {
+        return false;
+    }
+    if (isMissionOrderTeam(mission)) {
+        return false;
+    }
+    switch (GfGameFlag::getLocal(4, mission + 5)) {
+    case 2:
+    case 3:
+        return true;
+    }
+    return false;
+}
+
+bool GfDataMercenaries::isMissionOrderTeam(unsigned int mission) {
+    return getTeamIDByMissionID(mission) != 0;
 }
 
 bool GfDataBlade::fn_71002383C8(unsigned int blade) {
@@ -3341,6 +3539,32 @@ unsigned int GfDataBlade::fn_7100236518(unsigned int blade) {
     default:
         return 0;
     }
+}
+
+const char* GfDataBlade::getName(const SDataBlade& data, unsigned int kind) {
+    const char* name = nullptr;
+    unsigned int id = data.m_bladeId;
+    if (id != 0) {
+        unsigned int msg = kind;
+        unsigned char* fp;
+        if (kind != 0) {
+            if (id < GfBdatChrBl::get()->getChrBlEnd()) {
+                fp = GfDataBdat::getFP(423);
+            } else {
+                fp = GfDataBdat::getFP(396);
+            }
+        } else if (data.m_nameMsg != 0) {
+            msg = data.m_nameMsg;
+            fp = GfDataBdat::getFP(423);
+        } else {
+            msg = data.m_nameMsgAlt;
+            fp = GfDataBdat::getFP(396);
+        }
+        if (msg != 0) {
+            name = Bdat::getMSText(fp, msg);
+        }
+    }
+    return name == nullptr ? "" : name;
 }
 
 bool GfDataBlade::fn_710024F258(unsigned int id) {

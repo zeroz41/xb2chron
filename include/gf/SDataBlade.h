@@ -125,7 +125,10 @@ public:
     unsigned short m_equipWeapon;  // its weapon (DataObjPcWpn::getBladeSet compares it with the weapon's row)
     unsigned short m_chestHeight;
     unsigned short m_landingHeight;
-    unsigned char pad_832[0x4];
+    // its name's row: in message table 423 (GfDataBdat::getFP), else m_nameMsgAlt's in table 396 (GfDataBlade::getName;
+    // the names are not the original's)
+    unsigned short m_nameMsg;
+    unsigned short m_nameMsgAlt;
     unsigned short m_scale;  // percent (GfDataBlade::getScale; the name is not the original's)
     unsigned short m_wpnScale;  // percent (GfDataBlade::getWpnScale; the name is not the original's)
     unsigned short m_offsetId;  // (named after its accessor; the name is not the original's)
@@ -148,7 +151,11 @@ public:
     unsigned short m_normalTalk;  // (named after its accessor; the name is not the original's)
     unsigned char pad_84e[0x2];
     unsigned int m_createEvent;  // (named after its accessor; the name is not the original's)
-    unsigned char pad_854[0x4A];
+    unsigned char pad_854[0x4];
+    // the name GfDataBlade::getDebugName returns while m_hasDebugName is set (the names are not the original's)
+    char m_debugName[0x40];
+    unsigned int m_hasDebugName;
+    unsigned char pad_89c[0x2];
     unsigned char m_enableEngageRex;  // (named after its accessor; the name is not the original's)
     // non-zero when attached to the party (isAttachedParty), 2 for a released rare blade (isReleasedRareBlade);
     // the name is not the original's

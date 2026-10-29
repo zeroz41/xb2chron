@@ -269,6 +269,11 @@ public:
     static void setSkillLineLevel(unsigned int blade, unsigned int line, unsigned int level);
     static unsigned int getBladeWpnType(unsigned int blade);
     static const char* getName(unsigned int blade, unsigned int kind);
+    // the blade's name from its data: kind 0 its own name rows (SDataBlade::m_nameMsg/m_nameMsgAlt), else that
+    // row of table 423 (blade rows below CHR_Bl's end) or 396; "" for none
+    static const char* getName(const SDataBlade& data, unsigned int kind);
+    // a common blade's debug name when one is set (else getName(blade, 0)); other blades' CHR_Bl DebugName
+    static const char* getDebugName(unsigned int blade);
     // the message table and row of the blade's name
     static bool getName(unsigned char*& bdat, unsigned int& id, unsigned int blade);
     static unsigned int getQuestRace(unsigned int blade);
