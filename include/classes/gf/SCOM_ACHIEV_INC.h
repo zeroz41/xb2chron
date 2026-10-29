@@ -17,6 +17,18 @@ public:
             ++s_countSalvageShop;
         }
     }
+    // the same with the request handle passed in and the blade it counts for (0: none): createBladeArts,
+    // fn_7100564088 and createBladeNArts call newHandle, then DataParamAcc::getBlade, then store the fields, which
+    // only this argument order gives
+    SCOM_ACHIEV_INC(unsigned long handle, unsigned int type, int value, unsigned int blade)
+        : SCOM(SCOM_TYPE(0x37), handle), m_value(type), m_value2(value) {
+        if (type == 0x22) {
+            ++s_countSalvageShop;
+        }
+        if (blade != 0) {
+            m_blades.push_back(blade);
+        }
+    }
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
     // queues a request that adds value to achievement counter type (type 0x22 also counts salvage-shop requests)
     static unsigned long create(unsigned int type, int value, unsigned int);
@@ -27,18 +39,26 @@ public:
     // placeholders (callers: one dispatch at 0x710000FDEC): fn_7100564360 counts type-1 once, then type for every
     // blade fn_7100563BB4 lists for the handle; the wrappers pass a fixed type and value 1
     static void fn_7100563BB4(mm::mtl::FixedVector<unsigned short, 422>&, GF_OBJ_HANDLE*, bool);
+    static unsigned long createBladeArts(GF_OBJ_HANDLE*, unsigned int);
+    static unsigned long fn_7100564088(GF_OBJ_HANDLE*, unsigned int);
+    static unsigned long createBladeNArts(GF_OBJ_HANDLE*);
     static void fn_7100564354(GF_OBJ_HANDLE*);
     static void fn_7100564360(GF_OBJ_HANDLE*, unsigned int, unsigned int);
     static void fn_71005645DC(GF_OBJ_HANDLE*);
     static void fn_71005645E8(GF_OBJ_HANDLE*);
     static void fn_71005645F0(GF_OBJ_HANDLE*, unsigned int);
     static void fn_7100564920(GF_OBJ_HANDLE*);
+    static void fn_7100564928(GF_OBJ_HANDLE*);
     static void fn_7100564ACC();
     static void fn_7100564AE8(GF_OBJ_HANDLE*);
     static void fn_7100564AF4();
     static void fn_7100564B10(GF_OBJ_HANDLE*);
     static void fn_7100564B1C(GF_OBJ_HANDLE*);
+    static void fn_7100564B28(GF_OBJ_HANDLE*);
     static void fn_7100564C9C(GF_OBJ_HANDLE*, unsigned int);
+    static void fn_7100564CAC(GF_OBJ_HANDLE*);
+    static void fn_7100564DC0(GF_OBJ_HANDLE*, unsigned int);
+    static void fn_7100564FE8(GF_OBJ_HANDLE*, unsigned int);
 
     // type-0x22 requests not yet counted: exec adds them as one (GfAchievManager::incAchiev(0x22, 1))
     static unsigned int s_countSalvageShop;

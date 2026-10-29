@@ -1103,6 +1103,59 @@ void SCOM_ACHIEV_INC::addTotalCount(unsigned int type, unsigned int value) {
     GfDataAchievement::addTotalCount(type, value);
 }
 
+unsigned long SCOM_ACHIEV_INC::createBladeArts(GF_OBJ_HANDLE* handle, unsigned int arts) {
+    DataParamAcc acc(handle);
+    if (!acc.isValid()) {
+        return -1;
+    }
+    unsigned int slot = 0;
+    for (; slot < 3; slot++) {
+        if (acc.getBladeArts(slot, false) == arts) {
+            break;
+        }
+    }
+    if (slot >= 3) {
+        return -1;
+    }
+    unsigned int blade = acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0;
+    fn_71002EE784(blade, slot);
+    unsigned int type = slot + 0x5D;
+#line 3448
+    SCOM_ACHIEV_INC* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        SCOM_ACHIEV_INC(GfReqSmallCom::sys()->newHandle(), 0x62, 1, acc.getBlade(-1, false));
+    GfReqSmallCom::addRequestParallel(request);
+#line 3451
+    request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        SCOM_ACHIEV_INC(GfReqSmallCom::sys()->newHandle(), type, 1, acc.getBlade(-1, false));
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_ACHIEV_INC::fn_7100564088(GF_OBJ_HANDLE* handle, unsigned int arts) {
+    if (arts == 0) {
+        return -1;
+    }
+    DataParamAcc acc(handle);
+    if (!acc.isValid() || (acc.getBladeArtsEx(false) != arts && acc.getBladeArtsEx2(false) != arts)) {
+        return -1;
+    }
+#line 3469
+    SCOM_ACHIEV_INC* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ACHIEV_INC(GfReqSmallCom::sys()->newHandle(), 0x62, 1, acc.getBlade(-1, false));
+    GfReqSmallCom::addRequestParallel(request);
+#line 3472
+    request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ACHIEV_INC(GfReqSmallCom::sys()->newHandle(), 0x60, 1, acc.getBlade(-1, false));
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_ACHIEV_INC::createBladeNArts(GF_OBJ_HANDLE* handle) {
+    DataParamAcc acc(handle);
+    if (!acc.isValid()) {
+        return -1;
+    }
+#line 3484
+    SCOM_ACHIEV_INC* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ACHIEV_INC(GfReqSmallCom::sys()->newHandle(), 0x61, 1, acc.getBlade(-1, false));
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
 void SCOM_ACHIEV_INC::fn_7100564354(GF_OBJ_HANDLE* handle) {
     fn_7100564360(handle, 0x7D, 1);
 }
@@ -1133,6 +1186,21 @@ void SCOM_ACHIEV_INC::fn_7100564920(GF_OBJ_HANDLE* handle) {
     fn_71005645F0(handle, 0x7B);
 }
 
+void SCOM_ACHIEV_INC::fn_7100564928(GF_OBJ_HANDLE* handle) {
+    if (!GfGameManager::fn_71002A9E68()) {
+        fn_7100564360(handle, 0x81, 1);
+        return;
+    }
+    GfObjAcc acc(handle);
+    if (GfDataDriver::fn_7100237A94(acc.getDriverId())) {
+        return;
+    }
+    unsigned int blade = GfDataBlade::fn_7100237B70(acc.getDriverId(), -1);
+    addTotalCount(0x80, 1);
+    create(0x80, 1, 0);
+    create(0x81, 1, blade);
+}
+
 void SCOM_ACHIEV_INC::fn_7100564ACC() {
     fn_7100564360(GfGameManager::getPartyLeaderDriver(), 0x83, 1);
 }
@@ -1153,8 +1221,68 @@ void SCOM_ACHIEV_INC::fn_7100564B1C(GF_OBJ_HANDLE* handle) {
     fn_7100564360(handle, 0x8B, 1);
 }
 
+void SCOM_ACHIEV_INC::fn_7100564B28(GF_OBJ_HANDLE* handle) {
+    DataParamAcc acc(handle);
+    unsigned int blade = acc.isValid() ? acc.getBdatId() : 0;
+    addTotalCount(0x8C, 1);
+    create(0x8C, 1, 0);
+    create(0x8D, 1, blade);
+}
+
 void SCOM_ACHIEV_INC::fn_7100564C9C(GF_OBJ_HANDLE* handle, unsigned int value) {
     fn_7100564360(handle, 0x95, value);
+}
+
+void SCOM_ACHIEV_INC::fn_7100564CAC(GF_OBJ_HANDLE* handle) {
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    fn_7100563BB4(blades, handle, true);
+    if (!blades.empty()) {
+        unsigned short* it = blades.begin();
+        unsigned short* end = blades.end();
+        do {
+            create(0x96, 1, *it);
+        } while (++it != end);
+    }
+}
+
+void SCOM_ACHIEV_INC::fn_7100564DC0(GF_OBJ_HANDLE* handle, unsigned int value) {
+    addTotalCount(0x92, value);
+    create(0x92, value, 0);
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    DataParamAcc acc(handle);
+    unsigned int objType = acc.getObjType();
+    if (objType == 4) {
+        blades.push_back(acc.isValid() ? acc.getBdatId() : 0);
+    } else if (objType == 3) {
+        fn_7100563BB4(blades, handle, true);
+    }
+    if (!blades.empty()) {
+        unsigned short* it = blades.begin();
+        unsigned short* end = blades.end();
+        do {
+            create(0x93, value, *it);
+        } while (++it != end);
+    }
+}
+
+void SCOM_ACHIEV_INC::fn_7100564FE8(GF_OBJ_HANDLE* handle, unsigned int value) {
+    addTotalCount(0x8E, value);
+    create(0x8E, value, 0);
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    DataParamAcc acc(handle);
+    unsigned int objType = acc.getObjType();
+    if (objType == 4) {
+        blades.push_back(acc.isValid() ? acc.getBdatId() : 0);
+    } else if (objType == 3) {
+        fn_7100563BB4(blades, handle, true);
+    }
+    if (!blades.empty()) {
+        unsigned short* it = blades.begin();
+        unsigned short* end = blades.end();
+        do {
+            create(0x8F, value, *it);
+        } while (++it != end);
+    }
 }
 
 void SCOM_ACHIEV_INC::createCrystal() {

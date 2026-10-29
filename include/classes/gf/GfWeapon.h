@@ -88,6 +88,12 @@ bool fn_71002EDAD4(unsigned int blade);
 // fn_71001F172C and GfBdatBtl::fn_71001EA310; GfMenuCharDataAdapter::update_DR_ClassBuffLv uses it for the
 // add-on (fn_710048FD30(3)) driver class.
 unsigned int fn_71002DC130(unsigned int driver);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit (no this). What it does: for each of 20 table rows (0x71009BBDC4 area) whose arts match the blade's
+// (DataParamAcc(3, blade) getBladeArts(slot)) at a high enough getBladeArtsLevel (and whose quest, if any, is ordered),
+// raises local flag 8 (row + 0xF9E) by one up to the row's limit. Caller: SCOM_ACHIEV_INC::createBladeArts with the
+// blade's bdat id and the arts slot (0..2).
+void fn_71002EE784(unsigned int blade, unsigned int slot);
 }  // namespace gf
 
 #endif
