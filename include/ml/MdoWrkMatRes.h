@@ -49,9 +49,23 @@ struct MdoWrkAvatarTbl {
 
 // The model data MdoWrkMatRes+0x20 points to: ScnObjAccResSubMesh's constructor adds m_subMeshOfs to its address.
 // The type and field names are not the original's.
+// The model's node (bone) table at MdoMdlData + m_nodeTblOfs: m_entryOfs (from the table) leads to the 0x18-byte
+// entries, each naming its node by an offset from the table (DrMdoNode::getNodeName/getNodeIdx). The names are not the
+// original's.
+struct MdsNodeEntry {
+    unsigned int m_nameOfs;
+    unsigned char pad_4[0x14];
+};
+struct MdsNodeTable {
+    unsigned char pad_0[0x8];
+    unsigned int m_entryOfs;  // 0x8
+};
+
 struct MdoMdlData {
     unsigned int m_flags;  // 0x0, 0x2000: DrMdoMat::getVanishEffectMax reads m_vanishEffectMax
-    unsigned char pad_4[0x60];
+    unsigned char pad_4[0x24];
+    unsigned int m_nodeTblOfs;  // 0x28, from this header (the name is not the original's)
+    unsigned char pad_2C[0x38];
     unsigned int m_subMeshOfs;  // 0x64
     unsigned char pad_68[0x2C];
     unsigned char m_vanishEffectMax;  // 0x94, DrMdoMat::getVanishEffectMax returns at least 1

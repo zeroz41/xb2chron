@@ -33,7 +33,7 @@ public:
     };
 
     // the names are not the original's
-    unsigned char pad_182[0x516];
+    unsigned char pad_18C[0x50C];
     DrResMdoInstAnmObj m_instAnm;  // 0x698: releaseSeam releases it; ScnObjAccSeamPos reads it (m_mdlType 3)
     EtcPosList m_etcPos;           // 0x6C8 (m_mdlType 3)
 };

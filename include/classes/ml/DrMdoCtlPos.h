@@ -37,7 +37,7 @@ public:
     void createThicknessRenderDisplayListSub(bool first);
 
     // the names are not the original's
-    unsigned char pad_182[0x66];
+    unsigned char pad_18C[0x5C];
     DrResMdoInstAnmObj m_instAnm;  // 0x1E8: releasePos releases it; ScnObjAccSeamPos reads it (m_mdlType 1)
     unsigned char pad_218[0x40];
     // 0x258: setDeleteCall calls its releaseCall (the name is not the original's)

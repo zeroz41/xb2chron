@@ -9,6 +9,10 @@ namespace ml {
 // table none (its derived classes')
 class DrMdlBase {
 public:
+    // inline in DrMdoCtl's and DrMdoGrpObj's constructors (no symbol of its own)
+    explicit DrMdlBase(int viewNum)
+        : pad_8(), m_pNext(nullptr), m_groups(0), m_viewNum(viewNum), m_mdlType(0), pad_1D(0), pad_1E(0),
+          m_dispFlags(3) {}
     virtual ~DrMdlBase() {}  // slot 0
     virtual void update() = 0;  // slot 2
     virtual void dispOffUpdate() {}  // slot 3
@@ -35,7 +39,8 @@ public:
     // the model's kind: 0 is a DrMdoCtlNom (the ScnObjAcc* accessors then use its data), ScnObjAccSeamPos takes
     // data at different offsets for 1 and 3 (the name is not the original's)
     unsigned char m_mdlType;  // 0x1C
-    unsigned char pad_1D[0x3];
+    unsigned char pad_1D;
+    short pad_1E;
     unsigned int m_dispFlags;  // 0x20: setDisp sets bit 0, setDeleteCall sets bit 3 + its argument
     unsigned char pad_24[0x4];
 };

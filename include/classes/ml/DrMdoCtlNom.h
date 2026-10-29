@@ -50,7 +50,7 @@ public:
     void cldBackAlphaCallRender();
 
     // the ScnObjAcc* accessors read these when DrMdoMat::m_mdlType is 0 (the names are not the original's)
-    unsigned char pad_182[0x56];  // DrMdlObj ends at 0x182 (m_nodeMax)
+    unsigned char pad_18C[0x4C];  // DrMdoNode ends at 0x18C
     DrResMdoVtxMeshObj* m_vtxMesh;  // 0x1D8, ScnObjAccMdlParticle's
     // 0x1E0: setDisp and setDeleteCall pass the display state on to it (the name is not the original's)
     DrResMdoLight* m_light;

@@ -16,6 +16,20 @@ namespace ml {
 // table 0x7100B7BD30
 class DrMdoMat : public ::ml::DrMdlBase {
 public:
+    // inline in DrMdoCtl's constructor (1.0.0's DrMdoNode and DrMdoCtl constructors store its table first)
+    explicit DrMdoMat(int viewNum)
+        : DrMdlBase(viewNum), m_pWrkMatRes(nullptr), m_matrix(mm::Mat44::identity), m_offsetPos(0.0f, 0.0f, 0.0f),
+          pad_C0(0.0f, 0.0f, 0.0f), m_colorScale(1.0f), m_speed(1.0f), m_singleAlpha(1.0f), m_outLineDist(0.0f) {
+        m_alpha[0] = 1.0f;
+        m_alpha[1] = 1.0f;
+        // the original zeroes 0x40..0x70 after the identity copy (the body, not the initializer list)
+        pad_40 = nullptr;
+        pad_48 = nullptr;
+        m_pResData = nullptr;
+        m_pSmlShadowObj = nullptr;
+        m_pNodeMats[0] = nullptr;
+        m_pNodeMats[1] = nullptr;
+    }
     virtual ~DrMdoMat() {}  // slot 0
 
     void updateMatCallBack(const unsigned int* dispBits);
@@ -76,15 +90,18 @@ public:
     // 0x38, the uniformBlock_ callbacks ask it for the location of their global parameter (the name is not the
     // original's)
     DrShdMdoDecExtTbl* m_pDecExtTbl;
-    unsigned char pad_40[0x10];
+    void* pad_40;  // zeroed by the constructor
+    void* pad_48;
     // 0x50: the resource data DrMdoCtlDammy's constructor is given (the name is not the original's)
     const void* m_pResData;
     // DrMdlObj::chageShadowObject hands it to DrMdoSmlShadowMan::changeViewNum (the name is not the original's)
     DrMdoSmlShadowObj* m_pSmlShadowObj;  // 0x58
-    unsigned char pad_60[0x10];
+    // 0x60, by DrMan::s_nDblStockIdx: the node matrices DrMdoNode::getNodeMatrix/setNodeMatrix index (the name is
+    // not the original's)
+    mm::Mat44* m_pNodeMats[2];
     mm::Mat44 m_matrix;  // 0x70, DrMdoCtl::setMatrix (the name is not the original's)
     mm::Vec3 m_offsetPos;  // 0xB0, DrMdoCtl::setOffsetPos (the name is not the original's)
-    unsigned char pad_C0[0x10];
+    mm::Vec3 pad_C0;  // 0xC0, zeroed by the constructor
     // 0xD0, by s_nDblStockIdx: DrMdlObj::setAlpha/getAlpha while double-buffered alpha is on (the name is not the
     // original's)
     float m_alpha[2];

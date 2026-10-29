@@ -15,7 +15,7 @@ public:
     virtual void dispOffUpdate();  // slot 3
     virtual void resourceInit();  // slot 5
 
-    unsigned char pad_188[0x20];
+    unsigned char pad_18C[0x1C];
     // 0x1A8: the cloud model data resourceInit creates from m_pCldData (the names are not the original's)
     cloud::CloudMdlDataObj* m_pCldMdlData;
     const void* m_pCldData;  // 0x1B0

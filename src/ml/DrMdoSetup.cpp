@@ -81,6 +81,8 @@
 
 namespace ml {
 
+DrMdoCtl::DrMdoCtl(int viewNum) : DrMdoNode(viewNum) {}
+
 void DrMdoCtl::setMatrix(const mm::Mat44& matrix) {
     m_matrix = matrix;
 }
@@ -510,6 +512,44 @@ void DrMdoMpfMan::addMpfObj() {
 
 bool DrMdoMpfMan::delMpfObj() {
     return --m_mpfObjNum < 1;
+}
+
+const char* DrMdoNode::getNodeName(int index) const {
+    const unsigned char* mdl = reinterpret_cast<const unsigned char*>(m_pWrkMatRes->m_pMdlData);
+    const MdsNodeTable* tbl = reinterpret_cast<const MdsNodeTable*>(mdl + m_pWrkMatRes->m_pMdlData->m_nodeTblOfs);
+    const MdsNodeEntry* entries =
+        reinterpret_cast<const MdsNodeEntry*>(reinterpret_cast<const char*>(tbl) + tbl->m_entryOfs);
+    return reinterpret_cast<const char*>(tbl) + entries[index].m_nameOfs;
+}
+
+int DrMdoNode::getNodeIdx(const char* name) const {
+    long num = m_nodeMax;
+    if (num != 0) {
+        const unsigned char* mdl = reinterpret_cast<const unsigned char*>(m_pWrkMatRes->m_pMdlData);
+        const MdsNodeTable* tbl = reinterpret_cast<const MdsNodeTable*>(mdl + m_pWrkMatRes->m_pMdlData->m_nodeTblOfs);
+        const MdsNodeEntry* entries =
+            reinterpret_cast<const MdsNodeEntry*>(reinterpret_cast<const char*>(tbl) + tbl->m_entryOfs);
+        for (long i = 0; i < m_nodeMax; i++) {
+            if (strcmp(name, reinterpret_cast<const char*>(tbl) + entries[i].m_nameOfs) == 0) {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
+void DrMdoNode::setNodeMatrix(int index, const mm::Mat44& mat) {
+    if (m_nodeMax != 0) {
+        m_pNodeMats[DrMan::s_nDblStockIdx][index] = mat;
+    }
+}
+
+const mm::Mat44& DrMdoNode::getNodeMatrix(int index) const {
+    return m_pNodeMats[DrMan::s_nDblStockIdx][index];
+}
+
+mm::Mat44* DrMdoNode::getNodeMatrixPtr(int index) {
+    return &m_pNodeMats[DrMan::s_nDblStockIdx][index];
 }
 
 void (*DrMdoAnim::s_pCallAnim[10])(DrResMdoMat*, float*, float) = {

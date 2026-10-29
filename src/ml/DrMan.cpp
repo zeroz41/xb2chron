@@ -92,6 +92,8 @@ void DrMdlObj::setDblBuffAlpha(bool enable) {
     }
 }
 
+DrMdlObj::DrMdlObj(int viewNum) : DrMdoCtl(viewNum) {}
+
 void DrMdlObj::chageShadowObject(DrMdoSmlShadowMan* shadowMan) {
     if (m_pSmlShadowObj != nullptr) {
         shadowMan->changeViewNum(m_pSmlShadowObj, m_viewNum);
