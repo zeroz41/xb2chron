@@ -1,4 +1,5 @@
 #include "classes/btl/CharacterParameter.h"
+#include "classes/btl/CharacterParameter.h"
 #include "classes/btl/EnemyParameter.h"
 #include "classes/btl/PlayerParameter.h"
 #include "classes/btl/DataManager.h"
@@ -25,6 +26,7 @@
 #include "gf/SDataEnemy.h"
 #include "classes/gf/GfMountManager.h"
 #include "classes/gf/GfBdatChrEnArrange.h"
+#include "classes/gf/GfBdatRsc.h"
 #include "gf/GfDataBlade.h"
 #include "classes/gf/GfGameParty.h"
 #include "gf/GfObjAcc.h"
@@ -44,6 +46,72 @@ inline CharacterParameter* GetDriverParameter(gf::GF_OBJ_HANDLE* handle) {
 
 EnemyParameter::~EnemyParameter() {
     DataManager::sys()->ReleaseEnemyGroup(m_handle);
+}
+
+void EnemyParameter::Initialize(gf::GF_OBJ_HANDLE* handle) {
+    CharacterParameter::Initialize(handle);
+    bool challenge = BattleGlobal::sys()->m_challengeAnySuccess;
+    bool isEnemyBlade = false;
+    if (!challenge) {
+        gf::GfObjAcc acc(handle);
+        if (acc.isEnemyBlade()) {
+            m_flags622_2 = true;
+            isEnemyBlade = true;
+        }
+        fn_7100085B24();
+    }
+    bool isNotBlade;
+    if (!BattleGlobal::sys()->m_challengeAnySuccess) {
+        isNotBlade = !fn_7100085314(false);
+    } else if (IsEnemyParameter()) {
+        isNotBlade = true;
+    } else {
+        isNotBlade = Utility::fn_7100011EA0(m_handle);
+    }
+    m_isNotBlade = isNotBlade;
+    const gf::SDataEnemy* data = GetEnemyData();
+    unsigned int arrangeID = m_enArrangeID;
+    unsigned int rscId = data->m_rscId;
+    gf::GfBdatRsc* rsc = gf::GfBdatRsc::sys();
+    m_enTypeFamily = rsc->getRscEnTypeFamily(rscId);
+    m_enMaterial = rsc->getRscEnMaterial(rscId);
+    gf::GfBdatChrEnArrange* arrange = gf::GfBdatChrEnArrange::sys();
+    pad_8aa = arrange->fn_71001F3260(arrangeID);
+    pad_8ac = arrange->fn_71001F32E8(arrangeID);
+    m_isInvalidWarp = isEnemyBlade ? true : arrange->isChrEnArrangeFlagNoTarget(arrangeID);
+    m_isInvalidHikariSp = arrange->isChrEnArrangeFlagHikariSP4(arrangeID);
+    m_isAlwaysKakusei = arrange->isChrEnArrangeFlagHomuri(arrangeID);
+    m_isChild = arrange->isChrEnArrangeFlagChild(arrangeID);
+    pad_bit9 = arrange->isChrEnArrangeFlagNoWarp(arrangeID);
+    pad_bit10 = !arrange->isChrEnArrangeFlagIgnoreLevPow(arrangeID);
+    m_isFallDeadDrop = !arrange->isChrEnArrangeFlagSalvage(arrangeID);
+    pad_bit13 = !arrange->fn_71001F3FB8(arrangeID);
+    pad_bit14 = challenge && arrange->fn_71001F3F28(arrangeID);
+    pad_bit15 = challenge && arrange->fn_71001F4048(arrangeID);
+    if (isEnemyBlade) {
+        unsigned int bladeID = arrange->getChrEnArrangeBladeID(arrangeID);
+        int set = (unsigned short)Bdat::getValCheck(gf::GfDataBdat::getFP(0x8A), "BKLSet", bladeID, 2);
+        pad_5da = Bdat::getValCheck(gf::GfDataBdat::getFP(0xC), "KizunaLink1", set, 2);
+    }
+    unsigned char* fp = gf::GfDataBdat::getFP(0x8C);
+    {
+        gf::DataParamAcc acc(m_handle);
+        unsigned int enParam = acc.getBdatIdEnParam();
+        unsigned short aura = Bdat::getValCheck(fp, "Aura", enParam, 2);
+        pad_898 = -1.0f;
+        m_angryAuraID = aura;
+        m_angryAttr = 0xFF;
+        m_isAngry = false;
+        pad_8a3_0 = Bdat::getValCheck(fp, "AwakeLev", enParam, 1);
+        pad_bit1 = false;
+        pad_bit12 = Bdat::getFlagVal(fp, "Flag", enParam, "TrgRndLady") != 0;
+        pad_8b5 = 0xFF;
+    }
+    m_deadSEID = rsc->getRscEnDeadSeNum(rscId);
+    m_isEatTarget = rsc->isRscEnFlagBait(rscId);
+    pad_8ae = 0;
+    m_overwriteAttr = 9;
+    fn_710007E0E8(handle);
 }
 
 const gf::SDataEnemy* EnemyParameter::GetEnemyData() const {

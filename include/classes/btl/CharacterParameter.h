@@ -247,6 +247,12 @@ public:
     virtual int ApplyStatusEnhance(int, int, int) const;  // slot 78
     virtual void InitializeAttackParam();  // slot 79
     virtual unsigned int CalcDamageArmorEx(unsigned int);  // slot 80
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its unit is
+    // CharacterParameter's and EnemyParameter::Initialize ends by calling it with its own this and handle. What it
+    // does: unless BattleGlobal's m_challengeAnySuccess is set, sets bit 11 of the flags at 0x622 to
+    // GfDataBlade::isDummyBlade(m_enArrangeID) when slot 65 (fn_7100085314(false)) holds, else to the handle's
+    // DataParamAcc::isScenarioMask(); clears that bit while the flag is set.
+    void fn_710007E0E8(gf::GF_OBJ_HANDLE* handle);
     CharacterParameter();  // out of line (0x710007D674, unit battle/character/CharacterParameter)
     // inline: its body is part of both EnemyParameter destructors (the D0 drops the dead store)
     virtual ~CharacterParameter() {
@@ -301,9 +307,16 @@ public:
     unsigned char m_elementalComboID;
     unsigned char pad_5e1;
     // the character's data type (see m_objId; the name is not the original's)
+    // 0x5E2-0x5E4 is one 24-bit storage unit: CharacterParameter::Initialize and EnemyParameter::Initialize write
+    // its fields with a load and store of all three bytes
     unsigned short m_objType : 6;
-    unsigned short pad_5e2_6 : 10;
-    unsigned char pad_5e4;
+    // EnemyParameter::Initialize stores GfBdatRsc::getRscEnMaterial of the enemy's row (the name is not the original's)
+    unsigned short m_enMaterial : 2;
+    unsigned short pad_5e2_8 : 4;
+    // EnemyParameter::Initialize stores GfBdatRsc::getRscEnTypeFamily of the enemy's row (the name is not the
+    // original's)
+    unsigned short m_enTypeFamily : 4;
+    unsigned char pad_5e4 : 8;
     // the axis the character spins about when blown (GetBlowRotAxis normalises it; the name is not the original's)
     signed char m_blowRotAxis[3];
     // GetBlowRotSpeed's spin speed in degrees (the name is not the original's)
