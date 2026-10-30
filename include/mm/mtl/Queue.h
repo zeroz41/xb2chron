@@ -193,18 +193,20 @@ void Queue<T>::expand(size_t capacity, size_t alignment) {
 #ifndef MM_MTL_QUEUE_ERASE_ELSEWHERE
 template <typename T>
 typename Queue<T>::iterator Queue<T>::erase(iterator it) {
-    if (it != end()) {
-#line 1067 MM_MTL_QUEUE_PATH
-        MM_ASSERT(size() != 0);
-        --m_size;
-        for (size_t i = it._index; i < m_head + m_size;) {
-            size_t index = i % m_capacity;
-            size_t next = ++i % m_capacity;
-            at(index) = at(next);
-        }
-        at((m_head + m_size) % m_capacity).~T();
-        (*end()).~T();
+    if (!(it != end())) {
+        return it;
     }
+#line 1067 MM_MTL_QUEUE_PATH
+    MM_ASSERT(size() != 0);
+    --m_size;
+    for (size_t i = it._index; i < m_head + m_size;) {
+        size_t index = i % m_capacity;
+        size_t next = ++i % m_capacity;
+        T& src = at(next);
+        at(index) = src;
+    }
+    at((m_head + m_size) % m_capacity).~T();
+    (*end()).~T();
     return it;
 }
 

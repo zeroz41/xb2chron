@@ -18,13 +18,13 @@ public:
     virtual void dispose();  // slot 5
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x33);
-    unsigned char pad_48[0x8];
+    // 0x48..0x50: padding before the 16-aligned phantom
     GmkPhantom m_phantom;  // 0x50 (the name is not the original's)
     // the constructor sets them (meaning unknown)
     bool pad_e0 = false;
     float pad_e4 = 0.0f;
     float pad_e8 = 1.0f;
-    unsigned char pad_ec[0x4];  // size from TGmkList::getInst's stride (0xf0)
+    // 0xec..0xf0: tail padding (size 0xf0, TGmkList::getInst's stride; Vector<GmkDmgSe>::expand copies 0xe0..0xec)
 };
 }  // namespace gmk
 

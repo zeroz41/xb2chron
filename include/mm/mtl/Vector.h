@@ -185,7 +185,7 @@ void Vector<T>::expand(size_t capacity, size_t alignment) {
 #line 94 MM_MTL_VECTOR_PATH
     MM_ASSERT(ptr != 0);
     if (m_buffer != nullptr) {
-        uninitialized_copy_n(m_buffer, size, ptr);
+        copy_construct_n(m_buffer, size, ptr);
         clear();
 #line 103 MM_MTL_VECTOR_PATH
         MM_ASSERT(m_allocator);
@@ -236,13 +236,9 @@ template <typename T>
 void Vector<T>::extend(size_t size, size_t alignment) {
     size_t oldSize = m_size;
     T* ptr = static_cast<T*>(m_allocator->allocate(size * sizeof(T), alignment));
-    if (__has_trivial_copy(T)) {
-        // a block copy (GfFieldDmgManager's BdatInfo rows)
-        uninitialized_copy_n(begin(), oldSize, ptr);
-    } else {
-        // by index (wnd::ConpoundWind's inline; skd::Node's out of line)
-        mtl_detail::copy_construct_n(begin(), oldSize, ptr, int_to_type<0>());
-    }
+    // a block copy (GfFieldDmgManager's BdatInfo rows) or by index (wnd::ConpoundWind's inline; skd::Node's out of
+    // line)
+    copy_construct_n(begin(), oldSize, ptr);
     if (oldSize < size) {
         T* element = ptr + oldSize;
         if (!__is_scalar(T)) {  // a pointer or scalar is left as it is (skd::Dynamics' solvers, Vector<short>)

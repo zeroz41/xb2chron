@@ -24,7 +24,7 @@ public:
     virtual void debugDraw() const;  // slot 7
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x34);
-    unsigned char pad_48[0x8];
+    // 0x48..0x50: padding (copy_construct_n<gmk::GmkTrigger> copies nothing there)
     GmkPhantom m_phantom;  // 0x50: the destructor destroys it, dispose disposes it (the name is not the original's)
     void* pad_e0;  // dispose clears it
     void* pad_e8;  // dispose clears it; fields: size from TGmkList::getInst's stride

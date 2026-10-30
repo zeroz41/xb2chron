@@ -1,6 +1,7 @@
 #ifndef CLASSES_GMK_GMKPHANTOM_H
 #define CLASSES_GMK_GMKPHANTOM_H
 
+#include "mm/Vec3.h"
 #include "mm/mtl/RTTI.h"
 #include "mm/mtl/IntrusiveList.h"
 #include "classes/gmk/GmkPhantomManager.h"
@@ -45,17 +46,22 @@ public:
     }
     static mm::mtl::RTTI m_rtti;
     // fields: 1.0.0's constructor clears each (0x50..0x80 in its body, in this order) (meaning unknown; the names are not the original's)
-    unsigned char pad_18[0x8];
-    int pad_20 = 0;
-    unsigned char pad_24[0xc];
-    void* pad_30 = nullptr;
-    int pad_38 = 0;
-    void* pad_40 = nullptr;
-    int pad_48 = 0;
+    // 0x20: 16-aligned (the copy constructors of its holders, copy_construct_n<gmk::GmkTrigger>, copy nothing at 0x18)
+    alignas(16) int pad_20 = 0;
+    // 0x30, 0x40: copied x, y and z each, as a Vec3 copies
+    mm::Vec3 pad_30 = mm::Vec3(0.0f, 0.0f, 0.0f);
+    mm::Vec3 pad_40 = mm::Vec3(0.0f, 0.0f, 0.0f);
     void* pad_50;
     int pad_58;
     void* pad_60;
     bool pad_68;
+    // 0x69: a member the copy constructor copies nothing of, yet that is not copied bit for bit: the holders' copies
+    // (copy_construct_n<gmk::GmkLandmark>, Vector<gmk::GmkAreaBgm>::expand) copy 0x50..0x69 and 0x70..0x84 as two
+    // runs (the type and both names are not the original's)
+    struct NoCopy {
+        NoCopy() {}
+        NoCopy(const NoCopy&) {}
+    } pad_69;
     void* pad_70;
     // the collision object it listens to, referenced while held (the name is not the original's)
     fw::ColiObject* m_coliObject;

@@ -43,8 +43,7 @@ public:
     static const gmk::GmkType TYPE = gmk::GmkType(29);
     GmkPhantom m_phantom;  // 0x50: dispose disposes it (the name is not the original's)
     GmkBgmCondInfo m_condInfos[4];  // 0xe0: dispose disposes each (the name is not the original's)
-    void* pad_160;  // dispose clears it
-    unsigned char pad_168[0x8];  // fields: size from TGmkList::getInst's stride
+    void* pad_160;  // dispose clears it; 0x168..0x170 is tail padding (Vector<GmkAreaBgm>::expand copies 0xe0..0x168)
 };
 }  // namespace gmk
 

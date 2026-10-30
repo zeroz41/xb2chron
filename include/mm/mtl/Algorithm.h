@@ -32,7 +32,22 @@ void copy_construct_n(const T* first, size_t n, T* result, int_to_type<0>) {
         new (&result[i]) T(first[i]);
     }
 }
+// the block copy (int_to_type<1>: a type copied bit for bit), which must not overlap the source ahead of it
+template <typename T>
+inline void copy_construct_n(const T* first, size_t n, T* result, int_to_type<1>) {
+#line 224 MM_MTL_ALGORITHM_PATH
+    MM_ASSERT((first + n <= result) || result < first);
+    memcpy(result, first, n * sizeof(T));
+}
 }  // namespace mtl_detail
+
+// constructs n copies of first's elements at result, as the type copies. Not declared inline: 3.0.1 keeps it out of
+// line where the element's copy is long (copy_construct_n<gmk::GmkTrigger>, <gmk::GmkLandmark>,
+// <anm::Util::PairName>, called by Vector's expand and extend)
+template <typename T>
+void copy_construct_n(const T* first, size_t n, T* result) {
+    mtl_detail::copy_construct_n(first, n, result, int_to_type<__has_trivial_copy(T)>());
+}
 
 // constructs n copies of first's elements at result: a block copy for types copied bit for bit, which must not
 // overlap the source ahead of it
