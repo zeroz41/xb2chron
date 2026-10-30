@@ -54,7 +54,7 @@ void AddBlendTree::onEnter(AsmListener* listener) {
 }
 
 void AsmState::initLoopCount() {
-    const ResStateInfo* pInfo = m_pRes->m_pInfo;
+    const ResState* pInfo = m_pRes->m_pInfo;
     const Binding* pBinding = m_pRes->m_clips[0].m_pBinding;
     m_loop = 0;
     const ResLoopCount* pLoopCount = pInfo->m_pLoopCount;

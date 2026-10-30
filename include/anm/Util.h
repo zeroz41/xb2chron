@@ -1,12 +1,16 @@
 #ifndef ANM_UTIL_H
 #define ANM_UTIL_H
 
+#include "mm/mtl/FixStr.h"
+
 namespace anm { class Binding; }
 namespace anm { class Control; }
 namespace anm { class Pose; }
 namespace anm { class QsTransform; }
 namespace anm { struct ExtraTruckSlot; }
 namespace anm { class ResASM; }
+namespace anm { class Skeleton; }
+namespace mm { namespace mtl { template <typename T> class Vector; } }
 
 namespace anm {
 // how a binding's animation plays (Util::getPlayMode; 1 plays once: AsmState::initLoopCount counts it as one loop and
@@ -36,6 +40,27 @@ struct ResAppendix {
 
 class Util {
 public:
+    // a part of a bone name whose bones are not mirrored (fw::AnimResAsmResolver::bindSkeleton makes them; the
+    // names of the fields are not the original's)
+    struct IgnoreName {
+        mm::mtl::FixStr<8> m_name;  // a bone name's start is compared with its characters
+        unsigned char pad_c[0x4];
+    };
+
+    // two name parts that tell a bone from its mirror counterpart (fw::AnimResAsmResolver::bindSkeleton makes them;
+    // the names of the fields are not the original's)
+    struct PairName {
+        mm::mtl::FixStr<8> m_nameA;
+        mm::mtl::FixStr<8> m_nameB;
+    };
+
+    // per bone, the bone whose name has each pair's parts swapped (itself when there is none), -1 for an ignored
+    // bone or one that pairs with none
+    static void computeBonePairFromName(const mm::mtl::Vector<PairName>& pairs, const Skeleton* pSkeleton,
+                                        const mm::mtl::Vector<signed char>& ignores, mm::mtl::Vector<short>* pOut);
+    // per bone, -1 where its name starts with one of names, else 0 (none without a skeleton)
+    static void computeIgnoreMirrorFromName(const mm::mtl::Vector<IgnoreName>& names, const Skeleton* pSkeleton,
+                                            mm::mtl::Vector<signed char>* pOut);
     // how long the binding's animation plays
     static float getPlayBackTime(const Binding& binding);
     static PlayMode getPlayMode(const Binding& binding);

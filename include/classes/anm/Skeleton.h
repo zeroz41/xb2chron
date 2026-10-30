@@ -11,7 +11,10 @@ namespace anm {
 // one of a skeleton's bones (getBoneFromLabel returns one): 16 bytes, its name first
 struct Bone {
     const char* m_name;  // the IK solvers' setup finds a bone by it
-    unsigned char pad_8[0x8];
+    unsigned char pad_8[0x4];
+    // Util::computeBonePairFromName pairs it with no bone (-1) while set (the name is not the original's)
+    bool m_noPair;
+    unsigned char pad_d[0x3];
 };
 
 // one of a skeleton's extra-track slots (Skeleton keeps them 0x38 apart; anm::ExtraTruckBuffer is made for one):
@@ -19,8 +22,15 @@ struct Bone {
 struct ExtraTruckSlot {
     const char* m_name;  // getExtraTruckSlotID finds a slot by it
     unsigned char pad_8[0x18];
+    // one value's limits (Util::clampLimitExtraTruck clamps the value into them; the names are not the original's)
+    struct Limit {
+        float m_min;
+        float m_max;
+    };
+
     unsigned int m_count;  // its values: Factory::createExtraTruckBuffer makes no buffer for a slot without any
-    unsigned char pad_24[0x14];
+    unsigned char pad_24[0x4];
+    Array<Limit> m_limits;  // one per value
 };
 
 // a label's kind (1.0.0's name; its values' names are not known: GfComEnvSensor::setup asks for kinds 0 and 1 for
@@ -54,6 +64,9 @@ public:
     // bone's parent's index, -1 for a root (inline: SpaceResolveUtil's loops and BlendUtil::normalizePoseMS pass
     // it a 16-bit bone index, which they widen to 64 bits apart from the assertion's; the name is not the original's)
     short getParentIndex(unsigned short bone) const { return m_parents[bone]; }
+    // the bone of the index (Util::computeIgnoreMirrorFromName indexes the bones with a 16-bit index; the name is not
+    // the original's)
+    const Bone& getBone(unsigned short bone) const { return m_bones[bone]; }
 
     // the index of the extra-track slot named `name`, -1 when none is
     short getExtraTruckSlotID(const char* name) const;

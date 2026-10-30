@@ -152,6 +152,19 @@ public:
         strcpy(m_str, m_str + n);
         m_nLen = strlen(m_str);
     }
+    // the index of the first c, -1 when there is none (anm::Util::computeBonePairFromName inlines it; the name is not
+    // the original's)
+    int find(char c) const {
+        for (long i = 0; i < m_nLen; ++i) {
+            if (m_str[i] == c) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    // n characters from index replaced with strNew, every one from index for -1 (fixstr.h asserts `strNew`; the
+    // name is the symbol's)
+    FixStr& replace(int index, int n, const char* strNew);
     // n characters of pszStr inserted at index (fixstr.h asserts `pszStr`, `newSize < capacity()` and
     // `index <= nowSize`; the name is the symbol's)
     FixStr& insert(int index, const char* pszStr, int n);
@@ -175,6 +188,25 @@ FixStr<LEN>& FixStr<LEN>::insert(int index, const char* pszStr, int n) {
     copy_n(pszStr, n, p);
     m_nLen = newSize;
     m_str[newSize] = '\0';
+    return *this;
+}
+
+template <int LEN>
+FixStr<LEN>& FixStr<LEN>::replace(int index, int n, const char* strNew) {
+#line 761 MM_MTL_FIXSTR_H_FILE
+    MM_ASSERT(strNew);
+    int newLen = strlen(strNew);
+    if (n == -1) {
+        if (index < m_nLen) {
+            m_str[index] = '\0';
+            m_nLen = index;
+        }
+    } else if (index < m_nLen) {
+        int end = index + n < m_nLen ? index + n : m_nLen;
+        strcpy(m_str + index, m_str + end);
+        m_nLen = strlen(m_str);
+    }
+    insert(index, strNew, newLen);
     return *this;
 }
 

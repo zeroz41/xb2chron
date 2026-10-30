@@ -35,12 +35,15 @@ public:
     }
 
     const char* m_name;  // 1.0.0's Control::getName returns it
-    unsigned char pad_20;
-    // Factory::createMirrorAnimation mirrors no animation where it is 1 (the name is not the original's)
+    // what kind of derived animation it is: 0xFF a MirrorAnimation, 0xFD a SimpleRetargetAnimation, whose original
+    // binding's locomotion Util::calcDeltaExtractMotion follows (the name is not the original's)
+    unsigned char m_kind;
+    // Factory::createMirrorAnimation mirrors no animation where it is 1; Util::samplePoseSmartFromControl samples a
+    // 0 animation as local-space and a 1 animation as model-space bones (the name is not the original's)
     unsigned char m_noMirror;
     bool m_clampTime;  // anm::Control clamps its local time to the length while set, wraps it when not (the name
                        // is not the original's)
-    unsigned char pad_23;
+    char m_blendHint;  // Util::getBlendHint's (the name is not the original's)
     float m_frameRate;  // frames per second: a time's frame is it times the time (UncompressAnimation::sampleTrucks; the
                         // name is not the original's)
     float m_interval;           // the time between two frames (1.0.0's getDeltaExtractMotion; the name is not the

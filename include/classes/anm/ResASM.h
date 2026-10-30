@@ -3,12 +3,14 @@
 
 #include "anm/Array.h"
 #include "anm/AsmListener.h"
+#include "anm/Util.h"
 #include "classes/anm/ReferenceObject.h"
 #include "mm/mtl/Vector.h"
 
 namespace anm { class AsmAnnotetion; }
 namespace anm { enum InterpolateType : int; enum InterpolateCurve : int; }
 namespace anm { class Binding; }
+namespace anm { class QsTransform; }
 namespace anm { class ResResolver; }
 namespace anm { class Skeleton; }
 namespace mm { namespace mtl { class IAllocator; }}
@@ -57,7 +59,7 @@ struct ResBlendTree {
     int m_type;
 };
 
-struct ResStateInfo {
+struct ResState {
     int m_type;  // StateMachine::createState: 0 SimplexState, 1 FrozenState, 2 m_pTree's blend tree
     unsigned char pad_4[0x4];
     const char* m_name;  // StateMachine::getStateName's
@@ -79,6 +81,10 @@ struct ResClipData {
     void cleanup();
     // the kind's frame annotations sorted by frame
     void sortAnnotation(unsigned int kind);
+    // the locomotion's reference at time within the clip's part (Util::getAsmLocomotionReference's; anm_res_clip_data.cpp)
+    bool getReference(float time, QsTransform* pOut) const;
+    // the locomotion's motion from time over dt within the clip's part (Util::getAsmLocomotionDeltaReference's)
+    bool getDeltaReference(float time, float dt, QsTransform* pOut) const;
 
     mm::mtl::Vector<AsmKeyframeAnnotation> m_frameAnnotations[5];  // per kind (AsmClip::update)
     // set by ResStateData::setFrameAnnotation: ResStateData::sortAnnotation sorts only a clip that has it (the name
@@ -166,8 +172,11 @@ struct ResVariable;
 // are not the original's)
 class ResStateArray {
 public:
-    unsigned char pad_0[0x28];
+    unsigned char pad_0[0x18];
+    Array<ResState*> m_states;  // sorted by name (Util::getVariableMinMax finds a state with CompResState)
     Array<ResVariable> m_variables;  // ASMControl makes a Variable of each
+    unsigned char pad_38[0x18];
+    Array<ResAppendix> m_appendices;  // sorted by name (Util::findAppendix finds one with lessAppendix)
 };
 
 // one state of an animation state machine: 0x1E0 bytes
@@ -178,7 +187,7 @@ struct ResStateData {
     // the clips and the annotations given up
     void cleanup();
 
-    const ResStateInfo* m_pInfo;
+    const ResState* m_pInfo;
     mm::mtl::Vector<ResClipData> m_clips;
     unsigned long m_attributes[4];  // StateMachine::getAttribute's categories 1 to 4 (the name is not the original's)
     mm::mtl::Vector<AsmAnnotetion> m_enterAnnotations[5];  // per kind (AsmState::notifyEnter)
