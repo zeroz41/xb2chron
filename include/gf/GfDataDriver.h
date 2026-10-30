@@ -48,6 +48,13 @@ public:
     // (fn_71001F161C's 16-bit ids) and answers whether the list is non-empty; any other row: false. Callers include
     // GfDataBlade::fn_7100237B70, getListPartyAll and GfMenuCharDataAdapter's TUnk_B5B908::getCharData.
     static bool fn_71002416B4(mm::mtl::FixedVector<unsigned short, 32>& list, unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies in GfDataBlade's
+    // unit among GfDataDriver's functions and takes a driver id. What it does: finds the driver's row (DLC rows
+    // 0x11-0x19 through GfDataManager::fn_7100224A10, others in getDataGame) and tail-calls fn_7100245800 with the
+    // two outputs and the row, which stores the reachable level (from the row's level at 0x94 and GfBdatBtl's growth
+    // table) and a second value and returns true when it found one. GfMenuObjLvupSelect::SelectListener takes the
+    // first output as the level select's maximum.
+    static bool fn_7100245794(unsigned int* level, unsigned int* value, unsigned int driver);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfDataBlade::isActivateDriver before
     // isActivateParty is other code). A member because it lies among GfDataDriver's functions (right before
     // isActivateParty) and its callers pass it a driver id. What it does: true for a driver outside the DLC rows

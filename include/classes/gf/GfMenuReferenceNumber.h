@@ -23,6 +23,10 @@ public:
     int m_value;
     int m_min;  // the number plugin's setMin
     int m_max;  // the number plugin's setMax
+    // whether the value is at an end of its range (GfMenuObjLvupSelect::SelectListener hides its arrows so: one
+    // operator-> per test, the value and the bound loaded together); the names are not the original's
+    bool isMin() const { return m_value == m_min; }
+    bool isMax() const { return m_value == m_max; }
 };
 }  // namespace gf
 

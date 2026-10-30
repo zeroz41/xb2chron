@@ -182,6 +182,14 @@ public:
     static void makeStateIdleByBlade(mm::mtl::FixStr<32>& out, unsigned int blade, bool battle);
     static void debugHpZero(gf::GF_OBJ_HANDLE* handle);
     static void execSaveAchievementPopup(unsigned int blade);
+    // a driver's level raised to that level (GfMenuObjLvupSelect::seqExecLevelUp)
+    static void execLevelUp(unsigned int driver, unsigned int level);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies right after
+    // GfGameUtil::execLevelUp in its unit and takes the same arguments. What it does: when the driver's level
+    // (GfDataDriver::getLevel) is above the level, lowers it there (GfDataDriver::fn_7100245EFC, fn_7100245EA8,
+    // fn_7100245F50 and the placeholders fn_710024487C/fn_71002448D8/fn_7100244988, the 999999999 experience cap).
+    // GfMenuObjLvupSelect::seqExecLevelUp calls it instead of execLevelUp when the chosen level is lower.
+    static void fn_71002DB338(unsigned int driver, unsigned int level);
     // the HP the UI shows for an object and its maximum (false when it has none)
     static bool getNowHpForUi(gf::GF_OBJ_HANDLE* handle, unsigned int* hp);
     static bool getMaxHpForUi(gf::GF_OBJ_HANDLE* handle, unsigned int* hp);
