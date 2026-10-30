@@ -651,7 +651,7 @@ unsigned int GfDataNanakoori::getSoulLevel() {
     return GfGameFlag::getLocal(8, 2129);
 }
 
-int GfDataUtil::getMoney() {
+unsigned int GfDataUtil::getMoney() {
     return GfDataManager::getDataGame()->m_money;
 }
 

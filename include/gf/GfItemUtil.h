@@ -2,6 +2,7 @@
 #define GF_GFITEMUTIL_H
 
 #include "classes/gf/GfItemBox.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace gf {
 
@@ -105,6 +106,8 @@ public:
     static void getProperty(ItemProperty& property, unsigned int item, unsigned int);
     static void getPrice(ItemPrice& price, unsigned int item, unsigned int shop);
     static GfItem getInfo(unsigned int item);
+    // the items of a type the party has
+    static void getInfo(::mm::mtl::FixedVector<GfItem, 1024>& items, ItemType::Type type, bool);
     static bool isPrecious(unsigned int item);  // an item of type 6
     static unsigned int getItemTime(unsigned int item, GfItemHandle handle);
     // the item's type, when its index in the type's table is 0 (else 0)

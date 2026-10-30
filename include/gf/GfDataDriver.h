@@ -254,6 +254,9 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit among GfDataDriver's functions. What it does: the item handle (+0x5A0) of the DLC driver (0x11-0x19) row of GfDataManager::fn_7100224A10's 0xDAC-byte table, else an empty handle (GfItemUtil::getEquipChar calls it).
     static GfItemHandle fn_71002474B0(unsigned int driver);
+    // the item handle of the accessory in the driver's slot (0-1, 2 the DLC drivers' extra slot); the name is 1.0.0's
+    // (its getEquipAcceHandle has the same callers), the symbols still spell it fn_7100247988
+    static GfItemHandle getEquipAcceHandle(unsigned int driver, unsigned int slot);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit among GfDataDriver's functions. What it does: sets the 16-bit item id (+0x5A4) of the DLC driver (0x11-0x19) row of GfDataManager::fn_7100224A10's 0xDAC-byte table (fn_7100247474 reads it).
     static void fn_71002474F4(unsigned int driver, unsigned short item);

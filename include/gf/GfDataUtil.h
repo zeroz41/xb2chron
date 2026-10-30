@@ -7,7 +7,7 @@ enum AMOVE : int;
 // the game data's helpers (functions, by its symbols)
 class GfDataUtil {
 public:
-    static int getMoney();
+    static unsigned int getMoney();  // unsigned: canBuyItem and canSellItem compare it unsigned
     static int getObjTypeByCharaId(unsigned int chara);  // the object type of a character
     static void setScenarioFlag(unsigned short flag);
     static void setRandomInn();  // picks one of 16 inns at random (the comment is not the original's)

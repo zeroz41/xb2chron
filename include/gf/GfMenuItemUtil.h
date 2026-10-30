@@ -2,6 +2,7 @@
 #define GF_GFMENUITEMUTIL_H
 
 namespace ui { class UIStr; }
+namespace gf { struct GfItemHandle; }
 
 namespace gf {
 
@@ -19,6 +20,20 @@ public:
     // the item's name (an empty text when it has none)
     static void getItemName(unsigned char type, unsigned int id, ui::UIStr& name);
     static int canEquipAcc(unsigned int item, unsigned int, unsigned int);  // 0 when the accessory can be equipped
+    static int getItemNum(unsigned char type, unsigned int id);  // GfItemUtil::getItemBoxCount(id)
+    // the party driver that has the accessory (item and handle) equipped, 0 for none; slot gets its slot (one more
+    // when GfMenuObjUtil::fn_710048FD30(3) holds; 0 for a DLC driver's own accessory). The name is 1.0.0's: its
+    // searchEquipAcc has the same callers (canEquipAcc, GfMenuObjDrEquip2); the symbols spell it fn_7100354624
+    static unsigned short searchEquipAcc(unsigned int item, GfItemHandle handle, unsigned int* slot);
+    // whether the party has the money for the item at the shop and room for it in its box
+    static bool canBuyItem(unsigned int item, unsigned int shop);
+    // false when the party's money is at its maximum, else GfDataItem::isEnableSell
+    static bool canSellItem(unsigned int item, unsigned int);
+    static bool canSellItemType(unsigned int type);  // false for types 4 and 6 and outside 1-12
+    // 0 when the orb can be made, 1 when the orb box is full, 2 when the recipe is not enabled, 3 without a recipe
+    static int canCreateOrb(unsigned int item);
+    // a common window id for an equip error (1-4)
+    static unsigned int getEquipErrorCmnWindowID(unsigned int error);
     static bool getIconNumber(ItemType::Type type, unsigned int id, unsigned int& number, bool);
     // whether an item (GfMenuItemAdapter::update_canStack) or an item type (GfMenuGameAdapter's type 19) counts its
     // stack

@@ -21,6 +21,7 @@ public:
     static bool isNoMultiple(unsigned int item);  // an item the party may hold once, already gained
     static void setNoMultiple(unsigned int item, bool set);
     static unsigned int getPrice(unsigned int item);  // the item's BDAT price
+    static bool isEnableSell(unsigned int item);  // false for types 4 and 6, else the type's BDAT no-sell flag
     static bool isFavoriteCategoryFood(unsigned int category);
     static bool isMayItem(unsigned int item);
     static bool isTukiItem(unsigned int item);
