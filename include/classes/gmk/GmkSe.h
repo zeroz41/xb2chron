@@ -48,7 +48,7 @@ public:
     virtual void debugDraw() const;  // slot 7
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(15);
-    unsigned char pad_58[0x8];
+    // 0x58..0x60: padding (the copies of Vector<T>::expand copy nothing there)
     GmkPhantom m_phantom;  // 0x60 (the name is not the original's)
     // fields the constructor clears (meaning unknown)
     unsigned short pad_f0 = 0;
@@ -57,7 +57,7 @@ public:
     int pad_f8 = 0;
     int pad_fc = 0;
     bool pad_100 = false;
-    unsigned char pad_101[0xf];  // size from TGmkList::getInst's stride (0x110)
+    // 0x101..0x110: tail padding (not copied); size from TGmkList::getInst's stride (0x110)
 };
 }  // namespace gmk
 

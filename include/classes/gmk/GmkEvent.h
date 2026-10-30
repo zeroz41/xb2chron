@@ -42,14 +42,14 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(10);
     void disposeGmkPhantom();
-    unsigned char pad_58[0x8];
+    // 0x58..0x60: padding (the copies of Vector<T>::expand copy nothing there)
     GmkPhantom m_phantom;  // 0x60 (the name is not the original's)
     // update() stores whether the event's pop conditions (blade, quest state, game cond) hold, creating or
     // disposing its phantom when it changes; the field locators read it. The name is not the original's.
     bool m_isCondMatched = false;
     bool pad_f1 = false;  // the constructor clears it (meaning unknown)
     bool pad_f2 = false;  // the constructor clears it (meaning unknown)
-    unsigned char pad_f3[0xd];  // size from TGmkList::getInst's stride (0x100)
+    // 0xf3..0x100: tail padding (not copied); size from TGmkList::getInst's stride (0x100)
 };
 }  // namespace gmk
 

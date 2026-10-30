@@ -37,10 +37,10 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x39);
     void disposeGmkPhantom();
-    unsigned char pad_58[0x8];
+    // 0x58..0x60: padding (the copies of Vector<T>::expand copy nothing there)
     GmkPhantom m_phantom;  // 0x60 (the name is not the original's)
     bool pad_f0 = false;  // the constructor clears it (meaning unknown)
-    unsigned char pad_f1[0xf];  // size from TGmkList::getInst's stride (0x100)
+    // 0xf1..0x100: tail padding (not copied); size from TGmkList::getInst's stride (0x100)
 };
 }  // namespace gmk
 

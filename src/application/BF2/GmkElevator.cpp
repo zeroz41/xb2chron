@@ -1094,8 +1094,7 @@ void GmkSeLine::dispose() {
 GmkSeLine::~GmkSeLine() { dispose(); }
 
 void GmkTrigger::dispose() {
-    pad_e0 = nullptr;
-    pad_e8 = nullptr;
+    m_seq = nullptr;
     m_phantom.dispose();
     AGmkBase::dispose();
 }

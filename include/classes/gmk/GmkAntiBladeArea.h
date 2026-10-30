@@ -8,17 +8,10 @@
 namespace gmk { class GmkAntiBladeAreaGob; }
 
 namespace gmk {
-// a base of gmk::GmkAntiBladeArea no evidence names yet. Its list node (0x8 in it, 0x50 in GmkAntiBladeArea) is linked
-// to itself before GmkAntiBladeArea's tables are stored (construct_n<GmkAntiBladeArea>), so it is part of this base;
-// copy_construct_n<GmkLandmark> copies the same layout under IGmkPhantomEventListener's table
-class TUnk_B6E320 : public mm::mtl::IntrusiveListNodeBase {
-public:
-    virtual void onEnterPhantom(gmk::IGmkPhantomEventListener::OnEnterInfo const&) = 0;
-    virtual void onLeavePhantom(gmk::IGmkPhantomEventListener::OnLeaveInfo const&) = 0;
-};
-// table 0x7100B6E2A8; base at 0x48 unknown (TUnk_B6E320)
+// table 0x7100B6E2A8; base at 0x48 IGmkPhantomEventListener (its secondary table 0x7100B6E320: offset -0x48 and the
+// override thunks; Vector<GmkAntiBladeArea>::expand stores IGmkPhantomEventListener's table there when copying)
 // 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (the 16-aligned field is not typed yet)
-class alignas(16) GmkAntiBladeArea : public ::gmk::AGmkBase, public TUnk_B6E320 {
+class alignas(16) GmkAntiBladeArea : public ::gmk::AGmkBase, public IGmkPhantomEventListener {
 public:
     // its size: the element size of Vector<BdatInfo>::resize 0x710062A048 (zero-filled)
     class BdatInfo {

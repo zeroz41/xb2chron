@@ -240,9 +240,10 @@ void Vector<T>::extend(size_t size, size_t alignment) {
     // line)
     copy_construct_n(begin(), oldSize, ptr);
     if (oldSize < size) {
+        size_t count = size - oldSize;
         T* element = ptr + oldSize;
         if (!__is_scalar(T)) {  // a pointer or scalar is left as it is (skd::Dynamics' solvers, Vector<short>)
-            construct_n(element, size - oldSize);
+            construct_n(element, count);
         }
     }
     clear();
