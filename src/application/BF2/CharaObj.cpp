@@ -61,6 +61,8 @@
 #include "classes/gf/GfGameParty.h"
 #include "gf/GfObjUtil.h"
 #include "classes/event/RandPlayer/Warp.h"
+#include "classes/event/RandPlayer/Wait.h"
+#include "classes/event/RandUtil.h"
 #include "classes/event/CharaStopHead.h"
 #include "classes/event/StmPackMemory.h"
 #include "classes/event/SeqManager/start.h"
@@ -1397,6 +1399,8 @@ event::ObjectManager::~ObjectManager() {}
 #include "classes/event/ScriptEffectMove.h"
 #include "classes/event/ScriptEffectTurn.h"
 #include "classes/event/ScriptEffectScale.h"
+#include "classes/event/ScriptEffectCast.h"
+#include "classes/event/ScriptEffectColor.h"
 
 namespace event {
 
@@ -1616,6 +1620,20 @@ void ScriptEffectPlay::redo(const event::Param& param) {
     }
 }
 
+void ScriptEffectCast::doit(const event::Param& param) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        ObjectChara* chara = static_cast<ObjectChara*>(param.val(0).getUserdata());
+        AttachActorBase* caster = chara->m_chara->m_attach;
+        EffectObj* effect = obj->m_effect;
+        if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+            effect->m_ctrl.setCaster(caster);
+        }
+        obj->m_caster = caster;
+        obj->m_mountActor = 0;
+    }
+}
+
 void ScriptEffectMount::undo(const event::Param&) {
     ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
     if (obj != 0) {
@@ -1688,6 +1706,39 @@ void ScriptEffectScale::redo(const event::Param& param) {
             effect->m_scale.y = scale;
             effect->m_scale.z = scale;
         }
+    }
+}
+
+void ScriptEffectColor::doit(const event::Param& param) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        mm::Col4 color(param.val(0).getF32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        const mm::Col4& cur = obj->m_effect->m_color;
+        m_prevColor = mm::Col4(cur.r, cur.g, cur.b, cur.a);
+        float time = param.val(4).getF32();
+        CV_TYPE type = static_cast<CV_TYPE>(param.val(5).getS32());
+        obj->m_effect->colorTo(color, time, type);
+    }
+}
+
+void ScriptEffectColor::undo(const event::Param&) {
+    const mm::Col4& prev = m_prevColor;
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        EffectObj* effect = obj->m_effect;
+        if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+            effect->m_color = prev;
+        }
+    }
+}
+
+void ScriptEffectColor::redo(const event::Param& param) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        mm::Col4 color(param.val(0).getF32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        float time = param.val(4).getF32();
+        CV_TYPE type = static_cast<CV_TYPE>(param.val(5).getS32());
+        obj->m_effect->colorTo(color, time, type);
     }
 }
 
@@ -2885,6 +2936,16 @@ bool SeqManager::play_start::update(const ICmd::Param& param) {
 bool RandPlayer::Warp::update(const ICmd::Param& param) {
     if (param.m_frame == 0) {
         gf::GfGameParty::judgeRandomTalkWarp();
+    }
+    return true;
+}
+
+// waits while the character with the id is not yet standing by to talk, at most 60 frames
+bool RandPlayer::Wait::update(const ICmd::Param& param) {
+    Object* obj = RandUtil::searchByID(param.m_param.val(0).getS32());
+    if (param.m_frame < 60 && obj->m_type == 2 &&
+        !gf::GfObjUtil::isStanbyTalkingPlayer(static_cast<ObjectChara*>(obj)->m_chara->m_gfHandle)) {
+        return false;
     }
     return true;
 }

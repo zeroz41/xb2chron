@@ -41,7 +41,7 @@ public:
     // signature; 3.0.1 inlines it into ScriptEffectPlay::doit and redo)
     void play(const char* name, float a, float b, float c, int d, int e) {
         m_effect->play(name, a, b, c, d, e);
-        pad_b0 = 0;
+        m_caster = 0;
         m_mountActor = 0;
         m_mountName = "";
         m_mountPos = mm::Vec3::zero;
@@ -57,8 +57,9 @@ public:
     // names are not the original's
     PosAxis m_pos;  // 0x70
     RotAxis m_rot;  // 0x90
-    // zeroed by setMount and play; no reader seen yet
-    unsigned long pad_b0;  // 0xb0
+    // the caster ScriptEffectCast hands the effect (EffectCtrl::setCaster); setMount and play clear it; the name is
+    // not the original's
+    IAttachActor* m_caster;  // 0xb0
     unsigned char pad_b8[0x8];
     // setMount's arguments (play clears them); the names are not the original's
     IAttachActor* m_mountActor;      // 0xc0

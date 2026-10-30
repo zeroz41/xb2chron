@@ -22,6 +22,8 @@
 #include "classes/event/CharaSetRot.h"
 #include "mm/Vec3.h"
 
+namespace gf { class GF_OBJ_HANDLE; }
+
 namespace event { class AttachActorBase; }
 
 namespace event {
@@ -101,7 +103,11 @@ public:
     CharaFade m_fade;  // 0xb80
     // bit 5: playFade's flag (it sets or clears it); the name is not the original's
     unsigned int m_flags;  // 0xca0
-    unsigned char pad_ca4[0xb4];
+    unsigned char pad_ca4[0x9c];
+    // the character's gf object (RandPlayer::Wait::update hands it to GfObjUtil::isStanbyTalkingPlayer); the name is
+    // not the original's
+    gf::GF_OBJ_HANDLE* m_gfHandle;  // 0xd40
+    unsigned char pad_d48[0x10];
     // initModel stores a new AttachActorGf here (the destructor deletes it); the name is not the original's
     AttachActorBase* m_attach;  // 0xd58
     unsigned char pad_d60[0x630];
