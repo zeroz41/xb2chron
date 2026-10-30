@@ -26,6 +26,7 @@
 #include "classes/fw/SoundSsdBank.h"
 #include "classes/fw/SoundReferenceObject.h"
 #include "classes/fw/SoundPack.h"
+#include "csvb/CsvbData.h"
 #include "mm/MMStdBase.h"
 #include "mtl/MemManager.h"
 
@@ -93,6 +94,14 @@ SoundSsdBank::~SoundSsdBank() {
 
 void SoundSsdBank::stopAll() {
     m_bank.Stop(0.0f);
+}
+
+SoundSsdDriver::~SoundSsdDriver() {
+    finalize();
+    if (m_bgmVolumes != nullptr) {
+        delete m_bgmVolumes;
+        m_bgmVolumes = nullptr;
+    }
 }
 
 bool SoundSsdDriver::isDeviceEnable() const {

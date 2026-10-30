@@ -1,0 +1,60 @@
+#ifndef MM_MTL_OBJECTALLOCATOR_H
+#define MM_MTL_OBJECTALLOCATOR_H
+
+#include "classes/mm/mtl/IAllocator.h"
+#include "mm/MMStdBase.h"
+#include "mm/mtl/Array.h"
+#include "mm/mtl/ReservedBitflag.h"
+
+// mm_lib's mm_mtl/internal/object_allocator.h, as the including file's include path named it (see mm/mtl/FixStr.h);
+// only the application's citation is known so far
+#define MM_MTL_OBJECT_ALLOCATOR_PATH \
+    "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/internal/object_allocator.h"
+
+namespace mm { namespace mtl {
+
+// up to a reserved number of T in one allocation, a flag per slot in use (1.0.0's ObjectAllocator<T>::reserve,
+// allocate and destroy; its assertions name m_capacity, m_allocated, m_element and valid_pointer(p)). The slots are
+// an Array of words (reserve asserts array.h's lines 161 to 167, destroy reads a slot through its operator[]); the
+// member names other than m_capacity and m_allocated are not the original's.
+template <typename T>
+class ObjectAllocator {
+public:
+    ObjectAllocator() : m_allocated(0), m_capacity(0) {}
+    ~ObjectAllocator() { destroy(); }
+
+    void reserve(IAllocator* allocator, unsigned int size);
+    T* allocate();
+    // destroys every object in use and gives the slots back
+    void destroy();
+    // destroys an object in place, nothing for none (destroy keeps the test of the slot's address, which a test
+    // written on the operator[] result folds away; the name is not the original's)
+    static void destruct(T* object) {
+        if (object != nullptr) {
+            object->~T();
+        }
+    }
+
+    Array<unsigned long> m_buffer;  // 0x00: the slots, in words
+    ReservedBitflag m_used;  // 0x18: a flag per slot in use
+    unsigned int m_allocated;  // 0x30: the slots in use
+    unsigned int m_capacity;  // 0x34: the slots reserved
+};
+
+template <typename T>
+void ObjectAllocator<T>::destroy() {
+    for (unsigned int i = 0; i < m_capacity; i++) {
+        if (m_used.getLocal(i)) {
+            destruct(reinterpret_cast<T*>(&m_buffer[i * static_cast<unsigned int>(sizeof(T)) / sizeof(unsigned long)]));
+            m_used.clrLocal(i);
+        }
+    }
+    m_allocated = 0;
+    m_buffer.clear();
+    m_used.destroy();
+    m_capacity = 0;
+}
+
+}}  // namespace mm::mtl
+
+#endif

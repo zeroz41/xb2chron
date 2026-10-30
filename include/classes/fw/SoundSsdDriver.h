@@ -13,6 +13,11 @@
 #include "mm/mtl/FixStr.h"
 #include "mm/Mat44.h"
 #include "ml/CriticalSection.h"
+#include "mm/mtl/FixedList.h"
+#include "mm/mtl/Map.h"
+#include "mm/mtl/ObjectAllocator.h"
+#include "classes/ssd/SoundHandle.h"
+#include "classes/ssd/SoundHandle/Notify.h"
 
 namespace fw { enum SoundCategory : int; }
 namespace fw { class SoundCategoryDebugInfo; }
@@ -32,8 +37,10 @@ namespace fw {
 enum SoundType : int;
 enum SoundPriority : int;
 class SoundSsdPlayer;
+class SoundPoolMemory;
 }  // namespace fw
-namespace ssd { class SoundCore; class SoundListener; }
+namespace ssd { class SoundCore; class SoundHandle; class SoundListener; }
+namespace csvb { class CCsvbData; }
 namespace fw {
 // table 0x7100B42EF0; the base at 0x8 is mm::mtl::PtrSingleton<SoundSsdDriver> (the constructor stores its
 // table there and asserts get()==0 from singleton.h)
@@ -180,6 +187,11 @@ public:
     }
     void stopSoundAll(fw::SoundType type, float fadeTime);
     void destroyResourceAll();  // destroys and releases every bank
+    // a handle's notification (registered on each handle the driver plays): a handle whose voice is freed drops the
+    // delegate and joins m_handles
+    ssd::Result SoundHandleDelegate(ssd::Delegate::Handle* delegate, ssd::SoundHandle* handle,
+                                    ssd::SoundHandle::Notify::Type type);
+    void releaseHandle(ssd::SoundHandle* handle);
 
     // field names are not the original's
     ssd::SoundCore* m_core;  // 0x10 (ssd::SoundCore::NewInstance(&m_allocator))
@@ -193,6 +205,13 @@ public:
     mm::mtl::List<SoundSsdBank*> m_banks;  // 0x838 (stopAll stops each)
     mm::mtl::List<ssd::SoundHandle*> m_handles;  // 0x878
     fw::PointerMap m_players;  // 0x8B8 (handle -> SoundSsdPlayer*)
+    mm::mtl::FixedList<SoundPoolMemory*, 256> m_poolMemories;  // 0x8F0 (attachPoolMemory, detachPoolMemory)
+    mm::mtl::Map<ssd::SoundHandle*, SoundSsdPlayer*> m_handlePlayers;  // 0x1B10 (releaseHandle finds a handle's player)
+    mm::mtl::ObjectAllocator<ssd::SoundHandle> m_handleAllocator;  // 0x1B28 (reserved for the constructor's count)
+    bool m_initialized;  // 0x1B60 (set at the end of the constructor)
+    int pad_1b64;  // 0x1B64 (1 at the end of the constructor)
+    unsigned char pad_1b68[0x8];
+    csvb::CCsvbData* m_bgmVolumes;  // 0x1B70 (sound/bgm_vol.csvb or sound/ira_vol.csvb; getBgmVolume reads it)
 };
 }  // namespace fw
 

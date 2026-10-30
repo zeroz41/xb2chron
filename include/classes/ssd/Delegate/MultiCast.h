@@ -8,6 +8,11 @@ namespace ssd { namespace Delegate {
 // one registered callback (Delegate::Object derives from it): MultiCast links it through its Node base.
 // sizeof 0x18 (SoundHandle's delegates are given back 0x18 bytes apart)
 class Handle : public List<Handle>::Node {
+public:
+    // calls the callback with a notification's two arguments (MultiCast's ExecuteDelegateImpl)
+    virtual Result ExecuteDelegate(unsigned long long, unsigned long long) = 0;  // slot 2
+    // the same callback as other's (MultiCast::FindDelegate's test)
+    virtual bool operator==(const Handle* other) const = 0;  // slot 3
 };
 
 // the callbacks a SoundHandle notifies (VoiceHandle::FreeVoice calls ExecuteDelegateImpl), as a list of Handles
@@ -21,6 +26,8 @@ public:
     void Clear();
     Result AddDelegate(Handle* handle);
     Result RemoveDelegate(Handle* handle);
+    // the registered handle equal to handle (Handle::operator==), null for none
+    Handle* FindDelegate(const Handle* handle);
 
     List<Handle> handles_;  // the name is not the original's
 };
