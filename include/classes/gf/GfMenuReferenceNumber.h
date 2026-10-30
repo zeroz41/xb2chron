@@ -27,6 +27,9 @@ public:
     // operator-> per test, the value and the bound loaded together); the names are not the original's
     bool isMin() const { return m_value == m_min; }
     bool isMax() const { return m_value == m_max; }
+    // sets the value (TUnk_B60820::reciveEvent: the object is asserted before the new value is loaded, so a call;
+    // the name is not the original's)
+    void setValue(int value) { m_value = value; }
 };
 }  // namespace gf
 
