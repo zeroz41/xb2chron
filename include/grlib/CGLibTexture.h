@@ -22,6 +22,10 @@ public:
     // buffer made from an image file's size bytes
     static void createTextureImagePtrs(CGLibTextureBuffer& buffer, const void* image, unsigned int size, bool flag,
                                        const CGLibTexSwizzle* swizzle, bool flag2);
+    // buffer made from an image of two parts (DrResMdoSeamTexture::createHeightTexture; the parameter names are not
+    // the original's)
+    static void createMixTextureImagePtrs(CGLibTextureBuffer& buffer, const void* image, unsigned int size,
+                                          unsigned int size2, bool flag, const CGLibTexSwizzle* swizzle, bool flag2);
     // buffer made from the size bytes at offset of pool's memory (DrResMdoTexList; the parameter names are not the
     // original's)
     static void createTextureImagePtrs(CGLibTextureBuffer& buffer, unsigned int size, CGLibVtlMemPool& pool,

@@ -17,6 +17,8 @@ public:
 
     // Per uniform variable: the number of floats its stock function writes (the stock functions return it).
     static const short s_nVarSizeTbl[];
+    // the bytes num elements of uniform variable type take (one when num is 0)
+    static int getValWork(int type, int num);
 };
 }  // namespace ml
 

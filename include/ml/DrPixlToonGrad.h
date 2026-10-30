@@ -2,14 +2,23 @@
 #define ML_DRPIXLTOONGRAD_H
 
 namespace grlib { class CGLibTextureBuffer; }
+namespace ml { class DrMan; class DrPixlRenderTarget; }
 
 namespace ml {
-// DrPixlPostMan::m_toonGrad. Only what DrPixlPostMan calls is declared.
+// DrPixlPostMan::m_toonGrad: the toon gradient render targets, one pair per double buffer index. Field names are
+// not the original's.
 class DrPixlToonGrad {
 public:
+    DrPixlToonGrad(DrMan* drMan);
+    ~DrPixlToonGrad();
     grlib::CGLibTextureBuffer* getGradTex() const;
     grlib::CGLibTextureBuffer* getDarkGradTex() const;
     void render();
+
+    DrMan* m_drMan;                          // 0x00
+    bool m_update;                           // 0x08: the constructor sets it
+    DrPixlRenderTarget* m_gradTarget[2];     // 0x10: getGradTex returns [DrMan::s_nDblIdx]'s texture
+    DrPixlRenderTarget* m_darkGradTarget[2]; // 0x20: getDarkGradTex returns [DrMan::s_nDblIdx]'s texture
 };
 }  // namespace ml
 

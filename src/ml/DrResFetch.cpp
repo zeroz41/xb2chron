@@ -84,6 +84,13 @@
 #include "ml/MdoWrkMatRes.h"
 #include <string.h>
 #include "ml/DrResMdoInstAnmObj.h"
+#include "ml/DrPixlToonGrad.h"
+#include "ml/DrPixlRenderTarget.h"
+#include "ml/DrResWrkClipList.h"
+#include "ml/DrResMdoSampler.h"
+#include "grlib/CGLibSampler.h"
+#include "ml/DrResFilterData.h"
+#include "ml/DrResMdoTexSimple.h"
 #include "classes/ml/DrResMdoSeamWrkMpf.h"
 #include "ml/DrMdoCtlMpfAuto.h"
 #include "ml/DrResMdoInstMdlInfo.h"
@@ -119,6 +126,12 @@ void DrResEtcPamObj::release(DrResEtcPamObj*& obj) {
     if (obj != nullptr) {
         obj = nullptr;
     }
+}
+
+void DrResMdoMeshParts::setDefAlpha(float alpha) {
+    m_alpha[DrMan::s_nDblStockIdx] = alpha;
+    m_flags |= 2 << DrMan::s_nDblStockIdx;
+    m_alpha[DrMan::s_nDblIdx] = alpha;
 }
 
 void DrResMdoMeshObj::release(DrResMdoMeshObj*& obj) {
@@ -474,6 +487,28 @@ inline void DrResMdoTexList::releaseTexInfo() {
     }
 }
 
+int DrResWrkClipList::calcWorkSize(const unsigned char* data, unsigned int ofs) {
+    const ListHead* head = reinterpret_cast<const ListHead*>(data + ofs);
+    int size = (head->m_num / 32) * 4 + 4;
+    return size + (0x20 - size % 0x20) % 0x20;
+}
+
+int DrResWrkClipList::setupWork(unsigned char* work, const unsigned char* data, unsigned int ofs) {
+    const ListHead* head = reinterpret_cast<const ListHead*>(data + ofs);
+    m_data = data;
+    m_num = head->m_num;
+    m_list = data + head->m_ofs;
+    m_work = work;
+    int size = (m_num / 32) * 4 + 4;
+    m_workSize = size + (0x20 - size % 0x20) % 0x20;
+    return m_workSize;
+}
+
+void DrResWrkClipList::changeMemCall(const unsigned char* data, unsigned int ofs) {
+    m_data = data;
+    m_list = data + reinterpret_cast<const ListHead*>(data + ofs)->m_ofs;
+}
+
 DrResMdoTexList::DrResMdoTexList(const unsigned char* data)
     : pad_0(nullptr), m_pNext(nullptr), m_res(data), pad_18(1), m_texBuf(nullptr), m_stmList(nullptr),
       m_texAlloc(nullptr), m_texNum(0), m_flags(0), m_stmState(0), m_data(data), m_mem(data), pad_90(nullptr),
@@ -619,6 +654,16 @@ void DrResMdoTexList::changeMemTexList(const unsigned char* mem) {
 
 unsigned int DrResMdoTexList::calcTextureMax(const unsigned char* data) {
     return *reinterpret_cast<const unsigned int*>(data);
+}
+
+DrResMdoTexSimple::~DrResMdoTexSimple() {
+    m_tex.release();
+    m_flags &= ~FLAG_CLEAR_MASK;
+}
+
+void DrResMdoTexSimple::createTex() {
+    grlib::CGLibTexture::createTextureImagePtrs(m_tex, m_image, m_imageSize, false, nullptr, false);
+    m_flags |= FLAG_CREATED;
 }
 
 int DrResMdoUniformBlock::getStaticUniformBlockSize() {
@@ -3568,6 +3613,23 @@ void DrResUseQueryObj::begin(DrPixlOccQuery* occ) {
     query->begin();
 }
 
+DrResMdoSampler::DrResMdoSampler(const unsigned char* data)
+    : pad_0(nullptr), m_pNext(nullptr), m_data(data), pad_18(1), m_samplerBuf(nullptr), m_samplerNum(0) {
+    setupSampler(data);
+}
+
+DrResMdoSampler::~DrResMdoSampler() {
+    if (m_samplerBuf != nullptr) {
+        for (int i = 0; i < m_samplerNum; i++) {
+            m_samplers[i].~CGLibSampler();
+        }
+        if (m_samplerBuf != nullptr) {
+            mtl::MemManager::deallocate(m_samplerBuf, 0, false);
+            m_samplerBuf = nullptr;
+        }
+    }
+}
+
 DrResOccUniformObj::~DrResOccUniformObj() {
     if (m_buf != nullptr) {
         mtl::MemManager::deallocate(m_buf, 0, false);
@@ -3586,6 +3648,13 @@ mm::Mat44* DrResOccUniformObj::getMatTbl() {
         return nullptr;
     }
     return &m_matTbl[m_cnt++];
+}
+
+DrResMdoSeamWrkInst::MdlInfo* DrResMdoSeamWrkInst::getMdlInfo() {
+    if (m_mdlCnt < m_mdlNum) {
+        return &m_mdlInfo[m_mdlCnt++];
+    }
+    return nullptr;
 }
 
 mm::Mat44* DrResOccUniformObj::getMatTbl(int idx) {
@@ -3793,6 +3862,38 @@ void DrResMpfSampler::setupSampler(const MdsMpfMatInfoHeader* header) {
     }
 }
 
+DrPixlToonGrad::DrPixlToonGrad(DrMan* drMan) {
+    m_update = true;
+    m_drMan = drMan;
+    for (int i = 0; i < 2; i++) {
+        m_gradTarget[i] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+        m_gradTarget[i]->setTextureInfo(512.0f, 256.0f, static_cast<GrlSurfaceFormat>(0x25), false, 0);
+        m_darkGradTarget[i] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+        m_darkGradTarget[i]->setTextureInfo(512.0f, 256.0f, static_cast<GrlSurfaceFormat>(0x25), false, 0);
+    }
+}
+
+DrPixlToonGrad::~DrPixlToonGrad() {
+    for (int i = 0; i < 2; i++) {
+        if (m_gradTarget[i] != nullptr) {
+            delete m_gradTarget[i];
+            m_gradTarget[i] = nullptr;
+        }
+        if (m_darkGradTarget[i] != nullptr) {
+            delete m_darkGradTarget[i];
+            m_darkGradTarget[i] = nullptr;
+        }
+    }
+}
+
+grlib::CGLibTextureBuffer* DrPixlToonGrad::getGradTex() const {
+    return m_gradTarget[DrMan::s_nDblIdx]->m_pTexture;
+}
+
+grlib::CGLibTextureBuffer* DrPixlToonGrad::getDarkGradTex() const {
+    return m_darkGradTarget[DrMan::s_nDblIdx]->m_pTexture;
+}
+
 DrResEtcTexList::~DrResEtcTexList() {
     releaseTexture();
 }
@@ -3855,6 +3956,28 @@ bool DrGpuCheckObj::isRender() const {
 }
 
 
+
+DrResFilterData::~DrResFilterData() {
+    if (m_texNum != 0) {
+        for (int i = 0; i < m_texNum; i++) {
+            m_texture[i].~CGLibTextureBuffer();
+        }
+        if (m_texture != nullptr) {
+            mtl::MemManager::deallocate(m_texture, 0, false);
+            m_texture = nullptr;
+        }
+        m_texNum = 0;
+    }
+}
+
+grlib::CGLibTextureBuffer* DrResFilterData::findFilterTexture(unsigned int id) const {
+    for (int i = 0; i < m_texNum; i++) {
+        if (m_entries[i].m_id == id) {
+            return &m_texture[i];
+        }
+    }
+    return m_texture;
+}
 
 DrGpuCheckBase* DrGpuCheckBase::createEffGpuCheckObj(int type) {
     return DrMan::get()->m_mdlMan->createEffGpuCheckObj(type);
@@ -4157,7 +4280,7 @@ void DrResMdoSeamWrkEnv::release() {
     }
     m_work2 = 0;
     m_flags = 0;
-    m_ctl = 0;
+    m_memObj = 0;
 }
 
 void DrResMdoSeamWrkEnv::setupWork(MdoWrkMatRes* matRes, grlib::CGLibTriUniformArray* triArray, mtl::ALLOC_HANDLE handle,
@@ -4301,6 +4424,10 @@ void DrResMdoSeamMemMan::releaseFreeObj(DrResMdoSeamMemObj* obj) {
 
 DrResMdoSeamRead::~DrResMdoSeamRead() { release(); }
 
+void DrResMdoSeamRead::setup(bool async) {
+    m_flags = (m_flags & ~(FLAG_READ_ASYNC | FLAG_READ_SYNC)) | (async ? FLAG_READ_ASYNC : FLAG_READ_SYNC);
+}
+
 void DrResMdoSeamRead::readCancel() {}
 
 int DrResMdoSeamTexList::SEAMRES_TEXLIST_CNTMAX = 0x3C;
@@ -4337,6 +4464,11 @@ DrResMdoSeamTexture::DrResMdoSeamTexture(int no)
     : m_prev(nullptr), m_next(nullptr), m_memObj(nullptr), m_heightMemObj(nullptr), m_heightOffset(0), m_no(no),
       pad_9E(0), m_cnt(0), m_readIn(0), m_heightCnt(0), m_heightReady(0) {}
 
+DrResMdoSeamTexture::~DrResMdoSeamTexture() {
+    release();
+    m_memObj = nullptr;
+}
+
 void DrResMdoSeamTexture::release() {
     m_texture.release();
     m_heightMemObj = nullptr;
@@ -4365,6 +4497,10 @@ void DrResMdoSeamTexture::createHeightMoveTexture(int offset, unsigned int size)
     m_cnt = 0;
     m_heightCnt = 0;
     m_heightOffset = offset;
+}
+
+void DrResMdoSeamTexture::createHeightTexture(int size, int size2) {
+    grlib::CGLibTexture::createMixTextureImagePtrs(m_texture, m_memObj->m_pData, size, size2, false, nullptr, false);
 }
 
 void DrResMdoSeamTexture::resetTexture(int size) {
@@ -4415,6 +4551,20 @@ void DrResMdoSeamVertex::changeMemVertex() {
 int DrResMdoSeamVertex::SEAMRES_CNTMAX = 0x3C;
 
 DrResMdoSeamWrkBase::~DrResMdoSeamWrkBase() { release(); }
+
+bool DrResMdoSeamWrkEnv::update(const mm::Vec3&, bool force) {
+    m_flags &= ~FLAG_READ;
+    if (m_matRes == nullptr) {
+        return false;
+    }
+    if (force) {
+        return true;
+    }
+    if (m_memObj->m_flags & 2) {
+        m_flags |= FLAG_READ;
+    }
+    return false;
+}
 
 DrResMdoSeamWrkInst::~DrResMdoSeamWrkInst() { release(); }
 
@@ -4491,6 +4641,15 @@ DrResMdoVertex::DrResMdoVertex(const unsigned char* data)
 
 DrResMdoVertex::~DrResMdoVertex() { vertexRelease(); }
 
+void DrResMdoVertex::update() {
+    if (m_stream != nullptr) {
+        DrCalcStmListObj::ResTexObj* res = m_stream->getResVertexObj();
+        if (res->m_flags & 1) {
+            changeMemVertex(res->m_pData);
+        }
+    }
+}
+
 int DrResMdoVertex::getVertexMax(int index) const { return m_vertex[index].m_num; }
 
 void DrResMdoVertex::render(int index) { m_index[index].drawIndex(); }
@@ -4498,6 +4657,16 @@ void DrResMdoVertex::render(int index) { m_index[index].drawIndex(); }
 void DrResMdoVertex::renderIns(int index, int instances) { m_index[index].drawInsIndex(instances); }
 
 grlib::CGLibVtxVertex* DrResMdoVertex::getWeightVertex() { return &m_vertex[m_weight->vertexNo]; }
+
+int DrResMdoVertex::setWeightVertexBind(int index) {
+    const VertexHead* head = reinterpret_cast<const VertexHead*>(m_vtxData);
+    if (head->weightVertexNo[index] == 0) {
+        return 0;
+    }
+    grlib::CGLibCtlVertex::setVertex(m_vertex[head->weightVertexNo[index]]);
+    m_bindVertex = head->weightVertexNo[index];
+    return m_vertex[head->weightVertexNo[index]].m_num;
+}
 
 const DrResMdoVertex::WeightInfo* DrResMdoVertex::getWeightVertexInfo(int no, int lv) {
     const unsigned short* table = reinterpret_cast<const unsigned short*>(m_vtxData + m_weight->tableOffset);

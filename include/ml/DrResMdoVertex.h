@@ -8,6 +8,7 @@ namespace grlib { class CGLibOneUniformBlock; }
 namespace grlib { class CGLibOneUniformArray; }
 
 namespace ml {
+class DrCalcStmListObj;
 // A model's vertex resource: vertex and index buffers set up from the resource data in a memory pool.
 // The field names and the WeightHead type are not the original's.
 class DrResMdoVertex {
@@ -30,6 +31,11 @@ public:
         unsigned short vertexNo;  // 0x2
         unsigned char pad_4[0x8];
     };
+    // the head of the vertex data (0x28): the weight vertex buffer number per weight index from 0x10 (0 = none)
+    struct VertexHead {
+        unsigned char pad_0[0x10];
+        unsigned short weightVertexNo[1];  // 0x10
+    };
     // the extra vertex buffer and uniform block (0x70)
     struct EtcBlock {
         grlib::CGLibVtxVertex* vertex;
@@ -50,6 +56,8 @@ public:
     const WeightInfo* getWeightVertexInfo(int no, int lv);
     void setVertexBind(int index);
     void setEtcVertexBind(int index, int slot);
+    // binds the weight vertex buffer of the index; returns its vertex count (0 when it has none)
+    int setWeightVertexBind(int index);
 
     void* m_link0;  // 0x0: zeroed by the constructor
     DrResMdoVertex* m_pNext;  // 0x8: zeroed by the constructor; DrMdoVertexMan's list link (the name is not the original's)
@@ -69,7 +77,7 @@ public:
     grlib::CGLibVtxVertex* m_etcVertex;  // 0x60
     grlib::CGLibVtlMemPool* m_memPool;  // 0x68
     EtcBlock* m_etc;  // 0x70
-    void* m_stream;  // 0x78: update reloads the buffers only when it is set
+    DrCalcStmListObj* m_stream;  // 0x78: update reloads the buffers only when it is set
 };
 }  // namespace ml
 

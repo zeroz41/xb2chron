@@ -17,6 +17,7 @@ public:
     bool update();
     bool updateHeight();
     void createTexture(int size);
+    void createHeightTexture(int size, int size2);
     void createHeightMoveTexture(int offset, unsigned int size);
     void resetTexture(int size);
     void changeMemTexture(int size);

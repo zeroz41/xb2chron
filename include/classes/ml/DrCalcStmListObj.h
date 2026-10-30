@@ -40,6 +40,9 @@ public:
         unsigned char pad_11[0x7];
     };
     ResTexObj* getResLowTexObj();
+    // the streamed vertex resource (same shape: DrResMdoVertex::update reloads its buffers from m_pData once bit 0
+    // of m_flags is set)
+    ResTexObj* getResVertexObj();
     // the stream's texture idx (0x70-byte entries at 0xB0)
     grlib::CGLibTextureBuffer* getTexObj(unsigned int idx);
 
