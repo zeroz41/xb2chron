@@ -36,6 +36,11 @@ public:
             3, speciesId, questId, reinterpret_cast<GF_OBJ_HANDLE*>(-1), true));
         m_iconBdatId = iconId < 0 ? 0x19f : iconId;
     }
+    // Placeholder name: nothing in 1.0.0's place names it (its update calls fn_71002E14A8 there). A member because
+    // update passes this; inline (weak, emitted after the unit's table slots). What it does: when the object has a
+    // valid transform and its DataObjEnemy is valid with getGenus() == m_speciesId, adds its world position to
+    // m_posList (defined in gf_field_locator.cpp).
+    inline void fn_7100272430(GF_OBJ_HANDLE* handle);
     // the destructor's clearing; 1.0.0's symbols name it dispose() (3.0.1 inlines it)
     void dispose() {
         m_posList.clear();

@@ -26,7 +26,16 @@ public:
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9 (fn_71005B9928)
     // its bdat row: complete because TGmkList's inline constructor needs Vector<BdatInfo>; the size is not read
     // yet (placeholder: no fields declared)
-    class BdatInfo {};
+    class BdatInfo {
+    public:
+        // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address
+        // (0x71005B94AC) sits just before this class's create (fn_71005B94D8) in GmkElevator's unit and
+        // LocatorGimmick::update calls it on a kind-0x3E gimmick's m_createInfo.m_bdatInfo, where its siblings call
+        // their BdatInfo's isPopCondMatched. What it does: true when the u16 at the row's offset 0 is 0, else
+        // GfGameCond::isGameCond of it (a condition id).
+        bool fn_71005B94AC() const;
+    };
+    const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x3e);
     gf::GF_OBJ_HANDLE* m_gob;  // 0x48: dispose destroys it unless it is -1 (the name is not the original's)

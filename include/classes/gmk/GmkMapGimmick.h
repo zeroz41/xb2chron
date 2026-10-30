@@ -32,6 +32,7 @@ public:
     };
     virtual ~GmkMapGimmick();  // slot 0
     void setSolved() const;
+    bool isNotSolved() const;
     void validateEffectWithoutLodControl(int lodId, bool flag) const;
     const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
     virtual gmk::GmkType getGmkType() const;  // slot 2

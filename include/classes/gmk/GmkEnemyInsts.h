@@ -23,6 +23,8 @@ public:
     public:
         class PopEnemyInfo;
         unsigned int getGobInstNum() const;  // how many objects pop
+        // LocatorBat_EnemySpeciesID::update skips a gimmick when it answers true for the species with true
+        bool hasTypeGenus(unsigned char genus, bool) const;
         unsigned char pad_0[0x8];  // fields: size unknown
     };
     // the gimmick's row as it pops (GmkEnemy's at 0x80)
@@ -63,6 +65,7 @@ public:
         unsigned char pad_4c[0x14];         // fields: size from PopInfo's offset
     };
     gf::GF_OBJ_HANDLE* getGobInst(unsigned int index) const;  // the handle of one of them
+    bool isQuestDead() const;
     // pops the gimmick's objects now (GfSmnEnemyManager::execAbsSummon)
     void reqForcePopGobInst(const ForcePopEnemyInfo& info) const;
     unsigned char pad_0[0x1c];
@@ -75,7 +78,11 @@ public:
     PopInfo m_popInfo;  // (the name is not the original's)
     // fields (its destructor 0x71005D85E8 touches +0x150, +0x178); size 0x190: GmkEnemy (insts at 0x48) and
     // GmkRoutedEnemy (insts at 0x50) getInst strides 0x1d8 and 0x200
-    unsigned char pad_a0[0xf0];
+    unsigned char pad_a0[0xd0];
+    // LocatorBat_EnemySpeciesID::update shows a gimmick that has no object only while this is not above 0 (meaning
+    // not known; the name is not the original's)
+    float m_popWait;
+    unsigned char pad_174[0x1c];
 };
 }  // namespace gmk
 

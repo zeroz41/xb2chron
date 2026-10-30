@@ -17,6 +17,8 @@ public:
     };
     GmkRoute() : pad_48(nullptr) {}  // inline: resize/extend construct in place with these stores
     virtual ~GmkRoute();  // slot 0
+    // the position of one of its route points (LocatorBat_EnemySpeciesID::update asks a routed enemy for point 0)
+    bool getRoutePointPos(mm::Vec3& pos, unsigned int index) const;
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4

@@ -30,6 +30,10 @@ public:
     // original's)
     unsigned int getGobInstNum() const { return m_insts.m_popInfo.getGobInstNum(); }
     gf::GF_OBJ_HANDLE* getGobInst(unsigned int index) const { return m_insts.getGobInst(index); }
+    // its pop state, as LocatorBat_EnemySpeciesID::update reads it inline (the names are not the original's)
+    bool isPopCondMatched() const { return m_insts.m_bdatInfo.isPopCondMatched(); }
+    float getPopWait() const { return m_insts.m_popWait; }
+    bool hasTypeGenus(unsigned char genus, bool flag) const { return m_insts.m_popInfo.hasTypeGenus(genus, flag); }
 
     unsigned char pad_1e0[0x20];  // size 0x200: TGmkList<GmkRoutedEnemy>::getInst's stride (index << 9)
 };

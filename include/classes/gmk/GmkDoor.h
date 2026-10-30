@@ -65,6 +65,7 @@ public:
         BootedGmkCond m_bootedGmk3;  // the row's SPOP_gimmickType/ID
     };
     virtual ~GmkDoor();  // slot 0
+    const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
     virtual void dispose();  // slot 5

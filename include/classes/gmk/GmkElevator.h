@@ -78,6 +78,8 @@ public:
     void createSe(SeType type, const mm::Vec3& pos);
     bool isCallSwitch(gf::GF_OBJ_HANDLE* gob) const;
     bool isLiftSwitch(gf::GF_OBJ_HANDLE* gob) const;
+    // where the compass shows it (LocatorGimmick::update copies it into its position when it answers true)
+    bool getPosForCompass(mm::Vec3& pos) const;
     // which of m_gobs it is (-1: none). Inline, no symbol: isCallSwitch (0 or 2) and isLiftSwitch (1 or 3) test
     // the first three/four entries in order with these answers (the name is not the original's)
     int getGobIndex(gf::GF_OBJ_HANDLE* gob) const {

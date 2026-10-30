@@ -37,6 +37,9 @@ public:
         m_mapBdatId = static_cast<unsigned short>(Bdat::getValCheck(fp, "MapID", row, 2));
         m_gmkSetId = GfFieldGimmick::getBdatIdFrom_FLD_maplist_To_RSC_GmkSetList(GfGameManager::getMapID());
     }
+    // whether create found a wave on the current map (inline, no symbol: update tests it first; the name is not the
+    // original's)
+    bool isValid() const { return m_gmkSetId != 0 && m_enemyWaveId != 0; }
     // the destructor's clearing (its siblings' 1.0.0 symbols name theirs dispose(); 3.0.1 inlines it)
     void dispose() {
         m_gmkSetId = 0;

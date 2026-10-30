@@ -40,6 +40,8 @@ public:
             GfQuestTarget::getIconTypeReachPlace(m_category, m_placeId, m_questId, mapId, true));
         m_iconBdatId = iconId < 0 ? 0x19f : iconId;
     }
+    // whether create found a place to show (inline, no symbol: update tests it first; the name is not the original's)
+    bool isValid() const { return m_category != 0 && m_placeId != 0; }
     // the destructor's clearing; 1.0.0's symbols name it dispose() (3.0.1 inlines it)
     void dispose() {
         m_posNum = 0;

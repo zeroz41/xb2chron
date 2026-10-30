@@ -33,7 +33,9 @@ public:
     // what AGmkBase::m_data points at for a jump gimmick (GfFieldJump::onFsSucceeded reads it; the struct and field
     // names are not the original's)
     struct alignas(8) Data {
-        unsigned char pad_0[0x10];
+        // where the jump gimmick stands: LocatorGimmick::update shows it on the compass (the name is not the original's)
+        mm::Vec3NA m_startPos;
+        unsigned char pad_c[0x4];
         mm::Vec3NA m_pos;  // where the jump lands
         float m_param[3];  // passed on in MsgPcFieldNotifyBigJump (meaning not known)
     };
