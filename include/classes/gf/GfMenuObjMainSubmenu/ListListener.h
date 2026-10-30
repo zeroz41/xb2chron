@@ -2,15 +2,20 @@
 #define CLASSES_GF_GFMENUOBJMAINSUBMENU_LISTLISTENER_H
 
 #include "classes/gf/GfMenuObjMainSubmenu.h"
+#include "classes/ui/UIObjectListener.h"
 
-namespace ui { class EventData; }
+namespace ui { struct EventData; }
 
 namespace gf {
 // table 0x7100B63328
-class GfMenuObjMainSubmenu::ListListener {
+class GfMenuObjMainSubmenu::ListListener : public ::ui::UIObjectListener {
 public:
-    virtual ~ListListener();  // slot 0
+    // its code zeroes 0xC-0x1B after storing its table: its own fields, as other menus' listeners use theirs
+    ListListener(GfMenuObjMainSubmenu* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~ListListener() {}  // slot 0: weak in the original, and its D1 slot is the base's destructor
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
+    unsigned char pad_0C[0x10];
+    GfMenuObjMainSubmenu* m_owner;  // what initialize makes it for
 };
 }  // namespace gf
 
