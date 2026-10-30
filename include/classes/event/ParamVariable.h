@@ -24,6 +24,8 @@ public:
     // 1.0.0 has them out of line too (0x71000972D4, 0x71000972EC): the stored value, unconverted
     bool getBool() const { return m_value.boolValue; }
     const char* getStr() const { return m_value.strValue; }
+    // 1.0.0 has it out of line (0x7100097304): the stored pointer
+    void* getUserdata() const { return m_value.userdata; }
     // the value as text ("%d", "%f", "true"/"false", the string, "%lld"); empty for nothing
     void createString(mm::mtl::FixStr<256>& str);
 

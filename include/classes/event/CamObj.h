@@ -1,6 +1,7 @@
 #ifndef CLASSES_EVENT_CAMOBJ_H
 #define CLASSES_EVENT_CAMOBJ_H
 
+#include "classes/event/CamBase.h"
 #include "classes/event/CamHands.h"
 #include "classes/event/CmdQueue.h"
 #include "classes/event/CamMotion.h"
@@ -36,7 +37,10 @@ public:
         m_cmdQueue.eraseAll();
         m_motion.stop();
     }
-    unsigned char pad_bf0[0x88];
+    unsigned char pad_bf0[0x80];
+    // the camera update runs and copies its fields from (0x70 holds one of them); render/tail work only while one is
+    // set; the name is not the original's
+    CamBase* m_activeCam;  // 0xc70
     CmdQueue<8, 0> m_cmdQueue;  // 0xc78; erased by end (CmdQueue<8,0>::erase); the name is not the original's
 
 };

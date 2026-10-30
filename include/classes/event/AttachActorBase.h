@@ -3,11 +3,12 @@
 
 namespace event { enum ATTACH_TYPE : int; }
 #include "mm/Mat44.h"
+#include "classes/event/IAttachActor.h"
 namespace mm { class Vec3; }
 
 namespace event {
 // table 0x7100B3C220
-class AttachActorBase {
+class AttachActorBase : public ::event::IAttachActor {
 public:
     virtual ~AttachActorBase() {}  // slot 0
     virtual const char* getName() const;  // slot 2: returns m_name

@@ -80,6 +80,11 @@
 #include "classes/event/ParamVariable.h"
 #include "classes/event/Param.h"
 #include "classes/event/CharaSetTar.h"
+#include "classes/event/CharaWinkPlayer.h"
+#include "classes/event/CharaWeightPlayer.h"
+#include "classes/event/EffectPlayEff.h"
+#include "classes/gf/GfMovieManager.h"
+#include "ml/MTRand.h"
 #include "classes/event/ShakeManager.h"
 #include "classes/event/TodoManager.h"
 #include "classes/event/ObjectPartyList.h"
@@ -198,9 +203,36 @@ void CharaPlayTalk::init() {
     pad_74 = 0.0f;
 }
 
+void CharaPlayTalk::term() {
+    idle();
+}
+
+void CharaWinkPlayer::idle_start() {
+    m_count = ml::mtRand(60) + 90;
+    m_state = &CharaWinkPlayer::idle_waiting;
+}
+
+void CharaWinkPlayer::idle_waiting() {
+    if (m_flags & 1) {
+        return;
+    }
+    if (m_count-- > 0) {
+        return;
+    }
+    m_weightPlayer->easeIn(static_cast<gf::AnimLayer>(3), "S_eye_close", 4.0f, 1.0f, 1.0f, static_cast<CV_TYPE>(1),
+                           static_cast<WeightLayer>(1));
+    m_stateName = "close";
+    m_state = &CharaWinkPlayer::idle_wink;
+    m_count = 7;
+}
+
 void CharaMount::init() {}
 
 void BlurManager::OnEventProc(event::MSG_TYPE) {}
+
+void EffectPlayEff::term() {
+    pad_20 = -1.0f;
+}
 
 void FormManager::OnEventProc(event::MSG_TYPE) {}
 
@@ -534,6 +566,13 @@ bool DebugManager::isMovieDebug() const {
     return (m_flags >> 16) & 1;
 }
 
+void CharaSetTar::term() {
+    if (m_flags & 1) {
+        idle();
+        m_flags &= ~1;
+    }
+}
+
 void CharaSetIdle::init() {
     m_step = 0;
 }
@@ -542,12 +581,24 @@ void CharaPlayHead::init() {
     m_step = 0;
 }
 
+void CharaPlayHead::term() {
+    idle();
+}
+
 void CharaPlayFacial::init() {
     m_step = 0;
 }
 
+void CharaPlayFacial::term() {
+    idle();
+}
+
 void CharaPlayWink::init() {
     m_step = 0;
+}
+
+void CharaPlayWink::term() {
+    idle();
 }
 
 ObjectLight::~ObjectLight() {
@@ -610,6 +661,18 @@ Object* Object::searchByPath(const char* path) {
         }
     }
     return nullptr;
+}
+
+void CamObj::render(const mm::Col4& col) {
+    if (m_activeCam) {
+        m_activeCam->render(col);
+    }
+}
+
+void CamObj::tail() {
+    if (m_activeCam) {
+        m_cmdQueue.update();
+    }
 }
 
 void CamManager::setFocal(bool focal) {
@@ -1588,6 +1651,21 @@ void ScriptEffectTurn::redo(const event::Param& param) {
     }
 }
 
+void ScriptEffectScale::doit(const event::Param& param) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        mm::Vec3 scalePrev = obj->m_effect->m_scale;
+        m_prevScale = scalePrev;
+        float scale = param.val(0).getF32();
+        EffectObj* effect = obj->m_effect;
+        if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+            effect->m_scale.x = scale;
+            effect->m_scale.y = scale;
+            effect->m_scale.z = scale;
+        }
+    }
+}
+
 void ScriptEffectScale::undo(const event::Param&) {
     ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
     if (obj != 0) {
@@ -2480,6 +2558,15 @@ inline void OutsiderManager::update() {
     }
 }
 
+bool MovieManager::isLoading() const {
+    if (pad_10 & 2) {
+        if (mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->isstandby() == false) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void MovieManager::setScriptFlag(bool enable) {
     if (enable) {
         pad_10 |= 0x100;
@@ -2825,6 +2912,8 @@ void StmPackMemory::render(const mm::Rect<int>& rect, float alpha) {}
 namespace event {
 
 void Scheduler::func_stanby(gf::GfObj* obj) {}
+
+void ScheduleItem::func_fadewait(gf::GF_OBJ_HANDLE*) {}
 
 void Scheduler::setup() {
     gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);

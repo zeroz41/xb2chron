@@ -7,7 +7,7 @@ namespace event {
 // table 0x7100B3E760
 class CharaSetIdle : public ::event::ICmd {
 public:
-    virtual ~CharaSetIdle();  // slot 0
+    virtual ~CharaSetIdle() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
     virtual void init();  // slot 2
     virtual bool update(event::ICmd::Param const&);  // slot 3
     // set to 0 by init (the command's step; the name is not the original's)

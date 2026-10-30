@@ -7,10 +7,11 @@ namespace event {
 // table 0x7100B3E5A0
 class CharaPlayHead : public ::event::ICmd {
 public:
-    virtual ~CharaPlayHead();  // slot 0
+    virtual ~CharaPlayHead() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
     virtual void init();  // slot 2
     virtual bool update(event::ICmd::Param const&);  // slot 3
     virtual void term();  // slot 4
+    void idle();  // out of line (0x71000EB3D0); term calls it
     // set to 0 by init (the command's step; the name is not the original's)
     int m_step;  // 0x8
     unsigned char pad_c[0x14];

@@ -11,8 +11,11 @@ public:
     virtual ~CharaSetTar() {}  // slot 0
     virtual bool update(event::ICmd::Param const&);  // slot 3
     virtual void term();  // slot 4
+    void idle();  // out of line (0x71000E5CD8); term calls it while bit 0 is set
     static const mm::Vec2 LENS_LIMIT;  // calcLensUV's bounds
     static const mm::Vec2 JOY_LIMIT;
+    // bit 0: term calls idle and clears it; the name is not the original's
+    unsigned int m_flags;  // 0x8
 };
 }  // namespace event
 
