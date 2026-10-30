@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKCLIMBING_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "mm/Vec3.h"
 #include "classes/gmk/ScenarioFlagCond.h"
 #include "classes/gmk/QuestFlagCond.h"
 #include "classes/gmk/BootedGmkCond.h"
@@ -33,7 +34,10 @@ public:
     virtual void update(float);  // slot 6
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(46);
-    unsigned char pad_48[0x18];  // fields: size from TGmkList::getInst's stride
+    // user-provided: Vector<GmkClimbing>::resize stores the defaults below only (no zero fill of the element first)
+    GmkClimbing() {}
+    void* pad_48 = nullptr;
+    mm::Vec3 pad_50 = mm::Vec3::zero;  // the 16-aligned field (resize copies Vec3::zero's x, y, z); size 0x60 (stride)
 };
 }  // namespace gmk
 

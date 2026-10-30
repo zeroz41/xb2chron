@@ -1,12 +1,16 @@
 #ifndef CLASSES_GMK_AGMKNPC_H
 #define CLASSES_GMK_AGMKNPC_H
 
+#include "mm/mtl/IntrusiveList.h"
+
 namespace gf { class GF_OBJ_HANDLE; }
 namespace mm { class Vec3; }
 
 namespace gmk {
 // table 0x7100B719F8
-class AGmkNpc {
+// its links (+0x8..+0x18) are a base, not a member: its copy constructor copies them apart from pad_18 (a base copy
+// is not merged with the member copies), as GmkNpc's and GmkRoutedNpc's copy loops do
+class AGmkNpc : public mm::mtl::IntrusiveListNodeBase {
 public:
     virtual ~AGmkNpc() {}  // slot 0
     virtual bool isPopCondMatched() const = 0;  // slot 2
@@ -21,6 +25,8 @@ public:
     virtual void unbindToGameObj(gf::GF_OBJ_HANDLE*) const = 0;  // slot 10
     virtual void validateDisp() const = 0;  // slot 11
     virtual void debugUpdate(float) {}  // slot 12
+    // GmkNpc's (base at 0x48) and GmkRoutedNpc's (base at 0x50) Vector<T>::resize store it at the base's +0x18
+    void* pad_18 = nullptr;
 };
 }  // namespace gmk
 

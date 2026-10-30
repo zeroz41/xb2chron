@@ -14,6 +14,8 @@ public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
     public:
+        // user-provided: Vector<BdatInfo>::resize/extend store each field (no zero fill of the padding)
+        BdatInfo() : m_footEffect(nullptr), m_condition(0) {}
         // inline: initGmkBdatInfo inlines it (no symbol); the column names are the original's, the field names not
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
             m_footEffect = reinterpret_cast<const char*>(Bdat::getValCheck(bdat.m_fp, "FootEffect", row, 7));
@@ -26,7 +28,7 @@ public:
         unsigned short m_condition;  // 0x8: "Condition"
         ScenarioFlagCond m_scenarioFlag;  // 0xa
         QuestFlagCond m_questFlag;  // 0xe
-        unsigned char pad_12[0x6];
+        // (0x12..0x18: tail padding, neither stored by resize nor copied)
     };
     GmkRoutedFootPrint() {}  // inline, user-provided: the defaults are stored by Vector<T>::resize/extend, no zero fill
     virtual ~GmkRoutedFootPrint();  // slot 0

@@ -16,6 +16,8 @@ public:
     // a gimmick row (its size: the element size of its Vector<BdatInfo>::resize)
     class BdatInfo {
     public:
+        // user-provided: Vector<BdatInfo>::resize/extend store each field (no zero fill of the padding)
+        BdatInfo() : m_kind(0), m_condition(0), m_battleReaction(0), m_visibleXZSq(0), m_visibleYSq(0), m_invisibleXZSq(0), m_invisibleYSq(0) {}
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
         bool isPopCommonCondMatched() const;
         // GfGmkBladeTraverser::onTraverse compares it with its own; the row's "BladeSizeCheck" (the field names are

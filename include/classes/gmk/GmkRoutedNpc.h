@@ -8,7 +8,8 @@
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
 namespace gmk { class GmkRouteGob; }
-namespace mm { class Vec3; }
+#include "mm/Vec3.h"
+#include "mm/Quat.h"
 
 namespace gmk {
 // table 0x7100B6DB80
@@ -35,7 +36,14 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(4);
     gf::GF_OBJ_HANDLE* getGobInst() const;  // its game object (-1: none)
-    unsigned char pad_58[0x48];  // fields: size from TGmkList::getInst's stride (0xa0; AGmkNpc, vptr only, sits at 0x50)
+    // user-provided: Vector<GmkRoutedNpc>::resize stores the defaults below only (no zero fill of the element first)
+    GmkRoutedNpc() {}
+    // fields after AGmkNpc (0x50..0x70); size from TGmkList::getInst's stride (0xa0)
+    void* pad_70 = nullptr;
+    unsigned char pad_78 = 1;
+    unsigned char pad_79 = 1;
+    mm::Vec3 pad_80 = mm::Vec3::zero;  // the 16-aligned field (resize copies Vec3::zero's x, y, z)
+    mm::Quat pad_90 = mm::Quat::zero;
 };
 }  // namespace gmk
 

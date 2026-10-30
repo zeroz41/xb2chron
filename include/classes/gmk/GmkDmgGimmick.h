@@ -49,13 +49,17 @@ public:
     // the steps update runs through m_seq (symbols name them)
     void seqWaitToCreateChild(float dt);
     void seqUpdatePopDepop(float dt);
-    unsigned char pad_50[0x8];
+    // the defaults below are Vector<GmkDmgGimmick>::resize's stores (no zero fill: a user-provided constructor)
+    GmkDmgGimmick() { pad_58 = nullptr; pad_60 = nullptr; m_seq = nullptr; pad_78 = this; }
+    unsigned char pad_50 = 0;
     void* pad_58;  // dispose clears it
-    unsigned char pad_60[0x8];
+    void* pad_60;
     // the step update calls while the gimmick is valid (seqWaitToCreateChild installs seqUpdatePopDepop; dispose
     // clears it; the name is not the original's)
     void (GmkDmgGimmick::*m_seq)(float dt);
-    unsigned char pad_78[0x10];  // fields: size from TGmkList::getInst's stride (0x88)
+    void* pad_78;  // resize stores the element's own address
+    unsigned char pad_80 = 1;
+    unsigned char pad_81[0x7];  // fields: size from TGmkList::getInst's stride (0x88); expand copies them
 };
 }  // namespace gmk
 

@@ -2,14 +2,29 @@
 #define CLASSES_GMK_GMKEFFECT_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "plugin/Bdat.h"
+#include "classes/gmk/QuestFlagCond.h"
+#include "classes/gmk/ScenarioFlagCond.h"
 namespace gmk { class GmkEffectGobCustom; }
 
 namespace gmk {
 // table 0x7100B6C550
 class GmkEffect : public ::gmk::AGmkBase {
 public:
-    // empty: its Vector<BdatInfo>::resize is the empty-element form (no element stores)
-    class BdatInfo {};
+    // 10 bytes: Vector<BdatInfo>::expand copies n*10; the stores are initGmkBdatInfo's (0x71005E8AF4)
+    class BdatInfo {
+    public:
+        // inline: initGmkBdatInfo inlines it (no symbol); the column names are the original's, the field names not
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+            m_scenarioFlag = ScenarioFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMin", row, 2), (unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMax", row, 2));
+            m_questFlag = QuestFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "QuestFlag", row, 2), (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMin", row, 1),
+                                        (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMax", row, 1));
+            m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Condition", row, 2);
+        }
+        unsigned short m_condition;  // 0x0: "Condition"
+        ScenarioFlagCond m_scenarioFlag;  // 0x2
+        QuestFlagCond m_questFlag;  // 0x6
+    };
     virtual ~GmkEffect();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
