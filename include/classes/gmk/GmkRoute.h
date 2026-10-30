@@ -16,6 +16,19 @@ public:
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {}
     };
     GmkRoute() : pad_48(nullptr) {}  // inline: resize/extend construct in place with these stores
+    // what m_createInfo.m_data points at for a route (getRoutePointNum/isClosed/getRoutePoint read it; the struct
+    // and field names are not the original's)
+    struct Data {
+        unsigned int m_pointBegin;  // 0x0: its first point's index in the binded route point list
+        unsigned int m_pointEnd;    // 0x4: one past its last point
+        unsigned int pad_8;
+        unsigned int m_flags;       // 0xC: bit 0: closed (isClosed)
+    };
+    const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
+    unsigned int getRoutePointNum() const;
+    bool isClosed() const;
+    // its point at index (from its first one) in the binded route point list, none past the list's end
+    AGmkBase* getRoutePoint(unsigned int index) const;
     virtual ~GmkRoute();  // slot 0
     // the position of one of its route points (LocatorBat_EnemySpeciesID::update asks a routed enemy for point 0)
     bool getRoutePointPos(mm::Vec3& pos, unsigned int index) const;
@@ -25,7 +38,7 @@ public:
     virtual void dispose();  // slot 5
     virtual void debugDraw() const;  // slot 7
     virtual void debugUpdateMmf();  // slot 10
-    virtual void getBindedRoutePointList() const;  // slot 11
+    virtual IGmkList* getBindedRoutePointList() const;  // slot 11
     // an 8-byte field the constructor clears (Vector<T>::resize stores 0 at 0x48); meaning unknown
     void* pad_48;
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)

@@ -22,7 +22,7 @@ public:
     GmkPhantom m_phantom;  // 0x50 (the name is not the original's)
     // the constructor sets them (meaning unknown)
     bool pad_e0 = false;
-    float pad_e4 = 0.0f;
+    unsigned int m_seHandle = 0;  // dispose stops it (SoundManager::stopSe; the name is not the original's)
     float pad_e8 = 1.0f;
     // 0xec..0xf0: tail padding (size 0xf0, TGmkList::getInst's stride; Vector<GmkDmgSe>::expand copies 0xe0..0xec)
 };

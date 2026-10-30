@@ -37,6 +37,8 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x39);
     void disposeGmkPhantom();
+    // the local game flag it reads: its BDAT row id + 54162
+    unsigned int getGameFlagId() const;
     // 0x58..0x60: padding (the copies of Vector<T>::expand copy nothing there)
     GmkPhantom m_phantom;  // 0x60 (the name is not the original's)
     bool pad_f0 = false;  // the constructor clears it (meaning unknown)

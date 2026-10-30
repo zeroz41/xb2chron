@@ -23,7 +23,7 @@ public:
     static const gmk::GmkType TYPE = gmk::GmkType(0x37);
     float pad_48 = 900.0f;
     float pad_4c = 100.0f;
-    unsigned int pad_50 = 0;
+    unsigned int m_effectHandle = 0;  // dispose kills it (EffectManager::dead; the name is not the original's)
     unsigned char pad_54 = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk

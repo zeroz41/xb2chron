@@ -21,7 +21,7 @@ public:
     virtual void update(float);  // slot 6
     virtual void debugDraw() const;  // slot 7
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
-    virtual void getBindedRoutePointList() const;  // slot 11
+    virtual IGmkList* getBindedRoutePointList() const;  // slot 11
     // its kind (getGmkType's; GmkManager::traverseGmkInst walks the enemies by it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(1);
 

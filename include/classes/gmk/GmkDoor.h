@@ -79,7 +79,12 @@ public:
     static mm::mtl::RTTI m_rtti;
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(41);
-    unsigned char pad_58[0x308];  // fields: size from TGmkList::getInst's stride
+    void seqDoor_Booted(float dt);
+    void seqDoor_Shutdowned(float dt);
+    void seqDoor_SpBooted(float dt);
+    unsigned char pad_58[0x268];
+    float m_doorWait;  // 0x2c0: seqDoor_SpBooted counts it up to the row's door_nextwait (the name is not the original's)
+    unsigned char pad_2c4[0x9c];  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

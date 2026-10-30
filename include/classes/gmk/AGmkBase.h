@@ -84,6 +84,9 @@ const GmkEnemy* fn_71005B3824(const AGmkBase* gmk, unsigned int index);
 // whether the player's object exists (defined in GmkElevator.cpp's unit; StateFieldHome::isCondMatch is its tail
 // call)
 bool isPlayerExist();
+// a gimmick's BDAT row and sheet names for debug output: "(null)" in this build
+const char* debugGetGmkBdatRowName(const AGmkBase& gmk);
+const char* debugGetGmkBdatSheetName(const AGmkBase& gmk);
 // the player's position (GfFieldGimmick::update hands it to GfGameUtil::isPointSavable)
 const mm::Vec3& getPlayerPos();
 // the current map's FLD_maplist id (defined in GmkElevator.cpp's unit)

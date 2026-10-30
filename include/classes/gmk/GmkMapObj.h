@@ -32,6 +32,7 @@ public:
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
     void disposeGobInst(bool);
+    void reqDisposeGob(float wait, unsigned int arg) const;
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(6);
@@ -43,8 +44,9 @@ public:
     unsigned char pad_51 = 0;
     unsigned char pad_52 = 0;
     unsigned char pad_53[0x1];
-    unsigned int pad_54 = 0;
-    unsigned int pad_58 = 0;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
+    // reqDisposeGob (const) stores its two arguments here (the names are not the original's)
+    mutable float m_disposeWait = 0.0f;
+    mutable unsigned int m_disposeArg = 0;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk
 

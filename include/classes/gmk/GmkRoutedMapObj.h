@@ -19,7 +19,7 @@ public:
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
-    virtual void getBindedRoutePointList() const;  // slot 11
+    virtual IGmkList* getBindedRoutePointList() const;  // slot 11
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(7);
     // its game object (GmkManager::collectGameObjs<GmkRoutedMapObj> reads it inline: none is -1; the names are

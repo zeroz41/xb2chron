@@ -19,7 +19,7 @@ public:
     static const gmk::GmkType TYPE = gmk::GmkType(0x32);
     unsigned char pad_48 = 1;
     unsigned char pad_49[0x3];
-    unsigned int pad_4c = 0;  // fields: size from TGmkList::getInst's stride
+    unsigned int m_effectHandle = 0;  // dispose removes it from fw::EffectManager (the name is not the original's)  // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

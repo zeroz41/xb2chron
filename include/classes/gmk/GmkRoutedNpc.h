@@ -22,7 +22,7 @@ public:
     virtual void dispose();  // slot 5
     virtual void debugDraw() const;  // slot 7
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
-    virtual void getBindedRoutePointList() const;  // slot 11
+    virtual IGmkList* getBindedRoutePointList() const;  // slot 11
     virtual bool isPopCondMatched() const;  // slot 12
     virtual void isDepopCondMatched() const;  // slot 13
     virtual void vf4();  // slot 14 (AGmkNpc slot 4; its override, fn_7100590868)

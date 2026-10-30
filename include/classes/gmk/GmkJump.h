@@ -58,6 +58,8 @@ public:
     // the effect "ma40a_01_101_dlc" from GfFieldManager::getEffectPack(). GfFieldJump::onFsSucceeded calls it after
     // sending MsgPcFieldNotifyBigJump (when fn_71002A9E68 answers true).
     void fn_71005A7770();
+    void createIcon();
+    void reqRecreateIcon();
     static const gmk::GmkType TYPE = gmk::GmkType(37);
     void* pad_48 = nullptr;
     unsigned char pad_50 = 0;
@@ -67,7 +69,7 @@ public:
     void* pad_68 = nullptr;
     unsigned int m_effectHandle;  // dispose removes it from fw::EffectManager (the name is not the original's)
     unsigned int pad_74 = 0;
-    unsigned char pad_78 = 0;
+    unsigned char pad_78 = 0;  // reqRecreateIcon clears it and makes the icon again when it was set
     unsigned char pad_79 = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk

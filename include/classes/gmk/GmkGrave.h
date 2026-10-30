@@ -32,6 +32,8 @@ public:
     virtual void debugDraw() const;  // slot 7
     // pops the grave's enemy (gf::GfFieldGrave::seqWaitToSelect calls it on the common window's first choice)
     bool reqPopEnemy() const;
+    // reqPopEnemy's per-kind halves (out of line in the original: _ZNK3gmk8GmkGrave11reqPopEnemyINS_8GmkEnemyEEEbv)
+    template <class T> bool reqPopEnemy() const;
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*) {}  // slot 9
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)

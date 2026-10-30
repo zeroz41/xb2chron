@@ -47,16 +47,20 @@ public:
     // (m_collectionTable) equals the given BDAT 0x1E0 row (gf_field_locator's collection locator update passes its row)
     bool fn_710059BFFC(unsigned short collectionId) const;
     bool isWaitRepop() const;
+    void setTargetable(bool targetable);
+    void seqUpdateRepopCounter(float dt);
     // AGmkBase's row as this kind's BdatInfo; the name is not the original's
     const BdatInfo* getBdatInfo() const {
         return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
     }
     static const gmk::GmkType TYPE = gmk::GmkType(0x1C);
-    long pad_48 = -1;
-    void* pad_50 = nullptr;
+    // its game object (dispose clears its user data, destroys it and stores -1; the name is not the original's)
+    gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    unsigned int m_iconEffect = 0;  // an EffectManager handle (disposeIcon removes it; the name is not the original's)
+    unsigned int pad_54 = 0;
     void* pad_58 = nullptr;
     void* pad_60 = nullptr;
-    unsigned int pad_68 = 0;
+    float m_repopCounter = 0.0f;  // seqUpdateRepopCounter counts it down (the name is not the original's)
     unsigned char pad_6c = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk

@@ -36,7 +36,9 @@ public:
     // pops the treasures the salvage's raffle drew (GfGameSalvage::execPop)
     void popByRaffleResult();
 
-    unsigned char pad_48[0xe8];  // size 0x130: TGmkList<GmkSalvage>::getInst's stride
+    unsigned char pad_48[0xe1];
+    unsigned char pad_129;  // GmkSalvageLocator::syncDepopTboxes sets it to 1, its dispose sets it too
+    unsigned char pad_12a[0x6];  // size 0x130: TGmkList<GmkSalvage>::getInst's stride
 };
 }  // namespace gmk
 

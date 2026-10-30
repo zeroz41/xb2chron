@@ -765,9 +765,109 @@ void GmkSquadLeader::dispose() { AGmkBase::dispose(); }
 void GmkSquadMember::dispose() { AGmkBase::dispose(); }
 // kinds whose create is the base one
 void GmkRoute::create(const CreateInfo& info) { AGmkBase::create(info); }
+
+unsigned int GmkRoute::getRoutePointNum() const { return getData()->m_pointEnd - getData()->m_pointBegin; }
+bool GmkRoute::isClosed() const { return getData()->m_flags & 1; }
+
 void GmkEvent::create(const CreateInfo& info) { AGmkBase::create(info); }
 void GmkBattleLock::create(const CreateInfo& info) { AGmkBase::create(info); }
 void GmkFieldLock::create(const CreateInfo& info) { AGmkBase::create(info); }
+
+void GmkCollection::dispose() {
+    disposeIcon(false);
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    AGmkBase::dispose();
+}
+
+GmkCollection::~GmkCollection() { dispose(); }
+
+// ---- kinds holding one effect or sound handle: the destructor is the key function (dispose inlined)
+void GmkDmgEffect::dispose() {
+    if (m_effectHandle != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effectHandle);
+        m_effectHandle = 0;
+    }
+    AGmkBase::dispose();
+}
+
+GmkDmgEffect::~GmkDmgEffect() { dispose(); }
+
+void GmkDmgSe::dispose() {
+    if (m_seHandle != 0) {
+        mm::mtl::PtrSingleton<fw::SoundManager>::sys()->stopSe(m_seHandle, 0.0f);
+        m_seHandle = 0;
+    }
+    AGmkBase::dispose();
+}
+
+GmkDmgSe::~GmkDmgSe() { dispose(); }
+
+void GmkRoutedFootPrintPoint::dispose() {
+    if (m_effectHandle != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->dead(m_effectHandle);
+        m_effectHandle = 0;
+    }
+    AGmkBase::dispose();
+}
+
+GmkRoutedFootPrintPoint::~GmkRoutedFootPrintPoint() { dispose(); }
+
+GmkPrecious::~GmkPrecious() { dispose(); }
+
+// ---- debug draws and updates of the base form
+void GmkEvent::debugDraw() const { AGmkBase::debugDraw(); }
+void GmkBattleLock::debugDraw() const { AGmkBase::debugDraw(); }
+void GmkFieldLock::debugDraw() const { AGmkBase::debugDraw(); }
+void GmkEffect::debugDraw() const { AGmkBase::debugDraw(); }
+void GmkMob::debugDraw() const { AGmkBase::debugDraw(); }
+void GmkMapJump::debugDraw() const { AGmkBase::debugDraw(); }
+void GmkGrave::debugDraw() const {
+    AGmkBase::debugDraw();
+    isValid();
+}
+void GmkDmgEffect::update(float dt) { AGmkBase::update(dt); }
+
+int IGmkList::debugGetDocId() const { return 0; }
+
+bool isPlayerExist() { return gf::GfGameManager::fn_71002AA074() != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1); }
+
+const char* debugGetGmkBdatRowName(const AGmkBase&) { return "(null)"; }
+const char* debugGetGmkBdatSheetName(const AGmkBase&) { return "(null)"; }
+
+int GmkTbox::getProgress() const { return gf::GfGameFlag::getLocal(2, m_createInfo.m_bdatId + 31765); }
+
+void GmkMapObj::reqDisposeGob(float wait, unsigned int arg) const {
+    m_disposeWait = wait;
+    m_disposeArg = arg;
+}
+
+void GmkRoutedFootPrint::dispose() {
+    AGmkBase::dispose();
+    pad_50 = nullptr;
+    pad_58 = nullptr;
+}
+
+unsigned int GmkTutorial::getGameFlagId() const { return m_createInfo.m_bdatId + 54162; }
+
+bool GmkLandmark::isFound() const { return gf::GfGameFlag::getLocal(1, m_createInfo.m_bdatId + 51161) != 0; }
+
+void GmkJump::reqRecreateIcon() {
+    if (pad_78) {
+        pad_78 = 0;
+        if (m_effectHandle == 0) {
+            createIcon();
+        }
+    }
+}
+
+void GmkSalvage::onPlayerAccessed(gf::GF_OBJ_HANDLE*) { gf::GfGameFlag::setLocal(1, m_createInfo.m_bdatId + 11804, 1); }
 void GmkRoutedMapObj::create(const CreateInfo& info) { GmkRoute::create(info); }
 void GmkLandmark::create(const CreateInfo& info) { AGmkBase::create(info); }
 void GmkRoutePoint::create(const CreateInfo& info) { AGmkBase::create(info); }
@@ -833,6 +933,29 @@ GmkSalvageLocator::~GmkSalvageLocator() { dispose(); }
 void GmkSalvageLocator::onPlayerAccessed(gf::GF_OBJ_HANDLE*) {
     m_isAccessed = true;
 }
+
+void GmkSalvageLocator::reqDisposeTboxGobInst(float wait) const {
+    m_disposeWait = wait;
+    pad_e4 = 0;
+}
+
+void GmkSalvageLocator::seqWaitPop(float dt) {
+    m_popTimer += dt;
+    if (m_popTimer < m_popWait) {
+        return;
+    }
+    m_seq = &GmkSalvageLocator::seqPop;
+}
+
+void GmkSalvageLocator::syncDepopTboxes() {
+    if (m_createInfo.m_data[0] == 4 && !pad_f1 && !pad_f2 && m_salvage != nullptr) {
+        m_salvage->pad_129 = 1;
+    }
+}
+
+void GmkSalvageLocator::onEnemyDead(gf::GF_OBJ_HANDLE*) { pad_f1 = 1; }
+
+void GmkSalvageLocator::onEnemyHomeToPlayerAccess(gf::GF_OBJ_HANDLE*) { pad_f2 = 1; }
 
 // ---- TUnk_B6D590 (placeholder slot symbols: see its header)
 void TUnk_B6D590::dispose() {
@@ -1030,6 +1153,13 @@ void GmkGrave::dispose() {
         m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     }
     AGmkBase::dispose();
+}
+
+bool GmkGrave::reqPopEnemy() const {
+    if (reqPopEnemy<GmkEnemy>()) {
+        return true;
+    }
+    return reqPopEnemy<GmkRoutedEnemy>();
 }
 
 GmkTbox::~GmkTbox() { dispose(); }
@@ -1648,6 +1778,14 @@ void GmkDoor::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) 
     m_bootedGmk3 = BootedGmkCond(bdat, row, "SPOP_");
     m_gmkCamPos = Bdat::getFlagVal(bdat.m_fp, "flag", row, "gmkCamPos") != 0;
 }
+
+void GmkDoor::seqDoor_Shutdowned(float dt) { seqDoor_Booted(dt); }
+
+void GmkDoor::seqDoor_SpBooted(float dt) {
+    if (m_doorWait < getBdatInfo()->m_doorNextwait) {
+        m_doorWait += dt;
+    }
+}
 void GmkMapGimmick::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
     m_popTime.m_time = (unsigned short)Bdat::getValCheck(bdat.m_fp, "popTime", row, 3);
     m_popWeather.m_weather = (unsigned char)Bdat::getValCheck(bdat.m_fp, "popWeather", row, 1);
@@ -1774,6 +1912,13 @@ bool GmkMapGimmick::BdatInfo::isPopCondMatched() const {
         return false;
     }
     return true;
+}
+
+void GmkMapGimmick::setSolved() const { gf::GfGameFlag::setLocal(1, m_createInfo.m_bdatId + 43878, 1); }
+
+bool GmkMapGimmick::isNotSolved() const {
+    GameFlagCond cond(1, m_createInfo.m_bdatId + 43878);
+    return cond.isMatch(0);
 }
 
 void GmkMapObj::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
@@ -2061,5 +2206,34 @@ bool GmkCollection::BdatInfo::isPopCondMatchedExceptDist() const {
     }
     return true;
 }
+
+bool GmkCollection::fn_710059BFFC(unsigned short collectionId) const {
+    return isValid() && getBdatInfo()->m_collectionTable == collectionId;
+}
+
+bool GmkCollection::isWaitRepop() const { return gf::GfGameFlag::getLocal(1, m_createInfo.m_bdatId + 29020) != 0; }
+
+void GmkCollection::disposeIcon(bool flag) {
+    if (m_iconEffect != 0) {
+        if (flag) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->fadeOutDead(m_iconEffect, 5);
+        } else {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_iconEffect);
+        }
+        m_iconEffect = 0;
+    }
+}
+
+void GmkCollection::seqUpdateRepopCounter(float dt) {
+    m_repopCounter -= dt;
+    if (m_repopCounter > 0.0f) {
+        return;
+    }
+    setTargetable(true);
+}
+
+void GmkCollection::onPlayerAccessed(gf::GF_OBJ_HANDLE*) { setTargetable(false); }
+
+bool GmkPrecious::isObtained() const { return gf::GfGameFlag::getLocal(1, m_createInfo.m_bdatId + 47087) != 0; }
 
 }  // namespace gmk

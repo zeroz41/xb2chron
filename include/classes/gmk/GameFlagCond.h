@@ -5,6 +5,8 @@ namespace gmk {
 // table 0x7100B6F398
 class GameFlagCond {
 public:
+    // GmkMapGimmick::isNotSolved builds one on the stack: both fields stored together after the table
+    GameFlagCond(int flagType, int flagIndex) : m_flagType(flagType), m_flagIndex(flagIndex) {}
     virtual ~GameFlagCond() {}  // slot 0
     // the local game flag of type 1 << (m_flagType - 1) at m_flagIndex equals value (false for a type outside 1..6)
     bool isMatch(unsigned int value) const;

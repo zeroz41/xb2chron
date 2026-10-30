@@ -64,7 +64,7 @@ public:
     virtual bool updateImmediate() = 0;  // slot 12: whether the list is valid (isValid's answer)
     virtual void debugUpdateMmf() = 0;  // slot 13
     virtual void debugDraw() const = 0;  // slot 14
-    virtual void debugGetDocId() const;  // slot 15
+    virtual int debugGetDocId() const;  // slot 15: 0 in this build
 };
 }  // namespace gmk
 
