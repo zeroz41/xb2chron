@@ -66,6 +66,11 @@ namespace gf {
 // TUnk_B3A9C8::fn_7100026CBC / fn_7100026C28 (a BDAT 78 "Score" value) and fn_7100026CF0.
 unsigned long fn_7100558D28(int value);
 unsigned long fn_7100558BAC(int value);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x7100558E88, right after
+// fn_7100558D28). A free function: it takes no this. What it does: passes value straight to GfWeapon's unit's
+// fn_71002DA5E4 (a type-0x10 MsgUnk_1000034 to the arena game mode), with no request. Its one caller is the challenge
+// battle unit's fn_7100025920 (an unsigned value it compares with a GfGameManager::fn_71002AC5D8 field).
+void fn_7100558E88(unsigned int value);
 }  // namespace gf
 
 #endif

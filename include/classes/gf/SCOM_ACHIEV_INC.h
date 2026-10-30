@@ -70,6 +70,26 @@ public:
     // the blades the count applies to (exec passes them to GfAchievManager::incAchievWithBlade when there are any)
     mm::mtl::FixedVector<unsigned short, 422> m_blades;
 };
+
+// Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions: they make no request and take
+// no this; their code sits among SCOM_ACHIEV_INC's functions in gf_req_scom and their one caller is the same dispatch
+// (fn_710000FDEC) that calls SCOM_ACHIEV_INC's achievement wrappers. What they do: while a quest is ordered
+// (GfQuestInfo::isQuestOrder), raise a local flag 8 counter by one up to 0xFF: quest 0x8ED flag 0x87C
+// (fn_7100566480) and quest 0x8F0 flag 0x87D (fn_71005664E8), both only for handle -1 or the party leader driver
+// (GfGameManager::getPartyLeaderDriver); quest 0x8F3 flag 0x87E (fn_7100566550), 0x8F6 / 0x87F (fn_7100566594),
+// 0x8F9 / 0x880 (fn_71005665D8).
+void fn_7100566480(GF_OBJ_HANDLE* handle);
+void fn_71005664E8(GF_OBJ_HANDLE* handle);
+void fn_7100566550();
+void fn_7100566594();
+void fn_71005665D8();
+// Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions for the same reasons (no
+// request, no this; between SCOM_ACHIEV_INC's functions). What they do: fill a blade list with
+// GfDataBlade::fn_71002376E8 and pass it to GfAchievManager::incAchievWithBlade(type, 1, list): type 0x9B
+// (fn_7100566168, caller the dispatch fn_710000FDEC) or the type given (fn_7100566424, caller
+// minigame::tora::MinigameUpdatableObject::update).
+void fn_7100566168();
+void fn_7100566424(unsigned int type);
 }  // namespace gf
 
 #endif

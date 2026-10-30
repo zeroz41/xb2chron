@@ -15,6 +15,11 @@ public:
     // fades the screen in slot (its s_fades entry) to color over frames frames; one request applies every slot's
     // pending fade (its handle stays in s_hCreatedReq until it runs), returns that handle
     static unsigned long create(unsigned int slot, unsigned int frames, const mm::Col4& color);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it follows create in
+    // gf_req_scom and only forwards to it. What it does: -1 (no request) for an instant (frames 0) fade to a colour
+    // of alpha 0 while event 10657 plays (GfGameEvent::getPlayEventId), else create(slot, frames, color).
+    // Callers: event::FadeCtrl::clear and update.
+    static unsigned long fn_710055C704(unsigned int slot, unsigned int frames, const mm::Col4& color);
 
     // a slot's pending fade: create fills it, exec passes it to GfMenuFade::setFade and clears m_slot to -1
     // (the names are not the original's; the static initializer sets m_slot to -1 only)

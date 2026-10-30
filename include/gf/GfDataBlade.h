@@ -66,6 +66,11 @@ public:
     // fills list with the party's blades (SCOM_ACHIEV_INC::createParty and createCrystal)
     static void getListPartyAll(mm::mtl::FixedVector<unsigned short, 422>& list);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit (before fn_7100237B70) and fills a 422-entry blade list. What it does: walks the blade rows (local game flag
+    // 0xD860 picks the walk) adding blades to the list; returns a bool. Callers: SCOM_ACHIEV_INC::fn_71005645F0 (when
+    // fn_71002324C8 is false), GfMenuBladeList::setupFromDriver/setupFromReleasble/setupFromTeam, GfMenuObjUtil.
+    static bool fn_71002376E8(mm::mtl::FixedVector<unsigned short, 422>& list);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
     // unit among its functions. What it does: GfGameFlag::getLocal of the game data's flags (GfDataManager::getDataGame
     // + 0xFBBC4), width 16, index 1; TUnk_B64F08::fn_71004944B8 compares it with 2000.
     static unsigned short fn_7100231884();
@@ -286,6 +291,8 @@ public:
     static unsigned int getAchievReleaseLevel(unsigned int blade, unsigned int line);
     static void setSkillLineLevel(unsigned int blade, unsigned int line, unsigned int level);
     static unsigned int getBladeWpnType(unsigned int blade);
+    // the voice name a blade says when it starts field skill skill, or null (SCOM_FIELD_VOICE::createFieldSkillStart)
+    static const char* getFieldSkillVoice(unsigned int blade, unsigned int skill);
     static const char* getName(unsigned int blade, unsigned int kind);
     // the blade's name from its data: kind 0 its own name rows (SDataBlade::m_nameMsg/m_nameMsgAlt), else that
     // row of table 423 (blade rows below CHR_Bl's end) or 396; "" for none

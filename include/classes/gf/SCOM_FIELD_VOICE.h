@@ -70,6 +70,9 @@ public:
     // fn_71005691B0). What it does: passes the voice pair "670103"/"670104" (count 2) to fn_7100568E1C. Its one
     // caller is GfMenuObjQuestLog::seqCompleteWait, after a quest's complete window when fn_710048FD30(3) holds.
     static void fn_71005691EC();
+    // the voice when a field skill starts: GfDataBlade::getFieldSkillVoice(blade, skill) for the blade, at once
+    // (0 when the blade has none). Caller: GfMenuObjFieldSkill::SkillInfoListener::reciveEvent.
+    static GAME_VOICE_HANDLE* createFieldSkillStart(unsigned int blade, unsigned int skill);
     static unsigned long createMercenariesEnd(unsigned int id);
     static unsigned long createMercenariesResult(unsigned int id);
     static unsigned long createLandmark();

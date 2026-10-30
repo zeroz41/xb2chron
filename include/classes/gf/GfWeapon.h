@@ -191,6 +191,14 @@ void fn_71002EE784(unsigned int blade, unsigned int slot);
 // QuestTaskParam first); false otherwise. Callers: GfQuestTarget::getIconType, fn_710030A840 and
 // GfMenuLocation::refreshLocatorFromQuest, which makes no locator for a task it holds for.
 bool fn_71002EE5E0(QuestID quest, unsigned int task);
+// Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions because their addresses are in
+// GfWeapon's unit (no this). What they do: when the arena game mode (TUnk_B535D0::sys()) exists, send it a
+// MsgUnk_1000034 of type 0xE (fn_71002DA4FC), 0xF (fn_71002DA570) or 0x10 (fn_71002DA5E4) carrying value in its
+// parameter word 0x30, 0x34 or 0x38. Callers: the exec of the requests TUnk_B6AF70 and TUnk_B6AFA0 (their value at
+// 0x1C) and gf_req_scom's fn_7100558E88.
+void fn_71002DA4FC(int value);
+void fn_71002DA570(int value);
+void fn_71002DA5E4(unsigned int value);
 }  // namespace gf
 
 #endif
