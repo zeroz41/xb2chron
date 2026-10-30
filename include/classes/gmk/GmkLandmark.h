@@ -49,7 +49,7 @@ public:
     void disposeGmkPhantom();
     unsigned char pad_50[0x10];
     GmkPhantom m_phantom;  // 0x60: the destructor destroys it (the name is not the original's)
-    unsigned char pad_e8[0x18];  // fields: size from TGmkList::getInst's stride (0x100)
+    unsigned char pad_f0[0x10];  // fields: size from TGmkList::getInst's stride (0x100)
 };
 }  // namespace gmk
 

@@ -8,7 +8,9 @@
 namespace gmk {
 // table 0x7100B6BF68
 // its node (a non-polymorphic base, so at 0x8 after the table) links it into GmkPhantomManager's list
-class GmkPhantom : public mm::mtl::IntrusiveListNodeBase {
+// 16-aligned (size 0x90): every holder is alignas(16) with its phantom at a 16-aligned offset and 8 free bytes after
+// it, and GmkElevator's destructor destroys four of them 0x90 apart as one array (the 16-aligned field is not typed yet)
+class alignas(16) GmkPhantom : public mm::mtl::IntrusiveListNodeBase {
 public:
     // 1.0.0 has it out of line (GmkPhantom(CreateInfo const*): these stores, create when given one, then the link);
     // 3.0.1 inlines it into the gimmicks that embed one (construct_n<GmkSe>)

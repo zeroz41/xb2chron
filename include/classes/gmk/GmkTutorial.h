@@ -39,7 +39,6 @@ public:
     void disposeGmkPhantom();
     unsigned char pad_58[0x8];
     GmkPhantom m_phantom;  // 0x60 (the name is not the original's)
-    unsigned char pad_e8[0x8];
     bool pad_f0 = false;  // the constructor clears it (meaning unknown)
     unsigned char pad_f1[0xf];  // size from TGmkList::getInst's stride (0x100)
 };

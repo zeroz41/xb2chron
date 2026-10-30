@@ -20,7 +20,6 @@ public:
     static const gmk::GmkType TYPE = gmk::GmkType(0x33);
     unsigned char pad_48[0x8];
     GmkPhantom m_phantom;  // 0x50 (the name is not the original's)
-    unsigned char pad_d8[0x8];
     // the constructor sets them (meaning unknown)
     bool pad_e0 = false;
     float pad_e4 = 0.0f;

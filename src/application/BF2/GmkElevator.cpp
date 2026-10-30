@@ -141,6 +141,10 @@
 #include "classes/gmk/GmkWarp.h"
 #include "mm/Mat44.h"
 #include "classes/gmk/Lvlb.h"
+#include "classes/gf/GfFieldLod.h"
+#include "classes/gf/GfFieldGimmick.h"
+#include "classes/gf/MenuCommonWindowParam.h"
+#include "gf/GfPlayFactory.h"
 
 namespace gf {
 // the resident sound sources' files, by index (getSoundSourceFileName reads it; bindGFSoundSource loads each)
@@ -773,6 +777,8 @@ GmkSquadMember::~GmkSquadMember() { dispose(); }
 GmkElevatorLocator::~GmkElevatorLocator() { dispose(); }
 GmkTargetPoint::~GmkTargetPoint() { dispose(); }
 GmkRoutedEnemyPoint::~GmkRoutedEnemyPoint() { dispose(); }
+
+GmkElevator::~GmkElevator() { dispose(); }
 
 // ---- GmkDmgGimmick
 void GmkDmgGimmick::seqWaitToCreateChild(float) {
@@ -1437,6 +1443,76 @@ void GmkElevator::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& g
     m_elevatorNextwait = (short)Bdat::getValCheck(bdat.m_fp, "elevator_nextwait", row, 5);
     m_liftAMapJumpId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "liftAMapJumpId", row, 2);
     m_liftBMapJumpId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "liftBMapJumpId", row, 2);
+}
+
+// ---- GmkElevator
+bool GmkElevator::isCallSwitch(gf::GF_OBJ_HANDLE* gob) const {
+    int index = getGobIndex(gob);
+    return index == 0 || index == 2;
+}
+
+bool GmkElevator::isLiftSwitch(gf::GF_OBJ_HANDLE* gob) const {
+    int index = getGobIndex(gob);
+    return index == 1 || index == 3;
+}
+
+void GmkElevator::dispose() {
+    m_accessed0 = false;
+    m_accessed2 = false;
+    m_accessed3 = false;
+    m_accessed1 = false;
+    pad_4b0 = -1;
+    m_seq = nullptr;
+    clearGobInsts();
+    for (int i = 0; i < 4; i++) {
+        m_ctrlVolSes[i].dispose();
+    }
+    bool valid = isValid();
+    gf::GfFieldLod* lod = mm::mtl::PtrSingleton<gf::GfFieldLod>::get();
+    if (lod != nullptr && valid) {
+        gf::GfFieldGimmick* gimmick = mm::mtl::PtrSingleton<gf::GfFieldGimmick>::get();
+        if (gimmick == nullptr || !gimmick->m_unknownFlag1) {
+            const BdatInfo* info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+            if (info->m_liftAMapJumpId != 0) {
+                lod->setAnimReverse(info->m_liftLod, true, true);
+            } else if (info->m_liftBMapJumpId != 0) {
+                lod->setAnimReverse(info->m_liftLod, false, true);
+            }
+        }
+    }
+    AGmkBase::dispose();
+}
+
+void GmkElevator::clearGobInsts() {
+    for (int i = 0; i < 4; i++) {
+        if (m_gobs[i] != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            gf::GfObjAcc acc(m_gobs[i]);
+            if (acc.m_obj != nullptr) {
+                acc.setUserData(gf::GfObjUserData(0), 0);
+            }
+            gf::GfObjUtil::destroy(m_gobs[i]);
+            m_gobs[i] = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        }
+    }
+}
+
+void GmkElevator::update(float dt) {
+    debugUpdateMmf();
+    if (isValid() && m_seq) {
+        (this->*m_seq)(dt);
+    }
+}
+
+void GmkElevator::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3)) {
+        switch (getGobIndex(handle)) {
+        case 0: m_gobs[0] = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1); break;
+        case 1: m_gobs[1] = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1); break;
+        case 2: m_gobs[2] = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1); break;
+        case 3: m_gobs[3] = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1); break;
+        }
+    }
 }
 
 bool ScenarioFlagCond::isMatch() const {

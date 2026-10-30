@@ -4,6 +4,8 @@
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/IGmkPhantomEventListener.h"
 #include "plugin/Bdat.h"
+#include "classes/gmk/GmkPhantom.h"
+#include "classes/gmk/GmkCtrlVolSe.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
@@ -63,13 +65,53 @@ public:
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9
     virtual void onEnterPhantom(gmk::IGmkPhantomEventListener::OnEnterInfo const&);  // slot 11
     virtual void onLeavePhantom(gmk::IGmkPhantomEventListener::OnLeaveInfo const&);  // slot 12
+    // which gimmick an item (one of m_gobs, by its index) acts on: 0 the elevator itself, 1..3 its locators (the
+    // values are not named by any evidence)
+    enum ItemType {};
+    // the sound create plays (onPlayerAccessed passes 0; the values are not named by any evidence)
+    enum SeType {};
+    // what m_createInfo.m_data starts with (the name is not the original's)
+    struct Data {
+        unsigned short m_locatorId;  // GmkSet's GmkElevatorLocator list index of its first locator
+    };
+    const AGmkBase* getGmkBaseByItemType(ItemType type) const;
+    void createSe(SeType type, const mm::Vec3& pos);
+    bool isCallSwitch(gf::GF_OBJ_HANDLE* gob) const;
+    bool isLiftSwitch(gf::GF_OBJ_HANDLE* gob) const;
+    // which of m_gobs it is (-1: none). Inline, no symbol: isCallSwitch (0 or 2) and isLiftSwitch (1 or 3) test
+    // the first three/four entries in order with these answers (the name is not the original's)
+    int getGobIndex(gf::GF_OBJ_HANDLE* gob) const {
+        for (int i = 0; i < 4; i++) {
+            if (m_gobs[i] == gob) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    void clearGobInsts();
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(42);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GmkElevator's unit. What it does: walks PtrSingleton<GmkManager>'s gimmick vector (0xF358 buffer, 0xF360
     // count, "m_buffer != 0") and answers a flag over them; the gmk plugin's openPortal waits while it answers false.
     static bool fn_71005B928C();
-    unsigned char pad_50[0x480];  // fields: size from TGmkList::getInst's stride
+    // 0x50..0x288: four phantoms, 0x2b0: four sound controls; the destructor destroys them in reverse
+    // (the names are not the original's)
+    GmkPhantom m_phantoms[4];
+    // 0x290: its object instances (clearGobInsts destroys each, onGobEvent forgets a destroyed one; -1: none;
+    // the name is not the original's)
+    gf::GF_OBJ_HANDLE* m_gobs[4];
+    GmkCtrlVolSe m_ctrlVolSes[4];
+    long pad_4b0;  // dispose sets it to -1 (meaning unknown)
+    // the step update runs (symbols name them seqInit, seqUpIdle, ...; the name is not the original's)
+    void (GmkElevator::*m_seq)(float dt);
+    // set when the player accesses m_gobs[0], [2], [3], [1] (onPlayerAccessed); dispose clears them (the names
+    // are not the original's)
+    bool m_accessed0;
+    bool m_accessed2;
+    bool m_accessed3;
+    bool m_accessed1;
+    unsigned char pad_4cc[0x4];  // size from TGmkList::getInst's stride (0x4d0)
 };
 }  // namespace gmk
 

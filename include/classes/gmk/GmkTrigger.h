@@ -26,7 +26,6 @@ public:
     static const gmk::GmkType TYPE = gmk::GmkType(0x34);
     unsigned char pad_48[0x8];
     GmkPhantom m_phantom;  // 0x50: the destructor destroys it, dispose disposes it (the name is not the original's)
-    unsigned char pad_d8[0x8];
     void* pad_e0;  // dispose clears it
     void* pad_e8;  // dispose clears it; fields: size from TGmkList::getInst's stride
 };

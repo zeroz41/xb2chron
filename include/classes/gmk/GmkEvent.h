@@ -44,7 +44,6 @@ public:
     void disposeGmkPhantom();
     unsigned char pad_58[0x8];
     GmkPhantom m_phantom;  // 0x60 (the name is not the original's)
-    unsigned char pad_e8[0x8];
     // update() stores whether the event's pop conditions (blade, quest state, game cond) hold, creating or
     // disposing its phantom when it changes; the field locators read it. The name is not the original's.
     bool m_isCondMatched = false;

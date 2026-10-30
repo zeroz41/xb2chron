@@ -42,7 +42,7 @@ public:
     static const gmk::GmkType TYPE = gmk::GmkType(56);
     unsigned char pad_50[0x10];
     GmkPhantom m_phantom;  // 0x60: the destructor destroys it (the name is not the original's)
-    unsigned char pad_e8[0x8];  // fields: size from TGmkList::getInst's stride
+    // fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 
