@@ -16,6 +16,9 @@ public:
     }
     T& operator[](unsigned long i) { return m_data[i]; }
     const T& operator[](unsigned long i) const { return m_data[i]; }
+    // the elements first to last (GfMenuObjPartyForm3's destructor walks its numbers by pointer)
+    T* begin() { return m_data; }
+    T* end() { return m_data + N; }
 
     T m_data[N];
 };

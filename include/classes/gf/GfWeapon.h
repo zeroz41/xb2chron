@@ -57,6 +57,13 @@ void fn_71002EEB14(int type, bool run);
 // GfDataManager::getDataGame()+0x11AF18/0x11AF0C/0x11AF24/0x11AF30/0x11AF3C is non-zero. GfFieldSound::createMapSound
 // loads the "dlc_se_btl_spskill" sound pack when it is true.
 bool fn_71002ED330();
+// Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions because their addresses are
+// in GfWeapon's unit and they take nothing. What they do: false when the int at 0x10D7C of
+// GfDataManager::fn_7100224A10() is 0, else whether GfBdatChrDr::fn_71001F1AEC (fn_71002ED9CC) /
+// fn_71001F1B74 (fn_71002EDA2C) of it is non-zero. GfMenuObjPartyForm3::initialize shows "LAY_guest@01" /
+// "LAY_guest@02" by them (GfGameCond and event::ObjectList call them too).
+bool fn_71002ED9CC();
+bool fn_71002EDA2C();
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfWeapon's unit among free placeholders and it takes only a blade id. What it does: true when
 // GfGameManager::fn_71002A9E68 holds, the blade's trust rank (GfDataBlade::getTrustRank) is 5 and its
