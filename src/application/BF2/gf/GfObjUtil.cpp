@@ -440,7 +440,7 @@ bool GfObjUtil::isStanbyTalkingPlayer(GF_OBJ_HANDLE* handle) {
     if (formation == nullptr || property == nullptr) {
         return false;
     }
-    GfTargetProperty* target = property->m_target;
+    GfObjProperty::TargetInfo* target = property->m_target;
     if (target == nullptr) {
         return false;
     }

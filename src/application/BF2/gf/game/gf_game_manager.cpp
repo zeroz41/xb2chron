@@ -528,7 +528,7 @@ bool GfGameManager::isEnemyChangeBattleOK() {
     bool ok = false;
     if (GfObj* obj = GfObjUtil::getObj(getControlMover())) {
         if (GfObjProperty* property = GfObjUtil::getProperty(obj->m_handle)) {
-            if (GfTargetProperty* target = property->m_target) {
+            if (GfObjProperty::TargetInfo* target = property->m_target) {
                 ok = target->m_state != 3;
             }
         }

@@ -2,14 +2,15 @@
 #define GF_GFTARGETPROPERTY_H
 
 #include "mm/Plane.h"
+#include "classes/gf/GfObjProperty.h"
 
 namespace gf {
 
-// no table: what an object's property tells those who target or follow it (GfComProperty holds one through a
-// UniquePtr, 1.0.0's UniquePtr<gf::GfTargetProperty> names the type; a GfObjProperty points at one, a driver's at
-// its own +0xC0, which GfComPropertyPc's procMsgObjectFlushProperty fills and the PC AI reads). The field names are
-// not the original's.
-class GfTargetProperty {
+// no table: what an object's property tells those who target or follow it (a GfObjProperty points at one, a driver's
+// at its own +0xC0, which GfComPropertyPc's procMsgObjectFlushProperty fills and the PC AI reads). Not 1.0.0's
+// GfTargetProperty (GfComProperty's, below, holds a handle where this holds its state). The class and field names
+// are not the original's.
+class GfObjProperty::TargetInfo {
 public:
     // what the object is doing, by the PC's flush: 0 none of the below, 1, 2, 3 while its field status has bit 4
     // (isFollowBuddyPc does not follow a PC in state 3), 4, 5, 6
@@ -34,6 +35,13 @@ public:
     mm::Plane m_wallPlane;
 };
 
+// no table: the object's target, as GfComProperty keeps it (1.0.0's UniquePtr<gf::GfTargetProperty> names the type;
+// GfComProperty::recieveMessage stores MsgGameChangeTarget's handle in it, flush copies it to the character
+// property, GfObjAcc reads it)
+class GfTargetProperty {
+public:
+    gf::GF_OBJ_HANDLE* m_target;  // the target, -1 for none (the name is not the original's)
+};
 }  // namespace gf
 
 #endif

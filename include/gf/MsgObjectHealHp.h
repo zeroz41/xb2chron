@@ -27,10 +27,15 @@ public:
     // cleared as one (the original zeroes the four bytes with a single store before setting m_reviveDead; the type
     // name is not the original's)
     struct Flags {
-        unsigned char pad_0[0x1];
+        // procMsgObjectHealHp shows a set heal's number at its larger scale (GfMenuObjDamageValue::OpenParam::m_large;
+        // the name is not the original's)
+        bool m_large;
         // procMsgObjectHealHp skips an object at 0 hit points unless it is set (the name is not the original's)
         bool m_reviveDead;
-        unsigned char pad_2[0x2];  // procMsgObjectHealHp's results
+        // procMsgObjectHealHp's results: the heal reached the maximum hit points, the heal changed them (the names are
+        // not the original's)
+        bool m_full;
+        bool m_healed;
     } m_flags;
 };
 

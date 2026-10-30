@@ -9,7 +9,6 @@ namespace gf { class GfObjPropertyBlade; }
 namespace gf { class GfObjPropertyDriver; }
 namespace gf { class GfObjPropertyCharacter; }
 namespace gf { class GfObjPropertyEnemy; }
-namespace gf { class GfTargetProperty; }
 
 namespace gf {
 // table 0x7100B6A288; what an object's info holds about it (GfObjManager::createGfObjProperty stores
@@ -29,6 +28,8 @@ public:
     GfObjPropertyDriver* getDriver();  // itself when its object is a driver (GfObjUtil::getObjType 3), else none
     GfObjPropertyBlade* getBlade();  // itself when its object is a blade (GfObjUtil::getObjType 4), else none
     GfObjPropertyEnemy* getEnemy();  // itself when its object is an enemy (GfObjUtil::getObjType 5), else none
+    // what m_target points at (gf/GfTargetProperty.h; the name is not the original's)
+    class TargetInfo;
     GF_OBJ_HANDLE* m_handle;  // create's; getEnemy asks GfObjUtil::getObjType about it
     // the character part of a driver, blade or enemy (GfObjPropertyDriver's and GfObjPropertyEnemy's constructors
     // point it at their GfObjPropertyCharacter at 0x88), none for the others; the name is not the original's
@@ -36,7 +37,7 @@ public:
     // what those targeting or following the object read (GfObjPropertyDriver's constructor points it at its own at
     // 0xC0, GfComPropertyPc::procMsgObjectFlushProperty fills it, the PCs' field AI reads it), none for the others;
     // the name is not the original's
-    GfTargetProperty* m_target;
+    TargetInfo* m_target;
     // the constructor sets these (a zero vector, the identity rotation, false and 0); nothing in 3.0.1 reads them.
     // The class is 16-aligned: GfObjPropertyMap and the others with no fields of their own take 0x90 bytes, while
     // GfObjPropertyDriver's first field reuses the tail at 0x88

@@ -12,6 +12,9 @@ namespace gf { class GfEnvProperty; }  // gf/GfEnvProperty.h
 #include "gf/GfAlphaProperty.h"
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
+namespace gf { class MsgObjectNotifyDead; }
+namespace gf { class MsgObjectDamage; }
+namespace gf { class MsgObjectHealHp; }
 
 namespace gf {
 // table 0x7100B69C30
@@ -24,6 +27,12 @@ public:
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     // GfObj::onEvent calls it for its object's event 0
     void flush();
+    // hands the death to the object's model and behaviour, then queues it (SCOM_CHAR_DEAD::create's handle)
+    unsigned long onDead(gf::MsgObjectNotifyDead& msg);
+    void procMsgObjectDamage(fw::MessageObject* sender, gf::MsgObjectDamage& msg);
+    void procMsgObjectHealHp(fw::MessageObject* sender, gf::MsgObjectHealHp& msg);
+    // one of the object's alphas (OBJ_ALPHA; 6 of them), and their product
+    void setAlpha(unsigned int kind, float alpha);
     static mm::mtl::RTTI m_rtti;
     // fields: its constructor zeroes 0x10-0x38, its destructor releases and deletes them last to first
     mm::mtl::IntrusivePtr<gf::GfStatusProperty> m_status;  // the object's hit points (none: it takes no damage)

@@ -63,7 +63,7 @@ void TaskFieldCheckWarp::update(BlackBoardField& bb) {
         GfGamePlayerFormation* formation = GfGamePlayerFormation::get();
         GfObjProperty* followed =
             GfObjUtil::getProperty(formation->m_players[formation->m_players[property->m_setupKind].m_followIndex].m_handle);
-        const GfTargetProperty* target = followed->m_target;
+        const GfObjProperty::TargetInfo* target = followed->m_target;
         if (target != nullptr && ((target->m_state | 4) == 5 || target->m_blocksFollowWarp)) {
             return;
         }
