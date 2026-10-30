@@ -337,6 +337,8 @@ public:
     static bool isBladeID(unsigned int blade);
     static bool isNeedChangeWeapon(unsigned int blade);
     static unsigned int getActBlade2CommonBlade(unsigned int blade);
+    // a common blade's row in BLD_NameList (GfMenuBdat::getBladeDataFP reads its name sort key there)
+    static unsigned int getBLD_NameList(unsigned int blade);
     static bool isEnableEngageRex(unsigned int blade);
     static unsigned int getBornTime(unsigned int blade);
     static SDataIdea* getSDataIdea(unsigned int blade);

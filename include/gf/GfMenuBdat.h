@@ -7,6 +7,11 @@ struct MenuOffset;
 // the menus' BDAT helpers (functions, by their symbols)
 class GfMenuBdat {
 public:
+    // looks the menus' tables up: MNU_OffsetList, MNU_IconList, MNU_Layer, FLD_FieldSkillList, ITM_CollectionList,
+    // itm_collection, BTL_Arts_Dr (GfMenuManager::initialize's)
+    static void initialize();
+    // the BDAT file holding an item's name text, by its type
+    static unsigned char* getItemTextFP(unsigned char type, unsigned short id);
     // the column GfMenuItemList's name sorts order items by; null when there is none
     static const char* getSortKeyName();
     // the BDAT file holding an item's row, by its type and id (1.0.0's name: 3.0.1's symbols spell it
@@ -21,6 +26,9 @@ public:
     static int getValueLevel(unsigned char* bdat, unsigned int value);  // the level a table gives that value
     static unsigned short getIconIDFromArtsID(unsigned short arts);
     static void getMenuOffset(int id, MenuOffset& offset);  // the menu offset of that id (GfGameUtil::getUiOffsetId's)
+
+    // the tables initialize looked up, in its order
+    static unsigned char* s_BdatArray[7];
 };
 
 }  // namespace gf
