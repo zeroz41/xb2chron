@@ -52,6 +52,9 @@ public:
         return m_buffer;
     }
     const T* end() const { return begin() + m_size; }
+    // the buffer without vector.h's assertion (anm::MirrorAnimation::sampleTrucks hands it on unchecked; the name is
+    // not the original's)
+    T* data() { return m_buffer; }
     bool valid_iterator(const T* it) const { return begin() <= it && it <= end(); }
     size_t size() const { return m_size; }
     size_t capacity() const { return m_capacity; }

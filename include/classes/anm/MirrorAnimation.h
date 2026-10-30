@@ -2,6 +2,7 @@
 #define CLASSES_ANM_MIRRORANIMATION_H
 
 #include "classes/anm/Animation.h"
+#include "mm/mtl/FixStr.h"
 
 namespace anm { class Binding; }
 namespace anm { class MirrorMapper; }
@@ -21,7 +22,11 @@ public:
     // the binding of the mirrored animation to the mapper's skeleton
     Binding* createBinding();
 
-    unsigned char pad_48[0x58];  // Factory::createMirrorAnimation allocates 0xA0 bytes
+    // Factory::createMirrorAnimation allocates 0xA0 bytes
+    const MirrorMapper* m_pMapper;  // the constructor's parameter pMapper; the slots mirror through it
+    const Binding* m_pOriginal;     // the binding whose animation is mirrored; the slots forward to its animation
+    // the original animation's name with "_mirror" appended; m_name points at it (the name is not the original's)
+    mm::mtl::FixStr<64> m_nameBuf;
 };
 }  // namespace anm
 
