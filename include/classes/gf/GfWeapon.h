@@ -29,6 +29,17 @@ public:
 // create type == 3), GfAssetSetupNpc::getMdlFile (id, false, create type == 3) for ids below 26.
 const char* fn_71002DF39C(unsigned int driverId, bool createTypeIn2311, bool createType3);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit next to fn_71002DF39C, its caller (no this). What it does: the model name of the first of the
+// driver's three accessories (GfDataDriver::getEquipAcce) whose GfBdatItem::fn_7100203698 name is non-empty and whose
+// fn_7100203610 is the driver ("pc/pc110602" instead of "pc/pc110601" for driver 6 with flag set); none otherwise.
+// fn_71002DF39C and fn_71002DF624 try it first.
+const char* fn_71002DF4C4(unsigned int driverId, bool flag);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit after fn_71002DF4C4 (no this). What it does: fn_71002DF4C4(id, flag), where for driver 6 with
+// the second argument set flag also takes GfDataEvent::fn_710024F910 of GfGameEvent::fn_71002A0FEC() (as
+// fn_71002DF39C does). GfAssetSetup::setRefResource calls it.
+const char* fn_71002DF624(unsigned int driverId, bool check, bool flag);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfWeapon's unit and it takes only a handle (no this). What it does: false for handle -1, a GfObjAcc with no
 // object, a destroyed object (isDestroy) or one with flag 0x11 (testFlag); for an object of type 6 whose bound
 // gimmick (gmk::getBindedGmkInst) has type 3 (its slot 2), whether the "flag" column of the gimmick's BDAT row
@@ -109,6 +120,25 @@ void fn_71002ED774(unsigned int enemy, unsigned int time, unsigned int mode);
 // fn_71002EE5A0 / fn_71002EE5C0: GfFieldSound's fn_710027CE60 / fn_710027CEA4 for name when GfFieldSound is up
 // (none otherwise; GfComSound::playSe2D calls both).
 bool fn_71002EB3FC();
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit before fn_71002EB3FC (no object). What it does: when GfGameManager::fn_71002A9E68 holds, whether
+// game condition 0xE86 does not hold (GfGameCond::isGameCond); else whether GfDataBlade::fn_7100231884() is below
+// 5048. GfMenuObjUtil::getFaceIconID and fn_710048FCF8 test it.
+bool fn_71002EB3C0();
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit (no this). What it does: DataParamAcc(handle).getWeaponStability(false);
+// btl::PlayerParameter::InitializeAttackParam calls it.
+unsigned int fn_71002EC6F4(GF_OBJ_HANDLE* handle);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit before fn_71002EDC24 (no this). What it does: for driver 6 only, whether fn_71002DF39C(6, ...)
+// gives a model name containing "pc110601" (false for other drivers); GfAssetSetupDriver::setup and
+// GfAssetSetupDriverForUi::setup call it.
+bool fn_71002EDBD8(unsigned int driverId, bool createTypeIn2311, bool createType3);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit before its callers fn_71002ED5B0 / ED608 / ED6B8 / ED774 (no this). What it does: the row of
+// GfBdatChrEnArrange whose fn_71001F4EB8 (when GfGameManager::fn_71002A9E68 holds, rows fn_71001F4E70 up to
+// fn_71001F4E7C) or fn_71001F4DE8 (rows fn_71001F4DA0 up to fn_71001F4DAC) equals enemy; 0 when none does.
+unsigned int fn_71002ED4F0(unsigned int enemy);
 bool fn_71002EDC24(const char* name);
 int fn_71002EDC4C(const char* name);
 // Placeholder name: GfWeapon's unit's function (callers GfGameObj::checkEnableGameObj, GfGameUtil::levelupForEnemy and
@@ -140,6 +170,10 @@ bool fn_71002EE9EC();
 bool fn_71002EEA34();
 bool fn_71002EEA7C();
 void fn_71002EE904(unsigned int value);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit after fn_71002EEA7C, the same shape (no object). What it does: whether byte 0x83 of the option data
+// (as fn_71002EE9EC reads it) is set; GfMenuManager::gevPlayerControl tests it.
+bool fn_71002EEAC4();
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfWeapon's unit (no this). What it does: a driver's class from the average trust rank (1..6) of the driver's
 // active party blades (GfDataDriver::fn_71002416B4, GfGameUtil::getTrustRank) through GfBdatChrDr::fn_71001F13E0,

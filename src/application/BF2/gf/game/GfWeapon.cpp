@@ -128,6 +128,11 @@
 #include "classes/gf/SCOM_OBJ_ALPHA.h"
 #include "gf/GfAppend.h"
 #include "fw/LangUtil.h"
+#include "classes/gf/GfBdatItem.h"
+#include "classes/gf/GfGameEvent.h"
+#include "gf/GfDataEvent.h"
+#include "gf/QuestTaskParam.h"
+#include "gf/GfPartySelect.h"
 
 namespace gf {
 
@@ -271,6 +276,13 @@ namespace gf {
 
 bool GfGameUtil::isCondDriverModel(unsigned int driver) {
     return GfGameCond::isGameCond(mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->getChrDrCondition(driver));
+}
+
+const char* fn_71002DF624(unsigned int driverId, bool check, bool flag) {
+    if (check && driverId == 6) {
+        flag = flag | GfDataEvent::fn_710024F910(GfGameEvent::fn_71002A0FEC());
+    }
+    return fn_71002DF4C4(driverId, flag);
 }
 
 const char* GfGameUtil::getSalvageDriverModel(unsigned int driver) {
@@ -691,6 +703,23 @@ void GfGameUtil::incEnemySuppress(unsigned int enemy) {
     }
 }
 
+bool GfGameUtil::fn_71002E16F4(unsigned int driver) {
+    if (GfDataDriver::fn_7100241DD4(driver)) {
+        return false;
+    }
+    switch (driver) {
+    case 1:
+        return execEquipMercenariesBlade(1, GfDataBlade::getStartCommonBlade(), false);
+    case 2:
+        return execEquipMercenariesBlade(2, 1004, false);
+    case 3:
+        return execEquipMercenariesBlade(3, 1010, false);
+    case 6:
+        return execEquipMercenariesBlade(6, 1009, false);
+    }
+    return false;
+}
+
 bool GfGameUtil::execActivateReserverForBlade(unsigned int blade) {
     ActivateType from = GfDataBlade::getBladeActivateType(*GfDataBlade::getSDataBlade(blade));
     if (GfDataBlade::isActivateReserver(blade)) {
@@ -796,6 +825,17 @@ void GfGameUtil::execEquipDriverDefaultAcce(unsigned int driver) {
     }
 }
 
+void GfGameUtil::execDriverDead(unsigned int driver) {
+    for (unsigned int slot = 0; slot < 3; slot++) {
+        GfEquipUtil::equipDriverAcce(driver, slot, 0, GfItemHandle());
+    }
+    for (int num = GfDataDriver::getMaxSetBladeNum(driver); num > 0; num--) {
+        if (unsigned int blade = GfDataDriver::getBlade(driver, num - 1)) {
+            GfDataDriver::unsetBlade(blade);
+        }
+    }
+}
+
 }  // namespace gf
 
 namespace gf {
@@ -887,6 +927,25 @@ const char* GfGameUtil::getBladeMotion(unsigned int blade, bool flag) {
         return data->m_condMotionName;
     }
     return data->m_motionName;
+}
+
+const char* fn_71002DF4C4(unsigned int driverId, bool flag) {
+    GfBdatItem* bdat = mm::mtl::PtrSingleton<GfBdatItem>::sys();
+    for (unsigned int slot = 0; slot < 3; slot++) {
+        unsigned int acce = GfDataDriver::getEquipAcce(driverId, slot);
+        if (acce == 0) {
+            continue;
+        }
+        const char* name = bdat->fn_7100203698(acce);
+        if (name == nullptr || *name == '\0' || bdat->fn_7100203610(acce) != driverId) {
+            continue;
+        }
+        if (flag && driverId == 6 && strcmp(name, "pc/pc110601") == 0) {
+            return "pc/pc110602";
+        }
+        return name;
+    }
+    return nullptr;
 }
 
 RESULT_HANA GfGameUtilHana::openArtsCircuit(unsigned int hana, unsigned int circuit) {
@@ -1235,9 +1294,89 @@ RESULT_HANA GfGameUtilHana::isExecPowerRankup(unsigned int hana, unsigned int ra
 
 namespace gf {
 
+// inline: the option data in use (tl::TitleMain's in advertize or theater mode, else GfDataManager's); the name is
+// not the original's
+static inline SDataOption* getActiveOptionData() {
+    if (GfManager::isExecModeAdvertize() || GfManager::isExecModeThater()) {
+        if (tl::TitleMain* title = mm::mtl::PtrSingleton<tl::TitleMain>::sys()) {
+            return title->getOptionBuffer();
+        }
+    }
+    return GfDataManager::getDataOption();
+}
+
+bool fn_71002EE5E0(QuestID quest, unsigned int task) {
+    if (quest.m_id == 0x8FD) {
+        return true;
+    }
+    QuestTaskParam param(quest, task, static_cast<TASK_STATE>(0));
+    return quest.m_id == 0x80B && task == 1;
+}
+
+bool fn_71002EE72C(unsigned int blade) {
+    if (!GfGameManager::fn_71002A9E68() || GfDataBlade::getTrustRank(blade) != 5) {
+        return false;
+    }
+    return GfDataBlade::getKizunaringMax(blade) == GfDataBlade::getKizunaringCompleteNum(blade);
+}
+
+bool fn_71002EB3C0() {
+    if (GfGameManager::fn_71002A9E68()) {
+        return !GfGameCond::isGameCond(0xE86);
+    }
+    return GfDataBlade::fn_7100231884() < 5048;
+}
+
 bool fn_71002EB3FC() {
     unsigned short id = GfDataBlade::fn_7100231884();
     return id >= 11100 && id <= 11130;
+}
+
+unsigned int fn_71002EC634() {
+    return getActiveOptionData()->m_soundUi.m_keyD;
+}
+
+unsigned int fn_71002EC6F4(GF_OBJ_HANDLE* handle) {
+    DataParamAcc acc(handle);
+    return acc.getWeaponStability(false);
+}
+
+unsigned int fn_71002ED4F0(unsigned int enemy) {
+    GfBdatChrEnArrange* bdat = mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys();
+    if (GfGameManager::fn_71002A9E68()) {
+        for (unsigned int row = bdat->fn_71001F4E70(), end = bdat->fn_71001F4E7C(); row < end; row++) {
+            if (bdat->fn_71001F4EB8(row) == enemy) {
+                return row;
+            }
+        }
+    } else {
+        for (unsigned int row = bdat->fn_71001F4DA0(), end = bdat->fn_71001F4DAC(); row < end; row++) {
+            if (bdat->fn_71001F4DE8(row) == enemy) {
+                return row;
+            }
+        }
+    }
+    return 0;
+}
+
+bool fn_71002ED5B0(unsigned int enemy, unsigned int mode) {
+    unsigned int row = fn_71002ED4F0(enemy);
+    if (row == 0) {
+        return false;
+    }
+    return (GfDataManager::getDataGame()->m_namedRecords[row].m_flags & (1 << mode)) != 0;
+}
+
+bool fn_71002EDA8C() {
+    return getActiveOptionData()->m_soundUi.m_flagD != 0;
+}
+
+bool fn_71002EDBD8(unsigned int driverId, bool createTypeIn2311, bool createType3) {
+    if (driverId != 6) {
+        return false;
+    }
+    const char* name = fn_71002DF39C(6, createTypeIn2311, createType3);
+    return name != nullptr && strstr(name, "pc110601") != nullptr;
 }
 
 bool fn_71002EDC24(const char* name) {
@@ -1269,23 +1408,36 @@ const char* fn_71002EE5C0(const char* name) {
     return nullptr;
 }
 
-// inline: the option data in use (tl::TitleMain's in advertize or theater mode, else GfDataManager's); the name is
-// not the original's
-static inline SDataOption* getActiveOptionData() {
-    if (GfManager::isExecModeAdvertize() || GfManager::isExecModeThater()) {
-        if (tl::TitleMain* title = mm::mtl::PtrSingleton<tl::TitleMain>::sys()) {
-            return title->getOptionBuffer();
-        }
-    }
-    return GfDataManager::getDataOption();
-}
-
 void* fn_71002EE8C4() {
     return &getActiveOptionData()->m_soundUi;
 }
 
+void fn_71002EE904(unsigned int value) {
+    fn_7100254FDC(&getActiveOptionData()->m_soundUi, value);
+}
+
 void fn_71002EE954(unsigned int type) {
     fn_7100254EF0(&getActiveOptionData()->m_soundUi, type);
+}
+
+bool fn_71002EE9A4() {
+    return getActiveOptionData()->m_soundUi.m_flagF == 0;
+}
+
+bool fn_71002EE9EC() {
+    return getActiveOptionData()->m_soundUi.m_flagA != 0;
+}
+
+bool fn_71002EEA34() {
+    return getActiveOptionData()->m_soundUi.m_flagB != 0;
+}
+
+bool fn_71002EEA7C() {
+    return getActiveOptionData()->m_soundUi.m_flagC != 0;
+}
+
+bool fn_71002EEAC4() {
+    return getActiveOptionData()->m_soundUi.m_flagE != 0;
 }
 
 void SDataOption::fn_71002EEB0C() {

@@ -131,12 +131,20 @@ public:
     static void setPartyChange10020();  // (symbols; the pt plugin's setPartyChange10020)
     // 3.0.1's takes a third argument (it tests bit 0 of w2; the symbols' Ejj is 1.0.0's two-argument signature);
     // ScriptPlayText's pt setDriverEnable passes (0, 1011, false). The third's name and type are inferred.
-    static void execEquipMercenariesBlade(unsigned int driver, unsigned int blade, bool flag);
+    // returns whether it went ahead (GfDataBlade::fn_71002383C8 held): fn_71002E16F4 tail-calls it and returns 0
+    // otherwise
+    static bool execEquipMercenariesBlade(unsigned int driver, unsigned int blade, bool flag);
     // Placeholder name: new in 3.0.1's shape, its address lies between GfGameUtil::execActivateMercenaryTeamForBlade
     // and execEquipMercenariesBlade (so a GfGameUtil member). What it does: 1.0.0's pt setDriverEnable calls
     // GfDataDriver::equipDriverBladeFromReserverBlade(driver) at the same place; 3.0.1's calls this with driver 2
     // when blade 1011 is not activate-unuse, and it calls execEquipMercenariesBlade.
-    static void fn_71002E16F4(unsigned int driver);
+    // It returns false when GfDataDriver::fn_7100241DD4(driver) holds or the driver is not 1, 2, 3 or 6, else
+    // execEquipMercenariesBlade's answer for the driver's blade (1: GfDataBlade::getStartCommonBlade, 2: 1004,
+    // 3: 1010, 6: 1009).
+    static bool fn_71002E16F4(unsigned int driver);
+    // (symbols) GfGameScene::gevDriverActivate calls it: takes off the driver's three accessories
+    // (GfEquipUtil::equipDriverAcce with item 0) and unsets each blade the driver has engaged, last slot first
+    static void execDriverDead(unsigned int driver);
     // Placeholder name: new in 3.0.1 (1.0.0's pt has no changeKubira). A GfGameUtil member because its address
     // follows setPartyChange10020's. What it does: ScriptPlayText's pt changeKubira calls it with nothing; it
     // reworks blades' drivers, orbs, weapons and engage flags (GfDataBlade/GfEquipUtil) and calls

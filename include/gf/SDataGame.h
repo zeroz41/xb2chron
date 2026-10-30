@@ -121,7 +121,15 @@ public:
     // it, fn_7100291CC0 / fn_7100291E40 read and mark its rows; the constructor runs its fn_71001528A0; the name is
     // not the original's)
     TUnk_B535D0::RuleTable m_ruleTable;
-    unsigned char pad_11B4CC[0x1770];
+    // 0x11B4CC: one record per row of GfBdatChrEnArrange's named-enemy range (gf::fn_71002ED4F0 gives the row, 0 for
+    // none): four times (the columns of modes 0, 1, 2 and 4: gf::fn_71002ED608 / fn_71002ED6B8) and a flag byte with
+    // one bit per mode (gf::fn_71002ED5B0). The type and names are not the original's.
+    struct NamedRecord {
+        unsigned int m_time[4];
+        unsigned char m_flags;
+        unsigned char pad_11[0x3];
+    };
+    NamedRecord m_namedRecords[300];
     // 0x11CC3C: the count GfDataBlade::fn_7100234998 raises for enemies (arrange ids) 1500 and up, at [enemy - 1500]
     // (below 1500 the count is a 16-bit local flag; GfGameUtil::incEnemySuppress reads it through fn_7100234940). The
     // name is not the original's.

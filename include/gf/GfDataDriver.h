@@ -42,6 +42,11 @@ public:
     // driver is a DLC driver row (0x11-0x19); then it walks fn_71002417DC(driver) and its fn_71002416B4 list and
     // returns a driver id; GfMenuCharDataAdapter::fn_710033973C shows that driver's face icon.
     static unsigned int fn_7100241A1C(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies in GfDataBlade's
+    // unit among GfDataDriver's functions (after fn_7100241A1C) and takes a driver id. What it does: answers
+    // fn_7100241E10(driver, list) for a local list (a 0x350-byte buffer and its size, cleared afterwards);
+    // GfGameUtil::fn_71002E16F4 does nothing for a driver it holds for.
+    static bool fn_7100241DD4(unsigned int driver);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among GfDataDriver's
     // functions (right before fn_71002417DC) and takes a driver row. What it does: for a DLC driver row (0x11-0x19)
     // collects every GfBdatChrDr row of type 1 whose group (fn_71001F172C) equals the driver's into the list

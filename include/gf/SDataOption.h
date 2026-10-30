@@ -21,6 +21,12 @@ void fn_7100254DC4(SSoundUiOption* option, unsigned int index, unsigned char val
 // divisor is 0) at the option's 0x2E, and the same for row 12 at 0x2F.
 void fn_7100254DF0(SSoundUiOption* option);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address sits in
+// GfDataBlade.cpp's unit after fn_71002550C0, among no class of its own, and it works on the option it is handed.
+// What it does: when GfBdatBtl is up, a value for index from the option's 0x23 (type 4: its byte at
+// 0x24 + index - 1, else from GfBdatBtl::fn_71001E9520 / fn_71001E91E8 / fn_71001E92F8 of index), scaled by
+// fn_71001E91E8 / fn_71001E9270 of index; 0 without GfBdatBtl. gf::fn_71002EE904 passes the option data's.
+unsigned int fn_7100254FDC(SSoundUiOption* option, unsigned int index);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address sits in
 // GfDataBlade.cpp's unit after fn_7100254EF0 (before GfDataBlade's own functions), among no class of its own, and it
 // reads the bytes fn_7100254DC4 stores. What it does: when GfBdatBtl is up, the option's byte at 0x24 + index - 1
 // (m_list), else 0.
@@ -52,7 +58,8 @@ struct SSoundUiOption {
     unsigned char pad_1D[0x1];
     // 0x1E-0x3C: what these hold is not known; the names are not the original's. clear() stores 0 at 0x1E;
     // fn_710022E334 stores the 0x1F-0x22 key (one 32-bit run of bitfields: a single unaligned store, separate loads in
-    // fn_710022E380), 6 at 0x23, clears m_list and 0x3B, and clears the flags after fn_7100254EF0 (one 48-bit run).
+    // fn_710022E380), 6 at 0x23, clears m_list and 0x3B, and clears the flags after fn_7100254EF0. The flags
+    // 0x33-0x38 are plain bytes: gf::fn_71002EDA8C, fn_71002EE9A4..fn_71002EEAC4 load each with one ldrb.
     // fn_710022E380 loads 0x22 and 0x23 with one ldrh, as if m_keyD were in the key's run; that layout breaks
     // fn_710022E334's store order, so m_keyD stays a byte here
     unsigned char m_byte1E;
@@ -61,12 +68,12 @@ struct SSoundUiOption {
     unsigned int m_keyC : 8;
     unsigned char m_keyD;
     unsigned char m_list[0xF];
-    unsigned int m_flagA : 8;
-    unsigned int m_flagB : 8;
-    unsigned int m_flagC : 8;
-    unsigned int m_flagD : 8;
-    unsigned int m_flagE : 8;
-    unsigned int m_flagF : 8;
+    unsigned char m_flagA;
+    unsigned char m_flagB;
+    unsigned char m_flagC;
+    unsigned char m_flagD;
+    unsigned char m_flagE;
+    unsigned char m_flagF;
     unsigned char pad_39[0x2];
     unsigned char m_byte3B;
 };
