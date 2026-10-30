@@ -37,11 +37,12 @@ public:
     void seqChangeState(GfComBehaviorEnemy& owner, const fw::UpdateInfo& info);
     // whether the enemy may take this state (GfComBehaviorEnemy asks before requesting it)
     static bool isCondMatch(const GfComBehaviorEnemy& owner);
+    // how enter picked the goals: 1 random, 2 random (flying insect), 3 circle (flying circle), 4 water
     unsigned int pad_18;
-    bool pad_1c;
+    bool pad_1c;  // enter sets it for a circle at random (the circle's direction?)
     TFieldExecCmd<GfComAsm> m_execCmd;
     Seq m_seq;
-    unsigned int pad_68;
+    float pad_68;  // seqMoveToGoal's time moving: past 5 it stops as if arrived
 };
 }}  // namespace gf::enemy
 

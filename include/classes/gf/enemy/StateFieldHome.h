@@ -37,7 +37,7 @@ public:
     TFieldExecCmd<GfComAsm> m_execCmd;
     Seq m_seq;
     bool pad_60;
-    unsigned int pad_64;
+    float pad_64;  // update counts the time in the state: past 10 it destroys the enemy (pad_60 set once it did)
 };
 }}  // namespace gf::enemy
 

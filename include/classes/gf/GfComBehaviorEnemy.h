@@ -5,6 +5,7 @@
 #include "ai/Hfsm.h"
 #include "fw/Transform.h"
 #include "classes/gf/GfComBehavior.h"
+#include "classes/gf/GfBehaviorEnemyField.h"
 
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
@@ -41,6 +42,8 @@ public:
     // its setup's CHR_EnArrange row
     virtual unsigned int getBdatId_CHR_EnArrange() const;  // slot 9
     virtual void getGmkBattleLockInfo(int&, int&) const;  // slot 10
+    // an animation callback of the field (empty; StateFieldHome's unit holds it)
+    void callbackField(gf::GfComAsm* asmCom, const gf::CallBackCache& cache);
     // the gimmick its object is bound to, none when it is bound to none
     gmk::AGmkBase* getBindedGmkInst() const;
     // whether its CHR_EnArrange row's act type (SDataEnemy::m_actType) is 3 (flying) / 1 (in water)
@@ -77,7 +80,9 @@ public:
     // its menu object's call context: disposeMenuObj closes the menu and releases it (the name is not the original's)
     gf::GfMenuCallContext* m_menuContext;
     fw::ReferenceFrame* pad_138;  // getTransformToSearchPlayer's frame when set
-    unsigned char pad_140[0x531C];
+    // its field movement (the name is not the original's)
+    GfBehaviorEnemyField m_field;
+    unsigned char pad_5458[0x4];
     bool pad_545c;  // the field states' seqWaitTurnEnd wait for it before moving (set when a turn ended?)
     unsigned char pad_545d[0x84];
     bool pad_54e1;  // StateFieldWalk::leave clears it
