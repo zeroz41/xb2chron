@@ -2417,13 +2417,49 @@ namespace event {
 // 1.0.0's BouManager::clear: detaches from the view first when attached
 inline void BouManager::clear() {
     endActive();
-    if (m_flags & 2) {
+    if (m_flags.test(1)) {
         mm::mtl::PtrSingleton<Manager>::sys()->m_scn->getView(-1)->detachWorkEvent(this);
-        m_flags &= ~2;
+        m_flags.set(1, false);
     }
     m_actives.clear();
     m_callbacks.clear();
-    m_flags = 0;
+    m_flags.reset();
+}
+
+bool BouManager::OnMouseMove(ml::EventView* view) {
+    if (!m_flags.test(0)) {
+        return false;
+    }
+    if (m_debugFlags.test(0) && m_flags.test(2) && !m_flags.test(3)) {
+        m_dragOfs.x = view->m_pos.x - m_downPos.x;
+        m_dragOfs.y = view->m_pos.y - m_downPos.y;
+        updateActive(view->m_pos);
+    }
+    return false;
+}
+
+bool BouManager::OnMouseButtonUp(ml::EventView*) {
+    if (!m_flags.test(0)) {
+        return false;
+    }
+    if (m_debugFlags.test(0) && m_flags.test(2) && !m_flags.test(3)) {
+        m_flags.set(2, false);
+    }
+    return false;
+}
+
+bool BouManager::OnKeyDown(ml::EventView*) {
+    if (m_flags.test(0) && m_debugFlags.test(0)) {
+        m_flags.set(3, true);
+    }
+    return false;
+}
+
+bool BouManager::OnKeyUp(ml::EventView*) {
+    if (m_flags.test(0) && m_debugFlags.test(0)) {
+        m_flags.set(3, false);
+    }
+    return false;
 }
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
