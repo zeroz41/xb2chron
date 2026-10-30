@@ -2249,6 +2249,15 @@ void BouManager::OnEventProc(event::MSG_TYPE msg) {
 
 BouManager::~BouManager() {}
 
+}  // namespace event
+
+#include "classes/event/ManiManager.h"
+
+namespace event {
+
+bool ManiManager::OnMouseButtonDown(ml::EventView*) { return false; }
+
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void EnvManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
