@@ -57,6 +57,8 @@ public:
     static unsigned int getOrderQuestMax();
     static unsigned int getOrderQuestMaxWithAchievement();
     static QuestID getOrderQuest(unsigned int index);
+    // the ordered quest of the purpose (GfQuestUtil::addTaskHanyouCount)
+    static QuestID getOrderQuestId(unsigned int purposeId);
     static unsigned int getReduceHpQuestMax();
     static QuestID getReduceHpQuest(unsigned int index);
     static void requestOrderAchievementQuestForce();

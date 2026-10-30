@@ -24,7 +24,8 @@ public:
     // whether the count changed (GfQuestInfo::incCollectUseCount and decCollectUseCount answer it)
     bool incleseCount(unsigned int count);
     bool decleseCount(unsigned int count);
-    void setCount(unsigned int count);
+    // sets the count (up to the count to reach); whether it rose
+    bool setCount(unsigned int count);
     bool isCountComplete() const;
     // sets (set) or clears flag bit 2 (task true) or bit 3 (task false); GfQuestTask::isCompleteFlag tests bit 2 for
     // a quest with no PRT quest, else bit 3

@@ -82,7 +82,11 @@ public:
     // is begin + count * 12; the count sits at 0x10A130, room for 128; ~SDataSave clears it after none other than
     // m_teams; the name is not the original's)
     mm::mtl::FixedVector<TaskAchieve, 128> m_taskAchieve;
-    unsigned char pad_10A138[0xC04];
+    // 0x10A138: the parent quests in the order they were taken, the last one latest (GfQuestUtil's
+    // add/remove/getLastOrderParentQuest; room for 256) and (0x10A538) their count. The names are not the original's.
+    QuestID m_orderParentQuests[256];
+    unsigned int m_orderParentQuestCount;
+    unsigned char pad_10A53C[0x800];
     unsigned int m_ether;  // 0x10AD3C (named after its accessors; the name is not the original's)
     // 0x10AD40: GfDataUtil::getMoveDistance/setMoveDistance, [0] for AMOVE 0, [1] for 1 (the name is not the
     // original's)

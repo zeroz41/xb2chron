@@ -23,6 +23,9 @@ struct GfQuestReward {
     };
 
     Item m_items[12];
+    // 0x360: the blade item 5's trust goes to (GfQuestUtil::execReward passes it to SCOM_ADD_TRUST::create; the
+    // original's stack copies are 0x368 bytes). The name is not the original's.
+    unsigned short m_trustBlade;
 };
 }  // namespace gf
 

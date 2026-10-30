@@ -35,8 +35,11 @@ public:
     // logs the task's item (fn_710030EB68 after a collect count changes, for a visible quest)
     static void sendItemLog(const QuestTaskParam& param);
     static QuestID getLastOrderCategoryQuest(QTYPE type);
+    // the last parent quest taken whose category (GfDataQuest::getQuestCategory) is not the type
+    static QuestID getLastOrderInvalidCategoryQuest(QTYPE type);
     static void clearOrderParentQuest();
     static void addOrderParentQuest(QuestID id);
+    static void removeOrderParentQuest(QuestID id);
     static QuestID getLastOrderParentQuest();
     // the quest a treasure box's object belongs to through an active task (GfPlayComFieldTbox's constructor keeps it)
     static QuestID getCurrentTBoxWithEvent(GF_OBJ_HANDLE* handle);
@@ -61,6 +64,22 @@ public:
     static bool getNeedCharacterByQuestTask(mm::mtl::FixedVector<unsigned short, 32>& characters, QuestID id,
                                             unsigned int task);
     static int getClearChildQuest(QuestID id);  // the child quests cleared
+    // whether the progressing quest has a task that reduces the object's HP (GfQuestTask::isReduceHpObj)
+    static bool isReduceHpObj(GF_OBJ_HANDLE* handle);
+    static unsigned short getBladeID(QuestID id);
+    // takes the task's items from the party when its collect row deducts them
+    static void removeQuestItem(const QuestTaskParam& param);
+    // formats the task's enemy and its suppress counts (the log call itself is compiled out)
+    static void sendSuppressLog(const QuestTaskParam& param, unsigned int enemy);
+    // adds to a general-purpose (hanyou) task's flag count, up to its limit, and tells the quest manager
+    static void addTaskHanyouCount(unsigned int purposeId, unsigned int task, unsigned int add);
+    // how many of the enemy a battle task of the progressing or an ordered quest still needs; 0 when none more,
+    // -1 when no task wants it
+    static int getEnemyPopRemainNumber(unsigned int enemy);
+    // resets the parent quests of categories 1, 3 and 2 for a new game (but a few kept ones)
+    static void setupNewGameParam();
+    // takes the items the quest's ItemLost row names (or the most held of its category) when it completes
+    static void questCompleteItem(QuestID id);  // the affinity chart quest's blade, 0 for none
 };
 }  // namespace gf
 
