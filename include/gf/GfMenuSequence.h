@@ -74,8 +74,27 @@ public:
 };
 
 // wait(), addAnimJob and wait_anim are out of line in both versions (gf_menu_obj_quest_log emits them for
-// GfMenuSequence<GfMenuObjQuestLog, 8> and wait for <GfMenuObjQuestLog, 12>). wait's body is not here yet: the
-// original folds its erase of the first count as no FixedVector form found so far does
+// GfMenuSequence<GfMenuObjQuestLog, 8> and wait for <GfMenuObjQuestLog, 12>). wait clears the count after its
+// erase of the first one, then the flag
+template <typename T, int N>
+bool GfMenuSequence<T, N>::wait() {
+    if (m_waits.empty()) {
+        return true;
+    }
+    if (!m_waiting) {
+        m_waitCount = *m_waits.begin();
+        m_waiting = true;
+        return false;
+    }
+    if (--m_waitCount != 0) {
+        return false;
+    }
+    m_waits.erase(m_waits.begin());
+    m_waitCount = 0;
+    m_waiting = false;
+    return true;
+}
+
 template <typename T, int N>
 bool GfMenuSequence<T, N>::wait_anim() {
     if (m_anims.empty()) {
