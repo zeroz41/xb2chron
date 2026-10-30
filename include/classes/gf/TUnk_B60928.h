@@ -42,6 +42,25 @@ public:
     static void fn_71003B4D80();
     static void fn_71003B4E18();
 
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: the jobs m_seq and m_seq2 call
+    // on this object (Delegate<bool ()>::memberFuncInvoker<TUnk_B60928>), queued by this class's listeners and by
+    // each other. LAY_time's new record (m_seq): fn_71003B52DC shows LAY_time_new_record, fades TXT_time_new_record
+    // in (cmn_fade_motion_lr fade_in_l), starts IMG_time_new_record_eff's "start", then waits 5 frames, runs
+    // fn_71003B5E54 (sound 0x22) and fn_71003B5E70 (until IMG_time_new_record_eff's animation stops), which queues
+    // fn_71003B5F20 (fades TXT_time_new_record out, fade_out_r), fn_71003B6028 (until that control ends) and
+    // fn_71003B60DC (hides LAY_time_new_record, sends LAY_time event 0x102). LAY_ether's box (m_seq2): fn_71003B5B28
+    // fades TXT_ether_box_get in, fn_71003B6170 waits for that control, then 60 frames, then fn_71003B62C4 fades it
+    // out (fade_out_r). All return true once done.
+    bool fn_71003B52DC();
+    bool fn_71003B5B28();
+    bool fn_71003B5E54();
+    bool fn_71003B5E70();
+    bool fn_71003B5F20();
+    bool fn_71003B6028();
+    bool fn_71003B60DC();
+    bool fn_71003B6170();
+    bool fn_71003B62C4();
+
     unsigned char pad_24[4];
     GfMenuSequence<TUnk_B60928, 8> m_seq;   // LAY_time's jobs (the name is not the original's)
     GfMenuSequence<TUnk_B60928, 8> m_seq2;  // LAY_ether's jobs (the name is not the original's)

@@ -239,4 +239,116 @@ void TUnk_B60928::fn_71003B4E18() {
     }
 }
 
+bool TUnk_B60928::fn_71003B52DC() {
+    ui::UIObjectAcc record(m_handle, "LAY_time_new_record");
+    record.setDisp(true);
+    {
+        ui::UIObjectAcc text(record.m_handle, "TXT_time_new_record");
+        text.setDisp(true);
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_in_l";
+        param.m_startFlags = 8;
+        param.m_setDefault = true;
+        GfMenuObjUtil::startCtrl(record.searchChild("TXT_time_new_record"), param, nullptr);
+    }
+    {
+        ui::UIObjectAcc eff(record.m_handle, "IMG_time_new_record_eff");
+        eff.startAnimation("start", false);
+    }
+    m_seq.addWait(5);
+    m_seq.addJob(&TUnk_B60928::fn_71003B5E54);
+    m_seq.addJob(&TUnk_B60928::fn_71003B5E70);
+    return true;
+}
+
+bool TUnk_B60928::fn_71003B5B28() {
+    {
+        ui::UIObjectAcc get(m_handle, "TXT_ether_box_get");
+        if (get.m_object != nullptr) {
+            GfMenuObjUtil::stopCtrl(GfMenuObjUtil::getCtrlID(get.m_handle));
+            get.setDisp(false);
+        }
+    }
+    ui::UIObjectAcc get(m_handle, "TXT_ether_box_get");
+    get.setDisp(true);
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x10000000;
+    param.m_motionLib = "cmn_fade_motion_lr";
+    param.m_motion = "fade_in_l";
+    param.m_startFlags = 8;
+    param.m_setDefault = true;
+    GfMenuObjUtil::startCtrl(get.m_handle, param, nullptr);
+    m_seq2.addJob(&TUnk_B60928::fn_71003B6170);
+    return true;
+}
+
+bool TUnk_B60928::fn_71003B5E54() {
+    GfMenuObjUtil::playSE(0x22);
+    return true;
+}
+
+bool TUnk_B60928::fn_71003B5E70() {
+    ui::UIObjectAcc eff(m_handle, "IMG_time_new_record_eff");
+    if (eff.isPlayingAnimation()) {
+        return false;
+    }
+    m_seq.addJob(&TUnk_B60928::fn_71003B5F20);
+    return true;
+}
+
+bool TUnk_B60928::fn_71003B5F20() {
+    ui::UIObjectAcc record(m_handle, "LAY_time_new_record");
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x10000000;
+    param.m_motionLib = "cmn_fade_motion_lr";
+    param.m_motion = "fade_out_r";
+    param.m_startFlags = 10;
+    param.m_setDefault = true;
+    GfMenuObjUtil::startCtrl(record.searchChild("TXT_time_new_record"), param, nullptr);
+    m_seq.addJob(&TUnk_B60928::fn_71003B6028);
+    return true;
+}
+
+bool TUnk_B60928::fn_71003B6028() {
+    ui::UIObjectAcc text(m_handle, "TXT_time_new_record");
+    if (GfMenuObjUtil::isBusyCtrl(GfMenuObjUtil::getCtrlID(text.m_handle))) {
+        return false;
+    }
+    m_seq.addJob(&TUnk_B60928::fn_71003B60DC);
+    return true;
+}
+
+bool TUnk_B60928::fn_71003B60DC() {
+    ui::UIObjectAcc record(m_handle, "LAY_time_new_record");
+    record.setDisp(false);
+    ui::EventData event;
+    event.m_type = 0x102;
+    GfMenuObject::sendEvent(searchChildOf(m_handle, "LAY_time"), event, 0.0f);
+    return true;
+}
+
+bool TUnk_B60928::fn_71003B6170() {
+    ui::UIObjectAcc get(m_handle, "TXT_ether_box_get");
+    if (GfMenuObjUtil::isBusyCtrl(GfMenuObjUtil::getCtrlID(get.m_handle))) {
+        return false;
+    }
+    m_seq2.addWait(60);
+    m_seq2.addJob(&TUnk_B60928::fn_71003B62C4);
+    return true;
+}
+
+bool TUnk_B60928::fn_71003B62C4() {
+    ui::UIObjectAcc get(m_handle, "TXT_ether_box_get");
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x10000000;
+    param.m_motionLib = "cmn_fade_motion_lr";
+    param.m_motion = "fade_out_r";
+    param.m_startFlags = 10;
+    param.m_setDefault = true;
+    GfMenuObjUtil::startCtrl(get.m_handle, param, nullptr);
+    return true;
+}
+
 }  // namespace gf
