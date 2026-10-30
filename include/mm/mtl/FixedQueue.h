@@ -187,8 +187,14 @@ public:
 #line 683 MM_MTL_FIXED_QUEUE_PATH
         MM_ASSERT(size() != 0);
         --m_size;
-        for (unsigned long index = it._index; index < m_head + m_size; ++index) {
-            data()[index % N] = data()[(index + 1) % N];
+        // by the slots' own storage (as at()), the slot written indexed before the count moves on: the original's loop
+        // recomputes the ring's start each pass and is entered at its test (GfFieldZone::removeEvent,
+        // GfEvent::removeEventCallback)
+        unsigned long index = it._index;
+        while (index < m_head + m_size) {
+            unsigned long slot = index % N;
+            ++index;
+            at(slot) = at(index % N);
         }
     }
 
@@ -213,10 +219,19 @@ public:
 template <typename Iterator, typename T>
 inline Iterator find(Iterator first, Iterator last, const T& value) {
     unsigned long n = last - first;
-    for (unsigned long i = 0; i != n;) {
-        Iterator it = first + i++;
-        if (*it == value) {
-            return it;
+    // the original tests the count before the loop (GfFieldZone::addEvent's empty queue goes straight to push_back's
+    // store)
+    // and steps first itself next to the count (two induction variables: loop strength reduction folds the
+    // iterator's index into first's start plus the count, a full-width add before the element's mask)
+    if (n != 0) {
+        unsigned long i = 0;
+        while (i != n) {
+            Iterator it = first + 0;
+            ++i;
+            ++first;
+            if (*it == value) {
+                return it;
+            }
         }
     }
     return last;

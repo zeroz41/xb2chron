@@ -34,9 +34,21 @@ void GfFieldZone::finalize() {
 
 void GfFieldZone::update(const fw::UpdateInfo& info) {}
 
-// addEvent (0x71002824F8) is not matched yet
+void GfFieldZone::addEvent(IEventZone* event) {
+    GfFieldZone* zone = get();
+    if (mm::mtl::find(zone->m_events.begin(), zone->m_events.end(), event) == zone->m_events.end()) {
+        zone->m_events.push_back(event);
+    }
+}
 
-// removeEvent (0x710028259C) is not matched yet
+void GfFieldZone::removeEvent(IEventZone* event) {
+    GfFieldZone* zone = get();
+    mm::mtl::FixedQueue<IEventZone*, 16>::iterator it =
+        mm::mtl::find(zone->m_events.begin(), zone->m_events.end(), event);
+    if (it != zone->m_events.end()) {
+        zone->m_events.erase(it);
+    }
+}
 
 void GfFieldZone::gevMapjump(GEV gev, const MapjumpCallbackInfo& info) {
     if (gev == GEV(2)) {
