@@ -1840,6 +1840,19 @@ bool GmkSe::BdatInfo::isPopCondMatched() const {
     return true;
 }
 
+GmkCtrlVolSe::GmkCtrlVolSe() : m_seHandle(0), m_dist(0.0f), m_isPaused(false) {}
+
+bool GmkCtrlVolSe::isPlayEnd() const {
+    return !mm::mtl::PtrSingleton<fw::SoundManager>::sys()->isPlaying(m_seHandle);
+}
+
+void GmkCtrlVolSe::create(const CreateInfo& info) {
+    dispose();
+    m_info = info;
+    m_curPos = info.m_pos;
+    createInst();
+}
+
 ScenarioFlagCond::ScenarioFlagCond(const CBdatWrapper& bdat, int row, const char* prefix) {
     unsigned short min;
     unsigned short max;
