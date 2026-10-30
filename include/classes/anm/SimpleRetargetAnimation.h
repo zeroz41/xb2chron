@@ -2,8 +2,10 @@
 #define CLASSES_ANM_SIMPLERETARGETANIMATION_H
 
 #include "classes/anm/Animation.h"
+#include "mm/mtl/FixStr.h"
 
 namespace anm { class Binding; }
+namespace anm { class ExtraBinding; }
 namespace anm { class QsTransform; }
 namespace anm { class SimpleMapper; }
 namespace mm { namespace mtl { class IAllocator; } }
@@ -21,7 +23,14 @@ public:
     // the binding of the carried-over animation to the mapper's other skeleton
     Binding* createBinding();
 
-    unsigned char pad_48[0x60];  // Factory::createRetargetAnimation allocates 0xA8 bytes
+    // Factory::createRetargetAnimation allocates 0xA8 bytes
+    const SimpleMapper* m_pMapper;  // the constructor asserts `m_pMapper->m_pSkeletonA->getBoneCount() == ...`
+    const Binding* m_pOriginal;     // the constructor's assertion names it; the slots forward to its animation
+    // the original animation's name with "_simple_map" appended; m_name points at it (the name is not the original's)
+    mm::mtl::FixStr<64> m_nameBuf;
+    // the extra bindings createBinding allocates and hands to its binding; the destructor frees them (the name is
+    // not the original's)
+    ExtraBinding* m_pExtraBindings;
 };
 }  // namespace anm
 
