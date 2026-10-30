@@ -1,3 +1,12 @@
+#include "classes/event/ModelObj.h"
+#include "classes/event/DebugManager.h"
+#include "classes/gf/GfAssetSetup.h"
+#include "classes/gf/GfInitParam.h"
+#include "classes/gf/GfInitParamEventObj.h"
+#include "classes/gf/GfInitParamDriver.h"
+#include "classes/gf/GfInitParamBlade.h"
+#include "classes/gf/GfInitParamEnemy.h"
+#include "classes/gf/GfInitParamWeapon.h"
 #include "classes/event/IBouCallback.h"
 #include "classes/event/IManiCallback.h"
 #include "classes/event/EffectObj.h"
@@ -1933,6 +1942,20 @@ void TextManager::OnEventProc(event::MSG_TYPE msg) {
 #include "classes/gf/GfMenuObjOpeningTelop.h"
 #include "classes/gf/GfMenuManager.h"
 #include "classes/event/ModelManager.h"
+#include "classes/gf/GfInitParamEventObj.h"
+#include "classes/gf/GfInitParamDriver.h"
+#include "classes/gf/GfInitParamBlade.h"
+#include "classes/gf/GfInitParamNpc.h"
+#include "classes/gf/GfInitParamEnemy.h"
+#include "classes/gf/GfInitParamWeapon.h"
+#include "classes/gf/GfAssetSetupEventObj.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfEvtModelDriver.h"
+#include "classes/gf/GfEvtModelBlade.h"
+#include "classes/gf/GfEvtModelNpc.h"
+#include "classes/gf/GfEvtModelEnemy.h"
+#include "classes/gf/GfEvtModelWeapon.h"
+#include "classes/gf/GfEvtModelEvent.h"
 #include "classes/event/DebugManager.h"
 #include "classes/event/FrameManager.h"
 
@@ -2071,6 +2094,22 @@ void UIManager::OnEventProc(event::MSG_TYPE msg) {
         update();
         break;
     }
+}
+
+void ModelObj::setupModel(const DESC& desc) {
+    gf::GfAssetSetupEventObj setup;
+    setup.setRefResource(0, desc.files[0].name.m_str, desc.files[0].data, desc.files[0].size);
+    if (desc.files[1].data != nullptr) {
+        setup.setRefResource(1, desc.files[1].name.m_str, desc.files[1].data, desc.files[1].size);
+    }
+    gf::GfInitParamEventObj param;
+    param.m_createType = 11;
+    param.pad_81 = false;
+    param.m_assetSetup = &setup;
+    param.pad_24 = pad_5c;
+    m_model = gf::GfGameEvent::createEventObj(param);
+    m_busyWait = 2;
+    m_handle = m_model->m_handle;
 }
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet

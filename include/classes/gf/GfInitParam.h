@@ -11,8 +11,8 @@ namespace gf {
 class GfInitParam {
 public:
     virtual bool isAllWeapon() const { return false; }  // slot 0
-    virtual unsigned int getBladeID() const;  // slot 1 (GfEvtModelBlade's constructor compares it with 0x451)
-    virtual unsigned int getEnArrangeID() const;  // slot 2
+    virtual unsigned int getBladeID() const { return m_objId; }  // slot 1 (GfEvtModelBlade's constructor compares it with 0x451)
+    virtual unsigned int getEnArrangeID() const { return 0; }  // slot 2
 
     // inline: no copy of it exists. GfObjFactory's createGmk* and createMapLodAnim build their parameters on the
     // stack with these values (kind is pad_c's); m_assetSetup is left to the derived class

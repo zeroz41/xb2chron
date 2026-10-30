@@ -43,7 +43,11 @@ private:
     mm::mtl::FixStr<256> pad_11c;
     int m_warningTime;  // 0x220
     unsigned int pad_224;
-    unsigned char pad_228[0x40];
+public:
+    // (public: ModelObj::setupModel reads it)
+    // a blade id per driver id 1..15: ModelObj::setupModel gives an event's driver this blade when its OPTION
+    // names none (outside fn_71002A9E68's mode)
+    unsigned int pad_228[16];
 };
 }  // namespace event
 

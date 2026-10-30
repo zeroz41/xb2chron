@@ -88,6 +88,8 @@ public:
     }
     // keeps the handle, the parameter, its object id and a copy of its BDAT table pointer
     void setupParam(GF_ASSET_HANDLE* handle, const GfInitParam& param);
+    // gives the setup a file already in memory (event::ModelObj::setupModel passes its DESC's files 0 and 1)
+    void setRefResource(unsigned int index, const char* name, void* data, unsigned int size);
 
     // a name, none when it is empty (inline; the name is not the original's)
     static const char* validName(const char* name) {
