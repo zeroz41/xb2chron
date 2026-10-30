@@ -3128,14 +3128,10 @@ libs/mcl/mm_lib/source/mm_thread/mm_thread_csection.cpp:
 libs/mcl/mm_lib/source/mm_thread/mm_thread_util.cpp:
 	.text        start:0x006FDDC8 end:0x006FDF14
 
-ml/CacheDraw.cpp:
-	.text        start:0x006FDF14 end:0x0070B8A4
-	.rodata      start:0x00F76294 end:0x00F762B8
-	.data        start:0x011AB280 end:0x011AB2C0
-
 libs/monolib_mm/source/device/nx/th_dev_file_nx.cpp:
-	.text        start:0x0070B8A4 end:0x0073DCD4
-	.data        start:0x011AB2C0 end:0x011AE460
+	.text        start:0x006FDF14 end:0x0073DCD4
+	.rodata      start:0x00F76294 end:0x00F762B8
+	.data        start:0x011AB280 end:0x011AE460
 	.bss         start:0x014B2600 end:0x014B9E28
 
 libs/monolib_mm/source/ErrViewer.cpp:

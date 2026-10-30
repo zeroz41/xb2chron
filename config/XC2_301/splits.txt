@@ -4072,17 +4072,12 @@ libs/mcl/mm_lib/source/mm_thread/mm_thread_csection.cpp:
 libs/mcl/mm_lib/source/mm_thread/mm_thread_util.cpp:
 	.text        start:0x00698B6C end:0x00698B98
 
-ml/CacheDraw.cpp:
-	.text        start:0x00698B98 end:0x0069FEDC
-	.rodata      start:0x009B5580 end:0x009B5588
-	.data        start:0x00B75998 end:0x00B770A8
-
 libs/monolib_mm/source/device/nx/th_dev_file_nx.cpp:
-	.text        start:0x0069FEDC end:0x006C05DC
+	.text        start:0x00698B98 end:0x006C05DC
 	.rodata      start:0x009A9495 end:0x009A9C13
-	.rodata      start:0x009B558C end:0x009B5598
+	.rodata      start:0x009B5580 end:0x009B5598
 	.rodata      start:0x009C7CF0 end:0x009C7D5C
-	.data        start:0x00B770A8 end:0x00B77A30
+	.data        start:0x00B75998 end:0x00B77A30
 	.init_array  start:0x00B8FD20 end:0x00B8FD28
 	.bss         start:0x00EC54F0 end:0x00ECE420
 
