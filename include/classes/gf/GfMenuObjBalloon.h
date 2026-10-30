@@ -8,11 +8,13 @@
 #include "mm/mtl/FixedArray.h"
 #include "mm/mtl/FixedVector.h"
 #include "mm/mtl/IntrusivePtr.h"
+#include "classes/ui/UIObjectListener.h"
 
 namespace gf { class GfMenuCallContext; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace ui { class UICtrlCursorSelect; }
 namespace ui { class UISelectObjList; }
+namespace ui { struct EventData; }
 
 namespace gf {
 // table 0x7100B5FBB0
@@ -56,6 +58,11 @@ public:
         mm::mtl::FixedVector<unsigned int, 3> m_selectIds;  // 0x10
         mm::mtl::FixedVector<unsigned short, 3> pad_28;
     };
+    // openGetItem's: the get-item table's row (BDAT 0xDD: ItemID1-3, ItemNumber1-3; the field name is not the
+    // original's)
+    struct OpenGetItemParam {
+        unsigned int m_id;
+    };
     GfMenuObjBalloon(unsigned int handle);
     virtual ~GfMenuObjBalloon();  // slot 0
     virtual void initialize();  // slot 2
@@ -67,6 +74,8 @@ public:
     static void openAutoTalk(GfMenuCallContext* context, const OpenParam& param);
     static void openEventSelectBox(GfMenuCallContext* context, const OpenSelectBoxParam& param);
     static void openEventSelectMoney(GfMenuCallContext* context, const OpenSelectMoneyParam& param);
+    // false when the row has no item to show (its context aborted when every item was skipped)
+    static bool openGetItem(GfMenuCallContext* context, const OpenGetItemParam& param);
     // the save the money selection's listener queues: a save request and the saving display, then waits for it
     bool seqSave();
     bool seqSaveWait();
@@ -84,6 +93,66 @@ public:
     unsigned int m_money;      // 0x1DC: the money selection's
     unsigned int m_moneyType;  // 0x1E0
     unsigned int m_saveRequest;  // 0x1E4: seqSave's request (GfReqManager), -1 without one
+};
+
+// table 0x7100B5FBF8: initialize registers it (0x28 bytes; initialize zeroes 0xC-0x1B)
+class GfMenuObjBalloon::BoxListener : public ::ui::UIObjectListener {
+public:
+    BoxListener(GfMenuObjBalloon* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~BoxListener() {}  // slot 0: its D1 slot is the base's destructor
+    virtual void reciveEvent(const ::ui::EventData& event, unsigned int handle);  // slot 2
+    unsigned char pad_0C[0x14];
+    GfMenuObjBalloon* m_owner;  // 0x20
+};
+
+// table 0x7100B5FC20: initialize registers it (0x28 bytes; initialize zeroes 0xC-0x1B)
+class GfMenuObjBalloon::SelMoneyListener : public ::ui::UIObjectListener {
+public:
+    SelMoneyListener(GfMenuObjBalloon* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~SelMoneyListener() {}  // slot 0: its D1 slot is the base's destructor
+    virtual void reciveEvent(const ::ui::EventData& event, unsigned int handle);  // slot 2
+    unsigned char pad_0C[0x14];
+    GfMenuObjBalloon* m_owner;  // 0x20
+};
+
+// table 0x7100B5FC48: initialize registers it (0x28 bytes; initialize zeroes 0xC-0x1B)
+class GfMenuObjBalloon::GetItemListener : public ::ui::UIObjectListener {
+public:
+    GetItemListener(GfMenuObjBalloon* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~GetItemListener() {}  // slot 0: its D1 slot is the base's destructor
+    virtual void reciveEvent(const ::ui::EventData& event, unsigned int handle);  // slot 2
+    unsigned char pad_0C[0x14];
+    GfMenuObjBalloon* m_owner;  // 0x20
+};
+
+// table 0x7100B5FC70: initialize registers it on "LAY_ev_talk_root" (0x28 bytes; initialize zeroes 0xC-0x1B)
+class GfMenuObjBalloon::EvTalkListener : public ::ui::UIObjectListener {
+public:
+    EvTalkListener(GfMenuObjBalloon* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~EvTalkListener() {}  // slot 0: its D1 slot is the base's destructor
+    virtual void reciveEvent(const ::ui::EventData& event, unsigned int handle);  // slot 2
+    unsigned char pad_0C[0x14];
+    GfMenuObjBalloon* m_owner;  // 0x20
+};
+
+// table 0x7100B5FC98: initialize registers it on "LAY_auto_talk_root" (0x28 bytes; initialize zeroes 0xC-0x1B)
+class GfMenuObjBalloon::AutoTalkListener : public ::ui::UIObjectListener {
+public:
+    AutoTalkListener(GfMenuObjBalloon* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~AutoTalkListener() {}  // slot 0: its D1 slot is the base's destructor
+    virtual void reciveEvent(const ::ui::EventData& event, unsigned int handle);  // slot 2
+    unsigned char pad_0C[0x14];
+    GfMenuObjBalloon* m_owner;  // 0x20
+};
+
+// table 0x7100B5FCC0: initialize registers it on "LAY_ev_select_root" (0x28 bytes; initialize zeroes 0xC-0x1B)
+class GfMenuObjBalloon::EvSelectListener : public ::ui::UIObjectListener {
+public:
+    EvSelectListener(GfMenuObjBalloon* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~EvSelectListener() {}  // slot 0: its D1 slot is the base's destructor
+    virtual void reciveEvent(const ::ui::EventData& event, unsigned int handle);  // slot 2
+    unsigned char pad_0C[0x14];
+    GfMenuObjBalloon* m_owner;  // 0x20
 };
 }  // namespace gf
 

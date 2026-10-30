@@ -58,6 +58,46 @@ bool GfMenuObjBalloon::seqSaveWait() {
     return true;
 }
 
+void GfMenuObjBalloon::AutoTalkListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        break;
+    case 0x100: {
+        unsigned short text = event.m_param0;
+        ui::UIObjectAcc talk(acc.searchDuplicatedChild("LAY_auto_talk", event.m_param3));
+        if (talk.m_object != nullptr) {
+            {
+                ui::UIObjectAcc msg(talk.m_handle, "TXT_auto_talk_msg");
+                GfMenuObject::setText(msg.m_handle, text);
+            }
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_emotion";
+            param.m_motion = "fade_in";
+            GfMenuObjUtil::startCtrl(talk.m_handle, param, nullptr);
+        }
+        break;
+    }
+    case 0x103: {
+        ui::UIObjectAcc talk(acc.searchDuplicatedChild("LAY_auto_talk", event.m_param3));
+        if (talk.m_object != nullptr) {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_emotion";
+            param.m_motion = "fade_out";
+            param.m_startFlags = 1;
+            GfMenuObjUtil::startCtrl(talk.m_handle, param, nullptr);
+            GfMenuObject::termCallContext(talk.m_handle);
+        }
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjBalloon::close(GfMenuCallContext* context, bool flag) {
     if (!context->isActive()) {
         return;
@@ -111,6 +151,23 @@ void GfMenuObjBalloon::nextEvent(GfMenuCallContext* context, const NextParam& pa
             event.m_param3 = ui::UIObjectAcc(target).getDuplicateIndex();
             GfMenuObject::sendEvent(handle, event, 0.0f);
         }
+    }
+}
+
+void GfMenuObjBalloon::openEventSelectMoney(GfMenuCallContext* context, const OpenSelectMoneyParam& param) {
+    if (GfMenuObjUtil::checkCCStart(context) && param.m_selectIds.size() != 0) {
+        unsigned int handle = GfMenuObject::getAttachedObject(8);
+        if (context != nullptr) {
+            GfMenuObject::startCallContext(context, 8, handle);
+        }
+        ui::EventData event;
+#line 2939
+        OpenSelectMoneyParam* copy = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) OpenSelectMoneyParam();
+        *copy = param;
+        event.m_type = 0x21;
+        event.m_paramPtr = copy;
+        GfMenuObject::sendEvent(handle, event, 0.0f);
+        ui::UIObjectAcc(handle).setSuspend(false);
     }
 }
 
