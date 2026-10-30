@@ -4,6 +4,7 @@
 #include "classes/effect/SystemManager.h"
 #include "classes/fw/EffectManager.h"
 #include "classes/fw/EffectCasterBase.h"
+#include "classes/fw/EffectPoint.h"
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/DrMdlObj.h"
 #include "classes/ml/DrMdoGrpObj.h"
@@ -17,6 +18,16 @@
 #include "classes/ml/DrLightObjSpt.h"
 
 namespace fw {
+
+EffectCasterSend::~EffectCasterSend() {}
+
+void EffectCasterSend::tailCopy() {
+    int src = effect::SystemManager::getPtr()->m_secondBuffer != 0;
+    int dst = effect::SystemManager::getPtr()->m_secondBuffer == 0;
+    m_scl[dst] = m_scl[src];
+    m_frame[dst] = m_frame[src];
+    m_stateName[dst] = m_stateName[src];
+}
 
 void EffectCasterSend::sendDataStateName(const char* name) {
     if (m_caster != nullptr && effect::SystemManager::getPtr() != nullptr) {
@@ -478,6 +489,34 @@ void EffectManager::deleteLgt(unsigned int type, void* lgt) {
     }
 }
 
+void EffectManager::addCaster(EffectCasterBase* caster) {
+    for (unsigned long i = 0; i < 32; ++i) {
+        for (CasterGroup::iterator it = m_casterGroups[i].begin(); it != m_casterGroups[i].end(); ++it) {
+            if (it->m_caster == caster) {
+                return;
+            }
+        }
+    }
+    EffectCasterSend* send = EffectCasterSend::create(caster, caster->m_pAllocator, caster->m_pointCount);
+    if (send != nullptr) {
+        send->m_point = caster->m_pPoint;
+        m_casterGroups[caster->m_layer].push_back(send);
+    }
+}
+
+void EffectManager::removeCaster(EffectCasterBase* caster) {
+    CasterGroup& group = m_casterGroups[caster->m_layer];
+    for (CasterGroup::iterator it = group.begin(); it != group.end(); ++it) {
+        if (it->m_caster == caster) {
+            remove(caster);
+            EffectCasterSend* send = it.operator->();  // unchecked (operator* asserts m_node: the original does not)
+            group.erase(it);
+            delete send;
+            return;
+        }
+    }
+}
+
 void EffectManager::fn_7100179D30(bool flag) {
     effect::SystemManager::getPtr()->fn_710083FF24(flag);
 }
@@ -498,6 +537,61 @@ void EffectManager::fn_71001765C0() {
 
 bool EffectManager::fn_71001765D0() {
     return pad_2fdc == 0;
+}
+
+bool EffectManager::finalize() {
+    return fn_71001765E8();
+}
+
+void EffectManager::updateLayer(const UpdateInfo& info, unsigned int layers) {
+    for (unsigned long i = 0; i < 32; ++i) {
+        if (layers & (1 << i)) {
+            for (CasterGroup::iterator it = m_casterGroups[i].begin(); it != m_casterGroups[i].end(); ++it) {
+                if (it->m_caster != nullptr && !it->m_caster->m_isDead) {
+                    if (it->m_point != nullptr) {
+                        it->m_point->update(info);
+                    }
+                    if (it->m_caster != nullptr) {
+                        it->m_caster->update(info);
+                    }
+                    if (it->m_point != nullptr) {
+                        for (int j = 0; j < it->m_point->getPointCount(); ++j) {
+                            it->m_point->setDirty(j, true);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void EffectManager::updateLayerPost(const UpdateInfo& info, unsigned int layers) {
+    for (unsigned long i = 0; i < 32; ++i) {
+        if (layers & (1 << i)) {
+            for (CasterGroup::iterator it = m_casterGroups[i].begin(); it != m_casterGroups[i].end(); ++it) {
+                if (it->m_caster != nullptr && !it->m_caster->m_isDead) {
+                    it->m_caster->postUpdate(info);
+                }
+            }
+        }
+    }
+}
+
+void EffectManager::tail(const UpdateInfo& info, bool flag) {
+    if (pad_2fda && effect::SystemManager::getPtr() != nullptr) {
+        effect::SystemManager::destroy();
+        effect::SystemManager::setUserFuncClear();
+    }
+    for (unsigned long i = 0; i < 32; ++i) {
+        for (CasterGroup::iterator it = m_casterGroups[i].begin(); it != m_casterGroups[i].end(); ++it) {
+            it->tailCopy();
+        }
+    }
+    m_tailFlip = (m_tailFlip + 1) % 2;
+    EffectCasterBase::tail();
+    if (effect::SystemManager::getPtr() != nullptr) {
+        effect::SystemManager::getPtr()->tail(flag);
+    }
 }
 
 void EffectManager::fn_710017CB08(bool flag) {

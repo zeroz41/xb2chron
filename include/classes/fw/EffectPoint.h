@@ -8,13 +8,19 @@
 #include "mm/MMStdBase.h"
 #include "mm/Mat44.h"
 
+namespace fw { class UpdateInfo; }
+
 namespace fw {
 // table 0x7100B41648
 class EffectPoint {
 public:
     virtual ~EffectPoint();  // slot 0
 
-    unsigned int getPointCount() const;
+    // signed: EffectManager::updateLayer compares it with cmp #1/b.lt
+    int getPointCount() const;
+    void update(const fw::UpdateInfo& info);
+    // EffectManager::updateLayer marks each of a caster's points (the names of the parameters are not the original's)
+    void setDirty(unsigned int index, bool dirty);
     // GfComEffectCaster::getEfpData returns the first and copies out the second for a point name (the names of the
     // parameters are not the original's)
     const char* getParentName(const char* name);

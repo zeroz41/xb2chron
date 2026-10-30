@@ -3,9 +3,12 @@
 
 #include "mm/mtl/IntrusiveList.h"
 #include "mm/mtl/FixStr.h"
+#include "mm/mtl/Vector.h"
+#include "mm/Mat44.h"
 
 namespace mm { class Mat44; }
 namespace fw { class EffectCasterBase; }
+namespace fw { class EffectPoint; }
 
 namespace fw {
 // table 0x7100B413D0
@@ -23,12 +26,29 @@ public:
     virtual void getMdlMat(mm::Mat44&);  // slot 7
     virtual void getEfpMat(mm::Mat44&, char const*);  // slot 8
     // EffectManager::sendCaster and sendCasterStateName hand a caster's values on to these
+    // a send for caster with count matrices per half, from allocator (EffectManager::addCaster passes the caster's own;
+    // the names of the parameters are not the original's)
+    static EffectCasterSend* create(EffectCasterBase* caster, mm::mtl::IAllocator* allocator, unsigned int count);
     void sendData(mm::Mat44& mtx, const char* name, int index);
     void sendDataStateName(const char* name);
+    // EffectManager::tail calls it on every send of every caster group
+    void tailCopy();
 
-    unsigned char pad_18[0x50];
+    // a matrix sent for a point name: the name's hash, the name ("root" for none) and the matrix (sendData fills one;
+    // the names are not the original's)
+    struct MtxAndName {
+        unsigned int m_hash;
+        char m_name[0x1C];
+        mm::Mat44 m_mtx;
+    };
+    // per half of effect::SystemManager's double buffer, one per point (create reserves and fills both with the
+    // caster's count; the name is not the original's)
+    mm::mtl::Vector<MtxAndName> m_mtxAndNames[2];
     EffectCasterBase* m_caster;  // the caster it sends for (EffectManager finds a caster's by it)
-    unsigned char pad_70[0x10];
+    // the caster's point (EffectManager::updateLayer updates it before the caster and marks its points dirty; the
+    // name is not the original's)
+    EffectPoint* m_point;
+    unsigned char pad_78[0x8];
     void* m_mdl;  // getMdl's last model (the name is not the original's)
     // per half of effect::SystemManager's double buffer (m_secondBuffer picks one): EffectCasterBase::setScl's and
     // setMotionFrame's values (the names are not the original's)

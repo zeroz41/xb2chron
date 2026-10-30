@@ -1,4 +1,3 @@
-// not proven yet: its table differs from the original's (word 18: _ZN2fw13EffectManager8finalizeEv where the original has =-8)
 #ifndef CLASSES_FW_EFFECTMANAGER_H
 #define CLASSES_FW_EFFECTMANAGER_H
 
@@ -61,7 +60,13 @@ public:
     virtual bool initialize();  // slot 2
     bool isCommonLoaded();
     bool commonLoaded();
-    virtual void vf3();  // slot 3
+    // slot 3 (a primary slot of its own: it overrides a secondary base's, ManagerObject's); it hands on to
+    // fn_71001765E8, whose body the -8 thunk reaches directly once finalize is inlined into it
+    virtual bool finalize();  // slot 3
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's finalize, slot 3, held this body
+    // itself). A member: finalize and update call it on this. What it does: sets m_inactive, clears the effect
+    // system (es_clearall), the caster groups, the texture buffers and the common packs; true once done.
+    bool fn_71001765E8();
     virtual void update(fw::UpdateInfo const&);  // slot 4
     virtual void updateLayer(fw::UpdateInfo const&, unsigned int);  // slot 5
     virtual void updateLayerPost(fw::UpdateInfo const&, unsigned int);  // slot 6
@@ -82,7 +87,6 @@ public:
     bool fn_71001765AC();
     void fn_71001765C0();
     bool fn_71001765D0();
-    virtual bool finalize();  // overrides a secondary base's (ManagerObject's)
     void addData(EffectData* data);
     // EffectCasterBase's setters hand their values on to these
     void addCaster(EffectCasterBase* caster);
@@ -217,7 +221,7 @@ public:
     // stored by fn_710017CB08 (GfManager::fn_710032A1FC hands it on), cleared by the constructor; nothing in this
     // unit reads it (the name is not the original's)
     bool m_gfManagerFlag;
-    unsigned char pad_2fd9;
+    unsigned char m_tailFlip;  // tail flips it between 0 and 1 every frame (the name is not the original's)
     unsigned char pad_2fda;  // fn_710017658C clears it
     unsigned char pad_2fdb;  // fn_710017658C sets it, fn_71001765AC tests it
     unsigned char pad_2fdc;  // fn_71001765C0 sets it, fn_71001765D0 tests it
