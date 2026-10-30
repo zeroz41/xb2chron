@@ -34,6 +34,8 @@
 #include "classes/gmk/GmkRoutedMapObj.h"
 #include "classes/gmk/GmkRoutedMob.h"
 #include "classes/gmk/GmkRoutedNpc.h"
+#include "classes/gmk/GmkRouteNavi.h"
+#include "ml/MtRand.h"
 #include "classes/gmk/GmkSe.h"
 #include "classes/gmk/GmkSeLine.h"
 #include "classes/gmk/GmkSeLinePoint.h"
@@ -788,6 +790,54 @@ void GmkSquadMember::dispose() { AGmkBase::dispose(); }
 // kinds whose create is the base one
 void GmkRoute::create(const CreateInfo& info) { AGmkBase::create(info); }
 
+GmkRouteNavi::CreateInfo::CreateInfo(const GmkRoute* route)
+    : m_bdatId(-1), m_type(GmkType(0x40)), m_routeIndx(0), m_offset(0.0f), pad_10(1.0f), pad_14(2.0f), pad_18(0x10),
+      m_initResult(nullptr) {
+    if (route != nullptr) {
+        IGmkList* list = route->m_list;
+        m_bdatId = static_cast<const GmkSet*>(list->getCreateInfo().m_param)->m_bdatId;
+        m_type = route->getGmkType();
+        unsigned int num = list->getInstNum();
+        for (unsigned int i = 0; i < num; i++) {
+            if (list->getInst(i) == route) {
+                m_routeIndx = i;
+            }
+        }
+    }
+}
+
+bool GmkRouteNavi::CreateInfo::isValid() const {
+    if (m_bdatId > 0) {
+        switch (m_type) {
+        case GmkType(1):
+        case GmkType(4):
+        case GmkType(7):
+        case GmkType(19):
+        case GmkType(22):
+            return pad_18 != 0;
+        default:
+            break;
+        }
+    }
+    return false;
+}
+
+GmkRouteNavi::GmkRouteNavi(const CreateInfo* info)
+    : pad_68(1.0f), pad_6c(2.0f), m_seq(nullptr), pad_80(false), pad_90(0.0f, 0.0f, 0.0f), pad_a0(0), pad_a4(false),
+      pad_a8(0), pad_ac(0) {
+    if (info != nullptr) {
+        create(*info);
+    }
+}
+
+void GmkRouteNavi::dispose() {
+    pad_ac = 0;
+    pad_a4 = false;
+    pad_a0 = 0;
+    pad_80 = false;
+    m_info = CreateInfo();
+}
+
 unsigned int GmkRoute::getRoutePointNum() const { return getData()->m_pointEnd - getData()->m_pointBegin; }
 bool GmkRoute::isClosed() const { return getData()->m_flags & 1; }
 
@@ -803,8 +853,65 @@ void GmkRoute::debugDraw() const {
 IGmkList* GmkRoutedEnemy::getBindedRoutePointList() const {
     return static_cast<const GmkSet*>(m_list->getCreateInfo().m_param)->m_gmkLists[GmkRoutedEnemyPoint::TYPE];
 }
+gf::GF_OBJ_HANDLE* GmkRoutedNpc::getGobInst() const {
+    if (m_npcIdInfo == nullptr) {
+        return reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    gf::GF_OBJ_HANDLE* handle = m_npcIdInfo->m_handle;
+    const void* owner = nullptr;
+    if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr && !acc.isDestroy() && !acc.testFlag(0x11) && acc.getObj() != nullptr) {
+            owner = acc.getUserData(gf::GfObjUserData(0));
+        }
+    }
+    return this == owner ? handle : reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+}
+
+bool GmkRoutedNpc::isPopCondMatchedExceptDist() const {
+    if (m_npcIdInfo == nullptr || m_npcIdInfo->m_gmk != static_cast<const AGmkNpc*>(this)) {
+        return false;
+    }
+    return isPopCondMatched();
+}
+
+void GmkRoutedNpc::dispose() {
+    if (m_navi != nullptr) {
+        delete m_navi;
+        m_navi = nullptr;
+    }
+    GmkRoute::dispose();
+}
+
 IGmkList* GmkRoutedNpc::getBindedRoutePointList() const {
     return static_cast<const GmkSet*>(m_list->getCreateInfo().m_param)->m_gmkLists[5];
+}
+
+bool GmkRoutedNpc::isPopCondMatched() const {
+    if (isValid()) {
+        return static_cast<const GmkNpc::BdatInfo*>(m_createInfo.m_bdatInfo)->isPopCommonCondMatched(*this);
+    }
+    return false;
+}
+
+bool GmkRoutedNpc::isDepopCondMatched() const {
+    if (isValid()) {
+        return !static_cast<const GmkNpc::BdatInfo*>(m_createInfo.m_bdatInfo)->isPopCommonCondMatched(*this);
+    }
+    return false;
+}
+
+void GmkRoutedNpc::debugDraw() const {
+    if (isValid()) {
+        bool matched = static_cast<const GmkNpc::BdatInfo*>(m_createInfo.m_bdatInfo)->isPopCommonCondMatched(*this);
+        if (isValid()) {
+            if (matched) {
+                debugDrawRoute(mm::Col4(mm::Col4::yellow));
+            } else {
+                debugDrawRoute(mm::Col4(mm::Col4::gray));
+            }
+        }
+    }
 }
 IGmkList* GmkRoutedMapObj::getBindedRoutePointList() const {
     return static_cast<const GmkSet*>(m_list->getCreateInfo().m_param)->m_gmkLists[8];
@@ -946,6 +1053,7 @@ IGmkList* GmkSquadLeader::getBindedSquadMemberList() const {
 }
 void GmkSquadMember::create(const CreateInfo& info) { AGmkBase::create(info); }
 GmkRoute::~GmkRoute() { dispose(); }
+GmkRoutedNpc::~GmkRoutedNpc() { dispose(); }
 
 void GmkRoutedMapObj::dispose() {
     if (m_gobInst != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {

@@ -43,7 +43,7 @@ public:
     virtual void debugDraw() const;  // slot 7
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual bool isPopCondMatched() const;  // slot 11
-    virtual void isDepopCondMatched() const;  // slot 12
+    virtual bool isDepopCondMatched() const;  // slot 12
     virtual void vf4();  // slot 13 (AGmkNpc slot 4)
     virtual void vf5();  // slot 14 (AGmkNpc slot 5)
     virtual unsigned char* getBindedBdatFp() const;  // slot 15

@@ -8,6 +8,7 @@
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
 namespace gmk { class GmkRouteGob; }
+namespace gmk { class GmkRouteNavi; }
 #include "mm/Vec3.h"
 #include "mm/Quat.h"
 
@@ -24,7 +25,7 @@ public:
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual IGmkList* getBindedRoutePointList() const;  // slot 11
     virtual bool isPopCondMatched() const;  // slot 12
-    virtual void isDepopCondMatched() const;  // slot 13
+    virtual bool isDepopCondMatched() const;  // slot 13
     virtual void vf4();  // slot 14 (AGmkNpc slot 4; its override, fn_7100590868)
     virtual void vf5();  // slot 15 (AGmkNpc slot 5; its override, fn_71005909C0)
     virtual unsigned char* getBindedBdatFp() const;  // slot 16
@@ -36,10 +37,12 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(4);
     gf::GF_OBJ_HANDLE* getGobInst() const;  // its game object (-1: none)
+    // isPopCondMatched while its NPC id's entry names this gimmick, false otherwise (the original's name)
+    bool isPopCondMatchedExceptDist() const;
     // user-provided: Vector<GmkRoutedNpc>::resize stores the defaults below only (no zero fill of the element first)
     GmkRoutedNpc() {}
     // fields after AGmkNpc (0x50..0x70); size from TGmkList::getInst's stride (0xa0)
-    void* pad_70 = nullptr;
+    GmkRouteNavi* m_navi = nullptr;  // 0x70: create allocates it, dispose deletes it (the name is not the original's)
     unsigned char pad_78 = 1;
     unsigned char pad_79 = 1;
     mm::Vec3 pad_80 = mm::Vec3::zero;  // the 16-aligned field (resize copies Vec3::zero's x, y, z)
