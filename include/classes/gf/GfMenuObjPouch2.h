@@ -6,6 +6,8 @@
 #include "gf/GfMenuSequence.h"
 #include "mm/mtl/FixedArray.h"
 #include "mm/mtl/IntrusivePtr.h"
+#include "classes/ui/UIManager.h"
+#include "ui/EventData.h"
 
 namespace ui {
 class UICtrlCursorSelect;
@@ -59,6 +61,14 @@ public:
     static void setupFilter(ui::UIObjectAcc& acc, unsigned int filter);
     static void getFilterText(unsigned int filter, ui::UIStr& text);
     static void setupPartyInfo(ui::UIObjectAcc& acc);
+    // 1.0.0's GfMenuObjPouch2::sendEvent (0x71004B7394, out of line there; 3.0.1 inlines every call): an event of
+    // that type and first parameter to the handle's object
+    static void sendEvent(unsigned int handle, unsigned int type, unsigned int param) {
+        ui::EventData event;
+        event.m_type = type;
+        event.m_param0 = param;
+        ui::UIManager::get()->requestObjectEvent(handle, event, 0.0f);
+    }
     static GAME_VOICE_HANDLE* procFavFlag(ui::UIObjectAcc& acc, FavoriteFlag& flag, unsigned int index,
                                           unsigned int favorite);
 

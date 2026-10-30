@@ -57,6 +57,8 @@ public:
     static GAME_VOICE_HANDLE* createReleaseBlade(unsigned int id);
     static GAME_VOICE_HANDLE* createAchievement(unsigned int id, unsigned int);
     static GAME_VOICE_HANDLE* createEngage(unsigned int id);
+    // the favourite voice of a driver or blade (GfMenuObjPouch2::procFavFlag returns what it returns)
+    static GAME_VOICE_HANDLE* createFavorite(unsigned int id, FAVORITE favorite);
     static unsigned long createMercenariesStart(unsigned int id);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's createQuest(CV_FIELD) has the same
     // size but plays a voice through GfFieldVoice::playVoice; this takes no argument). A member because it sits among

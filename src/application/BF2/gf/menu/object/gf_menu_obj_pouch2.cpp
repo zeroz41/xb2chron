@@ -1,4 +1,8 @@
 #include "gf/SDataPouch.h"
+#include "classes/gf/SCOM_FIELD_VOICE.h"
+#include "classes/gf/GfMenuItemAdapter.h"
+#include "classes/gf/GfMenuPouchAdapter.h"
+#include "mm/mtl/FixStr.h"
 #include "classes/gf/GfMenuObjSort.h"
 #include "classes/gf/GfMenuObjPouch2.h"
 #include "classes/gf/GfMenuObjPouch2/MainListener.h"
@@ -251,6 +255,27 @@ bool GfMenuObjPouch2::seqFavOpen() {
     return true;
 }
 
+void GfMenuObjPouch2::setupSlot(ui::UIObjectAcc& acc, mm::mtl::IntrusivePtr<GfMenuReferenceNumber> number) {
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < 3; i++) {
+        name.format("IMG_eqpouch_slicon@%02d", i + 1);
+        GfMenuItemAdapter::createFromPouchReferenceDriver(acc.searchChild(name.m_str), 2, i, 0, false);
+        name.format("TXT_eqpouch_efftime@%02d", i + 1);
+        ui::UIObjectAcc time(acc.searchChild(name.m_str));
+        GfMenuPouchAdapter* adapter =
+            GfMenuPouchAdapter::createFromReferenceDriver(acc.searchChild(name.m_str), 0, i, 0, false);
+        name.format("IMG_eqpouch_efftime_bg@%02d", i + 1);
+        ui::UIObjectAcc bg(acc.searchChild(name.m_str));
+        if (adapter != nullptr) {
+            adapter->m_rowHandle = bg.m_handle;
+        }
+        GfMenuObjUtil::FitOption option;
+        GfMenuObjUtil::createFitPlugin(bg.m_handle, time.m_handle, 8, 8, option);
+        name.format("TXT_eqpouch_name@%02d", i + 1);
+        GfMenuItemAdapter::createFromPouchReferenceDriver(acc.searchChild(name.m_str), 0, i, 0, false);
+    }
+}
+
 void GfMenuObjPouch2::updateSlotList(GfMenuItemList* items) {
     unsigned int driver = GfMenuReference::getReferenceDriverID(0);
     items->clear();
@@ -264,6 +289,17 @@ void GfMenuObjPouch2::updateSlotList(GfMenuItemList* items) {
             items->addContents(info);
         }
     }
+}
+
+bool GfMenuObjPouch2::seqFavClose() {
+    ui::UIObjectAcc acc(m_handle);
+    sendEvent(acc.searchChild("LAY_fvstock_fevitem"), 0x22, 0);
+    sendEvent(acc.searchChild("LAY_stock_filter2"), 0x22, 0);
+    sendEvent(acc.searchChild("LAY_chr_fevinfo"), 0x102, 0);
+    sendEvent(acc.searchChild("LAY_eqp_fevitem"), 0x101, 1);
+    m_favIndex = 0;
+    m_favKind = 0;
+    return true;
 }
 
 void GfMenuObjPouch2::getFilterText(unsigned int filter, ui::UIStr& text) {
