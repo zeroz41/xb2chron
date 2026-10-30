@@ -153,7 +153,7 @@ public:
     // places the list's objects in a row around center, width apart (GfMenuObjNpcTelop's listener)
     static void placeObjectH(ui::UISelectObjList* list, const mm::Pnt<short>& center, unsigned int width);
     // places count objects named by format (numbered from 1) in a row around center, width apart (the names are not
-    // the original's; GfMenuObjItemList2::initialize places its filter icons)
+    // the original's; GfMenuObjItemList2::initialize places its filter icons, gf_menu_obj_named_list initialize)
     static void placeObjectH(unsigned int handle, const char* format, unsigned int count, const mm::Pnt<short>& center,
                              unsigned int width);
     static int startPresetCtrl(unsigned int handle, const PresetCtrlParam& param);  // startCtrl's slot

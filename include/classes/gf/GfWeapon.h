@@ -69,6 +69,12 @@ bool fn_71002EE72C(unsigned int blade);
 // when fn_71002EE72C holds.
 void fn_71002EE640(unsigned int blade);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit (no this). What it does: false when fn_71002ED4F0(enemy) gives no record, else whether bit mode of
+// that record's flag byte (0x14 bytes each in the game data, at 0x11B4DC) is set. gf_menu_obj_named_list's
+// fn_7100445F58 passes a named enemy's "EnemyID" and GfMenuObjOption::fn_7100452BC0's difficulty; its
+// fn_7100446C54 passes GfGameManager::fn_71002AC57C().
+bool fn_71002ED5B0(unsigned int enemy, unsigned int mode);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfWeapon's unit (no this). What it does: -1 when fn_71002ED4F0(id) gives no record, else the int of that record
 // (0x14 bytes each in the game data) at 0x11B4CC/D0/D4/D8 for fn_71002AC57C() 0/1/2/4 (-1 for other values);
 // GfMenuCharDataAdapter::fn_7100339108 shows it as minutes and seconds for an enemy (objType 5).
