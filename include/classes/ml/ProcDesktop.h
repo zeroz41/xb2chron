@@ -21,6 +21,9 @@ public:
     static bool isDispInfo();
     static void setStartNotify(void (*initialize)(), void (*update)(), void (*finalize)());
     static void setBuildRevision(const char* revision);
+    // runs the icon whose name _dsk::s_selectAppName holds (apps::LauncherApp's destructor calls it once a closing
+    // FrameworkLauncher handed it an applet)
+    static void executeSelectApp();
     virtual ~ProcDesktop();  // slot 0
     virtual void OnPauseTrigger(bool, char const*);  // slot 5
     virtual void wkStandby();  // slot 8

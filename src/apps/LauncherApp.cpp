@@ -2,6 +2,9 @@
 #include "classes/apps/LauncherApp.h"
 #include "classes/fw/Framework.h"
 #include "classes/fw/Applet.h"
+#include "classes/ml/ProcDesktop.h"
+#include "classes/ml/WinView.h"
+#include "classes/ml/WorkCpu.h"
 #include "classes/ai/AiData.h"
 #include "btl/Utility.h"
 #include "classes/gf/GfGameParty.h"
@@ -20,9 +23,44 @@
 
 namespace apps {
 
+LauncherApp::LauncherApp(const char* name, ml::WorkObj* parent, int childCapacity)
+    : WinProc(name, parent, childCapacity), m_debugInfo(true), m_appletPending(false) {
+    ml::WorkCpu::registErrorCB(this);
+    m_flags |= 0x800;
+}
+
+LauncherApp::~LauncherApp() {
+    destroyMenu();
+    destroyDebugDraw();
+    ml::WorkCpu::unregistErrorCB(this);
+    if (m_appletPending) {
+        m_appletPending = false;
+        ml::ProcDesktop::executeSelectApp();
+    }
+}
+
 void LauncherApp::wkUpdate() {}
 
+void LauncherApp::wkRender() {
+    if (ml::WinView::getView(true) != FrameworkLauncher::getView()) {
+        return;
+    }
+    FrameworkLauncher::drawTask();
+    if (m_debugInfo) {
+        for (DebugDraw** it = m_debugDraws.begin(); it != m_debugDraws.end(); ++it) {
+            (*it)->draw(this, FrameworkLauncher::getScn(), FrameworkLauncher::getView());
+        }
+    }
+}
+
 void LauncherApp::wkTail() {}
+
+bool LauncherApp::wkStandbyLogout() {
+    if (!FrameworkLauncher::destroy() || m_child.size() != 0) {
+        return false;
+    }
+    return WinProc::wkStandbyLogout();
+}
 
 bool LauncherApp::OnMouseButtonDown(ml::EventView*) { return false; }
 
@@ -31,6 +69,25 @@ bool LauncherApp::OnFMenuSelect(ml::EventFloatingMenu*) { return false; }
 bool LauncherApp::OnKeyDown(ml::EventView*) { return false; }
 
 bool LauncherApp::OnCButtonSelect(ml::EventButton*) { return false; }
+
+bool LauncherApp::OnFileEvent(ml::EventFileTh* event) {
+    if (event == nullptr) {
+        return false;
+    }
+    // the applet first, then each menu until one handles it
+    bool handled = false;
+    if (fw::Framework::sys() != nullptr) {
+        if (fw::Applet* applet = fw::Framework::sys()->getApplet()) {
+            handled = applet->OnFileEvent(event);
+        }
+    }
+    if (!handled && !m_menus.empty()) {
+        for (ml::IWorkEvent** it = m_menus.begin(); !handled && it != m_menus.end(); ++it) {
+            handled = (*it)->OnFileEvent(event);
+        }
+    }
+    return handled;
+}
 
 void LauncherApp::OnPauseTrigger(bool pause, const char* name) {
     if (fw::Framework::sys() != nullptr) {
@@ -132,6 +189,39 @@ void AiData::setFrameCount(float count) { m_frameCount = count; }
 bool AiData::isFrameCountEnd() const { return m_frameCount <= 0.0f; }
 
 float AiData::getRadius() const { return getRadius(m_handle); }
+
+float AiData::getRadius(gf::GF_OBJ_HANDLE* handle) const {
+    if (m_handle == INVALID_HANDLE) {
+        return 0.0f;
+    }
+    gf::GfObjAcc acc(handle);
+    float radius = 0.0f;
+    if (acc.m_obj != nullptr) {
+        switch (acc.getType()) {
+        case 3:
+            radius = 0.5f;
+            break;
+        case 5: {
+            gf::DataParamAcc param(handle);
+            const gf::SDataEnemy* enemy = param.getSDataEnemy();
+            if (enemy != nullptr && gf::GfBdatRsc::sys() != nullptr) {
+                radius = gf::GfBdatRsc::sys()->getRscEnEnRadius(enemy->m_rscId);
+                gf::GFOBJ_INFO* info = gf::GfObjManager::getObjInfo(handle);
+                if (info != nullptr) {
+                    gf::GfObjSetup* setup = info->m_setup;
+                    // scaled by an enemy setup's initial scale
+                    if (setup != nullptr && setup->m_type == info->m_obj->m_type && info->m_obj->m_type == 5 &&
+                        setup->getRTTI()->isKindOf(&gf::GfObjSetupEnemy::m_rtti)) {
+                        radius = radius * setup->m_initialScale.x;
+                    }
+                }
+            }
+            break;
+        }
+        }
+    }
+    return radius;
+}
 
 float AiData::getRadiusTarget() const { return getRadius(getHandleTarget()); }
 
