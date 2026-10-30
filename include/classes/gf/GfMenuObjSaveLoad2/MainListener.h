@@ -2,15 +2,20 @@
 #define CLASSES_GF_GFMENUOBJSAVELOAD2_MAINLISTENER_H
 
 #include "classes/gf/GfMenuObjSaveLoad2.h"
+#include "classes/ui/UIObjectListener.h"
 
-namespace ui { class EventData; }
+namespace ui { struct EventData; }
 
 namespace gf {
-// table 0x7100B64710
-class GfMenuObjSaveLoad2::MainListener {
+// table 0x7100B64710: initialize makes it for "LAY_main"
+class GfMenuObjSaveLoad2::MainListener : public ::ui::UIObjectListener {
 public:
-    virtual ~MainListener();  // slot 0
-    virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
+    MainListener(GfMenuObjSaveLoad2* owner) : pad_C(), m_owner(owner) {}
+    virtual ~MainListener() {}  // slot 0: weak in the original, and its D1 slot is the base's destructor
+    virtual void reciveEvent(const ui::EventData& event, unsigned int handle);  // slot 2
+
+    unsigned int pad_C[4];  // zeroed by the constructor; nothing in the unit reads it
+    GfMenuObjSaveLoad2* m_owner;
 };
 }  // namespace gf
 

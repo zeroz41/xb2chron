@@ -39,6 +39,15 @@ public:
     struct ReleasbleSetup : public ::ui::UIListInfoBase::SetupParam {};
     // the blades that can be released (GfMenuObjBladeRelease::initialize)
     void setupFromReleasble(const ReleasbleSetup& setup);
+    // setupFromTeam's parameter (1.0.0's symbol names the type; its field names are not the original's)
+    class TeamSetup {
+    public:
+        ::ui::UIListInfoBase::SetupParam m_param;  // handed to setup
+        int m_type;  // 0: the members of mercenary team m_team (GfDataMercenaries::getTeamMember)
+        unsigned int m_team;
+        bool m_keepEmpty;  // type 0: an empty member slot is added too (as blade 0)
+    };
+    void setupFromTeam(const TeamSetup& setup);
     void updateOwner();
     // orders the list by a sort type (1.0.0's sort has the same switch; types over 100 go to fn_710036E1A0)
     void sort(unsigned int type, bool descending);
