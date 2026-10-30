@@ -2,6 +2,7 @@
 #define MM_LIB_FROM_MONOLIB_MM
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 #include "classes/ml/DevBase.h"
 #include "classes/ml/DevClock.h"
 #include "classes/ml/DevClockNx.h"
@@ -68,6 +69,7 @@
 #include "ml/MlMem.h"
 #include "grlib/CGLibCtl.h"
 #include "ml/WorkRoot.h"
+#include "ml/WorkUtil.h"
 #include "classes/grlib/CGLibManager.h"
 #include "mtl/MemManager.h"
 
@@ -248,6 +250,178 @@ void Device::initializeSDK(const InitParam& param) {
     DeviceNx::initializeSDK(param);
 }
 
+FontLayer::FontLayer() {
+    DevFont* font = mm::mtl::PtrSingleton<DevFont>::get();
+    DevFontLayer* layer;
+    if (font != nullptr) {
+        layer = WorkUtil::createWork<DevFontLayer>("DevFontLayer", font, false);
+        layer->m_layer = this;
+    } else {
+        layer = nullptr;
+    }
+    m_devLayer = layer;
+}
+
+inline void DevFontLayer::resetQue() {
+    m_shadowCol = mm::Col4(0.0f, 0.0f, 0.0f, 0.0f);
+    m_col = mm::Col4(1.0f, 1.0f, 1.0f, 1.0f);
+    m_queNum = 0;
+    if (DevGraph::get() != nullptr) {
+        m_que = static_cast<const LAYER_QUE**>(DevGraph::get()->allocWork(m_queMax * sizeof(LAYER_QUE*)));
+    }
+}
+
+inline DevFontLayer::DevFontLayer(const char* name, WorkObj* parent)
+    : WorkObj(name, parent, 0), m_que(nullptr), m_scaleX(1.0f), m_scaleY(1.0f), m_style(static_cast<FONT_STYLE>(0)),
+      m_layer(nullptr), m_shadow(false), m_done(false), m_queMax(0x400), m_cmd4Value(0) {
+    resetQue();
+}
+
+template <typename T>
+inline T* DevFontLayer::newQue() {
+    if (m_que == nullptr) {
+        return nullptr;
+    }
+    return static_cast<T*>(DevGraph::get()->allocWork(sizeof(T)));
+}
+
+inline void DevFontLayer::pushQue(const LAYER_QUE* que) {
+    m_que[m_queNum++] = que;
+}
+
+inline void DevFontLayer::queColor(const mm::Col4& col) {
+    if (m_que != nullptr) {
+        QUE_COL* que = newQue<QUE_COL>();
+        que->m_type = 1;
+        que->m_col = col;
+        pushQue(que);
+        m_col = col;
+    }
+}
+
+inline void DevFontLayer::queShadowColor(const mm::Col4& col) {
+    if (m_que != nullptr) {
+        QUE_COL* que = newQue<QUE_COL>();
+        que->m_type = 2;
+        que->m_col = col;
+        pushQue(que);
+        m_shadowCol = col;
+    }
+}
+
+inline void DevFontLayer::queScale(float x, float y) {
+    if (m_que != nullptr) {
+        QUE_SCALE* que = newQue<QUE_SCALE>();
+        que->m_type = 3;
+        que->m_x = x;
+        que->m_y = y;
+        pushQue(que);
+        m_scaleX = x;
+        m_scaleY = y;
+    }
+}
+
+inline void DevFontLayer::queStyle(FONT_STYLE style) {
+    if (m_que != nullptr) {
+        QUE_STYLE* que = newQue<QUE_STYLE>();
+        que->m_type = 5;
+        que->m_style = style;
+        pushQue(que);
+        m_style = style;
+    }
+}
+
+inline void DevFontLayer::queShadow(bool on) {
+    if (m_que != nullptr) {
+        QUE_SHADOW* que = newQue<QUE_SHADOW>();
+        que->m_type = 6;
+        que->m_on = on;
+        pushQue(que);
+    }
+}
+
+inline DevFontLayer* DevFont::findFontLayer(const FontLayer* layer) {
+    DevFont* font = mm::mtl::PtrSingleton<DevFont>::get();
+    if (font == nullptr) {
+        return nullptr;
+    }
+    for (reslist<WorkObj*>::iterator it = font->wkGetChild()->begin(); it != font->wkGetChild()->end(); ++it) {
+        DevFontLayer* fontLayer = static_cast<DevFontLayer*>(*it);
+        if (fontLayer == nullptr) {
+            continue;
+        }
+        if (fontLayer->m_layer == layer) {
+            return fontLayer;
+        }
+    }
+    return layer->m_devLayer;
+}
+
+void DevFont::fontLayer(const FontLayer* layer, int x, int y, const char* text) {
+    DevFontLayer* fontLayer = findFontLayer(layer);
+    if (fontLayer != nullptr && fontLayer->m_que != nullptr) {
+        unsigned int size = strlen(text) + 1;
+        char* str = static_cast<char*>(DevGraph::get()->allocWork(size));
+        memcpy(str, text, size);
+        DevFontLayer::QUE_FONT* que = fontLayer->newQue<DevFontLayer::QUE_FONT>();
+        que->m_type = 0;
+        que->m_x = x;
+        que->m_y = y;
+        fontLayer->pushQue(que);
+    }
+}
+
+void DevFont::fontLayerColor(const FontLayer* layer, const mm::Col4& col) {
+    DevFontLayer* fontLayer = findFontLayer(layer);
+    if (fontLayer != nullptr) {
+        fontLayer->queColor(col);
+    }
+}
+
+void DevFont::fontLayerScale(const FontLayer* layer, float x, float y) {
+    DevFontLayer* fontLayer = findFontLayer(layer);
+    if (fontLayer != nullptr) {
+        fontLayer->queScale(x, y);
+    }
+}
+
+void DevFont::fontLayerStyle(const FontLayer* layer, FONT_STYLE style) {
+    DevFontLayer* fontLayer = findFontLayer(layer);
+    if (fontLayer != nullptr) {
+        fontLayer->queStyle(style);
+    }
+}
+
+void DevFont::fontLayerShadow(const FontLayer* layer, bool on) {
+    DevFontLayer* fontLayer = findFontLayer(layer);
+    if (fontLayer != nullptr) {
+        fontLayer->queShadow(on);
+    }
+}
+
+void DevFont::fontLayerFlush(const FontLayer* layer, bool on) {
+    DevFontLayer* fontLayer = findFontLayer(layer);
+    if (fontLayer != nullptr) {
+        fontLayer->flush(on);
+        s_debDraw->restoreShader();
+    }
+}
+
+void DevFontLayer::flush(bool on) {
+    if (m_que != nullptr) {
+        LAYER_QUE* end = newQue<LAYER_QUE>();
+        end->m_type = 7;
+        pushQue(end);
+        const RenderContext* ctx;
+        renderQue(ctx, m_que);
+        m_queNum = 0;
+        if (!on) {
+            queColor(m_col);
+            queShadowColor(m_shadowCol);
+        }
+    }
+}
+
 DebDraw* DebDraw::getOnly(unsigned int) {
     return s_debDraw;
 }
@@ -263,6 +437,10 @@ bool DevFontLayer::wkStandbyLogout() {
         return WorkObj::wkStandbyLogout();
     }
     return false;
+}
+
+void DevFontLayer::wkTail() {
+    resetQue();
 }
 
 void DebDraw::fontColor(const mm::Col4& col) {

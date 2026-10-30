@@ -9,6 +9,8 @@ namespace ml {
 // table 0x7100B763C0
 class FontLayer {
 public:
+    // makes its DevFontLayer under DevFont when DevFont exists
+    FontLayer();
     virtual ~FontLayer();  // slot 0
 
     void font(int x, int y, const char* format, ...);

@@ -6,6 +6,7 @@
 #include "classes/ml/WorkObj.h"
 
 namespace mm { class Col4; }
+namespace ml { class DevFontLayer; }
 
 namespace ml {
 // a base of ml::DevFont no evidence names yet
@@ -24,6 +25,9 @@ public:
     virtual bool createFont() = 0;  // slot 6
     virtual void releaseFont() = 0;  // slot 7
 
+    // the DevFontLayer serving layer: the font's child made for it, else the layer's own (inline; the name is not
+    // the original's)
+    static DevFontLayer* findFontLayer(const FontLayer* layer);
     static void fontLayerStyle(const FontLayer* layer, FONT_STYLE style);
     static void fontLayer(const FontLayer* layer, int x, int y, const char* text);
     static void fontLayerColor(const FontLayer* layer, const mm::Col4& col);

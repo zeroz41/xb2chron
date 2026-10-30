@@ -31,6 +31,21 @@ enum RCB : int;
 class DevGraph : public ::ml::DevBase, public ::mm::mtl::PtrSingleton<DevGraph> {
 public:
     virtual ~DevGraph();  // slot 0
+    // the frame's scratch memory 0x338 points at: taken downward from m_top (the names are not the original's)
+    struct WorkBuf {
+        unsigned char pad_0[0x30];
+        char* m_top;  // 0x30
+    };
+    // size bytes of the frame's scratch memory, 4-aligned downward (inline: DevFontLayer's queue and its commands;
+    // the name is not the original's)
+    void* allocWork(unsigned int size) {
+        char* p = m_workBuf->m_top - size;
+        if (reinterpret_cast<unsigned long>(p) & 3) {
+            p -= reinterpret_cast<unsigned long>(p) & 3;
+        }
+        m_workBuf->m_top = p;
+        return p;
+    }
     static int getRootWidth();
     static int getRootHeight();
     static float getVSyncSec();
@@ -113,7 +128,8 @@ public:
     float m_clearDepth;   // 0x328
     unsigned char pad_32c[0x4];
     DevGraphQue* m_que;   // 0x330 pushRect/popRect forward to it (the name is not the original's)
-    unsigned char pad_338[0x10];
+    WorkBuf* m_workBuf;  // 0x338 (the name is not the original's)
+    unsigned char pad_340[0x8];
     float m_frameSpd;     // 0x348 setFrameSpd (the name is not the original's)
 };
 }  // namespace ml
