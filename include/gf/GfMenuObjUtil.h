@@ -152,6 +152,10 @@ public:
     static unsigned int playSE(const char* se);  // a sound by its name
     // places the list's objects in a row around center, width apart (GfMenuObjNpcTelop's listener)
     static void placeObjectH(ui::UISelectObjList* list, const mm::Pnt<short>& center, unsigned int width);
+    // places count objects named by format (numbered from 1) in a row around center, width apart (the names are not
+    // the original's; GfMenuObjItemList2::initialize places its filter icons)
+    static void placeObjectH(unsigned int handle, const char* format, unsigned int count, const mm::Pnt<short>& center,
+                             unsigned int width);
     static int startPresetCtrl(unsigned int handle, const PresetCtrlParam& param);  // startCtrl's slot
     static bool setPointSpeedRate(ui::UIObjectAcc acc, float rate);  // the pointer's speed over the object
     static short getBtnIconNumber(unsigned int button);  // the icon number of a button

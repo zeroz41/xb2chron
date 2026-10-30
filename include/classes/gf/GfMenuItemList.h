@@ -67,6 +67,7 @@ public:
     // adds an item to the list (GfMenuObjDrArtsSet2::initialize adds items 0x633D-0x633F with false)
     void addItem(const MenuItemInfo& item, bool flag);
     void setupFromBox(const ItemBoxSetup& setup);
+    void addListFromBox(const ItemBoxSetup& setup);  // setupFromBox's items added to the list
     void filterRarity(const FiltertInfo& filter);
     void filterRarityMore(const FiltertInfo& filter);
     void filterCollectionType(const FiltertInfo& filter);

@@ -96,7 +96,10 @@ public:
     MenuItemInfo m_item;
     mm::mtl::Delegate<bool(const MenuItemInfo&)> m_update;
     IConverter* m_converter;
-    unsigned char pad_70[0x8];
+    // which of several adapters of one kind it is (GfMenuObjItemList2::setupItemList numbers its two kind 0xB
+    // and three kind 0xE adapters from 0; the name is not the original's)
+    unsigned int m_subIndex;
+    unsigned char pad_74[0x4];
 };
 }  // namespace gf
 
