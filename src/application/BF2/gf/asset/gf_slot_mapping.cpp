@@ -43,7 +43,7 @@ void GfSlotMapping::releaseSlot(GF_SLOT_HANDLE* handle) {
 }
 
 void* GfSlotMapping::allocateSize(unsigned long size, unsigned long alignment) {
-    return m_slotAll->fn_71001C77B8(18, size, alignment);
+    return m_slotAll->allocateSize(static_cast<GfAssetType>(18), size, alignment);
 }
 
 bool GfSlotMapping::deallocateSize(void* memory) {
