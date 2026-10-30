@@ -4,6 +4,7 @@
 #include "classes/gf/GfAppendHandles.h"
 
 namespace fw { class SoundPack; }
+namespace gf { class QuestID; }
 namespace gf {
 // table 0x7100B54DE8: its slot 0 is GfAppendHandles's destructor, so the destructor is inline
 class GfWeapon : public ::gf::GfAppendHandles {
@@ -138,6 +139,11 @@ unsigned int fn_71002DC130(unsigned int driver);
 // raises local flag 8 (row + 0xF9E) by one up to the row's limit. Caller: SCOM_ACHIEV_INC::createBladeArts with the
 // blade's bdat id and the arts slot (0..2).
 void fn_71002EE784(unsigned int blade, unsigned int slot);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function: its code is in GfWeapon's unit
+// and it takes no this. What it does: true for quest 0x8FD, and for quest 0x80B's task 1 (it builds that task's
+// QuestTaskParam first); false otherwise. Callers: GfQuestTarget::getIconType, fn_710030A840 and
+// GfMenuLocation::refreshLocatorFromQuest, which makes no locator for a task it holds for.
+bool fn_71002EE5E0(QuestID quest, unsigned int task);
 }  // namespace gf
 
 #endif

@@ -196,6 +196,8 @@ public:
     static void stopSE(unsigned int handle, float time);
     static void playVibration(fw::VibrationID id, float scale);
     static bool isQuestCompleted(QuestID id);
+    // the current quest of a quest type (GfMenuLocation::refreshLocatorFromQuest passes 0 for its list 0, 1 for list 1)
+    static QuestID getCurrentQuest(unsigned int type);
     static void setChildIcon(unsigned int handle, const char* child, unsigned short icon);
     static void playJingle(unsigned int jingle);
     // the common fades, in and out: startCtrl's slot (the second argument is the end event's CtrlParam::m_eventId)

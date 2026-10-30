@@ -29,6 +29,8 @@ public:
     // the open (0x21) and close (0x22) events for the compass attached under 0x42
     static void open();
     static void close();
+    // shows an icon for a locator (GfMenuLocation::updateLocator adds one per new entry of its lists)
+    static void addLocator(const LocatorParam& param);
     static mm::mtl::FixedVector<IconObj, 32> m_IconObjList;
 };
 }  // namespace gf

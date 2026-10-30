@@ -4,12 +4,16 @@
 namespace gf { class GF_OBJ_HANDLE; struct OwnerBonus; }
 namespace mm { class Vec3; namespace mtl { template <int LEN> class FixStr; template <typename T, unsigned long N> class FixedList; } }
 namespace gmk { enum GmkType : int; }
+namespace gf { class GfFieldLocator; }
+namespace mm { namespace mtl { template <typename T> class Vector; } }
 
 namespace gf {
 
 // game-wide helpers (functions, by its symbols)
 class GfGameUtil {
 public:
+    // the field locators the orderable quests ask for (GfMenuLocation::refreshLocator fills its list 3 from them)
+    static void collectOrderableLocators(mm::mtl::Vector<GfFieldLocator>& locators);
     static void clearEnemyRepopCounter(int enemy);
     // switches the current Homura/Hikari blade (true: to Hikari); GfMenuObjCharSelect::seqSpHomuraToHikari and
     // seqSpHikariToHomura call it

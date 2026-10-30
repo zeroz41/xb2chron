@@ -3,6 +3,7 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "gf/QuestID.h"
+namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
 #include "gf/QuestListAcc.h"
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedQueue.h"
@@ -30,6 +31,8 @@ public:
     static void build(const GfSetupParam& param);
     static void destroy();
     static void resetQuest(QuestID id);
+    // the quests linked to id (GfMenuLocation::refreshLocatorFromQuest makes locators for the uncompleted ones)
+    static void getLinkQuest(mm::mtl::FixedVector<QuestID, 16>& quests, QuestID id);
     void destroyEvent();
     static void addEvent(IQuestEvent* event);
     static void removeEvent(IQuestEvent* event);
