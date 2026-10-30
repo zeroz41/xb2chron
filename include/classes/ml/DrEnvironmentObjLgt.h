@@ -2,6 +2,7 @@
 #define CLASSES_ML_DRENVIRONMENTOBJLGT_H
 
 #include "classes/ml/DrEnvironmentObj.h"
+#include <string.h>
 
 namespace ml { class DrCalcViewWork; }
 namespace ml { class DrEnvironmentLgtList; }
@@ -13,6 +14,24 @@ namespace ml {
 // table 0x7100B7B270
 class DrEnvironmentObjLgt : public ::ml::DrEnvironmentObj {
 public:
+    // 1.0.0 has it out of line; 3.0.1 inlines it into DrEnvironmentMan::createObj
+    DrEnvironmentObjLgt(const void* resource, DrMan* drMan, DrLightMan* lightMan, DrFogMan* fogMan, int lgtArg)
+        : DrEnvironmentObj(drMan, lightMan, fogMan) {
+        m_lgtArg = lgtArg;
+        m_work2 = nullptr;
+        m_captureMode = 0;
+        m_lgtArray[0] = nullptr;
+        m_work[3] = nullptr;
+        m_work[4] = nullptr;
+        m_work[1] = nullptr;
+        m_work[2] = nullptr;
+        m_resource = resource;
+        m_weatherNum = 0;
+        m_work[0] = nullptr;
+        memset(&m_lgtArray[1], 0, 0x20);
+        memset(m_lgtArrayNum, 0, 0x20);
+        m_updateReq = 1;
+    }
     virtual ~DrEnvironmentObjLgt();  // slot 0
     virtual void resourceInit();  // slot 2
     virtual void update();  // slot 3

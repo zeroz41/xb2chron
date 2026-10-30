@@ -566,6 +566,24 @@ DrEnvironmentMan::DrEnvironmentMan(DrMan* drMan, DrLightMan* lightMan, DrFogMan*
     m_envColiMan = new (drMan->m_workHandle, nullptr, 0, 4, false) DrEnvColiMan(drMan);
 }
 
+DrEnvironmentObj* DrEnvironmentMan::createObj(const void* resource) {
+    DrEnvironmentObjLgt* obj = new (m_drMan->m_resHandle, nullptr, 0, 4, false)
+        DrEnvironmentObjLgt(resource, m_drMan, m_lightMan, m_fogMan, m_lgtArg);
+    ObjList& list = m_objList[DrMan::s_nDblStockIdx];
+    if (list.m_tail != nullptr) {
+        list.m_tail->m_next = obj;
+        obj->m_prev = list.m_tail;
+        list.m_tail = obj;
+    } else {
+        list.m_head = obj;
+        list.m_tail = obj;
+        obj->m_prev = nullptr;
+    }
+    obj->m_next = nullptr;
+    m_lightMan->releaseFastLight();
+    return obj;
+}
+
 void DrEnvironmentObjLgt::callback_Ren_Point(DrLightObj* light, DrShdLgtMan* shdLgtMan) {
     DrAPGxType::setupCullingFront();
     DrAPGxType::setupDepthContl(1, 1, 3);
