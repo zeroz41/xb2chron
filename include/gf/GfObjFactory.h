@@ -8,6 +8,7 @@ namespace gf { class GfInitParamDriver; class GfInitParamBlade; class GfInitPara
 namespace gf { class GfInitParamMapSeamless; class GfInitParamGimmick; class GfInitParamNpc; class GfInitParamMob; }
 namespace gf { class GfInitParamFobj; class GfInitParamWeapon; class GfInitParamEnWeapon; class GfInitParamBelonging; }
 namespace gf { class GfInitParamExtra; class GfInitParamEventObj; class GfInitParamUiObj; }
+namespace gf { class GfAppendHandles; }
 
 namespace gf {
 // makes the game's objects (functions, by its symbols)
@@ -36,7 +37,8 @@ public:
     static GF_OBJ_HANDLE* createGmkMapGimmick(const CBdatWrapper& bdat, int row);
     static GF_OBJ_HANDLE* createGmkBlade(const CBdatWrapper& bdat, int row, int index);
     static GF_OBJ_HANDLE* createFieldObj(const GfInitParamFobj& param);
-    static GF_OBJ_HANDLE* createDriverWeapon(GfInitParamWeapon& param);
+    // the weapons it made for the driver (GfEvtModelWeapon's constructor copies them into its own GfAppendHandles)
+    static GfAppendHandles* createDriverWeapon(GfInitParamWeapon& param);
     static GF_OBJ_HANDLE* createEnemyBladeWeapon(GfInitParamWeapon& param, unsigned int id, GF_OBJ_HANDLE* owner,
                                                  GF_OBJ_HANDLE* blade);
     static GF_OBJ_HANDLE* createEnWeapon(GfInitParamEnWeapon& param);

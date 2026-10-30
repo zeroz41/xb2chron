@@ -52,6 +52,12 @@
 #include "classes/gf/GfComAsm.h"
 #include "classes/gf/GfGameObj.h"
 #include "classes/gf/GfBdatChrBl.h"
+#include "classes/gf/GfComEvtAnim.h"
+#include "classes/gf/GfComTransform.h"
+#include "classes/gf/SCOM_OBJ_ALPHA.h"
+#include "gf/GfDataDriver.h"
+#include "mm/Vec3.h"
+#include <string.h>
 
 namespace gf {
 
@@ -74,6 +80,143 @@ GfEvtModel::~GfEvtModel() {
     GfObjManager::removeListener(this);
 }
 
+bool GfEvtModel::isBusy(mm::mtl::FixStr<128>*) const {
+    mm::mtl::FixStr<128> error;
+    if (m_handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return false;
+    }
+    for (int attach = 0; attach < 4; attach++) {
+        if (GfAppendHandles* handles = GfMountManager::getAppendHandles(m_handle, static_cast<GFATTACH>(attach))) {
+            for (unsigned long i = 0; i < 10; i++) {
+                GF_OBJ_HANDLE* handle = handles->getObjHandles()[i];
+                if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) && GfObjUtil::getObj(handle) != nullptr &&
+                    !GfGameObj::isValidGameObj(handle, true, &error)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return !GfGameObj::isValidGameObj(m_handle, true, &error);
+}
+
+void GfEvtModel::resetMount(GfEvtModel* model) {
+    if (model == nullptr || pad_28 == nullptr) {
+        return;
+    }
+    if (GfObjUtil::getParentHandle(m_handle) == model->m_handle) {
+        GfObjUtil::unmountFromBone(m_handle);
+    }
+    if (strcmp(pad_30.m_str, "MT_met") == 0) {
+        GfMountManager::setMountType(m_handle, static_cast<GFATTACH>(1), static_cast<OPTMNT>(2));
+    }
+    pad_30 = "";
+    pad_28 = nullptr;
+    release();
+    model->m_mountList.erase(model->m_mountList.find(this));
+}
+
+void GfEvtModel::setMount(GfEvtModel* model, const char* bone) {
+    setMount(model, bone, mm::Vec3::zero, mm::Vec3::zero);
+}
+
+void GfEvtModel::setMount(GfEvtModel* model, const char* bone, const mm::Vec3& pos, const mm::Vec3& rot) {
+    if (pad_28 != nullptr) {
+        return;
+    }
+    if (model->m_mountList.find(this) != model->m_mountList.end()) {
+        return;
+    }
+    model->m_mountList.push_back(this);
+    addRef();
+    pad_28 = model;
+    pad_30 = bone;
+    model->execMount(this, pos, rot);
+}
+
+void GfEvtModel::execMount(GfEvtModel* model, const mm::Vec3& pos, const mm::Vec3& rot) {
+    GfObjAcc acc(model->m_handle);
+    if (GfComTransform* transform = acc.getObj()->getComponent<GfComTransform>(0)) {
+        // rot as Euler angles (x, y, z) turned into a quaternion from the half angles
+        mm::Vec3 angle = rot;
+        float x = angle.x * 0.5f;
+        float y = angle.y * 0.5f;
+        float z = angle.z * 0.5f;
+        float sx = sinf(x);
+        float cx = cosf(x);
+        float sy = sinf(y);
+        float cy = cosf(y);
+        float sz = sinf(z);
+        float cz = cosf(z);
+        mm::Quat q;
+        q.x = sx * cy * cz - cx * sy * sz;
+        q.y = cx * sy * cz + sx * cy * sz;
+        q.z = cx * cy * sz - sx * sy * cz;
+        q.w = cx * cy * cz + sx * sy * sz;
+        transform->setPosition(pos);
+        transform->setRotation(q);
+        transform->syncFrame();
+        if (GfObjUtil::getParentHandle(model->m_handle) != m_handle && !model->isBusy(nullptr)) {
+            if (strcmp(model->pad_30.m_str, "MT_met") == 0) {
+                GfMountManager::execMount(m_handle, static_cast<GFATTACH>(1), static_cast<OPTMNT>(0));
+            }
+            GfObjUtil::mountToBone(model->m_handle, m_handle, model->pad_30.m_str);
+        }
+    }
+}
+
+void GfEvtModel::listenerGfObj(IGfObjListener::OBJEVT event, GF_OBJ_HANDLE* handle, unsigned int) {
+    if (m_handle != handle) {
+        return;
+    }
+    if (event == static_cast<IGfObjListener::OBJEVT>(2)) {
+        // the object is in: the models mounted on it and this one go back on their bones
+        for (mm::mtl::FixedList<GfEvtModel*, 32>::iterator it = m_mountList.begin(); it != m_mountList.end(); ++it) {
+            GfEvtModel* model = *it;
+            if (GfObjUtil::getParentHandle(model->m_handle) != m_handle && !model->isBusy(nullptr)) {
+                if (strcmp(model->pad_30.m_str, "MT_met") == 0) {
+                    GfMountManager::execMount(m_handle, static_cast<GFATTACH>(1), static_cast<OPTMNT>(0));
+                }
+                GfObjUtil::mountToBone(model->m_handle, m_handle, model->pad_30.m_str);
+            }
+        }
+        if (pad_28 != nullptr && !pad_28->isBusy(nullptr)) {
+            GfEvtModel* parent = pad_28;
+            if (GfObjUtil::getParentHandle(m_handle) != parent->m_handle && !isBusy(nullptr)) {
+                if (strcmp(pad_30.m_str, "MT_met") == 0) {
+                    GfMountManager::execMount(parent->m_handle, static_cast<GFATTACH>(1), static_cast<OPTMNT>(0));
+                }
+                GfObjUtil::mountToBone(m_handle, parent->m_handle, pad_30.m_str);
+            }
+        }
+    } else if (event == static_cast<IGfObjListener::OBJEVT>(3)) {
+        // the object is going: the models mounted on it and this one leave their bones
+        for (mm::mtl::FixedList<GfEvtModel*, 32>::iterator it = m_mountList.begin(); it != m_mountList.end(); ++it) {
+            GfEvtModel* model = *it;
+            if (GfObjUtil::getParentHandle(model->m_handle) == m_handle) {
+                GfObjUtil::unmountFromBone(model->m_handle);
+            }
+        }
+        if (pad_28 != nullptr && !pad_28->isBusy(nullptr)) {
+            GfEvtModel* parent = pad_28;
+            if (GfObjUtil::getParentHandle(m_handle) == parent->m_handle) {
+                GfObjUtil::unmountFromBone(m_handle);
+            }
+            pad_28 = nullptr;
+        }
+    }
+}
+
+unsigned int GfEvtModel::changeLayerUI(unsigned int layer) {
+    switch (layer) {
+    case 7:
+        return 10;
+    case 8:
+        return 11;
+    case 9:
+        return 12;
+    }
+    return layer;
+}
 
 GfEvtModelDriver::GfEvtModelDriver(GfInitParamDriver& param)
     : GfEvtModel(0, param.m_objId), m_fsm(getAllocator(ALLOCATOR(0))) {
@@ -174,6 +317,58 @@ void GfEvtModelDriver::setWeaponFieldCommand() {
     m_fsm.setState(3);
 }
 
+void GfEvtModelDriver::setWeaponBattleState() {
+    setWeaponBattleMount();
+    mm::mtl::FixStr<32> weaponState;
+    mm::mtl::FixStr<32> state;
+    GfGameUtil::makeWeaponStateIdle(weaponState, m_handle, true);
+    GfGameUtil::makeStateIdleByBlade(state, m_bladeId, true);
+    if (GfObj* obj = GfObjUtil::getObj(m_handle)) {
+        if (GfComEvtAnim* anim = obj->getComponent<GfComEvtAnim>(2)) {
+            anim->setState(state.m_str);
+        }
+    }
+    if (GfAppendHandles* handles = GfMountManager::getAppendHandles(m_handle, static_cast<GFATTACH>(0))) {
+        for (int i = 0; i < 10; i++) {
+            GF_OBJ_HANDLE* handle = handles->getObjHandles()[i];
+            if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                if (GfComAsm* com = GfObjUtil::getObj(handle)->getComponent<GfComAsm>(2)) {
+                    com->setState(weaponState.m_str, static_cast<AnimLayer>(0));
+                }
+            }
+        }
+    }
+    if (GfDataDriver::fn_710023F9A8(m_objId) && GfDataDriver::fn_7100241660(m_objId)) {
+        SCOM_OBJ_ALPHA::createWeapon(m_handle, 0.0f, 1.0f);
+    }
+}
+
+void GfEvtModelDriver::setWeaponFieldState() {
+    GfMountManager::execMount(m_handle, static_cast<GFATTACH>(0), static_cast<OPTMNT>(2));
+    mm::mtl::FixStr<32> weaponState;
+    mm::mtl::FixStr<32> state;
+    GfGameUtil::makeWeaponStateIdle(weaponState, m_handle, false);
+    GfGameUtil::makeStateIdleByBlade(state, m_bladeId, false);
+    if (GfObj* obj = GfObjUtil::getObj(m_handle)) {
+        if (GfComEvtAnim* anim = obj->getComponent<GfComEvtAnim>(2)) {
+            anim->setState(state.m_str);
+        }
+    }
+    if (GfAppendHandles* handles = GfMountManager::getAppendHandles(m_handle, static_cast<GFATTACH>(0))) {
+        for (int i = 0; i < 10; i++) {
+            GF_OBJ_HANDLE* handle = handles->getObjHandles()[i];
+            if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                if (GfComAsm* com = GfObjUtil::getObj(handle)->getComponent<GfComAsm>(2)) {
+                    com->setState(weaponState.m_str, static_cast<AnimLayer>(0));
+                }
+            }
+        }
+    }
+    if (GfDataDriver::fn_710023F9A8(m_objId) && GfDataDriver::fn_7100241660(m_objId)) {
+        SCOM_OBJ_ALPHA::createWeapon(m_handle, 0.0f, 0.0f);
+    }
+}
+
 void GfEvtModelDriver::setWeaponBattleMount() {
     GfMountManager::execMount(m_handle, static_cast<GFATTACH>(0), static_cast<OPTMNT>(1));
 }
@@ -220,6 +415,107 @@ GF_OBJ_HANDLE* GfEvtModelDriver::getWeaponHandleLeft() const {
 }
 // GEN driver end
 
+void GfEvtModelDriver::StateStartBattle::enter(GfEvtModelDriver* owner, ai::State* prev) {
+    if (GfMountManager::getMountType(owner->m_handle, static_cast<GFATTACH>(0)) != 1) {
+        owner->setWeaponBattleMount();
+    }
+    mm::mtl::FixStr<32> weaponCommand;
+    mm::mtl::FixStr<32> command;
+    GfGameUtil::makeWeaponCommandBattle(weaponCommand, owner->m_handle, true, false);
+    GfGameUtil::makeCommandBattle(command, true);
+    mm::mtl::FixStr<32> state;
+    GfGameUtil::makeStateBattleByBlade(state, owner->m_bladeId, true);
+    fn_710029C9B4(owner->m_handle, command, state);
+    if (GfAppendHandles* handles = GfMountManager::getAppendHandles(owner->m_handle, static_cast<GFATTACH>(0))) {
+        for (int i = 0; i < 10; i++) {
+            GF_OBJ_HANDLE* handle = handles->getObjHandles()[i];
+            if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                if (GfComAsm* com = GfObjUtil::getObj(handle)->getComponent<GfComAsm>(2)) {
+                    com->execCmd(weaponCommand.m_str, static_cast<AnimLayer>(0));
+                }
+            }
+        }
+    }
+    if (GfDataDriver::fn_710023F9A8(owner->m_objId) && GfDataDriver::fn_7100241660(owner->m_objId)) {
+        SCOM_OBJ_ALPHA::createWeapon(owner->m_handle, 0.5f, 1.0f);
+    }
+}
+
+// Placeholder name (see its declaration in GfEvtModel.h): runs the battle command on the object's event animation
+// and sets the state when the animation is not in it already
+void fn_710029C9B4(GF_OBJ_HANDLE* handle, mm::mtl::FixStr<32>& command, mm::mtl::FixStr<32>& state) {
+    if (GfObj* obj = GfObjUtil::getObj(handle)) {
+        if (GfComEvtAnim* anim = obj->getComponent<GfComEvtAnim>(2)) {
+            anim->execCmd(command.m_str);
+            if (strcmp(anim->getStateName() ? anim->getStateName() : "", state.m_str) != 0) {
+                anim->setState(state.m_str);
+            }
+        }
+    }
+}
+
+void GfEvtModelDriver::StateStartBattle::update(GfEvtModelDriver* owner, const fw::UpdateInfo& info) {
+    GfComEvtAnim* anim = GfObjUtil::getObj(owner->m_handle)->getComponent<GfComEvtAnim>(2);
+    if (anim == nullptr || anim->isEnd(static_cast<AnimLayer>(0))) {
+        if (GfObj* obj = GfObjUtil::getObj(owner->m_handle)) {
+            if (GfComEvtAnim* evtAnim = obj->getComponent<GfComEvtAnim>(2)) {
+                evtAnim->execCmd("C_btidle");
+            }
+        }
+        requestState(1);
+    }
+}
+
+void GfEvtModelDriver::StateEndBattle::enter(GfEvtModelDriver* owner, ai::State* prev) {
+    if (GfMountManager::getMountType(owner->m_handle, static_cast<GFATTACH>(0)) == 2) {
+        return;
+    }
+    mm::mtl::FixStr<32> weaponCommand;
+    mm::mtl::FixStr<32> command;
+    GfGameUtil::makeWeaponCommandBattle(weaponCommand, owner->m_handle, false, false);
+    GfGameUtil::makeCommandBattle(command, false);
+    mm::mtl::FixStr<32> state;
+    GfGameUtil::makeStateBattleByBlade(state, owner->m_bladeId, false);
+    fn_710029C9B4(owner->m_handle, command, state);
+    if (GfAppendHandles* handles = GfMountManager::getAppendHandles(owner->m_handle, static_cast<GFATTACH>(0))) {
+        for (int i = 0; i < 10; i++) {
+            GF_OBJ_HANDLE* handle = handles->getObjHandles()[i];
+            if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                if (GfComAsm* com = GfObjUtil::getObj(handle)->getComponent<GfComAsm>(2)) {
+                    com->execCmd(weaponCommand.m_str, static_cast<AnimLayer>(0));
+                }
+            }
+        }
+    }
+    if (GfDataDriver::fn_710023F9A8(owner->m_objId) && GfDataDriver::fn_7100241660(owner->m_objId)) {
+        SCOM_OBJ_ALPHA::createWeapon(owner->m_handle, 0.5f, 0.0f);
+    }
+}
+
+void GfEvtModelDriver::StateEndBattle::update(GfEvtModelDriver* owner, const fw::UpdateInfo& info) {
+    GfComEvtAnim* anim = GfObjUtil::getObj(owner->m_handle)->getComponent<GfComEvtAnim>(2);
+    if (anim == nullptr || anim->isEnd(static_cast<AnimLayer>(0))) {
+        if (GfObj* obj = GfObjUtil::getObj(owner->m_handle)) {
+            if (GfComEvtAnim* evtAnim = obj->getComponent<GfComEvtAnim>(2)) {
+                evtAnim->execCmd("C_idle");
+            }
+        }
+        mm::mtl::FixStr<32> weaponState;
+        GfGameUtil::makeWeaponStateIdle(weaponState, owner->m_handle, false);
+        if (GfAppendHandles* handles = GfMountManager::getAppendHandles(owner->m_handle, static_cast<GFATTACH>(0))) {
+            for (int i = 0; i < 10; i++) {
+                GF_OBJ_HANDLE* handle = handles->getObjHandles()[i];
+                if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                    if (GfComAsm* com = GfObjUtil::getObj(handle)->getComponent<GfComAsm>(2)) {
+                        com->setState(weaponState.m_str, static_cast<AnimLayer>(0));
+                    }
+                }
+            }
+        }
+        requestState(0);
+    }
+}
+
 GfEvtModelSalvage* GfEvtModelSalvage::create(GfInitParamDriver& param) {
 #line 734
     GfEvtModelSalvage* model = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfEvtModelSalvage(param);
@@ -235,6 +531,18 @@ GfEvtModelBlade* GfEvtModelBlade::create(GfInitParamBlade& param) {
     GfEvtModelBlade* model = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfEvtModelBlade(param);
     model->addRef();
     return model;
+}
+
+void GfEvtModelDriver::setDispJiji(bool disp) {
+    GfAppendHandles* jiji = GfMountManager::getAppendHandles(m_handle, static_cast<GFATTACH>(1));
+    if (jiji != nullptr) {
+        for (int i = 0; i < 10; i++) {
+            GfObjAcc acc(jiji->getObjHandles()[i]);
+            if (acc.m_obj != nullptr) {
+                acc.setAlphaNormal(disp ? 1.0f : 0.0f);
+            }
+        }
+    }
 }
 
 // GEN driveranim begin
@@ -326,6 +634,28 @@ void GfEvtModelBlade::setWeaponBattleCommand() {
 
 void GfEvtModelBlade::setWeaponFieldCommand() {
     m_fsm.setState(3);
+}
+
+void GfEvtModelBlade::setWeaponBattleState() {
+    GfMountManager::execMount(m_handle, static_cast<GFATTACH>(0), static_cast<OPTMNT>(1));
+    mm::mtl::FixStr<32> state;
+    GfGameUtil::makeStateIdle(state, m_handle, true);
+    if (GfObj* obj = GfObjUtil::getObj(m_handle)) {
+        if (GfComEvtAnim* anim = obj->getComponent<GfComEvtAnim>(2)) {
+            anim->setState(state.m_str);
+        }
+    }
+}
+
+void GfEvtModelBlade::setWeaponFieldState() {
+    GfMountManager::execMount(m_handle, static_cast<GFATTACH>(0), static_cast<OPTMNT>(2));
+    mm::mtl::FixStr<32> state;
+    GfGameUtil::makeStateIdle(state, m_handle, false);
+    if (GfObj* obj = GfObjUtil::getObj(m_handle)) {
+        if (GfComEvtAnim* anim = obj->getComponent<GfComEvtAnim>(2)) {
+            anim->setState(state.m_str);
+        }
+    }
 }
 
 void GfEvtModelBlade::setWeaponBattleMount() {
@@ -446,6 +776,30 @@ void GfEvtModelBlade::setAnimSpeedWeaponLeftCS(float speed) {
 }
 // GEN blade end
 
+void GfEvtModelBlade::StateStartBattle::update(GfEvtModelBlade* owner, const fw::UpdateInfo& info) {
+    GfComEvtAnim* anim = GfObjUtil::getObj(owner->m_handle)->getComponent<GfComEvtAnim>(2);
+    if (anim == nullptr || anim->isEnd(static_cast<AnimLayer>(0))) {
+        if (GfObj* obj = GfObjUtil::getObj(owner->m_handle)) {
+            if (GfComEvtAnim* evtAnim = obj->getComponent<GfComEvtAnim>(2)) {
+                evtAnim->execCmd("C_btidle");
+            }
+        }
+        requestState(1);
+    }
+}
+
+void GfEvtModelBlade::StateEndBattle::update(GfEvtModelBlade* owner, const fw::UpdateInfo& info) {
+    GfComEvtAnim* anim = GfObjUtil::getObj(owner->m_handle)->getComponent<GfComEvtAnim>(2);
+    if (anim == nullptr || anim->isEnd(static_cast<AnimLayer>(0))) {
+        if (GfObj* obj = GfObjUtil::getObj(owner->m_handle)) {
+            if (GfComEvtAnim* evtAnim = obj->getComponent<GfComEvtAnim>(2)) {
+                evtAnim->execCmd("C_idle");
+            }
+        }
+        requestState(0);
+    }
+}
+
 GfEvtModelEnemy::~GfEvtModelEnemy() {
     m_fsm.cleanup();
 }
@@ -468,6 +822,52 @@ void GfEvtModelEnemy::setWeaponBattleCommand() {
 
 void GfEvtModelEnemy::setWeaponFieldCommand() {
     m_fsm.setState(3);
+}
+
+void GfEvtModelEnemy::setWeaponBattleState() {
+    setWeaponBattleMount();
+    mm::mtl::FixStr<32> weaponState;
+    mm::mtl::FixStr<32> state;
+    GfGameUtil::makeWeaponStateIdle(weaponState, m_handle, true);
+    GfGameUtil::makeStateIdle(state, m_handle, true);
+    if (GfObj* obj = GfObjUtil::getObj(m_handle)) {
+        if (GfComEvtAnim* anim = obj->getComponent<GfComEvtAnim>(2)) {
+            anim->setState(state.m_str);
+        }
+    }
+    if (GfAppendHandles* handles = GfMountManager::getAppendHandles(m_handle, static_cast<GFATTACH>(0))) {
+        for (int i = 0; i < 10; i++) {
+            GF_OBJ_HANDLE* handle = handles->getObjHandles()[i];
+            if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                if (GfComAsm* com = GfObjUtil::getObj(handle)->getComponent<GfComAsm>(2)) {
+                    com->setState(weaponState.m_str, static_cast<AnimLayer>(0));
+                }
+            }
+        }
+    }
+}
+
+void GfEvtModelEnemy::setWeaponFieldState() {
+    GfMountManager::execMount(m_handle, static_cast<GFATTACH>(0), static_cast<OPTMNT>(2));
+    mm::mtl::FixStr<32> weaponState;
+    mm::mtl::FixStr<32> state;
+    GfGameUtil::makeWeaponStateIdle(weaponState, m_handle, false);
+    GfGameUtil::makeStateIdle(state, m_handle, false);
+    if (GfObj* obj = GfObjUtil::getObj(m_handle)) {
+        if (GfComEvtAnim* anim = obj->getComponent<GfComEvtAnim>(2)) {
+            anim->setState(state.m_str);
+        }
+    }
+    if (GfAppendHandles* handles = GfMountManager::getAppendHandles(m_handle, static_cast<GFATTACH>(0))) {
+        for (int i = 0; i < 10; i++) {
+            GF_OBJ_HANDLE* handle = handles->getObjHandles()[i];
+            if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                if (GfComAsm* com = GfObjUtil::getObj(handle)->getComponent<GfComAsm>(2)) {
+                    com->setState(weaponState.m_str, static_cast<AnimLayer>(0));
+                }
+            }
+        }
+    }
 }
 
 void GfEvtModelEnemy::setWeaponBattleMount() {
@@ -516,6 +916,92 @@ GF_OBJ_HANDLE* GfEvtModelEnemy::getWeaponHandleLeft() const {
 }
 // GEN enemy end
 
+void GfEvtModelEnemy::StateStartBattle::enter(GfEvtModelEnemy* owner, ai::State* prev) {
+    mm::mtl::FixStr<32> weaponCommand;
+    mm::mtl::FixStr<32> command;
+    GfGameUtil::makeWeaponCommandBattle(weaponCommand, owner->m_handle, true, true);
+    GfGameUtil::makeCommandBattle(command, true);
+    mm::mtl::FixStr<32> state;
+    GfGameUtil::makeStateBattle(state, owner->m_handle, true);
+    fn_710029C9B4(owner->m_handle, command, state);
+    if (GfAppendHandles* handles = GfMountManager::getAppendHandles(owner->m_handle, static_cast<GFATTACH>(0))) {
+        for (int i = 0; i < 10; i++) {
+            GF_OBJ_HANDLE* handle = handles->getObjHandles()[i];
+            if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                if (GfComAsm* com = GfObjUtil::getObj(handle)->getComponent<GfComAsm>(2)) {
+                    com->execCmd(weaponCommand.m_str, static_cast<AnimLayer>(0));
+                }
+            }
+        }
+    }
+    if (GfMountManager::getMountType(owner->m_handle, static_cast<GFATTACH>(0)) != 1) {
+        owner->setWeaponBattleMount();
+    }
+}
+
+void GfEvtModelEnemy::StateStartBattle::update(GfEvtModelEnemy* owner, const fw::UpdateInfo& info) {
+    GfComEvtAnim* anim = GfObjUtil::getObj(owner->m_handle)->getComponent<GfComEvtAnim>(2);
+    if (anim == nullptr || anim->isEnd(static_cast<AnimLayer>(0))) {
+        if (GfObj* obj = GfObjUtil::getObj(owner->m_handle)) {
+            if (GfComEvtAnim* evtAnim = obj->getComponent<GfComEvtAnim>(2)) {
+                evtAnim->execCmd("C_btidle");
+            }
+        }
+        requestState(1);
+    }
+}
+
+void GfEvtModelEnemy::StateEndBattle::enter(GfEvtModelEnemy* owner, ai::State* prev) {
+    if (GfMountManager::getMountType(owner->m_handle, static_cast<GFATTACH>(0)) == 2) {
+        return;
+    }
+    mm::mtl::FixStr<32> weaponCommand;
+    mm::mtl::FixStr<32> command;
+    GfGameUtil::makeWeaponCommandBattle(weaponCommand, owner->m_handle, false, true);
+    GfGameUtil::makeCommandBattle(command, false);
+    mm::mtl::FixStr<32> state;
+    GfGameUtil::makeStateBattle(state, owner->m_handle, false);
+    fn_710029C9B4(owner->m_handle, command, state);
+    if (GfAppendHandles* handles = GfMountManager::getAppendHandles(owner->m_handle, static_cast<GFATTACH>(0))) {
+        for (int i = 0; i < 10; i++) {
+            GF_OBJ_HANDLE* handle = handles->getObjHandles()[i];
+            if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                if (GfComAsm* com = GfObjUtil::getObj(handle)->getComponent<GfComAsm>(2)) {
+                    com->execCmd(weaponCommand.m_str, static_cast<AnimLayer>(0));
+                }
+            }
+        }
+    }
+}
+
+void GfEvtModelEnemy::StateEndBattle::update(GfEvtModelEnemy* owner, const fw::UpdateInfo& info) {
+    GfComEvtAnim* anim = GfObjUtil::getObj(owner->m_handle)->getComponent<GfComEvtAnim>(2);
+    if (anim == nullptr || anim->isEnd(static_cast<AnimLayer>(0))) {
+        if (GfObj* obj = GfObjUtil::getObj(owner->m_handle)) {
+            if (GfComEvtAnim* evtAnim = obj->getComponent<GfComEvtAnim>(2)) {
+                evtAnim->execCmd("C_idle");
+            }
+        }
+        requestState(0);
+    }
+}
+
+GfEvtModelNpc::GfEvtModelNpc(GfInitParamNpc& param) : GfEvtModel(4, param.m_objId) {
+    if (GfManager::isExecModeThater() ? mm::mtl::PtrSingleton<event::Manager>::sys()->pad_294 != 0
+                                      : GfMenuManager::isOpenFullScreen() &&
+                                            GfGameManager::isInnerState(static_cast<GF_STATE>(6))) {
+        int type = param.pad_40;
+        if (static_cast<unsigned int>(type - 7) < 3) {
+            type += 3;
+        }
+        param.pad_40 = type;
+    } else if (param.m_objId == 0x7D1) {
+        param.pad_40 = 9;
+    }
+    param.pad_44 = 1;
+    m_handle = GfObjFactory::createNpc(param);
+}
+
 // GEN npc begin
 GfEvtModelNpc* GfEvtModelNpc::create(GfInitParamNpc& param) {
 #line 1086
@@ -524,6 +1010,25 @@ GfEvtModelNpc* GfEvtModelNpc::create(GfInitParamNpc& param) {
     return model;
 }
 // GEN npc end
+
+GfEvtModelWeapon::GfEvtModelWeapon(GfInitParamWeapon& param) : GfEvtModel(2, param.m_objId) {
+    m_weaponId = param.pad_128;
+    // the UI layer while the theater or a full-screen menu shows the event, else layer 9
+    bool ui = GfManager::isExecModeThater() ? mm::mtl::PtrSingleton<event::Manager>::sys()->pad_294 != 0
+                                            : GfMenuManager::isOpenFullScreen() &&
+                                                  GfGameManager::isInnerState(static_cast<GF_STATE>(6));
+    int& layer = param.pad_40;
+    layer = ui ? changeLayerUI(layer) : 9;
+    m_weapons = *GfObjFactory::createDriverWeapon(param);
+    for (int i = 0; i < 10; i++) {
+        GF_OBJ_HANDLE* handle = m_weapons.getObjHandles()[i];
+        if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            m_handle = handle;
+            break;
+        }
+    }
+}
+
 
 // GEN weapon begin
 GfEvtModelWeapon* GfEvtModelWeapon::create(GfInitParamWeapon& param) {
@@ -632,8 +1137,27 @@ void GfEvtModelWeapon::setWeaponFieldState() {
     }
 }
 
+void GfEvtModelSalvage::setTransform(const mm::Vec3& pos, float rotY) {
+    if (GfGameObj::isValidGameObj(m_handle, false, nullptr)) {
+        SCOM_OBJ_WARP_POS::create(m_handle, pos, mm::Vec3(0.0f, rotY * 0.017453292f, 0.0f), false);
+    }
+}
+
 bool GfEvtModelSalvage::isValid() const {
     return GfGameObj::isValidGameObj(m_handle, false, nullptr);
+}
+
+GfEvtModelEvent::GfEvtModelEvent(GfInitParamEventObj& param) : GfEvtModel(3, param.m_objId) {
+    if (GfManager::isExecModeThater() ? mm::mtl::PtrSingleton<event::Manager>::sys()->pad_294 != 0
+                                      : GfMenuManager::isOpenFullScreen() &&
+                                            GfGameManager::isInnerState(static_cast<GF_STATE>(6))) {
+        int type = param.pad_40;
+        if (static_cast<unsigned int>(type - 7) < 3) {
+            type += 3;
+        }
+        param.pad_40 = type;
+    }
+    m_handle = GfObjFactory::createEventObj(param);
 }
 
 // GEN event begin

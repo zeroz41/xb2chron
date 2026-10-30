@@ -10,6 +10,7 @@ namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/GfInitParam.h"
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedList.h"
+#include "mm/Vec3.h"
 
 namespace gf {
 // Placeholder name: 1.0.0 leaves it unnamed too (fn_7100309D10, called from the same states). A free function
@@ -48,6 +49,15 @@ public:
     void destroy();
     // takes this model off model's mount (destroy hands each mounted model this one)
     void resetMount(GfEvtModel* model);
+    // mounts this model on model's bone (once: not while mounted, not twice in model's list): takes a reference,
+    // keeps model in pad_28 and the bone in pad_30, then execMount; the short form passes mm::Vec3::zero twice
+    void setMount(GfEvtModel* model, const char* bone);
+    void setMount(GfEvtModel* model, const char* bone, const mm::Vec3& pos, const mm::Vec3& rot);
+    // places model (mounted on this one) at pos with the Euler rotation rot and attaches it to the bone in its
+    // pad_30 unless already attached or busy ("MT_met" first mounts this model's attach 1)
+    void execMount(GfEvtModel* model, const mm::Vec3& pos, const mm::Vec3& rot);
+    // whether an attached object (attaches 0-3) or the model's own object is not valid yet (GfGameObj::isValidGameObj
+    // with a local message; the parameter is not used)
     bool isBusy(mm::mtl::FixStr<128>* name) const;
     // the UI-layer counterpart of an init parameter's layer (GfGameEvent::createEventObj passes pad_40 while a
     // full-screen menu is up)
@@ -62,7 +72,10 @@ public:
     // the object the model shows: -1 until the derived constructor makes it (GfObjFactory::createDriver); the
     // states pass it to GfMountManager and GfGameUtil (the name is not the original's)
     GF_OBJ_HANDLE* m_handle;
-    ::mm::mtl::ReferenceObject* pad_28;  // a counted object destroy releases; zeroed by the constructor; setMount tests it
+    // the model this one is mounted on (setMount stores it, resetMount and listenerGfObj (the object going, event 3)
+    // clear it); a counted object destroy releases;
+    // zeroed by the constructor
+    GfEvtModel* pad_28;
     mm::mtl::FixStr<32> pad_30;  // made empty by the constructor
     // the models mounted on this one (FixedList<GfEvtModel*, 32>::erase is in the unit; resetMount/setMount
     // use it) (the name is not the original's)
