@@ -17,7 +17,12 @@ void GfEvent::destroy() {
     delete event;
 }
 
-// addEventCallback and removeEventCallback are not written yet (see the worker notes)
+// addEventCallback is not matched yet (the original keeps the ring's first index loaded before the empty test)
+
+void GfEvent::removeEventCallback(IGfEvent* listener) {
+    GfEvent* event = get();
+    event->m_listeners.erase(mm::mtl::find(event->m_listeners.begin(), event->m_listeners.end(), listener));
+}
 
 void GfEvent::callChangeScenarioFlag(unsigned int flag, unsigned int prevFlag) {
     GfEvent* event = get();
