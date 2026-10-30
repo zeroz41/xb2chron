@@ -22,6 +22,8 @@ public:
         }
         pad_8 = 0;
     }
+    // inline: 3.0.1 has no copy (SelectManager's constructor zeroes 0x8..0x17 after the table)
+    SelectWindow() : pad_8(0), pad_c(0), m_context(nullptr) {}
     unsigned int pad_8;
     unsigned int pad_c;
     gf::GfMenuCallContext* m_context;  // 0x10 the balloon's call context (the name is not the original's)

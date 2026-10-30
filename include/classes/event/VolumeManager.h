@@ -2,6 +2,8 @@
 #define CLASSES_EVENT_VOLUMEMANAGER_H
 #include "classes/event/IManager.h"
 #include "classes/mm/mtl/Singleton.h"
+#include "classes/event/VolumeSeamless.h"
+#include "classes/event/VolumeSkip.h"
 
 namespace event { enum MSG_TYPE : int; }
 
@@ -21,12 +23,12 @@ public:
     void clear();   // out of line
     void render();  // out of line
     void update();  // OnEventProc's update (inlined; the name is not the original's)
-    unsigned char pad_10[0x48];
-    // 0x58 bits 1 and 2: update counts m_timer down; bit 2 is cleared once it runs out (the name is not the original's)
-    unsigned int m_flags;
-    unsigned char pad_5c[0x40];
-    float m_timer;  // 0x9c frames left, update subtracts 1 each frame (the name is not the original's)
-    unsigned char pad_a0[0x50];
+    unsigned int pad_10;  // the constructor zeroes it
+    unsigned int pad_14;  // the constructor zeroes it
+    unsigned char pad_18[0x38];
+    VolumeSeamless m_seamless;  // 0x50 (the name is not the original's)
+    VolumeSkip m_skip;          // 0xa0 (the name is not the original's)
+    unsigned char pad_e8[0x8];  // sizeof 0xF0 (s_instance)
 };
 }  // namespace event
 

@@ -1,4 +1,14 @@
 #include "classes/event/ModelObj.h"
+#include "classes/event/PosAxis.h"
+#include "classes/event/RotAxis.h"
+#include "classes/event/TarAxis.h"
+#include "classes/event/AttachActorCS.h"
+#include "classes/event/ScriptUtil.h"
+#include "classes/event/CharaPlayTalk.h"
+#include "gf/GfDataBlade.h"
+#include "mm/Mat44.h"
+#include "classes/event/FrameManager.h"
+#include "classes/event/CamManager.h"
 #include "classes/event/DebugManager.h"
 #include "classes/gf/GfAssetSetup.h"
 #include "classes/gf/GfInitParam.h"
@@ -114,7 +124,17 @@ ParamVariable::~ParamVariable() {}
 
 Param::Param() {}
 
+bool AttachActorCS::getMtpMat(mm::Mat44& mat, const char*) const {
+    mat = mm::Mat44::identity;
+    return false;
+}
+
 AttachActorGf::~AttachActorGf() {}
+
+bool AttachActorGf::getMtpMat(mm::Mat44& mat, const char*) const {
+    mat = mm::Mat44::identity;
+    return false;
+}
 
 const char* AttachActorBase::getName() const {
     return m_name;
@@ -158,9 +178,25 @@ void CharaPlayActionAuto::term() {}
 
 void CharaPlayAction::init() {}
 
+void CharaPlayAction::term() {
+    if (m_flags & 2) {
+        m_flags &= ~2;
+    } else {
+        idle();
+    }
+}
+
 void CharaPlayTalkAuto::init() {}
 
 void CharaPlayTalkAuto::term() {}
+
+void CharaPlayTalk::init() {
+    m_flags = 0;
+    pad_68 = 1.0f;
+    pad_6c = 1.0f;
+    pad_70 = 0.0f;
+    pad_74 = 0.0f;
+}
 
 void CharaMount::init() {}
 
@@ -190,6 +226,11 @@ void ScriptCharaMotionABC::doit(const event::Param& param) {
 }
 
 void ScriptCharaMotionABC::undo(const event::Param&) {}
+
+void FrameManager::setSkipAbleFrame(float frame) {
+    m_skipAbleFrame = frame;
+    pad_15c = pad_160 + frame;
+}
 
 SkipManager::~SkipManager() {}
 
@@ -400,6 +441,12 @@ const char* Extend::filename(const char* pszPath) {
     return pszPath;
 }
 
+PosAxis::PosAxis() : m_type(1), m_value(mm::Vec3::zero) {}
+
+RotAxis::RotAxis() : m_type(1), m_value(mm::Vec3::zero) {}
+
+TarAxis::TarAxis() : m_type(1), m_value(mm::Vec3::zero) {}
+
 void ParamVariable::setS32(int value) {
     m_type = 1;
     m_value.intValue = value;
@@ -563,6 +610,14 @@ Object* Object::searchByPath(const char* path) {
         }
     }
     return nullptr;
+}
+
+void CamManager::setFocal(bool focal) {
+    if (focal) {
+        pad_10 |= 4;
+    } else {
+        pad_10 &= ~4;
+    }
 }
 
 void CharaObj::playWink(int a, float b, bool c, float d, float e, int f, bool g, bool h) {
@@ -1807,6 +1862,13 @@ void ScriptSetActive::doit(const event::Param& param) {
     mgr->m_current->setActivePath(path);
 }
 
+int ScriptUtil::getObjType(Object* obj) {
+    if (obj == nullptr) {
+        return 0;
+    }
+    return obj->m_type;
+}
+
 void ScriptSetActive::undo(const event::Param&) {
     Object* prev = m_prevActive;
     ObjectManager* mgr = mm::mtl::Singleton<ObjectManager>::getPtr();
@@ -2418,6 +2480,14 @@ inline void OutsiderManager::update() {
     }
 }
 
+void MovieManager::setScriptFlag(bool enable) {
+    if (enable) {
+        pad_10 |= 0x100;
+    } else {
+        pad_10 &= ~0x100;
+    }
+}
+
 // 1.0.0's OutsiderManager::render
 inline void OutsiderManager::render() {
     if (m_dispFlags.test(0) && (m_flags & 1)) {
@@ -2444,7 +2514,13 @@ void OutsiderManager::OnEventProc(event::MSG_TYPE msg) {
     }
 }
 
-inline void VolumeManager::update() {
+unsigned int StatusManager::getDriverByBladeId(unsigned int bladeId) const {
+    return gf::GfDataBlade::getCreator(bladeId);
+}
+
+VolumeManager::VolumeManager() : pad_10(0), pad_14(0) {}
+
+inline void VolumeSeamless::update() {
     if (m_flags & 6) {
         if (m_timer >= 0.0f) {
             m_timer -= 1.0f;
@@ -2453,6 +2529,10 @@ inline void VolumeManager::update() {
             m_flags &= ~4;
         }
     }
+}
+
+inline void VolumeManager::update() {
+    m_seamless.update();
     mm::mtl::Singleton<VolumePlayer>::getPtr()->update();
 }
 

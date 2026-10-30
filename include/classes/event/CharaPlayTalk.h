@@ -13,7 +13,11 @@ public:
     virtual void term();  // slot 4
     // bit 3: playTalk with its first argument false does not requeue a running talk; the name is not the original's
     unsigned int m_flags;  // 0x8 (init zeroes it)
-    unsigned char pad_c[0x6c];  // CharaObj holds one at 0xa38, the next command at +0x78
+    unsigned char pad_c[0x5c];  // CharaObj holds one at 0xa38, the next command at +0x78
+    float pad_68;  // init: 1
+    float pad_6c;  // init: 1
+    float pad_70;  // init: 0
+    float pad_74;  // init: 0
 };
 }  // namespace event
 

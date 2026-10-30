@@ -46,7 +46,8 @@ private:
     int pad_16c;
     // what getMaxFrame returns; the name is not the original's
     float m_maxFrame;  // 0x170
-    unsigned char pad_174[0x10];
+    unsigned char pad_174[0xc];
+    float m_skipAbleFrame;  // 0x180 setSkipAbleFrame stores its argument (the name is not the original's)
     int pad_184;
     unsigned char pad_188[0x8];
     // what addKeyFrame keeps sorted by frame (asserts `size() < capacity()`); the names are not the original's
