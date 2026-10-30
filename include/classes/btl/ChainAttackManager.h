@@ -81,7 +81,9 @@ public:
     bool fn_7100024A0C() const;
     bool IsStopTime() const;
 
-    unsigned char pad_8[0x28];
+    // ElementalComboManager::CreateBreakEffect compares it with its character's handle (meaning unknown)
+    gf::GF_OBJ_HANDLE* pad_8;
+    unsigned char pad_10[0x20];
     ::mm::mtl::FixedVector<DROP_ITEM_DATA, 32> m_dropItems;  // AddDropData's (the name is not the original's)
     unsigned char pad_1838[0x10C];
     float m_addedValue;  // fn_71000247D0 adds to it (the name is not the original's)

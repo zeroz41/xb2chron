@@ -64,6 +64,8 @@ public:
     };
     const FIGHT_COMBO_DATA* GetFightComboDataConst() const;
     bool IsBuff(int buff) const;
+    // ElementalComboManager::Update passes its running combo id and that stage's pad_78 (-1 for none)
+    void SetElementalComboID(int id, int);
     int GetLevel() const;
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads m_driverHandle and
     // IsBuff/fn_7100081D64 inline it. What it does: the parameter of the character m_driverHandle names

@@ -80,7 +80,9 @@ public:
         unsigned char prevId;  // the step before this one (GetFirstStageElementalComboData walks back to stage 1)
         unsigned char pad_a;
         unsigned char stage : 3;  // GetElementalComboStage
-        unsigned char pad_bit3 : 5;
+        // the element whose value the step bursts (ElementalComboManager::Burst; the name is not the original's)
+        unsigned char element : 4;
+        unsigned char pad_bit7 : 1;
 
     };
 

@@ -2,6 +2,7 @@
 #define CLASSES_BTL_ELEMENTALCOMBOMANAGER_H
 
 #include <string.h>
+#include "mm/Vec3.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 namespace btl { class BattleCharacter; }
@@ -35,7 +36,8 @@ public:
         // IsDirecting (1.0.0) tests it for 3 and up (the name is not the original's)
         int m_state;
         unsigned int pad_10;  // the constructor clears it, ResetElement does not
-        unsigned char pad_14[0xA0];
+        // Burst adds an id to the first 20 when they lack it (meaning unknown)
+        int pad_14[40];
         unsigned int pad_b4;
         unsigned char pad_b8;
         unsigned char pad_b9;
@@ -47,9 +49,9 @@ public:
     // one per combo stage (ElementalComboDamage, CalcRestTimeRatio; 1.0.0 names the type)
     struct ELEMENTAL_COMBO_DATA {
         ELEMENTAL_COMBO_DATA()
-            : pad_0(0), pad_4(0), pad_8(0), m_time(0.0f), m_restTime(0.0f), pad_14(0.0f), pad_18(0), pad_1c(0),
-              pad_20(0), pad_24(1.0f), pad_28(0), pad_2c(0), pad_70(0), m_restTimeSpeed(2000), m_comboID(0),
-              pad_77(0), pad_78(0xFF), pad_79(0), pad_7a(), pad_88_0(0), pad_88_1(0) {}
+            : pad_0(0), pad_4(0), pad_8(0), m_time(0.0f), m_restTime(0.0f), pad_14(0.0f), pad_18(0), pad_1c(0.0f),
+              pad_20(0.0f), pad_24(1.0f), pad_28(0), pad_2c(0), pad_70(0), m_restTimeSpeed(2000), m_comboID(0),
+              pad_77(0), pad_78(0xFF), pad_79(0), pad_7a(), pad_86(0), pad_88_0(0), pad_88_1(0) {}
         void Clear() {
             pad_24 = 1.0f;
             m_restTimeSpeed = 2000;
@@ -70,6 +72,7 @@ public:
             pad_77 = 0;
             pad_78 = 0xFF;
             memset(pad_7a, 0, sizeof(pad_7a));
+            pad_86 = 0;
             pad_88_0 = 0;
             pad_88_1 = 0;
         }
@@ -81,8 +84,9 @@ public:
         float m_restTime;
         float pad_14;  // GetRestTimeRatio answers it while pad_88_0 is set
         unsigned int pad_18;
-        unsigned int pad_1c;
-        unsigned int pad_20;
+        // Rub: the combo's "DD" and "Dot" (player: "DDEn", "DotEn") of BDAT 0x23 in hundredths (meaning unknown)
+        float pad_1c;
+        float pad_20;
         float pad_24;
         unsigned int pad_28;
         unsigned int pad_2c;
@@ -95,7 +99,9 @@ public:
         unsigned char pad_77;
         unsigned char pad_78;
         unsigned char pad_79;
-        unsigned char pad_7a[0xE];
+        // a bit per character index (Rub sets its character's; meaning unknown)
+        unsigned char pad_7a[0xC];
+        unsigned short pad_86;
         unsigned char pad_88_0 : 1;
         unsigned char pad_88_1 : 1;
     };
@@ -103,7 +109,9 @@ public:
     // one per element (CreateBallEffect, MoveBallEffect, DeleteBallEffect; the name is not the original's)
     struct BALL_DATA {
         BALL_DATA() : m_effect(0) {}
-        unsigned char pad_0[0x34];
+        // where the ball is (CreateBreakEffect places its effect there; the name is not the original's)
+        mm::Vec3 m_pos;
+        unsigned char pad_10[0x24];
         // the fw::EffectManager combo ball (DeleteBallEffect destroys it; the name is not the original's)
         unsigned int m_effect;
         unsigned int m_element : 31;  // the name is not the original's
@@ -163,7 +171,13 @@ public:
     ELEMENTAL_COMBO_DATA m_combos[3];   // the name is not the original's
     unsigned char pad_85c[0x4];
     BALL_DATA m_balls[9];               // the name is not the original's
-    unsigned int pad_aa0;
+    // counts down 0x8888 per Update; at the end Update hands DataManager::SetElementalEffect the entry pad_aa0_28
+    // picks (meaning unknown)
+    // its own 32-bit unit (Update loads and stores the word)
+    struct {
+        unsigned int pad_aa0 : 28;
+        unsigned int pad_aa0_28 : 4;
+    };
     // the running combo stage, 0 for none (GetElementalComboID, GetRestTimeRatio; the name is not the original's)
     unsigned char m_comboStage : 4;
     unsigned char pad_aa4_4 : 4;

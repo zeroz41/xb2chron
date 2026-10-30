@@ -15,6 +15,9 @@ namespace gf { class MsgObjectNotifyAsmCallback; }
 namespace gf { class MsgObjectNotifyDead; }
 namespace gf { class MsgObjectNotifyDamage; }
 
+// 1.0.0's name (BattleCharacter::PlaySE's parameter, mangled at global scope); its values are not recovered
+enum BTL_SE {};
+
 namespace btl {
 // table 0x7100B3AA08
 class BattleCharacter {
@@ -42,6 +45,8 @@ public:
     };
     CharacterParameter* GetCharacterParameter(bool);
     CharacterParameter* GetCharacterParameterConst(bool) const;
+    // plays a battle sound effect (ElementalComboManager::CreateBreakEffect passes (1, 0x1F, nullptr, true))
+    void PlaySE(BTL_SE se, int, const mm::Vec3* pos, bool);
     // where the character stands to the target, 0-3 (Utility::AI_GetTargetDirection answers it plus 1); the bool
     // it sets makes the answer void
     unsigned char CheckAttackPosition(gf::GF_OBJ_HANDLE* target, bool, bool* out) const;

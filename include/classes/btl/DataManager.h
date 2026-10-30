@@ -74,6 +74,8 @@ public:
     float GetPouchBuffParam(int param, int groupIndex) const;
     bool IsPouchBuffTiming(int groupIndex) const;
     void SetSpecialEffects(int effect, bool enable);
+    // ElementalComboManager::Update passes an entry of its element table and its character index
+    void SetElementalEffect(int, int);
     static bool IsValidDeadEnhance(int enhance);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because Create calls it on the
     // new instance and fn_710009673C forwards to it. What it does: when m_criticalSection is enabled calls the
