@@ -16,6 +16,7 @@ struct Col4 {
     static const Col4 zero;
     static const Col4 white;
     static const Col4 black;
+    static const Col4 yellow;  // GmkRoute/GmkRoutedFootPrint::debugDraw pass it to debugDrawRoute
 };
 
 }  // namespace mm

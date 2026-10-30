@@ -18,7 +18,9 @@ public:
     virtual void dispose();  // slot 5
     virtual void debugDraw() const {}  // slot 7
     virtual void debugUpdateMmf() {}  // slot 10
-    virtual void getBindedSquadMemberList() const;  // slot 11
+    // the GmkSquadMember list of the gimmick set that made its list (GmkSet::createGmkLists passes the set as the
+    // list's CreateInfo::m_param)
+    virtual IGmkList* getBindedSquadMemberList() const;  // slot 11
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(39);
     // an 8-byte field the constructor clears (Vector<T>::resize stores 0 at 0x48); meaning unknown

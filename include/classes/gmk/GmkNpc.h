@@ -25,6 +25,8 @@ public:
         BdatInfo() {}
         // out of line: initGmkBdatInfo calls it (symbol 0x710058E934)
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
+        // the row's pop conditions for the gimmick (debugDraw asks it while the gimmick is valid)
+        bool isPopCommonCondMatched(const AGmkBase& gmk) const;
         unsigned short m_condition = 0;       // 0x0: "Condition" (read only when Group is 0)
         unsigned short m_group = 0;           // 0x2: "Group"
         unsigned short m_battleReaction = 0;  // 0x4: "BattleReaction"

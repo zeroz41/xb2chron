@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKROUTE_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "mm/Col4.h"
 #include "plugin/Bdat.h"
 namespace gmk { class GmkRouteGob; }
 
@@ -27,6 +28,8 @@ public:
     const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     unsigned int getRoutePointNum() const;
     bool isClosed() const;
+    // draws the route (debugDraw passes mm::Col4::yellow while the gimmick is valid)
+    void debugDrawRoute(const mm::Col4& color) const;
     // its point at index (from its first one) in the binded route point list, none past the list's end
     AGmkBase* getRoutePoint(unsigned int index) const;
     virtual ~GmkRoute();  // slot 0

@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKROUTEDFOOTPRINT_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "mm/Col4.h"
 #include "plugin/Bdat.h"
 #include "classes/gmk/QuestFlagCond.h"
 #include "classes/gmk/ScenarioFlagCond.h"
@@ -37,6 +38,8 @@ public:
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
     virtual void debugDraw() const;  // slot 7
+    // draws the route (debugDraw passes mm::Col4::yellow while the gimmick is valid)
+    void debugDrawRoute(const mm::Col4& color) const;
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(54);
     void* pad_48 = nullptr;

@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKCAMERA_H
 
 #include "classes/fw/Camera.h"
+#include "classes/gf/GimmickCamera.h"
 #include "mm/mtl/IntrusivePtr.h"
 #include "mm/mtl/FixStr.h"
 #include "mm/Vec3.h"
@@ -39,15 +40,20 @@ public:
     bool isLoaded() const;
     bool isEnd() const;
     void update(float dt);
+    // starts the sequence at seqWaitToPlay
     void play();
+    void seqWaitToPlay(float dt);
     void create(const CreateInfo& info);
     unsigned char pad_8[0x8];
     // the camera's name: create() asserts its length (FixStr's m_nLen < LEN); GfFieldMapGimmick::onFsSucceeded plays the
     // camera only when it is not empty (the name is not the original's)
     mm::mtl::FixStr<256> m_name;
     unsigned char pad_114[0x2c];
-    mm::mtl::IntrusivePtr<fw::Camera> m_camera;  // released by the destructor (the name is not the original's)
-    unsigned char pad_148[0x18];
+    // released by the destructor; isLoaded/isEnd ask it (gf::GimmickCamera::isLoaded/isPlayEnd; the name is not the
+    // original's)
+    mm::mtl::IntrusivePtr<gf::GimmickCamera> m_camera;
+    void (GmkCamera::*m_seq)(float);  // the sequence step (play() sets seqWaitToPlay; the name is not the original's)
+    unsigned char pad_158[0x8];
 };
 }  // namespace gmk
 

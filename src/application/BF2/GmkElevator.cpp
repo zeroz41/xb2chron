@@ -100,6 +100,7 @@
 #include "classes/gmk/IGmkList.h"
 #include "classes/gmk/GmkAcc.h"
 #include "classes/gmk/GmkAccManager.h"
+#include "classes/gmk/GmkCamera.h"
 #include "classes/gmk/GmkGobEventListener.h"
 #include "classes/gmk/TGmkList.h"
 #include "classes/gmk/GmkMob.h"
@@ -717,12 +718,33 @@ GmkAcc::GmkAcc(const GmkAcc& other) : m_gmk(nullptr) {
     }
 }
 
+void GmkAcc::dispose() {
+    GmkAccManager* manager = GmkAccManager::sys();
+    if (manager != nullptr) {
+        manager->removeGmkAcc(this);
+    }
+    m_gmk = nullptr;
+    m_infoByBdatId = CreateInfoByBdatId();
+    m_info = CreateInfo();
+}
+
 bool GmkAcc::isValid() const {
     if (m_gmk != nullptr) {
         return m_gmk->isValid();
     }
     return false;
 }
+
+bool GmkCamera::isLoaded() const { return m_camera.get()->isLoaded(); }
+
+bool GmkCamera::isEnd() const {
+    if (m_camera.get() == nullptr) {
+        return true;
+    }
+    return m_camera.get()->isPlayEnd();
+}
+
+void GmkCamera::play() { m_seq = &GmkCamera::seqWaitToPlay; }
 
 // the entry's matrix: rotation then translation, scaled first unless noScale (AGmkBase::getMatrix calls it,
 // TGmkList::createGmk inlines it)
@@ -768,6 +790,31 @@ void GmkRoute::create(const CreateInfo& info) { AGmkBase::create(info); }
 
 unsigned int GmkRoute::getRoutePointNum() const { return getData()->m_pointEnd - getData()->m_pointBegin; }
 bool GmkRoute::isClosed() const { return getData()->m_flags & 1; }
+
+void GmkRoute::debugDraw() const {
+    AGmkBase::debugDraw();
+    if (isValid()) {
+        debugDrawRoute(mm::Col4::yellow);
+    }
+}
+
+// the route point list of each routed kind in the gimmick set that made its list (GmkSet::createGmkLists passes the
+// set as the list's CreateInfo::m_param); kinds 5, 8 and 20 have no class in the headers yet
+IGmkList* GmkRoutedEnemy::getBindedRoutePointList() const {
+    return static_cast<const GmkSet*>(m_list->getCreateInfo().m_param)->m_gmkLists[GmkRoutedEnemyPoint::TYPE];
+}
+IGmkList* GmkRoutedNpc::getBindedRoutePointList() const {
+    return static_cast<const GmkSet*>(m_list->getCreateInfo().m_param)->m_gmkLists[5];
+}
+IGmkList* GmkRoutedMapObj::getBindedRoutePointList() const {
+    return static_cast<const GmkSet*>(m_list->getCreateInfo().m_param)->m_gmkLists[8];
+}
+IGmkList* GmkRoutedMob::getBindedRoutePointList() const {
+    return static_cast<const GmkSet*>(m_list->getCreateInfo().m_param)->m_gmkLists[20];
+}
+IGmkList* GmkRoute::getBindedRoutePointList() const {
+    return static_cast<const GmkSet*>(m_list->getCreateInfo().m_param)->m_gmkLists[GmkRoutePoint::TYPE];
+}
 
 void GmkEvent::create(const CreateInfo& info) { AGmkBase::create(info); }
 void GmkBattleLock::create(const CreateInfo& info) { AGmkBase::create(info); }
@@ -843,6 +890,11 @@ const char* debugGetGmkBdatSheetName(const AGmkBase&) { return "(null)"; }
 
 int GmkTbox::getProgress() const { return gf::GfGameFlag::getLocal(2, m_createInfo.m_bdatId + 31765); }
 
+void GmkTbox::debugDraw() const {
+    AGmkBase::debugDraw();
+    isValid();
+}
+
 void GmkMapObj::reqDisposeGob(float wait, unsigned int arg) const {
     m_disposeWait = wait;
     m_disposeArg = arg;
@@ -852,6 +904,15 @@ void GmkRoutedFootPrint::dispose() {
     AGmkBase::dispose();
     pad_50 = nullptr;
     pad_58 = nullptr;
+}
+
+GmkRoutedFootPrint::~GmkRoutedFootPrint() { dispose(); }
+
+void GmkRoutedFootPrint::debugDraw() const {
+    AGmkBase::debugDraw();
+    if (isValid()) {
+        debugDrawRoute(mm::Col4::yellow);
+    }
 }
 
 unsigned int GmkTutorial::getGameFlagId() const { return m_createInfo.m_bdatId + 54162; }
@@ -868,12 +929,21 @@ void GmkJump::reqRecreateIcon() {
 }
 
 void GmkSalvage::onPlayerAccessed(gf::GF_OBJ_HANDLE*) { gf::GfGameFlag::setLocal(1, m_createInfo.m_bdatId + 11804, 1); }
+
+void GmkSalvage::debugDraw() const {
+    AGmkBase::debugDraw();
+    isValid();
+}
 void GmkRoutedMapObj::create(const CreateInfo& info) { GmkRoute::create(info); }
 void GmkLandmark::create(const CreateInfo& info) { AGmkBase::create(info); }
 void GmkRoutePoint::create(const CreateInfo& info) { AGmkBase::create(info); }
 void GmkFieldVolume::create(const CreateInfo& info) { AGmkBase::create(info); }
 void GmkTutorial::create(const CreateInfo& info) { AGmkBase::create(info); }
 void GmkSquadLeader::create(const CreateInfo& info) { AGmkBase::create(info); }
+
+IGmkList* GmkSquadLeader::getBindedSquadMemberList() const {
+    return static_cast<const GmkSet*>(m_list->getCreateInfo().m_param)->m_gmkLists[GmkSquadMember::TYPE];
+}
 void GmkSquadMember::create(const CreateInfo& info) { AGmkBase::create(info); }
 GmkRoute::~GmkRoute() { dispose(); }
 
@@ -1155,6 +1225,8 @@ void GmkGrave::dispose() {
     AGmkBase::dispose();
 }
 
+GmkGrave::~GmkGrave() { dispose(); }
+
 bool GmkGrave::reqPopEnemy() const {
     if (reqPopEnemy<GmkEnemy>()) {
         return true;
@@ -1165,6 +1237,12 @@ bool GmkGrave::reqPopEnemy() const {
 GmkTbox::~GmkTbox() { dispose(); }
 
 GmkKizunaTalk::~GmkKizunaTalk() { dispose(); }
+
+void GmkKizunaTalk::debugDraw() const {
+    if (isValid()) {
+        static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo)->isCondMatched();
+    }
+}
 
 GmkBlade::~GmkBlade() { dispose(); }
 
@@ -1324,6 +1402,12 @@ GmkNpc::~GmkNpc() { dispose(); }
 unsigned char* GmkNpc::getBindedBdatFp() const { return m_list->getBindedBdatFp(); }
 
 int GmkNpc::getBindedBdatId() const { return m_createInfo.m_bdatId; }
+
+void GmkNpc::debugDraw() const {
+    if (isValid()) {
+        static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo)->isPopCommonCondMatched(*this);
+    }
+}
 
 // clears the game object's user data (the object stays)
 void GmkNpc::unbindToGameObj(gf::GF_OBJ_HANDLE* handle) const {
@@ -1828,6 +1912,68 @@ bool GmkWarp::BdatInfo::isPopCondCommonMatched() const {
     }
     return true;
 }
+
+void GmkWarp::create(const CreateInfo& info) {
+    AGmkBase::create(info);
+    Bdat::uVal popDist;
+    popDist.ulong = Bdat::getValCheck(gf::GfDataBdat::getFP(0x7B), 0, 1, 8);
+    m_popDistSq = popDist.real * popDist.real;
+}
+
+void GmkWarp::dispose() {
+    for (unsigned int i = 0; i < 2; i++) {
+        if (m_iconEffects[i] != 0) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_iconEffects[i]);
+            m_iconEffects[i] = 0;
+        }
+    }
+    clearGobInsts();
+    AGmkBase::dispose();
+}
+
+void GmkWarp::clearGobInsts() {
+    if (m_firstHandle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_firstHandle);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_firstHandle);
+        m_firstHandle = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    if (m_secondHandle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_secondHandle);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_secondHandle);
+        m_secondHandle = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+}
+
+void GmkWarp::reqDeadIcon() {
+    if (!m_iconDead) {
+        m_iconDead = true;
+        for (unsigned int i = 0; i < 2; i++) {
+            if (m_iconEffects[i] != 0) {
+                mm::mtl::PtrSingleton<fw::EffectManager>::sys()->dead(m_iconEffects[i]);
+                m_iconEffects[i] = 0;
+            }
+        }
+    }
+}
+
+void GmkWarp::reqRecreateIcon() {
+    if (m_iconDead) {
+        m_iconDead = false;
+        for (unsigned int i = 0; i < 2; i++) {
+            if (m_iconEffects[i] == 0) {
+                createIcon(i);
+            }
+        }
+    }
+}
+
+GmkWarp::~GmkWarp() { dispose(); }
 void GmkClimbing::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
     m_scenarioFlag = ScenarioFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMin", row, 2),
                                       (unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMax", row, 2));
@@ -1919,6 +2065,12 @@ void GmkMapGimmick::setSolved() const { gf::GfGameFlag::setLocal(1, m_createInfo
 bool GmkMapGimmick::isNotSolved() const {
     GameFlagCond cond(1, m_createInfo.m_bdatId + 43878);
     return cond.isMatch(0);
+}
+
+void GmkMapGimmick::debugDraw() const {
+    if (isValid()) {
+        isNotSolved();
+    }
 }
 
 void GmkMapObj::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
