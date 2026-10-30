@@ -25,6 +25,8 @@ public:
         ScenarioFlagCond m_scenarioFlag;  // the row's ScenarioFlagMin/Max
         QuestFlagCond m_questFlag;        // the row's QuestFlag/Min/Max
     };
+    // user-provided: Vector<GmkFieldLock>::resize stores the defaults below only (no zero fill of the element first)
+    GmkFieldLock() {}
     virtual ~GmkFieldLock();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
@@ -33,10 +35,10 @@ public:
     virtual void debugDraw() const;  // slot 7
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(12);
-    unsigned char pad_48[0x8];
-    // its collision (1.0.0's GmkFieldLock::createGmkCollision creates it; the name is not the original's)
+    // its collision (1.0.0's GmkFieldLock::createGmkCollision creates it; the name is not the original's); at 0x50,
+    // 16-aligned (0x48..0x4f: a hole, not stored or copied)
     GmkCollision m_collision;
-    unsigned char pad_b8[0x18];  // fields: size from TGmkList::getInst's stride
+    float pad_c0 = 1.0e12f;  // resize stores 0x5368D4A5 (0xc4..0xcf: tail padding; the size: TGmkList::getInst's stride)
 };
 }  // namespace gmk
 

@@ -98,6 +98,7 @@
 #include "mtl/MemManager.h"
 #include "plugin/Bdat.h"
 #include "classes/gmk/IGmkList.h"
+#include "classes/gmk/GmkAcc.h"
 #include "classes/gmk/GmkAccManager.h"
 #include "classes/gmk/GmkGobEventListener.h"
 #include "classes/gmk/TGmkList.h"
@@ -702,6 +703,25 @@ void AGmkBase::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* han
             acc.setUserData(gf::GfObjUserData(0), 0);
         }
     }
+}
+
+GmkAcc::GmkAcc() : m_gmk(nullptr) {}
+
+GmkAcc::GmkAcc(const CreateInfo& info) : m_gmk(nullptr) { create(info); }
+
+GmkAcc::GmkAcc(const GmkAcc& other) : m_gmk(nullptr) {
+    if (other.m_info.isValid()) {
+        create(other.m_info);
+    } else if (other.m_infoByBdatId.isValid()) {
+        create(other.m_infoByBdatId);
+    }
+}
+
+bool GmkAcc::isValid() const {
+    if (m_gmk != nullptr) {
+        return m_gmk->isValid();
+    }
+    return false;
 }
 
 // the entry's matrix: rotation then translation, scaled first unless noScale (AGmkBase::getMatrix calls it,

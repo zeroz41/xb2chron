@@ -4,6 +4,7 @@
 #include "mm/mtl/RTTI.h"
 #include "classes/fw/IColiEventListener.h"
 #include "classes/fw/ColiObject.h"
+#include "mm/Vec3.h"
 
 namespace gmk {
 // a base of gmk::GmkCollision no evidence names yet
@@ -37,16 +38,36 @@ public:
         }
         pad_50 = nullptr;
     }
+    // what create builds the collision object from (create's parameter; kept in m_info). The field names are not
+    // the original's: create reads m_type 1 as a sphere (m_size[0]), 2 as a capsule (m_size[0..1]), 3 as a box
+    // (m_size[0..2]), and m_pos/m_rot as the collision's position and rotation angles
+    class CreateInfo {
+    public:
+        // user-provided: Vector<GmkFieldLock/GmkBattleLock>::resize store these, no zero fill; its copy is its
+        // own (mm::Vec3), so the gimmick's copy copies it apart from the fields after it
+        CreateInfo() : m_type(0), m_pos(0.0f, 0.0f, 0.0f), m_rot(0.0f, 0.0f, 0.0f), pad_30(false) {
+            m_size[0] = 0.0f;
+            m_size[1] = 0.0f;
+            m_size[2] = 0.0f;
+        }
+        unsigned int m_type;
+        mm::Vec3 m_pos;     // 0x10
+        mm::Vec3 m_rot;     // 0x20
+        bool pad_30;        // 0x30: set with a capsule or box (create then makes m_type 2 unless 2 or 3)
+        float m_size[3];    // 0x34
+    };
+    // user-provided: Vector<GmkFieldLock/GmkBattleLock>::resize store these defaults only (no zero fill)
+    GmkCollision() : pad_50(nullptr), m_coliObject(nullptr), m_leaderEntered(false), m_leaderLeft(false), m_leaderInside(false) {}
+    void create(const CreateInfo& info);
     static mm::mtl::RTTI m_rtti;
-    unsigned char pad_10[0x40];
+    CreateInfo m_info;  // 0x10: create keeps a copy (the name is not the original's)
     void* pad_50;  // dispose clears it
     // the collision object it listens to, referenced while held (the name is not the original's)
     fw::ColiObject* m_coliObject;
     // 0x60: the party leader's collider entered (enter sets it; the names are not the original's)
     bool m_leaderEntered;
     bool m_leaderLeft;  // 0x61: leave sets it
-    bool m_leaderInside;  // 0x62: enter sets it, leave clears it
-    unsigned char pad_63[0x5];
+    bool m_leaderInside;  // 0x62: enter sets it, leave clears it (0x63..0x6f: tail padding, not stored)
 };
 }  // namespace gmk
 

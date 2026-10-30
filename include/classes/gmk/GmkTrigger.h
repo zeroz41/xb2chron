@@ -15,6 +15,8 @@ public:
         BdatInfo() {}  // user-provided: Vector<BdatInfo>::resize/extend leave the byte as it is (no zero fill)
         unsigned char pad_0[0x1];
     };
+    // user-provided: construct_n<GmkTrigger> stores the defaults below only (no zero fill of the element first)
+    GmkTrigger() {}
     virtual ~GmkTrigger();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3
@@ -26,8 +28,8 @@ public:
     static const gmk::GmkType TYPE = gmk::GmkType(0x34);
     // 0x48..0x50: padding (copy_construct_n<gmk::GmkTrigger> copies nothing there)
     GmkPhantom m_phantom;  // 0x50: the destructor destroys it, dispose disposes it (the name is not the original's)
-    void* pad_e0;  // dispose clears it
-    void* pad_e8;  // dispose clears it; fields: size from TGmkList::getInst's stride
+    void* pad_e0 = nullptr;  // dispose clears it
+    void* pad_e8 = nullptr;  // dispose clears it; fields: size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

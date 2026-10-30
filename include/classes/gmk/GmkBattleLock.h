@@ -14,6 +14,8 @@ class alignas(16) GmkBattleLock : public ::gmk::AGmkBase {
 public:
     // empty: its Vector<BdatInfo>::resize is the empty-element form (no element stores)
     class BdatInfo {};
+    // user-provided: Vector<GmkBattleLock>::resize stores the defaults below only (no zero fill of the element first)
+    GmkBattleLock() {}
     virtual ~GmkBattleLock();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual bool isValid() const;  // slot 3
@@ -24,12 +26,11 @@ public:
     // its kind (getGmkType's; GfGameInsideBattleLock walks the battle locks by it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(11);
 
-    unsigned char pad_48[0x8];
-    // its collision (1.0.0's GmkBattleLock::createGmkCollision creates it; the name is not the original's)
+    // its collision (1.0.0's GmkBattleLock::createGmkCollision creates it; the name is not the original's); at 0x50,
+    // 16-aligned (0x48..0x4f: a hole, not stored or copied)
     GmkCollision m_collision;
-    unsigned char pad_b8[0x8];
-    unsigned int m_effectHandle;  // dispose removes the effect it names (the name is not the original's)
-    unsigned char pad_c4[0xc];  // fields: size from TGmkList::getInst's stride
+    unsigned int m_effectHandle = 0;  // 0xc0: dispose removes the effect it names (the name is not the original's)
+    unsigned int pad_c4 = 0;  // (0xc8..0xcf: tail padding; the size: TGmkList::getInst's stride)
 };
 }  // namespace gmk
 

@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKMAPJUMP_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/GmkPhantom.h"
 #include "plugin/Bdat.h"
 #include "classes/gmk/QuestFlagCond.h"
 #include "classes/gmk/ScenarioFlagCond.h"
@@ -9,7 +10,7 @@ namespace gmk { class GmkMapJumpGob; }
 
 namespace gmk {
 // table 0x7100B6CEA8
-// 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (the 16-aligned field is not typed yet)
+// 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (its GmkPhantom)
 class alignas(16) GmkMapJump : public ::gmk::AGmkBase {
 public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
@@ -28,6 +29,8 @@ public:
         ScenarioFlagCond m_scenarioFlag;  // 0x4
         QuestFlagCond m_questFlag;  // 0x8
     };
+    // user-provided: construct_n<GmkMapJump> stores the defaults below only (no zero fill of the element first)
+    GmkMapJump() {}
     virtual ~GmkMapJump();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void dispose();  // slot 5
@@ -35,7 +38,12 @@ public:
     virtual void debugDraw() const;  // slot 7
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(44);
-    unsigned char pad_48[0xa8];  // fields: size from TGmkList::getInst's stride
+    // 0x50 (0x48..0x4f: a hole): construct_n<GmkMapJump> inlines GmkPhantom's constructor here (the name is not
+    // the original's)
+    GmkPhantom m_phantom;
+    // two bytes (construct_n<GmkMapJump> addresses its element from 0xe1; one halfword store clears both)
+    unsigned char pad_e0 = 0;
+    unsigned char pad_e1 = 0;  // (0xe2..0xef: tail padding; the size: TGmkList::getInst's stride)
 };
 }  // namespace gmk
 

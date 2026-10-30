@@ -8,8 +8,10 @@
 namespace gmk { class GmkAntiBladeAreaGob; }
 
 namespace gmk {
-// a base of gmk::GmkAntiBladeArea no evidence names yet
-class TUnk_B6E320 {
+// a base of gmk::GmkAntiBladeArea no evidence names yet. Its list node (0x8 in it, 0x50 in GmkAntiBladeArea) is linked
+// to itself before GmkAntiBladeArea's tables are stored (construct_n<GmkAntiBladeArea>), so it is part of this base;
+// copy_construct_n<GmkLandmark> copies the same layout under IGmkPhantomEventListener's table
+class TUnk_B6E320 : public mm::mtl::IntrusiveListNodeBase {
 public:
     virtual void onEnterPhantom(gmk::IGmkPhantomEventListener::OnEnterInfo const&) = 0;
     virtual void onLeavePhantom(gmk::IGmkPhantomEventListener::OnLeaveInfo const&) = 0;
@@ -31,6 +33,8 @@ public:
         }
     };
     const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
+    // user-provided: construct_n<GmkAntiBladeArea> stores the defaults below only (no zero fill of the element first)
+    GmkAntiBladeArea() {}
     virtual ~GmkAntiBladeArea();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
@@ -40,7 +44,6 @@ public:
     virtual void onLeavePhantom(gmk::IGmkPhantomEventListener::OnLeaveInfo const&);  // slot 12
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(56);
-    unsigned char pad_50[0x10];
     GmkPhantom m_phantom;  // 0x60: the destructor destroys it (the name is not the original's)
     // fields: size from TGmkList::getInst's stride
 };
