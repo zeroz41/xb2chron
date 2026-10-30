@@ -13,6 +13,9 @@
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuItemList.h"
 #include "classes/gf/GfMenuObjCommonText.h"
+#include "classes/gf/GfMenuObjMainMenu2.h"
+#include "classes/gf/GfMenuObjOperationInfo.h"
+#include "classes/gf/GfMenuReference.h"
 #include "classes/gf/GfMenuObjDrArtsSet2/ArtsListListener.h"
 #include "classes/gf/GfMenuObjDrArtsSet2/LevelupListener.h"
 #include "classes/gf/GfMenuObjDrArtsSet2/MainListener.h"
@@ -38,7 +41,8 @@ GfMenuObjDrArtsSet2::GfMenuObjDrArtsSet2(unsigned int handle)
       m_context2(nullptr), pad_128(-1), pad_12C(-1), m_arts(nullptr), pad_138(false), m_blades(nullptr),
       m_items(nullptr), m_seq(this), m_seqStep(false) {
     pad_2BA = false;
-    pad_2B8 = 0;
+    pad_2B8 = false;
+    pad_2B9 = false;
     pad_2B4 = 0;
     m_blades = GfMenuBladeList::create();
     m_items = GfMenuItemList::create();
@@ -160,6 +164,14 @@ void GfMenuObjDrArtsSet2::update() {
     GfMenuObject::update();
 }
 
+inline int GfMenuObjDrArtsSet2::checkArtsLvUp(unsigned int driver, unsigned int wpnType, unsigned int arts,
+                                              unsigned int level) {
+    if (arts == 0 || GfDataDriverArts::getLevelMax(arts) <= level) {
+        return 4;
+    }
+    return GfDataDriverArts::getNeedLevelupWp(driver, arts) > GfDataDriverArts::getWp(driver, wpnType, 0) ? 5 : 0;
+}
+
 void GfMenuObjDrArtsSet2::refreshLvUp(ui::UIObjectAcc& acc, unsigned int driver, unsigned int wpnType,
                                       GfMenuArtsList* arts) {
     mm::mtl::FixStr<32> name;
@@ -174,6 +186,21 @@ void GfMenuObjDrArtsSet2::refreshLvUp(ui::UIObjectAcc& acc, unsigned int driver,
             wpn2.setDispChild(lvUp, name.m_str);
         }
     }
+}
+
+int GfMenuObjDrArtsSet2::checkArtsLvUp(unsigned int driver, unsigned int wpnType, GfMenuArtsList* arts,
+                                       unsigned int index) {
+    unsigned int artsId = (index < arts->m_list.size() ? arts->m_list[index] : arts->m_dummy).m_artsId;
+    unsigned int level = (index < arts->m_list.size() ? arts->m_list[index] : arts->m_dummy).m_level;
+    if (GfMenuObjUtil::fn_710048FD30(3) && pad_2BA) {
+        int size = arts->getSize();
+        if (artsId == 0 || size - 1 == index) {
+            return 4;
+        }
+    } else if (artsId == 0) {
+        return 4;
+    }
+    return checkArtsLvUp(driver, wpnType, artsId, level);
 }
 
 bool GfMenuObjDrArtsSet2::seqSelectItem() {
@@ -198,6 +225,177 @@ bool GfMenuObjDrArtsSet2::seqSelectItem() {
     }
     m_seqStep = false;
     return true;
+}
+
+void GfMenuObjDrArtsSet2::refreshLvUpWpn(ui::UIObjectAcc& acc, unsigned int driver,
+                                         const mm::mtl::FixedVector<unsigned int, 50>& wpnTypes) {
+    for (unsigned int i = 0; i < wpnTypes.size();) {
+        mm::mtl::FixedArray<unsigned int, 4> arts;
+        unsigned int count = GfMenuObjUtil::getEnableArts(arts, driver, wpnTypes[i], 0, false);
+        bool lvUp = false;
+        mm::mtl::FixStr<32> name;
+        for (unsigned int j = 0; j < count; j++) {
+            unsigned int artsId = arts[j];
+            unsigned int level = GfDataDriverArts::getArtsLevel(driver, artsId);
+            if (checkArtsLvUp(driver, wpnTypes[i], artsId, level) == 0) {
+                lvUp = true;
+                break;
+            }
+        }
+        i++;
+        name.format("IMG_wpn_lvup@%02d", i);
+        acc.setDispChild(lvUp, name.m_str);
+        if (s_extraWpnType) {
+            ui::UIObjectAcc wpn2(acc.searchSibiling("LAY_wpn2"));
+            name.format("IMG_wpn2_lvup@%02d", i);
+            wpn2.setDispChild(lvUp, name.m_str);
+        }
+    }
+}
+
+void GfMenuObjDrArtsSet2::refreshLvCap(ui::UIObjectAcc& acc, unsigned int driver, unsigned int wpnType,
+                                       GfMenuArtsList* arts, unsigned int index) {
+    mm::mtl::FixStr<32> name;
+    unsigned int artsId = (index < arts->m_list.size() ? arts->m_list[index] : arts->m_dummy).m_artsId;
+    unsigned int level = (index < arts->m_list.size() ? arts->m_list[index] : arts->m_dummy).m_level;
+    for (unsigned int i = 1; i <= 4; i++) {
+        name.format("IMG_arts_lv_cap_base@%02d", i);
+        ui::UIObjectAcc base(acc.m_handle, name.m_str);
+        bool lvUp = false;
+        if (i > level) {
+            base.setImageIndex(2);
+        } else if (level == i && checkArtsLvUp(driver, wpnType, arts, index) == 0) {
+            base.setImageIndex(1);
+            lvUp = true;
+        } else {
+            base.setImageIndex(0);
+        }
+        name.format("TXT_arts_lv_cap_num@%02d", i);
+        if (lvUp) {
+            GfMenuObjUtil::setColMulandAdd(acc.searchChild(name.m_str), "txt_column");
+        } else {
+            GfMenuObjUtil::setColDefault(acc.searchChild(name.m_str));
+        }
+    }
+}
+
+void GfMenuObjDrArtsSet2::fn_71003EF53C() {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) {
+        return;
+    }
+    ui::UIObjectAcc acc(m_handle, "LAY_arts");
+    int select = pad_12C;
+    bool listTop = m_arts->getIndex(false) < 3;
+    bool idle = select == -1;
+    float alpha = select != -1 ? 0.5f : 1.0f;
+    GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 12, listTop & idle);
+    bool hasItems = m_items->getSize() != 0;
+    GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 9, hasItems & idle);
+    GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 10, idle);
+    GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 11, idle);
+    ui::UIObjectAcc(acc.m_handle, "LAY_list_index_btn").setAlpha(alpha);
+    GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 1, !pad_2BA);
+    GfMenuObjOperationInfo::changeText(acc.m_handle, 2, select != -1);
+}
+
+void GfMenuObjDrArtsSet2::refreshArtsNeedWP(ui::UIObjectAcc& acc, GfMenuArtsList* arts, unsigned int driver,
+                                            unsigned int wpnType) {
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < 4;) {
+        bool lvUp = i < arts->getSize() && checkArtsLvUp(driver, wpnType, arts, i) == 0;
+        unsigned int index = i;
+        i++;
+        name.format("TXT_arts_tag_wp_num@%02d", i);
+        ui::UIObjectAcc text(acc.m_handle, name.m_str);
+        if (lvUp) {
+            text.loadDefColor();
+            text.setBorderWeight(-0.5f);
+        } else {
+            GfMenuObjUtil::setColMulandAdd(text.m_handle, "txt_warning");
+            text.setBorderWeight(2.0f);
+        }
+        if (GfMenuObjUtil::fn_710048FD30(3) && pad_2B9 && index == arts->getSize() - 1) {
+            bool disp = pad_2B4 != 0;
+            name.format("LAY_arts_tag_wp@%02d", i);
+            acc.setDispChild(disp, name.m_str);
+            name.format("LAY_arts_lv@%02d", i);
+            acc.setDispChild(disp, name.m_str);
+        }
+    }
+}
+
+void GfMenuObjDrArtsSet2::fn_71003EF804(int index, bool close) {
+    ui::UIObjectAcc acc(m_handle, "LAY_arts");
+    unsigned int driver = GfMenuReference::getReferenceDriverID(s_wpnTypeIndex);
+    mm::mtl::FixedArray<unsigned int, 4> arts;
+    unsigned int count = GfMenuObjUtil::getEnableArts(arts, driver, m_number->m_value, pad_2B4, pad_2B9);
+    if (count <= 3) {
+        count = 3;
+    }
+    if (close) {
+        if (pad_2B4 != 0 || pad_2B9) {
+            GfMenuObject::setupInputSelection(acc.m_handle, index, count - 1);
+        }
+        GfMenuObjMainMenu2::closeCharChange();
+    } else {
+        GfMenuObject::setupInputSelection(acc.m_handle, index, count);
+        if (pad_2B8) {
+            GfMenuObjMainMenu2::openCharChange(acc.m_handle, 1, false);
+        } else {
+            GfMenuObjMainMenu2::openCharChange(acc.m_handle, 0, false);
+        }
+    }
+}
+
+void GfMenuObjDrArtsSet2::refreshParam(ui::UIObjectAcc& acc, unsigned int driver, unsigned int wpnType,
+                                       GfMenuArtsList* arts, unsigned int index) {
+    int lvUp = checkArtsLvUp(driver, wpnType, arts, index);
+    if (lvUp == 4) {
+        acc.setDispChild(true, "LAY_param_num_max@01");
+        acc.setDispChild(true, "LAY_param_num_max@02");
+        return;
+    }
+    acc.setDispChild(true, "LAY_param_num_diff@01");
+    acc.setDispChild(true, "LAY_param_num_diff@02");
+    if (lvUp == 0) {
+        GfMenuObjUtil::setColMulandAdd(acc.searchChild("TXT_param_num_r@01"), "txt_lvup");
+        GfMenuObjUtil::setColMulandAdd(acc.searchChild("TXT_param_num_r@02"), "txt_lvup");
+    } else {
+        GfMenuObjUtil::setColDefault(acc.searchChild("TXT_param_num_r@01"));
+        GfMenuObjUtil::setColDefault(acc.searchChild("TXT_param_num_r@02"));
+    }
+    acc.setDispChild(false, "LAY_param_num_max@01");
+    acc.setDispChild(false, "LAY_param_num_max@02");
+}
+
+void GfMenuObjDrArtsSet2::LevelupListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    if (event.m_type == 1) {
+        acc.setDisp(false);
+    } else if (event.m_type == 3) {
+        sendEvent(owner.searchChild("LAY_arts"), 0x102, 0);
+        acc.setDisp(false);
+    } else if (event.m_type == 0x21) {
+        acc.setDisp(true);
+        {
+            ui::UIObjectAcc img(acc.m_handle, "IMG_lvup_eff");
+            img.startAnimation("fade_in", false);
+        }
+        ui::UIObjectAcc text(acc.m_handle, "TXT_lvup_eff_blur");
+        ui::UIObjectAcc blur(acc.m_handle, "TXT_lvup_eff_blur");
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_levelup_text_fadein";
+        param.m_motion = "fade_in";
+        param.m_startFlags = 10;
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, "TXT_lvup_eff");
+        param.m_motionLib = "cmn_levelup_text_fadein_blur";
+        int ctrl = GfMenuObjUtil::startCtrl(acc.m_handle, param, "TXT_lvup_eff_blur");
+        GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+    } else {
+        UIObjectListener::reciveEvent(event, handle);
+    }
 }
 
 bool GfMenuObjDrArtsSet2::fn_71003F03D8() {

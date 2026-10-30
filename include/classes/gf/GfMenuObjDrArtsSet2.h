@@ -50,6 +50,10 @@ public:
                       GfMenuBladeList* blades);
     // 0 when the art can level up, 4 at its highest level (refreshParam, refreshLvUp read it)
     int checkArtsLvUp(unsigned int driver, unsigned int wpnType, GfMenuArtsList* arts, unsigned int index);
+    // 1.0.0's checkArtsLvUp(unsigned int, unsigned int, unsigned int, unsigned int) (0x710044EAB4), inlined into its
+    // callers in 3.0.1: 4 for no art or one at its highest level, 5 when the weapon type's points are short of the
+    // level-up cost, 0 when it can level up
+    static int checkArtsLvUp(unsigned int driver, unsigned int wpnType, unsigned int arts, unsigned int level);
     // 1.0.0's refreshLvUp (0x710044B7D0: the same calls, string and arguments); the symbols spell fn_71003EBC3C
     void refreshLvUp(ui::UIObjectAcc& acc, unsigned int driver, unsigned int wpnType, GfMenuArtsList* arts);
     void setupWpnTypeIcon(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 50>& wpnTypes,
@@ -63,6 +67,19 @@ public:
     void refreshArtsNeedWP(ui::UIObjectAcc& acc, GfMenuArtsList* arts, unsigned int driver, unsigned int wpnType);
     void refreshParam(ui::UIObjectAcc& acc, unsigned int driver, unsigned int wpnType, GfMenuArtsList* arts,
                       unsigned int index);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because ArtsListListener::reciveEvent
+    // calls it with the owner and its address lies among the owner's functions. What it does: when layer 3 is usable
+    // (GfMenuObjUtil::fn_710048FD30(3)), sets "LAY_arts"' operation info: actions 12 (index < 3 on the arts list),
+    // 9 (items to use), 10 and 11 enabled only while pad_12C is -1, action 1 while pad_2BA is clear, text 2 swapped
+    // and "LAY_list_index_btn" half transparent otherwise.
+    void fn_71003EF53C();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because ArtsListListener::reciveEvent
+    // calls it with the owner and its address lies among the owner's functions. What it does: counts the enabled arts
+    // (GfMenuObjUtil::getEnableArts, at least 3) of the driver of reference s_wpnTypeIndex and the weapon type in
+    // m_number; without the flag sets "LAY_arts"' input selection to the index over that count and opens the
+    // character change (GfMenuObjMainMenu2::openCharChange with pad_2B8); with it closes the character change, first
+    // setting the selection over one fewer when pad_2B4 or pad_2B9 is set.
+    void fn_71003EF804(int index, bool close);
     bool seqSelectItem();
     bool seqConfirmItem();
     bool seqReturnWeaponSelect();
@@ -92,9 +109,11 @@ public:
     GfMenuItemList* m_items;  // 0x148: the constructor creates it (initialize adds items 0x633D-0x633F)
     GfMenuSequence<GfMenuObjDrArtsSet2, 4> m_seq;  // 0x150
     bool m_seqStep;  // 0x2B0: the running seq* job has started its step
+    // 0x2B4: fn_71003EF804 passes it as GfMenuObjUtil::getEnableArts' mode
     unsigned int pad_2B4;
-    unsigned short pad_2B8;
-    bool pad_2BA;
+    bool pad_2B8;  // fn_71003EF804 passes it to GfMenuObjMainMenu2::openCharChange as its kind (0 or 1)
+    bool pad_2B9;  // fn_71003EF804 passes it as GfMenuObjUtil::getEnableArts' flag
+    bool pad_2BA;  // fn_71003EF53C disables operation 1 while it is set
 };
 }  // namespace gf
 
