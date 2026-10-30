@@ -31,26 +31,27 @@ void MessageManager::Impl::update(const UpdateInfo& info) {
     }
 }
 
-// push (0x710019094C) is 16 words off as written below: the original stores the incremented id, then branches to
-// store the first id when it left the range (cmp/b.hi, cmp/b.hs, mov+str); this form folds the two tests into
-// ccmp/csinc and stores the select (zkit sweep found no rewrite). Everything else in it is identical.
-// unsigned int MessageManager::Impl::push(MessageObject* from, MessageObject* to, Message* msg, float delay) {
-//     MessageInfo message;
-// #line 210
-//     message.m_holder = new (Framework::getAllocator(), 8, __FILE__, __LINE__) MessageHolder(msg);
-//     if (++m_lastId > m_lastIdMax || m_lastId < m_firstId) {
-//         m_lastId = m_firstId;
-//     }
-//     unsigned int id = m_lastId;
-//     message.m_delay = delay;
-//     message.m_from = from != nullptr ? HandlePtr<MessageObject>(from->m_registId, from->m_pointerMap)
-//                                      : HandlePtr<MessageObject>();
-//     message.m_to = to != nullptr ? HandlePtr<MessageObject>(to->m_registId, to->m_pointerMap)
-//                                  : HandlePtr<MessageObject>();
-//     message.m_id = id;
-//     m_messages.push_back(message);
-//     return id;
-// }
+unsigned int MessageManager::Impl::push(MessageObject* from, MessageObject* to, Message* msg, float delay) {
+    MessageInfo message;
+#line 210
+    message.m_holder = new (Framework::getAllocator(), 8, __FILE__, __LINE__) MessageHolder(msg);
+    // the ids wrap to the first past the last or below the first
+    unsigned int first = m_firstId;
+    unsigned int id = ++m_lastId;
+    if (id > m_lastIdMax) {
+        m_lastId = id = first;
+    } else if (id < first) {
+        m_lastId = id = first;
+    }
+    message.m_delay = delay;
+    message.m_from = from != nullptr ? HandlePtr<MessageObject>(from->m_registId, from->m_pointerMap)
+                                     : HandlePtr<MessageObject>();
+    message.m_to = to != nullptr ? HandlePtr<MessageObject>(to->m_registId, to->m_pointerMap)
+                                 : HandlePtr<MessageObject>();
+    message.m_id = id;
+    m_messages.push_back(message);
+    return id;
+}
 
 MessageManager::MessageManager(mm::mtl::IAllocator* allocator)
 #line 248

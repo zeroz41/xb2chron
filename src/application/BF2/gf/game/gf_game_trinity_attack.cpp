@@ -6,6 +6,8 @@
 #include "classes/gf/GfWeapon.h"
 #include "gf/GfDataDriver.h"
 #include "gf/GfObjUtil.h"
+#include "gf/GfObjFactory.h"
+#include "classes/gf/GfInitParamBlade.h"
 #include "classes/gf/GfAllocator.h"
 
 namespace gf {
@@ -51,6 +53,29 @@ bool GfTrinityAttack::isLoading() const {
         }
     }
     return false;
+}
+
+void GfTrinityAttack::startAttack() {
+    m_state = 1;
+    m_update.set(this, &GfTrinityAttack::updateForSetup);
+    unsigned int bladeId = getBladeId();
+    GfInitParamBlade param;
+    unsigned int partyId = GfGameParty::getPartyId(GfGameManager::getPartyLeaderDriver());
+    param.m_createType = 8;
+    param.m_objId = bladeId;
+    param.pad_40 = 4;
+    param.pad_81 = false;
+    param.pad_20 = partyId;
+    param.pad_a0 = 3;
+    param.pad_50 = 0.0f;
+    param.pad_38 = GfGameManager::getPartyLeaderDriver();
+    m_blade = GfObjFactory::createBlade(param);
+    GF_OBJ_HANDLE* driver = GfGameManager::getPartyLeaderDriver();
+    GF_MOUNT_HANDLE* mount = GfObjUtil::getMountHandle(m_blade, GFATTACH(3));
+    if (mount != reinterpret_cast<GF_MOUNT_HANDLE*>(-1)) {
+        GfMountManager::removeMountHandle(driver, GFATTACH(3));
+        GfMountManager::addMountHandle(mount, driver);
+    }
 }
 
 void GfTrinityAttack::updateForSetup(const fw::UpdateInfo&) {

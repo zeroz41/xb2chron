@@ -221,6 +221,19 @@ unsigned char* GfMenuBdat::getItemTextFP(unsigned char type, unsigned short id) 
     return nullptr;
 }
 
+int GfMenuBdat::getIconIDFromArtsID(unsigned short arts) {
+    unsigned char* bdat = s_BdatArray[6];
+    int icon = 1;
+    if (isValidBdatID(bdat, arts)) {
+        // the column is 16 bits wide; 0 keeps the default icon
+        unsigned long id = (unsigned short)Bdat::getVal(bdat, "UI", arts);
+        if (id != 0) {
+            icon = id;
+        }
+    }
+    return icon;
+}
+
 int GfMenuBdat::getIconIDFromWeatherType(unsigned int type) {
     return type + 0xA7;
 }

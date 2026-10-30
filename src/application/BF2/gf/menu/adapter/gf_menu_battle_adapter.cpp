@@ -101,7 +101,8 @@ bool GfMenuBattleAdapter::update_ArtsSlotRecast() {
 bool GfMenuBattleAdapter::update_ArtsSlotIcon() {
     unsigned short arts = GfMenuReference::getArtsPaletteInfo(m_index)->m_artsId;
     if (arts != 0) {
-        setNumber(GfMenuBdat::getIconImageIndex(GfMenuBdat::getIconIDFromArtsID(arts)));
+        unsigned short icon = GfMenuBdat::getIconIDFromArtsID(arts);
+        setNumber(GfMenuBdat::getIconImageIndex(icon));
     }
     return arts != 0;
 }
