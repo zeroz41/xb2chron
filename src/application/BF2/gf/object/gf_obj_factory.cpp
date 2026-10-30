@@ -1,3 +1,4 @@
+#include "gf/GfObjFactory.h"
 #include "classes/gf/GfInitParamNpc.h"
 #include "gf/GfDataNpc.h"
 #include "mm/mtl/FixStr.h"
@@ -43,6 +44,10 @@
 #include "classes/gf/GfObjSetupGimmick.h"
 #include "gf/GfDataNpc.h"
 #include "mm/mtl/FixStr.h"
+#include "classes/gf/GfMountManager.h"
+#include "classes/gf/GfAppendHandles.h"
+#include "gf/GFATTACH.h"
+#include "gf/GfDataMob.h"
 
 #define GF_OBJ_FACTORY_PATH "D:/Monolithsoft/BF2/prog/application/BF2/gf/object/gf_obj_factory.cpp"
 
@@ -95,7 +100,82 @@ inline bool isEventCreateType(int type) {
 inline bool isEventActCreateType(int type) {
     return type >= 10 && type <= 13;
 }
+// the setup's pad_68 for an object's race (GfDataMob::getRace's): 1..10 to 0, 4, 1, 3, 5..10, else -1; createDriver,
+// createBlade, createNpc, createMob and createEnemy share the switch's table (the name is not the original's)
+inline int getRaceType(unsigned int race) {
+    switch (race) {
+    case 1:
+        return 0;
+    case 2:
+        return 4;
+    case 3:
+        return 1;
+    case 4:
+        return 3;
+    case 5:
+        return 5;
+    case 6:
+        return 6;
+    case 7:
+        return 7;
+    case 8:
+        return 8;
+    case 9:
+        return 9;
+    case 10:
+        return 10;
+    default:
+        return -1;
+    }
+}
 }  // namespace
+
+GF_OBJ_HANDLE* GfObjFactory::createNpc(const GfInitParamNpc& param) {
+    GfObjManager* manager = GfObjManager::sys();
+    if (manager == nullptr || GfGameManager::isAssetNumberInvalid()) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    GF_OBJ_HANDLE* handle = manager->createGfObj(6, param);
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    const char* model = GfDataNpc::getModelName(param.m_objId);
+    if (model != nullptr && *model != '\0') {
+        GF_ASSET_HANDLE* asset = GfAssetFactory::createAssetPackNpc(param);
+        setupObjInfo(handle, asset, param);
+    }
+    manager->addHandle(handle);
+    GfObjSetup* setup = GfObjSetup::createSetupParam(handle, param);
+    setup->setInitialScale(GfDataNpc::getScale(param.m_objId));
+    if (setup->m_initialScale.x == 0.0f) {
+        setup->setInitialScale(1.0f);
+    }
+    setup->pad_68 = getRaceType(GfDataNpc::getRace(param.m_objId));
+    GfObjUtil::addDebugName(handle);
+    fn_7100528684(handle, param.pad_a0[0], param.pad_a0[1], param.pad_a0[2], param.pad_a0[3]);
+    manager->callGfObjListener(IGfObjListener::OBJEVT(1), handle);
+    return handle;
+}
+
+GF_OBJ_HANDLE* GfObjFactory::createMob(const GfInitParamMob& param) {
+    GfObjManager* manager = GfObjManager::sys();
+    if (manager == nullptr || GfGameManager::isAssetNumberInvalid()) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    GF_OBJ_HANDLE* handle = manager->createGfObj(7, param);
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    GF_ASSET_HANDLE* asset = GfAssetFactory::createAssetPackMob(param);
+    setupObjInfo(handle, asset, param);
+    manager->addHandle(handle);
+    GfObjSetup* setup = GfObjSetup::createSetupParam(handle, param);
+    setup->pad_68 = getRaceType(GfDataMob::getRace(param.m_objId));
+    GfObjUtil::addDebugName(handle);
+    fn_7100528684(handle, param.pad_90[0], param.pad_90[1], param.pad_90[2], param.pad_90[3]);
+    manager->callGfObjListener(IGfObjListener::OBJEVT(1), handle);
+    return handle;
+}
 
 GF_OBJ_HANDLE* GfObjFactory::createMap(const GfInitParamMapSeamless& param) {
     GfObjManager* manager = GfObjManager::sys();

@@ -51,6 +51,14 @@ public:
     static void rebuildAssetHandle(GF_OBJ_HANDLE* handle);
     static void destroyObj(GF_OBJ_HANDLE* handle);
 };
+
+// Placeholder name: 1.0.0 leaves it unnamed too (fn_7100587AF8, a file static there). A free function of the module
+// because only GfObjFactory::createNpc and createMob (this unit) call it. What it does: GfAppendUtil::setupBelonging
+// (handle, a, b, c, d) when b is not 0; when the object's attach-2 append list is not empty, mounts it
+// (GfMountManager::createMount, attach 2, option 2) and creates one belonging per append of that list
+// (createBelonging with a GfInitParamBelonging: owner handle, the append's resource id and model, a..d), keeping
+// each in the mount's append handles. Callers pass their parameter's four belonging values.
+void fn_7100528684(GF_OBJ_HANDLE* handle, unsigned int a, unsigned int b, unsigned int c, unsigned int d);
 }  // namespace gf
 
 #endif
