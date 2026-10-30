@@ -19,6 +19,9 @@ namespace gf {
 class GfVoiceName {
 public:
     GfVoiceName(const char* name);
+    // user-declared: PJOB_PLAY's slot 0 is its own empty destructor (a member with a non-trivial destructor), not
+    // PJOB's as in PJOB_STOP's and PJOB_WAIT_STOP's tables
+    ~GfVoiceName() {}
     void getVoicePath(mm::mtl::FixStr<16>& path) const;
 
     mm::mtl::FixStr<16> m_name;
@@ -74,7 +77,7 @@ public:
     };
 
     VoiceInfo()
-        : m_isFree(true), m_state(0), m_time(0.0f), m_obj(0, 0), m_voice(nullptr), m_waitForOthers(false) {
+        : m_isFree(true), m_prio(CV_PRIO(0)), m_time(0.0f), m_obj(0, 0), m_voice(nullptr), m_waitForOthers(false) {
         clear();
     }
 
@@ -87,10 +90,12 @@ public:
     // queues a stop unless the queue is full or nothing plays (GfGameVoice::destroyVoiceAll; the name is not the
     // original's)
     inline void addStop(CV_PRIO prio);
+    // nothing plays and no job is queued (1.0.0's gf::VoiceInfo::isEmpty() const, 0x7100358E44; 3.0.1 inlines it)
+    bool isEmpty() const { return !m_sound.isValid() && m_jobs.empty(); }
 
     bool m_isFree;  // clear sets it
+    CV_PRIO m_prio;  // the playing voice's (setPlayInfoStart sets it, setPlayInfoStop compares and clears it)
     int m_state;
-    CV_PRIO m_prio;
     float m_time;  // seconds the voice has played (update); checkInvalid gives up past 60
     ParamObj m_obj;
     SoundHandle m_sound;
