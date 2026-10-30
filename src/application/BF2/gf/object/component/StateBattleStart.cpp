@@ -79,6 +79,32 @@ bool StateBattleStart::Enter(GfComBehaviorPc* behavior, ai::State* prev) {
 
 void StateBattleStart::Leave(GfComBehaviorPc*, ai::State*) {}
 
+// the battle's opening state, by the start condition SetStartCondition kept
+void StateBattleStart::Update(btl::BattleCharacter* chara, GfComBehaviorPc* behavior, const fw::UpdateInfo& info) {
+    StateBattleActionBase::Update(chara, behavior, info);
+    if (m_stateChangeRequested) {
+        return;
+    }
+    const GfPropertyBattle* property = GetBattlePropertyConst();
+    switch (property->m_startValue) {
+    case 0:
+        ChangeState(STATE_ID(0x41), 0);
+        break;
+    case 1:
+        ChangeState(STATE_ID(0x40), 1);
+        break;
+    case 2:
+        ChangeState(STATE_ID(0x52), 1);
+        break;
+    case 3:
+        ChangeState(STATE_ID(0x40), property->m_startParam0 << 16 | property->m_startParam1);
+        break;
+    default:
+        ChangeState(STATE_ID(0x41), 0);
+        break;
+    }
+}
+
 inline const char* StateBattleStart::getName() const {
     return "StateBattleStart";
 }
