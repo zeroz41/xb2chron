@@ -2,13 +2,16 @@
 #define GF_SDATADRIVER_H
 
 #include "gf/SDataBlade.h"
+#include "gf/SDataPouch.h"
 #include "classes/gf/GfItemBox.h"
 
 namespace gf {
 // an accessory slot of a driver (GfDataDriver::getEquipAcce; the names are not the original's)
+// (8 bytes at 0x574: the item handle GfDataDriver::getEquipAcceHandle returns, then the item id getEquipAcce reads)
 struct SDataDriverAcce {
+    GfItemHandle m_handle;
     unsigned short m_item;
-    unsigned char pad_2[0x6];
+    unsigned char pad_6[0x2];
 };
 
 // no table: a driver's data, 0x5A0 bytes (DataObjDriver::setupVirtualParam allocates one for its virtual settings;
@@ -38,16 +41,24 @@ public:
     unsigned char pad_c0[0x228];
     // 0x2E8: its low 16 bits are the accessory of GfDataDriver::getEquipAcce's slots past the first two (setEquipAcce
     // keeps the high 16 bits; the name is not the original's)
+    // bit 31: the flag GfDataDriver::fn_7100247BF0 reads and fn_7100247B40 sets
     unsigned int m_equipAcceEx;
-    unsigned char pad_2ec[0x284];
+    // 0x2EC: the item handle of that extra slot (GfDataDriver::getEquipAcceHandle's slot 2; the name is not the original's)
+    GfItemHandle m_equipAcceHandleEx;
+    unsigned char pad_2f0[0x280];
     unsigned char m_scenarioMask;  // 0x570: 1 when masked (GfDataDriver::isScenarioMask; the name is not the original's)
-    unsigned char pad_571[0x1];
+    // 0x571: GfDataDriver::fn_7100249170 returns whether it is nonzero (GfGameUtil::execLevelUp/addWpForObject call
+    // it; the name is not the original's)
+    unsigned char m_stateFlag;
     // 0x572: the driver's default accessory was handed out (GfGameUtil::execEquipDriverDefaultAcce sets it, its
     // fn_71002491D4 check reads it; the name is not the original's)
     bool m_defaultAcceDone;
-    unsigned char pad_573[0x5];
-    SDataDriverAcce m_equipAcce[2];  // 0x578 (GfDataDriver::getEquipAcce's slots 0 and 1)
-    unsigned char pad_588[0x18];
+    // 0x573: bit 0 or 1 (by a flag) set by GfDataDriver::fn_7100241CF4 and tested by fn_7100241D64, whose one caller
+    // is GfMenuObjDrKizunaRing::seqComplete (the name is not the original's)
+    unsigned char m_kizunaRingFlags;
+    SDataDriverAcce m_equipAcce[2];  // 0x574 (GfDataDriver::getEquipAcce's slots 0 and 1)
+    SDataPouch m_pouches[3];  // 0x584 (GfDataDriver::getPouchData; the count is not known)
+    unsigned char pad_59c[0x4];
 };
 
 // a DLC driver's data, 0xDAC bytes: a driver's data and more (GfDataDriver::fn_7100241BB4 returns one;

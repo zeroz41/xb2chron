@@ -209,6 +209,8 @@ public:
     static unsigned int getSkillLineId(unsigned int blade, unsigned int line);
     // whether the blade is in the battle party (1.0.0's GfQuestInfo::incSuppressCount calls it on the quest's blade)
     static bool isBattleMember(unsigned int blade);
+    // whether the blade (data type 1) is set to a driver in a party slot below 3 (GfDataParty::getDriverPartyID)
+    static bool isActivateParty(unsigned int blade);
     static unsigned int getKizunaringCompleteNum(unsigned int blade);
     static unsigned int getKizunaringMax(unsigned int blade);
     // the scale of a blade's weapon (GfGameMount::attach scales the weapon's models by it at option 3)

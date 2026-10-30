@@ -61,6 +61,8 @@ public:
     // 0x11-0x19; for those, whether GfBdatChrDr::fn_71001F16A4 of the row GfBdatChrDr::fn_71001F13E0 gives is 0.
     // Caller here: gf_menu_obj_char_select_ira's fn_71003D273C (driver 0 and 1 references both set to it when true).
     static bool fn_7100237A94(unsigned int driver);
+    // whether the driver (data type 1) is in a party slot below 3 (GfDataParty::getDriverPartyID)
+    static bool isActivateParty(unsigned int driver);
     static unsigned int getExp(const SDataDriver& data);  // fn_7100245AB4
     static unsigned int getBattleExp(const SDataDriver& data);  // fn_7100245B7C
     static unsigned int getExpNextLevel(const SDataDriver& data);  // fn_710024618C
@@ -260,6 +262,57 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit among GfDataDriver's functions. What it does: sets the 16-bit item id (+0x5A4) of the DLC driver (0x11-0x19) row of GfDataManager::fn_7100224A10's 0xDAC-byte table (fn_7100247474 reads it).
     static void fn_71002474F4(unsigned int driver, unsigned short item);
+    // 1.0.0's name: GfPouchUtil calls it in both builds (1.0.0: GfDataDriver::setPouchData(unsigned int, unsigned
+    // int, const SDataPouch&)); copies the slot into the driver's pouch
+    static void setPouchData(unsigned int driver, unsigned int pouch, const SDataPouch& data);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataDriver's functions and it takes a driver row. What it does: false for driver 0,
+    // else whether the byte at +0x571 of the driver's data (found the getSDataDriver way) is nonzero. Callers:
+    // GfGameUtil::execLevelUp, GfGameUtil::addWpForObject, GfAssetSetup::setRefResource.
+    static bool fn_7100249170(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does:
+    // sets bit 1 (flag true) or bit 0 of the byte at +0x573 of the driver's data; its one caller is
+    // GfMenuObjDrKizunaRing::seqComplete.
+    static void fn_7100241CF4(unsigned int driver, bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does:
+    // whether bit 1 (flag true) or bit 0 of the byte fn_7100241CF4 sets is set; its one caller is
+    // GfMenuObjDrKizunaRing::seqComplete.
+    static bool fn_7100241D64(unsigned int driver, bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does:
+    // nothing for driver 0, else setEquipAcce on the driver's data; its one caller is GfEquipUtil::equipDriverAcce.
+    static void fn_7100247A08(unsigned int driver, unsigned int slot, unsigned int accessory);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does:
+    // nothing for driver 0, else stores the handle as the item handle of the driver's accessory slot (slots 0-1 at
+    // +0x574, others at +0x2EC); its one caller is GfEquipUtil::equipDriverAcce.
+    static void fn_7100247ABC(unsigned int driver, unsigned int slot, const GfItemHandle& handle);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does:
+    // addSkillPoint on the driver's data; callers GfGameUtil::execDriverSkillLevelUp and fn_71002DB9D4.
+    static void fn_7100247E88(unsigned int driver, int point);
+    // 3.0.1's symbol name (GfDataBlade's unit): recomputes the driver's base stats from its level
+    static void calcDriverBaseParamByLevel(SDataDriver& data);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataDriver's functions and it takes a driver's data. What it does: for a DLC driver
+    // (0x11-0x19) whose GfBdatChrDr::fn_71001F16A4 row is set, does the same to fn_71002417DC's driver; else stores
+    // level at +0x94 and calls calcDriverBaseParamByLevel. Callers: DataObjDriver::setVirtualLevel, fn_710024487C.
+    static void fn_71002447AC(SDataDriver& data, unsigned int level);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does:
+    // fn_71002447AC on the driver's data (found the getSDataDriver way); callers include GfGameUtil's
+    // fn_71002DAD5C and TUnk_28D7B8::fn_710028E15C.
+    static void fn_710024487C(unsigned int driver, unsigned int level);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does:
+    // stores exp at +0xB0 of the driver's data, for a DLC driver whose GfBdatChrDr::fn_71001F16A4 row is set the data
+    // of fn_71002417DC's driver (getExp reads it the same way); callers GfGameUtil::execLevelUp, fn_71002DB338.
+    static void fn_71002448D8(unsigned int driver, unsigned int exp);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason. What it does:
+    // as fn_71002448D8 for the battle experience at +0xB4 (getBattleExp's field).
+    static void fn_7100244988(unsigned int driver, unsigned int exp);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because fn_7100245794 tail-calls
+    // it with its outputs and the driver's data. What it does: see fn_7100245794.
+    static bool fn_7100245800(unsigned int* level, unsigned int* value, const SDataDriver& data);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataDriver's functions. What it does: fn_7100247FD0 on the driver's data (found the
+    // getSDataDriver way); its one caller is btl::PlayerParameter::InitializeEnhance.
+    static void fn_7100247F74(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int driver);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit among GfDataDriver's functions (next to fn_71002474F4/fn_7100247534, which set the same row's fields
     // through the driver id). What it does: stores item into the DLC driver record's 16-bit item id (+0x5A4);
