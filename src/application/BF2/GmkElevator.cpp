@@ -1445,6 +1445,14 @@ void GmkElevator::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& g
     m_liftBMapJumpId = (unsigned short)Bdat::getValCheck(bdat.m_fp, "liftBMapJumpId", row, 2);
 }
 
+GmkElevator::GmkElevator()
+    : pad_4b0(-1), m_seq(nullptr), m_accessed0(false), m_accessed2(false), m_accessed3(false), m_accessed1(false),
+      pad_4cc(0) {
+    for (int i = 0; i < 4; i++) {
+        m_gobs[i] = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+}
+
 // ---- GmkElevator
 bool GmkElevator::isCallSwitch(gf::GF_OBJ_HANDLE* gob) const {
     int index = getGobIndex(gob);

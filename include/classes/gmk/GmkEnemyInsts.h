@@ -57,12 +57,13 @@ public:
         unsigned char pad_d;
         ScenarioFlagCond m_scenarioFlag;    // 0xE
         QuestFlagCond m_questFlag;          // 0x12
-        unsigned char pad_16[0x2];
+        // 0x16..0x18: padding (GmkEnemy's copy copies 0x0..0x16 as one run)
         TimeCond m_popTime;                 // 0x18: "POP_TIME"
         WeatherCond m_popWeather;           // 0x28: "popWeather"
         CloudCond m_popCloud;               // 0x38: "flag" bit "popCloud"
         QuestFlagCond m_mutekiQuestFlag;    // 0x48: "muteki_QuestFlag"/Min/Max
-        unsigned char pad_4c[0x14];         // fields: size from PopInfo's offset
+        // 0x4c..0x50: tail padding (not copied); size 0x50: the holders' copies copy 0x88..0x188 of the insts as one
+        // run, which a member with a non-trivial copy cannot share
     };
     gf::GF_OBJ_HANDLE* getGobInst(unsigned int index) const;  // the handle of one of them
     bool isQuestDead() const;
@@ -75,14 +76,15 @@ public:
     float m_depopDist;
     unsigned char pad_24[0x14];
     BdatInfo m_bdatInfo;  // 0x38 (the name is not the original's)
-    PopInfo m_popInfo;  // (the name is not the original's)
-    // fields (its destructor 0x71005D85E8 touches +0x150, +0x178); size 0x190: GmkEnemy (insts at 0x48) and
-    // GmkRoutedEnemy (insts at 0x50) getInst strides 0x1d8 and 0x200
+    unsigned char pad_88[0x10];  // the constructor clears it
+    PopInfo m_popInfo;  // 0x98 (the name is not the original's)
+    // fields (its destructor 0x71005D85E8 touches +0x150, +0x178); size 0x188: GmkRoutedEnemy's Vector follows it at
+    // 0x1d8 (insts at 0x50; its copy copies the insts up to 0x188)
     unsigned char pad_a0[0xd0];
     // LocatorBat_EnemySpeciesID::update shows a gimmick that has no object only while this is not above 0 (meaning
     // not known; the name is not the original's)
     float m_popWait;
-    unsigned char pad_174[0x1c];
+    unsigned char pad_174[0x14];
 };
 }  // namespace gmk
 

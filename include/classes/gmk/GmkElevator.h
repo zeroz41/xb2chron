@@ -6,6 +6,7 @@
 #include "plugin/Bdat.h"
 #include "classes/gmk/GmkPhantom.h"
 #include "classes/gmk/GmkCtrlVolSe.h"
+#include "mm/mtl/FixedArray.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
@@ -56,6 +57,8 @@ public:
         unsigned short m_liftAMapJumpId = 0;
         unsigned short m_liftBMapJumpId = 0;
     };
+    // out of line (0x71005ACB14; Vector<GmkElevator>::resize calls it)
+    GmkElevator();
     virtual ~GmkElevator();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4
@@ -99,11 +102,12 @@ public:
     static bool fn_71005B928C();
     // 0x50..0x288: four phantoms, 0x2b0: four sound controls; the destructor destroys them in reverse
     // (the names are not the original's)
-    GmkPhantom m_phantoms[4];
+    // a FixedArray: the constructor calls FixedArray<GmkPhantom, 4>'s (out of line, 0x71005ACCD8)
+    mm::mtl::FixedArray<GmkPhantom, 4> m_phantoms;
     // 0x290: its object instances (clearGobInsts destroys each, onGobEvent forgets a destroyed one; -1: none;
     // the name is not the original's)
     gf::GF_OBJ_HANDLE* m_gobs[4];
-    GmkCtrlVolSe m_ctrlVolSes[4];
+    mm::mtl::FixedArray<GmkCtrlVolSe, 4> m_ctrlVolSes;
     long pad_4b0;  // dispose sets it to -1 (meaning unknown)
     // the step update runs (symbols name them seqInit, seqUpIdle, ...; the name is not the original's)
     void (GmkElevator::*m_seq)(float dt);
@@ -113,7 +117,7 @@ public:
     bool m_accessed2;
     bool m_accessed3;
     bool m_accessed1;
-    unsigned char pad_4cc[0x4];  // size from TGmkList::getInst's stride (0x4d0)
+    int pad_4cc;  // the constructor clears it with the four flags (one 8-byte store); size from TGmkList::getInst's stride (0x4d0)
 };
 }  // namespace gmk
 

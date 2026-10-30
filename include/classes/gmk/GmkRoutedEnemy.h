@@ -35,7 +35,8 @@ public:
     float getPopWait() const { return m_insts.m_popWait; }
     bool hasTypeGenus(unsigned char genus, bool flag) const { return m_insts.m_popInfo.hasTypeGenus(genus, flag); }
 
-    unsigned char pad_1e0[0x20];  // size 0x200: TGmkList<GmkRoutedEnemy>::getInst's stride (index << 9)
+    // 0x1d8: a Vector<std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi>> (copy_construct_n<gmk::GmkRoutedEnemy> assigns it)
+    unsigned char pad_1d8[0x28];  // size 0x200: TGmkList<GmkRoutedEnemy>::getInst's stride (index << 9)
 };
 }  // namespace gmk
 

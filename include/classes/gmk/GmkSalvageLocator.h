@@ -26,11 +26,11 @@ public:
     static const gmk::GmkType TYPE = gmk::GmkType(0x20);
     // the stores Vector<GmkSalvageLocator>::resize makes in each element
     GmkSalvageLocator()
-        : pad_58(0), m_dropitemEmitter(nullptr), m_gob(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_isAccessed(false),
+        : pad_48(nullptr), pad_50(nullptr), pad_58(0), m_dropitemEmitter(nullptr), m_gob(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_isAccessed(false),
           pad_d0(nullptr), pad_d8(nullptr), pad_e0(nullptr), pad_e8(-1), pad_ec(0), pad_f0(0), pad_f1(0), pad_f2(0) {}
-    unsigned char pad_48[0x10];
+    void* pad_48;  // the constructor clears it (8-byte store)
+    void* pad_50;  // the constructor clears it (8-byte store)
     unsigned char pad_58;  // dispose clears it
-    unsigned char pad_59[0x7];
     // the destructor runs its destructor (gf::GfDropitemEmitter::dispose) after dispose; the name is not the original's
     gf::GfDropitemEmitter m_dropitemEmitter;
     gf::GF_OBJ_HANDLE* m_gob;  // dispose destroys it unless it is -1 (the name is not the original's)
@@ -44,7 +44,7 @@ public:
     unsigned char pad_f0;  // dispose clears it
     unsigned char pad_f1;  // dispose tests it
     unsigned char pad_f2;  // dispose tests it
-    unsigned char pad_f3[0xd];  // fields: size from TGmkList::getInst's stride (0x100)
+    // 0xf3..0x100: tail padding (expand copies up to 0xf3); size from TGmkList::getInst's stride (0x100)
 };
 }  // namespace gmk
 

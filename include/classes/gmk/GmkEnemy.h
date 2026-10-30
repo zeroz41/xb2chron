@@ -39,6 +39,14 @@ public:
     static const gmk::GmkType TYPE = gmk::GmkType(0);
 
     GmkEnemyInsts m_insts;  // (the name is not the original's)
+    // 0x1d0: a member neither its constructor (construct_n<gmk::GmkEnemy>) nor its copy (Vector<gmk::GmkEnemy>::expand,
+    // which copies up to 0x1d0) writes; size 0x1d8 from TGmkList::getInst's stride (the type and name are not the
+    // original's)
+    struct NoCopy {
+        NoCopy() {}
+        NoCopy(const NoCopy&) {}
+        void* pad_0;
+    } pad_1d0;
     // its game objects, as GmkManager::collectGameObjsUnbound<T> reads them inline (the names are not the
     // original's)
     unsigned int getGobInstNum() const { return m_insts.m_popInfo.getGobInstNum(); }
