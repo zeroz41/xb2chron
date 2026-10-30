@@ -32,6 +32,7 @@ public:
     // whether a battle can run: not while GfGameManager stops battles
     bool IsEnableBattle() const;
     void SetElementalComboImmortal(gf::GF_OBJ_HANDLE* handle);
+    void DeleteUniteComboDirection();
     void SetPause(int kind, bool pause);
     void DeleteSlow(unsigned int id);
     // deletes the elemental combo's slow-motion request and sets its slowed effects back to speed 1
@@ -338,10 +339,16 @@ public:
     unsigned int m_elementalComboSlowEffect[2];
     // the elemental combo's slow-motion request (DeleteDelayElementalComboSlow; the name is not the original's)
     unsigned int m_elementalComboSlowId;
-    unsigned char pad_5d04[0x14];
+    unsigned char pad_5d04[0x4];
+    // ElementalComboManager deletes the unite combo direction when its character is this one, while pad_5d3f is
+    // clear (meaning unknown)
+    gf::GF_OBJ_HANDLE* pad_5d08;
+    unsigned char pad_5d10[0x8];
     // the unite combo direction's camera (DeleteUniteComboDirection pops it; the name is not the original's)
     ::mm::mtl::IntrusivePtr<fw::Camera> m_uniteComboCamera;
-    unsigned char pad_5d20[0x28];
+    unsigned char pad_5d20[0x1F];
+    unsigned char pad_5d3f;  // see pad_5d08
+    unsigned char pad_5d40[0x8];
     // fn_710000C624 compares its handle with it while pad_5d54 is non-zero
     gf::GF_OBJ_HANDLE* pad_5d48;
     unsigned char pad_5d50[0x4];

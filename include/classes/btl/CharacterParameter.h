@@ -288,7 +288,12 @@ public:
     float m_distanceScale;
     // EnemyParameter::AngryInfection widens its range by each character's (the name is not the original's)
     float m_radius;
-    unsigned char pad_30[0xC4];
+    // ElementalComboManager::CheckCharacterID takes a tenth of it or a sixth of pad_3c, whichever is larger, as
+    // the elemental rate (meaning unknown)
+    float pad_30;
+    unsigned char pad_34[0x8];
+    float pad_3c;  // see pad_30
+    unsigned char pad_40[0xB4];
     // GetFightComboDataConst answers the second while m_flags622_9 is set and its id is not 0 (the name is not the
     // original's)
     FIGHT_COMBO_DATA m_fightCombos[2];

@@ -13,7 +13,15 @@ public:
     static void Create();
     static void Destroy();
 
-    unsigned char pad_8[0x54];
+    unsigned char pad_8[0x2C];
+    // ElementalComboManager::CheckCharacterID: a player character's maximum elemental value (the name is not the
+    // original's)
+    unsigned char m_elementalValueMax;
+    unsigned char pad_35[0xC];
+    // ElementalComboManager::CheckCharacterID clamps its elemental rate to these percentages (meaning unknown)
+    unsigned char pad_41;
+    unsigned short pad_42;
+    unsigned char pad_44[0x18];
     // ButtonChallenge's damage rates, in percent, for results 1, 2 and 3 (the names are not the original's)
     unsigned char m_buttonChallengeRate1;
     unsigned char m_buttonChallengeRate2;

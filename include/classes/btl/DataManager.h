@@ -113,7 +113,11 @@ public:
     unsigned char pad_15CEC[0x14];
     // InitializeComboRequestUI creates it, Destroy releases it (the name is not the original's)
     gf::GfMenuCallContext* m_comboRequestContext;
-    unsigned char pad_15D08[0xB];
+    // ElementalComboManager::GetElementalComboID answers pad_15D11 for this character (meaning unknown)
+    gf::GF_OBJ_HANDLE* pad_15D08;
+    unsigned char pad_15D10;
+    unsigned char pad_15D11;  // see pad_15D08
+    unsigned char pad_15D12;
     // Utility::GetElementalEffectID returns it (the name is not the original's)
     unsigned char m_elementalEffectID;
     unsigned char pad_15D14;
