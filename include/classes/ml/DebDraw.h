@@ -2,6 +2,11 @@
 #define CLASSES_ML_DEBDRAW_H
 
 #include "classes/ml/DevGraphCB.h"
+#include "mm/Col4.h"
+#include "mm/Mat44.h"
+#include "mm/Vec3.h"
+#include "classes/ml/fixed_size_alloc.h"
+#include "classes/ml/reslist.h"
 
 namespace mm { class Col3; }
 namespace mm { class Col4; }
@@ -20,7 +25,11 @@ class DebDraw : public ::ml::DevGraphCB {
 public:
     // swaps the draw buffers once a frame rendered (DevGraph::renderSync calls it after renderSyncSys)
     static void swap();
-    enum PRM_DATA : int;
+    // a primitive's 16 bytes in the pool (the layout is unknown)
+    struct PRM_DATA {
+        unsigned char pad_00[0x10];
+    };
+    DebDraw();
     virtual ~DebDraw();  // slot 0
     virtual void fastSetup() = 0;  // slot 7
     virtual void restoreShader() = 0;  // slot 8
@@ -50,6 +59,12 @@ public:
     static bool isNotRender();
     // the command cache the framework's debug drawing (fw::debug) records into
     static CacheDraw* getCacheDraw();
+    // the debug draw (the argument is unused)
+    static DebDraw* getOnly(unsigned int);
+    // the cache's work id; -1 with no debug draw
+    static int getCacheDrawWID();
+    static void setCurrentPrio(int prio);
+    static void flushPrio(int prio, const mm::Mat44& view, const mm::Mat44& proj);
 
     void setLineWidth(unsigned int width);
     void setAlphaBlend(bool blend);
@@ -60,11 +75,30 @@ public:
     void font(int x, int y, const char* text);
 
     unsigned int m_flags;                 // 0x08 (the name is not the original's)
-    unsigned char pad_00c[0x138];
+    mm::Col4 m_col;                       // 0x0C white from the constructor (the name is not the original's)
+    float pad_01c;                        // 0x1C 1.0f from the constructor
+    int pad_020;                          // 0x20 -1 from the constructor
+    int pad_024;
+    int pad_028;
+    mm::Vec3 m_pos;                       // 0x30 zero from the constructor (the name is not the original's)
+    unsigned char pad_040[0x80];
+    mm::Mat44 m_mtx;                      // 0xC0 identity from the constructor (the name is not the original's)
+    unsigned char pad_100[0x40];
+    int pad_140;
     unsigned int m_lineWidth;             // 0x144 setLineWidth's (the name is not the original's)
-    unsigned char pad_148[0x38];
+    void* pad_148;
+    int pad_150;
+    bool pad_154;                         // true from the constructor
+    bool pad_155;                         // true from the constructor
+    mm::Vec3 pad_160;                     // zero from the constructor
+    int pad_170;                          // -1 from the constructor
+    void* pad_178;
     grlib::CGLibTextureBuffer* m_tex;     // 0x180 setTex's (the name is not the original's)
-    unsigned char pad_188[0x88];
+    fixed_size_alloc<PRM_DATA> m_prmAlloc;  // 0x188 (the name is not the original's)
+    reslist<PRM_DATA*> m_prmList;         // 0x1B8 (the name is not the original's)
+    long pad_1f8;                         // -1 from the constructor
+    int pad_200;
+    void* pad_208;
     CacheDraw* m_cache;                   // 0x210 (the name is not the original's)
     bool m_cacheOnRender;                 // 0x218 isNotRender's (the name is not the original's)
 };

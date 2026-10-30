@@ -239,7 +239,7 @@ bool WorkCpu::isShutdown() {
     return false;
 }
 
-bool WorkCpu::getOdd() {
+int WorkCpu::getOdd() {
     return get()->m_bank == 0;
 }
 

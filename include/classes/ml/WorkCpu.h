@@ -62,7 +62,8 @@ public:
     static void setRenderSubCpu(bool renderSubCpu);
     // the CPU work's stack memory, none before it exists
     static mtl::ALLOC_HANDLE getMemStack();
-    // the bank in use this frame: 0 even, else odd (getOdd is its negation)
+    // the bank in use this frame: 0 even, else odd (getOdd is its negation; both return int: the callers index with
+    // the result unmasked)
     static int getEven();
     // the calling thread's id, the main thread's, the thread a CPU runs and the CPU the renderer runs on
     // (ml::CacheDraw's command queue compares them)
@@ -74,7 +75,7 @@ public:
     // scene, no argument, no colour, true and sync 0); the return type is not in the symbols
     static void runThread(CPUID cpu, unsigned int (*func)(void*, void*), void*, void*, const mm::Col3* col,
                           bool, WKCPU_SYNC sync);
-    static bool getOdd();
+    static int getOdd();
     // shutting down (false before the CPU work exists)
     static bool isShutdown();
     static void backgroundProcess();

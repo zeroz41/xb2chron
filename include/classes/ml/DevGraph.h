@@ -48,6 +48,8 @@ public:
     static void getPers(mm::Mat44& mtx, float fovy, float nearZ, float farZ);
     static mm::Rect<int>& getViewport();
     static float getScreenScaleW();
+    // opens the frame: the display list, CGLibManager, the debug draw, then the device
+    static void renderBegin();
     static void renderSync();
     // sets a render state (DevGraphNx::renderEndSys passes 1)
     static void setRenderState(RSTAT state);

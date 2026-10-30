@@ -75,6 +75,7 @@ public:
         unsigned int m_groupNum;
     };
 
+    CacheDraw(mtl::ALLOC_HANDLE mem, unsigned long size);
     virtual ~CacheDraw();  // slot 0
 
     // 1.0.0 has these out of line (getBuf, calcCurrentBuf); 3.0.1 inlines every use
@@ -97,6 +98,8 @@ public:
         return true;
     }
 
+    // replays the commands of priority prio (DebDraw::flushPrio)
+    void flush(int prio, const mm::Mat44& view, const mm::Mat44& proj);
     bool setLineWidth(unsigned int width);
     bool setDoubleSide(bool doubleSide);
     bool setAlphaBlend(bool blend);
@@ -119,12 +122,14 @@ public:
     bool renderLine(const mm::Pnt<int>& a, const mm::Pnt<int>& b);
     bool fontColor(const mm::Col4& col);
     bool fontShadow(bool on);
+    bool fontFlush(bool on);
+    bool fontScale(float x, float y);
     bool font(short x, short y, const char* text);
 
     BUF m_buf[2];                         // 0x08
     mtl::ALLOC_HANDLE m_handle;           // 0x6048 the constructor's (the name is not the original's)
     int m_prim;                           // 0x604C reset_prim's (the name is not the original's)
-    int pad_6050;                         // 0x6050 DebDraw::get's argument
+    int m_wid;                            // 0x6050 DebDraw::get's argument, getCacheDrawWID's (the name is not the original's)
     float pad_6054;
     float pad_6058;
     unsigned char pad_605c[0x4];

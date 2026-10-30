@@ -1,7 +1,6 @@
 #ifndef CLASSES_ML_RESLIST_H
 #define CLASSES_ML_RESLIST_H
 
-#include "classes/ml/DebDraw.h"
 #include "classes/ml/_reslist_base.h"
 
 namespace ml { class DevGraphCB; }
@@ -21,5 +20,8 @@ public:
     virtual ~reslist() {}  // slot 0
 };
 }  // namespace ml
+
+// after the template: DebDraw holds a reslist of its own
+#include "classes/ml/DebDraw.h"
 
 #endif

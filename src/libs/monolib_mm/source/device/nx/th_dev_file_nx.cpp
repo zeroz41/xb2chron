@@ -1,5 +1,7 @@
 // monolib_mm's own build: mm_lib's headers cite their paths from monolib_mm's build folder
 #define MM_LIB_FROM_MONOLIB_MM
+#include <stdarg.h>
+#include <stdio.h>
 #include "classes/ml/DevBase.h"
 #include "classes/ml/DevClock.h"
 #include "classes/ml/DevClockNx.h"
@@ -45,8 +47,15 @@
 #include "classes/ml/CacheDraw/DFONT64.h"
 #include "classes/ml/CacheDraw/DFONT128.h"
 #include "classes/ml/CacheDraw/DFONT256.h"
+#include "classes/ml/CacheDraw/DFONT_COL.h"
+#include "classes/ml/CacheDraw/DFONT_SHADOW.h"
+#include "classes/ml/CacheDraw/DFONT_FLUSH.h"
+#include "classes/ml/CacheDraw/DFONT_SCALE.h"
 #include "classes/ml/WinView.h"
+#include "classes/ml/WinProcRoot.h"
+#include "classes/ml/WinViewRoot.h"
 #include "classes/ml/DevFont.h"
+#include "classes/ml/DevFontLayer.h"
 #include "classes/ml/FileResTh.h"
 #include "classes/ml/DevFontNx.h"
 #include "classes/ml/DevFileBlackListNxTh.h"
@@ -56,6 +65,7 @@
 #include "nn/fs.h"
 #include "ml/EventFileTh.h"
 #include "ml/PathUtil.h"
+#include "ml/MlMem.h"
 #include "grlib/CGLibCtl.h"
 #include "ml/WorkRoot.h"
 #include "classes/grlib/CGLibManager.h"
@@ -145,6 +155,35 @@ void CacheDraw::DFONT32::flush(DebDraw*) {
     WinView::getView(false)->font(m_pos.x, m_pos.y, m_text);
 }
 
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EC7360). The debug draw the statics
+// work on; every user (ml/CacheDraw's code too) reaches it without the GOT, so it is file-static
+static DebDraw* s_debDraw;
+
+// commands go to the cache when a debug draw exists and the caller is not the render thread, or the cache is used
+// there too (1.0.0 has it out of line; 3.0.1 inlines every use)
+inline bool DebDraw::isNotRender() {
+    if (s_debDraw == nullptr) {
+        return false;
+    }
+    if (WorkCpu::getCurrentThreadId() != WorkCpu::getThreadId(WorkCpu::getRenderCPUID())) {
+        return true;
+    }
+    return s_debDraw->m_cacheOnRender;
+}
+
+void FontLayer::font(int x, int y, const char* format, ...) {
+    char text[0x200];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(text, sizeof(text), format, args);
+    va_end(args);
+    if (DebDraw::isNotRender()) {
+        s_debDraw->m_cache->font(x, y, text);
+    } else {
+        DevFont::fontLayer(this, x, y, text);
+    }
+}
+
 void CacheDraw::DFONT64::flush(DebDraw*) {
     WinView::getView(false)->font(m_pos.x, m_pos.y, m_text);
 }
@@ -157,12 +196,144 @@ void CacheDraw::DFONT256::flush(DebDraw*) {
     WinView::getView(false)->font(m_pos.x, m_pos.y, m_text);
 }
 
+void CacheDraw::DFONT_COL::flush(DebDraw*) {
+    WinView::getView(false)->fontColor(m_col);
+}
+
+void FontLayer::fontColor(const mm::Col4& col) {
+    if (DebDraw::isNotRender()) {
+        s_debDraw->m_cache->fontColor(col);
+    } else {
+        DevFont::fontLayerColor(this, col);
+    }
+}
+
+void CacheDraw::DFONT_SHADOW::flush(DebDraw*) {
+    WinView::getView(false)->fontShadow(m_on);
+}
+
+void FontLayer::fontShadow(bool on) {
+    if (DebDraw::isNotRender()) {
+        s_debDraw->m_cache->fontShadow(on);
+    } else {
+        DevFont::fontLayerShadow(this, on);
+    }
+}
+
+void CacheDraw::DFONT_FLUSH::flush(DebDraw*) {
+    WinView::getView(false)->fontFlush(m_on);
+}
+
+void FontLayer::fontFlush(bool on) {
+    if (DebDraw::isNotRender()) {
+        s_debDraw->m_cache->fontFlush(on);
+    } else {
+        DevFont::fontLayerFlush(this, on);
+    }
+}
+
+void CacheDraw::DFONT_SCALE::flush(DebDraw*) {
+    WinView::getView(false)->fontScale(m_x, m_y);
+}
+
+void FontLayer::fontScale(float x, float y) {
+    if (DebDraw::isNotRender()) {
+        s_debDraw->m_cache->fontScale(x, y);
+    } else {
+        DevFont::fontLayerScale(this, x, y);
+    }
+}
+
+void Device::initializeSDK(const InitParam& param) {
+    DeviceNx::initializeSDK(param);
+}
+
+DebDraw* DebDraw::getOnly(unsigned int) {
+    return s_debDraw;
+}
+
+void DevFontLayer::wkUpdate() {
+    if (m_done) {
+        wkSetEvent(EVT(0));
+    }
+}
+
+bool DevFontLayer::wkStandbyLogout() {
+    if (m_child.size() == 0 && m_done) {
+        return WorkObj::wkStandbyLogout();
+    }
+    return false;
+}
+
 void DebDraw::fontColor(const mm::Col4& col) {
     m_cache->fontColor(col);
 }
 
 void DebDraw::font(int x, int y, const char* text) {
     m_cache->font(x, y, text);
+}
+
+// Proposed names, not the original's: the symbols leave them unnamed (lbl_7100EC7160, lbl_7100EC7260). A cylinder's
+// Proposed names, not the original's (lbl_7100EC7160, lbl_7100EC7260): top and bottom rims (16 points around the y axis at y 1 and -1), filled by the constructor; 1.0.0's
+// DebDraw::cylinder (dropped from 3.0.1) draws them
+static mm::Vec3 s_cylinderT[16];
+static mm::Vec3 s_cylinderB[16];
+
+DebDraw::DebDraw()
+    : m_flags(0), pad_01c(1.0f), pad_020(-1), pad_024(0), pad_028(0), pad_140(0), m_lineWidth(1), pad_148(nullptr),
+      pad_150(0), pad_154(true), pad_155(true), pad_170(-1), pad_178(nullptr), pad_1f8(-1), pad_200(0),
+      pad_208(nullptr), m_cache(nullptr), m_cacheOnRender(false) {
+    s_debDraw = this;
+    m_cache = new (MlMem::getProductMem(), nullptr, 0, 4, false) CacheDraw(MlMem::getDebugMem(), 0x20000);
+    m_col = mm::Col4(1.0f, 1.0f, 1.0f, 1.0f);
+    m_mtx = mm::Mat44::identity;
+    m_pos = mm::Vec3::zero;
+    pad_160 = mm::Vec3::zero;
+    for (int i = 0; i < 16; i++) {
+        float angle = i * 0.3926991f;
+        float s = sinf(angle);
+        float c = cosf(angle);
+        s_cylinderB[i].x = s;
+        s_cylinderT[i].x = s;
+        s_cylinderB[i].y = -1.0f;
+        s_cylinderB[i].z = c;
+        s_cylinderT[i].y = 1.0f;
+        s_cylinderT[i].z = c;
+    }
+    m_prmAlloc.create(MlMem::getDebugMem(), 0x400);
+    m_prmList.create(0x400, MlMem::getDebugMem());
+}
+
+DebDraw::~DebDraw() {
+    if (m_cache != nullptr) {
+        delete m_cache;
+        m_cache = nullptr;
+    }
+    s_debDraw = nullptr;
+}
+
+int DebDraw::getCacheDrawWID() {
+    if (s_debDraw != nullptr) {
+        return s_debDraw->m_cache->m_wid;
+    }
+    return -1;
+}
+
+CacheDraw* DebDraw::getCacheDraw() {
+    s_debDraw->m_cache->m_prim = -2;
+    return s_debDraw->m_cache;
+}
+
+void DebDraw::setCurrentPrio(int prio) {
+    if (s_debDraw != nullptr) {
+        s_debDraw->m_cache->m_prim = prio;
+    }
+}
+
+void DebDraw::flushPrio(int prio, const mm::Mat44& view, const mm::Mat44& proj) {
+    if (s_debDraw != nullptr) {
+        s_debDraw->m_cache->flush(prio, view, proj);
+    }
 }
 
 void DebDraw::clrTex() {
@@ -506,13 +677,37 @@ void DevGraphNx::wkUpdate() {}
 
 void DevGraphNx::wkRender() {}
 
-int DevGraphNx::thInitialize(void*, void*) {
+unsigned int DevGraphNx::thInitialize(void*, void*) {
     return initGL();
 }
 
-int DevGraphNx::thDestroy(void*, void*) {
+unsigned int DevGraphNx::thDestroy(void*, void*) {
     mm::mtl::PtrSingleton<grlib::CGLibManager>::get()->deviceRelease();
     return true;
+}
+
+bool DevGraphNx::wkStandbyLogout() {
+    if (m_child.size() == 0 && mm::mtl::PtrSingleton<WinProcRoot>::get() == nullptr &&
+        mm::mtl::PtrSingleton<WinViewRoot>::get() == nullptr) {
+        if (m_fontData != nullptr) {
+            m_font.destroy();
+            if (m_fontData != nullptr) {
+                mtl::MemManager::deallocate(m_fontData, 0, false);
+                m_fontData = nullptr;
+            }
+        }
+        if (s_debDraw != nullptr) {
+            delete s_debDraw;
+        }
+        grlib::CGLibManager* lib = mm::mtl::PtrSingleton<grlib::CGLibManager>::get();
+        if (lib != nullptr && lib->isRelease()) {
+            WorkCpu::runThread(WorkCpu::getRenderCPUID(), thDestroy, this, nullptr, nullptr, false,
+                               static_cast<WKCPU_SYNC>(0));
+            return false;
+        }
+        return DevGraph::wkStandbyLogout();
+    }
+    return false;
 }
 
 void DevPadNx::Impl::stateUpdate(float) {
@@ -1109,12 +1304,62 @@ void DevGraph::releaseMemPoolBuffer(void* buffer) {
     grlib::CGLibGPUCache::releaseMemPoolBuffer(buffer);
 }
 
+void DevGraph::renderBegin() {
+    DevGraph* dev = get();
+    if (dev != nullptr) {
+        dev->cmdOpenDisplayListSys(0, false, false);
+        grlib::CGLibManager* lib = mm::mtl::PtrSingleton<grlib::CGLibManager>::get();
+        if (lib != nullptr) {
+            lib->begin();
+        }
+        if (s_debDraw != nullptr) {
+            s_debDraw->fastSetup();
+        }
+        get()->renderBeginSys();
+    }
+}
+
 void DevGraph::renderSync() {
     DevGraph* dev = get();
     if (dev != nullptr) {
         dev->renderSyncSys();
         DebDraw::swap();
     }
+}
+
+void DebDraw::swap() {
+    if (s_debDraw == nullptr) {
+        return;
+    }
+    CacheDraw* cache = s_debDraw->m_cache;
+    if (cache->m_suspendSwap == 0) {
+        // closes the odd bank's open group
+        CacheDraw::BUF* buf = cache->getBuf(true);
+        if (buf->m_top < buf->m_cur) {
+            buf->m_groupNum++;
+            buf->m_group[buf->m_groupNum].m_end = buf->m_cur;
+            buf->m_group[buf->m_groupNum].m_begin = buf->m_cur;
+            buf->m_group[buf->m_groupNum].m_prim = cache->m_prim;
+        }
+    }
+    cache = s_debDraw->m_cache;
+    if (cache->m_suspendSwap == 0) {
+        // empties the bank recorded next (every pass resets the current group, as the original does)
+        CacheDraw::BUF* buf = cache->getBuf(false);
+        buf->m_cur = buf->m_top;
+        buf->m_groupNum = 0;
+        buf->m_group[0].m_begin = nullptr;
+        buf->m_group[0].m_end = nullptr;
+        buf->m_group[0].m_prim = -1;
+        for (int i = 0; i < 0x1ff; i++) {
+            buf->m_group[buf->m_groupNum].m_end = nullptr;
+            buf->m_group[buf->m_groupNum].m_begin = nullptr;
+            buf->m_group[buf->m_groupNum].m_prim = -1;
+        }
+    }
+    cache->pad_6054 = 1.0f;
+    cache->pad_6058 = 1.0f;
+    cache->pad_6070 = true;
 }
 
 void DevGraph::getPers(mm::Mat44& mtx, float fovy, float nearZ, float farZ) {
