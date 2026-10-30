@@ -3,7 +3,6 @@
 
 #include "classes/gf/GfComIK.h"
 #include "classes/fw/IKFootGroundInterface.h"
-#include "classes/fw/PlaneRayCaster.h"
 #include "mm/Plane.h"
 #include "mm/Vec3.h"
 
@@ -19,6 +18,10 @@ struct IKGroundResult {
     // the hit at an index holds while bit index + 1 of m_flags is set (0 the main ground, 1-6 the feet, 7 the sub
     // ground: the grounds' getPlane and getHitPos read them so)
     Hit m_hits[8];
+    // whether the hit at an index holds (inline: the name is not the original's)
+    bool isHit(int index) const { return ((1 << (index + 1)) & m_flags) != 0; }
+    // the hit at an index, none while it does not hold (inline: the name is not the original's)
+    const Hit* getHit(int index) const { return isHit(index) ? &m_hits[index] : nullptr; }
     unsigned char pad_280[0x50];
     unsigned int m_flags;
     bool m_valid;  // the grounds read none of it while clear
@@ -32,7 +35,6 @@ public:
     virtual ~FootGround() {}  // slot 2 (its complete destructor is fw::IKFootGroundInterface's)
 
     // (the names are not the original's)
-    fw::PlaneRayCaster m_rayCaster;
     const IKGroundResult* m_result;
     int m_index;  // its hit's index in m_result: setup numbers the feet from 1
 };
