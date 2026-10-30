@@ -82,8 +82,9 @@ public:
     virtual void renderSyncSys() = 0;  // slot 29
     virtual void resetSizeSys(short, short) = 0;  // slot 30
     virtual void fontDrawSys(short, short, float, float, char const*, mm::Col4 const*, bool) = 0;  // slot 31
-    virtual int fontGetWidthSys(char const*, ml::FONT_STYLE, float) = 0;  // slot 32
-    virtual void fontGetHeightSys(ml::FONT_STYLE, float) = 0;  // slot 33
+    // the widths and heights are unsigned (DevGraphNx converts its float with fcvtzu)
+    virtual unsigned int fontGetWidthSys(char const*, ml::FONT_STYLE, float) = 0;  // slot 32
+    virtual unsigned int fontGetHeightSys(ml::FONT_STYLE, float) = 0;  // slot 33
     virtual float getCostSys() const = 0;  // slot 34
     virtual void cmdExecDisplayListSys() {}  // slot 35
     virtual void cmdAddDisplayListSys(void*, unsigned int, unsigned int) {}  // slot 36

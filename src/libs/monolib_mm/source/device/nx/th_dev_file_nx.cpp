@@ -10,6 +10,8 @@
 #include "classes/ml/DevFileJobValidNxTh.h"
 #include "classes/ml/DevFileWriterNx.h"
 #include "classes/ml/DevGraphNx.h"
+#include "grlib/CGLibState.h"
+#include "ml/font/WriteStr.h"
 #include "classes/ml/DevGraphQue.h"
 #include "classes/ml/DevPad.h"
 #include "classes/ml/DevPadNx.h"
@@ -429,13 +431,76 @@ int DevGraphNx::getRootHeightSys() {
     return WorkRoot::getHeight();
 }
 
+void DevGraphNx::grSetViewportSys(const mm::Rect<int>& rect, int) {
+    mm::Rect<int> r = rect;
+    grlib::LibMainStateViewPort viewport;
+    viewport.x = r.x;
+    viewport.y = r.y;
+    viewport.width = r.w;
+    viewport.height = r.h;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    grlib::CGLibState::setOnlyViewport(viewport);
+}
+
+void DevGraphNx::grSetScissorSys(const mm::Rect<int>& rect) {
+    mm::Rect<int> r = rect;
+    grlib::LibMainStateViewPort viewport;
+    viewport.x = r.x;
+    viewport.y = r.y;
+    viewport.width = r.w;
+    viewport.height = r.h;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    grlib::CGLibState::setOnlyScissor(viewport);
+}
+
+void DevGraphNx::renderBeginSys() {
+    if (get() != nullptr) {
+        setRenderState(static_cast<RSTAT>(0));
+        if (DevGraph* dev = get()) {
+            grlib::CGLibColorCtl::clearMainFrameBuffer(dev->m_clearCol);
+        }
+    }
+}
+
 void DevGraphNx::renderEndSys() {
     if (get() != nullptr) {
         setRenderState(static_cast<RSTAT>(1));
     }
 }
 
+int DevGraphNx::thSync(void*, void*) {
+    mm::mtl::PtrSingleton<grlib::CGLibManager>::get()->swap();
+    setRenderState(static_cast<RSTAT>(2));
+    return 0;
+}
+
 void DevGraphNx::resetSizeSys(short, short) {}
+
+unsigned int DevGraphNx::fontGetWidthSys(const char* text, FONT_STYLE, float scale) {
+    WriteStr str;
+    str.set_font(&static_cast<DevGraphNx*>(get())->m_font);
+    str.set_scale(scale, scale);
+    return str.calc_string_width(text);
+}
+
+unsigned int DevGraphNx::fontGetHeightSys(FONT_STYLE, float scale) {
+    WriteStr str;
+    str.set_font(&static_cast<DevGraphNx*>(get())->m_font);
+    return str.get_origin_size() * scale;
+}
+
+void DevGraphNx::fontDrawSys(short x, short y, float scaleH, float scaleV, const char* text, const mm::Col4* col, bool) {
+    WriteStr str;
+    str.set_font(&static_cast<DevGraphNx*>(get())->m_font);
+    str.set_pos(x, y);
+    str.set_scale(scaleH, scaleV);
+    if (col != nullptr) {
+        str.set_color(Color(col->r * 255.0f, col->g * 255.0f, col->b * 255.0f, col->a * 255.0f));
+    }
+    str.print(text, false);
+}
 
 void DevGraphNx::wkUpdate() {}
 
@@ -450,8 +515,68 @@ int DevGraphNx::thDestroy(void*, void*) {
     return true;
 }
 
+void DevPadNx::Impl::stateUpdate(float) {
+    if (m_stateId == 2) {
+        updateNpad();
+    }
+}
+
+bool DevPadNx::isLocalConnect(int pad) const {
+    return m_impl->getPadData(pad).m_connect;
+}
+
+int DevPadNx::getLocalStyle(int pad) const {
+    return m_impl->getPadData(pad).m_style;
+}
+
+int DevPadNx::getLocalUserSelectPadID() const {
+    return m_impl->getUserSelectPadID();
+}
+
+unsigned int DevPadNx::getLocalBtn(int pad) const {
+    return m_impl->getPadData(pad).m_btn;
+}
+
+float DevPadNx::getLocalALX(int pad) const {
+    return m_impl->getPadData(pad).m_alx;
+}
+
+float DevPadNx::getLocalALY(int pad) const {
+    return m_impl->getPadData(pad).m_aly;
+}
+
+float DevPadNx::getLocalARX(int pad) const {
+    return m_impl->getPadData(pad).m_arx;
+}
+
+float DevPadNx::getLocalARY(int pad) const {
+    return m_impl->getPadData(pad).m_ary;
+}
+
+void DevPadNx::playLocalVibration(int pad, const PadVibrationInfo& info) {
+    m_impl->playVibration(m_impl->getPadData(pad), info);
+}
+
+void DevPadNx::setUserSelectControllerID(unsigned int id) {
+    DevPadNx* dev = static_cast<DevPadNx*>(get());
+    if (dev != nullptr) {
+        dev->m_impl->setUserSelectController(id);
+    }
+}
+
+void DevPadNx::updateDevice(float dt) {
+    const mm::mtl::Delegate<void(float)>& state = m_impl->m_state;
+    if (state.isValid()) {
+        state(dt);
+    }
+}
+
 bool DevPadNx::createDevice() {
     return true;
+}
+
+void DevPadNx::releaseDevice() {
+    m_impl->release();
 }
 
 void device_detail::deallocateFile(void* ptr, unsigned long) {

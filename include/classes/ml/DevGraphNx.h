@@ -2,6 +2,7 @@
 #define CLASSES_ML_DEVGRAPHNX_H
 
 #include "classes/ml/DevGraph.h"
+#include "ml/font/FontSys.h"
 
 namespace ml { enum FONT_STYLE : int; }
 namespace mm { class Col4; }
@@ -12,7 +13,8 @@ namespace ml {
 // table 0x7100B764C0
 class DevGraphNx : public ::ml::DevGraph {
 public:
-    virtual ~DevGraphNx();  // slot 0
+    // inline: its copies sit with the class's weak slots (wkUpdate is the key function)
+    virtual ~DevGraphNx() {}  // slot 0
     virtual void wkUpdate();  // slot 9
     virtual void wkRender();  // slot 10
     virtual bool wkStandbyLogin();  // slot 14
@@ -30,14 +32,19 @@ public:
     virtual void renderSyncSys();  // slot 29
     virtual void resetSizeSys(short, short);  // slot 30
     virtual void fontDrawSys(short, short, float, float, char const*, mm::Col4 const*, bool);  // slot 31
-    virtual int fontGetWidthSys(char const*, ml::FONT_STYLE, float);  // slot 32
-    virtual void fontGetHeightSys(ml::FONT_STYLE, float);  // slot 33
+    virtual unsigned int fontGetWidthSys(char const*, ml::FONT_STYLE, float);  // slot 32
+    virtual unsigned int fontGetHeightSys(ml::FONT_STYLE, float);  // slot 33
     virtual float getCostSys() const;  // slot 34
 
     // the render thread's callbacks (their returns: nonzero when done)
     static int thInitialize(void*, void*);
     static int thDestroy(void*, void*);
+    // named by the symbols: the render thread's frame swap
+    static int thSync(void*, void*);
     static bool initGL();
+
+    unsigned char pad_350[0x28];
+    FontSys m_font;  // 0x378 (the destructor destroys it; the name is not the original's)
 };
 // nn::fs's allocator hooks (0x71006AEF64 allocateFile, 0x71006AEFB0 deallocateFile)
 namespace device_detail {
