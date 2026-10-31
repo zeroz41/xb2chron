@@ -3355,7 +3355,38 @@ bool StmPackData::OnFileEvent(ml::EventFileTh* event) {
     return false;
 }
 
+void StmPackMemory::loadStream(const char* name, const char* header, const char* data) {
+    Pack* pack = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) Pack(name);
+    pack->m_header.create(mtl::ALLOC_HANDLE(), header);
+    pack->m_data.create(data);
+    pad_5860.push_back(pack);
+}
+
 void StmPackMemory::render(const mm::Rect<int>& rect, float alpha) {}
+
+void StmPackMemory::free(void* p, int) {
+    for (Block* it = pad_30.begin(); it != pad_30.end(); ++it) {
+        if (!(it->pad_4 & 1) && it->pad_10 <= reinterpret_cast<unsigned long>(p) &&
+            reinterpret_cast<unsigned long>(p) < it->pad_10 + it->pad_18) {
+            it->pad_4 |= 2;
+            it->pad_0--;
+            return;
+        }
+    }
+}
+
+bool StmPackMemory::isLoadingPrio(float prio) const {
+    if (pad_58e8 <= pad_58f0 && pad_5840 <= prio) {
+        return true;
+    }
+    return false;
+}
+
+// the original checks the index twice: a first lookup's value is unused
+bool StmPackMemory::isFailure() const {
+    pad_5860[pad_58e8];
+    return pad_5860[pad_58e8]->m_data.pad_90 == nullptr;
+}
 
 }  // namespace event
 

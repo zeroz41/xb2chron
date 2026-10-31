@@ -11,6 +11,8 @@ namespace event {
 // table 0x7100B3C420
 class StmPackData : public ::ml::IWorkEvent {
 public:
+    // inline (StmPackMemory::loadStream builds one in each pack)
+    StmPackData() : pad_8(0), pad_90(nullptr) {}
     virtual ~StmPackData();  // slot 0
     virtual bool OnFileEvent(ml::EventFileTh*);  // slot 7
     // closes what it held, then keeps the name
