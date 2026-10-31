@@ -69,6 +69,7 @@ public:
     void setupGodRay();
     void endGBuffRenderTarget();
     void depCheckBegin(bool useDepth);
+    void occRenderBegin(bool useDepth);
     void renderRefractionEnd();
     void selectZprepassRenderTarget();
     void thicknessFirstBegin();

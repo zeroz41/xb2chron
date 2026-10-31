@@ -118,7 +118,9 @@ public:
     grlib::CGLibDblUniformBlock m_lightBlock;   // 0x8C8
     // 0x900: DrMdoShdSetMpf::mpfshd_* bind it first for every mpf shader (the name is not the original's)
     grlib::CGLibDblUniformBlock m_mpfBlock;
-    unsigned char pad_938[0x72];
+    unsigned char pad_938[0x71];
+    // 0x9A9, DrPixlPostObjMotionBlur::render skips calcVelocityBlur while set (the name is not the original's)
+    bool m_velocityBlurOff;
     // DrGpuCheckObj::setWorldPos/update treat every check object as visible while it is set (the name is not the
     // original's)
     bool m_gpuCheckAllVisible;      // 0x9AA

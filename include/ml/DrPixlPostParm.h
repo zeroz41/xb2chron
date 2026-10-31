@@ -57,6 +57,7 @@ public:
     bool getRainDropOn() const;
     bool isBlm2PassExtract() const;
     bool getSSRWithTrans() const;
+    bool getSSROn() const;
     float getToonDirLightScale() const;
     void calcOfsRenderCheck(float x, float y);
     void calcReductionBuffer(int& width, int& height);
@@ -100,7 +101,10 @@ public:
     bool m_toneMap;
     unsigned char pad_1[0x3B];
     bool m_godRay;  // 0x3C, DrPixlMan::setupGodRay clears the god ray target only when set (name inferred)
-    unsigned char pad_3D[0x7];
+    unsigned char pad_3D[0x1];
+    // 0x3E, DrPixlPostObjBloom::calculateGaussBlur adds the flare and lens flare only while set (name inferred)
+    bool m_lensFlare;
+    unsigned char pad_3F[0x5];
     float m_borderBlmMul;  // 0x44
     unsigned char pad_48[0xC9];
     bool m_tmaa;  // 0x111, getTMAAOn
@@ -113,7 +117,10 @@ public:
     unsigned char pad_1CB[0x2];
     // 0x1CD: DrPixlPostObjMotionBlur2::render runs calcVelocityBlur while it is set (the name is not the original's)
     bool m_velocityBlur;
-    unsigned char pad_1CE[0x4A];
+    unsigned char pad_1CE[0x1E];
+    // 0x1EC, DrPixlPostObjMotionBlur::render runs calcVelocityBlur only while it is above 0 (name inferred)
+    float m_velocityBlurRate;
+    unsigned char pad_1F0[0x28];
     bool m_dofOverride;  // isDOF: either of these two
     bool m_dof;
     bool m_dofHLvMode;
@@ -152,7 +159,9 @@ public:
     // are not the original's)
     float m_skyLumColorRate;  // 0x468
     float m_skyLumAmbRate;  // 0x46C
-    unsigned char pad_470[0x60];
+    unsigned char pad_470[0x1A];
+    bool m_ssr;  // 0x48A, getSSROn (name inferred)
+    unsigned char pad_48B[0x45];
     bool m_glassBr;  // 0x4D0
     unsigned char pad_4D1[0x7];
     float m_glassBrParm[15];  // 0x4D8, setGlassBrk's values (their meanings are not known)
@@ -178,7 +187,9 @@ public:
     unsigned char pad_1062[0x22];
     int m_weather;  // 0x1084
     float m_weatherFrame[2];  // 0x1088, set by DrMan::s_nDblStockIdx, read by s_nDblIdx; reset to 60
-    unsigned char pad_1090[0x75];
+    unsigned char pad_1090[0x74];
+    // 0x1104, getSSROn is false while set and DrCalcViewWork::m_gpuCheckAllVisible is (name inferred)
+    bool m_ssrGpuCheckOff;
     bool m_resetScene[2];  // 0x1105, resetScene sets [DrMan::s_nDblStockIdx]
     unsigned char pad_1107[0x9];
 };

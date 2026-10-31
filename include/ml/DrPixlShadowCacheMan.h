@@ -40,6 +40,9 @@ public:
     void callSelectShadowCacheUpdate(unsigned long mask);
     void shadowCacheRender();
     void fastRender();
+    void createCacheBuff();
+    void resetColorBuff();
+    void buffUpdate();
 
     // 0x0: 0x40 set by DrPixlMan::pixelEndMode, 0x80 by addShadowCacheUpdate, 0x180 by delShadowCacheUpdate,
     // 0x400 by DrPixlMan::callShadowCacheVariance

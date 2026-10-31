@@ -16,6 +16,8 @@
 #include "ml/DrPixlPostObjCubeMapMultiIBL.h"
 #include "ml/DrPixlPostObjCubeMapIBL.h"
 #include "ml/DrPixlPostObjVolume.h"
+#include "ml/DrPixlPostObjMotionBlur.h"
+#include "ml/DrPixlPostObjBloom.h"
 #include "ml/DrPixlMdlSampler.h"
 #include "ml/DrCalcMan.h"
 #include "ml/DrPixlRenderTarget.h"
@@ -28,9 +30,27 @@
 #include "ml/DrResQueryObj.h"
 #include "mm/Col4.h"
 #include "grlib/CGLibState.h"
+#include "ml/DrCalcViewWork.h"
+#include "ml/DrShdDataObj.h"
+#include "ml/DrShdDataList.h"
+#include "ml/DrPixlOccQuery.h"
+#include <math.h>
 #include <string.h>
 
 namespace ml {
+
+DrPixlDeferred::~DrPixlDeferred() {
+    if (m_shadowTarget != nullptr) {
+        delete m_shadowTarget;
+        m_shadowTarget = nullptr;
+    }
+    for (int i = 0; i < 2; i++) {
+        if (m_shadowTargetDbl[i] != nullptr) {
+            delete m_shadowTargetDbl[i];
+            m_shadowTargetDbl[i] = nullptr;
+        }
+    }
+}
 
 DrPixlMan::~DrPixlMan() { releaseColorBuffer(); }
 
@@ -224,6 +244,23 @@ void DrPixlMan::depCheckBegin(bool useDepth) {
     grlib::CGLibDepthCtl::setDepthControl(1, 0, (GrlCompare)3);
 }
 
+void DrPixlMan::occRenderBegin(bool useDepth) {
+    m_renderTarget = 0;
+    if (useDepth) {
+        grlib::CGLibState::beginRegisterRenderTarget();
+        grlib::CGLibState::setRegisterDepthTarget(*m_objTbl->m_depth[DrMan::s_nDblIdx]->m_pDepthBuffer);
+        grlib::CGLibState::endRegisterRenderTarget();
+    } else {
+        m_objTbl->m_depthCheck->setRenderTarget();
+    }
+    DrPixlOccQuery* occQuery = m_occQuery;
+    DrAPGxType::beginOccQuery();
+    occQuery->m_shdList->bindShdBoxVertex();
+    occQuery->m_renderCount = 0;
+    occQuery->m_shader->setupShader(0u);
+    occQuery->m_uniformOfs = occQuery->m_shader->getCurrentShader().getUniformBlockOfs("U_POST");
+}
+
 void DrPixlMan::shadowDirEnd() {
     DrAPGxType::endShadow();
     m_renderTarget = 0;
@@ -303,6 +340,11 @@ DrPixlMemMan::~DrPixlMemMan() {}
 DrPixlPostObj::DrPixlPostObj(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)
     : m_drMan(drMan), m_pixlMan(pixlMan), m_postMan(postMan) {}
 
+float DrPixlPostObj::gaussianDistribution(float x, float y, float rho) {
+    float g = 1.0f / sqrtf(2.0f * 3.14159265f * rho * rho);
+    return g * expf((x * x + y * y) / (-2.0f * rho * rho));
+}
+
 void DrPixlPostObj::calc1PixlOfs(float& width, float& height) {
     int w = (int)width;
     int h = (int)height;
@@ -311,6 +353,57 @@ void DrPixlPostObj::calc1PixlOfs(float& width, float& height) {
 }
 
 DrPixlTileParm::~DrPixlTileParm() {}
+
+void DrPixlPostObjMotionBlur::render() {
+    DrAPGxType::setupScreenQuads(false);
+    calcBlurWork();
+    if (!m_drMan->m_calcMan->m_pViewWork->m_velocityBlurOff) {
+        DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+        if (parm->m_velocityBlur && parm->m_velocityBlurRate > 0.0f) {
+            calcVelocityBlur();
+        }
+    }
+    m_drMan->blurCallBackRender();
+    m_blurVel[0]->setColorInvalidate();
+    renderCalcBlur();
+    lastRender();
+}
+
+void DrPixlPostObjBloom::calculateGaussBlur() {
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    calculateGaussBlurImplPS();
+    if (parm->m_lensFlare) {
+        calculateFlareBuff();
+        calculateLensFlare();
+        DrAPGxType::setupBlend(2);
+        m_compositeBuff->setRenderTarget();
+        setScaleShader(m_bloomBuff[3]);
+        m_compositeBuff->setColorInvalidate();
+        DrAPGxType::setupBlend(0);
+    }
+}
+
+DrPixlPostObjMotionBlur::~DrPixlPostObjMotionBlur() {
+    for (int i = 0; i < 2; i++) {
+        if (m_blurVel[i] != nullptr) {
+            delete m_blurVel[i];
+            m_blurVel[i] = nullptr;
+        }
+    }
+    if (m_blurOut != nullptr) {
+        delete m_blurOut;
+        m_blurOut = nullptr;
+    }
+}
+
+DrPixlPostObjVolume::~DrPixlPostObjVolume() {
+    for (int i = 0; i < 3; i++) {
+        if (m_volumeBuff[i] != nullptr) {
+            delete m_volumeBuff[i];
+            m_volumeBuff[i] = nullptr;
+        }
+    }
+}
 
 void DrPixlTileParm::update() { m_idx = DrMan::get()->m_qualityMode == 0; }
 
@@ -428,6 +521,16 @@ float DrPixlPostParm::getTMAASharpness(unsigned int type) const {
 
 bool DrPixlPostParm::getSSRWithTrans() const { return !DrMan::getIns()->m_autoResetScene; }
 
+bool DrPixlPostParm::getSSROn() const {
+    if (DrMan::getIns()->m_pixlMan->m_objTbl->m_postMan->m_waterFog < 0.01f) {
+        return false;
+    }
+    if (DrMan::getIns()->m_calcMan->m_pViewWork->m_gpuCheckAllVisible && m_ssrGpuCheckOff) {
+        return false;
+    }
+    return m_ssr;
+}
+
 
 DrPixlRenderTarget::DrPixlRenderTarget(DrMan* drMan) { m_drMan = drMan; }
 
@@ -436,6 +539,19 @@ DrPixlRenderTarget::~DrPixlRenderTarget() { releaseWork(); }
 DrPixlRenderCubeMapMipMap::DrPixlRenderCubeMapMipMap(DrMan* drMan) { m_drMan = drMan; }
 
 DrPixlRenderCubeMapMipMap::~DrPixlRenderCubeMapMipMap() { releaseWork(); }
+
+void DrPixlShadowCacheMan::buffUpdate() {
+    createCacheBuff();
+    DrMan::get();
+    if (m_flags & 2) {
+        for (int i = 0; i < 4; i++) {
+            m_workTbl[i].m_dirDepth.release();
+        }
+        m_flags &= ~2;
+    }
+    m_flags |= 2;
+    resetColorBuff();
+}
 
 void DrPixlShadowCacheMan::addShadowCacheUpdate(bool) {
     m_updateCount++;

@@ -24,6 +24,7 @@ float ceilf(float x);
 float log2f(float x);
 float logf(float x);
 float powf(float x, float y);
+float expf(float x);
 
 #ifdef __cplusplus
 }
