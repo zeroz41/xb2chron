@@ -693,6 +693,19 @@ void CloudMdlParts::createUniform(const mm::Vec3& dir) {
     m_uniform.updateData();
 }
 
+void CloudMdlParts::bindVertex() {
+    CloudMdlDataObj* data = m_pData;
+    const CloudMdlDataObj::MeshInfo* mesh = data->m_pMesh + (data->m_pObjData + m_index)->m_meshIdx;
+    grlib::CGLibCtlVertex::setVertex((data->m_pVtxBuf + mesh->m_vtxIdx)->m_vertex);
+}
+
+void CloudMdlParts::render() {
+    CloudMdlDataObj* data = m_pData;
+    const CloudMdlDataObj::MeshInfo* mesh = data->m_pMesh + (data->m_pObjData + m_index)->m_meshIdx;
+    grlib::CGLibVtxIndex& index = (data->m_pVtxBuf + mesh->m_vtxIdx)->m_index;
+    index.drawIndex(mesh->m_count, mesh->m_start * 2);
+}
+
 int CloudMdlParts::isDisp() const {
     if (!(m_pData->m_flags & 1)) {
         return 0;
@@ -772,6 +785,55 @@ void CloudMdlDataObj::releaseData() {
     m_vtxNum = 0;
     m_partsNum = 0;
     m_pVtxBuf = nullptr;
+}
+
+void CloudMdlDataObj::create(const void* data) {
+    m_pFile = data;
+    const Header* header = static_cast<const Header*>(data);
+    const CMLObjData* objData =
+        reinterpret_cast<const CMLObjData*>(static_cast<const char*>(data) + header->m_objDataOfs);
+    m_partsNum = header->m_objDataNum;
+    const VtxHeader* vtxHeader =
+        reinterpret_cast<const VtxHeader*>(static_cast<const char*>(data) + header->m_vtxOfs);
+    unsigned int infoOfs = vtxHeader->m_infoOfs;
+    m_vtxNum = vtxHeader->m_num;
+    unsigned int vtxSize = m_vtxNum * 0x50;
+    unsigned int partsSize = m_partsNum * 8;
+    void* buffer = mtl::MemManager::allocate(CloudMan::sys()->m_hWork, partsSize + vtxSize, 0x10, false, "no name", 0);
+    m_pAlloc = buffer;
+    m_ppParts = static_cast<CloudMdlParts**>(buffer);
+    m_pVtxBuf = reinterpret_cast<VtxBuf*>(static_cast<char*>(buffer) + partsSize);
+    m_pObjData = objData;
+    m_pMesh = reinterpret_cast<const MeshInfo*>(static_cast<const char*>(m_pFile) + header->m_meshOfs);
+    m_memPool.setupBuffer(const_cast<char*>(static_cast<const char*>(m_pFile)) + vtxHeader->m_bufOfs,
+                          vtxHeader->m_bufSize);
+    const VtxInfo* info = reinterpret_cast<const VtxInfo*>(static_cast<const char*>(data) + infoOfs);
+    for (int i = 0; i < m_vtxNum; i++, info++) {
+        new (&m_pVtxBuf[i].m_vertex) grlib::CGLibVtxVertex();
+        new (&m_pVtxBuf[i].m_index) grlib::CGLibVtxIndex();
+        m_pVtxBuf[i].m_vertex.createMemVertexBuff(&m_memPool, info->m_vtxOfs, info->m_vtxSize, 12);
+        m_pVtxBuf[i].m_index.createMemIndexBuff(&m_memPool, info->m_idxOfs, info->m_idxSize >> 1, GrlPrimitiveType(4),
+                                                GrlIndexFormat(1));
+    }
+    CloudMdlListMan& list = CloudMan::sys()->m_pObjMan->m_pMdl->m_partsList;
+    for (int i = 0; i < m_partsNum; i++) {
+        m_ppParts[i] = list.createParts();
+        CloudMdlParts* parts = m_ppParts[i];
+        parts->m_pData = this;
+        parts->m_index = i;
+        const CMLObjData* obj = &m_pObjData[parts->m_index];
+        parts->m_pos = mm::Vec3(obj->m_pos[0], obj->m_pos[1], obj->m_pos[2]);
+        parts->m_param = obj->m_param;
+        for (int j = 0; j < 7; j++) {
+            parts->m_params0[j] = obj->m_params0[j];
+        }
+        for (int j = 0; j < 7; j++) {
+            parts->m_params1[j] = obj->m_params1[j];
+        }
+        parts->m_type = obj->m_type;
+        parts->m_dispBit = obj->m_dispBit;
+        parts->m_scrollType = (obj->m_flags & 1) + 1;
+    }
 }
 
 void CloudMdlDataObj::release() { m_flags |= 0x40 << CloudMan::s_nDblStIdx; }

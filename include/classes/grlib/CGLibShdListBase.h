@@ -69,6 +69,43 @@ public:
     int m_extNum;               // 0x54, the package's m_extNum
 };
 
+template <typename T0>
+bool CGLibShdListBase<T0>::createPacShader(const void* pac, unsigned int version, bool flag) {
+    release();
+    const CGLibShdPacHeader* head = static_cast<const CGLibShdPacHeader*>(pac);
+    m_pPac = head;
+    if (head->m_version != version) {
+        return false;
+    }
+    const unsigned char* top = static_cast<const unsigned char*>(pac);
+    const unsigned char* shd = top + head->m_shdOfs;
+    const CGLibShdPacEntry* entry = reinterpret_cast<const CGLibShdPacEntry*>(top + head->m_entryOfs);
+    int i = 0;
+    unsigned int workSize = 0;
+    for (; i < head->m_num; i++, entry++) {
+        workSize += T0::calcWorkSize(shd + entry->m_ofs, flag);
+    }
+    unsigned int listSize = head->m_num * sizeof(T0);
+    unsigned int bufSize = head->m_bufSize;
+    unsigned int alignSize = bufSize + (-bufSize & 0xFFF);
+    m_memPool.setupBuffer(const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(m_pPac)) + head->m_bufOfs, alignSize);
+    m_num = head->m_num;
+    m_extNum = head->m_extNum;
+    m_pMem = mtl::MemManager::allocate(CGLibMemHandle::s_hShdHandle, listSize + workSize, 0x10, false, "no name", 0);
+    m_pList = static_cast<T0*>(m_pMem);
+    unsigned char* work = static_cast<unsigned char*>(m_pMem) + listSize;
+    const unsigned char* data = reinterpret_cast<const unsigned char*>(m_pPac);
+    const CGLibShdPacEntry* entries = reinterpret_cast<const CGLibShdPacEntry*>(data + head->m_entryOfs);
+    const unsigned char* programs = data + head->m_progOfs;
+    const unsigned char* shaders = data + head->m_shdOfs;
+    unsigned int workOfs = 0;
+    for (int i = 0; i < m_num; i++) {
+        new (&m_pList[i]) T0();
+        workOfs += m_pList[i].createMemPoolShader(work + workOfs, shaders + entries[i].m_ofs, programs, &m_memPool, flag);
+    }
+    return true;
+}
+
 }  // namespace grlib
 
 #endif

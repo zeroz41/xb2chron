@@ -75,12 +75,8 @@ public:
     // DrMdoCtlCldMdl::update/dispOffUpdate pass true/false
     void setCallDisp(bool disp);
 
-    // inline (CloudMdlParts::createUniform/bindVertex/render, no symbol; the name is not the original's)
+    // inline (CloudMdlParts::createUniform, no symbol; the name is not the original's)
     const CMLObjData& getObjData(unsigned short index) const { return m_pObjData[index]; }
-    // inline (CloudMdlParts::bindVertex/render, no symbol; the name is not the original's)
-    const MeshInfo& getMesh(unsigned short index) const { return m_pMesh[m_pObjData[index].m_meshIdx]; }
-    // inline (CloudMdlParts::bindVertex/render, no symbol; the name is not the original's)
-    VtxBuf& getVtxBuf(const MeshInfo& mesh) { return m_pVtxBuf[mesh.m_vtxIdx]; }
 
     CloudMdlDataObj* m_pPrev;          // 0x0
     CloudMdlDataObj* m_pNext;          // 0x8
