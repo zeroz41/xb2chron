@@ -639,6 +639,26 @@ void BattleCharacter::fn_7100042E90() {
     }
 }
 
+void BattleCharacter::UpdateBuffEffect(int id) {
+    switch (id) {
+    case 0xB:
+        UpdateTargetLockArrow();
+        break;
+    case 0xE: {
+        float scale = pad_EE4 * 0.01f;
+        const CharacterParameter* param = GetCharacterParameterConst(false);
+        if (param != nullptr) {
+            scale *= param->m_distanceScale;
+        }
+        fn_710003B0F4(0xE, nullptr, scale, nullptr, nullptr);
+        break;
+    }
+    default:
+        fn_710003B0F4(id, nullptr, -1.0f, nullptr, nullptr);
+        break;
+    }
+}
+
 void BattleCharacter::StartBladeTimer(BLADE_TIMER_MODE mode) {
     if (m_bladeTimerMode > mode) {
         return;

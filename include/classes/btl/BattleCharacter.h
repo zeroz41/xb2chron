@@ -319,6 +319,15 @@ public:
     float GetArtsAttackDistance(const ARTS_DATA& arts) const;
     void TurnDirection(const mm::Vec3& dir, bool, bool);
     void SetAnimation(ANIM_ID id, bool, int, int, bool, bool);
+    // 1.0.0's UpdateBuffEffect(int) (0x7100036A18, right before UpdateTargetLockArrow as here): one buff id
+    // updates the target lock arrow, the others their effect's position and scale (3.0.1's symbols spell
+    // fn_7100043CF4)
+    void UpdateBuffEffect(int id);
+    void UpdateTargetLockArrow();
+    // Placeholder name: 1.0.0's UpdateEffectPositionScale(int, const char*, float) has its callers and body, but
+    // 3.0.1's takes two more pointers (each read as three floats when given), so its signature is not 1.0.0's.
+    // The node name falls back to the 0xC50 string when null; the two vectors are optional.
+    void fn_710003B0F4(int id, const char* node, float scale, const mm::Vec3*, const mm::Vec3*);
 
     unsigned char pad_8[0x8];
     // where the character stands: EnemyParameter::AngryInfection measures from it (the name is not the original's)
@@ -383,7 +392,10 @@ public:
     // the original's)
     unsigned short m_animKind : 12;
     unsigned short pad_EE0_12 : 4;
-    unsigned char pad_EE2[0x6];
+    unsigned char pad_EE2[0x2];
+    // UpdateBuffEffect scales buff 14's effect by it / 100 (a percentage; meaning unknown)
+    unsigned short pad_EE4;
+    unsigned char pad_EE6[0x2];
     // GetDriverType answers it (a blade answers its driver's; the name is not the original's)
     unsigned int m_driverType : 3;
     unsigned int pad_EE8_3 : 6;
