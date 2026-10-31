@@ -97,6 +97,16 @@ int StreamBuffer::Free() {
     return 0;
 }
 
+Result AudioFileAiff::Open(IoStreamBase* stream) {
+    stream_ = stream;
+    return Result(0);
+}
+
+Result AudioFileAiff::Close() {
+    stream_ = nullptr;
+    return Result(0);
+}
+
 void AudioFileAiff::SetPositionBySample(unsigned long) {}
 
 }  // namespace ssd
