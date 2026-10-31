@@ -4,10 +4,12 @@
 #include "classes/gf/GfMenuObjChainAttack/ExtendListener.h"
 #include "classes/gf/GfMenuObjChainAttack.h"
 #include "classes/gf/GfMenuObjChainAttack/ExtendListener.h"
+#include "classes/gf/GfMenuObjChainAttack/ResultListener.h"
 #include "classes/gf/GfMenuObjChainAttack/StartListener.h"
 #include "classes/gf/GfMenuObjChainAttack/StartListener.h"
 #include "classes/gf/GfMenuObjArtsPalette.h"
 #include "classes/gf/GfMenuObjBladeChange.h"
+#include "classes/gf/GfMenuObjChainCount/MainListener.h"
 #include "classes/gf/GfMenuReference.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuObjUtil.h"
@@ -188,6 +190,55 @@ void GfMenuObjChainAttack::StartListener::reciveEvent(const ui::EventData& event
     }
 }
 
+void GfMenuObjChainAttack::ResultListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        m_state = 0;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 0xB:
+        GfMenuObjChainAttack::closeResult();
+        break;
+    case 0xC:
+        // the open event's time, kept in hundredths in the state field until the open finishes
+        GfMenuObject::registTimer(acc.m_handle, 0, m_state / 100.0f, false);
+        break;
+    case 0x21:
+        if (m_state == 0) {
+            float time = event.m_param1Float;
+            ui::UIObjectAcc bg(acc.m_handle, "IMG_result_info_bg");
+            bg.startAnimationFromID(1, false);
+            GfMenuObject::hookAnimationEvent(acc.m_handle, bg.m_handle, 0);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_in_r";
+            param.m_setDefault = true;
+            param.m_startFlags = 8;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_result_info");
+            acc.setDisp(true);
+            m_state = time * 100.0f;
+            GfMenuObjUtil::playJingle(0xE);
+            m_state = 1;
+        }
+        break;
+    case 0x22:
+        if (m_state == 1) {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 2;
+            param.m_time = 0.25f;
+            param.m_startFlags = 10;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            GfMenuObject::releaseTimer(acc.m_handle);
+            m_state = 0;
+        }
+        break;
+    }
+}
+
 void GfMenuObjChainAttack::ExtendListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
@@ -224,6 +275,64 @@ void GfMenuObjChainAttack::ExtendListener::reciveEvent(const ui::EventData& even
             param.m_startFlags = 10;
             GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
             m_state = 0;
+        }
+        break;
+    }
+}
+
+
+void GfMenuObjChainCount::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        m_state = 0;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 3:
+        if (event.m_param0 == 2) {
+            GfMenuObject::termCallContext(acc.m_handle);
+        }
+        break;
+    case 0xC:
+        GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+        break;
+    case 0x21:
+        if (m_state == 0) {
+            acc.setDisp(true);
+            {
+                ui::UIObjectAcc base(acc.m_handle, "IMG_ovk_start_base");
+                base.startAnimation("start", false);
+                GfMenuObject::hookAnimationEvent(acc.m_handle, base.m_handle, 0);
+            }
+            {
+                ui::UIObjectAcc text(acc.m_handle, "TXT_ovk_start");
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x10000000;
+                param.m_motionLib = "cmn_fade_motion_lr";
+                param.m_eventId = 1;
+                param.m_motion = "fade_in_l";
+                param.m_setDefault = true;
+                param.m_startFlags = 8;
+                GfMenuObjUtil::startCtrl(text.m_handle, param, nullptr);
+            }
+            m_state = 1;
+        }
+        break;
+    case 0x22:
+        if (m_state == 1) {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_out_l";
+            param.m_setDefault = true;
+            param.m_eventId = 2;
+            param.m_startFlags = 10;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            m_state = 0;
+        } else {
+            GfMenuObject::termCallContext(acc.m_handle);
         }
         break;
     }
