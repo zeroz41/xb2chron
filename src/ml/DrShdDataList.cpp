@@ -17,6 +17,7 @@
 #include "classes/ml/DrCalcClipWorkPlane.h"
 #include "classes/ml/DrCalcClipWorkShadowPlane.h"
 #include "classes/ml/DrLightObjLocalIBL.h"
+#include "classes/ml/DrLightObjPnt.h"
 #include "classes/ml/DrShdLgtClustered.h"
 #include "classes/ml/DrShdLgtHybrid.h"
 #include "classes/ml/DrShdLgtTileBasedDr.h"
@@ -121,11 +122,74 @@ void DrShdLgtMan::stockEnd() {
     m_pClustered->stockEnd();
 }
 
+void DrShdLgtTileBasedDr::createWork() {
+    for (int i = 0; i < 4; i++) {
+        int lightNum = i == 0 ? 0x100 : 0x10;
+        int pntSize = lightNum * 0x30;
+        int sptSize = lightNum * 0x40;
+        ViewWork& view = m_viewWork[i];
+        view.pntLight.setup(pntSize);
+        view.sptLight.setup(sptSize);
+        view.param.setup(0x280);
+        view.blocks.setupArray(27);
+        view.blocks.allocMem(0x3600);
+        view.blocks.m_ofs = 0;
+        for (int j = 0; j < 27; j++) {
+            view.blocks.m_ofs += view.blocks.m_pArray[j].setupArray(0x10, view.blocks.m_mem, view.blocks.m_ofs);
+        }
+    }
+    addViewInfo(0);
+}
+
+DrShdLgtTileBasedDr::~DrShdLgtTileBasedDr() {
+    if (m_pWork) {
+        mtl::MemManager::deallocate(m_pWork, 0, false);
+        m_pWork = nullptr;
+    }
+}
+
+void DrShdLgtTileBasedDr::stockBegin() {
+    ViewWork& view = m_viewWork[m_cateIdx];
+    view.pntNum = 0;
+    view.sptNum = 0;
+    m_pntBuffRest = view.pntLight.m_size;
+    m_sptBuffRest = view.sptLight.m_size;
+    m_pPntBuff = reinterpret_cast<PntLightEntry*>(view.pntLight.getBuff());
+    m_pSptBuff = reinterpret_cast<float*>(view.sptLight.getBuff());
+}
+
 void DrShdLgtTileBasedDr::update() {}
 
 void DrShdLgtTileBasedDr::addViewInfo(int) {}
 
 void DrShdLgtTileBasedDr::delViewInfo(int) {}
+
+void DrShdLgtTileBasedDr::stockPntList(DrLightObjPnt* light) {
+    ViewWork& view = m_viewWork[m_cateIdx];
+    int lightMax = m_cateIdx == 0 ? 0x100 : 0x10;
+    if (lightMax != view.pntNum) {
+        const mm::Mat44& mtx = m_pDrMan->m_calcMan->m_pViewWork->m_view;
+        m_pntBuffRest -= sizeof(PntLightEntry);
+        PntLightEntry* entry = m_pPntBuff++;
+        const float* pos = light->m_pos;
+        float px = mtx.m[3][0] + (pos[0] * mtx.m[0][0] + pos[1] * mtx.m[1][0] + pos[2] * mtx.m[2][0]);
+        float py = mtx.m[3][1] + (pos[0] * mtx.m[0][1] + pos[1] * mtx.m[1][1] + pos[2] * mtx.m[2][1]);
+        float pz = (pos[0] * mtx.m[0][2] + pos[1] * mtx.m[1][2] + pos[2] * mtx.m[2][2]) + mtx.m[3][2];
+        entry->pos[0] = px;
+        entry->pos[1] = py;
+        entry->pos[2] = pz;
+        entry->size = light->m_size;
+        entry->color[0] = light->m_color[0];
+        entry->color[1] = light->m_color[1];
+        entry->color[2] = light->m_color[2];
+        entry->param2 = light->m_lightParam2;
+        entry->invSize = 1.0f / light->m_size;
+        entry->zero = 0.0f;
+        entry->rate = (light->m_bLightFlag << 31) | (static_cast<int>(light->m_lightRate * 255.0f) & 0x7FFFFFFF);
+        entry->param = light->m_lightParam;
+        view.pntNum++;
+    }
+}
 
 void DrShdLgtTileBasedDr::debugRender() {}
 

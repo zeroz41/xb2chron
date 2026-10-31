@@ -11,7 +11,22 @@ namespace grlib {
 template <class T>
 class CGLibUniformArray {
 public:
+    // DrShdDataList's and DrShdLgtTileBasedDr's constructors zero these and set up m_mem
+    CGLibUniformArray() : m_pArray(nullptr), m_num(0), m_ofs(0), m_memSize(0) {}
+    // DrShdLgtTileBasedDr's and DrShdDataList's destructors inline release()
+    ~CGLibUniformArray() { release(); }
     void setupArray(unsigned int num);
+    // takes size bytes of uniform memory for the blocks (DrShdLgtTileBasedDr::createWork and
+    // DrShdDataList::createAlphaTestBlock inline it; the name is not the original's)
+    void allocMem(unsigned int size) {
+        m_ofs = size;
+        CGLibMemHandle::free(m_mem);
+        if (m_ofs != 0) {
+            CGLibMemHandle::allocUniform(m_mem, m_ofs);
+            m_memSize = m_ofs;
+            m_ofs = 0;
+        }
+    }
     // releases every block, frees the array and m_mem (setupArray starts with it; ~LayerObjTopDef inlines it; the
     // name is not the original's)
     void release() {
@@ -28,7 +43,10 @@ public:
 
     T* m_pArray;          // 0x0
     unsigned int m_num;   // 0x8
-    unsigned char pad_C[0xC];
+    // the names below are not the original's
+    unsigned int m_ofs;      // 0xC, the bytes of m_mem the blocks' setupArray calls took so far
+    unsigned int m_memSize;  // 0x10, the size allocMem allocated
+    unsigned char pad_14[0x4];
     CGLibMemType m_mem;   // 0x18
 };
 
