@@ -71,4 +71,23 @@ SoundPack::~SoundPack() {
     mm::mtl::PtrSingleton<SoundManager>::get()->removePack(this);
 }
 
+mm::mtl::IntrusivePtr<SoundSsdSource> SoundPack::findSource(const char* name) const {
+    unsigned int nameHash = mm::mtl::hashStrCrc(name);
+    for (unsigned int i = 0; i < m_sourceIds.size(); i++) {
+        if (m_sourceIds[i].nameHash == nameHash && strcmp(m_sources[i]->m_label.m_str, name) == 0) {
+            return m_sources[i];
+        }
+    }
+    return nullptr;
+}
+
+mm::mtl::IntrusivePtr<SoundSsdSource> SoundPack::findSourceFromID(unsigned int id) const {
+    for (unsigned int i = 0; i < m_sourceIds.size(); i++) {
+        if (m_sourceIds[i].id == id) {
+            return m_sources[i];
+        }
+    }
+    return nullptr;
+}
+
 }  // namespace fw

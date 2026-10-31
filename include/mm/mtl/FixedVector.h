@@ -61,16 +61,24 @@ struct FixedVectorStorage {
 // element the n-th storage (the original folds erase's and assign's `first <= last` to `size >= 0` but not their
 // pointer difference: GfMenuSequence<., N>::wait, GfMenuObjBalloon::OpenSelectMoneyParam's copy; and indexes
 // push_back's and operator[]'s element from the object: GfMenuStrLinker's constructor, GfMenuObjTitle::moveCursor);
-// the bytes for any other T (Delegate, IntrusivePtr, structs), whose casts stay casts of the bytes
-// (GfMenuObjBalloon::update's erase, FixedVector<IntrusivePtr<.>, 6>::resize). stride: the room's units per element
+// for any other T (Delegate, IntrusivePtr, structs) an array of element-sized byte units, which the const operator[]
+// indexes from the object (fw::SoundPack::findSourceFromID: one this + i * 8 for both of its vectors), while the
+// other accesses address the bytes (GfMenuObjBalloon::update's erase, FixedVector<IntrusivePtr<.>, 6>::resize,
+// GfFileSizePool::recalcFileSizeCache's operator[], the destructors' clear). stride: cursor's units per element
 template <typename T, unsigned long N, bool Arithmetic = __is_arithmetic(T)>
 struct FixedVectorRoom {
-    typedef unsigned char type[sizeof(T) * N];
+    struct unit {
+        alignas(T) unsigned char m_data[sizeof(T)];
+    };
+    typedef unit type[N];
+    typedef unsigned char* cursor;
     static const unsigned long stride = sizeof(T);
 };
 template <typename T, unsigned long N>
 struct FixedVectorRoom<T, N, true> {
-    typedef typename FixedVectorStorage<sizeof(T), alignof(T)>::type type[N];
+    typedef typename FixedVectorStorage<sizeof(T), alignof(T)>::type unit;
+    typedef unit type[N];
+    typedef unit* cursor;
     static const unsigned long stride = 1;
 };
 
@@ -144,7 +152,8 @@ public:
         // constructed in place at its offset in the room: the original addresses the new element from the
         // container (GfMenuObjMercenaryRoot::MainListener::reciveEvent), and checks it for null (folded away where
         // the container is not at the start of its object; ptlib's MaterialManager::initSub keeps it)
-        T* element = reinterpret_cast<T*>(m_buffer + m_size * Room::stride);
+        T* element =
+            reinterpret_cast<T*>(reinterpret_cast<typename Room::cursor>(m_buffer) + m_size * Room::stride);
         if (element != nullptr) {
             new (element) T(value);
         }
@@ -158,7 +167,8 @@ public:
             --m_size;
             // destroyed at its offset in the room, checked for null (as push_back constructs it:
             // FixedVector<IntrusivePtr<FootPlacementIKSolver>, 6>::resize in ik_two_chara_ground_solver keeps it)
-            T* element = reinterpret_cast<T*>(m_buffer + m_size * Room::stride);
+            T* element =
+                reinterpret_cast<T*>(reinterpret_cast<typename Room::cursor>(m_buffer) + m_size * Room::stride);
             if (element != nullptr) {
                 element->~T();
             }
@@ -247,13 +257,14 @@ public:
         MM_ASSERT(index < size());
         return *at(index);
     }
+    // the index-th unit of the room (fw::SoundPack::findSource, findSourceFromID); the name is not the original's
     const T* at(unsigned long index) const {
-        return reinterpret_cast<const T*>(m_buffer + index * Room::stride);
+        return reinterpret_cast<const T*>(&m_buffer[index]);
     }
     // an element's address from the room (GfMenuStrLinker's destructors and fw::ManagerRegister::finalize
     // add the room's offset to the element's last); the name is not the original's
     T* at(unsigned long index) {
-        return reinterpret_cast<T*>(m_buffer + index * Room::stride);
+        return reinterpret_cast<T*>(reinterpret_cast<typename Room::cursor>(m_buffer) + index * Room::stride);
     }
 
     typedef FixedVectorRoom<T, N> Room;
