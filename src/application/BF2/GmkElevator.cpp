@@ -826,8 +826,14 @@ gmk::GmkType GmkEvent::getGmkType() const { return TYPE; }
 gmk::GmkType GmkTutorial::getGmkType() const { return gmk::GmkType(57); }
 gmk::GmkType GmkTrigger::getGmkType() const { return gmk::GmkType(52); }
 gmk::GmkType GmkEnemy::getGmkType() const { return TYPE; }
+
+bool GmkEnemy::isValid() const { return AGmkBase::isValid() && m_insts.isValid(); }
+
 gmk::GmkType GmkRoute::getGmkType() const { return TYPE; }
 gmk::GmkType GmkRoutedEnemy::getGmkType() const { return TYPE; }
+
+bool GmkRoutedEnemy::isValid() const { return GmkRoute::isValid() && m_insts.isValid(); }
+
 gmk::GmkType GmkRoutePoint::getGmkType() const { return gmk::GmkType(23); }
 gmk::GmkType GmkNpc::getGmkType() const { return TYPE; }
 gmk::GmkType GmkRoutedNpc::getGmkType() const { return TYPE; }
@@ -875,6 +881,18 @@ AGmkBase::~AGmkBase() {
     m_list = nullptr;
     m_pos = nullptr;
     m_info = nullptr;
+}
+
+// valid while its route point list holds points
+bool GmkRoute::isValid() const {
+    bool valid = false;
+    if (AGmkBase::isValid()) {
+        IGmkList* list = getBindedRoutePointList();
+        if (list != nullptr && list->getInstNum() != 0) {
+            valid = true;
+        }
+    }
+    return valid;
 }
 
 bool AGmkBase::isValid() const {
@@ -4027,6 +4045,11 @@ void GmkEnemy::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk)
     m_dispH = Bdat::getVarType(bdat.m_fp, "ene_disp_h") == 2
                   ? static_cast<unsigned short>(Bdat::getValCheck(bdat.m_fp, "ene_disp_h", row, 2))
                   : static_cast<unsigned char>(Bdat::getValCheck(bdat.m_fp, "ene_disp_h", row, 1));
+}
+
+bool GmkEnemy::isPointInsideRandomWalk(const mm::Vec3& pos) const {
+    mm::Vec3 d = *m_pos - pos;
+    return d.dot(d) <= getData()->m_randomWalkRadius * getData()->m_randomWalkRadius;
 }
 
 bool GmkBlade::BdatInfo::isPopCommonCondMatched() const {

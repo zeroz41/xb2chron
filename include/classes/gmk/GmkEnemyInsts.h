@@ -140,6 +140,9 @@ public:
     bool reqClearRepopCounter() const;
     void seqUpdatePopDepop(const UpdateInfo& info);
     void seqUpdateRepopCounter(const UpdateInfo& info);
+    // whether it holds what it pops by: its first two fields set and a positive count at 0x10 (inline in GmkEnemy's
+    // and GmkRoutedEnemy's isValid; the name is not the original's)
+    bool isValid() const { return pad_0 != 0 && pad_8 != 0 && pad_10 > 0; }
     unsigned long pad_0;
     unsigned long pad_8;
     // seqUpdateRepopCounter never counts down for the values 40012 and 40013 (a bdat id? not proven)
