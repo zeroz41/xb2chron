@@ -16,6 +16,8 @@
 
 namespace gf {
 
+bool GfMenuObjPopup::s_disp;
+
 GfMenuObjPopup::GfMenuObjPopup(unsigned int handle)
     : GfMenuObject(handle), m_open(false), m_giftWait(false), pad_26(false), m_count(0), m_number05_1(nullptr),
       m_number05_2(nullptr), m_number05_3(nullptr), m_number05_4(nullptr), m_number09(nullptr), m_number11(nullptr),
@@ -47,6 +49,52 @@ GfMenuObjPopup::~GfMenuObjPopup() {
         m_number11 = nullptr;
     }
     GfMenuManyObjects::destroy<PopupInfo>(7);
+}
+
+void GfMenuObjPopup::initialize() {
+    ui::UIObjectAcc acc(m_handle);
+    unsigned int main = acc.searchChild("LAY_main");
+#line 130
+    MainListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) MainListener(this);
+    listener->m_RefCount = 1;
+    ui::UIEventManager::get()->registObjectListener(main, listener);
+    if (listener != nullptr) {
+        listener->release();
+    }
+    GfMenuObject::attachExternalCall(0x76, main);
+    {
+    unsigned char* names = GfDataBdat::getFP(0x15c);
+    unsigned char* labels = GfDataBdat::getFP(0x15c);
+    unsigned char* text = GfDataBdat::getFP(0x132);
+    unsigned int id05_1 = static_cast<unsigned short>(Bdat::getVal(labels, "name", 7));
+    ui::UIObjectAcc text05_1(acc.searchChild("TXT_text@05_1"));
+    text05_1.setText(ui::UIStr(text, id05_1));
+    unsigned int id05_2 = static_cast<unsigned short>(Bdat::getVal(labels, "name", 8));
+    ui::UIObjectAcc text05_2(acc.searchChild("TXT_text@05_2"));
+    text05_2.setText(ui::UIStr(text, id05_2));
+    unsigned int id05_3 = static_cast<unsigned short>(Bdat::getVal(labels, "name", 9));
+    ui::UIObjectAcc text05_3(acc.searchChild("TXT_text@05_3"));
+    text05_3.setText(ui::UIStr(text, id05_3));
+    unsigned int id05_4 = static_cast<unsigned short>(Bdat::getVal(labels, "name", 10));
+    ui::UIObjectAcc text05_4(acc.searchChild("TXT_text@05_4"));
+    text05_4.setText(ui::UIStr(text, id05_4));
+    unsigned int id09 = static_cast<unsigned short>(Bdat::getVal(names, "name", 4));
+    unsigned char* text09 = GfDataBdat::getFP(0x132);
+    ui::UIObjectAcc acc09(acc.searchChild("TXT_text@09"));
+    acc09.setText(ui::UIStr(text09, id09));
+    unsigned int id11 = static_cast<unsigned short>(Bdat::getVal(names, "name", 3));
+    unsigned char* text11 = GfDataBdat::getFP(0x132);
+    ui::UIObjectAcc acc11(acc.searchChild("TXT_text@11"));
+    acc11.setText(ui::UIStr(text11, id11));
+    }
+    m_number05_1 = ui::UIObjectNumberPlugin::create(acc.searchChild("TXT_text@05_1"));
+    m_number05_2 = ui::UIObjectNumberPlugin::create(acc.searchChild("TXT_text@05_2"));
+    m_number05_3 = ui::UIObjectNumberPlugin::create(acc.searchChild("TXT_text@05_3"));
+    m_number05_4 = ui::UIObjectNumberPlugin::create(acc.searchChild("TXT_text@05_4"));
+    m_number09 = ui::UIObjectNumberPlugin::create(acc.searchChild("TXT_text@09"));
+    m_number11 = ui::UIObjectNumberPlugin::create(acc.searchChild("TXT_text@11"));
+    GfMenuObject::initialize();
+    GfMenuManyObjects::createQueue<PopupInfo>(7, 64);
 }
 
 void GfMenuObjPopup::finalize() {

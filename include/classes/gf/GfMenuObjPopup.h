@@ -19,7 +19,8 @@ public:
         unsigned int m_value[3];
     };
     GfMenuObjPopup(unsigned int handle);
-    static bool open(const OpenParam& param);
+    // the popup layer's handle (0 when nothing opened)
+    static unsigned int open(const OpenParam& param);
     static void close(unsigned int handle);
     virtual ~GfMenuObjPopup();  // slot 0
     static void closeAll();  // closes every popup (GfMenuManyObjects::closeAll with close)
@@ -56,6 +57,9 @@ public:
     // the queued popup `index` places after the first, or null without a queue or popups (inlined in 3.0.1; the
     // name is not the original's)
     static PopupInfo* getInfo(unsigned int index);
+
+    // set once open has sent a popup's open event (open sends no other while set; reciveEvent sets and clears it)
+    static bool s_disp;
 
     bool m_open;                  // 0x24: set while a popup shows (reciveEvent); the name is not the original's
     bool m_giftWait;              // 0x25: cleared by fn_710045DA2C; the name is not the original's
