@@ -5,6 +5,7 @@
 #include <algorithm>
 #include "anm/Array.h"
 #include "anm/QsTransform.h"
+#include "anm/AnimationObject.h"
 #include "classes/anm/ReferenceObject.h"
 
 namespace anm {
@@ -44,11 +45,12 @@ struct SkelLabel {
     unsigned short m_bone;  // the bone it names
 };
 
-// table 0x7100B810B8
+// table 0x7100B810B8 (weak: DynamicSkeleton.cpp's SkeletonImporter::import constructs it in place)
 // counted: GfComModel::cleanup releases its skeleton as the pose and extra truck buffer
-class Skeleton : public ::anm::ReferenceObject {
+class Skeleton : public ::anm::AnimationObject {
 public:
-    virtual ~Skeleton();  // slot 0
+    // trivial and inline: the table's slot 0 holds AnimationObject's destructor (its base's)
+    virtual ~Skeleton() {}  // slot 0
 
     // the index of the bone named `name`, 0xFFFF when none is (inline: the IK solvers' setup each inline it;
     // the name is not the original's)
