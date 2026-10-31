@@ -17,6 +17,7 @@
 #include "classes/ui/UICtrlCursorSelect.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UISelectObjList.h"
+#include "gf/GfDataEnBook.h"
 #include "gf/GfDataEnemy.h"
 #include "gf/GfMenuObjUtil.h"
 #include "mm/mtl/FixStr.h"
@@ -503,6 +504,76 @@ void GfMenuObjEnBook::LocationSelListener::reciveEvent(const ui::EventData& even
         param.m_preset = 6;
         param.m_out = 0;
         GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        break;
+    }
+    case 0x22: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 1;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjEnBook::DetailListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableFSInput(5);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+            GfMenuIDList* list = m_owner->m_enBookList;
+            unsigned int id = list->getContents(list->getIndex(false)).m_id;
+            bool defeated = false;
+            unsigned char* bdat = GfDataBdat::getFP(0x28);
+            if (bdat != nullptr) {
+                unsigned long enemy = Bdat::getVal(bdat, "BaseEnemyID", id);  // a u16 column
+                defeated = GfDataEnBook::getDefeatNum(static_cast<unsigned short>(enemy)) != 0;
+            }
+            if (defeated) {
+                GfMenuObject::setupInputSelection(acc.m_handle, 0, m_owner->pad_78->getSize());
+            } else {
+                GfMenuObject::setupInputSelection(acc.m_handle, 0, m_owner->pad_78->getSize() - 1);
+            }
+        }
+        break;
+    case 6: {
+        int index = event.m_param0;
+        if (index != -1) {
+            if (event.m_param1 != -1) {
+                ui::UIObjectAcc old(m_owner->pad_78->getObject(event.m_param1));
+                old.setDisp(false);
+            }
+            m_owner->pad_78->setIndex(index);
+            ui::UIObjectAcc select(m_owner->pad_78->getSelectObject());
+            select.setDisp(true);
+        }
+        break;
+    }
+    case 8:
+        if (event.m_param1 == 2) {
+            ui::EventData open(0x100);
+            GfMenuObject::sendEvent(GfMenuObject::getFSInputObject(4), open, 0.0f);
+            GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+            GfMenuObject::disableFSInput();
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+        }
+        break;
+    case 0x21: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 0;
+        param.m_eventId = 1;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        m_owner->pad_78->setIndex(0);
+        ui::UIObjectAcc select(m_owner->pad_78->getSelectObject());
+        select.setDisp(true);
         break;
     }
     case 0x22: {
