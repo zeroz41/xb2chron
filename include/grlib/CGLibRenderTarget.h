@@ -155,6 +155,9 @@ public:
     unsigned int m_height;  // 0x04
     unsigned char pad_8[0x118];
     CGLibDepthBuffer* m_pDepthBuffer;  // 0x120
+    unsigned char pad_128[0x8];
+    // 0x130: the texture DrMdoSetup::fn_710077C23C binds (DrPixlMan::getDepthObj's); the name is not the original's
+    CGLibTextureBuffer* m_pTexture;
 };
 
 }  // namespace grlib

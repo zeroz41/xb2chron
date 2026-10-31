@@ -74,6 +74,9 @@
 #include "ml/DrShdMdoDecExtTbl.h"
 #include "ml/MdoWrkMatRes.h"
 #include "ml/MdsMatInfoHeader.h"
+#include "ml/MdsMatVariableTbl.h"
+#include "ml/DrResMdoUniformBlock.h"
+#include "grlib/CGLibUniBaseUtility.h"
 #include "ml/MdsMatValShaderCate.h"
 #include "mm/Math.h"
 #include "mtl/MemManager.h"
@@ -955,6 +958,23 @@ void DrMdoSetup::varStTex_ToonDarkGradTex(const MdsMatInfoHeader* info, unsigned
     }
 }
 
+void DrMdoSetup::fn_710077C23C(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 0);
+    ap->setTexture(*m_pDrMan->m_pixlMan->getDepthObj()->m_pTexture, location);
+}
+
+void DrMdoSetup::fn_710077C294(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
+    DrAPCache* ap = m_pDrMan->m_apCache;
+    ap->beginTexSampling(2, 0);
+    DrIniSys* iniSys = m_pDrMan->m_iniSys;
+    if (!(m_stateFlags & 0x400)) {
+        ap->setTexture(iniSys->m_texture[1], location);
+    } else {
+        ap->setTexture(iniSys->m_texture[2], location);
+    }
+}
+
 void DrMdoSetup::varStImg_BaseColor(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx) {
     grlib::CGLibCtlTexture::setUAVTexture(*m_pDrMan->m_pixlMan->getPixlObj(0)->m_pTexture, location, 0, 0);
 }
@@ -976,6 +996,40 @@ void DrMdoSetup::varStImg_ZBuff(const MdsMatInfoHeader* info, unsigned int locat
 }
 
 DrMdoZSortObj::DrMdoZSortObj(void* owner) : m_next(nullptr), m_parent(nullptr), m_owner(owner) {}
+
+void (DrMdoSetup::*DrMdoSetup::s_pUniBkMat[31])(const MdsMatValShaderCate*, int, int, int, bool, unsigned int) = {
+    &DrMdoSetup::uniformBlock_Static,
+    &DrMdoSetup::uniformBlock_Material,
+    &DrMdoSetup::uniformBlock_Light,
+    &DrMdoSetup::uniformBlock_Mdl,
+    &DrMdoSetup::uniformBlock_Bone,
+    &DrMdoSetup::uniformBlock_OldMdl,
+    &DrMdoSetup::uniformBlock_OldBone,
+    &DrMdoSetup::uniformBlock_no,
+    &DrMdoSetup::uniformBlock_AvatarChar,
+    &DrMdoSetup::uniformBlock_AvatarDoll,
+    &DrMdoSetup::uniformBlock_no,
+    &DrMdoSetup::uniformBlock_no,
+    &DrMdoSetup::uniformBlock_no,
+    &DrMdoSetup::uniformBlock_Fog,
+    &DrMdoSetup::uniformBlock_no,
+    &DrMdoSetup::uniformBlock_no,
+    &DrMdoSetup::uniformBlock_no,
+    &DrMdoSetup::uniformBlock_Toon,
+    &DrMdoSetup::uniformBlock_VolTexCalc,
+    &DrMdoSetup::uniformBlock_GlobalIBL,
+    &DrMdoSetup::uniformBlock_ClusterParam,
+    &DrMdoSetup::uniformBlock_ClusterPntList,
+    &DrMdoSetup::uniformBlock_ClusterSptList,
+    &DrMdoSetup::uniformBlock_ClusterIdxList,
+    &DrMdoSetup::uniformBlock_ClusterAddressList,
+    &DrMdoSetup::uniformBlock_RimBloomCalc,
+    &DrMdoSetup::uniformBlock_no,
+    &DrMdoSetup::uniformBlock_no,
+    &DrMdoSetup::uniformBlock_no,
+    &DrMdoSetup::uniformBlock_no,
+    &DrMdoSetup::uniformBlock_Toon2,
+};
 
 void (DrMdoSetup::*DrMdoSetup::s_pStaticTexture[46])(const MdsMatInfoHeader*, unsigned int, unsigned int) = {
     &DrMdoSetup::varStTex_ColorTex,
@@ -1032,6 +1086,19 @@ void (DrMdoSetup::*DrMdoSetup::s_pStaticImage[5])(const MdsMatInfoHeader*, unsig
     &DrMdoSetup::varStImg_Normal,
     &DrMdoSetup::varStImg_Velocity,
     &DrMdoSetup::varStImg_ZBuff,
+};
+
+int (DrMdoSetup::*DrMdoSetup::s_pStockMaterial[10])(float*, DrResMdoMat*, const MdsMatInfoHeader*, const MdsMatVariableTbl*) = {
+    &DrMdoSetup::unimate_depthRatio,
+    &DrMdoSetup::unimate_texMatrix,
+    &DrMdoSetup::unimate_workFloat4,
+    &DrMdoSetup::unimate_workColor,
+    &DrMdoSetup::unimate_ProjectionMat,
+    &DrMdoSetup::unimate_alphaInfo,
+    &DrMdoSetup::unimate_matColor,
+    &DrMdoSetup::unimate_NomProjectionMat,
+    &DrMdoSetup::unimate_DollTexWork,
+    &DrMdoSetup::unimate_AvatarMapWrk,
 };
 
 DrMdoCtlCldMdl::DrMdoCtlCldMdl(const void* data, DrMan* drMan, int viewNum) : DrMdlObj(viewNum) {
@@ -1817,6 +1884,26 @@ void DrMdoSetup::uniformBlock_Bone(const MdsMatValShaderCate* cate, int paramIdx
     m_pDrMan->m_shdMan->m_dataList->m_boneStmOut.setStorageBuffer(m_pDecExtTbl->getValGlobalParam(paramIdx));
 }
 
+void DrMdoSetup::uniformBlock_OldMdl(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    grlib::CGLibTriUniformBlock* block = &m_pWrkMatRes->m_pTriUniformArray->m_pArray[static_cast<unsigned int>(mdlIdx)];
+    unsigned int location = m_pDecExtTbl->getValGlobalParam(paramIdx);
+    if (!(m_mdlFlags & 0x200)) {
+        block->setOldUniformBlock(location);
+    } else {
+        block->setUniformBlock(location);
+    }
+}
+
+void DrMdoSetup::uniformBlock_OldBone(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
+    DrShdDataList* list = m_pDrMan->m_shdMan->m_dataList;
+    unsigned int location = m_pDecExtTbl->getValGlobalParam(paramIdx);
+    if (!(m_mdlFlags & 0x200)) {
+        list->m_oldBoneStmOut.setStorageBuffer(location);
+    } else {
+        list->m_boneStmOut.setStorageBuffer(location);
+    }
+}
+
 void DrMdoSetup::uniformBlock_AvatarChar(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
     m_pWrkMatRes->m_pAvatarTbl->m_charBlock->setUniformBlock(m_pDecExtTbl->getValGlobalParam(paramIdx));
 }
@@ -1897,6 +1984,88 @@ void DrMdoSetup::uniformBlock_RimBloomCalc(const MdsMatValShaderCate* cate, int 
 
 void DrMdoSetup::uniformBlock_Toon2(const MdsMatValShaderCate* cate, int paramIdx, int mdlIdx, int matIdx, bool flag, unsigned int texIdx) {
     m_pDrMan->m_calcMan->m_pViewWork->m_toon2Block.setUniformBlock(m_pDecExtTbl->getValGlobalParam(paramIdx));
+}
+
+int DrMdoSetup::unimate_texMatrix(float* out, DrResMdoMat* mat, const MdsMatInfoHeader* info, const MdsMatVariableTbl* var) {
+    grlib::ShdF32SetF32Array(out, m_pWrkMatRes->m_pUniformVal + (info->m_uniformOfs + var->m_valIdx), var->m_num * 8);
+    return DrResMdoUniformBlock::s_nVarSizeTbl[17] * var->m_num;
+}
+
+int DrMdoSetup::unimate_workFloat4(float* out, DrResMdoMat* mat, const MdsMatInfoHeader* info, const MdsMatVariableTbl* var) {
+    grlib::ShdF32SetF32Array(out, m_pWrkMatRes->m_pUniformVal + (info->m_uniformOfs + var->m_valIdx), var->m_num * 4);
+    return DrResMdoUniformBlock::s_nVarSizeTbl[18] * var->m_num;
+}
+
+int DrMdoSetup::unimate_workColor(float* out, DrResMdoMat* mat, const MdsMatInfoHeader* info, const MdsMatVariableTbl* var) {
+    grlib::ShdF32SetF32Array(out, m_pWrkMatRes->m_pUniformVal + (info->m_uniformOfs + var->m_valIdx), var->m_num * 4);
+    return DrResMdoUniformBlock::s_nVarSizeTbl[19] * var->m_num;
+}
+
+int DrMdoSetup::unimate_ProjectionMat(float* out, DrResMdoMat* mat, const MdsMatInfoHeader* info, const MdsMatVariableTbl* var) {
+    const float* src = m_pWrkMatRes->m_pUniformVal + (info->m_uniformOfs + var->m_valIdx);
+    for (int i = 0; i < var->m_num; i++) {
+        grlib::ShdF32TransposeMat34(&out[i * 12], &src[i * 16]);
+    }
+    return DrResMdoUniformBlock::s_nVarSizeTbl[20] * var->m_num;
+}
+
+int DrMdoSetup::unimate_alphaInfo(float* out, DrResMdoMat* mat, const MdsMatInfoHeader* info, const MdsMatVariableTbl* var) {
+    out[0] = 1.0f;
+    out[1] = mat->m_alphaParam;
+    float alpha = mat->m_color.a;
+    if (!(info->m_flags & 1)) {
+        alpha *= m_singleAlpha;
+    }
+    out[2] = alpha;
+    out[3] = m_colorScale;
+    return DrResMdoUniformBlock::s_nVarSizeTbl[23];
+}
+
+int DrMdoSetup::unimate_matColor(float* out, DrResMdoMat* mat, const MdsMatInfoHeader* info, const MdsMatVariableTbl* var) {
+    if (m_renderPass == 0 && !(info->m_shdFlags & 0x80)) {
+        out[0] = mat->m_color.r;
+        out[1] = mat->m_color.g;
+        out[2] = mat->m_color.b;
+    } else {
+        float rate = m_pDrMan->m_pixlMan->m_rate;
+        out[0] = powf(mat->m_color.r, rate);
+        out[1] = powf(mat->m_color.g, rate);
+        out[2] = powf(mat->m_color.b, rate);
+    }
+    float alpha = mat->m_color.a;
+    if (!(info->m_flags & 1)) {
+        alpha *= m_singleAlpha;
+    }
+    out[3] = alpha;
+    return DrResMdoUniformBlock::s_nVarSizeTbl[24];
+}
+
+int DrMdoSetup::unimate_NomProjectionMat(float* out, DrResMdoMat* mat, const MdsMatInfoHeader* info, const MdsMatVariableTbl* var) {
+    const float* src = m_pWrkMatRes->m_pUniformVal + (info->m_uniformOfs + var->m_valIdx);
+    for (int i = 0; i < var->m_num; i++) {
+        grlib::ShdF32TransposeMat34(&out[i * 12], &src[i * 16]);
+    }
+    return DrResMdoUniformBlock::s_nVarSizeTbl[50] * var->m_num;
+}
+
+int DrMdoSetup::unimate_AvatarMapWrk(float* out, DrResMdoMat* mat, const MdsMatInfoHeader* info, const MdsMatVariableTbl* var) {
+    const MdsMatAvatarMap* map = m_pWrkMatRes->m_pAvatarMap + info->m_avatarMapIdx;
+    const mm::Col3& color0 = m_pAvatarColor[map->m_colorIdx[0]];
+    const mm::Col3& color1 = m_pAvatarColor[map->m_colorIdx[1]];
+    const mm::Col3& color2 = m_pAvatarColor[map->m_colorIdx[2]];
+    out[0] = color0.r;
+    out[1] = color0.g;
+    out[2] = color0.b;
+    out[3] = 0.0f;
+    out[4] = color1.r;
+    out[5] = color1.g;
+    out[6] = color1.b;
+    out[7] = 0.0f;
+    out[8] = color2.r;
+    out[9] = color2.g;
+    out[10] = color2.b;
+    out[11] = 0.0f;
+    return DrResMdoUniformBlock::s_nVarSizeTbl[51];
 }
 // Last alpha objects: buckets 0..3.
 void DrMdoZSortMan::setViewWorldPosLastAlpha(DrMdoZSortObj* obj, const mm::Vec3& pos) {

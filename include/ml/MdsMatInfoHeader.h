@@ -15,9 +15,14 @@ struct MdsMatInfoHeader {
     float m_color[4];  // 0x0C, scaled by DrMdoMat::matCall_CalcColor
     // 0x1C, the shadow and pre-pass *T setters pass it to DrShdDataList::getAlphaTestUniform (name inferred)
     float m_alphaRef;
-    unsigned char pad_20[0x20];
+    // 0x20, from MdoWrkMatRes::m_pMatData: this material's MdsMatTexEntry list; DrMdoSetup::unimate_DollTexWork
+    // indexes it by MdsMatVariableTbl::m_valIdx (name inferred)
+    unsigned int m_texEntryOfs;
+    unsigned char pad_24[0x1C];
     unsigned int m_uniformOfs;  // 0x40, this material's first slot in MdoWrkMatRes::m_pUniformVal
-    unsigned char pad_44[0x14];
+    unsigned char pad_44[0x12];
+    // 0x56: this material's entry in MdoWrkMatRes::m_pAvatarMap (DrMdoSetup::unimate_AvatarMapWrk; name inferred)
+    unsigned short m_avatarMapIdx;
     unsigned short m_callBackIdx;  // 0x58, first (callback, slot) pair of the material's list
     unsigned short m_callBackNum;  // 0x5A, number of pairs
     unsigned char pad_5C[0x6];

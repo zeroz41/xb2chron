@@ -3551,7 +3551,7 @@ void DrResEtcParams::setInitParams(float value) {
 
 DrResMdoMat& DrResMdoMat::operator=(const DrResMdoMat& other) {
     m_color = other.m_color;
-    pad_18 = other.pad_18;
+    m_alphaParam = other.m_alphaParam;
     pad_1C = other.pad_1C;
     return *this;
 }

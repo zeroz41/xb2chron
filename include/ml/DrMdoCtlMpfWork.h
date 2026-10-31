@@ -5,6 +5,8 @@ namespace ml { class DrMdoMpfMan; }
 namespace ml { struct MdsMpfObjData; }
 namespace ml { struct MdsMpfPosData; }
 namespace ml { struct _MPFWorkAutoInf; }
+namespace ml { class DrCalcViewWork; }
+namespace grlib { class CGLibVtxInstans; }
 
 namespace ml {
 class DrMdoCtlMpfWork;
@@ -66,13 +68,25 @@ struct _wkMpfAlphaObjChunk {
     _wkMpfAlphaObjList m_list;
 };
 
-// One MPF object's list state, 0x40 bytes (the type and field names are not the original's).
-struct _wkMpfObjWork {
+// One MPF object's list state, 0x40 bytes: the createAuto*/createPos*RenderList symbols name the type (their first
+// parameter; createAutoList/createPosList pass &m_pObjSelect[idx]). The field names are not the original's.
+struct _wkMpfObjSelect {
     unsigned char pad_0[0x20];
     unsigned short m_objChk;  // 0x20, returned by getObjChk; a failed allocation takes one off
-    unsigned char pad_22[0xE];
+    // 0x22, bit 0: createAutoList/createPosList build the model render list, else the billboard one
+    unsigned char m_selFlags;
+    unsigned char pad_23[0xD];
     _wkMpfObjBuff* m_pLastBuff;  // 0x30
     _wkMpfAlphaObjBuff* m_pLastAlphaBuff;  // 0x38
+};
+
+// One MPF object's data, 0x18 bytes (DrMdoCtlMpfWork::m_pObjData is an array of them). Only the field
+// createAutoList/createPosList read is known; the field names are not the original's.
+struct MdsMpfObjData {
+    unsigned short pad_0;
+    // 0x2: in hundredths; createAutoList/createPosList hand the render list builders m_range * 0.01f
+    unsigned short m_range;
+    unsigned char pad_4[0x14];
 };
 
 // Placed at the start of DrResMdoSeamWrkMpf's work memory (0x48 bytes, no vtable).
@@ -97,8 +111,23 @@ public:
     void auto_alpha_countSet(_wkMpfAlphaObjBuff* buff, const _MPFWorkAutoInf* inf, int idx);
     void auto_alpha_changeSet(_wkMpfAlphaObjBuff* buff, const _MPFWorkAutoInf* inf, int idx);
 
-    unsigned char pad_0[0x20];
-    _wkMpfObjWork* m_pObjWork;  // 0x20
+    void createAutoList(int idx, DrCalcViewWork* view, grlib::CGLibVtxInstans* inst);
+    void createPosList(int idx, grlib::CGLibVtxInstans* inst);
+    void createPosMdlRenderList(_wkMpfObjSelect* sel, grlib::CGLibVtxInstans* inst, float range, _wkMpfObjBuff* buff,
+                                _wkMpfAlphaObjBuff* alphaBuff);
+    void createPosBillRenderList(_wkMpfObjSelect* sel, grlib::CGLibVtxInstans* inst, float range, _wkMpfObjBuff* buff,
+                                 _wkMpfAlphaObjBuff* alphaBuff);
+    void createAutoMdlRenderList(_wkMpfObjSelect* sel, DrCalcViewWork* view, grlib::CGLibVtxInstans* inst, float range,
+                                 _wkMpfObjBuff* buff, _wkMpfAlphaObjBuff* alphaBuff);
+    void createAutoBillRenderList(_wkMpfObjSelect* sel, DrCalcViewWork* view, grlib::CGLibVtxInstans* inst, float range,
+                                  _wkMpfObjBuff* buff, _wkMpfAlphaObjBuff* alphaBuff);
+
+    unsigned char pad_0[0x10];
+    // 0x10/0x18, by object: the render list chunks createAutoList/createPosList hand the builders (the names are
+    // not the original's)
+    _wkMpfObjBuff** m_ppObjBuff;
+    _wkMpfAlphaObjBuff** m_ppAlphaObjBuff;
+    _wkMpfObjSelect* m_pObjWork;  // 0x20
     unsigned char pad_28[0x8];
     DrMdoMpfMan* m_pMpfMan;  // 0x30
     const MdsMpfObjData* m_pObjData;  // 0x38, set by changeMemWork

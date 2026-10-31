@@ -16,7 +16,9 @@ public:
 
     const char* m_name;  // 0x00, set by setName
     mm::Col4 m_color;  // 0x08, r/g/b set by DrMdoAnim::animcall_MatColorR/G/B, a by setAlpha; operator= copies it as one
-    unsigned int pad_18;  // 0x18, operator= copies it
+    // 0x18, operator= copies it; DrMdoSetup::unimate_alphaInfo writes it as the alpha info's second value (the
+    // name is not the original's)
+    float m_alphaParam;
     unsigned int pad_1C;  // 0x1C, operator= copies it
 };
 }  // namespace ml

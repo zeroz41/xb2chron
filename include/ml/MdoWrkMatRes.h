@@ -123,6 +123,12 @@ struct MdoWrkSamplerTbl {
     unsigned char pad_0[0x30];
     grlib::CGLibSampler* m_pSampler;  // 0x30, by MdsMatTexEntry::m_samplerMip/m_samplerNoMip
 };
+// One material's avatar map entry, 4 bytes: three indices into DrMdoMat::m_pAvatarColor (DrMdoSetup::
+// unimate_AvatarMapWrk). The type and field names are not the original's.
+struct MdsMatAvatarMap {
+    unsigned char m_colorIdx[3];
+    unsigned char pad_3;
+};
 struct MdoWrkMatRes {
     const MdsMatTexEntry* getTexEntries() const {
         return reinterpret_cast<const MdsMatTexEntry*>(
@@ -138,7 +144,10 @@ struct MdoWrkMatRes {
     unsigned char pad_34[0x4];
     float* m_pMatVal;  // 0x38, the material values the callbacks read
     const MdsMatCallBackTbl* m_pCallBackTbl;  // 0x40, read by DrMdoMat::updateMatCallBack
-    unsigned char pad_48[0x48];
+    // 0x48, by MdsMatInfoHeader::m_avatarMapIdx: DrMdoSetup::unimate_AvatarMapWrk's colour indices (the name is not
+    // the original's)
+    const MdsMatAvatarMap* m_pAvatarMap;
+    unsigned char pad_50[0x40];
     // 0x90, per-material blocks: DrMdoSetup::uniformBlock_Material binds the material's (the name is not the original's)
     grlib::CGLibUniformArray<grlib::CGLibDblUniformBlock>* m_pMatUniformArray;
     unsigned char pad_98[0x8];

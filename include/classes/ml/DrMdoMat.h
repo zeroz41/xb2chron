@@ -2,6 +2,7 @@
 #define CLASSES_ML_DRMDOMAT_H
 
 #include "classes/ml/DrMdlBase.h"
+#include "mm/Col3.h"
 #include "mm/Mat44.h"
 #include "mm/Vec3.h"
 
@@ -23,7 +24,7 @@ public:
         m_alpha[0] = 1.0f;
         m_alpha[1] = 1.0f;
         // the original zeroes 0x40..0x70 after the identity copy (the body, not the initializer list)
-        pad_40 = nullptr;
+        m_pAvatarColor = nullptr;
         pad_48 = nullptr;
         m_pResData = nullptr;
         m_pSmlShadowObj = nullptr;
@@ -90,7 +91,9 @@ public:
     // 0x38, the uniformBlock_ callbacks ask it for the location of their global parameter (the name is not the
     // original's)
     DrShdMdoDecExtTbl* m_pDecExtTbl;
-    void* pad_40;  // zeroed by the constructor
+    // 0x40, zeroed by the constructor: the colours DrMdoSetup::unimate_AvatarMapWrk picks by MdsMatAvatarMap's
+    // indices (the name and the element type are not the original's)
+    mm::Col3* m_pAvatarColor;
     void* pad_48;
     // 0x50: the resource data DrMdoCtlDammy's constructor is given (the name is not the original's)
     const void* m_pResData;
