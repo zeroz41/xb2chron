@@ -48,7 +48,8 @@ void GROUP_BLADE_DATA::InitializeCoolTime(float ratio) {
 
 int GROUP_BLADE_DATA::GetTrustRank() const {
     unsigned int blade = m_blade;
-    if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->pad_bit35 && m_isPlayer) {
+    // the original tests bit 3 of the flag unit (tbz w, #3), the bit ButtonChallenge sets as m_challengeAnySuccess
+    if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_challengeAnySuccess && m_isPlayer) {
         blade = Utility::fn_7100010D3C(blade);
     }
     return Utility::GetTrustRank(blade);
