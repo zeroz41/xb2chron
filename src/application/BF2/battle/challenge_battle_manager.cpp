@@ -35,6 +35,10 @@ void TUnk_B3A9C8::fn_710002575C() {
     pad_1c = 2.75f;
 }
 
+void fn_7100025908(const fw::UpdateInfo& info) {
+    TUnk_B3A9C8::get()->fn_7100025920(info);
+}
+
 bool TUnk_B3A9C8::fn_7100026A48() const {
     return pad_26 > 149;
 }
@@ -117,6 +121,10 @@ bool TUnk_B3A9C8::fn_7100026EB0() const {
         return true;
     }
     return pad_29 == 3;
+}
+
+bool TUnk_B3A9C8::fn_7100026ED0() const {
+    return gf::GfGameManager::fn_71002AC5D8()->m_value4 - pad_10 <= 300.0f;
 }
 
 }  // namespace btl
