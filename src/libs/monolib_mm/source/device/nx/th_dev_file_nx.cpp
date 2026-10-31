@@ -66,6 +66,8 @@
 #include "classes/ml/CacheDraw/DRCAPSULE.h"
 #include "classes/ml/CacheDraw/DRSQUARE.h"
 #include "classes/ml/CacheDraw.h"
+#include "classes/ml/DebDrawCmd.h"
+#include "grlib/CGLibVtxVertex.h"
 #include "mm/Col4.h"
 #include "classes/ml/CacheDraw/DFONT32.h"
 #include "classes/ml/CacheDraw/DFONT64.h"
@@ -191,6 +193,8 @@ namespace ml {
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EC7360). The debug draw the statics
 // work on; every user (ml/CacheDraw's code too) reaches it without the GOT, so it is file-static
 static DebDraw* s_debDraw;
+// Proposed name, not the original's (lbl_7100EC7368): the vertex buffer ~DebDrawCmd hands to thDestroy on the render thread
+static grlib::CGLibVtxVertex* s_destroyVtx;
 
 // commands go to the cache when a debug draw exists and the caller is not the render thread, or the cache is used
 // there too (1.0.0 has it out of line; 3.0.1 inlines every use)
@@ -1100,7 +1104,7 @@ static mm::Vec3 s_cylinderT[16];
 static mm::Vec3 s_cylinderB[16];
 
 DebDraw::DebDraw()
-    : m_flags(0), pad_01c(1.0f), pad_020(-1), pad_024(0), pad_028(0), pad_140(0), m_lineWidth(1), pad_148(nullptr),
+    : m_flags(0), pad_01c(1.0f), pad_020(-1), pad_024(0), pad_028(0), pad_140(0), m_lineWidth(1), pad_148(0), pad_14c(0.0f),
       pad_150(0), m_zComp(true), m_zWrite(true), pad_170(-1), pad_178(nullptr), pad_1f8(-1), pad_200(0),
       pad_208(nullptr), m_cache(nullptr), m_cacheOnRender(false) {
     s_debDraw = this;
@@ -1170,6 +1174,136 @@ void DebDraw::setOrtho() {
         m_flags &= ~4;
     }
     m_flags &= ~8;
+}
+
+unsigned int DebDrawCmd::thInitialize(void* p, void*) {
+    DebDrawCmd* self = static_cast<DebDrawCmd*>(p);
+    self->m_size = 0xC00000;
+    self->m_vtx = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) grlib::CGLibVtxVertex();
+    self->m_vtx->createVertexBuff(self->m_size, sizeof(VERTEX));
+    self->pad_2f0 = false;
+    return 0;
+}
+
+DebDrawCmd::~DebDrawCmd() {
+    s_destroyVtx = m_vtx;
+    WorkCpu::runThread(WorkCpu::getRenderCPUID(), thDestroy, &s_destroyVtx, nullptr, nullptr, false,
+                       static_cast<WKCPU_SYNC>(0));
+}
+
+unsigned int DebDrawCmd::thDestroy(void* p, void*) {
+    grlib::CGLibVtxVertex** vtx = static_cast<grlib::CGLibVtxVertex**>(p);
+    if (*vtx != nullptr) {
+        delete *vtx;
+        *vtx = nullptr;
+    }
+    return 0;
+}
+
+void DebDrawCmd::fastSetup() {
+    pad_156 = false;
+    if (pad_2f0) {
+        pad_2d8 = m_size / 2;
+        m_ofs = pad_2d8;
+        pad_2f0 = false;
+    } else {
+        pad_2d8 = 0;
+        m_ofs = pad_2d8;
+        pad_2f0 = true;
+    }
+}
+
+void DebDrawCmd::add(const mm::Vec3& p0, const mm::Vec3& p1) {
+    if (m_cache->add(p0, p1)) {
+        return;
+    }
+    mm::Vec3 tmp0;
+    mm::Vec3 tmp1;
+    const mm::Vec3* q0 = &p0;
+    const mm::Vec3* q1 = &p1;
+    if (m_flags & 8) {
+        transform(p0, tmp0);
+        q0 = &tmp0;
+        transform(p1, tmp1);
+        q1 = &tmp1;
+    }
+    if (!(m_flags & 2)) {
+        if (m_flags & 0x20000) {
+            putVtx(*q0, m_col);
+            putVtx(*q1, m_col);
+        }
+        pad_140 += 2;
+    }
+}
+
+void DebDrawCmd::add(const mm::Pnt<int>& p0, const mm::Pnt<int>& p1) {
+    putVtx(p0.x, p0.y, pad_14c, m_col);
+    putVtx(p1.x, p1.y, pad_14c, m_col);
+    pad_140 += 2;
+}
+
+void DebDrawCmd::add(int x0, int y0, int x1, int y1) {
+    putVtx(x0, y0, pad_14c, m_col);
+    putVtx(x1, y1, pad_14c, m_col);
+    pad_140 += 2;
+}
+
+void DebDrawCmd::add(const mm::Vec3& p) {
+    if (m_cache->add(p)) {
+        return;
+    }
+    mm::Vec3 tmp;
+    const mm::Vec3* q = transform(&p, tmp);
+    putVtx(*q, m_col);
+    pad_140++;
+}
+
+void DebDrawCmd::add(const mm::Pnt<int>& p) {
+    putVtx(p.x, p.y, pad_14c, m_col);
+    pad_140++;
+}
+
+void DebDrawCmd::add(float x, float y, float z) {
+    add(mm::Vec3(x, y, z));
+}
+
+void DebDrawCmd::add(int x, int y, int z) {
+    putVtx(x, y, z, m_col);
+    pad_140++;
+}
+
+void DebDrawCmd::add(int x, int y) {
+    putVtx(x, y, pad_14c, m_col);
+    pad_140++;
+}
+
+void DebDrawCmd::add(const mm::Vec3& p, const mm::Col4& col) {
+    mm::Vec3 tmp;
+    const mm::Vec3* q = transform(&p, tmp);
+    putVtx(*q, col);
+    pad_140++;
+}
+
+void DebDrawCmd::add(const mm::Vec3& p, const mm::Col3& col) {
+    mm::Vec3 tmp;
+    const mm::Vec3* q = transform(&p, tmp);
+    putVtx(*q, mm::Col4(col.r, col.g, col.b, m_col.a));
+    pad_140++;
+}
+
+void DebDrawCmd::add(int x, int y, const mm::Col4& col) {
+    putVtx(x, y, pad_14c, col);
+    pad_140++;
+}
+
+void DebDrawCmd::add(int x, int y, const mm::Col3& col) {
+    putVtx(x, y, pad_14c, mm::Col4(col.r, col.g, col.b, m_col.a));
+    pad_140++;
+}
+
+void DebDrawCmd::add(const mm::Vec3& p, const mm::Vec3& uv, const mm::Col4& col) {
+    putVtx(p, col, uv.x, uv.y);
+    pad_140++;
 }
 
 void FontLayer::fontStyle(FONT_STYLE style) {
@@ -1496,6 +1630,20 @@ void DevGraphNx::fontDrawSys(short x, short y, float scaleH, float scaleV, const
 void DevGraphNx::wkUpdate() {}
 
 void DevGraphNx::wkRender() {}
+
+bool DevGraphNx::wkStandbyLogin() {
+    if (!DevGraph::wkStandbyLogin()) {
+        return false;
+    }
+    if (!WorkRoot::isWinDestroy()) {
+        WorkCpu::runThread(WorkCpu::getRenderCPUID(), thInitialize, this, nullptr, nullptr, false,
+                           static_cast<WKCPU_SYNC>(0));
+        DebDrawCmd* cmd = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) DebDrawCmd();
+        WorkCpu::runThread(WorkCpu::getRenderCPUID(), DebDrawCmd::thInitialize, cmd, nullptr, nullptr, false,
+                           static_cast<WKCPU_SYNC>(0));
+    }
+    return true;
+}
 
 unsigned int DevGraphNx::thInitialize(void*, void*) {
     return initGL();

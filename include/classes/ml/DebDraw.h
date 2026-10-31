@@ -109,10 +109,12 @@ public:
     unsigned char pad_100[0x40];
     int pad_140;
     unsigned int m_lineWidth;             // 0x144 setLineWidth's (the name is not the original's)
-    void* pad_148;
+    int pad_148;
+    float pad_14c;                        // 0x14C DebDrawCmd's 2D adds take z from it
     int pad_150;
     bool m_zComp;                         // 0x154 true from the constructor, setZComp's (the name is not the original's)
     bool m_zWrite;                        // 0x155 true from the constructor, setZWrite's (the name is not the original's)
+    bool pad_156;                         // DebDrawCmd::fastSetup clears it
     mm::Vec3 pad_160;                     // zero from the constructor
     int pad_170;                          // -1 from the constructor
     void* pad_178;
