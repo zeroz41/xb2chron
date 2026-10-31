@@ -18,6 +18,8 @@
 #include "gf/GfObjInfo.h"
 #include "classes/gf/GfObjManager.h"
 #include "classes/gf/GfObj.h"
+#include "gf/GfItemUtil.h"
+#include "gf/GfPlayFactory.h"
 
 namespace gf {
 namespace {
@@ -134,6 +136,30 @@ GfDropitemParams::~GfDropitemParams() {
     m_params.destroy();
 }
 
+GfDropitemEmitter::GfDropitemEmitter(const CreateInfo* info) : m_isEmitted(false), m_timer(0.0f), m_endTime(0.0f) {
+    if (info != nullptr) {
+        create(*info);
+    }
+}
+
+void GfDropitemEmitter::create(const CreateInfo& info) {
+    dispose();
+    m_info = info;
+    m_seq = &GfDropitemEmitter::seqWaitBeginDrop;
+}
+
+void GfDropitemEmitter::dispose() {
+    m_timer = 0.0f;
+    m_endTime = 0.0f;
+    m_isEmitted = false;
+    // the original keeps the defaults in a stack copy and copies them with memcpy: the self-copy test (folded
+    // later) keeps the copy from being split into direct stores, as in the original
+    const CreateInfo info;
+    if (&m_info != &info) {
+        m_info = info;
+    }
+}
+
 void GfDropitemEmitter::update(float dt) {
     if (m_info.m_items != nullptr && m_info.m_itemCount > 0) {
         m_timer += dt;
@@ -190,6 +216,47 @@ bool GfFobjDropitem::applyGetItem(GF_OBJ_HANDLE* item, GF_OBJ_HANDLE* getter) {
     }
     dropitem->applyGetItem(getter);
     return true;
+}
+
+GF_OBJ_HANDLE* GfFobjDropitem::emitDropitem(unsigned char paramId, int itemId, float value) {
+    unsigned char* fp = GfFobjManager::sys() != nullptr ? GfFobjManager::sys()->m_dropitemListFP : nullptr;
+    GfFobjManager::getDropitemParams();
+    const unsigned int bdats[] = {0x93, 0x94, 0x95, 0x97, 0x98, 0x9B, 0x9C, 0xA0, 0xA1, 0xA2, 0x9A, 0x9D};
+    unsigned int itemBdat = 0x1E1;
+    const unsigned int* bdatIt = bdats;
+    for (unsigned long i = 0; i < sizeof(bdats) / sizeof(bdats[0]); i++) {
+        unsigned int bdat = *bdatIt++;
+        unsigned char* bdatFp = GfDataBdat::getFP(bdat);
+        if (bdatFp == nullptr) {
+            continue;
+        }
+        int top = Bdat::getIdTop(bdatFp);
+        int end = top + Bdat::getIdCount(bdatFp);
+        if (top <= itemId && itemId < end) {
+            itemBdat = bdat;
+            if (bdat == 0x9C || bdat == 0x9D) {
+                if (GfItemUtil::isEnableAddItemBox(itemId, 1) && GfItemUtil::addItemBox(itemId, 1)) {
+                    GfPlayFactory::createMenuPrecious(itemId, true);
+                }
+                return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+            }
+            break;
+        }
+    }
+    int resId = getResBdatIdFromItemId(itemId);
+    GfInitParamFobj param;
+    param.m_isDropItem = true;
+    param.pad_90 = 2;
+    param.m_objId = resId;
+    param.pad_18 = &fp;
+    param.pad_94 = paramId;
+    GF_OBJ_HANDLE* handle = GfObjFactory::createFieldObj(param);
+    GfObjSetupFieldObj* setup = getFieldObjSetup(handle);
+    setup->m_itemBdat = itemBdat;
+    setup->m_itemId = itemId;
+    setup->m_fobjId = resId;
+    setup->pad_8c = value;
+    return handle;
 }
 
 GF_OBJ_HANDLE* GfFobjDropitem::fn_7100287E30(unsigned char paramId, unsigned int amount) {

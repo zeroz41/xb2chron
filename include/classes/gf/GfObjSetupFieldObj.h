@@ -31,7 +31,8 @@ public:
     // the field object row (GfInitParamFobj's m_objId); GfFobjDropitem::initialize reads its "dropSE" (the name is
     // not the original's)
     unsigned int m_fobjId;
-    unsigned char pad_8c[0x90 - 0x8C];
+    // GfFobjDropitem::emitDropitem stores its float argument (the value of the drop list entry) here
+    float pad_8c;
     bool pad_90;
 };
 }  // namespace gf

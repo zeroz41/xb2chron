@@ -20,6 +20,11 @@ public:
     static bool applyGetItem(GF_OBJ_HANDLE* item, GF_OBJ_HANDLE* getter);
     // the drop resource row of an item id: which of the item tables holds it decides, three of them read it from the
     // row's "Category" or "DropRsc"; -1 when no table holds it
+    // makes the field object of an item id (its row from getResBdatIdFromItemId; paramId picks its "paramid<n>"
+    // column) and gives its setup the item's table and id and the float emitDropitems takes from its drop list
+    // (setup 0x8c); an item of tables 0x9C/0x9D goes to the item box at once (createMenuPrecious) and returns -1
+    // (the argument names are not the original's)
+    static GF_OBJ_HANDLE* emitDropitem(unsigned char paramId, int itemId, float value);
     // makes a field object dropping gold (row 10 to 14 of the field object table by the amount against the
     // thresholds of table 0x7B rows 8 to 11) and gives its setup the amount; the object's handle
     static GF_OBJ_HANDLE* emitDropgold(unsigned char paramId, unsigned int gold);
