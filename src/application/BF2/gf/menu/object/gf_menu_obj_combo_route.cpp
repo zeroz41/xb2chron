@@ -7,6 +7,9 @@
 #include "classes/gf/GfMenuElementComboAdapter.h"
 #include "classes/ui/UIEventManager.h"
 #include "classes/ui/UIObjectAcc.h"
+#include "classes/ui/UIManager.h"
+#include "classes/gf/GfMenuReference.h"
+#include "classes/gf/TUnk_B61408.h"
 
 namespace gf {
 
@@ -152,6 +155,45 @@ void GfMenuObjComboRoute::setupComboRoute(ui::UIObjectAcc& acc) {
     }
 }
 
-// open, close and disp are not here yet: see the report
+void GfMenuObjComboRoute::open() {
+    if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuReference::fn_7100368418(5)) {
+        TUnk_B61408::fn_71003DC3AC();
+        return;
+    }
+    unsigned int handle = GfMenuObject::getAttachedObject(0x5E);
+    if (ui::UIObjectAcc(handle).m_object != nullptr) {
+        if (!ui::UIObjectAcc(handle).isTerm()) {
+            ui::EventData event;
+            event.m_type = 0x21;
+            ui::UIManager::get()->requestObjectEvent(handle, event, 0.0f);
+        }
+    }
+}
+
+void GfMenuObjComboRoute::close() {
+    if (GfMenuObjUtil::fn_710048FD30(3)) {
+        TUnk_B61408::fn_71003DC440();
+    }
+    unsigned int handle = GfMenuObject::getAttachedObject(0x5E);
+    if (ui::UIObjectAcc(handle).m_object != nullptr) {
+        if (!ui::UIObjectAcc(handle).isTerm()) {
+            ui::EventData event;
+            event.m_type = 0x22;
+            ui::UIManager::get()->requestObjectEvent(handle, event, 0.0f);
+        }
+    }
+}
+
+void GfMenuObjComboRoute::disp(bool disp) {
+    if (GfMenuObjUtil::fn_710048FD30(3)) {
+        TUnk_B61408::fn_71003DC4D4(disp);
+    }
+    unsigned int handle = GfMenuObject::getAttachedObject(0x5E);
+    if (ui::UIObjectAcc(handle).m_object != nullptr) {
+        if (!ui::UIObjectAcc(handle).isTerm()) {
+            ui::UIObjectAcc(handle).setDisp(disp);
+        }
+    }
+}
 
 }  // namespace gf
