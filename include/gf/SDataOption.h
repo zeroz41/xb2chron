@@ -96,21 +96,23 @@ public:
     // 0x3A15B as made, as SDataSystem's (the name is not the original's)
     unsigned int m_version;
     // 0x4-0x4C: cleared as made, all but 0xB (made 1); what they hold is not known (the names are not the
-    // original's)
-    unsigned int m_optionWord;
-    unsigned short m_optionHalf;
-    unsigned char m_optionByte;
-    bool m_optionOn;
+    // original's). 0x4-0xB are eight byte settings (0xB made 1): GfMenuObjOption::convLevelListToOptionData
+    // stores each with one strb and GfMenuObjOption::MainListener compares them in a loop
+    unsigned char m_settings[8];
     unsigned char m_optionBlock[0x40];
     SSoundUiOption m_soundUi;  // 0x4C (the name is not the original's)
 };
 
 inline void SDataOption::clear() {
     m_version = 0x3A15B;
-    m_optionByte = 0;
-    m_optionHalf = 0;
-    m_optionWord = 0;
-    m_optionOn = true;
+    m_settings[6] = 0;
+    m_settings[4] = 0;
+    m_settings[5] = 0;
+    m_settings[0] = 0;
+    m_settings[1] = 0;
+    m_settings[2] = 0;
+    m_settings[3] = 0;
+    m_settings[7] = true;
     memset(m_optionBlock, 0, sizeof(m_optionBlock));
     m_soundUi.clear();
 }

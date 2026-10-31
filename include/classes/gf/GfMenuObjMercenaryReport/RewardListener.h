@@ -2,15 +2,20 @@
 #define CLASSES_GF_GFMENUOBJMERCENARYREPORT_REWARDLISTENER_H
 
 #include "classes/gf/GfMenuObjMercenaryReport.h"
+#include "classes/ui/UIObjectListener.h"
 
-namespace ui { class EventData; }
+namespace ui { struct EventData; }
 
 namespace gf {
 // table 0x7100B63570
-class GfMenuObjMercenaryReport::RewardListener {
+class GfMenuObjMercenaryReport::RewardListener : public ::ui::UIObjectListener {
 public:
-    virtual ~RewardListener();  // slot 0
+    // initialize news it (0x28 bytes): its code zeroes 0xC-0x1B after storing its table, then stores the owner
+    RewardListener(GfMenuObjMercenaryReport* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~RewardListener() {}  // slot 0: weak in the original (its D0 is in the unit's tail)
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
+    unsigned char pad_0C[0x10];
+    GfMenuObjMercenaryReport* m_owner;  // what initialize makes it for
 };
 }  // namespace gf
 

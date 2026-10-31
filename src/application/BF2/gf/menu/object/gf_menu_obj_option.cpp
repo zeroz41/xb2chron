@@ -101,6 +101,52 @@ void GfMenuObjOption::updateInfo(unsigned int index) {
     }
 }
 
+void GfMenuObjOption::MainListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    if (event.m_type == 2) {
+        SDataOption* save = GfGameUtilSaveData::getValidOptionData();
+        if (m_owner->m_category != -1) {
+            convLevelListToOptionData(m_owner->m_category, m_owner->m_levels, m_owner->m_option);
+        }
+        float scale = GfMenuObjUtil::fn_710048FD30(3) ? 0.9375f : 0.875f;
+        m_owner->m_option.m_soundUi.m_volume[0] = scale * m_owner->m_option.m_soundUi.m_volume[1];
+        m_owner->m_option.m_soundUi.m_volume[3] = m_owner->m_option.m_soundUi.m_volume[0];
+        m_owner->m_option.m_soundUi.m_volume[4] = m_owner->m_option.m_soundUi.m_volume[2];
+        m_owner->m_option.m_soundUi.m_volume[9] = m_owner->m_option.m_soundUi.m_volume[8];
+        m_owner->m_option.m_soundUi.m_volume[6] = m_owner->m_option.m_soundUi.m_volume[5];
+        m_owner->m_option.m_soundUi.m_volume[12] = m_owner->m_option.m_soundUi.m_volume[11];
+        const SDataOption& option = m_owner->m_option;
+        bool dirty = false;
+        for (int i = 0; i < 8; i++) {
+            if (save->m_settings[i] != option.m_settings[i]) {
+                dirty = true;
+                break;
+            }
+        }
+        if (!dirty) {
+            dirty = save->m_soundUi.isDirty(option.m_soundUi);
+        }
+        m_owner->m_option.fn_71002EEB0C();
+        unsigned int type = 2;
+        if (dirty) {
+            *save = m_owner->m_option;
+            GfGameUtilSaveData::flushOptionSaveData();
+            m_owner->m_seq.clear();
+            m_owner->m_seq.addJob(&GfMenuObjOption::seqSave);
+            m_owner->m_seq.addJob(&GfMenuObjOption::seqSaveWait);
+            type = 0;
+        }
+        GfMenuObjUtil::setCommonFadeOut(acc.m_handle, type, 0);
+    } else if (event.m_type == 3) {
+        if (event.m_param0 == 2) {
+            GfMenuObject::termCallContext(acc.m_handle);
+            acc.setTerm();
+        }
+    } else {
+        UIObjectListener::reciveEvent(event, handle);
+    }
+}
+
 bool GfMenuObjOption::seqSave() {
     ui::UIObjectAcc acc(m_handle, "LAY_submenu");
     GfMenuObject::disableInput(acc.m_handle);

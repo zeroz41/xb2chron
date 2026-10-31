@@ -8,6 +8,7 @@
 #include "classes/gf/GfMenuFullScreen.h"
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfMenuObjMainMenu2/CloseListener.h"
+#include "classes/gf/GfMenuObjMainMenu2/IndexListener.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/gf/GfMenuSoundManager.h"
 #include "classes/ui/UIObjectAcc.h"
@@ -93,6 +94,53 @@ void GfMenuObjMainMenu2::setSystemKeyEnable(bool enable) {
         event.m_param0 = enable;
         ui::UIManager::sys()->requestObjectEvent(acc.m_handle, event, 0.0f);
         s_cancelEnable = enable;
+    }
+}
+
+void GfMenuObjMainMenu2::IndexListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    if (event.m_type == 1) {
+        acc.searchChild("TXT_index");
+        GfMenuObjUtil::setChildDisp(acc.m_handle, "LAY_index", false);
+        acc.searchChild("TXT_index_shadow");
+        GfMenuObjUtil::setChildDisp(acc.m_handle, "LAY_index", false);
+        ui::UIObjectAcc icon(acc.searchChild("IMG_index_icon"));
+        icon.setImageIndex(0);
+        acc.setDisp(true);
+    } else if (event.m_type == 0x102) {
+        unsigned int index = event.m_param0;
+        ui::UIObjectAcc title(acc.searchChild("LAY_title"));
+        if (index != 0) {
+            setContentsSubText(acc.searchChild("TXT_index"), index, acc.m_handle);
+            setContentsSubText(acc.searchChild("TXT_index_shadow"), index, acc.m_handle);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 1;
+            param.m_curve = 1;
+            param.m_time = 0.3f;
+            GfMenuObjUtil::startCtrl(title.m_handle, param, nullptr);
+            title.setDisp(true);
+        } else {
+            title.setDisp(false);
+        }
+        if (GfMenuObjUtil::fn_710048FD30(3)) {
+            s_index = index;
+        }
+    } else if (event.m_type == 0x101) {
+        int index = event.m_param0;
+        unsigned char* fp = GfDataBdat::getFP(GfMenuObjUtil::fn_710048FD30(3) ? 0x180 : 0x17F);
+        unsigned int id = m_owner->m_contentsIds[index];
+        unsigned int text = (unsigned short)Bdat::getVal(fp, "subTitle", id);
+        if (handle != 0) {
+            ui::EventData sub;
+            sub.m_type = 0x102;
+            sub.m_param0 = text;
+            ui::UIManager::sys()->requestObjectEvent(handle, sub, 0.0f);
+        }
+        unsigned int image = (unsigned short)Bdat::getVal(fp, "titleIcon", id);
+        ui::UIObjectAcc icon(acc.searchChild("IMG_index_icon"));
+        icon.setImageIndex(image);
+    } else {
+        UIObjectListener::reciveEvent(event, handle);
     }
 }
 

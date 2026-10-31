@@ -39,6 +39,9 @@ public:
     static void disableCharChange();
     static void cancelEnableMainMenu(bool enable);
     static void setSubIndexText(unsigned int text);
+    // a contents entry's sub text (IndexListener's event 0x102 passes TXT_index and TXT_index_shadow, the index and
+    // its own object; the parameter names are not the original's)
+    static void setContentsSubText(unsigned int handle, unsigned int index, unsigned int owner);
     static bool isOpenCharMenu();
     static void setSubLayer(unsigned int layer);
     static void setGuideText(unsigned int text);
