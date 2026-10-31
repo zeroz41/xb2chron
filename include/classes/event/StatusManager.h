@@ -25,6 +25,8 @@ public:
     StatusManager();
     virtual ~StatusManager();  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
+    // the symbol _ZN5event13StatusManager14changeFromBdatEj (SeqManager::start_change::update calls it; false: wait)
+    bool changeFromBdat(unsigned int id);
     // 1.0.0's init() (0x71000F69B8): clear(), then GfGameEvent::setCancelFlag(false)
     void init();
     // 1.0.0's clear() (0x71000F69D0): empties the list, then zeroes the flags

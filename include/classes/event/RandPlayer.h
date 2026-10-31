@@ -50,6 +50,8 @@ public:
         }
     }
     bool isPlaying() const { return m_flags & 1; }
+    // the message file Reply::update hands TextManager::reply ("fld_randomtalk", symbol _ZN5event10RandPlayer6MSBDATE)
+    static const char* MSBDAT;
     Warp m_warp;  // 0x8 (the name is not the original's)
     Wait m_wait;  // 0x10 (the name is not the original's)
     Reply m_reply;  // 0x18 (the name is not the original's)

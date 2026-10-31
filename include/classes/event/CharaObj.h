@@ -21,6 +21,8 @@
 #include "classes/event/CharaSetPos.h"
 #include "classes/event/CharaSetRot.h"
 #include "classes/event/CharaSetTar.h"
+#include "classes/event/CharaTurnRot.h"
+#include "classes/event/CharaLinerRot.h"
 #include "mm/Vec3.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
@@ -84,7 +86,12 @@ public:
     CharaSetPos m_setPos;  // 0x8
     // the command setRot queues (CharaObj's constructor builds it); the name is not the original's
     CharaSetRot m_setRot;  // 0x18
-    unsigned char pad_28[0x508];
+    unsigned char pad_28[0x2e8];
+    // the turn and liner rotation commands (RandPlayer::Reply::update tests whether either is queued); the names are
+    // not the original's
+    CharaTurnRot m_turnRot;  // 0x310
+    CharaLinerRot m_linerRot;  // 0x330
+    unsigned char pad_338[0x1f8];
     // the command setTar queues in m_cmdQueue2 (ScriptCharaTgt::doit tests whether it is queued); the name is not
     // the original's
     CharaSetTar m_setTar;  // 0x530
@@ -133,6 +140,9 @@ public:
     unsigned char pad_2fc0[0x10];
     // the rotation setRot stores before queueing its command; the name is not the original's
     mm::Vec3 m_rot;  // 0x2fd0
+    // the rotation a queued turn or liner rotation heads for (RandPlayer::Reply::update reads it instead of m_rot while
+    // one is queued); the name is not the original's
+    mm::Vec3 m_rotGoal;  // 0x2fe0
 };
 }  // namespace event
 

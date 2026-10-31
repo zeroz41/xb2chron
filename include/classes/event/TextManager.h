@@ -7,7 +7,7 @@
 #include "classes/event/TextCaption.h"
 #include "classes/event/TextWindow.h"
 
-namespace event { enum MSG_TYPE : int; }
+namespace event { enum MSG_TYPE : int; class CharaObj; }
 
 namespace event {
 // table 0x7100B3D650; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::TextManager>
@@ -21,6 +21,8 @@ public:
     void clear();
     void update();
     void render();
+    // the symbol _ZN5event11TextManager5replyEPKciPNS_8CharaObjE (RandPlayer::Reply::update calls it)
+    void reply(const char* msb, int id, CharaObj* chara);
     // 1.0.0's TextManager::init (0x71000F3B6C); 3.0.1 inlines it into OnEventProc
     void init() {
         m_flags = 0;

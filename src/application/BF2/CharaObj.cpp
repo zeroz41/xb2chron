@@ -3567,6 +3567,20 @@ bool SeqManager::end::update(const ICmd::Param& param) {
     return true;
 }
 
+bool SeqManager::end_env_seam::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        EnvManager* env = mm::mtl::Singleton<EnvManager>::getPtr();
+        if (env->m_event.pad_1c == 1) {
+            env->m_event.load();
+            env->m_event.pad_18 = 0;
+            env->m_event.pad_1c = 0;
+        }
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        manager->m_seqName = "end envseam";
+    }
+    return true;
+}
+
 bool SeqManager::end_fadein::update(const ICmd::Param& param) {
     if (param.m_frame <= 0) {
         SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
@@ -3579,6 +3593,34 @@ bool SeqManager::start_streaming1::update(const ICmd::Param& param) {
     if (param.m_frame <= 0) {
         SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
         manager->m_seqName = "start stream1";
+    }
+    return true;
+}
+
+bool SeqManager::start_change::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        manager->m_seqName = "start change";
+    }
+    if (param.m_param.val(1).getS32() != 0) {
+        if (!mm::mtl::Singleton<StatusManager>::getPtr()->changeFromBdat(param.m_param.val(1).getS32())) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool SeqManager::start_env_seam::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        unsigned int id = param.m_param.val(1).getS32();
+        EnvManager* env = mm::mtl::Singleton<EnvManager>::getPtr();
+        if (env->m_event.pad_1c == id) {
+            env->m_event.load();
+            env->m_event.pad_18 = 0;
+            env->m_event.pad_1c = 0;
+        }
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        manager->m_seqName = "start envseam";
     }
     return true;
 }
