@@ -43,7 +43,11 @@ public:
     unsigned char m_buttonChallengeRate1;
     unsigned char m_buttonChallengeRate2;
     unsigned char m_buttonChallengeRate3;
-    unsigned char pad_5F[0x54];
+    unsigned char pad_5F[0x51];
+    // while BattleGlobal's pad_bit30 is set, the distance every enemy's GfEnemyBattleProperty returns home at (the
+    // name is not the original's)
+    unsigned short m_returnHomeDistance;
+    unsigned char pad_B2[0x1];
     // Initialize reads these from the balance table's rows 0x62 and 0x63; GfComPropertyEnemy::isFieldDeadCondMatched
     // scales an enemy's chest height by them (act types 0 and 2) for the water depth it dies in (the names are
     // not the original's)

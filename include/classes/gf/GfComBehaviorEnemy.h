@@ -44,6 +44,8 @@ public:
     virtual void getGmkBattleLockInfo(int&, int&) const;  // slot 10
     // an animation callback of the field (empty; StateFieldHome's unit holds it)
     void callbackField(gf::GfComAsm* asmCom, const gf::CallBackCache& cache);
+    // an animation callback of the battle (empty; GfEnemyBattleProperty's unit holds it)
+    void callbackBattle(gf::GfComAsm* asmCom, const gf::CallBackCache& cache);
     // the gimmick its object is bound to, none when it is bound to none
     gmk::AGmkBase* getBindedGmkInst() const;
     // whether its CHR_EnArrange row's act type (SDataEnemy::m_actType) is 3 (flying) / 1 (in water)

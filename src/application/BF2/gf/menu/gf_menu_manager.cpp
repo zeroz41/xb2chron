@@ -732,7 +732,7 @@ void GfMenuManager::fn_710035A460() {
 }
 
 int GfMenuManager::fn_710035A6C4() {
-    return fn_71002229C0(4);
+    return TUnk_B4C840::fn_71002229C0(4);
 }
 
 bool GfMenuManager::fn_710035A6CC() {

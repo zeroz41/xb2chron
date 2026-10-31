@@ -14,7 +14,7 @@ inline void GfDataManager::initialize(const GfSetupParam& param) {
     GfDataBdat::build(param);
     GfGameFlag::build(param);
     GfDataStore::build(param);
-    fn_7100222908(param);
+    TUnk_B4C840::fn_7100222908(param);
     GfDataBlade::fn_71002550E8();
     GfEvent::addEventCallback(this);
     m_initialized = true;
@@ -26,7 +26,7 @@ inline void GfDataManager::finalize() {
     GfDataStore::destroy();
     GfGameFlag::destroy();
     GfDataBdat::destroy();
-    fn_710022299C();
+    TUnk_B4C840::fn_710022299C();
     m_initialized = false;
 }
 

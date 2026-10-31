@@ -438,7 +438,11 @@ public:
     bool m_controlCharacterDead : 1;
     // while set, IsGameOver holds without asking GfGameManager (the name is not the original's)
     bool m_gameOver : 1;
-    unsigned char : 7;
+    unsigned char : 5;
+    // while set, an enemy's GfEnemyBattleProperty::GetReturnHomeDistance and GetReturnHomeCharacterDistance give
+    // BtlSystemBalanceAccess's m_returnHomeDistance instead of its own
+    bool pad_bit30 : 1;
+    unsigned char : 1;
     unsigned char : 1;
     // Utility::AI_IsKillChild returns it (the name is not the original's)
     bool m_killChild : 1;

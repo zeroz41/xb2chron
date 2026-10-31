@@ -57,7 +57,7 @@ bool TUnk_B625A0::fn_710040C16C(unsigned int row, unsigned int arg) {
 
 bool TUnk_B625A0::fn_710040C3B4() {
     unsigned char* fp = GfDataBdat::getFP(0x10A);
-    if (fn_71002229C0(5) >= 0) {
+    if (TUnk_B4C840::fn_71002229C0(5) >= 0) {
         for (int i = 0; i < Bdat::getIdCount(fp); i++) {
             if (Bdat::getVal(fp, "releasecount", Bdat::getIdTop(fp) + i) & 0x80) {
                 return true;
