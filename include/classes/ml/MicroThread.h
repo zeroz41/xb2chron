@@ -13,6 +13,8 @@ namespace ml {
 class MicroThread : public ::mm::mtl::PtrSingleton< ::ml::MicroThread> {
 public:
     class MTHREAD;
+    // deletes the instance, if any (ProcDesktop::wkStandbyLogout calls it)
+    static void destroy();
     virtual ~MicroThread();  // slot 0
     virtual void destroyThread(ml::MicroThread::MTHREAD*) = 0;  // slot 2
     virtual void switchThreadMain(ml::MicroThread::MTHREAD*) = 0;  // slot 3

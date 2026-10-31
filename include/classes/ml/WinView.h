@@ -75,8 +75,14 @@ public:
     threadval<RENDER_INFO> m_renderInfo;  // 0x1B8 (the name is not the original's)
     reslist<unsigned int> m_renderWorks;  // 0x338 wkTail sends event 0 only once it is empty (the name is not the original's)
     reslist<IWorkEvent*> m_workEvents;    // 0x378 (the name is not the original's)
-    bool m_fullScreen : 1;  // 0x3B8 getClientSize returns the root's size while it is set (the name is not the original's)
-    unsigned char pad_3b9[0x7];
+    // 0x3B8 one word of flags (setFullScreen reads and sets bit 0 as a word; ProcDesktop::wkStandbyLogin sets 0x100)
+    unsigned int m_fullScreen : 1;  // getClientSize returns the root's size while it is set (the name is not the original's)
+    unsigned int : 6;
+    // bit 7: wkStandbyLogout detaches the render works and logs out even while some remain (the name is not the
+    // original's)
+    unsigned int m_forceLogout : 1;
+    unsigned int : 24;
+    unsigned char pad_3bc[0x4];
     MsgParam<10> m_msg;  // 0x3C0 (the name is not the original's)
     unsigned char pad_4c8[0x4C];
     // 0x514 the constructor copies setInitialBackCol's colour into it; tl::TitleApplet::initialize sets it black

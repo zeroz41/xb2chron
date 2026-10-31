@@ -28,6 +28,8 @@ public:
     static WinView* getView(unsigned int wid);
     // whether view is a child of parent, at any depth (the parameter names are not the original's)
     static bool isCurrentChild(const WinView* parent, const WinView* view);
+    // forgets view as the current view (WinView::wkStandbyLogout calls it; the parameter name is not the original's)
+    static void invalidCurrent(WinView* view);
     virtual ~WinViewRoot();  // slot 0
     virtual bool wkStandbyLogin();  // slot 14
     virtual bool wkStandbyLogout();  // slot 15

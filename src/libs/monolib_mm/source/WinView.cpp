@@ -6,6 +6,9 @@
 #include "classes/ml/WinProc.h"
 #include "classes/ml/ProcDesktop.h"
 #include "classes/ml/Device.h"
+#include "classes/ml/DevFileTh.h"
+#include "classes/ml/MicroThread.h"
+#include "classes/ml/DesktopIcon.h"
 #include "classes/ml/WinProc.h"
 #include "classes/ml/ProcDesktop.h"
 #include "classes/ml/WinView.h"
@@ -1319,6 +1322,62 @@ void ProcDesktop::wkRender() {}
 
 void ProcDesktop::wkRenderAfter() {}
 
+bool ProcDesktop::wkStandbyLogout() {
+    if (m_child.size() != 0 ||
+        WorkRootState::getWork(mm::mtl::PtrSingleton<WinProcRoot>::get(), "ProcDesktopBack") != nullptr) {
+        return false;
+    }
+    MicroThread::destroy();
+    if (_dsk::s_finalizeNotify != nullptr) {
+        _dsk::s_finalizeNotify();
+        _dsk::s_finalizeNotify = nullptr;
+    }
+    for (DesktopIcon** it = m_icons.m_items; it != m_icons.m_items + m_icons.m_count; ++it) {
+        if (*it != nullptr) {
+            delete *it;
+            *it = nullptr;
+        }
+    }
+    DevFileTh::removeCb(this);
+    return WinProc::wkStandbyLogout();
+}
+
+bool WinProc::pssDetachView() {
+    for (reslist<unsigned int>::iterator it = m_viewList.begin(); it != m_viewList.end(); ++it) {
+        WinView* view = WinViewRoot::getView(*it);
+        if (view != nullptr) {
+            view->detachRenderWork(this);
+        }
+    }
+    m_viewList.clear();
+    return true;
+}
+
+DesktopIcon* DesktopIcon::create(mtl::ALLOC_HANDLE mem, const char* name, void (*func)()) {
+    mm::mtl::FixStr<64> tag("(ICON)");
+    tag += name;
+    return new (mem, nullptr, 0, 4, false) DesktopIcon(name, func);
+}
+
+ProcDesktop::~ProcDesktop() {}
+
+void ProcDesktop::executeSelectApp() {
+    ProcDesktop* desktop = get();
+    if (desktop == nullptr) {
+        return;
+    }
+    for (DesktopIcon** it = desktop->m_icons.m_items; it != desktop->m_icons.m_items + desktop->m_icons.m_count;
+         ++it) {
+        if (strcmp((*it)->m_name.m_str, _dsk::s_selectAppName.m_str) == 0) {
+            _dsk::s_selectAppName = (*it)->m_name.m_str;
+            if ((*it)->m_func != nullptr) {
+                (*it)->m_func();
+            }
+            return;
+        }
+    }
+}
+
 void ProcDesktop::setStartNotify(void (*initialize)(), void (*update)(), void (*finalize)()) {
     _dsk::s_initializeNotify = initialize;
     _dsk::s_updateNotify = update;
@@ -1397,6 +1456,12 @@ bool WinViewRoot::wkStandbyLogout() {
         return WorkObj::wkStandbyLogout();
     }
     return false;
+}
+
+WinViewRoot* WinViewRoot::create(WorkObj* parent) {
+    WinViewRoot* root = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) WinViewRoot("WinViewRoot", parent);
+    WorkRootState::entryWork(root, parent, false);
+    return root;
 }
 
 namespace _dsk {
@@ -1487,6 +1552,25 @@ WinView* WinViewRoot::getView(unsigned int wid) {
         return static_cast<WinView*>(work);
     }
     return nullptr;
+}
+
+bool WinView::wkStandbyLogout() {
+    wkCheckTimeout(30000, m_child.size() == 0 && m_renderWorks.size() == 0 && !isSplit(true),
+                   "ログアウトに失敗しました");
+    if (m_child.size() == 0 && (m_renderWorks.size() == 0 || m_forceLogout)) {
+        for (reslist<unsigned int>::iterator it = m_renderWorks.begin(); it != m_renderWorks.end();
+             it = m_renderWorks.begin()) {
+            unsigned int wid = *it;
+            m_renderWorks.erase(it);
+            WorkObj* proc = WorkRootState::getWork(mm::mtl::PtrSingleton<WinProcRoot>::get(), wid);
+            if (proc != nullptr) {
+                static_cast<WinProc*>(proc)->pssDetachView(m_wid);
+            }
+        }
+        WinViewRoot::invalidCurrent(this);
+        return WorkObj::wkStandbyLogout();
+    }
+    return false;
 }
 
 bool WinViewRoot::isCurrentChild(const WinView* parent, const WinView* view) {

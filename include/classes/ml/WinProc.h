@@ -19,7 +19,11 @@ public:
     // the work its view id names, else the views' root (the return type is not in the symbol)
     WorkObj* pssGetParentView();
     // detaches the process's views (wkStandbyLogout calls it first)
-    void pssDetachView();
+    // (returns true in w0)
+    bool pssDetachView();
+    // detaches the view whose work id is wid (WinView::wkStandbyLogout calls it on each process it renders): false
+    // when the list does not hold it (the parameter name is not the original's)
+    bool pssDetachView(unsigned int wid);
     // 0x1A8 room for 16 work ids (the constructor creates it; the name is not the original's)
     reslist<unsigned int> m_viewList;
     unsigned int m_viewWid;  // 0x1E8 tl::TitleApp::execute stores its view's work id (WorkObj 0x50) here (the name is not the original's)
