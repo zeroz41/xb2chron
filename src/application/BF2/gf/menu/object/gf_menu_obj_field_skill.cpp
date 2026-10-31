@@ -2,6 +2,7 @@
 #include "classes/gf/GfMenuObjFieldIcon.h"
 #include "gf/GfMenuObjUtil.h"
 #include "classes/gf/GfMenuObjFieldSkill.h"
+#include "classes/gf/GfMenuObjFieldSkill/InputListener.h"
 #include "classes/gf/GfMenuObjFieldIcon.h"
 #include "classes/gf/GfMenuObjFieldSkill.h"
 #include "classes/gf/GfMenuCallContext.h"
@@ -111,6 +112,35 @@ bool GfMenuObjFieldSkill::seqWaitVoice() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     GfMenuObject::termCallContext(main.m_handle);
     return true;
+}
+
+void GfMenuObjFieldSkill::InputListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObject::disableInput(acc.m_handle);
+        break;
+    case 8:
+        if (event.m_param1 == 1) {
+            GfMenuObject::addResultCallContext(acc.m_handle, 2, 0);
+            GfMenuObject::disableInput(acc.m_handle);
+        }
+        break;
+    case 0x22:
+        GfMenuObject::disableInput(acc.m_handle);
+        GfMenuObject::termCallContext(acc.m_handle);
+        break;
+    case 0x10B:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+        } else {
+            GfMenuObject::disableInput(acc.m_handle);
+        }
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 void GfMenuObjFieldSkill::close(GfMenuCallContext* context) {
