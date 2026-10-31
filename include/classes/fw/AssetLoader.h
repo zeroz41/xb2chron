@@ -3,6 +3,7 @@
 
 #include "classes/ml/FileResTh.h"
 #include "mtl/AllocHandle.h"
+#include "classes/fw/AssetManager.h"
 
 namespace mm { namespace mtl { class IAllocator; } }
 
@@ -10,6 +11,9 @@ namespace fw {
 // table 0x7100B40DE8
 class AssetLoader : public ::ml::FileResTh {
 public:
+    // inline (no symbol): Create builds it in place and registers it with the AssetManager, as the destructor
+    // removes it
+    AssetLoader() : m_allocator(nullptr), m_hash(0) { AssetManager::sys()->addLoader(this); }
     virtual ~AssetLoader();  // slot 0
     // a loader reading path (fw::SoundResource::update passes its allocator, path, load priority and the int at 0x24
     // of its ResourceObject; the parameter names are not the original's)
@@ -21,6 +25,7 @@ public:
     unsigned char pad_104[0x4];
     mm::mtl::IAllocator* m_allocator;  // the same, as an allocator
     unsigned int m_hash;  // AssetManager::getHash of the path
+    unsigned char pad_114[0xC];  // to 0x120, the size Create allocates
 };
 }  // namespace fw
 
