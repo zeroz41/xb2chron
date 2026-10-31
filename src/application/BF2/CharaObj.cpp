@@ -3362,6 +3362,22 @@ void StmPackMemory::loadStream(const char* name, const char* header, const char*
     pad_5860.push_back(pack);
 }
 
+// not identical yet (4 instructions): ours hoists this+0x5860 into a register, the original indexes [this+i*8, #0x5860]
+StmPackMemory::~StmPackMemory() {
+    pad_5838 = 0;
+    pad_20 = 0;
+    pad_28 = 0;
+    pad_30.clear();
+    mtl::MemManager::deallocate(pad_10, 0, false);
+    for (unsigned long i = 0; i < pad_5860.size(); i++) {
+        Pack* pack = *pad_5860.at(i);
+        pack->m_data.clear();
+        pack->m_header.clear();
+        delete pack;
+    }
+    pad_5860.clear();
+}
+
 void StmPackMemory::render(const mm::Rect<int>& rect, float alpha) {}
 
 void StmPackMemory::free(void* p, int) {
