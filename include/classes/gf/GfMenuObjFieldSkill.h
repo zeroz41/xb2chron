@@ -3,10 +3,14 @@
 
 #include "classes/gf/GfMenuObject.h"
 #include "classes/gf/GfMenuFieldSkill.h"
+#include "classes/gf/GfMenuReferenceFs.h"
+#include "classes/gf/GfMenuReferenceNumber.h"
+#include "gf/GfMenuSequence.h"
 #include "mm/mtl/Delegate.h"
 #include "mm/mtl/FixedVector.h"
+#include "mm/mtl/IntrusivePtr.h"
 
-namespace gf { class GfMenuCallContext; class GAME_VOICE_HANDLE; }
+namespace gf { class GfMenuCallContext; class GfMenuFieldSkillList; class GAME_VOICE_HANDLE; }
 
 namespace gf {
 // table 0x7100B62378
@@ -65,12 +69,26 @@ public:
     static void openSkillInfo(GfMenuCallContext* context, unsigned char slot, const OpenSkillInfoParam& param);
     static void addTotalSkillLevel(unsigned char slot, unsigned char level);
     static void setCurrentTotalSkill(unsigned char slot);
+    // BladeListener's: what it sets on the handle's blade images (not written yet)
+    static void applyImageParam(unsigned int handle);
 
-    unsigned char pad_24[0x44];  // the constructor's fields (see NOTES): not laid out yet
+    unsigned char pad_24[0x4];
+    // the constructor makes each (9999 at most); initialize hands them to TXT_request_skill_lv_num@01-04 (the name
+    // is not the original's)
+    mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_skillLevels[4];
+    GfMenuFieldSkillList* m_skillList;  // 0x48 initialize creates it for LAY_request (the name is not the original's)
+    mm::mtl::IntrusivePtr<GfMenuReferenceFs> pad_50;  // the constructor makes it
+    unsigned short pad_58;  // the constructor zeroes 0x58-0x5D
+    unsigned char pad_5A;
+    unsigned char pad_5B;  // the constructor leaves it
+    // BaseListener's open (0x21): 0x5C set picks its skill variants, 0x5D set (with it) the one-blade ones
+    unsigned char pad_5C;
+    unsigned char pad_5D;
+    unsigned int m_mainHandle;  // 0x60 MainListener's close (0x22) keeps the LAY_main handle (the name is not the original's)
     GAME_VOICE_HANDLE* m_voice;  // update stops or drops it; seqWaitVoice waits for it to go
-    // steps update runs from the front, dropping each once it returns true (seqWaitVoice is one; the name is not
-    // the original's)
-    mm::mtl::FixedVector<mm::mtl::Delegate<bool()>, 4> m_seq;
+    // 0x70: update runs its jobs; MainListener's event 0x10D clears it and adds seqWaitVoice (the name is not the
+    // original's)
+    GfMenuSequence<GfMenuObjFieldSkill, 4> m_seq;
 };
 }  // namespace gf
 

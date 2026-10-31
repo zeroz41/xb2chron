@@ -3,9 +3,13 @@
 #include "gf/GfMenuObjUtil.h"
 #include "classes/gf/GfMenuObjFieldSkill.h"
 #include "classes/gf/GfMenuObjFieldSkill/InputListener.h"
+#include "classes/gf/GfMenuObjFieldSkill/MainListener.h"
+#include "classes/gf/GfMenuObjFieldSkill/BladeListener.h"
+#include "classes/gf/GfMenuObjFieldSkill/BaseListener.h"
 #include "classes/gf/GfMenuObjFieldIcon.h"
 #include "classes/gf/GfMenuObjFieldSkill.h"
 #include "classes/gf/GfMenuCallContext.h"
+#include "classes/gf/GfMenuFieldSkillList.h"
 #include "classes/gf/GfGameVoice.h"
 #include "classes/gf/GfMenuObject.h"
 #include "classes/gf/GfMenuPosAdapter.h"
@@ -84,6 +88,18 @@ void GfMenuObjFieldIcon::update() {
     GfMenuObject::update();
 }
 
+namespace {
+// BaseListener's animations per its m_type: in, in (skill), repeat, out (proposed name, not the original's: the
+// symbols leave it unnamed, lbl_7100B623C0)
+const char* s_baseAnims[5][4] = {
+    {"treasure_in", "treasure_in_skill", "treasure_repeat", "treasure_out"},
+    {"non_one_in", nullptr, nullptr, "non_one_out"},
+    {"non_two_in", nullptr, nullptr, "non_two_out"},
+    {"obj_one_in", "obj_one_in_skill", "obj_one_repeat", "obj_one_out"},
+    {"obj_two_in", "obj_two_in_skill", "obj_two_repeat", "obj_two_out"},
+};
+}  // namespace
+
 void GfMenuObjFieldSkill::finalize() {
     GfMenuObject::finalize();
 }
@@ -99,10 +115,47 @@ void GfMenuObjFieldSkill::update() {
             m_voice = nullptr;
         }
     }
-    if (!m_seq.empty() && (*m_seq.begin())()) {
-        m_seq.erase(m_seq.begin());
-    }
+    m_seq.update();
     GfMenuObject::update();
+}
+
+void GfMenuObjFieldSkill::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObject::disableInput(acc.m_handle);
+        break;
+    case 8:
+        if (event.m_param1 == 1) {
+            GfMenuObject::addResultCallContext(acc.m_handle, 2, 0);
+            GfMenuObject::disableInput(acc.m_handle);
+        }
+        break;
+    case 0x22:
+        GfMenuObject::disableInput(acc.m_handle);
+        GfMenuObject::sendCloseEvent(acc.searchChild("LAY_blade"), 0, 0.0f);
+        GfMenuObject::sendCloseEvent(acc.searchChild("LAY_base"), 0, 0.0f);
+        GfMenuObject::sendCloseEvent(acc.searchChild("LAY_request"), 0, 0.0f);
+        GfMenuObject::sendCloseEvent(acc.searchChild("LAY_blade_info"), 0, 0.0f);
+        GfMenuObject::sendCloseEvent(acc.searchChild("LAY_blade_result"), 0, 0.0f);
+        GfMenuObject::sendCloseEvent(acc.searchChild("LAY_input"), 0, 0.0f);
+        m_owner->m_mainHandle = acc.m_handle;
+        break;
+    case 0x10B:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+        } else {
+            GfMenuObject::disableInput(acc.m_handle);
+        }
+        break;
+    case 0x10D:
+        m_owner->m_seq.clear();
+        m_owner->m_seq.addJob(&GfMenuObjFieldSkill::seqWaitVoice);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 bool GfMenuObjFieldSkill::seqWaitVoice() {
@@ -112,6 +165,147 @@ bool GfMenuObjFieldSkill::seqWaitVoice() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     GfMenuObject::termCallContext(main.m_handle);
     return true;
+}
+
+void GfMenuObjFieldSkill::BladeListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        m_state = 0;
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            acc.setDisp(true);
+            GfMenuObjFieldSkill::applyImageParam(acc.m_handle);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_in_l";
+            param.m_startFlags = 8;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        } else if (event.m_param0 == 2) {
+            ui::UIObjectAcc blade(acc.m_handle, "IMG_blade");
+            ui::UIObjectAcc shadow(acc.m_handle, "IMG_blade_shadow");
+            blade.setImageIndex(0);
+            shadow.setImageIndex(0);
+        }
+        break;
+    case 0x21:
+        acc.setDisp(true);
+        if (m_state == 0) {
+            GfMenuObjFieldSkill::applyImageParam(acc.m_handle);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_in_l";
+            param.m_startFlags = 8;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            m_state = 1;
+        } else {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_eventId = 1;
+            param.m_motion = "fade_out_r";
+            param.m_startFlags = 10;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        }
+        break;
+    case 0x22:
+        if (m_state == 1) {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_out_l";
+            param.m_startFlags = 10;
+            param.m_eventId = 2;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            m_state = 0;
+        }
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjFieldSkill::BaseListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    ui::UIObjectAcc shadowLayout(acc.searchSibiling("LAY_shadow"));
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        m_type = 0;
+        m_shown = 0;
+        break;
+    case 0xC: {
+        unsigned int main = m_owner->m_mainHandle;
+        if (main != 0) {
+            ui::EventData close;
+            close.m_type = 0x10D;
+            GfMenuObject::sendEvent(main, close, 0.0f);
+        }
+        break;
+    }
+    case 0x21: {
+        ui::UIObjectAcc base(acc.m_handle, "IMG_base");
+        ui::UIObjectAcc shadow(shadowLayout.m_handle, "IMG_shadow");
+        int mode = event.m_param0;
+        acc.setDisp(true);
+        shadow.setDisp(true);
+        unsigned int type = 0;
+        if (m_owner->pad_5C) {
+            if (m_owner->pad_5D) {
+                shadow.setDisp(false);
+                type = m_owner->m_skillList->getSize() == 1 ? 1 : 2;
+            } else {
+                type = m_owner->m_skillList->getSize() == 1 ? 3 : 4;
+            }
+        }
+        m_type = type;
+        if (mode == 0) {
+            if (m_owner->pad_5C) {
+                GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_request"), 0, 0.0f);
+            }
+            base.startAnimation(s_baseAnims[m_type][0], false);
+            shadow.startAnimation(s_baseAnims[m_type][0], false);
+        } else if (mode == 1) {
+            if (m_shown == 0) {
+                if (type - 1UL > 1) {
+                    base.startAnimation(s_baseAnims[m_type][1], false);
+                    shadow.startAnimation(s_baseAnims[m_type][1], false);
+                }
+                m_shown = 1;
+            } else if (type - 1UL > 1) {
+                base.startAnimation(s_baseAnims[m_type][2], false);
+                shadow.startAnimation(s_baseAnims[m_type][2], false);
+            }
+        }
+        GfMenuObject::hookAnimationEvent(acc.m_handle, base.m_handle, 0);
+        break;
+    }
+    case 0x22: {
+        ui::UIObjectAcc base(acc.m_handle, "IMG_base");
+        ui::UIObjectAcc shadow(shadowLayout.m_handle, "IMG_shadow");
+        base.startAnimation(s_baseAnims[m_type][3], false);
+        shadow.startAnimation(s_baseAnims[m_type][3], false);
+        GfMenuObject::hookAnimationEvent(acc.m_handle, base.m_handle, 0);
+        break;
+    }
+    case 0x10A: {
+        ui::UIObjectAcc base(acc.m_handle, "IMG_base");
+        if (m_type == 3) {
+            base.startAnimation("obj_one_special", false);
+        } else if (m_type == 4) {
+            base.startAnimation("obj_two_special", false);
+        }
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 void GfMenuObjFieldSkill::InputListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
