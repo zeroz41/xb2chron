@@ -11,7 +11,15 @@ class Vec4 {
 public:
     Vec4() {}
     Vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
-    Vec4(const Vec4& v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
+    // assigned in the body, not a member-init list: each component's source address comes before its destination's,
+    // so a loop copying elements that hold Vec4s (mtl copy_construct_n in Vector<anm::QsTransform>'s expand and
+    // extend) offsets the source pointer, as the original's does; the init-list form offsets the destination
+    Vec4(const Vec4& v) {
+        x = v.x;
+        y = v.y;
+        z = v.z;
+        w = v.w;
+    }
     Vec4& operator=(const Vec4& v) {
         x = v.x;
         y = v.y;
