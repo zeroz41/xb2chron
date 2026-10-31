@@ -73,8 +73,8 @@ void GfMenuObjLocationTelop::MainListener::reciveEvent(const ui::EventData& even
         const char* textName = event.m_param2 == 2 ? "TXT_name_area" : "TXT_name_other";
         ui::UIObjectAcc text(acc.m_handle, textName);
         GfMenuObject::setText(text.m_handle, event.m_param0);
-        const char* anim = nullptr;
         unsigned int jingle = 0;
+        const char* anim = nullptr;
         if (event.m_param2 == 0) {
             GfMenuObjUtil::setChildDisp(handle, "TXT_index_landmark", true);
             GfMenuObjUtil::setChildDisp(handle, "TXT_index_secret", false);

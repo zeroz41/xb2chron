@@ -329,6 +329,33 @@ bool GfMenuObjLvupMain::seqClose() {
     return true;
 }
 
+bool GfMenuObjLvupMain::seqClose2() {
+    m_jingle = GfMenuObjUtil::playJingle(4);
+    m_seq.addJob(&GfMenuObjLvupMain::seqClose3);
+    return true;
+}
+
+bool GfMenuObjLvupMain::seqClose3() {
+    GfSound* sound = GfSound::get();
+    if (sound != nullptr) {
+        if (sound->isPlaying(m_jingle)) {
+            if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuObjUtil::fn_7100492C88()) {
+                sound->stopBgm(m_jingle, 0.5f);
+                m_jingle = SoundHandle(0);
+            }
+            return false;
+        }
+    }
+    GfMenuSoundManager::fadeInFieldBgm(2.0f);
+    GfMenuObjOperationInfo::close();
+    if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuManager::fn_710035DC94()) {
+        GfMenuObject::closeFSLayer(m_handle, false, true);
+    } else {
+        GfMenuObject::closeFSLayer(m_handle, true, true);
+    }
+    return true;
+}
+
 
 void GfMenuObjLvupMain::MainListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);

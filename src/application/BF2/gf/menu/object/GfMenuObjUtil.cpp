@@ -703,8 +703,8 @@ void GfMenuObjUtil::stopBGM(unsigned int handle, float time) {
     }
 }
 
-void GfMenuObjUtil::playJingle(unsigned int jingle) {
-    GfMenuSoundManager::playJingle(jingle);
+SoundHandle GfMenuObjUtil::playJingle(unsigned int jingle) {
+    return GfMenuSoundManager::playJingle(jingle);
 }
 
 bool GfMenuObjUtil::fn_7100492C88() {

@@ -7,6 +7,7 @@
 #include "mm/mtl/FixedVector.h"
 #include "mm/Pnt.h"
 #include "mm/Rect.h"
+#include "gf/SoundHandle.h"
 
 namespace gf { class GfMenuCallContext; }
 namespace gf { class GF_OBJ_HANDLE; }
@@ -203,7 +204,7 @@ public:
     // the current quest of a quest type (GfMenuLocation::refreshLocatorFromQuest passes 0 for its list 0, 1 for list 1)
     static QuestID getCurrentQuest(unsigned int type);
     static void setChildIcon(unsigned int handle, const char* child, unsigned short icon);
-    static void playJingle(unsigned int jingle);
+    static SoundHandle playJingle(unsigned int jingle);
     // the common fades, in and out: startCtrl's slot (the second argument is the end event's CtrlParam::m_eventId)
     static int setCommonFadeIn(unsigned int handle, unsigned int eventId, unsigned char);
     static int setCommonFadeOut(unsigned int handle, unsigned int eventId, unsigned char);
