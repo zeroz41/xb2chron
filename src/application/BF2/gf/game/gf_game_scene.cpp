@@ -11,6 +11,7 @@
 #include "classes/gf/GfGameScene.h"
 #include "classes/gf/GfFieldBgm.h"
 #include "classes/gf/GfAllocator.h"
+#include "classes/gf/GfAppendWire.h"
 #include "gf/GfSetupParam.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfGameParty.h"
@@ -239,6 +240,24 @@ void GfGameScene::setDamageCharacter(GF_OBJ_HANDLE* handle) {
             return;
         }
     }
+}
+
+void GfGameScene::destroyDriverAppendModelControl(GF_OBJ_HANDLE* handle) {
+    mm::mtl::FixedList<GfAppendWire*, 8>::iterator it = m_appendWires.find_if(
+        [handle](GfAppendWire* wire) { return wire->m_wire == handle || wire->m_owner == handle; });
+    if (it != m_appendWires.end()) {
+        delete *it;
+        m_appendWires.erase(it);
+    }
+}
+
+GfAppendWire* GfGameScene::getAppendControl(GF_OBJ_HANDLE* handle) {
+    mm::mtl::FixedList<GfAppendWire*, 8>::iterator it = m_appendWires.find_if(
+        [handle](GfAppendWire* wire) { return wire->m_wire == handle || wire->m_owner == handle; });
+    if (it == m_appendWires.end()) {
+        return nullptr;
+    }
+    return *it;
 }
 
 void GfGameScene::saveBattleHpForEnemy(GF_OBJ_HANDLE* handle) {

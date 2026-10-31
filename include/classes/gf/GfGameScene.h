@@ -7,6 +7,7 @@
 namespace mm { class Vec3; }
 #include "mm/mtl/Bitflag.h"
 #include "mm/mtl/FixedQueue.h"
+#include "mm/mtl/FixedList.h"
 
 namespace gf { class GfGameScene; class GfAppendWire; }
 namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
@@ -150,6 +151,8 @@ public:
     // the object's wire, null for none (GfGameUtil's startWire/startWireWithClose/endWire call GfAppendWire's
     // members on it; the return type is inferred from that)
     GfAppendWire* getAppendControl(GF_OBJ_HANDLE* handle);
+    // the wire whose wire object or owner is handle deleted and taken off the list (gevGameObjLeave)
+    void destroyDriverAppendModelControl(GF_OBJ_HANDLE* handle);
     const mm::Vec3& getEnableSavePos() const;
     bool isResetBladePlay() const;
     bool isNeedResetBladeForBattleEndForBattleEnd() const;
@@ -195,7 +198,9 @@ public:
     bool m_ownerBonusDirty;
     unsigned char pad_51[0x3];
     OwnerBonus m_ownerBonus;  // getOwnerBonus's
-    unsigned char pad_72[0xAE];
+    unsigned char pad_72[0x6];
+    // the drivers' wires (getAppendControl finds one by its wire object or owner; the name is not the original's)
+    mm::mtl::FixedList<GfAppendWire*, 8> m_appendWires;  // 0x78
     float m_moneyLogTime;  // addMoneyLog sets 0.5
     QuestID m_questIdForTaskLog;  // getQuestIdForTaskLog's
     // the battle's achievement counts (1.0.0 symbol BattleAchievement::addDamage; the field names are not the

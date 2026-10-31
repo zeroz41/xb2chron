@@ -142,6 +142,19 @@ public:
         }
         return last;
     }
+    // the first element pred holds for, or end(): the walk stops on it and hands back that one iterator
+    // (GfGameScene::getAppendControl and destroyDriverAppendModelControl compare it with end() again after the walk)
+    // (the name is not the original's)
+    template <typename Pred>
+    iterator find_if(Pred pred) {
+        iterator it = begin();
+        for (; it != end(); ++it) {
+            if (pred(*it)) {
+                break;
+            }
+        }
+        return it;
+    }
     bool empty() const { return m_num_nodes == 0; }
     unsigned long size() const { return m_num_nodes; }
     // the first element, read without the iterator's assertion (GfFobjManager::registFiledObj reads its full
