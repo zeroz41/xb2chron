@@ -3,6 +3,7 @@
 
 #include "classes/ml/IWorkEvent.h"
 #include "ml/CriticalSection.h"
+#include "classes/ml/ScnDebugManipuObj.h"
 
 namespace ml { class AttrTransform; }
 namespace ml { class ScnDebugManipuObj; }
@@ -23,6 +24,13 @@ public:
     bool isPick() const;
     // the manipulator's transform: the calculation thread's (true) or the render thread's (false); none without one
     const AttrTransform* getTrans(bool cpu) const;
+    // the shown manipulator's drawing (1.0.0 keeps it out of line; 3.0.1's ScnDebug::cbRenderAfter inlines it)
+    void render(DebDraw* draw) {
+        CS cs(m_cs);
+        if (m_disp && m_obj != nullptr) {
+            m_obj->render(draw);
+        }
+    }
 
     CriticalSection m_cs;  // 0x8 (the name is not the original's)
     unsigned char pad_30[0x8];

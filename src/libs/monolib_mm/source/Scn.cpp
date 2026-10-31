@@ -1,3 +1,4 @@
+#define MM_LIB_FROM_MONOLIB_MM
 #include "math.h"
 #include "classes/ml/WorkCpu.h"
 #include "classes/ml/ScnRender.h"
@@ -41,6 +42,8 @@
 #include "classes/ml/Scn.h"
 #include "classes/ml/ScnPoolObj.h"
 #include "classes/ml/ScnCamMan.h"
+#include "classes/ml/WinViewRoot.h"
+#include "classes/ml/DebDraw.h"
 #include "nn/os.h"
 #include "ml/CriticalSection.h"
 #include "classes/ml/Thread.h"
@@ -182,6 +185,70 @@ void Scn::releaseItem(ScnObj* item) {
 
 void Scn::setView(WinView* view, int index) {
     m_camMan->setView(view, index);
+}
+
+void ScnCamMan::setView(WinView* view, int index) {
+    if (m_views[index] != -1 && m_views[index] != view->m_wid) {
+        WinView* old = WinViewRoot::getView(m_views[index]);
+        if (old != nullptr) {
+            old->detachWorkEvent(m_scn);
+        }
+    }
+    view->attachWorkEvent(m_scn, false);
+    m_views[index] = view->m_wid;
+}
+
+WinView* Scn::getView(int index) {
+    return m_camMan->getView(index);
+}
+
+ScnCamMan::~ScnCamMan() {
+    for (unsigned int i = 0; i < m_views.size(); i++) {
+        WinView* view = WinViewRoot::getView(*m_views.at(i));
+        if (view != nullptr) {
+            view->detachWorkEvent(m_scn);
+        }
+    }
+}
+
+ScnObjCam* ScnPoolObj::getCam(const WinView* view) {
+    if (view != nullptr) {
+        for (reslist<ScnObj*>::iterator it = m_cam.begin(); it != m_cam.end(); ++it) {
+            ScnObjCam* cam = static_cast<ScnObjCam*>(*it);
+            if (m_scn->getView(cam->m_index) == view) {
+                return cam;
+            }
+        }
+    }
+    return nullptr;
+}
+
+ScnObjCam* ScnObjCam::create(Scn* scn, int index) {
+    if (!scn->m_pool->isValidInsert(2)) {
+        return nullptr;
+    }
+    mm::mtl::FixStr<32> name;
+    name.format("Camera%d", index);
+    ScnObjCam* cam = new (scn->m_allocHandle, nullptr, 0, 4, false) ScnObjCam(scn, name.m_str);
+    cam->m_index = index;
+    cam->setDefault();
+    scn->m_pool->insert(cam);
+    return cam;
+}
+
+bool ScnPoolObj::isValidInsert(unsigned short type) const {
+    CS cs(m_cs);
+    const reslist<ScnObj*>* list = getList(type);
+    return list->m_capacity > list->size();
+}
+
+bool ScnPoolObj::isExistLgtEnv() const {
+    CS cs(m_cs);
+    bool exist = false;
+    for (reslist<ScnObj*>::iterator it = m_lgt.begin(); it != m_lgt.end(); ++it) {
+        exist |= static_cast<ScnObjLight*>(*it)->isEnv();
+    }
+    return exist;
 }
 
 ScnObjEnvColi::ScnObjEnvColi(Scn* scn) : ScnObj(scn, 6), m_name("envColi") {}
@@ -420,6 +487,10 @@ bool ScnDebug::isPickManipu() const {
 
 void ScnDebug::clrManipulator() {
     m_manipu->clear();
+}
+
+void ScnDebug::cbRenderAfter(Scn*, SCNPRIO_CB) {
+    render(DebDraw::get(-1));
 }
 
 // not an alias of ScnDebugManipuObj's: the original has its own copy (an empty statement keeps it)

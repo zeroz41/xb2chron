@@ -32,6 +32,9 @@ public:
     // one of the six planes of the calculation thread's (true) or the render thread's (false) information
     const mm::Plane& getPlaneGbl(unsigned int index, bool cpu) const;
     void setCopydataCam(bool);
+    // a new camera numbered index ("Camera%d") in the scene's pool; none when the pool is full
+    static ScnObjCam* create(Scn* scn, int index);
+    ScnObjCam(Scn* scn, const char* name);
     // the default view: looking from (0, 5, 20) at the origin with a 40 degree field of view
     void setDefault();
     void updateViewMatrix(bool);
@@ -44,7 +47,7 @@ public:
     virtual void apply();  // slot 4
     virtual const char* getName() const;  // slot 6
 
-    unsigned char pad_14[0x4];
+    int m_index;  // 0x14 create's index: Scn::getCam finds a camera by it (the name is not the original's)
     mm::mtl::FixStr<64> m_name;  // 0x18 getName's (the name is not the original's)
     unsigned char pad_5C[0x14];
     threadval<RENDER_INFO> m_info;  // apply and setLookAt read its banks (the name is not the original's)
