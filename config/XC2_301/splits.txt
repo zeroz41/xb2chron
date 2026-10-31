@@ -4462,23 +4462,13 @@ libs/eflib/source/ptlib/memory/particle_stack_allocater.cpp:
 	.rodata      start:0x009AE159 end:0x009AE1CD
 
 libs/eflib/source/ptlib/particle_system.cpp:
-	.text        start:0x008542B8 end:0x00858FDC
-	.rodata      start:0x009AE1CD end:0x009AE339
-	.rodata      start:0x009B5780 end:0x009B5784
-	.bss         start:0x015E9D60 end:0x015EAE50
-
-libs/eflib/source/ptlib/particle_intrusive_list.cpp:
-	.text        start:0x00858FDC end:0x00859104
-	.rodata      start:0x009AE339 end:0x009AE3A2
-
-libs/eflib/source/ptlib/forcefield/particle_force_field.cpp:
-	.text        start:0x00859104 end:0x0085A2DC
-	.rodata      start:0x009AE3A2 end:0x009AE413
-	.rodata      start:0x009B5784 end:0x009B578C
+	.text        start:0x008542B8 end:0x0085A2DC
+	.rodata      start:0x009AE1CD end:0x009AE413
+	.rodata      start:0x009B5780 end:0x009B578C
 	.rodata      start:0x009D5498 end:0x009D54AC
 	.data        start:0x00B80840 end:0x00B80C40
 	.init_array  start:0x00B8FD70 end:0x00B8FD78
-	.bss         start:0x015EAE50 end:0x015EB000
+	.bss         start:0x015E9D60 end:0x015EB000
 
 libs/eflib/source/ptlib/renderer/screen_render_manager.cpp:
 	.text        start:0x0085A2DC end:0x0085AD3C

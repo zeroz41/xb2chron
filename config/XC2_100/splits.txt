@@ -3413,15 +3413,8 @@ libs/eflib/source/ptlib/memory/particle_stack_allocater.cpp:
 	.text        start:0x00930DC4 end:0x00930EC4
 
 libs/eflib/source/ptlib/particle_system.cpp:
-	.text        start:0x00930EC4 end:0x00936370
-	.bss         start:0x01BD75D0 end:0x01BD76A0
-
-libs/eflib/source/ptlib/particle_intrusive_list.cpp:
-	.text        start:0x00936370 end:0x00936584
-
-libs/eflib/source/ptlib/forcefield/particle_force_field.cpp:
-	.text        start:0x00936584 end:0x00937858
-	.bss         start:0x01BD87C0 end:0x01BD8FC4
+	.text        start:0x00930EC4 end:0x00937858
+	.bss         start:0x01BD75D0 end:0x01BD8FC4
 
 libs/eflib/source/ptlib/renderer/screen_render_manager.cpp:
 	.text        start:0x00937858 end:0x00938C80
