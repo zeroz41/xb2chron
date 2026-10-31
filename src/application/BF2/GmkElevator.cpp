@@ -62,6 +62,7 @@
 #include "classes/gmk/GmkSquadManager.h"
 #include "classes/gmk/TUnk_B6EE88.h"
 #include "classes/gf/GfGameManager.h"
+#include "fw/NaviUtil.h"
 #include "classes/gf/GfFieldTime.h"
 #include "classes/gf/GfFieldWeather.h"
 #include "classes/gf/GfGameFlag.h"
@@ -91,6 +92,7 @@
 #include "classes/gmk/GmkSet.h"
 #include "classes/gmk/GmkSetOfSalvageChildren.h"
 #include "classes/gmk/GmkManager.h"
+#include "classes/gmk/GmkForm.h"
 #include "classes/gmk/TGmkFormPc.h"
 #include "classes/gmk/TGmkFormPcnpc.h"
 #include "classes/gmk/TGmkFormPcList.h"
@@ -292,6 +294,8 @@ void GmkElevator::onLeavePhantom(const gmk::IGmkPhantomEventListener::OnLeaveInf
 
 void GmkTrigger::debugDraw() const {}
 
+void GmkTrigger::seqUpdate(float) { applyPopCondMatched(m_phantom.pad_83); }
+
 void GmkAntiBladeArea::debugDraw() const {}
 
 GmkRoutePointList::~GmkRoutePointList() {}
@@ -488,6 +492,12 @@ const IGmkList* GmkSet::getGmkList(GmkType type) const { return m_gmkLists[stati
 
 IGmkList* GmkSet::getGmkList(GmkType type) { return m_gmkLists[static_cast<unsigned int>(type)]; }
 
+void GmkSet::seqWaitToValidate_GfGameManager_m_mapID(float) {
+    if (gf::GfGameManager::getMapID() != 0) {
+        m_seq = &GmkSet::seqCreateMapBdat;
+    }
+}
+
 void GmkSet::createGmkLists(int id) {
     m_listParam = 0x20;
     for (int i = 0; i < GMK_LIST_NUM; ++i) {
@@ -606,6 +616,11 @@ void GmkSet::createGmkLists(int id) {
         info.m_rotY = m_rotY;
         list->create(info);
     }
+}
+
+void GmkSet::seqCreateMapBdat(float) {
+    createGmkLists(m_bdatId);
+    m_seq = &GmkSet::seqUpdate;
 }
 
 unsigned char* AGmkBase::getBindedBdatFp() const { return m_list->getBindedBdatFp(); }
@@ -1026,6 +1041,11 @@ void GmkDmgEffect::update(float dt) { AGmkBase::update(dt); }
 int IGmkList::debugGetDocId() const { return 0; }
 
 bool isPlayerExist() { return gf::GfGameManager::fn_71002AA074() != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1); }
+
+bool isNaviMeshExist(const mm::Vec3& pos) {
+    mm::Vec3 out;
+    return fw::NaviUtil::testNaviColi(out, pos, 2.0f, 2.0f);
+}
 
 const char* debugGetGmkBdatRowName(const AGmkBase&) { return "(null)"; }
 const char* debugGetGmkBdatSheetName(const AGmkBase&) { return "(null)"; }
@@ -1638,6 +1658,21 @@ GmkManager::~GmkManager() {
 }
 
 GmkPhantomManager::~GmkPhantomManager() {}
+
+void GmkForm::getPosRotY(mm::Vec3& pos, float& rotY, unsigned int index) const {
+    pos = pad_10[index];
+    rotY = pad_70[index];
+}
+
+bool GmkForm::create(const mm::Vec3& pos, float rotY) {
+    pad_0 = 1;
+    pad_10[0] = pos;
+    pad_70[0] = rotY;
+    validatePosRotY();
+    return true;
+}
+
+void GmkForm::dispose() { pad_0 = 0; }
 
 GmkBdat::~GmkBdat() {
     dispose();
