@@ -10,6 +10,7 @@ public:
     // built in place by TextManager's constructor (inlined into every Singleton<TextManager>::getPtr); size 0x298
     TextWindow() : pad_8(0), pad_218(-1), pad_220(0), pad_250(0), pad_25c(0) {}
     virtual ~TextWindow() {}  // slot 0
+    void erase();
     unsigned int pad_8;
     mm::mtl::FixStr<256> pad_c;    // two 256-byte strings (emptied by the constructor)
     mm::mtl::FixStr<256> pad_110;

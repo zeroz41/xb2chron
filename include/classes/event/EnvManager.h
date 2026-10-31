@@ -54,13 +54,17 @@ public:
     // cloud sea when 0x20 is set, the colour filter when 0x24 is set, and removes the effect handle 0x38
     int pad_18;
     int pad_1c;
-    int pad_20;
-    int pad_24;
+    // 1 or 2: the cloud sea EnvTransfer::load set (2 when the transfer's is 0); clear() turns it off when set (the
+    // name is not the original's)
+    int m_cloudSea;  // 0x20
+    // set while a colour filter is on: clear() turns it off when set (the name is not the original's)
+    int m_colorFilter;  // 0x24
     int pad_28;
     int pad_2c;
     int pad_30;
     int pad_34;
-    unsigned int pad_38;
+    // the effect handle clear() hands to fw::EffectManager::remove when set (the name is not the original's)
+    unsigned int m_effect;  // 0x38
     float m_toneMap;  // 0x3c setToneMap's value (the name is not the original's)
     EnvTransferEvent m_event;  // 0x40 (the name is not the original's)
     EnvTransferField m_field;  // 0x60 login() stores the field's time and weather (the name is not the original's)

@@ -1839,6 +1839,25 @@ void ScriptCharaFacial::undo(const event::Param&) {
     }
 }
 
+// mounts the active character on the scene's character val 0 (when the scene has that many) at the val 1 joint,
+// val 2..4 its position and val 5..7 its rotation
+void ScriptCharaMount::doit(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        unsigned int id = param.val(0).getS32();
+        const char* name = param.val(1).getStr();
+        mm::Vec3 pos(param.val(2).getF32(), param.val(3).getF32(), param.val(4).getF32());
+        mm::Vec3 rot(param.val(5).getF32(), param.val(6).getF32(), param.val(7).getF32());
+        ObjectList* scene = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+        if (scene != 0 && scene->m_counts[0] > id) {
+            ObjectChara* parent = mm::mtl::Singleton<ObjectManager>::getPtr()->getChara(id);
+            if (obj != parent) {
+                obj->m_chara->mount(parent->m_chara, name, pos, rot);
+            }
+        }
+    }
+}
+
 void ScriptCharaMount::undo(const event::Param&) {
     ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
     if (obj != 0) {
@@ -2024,6 +2043,7 @@ RotAxis::RotAxis(unsigned int type, float x, float y, float z) : m_type(type), m
 #include "classes/event/ScriptCharaMotion.h"
 #include "classes/event/ScriptCharaFade.h"
 #include "classes/event/TextManager.h"
+#include "classes/event/ScriptPlayText.h"
 #include "classes/event/ScriptCamPos.h"
 #include "classes/event/ScriptCamTar.h"
 #include "classes/event/ScriptCamMovePos.h"
@@ -2085,6 +2105,23 @@ void ScriptEffectAnim::doit(const event::Param& param) {
     if (obj != 0) {
         obj->m_effect->playAnim(param.val(0).getStr(), param.val(1).getF32());
     }
+}
+
+// takes the text down: the subtitle while bit 0 is set, else the window (its strings emptied)
+void ScriptPlayText::undo(const event::Param&) {
+    TextManager* text = mm::mtl::Singleton<TextManager>::getPtr();
+    if (!(text->m_flags & 1)) {
+        text->m_window.erase();
+        text->m_window.pad_218 = -1;
+        text->m_window.pad_110 = "";
+        text->m_window.pad_c = "";
+        text->m_window.pad_8 &= ~3;
+    } else {
+        gf::GfMenuObjEventSubtitle::hideText();
+        text->m_caption.pad_c = "";
+        text->m_caption.pad_8 &= ~1;
+    }
+    text->m_flags &= ~0x3c0;
 }
 
 void ScriptCharaMotion::doit(const event::Param& param) {
@@ -3011,9 +3048,35 @@ namespace event {
 bool ManiManager::OnMouseButtonDown(ml::EventView*) { return false; }
 
 
+// the transfer's cloud sea 1 turns EnvManager's on (type true), 0 turns it on with type false
+void EnvTransfer::load() {
+    if (gf::GfFieldTime* time = mm::mtl::PtrSingleton<gf::GfFieldTime>::sys()) {
+        time->setTime(m_hour, m_min);
+        gf::GfGameEvent::setMapWeather(m_weatherID);
+        switch (m_cloudSea) {
+        case 0: {
+            EnvManager* env = mm::mtl::Singleton<EnvManager>::getPtr();
+            if (env->m_cloudSea != 2) {
+                gf::GfGameEvent::setCloudSea(true, false);
+            }
+            env->m_cloudSea = 2;
+            break;
+        }
+        case 1: {
+            EnvManager* env = mm::mtl::Singleton<EnvManager>::getPtr();
+            if (env->m_cloudSea != 1) {
+                gf::GfGameEvent::setCloudSea(true, true);
+            }
+            env->m_cloudSea = 1;
+            break;
+        }
+        }
+    }
+}
+
 EnvManager::EnvManager()
-    : m_flags(0), pad_14(0), pad_18(-1), pad_1c(-1), pad_20(0), pad_24(0), pad_28(-1), pad_2c(-1), pad_30(0),
-      pad_34(0), pad_38(0) {}
+    : m_flags(0), pad_14(0), pad_18(-1), pad_1c(-1), m_cloudSea(0), m_colorFilter(0), pad_28(-1), pad_2c(-1),
+      pad_30(0), pad_34(0), m_effect(0) {}
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void EnvManager::OnEventProc(event::MSG_TYPE msg) {

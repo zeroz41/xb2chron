@@ -11,6 +11,8 @@ class EnvTransfer {
 public:
     EnvTransfer() : m_hour(0), m_min(0), m_weatherID((gf::WEATHERID)1) {}
     virtual ~EnvTransfer() {}  // slot 0
+    // applies the time and weather to the field (when it has a clock) and the cloud sea to EnvManager
+    void load();
     unsigned int m_hour;  // 0x8 (the name is not the original's)
     unsigned int m_min;  // 0xc (the name is not the original's)
     gf::WEATHERID m_weatherID;  // 0x10 (the name is not the original's)
