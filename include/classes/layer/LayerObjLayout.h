@@ -11,8 +11,11 @@ class LayerObjLayout : public ::layer::LayerActBase {
 public:
     virtual ~LayerObjLayout() {}  // slot 0: inline (its deleting destructor sits in the unit's tail)
 
+    void workLayoutRelease();
+
     // The field names follow LayerAccLayoutObj's accessors (not the original's).
-    unsigned char pad_258[0x18];
+    // 0x258: deleted with m_childList by ~LayerObjTopLayout (the name is not the original's)
+    LayerLinkList<LayerBase> m_objList;
     // 0x270: the objects LayerAccLayoutObj's create functions made while LayerManager::s_nStkIdx names each (the
     // name is not the original's)
     LayerLinkList<LayerBase> m_childList[2];

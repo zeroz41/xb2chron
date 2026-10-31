@@ -10,11 +10,8 @@ template <class T>
 class LayerLinkList {
 public:
     LayerLinkList() : m_head(nullptr), m_tail(nullptr), m_num(0) {}
-    ~LayerLinkList() {
-        m_head = nullptr;
-        m_tail = nullptr;
-        m_num = 0;
-    }
+    // no destructor of its own: ~LayerObjLayout is a bare return (folded with ~LayerBase) and ~LayerObjTopLayout and
+    // ~LayerFontManager empty each list once, right after deleting its objects (deleteAll)
 
     void addList(T* obj) {
         if (obj != nullptr) {
@@ -70,6 +67,18 @@ public:
     void deleteList(T* obj) {
         removeList(obj);
         delete obj;
+    }
+
+    // deletes every object and empties the list (~LayerObjTopLayout; the name is not the original's)
+    void deleteAll() {
+        for (T* obj = m_head; obj != nullptr;) {
+            T* next = obj->m_next;
+            delete obj;
+            obj = next;
+        }
+        m_num = 0;
+        m_head = nullptr;
+        m_tail = nullptr;
     }
 
     T* m_head;  // 0x0

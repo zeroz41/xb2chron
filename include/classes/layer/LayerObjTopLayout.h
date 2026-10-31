@@ -22,7 +22,7 @@ public:
     // the bits of m_renderFlags LayerObjSortLayout::finalRender tests (the name is not the original's)
     enum { RENDER_TEX_OBJ = 0xC };
 
-    unsigned char pad_248[0x88];
+    unsigned char pad_2C8[0x8];
     // LayerObjSortLayout::finalRender renders it first, then m_texObj when m_renderFlags holds RENDER_TEX_OBJ (the
     // field names are not the original's)
     LayerSortMan* m_sortMan;

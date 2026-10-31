@@ -60,14 +60,7 @@ void LayerSortMan::finalRender() {
 
 LayerTextureMan::LayerTextureMan(LayerManager* manager) : m_manager(manager) {}
 
-LayerTextureMan::~LayerTextureMan() {
-    LayerTextureObj* obj = m_head;
-    while (obj != nullptr) {
-        LayerTextureObj* next = obj->m_next;
-        delete obj;
-        obj = next;
-    }
-}
+LayerTextureMan::~LayerTextureMan() { deleteAll(); }
 
 void LayerTextureObj::setupTexture(const unsigned char* res, LayerManager* manager) {
     textureRelease();
@@ -123,6 +116,9 @@ LayerVertexMan::~LayerVertexMan() {
         delete obj;
         obj = next;
     }
+    m_num = 0;
+    m_head = nullptr;
+    m_tail = nullptr;
 }
 
 void LayerVertexObj::vertexRelease() {

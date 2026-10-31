@@ -24,6 +24,8 @@
 #include "layer/LayerVertexObj.h"
 #include "classes/layer/LayerObjMesh.h"
 #include "classes/layer/LayerObjTopDef.h"
+#include "grlib/CGLibUniformArray.h"
+#include "grlib/CGLibDblUniformBlock.h"
 #include "layer/LayerObjUtil.h"
 #include "classes/layer/LayerObjTopMaskObj.h"
 #include "layer/LayerTextureObj.h"
@@ -390,6 +392,25 @@ const unsigned short LayerObjUtil::UNIFORM_BLOCK_SIZE[12] = {
     0x80, 0x180, 0x80, 0x50, 0x60, 0x80, 0x60, 0x50, 0x80, 0x120, 0x40, 0x20,
 };
 int LayerObjUtil::getUniformBlockSizeAlOff(LayerUniType type) { return UNIFORM_BLOCK_SIZE[type]; }
+LayerObjTopDef::~LayerObjTopDef() {
+    if (m_work != nullptr) {
+        m_texRefs->m_uniforms->release();
+    }
+    baseRelease();
+    m_resTex.clear();
+    if (m_vertexObj != nullptr) {
+        m_vertexObj->release();
+        m_vertexObj = nullptr;
+    }
+    if (m_textureObj != nullptr) {
+        m_textureObj->release();
+        m_textureObj = nullptr;
+    }
+    if (m_work != nullptr) {
+        mtl::MemManager::deallocate(m_work, 0, false);
+        m_work = nullptr;
+    }
+}
 void LayerObjTopDef::setDrawList(LayerSortMan* sortMan, bool use3D) {
     if (m_stateFlags & STATE_NO_DRAW) return;
     if (use3D) {
@@ -408,6 +429,13 @@ LayerObjTopFont::~LayerObjTopFont() {
 }
 void LayerObjTopFont::applyParams(const LayerRenderView* view, const LayerResMatrix& matrix, const LayerResColor& color) {
     updateShaderParms(view, matrix, color);
+}
+LayerObjTopLayout::~LayerObjTopLayout() {
+    baseRelease();
+    workLayoutRelease();
+    m_objList.deleteAll();
+    m_childList[0].deleteAll();
+    m_childList[1].deleteAll();
 }
 void LayerObjUtil::getLayoutInfo(float* pos, const LyrLayoutPosData* data, LayerCenterType type, float sclX, float sclY) {
     s_CallDataPos[mm::mtl::PtrSingleton<LayerManager>::sys()->m_coordinate](pos, data, type, sclX, sclY);

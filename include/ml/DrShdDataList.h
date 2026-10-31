@@ -86,8 +86,7 @@ public:
     grlib::CGLibVtxStmOut m_boneStmOut; // 0x958
     grlib::CGLibVtxStmOut m_oldBoneStmOut; // 0x980
     // createAlphaTestBlock builds them: one per alpha test step of 0.1 (the name is not the original's)
-    grlib::CGLibUniformArray<grlib::CGLibOneUniformBlock> m_alphaTestBlock;  // 0x9A8
-    unsigned char pad_9c0[0x10];
+    grlib::CGLibUniformArray<grlib::CGLibOneUniformBlock> m_alphaTestBlock;  // 0x9A8 (0x28 bytes: its m_mem is 0x9C0)
     DrResShdStreamOut* m_pStmOutObj;  // 0x9D0
     unsigned char pad_9d8[0x8];
 };

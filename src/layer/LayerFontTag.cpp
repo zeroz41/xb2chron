@@ -27,6 +27,8 @@
 
 namespace layer {
 
+LayerFontManager::~LayerFontManager() { allRelease(); }
+
 LayerFontIconObj::~LayerFontIconObj() {
     if (m_texture != nullptr) {
         m_texture->release();

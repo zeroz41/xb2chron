@@ -6,13 +6,16 @@
 namespace layer { class LyrActionData; }
 namespace layer { class LayerVertexObj; }
 namespace grlib { class CGLibTextureBuffer; }
+namespace grlib { class CGLibDblUniformBlock; }
+namespace grlib { template <class T> class CGLibUniformArray; }
+namespace layer { class LayerTextureObj; }
 
 namespace layer {
 // table none in 3.0.1 (its derived classes'). 1.0.0's LayerActDef() calls LayerObjWork's C2 constructor and its
 // table (0x71011B7980) is LayerObjWork's but for slot 1 (its own destructor) and slot 10 (updatePartsAction).
 class LayerActDef : public ::layer::LayerObjWork {
 public:
-    virtual ~LayerActDef();  // slot 0
+    virtual ~LayerActDef() {}  // slot 0: inline (no table in 3.0.1; ~LayerObjTopDef inlines it)
     virtual void updatePartsAction(layer::LyrActionData const*);  // slot 10
     // the action commands s_pCallActCmd adds to LayerActBase's (each reads its command at cmd, steps cmd past it
     // and returns whether the action waits)
@@ -23,9 +26,11 @@ public:
     // LayerActDef's: actcmd_iconnum and actcmd_animicon write m_iconNum (LayerObjMesh and LayerObjTopDef add none).
     unsigned char pad_258[0x18];
     LayerVertexObj* m_vertexObj;  // 0x270: LayerObjTopDef::resourceInit creates it from the resource (the name is not the original's)
-    unsigned char pad_278[0x8];
+    LayerTextureObj* m_textureObj;  // 0x278: workIconCreate creates it from the resource (the name is not the original's)
     grlib::CGLibTextureBuffer** m_textures;  // 0x280: the LayerObjDraw texture draws index it (the name is not the original's)
-    unsigned char pad_288[0x10];
+    int m_textureNum;  // 0x288: m_textureObj's texture count (the name is not the original's)
+    unsigned char pad_28C[0x4];
+    void* m_work;  // 0x290: the block workIconCreate allocates; ~LayerObjTopDef frees it (the name is not the original's)
     // which of m_textures each draw uses (the type and field names are not the original's)
     struct TexRef {
         unsigned short pad_0;
@@ -35,6 +40,8 @@ public:
     struct TexRefList {
         unsigned char pad_0[0x8];
         const TexRef* m_refs;  // a LyrDrawData's m_texNum entries from its m_texIdx
+        unsigned char pad_10[0x58];
+        grlib::CGLibUniformArray<grlib::CGLibDblUniformBlock>* m_uniforms;  // 0x68: ~LayerObjTopDef releases it
     };
     const TexRefList* m_texRefs;  // 0x298 (the name is not the original's)
     float m_param;  // setParm
