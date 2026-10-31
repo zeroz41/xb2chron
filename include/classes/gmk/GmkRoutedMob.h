@@ -4,6 +4,9 @@
 #include "classes/gmk/AGmkBase.h"
 #include "mm/mtl/Vector.h"
 #include "classes/gmk/GmkRoute.h"
+#include "classes/gmk/GmkMobInsts.h"
+#include "classes/gmk/GmkRouteNavi.h"
+#include <utility>
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
@@ -27,11 +30,14 @@ public:
     static const gmk::GmkType TYPE = gmk::GmkType(19);
     // its game objects, as GmkManager::collectGameObjsUnbound<T> reads them inline (-1: none; the names are not
     // the original's)
-    unsigned int getGobInstNum() const { return m_gobInsts->size(); }
-    gf::GF_OBJ_HANDLE* getGobInst(unsigned int index) const { return (*m_gobInsts)[index]; }
-    unsigned char pad_51[0xa7];  // fields: size from TGmkList::getInst's stride
-    mm::mtl::Vector<gf::GF_OBJ_HANDLE*>* m_gobInsts;  // 0xf8 (the name is not the original's)
-    unsigned char pad_100[0x48];
+    unsigned int getGobInstNum() const { return m_insts.m_gobInsts->size(); }
+    gf::GF_OBJ_HANDLE* getGobInst(unsigned int index) const { return (*m_insts.m_gobInsts)[index]; }
+    // 0x50: dispose calls its dispose, the destructor its inline destructor (as GmkMob's at 0x48; the name is not the
+    // original's)
+    GmkMobInsts m_insts;
+    // 0x120: each object's route navigator (dispose destroys it when it has any, with destruct_n<std::pair<
+    // GF_OBJ_HANDLE*, GmkRouteNavi>>; the name is not the original's); size 0x148 from TGmkList::getInst's stride
+    mm::mtl::Vector<std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi> > m_navis;
 };
 }  // namespace gmk
 

@@ -45,6 +45,8 @@ public:
     void getMatrix(mm::Mat44& mtx, bool world) const;
     // whether pos lies inside the gimmick's shape (GfGameInsideBattleLock::isInside asks a battle lock's with 0)
     bool isInsideShape(const mm::Vec3& pos, float margin) const;  // the BDAT table of the gimmick's kind
+    // the length of a ray snapping it on the ground, by its shape's scale (StateFieldAreaWalk::seqInitGoalPos)
+    float getYSnapRayLength() const;
     // the list holding it (TGmkList::createGmk stores the list there; isValid tests it, the destructor clears it;
     // the name is not the original's)
     IGmkList* m_list;

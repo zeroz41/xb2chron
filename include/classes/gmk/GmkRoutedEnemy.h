@@ -4,6 +4,9 @@
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkRoute.h"
 #include "classes/gmk/GmkEnemyInsts.h"
+#include "classes/gmk/GmkRouteNavi.h"
+#include "mm/mtl/Vector.h"
+#include <utility>
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
@@ -35,8 +38,10 @@ public:
     float getPopWait() const { return m_insts.m_popWait; }
     bool hasTypeGenus(unsigned char genus, bool flag) const { return m_insts.m_popInfo.hasTypeGenus(genus, flag); }
 
-    // 0x1d8: a Vector<std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi>> (copy_construct_n<gmk::GmkRoutedEnemy> assigns it)
-    unsigned char pad_1d8[0x28];  // size 0x200: TGmkList<GmkRoutedEnemy>::getInst's stride (index << 9)
+    // 0x1d8: each object's route navigator (the destructor destroys it with destruct_n<std::pair<GF_OBJ_HANDLE*,
+    // GmkRouteNavi>>; copy_construct_n<gmk::GmkRoutedEnemy> assigns it; the name is not the original's); size 0x200:
+    // TGmkList<GmkRoutedEnemy>::getInst's stride (index << 9)
+    mm::mtl::Vector<std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi> > m_navis;
 };
 }  // namespace gmk
 

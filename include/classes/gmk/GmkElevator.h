@@ -76,6 +76,8 @@ public:
     // what m_createInfo.m_data starts with (the name is not the original's)
     struct Data {
         unsigned short m_locatorId;  // GmkSet's GmkElevatorLocator list index of its first locator
+        // one past its last locator: create wants three (the name is not the original's)
+        unsigned short m_locatorEnd;
     };
     const AGmkBase* getGmkBaseByItemType(ItemType type) const;
     void createSe(SeType type, const mm::Vec3& pos);
@@ -94,6 +96,8 @@ public:
         return -1;
     }
     void clearGobInsts();
+    void seqInit(float dt);
+    void seqWaitToValidate_GfFieldLod(float dt);
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(42);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
@@ -117,7 +121,9 @@ public:
     bool m_accessed2;
     bool m_accessed3;
     bool m_accessed1;
-    int pad_4cc;  // the constructor clears it with the four flags (one 8-byte store); size from TGmkList::getInst's stride (0x4d0)
+    // the row's "elevator_nextwait" (create copies it; the name is not the original's); the constructor clears it
+    // with the four flags (one 8-byte store); size from TGmkList::getInst's stride (0x4d0)
+    float m_nextWait;  // the constructor clears it with the four flags (one 8-byte store); size from TGmkList::getInst's stride (0x4d0)
 };
 }  // namespace gmk
 

@@ -902,6 +902,21 @@ void AGmkBase::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* han
     }
 }
 
+// m_pos points at the gimmick's Xform: its scale is the third vector
+float AGmkBase::getYSnapRayLength() const {
+    switch (m_info->m_shape) {
+    case 1:
+    case 3:
+        return m_pos[2].y;
+    case 2:
+        return m_pos[2].x;
+    case 4:
+        return m_pos[2].x + m_pos[2].y;
+    default:
+        return 1.0f;
+    }
+}
+
 GmkAcc::GmkAcc() : m_gmk(nullptr) {}
 
 GmkAcc::GmkAcc(const CreateInfo& info) : m_gmk(nullptr) { create(info); }
@@ -2279,6 +2294,16 @@ void GmkMob::dispose() {
 
 GmkMob::~GmkMob() { dispose(); }
 
+void GmkRoutedMob::dispose() {
+    if (m_navis.size() != 0) {
+        m_navis.destroy();
+    }
+    m_insts.dispose();
+    GmkRoute::dispose();
+}
+
+GmkRoutedMob::~GmkRoutedMob() { dispose(); }
+
 void GmkLandmark::dispose() {
     disposeGmkPhantom();
     AGmkBase::dispose();
@@ -2655,7 +2680,7 @@ void GmkElevator::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& g
 
 GmkElevator::GmkElevator()
     : pad_4b0(-1), m_seq(nullptr), m_accessed0(false), m_accessed2(false), m_accessed3(false), m_accessed1(false),
-      pad_4cc(0) {
+      m_nextWait(0.0f) {
     for (int i = 0; i < 4; i++) {
         m_gobs[i] = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     }
@@ -3479,6 +3504,25 @@ void GmkEnemyInsts::seqUpdateRepopCounter(const UpdateInfo& info) {
     m_popInfo.removeDefeatedNamedEnemyInfo();
     m_seq = &GmkEnemyInsts::seqUpdatePopDepop;
 }
+
+GmkEnemyInsts::~GmkEnemyInsts() { dispose(); }
+
+void GmkEnemy::dispose() {
+    m_insts.dispose();
+    AGmkBase::dispose();
+}
+
+GmkEnemy::~GmkEnemy() { dispose(); }
+
+void GmkRoutedEnemy::dispose() {
+    if (m_navis.size() != 0) {
+        m_navis.destroy();
+    }
+    m_insts.dispose();
+    GmkRoute::dispose();
+}
+
+GmkRoutedEnemy::~GmkRoutedEnemy() { dispose(); }
 
 void GmkEnemy::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
     m_targetPointName = static_cast<unsigned short>(Bdat::getValCheck(bdat.m_fp, "tagetpoint_name", row, 2));

@@ -138,9 +138,11 @@ public:
             m_allocator = allocator;
         }
     }
+    // the original's callers of an out-of-line destruct_n test the buffer, then the size, before the call
+    // (GfGmkLocatorAtlas's destructor, GmkRoutedEnemy's)
     void clear() {
-        if (m_buffer != nullptr) {
-            destroy_n(m_buffer, m_size);
+        if (m_buffer != nullptr && m_size != 0) {
+            destruct_n(m_buffer, m_size);
         }
         m_size = 0;
     }
@@ -206,7 +208,8 @@ void Vector<T>::assign(const Vector& other) {
         m_buffer = static_cast<T*>(m_allocator->allocate(other.m_capacity * sizeof(T), m_alignment));
         const T* first = other.begin();
         if (first != other.end()) {
-            uninitialized_copy_n(first, other.m_capacity, begin());
+            // the original calls mtl_detail::copy_construct_n<std::pair<GF_OBJ_HANDLE*, gmk::GmkRouteNavi>> (int_to_type<0>)
+            copy_construct_n(first, other.m_capacity, begin());
             m_size = other.m_size;
         }
     }

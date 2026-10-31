@@ -76,9 +76,12 @@ inline void uninitialized_fill_n(T* first, size_t n, const T& value) {
 
 // destroys the n objects from first on. Indexed: a destructor that only stores (gf::GfFieldLod::BdatInfo's, in
 // GfFieldLod's destructor and destroy) comes out interleaved by 4 with the remainder after, as the original's does;
-// the pointer-walking form gave a runtime-unrolled loop with the remainder first
+// the pointer-walking form gave a runtime-unrolled loop with the remainder first. The name is the original's: its
+// out-of-line copies are mm::mtl::destruct_n<T>(T*, unsigned long) (0x710062DE68, 0x710026BB70), called from Vector's clear.
+// Not declared inline: destruct_n<std::pair<GF_OBJ_HANDLE*, gmk::GmkRouteNavi>> (inline cost 280) stays out of line
+// in Vector::destroy as the original's does, which the inline-hint threshold (325) would inline
 template <typename T>
-inline void destroy_n(T* first, size_t n) {
+void destruct_n(T* first, size_t n) {
     for (size_t i = 0; i < n; ++i) {
         first[i].~T();
     }
