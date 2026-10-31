@@ -22,8 +22,9 @@ public:
     mm::mtl::FixStr<64> m_name;
 };
 
-// which allocator: the code passes 0 (the battle managers) and 1 (the menus); the names are unknown
-enum ALLOCATOR : int {};
+// which allocator: the code passes 0 (the battle managers) and 1 (the menus); the names are unknown. Unsigned:
+// GfAllocatorManager::getAllocator/buildAllocator index the array with umaddl (a signed type gives smaddl)
+enum ALLOCATOR : unsigned int {};
 GfAllocator* getAllocator(ALLOCATOR allocator);
 }  // namespace gf
 
