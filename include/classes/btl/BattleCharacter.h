@@ -48,6 +48,11 @@ public:
     CharacterParameter* GetCharacterParameterConst(bool) const;
     // plays a battle sound effect (ElementalComboManager::CreateBreakEffect passes (1, 0x1F, nullptr, true))
     void PlaySE(BTL_SE se, int, const mm::Vec3* pos, bool);
+    void PlaySystemSE(BTL_SE se, int no, bool, bool);
+    void StopSE(BTL_SE se, int no);
+    // 3.0.1's body answers its parameter's slot 74 (a bool) for a living non-player character in battle while
+    // BattleGlobal's m_challengeAnySuccess is set, else false: the return type is read from that tail call
+    bool GetWeaponEffectCaster();
     // where the character stands to the target, 0-3 (Utility::AI_GetTargetDirection answers it plus 1); the bool
     // it sets makes the answer void
     unsigned char CheckAttackPosition(gf::GF_OBJ_HANDLE* target, bool, bool* out) const;
@@ -135,6 +140,15 @@ public:
     };
     enum BLADE_TIMER_MODE : int;
     enum ALPHA_PROC_ID : int;
+    // an alpha fade RegisterAlphaAnimation starts (the names are not the original's): the rate it started from,
+    // its target, the rate now, the time it takes and the frames run
+    struct ALPHA_ANIMATION {
+        float m_startRate;
+        float m_targetRate;
+        float m_rate;
+        float m_time;
+        int m_frame;
+    };
     enum ANIM_SPDATA_TYPE : int;
     enum DROP_ITEM_TYPE : int;
     enum RIMBLOOM_ID : int;
@@ -142,6 +156,10 @@ public:
     void SetAction(ACTION_ID id, bool, bool, int param, float value);
     void DropItem(DROP_ITEM_TYPE type, bool);
     void SetRimBloom(RIMBLOOM_ID id, bool on);
+    // 1.0.0's name: its DeleteKizunaLinkEffect() (0x7100022458) has the same body without the flag (the SE is
+    // always played there) and the same callers (dtor, Initialize, NotifyBattleEnd, ManagerUpdate); 3.0.1's symbols
+    // spell fn_710002C71C
+    void DeleteKizunaLinkEffect(bool playSE);
     const gf::GfComProperty* GetComPropertyConst() const;
     gf::GfComEffectCaster* GetEffectCaster();
     bool IsOnSlide() const;
@@ -174,7 +192,11 @@ public:
     int GetAlphaSetID(ALPHA_PROC_ID id);
     unsigned long GetAnimSpecialProcData(ANIM_SPDATA_TYPE type) const;
     void ResetAlphaRate(int id);
-    void RegisterAlphaAnimation(ALPHA_PROC_ID id, float, float, bool);
+    void RegisterAlphaAnimation(ALPHA_PROC_ID id, float rate, float time, bool all);
+    void AlphaAnimation(ALPHA_PROC_ID id);
+    // 1.0.0's name: its ResetAlphaAnimation (0x710001F77C) has the same three BladeChangeManager callers and the
+    // same body over 17 entries (3.0.1's symbols spell fn_7100028A40)
+    void ResetAlphaAnimation();
     ActionCommand* GetFreeCommand();
     int GetGroupIndex() const;
     bool CheckRandFriendEnhanceRate(int id) const;
@@ -269,6 +291,14 @@ public:
     // byte of 0xED4/0xED6/0xED8 equals id, and on success sets the bit in 0xED0. Returns whether it notified.
     // Callers: NotifyDirectDamage, AfterUpdate, NotifyLostHateTarget, DeadProc, AttackProc, DropHeadPot, others.
     bool fn_710002FC0C(int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
+    // functions and reads its fields. What it does: false when dead (IsDead(0), unless the flag is set), while
+    // m_reactionID is non-zero or while pad_F09_2 is set; else true. Callers: TalkManager, Utility.
+    bool fn_710002FD3C(bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
+    // functions and counts in pad_1073. What it does: true while pad_1076_12 is clear, while BattleGlobal's
+    // m_challengeAnySuccess is clear or once pad_1073 reached 150; else counts pad_1073 up and answers pad_1076_13.
+    bool fn_7100059314();
     // fn_710002FC0C(7).
     bool fn_710004232C();
     // DropItem((DROP_ITEM_TYPE)(type + 5), false).
@@ -299,7 +329,10 @@ public:
     // the other object TurnTarget turns to when asked, (GF_OBJ_HANDLE*)-1 for none: then it turns to m_targetHandle
     // (the name is not the original's)
     gf::GF_OBJ_HANDLE* m_subTargetHandle;
-    unsigned char pad_130[0x20];
+    unsigned char pad_130[0xC];
+    // the kizuna line effect DeleteKizunaLinkEffect destroys (the name is not the original's)
+    unsigned int m_kizunaLinkEffect;
+    unsigned char pad_140[0x10];
     // the angry aura's effect, NotifyAngryEnd ends it (the name is not the original's)
     unsigned int m_angryEffect;
     // the effect fn_7100042460 ends the same way (the name is not the original's)
@@ -329,7 +362,10 @@ public:
     unsigned char pad_DE7_3 : 5;
     unsigned int m_animSpStart;
     unsigned int m_animSpEnd;
-    unsigned char pad_DF0[0xBC];
+    unsigned char pad_DF0[0x8];
+    // one fade per ALPHA_PROC_ID: ResetAlphaAnimation sets the rates to -1 and the rest to 0, RegisterAlphaAnimation
+    // starts one (the names are not the original's)
+    ALPHA_ANIMATION m_alphaAnimations[9];
     // one alpha rate per alpha set; ResetAlphaRate sets them to -1 (the name is not the original's)
     float m_alphaRate[3];
     unsigned char pad_EB8[0x22];
@@ -373,7 +409,9 @@ public:
     unsigned char pad_EF5_3 : 5;
     unsigned char pad_EF6[0x8];
     // one 16-byte bitfield run (StartBackHome loads and stores 0xEFE and 0xF06 as two 8-byte halves)
-    unsigned int pad_EFE : 8;
+    unsigned int pad_EFE : 5;
+    // SetWeaponType keeps the "VoiceType" of its weapon type's row in BDAT 0x96 here (the name is not the original's)
+    unsigned int m_voiceType : 3;
     // IsControlCharacter's cached answer and whether it is cached (the names are not the original's)
     mutable unsigned int m_isControlChara : 1;
     mutable unsigned int m_isControlCharaCached : 1;
@@ -403,7 +441,9 @@ public:
     // the name is not the original's: fn_710002F368 treats the character as out of battle while it is set
     unsigned int m_isBattleIgnore : 1;
     unsigned int pad_F07_2 : 6;
-    unsigned int pad_F08 : 32;
+    unsigned int pad_F08 : 10;
+    unsigned int pad_F09_2 : 1;  // fn_710002FD3C answers false while it is set (meaning unknown)
+    unsigned int pad_F09_3 : 21;
     unsigned int pad_F0C : 16;
     unsigned char pad_F0E[0x12];
     // the commands GetFreeCommand hands out, m_commandNum of them in use (the names are not the original's)
@@ -431,7 +471,12 @@ public:
     unsigned int m_bladeArtsState : 3;
     // a 3-byte run: IsBladeArtsEnd loads the byte at 0x1072 shifted, the byte at 0x1073 is a counter of its own
     unsigned char pad_1073;
-    unsigned char pad_1074[0x1C];
+    unsigned char pad_1074[0x2];
+    unsigned short pad_1076_0 : 12;
+    unsigned short pad_1076_12 : 1;  // fn_7100059314 answers true while it is clear (meaning unknown)
+    unsigned short pad_1076_13 : 1;  // fn_7100059314's answer once it counts (meaning unknown)
+    unsigned short pad_1076_14 : 2;
+    unsigned char pad_1078[0x18];
     // SetSuperArmorTime keeps the longer time (the name is not the original's)
     float m_superArmorTime;
     unsigned char pad_1094[0x13];

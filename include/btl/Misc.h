@@ -22,6 +22,9 @@ bool CheckInRange(const mm::Vec3& pos, BattleCharacter* chr, float range, bool f
 // the party the object belongs to, -1 for none (PlayerParameter::Update keeps its m_groupIndex then)
 int GetPartyID(gf::GF_OBJ_HANDLE* handle);
 
+// the alpha rate a volume fade gives the object (BattleCharacter::RegisterAlphaAnimation starts from it)
+float GetVolumeFadeAlphaRate(gf::GF_OBJ_HANDLE* handle);
+
 // which way GetCrossDirection turns: 0 one side, any other the opposite (the names are not the original's)
 enum CROSS_MODE {
     CROSS_MODE_0 = 0,

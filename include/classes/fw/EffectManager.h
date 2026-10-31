@@ -98,6 +98,7 @@ public:
     void sendCasterFrame(EffectCasterBase* caster, float frame);
     void sendCasterStateName(EffectCasterBase* caster, const char* name);
     void removeData(EffectData* data);
+    void destroyKizunaLine(unsigned int handle);  // the symbols' name (BattleCharacter's kizuna link effect)
     // an effect by name, its handle (0 for none)
     unsigned int create(const char* name, EffectPack* pack, const effect::SendParam* param, bool flag);
     unsigned int create(const char* name, EffectPack* pack, bool flag);

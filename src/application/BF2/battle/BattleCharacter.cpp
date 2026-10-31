@@ -18,6 +18,10 @@
 #include "classes/gf/GfComProperty.h"
 #include "classes/gf/GfComPropertyPc.h"
 #include "classes/gf/GfComEffectCaster.h"
+#include "classes/gf/GfComSound.h"
+#include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfDataBdat.h"
+#include "plugin/Bdat.h"
 
 namespace btl {
 
@@ -320,6 +324,44 @@ bool BattleCharacter::fn_710002F368() const {
     return !m_isBattle || m_isBattleIgnore;
 }
 
+bool BattleCharacter::GetWeaponEffectCaster() {
+    if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_challengeAnySuccess && !m_isPlayer && m_isBattle &&
+        !IsDead(0)) {
+        return GetCharacterParameter(false)->fn_7100088FEC();
+    }
+    return false;
+}
+
+void BattleCharacter::PlaySystemSE(BTL_SE se, int no, bool flag0, bool flag1) {
+    bool hidden = gf::GfMenuManager::fn_710035DE04();
+    if (no == 0 || hidden) {
+        return;
+    }
+    const char* tag = mm::mtl::PtrSingleton<BattleGlobal>::sys()->GetSeTag(se);
+    if (tag == nullptr) {
+        return;
+    }
+    gf::GfComSound* sound = gf::GfObjUtil::getObj(m_handle)->getComponent<gf::GfComSound>(10);
+    if (sound != nullptr) {
+        mm::mtl::FixStr<32> name;
+        name.format("btl_%s_%03d", tag, no);
+        sound->playSe2D(name.m_str, 1.0f, flag0, flag1);
+    }
+}
+
+void BattleCharacter::StopSE(BTL_SE se, int no) {
+    const char* tag = mm::mtl::PtrSingleton<BattleGlobal>::sys()->GetSeTag(se);
+    if (tag == nullptr) {
+        return;
+    }
+    gf::GfComSound* sound = gf::GfObjUtil::getObj(m_handle)->getComponent<gf::GfComSound>(10);
+    if (sound != nullptr) {
+        mm::mtl::FixStr<32> name;
+        name.format("btl_%s_%03d", tag, no);
+        sound->stopSe(name.m_str);
+    }
+}
+
 void BattleCharacter::fn_710003D114(bool flag0, int slot, bool flag1, float value) {
     fn_710005F554(~(slot < 0 ? 16 : slot), flag0, flag1, value);
 }
@@ -336,6 +378,20 @@ void BattleCharacter::ActionCommandEndRun() {
     if (!m_isRunHold && m_actionStep == 0) {
         SetAction(ACTION_PUT_OUT_WEAPON, false, false, 0, 0.0f);
     }
+}
+
+bool BattleCharacter::fn_7100059314() {
+    if (!pad_1076_12) {
+        return true;
+    }
+    if (!mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_challengeAnySuccess) {
+        return true;
+    }
+    if (pad_1073 >= 150) {
+        return true;
+    }
+    pad_1073++;
+    return pad_1076_13;
 }
 
 bool BattleCharacter::fn_7100059D0C() const {
@@ -479,6 +535,17 @@ bool BattleCharacter::fn_7100041CA4() const {
         return param->fn_7100088F40();
     }
     return false;
+}
+
+void BattleCharacter::ResetAlphaAnimation() {
+    for (int i = 0; i < 9; i++) {
+        ALPHA_ANIMATION& anim = m_alphaAnimations[i];
+        anim.m_frame = 0;
+        anim.m_time = 0.0f;
+        anim.m_rate = -1.0f;
+        anim.m_targetRate = -1.0f;
+        anim.m_startRate = -1.0f;
+    }
 }
 
 bool BattleCharacter::fn_7100028D0C(bool flag) {
