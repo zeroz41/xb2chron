@@ -16,6 +16,10 @@ class GmkSquad {
 public:
     virtual ~GmkSquad();  // slot 0
     void dispose();
+    void seqInit(float);
+    // runs while the squad is valid: updatePosRotY(false); else back to seqInit
+    void seqUpdate(float);
+    void updatePosRotY(bool);
     // its leader, when the access reaches a valid one with members and the squad has members; none otherwise
     GmkSquadLeader* getBindedGmkSquadLeader() const;
     // whether the access reaches a valid leader with members and the squad has members: getBindedGmkSquadLeader's test
@@ -41,7 +45,8 @@ public:
     // is not the original's
     GmkAcc m_acc;
     unsigned int pad_70;  // how many members it has (GmkSquadNavi::getMemberDefType, GfComBehaviorMob::isSquadMember)
-    unsigned char pad_74[0x14];
+    unsigned char pad_74[0x4];
+    void (GmkSquad::*m_seq)(float);  // 0x78: the step to run (seqUpdate sets seqInit; the name is not the original's)
     // 0x88: the navis that joined it (addGmkSquadNavi links one, removeGmkSquadNavi unlinks it; the name is not the
     // original's)
     ::mm::mtl::IntrusiveList<GmkSquadNavi> m_navis;

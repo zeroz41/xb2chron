@@ -46,6 +46,12 @@ public:
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     bool isObtained() const;
+    void disposeGobInst(bool);  // out of line (0x71005A45E4): onGobEvent calls it with false on event 3
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because debugDraw calls it on this
+    // and its unit is the gimmicks'. What it does: false when obtained (GfGameFlag local bdatId + 47087) or when the
+    // BdatInfo's isPopCondMatched fails; then tests GmkManager's state (0x198), fn_71002A9E68 and the pop distance
+    // (m_popDistSq). debugDraw calls it when the gimmick is valid and ignores the answer.
+    bool fn_71005A4238() const;
     // AGmkBase's row as this kind's BdatInfo; the name is not the original's
     const BdatInfo* getBdatInfo() const {
         return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);

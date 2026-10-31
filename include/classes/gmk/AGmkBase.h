@@ -91,6 +91,9 @@ GmkEnemy* fn_71005B3824(const AGmkBase* gmk, unsigned int index);
 // whether the player's object exists (defined in GmkElevator.cpp's unit; StateFieldHome::isCondMatch is its tail
 // call)
 bool isPlayerExist();
+// sends SCOM_DESTROY_GAME_OBJ for handle's object after time seconds unless it is gone, being destroyed or has flag
+// 17 (0x710057C080; GfMobSlotManager::update and createMobInfos call it)
+void disposeGobInst(gf::GF_OBJ_HANDLE* handle, float time);
 // snaps a point on the ground below from: a line test (fw::ColiCheck::testLineChara) from from down by length with
 // config; out takes the nearest hit whose y is not negative. False when nothing was hit (0x710057B63C; the pop
 // finders, GmkEffect::applyEffectParam and the gimmicks' validateIconPos call it)

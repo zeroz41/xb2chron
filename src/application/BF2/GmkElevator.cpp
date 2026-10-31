@@ -426,11 +426,11 @@ gmk::AGmkBase* GmkSalvageLocatorList::getInst(unsigned int index) const {
 }
 
 bool GmkManager::isValid() const {
-    return m_bdat.pad_120 != 0 && fw::BdatManager::isEnableBdat(m_bdat.m_createInfo.m_param) && m_bdatFp != nullptr;
+    return m_bdat.m_assetData != 0 && fw::BdatManager::isEnableBdat(m_bdat.m_createInfo.m_param) && m_bdatFp != nullptr;
 }
 
 void GmkManager::seqWaitValidateResDefBdatFp(float) {
-    if (m_bdat.pad_120 != 0 && fw::BdatManager::isEnableBdat(m_bdat.m_createInfo.m_param)) {
+    if (m_bdat.m_assetData != 0 && fw::BdatManager::isEnableBdat(m_bdat.m_createInfo.m_param)) {
         m_bdatFp = Bdat::getFP(m_createInfo.m_tableName.m_str);
         m_seq = &GmkManager::seqUpdate;
     }
@@ -472,7 +472,7 @@ int GmkManager::findFirstBdatId_RSC_GmkSetList(GmkType type, int bdatId) const {
 }
 
 int GmkManager::findFirstBdatId_RSC_GmkSetList(int mapId) const {
-    if (m_bdat.pad_120 != 0 && fw::BdatManager::isEnableBdat(m_bdat.m_createInfo.m_param)) {
+    if (m_bdat.m_assetData != 0 && fw::BdatManager::isEnableBdat(m_bdat.m_createInfo.m_param)) {
         unsigned char* fp = m_bdatFp;
         int count = Bdat::getIdCount(fp);
         int top = Bdat::getIdTop(fp);
@@ -536,6 +536,39 @@ void GmkRoutedEnemyList::debugDraw() const {
 GmkEnemyList::GmkEnemyList(unsigned int updateGmkNumPerFrame)
     : TGmkList(updateGmkNumPerFrame), m_triggerList(-1), m_waveList(-1), pad_8d0(nullptr) {}
 
+void GmkEnemyList::create(const IGmkList::CreateInfo& info) {
+    if (m_bdatInfo.create()) {
+        TGmkList::create(info);
+    } else {
+        dispose();
+    }
+}
+
+void GmkEnemyList::dispose() {
+    m_triggerList.dispose();
+    if (gf::GfGameManager::fn_71002AC598() || gf::GfGameManager::fn_71002A9E68()) {
+        m_waveList.dispose();
+        pad_8d0 = nullptr;
+    }
+    TGmkList::dispose();
+}
+
+void GmkEnemyList::debugUpdateMmf() {
+    TGmkList::debugUpdateMmf();
+    m_triggerList.debugUpdateMmf();
+    if (gf::GfGameManager::fn_71002AC598() || gf::GfGameManager::fn_71002A9E68()) {
+        m_waveList.debugUpdateMmf();
+    }
+}
+
+void GmkEnemyList::debugDraw() const {
+    TGmkList::debugDraw();
+    m_triggerList.debugDraw();
+    if (gf::GfGameManager::fn_71002AC598() || gf::GfGameManager::fn_71002A9E68()) {
+        m_waveList.debugDraw();
+    }
+}
+
 GmkEnemyList::~GmkEnemyList() {
     dispose();
 }
@@ -546,6 +579,14 @@ GmkRoutedEnemyList::~GmkRoutedEnemyList() {
 
 GmkCollectionList::~GmkCollectionList() {
     dispose();
+}
+
+void GmkCollectionList::create(const IGmkList::CreateInfo& info) {
+    if (m_bdatInfo.create()) {
+        TGmkList::create(info);
+    } else {
+        dispose();
+    }
 }
 
 void GmkSalvageList::update(float dt) {
@@ -670,7 +711,7 @@ bool GmkSet::isValid() const {
     if (bdat.m_handle.m_handle == 0 || !(bdat.m_path.length() > 0) || bdat.m_param < 0) {
         return true;
     }
-    return m_bdat.pad_120 != 0 && fw::BdatManager::isEnableBdat(bdat.m_param);
+    return m_bdat.m_assetData != 0 && fw::BdatManager::isEnableBdat(bdat.m_param);
 }
 
 void GmkSet::update(float dt) {
@@ -693,6 +734,10 @@ const IGmkList* GmkSet::getGmkList(GmkType type) const { return m_gmkLists[stati
 IGmkList* GmkSet::getGmkList(GmkType type) { return m_gmkLists[static_cast<unsigned int>(type)]; }
 
 GmkNpcManager::~GmkNpcManager() { dispose(); }
+
+const GmkNpcIdInfo* GmkNpcManager::getNpcIdInfoByNpcId(int npcId) const {
+    return &m_npcIdInfos[getNpcIdInfoIdxFromNpcId(npcId)];
+}
 
 // the same steps as dispose, written here: the original's dispose keeps its default CreateInfo on the stack, this
 // copy does not (so the destructor does not inline dispose)
@@ -1065,6 +1110,13 @@ GmkAccManager::~GmkAccManager() {
     }
 }
 
+void disposeGobInst(gf::GF_OBJ_HANDLE* handle, float time) {
+    gf::GfObjAcc acc(handle);
+    if (acc.getObj() != nullptr && !acc.isDestroy() && !acc.testFlag(17)) {
+        gf::SCOM_DESTROY_GAME_OBJ::create(handle, time, 0);
+    }
+}
+
 bool GmkCamera::CreateInfo::validateTransform(unsigned short lodId) {
     mm::Mat44 mtx;
     if (!gf::GfFieldLod::sys()->findTransform(mtx, lodId)) {
@@ -1275,6 +1327,18 @@ GmkRouteNavi::GmkRouteNavi(const CreateInfo* info)
     if (info != nullptr) {
         create(*info);
     }
+}
+
+bool GmkRouteNavi::isArrived(const mm::Vec3& pos, const mm::Vec3& target) const {
+    mm::Vec3 d = pos - target;
+    if (pad_6c < d.y) {
+        return false;
+    }
+    float distSq = d.x * d.x + d.z * d.z;
+    if (pad_68 * pad_68 < distSq) {
+        return false;
+    }
+    return true;
 }
 
 void GmkRouteNavi::dispose() {
@@ -1838,6 +1902,14 @@ GmkFieldVolume::~GmkFieldVolume() { dispose(); }
 GmkSquadLeader::~GmkSquadLeader() { dispose(); }
 GmkSquadMember::~GmkSquadMember() { dispose(); }
 GmkSquad::~GmkSquad() { dispose(); }
+
+void GmkSquad::seqUpdate(float) {
+    if (isValid()) {
+        updatePosRotY(false);
+    } else {
+        m_seq = &GmkSquad::seqInit;
+    }
+}
 
 GmkSquadLeader* GmkSquad::getBindedGmkSquadLeader() const {
     if (m_acc.isValid()) {
@@ -2556,6 +2628,11 @@ inline void GmkBgmCondInfo::dispose() { GmkBgmCondInfoManager::removeInfo(this);
 // its address follows the template code's (0x71005D852C); kept next to its users
 GmkBgmCondInfo::~GmkBgmCondInfo() { dispose(); }
 
+void GmkAreaBgm::create(const CreateInfo& info) {
+    AGmkBase::create(info);
+    createBgmCondInfos();
+}
+
 void GmkAreaBgm::dispose() {
     for (int i = 0; i < 4; i++) {
         m_condInfos[i].dispose();
@@ -2622,6 +2699,13 @@ void GmkTutorial::dispose() {
 }
 
 GmkTutorial::~GmkTutorial() { dispose(); }
+
+void GmkMapObj::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3)) {
+        disposeGobInst(false);
+    }
+}
 
 void GmkMapObj::dispose() {
     disposeGobInst(false);
@@ -2965,6 +3049,18 @@ void GmkForm::dispose() { pad_0 = 0; }
 
 GmkBdat::~GmkBdat() {
     dispose();
+}
+
+void GmkBdat::seqWaitResourceLoaded(float) {
+    if (m_resource->valid()) {
+        m_assetData = m_resource->getAssetData();
+        if (m_assetData == nullptr || fw::BdatManager::isExistBdat(m_createInfo.m_param)) {
+            dispose();
+            return;
+        }
+        fw::BdatManager::loadBdatFromMemory(m_createInfo.m_param, m_assetData);
+        m_seq = nullptr;
+    }
 }
 
 GmkLandmarkManager::~GmkLandmarkManager() {
@@ -4472,6 +4568,19 @@ void GmkCollection::seqUpdateRepopCounter(float dt) {
 }
 
 void GmkCollection::onPlayerAccessed(gf::GF_OBJ_HANDLE*) { setTargetable(false); }
+
+void GmkPrecious::debugDraw() const {
+    if (isValid()) {
+        fn_71005A4238();
+    }
+}
+
+void GmkPrecious::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3)) {
+        disposeGobInst(false);
+    }
+}
 
 bool GmkPrecious::isObtained() const { return gf::GfGameFlag::getLocal(1, m_createInfo.m_bdatId + 47087) != 0; }
 

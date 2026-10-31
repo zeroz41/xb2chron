@@ -39,6 +39,7 @@ public:
     virtual void debugDraw() const;  // slot 7
     virtual void onEnterPhantom(gmk::IGmkPhantomEventListener::OnEnterInfo const&) {}  // slot 11
     virtual void onLeavePhantom(gmk::IGmkPhantomEventListener::OnLeaveInfo const&);  // slot 12
+    void createBgmCondInfos();  // out of line (0x710059CF0C): create's tail call
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(29);
     GmkPhantom m_phantom;  // 0x50: dispose disposes it (the name is not the original's)
