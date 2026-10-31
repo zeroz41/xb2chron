@@ -16,6 +16,10 @@ public:
     virtual void consistentUpdate() {}  // slot 6
     void setDeleteCall();
 
+    // 0.57735026 (1/sqrt(3)) in IDColiObjData's .rodata; IDColiPrimitive::createBaseSphere scales the length of
+    // the matrix's summed axes by it
+    static const float OBJ_CALC_RADIUS;
+
     IDColiObj* m_prev;  // 0x8
     IDColiObj* m_next;  // 0x10
     unsigned int m_state;  // 0x18, 1 << ColiState bits (IDColiParmsBase::isState/setState)

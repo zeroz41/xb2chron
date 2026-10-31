@@ -2,15 +2,29 @@
 #define IDCOLI_IDCOLIGRANDMESH_H
 
 #include "mm/Mat44.h"
+#include "mm/Vec3NA.h"
 
 namespace idcoli { class IDColiCallArg; }
-namespace idcoli { class IDCmfPoliData; }
 namespace idcoli { class IDColiInput; }
 namespace idcoli { class IDColiResult; }
 namespace idcoli { class IDColiGrdMoveObj; }
 namespace idcoli { class IDColiTreeTop; }
 
 namespace idcoli {
+
+// a polygon of the grand data (12 bytes: meshLine indexes the table at wrkIDCmfWork 0x10 so; IDColiCallArg::m_poli
+// points to one). Only what vecotrDef/vecotrInst read is declared; the names are not the original's.
+class IDCmfPoliData {
+public:
+    unsigned int m_offset;  // 0x0, its index record's offset in the grand data (u16 indices)
+    // the number of vertex indices at the head of the index record (meshLine loops over them)
+    unsigned char m_num;  // 0x4
+    // which table of wrkIDCmfWork::m_vectors (and of the normal tables at 0x18, in meshLine) the record indexes
+    unsigned char m_table;  // 0x5
+    unsigned char pad_6[2];
+    unsigned short m_flags;  // 0x8, bit 7: it has a vector (vecotrDef/vecotrInst give zero otherwise)
+    unsigned char pad_a[2];
+};
 
 // one position record of a grand mesh's work (0xA0 bytes: IDColiGrandTree's inst*Hit index them so).
 // IDColiPrimitive::calcPosDataSetup fills it from a matrix and two corners; the names are not the original's.
@@ -49,7 +63,9 @@ public:
     };
 
     const Header* m_data;  // 0x0, createGrand's data
-    unsigned char pad_8[0x28];
+    unsigned char pad_8[0x20];
+    // the vector tables (vecotrDef/vecotrInst pick one by IDCmfPoliData's table byte)
+    const mm::Vec3NA* const* m_vectors;  // 0x28
     const IDCmfPosData* m_posData;  // 0x30, inst*Hit index it
     const IDCmfPosInfo* m_posInfo;  // 0x38, the same index
     unsigned char pad_40[0x30];

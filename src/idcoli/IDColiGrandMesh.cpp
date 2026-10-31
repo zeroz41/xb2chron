@@ -57,6 +57,16 @@
 #include "idcoli/IDColiUtilTreeAcc.h"
 
 namespace idcoli {
+void IDColiPrimitive::createBaseSphere(void* base, IDColiBaseType& type, const mm::Mat44& matrix, const mm::Vec3& size) {
+    CLSphereWork* sphere = static_cast<CLSphereWork*>(base);
+    type = IDCOLI_BASE_SPHERE;
+    mm::Vec3 axis(matrix.m[0][0] + matrix.m[1][0] + matrix.m[2][0], matrix.m[0][1] + matrix.m[1][1] + matrix.m[2][1],
+                  matrix.m[0][2] + matrix.m[1][2] + matrix.m[2][2]);
+    float radius = axis.length() * IDColiObj::OBJ_CALC_RADIUS;
+    sphere->m_radius = size.x * radius;
+    sphere->m_center = matrix.getTrans();
+}
+
 void IDColiPrimitive::createBaseBox(void* base, IDColiBaseType& type, const mm::Mat44& matrix, const mm::Vec3& size) {
     calcBaseBoxSetup(static_cast<CLBoxWork*>(base), matrix, size);
     type = IDCOLI_BASE_BOX;
@@ -209,6 +219,38 @@ void IDColiGrandMesh::stockTbl(IDColiCallArg& arg, const IDCmfPoliData* poli, fl
 
 void IDColiGrandMesh::vecotrNon(IDColiCallArg&, const IDCmfPoliData*) {}
 
+void IDColiGrandMesh::vecotrDef(IDColiCallArg& arg, const IDCmfPoliData* poli) {
+    if (!(arg.m_poli->m_flags & 0x80)) {
+        arg.m_vector = mm::Vec3::zero;
+        return;
+    }
+    const unsigned short* index =
+        reinterpret_cast<const unsigned short*>(reinterpret_cast<const char*>(m_work->m_data) + poli->m_offset);
+    const mm::Vec3NA& vector = m_work->m_vectors[poli->m_table][index[poli->m_num * 2 + 2]];
+    arg.m_vector.x = vector.x;
+    arg.m_vector.y = vector.y;
+    arg.m_vector.z = vector.z;
+}
+
+void IDColiGrandMesh::vecotrInst(IDColiCallArg& arg, const IDCmfPoliData* poli) {
+    if (!(arg.m_poli->m_flags & 0x80)) {
+        arg.m_vector = mm::Vec3::zero;
+        return;
+    }
+    const unsigned short* index =
+        reinterpret_cast<const unsigned short*>(reinterpret_cast<const char*>(m_work->m_data) + poli->m_offset);
+    const mm::Vec3NA& vector = m_work->m_vectors[poli->m_table][index[poli->m_num * 2 + 2]];
+    float x = vector.x;
+    float y = vector.y;
+    float z = vector.z;
+    arg.m_vector.x = x * m_instPosData->m_matrix.m[0][0] + y * m_instPosData->m_matrix.m[0][1] +
+                     z * m_instPosData->m_matrix.m[0][2];
+    arg.m_vector.y = x * m_instPosData->m_matrix.m[1][0] + y * m_instPosData->m_matrix.m[1][1] +
+                     z * m_instPosData->m_matrix.m[1][2];
+    arg.m_vector.z = x * m_instPosData->m_matrix.m[2][0] + y * m_instPosData->m_matrix.m[2][1] +
+                     z * m_instPosData->m_matrix.m[2][2];
+}
+
 IDColiGrandObj::IDColiGrandObj(wrkIDCmfWork* work) {
     m_work = work;
     m_instPosData = nullptr;
@@ -280,6 +322,33 @@ bool IDColiGrandObj::coliCallCheck(bool (IDColiGrandTree::*parts)(const IDCmfPos
         }
     }
     return false;
+}
+
+bool IDColiGrandObj::coliCallResl(bool (IDColiGrandTree::*parts)(const IDCmfPosData* posData,
+                                                                   const IDCmfPosInfo* posInfo)) {
+    bool hit = false;
+    if (m_work->m_instNum != 0) {
+        const wrkIDCmfWork::Inst* inst = m_work->m_insts;
+        for (int i = 0; i < m_work->m_instNum; i++, inst++) {
+            if (inst->m_id != 0 && IDColiManager::sys()->isGblId(inst->m_id)) continue;
+            if ((inst->m_flags & 1) && (inst->m_flags >> 8) != IDColiManager::sys()->m_subNum) continue;
+            hit |= (this->*m_treeHit)(inst->m_index);
+        }
+    } else {
+        hit = (this->*m_treeHit)(0);
+    }
+    if (m_work->m_moveObjNum != 0) {
+        IDColiUtilTreeAcc acc(m_work->m_treeTops[m_work->m_bank]);
+        acc.startTreeAaBbMode(m_input->m_max, m_input->m_min);
+        for (ColiLinkList<IDColiTreeObj>* list = acc.nextList(); list != nullptr; list = acc.nextList()) {
+            for (IDColiTreeObj* node = list->m_head; node != nullptr; node = node->m_next) {
+                IDColiGrdMoveObj* obj = static_cast<IDColiGrdMoveObj*>(node->m_owner);
+                m_result->m_obj = obj->m_userData;
+                hit |= (this->*parts)(&obj->m_posData, &obj->m_posInfo);
+            }
+        }
+    }
+    return hit;
 }
 
 bool IDColiGrandObj::testRay(IDColiResult& result, const IDColiInput& input) {
