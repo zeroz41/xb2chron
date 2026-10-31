@@ -48,6 +48,18 @@ public:
         bool m_keepEmpty;  // type 0: an empty member slot is added too (as blade 0)
     };
     void setupFromTeam(const TeamSetup& setup);
+    // setupFromDriver's parameter (the symbol names the type; its field names are not the original's): setupFromDriver
+    // reads 0x14 (GfMenuObjBlWeapon2's MainListener passes 3), 0x18 (a driver id), the bytes 0x1C and 0x1E
+    class DriverSetup {
+    public:
+        ::ui::UIListInfoBase::SetupParam m_param;  // handed to setup
+        int m_type;
+        unsigned int m_driver;
+        bool pad_1C;
+        bool pad_1D;
+        bool pad_1E;
+    };
+    void setupFromDriver(const DriverSetup& setup);
     void updateOwner();
     // orders the list by a sort type (1.0.0's sort has the same switch; types over 100 go to fn_710036E1A0)
     void sort(unsigned int type, bool descending);

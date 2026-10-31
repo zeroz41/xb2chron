@@ -15,7 +15,10 @@
 #include "classes/gf/GfMenuFullScreen.h"
 #include "classes/gf/GfMenuItemList.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
+#include "classes/gf/GfMenuObjCharSelect.h"
+#include "classes/gf/GfMenuObjCmnStatus.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
+#include "classes/gf/GfMenuObjShop.h"
 #include "classes/gf/GfMenuReference.h"
 #include "classes/gf/GfMenuObjBlWeapon2/ChrChangeListener.h"
 #include "classes/gf/GfMenuObjBlWeapon2/ItemSelectListener.h"
@@ -28,6 +31,7 @@
 #include "gf/GfEquipUtil.h"
 #include "gf/GfMenuObjUtil.h"
 #include "gf/GfMenuTypes.h"
+#include "mm/mtl/FixStr.h"
 #include "ui/EventData.h"
 
 namespace gf {
@@ -127,6 +131,83 @@ void GfMenuObjBlWeapon2::finalize() {
 void GfMenuObjBlWeapon2::update() {
     m_seq.update();
     GfMenuObject::update();
+}
+
+void GfMenuObjBlWeapon2::MainListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        acc.setDisp(true);
+        GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_base"), 0, 0);
+        GfMenuObject::sendOpenEvent(acc.searchChild("LAY_chips"), 0, 0.0f);
+        GfMenuObject::sendOpenEvent(acc.searchChild("LAY_weapon"), 0, 0.0f);
+        mm::mtl::FixStr<32> name;
+        if (m_owner->m_openType == 1) {
+            GfMenuBladeList::DriverSetup setup;
+            setup.pad_1C = false;
+            setup.pad_1D = false;
+            setup.pad_1E = false;
+            setup.m_type = 3;
+            setup.m_driver = 0;
+            setup.m_param.m_pageRowSize = 5;
+            m_owner->m_blades->setupFromDriver(setup);
+            GfMenuReference::setReferenceBladeID(0, m_owner->m_blades->getContents(0).m_blade);
+            for (int i = 1; i < 7; i++) {
+                name.format("LAY_menu@%02d", i);
+                ui::UIObjectAcc menu(acc.searchChild(name.m_str));
+                menu.setDisp(false);
+                name.format("LAY_shop@%02d", i);
+                ui::UIObjectAcc shop(acc.searchChild(name.m_str));
+                shop.setDisp(true);
+            }
+            GfMenuObjCmnStatus::openBlStatus(1, -1);
+        } else {
+            for (int i = 1; i < 7; i++) {
+                name.format("LAY_menu@%02d", i);
+                ui::UIObjectAcc menu(acc.searchChild(name.m_str));
+                menu.setDisp(true);
+                name.format("LAY_shop@%02d", i);
+                ui::UIObjectAcc shop(acc.searchChild(name.m_str));
+                shop.setDisp(false);
+            }
+        }
+        break;
+    }
+    case 3:
+        if (event.m_param0 == 2) {
+            acc.setDisp(false);
+            acc.setTerm();
+            if (m_owner->m_openType == 0) {
+                GfMenuObjCharSelect::returnSubMenu();
+                GfMenuObject::returnFSSubLayer(m_owner);
+            } else {
+                GfMenuObject::termCallContext(handle);
+                ui::UIManager::get()->terminateLayer(0x2D, true);
+            }
+        }
+        break;
+    case 0x21:
+        acc.setDisp(true);
+        break;
+    case 0x22: {
+        int time = GfMenuObjUtil::setCommonFadeOut(acc.searchChild("LAY_base"), 2, 0);
+        GfMenuObject::hookCtrlEvent(acc.m_handle, time);
+        GfMenuObject::sendCloseEvent(acc.searchChild("LAY_chips"), 0, 0.0f);
+        GfMenuObject::sendCloseEvent(acc.searchChild("LAY_weapon"), 0, 0.0f);
+        if (m_owner->m_openType == 1) {
+            GfMenuObjShop::dispBlade(false);
+            GfMenuObjCmnStatus::closeBlStatus();
+            unsigned int change = acc.searchChild("LAY_chr_change");
+            ui::EventData close;
+            close.m_type = 0x22;
+            ui::UIManager::get()->requestObjectEvent(change, close, 0.0f);
+        }
+        break;
+    }
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 void GfMenuObjBlWeapon2::openCharChange() {
