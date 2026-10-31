@@ -20,7 +20,6 @@ public:
     bool m_isDestroyed;
     unsigned char pad_1D[0x3];
     RQ_SETUP_PARTY m_party;
-    unsigned char pad_E8[0x178];
     mm::mtl::FixedVector<GF_OBJ_HANDLE*, 32> m_handles;
 };
 }  // namespace gf

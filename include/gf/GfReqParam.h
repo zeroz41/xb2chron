@@ -36,7 +36,18 @@ public:
     // every act blade to the common blade it stands for, and the DLC drivers to their default blades
     void replaceActBlade();
 
+    // two more members past the drivers: replaceActBlade turns the id of one whose type is 4 into its common blade.
+    // The names are not the original's.
+    struct Extra {
+        unsigned int m_type;
+        unsigned int m_id;
+    };
+
     Driver m_drivers[10];
+    unsigned char pad_C8[0x3C];  // the constructor zeroes 0xC8 to 0x115 (one memset)
+    Extra m_extras[2];
+    // 0x240 bytes in all: GfGameParty's copy at 0x130 ends where its m_currentPartyValid (0x370) starts
+    unsigned char pad_114[0x12C];
 };
 
 // where a map jump goes. The names are not the original's.

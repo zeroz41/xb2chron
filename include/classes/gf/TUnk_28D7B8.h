@@ -40,7 +40,7 @@ public:
     TUnk_B535D0* m_owner;  // (the name is not the original's)
     unsigned char pad_8[0x8];
     RQ_SETUP_PARTY m_party;  // the constructor builds it (the name is not the original's)
-    unsigned char pad_D8[0x218];
+    unsigned char pad_250[0xA0];
     // cleared by the constructor; the destructor clears it when set (what it holds is unknown)
     void* pad_2F0;
     unsigned char pad_2F8[0x9E8];

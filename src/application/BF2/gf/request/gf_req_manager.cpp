@@ -6,6 +6,9 @@
 #include "classes/gf/GfInfo.h"
 #include "gf/GfReqParam.h"
 #include "gf/GfDataDriver.h"
+#include "gf/GfDataBlade.h"
+#include "gf/SDataBlade.h"
+#include "classes/gf/GfBdatChrDr.h"
 #include "classes/gf/GfAllocator.h"
 
 namespace gf {
@@ -163,6 +166,39 @@ void GfMapjumpInfo::setupForSaveData(unsigned int map, const mm::Vec3& pos, cons
     m_setRotY = true;
     m_startChapter = startChapter;
     m_kind = 1;
+}
+
+void RQ_SETUP_PARTY::replaceActBlade() {
+    // an act blade's common blade, its data copied from the act blade the first time (the name is not the original's)
+    auto toCommon = [](unsigned int blade) -> unsigned int {
+        unsigned int common = GfDataBlade::getActBlade2CommonBlade(blade);
+        if (common == blade) {
+            return blade;
+        }
+        SDataBlade* data = GfDataBlade::getSDataBlade(common);
+        if (data->m_bladeId == 0) {
+            *data = *GfDataBlade::getSDataBlade(blade);
+            data->m_bladeId = common;
+        }
+        return common;
+    };
+    for (int i = 0; i < 2; i++) {
+        if (m_extras[i].m_type == 4) {
+            m_extras[i].m_id = toCommon(m_extras[i].m_id);
+        }
+    }
+    for (Driver& driver : m_drivers) {
+        for (unsigned short& blade : driver.m_blades) {
+            blade = toCommon(blade);
+        }
+    }
+    for (Driver& driver : m_drivers) {
+        if (GfDataDriver::fn_710023F9A8(driver.m_driver)) {
+            memset(driver.m_blades, 0, sizeof(driver.m_blades));
+            driver.m_blades[0] = mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->getChrDrDefBlade1(driver.m_driver);
+            driver.m_activeIndex = 0;
+        }
+    }
 }
 
 RQ_SETUP_BLADE::RQ_SETUP_BLADE() : m_driver(0), m_activeBlade(0) {

@@ -168,7 +168,6 @@ public:
     GfSelectBlade m_selectBlade;
     unsigned char pad_124[0xC];
     RQ_SETUP_PARTY m_currentParty;  // what getCurrentPartyInfo fills (the name is not the original's)
-    unsigned char pad_1f8[0x178];
     bool m_currentPartyValid;  // set once m_currentParty is filled (the name is not the original's)
     unsigned char pad_371[0xF];
     // frames since the party's objects got ready, counted to 100 (update announces callPartyMemberOK(true) at 2),
