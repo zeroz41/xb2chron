@@ -159,12 +159,12 @@ void RQ_SETUP_PARTY::getAllBlade(mm::mtl::FixedVector<unsigned int, 32>& blades)
 
 void GfMapjumpInfo::setupForSaveData(unsigned int map, const mm::Vec3& pos, const mm::Vec3& rot, bool startChapter) {
     m_map = map;
-    m_fromSaveData = true;
+    m_flags.m_fromSaveData = true;
     float rotY = rot.y;
     m_pos = pos;
     m_rotY = rotY;
     m_setRotY = true;
-    m_startChapter = startChapter;
+    m_flags.m_startChapter = startChapter;
     m_kind = 1;
 }
 

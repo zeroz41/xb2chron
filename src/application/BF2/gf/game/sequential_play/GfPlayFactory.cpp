@@ -325,14 +325,14 @@ bool GfPlayFactory::createTalk(const GfSetupPfTalk& talk) {
 
 bool GfPlayFactory::createMapjump(const GfMapjumpInfo& info) {
     GfSequentialPlay::beginCommand(GfSequentialPlay::TYPE(0));
-    if (info.m_stopPlayer) {
+    if (info.m_flags.m_stopPlayer) {
         GfSequentialPlay::addEventPlayerStop(true);
     }
-    GfSequentialPlay::pushState(GF_STATE(info.m_stopPlayer ? 9 : 8));
+    GfSequentialPlay::pushState(GF_STATE(info.m_flags.m_stopPlayer ? 9 : 8));
     GfSequentialPlay::addWaitBattleEnd(0);
     GfSequentialPlay::addMapjump(info);
     GfSequentialPlay::popState();
-    if (info.m_stopPlayer) {
+    if (info.m_flags.m_stopPlayer) {
         GfSequentialPlay::addEventPlayerStop(false);
     }
     return GfSequentialPlay::play();

@@ -53,6 +53,22 @@ public:
 // where a map jump goes. The names are not the original's.
 class GfMapjumpInfo {
 public:
+    // inline (no symbol; SeqManager::start_areajump/end_areajump build one on the stack). The original's stores fix
+    // the body's order: the points in a loop, m_kind, then m_flags reset as one (a 7-byte memset) and m_startChapter
+    // and pad_162 set true afterwards
+    explicit GfMapjumpInfo(unsigned int map)
+        : m_map(map), pad_4(0), pad_8(-1), pad_C(1.0f), m_pos(mm::Vec3::zero), m_rotY(0.0f), m_setRotY(false) {
+        for (int i = 0; i < 8; i++) {
+            m_points[i].m_pos = mm::Vec3::zero;
+            m_points[i].m_rotY = 0.0f;
+            m_points[i].m_setRotY = false;
+        }
+        m_kind = 0;
+        m_flags = Flags();
+        m_flags.m_startChapter = true;
+        m_flags.pad_162 = true;
+    }
+
     // for a game loaded from save data (GfManager::startGame: the saved map, position and rotation in radians,
     // and GfDataUtil::isStartChapterSave)
     void setupForSaveData(unsigned int map, const mm::Vec3& pos, const mm::Vec3& rot, bool startChapter);
@@ -67,7 +83,9 @@ public:
     };
 
     unsigned int m_map;
-    unsigned char pad_4[0xC];
+    unsigned int pad_4;
+    int pad_8;
+    float pad_C;
     // a text of up to 31 characters (the copy runs FixStr's strlen, assert and strcpy on it)
     mm::mtl::FixStr<32> pad_10;
     mm::Vec3 m_pos;
@@ -75,13 +93,20 @@ public:
     bool m_setRotY;
     // eight more positions after m_pos's; the name is not the original's
     Point m_points[8];
-    bool m_fromSaveData;
-    bool m_startChapter;
-    unsigned char pad_162[0x2];
-    // the jump stops the player (GfPlayFactory::createMapjump wraps it in addEventPlayerStop and state 9 instead of
-    // 8); the name is not the original's
-    bool m_stopPlayer;
-    unsigned char pad_165[0x3];
+    // seven bytes the constructor value-initializes as one (a 7-byte memset); the names are not the original's
+    struct Flags {
+        bool m_fromSaveData;
+        bool m_startChapter;
+        bool pad_162;
+        bool pad_163;
+        // the jump stops the player (GfPlayFactory::createMapjump wraps it in addEventPlayerStop and state 9 instead
+        // of 8); the name is not the original's
+        bool m_stopPlayer;
+        unsigned char pad_165;
+        unsigned char pad_166;
+    };
+    Flags m_flags;  // 0x160
+    unsigned char pad_167;
     unsigned int m_kind;  // setupForSaveData's 1
 };
 

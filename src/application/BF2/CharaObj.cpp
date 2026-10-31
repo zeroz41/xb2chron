@@ -78,6 +78,9 @@
 #include "classes/event/ICmd/Param.h"
 #include "classes/gf/GfEvent.h"
 #include "classes/gf/GfGameParty.h"
+#include "classes/gf/GfReqManager.h"
+#include "gf/GfReqCommand.h"
+#include "gf/GfReqParam.h"
 #include "gf/GfObjUtil.h"
 #include "classes/event/RandPlayer/Warp.h"
 #include "classes/event/RandPlayer/Wait.h"
@@ -3567,6 +3570,16 @@ bool SeqManager::end::update(const ICmd::Param& param) {
     return true;
 }
 
+bool SeqManager::end_areajump::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        gf::GfMapjumpInfo info(param.m_param.val(1).getS32());
+        m_req = gf::GfReqCommand::reqMapjump(info);
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        manager->m_seqName = "end areajump";
+    }
+    return !gf::GfReqManager::isValid(m_req);
+}
+
 bool SeqManager::end_env_seam::update(const ICmd::Param& param) {
     if (param.m_frame <= 0) {
         EnvManager* env = mm::mtl::Singleton<EnvManager>::getPtr();
@@ -3641,6 +3654,16 @@ bool SeqManager::start_notice::update(const ICmd::Param& param) {
     unsigned int id = param.m_param.val(1).getS32();
     if (id != 0) gf::GfEvent::callEventPlay(static_cast<gf::GEV>(10), id);
     return true;
+}
+
+bool SeqManager::start_areajump::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        gf::GfMapjumpInfo info(param.m_param.val(1).getS32());
+        m_req = gf::GfReqCommand::reqMapjump(info);
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        manager->m_seqName = "start areajump";
+    }
+    return !gf::GfReqManager::isValid(m_req);
 }
 
 bool SeqManager::end_notice::update(const ICmd::Param& param) {

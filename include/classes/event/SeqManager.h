@@ -45,7 +45,9 @@ public:
     public:
         virtual ~start_areajump() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
         virtual bool update(event::ICmd::Param const&);  // slot 3
-        unsigned char pad_8[0x8];
+        // update's GfReqCommand::reqMapjump handle (it waits on GfReqManager::isValid); the name is not the original's
+        unsigned int m_req;
+        unsigned char pad_c[0x4];
     };
     // table 0x7100B3EC68
     class start_notice : public ::event::ICmd {
@@ -169,7 +171,9 @@ public:
     public:
         virtual ~end_areajump() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
         virtual bool update(event::ICmd::Param const&);  // slot 3
-        unsigned char pad_8[0x8];
+        // update's GfReqCommand::reqMapjump handle (it waits on GfReqManager::isValid); the name is not the original's
+        unsigned int m_req;
+        unsigned char pad_c[0x4];
     };
     // table 0x7100B3EE28
     class end_env_seam : public ::event::ICmd {
