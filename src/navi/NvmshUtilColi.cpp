@@ -1,6 +1,8 @@
+#define MM_LIB_FROM_NAVI
 #include "classes/navi/NvmshResMan.h"
 #include "classes/navi/NvmshManager.h"
 #include "classes/ml/DevFileTh.h"
+#include "ml/DevFileParamTh.h"
 #include "ml/EventFileTh.h"
 #include "mtl/MemManager.h"
 #include "navi/NvmshAccUtil.h"
@@ -11,7 +13,7 @@
 namespace navi {
 
 void NvmshResData::resetNavi() {
-    const ReadInfo* info = m_info;
+    const _NvMhAllReadObj* info = m_info;
     m_navi[0].clear();
     m_navi[1].clear();
     if (info->m_flags & 1) {
@@ -25,7 +27,7 @@ void NvmshResData::resetNavi() {
 }
 
 void NvmshResData::createNavi() {
-    const ReadInfo* info = m_info;
+    const _NvMhAllReadObj* info = m_info;
     if (info->m_flags & 1) {
         m_navi[0].create(m_memObj->m_data);
         if (info->m_flags & 2) {
@@ -89,6 +91,96 @@ void NvmshResMan::update() {
                 break;
             }
             obj = next;
+        }
+    }
+}
+
+void NvmshResMan::resInfoUpdate(const mm::Vec3& pos, bool flag, const mm::Vec3& target, int worldId) {
+    for (int i = 0; i < 4; i++) {
+        if ((m_flags & (0x110000 << i)) == (0x100000 << i)) {
+            if (m_fileData[i] != nullptr) {
+                m_fileData[i]->createNavi();
+                m_fileData[i] = nullptr;
+            }
+            m_flags &= ~(0x100000 << i);
+        }
+    }
+    unsigned int flags = m_flags;
+    m_flags &= ~4;
+    m_worldHead = nullptr;
+    m_conectHead = nullptr;
+    if (flags & 8) {
+        m_flags = (flags & ~0xc) | 4;
+    }
+    if (m_worldId != worldId) {
+        m_worldId = worldId;
+        m_flags |= 4;
+    }
+    const _NvMhAllHead* all = m_allHead;
+    const _NvMhAllWorldHead* worlds =
+        reinterpret_cast<const _NvMhAllWorldHead*>(reinterpret_cast<const unsigned char*>(all) + all->m_worldOfs);
+    int world = -1;
+    for (int i = 0; i < all->m_worldNum; i++) {
+        if (worlds[i].m_id == m_worldId) {
+            world = i;
+            break;
+        }
+    }
+    if (m_flags & 4) {
+        for (int i = 0; i < 26; i++) {
+            m_resData[i].m_flags |= 4;
+            m_resData[i].m_counter = 0;
+        }
+    }
+    memset(m_calcTbl, 0, sizeof(_NaviCalcResTbl) * 2);
+    m_calcTbl[0].m_info = m_calcInfo;
+    m_calcTbl[1].m_info = m_calcInfo;
+    if (world == -1) {
+        m_flags &= ~0x4000002;
+        m_freeNum = 0;
+        for (int i = 0; i < 26; i++) {
+            m_resData[i].update(m_memMan);
+        }
+        return;
+    }
+    m_worldHead = &worlds[world];
+    calcNaviInfoUpdate(pos, m_worldHead, flag, target);
+    if (all->m_conectOfs != 0) {
+        m_conectHead = reinterpret_cast<const _NvMhAllWrdConectHead*>(
+                           reinterpret_cast<const unsigned char*>(m_allHead) + all->m_conectOfs) +
+                       world;
+        calcConectInfoUpdate(m_worldHead, m_conectHead);
+    }
+    m_calcInfo->m_worldHead = m_worldHead;
+    calcNaviObjUpdate();
+}
+
+void NvmshResMan::calcConectInfoUpdate(const _NvMhAllWorldHead* head, const _NvMhAllWrdConectHead* conect) {
+    for (int i = 0; i < 2; i++) {
+        if (conect->m_layerOfs[i] != 0) {
+            const _NvMhConectData* data = reinterpret_cast<const _NvMhConectData*>(
+                reinterpret_cast<const unsigned char*>(m_allHead) + conect->m_layerOfs[i]);
+            const unsigned char* base = reinterpret_cast<const unsigned char*>(data);
+            unsigned int size = (data->m_num / 32) * 4 + 4;
+            int pad = 0;
+            if (size % 32 != 0) {
+                pad = 32 - size % 32;
+            }
+            m_calcTbl[i].m_conectSize = size + pad;
+            _NaviCalcResTbl* tbl = &m_calcTbl[i];
+            tbl->m_conect = data;
+            tbl->m_conectBlocks[0] = base + data->m_blockOfs0;
+            tbl->m_conectBlocks[1] = base + data->m_blockOfs1;
+            tbl->m_conectBlocks[2] = base + data->m_blockOfs2;
+            tbl->m_conectBlocks[3] = base + data->m_blockOfs3;
+            tbl->m_conectBlocks[4] = base + data->m_blockOfs4;
+            tbl->m_conectBlocks[5] = base + data->m_blockOfs7;
+            if (data->m_blockNum5 != 0) {
+                tbl->m_conectBlocks[6] = base + data->m_blockOfs5;
+            }
+            if (data->m_blockNum6 != 0) {
+                tbl->m_conectBlocks[7] = base + data->m_blockOfs6;
+            }
         }
     }
 }
