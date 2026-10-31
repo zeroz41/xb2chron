@@ -183,6 +183,114 @@ void GfMenuObjLinkJump::RootListener::reciveEvent(const ui::EventData& event, un
     }
 }
 
+void GfMenuObjLinkJump::CategoryListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 0x21: {
+        if (m_owner->m_revolve->isMoving()) {
+            UIObjectListener::reciveEvent(event, handle);
+            break;
+        }
+        if (m_owner->m_open) {
+            break;
+        }
+        ui::UISelectObjList* categories = m_owner->m_categories;
+        categories->clear();
+        int index = -1;
+        for (int i = 0; i < 2; i++) {
+            if (m_owner->m_lists[i].m_list->getSize() == 0) {
+                ui::UIObjectAcc(m_owner->m_lists[i].m_handle).setDisp(false);
+            } else {
+                if (index == -1) {
+                    index = i;
+                }
+                categories->addContents(m_owner->m_lists[i].m_handle);
+            }
+        }
+        categories->setIndex(0);
+        GfMenuObject::setupInputSelectionFromList(acc.m_handle, *categories);
+        m_owner->m_revolve->moveCenterOffset(mm::Pnt<short>(0, 720), true);
+        m_owner->changeCategory(index);
+        m_owner->m_open = true;
+        acc.setDisp(true);
+        acc.setDispChild(true, "LAY_main");
+        {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 4;
+            param.m_time = 0.5f;
+            param.m_alpha = 0.5f;
+            GfMenuObjUtil::startCtrl(acc.searchChild("IMG_bg"), param, nullptr);
+        }
+        ui::UIObjectAcc category(acc.m_handle);
+        if (category.m_object != nullptr) {
+            ui::UIObjectAcc main(acc.m_handle, "LAY_main");
+            if (main.m_object != nullptr) {
+                GfMenuObject::disableInput(category.m_handle);
+                GfMenuObject::disableInput(main.m_handle);
+            }
+        }
+        break;
+    }
+    case 1: {
+        {
+            ui::UISelectObjList::CreateParam create;
+            create.m_allocator = getAllocator(ALLOCATOR(0));
+            m_owner->m_categories = ui::UISelectObjList::create(create);
+        }
+        ui::UICtrlRevolveSelect::RevolveSetting setting;
+        setting.m_angleRange = 360;
+        setting.m_type = 2;
+        setting.m_radius = 100;
+        setting.m_center = mm::Pnt<short>(640, -360);
+        setting.m_rollTime = 0.25f;
+        setting.m_moveTime = 0.5f;
+        setting.m_moveCurve = ui::CURVE_SIN90;
+        setting.m_scaleRate = 0.0f;
+        m_owner->m_revolve = ui::UICtrlRevolveSelect::create(acc.searchChild("LAY_main"), setting, m_owner->m_categories);
+        m_owner->m_revolve->setupEventHanding(acc.m_handle, 1);
+        acc.setDisp(false);
+        break;
+    }
+    case 6: {
+        int index = event.m_param0;
+        m_owner->changeCategory(index);
+        break;
+    }
+    case 8:
+        if (m_owner->m_revolve->isMoving()) {
+            UIObjectListener::reciveEvent(event, handle);
+            break;
+        }
+        if (event.m_param1 == 2 && m_owner->m_open) {
+            m_owner->m_revolve->moveCenterOffset(mm::Pnt<short>(0, 0), true);
+            m_owner->m_open = false;
+            {
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 2;
+                param.m_time = 0.5f;
+                GfMenuObjUtil::startCtrl(acc.searchChild("IMG_bg"), param, nullptr);
+            }
+            ui::UIObjectAcc category(acc.m_handle);
+            if (category.m_object != nullptr) {
+                ui::UIObjectAcc main(acc.m_handle, "LAY_main");
+                if (main.m_object != nullptr) {
+                    GfMenuObject::disableInput(category.m_handle);
+                    GfMenuObject::disableInput(main.m_handle);
+                }
+            }
+        }
+        break;
+    case 0xE:
+        if (ui::UICtrlObject::getEventCtrlObjID(event) == 1) {
+            m_owner->listenerCategorySelect(event);
+        }
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjLinkJump::changeCategory(int index) {
     ui::UIObjectAcc acc(m_handle, "LAY_main");
     if (acc.m_object != nullptr) {
