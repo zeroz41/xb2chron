@@ -146,8 +146,10 @@ bool Factory::createASMResource(const ResStateArray& states, const ResResolver& 
     bool result = true;
     const Skeleton* skeleton = res->m_pSkeleton;
     if (skeleton != nullptr) {
-        for (unsigned int i = 0; i < res->m_states.size(); i++) {
-            const ResStateData& state = res->m_states[i];
+        // read-only: the const index operator's assertions (anm_array-inl.h lines 231 and 232)
+        const Array<ResStateData>& stateData = res->m_states;
+        for (unsigned int i = 0; i < stateData.size(); i++) {
+            const ResStateData& state = stateData[i];
             for (unsigned int j = 0; j < state.m_clips.size(); j++) {
                 const Binding* binding = state.m_clips[j].m_pBinding;
                 if (binding != nullptr && skeleton->m_bones.size() != binding->m_indexTable.size()) {

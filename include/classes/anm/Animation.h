@@ -2,6 +2,7 @@
 #define CLASSES_ANM_ANIMATION_H
 
 #include "anm/AnimationObject.h"
+#include "anm/Array.h"
 #include "anm/Locomotion.h"
 
 namespace anm { class Binding; }
@@ -49,7 +50,14 @@ public:
     float m_interval;           // the time between two frames (1.0.0's getDeltaExtractMotion; the name is not the
                                 // original's)
     unsigned int m_frameCount;  // the length is m_interval times one less than it
-    unsigned char pad_30[0x10];
+    // an event at a frame of the animation, 0x18 bytes (ResClipData::setup makes each a frame annotation of kind 0
+    // with type 1; the names are not the original's)
+    struct Event {
+        float m_frame;
+        const char* m_name;
+        const void* m_data;
+    };
+    Array<Event> m_events;  // the name is not the original's
     const Locomotion* m_pLocomotion;  // 1.0.0's getDeltaExtractMotion reads it when set
 };
 }  // namespace anm

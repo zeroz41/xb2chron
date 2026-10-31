@@ -45,6 +45,8 @@ public:
         MM_ASSERT(m_pData);
         return *m_pData;
     }
+    // without an assertion (ResASM::findResStateData and set*Annotation read the found state through it)
+    T* operator->() const { return m_pData; }
     ArrayIterartor& operator++() {
 #line 69 ANM_ARRAY_H_PATH
         MM_ASSERT(m_pData);
@@ -84,6 +86,17 @@ public:
     bool empty() const { return m_size == 0; }
     ArrayIterartor<const T> begin() const { return ArrayIterartor<const T>(m_pElements); }
     ArrayIterartor<const T> end() const { return ArrayIterartor<const T>(m_pElements + m_size); }
+    // over an array the owner may change (ResASM's states, set*Annotation)
+    ArrayIterartor<T> begin() { return ArrayIterartor<T>(m_pElements); }
+    ArrayIterartor<T> end() { return ArrayIterartor<T>(m_pElements + m_size); }
+    // the same assertions at lines 217 and 218 (ResASM's constructor and destructor)
+    T& operator[](unsigned int index) {
+#line 217 ANM_ARRAY_PATH
+        MM_ASSERT(m_pElements);
+#line 218 ANM_ARRAY_PATH
+        MM_ASSERT(index < m_size);
+        return m_pElements[index];
+    }
     const T& operator[](unsigned int index) const {
 #line 231 ANM_ARRAY_PATH
         MM_ASSERT(m_pElements);

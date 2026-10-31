@@ -5,7 +5,9 @@
 #include "anm/AsmListener.h"
 #include "anm/Util.h"
 #include "classes/anm/ReferenceObject.h"
+#include "mm/mtl/FixedArray.h"
 #include "mm/mtl/Vector.h"
+#include "string.h"
 
 namespace anm { class AsmAnnotetion; }
 namespace anm { enum InterpolateType : int; enum InterpolateCurve : int; }
@@ -18,10 +20,14 @@ namespace mm { namespace mtl { class IAllocator; }}
 namespace anm {
 // a clip's settings (the names are not the original's)
 struct ResClipInfo {
-    unsigned char pad_0[0xC];
-    unsigned int m_flags;  // bit 2: AsmBlender skips sampling while every clip has it
+    const char* m_animationName;  // with m_animationIndex, ResResolver::importBinding's
+    unsigned int m_animationIndex;
+    unsigned int m_flags;  // bit 0: mirrored, bit 2: AsmBlender skips sampling while every clip has it, bit 3:
+                           // retargeted (ResClipData::setup)
     float m_speed;         // AsmClip::setSpeed scales the speed by it
     float m_weight;        // AsmClip::setWeight scales the weight by it
+    float m_start;  // less than 0: the animation's end (ResClipData::setup)
+    float m_end;    // less than 0: the animation's end (ResClipData::setup)
 };
 
 // a state's loop count: at least m_min, up to m_range more at random (AsmState::initLoopCount; the names are not the
@@ -73,10 +79,10 @@ struct ResState {
 
 // one clip of a state: 0xE8 bytes (the fields' names are not the original's)
 struct ResClipData {
-    const ResClipInfo* m_pInfo;
-    const Binding* m_pBinding;  // Factory::createASMResource checks its bone count against the skeleton's
-    float m_start;  // the part of the animation it plays (AsmBlender::getDeltaExtractMotion)
-    float m_end;
+    ResClipData();
+    // the clip's binding (retargeted and mirrored as the info asks, else the skeleton's reference pose), its part
+    // of the animation and the animation's events as kind 0's frame annotations
+    void setup(const ResClipInfo& info, const ResResolver& resolver, mm::mtl::IAllocator& allocator);
     // (anm_res_clip_data.cpp, out of line)
     void cleanup();
     // the kind's frame annotations sorted by frame
@@ -85,13 +91,22 @@ struct ResClipData {
     bool getReference(float time, QsTransform* pOut) const;
     // the locomotion's motion from time over dt within the clip's part (Util::getAsmLocomotionDeltaReference's)
     bool getDeltaReference(float time, float dt, QsTransform* pOut) const;
+    // a frame annotation of the kind at the frame (none without a binding); sortAnnotation sorts them later
+    void setFrameAnnotation(unsigned int kind, float frame, const AsmAnnotetion& annotation);
 
-    mm::mtl::Vector<AsmKeyframeAnnotation> m_frameAnnotations[5];  // per kind (AsmClip::update)
+    const ResClipInfo* m_pInfo;
+    const Binding* m_pBinding;  // Factory::createASMResource checks its bone count against the skeleton's
+    float m_start;  // the part of the animation it plays (AsmBlender::getDeltaExtractMotion)
+    float m_end;    // the part's length past m_start (setup)
+    mm::mtl::FixedArray<mm::mtl::Vector<AsmKeyframeAnnotation>, 5> m_frameAnnotations;  // per kind (AsmClip::update)
     // set by ResStateData::setFrameAnnotation: ResStateData::sortAnnotation sorts only a clip that has it (the name
     // is not the original's)
     bool m_unsorted;
     unsigned char pad_e1[0x7];
 };
+
+// orders frame annotations by frame (ResClipData::sortAnnotation's std::sort comparator)
+bool lessAsmKeyframeAnnotation(const AsmKeyframeAnnotation& lhs, const AsmKeyframeAnnotation& rhs);
 
 // one point of a lerp blend tree: from its position on the variable's value blends its clip towards the next one's
 // (0x28 bytes; the names are not the original's)
@@ -182,6 +197,10 @@ public:
 // one state of an animation state machine: 0x1E0 bytes
 struct ResStateData {
     ResStateData();
+    // (anm_res_state_data.cpp)
+    void setup(const ResState& info, const ResResolver& resolver, mm::mtl::IAllocator& allocator);
+    // a frame annotation of the kind at the frame for the clip
+    void setFrameAnnotation(unsigned int kind, unsigned int clip, float frame, const AsmAnnotetion& annotation);
     // every clip's frame annotations of the kind sorted by frame, for the clips given new ones
     void sortAnnotation(unsigned int kind);
     // the clips and the annotations given up
@@ -190,8 +209,14 @@ struct ResStateData {
     const ResState* m_pInfo;
     mm::mtl::Vector<ResClipData> m_clips;
     unsigned long m_attributes[4];  // StateMachine::getAttribute's categories 1 to 4 (the name is not the original's)
-    mm::mtl::Vector<AsmAnnotetion> m_enterAnnotations[5];  // per kind (AsmState::notifyEnter)
-    mm::mtl::Vector<AsmAnnotetion> m_leaveAnnotations[5];  // per kind (AsmState::notifyLeave)
+    mm::mtl::FixedArray<mm::mtl::Vector<AsmAnnotetion>, 5> m_enterAnnotations;  // per kind (AsmState::notifyEnter)
+    mm::mtl::FixedArray<mm::mtl::Vector<AsmAnnotetion>, 5> m_leaveAnnotations;  // per kind (AsmState::notifyLeave)
+};
+
+// orders an animation state machine resource's states against a name (std::lower_bound's comparator in ResASM's
+// state lookups; the name is the original's)
+struct Comp {
+    bool operator()(const ResStateData& data, const char* name) const { return strcmp(data.m_pInfo->m_name, name) < 0; }
 };
 
 // table 0x7100B81198; an animation state machine's resource: its states and the skeleton their clips are bound to
@@ -200,9 +225,10 @@ public:
     ResASM(const ResStateArray& states, const ResResolver& resolver, mm::mtl::IAllocator& allocator);
     virtual ~ResASM();  // slot 0
 
-    void setEnterAnnotation(unsigned int kind, const char* stateName, const AsmAnnotetion& annotation);
-    void setLeaveAnnotation(unsigned int kind, const char* stateName, const AsmAnnotetion& annotation);
-    void setFrameAnnotation(unsigned int kind, const char* stateName, float frame, const AsmAnnotetion& annotation);
+    // false without a state of the name
+    bool setEnterAnnotation(unsigned int kind, const char* stateName, const AsmAnnotetion& annotation);
+    bool setLeaveAnnotation(unsigned int kind, const char* stateName, const AsmAnnotetion& annotation);
+    bool setFrameAnnotation(unsigned int kind, const char* stateName, float frame, const AsmAnnotetion& annotation);
     void sortAnnotation(unsigned int kind);
     // the state of the name, none without one
     const ResStateData* findResStateData(const char* name) const;
@@ -210,7 +236,8 @@ public:
     const Skeleton* m_pSkeleton;  // the names of the fields are not the original's
     const ResStateArray* m_pStates;  // the constructor's
     Array<ResStateData> m_states;
-    unsigned char pad_38[0x8];  // Factory::createASMResource allocates 0x40 bytes
+    ResStateData* m_pStateBuffer;  // the allocator's memory m_states lies in (the name is not the original's)
+    // Factory::createASMResource allocates 0x40 bytes
 };
 }  // namespace anm
 
