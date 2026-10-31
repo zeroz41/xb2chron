@@ -1,3 +1,7 @@
+// skdlib's capsule and plane detection jobs, as the split places them: they cite skdlib's include paths
+// (SKD_LIB_PROJECT), which a unit outside libs/skdlib does not get from its command.
+#define MM_LIB_FROM_LIBS
+#define SKD_LIB_PROJECT
 #include "anm/JobQueue.h"
 #include "skd/CollisionObj.h"
 #include "skd/DetectInfo.h"
