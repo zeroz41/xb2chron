@@ -7,6 +7,7 @@
 #include "classes/gf/GfAssetManager.h"
 namespace gf { class GF_ASSET_HANDLE; }
 namespace gf { class GfAssetPack; }
+namespace gf { class GfAssetFilesInfo; }
 namespace gf { class GfInitParam; }
 
 namespace gf {
@@ -65,7 +66,8 @@ public:
     virtual const char* getEffPath() const;  // slot 35
     virtual const char* getStpPath() const;  // slot 36
     virtual const char* getSePackPath() const;  // slot 37
-    virtual void requestCoreResource(gf::GfAssetPack*, gf::GF_ASSET_HANDLE*);  // slot 38
+    // 3.0.1 passes the asset type the file getters take as a third argument (1.0.0's symbol has two)
+    virtual void requestCoreResource(gf::GfAssetPack*, gf::GF_ASSET_HANDLE*, gf::GfAssetType);  // slot 38
     virtual GfAssetType getAssetType() const;  // slot 39
     static mm::mtl::RTTI m_rtti;
 
@@ -90,6 +92,12 @@ public:
     void setupParam(GF_ASSET_HANDLE* handle, const GfInitParam& param);
     // gives the setup a file already in memory (event::ModelObj::setupModel passes its DESC's files 0 and 1)
     void setRefResource(unsigned int index, const char* name, void* data, unsigned int size);
+    // true when a reference resource holds the file: it is added to the pack from there (1.0.0's symbols name it)
+    bool setupReference(GfAssetPack* pack, const char* name, GfFileIdx idx);
+    // "<type>" then the file's and the suffix's names without path and extension (1.0.0's symbols name it)
+    static void makeAssetNamePrefix(mm::mtl::FixStr<128>& name, GfAssetType type, const char* file, const char* suffix);
+    // the foot step sound pack request (1.0.0's symbols name it; the return type is not known)
+    static void requestFootStepSePackFile(GfAssetFilesInfo& info, unsigned int footStep, GfFileIdx idx0, GfFileIdx idx1);
 
     // a name, none when it is empty (inline; the name is not the original's)
     static const char* validName(const char* name) {

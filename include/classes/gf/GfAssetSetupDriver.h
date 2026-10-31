@@ -36,6 +36,10 @@ public:
     virtual GfAssetType getAssetTypeMot() const;  // slot 41 (1.0.0's symbols name it)
     virtual GfAssetType getAssetTypeEvtMot() const;  // slot 42
     static mm::mtl::RTTI m_rtti;
+    // the weapon type's added animation name with "_bl<blade>" for the asset name; false without one (1.0.0's
+    // symbols name it)
+    static bool makeAssetNameWpnType(mm::mtl::FixStr<128>& name, GfAssetType type, unsigned int driver,
+                                     unsigned int weaponType, unsigned int blade);
 
     int pad_1fc;  // the constructor sets -1
 };

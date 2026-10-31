@@ -20,7 +20,8 @@ public:
     virtual const char* getEfbFile(gf::GfAssetType type);  // slot 13
     virtual int getMdlSlot() const;  // slot 19
     virtual const char* getPath() const;  // slot 33
-    virtual void requestCoreResource(gf::GfAssetPack*, gf::GF_ASSET_HANDLE*);  // slot 38
+    // 3.0.1 passes the asset type the file getters take as a third argument (1.0.0's symbol has two)
+    virtual void requestCoreResource(gf::GfAssetPack*, gf::GF_ASSET_HANDLE*, gf::GfAssetType);  // slot 38
     virtual GfAssetType getAssetType() const;  // slot 39
     virtual const char* getColFile(gf::GfAssetType type);  // slot 40
     virtual const char* getNaviFile(gf::GfAssetType type);  // slot 41

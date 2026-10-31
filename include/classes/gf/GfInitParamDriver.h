@@ -30,16 +30,20 @@ public:
         pad_82 = 1;
     }
 
-    // an element of pad_98: 0x100 bytes of elements; the split into four of 0x40 is not known (the name is not
-    // the original's)
+    // an element of pad_98: 8 bytes (GfAssetSetupDriverForUi::setup indexes it by 8): a weapon's slot, its id and
+    // a blade id (the names are not the original's)
     struct Entry {
-        unsigned char pad_0[0x40];
+        signed char m_slot;  // the weapon's file slot, < 0: the element's index
+        unsigned char m_weaponId;  // GfDataWeapon::getAsmWeaponType's argument
+        unsigned char pad_2[0x4 - 0x2];
+        unsigned short m_bladeId;  // makeAssetNameWpnType's "_bl<n>"
+        unsigned char pad_6[0x8 - 0x6];
     };
 
     unsigned int pad_90;
     unsigned char pad_94[0x98 - 0x94];
     // emptied by the (implicit) destructor: ModelObj::setupModel clears its size after making the driver
-    mm::mtl::FixedVector<Entry, 4> pad_98;
+    mm::mtl::FixedVector<Entry, 32> pad_98;
     unsigned char pad_1a0;
     // what isAllWeapon returns (the name is not the original's)
     bool m_isAllWeapon;

@@ -18,6 +18,7 @@ namespace gf { class GF_SLOT_HANDLE; }
 namespace gf { class GfInitParam; }
 namespace gf { class GfAssetResource; }
 namespace gf { class GfAssetPack; }
+namespace gf { class GfAssetFilesInfo; }
 namespace gf { class GfSlotMapping; }
 // 1.0.0's GfAssetManager::addEvent(gf::IGfAssetEvent*) names it; no table in 3.0.1 (nothing implements it)
 namespace gf { class IGfAssetEvent; }
@@ -67,6 +68,8 @@ public:
     static void setModelInfo(GF_ASSET_HANDLE* handle, const char* name);
     static const char* getModelInfo(GF_ASSET_HANDLE* handle);
     static void setMotionInfo(GF_ASSET_HANDLE* handle, const char* name);
+    // the pack info describes, made or found (1.0.0's symbols name it)
+    static GfAssetPack* createAssetFiles(const GfAssetFilesInfo& info);
     bool isFullResource(GF_ASSET_HANDLE* handle) const;
     fw::SoundPack* getSePackByFileIdx(GF_ASSET_HANDLE* handle, GfFileIdx file);
     static void setupLoadStart(GF_ASSET_HANDLE* handle);

@@ -12,6 +12,7 @@ namespace gf { enum GfAssetType : int; }
 namespace gf { enum GfFileIdx : int; }
 namespace gf { class GfAssetResource; }
 namespace gf { class GF_SLOT_HANDLE; }
+namespace gf { class GF_ASSET_HANDLE; }
 namespace fw { class SoundPack; }
 
 namespace gf {
@@ -19,11 +20,19 @@ namespace gf {
 // name the class; the field names are not the original's; the size is not proven)
 class GfAssetFilesInfo {
 public:
-    unsigned char pad_0[0x8];
+    // the setups build it on the stack with these values (GfAssetSetupDriverForUi::setup)
+    GfAssetFilesInfo() : m_type(GfAssetType(0)), pad_20(0), pad_28(0), m_name(nullptr), pad_38(0), pad_3c(1) {}
+
+    GF_ASSET_HANDLE* m_handle;  // the setup's handle (the name is not the original's)
     GfAssetType m_type;  // the pack's asset type
-    unsigned char pad_c[0x24];
+    unsigned char pad_c[0x20 - 0xC];
+    unsigned long pad_20;
+    unsigned long pad_28;
     const char* m_name;  // the pack's name (its CRC is the pack's key)
-    unsigned char pad_38[0x10];
+    unsigned int pad_38;
+    unsigned int pad_3c;
+    unsigned int pad_40;  // the setups copy GfInitParam::pad_44 here
+    unsigned char pad_44[0x48 - 0x44];
 };
 
 // an asset's name split from its path: the file name, the folder before it (set), and a third name the constructor
@@ -83,6 +92,8 @@ public:
     void setInitializeParam(const GfAssetFilesInfo& info);
     // the file's path, an empty name for a file the pack does not have (1.0.0's symbols name it)
     const mm::mtl::FixStr<128>& getFileName(GfFileIdx idx) const;
+    // the file path under the index (1.0.0's symbols name it; the return type is not known)
+    void addResource(GfFileIdx idx, const char* path);
 
     GfAssetType m_type;
     unsigned int m_nameHash;  // m_name's CRC (setInitializeParam)

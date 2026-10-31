@@ -51,6 +51,9 @@
 #include "gf/GfUtil.h"
 #include "classes/gf/GfBdatChrEnArrange.h"
 #include "gf/GfDataHana.h"
+#include "classes/gf/GfInitParamDriver.h"
+#include "classes/gf/GfAssetPack.h"
+#include "gf/GfDataWeapon.h"
 #include <string.h>
 
 namespace gf {
@@ -213,6 +216,216 @@ const char* GfAssetSetupSalvage::getMdlFile(GfAssetType type) {
 const char* GfAssetSetupSalvage::getArcFile(GfAssetType type) {
     return getMdlFile(type);
 }
+
+const char* GfAssetSetupSalvage::getSalvageMotFile(GfAssetType type) {
+    if (type == 16) {
+        DataParamAcc acc(3, m_objId, static_cast<GimmickType>(0));
+        const char* name = validName(acc.getMotionResourceName());
+        // the file name with its number appended (the name is not the original's)
+        static mm::mtl::FixStr<128> s_name;
+        s_name.clear();
+        s_name.format("%s_%d", name, 99);
+        return s_name.m_str;
+    }
+    return nullptr;
+}
+
+const char* GfAssetSetupSalvage::getSalvageStpFile(GfAssetType type) {
+    if (getAssetType() == type) {
+        DataParamAcc acc(3, m_objId, static_cast<GimmickType>(0));
+        const char* name = validName(acc.getMotionResourceName());
+        // the file name with its number appended (the name is not the original's)
+        static mm::mtl::FixStr<128> s_name;
+        s_name.clear();
+        s_name.format("%s_%d", name, 99);
+        return s_name.m_str;
+    }
+    return nullptr;
+}
+
+namespace {
+// the driver's UI event motion: its model's name with "_98" appended, kept in a static (only
+// GfAssetSetupDriverForUi::setup uses it; an internal helper, as its static is created after the getters'; the
+// name is not the original's)
+const char* makeUiEventMotName(unsigned int driver) {
+    DataParamAcc acc(3, driver, static_cast<GimmickType>(0));
+    const char* name = GfAssetSetup::validName(fn_71002DF39C(driver, false, false));
+    static mm::mtl::FixStr<128> s_name;
+    s_name.clear();
+    s_name.format("%s_%d", name, 98);
+    return s_name.m_str;
+}
+}  // namespace
+
+void GfAssetSetupDriverForUi::setup(GF_ASSET_HANDLE* handle, const GfInitParamDriver& param) {
+    setupParam(handle, param);
+    if (getMdlFile(getAssetType()) == nullptr || *getMdlFile(getAssetType()) == '\0') {
+        GfAssetManager::destroy(m_handle);
+        m_handle = reinterpret_cast<GF_ASSET_HANDLE*>(-1);
+        return;
+    }
+    mm::mtl::FixStr<128> name;
+    GfAssetFilesInfo info;
+    info.m_handle = handle;
+    info.m_name = name.m_str;
+    info.pad_40 = param.pad_44;
+
+    info.m_type = getAssetType();
+    makeAssetNamePrefix(name, info.m_type, getMdlFile(info.m_type), "");
+    GfAssetPack* core = GfAssetManager::createAssetFiles(info);
+    requestCoreResource(core, handle, info.m_type);
+
+    info.m_type = getAssetTypeMot();
+    const char* mot = getMotFile(info.m_type);
+    if (mot != nullptr) {
+        makeAssetNamePrefix(name, info.m_type, mot, "");
+        GfAssetPack* pack = GfAssetManager::createAssetFiles(info);
+        if (!setupReference(pack, name.m_str, static_cast<GfFileIdx>(getMotSlot()))) {
+            GfAssetManager::setMotionInfo(handle, mot);
+            mm::mtl::FixStr<128> path;
+            path.format("%s%s%s", getPath(), mot, ".mot");
+            pack->m_files.addResource(static_cast<GfFileIdx>(getMotSlot()), path.m_str);
+        }
+    }
+
+    info.m_type = static_cast<GfAssetType>(18);
+    const char* uiMot = getUiMotFile(info.m_type);
+    if (uiMot != nullptr) {
+        makeAssetNamePrefix(name, info.m_type, uiMot, "");
+        GfAssetPack* pack = GfAssetManager::createAssetFiles(info);
+        if (!setupReference(pack, uiMot, static_cast<GfFileIdx>(getUiMotSlot()))) {
+            mm::mtl::FixStr<128> path;
+            path.format("%s%s%s", getPath(), uiMot, ".mot");
+            pack->m_files.addResource(static_cast<GfFileIdx>(getUiMotSlot()), path.m_str);
+        }
+    }
+
+    if (fn_71002EDBD8(param.m_objId, false, false)) {
+        const char* evtMot = makeUiEventMotName(param.m_objId);
+        makeAssetNamePrefix(name, info.m_type, evtMot, "DR");
+        GfAssetPack* pack = GfAssetManager::createAssetFiles(info);
+        if (!setupReference(pack, name.m_str, static_cast<GfFileIdx>(0x45))) {
+            GfAssetManager::setMotionInfo(handle, evtMot);
+            mm::mtl::FixStr<128> path;
+            path.format("%s%s%s", getPath(), evtMot, ".mot");
+            pack->m_files.addResource(static_cast<GfFileIdx>(0x45), path.m_str);
+            path.format("%s%s%s", getPath(), GfDataDriver::getModelResourceName(param.m_objId), ".arc");
+            pack->m_files.addResource(static_cast<GfFileIdx>(0x44), path.m_str);
+        }
+    }
+
+    info.m_type = getAssetType();
+    const char* stp = getUiStpFile(info.m_type);
+    if (stp != nullptr) {
+        makeAssetNamePrefix(name, info.m_type, stp, getAssetCategoryName());
+        GfAssetPack* pack = GfAssetManager::createAssetFiles(info);
+        if (!setupReference(pack, stp, static_cast<GfFileIdx>(getUiStpSlot()))) {
+            mm::mtl::FixStr<128> path;
+            path.format("%s%s%s", getStpPath(), stp, ".stp");
+            pack->m_files.addResource(static_cast<GfFileIdx>(getUiStpSlot()), path.m_str);
+        }
+    }
+
+    info.m_type = getAssetTypeMot();
+    const char* efb = getEfbFile(info.m_type);
+    if (efb != nullptr) {
+        makeAssetNamePrefix(name, info.m_type, efb, "");
+        GfAssetPack* pack = GfAssetManager::createAssetFiles(info);
+        if (!setupReference(pack, efb, static_cast<GfFileIdx>(getEfbSlot()))) {
+            mm::mtl::FixStr<128> path;
+            path.format("%s%s%s", getEffPath(), efb, ".wiefb");
+            pack->m_files.addResource(static_cast<GfFileIdx>(getEfbSlot()), path.m_str);
+        }
+    }
+
+    info.m_type = static_cast<GfAssetType>(18);
+    for (unsigned int i = 0; i < param.pad_98.size(); i++) {
+        unsigned int weaponType = GfDataWeapon::getAsmWeaponType(param.pad_98.at(i)->m_weaponId);
+        long slot = param.pad_98[i].m_slot;
+        unsigned int weaponId = param.pad_98[i].m_weaponId;
+        unsigned int blade = param.pad_98[i].m_bladeId;
+        if (weaponType != 0) {
+            int index = slot < 0 ? static_cast<int>(i) : slot;
+            if (GfAssetSetupDriver::makeAssetNameWpnType(name, info.m_type, m_objId, weaponType, blade)) {
+                info.m_name = name.m_str;
+                GfAssetPack* pack = GfAssetManager::createAssetFiles(info);
+                mm::mtl::FixStr<128> anim;
+                if (GfDataDriver::getDriverAddAnim(anim, m_objId, weaponType)) {
+                    if (!setupReference(pack, anim.m_str,
+                                        static_cast<GfFileIdx>(GfDataDriver::getWeaponAnmFileIdx(index)))) {
+                        mm::mtl::FixStr<128> path;
+                        path.format("%s%s%s", getPath(), anim.m_str, ".mot");
+                        pack->m_files.addResource(static_cast<GfFileIdx>(GfDataDriver::getWeaponAnmFileIdx(index)),
+                                                  path.m_str);
+                        path.format("%s%s%s", getEffPath(), anim.m_str, ".wieab");
+                        pack->m_files.addResource(static_cast<GfFileIdx>(GfDataDriver::getWeaponEabFileIdx(index)),
+                                                  path.m_str);
+                    }
+                }
+            }
+        }
+    }
+
+    unsigned int footStep;
+    {
+        DataParamAcc acc(3, m_objId, static_cast<GimmickType>(0));
+        footStep = acc.getFootStep();
+    }
+    requestFootStepSePackFile(info, footStep, static_cast<GfFileIdx>(1), static_cast<GfFileIdx>(2));
+}
+
+const char* GfAssetSetupDriverForUi::getUiMotFile(GfAssetType type) {
+    if (type == 18) {
+        DataParamAcc acc(3, m_objId, static_cast<GimmickType>(0));
+        const char* name = validName(acc.getMotionResourceName());
+        // the file name with its number appended (the name is not the original's)
+        static mm::mtl::FixStr<128> s_name;
+        s_name.clear();
+        s_name.format("%s_%d", name, 98);
+        return s_name.m_str;
+    }
+    return nullptr;
+}
+
+const char* GfAssetSetupDriverForUi::getUiStpFile(GfAssetType type) {
+    if (getAssetType() == type) {
+        DataParamAcc acc(3, m_objId, static_cast<GimmickType>(0));
+        const char* name = validName(acc.getMotionResourceName());
+        // the file name with its number appended (the name is not the original's)
+        static mm::mtl::FixStr<128> s_name;
+        s_name.clear();
+        s_name.format("%s_%d", name, 98);
+        return s_name.m_str;
+    }
+    return nullptr;
+}
+
+const char* GfAssetSetupBladeForUi::getUiMotFile(GfAssetType type) {
+    if (getAssetTypeMot() == type) {
+        DataParamAcc acc(4, m_objId, static_cast<GimmickType>(0));
+        const char* name = validName(acc.getMotionResourceName());
+        // the file name with its number appended (the name is not the original's)
+        static mm::mtl::FixStr<128> s_name;
+        s_name.clear();
+        s_name.format("%s_%d", name, 98);
+        return s_name.m_str;
+    }
+    return nullptr;
+}
+
+const char* GfAssetSetupBladeForUi::getUiStpFile(GfAssetType type) {
+    if (getAssetType() == type) {
+        DataParamAcc acc(4, m_objId, static_cast<GimmickType>(0));
+        const char* name = validName(acc.getMotionResourceName());
+        // the file name with its number appended (the name is not the original's)
+        static mm::mtl::FixStr<128> s_name;
+        s_name.clear();
+        s_name.format("%s_%d", name, 98);
+        return s_name.m_str;
+    }
+    return nullptr;
+}
+
 GfAssetSetupBlade::GfAssetSetupBlade() : pad_1fc(0) {}
 
 const char* GfAssetSetupBlade::getMdlFile(GfAssetType type) {
@@ -921,6 +1134,19 @@ const char* GfAssetSetupFobj::getPath() const {
 
 GfAssetSetupWeapon::GfAssetSetupWeapon() {}
 
+const char* GfAssetSetupWeapon::getMdlFile(GfAssetType type) {
+    static mm::mtl::FixStr<128> s_file;
+    RefResource* resource = findRefResource(getMdlSlot());
+    if (resource != nullptr) {
+        fn_71001C0EE0(s_file, resource->m_name, m_append.getModelName(), m_param->pad_83);
+    } else {
+        mm::mtl::FixStr<128> none;
+        fn_71001C0EE0(s_file, none, m_append.getModelName(), m_param->pad_83);
+    }
+    return s_file.m_nLen == 0 ? nullptr : s_file.m_str;
+}
+
+
 void fn_71001C0EE0(mm::mtl::FixStr<128>& out, const mm::mtl::FixStr<128>& file, const char* name, bool dbPath) {
     out.clear();
     if (file.m_nLen != 0) {
@@ -933,6 +1159,41 @@ void fn_71001C0EE0(mm::mtl::FixStr<128>& out, const mm::mtl::FixStr<128>& file, 
         out.insert(0, "db/", 3);
     }
 }
+const char* GfAssetSetupWeapon::getArcFile(GfAssetType type) {
+    static mm::mtl::FixStr<128> s_file;
+    RefResource* resource = findRefResource(getMdlSlot());
+    if (resource != nullptr) {
+        fn_71001C0EE0(s_file, resource->m_name, m_append.getModelName(), m_param->pad_83);
+    } else {
+        mm::mtl::FixStr<128> none;
+        fn_71001C0EE0(s_file, none, m_append.getModelName(), m_param->pad_83);
+    }
+    return s_file.m_nLen == 0 ? nullptr : s_file.m_str;
+}
+const char* GfAssetSetupWeapon::getMotFile(GfAssetType type) {
+    static mm::mtl::FixStr<128> s_file;
+    RefResource* resource = findRefResource(getMotSlot());
+    if (resource != nullptr) {
+        fn_71001C0EE0(s_file, resource->m_name, m_append.getMotionName(), m_param->pad_83);
+    } else {
+        mm::mtl::FixStr<128> none;
+        fn_71001C0EE0(s_file, none, m_append.getMotionName(), m_param->pad_83);
+    }
+    return s_file.m_nLen == 0 ? nullptr : s_file.m_str;
+}
+const char* GfAssetSetupWeapon::getEfpFile(GfAssetType type) {
+    static mm::mtl::FixStr<128> s_file;
+    RefResource* resource = findRefResource(getMdlSlot());
+    if (resource != nullptr) {
+        fn_71001C0EE0(s_file, resource->m_name, m_append.getModelName(), m_param->pad_83);
+    } else {
+        mm::mtl::FixStr<128> none;
+        fn_71001C0EE0(s_file, none, m_append.getModelName(), m_param->pad_83);
+    }
+    return s_file.m_nLen == 0 ? nullptr : s_file.m_str;
+}
+
+
 const char* GfAssetSetupWeapon::getStpFile(GfAssetType type) {
     return validName(m_append.getModelName());
 }

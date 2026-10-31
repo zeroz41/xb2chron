@@ -8,6 +8,7 @@ namespace gf { enum FAVORITE : int; }
 namespace gf { struct SDataIdea; class GfInitParamDriver; }
 
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
+namespace mm { namespace mtl { template <int> class FixStr; } }
 
 namespace gf {
 // the drivers' data (functions, by its symbols)
@@ -194,6 +195,8 @@ public:
     static unsigned int getWeaponEabFileIdx(int index);
     static unsigned int getWeaponSwtFileIdx(int index);
     static unsigned int getWeaponAnmFileIdx(int index);
+    // the driver's added animation for the weapon type; false without one (1.0.0's symbols name it)
+    static bool getDriverAddAnim(mm::mtl::FixStr<128>& name, unsigned int driver, unsigned int weaponType);
     // (appended by chardata) 1.0.0's names: its GfMenuCharDataAdapter::update_DR_LevelUpEnable / update_DR_IdeaPoint
     // call them at the same sites (the symbols call them fn_7100245C44 / fn_71002422C4)
     static bool isEnableLevelUp(unsigned int driver);
