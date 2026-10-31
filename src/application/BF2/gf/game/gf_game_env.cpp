@@ -266,6 +266,15 @@ void TUnk_B54858::fn_71002A7430(int mode) {
     fn_71002A7468();
 }
 
+void TUnk_B54858::fn_71002A752C() {
+#line 1258
+    new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) TUnk_B54858();
+}
+
+void TUnk_B54858::fn_71002A75BC() {
+    delete get();
+}
+
 void TUnk_B54858::fn_71002A7734(unsigned int id) {
     if (id < 35353) {
         return;
