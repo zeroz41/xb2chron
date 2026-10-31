@@ -32,6 +32,7 @@ public:
         pad_38 = 0;
         m_result = 0;
         pad_10 = 0;
+        pad_14 = 0;
     }
     void update() {
         if (pad_10 & 1) {
@@ -40,7 +41,10 @@ public:
     }
 
 private:
-    long pad_10;  // bit 0: a window is open (1.0.0 update and isActive test it)
+    // two 32-bit words, not one 64-bit field: the constructor's lone 8-byte zero store comes first, before the tables,
+    // only when the compiler merges two words (a long gives the tables first)
+    unsigned int pad_10;  // bit 0: a window is open (1.0.0 update and isActive test it)
+    unsigned int pad_14;
     SelectWindow m_window;  // 0x18 (the name is not the original's)
     unsigned int pad_38;
     // what getResult returns; the name is not the original's

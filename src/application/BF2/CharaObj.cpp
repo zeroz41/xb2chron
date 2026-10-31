@@ -2648,6 +2648,8 @@ void DofManager::play(int type, float p0, float p1, float p2, float p3, float p4
     pad_50 = name;
 }
 
+SelectManager::SelectManager() : pad_10(0), pad_14(0), pad_38(0), m_result(0) {}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void SelectManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
