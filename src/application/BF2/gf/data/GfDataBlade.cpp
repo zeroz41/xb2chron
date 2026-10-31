@@ -4358,7 +4358,8 @@ unsigned int GfDataDriver::fn_7100247E28(unsigned int driver) {
 }
 
 void GfDataDriver::setScenarioMask(unsigned int driver, bool mask) {
-    getSDataDriver(driver)->m_scenarioMask = mask;
+    SDataDriver* data = getSDataDriver(driver);
+    data->m_scenarioMask = mask;
 }
 
 unsigned int GfDataDriver::getEquipAcce(unsigned int driver, unsigned int slot) {
