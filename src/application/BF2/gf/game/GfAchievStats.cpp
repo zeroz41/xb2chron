@@ -199,7 +199,54 @@ void GfAchievStats::fn_710028AF64(BladeCounts& counts, unsigned int blade) {
     }
 }
 
-// getAchievementAddCount 0x710028B15C: 4 words off, see the worker notes (wip/GfAchievStats_full_addcount4words.cpp)
+void GfAchievStats::getAchievementAddCount(unsigned int& add, unsigned int& total, unsigned int stats,
+                                           unsigned int value, unsigned int prev, unsigned int max) {
+    total = 0;
+    add = 0;
+    unsigned int count;
+    if (GfDataAchievement::fn_710024B4D0(stats) >= 0 || GfDataAchievement::getAchievementTotalFlgIndex(stats) >= 0) {
+        count = GfDataAchievement::getTotalCount(stats);
+    } else {
+        switch (stats) {
+        case 21:
+        case 38:
+        case 39:
+        case 40:
+        case 41:
+        case 42:
+        case 43:
+        case 44:
+        case 45:
+        case 46:
+        case 47:
+        case 48:
+        case 68:
+        case 147:
+        case 156: {
+            unsigned int reached = max <= value ? max : 0;
+            total = value;
+            add = reached;
+            if (value <= prev) {
+                return;
+            }
+            add = value - prev;
+            return;
+        }
+        case 56:
+            count = GfDataUtil::getMoney();
+            break;
+        case 67:
+            count = GfItemUtil::getCrystalNum();
+            break;
+        default:
+            add = value;
+            return;
+        }
+    }
+    unsigned int reached = count >= max ? max : 0;
+    total = count;
+    add = reached;
+}
 
 int GfAchievStats::getAchievementTotalCount(const AchievQuest& quest) {
     BladeCounts counts = {};
