@@ -3664,8 +3664,12 @@ application/BF2/ui/ctrl/ui_ctrl_frame.cpp:
 	.data        start:0x00B74470 end:0x00B74498
 
 application/BF2/ui/ctrl/UICtrlManager.cpp:
-	.text        start:0x0066E99C end:0x00670C74
-	.data        start:0x00B74498 end:0x00B74598
+	.text        start:0x0066E99C end:0x00670710
+	.data        start:0x00B74498 end:0x00B744D8
+
+application/BF2/ui/ctrl/UICtrlMethodAlpha.cpp:
+	.text        start:0x00670710 end:0x00670C74
+	.data        start:0x00B744D8 end:0x00B74598
 
 application/BF2/ui/ctrl/UICtrlObject.cpp:
 	.text        start:0x00670C74 end:0x00670DB4

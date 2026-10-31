@@ -2820,8 +2820,12 @@ application/BF2/ui/ctrl/ui_ctrl_frame.cpp:
 	.data        start:0x011A9A90 end:0x011A9AB8
 
 application/BF2/ui/ctrl/UICtrlManager.cpp:
-	.text        start:0x006CD6E4 end:0x006CFA24
-	.data        start:0x011A9AB8 end:0x011A9BB8
+	.text        start:0x006CD6E4 end:0x006CF4C0
+	.data        start:0x011A9AB8 end:0x011A9AF8
+
+application/BF2/ui/ctrl/UICtrlMethodAlpha.cpp:
+	.text        start:0x006CF4C0 end:0x006CFA24
+	.data        start:0x011A9AF8 end:0x011A9BB8
 
 application/BF2/ui/ctrl/UICtrlObject.cpp:
 	.text        start:0x006CFA24 end:0x006CFB74
