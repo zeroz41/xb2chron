@@ -431,18 +431,18 @@ static void fn_7100312FBC(QTYPE type) {
 bool GfQuestUtil::getResultIdea(unsigned int& idea, unsigned int& count, unsigned int blade, unsigned int line,
                                 unsigned int level) {
     AchievInfo* info = GfDataBlade::getAchievInfo(blade, line);
+    bool result = false;
     if (info->m_achievementId != 0) {
         GfQuestReward reward;
-        if (!GfQuestManager::getRewardItem(reward, info->m_quests[level - 1].m_questId, true)) {
-            return false;
-        }
-        count = reward.m_items[6].m_value & 0xFFFF;
-        if (count != 0) {
-            idea = reward.m_items[6].m_value >> 16;
-            return true;
+        if (GfQuestManager::getRewardItem(reward, info->m_quests[level - 1].m_questId, true)) {
+            count = reward.m_items[6].m_value & 0xFFFF;
+            if (count != 0) {
+                idea = reward.m_items[6].m_value >> 16;
+                result = true;
+            }
         }
     }
-    return false;
+    return result;
 }
 
 }  // namespace gf
