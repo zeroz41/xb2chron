@@ -1,3 +1,6 @@
+#include "classes/fw/AssetData.h"
+#include "classes/fw/AssetManager.h"
+#include "mtl/MemManager.h"
 #include "classes/anm/ExtraTruckBuffer.h"
 #include "classes/anm/Pose.h"
 #include "classes/anm/ASMControl.h"
@@ -69,6 +72,18 @@ void AnimSamplePoseJob::exec(anm::Job& job) {
     for (int i = 0; i < self.m_count; i++) {
         self.m_samplers[i]->samplePose();
     }
+}
+
+AssetData::~AssetData() {
+    if (m_data != nullptr) {
+        if (m_allocator != nullptr) {
+            m_allocator->deallocate(m_data);
+        } else {
+            mtl::MemManager::deallocate(m_data, 0, false);
+        }
+        m_data = nullptr;
+    }
+    AssetManager::sys()->removeAsset(this);
 }
 
 }  // namespace fw
