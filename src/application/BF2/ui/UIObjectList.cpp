@@ -13,8 +13,8 @@
 namespace ui {
 
 UIObjectBase::UIObjectBase(const mm::mtl::FixStr<32>& name)
-    : m_flags(0), m_duplicateIndex(0), m_name(name) {
-    m_flags = 0;
+    : m_flags(), m_duplicateIndex(0), m_name(name) {
+    m_flags.reset();
 }
 
 UIObjectBase::~UIObjectBase() {}
@@ -25,30 +25,40 @@ void UIObjectBase::update() {
 }
 
 void UIObjectBase::setInitialize() {
-    m_flags &= ~0x8;
+    m_flags.reset(3);
 }
 
 void UIObjectBase::setTerm() {
-    m_flags &= ~0x8000;
-    m_flags |= 0x8;
+    m_flags.reset(15);
+    m_flags.set(3, true);
 }
 
 void UIObjectBase::setSuspend(bool suspend) {
-    if (m_flags & 0x8) {
-        m_flags &= ~0x8000;
+    if (m_flags.test(3)) {
+        m_flags.reset(15);
         return;
     }
-    if (suspend) {
-        m_flags |= 0x8000;
-    } else {
-        m_flags &= ~0x8000;
-    }
+    m_flags.set(15, suspend);
 }
 
 UIObjectList::UIObjectList() : m_allTerm(false), m_changed(false) {}
 
 UIObjectList::~UIObjectList() {
     clear();
+}
+
+void UIObjectList::clear() {
+    mm::mtl::IntrusiveList<UIObject>::iterator cur(nullptr);
+    mm::mtl::IntrusiveList<UIObject>::iterator it = m_list.begin();
+    while (it != m_list.end()) {
+        cur = it;
+        it = m_list.erase(it);
+        if (cur.m_node != nullptr) {
+            cur->setParent(0);
+            UIUtil::releaseObject(cur->m_handle);
+            cur->release();
+        }
+    }
 }
 
 void UIObjectList::update() {
@@ -62,9 +72,9 @@ void UIObjectList::update() {
         if (object == nullptr) {
             continue;
         }
-        if ((object->m_flags & 0x8) &&
+        if (object->m_flags.test(3) &&
             (object->m_type != 3 || UIUtil::getLayoutObject(object->m_handle)->isTermWithChild())) {
-            if (object->m_flags & 0x10) {
+            if (object->m_flags.test(4)) {
                 it = m_list.erase(it);
                 UIUtil::releaseObject(object->m_handle);
                 object->release();
@@ -165,6 +175,20 @@ unsigned int UIObjectList::search(const char* name) {
     unsigned int hash = mm::mtl::hashStrCrc(name);
     for (mm::mtl::IntrusiveList<UIObject>::iterator it = m_list.begin(); it != m_list.end(); ++it) {
         if (it->m_nameHash == hash) {
+            return it->m_handle;
+        }
+    }
+    return 0;
+}
+
+unsigned int UIObjectList::searchDuplicate(const char* name, unsigned short index) {
+    if (name == nullptr) {
+        return 0;
+    }
+    unsigned int hash = mm::mtl::hashStrCrc(name);
+    for (mm::mtl::IntrusiveList<UIObject>::iterator it = m_list.begin(); it != m_list.end(); ++it) {
+        bool duplicate = it->m_flags.test(4);
+        if (duplicate && it->m_duplicateIndex == index && it->m_nameHash == hash) {
             return it->m_handle;
         }
     }

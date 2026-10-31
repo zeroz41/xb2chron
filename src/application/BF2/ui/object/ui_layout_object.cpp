@@ -149,9 +149,9 @@ void UILayoutObject::setInitialize() {
 
 bool UILayoutObject::isTermWithChild() const {
     if (m_list != nullptr) {
-        return (m_flags & 8) != 0 && m_list->m_allTerm;  // bit 3: terminated
+        return m_flags.test(3) && m_list->m_allTerm;  // bit 3: terminated
     }
-    return (m_flags & 8) != 0;
+    return m_flags.test(3);
 }
 
 void UILayoutObject::reloadText() {
@@ -205,12 +205,12 @@ void UILayoutObject::updateSize() {
 
 void UILayoutObject::update() {
     // terminated (bit 3) or following its parent's termination (bit 4); suspended (bit 15)
-    unsigned int flags = m_flags;
-    if ((flags & 0x10) && getParentPtr() != nullptr) {
-        if (!(getParentPtr()->m_flags & 8) && (m_flags & 0x8000)) {
+    mm::mtl::Bitflag<32> flags = m_flags;
+    if (flags.test(4) && getParentPtr() != nullptr) {
+        if (!getParentPtr()->m_flags.test(3) && m_flags.test(15)) {
             return;
         }
-    } else if (!(flags & 8) && (m_flags & 0x8000)) {
+    } else if (!flags.test(3) && m_flags.test(15)) {
         return;
     }
     UIObject::update();
@@ -224,7 +224,7 @@ void UILayoutObject::update() {
 
 void UILayoutObject::apply() {
     UIObject::apply();
-    if (!(m_flags & 0x8000) && m_list != nullptr) {
+    if (!m_flags.test(15) && m_list != nullptr) {
         for (mm::mtl::IntrusiveList<UIObject>::iterator it = m_list->m_list.begin(), end = m_list->m_list.end();
              it != end; ++it) {
             UIObject& child = *it;

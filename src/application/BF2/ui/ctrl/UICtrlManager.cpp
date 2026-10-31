@@ -48,7 +48,7 @@ UICtrlManager::~UICtrlManager() {
 
 void UICtrlManager::releaseCtrlSlot(int slot) {
     if (m_slots[slot].m_object != nullptr) {
-        m_slots[slot].m_object->m_flags &= ~1;
+        m_slots[slot].m_object->m_flags.reset(0);
         if (m_slots[slot].m_flags & 2) {
             m_slots[slot].m_object->setTerm();
         }
@@ -73,7 +73,7 @@ void UICtrlManager::stopCtrl(int slot, bool release, bool notify) {
     m_slots[slot].m_ctrl.stop();
     if (notify && m_slots[slot].m_eventHandle != 0) {
         UIObject* object = UIUtil::getObject(m_slots[slot].m_eventHandle);
-        if (object != nullptr && (object->m_flags & 2) != 0) {
+        if (object != nullptr && object->m_flags.test(1)) {
             UIEventManager::EventInfo event;
             event.m_handle = m_slots[slot].m_eventHandle;
             event.m_data.m_type = 3;
@@ -225,7 +225,7 @@ void UICtrlManager::startCtrl(int slot, float duration, unsigned int flags, unsi
         m_slots[slot].m_ctrl.start(m_slots[slot].m_object, duration, m_slots[slot].m_methods, m_slots[slot].m_loop);
         m_slots[slot].m_methods.clear();
         m_slots[slot].m_flags = flags;
-        m_slots[slot].m_object->m_flags |= 1;
+        m_slots[slot].m_object->m_flags.set(0, true);
         m_slots[slot].m_ctrlParam = param;
     }
 }

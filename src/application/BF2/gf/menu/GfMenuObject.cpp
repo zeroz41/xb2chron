@@ -285,7 +285,7 @@ void GfMenuObject::sendEventToParent(unsigned int handle, const ui::EventData& e
 
 void GfMenuObject::addNumberEventCondition(unsigned int handle, const char* child, unsigned int event,
                                            unsigned int value, float rate) {
-    if (handle == 0 || (ui::UIUtil::getObject(handle)->m_flags & 2) == 0) {
+    if (handle == 0 || !ui::UIUtil::getObject(handle)->m_flags.test(1)) {
         return;
     }
     unsigned int target = handle;
@@ -311,7 +311,7 @@ void GfMenuObject::addNumberEventCondition(unsigned int handle, const char* chil
 
 void GfMenuObject::addNumberEventCondition(unsigned int handle, const char* child, unsigned int event,
                                            unsigned int value) {
-    if (handle == 0 || (ui::UIUtil::getObject(handle)->m_flags & 2) == 0) {
+    if (handle == 0 || !ui::UIUtil::getObject(handle)->m_flags.test(1)) {
         return;
     }
     unsigned int target = handle;
@@ -337,7 +337,7 @@ void GfMenuObject::addNumberEventCondition(unsigned int handle, const char* chil
 
 void GfMenuObject::addDispEventCondition(unsigned int handle, const char* child, unsigned int event,
                                          unsigned int value, bool duplicated) {
-    if (handle == 0 || (ui::UIUtil::getObject(handle)->m_flags & 2) == 0) {
+    if (handle == 0 || !ui::UIUtil::getObject(handle)->m_flags.test(1)) {
         return;
     }
     unsigned int target = handle;
@@ -363,7 +363,7 @@ void GfMenuObject::addDispEventCondition(unsigned int handle, const char* child,
 
 void GfMenuObject::addPosEventCondition(unsigned int handle, const char* child, unsigned int event,
                                         unsigned int value) {
-    if (handle == 0 || (ui::UIUtil::getObject(handle)->m_flags & 2) == 0) {
+    if (handle == 0 || !ui::UIUtil::getObject(handle)->m_flags.test(1)) {
         return;
     }
     unsigned int target = handle;

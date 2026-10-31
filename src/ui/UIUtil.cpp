@@ -130,7 +130,7 @@ bool isTerm(unsigned int handle) {
     if (!isValid(handle)) {
         return false;
     }
-    return (getObject(handle)->m_flags & 8) != 0;
+    return getObject(handle)->m_flags.test(3);
 }
 
 void initBdatFP() {

@@ -38,7 +38,7 @@ UIPolygonObject* UIPolygonObject::create(UILayoutObject* parent, const PolygonIn
     UIPolygonObject* object = createObject(parent, info, name, allocator);
     if (object != nullptr) {
         if (object->m_info.m_shapeType == 3) {
-            object->m_flags |= 0x400;
+            object->m_flags.set(10, true);
         }
         object->m_textureSize = textureSize;
         object->m_capture = nullptr;

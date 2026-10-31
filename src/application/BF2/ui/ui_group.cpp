@@ -155,7 +155,7 @@ void UIGroup::terminateObject(const char* name, bool release) {
 
 void UIGroup::readyTerminate(unsigned int handle) {
     UIObject* object = UIUtil::getObject(handle);
-    if ((object->m_flags & 2) == 0) {
+    if (!object->m_flags.test(1)) {
         object->setTerm();
     } else {
         UIEventManager::EventInfo event;

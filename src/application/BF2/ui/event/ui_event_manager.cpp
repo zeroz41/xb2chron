@@ -116,7 +116,7 @@ void UIEventManager::registObjectListener(unsigned int handle, UIObjectListener*
     node->m_listener = listener;
     node->m_conditions = nullptr;
     m_listeners.push_back(node);
-    UIUtil::getObject(handle)->m_flags |= 2;  // bit 1: the object has a listener (removeObjectListener clears it)
+    UIUtil::getObject(handle)->m_flags.set(1, true);  // bit 1: the object has a listener (removeObjectListener clears it)
     // event 1 tells the new listener it is registered; the parameters are stored again although EventData's
     // constructor zeroes them (without the stores the copy into the queue goes through the stack)
     EventInfo info;
@@ -146,7 +146,7 @@ void UIEventManager::removeObjectListener(unsigned int handle) {
                 condition->release();
                 condition = next;
             }
-            UIUtil::getObject(handle)->m_flags &= ~2;
+            UIUtil::getObject(handle)->m_flags.reset(1);
             ListenerNode* node = it.operator->();
             m_listeners.erase(it);
             operator delete(node);  // freed without the null check a delete expression makes

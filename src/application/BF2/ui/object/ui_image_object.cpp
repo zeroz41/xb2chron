@@ -63,7 +63,7 @@ UIImageObject* UIImageObject::create(UILayoutObject* parent, const void* resourc
 #line 106
         object = new (allocator, 16, __FILE__, __LINE__) UIImageObject(layer, mm::mtl::FixStr<32>(name.m_str));
         if (object != nullptr && mask) {
-            object->m_flags |= 0x4000;  // a mask object
+            object->m_flags.set(14, true);  // a mask object
         }
     }
     object->m_contents = contents;
@@ -99,7 +99,7 @@ void UIImageObject::changeBin(const void* resource) {
 }
 
 void UIImageObject::setMaskObject(UIImageObject* mask) {
-    if (mask != nullptr && m_layer != nullptr && mask->m_layer != nullptr && (mask->m_flags & 0x4000)) {
+    if (mask != nullptr && m_layer != nullptr && mask->m_layer != nullptr && mask->m_flags.test(14)) {
         layer::LayerAccDefObj def(m_layer);
         def.setMaskObj(mask->m_layer);
     }
@@ -220,7 +220,7 @@ bool UIImageObject::hasAnimation() {
     if (m_layer == nullptr) {
         return false;
     }
-    if (m_flags & 0x4000) {  // a mask object
+    if (m_flags.test(14)) {  // a mask object
         return false;
     }
     layer::LayerAccAction action(m_layer);
@@ -296,7 +296,7 @@ unsigned int UIImageObject::duplicateImpl(unsigned int handle) {
         object = create(parent, m_capture, mm::mtl::FixStr<32>(m_name.m_str), UIUtil::getProgAllocator());
     } else {
         object = create(parent, base.getResData(), m_contents, mm::mtl::FixStr<32>(m_name.m_str),
-                        UIUtil::getProgAllocator(), (m_flags & 0x4000) != 0);
+                        UIUtil::getProgAllocator(), m_flags.test(14));
     }
     if (object == nullptr) {
         return 0;

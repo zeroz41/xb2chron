@@ -111,56 +111,56 @@ bool UIObjectAcc::isDisp() const {
 
 bool UIObjectAcc::isControl() const {
     if (m_object != nullptr) {
-        return (m_object->m_flags & (1u << 0)) != 0;
+        return m_object->m_flags.test(0);
     }
     return false;
 }
 
 bool UIObjectAcc::isDuplicate() const {
     if (m_object != nullptr) {
-        return (m_object->m_flags & (1u << 4)) != 0;
+        return m_object->m_flags.test(4);
     }
     return false;
 }
 
 bool UIObjectAcc::isStreamImage() const {
     if (m_object != nullptr) {
-        return (m_object->m_flags & (1u << 6)) != 0;
+        return m_object->m_flags.test(6);
     }
     return false;
 }
 
 bool UIObjectAcc::isStreamImage2nd() const {
     if (m_object != nullptr) {
-        return (m_object->m_flags & (1u << 17)) != 0;
+        return m_object->m_flags.test(17);
     }
     return false;
 }
 
 bool UIObjectAcc::isStreaming() const {
     if (m_object != nullptr) {
-        return (m_object->m_flags & (1u << 7)) != 0;
+        return m_object->m_flags.test(7);
     }
     return false;
 }
 
 bool UIObjectAcc::isNotInputTarget() const {
     if (m_object != nullptr) {
-        return (m_object->m_flags & (1u << 9)) != 0;
+        return m_object->m_flags.test(9);
     }
     return false;
 }
 
 bool UIObjectAcc::isAlwaysInLayout() const {
     if (m_object != nullptr) {
-        return (m_object->m_flags & (1u << 12)) != 0;
+        return m_object->m_flags.test(12);
     }
     return false;
 }
 
 bool UIObjectAcc::isIgnoreSize() const {
     if (m_object != nullptr) {
-        return (m_object->m_flags & (1u << 13)) != 0;
+        return m_object->m_flags.test(13);
     }
     return false;
 }
@@ -173,7 +173,7 @@ void UIObjectAcc::setTerm() {
 
 bool UIObjectAcc::isTerm() const {
     if (m_object != nullptr) {
-        return (m_object->m_flags & 8) != 0;
+        return m_object->m_flags.test(3);
     }
     return true;
 }
@@ -375,21 +375,15 @@ unsigned int UIObjectAcc::duplicateChild(const char* name) {
 
 void UIObjectAcc::setScreenAdjusting(bool adjusting) {
     if (m_object != nullptr) {
-        if (adjusting) {
-            m_object->m_flags |= 0x800;
-        } else {
-            m_object->m_flags &= ~0x800;
-        }
+        m_object->m_flags.set(11, adjusting);
     }
 }
 
 void UIObjectAcc::setIgnoreSize(bool ignore) {
-    if (m_object != nullptr && ((m_object->m_flags & 0x2000) != 0) != ignore) {
-        if (ignore) {
-            m_object->m_flags |= 0x2000;
-        } else {
-            m_object->m_flags &= ~0x2000;
-        }
+    // the object in a local: a second m_object read for the flag's store keeps a second load of the flags
+    UIObject* object = m_object;
+    if (object != nullptr && object->m_flags.test(13) != ignore) {
+        object->m_flags.set(13, ignore);
         m_object->m_transform.m_changed = true;
     }
 }
@@ -632,7 +626,7 @@ void UIObjectAcc::updateLayoutSize() {
 
 bool UIObjectAcc::fn_7100690ED4() const {
     if (m_object != nullptr) {
-        return (m_object->m_flags & (1u << 18)) != 0;
+        return m_object->m_flags.test(18);
     }
     return false;
 }
@@ -695,7 +689,7 @@ void UIObjectAcc::setStreamImage2nd() {
     if (m_object != nullptr) {
         UIImageObject* object = mm::mtl::rttiCast<UIImageObject>(m_object);
         if (object != nullptr) {
-            object->m_flags |= 0x20000;
+            object->m_flags.set(17, true);
         }
     }
 }
@@ -704,7 +698,7 @@ void UIObjectAcc::fn_7100691FD0() {
     if (m_object != nullptr) {
         UIImageObject* object = mm::mtl::rttiCast<UIImageObject>(m_object);
         if (object != nullptr) {
-            object->m_flags |= 0x40000;
+            object->m_flags.set(18, true);
         }
     }
 }
@@ -713,7 +707,8 @@ void UIObjectAcc::fn_710069201C() {
     if (m_object != nullptr) {
         UIImageObject* object = mm::mtl::rttiCast<UIImageObject>(m_object);
         if (object != nullptr) {
-            object->m_flags &= ~0x60000u;
+            object->m_flags.reset(17);
+            object->m_flags.reset(18);
         }
     }
 }

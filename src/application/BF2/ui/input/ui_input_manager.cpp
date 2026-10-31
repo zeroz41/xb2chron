@@ -56,7 +56,7 @@ void UIInputManager::releaseInputLayer(unsigned int handle) {
     for (InputList::iterator it = m_layers.begin(); it != m_layers.end(); ++it) {
         if (it->m_handle == handle) {
             if (UIUtil::isValid(it->m_layer->m_id)) {
-                UIUtil::getObject(it->m_layer->m_id)->m_flags &= ~4;
+                UIUtil::getObject(it->m_layer->m_id)->m_flags.reset(2);
             }
             if (it->m_layer != nullptr) {
                 it->m_layer->release();
@@ -133,7 +133,7 @@ bool UIInputManager::migrateInput(unsigned int handle, unsigned int target) {
         if (info.m_handle == handle) {
             info.m_target = target;
             if (target != 0) {
-                UIUtil::getObject(target)->m_flags |= 4;
+                UIUtil::getObject(target)->m_flags.set(2, true);
             }
             return true;
         }

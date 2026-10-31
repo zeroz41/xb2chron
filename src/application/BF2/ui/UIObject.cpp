@@ -25,14 +25,14 @@ UIObject::UIObject(layer::LayerBase* layer, const mm::mtl::FixStr<32>& name, uns
 }
 
 void UIObject::update() {
-    if ((m_flags & 0x18) == 0x10) {
+    if (m_flags.test(4) && !m_flags.test(3)) {
         UIObject* parent = UIUtil::getObject(m_parent);
-        if ((parent->m_flags >> 3) & 1) {
+        if (parent->m_flags.test(3)) {
             setTerm();
             return;
         }
     }
-    if (!((m_flags >> 15) & 1) && m_displayInfo.m_disp) {
+    if (!m_flags.test(15) && m_displayInfo.m_disp) {
         UIObjectBase::update();
     }
 }

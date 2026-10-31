@@ -6,6 +6,7 @@
 #include "classes/mm/mtl/ReferenceObject.h"
 #include "mm/mtl/IntrusiveList.h"
 #include "mm/mtl/FixStr.h"
+#include "mm/mtl/Bitflag.h"
 
 namespace ui {
 // table 0x7100B75738; a reference object (UIPolygonObject::duplicateImpl holds a reference to its copy while its
@@ -22,7 +23,9 @@ public:
     UITransform m_transform;  // the constructor builds it; UIObject::importTransform fills it from the layer
                               // (0x30 bytes: 16-aligned for its scale)
     UIDisplayInfo m_displayInfo;  // what UIObject::importDisplayInfo fills from the object's layer
-    unsigned int m_flags;         // bit 3: terminated (UIObjectAcc::isTerm reads it)
+    // bit 3: terminated (UIObjectAcc::isTerm reads it). A Bitflag: searchDuplicate loads it apart from
+    // m_duplicateIndex (a raw int load is widened over both by GVN)
+    ::mm::mtl::Bitflag<32> m_flags;
     unsigned short m_duplicateIndex;  // UIObjectAcc::getDuplicateIndex
     unsigned char pad_9E[0x2];
     mm::mtl::FixStr<32> m_name;  // UILayoutObject::addChild registers the child under it

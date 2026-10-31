@@ -48,7 +48,7 @@ unsigned int GfMenuObjMovieLayer::createMovieLayer(unsigned int width, unsigned 
         handle = ui::UIUtil::registObject(screen);
         if (handle != 0) {
             layout->addChild(handle, screen);
-            screen->m_flags |= 0x10;
+            screen->m_flags.set(4, true);
         }
     }
     return handle;
