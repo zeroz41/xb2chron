@@ -157,6 +157,10 @@ public:
     // the original's; GfMenuObjItemList2::initialize places its filter icons, gf_menu_obj_named_list initialize)
     static void placeObjectH(unsigned int handle, const char* format, unsigned int count, const mm::Pnt<short>& center,
                              unsigned int width);
+    // count objects named by format (numbered from 1) in a row from left, width apart (GfMenuObjMainMenu2's
+    // openChrChange2Sub places its character icons so; the parameter names are not the original's)
+    static void placeObjectHLeft(unsigned int handle, const char* format, unsigned int count,
+                                 const mm::Pnt<short>& left, unsigned int width);
     static int startPresetCtrl(unsigned int handle, const PresetCtrlParam& param);  // startCtrl's slot
     static bool setPointSpeedRate(ui::UIObjectAcc acc, float rate);  // the pointer's speed over the object
     static short getBtnIconNumber(unsigned int button);  // the icon number of a button

@@ -2,6 +2,7 @@
 #include "classes/gf/SelectionChecker.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfMenuCharDataAdapter.h"
 #include "classes/gf/GfMenuBladeList.h"
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuDriverList.h"
@@ -16,7 +17,17 @@
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuObjUtil.h"
 #include "gf/GfMenuTypes.h"
+#include "gf/GfPartySelect.h"
+#include "gf/GfDataDriver.h"
+#include "gf/GfDataBlade.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfMenuObjPopup.h"
+#include "gf/GfMenuBdat.h"
+#include "classes/gf/GfGameParty.h"
+#include "classes/gf/DataParamAcc.h"
+#include "mm/mtl/FixStr.h"
 #include "plugin/Bdat.h"
+#include "ui/UIStr.h"
 
 namespace gf {
 
@@ -65,6 +76,47 @@ GfMenuObjMainMenu2::~GfMenuObjMainMenu2() {
     s_bgOpen = 0;
 }
 
+void GfMenuObjMainMenu2::initChrChangeDr(ui::UIObjectAcc& acc, GfMenuDriverList* list) {
+    ui::UIObjectAcc change(acc.searchChild("LAY_chr_change"));
+    mm::mtl::FixStr<32> name;
+    unsigned int count = change.countChild("LAY_chr_change_dr@%02d", 1);
+    mm::mtl::FixedVector<unsigned short, 32> drivers;
+    GfPartySelect::getDriverList(drivers, GfPartySelect::LIST_TYPE(0), 0);
+    unsigned int party = drivers.size();
+    for (unsigned int i = 0; i < count; i++) {
+        name.format("IMG_chr_change_dr_icon@%02d", i + 1);
+        GfMenuCharDataAdapter* adapter =
+            GfMenuCharDataAdapter::createFromDriverList(change.searchChild(name.m_str), 3, list, i, false);
+        if (adapter != nullptr) {
+            name.format("LAY_chr_change_dr@%02d", i + 1);
+            adapter->m_rowHandle = change.searchChild(name.m_str);
+        }
+        name.format("IMG_chr_change_no@%02d", i + 1);
+        ui::UIObjectAcc number(change.searchChild(name.m_str));
+        if (i < party) {
+            number.setImageIndex(i);
+            number.setDisp(true);
+        } else {
+            number.setDisp(false);
+        }
+    }
+}
+
+void GfMenuObjMainMenu2::initChrChangeBl(ui::UIObjectAcc& acc, GfMenuBladeList* list) {
+    ui::UIObjectAcc change(acc.searchChild("LAY_chr_change"));
+    mm::mtl::FixStr<32> name;
+    unsigned int count = change.countChild("LAY_chr_change_bl@%02d", 1);
+    for (unsigned int i = 0; i < count; i++) {
+        name.format("IMG_chr_change_bl_icon@%02d", i + 1);
+        GfMenuCharDataAdapter* adapter =
+            GfMenuCharDataAdapter::createFromBladeList(change.searchChild(name.m_str), 3, list, i, false);
+        if (adapter != nullptr) {
+            name.format("LAY_chr_change_bl@%02d", i + 1);
+            adapter->m_rowHandle = change.searchChild(name.m_str);
+        }
+    }
+}
+
 void GfMenuObjMainMenu2::finalize() {
     GfMenuSoundManager::fadeInFieldBgm(1.0f);
     GfMenuObject::finalize();
@@ -76,6 +128,41 @@ void GfMenuObjMainMenu2::update() {
     }
     m_seq.update();
     GfMenuObject::update();
+}
+
+bool GfMenuObjMainMenu2::seqExecTerm() {
+    ui::UIObjectAcc acc(m_handle);
+    ui::UIObjectAcc main(acc.searchChild("LAY_main"));
+    if (GfMenuObjUtil::fn_710048FD30(3)) {
+        if (m_jobStarted) {
+            m_jobStarted = false;
+        } else if (!GfGameManager::isEvent(false) && !GfGameManager::isTalking()) {
+            if (!s_charMenuOpen ||
+                (GfDataBlade::fn_7100231884() != 0x2B38 && GfDataBlade::fn_7100231884() != 0x2B74)) {
+                GfMenuObjPopup::continuePickup(0x14);
+            }
+        }
+        GfMenuReference::fn_7100368380(6, false);
+    } else {
+        if (m_jobStarted) {
+            m_jobStarted = false;
+        } else {
+            GfMenuObjPopup::continuePickup(0x14);
+        }
+    }
+    main.setTerm();
+    return true;
+}
+
+void GfMenuObjMainMenu2::setDispGold(bool disp) {
+    unsigned int handle = GfMenuObject::getAttachedObject(0x5F);
+    if (ui::UIObjectAcc(handle).m_object != nullptr) {
+        if (!ui::UIObjectAcc(handle).isTerm()) {
+            GfMenuObjUtil::setChildDisp(handle, "LAY_info_money", disp);
+            GfMenuObjUtil::setChildDisp(handle, "LAY_info_time", disp);
+            GfMenuObjUtil::setChildDisp(handle, "LAY_clear_mark", disp);
+        }
+    }
 }
 
 void GfMenuObjMainMenu2::setCloseKeyEnable(bool enable) {
@@ -146,6 +233,17 @@ void GfMenuObjMainMenu2::IndexListener::reciveEvent(const ui::EventData& event, 
     }
 }
 
+void GfMenuObjMainMenu2::setContentsSubText(unsigned int handle, unsigned int index, unsigned int owner) {
+    bool disp = false;
+    if (index != 0) {
+        ui::UIObjectAcc acc(handle);
+        unsigned int name = (unsigned short)Bdat::getVal(GfDataBdat::getFP(0x148), "name", index);
+        acc.setText(ui::UIStr(GfDataBdat::getFP(0x119), name));
+        disp = true;
+    }
+    GfMenuObjUtil::setChildDisp(owner, "LAY_index", disp);
+}
+
 void GfMenuObjMainMenu2::closeCharChange() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x5F));
     if (acc.m_object != nullptr) {
@@ -154,6 +252,171 @@ void GfMenuObjMainMenu2::closeCharChange() {
         event.m_type = 0x22;
         ui::UIManager::sys()->requestObjectEvent(change.m_handle, event, 0.0f);
     }
+}
+
+void GfMenuObjMainMenu2::fn_71004323A8(ui::UIObjectAcc& acc, GfMenuDriverList* list) {
+    ui::UIObjectAcc change(acc.m_handle, "LAY_chr_change_dr");
+    mm::mtl::FixStr<32> name;
+    unsigned int party;
+    {
+        mm::mtl::FixedVector<unsigned short, 32> drivers;
+        GfPartySelect::getDriverList(drivers, GfPartySelect::LIST_TYPE(0), 0);
+        party = drivers.size();
+    }
+    for (unsigned int i = 0; i < list->getSize(); i++) {
+        name.format("IMG_chr_change_dr_cursor@%02d", i + 1);
+        ui::UIObjectAcc cursor(change.m_handle, name.m_str);
+        name.format("IMG_chr_change_no@%02d", i + 1);
+        ui::UIObjectAcc number(change.m_handle, name.m_str);
+        if (i < party) {
+            if (GfMenuObjUtil::fn_710048FD30(3)) {
+                unsigned int driver = list->getContents(i).m_driver;
+                if (GfDataDriver::isActivateUnuse(driver)) {
+                    number.setImageIndex(i);
+                } else {
+                    number.setImageIndex(GfGameParty::getPartyId(3, driver));
+                }
+            } else {
+                number.setImageIndex(i);
+            }
+            number.setDisp(true);
+        } else {
+            number.setDisp(false);
+        }
+        if (i == list->getIndex(false)) {
+            cursor.setDisp(true);
+            cursor.startAnimation("loop", false);
+        } else {
+            cursor.stopAnimation();
+            cursor.setDisp(false);
+        }
+    }
+}
+
+void GfMenuObjMainMenu2::refreshCharChangeBl(ui::UIObjectAcc& acc, GfMenuBladeList* list) {
+    ui::UIObjectAcc change(acc.m_handle, "LAY_chr_change_bl");
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < list->getPageSize(); i++) {
+        name.format("IMG_chr_change_bl_cursor@%02d", i + 1);
+        ui::UIObjectAcc cursor(change.m_handle, name.m_str);
+        if (i == list->getIndex(true)) {
+            cursor.setDisp(true);
+            cursor.startAnimation("loop", false);
+        } else {
+            cursor.stopAnimation();
+            cursor.setDisp(false);
+        }
+    }
+    ui::UIObjectAcc left(change.m_handle, "IMG_chr_change_bl_icon_l");
+    left.setDisp(false);
+    unsigned int first = list->getPageIndex(0);
+    if (first != 0) {
+        DataParamAcc blade(4, list->getContents(first - 1).m_blade, GimmickType(0));
+        int icon = GfMenuObjUtil::getFaceIconID(blade);
+        if (icon != 0) {
+            left.setImageIndex(GfMenuBdat::getIconImageIndex(icon));
+            left.setDisp(true);
+        }
+    }
+    ui::UIObjectAcc right(change.m_handle, "IMG_chr_change_bl_icon_r");
+    right.setDisp(false);
+    unsigned int count = list->getPageSize();
+    if (count != 0) {
+        unsigned int last = list->getPageIndex(count - 1);
+        if (last < list->getSize() - 1U) {
+            DataParamAcc blade(4, list->getContents(last + 1).m_blade, GimmickType(0));
+            int icon = GfMenuObjUtil::getFaceIconID(blade);
+            if (icon != 0) {
+                right.setImageIndex(GfMenuBdat::getIconImageIndex(icon));
+                right.setDisp(true);
+            }
+        }
+    }
+}
+
+void GfMenuObjMainMenu2::openChrChange2Sub(ui::UIObjectAcc& acc, ChrChangeParam& param) {
+    mm::Rect<short> icon1;
+    acc.getLayoutRect("chr_icon_1", icon1);
+    mm::Rect<short> icon2;
+    acc.getLayoutRect("chr_icon_2", icon2);
+    if (param.m_listKind == 0) {
+        unsigned int count = param.m_driverList->getSize();
+        GfMenuObjUtil::placeObjectHLeft(acc.m_handle, "LAY_chr_change_dr@%02d", count,
+                                        mm::Pnt<short>(icon1.x + icon1.w / 2, icon1.y + icon1.h / 2),
+                                        icon2.x - icon1.x);
+    } else {
+        unsigned int count = param.m_bladeList->getSize();
+        if (count > 5) {
+            count = 5;
+        }
+        GfMenuObjUtil::placeObjectHLeft(acc.m_handle, "LAY_chr_change_bl@%02d", count,
+                                        mm::Pnt<short>(icon1.x + icon1.w / 2, icon1.y + icon1.h / 2),
+                                        icon2.x - icon1.x);
+    }
+}
+
+void GfMenuObjMainMenu2::inputChrChangeSub(ui::UIObjectAcc& acc, ChrChangeParam& param, int index) {
+    switch (param.m_listKind) {
+    case 1:
+    case 2: {
+        if (index == -1) {
+            return;
+        }
+        param.m_bladeList->setIndex(index);
+        refreshCharChangeBl(acc, param.m_bladeList);
+        if (GfMenuReference::getReferenceBladeID(0) ==
+            param.m_bladeList->getContents(param.m_bladeList->getIndex(false)).m_blade) {
+            return;
+        }
+        ui::EventData event;
+        event.m_type = 0x140;
+        event.m_param0 = param.m_bladeList->getContents(param.m_bladeList->getIndex(false)).m_blade;
+        event.m_param1 = index;
+        GfMenuObject::sendEvent(param.m_target, event, 0.0f);
+        break;
+    }
+    case 0: {
+        if (index == -1) {
+            return;
+        }
+        param.m_driverList->setIndex(index);
+        fn_71004323A8(acc, param.m_driverList);
+        if (GfMenuReference::getReferenceDriverID(0) ==
+            param.m_driverList->getContents(param.m_driverList->getIndex(false)).m_driver) {
+            return;
+        }
+        ui::EventData event;
+        event.m_type = 0x140;
+        event.m_param0 = param.m_driverList->getContents(param.m_driverList->getIndex(false)).m_driver;
+        event.m_param1 = index;
+        GfMenuObject::sendEvent(param.m_target, event, 0.0f);
+        break;
+    }
+    }
+}
+
+void GfMenuObjMainMenu2::closeChrChangeSub(ui::UIObjectAcc& acc, ChrChangeParam& param) {
+    unsigned int list;
+    if (param.m_listKind == 0) {
+        list = acc.searchChild("LAY_chr_change_dr");
+    } else {
+        list = acc.searchChild("LAY_chr_change_bl");
+    }
+    GfMenuObjUtil::CtrlParam ctrl;
+    ctrl.m_methods = 0x10000000;
+    ctrl.m_motionLib = "cmn_fade_motion_lr";
+    ctrl.m_motion = "fade_out_r";
+    ctrl.m_setDefault = true;
+    ctrl.m_startFlags = 10;
+    ctrl.m_eventId = 2;
+    int slot = GfMenuObjUtil::startCtrl(list, ctrl, nullptr);
+    GfMenuObjUtil::startCtrl(acc.searchChild("LAY_chr_change_input"), ctrl, nullptr);
+    ctrl = GfMenuObjUtil::CtrlParam();
+    ctrl.m_methods = 2;
+    ctrl.m_time = 0.2f;
+    GfMenuObjUtil::startCtrl(acc.searchChild("IMG_chr_change_base"), ctrl, nullptr);
+    GfMenuObject::hookCtrlEvent(acc.m_handle, slot);
+    GfMenuObject::disableInput(acc.m_handle);
 }
 
 bool GfMenuObjMainMenu2::isOpenCharMenu() {
@@ -341,6 +604,31 @@ void GfMenuObjMainMenu2::CloseListener::reciveEvent(const ui::EventData& event, 
     }
 }
 
+void GfMenuObjMainMenu2::getContentsText(unsigned int index, unsigned char*& bdat, unsigned int& text) {
+    unsigned char* menu = GfDataBdat::getFP(GfMenuObjUtil::fn_710048FD30(3) ? 0x180 : 0x17F);
+    int top = Bdat::getIdTop(menu);
+    if (GfMenuObjUtil::getMenuCondition((unsigned short)Bdat::getVal(menu, "useCond", top + index))) {
+        bdat = GfDataBdat::getFP(0x117);
+        text = (unsigned short)Bdat::getVal(menu, "title", top + index);
+    } else {
+        bdat = GfDataBdat::getFP(0xF5);
+        text = 0x67C;
+    }
+}
+
+void GfMenuObjMainMenu2::setSubIndexText(unsigned int text) {
+    unsigned int handle = GfMenuObject::getAttachedObject(0x5F);
+    if (ui::UIObjectAcc(handle).m_object != nullptr) {
+        if (!ui::UIObjectAcc(handle).isTerm()) {
+            ui::EventData event;
+            event.m_type = 0x102;
+            event.m_param0 = text;
+            ui::UIObjectAcc acc(handle);
+            ui::UIManager::sys()->requestObjectEvent(acc.searchChild("LAY_index"), event, 0.0f);
+        }
+    }
+}
+
 void GfMenuObjMainMenu2::cancelEnableMainMenu(bool enable) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x5F));
     if (acc.m_object != nullptr) {
@@ -349,6 +637,39 @@ void GfMenuObjMainMenu2::cancelEnableMainMenu(bool enable) {
         event.m_param0 = enable;
         ui::UIManager::sys()->requestObjectEvent(acc.m_handle, event, 0.0f);
         s_cancelEnable = enable;
+    }
+}
+
+void GfMenuObjMainMenu2::fn_71004335FC(bool lock) {
+    if (GfMenuObjUtil::fn_710048FD30(3) && s_closeKeyLocked != lock) {
+        if (lock) {
+            setCloseKeyEnable(false);
+        }
+        s_closeKeyLocked = lock;
+    }
+}
+
+void GfMenuObjMainMenu2::openCharChange(unsigned int handle, unsigned int kind, bool flag) {
+    ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x5F));
+    if (acc.m_object != nullptr) {
+        ui::UIObjectAcc change(acc.searchChild("LAY_chr_change"));
+        ui::EventData event;
+        event.m_type = 0x21;
+        event.m_param0 = kind;
+        event.m_param1 = handle;
+        event.m_param2 = flag;
+        ui::UIManager::sys()->requestObjectEvent(change.m_handle, event, 0.0f);
+    }
+}
+
+void GfMenuObjMainMenu2::disableCharChange() {
+    ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x5F));
+    if (acc.m_object != nullptr) {
+        ui::UIObjectAcc change(acc.searchChild("LAY_chr_change"));
+        ui::EventData event;
+        event.m_type = 0x109;
+        ui::UIManager::sys()->requestObjectEvent(change.m_handle, event, 0.0f);
+        GfMenuObject::disableInput(change.m_handle);
     }
 }
 

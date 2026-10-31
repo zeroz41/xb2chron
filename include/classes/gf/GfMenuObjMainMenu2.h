@@ -59,11 +59,19 @@ public:
     static void openChrChange2Sub(ui::UIObjectAcc& acc, ChrChangeParam& param);
     static void inputChrChangeSub(ui::UIObjectAcc& acc, ChrChangeParam& param, int index);
     static void closeChrChangeSub(ui::UIObjectAcc& acc, ChrChangeParam& param);
+    // Placeholder name: the symbols leave it unnamed. The driver list's counterpart of refreshCharChangeBl:
+    // openChrChangeSub and inputChrChangeSub call it with the parameter's driver list.
+    static void fn_71004323A8(ui::UIObjectAcc& acc, GfMenuDriverList* list);
+    static void refreshCharChangeBl(ui::UIObjectAcc& acc, GfMenuBladeList* list);
     GfMenuObjMainMenu2(unsigned int handle);
     virtual ~GfMenuObjMainMenu2();  // slot 0
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
+    // the sequence's term step (a Delegate job; it always answers true)
+    bool seqExecTerm();
+    // shows or hides the main menu's money, time and clear mark (LAY_info_money, LAY_info_time, LAY_clear_mark)
+    static void setDispGold(bool disp);
     static void setCloseKeyEnable(bool enable);
     static void setSystemKeyEnable(bool enable);
     static void closeCharChange();
@@ -105,6 +113,14 @@ public:
     // only. What it does: s_index while GfMenuObjUtil::fn_710048FD30(3) holds, else 0; its one caller is
     // fn_71003D4B70.
     static unsigned int fn_7100432E6C();
+    // Placeholder name: the symbols leave it unnamed. A static member: it reads and sets this class's statics only.
+    // What it does: on menu layer 3 (GfMenuObjUtil::fn_710048FD30(3)) it sets s_closeKeyLocked, disabling the close
+    // key first (setCloseKeyEnable(false), inlined) when it locks; its one caller is GfMenuObjPartyForm3's main
+    // listener (0x7100453FCC).
+    static void fn_71004335FC(bool lock);
+    // a contents entry's BDAT and text id: the menu table's (0x17F, 0x180 on menu layer 3) title row in 0x117 while
+    // its useCond holds, else text 0x67C of 0xF5 (the parameter names are not the original's)
+    static void getContentsText(unsigned int index, unsigned char*& bdat, unsigned int& text);
 
     // the menu the update keeps in s_openMenuID (1.0.0's name); isOpenCharMenu compares it with 0x27 and 0x12D
     static unsigned int s_openMenuID;
