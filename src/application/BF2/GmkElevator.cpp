@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "classes/gmk/GmkBdat.h"
 #include "classes/gmk/GmkPhantomManager.h"
 #include "classes/gmk/GmkLandmarkManager.h"
@@ -301,6 +302,19 @@ static inline const char* getGmkKindName(const char** names, unsigned int type) 
 }
 
 namespace gmk {
+
+// ---- TUnk_B6D418's pop settings reader (placeholder symbol: see its header)
+void TUnk_B6D418::fn_7100581E54(const GmkEnemy& enemy, Entry::PopInfo& info) const {
+    if (gf::GfGameManager::fn_71002AC598() || gf::GfGameManager::fn_71002A9E68()) {
+        unsigned char* fp = enemy.m_list->getBindedBdatFp();
+        int row = enemy.m_createInfo.m_bdatId;
+        info.m_partyFlag = Bdat::getValCheck(fp, "party_flag", row, 1);
+        info.m_popPriority = Bdat::getValCheck(fp, "Wpop_Priority", row, 1);
+        info.m_popTimerCond = Bdat::getValCheck(fp, "Wpop_TimerCond", row, 2);
+        info.m_popNumCond = Bdat::getValCheck(fp, "Wpop_PopNumCond", row, 1);
+        info.m_battleLockName = static_cast<short>(Bdat::getValCheck(fp, "battlelockname", row, 2)) - 1;
+    }
+}
 
 // ---- TUnk_B6D480 (GmkEnemyList's list at 0x470; placeholder slot symbols: see its header)
 TUnk_B6D480::~TUnk_B6D480() { dispose(); }
@@ -2022,6 +2036,138 @@ void GmkSalvageLocator::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HA
 void GmkSalvageLocator::onEnemyDead(gf::GF_OBJ_HANDLE*) { pad_f1 = 1; }
 
 void GmkSalvageLocator::onEnemyHomeToPlayerAccess(gf::GF_OBJ_HANDLE*) { pad_f2 = 1; }
+
+// ---- TUnk_B6D418 (GmkEnemyList's wave; placeholder slot symbols: see its header)
+unsigned int fn_71005B3814(const AGmkBase* gmk) {
+    const TUnk_B6D418::Data* data = static_cast<const TUnk_B6D418*>(gmk)->getData();
+    return data->m_enemyEnd - data->m_enemyBegin;
+}
+
+GmkEnemy* fn_71005B3824(const AGmkBase* gmk, unsigned int index) {
+    const GmkSet* set = static_cast<const GmkSet*>(gmk->m_list->getCreateInfo().m_param);
+    GmkEnemyList* enemies = static_cast<GmkEnemyList*>(set->m_gmkLists[GmkEnemy::TYPE]);
+    if (enemies == nullptr) {
+        return nullptr;
+    }
+    unsigned int enemyIndex = static_cast<const TUnk_B6D418*>(gmk)->getData()->m_enemyBegin + index;
+    if (enemies->getInstNum() <= enemyIndex) {
+        return nullptr;
+    }
+    return &enemies->m_gmks[enemyIndex];
+}
+
+// whether a list of the gimmick set is still loading: it has a path to load but is not valid yet (an inferred helper;
+// the name is not the original's)
+static inline bool isGmkListLoading(const IGmkList* list) {
+    if (list == nullptr) {
+        return false;
+    }
+    const IGmkList::CreateInfo& info = list->getCreateInfo();
+    return info.m_allocHandle.m_handle != 0 && info.m_path.length() != 0 && !list->isValid();
+}
+
+// takes its enemies (sorted by pop priority, then index), the access to the gimmick its first enemy's battle lock
+// names, its phantom (on that gimmick when there is one) unless the gimmick set says otherwise, then runs its first
+// step
+void TUnk_B6D418::create(const CreateInfo& info) {
+    AGmkBase::create(info);
+    for (unsigned short i = 0; i < fn_71005B3814(this); i++) {
+        GmkEnemy* enemy = fn_71005B3824(this, i);
+        if (enemy->isValid()) {
+            if (gf::GfGameManager::fn_71002AC598() || gf::GfGameManager::fn_71002A9E68()) {
+                enemy->m_insts.m_waveFlags |= 2;
+            }
+            if ((gf::GfGameManager::fn_71002AC598() || gf::GfGameManager::fn_71002A9E68()) &&
+                (gf::GfGameManager::fn_71002AC598() || gf::GfGameManager::fn_71002A9E68())) {
+                enemy->m_insts.m_waveFlags |= 1;
+            }
+            Entry::PopInfo popInfo;
+            fn_7100581E54(*enemy, popInfo);
+            m_entries.push_back(Entry(enemy, i, popInfo));
+        }
+    }
+    std::sort(m_entries.begin(), m_entries.end(), [](const Entry& a, const Entry& b) {
+        if (a.m_popInfo.m_popPriority != b.m_popInfo.m_popPriority) {
+            return a.m_popInfo.m_popPriority < b.m_popInfo.m_popPriority;
+        }
+        return a.m_index < b.m_index;
+    });
+    Bdat::uVal dist;
+    dist.ulong = Bdat::getValCheck(gf::GfDataBdat::getFP(0x7B), 0, 0x1E, 8);
+    m_accessDistSq = dist.real * dist.real;
+    if (m_entries.size() != 0) {
+        short lockName = m_entries[0].m_popInfo.m_battleLockName;
+        if (lockName >= 0) {
+            GmkAcc::CreateInfo accInfo;
+            accInfo.m_bdatId = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param)->m_createInfo.m_bdatId;
+            accInfo.m_type = GmkType(0xb);
+            accInfo.pad_8 = lockName;
+            m_acc.create(accInfo);
+            m_isAccCounted = false;
+        }
+    }
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set == nullptr || !set->m_createInfo.m_flag) {
+        if (m_acc.isValid()) {
+            m_phantom.create(*m_acc.m_gmk, nullptr, false);
+        } else {
+            m_phantom.create(*this, nullptr, false);
+        }
+    }
+    m_seq = &TUnk_B6D418::fn_71005B3D64;
+    fn_71005B3D64(0.0f);
+}
+
+// the index-th sealed stone of the gimmick set's list (an inferred helper: the original reaches the element through a
+// pointer, not a reference, and re-reads the index; the name is not the original's)
+static inline TUnk_B6D6C8* getSealedStone(TUnk_B6E340* stones, unsigned int index) { return &stones->m_gmks[index]; }
+
+// waits for the gimmick set's enemy lists, takes the sealed stone and the map gimmick its row names, then goes on to
+// fn_71005B40D8
+void TUnk_B6D418::fn_71005B3D64(float dt) {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (isGmkListLoading(set->m_gmkLists[GmkEnemy::TYPE]) || isGmkListLoading(set->m_gmkLists[GmkRoutedEnemy::TYPE])) {
+        return;
+    }
+    fn_71005B425C(false);
+    const BdatInfo* bdat = getBdatInfo();
+    if (gf::GfGameManager::fn_71002A9E68()) {
+        const GmkSet* gmkSet = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+        if (bdat->m_sealedStoneIndex != 0 && m_sealedStone == nullptr) {
+            TUnk_B6E340* stones = static_cast<TUnk_B6E340*>(gmkSet->m_gmkLists[63]);
+            if (stones == nullptr || !stones->isValid()) {
+                return;
+            }
+            unsigned int index = bdat->m_sealedStoneIndex - 1;
+            if (stones->getInstNum() <= index) {
+                return;
+            }
+            m_sealedStone = getSealedStone(stones, bdat->m_sealedStoneIndex - 1);
+            if (m_sealedStone == nullptr || !m_sealedStone->isValid()) {
+                return;
+            }
+        }
+        if (bdat->m_mapGimmickId != 0 && !m_secondAcc.isValid()) {
+            IGmkList* maps = gmkSet->m_gmkLists[GmkMapGimmick::TYPE];
+            if (maps == nullptr || !maps->isValid()) {
+                return;
+            }
+            GmkAcc::CreateInfoByBdatId accInfo;
+            accInfo.m_type = GmkMapGimmick::TYPE;
+            accInfo.m_bdatId = bdat->m_mapGimmickId;
+            m_secondAcc.create(accInfo);
+            if (!m_secondAcc.isValid()) {
+                return;
+            }
+            GmkMapGimmick* gimmick = static_cast<GmkMapGimmick*>(m_secondAcc.m_gmk);
+            gimmick->pad_a8 = true;
+            gimmick->pad_a9 = false;
+        }
+    }
+    fn_71005B40D8();
+}
+
+void TUnk_B6D418::debugDraw() const {}
 
 // a gimmick set row's BDAT table name for a kind given by name, as GmkManager::getSheetnameByType reads it (the
 // original inlines it with the literal kind name; the name is not the original's)

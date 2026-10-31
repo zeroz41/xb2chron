@@ -12,6 +12,8 @@ namespace gmk {
 // Inferred: the enemy wave gimmick gf_field_locator finds by "EnemyWaveID" (AGmkBase.h's fn_71005B38EC notes); the
 // name is not proven, so it stays TUnk_.
 class TUnk_B6D418Gob;
+class GmkEnemy;
+class TUnk_B6D6C8;
 
 class alignas(16) TUnk_B6D418 : public ::gmk::AGmkBase {
 public:
@@ -24,18 +26,70 @@ public:
     virtual void update(float);  // slot 6 (fn_71005B49A4, 0x254)
     virtual void debugDraw() const;  // slot 7 (fn_71005B4DF0, empty)
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9 (fn_71005B514C, 0x188)
-    class BdatInfo {};
-    static const gmk::GmkType TYPE = gmk::GmkType(0x3a);
-    // one entry of the array fn_71005B38EC walks (0x18 bytes; meaning unknown)
-    struct Entry {
-        unsigned char pad_0[0x18];
+    // its row (0x40 bytes: TGmkList::createGmk's stride; the names are not the original's)
+    class BdatInfo {
+    public:
+        unsigned char pad_0[0x2c];
+        unsigned short m_mapGimmickId;  // 0x2C: the map gimmick (GmkType 0x21) fn_71005B3D64 reaches with m_secondAcc
+        unsigned char pad_2e[0x2];
+        unsigned short pad_30;  // TUnk_B6D528::fn_71005B76B4's timer (0: none)
+        unsigned char pad_32[0xa];
+        unsigned short m_sealedStoneIndex;  // 0x3C: from 1, the gimmick set's TUnk_B6E340 element fn_71005B3D64 takes
+        unsigned char pad_3e[0x2];
     };
+    const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
+    static const gmk::GmkType TYPE = gmk::GmkType(0x3a);
+    // its data (m_createInfo.m_data): the range of enemies (GmkEnemy, the gimmick set's enemy list) it holds, by
+    // index (the names are not the original's)
+    struct Data {
+        unsigned char pad_0[0xc];
+        unsigned int m_enemyBegin;  // 0xC
+        unsigned int m_enemyEnd;    // 0x10
+    };
+    const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
+    // one entry of the array fn_71005B38EC walks (0x18 bytes): one of its enemies; create sorts them by priority, then
+    // index
+    struct Entry {
+        // the enemy's wave pop settings, read by fn_7100581E54 from its row (field names from the BDAT columns:
+        // "party_flag", "Wpop_Priority", "Wpop_PopNumCond", "battlelockname" minus 1, "Wpop_TimerCond")
+        struct PopInfo {
+            unsigned char m_partyFlag;
+            unsigned char m_popPriority;
+            unsigned char m_popNumCond;
+            short m_battleLockName;
+            unsigned short m_popTimerCond;
+        };
+        Entry() {}
+        // the pop settings copied member by member (create's stores skip the PopInfo's padding byte)
+        Entry(GmkEnemy* enemy, unsigned short index, const PopInfo& popInfo) : m_enemy(enemy), pad_8(0), m_index(index), pad_e(0) {
+            m_popInfo.m_partyFlag = popInfo.m_partyFlag;
+            m_popInfo.m_popPriority = popInfo.m_popPriority;
+            m_popInfo.m_popNumCond = popInfo.m_popNumCond;
+            m_popInfo.m_battleLockName = popInfo.m_battleLockName;
+            m_popInfo.m_popTimerCond = popInfo.m_popTimerCond;
+        }
+        GmkEnemy* m_enemy;
+        unsigned int pad_8;  // create and fn_71005B3D64 clear it
+        unsigned short m_index;  // 0xC: its index in the data's range (the name is not the original's)
+        unsigned short pad_e;  // create and fn_71005B3D64 clear it
+        PopInfo m_popInfo;  // 0x10 (the name is not the original's)
+    };
+    // Placeholder name (no symbol): reads enemy's PopInfo from its row while fn_71002AC598 or fn_71002A9E68 holds; a
+    // member whose this is unused (the original's callers leave x0 unset). Its class is inferred from its only caller,
+    // create; it sits after BootedGmkCond::isMatch
+    void fn_7100581E54(const GmkEnemy& enemy, Entry::PopInfo& info) const;
+    // Placeholder name: the first step create stores in m_seq and runs
+    void fn_71005B3D64(float dt);
+    // Placeholder names: fn_71005B3D64's helper (called with false) and what it ends with (no step: no m_seq stores it)
+    void fn_71005B425C(bool);
+    void fn_71005B40D8();
     gf::GF_OBJ_HANDLE* m_gob;  // 0x48: dispose destroys it unless it is -1 (the name is not the original's)
-    unsigned char pad_50[0x10];
+    float m_accessDistSq;  // 0x50: create squares the "0x7B" table's row 0 column 0x1E (the name is not the original's)
+    unsigned char pad_54[0xc];
     GmkPhantom m_phantom;  // 0x60 (the name is not the original's)
     GmkAcc m_acc;  // 0xF0 (the name is not the original's)
     void (TUnk_B6D418::*m_seq)(float dt);  // 0x130: dispose clears it (the name is not the original's)
-    unsigned char pad_140;
+    bool m_isAccCounted;  // 0x140: create clears it after creating m_acc (the name is not the original's)
     // 0x141..0x145: flags the battle challenge (TUnk_B6D528) reads and sets (the names are not the original's)
     bool m_isCleared;     // 0x141: fn_71005B77B8 counts the waves up to the last one set
     bool m_isChallenge;   // 0x142: TUnk_B6D528::create sets it
@@ -44,7 +98,8 @@ public:
     bool m_isPaused;      // 0x145: TUnk_B6D528::fn_71005B75AC sets it
     unsigned char pad_146[0x2];
     mm::mtl::FixedVector<Entry, 32> m_entries;  // 0x148, size at 0x448 (the name is not the original's)
-    unsigned char pad_450[0x8];
+    // 0x450: the gimmick set's sealed stone its row names, taken by fn_71005B3D64 (the name is not the original's)
+    TUnk_B6D6C8* m_sealedStone;
     GmkAcc m_secondAcc;  // 0x458 (the name is not the original's)
 };
 }  // namespace gmk

@@ -187,7 +187,11 @@ public:
     // flag bits (canDepopGobInst tests bits 0 and 2; dispose clears bits 0..2 with one 64-bit and; the name is not
     // the original's)
     unsigned long m_flags;
-    unsigned char pad_180[0x8];
+    unsigned char pad_180[0x4];
+    // 0x184: flag bits the enemy wave gimmick (TUnk_B6D418) sets: 0x2 and 0x1 in its create, 0x4 cleared by its
+    // fn_71005B3D64 (the name is not the original's)
+    unsigned char m_waveFlags;
+    unsigned char pad_185[0x3];
 };
 }  // namespace gmk
 

@@ -58,7 +58,11 @@ public:
     // 0x70: its effects by LOD state (the destructor disposes them; Vector<GmkMapGimmick>::resize constructs it; the
     // name is not the original's)
     gf::GfFieldLodEffect m_lodEffect;
-    unsigned char pad_a8[0x8];  // size from TGmkList::getInst's stride
+    // 0xA8, 0xA9: the enemy wave gimmick (TUnk_B6D418::fn_71005B3D64) sets the first and clears the second on the map
+    // gimmick its row names (meaning unknown)
+    bool pad_a8;
+    bool pad_a9;
+    unsigned char pad_aa[0x6];  // size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 
