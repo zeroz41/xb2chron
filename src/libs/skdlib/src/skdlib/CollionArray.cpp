@@ -101,6 +101,30 @@ void CapsuleCollObj::calc(anm::Pose& pose) {
 
 // the index of the bone named `name` in the skeleton, 0xFFFF when there is no name or no such bone (the name is not
 // the original's)
+void PlaneCollObj::calc(anm::Pose& pose) {
+    const anm::QsTransform& transform = pose.getBoneModelSpace(m_bone);
+    rotateVector(m_pos, transform.m_rotation, m_pRes->m_offset);
+    // the sum reads a copy of the rotated offset: its z is then a reload, not the value just stored (the original's
+    // operand order, translation first)
+    m_pos = mm::Vec3(transform.m_translation.x, transform.m_translation.y, transform.m_translation.z) +
+            mm::Vec3(m_pos);
+    m_rotation = m_pRes->m_rotation * transform.m_rotation;
+    mm::Vec3 normal = m_rotation.rotate(mm::Vec3::unitY);
+    m_plane = mm::Vec4(normal.x, normal.y, normal.z, -m_pos.dot(normal));
+}
+
+bool PlaneCollObj::detect(float radius, const mm::Vec3& pos, mm::Vec3* push) const {
+    mm::Vec3 point = pos;
+    // the plane's normal read as a Vec3 in place: the push reloads it after the test (the original's operand order)
+    const mm::Vec3& normal = reinterpret_cast<const mm::Vec3&>(m_plane);
+    float height = m_plane.w + point.dot(normal) - radius;
+    if (height < 0.0f) {
+        *push = mm::Vec3(-(height * normal.x), -(height * normal.y), -(height * normal.z));
+        return true;
+    }
+    return false;
+}
+
 static inline unsigned short findBone(const anm::Skeleton* skeleton, const char* name) {
     if (name == nullptr) {
         return 0xFFFF;
