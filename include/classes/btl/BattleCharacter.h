@@ -4,12 +4,14 @@
 #include "btl/ActionCommand.h"
 #include "mm/Vec3.h"
 #include "mm/mtl/FixStr.h"
+#include "classes/btl/ElementalComboManager.h"
 
 namespace btl { class CharacterParameter; }
 namespace btl { struct ARTS_SLOT_DATA; struct ARTS_DATA; }
 namespace btl { class GROUP_DATA; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
+namespace navi { class NvmshAcObj; }
 namespace gf { class GfObj; }
 namespace gf { class GfComProperty; }
 namespace gf { class GfComEffectCaster; }
@@ -39,10 +41,16 @@ public:
     // a hit that skips the attack's own calculation (ButtonChallenge's result damages the challenge's target with
     // one; the field names are not the original's)
     struct DIRECT_DAMAGE_DATA {
+        // HealHpRate and fn_710006AEE8 build one on the stack: 0x10-0x14 zeroed (one word and a byte), then
+        // pad_10 set to 1
+        DIRECT_DAMAGE_DATA()
+            : pad_10(0), pad_11(0), pad_12(0), pad_14(false) {}
         BattleCharacter* m_attacker;
         int m_type;              // ButtonChallenge gives 0x12-0x15 by the result
         unsigned int m_damage;
-        int pad_10;
+        unsigned char pad_10;
+        unsigned char pad_11;
+        unsigned short pad_12;
         bool pad_14;
     };
     CharacterParameter* GetCharacterParameter(bool);
@@ -69,6 +77,12 @@ public:
     bool IsControlCharacterGroup() const;
     void SetWeaponType(int type);
     void NotifyDirectDamage(const DIRECT_DAMAGE_DATA& data);
+    // heals rate of the max HP (at least 1) as a direct damage of the given type from attacker
+    void HealHpRate(float rate, int type, BattleCharacter* attacker);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its x0 flows as this into
+    // NotifyDirectDamage. What it does: NotifyDirectDamage of a DIRECT_DAMAGE_DATA {attacker, type, damage} with
+    // pad_10 = 1, as HealHpRate builds it; only caller fn_7100011390.
+    void fn_710006AEE8(unsigned int damage, int type, BattleCharacter* attacker);
     void AddBladeArtsRecast(int, float);
     void FluctuateKizuna(int, float);
     void AddPartyGauge(float);
@@ -366,18 +380,20 @@ public:
     // the other object TurnTarget turns to when asked, (GF_OBJ_HANDLE*)-1 for none: then it turns to m_targetHandle
     // (the name is not the original's)
     gf::GF_OBJ_HANDLE* m_subTargetHandle;
-    unsigned char pad_130[0xC];
-    // the kizuna line effect DeleteKizunaLinkEffect destroys (the name is not the original's)
-    unsigned int m_kizunaLinkEffect;
-    unsigned char pad_140[0x10];
-    // the angry aura's effect, NotifyAngryEnd ends it (the name is not the original's)
-    unsigned int m_angryEffect;
-    // the effect fn_7100042460 ends the same way (the name is not the original's)
-    unsigned int m_subEffect;
-    unsigned char pad_158[0x28];
+    unsigned char pad_130[0x8];
+    // the character's effect handles: the destructor removes every non-zero one (index 1 through
+    // DeleteKizunaLinkEffect). [1] the kizuna line effect DeleteKizunaLinkEffect destroys, [6] the angry aura's
+    // effect NotifyAngryEnd ends, [7] the effect fn_7100042460 ends the same way (the name is not the original's)
+    unsigned int m_effects[17];
+    unsigned char pad_17C[0x4];
     // GetCharacterParameter's cache of DataManager's parameter for m_chrID (the name is not the original's)
     mutable CharacterParameter* m_param;
-    unsigned char pad_188[0xB14];
+    // the navigation mesh object the destructor hands to fw::NaviManager::releaseObject (the name is not the
+    // original's)
+    navi::NvmshAcObj* m_nvmshAcObj;
+    // constructed by the constructor, destroyed by the destructor (the name is not the original's)
+    ElementalComboManager m_elementalCombo;
+    unsigned char pad_C50[0x4C];
     // the animation state names GetAnimationStateName formats (the names are not the original's)
     mutable mm::mtl::FixStr<20> m_animStateName;
     mutable mm::mtl::FixStr<24> m_animName;

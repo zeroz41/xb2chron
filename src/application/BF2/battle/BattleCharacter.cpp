@@ -15,6 +15,7 @@
 #include "classes/btl/ChainAttackManager.h"
 #include "classes/btl/BtlSystemBalanceAccess.h"
 #include "classes/fw/EffectManager.h"
+#include "classes/fw/NaviManager.h"
 #include "classes/gf/GfComProperty.h"
 #include "classes/gf/GfComPropertyPc.h"
 #include "classes/gf/GfComEffectCaster.h"
@@ -25,6 +26,26 @@
 #include "btl/Utility.h"
 
 namespace btl {
+
+BattleCharacter::~BattleCharacter() {
+    for (int i = 0; i < 17; i++) {
+        if (i == 1) {
+            DeleteKizunaLinkEffect(true);
+            continue;
+        }
+        if (m_effects[i] != 0) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effects[i]);
+            m_effects[i] = 0;
+        }
+    }
+    if (m_nvmshAcObj != nullptr) {
+        if (mm::mtl::PtrSingleton<fw::NaviManager>::sys() != nullptr) {
+            mm::mtl::PtrSingleton<fw::NaviManager>::sys()->releaseObject(m_nvmshAcObj);
+        }
+        m_nvmshAcObj = nullptr;
+        m_flagEFF_5 = false;
+    }
+}
 
 CharacterParameter* BattleCharacter::GetCharacterParameterConst(bool) const {
     if (m_param == nullptr) {
@@ -48,6 +69,15 @@ CharacterParameter* BattleCharacter::GetCharacterParameter(bool) {
         m_param = mm::mtl::PtrSingleton<DataManager>::sys()->GetCharacterParameterConst(m_chrID);
     }
     return m_param;
+}
+
+void BattleCharacter::SetWeaponType(int type) {
+    m_weaponType = type;
+    gf::GfComAsm* com = gf::GfObjUtil::getObj(m_handle)->getComponent<gf::GfComAsm>(2);
+    if (com != nullptr) {
+        com->setVariable("V_weaponselect", (int)gf::GfDataWeapon::getAsmWeaponType(m_weaponType));
+    }
+    m_voiceType = Bdat::getValCheckU8(gf::GfDataBdat::getFP(0x96), "VoiceType", type);
 }
 
 bool BattleCharacter::IsBattle() const {
@@ -516,6 +546,53 @@ gf::GfComEffectCaster* BattleCharacter::GetEffectCaster() {
     return obj->getComponent<gf::GfComEffectCaster>(7);
 }
 
+void BattleCharacter::DeleteKizunaLinkEffect(bool playSE) {
+    if (m_effects[1] != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->destroyKizunaLine(m_effects[1]);
+        m_effects[1] = 0;
+        if (playSE) {
+            PlaySE((BTL_SE)1, 0x25, nullptr, true);
+        }
+    }
+    m_rimBloomFlags &= ~1;
+    CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param != nullptr) {
+        gf::GF_OBJ_HANDLE* handle = param->m_driverHandle;
+        BattleCharacter* driver = mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(handle);
+        if (driver != nullptr) {
+            driver->m_rimBloomFlags &= ~1;
+        }
+    }
+}
+
+void BattleCharacter::HealHpRate(float rate, int type, BattleCharacter* attacker) {
+    CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr) {
+        return;
+    }
+    float hp = param->GetMaxHP() * rate;
+    unsigned int heal = (unsigned int)hp;
+    heal += hp - heal > 0.998f;
+    if (heal <= 1) {
+        heal = 1;
+    }
+    DIRECT_DAMAGE_DATA data;
+    data.m_attacker = attacker;
+    data.pad_10 = 1;
+    data.m_type = type;
+    data.m_damage = heal;
+    NotifyDirectDamage(data);
+}
+
+void BattleCharacter::fn_710006AEE8(unsigned int damage, int type, BattleCharacter* attacker) {
+    DIRECT_DAMAGE_DATA data;
+    data.m_attacker = attacker;
+    data.m_type = type;
+    data.pad_10 = 1;
+    data.m_damage = damage;
+    NotifyDirectDamage(data);
+}
+
 void BattleCharacter::SetRimBloom(RIMBLOOM_ID id, bool on) {
     if (id == 0) {
         if (on) {
@@ -683,24 +760,24 @@ void BattleCharacter::StartBladeTimer(BLADE_TIMER_MODE mode) {
 }
 
 void BattleCharacter::NotifyAngryEnd() {
-    if (m_angryEffect != 0) {
+    if (m_effects[6] != 0) {
         if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_removeEffect) {
-            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_angryEffect);
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effects[6]);
         } else {
-            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->fadeOutDead(m_angryEffect, 5);
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->fadeOutDead(m_effects[6], 5);
         }
-        m_angryEffect = 0;
+        m_effects[6] = 0;
     }
 }
 
 void BattleCharacter::fn_7100042460() {
-    if (m_subEffect != 0) {
+    if (m_effects[7] != 0) {
         if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_removeEffect) {
-            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_subEffect);
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effects[7]);
         } else {
-            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->fadeOutDead(m_subEffect, 5);
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->fadeOutDead(m_effects[7], 5);
         }
-        m_subEffect = 0;
+        m_effects[7] = 0;
     }
 }
 
