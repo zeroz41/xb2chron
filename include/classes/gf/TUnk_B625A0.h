@@ -29,6 +29,12 @@ public:
     virtual void update();  // slot 4
     // Placeholder names: new after 1.0.0, nothing names them. fn_7100383310 calls them; each registers the gift
     // box's full-screen layer (0x46) with menu id 1 / 2, which initialize reads back into m_menuId.
+    // Placeholder name: new after 1.0.0, nothing names it. A static member: its address lies in this class's unit
+    // (before fn_710040C16C, which it calls) and it takes no object. What it does: off menu layer 3 and with
+    // GfMenuManager::fn_710035A6BC, walks BDAT 0x10A's rows ("releasecount", add-on 5, fn_710040C16C) and answers
+    // whether a gift is waiting; the flag picks which rows count. Callers: GfMenuObjMainMenu2's setupMainMenu and
+    // main listener (they show "LAY_gift_icon" with fn_710040BF88(true)), GfMenuObjPopup's main listener.
+    static bool fn_710040BF88(bool);
     static void fn_710040C444();
     static void fn_710040C474();
     // Placeholder names: its sequence's jobs (address-taken into m_seq). fn_7100410158 waits for the common window

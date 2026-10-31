@@ -24,6 +24,12 @@ public:
     // class's unit and it takes no object. What it does: registers full-screen layer 0x47 with a GfMenuTypes::Param
     // whose m_menuId is 1 (GfMenuFullScreen::registLayerParam).
     static void fn_710038289C();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies in this
+    // class's unit (right after fn_710038289C) and it takes no object. What it does: false on menu layer 3
+    // (GfMenuObjUtil::fn_710048FD30(3)) or while lbl_7100C294C0 is 0; else true when gf::fn_71002229C0 answers >= 0
+    // for any of 0..4. Callers: this class's initialize and its listener, GfMenuObjMainMenu2::initialize (which
+    // then drops contents id 8 when it is false, id 9 when it is true).
+    static bool fn_71003828CC();
     // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because their addresses lie in
     // this class's unit and they read its fields. fn_7100383844, fn_7100383EE8, fn_7100385460 and fn_7100385508 are
     // m_seq jobs over LAY_contents_img (fades it out, swaps IMG_contents_img to m_imageIndex, fades it back in).

@@ -10,7 +10,17 @@
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfMenuObjMainMenu2/ChrChangeListener.h"
 #include "classes/gf/GfMenuObjMainMenu2/CloseListener.h"
+#include "classes/gf/GfMenuObjMainMenu2/ContentsListener.h"
 #include "classes/gf/GfMenuObjMainMenu2/IndexListener.h"
+#include "classes/gf/GfMenuObjMainMenu2/MainListener.h"
+#include "classes/gf/TUnk_B5F9E8.h"
+#include "classes/gf/TUnk_B625A0.h"
+#include "classes/gf/GfMenuGameAdapter.h"
+#include "classes/ui/UIEventManager.h"
+#include "classes/ui/UICtrlCursorSelect.h"
+#include "classes/ui/UISelectObjList.h"
+#include "mm/Rect.h"
+#include "mm/Pnt.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/gf/GfMenuReference.h"
 #include "classes/gf/GfMenuSoundManager.h"
@@ -38,9 +48,12 @@ bool GfMenuObjMainMenu2::s_closeKeyLocked;
 bool GfMenuObjMainMenu2::s_charMenuOpen;
 unsigned char GfMenuObjMainMenu2::s_bgOpen;
 unsigned int GfMenuObjMainMenu2::s_index;
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB890). initialize stores how many
+// contents ids it collected (m_contentsIds' size); setupMainMenu and the contents listener read it.
+static unsigned int s_contentsCount;
 
 GfMenuObjMainMenu2::GfMenuObjMainMenu2(unsigned int handle)
-    : GfMenuObject(handle), pad_28(nullptr), m_context(nullptr), pad_38(0), pad_3C(-1), pad_40(-1), m_menuId(0),
+    : GfMenuObject(handle), m_cursor(nullptr), m_context(nullptr), pad_38(0), m_contentsIndex(-1), pad_40(-1), m_menuId(0),
       m_driverList(nullptr), m_bladeList(nullptr), m_checker(nullptr), pad_88(0), pad_8C(false), m_seq(this),
       m_jobStarted(false) {
     m_driverList = GfMenuDriverList::create();
@@ -60,9 +73,9 @@ GfMenuObjMainMenu2::~GfMenuObjMainMenu2() {
         m_driverList->release();
         m_driverList = nullptr;
     }
-    if (pad_28 != nullptr) {
-        pad_28->release();
-        pad_28 = nullptr;
+    if (m_cursor != nullptr) {
+        m_cursor->release();
+        m_cursor = nullptr;
     }
     if (m_context != nullptr) {
         m_context->release();
@@ -74,6 +87,75 @@ GfMenuObjMainMenu2::~GfMenuObjMainMenu2() {
     }
     s_openMenuID = 0;
     s_bgOpen = 0;
+}
+
+void GfMenuObjMainMenu2::initialize() {
+    ui::UIObjectAcc acc(m_handle);
+    unsigned char* bdat = GfDataBdat::getFP(GfMenuObjUtil::fn_710048FD30(3) ? 0x180 : 0x17F);
+    m_contentsIds.clear();
+    for (unsigned int i = 0; i < (unsigned int)Bdat::getIdCount(bdat); i++) {
+        if (GfMenuObjUtil::fn_710048FD30(3)) {
+            if (7 == Bdat::getIdTop(bdat) + i || Bdat::getIdTop(bdat) + i == 8) {
+                continue;
+            }
+        } else {
+            if (Bdat::getIdTop(bdat) + i == 8 && !TUnk_B5F9E8::fn_71003828CC()) {
+                continue;
+            }
+            if (Bdat::getIdTop(bdat) + i == 9 && TUnk_B5F9E8::fn_71003828CC()) {
+                continue;
+            }
+        }
+        m_contentsIds.push_back(Bdat::getIdTop(bdat) + i);
+    }
+    s_contentsCount = m_contentsIds.size();
+    unsigned int main = acc.searchChild("LAY_main");
+#line 276
+    MainListener* mainListener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) MainListener(this);
+    mainListener->m_RefCount = 1;
+    ui::UIEventManager::get()->registObjectListener(main, mainListener);
+    if (mainListener != nullptr) {
+        mainListener->release();
+    }
+    GfMenuObject::attachExternalCall(0x5F, main);
+    unsigned int contents = acc.searchChild("LAY_contents");
+    ContentsListener* contentsListener =
+#line 282
+        new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ContentsListener(this);
+    contentsListener->m_RefCount = 1;
+    ui::UIEventManager::get()->registObjectListener(contents, contentsListener);
+    if (contentsListener != nullptr) {
+        contentsListener->release();
+    }
+    unsigned int index = acc.searchChild("LAY_index");
+#line 286
+    IndexListener* indexListener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) IndexListener(this);
+    indexListener->m_RefCount = 1;
+    ui::UIEventManager::get()->registObjectListener(index, indexListener);
+    if (indexListener != nullptr) {
+        indexListener->release();
+    }
+    unsigned int close = acc.searchChild("LAY_close");
+#line 291
+    CloseListener* closeListener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) CloseListener(this);
+    closeListener->m_RefCount = 1;
+    ui::UIEventManager::get()->registObjectListener(close, closeListener);
+    if (closeListener != nullptr) {
+        closeListener->release();
+    }
+    unsigned int chrChange = acc.searchChild("LAY_chr_change");
+    ChrChangeListener* chrListener =
+#line 299
+        new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ChrChangeListener(this);
+    chrListener->m_RefCount = 1;
+    ui::UIEventManager::get()->registObjectListener(chrChange, chrListener);
+    if (chrListener != nullptr) {
+        chrListener->release();
+    }
+    m_context = GfMenuCallContext::create();
+    acc.setDispChild(GfMenuManager::isClearCheck(), "IMG_clear_mark");
+    s_worldMapOpen = false;
+    GfMenuObject::initialize();
 }
 
 void GfMenuObjMainMenu2::initChrChangeDr(ui::UIObjectAcc& acc, GfMenuDriverList* list) {
@@ -128,6 +210,51 @@ void GfMenuObjMainMenu2::update() {
     }
     m_seq.update();
     GfMenuObject::update();
+}
+
+void GfMenuObjMainMenu2::setupMainMenu(ui::UIObjectAcc& acc, const mm::mtl::FixedVector<unsigned int, 8>& ids) {
+    mm::mtl::FixStr<32> name;
+    mm::mtl::FixStr<32> layout;
+    for (unsigned int i = 0; i < s_contentsCount; i++) {
+        unsigned int no = i + 1;
+        name.format("TXT_contents_item@%02d", no);
+        unsigned int item = acc.searchChild(name.m_str);
+        if (item == 0) {
+            continue;
+        }
+        setContentsText(item, ids[i] - 1);
+        if (GfMenuObjUtil::fn_710048FD30(3)) {
+            if (ids.size() == 7) {
+                name.format("IMG_contents_item_bg@%02d", no);
+                layout.format("mnu075_menu_anim_%02d", no);
+                acc.setLayout(acc.searchChild(name.m_str), layout.m_str);
+                name.format("TXT_contents_item@%02d", no);
+                layout.format("text%02d", no);
+                acc.setLayout(acc.searchChild(name.m_str), layout.m_str);
+                name.format("LAY_contents_item@%02d", no);
+                acc.setDispChild(true, name.m_str);
+            }
+        } else {
+            if (ids.size() == 8) {
+                name.format("IMG_contents_item_bg@%02d", no);
+                layout.format("mnu075_menu_anim_pres%02d", no);
+                acc.setLayout(acc.searchChild(name.m_str), layout.m_str);
+                name.format("TXT_contents_item@%02d", no);
+                layout.format("text_pres%02d", no);
+                acc.setLayout(acc.searchChild(name.m_str), layout.m_str);
+                name.format("LAY_contents_item@%02d", no);
+                acc.setDispChild(true, name.m_str);
+            }
+        }
+        GfMenuObjUtil::setColMulandAdd(item, "txt_main_title");
+    }
+    GfMenuGameAdapter::create(acc.searchChild("TXT_info_time"), 0, true);
+    GfMenuGameAdapter::create(acc.searchChild("TXT_info_money"), 1, true);
+    if (GfMenuManager::fn_710035A6BC()) {
+        acc.setDispChild(TUnk_B625A0::fn_710040BF88(true), "LAY_gift_icon");
+    }
+    ui::UIObjectAcc bg(acc.searchChild("IMG_contents_bg"));
+    bg.startAnimation("loop", false);
 }
 
 bool GfMenuObjMainMenu2::seqExecTerm() {

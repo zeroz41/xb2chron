@@ -4,12 +4,14 @@
 #include "classes/gf/GfMenuObject.h"
 #include "gf/GfMenuSequence.h"
 #include "classes/ui/UIManager.h"
+#include "classes/ui/UIObjectAcc.h"
 #include "mm/mtl/FixedVector.h"
 #include "ui/EventData.h"
+#include "ui/UIStr.h"
 
 namespace gf { class GfMenuBladeList; class GfMenuCallContext; class GfMenuDriverList; class SelectionChecker; }
 namespace mm { namespace mtl { class ReferenceObject; } }
-namespace ui { class UIObjectAcc; }
+namespace ui { class UICtrlCursorSelect; class UIObjectAcc; }
 
 namespace gf {
 // table 0x7100B62FB8
@@ -19,6 +21,7 @@ public:
     class CloseListener;
     class ContentsListener;
     class IndexListener;
+    class MainListener;
     // what registOpenParam keeps for the next open: GfMenuManager::setMainmenuOpenMap passes 1,
     // setMainmenuOpenSystem 6 (5 in 3.0.1 when GfMenuObjUtil::fn_710048FD30(3) answers true)
     // (the field name is not the original's)
@@ -68,6 +71,12 @@ public:
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
+    // lays out the main menu's contents entries (their texts, layouts for 7 / 8 entries), its time, money and gift
+    // icon. 1.0.0's setupMainMenu took the accessor only; 3.0.1's also reads initialize's m_contentsIds (x1)
+    static void setupMainMenu(ui::UIObjectAcc& acc, const mm::mtl::FixedVector<unsigned int, 8>& ids);
+    // 1.0.0's helper, inlined in its one caller (the main listener, which is not written yet): moves LAY_move,
+    // answers the control it started
+    static int moveMainMenu(ui::UIObjectAcc& acc, unsigned int dir, bool);
     // the sequence's term step (a Delegate job; it always answers true)
     bool seqExecTerm();
     // shows or hides the main menu's money, time and clear mark (LAY_info_money, LAY_info_time, LAY_clear_mark)
@@ -121,6 +130,15 @@ public:
     // a contents entry's BDAT and text id: the menu table's (0x17F, 0x180 on menu layer 3) title row in 0x117 while
     // its useCond holds, else text 0x67C of 0xF5 (the parameter names are not the original's)
     static void getContentsText(unsigned int index, unsigned char*& bdat, unsigned int& text);
+    // 1.0.0's out-of-line helper (0x71004886AC), inlined into setupMainMenu in 3.0.1: the contents entry's text
+    // (getContentsText) on the text object of that handle
+    static void setContentsText(unsigned int handle, unsigned int index) {
+        ui::UIObjectAcc acc(handle);
+        unsigned char* bdat;
+        unsigned int text;
+        getContentsText(index, bdat, text);
+        acc.setText(ui::UIStr(bdat, text));
+    }
 
     // the menu the update keeps in s_openMenuID (1.0.0's name); isOpenCharMenu compares it with 0x27 and 0x12D
     static unsigned int s_openMenuID;
@@ -143,10 +161,14 @@ public:
     static unsigned int s_index;
 
     unsigned char pad_24[4];
-    mm::mtl::ReferenceObject* pad_28;  // released by the destructor
+    // the contents' cursor (the main listener shows it and reads its list's selection); released by the destructor
+    // (the name is not the original's)
+    ui::UICtrlCursorSelect* m_cursor;
     GfMenuCallContext* m_context;  // 0x30 initialize creates it (the name is not the original's)
     unsigned short pad_38;
-    int pad_3C;  // the constructor sets -1
+    // the selected contents entry, an index into m_contentsIds (the main listener reads it; the constructor sets -1;
+    // the name is not the original's)
+    int m_contentsIndex;
     int pad_40;  // the constructor sets -1
     unsigned int m_menuId;  // 0x44 update copies it to s_openMenuID unless it is 0x28 (the name is not the original's)
     GfMenuDriverList* m_driverList;  // 0x48 (the name is not the original's)
