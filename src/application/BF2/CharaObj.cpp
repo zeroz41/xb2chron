@@ -70,6 +70,7 @@
 #include "classes/event/ObjectEffect.h"
 #include "classes/event/ObjectList.h"
 #include "classes/event/ObjectManager.h"
+#include "classes/event/MemoryManager.h"
 #include "classes/event/CmdVariable.h"
 #include "classes/event/ICmd/Param.h"
 #include "classes/gf/GfEvent.h"
@@ -656,6 +657,19 @@ void CharaPlayWink::init() {
     m_step = 0;
 }
 
+ObjectChara* ObjectManager::getChara(unsigned int id) {
+    updateCurrent();
+    Object* category = m_current->m_categories[0];
+    if (category) {
+        for (Object* obj = category->m_child; obj; obj = obj->m_next) {
+            if (id-- == 0) {
+                return static_cast<ObjectChara*>(obj);
+            }
+        }
+    }
+    return nullptr;
+}
+
 void CharaPlayWink::term() {
     idle();
 }
@@ -1167,6 +1181,14 @@ Object* ObjectManager::createEffect(const char* name) {
 Object* ObjectManager::createLight(const char* name, unsigned int id) {
     updateCurrent();
     return m_current->createLight(name, id);
+}
+
+// 1.0.0's createScene (same signature): a new scene list, added to m_scenes
+ObjectList* ObjectManager::createScene(const char* name) {
+    ObjectList* list = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+        ObjectList(name, m_flags & 1);
+    m_scenes.push_back(list);
+    return list;
 }
 
 Object* ObjectManager::searchByName(const char* name) {

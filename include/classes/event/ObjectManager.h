@@ -54,6 +54,8 @@ public:
 
     // makes the scene named m_sceneName current (ScriptSetActive calls it before reading m_current)
     void updateCurrent();
+    // a new scene (an ObjectList named name, m_flags bit 0 passed on), added to m_scenes (1.0.0's name)
+    ObjectList* createScene(const char* name);
 
     // bit 0 is passed to each new ObjectList (1.0.0's createScene); the name is not the original's
     unsigned int m_flags;  // 0x10

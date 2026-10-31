@@ -8,6 +8,8 @@ namespace event {
 // table 0x7100B3E0F8
 class ObjectList {
 public:
+    // 0x7100127994 (1.0.0's ObjectList(const char*, bool)): ObjectManager::createScene passes m_flags bit 0
+    ObjectList(const char* name, bool flag);
     virtual ~ObjectList();  // slot 0
     // makes the object at the given path active (ScriptSetActive::doit tail-calls it)
     void setActivePath(const char* path);
@@ -38,6 +40,11 @@ public:
     Object* m_categories[4];  // 0x58
     // the object the script commands act on (ScriptSetActive's doit sets it); the name is not the original's
     Object* m_active;  // 0x78
+    // zeroed with m_active by the destructor; the gf object creators store the new object here while it is null
+    Object* pad_80;  // 0x80
+    // how many objects each category holds: the creators count up (createGfObjPcByWalkID: [0]), startPage and the
+    // destructor zero them while emptying the category; the name is not the original's
+    unsigned int m_counts[4];  // 0x88 (sizeof 0x98: ObjectManager::createScene allocates 0x98)
 };
 }  // namespace event
 
