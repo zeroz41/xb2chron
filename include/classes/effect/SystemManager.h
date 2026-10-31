@@ -104,8 +104,8 @@ public:
     bool m_dispEmitterList;    // testUpdate prints the emitter list (DISP_EMITTER_LIST_START) while set
     bool m_flagC;              // create sets it; nothing in 3.0.1 reads it
     unsigned char pad_d[0x3];
-    mm::mtl::FixedVector<ptlib::AddForceParam, 8> m_addForces;  // tail hands them to the force-field manager
-    unsigned char pad_218[0x8];
+    // tail hands them to the force-field manager (AddForceParam is 16-aligned: the vector ends at 0x220)
+    mm::mtl::FixedVector<ptlib::AddForceParam, 8> m_addForces;
     // the es_ functions queue their requests on side m_writeSide; es_command_core runs them
     mm::mtl::FixedVector<Command, 1152> m_commands[2];
     float m_globalSpeed[2];  // setGlobalSpeed writes the side m_writeSide is not
