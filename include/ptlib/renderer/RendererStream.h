@@ -46,6 +46,7 @@ public:
     grlib::CGLibVtxIndex m_keptIndex;
     grlib::CGLibVtxIndex m_index[4];
     grlib::CGLibVtxInstans m_instans;  // the instanced streams' per-instance data
+    unsigned char pad_648[0xD8];  // RenderManager::init allocates 0x720 bytes for it; the constructor leaves these
 };
 
 // how many bytes a particle's stream data takes: 20 to 40, by fours (no value has a name yet)

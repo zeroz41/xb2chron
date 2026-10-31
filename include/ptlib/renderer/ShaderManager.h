@@ -21,6 +21,8 @@ public:
         unsigned int m_usingTemporalAA;  // "USING_TEMPORAL_AA"
     };
 
+    // inline in RenderManager::init (it builds the RenderGrObj in place)
+    ShaderManager() : m_pFile(nullptr) {}
     ~ShaderManager() { m_shdList.release(); }
     void init();
     // releases the shaders and frees the package (inline in RenderGrObj::term; the name is not the original's)
