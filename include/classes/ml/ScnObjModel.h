@@ -28,6 +28,7 @@ public:
     // the offset its render applies (fw::ModelObject::update copies its added offset there; the return type is
     // not in the symbol)
     mm::Vec3& getOffsetInfo(bool);
+    ScnObjModel(Scn* scn, const char* name);
     void setFrameSpd(float spd);
     // the calculation thread's transform (true) or the render thread's (false)
     AttrTransform* getTrans(bool cpu);

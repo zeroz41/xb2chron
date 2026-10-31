@@ -110,7 +110,10 @@ public:
     float m_tmaaSharpnessAlt[6];  // 0x12C
     unsigned char pad_144[0x86];
     bool m_motBlur;  // 0x1CA
-    unsigned char pad_1CB[0x4D];
+    unsigned char pad_1CB[0x2];
+    // 0x1CD: DrPixlPostObjMotionBlur2::render runs calcVelocityBlur while it is set (the name is not the original's)
+    bool m_velocityBlur;
+    unsigned char pad_1CE[0x4A];
     bool m_dofOverride;  // isDOF: either of these two
     bool m_dof;
     bool m_dofHLvMode;

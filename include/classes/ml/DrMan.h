@@ -44,6 +44,7 @@ public:
 
     // both read s_pTop
     static DrMan* getIns();
+    void blurCallBackRender();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: `this` is the DrMan
     // (ScnRenderDrSysParmAcc::getWeatherFrame passes its m_drMan), its code is in the DrMan unit. What it does: sets the
     // byte at 0x1CC0 + s_nDblStockIdx to 1 (a double-buffered bool flag).
@@ -164,6 +165,9 @@ public:
         // 0x20: the constructor copies the screen size here too; DrPixlMan::setMainRenderTarget's viewport uses it
         int m_renderWidth;
         int m_renderHeight;  // 0x24
+        // 0x28: DrPixlPostObjCapture::update sizes its capture target from it (the names are not the original's)
+        int m_captureWidth;
+        int m_captureHeight;  // 0x2C
     };
     ViewInfo* m_curViewInfo;
     DrAPCache* m_apCache;               // 0x5C0, DrMdoSetup::varStTex_* bind textures through it (the name is not the original's)

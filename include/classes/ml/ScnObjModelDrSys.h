@@ -32,9 +32,11 @@ public:
     // and the size are not the original's)
     char m_mdlName[0x88];
     DrMdlObj* m_pMdlObj;  // 0x3D8 the name is not the original's
-    unsigned char pad_3E0[0x8];
+    DrMan* m_drMan;  // 0x3E0 the constructor takes the scene's ScnRenderDrSys::m_drMan (the name is not the original's)
     const void* m_pRes;  // 0x3E8 the constructor's resource (the name is not the original's)
-    unsigned char pad_3F0[0x44];
+    bool m_unkFlag;  // 0x3F0 the constructor clears it (meaning unknown; the name is not the original's)
+    unsigned char pad_3F1[0x3F];
+    int m_unkValue;  // 0x430 the constructor clears it (meaning unknown; the name is not the original's)
 };
 }  // namespace ml
 
