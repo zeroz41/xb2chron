@@ -8,7 +8,7 @@ class BinaryResolver {
 public:
     // the head of a binary resource
     struct Header {
-        char m_magic[2];               // "BG"
+        char m_magic[2];               // "BC"
         unsigned short m_flags;        // bit 0: the pointers are resolved
         unsigned int m_version;        // 0x10000
         unsigned int pad_8;
