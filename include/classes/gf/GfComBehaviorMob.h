@@ -13,6 +13,7 @@
 #include "gf/GfFieldMoveSpeed.h"
 #include "gf/GfFieldLookIk.h"
 
+namespace fw { class ColiMoveObject; }
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
 namespace fw { class UpdateInfo; }
@@ -20,6 +21,7 @@ namespace gmk { class AGmkBase; }
 namespace gf { class GfComAsm; }
 namespace mm { class Vec3; }
 namespace navi { class NvmshAcObj; }
+class CBdatWrapper;
 
 namespace gf {
 // table 0x7100B66500
@@ -48,19 +50,45 @@ public:
     // what the object factory calls before destroying it; the destructor does the same
     void cleanup();
     // (re)starts its movement; the states pass true on entering, the approach state false
+    // while its navigation mesh object moves: from its position to pad_110 at its speed (km/h to m/s, by the setup's
+    // scale) over the frame's time, counting the frames in pad_b0
+    void updateNaviMeshObj(float deltaTime);
     void init(bool);
+    // the collision object of its collider (component 4) when it is a fw::ColiMoveObject, else none
+    fw::ColiMoveObject* getColiObject() const;
+    // its walking speed: the setup's speed percent (GfObjSetupMob::pad_90) of the slowest, eased over the time given
+    void initMoveSpeed(float duration);
     bool isSquadMember() const;
+    // false while its turn is set up and not done; else whether it has a collision object that follows its frame and
+    // either pad_b8, a place in a squad, or a bound gimmick whose INFO shape is not 1
+    bool isMove() const;
     void execTurnCmdToPos(const mm::Vec3& pos);
+    // turns toward its navigation mesh object's move vector, or toward pad_110 when it has none
+    void execTurnCmdToGoal();
+    // where it walks to: pad_110 (no copy of it exists; StateBattle's sequences store the goal in place)
+    void setGoalPos(const mm::Vec3& pos) { pad_110 = pos; }
+    void moveToGoal(float);
+    // whether it reached pad_110: its steering timed out, or the goal is within its collision's height and radius
+    bool isArrivedToGoal() const;
     static mm::mtl::RTTI m_rtti;
-    // the reaction's motion row and reach: StateReaction<GfComBehaviorMob>::seqUpdateMove keeps reacting while
-    // pad_98 > 0, pad_9c and pad_9e are set and the player is within pad_98 (pad_53d0); beginReaction starts
-    // FLD_NpcMobMotionId's cmdName of row pad_9e
-    float pad_98;
-    unsigned int pad_9c : 16;
-    unsigned int pad_9e : 16;
-    unsigned short pad_a0;
-    unsigned short pad_a2;
-    float pad_a4;  // mob::StateApproachPc's fn_71004D7468 compares it with pad_53d0
+    // the mob's row of its BDAT sheet (BdatInfo::create reads it); create reads each from the row's column of the
+    // same name ("ReactionRange", ...): the field names follow the columns and are not the original's
+    class BdatInfo {
+    public:
+        void create(const CBdatWrapper& bdat, int row);
+        // ReactionRange squared: StateReaction keeps reacting while the player is within it
+        float m_reactionRangeSq;
+        // one 32-bit unit: StateReaction<T>::seqUpdateMove loads both halves at once
+        unsigned int m_reactionPercent : 16;
+        unsigned int m_reactionMot : 16;  // the FLD_NpcMobMotionId row StateReaction::beginReaction runs
+        // plain halves: StateBattle<T>::isCondMatch's one 32-bit load of both is GVN widening its second load
+        unsigned short m_battleReaction;
+        unsigned short m_battleMot;  // the FLD_NpcMobMotionId row StateBattle::seqApplyBattleMot runs
+        // CloseRange squared (read only when GfGameManager::fn_71002A9E68 answers true): mob::StateApproachPc's
+        // fn_71004D7468 compares it with pad_53d0
+        float m_approachDistSq;
+    };
+    BdatInfo m_bdatInfo;
     navi::NvmshAcObj* pad_a8;  // cleanup hands it back to the navigation manager
     int pad_b0;
     void* pad_b8;  // mob::StateMove::isCondMatch: the state may run while it is set
