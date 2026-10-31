@@ -712,6 +712,35 @@ GmkAcc::GmkAcc() : m_gmk(nullptr) {}
 
 GmkAcc::GmkAcc(const CreateInfo& info) : m_gmk(nullptr) { create(info); }
 
+void GmkAcc::create(const CreateInfo& info) {
+    dispose();
+    m_info = info;
+    if (info.pad_c != 0) {
+        update();
+    }
+    GmkAccManager* manager = GmkAccManager::sys();
+    if (isValid()) {
+        manager->m_list1.push_back(this);
+    } else {
+        manager->m_list0.push_back(this);
+    }
+}
+
+// the same, from a type and row
+void GmkAcc::create(const CreateInfoByBdatId& info) {
+    dispose();
+    m_infoByBdatId = info;
+    if (info.m_flag) {
+        update();
+    }
+    GmkAccManager* manager = GmkAccManager::sys();
+    if (isValid()) {
+        manager->m_list1.push_back(this);
+    } else {
+        manager->m_list0.push_back(this);
+    }
+}
+
 GmkAcc::GmkAcc(const GmkAcc& other) : m_gmk(nullptr) {
     if (other.m_info.isValid()) {
         create(other.m_info);
@@ -744,6 +773,12 @@ bool GmkCamera::isEnd() const {
         return true;
     }
     return m_camera.get()->isPlayEnd();
+}
+
+void GmkCamera::update(float dt) {
+    if (m_name.length() > 0 && m_seq) {
+        (this->*m_seq)(dt);
+    }
 }
 
 void GmkCamera::play() { m_seq = &GmkCamera::seqWaitToPlay; }
@@ -2418,6 +2453,33 @@ bool GmkEnemyInsts::BdatInfo::isPopCondMatchedOfSmn() const {
         return false;
     }
     return true;
+}
+
+bool GmkEnemyInsts::reqClearRepopCounter() const {
+    if (&GmkEnemyInsts::seqUpdateRepopCounter == m_seq) {
+        m_clearRepopCounterReq = true;
+        return true;
+    }
+    return false;
+}
+
+void GmkEnemyInsts::seqUpdateRepopCounter(const UpdateInfo& info) {
+    const int id = pad_10;
+    if (id == 40012 || id == 40013) {
+        return;
+    }
+    if (m_clearRepopCounterReq) {
+        m_clearRepopCounterReq = false;
+        m_popWait = 0.0f;
+    }
+    if (!pad_141) {
+        m_popWait -= info.m_dt;
+        if (m_popWait > 0.0f) {
+            return;
+        }
+    }
+    m_popInfo.removeDefeatedNamedEnemyInfo();
+    m_seq = &GmkEnemyInsts::seqUpdatePopDepop;
 }
 
 void GmkEnemy::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {

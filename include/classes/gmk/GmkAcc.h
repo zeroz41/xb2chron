@@ -50,6 +50,8 @@ public:
     }
     void dispose();
     bool isValid() const;
+    // finds the gimmick (create calls it when the info's byte at 0xc is set)
+    void update();
     void create(const CreateInfo& info);
     void create(const CreateInfoByBdatId& info);
 

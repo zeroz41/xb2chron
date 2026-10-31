@@ -25,6 +25,8 @@ public:
         unsigned int getGobInstNum() const;  // how many objects pop
         // LocatorBat_EnemySpeciesID::update skips a gimmick when it answers true for the species with true
         bool hasTypeGenus(unsigned char genus, bool) const;
+        // seqUpdateRepopCounter calls it as the counter runs out
+        void removeDefeatedNamedEnemyInfo();
         unsigned char pad_0[0x8];  // fields: size unknown
     };
     // the gimmick's row as it pops (GmkEnemy's at 0x80)
@@ -65,11 +67,23 @@ public:
         // 0x4c..0x50: tail padding (not copied); size 0x50: the holders' copies copy 0x88..0x188 of the insts as one
         // run, which a member with a non-trivial copy cannot share
     };
+    // what update and the sequence steps are given (the seq steps read its first float as the frame time)
+    class UpdateInfo {
+    public:
+        float m_dt;  // (the name is not the original's; fields after it unknown)
+    };
     gf::GF_OBJ_HANDLE* getGobInst(unsigned int index) const;  // the handle of one of them
     bool isQuestDead() const;
     // pops the gimmick's objects now (GfSmnEnemyManager::execAbsSummon)
     void reqForcePopGobInst(const ForcePopEnemyInfo& info) const;
-    unsigned char pad_0[0x1c];
+    // asks a running repop counter to restart from 0 (true when the sequence is seqUpdateRepopCounter)
+    bool reqClearRepopCounter() const;
+    void seqUpdatePopDepop(const UpdateInfo& info);
+    void seqUpdateRepopCounter(const UpdateInfo& info);
+    unsigned char pad_0[0x10];
+    // seqUpdateRepopCounter never counts down for the values 40012 and 40013 (a bdat id? not proven)
+    int pad_10;
+    unsigned char pad_14[0x8];
     // the distances its objects pop within and depop beyond (GfRelSmnEnemy::create squares them; the names are not
     // the original's)
     float m_popDist;
@@ -80,7 +94,15 @@ public:
     PopInfo m_popInfo;  // 0x98 (the name is not the original's)
     // fields (its destructor 0x71005D85E8 touches +0x150, +0x178); size 0x188: GmkRoutedEnemy's Vector follows it at
     // 0x1d8 (insts at 0x50; its copy copies the insts up to 0x188)
-    unsigned char pad_a0[0xd0];
+    unsigned char pad_a0[0xa1];
+    bool pad_141;  // when set, seqUpdateRepopCounter ends the count at once
+    unsigned char pad_142[0x18];
+    // set by reqClearRepopCounter (a const member), cleared by seqUpdateRepopCounter as it zeroes m_popWait (the
+    // name is not the original's)
+    mutable bool m_clearRepopCounterReq;
+    unsigned char pad_15b[0x5];
+    // the sequence step (seqUpdateRepopCounter moves on to seqUpdatePopDepop; the name is not the original's)
+    void (GmkEnemyInsts::*m_seq)(const UpdateInfo&);
     // LocatorBat_EnemySpeciesID::update shows a gimmick that has no object only while this is not above 0 (meaning
     // not known; the name is not the original's)
     float m_popWait;

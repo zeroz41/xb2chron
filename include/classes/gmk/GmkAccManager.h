@@ -18,9 +18,10 @@ public:
     void update();
     // takes the access out of its list (GmkAcc::dispose calls it while the manager exists)
     void removeGmkAcc(GmkAcc* acc);
-    // two lists GfFieldGimmick's constructor builds (the names are not the original's)
-    ::mm::mtl::IntrusiveListBase m_list0;
-    ::mm::mtl::IntrusiveListBase m_list1;
+    // two lists GfFieldGimmick's constructor builds (the names are not the original's): GmkAcc::create links an
+    // access to m_list1 when it reached a valid gimmick, else to m_list0
+    ::mm::mtl::IntrusiveList< ::gmk::GmkAcc> m_list0;
+    ::mm::mtl::IntrusiveList< ::gmk::GmkAcc> m_list1;
 };
 }  // namespace gmk
 
