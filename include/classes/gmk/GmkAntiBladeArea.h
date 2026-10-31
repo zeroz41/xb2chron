@@ -11,7 +11,12 @@ namespace gmk {
 // table 0x7100B6E2A8; base at 0x48 IGmkPhantomEventListener (its secondary table 0x7100B6E320: offset -0x48 and the
 // override thunks; Vector<GmkAntiBladeArea>::expand stores IGmkPhantomEventListener's table there when copying)
 // 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (the 16-aligned field is not typed yet)
-class alignas(16) GmkAntiBladeArea : public ::gmk::AGmkBase, public IGmkPhantomEventListener {
+// base at 0x50 mm::mtl::IntrusiveListNodeBase: a list node initialized with the bases, before the gimmick's tables are
+// stored (Vector<GmkAntiBladeArea>::expand stores IGmkPhantomEventListener's table at 0x48, then copies 0x50..0x60,
+// then the gimmick's tables; construct_n<GmkAntiBladeArea> links it to itself). IGmkPhantomEventListener itself is 8
+// bytes (GmkDoor has fw::ColiUserData at 0x50).
+class alignas(16) GmkAntiBladeArea : public ::gmk::AGmkBase, public IGmkPhantomEventListener,
+                                     public ::mm::mtl::IntrusiveListNodeBase {
 public:
     // its size: the element size of Vector<BdatInfo>::resize 0x710062A048 (zero-filled)
     class BdatInfo {

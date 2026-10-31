@@ -171,6 +171,9 @@
 #include "classes/gf/GfEvent.h"
 #include "classes/gf/GfGamePlayerFormation.h"
 #include "classes/gf/GfBdatChrEnArrange.h"
+#include "gf/GfObjFactory.h"
+#include "classes/gf/GfComTransform.h"
+#include "fw/FwDebug.h"
 
 namespace gf {
 // the resident sound sources' files, by index (getSoundSourceFileName reads it; bindGFSoundSource loads each)
@@ -3081,6 +3084,31 @@ void GmkDoor::closeDoor(bool anim) {
     }
 }
 
+void GmkDoor::bootGmk(bool anim, bool camera) {
+    if (getProgress() == 1) {
+        return;
+    }
+    const BdatInfo* info = getBdatInfo();
+    if (info->m_openLodAnime) {
+        closeDoor(anim);
+    } else {
+        openDoor(anim);
+    }
+    unsigned short lodModel = info->m_lodModel;
+    if (const gf::GfFieldLod::BdatInfo* lodInfo = mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->findBdatInfo(lodModel)) {
+        if (lodInfo->m_fadeInTime > 0.0f) {
+            mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->setFade(lodModel, true, anim);
+        } else if (lodInfo->m_fadeOutTime > 0.0f) {
+            mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->setFade(lodModel, false, anim);
+        }
+    }
+    createGmkCamera(info->m_openCamGimId, info->m_openCamGimAtr, camera);
+    if (!info->m_bootedGmk3.isSet()) {
+        m_doorWait = anim ? info->m_doorNextwait : 0.0f;
+    }
+    setProgress(Progress(1));
+}
+
 void GmkDoor::dispose() {
     disposeGmkPhantom();
     m_camera.dispose();
@@ -3138,6 +3166,70 @@ void GmkDoor::update(float dt) {
     }
 }
 
+void GmkDoor::createGfObjHandle() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    disposeGfObjHandle();
+    CBdatWrapper bdat(m_list->getBindedBdatFp());
+    m_gob = gf::GfObjFactory::createGmkEvent(bdat, m_createInfo.m_bdatId);
+    {
+        gf::GfObjAcc acc(m_gob);
+        acc.setUserData(gf::GfObjUserData(0), reinterpret_cast<unsigned long>(this));
+    }
+    gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(m_gob)->m_setup);
+    const mm::Vec3* xform = m_pos;
+    setup->m_initialPos.x = xform[0].x;
+    setup->m_initialPos.y = xform[0].y;
+    setup->m_initialPos.z = xform[0].z;
+    setup->pad_30.x = xform[1].x;
+    setup->pad_30.y = xform[1].y;
+    setup->pad_30.z = xform[1].z;
+    unsigned short lodModel = getBdatInfo()->m_lodModel;
+    bool closed = mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->isAnimReverse(lodModel);
+    gf::GF_OBJ_HANDLE* gob = m_gob;
+    gf::GfObjAcc acc(gob);
+    if (acc.m_obj != nullptr) {
+        gf::GfObjSetupGimmick* gobSetup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(gob)->m_setup);
+        if (closed) {
+            gobSetup->pad_6c |= 7;
+        } else {
+            gobSetup->pad_6c &= ~7;
+        }
+    }
+    if (gf::GfObj* obj = acc.getObj()) {
+        if (closed) {
+            obj->pad_110 |= 7;
+        } else {
+            obj->pad_110 &= ~7;
+        }
+    }
+}
+
+void GmkDoor::createGmkPhantom() {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    switch (m_info->m_shape) {
+    case 2:
+    case 3:
+    case 4:
+        break;
+    default:
+        return;
+    }
+    if (getBdatInfo()->m_responseChr & 2) {
+        GmkPhantomSimple::CreateInfo info;
+        info.validateByAGmkBase(*this);
+        m_phantomSimple.create(info);
+        m_phantomSimple.m_coliObject->setUserData(this);
+    } else {
+        m_phantom.create(*this, this, true);
+    }
+}
+
 bool GmkDoor::createGmkCamera(const char* name, unsigned char attr, bool play) {
     m_camera.dispose();
     GmkCamera::CreateInfo info;
@@ -3153,6 +3245,76 @@ bool GmkDoor::createGmkCamera(const char* name, unsigned char attr, bool play) {
         return true;
     }
     return false;
+}
+
+void GmkDoor::debugDraw() const {
+    if (!isValid()) {
+        return;
+    }
+    if (getBdatInfo()->m_responseType == 5) {
+        const mm::Vec3* xform = m_pos;
+        mm::Vec3 dir = mm::Vec3::unitZ;
+        mm::Mat44 rot;
+        rot.setRotXYZ(xform[1]);
+        mm::Vec3 end = xform[0] + mm::Vec3(dir.x * rot.m[0][0] + dir.y * rot.m[1][0] + dir.z * rot.m[2][0] + rot.m[3][0],
+                                           dir.x * rot.m[0][1] + dir.y * rot.m[1][1] + dir.z * rot.m[2][1] + rot.m[3][1],
+                                           dir.x * rot.m[0][2] + dir.y * rot.m[1][2] + dir.z * rot.m[2][2] + rot.m[3][2]);
+        const mm::Col3& col = mm::Col3::yellow;
+        fw::debug::drawArrow(xform[0], end, mm::Col4(col.r, col.g, col.b, 1.0f));
+    }
+    mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->isAnimReverse(getBdatInfo()->m_lodModel);
+}
+
+void GmkDoor::createSe(bool mapPack, unsigned short se, unsigned char size) {
+    m_ctrlVolSe.dispose();
+    gf::GfFieldSound* sound = mm::mtl::PtrSingleton<gf::GfFieldSound>::get();
+    fw::SoundPack* pack = mapPack ? sound->getMapPack() : sound->getCommonPack();
+    if (se == 0 || pack == nullptr) {
+        return;
+    }
+    GmkCtrlVolSe::CreateInfo info;
+    info.m_pack = pack;
+    info.m_seId = se;
+    info.m_minDist = size;
+    info.m_maxDist = size;
+    info.m_pos = *m_pos;
+    m_ctrlVolSe.create(info);
+}
+
+void GmkDoor::onPlayerAccessed(gf::GF_OBJ_HANDLE*) {
+    const BdatInfo* info = getBdatInfo();
+    if (info->m_responseType == 5) {
+        if (gf::GfGameManager::fn_71002AA074() == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            return;
+        }
+        const mm::Vec3* player;
+        if (gf::GfGameManager::fn_71002A9E68()) {
+            player = &gf::GfGameManager::getControlMoverPosition();
+        } else {
+            gf::GfObj* obj = gf::GfObjUtil::getObj(gf::GfGameManager::fn_71002AA074());
+            player = &obj->getComponent<gf::GfComTransform>(0)->getPosition();
+        }
+        mm::Vec3 diff;
+        diff.x = player->x - m_pos[0].x;
+        diff.y = player->y - m_pos[0].y;
+        diff.z = player->z - m_pos[0].z;
+        mm::Mat44 rot;
+        rot.setRotXYZ(m_pos[1]);
+        // in front of the door: opens it
+        if (diff.x * rot.m[2][0] + diff.y * rot.m[2][1] + diff.z * rot.m[2][2] < 0.0f) {
+            bootGmk(false, false);
+            setLodSwitch(LodSwitch(2));
+            return;
+        }
+    } else if (!info->m_bootedGmk2.isSet() || info->m_bootedGmk2.isMatch()) {
+        bootGmk(false, false);
+        return;
+    }
+    unsigned short msgId = info->m_missMsgId;
+    gf::MenuCommonWindowParam param;
+    param.m_bdat = gf::GfDataBdat::getFP(0x1b1);
+    param.m_msgId = msgId;
+    gf::GfPlayFactory::createCommonMessage(param);
 }
 
 void GmkDoor::onEnterPhantom(const IGmkPhantomEventListener::OnEnterInfo& info) {
