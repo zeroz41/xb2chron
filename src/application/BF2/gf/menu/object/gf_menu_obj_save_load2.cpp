@@ -212,10 +212,10 @@ void GfMenuObjSaveLoad2::MainListener::reciveEvent(const ui::EventData& event, u
                 }
                 m_owner->m_seq.clear();
                 m_owner->m_seq.addJob(&GfMenuObjSaveLoad2::seqSave);
-                if (close) {
-                    m_owner->m_seq.addJob(&GfMenuObjSaveLoad2::seqSaveWaitToClose);
-                } else {
+                if (!close) {
                     m_owner->m_seq.addJob(&GfMenuObjSaveLoad2::seqSaveWait);
+                } else {
+                    m_owner->m_seq.addJob(&GfMenuObjSaveLoad2::seqSaveWaitToClose);
                 }
             } else if (m_owner->m_confirm == 1) {
                 GfMenuObjSaveLoad2::sendEvent(handle, 0x22, 0);
