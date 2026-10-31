@@ -186,7 +186,8 @@ GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitPara
 }
 
 GfObjSetupFieldObj::GfObjSetupFieldObj(const GfInitParamFobj& param)
-    : GfObjSetup(9, param), pad_6c(-1), pad_70(), pad_90(false) {}
+    : GfObjSetup(9, param), pad_6c(-1), m_dropDistance(0.0f), m_appearDelay(0.0f), m_itemBdat(0), m_itemId(0), m_gold(0),
+      m_amount(0), m_fobjId(0), pad_8c(), pad_90(false) {}
 
 #line 358
 GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamEnWeapon& param) {
