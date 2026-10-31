@@ -15,18 +15,23 @@ public:
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     // the inlined getPtr's constructor zeroes only the word at 0x10
     ScheManager() : pad_10(0) {}
-    // clears the look step (flag 0x10) of handle's scheduler (inlined by ScriptCharaTgt::doit, which aims the
-    // character itself); the name is not the original's
-    void cancelLook(gf::GF_OBJ_HANDLE* handle) {
+    // clears the step flag of handle's scheduler (the first scheduler with that handle); the name is not the original's
+    void cancelStep(gf::GF_OBJ_HANDLE* handle, unsigned int flag) {
         for (Scheduler** it = m_schedulers.begin(); it != m_schedulers.end(); ++it) {
             if ((*it)->m_handle == handle) {
-                if ((*it)->m_flags & 0x10) {
-                    (*it)->m_flags &= ~0x10;
+                if ((*it)->m_flags & flag) {
+                    (*it)->m_flags &= ~flag;
                 }
                 return;
             }
         }
     }
+    // clears the look step (flag 0x10) of handle's scheduler (inlined by ScriptCharaTgt::doit, which aims the
+    // character itself); the name is not the original's
+    void cancelLook(gf::GF_OBJ_HANDLE* handle) { cancelStep(handle, 0x10); }
+    // clears the turn step (flag 0x4) of handle's scheduler (inlined by ScriptCharaTurnRot::doit, which turns the
+    // character itself); the name is not the original's
+    void cancelTurn(gf::GF_OBJ_HANDLE* handle) { cancelStep(handle, 0x4); }
 
 private:
     unsigned int pad_10;

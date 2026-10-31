@@ -24,6 +24,8 @@ public:
     void setPos(PosAxis const& pos, CV_TYPE type);
     void setTar(TarAxis const& tar, CV_TYPE type);
     void setFov(float fov, CV_TYPE type);
+    void addAnmPos(float time, PosAxis const& pos, CV_TYPE type);
+    void addAnmTar(float time, TarAxis const& tar, CV_TYPE type);
     void addAnmFov(float time, float fov, CV_TYPE type);
     void setRotZ(float rotZ, CV_TYPE type);
     void addAnmRotZ(float time, float rotZ, CV_TYPE type);

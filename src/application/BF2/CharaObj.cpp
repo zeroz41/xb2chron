@@ -1647,6 +1647,18 @@ void ScriptCharaWalkPos::redo(const event::Param& param) {
     }
 }
 
+void ScriptCharaTurnRot::doit(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        RotAxis axis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        m_prevRot = obj->m_rot;
+        mm::mtl::Singleton<ScheManager>::getPtr()->cancelTurn(obj->m_chara->m_gfHandle);
+        EVT_rotcvtype cvType = static_cast<EVT_rotcvtype>(param.val(4).getS32());
+        float time = param.val(5).getF32();
+        obj->turnRotAxis(axis, cvType, time);
+    }
+}
+
 void ScriptCharaTurnRot::undo(const event::Param&) {
     ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
     if (obj != 0) {
@@ -2014,6 +2026,8 @@ RotAxis::RotAxis(unsigned int type, float x, float y, float z) : m_type(type), m
 #include "classes/event/TextManager.h"
 #include "classes/event/ScriptCamPos.h"
 #include "classes/event/ScriptCamTar.h"
+#include "classes/event/ScriptCamMovePos.h"
+#include "classes/event/ScriptCamMoveTar.h"
 #include "classes/event/ScriptCamFov.h"
 #include "classes/event/ScriptCamRotZ.h"
 #include "classes/event/ScriptCamMoveFov.h"
@@ -2141,6 +2155,33 @@ void ScriptCamPos::undo(const event::Param&) {
     }
 }
 
+void ScriptCamMovePos::doit(const event::Param& param) {
+    ObjectList* cur = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+    ObjectCamera* obj = cur != 0 ? static_cast<ObjectCamera*>(cur->m_active) : 0;
+    if (obj != 0 && obj->m_type == 3) {
+        PosAxis axis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        float time = param.val(4).getF32();
+        CV_TYPE type = static_cast<CV_TYPE>(param.val(5).getS32());
+        obj->m_posQueue.push_back(axis);
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        cam->m_hands.addAnmPos(time, axis, type);
+    }
+}
+
+void ScriptCamMovePos::redo(const event::Param& param) {
+    ObjectList* cur = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+    ObjectCamera* obj = cur != 0 ? static_cast<ObjectCamera*>(cur->m_active) : 0;
+    if (obj != 0 && obj->m_type == 3) {
+        PosAxis axis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        CV_TYPE type = static_cast<CV_TYPE>(param.val(5).getS32());
+        obj->m_posQueue.push_back(axis);
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        cam->m_hands.addAnmPos(0.0f, axis, type);
+    }
+}
+
 void ScriptCamTar::doit(const event::Param& param) {
     // the active camera read in place, as ScriptCamPos::doit
     ObjectList* cur = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
@@ -2174,6 +2215,33 @@ void ScriptCamTar::undo(const event::Param&) {
         CamObj* cam = obj->m_cam;
         cam->changeActive(&cam->m_hands);
         cam->m_hands.setTar(axis, static_cast<CV_TYPE>(1));
+    }
+}
+
+void ScriptCamMoveTar::doit(const event::Param& param) {
+    ObjectList* cur = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+    ObjectCamera* obj = cur != 0 ? static_cast<ObjectCamera*>(cur->m_active) : 0;
+    if (obj != 0 && obj->m_type == 3) {
+        TarAxis axis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        float time = param.val(4).getF32();
+        CV_TYPE type = static_cast<CV_TYPE>(param.val(5).getS32());
+        obj->m_tarQueue.push_back(axis);
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        cam->m_hands.addAnmTar(time, axis, type);
+    }
+}
+
+void ScriptCamMoveTar::redo(const event::Param& param) {
+    ObjectList* cur = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+    ObjectCamera* obj = cur != 0 ? static_cast<ObjectCamera*>(cur->m_active) : 0;
+    if (obj != 0 && obj->m_type == 3) {
+        TarAxis axis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        CV_TYPE type = static_cast<CV_TYPE>(param.val(5).getS32());
+        obj->m_tarQueue.push_back(axis);
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        cam->m_hands.addAnmTar(0.0f, axis, type);
     }
 }
 
@@ -2943,6 +3011,10 @@ namespace event {
 bool ManiManager::OnMouseButtonDown(ml::EventView*) { return false; }
 
 
+EnvManager::EnvManager()
+    : m_flags(0), pad_14(0), pad_18(-1), pad_1c(-1), pad_20(0), pad_24(0), pad_28(-1), pad_2c(-1), pad_30(0),
+      pad_34(0), pad_38(0) {}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void EnvManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
@@ -3016,6 +3088,8 @@ void SelectManager::OnEventProc(event::MSG_TYPE msg) {
         break;
     }
 }
+
+RandManager::RandManager() : m_flags(0) {}
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void RandManager::OnEventProc(event::MSG_TYPE msg) {
@@ -3501,6 +3575,30 @@ bool RandPlayer::Wait::update(const ICmd::Param& param) {
     if (param.m_frame < 60 && obj->m_type == 2 &&
         !gf::GfObjUtil::isStanbyTalkingPlayer(static_cast<ObjectChara*>(obj)->m_chara->m_gfHandle)) {
         return false;
+    }
+    return true;
+}
+
+// on its first frame: when val 1 is set and the id names a character, aims it at the val 2..4 target (val 5 set) or
+// drops its queued target command
+bool RandPlayer::Reset::update(const ICmd::Param& param) {
+    if (param.m_frame == 0) {
+        int id = param.m_param.val(0).getS32();
+        bool enable = param.m_param.val(1).getBool();
+        float x = param.m_param.val(2).getF32();
+        float y = param.m_param.val(3).getF32();
+        float z = param.m_param.val(4).getF32();
+        bool setTar = param.m_param.val(5).getBool();
+        Object* obj = RandUtil::searchByID(id);
+        if (enable && obj->m_type == 2) {
+            CharaObj* chara = static_cast<ObjectChara*>(obj)->m_chara;
+            if (setTar) {
+                chara->setTar(TarAxis(1, x, y, z), -1.0f, static_cast<EVT_tarcvtype>(1), static_cast<EVT_aimtype>(0),
+                              -1.0f, -1.0f);
+            } else {
+                chara->m_cmdQueue2.erase(&chara->m_setTar);
+            }
+        }
     }
     return true;
 }

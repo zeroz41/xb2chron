@@ -14,6 +14,8 @@ namespace mm { class Col4; }
 
 // the curve kind ObjectChara::walkPosAxis takes (the mangled name spells a global enum); its values are not known
 enum EVT_poscvtype {};
+// how turnRotAxis turns (ScriptCharaTurnRot::doit passes val 4); no enumerator is named
+enum EVT_rotcvtype : int {};
 
 namespace event {
 // table 0x7100B3DD70 (its first slots are event::Object's)
@@ -41,6 +43,7 @@ public:
     void linerPosAxis(const PosAxis& pos, bool flag, float time, CV_TYPE type);
     void linerRotAxis(const RotAxis& rot, float time, CV_TYPE type);
     void walkPosAxis(const PosAxis& pos, EVT_poscvtype type, bool flag);
+    void turnRotAxis(const RotAxis& rot, EVT_rotcvtype type, float time);
 
     unsigned char pad_68[0x8];
     CharaObj* m_chara;  // 0x70; the character the commands drive; the name is not the original's
