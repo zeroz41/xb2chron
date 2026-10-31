@@ -19,6 +19,11 @@ public:
     int m_ctrl;  // the slot of the running fade's control, -1 for none
     unsigned char pad_14[8];
     GfMenuObjFade* m_owner;  // what initialize makes it for
+
+private:
+    // reciveEvent's: a fade's start (0xA) or end (0xB) on a channel as a game event from the image (inlined; the name
+    // is not the original's)
+    static void pushFadeEvent(unsigned int handle, unsigned short type, unsigned char channel);
 };
 }  // namespace gf
 

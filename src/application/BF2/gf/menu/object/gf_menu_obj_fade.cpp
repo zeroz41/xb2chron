@@ -8,9 +8,13 @@
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuObjUtil.h"
 #include "classes/gf/GfAllocator.h"
+#include "classes/gf/TUnk_B62D58.h"
 #include "mm/Col3.h"
 #include "mm/Col4.h"
 #include "mm/mtl/FixStr.h"
+#include "mm/Pnt.h"
+#include "mm/Vec2.h"
+#include "ui/UIUtil.h"
 
 namespace gf {
 
@@ -74,8 +78,78 @@ void GfMenuObjFade::update() {
 
 // a fade's start (0xA) or end (0xB) on a channel, as a game event from the channel's image (the name is not the
 // original's)
-// FadeListener::reciveEvent (0x71004077C8) is not written: no candidate is identical yet (the closest is in the
-// worker's wip folder)
+inline void GfMenuObjFade::FadeListener::pushFadeEvent(unsigned int handle, unsigned short type, unsigned char channel) {
+    ui::UIEventManager::EventInfo info;
+    info.m_handle = handle;
+    info.m_data.m_type = type;
+    info.m_data.m_param0 = channel;
+    ui::UIEventManager::get()->pushGameEvent(info);
+}
+
+void GfMenuObjFade::FadeListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        short width, height;
+        acc.getSize(false, width, height);
+        mm::Vec2 scale;
+        scale.x = ui::UIUtil::getScreenWidth() / (float)width;
+        scale.y = ui::UIUtil::getScreenHeight() / (float)height;
+        acc.setScale(scale);
+        mm::Pnt<short> center(ui::UIUtil::getScreenWidth() / 2, ui::UIUtil::getScreenHeight() / 2);
+        acc.setPosCenter(center);
+        acc.setAlpha(0.0f);
+        m_ctrl = -1;
+        break;
+    }
+    case 3: {
+        pushFadeEvent(acc.m_handle, 0xB, m_channel);
+        m_ctrl = -1;
+        break;
+    }
+    case 0x100: {
+        float time = event.m_paramShort[0] / 30.0f;
+        float alpha = event.m_paramShort[4];
+        mm::Col3 color;
+        color.r = event.m_paramShort[1] / 255.0f;
+        color.g = event.m_paramShort[2] / 255.0f;
+        color.b = event.m_paramShort[3] / 255.0f;
+        m_channel = event.m_paramShort[5];
+        acc.setAddColor(color);
+        if (m_ctrl != -1) {
+            GfMenuObjUtil::stopCtrl(m_ctrl);
+            m_ctrl = -1;
+        }
+        alpha /= 255.0f;
+        if (time == 0.0f) {
+            acc.setAlpha(alpha);
+            pushFadeEvent(acc.m_handle, 0xB, m_channel);
+        } else {
+            GfMenuObjUtil::CtrlParam param;
+            bool changed;
+            {
+                float current;
+                acc.getAlpha(current);
+                changed = alpha != current;
+            }
+            if (changed) {
+                param.m_methods = 4;
+                param.m_alpha = alpha;
+                param.m_time = time;
+                m_ctrl = GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+                pushFadeEvent(acc.m_handle, 0xA, m_channel);
+            } else {
+                param.m_time = time;
+                pushFadeEvent(acc.m_handle, 0xB, m_channel);
+            }
+        }
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
 
 void GfMenuObjFade::LoadingListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
@@ -130,6 +204,40 @@ void GfMenuObjFade::start(const StartParam& param) {
             event.m_paramShort[4] = param.color.a * 255.0f;
             event.m_paramShort[5] = param.channel;
             ui::UIManager::get()->requestObjectEvent(fade.m_handle, event, 0.0f);
+        }
+    }
+}
+
+void GfMenuObjFade::dispLoading(bool disp, unsigned short frames) {
+    ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x3B));
+    if (acc.m_object != nullptr && !acc.isTerm()) {
+        ui::EventData event;
+        event.m_type = disp ? 0x21 : 0x22;
+        event.m_param0 = frames;
+        GfMenuObject::sendEvent(acc.searchChild("LAY_loading"), event, 0.0f);
+        ui::UIObjectAcc image(acc.m_handle, "IMG_loading");
+        if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuObject::existAttachedObject(0x8F)) {
+            image.setAlpha(0.0f);
+            TUnk_B62D58::fn_710042AE80(disp, frames);
+        } else {
+            image.setAlpha(1.0f);
+        }
+    }
+}
+
+void GfMenuObjFade::dispSaving(bool disp, unsigned short frames) {
+    ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x3B));
+    if (acc.m_object != nullptr && !acc.isTerm()) {
+        ui::EventData event;
+        event.m_type = disp ? 0x21 : 0x22;
+        event.m_param0 = frames;
+        GfMenuObject::sendEvent(acc.searchChild("LAY_saving"), event, 0.0f);
+        ui::UIObjectAcc image(acc.m_handle, "IMG_saving");
+        if (GfMenuObjUtil::fn_710048FD30(3) && GfMenuObject::existAttachedObject(0x8F)) {
+            image.setAlpha(0.0f);
+            TUnk_B62D58::fn_710042AF14(disp, frames);
+        } else {
+            image.setAlpha(1.0f);
         }
     }
 }
