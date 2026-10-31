@@ -15,7 +15,7 @@ public:
     };
     // a row as getRow hands it out (the field names are not the original's)
     struct Row {
-        int m_id;
+        float m_id;  // a float: GfMenuObjStaffroll::update converts it (fcvtzu) for a skipped row's height
         bool m_skip;  // the file's word is positive; the columns are then cleared
         int m_param;
         Column m_columns[3];
@@ -28,7 +28,7 @@ public:
         int m_textOffset;  // into the strings, or -1
     };
     struct FileRow {
-        int m_id;
+        float m_id;  // copied word for word into Row::m_id
         int m_skip;
         int m_param;
         int pad_0C;

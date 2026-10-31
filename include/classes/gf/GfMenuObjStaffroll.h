@@ -19,7 +19,8 @@ public:
         unsigned int m_y;       // its offset from the top
         int m_height;           // its image's height (0 without one)
         unsigned int m_index;   // its row in the credit file
-        unsigned short m_flag;  // cleared by update
+        bool m_created;         // its texts or image are made (update, once the row scrolls in)
+        bool m_done;            // set for the last rows once they reach the end; no longer moved
         mm::mtl::FixedVector<unsigned int, 4> m_texts;  // createText's handles
     };
     GfMenuObjStaffroll(unsigned int handle);

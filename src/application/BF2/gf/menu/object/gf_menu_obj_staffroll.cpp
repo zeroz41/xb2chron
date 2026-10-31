@@ -69,6 +69,145 @@ void GfMenuObjStaffroll::finalize() {
     GfMenuObject::finalize();
 }
 
+void GfMenuObjStaffroll::update() {
+    if (m_resource == nullptr) {
+        return;
+    }
+    if (m_state == 0) {
+        if (m_resource->valid()) {
+            // getSize's out-parameters: the frame's first locals (just under the saved registers)
+            short imageWidth;
+            short imageHeight;
+            m_reader.bind(m_resource->getAssetData(), m_resource->getAssetSize());
+            unsigned int count = m_reader.getRowCount();
+            m_rows.setAllocator(getAllocator(ALLOCATOR(0)));
+            m_rows.reserve(count);
+            unsigned int y = 0;
+            for (unsigned int i = 0; i < count; ++i) {
+                CreditReader::Row data;
+                if (!m_reader.getRow(i, data)) {
+                    continue;
+                }
+                if (!data.m_skip || data.m_param != 0) {
+                    RowInfo info;
+                    info.m_y = y;
+                    info.m_height = 0;
+                    info.m_index = i;
+                    info.m_created = false;
+                    info.m_done = false;
+                    if (data.m_param != 0) {
+                        mm::mtl::FixStr<32> name;
+                        name.format("IMG_image@%02d", data.m_param);
+                        ui::UIObjectAcc image(m_handle, name.m_str);
+                        image.getSize(false, imageWidth, imageHeight);
+                        info.m_height = imageHeight;
+                    }
+                    m_rows.push_back(info);
+                }
+                int height;
+                if (data.m_skip) {
+                    height = static_cast<unsigned int>(data.m_id) > 10 ? 24 : 8;
+                } else {
+                    height = 0;
+                    for (int c = 0; c < 3; ++c) {
+                        int size = data.m_columns[c].m_param0;
+                        if (height < size) {
+                            height = size < 24 ? 24 : size;
+                        }
+                    }
+                }
+                y += height;
+            }
+            m_scrollLength = y + 720;
+            m_state = 1;
+            m_end = false;
+        }
+    } else if (m_state == 2) {
+        if (GfMenuManager::fn_710035A738()) {
+            return;
+        }
+        m_scroll += m_scrollSpeed;
+        unsigned int scroll = m_scroll;
+        for (unsigned int i = m_row; i < m_rows.size(); ++i) {
+            RowInfo& row = m_rows[i];
+            if (!row.m_created) {
+                if (scroll <= row.m_y) {
+                    break;
+                }
+                CreditReader::Row data;
+                m_reader.getRow(row.m_index, data);
+                if (data.m_param != 0) {
+                    mm::mtl::FixStr<32> name;
+                    name.format("IMG_image@%02d", data.m_param);
+                    ui::UIObjectAcc image(m_handle, name.m_str);
+                    if (image.m_object != nullptr) {
+                        unsigned int handle = image.m_handle;
+                        row.m_texts.push_back(handle);
+                        image.setDisp(true);
+                    }
+                } else {
+                    for (unsigned int c = 0; c < 3; ++c) {
+                        if (!(data.m_columns[c].m_param0 > 0)) {
+                            continue;
+                        }
+                        row.m_texts.push_back(createText(c, data.m_columns[c]));
+                    }
+                }
+                row.m_created = true;
+            }
+            if (row.m_created) {
+                int y = row.m_y - scroll + 720;
+                if (i >= m_rows.size() - 2 && y < 340) {
+                    for (unsigned int j = i; j < m_rows.size(); ++j) {
+                        m_rows[j].m_done = true;
+                    }
+                    m_end = true;
+                    if (m_row >= m_rows.size() - 2) {
+                        m_state = 4;
+                    }
+                }
+                if (row.m_height + y < 0) {
+                    for (unsigned int j = 0; j < row.m_texts.size(); ++j) {
+                        ui::UIObjectAcc text(row.m_texts[j]);
+                        text.setTerm();
+                        row.m_texts[j] = 0;
+                    }
+                    m_row = i + 1;
+                    if (m_end && m_row >= m_rows.size() - 2) {
+                        m_state = 4;
+                    }
+                } else if (!row.m_done) {
+                    for (unsigned int j = 0; j < row.m_texts.size(); ++j) {
+                        ui::UIObjectAcc text(row.m_texts[j]);
+                        mm::Pnt<short> pos;
+                        text.getPos(pos);
+                        pos.y = y;
+                        text.setPos(pos);
+                        if (GfMenuObjUtil::fn_710048FD30(3)) {
+                            if (!(y >= 550)) {
+                                if (y >= 530) {
+                                    text.setAlpha((550 - y) / 20.0f);
+                                } else if (y <= 20) {
+                                    if (!(y > 0)) {
+                                        text.setAlpha(0.0f);
+                                    } else {
+                                        text.setAlpha(y / 20.0f);
+                                    }
+                                } else {
+                                    text.setAlpha(1.0f);
+                                }
+                            } else {
+                                text.setAlpha(0.0f);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    GfMenuObject::update();
+}
+
 // the text parts createText duplicates, per column (lbl_7100B64B20; the name is not the original's)
 static const char* const s_textNames[] = {"TXT_left", "TXT_center", "TXT_right", "TXT_right2"};
 
