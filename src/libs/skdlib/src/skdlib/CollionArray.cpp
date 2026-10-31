@@ -101,6 +101,73 @@ void CapsuleCollObj::calc(anm::Pose& pose) {
 
 // the index of the bone named `name` in the skeleton, 0xFFFF when there is no name or no such bone (the name is not
 // the original's)
+bool CapsuleCollObj::detect(float radius, const mm::Vec3& pos, mm::Vec3* push) const {
+    mm::Vec3 diff = pos - m_pos;
+    float t = diff.dot(m_dir);
+    float limit = m_pRes->m_radius + radius;
+    mm::Vec3 normal;
+    // before the segment's start: a zero offset leaves normal unset there (3.0.1 pushes along whatever it holds)
+    if (t < 0.0f) {
+        float distance = diff.length();
+        if (distance < limit) {
+            if (!diff.isZero()) {
+                float length = diff.length();
+                if (length <= 1e-6f) {
+                    normal = mm::Vec3::zero;
+                } else {
+                    float scale = 1.0f / length;
+                    normal.x = diff.x * scale;
+                    normal.y = diff.y * scale;
+                    normal.z = diff.z * scale;
+                }
+            }
+            *push = (limit - distance) * normal;
+            return true;
+        }
+    } else if (t > m_pRes->m_length) {
+        diff = pos - (m_pos + m_dir * m_pRes->m_length);
+        float distance = diff.length();
+        if (distance < limit) {
+            if (diff.isZero()) {
+                normal = mm::Vec3::unitY;
+            } else {
+                float length = diff.length();
+                if (length <= 1e-6f) {
+                    normal = mm::Vec3::zero;
+                } else {
+                    float scale = 1.0f / length;
+                    normal.x = diff.x * scale;
+                    normal.y = diff.y * scale;
+                    normal.z = diff.z * scale;
+                }
+            }
+            *push = (limit - distance) * normal;
+            return true;
+        }
+    } else {
+        diff = diff - m_dir * t;
+        float distance = diff.length();
+        if (distance < limit) {
+            if (diff.isZero()) {
+                normal = mm::Vec3::unitY;
+            } else {
+                float length = diff.length();
+                if (length <= 1e-6f) {
+                    normal = mm::Vec3::zero;
+                } else {
+                    float scale = 1.0f / length;
+                    normal.x = diff.x * scale;
+                    normal.y = diff.y * scale;
+                    normal.z = diff.z * scale;
+                }
+            }
+            *push = (limit - distance) * normal;
+            return true;
+        }
+    }
+    return false;
+}
+
 void PlaneCollObj::calc(anm::Pose& pose) {
     const anm::QsTransform& transform = pose.getBoneModelSpace(m_bone);
     rotateVector(m_pos, transform.m_rotation, m_pRes->m_offset);

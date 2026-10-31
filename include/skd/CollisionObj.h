@@ -75,6 +75,12 @@ public:
 // a plane of a collision object
 class PlaneCollObj {
 public:
+    PlaneCollObj() = default;
+    // a written copy, member by member: Vector<PlaneCollObj>'s expand and extend copy m_rotation as one block and
+    // m_bone after it (the implicit copy would copy both as one block)
+    PlaneCollObj(const PlaneCollObj& other)
+        : m_pRes(other.m_pRes), m_plane(other.m_plane), m_pos(other.m_pos), m_rotation(other.m_rotation),
+          m_bone(other.m_bone) {}
     bool detect(float radius, const mm::Vec3& pos, mm::Vec3* push) const;
     void calc(anm::Pose& pose);
 
