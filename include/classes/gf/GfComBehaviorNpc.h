@@ -66,6 +66,8 @@ public:
     virtual GfComAsm* getComAsm() const;  // slot 7
     // the gimmick its object is bound to, none when it is bound to none
     gmk::AGmkBase* getBindedGmkInst() const;
+    // GmkNpc/GmkRoutedNpc::bindToGameObj call it with true once they set the object's gimmick user data
+    void validateBindedGmkInstInfo(bool);
     // (re)makes its state machine: the npc's 7 states, one level deep
     void createFsm();
     // points its local steering at what the state with that ID needs (the npc states' enter and leave)

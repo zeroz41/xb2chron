@@ -73,6 +73,7 @@
 #include "gf/GfDataBlade.h"
 #include "gf/GfQuestInfo.h"
 #include "gf/GfObjAcc.h"
+#include "classes/gf/GfComBehaviorNpc.h"
 #include "gf/GfObjUtil.h"
 #include "classes/gmk/GmkEnemy.h"
 #include "classes/gmk/GmkRoutedEnemy.h"
@@ -1247,11 +1248,43 @@ bool GmkNpc::isPopCondMatchedExceptDist() const {
     return isPopCondMatched();
 }
 
+bool GmkNpc::isPopCondMatched() const {
+    if (isValid()) {
+        const BdatInfo* info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+        if (gf::GfGameManager::isBattle() && info->m_battleReaction == 0) {
+            return false;
+        }
+        return info->isPopCommonCondMatched(*this);
+    }
+    return false;
+}
+
+bool GmkNpc::isDepopCondMatched() const {
+    if (isValid()) {
+        return !static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo)->isPopCommonCondMatched(*this);
+    }
+    return false;
+}
+
 // m_pos points at the gimmick's Xform: its position, then its rotation
 bool GmkNpc::findPopPosRot(mm::Vec3& pos, mm::Vec3& rot) const {
     pos = m_pos[0];
     rot = m_pos[1];
     return true;
+}
+
+void GmkNpc::bindToGameObj(gf::GF_OBJ_HANDLE* handle) const {
+    {
+        gf::GfObjAcc acc(handle);
+        acc.setUserData(gf::GfObjUserData(0), reinterpret_cast<unsigned long>(this));
+    }
+    gf::GfObjAcc acc(handle);
+    gf::GfObj* obj = acc.getObj();
+    if (obj != nullptr && !acc.isDestroy() && !acc.testFlag(0x11)) {
+        if (gf::GfComBehaviorNpc* behavior = obj->getComponent<gf::GfComBehaviorNpc>(6)) {
+            behavior->validateBindedGmkInstInfo(true);
+        }
+    }
 }
 
 gf::GF_OBJ_HANDLE* GmkRoutedNpc::getGobInst() const {
@@ -1313,6 +1346,42 @@ void GmkRoutedNpc::debugDraw() const {
             }
         }
     }
+}
+
+void GmkRoutedNpc::bindToGameObj(gf::GF_OBJ_HANDLE* handle) const {
+    {
+        gf::GfObjAcc acc(handle);
+        acc.setUserData(gf::GfObjUserData(0), reinterpret_cast<unsigned long>(this));
+    }
+    gf::GfObjAcc acc(handle);
+    if (gf::GfObj* obj = acc.getObj()) {
+        if (gf::GfComBehaviorNpc* behavior = obj->getComponent<gf::GfComBehaviorNpc>(6)) {
+            behavior->validateBindedGmkInstInfo(true);
+        }
+    }
+}
+
+void GmkRoutedNpc::validateDisp() const {
+    gf::GF_OBJ_HANDLE* handle = getGobInst();
+    if (handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    bool disp;
+    if (pad_79) {
+        // the original calls getGmkType here and drops its answer
+        getGmkType();
+        disp = true;
+    } else {
+        disp = false;
+    }
+    gf::GfObjAcc acc(handle);
+    if (acc.m_obj != nullptr) {
+        acc.setDisp(gf::OBJDISP(8), disp);
+    }
+}
+
+void GmkRoutedNpcList::create(const IGmkList::CreateInfo& info) {
+    TGmkList::create(info);
 }
 IGmkList* GmkRoutedMapObj::getBindedRoutePointList() const {
     return static_cast<const GmkSet*>(m_list->getCreateInfo().m_param)->m_gmkLists[8];
