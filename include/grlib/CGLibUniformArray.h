@@ -1,6 +1,8 @@
 #ifndef GRLIB_CGLIBUNIFORMARRAY_H
 #define GRLIB_CGLIBUNIFORMARRAY_H
 
+#include "grlib/CGLibDblUniformBlock.h"
+#include "grlib/CGLibOneUniformBlock.h"
 #include "grlib/CGLibTriUniformBlock.h"
 #include "grlib/CGLibMemHandle.h"
 #include "mtl/MemManager.h"
@@ -52,6 +54,10 @@ public:
 
 // ml::DrResMdoSeamWrk*::setupWork take a CGLibTriUniformArray*: the array of triangle uniform blocks
 class CGLibTriUniformArray : public CGLibUniformArray<CGLibTriUniformBlock> {};
+// ml::DrShdUniformBlockMan's material, volume texture and rim bloom arrays: double-buffered blocks
+class CGLibDblUniformArray : public CGLibUniformArray<CGLibDblUniformBlock> {};
+// ml::DrShdUniformBlockMan's motion blend arrays: single blocks
+class CGLibOneUniformArray : public CGLibUniformArray<CGLibOneUniformBlock> {};
 }  // namespace grlib
 
 #endif

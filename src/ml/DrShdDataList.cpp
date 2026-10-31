@@ -12,6 +12,10 @@
 #include "ml/DrShdMdoMan.h"
 #include "ml/DrShdDataList.h"
 #include "ml/DrShdMdoDecExtTbl.h"
+#include "ml/MdsMatTechnique.h"
+#include "ml/MdsMpfMatTopHeader.h"
+#include "ml/MdsMatVertexInfo.h"
+#include "classes/ml/DrCalcStmListObj.h"
 #include "classes/ml/DrAPCache.h"
 #include "classes/ml/DrCalcClipWorkCone.h"
 #include "classes/ml/DrCalcClipWorkPlane.h"
@@ -51,6 +55,7 @@
 #include "ml/DrShdDataList.h"
 #include "ml/DrShdDataObj.h"
 #include "ml/DrShdLgtMan.h"
+#include "ml/DrPixlMan.h"
 #include "ml/DrResShdMpf.h"
 #include "ml/DrResShdPrePass.h"
 #include "ml/DrResShdShw.h"
@@ -111,6 +116,70 @@ void DrShdDataObj::setupShader(unsigned int fetch) { grlib::CGLibCtlShader::setS
 void DrShdDataObj::setupShader(DrResFetch* fetch) { grlib::CGLibCtlShader::setShader(*this, *fetch); }
 
 void DrShdDataObj::setupComputeShader() { grlib::CGLibCtlShader::setComputeShader(*this); }
+
+DrShdLgtMan::DrShdLgtMan(DrMan* drMan) : m_pDrMan(drMan), m_pRes(nullptr), m_pHybrid(nullptr), m_pClustered(nullptr) {
+    m_pShdList = new (m_pDrMan->m_workHandle, nullptr, 0, 4, false) grlib::CGLibShdListBase<DrShdLgtObj>;
+    m_fetch.setLgtVertexParam();
+    releaseLightShader();
+    int idx;
+    reloadShader(idx);
+    m_pHybrid = new (drMan->m_workHandle, nullptr, 0, 4, false) DrShdLgtHybrid(drMan);
+    m_pGlobalIBL = new (drMan->m_workHandle, nullptr, 0, 4, false) DrShdLgtGlobalIBL(drMan);
+    m_pClustered = new (drMan->m_workHandle, nullptr, 0, 4, false) DrShdLgtClustered(drMan, true);
+}
+
+void DrShdLgtMan::releaseLightShader() {
+    m_pShdList->release();
+    if (m_pRes != nullptr) {
+        m_pRes->Release();
+        m_pRes = nullptr;
+    }
+}
+
+void DrShdLgtMan::reloadShader(int) {
+    if (Scn* scn = mm::mtl::PtrSingleton<Scn>::sys()) {
+        m_pRes = scn->allocEntryRes("/monolib/shader/shd_lgt.wishp");
+    }
+    if (m_pRes == nullptr) {
+        m_pRes = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) FileResTh();
+        m_pRes->loadBlock(m_pDrMan->m_fileHandle, "/monolib/shader/shd_lgt.wishp", 0x1000, 0);
+    }
+    if (m_pShdList->createPacShader(m_pRes->m_data, 1011, true)) {
+        for (int i = 0; i < m_pShdList->m_extNum; i++) {
+            m_pExtShader[i] = &m_pShdList->getExt(i);
+        }
+    }
+}
+
+DrShdLgtMan::~DrShdLgtMan() {
+    releaseLightShader();
+    m_fetch.clearWork();
+    if (m_pHybrid != nullptr) {
+        delete m_pHybrid;
+        m_pHybrid = nullptr;
+    }
+    if (m_pGlobalIBL != nullptr) {
+        delete m_pGlobalIBL;
+        m_pGlobalIBL = nullptr;
+    }
+    if (m_pClustered != nullptr) {
+        delete m_pClustered;
+        m_pClustered = nullptr;
+    }
+    if (m_pShdList != nullptr) {
+        delete m_pShdList;
+        m_pShdList = nullptr;
+    }
+}
+
+void DrShdLgtMan::setupLgtBuff() {
+    if (m_lgtBuffReq != 0) {
+        m_lgtBuffReq = 0;
+        DrAPGxType::setupCullingOff();
+        DrAPGxType::setupBlend(7);
+        m_pDrMan->m_pixlMan->selectLightRenderTarget();
+    }
+}
 
 void DrShdLgtMan::stockBegin() {
     m_pHybrid->stockBegin();
@@ -270,6 +339,120 @@ void DrShdMan::resetColorBuff(int viewIdx) {
     }
 }
 
+DrShdMdoDecShdObj* DrShdMdoMan::createShaderObj(const unsigned char* shdData, const unsigned char* tblData,
+                                                const MdsMatTechnique* tech) {
+    for (DrShdMdoDecShdObj* obj = m_pTop; obj != nullptr; obj = obj->m_pNext) {
+        if (obj->m_pShdData == shdData) {
+            obj->m_refCount++;
+            return obj;
+        }
+    }
+    DrShdMdoDecShdObj* obj =
+        new (DrMan::getIns()->m_resHandle, nullptr, 0, 4, false) DrShdMdoDecShdObj(shdData, tblData, tech);
+    if (obj != nullptr) {
+        append(obj);
+    }
+    return obj;
+}
+
+DrShdMdoDecShdObj* DrShdMdoMan::createShaderObj(DrCalcStmListObj* stmObj, const unsigned char* tblData,
+                                                const MdsMatTechnique* tech) {
+    for (DrShdMdoDecShdObj* obj = m_pTop; obj != nullptr; obj = obj->m_pNext) {
+        if (obj->m_pShdData == stmObj) {
+            obj->m_refCount++;
+            return obj;
+        }
+    }
+    DrCalcStmListObj::ResTexObj* res = stmObj->getResShaderObj();
+    DrShdMdoDecShdObj* obj =
+        new (DrMan::getIns()->m_resHandle, nullptr, 0, 4, false) DrShdMdoDecShdObj(res->m_pData, tblData, tech);
+    obj->m_pStmObj = stmObj;
+    if (obj != nullptr) {
+        append(obj);
+    }
+    return obj;
+}
+
+void DrShdMdoMan::releaseShaderObj(DrShdMdoDecShdObj* obj) {
+    if (--obj->m_refCount < 0) {
+        obj->m_refCount = 0;
+    }
+    if (obj->m_refCount > 0) {
+        return;
+    }
+    DrShdMdoDecShdObj* prev = obj->m_pPrev;
+    DrShdMdoDecShdObj* next = obj->m_pNext;
+    if (prev == nullptr) {
+        if (next == nullptr) {
+            m_pTop = nullptr;
+            m_pEnd = nullptr;
+        } else {
+            m_pTop = next;
+            next->m_pPrev = nullptr;
+        }
+    } else if (next == nullptr) {
+        m_pEnd = prev;
+        prev->m_pNext = nullptr;
+    } else {
+        prev->m_pNext = next;
+        obj->m_pNext->m_pPrev = obj->m_pPrev;
+    }
+    obj->m_pPrev = nullptr;
+    obj->m_pNext = nullptr;
+    delete obj;
+}
+
+void DrShdMdoDecShdObj::update() {
+    if (m_pStmObj != nullptr) {
+        DrCalcStmListObj::ResTexObj* res = m_pStmObj->getResShaderObj();
+        if (res->m_flags & 1) {
+            changeMemShader(res->m_pData, nullptr, nullptr);
+        }
+    }
+}
+
+DrShdMdoDecShdObj::DrShdMdoDecShdObj(const unsigned char* shdData, const unsigned char* tblData, const MdsMatTechnique* tech)
+    : m_pPrev(nullptr), m_pNext(nullptr), m_pShdData(shdData), m_refCount(1), m_pStmObj(nullptr) {
+    m_shdList.createPacShader(shdData, 0, true);
+    DrShdFetchMan* fetchMan = DrMan::getIns()->m_shdMan->m_fetchMan;
+    for (int i = 0; i < m_shdList.m_num; i++) {
+        m_shdList.get(i).setVertexParam(fetchMan, tech[i].m_vtxInfoNum,
+                                            reinterpret_cast<const MdsMatVertexInfo*>(tblData + tech[i].m_vtxInfoOfs));
+    }
+}
+
+void DrShdMdoDecRes::setVertexParam(DrShdFetchMan* fetchMan, int num, const MdsMatVertexInfo* info) {
+    if (m_pFetchObj != nullptr) {
+        fetchMan->releaseFetchObj(m_pFetchObj);
+    }
+    m_pFetchObj = fetchMan->createFetchObj(num, info);
+}
+
+DrShdMdoDecShdObj::~DrShdMdoDecShdObj() { m_shdList.release(); }
+
+void DrShdMdoDecShdObj::changeMemShader(const unsigned char* shdData, const unsigned char*, const MdsMatTechnique*) {
+    m_shdList.m_pPac = reinterpret_cast<const grlib::CGLibShdPacHeader*>(shdData);
+    const grlib::CGLibShdPacHeader* head = reinterpret_cast<const grlib::CGLibShdPacHeader*>(shdData);
+    unsigned int bufSize = head->m_bufSize;
+    unsigned int alignSize = bufSize + (-bufSize & 0xFFF);
+    m_shdList.m_memPool.setupBuffer(const_cast<unsigned char*>(shdData) + head->m_bufOfs, alignSize);
+    const unsigned char* data = reinterpret_cast<const unsigned char*>(m_shdList.m_pPac);
+    const grlib::CGLibShdPacEntry* entries = reinterpret_cast<const grlib::CGLibShdPacEntry*>(data + head->m_entryOfs);
+    const unsigned char* programs = data + head->m_progOfs;
+    const unsigned char* shaders = data + head->m_shdOfs;
+    for (int i = 0; i < m_shdList.m_num; i++) {
+        m_shdList.m_pList[i].changeMemPoolSetMem(shaders + entries[i].m_ofs, programs, &m_shdList.m_memPool);
+    }
+}
+
+void DrShdMdoDecRes::releaseObj() {
+    release();
+    if (m_pFetchObj != nullptr) {
+        DrMan::getIns()->m_shdMan->m_fetchMan->releaseFetchObj(m_pFetchObj);
+        m_pFetchObj = nullptr;
+    }
+}
+
 unsigned int DrShdMdoDecExtTbl::getValGlobalParam(int idx) { return m_pValGlobalParam[idx]; }
 
 void DrShdMdoDecExtTbl::bindShader() { DrAPCache::s_pIns->setupShader(this, &m_pRes->m_pFetchObj->m_fetch); }
@@ -277,6 +460,67 @@ void DrShdMdoDecExtTbl::bindShader() { DrAPCache::s_pIns->setupShader(this, &m_p
 void DrShdUniformBlockMan::createUniformBoneObj(grlib::CGLibTriUniformBlock* block, int num) {
     new (block) grlib::CGLibTriUniformBlock;
     block->setup(num * 0x30);
+}
+
+void DrShdUniformBlockMan::createUniformMdlObj(grlib::CGLibTriUniformArray* array, int num) {
+    new (array) grlib::CGLibTriUniformArray;
+    int size = DrResMdoUniformBlock::getMdlUniformBlockSize();
+    array->setupArray(num);
+    unsigned int memSize = 0;
+    for (int i = 0; i < num; i++) {
+        memSize += (size + (-size & 0xFF)) * 3;
+    }
+    array->allocMem(memSize);
+    array->m_ofs = 0;
+    for (int i = 0; i < num; i++) {
+        array->m_ofs += array->m_pArray[i].setupArray(size, array->m_mem, array->m_ofs);
+    }
+}
+
+void DrShdUniformBlockMan::createUniformVolTexCalcObj(grlib::CGLibDblUniformArray* array, unsigned int num) {
+    new (array) grlib::CGLibDblUniformArray;
+    int size = DrResMdoUniformBlock::getVolTexCalcUniformBlockSize();
+    array->setupArray(num);
+    unsigned int memSize = 0;
+    for (unsigned int i = 0; i < num; i++) {
+        memSize += (size + (-size & 0xFF)) * 2;
+    }
+    array->allocMem(memSize);
+    array->m_ofs = 0;
+    for (unsigned int i = 0; i < num; i++) {
+        array->m_ofs += array->m_pArray[i].setupArray(size, array->m_mem, array->m_ofs);
+    }
+}
+
+void DrShdUniformBlockMan::createUniformRimBloomCalcObj(grlib::CGLibDblUniformArray* array) {
+    new (array) grlib::CGLibDblUniformArray;
+    int size = DrResMdoUniformBlock::getRimBloomCalcUniformBlockSize();
+    array->setupArray(1);
+    unsigned int memSize = 0;
+    for (unsigned int i = 0; i < 1; i++) {
+        memSize += (size + (-size & 0xFF)) * 2;
+    }
+    array->allocMem(memSize);
+    array->m_ofs = 0;
+    for (unsigned int i = 0; i < 1; i++) {
+        array->m_ofs += array->m_pArray[i].setupArray(size, array->m_mem, array->m_ofs);
+    }
+}
+
+void DrShdUniformBlockMan::createUniformMpfMaterialObj(grlib::CGLibDblUniformArray* array,
+                                                       const MdsMpfMatTopHeader* header) {
+    new (array) grlib::CGLibDblUniformArray;
+    int size = DrResMdoUniformBlock::getMpfMaterialUniformBlockSize();
+    array->setupArray(header->m_matNum);
+    array->m_ofs = 0;
+    for (unsigned int i = 0; i < header->m_matNum; i++) {
+        array->m_ofs += (size + (-size & 0xFF)) * 2;
+    }
+    array->allocMem(array->m_ofs);
+    array->m_ofs = 0;
+    for (int i = 0; i < static_cast<int>(header->m_matNum); i++) {
+        array->m_ofs += array->m_pArray[static_cast<unsigned int>(i)].setupArray(size, array->m_mem, array->m_ofs);
+    }
 }
 
 DrResShdMpf* DrShdDataList::getMpfObj(int i) { return &m_pMpfObj[i]; }

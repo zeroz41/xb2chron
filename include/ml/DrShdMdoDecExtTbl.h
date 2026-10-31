@@ -5,12 +5,20 @@
 
 namespace ml {
 class DrShdFetchObj;
+class DrShdFetchMan;
+struct MdsMatVertexInfo;
 
-// A model material's shader resources (only what DrShdMdoDecExtTbl::bindShader reads is declared; the name of the
-// field is not the original's).
-class DrShdMdoDecRes {
+// A model material's shader (0x70 bytes: grlib::CGLibShdListBase<DrShdMdoDecRes> steps its list by it) and its
+// vertex fetch. The constructor and destructor are inline in 3.0.1 (out of line in 1.0.0). The name of the field is
+// not the original's.
+class DrShdMdoDecRes : public grlib::CGLibDecShader {
 public:
-    unsigned char pad_0[0x68];
+    DrShdMdoDecRes() : m_pFetchObj(nullptr) {}
+    ~DrShdMdoDecRes() { releaseObj(); }
+    // releases the shader and hands the vertex fetch back to DrShdFetchMan
+    void releaseObj();
+    void setVertexParam(DrShdFetchMan* fetchMan, int num, const MdsMatVertexInfo* info);
+
     DrShdFetchObj* m_pFetchObj;  // 0x68, the vertex fetch setVertexParam takes from DrShdFetchMan
 };
 

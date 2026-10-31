@@ -12,6 +12,13 @@ struct MdsMatVertexInfo;
 // inline in 3.0.1). The field names are not the original's.
 class DrShdFetchObj {
 public:
+    DrShdFetchObj(unsigned int attrBits0, unsigned int attrBits1, unsigned int strideSum, int num,
+                  const MdsMatVertexInfo* info)
+        : m_pPrev(nullptr), m_pNext(nullptr), m_strideSum(strideSum), m_refCount(1) {
+        m_attrBits[0] = attrBits0;
+        m_attrBits[1] = attrBits1;
+        m_fetch.setMdlVertexParam(num, info);
+    }
     ~DrShdFetchObj() { m_fetch.clearWork(); }
 
     DrShdFetchObj* m_pPrev;  // 0x0
@@ -36,6 +43,36 @@ public:
         }
     }
     DrShdFetchObj* createFetchObj(int num, const MdsMatVertexInfo* info);
+    // drops a reference to obj; the last one unlinks and deletes it (1.0.0 out of line, inline in 3.0.1)
+    void releaseFetchObj(DrShdFetchObj* obj) {
+        if (--obj->m_refCount < 0) {
+            obj->m_refCount = 0;
+        }
+        if (obj->m_refCount > 0) {
+            return;
+        }
+        DrShdFetchObj* prev = obj->m_pPrev;
+        DrShdFetchObj* next = obj->m_pNext;
+        if (prev == nullptr) {
+            if (next == nullptr) {
+                m_pTop = nullptr;
+                m_pEnd = nullptr;
+            } else {
+                m_pTop = next;
+                next->m_pPrev = nullptr;
+            }
+        } else if (next == nullptr) {
+            m_pEnd = prev;
+            prev->m_pNext = nullptr;
+        } else {
+            prev->m_pNext = next;
+            obj->m_pNext->m_pPrev = obj->m_pPrev;
+        }
+        obj->m_pPrev = nullptr;
+        obj->m_pNext = nullptr;
+        delete obj;
+        m_num--;
+    }
 
     DrShdFetchObj* m_pTop;  // 0x0
     DrShdFetchObj* m_pEnd;  // 0x8

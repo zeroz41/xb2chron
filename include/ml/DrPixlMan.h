@@ -78,6 +78,7 @@ public:
     void setShadowDirRenderTarget(int index);
     void setupShadowUnifrom(int index);
     void selectGBuffRenderTarget();
+    void selectLightRenderTarget();
     // true when it switched the render target (alphaRenderTarget/skyGodRayRenderTarget then set the main viewport)
     bool selectGBuffRenderTarget(unsigned int target);
     void setMainViewPort();

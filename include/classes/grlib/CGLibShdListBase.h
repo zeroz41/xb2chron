@@ -60,6 +60,13 @@ public:
     bool createPacShader(const void* pac, unsigned int version, bool flag);
     // the entry of the index (inline; the name is not the original's)
     T0& get(unsigned int idx) { return m_pList[idx]; }
+    // the entry the package's extension entry of the index names (DrShdLgtMan::reloadShader; inline, the name is not
+    // the original's)
+    T0& getExt(unsigned int idx) {
+        const CGLibShdPacExt* ext =
+            reinterpret_cast<const CGLibShdPacExt*>(reinterpret_cast<const unsigned char*>(m_pPac) + m_pPac->m_extOfs);
+        return m_pList[ext[idx].m_idx];
+    }
 
     const CGLibShdPacHeader* m_pPac;  // 0x8 (the field names are not the original's)
     CGLibVtlMemPool m_memPool;  // 0x10

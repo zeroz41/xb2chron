@@ -3,6 +3,8 @@
 
 #include "ml/DrResFetch.h"
 
+namespace mm { class Vec3; class Quat; class Col3; }
+
 namespace grlib { template <typename T0> class CGLibShdListBase; }
 
 namespace ml {
@@ -21,6 +23,8 @@ class DrShdLgtMan {
 public:
     // the program kinds of the global IBL shader getGlobalIBLShader indexes (no enumerator has a name yet)
     enum GIBL_SHADER_TYPE {};
+    // the shape renderDebug draws: renderDebugPnt passes 0 (no enumerator has a name yet)
+    enum RENDER_DEBUG_TYPE {};
 
     DrShdLgtMan(DrMan* drMan);
     ~DrShdLgtMan();
@@ -35,6 +39,8 @@ public:
     void setupGlobalIBLShader(DrShdLgtObj* shader);
     void renderDebugPnt(DrLightObjPnt* light);
     void renderDebugSpt(DrLightObjSpt* light);
+    void renderDebug(RENDER_DEBUG_TYPE type, const mm::Vec3& pos, const mm::Quat& rot, const mm::Vec3& scale,
+                     const mm::Col3& color);
 
     DrMan* m_pDrMan;  // 0x0
     FileResTh* m_pRes;  // 0x8, the shader package's file
