@@ -40,6 +40,9 @@ public:
     void emitter_pack_free(unsigned long pack);
     void emitter_set_free(FxHeader* pHeader, int frames);
     void moveAfter();
+    // links a type-1 effect file to the emitters (ParticleManager::parseEfb; what it returns is not known yet)
+    void emitter_set_link(FxHeader* pHeader);
+    void move();
     // what it returns is not known yet
     void emitter_update(unsigned int handle, float frames, bool flag);
     bool emitter_set_check(FxHeader* pHeader);
@@ -51,7 +54,10 @@ public:
 
     unsigned char pad_0[0x1700];
     float m_categorySpeed[1];  // indexed by category; the count is not known yet
-    unsigned char pad_1704[0xA4];
+    unsigned char pad_1704[0x8C];
+    // ParticleManager::tail flips it between 0 and 1 after moveAfter each frame (the name is not the original's)
+    unsigned int m_flip;
+    unsigned char pad_1794[0x14];
     IntrusiveList<EmitterObj> m_emitterActiveList;  // getEmitterActiveList's; the emitter_set_* setters walk it
     // the emitters not in use (getEmitterFree takes them; the name is not the original's)
     IntrusiveList<EmitterObj> m_emitterFreeList;

@@ -1,6 +1,7 @@
 #define MM_LIB_FROM_EFLIB
 #include "ptlib/ParticleSystem.h"
 #include "ptlib/emitter/EmitterManager.h"
+#include "ptlib/emitter/EmitterObj.h"
 #include "ptlib/renderer/RendererManager.h"
 #include "ptlib/material/MaterialManager.h"
 #include "classes/ptlib/HeapAllocator.h"
@@ -11,6 +12,7 @@
 #include "ptlib/Utility.h"
 #include "ptlib/forcefield/FfManager.h"
 #include "ptlib/forcefield/TurbulenceN.h"
+#include "idcoli/IDColiDef.h"
 #include "new"
 #include <stdio.h>
 #include <stdarg.h>
@@ -21,6 +23,10 @@ namespace ptlib {
 static char s_message[0x1000];
 // the line efAstMsg prints around its text (the name is not the original's)
 static const char s_separator[] = "_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_";
+
+// the speed update_model_spd hands the models (Proposed name, not the original's: the symbols leave it unnamed
+// (lbl_71015E9E30))
+static float s_mdlSpd;
 
 // the instance init makes (the name is not the original's: the symbols leave it unnamed)
 static ParticleManager* s_pIns;
@@ -192,6 +198,33 @@ void* ParticleManager::getGrp(int index) {
     return nullptr;
 }
 
+unsigned char* ParticleManager::parseEfb(unsigned char* pData, const char*, unsigned long param) {
+    FxHeader* pHeader = reinterpret_cast<FxHeader*>(pData);
+    if (pHeader->m_magic == 0x30626665) {
+        if (pHeader->m_type == 1) {
+            pHeader->m_userParam = param;
+            emitter::EmitterManager::get()->emitter_set_link(pHeader);
+            parse_efb_type0001(pData);
+        } else if (pHeader->m_type == 'P') {
+            FxHeader::TexTable* pTable = static_cast<FxHeader::TexTable*>(pHeader->getBlock());
+            renderer::RenderManager* pRender = renderer::RenderManager::get();
+            for (unsigned int i = 0; i < pTable->m_num; i++) {
+                FxHeader::TexTable::Entry& entry = pTable->m_entries[i];
+                pRender->tex_loadmem(entry.m_key, pTable->getData(entry), entry.m_size, entry.m_format, pData, true,
+                                     nullptr);
+            }
+        } else if (pHeader->m_type == 'Q') {
+            m_pReserved = pHeader->getBlock();
+        } else {
+            efAstMsg("0", "illegal EFB format:%04x", pHeader->m_type);
+        }
+    } else {
+        efMsg("corrupted data %10x-", pData);
+        pData = nullptr;
+    }
+    return pData;
+}
+
 void ParticleManager::getCamParam() {}
 
 void efMsg(const char* format, ...) {
@@ -270,6 +303,35 @@ void ParticleManager::emitter_set_fadeout(void* p, int frames) {
     emitter::EmitterManager::get()->emitter_set_fadeout(p, frames);
 }
 
+void ParticleManager::update_pause() {
+    m_fxParam.m_paused = m_fxParam.m_pause;
+    update_model_spd(nullptr, 1.0f);
+}
+
+void ParticleManager::update_model_spd(emitter::EmitterObj* pEmitter, float speed) {
+    float spd = m_fxParam.m_paused ? 0.0f : speed;
+    if (pEmitter != nullptr) {
+        for (IntrusiveList<emitter::ParticleObj>::iterator it = pEmitter->m_particleList.begin();
+             it != pEmitter->m_particleList.end(); ++it) {
+            s_mdlSpd = spd * pEmitter->m_speed;
+            if (it->m_hasMdl && it->m_pWork->m_pMdl != nullptr) {
+                s_pDrFunc.setMdlSpd(it->m_pWork->m_pMdl, &s_mdlSpd);
+            }
+        }
+    } else {
+        emitter::EmitterManager* pManager = emitter::EmitterManager::getPtr();
+        for (IntrusiveList<emitter::EmitterObj>::iterator em = pManager->getEmitterActiveList()->begin();
+             em != pManager->getEmitterActiveList()->end(); ++em) {
+            s_mdlSpd = spd * em->m_speed;
+            for (IntrusiveList<emitter::ParticleObj>::iterator it = em->m_particleList.begin();
+                 it != em->m_particleList.end(); ++it) {
+                if (it->m_hasMdl && it->m_pWork->m_pMdl != nullptr) {
+                    s_pDrFunc.setMdlSpd(it->m_pWork->m_pMdl, &s_mdlSpd);
+                }
+            }
+        }
+    }
+}
 
 void ParticleManager::set_pause(bool pause) {
     m_fxParam.m_pause = pause;
@@ -289,6 +351,28 @@ int ParticleManager::convert_key_by_material_index(int index, FxHeader* pHeader)
     return pTable->getEntry(index)->m_key;
 }
 
+unsigned char* ParticleManager::parse_efs(const char*, void* pData, unsigned int) {
+    if (pData == nullptr) {
+        return nullptr;
+    }
+    FxHeader* pHeader = static_cast<FxHeader*>(pData);
+    if (pHeader->m_magic != 0x30626665) {
+        return nullptr;
+    }
+    ParticleManager* pManager = getPtr();
+    // the original passes parseEfb a name it never sets (no register is loaded for it)
+    const char* pName;
+    if (pHeader->m_type == 'a') {
+        FxHeader* pFile = pHeader->getNext();
+        do {
+            pManager->parseEfb(reinterpret_cast<unsigned char*>(pFile), pName, reinterpret_cast<unsigned long>(pData));
+            pFile = pFile->getNext();
+        } while (pFile != nullptr);
+        return static_cast<unsigned char*>(pData);
+    }
+    return pManager->parseEfb(static_cast<unsigned char*>(pData), pName, 0);
+}
+
 void ParticleManager::emitter_pack_free(unsigned long pack) {
     emitter::EmitterManager::get()->emitter_pack_free(pack);
 }
@@ -300,6 +384,98 @@ void ParticleManager::emitter_set_free(FxHeader* pHeader, int frames) {
 
 void ParticleManager::emitter_alloc01_set_draw(emitter::EmitterObj* pObj, emitter::EmitterArg* pArg) {
     renderer::RenderManager::get()->setEmitterDraw(pObj, pArg);
+}
+
+void ParticleManager::move() {
+    if (m_fxParam.m_flag10) {
+        return;
+    }
+    if (!m_fxParam.m_paused) {
+        m_frame += 1.0f;
+        if (m_frame >= 1.0f) {
+            do {
+                emitter::EmitterManager::get()->emitter_update(0, 1.0f, false);
+                m_frame -= 1.0f;
+            } while (m_frame >= 1.0f);
+        } else {
+            emitter::EmitterManager::get()->emitter_update(0, 1.0f, true);
+        }
+    }
+    emitter::EmitterManager::get()->move();
+}
+
+void ParticleManager::tail() {
+    emitter::EmitterManager::get()->moveAfter();
+    // the original passes build an emitter it never sets (no register is loaded for it)
+    emitter::EmitterObj* pEmitter;
+    HashManager::get()->build(pEmitter);
+    emitter::EmitterManager* pManager = emitter::EmitterManager::get();
+    pManager->m_flip = !(pManager->m_flip & 1);
+    // the original asserts the instances here without using them
+    get();
+    renderer::RenderManager::get();
+}
+
+void ParticleManager::draw(const DrDrawWorkInfoEF* pDrInfo, int view, bool blur) {
+    // the original asserts the instance first without using it
+    get();
+    renderer::RenderManager* pRender = renderer::RenderManager::get();
+    pRender->setDrInfo(pDrInfo);
+    emitter::EmitterManager* pManager = emitter::EmitterManager::get();
+    if (blur) {
+        pRender->draw(*pManager, m_fxParam, view, 1);
+    } else {
+        pRender->draw(*pManager, m_fxParam, view, 0);
+    }
+}
+
+void ParticleManager::setDrInfo(const DrDrawWorkInfoEF* pDrInfo) {
+    // the original asserts the instance first without using it
+    get();
+    renderer::RenderManager::get()->setDrInfo(pDrInfo);
+}
+
+bool ParticleManager::testRayGround(mm::Vec3& outNormal, mm::Vec3& outPos, const mm::Vec3& pos, const mm::Vec3& dir,
+                                    float a, float b) {
+    if (m_initFlags[1]) {
+        return false;
+    }
+    idcoli::IDColiDef def;
+    def.m_result.m_type = 1;
+    def.pad_0 = false;
+    def.pad_1 = true;
+    if (!def.testRay(pos, dir, a, b)) {
+        return false;
+    }
+    if (def.m_result.m_nearHit) {
+        outNormal = def.m_result.m_near.m_normal;
+        outPos = def.m_result.m_near.m_pos;
+#line 1584
+        MM_ASSERT(!outPos.isError());
+    } else {
+        outNormal = def.m_result.m_secNear.m_normal;
+        outPos = def.m_result.m_secNear.m_pos;
+#line 1589
+        MM_ASSERT(!outPos.isError());
+    }
+    return true;
+}
+
+bool ParticleManager::testLineGround(mm::Vec3& outNormal, mm::Vec3& outPos, const mm::Vec3& start,
+                                     const mm::Vec3& end) {
+    if (m_initFlags[1]) {
+        return false;
+    }
+    idcoli::IDColiDef def;
+    def.m_result.m_type = 1;
+    def.pad_0 = false;
+    def.pad_1 = true;
+    if (!def.testLine(start, end)) {
+        return false;
+    }
+    outNormal = def.m_result.m_near.m_normal;
+    outPos = def.m_result.m_near.m_pos;
+    return true;
 }
 
 }  // namespace ptlib

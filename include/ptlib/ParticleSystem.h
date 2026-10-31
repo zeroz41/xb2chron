@@ -29,11 +29,45 @@ public:
 // es_is_loop and es_contais_cam_axis read the flags)
 class FxHeader {
 public:
-    unsigned char pad_0[0x9];
+    // the texture table of a type 'P' file: m_num entries; each entry's data lies m_offset bytes after the table
+    // (the names are not the original's)
+    struct TexTable {
+        struct Entry {
+            int m_key;
+            int m_format;
+            int m_size;
+            unsigned int m_offset;
+        };
+        void* getData(const Entry& entry) {
+            return entry.m_offset != 0 ? reinterpret_cast<unsigned char*>(this) + entry.m_offset : nullptr;
+        }
+        unsigned int m_num;
+        Entry m_entries[1];
+    };
+
+    // the block at m_materialTableOffset whatever the file's type (parseEfb: 'Q' and 'P' files)
+    void* getBlock() {
+        return m_materialTableOffset != 0 ? reinterpret_cast<unsigned char*>(this) + m_materialTableOffset : nullptr;
+    }
+
+    // the file m_nextOffset names, or null
+    FxHeader* getNext() {
+        return m_nextOffset != 0 ? reinterpret_cast<FxHeader*>(reinterpret_cast<unsigned char*>(this) + m_nextOffset)
+                                 : nullptr;
+    }
+
+    unsigned int m_magic;  // "efb0" (parseEfb; the name is not the original's)
+    unsigned char pad_4[0x4];
+    unsigned char m_type;  // 0x8: 1 an effect, 'P' textures, 'Q' ParticleManager::m_pReserved (the name is not the original's)
     unsigned char m_loop;
     unsigned char m_containsCamAxis;
-    unsigned char pad_b[0x5];
+    unsigned char pad_b[0x1];
+    // 0xC: of a pack ('a'), its first file; of a file in a pack, the next one; relative to the header, 0 for none
+    // (parse_efs; the name is not the original's)
+    unsigned int m_nextOffset;
     unsigned int m_materialTableOffset;  // from the header; 0 for none (the name is not the original's)
+    unsigned char pad_14[0x34];
+    unsigned long m_userParam;  // 0x48: parseEfb's third argument for a type-1 file (the name is not the original's)
 
     const FxMaterialTable* getMaterialTable() const {
         return m_materialTableOffset != 0
@@ -125,8 +159,15 @@ public:
     static void destroyGrp(void* pGrp) { s_pDrFunc.destroyGrp(pGrp); }
     // the draw group <index> (0..3) init made, or null
     static void* getGrp(int index);
+    // checks an effect file's header and takes it in by its type; the file, or null when it is not one
+    unsigned char* parseEfb(unsigned char* pData, const char* name, unsigned long param);
+    void parse_efb_type0001(unsigned char* pData);
+    // parseEfb of an effect file, or of every file of a pack ('a'); null when it is not one
+    unsigned char* parse_efs(const char* name, void* pData, unsigned int size);
     // what it returns is not known yet (EmitterManager's callers drop it)
     void update_model_spd(emitter::EmitterObj* pEmitter, float speed);
+    // applies set_pause's request to the models (update_model_spd of every emitter at speed 1)
+    void update_pause();
     FxParam* getFxParam();
     void getCamParam();
     void set_pause(bool pause);
@@ -160,8 +201,12 @@ public:
     static void init(const DrDrawWorkInfoEF* pDrInfo);
     void term();
     void move();
+    void tail();
     void setDrInfo(const DrDrawWorkInfoEF* pDrInfo);
     void draw(const DrDrawWorkInfoEF* pDrInfo, int view, bool blur);
+    // the ground under a ray or a line (idcoli::IDColiDef), false while m_initFlags[1] is set
+    bool testRayGround(mm::Vec3& outNormal, mm::Vec3& outPos, const mm::Vec3& pos, const mm::Vec3& dir, float, float);
+    bool testLineGround(mm::Vec3& outNormal, mm::Vec3& outPos, const mm::Vec3& start, const mm::Vec3& end);
     void emitter_set_free(FxHeader* pHeader, int frames);
     void emitter_set_free_all(bool flag);
 
@@ -239,6 +284,8 @@ public:
         }
         m_count = 0;
     }
+    // rebuilds the entries from the active emitters (tail passes it an emitter it never sets; build does not use it)
+    void build(emitter::EmitterObj* pEmitter);
     void add(unsigned int handle);
     bool check(unsigned int handle);
     unsigned int get_create_key();

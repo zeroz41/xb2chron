@@ -39,13 +39,30 @@ public:
 // is not known yet.
 class ParticleObj : public IntrusiveListNode {
 public:
+    // the particle's work block (the name is not the original's; the size is not known yet)
+    struct Work {
+        unsigned char pad_0[0x110];
+        void* m_pMdl;  // 0x110: the model the DrFunc hooks drive (ParticleManager::update_model_spd)
+    };
     void particle_clear_union();
+
+    unsigned char pad_10[0x120];
+    Work* m_pWork;  // 0x130
+    unsigned char pad_138[0x6];
+    bool m_hasMdl;  // 0x13E: update_model_spd sets the speed of m_pWork->m_pMdl only when it is set (the name is not the original's)
 };
 
 // an emitter (particle_emitter.cpp); its links are EmitterManager's active list. The field names are not the
 // original's unless a comment says so; the size is not known yet.
 class EmitterObj : public IntrusiveListNode {
 public:
+    // what the emitter was made from (the name is not the original's; the size is not known yet)
+    struct Data {
+        unsigned char pad_0[0xFD];
+        unsigned char m_hashValue;  // 0xFD: HashManager::build records it with the handle (the name is not the original's)
+        unsigned char pad_fe[0x14E];
+        char m_name[4];  // 0x24C: HashManager::build's entry name; the length is not known yet
+    };
     void emitter_set_param_sub(EmitterParam* pParam);
     // m_fadeCount out of m_fadeFrames, 1 without a fade
     float calc_fade();
@@ -69,7 +86,8 @@ public:
     void* m_pAttach;
     unsigned char pad_88[0x8];
     void* m_pGrp;  // ParticleManager::getGrp(m_viewNum) (the name is the original's: "em->m_pGrp")
-    unsigned char pad_98[0x28];
+    Data* m_pData;  // 0x98 (the name is not the original's)
+    unsigned char pad_a0[0x20];
     EmitterCas* m_pCas;
     unsigned char pad_c8[0x18];
     mm::Mat44 m_mtx;  // the emitter's placement: EmitterParam::m_mtx
@@ -89,7 +107,9 @@ public:
     unsigned char m_fadeFrames;  // calc_fade's denominator
     unsigned char pad_183[0xE1];
     unsigned int m_handle;  // the handle the emitter_set_* setters look for
-    unsigned char pad_268[0xC];
+    unsigned char pad_268[0x4];
+    unsigned char m_flags;  // 0x26C: HashManager::build skips the emitter while bit 4 is set (the name is not the original's)
+    unsigned char pad_26d[0x7];
     unsigned char m_viewNum;  // emitter_set_viewnum's
 };
 

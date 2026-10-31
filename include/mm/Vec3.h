@@ -47,6 +47,16 @@ public:
     float dot(const Vec3& v) const { return x * v.x + y * v.y + z * v.z; }
     Vec3 cross(const Vec3& v) const { return Vec3(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x); }
     float length() const { return ::sqrtf(x * x + y * y + z * z); }
+    // a component infinite or NaN, or the 0xCCCCCCCC of uninitialized memory (ptlib's "!outPos.isError()")
+    bool isError() const { return !(isValid(x) && isValid(y) && isValid(z)); }
+    static bool isValid(float f) {
+        union {
+            float f;
+            unsigned int bits;
+        } value;
+        value.f = f;
+        return value.bits != 0xCCCCCCCC && (value.bits & 0x7F800000) != 0x7F800000;
+    }
     bool isZero() const { return ::fabsf(x) <= 1e-6f && ::fabsf(y) <= 1e-6f && ::fabsf(z) <= 1e-6f; }
     // to length 1; one too short for that becomes zero
     void normalize() {
