@@ -3,6 +3,7 @@
 
 #include "grlib/CGLibShader.h"
 #include "grlib/CGLibVtlMemPool.h"
+#include "mtl/AllocHandle.h"
 
 namespace grlib {
 
@@ -27,6 +28,9 @@ public:
     // (the parameter names are not the original's)
     unsigned int createMemPoolShader(void* work, const unsigned char* data, const unsigned char* programs,
                                      CGLibVtlMemPool* pool, bool flag);
+    // builds the shader from a copy of data in memory of handle (CGLibUtilObj::setup; the parameter names are not
+    // the original's)
+    unsigned int createCopyShader(mtl::ALLOC_HANDLE handle, const void* data, bool flag);
     // the declarations' count, the size of a CGLibDecShdExtTbl table, of data (0 when it is no declared shader)
     static unsigned int calcTblSize(const void* data);
     unsigned int getDeclarationMax() const;
