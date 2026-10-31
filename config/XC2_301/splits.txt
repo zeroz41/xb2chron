@@ -4787,14 +4787,14 @@ unit_7100891294.cpp:
 	.text        start:0x00891294 end:0x008912C0
 	.bss         start:0x015EC450 end:0x015EC460
 
-unit_71008912C0.cpp:
+unit_71008912C0.c:
 	.text        start:0x008912C0 end:0x00891460
 	.rodata      start:0x009B067F end:0x009B06C4
 
-unit_7100891460.cpp:
+unit_7100891460.c:
 	.text        start:0x00891460 end:0x0089194C
 
-unit_710089194C.cpp:
+unit_710089194C.c:
 	.text        start:0x0089194C end:0x00891AE4
 
 libs/wndlib/src/wndlib/broadphaze/wnd_broad_phaze_octree.cpp:

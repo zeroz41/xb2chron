@@ -1,8 +1,11 @@
 #ifndef NN_UTIL_H
 #define NN_UTIL_H
 
-// NintendoSDK 3.5.0's nn::util character conversion, as far as the module imports it.
+// NintendoSDK 3.5.0's nn::util character conversion and ReferSymbol, as far as the module imports them.
 namespace nn { namespace util {
+
+// keeps the symbol (a middleware info string) from being discarded by the linker
+void ReferSymbol(const void* pSymbol);
 
 enum CharacterEncodingResult {
     CharacterEncodingResult_Success,

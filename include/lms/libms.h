@@ -9,6 +9,27 @@
 extern "C" {
 #endif
 
+// the header a message binary starts with (its blocks follow at 0x20); the file size sits unaligned at 0x12
+typedef struct __attribute__((packed)) LMSiFileHeader {
+    char signature[8];          // "MsgPrjBn", "MsgStdBn", ...
+    unsigned short byteOrder;   // the byte order mark
+    unsigned short pad_A;
+    unsigned char encoding;     // 0x0C
+    unsigned char version;      // 0x0D
+    unsigned short numBlocks;   // 0x0E
+    unsigned short pad_10;
+    unsigned int fileSize;      // 0x12
+    unsigned char pad_16[0xA];
+} LMSiFileHeader;
+
+// the header each block of a message binary starts with (its contents follow at 0x10)
+typedef struct LMSiBlockHeader {
+    char type[4];            // its magic ("CLR1", "TGG2", ...)
+    unsigned int size;       // the contents' size
+    unsigned short reserved;
+    unsigned char pad_A[6];
+} LMSiBlockHeader;
+
 // one block of a message binary, as LMSi_AnalyzeMessageBinary lists it
 typedef struct LMSiBlock {
     const void* data;      // the block's contents (after its 0x10-byte header)
@@ -31,6 +52,35 @@ typedef struct LMSiColorBlock {
     int count;
     unsigned char colors[1][4];  // count of them
 } LMSiColorBlock;
+
+// a block that lists its entries by offset: a count, then each entry's offset from the block's start
+// (the tag blocks "TGG2", "TAG2", "TGP2", "TGL2")
+typedef struct LMSiOffsetTable {
+    unsigned short count;
+    unsigned short pad_2;
+    unsigned int offsets[1];  // count of them
+} LMSiOffsetTable;
+
+// an entry of the tag group block ("TGG2"): the group's id, then the indices of its tags in "TAG2"
+typedef struct LMSiTagGroup {
+    unsigned short id;
+    unsigned short numTags;
+    unsigned short tags[1];  // numTags of them
+} LMSiTagGroup;
+
+// an entry of the tag block ("TAG2"): the indices of its parameters in "TGP2", then its name
+typedef struct LMSiTag {
+    unsigned short numParams;
+    unsigned short params[1];  // numParams of them, then the name
+} LMSiTag;
+
+// an entry of the tag parameter block ("TGP2"): a list parameter (type 9) names the indices of its items in "TGL2"
+typedef struct LMSiTagParam {
+    unsigned char type;
+    unsigned char pad_1;
+    unsigned short numItems;
+    unsigned short items[1];  // numItems of them
+} LMSiTagParam;
 
 // a project binary ("MsgPrjBn"): the index of each block LMS_InitProject looks up, -1 for none
 typedef struct LMS_ProjectBinary {
