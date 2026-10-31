@@ -324,9 +324,8 @@ void GfGameUtil::fn_71002DF8B0(GF_OBJ_HANDLE*& handle) {
         mm::mtl::FixedVector<unsigned short, 32> drivers;
         drivers.push_back(GfDataDriver::fn_71002417DC(acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0));
         GfDataDriver::fn_71002416B4(drivers, acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0);
-        unsigned long num = drivers.size();
-        for (unsigned long i = 0; i < num; i++) {
-            GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriverByBdatID(drivers.begin()[i]);
+        for (unsigned short id : drivers) {
+            GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriverByBdatID(id);
             if (GfObjUtil::isValid(driver)) {
                 handle = driver;
                 break;
