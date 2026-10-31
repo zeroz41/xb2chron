@@ -42,6 +42,7 @@ public:
     // sequences: seqTitleStart queues it twice, and it sits between seqCompleteStart and seqTitleFadeInText. What it
     // does: GfMenuObjUtil::playJingle(7), returns true.
     bool fn_710046D648();
+    bool seqTitleStart();  // TitleListener queues it
     bool seqTitleEndWait();
     bool seqLogStart();
     bool seqLogNextWaitInfo();

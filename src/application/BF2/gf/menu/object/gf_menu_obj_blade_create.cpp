@@ -16,6 +16,7 @@
 #include "gf/GfMenuTypes.h"
 #include "ml/ScnRenderDrSysParmAcc.h"
 #include "classes/gf/GfMenuObjBladeCreate/MainListener.h"
+#include "classes/gf/GfMenuObjBladeCreate/IdeagramListener.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
@@ -134,6 +135,26 @@ bool GfMenuObjBladeCreate::seqResultStart() {
     pad_1120 = false;
     m_seq.addJob(&GfMenuObjBladeCreate::seqResultConfirm);
     return true;
+}
+
+void GfMenuObjBladeCreate::IdeagramListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    if (event.m_type == 1) {
+        acc.setDisp(false);
+        m_shown = 0;
+    } else if (event.m_type == 0x21) {
+        if (m_shown == 0) {
+            fadeIn(acc.m_handle);
+            m_shown = 1;
+        }
+    } else if (event.m_type == 0x22) {
+        if (m_shown == 1) {
+            fadeOut(acc.m_handle);
+            m_shown = 0;
+        }
+    } else {
+        ui::UIObjectListener::reciveEvent(event, handle);
+    }
 }
 
 bool GfMenuObjBladeCreate::seqCreateStartSE() {

@@ -12,6 +12,7 @@
 #include "classes/gf/GfMenuObjQuestLog/OrderListener.h"
 #include "classes/gf/GfMenuObjQuestLog/TitleListener.h"
 #include "classes/gf/GfMenuObject.h"
+#include "classes/gf/GfMenuReferenceQuest.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuFlag.h"
 #include "gf/GfMenuObjUtil.h"
@@ -232,6 +233,21 @@ bool GfMenuObjQuestLog::seqLogOut() {
     }
     pad_940 = false;
     return true;
+}
+
+void GfMenuObjQuestLog::TitleListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    if (event.m_type == 1) {
+        acc.setDisp(false);
+    } else if (event.m_type == 0x21) {
+        QuestID id(event.m_param0);
+        m_owner->getRef<GfMenuReferenceQuest>(0)->m_quest = id;
+        m_owner->m_titleSeq.clear();
+        m_owner->m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleStart);
+        acc.setDisp(true);
+    } else {
+        ui::UIObjectListener::reciveEvent(event, handle);
+    }
 }
 
 bool GfMenuObjQuestLog::seqLogNext() {

@@ -10,6 +10,7 @@
 #include "mm/mtl/FixedArray.h"
 #include "mm/mtl/IntrusivePtr.h"
 #include "classes/gf/GfMenuHanaAdapter.h"
+#include "classes/gf/GfMenuHanaPartsAdapter.h"
 #include "classes/ui/UIManager.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuObjUtil.h"
@@ -67,6 +68,16 @@ public:
     static void equipParts(unsigned int hana, unsigned int slot, unsigned int item, GfItemHandle handle);
     static void setupPlan(ui::UIObjectAcc& acc, GfMenuIDList* list);
     static void setupItemInfo(ui::UIObjectAcc& acc, GfMenuItemList* list);
+    // 1.0.0 has it out of line (0x710046F2AC), 3.0.1 only inlined into PlanListener::reciveEvent: the number
+    // adapter of TXT_ndetl_num for that blade
+    static void setupItemInfo2(ui::UIObjectAcc& acc, mm::mtl::IntrusivePtr<GfMenuReferenceNumber> number,
+                               unsigned int hana) {
+        GfMenuHanaPartsAdapter* adapter =
+            GfMenuHanaPartsAdapter::createFromReference(acc.searchChild("TXT_ndetl_num"), 2, number, true);
+        if (adapter != nullptr) {
+            adapter->m_hanaId = hana;
+        }
+    }
     static void refreshEquipListSub(ui::UIObjectAcc& acc, unsigned int hana, unsigned int slot, unsigned int type);
     bool seqLineAnime();
 

@@ -26,6 +26,8 @@ public:
     // parent layout's children and, for an image object (RTTI isKindOf), uses that one. Its one caller is
     // GfMenuObjMinimap2::MapListener::reciveEvent, when GfMenuObjUtil::fn_710048FD30(3) holds.
     void fn_710068A034(const mm::mtl::FixStr<32>& name, unsigned int parent, const char* file, unsigned int index);
+    // drops the image of that name streamed under the parent's object (GfMenuObjWorldMap::MainListener's floor map)
+    void deleteImage(const mm::mtl::FixStr<32>& name, unsigned int parent);
 
     unsigned char pad_08[0x58];  // 0x60 bytes in all (UIManager's constructor allocates so)
 };

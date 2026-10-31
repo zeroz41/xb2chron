@@ -282,6 +282,23 @@ void GfMenuObjHanaCustom::setupItemList(ui::UIObjectAcc& acc, GfMenuItemList* li
     }
 }
 
+void GfMenuObjHanaCustom::PlanListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc ownerAcc(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        unsigned int hana = GfMenuReference::getReferenceBladeID(0);
+        setupPlan(acc, m_owner->m_planList);
+        setupItemInfo(ownerAcc, m_owner->m_itemList);
+        setupItemInfo2(ownerAcc, m_owner->m_refNumber, hana);
+        break;
+    }
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjHanaCustom::setupPlan(ui::UIObjectAcc& acc, GfMenuIDList* list) {
     GfMenuHanaAdapter::createFromReferenceIndex(acc.searchChild("TXT_hn_enu_num"), 1, 0, true);
     GfMenuHanaAdapter::createFromReferenceIndex(acc.searchChild("TXT_hn_enu_max"), 2, 0, true);

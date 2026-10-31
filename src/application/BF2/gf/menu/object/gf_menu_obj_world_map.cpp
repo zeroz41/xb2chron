@@ -21,6 +21,10 @@
 #include "classes/ui/UIListInfoBase.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UISelectObjList.h"
+#include "classes/ui/UIStreamManager.h"
+#include "classes/gf/GfMenuObjMainMenu2.h"
+#include "classes/gf/GfMenuObjWorldMap/MainListener.h"
+#include "ui/EventData.h"
 #include "gf/GfMenuObjUtil.h"
 #include "mm/mtl/FixStr.h"
 #include "plugin/Bdat.h"
@@ -51,8 +55,8 @@ SelectMaps sSelectMaps = {{52, 53}, {3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 15, 16, 
 GfMenuObjWorldMap::GfMenuObjWorldMap(unsigned int handle)
     : GfMenuObject(handle), m_mapList(nullptr), m_mapSelectList(nullptr), pad_38(true), m_zoneList(nullptr),
       m_zoneSelectList(nullptr), m_seq(this), m_list2E0(nullptr), m_mapScale(1.0f), m_pointList(nullptr),
-      m_pointSelectList(nullptr), pad_318(0), m_zoneMapList1(nullptr), m_zoneMapList2(nullptr), m_fieldSkillList(nullptr), pad_698(false),
-      pad_69C(false), pad_6BC(0), m_iconSelectList(nullptr), m_iconTables(), pad_2F18(0), pad_2F60(false),
+      m_pointSelectList(nullptr), pad_318(0), m_zoneMapList1(nullptr), m_zoneMapList2(nullptr), m_fieldSkillList(nullptr), m_floorLoaded(false),
+      m_floorImage(), m_iconSelectList(nullptr), m_iconTables(), pad_2F18(0), pad_2F60(false),
       pad_2F61(false), m_context(nullptr), pad_2F70(false), m_gmkBdat(nullptr), pad_2F80(0), m_iconFilter(0),
       m_iconFilterList(nullptr), m_iconFilterCursor(nullptr), pad_2FD0(0), pad_2FD4(false) {
     m_jumpInfos.setAllocator(getAllocator(ALLOCATOR(0)));
@@ -193,6 +197,36 @@ void GfMenuObjWorldMap::fn_710049761C(GfMenuIDList* list) {
             id.m_id = (GfMenuObjUtil::fn_710048FD30(3) ? sSelectMaps.layer3 : sSelectMaps.normal)[i];
             list->addContents(id);
         }
+    }
+}
+
+void GfMenuObjWorldMap::MainListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        setFadeIn(handle);
+        break;
+    case 2: {
+        m_owner->m_seq.clear();
+        GfMenuObjWorldMap* owner = m_owner;
+        if (owner->m_floorLoaded && owner->m_floorImage.m_nLen != 0) {
+            ui::UIObjectAcc ownerAcc(owner->m_handle);
+            mm::mtl::PtrSingleton<ui::UIStreamManager>::sys()->deleteImage(owner->m_floorImage,
+                                                                           ownerAcc.searchChild("LAY_floor"));
+            owner->m_floorLoaded = false;
+            owner->m_floorImage.clear();
+        }
+        setFadeOut(handle, true);
+        break;
+    }
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObjMainMenu2::setCloseKeyEnable(true);
+        }
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
     }
 }
 

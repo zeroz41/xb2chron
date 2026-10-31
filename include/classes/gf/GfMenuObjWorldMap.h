@@ -3,6 +3,7 @@
 
 #include "classes/gf/GfMenuObject.h"
 #include "classes/gf/GfGmkLocatorAtlas.h"
+#include "gf/GfMenuObjUtil.h"
 #include "gf/GfMenuSequence.h"
 #include "mm/Aabb.h"
 #include "mm/Col3.h"
@@ -50,6 +51,26 @@ public:
     // the point's name only then (else GfDataBdat 0xF5's row 0x67C). isEnableJump inlines it.
     static bool fn_7100495A98(unsigned int id);
     static bool isEnterMap(unsigned int mapId);
+    // 1.0.0's setFadeIn/setFadeOut (0x71004E6D2C, 0x71004E6E18; out of line there, inlined into MainListener in 3.0.1)
+    static int setFadeIn(unsigned int handle) {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 0;
+        param.m_eventId = 1;
+        int ctrl = GfMenuObjUtil::startPresetCtrl(handle, param);
+        GfMenuObject::hookCtrlEvent(handle, ctrl);
+        return ctrl;
+    }
+    static int setFadeOut(unsigned int handle, bool flag) {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_out = 1;
+        param.m_preset = 6;
+        param.m_eventId = 2;
+        param.m_startFlag1 = flag;
+        int ctrl = GfMenuObjUtil::startPresetCtrl(handle, param);
+        GfMenuObject::hookCtrlEvent(handle, ctrl);
+        return ctrl;
+    }
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its code sits in
     // gf_menu_obj_world_map's .text right after initialize, which calls it (as WorldMapListener::reciveEvent does).
     // What it does: clears the list, then adds each map of the selectable-map table whose chkMapCond holds: maps 52
@@ -108,11 +129,10 @@ public:
     GfMenuFieldSkillList* m_fieldSkillList;     // 0x338
     // the blades with field skills (GfDataBlade::getListForFieldSkill fills it; getTotalFieldSkillLv sums them)
     mm::mtl::FixedVector<unsigned short, 422> m_fieldSkillBlades;  // 0x340
-    bool pad_698;
-    unsigned char pad_699[3];
-    bool pad_69C;
-    unsigned char pad_69D[0x1F];
-    unsigned int pad_6BC;
+    // a floor image is streamed in: MainListener's close deletes m_floorImage from LAY_floor and clears both (the
+    // names are not the original's)
+    bool m_floorLoaded;
+    mm::mtl::FixStr<32> m_floorImage;           // 0x69C
     ui::UISelectObjList* m_iconSelectList;      // 0x6C0
     mm::mtl::FixedArray<mm::mtl::FixedVector<unsigned int, 256>, 10> m_iconTables;  // 0x6C8
     unsigned int pad_2F18;

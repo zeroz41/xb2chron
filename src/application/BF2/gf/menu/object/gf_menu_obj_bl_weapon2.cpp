@@ -11,6 +11,7 @@
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfMenuBladeList.h"
 #include "classes/gf/GfMenuCallContext.h"
+#include "classes/gf/GfMenuCharDataAdapter.h"
 #include "classes/gf/GfMenuFullScreen.h"
 #include "classes/gf/GfMenuItemList.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
@@ -188,6 +189,56 @@ bool GfMenuObjBlWeapon2::seqSrcLeave() {
     m_seq.addWait(15);
     m_seq.addJob(&GfMenuObjBlWeapon2::seqSrcAppear);
     return true;
+}
+
+void GfMenuObjBlWeapon2::WeaponListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    if (event.m_type == 1) {
+        GfMenuWeaponAdapter::ReferenceChip chip;
+        chip.m_reference = 0;
+        chip.m_chip = m_owner->m_chip;
+        setupWeapon(acc, m_owner->m_items, chip);
+        if (m_owner->m_items->getSize() == 0) {
+            acc.setDispChild(false, "LAY_wpn_img@02");
+        }
+    } else if (event.m_type == 0x21) {
+        GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_bl_weapon@01"), 0, 2);
+        GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_bl_weapon@02"), 0, 1);
+    } else if (event.m_type == 0x22) {
+        GfMenuObjUtil::setCommonFadeOut(acc.searchChild("LAY_bl_weapon@01"), 0, 2);
+        GfMenuObjUtil::setCommonFadeOut(acc.searchChild("LAY_bl_weapon@02"), 0, 1);
+    } else {
+        ui::UIObjectListener::reciveEvent(event, handle);
+    }
+}
+
+void GfMenuObjBlWeapon2::setupWeapon(ui::UIObjectAcc& acc, GfMenuItemList* items,
+                                     GfMenuWeaponAdapter::ReferenceChip& chip) {
+    GfMenuWeaponAdapter* name =
+        GfMenuWeaponAdapter::createFromReferenceBlade(acc.searchChild("TXT_wpname_@01"), 0, 0, false);
+    if (name != nullptr) {
+        name->m_rowHandle = acc.searchChild("LAY_bl_weapon_text@01");
+    }
+    GfMenuCharDataAdapter::createFromReferenceBlade(acc.searchChild("IMG_wpn_img@01"), 0x59, 0, true);
+    GfMenuCharDataAdapter::createFromReferenceBlade(acc.searchChild("IMG_wpn_img_eff@01"), 0x59, 0, true);
+    GfMenuObjUtil::setChildDisp(acc.m_handle, "TXT_wptype_@01", false);
+    GfMenuWeaponAdapter::createFromReferenceBlade(acc.searchChild("TXT_wp_text_@01"), 6, 0, false);
+    GfMenuObjUtil::createSyncPlugin(acc.searchChild("TXT_wp_text_no_eff@01"), acc.searchChild("TXT_wp_text_@01"), 0x40);
+
+    name = GfMenuWeaponAdapter::createFromReferenceChip(acc.searchChild("TXT_wpname_@02"), 0, chip, false);
+    if (name != nullptr) {
+        name->m_rowHandle = acc.searchChild("LAY_bl_weapon_text@02");
+    }
+    GfMenuCharDataAdapter* image =
+        GfMenuCharDataAdapter::createFromReferenceBlade(acc.searchChild("IMG_wpn_img@02"), 0x59, 0, true);
+    if (image != nullptr) {
+        image->m_virtualMode = 1;
+    }
+    GfMenuObjUtil::setChildDisp(acc.m_handle, "TXT_wp_chip_@02", false);
+    GfMenuObjUtil::setChildDisp(acc.m_handle, "TXT_wptype_@02", false);
+    GfMenuObjUtil::setChildDisp(acc.m_handle, "TXT_wp_plus_@02", false);
+    GfMenuWeaponAdapter::createFromReferenceChip(acc.searchChild("TXT_wp_text_@02"), 6, chip, false);
+    GfMenuObjUtil::createSyncPlugin(acc.searchChild("TXT_wp_text_no_eff@02"), acc.searchChild("TXT_wp_text_@02"), 0x40);
 }
 
 bool GfMenuObjBlWeapon2::seqEnd() {

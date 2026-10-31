@@ -46,7 +46,8 @@ public:
     }
     void setupItemList(ui::UIObjectAcc& acc, GfMenuItemList* items, ui::UISelectObjList* select, unsigned int,
                        unsigned int);
-    void setupWeapon(ui::UIObjectAcc& acc, GfMenuItemList* items, GfMenuWeaponAdapter::ReferenceChip& chip);
+    // static: WeaponListener passes the acc first (x0); it never reads the list
+    static void setupWeapon(ui::UIObjectAcc& acc, GfMenuItemList* items, GfMenuWeaponAdapter::ReferenceChip& chip);
     void openCharChange();
     void closeCharChange();
     bool seqStart();
