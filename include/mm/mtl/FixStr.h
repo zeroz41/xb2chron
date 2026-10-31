@@ -140,10 +140,11 @@ public:
         return m_str[nIdx];
     }
     // the index of the first `s`, -1 when there is none (gf::fn_71001C0EE0 inlines it; the name is not the
-    // original's)
+    // original's; fw::ResourceManager::isDelayReleaseExtention keeps s's length as an int)
     int find(const char* s) const {
+        int len = strlen(s);
         for (long i = 0; i < m_nLen; ++i) {
-            if (strncmp(m_str + i, s, strlen(s)) == 0) {
+            if (strncmp(m_str + i, s, len) == 0) {
                 return i;
             }
         }

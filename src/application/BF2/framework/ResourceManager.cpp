@@ -135,10 +135,23 @@ ResourceObject* ResourceManager::searchResource(unsigned int type, mm::mtl::IAll
     return nullptr;
 }
 
-// isDelayReleaseExtention (0x710019BFC0) is not written yet: the closest attempt is 15 words long, all in the case of an
-// extension of no characters: the original returns false at once, this text leaves an empty walk over the list
-// (the inner search is FixStr::find's loop, which this text added to fixstr.h as a find; the name is not the
-// original's).
+bool ResourceManager::isDelayReleaseExtention(const char* path) {
+    ResourceManager* manager = mm::mtl::PtrSingleton<ResourceManager>::get();
+    if (manager != nullptr) {
+        const char* ext = ml::PathUtil::getFileExtPtr(path);
+        if (ext != nullptr) {
+            mm::mtl::FixStr<16> extention(ext);
+            for (const char **it = manager->m_delayReleaseExtentions.begin(),
+                            **last = manager->m_delayReleaseExtentions.end();
+                 it != last; ++it) {
+                if (extention.find(*it) != -1) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
 
 void ResourceManager::addSafeObject(mm::mtl::ReferenceObject* object, eResourceType type) {
     SafeObject* it = m_safeObjects.begin();

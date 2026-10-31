@@ -81,6 +81,19 @@ unsigned int PointerMap::regist(const void* ptr) {
     return m_lastHandle;
 }
 
+void PointerMap::remove(unsigned int handle) {
+    if (m_count != 0) {
+        handle &= m_mask;
+        unsigned int index = handle % m_count;
+        if (m_params[index].m_ptr != nullptr) {
+            m_params[index] = ptr_detail::PtrParam();
+            m_registCount--;
+        } else {
+            mm::MMStdBase::mmPrint("[fw] not exist handle:%x", handle);
+        }
+    }
+}
+
 void* PointerMap::getPtr(unsigned int handle) const {
     if (handle != 0 && m_count != 0) {
         handle &= m_mask;
@@ -122,9 +135,33 @@ bool PrimCapsule::isCollide(const PrimCapsule& other) const {
     return mm::Line2::getNearestLength(*this, other) <= m_radius + other.m_radius;
 }
 
+// mm::Line2::getNearestLength(const Line2&, const Line2&) (0x7100198EF8) is not written yet: the closest attempt
+// (direction copies for the cosine and the crossing feet, the fields for the parallel case) is still about 140 words
+// off in register choice and load placement.
+
 bool PrimCapsule::isCollide(const PrimSphere& sphere) const {
     return mm::Line2::getNearestLength(*this, sphere.m_center) <= m_radius + sphere.m_radius;
 }
+
+}  // namespace fw
+
+namespace mm {
+
+float Line2::getNearestLength(const Line2& line, const Vec3& point) {
+    float t = (point - line.m_start).dot(line.m_dir);
+    Vec3 nearest = line.m_start + line.m_dir * t;
+    // inside the segment when its ends lie on either side of the point's foot
+    if ((line.m_start - nearest).dot(line.m_end - nearest) < 0.0f) {
+        return (nearest - point).length();
+    }
+    float startSq = (line.m_start - point).dot(line.m_start - point);
+    float endSq = (line.m_end - point).dot(line.m_end - point);
+    return ::sqrtf(startSq < endSq ? startSq : endSq);
+}
+
+}  // namespace mm
+
+namespace fw {
 
 void PrimSphere::setup(const mm::Vec3& center, float radius) {
     m_center = center;
