@@ -22,7 +22,14 @@ struct Bone {
 // the fields' names are not the original's
 struct ExtraTruckSlot {
     const char* m_name;  // getExtraTruckSlotID finds a slot by it
-    unsigned char pad_8[0x10];
+    // the index of the truck named `name`, -1 when none is (AnimPoseModifier.cpp's unit; it lower_bounds m_truckNames)
+    short getTruckID(const char* name) const;
+    // the name of a value's truck (inline: SimpleMapper's constructor indexes the names with a 16-bit index; the name
+    // is not the original's)
+    const char* getTruckName(unsigned short truck) const { return m_truckNames[truck]; }
+
+    // per value, its truck's name, sorted (getTruckID searches them; the name is not the original's)
+    Array<const char*> m_truckNames;
     // its values' defaults: Blender::sampleExtraTrucks normalizes with them (NormalizeExtraTruckSrc::pDefaults), so its
     // size is the slot's value count (Factory::createExtraTruckBuffer makes no buffer for a slot without any). The
     // name is not the original's
