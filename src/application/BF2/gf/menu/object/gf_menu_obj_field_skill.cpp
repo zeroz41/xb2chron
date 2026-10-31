@@ -21,9 +21,15 @@
 #include "classes/gf/GfMenuPosAdapter.h"
 #include "classes/ui/UIManager.h"
 #include "classes/ui/UIObjectAcc.h"
+#include "classes/gf/GfMenuCharDataAdapter.h"
+#include "classes/gf/GfMenuFieldSkillAdapter.h"
+#include "classes/gf/GfMenuReferenceAdapter.h"
+#include "classes/ui/UIEventManager.h"
+#include "mm/Pnt.h"
 #include "gf/GfMenuBdat.h"
 #include "gf/GfMenuObjUtil.h"
 #include "mm/Vec3.h"
+#include "mm/mtl/FixStr.h"
 #include "ui/EventData.h"
 #include "ui/UIStr.h"
 
@@ -127,6 +133,129 @@ GfMenuObjFieldSkill::~GfMenuObjFieldSkill() {
         m_skillList->release();
         m_skillList = nullptr;
     }
+}
+
+void GfMenuObjFieldSkill::initialize() {
+    ui::UIObjectAcc acc(m_handle);
+    {
+        ui::UIObjectAcc main(acc.m_handle, "LAY_main");
+        GfMenuObject::attachExternalCall(0x31, main.m_handle);
+        GfMenuObject::attachExternalCall(0x33, main.m_handle);
+        GfMenuObject::attachExternalCall(0x34, main.m_handle);
+        GfMenuObject::attachExternalCall(0x35, main.m_handle);
+        GfMenuObject::attachExternalCall(0x36, main.m_handle);
+#line 125
+        MainListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) MainListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(main.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    {
+        ui::UIObjectAcc request(acc.m_handle, "LAY_request");
+        mm::mtl::FixStr<32> name;
+        GfMenuObject::attachExternalCall(0x37, request.m_handle);
+#line 138
+        TotalListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TotalListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(request.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+        {
+            ui::UIListInfoBase::SetupParam param;
+            m_skillList = GfMenuFieldSkillList::create();
+            param.m_pageRowSize = 2;
+            m_skillList->setup(getAllocator(ALLOCATOR(0)), param);
+        }
+        for (int i = 0; i < 2; i++) {
+            name.format("TXT_request_skill_name@%02d", i + 1);
+            GfMenuFieldSkillAdapter* skill =
+                GfMenuFieldSkillAdapter::createFromList(request.searchChild(name.m_str), 0, m_skillList, i);
+            if (skill != nullptr) {
+                name.format("LAY_request_skill@%02d", i + 1);
+                skill->m_rowHandle = request.searchChild(name.m_str);
+            }
+            name.format("TXT_request_skill_lv_num@%02d", i + 1);
+            GfMenuReferenceAdapter* level =
+                GfMenuReferenceAdapter::create(request.searchChild(name.m_str), m_skillLevels[i], true);
+            if (level != nullptr) {
+                level->setNumberInterpolateMode(0.15f);
+            }
+            name.format("IMG_requestskill_gauge@%02d", i + 1);
+            ui::UIObjectAcc gauge(request.m_handle, name.m_str);
+            if (gauge.m_object != nullptr) {
+                GfMenuReferenceAdapter* number = GfMenuReferenceAdapter::create(gauge.m_handle, m_skillGauges[i], true);
+                if (number != nullptr) {
+                    number->setNumberInterpolateMode(0.15f);
+                }
+                gauge.setExtType(1);
+                GfMenuObject::addNumberEventCondition(request.m_handle, name.m_str, 1, i, 1.0f);
+            }
+        }
+    }
+    {
+        ui::UIObjectAcc blade(acc.m_handle, "LAY_blade");
+        GfMenuCharDataAdapter::createFromReferenceBlade(blade.searchChild("IMG_blade_shadow"), 0x36, 5, false);
+        GfMenuCharDataAdapter::createFromReferenceBlade(blade.searchChild("IMG_blade"), 0x36, 5, false);
+#line 203
+        BladeListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) BladeListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(blade.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    {
+        ui::UIObjectAcc base(acc.m_handle, "LAY_base");
+#line 213
+        BaseListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) BaseListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(base.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    {
+        ui::UIObjectAcc info(acc.m_handle, "LAY_blade_info");
+        GfMenuCharDataAdapter::createFromReferenceBlade(info.searchChild("TXT_blade_info_name"), 2, 5, false);
+        GfMenuFieldSkillAdapter::createFromReference(info.searchChild("TXT_blade_info_skill_name"), 0, m_skillRef);
+        GfMenuFieldSkillAdapter::createFromReference(info.searchChild("TXT_blade_info_skill_lv_num"), 1, m_skillRef);
+#line 232
+        SkillInfoListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SkillInfoListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(info.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    {
+        ui::UIObjectAcc result(acc.m_handle, "LAY_result");
+        GfMenuObjUtil::createDockPlugin(acc.searchChild("TXT_result_success_text"),
+                                        acc.searchChild("TXT_result_success_name"), 1, mm::Pnt<short>(8, 0), 0);
+        GfMenuObjUtil::createDockPlugin(acc.searchChild("TXT_result_success_eff_text"),
+                                        acc.searchChild("TXT_result_success_eff_name"), 1, mm::Pnt<short>(8, 0), 0);
+#line 250
+        ResultListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ResultListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(result.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    {
+        ui::UIObjectAcc input(acc.m_handle, "LAY_input");
+        GfMenuObject::attachExternalCall(0x32, input.m_handle);
+#line 262
+        InputListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) InputListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(input.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    GfMenuObject::initialize();
 }
 
 void GfMenuObjFieldSkill::finalize() {
@@ -580,6 +709,142 @@ void GfMenuObjFieldSkill::ResultListener::reciveEvent(const ui::EventData& event
             m_state = 0;
         }
         break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjFieldSkill::TotalListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        m_state = 0;
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::addResultCallContext(acc.m_handle, 1, 0);
+        } else if (event.m_param0 == 2) {
+            m_owner->pad_5C = 0;
+        }
+        break;
+    case 0x21:
+        if (m_state == 0) {
+            acc.setDisp(true);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_in_r";
+            param.m_startFlags = 8;
+            param.m_eventId = 1;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            m_state = 1;
+        }
+        break;
+    case 0x22:
+        if (m_state == 1) {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_out_r";
+            param.m_startFlags = 10;
+            param.m_eventId = 2;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            m_state = 0;
+        }
+        break;
+    case 0xD:
+        if (event.m_param1 == 1) {
+            int row = event.m_param2 + 1;
+            int on = event.m_param0;
+            mm::mtl::FixStr<32> name;
+            name.format("IMG_requestskill_clear@%02d", row);
+            ui::UIObjectAcc clear(acc.m_handle, name.m_str);
+            name.format("TXT_request_skill_name@%02d", row);
+            ui::UIObjectAcc skillName(acc.m_handle, name.m_str);
+            name.format("TXT_request_skill_lv_num@%02d", row);
+            ui::UIObjectAcc level(acc.m_handle, name.m_str);
+            if (on == 1) {
+                GfMenuObjUtil::setColMulandAdd(skillName.m_handle, "txt_highlight");
+                skillName.setBorderWeight(1.0f);
+                level.setBorderWeight(1.0f);
+                clear.startAnimation("start", false);
+                clear.setDisp(true);
+            } else {
+                skillName.loadDefColor();
+                skillName.setBorderWeight(-0.5f);
+                level.setBorderWeight(-0.5f);
+                clear.stopAnimation();
+                clear.setDisp(false);
+            }
+        }
+        break;
+    case 0x100: {
+        unsigned short gmkName = event.m_param0Short;
+        unsigned short noSkills = event.m_paramShort[7];
+        {
+            ui::UIObjectAcc text(acc.m_handle, "TXT_requset_gmkname");
+            text.setDisp(gmkName != 0xffff);
+            if (gmkName != 0xffff) {
+                GfMenuObject::setText(text.m_handle, gmkName);
+            }
+        }
+        m_owner->m_skillList->clear();
+        for (int i = 0; i < 2; i++) {
+            unsigned short skill = event.m_paramShort[i * 2 + 1];
+            if (skill == 0) {
+                m_owner->m_skillLevels[i]->m_value = 0;
+                m_owner->m_skillGauges[i]->m_value = 0;
+            } else {
+                unsigned short lv = event.m_paramShort[i * 2 + 2];
+                MenuFieldSkill fs;
+                fs.m_id = skill;
+                fs.m_lv = lv;
+                m_owner->m_skillList->addFieldSkill(fs);
+                m_owner->m_skillLevels[i]->m_value = lv;
+                m_owner->m_skillLevels[i]->m_max = lv;
+                m_owner->m_skillGauges[i]->m_value = 0;
+                m_owner->m_skillGauges[i]->m_max = 100;
+            }
+        }
+        if (noSkills == 1) {
+            m_owner->m_mainHandle = acc.m_handle;
+            GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_base"), 0, 0.0f);
+            GfMenuObject::sendOpenEvent(acc.m_handle, 0, 0.0f);
+        } else {
+            GfMenuObject::addResultCallContext(acc.m_handle, 1, 0);
+        }
+        m_owner->pad_5D = noSkills == 1;
+        m_owner->pad_5C = 1;
+        break;
+    }
+    case 0x101:
+        GfMenuObject::termCallContext(acc.m_handle);
+        break;
+    case 0x102: {
+        unsigned short slot = event.m_paramShort[0];
+        unsigned short add = event.m_paramShort[1];
+        unsigned short done = m_owner->m_skillLevels[slot]->m_max - m_owner->m_skillLevels[slot]->m_value;
+        m_owner->m_skillLevels[slot]->setValue(m_owner->m_skillLevels[slot]->m_max - (add + done));
+        if (m_owner->m_skillLevels[slot]->m_value < 0) {
+            m_owner->m_skillLevels[slot]->m_value = 0;
+        }
+        m_owner->m_skillGauges[slot]->m_value =
+            (1.0f - (float)m_owner->m_skillLevels[slot]->m_value / (float)m_owner->m_skillLevels[slot]->m_max) * 100.0f;
+        GfMenuObjUtil::playVibration(static_cast<fw::VibrationID>(2), 1.0f);
+        break;
+    }
+    case 0x103:
+        break;
+    case 0x10C: {
+        unsigned short slot = event.m_param0Short;
+        if (slot >= 1 && slot <= 2) {
+            (*(m_owner->m_skillLevels + (slot - 1)))->setValue(m_owner->m_skillLevels[slot - 1]->m_max);
+            m_owner->m_skillGauges[slot - 1]->m_value = 0;
+        }
+        break;
+    }
     default:
         UIObjectListener::reciveEvent(event, handle);
         break;
