@@ -7,6 +7,7 @@
 
 namespace btl { class CharacterParameter; }
 namespace btl { struct ARTS_SLOT_DATA; struct ARTS_DATA; }
+namespace btl { class GROUP_DATA; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfObj; }
@@ -97,6 +98,8 @@ public:
     bool StartBackHome();
     bool MoveStop(bool);
     void AddKizuna(float);
+    void AddKizunaStage(int add);
+    float GetKizunaMoveSpeedRate() const;
     void SetScout(bool);
     void SetSuperArmorTime(float);
     bool IsInAttackRange(int, float*) const;
@@ -199,6 +202,8 @@ public:
     void ResetAlphaAnimation();
     ActionCommand* GetFreeCommand();
     int GetGroupIndex() const;
+    const GROUP_DATA* GetGroupDataConst() const;
+    void ResetRequestPermit();
     bool CheckRandFriendEnhanceRate(int id) const;
     bool IsRescue() const;
 
@@ -313,6 +318,7 @@ public:
     int GetArtsSlotIndex(int artsID) const;
     float GetArtsAttackDistance(const ARTS_DATA& arts) const;
     void TurnDirection(const mm::Vec3& dir, bool, bool);
+    void SetAnimation(ANIM_ID id, bool, int, int, bool, bool);
 
     unsigned char pad_8[0x8];
     // where the character stands: EnemyParameter::AngryInfection measures from it (the name is not the original's)
@@ -437,7 +443,11 @@ public:
     // Utility::AI_IsFly returns it (the name is not the original's)
     unsigned int m_isFly : 1;
     unsigned int pad_F00_24 : 8;
-    unsigned int pad_F04 : 25;
+    unsigned int pad_F04 : 4;
+    // ActionCommandEndBladeArts clears both when it ends the action (meaning unknown)
+    unsigned int pad_F04_4 : 1;
+    unsigned int pad_F04_5 : 1;
+    unsigned int pad_F04_6 : 19;
     // the name is not the original's: fn_710002F368 treats the character as out of battle while it is set
     unsigned int m_isBattleIgnore : 1;
     unsigned int pad_F07_2 : 6;

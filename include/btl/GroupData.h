@@ -135,10 +135,14 @@ public:
     unsigned char pad_114[0x5];
     bool pad_bit0 : 1;
     bool m_needPermit : 1;  // named after 1.0.0's SetNeedPermit
-    bool pad_bit2 : 1;
-    bool pad_bit3 : 1;
-    unsigned char : 4;
-    unsigned char : 6;
+    // BattleCharacter::ResetRequestPermit clears both bits (the name is not the original's)
+    unsigned char m_requestPermit : 2;
+    unsigned char : 3;
+    // BattleCharacter::GetKizunaStage answers 3 while it is set (meaning unknown)
+    bool pad_bit7 : 1;
+    unsigned char : 5;
+    // BattleCharacter::GetGroupDataConst answers the group only while it is set (the name is not the original's)
+    bool m_isValid : 1;
     unsigned char pad_11B[0x5];
 };
 

@@ -22,6 +22,7 @@
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfDataBdat.h"
 #include "plugin/Bdat.h"
+#include "btl/Utility.h"
 
 namespace btl {
 
@@ -273,6 +274,14 @@ void BattleCharacter::ActionCommandBladeArts(const ActionCommand* cmd, ActionCom
     }
 }
 
+void BattleCharacter::ActionCommandEndBladeArts() {
+    if (m_actionID == ACTION_BLADE_ARTS && m_moveData.isZero() && pad_EEE != 1 && pad_EEE != 0x15) {
+        SetAnimation(static_cast<ANIM_ID>(1), true, 0, 0, true, true);
+        pad_F04_4 = false;
+        pad_F04_5 = false;
+    }
+}
+
 bool BattleCharacter::IsBlade() const {
     if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
         return !param->m_isNotBlade;
@@ -324,6 +333,15 @@ bool BattleCharacter::fn_710002F368() const {
     return !m_isBattle || m_isBattleIgnore;
 }
 
+const GROUP_DATA* BattleCharacter::GetGroupDataConst() const {
+    int group = GetGroupIndex();
+    if (group < 0) {
+        return nullptr;
+    }
+    const GROUP_DATA* data = &mm::mtl::PtrSingleton<DataManager>::sys()->m_groups[group];
+    return data->m_isValid ? data : nullptr;
+}
+
 bool BattleCharacter::GetWeaponEffectCaster() {
     if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_challengeAnySuccess && !m_isPlayer && m_isBattle &&
         !IsDead(0)) {
@@ -362,6 +380,27 @@ void BattleCharacter::StopSE(BTL_SE se, int no) {
     }
 }
 
+int BattleCharacter::GetKizunaStage(float* ratio) const {
+    if (Utility::IsThirdCharacter(m_handle)) {
+        return 6;
+    }
+    if (ratio != nullptr) {
+        *ratio = 0.0f;
+    }
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr) {
+        return 0;
+    }
+    int group = param->m_groupIndex;
+    if (group >= 0) {
+        const GROUP_DATA& data = mm::mtl::PtrSingleton<DataManager>::sys()->m_groups[group];
+        if (data.m_isValid && !data.pad_bit7) {
+            return data.GetBladeDataConst(-1)->GetKizunaStage(ratio);
+        }
+    }
+    return 3;
+}
+
 void BattleCharacter::fn_710003D114(bool flag0, int slot, bool flag1, float value) {
     fn_710005F554(~(slot < 0 ? 16 : slot), flag0, flag1, value);
 }
@@ -374,10 +413,36 @@ bool BattleCharacter::fn_710004232C() {
     return fn_710002FC0C(7);
 }
 
+void BattleCharacter::ResetRequestPermit() {
+    int group = GetGroupIndex();
+    if (group < 0) {
+        return;
+    }
+    DataManager* manager = mm::mtl::PtrSingleton<DataManager>::sys();
+    manager->m_groups[group].m_requestPermit = 0;
+    if (manager->pad_15D10 == group) {
+        manager->m_specialEffects[3] = true;
+    }
+}
+
 void BattleCharacter::ActionCommandEndRun() {
     if (!m_isRunHold && m_actionStep == 0) {
         SetAction(ACTION_PUT_OUT_WEAPON, false, false, 0, 0.0f);
     }
+}
+
+float BattleCharacter::GetKizunaMoveSpeedRate() const {
+    if (!m_isPlayer) {
+        const CharacterParameter* param = GetCharacterParameterConst(false);
+        if (param == nullptr || !param->fn_710008527C(false)) {
+            param = GetCharacterParameterConst(false);
+            if (param == nullptr || !param->fn_7100085314(false)) {
+                return 1.0f;
+            }
+        }
+    }
+    int id = Misc::CovertKizunaStageToID(GetKizunaStage(nullptr));
+    return Bdat::getValCheckU16(gf::GfDataBdat::getFP(0x33), "MoveSpeedRev", id) * 0.01f;
 }
 
 bool BattleCharacter::fn_7100059314() {
@@ -660,6 +725,43 @@ void BattleCharacter::AddPartyGauge(float value) {
     }
     int group = GetGroupIndex();
     mm::mtl::PtrSingleton<DataManager>::sys()->AddPartyGauge(value, group, true);
+}
+
+void BattleCharacter::AddKizuna(float value) {
+    if (value == 0.0f) {
+        return;
+    }
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr) {
+        return;
+    }
+    int group = param->m_groupIndex;
+    if (group < 0) {
+        return;
+    }
+    GROUP_DATA& data = mm::mtl::PtrSingleton<DataManager>::sys()->m_groups[group];
+    if (!data.m_isValid || data.pad_bit7) {
+        return;
+    }
+    const_cast<GROUP_BLADE_DATA*>(data.GetBladeDataConst(-1))->AddGauge(value, true);
+}
+
+void BattleCharacter::AddKizunaStage(int add) {
+    int stage = GetKizunaStage(nullptr) + add;
+    stage = stage < 0 ? 0 : stage > 6 ? 6 : stage;
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr) {
+        return;
+    }
+    int group = param->m_groupIndex;
+    if (group < 0) {
+        return;
+    }
+    GROUP_DATA& data = mm::mtl::PtrSingleton<DataManager>::sys()->m_groups[group];
+    if (!data.m_isValid || data.pad_bit7) {
+        return;
+    }
+    const_cast<GROUP_BLADE_DATA*>(data.GetBladeDataConst(-1))->SetKizunaStage(stage, 0.5f, false);
 }
 
 void BattleCharacter::FluctuatePartyGauge(int value) {

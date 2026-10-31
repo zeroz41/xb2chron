@@ -1,6 +1,7 @@
 #ifndef CLASSES_BTL_DATAMANAGER_H
 #define CLASSES_BTL_DATAMANAGER_H
 
+#include "btl/GroupData.h"
 #include "classes/btl/PlayerParameter.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "ml/CriticalSection.h"
@@ -109,7 +110,7 @@ public:
     // GetCharacterParameterConst answers ids from 1000 from here (the name is not the original's)
     CharacterParameter* m_enemyParameters[70];
     unsigned char pad_7370[0xBAC0];
-    unsigned char pad_12E30[0x2AC0];  // GROUP_DATA[38] (fn_71000968B8, ReleaseEnemyGroup)
+    GROUP_DATA m_groups[38];  // BattleCharacter::GetGroupDataConst indexes it by group (the name is not the original's)
     ENEMY_GROUP m_enemyGroups[35];   // the name is not the original's
     POUCH_BUFF m_pouchBuffs[3];      // indexed by group (the name is not the original's)
     unsigned char pad_15CEC[0x14];
@@ -117,7 +118,9 @@ public:
     gf::GfMenuCallContext* m_comboRequestContext;
     // ElementalComboManager::GetElementalComboID answers pad_15D11 for this character (meaning unknown)
     gf::GF_OBJ_HANDLE* pad_15D08;
-    unsigned char pad_15D10;
+    // the group BattleCharacter::ResetRequestPermit compares its own with (signed: 1.0.0's
+    // DataManager::ResetRequestPermit sets it and the next byte to -1)
+    signed char pad_15D10;
     unsigned char pad_15D11;  // see pad_15D08
     unsigned char pad_15D12;
     // Utility::GetElementalEffectID returns it (the name is not the original's)

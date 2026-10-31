@@ -77,6 +77,26 @@ int DataManager::RegisterEnemyGroup(gf::GF_OBJ_HANDLE* first, gf::GF_OBJ_HANDLE*
     return -1;
 }
 
+void DataManager::ReleaseEnemyGroup(gf::GF_OBJ_HANDLE* handle) {
+    int index = GetEnemyGroupIndex(handle);
+    if (index < 0) {
+        return;
+    }
+    ENEMY_GROUP& group = m_enemyGroups[index - 3];
+    if (group.m_first == handle) {
+        group.m_firstReleased = true;
+    } else if (group.m_second == handle) {
+        group.m_secondReleased = true;
+    }
+    if (group.m_firstReleased && group.m_secondReleased) {
+        group.m_second = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        group.m_first = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        group.m_firstReleased = false;
+        group.m_secondReleased = false;
+        m_groups[index].m_isValid = false;
+    }
+}
+
 int DataManager::GetEnemyGroupIndex(gf::GF_OBJ_HANDLE* handle) {
     int index = -1;
     if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
