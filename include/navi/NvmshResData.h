@@ -149,7 +149,8 @@ public:
         // the resource's grid cell (read as one word by NvmshResMan::calcNaviObjUpdate)
         unsigned int m_cellX : 16;
         unsigned int m_cellY : 16;
-        unsigned char pad_C[0x1C];
+        unsigned char pad_C[0x18];
+        float m_treeScale;  // _NvMhMeshTree's bounds' unit (the name is not the original's)
         unsigned int m_blockOfs0;
         int m_workSize;  // what NvmshResMan::calcNaviObjUpdate sums into _NaviCalcResTbl::m_total
         unsigned int m_blockOfs1;
@@ -318,9 +319,10 @@ struct _NvMhTreeData {
     unsigned int m_layerOfs[2];
 };
 
-// the grid around the current position NvmshResMan::calcNaviInfoUpdate sets up (0x60 bytes; the type name is
-// NvmshAcObjBase::calcMoveVecRay's mangled signature's, the member names are not the original's)
-struct _NaviCalcResInfo {
+// the grid around the current position NvmshResMan::calcNaviInfoUpdate sets up (0x60 bytes, NvmshResMan's
+// m_calcInfo; the type and member names are not the original's: NvmshAcObjBaseDef::update passes the 0x40-byte
+// per-bank work, not this, as the mangled _NaviCalcResInfo*)
+struct NaviCalcGrid {
     // a grid cell
     struct Cell {
         short x;
@@ -345,6 +347,18 @@ struct _NaviCalcResInfo {
     unsigned char pad_58[0x8];
 };
 
+class NvmshResMan;
+
+// one bank's search work (0x40 bytes, two in NvmshResMan's work allocation after the tables, over its m_workBuf;
+// the type name is the mangled signatures': NvmshAcObjBaseDef::update passes NvmshResMan's work of the read bank
+// as the _NaviCalcResInfo* of NvmshAcObjBase::seachNaviMesh etc.; the member names are not the original's): four
+// sized areas and a fifth one; m_bufs[0] is NvmshUtilColi's mesh bit table
+struct _NaviCalcResInfo {
+    NvmshResMan* m_resMan;
+    int m_sizes[4];
+    unsigned char* m_bufs[5];
+};
+
 // a navi layer's resources in the 5x5 cells around the position (0x1C0 bytes, two in NvmshResMan's work
 // allocation; the type name is the mangled signatures', the member names are not the original's)
 struct _NaviCalcResTbl {
@@ -359,7 +373,30 @@ struct _NaviCalcResTbl {
     const unsigned char* m_conectBlocks[8];
     const _NvMhTreeData* m_tree;
     const unsigned char* m_treeBlocks[4];
-    _NaviCalcResInfo* m_info;
+    NaviCalcGrid* m_info;
+};
+
+// a node of a navi's mesh tree (0x10 bytes, block 3; the type name is NvmshUtilColi::treePointRay's mangled
+// signature's, the member names are not the original's): bounds in Head::m_treeScale units (the far corner
+// first), m_meshNum mesh indices from m_meshOfs in block 7, then m_childNum child node indices
+struct _NvMhMeshTree {
+    short m_maxX;
+    short m_maxY;
+    short m_maxZ;
+    short m_minX;
+    short m_minY;
+    short m_minZ;
+    unsigned short m_meshOfs;
+    unsigned short m_meshNum : 8;
+    unsigned short m_childNum : 8;
+};
+
+// a mesh of a navi in the 5x5 cells (the type name is the mangled signatures', the member names are not the
+// original's): the mesh index and its navi's grid cell (read as one halfword)
+struct _NaviStMeshId {
+    unsigned short m_mesh;
+    unsigned short m_cellX : 8;
+    unsigned short m_cellY : 8;
 };
 
 }  // namespace navi

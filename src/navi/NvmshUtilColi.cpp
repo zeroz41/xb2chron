@@ -56,9 +56,9 @@ NvmshResMan::NvmshResMan(mtl::ALLOC_HANDLE handle, int size, int acSize)
     m_workBuf = m_buffer + m_bufferSize;
     unsigned char* calc = m_buffer + (m_bufferSize + acSize);
     m_calcTbl = reinterpret_cast<_NaviCalcResTbl*>(calc);
-    m_seachWork = reinterpret_cast<SeachWork*>(calc + sizeof(_NaviCalcResTbl) * 2);
-    m_calcInfo = reinterpret_cast<_NaviCalcResInfo*>(calc + sizeof(_NaviCalcResTbl) * 2 + sizeof(SeachWork) * 2);
-    memset(m_calcInfo, 0, sizeof(_NaviCalcResInfo));
+    m_resInfo = reinterpret_cast<_NaviCalcResInfo*>(calc + sizeof(_NaviCalcResTbl) * 2);
+    m_calcInfo = reinterpret_cast<NaviCalcGrid*>(calc + sizeof(_NaviCalcResTbl) * 2 + sizeof(_NaviCalcResInfo) * 2);
+    memset(m_calcInfo, 0, sizeof(NaviCalcGrid));
     m_calcInfo->m_pos = mm::Vec3(100000.0f, 100000.0f, 100000.0f);
     m_calcInfo->m_max = mm::Vec3(-100000.0f, -100000.0f, -100000.0f);
     m_calcInfo->m_min = mm::Vec3(100000.0f, 100000.0f, 100000.0f);
@@ -67,16 +67,16 @@ NvmshResMan::NvmshResMan(mtl::ALLOC_HANDLE handle, int size, int acSize)
     m_calcTbl[0].m_info = m_calcInfo;
     m_calcTbl[1].m_info = m_calcInfo;
     for (int i = 0; i < 2; i++) {
-        m_seachWork[i].m_bufs[0] = m_workBuf + i * 0x3f020;
-        m_seachWork[i].m_sizes[0] = 0x3000;
-        m_seachWork[i].m_bufs[2] = m_workBuf + i * 0x3f020 + 0x3000;
-        m_seachWork[i].m_sizes[2] = 0x20;
-        m_seachWork[i].m_bufs[1] = m_workBuf + i * 0x3f020 + 0x3020;
-        m_seachWork[i].m_sizes[1] = 0x30000;
-        m_seachWork[i].m_bufs[3] = m_workBuf + i * 0x3f020 + 0x33020;
-        m_seachWork[i].m_bufs[4] = m_workBuf + i * 0x3f020 + 0x39020;
-        m_seachWork[i].m_sizes[3] = 0x6000;
-        m_seachWork[i].m_resMan = this;
+        m_resInfo[i].m_bufs[0] = m_workBuf + i * 0x3f020;
+        m_resInfo[i].m_sizes[0] = 0x3000;
+        m_resInfo[i].m_bufs[2] = m_workBuf + i * 0x3f020 + 0x3000;
+        m_resInfo[i].m_sizes[2] = 0x20;
+        m_resInfo[i].m_bufs[1] = m_workBuf + i * 0x3f020 + 0x3020;
+        m_resInfo[i].m_sizes[1] = 0x30000;
+        m_resInfo[i].m_bufs[3] = m_workBuf + i * 0x3f020 + 0x33020;
+        m_resInfo[i].m_bufs[4] = m_workBuf + i * 0x3f020 + 0x39020;
+        m_resInfo[i].m_sizes[3] = 0x6000;
+        m_resInfo[i].m_resMan = this;
     }
     m_acWork = reinterpret_cast<int*>(m_workBuf + 0x3f020 * 2);
     m_acWorkSize = acSize - 0x3f020 * 2;

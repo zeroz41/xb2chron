@@ -13,14 +13,6 @@ namespace navi {
 // table 0x7100B7F7E0
 class NvmshResMan : public ::ml::IWorkEvent {
 public:
-    // one A* search's work (0x40 bytes, two in the constructor's allocation after the resource buffer's end,
-    // over m_workBuf; the type and member names are not the original's): four sized areas and a fifth one
-    struct SeachWork {
-        NvmshResMan* m_resMan;
-        int m_sizes[4];
-        unsigned char* m_bufs[5];
-    };
-
     // size bytes of resource memory (m_memMan's blocks), then acSize bytes of work: the two searches' and the
     // access objects' (the parameter names are not the original's)
     NvmshResMan(mtl::ALLOC_HANDLE handle, int size, int acSize);
@@ -85,8 +77,8 @@ public:
     // the two navi layers' tables and the info they share (in the allocation after the access work; the
     // names are not the original's)
     _NaviCalcResTbl* m_calcTbl;
-    SeachWork* m_seachWork;  // two (the name is not the original's)
-    _NaviCalcResInfo* m_calcInfo;
+    _NaviCalcResInfo* m_resInfo;  // two, one per bank (the name is not the original's)
+    NaviCalcGrid* m_calcInfo;
     unsigned char* m_workBuf;  // the work after the resource buffer (the name is not the original's)
     // the access objects' work buffer: m_acWorkNum ints for each of NvmshAcMan's 256 objects and its global one
     // (NvmshAcMan's constructor slices it); the names are not the original's

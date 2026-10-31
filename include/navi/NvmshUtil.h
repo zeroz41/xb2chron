@@ -2,9 +2,8 @@
 #define NAVI_NVMSHUTIL_H
 
 #include "mm/Vec3.h"
+#include "navi/NvmshResData.h"
 
-namespace navi { class NvmshColiResult; }
-namespace navi { class NvmshResObj; }
 namespace navi { class NvmshConectResult; }
 
 namespace navi {
@@ -46,6 +45,15 @@ public:
     static const unsigned char* NAVI_UTIL_ADJTBL[4];
 };
 
+// a mesh query's input and result (0xB0 bytes, NvmshAcObjBase::seachNaviMesh fills one on the stack; only the
+// members NvmshUtilColi reads are declared, the names are not the original's)
+class NvmshColiResult {
+public:
+    unsigned char pad_0[0xA0];
+    _NaviCalcResTbl* m_tbl;  // the layer's resources (NvmshAcObjBase::seachNaviMesh's _NaviCalcResTbl*)
+    _NaviCalcResInfo* m_info;  // the read bank's work (its _NaviCalcResInfo*)
+};
+
 // navigation mesh collision queries (no table, made on the stack). The field names are not the original's.
 class NvmshUtilColi {
 public:
@@ -53,17 +61,48 @@ public:
     // clears the attribute bits when clear is set, else sets them
     void setAttr(bool clear, unsigned int attr);
     bool testPointRadius(NvmshColiResult* result);
+    bool testWideAreaOldMeshPointRay(NvmshColiResult* result, const _NaviStMeshId* id);
+    bool treePointRay(const _NvMhMeshTree* tree);
+    bool treeRadiusRay(const _NvMhMeshTree* tree);
+    bool treeRangeRay(const _NvMhMeshTree* tree);
+    bool coliMeshPointRay(int mesh);
+    bool coliMeshRangeAddRay(int mesh);
+    bool coliMeshRangeRay(int mesh);
 
-    unsigned char pad_0[0x70];
-    float m_radius;  // 3.0 (the name is not the original's)
-    unsigned char pad_74[0x4];
+    // m_conect and m_adj for obj, the navi tested (the name is not the original's)
+    void setConect(const _NaviCalcResTbl* tbl, const NvmshResObj* obj) {
+        const unsigned short* cells = reinterpret_cast<const unsigned short*>(tbl->m_conectBlocks[0]);
+        int n = cells[tbl->m_info->m_worldHead->m_gridW * obj->m_head->m_cellY + obj->m_head->m_cellX];
+        m_conect = reinterpret_cast<const unsigned short*>(tbl->m_conectBlocks[7]) +
+                   reinterpret_cast<const unsigned short*>(tbl->m_conectBlocks[1])[n * 2 - 1];
+        m_adj = obj->m_blocks[6];
+    }
+
+    unsigned int* m_bits;  // a bit per mesh tested (the read bank's _NaviCalcResInfo::m_bufs[0])
+    NvmshColiResult* m_result;
+    NvmshResObj* m_obj;  // the navi tested
+    const NvmshResObj::Head* m_head;  // m_obj's head
+    unsigned char pad_20[0x8];
+    const unsigned char* m_adj;  // m_obj's block 6
+    const unsigned short* m_conect;  // the navi's connection entries (the layer's connection block 7)
+    unsigned char pad_38[0x8];
+    mm::Vec3 m_max;  // the query's bounds, relative to the navi's tree origin
+    mm::Vec3 m_min;
+    unsigned char pad_60[0x10];
+    float m_radius;  // 3.0
+    float m_radiusSq;
     int m_meshIdx;  // -1
     short m_meshSub;  // -1
     unsigned char pad_7E[0x2];
     unsigned int m_attr;  // 0x80, setAttr's bits
-    int m_hitNum;  // 0
-    short m_count0;  // 0
-    short m_count1;  // 0
+    int m_hitNum;  // 0; non-zero: the tests set m_adj and m_conect
+    // NvmshAcObjBase::seachNaviMesh's options (the names are not the original's): with pad_38's value, with
+    // pad_60's vector, with m_meshSub (testPointRay skips the way points when that mesh was hit), and the way
+    // point test
+    bool m_useParam;
+    bool m_useVec;
+    bool m_useOldMesh;
+    bool m_useWayPoint;
 };
 
 // A* searches over the navigation mesh's connections (no table, made on the stack)
