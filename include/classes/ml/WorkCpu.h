@@ -5,6 +5,7 @@
 #include "mtl/AllocHandle.h"
 #include "mm/mtl/FixedList.h"
 #include "classes/ml/reslist.h"
+#include "classes/ml/fixed_size_alloc.h"
 #include "ml/CriticalSection.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 namespace mm { class Col3; }
@@ -12,7 +13,7 @@ namespace ml {
 enum CPUID : int;
 // how WorkCpu::sync waits (enumerators not recovered: DrCalcTexStreamMan::jobWait passes 0)
 enum WKCPU_SYNC : int;
-class IErrorCB; class WorkCpuThread; class IWorkInfomation; class IWorkBackground; class IThreadValue; }
+class IErrorCB; class TJOB; class WorkCpuThread; class IWorkInfomation; class IWorkBackground; class IThreadValue; }
 
 namespace ml {
 // table 0x7100B78E08; its singleton base at 0x1A8 (the deleting destructor's thunk adjusts by 0x1A8 to
@@ -24,6 +25,11 @@ public:
     struct AUTO_EXEC {
         int m_group;
         unsigned int m_priority;
+    };
+    // a job group createGroupHandle hands out and releaseGroupHandle takes back (0x20 bytes, 8-aligned: its
+    // FixedList node is 0x28; fields not recovered)
+    struct GRPLIST {
+        unsigned long pad_0[4];
     };
 
     WorkCpu(const char* name, WorkObj* parent);
@@ -92,12 +98,15 @@ public:
     static void beginRender();
     static void endUpdate();
     static void swapBank();
+    // a job off m_jobAlloc (null when all are in use) and one handed back, under the job lock
+    TJOB* allocJob();
+    void freeJob(TJOB* job);
 
     static bool s_bRenderSubCpu;
 
     // 0x1B0 0x2: shutting down (isShutdown), 0x20: the update ended (endUpdate) (the name is not the original's)
     unsigned int m_flags;
-    unsigned char pad_1b4[0x4];
+    mtl::ALLOC_HANDLE m_memWork;       // 0x1B4 the destructor erases it first (the name is not the original's)
     mtl::ALLOC_HANDLE m_memStack;      // 0x1B8 getMemStack (the name is not the original's)
     // 0x1BC the CPUs the work runs on: getRenderCPUID and getSubWorkCPUID choose by it (the name is not the original's)
     unsigned int m_cpuNum;
@@ -105,7 +114,10 @@ public:
     // m_cpuNum and keeps the list's index as its getCpuBank, removeSwap picks the list by it, thSwap swaps one list
     // (the name is not the original's)
     reslist<IThreadValue*> m_swap[3];
-    unsigned char pad_280[0x14C0];
+    // 0x280 the job groups (createGroupHandle, releaseGroupHandle) (the name is not the original's)
+    mm::mtl::FixedList<GRPLIST, 128> m_group;
+    int pad_1738;                      // 0x1738 the constructor sets 1; getWaitingJob, wakeup test it
+    int pad_173c;                      // 0x173C the constructor sets 1
     // 0x1740 the thread work of each CPU, m_cpuNum of them (isInitialized asks each it is logged in; the name is not
     // the original's)
     WorkCpuThread* m_thread[3];
@@ -117,10 +129,13 @@ public:
     bool m_rendering;                  // 0x1760 set while thRender renders (the name is not the original's)
     unsigned char pad_1761[0x3];
     int m_bank;                        // 0x1764 getEven (the name is not the original's)
-    unsigned char pad_1768[0x38];
+    fixed_size_alloc<TJOB> m_jobAlloc;  // 0x1768 the jobs allocJob hands out (the name is not the original's)
+    unsigned long pad_1798;            // 0x1798 entryJobThread stores a job pointer here
     // 0x17A0 the job groups beginUpdate wakes (entryAutoExecGrp, removeAutoExecGrp) (the name is not the original's)
     mm::mtl::FixedList<AUTO_EXEC, 32> m_autoExec;
-    unsigned char pad_1958[0x248];
+    unsigned long pad_1958;
+    // 0x1960 a list of 8-byte values (element type not recovered)
+    mm::mtl::FixedList<void*, 32> pad_1960;
     // 0x1BA0 the listeners told of the HOME menu (add/removeBackgroundListener, setBackground) and of the system
     // information (add/removeSystemInfoListener), under one lock (the names are not the original's)
     mm::mtl::FixedList<IWorkBackground*, 32> m_backgroundListener;
@@ -128,11 +143,16 @@ public:
     unsigned long m_mainThreadId;      // 0x2020 getMainThreadId (the name is not the original's)
     int m_bankCount[2];                // 0x2028 beginFrame zeroes the current bank's (the name is not the original's)
     float m_renderTime;                // 0x2030 thRender's time of WorkRootState::renderWork (the name is not the original's)
-    unsigned char pad_2034[0x14];
+    unsigned int pad_2034;
+    unsigned long pad_2038;
+    bool pad_2040;                     // 0x2040 updateMessage sets it and clears it once DevFileTh is not saving
+    unsigned char pad_2041[0x7];
     long m_beginClock[8];              // 0x2048 getBeginClock returns [0] or [4] (the name is not the original's)
-    unsigned char pad_2088[0x8];
+    int pad_2088;                      // 0x2088 createGroupHandle counts up
+    unsigned char pad_208c[0x4];
     unsigned int m_frameCount;         // 0x2090 getFrameCount (the name is not the original's)
-    unsigned char pad_2094[0xC];
+    unsigned int pad_2094;
+    long pad_2098;                     // 0x2098 the constructor stores std::chrono::system_clock::now()
     // 0x20A0 the error callbacks registErrorCB enters and unregistErrorCB removes, under m_errorCBLock (the names are
     // not the original's)
     mm::mtl::FixedList<IErrorCB*, 32> m_errorCB;

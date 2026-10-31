@@ -207,6 +207,17 @@ WorkSystem::~WorkSystem() {}
 
 WorkFlowSetup::~WorkFlowSetup() {}
 
+WorkCpu::~WorkCpu() {
+    if (m_memWork.m_handle != 0) {
+        mtl::MemManager::erase(m_memWork);
+        m_memWork.m_handle = 0;
+    }
+    if (m_memStack.m_handle != 0) {
+        mtl::MemManager::erase(m_memStack);
+        m_memStack.m_handle = 0;
+    }
+}
+
 mtl::ALLOC_HANDLE WorkCpu::getMemStack() {
     if (WorkCpu* cpu = get()) {
         return cpu->m_memStack;

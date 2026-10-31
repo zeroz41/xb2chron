@@ -43,6 +43,35 @@ public:
         m_blocks = static_cast<T0*>(m_buffer);
     }
 
+    // a free block marked in use, null when every block is (WorkCpu::allocJob inlines it; the name is not the
+    // original's)
+    T0* allocate() {
+        unsigned int* bits = m_usedBits;
+        for (unsigned int i = 0; i < static_cast<unsigned int>(m_bitWords); ++i, ++bits) {
+            unsigned int word = *bits;
+            if (word != 0xFFFFFFFF) {
+                unsigned int bit = (word & 0xFFFF) == 0xFFFF ? 16 : 0;
+                for (unsigned int mask = 1u << bit; bit < 32; ++bit, mask <<= 1) {
+                    if ((mask & word) == 0) {
+                        ++m_used;
+                        *bits |= mask;
+                        return &m_blocks[i * 32 + bit];
+                    }
+                }
+            }
+        }
+        return nullptr;
+    }
+    // the block back, unmarked if it was in use (WorkCpu::freeJob inlines it; the name is not the original's)
+    void deallocate(T0* block) {
+        unsigned int index = block - m_blocks;
+        unsigned int mask = 1u << (index & 31);
+        if (m_usedBits[index >> 5] & mask) {
+            m_usedBits[index >> 5] &= ~mask;
+            --m_used;
+        }
+    }
+
     void* m_buffer;                // 0x08
     unsigned int* m_usedBits;      // 0x10 one bit per block, after the blocks
     T0* m_blocks;                  // 0x18
