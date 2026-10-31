@@ -979,6 +979,23 @@ const mm::Col4 s_borderColorTbl[3] = {
     mm::Col4(1.0f, 1.0f, 1.0f, 1.0f),
 };
 
+// the NVN values of the CGLibWkrSamplerParams fields (CGLibSamplerParam::setupResource). Proposed names, not the
+// original's: the symbols leave s_minFilterTbl (lbl_71009CEE3C) and s_anisoTbl (lbl_71009CEE54) unnamed; the other
+// three are kept once for several units (merged constants)
+const NVNwrapMode s_wrapModeTbl[8] = {
+    static_cast<NVNwrapMode>(1), static_cast<NVNwrapMode>(6), static_cast<NVNwrapMode>(7), static_cast<NVNwrapMode>(3),
+    static_cast<NVNwrapMode>(0), static_cast<NVNwrapMode>(2), static_cast<NVNwrapMode>(5), static_cast<NVNwrapMode>(4)};
+const NVNminFilter s_minFilterTbl[6] = {
+    static_cast<NVNminFilter>(0), static_cast<NVNminFilter>(1), static_cast<NVNminFilter>(2),
+    static_cast<NVNminFilter>(3), static_cast<NVNminFilter>(4), static_cast<NVNminFilter>(5)};
+const NVNmagFilter s_magFilterTbl[2] = {static_cast<NVNmagFilter>(0), static_cast<NVNmagFilter>(1)};
+const float s_anisoTbl[16] = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f,
+                              9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f};
+const NVNcompareFunc s_compareFuncTbl[8] = {
+    static_cast<NVNcompareFunc>(1), static_cast<NVNcompareFunc>(2), static_cast<NVNcompareFunc>(3),
+    static_cast<NVNcompareFunc>(4), static_cast<NVNcompareFunc>(5), static_cast<NVNcompareFunc>(6),
+    static_cast<NVNcompareFunc>(7), static_cast<NVNcompareFunc>(8)};
+
 }  // namespace
 
 
@@ -1083,6 +1100,46 @@ void CGLibPixlCounter::endCounter() {
     nvnCommandBufferReportCounter(pSys->m_pipeline.m_pCmdBuf, static_cast<NVNcounterType>(1), m_gpuAddress);
 }
 
+// ---- CGLibSamplerParam ----
+
+void CGLibSamplerParam::setupResource(const CGLibWkrSamplerParams& params) {
+    NVNsamplerBuilder builder;
+    nvnSamplerBuilderSetDefaults(&builder);
+    nvnSamplerBuilderSetDevice(&builder, &CGLibManager::sys()->m_device);
+    nvnSamplerBuilderSetWrapMode(&builder, s_wrapModeTbl[params.m_clampS], s_wrapModeTbl[params.m_clampT],
+                                 s_wrapModeTbl[params.m_clampR]);
+    nvnSamplerBuilderSetMinMagFilter(&builder, s_minFilterTbl[params.m_minFilter], s_magFilterTbl[params.m_magFilter]);
+    nvnSamplerBuilderSetMaxAnisotropy(&builder, s_anisoTbl[params.m_aniso]);
+    nvnSamplerBuilderSetLodClamp(&builder, 0.0f, 15.999f);
+    nvnSamplerBuilderSetLodBias(&builder, params.m_lod);
+    if (params.m_border) {
+        nvnSamplerBuilderSetBorderColor(&builder, &params.m_borderColor.r);
+    }
+    if (params.m_compare != 0) {
+        nvnSamplerBuilderSetCompare(&builder, static_cast<NVNcompareMode>(1), s_compareFuncTbl[params.m_compare]);
+    } else {
+        nvnSamplerBuilderSetCompare(&builder, static_cast<NVNcompareMode>(0), static_cast<NVNcompareFunc>(1));
+    }
+    nvnSamplerInitialize(&m_sampler, &builder);
+    m_init = true;
+    if (m_samplerId == -1) {
+        context::CGLibSystemContext* pSys = context::CGLibSystemContext::sys();
+        m_samplerId = pSys->m_samplerDescriptor.allocID();
+        pSys->m_samplerDescriptor.bindSampler(*this, m_samplerId);
+    }
+}
+
+void CGLibSamplerParam::releaseParams() {
+    if (m_init) {
+        nvnSamplerFinalize(&m_sampler);
+        m_init = false;
+    }
+    if (m_samplerId != -1) {
+        context::CGLibSystemContext::sys()->m_samplerDescriptor.freeID(m_samplerId);
+        m_samplerId = -1;
+    }
+}
+
 
 // ---- small accessors ----
 
@@ -1145,6 +1202,41 @@ unsigned int CGLibDepthBuffer::getHeight() const {
 void CGLibDepthBuffer::invalidate() {}
 
 // ---- CGLibDecShader / CGLibDecShdExtTbl ----
+
+CGLibDecShader::CGLibDecShader() {
+    m_pShaders = nullptr;
+    m_shaderNum = 0;
+    m_pDeclValues = nullptr;
+    m_current = 0;
+    m_pAllocBuff = nullptr;
+    m_pCopyBuff = nullptr;
+}
+
+CGLibDecShader::~CGLibDecShader() {
+    release();
+}
+
+void CGLibDecShader::release() {
+    for (int i = 0; i < m_shaderNum; i++) {
+        CGLibShader& shader = m_pShaders[i];
+        if (shader.m_flags & 1) {
+            shader.m_pData = nullptr;
+            nvnProgramFinalize(&shader.m_program);
+            shader.m_flags &= ~5;
+        }
+    }
+    m_pShaders = nullptr;
+    m_shaderNum = 0;
+    if (m_pAllocBuff != nullptr) {
+        mtl::MemManager::deallocate(m_pAllocBuff, 0, false);
+        m_pAllocBuff = nullptr;
+    }
+    if (m_pCopyBuff != nullptr) {
+        mtl::MemManager::deallocate(m_pCopyBuff, 0, false);
+        m_pCopyBuff = nullptr;
+    }
+    m_memPool.release();
+}
 
 unsigned int CGLibDecShader::calcTblSize(const void* data) {
     const CGLibDecShaderData* pData = static_cast<const CGLibDecShaderData*>(data);

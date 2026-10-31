@@ -26,6 +26,11 @@ typedef enum NVNformat { NVN_FORMAT_LARGE = 0x7FFFFFFF } NVNformat;
 typedef enum NVNdeviceInfo { NVN_DEVICE_INFO_LARGE = 0x7FFFFFFF } NVNdeviceInfo;
 typedef enum NVNdepthMode { NVN_DEPTH_MODE_LARGE = 0x7FFFFFFF } NVNdepthMode;
 typedef enum NVNwindowOriginMode { NVN_WINDOW_ORIGIN_MODE_LARGE = 0x7FFFFFFF } NVNwindowOriginMode;
+typedef enum NVNwrapMode { NVN_WRAP_MODE_LARGE = 0x7FFFFFFF } NVNwrapMode;
+typedef enum NVNminFilter { NVN_MIN_FILTER_LARGE = 0x7FFFFFFF } NVNminFilter;
+typedef enum NVNmagFilter { NVN_MAG_FILTER_LARGE = 0x7FFFFFFF } NVNmagFilter;
+typedef enum NVNcompareMode { NVN_COMPARE_MODE_LARGE = 0x7FFFFFFF } NVNcompareMode;
+typedef enum NVNcompareFunc { NVN_COMPARE_FUNC_LARGE = 0x7FFFFFFF } NVNcompareFunc;
 
 typedef struct NVNblendState { char reserved[8]; } NVNblendState;
 typedef struct NVNchannelMaskState { char reserved[4]; } NVNchannelMaskState;
@@ -41,7 +46,8 @@ typedef struct NVNpolygonState { char reserved[4]; } NVNpolygonState;
 typedef struct NVNprogram { char reserved[192]; } NVNprogram;
 typedef struct NVNqueue { char reserved[8192]; } NVNqueue;
 typedef struct NVNqueueBuilder { char reserved[64]; } NVNqueueBuilder;
-typedef struct NVNsampler { char reserved[96]; } NVNsampler;
+typedef struct __attribute__((aligned(8))) NVNsampler { char reserved[96]; } NVNsampler;  // 8-aligned as the SDK declares it (releaseParams reads 0x60..0x67 as one word)
+typedef struct NVNsamplerBuilder { char reserved[96]; } NVNsamplerBuilder;
 typedef struct NVNsamplerPool { char reserved[32]; } NVNsamplerPool;
 typedef struct NVNsync { char reserved[64]; } NVNsync;
 typedef struct NVNtexture { char reserved[192]; } NVNtexture;

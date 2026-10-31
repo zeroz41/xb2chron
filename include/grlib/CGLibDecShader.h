@@ -2,6 +2,7 @@
 #define GRLIB_CGLIBDECSHADER_H
 
 #include "grlib/CGLibShader.h"
+#include "grlib/CGLibVtlMemPool.h"
 
 namespace grlib {
 
@@ -14,7 +15,6 @@ struct CGLibDecShaderData {
 };
 
 // a shader with declarations (0x68 bytes): its programs by the declarations' current values
-class CGLibVtlMemPool;
 
 class CGLibDecShader {
 public:
@@ -37,11 +37,17 @@ public:
     const CGLibShader& getCurrentShader() const { return *(m_pShaders + m_current); }
 
     const CGLibDecShaderData* m_pData;  // 0x0
-    unsigned char pad_8[0x30];
-    CGLibShader* m_pShaders;
-    unsigned char pad_40[0x18];
-    unsigned int m_current;  // the index of the program the declarations select
-    unsigned char pad_5c[0xC];
+    CGLibVtlMemPool m_memPool;  // 0x8: the programs' code (release frees it; the name is not the original's)
+    CGLibShader* m_pShaders;  // 0x38
+    int m_shaderNum;  // 0x40: the programs in m_pShaders (the name is not the original's)
+    unsigned char pad_44[0x4];
+    // 0x48, 0x50: buffers release frees; createCopyShader allocates m_pCopyBuff for the programs and the declaration
+    // values (the names are not the original's)
+    void* m_pAllocBuff;  // 0x48
+    void* m_pCopyBuff;  // 0x50
+    unsigned int m_current;  // 0x58: the index of the program the declarations select
+    unsigned char pad_5c[0x4];
+    unsigned char* m_pDeclValues;  // 0x60: a value per declaration, after the programs (the name is not the original's)
 };
 
 // a shader table entry: a declared shader and the program it selects (the field names are not the original's; the

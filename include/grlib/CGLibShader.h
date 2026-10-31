@@ -69,7 +69,9 @@ public:
         return 0;
     }
 
-    unsigned char pad_10[0x4];
+    // bit 0: m_program is initialized (CGLibDecShader::release finalizes it and clears bits 0 and 2; the name is
+    // not the original's)
+    unsigned int m_flags;  // 0x10
     // the stages the program holds and the NVN program CGLibCtlShader::setShader binds (the names are not the
     // original's)
     unsigned int m_stages;  // 0x14

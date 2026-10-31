@@ -65,7 +65,10 @@ public:
 
     unsigned char pad_8[0x530];
     CGLibBuffFixAlloc m_texDescriptor;  // 0x538: texture and sampler descriptor ids (CGLibTextureBuffer::release)
-    unsigned char pad_560[0xA8];
+    unsigned char pad_560[0x40];
+    // 0x5A0: the sampler descriptor ids and pool (CGLibSamplerParam::setupResource/releaseParams; the name is not the
+    // original's)
+    CGLibSamplerDescriptor m_samplerDescriptor;
     CGLibBuffSamplerTbl m_samplerTbl;  // 0x608: CGLibSampler::updateData
     CGLibBuffOcclusion m_occlusion;  // 0xE38: CGLibOcclusionQuery's report slots
     CGLibBuffFixAlloc m_textureAlloc;  // 0xE60: the NVNtexture objects (CGLibTextureBuffer::release)

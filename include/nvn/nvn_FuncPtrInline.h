@@ -290,6 +290,54 @@ typedef void (*PFNNVNTEXTUREPOOLREGISTERIMAGEPROC)(const NVNtexturePool* pool, i
 extern PFNNVNTEXTUREPOOLREGISTERIMAGEPROC pfnc_nvnTexturePoolRegisterImage;
 static inline void nvnTexturePoolRegisterImage(const NVNtexturePool* pool, int id, const NVNtexture* texture, const NVNtextureView* view) { pfnc_nvnTexturePoolRegisterImage(pool, id, texture, view); }
 
+typedef void (*PFNNVNPROGRAMFINALIZEPROC)(NVNprogram* program);
+extern PFNNVNPROGRAMFINALIZEPROC pfnc_nvnProgramFinalize;
+static inline void nvnProgramFinalize(NVNprogram* program) { pfnc_nvnProgramFinalize(program); }
+
+typedef void (*PFNNVNSAMPLERBUILDERSETDEFAULTSPROC)(NVNsamplerBuilder* builder);
+extern PFNNVNSAMPLERBUILDERSETDEFAULTSPROC pfnc_nvnSamplerBuilderSetDefaults;
+static inline void nvnSamplerBuilderSetDefaults(NVNsamplerBuilder* builder) { pfnc_nvnSamplerBuilderSetDefaults(builder); }
+
+typedef void (*PFNNVNSAMPLERBUILDERSETDEVICEPROC)(NVNsamplerBuilder* builder, NVNdevice* device);
+extern PFNNVNSAMPLERBUILDERSETDEVICEPROC pfnc_nvnSamplerBuilderSetDevice;
+static inline void nvnSamplerBuilderSetDevice(NVNsamplerBuilder* builder, NVNdevice* device) { pfnc_nvnSamplerBuilderSetDevice(builder, device); }
+
+typedef void (*PFNNVNSAMPLERBUILDERSETWRAPMODEPROC)(NVNsamplerBuilder* builder, NVNwrapMode s, NVNwrapMode t, NVNwrapMode r);
+extern PFNNVNSAMPLERBUILDERSETWRAPMODEPROC pfnc_nvnSamplerBuilderSetWrapMode;
+static inline void nvnSamplerBuilderSetWrapMode(NVNsamplerBuilder* builder, NVNwrapMode s, NVNwrapMode t, NVNwrapMode r) { pfnc_nvnSamplerBuilderSetWrapMode(builder, s, t, r); }
+
+typedef void (*PFNNVNSAMPLERBUILDERSETMINMAGFILTERPROC)(NVNsamplerBuilder* builder, NVNminFilter min, NVNmagFilter mag);
+extern PFNNVNSAMPLERBUILDERSETMINMAGFILTERPROC pfnc_nvnSamplerBuilderSetMinMagFilter;
+static inline void nvnSamplerBuilderSetMinMagFilter(NVNsamplerBuilder* builder, NVNminFilter min, NVNmagFilter mag) { pfnc_nvnSamplerBuilderSetMinMagFilter(builder, min, mag); }
+
+typedef void (*PFNNVNSAMPLERBUILDERSETMAXANISOTROPYPROC)(NVNsamplerBuilder* builder, float maxAniso);
+extern PFNNVNSAMPLERBUILDERSETMAXANISOTROPYPROC pfnc_nvnSamplerBuilderSetMaxAnisotropy;
+static inline void nvnSamplerBuilderSetMaxAnisotropy(NVNsamplerBuilder* builder, float maxAniso) { pfnc_nvnSamplerBuilderSetMaxAnisotropy(builder, maxAniso); }
+
+typedef void (*PFNNVNSAMPLERBUILDERSETLODCLAMPPROC)(NVNsamplerBuilder* builder, float min, float max);
+extern PFNNVNSAMPLERBUILDERSETLODCLAMPPROC pfnc_nvnSamplerBuilderSetLodClamp;
+static inline void nvnSamplerBuilderSetLodClamp(NVNsamplerBuilder* builder, float min, float max) { pfnc_nvnSamplerBuilderSetLodClamp(builder, min, max); }
+
+typedef void (*PFNNVNSAMPLERBUILDERSETLODBIASPROC)(NVNsamplerBuilder* builder, float bias);
+extern PFNNVNSAMPLERBUILDERSETLODBIASPROC pfnc_nvnSamplerBuilderSetLodBias;
+static inline void nvnSamplerBuilderSetLodBias(NVNsamplerBuilder* builder, float bias) { pfnc_nvnSamplerBuilderSetLodBias(builder, bias); }
+
+typedef void (*PFNNVNSAMPLERBUILDERSETBORDERCOLORPROC)(NVNsamplerBuilder* builder, const float* borderColor);
+extern PFNNVNSAMPLERBUILDERSETBORDERCOLORPROC pfnc_nvnSamplerBuilderSetBorderColor;
+static inline void nvnSamplerBuilderSetBorderColor(NVNsamplerBuilder* builder, const float* borderColor) { pfnc_nvnSamplerBuilderSetBorderColor(builder, borderColor); }
+
+typedef void (*PFNNVNSAMPLERBUILDERSETCOMPAREPROC)(NVNsamplerBuilder* builder, NVNcompareMode mode, NVNcompareFunc func);
+extern PFNNVNSAMPLERBUILDERSETCOMPAREPROC pfnc_nvnSamplerBuilderSetCompare;
+static inline void nvnSamplerBuilderSetCompare(NVNsamplerBuilder* builder, NVNcompareMode mode, NVNcompareFunc func) { pfnc_nvnSamplerBuilderSetCompare(builder, mode, func); }
+
+typedef NVNboolean (*PFNNVNSAMPLERINITIALIZEPROC)(NVNsampler* sampler, const NVNsamplerBuilder* builder);
+extern PFNNVNSAMPLERINITIALIZEPROC pfnc_nvnSamplerInitialize;
+static inline NVNboolean nvnSamplerInitialize(NVNsampler* sampler, const NVNsamplerBuilder* builder) { return pfnc_nvnSamplerInitialize(sampler, builder); }
+
+typedef void (*PFNNVNSAMPLERFINALIZEPROC)(NVNsampler* sampler);
+extern PFNNVNSAMPLERFINALIZEPROC pfnc_nvnSamplerFinalize;
+static inline void nvnSamplerFinalize(NVNsampler* sampler) { pfnc_nvnSamplerFinalize(sampler); }
+
 typedef NVNboolean (*PFNNVNSAMPLERPOOLINITIALIZEPROC)(NVNsamplerPool* pool, const NVNmemoryPool* memoryPool, ptrdiff_t offset, int numDescriptors);
 extern PFNNVNSAMPLERPOOLINITIALIZEPROC pfnc_nvnSamplerPoolInitialize;
 static inline NVNboolean nvnSamplerPoolInitialize(NVNsamplerPool* pool, const NVNmemoryPool* memoryPool, ptrdiff_t offset, int numDescriptors) { return pfnc_nvnSamplerPoolInitialize(pool, memoryPool, offset, numDescriptors); }
