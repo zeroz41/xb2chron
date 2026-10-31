@@ -57,7 +57,8 @@ public:
     ml::Scn* m_pScn;                    // 0x18
     bool m_isSetupWait;                 // 0x20, true until beginSetup has the data (begin calls it while set)
     unsigned char pad_21[0x7];
-    void* m_pReserved;                  // 0x28, only zeroed by the constructor (its use is not known)
+    // 0x28, zeroed by the constructor: a bit array CloudMdlParts::isDisp reads (a set bit hides the part)
+    unsigned int* m_pReserved;
     CloudDataMan* m_pDataMan;           // 0x30
     CloudVertexMan* m_pVertexMan;       // 0x38
     CloudTextureMan* m_pTextureMan;     // 0x40

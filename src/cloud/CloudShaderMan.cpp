@@ -31,6 +31,14 @@
 #include "ml/DevFileParamTh.h"
 #include "ml/EventFileTh.h"
 #include "grlib/CGLibTextureBuffer.h"
+#include "cloud/CloudMdlParts.h"
+#include "cloud/CloudMdlListMan.h"
+#include "cloud/CloudMdlDataObj.h"
+#include "cloud/CloudObjMan.h"
+#include "classes/cloud/CloudObjMdl.h"
+#include "mtl/MemManager.h"
+#include <math.h>
+#include <new>
 
 namespace cloud {
 
@@ -346,6 +354,147 @@ void CloudVertexMan::releaseVertexList() {
 void CloudVertexMan::bindVertexList(CloudVertexType type) { grlib::CGLibCtlVertex::setVertex(*m_pVertex[type]); }
 
 void CloudVertexMan::renderIndexList(CloudVertexType type) { m_pIndex[type]->drawIndex(); }
+
+void CloudMdlParts::createUniform(const mm::Vec3& dir) {
+    float speed = m_params0[1] * 0.05f;
+    m_scroll.x += speed * (dir.x * m_params1[4]);
+    m_scroll.y += speed * (dir.y * m_params1[5]);
+    m_scroll.z += speed * (dir.z * m_params1[4]);
+    m_detailScroll.x += speed * (dir.x * m_params1[4]) * 10.0f;
+    m_detailScroll.y += speed * (dir.y * m_params1[5]) * 10.0f;
+    m_detailScroll.z += speed * (dir.z * m_params1[4]) * 10.0f;
+    if (m_scrollType == 2) {
+        m_scroll.x = fmodf(m_scroll.x, 256.0f);
+        m_scroll.y = fmodf(m_scroll.y, 256.0f);
+        if (m_scroll.z >= 4352.0f) {
+            m_scroll.z -= 4352.0f;
+        } else if (m_scroll.z <= -4352.0f) {
+            m_scroll.z += 4352.0f;
+        }
+    } else {
+        m_scroll.x = fmodf(m_scroll.x, 1.0f);
+        m_scroll.y = fmodf(m_scroll.y, 1.0f);
+        m_scroll.z = fmodf(m_scroll.z, 1.0f);
+    }
+    m_detailScroll.x = fmodf(m_detailScroll.x, 256.0f);
+    m_detailScroll.y = fmodf(m_detailScroll.y, 256.0f);
+    if (m_detailScroll.z >= 4352.0f) {
+        m_detailScroll.z -= 4352.0f;
+    } else if (m_detailScroll.z <= -4352.0f) {
+        m_detailScroll.z += 4352.0f;
+    }
+    m_uniform.createMdlPolyUniform(this, m_scroll, m_detailScroll, &m_pData->getObjData(m_index));
+    m_uniform.updateData();
+}
+
+int CloudMdlParts::isDisp() const {
+    if (!(m_pData->m_flags & 1)) {
+        return 0;
+    }
+    unsigned int bit = m_dispBit;
+    if (bit != 0 && (CloudMan::sys()->m_pReserved[bit >> 5] & (1 << (bit & 0x1F)))) {
+        return 0;
+    }
+    return 1;
+}
+
+CloudMdlListMan::CloudMdlListMan() : m_pTop(nullptr), m_pTail(nullptr) {}
+
+CloudMdlListMan::~CloudMdlListMan() { releaseAll(); }
+
+void CloudMdlListMan::releaseAll() {
+    for (CloudMdlParts* parts = m_pTop; parts != nullptr;) {
+        CloudMdlParts* next = parts->m_pNext;
+        delete parts;
+        parts = next;
+    }
+    m_pTop = nullptr;
+    m_pTail = nullptr;
+}
+
+void CloudMdlListMan::update() {}
+
+CloudMdlDataObj::CloudMdlDataObj() : m_pPrev(nullptr), m_pNext(nullptr), m_pList(nullptr) {
+    m_pFile = nullptr;
+    m_flags = 0;
+    m_ppParts = nullptr;
+    m_vtxNum = 0;
+    m_partsNum = 0;
+    m_pAlloc = nullptr;
+    m_pVtxBuf = nullptr;
+}
+
+CloudMdlDataObj::~CloudMdlDataObj() { releaseData(); }
+
+void CloudMdlDataObj::releaseData() {
+    for (int i = 0; i < m_vtxNum; i++) {
+        m_pVtxBuf[i].m_vertex.release();
+        m_pVtxBuf[i].m_index.release();
+    }
+    CloudMdlListMan& list = CloudMan::sys()->m_pObjMan->m_pMdl->m_partsList;
+    for (int i = 0; i < m_partsNum; i++) {
+        CloudMdlParts*& parts = m_ppParts[i];
+        CloudMdlParts* next = parts->m_pNext;
+        CloudMdlParts* prev = parts->m_pPrev;
+        if (prev == nullptr) {
+            if (next == nullptr) {
+                list.m_pTop = nullptr;
+                list.m_pTail = nullptr;
+            } else {
+                list.m_pTop = next;
+                next->m_pPrev = nullptr;
+            }
+        } else if (next == nullptr) {
+            list.m_pTail = prev;
+            prev->m_pNext = nullptr;
+        } else {
+            prev->m_pNext = next;
+            parts->m_pNext->m_pPrev = parts->m_pPrev;
+        }
+        if (parts != nullptr) {
+            delete parts;
+            parts = nullptr;
+        }
+    }
+    m_memPool.release();
+    if (m_pAlloc != nullptr) {
+        mtl::MemManager::deallocate(m_pAlloc, 0, false);
+        m_pAlloc = nullptr;
+    }
+    m_pFile = nullptr;
+    m_ppParts = nullptr;
+    m_vtxNum = 0;
+    m_partsNum = 0;
+    m_pVtxBuf = nullptr;
+}
+
+void CloudMdlDataObj::release() { m_flags |= 0x40 << CloudMan::s_nDblStIdx; }
+
+bool CloudMdlDataObj::update() {
+    if (m_flags & 0x100) {
+        return false;
+    }
+    if (m_flags & (0x40 << CloudMan::s_nDblDfIdx)) {
+        m_flags &= ~1u;
+        m_flags |= 0x100;
+    } else {
+        if (m_flags & 2) {
+            m_flags |= 1;
+        } else {
+            m_flags &= ~1u;
+        }
+        m_flags &= ~2u;
+    }
+    return true;
+}
+
+void CloudMdlDataObj::setCallDisp(bool disp) {
+    if (disp) {
+        m_flags |= 2;
+    } else {
+        m_flags &= ~3u;
+    }
+}
 
 CloudShaderMan::SelectFunc CloudShaderMan::s_CallSelect[16] = {
     &CloudShaderMan::selectRenderPlane, &CloudShaderMan::selectDebug,     &CloudShaderMan::selectColor,

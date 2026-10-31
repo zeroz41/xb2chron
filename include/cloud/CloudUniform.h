@@ -3,6 +3,8 @@
 
 #include "grlib/CGLibDblUniformBlock.h"
 
+namespace mm { class Vec3; }
+
 namespace cloud {
 
 // the uniform block kinds; s_nUniformBlockSize holds each one's size. The enumerator names are not the original's:
@@ -41,6 +43,9 @@ public:
     void createUniform(CloudUniformType type, unsigned int num);
     void updateData();
     void releaseUniform();
+    // CloudMdlParts::createUniform's: the part's uniform from its scrolls and CMLObjData
+    void createMdlPolyUniform(const CloudMdlParts* parts, const mm::Vec3& scroll, const mm::Vec3& detailScroll,
+                              const CMLObjData* data);
 
     static unsigned int s_nUniformBlockSize[CLOUD_UNIFORM_NUM];
 };
