@@ -101,6 +101,9 @@ void setDispByGmkTypeAndGmkIdx(int gmkSetId, GmkType type, unsigned int idx, boo
 // shows or hides one gimmick (GmkInstDispTraverserByBdatId::onTraverse and setDispByGmkTypeAndGmkIdx call it; no
 // symbol: placeholder name)
 void fn_71005D3C54(const AGmkBase& gmk, bool, bool disp);
+// whether the gimmick's npc motion blinks (its row's Mot names a FLD_NpcMobMotionId row without notEyeBlink);
+// GfComBehaviorMob::setup and GfComBehaviorNpc::setup call it (defined in GmkElevator.cpp's unit)
+bool hasEyeBlink(const AGmkBase& gmk);
 }  // namespace gmk
 
 #endif

@@ -465,6 +465,14 @@ unsigned int GfMenuObjWorldMap::getFloor() {
     return static_cast<unsigned short>(Bdat::getVal(m_gmkBdat, "menuMapImage", pointId));
 }
 
+bool GfMenuObjWorldMap::fn_710049FB94(const gmk::AGmkBase* gmk) {
+    unsigned int type = gmk->getGmkType();
+    if (type - 3 > 1) {
+        return false;
+    }
+    return Bdat::getValCheckU16(gmk->getBindedBdatFp(), "ShopID", gmk->m_createInfo.m_bdatId) == 0xDE;
+}
+
 unsigned int GfMenuObjWorldMap::setupIconTableSub(ui::UIObjectAcc& acc, mm::mtl::FixedVector<unsigned int, 256>& icons,
                                                   unsigned int type, mm::Pnt<short> pos, mm::Vec2 scale) {
     static const unsigned int imageIndex[10] = {1, 3, 4, 5, 6, 7, 8, 9, 10, 0};

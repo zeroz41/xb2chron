@@ -28,7 +28,8 @@ public:
     virtual void onStep(void* owner, const void* arg) {  // slot 5
         update(static_cast<GfComBehaviorNpc*>(owner), *static_cast<const fw::UpdateInfo*>(arg));
     }
-    // whether leaving for (or coming back from) state ends the npc's schedule (1.0.0's symbol; 3.0.1 inlines it)
+    // whether leaving for (or coming back from) state ends the npc's schedule (1.0.0's symbol; 3.0.1 inlines it):
+    // false without a state and for a talk (state 6) with a gimmick whose bdat row's NpcTurn (u8) is 3, else true
     inline bool isExecEndScheduleCondMatched(GfComBehaviorNpc& owner, ai::State* state) const;
     void enter(GfComBehaviorNpc* owner, ai::State* prev);
     void leave(GfComBehaviorNpc* owner, ai::State* next);
@@ -45,8 +46,8 @@ public:
     // then starts the schedule command and moves on to fn_71004E0948.
     void fn_71004E09E0(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
     TFieldExecCmd<GfComAsm> m_execCmd;
-    // whether starting the schedule command ends the schedule first: enter sets it unless it came back from a talk
-    // whose gimmick's NpcTurn is 3 (the name is not the original's)
+    // whether starting the schedule command ends the schedule first: enter stores isExecEndScheduleCondMatched of
+    // the previous state (the name is not the original's)
     bool m_endSchedule;
     Seq m_seq;
 };

@@ -49,6 +49,16 @@ int getArrayCount(unsigned char* fp, const char* column);
 int getVarType(unsigned char* fp, const char* column);
 // getVal for a column of that value type (7: a string; ai::AiScriptDataManager reads its Script column so)
 unsigned long getValCheck(unsigned char* fp, const char* column, int id, int type);
+// getValCheck of a u8 / u16 column, narrowed by an inline callee (no copy of them exists; the names are not the
+// original's). The original compares such values in 32 bits after the call (and w8, w0, #0xff / #0xffff; cmp w8):
+// the narrowing done in a callee keeps the compare narrow, the same cast written at the call site widens it to
+// and x8/cmp x8 (GmkCollection::BdatInfo::create, gf::npc::StateIdle::enter/leave, GfMenuObjWorldMap's shop test)
+inline unsigned char getValCheckU8(unsigned char* fp, const char* column, int id) {
+    return getValCheck(fp, column, id, 1);
+}
+inline unsigned short getValCheckU16(unsigned char* fp, const char* column, int id) {
+    return getValCheck(fp, column, id, 2);
+}
 // a row's text in a message table
 const char* getMSText(unsigned char* fp, int id);
 // a row's style in a message table (its 16 bits: the code masks them into the int it returns)

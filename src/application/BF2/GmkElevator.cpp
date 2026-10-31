@@ -1176,6 +1176,20 @@ bool isNaviMeshExist(const mm::Vec3& pos) {
 const char* debugGetGmkBdatRowName(const AGmkBase&) { return "(null)"; }
 const char* debugGetGmkBdatSheetName(const AGmkBase&) { return "(null)"; }
 
+// whether the gimmick's npc motion blinks: its bdat row's "Mot" (u16) names a FLD_NpcMobMotionId row whose
+// "notEyeBlink" flag is clear; false without a bound table or motion
+bool hasEyeBlink(const AGmkBase& gmk) {
+    unsigned char* fp = gmk.getBindedBdatFp();
+    if (fp == nullptr) {
+        return false;
+    }
+    unsigned short mot = Bdat::getValCheckU16(fp, "Mot", gmk.m_createInfo.m_bdatId);
+    if (mot == 0) {
+        return false;
+    }
+    return Bdat::getFlagVal(Bdat::getFP("FLD_NpcMobMotionId"), "flag", mot, "notEyeBlink") == 0;
+}
+
 int GmkTbox::getProgress() const { return gf::GfGameFlag::getLocal(2, m_createInfo.m_bdatId + 31765); }
 
 void GmkTbox::debugDraw() const {
@@ -2865,13 +2879,13 @@ void GmkCollection::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase&
     m_popDistSq = popDist.real * popDist.real;
     if (gf::GfGameManager::fn_71002A9E68()) {
         m_rarity = (unsigned char)Bdat::getValCheck(bdat.m_fp, "rarity", row, 1);
-        m_collectionTable = (unsigned short)(unsigned int)Bdat::getValCheck(bdat.m_fp, "CollectionTable", row, 2);
+        m_collectionTable = Bdat::getValCheckU16(bdat.m_fp, "CollectionTable", row);
         if (m_collectionTable != 0) {
             unsigned char* fp = gf::GfDataBdat::getFP(0x1E0);
-            if ((unsigned char)(unsigned int)Bdat::getValCheck(fp, "randitmPopMin", m_collectionTable, 1) == 1 &&
-                (unsigned char)(unsigned int)Bdat::getValCheck(fp, "randitmPopMax", m_collectionTable, 1) == 1) {
-                unsigned short itemId = Bdat::getValCheck(fp, "itm1ID", m_collectionTable, 2);
-                unsigned char per = (unsigned int)Bdat::getValCheck(fp, "itm1Per", m_collectionTable, 1);
+            if (Bdat::getValCheckU8(fp, "randitmPopMin", m_collectionTable) == 1 &&
+                Bdat::getValCheckU8(fp, "randitmPopMax", m_collectionTable) == 1) {
+                unsigned short itemId = Bdat::getValCheckU16(fp, "itm1ID", m_collectionTable);
+                unsigned char per = Bdat::getValCheckU8(fp, "itm1Per", m_collectionTable);
                 if (gf::GfItemUtil::isPrecious(itemId) && per == 100) {
                     m_itemId = itemId;
                 }

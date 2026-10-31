@@ -55,6 +55,39 @@ void StateApproachPc::update(GfComBehaviorNpc* owner, const fw::UpdateInfo& info
     }
 }
 
+inline bool StateIdle::isExecEndScheduleCondMatched(GfComBehaviorNpc& owner, ai::State* state) const {
+    if (state == nullptr) {
+        return false;
+    }
+    if (state->m_stateID == 6) {
+        gmk::AGmkBase* gmk = owner.getBindedGmkInst();
+        if (gmk != nullptr &&
+            Bdat::getValCheckU8(gmk->getBindedBdatFp(), "NpcTurn", gmk->m_createInfo.m_bdatId) == 3) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void StateIdle::enter(GfComBehaviorNpc* owner, ai::State* prev) {
+    m_endSchedule = isExecEndScheduleCondMatched(*owner, prev);
+    if (owner->m_turnCmd.pad_6c) {
+        fn_71004E0660(*owner);
+        m_seq = &StateIdle::fn_71004E0948;
+    } else {
+        m_seq = &StateIdle::fn_71004E09E0;
+    }
+}
+
+void StateIdle::leave(GfComBehaviorNpc* owner, ai::State* next) {
+    if (next == nullptr || m_stateID == next->m_stateID) {
+        return;
+    }
+    if (isExecEndScheduleCondMatched(*owner, next)) {
+        execEndSchedule(*owner);
+    }
+}
+
 void StateIdle::update(GfComBehaviorNpc* owner, const fw::UpdateInfo& info) {
     if (m_seq) {
         (this->*m_seq)(*owner, info);

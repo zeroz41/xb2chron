@@ -580,6 +580,19 @@ void GfGmkLocator::dispose() {
     m_gmk = nullptr;
     m_isAcc = false;
 }
+
+bool GfGmkLocator::isShop(const gmk::AGmkBase& gmk) {
+    unsigned int type = gmk.getGmkType();
+    if (type - 3 > 1) {
+        return false;
+    }
+    unsigned short shopId = Bdat::getValCheckU16(gmk.getBindedBdatFp(), "ShopID", gmk.m_createInfo.m_bdatId);
+    if (shopId == 0) {
+        return false;
+    }
+    unsigned short icon = Bdat::getValCheckU16(GfDataBdat::getFP(0xED), "ShopIcon", shopId);
+    return icon != 0x1A3 && icon != 0x1A4;
+}
 GfGmkLocatorAtlas::GfGmkLocatorAtlas(const CreateInfo* info)
     : m_bdatIdTop(-1), m_curGmkSet(nullptr), m_gmkSet(nullptr), m_seq(nullptr) {
     if (info != nullptr) {
