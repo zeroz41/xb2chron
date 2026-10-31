@@ -4364,11 +4364,16 @@ navi/NvmshAcObjBase.cpp:
 	.data        start:0x00B7F6C0 end:0x00B7F7E0
 	.bss         start:0x015E9CB0 end:0x015E9CC0
 
-layer/LayerAccObjBase.cpp:
-	.text        start:0x0081E298 end:0x00828A24
-	.rodata      start:0x009AD5B1 end:0x009AD6EC
+navi/NvmshUtilColi.cpp:
+	.text        start:0x0081E298 end:0x00826920
+	.rodata      start:0x009AD5B1 end:0x009AD60C
 	.rodata      start:0x009D5038 end:0x009D5058
-	.data        start:0x00B7F7E0 end:0x00B7F9E8
+	.data        start:0x00B7F7E0 end:0x00B7F850
+
+layer/LayerAccObjBase.cpp:
+	.text        start:0x00826920 end:0x00828A24
+	.rodata      start:0x009AD60C end:0x009AD6EC
+	.data        start:0x00B7F850 end:0x00B7F9E8
 	.bss         start:0x015E9CC0 end:0x015E9CC8
 
 layer/LayerObj.cpp:
