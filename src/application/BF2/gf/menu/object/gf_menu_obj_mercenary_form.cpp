@@ -8,6 +8,7 @@
 #include "classes/gf/SCOM_FIELD_VOICE.h"
 #include "classes/gf/GfMenuObjMercenaryForm/MainListener.h"
 #include "classes/gf/GfMenuObjMercenaryForm/ApplyListener.h"
+#include "classes/gf/GfMenuObjMercenaryForm/BlImgListener.h"
 #include "classes/gf/GfMenuReferenceNumber.h"
 #include "classes/ui/UICtrlCursorSelect.h"
 #include "classes/ui/UISelectObjList.h"
@@ -217,6 +218,60 @@ void GfMenuObjMercenaryForm::ApplyListener::reciveEvent(const ui::EventData& eve
             caption.setDisp(false);
         }
         m_open = 0;
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjMercenaryForm::BlImgListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        break;
+    case 3:
+        break;
+    case 0x21:
+        if (GfMenuReference::getReferenceBladeID(0) != 0) {
+            acc.setDisp(true);
+            acc.setAlpha(1.0f);
+            m_owner->m_subSeq.clear();
+            m_owner->m_subSeq.addJob(&GfMenuObjMercenaryForm::seqOpenImage);
+        }
+        break;
+    case 0x22: {
+        ui::UIObjectAcc image(acc.m_handle, "IMG_leader_bl_img");
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_out_r";
+        param.m_startFlags = 2;
+        param.m_setDefault = true;
+        GfMenuObjUtil::startCtrl(image.m_handle, param, nullptr);
+        break;
+    }
+    case 0x100: {
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "mnu090_anim_leader";
+        param.m_motion = "start";
+        param.m_setDefault = true;
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        GfMenuObjUtil::playSE(0xF);
+        break;
+    }
+    case 0x101: {
+        acc.setScale(mm::Vec2(1.0f, 1.0f));
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "mnu090_anim_leader";
+        param.m_motion = "end";
+        param.m_setDefault = true;
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        GfMenuObjUtil::playSE("se_fld_allmap_503");
         break;
     }
     default:
