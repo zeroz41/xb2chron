@@ -18,6 +18,7 @@ public:
     virtual void applyBegin(layer::LayerResUpdateInfo&, layer::LayerRenderView const*);  // slot 5
     virtual void applyEnd(layer::LayerResUpdateInfo&, layer::LayerRenderView const*);  // slot 6
     virtual void setDrawList(layer::LayerSortMan*, bool);  // slot 7
+    void updateEndLayout(const LayerRenderView* view, LayerResUpdateInfo& info);
 
     // the bits of m_renderFlags LayerObjSortLayout::finalRender tests (the name is not the original's)
     enum { RENDER_TEX_OBJ = 0xC };

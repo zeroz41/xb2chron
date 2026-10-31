@@ -20,6 +20,13 @@ public:
     virtual void applyBegin(layer::LayerResUpdateInfo&, layer::LayerRenderView const*);  // slot 5
     virtual void applyEnd(layer::LayerResUpdateInfo&, layer::LayerRenderView const*);  // slot 6
     virtual void setDrawList(layer::LayerSortMan*, bool);  // slot 7
+    void updateParams(LayerArgMdlRenInf& arg, const LayerRenderView* view);
+
+    // the head of its resource (m_resData; the type and field names are not the original's)
+    struct ResData {
+        unsigned char pad_0[0x10];
+        unsigned int m_vertexOfs;  // 0x10: its vertex data, from the head (0: none); resourceInit
+    };
 
     unsigned char pad_2AA[0x16];
     LayerObjResTex m_resTex;  // 0x2C0: ~LayerObjTopDef clears it (the name is not the original's)

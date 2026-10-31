@@ -88,6 +88,8 @@ extern void (*s_CallDataPos[2])(float*, const LyrLayoutPosData*, LayerCenterType
 // writes a position matrix (8 floats) to buff: z at [2]; raw leaves out the LayerManager's screen scale
 // the screen bounds of an object drawn with the matrix and render info
 void calcDispInfo(LayerResDispInfo& disp, const LayerResMatrix& matrix, const LayerResRenderInfo& info);
+// the screen bounds of a layout drawn with the matrix and render info
+void calcLayoutDispInfo(LayerResDispInfo& disp, const LayerResMatrix& matrix, const LayerResRenderInfo& info);
 void updatePosMatrixUniformBlock(float* buff, const LayerResMatrix* matrix, const LayerResMatrix& view, float z, bool raw);
 }  // namespace LayerObjUtil
 }  // namespace layer

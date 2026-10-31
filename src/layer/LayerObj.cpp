@@ -22,6 +22,8 @@
 #include "classes/layer/LayerActDef.h"
 #include "classes/layer/LayerObjDraw.h"
 #include "layer/LayerVertexObj.h"
+#include "layer/LayerVertexMan.h"
+#include "grlib/CGLibTextureBuffer.h"
 #include "classes/layer/LayerObjMesh.h"
 #include "classes/layer/LayerObjTopDef.h"
 #include "grlib/CGLibUniformArray.h"
@@ -104,6 +106,19 @@ void LayerObj::setInitPos(float x, float y) {
     m_params[0].m_posY = y;
     m_params[2].m_posY = y;
 }
+void LayerObj::applyEnd(LayerResUpdateInfo& info, const LayerRenderView* view) {
+    if (m_stateFlags & STATE_NO_UPDATE) return;
+    LayerResMatrix matrix;
+    matrix.mul(m_localMatrix, *info.m_matrix);
+    LayerResColor color;
+    color.mul(m_params[2].m_color, *info.m_color);
+    applyParams(view, matrix, color);
+    if (m_maskObj != nullptr) {
+        m_curMaskObj = m_maskObj;
+    } else {
+        m_curMaskObj = info.m_maskObj;
+    }
+}
 void LayerObj::setPos(float x, float y) {
     int index = LayerManager::s_nStkIdx;
     m_params[index].m_posX = x;
@@ -123,12 +138,12 @@ void LayerObj::setScale(float x, float y) {
 }
 void LayerObj::setMulCol(const mm::Col4& col) {
     int index = LayerManager::s_nStkIdx;
-    m_params[index].m_mulCol = col;
+    m_params[index].m_color.m_mulCol = col;
     onFlag(index, FLAG_MUL_COL);
 }
 void LayerObj::setAddCol(const mm::Col3& col) {
     int index = LayerManager::s_nStkIdx;
-    m_params[index].m_addCol = col;
+    m_params[index].m_color.m_addCol = col;
     onFlag(index, FLAG_ADD_COL);
 }
 void LayerObj::setMatrix(const mm::Mat44& mtx) {
@@ -411,6 +426,43 @@ LayerObjTopDef::~LayerObjTopDef() {
         m_work = nullptr;
     }
 }
+void LayerObjTopDef::resourceInit() {
+    if (!(m_stateFlags & STATE_RESOURCE_INIT)) return;
+    const ResData* res = static_cast<const ResData*>(m_resData);
+    if (res->m_vertexOfs != 0) {
+        m_vertexObj = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager->m_vertexMan->createVertexObj(
+            reinterpret_cast<const unsigned char*>(res) + res->m_vertexOfs);
+    }
+    if (m_textureObj != nullptr) {
+        m_textureObj->setupResource();
+        if (m_textureObj->m_texNum != 0) {
+            switch (static_cast<int>(m_textureObj->getTexture(0)->getFormat())) {
+            case 0x4D:
+            case 0x4F:
+            case 0x50:
+                m_stateFlags |= STATE_TEX_FORMAT;
+                break;
+            }
+        }
+    }
+    m_stateFlags &= ~STATE_RESOURCE_INIT;
+}
+void LayerObjTopDef::applyEnd(LayerResUpdateInfo& info, const LayerRenderView* view) {
+    if (m_stateFlags & STATE_NO_UPDATE) return;
+    LayerResMatrix matrix;
+    matrix.mul(m_localMatrix, *info.m_matrix);
+    LayerResColor color;
+    color.mul(m_params[2].m_color, *info.m_color);
+    LayerArgMdlRenInf arg;
+    arg.m_viewMatrix = &matrix;
+    arg.m_color = &color;
+    updateParams(arg, view);
+    if (m_maskObj != nullptr) {
+        m_curMaskObj = m_maskObj;
+    } else {
+        m_curMaskObj = info.m_maskObj;
+    }
+}
 void LayerObjTopDef::setDrawList(LayerSortMan* sortMan, bool use3D) {
     if (m_stateFlags & STATE_NO_DRAW) return;
     if (use3D) {
@@ -436,6 +488,27 @@ LayerObjTopLayout::~LayerObjTopLayout() {
     m_objList.deleteAll();
     m_childList[0].deleteAll();
     m_childList[1].deleteAll();
+}
+void LayerObjTopLayout::applyEnd(LayerResUpdateInfo& info, const LayerRenderView* view) {
+    if (m_stateFlags & STATE_NO_UPDATE) return;
+    LayerResMatrix matrix;
+    matrix.mul(m_localMatrix, *info.m_matrix);
+    LayerResColor color;
+    color.mul(m_params[2].m_color, *info.m_color);
+    LayerResUpdateInfo child;
+    child.m_matrix = &matrix;
+    child.m_color = &color;
+    child.m_flag50 = true;
+    child.m_blendType = m_blendType;
+    if (m_maskObj != nullptr) {
+        child.m_maskObj = m_maskObj;
+    } else {
+        child.m_maskObj = info.m_maskObj;
+    }
+    updateEndLayout(view, child);
+    m_dispInfo.m_minX = m_dispInfo.m_minY = -100000.0f;
+    m_dispInfo.m_maxX = m_dispInfo.m_maxY = 100000.0f;
+    LayerObjUtil::calcLayoutDispInfo(m_dispInfo, matrix, m_renderInfo);
 }
 void LayerObjUtil::getLayoutInfo(float* pos, const LyrLayoutPosData* data, LayerCenterType type, float sclX, float sclY) {
     s_CallDataPos[mm::mtl::PtrSingleton<LayerManager>::sys()->m_coordinate](pos, data, type, sclX, sclY);

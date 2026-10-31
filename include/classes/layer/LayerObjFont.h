@@ -24,7 +24,7 @@ public:
     // LayerObjTopFont::applyParams
     void updateShaderParms(const LayerRenderView* view, const LayerResMatrix& matrix, const LayerResColor& color);
 
-    unsigned char pad_248[0x30];
+    unsigned char pad_250[0x28];
     // what setMsg(text) draws with (named after setMsg's parameters)
     const LayerFontResObj* m_font;
     const LayerFontStyleObj* m_style;

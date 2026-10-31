@@ -19,7 +19,6 @@ public:
     virtual void setDrawList(layer::LayerSortMan*, bool);  // slot 7
     virtual void applyParams(layer::LayerRenderView const*, layer::LayerResMatrix const&, layer::LayerResColor const&);  // slot 9
 
-    unsigned char pad_248[0x8];
     const void* m_viewData;  // applyParams copies LayerRenderView::m_viewData (the name is not the original's)
     LayerObjSortTexObj m_sortObj;  // 0x258: what setDrawList puts in the sort lists (the name is not the original's)
     unsigned char pad_270[0x8];

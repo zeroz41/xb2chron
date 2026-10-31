@@ -26,7 +26,6 @@ public:
 
     // The field names follow LayerAccMemObj's accessors that read them (not the original's).
     // The field names follow the functions that use them (not the original's).
-    unsigned char pad_248[0x8];
     const void* m_viewData;  // applyParams copies LayerRenderView::m_viewData (the name is not the original's)
     LayerObjSortMemObj m_sortObj;  // 0x258: what setDrawList puts in the sort lists
     unsigned int m_renderFlags;  // setRender sets or clears RENDER_ON

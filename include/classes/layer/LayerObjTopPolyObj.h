@@ -40,7 +40,6 @@ public:
         UPDATE_INDEX_INFO = 0x40,  // setIndexInfo
     };
     // The field names follow the functions that use them (not the original's).
-    unsigned char pad_248[0x8];
     unsigned int m_updateFlags;  // UPDATE_*
     unsigned char pad_254[0x4];
     const void* m_viewData;  // applyParams copies LayerRenderView::m_viewData (the name is not the original's)

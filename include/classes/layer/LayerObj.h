@@ -10,9 +10,6 @@
 #include "layer/LayerSortMan.h"
 
 namespace layer { class LayerRenderView; }
-namespace layer { class LayerResColor; }
-namespace layer { class LayerResMatrix; }
-namespace layer { class LayerResUpdateInfo; }
 namespace layer { class LayerSortMan; }
 namespace layer { class LayerSortObj; }
 namespace grlib { class CGLibDblUniformBlock; }
@@ -39,6 +36,59 @@ public:
     short m_pixelWidth;  // getPixelWidth (calcScl_Pixel_Up reads it signed)
     short m_pixelHeight;  // getPixelHeight
     unsigned char m_centerType;  // set/getCenterType (a LayerCenterType)
+};
+// a 2D affine matrix: the translation, then the 2x2 part (the field names and their order are inferred from
+// mul, not the original's)
+class LayerResMatrix {
+public:
+    // this = a then b (applyEnd: the object's matrix in its parent's)
+    void mul(const LayerResMatrix& a, const LayerResMatrix& b) {
+        m_xx = a.m_xx * b.m_xx + a.m_xy * b.m_yx;
+        m_yx = a.m_yx * b.m_xx + a.m_yy * b.m_yx;
+        m_transX = a.m_transX * b.m_xx + a.m_transY * b.m_yx + b.m_transX;
+        m_xy = a.m_xx * b.m_xy + a.m_xy * b.m_yy;
+        m_yy = a.m_yx * b.m_xy + a.m_yy * b.m_yy;
+        m_transY = a.m_transX * b.m_xy + a.m_transY * b.m_yy + b.m_transY;
+    }
+
+    float m_transX;
+    float m_transY;
+    float m_xx;
+    float m_yy;
+    float m_xy;
+    float m_yx;
+};
+// a multiplied and an added color (the field names are not the original's)
+class LayerResColor {
+public:
+    // this = a's colors combined with b's (applyEnd: the object's in its parent's)
+    void mul(const LayerResColor& a, const LayerResColor& b) {
+        m_mulCol.r = a.m_mulCol.r * b.m_mulCol.r;
+        m_mulCol.g = a.m_mulCol.g * b.m_mulCol.g;
+        m_mulCol.b = a.m_mulCol.b * b.m_mulCol.b;
+        m_mulCol.a = a.m_mulCol.a * b.m_mulCol.a;
+        m_addCol.r = a.m_addCol.r + b.m_addCol.r;
+        m_addCol.g = a.m_addCol.g + b.m_addCol.g;
+        m_addCol.b = a.m_addCol.b + b.m_addCol.b;
+    }
+
+    mm::Col4 m_mulCol;
+    mm::Col3 m_addCol;
+};
+class LayerBase;
+// what an object's applyBegin/applyEnd pass down to its children (only the fields applyEnd reads and writes are
+// known; the field names are not the original's)
+class LayerResUpdateInfo {
+public:
+    unsigned char pad_0[0x40];
+    const LayerResMatrix* m_matrix;  // 0x40: the parent's matrix
+    const LayerResColor* m_color;  // 0x48: the parent's colors
+    bool m_flag50;  // LayerObjTopLayout::applyEnd sets it for its children (the name is not the original's)
+    unsigned char pad_51[0x7];
+    unsigned int m_blendType;  // 0x58: LayerObjTopLayout::applyEnd passes its m_blendType down
+    unsigned char pad_5C[0x14];
+    const LayerBase* m_maskObj;  // 0x70: the mask object the children inherit
+    unsigned char pad_78[0x10];  // LayerObjTopLayout::applyEnd's local copy is 0x88 bytes
 };
 // table 0x7100B7F9E8
 class LayerObj : public ::layer::LayerBase {
@@ -93,7 +143,11 @@ public:
     };
     // the bits of m_stateFlags (the names are not the original's)
     enum {
-        STATE_VIEWPORT = 0x10,  // LayerAccLayoutObj::setViewPortMode
+        // set while the object's resource still needs resourceInit (LayerObjTopDef::resourceInit clears it)
+        STATE_RESOURCE_INIT = 0x1,
+        STATE_VIEWPORT = 0x10,
+        // applyEnd: the object is skipped (its matrix and colors are not updated)
+        STATE_NO_UPDATE = 0x10000,  // LayerAccLayoutObj::setViewPortMode
         STATE_PARTS_ACTION = 0x40,  // LayerAccAction reads the running action from m_actionData
         // LayerObjUtil::updatePosMatrixUniformBlock leaves the position unscaled by the LayerManager's screen
         // scale (LayerObjMesh::call_uniform_noImage passes it)
@@ -102,6 +156,8 @@ public:
         STATE_3D_SPACE = 0x400,
         // setDrawList: either bit keeps the object out of the sort lists
         STATE_NO_DRAW = 0x90000,
+        // LayerObjTopDef::resourceInit sets it when its first texture has one of the formats 0x4D, 0x4F or 0x50
+        STATE_TEX_FORMAT = 0x400000,
     };
     // what setPos/setRot/setScale/setMulCol/setAddCol write, one per m_flags entry and a third the getters fall
     // back to (the layout is not the original's)
@@ -112,8 +168,7 @@ public:
         float m_scaleX;
         float m_scaleY;
         unsigned char pad_14[0x8];
-        mm::Col4 m_mulCol;
-        mm::Col3 m_addCol;
+        LayerResColor m_color;  // setMulCol / setAddCol
     };
 
     // the entry the getters read for a value: this frame's when it set it, else the one being read back when that
@@ -161,7 +216,7 @@ public:
     LayerResRenderInfo m_renderInfo;  // 0x180
     unsigned char pad_19C[0x3C];  // the render info is 4-aligned (floats at 0x188)
     unsigned short m_runningActIdx[2];  // LayerAccAction::getRunningActIdx, indexed by LayerManager::s_nDebIdx
-    unsigned char pad_1DC[0x18];
+    LayerResMatrix m_localMatrix;  // 0x1DC: applyEnd multiplies it by its parent's (the name is not the original's)
     float m_ctrlSpd;  // LayerActBase::actcmd_ctrlspd (the name is not the original's)
     unsigned char pad_1F8[0x4];
     // the z LayerObjUtil::updatePosMatrixUniformBlock writes into the position uniform (LayerObjMesh's
@@ -170,6 +225,8 @@ public:
     float m_depth;  // setDrawList's set3DSpace distance (the name is not the original's)
     unsigned char pad_204[0x3C];
     const LayerBase* m_maskObj;  // setMaskObj
+    // the mask object it draws with: m_maskObj, else its parent's (applyEnd; the name is not the original's)
+    const LayerBase* m_curMaskObj;
 };
 inline void LayerObj::onFlag(unsigned int flag) { onFlag(LayerManager::s_nStkIdx, flag); }
 inline void LayerObj::offFlag(unsigned int flag) { offFlag(LayerManager::s_nStkIdx, flag); }
