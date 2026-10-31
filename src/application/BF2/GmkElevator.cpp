@@ -175,6 +175,9 @@
 #include "classes/gf/GfBdatChrEnArrange.h"
 #include "gf/GfObjFactory.h"
 #include "classes/gf/GfComTransform.h"
+#include "classes/ml/Scn.h"
+#include "classes/ml/ScnObjCam.h"
+#include "classes/gmk/GmkSquadNavi.h"
 #include "fw/FwDebug.h"
 
 namespace gf {
@@ -1502,7 +1505,41 @@ void GmkDmgEffect::update(float dt) { AGmkBase::update(dt); }
 
 int IGmkList::debugGetDocId() const { return 0; }
 
+bool isInterestPosExist() {
+    GmkManager* manager = GmkManager::sys();
+    if (manager != nullptr && manager->pad_198 != 1) {
+        if (manager->pad_198 == 0) {
+            return isPlayerExist();
+        }
+        return false;
+    }
+    ml::Scn* scn = ml::Scn::sys();
+    if (scn == nullptr) {
+        return false;
+    }
+    return scn->getCam(-1) != nullptr;
+}
+
 bool isPlayerExist() { return gf::GfGameManager::fn_71002AA074() != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1); }
+
+const mm::Vec3& getInterestPos() {
+    GmkManager* manager = GmkManager::sys();
+    if (manager != nullptr && manager->pad_198 != 1) {
+        if (manager->pad_198 == 0) {
+            return getPlayerPos();
+        }
+        return mm::Vec3::zero;
+    }
+    return ml::Scn::sys()->getCam(-1)->m_info.m_render->m_transform.m_posGbl;
+}
+
+const mm::Vec3& getPlayerPos() {
+    if (gf::GfGameManager::fn_71002A9E68()) {
+        return gf::GfGameManager::getControlMoverPosition();
+    }
+    gf::GfObj* obj = gf::GfObjUtil::getObj(gf::GfGameManager::fn_71002AA074());
+    return obj->getComponent<gf::GfComTransform>(0)->getPosition();
+}
 
 bool isNaviMeshExist(const mm::Vec3& pos) {
     mm::Vec3 out;
@@ -1762,6 +1799,41 @@ GmkSquadLeader* GmkSquad::getBindedGmkSquadLeader() const {
         }
     }
     return nullptr;
+}
+
+bool GmkSquadNavi::getPosRotY(mm::Vec3& pos, float& rotY) const {
+    if (isInSquad() && m_info.m_squad->isValid()) {
+        m_info.m_squad->getPosRotY(pos, rotY, m_index);
+        pos += pad_30;
+        return true;
+    }
+    return false;
+}
+
+void GmkSquad::getPosRotY(mm::Vec3& pos, float& rotY, unsigned int index) const {
+    pos = m_vec3s[index];
+    rotY = m_floats[index];
+}
+
+void GmkSquadNavi::create(const CreateInfo& info) {
+    dispose();
+    m_info = info;
+    m_info.m_squad->addGmkSquadNavi(this);
+}
+
+void GmkSquadNavi::dispose() {
+    if (m_info.m_squad != nullptr && m_info.m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        m_info.m_squad->removeGmkSquadNavi(this);
+        m_info = CreateInfo();
+    }
+}
+
+void GmkSquad::removeGmkSquadNavi(GmkSquadNavi* navi) {
+    if (navi != nullptr && navi->intoNode()) {
+        m_bools[navi->m_index] = false;
+        m_navis.remove(navi);
+        navi->m_info = GmkSquadNavi::CreateInfo();
+    }
 }
 GmkElevatorLocator::~GmkElevatorLocator() { dispose(); }
 GmkTargetPoint::~GmkTargetPoint() { dispose(); }

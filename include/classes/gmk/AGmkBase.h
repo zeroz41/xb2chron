@@ -101,6 +101,12 @@ const char* debugGetGmkBdatRowName(const AGmkBase& gmk);
 const char* debugGetGmkBdatSheetName(const AGmkBase& gmk);
 // the player's position (GfFieldGimmick::update hands it to GfGameUtil::isPointSavable)
 const mm::Vec3& getPlayerPos();
+// whether getInterestPos has a position to give: the scene's camera (no GmkManager, or its mode at 0x198 is 1), the
+// player (mode 0); none in any other mode
+bool isInterestPosExist();
+// the position the gimmicks measure against: the camera's global position (no GmkManager, or mode 1), the player's
+// (mode 0), else mm::Vec3::zero
+const mm::Vec3& getInterestPos();
 // the current map's FLD_maplist id (defined in GmkElevator.cpp's unit)
 int getCurrentMapBdatId();
 // show or hide the gimmicks of a type: all of them, the one of a BDAT row, the one of a gimmick set's index (defined

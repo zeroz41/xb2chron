@@ -65,7 +65,6 @@ public:
     int pad_b0;
     void* pad_b8;  // mob::StateMove::isCondMatch: the state may run while it is set
     gmk::GmkSquadNavi m_squadNavi;  // isSquadMember reads it (the name is not the original's)
-    mm::Vec3 pad_f0;
     mm::Vec3 pad_100;  // what it answers MsgObjectGetVelocity (0x1000049) with
     // mob::StateSquadMember::seqUpdateIdle starts moving once the owner is pad_18 away from it on the ground plane
     mm::Vec3 pad_110;
