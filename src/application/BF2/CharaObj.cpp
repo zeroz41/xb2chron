@@ -1740,6 +1740,17 @@ void ScriptEffectCast::doit(const event::Param& param) {
     }
 }
 
+void ScriptEffectMount::doit(const event::Param& param) {
+    ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
+    if (obj != 0) {
+        ObjectChara* chara = static_cast<ObjectChara*>(param.val(0).getUserdata());
+        ATTACH_TYPE type = static_cast<ATTACH_TYPE>(param.val(1).getS32());
+        const char* name = param.val(2).getStr();
+        mm::Vec3 pos(param.val(3).getF32(), param.val(4).getF32(), param.val(5).getF32());
+        obj->setMount(chara->m_chara->m_attach, name, pos, param.val(6).getBool(), type);
+    }
+}
+
 void ScriptEffectMount::undo(const event::Param&) {
     ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
     if (obj != 0) {
