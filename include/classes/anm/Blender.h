@@ -2,9 +2,10 @@
 #define CLASSES_ANM_BLENDER_H
 
 #include "classes/anm/ReferenceObject.h"
+#include "anm/QsTransform.h"
+#include "mm/mtl/Vector.h"
 
 namespace anm { class Control; }
-namespace anm { class QsTransform; }
 namespace anm { class Skeleton; }
 namespace mm { namespace mtl { class IAllocator; }}
 
@@ -23,9 +24,21 @@ public:
     // fw::AnimBlenderUpdater::update passes it UpdateInfo::m_deltaTime
     void update(float dt);
 
-    unsigned char pad_18[0x28];  // Factory::createBlender allocates 0x50 bytes
-    const Skeleton* m_pSkeleton;  // the constructor's (the name is not the original's)
-    unsigned char pad_48[0x8];
+    // the scratch buffers the samplers blend in (Blender::Work::~Work is the symbols'; 0xA0 bytes, the constructor's
+    // allocation). The field names are not the original's
+    struct Work {
+        ~Work();
+
+        mm::mtl::Vector<float> m_weights;          // per bone (or extra-track value), the weights' sum
+        mm::mtl::Vector<QsTransform> m_transforms;  // per bone, a control's sampled transform
+        mm::mtl::Vector<float> m_extraValues;      // per extra-track value, a control's sampled value
+        mm::mtl::Vector<bool> m_partial;           // per bone, sampleTrucksMS's partial space conversions'
+    };
+
+    // Factory::createBlender allocates 0x50 bytes
+    mm::mtl::Vector<Control*> m_controls;  // addControl's, each referenced (the name is not the original's)
+    const Skeleton* m_pSkeleton;  // the constructor asserts `m_pSkeleton`
+    Work* m_pWork;                // the constructor's (the name is not the original's)
 };
 }  // namespace anm
 

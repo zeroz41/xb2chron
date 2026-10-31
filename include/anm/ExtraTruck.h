@@ -15,7 +15,10 @@ public:
 
     unsigned char pad_8[0x8];
     unsigned char m_type;  // which kind: 0 UncompressExtraTruck, 1 CubicExtraTruck (ExtraBinding's constructor)
-    unsigned char pad_11[0x7];
+    // Blender's samplers blend a 0 track normally and add a 1 track (as Animation's m_blendHint; the name is not
+    // the original's)
+    unsigned char m_blendHint;
+    unsigned char pad_12[0x6];
 };
 }  // namespace anm
 

@@ -22,15 +22,17 @@ struct Bone {
 // the fields' names are not the original's
 struct ExtraTruckSlot {
     const char* m_name;  // getExtraTruckSlotID finds a slot by it
-    unsigned char pad_8[0x18];
+    unsigned char pad_8[0x10];
+    // its values' defaults: Blender::sampleExtraTrucks normalizes with them (NormalizeExtraTruckSrc::pDefaults), so its
+    // size is the slot's value count (Factory::createExtraTruckBuffer makes no buffer for a slot without any). The
+    // name is not the original's
+    Array<float> m_defaults;
     // one value's limits (Util::clampLimitExtraTruck clamps the value into them; the names are not the original's)
     struct Limit {
         float m_min;
         float m_max;
     };
 
-    unsigned int m_count;  // its values: Factory::createExtraTruckBuffer makes no buffer for a slot without any
-    unsigned char pad_24[0x4];
     Array<Limit> m_limits;  // one per value
 };
 
@@ -69,6 +71,9 @@ public:
     // the bone of the index (Util::computeIgnoreMirrorFromName indexes the bones with a 16-bit index; the name is not
     // the original's)
     const Bone& getBone(unsigned short bone) const { return m_bones[bone]; }
+    // the extra-track slot of the index (inline: Blender's constructor indexes the slots with a 16-bit index; the
+    // name is not the original's)
+    const ExtraTruckSlot& getExtraTruckSlot(unsigned short slot) const { return m_extraTruckSlots[slot]; }
 
     // the index of the extra-track slot named `name`, -1 when none is
     short getExtraTruckSlotID(const char* name) const;

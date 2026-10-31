@@ -61,7 +61,7 @@ ExtraTruckBuffer* Factory::createExtraTruckBuffer(const Skeleton* pSkeleton, con
         unsigned short id = pSkeleton->getExtraTruckSlotID(name);
         if (id != 0xFFFF) {
             const ExtraTruckSlot& slot = pSkeleton->m_extraTruckSlots[id];
-            if (slot.m_count != 0) {
+            if (slot.m_defaults.size() != 0) {
                 ExtraTruckBuffer* buffer = new (pAllocator->allocate(sizeof(ExtraTruckBuffer), 8))
                     ExtraTruckBuffer(*pSkeleton, slot, pAllocator);
                 buffer->addRef();

@@ -58,7 +58,7 @@ void AnimSinglePoseSamper::bind(anm::Control* control, anm::Pose* pose, anm::Ext
         if (m_extraIndex != 0xFFFF) {
             const anm::Binding* binding = control->m_pBinding;
             if (slotID < binding->m_extraBindings.size() &&
-                slot->m_count == binding->m_extraBindings[slotID].m_indices.size()) {
+                slot->m_defaults.size() == binding->m_extraBindings[slotID].m_indices.size()) {
                 m_extra = extra;
                 extra->addRef();
             }
