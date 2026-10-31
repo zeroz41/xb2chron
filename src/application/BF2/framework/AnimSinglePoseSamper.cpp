@@ -134,12 +134,12 @@ void AnimPoseSamper::bind(anm::Blender* blender, anm::Pose* pose, anm::ExtraTruc
 void AnimPoseSamper::samplePose() {
     if (m_enable) {
         if (m_sampleFlag) {
-            anm::Array<anm::QsTransform>& out = m_pose->accessSyncedPoseLocalSpace();
-            m_blender->sampleTrucks(out.size(), out.m_pElements);
+            mm::mtl::Vector<anm::QsTransform>& out = m_pose->accessSyncedPoseLocalSpace();
+            m_blender->sampleTrucks(out.size(), out.data());
             m_pose->syncModelSpace();
         } else {
-            anm::Array<anm::QsTransform>& out = m_pose->accessSyncedPoseModelSpace();
-            m_blender->sampleTrucksMS(out.size(), out.m_pElements);
+            mm::mtl::Vector<anm::QsTransform>& out = m_pose->accessSyncedPoseModelSpace();
+            m_blender->sampleTrucksMS(out.size(), out.data());
         }
         if (m_extra != nullptr) {
             m_blender->sampleExtraTrucks(m_extraIndex, m_extra->m_count, m_extra->m_pValues);
@@ -187,12 +187,12 @@ void AnimAsmPoseSampler::bind(anm::ASMControl* control, anm::Pose* pose, anm::Ex
 
 void AnimAsmPoseSampler::samplePose() {
     if (m_sampleFlag) {
-        anm::Array<anm::QsTransform>& out = m_pose->accessSyncedPoseLocalSpace();
-        m_control->sampleTrucks(out.size(), out.m_pElements);
+        mm::mtl::Vector<anm::QsTransform>& out = m_pose->accessSyncedPoseLocalSpace();
+        m_control->sampleTrucks(out.size(), out.data());
         m_pose->syncModelSpace();
     } else {
-        anm::Array<anm::QsTransform>& out = m_pose->accessSyncedPoseModelSpace();
-        m_control->sampleTrucksMS(out.size(), out.m_pElements);
+        mm::mtl::Vector<anm::QsTransform>& out = m_pose->accessSyncedPoseModelSpace();
+        m_control->sampleTrucksMS(out.size(), out.data());
     }
     if (m_extra != nullptr) {
         m_control->sampleExtraTrucks(m_extraIndex, m_extra->m_count, m_extra->m_pValues);
@@ -250,8 +250,8 @@ void AnimEventAsmPoseSampler::bind(anm::ASMControl* control, anm::Pose* pose, an
 void AnimEventAsmPoseSampler::samplePose() {
     if (!m_pause) {
         if (m_control != nullptr) {
-            anm::Array<anm::QsTransform>& out = m_pose->accessSyncedPoseLocalSpace();
-            m_control->sampleTrucks(out.size(), out.m_pElements);
+            mm::mtl::Vector<anm::QsTransform>& out = m_pose->accessSyncedPoseLocalSpace();
+            m_control->sampleTrucks(out.size(), out.data());
         } else {
             m_pose->setReferencePose();
         }

@@ -243,18 +243,18 @@ void Util::samplePoseSmartFromControl(Control* control, Pose* pose, bool flag) {
     if (flag) {
         switch (space) {
         case 1: {
-            Array<QsTransform>& local = pose->accessSyncedPoseLocalSpace();
-            control->sampleTrucks(local.size(), local.m_pElements);
+            mm::mtl::Vector<QsTransform>& local = pose->accessSyncedPoseLocalSpace();
+            control->sampleTrucks(local.size(), local.data());
             const Skeleton* pSkeleton = pose->m_pSkeleton;
 #line 1225
             MM_ASSERT(pSkeleton);
-            SpaceResolveUtil::clacPoseMSNoTruck(pBinding, pSkeleton, local.m_pElements);
-            SpaceResolveUtil::convertMStoLS(pSkeleton, local.m_pElements);
+            SpaceResolveUtil::clacPoseMSNoTruck(pBinding, pSkeleton, local.data());
+            SpaceResolveUtil::convertMStoLS(pSkeleton, local.data());
             break;
         }
         case 0: {
-            Array<QsTransform>& local = pose->accessSyncedPoseLocalSpace();
-            control->sampleTrucks(local.size(), local.m_pElements);
+            mm::mtl::Vector<QsTransform>& local = pose->accessSyncedPoseLocalSpace();
+            control->sampleTrucks(local.size(), local.data());
             break;
         }
         default:
@@ -264,18 +264,18 @@ void Util::samplePoseSmartFromControl(Control* control, Pose* pose, bool flag) {
     } else {
         switch (space) {
         case 1: {
-            Array<QsTransform>& model = pose->accessSyncedPoseModelSpace();
-            control->sampleTrucks(model.size(), model.m_pElements);
+            mm::mtl::Vector<QsTransform>& model = pose->accessSyncedPoseModelSpace();
+            control->sampleTrucks(model.size(), model.data());
             break;
         }
         case 0: {
-            Array<QsTransform>& model = pose->accessSyncedPoseModelSpace();
-            control->sampleTrucks(model.size(), model.m_pElements);
+            mm::mtl::Vector<QsTransform>& model = pose->accessSyncedPoseModelSpace();
+            control->sampleTrucks(model.size(), model.data());
             const Skeleton* pSkeleton = pose->m_pSkeleton;
 #line 1242
             MM_ASSERT(pSkeleton);
-            SpaceResolveUtil::setReferencePoseNoTruck(pBinding, pSkeleton, model.m_pElements);
-            SpaceResolveUtil::convertLStoMS(pSkeleton, model.m_pElements);
+            SpaceResolveUtil::setReferencePoseNoTruck(pBinding, pSkeleton, model.data());
+            SpaceResolveUtil::convertLStoMS(pSkeleton, model.data());
             break;
         }
         }

@@ -17,6 +17,12 @@ namespace anm {
 class AnimationObject {
 public:
     virtual ~AnimationObject() {}
+    // ReferenceObject's (Pose's constructor counts its skeleton so)
+    void addRef() const {
+        if (m_refEnable != 0) {
+            ++m_refCount;
+        }
+    }
     void release() const {
         if (m_refEnable != 0) {
             if (--m_refCount <= 0) {
