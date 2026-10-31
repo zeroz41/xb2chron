@@ -7,6 +7,8 @@ namespace idcoli { class IDColiCallArg; }
 namespace idcoli { class IDCmfPoliData; }
 namespace idcoli { class IDColiInput; }
 namespace idcoli { class IDColiResult; }
+namespace idcoli { class IDColiGrdMoveObj; }
+namespace idcoli { class IDColiTreeTop; }
 
 namespace idcoli {
 
@@ -26,35 +28,82 @@ public:
     unsigned char pad_0[4];
 };
 
-// a grand mesh's work (IDColiGrandObj's constructor takes it); the names are not the original's
+// a grand object's work: IDColiObjGrand holds it at 0x50 (IDColiParmsGrand's constructor and IDColiDef's tests take
+// that address; createGrand fills it, coliCallCheck and getGrandAABB read it). The names are not the original's.
 class wrkIDCmfWork {
 public:
-    unsigned char pad_0[0x30];
+    // the bounding box record of the grand data (getGrandAABB widens by it); the name is not the original's
+    struct Box {
+        float m_max[3];  // 0x0
+        float m_min[3];  // 0xC
+    };
+    // the head of the grand data IDColiObjGrand::createGrand takes (it sizes the work from the counts at
+    // 0x1C..0x3C and 0x94); only what getGrandAABB reads is declared. The names are not the original's.
+    struct Header {
+        unsigned char pad_0[8];
+        unsigned int m_size;  // 0x8, the box record sits 0x28 bytes before it unless m_flags bit 1 is set
+        unsigned char pad_c[0x7C];
+        unsigned char m_flags;  // 0x88, bit 1: m_boxOffset holds the box record's offset
+        unsigned char pad_89[3];
+        unsigned int m_boxOffset;  // 0x8C
+    };
+
+    const Header* m_data;  // 0x0, createGrand's data
+    unsigned char pad_8[0x28];
     const IDCmfPosData* m_posData;  // 0x30, inst*Hit index it
     const IDCmfPosInfo* m_posInfo;  // 0x38, the same index
+    unsigned char pad_40[0x30];
+    // the moving parts (0x200 bytes each); IDColiObjGrand::update updates them and enters them into a tree
+    IDColiGrdMoveObj* m_moveObjs;  // 0x70
+    int m_moveObjNum;  // 0x78
+    unsigned char pad_7c[0x14];
+    // createGrand destroys both (without freeing them) while m_memBlock is set, then frees m_memBlock
+    IDColiTreeTop* m_treeTops[2];  // 0x90
+    // the tree IDColiObjGrand::update builds is m_treeTops[m_bank == 0]; update then makes it m_bank
+    int m_bank;  // 0xA0
+    unsigned char pad_a4[4];
+    void* m_memBlock;  // 0xA8, IDColiObjGrand's constructor clears it
 };
 
-// the mesh tests of a grand object. IDColiGrandObj::testLine/testRay/... store the result at 0x8 and the input at
-// 0x10 and then run IDColiGrandMesh's and IDColiGrandTree's members on the same object through member pointers, so
-// both read this layout (IDColiGrandObj's relation to them is not declared yet). The names are not the original's.
+// the mesh tests of a grand object (IDColiGrandObj derives from it through IDColiGrandTree: its testLine/testRay/...
+// store the result at 0x8, the input at 0x10 and the member pointers below, then run them). The names are not the
+// original's.
 class IDColiGrandMesh {
 public:
+    // test the mesh's polygons of a tree cell (the parameter name is not the original's)
+    bool meshLine(unsigned int index);
+    bool meshSphere(unsigned int index);
+    bool meshCapsule(unsigned int index);
     // whether a hit at that distance counts for the query kind
     bool lenghtLine(float length);
     bool lenghtRay(float length);
     bool lenghtSphere(float length);
     bool lenghtWallSphere(float length);
     void vecotrNon(IDColiCallArg& arg, const IDCmfPoliData* poli);
+    void vecotrDef(IDColiCallArg& arg, const IDCmfPoliData* poli);
+    void vecotrInst(IDColiCallArg& arg, const IDCmfPoliData* poli);
     // store a hit in the result: the nearest (stockNear), the nearest and the second one for negative lengths
     // (stockSecNear), the next table entry (stockTbl); then run the m_vecotr step on it
     void stockNear(IDColiCallArg& arg, const IDCmfPoliData* poli, float length);
     void stockSecNear(IDColiCallArg& arg, const IDCmfPoliData* poli, float length);
     void stockTbl(IDColiCallArg& arg, const IDCmfPoliData* poli, float length);
+    void stockInstNear(IDColiCallArg& arg, const IDCmfPoliData* poli, float length);
+    void stockInstSecNear(IDColiCallArg& arg, const IDCmfPoliData* poli, float length);
+    void stockInstTbl(IDColiCallArg& arg, const IDCmfPoliData* poli, float length);
 
     wrkIDCmfWork* m_work;  // 0x0
     IDColiResult* m_result;  // 0x8
     const IDColiInput* m_input;  // 0x10
-    unsigned char pad_18[0x58];
+    // the instance being tested (inst*HitParts set it around the mesh test; IDColiGrandObj's constructor clears it);
+    // the test* functions pick the stockInst*/vecotrInst steps while it is set
+    const IDCmfPosData* m_instPosData;  // 0x18
+    // the steps IDColiGrandObj's test* functions pick for the query kind
+    bool (IDColiGrandMesh::*m_mesh)(unsigned int index);  // 0x20
+    void (IDColiGrandMesh::*m_stock)(IDColiCallArg& arg, const IDCmfPoliData* poli, float length);  // 0x30
+    void (IDColiGrandMesh::*m_stockInst)(IDColiCallArg& arg, const IDCmfPoliData* poli, float length);  // 0x40
+    bool (IDColiGrandMesh::*m_lenght)(float length);  // 0x50
+    // the second length test of capsules (testCapsule/testMoveCapsule set it)
+    bool (IDColiGrandMesh::*m_lenghtSub)(float length);  // 0x60
     // the vector step IDColiGrandObj::testLine picks (vecotrNon, vecotrDef or vecotrInst) and the one for instances
     void (IDColiGrandMesh::*m_vecotr)(IDColiCallArg& arg, const IDCmfPoliData* poli);  // 0x70
     void (IDColiGrandMesh::*m_vecotrInst)(IDColiCallArg& arg, const IDCmfPoliData* poli);  // 0x80
@@ -62,6 +111,10 @@ public:
 
 class IDColiGrandTree : public IDColiGrandMesh {
 public:
+    // test a tree cell's entry: treeHitDef runs the mesh and instance tests, treeHitEnd stops at the first hit
+    // (the parameter names are not the original's)
+    bool treeHitDef(unsigned int index);
+    bool treeHitEnd(unsigned int index);
     bool instLineHit(unsigned int index);
     bool instLineHitParts(const IDCmfPosData* posData, const IDCmfPosInfo* posInfo);
     bool instRayHit(unsigned int index);
@@ -72,6 +125,12 @@ public:
     bool instCapsuleHitParts(const IDCmfPosData* posData, const IDCmfPosInfo* posInfo);
     // whether the box (max, min) lies apart from the input's box (the parameter names are not the original's)
     bool isAaBbToAaBb(const float* max, const float* min);
+    bool isLineAaBb(const float* max, const float* min);
+
+    // the tree-entry test, the instance test and the box rejection the test* functions pick
+    bool (IDColiGrandTree::*m_treeHit)(unsigned int index);  // 0x90
+    bool (IDColiGrandTree::*m_instHit)(unsigned int index);  // 0xA0
+    bool (IDColiGrandTree::*m_isAaBb)(const float* max, const float* min);  // 0xB0
 };
 
 }  // namespace idcoli

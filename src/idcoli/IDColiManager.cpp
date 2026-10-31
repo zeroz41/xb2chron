@@ -287,6 +287,8 @@ void IDColiPartsMoveGrand::setMatrix(const mm::Mat44& matrix) { m_obj->setMat(ma
 
 void IDColiPartsMoveGrand::setUserData(void* userData) { m_obj->m_userData = userData; }
 
+IDColiParmsGrand::IDColiParmsGrand(IDColiObj* obj) : m_grand(&static_cast<IDColiObjGrand*>(obj)->m_work) {}
+
 IDColiPartsMoveGrand IDColiParmsGrand::getMoveObj(unsigned int index) {
     return IDColiPartsMoveGrand(&m_grand->m_moveObjs[index]);
 }

@@ -4,7 +4,7 @@
 namespace mm { class Mat44; class Vec3; }
 #include "classes/idcoli/IDColiObjBase.h"
 
-namespace idcoli { class IDColiGrandObj; class IDColiGrdMoveObj; class IDColiObjData; class IDColiObjPhantom; }
+namespace idcoli { class IDColiGrdMoveObj; class wrkIDCmfWork; class IDColiObjData; class IDColiObjPhantom; }
 
 namespace idcoli {
 // a collision attribute and state: bit numbers of IDColiObj::m_attr/m_state; no value has a name yet
@@ -91,7 +91,8 @@ public:
     IDColiPartsMoveGrand getMoveObj(unsigned int index);
     int getMoveObjIdx(const char* name);
 
-    IDColiGrandObj* m_grand;
+    // the object's work (the constructor takes the address of IDColiObjGrand's m_work)
+    wrkIDCmfWork* m_grand;
 };
 }  // namespace idcoli
 

@@ -208,6 +208,11 @@ void IDColiGrandMesh::stockTbl(IDColiCallArg& arg, const IDCmfPoliData* poli, fl
 
 void IDColiGrandMesh::vecotrNon(IDColiCallArg&, const IDCmfPoliData*) {}
 
+IDColiGrandObj::IDColiGrandObj(wrkIDCmfWork* work) {
+    m_work = work;
+    m_instPosData = nullptr;
+}
+
 IDColiGrandObj::~IDColiGrandObj() {}
 
 bool IDColiGrandTree::instLineHit(unsigned int index) {
@@ -241,32 +246,58 @@ void IDColiGrdMoveObj::setMat(const mm::Mat44& matrix) {
 }
 
 IDColiObjGrand::IDColiObjGrand() {
-    m_memBlock = nullptr;
+    m_work.m_memBlock = nullptr;
     m_type = 3;  // a ground (fw::ColiObject's isGrand tests 3)
 }
 
 IDColiObjGrand::~IDColiObjGrand() {
-    if (m_memBlock) {
-        if (m_treeTops[0]) m_treeTops[0]->~IDColiTreeTop();
-        if (m_treeTops[1]) m_treeTops[1]->~IDColiTreeTop();
-        if (m_memBlock) {
-            mtl::MemManager::deallocate(m_memBlock, 0, false);
-            m_memBlock = nullptr;
+    if (m_work.m_memBlock) {
+        if (m_work.m_treeTops[0]) m_work.m_treeTops[0]->~IDColiTreeTop();
+        if (m_work.m_treeTops[1]) m_work.m_treeTops[1]->~IDColiTreeTop();
+        if (m_work.m_memBlock) {
+            mtl::MemManager::deallocate(m_work.m_memBlock, 0, false);
+            m_work.m_memBlock = nullptr;
         }
     }
 }
 
 void IDColiObjGrand::update() {
-    if (m_moveObjNum != 0) {
-        int bank = m_bank == 0;
-        m_treeTops[bank]->begin();
-        for (int i = 0; i < m_moveObjNum; i++) {
-            m_moveObjs[i].update();
-            m_treeTops[bank]->setupTreeList(&m_moveObjs[i].m_treeObjs[bank], m_moveObjs[i].m_max, m_moveObjs[i].m_min);
+    if (m_work.m_moveObjNum != 0) {
+        int bank = m_work.m_bank == 0;
+        m_work.m_treeTops[bank]->begin();
+        for (int i = 0; i < m_work.m_moveObjNum; i++) {
+            m_work.m_moveObjs[i].update();
+            m_work.m_treeTops[bank]->setupTreeList(&m_work.m_moveObjs[i].m_treeObjs[bank],
+                                                   m_work.m_moveObjs[i].m_posData.m_max,
+                                                   m_work.m_moveObjs[i].m_posData.m_min);
         }
-        m_treeTops[bank]->end();
-        m_bank = bank;
+        m_work.m_treeTops[bank]->end();
+        m_work.m_bank = bank;
     }
+}
+
+void IDColiObjGrand::getGrandAABB(mm::Vec3& max, mm::Vec3& min) const {
+    const wrkIDCmfWork::Header* data = m_work.m_data;
+    long offset;
+    if (data->m_flags & 2) {
+        offset = data->m_boxOffset;
+    } else {
+        offset = data->m_size - 0x28L;
+    }
+    const wrkIDCmfWork::Box* box =
+        reinterpret_cast<const wrkIDCmfWork::Box*>(reinterpret_cast<const char*>(data) + offset);
+    float x = box->m_max[0];
+    float y = box->m_max[1];
+    float z = box->m_max[2];
+    max.x = max.x > x ? max.x : x;
+    max.y = max.y > y ? max.y : y;
+    max.z = max.z > z ? max.z : z;
+    x = box->m_min[0];
+    y = box->m_min[1];
+    z = box->m_min[2];
+    min.x = min.x < x ? min.x : x;
+    min.y = min.y < y ? min.y : y;
+    min.z = min.z < z ? min.z : z;
 }
 
 IDColiObjGrdChar::IDColiObjGrdChar() {
