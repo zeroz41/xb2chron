@@ -99,7 +99,8 @@ public:
     mm::Vec3 m_viewYVec;            // 0x460
     unsigned char pad_470[0x20];
     float m_fade[12];               // 0x490
-    unsigned char pad_4C0[0x8];
+    unsigned char pad_4C0[0x4];
+    float m_fovY;                   // 0x4C4: DrShdLgtClustered::stockEnd takes tanf of half of it (the name is not the original's)
     float m_near;                   // 0x4C8: 0.1 from the constructor (the name is not the original's)
     unsigned char pad_4CC[0x14];
     DrCalcClipWorkViewPlane m_clipPlane;  // 0x4E0: set from m_proj by the constructor (the name is not the original's)

@@ -1,3 +1,4 @@
+#define MM_LIB_FROM_XBRD
 #include "classes/ml/DrResMdoInstPartsAnm.h"
 #include "classes/ml/DrResMdoInstPartsGlbID.h"
 #include "classes/ml/DrResMdoSeamColi.h"
@@ -28,6 +29,11 @@
 #include "ml/DrResShdStreamOut.h"
 #include "ml/DrShdDataObj.h"
 #include "mtl/MemManager.h"
+#include "ml/DrCalcMan.h"
+#include "ml/DrCalcViewWork.h"
+#include "mm/Math.h"
+#include "mm/Vec3.h"
+#include <math.h>
 #include <string.h>
 
 namespace ml {
@@ -94,12 +100,52 @@ void DrShdLgtClustered::stockBegin() {
     view.listNum = 0;
     m_pntBuffRest = view.pntLight.m_size;
     m_sptBuffRest = view.sptLight.m_size;
-    m_pPntBuff = reinterpret_cast<float*>(view.pntLight.getBuff());
-    m_pSptBuff = reinterpret_cast<float*>(view.sptLight.getBuff());
+    m_pPntBuff = reinterpret_cast<PntLightEntry*>(view.pntLight.getBuff());
+    m_pSptBuff = reinterpret_cast<SptLightEntry*>(view.sptLight.getBuff());
     unsigned int cellNum = s.gridX * s.gridY * s.gridZ;
     memset(m_pCellWork[0], 0, cellNum * sizeof(unsigned long));
     memset(m_pCellWork[1], 0, cellNum * sizeof(unsigned long));
     m_cellLightNum = 0;
+}
+
+void DrShdLgtClustered::stockEnd() {
+    ViewWork& view = m_viewWork[m_cateIdx];
+    if (view.pntNum == 0 && view.sptNum == 0) {
+        memset(view.pointerList.getBuff(), 0, view.pointerList.m_size);
+    } else {
+        updateCluster();
+        if (view.listNum == 0) {
+            return;
+        }
+        ViewWork& cur = m_viewWork[m_cateIdx];
+        for (int i = 0; i < cur.pntNum; i++) {
+            cur.pntLight.getBuff();
+        }
+        for (int i = 0; i < cur.sptNum; i++) {
+            cur.sptLight.getBuff();
+        }
+    }
+    const ClusterSetting& s = getClusterSetting(m_cateIdx);
+    DrCalcViewWork* viewWork = m_pDrMan->m_calcMan->m_pViewWork;
+    if (view.pntNum != 0) {
+        view.pntLight.updateData();
+    }
+    if (view.sptNum != 0) {
+        view.sptLight.updateData();
+    }
+    view.pointerList.updateData();
+    ClusterParam* param = reinterpret_cast<ClusterParam*>(view.param.getBuff());
+    tanf(viewWork->m_fovY * 0.5f);
+    param->cellWidth = m_pDrMan->m_curViewInfo->m_width / s.gridX;
+    param->cellHeight = m_pDrMan->m_curViewInfo->m_height / s.gridY;
+    param->screenWidth = m_pDrMan->m_curViewInfo->m_width;
+    param->screenHeight = m_pDrMan->m_curViewInfo->m_height;
+    param->gridX = s.gridX;
+    param->gridY = s.gridY;
+    param->gridZ = s.gridZ;
+    param->zero = 0;
+    param->slice = mm::Vec4(-logf(view.sliceNear), 1.0f / logf(view.sliceScale), s.gridZ - 1.0f, view.listNum);
+    view.param.updateData();
 }
 
 void DrShdLgtClustered::update() {}
@@ -116,6 +162,22 @@ void DrShdLgtClustered::addViewInfo(int idx) {
 }
 
 void DrShdLgtClustered::delViewInfo(int) {}
+
+bool DrShdLgtClustered::planeVsCone(const mm::Vec3& planePos, const mm::Vec3& planeNormal, const mm::Vec3& conePos,
+                                    const mm::Vec3& coneDir, float range, float angle) const {
+    float dist = (conePos - planePos).dot(planeNormal);
+    if (dist > range) {
+        return false;
+    }
+    if (dist <= 0.001f) {
+        return true;
+    }
+    float planeAngle = mm::acos(dist / range);
+    mm::Vec3 normal;
+    normal.setNeg(planeNormal);
+    float coneAngle = mm::acos(normal.dot(coneDir));
+    return planeAngle + angle >= coneAngle - 0.052;
+}
 
 void DrShdLgtClustered::setPntLightUniformBlock(unsigned int idx, unsigned int location) {
     m_viewWork[idx].pntLight.setUniformBlock(location);

@@ -4,7 +4,9 @@
 #include "classes/ml/DrShdLgtDynamic.h"
 #include "grlib/CGLibDblUniformBlock.h"
 #include "ml/DrResFetch.h"
+#include "mm/Vec4.h"
 
+namespace mm { class Vec3; }
 namespace ml { class DrLightMan; }
 namespace ml { class DrMan; }
 namespace ml { class DrLightObjPnt; }
@@ -48,6 +50,11 @@ public:
     // allocates the work memory and sets up every view's buffers (the constructor's body)
     void createWork();
     void updateCluster();
+    void calcBoundingOnGrid(int&, int&, int&, int&, int&, int&, const mm::Vec3&, float);
+    // whether a cone (apex, unit axis, half angle) reaches past a plane (point, unit normal) within range
+    // (the parameter names are not the original's)
+    bool planeVsCone(const mm::Vec3& planePos, const mm::Vec3& planeNormal, const mm::Vec3& conePos,
+                     const mm::Vec3& coneDir, float range, float angle) const;
 
     void setPntLightUniformBlock(unsigned int idx, unsigned int location);
     void setSptLightUniformBlock(unsigned int idx, unsigned int location);
@@ -59,6 +66,44 @@ public:
     void setPointerListStorageBuffer(unsigned int idx, unsigned int location);
     void setLightListStorageBuffer(unsigned int idx, unsigned int location);
     void setParamStorageBuffer(unsigned int idx, unsigned int location);
+
+    // a point light's entry in pntLight's buffer (0x30 bytes; stockPntList; the names are not the original's)
+    struct PntLightEntry {
+        float color[3];  // 0x0
+        float param2;    // 0xC
+        float pos[3];    // 0x10, in view space
+        float size;      // 0x1C
+        float invSize;   // 0x20
+        float zero;      // 0x24
+        float rate;      // 0x28
+        float param;     // 0x2C, the light's m_lightParam, 2.0 without its flag
+    };
+    // a spot light's entry in sptLight's buffer (0x40 bytes; stockSptList; the names are not the original's)
+    struct SptLightEntry {
+        float color[3];    // 0x0
+        float param2;      // 0xC
+        float pos[3];      // 0x10, in view space
+        float size;        // 0x1C
+        float cosOuter;    // 0x20, cos of half the angle
+        float invCosDiff;  // 0x24, 1 / (cos inner - cos outer), 1e12 when they meet
+        float rate;        // 0x28
+        float param;       // 0x2C, the light's m_lightParam, 2.0 without its flag
+        float dir[3];      // 0x30, the negated direction in view space, unit length
+        float invSize;     // 0x3C
+    };
+    // the param block stockEnd fills (0x30 bytes; the names are not the original's)
+    struct ClusterParam {
+        int cellWidth;    // 0x0, screen width / gridX
+        int cellHeight;   // 0x4
+        int screenWidth;  // 0x8
+        int screenHeight; // 0xC
+        int gridX;        // 0x10
+        int gridY;        // 0x14
+        int gridZ;        // 0x18
+        int zero;         // 0x1C
+        // 0x20: -log(sliceNear), 1 / log(sliceScale), gridZ - 1, listNum (stored as one vector after both logs)
+        mm::Vec4 slice;
+    };
 
     // one view's light buffers (0x190 bytes; the set*UniformBlock/StorageBuffer members index it by view);
     // field names from those setters
@@ -88,8 +133,8 @@ public:
     void* m_pWork = nullptr;  // 0x660, the destructor frees it
     int m_pntBuffRest = 0;  // 0x668, bytes left in the view's pntLight buffer (stockBegin, stockPntList)
     int m_sptBuffRest = 0;  // 0x66C
-    float* m_pPntBuff = nullptr;  // 0x670, the next point light's entry in pntLight's buffer
-    float* m_pSptBuff = nullptr;  // 0x678
+    PntLightEntry* m_pPntBuff = nullptr;  // 0x670, the next point light's entry in pntLight's buffer
+    SptLightEntry* m_pSptBuff = nullptr;  // 0x678
     // 0x680: two gridX * gridY * gridZ * 8-byte tables in m_pWork (stockBegin clears both)
     unsigned long* m_pCellWork[2] = {};
     int m_cellLightNum = 0;  // 0x690, stockBegin clears it
