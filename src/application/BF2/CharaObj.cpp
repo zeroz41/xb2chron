@@ -1993,8 +1993,11 @@ void ScriptCharaFade::redo(const event::Param& param) {
 }
 
 void ScriptCamPos::doit(const event::Param& param) {
-    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
-    if (obj != 0) {
+    // the active camera read in place (not through ObjectManager::getActive): the original's typed pointer
+    // addresses the inlined FixedVector::clear's elements from the object (ldr [obj + i * 32 + 0xa0]!)
+    ObjectList* cur = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+    ObjectCamera* obj = cur != 0 ? static_cast<ObjectCamera*>(cur->m_active) : 0;
+    if (obj != 0 && obj->m_type == 3) {
         unsigned int axisType = param.val(0).getS32();
         mm::Vec3 value(param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
         PosAxis axis(axisType, value.x, value.y, value.z);
@@ -2013,8 +2016,9 @@ void ScriptCamPos::doit(const event::Param& param) {
 }
 
 void ScriptCamPos::undo(const event::Param&) {
-    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
-    if (obj != 0) {
+    ObjectList* cur = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+    ObjectCamera* obj = cur != 0 ? static_cast<ObjectCamera*>(cur->m_active) : 0;
+    if (obj != 0 && obj->m_type == 3) {
         PosAxis axis(m_prevPos);
         obj->m_pos = axis;
         obj->m_posQueue.clear();
@@ -2022,6 +2026,42 @@ void ScriptCamPos::undo(const event::Param&) {
         CamObj* cam = obj->m_cam;
         cam->changeActive(&cam->m_hands);
         cam->m_hands.setPos(axis, static_cast<CV_TYPE>(1));
+    }
+}
+
+void ScriptCamTar::doit(const event::Param& param) {
+    // the active camera read in place, as ScriptCamPos::doit
+    ObjectList* cur = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+    ObjectCamera* obj = cur != 0 ? static_cast<ObjectCamera*>(cur->m_active) : 0;
+    if (obj != 0 && obj->m_type == 3) {
+        unsigned int axisType = param.val(0).getS32();
+        mm::Vec3 value(param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        TarAxis axis(axisType, value.x, value.y, value.z);
+        CV_TYPE type = static_cast<CV_TYPE>(param.val(4).getS32());
+        m_prevTar = obj->m_tar;
+        obj->m_tar = axis;
+        obj->m_tarQueue.clear();
+        obj->m_tarQueue.push_back(axis);
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        cam->m_hands.setTar(axis, type);
+        if (m_prevTar.m_type != axisType || !(value - m_prevTar.m_value).isZero()) {
+            mm::mtl::Singleton<TextManager>::getPtr()->m_flags |= 0x20;
+        }
+    }
+}
+
+void ScriptCamTar::undo(const event::Param&) {
+    ObjectList* cur = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+    ObjectCamera* obj = cur != 0 ? static_cast<ObjectCamera*>(cur->m_active) : 0;
+    if (obj != 0 && obj->m_type == 3) {
+        TarAxis axis(m_prevTar);
+        obj->m_tar = axis;
+        obj->m_tarQueue.clear();
+        obj->m_tarQueue.push_back(axis);
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        cam->m_hands.setTar(axis, static_cast<CV_TYPE>(1));
     }
 }
 
