@@ -94,7 +94,17 @@ void UIInputPad::setLineSelectionMax(unsigned int max) {
     }
 }
 
-// 0x7100679FC4 (setLineSelectionMax without the one-line check, 3.0.1's) is not here yet: no evidence names it
+// setLineSelectionMax without the one-line check (3.0.1's; no evidence names it)
+void UIInputPad::fn_7100679FC4(unsigned int max) {
+    if (m_padLineNext != 0 && m_padLinePrev != 0) {
+        m_lineSelectionMax = max;
+        unsigned int num = m_selectMax / max;
+        if (m_selectMax % max != 0) {
+            num++;
+        }
+        m_lineNum = num;
+    }
+}
 
 void UIInputPad::setLineSelectLoop(bool loop) {
     m_lineSelectLoop = loop;
@@ -110,7 +120,13 @@ void UIInputPad::setLoop(bool loop) {
     m_loop = loop;
 }
 
-// 0x710067A02C (the setup's select text unless looping, 3.0.1's) is not here yet: no evidence names it
+// the setup's select text, none while looping (3.0.1's; no evidence names it)
+unsigned short UIInputPad::fn_710067A02C() const {
+    if (m_loop) {
+        return 0;
+    }
+    return m_param.m_selectText;
+}
 
 bool UIInputPad::updateImpl() {
     if (m_selectMax == 0) {
@@ -214,8 +230,8 @@ int UIInputPad::moveSelect(const fw::PadData& pad, unsigned int step, int select
     return select;
 }
 
-// fixSelectNo (0x710067A41C): not identical yet (wip/ui_input_pad.cpp: the wrapping return of a line move from
-// the first line and the blocks that set the event are laid out apart from the original)
+// fixSelectNo (0x710067A41C): not identical yet (wip/fixSelectNo_ui_input_pad.cpp: one return copied through the
+// return register and a few instructions scheduled apart from the original)
 
 EventData* UIInputPad::getInputEventExt() {
     return &m_eventExt;

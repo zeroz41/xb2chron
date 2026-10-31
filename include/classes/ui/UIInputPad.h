@@ -18,7 +18,7 @@ public:
         unsigned short m_repeat;  // "repeat": 0, only presses move the selection; else held buttons repeat too
         unsigned char m_shift;    // "shift": a held button moves it faster the longer it is held
         unsigned short m_padSelect;   // "pad_select": which buttons move it (1 to 9; the constructor picks them)
-        unsigned short m_selectText;  // "select_text": the message the operation guide shows (0x710067A02C reads it)
+        unsigned short m_selectText;  // "select_text": the message the operation guide shows (fn_710067A02C reads it)
         unsigned short m_keySort;     // "key_sort"
     };
     class PadSetup : public InputSetup {
@@ -37,9 +37,11 @@ public:
     static UIInputPad* create(unsigned int id, unsigned int handle, const PadSetup& setup,
                               mm::mtl::IAllocator* allocator);
     void setLineSelectionMax(unsigned int max);
+    void fn_7100679FC4(unsigned int max);  // setLineSelectionMax without the one-line check
     void setLineSelectLoop(bool loop);
     void setPageSize(unsigned int size);
     void setLoop(bool loop);
+    unsigned short fn_710067A02C() const;  // m_param.m_selectText, 0 while m_loop
     int moveSelect(const fw::PadData& pad, unsigned int step, int select);
     int fixSelectNo(int select, bool line, bool press);
 
@@ -61,7 +63,7 @@ public:
     unsigned int m_repeatCount;       // the frames a button has been held (m_param.m_shift); the name is not the original's
     unsigned char pad_404[0x4];
     EventData m_eventExt;  // 9: the selection hit an end and stayed (m_param0 says which)
-    bool m_loop;           // setLoop; 0x710067A02C gives no message while it is set
+    bool m_loop;           // setLoop; fn_710067A02C gives no message while it is set
 };
 }  // namespace ui
 
