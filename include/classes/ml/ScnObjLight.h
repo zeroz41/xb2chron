@@ -49,7 +49,7 @@ public:
     threadval<RENDER_INFO> m_info;  // its destructor's (the name is not the original's)
     unsigned int m_disp : 1;       // isDisp (the name is not the original's)
     unsigned int m_ofsMatrix : 1;  // isOfsMatrix (the name is not the original's)
-    unsigned int pad_bits : 30;  // unknown flags: isDisp loads the whole 32-bit unit
+    unsigned int pad_bits : 30;  // unknown flags: isDisp loads the whole 32-bit unit; the constructor clears them
 };
 }  // namespace ml
 

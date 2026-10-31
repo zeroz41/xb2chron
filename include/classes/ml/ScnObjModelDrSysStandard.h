@@ -15,7 +15,7 @@ public:
         : ScnObjModelDrSys(scn, res, name), pad_438(0) {
         if (m_pMdlObj == nullptr) {
             DrCreator creator;
-            m_pMdlObj = creator.createMdl(m_pRes, m_mdlName, view);
+            m_pMdlObj = creator.createMdl(m_pRes, m_mdlName.m_str, view);
             if (m_pMdlObj->m_mdlType == 3) {
                 m_mdlType3 = 1;
             }

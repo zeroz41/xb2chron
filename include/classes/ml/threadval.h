@@ -20,6 +20,15 @@ public:
 template <typename T0>
 class threadval : public IThreadValue {
 public:
+    // the two copies start empty with m_buf[0] the render thread's; WorkCpu swaps them from now on
+    threadval() {
+        m_state.m_flags = 0;
+        m_state.m_bank = 0;
+        m_state.m_cpuBank = 0;
+        m_render = &m_buf[m_state.m_bank];
+        m_cpu = &m_buf[1 - m_state.m_bank];
+        WorkCpu::entrySwap(this);
+    }
     virtual ~threadval() { WorkCpu::removeSwap(this); }  // slot 0
     virtual void tvSwap() {  // slot 2
         if (m_state.isCopy()) {
@@ -33,19 +42,26 @@ public:
     }
     virtual unsigned char getCpuBank() const { return m_state.m_cpuBank; }  // slot 3
     virtual void setCpuBank(unsigned char bank) { m_state.m_cpuBank = bank; }  // slot 4
+    // copies the calculation thread's value over the render thread's now and at every swap from then on (the
+    // owners' constructors end with it; the name is not the original's)
+    void setCopy() {
+        const T0* cpu = m_cpu;
+        memcpy(m_render, cpu, sizeof(T0));
+        m_state.m_flags |= 1;
+    }
 
     T0* m_render;  // what tvSwap copies m_cpu into (the name is not the original's)
     T0* m_cpu;     // what ScnObjCam::setLookAt writes (the name is not the original's)
     // the two copies m_render and m_cpu point into, at 0x18, or 0x20 when T0 is 16-aligned (WinView's 8-aligned
     // RENDER_INFO's are at 0x18) (the name is not the original's)
     T0 m_buf[2];
-    // the four bytes after the buffers. tvSwap's read of the copy flag is a 1-aligned bit test the next byte's
-    // read is not merged with (no load widening), which a bitfield read through a 1-aligned type's own inline
-    // accessor gives; a plain member of threadval does not (the struct and its names are not the original's)
+    // the four bytes after the buffers: a 16-bit flags word (bit 0: tvSwap copies m_cpu over m_render first; the
+    // constructors set it with a 16-bit read-modify-write, tvSwap tests it with a byte read through the 2-aligned
+    // struct's own accessor, which keeps it from being widened into the bank's read) and the two banks (the
+    // struct and its names are not the original's)
     struct STATE {
-        bool isCopy() const { return m_copy; }
-        bool m_copy : 1;          // tvSwap copies m_cpu over m_render first (the name is not the original's)
-        unsigned char pad_1[1];
+        bool isCopy() const { return m_flags & 1; }
+        unsigned short m_flags;
         unsigned char m_bank;     // which of m_buf m_render points at (the name is not the original's)
         unsigned char m_cpuBank;  // getCpuBank/setCpuBank (the name is not the original's)
     } m_state;

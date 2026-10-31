@@ -11,6 +11,8 @@ namespace ml {
 // fields below; the names are not the original's
 class AttrTransform {
 public:
+    // only the flags: threadval's buffers of transforms are built with a zero at 0x130 each
+    AttrTransform() : m_flags(0) {}
     void update();
     void clear();
 

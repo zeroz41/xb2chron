@@ -84,6 +84,28 @@ ScnObjClip::~ScnObjClip() {}
 
 ScnObjEnvColi::~ScnObjEnvColi() {}
 
+ScnObjModel::ScnObjModel(Scn* scn, const char* name)
+    : ScnObj(scn, 1), m_frameSpd(1.0f), m_unkValue(1.0f), m_disp(true), m_clip(true), pad_bits2(0), m_warp(false),
+      m_mdlType3(false), m_unkFlag6(false), pad_bits7(0), m_dispReq(true), pad_bits17(0) {
+    if (name != nullptr) {
+        m_mdlName = name;
+        int dot = m_mdlName.findLast('.');
+        if (dot != -1 && m_mdlName.m_nLen > dot) {
+            m_mdlName.m_str[dot] = '\0';
+            m_mdlName.m_nLen = dot;
+        }
+        m_mdlName += ".wismt";
+    }
+    m_info.m_cpu->m_trans.clear();
+    m_info.setCopy();
+    mm::Vec3& ofs = m_offsetInfo.m_cpu->m_ofs;
+    ofs.x = 0.0f;
+    ofs.y = 0.0f;
+    ofs.z = 0.0f;
+    m_offsetInfo.setCopy();
+    m_unkFlag6 = true;
+}
+
 void ScnObjModel::setDelete() {
     m_delete = true;
 }
@@ -389,6 +411,15 @@ void ScnObjLight::setMat(const mm::Mat44& mat) {
     trans->m_flags |= 1;
 }
 
+ScnObjLight::ScnObjLight(Scn* scn) : ScnObj(scn, 4) {
+    m_disp = false;
+    m_ofsMatrix = false;
+    pad_bits = 0;
+    m_info.m_cpu->m_trans.clear();
+    m_info.setCopy();
+    m_disp = true;
+}
+
 AttrTransform* ScnObjLight::getTrans(bool cpu) {
     return &(cpu ? m_info.m_cpu : m_info.m_render)->m_trans;
 }
@@ -403,6 +434,36 @@ void ScnObjCam::setCopydataCam(bool) {}
 // Proposed names, not the original's: the symbols leave them unnamed (lbl_71009C7E40, lbl_71009C7E50)
 static const mm::Vec3 s_defaultEye(0.0f, 5.0f, 20.0f);
 static const mm::Vec3 s_defaultTarget(0.0f, 0.0f, 0.0f);
+
+inline void ScnObjCam::RENDER_INFO::initialize() {
+    m_fov = 40.0f;
+    m_near = 0.1f;
+    m_far = 80000.0f;
+    m_dist = 4.0f;
+    m_invTan = 1.0f;
+    m_target = mm::Vec3(0.0f, 0.0f, 0.0f);
+    m_nearExtent[0] = 0.0f;
+    m_nearExtent[1] = 0.0f;
+    m_nearExtent[2] = 0.0f;
+    m_nearExtent[3] = 0.0f;
+    m_aspect = static_cast<float>(DevGraph::getRootWidth()) / static_cast<float>(DevGraph::getRootHeight());
+    m_transform.clear();
+    m_transform.m_flags |= 8;
+    int width = DevGraph::getRootWidth();
+    int height = DevGraph::getRootHeight();
+    m_width = width;
+    m_height = height;
+}
+
+ScnObjCam::ScnObjCam(Scn* scn, const char* name)
+    : ScnObj(scn, 2), m_index(-1), m_name(name), m_changed(false), m_controller(nullptr) {
+    m_info.m_cpu->initialize();
+    m_info.m_render->initialize();
+    updateViewMatrix(false);
+    DevGraph::getPers(m_info.m_cpu->m_proj, m_info.m_render->m_fov, m_info.m_render->m_near, m_info.m_render->m_far);
+    setDefault();
+    m_info.setCopy();
+}
 
 void ScnObjCam::setDefault() {
     setLookAt(s_defaultEye, s_defaultTarget, 0.0f);

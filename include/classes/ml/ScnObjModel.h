@@ -70,17 +70,21 @@ public:
     threadval<RENDER_INFO> m_info;  // its destructor's (the name is not the original's)
     threadval<RENDER_OFFSET_INFO> m_offsetInfo;  // getOffsetInfo returns one of its banks (the name is not the original's)
     mm::mtl::FixStr<32> m_name;  // 0x320 getName's, empty from the constructor (the name is not the original's)
-    float m_frameSpd;             // setFrameSpd (the name is not the original's)
-    unsigned char pad_348[0x4];
-    unsigned int m_disp : 1;      // isDisp (the name is not the original's)
-    unsigned int m_clip : 1;      // isClip; setClip sets it (the name is not the original's)
+    float m_frameSpd;             // setFrameSpd, 1 from the constructor (the name is not the original's)
+    float m_unkValue;             // 0x348 1 from the constructor (meaning unknown; the name is not the original's)
+    unsigned int m_disp : 1;      // isDisp, set by the constructor (the name is not the original's)
+    unsigned int m_clip : 1;      // isClip; setClip sets it, so does the constructor (the name is not the original's)
     unsigned int pad_bits2 : 2;
     unsigned int m_warp : 1;      // setPosWarp sets it (the name is not the original's)
     // ScnObjModelDrSysStandard's constructor sets it when its draw model's m_mdlType is 3 (the name is not the original's)
     unsigned int m_mdlType3 : 1;
-    unsigned int pad_bits6 : 10;
-    unsigned int m_dispReq : 1;   // setDisp sets it (the name is not the original's)
-    unsigned int pad_bits17 : 15;  // unknown flags: isDisp loads the whole 32-bit unit
+    unsigned int m_unkFlag6 : 1;  // the constructor's last step sets it (meaning unknown; the name is not the original's)
+    unsigned int pad_bits7 : 9;
+    unsigned int m_dispReq : 1;   // setDisp sets it, so does the constructor (the name is not the original's)
+    unsigned int pad_bits17 : 15;  // unknown flags: isDisp loads the whole 32-bit unit; the constructor clears them
+    // 0x350 the constructor's name with its extension replaced by ".wismt"; ScnObjModelDrSysStandard's constructor
+    // passes it to DrCreator::createMdl as the model's name (the name is not the original's)
+    mm::mtl::FixStr<128> m_mdlName;
 };
 }  // namespace ml
 

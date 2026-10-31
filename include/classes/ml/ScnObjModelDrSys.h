@@ -28,9 +28,7 @@ public:
     virtual void setGroups(int);  // slot 27
     virtual int getGroups();  // slot 28
 
-    // 0x350 ScnObjModelDrSysStandard's constructor passes it to DrCreator::createMdl as the model's name (the name
-    // and the size are not the original's)
-    char m_mdlName[0x88];
+    // 0x350 ScnObjModel::m_mdlName
     DrMdlObj* m_pMdlObj;  // 0x3D8 the name is not the original's
     DrMan* m_drMan;  // 0x3E0 the constructor takes the scene's ScnRenderDrSys::m_drMan (the name is not the original's)
     const void* m_pRes;  // 0x3E8 the constructor's resource (the name is not the original's)
