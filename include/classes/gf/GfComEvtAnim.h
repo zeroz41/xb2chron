@@ -7,6 +7,7 @@
 #include "mm/mtl/FixedVector.h"
 #include "mm/mtl/Vector.h"
 #include "anm/AsmListener.h"
+#include "classes/anm/Control.h"
 #include "classes/fw/AnimAsmUpdater.h"
 #include "classes/fw/AnimBlenderUpdater.h"
 #include "classes/fw/AnimEventAsmPoseSampler.h"
@@ -72,6 +73,16 @@ public:
         void setup(unsigned int layer, GfComModel* model, anm::ResASM* res, const char* state, bool sampleFlag);
         // hands every queued event to its callback, then empties the queue
         void executeCallback(GfComEvtAnim* owner);
+        // pauses the sampler while the motions play over it (inline: GfComEvtAnim::play/playMulti pause it,
+        // stop/stopMulti resume it; the name is not the original's)
+        void setPause(unsigned int, bool pause) {
+            if (m_control != nullptr) {
+                m_sampler.m_pause = pause;
+            }
+        }
+        // empty in this build: play, playMulti, stop and stopMulti call getLayer() once more after setPause and
+        // discard it (a hook compiled out of the release build; the name is not the original's)
+        void updateViewer(unsigned int) {}
 
         unsigned int m_flags;  // bit 0: the updater and sampler are in the manager (the name is not the original's)
         GfComModel* m_model;  // setup's
@@ -90,10 +101,39 @@ public:
     public:
         Mot() : m_flags(0), m_model(nullptr), m_res(nullptr), m_blender(nullptr), m_count(0), m_current(0), m_speed(1.0f) {}
         void cleanup(unsigned int layer);
+        // binds a blender of the model's skeleton to its pose (GfComEvtAnim::updateSetup's)
+        inline void setup(GfComModel* model, anm::ResASM* res, bool sampleFlag);
         void stop(unsigned int layer);
         void init(unsigned int layer, void** data, unsigned long* sizes, unsigned long count);
         bool easeIn(const char* name, AnimLayer layer);
         bool easeOut(const char* name, AnimLayer layer);
+        // plays motion index from time at the speed, the others stopped and weightless (inline: GfComEvtAnim::play
+        // and playMulti; the name is not the original's)
+        void play(unsigned int index, float time) {
+            if (m_count > index && m_blender != nullptr) {
+                for (unsigned long i = 0; i < m_count; ++i) {
+                    anm::Control* control = m_controls[i];
+                    if (i == index) {
+                        control->setLocalTime(time);
+                        control->m_speed = m_speed;
+                        control->m_weight = 1.0f;
+                    } else {
+                        control->m_speed = 0.0f;
+                        control->m_weight = 0.0f;
+                    }
+                }
+                m_current = index;
+            }
+        }
+        // whether the motion playing reached its end (inline: GfComEvtAnim::isEndMulti; the name is not the
+        // original's)
+        bool isEnd() const {
+            if (m_blender != nullptr) {
+                const anm::Control* control = m_controls[m_current];
+                return m_playbackTimes[m_current] <= control->m_localTime;
+            }
+            return true;
+        }
 
         unsigned int m_flags;  // bit 0: the updater and sampler are in the manager
         GfComModel* m_model;  // GfComEvtAnim::updateSetup's
@@ -119,9 +159,12 @@ public:
 
     GfComEvtAnim();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
-    virtual ~GfComEvtAnim();  // slot 1
-    virtual void changeLayer(unsigned int, unsigned int);  // slot 3
+    // inline: the original's D2 keeps Asm's destructor out of line while D0 inlines both, which the inliner does
+    // only for a linkonce D2 (it defers inlining into a linkonce caller that its own callers would inline)
+    virtual ~GfComEvtAnim() {}  // slot 1
+    // the key function (the first virtual not defined in the class): this unit emits the table
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
+    virtual void changeLayer(unsigned int, unsigned int);  // slot 3
     void cleanup();
     void setup(const SetupInfo& info);
     void updateSetup();
@@ -135,11 +178,11 @@ public:
     bool getLocomotionReference(const char* state, float time, anm::QsTransform* pOut) const;
     const anm::QsTransform* getLocomotion() const;
     bool isEnd(AnimLayer layer) const;
-    bool play(void* data, unsigned long size, float time);
-    bool stop();
+    void play(void* data, unsigned long size, float time);
+    void stop();
     void initMulti(void** data, unsigned long* sizes, unsigned long count);
-    bool playMulti(unsigned int index, float time);
-    bool stopMulti();
+    void playMulti(unsigned int index, float time);
+    void stopMulti();
     bool isEndMulti() const;
     void setWeightMulti(float* weights, unsigned long count);
     void setSpeed(float speed, AnimLayer layer);
