@@ -360,16 +360,16 @@ void DrMdoMat::matCall_VolumeTest(const MdsMatInfoHeader* info, int slot, int ma
 
 void DrMdoMat::matCall_BaseColor(const MdsMatInfoHeader* info, int slot, int matIdx) {
     DrResMdoMat* mat = &m_pWrkMatRes->m_pResMat[matIdx];
-    mat->m_color[0] = m_pWrkMatRes->m_pAce->m_color[slot].r;
-    mat->m_color[1] = m_pWrkMatRes->m_pAce->m_color[slot].g;
-    mat->m_color[2] = m_pWrkMatRes->m_pAce->m_color[slot].b;
+    mat->m_color.r = m_pWrkMatRes->m_pAce->m_color[slot].r;
+    mat->m_color.g = m_pWrkMatRes->m_pAce->m_color[slot].g;
+    mat->m_color.b = m_pWrkMatRes->m_pAce->m_color[slot].b;
 }
 
 void DrMdoMat::matCall_BaseVal(const MdsMatInfoHeader* info, int slot, int matIdx) {
     DrResMdoMat* mat = &m_pWrkMatRes->m_pResMat[matIdx];
-    mat->m_color[0] = m_pWrkMatRes->m_pAce->m_val[slot];
-    mat->m_color[1] = m_pWrkMatRes->m_pAce->m_val[slot];
-    mat->m_color[2] = m_pWrkMatRes->m_pAce->m_val[slot];
+    mat->m_color.r = m_pWrkMatRes->m_pAce->m_val[slot];
+    mat->m_color.g = m_pWrkMatRes->m_pAce->m_val[slot];
+    mat->m_color.b = m_pWrkMatRes->m_pAce->m_val[slot];
 }
 
 void DrMdoMat::matCall_TransVal(const MdsMatInfoHeader* info, int slot, int matIdx) {
@@ -453,15 +453,15 @@ void DrMdoAnim::animcall_MatAlpha(DrResMdoMat* mat, float* work, float value) {
 }
 
 void DrMdoAnim::animcall_MatColorR(DrResMdoMat* mat, float* work, float value) {
-    mat->m_color[0] = value;
+    mat->m_color.r = value;
 }
 
 void DrMdoAnim::animcall_MatColorG(DrResMdoMat* mat, float* work, float value) {
-    mat->m_color[1] = value;
+    mat->m_color.g = value;
 }
 
 void DrMdoAnim::animcall_MatColorB(DrResMdoMat* mat, float* work, float value) {
-    mat->m_color[2] = value;
+    mat->m_color.b = value;
 }
 
 void DrMdoAnim::anmNodeParm_TranX(mm::Vec3* srt, float value) {

@@ -69,6 +69,7 @@
 #include "ml/DrResEtcPamObj.h"
 #include "ml/DrResMdoLodObj.h"
 #include "ml/DrResMdoMeshObj.h"
+#include "ml/DrResMdoShdObj.h"
 #include "ml/DrResMdoMorpObj.h"
 #include "classes/ml/DrMan.h"
 #include "classes/ml/DrResMdoInstPartsObj.h"
@@ -106,6 +107,18 @@ DrResMdoInstPartsGlbID::~DrResMdoInstPartsGlbID() {}
 
 DrResMdoSeamColi::~DrResMdoSeamColi() {}
 
+unsigned int DrResMdoLodObj::calcWorkSize(const unsigned char* data) {
+    const MdoHeader* header = reinterpret_cast<const MdoHeader*>(data);
+    const MdoLod* lod = (header->m_flags & MdoHeader::FLAG_LOD) ? reinterpret_cast<const MdoLod*>(data + header->m_lodOfs) : nullptr;
+    int grpNum = 1;
+    int partsNum = 1;
+    if (lod != nullptr) {
+        grpNum = lod->m_grpNum + 1;
+        partsNum = lod->m_partsNum + 1;
+    }
+    return sizeof(DrResMdoLodObj) + grpNum * 0x20 + partsNum * 0x20;
+}
+
 unsigned int DrResMdoLodObj::create(unsigned char* work, const unsigned char* data) {
     return reinterpret_cast<DrResMdoLodObj*>(work)->setup(data, work + sizeof(DrResMdoLodObj));
 }
@@ -114,6 +127,14 @@ void DrResMdoLodObj::release(DrResMdoLodObj*& obj) {
     if (obj != nullptr) {
         obj = nullptr;
     }
+}
+
+void DrResEtcPamObj::mdonode_etcpam_etcmesh_disp(const MdsEtcParamsCallBack* cb, DrResEtcParams* params, wrkCallbackArg& arg) {
+    float value = params->getParams();
+    DrResMdoMeshParts* parts = arg.m_mesh->m_parts + cb->m_meshNo;
+    float alpha = !(value <= 0.5f) ? 1.0f : 0.0f;
+    parts->m_alpha[0] = parts->m_alpha[1] = parts->m_alpha[2] = alpha;
+    parts->m_flags &= ~6;
 }
 
 unsigned int DrResEtcPamObj::calcWorkSize(const unsigned char* mdo) {
@@ -134,9 +155,33 @@ void DrResMdoMeshParts::setDefAlpha(float alpha) {
     m_alpha[DrMan::s_nDblIdx] = alpha;
 }
 
+int DrResMdoMeshObj::getIdx(const char* name) const {
+    for (unsigned int i = 0; i < m_num; i++) {
+        if (strcmp(m_parts[i].m_name, name) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 void DrResMdoMeshObj::release(DrResMdoMeshObj*& obj) {
     if (obj != nullptr) {
         obj = nullptr;
+    }
+}
+
+int DrResMdoShdObj::getDecShdIdx(const char* name) const {
+    for (unsigned int i = 0; i < m_num; i++) {
+        if (strcmp(reinterpret_cast<const char*>(m_header) + m_entries[i].m_data->m_nameOfs, name) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void DrResMdoShdObj::setDecShdParm(unsigned int idx, unsigned int parm) {
+    if (idx < m_num) {
+        m_entries[idx].m_decShdParm = parm;
     }
 }
 
@@ -3504,15 +3549,22 @@ void DrResEtcParams::setInitParams(float value) {
     m_params = value;
 }
 
+DrResMdoMat& DrResMdoMat::operator=(const DrResMdoMat& other) {
+    m_color = other.m_color;
+    pad_18 = other.pad_18;
+    pad_1C = other.pad_1C;
+    return *this;
+}
+
 void DrResMdoMat::setColor(float r, float g, float b, float a) {
-    m_color[0] = r;
-    m_color[1] = g;
-    m_color[2] = b;
-    m_alpha = a;
+    m_color.r = r;
+    m_color.g = g;
+    m_color.b = b;
+    m_color.a = a;
 }
 
 void DrResMdoMat::setAlpha(float alpha) {
-    m_alpha = alpha;
+    m_color.a = alpha;
 }
 
 void DrResMdoMat::setName(const char* name) {
