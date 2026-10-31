@@ -12,6 +12,26 @@ namespace gf {
 
 GfChainAttack::~GfChainAttack() {}
 
+void GfChainAttack::createPartyDriver() {
+    for (unsigned int i = 0; i < 3; i++) {
+        unsigned int id = GfGameParty::getDriverBdatId(i, 0);
+        if (id != 0) {
+            GfInitParamDriver param;
+            param.m_createType = 7;
+            param.m_objId = id;
+            param.pad_24 = 1;
+            param.pad_40 = 10;
+            param.pad_81 = false;
+            param.pad_82 = 0;
+            param.pad_50 = 0.0f;
+            GF_OBJ_HANDLE* handle = GfObjFactory::createDriver(param);
+            if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                m_drivers[i] = handle;
+            }
+        }
+    }
+}
+
 void GfChainAttack::startSetup() {
     m_state = 1;
     m_update.set(this, &GfChainAttack::updateForSetup);
