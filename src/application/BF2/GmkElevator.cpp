@@ -305,6 +305,13 @@ void GmkTrigger::debugDraw() const {}
 
 void GmkTrigger::seqUpdate(float) { applyPopCondMatched(m_phantom.pad_83); }
 
+void GmkTrigger::update(float dt) {
+    AGmkBase::update(dt);
+    if (m_seq) {
+        (this->*m_seq)(dt);
+    }
+}
+
 void GmkAntiBladeArea::debugDraw() const {}
 
 GmkRoutePointList::~GmkRoutePointList() {}
@@ -312,6 +319,17 @@ GmkRoutePointList::~GmkRoutePointList() {}
 GmkRoutedEnemyPointList::~GmkRoutedEnemyPointList() {}
 
 GmkMobList::~GmkMobList() {}
+
+void GmkMobList::onResetUpdateGmkIndex() {
+    if (++m_resetCount >= 2) {
+        m_resetCount = 0;
+        gf::GfFieldGimmick* fieldGimmick = mm::mtl::PtrSingleton<gf::GfFieldGimmick>::sys();
+        if (fieldGimmick != nullptr) {
+            fieldGimmick->m_mobSlotMgr.m_failedPopDistSqs.clear();
+            fieldGimmick->m_mobSlotMgr.m_popDistSqLimit = 1.0e12f;
+        }
+    }
+}
 
 gmk::AGmkBase* GmkDmgPhantomList::getInst(unsigned int index) const {
     return const_cast<GmkDmgPhantom*>(&m_gmks[index]);
@@ -331,6 +349,13 @@ gmk::AGmkBase* GmkSalvageLocatorList::getInst(unsigned int index) const {
 
 bool GmkManager::isValid() const {
     return m_bdat.pad_120 != 0 && fw::BdatManager::isEnableBdat(m_bdat.m_createInfo.m_param) && m_bdatFp != nullptr;
+}
+
+void GmkManager::seqWaitValidateResDefBdatFp(float) {
+    if (m_bdat.pad_120 != 0 && fw::BdatManager::isEnableBdat(m_bdat.m_createInfo.m_param)) {
+        m_bdatFp = Bdat::getFP(m_createInfo.m_tableName.m_str);
+        m_seq = &GmkManager::seqUpdate;
+    }
 }
 
 const char* GmkManager::getSheetnameByType(int id, GmkType type) const {
@@ -733,6 +758,14 @@ void GmkSet::seqCreateMapBdat(float) {
     m_seq = &GmkSet::seqUpdate;
 }
 
+void GmkSet::seqUpdate(float dt) {
+    for (int i = 0; i < GMK_LIST_NUM; ++i) {
+        if (m_gmkLists[i] != nullptr) {
+            m_gmkLists[i]->update(dt);
+        }
+    }
+}
+
 void setDispByGmkType(GmkType type, bool disp) {
     GmkInstDispTraverserByBdatId f(0, disp);
     GmkManager::get()->traverseGmkInst(type, f);
@@ -1071,6 +1104,13 @@ bool GmkNpc::isPopCondMatchedExceptDist() const {
     return isPopCondMatched();
 }
 
+// m_pos points at the gimmick's Xform: its position, then its rotation
+bool GmkNpc::findPopPosRot(mm::Vec3& pos, mm::Vec3& rot) const {
+    pos = m_pos[0];
+    rot = m_pos[1];
+    return true;
+}
+
 gf::GF_OBJ_HANDLE* GmkRoutedNpc::getGobInst() const {
     if (m_npcIdInfo == nullptr) {
         return reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
@@ -1160,6 +1200,13 @@ void GmkCollection::dispose() {
 
 GmkCollection::~GmkCollection() { dispose(); }
 
+void GmkCollection::update(float dt) {
+    AGmkBase::update(dt);
+    if (m_seq) {
+        (this->*m_seq)(dt);
+    }
+}
+
 // ---- kinds holding one effect or sound handle: the destructor is the key function (dispose inlined)
 void GmkDmgEffect::dispose() {
     if (m_effectHandle != 0) {
@@ -1192,6 +1239,13 @@ void GmkRoutedFootPrintPoint::dispose() {
 GmkRoutedFootPrintPoint::~GmkRoutedFootPrintPoint() { dispose(); }
 
 GmkPrecious::~GmkPrecious() { dispose(); }
+
+void GmkPrecious::create(const CreateInfo& info) {
+    AGmkBase::create(info);
+    Bdat::uVal popDist;
+    popDist.ulong = Bdat::getValCheck(gf::GfDataBdat::getFP(0x7B), 0, 0x22, 8);
+    m_popDistSq = popDist.real * popDist.real;
+}
 
 // ---- debug draws and updates of the base form
 void GmkEvent::debugDraw() const { AGmkBase::debugDraw(); }
@@ -1267,6 +1321,16 @@ void GmkRoutedFootPrint::debugDraw() const {
 unsigned int GmkTutorial::getGameFlagId() const { return m_createInfo.m_bdatId + 54162; }
 
 bool GmkLandmark::isFound() const { return gf::GfGameFlag::getLocal(1, m_createInfo.m_bdatId + 51161) != 0; }
+
+void GmkJump::reqDeadIcon() {
+    if (!pad_78) {
+        pad_78 = 1;
+        if (m_effectHandle != 0) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->dead(m_effectHandle);
+            m_effectHandle = 0;
+        }
+    }
+}
 
 void GmkJump::reqRecreateIcon() {
     if (pad_78) {
@@ -1441,12 +1505,29 @@ void GmkRoutedMapObj::dispose() {
     GmkRoute::dispose();
 }
 
+void GmkRoutedMapObj::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3)) {
+        m_gobInst = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+}
+
 GmkRoutedMapObj::~GmkRoutedMapObj() { dispose(); }
 GmkRoutePoint::~GmkRoutePoint() { dispose(); }
 GmkFieldVolume::~GmkFieldVolume() { dispose(); }
 GmkSquadLeader::~GmkSquadLeader() { dispose(); }
 GmkSquadMember::~GmkSquadMember() { dispose(); }
 GmkSquad::~GmkSquad() { dispose(); }
+
+GmkSquadLeader* GmkSquad::getBindedGmkSquadLeader() const {
+    if (m_acc.isValid()) {
+        IGmkList* members = static_cast<GmkSquadLeader*>(m_acc.m_gmk)->getBindedSquadMemberList();
+        if (members != nullptr && members->getInstNum() != 0 && pad_70 != 0) {
+            return static_cast<GmkSquadLeader*>(m_acc.m_gmk);
+        }
+    }
+    return nullptr;
+}
 GmkElevatorLocator::~GmkElevatorLocator() { dispose(); }
 GmkTargetPoint::~GmkTargetPoint() { dispose(); }
 GmkRoutedEnemyPoint::~GmkRoutedEnemyPoint() { dispose(); }
@@ -1786,6 +1867,18 @@ void GmkTbox::dispose() {
     AGmkBase::dispose();
 }
 
+void GmkTbox::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3) && m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+}
+
 void GmkKizunaTalk::dispose() {
     if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         gf::GfObjAcc acc(m_gob);
@@ -1822,6 +1915,18 @@ void GmkGrave::dispose() {
     AGmkBase::dispose();
 }
 
+void GmkGrave::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3) && m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+}
+
 GmkGrave::~GmkGrave() { dispose(); }
 
 bool GmkGrave::reqPopEnemy() const {
@@ -1834,6 +1939,13 @@ bool GmkGrave::reqPopEnemy() const {
 GmkTbox::~GmkTbox() { dispose(); }
 
 GmkKizunaTalk::~GmkKizunaTalk() { dispose(); }
+
+void GmkKizunaTalk::create(const CreateInfo& info) {
+    AGmkBase::create(info);
+    Bdat::uVal popDist;
+    popDist.ulong = Bdat::getValCheck(gf::GfDataBdat::getFP(0x7B), 0, 0x1E, 8);
+    m_popDistSq = popDist.real * popDist.real;
+}
 
 void GmkKizunaTalk::debugDraw() const {
     if (isValid()) {
@@ -2333,6 +2445,18 @@ void GmkJump::dispose() {
     AGmkBase::dispose();
 }
 
+void GmkJump::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3) && m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+}
+
 GmkJump::~GmkJump() { dispose(); }
 
 void GmkLandmark::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
@@ -2611,6 +2735,13 @@ void GmkDoor::seqDoor_SpBooted(float dt) {
         m_doorWait += dt;
     }
 }
+
+void GmkDoor::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3)) {
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+}
 void GmkMapGimmick::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
     m_popTime.m_time = (unsigned short)Bdat::getValCheck(bdat.m_fp, "popTime", row, 3);
     m_popWeather.m_weather = (unsigned char)Bdat::getValCheck(bdat.m_fp, "popWeather", row, 1);
@@ -2670,6 +2801,21 @@ void GmkWarp::dispose() {
     }
     clearGobInsts();
     AGmkBase::dispose();
+}
+
+void GmkWarp::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3)) {
+        gf::GF_OBJ_HANDLE** gob = nullptr;
+        if (m_firstHandle == handle) {
+            gob = &m_firstHandle;
+        } else if (m_secondHandle == handle) {
+            gob = &m_secondHandle;
+        }
+        if (gob != nullptr) {
+            *gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        }
+    }
 }
 
 void GmkWarp::clearGobInsts() {

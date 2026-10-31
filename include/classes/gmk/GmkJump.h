@@ -60,6 +60,8 @@ public:
     void fn_71005A7770();
     void createIcon();
     void reqRecreateIcon();
+    // sets the flag reqRecreateIcon tests and removes the icon effect (fw::EffectManager::dead)
+    void reqDeadIcon();
     static const gmk::GmkType TYPE = gmk::GmkType(37);
     void* pad_48 = nullptr;
     unsigned char pad_50 = 0;

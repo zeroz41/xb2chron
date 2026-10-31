@@ -45,6 +45,9 @@ public:
     bool isGmkSetsReady() const;
     void update(float dt);
     bool updateImmediate();
+    // its steps (named by the symbols): wait for the gimmick-set BDAT, then update
+    void seqWaitValidateResDefBdatFp(float dt);
+    void seqUpdate(float dt);
     bool isValidView() const;
     AGmkBase* findFirstGmkInstByBdatId(GmkType type, int bdatId) const;
     // the RSC_GmkSetList row of the first gimmick set holding a gimmick of this type and id (<= 0: none)

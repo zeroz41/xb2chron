@@ -55,7 +55,7 @@ public:
     unsigned int pad_60 = 0;
     unsigned char pad_64[0x4];
     void* pad_68 = nullptr;
-    unsigned int pad_70 = 0;
+    float m_popDistSq = 0.0f;  // 0x70: create squares BDAT 0x7B's row 0 member 0x22 into it (the name is not the original's)
     unsigned char pad_74 = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };
 }  // namespace gmk

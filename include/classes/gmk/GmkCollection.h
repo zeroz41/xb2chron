@@ -58,8 +58,8 @@ public:
     gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     unsigned int m_iconEffect = 0;  // an EffectManager handle (disposeIcon removes it; the name is not the original's)
     unsigned int pad_54 = 0;
-    void* pad_58 = nullptr;
-    void* pad_60 = nullptr;
+    // the step update runs (seqUpdateRepopCounter is one; the name is not the original's)
+    void (GmkCollection::*m_seq)(float dt) = nullptr;
     float m_repopCounter = 0.0f;  // seqUpdateRepopCounter counts it down (the name is not the original's)
     unsigned char pad_6c = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };

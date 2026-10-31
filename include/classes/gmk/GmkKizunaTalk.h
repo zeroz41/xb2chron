@@ -37,7 +37,7 @@ public:
     static const gmk::GmkType TYPE = gmk::GmkType(36);
     // its game object (dispose clears its user data, destroys it and stores -1; the name is not the original's)
     gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
-    float pad_50 = 0.0f;               // update reads it, meaning not known
+    float m_popDistSq = 0.0f;  // create squares BDAT 0x7B's row 0 member 0x1E into it; update reads it (the name is not the original's)
     unsigned char pad_54 = 1;          // meaning not known
 };
 }  // namespace gmk

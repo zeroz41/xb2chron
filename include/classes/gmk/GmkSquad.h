@@ -6,11 +6,14 @@
 #include "mm/mtl/Vector.h"
 
 namespace gmk {
+class GmkSquadLeader;
 // table 0x7100B6CD10
 class GmkSquad {
 public:
     virtual ~GmkSquad();  // slot 0
     void dispose();
+    // its leader, when the access reaches a valid one with members and the squad has members; none otherwise
+    GmkSquadLeader* getBindedGmkSquadLeader() const;
     unsigned char pad_8[0x28];
     // 0x30: the destructor ends this access after dispose (GmkAcc's table and GmkAccManager::removeGmkAcc); the name
     // is not the original's

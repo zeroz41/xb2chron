@@ -82,7 +82,9 @@ public:
     void seqDoor_Booted(float dt);
     void seqDoor_Shutdowned(float dt);
     void seqDoor_SpBooted(float dt);
-    unsigned char pad_58[0x268];
+    unsigned char pad_58[0x260];
+    // 0x2b8: its game object (onGobEvent forgets it when it goes away; -1: none; the name is not the original's)
+    gf::GF_OBJ_HANDLE* m_gob;
     float m_doorWait;  // 0x2c0: seqDoor_SpBooted counts it up to the row's door_nextwait (the name is not the original's)
     unsigned char pad_2c4[0x9c];  // fields: size from TGmkList::getInst's stride
 };
