@@ -9,6 +9,7 @@
 #include "classes/gf/GfMenuObjArtsPalette.h"
 #include "classes/gf/GfMenuObjPartyStatus.h"
 #include "classes/gf/GfMenuObjPartyGauge.h"
+#include "classes/gf/GfMenuObjBladeChange.h"
 #include "classes/gf/TUnk_B60E28.h"
 #include "classes/gf/TUnk_B63AE0.h"
 #include "gf/GfMenuObjUtil.h"
@@ -204,6 +205,20 @@ float GfMenuReference::fn_710036742C() {
     GfMenuReference* self = get();
     if (self) return self->m_challengeRatio;
     return 0.0f;
+}
+
+void GfMenuReference::fn_7100367454(unsigned int value) {
+    GfMenuReference* self = get();
+    if (self) {
+        if (self->m_bladeChangeValue != value) GfMenuObjBladeChange::fn_7100391CDC();
+        self->m_bladeChangeValue = value;
+    }
+}
+
+unsigned int GfMenuReference::fn_71003674A0() {
+    GfMenuReference* self = get();
+    if (self) return self->m_bladeChangeValue;
+    return 0;
 }
 
 void GfMenuReference::setElementComboParty(unsigned int index, unsigned int party, float timeLeft) {
@@ -441,6 +456,16 @@ void GfMenuReference::fn_7100368744(unsigned int index, unsigned int gimmickId, 
             self->m_layerGimmick[index].m_ratio = ratio;
         }
     }
+}
+
+const GfMenuReference::ComboRouteState* GfMenuReference::fn_71003689C0() {
+    static ComboRouteState s_dummy;
+    const ComboRouteState* state = &s_dummy;
+    if (GfMenuObjUtil::fn_710048FD30(3)) {
+        GfMenuReference* self = get();
+        if (self) state = &self->m_comboRoute;
+    }
+    return state;
 }
 
 void GfMenuReference::fn_7100368A44() {

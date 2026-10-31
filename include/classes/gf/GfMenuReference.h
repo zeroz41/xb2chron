@@ -245,6 +245,13 @@ public:
     static float fn_71003673C8();
     static void fn_71003673F0(float ratio);
     static float fn_710036742C();
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Static members: their addresses lie
+    // among this class's accessors (after fn_710036742C) and they read or write its singleton's word at 0x4CB84
+    // (m_bladeChangeValue). fn_7100367454 stores it and, when it changed, calls GfMenuObjBladeChange::fn_7100391CDC
+    // (event 0x105 to the blade change object); fn_71003674A0 returns it (callers BladeListener::reciveEvent,
+    // fn_7100391EF0, fn_71003C56C0).
+    static void fn_7100367454(unsigned int value);
+    static unsigned int fn_71003674A0();
     // Records the layer-3 battle menu reads (the names and their fields' names are not the original's).
     // fn_7100366074's and fn_71003680AC's: four 12-byte records at 0x4CF70 of the instance (the names are not the
     // original's): a value, 4 flags (fn_710036816C sets, fn_71003682D8 tests; fn_7100366074 starts them at 1) and a
@@ -265,7 +272,8 @@ public:
         // or "LAY_gauge" (record 1) events (GfMenuObjPartyGauge::fn_7100456EA0 etc.); the names are not the original's
         bool m_stateA;
         bool m_stateB;
-        unsigned char pad_7[0x1];
+        // no explicit tail member: fn_71003686A0's guarded dummy zeroes 7 bytes and is not merged with the file's
+        // other statics, as the original's (an explicit pad byte here lets GlobalMerge take it)
     };
     // fn_71003687B0's: three 8-byte records at 0x4CFB4 of the instance (a zeroed static one otherwise)
     struct LayerGimmick {
@@ -382,7 +390,10 @@ public:
     unsigned short m_chainNum;
     unsigned char pad_4CB72[0xE];
     HOMURA_MODE m_homuraModeInBattle;
-    unsigned char pad_4CB84[0x4];
+    // fn_7100367454 stores it, refreshing GfMenuObjBladeChange's display (fn_7100391CDC) when it changes;
+    // fn_71003674A0 returns it (0 without the singleton; GfMenuObjBladeChange::BladeListener::reciveEvent reads it).
+    // The name is not the original's.
+    unsigned int m_bladeChangeValue;
     bool m_paletteModeReverse;  // 1.0.0's isPaletteModeReverse reads it
     unsigned char pad_4CB89[0x3];
     // every arts palette's reverse button states (is/setReversePaletteBtnState; the name is not the original's)
