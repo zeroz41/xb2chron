@@ -3,11 +3,14 @@
 
 #include "classes/gmk/AGmkBase.h"
 #include "plugin/Bdat.h"
+#include "mm/mtl/FixedVector.h"
+#include <bitset>
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
 
 namespace gmk {
+class GmkSalvageLocator;
 // table 0x7100B6C990
 class GmkSalvage : public ::gmk::AGmkBase {
 public:
@@ -21,6 +24,46 @@ public:
         bool isCondMatched() const;
         unsigned short m_condition;  // the row's "Condition" (a GfGameCond id; 0: none)
     };
+    // what the last raffle drew (createRaffle fills it, disposeRaffle resets it; GfGameSalvage::getRaffleResult reads
+    // it); the field names are not the original's
+    class RaffleResult {
+    public:
+        // an enemy the raffle drew: its id (0: none) and its level offset (isPowerfullEnemyExist adds it to the id's
+        // ChrEnArrange level)
+        class Enemy {
+        public:
+            Enemy() : m_id(0), pad_2(0) {}
+            unsigned short m_id;
+            unsigned char pad_2;
+            signed char m_lvOffset;
+        };
+        RaffleResult() {
+            m_dropIds[0] = -1;
+            m_dropIds[1] = -1;
+            m_dropIds[2] = -1;
+            m_tboxIds[0] = -1;
+            m_tboxIds[1] = -1;
+            m_tboxIds[2] = -1;
+            m_enemyIds[0] = -1;
+            m_enemyIds[1] = -1;
+            m_enemyIds[2] = -1;
+        }
+        bool isPowerfullEnemyExist() const;
+
+        // which of the three locators of each kind (m_dropLocators, m_tboxLocators, m_enemyLocators) the raffle
+        // drew, and what for each (seqUpdatePopDepop tests m_enemyDrawn's bit for each enemy locator)
+        std::bitset<3> m_dropDrawn;
+        int m_dropIds[3];
+        std::bitset<3> m_tboxDrawn;
+        int m_tboxIds[3];
+        std::bitset<3> m_enemyDrawn;
+        int m_enemyIds[3];
+        Enemy m_enemies[3];
+    };
+    // the stores Vector<GmkSalvage>::resize (construct_n) makes in each element
+    GmkSalvage()
+        : m_seq(nullptr), m_gob(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_popDistSq(0.0f), pad_64(0.0f), pad_a8(0),
+          pad_d0(false), pad_d1(false), pad_128(1), pad_129(0) {}
     virtual ~GmkSalvage();  // slot 0
     const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
     virtual gmk::GmkType getGmkType() const;  // slot 2
@@ -35,10 +78,33 @@ public:
     static const gmk::GmkType TYPE = gmk::GmkType(31);
     // pops the treasures the salvage's raffle drew (GfGameSalvage::execPop)
     void popByRaffleResult();
+    // ends what the last raffle placed (createRaffle and dispose call it)
+    void disposeRaffle(bool);
+    // the step create installs
+    void seqValidateGmkSalvageLocatorDetails(float);
 
-    unsigned char pad_48[0xe1];
-    unsigned char pad_129;  // GmkSalvageLocator::syncDepopTboxes sets it to 1, its dispose sets it too
-    unsigned char pad_12a[0x6];  // size 0x130: TGmkList<GmkSalvage>::getInst's stride
+    // 0x48: the sequence step update runs (create installs seqValidateGmkSalvageLocatorDetails, dispose clears it)
+    void (GmkSalvage::*m_seq)(float);
+    // 0x58: its object (dispose destroys it unless it is -1; seqUpdatePopDepop creates it within m_popDistSq)
+    gf::GF_OBJ_HANDLE* m_gob;
+    float m_popDistSq;  // 0x60: Bdat 0x7B's column 0x1E squared (create)
+    float pad_64;       // 0x64: Bdat 0x7B's column 0x3A squared (create)
+    // 0x68, 0x88, 0xB0: the locators the raffle placed, by kind: disposeRaffle clears the first's elements' byte
+    // 0x58 and disposes their drop item emitters, clears the second's m_isAccessed and disposes their objects,
+    // disposes the third's objects (the names are not the original's)
+    mm::mtl::FixedVector<GmkSalvageLocator*, 3> m_dropLocators;
+    mm::mtl::FixedVector<GmkSalvageLocator*, 3> m_tboxLocators;
+    unsigned long pad_a8;  // dispose clears it
+    mm::mtl::FixedVector<GmkSalvageLocator*, 3> m_enemyLocators;
+    bool pad_d0;  // disposeRaffle does its work only when it is set, then clears it and pad_d1
+    bool pad_d1;  // seqUpdatePopDepop goes through m_enemyLocators only when it is set
+    RaffleResult m_raffleResult;  // 0xD8
+    unsigned char pad_128;  // 1 when constructed
+    // GmkSalvageLocator::syncDepopTboxes sets it to 1, its dispose sets it too; update then disposes the objects of
+    // m_tboxLocators and clears it
+    unsigned char pad_129;
+    // 0x12A..0x130: tail padding (the copy constructor copies up to 0x12A); size 0x130: TGmkList<GmkSalvage>::getInst's
+    // stride
 };
 }  // namespace gmk
 

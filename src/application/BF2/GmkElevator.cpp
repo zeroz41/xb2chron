@@ -1174,6 +1174,54 @@ void GmkJump::reqRecreateIcon() {
     }
 }
 
+void GmkSalvage::create(const CreateInfo& info) {
+    AGmkBase::create(info);
+    unsigned char* fp = gf::GfDataBdat::getFP(0x7B);
+    unsigned int popDist = Bdat::getValCheck(fp, 0, 0x1E, 8);
+    m_popDistSq = *reinterpret_cast<float*>(&popDist) * *reinterpret_cast<float*>(&popDist);
+    unsigned int dist = Bdat::getValCheck(fp, 0, 0x3A, 8);
+    pad_64 = *reinterpret_cast<float*>(&dist) * *reinterpret_cast<float*>(&dist);
+    m_seq = &GmkSalvage::seqValidateGmkSalvageLocatorDetails;
+}
+
+void GmkSalvage::dispose() {
+    disposeRaffle(false);
+    m_seq = nullptr;
+    m_enemyLocators.clear();
+    pad_a8 = 0;
+    m_tboxLocators.clear();
+    m_dropLocators.clear();
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    AGmkBase::dispose();
+}
+
+void GmkSalvage::update(float dt) {
+    AGmkBase::update(dt);
+    if (isValid()) {
+        if (pad_129) {
+            pad_129 = 0;
+            const mm::mtl::FixedVector<GmkSalvageLocator*, 3>& tboxes = m_tboxLocators;
+            for (unsigned int i = 0, n = tboxes.size(); i < n; i++) {
+                GmkSalvageLocator* locator = tboxes[i];
+                if (locator != nullptr) {
+                    locator->m_isAccessed = false;
+                    locator->disposeGobInst(true);
+                }
+            }
+        }
+        if (m_seq) {
+            (this->*m_seq)(dt);
+        }
+    }
+}
+
 void GmkSalvage::onPlayerAccessed(gf::GF_OBJ_HANDLE*) { gf::GfGameFlag::setLocal(1, m_createInfo.m_bdatId + 11804, 1); }
 
 void GmkSalvage::debugDraw() const {
@@ -1612,15 +1660,66 @@ void GmkFieldLock::dispose() {
 
 GmkFieldLock::~GmkFieldLock() { dispose(); }
 
+// the gimmick data's show conditions into its conditions (bytes 0x14..0x22)
+void GmkEffect::create(const CreateInfo& info) {
+    if (info.m_bdatInfo == nullptr) {
+        return;
+    }
+    AGmkBase::create(info);
+    const Data* data = getData();
+    int time = data->m_time0;
+    if (data->m_time1) {
+        time |= 2;
+    }
+    if (data->m_time2) {
+        time |= 4;
+    }
+    if (data->m_time3) {
+        time |= 8;
+    }
+    if (data->m_time4) {
+        time |= 0x10;
+    }
+    if (data->m_time5) {
+        time |= 0x20;
+    }
+    m_popTime.m_time = time;
+    unsigned char weather = 0;
+    if (data->m_weather0) {
+        weather |= 0x10;
+    }
+    if (data->m_weather1) {
+        weather |= 1;
+    }
+    if (data->m_weather2) {
+        weather |= 2;
+    }
+    if (data->m_weather3) {
+        weather |= 4;
+    }
+    if (data->m_weather4) {
+        weather |= 8;
+    }
+    m_popWeather.m_weather = weather;
+    m_popInOutDoor = InOutDoorCond(data->m_inOutDoor0, data->m_inOutDoor1);
+    if (data->m_cloud[0]) {
+        if (!data->m_cloud[1]) {
+            m_popCloud.m_cloudSea = 0;
+        }
+    } else if (data->m_cloud[1]) {
+        m_popCloud.m_cloudSea = 1;
+    }
+    m_seq = &GmkEffect::seqValidateResHandle;
+}
+
 void GmkEffect::dispose() {
-    m_flags &= ~7ul;
+    m_flags.reset();
     if (m_effectHandle != 0) {
         mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effectHandle);
         m_effectHandle = 0;
     }
     AGmkBase::dispose();
-    pad_90 = nullptr;
-    pad_98 = nullptr;
+    m_seq = nullptr;
     pad_a0 = nullptr;
 }
 
@@ -2443,6 +2542,8 @@ void GmkMapGimmick::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE
         m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     }
 }
+
+GmkSalvage::~GmkSalvage() { dispose(); }
 
 GmkMapGimmick::~GmkMapGimmick() { dispose(); }
 

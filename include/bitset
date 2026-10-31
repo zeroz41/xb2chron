@@ -1,0 +1,46 @@
+#ifndef BITSET_H
+#define BITSET_H
+
+// The C++ library's std::bitset, as the SDK's libc++ 3.9.1 writes it (std::__1), for sizes of one word only: the bits
+// in an unsigned long (__bitset<1, N>::__first_), zeroed by the default constructor. Only what the game's code uses:
+// gmk::GmkSalvage::RaffleResult's three bitset<3> (its constructor stores a zero word; disposeRaffle's reset() clears
+// the low 3 bits in place, libc++'s fill_n on a partial word; GfGameSalvage::getRaffleResult's count() is a popcount).
+#include <stddef.h>
+
+namespace std { inline namespace __1 {
+
+template <size_t _Size>
+class bitset {
+    static_assert(_Size <= sizeof(unsigned long) * 8, "one word only");
+    unsigned long __first_;
+
+public:
+    bitset() noexcept : __first_(0) {}
+    bitset& set(size_t __pos, bool __val = true) {
+        unsigned long __m = 1ul << __pos;
+        if (__val) {
+            __first_ |= __m;
+        } else {
+            __first_ &= ~__m;
+        }
+        return *this;
+    }
+    // fill_n(__make_iter(0), _Size, false): the low _Size bits of the word, the rest kept
+    bitset& reset() noexcept {
+        __first_ &= ~(~0ul >> (sizeof(unsigned long) * 8 - _Size));
+        return *this;
+    }
+    bitset& reset(size_t __pos) { return set(__pos, false); }
+    bool test(size_t __pos) const { return (__first_ & (1ul << __pos)) != 0; }
+    bool operator[](size_t __pos) const { return test(__pos); }
+    size_t count() const noexcept {
+        return __builtin_popcountl(__first_ & (~0ul >> (sizeof(unsigned long) * 8 - _Size)));
+    }
+    bool any() const noexcept { return count() != 0; }
+    bool none() const noexcept { return count() == 0; }
+    static constexpr size_t size() noexcept { return _Size; }
+};
+
+}}  // namespace std::__1
+
+#endif

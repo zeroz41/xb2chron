@@ -21,6 +21,8 @@ public:
     void seqWaitPop(float dt);
     void seqPop(float dt);
     void syncDepopTboxes();
+    // drops its object (GmkSalvage::update and disposeRaffle call it on the raffle's locators)
+    void disposeGobInst(bool);
     void onEnemyDead(gf::GF_OBJ_HANDLE*);
     void onEnemyHomeToPlayerAccess(gf::GF_OBJ_HANDLE*);
     virtual gmk::GmkType getGmkType() const;  // slot 2

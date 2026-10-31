@@ -9,6 +9,8 @@ class CloudCond {
 public:
     // the cloud sea the row asks for: -1 any, else GfFieldWeather::getCurrentCloudSea must equal 0 or 1 (no copy
     // of it exists: inline; the name is not the original's)
+    // -1 (any): GmkEffect's elements are built with it (Vector<GmkEffect>::resize)
+    CloudCond() : m_cloudSea(-1) {}
     bool isMatch() const {
         if (m_cloudSea == -1) {
             return true;
