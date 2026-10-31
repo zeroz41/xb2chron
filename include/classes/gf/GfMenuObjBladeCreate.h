@@ -92,9 +92,9 @@ public:
     unsigned int pad_11B8;
     unsigned char pad_11BC[4];
     unsigned int m_bgm;  // the handle seqCreatePlayJingle stops (GfMenuObjUtil::stopBGM); the name is not the original's
-    unsigned int pad_11C4;
-    unsigned int m_se;  // a sound handle seqCreateStartSE stops first; the name is not the original's
-    unsigned int m_createSe;  // seqCreateStartSE's "se_fld_allmap_715"; the name is not the original's
+    // three sound handles MainListener's event 2 stops in a loop (the name is not the original's): [1] is the one
+    // seqCreateStartSE stops first, [2] its "se_fld_allmap_715"
+    unsigned int m_se[3];
 };
 }  // namespace gf
 
