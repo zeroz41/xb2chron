@@ -16,7 +16,7 @@ public:
     // 0 hidden, 1 shown: the open event (0x21) shows it, the close event (0x22) hides it (the name is not the
     // original's)
     int m_state;
-    unsigned char pad_10[0x10];
+    unsigned char pad_10[0xC];  // zeroed by the constructor; 0x1C-0x1F is not
     GfMenuObjChainAttack* m_owner;  // what initialize makes it for (the name is not the original's)
 };
 }  // namespace gf

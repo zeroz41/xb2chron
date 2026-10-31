@@ -2,6 +2,8 @@
 #include "classes/gf/GfMenuObjArtsPalette.h"
 #include "classes/gf/GfMenuObjBladeChange.h"
 #include "classes/gf/GfMenuObjChainAttack/ExtendListener.h"
+#include "classes/gf/GfMenuObjChainAttack/FullBurstListener.h"
+#include "classes/gf/GfMenuObjChainAttack/StatusListener.h"
 #include "classes/gf/GfMenuObjChainAttack.h"
 #include "classes/gf/GfMenuObjChainAttack/ExtendListener.h"
 #include "classes/gf/GfMenuObjChainAttack/ResultListener.h"
@@ -10,9 +12,14 @@
 #include "classes/gf/GfMenuObjArtsPalette.h"
 #include "classes/gf/GfMenuObjBladeChange.h"
 #include "classes/gf/GfMenuObjChainCount/MainListener.h"
+#include "classes/gf/GfAllocator.h"
+#include "classes/gf/GfMenuBattleAdapter.h"
+#include "classes/gf/GfMenuGfObjAdapter.h"
 #include "classes/gf/GfMenuReference.h"
+#include "classes/ui/UIEventManager.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuObjUtil.h"
+#include "mm/mtl/FixStr.h"
 #include "ui/EventData.h"
 
 #include <string.h>
@@ -24,6 +31,132 @@ GfMenuObjChainAttack::GfMenuObjChainAttack(unsigned int handle)
 
 GfMenuObjChainAttack::~GfMenuObjChainAttack() {
     ;  // the original body has a statement the build compiles away; an empty one would drop the table store
+}
+
+void GfMenuObjChainAttack::initialize() {
+    ui::UIObjectAcc acc(m_handle, "LAY_main");
+    if (acc.m_object != nullptr) {
+        GfMenuObject::attachExternalCall(0x54, acc.m_handle);
+        {
+            ui::UIObjectAcc start(acc.m_handle, "LAY_start");
+#line 92
+            StartListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) StartListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(start.m_handle, listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+        }
+        {
+            ui::UIObjectAcc status(acc.m_handle, "LAY_status");
+#line 101
+            StatusListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) StatusListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(status.m_handle, listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+            GfMenuBattleAdapter::create(status.searchChild("TXT_status_damage_num"), 0x10);
+            GfMenuBattleAdapter::create(status.searchChild("TXT_status_damage_num_b"), 0x10);
+            GfMenuObject::addNumberEventCondition(status.m_handle, "TXT_status_damage_num", 3, 0);
+            GfMenuBattleAdapter* overkill = GfMenuBattleAdapter::create(status.searchChild("TXT_status_ovk_num"), 0x11);
+            if (overkill != nullptr) {
+                overkill->setNumberInterpolateMode(0.2f);
+            }
+            GfMenuObject::addNumberEventCondition(status.m_handle, "TXT_status_ovk_num", 4, 0);
+            {
+                mm::mtl::FixStr<32> name;
+                for (int i = 0; i < 8; i++) {
+                    name.format("IMG_status_elem_icon@%02d", i + 1);
+                    GfMenuGfObjAdapter* adapter =
+                        GfMenuGfObjAdapter::createFromTargetEnemy(status.searchChild(name.m_str), 0x1E, true);
+                    if (adapter != nullptr) {
+                        adapter->m_index = i;
+                        GfMenuObject::addNumberEventCondition(status.m_handle, name.m_str, 2, i);
+                        name.format("IMG_status_elem_base_dummy@%02d", i + 1);
+                        adapter->m_rowHandle = status.searchChild(name.m_str);
+                    }
+                    name.format("IMG_status_elem_icon_eff@%02d", i + 1);
+                    adapter = GfMenuGfObjAdapter::createFromTargetEnemy(status.searchChild(name.m_str), 0x1E, true);
+                    if (adapter != nullptr) {
+                        adapter->m_index = i;
+                    }
+                    name.format("LAY_status_elem_target@%02d", i + 1);
+                    adapter = GfMenuGfObjAdapter::createFromTargetEnemy(status.searchChild(name.m_str), 0x1C, true);
+                    if (adapter != nullptr) {
+                        adapter->m_index = i;
+                    }
+                    GfMenuObject::addDispEventCondition(status.m_handle, name.m_str, 1, i, false);
+                    name.format("TXT_status_elem_burst@%02d", i + 1);
+                    adapter = GfMenuGfObjAdapter::createFromTargetEnemy(status.searchChild(name.m_str), 0x1D, true);
+                    if (adapter != nullptr) {
+                        adapter->m_index = i;
+                    }
+                    GfMenuObject::addDispEventCondition(status.m_handle, name.m_str, 0, i, false);
+                }
+            }
+            {
+                GfMenuObjUtil::FitOption option;
+                option.m_keepScaleY = true;
+                GfMenuObjUtil::createFitPlugin(status.searchChild("IMG_status_elem_base"),
+                                               status.searchChild("LAY_status_elem_base"), 20, 0, option);
+            }
+            {
+                ui::UIObjectAcc bar(status.m_handle, "IMG_status_gauge_bar");
+                GfMenuBattleAdapter* gauge = GfMenuBattleAdapter::create(bar.m_handle, 0xD);
+                if (gauge != nullptr) {
+                    gauge->setNumberInterpolateMode(0.2f);
+                }
+                bar.setExtType(1);
+                GfMenuObject::addNumberEventCondition(status.m_handle, "IMG_status_gauge_bar", 5, 0, 1.0f);
+            }
+        }
+        {
+            ui::UIObjectAcc result(acc.m_handle, "LAY_result");
+#line 189
+            ResultListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ResultListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(result.m_handle, listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+            GfMenuBattleAdapter::create(result.searchChild("TXT_result_total_damage_num"), 0x13);
+            GfMenuBattleAdapter::create(result.searchChild("TXT_result_burst_num"), 0x14);
+        }
+        {
+            ui::UIObjectAcc fullBurst(acc.m_handle, "LAY_full_burst");
+#line 203
+            FullBurstListener* listener =
+                new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) FullBurstListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(fullBurst.m_handle, listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+        }
+        {
+            ui::UIObjectAcc extend(acc.m_handle, "LAY_extend");
+#line 213
+            ExtendListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ExtendListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(extend.m_handle, listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+        }
+        {
+            ui::UIObjectAcc overkillStart(acc.m_handle, "LAY_ovk_start");
+#line 221
+            GfMenuObjChainCount::MainListener* listener =
+                new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfMenuObjChainCount::MainListener(this);
+            listener->m_RefCount = 1;
+            ui::UIEventManager::get()->registObjectListener(overkillStart.m_handle, listener);
+            if (listener != nullptr) {
+                listener->release();
+            }
+        }
+        GfMenuObject::initialize();
+    }
 }
 
 void GfMenuObjChainAttack::finalize() {
@@ -236,6 +369,62 @@ void GfMenuObjChainAttack::ResultListener::reciveEvent(const ui::EventData& even
             m_state = 0;
         }
         break;
+    }
+}
+
+void GfMenuObjChainAttack::FullBurstListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            acc.setDisp(false);
+        }
+        break;
+    case 0x21: {
+        ui::UIObjectAcc base(acc.m_handle, "IMG_full_burst_base");
+        base.startAnimation("fadein", false);
+        GfMenuObject::hookAnimationEvent(acc.m_handle, base.m_handle, 0);
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "mnu065_fb_base";
+        param.m_motion = "fadein";
+        param.m_setDefault = true;
+        param.m_startFlags = 10;
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, "TXT_full_burst");
+        param = GfMenuObjUtil::CtrlParam();
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "mnu065_fb_base_hilight";
+        param.m_motion = "fadein";
+        param.m_setDefault = true;
+        param.m_startFlags = 10;
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, "TXT_full_burst_eff");
+        {
+            ui::UIObjectAcc bg(acc.m_handle, "IMG_full_burst_bg");
+            bg.setAlpha(0.0f);
+            param = GfMenuObjUtil::CtrlParam();
+            param.m_methods = 1;
+            param.m_time = GfMenuObjUtil::getCtrlMotionTime("mnu065_fb_base", "fadein") * 0.5f;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, "IMG_full_burst_bg");
+        }
+        acc.setDisp(true);
+        break;
+    }
+    case 0xC: {
+        GfMenuObject::termCallContext(acc.m_handle);
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 2;
+        param.m_time = 0.2f;
+        param.m_startFlags = 10;
+        param.m_eventId = 1;
+        int ctrl = GfMenuObjUtil::startCtrl(acc.m_handle, param, "IMG_full_burst_bg");
+        GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        break;
+    }
     }
 }
 
