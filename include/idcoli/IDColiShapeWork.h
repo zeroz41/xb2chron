@@ -19,6 +19,23 @@ public:
     mm::Vec3 m_center;  // 0x60
     float m_radius;  // 0x70
     float m_height;  // 0x74
+    unsigned char pad_78[8];
+    // the bounding box (IDColiPrimitive::createAaBbBox widens a box by them; createBaseInBox grows them by 4)
+    mm::Vec3 m_max;  // 0x80
+    mm::Vec3 m_min;  // 0x90
+};
+
+// a capsule shape's work (IDColiPrimitive::createBaPosCapsule/createAaBbCapsule read it); the names are not the
+// original's
+class CLCapsuleWork {
+public:
+    mm::Vec3 m_pos;  // 0x0, createBaPosCapsule's position
+    unsigned char pad_10[0x10];
+    mm::Vec3 m_offset;  // 0x20, createBaPosCapsule's offset
+    mm::Vec3 m_max;  // 0x30, the bounding box (createAaBbCapsule)
+    mm::Vec3 m_min;  // 0x40
+    float m_radius;  // 0x50
+    float m_lengthSq;  // 0x54, createBaPosCapsule's height is its square root plus twice the radius
 };
 
 // a line shape's work: 0x70 bytes (1.0.0's IDColiPrimitive::createRay fills two of them, at 0x0 and 0x70 of a

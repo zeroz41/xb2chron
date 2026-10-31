@@ -10,7 +10,12 @@ class IDColiInput {
 public:
     const void* getShape() const { return m_shape; }
 
-    unsigned char pad_0[0x90];
+    // the query's bounding box (IDColiGrandTree::isAaBbToAaBb tests a box against it); the names are not the
+    // original's
+    float m_max[3];  // 0x0
+    unsigned char pad_c[4];
+    float m_min[3];  // 0x10
+    unsigned char pad_1c[0x74];
     // the hit distance range (IDColiGrandMesh's lenght* tests: a ray hit lies in [m_lengthMin, m_lengthMax], a
     // sphere's within m_lengthMax); the names are not the original's
     float m_lengthMax;  // 0x90

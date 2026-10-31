@@ -51,11 +51,57 @@
 #include "classes/idcoli/IDColiObjGrand.h"
 #include "classes/ml/WorkCpu.h"
 #include "mtl/MemManager.h"
+#include "classes/idcoli/IDColiObjGrdChar.h"
+#include "idcoli/IDColiResult.h"
+#include "classes/fw/ColiCheckCallback.h"
 
 namespace idcoli {
 void IDColiPrimitive::createBaseBox(void* base, IDColiBaseType& type, const mm::Mat44& matrix, const mm::Vec3& size) {
     calcBaseBoxSetup(static_cast<CLBoxWork*>(base), matrix, size);
     type = IDCOLI_BASE_BOX;
+}
+
+void IDColiPrimitive::createBasePoli(void* base, IDColiBaseType& type, const mm::Mat44& matrix, const mm::Vec3&) {
+    IDColiObjGrdChar::Part* part = *static_cast<IDColiObjGrdChar::Part**>(base);
+    calcPosDataSetup(&part->m_posData, matrix, part->m_corners[0], part->m_corners[1]);
+    type = IDCOLI_BASE_POLI;
+}
+
+void IDColiPrimitive::createAaBbSphere(mm::Vec3& max, mm::Vec3& min, const void* shape) {
+    const CLSphereWork* sphere = static_cast<const CLSphereWork*>(shape);
+    float value;
+    value = sphere->m_center.x + sphere->m_radius;
+    if (max.x < value) max.x = value;
+    value = sphere->m_center.x - sphere->m_radius;
+    if (min.x > value) min.x = value;
+    value = sphere->m_center.y + sphere->m_radius;
+    if (max.y < value) max.y = value;
+    value = sphere->m_center.y - sphere->m_radius;
+    if (min.y > value) min.y = value;
+    value = sphere->m_center.z + sphere->m_radius;
+    if (max.z < value) max.z = value;
+    value = sphere->m_center.z - sphere->m_radius;
+    if (min.z > value) min.z = value;
+}
+
+void IDColiPrimitive::createAaBbBox(mm::Vec3& max, mm::Vec3& min, const void* shape) {
+    const CLBoxWork* box = static_cast<const CLBoxWork*>(shape);
+    if (max.x < box->m_max.x) max.x = box->m_max.x;
+    if (min.x > box->m_min.x) min.x = box->m_min.x;
+    if (max.y < box->m_max.y) max.y = box->m_max.y;
+    if (min.y > box->m_min.y) min.y = box->m_min.y;
+    if (max.z < box->m_max.z) max.z = box->m_max.z;
+    if (min.z > box->m_min.z) min.z = box->m_min.z;
+}
+
+void IDColiPrimitive::createAaBbCapsule(mm::Vec3& max, mm::Vec3& min, const void* shape) {
+    const CLCapsuleWork* capsule = static_cast<const CLCapsuleWork*>(shape);
+    if (max.x < capsule->m_max.x) max.x = capsule->m_max.x;
+    if (min.x > capsule->m_min.x) min.x = capsule->m_min.x;
+    if (max.y < capsule->m_max.y) max.y = capsule->m_max.y;
+    if (min.y > capsule->m_min.y) min.y = capsule->m_min.y;
+    if (max.z < capsule->m_max.z) max.z = capsule->m_max.z;
+    if (min.z > capsule->m_min.z) min.z = capsule->m_min.z;
 }
 
 void IDColiPrimitive::createAaBbPoli(mm::Vec3&, mm::Vec3&, const void*) {}
@@ -80,6 +126,27 @@ void IDColiPrimitive::createBaPosBox(mm::Vec3& pos, mm::Vec3& offset, bool& flag
     offset = mm::Vec3(0.0f, 0.0f, 0.0f);
 }
 
+void IDColiPrimitive::createBaPosCapsule(mm::Vec3& pos, mm::Vec3& offset, bool& flag, float& radius, float& height,
+                                         const void* shape) {
+    const CLCapsuleWork* capsule = static_cast<const CLCapsuleWork*>(shape);
+    pos = capsule->m_pos;
+    radius = capsule->m_radius;
+    height = ::sqrtf(capsule->m_lengthSq) + (radius + radius);
+    flag = true;
+    offset = capsule->m_offset;
+}
+
+void IDColiPrimitive::createBaPosPoli(mm::Vec3& pos, mm::Vec3& offset, bool& flag, float& radius, float& height,
+                                      const void* shape) {
+    const IDColiObjGrdChar::Part* part = *static_cast<const IDColiObjGrdChar::Part* const*>(shape);
+    pos = mm::Vec3(part->m_posData.m_matrix.m[0][3], part->m_posData.m_matrix.m[1][3],
+                   part->m_posData.m_matrix.m[2][3]);
+    radius = (part->m_posData.m_max.x - part->m_posData.m_min.x) * 0.5f;
+    height = radius + radius;
+    flag = false;
+    offset = mm::Vec3(0.0f, 0.0f, 0.0f);
+}
+
 bool IDColiGrandMesh::lenghtLine(float length) { return length >= 0.0f && length <= 1.0f; }
 
 bool IDColiGrandMesh::lenghtRay(float length) {
@@ -96,6 +163,47 @@ bool IDColiGrandMesh::lenghtWallSphere(float length) {
         return m_input->m_lengthMax > length;
     }
     return false;
+}
+
+void IDColiGrandMesh::stockNear(IDColiCallArg& arg, const IDCmfPoliData* poli, float length) {
+    if (m_result->m_nearLength > length) {
+        m_result->m_near.m_pos = arg.m_pos;
+        m_result->m_near.m_normal = arg.m_normal;
+        m_result->m_nearLength = length;
+        m_result->m_near.m_poli = arg.m_poli;
+        m_result->m_nearHit = true;
+        m_result->m_nearObj = m_result->m_obj;
+        (this->*m_vecotr)(m_result->m_near, poli);
+    }
+}
+
+void IDColiGrandMesh::stockSecNear(IDColiCallArg& arg, const IDCmfPoliData* poli, float length) {
+    if (length < 0.0f) {
+        if (m_result->m_secNearLength <= length) {
+            m_result->m_secNear.m_pos = arg.m_pos;
+            m_result->m_secNear.m_normal = arg.m_normal;
+            m_result->m_secNearLength = length;
+            m_result->m_secNear.m_poli = arg.m_poli;
+            m_result->m_secNearHit = true;
+            m_result->m_secNearObj = m_result->m_obj;
+            (this->*m_vecotr)(m_result->m_secNear, poli);
+        }
+    } else {
+        stockNear(arg, poli, length);
+    }
+}
+
+void IDColiGrandMesh::stockTbl(IDColiCallArg& arg, const IDCmfPoliData* poli, float) {
+    (this->*m_vecotr)(arg, poli);
+    if (m_result->m_tblMax > m_result->m_tblNum) {
+        if (m_result->m_tblPos) m_result->m_tblPos[m_result->m_tblNum] = arg.m_pos;
+        if (m_result->m_tblNormal) m_result->m_tblNormal[m_result->m_tblNum] = arg.m_normal;
+        if (m_result->m_tblVector) m_result->m_tblVector[m_result->m_tblNum] = arg.m_vector;
+        if (m_result->m_tblPoli) m_result->m_tblPoli[m_result->m_tblNum] = arg.m_poli;
+        m_result->m_nearHit = true;
+        m_result->m_tblNum++;
+    }
+    if (m_result->m_callback) m_result->m_callback->coli_param_callback(m_result->m_obj, arg);
 }
 
 void IDColiGrandMesh::vecotrNon(IDColiCallArg&, const IDCmfPoliData*) {}
@@ -118,6 +226,15 @@ bool IDColiGrandTree::instCapsuleHit(unsigned int index) {
     return instCapsuleHitParts(&m_work->m_posData[index], &m_work->m_posInfo[index]);
 }
 
+bool IDColiGrandTree::isAaBbToAaBb(const float* max, const float* min) {
+    if (m_input->m_max[0] < min[0]) return true;
+    if (m_input->m_min[0] > max[0]) return true;
+    if (m_input->m_max[2] < min[2]) return true;
+    if (m_input->m_min[2] > max[2]) return true;
+    if (m_input->m_min[1] > max[1]) return true;
+    return m_input->m_max[1] < min[1];
+}
+
 void IDColiGrdMoveObj::setMat(const mm::Mat44& matrix) {
     m_mats[IDColiManager::s_nStkIdx] = matrix;
     m_matRequest |= 1 << IDColiManager::s_nStkIdx;
@@ -136,6 +253,56 @@ IDColiObjGrand::~IDColiObjGrand() {
             mtl::MemManager::deallocate(m_memBlock, 0, false);
             m_memBlock = nullptr;
         }
+    }
+}
+
+void IDColiObjGrand::update() {
+    if (m_moveObjNum != 0) {
+        int bank = m_bank == 0;
+        m_treeTops[bank]->begin();
+        for (int i = 0; i < m_moveObjNum; i++) {
+            m_moveObjs[i].update();
+            m_treeTops[bank]->setupTreeList(&m_moveObjs[i].m_treeObjs[bank], m_moveObjs[i].m_max, m_moveObjs[i].m_min);
+        }
+        m_treeTops[bank]->end();
+        m_bank = bank;
+    }
+}
+
+IDColiObjGrdChar::IDColiObjGrdChar() {
+    m_partNum = 0;
+    m_parts = nullptr;
+    m_owner = nullptr;
+    m_memBlock = nullptr;
+    m_max = mm::Vec3(1.0f, 1.0f, 1.0f);
+    m_min = mm::Vec3(-1.0f, -1.0f, -1.0f);
+}
+
+IDColiObjGrdChar::~IDColiObjGrdChar() {
+    if (m_partNum != 0) {
+        for (int i = 0; i < m_partNum; i++) {
+            m_parts[i].m_grand->~IDColiObjGrand();
+        }
+        m_partNum = 0;
+        m_parts = nullptr;
+        if (m_memBlock) {
+            mtl::MemManager::deallocate(m_memBlock, 0, false);
+            m_memBlock = nullptr;
+        }
+    }
+}
+
+void IDColiObjGrdChar::update() {
+    m_max = mm::Vec3(-1000000.0f, -1000000.0f, -1000000.0f);
+    m_min = mm::Vec3(1000000.0f, 1000000.0f, 1000000.0f);
+    for (int i = 0; i < m_partNum; i++) {
+        const Part& part = m_parts[i];
+        if (m_max.x < part.m_posData.m_max.x) m_max.x = part.m_posData.m_max.x;
+        if (m_min.x > part.m_posData.m_min.x) m_min.x = part.m_posData.m_min.x;
+        if (m_max.y < part.m_posData.m_max.y) m_max.y = part.m_posData.m_max.y;
+        if (m_min.y > part.m_posData.m_min.y) m_min.y = part.m_posData.m_min.y;
+        if (m_max.z < part.m_posData.m_max.z) m_max.z = part.m_posData.m_max.z;
+        if (m_min.z > part.m_posData.m_min.z) m_min.z = part.m_posData.m_min.z;
     }
 }
 

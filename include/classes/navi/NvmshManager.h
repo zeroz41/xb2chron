@@ -32,7 +32,8 @@ public:
     // two positions, m_posBank's the one written (fw::NaviManager::update gives it the camera's); tail hands the
     // other to NvmshResMan::updateMemMove and flips m_posBank (the names are not the original's)
     mm::Vec3 m_pos[2];
-    unsigned char pad_40[0x10];
+    // tail hands it to NvmshResMan::updateMemMove as the second position (the name is not the original's)
+    mm::Vec3 m_target;  // 0x40
     // setupResource/releaseResource forward to the first, createObj/releaseObj to the second, createObj passes
     // the handle (the names are not the original's)
     NvmshResMan* m_pResMan;  // 0x50
@@ -42,7 +43,7 @@ public:
     // jobUpdate sets 0x20000 while it runs and skips the update when the bit 0x4 selects (0x8 if set, else
     // 0x1) is set (the name is not the original's)
     unsigned int m_flags;  // 0x68
-    unsigned char pad_6c[4];
+    int m_worldId;  // 0x6C, tail hands it to NvmshResMan::updateMemMove (the name is not the original's)
     int m_jobGroup;  // 0x70, the WorkCpu job group the constructor creates (the name is not the original's)
     unsigned char pad_74[0xC];  // fields: size from fw::NaviManager::initialize's allocation (0x80)
 };
