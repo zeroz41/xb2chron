@@ -13,6 +13,7 @@
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuCharDataAdapter.h"
 #include "classes/gf/GfMenuFullScreen.h"
+#include "classes/gf/GfMenuItemAdapter.h"
 #include "classes/gf/GfMenuItemList.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
 #include "classes/gf/GfMenuObjCharSelect.h"
@@ -28,7 +29,9 @@
 #include "classes/ui/UIManager.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UISelectObjList.h"
+#include "gf/GfDataUtil.h"
 #include "gf/GfEquipUtil.h"
+#include "gf/GfItemUtil.h"
 #include "gf/GfMenuObjUtil.h"
 #include "gf/GfMenuTypes.h"
 #include "mm/mtl/FixStr.h"
@@ -210,6 +213,42 @@ void GfMenuObjBlWeapon2::MainListener::reciveEvent(ui::EventData const& event, u
     }
 }
 
+void GfMenuObjBlWeapon2::setupItemList(ui::UIObjectAcc& acc, GfMenuItemList* items, ui::UISelectObjList* select,
+                                       unsigned int openType, unsigned int shop) {
+    select->pickupObject(acc.m_handle, "LAY_ch_listtag@%02d", 1);
+    unsigned int count = select->getSize();
+    if (items == nullptr || count == 0) {
+        return;
+    }
+    if (openType != 0) {
+        GfMenuItemList::ItemShopSetup setup;
+        setup.m_setup.m_pageRowSize = select->getSize();
+        setup.m_shop = shop;
+        items->setupFromShop(setup);
+    } else {
+        GfMenuItemList::ItemBoxSetup setup;
+        setup.m_type = 1;
+        setup.m_setup.m_pageRowSize = select->getSize();
+        setup.m_setup.m_pageScroll = true;
+        items->setupFromBox(setup);
+    }
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < select->getSize(); i++) {
+        name.format("IMG_itemicon_@%02d", i + 1);
+        GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 2, items, i, false);
+        name.format("IMG_ch_reaicon@%02d", i + 1);
+        GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 7, items, i, false);
+        name.format("TXT_chipname_@%02d", i + 1);
+        GfMenuItemAdapter* chipName = GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 0, items, i, false);
+        name.format("LAY_ch_listtag_item@%02d", i + 1);
+        chipName->m_rowHandle = acc.searchChild(name.m_str);
+        name.format("TXT_shstnum_@%02d", i + 1);
+        GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 3, items, i, false);
+        name.format("TXT_price@%02d", i + 1);
+        GfMenuItemAdapter::createFromList(acc.searchChild(name.m_str), 5, items, i, false);
+    }
+}
+
 void GfMenuObjBlWeapon2::openCharChange() {
     if (m_openType == 0) {
         if (!GfMenuObjMainMenu2::isOpenCharMenu()) {
@@ -220,6 +259,31 @@ void GfMenuObjBlWeapon2::openCharChange() {
     } else {
         ui::UIObjectAcc acc(m_handle);
         sendEvent(acc.searchChild("LAY_chr_change"), 0x21, 0);
+    }
+}
+
+void GfMenuObjBlWeapon2::fn_71003AC544(ui::UIObjectAcc& acc, GfMenuItemList* items, ui::UISelectObjList* select,
+                                       unsigned int openType, unsigned int shop) {
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < select->getSize();) {
+        MenuItemInfo& item = items->getContents(items->getPageIndex(i));
+        i++;
+        name.format("TXT_chipname_@%02d", i);
+        ui::UIObjectAcc text(acc.searchChild(name.m_str));
+        if (openType == 1) {
+            ItemPrice price;
+            GfItemUtil::getPrice(price, item.m_id, shop);
+            int stock = GfItemUtil::getEnableStock(item.m_id);
+            int count = GfItemUtil::getItemBoxCount(item.m_id);
+            unsigned int money = GfDataUtil::getMoney();
+            if (stock != count && money >= price.m_price) {
+                GfMenuObjUtil::setColMulandAdd(text.m_handle, "txt_normal");
+            } else {
+                GfMenuObjUtil::setColMulandAdd(text.m_handle, "txt_disable");
+            }
+        } else {
+            GfMenuObjUtil::setColMulandAdd(text.m_handle, "txt_normal");
+        }
     }
 }
 
