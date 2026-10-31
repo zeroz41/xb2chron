@@ -4,6 +4,7 @@
 namespace gf { class GF_OBJ_HANDLE; }
 namespace mm { class Vec3; }
 namespace mm { class Mat44; }
+namespace fw { struct ColiCheckConfig; }
 #include "classes/gf/IGfObjListener.h"
 
 namespace gmk {
@@ -47,6 +48,9 @@ public:
     bool isInsideShape(const mm::Vec3& pos, float margin) const;  // the BDAT table of the gimmick's kind
     // the length of a ray snapping it on the ground, by its shape's scale (StateFieldAreaWalk::seqInitGoalPos)
     float getYSnapRayLength() const;
+    // a position inside the gimmick's shape (out of line, 0x71005798CC; returns pos; the pop finders of GmkMob and
+    // GmkEnemy call it with false when the gimmick does not pop at its own position)
+    mm::Vec3& getPositionInShape(mm::Vec3& pos, bool) const;
     // the list holding it (TGmkList::createGmk stores the list there; isValid tests it, the destructor clears it;
     // the name is not the original's)
     IGmkList* m_list;
@@ -86,6 +90,10 @@ const GmkEnemy* fn_71005B3824(const AGmkBase* gmk, unsigned int index);
 // whether the player's object exists (defined in GmkElevator.cpp's unit; StateFieldHome::isCondMatch is its tail
 // call)
 bool isPlayerExist();
+// snaps a point on the ground below from: a line test (fw::ColiCheck::testLineChara) from from down by length with
+// config; out takes the nearest hit whose y is not negative. False when nothing was hit (0x710057B63C; the pop
+// finders, GmkEffect::applyEffectParam and the gimmicks' validateIconPos call it)
+bool getYSnapPos(mm::Vec3& out, const mm::Vec3& from, float length, const fw::ColiCheckConfig& config);
 // whether the navigation mesh has a point near pos (fw::NaviUtil::testNaviColi with 2, 2)
 bool isNaviMeshExist(const mm::Vec3& pos);
 // a gimmick's BDAT row and sheet names for debug output: "(null)" in this build

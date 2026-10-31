@@ -10,7 +10,12 @@ namespace fw {
 // fw::ColiCheck::getSnapPos fill it on the stack). The field names are not the original's.
 struct ColiCheckConfig {
     // the defaults getSnapPos keeps (checkSpace changes m_mode and m_option); both set m_flags and m_mask after it
-    ColiCheckConfig() : m_radius(0.0f), pad_c(), m_mode(1), m_option(true), m_callbackParam(false) {}
+    // the two flags are set in the body, m_callbackParam first: GmkMob::PopXformFinder::findPosRot stores the
+    // false before the true (an init list stores them in field order)
+    ColiCheckConfig() : m_radius(0.0f), pad_c(), m_mode(1) {
+        m_callbackParam = false;
+        m_option = true;
+    }
 
     unsigned int m_flags;  // bits 0, 1, 3: test the collision (IDColiDef); bit 2: test the phantoms
     unsigned int m_mask;   // the collision groups to hit (testCapsule hands on its complement)

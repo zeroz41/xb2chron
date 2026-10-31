@@ -78,6 +78,8 @@
 #include "classes/gmk/GmkEnemy.h"
 #include "classes/gmk/GmkRoutedEnemy.h"
 #include "classes/gmk/GmkSalvage.h"
+#include "classes/gmk/GmkMob/PopXformFinder.h"
+#include "fw/ColiCheck.h"
 #include "classes/gmk/GameFlagCond.h"
 #include "classes/gf/GfManager.h"
 #include "arc/CArcData.h"
@@ -2376,6 +2378,48 @@ void GmkEffect::update(float dt) {
 }
 
 GmkEffect::~GmkEffect() { dispose(); }
+
+// getYSnapPos with the pop finders' line test (all four build the same config inline; the name is not the
+// original's)
+static inline bool getYSnapPosForPop(mm::Vec3& pos, const mm::Vec3& from, float length) {
+    fw::ColiCheckConfig config;
+    config.m_mode = 2;
+    config.m_flags = 9;
+    config.m_mask = 0x80000020;
+    return getYSnapPos(pos, from, length, config);
+}
+
+// a squad with room places the objects; else the gimmick's position (pad_98 1) or a point in its shape; the
+// rotation is the gimmick's; snapped on the ground when its data's first byte says so
+bool GmkMob::PopXformFinder::findPosRot(mm::Vec3& pos, mm::Vec3& rot) const {
+    GmkSquad* squad = m_gmk->m_insts.m_squad;
+    unsigned int num;
+    if (squad != nullptr && (num = m_gmk->getGobInstNum()) != 0 && num < squad->pad_70) {
+        gf::GfObjAcc acc(m_gmk->getGobInst(0));
+        if (!acc.isValidTransform()) {
+            return false;
+        }
+        squad->getPosRotY(pos, rot.y, m_gmk->getGobInstNum());
+        rot.z = 0.0f;
+        rot.x = 0.0f;
+    } else if (m_gmk->m_insts.pad_98 == 1) {
+        pos = *m_gmk->m_pos;
+    } else {
+        m_gmk->getPositionInShape(pos, false);
+    }
+    rot = m_gmk->m_pos[1];
+    if (*m_gmk->m_createInfo.m_data != 0) {
+        float half = m_gmk->getYSnapRayLength() * 0.5f;
+        mm::Vec3 from;
+        from.x = pos.x;
+        from.y = pos.y + half;
+        from.z = pos.z;
+        if (!getYSnapPosForPop(pos, from, half + half)) {
+            return false;
+        }
+    }
+    return true;
+}
 
 void GmkMob::dispose() {
     m_insts.dispose();

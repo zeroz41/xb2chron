@@ -14,6 +14,8 @@ public:
     void dispose();
     // its leader, when the access reaches a valid one with members and the squad has members; none otherwise
     GmkSquadLeader* getBindedGmkSquadLeader() const;
+    // the position and y rotation of member index (out of line, 0x7100580618; the mob pop finders call it)
+    void getPosRotY(::mm::Vec3& pos, float& rotY, unsigned int index) const;
     unsigned char pad_8[0x28];
     // 0x30: the destructor ends this access after dispose (GmkAcc's table and GmkAccManager::removeGmkAcc); the name
     // is not the original's
