@@ -35,7 +35,14 @@ public:
     GmkPhantom m_phantom;  // 0x60 (the name is not the original's)
     GmkAcc m_acc;  // 0xF0 (the name is not the original's)
     void (TUnk_B6D418::*m_seq)(float dt);  // 0x130: dispose clears it (the name is not the original's)
-    unsigned char pad_140[0x8];  // 0x142: a flag TUnk_B6D528::create sets
+    unsigned char pad_140;
+    // 0x141..0x145: flags the battle challenge (TUnk_B6D528) reads and sets (the names are not the original's)
+    bool m_isCleared;     // 0x141: fn_71005B77B8 counts the waves up to the last one set
+    bool m_isChallenge;   // 0x142: TUnk_B6D528::create sets it
+    bool m_isStarted;     // 0x143: TUnk_B6D528::fn_71005B76B4 sets it
+    unsigned char pad_144;
+    bool m_isPaused;      // 0x145: TUnk_B6D528::fn_71005B75AC sets it
+    unsigned char pad_146[0x2];
     mm::mtl::FixedVector<Entry, 32> m_entries;  // 0x148, size at 0x448 (the name is not the original's)
     unsigned char pad_450[0x8];
     GmkAcc m_secondAcc;  // 0x458 (the name is not the original's)

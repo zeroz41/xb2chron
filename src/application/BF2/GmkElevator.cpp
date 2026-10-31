@@ -2047,6 +2047,72 @@ void TUnk_B6D480::createGmk(void* data) {
     }
 }
 
+// ---- TUnk_B6D528 (GmkEnemyList's battle challenge; placeholder slot symbols: see its header)
+TUnk_B6D528* TUnk_B6D528::s_current;
+unsigned int TUnk_B6D528::s_battleId;
+TUnk_B6D528::State TUnk_B6D528::s_state;
+
+inline TUnk_B6D418* TUnk_B6D528::getWave(unsigned int index) const {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    GmkEnemyList* enemies = static_cast<GmkEnemyList*>(set->m_gmkLists[GmkEnemy::TYPE]);
+    if (enemies == nullptr) {
+        return nullptr;
+    }
+    unsigned int waveIndex = index + getData()->m_waveBegin;
+    if (enemies->m_waveList.getInstNum() <= waveIndex) {
+        return nullptr;
+    }
+    return &enemies->m_waveList.m_gmks[waveIndex];
+}
+
+// its phantom is made unless the gimmick set says otherwise (on the access's target when there is one); its waves'
+// phantoms are released
+void TUnk_B6D528::create(const CreateInfo& info) {
+    AGmkBase::create(info);
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set == nullptr || !set->m_createInfo.m_flag) {
+        AGmkBase* target = fn_71005B73E8();
+        if (target != nullptr) {
+            m_phantom.create(*target, nullptr, false);
+        } else {
+            m_phantom.create(*this, nullptr, false);
+        }
+        m_isAccCounted = false;
+    }
+    for (unsigned int i = 0; i < getWaveNum(); i++) {
+        TUnk_B6D418* wave = getWave(i);
+        wave->m_isChallenge = true;
+        wave->m_phantom.dispose();
+    }
+    m_seq = &TUnk_B6D528::fn_71005B7178;
+}
+
+void TUnk_B6D528::dispose() {
+    m_seq = nullptr;
+    m_phantom.dispose();
+    if (s_current == this) {
+        fn_71005B7344();
+    }
+    AGmkBase::dispose();
+}
+
+void TUnk_B6D528::fn_71005B7344() {
+    s_state.clear();
+    s_battleId = 0;
+    s_current = nullptr;
+}
+
+void TUnk_B6D528::update(float dt) {
+    AGmkBase::update(dt);
+    if (!m_isPaused) {
+        if (m_seq) {
+            (this->*m_seq)(dt);
+        }
+    }
+}
+
+void TUnk_B6D528::debugDraw() const {}
+
 // ---- TUnk_B6D590 (placeholder slot symbols: see its header)
 void TUnk_B6D590::dispose() {
     m_isAccessed = false;
