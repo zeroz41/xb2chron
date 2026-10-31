@@ -18,9 +18,26 @@
 #include "gf/MsgObjectNotifyAsmCallback.h"
 #include "fw/Message.h"
 #include "fw/UpdateInfo.h"
+#include "classes/gf/enemy/StateFieldIdle.h"
+#include "classes/gf/GfComAsm.h"
 
 namespace gf {
 namespace enemy {
+
+void StateFieldIdle::leave(GfComBehaviorEnemy* owner, ai::State* next) {
+    GfComAsm* asmCom = owner->m_owner->getComponent<GfComAsm>(2);
+    if (asmCom == nullptr) {
+        return;
+    }
+    switch (m_stateID) {
+    case 4:
+        asmCom->execCmd("C_specialA_02", AnimLayer(0));
+        break;
+    case 5:
+        asmCom->execCmd("C_specialB_02", AnimLayer(0));
+        break;
+    }
+}
 
 void StateFieldSpawn::enter(GfComBehaviorEnemy* owner, ai::State*) { owner->disposeMenuObj(); }
 
