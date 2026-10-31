@@ -18,6 +18,8 @@ public:
     class BdatInfo {};
     virtual ~GmkSalvageLocator();  // slot 0
     void reqDisposeTboxGobInst(float wait) const;
+    // sets or clears its object's targetable bits (GfObjSetupGimmick 0x6c, GfObj 0x110: |= 7 / &= ~7)
+    void setTargetable(bool targetable) const;
     void seqWaitPop(float dt);
     void seqPop(float dt);
     void syncDepopTboxes();

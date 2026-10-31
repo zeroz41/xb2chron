@@ -10,6 +10,7 @@
 #include "classes/gf/GfFieldBgm.h"
 #include "classes/gf/GfComCollider.h"
 #include "classes/gf/GfObj.h"
+#include "classes/gf/GfObjSetupGimmick.h"
 #include "classes/fw/EffectManager.h"
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkGrave.h"
@@ -1430,6 +1431,29 @@ void GmkSalvageLocator::reqDisposeTboxGobInst(float wait) const {
     pad_e4 = 0;
 }
 
+void GmkSalvageLocator::setTargetable(bool targetable) const {
+    gf::GF_OBJ_HANDLE* gob = m_gob;
+    if (gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    gf::GfObjAcc acc(gob);
+    if (acc.m_obj != nullptr) {
+        gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(gob)->m_setup);
+        if (targetable) {
+            setup->pad_6c |= 7;
+        } else {
+            setup->pad_6c &= ~7;
+        }
+    }
+    if (gf::GfObj* obj = acc.getObj()) {
+        if (targetable) {
+            obj->pad_110 |= 7;
+        } else {
+            obj->pad_110 &= ~7;
+        }
+    }
+}
+
 void GmkSalvageLocator::seqWaitPop(float dt) {
     m_popTimer += dt;
     if (m_popTimer < m_popWait) {
@@ -1666,6 +1690,29 @@ void TUnk_B6E340::EffectList::fn_71005BAC78() {
 TUnk_B6E340::~TUnk_B6E340() { dispose(); }
 
 // ---- kinds holding one game object
+void GmkTbox::setTargetable(bool targetable) const {
+    gf::GF_OBJ_HANDLE* gob = m_gob;
+    if (gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    gf::GfObjAcc acc(gob);
+    if (acc.m_obj != nullptr) {
+        gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(gob)->m_setup);
+        if (targetable) {
+            setup->pad_6c |= 7;
+        } else {
+            setup->pad_6c &= ~7;
+        }
+    }
+    if (gf::GfObj* obj = acc.getObj()) {
+        if (targetable) {
+            obj->pad_110 |= 7;
+        } else {
+            obj->pad_110 &= ~7;
+        }
+    }
+}
+
 void GmkTbox::dispose() {
     if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         gf::GfObjAcc acc(m_gob);
