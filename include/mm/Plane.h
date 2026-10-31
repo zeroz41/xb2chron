@@ -10,14 +10,17 @@ namespace mm {
 class Plane {
 public:
     Plane() {}
-    // through pos, facing normal (made length 1; one too short becomes zero), GfInfo::initialize's planes
-    Plane(const Vec3& normal, const Vec3& pos) {
-        Vec3 n = normal;
-        float length = n.length();
+    // through pos, facing normal (made length 1; one too short becomes zero), GfInfo::initialize's planes. The
+    // normal is copied first and scaled in place (GfComEnvSensor::flushGroundSingle's register order needs it)
+    Plane(const Vec3& normal, const Vec3& pos) : normal(normal) {
+        float length = this->normal.length();
         if (length <= 1e-6f) {
             this->normal = Vec3::zero;
         } else {
-            this->normal = n * (1.0f / length);
+            float scale = 1.0f / length;
+            this->normal.x = scale * this->normal.x;
+            this->normal.y = scale * this->normal.y;
+            this->normal.z = scale * this->normal.z;
         }
         d = -this->normal.dot(pos);
     }

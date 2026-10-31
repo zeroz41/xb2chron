@@ -26,11 +26,55 @@ struct ColiCheckConfig {
 template <unsigned int N>
 class TColiCheckResult {
 public:
+    // the surface a hit found (GfComEnvSensor::flushGroundSingle copies it into its GfEnvProperty::Ground; the
+    // field names are not the original's)
+    struct Material {
+        unsigned short m_id;  // the ground's material
+        unsigned char pad_2[0x2];
+        unsigned int m_attribute;
+        unsigned char pad_8[0x10];
+        unsigned char m_params[4];  // the ground takes them as floats
+    };
     struct Hit {
-        unsigned char pad_0[0x50];
+        mm::Vec3 m_position;  // where the test hit (the field names are not the original's)
+        mm::Vec3 m_normal;    // the surface's normal there
+        unsigned char pad_20[0x10];
+        const Material* m_material;  // none: getMaterial gives a zeroed one
+        unsigned char pad_38[0x18];
     } __attribute__((aligned(16)));
 
     TColiCheckResult() : m_count(0), m_hit(false) {}
+
+    // the accessors' names are not the original's (1.0.0 names getMaterial; GfComEnvSensor::flushGroundSingle
+    // inlines them all)
+    unsigned int getHitNum() const { return m_hits.size(); }
+    const mm::Vec3& getPosition(unsigned int index) const {
+        if (index < getHitNum()) {
+            return m_hits[index].m_position;
+        }
+        return mm::Vec3::zero;
+    }
+    const mm::Vec3& getNormal(unsigned int index) const {
+        if (index < getHitNum()) {
+            return m_hits[index].m_normal;
+        }
+        return mm::Vec3::zero;
+    }
+    // its statics' names are the original's
+    const Material& getMaterial(unsigned int index) const {
+        if (index < m_count) {
+            if (m_hits[index].m_material != nullptr) {
+                return *m_hits[index].m_material;
+            }
+        }
+        static bool bInitialized = false;
+        static Material nullData;
+        if (!bInitialized) {
+            memset(&nullData, 0, sizeof(nullData));
+            bInitialized = true;
+        }
+        return nullData;
+    }
 
     mm::mtl::FixedVector<Hit, N> m_hits;
     unsigned int m_count;
@@ -39,6 +83,8 @@ public:
 
 class ColiCheck {
 public:
+    static bool testLine(TColiCheckResult<256>& result, const mm::Vec3& start, const mm::Vec3& end,
+                         const ColiCheckConfig& config);
     static bool testCapsule(TColiCheckResult<256>& result, const mm::Vec3& start, const mm::Vec3& end, float radius,
                             const ColiCheckConfig& config);
 };
