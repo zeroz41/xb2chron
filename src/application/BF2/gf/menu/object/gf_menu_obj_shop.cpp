@@ -238,6 +238,42 @@ void GfMenuObjShop::refreshFilterIcon() {
     }
 }
 
+void GfMenuObjShop::SellFilterListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObject::disableInput(acc.m_handle);
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        if (m_owner->m_filterIndex != index) {
+            m_owner->m_filterIndex = index;
+            ui::EventData change;
+            change.m_type = 0x45;
+            GfMenuObject::sendEvent(acc.getParentHandle(), change, 0.0f);
+        }
+        m_owner->refreshFilterIcon();
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonTab();
+        }
+        break;
+    }
+    case 0x21:
+        GfMenuObject::resetInputSelection(acc.m_handle);
+        GfMenuObject::setupInputSelection(acc.m_handle, m_owner->m_filterIndex, m_owner->m_filters.size());
+        GfMenuObject::enableInput(acc.m_handle);
+        break;
+    case 0x22:
+        // a separate case, not merged with case 1: the block layout (case 0x21 falls into the exit) needs it
+        GfMenuObject::disableInput(acc.m_handle);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 bool GfMenuObjShop::seqStartLevelUp() {
     if (m_switchInnCloudSea) {
         GfGameUtilCloudSea::setInnCloudSea(static_cast<CLOUD_SEA>(GfGameUtilCloudSea::getCloudSea() == 0));
