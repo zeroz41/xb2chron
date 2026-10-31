@@ -156,6 +156,11 @@
 #include "classes/gf/MenuCommonWindowParam.h"
 #include "gf/GfPlayFactory.h"
 #include "classes/gf/SCOM_DESTROY_GAME_OBJ.h"
+#include "classes/gf/SCOM_QUEST_GIMMICK.h"
+#include "classes/gf/GfFieldSound.h"
+#include "gf/GfQuestUtil.h"
+#include "ml/ScnObjAccSeamPos.h"
+#include "ml/ScnObjAccPartsPos.h"
 #include "classes/gf/GfFieldManager.h"
 #include "classes/fw/BdatManager.h"
 #include "classes/gf/DataParamAcc.h"
@@ -2846,28 +2851,151 @@ void GmkDoor::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) 
     m_openSeType = Bdat::getFlagVal(bdat.m_fp, "flag", row, "open_SE_type") != 0;
     m_openSe = (unsigned short)Bdat::getValCheck(bdat.m_fp, "open_SE", row, 2);
     m_openSeSize = (unsigned char)Bdat::getValCheck(bdat.m_fp, "open_SE_size", row, 1);
-    m_openCamGimId = Bdat::getValCheck(bdat.m_fp, "open_camGim_ID", row, 7);
+    m_openCamGimId = reinterpret_cast<const char*>(Bdat::getValCheck(bdat.m_fp, "open_camGim_ID", row, 7));
     m_openCamGimAtr = (unsigned char)Bdat::getValCheck(bdat.m_fp, "open_camGim_ATR", row, 1);
     m_closeLodAnime = Bdat::getFlagVal(bdat.m_fp, "flag", row, "close_LODanime") != 0;
     m_closeSeType = Bdat::getFlagVal(bdat.m_fp, "flag", row, "close_SE_type") != 0;
     m_closeSe = (unsigned short)Bdat::getValCheck(bdat.m_fp, "close_SE", row, 2);
     m_closeSeSize = (unsigned char)Bdat::getValCheck(bdat.m_fp, "close_SE_size", row, 1);
-    m_closeCamGimId = Bdat::getValCheck(bdat.m_fp, "close_camGim_ID", row, 7);
+    m_closeCamGimId = reinterpret_cast<const char*>(Bdat::getValCheck(bdat.m_fp, "close_camGim_ID", row, 7));
     m_closeCamGimAtr = (unsigned char)Bdat::getValCheck(bdat.m_fp, "close_camGim_ATR", row, 1);
     Bdat::uVal nextwait;
     nextwait.ulong = Bdat::getValCheck(bdat.m_fp, "door_nextwait", row, 8);
     m_doorNextwait = nextwait.real;
-    m_spCloseCamGimId = Bdat::getValCheck(bdat.m_fp, "sp_close_camGim_ID", row, 7);
+    m_spCloseCamGimId = reinterpret_cast<const char*>(Bdat::getValCheck(bdat.m_fp, "sp_close_camGim_ID", row, 7));
     m_spCloseCamGimAtr = (unsigned char)Bdat::getValCheck(bdat.m_fp, "sp_close_camGim_ATR", row, 1);
     m_bootedGmk3 = BootedGmkCond(bdat, row, "SPOP_");
     m_gmkCamPos = Bdat::getFlagVal(bdat.m_fp, "flag", row, "gmkCamPos") != 0;
 }
+
+bool GmkDoor::BdatInfo::isLoadSaveData() const {
+    gf::GfFieldGimmick* gimmick = mm::mtl::PtrSingleton<gf::GfFieldGimmick>::get();
+    if (gimmick != nullptr && gimmick->m_unknownFlag1) {
+        return true;
+    }
+    if (m_lodModel == 0) {
+        return false;
+    }
+    switch (m_responseType) {
+    case 2:
+    case 4:
+    case 5:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool GmkDoor::isSeLoop(bool mapPack, unsigned short se) const {
+    gf::GfFieldSound* sound = mm::mtl::PtrSingleton<gf::GfFieldSound>::get();
+    fw::SoundPack* pack = mapPack ? sound->getMapPack() : sound->getCommonPack();
+    return fw::SoundManager::get()->isLoop(se, pack);
+}
+
+void GmkDoor::seqDoor_BeforeBoot(float) { pollBootGmk(); }
 
 void GmkDoor::seqDoor_Shutdowned(float dt) { seqDoor_Booted(dt); }
 
 void GmkDoor::seqDoor_SpBooted(float dt) {
     if (m_doorWait < getBdatInfo()->m_doorNextwait) {
         m_doorWait += dt;
+    }
+}
+
+void GmkDoor::setLodSwitch(LodSwitch lodSwitch) {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set == nullptr || !set->m_createInfo.m_flag) {
+        unsigned int switchId;
+        switch (lodSwitch) {
+        case 0:
+            switchId = 2;
+            break;
+        case 1:
+            switchId = 2;
+            break;
+        case 2:
+            switchId = 1;
+            break;
+        default:
+            switchId = 0;
+            break;
+        }
+        gf::GfFieldLod* lod = mm::mtl::PtrSingleton<gf::GfFieldLod>::get();
+        if (lod->m_coliAnim.m_info.m_model == nullptr || lod->m_coliAnim.m_info.m_lod == nullptr) {
+            return;
+        }
+        unsigned short lodId = lod->m_lodIds[getBdatInfo()->m_lodModel - lod->m_idTop];
+        ml::ScnObjAccSeamPos seam(lod->m_coliAnim.m_info.m_model);
+        int max = seam.getMax();
+        for (int i = 0; i < max; i++) {
+            ml::ScnObjAccPartsPos parts = seam.getObj(i);
+            if (lodId == parts.getID()) {
+                parts.setSwitchID(switchId);
+            }
+        }
+    }
+}
+
+void GmkDoor::openDoor(bool anim) {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    const BdatInfo* info = getBdatInfo();
+    mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->setAnimReverse(info->m_lodModel, false, anim);
+    gf::GF_OBJ_HANDLE* gob = m_gob;
+    if (gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(gob);
+        if (acc.m_obj != nullptr) {
+            gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(gob)->m_setup);
+            setup->pad_6c &= ~7;
+        }
+        if (gf::GfObj* obj = acc.getObj()) {
+            obj->pad_110 &= ~7;
+        }
+    }
+    if (info->m_openSe != 0) {
+        if (anim && !isSeLoop(info->m_openSeType, info->m_openSe)) {
+            return;
+        }
+        createSe(info->m_openSeType, info->m_openSe, info->m_openSeSize);
+    }
+    if (!anim) {
+        unsigned int id = m_createInfo.m_bdatId;
+        float time;
+        if (gf::GfQuestUtil::getGimmickTaskEndCheck(TYPE, id) == 1) {
+            const BdatInfo* bdat = getBdatInfo();
+            time = mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->getAnimEndTime(bdat->m_lodModel) + bdat->m_doorNextwait;
+        } else {
+            time = 0.0f;
+        }
+        gf::SCOM_QUEST_GIMMICK::createDoor(id, time);
+    }
+}
+
+void GmkDoor::closeDoor(bool anim) {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set != nullptr && set->m_createInfo.m_flag) {
+        return;
+    }
+    const BdatInfo* info = getBdatInfo();
+    mm::mtl::PtrSingleton<gf::GfFieldLod>::get()->setAnimReverse(info->m_lodModel, true, anim);
+    gf::GF_OBJ_HANDLE* gob = m_gob;
+    if (gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(gob);
+        if (acc.m_obj != nullptr) {
+            gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(gob)->m_setup);
+            setup->pad_6c |= 7;
+        }
+        if (gf::GfObj* obj = acc.getObj()) {
+            obj->pad_110 |= 7;
+        }
+    }
+    if (info->m_closeSe != 0) {
+        if (anim && !isSeLoop(info->m_closeSeType, info->m_closeSe)) {
+            return;
+        }
+        createSe(info->m_closeSeType, info->m_closeSe, info->m_closeSeSize);
     }
 }
 
@@ -2889,6 +3017,43 @@ void GmkDoor::dispose() {
 void GmkDoor::disposeGmkPhantom() {
     m_phantomSimple.dispose();
     m_phantom.dispose();
+}
+
+void GmkDoor::update(float dt) {
+    AGmkBase::update(dt);
+    if (!isValid()) {
+        return;
+    }
+    if (pad_2b1 != pad_2b0) {
+        if (pad_2b1 && !pad_2b0) {
+            switch (getBdatInfo()->m_responseType) {
+            case 6:
+            case 7:
+                shutdownGmk(false, true);
+                break;
+            }
+        }
+        pad_2b1 = pad_2b0;
+    }
+    const BdatInfo* info = getBdatInfo();
+    pad_2b0 = false;
+    if (info->isPopCondMatched()) {
+        if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) && info->isGfObjMustExist()) {
+            createGfObjHandle();
+        }
+        if (m_phantom.m_coliObject == nullptr && m_phantomSimple.m_coliObject == nullptr && info->isPhantomMustExist()) {
+            createGmkPhantom();
+        }
+    } else {
+        disposeGfObjHandle();
+        if (m_phantom.m_coliObject != nullptr || m_phantomSimple.m_coliObject != nullptr) {
+            disposeGmkPhantom();
+        }
+    }
+    m_camera.update(dt);
+    if (m_seq) {
+        (this->*m_seq)(dt);
+    }
 }
 
 void GmkDoor::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
