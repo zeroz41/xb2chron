@@ -10,6 +10,8 @@ class StateUtilBattle {
 public:
     // whether state is one of the battle states
     static bool IsBattleState(STATE_ID state);
+    // the battle state that runs the battle character's action
+    static STATE_ID ConversionActionToState(btl::BattleCharacter::ACTION_ID action);
     // the battle character's action a battle state runs
     static btl::BattleCharacter::ACTION_ID ConversionStateToAction(STATE_ID state);
 };

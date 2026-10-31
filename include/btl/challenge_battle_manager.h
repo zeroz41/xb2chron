@@ -9,6 +9,7 @@
 // functions keep placeholder names (new in 3.0.1, nothing in 1.0.0's place names them).
 
 namespace btl { class BattleCharacter; }
+namespace fw { class UpdateInfo; }
 
 namespace btl {
 // Placeholder name. A free function: btl::BattleManager::Initialize calls it after DataManager's create. What it
@@ -76,6 +77,13 @@ public:
     bool fn_7100026E64() const;
     bool fn_7100026E84() const;
     bool fn_7100026EB0() const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: btl::UIManager::fn_71000B233C calls
+    // it with the singleton in x0 and it reads pad_10. What it does: whether fn_71002AC5D8()'s m_value4 (seconds) less
+    // pad_10 is at most 300.
+    bool fn_7100026ED0() const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: fn_7100025908 passes the singleton
+    // and the update info. What it does: the per-frame update (0xDD4 bytes; not written).
+    void fn_7100025920(const fw::UpdateInfo& info);
 
     ::mm::mtl::ReferenceObject* pad_8;  // released (and cleared) by fn_71000255A8/fn_710002568C/fn_710002579C
     float pad_10;
@@ -94,6 +102,11 @@ public:
     unsigned char pad_2c;
     unsigned char pad_2d;
 };
+
+// Placeholder name. A free function: btl::BattleManager::update calls it with its update info between
+// CharacterManager::Update and BladeArtsManager::Update (the managers' static Update(const fw::UpdateInfo&) slot).
+// What it does: the singleton's fn_7100025920(info).
+void fn_7100025908(const fw::UpdateInfo& info);
 
 // Placeholder name. A free function: it reads no TUnk_B3A9C8. What it does: BattleGlobal's pad_5c50
 // (BattleCharacter::DropItem).

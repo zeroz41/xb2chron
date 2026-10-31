@@ -10,7 +10,13 @@ namespace gf {
 class GfBladeCreateInfo {
 public:
     GfBladeCreateInfo();
-    mm::mtl::FixedVector<unsigned int, 0x82> pad_0;
+    void clear();
+    // the driver and core crystal GfBladeCreate::setupDriver / setupCoreCrystal store (the names are not the
+    // original's); clear zeroes both with one store
+    unsigned int m_driver;
+    unsigned int m_coreCrystal;
+    // GfBladeCreate::setupAddBooster pushes the booster item here (asserting `size() < capacity()`, 0x80)
+    mm::mtl::FixedVector<unsigned int, 0x80> m_boosters;
     mm::mtl::FixedVector<unsigned int, 0x10> pad_210;
     mm::mtl::FixedVector<unsigned int, 2> pad_258;
     unsigned char pad_268[0x748];
@@ -21,6 +27,10 @@ public:
 class GfBladeCreate : public GfBladeCreateInfo {
 public:
     GfBladeCreate();
+    void clear();
+    void setupDriver(unsigned int driver);
+    // stores the item when GfItemUtil::isValidCrystal accepts it
+    bool setupCoreCrystal(unsigned int item);
 };
 }  // namespace gf
 
