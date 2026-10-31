@@ -1,3 +1,4 @@
+#include "mm/mtl/FixedVector.h"
 #include "gf/GfKizunaringBlade.h"
 #include "gf/GfDataBlade.h"
 #include "gf/GfDataDriver.h"
@@ -12,9 +13,19 @@
 
 namespace gf {
 
-// refreshOrderQuestList (0x71002FECC4) is not written yet: a range-for over the FixedVector<unsigned short, 422>
-// tests the byte count for the empty list where the original tests the element count (12 words apart); its callee
-// fn_71002FF034 (0x71002FF034, 0x270 bytes) is not written either.
+void GfKizunaringBlade::refreshOrderQuestList() {
+    mm::mtl::FixedVector<unsigned short, 422> list;
+    GfDataBlade::getListForAchievement(list);
+    for (unsigned short blade : list) {
+        for (int line = 9; line >= 0; --line) {
+            fn_71002FF034(blade, line);
+        }
+    }
+}
+
+// fn_71002FF034 (0x71002FF034): not identical yet (wip/fn_71002FF034_GfKizunaringBlade.cpp: the QuestID
+// temporaries get other registers, and the key line's flag store folds to the second quest's address where the
+// original stores through the loop's pointer)
 
 bool GfKizunaringBlade::isCompleteLevel(unsigned int blade, unsigned int line, unsigned int level) {
     if (blade == 0 || GfDataBlade::isActivateUnuse(blade)) {
