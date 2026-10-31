@@ -7,6 +7,7 @@
 #include "classes/ssd/AudioMarkerList.h"
 #include "classes/ssd/AudioFileBase.h"
 #include "classes/ssd/AudioFileSadf.h"
+#include "classes/ssd/AudioFileWave.h"
 
 namespace ssd {
 
@@ -76,5 +77,15 @@ Result AudioFileSadf::Close() {
 }
 
 void AudioFileSadf::SetPositionBySample(unsigned long) {}
+
+Result AudioFileWave::Open(IoStreamBase* stream) {
+    stream_ = stream;
+    return Result(0);
+}
+
+void AudioFileWave::SetPositionBySample(unsigned long sample) {
+    unsigned long position = format_.data.dataOffset + sample;
+    stream_->Seek(IoStreamBase::SeekMode_Begin, position, nullptr);
+}
 
 }  // namespace ssd
