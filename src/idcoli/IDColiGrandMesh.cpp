@@ -6,6 +6,8 @@
 #include "navi/NvmshAcMan.h"
 #include "classes/idcoli/IDColiObjBase.h"
 #include "idcoli/IDColiInput.h"
+#include "idcoli/IDColiInputUtil.h"
+#include "idcoli/IDColiResult.h"
 #include "idcoli/IDColiPrimitive.h"
 #include "idcoli/IDColiGrandMesh.h"
 #include "classes/ml/DrAPCache.h"
@@ -294,6 +296,19 @@ bool IDColiGrandObj::testLine(IDColiResult& result, const IDColiInput& input) {
     return coliCallResl(&IDColiGrandTree::instLineHitParts);
 }
 
+bool IDColiGrandTree::isLineAaBb(const float* max, const float* min) {
+    if (isAaBbToAaBb(max, min)) return true;
+    const IDColiInput* input = m_input;
+    mm::Vec3 half = (mm::Vec3(max[0], max[1], max[2]) - mm::Vec3(min[0], min[1], min[2])) * 0.5f;
+    mm::Vec3 center = mm::Vec3(min[0], min[1], min[2]) + half;
+    mm::Vec3 d = input->m_lineCenter - center;
+    const mm::Vec3& w = input->m_lineHalf;
+    const mm::Vec3& a = input->m_lineHalfAbs;
+    if (mm::fabs(d.y * w.z - d.z * w.y) > half.y * a.z + half.z * a.y) return true;
+    if (mm::fabs(d.z * w.x - d.x * w.z) > half.x * a.z + half.z * a.x) return true;
+    return mm::fabs(d.x * w.y - d.y * w.x) > half.x * a.y + half.y * a.x;
+}
+
 bool IDColiGrandTree::instLineHit(unsigned int index) {
     return instLineHitParts(&m_work->m_posData[index], &m_work->m_posInfo[index]);
 }
@@ -322,6 +337,31 @@ bool IDColiGrandObj::coliCallCheck(bool (IDColiGrandTree::*parts)(const IDCmfPos
         }
     }
     return false;
+}
+
+bool IDColiGrandTree::instLineHitParts(const IDCmfPosData* posData, const IDCmfPosInfo* posInfo) {
+    if (IDColiManager::sys()->isGblId(posInfo->m_id)) return false;
+    if (isLineAaBb(&posData->m_max.x, &posData->m_min.x)) return false;
+    const IDColiInput* input = m_input;
+    if (input->m_instSizeMin != 0.0f) {
+        mm::Vec3 half = (posData->m_max - posData->m_min) * 0.5f;
+        if (half.dot(half) <= input->m_instSizeMin) return false;
+    }
+    const IDCmfPosData* instPosData = m_instPosData;
+    void (IDColiGrandMesh::*stock)(IDColiCallArg& arg, const IDCmfPoliData* poli, float length) = m_stock;
+    void (IDColiGrandMesh::*vecotr)(IDColiCallArg& arg, const IDCmfPoliData* poli) = m_vecotr;
+    IDColiInput instInput;
+    IDColiInputUtil::getLine(instInput, *input, posData, false);
+    m_input = &instInput;
+    m_instPosData = posData;
+    m_stock = m_stockInst;
+    m_vecotr = m_vecotrInst;
+    bool hit = (this->*m_treeHit)(m_work->m_trees[posInfo->m_tree].m_index);
+    m_input = input;
+    m_instPosData = instPosData;
+    m_stock = stock;
+    m_vecotr = vecotr;
+    return hit;
 }
 
 bool IDColiGrandObj::coliCallResl(bool (IDColiGrandTree::*parts)(const IDCmfPosData* posData,
@@ -391,6 +431,31 @@ bool IDColiGrandTree::instRayHit(unsigned int index) {
     return instRayHitParts(&m_work->m_posData[index], &m_work->m_posInfo[index]);
 }
 
+bool IDColiGrandTree::instRayHitParts(const IDCmfPosData* posData, const IDCmfPosInfo* posInfo) {
+    if (IDColiManager::sys()->isGblId(posInfo->m_id)) return false;
+    if (isLineAaBb(&posData->m_max.x, &posData->m_min.x)) return false;
+    const IDColiInput* input = m_input;
+    if (input->m_instSizeMin != 0.0f) {
+        mm::Vec3 half = (posData->m_max - posData->m_min) * 0.5f;
+        if (half.dot(half) <= input->m_instSizeMin) return false;
+    }
+    const IDCmfPosData* instPosData = m_instPosData;
+    void (IDColiGrandMesh::*stock)(IDColiCallArg& arg, const IDCmfPoliData* poli, float length) = m_stock;
+    void (IDColiGrandMesh::*vecotr)(IDColiCallArg& arg, const IDCmfPoliData* poli) = m_vecotr;
+    IDColiInput instInput;
+    IDColiInputUtil::getRay(instInput, *input, posData, false);
+    m_input = &instInput;
+    m_instPosData = posData;
+    m_stock = m_stockInst;
+    m_vecotr = m_vecotrInst;
+    bool hit = (this->*m_treeHit)(m_work->m_trees[posInfo->m_tree].m_index);
+    m_input = input;
+    m_instPosData = instPosData;
+    m_stock = stock;
+    m_vecotr = vecotr;
+    return hit;
+}
+
 bool IDColiGrandObj::testSphere(IDColiResult& result, const IDColiInput& input, bool wall) {
     m_result = &result;
     m_input = &input;
@@ -429,6 +494,31 @@ bool IDColiGrandObj::testSphere(IDColiResult& result, const IDColiInput& input, 
 
 bool IDColiGrandTree::instSphereHit(unsigned int index) {
     return instSphereHitParts(&m_work->m_posData[index], &m_work->m_posInfo[index]);
+}
+
+bool IDColiGrandTree::instSphereHitParts(const IDCmfPosData* posData, const IDCmfPosInfo* posInfo) {
+    if (IDColiManager::sys()->isGblId(posInfo->m_id)) return false;
+    if (isAaBbToAaBb(&posData->m_max.x, &posData->m_min.x)) return false;
+    const IDColiInput* input = m_input;
+    if (input->m_instSizeMin != 0.0f) {
+        mm::Vec3 half = (posData->m_max - posData->m_min) * 0.5f;
+        if (half.dot(half) <= input->m_instSizeMin) return false;
+    }
+    const IDCmfPosData* instPosData = m_instPosData;
+    void (IDColiGrandMesh::*stock)(IDColiCallArg& arg, const IDCmfPoliData* poli, float length) = m_stock;
+    void (IDColiGrandMesh::*vecotr)(IDColiCallArg& arg, const IDCmfPoliData* poli) = m_vecotr;
+    IDColiInput instInput;
+    IDColiInputUtil::getSphere(instInput, *input, posData, false);
+    m_stock = m_stockInst;
+    m_vecotr = m_vecotrInst;
+    m_input = &instInput;
+    m_instPosData = posData;
+    bool hit = (this->*m_treeHit)(m_work->m_trees[posInfo->m_tree].m_index);
+    m_input = input;
+    m_instPosData = instPosData;
+    m_stock = stock;
+    m_vecotr = vecotr;
+    return hit;
 }
 
 bool IDColiGrandObj::testCapsule(IDColiResult& result, const IDColiInput& input, bool wall) {
@@ -470,6 +560,31 @@ bool IDColiGrandObj::testCapsule(IDColiResult& result, const IDColiInput& input,
 
 bool IDColiGrandTree::instCapsuleHit(unsigned int index) {
     return instCapsuleHitParts(&m_work->m_posData[index], &m_work->m_posInfo[index]);
+}
+
+bool IDColiGrandTree::instCapsuleHitParts(const IDCmfPosData* posData, const IDCmfPosInfo* posInfo) {
+    if (IDColiManager::sys()->isGblId(posInfo->m_id)) return false;
+    if (isAaBbToAaBb(&posData->m_max.x, &posData->m_min.x)) return false;
+    const IDColiInput* input = m_input;
+    if (input->m_instSizeMin != 0.0f) {
+        mm::Vec3 half = (posData->m_max - posData->m_min) * 0.5f;
+        if (half.dot(half) <= input->m_instSizeMin) return false;
+    }
+    const IDCmfPosData* instPosData = m_instPosData;
+    void (IDColiGrandMesh::*stock)(IDColiCallArg& arg, const IDCmfPoliData* poli, float length) = m_stock;
+    void (IDColiGrandMesh::*vecotr)(IDColiCallArg& arg, const IDCmfPoliData* poli) = m_vecotr;
+    IDColiInput instInput;
+    IDColiInputUtil::getCapsule(instInput, *input, posData, false);
+    m_input = &instInput;
+    m_instPosData = posData;
+    m_stock = m_stockInst;
+    m_vecotr = m_vecotrInst;
+    bool hit = (this->*m_treeHit)(m_work->m_trees[posInfo->m_tree].m_index);
+    m_input = input;
+    m_instPosData = instPosData;
+    m_stock = stock;
+    m_vecotr = vecotr;
+    return hit;
 }
 
 bool IDColiGrandTree::isAaBbToAaBb(const float* max, const float* min) {
@@ -633,6 +748,217 @@ void IDColiObjGrdChar::update() {
         if (m_max.z < part.m_posData.m_max.z) m_max.z = part.m_posData.m_max.z;
         if (m_min.z > part.m_posData.m_min.z) m_min.z = part.m_posData.m_min.z;
     }
+}
+
+
+bool IDColiObjGrdChar::testLine(IDColiResult& result, const IDColiInput& input) {
+    if ((m_owner->m_flags & 0x80) || result.m_skipObj == m_owner || (result.m_ignoreMaterial & m_owner->m_materialBit)) {
+        return false;
+    }
+    if (m_max.x < input.m_min.x || m_min.x > input.m_max.x) return false;
+    if (m_max.z < input.m_min.z || m_min.z > input.m_max.z) return false;
+    if (m_max.y < input.m_min.y || m_min.y > input.m_max.y) return false;
+    bool hit = false;
+    bool found = false;
+    for (int i = 0; i < m_partNum; i++) {
+        const IDCmfPosData* posData = &m_parts[i].m_posData;
+        IDColiObjGrand* grand = m_parts[i].m_grand;
+        int type = result.m_type;
+        bool partHit;
+        if (grand->m_flags & 0x80) {
+            partHit = false;
+        } else {
+            IDColiInput partInput;
+            IDColiGrandObj obj(&grand->m_work);
+            obj.m_instPosData = posData;
+            IDColiInputUtil::getLine(partInput, input, posData, false);
+            partHit = obj.testLine(result, partInput);
+        }
+        if (type == 0) {
+            if (partHit) {
+                found = true;
+                break;
+            }
+        } else {
+            hit |= partHit;
+        }
+    }
+    return hit | found;
+}
+
+bool IDColiObjGrdChar::testRay(IDColiResult& result, const IDColiInput& input) {
+    if ((m_owner->m_flags & 0x80) || result.m_skipObj == m_owner || (result.m_ignoreMaterial & m_owner->m_materialBit)) {
+        return false;
+    }
+    if (m_max.x < input.m_min.x || m_min.x > input.m_max.x) return false;
+    if (m_max.z < input.m_min.z || m_min.z > input.m_max.z) return false;
+    if (m_max.y < input.m_min.y || m_min.y > input.m_max.y) return false;
+    bool hit = false;
+    bool found = false;
+    for (int i = 0; i < m_partNum; i++) {
+        const IDCmfPosData* posData = &m_parts[i].m_posData;
+        IDColiObjGrand* grand = m_parts[i].m_grand;
+        int type = result.m_type;
+        bool partHit;
+        if (grand->m_flags & 0x80) {
+            partHit = false;
+        } else {
+            IDColiInput partInput;
+            IDColiGrandObj obj(&grand->m_work);
+            obj.m_instPosData = posData;
+            IDColiInputUtil::getRay(partInput, input, posData, false);
+            partHit = obj.testRay(result, partInput);
+        }
+        if (type == 0) {
+            if (partHit) {
+                found = true;
+                break;
+            }
+        } else {
+            hit |= partHit;
+        }
+    }
+    return hit | found;
+}
+
+bool IDColiObjGrdChar::testSphere(IDColiResult& result, const IDColiInput& input) {
+    if ((m_owner->m_flags & 0x80) || result.m_skipObj == m_owner || (result.m_ignoreMaterial & m_owner->m_materialBit)) {
+        return false;
+    }
+    if (m_max.x < input.m_min.x || m_min.x > input.m_max.x) return false;
+    if (m_max.z < input.m_min.z || m_min.z > input.m_max.z) return false;
+    if (m_max.y < input.m_min.y || m_min.y > input.m_max.y) return false;
+    bool hit = false;
+    bool found = false;
+    for (int i = 0; i < m_partNum; i++) {
+        const IDCmfPosData* posData = &m_parts[i].m_posData;
+        IDColiObjGrand* grand = m_parts[i].m_grand;
+        int type = result.m_type;
+        bool partHit;
+        if (grand->m_flags & 0x80) {
+            partHit = false;
+        } else {
+            IDColiInput partInput;
+            IDColiGrandObj obj(&grand->m_work);
+            obj.m_instPosData = posData;
+            IDColiInputUtil::getSphere(partInput, input, posData, false);
+            partHit = obj.testSphere(result, partInput, false);
+        }
+        if (type == 0) {
+            if (partHit) {
+                found = true;
+                break;
+            }
+        } else {
+            hit |= partHit;
+        }
+    }
+    return hit | found;
+}
+
+bool IDColiObjGrdChar::testCapsule(IDColiResult& result, const IDColiInput& input) {
+    if ((m_owner->m_flags & 0x80) || result.m_skipObj == m_owner || (result.m_ignoreMaterial & m_owner->m_materialBit)) {
+        return false;
+    }
+    if (m_max.x < input.m_min.x || m_min.x > input.m_max.x) return false;
+    if (m_max.z < input.m_min.z || m_min.z > input.m_max.z) return false;
+    if (m_max.y < input.m_min.y || m_min.y > input.m_max.y) return false;
+    bool hit = false;
+    bool found = false;
+    for (int i = 0; i < m_partNum; i++) {
+        const IDCmfPosData* posData = &m_parts[i].m_posData;
+        IDColiObjGrand* grand = m_parts[i].m_grand;
+        int type = result.m_type;
+        bool partHit;
+        if (grand->m_flags & 0x80) {
+            partHit = false;
+        } else {
+            IDColiInput partInput;
+            IDColiGrandObj obj(&grand->m_work);
+            obj.m_instPosData = posData;
+            IDColiInputUtil::getCapsule(partInput, input, posData, false);
+            partHit = obj.testCapsule(result, partInput, false);
+        }
+        if (type == 0) {
+            if (partHit) {
+                found = true;
+                break;
+            }
+        } else {
+            hit |= partHit;
+        }
+    }
+    return hit | found;
+}
+
+bool IDColiObjGrdChar::testWallSphere(IDColiResult& result, const IDColiInput& input) {
+    if ((m_owner->m_flags & 0x80) || result.m_skipObj == m_owner || (result.m_ignoreMaterial & m_owner->m_materialBit)) {
+        return false;
+    }
+    if (m_max.x < input.m_min.x || m_min.x > input.m_max.x) return false;
+    if (m_max.z < input.m_min.z || m_min.z > input.m_max.z) return false;
+    if (m_max.y < input.m_min.y || m_min.y > input.m_max.y) return false;
+    bool hit = false;
+    bool found = false;
+    for (int i = 0; i < m_partNum; i++) {
+        const IDCmfPosData* posData = &m_parts[i].m_posData;
+        IDColiObjGrand* grand = m_parts[i].m_grand;
+        int type = result.m_type;
+        bool partHit;
+        if (grand->m_flags & 0x80) {
+            partHit = false;
+        } else {
+            IDColiInput partInput;
+            IDColiGrandObj obj(&grand->m_work);
+            obj.m_instPosData = posData;
+            IDColiInputUtil::getSphere(partInput, input, posData, false);
+            partHit = obj.testSphere(result, partInput, true);
+        }
+        if (type == 0) {
+            if (partHit) {
+                found = true;
+                break;
+            }
+        } else {
+            hit |= partHit;
+        }
+    }
+    return hit | found;
+}
+
+bool IDColiObjGrdChar::testWallCapsule(IDColiResult& result, const IDColiInput& input) {
+    if ((m_owner->m_flags & 0x80) || result.m_skipObj == m_owner || (result.m_ignoreMaterial & m_owner->m_materialBit)) {
+        return false;
+    }
+    if (m_max.x < input.m_min.x || m_min.x > input.m_max.x) return false;
+    if (m_max.z < input.m_min.z || m_min.z > input.m_max.z) return false;
+    if (m_max.y < input.m_min.y || m_min.y > input.m_max.y) return false;
+    bool hit = false;
+    bool found = false;
+    for (int i = 0; i < m_partNum; i++) {
+        const IDCmfPosData* posData = &m_parts[i].m_posData;
+        IDColiObjGrand* grand = m_parts[i].m_grand;
+        int type = result.m_type;
+        bool partHit;
+        if (grand->m_flags & 0x80) {
+            partHit = false;
+        } else {
+            IDColiInput partInput;
+            IDColiGrandObj obj(&grand->m_work);
+            obj.m_instPosData = posData;
+            IDColiInputUtil::getCapsule(partInput, input, posData, false);
+            partHit = obj.testCapsule(result, partInput, true);
+        }
+        if (type == 0) {
+            if (partHit) {
+                found = true;
+                break;
+            }
+        } else {
+            hit |= partHit;
+        }
+    }
+    return hit | found;
 }
 
 }  // namespace idcoli

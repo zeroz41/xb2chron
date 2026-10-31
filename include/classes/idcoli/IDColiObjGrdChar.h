@@ -6,6 +6,8 @@
 #include "mm/Vec3.h"
 
 namespace idcoli { class IDColiObjGrand; }
+namespace idcoli { class IDColiInput; }
+namespace idcoli { class IDColiResult; }
 
 namespace idcoli {
 // table 0x7100B7F5E8
@@ -15,6 +17,13 @@ public:
     virtual ~IDColiObjGrdChar();  // slot 0
     // m_max/m_min become the bounds of all parts
     virtual void update();  // slot 4
+    // each part whose grand is enabled is tested with the input taken into the part's space (IDColiInputUtil)
+    bool testLine(IDColiResult& result, const IDColiInput& input);
+    bool testRay(IDColiResult& result, const IDColiInput& input);
+    bool testSphere(IDColiResult& result, const IDColiInput& input);
+    bool testCapsule(IDColiResult& result, const IDColiInput& input);
+    bool testWallSphere(IDColiResult& result, const IDColiInput& input);
+    bool testWallCapsule(IDColiResult& result, const IDColiInput& input);
     // one grand of the character (0xC0 bytes: the destructor and update index them so; createWorkBuffer fills
     // them, IDColiPrimitive::createBasePoli/createBaPosPoli read one through a shape's pointer). The names are
     // not the original's.

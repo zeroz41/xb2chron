@@ -5,6 +5,7 @@
 
 namespace fw { class ColiCheckCallback; }
 namespace idcoli { class IDCmfPoliData; }
+namespace idcoli { class IDColiObj; }
 
 namespace idcoli {
 // one hit of a grand mesh test (IDColiGrandMesh's stock* steps copy it into the result, fw::ColiCheckCallback's
@@ -48,6 +49,9 @@ public:
     void* m_obj;  // 0xF0, the object under test (the stock* steps record it with a hit)
     unsigned char pad_f8[8];
     fw::ColiCheckCallback* m_callback;  // 0x100, stockTbl hands it every stored hit
+    // 0x108, an object the query skips: IDColiObjGrdChar::test* return false when their owner is it (the name is
+    // not the original's)
+    IDColiObj* m_skipObj;
 };
 }  // namespace idcoli
 

@@ -36,10 +36,13 @@ public:
     mm::Vec3 m_min;  // 0x90
 };
 
-// the info record beside each IDCmfPosData (4 bytes: inst*Hit index them so). Fields are not declared yet.
+// the info record beside each IDCmfPosData (4 bytes: inst*Hit index them so). The names are not the original's.
 class IDCmfPosInfo {
 public:
-    unsigned char pad_0[4];
+    // 0x0, the wrkIDCmfWork::m_trees entry whose cell inst*HitParts test
+    unsigned short m_tree;
+    // 0x2, inst*HitParts skip the instance when IDColiManager::isGblId reports it
+    unsigned short m_id;
 };
 
 // a grand object's work: IDColiObjGrand holds it at 0x50 (IDColiParmsGrand's constructor and IDColiDef's tests take
@@ -63,12 +66,43 @@ public:
     };
 
     const Header* m_data;  // 0x0, createGrand's data
-    unsigned char pad_8[0x20];
+    // 0x14-byte records (IDColiGrandTree's inst*HitParts index them by IDCmfPosInfo::m_tree and run m_treeHit on
+    // the m_index of one); the names are not the original's
+    struct Tree {
+        unsigned char pad_0[0xC];
+        unsigned int m_index;  // 0xC
+        unsigned char pad_10[4];
+    };
+    const Tree* m_trees;  // 0x8
+    unsigned char pad_10[0x18];
     // the vector tables (vecotrDef/vecotrInst pick one by IDCmfPoliData's table byte)
     const mm::Vec3NA* const* m_vectors;  // 0x28
     const IDCmfPosData* m_posData;  // 0x30, inst*Hit index it
     const IDCmfPosInfo* m_posInfo;  // 0x38, the same index
-    unsigned char pad_40[0x30];
+    unsigned char pad_40[8];
+    // the bases a cell's u16 starts are added to, per table byte of the cell: of the polygons (m_mesh), the
+    // instances (m_instHit) and the child cells (m_treeHit); the names are not the original's
+    const unsigned int* m_meshBases;  // 0x48
+    const unsigned int* m_instBases;  // 0x50
+    const unsigned int* m_cellBases;  // 0x58
+    // the tree cells (IDColiGrandTree::treeHitEnd/treeHitDef index both by the cell index): the box the m_isAaBb
+    // step rejects and the record of what the cell holds. The names are not the original's.
+    struct CellBox {
+        mm::Vec3 m_max;  // 0x0
+        mm::Vec3 m_min;  // 0x10
+    };
+    struct Cell {
+        unsigned int m_offset;  // 0x0, the u16 starts (meshes, instances, cells) in the grand data
+        unsigned char m_cellNum;  // 0x4
+        unsigned char m_meshNum;  // 0x5
+        unsigned char m_instNum;  // 0x6
+        unsigned char m_cellTable;  // 0x7
+        unsigned char m_meshTable;  // 0x8
+        unsigned char m_instTable;  // 0x9
+        unsigned char pad_a[2];
+    };
+    const CellBox* m_cellBoxes;  // 0x60
+    const Cell* m_cells;  // 0x68
     // the moving parts (0x200 bytes each); IDColiObjGrand::update updates them and enters them into a tree
     IDColiGrdMoveObj* m_moveObjs;  // 0x70
     int m_moveObjNum;  // 0x78
