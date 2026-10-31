@@ -20,6 +20,17 @@ void KIZUNA_GAUGE_DATA::SetGauge(float value, bool) {
     setGaugeValue(value);
 }
 
+void KIZUNA_GAUGE_DATA::SetKizunaMax(int max) {
+    max = mm::clamp(max, 0, 1000);
+    m_max = max;
+    if (m_gauge > max) {
+        bool lock = m_lock;
+        m_lock = false;
+        SetGauge(max, false);
+        m_lock = lock;
+    }
+}
+
 int KIZUNA_GAUGE_DATA::GetKizunaStage(float* ratio) const {
     if (m_stage > 6) {
         KIZUNA_GAUGE_DATA* self = const_cast<KIZUNA_GAUGE_DATA*>(this);

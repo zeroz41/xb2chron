@@ -35,6 +35,7 @@ public:
             m_gauge = 0.0f;
             m_reserve = 0.0f;
             m_rate = 0.0f;
+            m_permitMax = false;
         } else if (value >= 1000.0f) {
             if (m_permitMax) {
                 if (m_gauge < 1000.0f) {
@@ -48,14 +49,12 @@ public:
                 m_reserve = -1.0f;
                 m_rate = 0.999f;
             }
-            m_stage = 7;
-            return;
         } else {
-            m_reserve = -1.0f;
             m_gauge = value;
+            m_reserve = -1.0f;
             m_rate = value * 0.001f;
+            m_permitMax = false;
         }
-        m_permitMax = false;
         m_stage = 7;
     }
 
