@@ -32,6 +32,8 @@ public:
     // callers (GfAssetSetupBlade::setup, DataObjBlade::getBladeSet, GfDataBlade's party lists)
     static int getDriverPartyID(unsigned int driver);
     static bool isRideChar(unsigned int chara);
+    // whether a driver is one of the first three party members' drivers
+    static bool isExistDriver(unsigned int driver);
     static SDataParty* getSDataParty();
     // GfGameScene::isRide and isRideParty ask it about a party id
     static bool isNiaByakko(unsigned int id);

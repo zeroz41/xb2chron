@@ -10,6 +10,7 @@ namespace gf { struct BladeSkillSlot; }
 namespace gf { struct SDataIdea; }
 namespace gf { class DataParamAcc; }
 namespace gf { class SDataGame; }
+namespace gf { struct GfItemHandle; }
 namespace gf { enum FAVORITE : int; }
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedArray; }}
 
@@ -301,6 +302,8 @@ public:
     static const char* getDebugName(unsigned int blade);
     // the message table and row of the blade's name
     static bool getName(unsigned char*& bdat, unsigned int& id, unsigned int blade);
+    // the message table and row of a blade data's name (getName passes the blade's game data slot)
+    static bool getNameWithMsgID(unsigned char*& bdat, unsigned int& id, const SDataBlade& data);
     static unsigned int getQuestRace(unsigned int blade);
     static SDataBlade* getSDataBlade(unsigned int blade);
     // the blade's physical and ether defense bonus (Hana's from her role part); 0 for no blade
@@ -313,6 +316,14 @@ public:
     static unsigned int getAgilityRev(unsigned int blade);
     static unsigned int getLuckRev(unsigned int blade);
     static bool getEquipOrb(mm::mtl::FixedArray<unsigned short, 3ul>& orbs, unsigned int blade);
+    // the item handles of the blade's equipped orbs, by slot (empty past getEquipOrbMax or for no blade)
+    static GfItemHandle getEquipOrbHandle(unsigned int blade, unsigned int slot);
+    static bool setEquipOrbHandle(unsigned int blade, GfItemHandle handle, unsigned int slot);
+    // the enhancements of the blade's equipped orbs (false for no blade)
+    static bool getEquipOrbEnance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int blade);
+    static bool getEquipOrbEnance(mm::mtl::FixedVector<unsigned short, 64>& enhances, SDataBlade& data);
+    // copies a blade's data into the blade's game data slot and gives it the blade's row
+    static void setUiCommonBlade(const SDataBlade& data, unsigned int blade);
     static unsigned int getFootStep(unsigned int blade);
     static unsigned int getFootStepEffect(unsigned int blade);
     static unsigned int getRole(unsigned int blade);

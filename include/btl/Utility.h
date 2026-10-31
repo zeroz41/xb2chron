@@ -18,6 +18,7 @@ bool AI_IsProcSpAttack();
 bool AI_IsBenkeiWeather();
 gf::GF_OBJ_HANDLE* GetLeader();
 gf::GF_OBJ_HANDLE* GetControlCharacterHandle();
+bool IsSatisfyCondition(int condition);
 bool IsSatisfyConditionFld(int condition);
 unsigned int GetTrustRank(int blade);
 int GetWeaponSeType(int weaponType);

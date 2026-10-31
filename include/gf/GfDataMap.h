@@ -28,6 +28,8 @@ public:
     // the FLD_maplist id of a map jump (GfFieldManager passes GfGameManager::getMapJumpID and
     // MapjumpCallbackInfo::m_mapJumpId), 0 for none
     static unsigned int getMapID(unsigned int mapJumpId);
+    // the first FLD_maplist row (BDAT 182) whose MapList byte is mapId, 0 for none
+    static unsigned int getMapJumpID(unsigned int mapId);
     static void setMapCompleteFlag(unsigned int mapId);
     static unsigned int getZoneIdForDevelopPoint(unsigned int point);
     static int getWeatherType(unsigned int mapId, WEATHERID id);

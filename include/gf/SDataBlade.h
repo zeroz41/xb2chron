@@ -82,7 +82,10 @@ public:
     BladeFavorite m_favorites[2];
     unsigned char pad_676[0x2];
     mm::mtl::FixedArray<unsigned short, 3> m_equipOrbs;  // DataObjBlade::setVirtualEquipOrb sets one, by slot; three slots (GfDataBlade::getEquipOrb(FixedArray<unsigned short, 3>&) copies them)
-    unsigned char pad_67e[0xE];
+    unsigned char pad_67e[0x2];
+    // 0x680: the item handles of the equipped orbs, by slot (GfDataBlade::getEquipOrbHandle/setEquipOrbHandle; the name is
+    // not the original's)
+    unsigned int m_equipOrbHandles[3];
     EquipHana m_equipHana;  // Hana's equipment (GfDataHana::getEquipParts; the name is not the original's)
     // 0x704: Hana's equipment power rank (GfDataHana::getEquipPowerRank/setEquipPowerRank; the name is not the
     // original's)

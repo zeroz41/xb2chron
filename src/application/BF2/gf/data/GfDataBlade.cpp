@@ -101,6 +101,8 @@
 #include "gf/GfDataDriverSkill.h"
 #include "plugin/Bdat.h"
 #include "classes/gf/GfGameManager.h"
+#include "btl/Utility.h"
+#include "classes/btl/BattleManager.h"
 
 namespace gf {
 
@@ -352,6 +354,18 @@ const char* GfDataMap::getMapResourceNameByMapID(unsigned int mapId) {
         return nullptr;
     }
     return GfBdatMaplist::get()->getMaplistresource(mapId);
+}
+
+unsigned int GfDataMap::getMapJumpID(unsigned int mapId) {
+    unsigned char* bdat = GfDataBdat::getFP(182);
+    unsigned int top = Bdat::getIdTop(bdat);
+    unsigned int end = Bdat::getIdCount(bdat) + top;
+    for (unsigned int id = top; id < end; id++) {
+        if (static_cast<unsigned char>(Bdat::getValCheck(bdat, "MapList", id, 1)) == mapId) {
+            return id;
+        }
+    }
+    return 0;
 }
 
 bool GfDataMap::getTimeRangeName(unsigned char*& bdat, unsigned int& id, unsigned int range) {
@@ -866,6 +880,12 @@ unsigned int GfDataBlade::getStartUiCommonBlade() {
     return 1397;
 }
 
+void GfDataBlade::setUiCommonBlade(const SDataBlade& data, unsigned int blade) {
+    SDataBlade& slot = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    slot = data;
+    slot.m_bladeId = blade;
+}
+
 bool GfDataBlade::isCommonBlade(unsigned int blade) {
     return blade >= 1197 && blade < 1423;
 }
@@ -961,6 +981,15 @@ bool GfDataHana::isValid(unsigned int blade) {
 
 bool GfDataDriver::isDriver(unsigned int driver) {
     return driver >= 1 && driver < 26;
+}
+
+bool GfDataParty::isExistDriver(unsigned int driver) {
+    for (int i = 0; i < 3; i++) {
+        if (GfDataManager::getDataGame()->m_party.m_members[i].m_driver == driver) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool GfDataDriver::isDummyDriver(unsigned int driver) {
@@ -1062,6 +1091,21 @@ unsigned int GfDataNanakoori::getItemForSoulLevelUp() {
     return 25177;
 }
 
+unsigned int GfDataNanakoori::getClearMissionForLesson() {
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BA37A)
+    static const unsigned short s_lessonMissions[15] = {
+        0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0,
+    };
+    unsigned int count = 0;
+    for (int i = 0; i < 15; i++) {
+        unsigned int offset = getNanakooriMissionClearFlg1Offset(s_lessonMissions[i]);
+        if (offset != 0 && GfGameFlag::getLocal(1, offset) != 0) {
+            count++;
+        }
+    }
+    return count;
+}
+
 void GfDataUtil::convertNewCollectFlagPatch() {
 }
 
@@ -1081,6 +1125,19 @@ bool GfDataAchievement::isWaitControllFreeStats(unsigned int stats) {
         return true;
     }
     return false;
+}
+
+void GfDataAchievement::clearTotalCount(unsigned int type) {
+    int index = fn_710024B4D0(type);
+    if (index >= 0) {
+        GfGameFlag::setLocal(8, index, 0);
+        return;
+    }
+    index = getAchievementTotalFlgIndex(type);
+    if (index < 0) {
+        return;
+    }
+    GfGameFlag::setLocal(32, index, 0);
 }
 
 
@@ -1148,6 +1205,14 @@ const char* GfDataBlade::getName(unsigned int blade, unsigned int kind) {
         }
     }
     return name == nullptr ? "" : name;
+}
+
+bool GfDataBlade::getName(unsigned char*& bdat, unsigned int& id, unsigned int blade) {
+    id = 0;
+    if (blade == 0) {
+        return false;
+    }
+    return getNameWithMsgID(bdat, id, GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)]);
 }
 
 bool GfDataBlade::isAttachedParty(unsigned int blade) {
@@ -1367,6 +1432,24 @@ bool GfDataBlade::setEquipOrb(unsigned int blade, unsigned short orb, unsigned i
     getEquipOrbMax(blade);
     data->m_equipOrbs[slot] = orb;
     return true;
+}
+
+bool GfDataBlade::setEquipOrbHandle(unsigned int blade, GfItemHandle handle, unsigned int slot) {
+    if (blade == 0) {
+        return false;
+    }
+    SDataBlade* data = getSDataBlade(blade);
+    // the original reads the orb count here without using it
+    getEquipOrbMax(blade);
+    data->m_equipOrbHandles[slot] = handle.m_handle;
+    return true;
+}
+
+bool GfDataBlade::getEquipOrbEnance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int blade) {
+    if (blade == 0) {
+        return false;
+    }
+    return getEquipOrbEnance(enhances, GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)]);
 }
 
 unsigned int GfDataBlade::getCreateEvent(unsigned int blade) {
@@ -1987,6 +2070,15 @@ void GfDataBlade::fn_710024D86C(unsigned int id, unsigned int value) {
 
 bool GfDataBlade::fn_710024D890(unsigned int id) {
     return GfGameFlag::getLocal(1, id > 43877 ? id + 11651 : id) != 0;
+}
+
+bool GfDataBlade::fn_710024D8C4(unsigned char*& bdat, unsigned int& id, unsigned int blade) {
+    if (blade <= 2000) {
+        return false;
+    }
+    bdat = GfDataBdat::getFP(0x1C3);
+    id = GfBdatRsc::get()->fn_7100219BD0(blade);
+    return id != 0;
 }
 
 bool GfDataBlade::fn_710024DA20(unsigned char*& bdat, unsigned int& id, unsigned int rsc) {
@@ -2642,6 +2734,17 @@ const char* GfDataMap::getWeatherEffName(WEATYPE type) {
     return GfBdatMaplist::get()->getWeatherInfoeff(type);
 }
 
+const char* GfDataMap::getWeatherSndName(WEATYPE type) {
+    if (type == 0) {
+        return "";
+    }
+    GfBdatMaplist* maplist = GfBdatMaplist::get();
+    if (GfDataBlade::fn_71002324C8()) {
+        return maplist->fn_710020A2AC(type);
+    }
+    return maplist->getWeatherInfosnd(type);
+}
+
 const char* GfDataMap::getWeatherSndBeginName(WEATYPE type) {
     if (type == 0) {
         return "";
@@ -2861,6 +2964,17 @@ bool GfDataHana::isEquipCondenserParts(unsigned int hana, unsigned int item) {
     return false;
 }
 
+unsigned int GfDataBlade::fn_7100253C98() {
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BA374)
+    static const unsigned short s_blades[3] = {1005, 1006, 1007};
+    for (const unsigned short& blade : s_blades) {
+        if (getSDataBlade(blade)->m_dataType == 2) {
+            return blade;
+        }
+    }
+    return 0;
+}
+
 bool GfDataFieldSkill::isFieldSkillSettingAccessed(unsigned int skill) {
     unsigned int start = QuestListAcc::get()->getFLD_FieldSkillSettingStart();
     unsigned int index = skill + 59675 - start;
@@ -2907,6 +3021,34 @@ bool GfDataNanakoori::setFan(unsigned int fan) {
     unsigned int old = GfGameFlag::getLocal(16, 0x60E);
     GfGameFlag::setLocal(16, 0x60E, fan);
     return old != fan;
+}
+
+unsigned int GfDataNanakoori::getLevelForNanakoori(unsigned int count) {
+    if (count == 0) {
+        return 1;
+    }
+    if (count < 3) {
+        return 2;
+    }
+    if (count < 9) {
+        return 3;
+    }
+    if (count < 17) {
+        return 4;
+    }
+    if (count < 30) {
+        return 5;
+    }
+    if (count < 50) {
+        return 6;
+    }
+    if (count < 75) {
+        return 7;
+    }
+    if (count < 99) {
+        return 8;
+    }
+    return 9;
 }
 
 unsigned int GfDataHana::getAutoHate(unsigned int hana) {
@@ -3104,6 +3246,11 @@ unsigned int GfDataDriver::fn_7100245F50(unsigned int driver) {
     return getBattleExpNextLevel(*getSDataDriver(driver));
 }
 
+unsigned int GfDataDriver::getExpSetLevel(unsigned int driver, unsigned int level) {
+    getSDataDriver(driver);
+    return GfDataBlade::fn_71002326F0(level);
+}
+
 unsigned int GfDataMap::getZoneIdForGameMap(unsigned int map) {
     unsigned int zone = getZoneIdForDevelopPoint(map);
     if (zone == 0) {
@@ -3160,6 +3307,19 @@ bool GfDataQuest::getTitle(unsigned char*& fp, unsigned int& id, QuestID quest) 
         return false;
     }
     fp = GfBdatMsg::getFpQuest(quest);
+    return true;
+}
+
+bool GfDataQuest::getResult(unsigned char*& bdat, unsigned int& id, QuestID quest) {
+    QuestListAcc* acc = QuestListAcc::get();
+    id = acc->getListResultA(quest);
+    if (id == 0) {
+        id = acc->getListResultB(quest);
+        if (id == 0) {
+            return false;
+        }
+    }
+    bdat = GfBdatMsg::getFpQuest(quest);
     return true;
 }
 
@@ -3370,6 +3530,17 @@ unsigned int GfDataQuest::getListQuestCategory(QuestID id) {
         return 5;
     }
     return 6;
+}
+
+QuestID GfDataQuest::getListPRTQuestID(QuestID id) {
+    QuestID quest;
+    if (id.empty()) {
+        return quest;
+    }
+    unsigned int prt = QuestListAcc::get()->getListPRTQuestID(id);
+    quest.m_id = prt;
+    quest.m_achieveId = id.m_achieveId == 0 ? static_cast<unsigned short>(prt >> 16) : id.m_achieveId;
+    return quest;
 }
 
 void SDataIdea::setPoint(unsigned int idea, unsigned int point) {
@@ -3623,6 +3794,77 @@ bool GfDataFieldSkill::getCaption(unsigned char*& bdat, unsigned int& id, unsign
     id = QuestListAcc::get()->getFLD_FieldSkillListCaption(skill);
     bdat = GfBdatMsg::getFpFieldSkill();
     return id != 0;
+}
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BA0B8). The statistics whose totals are
+// kept in 32-bit local flags 258 on (getAchievementTotalFlgIndex).
+static const unsigned short s_achievementTotalStats[64] = {
+        0x31, 0x36, 0x3C, 0x3E, 0x63, 0x72, 0x74, 0x76, 0x78, 0x7A, 0x7C, 0x7E,
+        0x80, 0x82, 0x84, 0x86, 0x88, 0x8A, 0x8C, 0x8E, 0x90, 0x92, 0x94, 0x33,
+        0x34, 0x35, 0x16, 0x2, 0x4, 0x17, 0x14, 0x20, 0x21, 0x5, 0xE, 0x13,
+        0x1, 0x39, 0x3B, 0x22, 0x3A, 0x23, 0x25, 0x65, 0x41, 0x97, 0x98, 0x99,
+        0x9A, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x9D, 0x9F, 0x0, 0x0,
+        0x0, 0x0, 0x0, 0x0,
+};
+
+int GfDataAchievement::getAchievementTotalFlgIndex(unsigned short stats) {
+    if (stats == 0) {
+        return -1;
+    }
+    for (int i = 0; i < 64; i++) {
+        if (s_achievementTotalStats[i] == stats) {
+            return i + 258;
+        }
+    }
+    return -1;
+}
+
+int GfDataAchievement::fn_710024B4D0(unsigned short stats) {
+    if (stats >= 184 && stats < 214) {
+        return stats + 3834;
+    }
+    return -1;
+}
+
+unsigned int GfDataAchievement::getTotalCount(unsigned int stats) {
+    int index = fn_710024B4D0(stats);
+    if (index >= 0) {
+        return GfGameFlag::getLocal(8, index);
+    }
+    index = getAchievementTotalFlgIndex(stats);
+    if (index < 0) {
+        return 0;
+    }
+    return GfGameFlag::getLocal(32, index);
+}
+
+void GfDataAchievement::addTotalCount(unsigned int type, unsigned int value) {
+    int index = fn_710024B4D0(type);
+    if (index >= 0) {
+        unsigned int count = GfGameFlag::getLocal(8, index) + value;
+        GfGameFlag::setLocal(8, index, count > 255 ? 255 : count);
+        return;
+    }
+    index = getAchievementTotalFlgIndex(type);
+    if (index < 0) {
+        return;
+    }
+    unsigned int count = GfGameFlag::getLocal(32, index);
+    unsigned int total = count + value;
+    GfGameFlag::setLocal(32, index, total < count ? 0xFFFFFFFF : total);
+}
+
+void GfDataAchievement::fn_710024B71C(unsigned int type, unsigned int value) {
+    int index = fn_710024B4D0(type);
+    if (index >= 0) {
+        GfGameFlag::setLocal(8, index, value > 255 ? 255 : value);
+        return;
+    }
+    index = getAchievementTotalFlgIndex(type);
+    if (index < 0) {
+        return;
+    }
+    GfGameFlag::setLocal(32, index, value);
 }
 
 bool GfDataWeapon::getName(unsigned char*& bdat, unsigned int& id, unsigned int weapon) {
