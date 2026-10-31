@@ -43,6 +43,11 @@ inline float getValFloat(unsigned char* fp, int member, int id) {
     unsigned int bits = Bdat::getValCheck(fp, member, id, 8);
     return *reinterpret_cast<float*>(&bits);
 }
+// a float column's value of a row, by the column's name (the name is not the original's)
+inline float getValFloat(unsigned char* fp, const char* column, int id) {
+    unsigned int bits = Bdat::getValCheck(fp, column, id, 8);
+    return *reinterpret_cast<float*>(&bits);
+}
 }  // namespace
 
 GfFobjSeManager::GfFobjSeManager(const CreateInfo* info) : m_pack(nullptr) {
@@ -136,6 +141,53 @@ GfDropitemParams::~GfDropitemParams() {
     m_params.destroy();
 }
 
+void GfDropitemParam::loadFromBdat(int& id) {
+    unsigned char* fp = Bdat::getFP("RSC_dropitemParam");
+    if (fp == nullptr) {
+        return;
+    }
+    m_height = getValFloat(fp, "height", id);
+    m_heightRand = getValFloat(fp, "heightRand", id);
+    m_distance = getValFloat(fp, "distance", id);
+    m_distanceRand = getValFloat(fp, "distanceRand", id);
+    m_time = getValFloat(fp, "time", id);
+    m_speedAtte = getValFloat(fp, "speedAtte", id);
+    m_rotYRand = getValFloat(fp, "rotYRand", id);
+    m_lifeTime = getValFloat(fp, "lifeTime", id);
+    m_flashTime = getValFloat(fp, "flashTime", id);
+    m_flashInterval1 = getValFloat(fp, "flashInterval1", id);
+    m_flashInterval2 = getValFloat(fp, "flashInterval2", id);
+    m_vanishTime1 = getValFloat(fp, "vanishTime1", id);
+    m_vanishTime2 = getValFloat(fp, "vanishTime2", id);
+    m_radius = getValFloat(fp, "radius", id);
+    m_initHeight = getValFloat(fp, "initHeight", id);
+    m_startScale = getValFloat(fp, "startScale", id);
+    m_endScale = getValFloat(fp, "endScale", id);
+    m_scaleTime = getValFloat(fp, "scaleTime", id);
+    m_isSpin = Bdat::getValCheckU8(fp, "isSpin", id) != 0;
+    m_spinSpeed = getValFloat(fp, "spinSpeed", id);
+    m_startSpinBound = Bdat::getValCheckU8(fp, "startSpinBound", id);
+    m_startSpinTime = getValFloat(fp, "startSpinTime", id);
+    m_boundNum = Bdat::getValCheckU8(fp, "boundNum", id);
+}
+
+void GfDropitemParams::update() {
+    if (m_params.size() != 0) {
+        return;
+    }
+    unsigned char* fp = Bdat::isExistFP("RSC_dropitemParam");
+    if (fp == nullptr) {
+        return;
+    }
+    m_params.resize(Bdat::getIdCount(fp));
+    m_idTop = Bdat::getIdTop(fp);
+    int count = Bdat::getIdCount(fp);
+    for (int i = 0; i < count; i++) {
+        int id = m_idTop + i;
+        m_params.at(i).loadFromBdat(id);
+    }
+}
+
 GfDropitemEmitter::GfDropitemEmitter(const CreateInfo* info) : m_isEmitted(false), m_timer(0.0f), m_endTime(0.0f) {
     if (info != nullptr) {
         create(*info);
@@ -167,6 +219,27 @@ void GfDropitemEmitter::update(float dt) {
             (this->*m_seq)(dt);
         }
     }
+}
+
+void GfDropitemEmitter::seqWaitBeginDrop(float dt) {
+    if (m_timer < m_info.m_dropDelay) {
+        return;
+    }
+    GfFobjDropitem::EmitInfo info;
+    if (m_info.pad_0x28) {
+        info.fn_71002849C4(m_info.m_itemCount);
+    } else {
+        info.createDropitemInfos(m_info.m_items, m_info.m_itemCount);
+    }
+    info.m_pos = m_info.m_pos;
+    info.m_angle = m_info.m_angle;
+    info.m_angleRange = m_info.m_angleRange;
+    info.m_dropDistance = m_info.m_dropDistance;
+    info.m_appearDelay = m_info.m_appearDelay;
+    info.m_appearDelayRange = m_info.m_appearDelayRange;
+    info.pad_0x56 = m_info.pad_0x29;
+    m_endTime = GfFobjDropitem::emitDropitems(info) + m_timer;
+    m_seq = &GfDropitemEmitter::seqWaitEndDrop;
 }
 
 void GfDropitemEmitter::seqWaitEndDrop(float dt) {

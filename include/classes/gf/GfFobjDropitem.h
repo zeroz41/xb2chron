@@ -1,13 +1,52 @@
 #ifndef CLASSES_GF_GFFOBJDROPITEM_H
 #define CLASSES_GF_GFFOBJDROPITEM_H
 
+#include "mm/Vec3.h"
+#include "mm/mtl/Vector.h"
+
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; struct GfDropitemParam; }
 
 namespace gf {
+// one entry of GfFobjDropitem::EmitInfo's drop list (0x14 bytes by its Vector's indexing): emitDropitems reads an
+// item id at 0x0, a count at 0x4 and the float it hands to emitDropitem at 0x10
+struct GfDropitemInfo {
+    unsigned char pad_0x0[0x14];
+};
+
 // table 0x7100B52910
 class GfFobjDropitem {
 public:
+    // what emitDropitems drops and where (GfDropitemEmitter::seqWaitBeginDrop builds one from its CreateInfo; the
+    // field names are not the original's)
+    struct EmitInfo {
+        EmitInfo()
+            : m_pos(mm::Vec3::zero), m_angle(0.0f), m_angleRange(3.14159265f), m_dropDistance(0.0f),
+              m_appearDelay(0.0f), m_appearDelayRange(0.0f), m_items(), pad_0x50(0), m_paramId(0), pad_0x55(false),
+              pad_0x56(0) {}
+        // fills m_items from count rows of items (the item and gold tables)
+        void createDropitemInfos(unsigned char* items, int count);
+        // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because seqWaitBeginDrop
+        // calls it on its EmitInfo in place of createDropitemInfos when its CreateInfo's 0x28 is set. What it does:
+        // fills m_items (Vector<GfDropitemInfo>::expand) from count random rows of a BDAT table (FixStr formats,
+        // ml::mtRand), checking GfItemUtil::getItemBoxCount; fn_71002862F8 is its helper.
+        void fn_71002849C4(int count);
+
+        mm::Vec3 m_pos;  // where the items drop from
+        float m_angle;  // emitDropitems spreads the drops from m_angle - m_angleRange
+        float m_angleRange;
+        float m_dropDistance;  // copied into each item's setup (GfObjSetupFieldObj::m_dropDistance)
+        // each item's setup gets m_appearDelay + m_appearDelayRange * a random [0, 1)
+        // (GfObjSetupFieldObj::m_appearDelay)
+        float m_appearDelay;
+        float m_appearDelayRange;
+        mm::mtl::Vector<GfDropitemInfo> m_items;  // the items to drop
+        unsigned int pad_0x50;  // emitDropitems makes this many more drops after m_items' (a count)
+        unsigned char m_paramId;  // emitDropitem/emitDropgold's paramId
+        bool pad_0x55;  // emitDropitems tests it for item 0x61C3
+        unsigned char pad_0x56;  // copied into each item's setup (0x90)
+    };
+
     GfFobjDropitem(GF_OBJ_HANDLE* handle);
     virtual ~GfFobjDropitem();  // slot 0
     void initialize();
@@ -34,6 +73,9 @@ public:
     // hands to btl::Utility::fn_7100010900); returns the object's handle.
     static GF_OBJ_HANDLE* fn_7100287E30(unsigned char paramId, unsigned int amount);
     static int getResBdatIdFromItemId(int itemId);
+    // drops info's items around info.m_pos; returns the longest appear delay it gave a drop (-1 when there is
+    // nothing to drop)
+    static float emitDropitems(const EmitInfo& info);
 
     // the item's row of the field object table (initialize reads them by name; the names are not the original's)
     // [0] "dropSE" (update plays it at the first bounce), [1] "getdropSE" (played when the item is taken); the

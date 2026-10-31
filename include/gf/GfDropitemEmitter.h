@@ -11,20 +11,25 @@ public:
     struct CreateInfo {
         // the constructor's defaults (the emitter's constructor, create and dispose store them)
         CreateInfo()
-            : m_pos(mm::Vec3::zero), m_angle(0.0f), m_angleRange(3.14159265f), pad_0x18(), m_dropDelay(0.0f),
-              pad_0x20(), pad_0x28(), m_items(nullptr), m_itemCount(0) {}
+            : m_pos(mm::Vec3::zero), m_angle(0.0f), m_angleRange(3.14159265f), m_dropDistance(0.0f),
+              m_dropDelay(0.0f), m_appearDelay(0.0f), m_appearDelayRange(0.0f), pad_0x28(0), pad_0x29(0),
+              m_items(nullptr), m_itemCount(0) {}
 
         mm::Vec3 m_pos;  // where the items drop from (the constructor's Vec3::zero copy)
         // copied into GfFobjDropitem::EmitInfo, where emitDropitems spreads the drops over m_angle - m_angleRange
         // onwards (the names are not the original's)
         float m_angle;
         float m_angleRange;
-        unsigned char pad_0x18[0x4];
+        // seqWaitBeginDrop copies it into EmitInfo::m_dropDistance (the name is not the original's)
+        float m_dropDistance;
         float m_dropDelay;  // seqWaitBeginDrop drops once m_timer reaches it
-        unsigned char pad_0x20[0x8];
-        // 0x28: seqWaitBeginDrop builds the drops with fn_71002849C4 when set, else with
-        // EmitInfo::createDropitemInfos; 0x29 is copied into EmitInfo
-        unsigned char pad_0x28[0x2];
+        // seqWaitBeginDrop copies them into EmitInfo::m_appearDelay/m_appearDelayRange (the names are not the
+        // original's)
+        float m_appearDelay;
+        float m_appearDelayRange;
+        // seqWaitBeginDrop builds the drops with fn_71002849C4 when set, else with EmitInfo::createDropitemInfos
+        unsigned char pad_0x28;
+        unsigned char pad_0x29;  // seqWaitBeginDrop copies it into EmitInfo::pad_0x56
         // the items' rows (GfFobjDropitem::EmitInfo::createDropitemInfos takes them with m_itemCount); update runs
         // only with both
         unsigned char* m_items;
