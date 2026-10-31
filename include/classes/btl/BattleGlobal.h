@@ -29,6 +29,8 @@ public:
     void PreUpdateProc(const fw::UpdateInfo& info);
     void UpdateProc(const fw::UpdateInfo& info);
     void PostUpdateProc(const fw::UpdateInfo& info);
+    // reads the anti-blade area's revision row (Bdat 0x35) into m_mapRev when the area changes
+    void UpdateMapRev();
     // whether a battle can run: not while GfGameManager stops battles
     bool IsEnableBattle() const;
     void SetElementalComboImmortal(gf::GF_OBJ_HANDLE* handle);
@@ -324,7 +326,18 @@ public:
     unsigned char pad_5c54[0x24];
     // the playing jingle's sound handle, -1 when none plays (IsJinglePlaying; the name is not the original's)
     long m_jingleHandle;
-    unsigned char pad_5c80[0x4C];
+    unsigned char pad_5c80[0x18];
+    // per party character, the anti-blade area's revisions: Bdat 0x35's "KizunaCap", "ArtSp", "nba" flag and
+    // "PC%02dAtk"/"PC%02dDef" columns (UpdateMapRev; the names are not the original's)
+    struct MapRev {
+        unsigned short kizunaCap : 11;
+        unsigned short artSp : 4;
+        unsigned short nbaClear : 1;  // set when the row's "nba" flag is clear
+        unsigned char atk;
+        unsigned char def;
+    };
+    MapRev m_mapRev[12];
+    int m_mapRevAreaId;  // the anti-blade area id m_mapRev was read for (the name is not the original's)
     // the chain count and the narration level it reached (AddChainCount; the names are not the original's)
     struct ChainCount {
         unsigned int count : 28;

@@ -13,6 +13,8 @@
 #include "classes/btl/ChainAttackManager.h"
 #include "classes/gf/GfGameParty.h"
 #include "classes/gf/GfDataBdat.h"
+#include "gf/GfGameUtil.h"
+#include "mm/mtl/FixStr.h"
 #include "plugin/Bdat.h"
 #include "classes/ai/AiScriptManager.h"
 #include "classes/gf/GfScriptManager.h"
@@ -345,6 +347,49 @@ unsigned short BattleGlobal::fn_71000053C4(int id) const {
 
 const BattleGlobal::ELEMENTAL_COMBO_FLOW_DATA& BattleGlobal::fn_71000053F8(int id) const {
     return m_elementalComboFlow[id];
+}
+
+void BattleGlobal::UpdateMapRev() {
+    // the party characters' column names in Bdat 0x35's "Flag" bits; the rest have none (proposed name, not the
+    // original's: the symbols leave it unnamed, lbl_7100B3A400)
+    static const char* const s_mapRevNames[12] = {
+        "Rex", "Nia", "Sieg", "Tora", "Vandamme", "Melef", "Sin", "Metsu", "Sin2",
+    };
+    int id = gf::GfGameUtil::getAntiBladeAreaBdatId();
+    if (id == m_mapRevAreaId) {
+        return;
+    }
+    if (id == 0) {
+        for (int i = 0; i < 12; i++) {
+            MapRev& rev = m_mapRev[i];
+            rev.kizunaCap = 1000;
+            rev.artSp = 4;
+            rev.nbaClear = 1;
+            rev.atk = 100;
+            rev.def = 100;
+        }
+        m_mapRevAreaId = 0;
+        return;
+    }
+    m_mapRevAreaId = id;
+    unsigned char* fp = gf::GfDataBdat::getFP(0x35);
+    ::mm::mtl::FixStr<32> column;
+    for (int i = 0; i < 12; i++) {
+        MapRev& rev = m_mapRev[i];
+        if (s_mapRevNames[i] != nullptr && Bdat::getFlagVal(fp, "Flag", id, s_mapRevNames[i])) {
+            rev.kizunaCap = Bdat::getValCheck(fp, "KizunaCap", id, 2);
+            rev.artSp = Bdat::getValCheck(fp, "ArtSp", id, 1);
+            rev.nbaClear = Bdat::getFlagVal(fp, "Flag", id, "nba") == 0;
+            rev.atk = Bdat::getValCheck(fp, column.format("PC%02dAtk", i + 1).m_str, id, 1);
+            rev.def = Bdat::getValCheck(fp, column.format("PC%02dDef", i + 1).m_str, id, 1);
+        } else {
+            rev.kizunaCap = 1000;
+            rev.artSp = 4;
+            rev.nbaClear = 1;
+            rev.atk = 100;
+            rev.def = 100;
+        }
+    }
 }
 
 bool BattleGlobal::fn_7100007554() const {
