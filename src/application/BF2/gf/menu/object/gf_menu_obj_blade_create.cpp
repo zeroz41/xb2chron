@@ -17,6 +17,13 @@
 #include "ml/ScnRenderDrSysParmAcc.h"
 #include "classes/gf/GfMenuObjBladeCreate/MainListener.h"
 #include "classes/gf/GfMenuObjBladeCreate/IdeagramListener.h"
+#include "classes/gf/GfMenuObjBladeCreate/ResultListener.h"
+#include "classes/gf/GfMenuObjBladeCreate/BoosterNumListener.h"
+#include "classes/gf/GfMenuItemList.h"
+#include "classes/gf/GfMenuObjCmnStatus.h"
+#include "classes/gf/GfMenuReference.h"
+#include "gf/GfDataBlade.h"
+#include "mm/Vec2.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
@@ -131,6 +138,65 @@ bool GfMenuObjBladeCreate::seqSaveWait() {
     return true;
 }
 
+void GfMenuObjBladeCreate::ResultListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableFSInput(5);
+            GfMenuObjOperationInfo::open(acc.m_handle, 0, 0, 0);
+            GfMenuObjOperationInfo::setGuideDisp(false);
+            m_owner->m_bgm = GfMenuObjUtil::playBGM(0x14, false, static_cast<fw::SoundCategory>(0x11));
+        }
+        break;
+    case 8:
+        if (event.m_param1 == 1) {
+            m_owner->m_seq.addJob(&GfMenuObjBladeCreate::seqResultStart);
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            GfMenuObject::disableFSInput();
+        }
+        break;
+    case 0x21: {
+        fadeIn(acc.m_handle);
+        GfMenuObjCmnStatus::openBlStatus(2, -1);
+        {
+            ui::UIObjectAcc image(acc.m_handle, "IMG_result_bl_img");
+            unsigned int blade = GfMenuReference::getReferenceBladeID(0);
+            acc.setLayout(image.m_handle, "blade");
+            GfMenuObjUtil::ImageParam imageParam;
+            if (GfMenuObjUtil::getImageParam(1, blade, imageParam, 1)) {
+                mm::Vec2 scale;
+                image.getScale(scale);
+                scale.x *= imageParam.m_scale;
+                scale.y *= imageParam.m_scale;
+                image.setScale(scale);
+                GfMenuObjUtil::addPos(image.m_handle, imageParam.m_x, imageParam.m_y);
+            }
+            GfMenuObjUtil::CtrlParam fade;
+            fade.m_eventId = 1;
+            fade.m_methods = 0x10000000;
+            fade.m_motionLib = "cmn_fade_motion_lr";
+            fade.m_motion = "fade_in_r";
+            fade.m_startFlags = 8;
+            GfMenuObjUtil::startCtrl(image.m_handle, fade, nullptr);
+        }
+        GfMenuObjUtil::playJingle(GfDataBlade::isCommonBlade(GfMenuReference::getReferenceBladeID(0)) ? 0xD : 0xC);
+        break;
+    }
+    case 0x22: {
+        GfMenuObjCmnStatus::closeBlStatus();
+        fadeOut(acc.m_handle);
+        break;
+    }
+    }
+}
+
 bool GfMenuObjBladeCreate::seqResultStart() {
     pad_1120 = false;
     m_seq.addJob(&GfMenuObjBladeCreate::seqResultConfirm);
@@ -154,6 +220,83 @@ void GfMenuObjBladeCreate::IdeagramListener::reciveEvent(const ui::EventData& ev
         }
     } else {
         ui::UIObjectListener::reciveEvent(event, handle);
+    }
+}
+
+void GfMenuObjBladeCreate::BoosterNumListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        m_shown = 0;
+        m_decided = 1;
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableFSInput(6);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        } else if (event.m_param0 == 2) {
+            ui::EventData send;
+            send.m_type = 0x103;
+            send.m_param0 = m_decided;
+            GfMenuObject::sendEvent(acc.getParentHandle(), send, 0.0f);
+        }
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        if (index != -1) {
+            m_owner->m_number->setValue(index + 1);
+            m_owner->updateIdea(false);
+        }
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSE(0x19);
+        }
+        break;
+    }
+    case 8:
+        if (event.m_param1 == 1) {
+            m_owner->updateIdea(true);
+            m_decided = 1;
+            GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+        } else if (event.m_param1 == 2) {
+            GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+            m_owner->m_number->m_value = 0;
+            m_owner->updateIdea(false);
+        }
+        GfMenuObjUtil::playSECommonFromInput(event.m_param1);
+        break;
+    case 0x21:
+        if (m_shown == 0) {
+            fadeIn(acc.m_handle);
+            m_shown = 1;
+            m_decided = 0;
+            GfMenuItemList* list = m_owner->m_boosterList;
+            // the count is read signed (ldrsh) and capped unsigned
+            short have = list->getContents(list->getIndex(false)).m_count;
+            unsigned int count = have;
+            if (count > 5) {
+                count = 5;
+            }
+            m_owner->m_number->m_min = 1;
+            m_owner->m_number->m_max = count;
+            m_owner->m_number->m_value = 1;
+            GfMenuObject::resetInputSelection(acc.m_handle);
+            GfMenuObject::setupInputSelection(acc.m_handle, 0, count);
+        }
+        m_owner->setGuideText(0x39);
+        break;
+    case 0x22:
+        if (m_shown == 1) {
+            GfMenuObject::disableFSInput();
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            fadeOut(acc.m_handle);
+            m_shown = 0;
+        }
+        break;
     }
 }
 
