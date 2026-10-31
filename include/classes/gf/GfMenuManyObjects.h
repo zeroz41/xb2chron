@@ -135,13 +135,12 @@ bool GfMenuManyObjects::fn_710045D604(unsigned int index, int position) {
     if (index < 8) {
         mm::mtl::Queue<T>* queue = getQueue<T>(index);
         if (queue != nullptr && !queue->empty()) {
-            for (typename mm::mtl::Queue<T>::iterator it = queue->begin(); it != queue->end(); ++it) {
+            for (typename mm::mtl::Queue<T>::iterator it = queue->begin(); it != queue->end(); ++it, --position) {
                 if (position == 0) {
                     (*it).dispose();
                     queue->erase(it);
                     return true;
                 }
-                --position;
             }
         }
     }

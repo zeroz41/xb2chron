@@ -220,6 +220,56 @@ void GfMenuObjPopup::continuePickup(unsigned int param) {
     }
 }
 
+// inlined in 3.0.1; the name is not the original's
+inline bool GfMenuObjPopup::getParam(unsigned int index, OpenParam& param) {
+    mm::mtl::Queue<PopupInfo>* queue = GfMenuManyObjects::getQueue<PopupInfo>(7);
+    if (queue != nullptr && !queue->empty()) {
+        param = (*queue)[index].m_param;
+        return true;
+    }
+    return false;
+}
+
+bool GfMenuObjPopup::fn_710045D48C(const OpenParam& param) {
+    unsigned int root = GfMenuObject::getAttachedObject(0x76);
+    if (ui::UIObjectAcc(root).m_object == nullptr) {
+        return false;
+    }
+    if (!ui::UIObjectAcc(root).isTerm()) {
+        size_t count = GfMenuManyObjects::getQueue<PopupInfo>(7)->size();
+        for (unsigned int i = 0; i < count; ++i) {
+            OpenParam queued;
+            if (getParam(i, queued) && queued == param) {
+                GfMenuManyObjects::fn_710045D604<PopupInfo>(7, i);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool GfMenuObjPopup::fn_710045D754(unsigned int value) {
+    unsigned int root = GfMenuObject::getAttachedObject(0x76);
+    if (ui::UIObjectAcc(root).m_object == nullptr) {
+        return false;
+    }
+    if (!ui::UIObjectAcc(root).isTerm()) {
+        size_t count = GfMenuManyObjects::getQueue<PopupInfo>(7)->size();
+        if (count != 0) {
+            bool removed = false;
+            for (unsigned int i = 0; i < count; ++i) {
+                OpenParam queued;
+                if (getParam(i, queued) && (queued.m_type & ~1u) == 4 && queued.m_value[0] == value) {
+                    GfMenuManyObjects::fn_710045D604<PopupInfo>(7, i);
+                    removed = true;
+                }
+            }
+            return removed;
+        }
+    }
+    return false;
+}
+
 bool GfMenuObjPopup::fn_710045DA2C() {
     m_giftWait = false;
     return true;

@@ -17,6 +17,11 @@ public:
     struct OpenParam {
         unsigned int m_type;
         unsigned int m_value[3];
+        // the same request (fn_710045D48C looks a queued popup up so)
+        friend bool operator==(const OpenParam& a, const OpenParam& b) {
+            return a.m_type == b.m_type && a.m_value[0] == b.m_value[0] && a.m_value[1] == b.m_value[1] &&
+                   a.m_value[2] == b.m_value[2];
+        }
     };
     GfMenuObjPopup(unsigned int handle);
     // the popup layer's handle (0 when nothing opened)
@@ -54,9 +59,9 @@ public:
 
     // 1.0.0's sendOpen (out of line there, inlined in 3.0.1); defined inline in gf_menu_obj_popup.cpp: the open event (0x21) carrying a queued request
     static void sendOpen(unsigned int handle, const PopupInfo& info);
-    // the queued popup `index` places after the first, or null without a queue or popups (inlined in 3.0.1; the
-    // name is not the original's)
-    static PopupInfo* getInfo(unsigned int index);
+    // copies the request of the queued popup `index` places after the first into param; false without a queue or
+    // popups (inlined in 3.0.1; the name is not the original's)
+    static bool getParam(unsigned int index, OpenParam& param);
 
     // set once open has sent a popup's open event (open sends no other while set; reciveEvent sets and clears it)
     static bool s_disp;
