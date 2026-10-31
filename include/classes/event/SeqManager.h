@@ -240,7 +240,7 @@ public:
     unsigned int pad_2760;  // 0x2760
     unsigned int pad_2764;  // 0x2764
     unsigned int pad_2768;  // 0x2768
-    unsigned int pad_276c;  // 0x276C
+    int pad_276c;  // 0x276C (ObjectCamera::OnBouRender compares it signed: < 3)
     const char* pad_2770;  // 0x2770
     unsigned char pad_2778;  // 0x2778
     unsigned int pad_277c;  // 0x277C

@@ -24,6 +24,9 @@
 #include "classes/event/ObjectChara.h"
 #include "classes/event/ObjectEffect.h"
 #include "classes/event/ObjectCamera.h"
+#include "classes/event/ObjectUtil.h"
+#include "classes/ml/DevGraph.h"
+#include <math.h>
 #include "classes/event/CamFree.h"
 #include "classes/event/VolumeManager.h"
 #include "classes/event/VolumePlayer.h"
@@ -151,6 +154,15 @@ CmdVariable::~CmdVariable() {}
 ParamVariable::~ParamVariable() {}
 
 Param::Param() {}
+
+AttachActorCS::~AttachActorCS() {
+    while (m_casters.size() != 0) {
+        setEffectCaster(false, **m_casters.begin());
+    }
+    while (m_mounts.size() != 0) {
+        setEffectMount(false, (*m_mounts.begin())->m_handle, "", mm::Vec3::zero, false, static_cast<ATTACH_TYPE>(0));
+    }
+}
 
 bool AttachActorCS::getMtpMat(mm::Mat44& mat, const char*) const {
     mat = mm::Mat44::identity;
@@ -701,6 +713,23 @@ void ObjectCamera::tail() {
 
 bool ObjectCamera::OnBouRectSelect(const IBouCallback::SelectParam&) {
     return false;
+}
+
+void ObjectCamera::OnBouRender(const IBouCallback::RenderParam&) {
+    if (SeqManager::getPtr()->pad_276c < 3 && pad_70 == 0) {
+        int x = ml::DevGraph::getRootWidth() - 415;
+        CamObj* cam = m_cam;
+        const mm::Vec3& pos = cam->m_pos;
+        const mm::Vec3& tar = cam->m_tar;
+        float dx = tar.x - pos.x;
+        float dy = tar.y - pos.y;
+        float dz = tar.z - pos.z;
+        mm::Vec3 rot;
+        rot.y = -atan2f(dx, -dz);
+        rot.x = atan2f(dy, sqrtf(dx * dx + dz * dz));
+        rot.z = cam->m_rotZ;
+        ObjectUtil::drawCameraInfo(x, 120, pos, tar, rot, m_cam->m_fov, m_cam->pad_8);
+    }
 }
 
 void ObjectCamera::OnManiRender(IManiCallback::RenderParam&) {

@@ -49,7 +49,12 @@ public:
     virtual void tail();  // slot 4
     void changeActive(CamBase* cam);
 
-    unsigned char pad_8[0x28];
+    bool pad_8;  // ObjectCamera::OnBouRender passes it as drawCameraInfo's bool (which of fov/foc it prints first)
+    unsigned char pad_9[0x7];
+    // the camera position and target ObjectCamera::OnBouRender passes to drawCameraInfo, which prints them after
+    // "pos:" and "tar:"; the names are not the original's
+    mm::Vec3 m_pos;  // 0x10
+    mm::Vec3 m_tar;  // 0x20
     float m_fov;   // 0x30; the camcommands save it before changing it; the name is not the original's
     float m_rotZ;  // 0x34; the name is not the original's
     unsigned char pad_38[0x8];
