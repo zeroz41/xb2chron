@@ -30,6 +30,10 @@ public:
     // a counted copy of the asset (its data copied into the handle's or allocator's memory)
     AssetData* Clone(mtl::ALLOC_HANDLE handle) const;
     AssetData* Clone(mm::mtl::IAllocator* allocator) const;
+    // inline (no symbol; the name is not the original's): the name copy is a member of AssetData, not the callers'
+    // own `asset->m_name = ...`: AssignFromMemory and Clone form the strcpy destination after the length assert, as
+    // an assignment inlined from a function on the asset does
+    void SetName(const char* name) { m_name = name; }
 
     // the names are not the original's
     mtl::ALLOC_HANDLE m_allocHandle;  // the memory its data is in (AssignFromMemory's handle; CreateFromCache compares it)

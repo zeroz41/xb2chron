@@ -12,6 +12,7 @@
 #include "classes/fw/AnimAsmPoseSampler.h"
 #include "classes/fw/AnimEventAsmPoseSampler.h"
 #include "fw/IkResolver.h"
+#include "classes/gf/GfComIK.h"
 #include "anm/Util.h"
 #include "classes/fw/AnimationManager.h"
 #include "classes/anm/ExtraTruckBuffer.h"
@@ -78,6 +79,55 @@ void AnimSamplePoseJob::exec(anm::Job& job) {
     }
 }
 
+// The solvers are gf::GfComIK's: its constructor stores its table pointer between the list node's and the Vector's
+// initialization, so the Vector is a GfComIK member, not IkResolver's; resolve reads it at its +0x10.
+void IkResolver::resolve(const UpdateInfo& info) {
+    gf::GfComIK* component = static_cast<gf::GfComIK*>(this);
+    for (unsigned int i = 0; i < component->m_solvers.size(); i++) {
+        if (component->m_solvers[i]) {
+            component->m_solvers[i]->solve(info);
+        }
+    }
+}
+
+AssetData* AssetData::AssignFromMemory(mtl::ALLOC_HANDLE handle, const void* data, unsigned int size, const char* name,
+                                       unsigned long arg) {
+    mm::mtl::FixStr<256> path;
+    ml::DevFileTh::normalizeDvdFileName(path, name);
+    AssetData* asset = new (AssetManager::getMemSYS(), nullptr, 0, 4, false) AssetData();
+    if (asset != nullptr) {
+        asset->m_allocHandle = handle;
+        if (data != nullptr && size != 0) {
+            asset->m_data = const_cast<void*>(data);
+            asset->m_size = size;
+            asset->m_timeStamp = arg;
+        }
+        asset->SetName(path.m_str);
+        asset->m_hash = AssetManager::getHash(path.m_str);
+        asset->addRef();
+    }
+    return asset;
+}
+
+AssetData* AssetData::AssignFromMemory(mm::mtl::IAllocator* allocator, const void* data, unsigned int size,
+                                       const char* name, unsigned long arg) {
+    mm::mtl::FixStr<256> path;
+    ml::DevFileTh::normalizeDvdFileName(path, name);
+    AssetData* asset = new (AssetManager::getMemSYS(), nullptr, 0, 4, false) AssetData();
+    if (asset != nullptr) {
+        asset->m_allocator = allocator;
+        if (data != nullptr && size != 0) {
+            asset->m_data = const_cast<void*>(data);
+            asset->m_size = size;
+            asset->m_timeStamp = arg;
+        }
+        asset->SetName(path.m_str);
+        asset->m_hash = AssetManager::getHash(path.m_str);
+        asset->addRef();
+    }
+    return asset;
+}
+
 // Placeholder name: no symbol (a file-local function). A free function: it takes only the path and reads no object.
 // What it does: whether path contains ".arc", ".mot", ".pcefb", ".wiefb", ".stp", ".ssp" or "effect", tested in that
 // order; CreateFromCache keeps no asset of such a path as the one to clone.
@@ -104,6 +154,23 @@ AssetData* AssetData::CreateFromCache(mtl::ALLOC_HANDLE handle, const char* path
         return nullptr;
     }
     return source->Clone(handle);
+}
+
+AssetData* AssetData::Clone(mtl::ALLOC_HANDLE handle) const {
+    AssetData* asset = new (AssetManager::getMemSYS(), nullptr, 0, 4, false) AssetData();
+    if (asset != nullptr) {
+        if (m_data != nullptr && m_size != 0) {
+            asset->m_data = mtl::MemManager::allocate(handle, m_size, 0x1000, false, "no name", 0);
+            memcpy(asset->m_data, m_data, m_size);
+            asset->m_size = m_size;
+            asset->m_timeStamp = m_timeStamp;
+        }
+        asset->m_allocHandle = handle;
+        asset->SetName(m_name.m_str);
+        asset->m_hash = m_hash;
+        asset->addRef();
+    }
+    return asset;
 }
 
 AssetData* AssetData::CreateFromCache(mm::mtl::IAllocator* allocator, const char* path) {
@@ -134,7 +201,7 @@ AssetData* AssetData::Clone(mm::mtl::IAllocator* allocator) const {
             asset->m_timeStamp = m_timeStamp;
         }
         asset->m_allocator = allocator;
-        asset->m_name = m_name;
+        asset->SetName(m_name.m_str);
         asset->m_hash = m_hash;
         asset->addRef();
     }
