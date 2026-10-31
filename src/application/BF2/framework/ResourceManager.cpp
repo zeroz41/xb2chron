@@ -171,9 +171,29 @@ void ResourceManager::addSafeObject(mm::mtl::ReferenceObject* object, eResourceT
     }
 }
 
-// removeSafeObject (0x710019C1AC) is not written yet: the closest attempt has the right steps, but the original's search keeps a
-// byte offset tested at the loop's top (returning when the list runs out), then tests the entry against the old end
-// again; neither a pointer walk with break, an inline find helper nor this index walk gives that loop.
+// drops one hold on object; when none is left it moves to the release list, released after 3 updates. The search
+// steps past each entry before testing it (3.0.1's loop is not rotated: its compare block is the latch, and its
+// iterator is the entry after the one tested)
+void ResourceManager::removeSafeObject(mm::mtl::ReferenceObject* object) {
+    SafeObject* it = m_safeObjects.begin();
+    while (it != m_safeObjects.end()) {
+        if ((it++)->m_object == object) {
+            --it;
+            break;
+        }
+    }
+    if (it == m_safeObjects.end()) {
+        return;
+    }
+    if (--it->m_count == 0) {
+        SafeObject entry;
+        entry.m_object = it->m_object;
+        entry.m_count = 3;
+        entry.m_type = it->m_type;
+        m_releaseList.push_back(entry);
+        m_safeObjects.erase(it);
+    }
+}
 
 bool ResourceManager::isLoaded() {
     for (int type = 0; type < 32; type++) {

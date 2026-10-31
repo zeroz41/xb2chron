@@ -121,7 +121,7 @@ public:
     // removes the element at it, moving the ones after it down (vector.h's assertion `valid_iterator(it)`)
     iterator erase(iterator it);
     // value placed before it, moving it and the ones after it up (vector.h's assertions at lines 639 to 653;
-    // 3.0.1 has Vector<fw::ResourceObject*>'s out of line, in ResourceManager.cpp; its body is not written yet)
+    // 3.0.1 has Vector<fw::ResourceObject*>'s out of line, in ResourceManager.cpp; defined below)
     iterator insert(iterator it, const T& value);
     void pop_back() {
         if (m_size != 0) {
@@ -343,6 +343,40 @@ void Vector<T>::push_back(const T& value) {
         new (element) T(value);
     }
     ++m_size;
+}
+
+// value goes in at it; the ones from it on move up one. 3.0.1 divides it - begin() two ways: exactly (signed) for the
+// count moved, and the byte offset unsigned for the place after expand (Vector<fw::ResourceObject*>'s `and ~7`,
+// Vector<gf::MenuBladeInfo>'s umulh). The end slot is default-constructed first, after a null test (a begin()
+// assertion; Vector<gf::MenuBladeInfo>'s keeps the test and its constructor's two stores)
+template <typename T>
+typename Vector<T>::iterator Vector<T>::insert(iterator it, const T& value) {
+#line 639 MM_MTL_VECTOR_PATH
+    MM_ASSERT(valid_iterator(it));
+#line 640 MM_MTL_VECTOR_PATH
+    MM_ASSERT(m_allocator != 0);
+#line 641 MM_MTL_VECTOR_PATH
+    MM_ASSERT(m_buffer);
+    iterator first = begin();
+    size_t index = it - first;
+    size_t prevSize = m_size;
+    if (prevSize == m_capacity) {
+        size_t offset = ((char*)it - (char*)first) / sizeof(T);
+        expand(prevSize != 0 ? prevSize * 2 : 16, m_alignment);
+        it = m_buffer + offset;
+    } else {
+#line 653 MM_MTL_VECTOR_PATH
+        MM_ASSERT(prevSize < m_capacity);
+    }
+    if (T* element = end()) {
+        new (element) T;
+    }
+    if (it != end()) {
+        move_n(it, prevSize - index, it + 1);
+    }
+    *it = value;
+    ++m_size;
+    return it;
 }
 
 template <typename T>
