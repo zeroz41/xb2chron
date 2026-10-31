@@ -269,4 +269,22 @@ void GfMenuObjLinkJump::NotifyListener::reciveEvent(const ui::EventData& event, 
     }
 }
 
+void GfMenuObjLinkJump::ListListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+    case 0x21:
+        break;
+    case 6: {
+        unsigned int index = event.m_param0;
+        m_list->m_list->setIndex(index);
+        m_list->m_selectList->setIndex(m_list->m_list->getIndex(true));
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 }  // namespace gf
