@@ -28,6 +28,8 @@
 #include "classes/navi/NvmshAcObjBaseDef.h"
 #include "classes/navi/NvmshResMan.h"
 #include "navi/NvmshAcMan.h"
+#include "navi/NvmshResData.h"
+#include "navi/NvmshUtil.h"
 #include "mtl/MemManager.h"
 #include "classes/layer/LayerSortObj.h"
 #include "classes/layer/LayerObjTopFont.h"
@@ -87,6 +89,19 @@ NvmshAcMan::~NvmshAcMan() {
 
 void NvmshAcMan::tail() { m_entryList = m_entryList == 0; }
 
+NvmshAcObjBase* NvmshAcMan::createObj(mtl::ALLOC_HANDLE handle, NvmshResMan* resMan) {
+    for (int i = 0; i < 256; i++) {
+        NvmshAcObjBase* obj = m_objs[i];
+        if (!(obj->m_flags & 1)) {
+            obj->reset();
+            obj->m_flags |= 1;
+            m_entryLists[m_entryList].pushBack(obj);
+            return m_objs[i];
+        }
+    }
+    return nullptr;
+}
+
 void NvmshAcMan::releaseObj(NvmshAcObjBase* object) { object->m_request |= 1; }
 
 void NvmshAcMan::update(NvmshResMan* resMan) {
@@ -101,10 +116,112 @@ void NvmshAcMan::update(NvmshResMan* resMan) {
     objectUpdate(resMan);
 }
 
+void NvmshAcMan::objectUpdate(NvmshResMan* resMan) {
+    NvmshAcObjBase* obj = m_activeList.m_head;
+    if (resMan->m_flags & 4) {
+        for (; obj != nullptr; obj = obj->m_next) {
+            obj->m_status &= 0xFF4FE3E0;
+        }
+        obj = m_activeList.m_head;
+    }
+    bool canSearch = true;
+    int searchNum = 0;
+    while (obj != nullptr) {
+        bool searched = false;
+        if (obj->update(searched, resMan, canSearch)) {
+            NvmshAcObjBase* next = obj->m_next;
+            m_activeList.remove(obj);
+            obj->reset();
+            obj = next;
+        } else {
+            if (searched) {
+                if (searchNum >= 23) {
+                    canSearch = false;
+                }
+                searchNum++;
+            }
+            obj = obj->m_next;
+        }
+    }
+}
 
 void NvmshAcObjBase::setMeshNum(int num) { m_isMeshNum = num > 0; }
 
+int NvmshAcObjBase::seachNaviMesh(_NaviTempColiResl& result, _NaviCalcResTbl* tbl, _NaviCalcResInfo* info) {
+    NvmshColiResult coli;
+    result.m_flags = 0;
+    coli.m_tbl = tbl;
+    coli.m_info = info;
+    if (!seachNaviMesh(coli, 0)) {
+        return 2;
+    }
+    result.m_mesh[0] = coli.m_hitMesh;
+    result.m_pos[0].x = coli.m_hitPos.x;
+    result.m_pos[0].y = coli.m_hitPos.y;
+    result.m_pos[0].z = coli.m_hitPos.z;
+    result.m_radiusSq[0] = coli.m_radiusSq;
+    if (coli.m_isHit) {
+        result.m_flags |= 1;
+    }
+    if (coli.m_isWayPoint) {
+        result.m_flags |= 4;
+    }
+    if (!seachNaviMesh(coli, 1)) {
+        return 3;
+    }
+    result.m_mesh[1] = coli.m_hitMesh;
+    result.m_pos[1].x = coli.m_hitPos.x;
+    result.m_pos[1].y = coli.m_hitPos.y;
+    result.m_pos[1].z = coli.m_hitPos.z;
+    result.m_radiusSq[1] = coli.m_radiusSq;
+    if (coli.m_isHit) {
+        result.m_flags |= 2;
+    }
+    if ((result.m_flags & 4) && !stockWayPointMesh(result, tbl)) {
+        return 2;
+    }
+    return 6;
+}
+
+int NvmshAcObjBase::seachWideAreaNaviMesh(_NaviTempColiResl& result, _NaviCalcResTbl* tbl, _NaviCalcResInfo* info) {
+    NvmshColiResult coli;
+    result.m_flags = 0;
+    coli.m_tbl = tbl;
+    coli.m_info = info;
+    if (!seachNaviMesh(coli, 0)) {
+        return 2;
+    }
+    result.m_mesh[0] = coli.m_hitMesh;
+    result.m_pos[0].x = coli.m_hitPos.x;
+    result.m_pos[0].y = coli.m_hitPos.y;
+    result.m_pos[0].z = coli.m_hitPos.z;
+    result.m_radiusSq[0] = coli.m_radiusSq;
+    if (coli.m_isHit) {
+        result.m_flags |= 1;
+    }
+    if (coli.m_isWayPoint) {
+        result.m_flags |= 4;
+    }
+    if (!seachWideAreaNaviMesh(coli, 1)) {
+        return 3;
+    }
+    result.m_mesh[1] = coli.m_hitMesh;
+    result.m_pos[1].x = coli.m_hitPos.x;
+    result.m_pos[1].y = coli.m_hitPos.y;
+    result.m_pos[1].z = coli.m_hitPos.z;
+    result.m_radiusSq[1] = coli.m_radiusSq;
+    if (coli.m_isHit) {
+        result.m_flags |= 2;
+    }
+    if ((result.m_flags & 4) && !stockWayPointMesh(result, tbl)) {
+        return 2;
+    }
+    return 6;
+}
+
 NvmshAcObjBaseGbl::~NvmshAcObjBaseGbl() {}
+
+void NvmshAcObjBaseGbl::release() { reset(); }
 
 const mm::Vec3& NvmshAcObjBase::getMoveVec() const { return m_moveVec; }
 
@@ -137,6 +254,7 @@ void NvmshAcObjBase::setMoveSpd(float spd) { m_moveSpd = spd; }
 NvmshAcObjBaseDef::~NvmshAcObjBaseDef() { release(); }
 
 void NvmshAcObjBaseDef::release() { m_flags = 0; }
+
 
 bool NvmshAcObjBaseGbl::update(bool& searched, NvmshResMan* resMan, bool canSearch) {
     m_meshNum = m_isMeshNum;

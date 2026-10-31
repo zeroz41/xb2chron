@@ -32,6 +32,26 @@ public:
             }
             obj->m_next = nullptr;
         }
+        // unlinks obj (objectUpdate; the name is not the original's)
+        void remove(NvmshAcObjBase* obj) {
+            if (obj->m_prev != nullptr) {
+                if (obj->m_next != nullptr) {
+                    obj->m_prev->m_next = obj->m_next;
+                    obj->m_next->m_prev = obj->m_prev;
+                } else {
+                    m_tail = obj->m_prev;
+                    m_tail->m_next = nullptr;
+                }
+            } else if (obj->m_next != nullptr) {
+                m_head = obj->m_next;
+                m_head->m_prev = nullptr;
+            } else {
+                m_head = nullptr;
+                m_tail = nullptr;
+            }
+            obj->m_prev = nullptr;
+            obj->m_next = nullptr;
+        }
         void clear() {
             m_tail = nullptr;
             m_head = nullptr;

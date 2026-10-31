@@ -49,7 +49,17 @@ public:
 // members NvmshUtilColi reads are declared, the names are not the original's)
 class NvmshColiResult {
 public:
-    unsigned char pad_0[0xA0];
+    unsigned char pad_0[0x20];
+    mm::Vec3 m_hitPos;  // NvmshAcObjBase::seachNaviMesh copies it to _NaviTempColiResl::m_pos
+    unsigned char pad_30[0x40];
+    _NaviStMeshId m_hitMesh;  // NvmshAcObjBase::seachNaviMesh copies it to _NaviTempColiResl::m_mesh
+    unsigned char pad_74[0x18];
+    float m_radiusSq;  // the query radius squared (seachNaviMesh's setup); copied to _NaviTempColiResl::m_radiusSq
+    unsigned char pad_90[0xC];
+    // seachNaviMesh's setup sets m_isHit when the radius is not 0 and clears m_isWayPoint (read as one halfword)
+    unsigned short m_isHit : 8;
+    unsigned short m_isWayPoint : 8;
+    unsigned char pad_9E[0x2];
     _NaviCalcResTbl* m_tbl;  // the layer's resources (NvmshAcObjBase::seachNaviMesh's _NaviCalcResTbl*)
     _NaviCalcResInfo* m_info;  // the read bank's work (its _NaviCalcResInfo*)
 };
