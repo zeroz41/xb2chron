@@ -113,6 +113,14 @@
 #include "classes/event/ShakeManager.h"
 #include "classes/event/TodoManager.h"
 #include "classes/event/ObjectPartyList.h"
+#include "gf/GfObjAcc.h"
+#include "classes/event/FrameInfo.h"
+#include "classes/event/LipsyncRes.h"
+#include "classes/event/MstxtRes.h"
+#include "classes/event/EffectRes.h"
+#include "classes/fw/EffectPack.h"
+#include "classes/fw/BdatManager.h"
+#include "classes/gf/GfMenuObjEventSubtitle.h"
 #include "event/AgelogUtil.h"
 #include "classes/event/AgelogManager.h"
 #include "ml/DateName.h"
@@ -442,11 +450,38 @@ void MotstmManager::OnEventProc(event::MSG_TYPE msg) {
 
 MotstmManager::~MotstmManager() {}
 
+MstxtRes::~MstxtRes() {
+    if (m_flags & 4) {
+        gf::GfMenuObjEventSubtitle::endText();
+        fw::BdatManager::unregistBdat(2);
+        m_flags &= ~4;
+    }
+}
+
+void MstxtRes::OnResEvent(const IResEvent::PARAM& param) {
+    if (param.m_type == 3) {
+        m_flags |= 2;
+    } else if (param.m_type == 4) {
+        mm::mtl::PtrSingleton<Manager>::sys()->failureSkip();
+    }
+    m_flags &= ~1;
+}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void MstxtManager::OnEventProc(event::MSG_TYPE msg) {
     if (msg == 12) {
         clear();
     }
+}
+
+void LipsyncRes::OnResEvent(const IResEvent::PARAM& param) {
+    if (param.m_type == 3) {
+        m_arc.setData(param.m_data);
+        m_flags |= 2;
+    } else {
+        m_flags &= ~2;
+    }
+    m_flags &= ~1;
 }
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
@@ -736,6 +771,18 @@ void ObjectCamera::OnManiRender(IManiCallback::RenderParam&) {
     SeqManager::getPtr();
 }
 
+// the party leader's driver row: 1 while the event has no party (or the leader slot is empty)
+unsigned int ObjectPartyList::getLeaderDriverId() const {
+    if (s_drlist.empty()) {
+        return 1;
+    }
+    gf::GF_OBJ_HANDLE* leader = s_drlist[0];
+    if (leader == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return 1;
+    }
+    return gf::GfObjAcc(leader).getBdatId();
+}
+
 Object::~Object() {
     Object* child = m_child;
     while (child) {
@@ -767,6 +814,15 @@ Object* Object::searchByPath(const char* path) {
 
 CamMotion::~CamMotion() {
     stop();
+}
+
+void CamMotion::update(const FrameInfo& info) {
+    if (pad_40 & 2) {
+        m_player.update(info.m_step);
+    }
+    if (pad_40 & 4) {
+        m_playerEff.update(info.m_step);
+    }
 }
 
 CamObj::~CamObj() {
@@ -2666,6 +2722,23 @@ void DebugManager::OnEventProc(event::MSG_TYPE msg) {
 #include "classes/event/ResManager.h"
 
 namespace event {
+
+EffectRes::~EffectRes() {
+    if (m_pack != nullptr) {
+        m_pack->release();
+        m_pack = nullptr;
+    }
+}
+
+void EffectRes::OnResEvent(const IResEvent::PARAM& param) {
+    if (param.m_type == 3) {
+        m_pack = fw::EffectPack::createFromMemory(param.m_data, param.m_size, param.m_name, false);
+        m_flags &= ~1;
+        return;
+    }
+    m_pack = nullptr;
+    m_flags &= ~1;
+}
 
 EffectManager::EffectManager() : m_flags(0), m_dispFlags(0), pad_a0(0), m_offscrID(0), pad_ac(0) {}
 

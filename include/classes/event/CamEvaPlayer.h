@@ -9,6 +9,7 @@ namespace event {
 class CamEvaPlayer {
 public:
     virtual ~CamEvaPlayer();  // slot 0
+    void update(float step);  // CamMotion::update calls it with the frame's step (3.0.1 symbol)
     // play (0x71000CA354) clears and frees the previous RchaCam, then stores its camera and a new RchaCam it sets up
     // (the names are not the original's)
     CamBase* m_cam;  // 0x8

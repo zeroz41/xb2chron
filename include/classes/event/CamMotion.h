@@ -19,7 +19,7 @@ public:
 
     // the layout follows CamObj's constructor (it builds the motion in place) and the destructor; the names are not
     // the original's. Size 0xC0.
-    unsigned int pad_40;
+    unsigned int pad_40;  // bit 1: m_player plays, bit 2: m_playerEff plays (update tests them)
     unsigned long pad_48;
     unsigned long pad_50;
     unsigned long pad_58;

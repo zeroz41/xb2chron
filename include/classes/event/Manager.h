@@ -56,6 +56,8 @@ public:
     void post();
     void stop();  // GfGameEvent::stop's
     void finishNewGameWait();  // GfGameEvent::finishNewGameWait's
+    // MstxtRes::OnResEvent calls it when its text fails to load (3.0.1 symbol)
+    void failureSkip();
     bool isPlaying() const { return m_playing; }
     // sends msg to every manager in turn; the name is not the original's (no symbol: inline everywhere)
     void sendMessage(event::MSG_TYPE msg) {

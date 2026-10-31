@@ -6,7 +6,14 @@ namespace event {
 // namespace); MdlstmObj's table holds OnResEvent(IResEvent::PARAM const&) in slot 0, ahead of its destructor
 class IResEvent {
 public:
-    class PARAM;
+    // what a load reports (LipsyncRes/MstxtRes/EffectRes::OnResEvent read it); the names are not the original's
+    class PARAM {
+    public:
+        int m_type;  // 0x0: 3 = loaded (the data below is valid), 4 = failed (MstxtRes calls Manager::failureSkip)
+        const char* m_name;  // 0x8: EffectRes hands it to EffectPack::createFromMemory as the pack's name
+        void* m_data;  // 0x10: the loaded file
+        unsigned int m_size;  // 0x18: its size
+    };
     virtual void OnResEvent(PARAM const&) = 0;
 };
 }  // namespace event
