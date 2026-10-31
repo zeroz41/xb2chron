@@ -26,6 +26,7 @@ namespace fw { class UpdateInfo; }
 namespace ml { class IDrDrawWorkInfo; }
 namespace ml { struct VolumeFadeParams; }
 namespace ml { struct DrMdlAfterImageParams; }
+namespace ml { class DrMdlBase; }
 
 namespace fw {
 // effect categories (setCategory hands one to effect::SystemManager::es_set_category)
@@ -255,7 +256,9 @@ public:
         mm::Vec3 pad_30[20];
         mm::Vec3 pad_170[20];
         mm::Vec3 pad_2b0[20];
-        unsigned char pad_3f0[0x20];
+        // the line's effect handles: term fades each still set out (es_fade_core -1, as EffectManager::remove) and
+        // clears it (the name is not the original's)
+        unsigned int m_effects[8];
         mm::Vec3 pad_410;  // init copies pad_440 in
         mm::Vec3 pad_420;  // init copies the last of pad_30 in
         unsigned char pad_430[0x10];
@@ -266,7 +269,10 @@ public:
         bool m_inUse;  // createKizunaLine takes a work whose flag is clear and sets it (the name is not the original's)
         bool pad_45a;   // init sets it
         bool pad_45b;   // init sets it
-        unsigned char pad_45c[0x14];
+        unsigned char pad_45c[0xC];
+        // a model term hides and hands to setDeleteCall (DrMdlBase slots 15/16, as deleteMdl) and clears (the name is
+        // not the original's)
+        ml::DrMdlBase* m_model;
     };
     KizunaWork m_kizunaWorks[8];  // 0x353E0, by handle (the name is not the original's)
     unsigned char pad_37760[0x1F8];

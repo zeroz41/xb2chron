@@ -16,6 +16,9 @@
 #include "ml/DrLightMan.h"
 #include "classes/ml/DrLightObjPnt.h"
 #include "classes/ml/DrLightObjSpt.h"
+#include "ml/ScnObjAccVolumeFade.h"
+#include "classes/fw/AssetManager.h"
+#include <string.h>
 
 namespace fw {
 
@@ -27,6 +30,25 @@ void EffectCasterSend::tailCopy() {
     m_scl[dst] = m_scl[src];
     m_frame[dst] = m_frame[src];
     m_stateName[dst] = m_stateName[src];
+}
+
+void EffectCasterSend::sendData(mm::Mat44& mtx, const char* name, int index) {
+    if (m_caster != nullptr && effect::SystemManager::getPtr() != nullptr) {
+        // the half effect::SystemManager does not read
+        MtxAndName* entries;
+        if (effect::SystemManager::getPtr()->m_secondBuffer) {
+            entries = &m_mtxAndNames[0][0];
+        } else {
+            entries = &m_mtxAndNames[1][0];
+        }
+        entries[index].m_mtx = mtx;
+        if (name != nullptr) {
+            strcpy(entries[index].m_name, name);
+        } else {
+            strcpy(entries[index].m_name, "root");
+        }
+        entries[index].m_hash = AssetManager::getHash(entries[index].m_name);
+    }
 }
 
 void EffectCasterSend::sendDataStateName(const char* name) {
@@ -380,6 +402,21 @@ unsigned int EffectManager::createComboBall(unsigned int type) {
     return effect::SystemManager::getPtr()->es_create(efb, true);
 }
 
+void EffectManager::KizunaWork::term() {
+    if (m_model != nullptr) {
+        m_model->setDisp(false);
+        m_model->setDeleteCall(ml::DrMan::s_nDblStockIdx);
+        m_model = nullptr;
+    }
+    for (int i = 0; i < 8; ++i) {
+        unsigned int handle = m_effects[i];
+        if (handle != 0) {
+            effect::SystemManager::getPtr()->es_fade_core(nullptr, handle, -1);
+            m_effects[i] = 0;
+        }
+    }
+}
+
 unsigned int EffectManager::createKizunaLine() {
     for (unsigned int i = 1; i < 8; ++i) {
         if (!m_kizunaWorks[i].m_inUse) {
@@ -526,6 +563,39 @@ void EffectManager::removeCaster(EffectCasterBase* caster) {
             return;
         }
     }
+}
+
+void EffectManager::changeLayerCaster(EffectCasterBase* caster, unsigned int index, unsigned int layer) {
+    CasterGroup& group = m_casterGroups[index];
+    for (CasterGroup::iterator it = group.begin(); it != group.end(); ++it) {
+        if (it->m_caster == caster) {
+            EffectCasterSend* send = it.operator->();  // unchecked, as in removeCaster
+            group.erase(it);
+            m_casterGroups[layer].push_back(send);
+            return;
+        }
+    }
+}
+
+bool EffectManager::getVolumeFadeParam(unsigned int type, ml::VolumeFadeParams& params) {
+    if (type < 32) {
+        const VolumeFadeParams* src = m_volumeFadeParams[type];
+        if (src != nullptr) {
+            for (int i = 0; i < 5; ++i) {
+                params.m_colors[i] = src->m_colors[i];
+                params.m_values0[i] = src->m_values0[i];
+                params.m_values1[i] = src->m_values1[i];
+                params.m_values2[i] = src->m_values2[i];
+            }
+            params.m_color0 = mm::Vec3(src->m_color0.r, src->m_color0.g, src->m_color0.b);
+            params.m_color1 = mm::Vec3(src->m_color1.r, src->m_color1.g, src->m_color1.b);
+            params.m_value0 = src->m_value0;
+            params.m_value1 = src->m_value1;
+            params.m_value2 = src->m_value2;
+            return true;
+        }
+    }
+    return false;
 }
 
 void EffectManager::fn_7100179D30(bool flag) {
