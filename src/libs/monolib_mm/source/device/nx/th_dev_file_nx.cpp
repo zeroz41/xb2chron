@@ -206,6 +206,16 @@ inline bool DebDraw::isNotRender() {
 
 // ---- ml::CacheDraw: queueing a command (one per DebDraw call) ----
 
+CacheDraw::~CacheDraw() {
+    for (int i = 0; i < 2; i++) {
+        mtl::MemManager::deallocate(m_buf[i].m_top, 0, false);
+    }
+    if (m_section != nullptr) {
+        delete m_section;
+        m_section = nullptr;
+    }
+}
+
 bool CacheDraw::clear() {
     CSNC lock(*m_section);
     if (!DebDraw::isNotRender()) {
