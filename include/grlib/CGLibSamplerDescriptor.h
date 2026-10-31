@@ -7,11 +7,20 @@
 
 namespace grlib {
 class CGLibSampler;
+struct CGLibWkrSamplerParams;
 
-// an NVN sampler as the descriptors register it (the name is the original's, the layout is not known beyond it)
+// an NVN sampler as the descriptors register it (the field names are not the original's)
 class CGLibSamplerParam {
 public:
+    CGLibSamplerParam() : m_init(false), m_samplerId(-1) {}
+    // initializes the sampler from the state and registers it in a descriptor slot
+    void setupResource(const CGLibWkrSamplerParams& params);
+    // finalizes the sampler (when initialized) and frees its descriptor slot
+    void releaseParams();
+
     NVNsampler m_sampler;  // 0x0
+    bool m_init;           // 0x60: the sampler is initialized (releaseParams finalizes it then)
+    int m_samplerId;       // 0x64: its slot in the sampler descriptor pool (CGLibSamplerDescriptor_plf::setSampler)
 };
 
 // the platform part of the sampler descriptor pool (a base at 0x28; the field names are not the original's)

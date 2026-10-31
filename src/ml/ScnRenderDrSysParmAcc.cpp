@@ -94,6 +94,8 @@ void CGLibVtxInstans::updateInstansBuff() {
 
 void* CGLibVtxInstans::getNextInstansBuff() { return static_cast<unsigned char*>(m_mem.m_pMem) + (m_offset + m_base); }
 
+unsigned long CGLibVtxInstans_plf::getGPUAdress() { return m_gpuAddress + CGLibManager::s_nDblNowIdx * m_frameSize; }
+
 CGLibVtxOneInstans::CGLibVtxOneInstans() {}
 
 CGLibVtxOneInstans::~CGLibVtxOneInstans() { CGLibMemHandle::free(m_mem); }
@@ -225,6 +227,12 @@ void CGLibMemPool::release() {
         }
         m_pPool = nullptr;
     }
+}
+
+unsigned int CGLibMemPoolList::cntOffset(unsigned int size, unsigned int alignment) {
+    unsigned int offset = m_offset + (alignment - m_offset % alignment) % alignment;
+    m_offset = (alignment - size % alignment) % alignment + offset + size;
+    return offset;
 }
 
 CGLibMemPool::CGLibMemPool() : m_size(0), m_pAlloc(nullptr), m_pBuffer(nullptr) {}
@@ -374,6 +382,10 @@ void CGLibBuffFixAlloc::freeID(unsigned int id) {
     m_pBits[id >> 6] &= ~(1UL << (static_cast<unsigned long>(id) & 0x3F));
     m_useNum--;
 }
+
+CGLibBuffSamplerTbl::CGLibBuffSamplerTbl() : m_pBuff(nullptr), m_useNum(0), m_num(0) {}
+
+CGLibBuffSamplerTbl::~CGLibBuffSamplerTbl() { release(); }
 
 CGLibBuffTexture::CGLibBuffTexture() {}
 
@@ -637,7 +649,7 @@ void CGLibSamplerDescriptor_plf::bindSampler(const CGLibSamplerParam& param, int
 }
 
 int CGLibSamplerDescriptor_plf::setSampler(const CGLibSampler& sampler) {
-    return context::CGLibSystemContext::s_nNumReservedSamplers + sampler.m_pSamObj->m_samplerId;
+    return context::CGLibSystemContext::s_nNumReservedSamplers + sampler.m_pSamObj->m_param.m_samplerId;
 }
 
 
