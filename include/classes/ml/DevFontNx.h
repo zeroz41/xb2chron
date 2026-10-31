@@ -1,4 +1,3 @@
-// not proven yet: its table differs from the original's (word 29: =-440 where the original has =-448)
 #ifndef CLASSES_ML_DEVFONTNX_H
 #define CLASSES_ML_DEVFONTNX_H
 
@@ -8,10 +7,14 @@ namespace ml {
 // table 0x7100B77240
 class DevFontNx : public ::ml::DevFont {
 public:
-    virtual ~DevFontNx();  // slot 0
-    virtual void wkUpdate();  // slot 4
+    // createFont declared first: the key function (the destructor and releaseFont are inline: 0x71006BDA04,
+    // 0x71006BDA28)
+    // inline: WorkUtil::createWork<DevFontNx> inlines it
+    DevFontNx(const char* name, WorkObj* parent) : DevFont(name, parent) {}
     virtual bool createFont();  // slot 6
-    virtual void releaseFont();  // slot 7
+    virtual ~DevFontNx() {}  // slot 0
+    virtual void wkUpdate();  // slot 4
+    virtual bool releaseFont() { return true; }  // slot 7
 };
 }  // namespace ml
 

@@ -1003,6 +1003,23 @@ inline DevFontLayer* DevFont::findFontLayer(const FontLayer* layer) {
     return layer->m_devLayer;
 }
 
+inline DevFontLayer* DevFont::createFontLayer(const FontLayer* layer) {
+    DevFont* font = mm::mtl::PtrSingleton<DevFont>::get();
+    if (font == nullptr) {
+        return nullptr;
+    }
+    DevFontLayer* fontLayer = WorkUtil::createWork<DevFontLayer>("DevFontLayer", font, false);
+    fontLayer->m_layer = layer;
+    return fontLayer;
+}
+
+inline void DevFont::doneFontLayer(const FontLayer* layer) {
+    DevFontLayer* fontLayer = findFontLayer(layer);
+    if (fontLayer != nullptr) {
+        fontLayer->m_done = true;
+    }
+}
+
 void DevFont::fontLayer(const FontLayer* layer, int x, int y, const char* text) {
     DevFontLayer* fontLayer = findFontLayer(layer);
     if (fontLayer != nullptr && fontLayer->m_que != nullptr) {
@@ -1070,6 +1087,57 @@ void DevFontLayer::flush(bool on) {
 
 DebDraw* DebDraw::getOnly(unsigned int) {
     return s_debDraw;
+}
+
+void DevFont::wkUpdate() {
+    for (reslist<IDevFontInfo*>::iterator it = m_infos.begin(); it != m_infos.end(); ++it) {
+        (*it)->fn_slot7();
+    }
+    for (reslist<IDevFontInfo*>::iterator it = m_infos.begin(); it != m_infos.end(); ++it) {
+        if ((*it)->fn_slot10()) {
+            if (*it != nullptr) {
+                delete *it;
+                *it = nullptr;
+            }
+            m_infos.erase(it);
+            break;
+        }
+    }
+}
+
+bool DevFont::wkStandbyLogin() {
+    if (dg::s_bIgnore) {
+        return WorkObj::wkStandbyLogin();
+    }
+    if (Device::isColdStartReady() && DevGraph::get() != nullptr && DevGraph::get()->isLoggedIn()) {
+        m_infos.create(8, m_mem);
+        createFont();
+        createFontLayer(this);
+        return WorkObj::wkStandbyLogin();
+    }
+    return false;
+}
+
+bool DevFont::wkStandbyLogout() {
+    doneFontLayer(this);
+    if (m_child.size() == 0 && WorkSystem::get() == nullptr && LibMain::get() == nullptr) {
+        releaseFont();
+        for (reslist<IDevFontInfo*>::iterator it = m_infos.begin(); it != m_infos.end(); ++it) {
+            if (*it != nullptr) {
+                delete *it;
+                *it = nullptr;
+            }
+        }
+        m_infos.clear();
+        return WorkObj::wkStandbyLogout();
+    }
+    return false;
+}
+
+void DevFont::wkTail() {
+    for (reslist<WorkObj*>::iterator it = wkGetChild()->begin(); it != wkGetChild()->end(); ++it) {
+        static_cast<DevFontLayer*>(*it)->resetQue();
+    }
 }
 
 void DevFontLayer::wkUpdate() {
@@ -1304,6 +1372,11 @@ void DebDrawCmd::add(int x, int y, const mm::Col3& col) {
 void DebDrawCmd::add(const mm::Vec3& p, const mm::Vec3& uv, const mm::Col4& col) {
     putVtx(p, col, uv.x, uv.y);
     pad_140++;
+}
+
+// tells the DevFontLayer serving it that it is done (wkUpdate then sends event 0)
+FontLayer::~FontLayer() {
+    DevFont::doneFontLayer(this);
 }
 
 void FontLayer::fontStyle(FONT_STYLE style) {
@@ -1546,6 +1619,10 @@ bool DevTouch::wkStandbyLogout() {
 
 bool DevFontNx::createFont() {
     return true;
+}
+
+void DevFontNx::wkUpdate() {
+    DevFont::wkUpdate();
 }
 
 int DevGraphNx::getRootWidthSys() {

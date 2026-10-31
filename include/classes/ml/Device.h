@@ -18,6 +18,8 @@ public:
     static void initializeSDK(const InitParam& param);
     // every device ready (WinViewRoot::wkStandbyLogin waits on it)
     static bool isAllReady();
+    // DevFont::wkStandbyLogin waits for it before making its font (0x71006A0AB0)
+    static bool isColdStartReady();
     virtual ~Device();  // slot 0
     virtual bool wkStandbyLogin();  // slot 14
     virtual bool wkStandbyLogout();  // slot 15

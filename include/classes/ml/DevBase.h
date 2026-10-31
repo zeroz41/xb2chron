@@ -7,8 +7,10 @@ namespace ml {
 // table 0x7100B77470
 class DevBase : public ::ml::WorkObj {
 public:
-    // WorkUtil::createWork<DevClockNx> inlines it: the work, then 0 at 0x1A8
-    DevBase(const char* name, WorkObj* parent) : WorkObj(name, parent, 0), m_devState(0) {}
+    // WorkUtil::createWork<DevClockNx> inlines it: the work, then 0 at 0x1A8 (DevFont's has room for 0x200
+    // children: WorkUtil::createWork<DevFontNx>; the parameter name is not the original's)
+    DevBase(const char* name, WorkObj* parent, int childCapacity = 0)
+        : WorkObj(name, parent, childCapacity), m_devState(0) {}
     virtual ~DevBase() {}  // slot 0
     int m_devState;  // 0x1A8 the constructor clears it (the name is not the original's)
     unsigned char pad_1ac[0x4];
