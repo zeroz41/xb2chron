@@ -79,6 +79,22 @@ void StateIdle::enter(GfComBehaviorNpc* owner, ai::State* prev) {
     }
 }
 
+void StateIdle::fn_71004E0948(GfComBehaviorNpc& owner, const fw::UpdateInfo& info) {
+    if (m_execCmd.m_info.handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) && m_execCmd.m_info.cmdName.m_nLen != 0) {
+        m_execCmd.update(info.m_deltaTime);
+        if (!m_execCmd.m_done) {
+            return;
+        }
+        if (m_execCmd.m_executed) {
+            owner.init(false);
+        }
+    }
+    int next = owner.getNexStateId();
+    if (next != -1) {
+        requestState(next);
+    }
+}
+
 void StateIdle::leave(GfComBehaviorNpc* owner, ai::State* next) {
     if (next == nullptr || m_stateID == next->m_stateID) {
         return;

@@ -157,6 +157,16 @@ unsigned int GfDataEnemy::getSavedHpType(unsigned int arrange) {
     return GfBdatChrEnArrange::get()->getChrEnArrangeHpOver(arrange);
 }
 
+unsigned char GfDataBlade::getAttribute(unsigned int blade) {
+    if (blade == 0) {
+        return 0;
+    }
+    if (GfDataHana::isValid(blade)) {
+        return GfDataHana::getAttribute(blade);
+    }
+    return GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_attribute;
+}
+
 unsigned int GfDataBlade::getRoleByWpnType(unsigned int wpnType) {
     if (wpnType == 0) {
         return 1;
@@ -174,6 +184,25 @@ unsigned int GfDataBlade::getBladeWeaponRank(unsigned int blade) {
         return 0;
     }
     return GfBdatItem::get()->getPcWpnRank(weapon);
+}
+
+unsigned int GfDataDriver::fn_71002417DC(unsigned int driver) {
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(driver)) != 0) {
+            bdat = GfBdatChrDr::get();
+            unsigned int group = bdat->fn_71001F172C(bdat->fn_71001F13E0(driver));
+            unsigned int row = bdat->fn_71001F15D4();
+            unsigned int end = bdat->fn_71001F15E0();
+            for (; row < end; row++) {
+                if (bdat->fn_71001F16A4(row) == 0 && bdat->fn_71001F172C(row) == group) {
+                    return bdat->fn_71001F161C(row);
+                }
+            }
+            return 0x11;
+        }
+    }
+    return driver;
 }
 
 unsigned int GfDataDriver::fn_7100241C04(unsigned int driver) {

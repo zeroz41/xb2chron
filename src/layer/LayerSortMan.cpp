@@ -99,6 +99,10 @@ void LayerTextureObj::textureRelease() {
     }
 }
 
+void LayerTextureObj::release() {
+    m_owner->releaseTextureObj(this);
+}
+
 const grlib::CGLibTextureBuffer* LayerTextureObj::getTexture(int index) const {
     return &m_textures[index];
 }
@@ -169,6 +173,14 @@ grlib::CGLibTextureBuffer* LayerResAddTexObj::getTexObj(unsigned int index) {
         return m_buffer;
     }
     return m_texObj->getTexture(index);
+}
+
+LayerResSecTexture::~LayerResSecTexture() {
+    if (m_texObj != nullptr) {
+        mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager->m_textureMan->releaseTextureObj(m_texObj);
+        m_texObj = nullptr;
+    }
+    m_uniform.release();
 }
 
 void LayerResSecTexture::resourceInit() {

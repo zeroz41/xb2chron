@@ -12,6 +12,14 @@ UIAnimationManager::UIAnimationManager() {}
 // the destructor (0x710066AD8C, 0x710066AEB4) is not written yet: the candidate differs in register allocation
 // only (see the worker report)
 
+UIAnimationManager::~UIAnimationManager() {
+    for (mm::mtl::IntrusiveList<ObjectNode>::iterator it = m_list.begin(); it != m_list.end();) {
+        ObjectNode* node = it.operator->();
+        it = m_list.erase(it);
+        delete node;
+    }
+}
+
 void UIAnimationManager::update(const fw::UpdateInfo& info) {
     for (mm::mtl::IntrusiveList<ObjectNode>::iterator it = m_list.begin(); it != m_list.end();) {
         ObjectNode& node = *it;

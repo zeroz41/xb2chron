@@ -197,6 +197,49 @@ void GfMenuObjHanaCustom::MainListener::reciveEvent(ui::EventData const& event, 
     }
 }
 
+void GfMenuObjHanaCustom::getEquipItem(unsigned int hana, unsigned int slot, MenuItemInfo& item) {
+    EquipHana equip;
+    GfGameUtilHana::getEquip(equip, hana);
+    switch (slot) {
+    case 1:
+        item.m_type = 0x10;
+        item.m_id = equip.m_roleParts;
+        break;
+    case 2:
+        item.m_type = 0x11;
+        item.m_id = equip.m_attributeParts;
+        break;
+    case 3:
+    case 4:
+    case 5:
+        item.m_type = 0x13;
+        item.m_id = equip.m_nArtsParts[slot - 3].m_item;
+        break;
+    case 6:
+    case 7:
+    case 8:
+        item.m_type = 0x14;
+        item.m_id = equip.m_condenserParts[slot - 6];
+        break;
+    case 9:
+    case 10:
+    case 11:
+        item.m_type = 0x12;
+        item.m_id = equip.m_artsParts[slot - 9].m_item;
+        break;
+    case 12:
+    case 13:
+    case 14:
+        item.m_type = 0x14;
+        item.m_id = (&equip.m_condenserParts[3])[slot - 12];
+        break;
+    default:
+        item.m_type = 0;
+        item.m_id = 0;
+        break;
+    }
+}
+
 void GfMenuObjHanaCustom::removeParts(unsigned int hana, unsigned int slot) {
     switch (slot) {
     case 3:

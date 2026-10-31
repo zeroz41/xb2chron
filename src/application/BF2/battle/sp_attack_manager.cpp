@@ -76,6 +76,8 @@ void SpAttackManager::DeleteCamera(bool interpolate) {
     }
 }
 
+void SpAttackManager::PreUpdate(const fw::UpdateInfo& info) {}
+
 void SpAttackManager::Update(const fw::UpdateInfo& info) {
     get()->UpdateProc(info);
 }

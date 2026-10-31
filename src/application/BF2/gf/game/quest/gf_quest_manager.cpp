@@ -43,6 +43,12 @@ void GfQuestManager::destroy() {
     delete self;
 }
 
+void GfQuestManager::removeEvent(IQuestEvent* event) {
+    if (GfQuestManager* self = get()) {
+        self->m_events.erase(::mm::mtl::find(self->m_events.begin(), self->m_events.end(), event));
+    }
+}
+
 ::mm::mtl::FixedQueue<QuestData, 15000>* GfQuestManager::getOrderAchievementQuest() {
     return &get()->m_orderAchievementQuest;
 }
@@ -179,6 +185,17 @@ void GfQuestManager::requestOrderQuestForce() {
     if (GfQuestManager* self = get()) {
         self->m_requestOrderQuest = true;
         self->setupParallelTaskCheck();
+    }
+}
+
+void GfQuestManager::resetBattleTaskForBattleEnd() {
+    ::mm::mtl::FixedVector<unsigned short, 128> enemies;
+    unsigned int max = getOrderQuestMax();
+    for (unsigned int i = 0; i < max; i++) {
+        GfQuestTask::resetBattleTaskForBattleEnd(enemies, getOrderQuest(i));
+    }
+    for (unsigned short enemy : enemies) {
+        GfGameUtil::clearEnemyRepopCounter(enemy);
     }
 }
 

@@ -568,6 +568,22 @@ QuestID GfGameScene::getQuestIdForTaskLog() const {
     return m_questIdForTaskLog;
 }
 
+void GfGameScene::updateParam(const fw::UpdateInfo&) {
+    if (m_ownerBonusDirty) {
+        m_ownerBonusDirty = false;
+        GfGameUtil::getOwnerBonus(m_ownerBonus);
+    }
+    {
+        mm::mtl::FixedVector<unsigned short, 32> drivers;
+        GfPartySelect::getDriverList(drivers, GfPartySelect::LIST_TYPE(1), 0);
+        GfPartySelect::getDriverList(drivers, GfPartySelect::LIST_TYPE(0), 0);
+        for (unsigned short driver : drivers) {
+            GfGameUtil::refreshEnhanceState(driver);
+        }
+    }
+    updatePlayerState();
+}
+
 void GfGameScene::updateRideRequest(const fw::UpdateInfo&) {
     if (!m_rideRequest) {
         return;

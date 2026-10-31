@@ -288,6 +288,20 @@ static inline const char* getGmkKindName(const char** names, unsigned int type) 
 
 namespace gmk {
 
+unsigned char GmkEnemyInsts::BdatInfo::fn_710058356C(CBdatWrapper bdat, int row) {
+    unsigned char groups = Bdat::getFlagVal(bdat.m_fp, "flag", row, "pop_smn") != 0;
+    if (Bdat::getMember(bdat.m_fp, "pop_smn2") != nullptr && Bdat::getFlagVal(bdat.m_fp, "flag", row, "pop_smn2") != 0) {
+        groups |= 2;
+    }
+    if (Bdat::getMember(bdat.m_fp, "pop_smn3") != nullptr && Bdat::getFlagVal(bdat.m_fp, "flag", row, "pop_smn3") != 0) {
+        groups |= 4;
+    }
+    if (Bdat::getMember(bdat.m_fp, "pop_smn4") != nullptr && Bdat::getFlagVal(bdat.m_fp, "flag", row, "pop_smn4") != 0) {
+        groups |= 8;
+    }
+    return groups;
+}
+
 void GmkTbox::onPlayerAccessed(gf::GF_OBJ_HANDLE*) {}
 
 void GmkEffect::debugUpdateMmf() {}

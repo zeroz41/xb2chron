@@ -20,6 +20,8 @@ inline void EffectManager::Finalize() {
     DeleteAllEffect();
 }
 
+EffectManager::EffectManager() : m_nextId(1) {}
+
 void EffectManager::Destroy() {
     EffectManager* manager = sys();
     manager->Finalize();

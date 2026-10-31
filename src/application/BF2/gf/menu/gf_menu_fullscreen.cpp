@@ -170,6 +170,20 @@ void GfMenuFullScreen::disableInput() {
 
 // removeLayerParam is not here yet (a candidate a few words off is in the worker notes)
 
+void GfMenuFullScreen::removeLayerParam(unsigned int layer) {
+    if (layer != 0) {
+        GfMenuFullScreen* screen = get();
+        if (screen != nullptr) {
+            for (LayerParam* it = screen->m_layerParams.begin(); it != screen->m_layerParams.end(); ++it) {
+                if (it->m_layer == layer) {
+                    screen->m_layerParams.erase(it);
+                    return;
+                }
+            }
+        }
+    }
+}
+
 void GfMenuFullScreen::registLayerObject(unsigned int layer, unsigned int handle) {
     if (layer != 0) {
         GfMenuFullScreen* screen = get();

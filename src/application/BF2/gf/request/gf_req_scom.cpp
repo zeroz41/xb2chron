@@ -326,6 +326,14 @@ bool SCOM_DEAD_PARTICLE::exec(fw::UpdateInfo const& info) {
     return true;
 }
 
+unsigned long SCOM_DEAD_PARTICLE::create(GF_OBJ_HANDLE* obj, unsigned int particle, float time) {
+    if (time < 1e-6f) {
+        return -1;
+    }
+#line 5899
+    return GfReqSmallCom::addRequestParallel(new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_DEAD_PARTICLE(SCOM_TYPE(77), GfReqSmallCom::sys()->newHandle(), obj, particle, time));
+}
+
 bool SCOM_BC_PARTICLE::exec(fw::UpdateInfo const& info) {
     GfObjAcc acc(m_obj);
     if (acc.getObj()) {

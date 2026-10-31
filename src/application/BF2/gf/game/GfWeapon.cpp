@@ -174,6 +174,14 @@ void GfGameUtil::addEther(int ether) {
     GfDataHana::setEther(value);
 }
 
+void GfGameUtil::addWpForReserve(int wp) {
+    mm::mtl::FixedVector<unsigned short, 32> drivers;
+    GfPartySelect::getDriverList(drivers, GfPartySelect::LIST_TYPE(1), 0);
+    for (unsigned short* it = drivers.begin(); it != drivers.end(); ++it) {
+        addWp(*it, 0, wp);
+    }
+}
+
 bool GfGameUtil::collectGfObjHandleByGmkType(mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>& list, gmk::GmkType type) {
     gmk::GmkManager* manager = gmk::GmkManager::sys();
     if (manager == nullptr || !manager->isValid()) {

@@ -34,6 +34,25 @@ void GfAssetName::set(const char* path) {
     }
 }
 
+GfAssetResource* GfAssetPack::getResource(GfFileIdx file) const {
+    for (const Resource& resource : m_resources) {
+        if (resource.m_fileIdx == file) {
+            return resource.m_resource;
+        }
+    }
+    for (unsigned int map : m_files.m_fileMap) {
+        if ((map & 0xFFFF) == static_cast<unsigned int>(file)) {
+            for (const Resource& resource : m_resources) {
+                if (resource.m_fileIdx == (map >> 16)) {
+                    return resource.m_resource;
+                }
+            }
+            return nullptr;
+        }
+    }
+    return nullptr;
+}
+
 GfAssetType GfAssetPack::getAssetType() const {
     return m_files.m_type;
 }

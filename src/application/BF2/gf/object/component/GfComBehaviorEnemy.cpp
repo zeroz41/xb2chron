@@ -32,6 +32,13 @@
 namespace gf {
 
 // GfComBehavior's own empty virtuals (its table is emitted here: changeLayer is its key function)
+const fw::Transform& GfComBehaviorEnemy::getTransformToSearchPlayer() const {
+    if (pad_138 != nullptr) {
+        return pad_138->getWorldTransform();
+    }
+    return getTransform();
+}
+
 void GfComBehavior::changeLayer(unsigned int, unsigned int) {}
 
 void GfComBehavior::procAnimCallback(GfComAsm*, const CallBackCache&) {}

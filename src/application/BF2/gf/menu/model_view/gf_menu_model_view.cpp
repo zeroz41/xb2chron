@@ -27,6 +27,9 @@
 
 namespace gf {
 
+GfMenuModelView::~GfMenuModelView() {
+}
+
 fw::Transform& GfMenuModelView::getObjectTransformLocal(GF_OBJ_HANDLE* handle) {
     // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EA7130)
     static fw::Transform s_transform;

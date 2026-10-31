@@ -9,6 +9,9 @@
 namespace fw {
 SoundManager::UniqueID SoundManager::m_uniqueID = {0, 1, 0xFFFFFFFF};
 
+SoundManager::SoundManager(mm::mtl::IAllocator*) : m_driver(nullptr), pad_68(0), m_pauseCount(0), m_deviceEnable(false),
+    m_commonSe(nullptr), m_battleSystemSe(nullptr), m_battleElemSe(nullptr), m_battleWeaponSe(nullptr), m_dlc(false) {}
+
 SoundManager::~SoundManager() {
     if (m_commonSe != nullptr) {
         m_commonSe->release();

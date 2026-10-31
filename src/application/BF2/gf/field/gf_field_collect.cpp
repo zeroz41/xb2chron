@@ -89,4 +89,12 @@ void GfFieldCollect::seqWaitUIEnd(float) {
     }
 }
 
+void GfFieldCollect::fn_71002681C4(float dt) {
+    m_seqTime += dt;
+    if (m_seqTime < 1.0f) {
+        return;
+    }
+    m_seq = &GfFieldCollect::seqDo;
+}
+
 }  // namespace gf

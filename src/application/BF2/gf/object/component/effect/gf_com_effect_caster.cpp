@@ -116,6 +116,12 @@ bool GfComEffectCaster::startTimer(unsigned int id) {
     return false;
 }
 
+void GfComEffectCaster::fn_71004B3B68(const mm::Mat44& mtx) {
+    if (m_caster) {
+        m_caster->fn_71004B3B78(mtx);
+    }
+}
+
 mm::mtl::RTTI GfComEffectCaster::m_rtti("GfComEffectCaster", &GfComEffect::m_rtti, nullptr);
 
 }  // namespace gf

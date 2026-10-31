@@ -144,6 +144,29 @@ void GfMenuObjItemList2::setupItemList(ui::UIObjectAcc& acc, GfMenuItemList* lis
     GfMenuAdapterManager::endAddAfter();
 }
 
+void GfMenuObjItemList2::refreshItemList(ui::UIObjectAcc& acc, GfMenuItemList* list, ui::UISelectObjList* select,
+                                         unsigned int filter) {
+    if (list != nullptr && select != nullptr) {
+        mm::mtl::FixStr<32> name;
+        for (unsigned int i = 0; i < static_cast<unsigned int>(select->getSize()); i++) {
+            const MenuItemInfo& item = list->getContents(list->getPageIndex(i));
+            name.format("IMG_tagsellect@%02d", i + 1);
+            GfMenuObjUtil::setChildDisp(acc.m_handle, name.m_str, list->getIndex(true) == i);
+            name.format("LAY_stock@%02d", i + 1);
+            GfMenuObjUtil::setChildDisp(acc.m_handle, name.m_str, GfMenuItemUtil::canCountStack(item.m_type));
+        }
+        if (filter == 0) {
+            unsigned int type = 0;
+            if (list->getSize() != 0) {
+                type = list->getContents(list->getIndex(false)).m_type;
+            }
+            GfMenuReference::fn_710036932C(type);
+        }
+        unsigned int type = GfMenuReference::fn_710036934C();
+        acc.setDispChild(type == 2 || type == 3, "LAY_stock");
+    }
+}
+
 void GfMenuObjItemList2::setupFilter(ui::UIObjectAcc& acc, unsigned int filter) {
     ui::UIStr text;
     getFilterText(filter, text);

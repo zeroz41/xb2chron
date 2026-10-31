@@ -76,6 +76,10 @@ MicroThreadNx::MicroThreadNx() {
     }
 }
 
+MicroThreadNx::~MicroThreadNx() {
+    destroyAll();
+}
+
 MicroThread::~MicroThread() {}
 
 void MicroThreadNx::setupThread(MTHREAD* thread, nn::os::FiberType* (*func)(void*)) {

@@ -34,6 +34,22 @@ static void fn_7100312FBC(QTYPE type);
 static const unsigned short s_newGameKeepQuests[] = {0xA4B, 0xA60};
 static const unsigned short s_newGameKeepQuestsMode[] = {0x8E1, 0x8E3, 0x8E5, 0x8E7, 0x8E9, 0x8EB};
 
+bool AchievQuest::decleseCount(unsigned int count) {
+    if (count == 0) {
+        return false;
+    }
+    if ((m_count & 0x3FFFFFFF) == 0) {
+        return false;
+    }
+    for (unsigned int i = 0; i < count; i++) {
+        if ((m_count & 0x3FFFFFFF) == 0) {
+            break;
+        }
+        m_count--;
+    }
+    return true;
+}
+
 void GfQuestUtil::removeQuestItem(const QuestTaskParam& param) {
     QuestListAcc* acc = QuestListAcc::get();
     if (param.m_taskType == 3 && acc->getCollectDeduct(param.m_taskId) != 0) {

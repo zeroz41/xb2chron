@@ -78,6 +78,31 @@ int SoundReferenceObject::release() {
     return count;
 }
 
+SoundSsdSource::~SoundSsdSource() {
+    if (m_bank != nullptr && m_entry != nullptr) {
+        m_bank->m_bank.RemoveSoundEntry(m_entry);
+    }
+    if (m_entry != nullptr) {
+        m_entry->~SoundEntry();
+        mtl::MemManager::deallocate(m_entry, 0, false);
+        m_entry = nullptr;
+    }
+    if (m_wave != nullptr) {
+        m_wave->~WaveSource();
+        mtl::MemManager::deallocate(m_wave, 0, false);
+        m_wave = nullptr;
+    }
+    mm::mtl::List<SoundSsdSource*>& sources = m_bank->m_sources;
+    mm::mtl::List<SoundSsdSource*>::iterator end = sources.end();
+    for (mm::mtl::List<SoundSsdSource*>::iterator it = sources.begin(); it != end;) {
+        if (*it == this) {
+            it = sources.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
 SoundSsdBank::SoundSsdBank(const SoundBankSetup& setup) : m_allocator(setup.allocator) {
     m_id = setup.id;
     m_name = setup.name;

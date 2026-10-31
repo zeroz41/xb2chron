@@ -24,6 +24,23 @@ UIObject::UIObject(layer::LayerBase* layer, const mm::mtl::FixStr<32>& name, uns
     m_nameHash = mm::mtl::hashStrCrc(m_name.m_str);
 }
 
+UIObject::~UIObject() {
+    if (m_layer != nullptr) {
+        m_layer->release();
+        m_layer = nullptr;
+    }
+    for (mm::mtl::IntrusiveList<UIObjectParam>::iterator it = m_params.begin(); it != m_params.end(); ++it) {
+        (*it).m_handle = 0;
+    }
+    UIObjectPlugin* plugin = m_plugins;
+    while (plugin != nullptr) {
+        UIObjectPlugin* next = plugin->m_next;
+        plugin->release();
+        plugin = next;
+    }
+    m_plugins = nullptr;
+}
+
 void UIObject::update() {
     if (m_flags.test(4) && !m_flags.test(3)) {
         UIObject* parent = UIUtil::getObject(m_parent);

@@ -88,6 +88,28 @@ void GfMenuLocation::updateLocator() {
     }
 }
 
+void GfMenuLocation::refreshLocator(unsigned int kind) {
+    GfMenuLocation* self = get();
+    if (self == nullptr) {
+        return;
+    }
+    LocatorList& list = self->m_lists[kind];
+    list.m_locators.clear();
+    list.m_dataNum = 0;
+    switch (kind) {
+    case 0:
+        self->refreshLocatorFromQuest(0, 0);
+        break;
+    case 1:
+        self->refreshLocatorFromQuest(1, 1);
+        break;
+    case 3:
+        GfGameUtil::collectOrderableLocators(list.m_locators);
+        break;
+    }
+    self->updateDataNum(kind);
+}
+
 void GfMenuLocation::refreshLocatorFromQuest(unsigned int kind, unsigned int type) {
     QuestID current = GfMenuObjUtil::getCurrentQuest(type);
     mm::mtl::FixedVector<QuestID, 16> quests;
@@ -118,6 +140,27 @@ void GfMenuLocation::refreshLocatorFromQuest(unsigned int kind, unsigned int typ
 void GfMenuLocation::fn_7100356980(unsigned int value) {
     if (get() != nullptr) {
         get()->m_requestId = value;
+    }
+}
+
+unsigned int GfMenuLocation::fn_7100356998() {
+    if (get() != nullptr) {
+        return get()->m_requestId;
+    }
+    return 0;
+}
+
+void GfMenuLocation::fn_71003569B8() {
+    GfMenuLocation* self = get();
+    if (self == nullptr) {
+        return;
+    }
+    for (long i = 0; i < 5; i++) {
+        LocatorList& list = self->m_lists[i];
+        list.m_locators.clear();
+        list.m_orders.clear();
+        list.m_dataNum = 0;
+        list.m_addedNum = 0;
     }
 }
 

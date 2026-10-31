@@ -67,6 +67,14 @@ void ModelObject::setScale(float scale) {
     }
 }
 
+VisibleObject::~VisibleObject() {
+    ModelManager::get()->m_groups[m_layer].remove(this);
+    if (m_gpuCheck != nullptr) {
+        m_gpuCheck->release();
+        m_gpuCheck = nullptr;
+    }
+}
+
 void VisibleObject::update() {
     if (m_gpuCheck != nullptr && m_frame.get() != nullptr) {
         mm::Vec3 pos = m_frame->m_worldTransform.position;

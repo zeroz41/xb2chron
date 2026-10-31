@@ -16,6 +16,8 @@
 
 namespace gf {
 
+GfMenuReference::~GfMenuReference() {}
+
 void GfMenuReference::build(const GfSetupParam& param) {
 #line 72
     new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfMenuReference(param);
