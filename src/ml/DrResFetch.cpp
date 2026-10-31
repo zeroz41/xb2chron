@@ -68,6 +68,8 @@
 #include "ml/DrResMdoUniformBlock.h"
 #include "ml/DrResEtcPamObj.h"
 #include "ml/DrResMdoLodObj.h"
+#include "ml/DrResMdoAlpTbl.h"
+#include "ml/DrResMdoSeamWrkPosMpf.h"
 #include "ml/DrResMdoMeshObj.h"
 #include "ml/DrResMdoShdObj.h"
 #include "ml/DrResMdoMorpObj.h"
@@ -117,6 +119,50 @@ unsigned int DrResMdoLodObj::calcWorkSize(const unsigned char* data) {
         partsNum = lod->m_partsNum + 1;
     }
     return sizeof(DrResMdoLodObj) + grpNum * 0x20 + partsNum * 0x20;
+}
+
+unsigned int DrResMdoAlpTbl::calcWorkSize(const unsigned char* data) {
+    const MdoHeader* header = reinterpret_cast<const MdoHeader*>(data);
+    if (!(header->m_flags & MdoHeader::FLAG_ALPTBL)) {
+        return 0;
+    }
+    const AlpHeader* alp = reinterpret_cast<const AlpHeader*>(data + header->m_alpOfs);
+    int num = alp->m_num;
+    int pad = (4 - num % 4) % 4;
+    int bitNum = num / 32 + (num % 32 != 0 ? 1 : 0);
+    return sizeof(DrResMdoAlpTbl) + (num + bitNum + pad) * 4;
+}
+
+unsigned int DrResMdoAlpTbl::create(unsigned char* work, const unsigned char* data) {
+    DrResMdoAlpTbl* obj = new (work) DrResMdoAlpTbl;
+    const MdoHeader* header = reinterpret_cast<const MdoHeader*>(data);
+    if (!(header->m_flags & MdoHeader::FLAG_ALPTBL)) {
+        return 0;
+    }
+    float* alpha = reinterpret_cast<float*>(work + sizeof(DrResMdoAlpTbl));
+    obj->m_alpha = alpha;
+    const AlpHeader* alp = reinterpret_cast<const AlpHeader*>(data + header->m_alpOfs);
+    obj->m_data = reinterpret_cast<const unsigned char*>(alp) + alp->m_dataOfs;
+    obj->m_num = alp->m_num;
+    int num = alp->m_num;
+    unsigned int alphaNum = (4 - num % 4) % 4 + num;
+    obj->m_inst.createInstansBuffer(alphaNum * 8);
+    for (unsigned int i = 0; i < obj->m_num; i++) {
+        obj->m_alpha[i] = 1.0f;
+    }
+    unsigned int bitNum = obj->m_num / 32 + ((obj->m_num & 0x1F) != 0 ? 1 : 0);
+    obj->m_bits = reinterpret_cast<unsigned int*>(alpha + alphaNum);
+    memset(obj->m_bits, 0, bitNum * sizeof(unsigned int));
+    return alphaNum * sizeof(float) + bitNum * sizeof(unsigned int) + sizeof(DrResMdoAlpTbl);
+}
+
+void DrResMdoAlpTbl::release(DrResMdoAlpTbl*& obj) {
+    DrResMdoAlpTbl* p = obj;
+    if (p != nullptr) {
+        p->m_inst.release();
+        p->~DrResMdoAlpTbl();
+        obj = nullptr;
+    }
 }
 
 unsigned int DrResMdoLodObj::create(unsigned char* work, const unsigned char* data) {
@@ -552,6 +598,16 @@ int DrResWrkClipList::setupWork(unsigned char* work, const unsigned char* data, 
 void DrResWrkClipList::changeMemCall(const unsigned char* data, unsigned int ofs) {
     m_data = data;
     m_list = data + reinterpret_cast<const ListHead*>(data + ofs)->m_ofs;
+}
+
+void DrResMdoSeamWrkPosMpf::setupMpfBasePos(const unsigned char* data) {
+    const MpfHeader* header = reinterpret_cast<const MpfHeader*>(data);
+    m_data = data;
+    m_work = nullptr;
+    m_workNum = 0;
+    m_pos = data + header->m_posOfs;
+    m_info = data + header->m_infoOfs;
+    m_posNum = header->m_posNum;
 }
 
 DrResMdoTexList::DrResMdoTexList(const unsigned char* data)
@@ -3682,6 +3738,11 @@ DrResMdoSampler::~DrResMdoSampler() {
     }
 }
 
+DrResOccUniformObj::DrResOccUniformObj(DrMan* man, int max) : m_max(max), m_cnt(0), m_buf(nullptr) {
+    int size = m_max * 0x40;
+    m_buf = m_matTbl = static_cast<mm::Mat44*>(mtl::MemManager::allocate(man->m_allocHandle, size, 0x10, false, "no name", 0));
+}
+
 DrResOccUniformObj::~DrResOccUniformObj() {
     if (m_buf != nullptr) {
         mtl::MemManager::deallocate(m_buf, 0, false);
@@ -4667,6 +4728,54 @@ void DrResMdoSeamWrkLow::release() {
 }
 
 
+void DrResMdoVtxMeshObj::setActive(bool active, unsigned int count) {
+    if (active) {
+        if (!m_active) {
+            m_flags |= 0x10000 << DrMan::s_nDblStockIdx;
+            m_flags &= ~(0x40000 << DrMan::s_nDblIdx);
+            m_countMax = count;
+        }
+    } else {
+        m_flags |= 0x40000 << DrMan::s_nDblStockIdx;
+        m_flags &= ~(0x10000 << DrMan::s_nDblIdx);
+    }
+}
+
+void DrResMdoVtxMeshObj::resourceInit(DrResMdoVertex* vertex) {
+    DrResMdoVertex::EtcBlock* etc = vertex->m_etc;
+    unsigned int num = 0;
+    if (etc != nullptr) {
+        m_vertex = etc->vertex;
+        m_uniform = etc->uniform;
+        num = m_vertex->m_num;
+    }
+    m_vtxNum = num;
+}
+
+bool DrResMdoVtxMeshObj::isRender() const {
+    if (!(m_flags & 1)) {
+        return false;
+    }
+    if (m_count1 == 0 && m_count3 == 0) {
+        return false;
+    }
+    return true;
+}
+
+void DrResMdoVtxMeshObj::release(DrResMdoVtxMeshObj*& obj) {
+    DrResMdoVtxMeshObj* p = obj;
+    if (p != nullptr) {
+        p->m_oneBlock.release();
+        p->m_dblBlock.release();
+        if (p->m_buf != nullptr) {
+            mtl::MemManager::deallocate(p->m_buf, 0, false);
+            p->m_buf = nullptr;
+        }
+        p->~DrResMdoVtxMeshObj();
+        obj = nullptr;
+    }
+}
+
 unsigned int DrResMdoVtxMeshObj::calcWorkSize(const unsigned char*) { return 0x140; }
 
 void DrResMdoSeamWrkBase::beginRender() {
@@ -4681,6 +4790,14 @@ void DrResMdoSeamWrkBase::selectVertex(int index) {
         m_matRes->m_pVertex = m_vertexList[index].vertex;
         m_matRes->m_pVertex->beginVertexSetup();
         m_selectVertex = index;
+    }
+}
+
+void DrResMdoSeamWrkBase::seachDefShadowBaseMapRender(DrPixlShadowObj* shadow, DrMdoCtlSeamBaseMap* ctl) {
+    if (!(m_header->m_flags & 4)) {
+        beginRender();
+        seachDefShadowBaseMapRenderChild(shadow, ctl, m_baseMapTree);
+        endRender();
     }
 }
 

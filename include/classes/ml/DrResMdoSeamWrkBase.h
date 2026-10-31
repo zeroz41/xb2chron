@@ -3,6 +3,8 @@
 
 namespace ml {
 class DrMdoCtlSeamBaseMap;
+class DrPixlShadowObj;
+struct MdsSeamBaMpTreeData;
 class DrResMdoSeamMemObj;
 class DrResMdoVertex;
 struct MdoWrkMatRes;
@@ -15,6 +17,9 @@ public:
     void beginRender();
     void endRender();
     void selectVertex(int index);
+    void seachDefShadowBaseMapRender(DrPixlShadowObj* shadow, DrMdoCtlSeamBaseMap* ctl);
+    void seachDefShadowBaseMapRenderChild(DrPixlShadowObj* shadow, DrMdoCtlSeamBaseMap* ctl,
+                                          const MdsSeamBaMpTreeData* tree);
     void setVertexCache(unsigned int cacheIdx, DrResMdoSeamMemObj* memObj, int param, DrMdoCtlSeamBaseMap* ctl);
 
     // one entry of the vertex list release walks (the names are not the original's)
@@ -24,7 +29,16 @@ public:
         unsigned char pad_10[0x8];
     };
 
-    unsigned char pad_8[0x60];
+    // the seam data's head: bit 2 of its first byte skips the default shadow render (the names are not the original's)
+    struct SeamHeader {
+        unsigned char m_flags;
+    };
+
+    unsigned char pad_8[0x18];
+    const SeamHeader* m_header;  // 0x20 (the name is not the original's)
+    unsigned char pad_28[0x10];
+    const MdsSeamBaMpTreeData* m_baseMapTree;  // 0x38: the root seachDefShadowBaseMapRender walks (the name is not the original's)
+    unsigned char pad_40[0x28];
     MdoWrkMatRes* m_matRes;  // 0x68: setupWork's matRes (the name is not the original's)
     unsigned char pad_70[0x8];
     VertexEntry* m_vertexList;  // 0x78 (the name is not the original's)
