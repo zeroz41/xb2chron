@@ -460,6 +460,47 @@ bool NvmshUtilConect::seachConectAStar(NvmshConectResult* result, bool flag) {
     return calcConectAStar();
 }
 
+int NvmshUtilConect::stockFastResult(unsigned short* route, int node, int num) {
+    const _NaviCalcResTbl* tbl = m_result->m_tbl;
+    const unsigned int* bits = reinterpret_cast<const unsigned int*>(m_result->m_info->m_bufs[0]);
+    const unsigned short* costs = reinterpret_cast<const unsigned short*>(m_result->m_info->m_bufs[1]);
+    int count = 0;
+    for (int i = num - 1; i >= 0; i--) {
+        int best = 1000000;
+        if (count != 0) {
+            best = costs[node] & 0x7fff;
+        }
+        const _NvMhConectNode* nodes = reinterpret_cast<const _NvMhConectNode*>(tbl->m_conectBlocks[2]);
+        int linkNum = nodes[node].m_linkNum;
+        if (linkNum == 0) {
+            return count;
+        }
+        const unsigned int* link =
+            reinterpret_cast<const unsigned int*>(tbl->m_conectBlocks[3]) + nodes[node].m_linkOfs;
+        const _NvMhConectPair* pairs = reinterpret_cast<const _NvMhConectPair*>(tbl->m_conectBlocks[4]);
+        int next = -1;
+        for (int j = 0; j < linkNum; j++) {
+            unsigned int end = link[j];
+            unsigned int other = (pairs[end & 0xfffffff].m_ends + (end >> 31))->m_node;
+            if ((bits[other >> 5] & (1 << (other & 0x1f))) != 0 && !(costs[other] & 0x8000)) {
+                int cost = costs[other] & 0x7fff;
+                if (cost < best) {
+                    best = cost;
+                    next = other;
+                }
+            }
+        }
+        if (next == -1) {
+            break;
+        }
+        count++;
+        route[i] = next;
+        node = next;
+    }
+    return count;
+}
+
+
 NvmshUtilSeach::NvmshUtilSeach() : m_count(0) {}
 
 bool NvmshUtilSeach::seachAStar(NvmshAStarResult* result) {

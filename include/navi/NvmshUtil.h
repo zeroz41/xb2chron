@@ -115,6 +115,41 @@ public:
     bool m_useWayPoint;
 };
 
+// a node of a navi layer's connection graph (block 2 of _NvMhConectData, 0xC bytes; the type and member names are
+// not the original's): m_linkNum links from m_linkOfs in block 3
+struct _NvMhConectNode {
+    unsigned char pad_0[0x2];
+    unsigned char m_linkNum;
+    unsigned char pad_3;
+    unsigned int m_linkOfs;
+    unsigned char pad_8[0x4];
+};
+
+// a connection's two ends (block 4 of _NvMhConectData, 0x8 bytes; block 3's links index it: bits 0-27 the pair,
+// bit 31 the end; the names are not the original's)
+struct _NvMhConectPair {
+    struct End {
+        unsigned short pad_0;
+        unsigned short m_node;  // the node (block 2 index) at this end
+    };
+    End m_ends[2];
+};
+
+// what NvmshAcObjBase::checkConectRoot passes NvmshUtilConect's searches (on its stack; the member names are not
+// the original's)
+class NvmshConectResult {
+public:
+    _NaviCalcResTbl* m_tbl;
+    _NaviCalcResInfo* m_info;  // m_bufs[0]: a bit per usable node, m_bufs[1]: a cost per node (bit 15: reached
+                               // from the goal)
+    unsigned char* m_route;  // the route is stored back from m_route + m_routeSize (NvmshAcObjBase's 0x30/0x38)
+    int m_routeSize;
+    int m_routeNum;
+    int m_linkIdx;
+    _NaviStMeshId m_start;
+    _NaviStMeshId m_goal;
+};
+
 // A* searches over the navigation mesh's connections (no table, made on the stack)
 class NvmshUtilConect {
 public:
@@ -123,6 +158,9 @@ public:
     bool seachSeamConectAStar(NvmshConectResult* result, bool flag);
     bool calcConectAStar();
     bool calcSeamAStar();
+    void stockResult(int node, const unsigned char* pri, int fastNum, int endNum);
+    int stockFastResult(unsigned short* route, int node, int num);
+    int stockEndResult(unsigned short* route, int node, int num);
 
     NvmshConectResult* m_result;
     bool m_flag;  // the seach functions' flag (the name is not the original's)
