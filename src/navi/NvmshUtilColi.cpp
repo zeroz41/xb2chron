@@ -40,6 +40,49 @@ void NvmshResData::createNavi() {
     m_flags = 0x11;
 }
 
+NvmshResMan::NvmshResMan(mtl::ALLOC_HANDLE handle, int size, int acSize)
+    : m_memMan(nullptr), m_allHead(nullptr), m_worldHead(nullptr), m_conectHead(nullptr), m_flags(0),
+      m_workBuf(nullptr), m_worldId(0), m_readBank(0), m_writeBank(1) {
+    for (int i = 0; i < 4; i++) {
+        m_fileHandles[i] = nullptr;
+        m_fileData[i] = nullptr;
+    }
+    m_bufferSize = size;
+    m_buffer = static_cast<unsigned char*>(mtl::MemManager::allocate(
+        handle,
+        m_bufferSize + acSize + 0x460, 0x40, false,
+        "no name", 0));
+    m_memMan = new (handle, nullptr, 0, 4, false) NvmshResMemMan(m_buffer, m_bufferSize, handle);
+    m_workBuf = m_buffer + m_bufferSize;
+    unsigned char* calc = m_buffer + (m_bufferSize + acSize);
+    m_calcTbl = reinterpret_cast<_NaviCalcResTbl*>(calc);
+    m_seachWork = reinterpret_cast<SeachWork*>(calc + sizeof(_NaviCalcResTbl) * 2);
+    m_calcInfo = reinterpret_cast<_NaviCalcResInfo*>(calc + sizeof(_NaviCalcResTbl) * 2 + sizeof(SeachWork) * 2);
+    memset(m_calcInfo, 0, sizeof(_NaviCalcResInfo));
+    m_calcInfo->m_pos = mm::Vec3(100000.0f, 100000.0f, 100000.0f);
+    m_calcInfo->m_max = mm::Vec3(-100000.0f, -100000.0f, -100000.0f);
+    m_calcInfo->m_min = mm::Vec3(100000.0f, 100000.0f, 100000.0f);
+    m_calcInfo->m_gridSize = 1.0f;
+    m_calcInfo->m_invGridSize = 1.0f;
+    m_calcTbl[0].m_info = m_calcInfo;
+    m_calcTbl[1].m_info = m_calcInfo;
+    for (int i = 0; i < 2; i++) {
+        m_seachWork[i].m_bufs[0] = m_workBuf + i * 0x3f020;
+        m_seachWork[i].m_sizes[0] = 0x3000;
+        m_seachWork[i].m_bufs[2] = m_workBuf + i * 0x3f020 + 0x3000;
+        m_seachWork[i].m_sizes[2] = 0x20;
+        m_seachWork[i].m_bufs[1] = m_workBuf + i * 0x3f020 + 0x3020;
+        m_seachWork[i].m_sizes[1] = 0x30000;
+        m_seachWork[i].m_bufs[3] = m_workBuf + i * 0x3f020 + 0x33020;
+        m_seachWork[i].m_bufs[4] = m_workBuf + i * 0x3f020 + 0x39020;
+        m_seachWork[i].m_sizes[3] = 0x6000;
+        m_seachWork[i].m_resMan = this;
+    }
+    m_acWork = reinterpret_cast<int*>(m_workBuf + 0x3f020 * 2);
+    m_acWorkSize = acSize - 0x3f020 * 2;
+    m_acWorkNum = (m_acWorkSize / 257) >> 2;
+}
+
 NvmshResMan::~NvmshResMan() {
     for (int i = 0; i < 4; i++) {
         if (m_fileHandles[i] != nullptr) {
@@ -54,6 +97,34 @@ NvmshResMan::~NvmshResMan() {
     if (m_buffer != nullptr) {
         mtl::MemManager::deallocate(m_buffer, 0, false);
         m_buffer = nullptr;
+    }
+}
+
+void NvmshResMan::setupResource(const unsigned char* resource, const char* name) {
+    const _NvMhAllHead* all = reinterpret_cast<const _NvMhAllHead*>(resource);
+    if (all->m_version == 0x1013) {
+        m_fileName = name;
+        int dot = m_fileName.findLast('.');
+        if (dot != -1 && m_fileName.m_nLen > dot) {
+            m_fileName.m_str[dot] = '\0';
+            m_fileName.m_nLen = dot;
+        }
+        m_fileName += ".winvda";
+        m_flags = (m_flags & 0xff00fff6) | 8;
+        m_worldHead = nullptr;
+        m_conectHead = nullptr;
+        m_allHead = all;
+        for (int i = 0; i < 26; i++) {
+            m_resData[i].m_flags |= 4;
+            m_resData[i].m_counter = 0;
+        }
+        for (int i = 0; i < 4; i++) {
+            if (m_fileHandles[i] != nullptr) {
+                ml::DevFileTh::cancel(m_fileHandles[i], false);
+            }
+            m_fileHandles[i] = nullptr;
+            m_fileData[i] = nullptr;
+        }
     }
 }
 
@@ -92,6 +163,78 @@ void NvmshResMan::update() {
             }
             obj = next;
         }
+    }
+}
+
+void NvmshResMan::updateMemMove(const mm::Vec3& pos, bool flag, const mm::Vec3& target, int worldId) {
+    if (m_flags & 0x10) {
+        if (!(m_flags & 0xf0000)) {
+            NvmshResMemMan* memMan = m_memMan;
+            NvmshResMemObj* obj = memMan->m_usedList.m_head;
+            NvmshResMemObj* next = nullptr;
+            while (obj != nullptr) {
+                next = obj->m_next;
+                if (obj->m_flags & 2) {
+                    break;
+                }
+                obj = next;
+            }
+            if (obj != nullptr && next != nullptr) {
+                // the next block's data moves down into this one's place, the two swap places
+                memcpy(obj->m_data, next->m_data, next->m_size);
+                next->m_flags |= 4;
+                unsigned char* data = obj->m_data;
+                next->m_data = data;
+                obj->m_data = data + next->m_size;
+                NvmshResMemObj* prev = obj->m_prev;
+                NvmshResMemObj* after = next->m_next;
+                if (prev != nullptr) {
+                    prev->m_next = next;
+                } else {
+                    memMan->m_usedList.m_head = next;
+                }
+                next->m_prev = prev;
+                if (after != nullptr) {
+                    after->m_prev = obj;
+                } else {
+                    memMan->m_usedList.m_tail = obj;
+                }
+                obj->m_prev = next;
+                obj->m_next = after;
+                next->m_next = obj;
+                memMan->clearMemObj(obj);
+            }
+        }
+        m_flags = (m_flags & ~0x30) | 0x20;
+    }
+    if (m_allHead != nullptr && !(m_flags & 1)) {
+        resInfoUpdate(pos, flag, target, worldId);
+        return;
+    }
+    unsigned int flags = m_flags;
+    m_flags = flags & ~0x4000007;
+    m_allHead = nullptr;
+    m_worldHead = nullptr;
+    m_conectHead = nullptr;
+    if (flags & 8) {
+        m_flags = (flags & ~0x400000f) | 4;
+    }
+    if (m_worldId != worldId) {
+        m_worldId = worldId;
+        m_flags |= 4;
+    }
+    if (m_flags & 4) {
+        for (int i = 0; i < 26; i++) {
+            m_resData[i].m_flags |= 4;
+            m_resData[i].m_counter = 0;
+        }
+    }
+    memset(m_calcTbl, 0, sizeof(_NaviCalcResTbl) * 2);
+    m_calcTbl[0].m_info = m_calcInfo;
+    m_calcTbl[1].m_info = m_calcInfo;
+    m_freeNum = 0;
+    for (long i = 0; i < 26; i++) {
+        m_resData[i].update(m_memMan);
     }
 }
 

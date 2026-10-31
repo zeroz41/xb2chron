@@ -2,6 +2,7 @@
 #define NAVI_NVMSHRESDATA_H
 
 #include "mm/Vec3.h"
+#include <new>
 #include "mtl/MemManager.h"
 
 namespace navi {
@@ -27,6 +28,8 @@ class NvmshResMemMan {
 public:
     // a list of blocks linked through their m_prev/m_next (the names are not the original's)
     struct ObjList {
+        ObjList() : m_head(nullptr), m_tail(nullptr) {}
+
         NvmshResMemObj* m_head;
         NvmshResMemObj* m_tail;
 
@@ -63,6 +66,22 @@ public:
         }
     };
 
+    // the 38 blocks from handle, the first one holding all of data and in use order, the rest free (NvmshResMan's
+    // constructor inlines it; the parameter names are not the original's)
+    NvmshResMemMan(unsigned char* data, unsigned int size, mtl::ALLOC_HANDLE handle) : m_freeList(), m_usedList() {
+        NvmshResMemObj* objs = static_cast<NvmshResMemObj*>(
+            mtl::MemManager::allocate(handle, sizeof(NvmshResMemObj) * 38, 0x40, false, "no name", 0));
+        m_objs = objs;
+        for (int i = 0; i < 38; i++) {
+            new (&objs[i]) NvmshResMemObj();
+        }
+        objs[0].m_data = data;
+        objs[0].m_size = size;
+        m_usedList.pushBack(&objs[0]);
+        for (int i = 1; i < 38; i++) {
+            m_freeList.pushBack(&objs[i]);
+        }
+    }
     ~NvmshResMemMan() {
         if (m_objs != nullptr) {
             mtl::MemManager::deallocate(m_objs, 0, false);
@@ -238,7 +257,10 @@ struct _NvMhAllWorldHead {
     float m_originX;  // the grid's origin
     unsigned char pad_1C[0x4];
     float m_originZ;
-    unsigned char pad_24[0x8];
+    // the grid's cells' reads (one unsigned short per cell: 1 + its _NvMhAllReadObj's index, 0: none), from the
+    // root (the name is not the original's)
+    unsigned int m_cellOfs;
+    unsigned char pad_28[0x4];
     int m_id;  // what resInfoUpdate's world id selects
     unsigned int m_treeOfs;  // the world's tree data, from the root (0: none)
     unsigned char pad_34[0xC];
@@ -253,7 +275,10 @@ struct _NvMhAllWrdConectHead {
 
 // the navigation data's root (NvmshResMan's m_allHead; the names are not the original's)
 struct _NvMhAllHead {
-    unsigned char pad_0[0x10];
+    unsigned char pad_0[0x4];
+    int m_version;  // setupResource takes only 0x1013 (the name is not the original's)
+    unsigned int m_readOfs;  // the _NvMhAllReadObj array (the name is not the original's)
+    unsigned char pad_C[0x4];
     unsigned int m_worldOfs;  // the _NvMhAllWorldHead array
     int m_worldNum;
     unsigned int m_conectOfs;  // the _NvMhAllWrdConectHead array (0: none)
