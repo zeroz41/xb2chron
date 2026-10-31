@@ -14,7 +14,8 @@ class ResResolver {
 public:
     // the binding of a clip's animation (ResClipInfo's name and number)
     virtual const Binding* importBinding(const char* name, unsigned int index) const = 0;  // slot 0
-    virtual const Binding* restoreBinding(const char* name, unsigned int index) const = 0;  // slot 1
+    // the binding's binary back as it was loaded (AnimationImporter::restore's result)
+    virtual bool restoreBinding(const char* name, unsigned int index) const = 0;  // slot 1
     virtual const Skeleton* getSkekelton() const = 0;  // slot 2 (the original spells it so)
     virtual const MirrorMapper* getMirrorMapper() const = 0;  // slot 3
     virtual const SimpleMapper* getSimpleMapper() const = 0;  // slot 4

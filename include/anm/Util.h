@@ -43,8 +43,11 @@ public:
     // a part of a bone name whose bones are not mirrored (fw::AnimResAsmResolver::bindSkeleton makes them; the
     // names of the fields are not the original's)
     struct IgnoreName {
+        // bindSkeleton's names leave pad_c zero
+        IgnoreName() : pad_c(0) {}
+
         mm::mtl::FixStr<8> m_name;  // a bone name's start is compared with its characters
-        unsigned char pad_c[0x4];
+        unsigned int pad_c;
     };
 
     // two name parts that tell a bone from its mirror counterpart (fw::AnimResAsmResolver::bindSkeleton makes them;

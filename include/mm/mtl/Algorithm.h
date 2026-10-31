@@ -25,9 +25,11 @@ struct int_to_type {
 
 namespace mtl_detail {
 // constructs n copies of first's elements at result, one by one (int_to_type<0>: a type not copied bit for bit).
-// Out of line where the copies are long: Vector<skd::Node>::extend calls 3.0.1's copy.
+// Out of line where the copies are long: Vector<skd::Node>::extend calls 3.0.1's copy. Declared inline (threshold
+// 325): copy_construct_n<anm::Util::PairName> then inlines it with PairName's copy (no inline deferral) and stays out of
+// line in Vector<PairName>::expand, as in fw::AnimResAsmResolver's unit.
 template <typename T>
-void copy_construct_n(const T* first, size_t n, T* result, int_to_type<0>) {
+inline void copy_construct_n(const T* first, size_t n, T* result, int_to_type<0>) {
     for (size_t i = 0; i < n; ++i) {
         new (&result[i]) T(first[i]);
     }

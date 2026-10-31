@@ -22,7 +22,8 @@ public:
         char m_name[0x34];
     };
 
-    CArcData(void* data);
+    // an empty one by default (Vector<CArcData>::resize constructs its new elements with none)
+    CArcData(void* data = nullptr);
     void setData(void* data);
     unsigned int getFiles() const;
     const char* getStr() const;

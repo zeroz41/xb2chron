@@ -187,7 +187,10 @@ struct ResVariable;
 // are not the original's)
 class ResStateArray {
 public:
-    unsigned char pad_0[0x18];
+    unsigned char pad_0[0x8];
+    // per pack, its name: fw::AnimResAsmResolver::resolvePackFiles finds each archive's (CArcData::getStr) here
+    // (the name is not the original's)
+    Array<const char*> m_packNames;
     Array<ResState*> m_states;  // sorted by name (Util::getVariableMinMax finds a state with CompResState)
     Array<ResVariable> m_variables;  // ASMControl makes a Variable of each
     unsigned char pad_38[0x18];
