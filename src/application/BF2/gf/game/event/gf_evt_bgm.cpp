@@ -16,6 +16,20 @@ namespace gf {
 
 GfEvtBgm::~GfEvtBgm() {}
 
+void GfEvtBgm::clear() {
+    for (mm::mtl::FixedQueue<EvtBgmTask*, 128>::iterator it = m_tasks.begin(), end = m_tasks.end(); it != end; ++it) {
+        if (*it != nullptr) {
+            delete *it;
+        }
+    }
+    m_tasks.clear();
+    m_currentTask = nullptr;
+    m_setup.m_name.clear();
+    if (BgmEvent* event = BgmEvent::get()) {
+        event->stopBGM(1.0f);
+    }
+}
+
 void GfEvtBgm::build(const GfSetupParam& param) {
 #line 70
     new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfEvtBgm(param);
@@ -64,6 +78,16 @@ inline EvtBgmTaskDelay* EvtBgmTaskDelay::create(const EventBgmSetup& setup) {
 inline EvtBgmTaskDelayStop* EvtBgmTaskDelayStop::create(const EventBgmSetup& setup) {
 #line 400
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) EvtBgmTaskDelayStop(setup);
+}
+
+void GfEvtBgm::stopBgm(const EventBgmSetup& setup) {
+    if (m_setup.m_overTime != 0.0f) {
+        if (BgmEvent* event = BgmEvent::get()) {
+            event->fn_7100265440();
+        }
+        return;
+    }
+    m_tasks.push_back(EvtBgmTaskDelayStop::create(setup));
 }
 
 void GfEvtBgm::cancelOverTime() {
