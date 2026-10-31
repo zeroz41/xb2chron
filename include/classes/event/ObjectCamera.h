@@ -7,6 +7,7 @@
 #include "classes/event/CamObj.h"
 #include "classes/event/PosAxis.h"
 #include "classes/event/TarAxis.h"
+#include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedVector.h"
 
 namespace mm { class Col4; }
@@ -41,6 +42,9 @@ public:
     mm::mtl::FixedVector<TarAxis, 16> m_tarQueue;  // 0x2d0, count 0x4d0
     // the index of the m_posQueue key OnManiSetPos edits (0 also moves m_pos)
     unsigned int pad_4e0;
+    unsigned int pad_4e4;
+    // the cut name the camcut command sets (its undo restores the previous one); the name is not the original's
+    mm::mtl::FixStr<64> m_cutName;  // 0x4e8
 };
 }  // namespace event
 

@@ -2305,6 +2305,25 @@ void ScriptCamNearfar::undo(const event::Param&) {
     }
 }
 
+void ScriptCamCut::doit(const event::Param& param) {
+    // the active camera read in place, as ScriptCamPos::doit
+    ObjectList* cur = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+    ObjectCamera* obj = cur != 0 ? static_cast<ObjectCamera*>(cur->m_active) : 0;
+    if (obj != 0 && obj->m_type == 3) {
+        const char* name = param.val(0).getStr();
+        m_prevCut = obj->m_cutName;
+        obj->m_cutName = name;
+    }
+}
+
+void ScriptCamCut::undo(const event::Param&) {
+    ObjectList* cur = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+    ObjectCamera* obj = cur != 0 ? static_cast<ObjectCamera*>(cur->m_active) : 0;
+    if (obj != 0 && obj->m_type == 3) {
+        obj->m_cutName = m_prevCut;
+    }
+}
+
 void ScriptCharaWink::doit(const event::Param& param) {
     ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
     if (obj != 0) {
@@ -2613,6 +2632,9 @@ void DebugManager::OnEventProc(event::MSG_TYPE msg) {
 #include "classes/event/MovieManager.h"
 #include "classes/event/TodoManager.h"
 #include "classes/event/DataManager.h"
+#include "classes/event/SeqManager.h"
+#include "classes/ml/DevSetting.h"
+#include "ml/ScnRenderDrSysParmAcc.h"
 #include "classes/event/MemoryManager.h"
 #include "classes/event/ResManager.h"
 
@@ -2654,9 +2676,75 @@ MovieManager::MovieManager() : pad_10(0), pad_118(false), pad_220(-1) {}
 // out of line: Singleton<MovieManager>::getPtr registers it with __cxa_atexit (D2 0x710014B038, a bare ret)
 MovieManager::~MovieManager() {}
 
-TodoManager::TodoManager() : pad_10(0), pad_8c18(0), pad_8c20(0), pad_10e28(0) {}
+TodoManager::TodoManager() : pad_10(0), pad_14(0), pad_8c20(0) {}
+
+// 1.0.0's SeqManager::login
+inline void SeqManager::login() {
+    pad_2860 = 1;
+    ml::DevSetting::setAutoSleepExtended(static_cast<ml::SleepExtendType>(1));
+    m_flags &= ~8;
+}
+
+// 1.0.0's SeqManager::logout
+inline void SeqManager::logout() {
+    ml::DevSetting::setAutoSleepExtended(static_cast<ml::SleepExtendType>(0));
+    ml::ScnRenderDrSysParmAcc acc(Manager::get()->m_scn->m_renderDrSys, 0);
+    if (acc.isGlassBr()) {
+        acc.setGlassBr(false, 0);
+    }
+}
+
+// 1.0.0's SeqManager::clear
+inline void SeqManager::clear() {
+    m_flags = 0;
+    m_seqName = "";
+    m_cmdQueue.clear();
+}
+
+// the key function: emits SeqManager's table (its destructor is inline)
+void SeqManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 1:
+        login();
+        break;
+    case 2:
+        logout();
+        clear();
+        break;
+    case 4:
+        init();
+        break;
+    case 5:
+        setupScene();
+        break;
+    case 6:
+        m_startLoading.pad_8 = 1;
+        break;
+    case 7:
+        startScene();
+        break;
+    case 9:
+        m_exec.pad_8 = 1;
+        break;
+    case 11:
+        end();
+        break;
+    case 12:
+        m_endWait.pad_8 = 1;
+        break;
+    case 15:
+        m_cmdQueue.update();
+        break;
+    case 17:
+        render();
+        break;
+    default:
+        break;
+    }
+}
 
 DataManager::DataManager() : m_flags(0), m_sceneName("default"), m_current(0) {}
+
 
 MemoryManager::MemoryManager() : pad_10(0), pad_18(0), pad_24(), pad_28(0), pad_30(0), pad_38(0), m_txtbufs(), pad_1048(0), pad_1050(0), pad_1058(0) {}
 

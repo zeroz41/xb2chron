@@ -114,10 +114,11 @@ public:
     // table 0x7100B3EA00
     class exec : public ::event::ICmd {
     public:
-        exec() : pad_8(0), pad_a(0), pad_c(0), pad_18(0) {}
+        exec() : pad_8(0), pad_9(0), pad_a(0), pad_c(0), pad_18(0) {}
         virtual ~exec() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
         virtual bool update(event::ICmd::Param const&);  // slot 3
-        unsigned short pad_8;
+        unsigned char pad_8;  // SeqManager::OnEventProc sets it (msg 9) with a byte store
+        unsigned char pad_9;
         unsigned char pad_a;
         unsigned int pad_c;
         unsigned char pad_10[0x8];
@@ -201,7 +202,8 @@ public:
         virtual bool update(event::ICmd::Param const&);  // slot 3
     };
     SeqManager() : m_flags(0), m_dispFlags(0), pad_2718(0), pad_2760(0), pad_2764(0), pad_2768(0), pad_276c(0), pad_2770(""), pad_2778(0), pad_277c(0), pad_2780(""), pad_2788(0), pad_278c(0), pad_2790(0), pad_2794(0), pad_2798(0), pad_279c(0), pad_27a0(0), pad_27a8(0), pad_27b0(0), pad_27b4(0), pad_27b8(0), pad_27bc(0), pad_27c0(0), pad_27c8(0), pad_27d0(0), pad_27d8(1), pad_27d9(0), pad_27da(0), pad_27db(0), pad_27dc(0), pad_27dd(0), pad_27e4(0), pad_27e8(0), pad_27f0(0), pad_27f8(0), pad_2800(0), pad_2808(0), pad_280c(0), pad_2810(0), pad_2814(0), pad_2818(0), pad_2820(""), pad_2830(0), pad_2838(0), pad_2840(0), pad_2848(0) {}
-    virtual ~SeqManager();  // slot 0
+    // inline: its D2/D0 are in the unit's inline tail (0x710014A6F4); OnEventProc is the key function
+    virtual ~SeqManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     play_start m_playStart;  // 0x10 (the name is not the original's)
     play_next m_playNext;  // 0x18 (the name is not the original's)
@@ -284,6 +286,18 @@ public:
     unsigned long pad_2838;  // 0x2838
     unsigned long pad_2840;  // 0x2840
     unsigned int pad_2848;  // 0x2848
+    unsigned char pad_284c[0x14];  // 0x284C
+    unsigned int pad_2860;  // 0x2860: login sets it to 1 (the instance ends at 0x2868, where getPtr's guard is)
+    // 1.0.0's out-of-line SeqManager::login/logout/clear (0x710013145C, 0x7100131494, 0x7100131404); 3.0.1 inlines
+    // them in OnEventProc
+    inline void login();
+    inline void logout();
+    inline void clear();
+    void init();
+    void setupScene();
+    void startScene();
+    void render();
+    void end();
 };
 }  // namespace event
 

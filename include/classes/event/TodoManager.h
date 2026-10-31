@@ -2,6 +2,9 @@
 #define CLASSES_EVENT_TODOMANAGER_H
 
 #include "classes/event/Param.h"
+#include "classes/event/TodoItem.h"
+#include "mm/mtl/FixStr.h"
+#include "mm/mtl/FixedVector.h"
 #include "classes/event/IManager.h"
 #include "classes/mm/mtl/Singleton.h"
 
@@ -18,13 +21,14 @@ public:
     // the script plugins' commands: exec makes the command, which then runs with a copy of the parameters
     void add(ITodo* (*exec)(), const Param& param);
     static Param s_zero;
-    // fields the constructor initializes; what they hold is not known yet
-    long pad_10;
-    unsigned char pad_18[0x8c00];
-    long pad_8c18;
+    void update();
+    void render();
+    unsigned int pad_10;
+    unsigned int pad_14;  // bit 0 (byte test): update dumps the items, render draws them
+    mm::mtl::FixedVector<TodoItem, 128> m_items;  // 0x18 (count 0x8c18); the name is not the original's
     long pad_8c20;
-    unsigned char pad_8c28[0x8200];
-    long pad_10e28;
+    // each item's parameters as text (update; render draws them); the name is not the original's
+    mm::mtl::FixedVector<mm::mtl::FixStr<256>, 128> m_texts;  // 0x8c28 (count 0x10e28)
 };
 }  // namespace event
 
