@@ -107,6 +107,17 @@ void GfMenuObjPopup::update() {
     GfMenuObject::update();
 }
 
+// 1.0.0's sendOpen (out of line there, inlined in 3.0.1): the open event (0x21) carrying a queued request
+inline void GfMenuObjPopup::sendOpen(unsigned int handle, const PopupInfo& info) {
+    ui::EventData event;
+    event.m_type = 0x21;
+    event.m_param0 = info.m_param.m_type;
+    event.m_param1 = info.m_param.m_value[0];
+    event.m_param2 = info.m_param.m_value[1];
+    event.m_param3 = info.m_param.m_value[2];
+    ui::UIManager::get()->requestObjectEvent(handle, event, 0.0f);
+}
+
 bool GfMenuObjPopup::fn_710045C9E4() {
     ui::UIObjectAcc icon(m_handle, "IMG_gift_icon");
     m_giftSeq.addAnimJob(icon.m_handle, "out");
@@ -125,6 +136,43 @@ bool GfMenuObjPopup::fn_710045CB7C() {
     m_giftSeq.addJob(&GfMenuObjPopup::fn_710045DA2C);
     icon.setDisp(true);
     return true;
+}
+
+unsigned int GfMenuObjPopup::open(const OpenParam& param) {
+    if (GfMenuObjUtil::isMenuObjectFull()) {
+        return 0;
+    }
+    if (param.m_type == 11 && !GfMenuObjUtil::fn_710048FD30(3)) {
+        return 0;
+    }
+    unsigned int root = GfMenuObject::getAttachedObject(0x76);
+    if (ui::UIObjectAcc(root).m_object == nullptr) {
+        return 0;
+    }
+    if (ui::UIObjectAcc(root).isTerm()) {
+        return 0;
+    }
+    mm::mtl::Queue<PopupInfo>* queue = GfMenuManyObjects::getQueue<PopupInfo>(7);
+    size_t count = queue->size();
+    if (count != 0 && param.m_type == 9) {
+        for (unsigned int i = 0; i < count; ++i) {
+            mm::mtl::Queue<PopupInfo>* popups = GfMenuManyObjects::getQueue<PopupInfo>(7);
+            if (popups != nullptr && !popups->empty()) {
+                const OpenParam& queued = (*popups)[i].m_param;
+                if (queued.m_type == 9 && queued.m_value[0] == param.m_value[0]) {
+                    return 0;
+                }
+            }
+        }
+    }
+    const PopupInfo request(root, param);
+    PopupInfo info = request;
+    GfMenuManyObjects::add<PopupInfo>(7, info, close);
+    if (!s_disp && !GfMenuManyObjects::get()->m_hold[7]) {
+        sendOpen(root, request);
+        s_disp = true;
+    }
+    return root;
 }
 
 void GfMenuObjPopup::close(unsigned int handle) {

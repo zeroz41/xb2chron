@@ -98,7 +98,7 @@ public:
         new (static_cast<void*>(&at((m_head + m_size) % m_capacity))) T(value);
         ++m_size;
     }
-    // takes the first element off and returns it (queue.h asserts `!empty()` as pop does; ai::Hfsm::setStateImpl takes
+    // takes the first element off into value (queue.h asserts `!empty()` as pop does; ai::Hfsm::setStateImpl takes
     // its state buffers so; the name is not the original's)
     T pop_front() {
 #line 781 MM_MTL_QUEUE_PATH
@@ -122,15 +122,14 @@ public:
     iterator end() { return iterator(&at(0), m_head + m_size, m_capacity); }
     // removes the element at it, moving the later ones down (out of line)
     iterator erase(iterator it);
-    // takes the first element off and returns it (queue.h asserts `!empty()` at line 769, not pop's 781: the
+    // takes the first element off into value (queue.h asserts `!empty()` at line 769, not pop's 781: the
     // GfMenuObj*::open functions drop their oldest object so; the name is not the original's)
-    T dequeue() {
+    void dequeue(T& value) {
 #line 769 MM_MTL_QUEUE_PATH
         MM_ASSERT(!empty());
-        T value = at(m_head);
+        value = at(m_head);
         m_head = (m_head + 1) % m_capacity;
         --m_size;
-        return value;
     }
     size_t size() const { return m_size; }
     bool empty() const { return m_size == 0; }

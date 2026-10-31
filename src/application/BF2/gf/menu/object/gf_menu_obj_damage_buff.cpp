@@ -119,7 +119,9 @@ unsigned int GfMenuObjDamageBuff::open(const OpenParam& param) {
     mm::mtl::Queue<DamageInfo>* queue = GfMenuManyObjects::getQueue<DamageInfo>(1);
     if (queue != nullptr) {
         if (queue->full()) {
-            close(queue->dequeue().m_handle);
+            DamageInfo old;
+            queue->dequeue(old);
+            close(old.m_handle);
         }
         queue->push_back(info);
     }
@@ -313,7 +315,9 @@ unsigned int GfMenuObjDamageBuff::openUniteCombo(const OpenUniteParam& param) {
     mm::mtl::Queue<DamageInfo>* queue = GfMenuManyObjects::getQueue<DamageInfo>(1);
     if (queue != nullptr) {
         if (queue->full()) {
-            closeUniteCombo(queue->dequeue().m_handle);
+            DamageInfo old;
+            queue->dequeue(old);
+            closeUniteCombo(old.m_handle);
         }
         queue->push_back(info);
     }

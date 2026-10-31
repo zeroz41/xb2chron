@@ -8,6 +8,7 @@ namespace gf {
 // table 0x7100B617D0: an open screen in GfMenuManyObjects' queue 1
 class GfMenuObjDamageBuff::DamageInfo : public ::gf::GfMenuManyObjects::InfoType {
 public:
+    DamageInfo() {}
     DamageInfo(unsigned int handle) : InfoType(handle) {}
 };
 }  // namespace gf
