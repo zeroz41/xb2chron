@@ -95,6 +95,12 @@ public:
     static bool isExistSameEffectCondenserParts(unsigned int hana, unsigned int item, unsigned int slot, bool extend);
     static bool isExistSameEffectNArtsParts(unsigned int hana, unsigned int item, unsigned int slot);
     static void setEquipPowerRank(unsigned int hana, unsigned int rank);
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because they live in GfDataBlade's
+    // unit after GfDataHana::isExistSameEffectCondenserParts and test isValid (Hana's forms 1005-1007). What they do:
+    // read (0 for any other blade) / store SDataBlade::m_hanaTeamFlag of the blade's game data slot. Callers:
+    // GfGameMercenaries::addTeamMember (setter), fn_71003014CC (both).
+    static unsigned char fn_7100253BCC(unsigned int hana);
+    static void fn_7100253C34(unsigned int hana, unsigned char flag);
 };
 
 }  // namespace gf

@@ -106,7 +106,10 @@ public:
     char m_addMotionName[0x14];  // GfDataBlade::getResourceNameAddMotion; the length is the distance to the next
     char m_voiceStr[0x1C];  // GfDataBlade::getVoiceStr; the length is the distance to the next
     unsigned char m_activateMercenaryTeam;  // GfDataBlade::isActivateMercenaryTeam (named after it; not the original's name)
-    unsigned char pad_78d[0x1F];
+    // a byte only Hana's forms use (GfDataHana::fn_7100253BCC/fn_7100253C34; GfGameMercenaries::addTeamMember sets
+    // it). The name is not the original's.
+    unsigned char m_hanaTeamFlag;
+    unsigned char pad_78e[0x1E];
     char m_effectName[0x28];  // getEffectResourceName; the length is not known
     char m_centerBone[0x14];  // getCenterBone; the length is the distance to the next
     char m_camBone[0x14];  // getCamBone; the length is the distance to the next

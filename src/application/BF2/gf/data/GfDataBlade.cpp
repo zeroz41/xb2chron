@@ -95,6 +95,7 @@
 #include "classes/gf/GfEvent.h"
 #include "classes/gf/GfBdatMsg.h"
 #include "gf/QuestListAcc.h"
+#include "classes/gf/TUnk_B4C840.h"
 #include "gf/SDataOption.h"
 #include "gf/GfDataNpc.h"
 #include "gf/GfDataBladeArtsN.h"
@@ -165,6 +166,17 @@ unsigned char GfDataBlade::getAttribute(unsigned int blade) {
         return GfDataHana::getAttribute(blade);
     }
     return GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_attribute;
+}
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B50C30)
+static const char* s_weaponNameSuffixes[51] = {
+    "", "_01", "_02", "_03", "_04", "_05", "_06", "_07", "_08", "_09", "_10", "_11", "_12", "_13", "_14", "_15", "_16",
+    "_17", "_18", "_19", "_20", "_20", "_21", "_22", "_23", "_24", "_25", "_26", "_27", "_28", "_29", "_30", "_31",
+    "_32", "_33", "_34", "_35", "_36", "_37", "_38", "_39", "_40", "_41", "_42", "_43", "_44", "_45", "_46", "_47",
+    "_48", "_49"};
+
+const char* GfDataBlade::getDeathBlowWeaponName(unsigned int blade) {
+    return s_weaponNameSuffixes[blade == 0 ? 0 : getSDataBlade(blade)->m_weaponType];
 }
 
 unsigned int GfDataBlade::getRoleByWpnType(unsigned int wpnType) {
@@ -1538,6 +1550,11 @@ void GfDataBlade::setBladeWeapon(unsigned int blade, unsigned int weapon) {
 
 void GfDataBlade::setTrustPoint(unsigned int blade, unsigned int point) {
     GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_trustPoint = point;
+    GfEvent::callDebugChangeIdea(4, blade, 0, 0);
+}
+
+void GfDataBlade::setTrustRank(unsigned int blade, GfIdea rank) {
+    GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_trustRank = rank;
     GfEvent::callDebugChangeIdea(4, blade, 0, 0);
 }
 
@@ -3078,6 +3095,19 @@ bool GfDataHana::isEquipCondenserParts(unsigned int hana, unsigned int item) {
     return false;
 }
 
+unsigned char GfDataHana::fn_7100253BCC(unsigned int hana) {
+    if (!isValid(hana)) {
+        return 0;
+    }
+    return GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)].m_hanaTeamFlag;
+}
+
+void GfDataHana::fn_7100253C34(unsigned int hana, unsigned char flag) {
+    if (isValid(hana)) {
+        GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)].m_hanaTeamFlag = flag;
+    }
+}
+
 unsigned int GfDataBlade::fn_7100253C98() {
     // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BA374)
     static const unsigned short s_blades[3] = {1005, 1006, 1007};
@@ -3213,6 +3243,17 @@ unsigned int GfDataEnBook::getDefeatNum(unsigned int arrange) {
         return 0;
     }
     return GfGameFlag::getLocal(0x20, book + 0x142);
+}
+
+unsigned int GfDataEnBook::fn_7100253EB4(const SDataGame& game, unsigned int arrange) {
+    if (arrange == 0) {
+        return 0;
+    }
+    unsigned int book = GfBdatChrEnArrange::get()->getChrEnArrangeBookID(arrange);
+    if (book == 0) {
+        return 0;
+    }
+    return GfGameFlag::getLocal(game.m_gameFlag, 0x20, book + 0x142);
 }
 
 void GfDataEnBook::incDefeatNum(unsigned int arrange) {
@@ -3796,6 +3837,19 @@ bool GfDataEvent::isSavedEvent(unsigned int event, const SDataGame& game) {
     return false;
 }
 
+unsigned int GfDataEvent::fn_710024F7CC(unsigned int event) {
+    GfBdatChrBl* bl = GfBdatChrBl::get();
+    unsigned int row = bl->getChrBlStart();
+    unsigned int end = bl->getChrBlEnd();
+    for (; row < end; row++) {
+        unsigned int createEvent = bl->getChrBlCreateEventID(row);
+        if (createEvent == event) {
+            return row;
+        }
+    }
+    return 0;
+}
+
 bool GfDataEvent::fn_710024F910(unsigned int event) {
     unsigned char* fp = GfDataBdat::getFP(fn_710024EBD8(event));
     if (fp == nullptr) {
@@ -3899,6 +3953,43 @@ bool GfDataFieldSkill::getName(unsigned char*& bdat, unsigned int& id, unsigned 
     id = QuestListAcc::get()->getFLD_FieldSkillListName(skill);
     bdat = GfBdatMsg::getFpFieldSkill();
     return id != 0;
+}
+
+const char* GfDataBlade::getBaseEabWeaponName(unsigned int blade) {
+    if (blade == 0) {
+        return "";
+    }
+    unsigned int type = getSDataBlade(blade)->m_weaponType;
+    if ((blade >= 1005 && blade < 1008) || (blade >= 1197 && blade <= 1422)) {
+        return s_weaponNameSuffixes[type];
+    }
+    if (blade >= 1051 && blade <= 1072) {
+        return s_weaponNameSuffixes[type];
+    }
+    if (blade < 1082 || blade == 1103) {
+        return "";
+    }
+    return s_weaponNameSuffixes[type];
+}
+
+const char* GfDataBlade::getBaseEfbWeaponName(unsigned int blade) {
+    if (blade == 0) {
+        return "";
+    }
+    unsigned int type = getSDataBlade(blade)->m_weaponType;
+    if (blade == 1004 || (blade >= 1005 && blade < 1008) || blade == 1010) {
+        return s_weaponNameSuffixes[type];
+    }
+    if (blade >= 1197 && blade <= 1422) {
+        return s_weaponNameSuffixes[type];
+    }
+    if (blade >= 1051 && blade <= 1072) {
+        return s_weaponNameSuffixes[type];
+    }
+    if (blade < 1082 || blade == 1103) {
+        return "";
+    }
+    return s_weaponNameSuffixes[type];
 }
 
 bool GfDataFieldSkill::getCaption(unsigned char*& bdat, unsigned int& id, unsigned int skill) {
@@ -4447,12 +4538,29 @@ void GfDataBlade::fn_71002324FC(SDataGame* game, bool flag) {
     GfGameFlag::setLocal(game->m_gameFlag, 1, 0xD860, flag);
 }
 
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BA04C)
+static const unsigned int s_componentValues[9] = {300, 4, 3, 1, 2, 0, 0, 0, 0};
+
+unsigned int GfDataBlade::fn_7100232650(unsigned int index) {
+    return s_componentValues[index];
+}
+
 unsigned int GfDataBlade::fn_71002326F0(unsigned int id) {
     GfBdatBtl* bdat = GfBdatBtl::get();
     if (fn_71002324C8()) {
         return bdat->fn_71001E77DC(id);
     }
     return bdat->getGrowLevelExp(id);
+}
+
+bool GfDataBlade::fn_7100232754() {
+    if (GfGameFlag::getLocal(1, 0xD788) != 0) {
+        return true;
+    }
+    if (TUnk_B4C840::sys() != nullptr && TUnk_B4C840::fn_71002229C0(3) > 0) {
+        return true;
+    }
+    return false;
 }
 
 bool GfDataBlade::fn_710023182C() {

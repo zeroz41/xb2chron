@@ -38,6 +38,10 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit among GfDataEvent's functions. What it does: fn_710024F454 on the game data (gf::isUnuseBlade calls it).
     static bool fn_710024F430(unsigned int event);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among GfDataEvent's functions and takes an event. What it does: the first GfBdatChrBl row (getChrBlStart to
+    // getChrBlEnd) whose getChrBlCreateEventID is the event, 0 for none. Caller: tl::TitleStatePlayEvent::enter.
+    static unsigned int fn_710024F7CC(unsigned int event);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because fn_710024F430 passes
     // it the game data and an event. What it does: tests the GameFlag bit fn_710024F2DC sets for the event.
     static bool fn_710024F454(const SDataGame& game, unsigned int event);
