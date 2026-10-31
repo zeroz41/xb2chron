@@ -29,6 +29,9 @@
 #include "csvb/CsvbData.h"
 #include "mm/MMStdBase.h"
 #include "mtl/MemManager.h"
+#include "classes/fw/FrameworkMemory.h"
+#include "classes/fw/SoundManager.h"
+#include "classes/ssd/SoundListener.h"
 
 #define SOUND_SSD_DRV_PATH "D:/Monolithsoft/BF2/prog/application/BF2/framework/sound/sound_ssd_drv.cpp"
 
@@ -75,6 +78,21 @@ int SoundReferenceObject::release() {
     return count;
 }
 
+SoundSsdBank::SoundSsdBank(const SoundBankSetup& setup) : m_allocator(setup.allocator) {
+    m_id = setup.id;
+    m_name = setup.name;
+    m_nameHash = mm::mtl::hashStrCrc(m_name.m_str);
+    pad_150 = setup.pad_18;
+    unsigned int count = setup.maxSound < 256 ? 256 : setup.maxSound;
+    m_sources.setAllocator(m_allocator);
+    m_sources.reserve(count);
+    m_bank.Init(m_id, ssd::TextRef(m_name.m_str));
+    m_group.id_ = 0;
+    m_group.maxSound_ = 256;
+    setMaxSound(setup.maxSound);
+    m_bank.AddSoundGroup(&m_group);
+}
+
 void SoundSsdBank::setMaxSound(int maxSound) {
     m_group.id_ = m_id;
     m_group.maxSound_ = maxSound;
@@ -94,6 +112,60 @@ SoundSsdBank::~SoundSsdBank() {
 
 void SoundSsdBank::stopAll() {
     m_bank.Stop(0.0f);
+}
+
+// the log method SoundCore::Init installs: drops every message
+static ssd::Result fn_71001A384C(ssd::LogMessage::Type, const char16_t*) {
+    return ssd::Result(0);
+}
+
+SoundSsdDriver::SoundSsdDriver(mm::mtl::IAllocator* allocator, unsigned int handleCount)
+    : m_core(nullptr), m_allocator(allocator), m_listener(nullptr), m_initialized(false) {
+    m_core = ssd::SoundCore::NewInstance(&m_allocator);
+    m_listeningPoint = mm::Mat44::identity;
+    ssd::SoundCore::InitParam param;
+    param.audioThread.coreMask = 2;
+    param.streamThread.coreMask = 2;
+    param.voiceNum = 0x40;
+    param.messageMethod = fn_71001A384C;
+    param.timeStampType = ssd::LogTimeStamp::Type(1);
+    m_core->Init(param);
+#line 1501 SOUND_SSD_DRV_PATH
+    m_listener = new (FrameworkMemory::getAllocator(5), 8, __FILE__, __LINE__) ssd::SoundListener();
+    m_listener->Init();
+    {
+        CategoryInfo info;
+        for (int i = 0; i < 18; i++) {
+            m_categories[i] = info;
+        }
+    }
+    m_banks.setAllocator(allocator);
+    m_banks.reserve(0x200);
+    m_handles.setAllocator(allocator);
+    m_handles.reserve(handleCount);
+    m_handlePlayers.setAllocator(allocator);
+    mm::Mat44 point = mm::Mat44::identity;
+    setListeningPoint(point);
+    m_handleAllocator.reserve(allocator, handleCount);
+    m_players.reserve(allocator, handleCount);
+    m_players.setRange(1, 0xFFFFFF, 0xFFFFFF);
+#line 1529 SOUND_SSD_DRV_PATH
+    m_bgmVolumes = new (FrameworkMemory::getAllocator(5), 16, __FILE__, __LINE__) csvb::CCsvbData();
+    fn_71001A39C8(-1);
+    pad_1b64 = 1;
+    m_initialized = true;
+}
+
+void SoundSsdDriver::fn_71001A39C8(int dlc) {
+    SoundManager* manager = SoundManager::sys();
+    if (dlc < 0) {
+        dlc = manager->m_dlc;
+    }
+    if (dlc != 0) {
+        m_bgmVolumes->Load(manager->getProcAllocator(), "sound/ira_vol.csvb");
+    } else {
+        m_bgmVolumes->Load(manager->getProcAllocator(), "sound/bgm_vol.csvb");
+    }
 }
 
 SoundSsdDriver::~SoundSsdDriver() {

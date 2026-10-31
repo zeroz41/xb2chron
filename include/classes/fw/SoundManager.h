@@ -35,7 +35,8 @@ public:
     void attachPoolMemory(void* memory, unsigned int size);
     bool loadBattleSe();
     void pauseAll(bool pause, float fade);
-    static mm::mtl::IAllocator* getProcAllocator();
+    // a member: fw::SoundSsdDriver calls it on the instance (its this unused)
+    mm::mtl::IAllocator* getProcAllocator();
     // a new handle: the next of m_uniqueID's serial numbers, category in the top byte
     static unsigned int getUniqueID(SoundCategory category);
     void setListeningPoint(const mm::Mat44& mtx);

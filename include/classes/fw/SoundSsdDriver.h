@@ -59,6 +59,7 @@ public:
 
         mm::mtl::IAllocator* m_allocator;  // 0x08 (the name is not the original's)
     };
+    SoundSsdDriver(mm::mtl::IAllocator* allocator, unsigned int handleCount);
     virtual ~SoundSsdDriver();  // slot 0
     virtual void update(fw::UpdateInfo const&);  // slot 2
     virtual void finalize();  // slot 3
@@ -119,6 +120,7 @@ public:
     struct CategoryInfo {
         // a value moving from start to target over time seconds
         struct Fade {
+            Fade() : current(1.0f), target(1.0f), start(1.0f), time(0.0f), elapsed(0.0f) {}
             // starts a move to value over time (at once when time is not positive)
             void set(float value, float time) {
                 if (time > 0.0f) {
@@ -138,6 +140,8 @@ public:
             float time;  // 0x0C
             float elapsed;  // 0x10
         };
+        // an unused category: no id, every factor 1 (the driver's constructor fills each entry with one)
+        CategoryInfo() : baseVolume(1.0f), masterVolume(1.0f), muteCount(0), pitch(1.0f), active(0), name("noname") {}
         void applyVolume() { category.volume_ = masterVolume * baseVolume * volume.current * mute.current; }
 
         ssd::SoundCategory category;  // 0x00
@@ -149,7 +153,7 @@ public:
         float pitch;  // 0x44 (setCategoryPitch; 1 from addCategory)
         int active;  // 0x48 (1 from addCategory, 0 from removeCategory)
         mm::mtl::FixStr<16> name;  // 0x4C
-        unsigned char pad_60[0x8];
+        bool pad_60;  // 0x60 (one byte: the constructor's assignment copies only it)
     };
 
     bool isValid() const { return m_core != nullptr; }
@@ -192,6 +196,9 @@ public:
     ssd::Result SoundHandleDelegate(ssd::Delegate::Handle* delegate, ssd::SoundHandle* handle,
                                     ssd::SoundHandle::Notify::Type type);
     void releaseHandle(ssd::SoundHandle* handle);
+    // loads m_bgmVolumes: sound/ira_vol.csvb when the argument (SoundManager's m_dlc when negative) is set, else
+    // sound/bgm_vol.csvb (the constructor's tail inlines it with a negative argument)
+    void fn_71001A39C8(int dlc);
 
     // field names are not the original's
     ssd::SoundCore* m_core;  // 0x10 (ssd::SoundCore::NewInstance(&m_allocator))

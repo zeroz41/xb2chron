@@ -48,10 +48,13 @@ public:
         T0 m_value;
     };
 
-    _ReslistBase() : m_capacity(0), m_size(0), m_alignment(8), m_allocator(nullptr) {
+    // the alignment is stored after the links: fw::SoundSsdDriver's and fw::SoundSsdBank's constructors schedule
+    // it there (UpdatableGroup's constructor matches either way)
+    _ReslistBase() : m_capacity(0), m_size(0), m_allocator(nullptr) {
         m_head = &m_end;
         m_head->m_next = m_head;
         m_head->m_prev = m_head;
+        m_alignment = 8;
     }
     // the same with its allocator set (fw::MessageManager::Impl's constructor stores it with the alignment, no
     // clear between)

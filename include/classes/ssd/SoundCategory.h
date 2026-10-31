@@ -5,6 +5,8 @@ namespace ssd {
 // table 0x7100B43330
 class SoundCategory {
 public:
+    // no id, full volume (fw::SoundSsdDriver's category entries: the stores stay apart from the vtable's)
+    SoundCategory() : id_(0), volume_(1.0f) {}
     virtual ~SoundCategory() {}  // slot 0
 
     // what ssd::SoundCore::SetCategory copies (the names are not the original's)
