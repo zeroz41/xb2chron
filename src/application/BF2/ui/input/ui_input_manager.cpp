@@ -4,6 +4,7 @@
 #include "classes/ui/UIEventManager.h"
 #include "classes/ui/UIInputPad.h"
 #include "ui/UIUtil.h"
+#include "mm/mtl/Hash.h"
 
 namespace ui {
 
@@ -51,6 +52,30 @@ void UIInputManager::sendEvent(InputLayerInfo& layer) {
 void UIInputManager::enable() { m_enabled = true; }
 
 void UIInputManager::disable() { m_enabled = false; }
+
+unsigned int UIInputManager::registInputLayer(UIInputLayer* layer, const char* name) {
+#line 128
+    InputLayerInfo* info = new (UIUtil::getProgAllocator(), 16, __FILE__, __LINE__) InputLayerInfo();
+    if (info == nullptr) {
+        return 0;
+    }
+    info->m_layer = layer;
+    layer->addRef();
+    info->m_target = 0;
+    info->m_enabled = true;
+    info->m_handle = mm::mtl::hashStrCrc(name);
+    InputList::iterator it = m_layers.begin();
+    for (; it != m_layers.end(); ++it) {
+        if (layer->m_handle >= (*it).m_layer->m_handle) {
+            break;
+        }
+    }
+    m_layers.insert(it, info);
+    if (UIUtil::isValid(info->m_layer->m_id)) {
+        UIUtil::getObject(layer->m_id)->m_flags.set(2, true);
+    }
+    return info->m_handle;
+}
 
 void UIInputManager::releaseInputLayer(unsigned int handle) {
     for (InputList::iterator it = m_layers.begin(); it != m_layers.end(); ++it) {

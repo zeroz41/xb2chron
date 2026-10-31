@@ -108,6 +108,17 @@ public:
         MM_ASSERT(m_size >= 0);
     }
     bool empty() const { return m_root.m_next == &m_root; }
+    // ptr linked before pos (UIInputManager::registInputLayer keeps its layers sorted so; the name is not known to
+    // be the original's). The original compares the root first (`cmp root, pos`) and keeps the test after its
+    // search loop: `end() == pos` with a push_back arm gives that; `pos == end()` lets the loop exits skip the test.
+    void insert(iterator pos, T* ptr) {
+        if (end() == pos) {
+            push_back(ptr);
+        } else {
+            linkNode(ptr, pos.m_node);
+            ++m_size;
+        }
+    }
     // it unlinked; the element after it (the name is not known to be the original's)
     iterator erase(iterator it) {
 #line 268 MM_MTL_INTRUSIVE_LIST_PATH
