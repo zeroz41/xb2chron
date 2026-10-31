@@ -37,7 +37,7 @@ public:
     virtual ~EyeBlinkPlugin() {}  // slot 1
     virtual void onActivate();  // slot 3
     virtual void onDeactivate();  // slot 4
-    virtual void onSetup(gf::GfComBehavior& behavior) { setup(behavior); }  // slot 5
+    virtual bool onSetup(gf::GfComBehavior& behavior) { return setup(behavior); }  // slot 5
     virtual void onCleanup(gf::GfComBehavior& behavior) { cleanup(behavior); }  // slot 6
     virtual void onUpdate(gf::GfComBehavior& behavior, fw::UpdateInfo const& info) {  // slot 7
         update(behavior, info);

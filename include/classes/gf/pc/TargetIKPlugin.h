@@ -33,8 +33,8 @@ public:
     virtual ~TargetIKPlugin();  // slot 1
     virtual void onActivate();  // slot 3
     virtual void onDeactivate();  // slot 4
-    virtual void onSetup(gf::GfComBehavior& behavior) {  // slot 5
-        setup(static_cast<gf::GfComBehaviorPc&>(behavior));
+    virtual bool onSetup(gf::GfComBehavior& behavior) {  // slot 5
+        return setup(static_cast<gf::GfComBehaviorPc&>(behavior));
     }
     virtual void onCleanup(gf::GfComBehavior& behavior) {  // slot 6
         cleanup(static_cast<gf::GfComBehaviorPc&>(behavior));

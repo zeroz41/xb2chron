@@ -297,7 +297,8 @@ void Vector<T>::resize(size_t size, const T& value) {
     if (m_size == size) {
         return;
     }
-    m_alignment = __alignof__(T);
+    // 8 at least, as resize(size): Vector<bool>'s and Vector<short>'s store 8
+    m_alignment = defaultAlignment();
     if (m_buffer == nullptr) {
         T* ptr = static_cast<T*>(m_allocator->allocate(size * sizeof(T), m_alignment));
         m_buffer = ptr;

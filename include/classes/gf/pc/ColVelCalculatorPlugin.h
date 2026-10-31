@@ -30,8 +30,8 @@ public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~ColVelCalculatorPlugin() {}  // slot 1
     virtual void onActivate();  // slot 3
-    virtual void onSetup(gf::GfComBehavior& behavior) {  // slot 5
-        setup(static_cast<gf::GfComBehaviorPc&>(behavior));
+    virtual bool onSetup(gf::GfComBehavior& behavior) {  // slot 5
+        return setup(static_cast<gf::GfComBehaviorPc&>(behavior));
     }
     virtual void onCleanup(gf::GfComBehavior& behavior) {  // slot 6
         cleanup(static_cast<gf::GfComBehaviorPc&>(behavior));
