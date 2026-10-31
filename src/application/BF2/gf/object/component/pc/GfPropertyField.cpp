@@ -308,6 +308,20 @@ ASM_CMD_ID_FIELD StateUtilField::getAsmID(GfPropertyField::WALL_MOVE_MODE mode) 
     }
 }
 
+mm::Vec3 StateUtilField::calcWallPreparePosition(gf::GfComPropertyPc& property, const mm::Vec3& wallPos,
+                                                 const mm::Plane& wallPlane) {
+    mm::Vec3 pos = wallPos;
+    const mm::Vec3& normal = wallPlane.normal;
+    if (wallPos.y >= property.m_pos.y) {
+        float dist = property.m_field.m_upLanding0Dist + property.m_field.m_wallBlendTarget;
+        pos = mm::Vec3(dist * normal.x, dist * normal.y, dist * normal.z) + pos;
+    } else {
+        float dist = property.m_field.m_downLanding0Dist - property.m_field.m_wallBlendTarget;
+        pos = pos - mm::Vec3(dist * normal.x, dist * normal.y, dist * normal.z);
+    }
+    return pos;
+}
+
 bool StateUtilField::isWallPreparePosition(gf::GfComPropertyPc& property, const mm::Vec3& preparePos) {
     mm::Vec3 diff(property.m_pos.x - preparePos.x, 0.0f, property.m_pos.z - preparePos.z);
     float distSq = diff.dot(diff);
