@@ -1,6 +1,8 @@
 #include "btl/EffectMoveComponent.h"
 
+#include "anm/QsTransform.h"
 #include "btl/Misc.h"
+#include "fw/TransformUtil.h"
 #include "fw/UpdateInfo.h"
 
 namespace btl {
@@ -20,6 +22,20 @@ void EffectMoveComponent::Initialize() {
     m_time = 0.0f;
     m_type = MOVE_TYPE_NONE;
 }
+
+}  // namespace btl
+
+namespace fw {
+
+void TransformUtil::mul(const Transform& lhs, const anm::QsTransform& rhs, float scale, Transform* pOut) {
+    mm::Vec3 position(rhs.m_translation.x, rhs.m_translation.y, rhs.m_translation.z);
+    pOut->position = lhs.position + lhs.rotation.rotate(position) * scale;
+    pOut->rotation = rhs.m_rotation * lhs.rotation;
+}
+
+}  // namespace fw
+
+namespace btl {
 
 void EffectMoveComponent::UpdateNormal(float dt, float frame, const mm::Vec3& pos) {
     if (dt <= 1e-06f) {
