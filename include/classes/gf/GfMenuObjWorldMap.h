@@ -66,7 +66,9 @@ public:
         param.m_out = 1;
         param.m_preset = 6;
         param.m_eventId = 2;
-        param.m_startFlag1 = flag;
+        if (flag) {
+            param.m_startFlag1 = true;
+        }
         int ctrl = GfMenuObjUtil::startPresetCtrl(handle, param);
         GfMenuObject::hookCtrlEvent(handle, ctrl);
         return ctrl;

@@ -174,6 +174,114 @@ void GfMenuObjQuestList::changeView(unsigned int view) {
     m_view = view;
 }
 
+void GfMenuObjQuestList::ListListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObject::disableInput(acc.m_handle);
+        acc.setDisp(false);
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        if (index != -1) {
+            m_owner->m_questLists[0]->setIndex(index);
+            m_owner->m_selectLists[0]->setIndex(m_owner->m_questLists[0]->getIndex(true));
+        }
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 8:
+        if (event.m_param1 == 1 && m_owner->m_questLists[0]->getSize() != 0) {
+            GfMenuQuestList* list = m_owner->m_questLists[0];
+            if (list->getContents(list->getIndex(false)).m_id != 0) {
+                m_owner->sendMenuEvent(acc.m_handle, 0x101);
+                list = m_owner->m_questLists[0];
+                m_owner->m_quest = list->getContents(list->getIndex(false)).m_id;
+                GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_detail"), 0, 0.0f);
+                GfMenuObjMainMenu2::setSystemKeyEnable(false);
+                GfMenuObjUtil::playSECommonDecide();
+                GfMenuObject::sendCloseEvent(acc.searchSibiling("LAY_tab_open"), 0, 0.0f);
+                GfMenuObject::disableInput(acc.m_handle);
+                GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            }
+        }
+        break;
+    case 0x21:
+        acc.setDisp(true);
+        break;
+    case 0x22:
+        acc.setDisp(false);
+        break;
+    case 0x101:
+        acc.setDispChild(false, "IMG_list_cursor");
+        if (m_owner->m_view == 1) {
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+        }
+        break;
+    case 0x102:
+        if (m_owner->m_view == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+            GfMenuObjMainMenu2::setSystemKeyEnable(true);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+            int size = m_owner->m_questLists[0]->getSize();
+            if (size != 0) {
+                acc.setDispChild(true, "IMG_list_cursor");
+            } else {
+                acc.setDispChild(false, "IMG_list_cursor");
+            }
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 1, size != 0);
+            GfMenuObject::resetInputSelection(acc.m_handle);
+            GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_questLists[0]);
+        }
+        break;
+    case 0x104:
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjQuestList::TabOpenListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        GfMenuObject::disableInput(acc.m_handle);
+        break;
+    case 8:
+        if (event.m_param1 == 9) {
+            GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_tab"), 0, 0.0f);
+            GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+            m_owner->sendMenuEvent(acc.searchSibiling("LAY_thumb"), 0x101);
+            m_owner->sendMenuEvent(acc.searchSibiling("LAY_list"), 0x101);
+            GfMenuObjMainMenu2::setSystemKeyEnable(false);
+            GfMenuObjUtil::playSECommonOpenSubMenu();
+        }
+        break;
+    case 0x21:
+        acc.setDisp(true);
+        GfMenuObject::enableInput(acc.m_handle);
+        GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        m_owner->sendMenuEvent(acc.searchSibiling("LAY_thumb"), 0x102);
+        m_owner->sendMenuEvent(acc.searchSibiling("LAY_list"), 0x102);
+        GfMenuObjMainMenu2::setSystemKeyEnable(true);
+        break;
+    case 0x22:
+        acc.setDisp(false);
+        GfMenuObject::disableInput(acc.m_handle);
+        GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 bool GfMenuObjQuestList::seqActivateStart() {
     if (m_quest != 0) {
         m_context->reset();

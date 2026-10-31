@@ -7,6 +7,7 @@
 
 namespace gf {
 class GfMenuCallContext;
+class GfMenuMsgList;
 class GfMenuReferenceNumber;
 
 // table 0x7100B62040
@@ -58,7 +59,11 @@ public:
     // s_capRows[index] (3 rows: 1, 2, 9).
     void fn_7100404720(unsigned int index);
 
-    unsigned char pad_24[0x16C - 0x24];
+    // the names of the fields below are not the original's
+    int m_title;  // 0x24: which TXT_header_title@%02d / TXT_header_input@%02d (from 1) HeaderListener shows
+    unsigned char pad_28[0x50 - 0x28];
+    GfMenuMsgList* m_msgList;  // 0x50: HeaderListener shows its selected entry's text
+    unsigned char pad_58[0x16C - 0x58];
     // fn_7100401298 shows timezone image m_timezone - 1 when it is set (the name is not the original's)
     unsigned int m_timezone;  // 0x16C
     unsigned char pad_170[0x178 - 0x170];

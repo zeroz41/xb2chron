@@ -6,6 +6,8 @@
 #include "classes/gf/GfMenuReferenceQuest.h"
 #include "gf/GfMenuSequence.h"
 #include "mm/mtl/IntrusivePtr.h"
+#include "classes/ui/UIObjectAcc.h"
+#include "ui/EventData.h"
 
 namespace ui { class UICtrlCursorSelect; class UISelectObjList; class UIObjectAcc; }
 namespace gf { class GfMenuCallContext; class GfMenuItemList; class GfMenuQuestList; }
@@ -40,6 +42,17 @@ public:
     bool seqActivateStart();
     bool seqActivateSelect();
     bool seqEnd();
+    // sends an event of that type to an object, to LAY_main when it is 0 (the listeners pass a sibling they search
+    // for, or their own object). Inline: its UIObjectAcc and EventData sit above the callers' locals in their
+    // frames. The name is not the original's.
+    void sendMenuEvent(unsigned int handle, unsigned short type) {
+        if (handle == 0) {
+            handle = ui::UIObjectAcc(m_handle, "LAY_main").m_handle;
+        }
+        ui::EventData event;
+        event.m_type = type;
+        GfMenuObject::sendEvent(handle, event, 0.0f);
+    }
 
     unsigned char pad_24[4];
     // the field names below are not the original's

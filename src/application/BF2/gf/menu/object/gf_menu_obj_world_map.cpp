@@ -24,7 +24,13 @@
 #include "classes/ui/UIStreamManager.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
 #include "classes/gf/GfMenuObjWorldMap/MainListener.h"
+#include "classes/gf/GfMenuObjWorldMap/WorldListener.h"
+#include "classes/gf/GfMenuObjWorldMap/IconFilterListener.h"
+#include "classes/gf/GfMenuObjOperationInfo.h"
+#include "classes/ui/UIManager.h"
 #include "ui/EventData.h"
+#include "ui/UIStr.h"
+#include "gf/GfMenuFlag.h"
 #include "gf/GfMenuObjUtil.h"
 #include "mm/mtl/FixStr.h"
 #include "plugin/Bdat.h"
@@ -230,6 +236,75 @@ void GfMenuObjWorldMap::MainListener::reciveEvent(ui::EventData const& event, un
     }
 }
 
+void GfMenuObjWorldMap::WorldListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObjOperationInfo::setGuideText(2, 0);
+        if (m_owner->pad_2FD0 == 0) {
+            setFadeIn(handle);
+        }
+        break;
+    case 2:
+        setFadeOut(handle, true);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableFSInput(0);
+        } else if (event.m_param0 == 2) {
+            acc.setDisp(false);
+            acc.setTerm();
+        }
+        break;
+    case 0x21:
+        acc.setDisp(true);
+        break;
+    case 0x22:
+        if (m_owner->pad_38) {
+            setFadeOut(handle, event.m_param0 == 1);
+        } else {
+            ui::EventData ev;
+            ev.m_type = 3;
+            ev.m_param0 = 2;
+            ui::UIManager::get()->requestObjectEvent(handle, ev, 0.0f);
+        }
+        GfMenuObject::disableInput(acc.searchChild("LAY_worldmap"));
+        GfMenuObject::disableInput(acc.searchChild("LAY_map_sellect"));
+        break;
+    case 0x24: {
+        GfMenuObject::disableInput(acc.searchChild("LAY_worldmap"));
+        GfMenuObject::disableInput(acc.searchChild("LAY_map_sellect"));
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_out = 1;
+        param.m_preset = 6;
+        param.m_eventId = 2;
+        GfMenuObjUtil::startPresetCtrl(handle, param);
+        m_owner->pad_38 = false;
+        break;
+    }
+    default:
+        if (event.m_type == 0x102) {
+            {
+                unsigned int child = acc.searchChild("LAY_worldmap");
+                ui::EventData ev;
+                ev.m_type = 0x103;
+                ev.m_param0 = 0;
+                ui::UIManager::get()->requestObjectEvent(child, ev, 0.0f);
+            }
+            {
+                unsigned int child = acc.searchChild("LAY_map_sellect");
+                ui::EventData ev;
+                ev.m_type = 0x103;
+                ev.m_param0 = 0;
+                ui::UIManager::get()->requestObjectEvent(child, ev, 0.0f);
+            }
+            break;
+        }
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjWorldMap::refreshMapSelect(ui::UIObjectAcc& acc, GfMenuIDList* list, ui::UISelectObjList* selectList,
                                          int index) {
     mm::mtl::FixStr<32> name;
@@ -305,6 +380,80 @@ void GfMenuObjWorldMap::fn_710049D2A4(bool fadeFirst) {
         } else {
             icon.setDisp(on);
         }
+    }
+}
+
+void GfMenuObjWorldMap::IconFilterListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc ownerAcc(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        GfMenuObject::disableInput(handle);
+        break;
+    case 6: {
+        int index = event.m_param0;
+        if (index != -1) {
+            int prev = event.m_param1;
+            m_owner->m_iconFilterList->setIndex(index);
+            {
+                ui::UIObjectAcc text(acc.m_handle, "TXT_icon_filter_index");
+                unsigned short msg =
+                    GfMenuObjUtil::getMsgIDFromList(GfMenuObjUtil::fn_710048FD30(3) ? 0x160 : 0x15F, index + 1);
+                ui::UIStr str(GfDataBdat::getFP(0xF5), msg);
+                text.setText(str);
+            }
+            bool on = (m_owner->m_iconFilter & (1 << index)) != 0;
+            GfMenuObjOperationInfo::changeText(acc.m_handle, 0xB, on);
+            if (prev != -1 && index != prev) {
+                GfMenuObjUtil::playSECommonTab();
+            }
+        }
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+    case 8: {
+        int index = event.m_param0;
+        if (index != -1 && event.m_param1 == 0xB) {
+            unsigned int flags = m_owner->m_iconFilter;
+            if (flags & (1 << index)) {
+                flags &= ~(1 << index);
+            } else {
+                flags |= 1 << index;
+            }
+            m_owner->m_iconFilter = flags;
+            m_owner->refreshIconFilter();
+            m_owner->fn_710049D2A4(true);
+            unsigned int on = m_owner->m_iconFilter & (1 << index);
+            if (on) {
+                GfMenuObjUtil::playSE(0xC);
+            } else {
+                GfMenuObjUtil::playSE(0xE);
+            }
+            GfMenuFlag::set1(index + 0x28, on != 0);
+            GfMenuObjOperationInfo::changeText(acc.m_handle, 0xB, on != 0);
+        }
+        break;
+    }
+    case 0x103:
+        m_owner->m_iconFilterList->setIndex(0);
+        GfMenuObject::resetInputSelection(acc.m_handle);
+        GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_iconFilterList);
+        acc.setDisp(true);
+        m_owner->m_iconFilterCursor->setDisp(true);
+        m_owner->refreshIconFilter();
+        GfMenuObject::enableInput(handle);
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 0x104:
+        acc.setDisp(false);
+        m_owner->m_iconFilterCursor->setDisp(false);
+        GfMenuObject::disableInput(handle);
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
     }
 }
 

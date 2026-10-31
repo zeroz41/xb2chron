@@ -1,5 +1,7 @@
 #include "classes/gf/GfMenuObjEvTheater.h"
+#include "classes/gf/GfMenuObjEvTheater/HeaderListener.h"
 #include "classes/gf/GfMenuObjEvTheater/TUnk_B62178.h"
+#include "classes/gf/GfMenuMsgList.h"
 #include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuManager.h"
@@ -8,6 +10,7 @@
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuBdat.h"
 #include "gf/GfMenuObjUtil.h"
+#include "mm/mtl/FixStr.h"
 #include "plugin/Bdat.h"
 #include "ui/UIStr.h"
 #include "ui/EventData.h"
@@ -100,6 +103,77 @@ bool GfMenuObjEvTheater::fn_71004015F8(unsigned int value) {
 bool GfMenuObjEvTheater::fn_710040166C(unsigned int value) {
     m_number->m_value = value;
     return true;
+}
+
+void GfMenuObjEvTheater::HeaderListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        m_shown = 0;
+        break;
+    case 0x21:
+        if (m_shown == 0) {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_in_r";
+            param.m_setDefault = true;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_header_body");
+            {
+                ui::UIObjectAcc base(acc.m_handle, "IMG_header_base");
+                base.startAnimation("fade_in", false);
+                base.setDisp(true);
+            }
+            unsigned int count = acc.countChild("TXT_header_title@%02d", 1);
+            mm::mtl::FixStr<32> name;
+            for (unsigned int i = 0; i < count; i++) {
+                name.format("TXT_header_title@%02d", i + 1);
+                acc.setDispChild(i + 1 == m_owner->m_title, name.m_str);
+            }
+            acc.setDispChild(false, "LAY_header_item");
+            acc.setDispChild(false, "LAY_header_input");
+            m_shown = 1;
+        }
+        break;
+    case 0x22:
+        if (m_shown == 1) {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_out_r";
+            param.m_startFlags = 10;
+            param.m_eventId = 2;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_header_body");
+            {
+                ui::UIObjectAcc base(acc.m_handle, "IMG_header_base");
+                base.startAnimation("fade_out", false);
+            }
+            m_shown = 0;
+        }
+        break;
+    case 0x103: {
+        ui::UIObjectAcc text(acc.m_handle, "TXT_header_item");
+        ui::UIStr str;
+        m_owner->m_msgList->getMsg(-1, str, false);
+        text.setText(str);
+        acc.setDispChild(true, "LAY_header_item");
+        acc.setDispChild(false, "LAY_header_input");
+        unsigned int count = acc.countChild("TXT_header_input@%02d", 1);
+        mm::mtl::FixStr<32> name;
+        for (unsigned int i = 0; i < count; i++) {
+            name.format("TXT_header_input@%02d", i + 1);
+            acc.setDispChild(i + 1 == m_owner->m_title, name.m_str);
+        }
+        break;
+    }
+    case 0x104:
+        acc.setDispChild(false, "LAY_header_item");
+        acc.setDispChild(false, "LAY_header_input");
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 void GfMenuObjEvTheater::fn_7100404720(unsigned int index) {
