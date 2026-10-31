@@ -40,7 +40,7 @@ struct ResHingeConstraint {
 struct ResNode {
     unsigned char pad_0[0x18];
     float m_damping;  // integrate keeps (1 - m_damping) of the node's velocity (the name is not the original's)
-    unsigned char pad_1C[0x4];
+    float m_windRate;  // fw::WindForceCalculator::calcForce scales the wind by it (the name is not the original's)
     float m_mass;  // applyAccel divides the node's force by it (the name is not the original's)
     unsigned char m_flags;
     unsigned char pad_25[0x3];

@@ -39,6 +39,19 @@ public:
                     (-(y * tx) + x * ty - z * tw) + w * tz);
     }
 
+    // rotate(v) written into out a component at a time: fw::WindForceCalculator::calcForce's node positions store
+    // x alone, then y and z, and schedule the products so (the name is not the original's: every mm::Quat member is
+    // inlined)
+    void rotate(Vec3& out, const Vec3& v) const {
+        float tx = (y * v.z - z * v.y) + w * v.x;
+        float ty = (z * v.x - x * v.z) + w * v.y;
+        float tz = (x * v.y - y * v.x) + w * v.z;
+        float tw = -x * v.x - y * v.y - z * v.z;
+        out.x = (-(z * ty) + y * tz - x * tw) + w * tx;
+        out.y = (-(x * tz) + z * tx - y * tw) + w * ty;
+        out.z = (-(y * tx) + x * ty - z * tw) + w * tz;
+    }
+
     // the opposite rotation: qa's conjugate over its squared length (mm_quat_impl_nx.h asserts `!qa.isZero()`)
     static __attribute__((always_inline)) Quat inverse(const Quat& qa) {
 #line 86 MM_QUAT_IMPL_PATH
