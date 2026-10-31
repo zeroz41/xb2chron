@@ -189,6 +189,37 @@ void Framework::deactivate() {
     }
 }
 
+void Framework::beginFrame(const UpdateState& state) {
+    if (!state.m_pause) {
+        float updateSpeed = m_updateSpeed;
+        float speed = m_updateInfo.m_speed;
+        if (::fabsf(updateSpeed - speed) > 1e-6f) {
+            speed = updateSpeed;
+            m_updateInfo.m_frameTime = 1.0f / m_config.m_frameRate;
+            m_updateInfo.m_speed = speed;
+            m_updateInfo.m_deltaTime = speed * m_updateInfo.m_frameTime;
+        }
+        for (unsigned int i = 0; i < 32; i++) {
+            Layer& layer = m_layers[i];
+            layer.m_speed = layer.m_speedRequest;
+            layer.m_deltaTime = layer.m_speedRequest * m_updateInfo.m_speed;
+            layer.m_pause = layer.m_pauseRequest;
+        }
+    } else {
+        m_updateInfo.m_frameTime = 1.0f / m_config.m_frameRate;
+        m_updateInfo.m_speed = 0.0f;
+        for (int i = 0; i < 32; i++) {
+            m_layers[i].m_deltaTime = 0.0f;
+        }
+        m_updateInfo.m_deltaTime = m_updateInfo.m_frameTime * m_updateInfo.m_speed;
+    }
+    if (m_state - 2u < 3) {
+        if (SoundManager* sound = SoundManager::get()) {
+            sound->update(m_updateInfo);
+        }
+    }
+}
+
 void Framework::endFrame(const UpdateState& state) {}
 
 void Framework::preUpdate() {
