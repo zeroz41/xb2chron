@@ -5,6 +5,7 @@ namespace gf { class GF_OBJ_HANDLE; struct OwnerBonus; }
 namespace mm { class Vec3; namespace mtl { template <int LEN> class FixStr; template <typename T, unsigned long N> class FixedList; } }
 namespace gmk { enum GmkType : int; }
 namespace gf { class GfFieldLocator; }
+namespace gf { class SDataBlade; }
 namespace mm { namespace mtl { template <typename T> class Vector; } }
 
 namespace gf {
@@ -134,6 +135,18 @@ public:
     // returns whether it went ahead (GfDataBlade::fn_71002383C8 held): fn_71002E16F4 tail-calls it and returns 0
     // otherwise
     static bool execEquipMercenariesBlade(unsigned int driver, unsigned int blade, bool flag);
+    // named by the symbols: adds a rare blade (GfDataBlade::addRareBlade) and, when that gives one, copies blade
+    // 0x3FE's creator to 1050, marks its m_createEvent watched (setWatchedEvent) and calls GfEvent::callBladeActivate
+    // from its previous activate type to 1; returns the new blade (0 for none)
+    static unsigned int execAddRareBlade(const SDataBlade& data);
+    static void setWatchedEvent(unsigned int event);  // (symbols)
+    // named by the symbols: raises the blade's trust rank by one up to 6 (GfDataBlade::setTrustRank), tells
+    // GfEvent::callDebugChangeIdea(4, blade) and shows SCOM_POPUP::createAffinity for its driver (its set driver, else
+    // its creator; with GfGameManager::fn_71002A9E68 GfDataDriver::fn_71002417DC of GfDataBlade::fn_7100236518)
+    static void addTrustRankForKizunaRing(unsigned int blade);
+    // named by the symbols: DataParamAcc::setBladeSet(select) on the object and, when it has a GfObj, sends it a
+    // MsgUnk_1000045 with its attribute after and before the change
+    static void setBladeSelect(gf::GF_OBJ_HANDLE* handle, int select);
     // Placeholder name: new in 3.0.1's shape, its address lies between GfGameUtil::execActivateMercenaryTeamForBlade
     // and execEquipMercenariesBlade (so a GfGameUtil member). What it does: 1.0.0's pt setDriverEnable calls
     // GfDataDriver::equipDriverBladeFromReserverBlade(driver) at the same place; 3.0.1's calls this with driver 2

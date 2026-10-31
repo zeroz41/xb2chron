@@ -18,6 +18,10 @@ public:
     // advertise mode), and calls fn_7100223650 on its 0xE98D8 and 0x11D27C areas with 0x6398; GfMenuObjOption's
     // difficulty lists use its answer to show all four difficulties.
     static bool fn_71002EDCEC();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it is fn_71002EDCEC's
+    // twin right before it (same code with item 25495 for 25496). Callers: TitleStateMainScreen::loadSaveDataForTitle,
+    // fn_7100154638 and GfMenuObjOption::initialize.
+    static bool fn_71002EDC78();
 };
 }  // namespace gf
 

@@ -122,6 +122,12 @@ public:
     // gf_game_scene's unit and GfGameManager::isEnableOpenMainMenu passes the scene. What it does: whether the int at
     // 0x690 is below 30; isEnableOpenMainMenu answers false while it holds.
     bool fn_71002C4A14();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // gf_game_scene's unit and GfWeapon's unit's fn_71002ED96C / fn_71002ED99C call it on PtrSingleton<GfGameScene>'s
+    // instance. What it does: keeps (handle, target, kind) records (0x20 bytes each from 0x6A8, count at 0x8A8);
+    // with flag clear it looks for the record with that handle and kind, and it reads both objects (GfObjAcc, the
+    // target's append handles by GfMountManager::getAppendHandles). kind is 0 or 1 (the two callers).
+    void fn_71002C4C0C(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag, unsigned int kind);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // gf_game_scene's unit and GfGameManager's statics pass the scene. What they do: fn_71002C4B38: whether the int
     // at 0x698 is below 2 (GfGameManager::fn_71002AC340); fn_71002C4BFC: whether the int at 0x68C is not 0

@@ -12,6 +12,7 @@ namespace gf { class DataParamAcc; }
 namespace gf { class SDataGame; }
 namespace gf { struct GfItemHandle; }
 namespace gf { enum FAVORITE : int; }
+namespace gf { enum GfIdea : int; }  // the type of GfDataBlade::setTrustRank's rank (symbols)
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedArray; }}
 
 namespace gf {
@@ -181,6 +182,7 @@ public:
     static bool fn_71002383C8(unsigned int blade);
     static ActivateType getBladeActivateType(const SDataBlade& blade);
     static ActivateType getBladeActivateType(unsigned int blade);
+    static unsigned int addRareBlade(const SDataBlade& data);  // (symbols) the new blade, 0 for none
     static bool isActivateReserver(unsigned int blade);
     static bool setActivateReserver(unsigned int blade);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
@@ -368,6 +370,9 @@ public:
     static bool isKizunaringComplete(unsigned int blade);
     static bool isReleasedRareBlade(unsigned int blade);
     static unsigned int getTrustRank(unsigned int blade);
+    // named by the symbols (its second parameter's type GfIdea too); GfGameUtil::addTrustRankForKizunaRing passes the
+    // rank above getTrustRank's
+    static void setTrustRank(unsigned int blade, GfIdea rank);
     static bool isSetBlade(unsigned int blade);
     static unsigned int getBladeWeapon(unsigned int blade);
     static const char* getResourceNameMotion(unsigned int blade);

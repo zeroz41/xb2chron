@@ -35,6 +35,12 @@ public:
     // does: returns the DLC drivers' data, 0xDAC-byte records for driver rows 0x11-0x19 (GfDataDriver::getSDataDriver
     // indexes it with row - 0x11).
     static SDataDriverDlc* fn_7100224A10();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in this
+    // unit and it takes no object (GfDataManager's statics fill the unit). What it does: GfDataItem::getItemType of
+    // item, then by the type (1..0x14, jump table 0x71009B9BCC) a per-type function on the matching parts of the
+    // favorite item area (SDataGame::m_favoriteItemType) and the item box (SDataGame::m_itemBox); 0 for an unknown
+    // item. GfGameUtilSaveData::fn_71002EDC78 / fn_71002EDCEC pass items 25495 / 25496 and test it against 0.
+    static unsigned int fn_7100223650(unsigned char* favorite, unsigned char* box, unsigned int item);
 
 private:
     // 1.0.0's initialize and finalize (the constructor and destroy hold their bodies in 3.0.1)

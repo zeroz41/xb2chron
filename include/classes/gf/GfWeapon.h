@@ -199,6 +199,33 @@ bool fn_71002EE5E0(QuestID quest, unsigned int task);
 void fn_71002DA4FC(int value);
 void fn_71002DA570(int value);
 void fn_71002DA5E4(unsigned int value);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit and it takes no object. What it does: for blade 1001, else 1002 (the first GfDataBlade::fn_71002383C8
+// holds for), cancels the mission of the blade's mercenary team (GfGameMercenaries::cancelMission of
+// GfDataMercenaries::getMissionIdByBlade) and clears that team's members (clearTeamMember of getTeamID);
+// GfGameScene::gevChangeScenarioFlag calls it.
+void fn_71002E1824();
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit and it takes only a handle (no this). What it does: in the arena (TUnk_B535D0::fn_7100291D54 holds)
+// TUnk_B535D0::fn_7100291E14(handle), else DataParamAcc(handle).getWeaponDamage(false), as fn_71002EC6F4 does for the
+// stability; btl::PlayerParameter::InitializeAttackParam calls it.
+unsigned int fn_71002EC674(GF_OBJ_HANDLE* handle);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit among GfGameUtil's experience functions and it takes no object. What it does: for a driver other
+// than 0, lowers its experience (DataParamAcc(3, driver).getExp()) by exp, down to 0 (at most 999999999), stores it
+// (GfDataDriver::fn_71002448D8) and, for a DLC driver row (fn_710023F9A8), calls fn_71002417DC on it;
+// GfMenuObjBalloon::SelMoneyListener::reciveEvent calls it.
+void fn_71002DAB40(unsigned int driver, unsigned int exp);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit and it takes only a handle (no this). What it does: for a handle other than -1, sets the alpha of
+// its "medal" extra mesh (GfObjAcc::getExtMeshIdx, setExtMeshAlpha) to 1 when show is set, else 0; fn_7100543F98
+// calls it.
+void fn_71002E24C0(GF_OBJ_HANDLE* handle, bool show);
+// Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions because their addresses are
+// in GfWeapon's unit (no this). What they do: when GfGameScene is up, GfGameScene::fn_71002C4C0C(handle, target,
+// flag) with kind 0 (fn_71002ED96C) or 1 (fn_71002ED99C); btl::BattleCharacter::SetAction / AsmCallback call them.
+void fn_71002ED96C(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag);
+void fn_71002ED99C(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag);
 }  // namespace gf
 
 #endif
