@@ -53,6 +53,10 @@
 #include "classes/gmk/GmkElevator.h"
 #include "classes/gmk/TUnk_B6D660.h"
 #include "classes/gf/GfGmkLocator.h"
+#include "classes/gf/TUnk_B51E90.h"
+#include "classes/gmk/GmkNpc.h"
+#include "classes/gmk/GmkRoutedNpc.h"
+#include "classes/gf/GfGmkLocatorAtlas.h"
 #include "classes/gmk/GmkRoutedEnemy.h"
 #include "classes/gmk/GmkRoute.h"
 #include "classes/gf/DataObjEnemy.h"
@@ -526,6 +530,47 @@ void GfFieldLocator::update() {
 bool GfFieldLocator::isIconIdPreorder(int iconId) {
     return static_cast<unsigned short>(Bdat::getValCheck(GfDataBdat::getFP(0x7b), 1, 0x10, 2)) == iconId;
 }
+TUnk_B51E90::TUnk_B51E90(const CreateInfo* info) : m_id(0), m_posNum(0), m_pos(mm::Vec3::zero), pad_20(0) {
+    if (info != nullptr) {
+        fn_71002700F0();
+        m_id = info->m_id;
+    }
+}
+void TUnk_B51E90::fn_71002700F0() {
+    pad_20 = 0;
+    m_posNum = 0;
+    m_pos = mm::Vec3::zero;
+    m_id = 0;
+}
+void TUnk_B51E90::fn_710027011C() {
+    if (m_id == 0) {
+        return;
+    }
+    m_posNum = 0;
+    pad_20 = GfFieldGimmick::getBdatIdFrom_FLD_maplist_To_RSC_GmkSetList(GfGameManager::getMapID());
+    const gmk::GmkSet* set = gmk::GmkManager::sys()->findGmkSet(pad_20);
+    if (set == nullptr) {
+        return;
+    }
+    const gmk::GmkNpcManager::NpcIdInfo* info = set->m_npcManager.getNpcIdInfoByNpcId(m_id);
+    GfObjAcc acc(info->m_handle);
+    if (acc.isValidTransform()) {
+        m_pos = acc.getWorldTransformNoSync().position;
+        m_posNum = 1;
+        return;
+    }
+    const gmk::AGmkNpc* npc = info->m_gmk;
+    if (npc == nullptr) {
+        return;
+    }
+    if (!npc->isPopCondMatched()) {
+        return;
+    }
+    mm::Vec3 rot;
+    if (npc->findPopPosRot(m_pos, rot)) {
+        m_posNum = 1;
+    }
+}
 
 const gmk::AGmkBase* GfGmkLocator::getBindedGmk() const {
     return m_isAcc ? m_acc.m_gmk : m_gmk;
@@ -534,6 +579,73 @@ void GfGmkLocator::dispose() {
     m_acc.dispose();
     m_gmk = nullptr;
     m_isAcc = false;
+}
+GfGmkLocatorAtlas::GfGmkLocatorAtlas(const CreateInfo* info)
+    : m_bdatIdTop(-1), m_curGmkSet(nullptr), m_gmkSet(nullptr), m_seq(nullptr) {
+    if (info != nullptr) {
+        create(*info);
+    }
+}
+void GfGmkLocatorAtlas::create(const CreateInfo& info) {
+    dispose();
+    m_info = info;
+    if (m_bdatInfos.size() == 0) {
+        createBdatInfos();
+    }
+    if (GfGameManager::getMapID() == info.m_mapId) {
+        m_seq = &GfGmkLocatorAtlas::seqWaitToCreateCurMapGmkSet;
+        return;
+    }
+    gmk::GmkSet::CreateInfo setInfo;
+    setInfo.m_allocHandle = getAllocator(ALLOCATOR(8))->getMemHandle();
+    setInfo.m_bdatId = GfFieldGimmick::getBdatIdFrom_FLD_maplist_To_RSC_GmkSetList(info.m_mapId);
+    setInfo.m_flag = true;
+    m_gmkSet.create(setInfo);
+    m_curGmkSet = &m_gmkSet;
+    m_seq = &GfGmkLocatorAtlas::seqWaitToCreateGmkSet;
+}
+void GfGmkLocatorAtlas::dispose() {
+    m_seq = nullptr;
+    m_locators.destroy();
+    m_gmkSet.dispose();
+    m_curGmkSet = nullptr;
+    m_bdatIdTop = -1;
+    m_bdatInfos.destroy();
+    m_info = CreateInfo();
+}
+void GfGmkLocatorAtlas::createBdatInfos() {
+    m_bdatIdTop = -1;
+    m_bdatInfos.destroy();
+    unsigned char* fp = GfDataBdat::getFP(0x17a);
+    m_bdatInfos.setAllocator(getAllocator(ALLOCATOR(0)));
+    int num = Bdat::getIdCount(fp);
+    m_bdatInfos.reserve(num);
+    m_bdatInfos.resize(num);
+    m_bdatIdTop = Bdat::getIdTop(fp);
+    for (int i = 0; i < num; ++i) {
+        BdatInfo& bdatInfo = m_bdatInfos[i];
+        int id = i + m_bdatIdTop;
+        bdatInfo.m_levelName = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "level_name", id, 7));
+        bdatInfo.m_levelPriority = Bdat::getValCheck(fp, "level_priority", id, 2);
+    }
+}
+void GfGmkLocatorAtlas::seqWaitToCreateCurMapGmkSet(float) {
+    const gmk::GmkManager* manager = gmk::GmkManager::sys();
+    if (manager->m_gmkSets.size() != 0) {
+        m_curGmkSet = manager->m_gmkSets[0];
+        m_seq = &GfGmkLocatorAtlas::seqWaitToCreateGmkSet;
+    }
+}
+void GfGmkLocatorAtlas::update(float delta) {
+    if (m_info.m_mapId <= 0) {
+        return;
+    }
+    if (m_gmkSet.isValid()) {
+        m_gmkSet.update(delta);
+    }
+    if (m_seq) {
+        (this->*m_seq)(delta);
+    }
 }
 
 inline void LocatorBat_EnemySpeciesID::fn_7100272430(GF_OBJ_HANDLE* handle) {

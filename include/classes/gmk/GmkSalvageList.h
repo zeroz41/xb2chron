@@ -21,8 +21,9 @@ public:
     virtual void disposeGmk();  // slot 17
 
     unsigned char pad_228[0x8];
-    GmkSet m_gmkSet;  // 0x230: the ctor stores GmkSet's table there, the dtor calls ~GmkSet (the name is not the original's)
-    unsigned char pad_5f0[0x10];  // size from GmkSet::createGmkLists's new (0x600)
+    // 0x230: the ctor stores GmkSet's table there, the dtor calls ~GmkSet (the name is not the original's); it ends
+    // at 0x600, the size of GmkSet::createGmkLists's new
+    GmkSet m_gmkSet;
 };
 }  // namespace gmk
 
