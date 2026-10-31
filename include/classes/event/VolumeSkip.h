@@ -16,6 +16,10 @@ public:
         m_volumes.assign(1.0f);
         pad_44 = 0;
     }
+    // out of line (0x710010F608, 0x71001105F0); SkipManager::setSkipVolume calls start when the scene's skip
+    // begins and end when it stops
+    void start();
+    void end();
     unsigned int pad_8;
     // one volume per sound category (1.0.0's set takes a const mm::mtl::FixedArray<float, 14>*); the name is not the original's
     mm::mtl::FixedArray<float, 14> m_volumes;  // 0xc

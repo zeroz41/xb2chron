@@ -10,6 +10,9 @@ namespace event {
 // table 0x7100B3CD78; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::CsSndManager>
 class CsSndManager : public IManager, public mm::mtl::Singleton<CsSndManager> {
 public:
+    // inline: Singleton<CsSndManager>::getPtr's static constructs it in SkipManager::setSkipVolume
+    CsSndManager()
+        : m_flags(0), pad_14(0), m_bgmHandle0(0), m_bgmHandle1(0), pad_238(0), m_bgmFrame1(0.0f) {}
     virtual ~CsSndManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     void update();  // out of line
@@ -25,7 +28,12 @@ public:
     unsigned int m_bgmHandle1;  // 0x1c fw::SoundManager::stopBgm's handle
     mm::mtl::FixStr<256> m_bgmName0;  // 0x20 emptied with m_bgmHandle0
     mm::mtl::FixStr<256> m_bgmName1;  // 0x124 emptied with m_bgmHandle1
-    unsigned char pad_228[0x20];
+    unsigned char pad_228[0x10];
+    unsigned long pad_238;  // the constructor zeroes it
+    // SkipManager::setSkipVolume restarts bgm 1 at (FrameManager's frame + this) / 30 seconds (the name is not
+    // the original's)
+    float m_bgmFrame1;  // 0x240
+    unsigned char pad_244[0x4];
 };
 }  // namespace event
 

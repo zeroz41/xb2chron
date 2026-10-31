@@ -27,6 +27,12 @@
 #include "classes/event/CamFree.h"
 #include "classes/event/VolumeManager.h"
 #include "classes/event/VolumePlayer.h"
+#include "classes/event/VoicePlayer.h"
+#include "classes/event/VoiceMaker.h"
+#include "fw/LangUtil.h"
+#include "classes/event/CsSndManager.h"
+#include "classes/fw/SoundManager.h"
+#include "classes/mm/mtl/PtrSingleton.h"
 #include "classes/event/AgelogManager.h"
 #include "classes/event/DebugManager.h"
 #include "classes/event/Manager.h"
@@ -2300,6 +2306,26 @@ void SeManager::pan(int id, float pan, float frame, CV_TYPE type) {
 
 SeManager::~SeManager() {}
 
+void SkipManager::setSkipVolume(bool skip) {
+    if (skip) {
+        if (!(m_flags & 2)) {
+            mm::mtl::Singleton<VolumeManager>::get().m_skip.start();
+            m_flags |= 2;
+        }
+    } else {
+        if (m_flags & 2) {
+            mm::mtl::Singleton<VolumeManager>::get().m_skip.end();
+            CsSndManager* snd = mm::mtl::Singleton<CsSndManager>::getPtr();
+            FrameManager* frame = mm::mtl::Singleton<FrameManager>::getPtr();
+            if (snd->m_flags & 2) {
+                float time = (frame->getFrame() + snd->m_bgmFrame1) / 30.0f;
+                mm::mtl::PtrSingleton<fw::SoundManager>::sys()->setPlayTime(snd->m_bgmHandle1, time);
+            }
+            m_flags &= ~2;
+        }
+    }
+}
+
 int UIManager::getPayoffUI() const {
     return m_payoffResult;
 }
@@ -2847,6 +2873,27 @@ void OutsiderManager::OnEventProc(event::MSG_TYPE msg) {
 
 unsigned int StatusManager::getDriverByBladeId(unsigned int bladeId) const {
     return gf::GfDataBlade::getCreator(bladeId);
+}
+
+void VoicePlayer::preload(float time, const char* name) {
+    while (static_cast<int>(m_keys.size()) >= 8) {
+        m_keys.erase(m_keys.begin());
+    }
+    m_keys.push_back(Key(time, name));
+}
+
+void VoiceMaker::create(bool use, const char* dir, const char* name) {
+    m_flags = 0;
+    m_path.clear();
+    if (use) {
+        unsigned long len = strlen(name);
+        if (len > 2 && (memcmp(name, "bf", 2) == 0 ||
+                        (len > 3 && (memcmp(name, "qst", 3) == 0 || memcmp(name, "fev", 3) == 0 ||
+                                     memcmp(name, "deb", 3) == 0 || (len > 6 && memcmp(name, "kizuna", 6) == 0))))) {
+            m_path.format("/stream/%s/%s/%s/", dir, fw::LangUtil::getVoiceFolder(), name);
+            m_flags |= 1;
+        }
+    }
 }
 
 VolumeManager::VolumeManager() : pad_10(0), pad_14(0) {}

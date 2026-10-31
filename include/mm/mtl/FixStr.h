@@ -1,6 +1,8 @@
 #ifndef MM_MTL_FIXSTR_H
 #define MM_MTL_FIXSTR_H
 
+#include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 #include "mm/MMStdBase.h"
 #include "mm/mtl/Algorithm.h"
@@ -177,6 +179,20 @@ public:
     char m_str[LEN];  // the text: format() copies what it formats here
     int m_nLen;  // fixstr.h asserts `m_nLen < LEN` as it stores a new text's length
 };
+
+// the text vsnprintf makes in a 256-byte buffer on the stack whatever LEN is, then stored as a text (the
+// assignment's length assertion, fixstr.h line 221: the FixStr<16>, <32>, <128> and <256> copies in 3.0.1 all
+// format into 0x100 bytes)
+template <int LEN>
+FixStr<LEN>& FixStr<LEN>::format(const char* format, ...) {
+    char buffer[256];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+    *this = buffer;
+    return *this;
+}
 
 template <int LEN>
 FixStr<LEN>& FixStr<LEN>::insert(int index, const char* pszStr, int n) {

@@ -13,6 +13,11 @@ public:
         static T0 s_instance;
         return &s_instance;
     }
+    // the instance as a reference, out of line in its callers (event::SkipManager::setSkipVolume calls
+    // Singleton<event::VolumeManager>::get, which holds getPtr's static); the return type is not known
+    static T0& get() {
+        return *getPtr();
+    }
 };
 }}  // namespace mm::mtl
 
