@@ -9,6 +9,7 @@
 
 class CBdatWrapper;
 #include "classes/mm/mtl/ReferenceObject.h"
+#include "mm/mtl/Vector.h"
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gmk { class AGmkBase; }
 
@@ -27,7 +28,23 @@ public:
         public:
             ~PopEnemyInfo() { dispose(); }
             void dispose();
-            unsigned char pad_0[0x28];
+            // how many objects the slot has: its two lists' sizes (PopInfo::getGobInstNum adds the four slots';
+            // inline, the name is not the original's)
+            unsigned char getGobInstNum() const {
+                if (pad_10 == nullptr || pad_18 == nullptr) {
+                    return 0;
+                }
+                return pad_10->size() + pad_18->size();
+            }
+            unsigned char pad_0[0xc];
+            // the pop finders snap the position on the ground only when it is set (with their isYSnap)
+            bool pad_c;
+            unsigned char pad_d[0x3];
+            // the slot's object handles in two lists (dispose empties and deletes both; getGobInst indexes pad_18
+            // first, then pad_10)
+            mm::mtl::Vector<gf::GF_OBJ_HANDLE*>* pad_10;
+            mm::mtl::Vector<gf::GF_OBJ_HANDLE*>* pad_18;
+            unsigned char pad_20[0x8];
         };
         // ~GmkEnemyInsts inlines it: each slot's dispose, the byte at 0x2 cleared, then the slots' destructors in
         // reverse (the name of dispose is not the original's)

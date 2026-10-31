@@ -3964,6 +3964,14 @@ bool GmkEnemyInsts::BdatInfo::isPopCondMatchedOfSmn() const {
     return true;
 }
 
+unsigned int GmkEnemyInsts::PopInfo::getGobInstNum() const {
+    unsigned int num = 0;
+    for (unsigned int i = 0; i < 4; i++) {
+        num += m_enemyInfos[i].getGobInstNum();
+    }
+    return num;
+}
+
 bool GmkEnemyInsts::reqClearRepopCounter() const {
     if (&GmkEnemyInsts::seqUpdateRepopCounter == m_seq) {
         m_clearRepopCounterReq = true;
