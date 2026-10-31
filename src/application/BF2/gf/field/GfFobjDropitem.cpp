@@ -47,6 +47,30 @@ void GfFobjSeManager::fn_7100282EA8() {
     m_pack = fw::SoundManager::sys()->findPack(name, nullptr);
 }
 
+void GfFobjSeManager::update(float deltaTime) {
+    if (m_info.m_maxSe == 0) {
+        return;
+    }
+    for (mm::mtl::Vector<SeInfo>::iterator it = m_seInfos.begin(); it != m_seInfos.end(); ++it) {
+        if (!fw::SoundManager::sys()->isPlaying(it->m_soundId)) {
+            it = m_seInfos.erase(it);
+            --it;
+        }
+    }
+    typedef mm::mtl::Map<unsigned short, float>::tree_type Tree;
+    Tree& tree = m_seTimes.m_tree;
+    Tree::node* n = nullptr;
+    if (tree.m_root != &Tree::m_sentinel) {
+        n = tree.m_root;
+        while (n->left != &Tree::m_sentinel) {
+            n = n->left;
+        }
+    }
+    for (; n != nullptr; n = tree.next(n)) {
+        n->value.second += deltaTime;
+    }
+}
+
 GfFobjGottenEffectManager::GfFobjGottenEffectManager(const CreateInfo* info) {
     if (info != nullptr) {
         create(*info);
