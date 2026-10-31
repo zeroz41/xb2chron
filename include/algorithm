@@ -545,6 +545,16 @@ extern template bool __insertion_sort_incomplete<__less<float>&, float*>(float*,
 extern template bool __insertion_sort_incomplete<__less<double>&, double*>(double*, double*, __less<double>&);
 extern template bool __insertion_sort_incomplete<__less<long double>&, long double*>(long double*, long double*, __less<long double>&);
 
+// libc++'s any_of (btl::TalkManager's IsTalk/IsPlaying* searches: the inlined predicate call gives their loop step
+// order, `sub` of the remaining bytes before `add` of the pointer, which a plain loop over the same range does not)
+template <class _InputIterator, class _Predicate>
+inline bool any_of(_InputIterator __first, _InputIterator __last, _Predicate __pred) {
+    for (; __first != __last; ++__first)
+        if (__pred(*__first))
+            return true;
+    return false;
+}
+
 }}  // namespace std::__1
 
 #endif

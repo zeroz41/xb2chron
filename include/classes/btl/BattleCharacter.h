@@ -83,6 +83,10 @@ public:
     int GetAiChrID() const {
         return m_isPlayer ? m_index : m_index + 100;
     }
+    // 1.0.0 has it out of line (TalkManager::PlayVoice(int, int) calls it); 3.0.1 inlines it
+    bool IsPlayer() const {
+        return m_isPlayer;
+    }
     bool SetAngry(bool, float);
     int GetKizunaStage(float*) const;
     bool StartBackHome();

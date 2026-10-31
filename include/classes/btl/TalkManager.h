@@ -88,6 +88,8 @@ public:
     static void Update(const fw::UpdateInfo& info);
     void UpdateProc(const fw::UpdateInfo& info);
     void RegisterNextVoice(const CHR_VOICE_DATA& data);
+    // false when the line is not registered (PlayVoice(int, int) returns 0 then)
+    bool RegisterTalk(int, int, int, int, int, int, bool);
     void StartBattleCallback();
     unsigned long GetBdatData(CBdatWrapper& bdat, unsigned int id, BDAT_DATA_TYPE type) const;
     int DecideVoiceBdatID(int, int, int, int, int);

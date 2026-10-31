@@ -1734,7 +1734,7 @@ _ZN2mm3mtl9FixedListIN3btl11TalkManager17CHR_INTERVAL_DATAELm200EE5eraseENS5_13n
 _ZN3btl11TalkManager17RegisterNextVoiceERKNS0_14CHR_VOICE_DATAE = .text:0x000AA9E8; // type:function size:0x1150 scope:global
 _ZN3btl11TalkManager19StartBattleCallbackEv = .text:0x000ABB38; // type:function size:0x138 scope:global
 _ZN2mm3mtl6FixStrILi16EE6formatEPKcz = .text:0x000ABC70; // type:function size:0xE4 scope:weak
-_ZN3btl11TalkManager11RegisterTalkEiiiiiib = .text:0x000ABD54; // type:function size:0xEA8 scope:global
+_ZN3btl11TalkManager12RegisterTalkEiiiiiib = .text:0x000ABD54; // type:function size:0xEA8 scope:global
 _ZNK3btl11TalkManager11GetBdatDataER12CBdatWrapperjNS0_14BDAT_DATA_TYPEE = .text:0x000ACBFC; // type:function size:0x2D4 scope:global
 _ZN3btl11TalkManager17DecideVoiceBdatIDEiiiii = .text:0x000ACED0; // type:function size:0xB0C scope:global
 _ZN3btl11TalkManager18RegisterSpecialWinEv = .text:0x000AD9DC; // type:function size:0xB7C scope:global
