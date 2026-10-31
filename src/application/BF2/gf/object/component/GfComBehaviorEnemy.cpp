@@ -28,13 +28,93 @@
 #include "classes/gf/GfMenuCallContext.h"
 #include "gf/GfObjInfo.h"
 #include "plugin/Bdat.h"
+#include "classes/gmk/GmkBattleLock.h"
+#include "classes/gmk/GmkRoutedEnemy.h"
+#include "classes/gf/GfStateBase.h"
+#include "gf/MsgObjectNotifyAsmCallback.h"
+#include "gf/CallBackCache.h"
+#include "gf/GfParamEnemyReflection.h"
 
 namespace gf {
 
+gmk::GmkRouteNavi* GfBehaviorEnemyField::getGmkRouteNavi() const {
+    gmk::AGmkBase* gmk = gmk::getBindedGmkInst(m_handle);
+    if (gmk != nullptr && gmk->getGmkType() == gmk::GmkRoutedEnemy::TYPE) {
+        return static_cast<gmk::GmkRoutedEnemy*>(gmk)->findRouteNavi(m_handle);
+    }
+    return nullptr;
+}
+
+void GfBehaviorEnemyField::applyFieldMoveSpeed(enemy::STATE_ID state, GfComBehaviorEnemy& owner) {
+    applyFieldMoveSpeed(getFieldMoveSpeedType(state), owner);
+}
+
+void GfBehaviorEnemyField::applyFieldMoveSpeed(MoveSpeed speed, GfComBehaviorEnemy& owner) {
+    MoveSpeed current = MoveSpeed(0);
+    if (owner.m_turnCmd.pad_6c) {
+        current = getFieldMoveSpeedType(owner.getStateId());
+    }
+    applyFieldMoveSpeed(current, speed, owner);
+}
+
+void GfBehaviorEnemyField::applyFieldMoveSpeed(MoveSpeed from, MoveSpeed to, GfComBehaviorEnemy&) {
+    float speed = getWalkSpeed();
+    switch (to) {
+    case 0:
+        speed = m_moveSpeed.m_speedMin;
+        break;
+    case 1:
+        speed = getWalkSpeed();
+        break;
+    case 2:
+        speed = getRunSpeed();
+        break;
+    }
+    const EnemeyMoveParam* param = getEnemeyMoveParam(pad_36);
+    float rate;
+    switch (from) {
+    case 0:
+        rate = to == 1 ? param->pad_0 : param->pad_8;
+        break;
+    case 1:
+        rate = to == 0 ? param->pad_10 : param->pad_4;
+        break;
+    case 2:
+        rate = to == 0 ? param->pad_14 : param->pad_c;
+        break;
+    default:
+        rate = 0.0f;
+        break;
+    }
+    m_moveSpeed.setSpeedKmph(speed, rate);
+}
+
+GfComBehaviorEnemy::~GfComBehaviorEnemy() {
+    if (pad_54e0) {
+        pad_54e0 = false;
+        if (m_field.m_sensor.m_gmkAcc.isValid()) {
+            static_cast<gmk::GmkBattleLock*>(m_field.m_sensor.m_gmkAcc.m_gmk)->pad_c4--;
+        }
+    }
+    cleanup();
+}
+
+void GfComBehaviorEnemy::cleanup() {
+    m_field.dispose();
+    disposeFsm();
+    disposeMenuObj();
+    m_pluginManager.cleanup();
+    pad_138 = nullptr;
+}
+
+GfBehaviorEnemyField::~GfBehaviorEnemyField() {
+    dispose();
+}
+
 // GfComBehavior's own empty virtuals (its table is emitted here: changeLayer is its key function)
 const fw::Transform& GfComBehaviorEnemy::getTransformToSearchPlayer() const {
-    if (pad_138 != nullptr) {
-        return pad_138->getWorldTransform();
+    if (pad_138.get() != nullptr) {
+        return pad_138.get()->getWorldTransform();
     }
     return getTransform();
 }
@@ -88,17 +168,17 @@ void GfComBehaviorEnemy::createFsm() {
 }
 
 void GfFieldEnemySensor::enter(const fw::IColiEventListener::EnterInfo& info) {
-    if (m_coli.get() == info.m_self) {
+    if (m_coli == info.m_self) {
         m_coliHit = true;
-    } else if (m_coli2.get() == info.m_self) {
+    } else if (m_coli2 == info.m_self) {
         m_coli2Hit = true;
     }
 }
 
 void GfFieldEnemySensor::leave(const fw::IColiEventListener::LeaveInfo& info) {
-    if (m_coli.get() == info.m_self) {
+    if (m_coli == info.m_self) {
         m_coliHit = false;
-    } else if (m_coli2.get() == info.m_self) {
+    } else if (m_coli2 == info.m_self) {
         m_coli2Hit = false;
     }
 }
@@ -190,6 +270,12 @@ void GfComBehaviorEnemy::fn_71004C1D20() {
     if (getStateId() != 0) {
         pad_54e2 = true;
     }
+}
+
+void GfComBehaviorEnemy::procAnimCallback(GfComAsm* asmCom, const CallBackCache& cache) {
+    MsgObjectNotifyAsmCallback msg(asmCom, cache.m_event);
+    GfStateBase::MessageEvent event = {static_cast<GfObj*>(m_owner), &msg};
+    m_hfsm.execEvent(&event);
 }
 
 void GfComBehaviorEnemy::Listener::onWkStandbyLogout() {

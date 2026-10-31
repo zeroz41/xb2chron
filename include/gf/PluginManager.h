@@ -17,7 +17,8 @@ public:
     typedef Plugin* (*Creator)();
 
     PluginManager(mm::mtl::IAllocator* allocator);
-    ~PluginManager();
+    // inline: its vectors go; GfComBehaviorEnemy's unit holds the weak copy the module kept
+    ~PluginManager() {}
     // sizes the vectors for count plugins, none to make yet
     void beginSetup(GfComBehavior& behavior, unsigned int count);
     // makes the plugins whose creator is set and enabled; drops those whose setup fails

@@ -39,7 +39,12 @@ public:
     unsigned char m_extraPartsMask;  // bits of the extra parts shown at first (isDispInitExtraParts)
     unsigned char pad_43[0x1];
     unsigned short m_rscId;  // its GfBdatRsc enemy row
-    unsigned char pad_46[0x16];
+    unsigned char pad_46[0x3];
+    // its field walk and run speeds, km/h (1.0.0's GfBehaviorEnemyField::getWalkSpeed/getRunSpeed read them; the
+    // names are not the original's)
+    unsigned char m_walkSpeed;
+    unsigned char m_runSpeed;
+    unsigned char pad_4b[0x11];
     unsigned short m_pArmor;
     unsigned short m_eArmor;
     unsigned char m_resistancePower;

@@ -58,7 +58,7 @@ void StateFieldAreaWalk::update(GfComBehaviorEnemy* owner, const fw::UpdateInfo&
 }
 
 void StateFieldAreaWalk::seqWaitTurnEnd(GfComBehaviorEnemy& owner, const fw::UpdateInfo&) {
-    if (owner.pad_545c) {
+    if (owner.m_turnCmd.pad_6c) {
         m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, "C_move"));
         pad_68 = 0;
         m_seq = &StateFieldAreaWalk::seqMoveToGoal;
@@ -179,7 +179,7 @@ void StateFieldHome::update(GfComBehaviorEnemy* owner, const fw::UpdateInfo& inf
 }
 
 void StateFieldHome::seqWaitTurnEnd(GfComBehaviorEnemy& owner, const fw::UpdateInfo&) {
-    if (owner.pad_545c) {
+    if (owner.m_turnCmd.pad_6c) {
         owner.m_field.applyFieldMoveSpeed(static_cast<GfBehaviorEnemyField::MoveSpeed>(1), owner);
         m_seq = &StateFieldHome::seqMoveToHomePos;
         m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, "C_move"));

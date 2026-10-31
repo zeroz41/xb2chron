@@ -30,6 +30,12 @@ public:
     };
 
     explicit GfFieldUndulator(const CreateInfo* info);
+    // inline: GfComBehaviorEnemy's destructor disposes it, then clears the row's two update flags, in place
+    ~GfFieldUndulator() {
+        dispose();
+        m_bdat.pad_0 = false;
+        m_bdat.pad_1 = false;
+    }
     void create(const CreateInfo& info);
     void dispose();
     void castRay(mm::mtl::IntrusivePtr<fw::ReferenceFrame>& frame, bool flag);

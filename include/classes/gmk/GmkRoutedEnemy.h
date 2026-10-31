@@ -27,6 +27,8 @@ public:
     virtual IGmkList* getBindedRoutePointList() const;  // slot 11
     // its kind (getGmkType's; GmkManager::traverseGmkInst walks the enemies by it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(1);
+    // the route navigation of one of its objects (GfBehaviorEnemyField::getGmkRouteNavi asks it)
+    GmkRouteNavi* findRouteNavi(gf::GF_OBJ_HANDLE* handle) const;
 
     GmkEnemyInsts m_insts;  // (the name is not the original's)
     // its game objects, as GmkManager::collectGameObjsUnbound<T> reads them inline (the names are not the

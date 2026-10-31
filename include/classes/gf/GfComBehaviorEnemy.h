@@ -6,6 +6,11 @@
 #include "fw/Transform.h"
 #include "classes/gf/GfComBehavior.h"
 #include "classes/gf/GfBehaviorEnemyField.h"
+#include "classes/gf/IGfBehFieldOwner.h"
+#include "classes/gf/GfFieldDmg.h"
+#include "classes/gf/TFieldExecCmdTurn.h"
+#include "gf/GfFieldUndulator.h"
+#include "mm/mtl/IntrusivePtr.h"
 
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
@@ -18,19 +23,12 @@ namespace gf { namespace enemy { enum STATE_ID : int; } }
 namespace fw { class ReferenceFrame; }
 
 namespace gf {
-// a base of gf::GfComBehaviorEnemy no evidence names yet
-class TUnk_B65E98 {
-public:
-    virtual const fw::Transform& getTransform() const = 0;
-    virtual const fw::Transform& getTransformToSearchPlayer() const = 0;
-    virtual unsigned int getBdatId_CHR_EnArrange() const = 0;
-    virtual void getGmkBattleLockInfo(int&, int&) const = 0;
-};
-// table 0x7100B65E30; base at 0x98 unknown (TUnk_B65E98)
-class GfComBehaviorEnemy : public ::gf::GfComBehavior, public TUnk_B65E98 {
+// table 0x7100B65E30; its IGfBehFieldOwner at 0x98
+class GfComBehaviorEnemy : public ::gf::GfComBehavior, public IGfBehFieldOwner {
 public:
     class Listener;
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
+    // the table's key function: takes the enemy out of its battle lock's count, cleans up, then the members go
     virtual ~GfComBehaviorEnemy();  // slot 1
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
     virtual void update(fw::UpdateInfo const&);  // slot 5
@@ -74,6 +72,16 @@ public:
     void execTurnCmdAccurately(float rotY);
     // (re)makes its state machine: the enemy's 16 states (battle, field idle/spawn/walk/home/squad/blade)
     void createFsm();
+    // disposes the field movement, the state machine and the menu object, cleans the plugins up and lets the
+    // search frame go
+    void cleanup();
+    // takes its state machine down unless it is being built (inline: cleanup holds it in place)
+    void disposeFsm() {
+        if (!m_buildingFsm) {
+            m_buildingFsm = true;
+            m_hfsm.cleanup();
+        }
+    }
     static mm::mtl::RTTI m_rtti;
     ai::Hfsm m_hfsm;
     // set while createFsm cleans up and sets the machine up again (the name is not the original's)
@@ -81,12 +89,18 @@ public:
     unsigned char pad_129[0x7];
     // its menu object's call context: disposeMenuObj closes the menu and releases it (the name is not the original's)
     gf::GfMenuCallContext* m_menuContext;
-    fw::ReferenceFrame* pad_138;  // getTransformToSearchPlayer's frame when set
+    mm::mtl::IntrusivePtr<fw::ReferenceFrame> pad_138;  // getTransformToSearchPlayer's frame when set
     // its field movement (the name is not the original's)
     GfBehaviorEnemyField m_field;
-    unsigned char pad_5458[0x4];
-    bool pad_545c;  // the field states' seqWaitTurnEnd wait for it before moving (set when a turn ended?)
-    unsigned char pad_545d[0x84];
+    // the turn execTurnCmd starts; the field states' seqWaitTurnEnd wait for its pad_6c (the names of these three
+    // are not the original's)
+    TFieldExecCmdTurn<GfComAsm> m_turnCmd;
+    GfFieldUndulator m_undulator;
+    GfFieldDmg m_fieldDmg;
+    unsigned char pad_54c8[0x18];
+    // set while the enemy is counted in its sensor's battle lock (GmkBattleLock::pad_c4); update counts it in and
+    // out, the destructor takes it out
+    bool pad_54e0;
     bool pad_54e1;  // StateFieldWalk::leave clears it
     bool pad_54e2;  // fn_71004C1D20 sets it
     // set by reqChangeBattle (the name is not the original's)

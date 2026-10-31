@@ -19,6 +19,8 @@ public:
     typedef void (GfFieldPitchRollController::*Seq)(const gmk::GmkRouteNavi& navi);
 
     explicit GfFieldPitchRollController(const CreateInfo* info);
+    // inline: GfBehaviorEnemyField's destructor disposes it in place
+    ~GfFieldPitchRollController() { dispose(); }
     void create(const CreateInfo& info);
     void dispose();
     void update(const gmk::GmkRouteNavi& navi);
