@@ -155,6 +155,9 @@ public:
     int GetFirstStageElementalComboData(int id) const;
     int GetNormalAttackArtsID(int chara, int weapon, int step) const;
     enum JINGLE_TYPE {};  // 1.0.0's name (RequestJingle, PlayJingle); its values are not recovered
+    // the "tag" string of row id (1 to 223) of BDAT table 0x3B when its "delivered" column is set, else null; cached
+    // in m_seTags (1.0.0's name; BattleCharacter's PlaySE/PlaySystemSE/SetAction call it)
+    const char* GetSeTag(int id) const;
     void RequestJingle(JINGLE_TYPE type);  // 1.0.0's RequestJingle(JINGLE_TYPE) (3.0.1's symbols spell fn_710000C3AC)
     bool IsJinglePlaying() const;
     void PlayErrorSE();  // 1.0.0's PlayErrorSE (3.0.1's symbols spell fn_710000C3C8)
@@ -288,7 +291,9 @@ public:
     // the character the player controls: BattleCharacter::IsControlCharacter compares its handle with it (the name is
     // not the original's)
     gf::GF_OBJ_HANDLE* m_controlHandle;
-    unsigned char pad_18[0x718];
+    unsigned char pad_18[0x18];
+    // GetSeTag's cache of BDAT 0x3B's "tag" strings, by row id (the name is not the original's)
+    mutable const char* m_seTags[0xE0];
     ShakeCameraManager* m_shakeCamera;  // ApplyBattleCameraAdjustment (the name is not the original's)
     // the button challenge in progress (the destructor destroys it in place; the name is not the original's)
     ButtonChallenge m_buttonChallenge;

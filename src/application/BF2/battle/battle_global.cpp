@@ -424,6 +424,21 @@ void BattleGlobal::fn_710000ACA4(int index) {
     pad_83bc[byte] |= 1 << bit;
 }
 
+const char* BattleGlobal::GetSeTag(int id) const {
+    if (id - 1U < 0xDF) {
+        const char*& tag = m_seTags[id];
+        if (tag != nullptr) {
+            return tag;
+        }
+        unsigned char* fp = gf::GfDataBdat::getFP(0x3B);
+        if (Bdat::getValCheckU8(fp, "delivered", id) != 0) {
+            tag = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "tag", id, 7));
+            return tag;
+        }
+    }
+    return nullptr;
+}
+
 void BattleGlobal::RequestJingle(JINGLE_TYPE type) {
     m_jingleRequest = type;
 }

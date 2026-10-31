@@ -1900,6 +1900,91 @@ bool GfDataDriverSkill::getEnhanceCaption(unsigned char*& bdat, unsigned int& id
     return id != 0;
 }
 
+// the skill tree tables of drivers 1 to 6 and 17 to 19. Proposed names, not the original's: the symbols leave them
+// unnamed (lbl_7100B50BA0, lbl_7100B50BD0).
+static const char* const sSkillTables[] = {"BTL_Skill_Dr_Table01", "BTL_Skill_Dr_Table02", "BTL_Skill_Dr_Table03",
+                                           "BTL_Skill_Dr_Table04", "BTL_Skill_Dr_Table05", "BTL_Skill_Dr_Table06"};
+static const char* const sSkillTablesEx[] = {"BTL_Skill_Dr_Table17", "BTL_Skill_Dr_Table18", "BTL_Skill_Dr_Table19"};
+
+// the driver's skill tree table; null for a driver without one (the helper's name is not the original's: inlined)
+static inline const char* getSkillTableName(unsigned int driver) {
+    if (driver - 1 < 6) {
+        return sSkillTables[driver - 1];
+    }
+    if (driver - 17 < 3) {
+        return sSkillTablesEx[driver - 17];
+    }
+    return nullptr;
+}
+
+unsigned int GfDataDriverSkill::getSkillFromBdat(unsigned int driver, unsigned int line, unsigned int level,
+                                                 bool round) {
+    if (level == 0) {
+        return 0;
+    }
+    const char* name = getSkillTableName(driver);
+    if (name == nullptr) {
+        return 0;
+    }
+    unsigned char* fp = Bdat::getFP(name);
+    return (unsigned short)Bdat::getValCheck(fp, "SkillID", line * 3 + level + (round ? 15 : 0), 2);
+}
+
+int GfDataDriverSkill::getSkillCategoryFromBdat(unsigned int driver, unsigned int line, unsigned int level,
+                                                bool round) {
+    if (level == 0) {
+        return 0;
+    }
+    const char* name = getSkillTableName(driver);
+    if (name == nullptr) {
+        return 0;
+    }
+    unsigned char* fp = Bdat::getFP(name);
+    unsigned int skill = (unsigned short)Bdat::getValCheck(fp, "SkillID", line * 3 + level + (round ? 15 : 0), 2);
+    if (skill == 0) {
+        return 0;
+    }
+    GfBdatBtl* btl = GfBdatBtl::get();
+    unsigned int enhance = btl->getBTL_Skill_DrEnhance(skill);
+    if (enhance == 0) {
+        return 0;
+    }
+    unsigned int effect = btl->getBTL_EnhanceEnhanceEffect(enhance);
+    if (effect == 0) {
+        return 0;
+    }
+    return btl->getBTL_EnhanceEffCategory(effect);
+}
+
+int GfDataDriverSkill::getSkillPointFromBdat(unsigned int driver, unsigned int line, unsigned int level, bool round) {
+    if (level == 0) {
+        return 0;
+    }
+    const char* name = getSkillTableName(driver);
+    if (name == nullptr) {
+        return 0;
+    }
+    unsigned char* fp = Bdat::getFP(name);
+    return (unsigned short)Bdat::getValCheck(fp, "NeedSp", line * 3 + level + (round ? 15 : 0), 2);
+}
+
+unsigned int GfDataDriverSkill::getEnhanceFromBdat(unsigned int driver, unsigned int line, unsigned int level,
+                                                   bool round) {
+    if (level == 0) {
+        return 0;
+    }
+    const char* name = getSkillTableName(driver);
+    if (name == nullptr) {
+        return 0;
+    }
+    unsigned char* fp = Bdat::getFP(name);
+    unsigned int skill = (unsigned short)Bdat::getValCheck(fp, "SkillID", line * 3 + level + (round ? 15 : 0), 2);
+    if (skill == 0) {
+        return 0;
+    }
+    return GfBdatBtl::get()->getBTL_Skill_DrEnhance(skill);
+}
+
 bool GfDataWeapon::getWeaponTypeName(unsigned char*& bdat, unsigned int& id, unsigned int row) {
     id = GfBdatItem::get()->getPcWpnTypeName(row);
     bdat = GfBdatMsg::getFpPcWpnType();

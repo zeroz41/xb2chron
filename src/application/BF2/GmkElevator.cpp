@@ -350,6 +350,53 @@ int GmkManager::getMapBdatId(int id) const {
     return static_cast<unsigned short>(Bdat::getValCheck(fp, "mapId", id, 2));
 }
 
+int GmkManager::findFirstBdatId_RSC_GmkSetList(GmkType type, int bdatId) const {
+    int id = findFirstBdatId_RSC_GmkSetList(gf::GfGameManager::getMapID());
+    if (id > 0 && isBdatIdOfGmkInstExist(id, type, bdatId)) {
+        return id;
+    }
+    unsigned char* fp = m_bdatFp;
+    if (fp != nullptr) {
+        int count = Bdat::getIdCount(fp);
+        int top = Bdat::getIdTop(fp);
+        for (int i = top; i < top + count; ++i) {
+            if (isBdatIdOfGmkInstExist(i, type, bdatId)) {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
+int GmkManager::findFirstBdatId_RSC_GmkSetList(int mapId) const {
+    if (m_bdat.pad_120 != 0 && fw::BdatManager::isEnableBdat(m_bdat.m_createInfo.m_param)) {
+        unsigned char* fp = m_bdatFp;
+        int count = Bdat::getIdCount(fp);
+        int top = Bdat::getIdTop(fp);
+        for (int id = top; id < top + count; ++id) {
+            if (getMapBdatId(id) == mapId) {
+                return id;
+            }
+        }
+    }
+    return -1;
+}
+
+bool GmkManager::isBdatIdOfGmkInstExist(int id, GmkType type, int bdatId) const {
+    if (id > 0) {
+        const char* sheet = getSheetnameByType(id, type);
+        if (sheet != nullptr && sheet[0] != '\0') {
+            unsigned char* fp = Bdat::isExistFP(sheet);
+            if (fp != nullptr) {
+                int count = Bdat::getIdCount(fp);
+                int top = Bdat::getIdTop(fp);
+                return bdatId >= top && bdatId < top + count;
+            }
+        }
+    }
+    return false;
+}
+
 void GmkRoutedEnemyList::setUpdateGmkNumPerFrame(unsigned int num) {
     TGmkList::setUpdateGmkNumPerFrame(num);
     m_triggerList.setUpdateGmkNumPerFrame(num);

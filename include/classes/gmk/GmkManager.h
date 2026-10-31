@@ -51,6 +51,9 @@ public:
     int findFirstBdatId_RSC_GmkSetList(GmkType type, int bdatId) const;
     // the RSC_GmkSetList row of the first gimmick set of a FLD_maplist map (LocatorTalk_NpcID passes its "MapID")
     int findFirstBdatId_RSC_GmkSetList(int mapId) const;
+    // whether the gimmick set of an RSC_GmkSetList row (> 0) names a BDAT table for this gimmick kind that is loaded
+    // and holds the row bdatId (1.0.0's name)
+    bool isBdatIdOfGmkInstExist(int id, GmkType type, int bdatId) const;
     // the gimmick set of an RSC_GmkSetList row, none when it is not loaded
     GmkSet* findGmkSet(int bdatId) const;
     // the BDAT table name the gimmick-set table's row id gives for a gimmick kind ("<kind>_bdat"), none when the

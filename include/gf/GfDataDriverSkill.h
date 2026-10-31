@@ -12,7 +12,7 @@ public:
     static unsigned int getSkillFromBdat(unsigned int driver, unsigned int line, unsigned int level, bool round);
     static int getSkillCategoryFromBdat(unsigned int driver, unsigned int line, unsigned int level, bool round);
     static int getSkillPointFromBdat(unsigned int driver, unsigned int line, unsigned int level, bool round);
-    static unsigned short getEnhanceFromBdat(unsigned int driver, unsigned int line, unsigned int level, bool round);
+    static unsigned int getEnhanceFromBdat(unsigned int driver, unsigned int line, unsigned int level, bool round);
     static unsigned int getValidSkillNum(unsigned int driver, bool round);  // how many skills it has learned
     static unsigned int getSkill(unsigned int driver, unsigned int line, unsigned int level, bool round);  // learned
     static bool isSkillLevelUnlock(unsigned int driver, unsigned int level, bool round);
