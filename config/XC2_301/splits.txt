@@ -4395,7 +4395,7 @@ navi/NvmshAcObjBase.cpp:
 navi/NvmshUtilColi.cpp:
 	.text        start:0x0081E298 end:0x00826920
 	.rodata      start:0x009AD5B1 end:0x009AD60C
-	.rodata      start:0x009D5038 end:0x009D5058
+	.rodata      start:0x009D5038 end:0x009D50B0
 	.data        start:0x00B7F7E0 end:0x00B7F850
 
 layer/LayerAccObjBase.cpp:
