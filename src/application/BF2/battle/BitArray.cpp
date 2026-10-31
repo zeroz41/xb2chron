@@ -514,10 +514,73 @@ int Utility::AI_GetBackAttackerCharacterID(gf::GF_OBJ_HANDLE* handle) {
     return -1;
 }
 
+bool Utility::AI_StartActionRescue(gf::GF_OBJ_HANDLE* handle, int target) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+        return false;
+    }
+    bool isPlayer;
+    if (static_cast<unsigned int>(target) < 16) {
+        isPlayer = true;
+    } else if (target >= 100 && target <= 168) {
+        target -= 100;
+        isPlayer = false;
+    } else {
+        return false;
+    }
+    int index = CharacterManager::sys()->GetCharacterIDByAiChrID(target, isPlayer);
+    if (index < 0) {
+        return false;
+    }
+    if (!chr->IsProcAI(false)) {
+        return false;
+    }
+    return chr->AI_Rescue(static_cast<BattleCharacter::ACTION_ID>(chr->m_state), index);
+}
+
 bool Utility::AI_StartActionEscape(gf::GF_OBJ_HANDLE* handle) {
     BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
     if (chr) {
         return chr->StartBackHome();
+    }
+    return false;
+}
+
+bool Utility::AI_StartActionArts(gf::GF_OBJ_HANDLE* handle, int slot, int target) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+        return false;
+    }
+    int index;
+    if (target < 0) {
+        index = -1;
+    } else {
+        bool isPlayer;
+        if (static_cast<unsigned int>(target) < 16) {
+            isPlayer = true;
+        } else if (target >= 100 && target <= 168) {
+            target -= 100;
+            isPlayer = false;
+        } else {
+            return false;
+        }
+        index = CharacterManager::sys()->GetCharacterIDByAiChrID(target, isPlayer);
+        if (index < 0) {
+            return false;
+        }
+    }
+    if (!chr->IsProcAI(false)) {
+        return false;
+    }
+    if (chr->AI_Arts(static_cast<BattleCharacter::ACTION_ID>(chr->m_state), slot)) {
+        chr->m_aiArtsTarget = index;
+        return true;
     }
     return false;
 }
@@ -531,6 +594,48 @@ bool Utility::AI_StartActionArtsByID(gf::GF_OBJ_HANDLE* handle, int id, int arg)
         }
     }
     return false;
+}
+
+bool Utility::AI_StartActionAttack(gf::GF_OBJ_HANDLE* handle) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+        return false;
+    }
+    if (!chr->IsProcAI(false)) {
+        return false;
+    }
+    return chr->AI_Attack(static_cast<BattleCharacter::ACTION_ID>(chr->m_state), false);
+}
+
+bool Utility::fn_7100012DEC(gf::GF_OBJ_HANDLE* handle) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+        return false;
+    }
+    if (!chr->IsProcAI(false)) {
+        return false;
+    }
+    return chr->AI_Arts(static_cast<BattleCharacter::ACTION_ID>(chr->m_state), 7);
+}
+
+bool Utility::AI_StartActionBladeChange(gf::GF_OBJ_HANDLE* handle, int blade) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+        return false;
+    }
+    if (!chr->IsProcAI(false)) {
+        return false;
+    }
+    return chr->AI_BladeChange(static_cast<BattleCharacter::ACTION_ID>(chr->m_state), blade);
 }
 
 bool Utility::AI_IsAngry(gf::GF_OBJ_HANDLE* handle) {
@@ -549,6 +654,40 @@ bool Utility::AI_SetAngry(gf::GF_OBJ_HANDLE* handle, float time) {
     return false;
 }
 
+int Utility::AI_GetArtsEnemyNum() {
+    int num = 0;
+    for (int i = 20; i < 90; i++) {
+        BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(i);
+        if (chr && !chr->IsBlade() && !chr->IsDead(0) && chr->IsBattle()) {
+            switch (chr->m_state) {
+            case 7:
+            case 9:
+            case 12:
+                num++;
+                break;
+            }
+        }
+    }
+    return num;
+}
+
+int Utility::AI_GetArtsPlayerNum() {
+    int num = 0;
+    for (int i = 0; i < 20; i++) {
+        BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(i);
+        if (chr && !chr->IsBlade() && !chr->IsDead(0) && chr->IsBattle()) {
+            switch (chr->m_state) {
+            case 7:
+            case 9:
+            case 12:
+                num++;
+                break;
+            }
+        }
+    }
+    return num;
+}
+
 bool Utility::AI_TurnTarget(gf::GF_OBJ_HANDLE* handle) {
     BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
     if (chr && chr->IsEnableTurnAI()) {
@@ -556,6 +695,183 @@ bool Utility::AI_TurnTarget(gf::GF_OBJ_HANDLE* handle) {
         return true;
     }
     return false;
+}
+
+bool Utility::AI_TurnDirection(gf::GF_OBJ_HANDLE* handle, const mm::Vec3& dir) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (chr && chr->IsEnableTurnAI()) {
+        mm::Vec3 xz = dir;
+        Misc::NormalizeXZ(xz);
+        chr->TurnDirection(xz, false, true);
+        return true;
+    }
+    return false;
+}
+
+bool Utility::AI_StartMovePosition(gf::GF_OBJ_HANDLE* handle, const mm::Vec3& pos, float value) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+        return false;
+    }
+    BattleCharacter::AI_MOVE_PARAM param;
+    param.m_value1 = value;
+    param.m_type = 10;
+    param.m_pos = &pos;
+    if (!chr->IsProcAI(true)) {
+        return false;
+    }
+    return chr->AI_Move(static_cast<BattleCharacter::ACTION_ID>(chr->m_state), false, &param);
+}
+
+bool Utility::AI_StartMoveTarget(gf::GF_OBJ_HANDLE* handle, int target, float value0, float value1) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+        return false;
+    }
+    BattleCharacter::AI_MOVE_PARAM param;
+    param.m_value0 = value0;
+    param.m_value1 = value1;
+    param.m_target = AI_GetCharacterHandle(target);
+    if (!chr->IsProcAI(true)) {
+        return false;
+    }
+    return chr->AI_Move(static_cast<BattleCharacter::ACTION_ID>(chr->m_state), false, &param);
+}
+
+bool Utility::AI_StartMoveFront(gf::GF_OBJ_HANDLE* handle, int target, float value0, float value1) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+        return false;
+    }
+    BattleCharacter::AI_MOVE_PARAM param;
+    param.m_value0 = value0;
+    param.m_value1 = value1;
+    param.m_type = 2;
+    param.m_target = AI_GetCharacterHandle(target);
+    if (!chr->IsProcAI(true)) {
+        return false;
+    }
+    return chr->AI_Move(static_cast<BattleCharacter::ACTION_ID>(chr->m_state), false, &param);
+}
+
+bool Utility::AI_StartMoveSide(gf::GF_OBJ_HANDLE* handle, int target, float value0, float value1) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+        return false;
+    }
+    BattleCharacter::AI_MOVE_PARAM param;
+    param.m_value0 = value0;
+    param.m_value1 = value1;
+    param.m_type = 3;
+    param.m_target = AI_GetCharacterHandle(target);
+    if (!chr->IsProcAI(true)) {
+        return false;
+    }
+    return chr->AI_Move(static_cast<BattleCharacter::ACTION_ID>(chr->m_state), false, &param);
+}
+
+bool Utility::AI_StartMoveLeft(gf::GF_OBJ_HANDLE* handle, int target, float value0, float value1) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+        return false;
+    }
+    BattleCharacter::AI_MOVE_PARAM param;
+    param.m_value0 = value0;
+    param.m_value1 = value1;
+    param.m_type = 4;
+    param.m_target = AI_GetCharacterHandle(target);
+    if (!chr->IsProcAI(true)) {
+        return false;
+    }
+    return chr->AI_Move(static_cast<BattleCharacter::ACTION_ID>(chr->m_state), false, &param);
+}
+
+bool Utility::AI_StartMoveRight(gf::GF_OBJ_HANDLE* handle, int target, float value0, float value1) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+        return false;
+    }
+    BattleCharacter::AI_MOVE_PARAM param;
+    param.m_value0 = value0;
+    param.m_value1 = value1;
+    param.m_type = 5;
+    param.m_target = AI_GetCharacterHandle(target);
+    if (!chr->IsProcAI(true)) {
+        return false;
+    }
+    return chr->AI_Move(static_cast<BattleCharacter::ACTION_ID>(chr->m_state), false, &param);
+}
+
+bool Utility::AI_StartMoveBack(gf::GF_OBJ_HANDLE* handle, int target, float value0, float value1) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+        return false;
+    }
+    BattleCharacter::AI_MOVE_PARAM param;
+    param.m_value0 = value0;
+    param.m_value1 = value1;
+    param.m_type = 6;
+    param.m_target = AI_GetCharacterHandle(target);
+    if (!chr->IsProcAI(true)) {
+        return false;
+    }
+    return chr->AI_Move(static_cast<BattleCharacter::ACTION_ID>(chr->m_state), false, &param);
+}
+bool Utility::AI_StartMoveSatellite(gf::GF_OBJ_HANDLE* handle, bool flag, float value) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+        return false;
+    }
+    BattleCharacter::AI_MOVE_PARAM param;
+    param.m_value0 = 0.0f;
+    param.m_value1 = value * (1.0f / 30.0f);
+    param.m_type = flag ? 8 : 9;
+    if (!chr->IsProcAI(true)) {
+        return false;
+    }
+    return chr->AI_Move(static_cast<BattleCharacter::ACTION_ID>(chr->m_state), false, &param);
+}
+
+bool Utility::AI_StartMoveBackward(gf::GF_OBJ_HANDLE* handle, float value0, float value1) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+        return false;
+    }
+    BattleCharacter::AI_MOVE_PARAM param;
+    param.m_value0 = value0;
+    param.m_value1 = value1;
+    param.m_type = 7;
+    if (!chr->IsProcAI(true)) {
+        return false;
+    }
+    return chr->AI_Move(static_cast<BattleCharacter::ACTION_ID>(chr->m_state), false, &param);
 }
 
 bool Utility::AI_MoveStop(gf::GF_OBJ_HANDLE* handle, bool flag) {
@@ -612,10 +928,43 @@ int Utility::AI_GetKizunaStage(gf::GF_OBJ_HANDLE* handle) {
     return 0;
 }
 
+bool Utility::AI_StartSpAttack(gf::GF_OBJ_HANDLE* handle) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess && !chr->fn_710002F1F8()) {
+        return false;
+    }
+    if (!chr->IsProcAI(false)) {
+        return false;
+    }
+    return chr->AI_SpAttack(static_cast<BattleCharacter::ACTION_ID>(chr->m_state), false, false);
+}
+
 bool Utility::AI_IsInAttackRange(gf::GF_OBJ_HANDLE* handle) {
     BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
     if (chr) {
         return chr->IsInAttackRange(-1, nullptr);
+    }
+    return false;
+}
+
+bool Utility::AI_IsEnableArts(gf::GF_OBJ_HANDLE* handle, int slot, int target) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return false;
+    }
+    return chr->IsEnableArts(-1, slot, 0, AI_GetCharacterHandle(target)) == 0;
+}
+
+bool Utility::AI_IsEnableArtsByID(gf::GF_OBJ_HANDLE* handle, int id, int target) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (chr) {
+        int slot = chr->GetArtsSlotIndex(id);
+        if (slot >= 0) {
+            return AI_IsEnableArts(handle, slot, target);
+        }
     }
     return false;
 }
@@ -634,6 +983,21 @@ int Utility::AI_GetPlayVoiceID(gf::GF_OBJ_HANDLE* handle) {
         return TalkManager::sys()->GetPlayVoiceID(chr->m_voiceIndex);
     }
     return 0;
+}
+
+void Utility::AI_SetBladeArtsRecastByLevel(gf::GF_OBJ_HANDLE* handle, int level, bool flag) {
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(handle);
+    if (!chr) {
+        return;
+    }
+    if (chr->fn_71000290BC(false)) {
+        CharacterParameter* param = chr->GetCharacterParameterConst(true);
+        chr = CharacterManager::sys()->GetCharacterConst(param->m_driverHandle);
+        if (!chr) {
+            return;
+        }
+    }
+    chr->SetSpAttackRecastByLevel(level, flag);
 }
 
 bool Utility::AI_IsBuff(gf::GF_OBJ_HANDLE* handle, int buff) {
@@ -657,6 +1021,18 @@ int Utility::AI_GetBdatID(gf::GF_OBJ_HANDLE* handle) {
         return chr->m_bdatID;
     }
     return 0;
+}
+
+bool Utility::AI_IsPartyMember(unsigned int id) {
+    mm::mtl::FixedVector<unsigned char, 90> list;
+    GetCharacterList(list, gf::GfGameManager::getPartyLeaderDriver(), static_cast<CHECK_CHR_NUM_MODE>(1), 0);
+    for (int index : list) {
+        BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(index);
+        if (chr->m_bdatID == id) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Utility::AI_GetCharacterGimmickPoint(gf::GF_OBJ_HANDLE* handle, mm::Vec3& pos) {

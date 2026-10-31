@@ -155,8 +155,27 @@ public:
     enum ANIM_SPDATA_TYPE : int;
     enum DROP_ITEM_TYPE : int;
     enum RIMBLOOM_ID : int;
+    // what an AI move asks for (Utility's AI_StartMove* fill it for AI_Move); the field names are not the original's
+    struct AI_MOVE_PARAM {
+        AI_MOVE_PARAM() :
+            m_value0(0.0f), m_value1(0.0f), m_type(0), m_pos(nullptr),
+            m_target(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {}
+        float m_value0;
+        float m_value1;
+        int m_type;  // 0 target, 2 front, 3 side, 7 backward, 10 position ...
+        const mm::Vec3* m_pos;  // AI_StartMovePosition's position
+        gf::GF_OBJ_HANDLE* m_target;  // -1 for none
+    };
 
     void SetAction(ACTION_ID id, bool, bool, int param, float value);
+    // the AI's action requests (Utility's AI_StartAction*/AI_StartMove* call them with m_state)
+    bool IsProcAI(bool) const;
+    bool AI_Attack(ACTION_ID id, bool);
+    bool AI_Arts(ACTION_ID id, int slot);
+    bool AI_BladeChange(ACTION_ID id, int);
+    bool AI_Rescue(ACTION_ID id, int index);
+    bool AI_SpAttack(ACTION_ID id, bool, bool);
+    bool AI_Move(ACTION_ID id, bool, const AI_MOVE_PARAM* param);
     void DropItem(DROP_ITEM_TYPE type, bool);
     void SetRimBloom(RIMBLOOM_ID id, bool on);
     // 1.0.0's name: its DeleteKizunaLinkEffect() (0x7100022458) has the same body without the flag (the SE is
@@ -316,6 +335,9 @@ public:
     bool CheckAttackAction(ACTION_ID id, bool flag) const;
     int GetDriverType() const;
     int GetArtsSlotIndex(int artsID) const;
+    // 0 when the arts in the slot can be used on the target (Utility::AI_IsEnableArts asks it with -1 and 0)
+    int IsEnableArts(int, int slot, int, gf::GF_OBJ_HANDLE* target) const;
+    void SetSpAttackRecastByLevel(int level, bool);
     float GetArtsAttackDistance(const ARTS_DATA& arts) const;
     void TurnDirection(const mm::Vec3& dir, bool, bool);
     void SetAnimation(ANIM_ID id, bool, int, int, bool, bool);
@@ -493,7 +515,10 @@ public:
     unsigned int m_bladeArtsState : 3;
     // a 3-byte run: IsBladeArtsEnd loads the byte at 0x1072 shifted, the byte at 0x1073 is a counter of its own
     unsigned char pad_1073;
-    unsigned char pad_1074[0x2];
+    unsigned char pad_1074;
+    // the party index of the character AI_StartActionArts aimed its arts at (-1 for none; the name is not the
+    // original's)
+    unsigned char m_aiArtsTarget;
     unsigned short pad_1076_0 : 12;
     unsigned short pad_1076_12 : 1;  // fn_7100059314 answers true while it is clear (meaning unknown)
     unsigned short pad_1076_13 : 1;  // fn_7100059314's answer once it counts (meaning unknown)

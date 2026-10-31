@@ -193,7 +193,7 @@ bool AI_StartMoveBackward(gf::GF_OBJ_HANDLE* handle, float, float);
 bool AI_StartMoveSatellite(gf::GF_OBJ_HANDLE* handle, bool, float);
 bool AI_StartMovePosition(gf::GF_OBJ_HANDLE* handle, const mm::Vec3& pos, float);
 bool AI_StartMovePosBackward(gf::GF_OBJ_HANDLE* handle, mm::Vec3& pos, float);
-void AI_TurnDirection(gf::GF_OBJ_HANDLE* handle, const mm::Vec3& dir);
+bool AI_TurnDirection(gf::GF_OBJ_HANDLE* handle, const mm::Vec3& dir);
 void AI_SetUseNavi(gf::GF_OBJ_HANDLE* handle, bool);
 bool AI_IsBattleOpening(gf::GF_OBJ_HANDLE* handle);
 bool AI_IsEnableArts(gf::GF_OBJ_HANDLE* handle, int, int);
