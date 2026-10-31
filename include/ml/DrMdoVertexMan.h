@@ -13,6 +13,8 @@ public:
     DrMdoVertexMan();
     ~DrMdoVertexMan();
     void update();
+    // drops a reference to vertex; the last one unlinks and deletes it
+    void releaseVertexObj(DrResMdoVertex* vertex);
     void begin();
     void end();
 

@@ -59,10 +59,10 @@ public:
     // binds the weight vertex buffer of the index; returns its vertex count (0 when it has none)
     int setWeightVertexBind(int index);
 
-    void* m_link0;  // 0x0: zeroed by the constructor
+    DrResMdoVertex* m_pPrev;  // 0x0: zeroed by the constructor; DrMdoVertexMan's list link (the name is not the original's)
     DrResMdoVertex* m_pNext;  // 0x8: zeroed by the constructor; DrMdoVertexMan's list link (the name is not the original's)
     const unsigned char* m_resData;  // 0x10: the constructor's data
-    int m_state;  // 0x18: 1 after construction
+    int m_state;  // 0x18: 1 after construction; a reference count (DrMdoVertexMan::releaseVertexObj drops it)
     void* m_work;  // 0x20: allocated by setupVertex, freed by vertexRelease
     const unsigned char* m_vtxData;  // 0x28
     const BindEntry* m_bindTbl;  // 0x30

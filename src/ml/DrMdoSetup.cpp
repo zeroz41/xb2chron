@@ -51,7 +51,9 @@
 #include "ml/DrMdoCtlMpfAuto.h"
 #include "ml/DrMdoCtlMpfWork.h"
 #include "ml/DrMdoSetup.h"
+#include "ml/DrMdoSmlShadowMan.h"
 #include "ml/DrMdoMpfMan.h"
+#include "ml/DrLightMan.h"
 #include "ml/DrMdlMan.h"
 #include "ml/DrMdoZSortMan.h"
 #include "ml/DrPixlDeferred.h"
@@ -124,6 +126,12 @@ int DrMdoMat::getVanishEffectMax() const {
         return 0;
     }
     return mdl->m_vanishEffectMax > 1 ? mdl->m_vanishEffectMax : 1;
+}
+
+DrMdoSmlShadowObj* DrMdoSmlShadowMan::createObj(int viewNum, const unsigned char* data) {
+    DrMdoSmlShadowObj* obj = new (m_pDrMan->m_resHandle, nullptr, 0, 4, false) DrMdoSmlShadowObj(viewNum, data, m_pDrMan);
+    m_dblList[DrMan::s_nDblStockIdx].pushBack(obj);
+    return obj;
 }
 
 MdoVanishEffectWrk* DrMdoMat::getVanishEffectWrk(unsigned int index, unsigned int bank) {
@@ -503,10 +511,44 @@ void DrMdoAnim::anmNodeParm_SclZ(mm::Vec3* srt, float value) {
     srt[2].z = value;
 }
 
+DrMdoMpfMan::~DrMdoMpfMan() {
+    m_windBlock.release();
+    m_ambBlock.release();
+    pad_98.release();
+    if (m_pWorkBuff != nullptr) {
+        mtl::MemManager::deallocate(m_pWorkBuff, 0, false);
+        m_pWorkBuff = nullptr;
+    }
+}
+
 void DrMdoMpfMan::begin() {
     m_windScale = 1.0f;
     m_frameWorkUsed = 0;
     m_listCount = 0;
+}
+
+void DrMdoMpfMan::updateUniformWork() {
+    float* buff = reinterpret_cast<float*>(m_windBlock.getBuff());
+    for (int i = 0; i < 64; i++) {
+        const mm::Mat44* mat = m_windCalc[i].m_windMat;
+        grlib::ShdMat44TransposeMat34(buff, mat[0]);
+        grlib::ShdMat44TransposeMat34(buff + 12, mat[1]);
+        buff += 24;
+    }
+    m_windBlock.updateData();
+    const float* amb = m_pDrMan->m_lightMan->m_ambColor;
+    float r = amb[0];
+    float g = amb[1];
+    float b = amb[2];
+    r *= 0.5f;
+    g *= 0.5f;
+    b *= 0.5f;
+    float* ambBuff = reinterpret_cast<float*>(m_ambBlock.getBuff());
+    ambBuff[0] = r;
+    ambBuff[1] = g;
+    ambBuff[2] = b;
+    ambBuff[3] = 0.0f;
+    m_ambBlock.updateData();
 }
 
 void DrMdoMpfMan::addMpfObj() {
@@ -2083,6 +2125,74 @@ void DrMdoZSortMan::setViewWorldPosLastAlpha(DrMdoZSortObj* obj, const mm::Vec3&
     }
 }
 
+DrMdoSmlShadowMan::DrMdoSmlShadowMan(DrMan* man)
+    : pad_0(0), m_viewIdx(0), m_pDrMan(man), m_viewList(), m_dblList(), m_delList() {}
+
+DrMdoSmlShadowMan::~DrMdoSmlShadowMan() {
+    for (int i = 0; i < 2; i++) {
+        m_dblList[i].deleteAll();
+    }
+    m_delList.deleteAll();
+    for (int i = 0; i < 4; i++) {
+        m_viewList[i].deleteAll();
+    }
+}
+
+void DrMdoSmlShadowMan::addObjList(int viewNum) {
+    DrMdoSmlShadowObj* obj = m_dblList[DrMan::s_nDblIdx].m_pHead;
+    while (obj != nullptr) {
+        if (obj->m_viewNum == viewNum) {
+            DrMdoSmlShadowObj* next = obj->m_pNext;
+            m_dblList[DrMan::s_nDblIdx].remove(obj);
+            m_viewList[viewNum].pushBack(obj);
+            obj = next;
+        } else {
+            obj = obj->m_pNext;
+        }
+    }
+}
+
+void DrMdoSmlShadowMan::updateList() {
+    DrMdoSmlShadowObj* obj = m_viewList[m_viewIdx].m_pHead;
+    if (obj == nullptr) {
+        return;
+    }
+    unsigned int mask = 0x4000 << DrMan::s_nDblIdx;
+    while (obj != nullptr) {
+        if (obj->m_flags & mask) {
+            DrMdoSmlShadowObj* next = obj->m_pNext;
+            m_viewList[m_viewIdx].remove(obj);
+            m_delList.pushBack(obj);
+            obj = next;
+        } else {
+            obj = obj->m_pNext;
+        }
+    }
+}
+
+bool DrMdoSmlShadowMan::checkDisp() {
+    for (DrMdoSmlShadowObj* obj = m_viewList[m_viewIdx].m_pHead; obj != nullptr; obj = obj->m_pNext) {
+        if (obj->m_flags & 1) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void DrMdoSmlShadowMan::delObjList() {
+    m_dblList[DrMan::s_nDblIdx].m_pHead = nullptr;
+    m_dblList[DrMan::s_nDblIdx].m_pTail = nullptr;
+    m_delList.deleteAll();
+}
+
+void DrMdoSmlShadowMan::changeViewNum(DrMdoSmlShadowObj* obj, int viewNum) {
+    if (obj->m_viewNum != viewNum) {
+        m_viewList[obj->m_viewNum].remove(obj);
+        m_viewList[viewNum].pushBack(obj);
+        obj->m_viewNum = viewNum;
+    }
+}
+
 DrMdoTexSimpleMan::DrMdoTexSimpleMan(DrMan* drMan)
     : m_pDrMan(drMan), m_list0(), m_list1(), m_list3(), m_list2() {}
 
@@ -2110,6 +2220,21 @@ grlib::CGLibTextureBuffer* DrMdoTextureMan::getTextureID(unsigned int id) {
     return nullptr;
 }
 
+void DrMdoTextureMan::update() {
+    for (DrResMdoTexList* list = m_texList.m_pHead; list != nullptr; list = list->m_pNext) {
+        list->update();
+    }
+    DrResEtcTexList* list = m_etcTexList.m_pHead;
+    while (list != nullptr) {
+        DrResEtcTexList* next = list->m_pNext;
+        if (list->m_flags & 1) {
+            m_etcTexList.remove(list);
+            delete list;
+        }
+        list = next;
+    }
+}
+
 DrMdoVertexMan::DrMdoVertexMan() : m_vertexList(), m_instans(nullptr) {
     m_instans = new (DrMan::getIns()->m_workHandle, nullptr, 0, 4, false) grlib::CGLibVtxInstans;
     m_instans->createInstansBuffer(s_nInstansBuffSize);
@@ -2132,6 +2257,17 @@ void DrMdoVertexMan::update() {
 void DrMdoVertexMan::begin() { m_instans->beginInstansBuff(); }
 
 void DrMdoVertexMan::end() { m_instans->updateInstansBuff(); }
+
+void DrMdoVertexMan::releaseVertexObj(DrResMdoVertex* vertex) {
+    if (--vertex->m_state < 0) {
+        vertex->m_state = 0;
+    }
+    if (vertex->m_state > 0) {
+        return;
+    }
+    m_vertexList.remove(vertex);
+    delete vertex;
+}
 
 DrMdoZSortMan::DrMdoZSortMan(DrMan* drMan)
     : m_pDrMan(drMan), m_pBuff(nullptr), m_pSpecial(nullptr), m_sortFar(300.0f), m_sortRate(0.8f) {

@@ -16,6 +16,8 @@ public:
     DrMdoTextureMan(DrMan* drMan);
     ~DrMdoTextureMan();
     grlib::CGLibTextureBuffer* getTextureID(unsigned int id);
+    // updates every texture list and deletes the etc lists released (m_flags bit 0)
+    void update();
 
     DrMan* m_pDrMan;                              // 0x0
     DrMdoResList<DrResMdoTexList> m_texList;      // 0x8

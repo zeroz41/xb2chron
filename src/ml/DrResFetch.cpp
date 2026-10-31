@@ -4804,7 +4804,7 @@ void DrResMdoSeamWrkBase::seachDefShadowBaseMapRender(DrPixlShadowObj* shadow, D
 void DrResMdoVertex::beginVertexSetup() { m_bindVertex = -1; }
 
 DrResMdoVertex::DrResMdoVertex(const unsigned char* data)
-    : m_link0(nullptr), m_pNext(nullptr), m_resData(data), m_state(1), m_work(nullptr), m_stream(nullptr) {
+    : m_pPrev(nullptr), m_pNext(nullptr), m_resData(data), m_state(1), m_work(nullptr), m_stream(nullptr) {
     setupVertex(data);
 }
 

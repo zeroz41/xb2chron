@@ -27,7 +27,7 @@ public:
     void release();
     grlib::CGLibTextureBuffer* getTextureID(unsigned int id);
 
-    unsigned char pad_0[0x8];
+    DrResEtcTexList* m_pPrev;  // 0x00: DrMdoTextureMan's list link (the name is not the original's)
     DrResEtcTexList* m_pNext;  // 0x08: DrMdoTextureMan's list link (the name is not the original's)
     grlib::CGLibTextureBuffer* m_texture;  // 0x10: m_num of them, in m_buf
     const Header* m_header;                // 0x18
