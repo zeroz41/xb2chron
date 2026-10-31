@@ -2,6 +2,8 @@
 #include "classes/gf/GfMenuObjEvTheater/HeaderListener.h"
 #include "classes/gf/GfMenuObjEvTheater/TUnk_B62178.h"
 #include "classes/gf/GfMenuMsgList.h"
+#include "classes/gf/GfMenuIDList.h"
+#include "classes/ui/UISelectObjList.h"
 #include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuManager.h"
@@ -12,17 +14,31 @@
 #include "gf/GfMenuObjUtil.h"
 #include "mm/mtl/FixStr.h"
 #include "plugin/Bdat.h"
+#include "fw/LangUtil.h"
+#include "gf/SDataOption.h"
+#include "mm/Math.h"
 #include "ui/UIStr.h"
 #include "ui/EventData.h"
 
 namespace gf {
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009C10C4). fn_7100401298's timezone images.
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_71009C10B8). fn_7100404720's "cap_id" rows.
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_71009C10B8). fn_7100404720's "cap_id" rows; fn_7100404B58 reads bdat 0x104's levels at the same rows.
 static const int s_capRows[3] = {1, 2, 9};
 static const unsigned int s_timezoneImages[3] = {0, 2, 3};
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009C10D0). fn_7100401598's element icons.
 static const int s_elementIcons[7] = {0x9F, 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA6};
+
+// a 0..255 volume on a level scale of 0..max, rounded (0xFF: max); fn_7100404B58 and fn_710040457C (the name is not
+// the original's)
+static unsigned char volumeToLevel(unsigned char volume, unsigned char max) {
+    if (volume == 0xFF) {
+        return max;
+    }
+    float step = 255.0f / static_cast<unsigned int>(max);
+    float level = static_cast<unsigned int>(volume) / step;
+    return static_cast<int>(level + (level > 0.0f ? 0.5f : -0.5f));
+}
 
 bool GfMenuObjEvTheater::attach(GfMenuCallContext* context) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x19));
@@ -75,6 +91,25 @@ bool GfMenuObjEvTheater::fn_7100401298(unsigned int value) {
     return true;
 }
 
+bool GfMenuObjEvTheater::fn_710040132C(unsigned int index) {
+    if (index < m_weathers.size()) {
+        ui::UIObjectAcc weather(m_handle, "IMG_select_set_ev_weather");
+        weather.setImageIndex(
+            GfMenuBdat::getIconImageIndex(GfMenuBdat::getIconIDFromWeatherType(m_weathers[index].m_weather)));
+        if (m_weathers[index].m_timezone == 0) {
+            m_timezoneLocked = false;
+        } else {
+            fn_7100401298(m_weathers[index].m_timezone);
+            m_choices[0].m_value = m_weathers[index].m_timezone;
+            m_timezoneLocked = true;
+        }
+        ui::UIObjectAcc input(m_handle, "LAY_select_set_ev_input@01");
+        input.setMulColor(m_timezoneLocked ? "gray" : "white");
+        input.setAlpha(m_timezoneLocked ? 0.5f : 1.0f);
+    }
+    return true;
+}
+
 bool GfMenuObjEvTheater::fn_7100401538(unsigned int value) {
     ui::UIObjectAcc acc(m_handle, "IMG_select_set_ev_face");
     acc.setImageIndex(GfMenuBdat::getIconImageIndex(value != 0 ? 0xD0 : 0xCF));
@@ -103,6 +138,16 @@ bool GfMenuObjEvTheater::fn_71004015F8(unsigned int value) {
 bool GfMenuObjEvTheater::fn_710040166C(unsigned int value) {
     m_number->m_value = value;
     return true;
+}
+
+void GfMenuObjEvTheater::refreshSelctList() {
+    unsigned int selected = m_selectIdList->getIndex(true);
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < m_selectObjList->getSize(); i++) {
+        name.format("IMG_select_frame@%02d", i + 1);
+        ui::UIObjectAcc frame(m_selectObjList->getObject(i), name.m_str);
+        frame.startAnimation(selected == i ? "select" : "non", false);
+    }
 }
 
 void GfMenuObjEvTheater::HeaderListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
@@ -176,6 +221,20 @@ void GfMenuObjEvTheater::HeaderListener::reciveEvent(const ui::EventData& event,
     }
 }
 
+void GfMenuObjEvTheater::fn_710040457C(unsigned int category, const SDataOption& option) {
+    m_levels.clear();
+    fn_7100404B58(category, m_levels);
+    unsigned int top = Bdat::getIdTop(GfDataBdat::getFP(0x104));
+    m_levels[1 - top].m_level = option.m_soundUi.m_eventSubtitle ? 1 : 2;
+    unsigned char volume = option.m_soundUi.m_volume[1];
+    m_levels[2 - top].m_level = volumeToLevel(volume, m_levels[2 - top].m_max);
+    if (GfMenuManager::fn_71003596C0()) {
+        m_levels[3 - top].m_level = option.m_soundUi.m_byte1E ? 2 : 1;
+    } else if (3 - top < m_levels.size()) {
+        m_levels[3 - top].m_level = 0;
+    }
+}
+
 void GfMenuObjEvTheater::fn_7100404720(unsigned int index) {
     ui::UIObjectAcc acc(m_capHandle);
     if (acc.m_object != nullptr) {
@@ -183,6 +242,38 @@ void GfMenuObjEvTheater::fn_7100404720(unsigned int index) {
         ui::UIStr text(messages, static_cast<unsigned short>(
                                      Bdat::getVal(m_capBdat, "cap_id", s_capRows[index])));
         acc.setText(text);
+    }
+}
+
+void GfMenuObjEvTheater::fn_7100404B58(unsigned int, mm::mtl::FixedVector<Level, 32>& levels) {
+    levels.clear();
+    unsigned char* bdat = GfDataBdat::getFP(0x104);
+    for (unsigned long i = 0; i < 3; i++) {
+        if (i == 2 && !GfMenuManager::fn_71003596C0()) {
+            break;
+        }
+        int row = s_capRows[i];
+        unsigned char level = Bdat::getVal(bdat, "default_level", row);
+        unsigned char max = Bdat::getVal(bdat, "max_level", row);
+        if (GfMenuObjUtil::fn_710048FD30(3)) {
+            if (GfMenuManager::fn_71003596C0() && i == 2) {
+                if (fw::LangUtil::getLangType() == 0 || fw::LangUtil::getLangType() == 6) {
+                    level = 2;
+                } else {
+                    level = fw::LangUtil::getLangType() == 11 ? 2 : 1;
+                }
+            }
+            if (i == 1) {
+                level = volumeToLevel(m_volumeLevel, max);
+            }
+        }
+        Level entry;
+        entry.m_level = level;
+        entry.m_max = max;
+        levels.push_back(entry);
+        if (levels.size() == levels.capacity()) {
+            break;
+        }
     }
 }
 

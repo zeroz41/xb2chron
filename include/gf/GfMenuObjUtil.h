@@ -161,6 +161,9 @@ public:
     // openChrChange2Sub places its character icons so; the parameter names are not the original's)
     static void placeObjectHLeft(unsigned int handle, const char* format, unsigned int count,
                                  const mm::Pnt<short>& left, unsigned int width);
+    // places point along base at ratio (0..1), offset by the short (GfMenuObjEvTheater's sound level bars pass -4;
+    // the parameter names are not the original's)
+    static void placeObjectHRatio(unsigned int base, unsigned int point, float ratio, short offset);
     static int startPresetCtrl(unsigned int handle, const PresetCtrlParam& param);  // startCtrl's slot
     static bool setPointSpeedRate(ui::UIObjectAcc acc, float rate);  // the pointer's speed over the object
     static short getBtnIconNumber(unsigned int button);  // the icon number of a button
