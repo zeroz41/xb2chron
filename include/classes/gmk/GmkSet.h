@@ -2,6 +2,7 @@
 #define CLASSES_GMK_GMKSET_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/GmkBdat.h"
 #include "classes/gmk/GmkNpcManager.h"
 #include "mm/Vec3.h"
 #include "mtl/AllocHandle.h"
@@ -42,14 +43,14 @@ public:
     // how many kinds of gimmicks a set can hold: a list per GmkType
     static const int GMK_LIST_NUM = 64;
     unsigned char pad_8[0x8];
-    mtl::ALLOC_HANDLE m_allocHandle;  // 0x10: its lists' memory (createGmkLists passes it on; the name is not the original's)
-    int m_bdatId;  // 0x14: its RSC_GmkSetList row (GfAutoTalkManager::seqInit reads its autoTalk columns by it; the name is not the original's)
-    unsigned char pad_18[0x8];
-    mm::Vec3 m_pos;  // 0x20: passed to its lists (the name is not the original's)
-    float m_rotY;  // 0x30: its lists' rotation (the name is not the original's)
-    unsigned char pad_34[0x144];
+    // 0x10: create's parameter, kept (dispose resets it from a default one: a struct copy; the name is not the
+    // original's). Its m_allocHandle is its lists' memory (createGmkLists passes it on), m_bdatId its
+    // RSC_GmkSetList row (GfAutoTalkManager::seqInit reads its autoTalk columns by it), m_pos and m_rotY its lists'
+    // position and rotation
+    CreateInfo m_createInfo;
+    GmkBdat m_bdat;  // 0x40: the constructor stores its table (the name is not the original's)
     GmkNpcManager m_npcManager;  // 0x178 (the name is not the original's)
-    unsigned char pad_180[0x2c];
+    unsigned char pad_1a8[0x4];
     // createGmkLists sets it to 0x20 before anything else (nothing else here reads it; the name is not the original's)
     int m_listParam;  // 0x1ac
     unsigned char pad_1b0[0x8];

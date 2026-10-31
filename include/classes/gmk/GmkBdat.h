@@ -20,7 +20,7 @@ public:
     };
 
     // inline: GmkManager's constructor inlines it (no symbol)
-    GmkBdat() : m_resource(nullptr), pad_120(0), m_seq(nullptr), m_bdatFp(nullptr), pad_140(0) {}
+    GmkBdat() : m_resource(nullptr), pad_120(0), m_seq(nullptr) {}
     virtual ~GmkBdat();  // slot 0
     // not virtual: the destructor and its callers call it directly
     void dispose();
@@ -31,9 +31,8 @@ public:
     unsigned long pad_120;
     // 0x128: the step to run (create sets seqWaitResourceLoaded; the name is not the original's)
     void (GmkBdat::*m_seq)(float);
-    // 0x138: the loaded BDAT file (GmkManager's gimmick-set table; the name is not the original's)
-    unsigned char* m_bdatFp;
-    int pad_140;
+    // 0x138 bytes: GmkSet holds one at 0x40 and its GmkNpcManager at 0x178 (GmkSet's constructor); the loaded file
+    // pointer that followed here is GmkManager's (seqWaitValidateResDefBdatFp stores it at 0x190)
 };
 }  // namespace gmk
 

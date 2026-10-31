@@ -82,7 +82,7 @@ void GfAutoTalkManager::seqInit(float dt) {
         const mm::mtl::Vector<gmk::GmkSet*>& sets = gmk::GmkManager::get()->m_gmkSets;
         unsigned long count = sets.size();
         for (unsigned long i = 0; i < count; ++i) {
-            createAutoTalkList(sets[i]->m_bdatId);
+            createAutoTalkList(sets[i]->m_createInfo.m_bdatId);
         }
         m_seq = &GfAutoTalkManager::seqUpdate;
     }
@@ -92,7 +92,7 @@ bool GfAutoTalkManager::createAutoTalkList(int id) {
     disposeAutoTalkList(id);
     GfAutoTalkList::CreateInfo info;
     info.m_id = id;
-    unsigned char* fp = gmk::GmkManager::get()->m_bdat.m_bdatFp;
+    unsigned char* fp = gmk::GmkManager::get()->m_bdatFp;
     const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "autoTalk", id, 7));
     if (name == nullptr || *name == '\0') {
         return false;

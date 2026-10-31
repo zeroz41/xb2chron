@@ -41,6 +41,7 @@
 #include "classes/gmk/GmkSeLinePoint.h"
 #include "classes/gmk/GmkSquadLeader.h"
 #include "classes/gmk/GmkSquadMember.h"
+#include "classes/gmk/GmkSquad.h"
 #include "classes/gmk/GmkTargetPoint.h"
 #include "classes/gmk/GmkJump.h"
 #include "classes/gf/GfGameCond.h"
@@ -323,12 +324,12 @@ gmk::AGmkBase* GmkSalvageLocatorList::getInst(unsigned int index) const {
 const char* GmkManager::getSheetnameByType(int id, GmkType type) const {
     mm::mtl::FixStr<256> column;
     column.format("%s_bdat", getGmkKindName(s_gmkKindNames, type));
-    unsigned char* setFp = m_bdat.m_bdatFp;
+    unsigned char* setFp = m_bdatFp;
     return Bdat::getMember(setFp, column.m_str) != nullptr ? reinterpret_cast<const char*>(Bdat::getValCheck(setFp, column.m_str, id, 7)) : nullptr;
 }
 
 int GmkManager::getMapBdatId(int id) const {
-    unsigned char* fp = m_bdat.m_bdatFp;
+    unsigned char* fp = m_bdatFp;
     int count = Bdat::getIdCount(fp);
     int top = Bdat::getIdTop(fp);
     if (id < top || id >= top + count) {
@@ -434,6 +435,8 @@ AGmkBase* GmkMapGimmickList::getInst(unsigned int index) const {
 }
 
 
+GmkSetOfSalvageChildren::~GmkSetOfSalvageChildren() {}
+
 void GmkSetOfSalvageChildren::createGmkLists(int id) {
     for (int i = 0; i < GMK_LIST_NUM; ++i) {
         if (m_gmkLists[i] != nullptr) {
@@ -441,7 +444,7 @@ void GmkSetOfSalvageChildren::createGmkLists(int id) {
             m_gmkLists[i] = nullptr;
         }
     }
-    unsigned char* fp = GmkManager::sys()->m_bdat.m_bdatFp;
+    unsigned char* fp = GmkManager::sys()->m_bdatFp;
     if (Bdat::getMember(fp, "salvage") == nullptr) {
         return;
     }
@@ -467,11 +470,11 @@ void GmkSetOfSalvageChildren::createGmkLists(int id) {
             GmkManager* manager = GmkManager::sys();
             mm::mtl::FixStr<256> column;
             column.format("%s_bdat", getGmkKindName(s_gmkKindNames, i));
-            unsigned char* setFp = manager->m_bdat.m_bdatFp;
+            unsigned char* setFp = manager->m_bdatFp;
             bdatName = Bdat::getMember(setFp, column.m_str) != nullptr ? reinterpret_cast<const char*>(Bdat::getValCheck(setFp, column.m_str, id, 7)) : nullptr;
         }
         IGmkList::CreateInfo info;
-        info.m_allocHandle = m_allocHandle;
+        info.m_allocHandle = m_createInfo.m_allocHandle;
         info.m_param = this;
         info.m_path = "gmk/";
         info.m_path += name;
@@ -479,8 +482,8 @@ void GmkSetOfSalvageChildren::createGmkLists(int id) {
         if (bdatName != nullptr) {
             info.m_bdatName = bdatName;
         }
-        info.m_pos = m_pos;
-        info.m_rotY = m_rotY;
+        info.m_pos = m_createInfo.m_pos;
+        info.m_rotY = m_createInfo.m_rotY;
         list->create(info);
     }
     m_npcManager.dispose();
@@ -491,6 +494,22 @@ int getCurrentMapBdatId() { return gf::GfGameManager::getMapID(); }
 const IGmkList* GmkSet::getGmkList(GmkType type) const { return m_gmkLists[static_cast<unsigned int>(type)]; }
 
 IGmkList* GmkSet::getGmkList(GmkType type) { return m_gmkLists[static_cast<unsigned int>(type)]; }
+
+GmkNpcManager::~GmkNpcManager() { dispose(); }
+
+// the same steps as dispose, written here: the original's dispose keeps its default CreateInfo on the stack, this
+// copy does not (so the destructor does not inline dispose)
+GmkSet::~GmkSet() {
+    m_seq = nullptr;
+    for (int i = 0; i < GMK_LIST_NUM; ++i) {
+        if (m_gmkLists[i] != nullptr) {
+            delete m_gmkLists[i];
+            m_gmkLists[i] = nullptr;
+        }
+    }
+    m_bdat.dispose();
+    m_createInfo = CreateInfo();
+}
 
 void GmkSet::seqWaitToValidate_GfGameManager_m_mapID(float) {
     if (gf::GfGameManager::getMapID() != 0) {
@@ -587,7 +606,7 @@ void GmkSet::createGmkLists(int id) {
         }
         const char* kindName = getGmkKindName(s_gmkKindNames, i);
         GmkManager* manager = GmkManager::sys();
-        unsigned char* fp = manager->m_bdat.m_bdatFp;
+        unsigned char* fp = manager->m_bdatFp;
         if (Bdat::getMember(fp, kindName) == nullptr) {
             continue;
         }
@@ -600,11 +619,11 @@ void GmkSet::createGmkLists(int id) {
             GmkManager* manager = GmkManager::sys();
             mm::mtl::FixStr<256> column;
             column.format("%s_bdat", kindName);
-            unsigned char* setFp = manager->m_bdat.m_bdatFp;
+            unsigned char* setFp = manager->m_bdatFp;
             bdatName = Bdat::getMember(setFp, column.m_str) != nullptr ? reinterpret_cast<const char*>(Bdat::getValCheck(setFp, column.m_str, id, 7)) : nullptr;
         }
         IGmkList::CreateInfo info;
-        info.m_allocHandle = m_allocHandle;
+        info.m_allocHandle = m_createInfo.m_allocHandle;
         info.m_param = this;
         info.m_path = "gmk/";
         info.m_path += name;
@@ -612,14 +631,14 @@ void GmkSet::createGmkLists(int id) {
         if (bdatName != nullptr) {
             info.m_bdatName = bdatName;
         }
-        info.m_pos = m_pos;
-        info.m_rotY = m_rotY;
+        info.m_pos = m_createInfo.m_pos;
+        info.m_rotY = m_createInfo.m_rotY;
         list->create(info);
     }
 }
 
 void GmkSet::seqCreateMapBdat(float) {
-    createGmkLists(m_bdatId);
+    createGmkLists(m_createInfo.m_bdatId);
     m_seq = &GmkSet::seqUpdate;
 }
 
@@ -781,6 +800,16 @@ bool GmkAcc::isValid() const {
     return false;
 }
 
+// the accesses it still holds lose their gimmick
+GmkAccManager::~GmkAccManager() {
+    for (::mm::mtl::IntrusiveList<GmkAcc>::iterator it = m_list1.begin(); it != m_list1.end(); ++it) {
+        it->m_gmk = nullptr;
+    }
+    for (::mm::mtl::IntrusiveList<GmkAcc>::iterator it = m_list0.begin(); it != m_list0.end(); ++it) {
+        it->m_gmk = nullptr;
+    }
+}
+
 bool GmkCamera::isLoaded() const { return m_camera.get()->isLoaded(); }
 
 bool GmkCamera::isEnd() const {
@@ -823,7 +852,16 @@ bool GmkBattleLock::isValid() const { return m_list != nullptr && m_createInfo.m
 bool GmkAreaWeather::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
 bool GmkSalvageLocator::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
 bool GmkFieldVolume::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+void GmkDmgPhantom::dispose() {
+    m_phantom.dispose();
+    AGmkBase::dispose();
+}
+
+GmkDmgPhantom::~GmkDmgPhantom() { dispose(); }
+
 bool GmkDmgPhantom::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
+
+GmkPhantomSimple::~GmkPhantomSimple() { dispose(); }
 bool GmkDmgEffect::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
 bool GmkDmgSe::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
 bool GmkRoutedFootPrintPoint::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
@@ -845,7 +883,7 @@ GmkRouteNavi::CreateInfo::CreateInfo(const GmkRoute* route)
       m_initResult(nullptr) {
     if (route != nullptr) {
         IGmkList* list = route->m_list;
-        m_bdatId = static_cast<const GmkSet*>(list->getCreateInfo().m_param)->m_bdatId;
+        m_bdatId = static_cast<const GmkSet*>(list->getCreateInfo().m_param)->m_createInfo.m_bdatId;
         m_type = route->getGmkType();
         unsigned int num = list->getInstNum();
         for (unsigned int i = 0; i < num; i++) {
@@ -1127,6 +1165,7 @@ GmkRoutePoint::~GmkRoutePoint() { dispose(); }
 GmkFieldVolume::~GmkFieldVolume() { dispose(); }
 GmkSquadLeader::~GmkSquadLeader() { dispose(); }
 GmkSquadMember::~GmkSquadMember() { dispose(); }
+GmkSquad::~GmkSquad() { dispose(); }
 GmkElevatorLocator::~GmkElevatorLocator() { dispose(); }
 GmkTargetPoint::~GmkTargetPoint() { dispose(); }
 GmkRoutedEnemyPoint::~GmkRoutedEnemyPoint() { dispose(); }
@@ -1622,7 +1661,7 @@ GmkRoutedNpcList::~GmkRoutedNpcList() {
     dispose();
 }
 
-GmkManager::GmkManager() : m_seq(nullptr) {}
+GmkManager::GmkManager() : m_bdatFp(nullptr), pad_198(0), m_seq(nullptr) {}
 
 void GmkCollision::enter(const fw::IColiEventListener::EnterInfo& info) {
     fw::ColiUserData* userData = info.m_other->m_userData;

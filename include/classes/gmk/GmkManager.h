@@ -140,9 +140,13 @@ public:
 
     // what create copies (the member names below are not the original's)
     CreateInfo m_createInfo;  // 0x8
-    // the BDAT file of the map's gimmick sets (its m_bdatFp: a row per set, a column per gimmick kind naming its
+    // the BDAT file of the map's gimmick sets (m_bdatFp below: a row per set, a column per gimmick kind naming its
     // resource and one ("<kind>_bdat") naming its BDAT table; GmkSet::createGmkLists reads it)
     GmkBdat m_bdat;  // 0x58
+    // 0x190: the loaded BDAT file (seqWaitValidateResDefBdatFp stores Bdat::getFP's result; the name is not the
+    // original's)
+    unsigned char* m_bdatFp;
+    int pad_198;
     GmkPhantomManager m_phantomManager;  // 0x1a0
     GmkLandmarkManager m_landmarkManager;  // 0xf220
     GmkBgmCondInfoManager m_bgmCondInfoManager;  // 0xf248

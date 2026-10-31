@@ -278,7 +278,7 @@ void LocatorTalk_NpcID::update() {
     if (set == nullptr) {
         return;
     }
-    const gmk::GmkNpcManager::NpcIdInfo* info = set->m_npcManager.getNpcIdInfoByNpcId(m_npcId);
+    const gmk::GmkNpcIdInfo* info = set->m_npcManager.getNpcIdInfoByNpcId(m_npcId);
     GfObjAcc acc(info->m_handle);
     if (acc.isValidTransform()) {
         m_pos = acc.getWorldTransformNoSync().position;
@@ -552,7 +552,7 @@ void TUnk_B51E90::fn_710027011C() {
     if (set == nullptr) {
         return;
     }
-    const gmk::GmkNpcManager::NpcIdInfo* info = set->m_npcManager.getNpcIdInfoByNpcId(m_id);
+    const gmk::GmkNpcIdInfo* info = set->m_npcManager.getNpcIdInfoByNpcId(m_id);
     GfObjAcc acc(info->m_handle);
     if (acc.isValidTransform()) {
         m_pos = acc.getWorldTransformNoSync().position;
