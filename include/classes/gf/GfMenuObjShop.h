@@ -68,6 +68,8 @@ public:
     void addCallContextResult(unsigned int result, unsigned int param);
     // event 0x40 to that object, or to the main layer when it is 0
     void sendEnableEvent(unsigned int handle);
+    // event 0x41 to that object, or to the main layer when it is 0
+    void sendExitEvent(unsigned int handle);
 
     // sequence jobs (m_seq): each returns true when done
     // "TXT_store_sell_index" shows the current filter's name (BDAT 0x11D, list 0x14B's entry filter + 1)

@@ -9,6 +9,7 @@
 #include "gf/GfItemUtil.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfMenuObjShop/SellFilterListener.h"
+#include "classes/gf/GfMenuObjShop/CommonListener.h"
 #include "classes/gf/GfMenuObjShop/SellFilterListener.h"
 #include "classes/gf/GfMenuObjBlWeapon2.h"
 #include "classes/gf/GfDataBdat.h"
@@ -164,6 +165,15 @@ void GfMenuObjShop::sendEnableEvent(unsigned int handle) {
     GfMenuObject::sendEvent(handle, event, 0.0f);
 }
 
+void GfMenuObjShop::sendExitEvent(unsigned int handle) {
+    if (handle == 0) {
+        handle = ui::UIObjectAcc(m_handle, "LAY_main").m_handle;
+    }
+    ui::EventData event;
+    event.m_type = 0x41;
+    GfMenuObject::sendEvent(handle, event, 0.0f);
+}
+
 bool GfMenuObjShop::seqEnd() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
     GfSequentialPlay::pauseOff();
@@ -221,6 +231,58 @@ int GfMenuObjShop::getSpecialShop(unsigned int shopId) {
         }
     }
     return 0;
+}
+
+void GfMenuObjShop::CommonListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        GfMenuObject::disableInput(acc.m_handle);
+        m_ctrl = -1;
+        break;
+    case 3:
+        if (event.m_param0 == 2) {
+            m_owner->sendExitEvent(0);
+            acc.setDisp(false);
+        }
+        break;
+    case 0x21: {
+        acc.setDisp(true);
+        {
+            ui::UIObjectAcc bg(acc.m_handle, "IMG_common_bg");
+            bg.startAnimation("fade_in", false);
+        }
+        acc.setDispChild(true, "LAY_index");
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_up_down"; param.m_motion = "fade_in_up";
+        param.m_setDefault = true;
+        param.m_startFlags = 8;
+        param.m_eventId = 1;
+        int ctrl = GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_index");
+        GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        m_ctrl = ctrl;
+        break;
+    }
+    case 0x22: {
+        {
+            ui::UIObjectAcc bg(acc.m_handle, "IMG_common_bg");
+            bg.startAnimation("fade_out", false);
+        }
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_up_down"; param.m_motion = "fade_out_up";
+        param.m_setDefault = true;
+        param.m_startFlags = 10;
+        param.m_eventId = 2;
+        int ctrl = GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_index");
+        GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        m_ctrl = ctrl;
+        break;
+    }
+    }
+    UIObjectListener::reciveEvent(event, handle);
 }
 
 void GfMenuObjShop::refreshFilterIcon() {
