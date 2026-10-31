@@ -14,6 +14,10 @@ namespace idcoli {
 // builds an object's base shape (into IDColiObjBase::m_base) from a matrix and a size, and its bounding box
 class IDColiPrimitive {
 public:
+    // the box's bounding box: its 8 corners +-m_size through m_axes, offset by m_center
+    static void calcBoxAaBb(CLBoxWork* box);
+    // m_offset, m_lengthSq and its inverse, and the bounding box of both ends widened by the radius
+    static void calcCapsuleSetup(CLCapsuleWork* capsule);
     // fills a position record from a matrix and two corners (the transposed matrix, its inverse, the bounds)
     static void calcPosDataSetup(IDCmfPosData* posData, const mm::Mat44& matrix, const mm::Vec3& corner0,
                                  const mm::Vec3& corner1);

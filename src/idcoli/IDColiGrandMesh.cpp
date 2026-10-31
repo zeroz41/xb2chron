@@ -59,6 +59,28 @@
 #include "idcoli/IDColiUtilTreeAcc.h"
 
 namespace idcoli {
+void IDColiPrimitive::calcBoxAaBb(CLBoxWork* box) {
+    mm::Vec3 corners[8] = {
+        mm::Vec3(box->m_size.x, box->m_size.y, box->m_size.z),    mm::Vec3(box->m_size.x, box->m_size.y, -box->m_size.z),
+        mm::Vec3(-box->m_size.x, box->m_size.y, box->m_size.z),   mm::Vec3(-box->m_size.x, box->m_size.y, -box->m_size.z),
+        mm::Vec3(box->m_size.x, -box->m_size.y, box->m_size.z),   mm::Vec3(box->m_size.x, -box->m_size.y, -box->m_size.z),
+        mm::Vec3(-box->m_size.x, -box->m_size.y, box->m_size.z),  mm::Vec3(-box->m_size.x, -box->m_size.y, -box->m_size.z),
+    };
+    box->m_max.x = box->m_max.y = box->m_max.z = -100000.0f;
+    box->m_min.x = box->m_min.y = box->m_min.z = 100000.0f;
+    for (int i = 0; i < 8; i++) {
+        mm::Vec3 pos(corners[i].dot(box->m_axes[0]), corners[i].dot(box->m_axes[1]), corners[i].dot(box->m_axes[2]));
+        if (box->m_max.x < pos.x) box->m_max.x = pos.x;
+        if (box->m_min.x > pos.x) box->m_min.x = pos.x;
+        if (box->m_max.y < pos.y) box->m_max.y = pos.y;
+        if (box->m_min.y > pos.y) box->m_min.y = pos.y;
+        if (box->m_max.z < pos.z) box->m_max.z = pos.z;
+        if (box->m_min.z > pos.z) box->m_min.z = pos.z;
+    }
+    box->m_max += box->m_center;
+    box->m_min += box->m_center;
+}
+
 void IDColiPrimitive::createBaseSphere(void* base, IDColiBaseType& type, const mm::Mat44& matrix, const mm::Vec3& size) {
     CLSphereWork* sphere = static_cast<CLSphereWork*>(base);
     type = IDCOLI_BASE_SPHERE;
@@ -133,8 +155,8 @@ void IDColiPrimitive::createBaPosBox(mm::Vec3& pos, mm::Vec3& offset, bool& flag
                                      const void* shape) {
     const CLBoxWork* box = static_cast<const CLBoxWork*>(shape);
     pos = box->m_center;
-    radius = box->m_radius;
-    height = box->m_height;
+    radius = box->m_size.x;
+    height = box->m_size.y;
     flag = false;
     offset = mm::Vec3(0.0f, 0.0f, 0.0f);
 }
