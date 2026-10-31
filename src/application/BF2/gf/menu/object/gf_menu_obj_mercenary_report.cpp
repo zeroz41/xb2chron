@@ -4,6 +4,11 @@
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfMenuBladeList.h"
 #include "classes/gf/GfMenuCallContext.h"
+#include "classes/gf/GfMenuObjMercenaryReport/MainListener.h"
+#include "classes/gf/GfMenuObjOperationInfo.h"
+#include "classes/ui/UIObjectAcc.h"
+#include "gf/GfMenuObjUtil.h"
+#include "ui/EventData.h"
 
 namespace gf {
 
@@ -38,8 +43,33 @@ void GfMenuObjMercenaryReport::finalize() {
     GfMenuObject::finalize();
 }
 
-// update, seqDispReward, MainListener::reciveEvent, seqStart and RewardListener::reciveEvent are not here yet: see
-// the report
+// update and seqDispReward are not here yet: see the report
+
+void GfMenuObjMercenaryReport::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        m_owner->m_seq.clear();
+        m_owner->m_seq.addJob(&GfMenuObjMercenaryReport::seqStart);
+        GfMenuObjOperationInfo::setGuideDisp(false);
+        break;
+    case 2: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_out = 1;
+        param.m_preset = 6;
+        param.m_startFlag1 = true;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        break;
+    }
+    case 3:
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+// seqStart and RewardListener::reciveEvent are not here yet: see the report
 
 bool GfMenuObjMercenaryReport::seqEnd() {
     if (GfMenuManager::isSwitchingFullScreen()) {
