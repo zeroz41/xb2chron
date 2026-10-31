@@ -81,7 +81,9 @@ public:
     int m_cursorMode;                                 // the listeners set 0x18 / 0x48
     unsigned int m_filter;                            // the stock list's filter
     unsigned int m_prevFilter;
-    unsigned char pad_64[4];
+    // nonzero: the stock (favourite) list is open: the result closes LAY_fvstock_fevitem, not LAY_eqp_fevitem
+    // (the name is not the original's)
+    unsigned int m_fvStock;
     GfMenuCallContext* m_subContext;                  // initialize creates it
     mm::mtl::FixedArray<FavoriteFlag, 4> m_favBefore;  // the party's favourite stats before
     mm::mtl::FixedArray<FavoriteFlag, 4> m_favAfter;   // and after

@@ -17,6 +17,7 @@
 #include "classes/gf/GfMenuItemList.h"
 #include "classes/gf/GfMenuObjCharSelect.h"
 #include "classes/gf/GfMenuObjSort.h"
+#include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/gf/GfMenuReference.h"
 #include "classes/gf/GfDataBdat.h"
 #include "gf/GfPouchUtil.h"
@@ -107,7 +108,7 @@ inline int setFadeOut(unsigned int handle, unsigned int type) {
 
 GfMenuObjPouch2::GfMenuObjPouch2(unsigned int handle)
     : GfMenuObject(handle), m_slotItems(nullptr), m_slotCursor(nullptr), m_number(), m_items(nullptr),
-      m_select(nullptr), m_context(nullptr), m_filter(0), m_prevFilter(0), pad_64(), m_subContext(nullptr),
+      m_select(nullptr), m_context(nullptr), m_filter(0), m_prevFilter(0), m_fvStock(0), m_subContext(nullptr),
       m_favBefore(), m_favAfter(), m_seq(this), m_slotActive(false), m_voice(nullptr), m_sort(0),
       m_blades(nullptr), pad_3E8(false) {}
 
@@ -300,6 +301,47 @@ bool GfMenuObjPouch2::seqFavClose() {
     m_favIndex = 0;
     m_favKind = 0;
     return true;
+}
+
+void GfMenuObjPouch2::ResultListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        setupResult(acc);
+        acc.setDisp(false);
+        GfMenuObject::disableInput(handle);
+        break;
+    case 8:
+        if (event.m_param1 == 0xB || event.m_param1 == 2) {
+            sendEvent(handle, 0x102, 0);
+            sendEvent(owner.searchChild(m_owner->m_fvStock == 0 ? "LAY_eqp_fevitem" : "LAY_fvstock_fevitem"), 0x101, 0);
+            if (m_owner->m_fvStock == 0) {
+                GfMenuObjCharSelect::setCharPosScale(0, GfMenuReference::getReferenceDriverID(0), 4, false);
+                GfMenuObjCharSelect::dispOnChar(0);
+            } else {
+                setFadeIn(owner.searchChild("LAY_fvstock_fevitem"), 1);
+                setFadeIn(owner.searchChild("LAY_chr_fevinfo"), 2);
+            }
+            GfMenuObjUtil::playSECommonCloseSubMenu();
+        }
+        break;
+    case 0x101:
+        refreshResult(acc, m_owner->m_blades);
+        GfMenuObjOperationInfo::setGuideText(0x22, 0);
+        GfMenuObjOperationInfo::add(handle, 0, 0, 0);
+        setFadeIn(handle, 1);
+        GfMenuObject::enableInput(handle);
+        break;
+    case 0x102:
+        GfMenuObjOperationInfo::remove(handle, 0, 0, 0);
+        setFadeOut(handle, 1);
+        GfMenuObject::disableInput(handle);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 void GfMenuObjPouch2::getFilterText(unsigned int filter, ui::UIStr& text) {

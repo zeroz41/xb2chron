@@ -13,6 +13,10 @@ public:
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
+
+    // the rest of the layout (the constructor's: a GfMenuSequence at 0x28, three GfMenuReferenceNumber pointers at
+    // 0x2C0) is not written yet. The name is not the original's
+    unsigned int m_telop;  // 0x24: the open telop's layout (MainListener's 0x21 searches it by s_telopLayouts)
 };
 }  // namespace gf
 
