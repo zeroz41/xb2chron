@@ -1606,9 +1606,36 @@ void ScriptCharaTurnRot::redo(const event::Param& param) {
     }
 }
 
+void ScriptCharaTgt::doit(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        TarAxis axis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        float time = param.val(4).getF32();
+        m_wasQueued = obj->m_chara->m_cmdQueue2.contains(&obj->m_chara->m_setTar);
+        m_prevTar = obj->m_tar;
+        mm::mtl::Singleton<ScheManager>::getPtr()->cancelLook(obj->m_chara->m_gfHandle);
+        EVT_tarcvtype cvType = static_cast<EVT_tarcvtype>(param.val(5).getS32());
+        EVT_aimtype aimType = static_cast<EVT_aimtype>(param.val(6).getS32());
+        float a = param.val(7).getF32();
+        float b = param.val(8).getF32();
+        obj->m_tar = axis;
+        obj->m_chara->setTar(axis, time, cvType, aimType, a, b);
+    }
+}
+
 void ScriptCharaTgt::undo(const event::Param&) {
     // nothing to restore: the active object is looked up and left as is
     mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2);
+}
+
+void ScriptCharaTgt::redo(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        TarAxis axis(param.val(0).getS32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        float time = param.val(4).getF32();
+        obj->m_tar = axis;
+        obj->m_chara->setTar(axis, time, static_cast<EVT_tarcvtype>(0), static_cast<EVT_aimtype>(0), -1.0f, -1.0f);
+    }
 }
 
 void ScriptCharaLinerPos::doit(const event::Param& param) {

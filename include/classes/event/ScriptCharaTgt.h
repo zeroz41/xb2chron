@@ -23,6 +23,8 @@ public:
     virtual void undo(event::Param const&);  // slot 4
     virtual void redo(event::Param const&);  // slot 5
 
+    // whether the character's setTar command was queued when doit ran; the name is not the original's
+    bool m_wasQueued;  // 0x8
     // the active object's TarAxis before doit; the name is not the original's
     TarAxis m_prevTar;  // 0x10
 };

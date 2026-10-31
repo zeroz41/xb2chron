@@ -20,11 +20,16 @@
 #include "classes/event/CharaSetIdle.h"
 #include "classes/event/CharaSetPos.h"
 #include "classes/event/CharaSetRot.h"
+#include "classes/event/CharaSetTar.h"
 #include "mm/Vec3.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 
-namespace event { class AttachActorBase; }
+namespace event { class AttachActorBase; class TarAxis; }
+
+// the kinds CharaObj::setTar takes (the mangled names spell global enums); their values are not known
+enum EVT_tarcvtype : int;
+enum EVT_aimtype : int;
 
 namespace event {
 // which weapon a hide request is for (the evt_chara script commands pass 3); no enumerator is named
@@ -39,6 +44,7 @@ public:
     void playTalk(bool a, float b, bool c, bool d, float e, float f, float g, float h);
     void setPos(const mm::Vec3& pos);
     void setRot(const mm::Vec3& rot);
+    void setTar(const TarAxis& tar, float time, EVT_tarcvtype cvType, EVT_aimtype aimType, float a, float b);
     // queues m_setIdle with this object and id, after erasing the idle and action commands
     void setIdle(int id);
     // the id of the queued m_setIdle, 0 when none is queued (inlined by ScriptCharaSetIdle::doit); the name is not
@@ -78,7 +84,11 @@ public:
     CharaSetPos m_setPos;  // 0x8
     // the command setRot queues (CharaObj's constructor builds it); the name is not the original's
     CharaSetRot m_setRot;  // 0x18
-    unsigned char pad_28[0x5b8];
+    unsigned char pad_28[0x508];
+    // the command setTar queues in m_cmdQueue2 (ScriptCharaTgt::doit tests whether it is queued); the name is not
+    // the original's
+    CharaSetTar m_setTar;  // 0x530
+    unsigned char pad_540[0xa0];
     // the commands setIdle erases from m_cmdQueue0 (CharaObj's constructor builds them); the names are not the original's
     CharaSetIdle m_setIdle;  // 0x5e0
     CharaPlayActionAuto m_playActionAuto;  // 0x608

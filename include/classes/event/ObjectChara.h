@@ -9,6 +9,7 @@ namespace mm { class Col4; }
 #include "classes/event/CharaObj.h"
 #include "classes/event/PosAxis.h"
 #include "classes/event/RotAxis.h"
+#include "classes/event/TarAxis.h"
 #include "event/CvType.h"
 
 // the curve kind ObjectChara::walkPosAxis takes (the mangled name spells a global enum); its values are not known
@@ -48,6 +49,8 @@ public:
     // names are not the original's
     PosAxis m_pos;  // 0x80
     RotAxis m_rot;  // 0xa0
+    // the target ScriptCharaTgt stores before CharaObj::setTar (and saves for undo); the name is not the original's
+    TarAxis m_tar;  // 0xc0
 };
 }  // namespace event
 
