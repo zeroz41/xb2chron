@@ -11,6 +11,8 @@ namespace ssd {
 class StreamBuffer {
 public:
     StreamBuffer() : allocator_(nullptr), buffer_(nullptr), loopPosition_(0) {}
+    // not virtual (the table holds no destructor); StreamController's destructor stores the vptr and calls Free
+    ~StreamBuffer() { Free(); }
 
     virtual unsigned long GetBufferSize() const;  // slot 0
     virtual unsigned long GetDataSize() const;  // slot 1

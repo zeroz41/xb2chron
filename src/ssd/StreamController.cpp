@@ -16,6 +16,8 @@ namespace ssd {
 // the constructor (not matched yet, wip/StreamController_full.cpp) takes the next number
 unsigned int StreamController::idCounter_;
 
+StreamController::~StreamController() {}
+
 void StreamController::ExecCloseStream() {
     decode_ = nullptr;
     inData_ = nullptr;
