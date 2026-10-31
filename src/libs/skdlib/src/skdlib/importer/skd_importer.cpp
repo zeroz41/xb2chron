@@ -6,7 +6,7 @@
 
 // bin::BinaryResolver::resolve (0x7100887F3C) and restore (0x7100887FE8), just before this unit, are another
 // translation unit's (bin/BinaryResolver.cpp): import calls resolve out of line; written here, clang inlines it
-// and turns its memcmp(binary, "BG", 2) into a halfword compare
+// and turns its memcmp(binary, "BC", 2) into a halfword compare
 
 namespace skd {
 
