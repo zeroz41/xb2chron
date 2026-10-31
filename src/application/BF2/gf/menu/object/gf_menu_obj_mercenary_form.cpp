@@ -7,6 +7,7 @@
 #include "classes/gf/GfMenuReference.h"
 #include "classes/gf/SCOM_FIELD_VOICE.h"
 #include "classes/gf/GfMenuObjMercenaryForm/MainListener.h"
+#include "classes/gf/GfMenuObjMercenaryForm/ApplyListener.h"
 #include "classes/gf/GfMenuReferenceNumber.h"
 #include "classes/ui/UICtrlCursorSelect.h"
 #include "classes/ui/UISelectObjList.h"
@@ -165,6 +166,64 @@ void GfMenuObjMercenaryForm::MainListener::reciveEvent(const ui::EventData& even
 
 // seqReturnMissionSelect, the Apply/Preset listeners, seqPresetSave, seqPresetLoad and LeaderListener are not here
 // yet
+
+void GfMenuObjMercenaryForm::ApplyListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        acc.setDisp(true);
+        ui::UIObjectAcc base(acc.m_handle, "IMG_form_apply_base");
+        base.startAnimation("non", false);
+        acc.setDispChild(false, "LAY_form_apply_caption");
+        m_open = 0;
+        break;
+    }
+    case 0xC:
+        if (m_open == 1) {
+            ui::UIObjectAcc base(acc.m_handle, "IMG_form_apply_base");
+            base.startAnimation("loop", false);
+        }
+        break;
+    case 0x21:
+        if (m_open == 0) {
+            ui::UIObjectAcc caption(acc.m_handle, "LAY_form_apply_caption");
+            caption.setDisp(true);
+            caption.setAlpha(1.0f);
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_in_r";
+            param.m_setDefault = true;
+            param.m_startFlags = 8;
+            GfMenuObjUtil::startCtrl(caption.m_handle, param, nullptr);
+            {
+                ui::UIObjectAcc base(acc.m_handle, "IMG_form_apply_base");
+                base.startAnimation("start", false);
+                GfMenuObject::hookAnimationEvent(acc.m_handle, base.m_handle, 0);
+            }
+            acc.setDisp(true);
+            m_open = 1;
+        }
+        break;
+    case 0x22: {
+        ui::UIObjectAcc base(acc.m_handle, "IMG_form_apply_base");
+        base.startAnimation("non", false);
+        {
+            ui::UIObjectAcc caption(acc.m_handle, "LAY_form_apply_caption");
+            int slot = GfMenuObjUtil::getCtrlID(caption.m_handle);
+            if (slot != -1) {
+                GfMenuObjUtil::stopCtrl(slot);
+            }
+            caption.setDisp(false);
+        }
+        m_open = 0;
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
 
 // seqConfirmStart (wip/seqConfirmStart.cpp, 4 words off) is not here yet
 
