@@ -406,6 +406,9 @@ public:
     static bool isNeedAttributeResource(unsigned int blade);
     // the reserve blades (GfDataMercenaries::getReserver fills its list with them)
     static void getListReserver(mm::mtl::FixedVector<unsigned short, 422>& list);
+    // drops the list's repeated blades (GfAchievStats's blade counts call it after getListReserver; returns nothing
+    // its caller reads)
+    static void removeSameBlade(mm::mtl::FixedVector<unsigned short, 422>& list);
     static unsigned int getBladeRelativeID(unsigned int blade);  // getBladeIndex
     // whether a model path names a common blade (it starts with "bl/bl2")
     static bool getCommonBladeName(const char* path);

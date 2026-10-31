@@ -15,7 +15,9 @@ public:
     unsigned int m_countMax;
     // bit 0: GfKizunaringBlade's checks count the quest as done; bits 2 and 3: 1.0.0's setTaskComplete
     unsigned short m_flags;
-    unsigned char pad_e[0x4];
+    // the statistic the quest counts (GfAchievStats::getAchievementTotalCount reads its total for it)
+    unsigned short m_stats;
+    unsigned char pad_10[0x2];
     unsigned short m_line;      // the blade's skill line (isCompleteLevel(AchievQuest&) passes the three on)
     unsigned short m_level;     // the line's level (getSkillLevel counts one done at 1 even without its quest)
     unsigned short m_blade;

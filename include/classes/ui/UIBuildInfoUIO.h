@@ -2,8 +2,13 @@
 #define CLASSES_UI_UIBUILDINFOUIO_H
 
 #include "classes/ui/UIBuildInfo.h"
+#include "mm/mtl/Array.h"
+
+namespace fw { class CommonResource; }
 
 namespace ui {
+class UIObjBuildData;
+
 // table 0x7100B743B0
 class UIBuildInfoUIO : public ::ui::UIBuildInfo {
 public:
@@ -18,7 +23,16 @@ public:
     virtual void getObjectData(unsigned int, ui::UIBuildInfo::ObjectData&) const;  // slot 6
     virtual const char* getName() const;  // slot 7
 
-    unsigned char pad_08[0x28];  // 0x30 bytes in all (UIObjFactory::order allocates so)
+private:
+    // the object at index of the file's build data as an ObjectData (a missing "type" or "name" leaves the rest
+    // at its defaults); the name is the original's (symbol)
+    void getObjectDataUIO(UIObjBuildData* buildData, unsigned int index, ui::UIBuildInfo::ObjectData& data) const;
+
+public:
+    // the names are not the original's
+    const char* m_name;                                   // the UIO file's name (getName)
+    fw::CommonResource* m_resource;                       // the requested file, released once read or found empty
+    mm::mtl::Array<ui::UIBuildInfo::ObjectData> m_objects;  // the file's objects, read by update (0x30 in all)
 };
 }  // namespace ui
 

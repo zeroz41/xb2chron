@@ -28,7 +28,8 @@ public:
         bool m_defUndisp;            // "def_undisp" == 1
         bool m_resourceIsFile;       // set for type 9's resource (not the original's)
         unsigned char m_flagB;       // 0 by default (not the original's)
-        unsigned short m_flagC;      // 0 by default (not the original's)
+        bool m_saveDefCol;           // UIO "save_def_col" != 0, else 0 (the name is not the original's)
+        bool m_ignoreSizing;         // UIO "ignore_sizing" != 0, else 0 (the name is not the original's)
         const char* m_strA;          // 0 by default (not the original's)
         const char* m_strB;          // 0 by default (not the original's)
         unsigned char m_inputType;   // "input_type"
@@ -39,30 +40,33 @@ public:
         unsigned char m_textFlag;    // 0 by default (not the original's)
         unsigned int m_textA;        // 0 by default (not the original's)
         unsigned int m_textB;        // 0 by default (not the original's)
-        unsigned short m_textC;      // 0 by default (not the original's)
+        bool m_imgHFlip;             // UIO "img_hflip" == 1, else 0 (the name is not the original's)
+        bool m_imgVFlip;             // UIO "img_vflip" == 1, else 0 (the name is not the original's)
         unsigned char m_textD;       // 0 by default (not the original's)
         int m_textId;                // "text_id" when not 0
         unsigned char m_textAlignH;  // "text_align_h"
         unsigned char m_textAlignV;  // "text_align_v"
         unsigned char m_textProp;    // "text_prop"
-        unsigned int m_extA;         // 0 by default (not the original's)
+        float m_borderWeight;        // UIO text "border_weight" / 10, else 0 (the name is not the original's)
         unsigned int m_extB;         // 0 by default (not the original's)
         const char* m_extC;          // 0 by default (not the original's)
-        const char* m_extD;          // 0 by default (not the original's)
+        unsigned int m_screenW;      // UIO "screen_w", else 0 (the name is not the original's)
+        unsigned int m_screenH;      // UIO "screen_h", else 0 (the name is not the original's)
         unsigned char m_extE;        // 0 by default (not the original's)
         unsigned short m_extF;       // 0 by default (not the original's)
-        unsigned int m_extG;         // 0 by default (not the original's)
+        unsigned short m_polyFaceVNum;  // UIO "poly_face_v_num" (type 5), else 0 (the name is not the original's)
+        unsigned short m_polyRingDiv;   // UIO "poly_ring_div" (type 5), else 0 (the name is not the original's)
         unsigned short m_extH;        // 0 by default (not the original's)
         const char* m_extI;          // 0 by default (not the original's)
 
         ObjectData()
             : m_name(0), m_parent(0), m_attachLayout(0), m_layoutFile(0), m_layoutName(0), m_resourceFile(0),
               m_type(0), m_offsX(0), m_offsY(0), m_attr(0), m_scaleX(1.0f), m_scaleY(1.0f), m_alpha(1.0f),
-              m_priority(0), m_flagA(0), m_defUndisp(false), m_resourceIsFile(false), m_flagB(0), m_flagC(0),
+              m_priority(0), m_flagA(0), m_defUndisp(false), m_resourceIsFile(false), m_flagB(0), m_saveDefCol(false), m_ignoreSizing(false),
               m_strA(0), m_strB(0), m_inputType(0), m_inputId(0), m_inputFlag(0), m_strC(0), m_index(-1),
-              m_textFlag(0), m_textA(0), m_textB(0), m_textC(0), m_textD(0), m_textId(0),
-              m_textAlignH(0), m_textAlignV(0), m_textProp(0), m_extA(0), m_extB(0), m_extC(0), m_extD(0),
-              m_extE(0), m_extF(0), m_extG(0), m_extH(0), m_extI(0) {}
+              m_textFlag(0), m_textA(0), m_textB(0), m_imgHFlip(false), m_imgVFlip(false), m_textD(0), m_textId(0),
+              m_textAlignH(0), m_textAlignV(0), m_textProp(0), m_borderWeight(0), m_extB(0), m_extC(0), m_screenW(0), m_screenH(0),
+              m_extE(0), m_extF(0), m_polyFaceVNum(0), m_polyRingDiv(0), m_extH(0), m_extI(0) {}
     };
     virtual ~UIBuildInfo() {}  // slot 0
     virtual void update() {}  // slot 2
