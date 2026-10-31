@@ -5,6 +5,8 @@
 #include "ml/CriticalSection.h"
 #include "classes/ml/WorkCpu.h"
 #include "classes/ml/DebDraw.h"
+#include "mm/Vec3.h"
+#include "mm/Vec3NA.h"
 
 namespace ml {
 // table 0x7100B759B8
@@ -32,10 +34,12 @@ public:
     class DORTHO;
     class DPERS;
     class DRARROW;
+    class DRARROW_CUBE;
     class DRAXIS;
     class DRCAPSULE;
     class DRCIRCLE_MAT;
     class DRCONE;
+    class DRCONE_FILL;
     class DRCUBE;
     class DRCYLINDER;
     class DRLINE;
@@ -55,6 +59,11 @@ public:
             m_type = type;
             m_size = size;
             m_kind = kind;
+        }
+        // a command keeps a mm::Vec3 argument as three unaligned floats (the name is not the original's)
+        static mm::Vec3NA na(const mm::Vec3& v) {
+            mm::Vec3NA r = {v.x, v.y, v.z};
+            return r;
         }
         unsigned char m_type;
         unsigned char m_kind;
@@ -88,8 +97,9 @@ public:
     bool calcCurrentBuf(unsigned long size) {
         BUF* buf = getBuf(false);
         GROUP* group = &buf->m_group[buf->m_groupNum];
+        unsigned char* begin = group->m_begin;
         unsigned char* cur = buf->m_cur;
-        if (group->m_begin == nullptr) {
+        if (begin == nullptr) {
             group->m_begin = cur;
             buf->m_group[buf->m_groupNum].m_prim = m_prim;
         }
@@ -100,26 +110,37 @@ public:
 
     // replays the commands of priority prio (DebDraw::flushPrio)
     void flush(int prio, const mm::Mat44& view, const mm::Mat44& proj);
-    bool setLineWidth(unsigned int width);
-    bool setDoubleSide(bool doubleSide);
-    bool setAlphaBlend(bool blend);
-    bool setOrtho();
+    bool clear();
     bool setMatrix(const mm::Mat44& mtx);
+    bool setPers(const mm::Mat44& mtx, float fovy, float aspect, float near, const mm::Vec3* eye);
+    bool setOrtho();
     bool setCol(const mm::Col4& col);
+    bool setTex(grlib::CGLibTextureBuffer* tex);
+    bool setDoubleSide(bool doubleSide);
     bool setZComp(bool on);
+    bool setZWrite(bool on);
     bool renderRect(const mm::Rect<int>& rect);
     bool renderRectFill(const mm::Rect<int>& rect);
     bool renderCube(const mm::Vec3& min, const mm::Vec3& max);
     bool renderCircle(const mm::Mat44& mtx, float radius, unsigned int div);
     bool renderAxis(float length);
     bool renderArrow(const mm::Vec3& start, const mm::Vec3& end);
+    bool renderCubeArrow(const mm::Vec3& start, const mm::Vec3& end);
     bool renderRealSphere(float radius, unsigned int div);
+    bool renderConeFill(float radius, float height, unsigned int div);
     bool renderCone(float radius, float height, unsigned int div);
     bool renderCylinder(float radius, float height, unsigned int div);
     bool renderCapsule(float radius, float height, unsigned int div);
     bool renderSquare(float width, float height);
     bool renderLine(const mm::Vec3& a, const mm::Vec3& b);
     bool renderLine(const mm::Pnt<int>& a, const mm::Pnt<int>& b);
+    bool setLineWidth(unsigned int width);
+    bool setAlphaBlend(bool blend);
+    bool begin(unsigned int prim, unsigned int param);
+    bool end();
+    bool add(const mm::Vec3& v0, const mm::Vec3& v1, const mm::Vec3& v2);
+    bool add(const mm::Vec3& v0, const mm::Vec3& v1);
+    bool add(const mm::Vec3& v0);
     bool fontColor(const mm::Col4& col);
     bool fontShadow(bool on);
     bool fontFlush(bool on);
@@ -136,7 +157,7 @@ public:
     CriticalSectionNC* m_section;         // 0x6060 (the name is not the original's)
     bool m_forceRenderQueue;              // 0x6068 setForceRenderQueue's (the name is not the original's)
     int m_suspendSwap;                    // 0x606C setSuspendSwap's (the name is not the original's)
-    bool pad_6070;
+    bool m_zWrite;                        // 0x6070 setZWrite's argument, stored before queueing (the name is not the original's)
 };
 }  // namespace ml
 

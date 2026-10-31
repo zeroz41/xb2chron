@@ -11,6 +11,10 @@
 // mm_lib's mm_math/mm_mat44.h, as the including file's include path named it (see mm/Math.h)
 #ifdef MM_LIB_FROM_LIBS
 #define MM_MAT44_PATH "../../../mcl/mm_lib/source\\mm_math/mm_mat44.h"
+#elif defined(MM_LIB_FROM_MONOLIB_MM)
+// monolib_mm's (CacheDraw::setMatrix's command copy cites it so)
+#define MM_MAT44_PATH \
+    "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../../MCL/mm_lib/source\\mm_math/mm_mat44.h"
 #elif defined(MM_LIB_FROM_XBRD)
 // xbrd's (ScnObjModelDrSysStandard::apply's matrix copy cites it so)
 #define MM_MAT44_PATH "D:/Monolithsoft/BF2/prog/libs/xbrd/proj/windows/../../../mcl/mm_lib/source\\mm_math/mm_mat44.h"

@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <new>
 #include "classes/ml/DevBase.h"
 #include "classes/ml/DevClock.h"
 #include "classes/ml/DevClockNx.h"
@@ -42,6 +43,28 @@
 #include "classes/ml/CacheDraw/DADDV3_3.h"
 #include "classes/ml/CacheDraw/DADDV3_2.h"
 #include "classes/ml/CacheDraw/DADDV3_1.h"
+#include "classes/ml/CacheDraw/DCLEAR.h"
+#include "classes/ml/CacheDraw/DMAT.h"
+#include "classes/ml/CacheDraw/DPERS.h"
+#include "classes/ml/CacheDraw/DORTHO.h"
+#include "classes/ml/CacheDraw/DCOL.h"
+#include "classes/ml/CacheDraw/DTEX.h"
+#include "classes/ml/CacheDraw/DDOUBLESIDE.h"
+#include "classes/ml/CacheDraw/DZCOMP.h"
+#include "classes/ml/CacheDraw/DZWRITE.h"
+#include "classes/ml/CacheDraw/DRRECT.h"
+#include "classes/ml/CacheDraw/DRRECT_FILL.h"
+#include "classes/ml/CacheDraw/DRCUBE.h"
+#include "classes/ml/CacheDraw/DRCIRCLE_MAT.h"
+#include "classes/ml/CacheDraw/DRAXIS.h"
+#include "classes/ml/CacheDraw/DRARROW.h"
+#include "classes/ml/CacheDraw/DRARROW_CUBE.h"
+#include "classes/ml/CacheDraw/DRSPHERE_REAL.h"
+#include "classes/ml/CacheDraw/DRCONE_FILL.h"
+#include "classes/ml/CacheDraw/DRCONE.h"
+#include "classes/ml/CacheDraw/DRCYLINDER.h"
+#include "classes/ml/CacheDraw/DRCAPSULE.h"
+#include "classes/ml/CacheDraw/DRSQUARE.h"
 #include "classes/ml/CacheDraw.h"
 #include "mm/Col4.h"
 #include "classes/ml/CacheDraw/DFONT32.h"
@@ -74,6 +97,467 @@
 #include "mtl/MemManager.h"
 
 namespace ml {
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EC7360). The debug draw the statics
+// work on; every user (ml/CacheDraw's code too) reaches it without the GOT, so it is file-static
+static DebDraw* s_debDraw;
+
+// commands go to the cache when a debug draw exists and the caller is not the render thread, or the cache is used
+// there too (1.0.0 has it out of line; 3.0.1 inlines every use)
+inline bool DebDraw::isNotRender() {
+    if (s_debDraw == nullptr) {
+        return false;
+    }
+    if (WorkCpu::getCurrentThreadId() != WorkCpu::getThreadId(WorkCpu::getRenderCPUID())) {
+        return true;
+    }
+    return s_debDraw->m_cacheOnRender;
+}
+
+// ---- ml::CacheDraw: queueing a command (one per DebDraw call) ----
+
+bool CacheDraw::clear() {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DCLEAR();
+    return calcCurrentBuf(sizeof(DCLEAR));
+}
+
+bool CacheDraw::setMatrix(const mm::Mat44& mtx) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DMAT(mtx);
+    return calcCurrentBuf(sizeof(DMAT));
+}
+
+bool CacheDraw::setOrtho() {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DORTHO();
+    return calcCurrentBuf(sizeof(DORTHO));
+}
+
+bool CacheDraw::setCol(const mm::Col4& col) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DCOL(col);
+    return calcCurrentBuf(sizeof(DCOL));
+}
+
+bool CacheDraw::setTex(grlib::CGLibTextureBuffer* tex) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DTEX(tex);
+    return calcCurrentBuf(sizeof(DTEX));
+}
+
+bool CacheDraw::setZWrite(bool on) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    m_zWrite = on;
+    new (getBuf(false)->m_cur) DZWRITE(on);
+    return calcCurrentBuf(sizeof(DZWRITE));
+}
+
+bool CacheDraw::renderRect(const mm::Rect<int>& rect) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DRRECT(rect);
+    return calcCurrentBuf(sizeof(DRRECT));
+}
+
+bool CacheDraw::renderRectFill(const mm::Rect<int>& rect) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DRRECT_FILL(rect);
+    return calcCurrentBuf(sizeof(DRRECT_FILL));
+}
+
+bool CacheDraw::renderCube(const mm::Vec3& min, const mm::Vec3& max) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DRCUBE(min, max);
+    return calcCurrentBuf(sizeof(DRCUBE));
+}
+
+bool CacheDraw::renderAxis(float length) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DRAXIS(length);
+    return calcCurrentBuf(sizeof(DRAXIS));
+}
+
+bool CacheDraw::renderArrow(const mm::Vec3& start, const mm::Vec3& end) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DRARROW(start, end);
+    return calcCurrentBuf(sizeof(DRARROW));
+}
+
+bool CacheDraw::renderCubeArrow(const mm::Vec3& start, const mm::Vec3& end) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DRARROW_CUBE(start, end);
+    return calcCurrentBuf(sizeof(DRARROW_CUBE));
+}
+
+bool CacheDraw::renderRealSphere(float radius, unsigned int div) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DRSPHERE_REAL(radius, div);
+    return calcCurrentBuf(sizeof(DRSPHERE_REAL));
+}
+
+bool CacheDraw::renderConeFill(float radius, float height, unsigned int div) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DRCONE_FILL(radius, height, div);
+    return calcCurrentBuf(sizeof(DRCONE_FILL));
+}
+
+bool CacheDraw::renderCone(float radius, float height, unsigned int div) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DRCONE(radius, height, div);
+    return calcCurrentBuf(sizeof(DRCONE));
+}
+
+bool CacheDraw::renderCylinder(float radius, float height, unsigned int div) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DRCYLINDER(radius, height, div);
+    return calcCurrentBuf(sizeof(DRCYLINDER));
+}
+
+bool CacheDraw::renderCapsule(float radius, float height, unsigned int div) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DRCAPSULE(radius, height, div);
+    return calcCurrentBuf(sizeof(DRCAPSULE));
+}
+
+bool CacheDraw::renderSquare(float width, float height) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DRSQUARE(width, height);
+    return calcCurrentBuf(sizeof(DRSQUARE));
+}
+
+bool CacheDraw::renderLine(const mm::Vec3& a, const mm::Vec3& b) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DRLINE(a, b);
+    return calcCurrentBuf(sizeof(DRLINE));
+}
+
+bool CacheDraw::renderLine(const mm::Pnt<int>& a, const mm::Pnt<int>& b) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DRLINE_PNT(a, b);
+    return calcCurrentBuf(sizeof(DRLINE_PNT));
+}
+
+bool CacheDraw::setLineWidth(unsigned int width) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DLINE_WIDTH(width);
+    return calcCurrentBuf(sizeof(DLINE_WIDTH));
+}
+
+bool CacheDraw::setAlphaBlend(bool blend) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DALPHA_BLEND(blend);
+    return calcCurrentBuf(sizeof(DALPHA_BLEND));
+}
+
+bool CacheDraw::begin(unsigned int prim, unsigned int param) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DBEGIN(prim, param);
+    return calcCurrentBuf(sizeof(DBEGIN));
+}
+
+bool CacheDraw::end() {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DEND();
+    return calcCurrentBuf(sizeof(DEND));
+}
+
+bool CacheDraw::add(const mm::Vec3& v0, const mm::Vec3& v1, const mm::Vec3& v2) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DADDV3_3(v0, v1, v2);
+    return calcCurrentBuf(sizeof(DADDV3_3));
+}
+
+bool CacheDraw::add(const mm::Vec3& v0, const mm::Vec3& v1) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DADDV3_2(v0, v1);
+    return calcCurrentBuf(sizeof(DADDV3_2));
+}
+
+bool CacheDraw::add(const mm::Vec3& v0) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DADDV3_1(v0);
+    return calcCurrentBuf(sizeof(DADDV3_1));
+}
+
+bool CacheDraw::fontColor(const mm::Col4& col) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DFONT_COL(col);
+    return calcCurrentBuf(sizeof(DFONT_COL));
+}
+
+bool CacheDraw::fontShadow(bool on) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DFONT_SHADOW(on);
+    return calcCurrentBuf(sizeof(DFONT_SHADOW));
+}
+
+bool CacheDraw::fontFlush(bool on) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DFONT_FLUSH(on);
+    return calcCurrentBuf(sizeof(DFONT_FLUSH));
+}
+
+void CacheDraw::DCLEAR::flush(DebDraw* draw) {
+    draw->clear();
+}
+
+void CacheDraw::DMAT::flush(DebDraw* draw) {
+    draw->setMatrix(m_mtx);
+}
+
+void CacheDraw::DPERS::flush(DebDraw* draw) {
+    draw->setPerspective(m_fovy, m_aspect, m_near, mat(), &vec(m_eye));
+}
+
+void CacheDraw::DORTHO::flush(DebDraw* draw) {
+    draw->setOrtho();
+}
+
+void CacheDraw::DTEX::flush(DebDraw* draw) {
+    draw->setTex(m_tex);
+}
+
+void DebDraw::setTex(grlib::CGLibTextureBuffer* tex) {
+    if (m_cache->setTex(tex)) {
+        return;
+    }
+    m_flags |= 2;
+    m_tex = tex;
+}
+
+void CacheDraw::DCOL::flush(DebDraw* draw) {
+    draw->setCol(m_col);
+}
+
+void DebDraw::setCol(const mm::Col4& col) {
+    if (m_cache->setCol(col)) {
+        return;
+    }
+    m_col = col;
+    if (m_col.r < 0.0f) {
+        m_col.r = 0.0f;
+    }
+    if (m_col.g < 0.0f) {
+        m_col.g = 0.0f;
+    }
+    if (m_col.b < 0.0f) {
+        m_col.b = 0.0f;
+    }
+    if (m_col.a < 0.0f) {
+        m_col.a = 0.0f;
+    }
+    if (m_col.r > 1.0f) {
+        m_col.r = 1.0f;
+    }
+    if (m_col.g > 1.0f) {
+        m_col.g = 1.0f;
+    }
+    if (m_col.b > 1.0f) {
+        m_col.b = 1.0f;
+    }
+    if (m_col.a > 1.0f) {
+        m_col.a = 1.0f;
+    }
+    m_flags &= ~4;
+}
+
+void CacheDraw::DDOUBLESIDE::flush(DebDraw* draw) {
+    draw->setDoubleSide(m_doubleSide);
+}
+
+void DebDraw::setDoubleSide(bool doubleSide) {
+    if (m_cache->setDoubleSide(doubleSide)) {
+        return;
+    }
+    if (DevGraph::get() == nullptr) {
+        return;
+    }
+    if (doubleSide) {
+        grlib::CGLibPolygon::setCullingOff();
+    } else {
+        grlib::CGLibPolygon::setCullingBack();
+    }
+}
+
+void CacheDraw::DZCOMP::flush(DebDraw* draw) {
+    draw->setZComp(m_on);
+}
+
+void DebDraw::setZComp(bool on) {
+    if (m_cache->setZComp(on)) {
+        return;
+    }
+    m_zComp = on;
+    if (DevGraph::get() == nullptr) {
+        return;
+    }
+    if (on) {
+        grlib::CGLibDepthCtl::setDepthControl(1, m_zWrite, GrlCompare(3));
+    } else {
+        grlib::CGLibDepthCtl::setDepthControl(0, 0, GrlCompare(7));
+    }
+}
+
+void CacheDraw::DZWRITE::flush(DebDraw* draw) {
+    draw->setZWrite(m_on);
+}
+
+void DebDraw::setZWrite(bool on) {
+    if (m_cache->setZWrite(on)) {
+        return;
+    }
+    m_zWrite = on;
+    if (DevGraph::get() == nullptr) {
+        return;
+    }
+    if (m_zComp) {
+        grlib::CGLibDepthCtl::setDepthControl(1, on, GrlCompare(3));
+    } else {
+        grlib::CGLibDepthCtl::setDepthControl(0, 0, GrlCompare(7));
+    }
+}
+
+void CacheDraw::DRRECT::flush(DebDraw* draw) {
+    draw->renderRect(m_rect);
+}
+
+void CacheDraw::DRRECT_FILL::flush(DebDraw* draw) {
+    draw->renderRectFill(m_rect);
+}
+
+void CacheDraw::DRCUBE::flush(DebDraw* draw) {
+    draw->renderCube(vec(m_min), vec(m_max));
+}
+
+void CacheDraw::DRCIRCLE_MAT::flush(DebDraw* draw) {
+    draw->renderCircle(mat(), m_radius, m_div);
+}
+
+void CacheDraw::DRAXIS::flush(DebDraw* draw) {
+    draw->renderAxis(m_length);
+}
+
+void CacheDraw::DRARROW::flush(DebDraw* draw) {
+    draw->renderArrow(vec(m_start), vec(m_end));
+}
+
+void CacheDraw::DRARROW_CUBE::flush(DebDraw* draw) {
+    draw->renderCubeArrow(vec(m_start), vec(m_end));
+}
+
+void CacheDraw::DRSPHERE_REAL::flush(DebDraw* draw) {
+    draw->renderRealSphere(m_radius, m_div);
+}
+
+void CacheDraw::DRCONE_FILL::flush(DebDraw* draw) {
+    draw->renderConeFill(m_radius, m_height, m_div);
+}
+
+void CacheDraw::DRCONE::flush(DebDraw* draw) {
+    draw->renderCone(m_radius, m_height, m_div);
+}
+
+void CacheDraw::DRCYLINDER::flush(DebDraw* draw) {
+    draw->renderCylinder(m_radius, m_height, m_div);
+}
+
+void CacheDraw::DRCAPSULE::flush(DebDraw* draw) {
+    draw->renderCapsule(m_radius, m_height, m_div);
+}
+
+void CacheDraw::DRSQUARE::flush(DebDraw* draw) {
+    draw->renderSquare(m_width, m_height);
+}
 
 // ---- debug draw commands (ml::CacheDraw::D*) and the DebDraw setters their flushes inline ----
 
@@ -155,22 +639,6 @@ void CacheDraw::DADDV3_1::flush(DebDraw* draw) {
 
 void CacheDraw::DFONT32::flush(DebDraw*) {
     WinView::getView(false)->font(m_pos.x, m_pos.y, m_text);
-}
-
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EC7360). The debug draw the statics
-// work on; every user (ml/CacheDraw's code too) reaches it without the GOT, so it is file-static
-static DebDraw* s_debDraw;
-
-// commands go to the cache when a debug draw exists and the caller is not the render thread, or the cache is used
-// there too (1.0.0 has it out of line; 3.0.1 inlines every use)
-inline bool DebDraw::isNotRender() {
-    if (s_debDraw == nullptr) {
-        return false;
-    }
-    if (WorkCpu::getCurrentThreadId() != WorkCpu::getThreadId(WorkCpu::getRenderCPUID())) {
-        return true;
-    }
-    return s_debDraw->m_cacheOnRender;
 }
 
 void FontLayer::font(int x, int y, const char* format, ...) {
@@ -459,7 +927,7 @@ static mm::Vec3 s_cylinderB[16];
 
 DebDraw::DebDraw()
     : m_flags(0), pad_01c(1.0f), pad_020(-1), pad_024(0), pad_028(0), pad_140(0), m_lineWidth(1), pad_148(nullptr),
-      pad_150(0), pad_154(true), pad_155(true), pad_170(-1), pad_178(nullptr), pad_1f8(-1), pad_200(0),
+      pad_150(0), m_zComp(true), m_zWrite(true), pad_170(-1), pad_178(nullptr), pad_1f8(-1), pad_200(0),
       pad_208(nullptr), m_cache(nullptr), m_cacheOnRender(false) {
     s_debDraw = this;
     m_cache = new (MlMem::getProductMem(), nullptr, 0, 4, false) CacheDraw(MlMem::getDebugMem(), 0x20000);
@@ -1537,7 +2005,7 @@ void DebDraw::swap() {
     }
     cache->pad_6054 = 1.0f;
     cache->pad_6058 = 1.0f;
-    cache->pad_6070 = true;
+    cache->m_zWrite = true;
 }
 
 void DevGraph::getPers(mm::Mat44& mtx, float fovy, float nearZ, float farZ) {

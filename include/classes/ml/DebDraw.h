@@ -66,6 +66,29 @@ public:
     static void setCurrentPrio(int prio);
     static void flushPrio(int prio, const mm::Mat44& view, const mm::Mat44& proj);
 
+    // the debug draw of a work id (the cache's DebDraw)
+    static DebDraw* get(unsigned int wid);
+
+    void setPerspective(const mm::Mat44& view, const mm::Mat44& proj);
+    void setMatrix(const mm::Mat44& mtx);
+    void setTex(grlib::CGLibTextureBuffer* tex);
+    void setCol(const mm::Col4& col);
+    void setDoubleSide(bool doubleSide);
+    void setZComp(bool on);
+    void setZWrite(bool on);
+    void renderRect(const mm::Rect<int>& rect);
+    void renderRectFill(const mm::Rect<int>& rect);
+    void renderCube(const mm::Vec3& min, const mm::Vec3& max);
+    void renderCircle(const mm::Mat44& mtx, float radius, int div);
+    void renderAxis(float length);
+    void renderArrow(const mm::Vec3& start, const mm::Vec3& end);
+    void renderCubeArrow(const mm::Vec3& start, const mm::Vec3& end);
+    void renderRealSphere(float radius, int div);
+    void renderConeFill(float radius, float height, unsigned int div);
+    void renderCone(float radius, float height, unsigned int div);
+    void renderCylinder(float radius, float height, unsigned int div);
+    void renderCapsule(float radius, float height, unsigned int div);
+    void renderSquare(float width, float height);
     void setLineWidth(unsigned int width);
     void setAlphaBlend(bool blend);
     void clrTex();
@@ -88,8 +111,8 @@ public:
     unsigned int m_lineWidth;             // 0x144 setLineWidth's (the name is not the original's)
     void* pad_148;
     int pad_150;
-    bool pad_154;                         // true from the constructor
-    bool pad_155;                         // true from the constructor
+    bool m_zComp;                         // 0x154 true from the constructor, setZComp's (the name is not the original's)
+    bool m_zWrite;                        // 0x155 true from the constructor, setZWrite's (the name is not the original's)
     mm::Vec3 pad_160;                     // zero from the constructor
     int pad_170;                          // -1 from the constructor
     void* pad_178;

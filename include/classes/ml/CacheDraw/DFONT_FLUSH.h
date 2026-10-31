@@ -9,6 +9,7 @@ namespace ml {
 // table 0x7100B77210
 class CacheDraw::DFONT_FLUSH : public CacheDraw::CMD {
 public:
+    DFONT_FLUSH(bool on) : CMD(0x3F, 0, sizeof(DFONT_FLUSH)), m_on(on) {}
     virtual void flush(ml::DebDraw*);  // slot 0
 
     unsigned char m_on;  // 0x0C read as a byte, tested != 0 (the name is not the original's)

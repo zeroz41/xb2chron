@@ -11,6 +11,7 @@ namespace ml {
 // table 0x7100B77138
 class CacheDraw::DADDV3_3 : public CacheDraw::CMD {
 public:
+    DADDV3_3(const mm::Vec3& v0, const mm::Vec3& v1, const mm::Vec3& v2) : CMD(0x36, 0, sizeof(DADDV3_3)), m_v0(na(v0)), m_v1(na(v1)), m_v2(na(v2)) {}
     virtual void flush(ml::DebDraw*);  // slot 0
 
     // the command keeps three floats unaligned (12-byte stride in its flush) and hands DebDraw::add a mm::Vec3 view of them

@@ -11,6 +11,7 @@ namespace ml {
 // table 0x7100B770A8
 class CacheDraw::DRLINE : public CacheDraw::CMD {
 public:
+    DRLINE(const mm::Vec3& start, const mm::Vec3& end) : CMD(0x2C, 2, sizeof(DRLINE)), m_start(na(start)), m_end(na(end)) {}
     virtual void flush(ml::DebDraw*);  // slot 0
 
     // the command keeps three floats unaligned (12-byte stride in its flush) and hands DebDraw::add a mm::Vec3 view of them
