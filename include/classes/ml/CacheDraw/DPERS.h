@@ -12,7 +12,18 @@ namespace ml {
 // table 0x7100B76EC8
 class CacheDraw::DPERS : public CacheDraw::CMD {
 public:
-    // command 0x3, kind 0, 0x68 bytes (CacheDraw's queueing function is not written yet)
+    DPERS(const mm::Mat44& mtx, float fovy, float aspect, float near, const mm::Vec3* eye)
+        : CMD(0x3, 0, sizeof(DPERS)) {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                m_mtx[i][j] = mtx.m[i][j];
+            }
+        }
+        m_fovy = fovy;
+        m_aspect = aspect;
+        m_near = near;
+        m_eye = na(eye == nullptr ? mm::Vec3::zero : *eye);
+    }
     virtual void flush(ml::DebDraw*);  // slot 0
     // the command keeps the matrix unaligned at 0x0C and hands DebDraw a mm::Mat44 view of it
     const mm::Mat44& mat() const { return reinterpret_cast<const mm::Mat44&>(m_mtx); }

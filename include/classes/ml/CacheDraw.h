@@ -151,8 +151,8 @@ public:
     mtl::ALLOC_HANDLE m_handle;           // 0x6048 the constructor's (the name is not the original's)
     int m_prim;                           // 0x604C reset_prim's (the name is not the original's)
     int m_wid;                            // 0x6050 DebDraw::get's argument, getCacheDrawWID's (the name is not the original's)
-    float pad_6054;
-    float pad_6058;
+    float m_fontScaleX;                   // 0x6054 fontScale stores its x after queueing (the name is not the original's)
+    float m_fontScaleY;                   // 0x6058 fontScale stores its y after queueing (the name is not the original's)
     unsigned char pad_605c[0x4];
     CriticalSectionNC* m_section;         // 0x6060 (the name is not the original's)
     bool m_forceRenderQueue;              // 0x6068 setForceRenderQueue's (the name is not the original's)

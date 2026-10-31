@@ -84,6 +84,8 @@ void FlushDataCache(const void* address, unsigned long size);
 
 void InitializeEvent(EventType* event, bool initiallySignaled, EventClearMode clearMode);
 void FinalizeEvent(EventType* event);
+void SignalEvent(EventType* event);
+void ClearEvent(EventType* event);
 void WaitEvent(EventType* event);
 bool TimedWaitEvent(EventType* event, TimeSpan timeout);
 

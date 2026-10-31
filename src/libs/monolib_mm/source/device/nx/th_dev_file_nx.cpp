@@ -95,6 +95,96 @@
 #include "ml/WorkUtil.h"
 #include "classes/grlib/CGLibManager.h"
 #include "mtl/MemManager.h"
+#include "classes/mm/threading/EventWait.h"
+#include "mm/threading/SpinLock.h"
+#include "classes/ml/ControllerApplet.h"
+#include "nn/ec.h"
+
+namespace mm { namespace threading {
+
+// ---- mm::threading::EventWait, SpinLock (mm_thread_nx's, built into this file) ----
+
+EventWait::EventWait(bool manualClear, bool signaled) {
+    CS lock(m_section);
+    nn::os::InitializeEvent(&m_event, signaled,
+                            manualClear ? nn::os::EventClearMode_ManualClear : nn::os::EventClearMode_AutoClear);
+    m_initialized = true;
+}
+
+EventWait::~EventWait() {
+    finalize();
+}
+
+void EventWait::finalize() {
+    if (m_initialized) {
+        nn::os::FinalizeEvent(&m_event);
+        m_initialized = false;
+    }
+}
+
+void EventWait::setSignal(bool signal) {
+    if (signal) {
+        nn::os::SignalEvent(&m_event);
+    } else {
+        CS lock(m_section);
+        nn::os::ClearEvent(&m_event);
+    }
+}
+
+bool EventWait::waitSignal(unsigned int milliseconds) {
+    if (milliseconds != 0) {
+        nn::TimeSpan timeout = nn::TimeSpan::FromMilliSeconds(milliseconds);
+        return nn::os::TimedWaitEvent(&m_event, timeout);
+    }
+    nn::os::WaitEvent(&m_event);
+    return true;
+}
+
+bool EventWait::isSignal() const {
+    return nn::os::TimedWaitEvent(const_cast<nn::os::EventType*>(&m_event), nn::TimeSpan::FromMilliSeconds(0));
+}
+
+SpinLock::SpinLock() : m_lock(0) {}
+
+}}  // namespace mm::threading
+
+namespace ml {
+
+bool ControllerApplet::showApplet() {
+    nn::hid::ControllerSupportResultInfo info;
+    nn::hid::ControllerSupportArg arg;
+    arg.SetDefault();
+    arg.enableSingleMode = true;
+    nn::Result result = nn::hid::ShowControllerSupport(&info, arg);
+    if (result.IsSuccess()) {
+        DevPadNx::setUserSelectControllerID(info.selectedId);
+    }
+    return result.IsSuccess();
+}
+
+}  // namespace ml
+
+bool fn_7100698EE0(int flag) {
+    nn::ApplicationId id;
+    if (flag != 0) {
+        id.value = 0x0100E95004038000ul;
+    } else {
+        id.value = 0x0100F3400332C000ul;
+    }
+    nn::ec::ShowShopAddOnContentList(id);
+    return true;
+}
+
+bool fn_7100698F20(int flag) {
+    nn::ApplicationId id;
+    if (flag != 0) {
+        id.value = 0x0100E95004038000ul;
+    } else {
+        id.value = 0x0100F3400332C000ul;
+    }
+    nn::ec::ShowShopApplicationInformation(id);
+    return true;
+}
 
 namespace ml {
 
@@ -134,6 +224,15 @@ bool CacheDraw::setMatrix(const mm::Mat44& mtx) {
     return calcCurrentBuf(sizeof(DMAT));
 }
 
+bool CacheDraw::setPers(const mm::Mat44& mtx, float fovy, float aspect, float near, const mm::Vec3* eye) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DPERS(mtx, fovy, aspect, near, eye);
+    return calcCurrentBuf(sizeof(DPERS));
+}
+
 bool CacheDraw::setOrtho() {
     CSNC lock(*m_section);
     if (!DebDraw::isNotRender()) {
@@ -159,6 +258,24 @@ bool CacheDraw::setTex(grlib::CGLibTextureBuffer* tex) {
     }
     new (getBuf(false)->m_cur) DTEX(tex);
     return calcCurrentBuf(sizeof(DTEX));
+}
+
+bool CacheDraw::setDoubleSide(bool doubleSide) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DDOUBLESIDE(doubleSide);
+    return calcCurrentBuf(sizeof(DDOUBLESIDE));
+}
+
+bool CacheDraw::setZComp(bool on) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DZCOMP(on);
+    return calcCurrentBuf(sizeof(DZCOMP));
 }
 
 bool CacheDraw::setZWrite(bool on) {
@@ -196,6 +313,15 @@ bool CacheDraw::renderCube(const mm::Vec3& min, const mm::Vec3& max) {
     }
     new (getBuf(false)->m_cur) DRCUBE(min, max);
     return calcCurrentBuf(sizeof(DRCUBE));
+}
+
+bool CacheDraw::renderCircle(const mm::Mat44& mtx, float radius, unsigned int div) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DRCIRCLE_MAT(mtx, radius, div);
+    return calcCurrentBuf(sizeof(DRCIRCLE_MAT));
 }
 
 bool CacheDraw::renderAxis(float length) {
@@ -387,6 +513,17 @@ bool CacheDraw::fontFlush(bool on) {
     return calcCurrentBuf(sizeof(DFONT_FLUSH));
 }
 
+bool CacheDraw::fontScale(float x, float y) {
+    CSNC lock(*m_section);
+    if (!DebDraw::isNotRender()) {
+        return false;
+    }
+    new (getBuf(false)->m_cur) DFONT_SCALE(x, y);
+    m_fontScaleX = x;
+    m_fontScaleY = y;
+    return calcCurrentBuf(sizeof(DFONT_SCALE));
+}
+
 void CacheDraw::DCLEAR::flush(DebDraw* draw) {
     draw->clear();
 }
@@ -511,8 +648,35 @@ void CacheDraw::DRRECT::flush(DebDraw* draw) {
     draw->renderRect(m_rect);
 }
 
+void DebDraw::renderRect(const mm::Rect<int>& rect) {
+    if (m_cache->renderRect(rect)) {
+        return;
+    }
+    m_flags &= ~0xAu;
+    begin(3, 5);
+    add(rect.x, rect.y, 0);
+    add(rect.x + rect.w, rect.y, 0);
+    add(rect.x + rect.w, rect.y + rect.h, 0);
+    add(rect.x - 1, rect.y + rect.h, 0);
+    add(rect.x, rect.y, 0);
+    end();
+}
+
 void CacheDraw::DRRECT_FILL::flush(DebDraw* draw) {
     draw->renderRectFill(m_rect);
+}
+
+void DebDraw::renderRectFill(const mm::Rect<int>& rect) {
+    if (m_cache->renderRectFill(rect)) {
+        return;
+    }
+    m_flags &= ~0xAu;
+    begin(6, 4);
+    add(rect.x, rect.y, 0);
+    add(rect.x + rect.w, rect.y, 0);
+    add(rect.x, rect.y + rect.h, 0);
+    add(rect.x + rect.w, rect.y + rect.h, 0);
+    end();
 }
 
 void CacheDraw::DRCUBE::flush(DebDraw* draw) {
@@ -2003,8 +2167,8 @@ void DebDraw::swap() {
             buf->m_group[buf->m_groupNum].m_prim = -1;
         }
     }
-    cache->pad_6054 = 1.0f;
-    cache->pad_6058 = 1.0f;
+    cache->m_fontScaleX = 1.0f;
+    cache->m_fontScaleY = 1.0f;
     cache->m_zWrite = true;
 }
 

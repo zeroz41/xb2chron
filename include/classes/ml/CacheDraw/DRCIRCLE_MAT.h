@@ -10,7 +10,16 @@ namespace ml {
 // table 0x7100B76FB8
 class CacheDraw::DRCIRCLE_MAT : public CacheDraw::CMD {
 public:
-    // command 0x15, kind 2, 0x58 bytes (CacheDraw's queueing function is not written yet)
+    DRCIRCLE_MAT(const mm::Mat44& mtx, float radius, unsigned int div)
+        : CMD(0x15, 2, sizeof(DRCIRCLE_MAT)) {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                m_mtx[i][j] = mtx.m[i][j];
+            }
+        }
+        m_radius = radius;
+        m_div = div;
+    }
     virtual void flush(ml::DebDraw*);  // slot 0
     // the command keeps the matrix unaligned at 0x0C and hands DebDraw a mm::Mat44 view of it
     const mm::Mat44& mat() const { return reinterpret_cast<const mm::Mat44&>(m_mtx); }
