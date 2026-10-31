@@ -88,6 +88,13 @@ public:
     // Caller: the fld plugin's setNpcMeet when the id's flag changed.
     static void fn_710035A764(unsigned int id);
     static int fn_710035A364();  // m_titleValue, 0 without a manager (one caller, fn_710066AA7C)
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
+    // GfMenuManager's functions in gf_menu_manager's unit and reads the manager singleton. What it does: false
+    // without a manager; else opens the given menu id (TUnk_B64C98::fn_7100487A1C / fn_71004879F0 when
+    // GfMenuObjUtil::fn_710048FD30(3) holds, else TUnk_B60848::fn_71003B2ABC / fn_71003B2A90, creating UI layers
+    // 0x12E or 0x67/0x66 when m_titleCount is 0), stores the id in m_titleCount and returns true. Caller:
+    // tl::TitleStateWarning::fn_71001565A0 (id 10).
+    static bool fn_710035A388(unsigned int menuId);
     static bool fn_710035A524();  // m_titleCount != 0 (tl::TitleStateWarning::fn_71001565A8, fn_71003AF924)
     static bool fn_710035A634(int index);  // m_bladeBookFlag's bit for index 0, else false (GfMenuBladeList::setupFromBook)
     static bool fn_710035A6BC();  // returns true (GfMenuObjMainMenu2's setupMainMenu and listener)

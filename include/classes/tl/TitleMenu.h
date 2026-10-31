@@ -6,7 +6,7 @@ namespace gf { class GfMenuCallContext; }
 namespace tl {
 // The title screen's menus (title, event theater, option) and the call context they report through. TitleMain
 // holds one at +0x198 (TitleStateMainScreen::dispTitleMenu passes title + 0x198 to setupTitle). Its size is not
-// known: only +0x8 is read by its functions.
+// known: its functions read only +0x8; the title states use +0x0.
 class TitleMenu {
 public:
     void destroyMenuCallContext();
@@ -36,7 +36,10 @@ public:
     void exitEventTheater();
     void fadeoutEventTheater();
 
-    unsigned char pad_0[0x8];
+    // TitleStateMainScreen::update reads it (tests for 3) and clears it; TitleStateLoad::update, TitleStateToTitle::update
+    // and TitleStateWarning's step clear it (the name is not the original's)
+    int m_request;
+    unsigned char pad_4[0x4];
     gf::GfMenuCallContext* m_context;  // made on first use, released by destroyMenuCallContext
 };
 }  // namespace tl

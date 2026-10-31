@@ -111,6 +111,9 @@ public:
     // a BGM by its ID (TUnk_28D5BC::fn_710028D644 passes its ID, fade time, false, 0 and category 3; the names of the
     // parameters are not the original's)
     SoundHandle playBgm(unsigned int id, float time, bool loop, int param, fw::SoundCategory category);
+    // a BGM by its stream path (TitleMain::update passes "stream/bgm/m02.wav" or "m204.wav", 1.0, false, -1 and
+    // category 3; the names of the parameters are not the original's)
+    SoundHandle playBgm(const char* path, float time, bool loop, int param, fw::SoundCategory category);
     void stopBgm(SoundHandle handle, float time);  // TitleMain::stopTitleBGM passes its BGM and fade time
     SoundHandle playVoice(const char* path, float volume, bool loop, fw::SoundCategory category);
     void stopVoice(SoundHandle handle, float time);

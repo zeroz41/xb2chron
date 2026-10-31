@@ -40,6 +40,7 @@
 #include "classes/gf/GfInfo.h"
 #include "classes/gf/GfFieldLod.h"
 #include "classes/gf/GfGameManager.h"
+#include "gf/GfDataBlade.h"
 
 namespace tl {
 
@@ -80,6 +81,41 @@ void TitleMain::fnUpdate(TitleMain* self) {
 }
 
 TitleMain::~TitleMain() {}
+
+void TitleMain::update(const fw::UpdateInfo& info) {
+    TitleMain* title = sys();
+    if (title == nullptr) {
+        return;
+    }
+    if (title->m_isTitleBgm) {
+        gf::GfSound* sound = gf::GfSound::sys();
+        if (sound != nullptr && !sound->isPlaying(title->m_titleBgm)) {
+            if (gf::GfManager::fn_710032A1DC()) {
+                title->m_titleBgm = sound->playBgm("stream/bgm/m204.wav", 1.0f, false, -1, static_cast<fw::SoundCategory>(3));
+            } else {
+                title->m_titleBgm = sound->playBgm("stream/bgm/m02.wav", 1.0f, false, -1, static_cast<fw::SoundCategory>(3));
+            }
+        }
+    }
+    title->m_updater->update();
+}
+
+void TitleMain::returnTitle(gf::SAVESLOT slot) {
+    TitleMain* title = sys();
+    if (title == nullptr) {
+        return;
+    }
+    title->m_returnSlot = slot;
+    switch (title->m_fsm.m_pState->m_stateID) {
+    case 2:
+    case 6:
+    case 7:
+        title->m_reqReturnTitle = true;
+        break;
+    }
+    title->fn_710014F5FC(0.0f, gf::GfManager::isExecModeThater() ? 0.0f : 2.0f);
+    title->fn_710014F70C(0.0f);
+}
 
 void TitleMain::fn_710014F5FC(float volume, float time) {
     gf::GfSound* sound = gf::GfSound::sys();
@@ -190,6 +226,70 @@ void TitleMain::playTitleEvent(unsigned int eventID) {
 
 unsigned int TitleMain::getPlayTitleEvent() {
     return m_playTitleEvent;
+}
+
+void TitleMain::fn_710014FBAC() {
+    m_newGameAdv = false;
+    if (m_saveBuffer->m_system.m_version != 0x3A15B) {
+        return;
+    }
+    if (gf::GfDataBlade::fn_710023217C(m_saveBuffer->m_game)) {
+        if (m_saveBuffer->m_game.m_gameClearCount == 0) {
+            m_saveBuffer->m_game.m_gameClearCount = 1;
+        }
+        if (gf::GfDataBlade::fn_7100231EB8(m_saveBuffer->m_game) >= 10032) {
+            m_newGameAdv = true;
+        }
+    }
+    if (m_saveBuffer->m_game.m_gameClearCount != 0) {
+        m_isClear = true;
+    }
+    if (gf::GfDataBlade::fn_7100232244(m_saveBuffer->m_game)) {
+        m_newGameAdv = false;
+    }
+}
+
+bool TitleMain::fn_710014FC5C() {
+    if (m_saveBuffer->m_system.m_version == 0x3A15B && gf::GfDataBlade::fn_710023217C(m_saveBuffer->m_game)) {
+        return m_newGameAdv;
+    }
+    return false;
+}
+
+unsigned short TitleMain::fn_710014FCB0(unsigned int event) {
+    if (m_saveBuffer != nullptr) {
+        for (gf::SDataGameSavedEvent& row : m_saveBuffer->m_game.m_savedEvents) {
+            if (row.m_event == event) {
+                return row.m_weather;
+            }
+        }
+    }
+    return 0;
+}
+
+unsigned int TitleMain::fn_710014FD10(unsigned int event) {
+    if (m_saveBuffer != nullptr) {
+        for (gf::SDataGameSavedEvent& row : m_saveBuffer->m_game.m_savedEvents) {
+            if (row.m_event == event) {
+                return row.m_hour;
+            }
+        }
+    }
+    return 12;
+}
+
+bool TitleMain::fn_710014FD74() {
+    gf::SDataSave* save = m_saveBuffer;
+    if (save->m_system.m_version != 0x3A15B) {
+        return true;
+    }
+    return !gf::GfDataBlade::fn_71002325AC(save->m_game);
+}
+
+void TitleMain::fn_710014FDB8(bool flag) {
+    gf::GfManager::fn_710032A1FC(flag);
+    m_isClear = false;
+    m_newGameAdv = false;
 }
 
 void TitleStateMainScreen::gevPlayEvent(gf::GEV gev, unsigned int arg) {

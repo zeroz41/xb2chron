@@ -24,7 +24,17 @@ struct TaskAchieve {
 // a saved event row of the game data, 0x64 bytes (GfDataEvent::isSavedEvent; the names are not the original's)
 struct SDataGameSavedEvent {
     unsigned short m_event;
-    unsigned char pad_2[0x62];
+    unsigned char pad_2[0x4A];
+    unsigned int : 12;
+    // 0x4C bits 12-16: the hour the event plays at (title_main's fn_710014FD10 returns it, 12 for an event not saved;
+    // fn_7100400410 uses it when the event's bdat row has no fixed_time; the name is not the original's)
+    unsigned int m_hour : 5;
+    unsigned int : 15;
+    unsigned char pad_50[0x2];
+    // 0x52: the weather (title_main's fn_710014FCB0 returns it, 0 for an event not saved; fn_7100400410 uses it unless
+    // the row has a fixed_weather; the name is not the original's)
+    unsigned short m_weather;
+    unsigned char pad_54[0x10];
 };
 
 class SDataGame {

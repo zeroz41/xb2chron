@@ -429,6 +429,11 @@ public:
     // GfDataBlade's unit among GfDataBlade's functions. What it does: true when local flag 0xD77E (type 1) of game's GameFlag is set, else whether flag 0xD87E is.
     static bool fn_710023217C(const SDataGame& game);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions and it takes the game as they do. What it does: true when
+    // gf::fn_71002229C0(n) is below the game's word at 0x117360 + 4 * (n - 1), minus 1, for any n of 1 to 4
+    // (title_main's fn_710014FD74 calls it on the save buffer's game).
+    static bool fn_71002325AC(const SDataGame& game);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit among GfDataBlade's functions. What it does: fn_710023217C's test on GfDataManager::getDataGame()'s flags.
     static bool fn_7100232120();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
