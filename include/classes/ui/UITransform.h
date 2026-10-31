@@ -2,6 +2,7 @@
 #define CLASSES_UI_UITRANSFORM_H
 
 #include "mm/Pnt.h"
+#include "mm/Vec2.h"
 
 namespace ui {
 // table 0x7100B75818; an object's position and scale (UIObjectBase keeps one at +0x20)
@@ -16,9 +17,9 @@ public:
     void syncParent();  // nothing (1.0.0's setParent did nothing either)
     mm::Pnt<short> m_pos;        // setPos's
     unsigned char pad_0C[0x4];
-    float m_scaleX;              // setScale's
-    float m_scaleY;
-    unsigned char pad_18[0x8];
+    // setScale's; a Vec2 (16 bytes, 16-aligned): UICtrlMethodScale/Motion::setup copy it as one 8-byte value, and
+    // UIObjectBase's display info follows the transform at the next 16-byte boundary
+    mm::Vec2 m_scale;
     float m_rotation;  // UIObjectAcc::getRot/setRot
     bool m_changed;              // setPos and setScale set it when they change something
 };

@@ -10,11 +10,8 @@ public:
     Vec2() {}
     Vec2(float x, float y) : x(x), y(y) {}
     Vec2(const Vec2& v) : x(v.x), y(v.y) {}
-    Vec2& operator=(const Vec2& v) {
-        x = v.x;
-        y = v.y;
-        return *this;
-    }
+    // trivial: an assignment copies the 8 data bytes at once (UICtrlMethodScale::setup, UICtrlMethodMotion::setup)
+    Vec2& operator=(const Vec2& v) = default;
     float x;
     float y;
 } __attribute__((aligned(16)));

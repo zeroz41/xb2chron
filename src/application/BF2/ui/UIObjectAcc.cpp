@@ -70,8 +70,8 @@ void UIObjectAcc::getSize(bool scaled, short& width, short& height) const {
     height = 0;
     if (m_object != nullptr) {
         if (scaled) {
-            width = m_object->m_displayInfo.m_pixelWidth * m_object->m_transform.m_scaleX;
-            height = m_object->m_displayInfo.m_pixelHeight * m_object->m_transform.m_scaleY;
+            width = m_object->m_displayInfo.m_pixelWidth * m_object->m_transform.m_scale.x;
+            height = m_object->m_displayInfo.m_pixelHeight * m_object->m_transform.m_scale.y;
         } else {
             width = m_object->m_displayInfo.m_pixelWidth;
             height = m_object->m_displayInfo.m_pixelHeight;

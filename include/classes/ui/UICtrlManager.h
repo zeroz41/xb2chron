@@ -48,10 +48,7 @@ public:
         unsigned int m_flags = 0;
         unsigned int m_eventHandle;  // the object told when the control ends (changeEventHandleObject's)
         unsigned int m_ctrlParam;    // startCtrl's last argument
-        UITransform m_defTransform;      // the object's as reserveCtrlSlot found it
-        // 8 bytes nothing here touches; UIObjectBase has the same 8 bytes after its transform (its pad_48), so
-        // UITransform may be 0x30 bytes
-        unsigned char pad_218[0x8];
+        UITransform m_defTransform;      // the object's as reserveCtrlSlot found it (0x30 bytes, 16-aligned)
         UIDisplayInfo m_defDisplayInfo;  // the object's as reserveCtrlSlot found it
     };
 

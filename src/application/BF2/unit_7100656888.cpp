@@ -345,7 +345,7 @@ static int fn_710065749C(VMThread* th, unsigned long handle) {
         }
     }
     ui::UIObject* object = ui::UIUtil::getObject(handle);
-    ui::UICtrlManager::get()->addScaleMethod(slot, x * object->m_transform.m_scaleX, y * object->m_transform.m_scaleY,
+    ui::UICtrlManager::get()->addScaleMethod(slot, x * object->m_transform.m_scale.x, y * object->m_transform.m_scale.y,
                                              ui::CURVE_TYPE(1));
     return 0;
 }

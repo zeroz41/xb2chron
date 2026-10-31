@@ -20,7 +20,7 @@ public:
     virtual void setTerm();  // slot 4
     void setSuspend(bool suspend);
     UITransform m_transform;  // the constructor builds it; UIObject::importTransform fills it from the layer
-    unsigned char pad_48[0x8];
+                              // (0x30 bytes: 16-aligned for its scale)
     UIDisplayInfo m_displayInfo;  // what UIObject::importDisplayInfo fills from the object's layer
     unsigned int m_flags;         // bit 3: terminated (UIObjectAcc::isTerm reads it)
     unsigned short m_duplicateIndex;  // UIObjectAcc::getDuplicateIndex

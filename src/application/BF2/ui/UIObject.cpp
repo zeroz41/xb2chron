@@ -112,8 +112,8 @@ void UIObject::registAdditionalParam(UIObjectParam* param) {
 void UIObject::getDisplayOffset(unsigned short mode, mm::Pnt<short>& offset) const {
     offset.x = 0;
     offset.y = 0;
-    unsigned short width = m_displayInfo.m_pixelWidth * m_transform.m_scaleX;
-    unsigned short height = m_displayInfo.m_pixelHeight * m_transform.m_scaleY;
+    unsigned short width = m_displayInfo.m_pixelWidth * m_transform.m_scale.x;
+    unsigned short height = m_displayInfo.m_pixelHeight * m_transform.m_scale.y;
     if (m_displayInfo.m_center == 0) {
         if (mode == 1) {
             offset.x = width >> 1;

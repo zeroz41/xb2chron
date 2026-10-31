@@ -120,8 +120,8 @@ unsigned int UIStr::getMsgID() const {
 UITransform::UITransform() {
     m_pos.x = 0;
     m_pos.y = 0;
-    m_scaleX = 1.0f;
-    m_scaleY = 1.0f;
+    m_scale.x = 1.0f;
+    m_scale.y = 1.0f;
     m_rotation = 0.0f;
     m_changed = false;
 }
@@ -141,11 +141,11 @@ void UITransform::setPos(short x, short y) {
 }
 
 void UITransform::setScale(float x, float y) {
-    if (m_scaleX != x || m_scaleY != y) {
+    if (m_scale.x != x || m_scale.y != y) {
         m_changed = true;
     }
-    m_scaleX = x;
-    m_scaleY = y;
+    m_scale.x = x;
+    m_scale.y = y;
 }
 
 UIUioLibrary::UIUioLibrary() {}

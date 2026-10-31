@@ -198,8 +198,8 @@ void UILayoutObject::updateSize() {
     m_displayInfo.setPixelHeight(mm::abs(rangeY.x - rangeY.y));
     float w = m_displayInfo.m_pixelWidth;
     float h = m_displayInfo.m_pixelHeight;
-    float sw = w * m_transform.m_scaleX;
-    float sh = h * m_transform.m_scaleY;
+    float sw = w * m_transform.m_scale.x;
+    float sh = h * m_transform.m_scale.y;
     m_offset = mm::Pnt<short>((short)((w - sw) * 0.5f) + rangeX.x, (short)((h - sh) * 0.5f) + rangeY.x);
 }
 
@@ -237,8 +237,8 @@ void UILayoutObject::apply() {
 void UILayoutObject::getDisplayOffset(unsigned short mode, mm::Pnt<short>& offs) const {
     offs = m_offset;
     if (mode == 1) {
-        offs.x += (short)(m_displayInfo.m_pixelWidth * m_transform.m_scaleX * 0.5f);
-        offs.y += (short)(m_displayInfo.m_pixelHeight * m_transform.m_scaleY * 0.5f);
+        offs.x += (short)(m_displayInfo.m_pixelWidth * m_transform.m_scale.x * 0.5f);
+        offs.y += (short)(m_displayInfo.m_pixelHeight * m_transform.m_scale.y * 0.5f);
     }
 }
 
