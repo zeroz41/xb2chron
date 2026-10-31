@@ -34,12 +34,17 @@ public:
     Placement applied_;
     // set while the listener is registered with SoundCore::instance_
     bool registered_;
-    // set by SetPosition and SetOrientation; UpdateGameFrame recomputes the velocity
-    bool moved_;
-    // set by SetPosition and SetOrientation; UpdateGameFrame rebuilds the matrix
-    bool changed_;
-    // set when the velocity changed; UpdateGameFrame rebuilds the matrix
-    bool velocityChanged_;
+    // what UpdateGameFrame has to redo. The grouping and the names are not the original's: the original reads
+    // changed and velocityChanged with separate byte loads (alignment 1), as members of a struct at an odd offset.
+    struct Dirty {
+        // set by SetPosition and SetOrientation; UpdateGameFrame recomputes the velocity
+        bool moved;
+        // set by SetPosition and SetOrientation; UpdateGameFrame rebuilds the matrix
+        bool changed;
+        // set when the velocity changed; UpdateGameFrame rebuilds the matrix
+        bool velocityChanged;
+    };
+    Dirty dirty_;
     // set once UpdateGameFrame built the matrix
     bool updated_;
     bool enableDoppler_;
