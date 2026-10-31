@@ -3,7 +3,11 @@
 #include "btl/Misc.h"
 #include "btl/Utility.h"
 #include "classes/gf/GfDataBdat.h"
+#include "classes/btl/BattleCharacter.h"
 #include "classes/btl/BattleGlobal.h"
+#include "classes/btl/BtlSystemBalanceAccess.h"
+#include "classes/btl/CharacterManager.h"
+#include "classes/btl/CharacterParameter.h"
 #include "plugin/Bdat.h"
 #include "mm/Math.h"
 
@@ -87,6 +91,69 @@ const GROUP_BLADE_DATA* GROUP_DATA::GetBladeDataConst(int index) const {
     return &m_blades[index];
 }
 
+GROUP_BLADE_DATA* GROUP_DATA::fn_71000A03D4(unsigned int blade) {
+    for (int i = 0; i < 5; i++) {
+        GROUP_BLADE_DATA& data = m_blades[i];
+        if (data.m_isValid && data.m_blade == blade) {
+            return &data;
+        }
+    }
+    return m_blades;
+}
+
+void GROUP_DATA::SetNeedPermit(bool need) {
+    if (need) {
+        if (!m_needPermit) {
+            m_requestPermit = 0;
+        }
+    } else {
+        m_requestPermit = 0;
+    }
+    m_needPermit = need;
+}
+
+void GROUP_DATA::ProgressCoolTime(float time) {
+    for (unsigned int i = 0; i < 5; i++) {
+        if (i != m_buddyBladeIndex && m_blades[i].m_isValid) {
+            m_blades[i].ProgressCoolTime(time);
+        }
+    }
+    BattleGlobal* global = mm::mtl::PtrSingleton<BattleGlobal>::sys();
+    if (global->pad_bit54) {
+        float max = m_coolTimeMax;
+        if (m_coolTime < max) {
+            m_coolTime += time;
+            if (m_coolTime >= m_coolTimeMax) {
+                m_coolTime = m_coolTimeMax;
+                if (!pad_112) {
+                    global->Tutorial(BTL_TUTORIAL_COND(25), 0, nullptr);
+                }
+            }
+        }
+    }
+}
+
+void GROUP_DATA::fn_71000A107C(float value) {
+    float amount = 0.0f;
+    if (value > 0.0f) {
+        BattleCharacter* character = mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(m_handle);
+        if (character != nullptr && character->IsBattle()) {
+            CharacterParameter* param = character->GetCharacterParameterConst(true);
+            if (param != nullptr) {
+                int hp = param->GetHP();
+                int maxHp = param->GetMaxHP();
+                amount = mm::clamp(value, 0.0f, static_cast<float>(maxHp - hp));
+            }
+        }
+    }
+    pad_108 = amount;
+    if (amount <= 0.0f) {
+        pad_10C = -1.0f;
+    } else if (pad_10C < 0.0f) {
+        pad_10C = mm::mtl::PtrSingleton<BtlSystemBalanceAccess>::sys()->pad_130;
+    }
+}
+
 void GROUP_DATA::FinishCoolTime() {
     for (int i = 0; i < 5; i++) {
         if (m_blades[i].m_isValid) {
@@ -94,6 +161,27 @@ void GROUP_DATA::FinishCoolTime() {
         }
     }
     m_coolTime = m_coolTimeMax;
+}
+
+float GROUP_DATA::fn_71000A11D4() const {
+    float max = m_coolTimeMax;
+    float ratio = m_coolTime / max;
+    if (ratio < 0.0f) {
+        return 0.0f;
+    }
+    if (ratio > 1.0f) {
+        ratio = 1.0f;
+    }
+    return ratio;
+}
+
+bool GROUP_DATA::fn_71000A11F8() const {
+    float max = m_coolTimeMax;
+    return m_coolTime >= max;
+}
+
+void GROUP_DATA::fn_71000A120C(float value) {
+    fn_71000A107C(pad_108 + value);
 }
 
 void GROUP_DATA::SynchroHomnuraData(int from, int to) {

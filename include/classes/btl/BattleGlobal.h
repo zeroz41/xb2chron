@@ -15,6 +15,9 @@ namespace mm { class Vec3; }
 namespace btl { class ShakeCameraManager; struct ARTS_DATA; }
 
 namespace btl {
+// The tutorial condition BattleGlobal::Tutorial takes (the type's name is the symbol's; its values are not named).
+enum BTL_TUTORIAL_COND {};
+
 // table 0x7100B3A3E0
 class BattleGlobal : public ::mm::mtl::PtrSingleton< ::btl::BattleGlobal> {
 public:
@@ -29,6 +32,7 @@ public:
     void PreUpdateProc(const fw::UpdateInfo& info);
     void UpdateProc(const fw::UpdateInfo& info);
     void PostUpdateProc(const fw::UpdateInfo& info);
+    void Tutorial(BTL_TUTORIAL_COND cond, int, void*);
     // reads the anti-blade area's revision row (Bdat 0x35) into m_mapRev when the area changes
     void UpdateMapRev();
     // whether a battle can run: not while GfGameManager stops battles
@@ -451,7 +455,8 @@ public:
     bool pad_bit48 : 1;
     bool pad_bit49 : 1;  // fn_710000A6CC returns it; fn_71000068F8 asks for it with pad_bit50
     bool pad_bit50 : 1;
-    unsigned char : 4;
+    unsigned char : 3;
+    bool pad_bit54 : 1;  // GROUP_DATA::ProgressCoolTime advances the group's own cool time while it is set
     bool pad_bit55 : 1;  // Utility::fn_71000151EC returns it
 };
 }  // namespace btl

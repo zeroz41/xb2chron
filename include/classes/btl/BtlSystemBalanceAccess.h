@@ -79,7 +79,9 @@ public:
     unsigned char pad_120;
     // percentages fn_710001C450 picks by a rate in tenths; meaning unknown
     unsigned char pad_121[0x9];
-    unsigned char pad_12A[0x16];  // Create allocates 0x140 bytes
+    unsigned char pad_12A[0x6];
+    float pad_130;  // GROUP_DATA::fn_71000A107C starts the group's pad_10C at it; meaning unknown
+    unsigned char pad_134[0xC];  // Create allocates 0x140 bytes
 };
 }  // namespace btl
 

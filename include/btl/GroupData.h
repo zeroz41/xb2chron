@@ -83,6 +83,14 @@ public:
     void Initialize(int blade, int driver, int groupIndex);
     void InitializeCoolTime(float ratio);
     int GetTrustRank() const;
+    // 1.0.0's out-of-line ProgressCoolTime(float) (inline in 3.0.1: GROUP_DATA::ProgressCoolTime carries its code)
+    void ProgressCoolTime(float time) {
+        if (m_coolTime < m_coolTimeMax) {
+            float max = m_coolTimeMax;
+            float next = m_coolTime + time;
+            m_coolTime = next < max ? next : max;
+        }
+    }
     float GetCoolTimeRatio() const;
     bool IsCoolTimeEnd() const;
     // 1.0.0's out-of-line SynchroHomnuraData(const GROUP_BLADE_DATA&) (no callers there): the gauge and the cool
@@ -114,6 +122,14 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member as fn_71000A0348. What it does:
     // the valid blade whose m_blade is blade, else blade 0 (fn_71000784E0, fn_710009E008 call it).
     GROUP_BLADE_DATA* fn_71000A03D4(unsigned int blade);
+    // 1.0.0's name (its ProgressCoolTime(float) has the same blade loop and stands in the same place, after
+    // Update); 3.0.1's symbols spell fn_71000A0F24
+    void ProgressCoolTime(float time);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: Update calls it on its group,
+    // fn_71000A120C forwards to it, and it sits among GROUP_DATA's functions. What it does: while the group's
+    // character (m_handle) is in battle, pad_108 = value clamped to [0, max HP - HP] (mm::clamp), and pad_10C starts
+    // at BtlSystemBalanceAccess's pad_130 when it was below 0; otherwise pad_108 = 0 and pad_10C = -1.
+    void fn_71000A107C(float value);
     void FinishCoolTime();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member as fn_71000A0348. What it does:
     // m_coolTime / m_coolTimeMax, not below 0 (UIManager::UpdateMenuData calls it).
@@ -121,6 +137,9 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member as fn_71000A0348. What it does:
     // whether m_coolTime reached m_coolTimeMax (fn_71000784E0 calls it).
     bool fn_71000A11F8() const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member as fn_71000A107C. What it does:
+    // fn_71000A107C(pad_108 + value) (BattleCharacter::NotifyDamage calls it).
+    void fn_71000A120C(float value);
     void SynchroHomnuraData(int from, int to);
 
     gf::GF_OBJ_HANDLE* m_handle;
@@ -130,7 +149,12 @@ public:
     unsigned char pad_F4[0xC];
     float m_coolTimeMax;
     float m_coolTime;
-    unsigned char pad_108[0xB];
+    // fn_71000A107C: the amount it is given, bounded by the HP the group's character lacks (0 outside battle)
+    float pad_108;
+    // fn_71000A107C: -1 while pad_108 is 0, else BtlSystemBalanceAccess's pad_130 when it was below 0
+    float pad_10C;
+    unsigned char pad_110[0x2];
+    bool pad_112;  // while clear, ProgressCoolTime raises tutorial condition 25 when the cool time ends
     signed char m_buddyBladeIndex;
     unsigned char pad_114[0x5];
     bool pad_bit0 : 1;
