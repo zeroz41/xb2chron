@@ -406,8 +406,8 @@ static void fn_7100312FBC(QTYPE type) {
             continue;
         }
         unsigned short id = it.getQuestID().m_id;
+        unsigned long count;
         const unsigned short* keep;
-        unsigned int count;
         if (GfGameManager::fn_71002A9E68()) {
             keep = s_newGameKeepQuestsMode;
             count = 6;
@@ -416,7 +416,7 @@ static void fn_7100312FBC(QTYPE type) {
             count = 2;
         }
         bool kept = false;
-        for (unsigned int i = 0; i < count; i++) {
+        for (long i = 0; i < count; i++) {
             if (keep[i] == id) {
                 kept = true;
                 break;
