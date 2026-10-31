@@ -28,6 +28,9 @@ public:
     Result RemoveDelegate(Handle* handle);
     // the registered handle equal to handle (Handle::operator==), null for none
     Handle* FindDelegate(const Handle* handle);
+    // calls every registered handle with the notification's two words, through SystemCore's delegates_ array
+    // (a snapshot taken under the audio lock)
+    void ExecuteDelegateImpl(unsigned long long, unsigned long long) const;
 
     List<Handle> handles_;  // the name is not the original's
 };

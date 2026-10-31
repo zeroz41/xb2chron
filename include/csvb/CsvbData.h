@@ -43,6 +43,7 @@ struct stCsvbRow {
 enum CsvbType {
     CSVB_TYPE_INT = 0,
     CSVB_TYPE_FLOAT = 1,
+    CSVB_TYPE_NONE = 2,  // an empty cell (0xFFFB), value 0
     CSVB_TYPE_STRING = 3,
 };
 
