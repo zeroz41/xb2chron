@@ -70,6 +70,76 @@ void TalkManager::Update(const fw::UpdateInfo& info) {
     get()->UpdateProc(info);
 }
 
+void TalkManager::UpdateProc(const fw::UpdateInfo& info) {
+    float dt = info.m_deltaTime;
+    if (m_isTimeA) {
+        bool counting = false;
+        for (int i = 1; i < 63; i++) {
+            float time = m_timeA[i] - dt;
+            m_timeA[i] = time > 0.0f ? time : 0.0f;
+            counting |= time > 0.0f;
+        }
+        m_isTimeA = counting;
+    }
+    if (m_isTimeB) {
+        bool counting = false;
+        for (int i = 1; i < 112; i++) {
+            float time = m_timeB[i] - dt;
+            m_timeB[i] = time > 0.0f ? time : 0.0f;
+            counting |= time > 0.0f;
+        }
+        m_isTimeB = counting;
+    }
+    for (::mm::mtl::FixedList<CHR_INTERVAL_DATA, 200>::iterator it = m_intervals.begin(); it != m_intervals.end();) {
+        float time = (*it).m_time - dt;
+        if (time <= 0.0f) {
+            it = m_intervals.erase(it);
+        } else {
+            it->m_time = time;
+            ++it;
+        }
+    }
+    for (CHR_VOICE_DATA* it = m_voices.begin(); it != m_voices.end();) {
+        gf::GAME_VOICE_HANDLE* voice = it->m_voice;
+        int result = gf::GfGameVoice::getResult(voice);
+        if (it->pad_bit3 || it->m_nextRegistered || result != 2) {
+            if (BattleGlobal::sys()->IsEnableBattle() && result != 4 && !it->m_nextRegistered &&
+                (it->pad_bit3 || result == 6 || result == 3)) {
+                it->m_nextRegistered = true;
+                RegisterNextVoice(*it);
+            }
+            if (it->m_voice == voice) {
+                CHR_VOICE_DATA empty;
+                empty.m_handle = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+                empty.m_voice = nullptr;
+                empty.m_type = 0;
+                empty.m_voiceId = 0;
+                empty.m_chrIndex = 0;
+                empty.pad_bits20 = 0;
+                empty.pad_bits24 = 0;
+                empty.pad_bit0 = false;
+                empty.pad_bit1 = false;
+                empty.m_nextRegistered = false;
+                empty.pad_bit3 = false;
+                empty.pad_bit4 = false;
+                empty.pad_bit5 = false;
+                empty.pad_bit6 = false;
+                empty.pad_bit7 = false;
+                memset(empty.pad_15, 0x5A, sizeof(empty.pad_15));
+                *it = empty;
+                it = m_voices.erase(it);
+                continue;
+            }
+        }
+        ++it;
+    }
+    if (m_narrationVoice != nullptr && gf::GfGameVoice::getResult(m_narrationVoice) != 2) {
+        m_narrationVoice = nullptr;
+        m_narrationState = 0;
+        m_narrationType = 5;
+    }
+}
+
 void TalkManager::StartBattleCallback() {
     for (COUNT_DATA* it = m_counts.begin(); it != m_counts.end();) {
         if (it->m_count == 0) {

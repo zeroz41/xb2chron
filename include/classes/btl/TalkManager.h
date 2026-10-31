@@ -17,7 +17,34 @@ class TalkManager : public ::mm::mtl::PtrSingleton< ::btl::TalkManager> {
 public:
     enum NARRATION_TYPE : int;
     enum TRIGGER : int;
-    enum BDAT_DATA_TYPE : int;
+    // the column GetBdatData reads, by the column's name in tables 0x55-0x58 (the enumerator names are not the
+    // original's)
+    enum BDAT_DATA_TYPE : int {
+        BDAT_PRIORITY,
+        BDAT_GROUP,
+        BDAT_CT_DRIVER,
+        BDAT_ENEMY_VC,
+        BDAT_COND_0,
+        BDAT_COND_1,
+        BDAT_LOT_RATE,
+        BDAT_REPLY,
+        BDAT_REPLY_GROUP,
+        BDAT_VOICE_0,
+        BDAT_VOICE_1,
+        BDAT_VOICE_2,
+        BDAT_VOICE_3,
+        BDAT_REP_BUDDY,
+        BDAT_LOT_NUM,
+        BDAT_NO_OVERWRITE,
+        BDAT_DEAD,
+        BDAT_NO_DIR,
+        BDAT_NO_CHAIN,
+        BDAT_NO_REPLY_OK,
+        BDAT_SERIOUS_OFF,
+        BDAT_INTERVAL,
+        BDAT_SOLO_MODE,
+        BDAT_COND_EX,
+    };
 
     // a registered voice line, 0x20 bytes (the field names are not the original's)
     struct CHR_VOICE_DATA {
@@ -29,6 +56,7 @@ public:
         unsigned int m_voiceId : 10;   // the row of that table
         unsigned int m_chrIndex : 7;   // the speaker (IsTalk, GetPlayVoiceID compare it)
         unsigned int pad_bits20 : 4;   // fn_71000AEAB4 sets 15 (meaning unknown)
+        unsigned int pad_bits24 : 8;   // UpdateProc clears the whole word with the entry (meaning unknown)
         unsigned int : 0;
         bool pad_bit0 : 1;
         bool pad_bit1 : 1;
@@ -40,6 +68,18 @@ public:
         bool pad_bit7 : 1;
         unsigned char pad_15[4];  // 0x5A each when UpdateProc drops the entry
         unsigned char pad_19[7];
+    };
+    // GetBdatData's result, returned in x0/x1: the column's value (zero-extended from its width) and whether the
+    // type was unknown (the names are not the original's)
+    struct BDAT_VALUE {
+        union {
+            bool m_flag;
+            unsigned char m_u8;
+            unsigned short m_u16;
+            float m_float;
+            unsigned long m_u64;
+        };
+        bool m_isNone;
     };
     // a speaker's pause between lines, kept in m_intervals (the field names are not the original's)
     struct CHR_INTERVAL_DATA {
@@ -91,7 +131,7 @@ public:
     // false when the line is not registered (PlayVoice(int, int) returns 0 then)
     bool RegisterTalk(int, int, int, int, int, int, bool);
     void StartBattleCallback();
-    unsigned long GetBdatData(CBdatWrapper& bdat, unsigned int id, BDAT_DATA_TYPE type) const;
+    BDAT_VALUE GetBdatData(CBdatWrapper& bdat, unsigned int id, BDAT_DATA_TYPE type) const;
     int DecideVoiceBdatID(int, int, int, int, int);
     void RegisterSpecialWin();
     bool IsBladeChangeCondition(int, int, BattleCharacter* chr) const;
