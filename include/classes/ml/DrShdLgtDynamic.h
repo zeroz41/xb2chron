@@ -10,11 +10,15 @@ namespace ml {
 class DrShdLgtDynamic {
 public:
     DrShdLgtDynamic() : m_cateIdx(0) {}
+    // DrShdLgtClustered's constructor stores m_cateIdx and m_pDrMan before its own table and members
+    explicit DrShdLgtDynamic(DrMan* drMan) : m_cateIdx(0), m_pDrMan(drMan) {}
     virtual ~DrShdLgtDynamic() {}  // slot 0
     virtual void stockBegin() = 0;  // slot 2
     virtual void stockEnd() = 0;  // slot 3
     virtual void update() = 0;  // slot 4
-    virtual void setupCate(int);  // slot 5
+    // inline: the class has no table of its own; the one copy sits at the end of DrShdLgtClustered's unit, which
+    // emits it through DrShdLgtClustered's table
+    virtual void setupCate(int cateIdx) { m_cateIdx = cateIdx; }  // slot 5
 
     int m_cateIdx;  // 0x8, setupCate stores it
     unsigned char pad_c[0x4];

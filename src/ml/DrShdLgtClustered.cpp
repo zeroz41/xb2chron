@@ -27,10 +27,93 @@
 #include "ml/DrResShdShw.h"
 #include "ml/DrResShdStreamOut.h"
 #include "ml/DrShdDataObj.h"
+#include "mtl/MemManager.h"
+#include <string.h>
 
 namespace ml {
 
+const DrShdLgtClustered::ClusterSetting DrShdLgtClustered::c_ClusterSettings[4] = {
+    {20, 12, 16, 20, 256},
+    {5, 3, 4, 5, 16},
+    {5, 3, 4, 20, 128},
+    {5, 3, 4, 5, 16},
+};
+
+DrShdLgtClustered::DrShdLgtClustered(DrMan* drMan, bool flag) : DrShdLgtDynamic(drMan), m_bSmallGrid(flag) {
+    createWork();
+}
+
+void DrShdLgtClustered::createWork() {
+    const ClusterSetting& set = getClusterSetting(0);
+    int extraSize = m_bSmallGrid ? 0x40 : 0x1D0;
+    m_cellLightMax = set.cellLightMax * set.gridX * set.gridY * set.gridZ;
+    unsigned int cellSize = set.getCellNum() * sizeof(unsigned long);
+    unsigned int sliceSize = 0;
+    for (int i = 0; i < 4; i++) {
+        sliceSize += (getClusterSetting(i).gridZ + 1) * sizeof(float);
+    }
+    m_pWork = mtl::MemManager::allocate(m_pDrMan->m_allocHandle, sliceSize + m_cellLightMax * 0x10 + cellSize + cellSize,
+                                        0x20, false, "no name", 0);
+    unsigned int ofs = 0;
+    for (int i = 0; i < 4; i++) {
+        const ClusterSetting& s = getClusterSetting(i);
+        int pntSize = s.lightMax * 0x30;
+        int sptSize = s.lightMax * 0x40;
+        int pointerSize = s.gridX * s.gridY * s.gridZ * 8;
+        ViewWork& view = m_viewWork[i];
+        view.pntLight.setup(pntSize);
+        view.sptLight.setup(sptSize);
+        view.pointerList.setup(pointerSize);
+        view.extra.setup(extraSize);
+        view.param.setup(0x30);
+        view.pSliceDepth = reinterpret_cast<float*>(static_cast<unsigned char*>(m_pWork) + ofs);
+        ofs += (s.gridZ + 1) * 4;
+        view.lightList.setup(s.gridX * s.gridZ * s.gridY * s.cellLightMax);
+    }
+    m_pCellWork[0] = reinterpret_cast<unsigned long*>(static_cast<unsigned char*>(m_pWork) + ofs);
+    ofs += cellSize;
+    m_pCellWork[1] = reinterpret_cast<unsigned long*>(static_cast<unsigned char*>(m_pWork) + ofs);
+    ofs += cellSize;
+    m_pCellLight = reinterpret_cast<unsigned int*>(static_cast<unsigned char*>(m_pWork) + ofs);
+    addViewInfo(0);
+    m_fetch.setLgtVertexParam();
+}
+
+DrShdLgtClustered::~DrShdLgtClustered() {
+    if (m_pWork) {
+        mtl::MemManager::deallocate(m_pWork, 0, false);
+        m_pWork = nullptr;
+    }
+}
+
+void DrShdLgtClustered::stockBegin() {
+    const ClusterSetting& s = getClusterSetting(m_cateIdx);
+    ViewWork& view = m_viewWork[m_cateIdx];
+    view.pntNum = 0;
+    view.sptNum = 0;
+    view.listNum = 0;
+    m_pntBuffRest = view.pntLight.m_size;
+    m_sptBuffRest = view.sptLight.m_size;
+    m_pPntBuff = reinterpret_cast<float*>(view.pntLight.getBuff());
+    m_pSptBuff = reinterpret_cast<float*>(view.sptLight.getBuff());
+    unsigned int cellNum = s.gridX * s.gridY * s.gridZ;
+    memset(m_pCellWork[0], 0, cellNum * sizeof(unsigned long));
+    memset(m_pCellWork[1], 0, cellNum * sizeof(unsigned long));
+    m_cellLightNum = 0;
+}
+
 void DrShdLgtClustered::update() {}
+
+void DrShdLgtClustered::addViewInfo(int idx) {
+    ViewWork& view = m_viewWork[idx];
+    const ClusterSetting& s = getClusterSetting(idx);
+    view.sliceScale = 1.36f;
+    view.sliceNear = 5.0f;
+    view.pSliceDepth[0] = 0.0f;
+    for (int i = 0; i <= s.gridZ; i++) {
+        view.pSliceDepth[i] = i == 0 ? -5.0f : view.pSliceDepth[i - 1] * view.sliceScale;
+    }
+}
 
 void DrShdLgtClustered::delViewInfo(int) {}
 
