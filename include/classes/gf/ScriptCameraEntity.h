@@ -50,8 +50,9 @@ public:
         m_rot = m_startRot + t * (m_endRot - m_startRot);
     }
     // where the camera looks: unit z turned by m_rot's x and y (half angles, a quaternion; m_rot's z is the roll
-    // setLookAt takes). Inline in both callers; the name is not the original's
-    __attribute__((always_inline)) mm::Vec3 getDirection() const {
+    // setLookAt takes), written into out a component at a time (the constructor's look-at target then reloads its x:
+    // a returned Vec3 makes the x addition's operands swap). Inline in both callers; the name is not the original's
+    __attribute__((always_inline)) void getDirection(mm::Vec3& out) const {
         mm::Vec3 euler(m_rot.x, m_rot.y, 0.0f);
         mm::Vec3 half = euler * 0.5f;
         float hx = half.x, hy = half.y, hz = half.z;
@@ -64,8 +65,9 @@ public:
         float ty = (q.z * v.x - q.x * v.z) + q.w * v.y;
         float tz = (q.x * v.y - q.y * v.x) + q.w * v.z;
         float tw = -q.x * v.x - q.y * v.y - v.z * q.z;
-        return mm::Vec3((-(q.z * ty) + q.y * tz - q.x * tw) + q.w * tx, (-(q.x * tz) + q.z * tx - q.y * tw) + q.w * ty,
-                        (-(q.y * tx) + q.x * ty - q.z * tw) + q.w * tz);
+        out.x = (-(q.z * ty) + q.y * tz - q.x * tw) + q.w * tx;
+        out.y = (-(q.x * tz) + q.z * tx - q.y * tw) + q.w * ty;
+        out.z = (-(q.y * tx) + q.x * ty - q.z * tw) + q.w * tz;
     }
     static mm::mtl::RTTI m_rtti;
 

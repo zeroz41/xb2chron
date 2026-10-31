@@ -9,8 +9,17 @@
 
 namespace gf {
 
-// the constructor (0x71001D8884) is not here yet: the body in ctor_candidate.cpp differs only in the operand order
-// of the first of the three additions that make the look-at target (the direction's x plus m_pos.x)
+ScriptCameraEntity::ScriptCameraEntity(const mm::Vec3& pos, const mm::Vec3& rot)
+    : ::fw::Camera(static_cast< ::fw::CAMERA_PRIO>(0x37)), m_startPos(pos), m_startRot(rot), m_endPos(pos),
+      m_endRot(rot), m_pos(pos), m_rot(rot), m_frames(0.0f), m_frame(0.0f) {
+    m_fov = 45.0f;
+    m_nearClip = 0.4f;
+    m_farClip = 80000.0f;
+    mm::Vec3 target;
+    getDirection(target);
+    target += m_pos;
+    setLookAt(m_pos, target, m_rot.z);
+}
 
 ScriptCameraEntity::~ScriptCameraEntity() {}
 
@@ -25,7 +34,7 @@ void ScriptCameraEntity::update(const fw::UpdateInfo& info) {
         }
     }
     mm::Vec3 target;
-    target = getDirection();
+    getDirection(target);
     target += m_pos;
     setLookAt(m_pos, target, m_rot.z);
 }
