@@ -112,6 +112,28 @@ void UIInputManager::setInputActionEnable(unsigned int handle, unsigned int acti
     }
 }
 
+unsigned int UIInputManager::searchInputHandle(unsigned int object) {
+    if (object == 0) {
+        return 0;
+    }
+    UIObject* obj = UIUtil::getObject(object);
+    if (obj == nullptr) {
+        return 0;
+    }
+    if (obj->m_flags.test(2)) {
+        for (InputList::iterator it = m_layers.begin(); it != m_layers.end(); ++it) {
+            // the layer's own object test is taken before the second *it (the original branches on it after
+            // each path of that check)
+            bool found = (*it).m_layer->m_id == object;
+            InputLayerInfo& info = *it;
+            if (found || info.m_target == object) {
+                return info.m_handle;
+            }
+        }
+    }
+    return 0;
+}
+
 UIInputLayer* UIInputManager::getInputLayer(unsigned int handle) {
     if (handle != 0) {
         for (InputList::iterator it = m_layers.begin(); it != m_layers.end(); ++it) {
