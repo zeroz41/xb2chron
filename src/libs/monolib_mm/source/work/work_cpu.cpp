@@ -54,6 +54,7 @@
 #include "classes/ml/WinViewRoot.h"
 #include "ml/MlMem.h"
 #include "classes/ml/threadval.h"
+#include "classes/ml/TJOB.h"
 #include <algorithm>
 
 namespace ml {
@@ -88,6 +89,13 @@ static const CriticalSection& getListenerCriticalSection() {
 // the lock the swap lists are changed under (inline in each user; the name is not the original's)
 static const CriticalSection& getSwapCriticalSection() {
     // Proposed name, not the original's: the symbols leave it and its guard unnamed (lbl_7100ECFFE0, lbl_7100ED0008)
+    static CriticalSection s_cs;
+    return s_cs;
+}
+
+// the lock the job groups are changed and walked under (inline in each user; the name is not the original's)
+static CriticalSection& getGroupCriticalSection() {
+    // Proposed name, not the original's: the symbols leave it and its guard unnamed (lbl_7100ED0030, lbl_7100ED09F0)
     static CriticalSection s_cs;
     return s_cs;
 }
@@ -437,6 +445,13 @@ bool WorkSystem::isOff() {
     return false;
 }
 
+bool WorkControl::setFlowSetup() {
+    if (WorkFlowSetup::get() == nullptr) {
+        WorkUtil::createWork<WorkFlowSetup>("WorkFlowSetup", get(), false);
+    }
+    return true;
+}
+
 bool WorkControl::wkStandbyLogin() {
     if (WorkCpu::isInitialized()) {
         return false;
@@ -687,6 +702,24 @@ void WorkCpu::beginFrame() {
         }
     }
     DevGraph::cb(RCB(0));
+}
+
+void WorkCpu::wkTail() {
+    WorkCpu* cpu = get();
+    CS lock(_mlwcpu::getGroupCriticalSection());
+    for (mm::mtl::FixedList<GRPLIST, 128>::iterator it = cpu->m_group.begin(); it != cpu->m_group.end(); ++it) {
+        for (unsigned int i = 0; i < get()->m_cpuNum; i++) {
+            reslist<TJOB*>* list = it->m_job[i];
+            for (reslist<TJOB*>::iterator job = list->begin(); job != list->end();) {
+                reslist<TJOB*>::iterator cur = job++;
+                TJOB* entry = *cur;
+                if (entry->m_cpu != 0 && i + 1 != entry->m_cpu) {
+                    list->erase(cur);
+                    it->m_job[entry->m_cpu - 1]->push_back(entry);
+                }
+            }
+        }
+    }
 }
 
 }  // namespace ml

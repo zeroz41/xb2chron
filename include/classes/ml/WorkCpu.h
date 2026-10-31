@@ -27,9 +27,12 @@ public:
         unsigned int m_priority;
     };
     // a job group createGroupHandle hands out and releaseGroupHandle takes back (0x20 bytes, 8-aligned: its
-    // FixedList node is 0x28; fields not recovered)
+    // FixedList node is 0x28)
     struct GRPLIST {
-        unsigned long pad_0[4];
+        unsigned long pad_0;
+        // 0x8 the group's jobs on each CPU, by the CPU less one (wkTail moves each job to its own CPU's; the name is
+        // not the original's)
+        reslist<TJOB*>* m_job[3];
     };
 
     WorkCpu(const char* name, WorkObj* parent);

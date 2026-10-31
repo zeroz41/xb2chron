@@ -12,6 +12,14 @@ public:
     virtual ~WorkFlowSetup();  // slot 0
     virtual bool wkStandbyLogin();  // slot 14
     virtual bool wkStandbyLogout();  // slot 15
+
+    // inline: WorkControl::setFlowSetup builds it in place through WorkUtil::createWork<WorkFlowSetup> (no children;
+    // the parameter names are not the original's)
+    WorkFlowSetup(const char* name, WorkObj* parent) : WorkObj(name, parent, 0) {
+        pad_1b0 = 0;
+    }
+
+    int pad_1b0;  // 0x1B0 the constructor clears it
 };
 }  // namespace ml
 
