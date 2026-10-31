@@ -15,6 +15,7 @@ public:
         gf::GF_OBJ_HANDLE* m_handle;
     };
     explicit GfFieldMoveSpeed(const CreateInfo* info);
+    ~GfFieldMoveSpeed() { dispose(); }
     void create(const CreateInfo& info);
     void dispose();
     void setSpeedKmph(float speed, float duration);

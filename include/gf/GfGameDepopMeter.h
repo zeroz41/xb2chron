@@ -13,6 +13,7 @@ class GfGameDepopMeter : public ::mm::mtl::IntrusiveListNodeBase {
 public:
     struct CreateInfo;
     explicit GfGameDepopMeter(const CreateInfo* info);
+    ~GfGameDepopMeter() { dispose(); }
     void create(const CreateInfo& info);
     void dispose();
     void update(float deltaTime);

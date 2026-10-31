@@ -1,3 +1,4 @@
+#include "gf/FileStaticVec3.h"
 #include "classes/gf/TFieldExecCmd.h"
 #include "classes/gf/TFieldExecCmdTurn.h"
 #include "classes/gf/GfFieldLocalSteer.h"
@@ -20,8 +21,24 @@
 #include "plugin/Bdat.h"
 #include "math.h"
 #include "ml/MTRand.h"
+#include "classes/fw/NaviManager.h"
+#include "classes/gmk/GmkSquad.h"
 
 namespace gf {
+
+mm::mtl::RTTI GfComBehaviorMob::m_rtti("GfComBehaviorMob", &GfComBehavior::m_rtti, nullptr);
+
+GfComBehaviorMob::~GfComBehaviorMob() {
+    cleanup();
+}
+
+void GfComBehaviorMob::cleanup() {
+    pad_b8 = nullptr;
+    fw::NaviManager::sys()->releaseObject(pad_a8);
+    pad_a8 = nullptr;
+    disposeFsm();
+    m_pluginManager.cleanup();
+}
 
 gmk::AGmkBase* GfComBehaviorMob::getBindedGmkInst() const {
     return gmk::getBindedGmkInst(static_cast<GfObj*>(m_owner)->m_handle);

@@ -7,6 +7,11 @@
 #include "classes/gf/GfComBehavior.h"
 #include "classes/gf/GfFieldLocalSteer.h"
 #include "classes/gf/TFieldExecCmdTurn.h"
+#include "classes/gmk/GmkSquadNavi.h"
+#include "gf/GfGameStuckMeter.h"
+#include "gf/GfGameDepopMeter.h"
+#include "gf/GfFieldMoveSpeed.h"
+#include "gf/GfFieldLookIk.h"
 
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
@@ -14,6 +19,7 @@ namespace fw { class UpdateInfo; }
 namespace gmk { class AGmkBase; }
 namespace gf { class GfComAsm; }
 namespace mm { class Vec3; }
+namespace navi { class NvmshAcObj; }
 
 namespace gf {
 // table 0x7100B66500
@@ -32,6 +38,15 @@ public:
     gmk::AGmkBase* getBindedGmkInst() const;
     // (re)makes its state machine: the mob's 7 states, one level deep
     void createFsm();
+    // cleans its state machine up once (1.0.0 has it out of line; 3.0.1 keeps no copy)
+    void disposeFsm() {
+        if (!m_buildingFsm) {
+            m_buildingFsm = true;
+            m_hfsm.cleanup();
+        }
+    }
+    // what the object factory calls before destroying it; the destructor does the same
+    void cleanup();
     // (re)starts its movement; the states pass true on entering, the approach state false
     void init(bool);
     bool isSquadMember() const;
@@ -46,14 +61,20 @@ public:
     unsigned short pad_a0;
     unsigned short pad_a2;
     float pad_a4;  // mob::StateApproachPc's fn_71004D7468 compares it with pad_53d0
-    unsigned char pad_a8[0x10];
+    navi::NvmshAcObj* pad_a8;  // cleanup hands it back to the navigation manager
+    int pad_b0;
     void* pad_b8;  // mob::StateMove::isCondMatch: the state may run while it is set
-    unsigned char pad_c0[0x50];
+    gmk::GmkSquadNavi m_squadNavi;  // isSquadMember reads it (the name is not the original's)
+    mm::Vec3 pad_f0;
+    mm::Vec3 pad_100;  // what it answers MsgObjectGetVelocity (0x1000049) with
     // mob::StateSquadMember::seqUpdateIdle starts moving once the owner is pad_18 away from it on the ground plane
     mm::Vec3 pad_110;
     // StateReaction<GfComBehaviorMob>::onLeave hands its saved rotation back to it (the name is not the original's)
     mm::Quat m_reactionRot;
-    unsigned char pad_130[0x120];
+    GfGameStuckMeter m_stuckMeter;  // the names of these four are not the original's
+    GfGameDepopMeter m_depopMeter;
+    GfFieldMoveSpeed m_moveSpeed;
+    GfFieldLookIk m_lookIk;
     // the turn execTurnCmdToPos starts; the states wait for its pad_6c (the name is not the original's)
     TFieldExecCmdTurn<GfComAsm> m_turnCmd;
     // execTurnCmdToPos adds its current angle to the turn (the name is not the original's)

@@ -28,6 +28,13 @@ public:
     template <typename T>
     class TIsTargetNotSameSquad;
     GfFieldLocalSteer(const CreateInfo* info);
+    // GfComBehaviorMob's destructor: dispose, then pad_5040 cleared when set
+    ~GfFieldLocalSteer() {
+        dispose();
+        if (pad_5040 != nullptr) {
+            pad_5040 = nullptr;
+        }
+    }
     void create(const CreateInfo& info);
     void dispose();
     // whether it has an object and pad_24 (seconds, as the 5.0 limit reads) passed 5
