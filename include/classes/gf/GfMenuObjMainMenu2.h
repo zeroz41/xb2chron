@@ -9,6 +9,7 @@
 
 namespace gf { class GfMenuBladeList; class GfMenuCallContext; class GfMenuDriverList; class SelectionChecker; }
 namespace mm { namespace mtl { class ReferenceObject; } }
+namespace ui { class UIObjectAcc; }
 
 namespace gf {
 // table 0x7100B62FB8
@@ -25,6 +26,39 @@ public:
         unsigned int m_page;
     };
     static void registOpenParam(const OpenParam& param);
+    // what the character change listeners (this class's and GfMenuObjBlWeapon2's) hand the *ChrChangeSub helpers
+    // (0x38 bytes on their stacks). The field names are not the original's.
+    struct ChrChangeParam {
+        ChrChangeParam()
+            : m_listKind(0), pad_04(false), m_prevKind(0), m_isOpen(false), m_target(0), m_driverList(nullptr),
+              m_bladeList(nullptr), m_driverId(0), pad_2C(true), m_subHandle(0) {}
+        int m_listKind;  // 0x0 the list shown: 0 the drivers, 1 and 2 the blades
+        bool pad_04;  // MainMenu2's open (0x21) sets it when the event's third parameter is 1
+        int m_prevKind;  // 0x8 the listener's list kind before this event
+        bool m_isOpen;  // 0xC the listener's state was 1 (open)
+        unsigned int m_target;  // 0x10 BlWeapon2: the open event's object / LAY_chips; MainMenu2: its own 0x88
+        GfMenuDriverList* m_driverList;  // 0x18
+        GfMenuBladeList* m_bladeList;  // 0x20
+        unsigned int m_driverId;  // 0x28 MainMenu2's open: GfMenuReference::getReferenceDriverID(0)
+        bool pad_2C;  // MainMenu2's open clears it for list kind 3
+        unsigned int m_subHandle;  // 0x30 the handle openChrChangeSub returned last time
+    };
+    // what the character change listeners (this class's and GfMenuObjBlWeapon2's) keep between events, 0xC-0x1B of
+    // each (their constructors zero it). Inferred, not the original's: a 4-aligned block, since their reads of
+    // m_listKind and m_subHandle stay two 4-byte loads (fields of the listener itself at 0x10 would be widened).
+    struct ChrChangeState {
+        int m_state;  // 1 while the character change is open
+        int m_listKind;  // its ChrChangeParam::m_listKind (-1 after the init event)
+        unsigned int m_subHandle;  // the handle openChrChangeSub returned
+        unsigned int pad_0C;
+    };
+    static void initChrChangeDr(ui::UIObjectAcc& acc, GfMenuDriverList* list);
+    static void initChrChangeBl(ui::UIObjectAcc& acc, GfMenuBladeList* list);
+    // true when it opened; the handle it opened goes to the last parameter
+    static bool openChrChangeSub(ui::UIObjectAcc& acc, ChrChangeParam& param, unsigned int& handle);
+    static void openChrChange2Sub(ui::UIObjectAcc& acc, ChrChangeParam& param);
+    static void inputChrChangeSub(ui::UIObjectAcc& acc, ChrChangeParam& param, int index);
+    static void closeChrChangeSub(ui::UIObjectAcc& acc, ChrChangeParam& param);
     GfMenuObjMainMenu2(unsigned int handle);
     virtual ~GfMenuObjMainMenu2();  // slot 0
     virtual void initialize();  // slot 2

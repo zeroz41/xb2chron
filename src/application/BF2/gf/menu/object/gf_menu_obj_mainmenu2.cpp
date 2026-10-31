@@ -7,9 +7,11 @@
 #include "classes/gf/GfMenuDriverList.h"
 #include "classes/gf/GfMenuFullScreen.h"
 #include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfMenuObjMainMenu2/ChrChangeListener.h"
 #include "classes/gf/GfMenuObjMainMenu2/CloseListener.h"
 #include "classes/gf/GfMenuObjMainMenu2/IndexListener.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
+#include "classes/gf/GfMenuReference.h"
 #include "classes/gf/GfMenuSoundManager.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuObjUtil.h"
@@ -171,6 +173,111 @@ bool GfMenuObjMainMenu2::fn_7100432E5C() {
 
 unsigned int GfMenuObjMainMenu2::fn_7100432E6C() {
     return GfMenuObjUtil::fn_710048FD30(3) ? s_index : 0;
+}
+
+void GfMenuObjMainMenu2::ChrChangeListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        initChrChangeDr(owner, m_owner->m_driverList);
+        initChrChangeBl(owner, m_owner->m_bladeList);
+        acc.setDisp(false);
+        GfMenuObject::disableInput(acc.m_handle);
+        m_chr.m_state = 0;
+        m_chr.m_listKind = -1;
+        m_chr.m_subHandle = 0;
+        break;
+    case 3:
+        switch (event.m_param0) {
+        case 0:
+            return;
+        case 1:
+            if (m_chr.m_listKind == 1 || m_chr.m_listKind == 2) {
+                GfMenuObject::resetInputSelection(acc.m_handle);
+                GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_bladeList);
+            } else if (m_chr.m_listKind == 0) {
+                GfMenuObject::resetInputSelection(acc.m_handle);
+                GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_driverList);
+            }
+            if (m_owner->pad_88 != 0) {
+                GfMenuObject::enableInput(acc.m_handle);
+            } else {
+                GfMenuObject::disableInput(acc.m_handle);
+            }
+            break;
+        case 2:
+            GfMenuObject::termCallContext(acc.m_handle);
+            acc.setDisp(false);
+            break;
+        case 3:
+            sendEvent(handle, 0x10C, 0);
+            break;
+        }
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        ChrChangeParam param;
+        param.m_listKind = m_chr.m_listKind;
+        param.m_target = m_owner->pad_88;
+        param.m_driverList = m_owner->m_driverList;
+        param.m_bladeList = m_owner->m_bladeList;
+        inputChrChangeSub(acc, param, index);
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonTab();
+        }
+        break;
+    }
+    case 0x21: {
+        int kind = event.m_param0;
+        int mode = event.m_param2;
+        m_owner->pad_88 = event.m_param1;
+        ChrChangeParam param;
+        if (kind == 3) {
+            kind = 0;
+            param.pad_2C = false;
+        }
+        param.m_listKind = kind;
+        param.pad_04 = mode == 1;
+        param.m_prevKind = m_chr.m_listKind;
+        param.m_isOpen = m_chr.m_state == 1;
+        param.m_target = m_owner->pad_88;
+        param.m_driverList = m_owner->m_driverList;
+        param.m_bladeList = m_owner->m_bladeList;
+        param.m_driverId = GfMenuReference::getReferenceDriverID(0);
+        param.m_subHandle = m_chr.m_subHandle;
+        unsigned int sub = 0;
+        if (openChrChangeSub(acc, param, sub)) {
+            m_chr.m_state = 1;
+            m_chr.m_listKind = kind;
+            m_chr.m_subHandle = sub;
+        }
+        break;
+    }
+    case 0x22: {
+        ChrChangeParam param;
+        param.m_listKind = m_chr.m_listKind;
+        closeChrChangeSub(acc, param);
+        m_chr.m_state = 0;
+        break;
+    }
+    case 0x109:
+        m_owner->pad_88 = 0;
+        break;
+    case 0x10C: {
+        ChrChangeParam param;
+        param.m_listKind = m_chr.m_listKind;
+        param.m_driverList = m_owner->m_driverList;
+        param.m_bladeList = m_owner->m_bladeList;
+        openChrChange2Sub(acc, param);
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 namespace {
