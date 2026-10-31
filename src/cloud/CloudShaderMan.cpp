@@ -31,6 +31,7 @@
 #include "ml/DevFileParamTh.h"
 #include "ml/EventFileTh.h"
 #include "grlib/CGLibTextureBuffer.h"
+#include "grlib/CGLibTexture.h"
 #include "cloud/CloudMdlParts.h"
 #include "cloud/CloudMdlListMan.h"
 #include "cloud/CloudMdlDataObj.h"
@@ -334,7 +335,312 @@ void CloudTextureMan::releaseTexture() {
     }
 }
 
+void CloudTextureMan::createTexture() {
+    releaseTexture();
+    for (int i = 0; i < 4; i++) {
+        m_pTextures[i] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibTextureBuffer();
+    }
+    CloudDataMan* data = CloudMan::sys()->m_pDataMan;
+    for (int i = 0; i < 4; i++) {
+        grlib::CGLibTexture::createTextureImagePtrs(*m_pTextures[i], data->m_pData[i + 1], data->m_size[i + 1], false,
+                                                    nullptr, true);
+    }
+}
+
 CloudVertexMan::CloudVertexMan() : m_pVertex(), m_pIndex() { createVertexList(); }
+
+void CloudVertexMan::createVertexList() {
+    releaseVertexList();
+    // lbl_71009D4230
+    static const float s_planeVtx[] = {
+        -1.f, 0.f, -1.f,
+        1.f, 0.f, -1.f,
+        1.f, 0.f, 1.f,
+        -1.f, 0.f, 1.f,
+    };
+    // lbl_71009D4260
+    static const unsigned char s_planeIdx[] = {
+        3, 2, 1, 0,
+    };
+    // lbl_71009D4264
+    static const float s_thinBoxVtx[] = {
+        -1.f, 0.f, -1.f,
+        1.f, 0.f, -1.f,
+        1.f, 0.f, 1.f,
+        -1.f, 0.f, 1.f,
+        -1.f, 0.02f, -1.f,
+        1.f, 0.02f, -1.f,
+        1.f, 0.02f, 1.f,
+        -1.f, 0.02f, 1.f,
+    };
+    // lbl_71009D42C4
+    static const unsigned char s_thinBoxIdx[] = {
+        3, 2, 1, 0, 0, 1, 5, 4, 2, 3, 7, 6, 4, 7, 3, 0, 1, 2, 6, 5,
+    };
+    // lbl_71009D42D8
+    static const float s_boxVtx[] = {
+        -1.f, -0.025f, -1.f,
+        1.f, -0.025f, -1.f,
+        1.f, -0.025f, 1.f,
+        -1.f, -0.025f, 1.f,
+        -1.f, 0.025f, -1.f,
+        1.f, 0.025f, -1.f,
+        1.f, 0.025f, 1.f,
+        -1.f, 0.025f, 1.f,
+    };
+    // lbl_71009D4338
+    static const unsigned char s_boxIdx[] = {
+        0, 1, 5, 4, 2, 3, 7, 6, 4, 7, 3, 0, 1, 2, 6, 5,
+    };
+    // lbl_71009D4348
+    static const float s_quadVtx[] = {
+        -1.f, -1.f, 0.5f, 0.f, 1.f,
+        1.f, -1.f, 0.5f, 1.f, 1.f,
+        1.f, 1.f, 0.5f, 1.f, 0.f,
+        -1.f, 1.f, 0.5f, 0.f, 0.f,
+    };
+    // lbl_71009D4398
+    static const unsigned char s_quadIdx[] = {
+        0, 1, 2, 3,
+    };
+    // lbl_71009D439C
+    static const float s_lowerBoxVtx[] = {
+        -1.f, -1.f, -1.f,
+        1.f, -1.f, -1.f,
+        1.f, -1.f, 1.f,
+        -1.f, -1.f, 1.f,
+        -1.f, 0.f, -1.f,
+        1.f, 0.f, -1.f,
+        1.f, 0.f, 1.f,
+        -1.f, 0.f, 1.f,
+    };
+    // lbl_71009D43FC
+    static const unsigned char s_lowerBoxIdx[] = {
+        3, 2, 1, 0, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 4, 7, 3, 0, 1, 2, 6, 5,
+    };
+    // lbl_71009D4414
+    static const float s_upperBoxVtx[] = {
+        -1.f, 0.f, -1.f,
+        1.f, 0.f, -1.f,
+        1.f, 0.f, 1.f,
+        -1.f, 0.f, 1.f,
+        -1.f, 1.f, -1.f,
+        1.f, 1.f, -1.f,
+        1.f, 1.f, 1.f,
+        -1.f, 1.f, 1.f,
+    };
+    // lbl_71009D4474
+    static const unsigned char s_upperBoxIdx[] = {
+        4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 4, 7, 3, 0, 1, 2, 6, 5,
+    };
+    m_pVertex[0] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxVertex();
+    m_pVertex[0]->createCopyVertexBuff(s_planeVtx, sizeof(s_planeVtx), 12);
+    m_pIndex[0] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxIndex();
+    m_pIndex[0]->createCopyIndexBuff(s_planeIdx, sizeof(s_planeIdx), GrlPrimitiveType(7), GrlIndexFormat(0));
+    m_pVertex[1] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxVertex();
+    m_pVertex[1]->createCopyVertexBuff(s_thinBoxVtx, sizeof(s_thinBoxVtx), 12);
+    m_pIndex[1] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxIndex();
+    m_pIndex[1]->createCopyIndexBuff(s_thinBoxIdx, sizeof(s_thinBoxIdx), GrlPrimitiveType(7), GrlIndexFormat(0));
+    m_pVertex[8] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxVertex();
+    m_pVertex[8]->createCopyVertexBuff(s_boxVtx, sizeof(s_boxVtx), 12);
+    m_pIndex[8] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxIndex();
+    m_pIndex[8]->createCopyIndexBuff(s_boxIdx, sizeof(s_boxIdx), GrlPrimitiveType(7), GrlIndexFormat(0));
+    m_pVertex[2] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxVertex();
+    m_pVertex[2]->createCopyVertexBuff(s_quadVtx, sizeof(s_quadVtx), 20);
+    m_pIndex[2] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxIndex();
+    m_pIndex[2]->createCopyIndexBuff(s_quadIdx, sizeof(s_quadIdx), GrlPrimitiveType(7), GrlIndexFormat(0));
+    m_pVertex[3] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxVertex();
+    m_pVertex[3]->createCopyVertexBuff(s_lowerBoxVtx, sizeof(s_lowerBoxVtx), 12);
+    m_pIndex[3] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxIndex();
+    m_pIndex[3]->createCopyIndexBuff(s_lowerBoxIdx, sizeof(s_lowerBoxIdx), GrlPrimitiveType(7), GrlIndexFormat(0));
+    m_pVertex[7] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxVertex();
+    m_pVertex[7]->createCopyVertexBuff(s_upperBoxVtx, sizeof(s_upperBoxVtx), 12);
+    m_pIndex[7] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxIndex();
+    m_pIndex[7]->createCopyIndexBuff(s_upperBoxIdx, sizeof(s_upperBoxIdx), GrlPrimitiveType(7), GrlIndexFormat(0));
+    createSphere();
+    createCapsule();
+    createHalfSphere();
+}
+
+void CloudVertexMan::createSphere() {
+    m_pVertex[4] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxVertex();
+    m_pIndex[4] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxIndex();
+    // 18 rings of 18 vertices between the poles, the top and bottom pole
+    m_pVertex[4]->createVertexBuff((16 * 18 + 2) * 12, 12);
+    void* buffer;
+    unsigned int size;
+    m_pVertex[4]->lock(&buffer, &size);
+    float* vtx = static_cast<float*>(buffer);
+    vtx[0] = 0.0f;
+    vtx[1] = 1.0f;
+    vtx[2] = 0.0f;
+    int n = 1;
+    for (int i = 1; i < 17; i++) {
+        float theta = (float)i / 18.0f * 3.1415927f;
+        float c = cosf(theta);
+        float s = sinf(theta);
+        for (int j = 0; j < 18; j++) {
+            float phi = (float)j / 18.0f * 6.2831855f;
+            float sp = sinf(phi);
+            float cp = cosf(phi);
+            vtx[n * 3 + 0] = s * sp;
+            vtx[n * 3 + 1] = c;
+            vtx[n * 3 + 2] = s * cp;
+            n++;
+        }
+    }
+    vtx[(16 * 18 + 1) * 3 + 0] = 0.0f;
+    vtx[(16 * 18 + 1) * 3 + 1] = -1.0f;
+    vtx[(16 * 18 + 1) * 3 + 2] = 0.0f;
+    m_pVertex[4]->unlock();
+    m_pIndex[4]->createIndexBuff(16 * 18 * 6, GrlPrimitiveType(4), GrlIndexFormat(1));
+    m_pIndex[4]->lock(&buffer, &size);
+    unsigned short* idx = static_cast<unsigned short*>(buffer);
+    n = 0;
+    for (int j = 0; j < 18; j++) {
+        int next = j + 1 == 18 ? 0 : j + 1;
+        idx[n + 0] = 0;
+        idx[n + 1] = next + 1;
+        idx[n + 2] = j + 1;
+        idx[n + 18 * 3 + 0] = 16 * 18 + 1;
+        idx[n + 18 * 3 + 1] = 15 * 18 + 1 + j;
+        idx[n + 18 * 3 + 2] = 15 * 18 + 1 + next;
+        n += 3;
+    }
+    n += 18 * 3;
+    for (int i = 1; i < 16; i++) {
+        for (int j = 0; j < 18; j++) {
+            int next = j + 1 == 18 ? 0 : j + 1;
+            idx[n++] = (i - 1) * 18 + 1 + j;
+            idx[n++] = (i - 1) * 18 + 1 + next;
+            idx[n++] = i * 18 + 1 + j;
+            idx[n++] = i * 18 + 1 + j;
+            idx[n++] = (i - 1) * 18 + 1 + next;
+            idx[n++] = i * 18 + 1 + next;
+        }
+    }
+    m_pIndex[4]->unlock();
+}
+
+void CloudVertexMan::createCapsule() {
+    void* buffer;
+    unsigned int size;
+    grlib::CGLibVtxVertex* vertex = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxVertex();
+    grlib::CGLibVtxIndex* index = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxIndex();
+    // the top pole, 11 rings of 12 vertices (rings 5 and 6 both on the equator, w 1 above and 0 below), the bottom pole
+    vertex->createVertexBuff((11 * 12 + 2) * 16, 16);
+    vertex->lock(&buffer, &size);
+    float* vtx = static_cast<float*>(buffer);
+    vtx[0] = 0.0f;
+    vtx[1] = 1.0f;
+    vtx[2] = 0.0f;
+    vtx[3] = 1.0f;
+    float* p = &vtx[4];
+    for (unsigned int i = 1; i < 12; i++) {
+        int ring = i > 5 ? i - 1 : i;
+        float theta = (float)ring / 12.0f * 3.1415927f;
+        float w = i > 5 ? 0.0f : 1.0f;
+        float c = cosf(theta);
+        float s = sinf(theta);
+        for (unsigned int j = 0; j < 12; j++) {
+            float phi = (float)j / 12.0f * 6.2831855f;
+            float sp = sinf(phi);
+            float cp = cosf(phi);
+            p[0] = s * sp;
+            p[1] = c;
+            p[2] = s * cp;
+            p[3] = w;
+            p += 4;
+        }
+    }
+    vtx[(11 * 12 + 1) * 4 + 0] = 0.0f;
+    vtx[(11 * 12 + 1) * 4 + 1] = -1.0f;
+    vtx[(11 * 12 + 1) * 4 + 2] = 0.0f;
+    vtx[(11 * 12 + 1) * 4 + 3] = 0.0f;
+    vertex->unlock();
+    index->createIndexBuff(11 * 12 * 6, GrlPrimitiveType(4), GrlIndexFormat(1));
+    index->lock(&buffer, &size);
+    unsigned short* idx = static_cast<unsigned short*>(buffer);
+    int n = 0;
+    for (int j = 0; j < 12; j++) {
+        int next = j + 1 == 12 ? 0 : j + 1;
+        idx[n + 0] = 0;
+        idx[n + 1] = next + 1;
+        idx[n + 2] = j + 1;
+        idx[n + 12 * 3 + 0] = 11 * 12 + 1;
+        idx[n + 12 * 3 + 1] = 10 * 12 + 1 + j;
+        idx[n + 12 * 3 + 2] = 10 * 12 + 1 + next;
+        n += 3;
+    }
+    n += 12 * 3;
+    for (int i = 1; i < 11; i++) {
+        for (int j = 0; j < 12; j++) {
+            int next = j + 1 == 12 ? 0 : j + 1;
+            idx[n++] = (i - 1) * 12 + 1 + j;
+            idx[n++] = (i - 1) * 12 + 1 + next;
+            idx[n++] = i * 12 + 1 + j;
+            idx[n++] = i * 12 + 1 + j;
+            idx[n++] = (i - 1) * 12 + 1 + next;
+            idx[n++] = i * 12 + 1 + next;
+        }
+    }
+    index->unlock();
+    m_pVertex[6] = vertex;
+    m_pIndex[6] = index;
+}
+
+void CloudVertexMan::createHalfSphere() {
+    m_pVertex[5] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxVertex();
+    m_pIndex[5] = new (CloudMan::sys()->m_hWork, nullptr, 0, 4, false) grlib::CGLibVtxIndex();
+    // the top pole and 8 rings of 16 vertices
+    m_pVertex[5]->createVertexBuff((8 * 16 + 1) * 12, 12);
+    void* buffer;
+    unsigned int size;
+    m_pVertex[5]->lock(&buffer, &size);
+    float* vtx = static_cast<float*>(buffer);
+    vtx[0] = 0.0f;
+    vtx[1] = 1.0f;
+    vtx[2] = 0.0f;
+    int n = 1;
+    for (int i = 1; i < 9; i++) {
+        float theta = (float)i / 16.0f * 3.1415927f;
+        float c = cosf(theta);
+        float s = sinf(theta);
+        for (int j = 0; j < 16; j++) {
+            float phi = (float)j / 16.0f * 6.2831855f;
+            float sp = sinf(phi);
+            float cp = cosf(phi);
+            vtx[n * 3 + 0] = s * sp;
+            vtx[n * 3 + 2] = s * cp;
+            vtx[n * 3 + 1] = c;
+            n++;
+        }
+    }
+    m_pVertex[5]->unlock();
+    m_pIndex[5]->createIndexBuff(15 * 16 * 3, GrlPrimitiveType(4), GrlIndexFormat(1));
+    m_pIndex[5]->lock(&buffer, &size);
+    unsigned short* idx = static_cast<unsigned short*>(buffer);
+    n = 0;
+    for (int j = 0; j < 16; j++) {
+        int next = j + 1 == 16 ? 0 : j + 1;
+        idx[n++] = 0;
+        idx[n++] = next + 1;
+        idx[n++] = j + 1;
+    }
+    for (int i = 1; i < 8; i++) {
+        for (int j = 0; j < 16; j++) {
+            int next = j + 1 == 16 ? 0 : j + 1;
+            idx[n++] = (i - 1) * 16 + 1 + j;
+            idx[n++] = (i - 1) * 16 + 1 + next;
+            idx[n++] = i * 16 + 1 + j;
+            idx[n++] = i * 16 + 1 + j;
+            idx[n++] = (i - 1) * 16 + 1 + next;
+            idx[n++] = i * 16 + 1 + next;
+        }
+    }
+    m_pIndex[5]->unlock();
+}
+
 
 CloudVertexMan::~CloudVertexMan() { releaseVertexList(); }
 
