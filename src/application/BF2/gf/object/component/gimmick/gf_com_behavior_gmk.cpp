@@ -93,6 +93,12 @@ void GfComBehaviorGmk::disposeMenuObj() {
     }
 }
 
+void GfComBehaviorGmk::setActivateCollison(bool activate) {
+    if (fw::ColiMoveObject* coli = getColiObject()) {
+        coli->setActivate(activate);
+    }
+}
+
 fw::ColiMoveObject* GfComBehaviorGmk::getColiObject() const {
     const GfComCollider* collider = m_owner->getComponent<GfComCollider>(4);
     if (collider != nullptr && collider->m_coliObjects.size() != 0) {
