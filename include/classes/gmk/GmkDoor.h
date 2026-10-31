@@ -6,6 +6,10 @@
 #include "classes/gmk/BootedGmkCond.h"
 class CBdatWrapper;
 #include "classes/gmk/IGmkPhantomEventListener.h"
+#include "classes/gmk/GmkCamera.h"
+#include "classes/gmk/GmkPhantom.h"
+#include "classes/gmk/GmkPhantomSimple.h"
+#include "classes/gmk/GmkCtrlVolSe.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 #include "classes/gf/IGfObjListener.h"
@@ -64,6 +68,8 @@ public:
         BootedGmkCond m_bootedGmk2;  // the row's OP_gimmickType/ID
         BootedGmkCond m_bootedGmk3;  // the row's SPOP_gimmickType/ID
     };
+    // inline: Vector<GmkDoor>::resize builds each in place (its camera with no CreateInfo)
+    GmkDoor() : m_camera(nullptr) {}
     virtual ~GmkDoor();  // slot 0
     const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
     virtual gmk::GmkType getGmkType() const;  // slot 2
@@ -82,11 +88,18 @@ public:
     void seqDoor_Booted(float dt);
     void seqDoor_Shutdowned(float dt);
     void seqDoor_SpBooted(float dt);
-    unsigned char pad_58[0x260];
+    void disposeGmkPhantom();
+    unsigned char pad_58[0x8];
+    // 0x60, 0x1c0, 0x250, 0x2e0: the destructor destroys them in reverse (the names are not the original's)
+    GmkCamera m_camera;
+    GmkPhantom m_phantom;
+    GmkPhantomSimple m_phantomSimple;
+    unsigned char pad_2b0[0x8];
     // 0x2b8: its game object (onGobEvent forgets it when it goes away; -1: none; the name is not the original's)
     gf::GF_OBJ_HANDLE* m_gob;
     float m_doorWait;  // 0x2c0: seqDoor_SpBooted counts it up to the row's door_nextwait (the name is not the original's)
-    unsigned char pad_2c4[0x9c];  // fields: size from TGmkList::getInst's stride
+    unsigned char pad_2c4[0x1c];
+    GmkCtrlVolSe m_ctrlVolSe;  // 0x2e0; size 0x360 from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

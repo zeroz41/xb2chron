@@ -23,7 +23,9 @@ public:
     bool m_noCameraFade : 1;
     bool m_weaponDrawDisp : 1;
     unsigned char m_flags5 : 3;  // unknown
-    unsigned char pad_6[0x2];
+    // bits too: the flags at 0x4 are one 32-bit unit (GmkDoorPhantomManager::listenerGfObj keeps the whole word of
+    // m_flags5bit2 across a call)
+    unsigned short pad_6 : 16;
     // a GfBdatChrEnParam row: ai::AiData::getScoutStartHp passes it to getChrEnParamScoutStartHp (the name is not the
     // original's)
     unsigned short m_scoutParamId;

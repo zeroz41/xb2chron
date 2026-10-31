@@ -159,6 +159,11 @@
 #include "classes/gf/GfFieldManager.h"
 #include "classes/fw/BdatManager.h"
 #include "classes/gf/DataParamAcc.h"
+#include "gf/SDataEnemy.h"
+#include "classes/gmk/GmkDoorPhantomManager.h"
+#include "classes/gmk/GmkDmgPhantomManager.h"
+#include "classes/gf/GfEvent.h"
+#include "classes/gf/GfGamePlayerFormation.h"
 #include "classes/gf/GfBdatChrEnArrange.h"
 
 namespace gf {
@@ -996,6 +1001,97 @@ bool GmkFieldVolume::isValid() const { return m_list != nullptr && m_createInfo.
 void GmkDmgPhantom::dispose() {
     m_phantom.dispose();
     AGmkBase::dispose();
+}
+
+GmkDmgPhantomManager::GmkDmgPhantomManager() : pad_38(false) {
+    gf::GfObjManager::addListener(this, gf::IGfObjListener::OBJEVT(0));
+    gf::GfEvent::addEventCallback(this);
+    create();
+}
+
+void GmkDmgPhantomManager::create() {
+    m_targets.destroy();
+    m_targets.setAllocator(gf::getAllocator(gf::ALLOCATOR(0)));
+    int capacity = gf::GfObjManager::getGfObjCapacity(5);
+    m_targets.reserve(capacity > 0 ? static_cast<unsigned int>(capacity + 3) : 3u);
+}
+
+GmkDmgPhantomManager::~GmkDmgPhantomManager() {
+    m_targets.destroy();
+    gf::GfEvent::removeEventCallback(this);
+    gf::GfObjManager::removeListener(this);
+}
+
+void GmkDmgPhantomManager::addTargetInfo(gf::GF_OBJ_HANDLE* handle) {
+    for (const GmkDmgPhantomTargetInfo& info : m_targets) {
+        if (info.m_gob == handle) {
+            return;
+        }
+    }
+    if (m_targets.size() != m_targets.capacity()) {
+        m_targets.push_back(GmkDmgPhantomTargetInfo(handle));
+    }
+}
+
+// whether an object of the given type is one the damage phantoms watch: the players standing alone, and enemies
+// with the flag (inlined; the name is not the original's)
+static bool isDmgPhantomTarget(gf::GF_OBJ_HANDLE* handle, unsigned int type) {
+    gf::GfObjAcc acc(handle);
+    if (type == 3 || type == 4) {
+        unsigned int index = mm::mtl::PtrSingleton<gf::GfGamePlayerFormation>::sys()->findPlayer(handle);
+        if (index == static_cast<unsigned int>(-1)) {
+            return false;
+        }
+        return mm::mtl::PtrSingleton<gf::GfGamePlayerFormation>::sys()->m_players[index].m_standalone;
+    }
+    if (type != 5) {
+        return false;
+    }
+    gf::DataParamAcc param(handle);
+    const gf::SDataEnemy* enemy = param.getSDataEnemy();
+    if (enemy == nullptr) {
+        return false;
+    }
+    return enemy->m_fieldDamage;
+}
+
+void GmkDmgPhantomManager::listenerGfObj(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle, unsigned int type) {
+    if (!isDmgPhantomTarget(handle, type)) {
+        return;
+    }
+    switch (evt) {
+    case gf::IGfObjListener::OBJEVT(2):
+        addTargetInfo(handle);
+        break;
+    case gf::IGfObjListener::OBJEVT(3):
+        if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            for (GmkDmgPhantomTargetInfo* it = m_targets.begin(); it != m_targets.end(); ++it) {
+                if (it->m_gob == handle) {
+                    m_targets.erase(it);
+                    break;
+                }
+            }
+        }
+        break;
+    }
+}
+
+void GmkDmgPhantomManager::gevPartyMover(gf::GF_OBJ_HANDLE* handle, bool mover) {
+    int type = gf::GfObjUtil::getObjType(handle);
+    if (type == 3 || type == 4) {
+        if (mover) {
+            if (gf::GfGameManager::isPartyMover(handle)) {
+                addTargetInfo(handle);
+            }
+        } else if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            for (GmkDmgPhantomTargetInfo* it = m_targets.begin(); it != m_targets.end(); ++it) {
+                if (it->m_gob == handle) {
+                    m_targets.erase(it);
+                    break;
+                }
+            }
+        }
+    }
 }
 
 GmkDmgPhantom::~GmkDmgPhantom() { dispose(); }
@@ -2736,10 +2832,91 @@ void GmkDoor::seqDoor_SpBooted(float dt) {
     }
 }
 
+void GmkDoor::dispose() {
+    disposeGmkPhantom();
+    m_camera.dispose();
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    m_ctrlVolSe.dispose();
+    AGmkBase::dispose();
+}
+
+void GmkDoor::disposeGmkPhantom() {
+    m_phantomSimple.dispose();
+    m_phantom.dispose();
+}
+
 void GmkDoor::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
     AGmkBase::onGobEvent(evt, handle);
     if (evt == gf::IGfObjListener::OBJEVT(3)) {
         m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+}
+
+GmkDoorPhantomManager::GmkDoorPhantomManager() {
+    gf::GfObjManager::addListener(this, gf::IGfObjListener::OBJEVT(0));
+    create();
+}
+
+void GmkDoorPhantomManager::create() {
+    m_targets.destroy();
+    m_targets.setAllocator(gf::getAllocator(gf::ALLOCATOR(0)));
+    int capacity = gf::GfObjManager::getGfObjCapacity(5);
+    m_targets.reserve(capacity > 0 ? static_cast<unsigned int>(capacity + 3) : 3u);
+}
+
+GmkDoorPhantomManager::~GmkDoorPhantomManager() {
+    m_targets.destroy();
+    gf::GfObjManager::removeListener(this);
+}
+
+// whether an object of the given type is one the door phantoms watch: objects of types 3 and 4, and enemies with
+// the flag (inlined; the name is not the original's)
+static bool isDoorPhantomTarget(gf::GF_OBJ_HANDLE* handle, unsigned int type) {
+    gf::GfObjAcc acc(handle);
+    switch (type) {
+    case 3:
+    case 4:
+        return true;
+    case 5: {
+        gf::DataParamAcc param(handle);
+        const gf::SDataEnemy* enemy = param.getSDataEnemy();
+        if (enemy == nullptr) {
+            return false;
+        }
+        return enemy->m_flags5bit2;
+    }
+    default:
+        return false;
+    }
+}
+
+void GmkDoorPhantomManager::listenerGfObj(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle, unsigned int type) {
+    if (!isDoorPhantomTarget(handle, type)) {
+        return;
+    }
+    switch (evt) {
+    case gf::IGfObjListener::OBJEVT(2):
+        if (m_targets.size() != m_targets.capacity()) {
+            m_targets.push_back(GmkDoorPhantomTargetInfo(handle));
+        }
+        break;
+    case gf::IGfObjListener::OBJEVT(3):
+        if (handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            for (GmkDoorPhantomTargetInfo* it = m_targets.begin(); it != m_targets.end(); ++it) {
+                if (it->m_gob == handle) {
+                    m_targets.erase(it);
+                    break;
+                }
+            }
+        }
+        break;
     }
 }
 void GmkMapGimmick::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
@@ -2861,6 +3038,7 @@ void GmkWarp::reqRecreateIcon() {
 }
 
 GmkWarp::~GmkWarp() { dispose(); }
+GmkDoor::~GmkDoor() { dispose(); }
 void GmkClimbing::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
     m_scenarioFlag = ScenarioFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMin", row, 2),
                                       (unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMax", row, 2));

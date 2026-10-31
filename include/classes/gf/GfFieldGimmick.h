@@ -92,8 +92,7 @@ public:
     gmk::GmkManager m_gmkMgr;  // 0x20 (the name is not the original's)
     gmk::GmkAccManager m_accMgr;  // 0xF3B0 (the names of the managers are not the original's)
     gmk::GmkDoorPhantomManager m_doorPhantomMgr;  // 0xF3E8
-    gmk::GmkDmgPhantomManager m_dmgPhantomMgr;  // 0xF418
-    unsigned char pad_F428[0x30];
+    gmk::GmkDmgPhantomManager m_dmgPhantomMgr;  // 0xF418 (0x40 bytes)
     gmk::GmkAntiBladeAreaManager m_antiBladeAreaMgr;  // 0xF458
     gmk::GmkCtrlVolSeManager m_ctrlVolSeMgr;  // 0xF480
     // cleared by the constructor (its use is not known; the name is not the original's)
