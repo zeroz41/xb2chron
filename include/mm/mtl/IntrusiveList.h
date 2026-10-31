@@ -84,6 +84,12 @@ public:
         linkNode(ptr, &m_root);
         ++m_size;
     }
+    // an element linked last, by reference: no assertion (1.0.0's GmkPhantom constructor links itself so, with no
+    // check; the overload is inferred, its name is not known to be the original's)
+    void push_back(T& ref) {
+        linkNode(&ref, &m_root);
+        ++m_size;
+    }
     // the first element, unlinked
     T* pop_front() {
         IntrusiveListNodeBase* node = m_root.m_next;

@@ -25,10 +25,14 @@ class GfMemberInfo {
 public:
     GfMemberInfo() { clear(); }
     ~GfMemberInfo() { clear(); }
+    // the first eight handles from last to first, then the ninth: the order of 3.0.1's stores in
+    // FixedArray<GfMemberInfo, 3>'s destructor and GfGameParty's constructor (1.0.0's clear, with seven handles,
+    // stores the first six likewise, then the seventh)
     void clear() {
-        for (int i = 0; i < 9; ++i) {
+        for (int i = 7; i >= 0; --i) {
             m_handles[i] = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
         }
+        m_handles[8] = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
     }
 
     // the member's object handles: 0 the driver (getHandleDriver reads its index by the party argument),

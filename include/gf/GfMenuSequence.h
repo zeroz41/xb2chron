@@ -32,6 +32,16 @@ public:
         delegate.set(m_owner, job);
         m_jobs.push_back(delegate);
     }
+    // a job that is a member of another class, run on the sequence's object: GfMenuObjPopup's gift sequence is a
+    // GfMenuSequence<GfMenuObjShop, 8> (1.0.0's and 3.0.1's symbols of its addAnimJob and wait_anim), yet its jobs
+    // are GfMenuObjPopup's members, called on the sequence's object (fn_710045C9E4 builds the delegate from the
+    // owner at 0x278 with memberFuncInvoker<GfMenuObjPopup>)
+    template <typename U>
+    void addJob(bool (U::*job)()) {
+        mm::mtl::Delegate<bool()> delegate;
+        delegate.set((U*)m_owner, job);
+        m_jobs.push_back(delegate);
+    }
     // runs the first job, and drops it once it returns true
     void update() {
         if (!m_jobs.empty()) {

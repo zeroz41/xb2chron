@@ -19,7 +19,7 @@ namespace gf {
 GfMenuObjPopup::GfMenuObjPopup(unsigned int handle)
     : GfMenuObject(handle), m_open(false), m_giftWait(false), pad_26(false), m_count(0), m_number05_1(nullptr),
       m_number05_2(nullptr), m_number05_3(nullptr), m_number05_4(nullptr), m_number09(nullptr), m_number11(nullptr),
-      m_seq(this), m_giftSeq(this) {}
+      m_seq(this), m_giftSeq((GfMenuObjShop*)this) {}
 
 GfMenuObjPopup::~GfMenuObjPopup() {
     if (m_number05_1 != nullptr) {

@@ -6,6 +6,7 @@
 #include "gf/GfMenuSequence.h"
 
 namespace gf {
+class GfMenuObjShop;
 // table 0x7100B64118
 class GfMenuObjPopup : public ::gf::GfMenuObject {
 public:
@@ -68,7 +69,9 @@ public:
     ui::UIObjectNumberPlugin* m_number09;
     ui::UIObjectNumberPlugin* m_number11;
     GfMenuSequence<GfMenuObjPopup, 8> m_seq;      // 0x60: the name is not the original's
-    GfMenuSequence<GfMenuObjPopup, 8> m_giftSeq;  // 0x2F0: IMG_gift_icon's animations; the name is not the original's
+    // 0x2F0: IMG_gift_icon's animations; the name is not the original's. A GfMenuSequence<GfMenuObjShop, 8> in the
+    // original (the symbols of the addAnimJob, wait_anim and memberFuncInvoker this unit emits), on this object
+    GfMenuSequence<GfMenuObjShop, 8> m_giftSeq;
 };
 }  // namespace gf
 

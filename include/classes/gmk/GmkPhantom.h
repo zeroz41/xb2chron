@@ -24,7 +24,7 @@ public:
         pad_80 = 0;
         m_coliObject = nullptr;
         pad_70 = nullptr;
-        GmkPhantomManager::get()->m_phantoms.push_back(this);
+        GmkPhantomManager::get()->m_phantoms.push_back(*this);
     }
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GmkPhantom();  // slot 1
