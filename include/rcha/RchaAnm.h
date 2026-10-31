@@ -69,7 +69,7 @@ public:
     mm::mtl::FixStr<64> m_name;  // 0x00
     Buffer m_buffer;             // 0x48
     unsigned int m_value;        // 0x70 the constant, when there is no track
-    int m_count;                 // 0x74 the track's frame count
+    unsigned int m_count;        // 0x74 the track's frame count
     unsigned int* m_data;        // 0x78 the track
     bool m_compressed;           // 0x80
     unsigned int m_id;           // 0x84 the track's id from the data
