@@ -147,6 +147,42 @@ void MicroThread::releaseGroup(MLTHG* id) {
     m_cs.unlock();
 }
 
+void MicroThread::releaseThread(MLTH* id) {
+    if (id == reinterpret_cast<MLTH*>(-1)) {
+        return;
+    }
+    m_cs.lock();
+    unsigned long handle = reinterpret_cast<unsigned long>(id);
+    unsigned long groupNo = handle >> 28 & 0xF;
+    unsigned long threadNo = handle >> 16 & 0xFF;
+    GROUP* group = m_groups[groupNo];
+    MTHREAD*& slot = group->m_threads[threadNo];
+    MTHREAD* thread = slot;
+    if (thread == nullptr) {
+        for (MTHREAD** it = m_newThreads.begin(); it != m_newThreads.end(); ++it) {
+            MTHREAD* added = *it;
+            if (added->m_id == id) {
+                m_newThreads.erase(it);
+                if (added != nullptr) {
+                    destroyThread(added);
+                    delete added;
+                    --group->m_threadNum;
+                }
+                break;
+            }
+        }
+    } else if (thread->m_id == id) {
+        destroyThread(thread);
+        if (slot != nullptr) {
+            delete slot;
+            slot = nullptr;
+        }
+        group->m_list.erase(group->m_list.find(thread));
+        --group->m_threadNum;
+    }
+    m_cs.unlock();
+}
+
 void MicroThread::sleep(unsigned int frames, bool wait) {
     if (frames == 0) {
         m_currentGroup->m_current->m_sleepClock = 0;

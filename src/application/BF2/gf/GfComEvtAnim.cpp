@@ -184,6 +184,26 @@ bool GfComEvtAnim::Mot::easeIn(const char* name, AnimLayer) {
     return true;
 }
 
+bool GfComEvtAnim::Mot::easeOut(const char* name, AnimLayer) {
+    if (m_blender == nullptr) {
+        return false;
+    }
+    anm::Control** it = m_easeControls.begin();
+    for (mm::mtl::FixStr<32>* easeName = m_easeNames.begin(); it != m_easeControls.end(); ++it, ++easeName) {
+        if (strcmp(easeName->m_str, name) == 0) {
+            m_blender->removeControl(*it);
+            if (*it != nullptr) {
+                (*it)->release();
+                *it = nullptr;
+            }
+            m_easeControls.erase(it);
+            m_easeNames.erase(easeName);
+            return true;
+        }
+    }
+    return false;
+}
+
 GfComEvtAnim::GfComEvtAnim() : m_res(nullptr), m_setupFlags(0), m_sampleFlag(true) {}
 
 void GfComEvtAnim::cleanup() {

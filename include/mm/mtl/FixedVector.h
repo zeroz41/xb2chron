@@ -195,14 +195,17 @@ public:
     }
     // as Vector::erase: the end read once, a block copy for types assigned bit for bit, else the ones after it assigned
     // down one by one (GfMenuSequence<., N>::wait_anim's AnimJob: a FixStr's copy, 1.0.0's out-of-line
-    // FixedVector<GfComEffectCaster::Param, 256>::erase), then the last slot null-tested before its destructor
+    // FixedVector<GfComEffectCaster::Param, 256>::erase), then the last slot null-tested before its destructor.
+    // The block's byte count is its own statement before the copy: the original computes it before the destination
+    // (MicroThread::releaseThread, GfComEvtAnim::Mot::easeOut)
     iterator erase(iterator it) {
 #line 345 MM_MTL_FIXED_VECTOR_PATH
         MM_ASSERT(validate_iterator(it));
         iterator last = end();
         if (it != last) {
             if (__has_trivial_assign(T)) {
-                memcpy(it, it + 1, (last - (it + 1)) * sizeof(T));
+                size_type bytes = (last - (it + 1)) * sizeof(T);
+                memcpy(it, it + 1, bytes);
             } else {
                 copy_forward(it + 1, last, it);
             }
