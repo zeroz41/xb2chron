@@ -60,6 +60,9 @@
 #include "classes/gmk/GmkRoutedEnemy.h"
 #include "classes/gmk/GmkRoute.h"
 #include "classes/gf/DataObjEnemy.h"
+#include "classes/gf/LocatorTalk_DummyGroup.h"
+#include "classes/gf/LocatorBat_EnemyGroupID.h"
+#include "mm/mtl/FixStr.h"
 
 namespace gf {
 
@@ -178,11 +181,115 @@ void LocatorPrecious::onTraverse(const gmk::AGmkBase& gmk) {
     m_accs.push_back(gmk::GmkAcc(info));
     m_posList.push_back(*gmk.m_pos);
 }
+void LocatorBat_EnemyGroupID::create(QuestID questId, unsigned short groupId) {
+    dispose();
+    m_questId = questId;
+    m_groupId = groupId;
+    unsigned char* groupFp = GfDataBdat::getFP(0xd9);
+    // CHR_EnArrange (0x8B): each enemy's zone, 0 when it has none
+    unsigned char* enemyFp = GfDataBdat::getFP(0x8b);
+    mm::mtl::FixStr<16> name;
+    for (int i = 1; i < 9; i++) {
+        name.format("EnemyID%d", i);
+        unsigned int enemyId = Bdat::getValCheckU16(groupFp, name.m_str, groupId);
+        if (enemyId != 0) {
+            m_enemyIds.push_back(enemyId);
+            unsigned char zoneId = Bdat::getValCheckU8(enemyFp, "ZoneID", enemyId);
+            if (zoneId == 0) {
+                zoneId = GfGameManager::getMapID();
+            }
+            m_zoneIds.push_back(zoneId);
+        }
+    }
+    if (m_enemyIds.size() == 0) {
+        dispose();
+        return;
+    }
+    unsigned char zoneId = Bdat::getValCheckU8(enemyFp, "ZoneID", m_enemyIds[0]);
+    if (zoneId == 0) {
+        dispose();
+        return;
+    }
+    m_mapBdatId = zoneId;
+    m_gmkSetId = GfFieldGimmick::getBdatIdFrom_FLD_maplist_To_RSC_GmkSetList(getMapBdatId());
+    int iconId = gmk::getBdatIdOfQuestTargetIcon(
+        GfQuestTarget::getIconTypeBattle(2, groupId, questId, reinterpret_cast<GF_OBJ_HANDLE*>(-1), true));
+    m_iconBdatId = iconId < 0 ? 0x19f : iconId;
+}
 LocatorBat_EnemySpeciesID::LocatorBat_EnemySpeciesID(QuestID questId, unsigned char speciesId)
     : m_speciesId(0), m_gmkSetId(-1) {
     if (!questId.empty() && speciesId != 0) {
         create(questId, speciesId);
     }
+}
+void LocatorTalk_DummyGroup::create(QuestID questId, unsigned short mapId, unsigned short npcId, unsigned short groupId) {
+    dispose();
+    m_mapBdatId = mapId;
+    m_questId = questId;
+    m_npcId = npcId;
+    m_groupId = groupId;
+    m_gmkSetId = gmk::GmkManager::sys()->findFirstBdatId_RSC_GmkSetList(mapId);
+    if (npcId != 0) {
+        m_npcIds.push_back(npcId);
+    }
+    unsigned char* fp = GfDataBdat::getFP(0xd0);
+    mm::mtl::FixStr<16> name;
+    for (int i = 1; i < 10; i++) {
+        name.format("NpcID%d", i);
+        unsigned short id = Bdat::getValCheckU16(fp, name.m_str, groupId);
+        if (id != 0) {
+            m_npcIds.push_back(id);
+        }
+    }
+    if (m_npcIds.size() == 0) {
+        dispose();
+    }
+}
+void LocatorTalk_DummyGroup::update() {
+    if (m_gmkSetId <= 0 || m_npcIds.size() == 0) {
+        return;
+    }
+    m_posList.clear();
+    const gmk::GmkSet* set = gmk::GmkManager::sys()->findGmkSet(m_gmkSetId);
+    if (set == nullptr) {
+        return;
+    }
+    const gmk::GmkNpcManager& npcManager = set->m_npcManager;
+    int mapId = getMapBdatId();
+    unsigned long num = m_npcIds.size();
+    if (num == 0) {
+        return;
+    }
+    const unsigned short* it = m_npcIds.begin();
+    const unsigned short* end = it + num;
+    do {
+        unsigned short npcId = *it;
+        unsigned int iconType = GfQuestTarget::getIconTypeTalk(npcId, m_questId, mapId, true);
+        if (iconType == 0) {
+            continue;
+        }
+        m_iconBdatId = gmk::getBdatIdOfQuestTargetIcon(iconType);
+        const gmk::GmkNpcIdInfo* info = npcManager.getNpcIdInfoByNpcId(npcId);
+        if (info->m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            GfObjAcc acc(info->m_handle);
+            if (acc.isValidTransform()) {
+                m_posList.push_back(acc.getWorldTransformNoSync().position);
+            }
+            continue;
+        }
+        const gmk::AGmkNpc* npc = info->m_gmk;
+        if (npc == nullptr) {
+            continue;
+        }
+        if (!npc->isPopCondMatched()) {
+            continue;
+        }
+        mm::Vec3 pos;
+        mm::Vec3 rot;
+        if (npc->findPopPosRot(pos, rot)) {
+            m_posList.push_back(pos);
+        }
+    } while (++it != end);
 }
 LocatorReach::LocatorReach(QuestID questId, int row) : m_category(0), m_placeId(0), m_posNum(0), m_pos(mm::Vec3::zero) {
     if (!questId.empty() && row > 0) {
@@ -316,6 +423,55 @@ void LocatorReach::update() {
             m_pos = *event->m_pos;
             m_posNum = 1;
         }
+    }
+}
+// 1.0.0's symbols name it (0x71002DDBCC, same stores and columns, called by createByQuest); the symbols still spell
+// it fn_710026E9C4
+void LocatorGimmick::create(QuestID questId, unsigned short row) {
+    dispose();
+    m_questId = questId;
+    unsigned char* fp = GfDataBdat::getFP(0xd1);
+    m_mapBdatId = Bdat::getValCheckU16(fp, "MapID", row);
+    unsigned short doorId = Bdat::getValCheckU16(fp, "DoorGimmickID", row);
+    unsigned short elevatorId = Bdat::getValCheckU16(fp, "ElevatorGimmickID", row);
+    unsigned short jumpId = Bdat::getValCheckU16(fp, "JumpGimmickID", row);
+    unsigned short mapGimmickId = Bdat::getValCheckU16(fp, "MapGimmickID", row);
+    unsigned short warpId = Bdat::getValCheckU16(fp, "WarpGimmickID", row);
+    unsigned short salvageId = Bdat::getValCheckU16(fp, "SalvagePointID", row);
+    unsigned short tboxId = Bdat::getValCheckU16(fp, "TboxPopID", row);
+    unsigned short enemyWaveId = Bdat::getValCheckU16(fp, "EnemyWaveID", row);
+    unsigned short campId = Bdat::getValCheckU16(fp, "CampPopID", row);
+    unsigned short collectionId = Bdat::getValCheckU16(fp, "CollectionPopID", row);
+    if (doorId != 0) {
+        m_gmkType = gmk::GmkDoor::TYPE;
+        m_gmkId = doorId;
+    } else if (elevatorId != 0) {
+        m_gmkType = gmk::GmkElevator::TYPE;
+        m_gmkId = elevatorId;
+    } else if (jumpId != 0) {
+        m_gmkType = gmk::GmkJump::TYPE;
+        m_gmkId = jumpId;
+    } else if (mapGimmickId != 0) {
+        m_gmkType = gmk::GmkMapGimmick::TYPE;
+        m_gmkId = mapGimmickId;
+    } else if (warpId != 0) {
+        m_gmkType = gmk::GmkWarp::TYPE;
+        m_gmkId = warpId;
+    } else if (salvageId != 0) {
+        m_gmkType = gmk::GmkSalvage::TYPE;
+        m_gmkId = salvageId;
+    } else if (tboxId != 0) {
+        m_gmkType = gmk::GmkTbox::TYPE;
+        m_gmkId = tboxId;
+    } else if (enemyWaveId != 0) {
+        m_gmkType = 0x3a;
+        m_gmkId = enemyWaveId;
+    } else if (campId != 0) {
+        m_gmkType = gmk::TUnk_B6D660::TYPE;
+        m_gmkId = campId;
+    } else if (collectionId != 0) {
+        m_gmkType = gmk::GmkCollection::TYPE;
+        m_gmkId = collectionId;
     }
 }
 void LocatorGimmick::update() {

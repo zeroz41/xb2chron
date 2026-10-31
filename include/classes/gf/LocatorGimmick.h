@@ -17,6 +17,9 @@ public:
         return &m_pos;
     }
     virtual void update();  // slot 6
+    // reads its gimmick from row's MapID and *GimmickID/*PopID columns of BDAT table 0xD1 (1.0.0's symbols name it
+    // create, 0x71002DDBCC; 3.0.1's GfFieldLocator::createByQuest calls it)
+    void create(QuestID questId, unsigned short row);
     // the destructor's clearing; 1.0.0's symbols name it dispose() (3.0.1 inlines it)
     void dispose() {
         m_posNum = 0;
