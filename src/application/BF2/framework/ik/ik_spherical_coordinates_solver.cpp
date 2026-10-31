@@ -45,15 +45,19 @@ bool SphericalCoordinatesIkSolver::setupLimit(const ParamAdapter& param, const c
 
 SphericalCoordinatesIkSolver::~SphericalCoordinatesIkSolver() {}
 
-// solve (0x710018BA18) is not matched yet: written as
-//     const mm::Vec3& position = m_frame->m_worldTransform.position;
-//     mm::Quat rotation = m_frame->m_worldTransform.rotation;
-//     mm::Vec3 target = mm::Quat::inverse(rotation).rotate(m_target - position);
-//     anm::QsTransform transform = m_pose->getBoneModelSpace(m_bone);
-//     anm::SphericalrdinatesIkSolver::solve(m_limit, target, isEnable() ? 1.0f : 0.0f, &transform);
-//     m_pose->setBoneModelSpace(m_bone, transform, anm::Pose::PROPAGATE_TYPE(1));
-// (after an isEnable() early return) its data flow is the original's; the original loads the position before
-// m_target for the difference, and schedules the rotation differently
+void SphericalCoordinatesIkSolver::solve(UpdateInfo const& info) {
+    if (!isEnable()) {
+        return;
+    }
+    const mm::Vec3& position = m_frame->m_worldTransform.position;
+    mm::Quat rotation = m_frame->m_worldTransform.rotation;
+    mm::Quat inverse = mm::Quat::inverse(rotation);
+    mm::Vec3 target = m_target - position;
+    inverse.rotate(target, target);
+    anm::QsTransform transform = m_pose->getBoneModelSpace(m_bone);
+    anm::SphericalrdinatesIkSolver::solve(m_limit, target, isEnable() ? 1.0f : 0.0f, &transform);
+    m_pose->setBoneModelSpace(m_bone, transform, anm::Pose::PROPAGATE_TYPE(1));
+}
 
 void SphericalCoordinatesIkSolver::resetLimit() {
     mm::Quat rotation = m_pose->getBoneModelSpace(m_bone).m_rotation;
