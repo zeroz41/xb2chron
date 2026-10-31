@@ -150,6 +150,18 @@ unsigned long GetThreadAvailableCoreMask();
 ThreadType* GetCurrentThread();
 int GetCurrentCoreNumber();
 
+// 8-aligned (it holds pointers); 0x58 bytes: ml::MicroThreadNx keeps each fiber's stack right after one
+struct alignas(8) FiberType {
+    unsigned char pad_0[0x58];
+};
+typedef FiberType* (*FiberFunction)(void* argument);
+
+void InitializeFiber(FiberType* fiber, FiberFunction function, void* argument, void* stack, unsigned long stackSize,
+                     int option);
+void FinalizeFiber(FiberType* fiber);
+void SwitchToFiber(FiberType* fiber);
+FiberType* GetCurrentFiber();
+
 }}  // namespace nn::os
 
 #endif

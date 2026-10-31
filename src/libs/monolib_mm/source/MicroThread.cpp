@@ -1,3 +1,8 @@
+#define MM_LIB_FROM_MONOLIB_MM
+#include "nn/os.h"
+#include "classes/ml/MicroThread.h"
+#include "classes/ml/MicroThreadNx.h"
+#include "ml/MlMem.h"
 #include "classes/ml/ScnDebug.h"
 #include "classes/ml/ScnDebugManipu.h"
 #include "classes/ml/ScnObj.h"
@@ -65,8 +70,131 @@ CSNC::~CSNC() {
     m_section->unlock();
 }
 
+MicroThreadNx::MicroThreadNx() {
+    for (int i = 0; i < 16; i++) {
+        m_fibers[i].m_stack = mtl::MemManager::allocate(WorkCpu::getMemStack(), 0x10000, 0x1000, false, "no name", 0);
+    }
+}
+
+MicroThread::~MicroThread() {}
+
+void MicroThreadNx::setupThread(MTHREAD* thread, nn::os::FiberType* (*func)(void*)) {
+    FIBER* fiber = nullptr;
+    for (FIBER* it = m_fibers; it != m_fibers + 16; ++it) {
+        if (it->m_useNum == 0) {
+            fiber = it;
+            break;
+        }
+    }
+    nn::os::InitializeFiber(&fiber->m_fiber, func, nullptr, fiber->m_stack, 0x10000, 0);
+    ++fiber->m_useNum;
+    thread->m_fiber = &fiber->m_fiber;
+}
+
+void MicroThreadNx::switchThreadMain(MTHREAD*) {
+    nn::os::SwitchToFiber(nullptr);
+}
+
+MicroThread* MicroThread::create() {
+    MicroThread* instance = sys();
+    if (instance == nullptr) {
+        instance = new (MlMem::getProductMem(), nullptr, 0, 4, false) MicroThreadNx();
+    }
+    return instance;
+}
+
+void MicroThread::destroy() {
+    if (sys() != nullptr) {
+        delete sys();
+    }
+}
+
+MLTHG* MicroThread::createGroup() {
+    m_cs.lock();
+    long index = -1;
+    for (int i = 0; i < 16; i++) {
+        if (m_groups[i] == nullptr) {
+            index = i;
+            break;
+        }
+    }
+    GROUP* group = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) GROUP();
+    group->m_id = reinterpret_cast<MLTHG*>(index);
+    m_groups[index] = group;
+    ++m_groupNum;
+    MLTHG* id = group->m_id;
+    m_cs.unlock();
+    return id;
+}
+
+void MicroThread::releaseGroup(MLTHG* id) {
+    if (id == reinterpret_cast<MLTHG*>(-1)) {
+        return;
+    }
+    m_cs.lock();
+    GROUP*& slot = m_groups[reinterpret_cast<unsigned long>(id)];
+    GROUP* group = slot;
+    for (int i = 0; i < 64; i++) {
+        if (group->m_threads[i] != nullptr) {
+            releaseThread(group->m_threads[i]->m_id);
+        }
+    }
+    if (slot != nullptr) {
+        delete slot;
+        slot = nullptr;
+    }
+    --m_groupNum;
+    m_cs.unlock();
+}
+
+void MicroThread::sleep(unsigned int frames, bool wait) {
+    if (frames == 0) {
+        m_currentGroup->m_current->m_sleepClock = 0;
+    } else {
+        DevClock::getClockNow(m_currentGroup->m_current->m_sleepClock);
+    }
+    m_currentGroup->m_current->m_sleepTime = frames;
+    m_currentGroup->m_current->m_waitFrames = wait;
+    ::mm::mtl::FixedList<MTHREAD*, 64>::iterator it = m_currentGroup->m_list.find(m_currentGroup->m_current);
+    for (++it; it != m_currentGroup->m_list.end(); ++it) {
+        MTHREAD* next = *it;
+        if (next->isAwake()) {
+            MTHREAD* current = m_currentGroup->m_current;
+            m_currentGroup->m_current = next;
+            switchThread(current, next);
+            return;
+        }
+    }
+    MTHREAD* current = m_currentGroup->m_current;
+    m_currentGroup->m_current = nullptr;
+    switchThreadMain(current);
+}
+
+void MicroThread::tail() {
+    if (m_newThreads.empty()) {
+        return;
+    }
+    for (MTHREAD** it = m_newThreads.begin(); it != m_newThreads.end(); ++it) {
+        MTHREAD* thread = *it;
+        unsigned long handle = reinterpret_cast<unsigned long>(thread->m_id);
+        GROUP* group = m_groups[handle >> 28 & 0xF];
+        group->m_threads[handle >> 16 & 0xFF] = thread;
+        group->m_list.push_back(thread);
+    }
+    m_newThreads.clear();
+}
+
+void* MicroThread::getCurrentUserData() {
+    return m_currentGroup->m_current->m_userData;
+}
+
 MLTHREAD* ThreadUtil::getCurrentID() {
     return static_cast<MLTHREAD*>(nn::os::GetCurrentThread());
+}
+
+void MicroThread::exit() {
+    m_currentGroup->m_current->m_exit = true;
+    sleep(0, false);
 }
 
 Thread::~Thread() {
