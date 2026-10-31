@@ -18,6 +18,8 @@
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UISelectObjList.h"
 #include "ui/EventData.h"
+#include "classes/gf/GfMenuObjCharSelect.h"
+#include "gf/GfMenuObjUtil.h"
 
 namespace gf {
 
@@ -136,6 +138,65 @@ void GfMenuObjDrEquip2::finalize() {
 
 void GfMenuObjDrEquip2::update() {
     GfMenuObject::update();
+}
+
+namespace {
+// Inferred names, not the original's: 3.0.1 inlines these and 1.0.0 has no out-of-line copy for this menu (its
+// MainListener::reciveEvent inlines them too); the frame (the control parameters above both UI accessors) shows
+// inlined helpers. They follow the sibling menus' 1.0.0 setFadeIn/setFadeOut (GfMenuObjPouch2's, type 1): the
+// common fade from the left, in or out, heard by the handle's object.
+inline int setFadeIn(unsigned int handle) {
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x10000000;
+    param.m_motionLib = "cmn_fade_motion_lr";
+    param.m_motion = "fade_in_l_early";
+    param.m_eventId = 1;
+    int ctrl = GfMenuObjUtil::startCtrl(handle, param, nullptr);
+    GfMenuObject::hookCtrlEvent(handle, ctrl);
+    return ctrl;
+}
+
+inline int setFadeOut(unsigned int handle) {
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x10000000;
+    param.m_motionLib = "cmn_fade_motion_lr";
+    param.m_motion = "fade_out_l_early";
+    param.m_startFlags = 10;
+    param.m_eventId = 2;
+    int ctrl = GfMenuObjUtil::startCtrl(handle, param, nullptr);
+    GfMenuObject::hookCtrlEvent(handle, ctrl);
+    return ctrl;
+}
+}  // namespace
+
+void GfMenuObjDrEquip2::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(true);
+        setFadeIn(handle);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::sendOpenEvent(acc.searchChild("LAY_equip_slot"), 0, 0.0f);
+        } else if (event.m_param0 == 2) {
+            acc.setDisp(false);
+            acc.setTerm();
+            GfMenuObjCharSelect::returnSubMenu();
+            GfMenuObject::returnFSSubLayer(m_owner);
+        }
+        break;
+    case 0x21:
+        acc.setDisp(true);
+        break;
+    case 0x22:
+        setFadeOut(handle);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 void GfMenuObjDrEquip2::fn_71003F1CD8() {
