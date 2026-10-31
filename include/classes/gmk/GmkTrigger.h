@@ -25,6 +25,10 @@ public:
     virtual void update(float);  // slot 6
     virtual void debugDraw() const;  // slot 7
     void seqWaitToValidLinkGmkList(float dt);
+    // its step once linked (named by the symbols): passes its phantom's flag at 0x83 on
+    void seqUpdate(float dt);
+    // named by the symbols; the parameter name is not the original's
+    void applyPopCondMatched(bool matched);
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x34);
     // 0x48..0x50: padding (copy_construct_n<gmk::GmkTrigger> copies nothing there)

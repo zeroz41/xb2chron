@@ -84,6 +84,8 @@ const GmkEnemy* fn_71005B3824(const AGmkBase* gmk, unsigned int index);
 // whether the player's object exists (defined in GmkElevator.cpp's unit; StateFieldHome::isCondMatch is its tail
 // call)
 bool isPlayerExist();
+// whether the navigation mesh has a point near pos (fw::NaviUtil::testNaviColi with 2, 2)
+bool isNaviMeshExist(const mm::Vec3& pos);
 // a gimmick's BDAT row and sheet names for debug output: "(null)" in this build
 const char* debugGetGmkBdatRowName(const AGmkBase& gmk);
 const char* debugGetGmkBdatSheetName(const AGmkBase& gmk);

@@ -30,7 +30,7 @@ public:
     virtual void OnMouseButtonDown(ml::EventView*);  // slot 5
     virtual void OnMouseMove(ml::EventView*);  // slot 6
     virtual void OnMouseButtonUp(ml::EventView*);  // slot 7
-    virtual void OnKeyUp(ml::EventView*);  // slot 8
+    virtual bool OnKeyUp(ml::EventView*);  // slot 8 (returns whether it took the key)
     virtual void OnKeyDown(ml::EventView*);  // slot 9
     // bit 0 is set while the camera is attached to the scene's view: the destructor then detaches it (ml::WinView's
     // detachWorkEvent); the name is not the original's

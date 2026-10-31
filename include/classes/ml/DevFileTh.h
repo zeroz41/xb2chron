@@ -79,6 +79,9 @@ public:
     static FileHandleTh* rfOpen(const DevFileParamTh& param);
     // closes a handle rfOpen returned; 0 (forwards to its Impl; the parameter name is not the original's)
     static int rfClose(FileHandleTh* handle);
+    // named by the symbols: whether a handle rfOpen returned is busy (event::StmPackData calls it before rfClose; the
+    // parameter name is not the original's)
+    static bool rfIsBusy(FileHandleTh* handle);
     // named by the symbols: called once a save's write ended (GfGameSave::OnFileEvent)
     static void flushSave();
     // named by the symbols: starts writing size bytes of data to path, listener gets the end event (GfGameSave)

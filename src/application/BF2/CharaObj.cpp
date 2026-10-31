@@ -65,6 +65,8 @@
 #include "classes/event/RandUtil.h"
 #include "classes/event/CharaStopHead.h"
 #include "classes/event/StmPackMemory.h"
+#include "classes/event/StmPackData.h"
+#include "ml/EventFileTh.h"
 #include "classes/event/SeqManager/start.h"
 #include "classes/event/SeqManager/end.h"
 #include "classes/event/SeqManager/end_fadein.h"
@@ -98,6 +100,7 @@
 #include "classes/event/BouRect.h"
 #include "classes/event/CamField.h"
 #include "classes/event/CamFree.h"
+#include "classes/ml/EventView.h"
 #include "classes/ml/Scn.h"
 #include "classes/ml/WinView.h"
 #include "classes/event/CharaMount.h"
@@ -174,6 +177,15 @@ CamFree::~CamFree() {
 }
 
 void CamFree::update(const event::FrameInfo&) {}
+
+bool CamFree::OnKeyUp(ml::EventView* view) {
+    if (!(view->pad_28 & 1)) {
+        return false;
+    }
+    pad_4c &= ~8u;
+    pad_50 = 0.0f;
+    return true;
+}
 
 void CamField::update(const event::FrameInfo&) {}
 
@@ -2504,6 +2516,23 @@ void EnvManager::OnEventProc(event::MSG_TYPE msg) {
     }
 }
 
+void DofManager::play(int type, float p0, float p1, float p2, float p3, float p4, float p5, int frame, bool flag,
+                      const char* name) {
+    pad_14 |= 3;
+    pad_18 = type;
+    pad_1c = p0;
+    pad_20 = p0;
+    pad_24 = p1;
+    pad_28 = false;
+    pad_34 = p2;
+    pad_38 = p3;
+    pad_3c = p4;
+    pad_40 = p5;
+    pad_44 = frame;
+    pad_48 = flag;
+    pad_50 = name;
+}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void SelectManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
@@ -2990,6 +3019,23 @@ bool RandPlayer::Wait::update(const ICmd::Param& param) {
 bool CharaStopHead::update(const ICmd::Param& param) {
     gf::GfObjUtil::getObj(m_handle);
     return true;
+}
+
+StmPackData::~StmPackData() {
+    clear();
+}
+
+void StmPackData::create(const char* name) {
+    clear();
+    pad_c = name;
+}
+
+bool StmPackData::OnFileEvent(ml::EventFileTh* event) {
+    if (event->m_kind == 2) {
+        pad_8 &= ~1u;
+        return true;
+    }
+    return false;
 }
 
 void StmPackMemory::render(const mm::Rect<int>& rect, float alpha) {}

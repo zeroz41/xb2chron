@@ -24,6 +24,25 @@ public:
     void stop();
     void update();
     void render();
+
+    // fields play() sets; what they hold is not known yet (play(int, int) reads them from EVT_dof's "dist", "range",
+    // "pixel", "lens", "strength", "blend" columns, in that order)
+    unsigned int pad_10;
+    unsigned int pad_14;  // bits 0 and 1 set by play
+    int pad_18;  // play's type
+    float pad_1c;  // play's first float (twice: 0x1c and 0x20)
+    float pad_20;
+    float pad_24;
+    bool pad_28;  // cleared by play
+    unsigned char pad_29[0xb];
+    float pad_34;
+    float pad_38;
+    float pad_3c;
+    float pad_40;
+    int pad_44;  // play's frame count
+    bool pad_48;
+    unsigned char pad_49[0x7];
+    const char* pad_50;  // play's name
 };
 }  // namespace event
 

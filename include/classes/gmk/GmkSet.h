@@ -35,6 +35,10 @@ public:
     // its list of the gimmicks of a kind, none when it has none
     const IGmkList* getGmkList(GmkType type) const;
     IGmkList* getGmkList(GmkType type);
+    // its steps (named by the symbols): wait for the game manager's map, create the lists, then update them
+    void seqWaitToValidate_GfGameManager_m_mapID(float dt);
+    void seqCreateMapBdat(float dt);
+    void seqUpdate(float dt);
     // how many kinds of gimmicks a set can hold: a list per GmkType
     static const int GMK_LIST_NUM = 64;
     unsigned char pad_8[0x8];
@@ -50,9 +54,10 @@ public:
     int m_listParam;  // 0x1ac
     unsigned char pad_1b0[0x8];
     IGmkList* m_gmkLists[GMK_LIST_NUM];  // 0x1b8: its list of each kind, by GmkType (the name is not the original's)
-    // 0x3b8: create stores its step function there (seqWaitToValidate_GfGameManager_m_mapID); 0x3D0 bytes in all
-    // (GfGmkLocatorAtlas holds one at 0x70, its next member at 0x440)
-    unsigned char pad_3b8[0x10];
+    // the step update runs (create stores seqWaitToValidate_GfGameManager_m_mapID, which moves on to
+    // seqCreateMapBdat, then seqUpdate); 0x3D0 bytes in all (GfGmkLocatorAtlas holds one at 0x70, its next member at
+    // 0x440); the name is not the original's
+    void (GmkSet::*m_seq)(float dt);  // 0x3b8
 };
 }  // namespace gmk
 

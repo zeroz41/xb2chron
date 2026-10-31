@@ -13,6 +13,9 @@ public:
     // bit 0 tested by BouManager::OnMouseButtonDown before it starts a drag: presumably the left button (the name is
     // not the original's)
     unsigned char m_buttons;  // 0x24
+    unsigned char pad_25[3];
+    // bit 0 tested by CamFree::OnKeyUp before it stops the camera's key move (a key state)
+    unsigned char pad_28;
 };
 }  // namespace ml
 
