@@ -56,7 +56,19 @@ public:
     // the moving parts (0x200 bytes each); IDColiObjGrand::update updates them and enters them into a tree
     IDColiGrdMoveObj* m_moveObjs;  // 0x70
     int m_moveObjNum;  // 0x78
-    unsigned char pad_7c[0x14];
+    unsigned char pad_7c[4];
+    // the instances of the grand data (IDColiGrandObj::coliCallCheck runs m_treeHit on each m_index whose id is
+    // not a global one (IDColiManager::isGblId) and whose m_flags bit 0 is clear or bits 8.. equal the manager's
+    // m_subNum). The names are not the original's.
+    struct Inst {
+        unsigned int m_id;  // 0x0
+        unsigned int m_index;  // 0x4
+        unsigned short m_flags;  // 0x8
+        unsigned char pad_a[6];
+    };
+    const Inst* m_insts;  // 0x80
+    int m_instNum;  // 0x88
+    unsigned char pad_8c[4];
     // createGrand destroys both (without freeing them) while m_memBlock is set, then frees m_memBlock
     IDColiTreeTop* m_treeTops[2];  // 0x90
     // the tree IDColiObjGrand::update builds is m_treeTops[m_bank == 0]; update then makes it m_bank

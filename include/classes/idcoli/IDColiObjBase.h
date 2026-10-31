@@ -32,7 +32,9 @@ class IDColiTreeObj {
 public:
     IDColiTreeObj* m_prev;  // 0x0
     IDColiTreeObj* m_next;  // 0x8
-    unsigned char pad_10[8];
+    // the object it stands for (a grand object's tree holds IDColiGrdMoveObj: IDColiGrandObj::coliCallCheck reads
+    // their m_userData and position records through it); the name is not the original's
+    void* m_owner;  // 0x10
 };
 
 // table 0x7100B7F0F0

@@ -1,6 +1,8 @@
 #ifndef IDCOLI_IDCOLIINPUT_H
 #define IDCOLI_IDCOLIINPUT_H
 
+#include "mm/Vec3.h"
+
 namespace idcoli {
 
 // a collision query's input. IDColiUtilColi{Simple,Result}'s statics hand the shape it holds at 0xB0 to the
@@ -11,11 +13,10 @@ public:
     const void* getShape() const { return m_shape; }
 
     // the query's bounding box (IDColiGrandTree::isAaBbToAaBb tests a box against it); the names are not the
-    // original's
-    float m_max[3];  // 0x0
-    unsigned char pad_c[4];
-    float m_min[3];  // 0x10
-    unsigned char pad_1c[0x74];
+    // original's. Vec3s: IDColiGrandObj::coliCallCheck hands both to IDColiUtilTreeAcc::startTreeAaBbMode.
+    mm::Vec3 m_max;  // 0x0
+    mm::Vec3 m_min;  // 0x10
+    unsigned char pad_20[0x70];
     // the hit distance range (IDColiGrandMesh's lenght* tests: a ray hit lies in [m_lengthMin, m_lengthMax], a
     // sphere's within m_lengthMax); the names are not the original's
     float m_lengthMax;  // 0x90

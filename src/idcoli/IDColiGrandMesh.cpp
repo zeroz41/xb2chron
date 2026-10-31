@@ -54,6 +54,7 @@
 #include "classes/idcoli/IDColiObjGrdChar.h"
 #include "idcoli/IDColiResult.h"
 #include "classes/fw/ColiCheckCallback.h"
+#include "idcoli/IDColiUtilTreeAcc.h"
 
 namespace idcoli {
 void IDColiPrimitive::createBaseBox(void* base, IDColiBaseType& type, const mm::Mat44& matrix, const mm::Vec3& size) {
@@ -215,16 +216,187 @@ IDColiGrandObj::IDColiGrandObj(wrkIDCmfWork* work) {
 
 IDColiGrandObj::~IDColiGrandObj() {}
 
+bool IDColiGrandObj::testLine(IDColiResult& result, const IDColiInput& input) {
+    m_result = &result;
+    m_input = &input;
+    m_mesh = &IDColiGrandMesh::meshLine;
+    m_isAaBb = &IDColiGrandTree::isLineAaBb;
+    m_instHit = &IDColiGrandTree::instLineHit;
+    m_lenght = &IDColiGrandMesh::lenghtLine;
+    if (result.m_type == 0) {
+        m_treeHit = &IDColiGrandTree::treeHitEnd;
+        m_stock = nullptr;
+        m_stockInst = nullptr;
+        m_vecotr = &IDColiGrandMesh::vecotrNon;
+        m_vecotrInst = &IDColiGrandMesh::vecotrNon;
+        return coliCallCheck(&IDColiGrandTree::instLineHitParts);
+    }
+    m_treeHit = &IDColiGrandTree::treeHitDef;
+    if (result.m_type == 2) {
+        if (m_instPosData) m_stock = &IDColiGrandMesh::stockInstTbl;
+        else m_stock = &IDColiGrandMesh::stockTbl;
+        m_stockInst = &IDColiGrandMesh::stockInstTbl;
+    } else {
+        if (m_instPosData) m_stock = &IDColiGrandMesh::stockInstNear;
+        else m_stock = &IDColiGrandMesh::stockNear;
+        m_stockInst = &IDColiGrandMesh::stockInstNear;
+    }
+    if (result.m_calcVector) {
+        if (m_instPosData) m_vecotr = &IDColiGrandMesh::vecotrInst;
+        else m_vecotr = &IDColiGrandMesh::vecotrDef;
+        m_vecotrInst = &IDColiGrandMesh::vecotrInst;
+    } else {
+        m_vecotr = &IDColiGrandMesh::vecotrNon;
+        m_vecotrInst = &IDColiGrandMesh::vecotrNon;
+    }
+    return coliCallResl(&IDColiGrandTree::instLineHitParts);
+}
+
 bool IDColiGrandTree::instLineHit(unsigned int index) {
     return instLineHitParts(&m_work->m_posData[index], &m_work->m_posInfo[index]);
+}
+
+bool IDColiGrandObj::coliCallCheck(bool (IDColiGrandTree::*parts)(const IDCmfPosData* posData,
+                                                                    const IDCmfPosInfo* posInfo)) {
+    if (m_work->m_instNum == 0) {
+        if ((this->*m_treeHit)(0)) return true;
+    } else {
+        const wrkIDCmfWork::Inst* inst = m_work->m_insts;
+        for (int i = 0; i < m_work->m_instNum; i++, inst++) {
+            if (inst->m_id != 0 && IDColiManager::sys()->isGblId(inst->m_id)) continue;
+            if ((inst->m_flags & 1) && (inst->m_flags >> 8) != IDColiManager::sys()->m_subNum) continue;
+            if ((this->*m_treeHit)(inst->m_index)) return true;
+        }
+    }
+    if (m_work->m_moveObjNum != 0) {
+        IDColiUtilTreeAcc acc(m_work->m_treeTops[m_work->m_bank]);
+        acc.startTreeAaBbMode(m_input->m_max, m_input->m_min);
+        for (ColiLinkList<IDColiTreeObj>* list = acc.nextList(); list != nullptr; list = acc.nextList()) {
+            for (IDColiTreeObj* node = list->m_head; node != nullptr; node = node->m_next) {
+                IDColiGrdMoveObj* obj = static_cast<IDColiGrdMoveObj*>(node->m_owner);
+                m_result->m_obj = obj->m_userData;
+                if ((this->*parts)(&obj->m_posData, &obj->m_posInfo)) return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool IDColiGrandObj::testRay(IDColiResult& result, const IDColiInput& input) {
+    m_result = &result;
+    m_input = &input;
+    m_mesh = &IDColiGrandMesh::meshLine;
+    m_isAaBb = &IDColiGrandTree::isLineAaBb;
+    m_instHit = &IDColiGrandTree::instRayHit;
+    m_lenght = &IDColiGrandMesh::lenghtRay;
+    if (result.m_type == 0) {
+        m_treeHit = &IDColiGrandTree::treeHitEnd;
+        m_stock = nullptr;
+        m_stockInst = nullptr;
+        m_vecotr = &IDColiGrandMesh::vecotrNon;
+        m_vecotrInst = &IDColiGrandMesh::vecotrNon;
+        return coliCallCheck(&IDColiGrandTree::instRayHitParts);
+    }
+    m_treeHit = &IDColiGrandTree::treeHitDef;
+    if (result.m_type == 2) {
+        if (m_instPosData) m_stock = &IDColiGrandMesh::stockInstTbl;
+        else m_stock = &IDColiGrandMesh::stockTbl;
+        m_stockInst = &IDColiGrandMesh::stockInstTbl;
+    } else {
+        if (m_instPosData) m_stock = &IDColiGrandMesh::stockInstSecNear;
+        else m_stock = &IDColiGrandMesh::stockSecNear;
+        m_stockInst = &IDColiGrandMesh::stockInstSecNear;
+    }
+    if (result.m_calcVector) {
+        if (m_instPosData) m_vecotr = &IDColiGrandMesh::vecotrInst;
+        else m_vecotr = &IDColiGrandMesh::vecotrDef;
+        m_vecotrInst = &IDColiGrandMesh::vecotrInst;
+    } else {
+        m_vecotr = &IDColiGrandMesh::vecotrNon;
+        m_vecotrInst = &IDColiGrandMesh::vecotrNon;
+    }
+    return coliCallResl(&IDColiGrandTree::instRayHitParts);
 }
 
 bool IDColiGrandTree::instRayHit(unsigned int index) {
     return instRayHitParts(&m_work->m_posData[index], &m_work->m_posInfo[index]);
 }
 
+bool IDColiGrandObj::testSphere(IDColiResult& result, const IDColiInput& input, bool wall) {
+    m_result = &result;
+    m_input = &input;
+    m_mesh = &IDColiGrandMesh::meshSphere;
+    m_instHit = &IDColiGrandTree::instSphereHit;
+    m_isAaBb = &IDColiGrandTree::isAaBbToAaBb;
+    m_lenght = wall ? &IDColiGrandMesh::lenghtWallSphere : &IDColiGrandMesh::lenghtSphere;
+    if (result.m_type == 0) {
+        m_treeHit = &IDColiGrandTree::treeHitEnd;
+        m_stock = nullptr;
+        m_stockInst = nullptr;
+        m_vecotr = &IDColiGrandMesh::vecotrNon;
+        m_vecotrInst = &IDColiGrandMesh::vecotrNon;
+        return coliCallCheck(&IDColiGrandTree::instSphereHitParts);
+    }
+    m_treeHit = &IDColiGrandTree::treeHitDef;
+    if (result.m_type == 2) {
+        if (m_instPosData) m_stock = &IDColiGrandMesh::stockInstTbl;
+        else m_stock = &IDColiGrandMesh::stockTbl;
+        m_stockInst = &IDColiGrandMesh::stockInstTbl;
+    } else {
+        if (m_instPosData) m_stock = &IDColiGrandMesh::stockInstNear;
+        else m_stock = &IDColiGrandMesh::stockNear;
+        m_stockInst = &IDColiGrandMesh::stockInstNear;
+    }
+    if (result.m_calcVector) {
+        if (m_instPosData) m_vecotr = &IDColiGrandMesh::vecotrInst;
+        else m_vecotr = &IDColiGrandMesh::vecotrDef;
+        m_vecotrInst = &IDColiGrandMesh::vecotrInst;
+    } else {
+        m_vecotr = &IDColiGrandMesh::vecotrNon;
+        m_vecotrInst = &IDColiGrandMesh::vecotrNon;
+    }
+    return coliCallResl(&IDColiGrandTree::instSphereHitParts);
+}
+
 bool IDColiGrandTree::instSphereHit(unsigned int index) {
     return instSphereHitParts(&m_work->m_posData[index], &m_work->m_posInfo[index]);
+}
+
+bool IDColiGrandObj::testCapsule(IDColiResult& result, const IDColiInput& input, bool wall) {
+    m_result = &result;
+    m_input = &input;
+    m_mesh = &IDColiGrandMesh::meshCapsule;
+    m_isAaBb = &IDColiGrandTree::isAaBbToAaBb;
+    m_instHit = &IDColiGrandTree::instCapsuleHit;
+    m_lenght = &IDColiGrandMesh::lenghtLine;
+    m_lenghtSub = wall ? &IDColiGrandMesh::lenghtWallSphere : &IDColiGrandMesh::lenghtSphere;
+    if (result.m_type == 0) {
+        m_treeHit = &IDColiGrandTree::treeHitEnd;
+        m_stock = nullptr;
+        m_stockInst = nullptr;
+        m_vecotr = &IDColiGrandMesh::vecotrNon;
+        m_vecotrInst = &IDColiGrandMesh::vecotrNon;
+        return coliCallCheck(&IDColiGrandTree::instCapsuleHitParts);
+    }
+    m_treeHit = &IDColiGrandTree::treeHitDef;
+    if (result.m_type == 2) {
+        if (m_instPosData) m_stock = &IDColiGrandMesh::stockInstTbl;
+        else m_stock = &IDColiGrandMesh::stockTbl;
+        m_stockInst = &IDColiGrandMesh::stockInstTbl;
+    } else {
+        if (m_instPosData) m_stock = &IDColiGrandMesh::stockInstNear;
+        else m_stock = &IDColiGrandMesh::stockNear;
+        m_stockInst = &IDColiGrandMesh::stockInstNear;
+    }
+    if (result.m_calcVector) {
+        if (m_instPosData) m_vecotr = &IDColiGrandMesh::vecotrInst;
+        else m_vecotr = &IDColiGrandMesh::vecotrDef;
+        m_vecotrInst = &IDColiGrandMesh::vecotrInst;
+    } else {
+        m_vecotr = &IDColiGrandMesh::vecotrNon;
+        m_vecotrInst = &IDColiGrandMesh::vecotrNon;
+    }
+    return coliCallResl(&IDColiGrandTree::instCapsuleHitParts);
 }
 
 bool IDColiGrandTree::instCapsuleHit(unsigned int index) {
@@ -232,12 +404,69 @@ bool IDColiGrandTree::instCapsuleHit(unsigned int index) {
 }
 
 bool IDColiGrandTree::isAaBbToAaBb(const float* max, const float* min) {
-    if (m_input->m_max[0] < min[0]) return true;
-    if (m_input->m_min[0] > max[0]) return true;
-    if (m_input->m_max[2] < min[2]) return true;
-    if (m_input->m_min[2] > max[2]) return true;
-    if (m_input->m_min[1] > max[1]) return true;
-    return m_input->m_max[1] < min[1];
+    if (m_input->m_max.x < min[0]) return true;
+    if (m_input->m_min.x > max[0]) return true;
+    if (m_input->m_max.z < min[2]) return true;
+    if (m_input->m_min.z > max[2]) return true;
+    if (m_input->m_min.y > max[1]) return true;
+    return m_input->m_max.y < min[1];
+}
+
+bool IDColiGrandObj::testMoveSphere(IDColiResult& result, const IDColiInput& input, bool wall) {
+    m_result = &result;
+    m_input = &input;
+    m_mesh = &IDColiGrandMesh::meshSphere;
+    m_instHit = &IDColiGrandTree::instSphereHit;
+    m_isAaBb = &IDColiGrandTree::isAaBbToAaBb;
+    m_lenght = &IDColiGrandMesh::lenghtWallSphere;
+    m_treeHit = &IDColiGrandTree::treeHitDef;
+    if (result.m_type == 2) {
+        if (m_instPosData) m_stock = &IDColiGrandMesh::stockInstTbl;
+        else m_stock = &IDColiGrandMesh::stockTbl;
+        m_stockInst = &IDColiGrandMesh::stockInstTbl;
+    } else {
+        if (m_instPosData) m_stock = &IDColiGrandMesh::stockInstNear;
+        else m_stock = &IDColiGrandMesh::stockNear;
+        m_stockInst = &IDColiGrandMesh::stockInstNear;
+    }
+    if (result.m_calcVector) {
+        if (m_instPosData) m_vecotr = &IDColiGrandMesh::vecotrInst;
+        else m_vecotr = &IDColiGrandMesh::vecotrDef;
+        m_vecotrInst = &IDColiGrandMesh::vecotrInst;
+    } else {
+        m_vecotr = &IDColiGrandMesh::vecotrNon;
+        m_vecotrInst = &IDColiGrandMesh::vecotrNon;
+    }
+    return coliMoveCallResl(&IDColiGrandTree::instSphereHitParts, wall);
+}
+
+bool IDColiGrandObj::testMoveCapsule(IDColiResult& result, const IDColiInput& input, bool wall) {
+    m_result = &result;
+    m_input = &input;
+    m_mesh = &IDColiGrandMesh::meshCapsule;
+    m_isAaBb = &IDColiGrandTree::isAaBbToAaBb;
+    m_instHit = &IDColiGrandTree::instCapsuleHit;
+    m_lenght = &IDColiGrandMesh::lenghtLine;
+    m_lenghtSub = &IDColiGrandMesh::lenghtWallSphere;
+    m_treeHit = &IDColiGrandTree::treeHitDef;
+    if (result.m_type == 2) {
+        if (m_instPosData) m_stock = &IDColiGrandMesh::stockInstTbl;
+        else m_stock = &IDColiGrandMesh::stockTbl;
+        m_stockInst = &IDColiGrandMesh::stockInstTbl;
+    } else {
+        if (m_instPosData) m_stock = &IDColiGrandMesh::stockInstNear;
+        else m_stock = &IDColiGrandMesh::stockNear;
+        m_stockInst = &IDColiGrandMesh::stockInstNear;
+    }
+    if (result.m_calcVector) {
+        if (m_instPosData) m_vecotr = &IDColiGrandMesh::vecotrInst;
+        else m_vecotr = &IDColiGrandMesh::vecotrDef;
+        m_vecotrInst = &IDColiGrandMesh::vecotrInst;
+    } else {
+        m_vecotr = &IDColiGrandMesh::vecotrNon;
+        m_vecotrInst = &IDColiGrandMesh::vecotrNon;
+    }
+    return coliMoveCallResl(&IDColiGrandTree::instCapsuleHitParts, wall);
 }
 
 void IDColiGrdMoveObj::setMat(const mm::Mat44& matrix) {
