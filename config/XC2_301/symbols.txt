@@ -5466,7 +5466,7 @@ _ZN2gf17GfAssetSetupEnemy19getEnemyEfbFileNameERN2mm3mtl6FixStrILi128EEERKNS_16G
 _ZN2gf17GfAssetSetupEnemy5setupEPNS_15GF_ASSET_HANDLEERKNS_16GfInitParamEnemyE = .text:0x001BBB38; // type:function size:0x11F0 scope:global
 fn_71001BCD28 = .text:0x001BCD28; // type:function size:0x25C scope:global
 _ZN2gf17GfAssetSetupEnemy10getMdlFileENS_11GfAssetTypeE = .text:0x001BCF84; // type:function size:0xC0 scope:global
-fn_71001BD044 = .text:0x001BD044; // type:function size:0x1CC scope:global
+_ZN2gf13fn_71001BD044EPKcb = .text:0x001BD044; // type:function size:0x1CC scope:global
 _ZN2gf17GfAssetSetupEnemy10getArcFileENS_11GfAssetTypeE = .text:0x001BD210; // type:function size:0x54 scope:global
 _ZN2gf17GfAssetSetupEnemy10getMotFileENS_11GfAssetTypeE = .text:0x001BD264; // type:function size:0xD4 scope:global
 _ZN2gf17GfAssetSetupEnemy18getRetargetMotFileENS_11GfAssetTypeE = .text:0x001BD338; // type:function size:0xD4 scope:global

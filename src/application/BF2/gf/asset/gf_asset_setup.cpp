@@ -42,8 +42,32 @@
 #include "classes/gf/GfAllocator.h"
 #include "plugin/Bdat.h"
 #include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfInitParamEnemy.h"
+#include "classes/gf/GfBdatChrDr.h"
+#include "classes/gf/GfBdatChrBl.h"
+#include "gf/GfDataDriver.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfDataMap.h"
+#include "gf/GfUtil.h"
+#include "classes/gf/GfBdatChrEnArrange.h"
+#include "gf/GfDataHana.h"
+#include <string.h>
 
 namespace gf {
+
+namespace {
+// the create types GfAssetFactory makes event setups for (as gf_obj_factory.cpp's; the name is not the original's)
+inline bool isEventCreateType(int type) {
+    switch (type) {
+    case 2:
+    case 3:
+    case 11:
+        return true;
+    default:
+        return false;
+    }
+}
+}  // namespace
 
 GfAssetSetup::~GfAssetSetup() {
     for (RefResource*& resource : m_refResources) {
@@ -70,6 +94,30 @@ void GfAssetSetup::setupParam(GF_ASSET_HANDLE* handle, const GfInitParam& param)
 }
 
 GfAssetSetupDriver::GfAssetSetupDriver() : pad_1fc(-1) {}
+
+const char* GfAssetSetupDriver::getMdlFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getMdlSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        const char* name = fn_71002DF39C(m_objId, isEventCreateType(m_param->m_createType), m_param->m_createType == 3);
+        if (name == nullptr || *name == '\0') {
+            return nullptr;
+        }
+        return name;
+    }
+    return resource->m_name.m_str;
+}
+
+const char* GfAssetSetupDriver::getArcFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getArcSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        const char* name = fn_71002DF39C(m_objId, isEventCreateType(m_param->m_createType), m_param->m_createType == 3);
+        if (name == nullptr || *name == '\0') {
+            return nullptr;
+        }
+        return name;
+    }
+    return resource->m_name.m_str;
+}
 
 const char* GfAssetSetupDriver::getMotFile(GfAssetType type) {
     if (getAssetTypeMot() == type) {
@@ -301,11 +349,104 @@ const char* GfAssetSetupEventBlade::getRetargetMotFile(GfAssetType type) {
     return nullptr;
 }
 
-GfAssetSetupEnemy::GfAssetSetupEnemy() : pad_200(0) {}
+GfAssetSetupEnemy::GfAssetSetupEnemy() : m_enemyParam(nullptr) {}
+
+unsigned int GfAssetSetupEnemy::getEnemyAttribute(const GfInitParamEnemy& param) {
+    unsigned int attr = GfBdatChrEnArrange::sys()->getChrEnArrangeBladeAtr(param.getEnArrangeID());
+    unsigned int blade = param.getBladeID();
+    if (attr != 0) {
+        return attr;
+    }
+    if (GfDataBlade::getCommonBladeName(getMdlFile(getAssetType())) ||
+        GfBdatChrEnArrange::sys()->getChrEnArrangeDriverLev(param.getEnArrangeID()) != 0) {
+        attr = GfDataBlade::getAttribute(blade);
+        if (attr != 0) {
+            return attr;
+        }
+    }
+    if (!GfDataHana::isValid(param.getBladeID())) {
+        return 0;
+    }
+    attr = GfDataBlade::getAttribute(blade);
+    if (attr == 0) {
+        if (blade == 1005) {
+            attr = 5;
+        } else if (blade == 1006) {
+            attr = 1;
+        } else if (blade == 1007) {
+            attr = 5;
+        }
+    }
+    return attr;
+}
+
+const char* GfAssetSetupEnemy::getMdlFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getMdlSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        unsigned char* fp = GfDataBdat::getFP(165);
+        unsigned char** table = m_paramCopy != nullptr ? m_paramCopy : &fp;
+        unsigned int id = m_objId;
+        const char* name = validName(reinterpret_cast<const char*>(Bdat::getValCheck(*table, "Model", id, 7)));
+        return fn_71001BD044(name, m_enemyParam->m_createType == 3);
+    }
+    return resource->m_name.m_str;
+}
+
+const char* fn_71001BD044(const char* name, bool createType3) {
+    GfBdatChrDr* chrDr = GfBdatChrDr::sys();
+    for (unsigned int driver = 1; driver <= 6; driver++) {
+        if (GfDataDriver::fn_7100249170(driver) && strcmp(name, chrDr->getChrDrModel(driver)) == 0) {
+            return fn_71002DF39C(driver, false, createType3);
+        }
+    }
+    GfBdatChrBl* chrBl = GfBdatChrBl::sys();
+    for (unsigned int blade = chrBl->getChrBlStart(); blade < chrBl->getChrBlEnd(); blade++) {
+        if (GfDataBlade::isAttachedParty(blade) && strcmp(name, chrBl->getChrBlModel(blade)) == 0) {
+            return GfGameUtil::getBladeModel(blade, false);
+        }
+    }
+    return name;
+}
 
 const char* GfAssetSetupEnemy::getArcFile(GfAssetType type) {
     if (getAssetTypeArc() == type) {
         return getMdlFile(type);
+    }
+    return nullptr;
+}
+
+const char* GfAssetSetupEnemy::getMotFile(GfAssetType type) {
+    if (getAssetTypeMot() == type) {
+        RefResource* resource = findRefResource(getMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            unsigned char* fp = GfDataBdat::getFP(165);
+            unsigned char** table = m_paramCopy != nullptr ? m_paramCopy : &fp;
+            unsigned int id = m_objId;
+            const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(*table, "Model", id, 7));
+            if (name == nullptr || *name == '\0') {
+                return nullptr;
+            }
+            return name;
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
+}
+
+const char* GfAssetSetupEnemy::getRetargetMotFile(GfAssetType type) {
+    if (getAssetTypeMot() == type) {
+        RefResource* resource = findRefResource(getMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            unsigned char* fp = GfDataBdat::getFP(165);
+            unsigned char** table = m_paramCopy != nullptr ? m_paramCopy : &fp;
+            unsigned int id = m_objId;
+            const char* name = reinterpret_cast<const char*>(Bdat::getValCheck(*table, "Motion", id, 7));
+            if (name == nullptr || *name == '\0') {
+                return nullptr;
+            }
+            return name;
+        }
+        return resource->m_name.m_str;
     }
     return nullptr;
 }
@@ -355,6 +496,37 @@ const char* GfAssetSetupEnemy::getPath() const {
 }
 
 GfAssetSetupEnemyBlade::GfAssetSetupEnemyBlade() {}
+
+const char* GfAssetSetupEnemyBlade::getMdlFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getMdlSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        return fn_71001BD044(GfDataBlade::getResourceNameModel(m_enemyParam->m_bladeId),
+                             m_enemyParam->m_createType == 3);
+    }
+    return resource->m_name.m_str;
+}
+
+const char* GfAssetSetupEnemyBlade::getMotFile(GfAssetType type) {
+    if (getAssetTypeMot() == type) {
+        RefResource* resource = findRefResource(getMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            return GfDataBlade::getResourceNameMotion(m_enemyParam->m_bladeId);
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
+}
+
+const char* GfAssetSetupEnemyBlade::getRetargetMotFile(GfAssetType type) {
+    if (getAssetTypeMot() == type) {
+        RefResource* resource = findRefResource(getMotSlot());
+        if (resource == nullptr || resource->m_name.m_nLen == 0) {
+            return GfDataBlade::getResourceNameMotion(m_enemyParam->m_bladeId);
+        }
+        return resource->m_name.m_str;
+    }
+    return nullptr;
+}
 
 const char* GfAssetSetupEnemyBlade::getPath() const {
     return GfAssetPath::getMdoModel();
@@ -459,6 +631,17 @@ const char* GfAssetSetupNpc::getRetargetMotFile(GfAssetType type) {
     return nullptr;
 }
 
+const char* GfAssetSetupNpc::getStpFile(GfAssetType type) {
+    if (getAssetType() != type) {
+        return nullptr;
+    }
+    const char* name = GfDataNpc::getMotionName(m_objId);
+    if (name == nullptr || *name == '\0') {
+        return nullptr;
+    }
+    return name;
+}
+
 const char* GfAssetSetupNpc::getPath() const {
     return "/model/";
 }
@@ -521,6 +704,17 @@ const char* GfAssetSetupEventNpc::getEvtMotFile(GfAssetType type) {
         return resource->m_name.m_str;
     }
     return nullptr;
+}
+
+const char* GfAssetSetupEventNpc::getEvtStpFile(GfAssetType type) {
+    if (getAssetType() != type) {
+        return nullptr;
+    }
+    const char* name = GfDataNpc::getMotionName(m_objId);
+    if (name == nullptr || *name == '\0') {
+        return nullptr;
+    }
+    return name;
 }
 
 GfAssetSetupMob::GfAssetSetupMob() {}
@@ -657,6 +851,24 @@ const char* GfAssetSetupGimmick::getMotFile(GfAssetType type) {
 
 const char* GfAssetSetupGimmick::getEfpFile(GfAssetType type) {
     return getMdlFile(type);
+}
+
+const char* GfAssetSetupGimmick::getEabFile(GfAssetType type) {
+    RefResource* resource = findRefResource(getEabSlot());
+    if (resource == nullptr || resource->m_name.m_nLen == 0) {
+        unsigned char** table = m_paramCopy;
+        const char* name;
+        {
+            unsigned int id = m_objId;
+            name = reinterpret_cast<const char*>(Bdat::getValCheck(*table, "Comp_Eff", id, 7));
+        }
+        if (name == nullptr || *name == '\0') {
+            unsigned int id = m_objId;
+            name = validName(reinterpret_cast<const char*>(Bdat::getValCheck(*table, "Model", id, 7)));
+        }
+        return name;
+    }
+    return resource->m_name.m_str;
 }
 
 const char* GfAssetSetupGimmick::getEfbFile(GfAssetType type) {
@@ -861,12 +1073,38 @@ const char* GfAssetSetupExtra::getPath() const {
 
 GfAssetSetupMapSeamless::GfAssetSetupMapSeamless() : pad_1fc(0) {}
 
+const char* GfAssetSetupMapSeamless::getMdlFile(GfAssetType type) {
+    const char* name = getRefFile(getMdlSlot());
+    if (name == nullptr) {
+        name = validName(pad_1fc != 0 ? GfDataMap::getMapResourceNameByMapID(m_objId)
+                                      : GfDataMap::getMapResourceName(m_objId));
+        if (pad_200.m_nLen != 0) {
+            name = pad_200.m_str;
+        }
+    }
+    return name;
+}
+
 const char* GfAssetSetupMapSeamless::getColFile(GfAssetType type) {
     return getMdlFile(type);
 }
 
 const char* GfAssetSetupMapSeamless::getNaviFile(GfAssetType type) {
     return getMdlFile(type);
+}
+
+// the model's file name with a final 'a' dropped and "_pack" added
+const char* GfAssetSetupMapSeamless::getEfbFile(GfAssetType type) {
+    pad_284 = util::getFilePtrFromPath(getMdlFile(type));
+    if (pad_284.m_nLen != 0) {
+        int last = pad_284.m_nLen - 1;
+        if (pad_284.m_str[last] == 'a') {
+            pad_284.m_str[last] = '\0';
+            pad_284.m_nLen = last;
+        }
+        pad_284 += "_pack";
+    }
+    return pad_284.m_str;
 }
 
 const char* GfAssetSetupMapSeamless::getGIblFile(GfAssetType type) {

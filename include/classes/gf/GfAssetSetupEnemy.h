@@ -37,10 +37,23 @@ public:
     virtual int getAddMotSlot() const;  // slot 41
     virtual GfAssetType getAssetTypeMot() const;  // slot 42
     virtual GfAssetType getAssetTypeArc() const;  // slot 43
+    // the enemy's attribute: its CHR_EnArrange row's BladeAtr, else (for a common blade model or a row with a
+    // driver level) its blade's attribute, else for Hana her attribute or 5/1/5 for blades 1005..1007, else 0
+    unsigned int getEnemyAttribute(const GfInitParamEnemy& param);
     static mm::mtl::RTTI m_rtti;
 
-    unsigned long pad_200;  // the constructor clears it
+    // the parameter setup was given (setup stores it first; the model/motion getters read its m_createType and
+    // m_bladeId); the constructor clears it (the name is not the original's)
+    const GfInitParamEnemy* m_enemyParam;
 };
+
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's getMdlFile calls nothing like it).
+// A free function next to GfAssetSetupEnemy because its only callers are GfAssetSetupEnemy::getMdlFile and
+// GfAssetSetupEnemyBlade::getMdlFile and it takes no this. What it does: when the model name is a party driver's
+// (drivers 1..6 for which GfDataDriver::fn_7100249170 holds, CHR_Dr model compared with strcmp) it returns
+// fn_71002DF39C(driver, false, createType3); else when it is an attached party blade's CHR_Bl model it returns
+// GfGameUtil::getBladeModel(blade, false); else the name itself. Callers pass m_enemyParam->m_createType == 3.
+const char* fn_71001BD044(const char* name, bool createType3);
 }  // namespace gf
 
 #endif
