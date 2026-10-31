@@ -33,6 +33,18 @@ void UIObjectBase::setTerm() {
     m_flags |= 0x8;
 }
 
+void UIObjectBase::setSuspend(bool suspend) {
+    if (m_flags & 0x8) {
+        m_flags &= ~0x8000;
+        return;
+    }
+    if (suspend) {
+        m_flags |= 0x8000;
+    } else {
+        m_flags &= ~0x8000;
+    }
+}
+
 UIObjectList::UIObjectList() : m_allTerm(false), m_changed(false) {}
 
 UIObjectList::~UIObjectList() {

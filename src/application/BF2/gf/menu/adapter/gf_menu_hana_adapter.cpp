@@ -13,6 +13,9 @@
 #include "gf/GfMenuItemUtil.h"
 #include "plugin/Bdat.h"
 #include "ui/UIStr.h"
+#include "gf/GfPartySelect.h"
+#include "classes/gf/GfGameCond.h"
+#include "classes/gf/GfMenuBladeList.h"
 
 namespace gf {
 
@@ -135,8 +138,20 @@ bool GfMenuHanaAdapter::update_maxRankPower() {
     return true;
 }
 
-// update_partsExpandIcon: not identical yet (it inlines isOpenCircuit: the original
-// branches to set 0/1 where ours selects)
+bool GfMenuHanaAdapter::update_partsExpandIcon() {
+    if (m_partsId == 0) {
+        return false;
+    }
+    int number = 0;
+    if (m_partsId - 9 < 6) {
+        RESULT_HANA result;
+        if (!isOpenCircuit(m_hanaId, m_partsId, result)) {
+            number = 1;
+        }
+    }
+    setNumber(number);
+    return true;
+}
 
 bool GfMenuHanaAdapter::update_equipColor() {
     if (m_partsId == 0) {
@@ -183,8 +198,27 @@ void GfMenuHanaAdapter::update(const fw::UpdateInfo& info) {
     }
 }
 
-// isOpenCircuit: not identical yet (flow identical; the original branches on the
-// result where ours uses cset)
+bool GfMenuHanaAdapter::isOpenCircuit(unsigned int hana, unsigned int partsId, RESULT_HANA& result) {
+    switch (partsId) {
+    case 9:
+    case 10:
+    case 11:
+        result = GfGameUtilHana::isOpenArtsCircuit(hana, partsId - 9);
+        if (result == 0) {
+            return true;
+        }
+        break;
+    case 12:
+    case 13:
+    case 14:
+        result = GfGameUtilHana::isOpenCondenserCircuit(hana, partsId - 12);
+        if (result == 0) {
+            return true;
+        }
+        break;
+    }
+    return false;
+}
 
 unsigned int GfMenuHanaAdapter::getEquipParts(unsigned int hana, unsigned int partsId) {
     EquipHana equip;
@@ -264,16 +298,59 @@ bool GfMenuHanaAdapter::isEquipParts(unsigned int hana, unsigned int partsId, un
     return result == 0 && count != 0;
 }
 
-// isMakeParts: not identical yet (the default case's false is materialized in
-// its own block in the original)
+bool GfMenuHanaAdapter::isMakeParts(unsigned int partsId, unsigned int item, RESULT_HANA& result) {
+    switch (partsId) {
+    case 1:
+        result = GfGameUtilHana::isExchangeRoleParts(item);
+        break;
+    case 2:
+        result = GfGameUtilHana::isExchangeAttributeParts(item);
+        break;
+    case 3:
+    case 4:
+    case 5:
+        result = GfGameUtilHana::isExchangeNArtsParts(item);
+        break;
+    case 6:
+    case 7:
+    case 8:
+        result = GfGameUtilHana::isExchangeCondenserParts(item);
+        break;
+    case 9:
+    case 10:
+    case 11:
+        result = GfGameUtilHana::isExchangeArtsParts(item);
+        break;
+    default:
+        return false;
+    }
+    ItemProperty property;
+    GfItemUtil::getProperty(property, item, 0);
+    if (property.m_condition != 0 && !GfGameCond::isGameCond(property.m_condition)) {
+        result = RESULT_HANA(5);
+        return false;
+    }
+    return result == 0;
+}
 
 bool GfMenuHanaAdapter::isCrystalParts(unsigned int partsId, unsigned int item, RESULT_HANA& result) {
     result = RESULT_HANA(0);
     return true;
 }
 
-// getHanaCount: not identical yet (the original tests the vectors' sizes before
-// pointer loops)
+int GfMenuHanaAdapter::getHanaCount() {
+    mm::mtl::FixedVector<unsigned short, 32> drivers;
+    GfPartySelect::getDriverList(drivers, GfPartySelect::LIST_TYPE(2), 0);
+    int count = 0;
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    for (unsigned short* it = drivers.begin(); it != drivers.end(); ++it) {
+        GfMenuBladeList::getBladeFromDriver(*it, blades, false);
+    }
+    for (unsigned short* it = blades.begin(); it != blades.end(); ++it) {
+        count += GfDataHana::isValid(*it);
+    }
+    return count;
+}
 
 unsigned int GfMenuHanaAdapter::getSortTableId(unsigned int partsId) {
     for (unsigned int i = 0; i < sizeof(s_sortTableIds) / sizeof(s_sortTableIds[0]); i++) {
