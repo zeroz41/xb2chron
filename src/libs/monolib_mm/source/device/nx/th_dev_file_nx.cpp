@@ -82,6 +82,7 @@
 #include "classes/ml/WinViewRoot.h"
 #include "classes/ml/DevFont.h"
 #include "classes/ml/DevFontLayer.h"
+#include "classes/mm/Sphere.h"
 #include "classes/ml/FileResTh.h"
 #include "classes/ml/DevFontNx.h"
 #include "classes/ml/DevFileBlackListNxTh.h"
@@ -779,6 +780,14 @@ inline void DebDraw::renderLine(const mm::Pnt<int>& start, const mm::Pnt<int>& e
     this->end();
 }
 
+}  // namespace ml
+
+namespace mm {
+PrimBase::~PrimBase() {}
+}  // namespace mm
+
+namespace ml {
+
 void CacheDraw::DRLINE::flush(DebDraw* draw) {
     draw->renderLine(vec(m_start), vec(m_end));
 }
@@ -1377,6 +1386,23 @@ void DebDrawCmd::add(const mm::Vec3& p, const mm::Vec3& uv, const mm::Col4& col)
 // tells the DevFontLayer serving it that it is done (wkUpdate then sends event 0)
 FontLayer::~FontLayer() {
     DevFont::doneFontLayer(this);
+}
+
+void FontLayer::fontSetMaxQue(unsigned int max) {
+    if (mm::mtl::PtrSingleton<DevFont>::get() != nullptr) {
+        DevFont::findFontLayer(this)->m_queMax = max;
+    }
+}
+
+unsigned int FontLayer::fontGetHeight() const {
+    DevFontLayer* fontLayer = DevFont::findFontLayer(this);
+    if (fontLayer != nullptr) {
+        DevGraph* dev = DevGraph::get();
+        if (dev != nullptr) {
+            return dev->fontGetHeightSys(fontLayer->m_style, fontLayer->m_scaleY);
+        }
+    }
+    return 0;
 }
 
 void FontLayer::fontStyle(FONT_STYLE style) {
@@ -2444,6 +2470,10 @@ void DevGraph::setFrameSpd(float spd) {
 namespace ml {
 DevGraph::~DevGraph() {}
 }  // namespace ml
+
+namespace mm {
+Sphere::~Sphere() {}
+}  // namespace mm
 
 namespace ml {
 DevGraphCB::DevGraphCB() {

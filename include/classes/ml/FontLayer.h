@@ -21,6 +21,10 @@ public:
     void fontShadow(bool on);
     void fontFlush(bool on);
     void fontScale(float x, float y);
+    // set the queue capacity of its DevFontLayer (FrameworkLauncher::mlthFnBuild's)
+    void fontSetMaxQue(unsigned int max);
+    // its DevFontLayer's font height through DevGraph::fontGetHeightSys, 0 without either
+    unsigned int fontGetHeight() const;
     // 0x08 its DevFontLayer, made by the constructor when DevFont exists (the name is not the original's)
     DevFontLayer* m_devLayer;
 };
