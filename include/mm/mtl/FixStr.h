@@ -17,6 +17,10 @@
 #elif defined(MM_LIB_FROM_MONOLIB_MM)
 #define MM_MTL_FIXSTR_H_FILE \
     "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../../MCL/mm_lib/source\\mm_mtl/fixstr.h"
+#elif defined(MM_LIB_FROM_LAYER)
+// layer's (LayerStrInfo::setCol4 and setS32 cite it so)
+#define MM_MTL_FIXSTR_H_FILE \
+    "D:/Monolithsoft/BF2/prog/libs/layer/proj/windows/../../../mcl/mm_lib/source\\mm_mtl/fixstr.h"
 #elif defined(MM_LIB_FROM_LIBS)
 #define MM_MTL_FIXSTR_H_FILE "../../../mcl/mm_lib/source\\mm_mtl/fixstr.h"
 #else

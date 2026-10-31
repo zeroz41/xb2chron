@@ -3,6 +3,7 @@
 
 #include "classes/layer/LayerActBase.h"
 #include "layer/LayerAccLayoutObj.h"
+#include "layer/LayerLinkList.h"
 
 namespace layer {
 // table 0x7100B7FCC8
@@ -11,7 +12,11 @@ public:
     virtual ~LayerObjLayout() {}  // slot 0: inline (its deleting destructor sits in the unit's tail)
 
     // The field names follow LayerAccLayoutObj's accessors (not the original's).
-    unsigned char pad_258[0x58];
+    unsigned char pad_258[0x18];
+    // 0x270: the objects LayerAccLayoutObj's create functions made while LayerManager::s_nStkIdx names each (the
+    // name is not the original's)
+    LayerLinkList<LayerBase> m_childList[2];
+    unsigned char pad_2A0[0x10];
     float m_viewPortX;  // setViewPort
     float m_viewPortY;
     float m_viewPortWidth;

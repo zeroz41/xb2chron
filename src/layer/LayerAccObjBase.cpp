@@ -51,6 +51,11 @@
 #include "layer/LayerRceManager.h"
 #include "layer/LayerStrInfo.h"
 #include "mtl/MemManager.h"
+#include "ml/CriticalSection.h"
+#include "layer/LayerAccLayoutBinary.h"
+#include "layer/LayerAccFormat.h"
+#include "layer/LayerObjUtil.h"
+#include <string.h>
 
 namespace layer {
 
@@ -423,6 +428,47 @@ void LayerAccFontObj::setColorMap(const LayerBase* colorMap, unsigned int patter
     static_cast<LayerObjFont*>(m_layer)->setColorMap(static_cast<const LayerFontIconObj*>(colorMap), pattern);
 }
 
+LayerAccFormat::LayerAccFormat(const void* data) : m_type(0), m_hasData(false), m_flag(false), m_multi(false) {
+    const LyrFormatHeader* header = static_cast<const LyrFormatHeader*>(data);
+    switch (header->m_magic) {
+    case 'DHAL':
+        if (header->m_version == 10001) {
+            m_type = 1;
+            if (header->m_flags & 0x20) {
+                m_flag = true;
+            }
+            if (header->m_data != 0) {
+                m_hasData = true;
+            }
+            if (*reinterpret_cast<const unsigned short*>(static_cast<const char*>(data) + header->m_entryOfs) >= 2) {
+                m_multi = true;
+            }
+            return;
+        }
+        break;
+    case 'SPAL':
+        if (header->m_version == 10001) {
+            m_type = 2;
+            return;
+        }
+        break;
+    case 'TFAL':
+        if (header->m_version == 10001) {
+            m_type = 3;
+            m_hasData = true;
+            return;
+        }
+        break;
+    case 'TSAL':
+        if (header->m_version == 10001) {
+            m_type = 4;
+            return;
+        }
+        break;
+    }
+    m_type = 0;
+}
+
 LayerAccLayoutObj::LayerAccLayoutObj(LayerBase* layer) : m_layer(layer) {}
 
 void LayerAccLayoutObj::setViewPortMode(bool enable) {
@@ -448,6 +494,114 @@ void LayerAccLayoutObj::createPriorityTbl(unsigned int count) {
 }
 
 void LayerAccLayoutObj::setAutoAnchorMode(LAYER_ANCHOR anchor) { static_cast<LayerObjLayout*>(m_layer)->m_anchorMode = anchor; }
+
+LayerBase* LayerAccLayoutObj::createObj(const void* resource) {
+    ml::CS cs(LayerObjManager::getCriticalSection());
+    LayerBase* obj = LayerObjManager::createStaticObj(resource);
+    static_cast<LayerObjLayout*>(m_layer)->m_childList[LayerManager::s_nStkIdx].addListNotNull(obj);
+    return obj;
+}
+
+LayerBase* LayerAccLayoutObj::createMaskObj(const void* resource) {
+    ml::CS cs(LayerObjManager::getCriticalSection());
+    LayerBase* obj = LayerObjManager::createStaticMaskObj(resource);
+    static_cast<LayerObjLayout*>(m_layer)->m_childList[LayerManager::s_nStkIdx].addListNotNull(obj);
+    return obj;
+}
+
+LayerBase* LayerAccLayoutObj::createFontObj() {
+    ml::CS cs(LayerObjManager::getCriticalSection());
+    LayerBase* obj = LayerObjManager::createStaticFontObj();
+    static_cast<LayerObjLayout*>(m_layer)->m_childList[LayerManager::s_nStkIdx].addListNotNull(obj);
+    return obj;
+}
+
+LayerBase* LayerAccLayoutObj::createLayoutObj() {
+    ml::CS cs(LayerObjManager::getCriticalSection());
+    LayerBase* obj = LayerObjManager::createStaticLayoutObj();
+    static_cast<LayerObjLayout*>(m_layer)->m_childList[LayerManager::s_nStkIdx].addListNotNull(obj);
+    return obj;
+}
+
+LayerBase* LayerAccLayoutObj::createTexObj(const grlib::CGLibTextureBuffer& texture) {
+    ml::CS cs(LayerObjManager::getCriticalSection());
+    LayerBase* obj = LayerObjManager::createStaticTexObj(texture);
+    static_cast<LayerObjLayout*>(m_layer)->m_childList[LayerManager::s_nStkIdx].addListNotNull(obj);
+    return obj;
+}
+
+LayerBase* LayerAccLayoutObj::createMemObj(unsigned int width, unsigned int height, LayerMemType type) {
+    ml::CS cs(LayerObjManager::getCriticalSection());
+    LayerBase* obj = LayerObjManager::createStaticMemObj(width, height, type);
+    static_cast<LayerObjLayout*>(m_layer)->m_childList[LayerManager::s_nStkIdx].addListNotNull(obj);
+    return obj;
+}
+
+LayerBase* LayerAccLayoutObj::createPolyObj(unsigned int width, unsigned int height, unsigned short vertexCount,
+                                            unsigned short indexCount, LayerPrimitiveType type) {
+    ml::CS cs(LayerObjManager::getCriticalSection());
+    LayerBase* obj = LayerObjManager::createStaticPolyObj(width, height, vertexCount, indexCount, type);
+    static_cast<LayerObjLayout*>(m_layer)->m_childList[LayerManager::s_nStkIdx].addListNotNull(obj);
+    return obj;
+}
+
+LayerAccLayoutBinary::LayerAccLayoutBinary(const void* binary) {
+    m_binary = binary;
+    const LyrLayoutBinHeader* header = static_cast<const LyrLayoutBinHeader*>(binary);
+    m_posNum = header->m_posNum;
+    m_posData = reinterpret_cast<const LyrLayoutPosData*>(static_cast<const char*>(binary) + header->m_posDataOfs);
+    if (header->m_tblOfs != 0) {
+        const LyrLayoutBinTbl* tbl =
+            reinterpret_cast<const LyrLayoutBinTbl*>(static_cast<const char*>(binary) + header->m_tblOfs);
+        m_tbl = static_cast<const char*>(binary) + tbl->m_ofs;
+        m_tblNum = tbl->m_num;
+    } else {
+        m_tbl = nullptr;
+        m_tblNum = 0;
+    }
+}
+
+int LayerAccLayoutBinary::getPosIdx(const char* name) const {
+    for (int i = 0; i < m_posNum; i++) {
+        if (strcmp(name, static_cast<const char*>(m_binary) + m_posData[i].m_nameOfs) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void LayerAccLayoutBinary::setLayoutObj(LayerObj* obj, const char* name, bool apply) {
+    int index = getPosIdx(name);
+    if (index != -1 && static_cast<unsigned int>(m_posNum) > static_cast<unsigned int>(index)) {
+        LayerAccObjBase acc(obj);
+        float pos[4];
+        LayerObjUtil::getLayoutInfo(pos, m_posData + index, acc.getCenterType(), acc.getPixelWidth(),
+                                    acc.getPixelHeight());
+        if (apply) {
+            obj->setInitPosScl(pos[0], pos[1], pos[2], pos[3]);
+        } else {
+            obj->setInitPos(pos[0], pos[1]);
+        }
+    }
+}
+
+void LayerAccLayoutBinary::setLayoutPosData(float& x, float& y, float& width, float& height, unsigned int index) {
+    if (index < static_cast<unsigned int>(m_posNum)) {
+        const LyrLayoutPosData* data = m_posData + index;
+        if (mm::mtl::PtrSingleton<LayerManager>::get()->m_coordinate == 0) {
+            data->getPixelRect(x, y, width, height);
+        } else {
+            data->getCorrectionRect(x, y, width, height);
+        }
+    }
+}
+
+void LayerAccLayoutBinary::setLayoutPosData(float& x, float& y, float& width, float& height, const char* name) {
+    int index = getPosIdx(name);
+    if (index != -1) {
+        setLayoutPosData(x, y, width, height, static_cast<unsigned int>(index));
+    }
+}
 
 int LayerManager::s_nStkIdx = 1;
 
@@ -603,6 +757,65 @@ void LayerManager::defSetup() {
 
 LayerStrInfo::LayerStrInfo() {}
 
+void LayerStrInfo::setCol4(const char* name, const mm::Col4& col) {
+    m_name = name;
+    m_col4.r = col.r;
+    m_col4.g = col.g;
+    m_col4.b = col.b;
+    m_col4.a = col.a;
+}
+
+void LayerStrInfo::setS32(const char* name, int value) {
+    m_name = name;
+    m_s32 = value;
+}
+
+void LayerTag::calcParseString(const unsigned char* text) {
+    beginParseString();
+    calcUTF8ParseString(text);
+    endParseString();
+}
+
+int LayerTag::calcStringLength(const unsigned char* text) {
+    unsigned int pos = 0;
+    int length = 0;
+    while (text[pos] != 0) {
+        unsigned char c = text[pos];
+        if (c < 0x80) {
+            pos += 1;
+        } else if (c >= 0xC2 && c <= 0xDF) {
+            pos += 2;
+        } else if ((c & 0xF0) == 0xE0) {
+            pos += 3;
+        } else if ((c & 0xF8) == 0xF0) {
+            pos += 4;
+        } else {
+            pos += 1;
+        }
+        length++;
+    }
+    return length;
+}
+
+void LayerTag::changeUtf8ToUtf16(unsigned short& code, const unsigned char* text, unsigned int& length) {
+    code = ' ';
+    unsigned char c = text[0];
+    if (c < 0x80) {
+        code = c;
+        length = 1;
+    } else if (c >= 0xC2 && c <= 0xDF) {
+        code = ((c & 0x1F) << 6) | (text[1] & 0x3F);
+        length = 2;
+    } else if ((c & 0xF0) == 0xE0) {
+        code = ((c & 0x0F) << 12) | ((text[1] & 0x3F) << 6) | (text[2] & 0x3F);
+        length = 3;
+    } else if ((c & 0xF8) == 0xF0) {
+        length = 4;
+    } else {
+        length = 1;
+    }
+}
+
 LayerTagStr::LayerTagStr() : m_stockTbl(nullptr), m_stockSize(0), m_stockCount(0) {}
 
 LayerTagStr::~LayerTagStr() {}
@@ -624,6 +837,27 @@ void LayerTagStr::endParseString() { m_stockTbl[m_stockCount] = '\0'; }
 
 void LayerTagStr::parseNotTag(const unsigned char* str, unsigned int& pos) {
     m_stockTbl[m_stockCount++] = str[pos];
+    pos++;
+}
+
+void LayerTagStr::parseNotTag(const wchar_t* str, unsigned int& pos) {
+    char* dst = &m_stockTbl[m_stockCount];
+    unsigned short c = str[pos];
+    int length;
+    if (c < 0x80) {
+        dst[0] = c;
+        length = 1;
+    } else if (c < 0x800) {
+        dst[0] = 0xC0 | (c >> 6);
+        dst[1] = 0x80 | (c & 0x3F);
+        length = 2;
+    } else {
+        dst[0] = 0xE0 | ((c >> 12) & 0x0F);
+        dst[1] = 0x80 | ((c >> 6) & 0x3F);
+        dst[2] = 0x80 | (c & 0x3F);
+        length = 3;
+    }
+    m_stockCount += length;
     pos++;
 }
 

@@ -31,6 +31,21 @@ public:
             m_num++;
         }
     }
+    // addList for an object known to exist (LayerAccLayoutObj's create functions add without the null test; the
+    // name is not the original's)
+    void addListNotNull(T* obj) {
+        if (m_tail != nullptr) {
+            m_tail->m_next = obj;
+            obj->m_prev = m_tail;
+            m_tail = obj;
+        } else {
+            m_head = obj;
+            m_tail = obj;
+            obj->m_prev = nullptr;
+        }
+        obj->m_next = nullptr;
+        m_num++;
+    }
     void removeList(T* obj) {
         if (obj->m_prev != nullptr) {
             if (obj->m_next != nullptr) {

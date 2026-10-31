@@ -26,7 +26,24 @@ public:
 // position and size (the field names are not the original's)
 class LyrLayoutPosData {
 public:
-    unsigned char pad_0[0x18];
+    // its rectangle in the correction coordinate (position and size) and in pixels (LayerAccLayoutBinary's
+    // setLayoutPosData; the names are not the original's)
+    void getCorrectionRect(float& x, float& y, float& width, float& height) const {
+        x = m_posX;
+        y = m_posY;
+        width = m_width;
+        height = m_height;
+    }
+    void getPixelRect(float& x, float& y, float& width, float& height) const {
+        x = m_left;
+        y = m_top;
+        width = m_right - m_left;
+        height = m_bottom - m_top;
+    }
+
+    unsigned char pad_0[0x4];
+    unsigned int m_nameOfs;  // 0x4: its name's offset from the layout binary's start (LayerAccLayoutBinary::getPosIdx)
+    unsigned char pad_8[0x10];
     float m_width;
     float m_height;
     float m_posX;

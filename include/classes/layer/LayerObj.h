@@ -59,6 +59,8 @@ public:
     void setPos(float x, float y);
     // sets the position in all three m_params
     void setInitPos(float x, float y);
+    // setInitPos with the size too (LayerAccLayoutBinary::setLayoutObj passes a layout position's x, y, width, height)
+    void setInitPosScl(float, float, float, float);
     void setRot(float rot);
     void setScale(float x, float y);
     void setMulCol(const mm::Col4& col);

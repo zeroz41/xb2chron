@@ -26,6 +26,9 @@ public:
     virtual void callTagNoUse(unsigned char const*) {}  // slot 8 (LayerFontDrawBuffer's table holds LayerTag's)
     void calcParseString(const unsigned char* text);      // reads text's tags, calling callTagStart and callTagEnd
     void calcUTF8ParseString(const unsigned char* text);  // the same for UTF-8 text
+    int calcStringLength(const unsigned char* text);  // the characters of UTF-8 text
+    // the UTF-16 character of the UTF-8 sequence at text, and the sequence's length (a space for 4-byte sequences)
+    void changeUtf8ToUtf16(unsigned short& code, const unsigned char* text, unsigned int& length);
 };
 }  // namespace layer
 

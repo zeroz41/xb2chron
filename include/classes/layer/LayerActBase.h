@@ -8,14 +8,19 @@ namespace layer {
 struct LyrActionInfo {
     unsigned char pad_0[0x8];
     unsigned int m_id;  // LayerAccAction::actionID looks for it
-    unsigned char pad_C[0xC];
+    // its name's offset in the action data's m_nameTbl is the sum of these two (LayerAccAction::actionName; the
+    // names are not the original's)
+    unsigned int m_nameBase;
+    unsigned char pad_10[0x4];
+    unsigned short m_nameOfs;
+    unsigned char pad_16[0x2];
     float m_sec;  // LayerAccAction::getActionSec
     unsigned char pad_1C[0x10];
 };
 // an object's action data (only the action count is known; the layout is not the original's)
 class LyrActionData {
 public:
-    unsigned char pad_0[0x8];
+    const char* m_nameTbl;  // the actions' names (LayerAccAction::actionName; the name is not the original's)
     const LyrActionInfo* m_actions;  // m_actionMax records
     int m_actionMax;  // LayerAccAction::getActionMax
     // the action running when the object's STATE_PARTS_ACTION is set (LayerAccAction::getRunningActIdx and

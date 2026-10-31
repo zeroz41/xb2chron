@@ -9,6 +9,7 @@ namespace layer { class LayerBase; }
 namespace layer { class LayerManager; }
 namespace layer { class LayerSortMan; }
 namespace ml { class IDrDrawWorkInfo; }
+namespace ml { class CriticalSection; }
 
 namespace layer {
 // makes the layer objects (LayerAccManager's create functions forward to it); no table
@@ -27,6 +28,17 @@ public:
     LayerBase* createMemObj(unsigned int width, unsigned int height, LayerMemType type);
     LayerBase* createPolyObj(unsigned int width, unsigned int height, unsigned short vertexCount,
                              unsigned short indexCount, LayerPrimitiveType type);
+    // the lock LayerAccLayoutObj's create functions hold (a function-local static)
+    static ml::CriticalSection& getCriticalSection();
+    // the objects LayerAccLayoutObj makes under a layout (the caller adds them to its child list)
+    static LayerBase* createStaticObj(const void* resource);
+    static LayerBase* createStaticMaskObj(const void* resource);
+    static LayerBase* createStaticFontObj();
+    static LayerBase* createStaticLayoutObj();
+    static LayerBase* createStaticTexObj(const grlib::CGLibTextureBuffer& texture);
+    static LayerBase* createStaticMemObj(unsigned int width, unsigned int height, LayerMemType type);
+    static LayerBase* createStaticPolyObj(unsigned int width, unsigned int height, unsigned short vertexCount,
+                                          unsigned short indexCount, LayerPrimitiveType type);
 
     // The field names are not the original's.
     const ml::IDrDrawWorkInfo* m_drawInfo;  // finalRender's (the constructor leaves it unset)

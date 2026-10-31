@@ -16,7 +16,7 @@ public:
     float getActionSec(unsigned int index) const;  // the action's length in seconds
     bool actionIdx(unsigned int index);  // starts the action; false when there is no such action
     bool actionID(unsigned int id);
-    void actionName(const char* name);
+    bool actionName(const char* name);  // starts the action of that name; false when there is none
     void actionEnd();
 
     LayerBase* m_layer;  // the constructor's
