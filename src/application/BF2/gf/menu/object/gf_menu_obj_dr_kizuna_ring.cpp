@@ -382,4 +382,74 @@ bool GfMenuObjDrKizunaRing::seqExecSkill() {
     return true;
 }
 
+void GfMenuObjDrKizunaRing::SkillDetailListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        setupSkillDetail(acc);
+        m_owner->m_detailOpen = false;
+        acc.setDisp(false);
+        break;
+    case 0x21: {
+        ui::UIObjectAcc caption(acc.searchChild("LAY_caption"));
+        caption.setDisp(true);
+        const char* name = isScreenLR(m_owner->m_selected % 6) ? "drskillinfo2_2" : "drskillinfo2_1";
+        mm::Rect<short> rect;
+        ui::UIObjectAcc main(owner.searchChild("LAY_dr_main"));
+        main.getLayoutRect(name, rect);
+        mm::Pnt<short> pos;
+        pos.x = rect.x;
+        pos.y = rect.y;
+        acc.setPos(pos);
+        if (m_owner->m_unlockLevel == 0) {
+            ui::UIObjectAcc skill(acc.searchChild("LAY_skif_skill"));
+            skill.setDisp(true);
+            ui::UIObjectAcc lock(acc.searchChild("LAY_skif_lock"));
+            lock.setDisp(false);
+        } else {
+            ui::UIObjectAcc skill(acc.searchChild("LAY_skif_skill"));
+            skill.setDisp(false);
+            ui::UIObjectAcc lock(acc.searchChild("LAY_skif_lock"));
+            lock.setDisp(true);
+        }
+        if (!m_owner->m_detailOpen) {
+            setFadeIn(handle);
+            m_owner->m_detailOpen = true;
+        }
+        unsigned int driver = GfMenuReference::getReferenceDriverID(0);
+        unsigned int line = GfMenuReference::getReferenceNumber(0);
+        unsigned int level = GfMenuReference::getReferenceNumber(1);
+        int round = GfMenuReference::getReferenceNumber(2);
+        ui::UIObjectAcc icon(acc.searchChild("IMG_skif_icon@01"));
+        ui::UIObjectAcc base(acc.searchChild("IMG_skif_icon_base@01"));
+        if (!GfDataDriverSkill::isSkillUnlock(driver, line, level, round != 0)) {
+            icon.setMulColor("white");
+            base.setMulColor("gray");
+        } else if (GfDataDriverSkill::getSkill(driver, line, level, round != 0) == 0) {
+            icon.setMulColor("black");
+            base.setMulColor("gray");
+        } else {
+            icon.setMulColor("white");
+            base.setMulColor("white");
+        }
+        break;
+    }
+    case 0x22:
+        if (m_owner->m_detailOpen) {
+            m_owner->m_detailOpen = false;
+            setFadeOut(handle);
+        }
+        break;
+    case 0x101:
+        if (!m_owner->m_detailOpen) {
+            setFadeIn(handle);
+            m_owner->m_detailOpen = true;
+        }
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
 }  // namespace gf
