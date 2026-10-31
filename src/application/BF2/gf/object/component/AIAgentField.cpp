@@ -61,8 +61,62 @@
 #include "classes/gf/GfComBehaviorPc.h"
 #include "gf/MsgObjectNotifyDead.h"
 #include "gf/pc/StateUtil.h"
+#include "gf/pc/StateUtilBattle.h"
+#include "classes/navi/NvmshAcObj.h"
 
 namespace gf { namespace pc {
+
+namespace {
+// a battle state and the battle character's action it runs (the names are not the original's)
+struct StateAction {
+    STATE_ID m_state;
+    btl::BattleCharacter::ACTION_ID m_action;
+};
+}  // namespace
+
+// lbl_71009C5904 (the name is not the original's): the battle states 0x3F..0x57, by action
+static const StateAction s_stateActions[25] = {
+    {STATE_ID(0x3F), btl::BattleCharacter::ACTION_ID(0)},
+    {STATE_ID(0x40), btl::BattleCharacter::ACTION_ID(1)},
+    {STATE_ID(0x41), btl::BattleCharacter::ACTION_ID(2)},
+    {STATE_ID(0x42), btl::BattleCharacter::ACTION_ID(3)},
+    {STATE_ID(0x43), btl::BattleCharacter::ACTION_ID(4)},
+    {STATE_ID(0x44), btl::BattleCharacter::ACTION_ID(5)},
+    {STATE_ID(0x45), btl::BattleCharacter::ACTION_ID(6)},
+    {STATE_ID(0x46), btl::BattleCharacter::ACTION_ID(7)},
+    {STATE_ID(0x47), btl::BattleCharacter::ACTION_ID(8)},
+    {STATE_ID(0x48), btl::BattleCharacter::ACTION_ID(9)},
+    {STATE_ID(0x49), btl::BattleCharacter::ACTION_ID(10)},
+    {STATE_ID(0x4A), btl::BattleCharacter::ACTION_ID(11)},
+    {STATE_ID(0x4B), btl::BattleCharacter::ACTION_ID(12)},
+    {STATE_ID(0x4C), btl::BattleCharacter::ACTION_ID(13)},
+    {STATE_ID(0x4D), btl::BattleCharacter::ACTION_ID(14)},
+    {STATE_ID(0x4E), btl::BattleCharacter::ACTION_ID(15)},
+    {STATE_ID(0x4F), btl::BattleCharacter::ACTION_ID(16)},
+    {STATE_ID(0x50), btl::BattleCharacter::ACTION_ID(17)},
+    {STATE_ID(0x51), btl::BattleCharacter::ACTION_ID(18)},
+    {STATE_ID(0x52), btl::BattleCharacter::ACTION_ID(19)},
+    {STATE_ID(0x53), btl::BattleCharacter::ACTION_ID(20)},
+    {STATE_ID(0x54), btl::BattleCharacter::ACTION_ID(21)},
+    {STATE_ID(0x55), btl::BattleCharacter::ACTION_ID(22)},
+    {STATE_ID(0x56), btl::BattleCharacter::ACTION_ID(23)},
+    {STATE_ID(0x57), btl::BattleCharacter::ACTION_ID(24)},
+};
+
+bool StateUtilBattle::IsBattleState(STATE_ID state) {
+    return state >= 0x3E && state < 0x58;
+}
+
+STATE_ID StateUtilBattle::ConversionActionToState(btl::BattleCharacter::ACTION_ID action) {
+    return s_stateActions[action].m_state;
+}
+
+btl::BattleCharacter::ACTION_ID StateUtilBattle::ConversionStateToAction(STATE_ID state) {
+    if (state < 0x3F) {
+        return btl::BattleCharacter::ACTION_ID(0);
+    }
+    return s_stateActions[state - 0x3F].m_action;
+}
 
 AIAgentField::AIAgentField() : m_nvmshAcObj(nullptr) {}
 
@@ -128,6 +182,28 @@ void AIAgentField::setup(GfComPropertyPc& property) {
     m_tree.attachComposite(15, 17, 1);
     m_tree.attachComposite(6, 18, 4);
     m_tree.attachComposite(6, 19, 5);
+}
+
+void AIAgentField::cleanup(GfComPropertyPc& property) {
+    m_tree.cleanup();
+    fw::NaviManager* navi = fw::NaviManager::get();
+    navi::NvmshAcObj* object = m_nvmshAcObj;
+    if (navi != nullptr && object != nullptr) {
+        navi->releaseObject(object);
+        m_nvmshAcObj = nullptr;
+    }
+}
+
+void AIAgentField::onActivate(GfComPropertyPc& property) {
+    if (m_nvmshAcObj != nullptr) {
+        m_nvmshAcObj->m_flags |= 2;
+    }
+}
+
+void AIAgentField::onDeactivate(GfComPropertyPc& property) {
+    if (m_nvmshAcObj != nullptr) {
+        m_nvmshAcObj->m_flags &= ~2;
+    }
 }
 
 BlackBoardField::~BlackBoardField() {}
