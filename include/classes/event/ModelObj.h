@@ -1,7 +1,7 @@
 #ifndef CLASSES_EVENT_MODELOBJ_H
 #define CLASSES_EVENT_MODELOBJ_H
 
-namespace event { namespace IResEvent { class PARAM; }}
+#include "classes/event/IResEvent.h"
 #include "mm/mtl/FixStr.h"
 
 namespace gf { class GfEvtModel; class GF_OBJ_HANDLE; }

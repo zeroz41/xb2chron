@@ -1,7 +1,7 @@
 #ifndef CLASSES_EVENT_LIPSYNCRES_H
 #define CLASSES_EVENT_LIPSYNCRES_H
 
-namespace event { namespace IResEvent { class PARAM; }}
+#include "classes/event/IResEvent.h"
 
 namespace event {
 // table 0x7100B3D298

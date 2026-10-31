@@ -355,6 +355,7 @@ void OffscrManager::OnEventProc(event::MSG_TYPE msg) {
 }  // namespace event
 
 #include "classes/event/StmManager.h"
+#include "classes/event/MdlstmObj.h"
 #include "classes/event/IStmMemory.h"
 
 namespace event {
@@ -364,6 +365,11 @@ StmManager::~StmManager() {
         delete m_stm;
         m_stm = nullptr;
     }
+}
+
+// the table store stays: the body is not empty
+MdlstmObj::~MdlstmObj() {
+    ;
 }
 
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
@@ -708,6 +714,35 @@ Object* Object::searchByPath(const char* path) {
         }
     }
     return nullptr;
+}
+
+CamMotion::~CamMotion() {
+    stop();
+}
+
+CamObj::~CamObj() {
+    changeActive(nullptr);
+    m_cmdQueue.update();
+    m_cmdQueue.update();
+}
+
+// the camera that leaves gets a SetEnable(false), the one that comes a SetEnable(true); m_field's needs none
+void CamObj::changeActive(CamBase* cam) {
+    if (m_activeCam != cam) {
+        if (m_activeCam != nullptr && m_activeCam != &m_field) {
+            CmdParam param;
+            param.val(0).setS32(pad_64);
+            param.val(1).setBool(false);
+            m_cmdQueue.push_back(&m_setEnable, param);
+        }
+        m_activeCam = cam;
+        if (cam != nullptr && cam != &m_field) {
+            CmdParam param;
+            param.val(0).setS32(pad_64);
+            param.val(1).setBool(true);
+            m_cmdQueue.push_back(&m_setEnable, param);
+        }
+    }
 }
 
 void CamObj::render(const mm::Col4& col) {

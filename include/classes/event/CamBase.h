@@ -8,6 +8,20 @@ namespace event {
 // table none (its derived classes')
 class CamBase {
 public:
+    // inline: the constructors of CamFree (CamManager's), CamField, CamHands and CamMotion (CamObj's) store these
+    // values for every camera before its own table, so they are the base's
+    CamBase() : pad_8(0) {
+        pad_10[0] = 0.0f;
+        pad_10[1] = 1.0f;
+        pad_10[2] = 2.0f;
+        pad_20[0] = 0.0f;
+        pad_20[1] = 1.0f;
+        pad_20[2] = 1.0f;
+        pad_30 = 40.0f;
+        pad_34 = 0.0f;
+        m_near = 0.5f;
+        m_far = 40000.0f;
+    }
     virtual ~CamBase() {}  // slot 0
     virtual void update(event::FrameInfo const&) = 0;  // slot 2
     virtual void render(mm::Col4 const&) {}  // slot 3
