@@ -25,6 +25,30 @@ namespace gf {
 GfMenuAdapterManager::GfMenuAdapterManager(const GfSetupParam& param)
     : m_categoryLists(), m_activeCategories(1), m_category(0), m_addAfter(false), m_cursor(m_list.begin()) {}
 
+GfMenuAdapterManager::~GfMenuAdapterManager() {
+    for (int i = 0; i < 5; i++) {
+        AdapterList& list = m_categoryLists[i];
+        for (AdapterList::iterator it = list.begin(); it != list.end();) {
+            GfMenuAdapter* adapter = it.operator->();
+            it = list.erase(it);
+            delete adapter;
+        }
+        list.clear();
+    }
+    for (AdapterList::iterator it = m_list.begin(); it != m_list.end();) {
+        GfMenuAdapter* adapter = it.operator->();
+        it = m_list.erase(it);
+        delete adapter;
+    }
+    m_list.clear();
+    for (AdapterList::iterator it = m_afterList.begin(); it != m_afterList.end();) {
+        GfMenuAdapter* adapter = it.operator->();
+        it = m_afterList.erase(it);
+        delete adapter;
+    }
+    m_afterList.clear();
+}
+
 void GfMenuAdapterManager::build(const GfSetupParam& param) {
 #line 90
     new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfMenuAdapterManager(param);

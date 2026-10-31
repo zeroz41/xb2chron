@@ -124,11 +124,14 @@ public:
 
     // every element unlinked (GfMenuAdapterManager's destructor calls it out of line; the name is not known to be
     // the original's)
-    void clear() {
-        for (iterator it = begin(); it != end();) {
-            it = erase(it);
+    // the elements from first up to last unlinked (the name is not known to be the original's)
+    iterator erase(iterator first, iterator last) {
+        while (first != last) {
+            first = erase(first);
         }
+        return last;
     }
+    void clear() { erase(begin(), end()); }
 
     iterator begin() const { return iterator(static_cast<T*>(m_root.m_next)); }
     iterator end() const { return iterator(static_cast<T*>(const_cast<IntrusiveListNodeBase*>(&m_root))); }
