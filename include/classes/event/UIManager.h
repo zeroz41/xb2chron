@@ -4,6 +4,7 @@
 #include "classes/gf/GfMenuObjFade.h"
 #include "classes/gf/GfMenuCallContext.h"
 #include "mm/mtl/FixedVector.h"
+#include "classes/event/AnmF32.h"
 #include "classes/event/IManager.h"
 #include "classes/mm/mtl/Singleton.h"
 
@@ -23,7 +24,8 @@ public:
         OPTELOP_RH = 4,
     };
 
-    virtual ~UIManager();  // slot 0
+    // inline: D2/D0 and the thunks sit in CharaObj's tail; OnEventProc is the key function
+    virtual ~UIManager() {}  // slot 0
     UIManager();  // out of line: Singleton<UIManager>::getPtr calls C1 (0x71001024A0)
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     void clear();
@@ -89,7 +91,11 @@ public:
     // the call contexts openAvanTitleUI and openZoneTelopUI create; the names are not the original's
     gf::GfMenuCallContext* m_avanTitleContext;  // 0x70
     gf::GfMenuCallContext* m_zoneTelopContext;  // 0x78
-    unsigned char pad_80[0x2B0 - 0x80];  // Singleton<UIManager>'s instance is 0x2B0 bytes
+    // two curves the constructor builds in place and the destructor tears down; the names are not the original's
+    AnmF32 m_anm0;  // 0x80
+    AnmF32 m_anm1;  // 0x190
+    unsigned long pad_2a0;
+    unsigned long pad_2a8;  // Singleton<UIManager>'s instance is 0x2B0 bytes
 };
 }  // namespace event
 

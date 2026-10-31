@@ -1319,8 +1319,19 @@ void CamManager::OnEventProc(event::MSG_TYPE msg) {
 }  // namespace event
 
 #include "classes/event/ResManager.h"
+#include "classes/event/ResPack.h"
 
 namespace event {
+
+ResPack::~ResPack() {
+    if (m_res != nullptr) {
+        m_res->release();
+        m_res = nullptr;
+    }
+    m_handle.m_handle = 0;
+    m_func = nullptr;
+    m_event = nullptr;
+}
 
 void ResManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
@@ -1346,6 +1357,10 @@ void ResManager::OnEventProc(event::MSG_TYPE msg) {
 #include "classes/event/ShakeManager.h"
 
 namespace event {
+
+ShakerRes::~ShakerRes() {
+    clear();
+}
 
 void Shaker::stop() {
     m_flags = 0;

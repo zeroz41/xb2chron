@@ -12,7 +12,9 @@ namespace event {
 // table 0x7100B3D4F8; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::ShakeManager>
 class ShakeManager : public IManager, public mm::mtl::Singleton<ShakeManager> {
 public:
-    virtual ~ShakeManager();  // slot 0
+    // inline: D2/D0 and the thunks sit in CharaObj's tail; OnEventProc is the key function. Written
+    // `inline`: the hint's threshold lets D0 and the thunks inline the whole D2 as the original's do (cost 275 > 275)
+    virtual inline ~ShakeManager() {}  // slot 0
     ShakeManager();  // out of line (Singleton<ShakeManager>::getPtr calls it)
     void play(const char* name, float p0, float p1, float p2);
     void setIdleShake(bool enable);
