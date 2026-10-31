@@ -7,6 +7,8 @@
 #include "mm/mtl/IntrusivePtr.h"
 #include "classes/gf/GfMenuReferenceNumber.h"
 
+namespace ui { class UISelectObjList; }
+
 namespace gf {
 class GfMenuCallContext;
 class GfMenuItemList;
@@ -63,6 +65,19 @@ public:
     static int getSpecialShop(unsigned int shopId);
     // "TXT_common_guide" shows that row's name (BDAT 0x146's "name", text BDAT 0x118) and fades in from the left
     void setGuideText(unsigned int id);
+    // the sell list: the current filter's item type from the item box (s_filterItemType), or every type for filter 0
+    void setupSellItemList();
+    // the exchange task (BDAT 0xF2 row) can be rewarded: no "Reward", or every item of its reward's items 8-11 fits
+    // the item box (GfItemUtil::isEnableAddItemBox)
+    bool canGetExcTaskReward(unsigned int task);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because refreshItemList calls it
+    // with this and it sits among the exchange-task functions. What it does: the item ids (low 16 bits) of the
+    // exchange task's (BDAT 0xF2 row's "Reward", GfQuestUtil::getReward) reward items 8-11 that are set go to the
+    // vector until it is full; true when it holds any.
+    bool fn_71004802F8(unsigned int task, mm::mtl::FixedVector<unsigned short, 4>& items);
+    // the exchange task's (BDAT 0xF2 row) "HideReward" flag, its "Reward" items in the list and its reward's first
+    // value; true when either is there
+    bool getExcTaskReward(unsigned int task, unsigned int& value, GfMenuItemList* list, bool& hide);
 
     // 1.0.0's helpers (3.0.1 inlines them all and drops the copies): the main layer's call context gets that result
     void addCallContextResult(unsigned int result, unsigned int param);
@@ -93,7 +108,11 @@ public:
     unsigned char pad_2C[0x38 - 0x2C];
     // the guide text "TXT_common_guide" shows (setGuideText; the name is not the original's)
     unsigned int m_guideTextId;  // 0x38
-    unsigned char pad_3C[0x58 - 0x3C];
+    unsigned char pad_3C[0x48 - 0x3C];  // 0x40: initialize's ui::UISelectObjList
+    // the items the sell list shows (initialize creates it, setupSellItemList fills it; the name is not the original's)
+    GfMenuItemList* m_sellItemList;  // 0x48
+    // the sell list's objects (initialize creates it; setupSellItemList's page rows; the name is not the original's)
+    ui::UISelectObjList* m_sellObjList;  // 0x50
     // fn_710047688C: "LAY_stock_num" follows the current filter's item type (the name is not the original's)
     bool m_useFilterItemType;  // 0x58
     // 1.0.0's reqRefreshItemList sets it, update calls refreshItemList and clears it (the name is not the original's)

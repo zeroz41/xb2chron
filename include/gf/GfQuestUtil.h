@@ -6,6 +6,7 @@ namespace gf { class GF_OBJ_HANDLE; }
 #include "gf/QuestListAcc.h"
 
 namespace gf { class QuestTaskParam; }
+namespace gf { struct GfQuestReward; }
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
 
 namespace gmk { enum GmkType : int; }
@@ -80,6 +81,9 @@ public:
     static void setupNewGameParam();
     // takes the items the quest's ItemLost row names (or the most held of its category) when it completes
     static void questCompleteItem(QuestID id);  // the affinity chart quest's blade, 0 for none
+    // fills the reward with the rewards of that reward id (GfMenuObjShop's exchange tasks pass a QUEST_EXCHANGE row's
+    // "Reward" and false); true when it has any
+    static bool getReward(GfQuestReward& reward, unsigned int id, bool);
 };
 }  // namespace gf
 

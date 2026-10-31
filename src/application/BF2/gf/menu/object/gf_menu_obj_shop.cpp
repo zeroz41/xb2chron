@@ -28,6 +28,10 @@
 #include "gf/GfGameUtilCloudSea.h"
 #include "mm/mtl/FixStr.h"
 #include "plugin/Bdat.h"
+#include "classes/ui/UISelectObjList.h"
+#include "gf/GfMenuBdat.h"
+#include "gf/GfQuestUtil.h"
+#include "gf/GfQuestReward.h"
 
 namespace gf {
 
@@ -300,6 +304,30 @@ void GfMenuObjShop::refreshFilterIcon() {
     }
 }
 
+void GfMenuObjShop::setupSellItemList() {
+    GfMenuItemList::ItemBoxSetup setup;
+    unsigned int filter = m_filters[m_filterIndex];
+    setFilterIndex();
+    setup.m_setup.m_pageRowSize = m_sellObjList->getSize();
+    setup.m_setup.m_pageScroll = true;
+    setup.pad_28 = 0;
+    setup.pad_29 = 0;
+    setup.pad_2A = 1;
+    setup.pad_2B = 1;
+    if (filter != 0) {
+        setup.m_type = s_filterItemType[filter];
+        m_sellItemList->setupFromBox(setup);
+    } else {
+        ui::UIListInfoBase::SetupParam param;
+        param = setup.m_setup;
+        m_sellItemList->setup(getAllocator(ALLOCATOR(0)), param);
+        for (int i = 1; i < 13; ++i) {
+            setup.m_type = s_filterItemType[i];
+            m_sellItemList->addListFromBox(setup);
+        }
+    }
+}
+
 void GfMenuObjShop::SellFilterListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
@@ -420,6 +448,57 @@ bool GfMenuObjShop::seqItemGet() {
         m_stockNumDirty = false;
     }
     return true;
+}
+
+bool GfMenuObjShop::fn_71004802F8(unsigned int task, mm::mtl::FixedVector<unsigned short, 4>& items) {
+    unsigned char* bdat = GfDataBdat::getFP(0xF2);
+    if (bdat == nullptr || !GfMenuBdat::isValidBdatID(bdat, task)) {
+        return false;
+    }
+    unsigned short id = Bdat::getVal(bdat, "Reward", task);
+    if (!id) {
+        return false;
+    }
+    GfQuestReward reward;
+    if (!GfQuestUtil::getReward(reward, id, false)) {
+        return false;
+    }
+    for (int i = 8; i < 12; ++i) {
+        unsigned short item = reward.m_items[i].m_value;
+        if (item != 0) {
+            items.push_back(item);
+            if (items.size() == items.capacity()) {
+                break;
+            }
+        }
+    }
+    return !items.empty();
+}
+
+bool GfMenuObjShop::getExcTaskReward(unsigned int task, unsigned int& value, GfMenuItemList* list, bool& hide) {
+    unsigned char* bdat = GfDataBdat::getFP(0xF2);
+    if (bdat != nullptr && GfMenuBdat::isValidBdatID(bdat, task)) {
+        hide = static_cast<unsigned short>(Bdat::getVal(bdat, "HideReward", task)) != 0;
+        list->clear();
+        unsigned short id = Bdat::getVal(bdat, "Reward", task);
+        if (id) {
+            {
+                GfMenuItemList::QuestRewardSetup setup;
+                setup.m_setup.m_pageRowSize = 4;
+                setup.m_reward = id;
+                list->setupFromQuestReward(setup);
+            }
+            GfQuestReward reward;
+            if (GfQuestUtil::getReward(reward, id, false)) {
+                value = reward.m_items[0].m_value;
+                if (value != 0) {
+                    return true;
+                }
+                return list->getSize() != 0;
+            }
+        }
+    }
+    return false;
 }
 
 }  // namespace gf

@@ -34,7 +34,7 @@ public:
     // what setupFromBox lists: the items of one type in the item box (the names are not the original's)
     struct ItemBoxSetup {
         // inline: its stores are its users' (GfMenuObjCylinderSelect's)
-        ItemBoxSetup() : m_filter(nullptr), pad_20(), pad_28(1), pad_29(1), pad_2A(0), pad_2B(0), pad_2C(false) {}
+        ItemBoxSetup() : m_type(0), m_filter(nullptr), pad_20(), pad_28(1), pad_29(1), pad_2A(0), pad_2B(0), pad_2C(false) {}
         ui::UIListInfoBase::SetupParam m_setup;  // the list's
         unsigned int m_type;                     // the items' ItemType::Type
         const FiltertInfo* m_filter;             // its first word's bits pick the filters setupFromBox applies
@@ -54,7 +54,12 @@ public:
         unsigned int m_shop;                     // the shop
     };
     struct ItemShopExcSetup;
-    struct QuestRewardSetup;
+    // what setupFromQuestReward lists: a reward id's items (GfMenuObjShop::getExcTaskReward; the names are not the
+    // original's)
+    struct QuestRewardSetup {
+        ui::UIListInfoBase::SetupParam m_setup;  // the list's
+        unsigned int m_reward;                   // the reward id
+    };
     struct MissionRewardSetup;
     // what setupFromHanaParts lists (the field names are not the original's)
     struct HanaPartsSetup {
@@ -67,6 +72,7 @@ public:
     // adds an item to the list (GfMenuObjDrArtsSet2::initialize adds items 0x633D-0x633F with false)
     void addItem(const MenuItemInfo& item, bool flag);
     void setupFromBox(const ItemBoxSetup& setup);
+    void setupFromQuestReward(const QuestRewardSetup& setup);
     void addListFromBox(const ItemBoxSetup& setup);  // setupFromBox's items added to the list
     void filterRarity(const FiltertInfo& filter);
     void filterRarityMore(const FiltertInfo& filter);
