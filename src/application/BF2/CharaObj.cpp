@@ -1899,6 +1899,9 @@ RotAxis::RotAxis(unsigned int type, float x, float y, float z) : m_type(type), m
 #include "classes/event/ScriptEffectAnim.h"
 #include "classes/event/ScriptCharaMotion.h"
 #include "classes/event/ScriptCharaFade.h"
+#include "classes/event/TextManager.h"
+#include "classes/event/ScriptCamPos.h"
+#include "classes/event/ScriptCamTar.h"
 #include "classes/event/ScriptCamFov.h"
 #include "classes/event/ScriptCamRotZ.h"
 #include "classes/event/ScriptCamMoveFov.h"
@@ -1986,6 +1989,39 @@ void ScriptCharaFade::redo(const event::Param& param) {
     ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
     if (obj != 0) {
         obj->m_chara->playFade(param.val(0).getBool(), 0.0f);
+    }
+}
+
+void ScriptCamPos::doit(const event::Param& param) {
+    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
+    if (obj != 0) {
+        unsigned int axisType = param.val(0).getS32();
+        mm::Vec3 value(param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
+        PosAxis axis(axisType, value.x, value.y, value.z);
+        CV_TYPE type = static_cast<CV_TYPE>(param.val(4).getS32());
+        m_prevPos = obj->m_pos;
+        obj->m_pos = axis;
+        obj->m_posQueue.clear();
+        obj->m_posQueue.push_back(axis);
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        cam->m_hands.setPos(axis, type);
+        if (m_prevPos.m_type != axisType || !(value - m_prevPos.m_value).isZero()) {
+            mm::mtl::Singleton<TextManager>::getPtr()->m_flags |= 0x20;
+        }
+    }
+}
+
+void ScriptCamPos::undo(const event::Param&) {
+    ObjectCamera* obj = static_cast<ObjectCamera*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(3));
+    if (obj != 0) {
+        PosAxis axis(m_prevPos);
+        obj->m_pos = axis;
+        obj->m_posQueue.clear();
+        obj->m_posQueue.push_back(axis);
+        CamObj* cam = obj->m_cam;
+        cam->changeActive(&cam->m_hands);
+        cam->m_hands.setPos(axis, static_cast<CV_TYPE>(1));
     }
 }
 

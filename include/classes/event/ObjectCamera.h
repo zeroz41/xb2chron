@@ -5,6 +5,9 @@
 #include "classes/event/IManiCallback.h"
 #include "classes/event/Object.h"
 #include "classes/event/CamObj.h"
+#include "classes/event/PosAxis.h"
+#include "classes/event/TarAxis.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace mm { class Col4; }
 
@@ -27,6 +30,14 @@ public:
     virtual void OnManiRender(event::IManiCallback::RenderParam&);  // slot 15
     // the camera the object drives (tail calls its slot 4, CamObj::tail); the name is not the original's
     CamObj* m_cam;  // 0x68
+    unsigned char pad_70[0x10];
+    // the camera position the campos command sets (its undo restores the previous one) and the queue it restarts
+    // with it (the command clears the queue and pushes the new position); the names are not the original's
+    PosAxis m_pos;  // 0x80
+    mm::mtl::FixedVector<PosAxis, 16> m_posQueue;  // 0xa0, count 0x2a0
+    // the same for the target (camtar); the names are not the original's
+    TarAxis m_tar;  // 0x2b0
+    mm::mtl::FixedVector<TarAxis, 16> m_tarQueue;  // 0x2d0, count 0x4d0
 };
 }  // namespace event
 

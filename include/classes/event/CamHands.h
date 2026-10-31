@@ -21,6 +21,8 @@ public:
     virtual ~CamHands() {}  // slot 0
     virtual void update(event::FrameInfo const&);  // slot 2
     virtual void render(mm::Col4 const&);  // slot 3
+    void setPos(PosAxis const& pos, CV_TYPE type);
+    void setTar(TarAxis const& tar, CV_TYPE type);
     void setFov(float fov, CV_TYPE type);
     void addAnmFov(float time, float fov, CV_TYPE type);
     void setRotZ(float rotZ, CV_TYPE type);
