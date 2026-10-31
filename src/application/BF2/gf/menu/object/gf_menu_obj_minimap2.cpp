@@ -188,4 +188,37 @@ void GfMenuObjMinimap2::fn_7100444B88(ui::UIObjectAcc& acc, mm::mtl::FixedVector
     }
 }
 
+
+void GfMenuObjMinimap2::MapListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        break;
+    case 0x100: {
+        mm::mtl::FixStr<32> name;
+        mm::mtl::FixStr<64> image;
+        if (GfMenuObjUtil::fn_710048FD30(3)) {
+            for (unsigned int i = 0; i < 9; i++) {
+                name.format("IMG_map_image@%02d", i + 1);
+                if (GfMenuMapInfo::getMapSegImageName(i % 3, i / 3, image)) {
+                    ui::UIStreamManager::get()->fn_710068A034(name, acc.searchChild("LAY_map_image"), image.m_str, 0);
+                }
+            }
+            m_owner->update();
+        } else {
+            for (unsigned int i = 0; i < 9; i++) {
+                name.format("IMG_map_image@%02d", i + 1);
+                if (GfMenuMapInfo::getMapSegImageName(i % 3, i / 3, image)) {
+                    ui::UIStreamManager::get()->createImage(name, acc.searchChild("LAY_map_image"), image.m_str, 0);
+                }
+            }
+        }
+        m_owner->m_mapCreated = true;
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
 }  // namespace gf

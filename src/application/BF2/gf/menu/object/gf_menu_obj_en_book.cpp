@@ -13,6 +13,7 @@
 #include "classes/gf/GfMenuIDList.h"
 #include "classes/gf/GfMenuModelView.h"
 #include "classes/gf/GfMenuMsgList.h"
+#include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/ui/UICtrlCursorSelect.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UISelectObjList.h"
@@ -280,6 +281,65 @@ void GfMenuObjEnBook::IndexListener::reciveEvent(const ui::EventData& event, uns
         param.m_preset = 6;
         param.m_out = 0;
         GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        break;
+    }
+    case 0x22: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 1;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjEnBook::GenusSelListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableFSInput(2);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+            GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_genusList);
+        }
+        break;
+    case 6:
+        if (event.m_param0 != -1) {
+            m_owner->m_genusList->setIndex(event.m_param0);
+            m_owner->refreshGenusMsgList();
+        }
+        break;
+    case 8:
+        if (event.m_param1 == 1) {
+            GfMenuMsgList* list = m_owner->m_genusList;
+            m_owner->m_genus = list->getContents(list->getIndex(false)).m_id;
+            GfMenuObject::sendOpenEvent(GfMenuObject::getFSInputObject(4), 2, 0.0f);
+            GfMenuObject::sendCloseEvent(GfMenuObject::getFSInputObject(1), 0, 0.0f);
+        } else if (event.m_param1 == 2) {
+            GfMenuObject::sendOpenEvent(GfMenuObject::getFSInputObject(1), 2, 0.0f);
+        } else {
+            break;
+        }
+        GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+        GfMenuObject::disableFSInput();
+        GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+        break;
+    case 0x21: {
+        int from = event.m_param0;  // the name is not the original's
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 0;
+        param.m_eventId = 1;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        if (from != 4) {
+            m_owner->setupGenusMsgList();
+            m_owner->refreshGenusMsgList();
+        }
         break;
     }
     case 0x22: {

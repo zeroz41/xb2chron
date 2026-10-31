@@ -6,6 +6,9 @@
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuDriverList.h"
 #include "classes/gf/GfMenuFullScreen.h"
+#include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfMenuObjMainMenu2/CloseListener.h"
+#include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/gf/GfMenuSoundManager.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuObjUtil.h"
@@ -120,6 +123,67 @@ bool GfMenuObjMainMenu2::fn_7100432E5C() {
 
 unsigned int GfMenuObjMainMenu2::fn_7100432E6C() {
     return GfMenuObjUtil::fn_710048FD30(3) ? s_index : 0;
+}
+
+namespace {
+// Inferred name, not the original's: 3.0.1 and 1.0.0 both inline it into CloseListener::reciveEvent (no symbol);
+// the frame shows an inlined helper (its event sits above the listener's own UI accessors). What it does: sends an
+// event of that type to the main menu object attached at 0x5F, when there is one (as setSubLayer, setGuideText and
+// execMapJump do with theirs).
+inline void sendMainMenuEvent(unsigned short type) {
+    ui::UIObjectAcc main(GfMenuObject::getAttachedObject(0x5F));
+    if (main.m_object != nullptr) {
+        ui::EventData event;
+        event.m_type = type;
+        ui::UIManager::sys()->requestObjectEvent(main.m_handle, event, 0.0f);
+    }
+}
+}  // namespace
+
+void GfMenuObjMainMenu2::CloseListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObject::disableInput(handle);
+        s_cancelEnable = false;
+        s_closeKeyLocked = false;
+        break;
+    case 8:
+        switch (event.m_param1) {
+        case 2:
+            if (!s_cancelEnable || GfMenuManager::isSwitchingFullScreen()) {
+                break;
+            }
+            if (m_owner->m_menuId != 0) {
+                GfMenuObject::returnFSSubLayer(handle, 1);
+                sendMainMenuEvent(0x105);
+                GfMenuObjUtil::playSECommonCancel();
+                break;
+            }
+            sendEvent(owner.searchChild("LAY_main"), 0x107, 0);
+            GfMenuObject::disableInput(handle);
+            break;
+        case 3:
+            if (GfMenuManager::isSwitchingFullScreen()) {
+                break;
+            }
+            sendEvent(owner.searchChild("LAY_main"), 0x107, 0);
+            GfMenuObject::disableInput(handle);
+            break;
+        }
+        break;
+    case 0x21:
+        GfMenuObject::enableInput(handle);
+        s_cancelEnable = true;
+        break;
+    case 0x10D:
+        GfMenuObjOperationInfo::open(handle, 0, 0, 0);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 void GfMenuObjMainMenu2::cancelEnableMainMenu(bool enable) {
