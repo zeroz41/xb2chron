@@ -124,8 +124,9 @@ unsigned short GfMenuItemUtil::searchEquipAcc(unsigned int item, GfItemHandle ha
         unsigned int slotCount = GfEquipUtil::fn_71002FC38C(driver) ? 3 : 2;
         for (unsigned int j = 0; j < slotCount; j++) {
             unsigned int acce = GfEquipUtil::getEquipDriverAcce(driver, j);
+            GfItemHandle equipped;
             if (acce != 0 && acce == item &&
-                GfDataDriver::getEquipAcceHandle(driver, j).m_handle == handle.m_handle) {
+                (equipped = GfDataDriver::getEquipAcceHandle(driver, j)).m_handle == handle.m_handle) {
                 if (slot != nullptr) {
                     *slot = j;
                     if (GfMenuObjUtil::fn_710048FD30(3)) {
@@ -143,7 +144,9 @@ unsigned short GfMenuItemUtil::searchEquipAcc(unsigned int item, GfItemHandle ha
                 continue;
             }
             unsigned int acce = GfDataDriver::fn_7100247474(driver);
-            if (acce != 0 && acce == item && GfDataDriver::fn_71002474B0(driver).m_handle == handle.m_handle) {
+            GfItemHandle equipped;
+            if (acce != 0 && acce == item &&
+                (equipped = GfDataDriver::fn_71002474B0(driver)).m_handle == handle.m_handle) {
                 if (slot != nullptr) {
                     *slot = 0;
                 }
