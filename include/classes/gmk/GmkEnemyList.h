@@ -5,6 +5,7 @@
 #include "classes/gmk/IGmkList.h"
 #include "classes/gmk/TGmkList.h"
 #include "classes/gmk/GmkTrigger.h"
+#include "classes/gmk/TUnk_B6D480.h"
 
 namespace gmk { class GmkEnemy; }
 namespace gmk { class GmkEnemyGob; }
@@ -19,6 +20,8 @@ public:
     class BdatInfo {
     public:
         // out of line (0x7100587350): reads the current map's row; false when the map has none
+        // the constructor's defaults (GmkEnemyList's constructor stores them)
+        BdatInfo() : m_row(-1), m_dispR(100), m_dispH(50), m_releaseR(10), m_releaseH(5), m_repopTime(3) {}
         bool create();
         int m_row;  // 0x0
         unsigned char m_dispR;  // 0x4: "ene_disp_r"
@@ -39,10 +42,12 @@ public:
     virtual void debugUpdateMmf();  // slot 13
     virtual void debugDraw() const;  // slot 14
     virtual void createGmk(void*);  // slot 16
-    unsigned char pad_228[0x18];
+    BdatInfo m_bdatInfo;  // 0x228 (the name is not the original's)
+    unsigned char pad_234[0xc];
     // the destructor's TGmkList<GmkTrigger> D2 at 0x240 (the name is not the original's)
     TGmkList<GmkTrigger, GmkTrigger::BdatInfo, 1380405844u, 2u, GmkTriggerGob> m_triggerList;
-    unsigned char pad_470[0x470];  // fields: size from GmkSet::createGmkLists's new (0x8e0)
+    TUnk_B6D480 m_waveList;  // 0x470: the constructor builds it with -1 (the name is not the original's)
+    void* pad_8d0;  // 0x8d0: the constructor clears it (sizeof 0x8e0: GmkSet::createGmkLists's new)
 };
 }  // namespace gmk
 

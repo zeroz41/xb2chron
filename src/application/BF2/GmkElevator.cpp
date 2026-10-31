@@ -302,6 +302,37 @@ static inline const char* getGmkKindName(const char** names, unsigned int type) 
 
 namespace gmk {
 
+// ---- TUnk_B6D480 (GmkEnemyList's list at 0x470; placeholder slot symbols: see its header)
+TUnk_B6D480::~TUnk_B6D480() { dispose(); }
+
+void TUnk_B6D480::create(const IGmkList::CreateInfo& info) { TGmkList::create(info); }
+
+void TUnk_B6D480::dispose() {
+    m_subList.dispose();
+    const GmkSet* set = static_cast<const GmkSet*>(getCreateInfo().m_param);
+    if (set != nullptr && !set->m_createInfo.m_flag) {
+        gf::GfGameManager::setStopMainMenuOpenForGimmick(false);
+    }
+    TGmkList::dispose();
+}
+
+void TUnk_B6D480::update(float dt) {
+    TGmkList::update(dt);
+    m_subList.update(dt);
+}
+
+bool TUnk_B6D480::updateImmediate() { return TGmkList::updateImmediate() && m_subList.updateImmediate(); }
+
+void TUnk_B6D480::debugUpdateMmf() {
+    TGmkList::debugUpdateMmf();
+    m_subList.debugUpdateMmf();
+}
+
+void TUnk_B6D480::debugDraw() const {
+    TGmkList::debugDraw();
+    m_subList.debugDraw();
+}
+
 unsigned char GmkEnemyInsts::BdatInfo::fn_710058356C(CBdatWrapper bdat, int row) {
     unsigned char groups = Bdat::getFlagVal(bdat.m_fp, "flag", row, "pop_smn") != 0;
     if (Bdat::getMember(bdat.m_fp, "pop_smn2") != nullptr && Bdat::getFlagVal(bdat.m_fp, "flag", row, "pop_smn2") != 0) {
@@ -487,6 +518,9 @@ void GmkRoutedEnemyList::debugDraw() const {
     TGmkList::debugDraw();
     m_triggerList.debugDraw();
 }
+
+GmkEnemyList::GmkEnemyList(unsigned int updateGmkNumPerFrame)
+    : TGmkList(updateGmkNumPerFrame), m_triggerList(-1), m_waveList(-1), pad_8d0(nullptr) {}
 
 GmkEnemyList::~GmkEnemyList() {
     dispose();
@@ -1988,6 +2022,30 @@ void GmkSalvageLocator::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HA
 void GmkSalvageLocator::onEnemyDead(gf::GF_OBJ_HANDLE*) { pad_f1 = 1; }
 
 void GmkSalvageLocator::onEnemyHomeToPlayerAccess(gf::GF_OBJ_HANDLE*) { pad_f2 = 1; }
+
+// a gimmick set row's BDAT table name for a kind given by name, as GmkManager::getSheetnameByType reads it (the
+// original inlines it with the literal kind name; the name is not the original's)
+static inline const char* getSheetnameByKindName(const GmkManager* manager, int id, const char* kindName) {
+    mm::mtl::FixStr<256> column;
+    column.format("%s_bdat", kindName);
+    unsigned char* setFp = manager->m_bdatFp;
+    return Bdat::getMember(setFp, column.m_str) != nullptr ? reinterpret_cast<const char*>(Bdat::getValCheck(setFp, column.m_str, id, 7)) : nullptr;
+}
+
+TUnk_B6D480::TUnk_B6D480(unsigned int updateGmkNumPerFrame) : TGmkList(updateGmkNumPerFrame), m_subList(-1) {}
+
+// the second list's BDAT table is the gimmick set's "battleChallenge_bdat" column
+void TUnk_B6D480::createGmk(void* data) {
+    TGmkList::createGmk(data);
+    IGmkList::CreateInfo info = getCreateInfo();
+    if (info.m_allocHandle.m_handle != 0 && info.m_path.length() != 0) {
+        info.m_bdatName.clear();
+        IGmkList::CreateInfo subInfo = info;
+        subInfo.m_bdatName = getSheetnameByKindName(GmkManager::sys(), static_cast<const GmkSet*>(info.m_param)->m_createInfo.m_bdatId,
+                                                    "battleChallenge");
+        m_subList.create(subInfo);
+    }
+}
 
 // ---- TUnk_B6D590 (placeholder slot symbols: see its header)
 void TUnk_B6D590::dispose() {

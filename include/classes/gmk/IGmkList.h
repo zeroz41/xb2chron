@@ -21,6 +21,8 @@ public:
         class Pos {
         public:
             Pos() : x(0.0f), y(0.0f), z(0.0f) {}
+            // member-wise: TUnk_B6D480::createGmk's CreateInfo copies store x and y from one 8-byte load and z apart
+            Pos(const Pos& v) : x(v.x), y(v.y), z(v.z) {}
             Pos& operator=(const Pos& v) {
                 if (this != &v) {
                     x = v.x;
