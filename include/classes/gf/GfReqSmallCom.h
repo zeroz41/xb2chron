@@ -5,7 +5,7 @@
 #include "mm/mtl/FixedList.h"
 
 
-namespace gf { class GfReqSmallCom; class SCOM; class GF_SCOM_HANDLE; enum SCOM_TYPE : int; }
+namespace gf { class GfReqSmallCom; class SCOM; class GF_SCOM_HANDLE; class GF_OBJ_HANDLE; enum SCOM_TYPE : int; }
 namespace fw { class UpdateInfo; }
 
 namespace gf {
@@ -19,6 +19,16 @@ void fn_710056A3FC(unsigned int id);
 // strings "670105" and "670106" (count 2). Callers: TUnk_B62AA0::fn_710042537C (when the Hitonowa menu's result
 // is closed) and fn_7100447D88.
 void fn_7100569228();
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x710056B988, gf_req_scom's unit). A
+// free function: it reads no object, only its argument. What it does: GfGameVoice::playVoice(6, 0xDC3,
+// table 0x7100B6AD58[row][ml::mtRand(4)], CV_PRIO 3) (rows of four const char*). Caller: TUnk_28E618::fn_710028EF70
+// with TUnk_28E618::fn_710028E7DC's count.
+void fn_710056B988(unsigned int row);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x710056B9CC, gf_req_scom's unit). A
+// free function: it reads only its arguments. What it does: for the first count handles that are valid drivers of
+// BDAT id 1..6 or 9, plays one of two voices (ml::mtRand(2)) from the tables at 0x7100B6ADD8.. (the row picked by
+// flag) through GfGameVoice::playVoice. Caller: TUnk_28E618::fn_710028F00C (handles of party drivers 0..2).
+void fn_710056B9CC(GF_OBJ_HANDLE* const* handles, unsigned int count, bool flag);
 
 // table 0x7100B6AF20; GfReqManager makes one (0x1B078 bytes, 3.0.1's new) and updates it after its own commands
 class GfReqSmallCom : public ::mm::mtl::PtrSingleton< ::gf::GfReqSmallCom> {

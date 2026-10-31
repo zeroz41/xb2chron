@@ -6,8 +6,10 @@
 #include "mm/Vec3.h"
 #include "mm/Mat44.h"
 #include "mm/mtl/IntrusivePtr.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace gf { class TUnk_B535D0; }
+namespace gmk { class AGmkBase; }
 
 namespace gf {
 // a class with no table (named after its constructor 0x710028E618): the 0x58-byte object TUnk_B535D0's setup
@@ -57,8 +59,9 @@ public:
     TUnk_B535D0* m_owner;  // (the name is not the original's)
     // GimmickCamera::create's camera cut (the name is not the original's)
     mm::mtl::IntrusivePtr<fw::Camera> m_camera;
-    // the type-0x3C gimmicks fn_710028EDAC collects (a FixedVector of 8 pointers, size at +0x50; not recovered)
-    unsigned char pad_10[0x48];
+    // the type-0x3C gimmicks fn_710028EDAC collects: the constructor zeroes only the size at +0x50, the destructor
+    // empties it before releasing m_camera, fn_710028EB74 reads its first (the name is not the original's)
+    mm::mtl::FixedVector<gmk::AGmkBase*, 8> m_gmks;
 };
 }  // namespace gf
 
