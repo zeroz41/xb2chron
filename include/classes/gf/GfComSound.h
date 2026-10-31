@@ -10,6 +10,7 @@
 #include "classes/mm/mtl/List.h"
 #include "classes/fw/ReferenceFrame.h"
 #include "classes/fw/SoundResSourceManager.h"
+#include "classes/fw/SoundUpdater.h"
 #include "classes/gf/GfComponent.h"
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
@@ -74,10 +75,9 @@ public:
 
     fw::SoundVariableTable m_variables;  // what the sounds it plays pick by (setup sets them)
     mm::mtl::List<SoundInfo> m_cache;  // the sounds playing (cleanup erases them all); 16-aligned, to 0xF0
-    mm::mtl::IntrusiveListNodeBase m_layerNode;  // linked into SoundLayerManager's list of its layer
-    mm::mtl::Delegate<unsigned int()> m_flushDelegate;  // setup's: flush
-    bool pad_120;  // the constructor clears it
-    bool m_inLayer;  // whether m_layerNode is linked
+    // linked into SoundLayerManager's list of its layer; its delegate is setup's: flush (the name is not the
+    // original's)
+    fw::SoundUpdater m_soundUpdater;
     void* pad_128;  // the constructor clears it
     // what the sound resources call back with for a resource's custom info (GfComBehaviorPc::setup sets
     // callbackSound; the name is not the original's)

@@ -29,7 +29,7 @@ void GfComSound::setup() {
         evtAnim->m_asm.m_callbacks[4].name = SOUND_CALLBACK_EVENT_NAME;
         evtAnim->m_asm.m_callbacks[4].delegate.set(this, &GfComSound::callbackAnimForEvent);
     }
-    m_flushDelegate.set(this, &GfComSound::flush);
+    m_soundUpdater.m_delegate.set(this, &GfComSound::flush);
     m_variables.setVariable(getSoundVariableName(SoundVariable(0)), 0);
     int attribute = GfGameUtil::getObjAttribute(static_cast<GfObj*>(m_owner)->m_handle);
     m_variables.setVariable(getSoundVariableName(SoundVariable(1)), attribute);
@@ -53,10 +53,10 @@ void GfComSound::cleanup() {
         eraseCache(m_cache.begin());
     }
     if (fw::SoundLayerManager* manager = mm::mtl::PtrSingleton<fw::SoundLayerManager>::get()) {
-        if (m_inLayer) {
+        if (m_soundUpdater.m_linked) {
             unsigned int layer = getLayer();
-            manager->m_layers[layer].remove(&m_layerNode);
-            m_inLayer = false;
+            manager->m_layers[layer].remove(&m_soundUpdater);
+            m_soundUpdater.m_linked = false;
         }
     }
     m_isSetup = false;
@@ -97,11 +97,11 @@ int GfComSound::getAttributeVariable() const {
 
 void GfComSound::changeLayer(unsigned int prevLayer, unsigned int layer) {
     if (fw::SoundLayerManager* manager = mm::mtl::PtrSingleton<fw::SoundLayerManager>::get()) {
-        if (m_inLayer) {
-            manager->m_layers[prevLayer].remove(&m_layerNode);
-            m_inLayer = false;
-            manager->m_layers[layer].push_back(&m_layerNode);
-            m_inLayer = true;
+        if (m_soundUpdater.m_linked) {
+            manager->m_layers[prevLayer].remove(&m_soundUpdater);
+            m_soundUpdater.m_linked = false;
+            manager->m_layers[layer].push_back(&m_soundUpdater);
+            m_soundUpdater.m_linked = true;
         }
     }
 }
