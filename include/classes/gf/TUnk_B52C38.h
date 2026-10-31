@@ -9,6 +9,11 @@
 namespace gf { class TUnk_B535D0; }
 
 namespace gf {
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function: no this, only the BTL_ChBtl row
+// id; TUnk_B52C38::fn_710028CF40 calls it (code in unit_710028EBB0). What it does: when GfBdatBtl's fn_71001E979C
+// gives the row's map, sets that map's MapEnvData weather id from fn_71001E9824 (+1, at most 5), time 0, length 100.
+void fn_710029064C(unsigned int id);
+
 // table 0x7100B52C38 (no RTTI; a fw::MessageObject secondary table, slots 0x710028C998/CE38/CEB8): the 0xF8-byte
 // object TUnk_B535D0's setup fn_7100291100 makes with fn_710028CDC0 and keeps at +0xC0. Only what the arena
 // states use is declared; its bases and the rest of its layout are not recovered.
@@ -70,11 +75,9 @@ public:
     bool pad_AC;
     bool m_isDone;  // TUnk_B535D0::fn_7100291DD8 answers true while it is set (the name is not the original's)
     unsigned char pad_AE[0x2];
-    unsigned int pad_B0;
-    unsigned int pad_B4;
-    unsigned short pad_B8;
-    unsigned char pad_BA;
-    unsigned char pad_BB;
+    // fn_710028C9CC's best values, kept with fn_71002903AC / fn_71002904DC / fn_71002904F4 (the constructor zeroes it
+    // as Rule() does; the name is not the original's)
+    GfGameManager::BattleChallengeRecord::Rule m_best;
     // 0x3C bytes fn_710028D584 / fn_710028CFF8 copy into the option data (fn_71002EE8C4's; the name is not the
     // original's); sizeof 0xF8 (the arena's setup allocates it)
     unsigned char m_option[0x3C];

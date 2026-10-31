@@ -18,6 +18,7 @@
 #include "classes/gf/GfGameCond.h"
 #include "classes/gf/GfMenuManager.h"
 #include "gf/GfDataMap.h"
+#include "gf/GfDataBlade.h"
 #include "gf/MapjumpCallbackInfo.h"
 #include "btl/Utility.h"
 
@@ -243,6 +244,34 @@ void TUnk_B53370::gevPlayEvent(gf::GEV gev, unsigned int) {
     case 0xD: m_playState = 3; break;
     case 0xE: m_playState = 2; break;
     default: break;
+    }
+}
+
+void GfGameManager::BattleChallengeRecord::Rule::fn_71002904DC(BattleChallengeRecord* record, unsigned int value) {
+    if (m_value4 < value) {
+        m_value4 = value;
+    }
+    record->m_value28 = value;
+}
+
+void GfGameManager::BattleChallengeRecord::Rule::fn_71002904F4(BattleChallengeRecord* record, unsigned int value) {
+    if (m_value0 == 0 || value < m_value0) {
+        m_value0 = value;
+    }
+    record->m_value30 = value;
+}
+
+void fn_710029064C(unsigned int id) {
+    GfBdatBtl* btl = mm::mtl::PtrSingleton<GfBdatBtl>::sys();
+    if (unsigned int map = btl->fn_71001E979C(id)) {
+        unsigned int mapId = GfDataMap::getMapID(map);
+        unsigned int weather = btl->fn_71001E9824(id);
+        MapEnvData* env = GfDataBlade::fn_710024E1C8(mapId);
+        if (env->m_mapId == mapId) {
+            env->m_id = static_cast<WEATHERID>(weather < 4 ? weather + 1 : 5);
+            env->m_time = 0.0f;
+            env->m_timeMax = 100.0f;
+        }
     }
 }
 

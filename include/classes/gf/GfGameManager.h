@@ -94,6 +94,15 @@ public:
         // 12 bytes the arena copies from GfDataGame's table (row * 0x40 + type * 12 at 0x11A8CC)
         struct Rule {
             Rule() : m_value0(0), m_value4(0), m_value8(0), m_flag8(0) {}
+            // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: TUnk_B52C38's
+            // fn_710028C9CC calls them on its Rule at +0xB0 with the arena's record (code in unit_710028EBB0). What
+            // they do: fn_71002903AC keeps a larger value in m_value8, sets the record's m_value2C to the value and
+            // its m_ratios from GfBdatBtl's fn_71001EA2E8 thresholds 0..2; fn_71002904DC keeps a larger value in
+            // m_value4 and sets the record's m_value28; fn_71002904F4 keeps a smaller one in m_value0 (0 counts as
+            // none) and sets the record's m_value30.
+            void fn_71002903AC(BattleChallengeRecord* record, unsigned int value);
+            void fn_71002904DC(BattleChallengeRecord* record, unsigned int value);
+            void fn_71002904F4(BattleChallengeRecord* record, unsigned int value);
             unsigned int m_value0;
             unsigned int m_value4;
             unsigned int m_value8 : 17;  // also stored at 0x2C
