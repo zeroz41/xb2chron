@@ -1,3 +1,4 @@
+#include "gf/FileStaticVec3.h"
 #include "classes/gf/TFieldExecCmd.h"
 #include "classes/gf/TFieldExecCmdTurn.h"
 #include "classes/gf/GfFieldLocalSteer.h"
@@ -29,6 +30,16 @@
 #include "plugin/Bdat.h"
 #include "math.h"
 #include "ml/MTRand.h"
+#include "classes/fw/NaviManager.h"
+#include "classes/navi/NvmshAcObj.h"
+#include "classes/gf/GfComCollider.h"
+#include "classes/fw/ColiObject.h"
+#include "classes/fw/ColiMoveObject.h"
+#include "classes/gf/GfComModel.h"
+#include "classes/gf/GfMenuObjTargetInfo.h"
+#include "classes/gf/GfMenuCallContext.h"
+#include "classes/gmk/GmkRoutedNpc.h"
+#include "classes/gmk/Lvlb.h"
 
 namespace gf {
 
@@ -56,6 +67,112 @@ bool GfComBehaviorNpc::LocalSteerIsTargetNotPlayer::operator()(const GfFieldLoca
 
 gmk::AGmkBase* GfComBehaviorNpc::getBindedGmkInst() const {
     return gmk::getBindedGmkInst(static_cast<GfObj*>(m_owner)->m_handle);
+}
+
+mm::mtl::RTTI GfComBehaviorNpc::m_rtti("GfComBehaviorNpc", &GfComBehavior::m_rtti, nullptr);
+
+GfComBehaviorNpc::GfComBehaviorNpc()
+    : pad_b8(nullptr), m_goalPos(mm::Vec3::zero), m_reactionRot(mm::Quat::identity), m_playerDistSq(1e12f),
+      m_playerDistYSq(1e12f), pad_f0(mm::Vec3::zero), pad_100(false), pad_101(false),
+      m_hfsm(fw::Allocator::getProcAllocator()), m_buildingFsm(true), pad_198(nullptr), m_menuContext(nullptr),
+      m_stuckMeter(nullptr), m_depopMeter(nullptr), m_moveSpeed(nullptr),
+      m_lookIk(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), m_localSteer(nullptr) {
+    fw::NaviManager::sys()->releaseObject(pad_b8);
+    pad_b8 = nullptr;
+    pad_b8 = fw::NaviManager::sys()->createObject();
+    if (pad_b8 != nullptr) {
+        pad_b8->setMeshNum(0);
+        pad_b8->m_flags |= 2;
+    }
+}
+
+GfComBehaviorNpc::~GfComBehaviorNpc() {
+    cleanup();
+    fw::NaviManager::sys()->releaseObject(pad_b8);
+    pad_b8 = nullptr;
+}
+
+void GfComBehaviorNpc::cleanup() {
+    disposeFsm();
+    if (m_menuContext != nullptr) {
+        GfMenuObjTargetInfo::close(m_menuContext);
+        if (m_menuContext != nullptr) {
+            m_menuContext->release();
+            m_menuContext = nullptr;
+        }
+    }
+    if (pad_1b8.get() != nullptr) {
+        if (GfComModel* model = m_owner->getComponent<GfComModel>(1)) {
+            if (model->getBoneReferenceFrame("JU_neck").get() != nullptr) {
+                model->destroyBoneReferenceFrame("JU_neck");
+            } else if (model->getBoneReferenceFrame("JU_spA").get() != nullptr) {
+                model->destroyBoneReferenceFrame("JU_spA");
+            }
+        }
+        pad_1b8 = nullptr;
+    }
+    m_pluginManager.cleanup();
+}
+
+gmk::GmkRouteNavi* GfComBehaviorNpc::getGmkRouteNavi() const {
+    gmk::AGmkBase* gmk = getBindedGmkInst();
+    if (gmk != nullptr && gmk->getGmkType() == 4) {
+        return static_cast<gmk::GmkRoutedNpc*>(gmk)->m_navi;
+    }
+    return nullptr;
+}
+
+fw::ColiMoveObject* GfComBehaviorNpc::getColiObject() const {
+    const GfComCollider* collider = m_owner->getComponent<GfComCollider>(4);
+    if (collider != nullptr) {
+        fw::ColiObject* coli = collider->m_coliObjects[0];
+        if (coli != nullptr) {
+            return coli->getRTTI()->isKindOf(&fw::ColiMoveObject::m_rtti) ? static_cast<fw::ColiMoveObject*>(coli)
+                                                                         : nullptr;
+        }
+    }
+    return nullptr;
+}
+
+void GfComBehaviorNpc::updateNaviMeshObj(float deltaTime) {
+    if (pad_b8 != nullptr && (pad_b8->m_flags & 2)) {
+        const mm::Vec3& pos = getPos();
+        pad_b8->setBeginPos(pos);
+        pad_b8->setEndPos(m_goalPos);
+        pad_b8->setMoveSpd(m_bdatInfo.m_moveSpeed * deltaTime);
+    }
+}
+
+void GfComBehaviorNpc::init(bool moving) {
+    if (fw::ColiMoveObject* coli = getColiObject()) {
+        coli->setState(static_cast<fw::ColiState>(1));
+        if (moving) {
+            coli->setColiType(static_cast<fw::ColiType>(1));
+            coli->setPriority(200);
+            coli->setState(static_cast<fw::ColiState>(0));
+        } else {
+            coli->setColiType(static_cast<fw::ColiType>(0));
+            coli->setPriority(900);
+            coli->clearState(static_cast<fw::ColiState>(0));
+        }
+        if (coli->m_shape.get() != nullptr && coli->m_shape->m_kind == 5) {
+            coli->setPriority(900);
+        }
+    }
+    if (pad_b8 != nullptr) {
+        if (moving) {
+            pad_b8->m_flags |= 2;
+        } else {
+            pad_b8->m_flags &= ~2;
+        }
+    }
+}
+
+void GfComBehaviorNpc::validateLocalSteer(npc::STATE_ID state) {
+    GfFieldLocalSteer::CreateInfo info;
+    info.m_handle = static_cast<GfObj*>(m_owner)->m_handle;
+    info.pad_18 = state == 3 ? &m_steerFilter : nullptr;
+    m_localSteer.create(info);
 }
 
 void GfComBehaviorNpc::createFsm() {
@@ -93,6 +210,17 @@ void GfComBehaviorNpc::execTurnCmd(float rotY) {
     m_turnCmd.create(info);
 }
 
+void GfComBehaviorNpc::execTurnCmd(float rotY, float speed, float threshold, float delay) {
+    TFieldExecCmdTurn<GfComAsm>::CreateInfo info;
+    info.handle = static_cast<GfObj*>(m_owner)->m_handle;
+    float steer = m_localSteer.m_info.m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) ? m_localSteer.getCurAngle() : 0.0f;
+    info.pad_8 = steer + rotY;
+    info.pad_c = threshold;
+    info.pad_14 = speed;
+    info.pad_18 = delay;
+    m_turnCmd.create(info);
+}
+
 void GfComBehaviorNpc::execTurnCmdToPos(const mm::Vec3& pos) {
     const mm::Vec3& cur = getPos();
     float angle = atan2f(pos.x - cur.x, pos.z - cur.z);
@@ -101,11 +229,112 @@ void GfComBehaviorNpc::execTurnCmdToPos(const mm::Vec3& pos) {
     m_turnCmd.create(info);
 }
 
+void GfComBehaviorNpc::execTurnCmdToGoal() {
+    mm::Vec3 pos;
+    if (getMoveVec(pos, pad_b8)) {
+        pos += getPos();
+    } else {
+        pos = m_goalPos;
+    }
+    execTurnCmdToPos(pos);
+}
+
+bool GfComBehaviorNpc::isArrivedToGoal() const {
+    if (m_localSteer.isTimeOutCollide()) {
+        return true;
+    }
+    fw::ColiMoveObject* coli = getColiObject();
+    if (coli == nullptr) {
+        return false;
+    }
+    float height;
+    float radius;
+    const fw::ColiShape* shape = coli->m_shape.get();
+    if (shape != nullptr && shape->m_kind == 3) {
+        height = static_cast<const fw::ColiShapeCharacter*>(shape)->m_height;
+        radius = static_cast<const fw::ColiShapeCharacter*>(shape)->m_radius;
+    } else {
+        mm::Vec3 min;
+        mm::Vec3 max;
+        coli->getAABB(min, max);
+        float dx = max.x - min.x;
+        float dz = max.z - min.z;
+        radius = sqrtf(dx * dx + dz * dz) * 0.5f;
+        height = max.y - min.y;
+    }
+    const mm::Vec3& pos = getPos();
+    if (height < m_goalPos.y - pos.y) {
+        return false;
+    }
+    mm::Vec3 diff(m_goalPos.x - pos.x, 0.0f, m_goalPos.z - pos.z);
+    float distSq = diff.dot(diff);
+    return !(radius * radius < distSq);
+}
+
 void GfComBehaviorNpc::Listener::onWkStandbyLogout() {
     m_owner->pad_198 = nullptr;
 }
 
 namespace npc {
+
+template <typename T>
+void StateAreaMove<T>::onEnter(void* p, ai::State*) {
+    T& owner = *static_cast<T*>(p);
+    gmk::AGmkBase* gmk = owner.getBindedGmkInst();
+    if (gmk != nullptr) {
+        int type = gmk->getGmkType();
+        if ((type == 3 || type == 0x12) && gmk->m_info->m_shape != 1) {
+            m_seq = &StateAreaMove::seqInitGoalPos;
+            return;
+        }
+    }
+    requestState(0);
+}
+
+template <typename T>
+void StateAreaMove<T>::seqWaitTurnEnd(T& owner, const fw::UpdateInfo&) {
+    if (owner.m_turnCmd.pad_6c) {
+        m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, "C_move"));
+        m_seq = &StateAreaMove::seqMoveToGoal;
+    }
+}
+
+template <typename T>
+void StateAreaMove<T>::seqMoveToGoal(T& owner, const fw::UpdateInfo& info) {
+    m_execCmd.update(info.m_deltaTime);
+    if (m_execCmd.m_done) {
+        if (!canGetMoveVec(owner.pad_b8)) {
+            m_seq = &StateAreaMove::seqInitGoalPos;
+            return;
+        }
+        if (owner.isArrivedToGoal()) {
+            owner.m_moveSpeed.setSpeedKmph(owner.m_moveSpeed.m_speedMin, 0.5f);
+            m_execCmd.create(
+                TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, "C_walkend"));
+            m_seq = &StateAreaMove::seqWaitMoveEnd;
+        }
+        owner.moveToGoal(info.m_deltaTime);
+    }
+}
+
+template <typename T>
+void StateAreaMove<T>::seqWaitMoveEnd(T& owner, const fw::UpdateInfo& info) {
+    m_execCmd.update(info.m_deltaTime);
+    if (m_execCmd.m_done) {
+        pad_60 = ml::mtRandf1(3.0f, 5.0f);
+        pad_64 = 0.0f;
+        owner.init(false);
+        m_seq = &StateAreaMove::seqIdle;
+    }
+}
+
+template <typename T>
+void StateAreaMove<T>::seqIdle(T&, const fw::UpdateInfo& info) {
+    pad_64 += info.m_deltaTime;
+    if (!(pad_64 < pad_60)) {
+        m_seq = &StateAreaMove::seqInitGoalPos;
+    }
+}
 
 template <typename T>
 void StateReaction<T>::seqTurnToPc(T& owner, const fw::UpdateInfo&) {

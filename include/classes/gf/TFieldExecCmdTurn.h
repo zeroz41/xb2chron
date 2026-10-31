@@ -17,16 +17,16 @@ public:
     struct CreateInfo {
         CreateInfo()
             : handle(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), pad_8(0.0f), pad_c(0.785398185f), pad_10(1.57079637f),
-              pad_14(1.0f), pad_18(0) {}
+              pad_14(1.0f), pad_18(0.0f) {}
         // a turn of the object by angle (GfComBehaviorMob::execTurnCmdToPos)
         CreateInfo(GF_OBJ_HANDLE* handle_, float angle)
-            : handle(handle_), pad_8(angle), pad_c(0.785398185f), pad_10(1.57079637f), pad_14(1.0f), pad_18(0) {}
+            : handle(handle_), pad_8(angle), pad_c(0.785398185f), pad_10(1.57079637f), pad_14(1.0f), pad_18(0.0f) {}
         GF_OBJ_HANDLE* handle;
         float pad_8;
         float pad_c;
         float pad_10;
         float pad_14;
-        int pad_18;
+        float pad_18;  // GfComBehaviorNpc::execTurnCmd stores its float fourth argument in it
     };
 
     TFieldExecCmdTurn() : pad_58(0.0f), pad_5c(1.0f), pad_60(false), pad_64(0), pad_68(0), pad_6c(false) {}
