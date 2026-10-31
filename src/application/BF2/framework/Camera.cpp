@@ -21,7 +21,7 @@
 namespace fw {
 
 Camera::Camera(CAMERA_PRIO prio)
-    : m_layerNode(nullptr), m_prio(prio), m_fov(40.0f), m_nearClip(0.01f), m_farClip(40000.0f), m_eye(mm::Vec3::zero),
+    : m_pScnCam(nullptr), m_prio(prio), m_fov(40.0f), m_nearClip(0.01f), m_farClip(40000.0f), m_eye(mm::Vec3::zero),
       m_target(mm::Vec3::unitZ), m_pushed(false), m_roll(0.0f) {
     m_view = mm::Mat44::identity;
 }

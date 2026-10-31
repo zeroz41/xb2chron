@@ -7,6 +7,7 @@
 #include "mm/mtl/IntrusiveList.h"
 #include "classes/mm/mtl/ReferenceObject.h"
 namespace fw { class UpdateInfo; }
+namespace ml { class ScnObjCam; }
 
 namespace fw {
 // the camera manager's ordering of a camera (SubViewCamera's is 55)
@@ -16,7 +17,8 @@ enum CAMERA_PRIO {};
 // inline ones' copies); counted by mm::mtl::IntrusivePtr (SubViewCamera::create returns one).
 // Its destructor is inline: only the deleting one is out of line (0x7100162460, with the table), and a derived
 // class's complete destructor returns without calling a base one.
-class Camera : public ::mm::mtl::ReferenceObject {
+// its layer links it by its node base (CameraLayer's list turns a node into its camera with a null-checked -0x10)
+class Camera : public ::mm::mtl::ReferenceObject, public ::mm::mtl::IntrusiveListNodeBase {
 public:
     Camera(CAMERA_PRIO prio);
     virtual ~Camera() {}  // slot 0
@@ -29,12 +31,15 @@ public:
     virtual void onDeactivate() {}  // slot 7
     virtual void update(fw::UpdateInfo const&) {}  // slot 8
     virtual void updateViewMatrix();  // slot 9
+    // CameraLayer::push hands each camera its scene camera so (the camera is read before the layer's field; the
+    // name is not the original's)
+    void setScnCam(ml::ScnObjCam* cam) { m_pScnCam = cam; }
     void setLookAt(const mm::Vec3& eye, const mm::Vec3& target, float roll);
     static mm::mtl::RTTI m_rtti;
 
-    unsigned char pad_c[0x4];
-    // unlinked, no owner, as the constructor leaves it (the name is not the original's)
-    mm::mtl::IntrusiveListNode<Camera> m_layerNode;
+    // the layer's scene camera: CameraLayer::push sets it from its own, the constructor clears it (the name is not
+    // the original's)
+    ml::ScnObjCam* m_pScnCam;
     CAMERA_PRIO m_prio;  // the constructor's
     float m_fov;  // GfGameFallDeadCamera::onActivate sets it from GfInfo::m_camFov
     float m_nearClip;  // 0.4 and 80000 from gf::ScriptCameraEntity's constructor: gf::PlayerCamera::getNearClip and

@@ -10,12 +10,10 @@ namespace fw {
 // what a camera layer runs on its camera (fw::CameraLayer::pushPlugin/popPlugin take an
 // mm::mtl::IntrusivePtr<fw::CameraPlugin>&): a counted object, so the pointer's end releases it. No table of its
 // own is identified; gf::ShipRollPlugin's has update(fw::Camera*) after the destructors.
-class CameraPlugin : public ::mm::mtl::ReferenceObject {
+// linked by its node base (CameraLayer::pushPlugin converts the plugin to its node with a null check)
+class CameraPlugin : public ::mm::mtl::ReferenceObject, public ::mm::mtl::IntrusiveListNodeBase {
 public:
     virtual void update(fw::Camera*) = 0;
-
-    // unlinked at construction (gf::ShipRollPlugin's inlined constructor; the name is not the original's)
-    mm::mtl::IntrusiveListNodeBase m_node;
 };
 }  // namespace fw
 

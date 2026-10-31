@@ -3,6 +3,9 @@
 
 #include "mm/MMStdBase.h"
 
+// the category its iterator states (defined in <algorithm>, which the users of std::lower_bound include)
+namespace std { inline namespace __1 { struct bidirectional_iterator_tag; } }
+
 // mm_lib's intrusive_list.h, as the including file's include path named it (see mm/mtl/FixStr.h)
 #ifdef MM_LIB_FROM_LIBS
 #define MM_MTL_INTRUSIVE_LIST_PATH "../../../mcl/mm_lib/source\\mm_mtl/intrusive_list.h"
@@ -59,6 +62,14 @@ class IntrusiveList : public IntrusiveListBase {
 public:
     class iterator {
     public:
+        // bidirectional: fw::CameraLayer::push finds a camera's place with std::lower_bound, whose advance steps
+        // back for a negative count
+        typedef std::bidirectional_iterator_tag iterator_category;
+        typedef T value_type;
+        typedef long difference_type;
+        typedef T* pointer;
+        typedef T& reference;
+
         explicit iterator(T* node) : m_node(node) {}
         T& operator*() const {
 #line 71 MM_MTL_INTRUSIVE_LIST_PATH
@@ -69,6 +80,10 @@ public:
         T* operator->() const { return m_node; }
         iterator& operator++() {
             m_node = static_cast<T*>(static_cast<IntrusiveListNodeBase*>(m_node)->m_next);
+            return *this;
+        }
+        iterator& operator--() {
+            m_node = static_cast<T*>(static_cast<IntrusiveListNodeBase*>(m_node)->m_prev);
             return *this;
         }
         bool operator==(const iterator& other) const { return m_node == other.m_node; }
@@ -90,6 +105,23 @@ public:
         linkNode(&ref, &m_root);
         ++m_size;
     }
+    // ptr linked first (fw::CameraLayer::pushPlugin)
+    void push_front(T* ptr) {
+#line 243 MM_MTL_INTRUSIVE_LIST_PATH
+        MM_ASSERT(ptr);
+        linkNode(ptr, m_root.m_next);
+        ++m_size;
+    }
+    // ptr linked before pos, asserted (fw::CameraLayer::push links a camera before the first one of a higher
+    // order so; the name is not the original's: insert above is another function)
+    void insert_before(iterator pos, T* ptr) {
+#line 256 MM_MTL_INTRUSIVE_LIST_PATH
+        MM_ASSERT(ptr);
+        linkNode(ptr, pos.m_node);
+        ++m_size;
+    }
+    // the first element, still linked (the name is not known to be the original's)
+    T* front() const { return static_cast<T*>(m_root.m_next); }
     // the first element, unlinked
     T* pop_front() {
         IntrusiveListNodeBase* node = m_root.m_next;

@@ -31,6 +31,16 @@ struct add_lvalue_reference {
     typedef _Tp& type;
 };
 
+// a list's: counted step by step (fw::CameraLayer::push's lower_bound over its cameras)
+template <class _InputIter>
+inline typename iterator_traits<_InputIter>::difference_type __distance(_InputIter __first, _InputIter __last,
+                                                                        input_iterator_tag) {
+    typename iterator_traits<_InputIter>::difference_type __r(0);
+    for (; __first != __last; ++__first)
+        ++__r;
+    return __r;
+}
+
 template <class _RandIter>
 inline typename iterator_traits<_RandIter>::difference_type __distance(_RandIter __first, _RandIter __last,
                                                                        random_access_iterator_tag) {
@@ -40,6 +50,17 @@ inline typename iterator_traits<_RandIter>::difference_type __distance(_RandIter
 template <class _InputIter>
 inline typename iterator_traits<_InputIter>::difference_type distance(_InputIter __first, _InputIter __last) {
     return __distance(__first, __last, typename iterator_traits<_InputIter>::iterator_category());
+}
+
+template <class _BiDirIter>
+inline void __advance(_BiDirIter& __i, typename iterator_traits<_BiDirIter>::difference_type __n,
+                      bidirectional_iterator_tag) {
+    if (__n >= 0)
+        for (; __n > 0; --__n)
+            ++__i;
+    else
+        for (; __n < 0; ++__n)
+            --__i;
 }
 
 template <class _RandIter>
