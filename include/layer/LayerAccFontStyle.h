@@ -10,11 +10,17 @@ namespace layer {
 // a style's record in a font style object's table (0x28 bytes; the type's name is the original's, from
 // LayerFontDrawBuffer's constructor's signature; the field names are not the original's)
 struct LyrFontStyleData {
-    unsigned char pad_0[0x8];
+    unsigned char m_flags;  // bit 1: fixed-width characters (LayerFontDrawBuffer::createFontCode)
+    unsigned char pad_1[0x7];
     unsigned int m_fontName;  // its font's name, at this offset in the object's strings (getFontName)
     float m_offsetX;  // UIFontManager::getFontStyleInfo copies it beside m_offsetY (inferred from that pairing)
     float m_offsetY;  // UIFontManager::StyleInfo's m_offsetY
-    unsigned char pad_14[0x14];
+    unsigned char pad_14[0x4];
+    unsigned short m_lineWidthMax;  // 0x18: createFontCode lays out no character past it
+    unsigned short m_lineNumMax;    // 0x1A: nor beyond this many line feeds
+    unsigned short m_lineSpace;     // 0x1C: added across the line (createFontCode, createLineBreak)
+    unsigned short m_charSpace;     // 0x1E: added after each character
+    unsigned char pad_20[0x8];
 };
 // what getStyleInfo hands back: the object's strings and the style's record (the names are not the original's)
 struct LayerFontStyleInfo {

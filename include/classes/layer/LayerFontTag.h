@@ -24,6 +24,18 @@ struct LayerTagWork {
 // destructor out of line; 3.0.1's linker kept only LayerFontDrawBuffer's table)
 class LayerFontTag : public ::layer::LayerTag {
 public:
+    // a character's quad in the vertex buffer (0x24 bytes; the type's name is not the original's)
+    struct Vertex {
+        float m_width;
+        float m_height;
+        float m_x;
+        float m_y;
+        float m_uvWidth;
+        float m_uvHeight;
+        float m_u;
+        float m_v;
+        unsigned char m_color[4];
+    };
     virtual ~LayerFontTag() {}  // slot 0
     virtual void beginParseString();  // slot 2
     virtual void parseNotTag(unsigned char const* text, unsigned int& pos);  // slot 4
@@ -48,16 +60,25 @@ public:
     const LayerFontIconObj* m_iconObj;    // 0x18
     const LyrFontStyleData* m_styleData;  // 0x20
     bool m_isCreate;  // 0x28: false in createChar's sizing pass, true in its creation pass
-    unsigned char pad_29[0x7];
+    bool m_doubleNext;  // 0x29: the next character takes twice its advance (createFontCode clears it)
+    unsigned char pad_2A[0x6];
     LayerTagWork* m_work;  // 0x30: createChar's
-    unsigned char pad_38[0x30];
+    LayerFontSetting m_setting;  // 0x38: the constructor's (1 and 2 lay characters out at the cell's width)
+    unsigned int m_axis;       // 0x3C: m_pos's index along a line (setting != 0)
+    unsigned int m_crossAxis;  // 0x40: the other one (setting == 0)
+    unsigned char pad_44[0x4];
+    Vertex* m_vertexTop;      // 0x48: createWorkBuffer's
+    Vertex* m_vertex;         // 0x50: the next character's
+    Vertex* m_rubyVertexTop;  // 0x58: the same for ruby characters
+    Vertex* m_rubyVertex;     // 0x60
     mm::Col4 m_color;         // 0x68: what the characters take (System:Color sets it)
     mm::Col4 m_defaultColor;  // 0x78: what callTagEnd puts back at the end of a System:Color tag
     unsigned char pad_88[0x408];
     int m_width;     // 0x490: zeroed by beginParseString (its use is not known yet)
-    int m_offsetX;   // 0x494: the style's x offset times the font's size (the constructor)
-    int m_offsetY;   // 0x498: the same for y
-    int m_lineNum;   // 0x49C: parseNotTag counts the sizing pass's line feeds
+    // 0x494: the next character's position (the constructor starts it at minus the font's border times the
+    // style's scale); createFontCode advances m_pos[m_axis]
+    int m_pos[2];
+    unsigned int m_lineNum;  // 0x49C: parseNotTag counts the sizing pass's line feeds
     unsigned short m_lastCode;  // 0x4A0: the last printable character parseNotTag saw
 };
 }  // namespace layer
