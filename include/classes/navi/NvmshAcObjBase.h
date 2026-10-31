@@ -100,6 +100,12 @@ public:
     // one search (0: from m_beginPos etc., 1: from m_endPos etc.)
     bool seachNaviMesh(NvmshColiResult& result, int idx);
     bool stockWayPointMesh(_NaviTempColiResl& result, _NaviCalcResTbl* tbl);
+    // the move vector toward vec: taken as it is when it turns less than about 28.8 degrees in the xz plane, else a
+    // quarter of it is added to the current one, normalized (callers: calcTargetVecLine, calcTargetVecColi)
+    void setMoveVec(const mm::Vec3& vec);
+    // setMoveVec with the direction from from to to (in the xz plane with m_flags bit 4), or (0, 0, 1) when they
+    // are within 0.001 on each axis (the parameter names are not the original's)
+    void calcTargetVecLine(const mm::Vec3& from, const mm::Vec3& to);
     // as seachNaviMesh, the end search over the wide area
     int seachWideAreaNaviMesh(_NaviTempColiResl& result, _NaviCalcResTbl* tbl, _NaviCalcResInfo* info);
     bool seachWideAreaNaviMesh(NvmshColiResult& result, int idx);

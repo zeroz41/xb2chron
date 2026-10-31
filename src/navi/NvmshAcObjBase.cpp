@@ -219,6 +219,96 @@ int NvmshAcObjBase::seachWideAreaNaviMesh(_NaviTempColiResl& result, _NaviCalcRe
     return 6;
 }
 
+// to length 1, or zero when shorter than 1e-6 (Vec3::normalize without its isZero test; the name is not the
+// original's)
+static inline void normalizeVec(mm::Vec3& vec) {
+    float length = vec.length();
+    if (length <= 1e-6f) {
+        vec = mm::Vec3::zero;
+    } else {
+        float scale = 1.0f / length;
+        vec.x = scale * vec.x;
+        vec.y = scale * vec.y;
+        vec.z = scale * vec.z;
+    }
+}
+
+void NvmshAcObjBase::setMoveVec(const mm::Vec3& vec) {
+    float dot = m_moveVec.x * vec.x + m_moveVec.z * vec.z;
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_71015E9CB0, with its guard)
+    static const float turnCos = ::cosf(0.50265485f);
+    if (dot < turnCos) {
+        m_moveVec += vec * 0.25f;
+        normalizeVec(m_moveVec);
+    } else {
+        m_moveVec = vec;
+    }
+}
+
+void NvmshAcObjBase::calcTargetVecLine(const mm::Vec3& from, const mm::Vec3& to) {
+    mm::Vec3 vec;
+    vec.x = to.x - from.x;
+    vec.y = to.y - from.y;
+    vec.z = to.z - from.z;
+    if (m_flags & 0x10) {
+        if (::fabsf(vec.x) <= 0.001f && ::fabsf(vec.z) <= 0.001f) {
+            vec = mm::Vec3(0.0f, 0.0f, 1.0f);
+        } else {
+            vec.y = 0.0f;
+            normalizeVec(vec);
+        }
+    } else if (::fabsf(vec.x) <= 0.001f && ::fabsf(vec.z) <= 0.001f && ::fabsf(vec.y) <= 0.001f) {
+        vec = mm::Vec3(0.0f, 0.0f, 1.0f);
+    } else {
+        normalizeVec(vec);
+    }
+    setMoveVec(vec);
+}
+
+void NvmshAcObjBaseDef::stateUpdate() {
+    if (m_meshNum != m_isMeshNum) {
+        m_meshNum = m_isMeshNum;
+        m_status &= 0xFF4FE3E0;
+    }
+    if (m_flags & 8) {
+        if (!(m_status & 0x8000)) {
+            m_status = (m_status & 0xFF4F63E0) | 0x8000;
+        }
+    } else if (m_status & 0x8000) {
+        m_status &= 0xFF4F63E0;
+    }
+    if (m_flags & 4) {
+        if (!(m_status & 0x10000)) {
+            m_status = (m_status & 0xFF4EE3E0) | 0x10000;
+        }
+    } else if (m_status & 0x10000) {
+        m_status &= 0xFF4EE3E0;
+    }
+    if (m_flags & 0x20) {
+        if (!(m_status & 0x20000)) {
+            m_status = (m_status & 0xFF4DE3E0) | 0x20000;
+        }
+    } else if (m_status & 0x20000) {
+        m_status &= 0xFF4DE3E0;
+    }
+    if (m_flags & 0x40) {
+        if (!(m_status & 0x40000)) {
+            m_status = (m_status & 0xFF4BE3E0) | 0x40000;
+        }
+    } else if (m_status & 0x40000) {
+        m_status &= 0xFF4BE3E0;
+    }
+    if (m_status & 4) {
+        float x = m_vec130.x - m_vec110.x;
+        float y = m_vec130.y - m_vec110.y;
+        float z = m_vec130.z - m_vec110.z;
+        if (x * x + y * y + z * z >= 16.0f) {
+            m_status &= 0xFF6FE3FF;
+            m_flag5F = 0;
+        }
+    }
+}
+
 NvmshAcObjBaseGbl::~NvmshAcObjBaseGbl() {}
 
 void NvmshAcObjBaseGbl::release() { reset(); }
