@@ -7,6 +7,26 @@ namespace nn { namespace hid {
 
 // the SDK's touch screen setup (ml::DevTouchNx::createDevice calls it)
 void InitializeTouchScreen();
+// the SDK's vibration file player (ml::DevPadNx::loadLocalVibration loads one per id; the size is the room
+// DevPadNx::Impl's player entries leave it, its fields are not known)
+class VibrationPlayer {
+public:
+    void Load(const void* data, unsigned long size);
+    void SetLoop(bool loop);
+    bool IsLoaded() const;
+    void Stop();
+    unsigned char pad_0[0xC0];
+};
+// the SDK's link between two vibration nodes (ml::DevPadNx::stopLocalVibration disconnects a pad's two; the size is
+// the room DevPadNx::Impl::PadData leaves it, its fields are not known)
+class VibrationNodeConnection {
+public:
+    void Disconnect();
+    unsigned char pad_0[0x38];
+};
+// the SDK's mouse and keyboard setup (ml::DeviceNx::initializeSDK calls them)
+void InitializeMouse();
+void InitializeKeyboard();
 
 // the SDK's controller support applet arguments (0x21C bytes; ml::ControllerApplet::showApplet fills it)
 struct ControllerSupportArg {

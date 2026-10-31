@@ -2,6 +2,7 @@
 #define MM_LIB_FROM_MONOLIB_MM
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <new>
 #include "classes/ml/DevBase.h"
@@ -26,6 +27,9 @@
 #include "classes/ml/DevTouch.h"
 #include "classes/ml/DevTouchNx.h"
 #include "classes/ml/DeviceNx.h"
+#include "classes/ml/TUnk_B777B8.h"
+#include "classes/ml/LanguageInfo.h"
+#include "classes/ml/WorkControl.h"
 #include "classes/ml/WorkCpu.h"
 #include "classes/ml/ErrViewer.h"
 #include "classes/ml/LibMain.h"
@@ -33,6 +37,8 @@
 #include "nn/hid.h"
 #include "nn/oe.h"
 #include "nn/os.h"
+#include "nn/time.h"
+#include "nn/account.h"
 
 #include "classes/ml/CacheDraw/DRLINE.h"
 #include "classes/ml/CacheDraw/DRLINE_PNT.h"
@@ -901,8 +907,70 @@ void FontLayer::fontScale(float x, float y) {
     }
 }
 
+bool DeviceNx::m_onceInitialize;
+mtl::ALLOC_HANDLE device_detail::hMemFile;
+
 void Device::initializeSDK(const InitParam& param) {
     DeviceNx::initializeSDK(param);
+}
+
+void DeviceNx::initializeSDK(const Device::InitParam& param) {
+    if (!m_onceInitialize) {
+        nn::oe::Initialize();
+        unsigned long size = param.m_fileMemSize;
+        unsigned long align = param.m_fileMemAlign;
+        unsigned long mem = reinterpret_cast<unsigned long>(malloc(size + align));
+        device_detail::hMemFile =
+            mtl::MemManager::create(reinterpret_cast<void*>((mem + align - 1) & -align), size, "sdkFileMem", true);
+        nn::fs::SetAllocator(device_detail::allocateFile, device_detail::deallocateFile);
+        DevFileNxTh::initializeSDK(param);
+        nn::account::Initialize();
+        nn::time::Initialize();
+        nn::hid::InitializeMouse();
+        nn::hid::InitializeKeyboard();
+        DevFileNxTh::initializeSave();
+        m_onceInitialize = true;
+    }
+}
+
+bool Device::wkStandbyLogin() {
+    if (WorkCpu::isInitialized()) {
+        return false;
+    }
+    m_langInfo = new (MlMem::getProductMem(), nullptr, 0, 4, false) LanguageInfo();
+    LanguageInfo::initialize(MlMem::getProductMem());
+    WorkUtil::createWork<TUnk_B777B8>("DeviceException", this, false);
+    createDevice();
+    wkSetEvent(EVT(9));
+    m_groupHandle = WorkCpu::createGroupHandle(1);
+    WorkCpu::entryJobThread(m_groupHandle, jobUpdate, 0, this, nullptr, WorkCpu::getRenderCPUID(), true, false);
+    return WorkObj::wkStandbyLogin();
+}
+
+unsigned int Device::jobUpdate(void*, void*) {
+    Device* dev = get();
+    if (dev != nullptr) {
+        for (mm::mtl::FixedList<Job, 16>::iterator it = dev->m_jobs.begin(); it != dev->m_jobs.end(); ++it) {
+            it->m_func(it->m_arg);
+        }
+    }
+    return 0;
+}
+
+bool Device::wkStandbyLogout() {
+    if (m_child.size() == 0 && WorkSystem::get() == nullptr && LibMain::get() == nullptr) {
+        WorkCpu::releaseGroupHandle(m_groupHandle);
+        if (m_langInfo != nullptr) {
+            delete m_langInfo;
+            m_langInfo = nullptr;
+        }
+        return WorkObj::wkStandbyLogout();
+    }
+    return false;
+}
+
+Device* Device::create() {
+    return WorkUtil::createWork<DeviceNx>("DeviceNx", mm::mtl::PtrSingleton<WorkControl>::get(), false);
 }
 
 FontLayer::FontLayer() {
@@ -1823,6 +1891,18 @@ void DevPadNx::playLocalVibration(int pad, const PadVibrationInfo& info) {
     m_impl->playVibration(m_impl->getPadData(pad), info);
 }
 
+void DevPadNx::loadLocalVibration(unsigned int id, void* file, unsigned long size) {
+    Impl::VibPlayerData& player = m_impl->m_players[id];
+    if (player.m_data == nullptr) {
+        player.m_id = id;
+        player.m_data = mtl::MemManager::allocate(WorkRoot::getMemTMP(), size, 0x20, false, "no name", 0);
+        player.m_size = size;
+        memcpy(player.m_data, file, size);
+        player.m_player.Load(player.m_data, size);
+        player.m_player.SetLoop(false);
+    }
+}
+
 void DevPadNx::setUserSelectControllerID(unsigned int id) {
     DevPadNx* dev = static_cast<DevPadNx*>(get());
     if (dev != nullptr) {
@@ -1843,6 +1923,10 @@ bool DevPadNx::createDevice() {
 
 void DevPadNx::releaseDevice() {
     m_impl->release();
+}
+
+void* device_detail::allocateFile(unsigned long size) {
+    return mtl::MemManager::allocate(hMemFile, size, 4, false, "no name", 0);
 }
 
 void device_detail::deallocateFile(void* ptr, unsigned long) {
@@ -1948,6 +2032,18 @@ void DevSettingNx::setAutoSleepExtended(SleepExtendType type) {
 
 bool DevSettingNx::isAutoSleepExtended() const {
     return nn::oe::IsUserInactivityDetectionTimeExtended();
+}
+
+DeviceNx::~DeviceNx() {
+    if (m_onceInitialize) {
+        delete mm::mtl::PtrSingleton<DevPerf>::get();
+        if (mm::mtl::PtrSingleton<DevSetting>::get() != nullptr) {
+            mm::mtl::PtrSingleton<DevSetting>::get()->m_impl->finalize();
+        }
+        delete mm::mtl::PtrSingleton<DevSetting>::get();
+        nn::time::Finalize();
+        m_onceInitialize = false;
+    }
 }
 
 void DeviceNx::createDevicePort(const char*) {}

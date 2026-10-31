@@ -2,6 +2,7 @@
 #define CLASSES_ML_DEVFILENXTH_H
 
 #include "classes/ml/DevFileAccessor.h"
+#include "classes/ml/Device.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "ml/CriticalSection.h"
 #include "ml/OpenReadParam.h"
@@ -53,6 +54,9 @@ public:
     mtl::ALLOC_HANDLE m_alloc;  // the handle the constructor is given (the name is not the original's)
     int pad_18;
     mm::mtl::UniquePtr<Impl> m_impl;
+    // named by the symbols: DeviceNx::initializeSDK calls them (the SDK's file setup, then the save data's)
+    static void initializeSDK(const Device::InitParam& param);
+    static void initializeSave();
     // set while the save data is mounted (DevFileTh::flushSave commits it then; named by the symbols)
     static bool m_mountSave;
 };

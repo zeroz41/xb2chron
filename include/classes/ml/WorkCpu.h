@@ -46,6 +46,13 @@ public:
     // the undoing of a job group's entryAutoExecGrp and createGroupHandle (navi::NvmshManager's destructor)
     static void removeAutoExecGrp(int group);
     static void releaseGroupHandle(int group);
+    // a job group of count threads' room (Device::wkStandbyLogin makes one for its jobUpdate; the parameter name is
+    // not the original's)
+    static int createGroupHandle(unsigned int count);
+    // enters job(data, extra) on the group's thread on cpu (Device::wkStandbyLogin: Device::jobUpdate on the render
+    // CPU; the unnamed parameters are not known yet)
+    static void entryJobThread(int group, unsigned int (*job)(void*, void*), unsigned int, void* data, void* extra,
+                               CPUID cpu, bool, bool);
     static const unsigned int& getFrameCount();  // the work CPU's frame counter (fw::Framework::getFrameCount)
     // a listener told of the HOME menu no more (fw::MovieManager's destructor)
     static void addBackgroundListener(IWorkBackground* listener);

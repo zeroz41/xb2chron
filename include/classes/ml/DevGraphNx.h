@@ -49,6 +49,9 @@ public:
 };
 // nn::fs's allocator hooks (0x71006AEF64 allocateFile, 0x71006AEFB0 deallocateFile)
 namespace device_detail {
+// the memory allocateFile takes from (DeviceNx::initializeSDK creates it: "sdkFileMem")
+extern mtl::ALLOC_HANDLE hMemFile;
+void* allocateFile(unsigned long size);
 void deallocateFile(void* ptr, unsigned long size);
 }  // namespace device_detail
 // zlib's allocator hooks

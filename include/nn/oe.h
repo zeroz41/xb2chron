@@ -8,6 +8,8 @@ enum FocusState {};
 // the SDK's performance mode: -1 invalid, 0 normal (handheld), 1 boost (docked)
 enum PerformanceMode {};
 
+// the SDK's application environment setup (ml::DeviceNx::initializeSDK calls it first)
+void Initialize();
 FocusState GetCurrentFocusState();
 void SetPerformanceConfiguration(PerformanceMode mode, int config);
 // the user-inactivity (auto-sleep) time extension: 1 extended, 2 extended unsafely

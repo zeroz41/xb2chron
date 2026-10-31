@@ -5,6 +5,7 @@
 #include "mm/mtl/Delegate.h"
 #include "mm/mtl/FixedArray.h"
 #include "mm/mtl/UniquePtr.h"
+#include "nn/hid.h"
 
 namespace ml { class PadVibrationInfo; }
 
@@ -26,7 +27,31 @@ public:
             bool m_connect;            // 0x14 (isLocalConnect)
             unsigned char pad_15[3];
             int m_style;               // 0x18 (getLocalStyle)
-            unsigned char pad_1c[0x164];
+            unsigned char pad_1c[0x44];
+            // 0x60.. the vibration stopLocalVibration stops and resets (the names are not the original's): the
+            // player id (1..63, an index into m_players), a state (3 once stopped), four scales (1.0 once stopped),
+            // a value (0 once stopped), two flags (playing, 0x7D unknown)
+            unsigned int m_vibId;      // 0x60
+            int m_vibState;            // 0x64
+            float m_vibScale0;         // 0x68
+            float m_vibScale1;         // 0x6C
+            float m_vibScale2;         // 0x70
+            float m_vibScale3;         // 0x74
+            int m_vibValue;            // 0x78
+            bool m_vibOn;              // 0x7C
+            bool m_vib7d;              // 0x7D
+            unsigned char pad_7e[0x92];
+            nn::hid::VibrationNodeConnection m_vibConnect0;  // 0x110
+            nn::hid::VibrationNodeConnection m_vibConnect1;  // 0x148
+        };
+        // a loaded vibration file (FixedArray<VibPlayerData, 64> names the type; the fields' names are not the
+        // original's): loadLocalVibration copies the file into m_data and loads m_player from it
+        struct VibPlayerData {
+            void* m_data;               // 0x00
+            unsigned long m_size;       // 0x08
+            unsigned int m_id;          // 0x10
+            unsigned char pad_14[4];
+            nn::hid::VibrationPlayer m_player;  // 0x18
         };
 
         // the state a getter reads for a pad: the user-selected pad's own entry for its id, pad 4 the selected
@@ -86,7 +111,8 @@ public:
         mm::mtl::Delegate<void(float)> m_state;   // 0x0 (updateDevice calls it; the name is not the original's)
         int m_stateId;                              // 0x20 (stateUpdate updates the npads in state 2)
         unsigned int m_npadId[4];                   // 0x24 (setUserSelectControllerID matches against these)
-        unsigned char pad_34[0x3604];
+        unsigned char pad_34[4];
+        mm::mtl::FixedArray<VibPlayerData, 64> m_players;  // 0x38 (the name is not the original's)
         mm::mtl::FixedArray<PadData, 4> m_pads;     // 0x3638
         unsigned char pad_3c38[0x600];
         PadData m_selectPad;                        // 0x4238

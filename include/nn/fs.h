@@ -19,6 +19,10 @@ void CloseFile(FileHandle handle);
 Result GetFileSize(long* size, FileHandle handle);
 Result ReadFile(unsigned long* readSize, FileHandle handle, long offset, void* buffer, unsigned long size);
 
+// the file system's allocator hooks (ml::DeviceNx::initializeSDK hands it device_detail::allocateFile and
+// deallocateFile)
+void SetAllocator(void* (*allocate)(unsigned long), void (*deallocate)(void*, unsigned long));
+
 // commits a mounted save data's writes (DevFileTh::flushSave passes "save")
 Result CommitSaveData(const char* name);
 }}  // namespace nn::fs
