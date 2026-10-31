@@ -7,6 +7,10 @@ namespace gf {
 // table 0x7100B69FA8
 class GfInitParamMob : public ::gf::GfInitParam {
 public:
+    // a setup to use instead of the factory's own (the name is not the original's). A member of each kind,
+    // not of GfInitParam: the copy assignments copy it with the kind's own fields, apart from the base's
+    // (GfInitParamDriver::operator=, GfObjSetupBlade's constructor)
+    GfAssetSetup* m_assetSetup;
     // inline: no copy of it exists (GfObjFactory's createGmkMob and createMobNull build it on the stack)
     GfInitParamMob() : GfInitParam(7), pad_90() {
         m_assetSetup = nullptr;

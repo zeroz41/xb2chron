@@ -9,6 +9,10 @@ namespace gf {
 // table 0x7100B3FBC0
 class GfInitParamWeapon : public ::gf::GfInitParam {
 public:
+    // a setup to use instead of the factory's own (the name is not the original's). A member of each kind,
+    // not of GfInitParam: the copy assignments copy it with the kind's own fields, apart from the base's
+    // (GfInitParamDriver::operator=, GfObjSetupBlade's constructor)
+    GfAssetSetup* m_assetSetup;
     void setupForEvent(unsigned int driverId, unsigned int bladeId);
     void setupForEventBlade(unsigned int weaponId, GF_OBJ_HANDLE* handle);
     void setupBladeForEventRightCS(unsigned int bladeId);
@@ -16,7 +20,7 @@ public:
 
     // inline: no copy of it exists (event::ModelObj::setupModel builds one on the stack)
     GfInitParamWeapon()
-        : GfInitParam(10, 6), pad_90(false), pad_91(false), pad_94(-1), pad_98(),
+        : GfInitParam(10, 6), m_assetSetup(nullptr), pad_90(false), pad_91(false), pad_94(-1), pad_98(),
           pad_120(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), pad_128(0), pad_12c(0), pad_130(), pad_1e0(false),
           pad_1e1(false), pad_1e4(0), pad_1e8(false) {}
 

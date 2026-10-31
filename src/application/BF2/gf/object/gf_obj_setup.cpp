@@ -34,6 +34,8 @@
 #include "classes/gf/GfBdatChrEnArrange.h"
 #include "classes/gf/GfBdatChrEnParam.h"
 #include "gf/GfDataDriver.h"
+#include "classes/gf/GfBdatChrBl.h"
+#include "classes/gf/GfBdatChrDr.h"
 
 namespace gf {
 
@@ -90,6 +92,33 @@ mm::mtl::RTTI GfObjSetupExtra::m_rtti("GfObjSetupExtra", &GfObjSetup::m_rtti, nu
 mm::mtl::RTTI GfObjSetupEventObj::m_rtti("GfObjSetupEventObj", &GfObjSetup::m_rtti, nullptr);
 mm::mtl::RTTI GfObjSetupUiObj::m_rtti("GfObjSetupUiObj", &GfObjSetup::m_rtti, nullptr);
 
+#line 128
+GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamDriver& param) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    GfObjSetupDriver* setup = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfObjSetupDriver(param);
+    info->m_setup = setup;
+    setup->pad_6c = param.pad_1a0;
+    if (param.m_hasTransform) {
+        setup->m_initialPos = param.m_initialPos;
+        setup->pad_30 = param.pad_70;
+    }
+    return setup;
+}
+
+GfObjSetupDriver::GfObjSetupDriver(const GfInitParamDriver& param)
+    : GfObjSetup(3, param), pad_6c(0), pad_6d(0), pad_6e(0), pad_70(-1) {
+    m_param = param;
+}
+
+#line 150
+GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamBlade& param) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    GfObjSetupBlade* setup = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfObjSetupBlade(param);
+    info->m_setup = setup;
+    setup->pad_6c = param.pad_98;
+    return setup;
+}
+
 #line 164
 GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamMapSeamless& param) {
     GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
@@ -121,6 +150,31 @@ GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitPara
 
 GfObjSetupMapLodAnim::GfObjSetupMapLodAnim(const GfInitParamMapLodAnim& param)
     : GfObjSetup(2, param), pad_6c(false), pad_6d(false) {}
+
+#line 214
+GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamEnemy& param) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    GfObjSetupEnemy* setup = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfObjSetupEnemy(param);
+    info->m_setup = setup;
+    setup->pad_6c = param.m_paramId;
+    setup->m_enArrangeId = param.m_arrangeId != 0 ? param.m_arrangeId : 1;
+    if (param.pad_a8 != 0) {
+        setup->m_actMoveId = param.pad_a8;
+    }
+#line 227
+    SDataEnemy* sdata = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SDataEnemy(setup->m_enArrangeId, param.pad_ac);
+    setup->m_sdata = sdata;
+    GFOBJ_INFO* owner = GfObjManager::getObjInfo(param.pad_38);
+    if (owner != nullptr && owner->m_setup != nullptr && owner->m_setup->m_type == owner->m_obj->m_type &&
+        owner->m_obj->m_type == 5) {
+        GfObjSetupEnemy* ownerSetup = mm::mtl::rttiCast<GfObjSetupEnemy>(owner->m_setup);
+        if (ownerSetup != nullptr && setup->m_sdata->pad_41 != 0) {
+            ownerSetup->m_sdata->pad_41 = setup->m_sdata->pad_41;
+        }
+    }
+    return setup;
+}
+
 
 #line 245
 GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamNpc& param) {
@@ -189,6 +243,22 @@ GfObjSetupFieldObj::GfObjSetupFieldObj(const GfInitParamFobj& param)
     : GfObjSetup(9, param), pad_6c(-1), m_dropDistance(0.0f), m_appearDelay(0.0f), m_itemBdat(0), m_itemId(0), m_gold(0),
       m_amount(0), m_fobjId(0), pad_8c(), pad_90(false) {}
 
+#line 341
+GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamWeapon& param) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    GfObjSetupWeapon* setup = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfObjSetupWeapon(param);
+    info->m_setup = setup;
+    setup->pad_6c = param.pad_94;
+    setup->m_mountIndex = param.pad_98.getMountIndex();
+    setup->pad_78 = param.pad_98.m_secondList;
+    return setup;
+}
+
+GfObjSetupWeapon::GfObjSetupWeapon(const GfInitParamWeapon& param)
+    : GfObjSetup(10, param), pad_6c(-1), pad_70(0), m_mountIndex(-1), pad_78(0) {
+    m_param = param;
+}
+
 #line 358
 GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamEnWeapon& param) {
     GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
@@ -227,6 +297,41 @@ GfObjSetupExtra::GfObjSetupExtra(const GfInitParamExtra& param) : GfObjSetup(14,
 GfObjSetupEventObj::GfObjSetupEventObj(const GfInitParamEventObj& param) : GfObjSetup(11, param) {}
 
 GfObjSetupUiObj::GfObjSetupUiObj(const GfInitParamUiObj& param) : GfObjSetup(15, param), m_stateName("S_idle") {}
+
+void GfInitParamWeapon::setupForEvent(unsigned int driverId, unsigned int bladeId) {
+    if (driverId == 0) {
+        if (bladeId == 1042) {
+            driverId = 8;
+        }
+        if (bladeId == 1043 || bladeId == 1044) {
+            driverId = 7;
+        }
+        if (bladeId == 1045) {
+            driverId = 7;
+        }
+    }
+    DataParamAcc driver(3, driverId, GimmickType(0));
+    m_createType = 2;
+    if (bladeId == 0) {
+        bladeId = driver.getBlade(-1, false);
+    }
+    if (bladeId != 0) {
+        m_objId = GfDataBlade::getBladeWeapon(bladeId);
+    }
+    if (m_objId == 0) {
+        m_objId = GfBdatChrBl::get()->getChrBlDefWeapon(GfBdatChrDr::get()->getChrDrDefBlade1(driverId));
+    }
+    if (bladeId != 0) {
+        mm::mtl::FixedVector<unsigned int, 50> types;
+        GfDataDriver::getEquipWpnType(types, driverId);
+        GfDataBlade::getBladeWpnType(bladeId);
+    }
+    pad_90 = false;
+    pad_40 = 9;
+    pad_128 = driverId;
+    pad_81 = false;
+    pad_12c = bladeId;
+}
 
 void GfInitParamWeapon::setupForEventBlade(unsigned int weaponId, GF_OBJ_HANDLE* handle) {
     m_createType = 2;

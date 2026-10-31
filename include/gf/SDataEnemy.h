@@ -66,7 +66,8 @@ public:
     unsigned int m_hpMax;
     unsigned short m_strength;
     unsigned short m_powerEther;
-    unsigned char pad_b4[0xC];
+    // sizeof is 0xbc: GfObjSetup::createSetupParam(GfInitParamEnemy) allocates that much
+    unsigned char pad_b4[0x8];
 };
 }  // namespace gf
 

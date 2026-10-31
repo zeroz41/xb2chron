@@ -9,6 +9,10 @@ namespace gf {
 // table 0x7100B69FD0
 class GfInitParamEnWeapon : public ::gf::GfInitParam {
 public:
+    // a setup to use instead of the factory's own (the name is not the original's). A member of each kind,
+    // not of GfInitParam: the copy assignments copy it with the kind's own fields, apart from the base's
+    // (GfInitParamDriver::operator=, GfObjSetupBlade's constructor)
+    GfAssetSetup* m_assetSetup;
     virtual unsigned int getEnArrangeID() const;  // slot 2
     unsigned char pad_90[0x98 - 0x90];
     // the weapon's model: createSetupParam takes its getMountIndex()

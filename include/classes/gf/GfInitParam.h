@@ -15,7 +15,7 @@ public:
     virtual unsigned int getEnArrangeID() const { return 0; }  // slot 2
 
     // inline: no copy of it exists. GfObjFactory's createGmk* and createMapLodAnim build their parameters on the
-    // stack with these values (kind is pad_c's); m_assetSetup is left to the derived class
+    // stack with these values (kind is pad_c's); m_assetSetup is the derived class's
     // (GfInitParamGimmick's zeroing of it merges with its own members')
     GfInitParam(int kind, int value40 = 4)
         : m_createType(0), pad_c(kind), m_objId(0), pad_18(nullptr), pad_20(-1), pad_24(0), pad_28(-1),
@@ -56,7 +56,7 @@ public:
     float m_scale;
     // GfObjSetup's constructor copies it into its pad_50 (a float)
     float pad_50;
-    unsigned char pad_54[0x60 - 0x54];
+    // (0x54..0x5f: alignment only: the copy assignments copy 0x08..0x53 as one block)
     // the object's position, used when m_hasTransform is set (GfObjSetup's constructor; the name is not the
     // original's)
     mm::Vec3 m_initialPos;
@@ -70,9 +70,8 @@ public:
     // a weapon's files from db/ in place of wp/: GfAssetSetupWeapon's file getters pass it to gf::fn_71001C0EE0
     bool pad_83;
     unsigned char pad_84;
-    unsigned char pad_85[0x88 - 0x85];
-    // a setup to use instead of the factory's own (the name is not the original's)
-    GfAssetSetup* m_assetSetup;
+    // the base ends here (0x85): the copy assignments copy 0x80..0x84 as the base's last block, and each kind's
+    // own fields (m_assetSetup first) start at 0x88 in the base's tail padding
 };
 }  // namespace gf
 

@@ -38,7 +38,7 @@ public:
     // the constructor's bool: setupBelonging's appends set it when added to the second list (the name is not the
     // original's)
     bool m_secondList;
-    unsigned char pad_81[0x7];
+    // (0x81..0x87: alignment only: GfObjSetupWeapon's copy of its parameter copies 0x68..0x80 as one block)
 };
 
 // no table: an object's appends, in two lists (GfAppendUtil::setupWeapon adds to the one m_list names, then sets it

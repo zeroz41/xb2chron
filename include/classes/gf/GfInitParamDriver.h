@@ -8,6 +8,10 @@ namespace gf {
 // table 0x7100B3FB20
 class GfInitParamDriver : public ::gf::GfInitParam {
 public:
+    // a setup to use instead of the factory's own (the name is not the original's). A member of each kind,
+    // not of GfInitParam: the copy assignments copy it with the kind's own fields, apart from the base's
+    // (GfInitParamDriver::operator=, GfObjSetupBlade's constructor)
+    GfAssetSetup* m_assetSetup;
     virtual bool isAllWeapon() const { return m_isAllWeapon; }  // slot 0
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it, and nothing in 3.0.1 calls it. A member
     // because it fills this class's fields (m_bladeId at 0x1AC) and sits among gf_obj_setup.cpp's driver and blade
@@ -41,7 +45,6 @@ public:
     };
 
     unsigned int pad_90;
-    unsigned char pad_94[0x98 - 0x94];
     // emptied by the (implicit) destructor: ModelObj::setupModel clears its size after making the driver
     mm::mtl::FixedVector<Entry, 32> pad_98;
     unsigned char pad_1a0;

@@ -8,6 +8,10 @@ namespace gf {
 // table 0x7100B3FB98
 class GfInitParamEnemy : public ::gf::GfInitParam {
 public:
+    // a setup to use instead of the factory's own (the name is not the original's). A member of each kind,
+    // not of GfInitParam: the copy assignments copy it with the kind's own fields, apart from the base's
+    // (GfInitParamDriver::operator=, GfObjSetupBlade's constructor)
+    GfAssetSetup* m_assetSetup;
     virtual unsigned int getBladeID() const { return m_bladeId; }  // slot 1
     virtual unsigned int getEnArrangeID() const { return m_arrangeId; }  // slot 2
     void setupForEvent(unsigned int arrangeId);
