@@ -1,6 +1,7 @@
 #ifndef NAVI_NVMSHRESDATA_H
 #define NAVI_NVMSHRESDATA_H
 
+#include "mm/Vec3.h"
 #include "mtl/MemManager.h"
 
 namespace navi {
@@ -75,12 +76,20 @@ public:
     ObjList m_usedList;  // the buffer's blocks in address order, free (m_flags bit 0 clear) or in use
 };
 
-// one navigation resource NvmshResMan holds (no table; NvmshResMan holds 26 from 0xB0). The names are not the
-// original's.
-class NvmshResData {
+// a navigation resource's blocks, located from its head (no table; NvmshResData holds two at 0x10).
+// NvmshUtil::getPoliCenter's NvmshResObj: its +0x8/0x10/0x18/0x20 are m_res, m_head and the first two blocks.
+// The member names are not the original's.
+class NvmshResObj {
 public:
+    // a vertex (block 1, 6 bytes each): grid coordinates scaled by Head::m_scale from Head's origin
+    // (bit-fields: getPoliCenter reads x and y as one 32-bit word)
+    struct Vertex {
+        unsigned short x : 16;
+        unsigned short y : 16;
+        unsigned short z : 16;
+    };
     // the offsets of a resource's blocks (the name is not the original's)
-    struct NaviHead {
+    struct Head {
         unsigned char pad_0[0x28];
         unsigned int m_blockOfs0;
         unsigned char pad_2C[0x4];
@@ -92,41 +101,69 @@ public:
         unsigned char pad_4C[0x4];
         unsigned int m_blockOfs7;
         unsigned int m_blockOfs2;
-        unsigned char pad_58[0x14];
+        unsigned char pad_58[0x4];
+        float m_originX;  // the vertices' origin and grid scale (getPoliCenter; the names are not the original's)
+        float m_originY;
+        float m_originZ;
+        float m_scale;
         unsigned int m_blockOfs4;
         unsigned char pad_70[0x4];
         unsigned int m_blockOfs5;
-    };
-    // a resource's blocks, located from its head (the names are not the original's)
-    struct Navi {
-        Navi() : m_valid(0), m_res(nullptr), m_head(nullptr) {
-            for (int i = 0; i < 8; i++) {
-                m_blocks[i] = nullptr;
-            }
-        }
-        void clear() {
-            m_valid = 0;
-            m_res = nullptr;
-        }
-        void set(unsigned char* res) {
-            m_res = res;
-            m_head = reinterpret_cast<const NaviHead*>(res);
-            m_blocks[0] = res + m_head->m_blockOfs0;
-            m_blocks[1] = res + m_head->m_blockOfs1;
-            m_blocks[2] = res + m_head->m_blockOfs2;
-            m_blocks[6] = res + m_head->m_blockOfs6;
-            m_blocks[3] = res + m_head->m_blockOfs3;
-            m_blocks[7] = res + m_head->m_blockOfs7;
-            m_blocks[4] = res + m_head->m_blockOfs4;
-            m_blocks[5] = res + m_head->m_blockOfs5;
-            m_valid = 1;
-        }
 
-        int m_valid;
-        unsigned char* m_res;
-        const NaviHead* m_head;
-        unsigned char* m_blocks[8];
+        // a vertex's position (the name is not the original's)
+        void calcPos(mm::Vec3& pos, const Vertex& v) const {
+            pos = mm::Vec3((unsigned int)v.x, (unsigned int)v.y, (unsigned int)v.z) * m_scale +
+                  mm::Vec3(m_originX, m_originY, m_originZ);
+        }
     };
+    // a polygon (block 0, 8 bytes each): its vertex count and the offset of its vertex indices from m_res
+    struct Poly {
+        unsigned char m_num;
+        unsigned char pad_1[0x3];
+        unsigned int m_idxOfs;
+    };
+
+    NvmshResObj() : m_valid(0), m_res(nullptr), m_head(nullptr) {
+        for (int i = 0; i < 8; i++) {
+            m_blocks[i] = nullptr;
+        }
+    }
+    void clear() {
+        m_valid = 0;
+        m_res = nullptr;
+    }
+    void set(unsigned char* res) {
+        setBlocks(res);
+        m_valid = 1;
+    }
+    // as set, but ORs the valid bit in (createNavi)
+    void create(unsigned char* res) {
+        setBlocks(res);
+        m_valid |= 1;
+    }
+    void setBlocks(unsigned char* res) {
+        m_res = res;
+        m_head = reinterpret_cast<const Head*>(res);
+        m_blocks[0] = res + m_head->m_blockOfs0;
+        m_blocks[1] = res + m_head->m_blockOfs1;
+        m_blocks[2] = res + m_head->m_blockOfs2;
+        m_blocks[6] = res + m_head->m_blockOfs6;
+        m_blocks[3] = res + m_head->m_blockOfs3;
+        m_blocks[7] = res + m_head->m_blockOfs7;
+        m_blocks[4] = res + m_head->m_blockOfs4;
+        m_blocks[5] = res + m_head->m_blockOfs5;
+    }
+
+    int m_valid;
+    unsigned char* m_res;
+    const Head* m_head;
+    unsigned char* m_blocks[8];
+};
+
+// one navigation resource NvmshResMan holds (no table; NvmshResMan holds 26 from 0xB0). The names are not the
+// original's.
+class NvmshResData {
+public:
     // the read's description (the name is not the original's): bit 0 of m_flags a first navi, bit 1 a second one
     // at m_secondOfs (or first when bit 0 is clear)
     struct ReadInfo {
@@ -144,7 +181,7 @@ public:
     unsigned int m_flags;
     short m_counter;  // frames since it was last used (or released)
     const ReadInfo* m_info;
-    Navi m_navi[2];
+    NvmshResObj m_navi[2];
     int pad_C0;  // zeroed by the constructor, nothing here reads it
     NvmshResMemObj* m_memObj;  // the block holding the resource
 };
