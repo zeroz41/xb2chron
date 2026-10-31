@@ -270,4 +270,17 @@ void UIInputManager::changeRegionScale(unsigned int handle, float scale) {
     }
 }
 
+void UIInputManager::fn_7100679754(unsigned int handle, unsigned int value) {
+    for (InputList::iterator it = m_layers.begin(); it != m_layers.end(); ++it) {
+        InputLayerInfo& info = *it;
+        if (info.m_handle == handle) {
+            UIInputPad* pad = info.m_layer->castUIInputPad();
+            if (pad != nullptr) {
+                pad->fn_7100679FC4(value);
+            }
+            return;
+        }
+    }
+}
+
 }  // namespace ui

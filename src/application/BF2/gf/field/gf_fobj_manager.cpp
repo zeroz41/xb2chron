@@ -119,6 +119,30 @@ void GfFobjManager::fn_7100289668() {
     m_seManager.fn_7100282EA8();
 }
 
+void GfFobjManager::listenerGfObj(IGfObjListener::OBJEVT evt, GF_OBJ_HANDLE* handle, unsigned int type) {
+    if (type != 9) {
+        return;
+    }
+    if (evt == IGfObjListener::OBJEVT(2)) {
+        for (DropitemList::iterator it = m_registList.begin(); it != m_registList.end(); ++it) {
+            GfFobjDropitem* item = *it;
+            if (item->m_handle == handle) {
+                if (m_fieldList.size() == 1024) {
+                    GF_OBJ_HANDLE* oldest = m_fieldList.front()->m_handle;
+                    GfObjUtil::destroy(oldest);
+                    leaveGameField(oldest);
+                }
+                m_fieldList.push_back(*it);
+                m_registList.erase(it);
+                item->initialize();
+                return;
+            }
+        }
+    } else if (evt == IGfObjListener::OBJEVT(3)) {
+        leaveGameField(handle);
+    }
+}
+
 void GfFobjManager::leaveGameField(GF_OBJ_HANDLE* handle) {
     for (DropitemList::iterator it = m_registList.begin(); it != m_registList.end(); ++it) {
         if ((*it)->m_handle == handle) {
