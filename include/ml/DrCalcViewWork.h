@@ -22,6 +22,9 @@ public:
     void end();
     // the shadow pass's billboard: the light's matrix without its translation (DrCalcMan::shadowEnd restores it)
     void shadowBegin(const mm::Mat44& mtx);
+    // m_ditherMatrix from an 8x8 Bayer matrix (the constructor and begin call it)
+    void updateDitherMatrix();
+    static void GenerateBayerDitherMatrix(unsigned int* pDst, unsigned int size);
 
     int unistatic_view(float* pDst, bool bJitter);
     int unistatic_proj(float* pDst, bool bJitter);
@@ -127,6 +130,10 @@ public:
     unsigned char pad_AF8[0x8];
     float m_ditherTmaaVal[4];       // 0xB00
     float m_ditherParam[2];         // 0xB10
+    unsigned char pad_B18[0x8];
+    // 0xB20: updateDitherMatrix's Bayer values (0..63); unistatic_dither_matrix / unistatic_inv_dither_matrix hand
+    // them to the shader as four 4x4 matrices (the name is not the original's)
+    unsigned int m_ditherMatrix[8][8];
 };
 }  // namespace ml
 

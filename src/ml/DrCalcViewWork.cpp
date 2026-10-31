@@ -21,6 +21,9 @@
 #include "idcoli/IDColiTreeTop.h"
 #include "idcoli/IDColiUtilColi.h"
 #include "classes/ml/DrCalcStmListObj.h"
+#include "classes/ml/DrCalcTexStmObj.h"
+#include "grlib/CGLibTextureBuffer.h"
+#include "ml/DrIniSys.h"
 #include "classes/ml/DrCalcTexStreamMan.h"
 #include "classes/ml/DrMan.h"
 #include "classes/ml/WorkCpu.h"
@@ -177,6 +180,26 @@ int DrCalcViewWork::unistatic_mpf_Fade(float* pDst) {
     return 0x30;
 }
 
+int DrCalcViewWork::unistatic_dither_param(float* pDst) {
+    mm::Vec4 v;
+    v.x = 1.0f;
+    v.y = 0.0f;
+    v.z = m_ditherParam[0];
+    v.w = m_ditherParam[1];
+    grlib::ShdVec4SetVec4(pDst, v);
+    return 4;
+}
+
+int DrCalcViewWork::unistatic_inv_dither_param(float* pDst) {
+    mm::Vec4 v;
+    v.x = -1.0f;
+    v.y = 1.0f;
+    v.z = m_ditherParam[0];
+    v.w = m_ditherParam[1];
+    grlib::ShdVec4SetVec4(pDst, v);
+    return 4;
+}
+
 DrCalcClipWorkCone::~DrCalcClipWorkCone() {}
 
 DrCalcClipWorkPlane::~DrCalcClipWorkPlane() {}
@@ -273,6 +296,29 @@ void DrCalcStmListObj::setUseMode(DrTexUseMode mode) {
     }
 }
 
+DrCalcStmListObj::ResTexObj* DrCalcStmListObj::getResVertexObj() {
+    return &m_pResObj[DrMan::s_nDblStockIdx][m_vertexIdx];
+}
+
+DrCalcStmListObj::ResTexObj* DrCalcStmListObj::getResShaderObj() {
+    return &m_pResObj[DrMan::s_nDblStockIdx][m_shaderIdx];
+}
+
+DrCalcStmListObj::ResTexObj* DrCalcStmListObj::getResLowTexObj() {
+    return &m_pResObj[DrMan::s_nDblStockIdx][m_lowTexIdx];
+}
+
+grlib::CGLibTextureBuffer* DrCalcStmListObj::getTexObj(unsigned int idx) {
+    return &m_texBuf[idx];
+}
+
+void* DrCalcStmListObj::getAdder() {
+    if ((m_flags & 0x10000) && m_pAddMemObj != nullptr) {
+        return m_pAddMemObj->m_pMem;
+    }
+    return nullptr;
+}
+
 inline void DrCalcStmListObj::end() {
     if (!(m_flags & FLAG_KEEPMEM)) {
         if (m_pMemObj) {
@@ -335,6 +381,18 @@ bool DrCalcStmListObj::texstm_defMidtexErrWait() {
 bool DrCalcStmListObj::texstm_fastErrWait() {
     m_stateNo = 17;
     return errWait(&DrCalcStmListObj::texstm_checkTexStm);
+}
+
+bool DrCalcStmListObj::texstm_defupdate() {
+    m_stateNo = 19;
+    if (m_curUseMode != 0) {
+        m_idleFrame[0] = 0;
+        m_idleFrame[1] = 0;
+    }
+    if (!(m_flags & 0x10)) {
+        m_func = &DrCalcStmListObj::texstm_checkTexStm;
+    }
+    return false;
 }
 
 bool DrCalcStmListObj::OnFileEvent(EventFileTh* pEvent) {

@@ -43,6 +43,8 @@ public:
     // the streamed vertex resource (same shape: DrResMdoVertex::update reloads its buffers from m_pData once bit 0
     // of m_flags is set)
     ResTexObj* getResVertexObj();
+    // the streamed shader resource (same shape)
+    ResTexObj* getResShaderObj();
     // the stream's texture idx (0x70-byte entries at 0xB0)
     grlib::CGLibTextureBuffer* getTexObj(unsigned int idx);
 
@@ -62,6 +64,7 @@ public:
     bool texstm_requestWait();
     bool texstm_defMidtexErrWait();
     bool texstm_fastErrWait();
+    bool texstm_defupdate();
 
     // the flag bits (names not recovered): 0x1000 no file, 0x2000 the memory kept, 0x8000 ended,
     // 0x40000 / 0x100000 << stock index isResSub / isResTex, 0x1000000 << stock index a use mode set,
@@ -81,20 +84,32 @@ public:
     // (field names are not the original's)
     unsigned char pad_8[0x8];
     DrCalcStmListObj* m_pNext;   // 0x10: DrCalcTexStreamMan::update walks the list from the manager's 0x28
-    unsigned char pad_18[0x28];
+    unsigned char pad_18[0x18];
+    ResTexObj* m_pResObj[2];     // 0x30: by DrMan::s_nDblStockIdx, the 0x18-byte resource entries getResVertexObj,
+                                 // getResShaderObj and getResLowTexObj index
     FileHandleTh* m_pFile;       // 0x40: the read OnFileEvent waits for
-    unsigned char pad_48[0x8];
+    DrCalcTexStmObj* m_pAddMemObj;  // 0x48: given back by release like m_pMemObj; getAdder returns its memory
     DrCalcTexStmObj* m_pMemObj;  // 0x50: given back by DrCalcTexStreamMan::clearMemObj when the stream ends
-    unsigned char pad_58[0x28];
+    unsigned char pad_58[0x1C];
+    unsigned short m_vertexIdx;  // 0x74: getResVertexObj's entry
+    unsigned short m_shaderIdx;  // 0x76: getResShaderObj's entry
+    unsigned short m_lowTexIdx;  // 0x78: getResLowTexObj's entry
+    unsigned char pad_7a[0x6];
     unsigned int m_flags;        // 0x80
     int m_readSize;              // 0x84: added to the manager's m_errReadSize while an error waits
     int m_stateNo;               // 0x88: the state running (each state stores its number)
-    unsigned char pad_8c[0x18];
+    // 0x8C: frames the stream went unused (counted while m_curUseMode is 0, clamped to 0x707 and 0xE0F;
+    // the ctor sets those, texstm_defupdate clears both once the stream is used)
+    short m_idleFrame[2];
+    unsigned char pad_90[0x14];
     short m_texNum;              // 0xA4: the stream's textures (DrResMdoTexList::createStmTexInfoList; the name is not the original's)
     unsigned char pad_a6[0x2];
     short m_errWait;             // 0xA8: frames an error waits (60 before the read is tried again)
     short m_reqWait;             // 0xAA: frames texstm_requestWait waits
-    unsigned char pad_ac[0x20];
+    unsigned char pad_ac[0x4];
+    grlib::CGLibTextureBuffer* m_texBuf;  // 0xB0: the stream's textures (getTexObj)
+    unsigned char pad_b8[0x10];
+    int m_curUseMode;            // 0xC8: DrCalcTexStreamMan::update moves m_useMode of the frame here (0 if no texture)
     int m_useMode[2];            // 0xCC: by DrMan::s_nDblStockIdx
     unsigned char pad_d4[0x10C];
     StmFunc m_func;              // 0x1E0: the state DrCalcTexStreamMan::update runs
