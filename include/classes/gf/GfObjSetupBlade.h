@@ -12,11 +12,9 @@ class GfObjSetupBlade : public ::gf::GfObjSetup {
 public:
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfObjSetupBlade() {}  // slot 1
-    // inline: its copy sits among the file's deferred functions (after the out-of-line ones)
-    GfObjSetupBlade(const GfInitParamBlade& param) : GfObjSetup(4, param), pad_6c(-1), pad_70(0), pad_74(-1) {
-        m_isCondBladeModel = GfGameUtil::isCondBladeModel(param.m_objId);
-        m_param = param;
-    }
+    // out of line: the symbols name its C1 (the alias of the C2 an out-of-line constructor emits), which sits
+    // among gf_obj_setup.cpp's own definitions in both builds
+    GfObjSetupBlade(const GfInitParamBlade& param);
     static mm::mtl::RTTI m_rtti;
 
     // the parameter's pad_98 (createSetupParam copies it)

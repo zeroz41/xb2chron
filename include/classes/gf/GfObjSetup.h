@@ -6,6 +6,7 @@
 #include "classes/gf/GfInitParam.h"
 #include "classes/gf/DataParamAcc.h"
 namespace fw { class Transform; }
+namespace mm { class Mat44; }
 namespace gf {
 class GF_OBJ_HANDLE;
 class GfInitParamDriver;
@@ -48,6 +49,9 @@ public:
     static GfObjSetup* createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamExtra& param);
     static GfObjSetup* createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamEventObj& param);
     static GfObjSetup* createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamUiObj& param);
+    // takes a matrix's translation and its rotation (euler angles, scale removed) as the object's initial ones
+    // (GfFieldLodColiAnim::createPosInfos)
+    void setInitialTransform(const mm::Mat44& mtx);
     // takes a transform as the object's initial one (GfObjUtil::copyTransformToSetup)
     void setInitialTransform(const fw::Transform& transform);
     static mm::mtl::RTTI m_rtti;
@@ -67,7 +71,8 @@ public:
     int m_createType;
     // the object's initial position: setInitialTransform's (the name is not the original's)
     mm::Vec3 m_initialPos;
-    // the parameter's pad_70 (the constructor copies it with the position)
+    // the parameter's pad_70 (the constructor copies it with the position); setInitialTransform writes the
+    // initial rotation's euler angles into it
     mm::Vec3 pad_30;
     // the object's scale: 1.0.0's setInitialScale(float) and setInitialScale(const mm::Vec3&) set it (the name is
     // not the original's)

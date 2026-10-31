@@ -1,5 +1,7 @@
 #include "gf/FileStaticVec3.h"
 #include "classes/gf/GfObjSetup.h"
+#include "mm/Mat44.h"
+#include "fw/Transform.h"
 #include "classes/gf/GfObjSetupDriver.h"
 #include "classes/gf/GfObjSetupBlade.h"
 #include "classes/gf/GfObjSetupMap.h"
@@ -36,8 +38,33 @@
 #include "gf/GfDataDriver.h"
 #include "classes/gf/GfBdatChrBl.h"
 #include "classes/gf/GfBdatChrDr.h"
+#include "classes/gf/GfAssetSetupUiObj.h"
+#include "gf/GfObjUtil.h"
 
 namespace gf {
+
+namespace {
+// name = the file name of path, without its folder and extension: the text after the last '/' (else '\\') with
+// everything from the last '.' cut off (inline: no copy of its own in the original; the name is not the
+// original's). The cut leaves the length as it was, so the slash search reads the old length. The slash searches
+// sit under their own empty test: the original tests the length once for both (findLast's own tests fold into it)
+inline void setArcName(mm::mtl::FixStr<128>& name, const char* path) {
+    name = path;
+    int dot = name.findLast('.');
+    if (dot != -1) {
+        name.m_str[dot] = '\0';
+    }
+    if (name.m_nLen != 0) {
+        int slash = name.findLast('/');
+        if (slash == -1) {
+            slash = name.findLast('\\');
+        }
+        if (slash != -1) {
+            name = &name.m_str[slash + 1];
+        }
+    }
+}
+}  // namespace
 
 mm::mtl::RTTI GfObjSetup::m_rtti("GfObjSetup", nullptr, nullptr);
 
@@ -67,6 +94,65 @@ unsigned int GfObjSetup::getFootStepEffect() const {
     }
     }
     return 1;
+}
+
+void GfObjSetup::setInitialTransform(const mm::Mat44& mtx) {
+    m_initialPos = mtx.getTrans();
+    // the rotation part with each row's scale divided out
+    mm::Mat44 rot;
+    float sx = ::sqrtf(mtx.m[0][0] * mtx.m[0][0] + mtx.m[0][1] * mtx.m[0][1] + mtx.m[0][2] * mtx.m[0][2]);
+    rot.m[0][0] = mtx.m[0][0] / sx;
+    rot.m[0][1] = mtx.m[0][1] / sx;
+    rot.m[0][2] = mtx.m[0][2] / sx;
+    float sy = ::sqrtf(mtx.m[1][0] * mtx.m[1][0] + mtx.m[1][1] * mtx.m[1][1] + mtx.m[1][2] * mtx.m[1][2]);
+    rot.m[1][0] = mtx.m[1][0] / sy;
+    rot.m[1][1] = mtx.m[1][1] / sy;
+    rot.m[1][2] = mtx.m[1][2] / sy;
+    float sz = ::sqrtf(mtx.m[2][0] * mtx.m[2][0] + mtx.m[2][1] * mtx.m[2][1] + mtx.m[2][2] * mtx.m[2][2]);
+    rot.m[2][0] = mtx.m[2][0] / sz;
+    rot.m[2][1] = mtx.m[2][1] / sz;
+    rot.m[2][2] = mtx.m[2][2] / sz;
+    rot.getRotXYZ(pad_30);
+    pad_30.x = -pad_30.x;
+    pad_30.y = -pad_30.y;
+    pad_30.z = -pad_30.z;
+}
+
+void GfObjSetup::setInitialTransform(const fw::Transform& transform) {
+    m_initialPos = transform.position;
+    const mm::Quat& q = transform.rotation;
+    float x2 = q.x + q.x;
+    float y2 = q.y + q.y;
+    float z2 = q.z + q.z;
+    float xx = q.x * x2;
+    float xy = q.x * y2;
+    float xz = q.x * z2;
+    float yy = q.y * y2;
+    float yz = q.y * z2;
+    float zz = q.z * z2;
+    float wx = q.w * x2;
+    float wy = q.w * y2;
+    float wz = q.w * z2;
+    float m00 = 1.0f - (yy + zz);
+    float m01 = xy + wz;
+    float m02 = xz - wy;
+    float m11 = 1.0f - (xx + zz);
+    float m20 = xz + wy;
+    float m21 = yz - wx;
+    float m22 = 1.0f - (xx + yy);
+    pad_30.x = mm::asin(-m21);
+    if (pad_30.x < 1.57079637f) {
+        if (pad_30.x > -1.57079637f) {
+            pad_30.z = ::atan2f(m01, m11);
+            pad_30.y = ::atan2f(m20, m22);
+        } else {
+            pad_30.z = -::atan2f(m02, m00);
+            pad_30.y = 0.0f;
+        }
+    } else {
+        pad_30.z = ::atan2f(m02, m00);
+        pad_30.y = 0.0f;
+    }
 }
 
 void GfObjSetup::setInitialScale(float scale) {
@@ -294,7 +380,37 @@ GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitPara
 
 GfObjSetupExtra::GfObjSetupExtra(const GfInitParamExtra& param) : GfObjSetup(14, param), m_mountIndex(-1) {}
 
+#line 404
+GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamEventObj& param) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    GfObjSetupEventObj* setup = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfObjSetupEventObj(param);
+    info->m_setup = setup;
+    GfAssetSetup* asset = param.m_assetSetup;
+    if (asset != nullptr && asset->getArcFile(asset->getAssetType()) != nullptr) {
+        setArcName(setup->m_arcName, param.m_assetSetup->getArcFile(param.m_assetSetup->getAssetType()));
+    }
+    return setup;
+}
+
 GfObjSetupEventObj::GfObjSetupEventObj(const GfInitParamEventObj& param) : GfObjSetup(11, param) {}
+
+#line 447
+GfObjSetup* GfObjSetup::createSetupParam(GF_OBJ_HANDLE* handle, const GfInitParamUiObj& param) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    GfObjSetupUiObj* setup = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfObjSetupUiObj(param);
+    info->m_setup = setup;
+    GF_ASSET_HANDLE* assetHandle = GfObjUtil::getAssetHandle(handle);
+    GfAssetSetupUiObj assetSetup;
+    assetSetup.setupParam(assetHandle, param);
+    GfAssetSetup* asset = &assetSetup;
+    if (param.m_assetSetup != nullptr) {
+        asset = param.m_assetSetup;
+    }
+    setArcName(setup->m_arcName, asset->getArcFile(asset->getAssetType()));
+    setup->m_stateName.format("S_idle");
+    return setup;
+}
+
 
 GfObjSetupUiObj::GfObjSetupUiObj(const GfInitParamUiObj& param) : GfObjSetup(15, param), m_stateName("S_idle") {}
 
@@ -470,6 +586,12 @@ void GfInitParamBlade::setupForUi(unsigned int bladeId, VIEWCAM camera) {
     pad_40 = 10;
     m_scale = GfDataBlade::getScale(bladeId);
     pad_81 = false;
+}
+
+GfObjSetupBlade::GfObjSetupBlade(const GfInitParamBlade& param)
+    : GfObjSetup(4, param), pad_6c(-1), pad_70(0), pad_74(-1) {
+    m_isCondBladeModel = GfGameUtil::isCondBladeModel(param.m_objId);
+    m_param = param;
 }
 
 void GfInitParamDriver::fn_710054E050(unsigned int driverId, unsigned int bladeId) {
