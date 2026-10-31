@@ -15,6 +15,11 @@ public:
     // 1.0.0 has both out of line; 3.0.1 only inlines them into the destructor
     void releaseDir();
     void deleteDirShadow();
+
+    unsigned char pad_30[0x60];
+    // 0x90: 1.0.0's initDir sets 1.0f; update picks shadow cache flag 0x4 when it is above 0, else 0x20 (the name
+    // is not the original's)
+    float m_shadowRate;
 };
 }  // namespace ml
 

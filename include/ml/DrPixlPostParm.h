@@ -147,7 +147,12 @@ public:
     float m_rainDropLayer[5][3];
     unsigned char pad_448[0x18];
     bool m_shwRaytrace;  // 0x460, isShwRaytrace
-    unsigned char pad_461[0x6F];
+    unsigned char pad_461[0x7];
+    // DrLightMan::getSkyLuminance weighs its 0x120 colour by the first and its ambient colour by the second (the names
+    // are not the original's)
+    float m_skyLumColorRate;  // 0x468
+    float m_skyLumAmbRate;  // 0x46C
+    unsigned char pad_470[0x60];
     bool m_glassBr;  // 0x4D0
     unsigned char pad_4D1[0x7];
     float m_glassBrParm[15];  // 0x4D8, setGlassBrk's values (their meanings are not known)

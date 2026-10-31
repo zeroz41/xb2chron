@@ -31,12 +31,15 @@
 #include "classes/ml/irrvol/MemHandlebaseAllocator.h"
 #include "grlib/CGLibCtl.h"
 #include "math.h"
+#include "ml/CriticalSection.h"
 #include "ml/DrAPGxType.h"
 #include "ml/DrEnvColiMan.h"
 #include "ml/DrEnvironmentAnim.h"
 #include "ml/DrEnvironmentMan.h"
 #include "ml/DrFogMan.h"
+#include "ml/DrIBLColiAcc.h"
 #include "ml/DrIniSys.h"
+#include "ml/DrLightObjGlobalIBL.h"
 #include "ml/DrLightMan.h"
 #include "ml/DrMdoAnim.h"
 #include "ml/DrMdoSetup.h"
@@ -45,6 +48,7 @@
 #include "ml/DrPixlPostMan.h"
 #include "ml/DrPixlPostObjCubeMapIBL.h"
 #include "ml/DrPixlPostParm.h"
+#include "ml/DrPixlShadowCacheMan.h"
 #include "ml/DrPixlShadowMan.h"
 #include "ml/DrResMdoMat.h"
 #include "ml/DrShdLgtMan.h"
@@ -619,6 +623,11 @@ bool DrGlobalIBLPack::checkFileType(const void* data) {
     return header->m_version == 10100 || header->m_version == 20000;
 }
 
+// --- DrLightObjGlobalIBL ---
+unsigned int DrLightObjGlobalIBL::getPriority() const {
+    return m_priority;
+}
+
 // --- DrFogMan ---
 DrFogMan::~DrFogMan() {
     releaseAll();
@@ -671,5 +680,133 @@ void DrLightMan::releaseInstantSptLight(DrLightObjSpt* light) {
         m_instantSptNum = 0;
     }
 }
+
+void DrLightMan::releasePntLight(DrLightObjPnt* light) {
+    CS lock(*DrMan::getCriticalSection());
+    light->m_flags |= DrLightObj::FLAG_RELEASE << DrMan::s_nDblStockIdx;
+    if (--m_instantPntNum < 0) {
+        m_instantPntNum = 0;
+    }
+}
+
+void DrLightMan::releaseSptLight(DrLightObjSpt* light) {
+    CS lock(*DrMan::getCriticalSection());
+    light->m_flags |= DrLightObj::FLAG_RELEASE << DrMan::s_nDblStockIdx;
+    if (--m_instantSptNum < 0) {
+        m_instantSptNum = 0;
+    }
+}
+
+void DrLightMan::releaseAllAmbLight() {
+    m_list[DrLightObj::TYPE_AMB].deleteAll();
+    m_stockList[DrLightObj::TYPE_AMB][0].deleteAll();
+    m_stockList[DrLightObj::TYPE_AMB][1].deleteAll();
+    m_ambNum = 0;
+    m_ambLight = nullptr;
+}
+
+void DrLightMan::releaseAllDirLight() {
+    m_list[DrLightObj::TYPE_DIR].deleteAll();
+    m_stockList[DrLightObj::TYPE_DIR][0].deleteAll();
+    m_stockList[DrLightObj::TYPE_DIR][1].deleteAll();
+    m_dirNum = 0;
+    m_dirLight = nullptr;
+}
+
+float DrLightMan::getSkyLuminance() const {
+    const DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    float ambRate = parm->m_skyLumAmbRate;
+    float colorRate = parm->m_skyLumColorRate;
+    float r = ambRate * m_ambColor[0] + colorRate * m_lumColor[0];
+    float g = ambRate * m_ambColor[1] + colorRate * m_lumColor[1];
+    float b = ambRate * m_ambColor[2] + colorRate * m_lumColor[2];
+    return r * 0.299f + g * 0.587f + b * 0.114f;
+}
+
+// --- DrLightObjDir ---
+void DrLightObjDir::update(DrLightMan*) {
+    if (m_flags & FLAG_SHADOW) {
+        if (m_shadowRate > 0.0f) {
+            m_pixlMan->m_shadowCacheMan->m_flags |= 0x4;
+        } else {
+            m_pixlMan->m_shadowCacheMan->m_flags |= 0x20;
+        }
+    }
+}
+
+// --- DrIBLColiAcc ---
+bool DrIBLColiAcc::envcoli_box(const unsigned char* data, const mm::Vec3& pos, float range) {
+    const float* d = reinterpret_cast<const float*>(data);
+    float dx = pos.x - d[12];
+    float dy = pos.y - d[13];
+    float dz = pos.z - d[14];
+    float r = d[15] + range;
+    if (!(dx * dx + dy * dy + dz * dz <= r * r)) return false;
+    float t = dx * d[0] + dy * d[4] + dz * d[8];
+    if (!(d[16] + range >= t)) return false;
+    if (!(-d[16] - range <= t)) return false;
+    t = dx * d[2] + dy * d[6] + dz * d[10];
+    if (!(d[18] + range >= t)) return false;
+    if (!(-d[18] - range <= t)) return false;
+    t = dx * d[1] + dy * d[5] + dz * d[9];
+    if (!(d[17] + range >= t)) return false;
+    return -d[17] - range <= t;
+}
+
+bool DrIBLColiAcc::envcoli_sphere(const unsigned char* data, const mm::Vec3& pos, float range) {
+    const float* d = reinterpret_cast<const float*>(data);
+    float dx = pos.x - d[0];
+    float dy = pos.y - d[1];
+    float dz = pos.z - d[2];
+    float r = d[3] + range;
+    return dx * dx + dy * dy + dz * dz <= r * r;
+}
+
+bool DrIBLColiAcc::envcoli_cylinder(const unsigned char* data, const mm::Vec3& pos, float range) {
+    const float* d = reinterpret_cast<const float*>(data);
+    float dx = pos.x - d[12];
+    float dy = pos.y - d[13];
+    float dz = pos.z - d[14];
+    float r = d[15] + range;
+    if (!(dx * dx + dy * dy + dz * dz <= r * r)) return false;
+    float t = dx * d[1] + dy * d[5] + dz * d[9];
+    if (!(d[17] + range >= t)) return false;
+    if (!(-d[17] - range <= t)) return false;
+    float u = dx * d[0] + dy * d[4] + dz * d[8];
+    float v = dx * d[2] + dy * d[6] + dz * d[10];
+    float rr = d[16] + range;
+    return u * u + v * v <= rr * rr;
+}
+
+bool DrIBLColiAcc::envcoli_notrot_box(const unsigned char* data, const mm::Vec3& pos, float range) {
+    const float* d = reinterpret_cast<const float*>(data);
+    float dx = pos.x - d[0];
+    float dy = pos.y - d[1];
+    float dz = pos.z - d[2];
+    float r = d[3] + range;
+    if (!(dx * dx + dy * dy + dz * dz <= r * r)) return false;
+    if (!(d[4] + range >= dx)) return false;
+    if (!(-d[4] - range <= dx)) return false;
+    if (!(d[6] + range >= dz)) return false;
+    if (!(-d[6] - range <= dz)) return false;
+    if (!(d[5] + range >= dy)) return false;
+    return -d[5] - range <= dy;
+}
+
+bool DrIBLColiAcc::envcoli_notrot_cylinder(const unsigned char* data, const mm::Vec3& pos, float range) {
+    const float* d = reinterpret_cast<const float*>(data);
+    float dy = pos.y - d[1];
+    if (!(d[4] + range >= dy)) return false;
+    if (!(-d[4] - range <= dy)) return false;
+    float dx = pos.x - d[0];
+    float dz = pos.z - d[2];
+    float r = d[3] + range;
+    return dx * dx + dz * dz <= r * r;
+}
+
+bool (DrIBLColiAcc::*DrIBLColiAcc::s_pColiTest[5])(const unsigned char*, const mm::Vec3&, float) = {
+    &DrIBLColiAcc::envcoli_box,        &DrIBLColiAcc::envcoli_sphere,          &DrIBLColiAcc::envcoli_cylinder,
+    &DrIBLColiAcc::envcoli_notrot_box, &DrIBLColiAcc::envcoli_notrot_cylinder,
+};
 
 }  // namespace ml
