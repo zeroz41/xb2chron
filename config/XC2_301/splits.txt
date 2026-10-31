@@ -4115,7 +4115,10 @@ libs/monolib_mm/source/LanguageInfo.cpp:
 	.bss         start:0x00ECEE08 end:0x00ECEE10
 
 libs/monolib_mm/source/ClockLap.cpp:
-	.text        start:0x006D0C94 end:0x006D2C68
+	.text        start:0x006D0C94 end:0x006D29DC
+
+libs/monolib_mm/source/_mlmisc.cpp:
+	.text        start:0x006D29DC end:0x006D2C68
 
 libs/monolib_mm/source/util/ml_misc.cpp:
 	.text        start:0x006D2C68 end:0x006D2E58
@@ -4157,12 +4160,18 @@ libs/monolib_mm/source/mtl/mtl_mem_manager.cpp:
 	.bss         start:0x00ED0C80 end:0x015DA308
 
 libs/monolib_mm/source/vm/yvm2.c:
-	.text        start:0x006ED39C end:0x006F1914
-	.rodata      start:0x009AA54C end:0x009AABFA
+	.text        start:0x006ED39C end:0x006F1444
+	.rodata      start:0x009AA54C end:0x009AABB2
 	.rodata      start:0x009CEBA4 end:0x009CEE0C
-	.data        start:0x00B795A8 end:0x00B79AB0
+	.data        start:0x00B795A8 end:0x00B79A80
+	.bss         start:0x015DA308 end:0x015E7BA0
+
+libs/monolib_mm/source/IMemManagerFinalize.cpp:
+	.text        start:0x006F1444 end:0x006F1914
+	.rodata      start:0x009AABB2 end:0x009AABFA
+	.data        start:0x00B79A80 end:0x00B79AB0
 	.init_array  start:0x00B8FD58 end:0x00B8FD60
-	.bss         start:0x015DA308 end:0x015E7CB8
+	.bss         start:0x015E7BA0 end:0x015E7CB8
 
 libs/monolib_mm/source/WorkRoot.cpp:
 	.text        start:0x006F1914 end:0x006F341C
@@ -4976,7 +4985,10 @@ ssd/AudioFileAiff.cpp:
 	.data        start:0x00B823C8 end:0x00B82498
 
 ssd/AudioMarkerList.cpp:
-	.text        start:0x008AA6C4 end:0x008AC858
+	.text        start:0x008AA6C4 end:0x008AA7BC
+
+unit_71008AA7BC.cpp:
+	.text        start:0x008AA7BC end:0x008AC858
 	.rodata      start:0x009B0D9C end:0x009B0F69
 	.rodata      start:0x009D69CC end:0x009D73EC
 
