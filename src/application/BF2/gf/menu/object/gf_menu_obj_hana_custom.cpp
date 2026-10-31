@@ -282,6 +282,22 @@ void GfMenuObjHanaCustom::setupItemList(ui::UIObjectAcc& acc, GfMenuItemList* li
     }
 }
 
+void GfMenuObjHanaCustom::setupPlan(ui::UIObjectAcc& acc, GfMenuIDList* list) {
+    GfMenuHanaAdapter::createFromReferenceIndex(acc.searchChild("TXT_hn_enu_num"), 1, 0, true);
+    GfMenuHanaAdapter::createFromReferenceIndex(acc.searchChild("TXT_hn_enu_max"), 2, 0, true);
+    GfMenuHanaAdapter* gauge = GfMenuHanaAdapter::createFromReferenceIndex(acc.searchChild("IMG_hn_gauge"), 1, 0, true);
+    if (gauge != nullptr) {
+        gauge->setNumberInterpolateMode(0.2f);
+    }
+    ui::UIObjectAcc gaugeAcc(acc.searchChild("IMG_hn_gauge"));
+    gaugeAcc.setExtType(4);
+    GfMenuHanaAdapter::createFromReferenceIndex(acc.searchChild("TXT_hn_ench_num"), 8, 0, true);
+    GfMenuHanaAdapter::createFromReferenceIndex(acc.searchChild("TXT_hn_ench_max"), 9, 0, false);
+    GfMenuHanaAdapter::createFromReferenceIndex(acc.searchChild("TXT_hn_rol"), 3, 0, true);
+    GfMenuHanaAdapter::createFromReferenceIndex(acc.searchChild("IMG_hn_elml"), 5, 0, true);
+    GfMenuHanaAdapter::createFromReferenceIndex(acc.searchChild("IMG_hana"), 6, 0, false);
+}
+
 void GfMenuObjHanaCustom::EquipListListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
     ui::UIObjectAcc ownerAcc(m_owner->m_handle);
     ui::UIObjectAcc acc(handle);
