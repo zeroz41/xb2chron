@@ -53,7 +53,10 @@ public:
     void destroy();
     void update(const fw::UpdateInfo& info);
     void setEventDisp(bool disp);
-    bool applyGetItem(GF_OBJ_HANDLE* getter) const;
+    // whether getter is near enough to take the item (radius widens the item_get param's reach; the argument names
+    // are not the original's)
+    bool canGetItem(GF_OBJ_HANDLE* getter, float radius) const;
+    void applyGetItem(GF_OBJ_HANDLE* getter) const;  // void: no path of the original sets w0
     // gives the item whose object is item (its user data 2 holds the GfFobjDropitem) to getter when getter's object
     // exists; false when item has no GfFobjDropitem (the argument names are not the original's)
     static bool applyGetItem(GF_OBJ_HANDLE* item, GF_OBJ_HANDLE* getter);

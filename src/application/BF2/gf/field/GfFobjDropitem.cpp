@@ -20,6 +20,13 @@
 #include "classes/gf/GfObj.h"
 #include "gf/GfItemUtil.h"
 #include "gf/GfPlayFactory.h"
+#include "gf/ItemGetParam.h"
+#include "gf/OwnerBonus.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfComTransform.h"
+#include "classes/fw/ParamManager.h"
+#include "classes/fw/ParamList.h"
+#include "classes/fw/UpdatableObject.h"
 
 namespace gf {
 namespace {
@@ -263,6 +270,44 @@ void GfFobjDropitem::destroy() {
             acc.setUserData(GfObjUserData(2), 0);
         }
     }
+}
+
+// whether getter may take the item: both objects have a transform, the item is within the item_get param's
+// heights of getter (radius widens them) and, across the ground, within the param's radius plus owner bonus 10
+// (percent, capped at 10000), the field's leader bonus and radius. While GfGameManager::fn_71002A9E68 holds, an
+// item lower than GfFobjManager's m_settingValue below getter counts as at getter's position.
+bool GfFobjDropitem::canGetItem(GF_OBJ_HANDLE* getter, float radius) const {
+    GfObj* getterObj = GfObjUtil::getObj(getter);
+    if (getterObj == nullptr || getterObj->m_components[0] == nullptr ||
+        !getterObj->m_components[0]->getRTTI()->isKindOf(&GfComTransform::m_rtti)) {
+        return false;
+    }
+    const ItemGetParam* param = fw::ParamManager::get()->m_paramLists[5]->getAdapter(5).get<ItemGetParam>();
+    GfObj* itemObj = GfObjUtil::getObj(m_handle);
+    if (itemObj == nullptr || itemObj->m_components[0] == nullptr ||
+        !itemObj->m_components[0]->getRTTI()->isKindOf(&GfComTransform::m_rtti)) {
+        return false;
+    }
+    mm::Vec3 diff = itemObj->getComponent<GfComTransform>(0)->getPosition() -
+                    getterObj->getComponent<GfComTransform>(0)->getPosition();
+    if (GfGameManager::fn_71002A9E68() && diff.y < -GfFobjManager::get()->m_settingValue) {
+        diff = mm::Vec3::zero;
+    }
+    if (diff.y + radius < -param->lower) {
+        return false;
+    }
+    if (param->upper < diff.y - radius) {
+        return false;
+    }
+    float bonus = 0.0f;
+    short value = GfGameManager::getOwnerBonus().m_values[10];
+    if (value >= 0) {
+        bonus = (value < 10000 ? value : 10000) * 0.01f;
+    }
+    bonus += GfFobjManager::get()->m_leaderBonus;
+    float range = param->radius + bonus + radius;
+    diff.y = 0.0f;
+    return !(range * range < diff.dot(diff));
 }
 
 void GfFobjDropitem::setEventDisp(bool disp) {
