@@ -39,8 +39,23 @@ unsigned int UITextManager::registTextFile(unsigned char* data) {
     return handle;
 }
 
-// unregistTextFile (0x710068B38C) is not written yet: the candidate is not identical (two instructions in
-// the inlined FixedVector::erase are scheduled the other way round; see the worker report)
+void UITextManager::unregistTextFile(unsigned int handle) {
+    for (FileInfo* it = m_files.begin(); it != m_files.end(); ++it) {
+        if (it->m_handle != handle) {
+            continue;
+        }
+        if (it->m_count != 0 && --it->m_count != 0) {
+            continue;
+        }
+        UITextFile* file = static_cast<UITextFile*>(m_textFiles.getPtr(handle));
+        if (file != nullptr) {
+            delete file;
+        }
+        m_textFiles.remove(it->m_handle);
+        m_files.erase(it);
+        return;
+    }
+}
 
 void UITextManager::reloadAll() {
     for (FileInfo* it = m_files.begin(); it != m_files.end(); ++it) {
