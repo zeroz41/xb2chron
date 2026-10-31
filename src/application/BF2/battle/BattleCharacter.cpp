@@ -78,6 +78,106 @@ void BattleCharacter::GetMoveDataPerSec(mm::Vec3& move) const {
     move.z = m_moveData.z * 30.0f;
 }
 
+namespace {
+
+// an animation's state name, and the one ButtonChallenge's success swaps in (proposed names, not the original's)
+struct AnimStateName {
+    const char* name;
+    const char* challengeName;
+};
+
+// GetAnimationStateName's names by ANIM_ID for m_animKind 2 (proposed name, not the original's: the symbols leave
+// it unnamed, lbl_7100B3AA70)
+const AnimStateName s_animStateNames[41] = {
+    {"C_btidle", nullptr}, {"C_idle", nullptr}, {"C_btstart", nullptr}, {"C_btend", nullptr},
+    {"C_btmoveF", nullptr}, {"C_btmoveB", nullptr}, {"C_move", nullptr}, {"C_btturnLA", nullptr},
+    {"C_btturnLB", nullptr}, {"C_btturnRA", nullptr}, {"C_btturnRB", nullptr}, {"C_max", nullptr},
+    {"C_attack_%02d_%02d", "C_attack_%02d"}, {"C_arts_%02d_%02d", nullptr}, {"C_deathblow_%02d_%02d", nullptr},
+    {"C_inculde", nullptr}, {"C_bladedefense", nullptr}, {"C_send", nullptr}, {"C_send_02", nullptr},
+    {"C_bladearts_%02d", nullptr}, {"C_arts_%02d_%02d", nullptr}, {"C_cheer", nullptr},
+    {"C_weaponchange_00", nullptr}, {"C_weaponchange_01", nullptr}, {"C_weaponchange_02", nullptr},
+    {"C_weaponchange_00", nullptr}, {"C_weaponchange_02", nullptr}, {"C_change_%02d", nullptr},
+    {"C_reflection", nullptr}, {"C_damage", nullptr}, {"C_damage", nullptr}, {"C_knockback", nullptr},
+    {"C_down_00", nullptr}, {"C_down_01", nullptr}, {"C_bounce", nullptr}, {"C_downpose", nullptr},
+    {"C_rise", nullptr}, {"C_dead", nullptr}, {"C_help", nullptr}, {nullptr, "C_emergence"},
+    {nullptr, "C_retreat"},
+};
+
+// the names by ANIM_ID for the other kinds (proposed name, not the original's: the symbols leave it unnamed,
+// lbl_7100B3AD00)
+const char* const s_animStateNamesOther[23] = {
+    "C_start", "C_btidle", "C_loop_00", "C_loop_01", "C_loop_02", "C_antagonism_00", "C_antagonism_01",
+    "C_attack_00", "C_attack_01", "C_attack_02", "C_attack_03", "C_damage_00", "C_damage_01", "C_damage_02",
+    "C_damage_03", "C_down", "C_downpose", "C_rise_00", "C_rise_01", "C_pursue_00", "C_pursue_01",
+    "C_return_00", "C_return_01",
+};
+
+}  // namespace
+
+const char* BattleCharacter::GetAnimationStateName(ANIM_ID id, int no, int subNo) const {
+    // the animations named by the weapon's type ("S_%02d%s") when the character's parameter does not answer for
+    // its weapon, and the ones that never are when it does (bits by ANIM_ID; the names are not the original's)
+    const unsigned long WEAPON_ANIMS = (1UL << 14) | (1UL << 20);
+    const unsigned long COMMON_ANIMS = (1UL << 1) | (1UL << 6) | (1UL << 21) | (0xFFUL << 30);
+    const char* name;
+    if (m_animKind == 2) {
+        bool challenge = BattleGlobal::sys()->m_challengeAnySuccess;
+        const AnimStateName& entry = s_animStateNames[static_cast<unsigned char>(id)];
+        if (challenge) {
+            const char* const* namePtr = &entry.challengeName;
+            if (!*namePtr) {
+                namePtr = &entry.name;
+            }
+            name = *namePtr;
+        } else {
+            name = entry.name;
+        }
+        bool formatted = true;
+        switch (static_cast<unsigned char>(id)) {
+        case 12:
+            // the challenge's attack name takes one number
+            if (!challenge) {
+                m_animStateName.format(name, no, subNo);
+                break;
+            }
+        case 19:
+        case 27:
+            m_animStateName.format(name, no);
+            break;
+        case 13:
+        case 14:
+        case 20:
+            m_animStateName.format(name, no, subNo);
+            break;
+        default:
+            formatted = false;
+            break;
+        }
+        if (formatted) {
+            name = m_animStateName.m_str;
+        }
+    } else {
+        name = s_animStateNamesOther[id & 0xFF];
+    }
+    if (!BattleGlobal::sys()->m_challengeAnySuccess) {
+        bool weapon;
+        const CharacterParameter* param = GetCharacterParameterConst(false);
+        if (param != nullptr && param->fn_710008527C(false) && (m_isPlayer || m_driverType == 0)) {
+            weapon = ((1UL << static_cast<unsigned char>(id)) & COMMON_ANIMS) == 0;
+        } else {
+            weapon = ((1UL << static_cast<unsigned char>(id)) & WEAPON_ANIMS) != 0;
+        }
+        if (weapon) {
+            m_animName.format("S_%02d%s", gf::GfDataWeapon::getAsmWeaponType(m_weaponType), name + 1);
+        } else {
+            m_animName.format("S%s", name + 1);
+        }
+    } else {
+        m_animName.format("S%s", name + 1);
+    }
+    return m_animName.m_str;
+}
+
 unsigned int BattleCharacter::GetIKData(float& value0, float& value1) const {
     long type = m_ikType;
     if (type != 0) {

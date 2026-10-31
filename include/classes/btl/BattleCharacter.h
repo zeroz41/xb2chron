@@ -3,6 +3,7 @@
 
 #include "btl/ActionCommand.h"
 #include "mm/Vec3.h"
+#include "mm/mtl/FixStr.h"
 
 namespace btl { class CharacterParameter; }
 namespace btl { struct ARTS_SLOT_DATA; struct ARTS_DATA; }
@@ -142,6 +143,8 @@ public:
     bool IsOnSlide() const;
     gf::GF_OBJ_HANDLE* GetBuddyTargetObjectHandle() const;
     const char* GetNowAnimationStateName() const;
+    // the animation's state name for the character's weapon: no and subNo fill the attack/arts names' numbers
+    const char* GetAnimationStateName(ANIM_ID id, int no, int subNo) const;
     float GetAnimationFrame() const;
     void FluctuatePartyGauge(int value);
 
@@ -300,7 +303,11 @@ public:
     unsigned char pad_158[0x28];
     // GetCharacterParameter's cache of DataManager's parameter for m_chrID (the name is not the original's)
     mutable CharacterParameter* m_param;
-    unsigned char pad_188[0xB60];
+    unsigned char pad_188[0xB14];
+    // the animation state names GetAnimationStateName formats (the names are not the original's)
+    mutable mm::mtl::FixStr<20> m_animStateName;
+    mutable mm::mtl::FixStr<24> m_animName;
+    unsigned char pad_CD0[0x18];
     // Utility::AI_GetBdatID returns it (the name is not the original's)
     int m_bdatID;
     unsigned char pad_CEC[0x4];
@@ -325,7 +332,12 @@ public:
     // the id DataManager::GetCharacterParameterConst looks the parameter up by, < 0 for none (the name is not the
     // original's)
     short m_chrID;
-    unsigned char pad_EDC[0xC];
+    unsigned char pad_EDC[0x4];
+    // the kind of character; 2 picks GetAnimationStateName's attack/arts names (meaning unknown, the name is not
+    // the original's)
+    unsigned short m_animKind : 12;
+    unsigned short pad_EE0_12 : 4;
+    unsigned char pad_EE2[0x6];
     // GetDriverType answers it (a blade answers its driver's; the name is not the original's)
     unsigned int m_driverType : 3;
     unsigned int pad_EE8_3 : 6;
