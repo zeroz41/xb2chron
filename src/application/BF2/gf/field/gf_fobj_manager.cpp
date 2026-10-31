@@ -16,6 +16,10 @@
 #include "gf/GfObjUtil.h"
 #include "mm/mtl/FixedVector.h"
 
+// The effect is compared as a 16-bit value inside a callee (the original's and w8/cmp w8; the same compare written
+// at the call site widens to and x8/cmp x8). The helper's name is not the original's.
+static inline bool isLeaderBonus(unsigned short effect) { return effect == 0xFB; }
+
 namespace gf {
 
 GfFobjManager::GfFobjManager(const GfSetupParam& param)
@@ -106,6 +110,31 @@ void GfFobjManager::update(const fw::UpdateInfo& info) {
     }
     manager->m_gottenEffect.update(info.m_deltaTime);
     manager->m_seManager.update(info.m_deltaTime);
+}
+
+void GfFobjManager::fn_7100289504() {
+    m_leaderBonus = 0.0f;
+    GfObjAcc acc(GfGameManager::getPartyLeaderDriver());
+    int driver = acc.getDriverId();
+    if (driver == 0) {
+        return;
+    }
+    if (driver == 12) {
+        unsigned int value = Bdat::getValCheck(GfDataBdat::getFP(0x7B), 0, 0x5D, 8);
+        m_leaderBonus = *reinterpret_cast<float*>(&value);
+        return;
+    }
+    mm::mtl::FixedVector<unsigned short, 64> enhances;
+    if (GfDataDriver::fn_7100247580(enhances, driver)) {
+        unsigned char* fp = GfDataBdat::getFP(0x2C);
+        for (unsigned short id : enhances) {
+            if (isLeaderBonus(Bdat::getValCheck(fp, "EnhanceEffect", id, 2))) {
+                unsigned int value = Bdat::getValCheck(fp, "Param1", id, 8);
+                m_leaderBonus += *reinterpret_cast<float*>(&value);
+            }
+        }
+    }
+    m_leaderBonus *= 0.01f;
 }
 
 GfDropitemParams* GfFobjManager::getDropitemParams() {

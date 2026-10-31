@@ -37,12 +37,16 @@ void Array<T0>::SetArraySize(int size) {
     if (capacity_ <= size) {
         T0* old = data_;
         data_ = SoundMemory::allocator_->NewInstance<T0>(size + 1);
-        if (old != nullptr) {
-            for (int i = 0; i < capacity_; i++) {
-                data_[i] = old[i];
-            }
-            SoundMemory::allocator_->DeleteInstance(old);
+        // the early return for an empty array keeps the function out of line, as the original calls it (inline
+        // cost 275 against the 275 threshold; with one shared tail it is 270 and AddSoundGroup inlines it)
+        if (old == nullptr) {
+            capacity_ = size;
+            return;
         }
+        for (int i = 0; i < capacity_; i++) {
+            data_[i] = old[i];
+        }
+        SoundMemory::allocator_->DeleteInstance(old);
         capacity_ = size;
     }
 }

@@ -24,6 +24,23 @@ SoundEntry::SoundEntry() : Object(ObjectType::Id(2)), source_(nullptr), bank_(nu
 
 SoundEntry::~SoundEntry() {}
 
+SoundGroup* SoundEntry::GetSoundGroup() const {
+    if (SoundCore::instance_ == nullptr) {
+        return nullptr;
+    }
+    SoundBank* bank = bank_;
+    int groupId = param_.groupId_;
+    if (bank->id_ < 0) {
+        return nullptr;
+    }
+    for (SoundGroup** it = bank->groups_.begin(); it != bank->groups_.end(); ++it) {
+        if ((*it)->id_ == groupId) {
+            return *it;
+        }
+    }
+    return nullptr;
+}
+
 SoundBank::SoundBank() : Object(ObjectType::Id(3)), id_(-1) {}
 
 SoundBank::~SoundBank() {
@@ -130,6 +147,19 @@ Result SoundBank::RemoveSoundEntry(SoundEntry* entry) {
     if (entry->deleteOnRemove_) {
         SoundMemory::allocator_->DeleteInstance(entry);
     }
+    return set_result(Result(0));
+}
+
+Result SoundBank::AddSoundGroup(SoundGroup* group) {
+    if (SoundCore::instance_ == nullptr || id_ < 0) {
+        return Result(-1);
+    }
+    int size = groups_.size_;
+    if (groups_.capacity_ <= size) {
+        groups_.SetArraySize(groups_.capacity_ + 16);
+    }
+    groups_.data_[groups_.size_] = group;
+    groups_.size_++;
     return set_result(Result(0));
 }
 
