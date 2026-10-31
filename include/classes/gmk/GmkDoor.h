@@ -6,6 +6,7 @@
 #include "classes/gmk/BootedGmkCond.h"
 class CBdatWrapper;
 #include "classes/gmk/IGmkPhantomEventListener.h"
+#include "classes/fw/ColiUserData.h"
 #include "classes/gmk/GmkCamera.h"
 #include "classes/gmk/GmkPhantom.h"
 #include "classes/gmk/GmkPhantomSimple.h"
@@ -25,14 +26,11 @@ public:
     virtual void onEnterPhantom(gmk::IGmkPhantomEventListener::OnEnterInfo const&) = 0;
     virtual void onLeavePhantom(gmk::IGmkPhantomEventListener::OnLeaveInfo const&) = 0;
 };
-// a base of gmk::GmkDoor no evidence names yet
-class TUnk_B6CDD0 {
-public:
-    virtual const mm::mtl::RTTI* getRTTI() const = 0;
-};
-// table 0x7100B6CD30; base at 0x48 unknown (TUnk_B6CDB0), base at 0x50 unknown (TUnk_B6CDD0)
+// table 0x7100B6CD30; base at 0x48 unknown (TUnk_B6CDB0); base at 0x50 fw::ColiUserData (getRTTI's thunk at
+// offset -0x50; GmkDoorPhantomManager::update casts a phantom hit's ColiObject::m_userData to GmkDoor after
+// isKindOf(&GmkDoor::m_rtti), adjusting it by -0x50)
 // 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (the 16-aligned field is not typed yet)
-class alignas(16) GmkDoor : public ::gmk::AGmkBase, public TUnk_B6CDB0, public TUnk_B6CDD0 {
+class alignas(16) GmkDoor : public ::gmk::AGmkBase, public TUnk_B6CDB0, public ::fw::ColiUserData {
 public:
     // its size: the element size of its Vector<BdatInfo>::resize; the fields are not read yet
     class BdatInfo {
@@ -222,7 +220,8 @@ public:
     void bootGmk(bool anim, bool camera);
     void createGfObjHandle();
     void createGmkPhantom();
-    void createGmkCamera(const char* name, unsigned char attr, bool play);
+    // whether it made a camera (a name was given)
+    bool createGmkCamera(const char* name, unsigned char attr, bool play);
     void createSe(bool mapPack, unsigned short se, unsigned char size);
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(41);

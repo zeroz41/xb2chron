@@ -990,6 +990,19 @@ GmkAccManager::~GmkAccManager() {
     }
 }
 
+bool GmkCamera::CreateInfo::validateTransform(unsigned short lodId) {
+    mm::Mat44 mtx;
+    if (!gf::GfFieldLod::sys()->findTransform(mtx, lodId)) {
+        return false;
+    }
+    mm::Vec3 pos = mtx.getTrans();
+    float rotY = atan2f(mtx.m[2][0], mtx.m[2][2]);
+    m_hasTransform = true;
+    m_pos = pos;
+    m_rotY = rotY;
+    return true;
+}
+
 bool GmkCamera::isLoaded() const { return m_camera.get()->isLoaded(); }
 
 bool GmkCamera::isEnd() const {
@@ -3053,6 +3066,39 @@ void GmkDoor::update(float dt) {
     m_camera.update(dt);
     if (m_seq) {
         (this->*m_seq)(dt);
+    }
+}
+
+bool GmkDoor::createGmkCamera(const char* name, unsigned char attr, bool play) {
+    m_camera.dispose();
+    GmkCamera::CreateInfo info;
+    info.m_name = name;
+    info.m_attr = attr;
+    info.pad_106 = play;
+    const BdatInfo* bdatInfo = getBdatInfo();
+    if (bdatInfo->m_gmkCamPos) {
+        info.validateTransform(bdatInfo->m_lodModel);
+    }
+    if (info.m_name.length() > 0) {
+        m_camera.create(info);
+        return true;
+    }
+    return false;
+}
+
+void GmkDoor::onEnterPhantom(const IGmkPhantomEventListener::OnEnterInfo& info) {
+    // only in seqDoor_BeforeBoot, seqDoor_Booted or seqDoor_Shutdowned
+    if (&GmkDoor::seqDoor_BeforeBoot != m_seq && &GmkDoor::seqDoor_Booted != m_seq &&
+        &GmkDoor::seqDoor_Shutdowned != m_seq) {
+        return;
+    }
+    pollBootGmk();
+}
+
+void GmkDoor::onLeavePhantom(const IGmkPhantomEventListener::OnLeaveInfo& info) {
+    const BdatInfo* bdatInfo = getBdatInfo();
+    if (bdatInfo->m_responseType == 6 || bdatInfo->m_responseType == 7) {
+        shutdownGmk(false, true);
     }
 }
 
