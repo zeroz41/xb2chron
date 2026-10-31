@@ -18,12 +18,22 @@ GfMenuStrLinker::GfMenuStrLinker(mm::mtl::IAllocator* allocator)
 
 GfMenuStrLinker::~GfMenuStrLinker() {}
 
+unsigned short GfMenuStrLinker::addString(const ui::UIStr& str) {
+    unsigned int index = *m_freeIndices.begin();
+    m_strings[index].copy(str);
+    m_freeIndices.erase(m_freeIndices.begin());
+    return index;
+}
+
 void GfMenuStrLinker::delString(unsigned short index) {
     if (index < 128) {
         m_strings[index].release();
         m_freeIndices.push_back(index);
     }
 }
+
+// getString (0x710036AD24) is not matched yet: our build merges its static and guard (GlobalMerge), the original
+// addresses them separately
 
 void GfMenuStrLinker::addSelectString(const ui::UIStr& str) {
     if (m_selectStrings.size() != m_selectStrings.capacity()) {
