@@ -4996,10 +4996,13 @@ unit_71008AC858.cpp:
 	.text        start:0x008AC858 end:0x008ACC24
 	.rodata      start:0x00B39EF4 end:0x00B39F23
 
-nn/gfx/detail/GlslcDll.cpp:
-	.text        start:0x008ACC24 end:0x008B0BD8
-	.rodata      start:0x009B0F69 end:0x009B458A
+unit_71008ACC24.cpp:
+	.text        start:0x008ACC24 end:0x008AD74C
 	.rodata      start:0x009D73EC end:0x009D93F0
+
+nn/gfx/detail/GlslcDll.cpp:
+	.text        start:0x008AD74C end:0x008B0BD8
+	.rodata      start:0x009B0F69 end:0x009B458A
 	.bss         start:0x015EC5F0 end:0x015ED4B0
 
 libs/mcl/mm_lib/source/mm_math/mm_cylinder.cpp:
