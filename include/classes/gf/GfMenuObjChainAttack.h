@@ -49,12 +49,13 @@ public:
     // handle. No code or data reference to it in the module.
     static void fn_71003BF974(GfMenuCallContext* context);
 
-    // zeroed by the constructor; what they hold is not known yet
-    void* pad_30;
-    void* pad_38;
-    void* pad_40;
-    void* pad_48;
-    void* pad_50;
+    // StatusListener's copy of the target's per-element levels (GfObjPropertyEnemy::m_resAttrs[i].m_level, by
+    // element 0..8): the open event (0x21) copies them and then sets each to 3; event 0xD's element damage lowers
+    // one (the name is not the original's)
+    int m_resLevel[9];
+    // how many of the status's overkill thresholds (400, 500 .. 900) event 0xD's value has passed; the open event
+    // resets it (the name is not the original's)
+    int m_ovkStage;
 };
 }  // namespace gf
 

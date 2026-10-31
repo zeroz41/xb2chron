@@ -16,6 +16,12 @@
 #include "classes/gf/GfMenuBattleAdapter.h"
 #include "classes/gf/GfMenuGfObjAdapter.h"
 #include "classes/gf/GfMenuReference.h"
+#include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfObjPropertyEnemy.h"
+#include "gf/GfObjAcc.h"
+#include "gf/GfObjUtil.h"
+#include "mm/Pnt.h"
+#include "mm/Rect.h"
 #include "classes/ui/UIEventManager.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuObjUtil.h"
@@ -27,7 +33,7 @@
 namespace gf {
 
 GfMenuObjChainAttack::GfMenuObjChainAttack(unsigned int handle)
-    : GfMenuObject(handle), pad_30(nullptr), pad_38(nullptr), pad_40(nullptr), pad_48(nullptr), pad_50(nullptr) {}
+    : GfMenuObject(handle), m_resLevel(), m_ovkStage(0) {}
 
 GfMenuObjChainAttack::~GfMenuObjChainAttack() {
     ;  // the original body has a statement the build compiles away; an empty one would drop the table store
@@ -318,6 +324,251 @@ void GfMenuObjChainAttack::StartListener::reciveEvent(const ui::EventData& event
         param.m_startFlags = 10;
         param.m_eventId = 1;
         GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        break;
+    }
+    }
+}
+
+void GfMenuObjChainAttack::StatusListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        m_state = 0;
+        m_ovkShown = 0;
+        acc.setDisp(false);
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            m_state = 1;
+            GfMenuObject::termCallContext(acc.m_handle);
+        } else if (event.m_param0 == 2) {
+            ui::UIObjectAcc text(acc.m_handle, "LAY_status_ovk_text");
+            if (GfMenuObjUtil::getCtrlID(text.m_handle) != -1) {
+                GfMenuObjUtil::stopCtrl(GfMenuObjUtil::getCtrlID(text.m_handle));
+            }
+        }
+        break;
+    case 0x21: {
+        {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_in_l";
+            param.m_time = GfMenuObjUtil::getParamMenu()->m_chainAttackWait;
+            param.m_eventId = 1;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        }
+        if (GfMenuManager::getTargetObjHandle() != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            GfObjAcc obj(GfMenuManager::getTargetObjHandle());
+            if (obj.m_obj == nullptr) {
+                break;
+            }
+            GfObjProperty* property = GfObjUtil::getProperty(GfMenuManager::getTargetObjHandle());
+            if (property == nullptr) {
+                break;
+            }
+            GfObjPropertyEnemy* enemy = property->getEnemy();
+            if (enemy == nullptr) {
+                break;
+            }
+            for (int i = 0; i < 9; i++) {
+                m_owner->m_resLevel[i] = enemy->m_resAttrs[i].m_level;
+            }
+            mm::Rect<short> center;
+            mm::Rect<short> range;
+            acc.getLayoutRect("elem2_center", center);
+            acc.getLayoutRect("elem2_center_range", range);
+            GfMenuObjUtil::placeObjectH(acc.m_handle, "LAY_status_elem@%02d", enemy->m_resAttrCount,
+                                        mm::Pnt<short>(center.x + center.w / 2, center.y + center.h / 2),
+                                        range.x - center.x);
+            GfMenuObjUtil::placeObjectH(acc.m_handle, "IMG_status_elem_base_dummy@%02d", enemy->m_resAttrCount,
+                                        mm::Pnt<short>(center.x + center.w / 2, center.y + center.h / 2),
+                                        range.x - center.x);
+            acc.setDispChild(static_cast<unsigned int>(enemy->m_resAttrCount) != 0, "IMG_status_elem_base");
+        }
+        for (int& level : m_owner->m_resLevel) {
+            level = 3;
+        }
+        m_owner->m_ovkStage = 0;
+        m_ovkShown = 0;
+        acc.setDispChild(false, "LAY_status_ovk");
+        break;
+    }
+    case 0x22: {
+        {
+            mm::mtl::FixStr<32> name;
+            for (int i = 1; i < 9; i++) {
+                name.format("IMG_status_elem_target@%02d", i);
+                ui::UIObjectAcc(acc.m_handle, name.m_str).stopAnimation();
+                name.format("IMG_status_elem_burst@%02d", i);
+                ui::UIObjectAcc(acc.m_handle, name.m_str).stopAnimation();
+            }
+            ui::UIObjectAcc bar(acc.m_handle, "IMG_status_gauge_bar");
+            int ctrl = GfMenuObjUtil::getCtrlID(bar.m_handle);
+            if (ctrl != -1) {
+                GfMenuObjUtil::stopCtrl(ctrl);
+            }
+        }
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_out_l";
+        param.m_startFlags = 10;
+        param.m_eventId = 2;
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        m_state = 0;
+        break;
+    }
+    case 0xD: {
+        // the condition's event and the element's index; m_param1 picks the update and m_param3 is its value (the
+        // names are not the original's)
+        int type = event.m_param0;
+        unsigned int index = event.m_param2;
+        switch (event.m_param1) {
+        case 0: {
+            mm::mtl::FixStr<32> name;
+            name.format("TXT_status_elem_burst@%02d", index + 1);
+            if (type == 5) {
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x10000000;
+                param.m_motionLib = "cmn_fade_emotion";
+                param.m_motion = "fade_in";
+                param.m_setDefault = true;
+                GfMenuObjUtil::startCtrl(acc.m_handle, param, name.m_str);
+            } else {
+                acc.setDispChild(false, name.m_str);
+            }
+            break;
+        }
+        case 1: {
+            mm::mtl::FixStr<32> name;
+            name.format("IMG_status_elem_icon_eff@%02d", index + 1);
+            int ctrl = GfMenuObjUtil::getCtrlID(acc.searchChild(name.m_str));
+            if (ctrl != -1) {
+                GfMenuObjUtil::stopCtrl(ctrl);
+            }
+            if (type == 5) {
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x40002;
+                param.m_scale = 0.3f;
+                param.m_reserve = true;
+                param.m_curve = 1;
+                param.m_time = 1.0f;
+                param.m_startFlags = 8;
+                GfMenuObjUtil::startCtrl(acc.m_handle, param, name.m_str);
+            } else {
+                acc.setDispChild(false, name.m_str);
+            }
+            break;
+        }
+        case 2: {
+            int value = event.m_param3;
+            if (m_state != 0 && GfMenuManager::getTargetObjHandle() != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                GfObjAcc obj(GfMenuManager::getTargetObjHandle());
+                if (obj.m_obj != nullptr) {
+                    GfObjProperty* property = GfObjUtil::getProperty(GfMenuManager::getTargetObjHandle());
+                    if (property != nullptr) {
+                        GfObjPropertyEnemy* enemy = property->getEnemy();
+                        if (type == 4 && enemy != nullptr && enemy->m_resAttrCount > index) {
+                            unsigned int element = enemy->m_resAttrList[index];
+                            if (element != 0) {
+                                int level = element * 4 - (value + 1);
+                                if (level < 0) {
+                                    level = 0;
+                                }
+                                int down = m_owner->m_resLevel[element] - level;
+                                if (down >= 1) {
+                                    mm::mtl::FixStr<32> name;
+                                    name.format("IMG_status_elem_eff@%02d", index + 1);
+                                    if (down == 1) {
+                                        ui::UIObjectAcc(acc.m_handle, name.m_str).startAnimation("damage_a", false);
+                                    } else {
+                                        ui::UIObjectAcc(acc.m_handle, name.m_str).startAnimation("damage_b", false);
+                                    }
+                                    name.format("LAY_status_elem@%02d", index + 1);
+                                    GfMenuObjUtil::CtrlParam param;
+                                    param.m_methods = 0x10000000;
+                                    param.m_motionLib = "cmn_damage";
+                                    param.m_motion = "fadein";
+                                    param.m_setDefault = true;
+                                    param.m_startFlags = 8;
+                                    GfMenuObjUtil::startCtrl(acc.m_handle, param, name.m_str);
+                                    m_owner->m_resLevel[element] = level;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+        }
+        case 3: {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_in_l";
+            param.m_setDefault = true;
+            param.m_startFlags = 8;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, "TXT_status_damage_num");
+            param = GfMenuObjUtil::CtrlParam();
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_levelup_text_fadein_blur";
+            param.m_motion = "fade_in";
+            param.m_setDefault = true;
+            param.m_startFlags = 8;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_status_damage_num_eff");
+            break;
+        }
+        case 4: {
+            static const int thresholds[6] = {400, 500, 600, 700, 800, 900};
+            // the flag is read before the value: the original tests it first
+            bool shown = m_ovkShown != 0;
+            int value = event.m_param3;
+            if (!shown && value >= 1 && m_owner->m_ovkStage == 0) {
+                ui::UIObjectAcc ovk(acc.m_handle, "LAY_status_ovk");
+                ui::UIObjectAcc text(acc.m_handle, "LAY_status_ovk_text");
+                ovk.setDisp(true);
+                text.setAddColor("black");
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x40000000;
+                param.m_bright = 1.0f;
+                param.m_time = 0.5f;
+                param.m_curve = 4;
+                param.m_setDefault = true;
+                param.m_reserve = true;
+                GfMenuObjUtil::startCtrl(ovk.m_handle, param, "LAY_status_ovk_text");
+                m_ovkShown = 1;
+            }
+            unsigned int stage = m_owner->m_ovkStage;
+            if (stage < 6 && value >= thresholds[stage]) {
+                m_owner->m_ovkStage = stage + 1;
+                ui::UIObjectAcc eff(acc.m_handle, "IMG_status_ovk_eff");
+                eff.startAnimation("start", false);
+            }
+            break;
+        }
+        case 5:
+            if (type == 1) {
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x40000000;
+                param.m_time = 1.0f;
+                param.m_reserve = true;
+                param.m_curve = 4;
+                param.m_startFlags = 8;
+                param.m_bright = 1.0f;
+                GfMenuObjUtil::startCtrl(acc.searchChild("IMG_status_gauge_bar"), param, nullptr);
+                GfMenuObjUtil::playSE(0x26);
+            } else {
+                ui::UIObjectAcc bar(acc.m_handle, "IMG_status_gauge_bar");
+                int ctrl = GfMenuObjUtil::getCtrlID(bar.m_handle);
+                if (ctrl != -1) {
+                    GfMenuObjUtil::stopCtrl(ctrl);
+                }
+            }
+            break;
+        }
         break;
     }
     }
