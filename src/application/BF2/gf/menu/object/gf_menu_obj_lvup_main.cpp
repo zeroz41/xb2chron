@@ -329,4 +329,199 @@ bool GfMenuObjLvupMain::seqClose() {
     return true;
 }
 
+
+void GfMenuObjLvupMain::MainListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 0;
+        param.m_eventId = 1;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        if (GfMenuObjUtil::fn_710048FD30(3) && !GfMenuManager::fn_710035DC94()) {
+            ui::UIObjectAcc main(m_owner->m_handle, "LAY_main");
+            main.setDispChild(false, "IMG_lv_fadebg");
+            main.setDispChild(true, "IMG_lv_fadebg_inn");
+        }
+        m_owner->refreshLevelUpInfo();
+        break;
+    }
+    case 3:
+        if (event.m_param0 == 1) {
+            if (!m_owner->m_levelUp) {
+                if (!GfGameManager::isClearGame() || m_owner->m_textContext == nullptr || GfMenuFlag::get1(0x53) != 0) {
+                    GfMenuObject::sendOpenEvent(acc.searchChild("LAY_lv_driverset"), 0, 0.0f);
+                } else {
+                    m_owner->m_textOpened = false;
+                    m_owner->m_seq.clear();
+                    m_owner->m_seq.addJob(&GfMenuObjLvupMain::fn_710042CB7C);
+                    m_owner->m_seq.addJob(&GfMenuObjLvupMain::fn_710042CB98);
+                    GfMenuFlag::set1(0x53, 1);
+                }
+            } else {
+                m_owner->m_textOpened = false;
+                m_owner->m_seq.clear();
+                m_owner->m_seq.addJob(&GfMenuObjLvupMain::seqExecLevelUp);
+                m_owner->m_seq.addJob(&GfMenuObjLvupMain::seqEndLevelUp);
+            }
+        }
+        break;
+    case 0x41: {
+        unsigned int id = event.m_param0;
+        if (m_owner->m_selectContext->m_id == id) {
+            if (event.m_param2 == 0) {
+                m_owner->m_levelUp = true;
+            } else {
+                m_owner->m_levelUp = false;
+            }
+        }
+        break;
+    }
+    case 0x42:
+        if (static_cast<unsigned int>(event.m_param0) == m_owner->m_selectContext->m_id) {
+            GfMenuObjUtil::PresetCtrlParam param;
+            param.m_preset = 6;
+            param.m_out = 0;
+            param.m_eventId = 1;
+            GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+            m_owner->refreshLevelUpInfo();
+            GfMenuObjOperationInfo::setGuideDisp(true);
+            mm::mtl::FixStr<32> name;
+            if (m_owner->m_levelUp) {
+                name.format("LAY_lv_lvup_enable@%02d", m_owner->m_drivers->getIndex(true) + 1);
+                ui::UIObjectAcc enable(acc.m_handle, name.m_str);
+                enable.setDisp(false);
+            }
+        }
+        break;
+    case 0x100: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 1;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        GfMenuObjOperationInfo::setGuideDisp(false);
+        GfMenuObjLvupSelect::openLevelSelect(m_owner->m_selectContext,
+                                             m_owner->m_drivers->getContents(m_owner->m_drivers->getIndex(false)).m_driver);
+        m_owner->m_levelUp = false;
+        GfMenuObject::setCallContextEventHandler(m_owner->m_selectContext, acc.m_handle);
+        break;
+    }
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjLvupMain::SelectListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        acc.setDispChild(false, "IMG_lv_drcursor");
+        GfMenuObjOperationInfo::open(acc.m_handle, 0, 0, 0);
+        bool alt = GfMenuObjUtil::fn_710048FD30(3);
+        bool clear = GfGameManager::isClearGame();
+        if (!alt) {
+            if (!clear) {
+                GfMenuObjOperationInfo::setGuideText(0x2A, 2);
+            } else {
+                GfMenuObjOperationInfo::setGuideText(0x47, 2);
+            }
+        } else if (!clear) {
+            GfMenuObjOperationInfo::setGuideText(0x4D, 2);
+        } else {
+            GfMenuObjOperationInfo::setGuideText(0x4E, 2);
+        }
+        break;
+    }
+    case 8:
+        if (event.m_param1 == 1) {
+            unsigned int driver = m_owner->m_drivers->getContents(m_owner->m_drivers->getIndex(false)).m_driver;
+            if (GfDataDriver::isEnableLevelUp(driver) ||
+                (GfGameManager::isClearGame() && GfDataDriver::getLevel(driver) >= 2)) {
+                if (m_owner->m_mode == 2) {
+                    ui::EventData decide;
+                    decide.m_type = 0x100;
+                    GfMenuObject::sendEventToParent(acc.m_handle, decide, 0.0f);
+                    GfMenuObjUtil::playSECommonDecide();
+                    GfMenuObject::disableFSInput();
+                }
+            } else {
+                GfMenuObjUtil::playSECommon(2);
+            }
+        } else if (event.m_param1 == 2) {
+            if (GfGameManager::isClearGame()) {
+                GfMenuObjCommonText::open(m_owner->m_textContext, 0x105, 0);
+            } else {
+                GfMenuObjCommonText::open(m_owner->m_textContext, 0xA5, 0);
+            }
+            GfMenuObject::setCallContextEventHandler(m_owner->m_textContext, acc.m_handle);
+            GfMenuObject::disableInput(handle);
+        }
+        break;
+    case 0x21:
+        GfMenuObject::resetInputSelection(acc.m_handle);
+        GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_drivers);
+        GfMenuObject::enableFSInput(1);
+        m_owner->m_mode = 2;
+        break;
+    case 0x22:
+        acc.setDispChild(false, "IMG_lv_drcursor");
+        break;
+    case 0x41:
+        if (event.m_param3 == 0) {
+            unsigned int id = event.m_param0;
+            if (m_owner->m_textContext->m_id == id) {
+                if (event.m_param2 == 0) {
+                    m_owner->m_seq.clear();
+                    m_owner->m_seq.addJob(&GfMenuObjLvupMain::seqClose);
+                    GfMenuObject::disableFSInput();
+                } else if (event.m_param2 == 1) {
+                    GfMenuObject::enableInput(handle);
+                }
+            }
+        }
+        break;
+    case 6: {
+        int index = event.m_param0;
+        if (index != -1) {
+            int prev = event.m_param1;
+            m_owner->m_driverObjs->setIndex(index);
+            m_owner->m_drivers->setIndex(index);
+            acc.setDispChild(true, "IMG_lv_drcursor");
+            if (prev != -1 && index != prev) {
+                GfMenuObjUtil::playSECommonCursor();
+            }
+        }
+    }
+    // fall through
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+bool GfMenuObjLvupMain::fn_710042CB7C() {
+    return !GfMenuManager::isFading();
+}
+
+bool GfMenuObjLvupMain::fn_710042CB98() {
+    ui::UIObjectAcc main(m_handle, "LAY_main");
+    if (!m_textOpened) {
+        m_textContext->reset();
+        if (GfMenuObjUtil::fn_710048FD30(3)) {
+            GfMenuObjCommonText::open(m_textContext, 0x132, 0);
+        } else {
+            GfMenuObjCommonText::open(m_textContext, 0x103, 0);
+        }
+        m_textOpened = true;
+    }
+    if (m_textContext->isActive()) {
+        return false;
+    }
+    GfMenuObject::sendOpenEvent(main.searchChild("LAY_lv_driverset"), 0, 0.0f);
+    m_textOpened = false;
+    return true;
+}
+
 }  // namespace gf
