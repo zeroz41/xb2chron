@@ -21,6 +21,10 @@ public:
     void incleaseAchievCount(QuestID id, unsigned int count, unsigned int add);
     void incAchievWithBlade(unsigned int type, int value, const mm::mtl::FixedVector<unsigned short, 422>& blades);
     virtual ~GfAchievManager();  // slot 0
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because fn_71005661C0 calls it on
+    // PtrSingleton<GfAchievManager>'s instance (which it does not read). What it does: for every blade of blades,
+    // fn_710028A448(type, value, blade). Its one caller passes type 0x9C.
+    void fn_710028A720(unsigned int type, int value, const mm::mtl::FixedVector<unsigned short, 422>& blades);
     void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int);
 };
 }  // namespace gf

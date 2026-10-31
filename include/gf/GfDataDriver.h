@@ -67,6 +67,11 @@ public:
     // 0x11-0x19; for those, whether GfBdatChrDr::fn_71001F16A4 of the row GfBdatChrDr::fn_71001F13E0 gives is 0.
     // Caller here: gf_menu_obj_char_select_ira's fn_71003D273C (driver 0 and 1 references both set to it when true).
     static bool fn_7100237A94(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in GfDataBlade's
+    // unit and lists driver ids (its callers, SCOM_ADD_TRUST::exec and GfMenuObjMainMenu2::openChrChangeSub, treat
+    // them as drivers). What it does: pushes every GfBdatChrDr row id from fn_71001F15D4 up to (not including)
+    // fn_71001F15E0 (fn_71001F161C) into drivers; true when drivers is not empty.
+    static bool fn_7100241570(mm::mtl::FixedVector<unsigned short, 32>& drivers);
     // whether the driver (data type 1) is in a party slot below 3 (GfDataParty::getDriverPartyID)
     static bool isActivateParty(unsigned int driver);
     static unsigned int getExp(const SDataDriver& data);  // fn_7100245AB4

@@ -123,6 +123,7 @@
 #include "classes/gf/TUnk_B535D0.h"
 #include "gf/MsgUnk_1000034.h"
 #include "classes/gf/GfScriptManager.h"
+#include "ml/MTRand.h"
 namespace gf {
 bool SCOM_ADD_MONEY::exec(fw::UpdateInfo const&) {
     GfGameUtil::addMoney(m_money);
@@ -513,6 +514,34 @@ unsigned long SCOM_SET_MERCENARIES_LEVEL::create(unsigned int a0) {
     SCOM_SET_MERCENARIES_LEVEL* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_SET_MERCENARIES_LEVEL(SCOM_TYPE(60));
     request->m_level = a0;
     return GfReqSmallCom::addRequest(request);
+}
+
+bool SCOM_ADD_TRUST::exec(fw::UpdateInfo const&) {
+    if (GfGameManager::fn_71002A9E68()) {
+        if (m_value2 == 0) {
+            mm::mtl::FixedVector<unsigned short, 32> drivers;
+            GfDataDriver::fn_7100241570(drivers);
+            for (const unsigned short& driver : drivers) {
+                if (GfDataDriver::fn_7100237A94(driver) || GfDataDriver::isActivateUnuse(driver)) {
+                    continue;
+                }
+                GfGameUtil::setTrustPointForDebug(driver, m_value);
+            }
+        } else if (GfDataDriver::isDriver(m_value2)) {
+            GfGameUtil::setTrustPointForDebug(m_value2, m_value);
+        }
+    } else {
+        if (m_value2 == 0) {
+            mm::mtl::FixedVector<unsigned short, 422> blades;
+            GfDataBlade::getListPartyAll(blades);
+            for (unsigned short* it = blades.begin(); it != blades.end(); ++it) {
+                GfGameUtil::addTrustPoint(*it, m_value);
+            }
+        } else {
+            GfGameUtil::addTrustPoint(m_value2, m_value);
+        }
+    }
+    return true;
 }
 
 unsigned long SCOM_ADD_TRUST::create(unsigned int a0, unsigned int a1) {
@@ -1078,6 +1107,15 @@ unsigned long SCOM_POPUP::createMercenaryReturn(unsigned int a0, unsigned int a1
     return GfReqSmallCom::addRequestParallel(request);
 }
 
+void SCOM_POPUP::fn_7100569D44(unsigned int mapId, unsigned int teamId) {
+    GfMenuObjPopup::OpenParam param;
+    param.m_type = 8;
+    param.m_value[0] = mapId;
+    param.m_value[1] = teamId;
+    param.m_value[2] = GfDataMercenaries::getTeamLeader(teamId);
+    GfMenuObjPopup::fn_710045D48C(param);
+}
+
 unsigned long SCOM_POPUP::createAchievement(unsigned int blade, unsigned int line, unsigned int level) {
     if (GfGameManager::isStartGame()) {
         return -1;
@@ -1359,6 +1397,30 @@ void fn_7100566168() {
     }
 }
 
+void fn_71005661C0(unsigned int value) {
+    if (!GfGameManager::fn_71002AC598()) {
+        return;
+    }
+    GfDataAchievement::addTotalCount(0x9D, value);
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    GfDataBlade::fn_71002376E8(blades);
+    if (GfAchievManager* manager = GfAchievManager::sys()) {
+        manager->fn_710028A720(0x9C, value, blades);
+    }
+}
+
+void fn_71005663BC() {
+    unsigned int count = 0;
+    for (int i = 1; i <= 100; ++i) {
+        if (GfGameFlag::getLocal(2, i) == 2) {
+            ++count;
+        }
+    }
+    count += GfGameFlag::getLocal(0x20, 0x141);
+    GfDataAchievement::fn_710024B71C(75, 0);
+    GfDataAchievement::addTotalCount(75, count);
+}
+
 void fn_7100566424(unsigned int type) {
     mm::mtl::FixedVector<unsigned short, 422> blades;
     GfDataBlade::fn_71002376E8(blades);
@@ -1522,6 +1584,70 @@ GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createFieldSkillStart(unsigned int blade, u
         return nullptr;
     }
     return GfGameVoice::playVoice(ParamObj(4, blade), name, CV_PRIO(1), false);
+}
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B6AAC0)
+static const char* const s_driverKizunaVoices[6][3] = {
+    {"01200201", "01420601", "01980201"}, {"02490101", "02750101", "02410602"},
+    {"06470101", "06470104", "06910103"}, {"03980201", "03490202", "03870101"},
+    {"04490101", "04980201", "04320102"}, {"05490101", "05980201", "05980101"},
+};
+
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createDriverKizuna(unsigned int id) {
+    if (id - 1 > 5) {
+        return nullptr;
+    }
+    return GfGameVoice::playVoice(3, id, s_driverKizunaVoices[id - 1][ml::mtRand(3)], CV_PRIO(3));
+}
+
+void SCOM_FIELD_VOICE::fn_71005691B0() {
+    VoiceList names;
+    names.m_names[0] = "670101";
+    names.m_names[1] = "670102";
+    names.m_count = 2;
+    fn_7100568E1C(names);
+}
+
+void SCOM_FIELD_VOICE::fn_71005691EC() {
+    VoiceList names;
+    names.m_names[0] = "670103";
+    names.m_names[1] = "670104";
+    names.m_count = 2;
+    fn_7100568E1C(names);
+}
+
+void fn_7100569228() {
+    SCOM_FIELD_VOICE::VoiceList names;
+    names.m_names[0] = "670105";
+    names.m_names[1] = "670106";
+    names.m_count = 2;
+    SCOM_FIELD_VOICE::fn_7100568E1C(names);
+}
+
+void fn_71005693C0(unsigned int blade) {
+    SCOM_FIELD_VOICE::VoiceList names;
+    names.m_names[0] = "680101";
+    names.m_names[1] = "680102";
+    names.m_count = 2;
+    fn_7100569264(blade, names);
+}
+
+void fn_71005695D0(unsigned int blade) {
+    SCOM_FIELD_VOICE::VoiceList names;
+    names.m_names[0] = "700101";
+    names.m_names[1] = "700102";
+    names.m_names[2] = "700103";
+    names.m_count = 3;
+    fn_7100569264(blade, names);
+}
+
+void fn_7100569618(unsigned int blade) {
+    SCOM_FIELD_VOICE::VoiceList names;
+    names.m_names[0] = "710101";
+    names.m_names[1] = "710102";
+    names.m_names[2] = "710103";
+    names.m_count = 3;
+    fn_7100569264(blade, names);
 }
 
 unsigned long SCOM_ADD_ETHER::create(int a0) {
@@ -1801,6 +1927,29 @@ unsigned long TUnk_B6AD28::fn_710056B88C() {
 #line 6249
     TUnk_B6AD28* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B6AD28(0x14);
     return GfReqSmallCom::addRequestParallel(request);
+}
+
+void fn_710056B914(float a, float b, unsigned int id) {
+    if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
+        MsgUnk_1000034 msg(0x12);
+        msg.pad_34 = a;
+        msg.pad_38 = b;
+        msg.pad_3C = id;
+        static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
+    }
+}
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B6AD58)
+static const char* const s_scoreVoices[4][4] = {
+    {"650490101", "650490101", "650490102", "650490102"},
+    {"650490109", "650490110", "650490103", "650490104"},
+    {"650490109", "650490110", "650490105", "650490106"},
+    {"650490109", "650490110", "650490107", "650490108"},
+};
+
+void fn_710056B988(unsigned int row) {
+    unsigned int index = ml::mtRand(4);
+    GfGameVoice::playVoice(6, 0xDC3, s_scoreVoices[row][index], CV_PRIO(3));
 }
 
 SCOM_FADE::Fade SCOM_FADE::s_fades[3];

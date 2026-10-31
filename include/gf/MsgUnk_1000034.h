@@ -38,8 +38,9 @@ public:
     unsigned int pad_28;
     unsigned int pad_2C;
     unsigned int pad_30;
-    unsigned int pad_34;
-    unsigned int pad_38;
+    // fn_710056B914 (type 0x12) sends two floats in pad_34 / pad_38 and its value in pad_3C
+    float pad_34;
+    float pad_38;
     unsigned int pad_3C;
     unsigned int pad_40;
 };

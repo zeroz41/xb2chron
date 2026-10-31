@@ -13,6 +13,19 @@ namespace gf {
 // table 0x7100B6B690
 class SCOM_FIELD_VOICE : public ::gf::SCOM {
 public:
+    // the voice names fn_7100568E1C and fn_7100569264 pick one of (ml::mtRand(m_count)); their callers fill it on the
+    // stack. Up to five (m_count at 0x28); no destructor code follows the calls, so it is not mm::mtl::FixedVector
+    // (that one clears its size on destruction). The name and the field names are not the original's.
+    struct VoiceList {
+        const char* m_names[5];
+        unsigned long m_count;
+    };
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because SCOM_FIELD_VOICE's
+    // fn_71005691B0, fn_71005691EC, fn_7100568D34 and createFieldSkillMiss call it and it sits among its create
+    // functions. What it does: when GfGameManager::fn_71002A9E68 holds, picks a party blade (fn_7100566B24,
+    // ml::mtRand) of bdat id 0x11 and up and plays one of names (ml::mtRand(m_count)) for it, with the blade's name
+    // from the table at 0x7100B6AB50; 0 when it plays nothing (not recovered).
+    static GAME_VOICE_HANDLE* fn_7100568E1C(const VoiceList& names);
     // the names below are not the original's (what the create functions store and exec reads)
     // one voice to play: exec waits m_wait seconds, plays it (GfFieldVoice::playVoice(m_obj, m_field, m_prio)),
     // then waits for GfGameVoice::getResult(m_voice)
@@ -60,6 +73,9 @@ public:
     // the favourite voice of a driver or blade (GfMenuObjPouch2::procFavFlag returns what it returns)
     static GAME_VOICE_HANDLE* createFavorite(unsigned int id, FAVORITE favorite);
     static unsigned long createMercenariesStart(unsigned int id);
+    // a driver's bond voice: one of three (ml::mtRand(3)) for driver id 1..6 (GfGameVoice::playVoice type 3);
+    // nullptr for any other id
+    static GAME_VOICE_HANDLE* createDriverKizuna(unsigned int id);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's createQuest(CV_FIELD) has the same
     // size but plays a voice through GfFieldVoice::playVoice; this takes no argument). A member because it sits among
     // this class's create functions in gf_req_scom (after createDriverKizuna). What it does: passes the voice pair
@@ -101,6 +117,18 @@ public:
     bool m_stopOnEvent;  // 1.0.0's isStopVoice(): set and GfGameManager::isPlayEvent()
     bool m_flagD3;
 };
+
+// Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions: they take no this, and their
+// callers are menu code outside any SCOM class. What fn_7100569264 does: when GfGameManager::fn_71002A9E68 holds and
+// blade is a bdat id 0x11..0x19, plays one of names (ml::mtRand(m_count)) appended to the blade's name (table
+// 0x7100B6AB50) for the blade (GfGameVoice::fn_71002F1D20(3, blade, ...)); 0 otherwise (not recovered). The others
+// pass it fixed lists: fn_71005693C0 "680101"/"680102" (caller fn_71003BD208), fn_71005695D0 "700101".."700103"
+// (caller GfMenuObjDrArtsSet2::ArtsListListener::reciveEvent), fn_7100569618 "710101".."710103" (caller
+// GfMenuObjDrKizunaRing::seqSkillAnime).
+GAME_VOICE_HANDLE* fn_7100569264(unsigned int blade, const SCOM_FIELD_VOICE::VoiceList& names);
+void fn_71005693C0(unsigned int blade);
+void fn_71005695D0(unsigned int blade);
+void fn_7100569618(unsigned int blade);
 }  // namespace gf
 
 #endif

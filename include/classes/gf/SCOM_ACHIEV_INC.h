@@ -90,6 +90,11 @@ void fn_71005665D8();
 // minigame::tora::MinigameUpdatableObject::update).
 void fn_7100566168();
 void fn_7100566424(unsigned int type);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function for the same reasons (no
+// request, no this; between SCOM_ACHIEV_INC's functions). What it does: counts the local flags 2/1..100 that are 2,
+// adds local flag 0x20/0x141, and sets achievement total 75 to that: GfDataAchievement::fn_710024B71C(75, 0), then
+// addTotalCount(75, count). Caller: GfGameScene::playEventSequenceEnd.
+void fn_71005663BC();
 }  // namespace gf
 
 #endif

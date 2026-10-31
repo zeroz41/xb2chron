@@ -24,6 +24,11 @@ void fn_7100569228();
 // table 0x7100B6AD58[row][ml::mtRand(4)], CV_PRIO 3) (rows of four const char*). Caller: TUnk_28E618::fn_710028EF70
 // with TUnk_28E618::fn_710028E7DC's count.
 void fn_710056B988(unsigned int row);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x710056B914, gf_req_scom's unit). A
+// free function: it reads only its arguments and PtrSingleton<TUnk_B535D0>'s instance. What it does: when the arena
+// exists, sends it MsgUnk_1000034 type 0x12 with a and b in pad_34 / pad_38 and id in pad_3C (recieveMessage).
+// Caller: btl::TUnk_B3A9C8::fn_7100025920 (0.0, 0.2 and 0x82 or 0x71, as Ghidra reads the call).
+void fn_710056B914(float a, float b, unsigned int id);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x710056B9CC, gf_req_scom's unit). A
 // free function: it reads only its arguments. What it does: for the first count handles that are valid drivers of
 // BDAT id 1..6 or 9, plays one of two voices (ml::mtRand(2)) from the tables at 0x7100B6ADD8.. (the row picked by
