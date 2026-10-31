@@ -212,6 +212,199 @@ void GfMenuObjMainMenu2::update() {
     GfMenuObject::update();
 }
 
+// 1.0.0's moveMainMenu (0x7100485C14), inlined into the main listener in 1.0.0 and 3.0.1 alike: LAY_move placed for
+// that direction (3-6) and a control that moves it by move_guide_line's height; the control's end event is the
+// direction. 1.0.0's code never reads the bool.
+inline int GfMenuObjMainMenu2::moveMainMenu(ui::UIObjectAcc& acc, unsigned int dir, bool) {
+    ui::UIObjectAcc move(acc.searchChild("LAY_move"));
+    GfMenuObjUtil::CtrlParam param;
+    param.m_curve = 1;
+    mm::Rect<short> rect;
+    move.getLayoutRect("move_guide_line", rect);
+    param.m_distance = rect.y;
+    param.m_time = 0.35f;
+    mm::Pnt<short> pos(0, 0);
+    switch (dir) {
+    case 3:
+        move.setPos(pos);
+        param.m_eventId = 3;
+        param.m_methods = 0x20;
+        break;
+    case 4:
+        pos.y = -rect.y;
+        move.setPos(pos);
+        param.m_eventId = 4;
+        param.m_methods = 0x40;
+        break;
+    case 5:
+        move.setPos(pos);
+        param.m_eventId = 5;
+        break;
+    case 6:
+        pos.y = -rect.y;
+        move.setPos(pos);
+        param.m_eventId = 6;
+        break;
+    }
+    return GfMenuObjUtil::startCtrl(move.m_handle, param, nullptr);
+}
+
+void GfMenuObjMainMenu2::MainListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        setupMainMenu(acc, m_owner->m_contentsIds);
+        acc.setDisp(true);
+        m_state = 1;
+        GfMenuSoundManager::fadeFieldBgm(1.0f, 0.5f);
+        GfMenuObjPopup::pausePickup();
+        break;
+    case 2:
+        m_owner->m_seq.clear();
+        m_owner->m_seq.addWait(16);
+        m_owner->m_seq.addJob(&GfMenuObjMainMenu2::seqExecTerm);
+        break;
+    case 3: {
+        int kind = event.m_param0;
+        if (kind == 2) {
+            sendEvent(handle, 0x107, 0);
+        } else if (kind == 4) {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0;
+            param.m_time = 0.1f;
+            param.m_eventId = 7;
+            GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr));
+        } else if (kind == 7) {
+            GfMenuObject::enableInput(owner.searchChild("LAY_contents"));
+            sendEvent(handle, 0x103, 1);
+        }
+        break;
+    }
+    case 0x21:
+        acc.setDisp(true);
+        break;
+    case 0x22:
+        GfMenuObject::hookCtrlEvent(handle, GfMenuObjUtil::setCommonFadeOut(handle, 2, 0));
+        break;
+    case 0x103: {
+        int value = event.m_param0;
+        ui::UIObjectAcc(acc.m_handle, "LAY_contents_input").setAlpha(value == 1 ? 1.0f : 0.5f);
+        if (value == 1) {
+            ui::UIObjectAcc(acc.m_handle, "LAY_contents_bg_sep").setAlpha(1.0f);
+        } else {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 4;
+            param.m_alpha = 0.5f;
+            param.m_time = 0.33f;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_contents_bg_sep");
+        }
+        if (m_owner->m_cursor != nullptr) {
+            mm::mtl::FixStr<32> name;
+            m_owner->m_cursor->setDisp(value == 1);
+            int index = m_owner->m_cursor->m_list->getIndex(false);
+            name.format("TXT_contents_item@%02d", index + 1);
+            {
+                ui::UIObjectAcc text(acc.m_handle, name.m_str);
+                if (value == 1) {
+                    GfMenuObjUtil::setColMulandAdd(text.m_handle, "txt_title_sel");
+                } else {
+                    GfMenuObjUtil::setColMulandAdd(text.m_handle, "txt_sys_disable");
+                }
+            }
+            name.format("IMG_contents_item_bg@%02d", index + 1);
+            {
+                ui::UIObjectAcc bg(acc.m_handle, name.m_str);
+                bg.startAnimation(value == 1 ? "loop" : "idol", false);
+                if (value == 1) {
+                    bg.setMulColor("white");
+                    bg.setAddColor("black");
+                } else {
+                    bg.setMulColor("black");
+                    bg.setAddColor("sys_disable");
+                }
+            }
+            for (int i = 0; i < 8; i++) {
+                if (i != m_owner->m_contentsIndex) {
+                    name.format("TXT_contents_item@%02d", i + 1);
+                    ui::UIObjectAcc text(acc.m_handle, name.m_str);
+                    text.setDisp(value == 1);
+                }
+            }
+        }
+        break;
+    }
+    case 0x105: {
+        GfMenuObject::hookCtrlEvent(handle, moveMainMenu(owner, 4, true));
+        GfMenuObjOperationInfo::open(owner.searchChild("LAY_close"), owner.searchChild("LAY_contents"), 0, 0);
+        setDispGold(true);
+        if (GfMenuManager::fn_710035A6BC()) {
+            acc.setDispChild(TUnk_B625A0::fn_710040BF88(true), "LAY_gift_icon");
+        }
+        unsigned char* fp = GfDataBdat::getFP(GfMenuObjUtil::fn_710048FD30(3) ? 0x180 : 0x17F);
+        GfMenuObjOperationInfo::setGuideText(
+            (unsigned short)Bdat::getVal(fp, "guide", m_owner->m_contentsIds[m_owner->m_contentsIndex]), 0);
+        m_owner->m_menuId = 0;
+        setCloseKeyEnable(true);
+        break;
+    }
+    case 0x106: {
+        bool enable = event.m_param0 == 1;
+        GfMenuObject::setInputActionEnable(owner.searchChild("LAY_close"), 2, enable);
+        break;
+    }
+    case 0x107:
+        if (!GfMenuManager::isSwitchingFullScreen()) {
+            GfMenuObject::closeFSLayer(owner.m_handle, true, true);
+            GfMenuObjUtil::playSE(4);
+        }
+        break;
+    case 0x108:
+        if (!m_owner->pad_8C) {
+            m_owner->m_menuId = event.m_param0;
+        }
+        break;
+    case 0x10A: {
+        ui::UIStr text;
+        if (event.m_param0 == 0) {
+            ui::UIStr empty(" ", false);
+            text.copy(empty);
+        } else {
+            unsigned int name = (unsigned short)Bdat::getVal(GfDataBdat::getFP(0x146), "name", event.m_param0);
+            ui::UIStr str(GfDataBdat::getFP(0x118), name);
+            text.copy(str);
+        }
+        ui::UIObjectAcc guide(acc.searchChild("TXT_guide"));
+        guide.setText(text);
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_in_l";
+        param.m_setDefault = true;
+        param.m_startFlags = 8;
+        param.m_time = 0.2f;
+        GfMenuObjUtil::startCtrl(guide.m_handle, param, nullptr);
+        break;
+    }
+    case 0x10B:
+        if (m_state != event.m_param0) {
+            if (event.m_param0 == 1) {
+                GfMenuObjUtil::setCommonFadeIn(acc.m_handle, 0, 0);
+            } else {
+                GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 0, 0);
+            }
+            m_state = event.m_param0;
+        }
+        break;
+    case 0x10E:
+        m_owner->m_jobStarted = true;
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjMainMenu2::setupMainMenu(ui::UIObjectAcc& acc, const mm::mtl::FixedVector<unsigned int, 8>& ids) {
     mm::mtl::FixStr<32> name;
     mm::mtl::FixStr<32> layout;
@@ -817,6 +1010,13 @@ void GfMenuObjMainMenu2::setGuideText(unsigned int text) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x5F));
     if (acc.m_object != nullptr) {
         sendEvent(acc.m_handle, 0x10A, text);
+    }
+}
+
+void GfMenuObjMainMenu2::dispGuide(bool disp) {
+    ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x5F));
+    if (acc.m_object != nullptr) {
+        sendEvent(acc.m_handle, 0x10B, disp);
     }
 }
 

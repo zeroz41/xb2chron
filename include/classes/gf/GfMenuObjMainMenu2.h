@@ -101,12 +101,13 @@ public:
     static void execMapJump();
 
     // 1.0.0's helper (0x7100485BCC), inlined into its callers in 3.0.1: an event of that type and first parameter
-    // to the object of that handle, when there is one
+    // to the object of that handle, when there is one. 3.0.1's inlined copies store the type before the parameter
+    // (MainListener::reciveEvent's 0x107/0x103 events, dispGuide); 1.0.0's out-of-line copy stored it after
     static void sendEvent(unsigned int handle, unsigned int type, unsigned int param) {
         if (handle != 0) {
             ui::EventData event;
-            event.m_param0 = param;
             event.m_type = type;
+            event.m_param0 = param;
             ui::UIManager::sys()->requestObjectEvent(handle, event, 0.0f);
         }
     }
