@@ -11,7 +11,7 @@ UIShapeParticle::UIShapeParticle(void* data, unsigned int size, unsigned int wid
     particleData.deserialize(data, size);
     m_emitter = UIParticleManager::sys()->create(particleData);
     if (m_emitter != -1) {
-        unsigned int count = (particleData.m_life + particleData.m_lifeRange) * particleData.m_rate;
+        unsigned int count = (particleData.m_life.value + particleData.m_life.range) * particleData.m_rate;
         setupBuffer(count * 4, count * 6);
         for (unsigned int i = 0; i < count; i++) {
             unsigned int index[6] = {i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 1, i * 4 + 2, i * 4 + 3};
