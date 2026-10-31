@@ -25,6 +25,8 @@ class GmkNpcManager {
 public:
     virtual ~GmkNpcManager();  // slot 0
     void dispose();
+    // GmkSet::update runs it each frame after its BDAT step
+    void update(float dt);
     const GmkNpcIdInfo* getNpcIdInfoByNpcId(int npcId) const;
     // 0x8: its NPC ids' entries (the destructor destroys them; the name is not the original's)
     ::mm::mtl::Vector<GmkNpcIdInfo> m_npcIdInfos;

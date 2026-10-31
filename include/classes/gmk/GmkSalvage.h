@@ -24,6 +24,14 @@ public:
         bool isCondMatched() const;
         unsigned short m_condition;  // the row's "Condition" (a GfGameCond id; 0: none)
     };
+    // what m_createInfo.m_data points at for a salvage gimmick (getGmkFormPc reads it; the struct and field names
+    // are not the original's)
+    struct Data {
+        unsigned char pad_0[8];
+        int m_formPcIdx;  // 0x8: its formation's element in the TGmkFormPc list
+        int pad_c;        // 0xc: getGmkFormPc gives none unless it exceeds m_formPcIdx
+    };
+    const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     // what the last raffle drew (createRaffle fills it, disposeRaffle resets it; GfGameSalvage::getRaffleResult reads
     // it); the field names are not the original's
     class RaffleResult {
@@ -76,6 +84,8 @@ public:
     // its kind (TGmkList<GmkSalvage>::getGmkType returns 31; GmkSet::createGmkLists puts GmkSalvageList at index 31; the
     // name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(31);
+    // its party formation gimmick: the GmkSet's TGmkFormPc list's element at the data's index (GfGameSalvage::applyPartyForm)
+    gmk::AGmkBase* getGmkFormPc() const;
     // pops the treasures the salvage's raffle drew (GfGameSalvage::execPop)
     void popByRaffleResult();
     // ends what the last raffle placed (createRaffle and dispose call it)

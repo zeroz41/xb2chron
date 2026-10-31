@@ -44,7 +44,9 @@ public:
     // what m_createInfo.m_data points at for an effect gimmick (create reads it; 4-aligned: create's reads of its
     // flags are widened to 2- and 4-byte loads; the struct and field names are not the original's)
     struct Data {
-        unsigned int pad_0[5];
+        // 0x0: the effect's name (seqValidateResHandle searches EffectManager for it; the name is not the original's)
+        const char* m_effectName;
+        unsigned int pad_8[3];
         // 0x14..0x1E: separate fields, not arrays (create's loads of 0x1A and 0x1C are widened: their alignment is
         // the field's, an array element's would be the array's)
         bool m_weather0;  // 0x14: WeatherCond bit 4
@@ -65,6 +67,11 @@ public:
     const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     // the step create installs
     void seqValidateResHandle(float);
+    // the step seqValidateResHandle installs once the effect's resource is found
+    void seqUpdate(float);
+    // update's check of the pop conditions before each step
+    void updatePopDepopCond();
+    void applyEffectParam(bool) const;
 
     unsigned long pad_48;
     // 0x50..0x90: when it shows, from its gimmick data (create fills them; the names are not the original's)
@@ -74,8 +81,10 @@ public:
     CloudCond m_popCloud;          // the data's bytes 0x21/0x22: 0 for the first alone, 1 for the second alone
     // 0x90: the sequence step (create installs seqValidateResHandle, dispose clears it)
     void (GmkEffect::*m_seq)(float);
-    void* pad_a0;  // dispose clears it
-    unsigned char pad_a8;
+    // 0xa0: the effect's resource (seqValidateResHandle's EffectManager::search; dispose clears it; the name is not
+    // the original's)
+    void* pad_a0;
+    unsigned char pad_a8;  // seqValidateResHandle: EffectManager::containsCamAxis of the resource
     unsigned m_effectHandle;  // 0xac: the playing effect (dispose removes it from EffectManager; the name is not the original's)
     unsigned char pad_b0;
     unsigned char pad_b1;

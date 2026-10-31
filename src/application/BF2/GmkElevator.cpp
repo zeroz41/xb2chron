@@ -154,6 +154,11 @@
 #include "classes/gf/GfFieldGimmick.h"
 #include "classes/gf/MenuCommonWindowParam.h"
 #include "gf/GfPlayFactory.h"
+#include "classes/gf/SCOM_DESTROY_GAME_OBJ.h"
+#include "classes/gf/GfFieldManager.h"
+#include "classes/fw/BdatManager.h"
+#include "classes/gf/DataParamAcc.h"
+#include "classes/gf/GfBdatChrEnArrange.h"
 
 namespace gf {
 // the resident sound sources' files, by index (getSoundSourceFileName reads it; bindGFSoundSource loads each)
@@ -323,6 +328,10 @@ gmk::AGmkBase* GmkSalvageLocatorList::getInst(unsigned int index) const {
     return const_cast<GmkSalvageLocator*>(&m_gmks[index]);
 }
 
+bool GmkManager::isValid() const {
+    return m_bdat.pad_120 != 0 && fw::BdatManager::isEnableBdat(m_bdat.m_createInfo.m_param) && m_bdatFp != nullptr;
+}
+
 const char* GmkManager::getSheetnameByType(int id, GmkType type) const {
     mm::mtl::FixStr<256> column;
     column.format("%s_bdat", getGmkKindName(s_gmkKindNames, type));
@@ -383,6 +392,11 @@ GmkRoutedEnemyList::~GmkRoutedEnemyList() {
 
 GmkCollectionList::~GmkCollectionList() {
     dispose();
+}
+
+void GmkSalvageList::update(float dt) {
+    TGmkList::update(dt);
+    m_gmkSet.update(dt);
 }
 
 void GmkSalvageList::debugUpdateMmf() {
@@ -489,6 +503,33 @@ void GmkSetOfSalvageChildren::createGmkLists(int id) {
         list->create(info);
     }
     m_npcManager.dispose();
+}
+
+bool GmkSet::isValid() const {
+    // read through a copy: the handle's own 4-byte load (the set's 16-aligned field is not widened with m_bdatId)
+    mtl::ALLOC_HANDLE handle = m_createInfo.m_allocHandle;
+    if (handle.m_handle == 0 || !(m_createInfo.m_bdatId > 0)) {
+        return false;
+    }
+    // a set whose BDAT file was not asked for needs none
+    const GmkBdat::CreateInfo& bdat = m_bdat.m_createInfo;
+    if (bdat.m_handle.m_handle == 0 || !(bdat.m_path.length() > 0) || bdat.m_param < 0) {
+        return true;
+    }
+    return m_bdat.pad_120 != 0 && fw::BdatManager::isEnableBdat(bdat.m_param);
+}
+
+void GmkSet::update(float dt) {
+    if (!GmkManager::sys()->isValid()) {
+        return;
+    }
+    if (m_bdat.m_seq) {
+        (m_bdat.*m_bdat.m_seq)(dt);
+    }
+    m_npcManager.update(dt);
+    if (m_seq) {
+        (this->*m_seq)(dt);
+    }
 }
 
 int getCurrentMapBdatId() { return gf::GfGameManager::getMapID(); }
@@ -1174,6 +1215,61 @@ void GmkJump::reqRecreateIcon() {
     }
 }
 
+void GmkSalvage::disposeRaffle(bool req) {
+    if (!pad_d0) {
+        return;
+    }
+    m_raffleResult.m_dropDrawn.reset();
+    m_raffleResult.m_dropIds[0] = -1;
+    m_raffleResult.m_dropIds[1] = -1;
+    m_raffleResult.m_dropIds[2] = -1;
+    m_raffleResult.m_tboxDrawn.reset();
+    m_raffleResult.m_tboxIds[0] = -1;
+    m_raffleResult.m_tboxIds[1] = -1;
+    m_raffleResult.m_tboxIds[2] = -1;
+    m_raffleResult.m_enemyDrawn.reset();
+    m_raffleResult.m_enemyIds[0] = -1;
+    m_raffleResult.m_enemyIds[1] = -1;
+    m_raffleResult.m_enemyIds[2] = -1;
+    for (int i = 0; i < 3; i++) {
+        m_raffleResult.m_enemies[i].m_id = 0;
+        m_raffleResult.m_enemies[i].pad_2 = 0;
+    }
+    pad_d0 = false;
+    pad_d1 = false;
+    const GmkSet& set = static_cast<const GmkSalvageList*>(m_list)->m_gmkSet;
+    if (!set.isValid()) {
+        return;
+    }
+    const IGmkList* locators = set.m_gmkLists[GmkSalvageLocator::TYPE];
+    if (locators == nullptr || !locators->isValid()) {
+        return;
+    }
+    const mm::mtl::FixedVector<GmkSalvageLocator*, 3>& tboxes = m_tboxLocators;
+    for (unsigned int i = 0, n = tboxes.size(); i < n; i++) {
+        GmkSalvageLocator* locator = tboxes[i];
+        if (locator != nullptr) {
+            locator->m_isAccessed = false;
+            locator->disposeGobInst(req);
+        }
+    }
+    const mm::mtl::FixedVector<GmkSalvageLocator*, 3>& drops = m_dropLocators;
+    for (unsigned int i = 0, n = drops.size(); i < n; i++) {
+        GmkSalvageLocator* locator = drops[i];
+        if (locator != nullptr) {
+            locator->pad_58 = 0;
+            locator->m_dropitemEmitter.dispose();
+        }
+    }
+    const mm::mtl::FixedVector<GmkSalvageLocator*, 3>& enemies = m_enemyLocators;
+    for (unsigned int i = 0, n = enemies.size(); i < n; i++) {
+        GmkSalvageLocator* locator = enemies[i];
+        if (locator != nullptr) {
+            locator->disposeGobInst(req);
+        }
+    }
+}
+
 void GmkSalvage::create(const CreateInfo& info) {
     AGmkBase::create(info);
     unsigned char* fp = gf::GfDataBdat::getFP(0x7B);
@@ -1219,6 +1315,35 @@ void GmkSalvage::update(float dt) {
         if (m_seq) {
             (this->*m_seq)(dt);
         }
+    }
+}
+
+void GmkSalvage::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3)) {
+        // the salvage's object went away: if it was an enemy the raffle placed, its treasure boxes go too
+        bool isEnemy = false;
+        const mm::mtl::FixedVector<GmkSalvageLocator*, 3>& enemies = m_enemyLocators;
+        for (unsigned int i = 0, n = enemies.size(); i < n; i++) {
+            GmkSalvageLocator* locator = enemies[i];
+            if (locator != nullptr && locator->isValid() && !locator->pad_f1) {
+                isEnemy |= locator->m_gob == handle;
+                if (locator->m_gob == handle) {
+                    break;
+                }
+            }
+        }
+        if (isEnemy) {
+            const mm::mtl::FixedVector<GmkSalvageLocator*, 3>& tboxes = m_tboxLocators;
+            for (unsigned int i = 0, n = tboxes.size(); i < n; i++) {
+                GmkSalvageLocator* locator = tboxes[i];
+                if (locator != nullptr) {
+                    locator->m_isAccessed = false;
+                    locator->disposeGobInst(true);
+                }
+            }
+        }
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     }
 }
 
@@ -1313,9 +1438,77 @@ void GmkSalvageLocator::seqWaitPop(float dt) {
     m_seq = &GmkSalvageLocator::seqPop;
 }
 
+void GmkSalvageLocator::dispose() {
+    pad_f0 = 0;
+    pad_e8 = -1;
+    pad_ec = 0;
+    m_disposeWait = 0.0f;
+    pad_e4 = 0;
+    pad_58 = 0;
+    m_dropitemEmitter.dispose();
+    m_isAccessed = false;
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        syncDepopTboxes();
+        if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            gf::GfObjAcc acc(m_gob);
+            if (acc.m_obj != nullptr) {
+                acc.setUserData(gf::GfObjUserData(0), 0);
+            }
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+    AGmkBase::dispose();
+}
+
+void GmkSalvageLocator::update(float dt) {
+    AGmkBase::update(dt);
+    if (m_seq) {
+        (this->*m_seq)(dt);
+    }
+}
+
 void GmkSalvageLocator::syncDepopTboxes() {
     if (m_createInfo.m_data[0] == 4 && !pad_f1 && !pad_f2 && m_salvage != nullptr) {
         m_salvage->pad_129 = 1;
+    }
+}
+
+void GmkSalvageLocator::disposeGobInst(bool req) {
+    if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    syncDepopTboxes();
+    if (req) {
+        gf::GF_OBJ_HANDLE* gob = m_gob;
+        gf::GfObjAcc acc(gob);
+        if (acc.getObj() != nullptr && !acc.isDestroy() && !acc.testFlag(17)) {
+            gf::SCOM_DESTROY_GAME_OBJ::create(gob, 1.0f, 0);
+        }
+    } else {
+        if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            gf::GfObjAcc acc(m_gob);
+            if (acc.m_obj != nullptr) {
+                acc.setUserData(gf::GfObjUserData(0), 0);
+            }
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+}
+
+void GmkSalvageLocator::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {
+    AGmkBase::onGobEvent(evt, handle);
+    if (evt == gf::IGfObjListener::OBJEVT(3) && m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        syncDepopTboxes();
+        if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            gf::GfObjAcc acc(m_gob);
+            if (acc.m_obj != nullptr) {
+                acc.setUserData(gf::GfObjUserData(0), 0);
+            }
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     }
 }
 
@@ -1712,6 +1905,20 @@ void GmkEffect::create(const CreateInfo& info) {
     m_seq = &GmkEffect::seqValidateResHandle;
 }
 
+void GmkEffect::seqValidateResHandle(float) {
+    fw::EffectPack* pack = gf::GfFieldManager::getEffectPack();
+    if (pack == nullptr) {
+        return;
+    }
+    const char* name = getData()->m_effectName;
+    pad_a0 = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->search(name, pack);
+    if (pad_a0 == nullptr) {
+        return;
+    }
+    pad_a8 = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->containsCamAxis(pad_a0);
+    m_seq = &GmkEffect::seqUpdate;
+}
+
 void GmkEffect::dispose() {
     m_flags.reset();
     if (m_effectHandle != 0) {
@@ -1721,6 +1928,16 @@ void GmkEffect::dispose() {
     AGmkBase::dispose();
     m_seq = nullptr;
     pad_a0 = nullptr;
+}
+
+void GmkEffect::update(float dt) {
+    AGmkBase::update(dt);
+    if (isValid()) {
+        updatePopDepopCond();
+        if (m_seq) {
+            (this->*m_seq)(dt);
+        }
+    }
 }
 
 GmkEffect::~GmkEffect() { dispose(); }
