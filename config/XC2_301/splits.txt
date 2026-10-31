@@ -193,11 +193,11 @@ application/BF2/battle/hate_ring_manager.cpp:
 	.data        start:0x00B3BC60 end:0x00B3BCA0
 
 application/BF2/battle/Misc.cpp:
-	.text        start:0x000A1E30 end:0x000A27FC
+	.text        start:0x000A1E30 end:0x000A4064
+	.rodata      start:0x0097DA0C end:0x0097DA20
 
 application/BF2/battle/ShakeCameraManager.cpp:
-	.text        start:0x000A27FC end:0x000A51A0
-	.rodata      start:0x0097DA0C end:0x0097DA20
+	.text        start:0x000A4064 end:0x000A51A0
 	.rodata      start:0x009B53B0 end:0x009B53B4
 	.data        start:0x00B3BCA0 end:0x00B3BD68
 
@@ -323,11 +323,15 @@ application/BF2/framework/CameraLayer.cpp:
 	.init_array  start:0x00B8F7F0 end:0x00B8F7F8
 	.bss         start:0x00C233F8 end:0x00C23410
 
-application/BF2/framework/coli/coli_manager.cpp:
-	.text        start:0x001646FC end:0x00167A98
-	.rodata      start:0x009806EF end:0x009807F2
-	.data        start:0x00B41050 end:0x00B41140
+application/BF2/framework/ColiCharactorProxy.cpp:
+	.text        start:0x001646FC end:0x00165E90
+	.data        start:0x00B41050 end:0x00B41070
 	.bss         start:0x00C23410 end:0x00C23420
+
+application/BF2/framework/coli/coli_manager.cpp:
+	.text        start:0x00165E90 end:0x00167A98
+	.rodata      start:0x009806EF end:0x009807F2
+	.data        start:0x00B41070 end:0x00B41140
 
 application/BF2/framework/coli/coli_move_object.cpp:
 	.text        start:0x00167A98 end:0x00167D5C
@@ -420,8 +424,11 @@ application/BF2/framework/framework.cpp:
 	.bss         start:0x00C23CE8 end:0x00C23D48
 
 application/BF2/framework/ReferenceFrame.cpp:
-	.text        start:0x00184944 end:0x001859F8
+	.text        start:0x00184944 end:0x00185478
 	.data        start:0x00B418F8 end:0x00B41918
+
+application/BF2/framework/TransformManager.cpp:
+	.text        start:0x00185478 end:0x001859F8
 
 application/BF2/framework/ik/ik_blow_rotate_solver.cpp:
 	.text        start:0x001859F8 end:0x00185D7C
@@ -536,9 +543,13 @@ application/BF2/framework/layer/layerset_manager.cpp:
 	.rodata      start:0x00981560 end:0x009815AE
 	.data        start:0x00B41D50 end:0x00B41DE0
 
+application/BF2/framework/ManagerObject.cpp:
+	.text        start:0x0018F65C end:0x0018F6F4
+	.data        start:0x00B41DE0 end:0x00B41E30
+
 application/BF2/framework/ManagerRegister.cpp:
-	.text        start:0x0018F65C end:0x0018FB4C
-	.data        start:0x00B41DE0 end:0x00B41E70
+	.text        start:0x0018F6F4 end:0x0018FB4C
+	.data        start:0x00B41E30 end:0x00B41E70
 
 application/BF2/framework/MemHandlebaseAllocator.cpp:
 	.text        start:0x0018FB4C end:0x0018FCA4
@@ -3144,11 +3155,16 @@ application/BF2/gf/object/component/pc/field/PadField.cpp:
 	.data        start:0x00B67E60 end:0x00B67E78
 
 application/BF2/gf/object/component/pc/GfPropertyField.cpp:
-	.text        start:0x004F2B90 end:0x004F78B0
-	.rodata      start:0x009A2106 end:0x009A23DE
+	.text        start:0x004F2B90 end:0x004F340C
+	.rodata      start:0x009A2106 end:0x009A21B6
+	.data        start:0x00B67E78 end:0x00B67EB0
+
+application/BF2/gf/object/component/pc/StateUtilField.cpp:
+	.text        start:0x004F340C end:0x004F78B0
+	.rodata      start:0x009A21B6 end:0x009A23DE
 	.rodata      start:0x009B552C end:0x009B5534
 	.rodata      start:0x009C5A44 end:0x009C5A50
-	.data        start:0x00B67E78 end:0x00B68048
+	.data        start:0x00B67EB0 end:0x00B68048
 
 application/BF2/gf/object/component/pc/StateField.cpp:
 	.text        start:0x004F78B0 end:0x004FABD4
@@ -4360,8 +4376,11 @@ idcoli/IDColiObjData.cpp:
 	.rodata      start:0x009D5028 end:0x009D5031
 	.data        start:0x00B7F0F0 end:0x00B7F560
 
+idcoli/IDColiUtilColiSimple.cpp:
+	.text        start:0x0080A2FC end:0x0081117C
+
 idcoli/IDColiGrandMesh.cpp:
-	.text        start:0x0080A2FC end:0x008190E0
+	.text        start:0x0081117C end:0x008190E0
 	.rodata      start:0x009AD4E9 end:0x009AD5B1
 	.rodata      start:0x009B5748 end:0x009B5750
 	.data        start:0x00B7F560 end:0x00B7F6C0
@@ -4751,9 +4770,12 @@ libs/anmlib/src/anmlib/statemachine/playback/anm_asm_speed_lerp_blend.cpp:
 	.rodata      start:0x009B0302 end:0x009B0371
 	.data        start:0x00B815B8 end:0x00B81628
 
-libs/skdlib/src/skdlib/importer/skd_importer.cpp:
-	.text        start:0x00887F3C end:0x008880F8
+bin/BinaryResolver.cpp:
+	.text        start:0x00887F3C end:0x00888090
 	.rodata      start:0x009D5938 end:0x009D593B
+
+libs/skdlib/src/skdlib/importer/skd_importer.cpp:
+	.text        start:0x00888090 end:0x008880F8
 	.data        start:0x00B81628 end:0x00B81648
 
 libs/skdlib/src/skdlib/skd_dynamics.cpp:
@@ -4908,11 +4930,15 @@ ssd/SoundHandle.cpp:
 	.text        start:0x008991C4 end:0x0089A75C
 	.data        start:0x00B81C50 end:0x00B81CF0
 
+ssd/SoundListener.cpp:
+	.text        start:0x0089A75C end:0x0089A9B4
+	.data        start:0x00B81CF0 end:0x00B81D10
+
 ssd/SystemCore.cpp:
-	.text        start:0x0089A75C end:0x0089E1F0
+	.text        start:0x0089A9B4 end:0x0089E1F0
 	.rodata      start:0x009B57A0 end:0x009B57A4
 	.rodata      start:0x009D5C94 end:0x009D5D1A
-	.data        start:0x00B81CF0 end:0x00B81FD0
+	.data        start:0x00B81D10 end:0x00B81FD0
 	.bss         start:0x015EC590 end:0x015EC5A0
 
 ssd/SystemCorePlatform.cpp:

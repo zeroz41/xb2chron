@@ -4,9 +4,9 @@
 #include "string.h"
 #include <new>
 
-// bin::BinaryResolver::resolve (0x7100887F3C) and restore (0x7100887FE8) sit in this unit's range but were
-// compiled in another translation unit with other flags: here clang turns memcmp(binary, "BG", 2) into a
-// halfword compare and inlines resolve into import, the original calls both
+// bin::BinaryResolver::resolve (0x7100887F3C) and restore (0x7100887FE8), just before this unit, are another
+// translation unit's (bin/BinaryResolver.cpp): import calls resolve out of line; written here, clang inlines it
+// and turns its memcmp(binary, "BG", 2) into a halfword compare
 
 namespace skd {
 
