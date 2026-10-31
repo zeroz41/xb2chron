@@ -31,9 +31,13 @@ public:
 // what LayerObjUtil::calcDispInfo reads the object's size from; only the fields LayerAccObjBase reads are known
 class LayerResRenderInfo {
 public:
-    unsigned char pad_0[0x14];
-    unsigned short m_pixelWidth;  // getPixelWidth
-    unsigned short m_pixelHeight;  // getPixelHeight
+    unsigned char pad_0[0x8];
+    float m_width;  // calcScl_Correction_Up's size (the name is not the original's)
+    float m_height;  // calcScl_Correction_Up's size (the name is not the original's)
+    short m_pixelX;  // calcScl_Pixel_Up adds it to m_pixelWidth (the name is not the original's)
+    short m_pixelY;  // calcScl_Pixel_Up adds it to m_pixelHeight (the name is not the original's)
+    short m_pixelWidth;  // getPixelWidth (calcScl_Pixel_Up reads it signed)
+    short m_pixelHeight;  // getPixelHeight
     unsigned char m_centerType;  // set/getCenterType (a LayerCenterType)
 };
 // table 0x7100B7F9E8
@@ -153,7 +157,7 @@ public:
     // the original's)
     LayerResDispInfo m_dispInfo;
     LayerResRenderInfo m_renderInfo;  // 0x180
-    unsigned char pad_19A[0x3E];
+    unsigned char pad_19C[0x3C];  // the render info is 4-aligned (floats at 0x188)
     unsigned short m_runningActIdx[2];  // LayerAccAction::getRunningActIdx, indexed by LayerManager::s_nDebIdx
     unsigned char pad_1DC[0x18];
     float m_ctrlSpd;  // LayerActBase::actcmd_ctrlspd (the name is not the original's)

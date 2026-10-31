@@ -1,7 +1,7 @@
 #ifndef CLASSES_LAYER_LAYEROBJMESH_H
 #define CLASSES_LAYER_LAYEROBJMESH_H
 
-#include "classes/layer/LayerActDef.h"
+#include "classes/layer/LayerObjDraw.h"
 
 namespace grlib { class CGLibDblUniformBlock; }
 namespace layer { class LayerResColor; }
@@ -22,7 +22,9 @@ struct LayerArgMdlRenInf {
 
 // table none in 3.0.1. 1.0.0's table (0x71011B7E38) is LayerActDef's (slot 10 LayerActDef::updatePartsAction) but
 // for slot 1 (its own destructor), and its methods take a LayerObjTopDef's this unadjusted (updateParams).
-class LayerObjMesh : public ::layer::LayerActDef {
+// its base LayerObjDraw is inferred (no table names it): LayerObjDraw's functions sit between LayerActDef's and
+// LayerObjMesh's in the unit and LayerObjTopDef::finalRender calls them with its this
+class LayerObjMesh : public ::layer::LayerObjDraw {
 public:
     void updateMeshUniformBlock(LayerArgMdlRenInf& arg);
     void call_uniform_def(LayerArgMdlRenInf& arg);

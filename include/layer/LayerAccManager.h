@@ -7,7 +7,7 @@ namespace layer { class LayerBase; }
 
 namespace layer {
 // the coordinates layer objects are placed in (UIUtil::initLayerLib sets 0; no value has a name yet)
-enum LayerCoordinate : int;
+enum LayerCoordinate : unsigned int;  // unsigned: LayerObjUtil::getLayoutInfo indexes its table with it zero-extended
 
 // access to the layer manager: makes objects outside any layout (UIPolygonObject's without a parent)
 class LayerAccManager {

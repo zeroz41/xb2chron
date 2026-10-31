@@ -20,6 +20,8 @@
 #include "classes/layer/LayerObjTopMaskObj.h"
 #include "classes/layer/LayerObj.h"
 #include "classes/layer/LayerActDef.h"
+#include "classes/layer/LayerObjDraw.h"
+#include "layer/LayerVertexObj.h"
 #include "classes/layer/LayerObjMesh.h"
 #include "classes/layer/LayerObjTopDef.h"
 #include "layer/LayerObjUtil.h"
@@ -226,6 +228,57 @@ bool LayerActLayout::actcmd_notcmd02(const unsigned char*& cmd) {
     cmd += 8;
     return false;
 }
+void LayerObjDraw::draw_call_onm_def(grlib::CGLibDblUniformBlock* block, const LyrDrawData* data) {
+    LayerShdManager* shdManager = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager;
+    shdManager->setupVertex(static_cast<LayerDefVertType>(0));
+    shdManager->m_select.m_shaderType = 0;
+    shdManager->setupShader(block);
+    shdManager->renderQuadsIndex();
+}
+void LayerObjDraw::draw_call_onm_tex(grlib::CGLibDblUniformBlock* block, const LyrDrawData* data) {
+    LayerShdManager* shdManager = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager;
+    shdManager->setupVertex(static_cast<LayerDefVertType>(1));
+    shdManager->m_select.m_shaderType = 1;
+    shdManager->setupShader(block);
+    unsigned char texNum = data->m_texNum;
+    if (texNum != 0) {
+        const TexRef* refs = m_texRefs->m_refs + data->m_texIdx;
+        for (unsigned int i = 0; i != texNum; i++) {
+            shdManager->setupTexture(*m_textures[refs[i].m_texIdx], static_cast<LayerSamplerType>(m_texFilterType), i);
+        }
+    }
+    shdManager->renderQuadsIndex();
+}
+void LayerObjDraw::draw_call_res_def(grlib::CGLibDblUniformBlock* block, const LyrDrawData* data) {
+    LayerShdManager* shdManager = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager;
+    shdManager->setupVertex(m_vertexObj, data->m_vertexIdx);
+    shdManager->m_select.m_shaderType = 0;
+    shdManager->setupShader(block);
+    m_vertexObj->render(data->m_renderIdx);
+}
+void LayerObjDraw::draw_call_res_tex(grlib::CGLibDblUniformBlock* block, const LyrDrawData* data) {
+    LayerShdManager* shdManager = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager;
+    shdManager->setupVertex(m_vertexObj, data->m_vertexIdx);
+    shdManager->m_select.m_shaderType = 1;
+    shdManager->setupShader(block);
+    const TexRef* ref = m_texRefs->m_refs + data->m_texIdx;
+    shdManager->setupTexture(*m_textures[ref->m_texIdx], static_cast<LayerSamplerType>(m_texFilterType), 0);
+    m_vertexObj->render(data->m_renderIdx);
+}
+void LayerObjDraw::draw_call_icon(grlib::CGLibDblUniformBlock* block, const LyrDrawData* data) {
+    LayerShdManager* shdManager = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager;
+    shdManager->setupVertex(static_cast<LayerDefVertType>(2));
+    shdManager->m_select.m_shaderType = 4;
+    shdManager->setupShader(block);
+    unsigned char texNum = data->m_texNum;
+    if (texNum != 0) {
+        const TexRef* refs = m_texRefs->m_refs + data->m_texIdx;
+        for (unsigned int i = 0; i != texNum; i++) {
+            shdManager->setupTexture(*m_textures[refs[i].m_texIdx], static_cast<LayerSamplerType>(m_texFilterType), i);
+        }
+    }
+    shdManager->renderQuadsIndex();
+}
 void LayerObjFont::setColorMap(const LayerFontIconObj* colorMap, unsigned int pattern) {
     m_colorMap = colorMap;
     m_colorMapPattern = pattern;
@@ -351,6 +404,9 @@ LayerObjTopFont::~LayerObjTopFont() {
 }
 void LayerObjTopFont::applyParams(const LayerRenderView* view, const LayerResMatrix& matrix, const LayerResColor& color) {
     updateShaderParms(view, matrix, color);
+}
+void LayerObjUtil::getLayoutInfo(float* pos, const LyrLayoutPosData* data, LayerCenterType type, float sclX, float sclY) {
+    s_CallDataPos[mm::mtl::PtrSingleton<LayerManager>::sys()->m_coordinate](pos, data, type, sclX, sclY);
 }
 void* LayerObjTopMemObj::getBuffer() {
     unsigned int index = LayerManager::s_nDebIdx;
@@ -510,6 +566,76 @@ void LayerObjUtil::calcPos_Correction_Up(float* pos, const LayerBasePos& base) {
     pos[0] = base.m_posX * mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcPosWidth();
     pos[1] = base.m_posY * mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcPosHeight();
 }
+void LayerObjUtil::calcScl_Pixel_Up(float* out, const LayerBasePos& base, const LayerResRenderInfo& info) {
+    float pixelWidth = info.m_pixelWidth + info.m_pixelX;
+    float width = mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcSclWidth() * pixelWidth;
+    float pixelHeight = info.m_pixelHeight + info.m_pixelY;
+    float height = mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcSclHeight() * pixelHeight;
+    out[0] = width * base.m_sclX;
+    out[1] = height * base.m_sclY;
+}
+void LayerObjUtil::calcScl_Correction_Up(float* out, const LayerBasePos& base, const LayerResRenderInfo& info) {
+    float width = info.m_width * mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcSclWidth();
+    float height = info.m_height * mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcSclHeight();
+    out[0] = width * base.m_sclX;
+    out[1] = height * base.m_sclY;
+}
+void LayerObjUtil::calcSwfScl_Pixel_Up(float* out, const LayerBasePos& base, const LayerResRenderInfo& info) {
+    float pixelWidth = info.m_pixelWidth + info.m_pixelX;
+    float pixelHeight = info.m_pixelHeight + info.m_pixelY;
+    float size = pixelWidth > pixelHeight ? pixelWidth : pixelHeight;
+    float width = mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcSclWidth() * size;
+    float height = mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcSclHeight() * size;
+    out[0] = base.m_sclX * width;
+    out[1] = height * base.m_sclY;
+}
+void LayerObjUtil::calcSwfScl_Correction_Up(float* out, const LayerBasePos& base, const LayerResRenderInfo& info) {
+    float size = info.m_width > info.m_height ? info.m_width : info.m_height;
+    float width = size * mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcSclWidth();
+    float height = size * mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcSclHeight();
+    out[0] = width * base.m_sclX;
+    out[1] = height * base.m_sclY;
+}
+void LayerObjUtil::calcPosData_Pixel_Up(float* pos, const LyrLayoutPosData* data, LayerCenterType type, float sclX, float sclY) {
+    pos[2] = (data->m_right - data->m_left) / sclX;
+    pos[3] = (data->m_bottom - data->m_top) / sclY;
+    pos[0] = data->m_left;
+    pos[1] = data->m_top;
+    switch (type) {
+    case 1:
+        pos[1] += data->m_bottom;
+        break;
+    case 2:
+        pos[0] += (data->m_right - data->m_left) * 0.5f;
+        pos[1] += (data->m_bottom - data->m_top) * 0.5f;
+        break;
+    }
+}
+void LayerObjUtil::calcPosData_Correction_Up(float* pos, const LyrLayoutPosData* data, LayerCenterType type, float sclX, float sclY) {
+    pos[0] = data->m_posX;
+    pos[1] = data->m_posY;
+    pos[2] = data->m_width;
+    pos[3] = data->m_height;
+    switch (type) {
+    case 1:
+        pos[1] += data->m_height * mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcPosHeight();
+        break;
+    case 2:
+        pos[0] += data->m_width * 0.5f * mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcPosWidth();
+        pos[1] += data->m_height * 0.5f * mm::mtl::PtrSingleton<LayerManager>::sys()->getScreenCalcPosHeight();
+        break;
+    }
+}
+void (*LayerObjUtil::s_CallScl[2])(float*, const LayerBasePos&, const LayerResRenderInfo&) = {
+    LayerObjUtil::calcScl_Pixel_Up, LayerObjUtil::calcScl_Correction_Up};
+void (*LayerObjUtil::s_CallPos[2])(float*, const LayerBasePos&) = {LayerObjUtil::calcPos_Pixel_Up,
+                                                                   LayerObjUtil::calcPos_Correction_Up};
+void (*LayerObjUtil::s_CallMdl[3])(float*, float*, const float*, const LayerBasePos&) = {
+    LayerObjUtil::calcMdlPos_Center_Up, LayerObjUtil::calcMdlPos_Center_Down, LayerObjUtil::calcMdlPos_Center_Center};
+void (*LayerObjUtil::s_CallSwfScl[2])(float*, const LayerBasePos&, const LayerResRenderInfo&) = {
+    LayerObjUtil::calcSwfScl_Pixel_Up, LayerObjUtil::calcSwfScl_Correction_Up};
+void (*LayerObjUtil::s_CallDataPos[2])(float*, const LyrLayoutPosData*, LayerCenterType, float, float) = {
+    LayerObjUtil::calcPosData_Pixel_Up, LayerObjUtil::calcPosData_Correction_Up};
 
 }  // namespace layer
 

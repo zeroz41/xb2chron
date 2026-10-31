@@ -4,6 +4,7 @@
 namespace layer { class LayerResMatrix; }
 namespace layer { class LayerResDispInfo; }
 namespace layer { class LayerResRenderInfo; }
+#include "layer/LayerAccObjBase.h"
 
 namespace layer {
 // a layer uniform block's kind (its values are not known: LayerResSecTexture::resourceInit passes 10)
@@ -14,9 +15,27 @@ class LayerBasePos {
 public:
     float m_posX;  // calcPos_*_Up scale it by the screen width (the name is not the original's)
     float m_posY;  // calcPos_*_Up scale it by the screen height (the name is not the original's)
-    unsigned char pad_8[0xC];
+    unsigned char pad_8[0x4];
+    float m_sclX;  // calcScl_*_Up multiply the scaled size by it (the name is not the original's)
+    float m_sclY;  // calcScl_*_Up multiply the scaled size by it (the name is not the original's)
     float m_alignX;
     float m_alignY;
+};
+
+// a layout part's position data: calcPosData_Pixel_Up reads its pixel rectangle, calcPosData_Correction_Up its
+// position and size (the field names are not the original's)
+class LyrLayoutPosData {
+public:
+    unsigned char pad_0[0x18];
+    float m_width;
+    float m_height;
+    float m_posX;
+    float m_posY;
+    unsigned char pad_28[0x4];
+    short m_left;
+    short m_top;
+    short m_right;
+    short m_bottom;
 };
 
 namespace LayerObjUtil {
@@ -32,6 +51,23 @@ void calcMdlPos_Center_Center(float* pos, float* out, const float* size, const L
 // pos = the base position scaled by the LayerManager's screen calc size
 void calcPos_Pixel_Up(float* pos, const LayerBasePos& base);
 void calcPos_Correction_Up(float* pos, const LayerBasePos& base);
+// out = the render info's size scaled by the LayerManager's screen calc scale and the base's scale (Swf: the larger
+// side for both axes)
+void calcScl_Pixel_Up(float* out, const LayerBasePos& base, const LayerResRenderInfo& info);
+void calcScl_Correction_Up(float* out, const LayerBasePos& base, const LayerResRenderInfo& info);
+void calcSwfScl_Pixel_Up(float* out, const LayerBasePos& base, const LayerResRenderInfo& info);
+void calcSwfScl_Correction_Up(float* out, const LayerBasePos& base, const LayerResRenderInfo& info);
+// pos (x, y, width, height) from a layout part's data, moved by its center type
+void calcPosData_Pixel_Up(float* pos, const LyrLayoutPosData* data, LayerCenterType type, float sclX, float sclY);
+void calcPosData_Correction_Up(float* pos, const LyrLayoutPosData* data, LayerCenterType type, float sclX, float sclY);
+// calls the s_CallDataPos entry of the LayerManager's coordinate
+void getLayoutInfo(float* pos, const LyrLayoutPosData* data, LayerCenterType type, float sclX, float sclY);
+// the per-coordinate (pixel, correction) variants, indexed by LayerManager::m_coordinate
+extern void (*s_CallScl[2])(float*, const LayerBasePos&, const LayerResRenderInfo&);
+extern void (*s_CallPos[2])(float*, const LayerBasePos&);
+extern void (*s_CallMdl[3])(float*, float*, const float*, const LayerBasePos&);
+extern void (*s_CallSwfScl[2])(float*, const LayerBasePos&, const LayerResRenderInfo&);
+extern void (*s_CallDataPos[2])(float*, const LyrLayoutPosData*, LayerCenterType, float, float);
 // writes a position matrix (8 floats) to buff: z at [2]; raw leaves out the LayerManager's screen scale
 // the screen bounds of an object drawn with the matrix and render info
 void calcDispInfo(LayerResDispInfo& disp, const LayerResMatrix& matrix, const LayerResRenderInfo& info);
