@@ -13,6 +13,7 @@
 #include "mm/mtl/FixedVector.h"
 #include "mm/mtl/IntrusivePtr.h"
 #include "classes/fw/EffectCasterSend.h"
+#include "classes/fw/RimBloomCalc.h"
 
 namespace effect { class SendParam; }
 namespace fw { class EffectData; }
@@ -24,6 +25,7 @@ namespace mm { class Mat44; }
 namespace fw { class UpdateInfo; }
 namespace ml { class IDrDrawWorkInfo; }
 namespace ml { struct VolumeFadeParams; }
+namespace ml { struct DrMdlAfterImageParams; }
 
 namespace fw {
 // effect categories (setCategory hands one to effect::SystemManager::es_set_category)
@@ -151,6 +153,8 @@ public:
     // combo ball type (1 on) from the common packs' cmn_010_<type - 1>; 0 for type 0 or none
     unsigned int createComboBall(unsigned int type);
     // a bond line's ends and count (1..6, 0 counts as 1) by its handle (1..7); other handles do nothing
+    // the handle (1..7) of a free bond line work, initialised; 0 when all are taken
+    unsigned int createKizunaLine();
     void updateKizunaLine(unsigned int handle, const mm::Vec3& start, const mm::Vec3& end, unsigned int count);
     void destroyHateRing(unsigned int handle);
     void destroyHateRingVec(unsigned int handle);
@@ -165,6 +169,8 @@ public:
     void dead(unsigned int handle);
     // copies the volume fade parameters of type into params; false when there are none
     bool getVolumeFadeParam(unsigned int type, ml::VolumeFadeParams& params);
+    // rim bloom src's colour and floats into the first after image, dst's into the second (parameter names inferred)
+    bool getAfterImageParams(unsigned int src, unsigned int dst, ml::DrMdlAfterImageParams& params);
     void fadeOutDead(unsigned int handle);
     void fadeOutDead(unsigned int handle, unsigned int frames);
     void setDisp(unsigned int handle, bool disp);
@@ -229,7 +235,8 @@ public:
     // the volume fade (vanish) parameters by gf::VFEFF, each from its effect/common/vanish/<VolumeName>.dprm
     // (BTL_VolumeFade's rows; gf::GfVolumeFade reads them)
     VolumeFadeParams* m_volumeFadeParams[32];
-    unsigned char pad_30e0[0x32300];
+    RimBloomCalc m_rimBlooms[64];  // 0x30E0, the constructor clears them (the name is not the original's)
+    unsigned char pad_352e0[0x100];
     // one bond (kizuna) line effect: createKizunaLine takes the first of works 1..7 whose byte at 0x459 is clear (work
     // 0 stays unused: handle 0 is none); updateKizunaLine sets its two ends and its count (the names are not the
     // original's)
@@ -243,7 +250,22 @@ public:
         unsigned char pad_8[0x8];
         mm::Vec3 m_start;
         mm::Vec3 m_end;
-        unsigned char pad_30[0x440];
+        // init sets the first two to (0, 0, i * 0.05) and clears the third, 20 points each
+        mm::Vec3 pad_30[20];
+        mm::Vec3 pad_170[20];
+        mm::Vec3 pad_2b0[20];
+        unsigned char pad_3f0[0x20];
+        mm::Vec3 pad_410;  // init copies pad_440 in
+        mm::Vec3 pad_420;  // init copies the last of pad_30 in
+        unsigned char pad_430[0x10];
+        mm::Vec3 pad_440;
+        float pad_450;  // init: the distance between pad_30's first two points
+        float pad_454;  // init: ml::mtRandf1() times pi
+        bool pad_458;   // init clears it
+        bool m_inUse;  // createKizunaLine takes a work whose flag is clear and sets it (the name is not the original's)
+        bool pad_45a;   // init sets it
+        bool pad_45b;   // init sets it
+        unsigned char pad_45c[0x14];
     };
     KizunaWork m_kizunaWorks[8];  // 0x353E0, by handle (the name is not the original's)
     unsigned char pad_37760[0x1F8];

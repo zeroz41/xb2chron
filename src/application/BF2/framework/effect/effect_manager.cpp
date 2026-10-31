@@ -380,6 +380,17 @@ unsigned int EffectManager::createComboBall(unsigned int type) {
     return effect::SystemManager::getPtr()->es_create(efb, true);
 }
 
+unsigned int EffectManager::createKizunaLine() {
+    for (unsigned int i = 1; i < 8; ++i) {
+        if (!m_kizunaWorks[i].m_inUse) {
+            m_kizunaWorks[i].m_inUse = true;
+            m_kizunaWorks[i].init();
+            return i;
+        }
+    }
+    return 0;
+}
+
 void EffectManager::updateKizunaLine(unsigned int handle, const mm::Vec3& start, const mm::Vec3& end,
                                      unsigned int count) {
     if (handle - 1 < 7) {
