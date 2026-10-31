@@ -25,6 +25,11 @@ template <typename T0, typename T1>
 TGmkFormPcList<T0, T1>::~TGmkFormPcList() {
     this->dispose();
 }
+// only the list's own create (a tail call)
+template <typename T0, typename T1>
+void TGmkFormPcList<T0, T1>::create(gmk::IGmkList::CreateInfo const& info) {
+    T1::create(info);
+}
 }  // namespace gmk
 
 #endif

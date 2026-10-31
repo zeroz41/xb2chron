@@ -6,6 +6,7 @@
 #include "mm/mtl/IntrusiveList.h"
 #include "classes/gmk/GmkPhantomManager.h"
 #include "classes/fw/ColiObject.h"
+namespace gmk { class AGmkBase; class IGmkPhantomEventListener; }
 namespace gmk {
 // table 0x7100B6BF68
 // its node (a non-polymorphic base, so at 0x8 after the table) links it into GmkPhantomManager's list
@@ -27,6 +28,7 @@ public:
     }
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GmkPhantom();  // slot 1
+    void create(const AGmkBase& gmk, IGmkPhantomEventListener* listener, bool);
     // 1.0.0 has it out of line (gmk::GmkPhantom::dispose(), 0x94 bytes); 3.0.1 inlines it (the destructor, the
     // gimmicks' disposeGmkPhantom and dispose): the collision object released, the flags at 0x80 cleared
     void dispose() {

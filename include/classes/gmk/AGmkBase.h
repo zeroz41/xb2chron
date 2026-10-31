@@ -98,6 +98,9 @@ int getCurrentMapBdatId();
 void setDispByGmkType(GmkType type, bool disp);
 void setDispByGmkTypeAndBdatId(GmkType type, int bdatId, bool disp);
 void setDispByGmkTypeAndGmkIdx(int gmkSetId, GmkType type, unsigned int idx, bool disp);
+// shows or hides one gimmick (GmkInstDispTraverserByBdatId::onTraverse and setDispByGmkTypeAndGmkIdx call it; no
+// symbol: placeholder name)
+void fn_71005D3C54(const AGmkBase& gmk, bool, bool disp);
 }  // namespace gmk
 
 #endif

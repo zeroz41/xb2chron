@@ -56,6 +56,8 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(3);
     gf::GF_OBJ_HANDLE* getGobInst() const;  // its game object (-1: none)
+    // isPopCondMatched while its NPC id's entry names this gimmick, false otherwise (the original's name)
+    bool isPopCondMatchedExceptDist() const;
     // user-provided: Vector<GmkNpc>::resize stores the defaults below only (no zero fill of the element first)
     GmkNpc() {}
     unsigned char pad_68 = 1;

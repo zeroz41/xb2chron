@@ -5,6 +5,7 @@
 #include "classes/gmk/TimeCond.h"
 #include "classes/gmk/WeatherCond.h"
 #include "classes/gmk/BootedGmkCond.h"
+#include "classes/gf/GfFieldLodColiAnim.h"
 class CBdatWrapper;
 
 namespace gf { class GF_OBJ_HANDLE; }
@@ -42,9 +43,22 @@ public:
     virtual void debugDraw() const;  // slot 7
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9
+    // its first step (create stores it; symbol name)
+    void seqInit(float dt);
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x21);
-    unsigned char pad_48[0x68];  // fields: size from TGmkList::getInst's stride
+    // 0x48: create stores (BdatInfo::m_nameRadius + 10) squared (the name is not the original's)
+    float m_nameDistSq;
+    // 0x50: the step update runs, cleared by dispose (the name is not the original's)
+    void (GmkMapGimmick::*m_seq)(float);
+    // 0x60: its game object, -1 for none (dispose destroys it; onGobEvent forgets it when it is destroyed; the name is
+    // not the original's)
+    gf::GF_OBJ_HANDLE* m_gob;
+    unsigned char pad_68[0x8];
+    // 0x70: its effects by LOD state (the destructor disposes them; Vector<GmkMapGimmick>::resize constructs it; the
+    // name is not the original's)
+    gf::GfFieldLodEffect m_lodEffect;
+    unsigned char pad_a8[0x8];  // size from TGmkList::getInst's stride
 };
 }  // namespace gmk
 

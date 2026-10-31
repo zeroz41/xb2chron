@@ -2,11 +2,12 @@
 #define CLASSES_GMK_GMKAREAWEATHER_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/GmkPhantom.h"
 namespace gmk { class GmkAreaWeatherGob; }
 
 namespace gmk {
 // table 0x7100B6DEC0
-// 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (the 16-aligned field is not typed yet)
+// 16-aligned through its GmkPhantom (TGmkList::createGmk reserves its Vector with alignment 16)
 class alignas(16) GmkAreaWeather : public ::gmk::AGmkBase {
 public:
     // empty: its Vector<BdatInfo>::resize is the empty-element form (no element stores)
@@ -18,7 +19,9 @@ public:
     virtual void dispose();  // slot 5
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(30);
-    unsigned char pad_48[0x98];  // fields: size from TGmkList::getInst's stride
+    // 0x50: create creates it with no listener unless the set's CreateInfo::m_flag is set, dispose disposes it
+    // (the name is not the original's)
+    GmkPhantom m_phantom;
 };
 }  // namespace gmk
 

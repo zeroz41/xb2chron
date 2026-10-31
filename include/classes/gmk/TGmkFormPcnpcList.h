@@ -13,7 +13,8 @@ template <typename T0, typename T1>
 class TGmkFormPcnpcList : public T1 {
 public:
     explicit TGmkFormPcnpcList(unsigned int updateGmkNumPerFrame) : T1(updateGmkNumPerFrame) {}
-    virtual ~TGmkFormPcnpcList();  // slot 0
+    // empty: its D2 is the base list's (D0 calls TGmkList's D2)
+    virtual ~TGmkFormPcnpcList() {}  // slot 0
     virtual void createGmk(void*);  // slot 16
 };
 }  // namespace gmk
