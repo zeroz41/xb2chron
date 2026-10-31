@@ -51,6 +51,22 @@ void* GfAllocator::allocate(unsigned long size, unsigned long alignment) {
     return mtl::MemManager::allocate(m_hMem, size, alignment, false, "no name", 0);
 }
 
+void GfAllocator::deallocate(void* memory) {
+    if (getAllocator(ALLOCATOR(11)) == this) {
+        GfSlotMapping* slotMapping = GfAssetManager::getSlotMapping();
+        if (slotMapping != nullptr) {
+            bool freed = slotMapping->deallocateSize(memory);
+            if (memory != nullptr && !freed) {
+                mtl::MemManager::deallocate(memory, 0, false);
+            }
+            return;
+        }
+    }
+    if (memory != nullptr) {
+        mtl::MemManager::deallocate(memory, 0, false);
+    }
+}
+
 const char* GfAllocator::getName() const {
     return m_name.m_str;
 }
