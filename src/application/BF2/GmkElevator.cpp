@@ -2816,6 +2816,12 @@ void GmkJump::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* hand
     }
 }
 
+void GmkJump::fn_71005A7770() {
+    if (gf::GfGameManager::fn_71002A9E68() && getBdatInfo()->m_type == 1) {
+        fn_71005A748C();
+    }
+}
+
 GmkJump::~GmkJump() { dispose(); }
 
 void GmkLandmark::BdatInfo::create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
@@ -4060,6 +4066,16 @@ unsigned int GmkEnemyInsts::PopInfo::getGobInstNum() const {
         num += m_enemyInfos[i].getGobInstNum();
     }
     return num;
+}
+
+bool GmkEnemyInsts::isQuestDead() const {
+    for (unsigned int i = 0; i < 4; i++) {
+        const PopInfo::PopEnemyInfo& info = m_popInfo.m_enemyInfos[i];
+        if (info.pad_21 != info.pad_4) {
+            return false;
+        }
+    }
+    return true;
 }
 
 bool GmkEnemyInsts::reqClearRepopCounter() const {

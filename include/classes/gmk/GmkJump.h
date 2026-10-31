@@ -58,6 +58,10 @@ public:
     // the effect "ma40a_01_101_dlc" from GfFieldManager::getEffectPack(). GfFieldJump::onFsSucceeded calls it after
     // sending MsgPcFieldNotifyBigJump (when fn_71002A9E68 answers true).
     void fn_71005A7770();
+    // Placeholder name: new in 3.0.1. A member because its only caller, fn_71005A7770, passes this and it sits among
+    // GmkJump's functions (between reqRecreateIcon and onGobEvent). What it does: creates the effect
+    // "ma40a_01_101_dlc" from GfFieldManager::getEffectPack() (0x71005A748C).
+    void fn_71005A748C();
     void createIcon();
     void reqRecreateIcon();
     // sets the flag reqRecreateIcon tests and removes the icon effect (fw::EffectManager::dead)

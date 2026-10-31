@@ -36,7 +36,9 @@ public:
                 }
                 return pad_10->size() + pad_18->size();
             }
-            unsigned char pad_0[0xc];
+            unsigned char pad_0[0x4];
+            unsigned char pad_4;  // GmkEnemyInsts::isQuestDead: false unless it equals pad_21 in every slot
+            unsigned char pad_5[0x7];
             // the pop finders snap the position on the ground only when it is set (with their isYSnap)
             bool pad_c;
             unsigned char pad_d[0x3];
@@ -44,7 +46,10 @@ public:
             // first, then pad_10)
             mm::mtl::Vector<gf::GF_OBJ_HANDLE*>* pad_10;
             mm::mtl::Vector<gf::GF_OBJ_HANDLE*>* pad_18;
-            unsigned char pad_20[0x8];
+            unsigned char pad_20;
+            // GmkEnemyInsts::isQuestDead compares it with pad_4 in each slot (meaning not known)
+            unsigned char pad_21;
+            unsigned char pad_22[0x6];
         };
         // ~GmkEnemyInsts inlines it: each slot's dispose, the byte at 0x2 cleared, then the slots' destructors in
         // reverse (the name of dispose is not the original's)
