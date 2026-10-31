@@ -290,6 +290,10 @@ void LayerObjFont::setBorderWeight(float weight) {
 }
 void LayerObjFont::setSlopeRot(float rot) { m_slopeRot = rot; }
 float LayerObjFont::getSlopeRot() const { return m_slopeRot; }
+ml::CriticalSection& LayerObjManager::getCriticalSection() {
+    static ml::CriticalSection s_cs;  // lbl_71015E9CC8, guard lbl_71015E9CF0; the name is not the original's
+    return s_cs;
+}
 void LayerObjManager::finalRender(const ml::IDrDrawWorkInfo* info) {
     m_drawInfo = info;
     m_sortMan->finalRender();

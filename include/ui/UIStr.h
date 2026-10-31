@@ -62,7 +62,8 @@ public:
     // what the text belongs to: GfMenuEnhanceAdapter::getEnhanceCaption stores the enhancement's id, copy copies it;
     // the name is not the original's
     unsigned short m_ownerId;
-    unsigned char pad_14[4];
+    // 0x14..0x18 is tail padding, not a member: GfMenuStrLinker::getString's static UIStr stays apart from its guard
+    // in the original (GlobalMerge skips a global whose type has tail padding: its IR struct is packed)
 };
 
 }  // namespace ui

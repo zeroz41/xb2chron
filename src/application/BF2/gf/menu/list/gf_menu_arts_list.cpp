@@ -32,8 +32,15 @@ void GfMenuStrLinker::delString(unsigned short index) {
     }
 }
 
-// getString (0x710036AD24) is not matched yet: our build merges its static and guard (GlobalMerge), the original
-// addresses them separately
+ui::UIStr& GfMenuStrLinker::getString(unsigned short index) {
+    if (index < 128) {
+        return m_strings[index];
+    }
+    // lbl_7100EA7098, guard lbl_7100EA70B0 (apart, not merged: UIStr ends in tail padding); the name is not the
+    // original's
+    static ui::UIStr s_empty;
+    return s_empty;
+}
 
 void GfMenuStrLinker::addSelectString(const ui::UIStr& str) {
     if (m_selectStrings.size() != m_selectStrings.capacity()) {
