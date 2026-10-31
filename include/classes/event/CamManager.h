@@ -12,7 +12,7 @@ namespace event {
 // table 0x7100B3C9A8; base at 0x0 event::IManager, base at 0x8 mm::mtl::Singleton<event::CamManager>
 class CamManager : public IManager, public mm::mtl::Singleton<CamManager> {
 public:
-    virtual ~CamManager();  // slot 0
+    virtual ~CamManager() {}  // slot 0 (inline: the original emits it with the table, after OnEventProc, the key function)
     CamManager();  // out of line (0x71000D0134; the evt_setup plugin's Singleton<CamManager>::getPtr calls it)
     // called by the evt_setup script plugin (application/BF2/ScriptPlayText); a result its callers ignore is declared void
     void loadResource(const char* name);

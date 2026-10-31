@@ -22,7 +22,8 @@ public:
     // the allocator the script commands come from (every event::Script*::exec passes it to operator new); the name
     // is not the original's
     mtl::ALLOC_HANDLE m_handle;  // 0x20
-    unsigned int pad_24;  // zeroed by the constructor
+    // a second handle: StmPackHeader::create (0x71000C1790) requests its resource from it; zeroed by the constructor
+    mtl::ALLOC_HANDLE pad_24;
     // fields the constructor initializes; what they hold is not known yet
     long pad_28;
     long pad_30;

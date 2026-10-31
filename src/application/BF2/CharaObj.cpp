@@ -43,6 +43,15 @@
 #include "classes/event/CharaEffectPlayer.h"
 #include "classes/event/CharaObj.h"
 #include "string.h"
+#include "classes/RchaEff.h"
+#include "classes/RchaChrEff.h"
+#include "classes/RchaCamEff.h"
+#include "classes/RchaCam.h"
+#include "classes/event/EffectEvaPlayer.h"
+#include "classes/event/CharaEvaPlayerEff.h"
+#include "classes/event/CharaWpnAsm.h"
+#include "classes/event/CamEvaPlayer.h"
+#include "classes/event/CamEvaPlayerEff.h"
 #include "classes/event/EffectCtrl.h"
 #include "classes/event/IBouCallback.h"
 #include "classes/event/IManiCallback.h"
@@ -66,6 +75,8 @@
 #include "classes/event/CharaStopHead.h"
 #include "classes/event/StmPackMemory.h"
 #include "classes/event/StmPackData.h"
+#include "classes/event/StmPackHeader.h"
+#include "classes/fw/RenderResource.h"
 #include "ml/EventFileTh.h"
 #include "classes/event/SeqManager/start.h"
 #include "classes/event/SeqManager/end.h"
@@ -243,6 +254,14 @@ void CharaWinkPlayer::idle_waiting() {
 void CharaMount::init() {}
 
 void BlurManager::OnEventProc(event::MSG_TYPE) {}
+
+EffectEvaPlayer::~EffectEvaPlayer() {
+    if (m_rcha) {
+        delete m_rcha;
+        m_rcha = nullptr;
+    }
+    m_ctrl = nullptr;
+}
 
 void EffectPlayEff::term() {
     pad_20 = -1.0f;
@@ -545,6 +564,7 @@ void Param::createString(mm::mtl::FixStr<256>& str) {
 #include "classes/event/CharaPlayWink.h"
 #include "classes/event/Object.h"
 #include "classes/event/LightObj.h"
+#include "classes/event/LightEvt.h"
 #include "classes/event/ObjectLight.h"
 #include "classes/event/ObjectCamera.h"
 
@@ -556,6 +576,19 @@ void HideManager::defineGroup(GRP_TYPE group) {
 
 HideManager::GRP_TYPE HideManager::getGroup() const {
     return m_group;
+}
+
+LightEvt::~LightEvt() {
+    if (m_lgt) {
+        mm::mtl::PtrSingleton<Manager>::sys()->m_scn->releaseItem(m_lgt);
+        m_lgt = nullptr;
+    }
+    m_name.clear();
+    m_lgtParam = 0;
+}
+
+LightObj::~LightObj() {
+    clear();
 }
 
 SelectManager::~SelectManager() {}
@@ -917,6 +950,17 @@ void CharaObj::playRimBloom(int type) {
 
 void CharaObj::stopRimBloom() {
     m_effectPlayer.stopRimBloom();
+}
+
+CharaWpnAsm::~CharaWpnAsm() {}
+
+CharaEvaPlayerEff::~CharaEvaPlayerEff() {
+    if (m_rcha) {
+        delete m_rcha;
+        m_rcha = nullptr;
+    }
+    m_model = nullptr;
+    m_player = nullptr;
 }
 
 bool CharaSetPos::update(const ICmd::Param& param) {
@@ -2400,7 +2444,7 @@ TodoManager::TodoManager() : pad_10(0), pad_8c18(0), pad_8c20(0), pad_10e28(0) {
 
 DataManager::DataManager() : m_flags(0), m_sceneName("default"), m_current(0) {}
 
-MemoryManager::MemoryManager() : pad_10(0), pad_18(0), pad_24(0), pad_28(0), pad_30(0), pad_38(0), m_txtbufs(), pad_1048(0), pad_1050(0), pad_1058(0) {}
+MemoryManager::MemoryManager() : pad_10(0), pad_18(0), pad_24(), pad_28(0), pad_30(0), pad_38(0), m_txtbufs(), pad_1048(0), pad_1050(0), pad_1058(0) {}
 
 MemoryManager::~MemoryManager() {}
 
@@ -2513,6 +2557,27 @@ void EnvManager::OnEventProc(event::MSG_TYPE msg) {
     case 17:
         render();
         break;
+    }
+}
+
+CamEvaPlayer::~CamEvaPlayer() {
+    if (m_rcha) {
+        m_rcha->clear();
+        if (m_rcha) {
+            delete m_rcha;
+            m_rcha = nullptr;
+        }
+    }
+    m_cam = nullptr;
+}
+
+CamEvaPlayerEff::~CamEvaPlayerEff() {
+    if (m_rcha) {
+        m_rcha->clear();
+        if (m_rcha) {
+            delete m_rcha;
+            m_rcha = nullptr;
+        }
     }
 }
 
@@ -3019,6 +3084,21 @@ bool RandPlayer::Wait::update(const ICmd::Param& param) {
 bool CharaStopHead::update(const ICmd::Param& param) {
     gf::GfObjUtil::getObj(m_handle);
     return true;
+}
+
+StmPackHeader::~StmPackHeader() {
+    if (m_res) {
+        m_res->release();
+        m_res = nullptr;
+    }
+}
+
+void StmPackHeader::create(mtl::ALLOC_HANDLE, const char* name) {
+    if (m_res) {
+        m_res->release();
+        m_res = nullptr;
+    }
+    m_res = fw::RenderResource::request(mm::mtl::Singleton<MemoryManager>::getPtr()->pad_24, name, 0);
 }
 
 StmPackData::~StmPackData() {
