@@ -23,6 +23,7 @@ public:
     class ResultListener;
     class SkillInfoListener;
     class TotalListener;
+    GfMenuObjFieldSkill(unsigned int handle);
     virtual ~GfMenuObjFieldSkill();  // slot 0
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
@@ -73,14 +74,17 @@ public:
     static void applyImageParam(unsigned int handle);
 
     unsigned char pad_24[0x4];
-    // the constructor makes each (9999 at most); initialize hands them to TXT_request_skill_lv_num@01-04 (the name
-    // is not the original's)
-    mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_skillLevels[4];
+    // the constructor makes each (9999 at most): per request skill row, the level initialize hands to
+    // TXT_request_skill_lv_num@01-02 and the gauge it hands to IMG_requestskill_gauge@01-02; TotalListener fills
+    // them (the names are not the original's)
+    mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_skillLevels[2];
+    mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_skillGauges[2];
     GfMenuFieldSkillList* m_skillList;  // 0x48 initialize creates it for LAY_request (the name is not the original's)
-    mm::mtl::IntrusivePtr<GfMenuReferenceFs> pad_50;  // the constructor makes it
-    unsigned short pad_58;  // the constructor zeroes 0x58-0x5D
-    unsigned char pad_5A;
-    unsigned char pad_5B;  // the constructor leaves it
+    // the constructor makes it; SkillInfoListener copies m_skill into it, initialize hands it to
+    // TXT_blade_info_skill_name/_lv_num (the name is not the original's)
+    mm::mtl::IntrusivePtr<GfMenuReferenceFs> m_skillRef;
+    // SkillInfoListener's open (0x21) takes it from the event (the name is not the original's)
+    MenuFieldSkill m_skill;
     // BaseListener's open (0x21): 0x5C set picks its skill variants, 0x5D set (with it) the one-blade ones
     unsigned char pad_5C;
     unsigned char pad_5D;

@@ -73,6 +73,13 @@ public:
     // the voice when a field skill starts: GfDataBlade::getFieldSkillVoice(blade, skill) for the blade, at once
     // (0 when the blade has none). Caller: GfMenuObjFieldSkill::SkillInfoListener::reciveEvent.
     static GAME_VOICE_HANDLE* createFieldSkillStart(unsigned int blade, unsigned int skill);
+    // Placeholder name (inferred: createFieldSkillSuccess): it sits between createFieldSkillStart and
+    // createFieldSkillMiss and is their twin with QuestListAcc::getFLD_FieldSkillSettingSuccessVoiceCategory (voices
+    // "750101"-"750103" first). Caller: GfMenuObjFieldSkill::ResultListener::reciveEvent on success.
+    static GAME_VOICE_HANDLE* fn_7100568D34(unsigned int);
+    // the voice when a field skill fails (QuestListAcc::getFLD_FieldSkillSettingMissVoiceCategory). Caller:
+    // GfMenuObjFieldSkill::ResultListener::reciveEvent on failure.
+    static GAME_VOICE_HANDLE* createFieldSkillMiss(unsigned int);
     static unsigned long createMercenariesEnd(unsigned int id);
     static unsigned long createMercenariesResult(unsigned int id);
     static unsigned long createLandmark();

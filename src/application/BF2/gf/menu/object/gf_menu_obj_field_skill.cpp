@@ -6,6 +6,12 @@
 #include "classes/gf/GfMenuObjFieldSkill/MainListener.h"
 #include "classes/gf/GfMenuObjFieldSkill/BladeListener.h"
 #include "classes/gf/GfMenuObjFieldSkill/BaseListener.h"
+#include "classes/gf/GfMenuObjFieldSkill/SkillInfoListener.h"
+#include "classes/gf/GfMenuObjFieldSkill/ResultListener.h"
+#include "classes/gf/GfMenuObjFieldSkill/TotalListener.h"
+#include "classes/gf/GfMenuReference.h"
+#include "classes/gf/GfMenuReferenceFs.h"
+#include "classes/gf/SCOM_FIELD_VOICE.h"
 #include "classes/gf/GfMenuObjFieldIcon.h"
 #include "classes/gf/GfMenuObjFieldSkill.h"
 #include "classes/gf/GfMenuCallContext.h"
@@ -100,6 +106,29 @@ const char* s_baseAnims[5][4] = {
 };
 }  // namespace
 
+GfMenuObjFieldSkill::GfMenuObjFieldSkill(unsigned int handle)
+    : GfMenuObject(handle), m_skillList(nullptr), pad_5C(0), pad_5D(0), m_seq(this) {
+    for (int i = 0; i < 2; i++) {
+        m_skillLevels[i] = GfMenuReferenceNumber::create();
+    }
+    for (int i = 0; i < 2; i++) {
+        m_skillGauges[i] = GfMenuReferenceNumber::create();
+    }
+    m_skillRef = GfMenuReferenceFs::create();
+}
+
+GfMenuObjFieldSkill::~GfMenuObjFieldSkill() {
+    m_skillRef = nullptr;
+    m_skillGauges[0] = nullptr;
+    m_skillGauges[1] = nullptr;
+    m_skillLevels[0] = nullptr;
+    m_skillLevels[1] = nullptr;
+    if (m_skillList != nullptr) {
+        m_skillList->release();
+        m_skillList = nullptr;
+    }
+}
+
 void GfMenuObjFieldSkill::finalize() {
     GfMenuObject::finalize();
 }
@@ -167,6 +196,120 @@ bool GfMenuObjFieldSkill::seqWaitVoice() {
     return true;
 }
 
+void GfMenuObjFieldSkill::SkillInfoListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        m_state = 0;
+        m_open = Open();
+        break;
+    case 3:
+        if (event.m_param0 == 3) {
+            acc.setDisp(true);
+            m_owner->m_skillRef->m_fs = m_owner->m_skill;
+            {
+                MenuFieldSkill skill;
+                m_owner->m_skillRef->getFs(skill);
+                m_owner->m_voice = SCOM_FIELD_VOICE::createFieldSkillStart(m_open.m_blade, skill.m_id);
+            }
+            {
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x10000000;
+                param.m_motionLib = "cmn_fade_motion_lr";
+                param.m_motion = "fade_in_l";
+                param.m_eventId = 2;
+                param.m_startFlags = 8;
+                GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            }
+            GfMenuObject::addResultCallContext(acc.m_handle, 1, 0);
+            GfMenuReference::setReferenceBladeID(5, m_open.m_blade);
+            m_owner->m_mainHandle = acc.m_handle;
+            GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_base"), 1, 0.0f);
+            GfMenuObjUtil::playSE(0x10);
+        }
+        break;
+    case 0x21: {
+        MenuFieldSkill skill;
+        skill.m_id = event.m_paramShort[0];
+        skill.m_lv = event.m_paramShort[1];
+        m_open.m_blade = event.m_param1;
+        m_owner->m_skill = skill;
+        GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_blade"), 0, 0.0f);
+        if (m_state == 0) {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_in_l";
+            param.m_eventId = 1;
+            param.m_startFlags = 8;
+            int ctrl = GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_blade_info_name");
+            GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+            acc.setDispChild(false, "LAY_blade_info_skill");
+            m_owner->m_mainHandle = acc.m_handle;
+            GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_base"), 0, 0.0f);
+            m_state = 1;
+            m_open.m_waitSkill = 1;
+            GfMenuReference::setReferenceBladeID(5, m_open.m_blade);
+        } else {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_out_r";
+            param.m_eventId = 3;
+            param.m_startFlags = 10;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        }
+        acc.setDisp(true);
+        break;
+    }
+    case 0x22:
+        if (m_state == 1) {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_out_l";
+            param.m_eventId = 2;
+            param.m_startFlags = 10;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+            GfMenuObject::sendCloseEvent(acc.searchSibiling("LAY_blade"), 0, 0.0f);
+            m_state = 0;
+        }
+        break;
+    case 0x10D:
+        if (m_open.m_waitSkill == 1) {
+            acc.setDispChild(true, "LAY_blade_info_skill");
+            m_owner->m_skillRef->m_fs = m_owner->m_skill;
+            {
+                MenuFieldSkill skill;
+                m_owner->m_skillRef->getFs(skill);
+                m_owner->m_voice = SCOM_FIELD_VOICE::createFieldSkillStart(m_open.m_blade, skill.m_id);
+            }
+            {
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x10000000;
+                param.m_motionLib = "cmn_fade_motion_lr";
+                param.m_motion = "fade_in_l";
+                param.m_eventId = 2;
+                param.m_startFlags = 8;
+                int ctrl = GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_blade_info_skill");
+                GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+            }
+            m_owner->m_mainHandle = acc.m_handle;
+            GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_base"), 1, 0.0f);
+            GfMenuObject::addResultCallContext(acc.m_handle, 1, 0);
+            m_open.m_waitSkill = 0;
+            GfMenuObjUtil::playSE(0x10);
+        } else {
+            GfMenuObject::termCallContext(acc.m_handle);
+        }
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjFieldSkill::BladeListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
@@ -227,6 +370,31 @@ void GfMenuObjFieldSkill::BladeListener::reciveEvent(const ui::EventData& event,
     default:
         UIObjectListener::reciveEvent(event, handle);
         break;
+    }
+}
+
+void GfMenuObjFieldSkill::applyImageParam(unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    if (acc.m_object != nullptr) {
+        ui::UIObjectAcc blade(acc.m_handle, "IMG_blade");
+        ui::UIObjectAcc shadow(acc.m_handle, "IMG_blade_shadow");
+        unsigned int id = GfMenuReference::getReferenceBladeID(5);
+        acc.setLayout(blade.m_handle, "character");
+        acc.setLayout(shadow.m_handle, "character");
+        GfMenuObjUtil::ImageParam imageParam;
+        if (GfMenuObjUtil::getImageParam(1, id, imageParam, 1)) {
+            mm::Vec2 scale;
+            blade.getScale(scale);
+            scale.x = imageParam.m_scale * scale.x;
+            scale.y = imageParam.m_scale * scale.y;
+            blade.setScale(scale);
+            GfMenuObjUtil::addPos(blade.m_handle, imageParam.m_x, imageParam.m_y);
+            shadow.getScale(scale);
+            scale.x = imageParam.m_scale * scale.x;
+            scale.y = imageParam.m_scale * scale.y;
+            shadow.setScale(scale);
+            GfMenuObjUtil::addPos(shadow.m_handle, imageParam.m_x + 10, imageParam.m_y + 10);
+        }
     }
 }
 
@@ -302,6 +470,116 @@ void GfMenuObjFieldSkill::BaseListener::reciveEvent(const ui::EventData& event, 
         }
         break;
     }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+void GfMenuObjFieldSkill::ResultListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        m_state = 0;
+        m_result = 0;
+        break;
+    case 3:
+        if (event.m_param0 == 2) {
+            acc.setDisp(true);
+            GfMenuObject::termCallContext(acc.m_handle);
+        }
+        break;
+    case 0x21:
+        if (m_state == 0) {
+            int result = event.m_param0;
+            acc.setDisp(true);
+            if (result == 0) {
+                int text = event.m_param1;
+                ui::UIObjectAcc name(acc.m_handle, "TXT_result_success_name");
+                ui::UIObjectAcc effName(acc.m_handle, "TXT_result_success_eff_name");
+                if (text == -1) {
+                    name.setAlpha(0.0f);
+                    effName.setAlpha(0.0f);
+                } else {
+                    name.setText(GfMenuObject::getString(text));
+                    name.setAlpha(1.0f);
+                    effName.setText(GfMenuObject::getString(text));
+                    effName.setAlpha(1.0f);
+                    GfMenuObject::releaseString(text);
+                }
+                acc.setDispChild(true, "LAY_result_success");
+                acc.setDispChild(true, "LAY_result_success_eff");
+                acc.setDispChild(false, "LAY_result_failed");
+                {
+                    GfMenuObjUtil::CtrlParam param;
+                    param.m_methods = 0x10000000;
+                    param.m_motionLib = "cmn_fade_motion_zoom";
+                    param.m_motion = "fade_out";
+                    param.m_startFlags = 10;
+                    GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_result_success_eff");
+                }
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x10000000;
+                param.m_motionLib = "cmn_fade_emotion";
+                param.m_motion = "fade_in_select";
+                param.m_startFlags = 8;
+                int ctrl = GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_result_success");
+                GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+                ui::EventData special;
+                special.m_type = 0x10A;
+                m_owner->m_mainHandle = acc.m_handle;
+                GfMenuObject::sendEvent(acc.searchSibiling("LAY_base"), special, 0.0f);
+                if (event.m_param2 != 0) {
+                    SCOM_FIELD_VOICE::fn_7100568D34(event.m_param2);
+                }
+                GfMenuObjUtil::playJingle(0x13);
+                GfMenuObjUtil::playVibration(static_cast<fw::VibrationID>(3), 1.0f);
+            } else {
+                acc.setDispChild(false, "LAY_result_success");
+                acc.setDispChild(false, "LAY_result_success_eff");
+                acc.setDispChild(true, "LAY_result_failed");
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x10000000;
+                param.m_motionLib = "cmn_fade_motion_lr";
+                param.m_motion = "fade_in_r";
+                param.m_startFlags = 8;
+                int ctrl = GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_result_failed");
+                GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+                if (event.m_param2 != 0) {
+                    SCOM_FIELD_VOICE::createFieldSkillMiss(event.m_param2);
+                }
+                GfMenuObjUtil::playVibration(static_cast<fw::VibrationID>(8), 1.0f);
+            }
+            m_state = 1;
+            m_result = result;
+            acc.setDisp(true);
+        }
+        break;
+    case 0x22:
+        if (m_state == 1) {
+            if (m_result != 0) {
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x10000000;
+                param.m_motionLib = "cmn_fade_motion_lr";
+                param.m_motion = "fade_out_l";
+                param.m_startFlags = 10;
+                param.m_eventId = 2;
+                int ctrl = GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_result_failed");
+                GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+            } else {
+                GfMenuObjUtil::CtrlParam param;
+                param.m_methods = 0x10000000;
+                param.m_motionLib = "cmn_fade_emotion";
+                param.m_motion = "fade_out";
+                param.m_startFlags = 10;
+                param.m_eventId = 2;
+                int ctrl = GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_result_success");
+                GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+            }
+            m_state = 0;
+        }
+        break;
     default:
         UIObjectListener::reciveEvent(event, handle);
         break;
@@ -482,6 +760,10 @@ void GfMenuObjFieldSkill::undoTotalSkillLevel(unsigned char slot) {
         event.m_param0Short = slot;
         ui::UIManager::get()->requestObjectEvent(total.m_handle, event, 0.0f);
     }
+}
+
+void GfMenuReferenceFs::getFs(MenuFieldSkill& fs) const {
+    fs = m_fs;
 }
 
 }  // namespace gf
