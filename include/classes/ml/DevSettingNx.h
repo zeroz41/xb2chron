@@ -17,6 +17,14 @@ public:
     virtual void fn_71006AEDA8(mm::mtl::FixedVector<LangType, 15>& list);  // slot 5
     virtual void setAutoSleepExtended(SleepExtendType type);  // slot 6
     virtual bool isAutoSleepExtended() const;  // slot 7
+
+    // a language and its code ("ja", "en-US", ...): the unit's static initializer builds a table of 15 in its
+    // merged .bss block (lbl_7100ECDF40+0x2E8), so it has a constructor. The names are not the original's.
+    struct LangCode {
+        LangCode(LangType lang, const char* code) : m_lang(lang), m_code(code) {}
+        LangType m_lang;
+        const char* m_code;
+    };
 };
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100ECA000). th_dev_file_nx.cpp's .bss
 // byte: which language DevSettingNx::getLang reports, 0 the device's, 1 Japanese (Framework::initialize: when

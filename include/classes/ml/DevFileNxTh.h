@@ -14,6 +14,7 @@ namespace ml { class DevFileParamTh; }
 namespace ml { enum DevFileResult : int; }  // an enum: writeBlock stores 0 through it as an int
 namespace ml { class FileHandleTh; }
 namespace mm { class VAL64; }
+namespace mm { namespace mtl { template <int LEN> class FixStr; } }
 
 namespace ml {
 // table 0x7100B76AE0; base at 0x8 mm::mtl::PtrSingleton<DevFileNxTh> (the constructor stores its table there)
@@ -57,6 +58,9 @@ public:
     // named by the symbols: DeviceNx::initializeSDK calls them (the SDK's file setup, then the save data's)
     static void initializeSDK(const Device::InitParam& param);
     static void initializeSave();
+    // named by the symbols: the path the file system opens for path (the medium's root, then path;
+    // DevFileJobValidNxTh::asyncUpdate passes its request's path)
+    static void getMediaPath(mm::mtl::FixStr<256>& out, const char* path);
     // set while the save data is mounted (DevFileTh::flushSave commits it then; named by the symbols)
     static bool m_mountSave;
 };

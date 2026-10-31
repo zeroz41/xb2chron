@@ -23,6 +23,13 @@ Result ReadFile(unsigned long* readSize, FileHandle handle, long offset, void* b
 // deallocateFile)
 void SetAllocator(void* (*allocate)(unsigned long), void (*deallocate)(void*, unsigned long));
 
+enum DirectoryEntryType {
+    DirectoryEntryType_Directory = 0,
+    DirectoryEntryType_File = 1,
+};
+// whether path names a file or a directory (ml::DevFileJobValidNxTh::asyncUpdate)
+Result GetEntryType(DirectoryEntryType* type, const char* path);
+
 // commits a mounted save data's writes (DevFileTh::flushSave passes "save")
 Result CommitSaveData(const char* name);
 }}  // namespace nn::fs

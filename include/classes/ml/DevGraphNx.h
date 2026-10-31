@@ -42,6 +42,8 @@ public:
     // named by the symbols: the render thread's frame swap
     static int thSync(void*, void*);
     static bool initGL();
+    // named by the symbols: keeps the name of the font file initGL loads (a FixStr<64> file static of the unit)
+    static void entrySasakiFont(const char* name);
 
     unsigned char pad_350[0x28];
     FontSys m_font;  // 0x378 (the destructor destroys it; the name is not the original's)

@@ -29,6 +29,7 @@
 #include "classes/ml/DeviceNx.h"
 #include "classes/ml/TUnk_B777B8.h"
 #include "classes/ml/LanguageInfo.h"
+#include "classes/ml/MemoryAutoReleaser.h"
 #include "classes/ml/WorkControl.h"
 #include "classes/ml/WorkCpu.h"
 #include "classes/ml/ErrViewer.h"
@@ -909,6 +910,31 @@ void FontLayer::fontScale(float x, float y) {
 
 bool DeviceNx::m_onceInitialize;
 mtl::ALLOC_HANDLE device_detail::hMemFile;
+
+// The unit's internal statics its static initializer builds: the compiler merges them into one .bss block
+// (lbl_7100ECDF40, 0x4E0 bytes, ordered by size, then by definition). Proposed names, not the original's: the symbols
+// leave them unnamed (lbl_7100ECDF40 holds them all; the offsets are into it).
+namespace {
+mm::mtl::FixStr<64> s_name08;  // +0x8 (Device::isAllReady/isColdStartReady read it)
+mm::mtl::FixStr<64> s_name4C;  // +0x4C
+DevSettingNx::LangCode s_langCodes[15] = {  // +0x2E8 (DevSettingNx::getLang)
+    DevSettingNx::LangCode(LangType(0), "ja"),     DevSettingNx::LangCode(LangType(1), "en-US"),
+    DevSettingNx::LangCode(LangType(2), "fr"),     DevSettingNx::LangCode(LangType(3), "de"),
+    DevSettingNx::LangCode(LangType(4), "it"),     DevSettingNx::LangCode(LangType(5), "es"),
+    DevSettingNx::LangCode(LangType(6), "zh-CN"),  DevSettingNx::LangCode(LangType(7), "ko"),
+    DevSettingNx::LangCode(LangType(8), "nl"),     DevSettingNx::LangCode(LangType(9), "pt"),
+    DevSettingNx::LangCode(LangType(10), "ru"),    DevSettingNx::LangCode(LangType(11), "zh-TW"),
+    DevSettingNx::LangCode(LangType(12), "en-GB"), DevSettingNx::LangCode(LangType(13), "fr-CA"),
+    DevSettingNx::LangCode(LangType(14), "es-419"),
+};
+mm::mtl::FixStr<64> s_sasakiFontName;  // +0x90 (DevGraphNx::entrySasakiFont keeps the name here)
+MemoryAutoReleaser s_memoryReleaser;   // +0x0
+mm::mtl::FixStr<128> s_pathD4;   // +0xD4
+mm::mtl::FixStr<128> s_path158;  // +0x158
+mm::mtl::FixStr<128> s_path1DC;  // +0x1DC
+mm::mtl::FixStr<128> s_dvdRoot;  // +0x260 (DevFileTh::getDvdRoot returns it outside rom mount mode)
+mm::mtl::FixStr<256> s_path3D8;  // +0x3D8
+}  // namespace
 
 void Device::initializeSDK(const InitParam& param) {
     DeviceNx::initializeSDK(param);
@@ -1849,6 +1875,10 @@ bool DevGraphNx::wkStandbyLogout() {
     return false;
 }
 
+void DevGraphNx::entrySasakiFont(const char* name) {
+    s_sasakiFontName = name;
+}
+
 void DevPadNx::Impl::stateUpdate(float) {
     if (m_stateId == 2) {
         updateNpad();
@@ -1933,6 +1963,12 @@ void device_detail::deallocateFile(void* ptr, unsigned long) {
     mtl::MemManager::deallocate(ptr, 0, false);
 }
 
+MemoryAutoReleaser::~MemoryAutoReleaser() {
+    if (m_ptr != nullptr) {
+        free(m_ptr);
+    }
+}
+
 DevFileNxTh::DevFileNxTh(mtl::ALLOC_HANDLE handle)
     : m_alloc(handle), pad_18(0), m_impl(new (handle, nullptr, 0, 4, false) Impl()) {
     __atomic_store_n(&m_impl->pad_17FC, 0, __ATOMIC_SEQ_CST);
@@ -1959,6 +1995,20 @@ int DevFileNxTh::addressAlignment() {
 
 bool DevFileNxTh::rfIsUsedChannel(unsigned int channel) {
     return m_impl->m_params[channel].m_isOpen;
+}
+
+bool DevFileJobValidNxTh::asyncUpdate() {
+    mm::mtl::FixStr<256> path;
+    DevFileNxTh::getMediaPath(path, m_handle->m_path);
+    nn::fs::DirectoryEntryType type;
+    if (nn::fs::GetEntryType(&type, path.m_str).IsSuccess()) {
+        m_handle->m_state = 9;
+        m_result = 2;
+        return true;
+    }
+    m_handle->m_state = 10;
+    m_result = -1;
+    return false;
 }
 
 DevFileBlackListNxTh::~DevFileBlackListNxTh() {
