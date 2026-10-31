@@ -7,8 +7,73 @@
 #include "classes/btl/CharacterManager.h"
 #include "classes/gf/DataParamAcc.h"
 #include "fw/UpdateInfo.h"
+#include "btl/Utility.h"
+#include "classes/gf/GfAllocator.h"
+#include "classes/gf/GfDataBdat.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfGameUtil.h"
+#include "gf/GfObjUtil.h"
+#include "plugin/Bdat.h"
+#include "classes/btl/DataManager.h"
+#include "classes/btl/BladeChangeManager.h"
+#include "btl/formation_change_manager.h"
+#include "classes/gf/GfGameParty.h"
+#include "gf/GfObjAcc.h"
+#include "btl/GroupData.h"
 
 namespace btl {
+
+namespace {
+// the kizuna link of the character's blade (Initialize, BattleStart; an inferred helper: the name is not the
+// original's)
+inline void SetupKizunaLink(PlayerParameter& param) {
+    if (param.fn_7100085314(false)) {
+        param.pad_5da = gf::GfGameUtil::getKizunaLink(BattleGlobal::sys()->m_challengeAnySuccess
+                                                          ? param.fn_7100088F68()
+                                                          : param.m_enArrangeID);
+    }
+}
+
+// what slot 54 and BattleStart take from Utility::fn_7100010D3C in a challenge battle: for the character's blade
+// row, else for the party group's other driver (an inferred helper: the name is not the original's)
+inline unsigned int GetChallengeValue(const PlayerParameter& param) {
+    unsigned int id;
+    if (param.fn_7100085314(false)) {
+        id = param.m_enArrangeID;
+    } else {
+        unsigned int group = param.m_groupIndex;
+        gf::GF_OBJ_HANDLE* driver = gf::GfGameParty::getHandleDriver(group, 0);
+        if (param.m_handle == driver) {
+            driver = gf::GfGameParty::getHandleDriver(group, 1);
+        }
+        gf::GfObjAcc acc(driver);
+        id = acc.getBdatId();
+    }
+    return Utility::fn_7100010D3C(id);
+}
+
+// sets the armor up from the party group's pouch buff while it is negative (BattleStart, CalcDamageArmorEx; an
+// inferred helper: the name is not the original's)
+inline void SetupDamageArmor(PlayerParameter& param) {
+    if (param.pad_630 < 0) {
+        float rate = DataManager::sys()->GetPouchBuffParam(0, param.m_groupIndex);
+        int armor = 0;
+        if (!(rate <= 0.0f)) {
+            unsigned int hp = gf::GfGameUtil::getMaxHp(param.m_handle, param.m_objType, param.m_objId);
+            CharacterParameter::ENHANCE_DATA data;
+            if (param.GetAdditionalEnhanceEffect(data, 10, nullptr)) {
+                hp += (int)data.m_value;
+            }
+            float maxHp = hp;
+            float value = rate * 0.01f * maxHp;
+            // the next float up
+            *reinterpret_cast<int*>(&value) += 1;
+            armor = (int)value;
+        }
+        param.pad_630 = armor;
+    }
+}
+}  // namespace
 
 PlayerParameter::PlayerParameter()
     : m_artsPaletteData(nullptr), pad_630(-1), pad_634(0.0f), pad_638(0.0f), pad_63c(0), m_artsPaletteNum(0),
@@ -21,10 +86,71 @@ PlayerParameter::~PlayerParameter() {
     }
 }
 
+void PlayerParameter::Initialize(gf::GF_OBJ_HANDLE* handle) {
+    CharacterParameter::Initialize(handle);
+    int challenge = BattleGlobal::sys()->m_challengeAnySuccess;
+    m_groupIndex = Misc::GetPartyID(handle);
+    int objType = gf::GfObjUtil::getObjType(handle);
+    bool isBlade = objType == 4 && !challenge;
+    m_flags622_2 = isBlade;
+    bool isNotBlade;
+    if (!BattleGlobal::sys()->m_challengeAnySuccess) {
+        isNotBlade = !fn_7100085314(false);
+    } else if (IsEnemyParameter()) {
+        isNotBlade = true;
+    } else {
+        isNotBlade = Utility::fn_7100011EA0(m_handle);
+    }
+    m_isNotBlade = isNotBlade;
+    SetupKizunaLink(*this);
+    m_enMaterial = 0;
+    m_enTypeFamily = 4;
+    m_bladeChangeType = (challenge || objType != 4)
+                            ? Bdat::getValCheck(gf::GfDataBdat::getFP(0x88), "Personality", m_enArrangeID, 1)
+                            : 0;
+    if (m_artsPaletteData != nullptr) {
+        delete[] m_artsPaletteData;
+        m_artsPaletteData = nullptr;
+    }
+    unsigned int num = challenge ? 2 : (isBlade ? 1 : 5);
+#line 3595
+    m_artsPaletteData = new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) ARTS_PALETTE_DATA[num];
+    m_artsPaletteNum = num;
+    pad_634 = 0.0f;
+    pad_642 = 0;
+    pad_638 = 0.0f;
+    pad_643 = (challenge || objType != 4) ? true : !gf::GfDataBlade::fn_71002397DC(m_enArrangeID);
+    pad_630 = -1;
+    fn_710007E0E8(handle);
+}
+
 void PlayerParameter::CheckChangeArtsPalette() {
     if (m_flags622_0 && !m_hasHateTarget && !BattleGlobal::sys()->pad_bit1) {
         InitializeArtsPalette(0);
     }
+}
+
+int PlayerParameter::fn_7100088F68() const {
+    if (pad_63c != 0) {
+        return pad_63c;
+    }
+    if (!BattleGlobal::sys()->m_challengeAnySuccess) {
+        return 0;
+    }
+    return GetChallengeValue(*this);
+}
+
+void PlayerParameter::BattleStart(int) {
+    SetupKizunaLink(*this);
+    pad_63c = BattleGlobal::sys()->m_challengeAnySuccess ? GetChallengeValue(*this) : 0;
+    InitializeArtsPalette(0);
+    if (pad_20 != BattleGlobal::sys()->pad_a9c && !BladeChangeManager::sys()->IsRegister(m_handle) &&
+        !TUnk_B3BC20::sys()->fn_710009EB70(m_handle)) {
+        ResetRecast();
+    }
+    pad_20 = BattleGlobal::sys()->pad_a9c;
+    m_hasHateTarget = true;
+    SetupDamageArmor(*this);
 }
 
 void PlayerParameter::BattleEnd() {
@@ -51,6 +177,17 @@ void PlayerParameter::Update(const fw::UpdateInfo& info, bool) {
     CharacterParameter::Update(info, false);
 }
 
+void PlayerParameter::WritebackRecast(GROUP_DATA* group) {
+    if (fn_7100085314(false) && m_hasHateTarget) {
+        int index = BattleGlobal::sys()->m_challengeAnySuccess ? 1 : -1;
+        const ARTS_PALETTE_DATA* palette = GetArtsPaletteDataConst(index);
+        for (int i = 0; i < 3; i++) {
+            ARTS_SLOT_DATA slot = *palette->GetSlotDataConst(i, false);
+            group->m_artsRecast[i] = slot.m_artsID != 0 ? slot.m_recast : 0.0f;
+        }
+    }
+}
+
 const ARTS_PALETTE_DATA* PlayerParameter::GetArtsPaletteDataConst(int index) const {
     if (BattleGlobal::sys()->m_challengeAnySuccess) {
         if (index < 0) {
@@ -60,6 +197,21 @@ const ARTS_PALETTE_DATA* PlayerParameter::GetArtsPaletteDataConst(int index) con
         index = fn_7100085314(false) ? 0 : GetBladeIndex();
     }
     return &m_artsPaletteData[index];
+}
+
+unsigned int PlayerParameter::CalcDamageArmorEx(unsigned int damage) {
+    SetupDamageArmor(*this);
+    int armor = pad_630;
+    if (armor != 0) {
+        if ((unsigned int)armor < damage) {
+            damage -= armor;
+            pad_630 = 0;
+        } else {
+            pad_630 = armor - damage;
+            damage = 0;
+        }
+    }
+    return damage;
 }
 
 void PlayerParameter::ResetRecast() {
@@ -183,6 +335,21 @@ float PlayerParameter::GetUseWeaponRate(int) const {
         return 0.0f;
     }
     return pad_634 / BtlSystemBalanceAccess::sys()->pad_10c;
+}
+
+bool PlayerParameter::fn_71000851B4() const {
+    if (!m_isNotBlade) {
+        gf::GF_OBJ_HANDLE* driver = m_driverHandle;
+        const BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(driver);
+        if (chr != nullptr) {
+            const CharacterParameter* param = chr->GetCharacterParameterConst(true);
+            if (param != nullptr) {
+                return param->fn_71000851B4();
+            }
+        }
+        return false;
+    }
+    return pad_642 != 0;
 }
 
 bool CharacterParameter::fn_71000851B4() const {

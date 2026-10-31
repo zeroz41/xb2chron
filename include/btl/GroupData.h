@@ -143,7 +143,9 @@ public:
 
     gf::GF_OBJ_HANDLE* m_handle;
     GROUP_BLADE_DATA m_blades[5];
-    unsigned char pad_E4[0xC];
+    // the recasts of the arts in palette slots 0-2 (PlayerParameter::WritebackRecast stores them, 0 for an empty
+    // slot; the name is not the original's)
+    float m_artsRecast[3];
     float m_buddyTime;  // SetBuddyBladeIndex clears it when the index changes
     unsigned char pad_F4[0xC];
     float m_coolTimeMax;

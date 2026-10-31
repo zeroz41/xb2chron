@@ -55,7 +55,9 @@ public:
     // the palettes (array new; GetArtsPaletteDataConst indexes it, the destructor deletes it; the name is not the
     // original's)
     ARTS_PALETTE_DATA* m_artsPaletteData;
-    int pad_630;  // -1 after construction and BattleEndInitialize; meaning unknown
+    // the armor CalcDamageArmorEx takes damage off (-1 after construction, Initialize and BattleEndInitialize;
+    // BattleStart and CalcDamageArmorEx set it up from the pouch buff when negative); meaning unknown
+    int pad_630;
     // a timer: slot 43 starts it at BtlSystemBalanceAccess's 0x10C, PreUpdate counts it down, slot 44 ends it,
     // GetUseWeaponRate answers its share of the start value; meaning unknown
     float pad_634;

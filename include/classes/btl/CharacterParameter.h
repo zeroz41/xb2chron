@@ -283,7 +283,9 @@ public:
     unsigned int m_objId;
     // BattleCharacter::GetGroupIndex returns it (the name is not the original's)
     int m_groupIndex;
-    unsigned char pad_20[0x4];
+    // PlayerParameter::BattleStart compares it with BattleGlobal's pad_a9c (ResetRecast when they differ) and then
+    // copies that in; meaning unknown
+    int pad_20;
     // the enemy's ChrEnArrange row: EnemyParameter asks GfBdatChrEnArrange for its blade (the name is not the original's)
     unsigned int m_enArrangeID;
     // BattleCharacter::GetArtsAttackDistance scales an arts' distance by it (the name is not the original's)

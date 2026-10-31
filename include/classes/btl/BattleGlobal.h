@@ -317,7 +317,10 @@ public:
     // the slow-motion requests (the name is not the original's)
     ::mm::mtl::FixedVector<SLOW_PROC_DATA, 20> m_slowProc;
     float pad_a50;  // Utility::fn_710000FB7C holds while it is <= 0
-    unsigned char pad_a54[0x54];
+    unsigned char pad_a54[0x48];
+    // PlayerParameter::BattleStart copies it into CharacterParameter's pad_20; meaning unknown
+    int pad_a9c;
+    unsigned char pad_aa0[0x8];
     unsigned int m_nextAttackId;  // CreateAttackData's next id, never 0 (the name is not the original's)
     unsigned char pad_aac[0x4];
     // the attack records (the name is not the original's); full, AddAttackDamage drops the oldest
