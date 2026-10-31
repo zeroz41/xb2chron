@@ -43,8 +43,15 @@
 #include "gf/MsgPcBattleStart.h"
 #include "mm/mtl/Delegate.h"
 #include "classes/gf/npc/StateWalk.h"
+#include "classes/gf/GfComBehaviorNpc.h"
 
 namespace gf { namespace npc {
+
+void StateWalk::enter(GfComBehaviorNpc* owner, ai::State* prev) {
+    updateGoalPos(*owner);
+    owner->execTurnCmdToGoal();
+    m_seq = &StateWalk::seqWaitTurnEnd;
+}
 
 void StateWalk::leave(GfComBehaviorNpc* owner, ai::State* next) {}
 

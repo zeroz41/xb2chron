@@ -14,7 +14,10 @@ namespace gf { namespace npc {
 // table 0x7100B66950
 class StateWalk : public ::gf::GfStateBase {
 public:
-    StateWalk() : pad_50(nullptr), pad_58(nullptr), pad_60(0) {}
+    // a step of the state: the sequence update runs (enter starts seqWaitTurnEnd)
+    typedef void (StateWalk::*Seq)(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
+
+    StateWalk() : m_seq(nullptr), pad_60(0) {}
     // what GfComBehaviorNpc::createFsm registers with its Hfsm: the state made in a state buffer
     static ai::State* create(void* buffer) { return new (buffer) StateWalk; }
     virtual ~StateWalk() {}  // slot 0: inline (emitted with the table by the registering unit)
@@ -28,9 +31,10 @@ public:
     void enter(GfComBehaviorNpc* owner, ai::State* prev);
     void leave(GfComBehaviorNpc* owner, ai::State* next);
     void update(GfComBehaviorNpc* owner, const fw::UpdateInfo& info);
+    void updateGoalPos(GfComBehaviorNpc& owner);
+    void seqWaitTurnEnd(GfComBehaviorNpc& owner, const fw::UpdateInfo& info);
     TFieldExecCmd<GfComAsm> m_execCmd;
-    void* pad_50;
-    void* pad_58;
+    Seq m_seq;
     unsigned int pad_60;
 };
 }}  // namespace gf::npc

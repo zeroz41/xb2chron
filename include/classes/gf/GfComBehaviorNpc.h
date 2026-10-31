@@ -71,6 +71,8 @@ public:
     // points its local steering at what the state with that ID needs (the npc states' enter and leave)
     void validateLocalSteer(npc::STATE_ID state);
     void execTurnCmdToPos(const mm::Vec3& pos);
+    // turns the npc toward its goal (StateWalk::enter's)
+    void execTurnCmdToGoal();
     void execTurnCmd(float rotY, float speed, float threshold, float delay);
     // turns the npc by rotY (plus its local steering's current angle)
     void execTurnCmd(float rotY);
