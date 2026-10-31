@@ -9,6 +9,7 @@
 #include "classes/ui/UIUpdateCallback.h"
 #include "classes/gf/GfGmkLocatorAtlas.h"
 #include "mm/mtl/FixedVector.h"
+#include "mm/mtl/IntrusiveList.h"
 
 namespace mm { struct Col4; }
 namespace gf { class GfSetupParam; }
@@ -40,6 +41,10 @@ class GfMenuManager : public ::mm::mtl::PtrSingleton< ::gf::GfMenuManager>, publ
 public:
     GfMenuManager(const GfSetupParam& param);
     static void build(const GfSetupParam& param);
+    // the constructor's tail call (named by the symbols)
+    void initialize(const GfSetupParam& param);
+    // the constructor's language choice, retried until it answers true (named by the symbols)
+    bool selectLanguage();
     static void destroy();
     void finalize();
     // the gamma of both the layer and the scene renderer: value * 2 + 1.2 (applyOptionData passes the option's
@@ -215,7 +220,13 @@ public:
     ::ml::fixed_size_alloc_inside<OBJ, 512> m_objs;  // 0x28 (the name is not the original's)
     bool m_initialized;     // 0x4090: every accessor tests it (the name is not the original's)
     bool m_locked;  // 0x4091: getFadeColor, setDispAll and isDispHud do nothing while it holds (the name is not the original's)
-    unsigned char pad_4092[0x26];
+    unsigned char pad_4092;  // the constructor clears it
+    unsigned char pad_4093[0x5];
+    // 0x4098: the constructor builds it (IntrusiveListBase's constructor, out of line); the element type and the name
+    // are not known (the name is not the original's)
+    ::mm::mtl::IntrusiveListBase m_list;
+    unsigned char pad_40B0;  // the constructor clears it
+    unsigned char pad_40B1[0x7];
     GF_OBJ_HANDLE* m_targetObjHandle;  // 0x40B8 getTargetObjHandle
     GF_OBJ_HANDLE* m_accessObjHandle;  // 0x40C0 getAccessObjHandle
     bool m_targetChanged;  // 0x40C8 gevChangeTarget sets it when the target changes (the name is not the original's)
@@ -230,7 +241,9 @@ public:
     mm::mtl::Bitflag<32> m_battleState;  // 0x40DC isBattleState, setBattleState (the name is not the original's)
     unsigned char pad_40E0[0x4];
     mm::mtl::Bitflag<32> m_dispHud;  // 0x40E4 isDispHud (the name is not the original's)
-    unsigned char pad_40E8[0x10];
+    unsigned int pad_40E8;  // the constructor clears it
+    unsigned char pad_40EC[0x4];
+    unsigned long pad_40F0;  // the constructor clears it
     float m_updateDT;  // 0x40F8 getUpdateDT
     unsigned char pad_40FC[0x1];
     bool m_openBtlModelView;  // 0x40FD isOpenBtlModelView
@@ -249,9 +262,13 @@ public:
     bool m_regionJP;  // 0x4111 isRegionJP
     // 0x4112 fn_7100359570 returns it unless GfGameManager::fn_71002A9E68() answers true (the name is not the original's)
     bool m_baseGameFlag;
-    unsigned char pad_4113[0x1];
-    bool m_bladeBookFlag : 1;  // 0x4114 fn_710035A634 reads its low bit (GfMenuBladeList::setupFromBook) (the name is not the original's)
-    unsigned char pad_4115[0x4F];
+    unsigned char pad_4113;  // the constructor makes it 1 and clears it when GfGameManager::fn_71002A9E68() holds
+    // 0x4114 fn_710035A634 reads its flag 0 (GfMenuBladeList::setupFromBook); the constructor clears the word and sets
+    // flag 0 when menu/image/fim_bl_142.wilay exists (the name is not the original's)
+    mm::mtl::Bitflag<32> m_bladeBookFlag;
+    unsigned int pad_4118;  // the constructor clears it
+    unsigned char pad_411C[0x4];
+    unsigned char pad_4120[0x44];  // the constructor clears it
     unsigned int m_latestCommonWinID;  // 0x4164 getLatestCommonWinID, openCommonWindow
     unsigned char pad_4168[0x8];
     // 0x4170 fn_710035A844 copies GfMenuMapInfo::postUpdate's atlas setup here during a map jump (the name is not
@@ -262,7 +279,8 @@ public:
     // 0x41A8 fn_710035A764 appends the ids the fld plugin's setNpcMeet reports (fixed_vector.h's push_back asserts);
     // fn_710035A800 tests it for elements, the destructor clears it (the name is not the original's)
     mm::mtl::FixedVector<unsigned short, 256> m_npcMeetIds;
-    unsigned char pad_43B0[0x10];
+    unsigned char pad_43B0;  // the constructor clears it
+    unsigned char pad_43B1[0xF];
 };
 }  // namespace gf
 

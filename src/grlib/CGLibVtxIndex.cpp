@@ -143,10 +143,10 @@ void CGLibGpuTimeStamp::begin() {
     if (report.m_pBuff == nullptr) {
         report.m_id = ctx->m_occlusion.allocID();
         report.m_pBuff = ctx->m_occlusion.getBuffer(report.m_id);
-        report.m_offset = report.m_pBuff - ctx->m_pReportPoolMem;
+        report.m_offset = report.m_pBuff - static_cast<unsigned char*>(ctx->m_reportPool.m_pBuffer);
     }
     nvnCommandBufferReportCounter(ctx->m_pipeline.m_pCmdBuf, (NVNcounterType)0,
-                                  nvnMemoryPoolGetBufferAddress(ctx->m_pReportPool) + report.m_offset);
+                                  nvnMemoryPoolGetBufferAddress(ctx->m_reportPool.m_pPool) + report.m_offset);
 }
 
 void CGLibGpuTimeStamp::end() {
@@ -155,10 +155,10 @@ void CGLibGpuTimeStamp::end() {
     if (report.m_pBuff == nullptr) {
         report.m_id = ctx->m_occlusion.allocID();
         report.m_pBuff = ctx->m_occlusion.getBuffer(report.m_id);
-        report.m_offset = report.m_pBuff - ctx->m_pReportPoolMem;
+        report.m_offset = report.m_pBuff - static_cast<unsigned char*>(ctx->m_reportPool.m_pBuffer);
     }
     nvnCommandBufferReportCounter(ctx->m_pipeline.m_pCmdBuf, (NVNcounterType)0,
-                                  nvnMemoryPoolGetBufferAddress(ctx->m_pReportPool) + report.m_offset);
+                                  nvnMemoryPoolGetBufferAddress(ctx->m_reportPool.m_pPool) + report.m_offset);
     int now = CGLibManager::s_nDblNowIdx;
     if (report.m_isReported && m_reports[0][now].m_pBuff != nullptr && m_reports[1][now].m_pBuff != nullptr) {
         unsigned long beginTime = nvnDeviceGetTimestampInNanoseconds(

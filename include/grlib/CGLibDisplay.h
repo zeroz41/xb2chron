@@ -3,12 +3,24 @@
 
 #include "nvn/nvn.h"
 #include "grlib/CGLibRenderTarget.h"
+#include "grlib/CGLibMemPool.h"
 
 namespace grlib {
 // the display: the window's textures and the sync swapChain waits on (the field names are not the original's;
 // the size is not known). CGLibSystemContext holds it at 0x1110 (CGLibManager::begin calls updateSignaled there).
 class CGLibDisplay {
 public:
+    // inline: CGLibSystemContext's constructor builds it in place
+    CGLibDisplay() {
+        m_init = false;
+        m_windowInit = false;
+        m_textureNum = 0;
+        m_pWindowMem = nullptr;
+        m_pWindowTextures = nullptr;
+        m_index = 1;
+        m_needWait = true;
+        m_signaled = true;
+    }
     ~CGLibDisplay();
     void setup(NVNdevice* device);
     void resize(unsigned int width, unsigned int height);
@@ -17,16 +29,24 @@ public:
     void swapChain(NVNqueue* queue);
 
     CGLibRenderTarget m_renderTargets[2];  // 0x0: m_index picks the current one
-    unsigned char pad_790[0x120];
-    CGLibDepthBuffer* m_pDepthBuffer;  // 0x8B0
-    unsigned char pad_8B8[0x70C];
-    int m_index;  // 0xFC4
-    unsigned char pad_FC8[0x1];
+    CGLibDepthTarget m_depthTarget;        // 0x790 (its m_pDepthBuffer at 0x8B0)
+    CGLibMemPool m_pool;                   // 0xF90
+    // 0xFB0..0xFC3: cleared as made; what they hold is not known (the names are not the original's)
+    void* m_pWindowTextures;
+    void* m_pWindowMem;
+    unsigned int m_textureNum;
+    int m_index;  // 0xFC4: made 1
+    // 0xFC8: the destructor finalizes the syncs, the textures and the window only while it holds, and clears it
+    // (the name is not the original's)
+    bool m_init;
     bool m_signaled;  // 0xFC9
-    unsigned char pad_FCA[0x1];
+    bool m_windowInit;  // 0xFCA: the destructor clears it after finalizing the window (the name is not the original's)
     bool m_needWait;  // 0xFCB
     unsigned char pad_FCC[0x4];
     NVNsync m_sync;  // 0xFD0
+    NVNsync m_sync2;  // 0x1010: the destructor finalizes it after m_sync (the name is not the original's)
+    unsigned char pad_1050[0x40];
+    NVNwindow m_window;  // 0x1090: the destructor finalizes it (0x1210 bytes in all: CGLibUtilObj follows it)
 };
 }  // namespace grlib
 

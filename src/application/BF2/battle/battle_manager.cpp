@@ -47,6 +47,13 @@ BattleManager::~BattleManager() {
     ;
 }
 
+void BattleManager::build(const gf::GfSetupParam& param) {
+    BattleManager* manager =
+#line 112
+        new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) BattleManager;
+    manager->Initialize(param);
+}
+
 void BattleManager::destroy() {
     BattleManager* manager = mm::mtl::PtrSingleton<BattleManager>::sys();
     manager->Finalize();

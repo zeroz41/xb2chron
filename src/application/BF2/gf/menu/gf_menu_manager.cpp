@@ -75,12 +75,60 @@
 #include "gf/SDataOption.h"
 #include "fw/LangUtil.h"
 #include "nn/oe.h"
+#include "classes/ml/DevFileTh.h"
+#include "classes/gf/GfGameEnv.h"
+#include "ui/UIUtil.h"
 
 namespace gf {
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EA6F48). fn_710035A660 reads the
 // application's display version into it.
 static nn::oe::DisplayVersion s_displayVersion;
+
+GfMenuManager::GfMenuManager(const GfSetupParam& param)
+    : m_objs(), m_initialized(false), m_locked(false), pad_4092(0), m_list(), pad_40B0(0), m_targetObjHandle((GF_OBJ_HANDLE*)-1),
+      m_accessObjHandle((GF_OBJ_HANDLE*)-1), m_targetChanged(false), m_accessChanged(false), m_battleStateEnable(false),
+      m_curCameraType(0), m_callContext(nullptr), m_commonWindowResult(0), m_battleState(), pad_40E0(), m_dispHud(),
+      pad_40E8(0), pad_40F0(0), m_updateDT(0.0f), pad_40FC(), m_openBtlModelView(false), m_openNameSelect(false),
+      m_openOpeningTelop(false), m_hideAll(false), m_enableQuestOpen(false), m_evTheaterFlag(false), m_layer101Open(false),
+      m_layer72Open(false), m_layer300Open(false), m_region(0), m_optionFlag(false), m_regionJP(false),
+      m_baseGameFlag(false), pad_4113(1), m_bladeBookFlag(), pad_4118(0), pad_4120(), m_latestCommonWinID(0),
+      m_mapjumpAtlasInfo(), m_titleValue(0), m_titleCount(0), m_npcMeetIds(), pad_43B0(0) {
+    bool jp = ml::DevFileTh::checkValidFileBlock("bdat/jp.bin");
+    m_region = !jp;
+    if (!jp && ml::DevFileTh::checkValidFileBlock("stream/voice/jp/01/01010101.nop")) {
+        m_optionFlag = true;
+    }
+    if (ml::DevFileTh::checkValidFileBlock("menu_ira/font/bf2.wisty")) {
+        ui::UIUtil::fn_7100696930("menu_ira");
+        ui::UIUtil::fn_7100696950(3);
+        if (GfGameManager::fn_71002A9E68()) {
+            ui::UIUtil::fn_7100696920(1);
+            pad_4113 = 0;
+        }
+        m_regionJP = true;
+    }
+    if (m_regionJP) {
+        m_optionFlag = true;
+    }
+    if (GfGameManager::fn_71002AC598()) {
+        ui::UIUtil::fn_7100696950(1);
+    }
+    if (TUnk_B54858::get()->fn_71002A75DC(0x101)) {
+        ui::UIUtil::fn_7100696950(3);
+        if (GfGameManager::fn_71002A9E68()) {
+            ui::UIUtil::fn_7100696920(1);
+        }
+    }
+    if (TUnk_B54858::get()->fn_71002A75DC(0x20301)) {
+        m_baseGameFlag = true;
+    }
+    m_bladeBookFlag.reset();
+    if (!GfMenuObjUtil::fn_710048FD30(3) && ml::DevFileTh::checkValidFileBlock("menu/image/fim_bl_142.wilay")) {
+        m_bladeBookFlag.set(0, true);
+    }
+    initialize(param);
+}
 
 void GfMenuManager::build(const GfSetupParam& param) {
 #line 514
@@ -735,7 +783,7 @@ bool GfMenuManager::fn_710035A4A0() {
 
 bool GfMenuManager::fn_710035A634(int index) {
     GfMenuManager* mgr = GfMenuManager::get();
-    return index == 0 && mgr != nullptr && mgr->m_bladeBookFlag;
+    return index == 0 && mgr != nullptr && mgr->m_bladeBookFlag.test(0);
 }
 
 const char* GfMenuManager::fn_710035A660() {

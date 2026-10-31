@@ -62,6 +62,12 @@ static inline void nvnVertexStreamStateSetDivisor(NVNvertexStreamState* stream, 
 typedef NVNsyncWaitResult (*PFNNVNSYNCWAITPROC)(const NVNsync* sync, uint64_t timeoutNs);
 extern PFNNVNSYNCWAITPROC pfnc_nvnSyncWait;
 static inline NVNsyncWaitResult nvnSyncWait(const NVNsync* sync, uint64_t timeoutNs) { return pfnc_nvnSyncWait(sync, timeoutNs); }
+typedef void (*PFNNVNSYNCFINALIZEPROC)(NVNsync* sync);
+extern PFNNVNSYNCFINALIZEPROC pfnc_nvnSyncFinalize;
+static inline void nvnSyncFinalize(NVNsync* sync) { pfnc_nvnSyncFinalize(sync); }
+typedef void (*PFNNVNWINDOWFINALIZEPROC)(NVNwindow* window);
+extern PFNNVNWINDOWFINALIZEPROC pfnc_nvnWindowFinalize;
+static inline void nvnWindowFinalize(NVNwindow* window) { pfnc_nvnWindowFinalize(window); }
 
 typedef void (*PFNNVNCOMMANDBUFFERBINDBLENDSTATEPROC)(NVNcommandBuffer* cmdBuf, const NVNblendState* blend);
 extern PFNNVNCOMMANDBUFFERBINDBLENDSTATEPROC pfnc_nvnCommandBufferBindBlendState;

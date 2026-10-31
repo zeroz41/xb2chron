@@ -144,6 +144,9 @@ public:
 // textures, are not known yet)
 class CGLibDepthTarget {
 public:
+    // out of line (CGLibUniBaseUtility's unit); CGLibDisplay's constructor and destructor call them
+    CGLibDepthTarget();
+    ~CGLibDepthTarget();
     void releaseWork();
     void release();
     // clears the depth buffer (CGLibDepthCtl::clearDepthBuffer)
@@ -158,6 +161,9 @@ public:
     unsigned char pad_128[0x8];
     // 0x130: the texture DrMdoSetup::fn_710077C23C binds (DrPixlMan::getDepthObj's); the name is not the original's
     CGLibTextureBuffer* m_pTexture;
+    // 0x138..0x800: the constructor builds CGLibVtlMemPools up to 0x7D8 (0x800 bytes: CGLibDisplay's memory pool
+    // follows it at 0x800, SHCACHE_WORK_TBL ends 0x800 after its one)
+    unsigned char pad_138[0x6C8];
 };
 
 }  // namespace grlib

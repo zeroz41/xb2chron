@@ -17,7 +17,7 @@ public:
     bool clipTest(mm::Vec3 const& pos, float radius);
 
     grlib::CGLibDepthTarget m_depth;  // 0x0
-    unsigned char pad_138[0x7C8];
+    unsigned char pad_800[0x100];
     DrCalcClipWorkPlane m_clip;  // 0x900
     unsigned char pad_910[0xC0];
 };
@@ -33,7 +33,6 @@ public:
 
         unsigned char pad_0[0x5940];
         grlib::CGLibDepthTarget m_dirDepth;  // 0x5940: DrPixlMan::setShadowDirRenderTarget selects it
-        unsigned char pad_5a78[0x6C8];
     };
 
     void addShadowCacheUpdate(bool);

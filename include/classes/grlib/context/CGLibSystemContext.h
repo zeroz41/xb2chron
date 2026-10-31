@@ -13,6 +13,12 @@
 #include "grlib/CGLibBuffSamplerTbl.h"
 #include "grlib/CGLibBuffFixAlloc.h"
 #include "grlib/CGLibGpuTimeStamp.h"
+#include "grlib/CGLibMemPool.h"
+#include "grlib/CGLibTexDescriptor.h"
+#include "grlib/CGLibSamplerDescriptor.h"
+#include "grlib/CGLibBuffReleaseTbl.h"
+#include "grlib/CGLibCmdBuffer.h"
+#include "grlib/CGLibUtilObj.h"
 namespace grlib { struct CGLibMemType; }
 
 namespace grlib { namespace context { class CGLibSystemContext; }}
@@ -63,38 +69,43 @@ public:
     // finalizes and frees the texture, frees the memory and the descriptor ids once the GPU is done with them
     void releaseDelayTexture(NVNtexture* texture, void* mem, int textureId, int samplerId);
 
-    unsigned char pad_8[0x530];
-    CGLibBuffFixAlloc m_texDescriptor;  // 0x538: texture and sampler descriptor ids (CGLibTextureBuffer::release)
-    unsigned char pad_560[0x40];
+    unsigned char pad_8[0x8];
+    // 0x10, 0x38, 0x60: three pool lists, separate members (the destructor reaches the first through its own base
+    // register, not an array's); the names are not the original's
+    CGLibMemPoolList m_memPoolList0;
+    CGLibMemPoolList m_memPoolList1;
+    CGLibMemPoolList m_memPoolList2;
+    // 0x88 and 0x268: two pairs of command buffers and one more at 0x448 (the destructor destroys each pair down to
+    // its own first element, kept in a register, after the single one); the names are not the original's
+    CGLibCmdBuffer m_cmdBuffers[2];
+    CGLibCmdBuffer m_subCmdBuffers[2];
+    CGLibCmdBuffer m_extraCmdBuffer;
+    CGLibTexDescriptor m_texDescriptor;  // 0x538: texture and sampler descriptor ids (CGLibTextureBuffer::release)
     // 0x5A0: the sampler descriptor ids and pool (CGLibSamplerParam::setupResource/releaseParams; the name is not the
     // original's)
     CGLibSamplerDescriptor m_samplerDescriptor;
     CGLibBuffSamplerTbl m_samplerTbl;  // 0x608: CGLibSampler::updateData
     CGLibBuffOcclusion m_occlusion;  // 0xE38: CGLibOcclusionQuery's report slots
-    CGLibBuffFixAlloc m_textureAlloc;  // 0xE60: the NVNtexture objects (CGLibTextureBuffer::release)
-    unsigned char pad_E88[0x8];
+    CGLibBuffTexture m_textureAlloc;  // 0xE60: the NVNtexture objects (CGLibTextureBuffer::release)
     CGLibBuffMemPoolTbl m_memPoolTbl;  // 0xE90: CGLibMemPool takes its NVNmemoryPool objects from it (the name is not the original's)
-    unsigned char pad_EB8[0x40];
+    CGLibBuffReleaseTbl m_releaseTbl;  // 0xEB8: the releaseDelay* entries (the name is not the original's)
     CGLibMemPoolAdder m_memPoolAdder;  // 0xEF8: CGLibGPUCache's pools
     // the five etc buffers (ArgMemInfo m_etc128Size..m_etc1024Size); CGLibMemHandle::free indexes them by
     // CGLibMemType::m_type (the name is not the original's)
     CGLibBuffMinUniform m_etcBuffer[5];  // 0xF08
     CGLibPipeline m_pipeline;  // 0x1070
     CGLibDisplay m_display;  // 0x1110
-    unsigned char pad_2120[0x200];
-    CGLibDecShader m_decShader;  // 0x2320: CGLibCtlShader::getDecShader
-    CGLibVtxFetch m_vtxFetches[3];  // 0x2388: CGLibCtlShader::getVtxFetch
-    CGLibSampler m_samplers[2];  // 0x23B8: CGLibCtlShader::getSampler (CGLibUtilObj's constructor builds two)
-    unsigned char pad_23F8[0x60];
-    NVNmemoryPool* m_pReportPool;  // 0x2458: the pool the occlusion reports are written to
-    unsigned char pad_2460[0x10];
-    unsigned char* m_pReportPoolMem;  // 0x2470: its memory
-    NVNmemoryPool* m_pPixelPool;  // 0x2478: the pool pixel memory comes from
-    unsigned char pad_2480[0x10];
-    unsigned char* m_pPixelPoolMem;  // 0x2490: its memory
-    unsigned char pad_2498[0x40];
+    CGLibUtilObj m_utilObj;  // 0x2320 (the name is not the original's)
+    unsigned long pad_2448;  // cleared as made
+    unsigned long pad_2450;  // cleared as made
+    // 0x2458: the pool the occlusion reports are written to (its m_pPool, its memory at m_pBuffer)
+    CGLibMemPool m_reportPool;
+    CGLibMemPool m_pixelPool;  // 0x2478: the pool pixel memory comes from
+    CGLibMemPool m_extraPool0;  // 0x2498 (the name is not the original's)
+    CGLibMemPool m_extraPool1;  // 0x24B8 (the name is not the original's)
     CGLibGpuTimeStamp m_gpuTimeStamp;  // 0x24D8: end() ends it, CGLibManager::getGpuTimeStamp reads it
-    unsigned char pad_2540[0x8];
+    unsigned char pad_2540;  // cleared as made
+    unsigned char pad_2541[0x7];
     unsigned long m_glbUniformGpuAddress;  // 0x2548
     unsigned char* m_pGlbUniformBuffer;  // 0x2550
     unsigned char pad_2558[0x10];

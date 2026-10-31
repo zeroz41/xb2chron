@@ -1,3 +1,5 @@
+// grlib's own file: PtrSingleton's assertion cites grlib's path to singleton.h
+#define MM_LIB_FROM_GRLIB
 #include "grlib/CGLibMemHandle.h"
 #include "classes/grlib/CGLibManager.h"
 #include "nvn/nvn.h"
@@ -32,6 +34,10 @@ const NVNdepthFunc s_depthFuncTbl[] = {
 
 namespace grlib { namespace context {
 
+CGLibSystemContext::CGLibSystemContext() : pad_2448(0), pad_2450(0), pad_2540(0) {}
+
+CGLibSystemContext::~CGLibSystemContext() {}
+
 bool CGLibSystemContext::isRelease() {
     return true;
 }
@@ -43,7 +49,7 @@ using context::CGLibSystemContext;
 
 void CGLibState::setMainFrameBuffer() {
     CGLibSystemContext* ctx = CGLibSystemContext::get();
-    ctx->m_display.m_renderTargets[ctx->m_display.m_index].setRenderTarget(*ctx->m_display.m_pDepthBuffer);
+    ctx->m_display.m_renderTargets[ctx->m_display.m_index].setRenderTarget(*ctx->m_display.m_depthTarget.m_pDepthBuffer);
 }
 
 }  // namespace grlib
@@ -125,8 +131,8 @@ void CGLibState::setPixelResidentArea(bool enable, unsigned int size) {
     ctx->m_pixelResAreaSize = size;
     if (enable) {
         ctx->m_pPixelResArea = mtl::MemManager::allocate(CGLibMemHandle::s_hPxlHandle, size, 0x10000, false, "no name", 0);
-        ctx->m_pixelResAreaOffset = (unsigned char*)ctx->m_pPixelResArea - ctx->m_pPixelPoolMem;
-        ctx->m_pixelResAreaGpuAddress = nvnMemoryPoolGetBufferAddress(ctx->m_pPixelPool) + ctx->m_pixelResAreaOffset;
+        ctx->m_pixelResAreaOffset = (unsigned char*)ctx->m_pPixelResArea - static_cast<unsigned char*>(ctx->m_pixelPool.m_pBuffer);
+        ctx->m_pixelResAreaGpuAddress = nvnMemoryPoolGetBufferAddress(ctx->m_pixelPool.m_pPool) + ctx->m_pixelResAreaOffset;
     }
 }
 
@@ -388,15 +394,15 @@ void CGLibCtlShader::setMemoryBarrierBit(unsigned int bits) {
 }
 
 CGLibDecShader* CGLibCtlShader::getDecShader() {
-    return &CGLibSystemContext::get()->m_decShader;
+    return &CGLibSystemContext::get()->m_utilObj.m_decShader;
 }
 
 CGLibVtxFetch* CGLibCtlShader::getVtxFetch(GrlUtilVertFetch fetch) {
-    return &CGLibSystemContext::get()->m_vtxFetches[fetch];
+    return &CGLibSystemContext::get()->m_utilObj.m_vtxFetches[fetch];
 }
 
 CGLibSampler* CGLibCtlShader::getSampler(GrlUtilSampler sampler) {
-    return &CGLibSystemContext::get()->m_samplers[sampler];
+    return &CGLibSystemContext::get()->m_utilObj.m_samplers[sampler];
 }
 
 void CGLibGPUCache::setTiledCacheSize(unsigned int width, unsigned int height) {
@@ -436,6 +442,18 @@ void CGLibDisplay::swapChain(NVNqueue* queue) {
     if (m_needWait) {
         // NVN_WAIT_TIMEOUT_MAXIMUM
         nvnSyncWait(&m_sync, ~0UL);
+    }
+}
+
+CGLibDisplay::~CGLibDisplay() {
+    if (m_init) {
+        m_init = false;
+        nvnSyncFinalize(&m_sync);
+        nvnSyncFinalize(&m_sync2);
+        m_renderTargets[0].releaseTexture();
+        m_renderTargets[1].releaseTexture();
+        nvnWindowFinalize(&m_window);
+        m_windowInit = false;
     }
 }
 

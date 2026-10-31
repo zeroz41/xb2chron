@@ -13,7 +13,7 @@ namespace btl {
 // GfEvent::addEventCallback)
 class BattleManager : public ::mm::mtl::PtrSingleton< ::btl::BattleManager>, public gf::IGfEvent {
 public:
-    BattleManager() : pad_10(0), m_initialized(false), pad_15(true), pad_16(0) {}
+    BattleManager() : pad_10(0.0f), m_initialized(false), pad_15(true), pad_16(false), pad_17(false) {}
     static void build(const gf::GfSetupParam& param);
     static void destroy();
     static void update(const fw::UpdateInfo& info);
@@ -28,10 +28,11 @@ public:
     static bool isInitialized();
     static void NotifyQuestTask(unsigned int id);
     void QuestTaskProc(unsigned int id);
-    unsigned int pad_10;
+    float pad_10;  // a timer: Update loads it as a float
     bool m_initialized;
     bool pad_15;
-    unsigned short pad_16;
+    bool pad_16;
+    bool pad_17;
 };
 }  // namespace btl
 
