@@ -32,6 +32,9 @@ public:
     // (1.0.0's update_WpnTypeWP calls getWp at the same site); 3.0.1 added the mode (0, 1 or 2: which weapon point
     // table it reads; update_WpnTypeWP passes 0)
     static int getWp(unsigned int driver, unsigned int wpnType, int mode);
+    // 1.0.0's name: the symbols call it fn_71002498F8 (it follows getWp; 1.0.0's DataObjDriver::addWeaponPoint calls
+    // addWp at the same site with the same arguments; 3.0.1 added the DLC drivers' records)
+    static void addWp(unsigned int driver, unsigned int wpnType, int point);
     static unsigned int getWpnType(unsigned int arts);
     // the symbols' name (its code is in GfDataBlade_710029064C's range; 0 for arts 0 or one outside the table).
     // TUnk_B535D0::fn_7100290D40 (message type 13) and TUnk_B53370 test it against 0

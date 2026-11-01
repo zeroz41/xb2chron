@@ -48,6 +48,9 @@
 #include "classes/gf/GfObjManager.h"
 #include "gf/GfObjInfo.h"
 #include "mm/Math.h"
+#include "mm/mtl/RTTI.h"
+#include "classes/gf/GfObjSetupWeapon.h"
+#include "classes/gf/GfGameParty.h"
 
 namespace gf {
 
@@ -250,6 +253,18 @@ unsigned int DataObjDriver::getWeaponPoint(unsigned int wpnType) const {
         wpnType = GfDataBlade::getSDataBlade(blade)->m_weaponType;
     }
     return GfDataDriverArts::getWp(m_bdatId, wpnType, 0);
+}
+
+void DataObjDriver::addWeaponPoint(unsigned int wpnType, int point) {
+    if (wpnType == 0) {
+        unsigned int blade = getBlade(false, -1);
+        if (blade == 0) {
+            return;
+        }
+        DataParamAcc acc(4, blade, static_cast<GimmickType>(0));
+        wpnType = acc.getWeaponType(-1, false);
+    }
+    GfDataDriverArts::addWp(getBdatId(), wpnType, point);
 }
 
 unsigned int DataObjDriver::getSkillPoint() const {
@@ -717,6 +732,28 @@ void DataObjDriver::setBladeSet(int slot) {
     GfEvent::callBladeChange(m_handle, current, slot);
 }
 
+unsigned int DataObjDriver::getBlade(bool virtualParam, int slot) const {
+    if (GfDataDriver::fn_710023F9A8(getBdatId())) {
+        if (slot > 0) {
+            return 0;
+        }
+        return GfDataBlade::fn_7100237B70(getBdatId(), -1);
+    }
+    GfObjSetup* setup = GfObjUtil::getObjSetup(m_handle);
+    if (setup != nullptr && setup->m_isAllWeapon && setup->pad_58 != 0) {
+        return setup->pad_58;
+    }
+    if (slot >= 0) {
+        return m_sdata->m_blades[slot];
+    }
+    int set = getBladeSet(virtualParam);
+    if (set < 0) {
+        return 0;
+    }
+    const SDataDriver* data = virtualParam ? m_sdata : GfDataDriver::getSDataDriver(getBdatId());
+    return GfDataDriver::fn_7100244E78(*data, set);
+}
+
 unsigned int DataObjDriver::getEquipWeapon(bool virtualParam, int slot) const {
     if (slot < 0) {
         slot = getBladeSet(virtualParam);
@@ -797,6 +834,33 @@ unsigned int DataObjDriver::getFootStepEffect() const {
 
 unsigned int DataObjDriver::getGender() const {
     return GfDataDriver::fn_7100241C94(getBdatId());
+}
+
+unsigned int DataObjDriver::getAttribute(bool virtualParam, int slot) const {
+    if (GfDataDriver::fn_710023F9A8(getBdatId())) {
+        if (GfDataDriver::fn_7100237A94(getBdatId())) {
+            unsigned int item = GfDataDriver::fn_7100247474(getBdatId());
+            if (item == 0) {
+                return 1;
+            }
+            return GfBdatItem::sys()->fn_7100202C3C(item);
+        }
+        DataObjBlade data(GfDataBlade::fn_7100237B70(getBdatId(), -1));
+        return data.getAttribute(virtualParam, -1);
+    }
+    if (slot < 0) {
+        slot = getBladeSet(virtualParam);
+    }
+    unsigned int blade = slot >= 0 ? m_sdata->m_blades[slot] : 0;
+    GfObjSetup* setup = GfObjUtil::getObjSetup(m_handle);
+    if (setup != nullptr) {
+        unsigned int id = setup->m_isAllWeapon ? setup->pad_58 : 0;
+        if (id != 0) {
+            blade = id;
+        }
+    }
+    DataObjBlade data(blade);
+    return data.getAttribute(virtualParam, -1);
 }
 
 unsigned int DataObjBlade::getAttribute(bool, int) const {
@@ -1216,6 +1280,31 @@ unsigned int DataObjPcWpn::getBdatId() const {
 
 unsigned int DataObjPcWpn::getEquipWeapon(bool, int) const {
     return m_bdatId;
+}
+
+unsigned int DataObjPcWpn::getAttribute(bool, int slot) const {
+    if (m_handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return 0;
+    }
+    unsigned int party = GfObjUtil::getObjSetup(m_handle)->m_partyId;
+    if (party == static_cast<unsigned int>(-1)) {
+        return 0;
+    }
+    if (GfDataBlade::fn_71002324C8()) {
+        GFOBJ_INFO* info = GfObjManager::getObjInfo(m_handle);
+        if (info != nullptr) {
+            if (GfObjSetup* setup = info->m_setup) {
+                if (setup->m_type == info->m_obj->m_type && info->m_obj->m_type == 10) {
+                    if (GfObjSetupWeapon* weapon = mm::mtl::rttiCast<GfObjSetupWeapon>(setup)) {
+                        DataParamAcc acc(3, weapon->m_param.pad_128, static_cast<GimmickType>(0));
+                        return acc.getAttribute(-1, false);
+                    }
+                }
+            }
+        }
+    }
+    DataParamAcc acc(GfGameParty::getHandleBlade(party, slot));
+    return acc.getAttribute(-1, false);
 }
 
 unsigned int DataObjPcWpn::getWeaponType(bool, int) const {
