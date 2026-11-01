@@ -65,6 +65,11 @@
 #include "classes/RchaCamEff.h"
 #include "classes/RchaCam.h"
 #include "classes/event/EffectEvaPlayer.h"
+#include "classes/event/EffectPlayEva.h"
+#include "classes/event/EffectManager.h"
+#include "classes/event/ResManager.h"
+#include "classes/event/MotstmManager.h"
+#include "classes/event/Extend.h"
 #include "classes/event/CharaEvaPlayerEff.h"
 #include "classes/event/CharaWpnAsm.h"
 #include "classes/event/CamEvaPlayer.h"
@@ -502,6 +507,53 @@ int EffectLinearCol::update(const ICmd::Param& param) {
     }
     m_anm.clear();
     return 1;
+}
+
+int EffectPlayEva::update(const ICmd::Param& param) {
+    if (m_ctrl != nullptr) {
+        float step = static_cast<EffectObj*>(param.m_param.val(0).getUserdata())->m_step;
+        if (param.m_frame <= 0) {
+            const char* name = param.m_param.val(1).getStr();
+            void* data;
+            unsigned long size;
+            if (!(mm::mtl::Singleton<EffectManager>::getPtr()->m_flags & 1)) {
+                ResManager::Item* item = mm::mtl::Singleton<ResManager>::getPtr()->search(
+                    mm::mtl::Singleton<Extend>::getPtr()->eva(name));
+                if (item == nullptr || item->m_data == nullptr || item->m_size == 0) {
+                    return 1;
+                }
+                data = item->m_data;
+                size = item->m_size;
+            } else {
+                data = mm::mtl::Singleton<MotstmManager>::getPtr()->adr(
+                    mm::mtl::Singleton<Extend>::getPtr()->eva(name), &size);
+                if (data == nullptr) {
+                    return 1;
+                }
+            }
+            m_player.play(m_ctrl, data);
+            m_time = param.m_param.val(2).getF32();
+            m_data = data;
+        }
+        m_player.update(step);
+        m_time -= step;
+        if (!(m_time < 0.0f)) {
+            return 2;
+        }
+    }
+    m_player.stop();
+    if ((mm::mtl::Singleton<EffectManager>::getPtr()->m_flags & 1) && m_data != nullptr) {
+        mm::mtl::Singleton<MotstmManager>::getPtr()->free(m_data);
+    }
+    m_data = nullptr;
+    return 1;
+}
+
+void EffectPlayEva::term() {
+    if ((mm::mtl::Singleton<EffectManager>::getPtr()->m_flags & 1) && m_data != nullptr) {
+        mm::mtl::Singleton<MotstmManager>::getPtr()->free(m_data);
+    }
+    m_data = nullptr;
 }
 
 int EffectLinearRot::update(const ICmd::Param& param) {
@@ -1732,6 +1784,10 @@ ResPack::~ResPack() {
     m_func = nullptr;
     m_event = nullptr;
 }
+
+// inline here: the original's out-of-line copy (0x71000B8D70, called from another unit) stores in an order no source
+// form gives yet, while the copies Singleton<ResManager>::getPtr inlines (EffectPlayEva::update) match this one
+ResManager::ResManager() : pad_0x18(0), pad_0x10b8(0) {}
 
 void ResManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {

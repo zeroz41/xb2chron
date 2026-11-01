@@ -12,6 +12,9 @@ public:
     virtual void update() = 0;  // slot 2
     virtual void render(mm::Rect<int> const&, float) = 0;  // slot 3
     virtual void tail() {}  // slot 4
+    // the region of the named stream and its size (StmPackMemory::adr; MotstmManager::adr calls it)
+    virtual void* adr(char const*, unsigned long*) = 0;  // slot 5
+    virtual void free(void*, int) = 0;  // slot 6
 };
 }  // namespace event
 

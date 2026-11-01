@@ -12,6 +12,12 @@ namespace event {
 class MotstmManager : public IManager, public mm::mtl::Singleton<MotstmManager> {
 public:
     virtual ~MotstmManager();  // slot 0
+    // inline: no constructor symbol; Singleton<MotstmManager>::getPtr's inlined copy zeroes 0x10..0x17 and builds
+    // the StmManager with this name
+    MotstmManager() : m_flags(), m_dispFlags(0), m_stmManager("streaming 1(eva lgt hkt)") {}
+    // 1.0.0's MotstmManager::adr and free (0x71000A85CC, 0x71000A85E4; 3.0.1 inlines them)
+    void* adr(const char* name, unsigned long* size) { return m_stmManager.adr(name, size); }
+    void free(void* p) { m_stmManager.free(p, 0); }
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     void update();  // out of line
     // 1.0.0's clear and render (3.0.1 inlines them into OnEventProc; defined inline in CharaObj.cpp)
