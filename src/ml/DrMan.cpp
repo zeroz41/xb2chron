@@ -45,6 +45,10 @@
 #include <string.h>
 #include "stdio.h"
 #include "grlib/CGLibTexture.h"
+#include "ml/DrIrrVolMan.h"
+#include "classes/ml/DrCalcTexStreamMan.h"
+#include "classes/cloud/CloudMan.h"
+#include "csvb/CsvbData.h"
 
 namespace cloud {
 using namespace grlib;
@@ -82,6 +86,38 @@ const char* FLAG_WAVE1_FILE = "flag_wave_1";
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_71015E9398). The path DrIniSys formats
 // its file names into.
 static char s_pathBuf[0x200];
+
+void DrIniSys::dataWorkClear() {
+    for (int i = 0; i < 18; i++) {
+        if (m_texRes[i] != nullptr) {
+            m_texture[i].release();
+            if (m_texRes[i] != nullptr) {
+                m_texRes[i]->Release();
+                m_texRes[i] = nullptr;
+            }
+        }
+    }
+    if (m_mirrorBallRes != nullptr) {
+        m_mirrorBallRes->Release();
+        m_mirrorBallRes = nullptr;
+    }
+    if (m_camLight != nullptr) {
+        m_camLight->Release();
+        m_camLight = nullptr;
+    }
+    if (m_glassBreakage != nullptr) {
+        m_glassBreakage->Release();
+        m_glassBreakage = nullptr;
+    }
+    if (m_filterLut != nullptr) {
+        m_filterLut->Release();
+        m_filterLut = nullptr;
+    }
+    if (m_wetnessCsv != nullptr) {
+        delete m_wetnessCsv;
+        m_wetnessCsv = nullptr;
+    }
+}
 
 FileResTh* DrIniSys::readTextureMapFile(const char* name) {
     snprintf(s_pathBuf, sizeof(s_pathBuf), "/monolib/shader/%s.witex", name);
@@ -163,13 +199,101 @@ void DrIniSys::loadFilterLutTexture() {
     m_pDrMan->m_filterData->setFilterData(res->m_data);
 }
 
+void DrIniSys::getWetnessSetting(unsigned short row, WetSetting& setting) const {
+    if (m_wetnessCsv->GetRowCount() == 0) {
+        setting.m_enable = false;
+        setting.m_param1 = 0;
+        setting.m_param2 = 0;
+        setting.m_value = m_wetDefault;
+        return;
+    }
+    row = (row == 0 || row >= m_wetnessCsv->GetRowCount()) ? 0 : row;
+    setting.m_enable = m_wetnessCsv->GetInt(row, 0) == 1;
+    setting.m_param1 = m_wetnessCsv->GetInt(row, 1);
+    setting.m_param2 = m_wetnessCsv->GetInt(row, 2);
+    setting.m_value = m_wetnessCsv->GetColumCount(row) >= 4 ? m_wetnessCsv->GetFloat(row, 3) : m_wetDefault;
+}
+
 const void* DrIniSys::getGlassBreakage() const { return m_glassBreakage->m_data; }
 
 DrMan* DrMan::getIns() { return s_pTop; }
 
 DrMan* DrMan::get() { return s_pTop; }
 
+void DrMan::createAddRenderSystem(DR_VIEW_PARAM* param) {
+    CS lock(*getCriticalSection());
+    int idx = s_nDblStockIdx;
+    m_addViewParam[idx][m_addViewNum[idx]] = *param;
+    m_addViewNum[idx]++;
+}
+
+void DrMan::setModelTexture(DR_MODEL_TEXTURE* texture, unsigned int slot) {
+    CS lock(*getCriticalSection());
+    m_modelTexture[s_nDblStockIdx][slot] = *texture;
+    m_modelTextureReq[s_nDblStockIdx] |= 1 << slot;
+}
+
+void DrMan::resetModelTexture(unsigned int slot) {
+    CS lock(*getCriticalSection());
+    m_modelTexture[s_nDblStockIdx][slot].m_texture = nullptr;
+    m_modelTexture[s_nDblStockIdx][slot].m_enable = false;
+    m_modelTextureReq[s_nDblStockIdx] |= 1 << slot;
+}
+
+void DrMan::deleteAddRenderSystem(unsigned int index) {
+    CS lock(*getCriticalSection());
+    int idx = s_nDblStockIdx;
+    m_delViewIdx[idx][m_delViewNum[idx]] = index;
+    m_delViewNum[idx]++;
+}
+
+void DrMan::end() {
+    if (m_cloudMan != nullptr) {
+        m_cloudMan->end();
+    }
+    for (int i = 0; i < m_callBackNum; i++) {
+        m_callBack[i]->end();
+    }
+    m_endFlag = m_endFlagReq;
+    m_curViewInfo = &m_viewInfo[0];
+    m_calcMan = m_viewCalcMan[0];
+    m_postParmIdx = 0;
+    m_lightMan = m_viewLightMan[0];
+    m_fogMan = m_viewFogMan[0];
+    m_curEnvMan = m_envMan[0];
+    m_pixlMan->setupCate(0);
+    DrMdlMan* mdlMan = m_mdlMan;
+    mdlMan->m_pExtraList = &mdlMan->m_extraList;
+    mdlMan->m_curZSortMan = mdlMan->m_zsortMan;
+    mdlMan->m_pMdlList = &mdlMan->m_lists[0];
+    mdlMan->pad_238 = 0;
+    mdlMan->m_pGrpList = &mdlMan->m_lists[10];
+    mdlMan->m_smlShadowMan->m_viewIdx = 0;
+    m_shdMan->setupCate(0);
+}
+
 bool DrMan::loopCnt() { return true; }
+
+void DrMan::blurCallBackRender() {
+    for (int i = 0; i < m_callBackNum; i++) {
+        m_callBack[i]->blurRender(&m_drawWorkInfo[m_postParmIdx]);
+    }
+}
+
+void DrMan::tail() {
+    m_texStreamMan->jobWait();
+    s_nDblIdx = !s_nDblIdx;
+    s_nDblStockIdx = !s_nDblIdx;
+    if (!m_mdlDblPause) {
+        s_nDblMemIdx = s_nDblIdx;
+    }
+    s_nDblNowIdx = s_nDblIdx;
+    s_nTriNowIdx = s_nTriNowIdx > 1 ? 0 : s_nTriNowIdx + 1;
+    m_irrVolMan->tail();
+    if (m_cloudMan != nullptr) {
+        m_cloudMan->tail();
+    }
+}
 
 bool DrMan::isIBLHalfRes() const { return true; }
 

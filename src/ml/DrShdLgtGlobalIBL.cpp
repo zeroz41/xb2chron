@@ -15,7 +15,7 @@ void DrShdLgtGlobalIBL::update(int viewIdx) {
     DrMan* drMan = m_drMan;
     if (viewIdx != 0) {
         if (viewIdx < 1) return;
-        if (!drMan->m_viewUpdate[viewIdx].m_enable) return;
+        if (!drMan->m_viewInfo[viewIdx].m_enable) return;
     }
     updateView(viewIdx);
 }

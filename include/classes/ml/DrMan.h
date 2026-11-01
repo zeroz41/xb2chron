@@ -15,9 +15,11 @@ namespace ml { class DrPixlMdlSampler; }
 namespace ml { class DrCalcMan; }
 namespace ml { class DrShdMan; }
 namespace ml { class DrLightMan; }
+namespace ml { class DrFogMan; }
 namespace ml { class DrGlobalIBLMan; }
 namespace ml { class DrCalcTexStreamMan; }
 namespace ml { class DrIniSys; }
+namespace ml { class DrIrrVolMan; }
 namespace ml { class DrPixlMan; }
 namespace ml { class DrMdlMan; }
 namespace ml { class DrPixlPostParm; }
@@ -119,6 +121,8 @@ public:
     static DrMan* s_pTop;
     static int s_nDblNowIdx;
     static int s_nDblMemIdx;
+    // tail steps it 0, 1, 2, 0 (a triple-buffer index)
+    static int s_nTriNowIdx;
     static bool s_bSRGBMode;
     static bool s_bFogSRGB;
 
@@ -137,14 +141,17 @@ public:
     DrPixlMan* m_pixlMan;               // 0x78, DrMdoSetup::varStTex_* call DrPixlMan methods on it (the name is not the original's)
     DrShdMan* m_shdMan;                 // 0x80, DrMdoSetup::uniformBlock_Bone/Cluster* read it (the name is not the original's)
     DrMdlMan* m_mdlMan;                 // 0x88, DrCreator's model calls go to it
-    unsigned char pad_90[0x8];
+    // 0x90: tail calls its tail, the destructor deletes it (the name is not the original's)
+    DrIrrVolMan* m_irrVolMan;
     DrResFilterData* m_filterData;  // 0x98, DrIniSys::loadFilterLutTexture hands it the filter LUT (name inferred)
     // one per view: DrCreator::createClipObj takes the view's clip manager from it (the name is not the original's)
     DrCalcMan* m_viewCalcMan[4];        // 0xA0
     // one per view: ScnObjLightDrSys's constructor releases the view's fast light with it (the name is not the
     // original's)
     DrLightMan* m_viewLightMan[4];      // 0xC0
-    unsigned char pad_E0[0x20];
+    // one per view: the destructor deletes them with ~DrFogMan; end makes [0] the current one (the name is not the
+    // original's)
+    DrFogMan* m_viewFogMan[4];          // 0xE0
     // the constructor makes one per view (index 0 here), after the DrLightMan/DrFogMan it is built from
     DrEnvironmentMan* m_envMan[4];
     DrPixlPostParm* m_postParm[4];      // the constructor makes them; ScnRenderDrSysParmAcc takes one per view
@@ -156,28 +163,21 @@ public:
     DrPixlTileParm* m_tileParm;
     // 0x188: DrMdoSamplerMan::begin sets its samplers up when update reports a change (the name is not the original's)
     DrPixlMdlSampler* m_pMdlSampler;
-    unsigned char pad_190[0x2E8];
-    // 0x478: one 0x40-byte record per view; DrShdLgtGlobalIBL::update updates a view other than 0 only when bit 0 of
-    // its first byte is set (the type and names are not the original's)
-    struct ViewUpdate {
-        bool m_enable : 1;
-        unsigned char pad_1[0x3F];
-    };
-    ViewUpdate m_viewUpdate[4];
-    unsigned char pad_578[0x8];
-    // the current view's DrCalcMan: beginSetup stores the one it makes at 0xA0 + index * 8 here too (the name is
-    // not the original's)
-    DrCalcMan* m_calcMan;               // 0x580
-    DrLightMan* m_lightMan;             // 0x588, DrResMdoLight makes and releases its lights with it (the name is not the original's)
-    unsigned char pad_590[0x8];
-    // 0x598: the current view's DrEnvironmentMan (DrResMdoSeamWrkLight::setupWork makes its environment object with
-    // it; the name is not the original's)
-    DrEnvironmentMan* m_curEnvMan;
-    unsigned char pad_5A0[0x10];
-    DrCalcTexStreamMan* m_texStreamMan;  // 0x5B0, DrStmReadCheck makes its stream lists with it (the name is not the original's)
-    // 0x5B8: the constructor points it at its record at 0x440 (0x40 bytes per view, the same records
-    // m_viewUpdate reads) and stores the main screen size in it; DrPixlMan::setMainViewPort makes the viewport from
-    // that size (the type and names are not the original's)
+    // 0x190: by s_nDblStockIdx: the views createAddRenderSystem queued (the names are not the original's)
+    DR_VIEW_PARAM m_addViewParam[2][4];
+    int m_addViewNum[2];                // 0x350
+    // 0x358: by s_nDblStockIdx: the view indices deleteAddRenderSystem queued (the names are not the original's)
+    unsigned int m_delViewIdx[2][4];
+    int m_delViewNum[2];                // 0x378
+    unsigned char pad_380[0x38];
+    // 0x3B8: by s_nDblStockIdx, then slot: setModelTexture/resetModelTexture write it (the name is not the original's)
+    DR_MODEL_TEXTURE m_modelTexture[2][4];
+    // 0x438: by s_nDblStockIdx, a bit per slot setModelTexture/resetModelTexture changed (the name is not the
+    // original's)
+    unsigned int m_modelTextureReq[2];
+    // 0x440: one 0x40-byte record per view (the type and names are not the original's). The constructor points
+    // m_curViewInfo at [0] and stores the main screen size in it; DrPixlMan::setMainViewPort makes the viewport from
+    // that size. DrShdLgtGlobalIBL::update updates a view other than 0 only when bit 0 of its byte 0x38 is set.
     struct ViewInfo {
         unsigned char pad_0[0x18];
         int m_width;   // 0x18, DrAPGxType::getMainScreenSize
@@ -188,7 +188,23 @@ public:
         // 0x28: DrPixlPostObjCapture::update sizes its capture target from it (the names are not the original's)
         int m_captureWidth;
         int m_captureHeight;  // 0x2C
+        unsigned char pad_30[0x8];
+        bool m_enable : 1;  // 0x38
+        unsigned char pad_39[0x7];
     };
+    ViewInfo m_viewInfo[4];
+    unsigned char pad_540[0x40];
+    // the current view's DrCalcMan: beginSetup stores the one it makes at 0xA0 + index * 8 here too (the name is
+    // not the original's)
+    DrCalcMan* m_calcMan;               // 0x580
+    DrLightMan* m_lightMan;             // 0x588, DrResMdoLight makes and releases its lights with it (the name is not the original's)
+    DrFogMan* m_fogMan;                 // 0x590, the current view's (end sets m_viewFogMan[0]; the name is not the original's)
+    // 0x598: the current view's DrEnvironmentMan (DrResMdoSeamWrkLight::setupWork makes its environment object with
+    // it; the name is not the original's)
+    DrEnvironmentMan* m_curEnvMan;
+    unsigned char pad_5A0[0x10];
+    DrCalcTexStreamMan* m_texStreamMan;  // 0x5B0, DrStmReadCheck makes its stream lists with it (the name is not the original's)
+    // 0x5B8: the current view's record in m_viewInfo (end resets it to [0]; the name is not the original's)
     ViewInfo* m_curViewInfo;
     DrAPCache* m_apCache;               // 0x5C0, DrMdoSetup::varStTex_* bind textures through it (the name is not the original's)
     bool* m_pAutoReduction;             // 0x5C8, setAutoReduction writes through it
@@ -261,7 +277,11 @@ public:
     bool m_mdlDblPause;
     // 0x1D98: DrMdoMpfMan::update skips the wind calculators while set (the name is not the original's)
     bool m_mpfWindStop;
-    unsigned char pad_1D99[0x1F];
+    unsigned char pad_1D99[0xF];
+    // 0x1DA8: end copies it to the next byte (the names are not the original's)
+    bool m_endFlagReq;
+    bool m_endFlag;                     // 0x1DA9
+    unsigned char pad_1DAA[0xE];
     bool m_allMiddelTexStmChk[2];       // 0x1DB8, by s_nDblStockIdx
     bool m_seamMapStmOk[2];             // 0x1DBA, setSeamMapStmOk writes [s_nDblIdx]
     // 0x1DBC: fn_710071E75C (DrMdoCtlSeam::calcBegin's call) sets [s_nDblIdx], fn_710071E77C reads [s_nDblStockIdx]

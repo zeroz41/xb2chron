@@ -3,6 +3,8 @@
 
 #include "grlib/CGLibTextureBuffer.h"
 
+namespace csvb { class CCsvbData; }
+
 namespace ml {
 class FileResTh;
 class DrMan;
@@ -10,6 +12,18 @@ class DrMan;
 // DrMan's (DrMan::DrMan makes it, 0x1BA0 bytes)
 class DrIniSys {
 public:
+    // what getWetnessSetting reads from a wetness_param row (DrEnvColiParameter::calcParams asks for it; the field
+    // names are not the original's)
+    struct WetSetting {
+        bool m_enable;  // column 0 == 1
+        int m_param1;   // column 1
+        int m_param2;   // column 2
+        float m_value;  // column 3, else the default at 0x1A0C
+    };
+
+    // releases every texture's resource, the other resources and the wetness table (the destructor calls it)
+    void dataWorkClear();
+    void getWetnessSetting(unsigned short row, WetSetting& setting) const;
     // the data of the resource loadGlassBreakage read
     const void* getGlassBreakage() const;
     // reads /monolib/shader/<name>.witex (the scene's entry resource, else a FileResTh of its own)
@@ -30,17 +44,27 @@ public:
     // the original's). Bound by DrMdoSetup: [1] dither, [3] ambient BRDF, [6] toon rim, [7] volume, [12] specular
     // IBL fallback, [15] orientation, [16]/[17] flag wave.
     grlib::CGLibTextureBuffer m_texture[18];
-    unsigned char pad_878[0x18];
+    // 0x878: loadMirrorBallModel's model resource (the name is not the original's)
+    FileResTh* m_mirrorBallRes;
+    unsigned char pad_880[0x10];
     FileResTh* m_camLight;  // 0x890, loadCameraLight's night_light.wilgt (the name is not the original's)
     // 0x898: the glass breakage resource loadGlassBreakage reads (the name is not the original's)
     FileResTh* m_glassBreakage;
     FileResTh* m_filterLut;  // 0x8A0, loadFilterLutTexture's filterlut file (the name is not the original's)
     unsigned char pad_8A8[0x2C4];
     bool m_motBlurDefault;  // ScnRenderDrSysParmAcc::setMotBlurDefault writes it (the name is not the original's)
-    unsigned char pad_B6D[0xF13];
+    unsigned char pad_B6D[0xE9F];
+    // 0x1A0C: the wetness value getWetnessSetting returns without a table row or column 3 (the name is not the
+    // original's)
+    float m_wetDefault;
+    unsigned char pad_1A10[0x70];
     // 0x1A80: the path loadIBLEnvTexture reads (the name is not the original's; its length is not known, it runs to
-    // the end of the class here)
-    char m_iblEnvPath[0x120];
+    // m_wetnessCsv here)
+    char m_iblEnvPath[0x108];
+    // 0x1B88: the wetness_param table getWetnessSetting reads; dataWorkClear deletes it (the name is not the
+    // original's)
+    csvb::CCsvbData* m_wetnessCsv;
+    unsigned char pad_1B90[0x10];
 };
 }  // namespace ml
 
