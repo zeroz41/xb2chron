@@ -12,7 +12,7 @@ public:
     DrCalcClipWorkCone();
     ~DrCalcClipWorkCone();  // not virtual: no table slot; its owners' destructors call it
     virtual bool clipTest(mm::Vec3 const&, float) const;  // slot 0
-    virtual bool clipTypeTest(mm::Vec3 const&, float) const;  // slot 4
+    virtual int clipTypeTest(mm::Vec3 const&, float) const;  // slot 4
     virtual void debugDraw();  // slot 5
 };
 }  // namespace ml

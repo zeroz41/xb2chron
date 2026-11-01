@@ -3,11 +3,13 @@
 
 #include "grlib/CGLibDblUniformBlock.h"
 #include "grlib/CGLibRenderTarget.h"
+#include "mm/Mat44.h"
 
 namespace mm { class Vec3; }
 
 namespace ml {
 class DrMan;
+class DrLightObj;
 
 // table 0x7100B7CE08
 class DrPixlShadowObj {
@@ -18,13 +20,16 @@ public:
     virtual void afterUpdate() {}  // slot 3
     virtual bool dispChk() { return true; }  // slot 4
     virtual bool clipChk(mm::Vec3 const&, float, bool) { return true; }  // slot 5
-    virtual bool clipTypeChk(mm::Vec3 const&, float) { return false; }  // slot 6
+    virtual int clipTypeChk(mm::Vec3 const&, float) { return 0; }  // slot 6
     virtual bool setSptCalcPos(mm::Vec3 const&, float) { return true; }  // slot 7
     virtual void renderLight() {}  // slot 8
     virtual void stockTile() {}  // slot 9
     virtual void debugInfo() {}  // slot 10
-    virtual const float* getParmTbl() const { return m_parmTbl; }  // slot 11
+    virtual const float* getParmTbl() const { return m_parmTbl.m[0]; }  // slot 11
 
+    // clears the depth target, begins the shadow pass (DrAPCache, DrAPGxType, the DrCalcViewWork with m_parmTbl)
+    // once per frame: bit 0 of m_flags marks it done
+    void renderSetup();
     bool renderEnd();
     void setInstSelMapShadow(bool enable);
 
@@ -33,21 +38,25 @@ public:
     // 0x40: the shadow depth target from DrPixlShadowMan's pool (create*Shadow set it up); renderEnd invalidates its
     // depth buffer (the name is not the original's)
     grlib::CGLibDepthTarget* m_depthTarget;
-    unsigned char pad_48[0x8];
+    unsigned char pad_48[0x4];
+    // 0x4C: DrPixlShadowMan::setSptCalcPos skips an object while it is 0 (the name is not the original's)
+    unsigned short m_active;
+    unsigned char pad_4E[0x2];
     // 0x50 flags (the name is not the original's): bit 0 set by renderSetup and tested by renderEnd, bit 1 tested by
     // the derived dispChk, bit 2 set by setInstSelMapShadow, bit 3 gates DrPixlShadowObjDir::clipTypeChk
     unsigned int m_flags;
     unsigned char pad_54[0xC];
-    // 0x60: what getParmTbl returns; the uniform block is set up with 0x40 or 0x50 bytes, a 4x4 matrix plus a vector
-    // (the name and element type are not the original's)
-    float m_parmTbl[0x44];
+    // 0x60: what getParmTbl returns; the uniform block is set up with 0x40 or 0x50 bytes, a 4x4 matrix plus a vector;
+    // renderSetup passes the matrix to DrCalcViewWork::shadowBegin (the name is not the original's)
+    mm::Mat44 m_parmTbl;
+    unsigned char pad_A0[0xD0];
     unsigned char pad_170[0x8];
     DrMan* m_drMan;  // 0x178: renderEnd ends the shadow pass of its DrCalcMan (the name is not the original's)
     unsigned char pad_180[0x10];
     // 0x190: the next object of a chain (DrPixlShadowMan::shadowRender walks it); the derived destructors delete it
     // (the name is not the original's)
     DrPixlShadowObj* m_next;
-    unsigned char pad_198[0x8];  // 0x198: the DrLightObj the object was created for
+    DrLightObj* m_lightObj;  // 0x198: the DrLightObj the object was created for (the name is not the original's)
 };
 }  // namespace ml
 

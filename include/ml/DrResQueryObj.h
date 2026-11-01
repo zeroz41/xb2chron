@@ -21,7 +21,9 @@ public:
     void begin();
     void end();
 
-    void* m_work[2];                    // 0x00: zeroed by the constructor
+    // 0x00: links in DrPixlOccQuery's free or used list (null at either end)
+    DrResQueryObj* m_next;              // 0x00
+    DrResQueryObj* m_prev;              // 0x08
     grlib::CGLibOcclusionQuery m_query; // 0x10
     DrResUseQueryObj* m_user;           // 0x28
     void* m_userWork;                   // 0x30: cleared with m_user

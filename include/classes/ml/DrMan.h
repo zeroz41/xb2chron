@@ -129,7 +129,9 @@ public:
     unsigned char pad_18[0x4];
     // 0x1C, DrShdLgtMan::reloadShader reads its shader file into it (the name is not the original's)
     mtl::ALLOC_HANDLE m_fileHandle;
-    unsigned char pad_20[0x50];
+    // 0x20, DrPixlOccQuery's constructor allocates its query pool from it (the name is not the original's)
+    mtl::ALLOC_HANDLE m_queryHandle;
+    unsigned char pad_24[0x4C];
     DrIniSys* m_iniSys;                 // the constructor makes it (0x1BA0 bytes)
     DrPixlMan* m_pixlMan;               // 0x78, DrMdoSetup::varStTex_* call DrPixlMan methods on it (the name is not the original's)
     DrShdMan* m_shdMan;                 // 0x80, DrMdoSetup::uniformBlock_Bone/Cluster* read it (the name is not the original's)

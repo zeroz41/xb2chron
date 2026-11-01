@@ -70,6 +70,8 @@ public:
     void endGBuffRenderTarget();
     void depCheckBegin(bool useDepth);
     void occRenderBegin(bool useDepth);
+    // updates every used occlusion query and gives the finished ones back to the pool
+    void lastUpdate();
     void renderRefractionEnd();
     void selectZprepassRenderTarget();
     void thicknessFirstBegin();

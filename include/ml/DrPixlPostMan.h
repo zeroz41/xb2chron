@@ -11,6 +11,7 @@ namespace ml { class DrPixlToonGrad; }
 namespace ml { class DrResUseQueryObj; }
 namespace ml { class DrPixlPostObjVolume; }
 namespace mm { class Vec3; }
+namespace ml { class DrMan; class DrPixlMan; class DrPixlPostObjDepthofField; class DrPixlPostObjMotionBlur; class DrPixlPostObjMotionBlur2; }
 namespace ml { class DrPixlPostObjCapture; }
 
 namespace ml {
@@ -26,13 +27,22 @@ public:
     grlib::CGLibTextureBuffer* getToonGradTex() const;
     grlib::CGLibTextureBuffer* getToonDarkGradTex() const;
     void setVolumePos(const mm::Vec3& pos);
+    // on: sets 0x80040 in m_flags and creates m_motionBlur2; off (when 0x40 is set): deletes both blurs, clears 0x40
+    void setBlur(bool on);
+    // on: sets 0x80020 in m_flags and creates m_depthOfField; off (when 0x20 is set): clears 0x20, deletes it
+    void setDepthField(bool on);
 
-    unsigned char pad_0[0x28];
+    DrMan* m_drMan;  // 0x0 (name inferred)
+    DrPixlMan* m_pixlMan;  // 0x8 (name inferred)
+    unsigned char pad_10[0x18];
     DrPixlPostObjVolume* m_volume;  // 0x28, the constructor creates it; setVolumePos writes its position (name inferred)
-    unsigned char pad_30[0x10];
+    DrPixlPostObjDepthofField* m_depthOfField;  // 0x30, setDepthField (name inferred)
+    unsigned char pad_38[0x8];
     DrPixlPostObjCubeMapMultiIBL* m_cubeMapMultiIBL;  // 0x40, DrPixlMan::fastRender renders it when set (name inferred)
     DrPixlPostObjCubeMapIBL* m_cubeMapIBL;  // 0x48, varStTex_SpecularIBLTex binds its premultiplied texture
-    unsigned char pad_50[0x40];
+    DrPixlPostObjMotionBlur* m_motionBlur;  // 0x50, setBlur deletes it (name inferred)
+    DrPixlPostObjMotionBlur2* m_motionBlur2;  // 0x58, setBlur creates and deletes it (name inferred)
+    unsigned char pad_60[0x30];
     DrPixlSkyDome* m_skyDome;  // 0x90, DrPixlMan::renderSkyDome/renderSkyGodRay when set
     DrPixlToonGrad* m_toonGrad;  // 0x98, getToonGradTex/getToonDarkGradTex when set
     unsigned char pad_A0[0x10];

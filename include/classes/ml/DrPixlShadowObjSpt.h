@@ -15,7 +15,7 @@ public:
     virtual void afterUpdate();  // slot 3
     virtual bool dispChk();  // slot 4
     virtual bool clipChk(mm::Vec3 const&, float, bool);  // slot 5
-    virtual bool clipTypeChk(mm::Vec3 const&, float);  // slot 6
+    virtual int clipTypeChk(mm::Vec3 const&, float);  // slot 6
     virtual bool setSptCalcPos(mm::Vec3 const&, float);  // slot 7
     virtual void renderLight();  // slot 8
     virtual void stockTile();  // slot 9

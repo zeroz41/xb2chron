@@ -13,7 +13,8 @@ public:
     virtual bool clipLineTest(mm::Vec3 const&, mm::Vec3 const&, float) const;  // slot 1
     virtual bool clipTest(float const*, float const*) const;  // slot 2
     virtual bool clipTest(mm::Vec3 const*, int) const;  // slot 3
-    virtual bool clipTypeTest(mm::Vec3 const&, float) const;  // slot 4
+    // 0 outside, 2 inside, else partly (DrPixlShadowCacheMan::clipDirShadowChk tests 0 and 2)
+    virtual int clipTypeTest(mm::Vec3 const&, float) const;  // slot 4
     virtual void debugDraw();  // slot 5
 
     int m_type;  // 0x8: 0, DrCalcClipWorkCone 2 (the name is not the original's)

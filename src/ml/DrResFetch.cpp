@@ -3658,7 +3658,7 @@ int DrResQueryObj::getOccZPassCount() {
     return 0;
 }
 
-DrResQueryObj::DrResQueryObj() : m_work(), m_user(nullptr), m_userWork(nullptr), m_flags(0) {}
+DrResQueryObj::DrResQueryObj() : m_next(nullptr), m_prev(nullptr), m_user(nullptr), m_userWork(nullptr), m_flags(0) {}
 
 DrResQueryObj::~DrResQueryObj() {
     m_query.release();

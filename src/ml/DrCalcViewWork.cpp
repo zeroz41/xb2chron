@@ -286,7 +286,7 @@ bool DrCalcClipWork::clipTest(float const*, float const*) const { return false; 
 bool DrCalcClipWork::clipTest(mm::Vec3 const*, int) const { return false; }
 void DrCalcClipWork::debugDraw() {}
 bool DrCalcClipWork::clipTest(mm::Vec3 const&, float) const { return false; }
-bool DrCalcClipWork::clipTypeTest(mm::Vec3 const&, float) const { return false; }
+int DrCalcClipWork::clipTypeTest(mm::Vec3 const&, float) const { return 0; }
 
 void DrCalcMan::begin() {
     m_pViewWork->begin(m_viewIdx);

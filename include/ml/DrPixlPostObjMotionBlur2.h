@@ -9,6 +9,8 @@ namespace ml {
 // 0x20..0x48 and two CGLibVtxVertex at 0x50/0x58).
 class DrPixlPostObjMotionBlur2 : public DrPixlPostObj {
 public:
+    DrPixlPostObjMotionBlur2(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan);
+    ~DrPixlPostObjMotionBlur2();
     void resetColorBuff();
     void update();
     void calcBludBuffColorBuff();

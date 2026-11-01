@@ -34,6 +34,15 @@
 #include "ml/DrShdDataObj.h"
 #include "ml/DrShdDataList.h"
 #include "ml/DrPixlOccQuery.h"
+#include "ml/DrShdMan.h"
+#include "ml/DrShdLgtMan.h"
+#include "classes/ml/DrShdLgtHybrid.h"
+#include "classes/ml/DrLightObjSpt.h"
+#include "classes/ml/DrCalcClipWorkViewPoli.h"
+#include "classes/grlib/CGLibUniformEtcUtility.h"
+#include "mtl/MemManager.h"
+#include "ml/DrPixlPostObjDepthofField.h"
+#include "ml/DrPixlPostObjMotionBlur2.h"
 #include <math.h>
 #include <string.h>
 
@@ -261,6 +270,19 @@ void DrPixlMan::occRenderBegin(bool useDepth) {
     occQuery->m_uniformOfs = occQuery->m_shader->getCurrentShader().getUniformBlockOfs("U_POST");
 }
 
+void DrPixlMan::lastUpdate() {
+    DrPixlOccQuery* occQuery = m_occQuery;
+    DrResQueryObj* obj = occQuery->m_useHead;
+    while (obj != nullptr) {
+        bool done = obj->update();
+        DrResQueryObj* next = obj->m_next;
+        if (done) {
+            occQuery->releaseObj(obj);
+        }
+        obj = next;
+    }
+}
+
 void DrPixlMan::shadowDirEnd() {
     DrAPGxType::endShadow();
     m_renderTarget = 0;
@@ -325,6 +347,96 @@ grlib::CGLibRenderTarget* DrPixlPostMan::getOldDownDepth() { return m_downDepth[
 
 bool DrPixlPostMan::isDepthDown() { return (m_flags >> 19) & 1; }
 
+DrPixlOccQuery::DrPixlOccQuery(DrMan* drMan, DrPixlMan* pixlMan)
+    : m_drMan(drMan), m_pixlMan(pixlMan), m_renderCount(0), m_freeHead(nullptr), m_freeTail(nullptr),
+      m_useHead(nullptr), m_useTail(nullptr), m_objs(nullptr), m_useCount(0), m_freeCount(0), m_capacity(0) {
+    m_shdList = drMan->m_shdMan->m_dataList;
+    m_shader = m_shdList->getSelectShdObj(4);
+    m_occTypeOfs = m_shader->getDeclarationOfs("OCC_TYPE");
+    m_buffer = static_cast<DrResQueryObj*>(mtl::MemManager::allocate(DrMan::getIns()->m_queryHandle,
+                                                                     sizeof(DrResQueryObj) * 0x800, 0x40, false,
+                                                                     "no name", 0));
+    m_objs = m_buffer;
+    m_capacity = 0x800;
+    for (long i = 0; i < m_capacity; i++) {
+        new (&m_objs[i]) DrResQueryObj();
+    }
+    DrResQueryObj* objs = m_objs;
+    int num = m_capacity;
+    m_useCount = 0;
+    m_freeCount = num;
+    m_freeHead = objs;
+    m_freeTail = &objs[num - 1];
+    for (int i = 0; i < num - 1; i++) {
+        objs[i].m_next = &objs[i + 1];
+        objs[i + 1].m_prev = &objs[i];
+    }
+}
+
+DrResQueryObj* DrPixlOccQuery::createObj() {
+    DrResQueryObj* obj = m_freeHead;
+    if (obj == nullptr) {
+        return nullptr;
+    }
+    DrResQueryObj* next = obj->m_next;
+    if (next == nullptr) {
+        m_freeHead = nullptr;
+        m_freeTail = nullptr;
+    } else {
+        m_freeHead = next;
+        next->m_prev = nullptr;
+    }
+    if (m_useTail != nullptr) {
+        m_useTail->m_next = obj;
+    }
+    if (m_useHead == nullptr) {
+        m_useHead = obj;
+    }
+    obj->m_prev = m_useTail;
+    obj->m_next = nullptr;
+    m_useTail = obj;
+    m_freeCount--;
+    m_useCount++;
+    obj->m_user = nullptr;
+    obj->m_userWork = nullptr;
+    obj->m_flags = 0;
+    return obj;
+}
+
+void DrPixlPostMan::setBlur(bool on) {
+    if (on) {
+        m_flags |= 0x80040;
+        if (m_motionBlur2 == nullptr) {
+            m_motionBlur2 = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlPostObjMotionBlur2(m_drMan, m_pixlMan, this);
+        }
+    } else if (m_flags & 0x40) {
+        if (m_motionBlur != nullptr) {
+            delete m_motionBlur;
+            m_motionBlur = nullptr;
+        }
+        if (m_motionBlur2 != nullptr) {
+            delete m_motionBlur2;
+            m_motionBlur2 = nullptr;
+        }
+        m_flags &= ~0x40;
+    }
+}
+
+void DrPixlPostMan::setDepthField(bool on) {
+    if (on) {
+        m_flags |= 0x80020;
+        if (m_depthOfField == nullptr) {
+            m_depthOfField = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlPostObjDepthofField(m_drMan, m_pixlMan, this);
+        }
+    } else if (m_flags & 0x20) {
+        m_flags &= ~0x20;
+        if (m_depthOfField != nullptr) {
+            delete m_depthOfField;
+            m_depthOfField = nullptr;
+        }
+    }
+}
+
 void DrPixlPostMan::setVolumePos(const mm::Vec3& pos) {
     if (m_volume != nullptr) {
         m_volume->m_pos = pos;
@@ -343,6 +455,21 @@ DrPixlPostObj::DrPixlPostObj(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* po
 float DrPixlPostObj::gaussianDistribution(float x, float y, float rho) {
     float g = 1.0f / sqrtf(2.0f * 3.14159265f * rho * rho);
     return g * expf((x * x + y * y) / (-2.0f * rho * rho));
+}
+
+// binds target's texture at location with point (or, with filter, linear) sampling and sets the vec4 at ofs to a
+// unit scale and zero offset; the shader is not used
+void DrPixlPostObj::setUVScale_UB(grlib::CGLibUniformEtcUtility& uniform, DrShdDataObj*, const DrPixlRenderTarget* target,
+                                  bool filter, unsigned int location, unsigned int ofs) {
+    DrAPCache* cache = m_drMan->m_apCache;
+    mm::Vec4 scale(1.0f, 1.0f, 0.0f, 0.0f);
+    if (filter) {
+        cache->beginTexSampling(2, 1);
+    } else {
+        cache->beginTexSampling(2, 0);
+    }
+    cache->setTexture(*target->m_pTexture, location);
+    uniform.setF32SetVec4(ofs, &scale.x);
 }
 
 void DrPixlPostObj::calc1PixlOfs(float& width, float& height) {
@@ -578,6 +705,29 @@ bool DrPixlShadowMan::setAddObjPos(mm::Vec3 const& pos, float radius) {
     return false;
 }
 
+bool DrPixlShadowMan::setSptCalcPos(mm::Vec3 const& pos, float radius) {
+    bool result = false;
+    for (int i = 0; i < m_objNum; i++) {
+        DrPixlShadowObj* obj = m_objs[i];
+        if (obj->m_active != 0) {
+            result |= obj->setSptCalcPos(pos, radius);
+        }
+    }
+    return result;
+}
+
+void DrPixlShadowObj::renderSetup() {
+    if (!(m_flags & 1)) {
+        m_depthTarget->clearDepth(false);
+        m_drMan->m_apCache->shadowBegin();
+        DrAPGxType::beginShadow();
+        m_drMan->m_pixlMan->m_renderTarget = 0;
+        m_depthTarget->setRenderTarget();
+        m_drMan->m_calcMan->m_pViewWork->shadowBegin(m_parmTbl);
+        m_flags |= 1;
+    }
+}
+
 bool DrPixlShadowObj::renderEnd() {
     if (!(m_flags & 1)) {
         return false;
@@ -603,9 +753,9 @@ DrPixlShadowObjDir::~DrPixlShadowObjDir() {
 
 bool DrPixlShadowObjDir::dispChk() { return (m_flags >> 1) & 1; }
 
-bool DrPixlShadowObjDir::clipTypeChk(mm::Vec3 const& pos, float radius) {
+int DrPixlShadowObjDir::clipTypeChk(mm::Vec3 const& pos, float radius) {
     if (!(m_flags & 8) || m_typeClipRange <= radius) {
-        return false;
+        return 0;
     }
     return m_clip.clipTypeTest(pos, radius);
 }
@@ -622,14 +772,19 @@ bool DrPixlShadowObjSpt::clipChk(mm::Vec3 const& pos, float radius, bool) {
     return m_clip.clipTest(pos, radius);
 }
 
-bool DrPixlShadowObjSpt::clipTypeChk(mm::Vec3 const& pos, float radius) {
+int DrPixlShadowObjSpt::clipTypeChk(mm::Vec3 const& pos, float radius) {
     if (m_clipRange < radius) {
-        return false;
+        return 0;
     }
     return m_clip.clipTypeTest(pos, radius);
 }
 
 bool DrPixlShadowObjSpt::dispChk() { return (m_flags >> 1) & 1; }
+
+void DrPixlShadowObjSpt::stockTile() {
+    DrLightObjSpt* light = static_cast<DrLightObjSpt*>(m_lightObj);
+    m_drMan->m_shdMan->m_lgtMan->m_pHybrid->stockSptList(light);
+}
 
 void DrPixlShadowObjSpt::renderLight() {}
 

@@ -12,7 +12,7 @@ public:
     virtual bool clipTest(mm::Vec3 const&, float) const;  // slot 0
     virtual bool clipTest(float const*, float const*) const;  // slot 2
     virtual bool clipTest(mm::Vec3 const*, int) const;  // slot 3
-    virtual bool clipTypeTest(mm::Vec3 const&, float) const;  // slot 4
+    virtual int clipTypeTest(mm::Vec3 const&, float) const;  // slot 4
 };
 }  // namespace ml
 
