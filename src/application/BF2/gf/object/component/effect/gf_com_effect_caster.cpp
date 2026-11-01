@@ -17,6 +17,15 @@
 #include "classes/gf/GfComTransform.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfObj.h"
+#include "classes/gf/GfAssetManager.h"
+#include "classes/gf/GfAssetResource.h"
+#include "gf/GfObjAcc.h"
+#include "gf/GfObjUtil.h"
+#include "gf/GfDataWeapon.h"
+#include "classes/gf/DataParamAcc.h"
+#include "classes/fw/EffectPack.h"
+#include <stdlib.h>
+#include <string.h>
 #include "classes/fw/EffectResData.h"
 #include "classes/gf/EffectCaster.h"
 #include "classes/gf/GfComEffectCaster.h"
@@ -33,6 +42,92 @@ static bool s_leaderCasterSet;
 GfComEffectCaster::~GfComEffectCaster() {
     s_leaderCasterSet = false;
     cleanup();
+}
+
+void GfComEffectCaster::setupEfp(const SetupInfo& info) {
+    GfObjAcc acc(static_cast<GfObj*>(m_owner));
+    fw::UpdatableObject* owner = m_owner;
+    GfAssetResource* resource;
+    switch (pad_117ac) {
+    case 0:
+    case 1:
+        resource = GfAssetManager::getResource(info.m_asset, static_cast<GfFileIdx>(61), static_cast<GfAssetType>(0));
+        break;
+    case 3:
+    case 5:
+        resource = GfAssetManager::getResource(info.m_asset, static_cast<GfFileIdx>(3), static_cast<GfAssetType>(0));
+        break;
+    case 4:
+    case 8:
+        resource = GfAssetManager::getResource(info.m_asset, static_cast<GfFileIdx>(2), static_cast<GfAssetType>(0));
+        break;
+    case 2:
+    case 6:
+    case 7:
+        resource = GfAssetManager::getResource(info.m_asset, static_cast<GfFileIdx>(9), static_cast<GfAssetType>(0));
+        break;
+    default:
+        return;
+    }
+    if (resource) {
+        fw::EfpInitData init;
+        init.pad_0 = info.pad_10;
+        init.scale = 1.0f;
+        if (GfComModel* model = owner->getComponent<GfComModel>(1)) {
+            init.createFrame.set(model, &GfComModel::createBoneReferenceFrame);
+            init.releaseFrame.set(model, &GfComModel::destroyBoneReferenceFrame);
+            init.model = model->m_model;
+        }
+        init.allocator = fw::Framework::getAllocator();
+        init.data = resource->getAssetData();
+        init.size = resource->getAssetSize();
+        m_pPoint = new (init.allocator, 16, __FILE__, 606) fw::EffectPoint(init);
+        if (m_pPoint) {
+            m_pPoint->addRef();
+        }
+    }
+}
+
+void GfComEffectCaster::setupEfTail(unsigned int id) {
+    if (pad_117ac != 0) {
+        if (m_tailId != id) {
+            mm::mtl::FixedVector<const char*, 128> names;
+            GF_ASSET_HANDLE* asset = GfObjUtil::getAssetHandle(static_cast<GfObj*>(m_owner)->m_handle);
+            if (GfAssetManager::fn_71001AE8A8(names, asset, ".wiswt")) {
+                if (GfAssetResource* resource = GfAssetManager::fn_71001AE9D0(asset, names[0])) {
+                    EffectCaster* caster = m_caster;
+                    void* data = resource->getAssetData();
+                    unsigned int size = resource->getAssetSize();
+                    caster->pad_20 = data;
+                    caster->pad_28 = size;
+                    m_tailId = id;
+                }
+            }
+        }
+    } else if (m_caster && m_tailId != id) {
+        mm::mtl::FixedVector<const char*, 128> names;
+        GF_ASSET_HANDLE* asset = GfObjUtil::getAssetHandle(static_cast<GfObj*>(m_owner)->m_handle);
+        GfAssetManager::fn_71001AE8A8(names, asset, ".wiswt");
+        for (const char* name : names) {
+            if (GfAssetResource* resource = GfAssetManager::fn_71001AE9D0(asset, name)) {
+                if (const char* number = strchr(resource->getAssetName(), '_')) {
+                    char digits[4] = {};
+                    digits[0] = number[1];
+                    digits[1] = number[2];
+                    digits[2] = '\0';
+                    if (atoi(digits) == id) {
+                        EffectCaster* caster = m_caster;
+                        void* data = resource->getAssetData();
+                        unsigned int size = resource->getAssetSize();
+                        caster->pad_20 = data;
+                        caster->pad_28 = size;
+                        m_tailId = id;
+                        return;
+                    }
+                }
+            }
+        }
+    }
 }
 
 void GfComEffectCaster::setupCaster(const fw::EffectPoint* point) {
@@ -86,6 +181,44 @@ GfComEffectCaster::Param* GfComEffectCaster::findEffectCasterParam(unsigned int 
     return nullptr;
 }
 
+fw::EffectPack* GfComEffectCaster::getWeaponEffectPack(const char* name) {
+    if (strncmp(name, "cmn", 3) != 0) {
+        unsigned int type;
+        {
+            DataParamAcc acc(static_cast<GfObj*>(m_owner)->m_handle);
+            type = GfDataWeapon::getEffWeaponType(acc.getWeaponType(-1, false));
+        }
+        fw::EffectPack* found = nullptr;
+        for (unsigned int i = 0; i < m_packs.size(); ++i) {
+            if (m_packs.at(i)->m_id == type || GfGameManager::fn_71002A9E68()) {
+                if (m_packs[i].m_pack && m_packs[i].m_pack->searchEfb(name)) {
+                    found = m_packs[i].m_pack;
+                    break;
+                }
+            }
+        }
+        if (found) {
+            return found;
+        }
+        fw::EffectPack* pack = pad_48;
+        if (pad_117ac == 3 || pad_117ac == 4) {
+            GF_OBJ_HANDLE* parent = GfObjUtil::getParentHandle(static_cast<GfObj*>(m_owner)->m_handle);
+            if (parent != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                GfObjUtil::getAssetHandle(parent);
+                GfAssetResource* resource = GfObjUtil::getResourceEfb(static_cast<GfObj*>(m_owner)->m_handle);
+                if (resource) {
+                    pack = fw::EffectPack::createFromMemory(resource->getAssetData(), resource->getAssetSize(),
+                                                            resource->getAssetName(), false);
+                } else {
+                    pack = nullptr;
+                }
+            }
+        }
+        return pack;
+    }
+    return nullptr;
+}
+
 // the names of the parameters are not the original's
 const char* GfComEffectCaster::getEfpData(const char* name, mm::Mat44& mtx) {
     if (m_caster && m_caster->m_pPoint) {
@@ -94,6 +227,23 @@ const char* GfComEffectCaster::getEfpData(const char* name, mm::Mat44& mtx) {
         return parent;
     }
     return nullptr;
+}
+
+bool GfComEffectCaster::removeMountEffectEv(unsigned int id) {
+    for (EventEfHandleTbl& handle : m_eventEfHandles) {
+        if (handle.m_id == id) {
+            if (handle.pad_41) {
+                if (m_pPoint) {
+                    m_pPoint->m_releaseFrame(handle.m_boneName.m_str);
+                } else if (GfComModel* model = m_owner->getComponent<GfComModel>(1)) {
+                    model->destroyBoneReferenceFrame(handle.m_boneName.m_str);
+                }
+            }
+            m_eventEfHandles.erase(&handle);
+            return true;
+        }
+    }
+    return false;
 }
 
 void GfComEffectCaster::setCaster(unsigned int handle) {
@@ -114,6 +264,29 @@ bool GfComEffectCaster::startTimer(unsigned int id) {
         return true;
     }
     return false;
+}
+
+bool GfComEffectCaster::fn_71004B39DC(mm::mtl::FixedVector<fw::EffectPack*, 8>& packs) {
+    packs.clear();
+    if (pad_48) {
+        packs.push_back(pad_48);
+    }
+    if (GfGameManager::fn_71002A9E68()) {
+        for (PackEntry& entry : m_packs) {
+            packs.push_back(entry.m_pack);
+        }
+    }
+    return !packs.empty();
+}
+
+bool GfComEffectCaster::getWeaponEffectPack(mm::mtl::FixedVector<fw::EffectPack*, 8>& packs, int id, int) {
+    packs.clear();
+    for (PackEntry& entry : m_packs) {
+        if (entry.m_id == id) {
+            packs.push_back(entry.m_pack);
+        }
+    }
+    return !packs.empty();
 }
 
 void GfComEffectCaster::fn_71004B3B68(const mm::Mat44& mtx) {

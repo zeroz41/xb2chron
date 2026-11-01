@@ -21,7 +21,9 @@ namespace fw {
 // what an effect point list is built from (GfComEffectCaster::setupEfp fills one; the constructor reads these fields;
 // the names are not the original's)
 struct EfpInitData {
-    unsigned char pad_0[0x4];
+    // GfComEffectCaster::setupEfp's (inline: its zeroing stores are in setupEfp)
+    EfpInitData() : size(0), data(nullptr), allocator(nullptr), model(nullptr) {}
+    unsigned int pad_0;  // GfComEffectCaster::setupEfp copies its SetupInfo's 0x10 in; what it holds is unknown
     float scale;              // 0x4 multiplies each point's position unless 1
     unsigned int size;        // 0x8 the csvb's size (CCsvbData::Load's third argument)
     const void* data;         // 0x10 the csvb of the points, none when null
