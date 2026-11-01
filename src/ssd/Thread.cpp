@@ -21,6 +21,29 @@ Thread::Param::Param()
 
 Thread::~Thread() {}
 
+Result Thread::CreateThreadImpl(void* argument, Function function, const Param& param) {
+    userData_ = param.userData;
+    argument_ = argument;
+    function_ = function;
+    nn::os::InitializeEvent(&event_, false, nn::os::EventClearMode_AutoClear);
+    closing_ = false;
+    sleeping_ = false;
+    interval_ = param.interval;
+    unsigned long stackSize = param.stackSize == 0 ? 0x8000 : param.stackSize;
+    unsigned char* stackBuffer = SoundMemory::allocator_->NewBuffer<unsigned char>(stackSize, STACK_ALIGNMENT_SIZE);
+#line 113 "D:/ssd/ssd51/ssd/sources/system/thread.nx.cpp"
+    SSD_ASSERT(CheckAlign( stackBuffer, STACK_ALIGNMENT_SIZE ));
+    stack_.address = stackBuffer;
+    stack_.size = stackSize;
+    nn::Result result = nn::os::CreateThread(&thread_, ThreadEntryProc, this, stackBuffer, stackSize, 16);
+    NN_ASSERT(result.IsSuccess());
+    created_ = true;
+    running_ = true;
+    nn::os::SetThreadCoreMask(&thread_, param.idealCore, param.coreMask);
+    nn::os::StartThread(&thread_);
+    return Result(0);
+}
+
 void Thread::ThreadEntryProc(void* thread) {
     Thread* self = static_cast<Thread*>(thread);
     self->running_ = true;
@@ -37,6 +60,16 @@ Result Thread::CloseThread() {
     nn::os::FinalizeEvent(&event_);
     if (stack_.address != nullptr) {
         stack_.Free();
+    }
+    return Result(0);
+}
+
+Result Thread::Sleep(float time) {
+    sleeping_ = true;
+    if (time == 0.0f) {
+        nn::os::WaitEvent(&event_);
+    } else {
+        nn::os::TimedWaitEvent(&event_, nn::TimeSpan::FromMicroSeconds(static_cast<unsigned long>(time * 1000000.0)));
     }
     return Result(0);
 }
@@ -79,6 +112,14 @@ bool Utf16ToUTF8(const char16_t* text, MemoryBlock* block) {
     nn::util::ConvertStringUtf16NativeToUtf8(static_cast<char*>(block->address), length + 1,
                                              reinterpret_cast<const unsigned short*>(text));
     return true;
+}
+
+void Hash::CalcTextHash(const char* text) {
+    CalcDataHash(text, GetTextLength(text));
+}
+
+void Hash::CalcTextHash(const char16_t* text) {
+    CalcDataHash(text, GetTextLength(text) * sizeof(char16_t));
 }
 
 }  // namespace ssd
