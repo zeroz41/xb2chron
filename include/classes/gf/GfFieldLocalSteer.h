@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFFIELDLOCALSTEER_H
 
 #include "classes/gf/TGfTween.h"
+#include "mm/Vec3.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gmk { class GmkRouteNavi; }
@@ -24,7 +25,12 @@ public:
         bool pad_14;
         void* pad_18;
     };
-    class UpdateInfo;
+    // what update takes (GfComBehaviorMob::update fills it on the stack: its goal pad_110 and the frame's time)
+    class UpdateInfo {
+    public:
+        mm::Vec3 pad_0;  // 16 bytes
+        float pad_10;  // update adds it to pad_24 (seconds)
+    };
     template <typename T>
     class TIsTargetNotSameSquad;
     GfFieldLocalSteer(const CreateInfo* info);
@@ -44,6 +50,8 @@ public:
     // in turned by the steering into out (GfComBehaviorMob::moveToGoal passes its velocity as both; out of line,
     // 0x71002D0C94)
     void apply(mm::Vec3& out, const mm::Vec3& in) const;
+    void castRay(const mm::Vec3& pos);  // 0x71002D0610
+    void update(const UpdateInfo& info);  // 0x71002D0798
 
     CreateInfo m_info;
     bool pad_20;

@@ -11,6 +11,7 @@ public:
     explicit GfFieldLookIk(GF_OBJ_HANDLE* handle);
     ~GfFieldLookIk() { dispose(); }
     void dispose();
+    void update(float deltaTime);  // 0x71002D2964
 
     unsigned char pad_0[0x40];
 };

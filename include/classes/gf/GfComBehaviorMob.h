@@ -3,6 +3,7 @@
 
 #include "mm/mtl/RTTI.h"
 #include "ai/Hfsm.h"
+#include "classes/ai/State.h"
 #include "mm/Quat.h"
 #include "classes/gf/GfComBehavior.h"
 #include "classes/gf/GfFieldLocalSteer.h"
@@ -23,6 +24,7 @@ namespace gf { class GfComAsm; }
 namespace mm { class Vec3; }
 namespace navi { class NvmshAcObj; }
 class CBdatWrapper;
+namespace gf { namespace mob { enum STATE_ID : int; } }
 
 namespace gf {
 // table 0x7100B66500
@@ -45,6 +47,17 @@ public:
     virtual const mm::Quat& getRot() const;  // slot 8
     // the gimmick its object is bound to, none when it is bound to none
     gmk::AGmkBase* getBindedGmkInst() const;
+    // whether the state may be taken: StateIdle's always, the others' tests (mob::StateIdle::update asks)
+    bool isStateCondMatch(mob::STATE_ID state);
+    // its state machine's current state, -1 without one (1.0.0 has it out of line; 3.0.1 keeps no copy)
+    mob::STATE_ID getStateId() const {
+        if (m_hfsm.m_pState != nullptr) {
+            return static_cast<mob::STATE_ID>(m_hfsm.m_pState->m_stateID);
+        }
+        return static_cast<mob::STATE_ID>(-1);
+    }
+    // what the object factory calls once the object is made: its plugins, BDAT row, states and helpers
+    void setup();
     // (re)makes its state machine: the mob's 7 states, one level deep
     void createFsm();
     // cleans its state machine up once (1.0.0 has it out of line; 3.0.1 keeps no copy)
@@ -65,6 +78,8 @@ public:
     fw::ColiMoveObject* getColiObject() const;
     // its walking speed: the setup's speed percent (GfObjSetupMob::pad_90) of the slowest, eased over the time given
     void initMoveSpeed(float duration);
+    // joins the squad of the squad gimmick its object is bound to (none when it is bound to none)
+    void createSquadNavi();
     bool isSquadMember() const;
     // false while its turn is set up and not done; else whether it has a collision object that follows its frame and
     // either pad_b8, a place in a squad, or a bound gimmick whose INFO shape is not 1

@@ -155,6 +155,94 @@ bool GfComBehaviorMob::isSquadMember() const {
     return m_squadNavi.isInSquad() && m_squadNavi.m_index != 0;
 }
 
+void GfComBehaviorMob::update(const fw::UpdateInfo& info) {
+    pad_100.z = 0.0f;
+    pad_100.x = 0.0f;
+    fw::ColiMoveObject* coli = getColiObject();
+    if (coli != nullptr && !coli->testAttribute(static_cast<fw::ColiAtrr>(0)) && coli->m_followType != 0) {
+        pad_100.y += info.m_deltaTime * -9.8f;
+    } else {
+        pad_100.y = 0.0f;
+    }
+    if (gmk::isPlayerExist()) {
+        GfObjAcc acc(static_cast<GfObj*>(m_owner));
+        const mm::Vec3& pos = acc.getWorldTransform().position;
+        mm::Vec3 diff = gmk::getPlayerPos() - pos;
+        pad_53d4 = diff.y * diff.y;
+        diff.y = 0.0f;
+        pad_53d0 = diff.dot(diff);
+    }
+    if (npc::StateBattle<GfComBehaviorMob>::isCondMatch(*this) && getStateId() != 5) {
+        m_hfsm.setState(5);
+    }
+    if (GfGameManager::isBattle() && m_bdatInfo.m_battleReaction == 1) {
+        GfObjAcc acc(static_cast<GfObj*>(m_owner)->m_handle);
+        if (!acc.testFlag(0x11)) {
+            SCOM_DESTROY_GAME_OBJ::create(static_cast<GfObj*>(m_owner)->m_handle, 1.0f, 0);
+        }
+    }
+    m_hfsm.update(&info);
+    if (fw::ColiMoveObject* moving = getColiObject()) {
+        moving->setDir(info.m_deltaTime * pad_100);
+    }
+    updateNaviMeshObj(info.m_deltaTime);
+    m_lookIk.update(info.m_deltaTime);
+    m_moveSpeed.update(info.m_deltaTime);
+    m_stuckMeter.update(info.m_deltaTime);
+    m_turnCmd.update(info.m_deltaTime);
+    m_pluginManager.update(info);
+    GfFieldLocalSteer::UpdateInfo steerInfo;
+    steerInfo.pad_0 = pad_110;
+    steerInfo.pad_10 = info.m_deltaTime;
+    m_localSteer.castRay(pad_110);
+    m_localSteer.update(steerInfo);
+}
+
+bool GfComBehaviorMob::isStateCondMatch(mob::STATE_ID state) {
+    switch (state) {
+    case 0:
+        return true;
+    case 1:
+        return mob::StateMove::isCondMatch(*this);
+    case 2: {
+        // StateAreaMove's test (its onEnter's)
+        gmk::AGmkBase* gmk = getBindedGmkInst();
+        if (gmk != nullptr) {
+            int type = gmk->getGmkType();
+            if (type == 0x12 || type == 3) {
+                return gmk->m_info->m_shape != 1;
+            }
+        }
+        break;
+    }
+    case 3:
+        return mob::StateSquadMember::isCondMatch(*this);
+    case 4:
+        // StateReaction's test: the player within ReactionRange, then one roll of ReactionPercent while it stays
+    {
+        bool inRange = gmk::isPlayerExist() && m_bdatInfo.m_reactionRangeSq > 0.0f && m_bdatInfo.m_reactionMot != 0 &&
+            m_bdatInfo.m_reactionPercent != 0 && !(m_bdatInfo.m_reactionRangeSq < pad_53d0) && !(pad_53d4 > 4.0f);
+        if (inRange) {
+            if (!pad_53d8) {
+                pad_53d8 = true;
+                return ml::mtRandf1() < static_cast<unsigned int>(m_bdatInfo.m_reactionPercent) * 0.01f;
+            }
+        } else {
+            pad_53d8 = false;
+        }
+        break;
+    }
+    case 5:
+        return npc::StateBattle<GfComBehaviorMob>::isCondMatch(*this);
+    case 6:
+        if (GfGameManager::fn_71002A9E68()) {
+            return mob::StateApproachPc::fn_71004D7468(*this);
+        }
+        break;
+    }
+    return false;
+}
+
 void GfComBehaviorMob::updateNaviMeshObj(float deltaTime) {
     if (pad_a8 != nullptr && (pad_a8->m_flags & 2) && m_moveSpeed.m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
         const mm::Vec3& pos = getPos();
