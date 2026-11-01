@@ -83,6 +83,16 @@ Result StreamController::ResetStream() {
     return Result(0);
 }
 
+Result StreamController::CloseStream() {
+    if (streaming_) {
+        return Result(0);
+    }
+    bufferReady_ = false;
+    closeRequested_ = true;
+    state_ = 3;
+    return Result(1);
+}
+
 void StreamController::ExecAdpcmDecode() {}
 
 unsigned long StreamBuffer::GetDataSize() const {
