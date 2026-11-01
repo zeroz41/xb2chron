@@ -16,8 +16,9 @@ struct WeatherInfo {
     void destroyEnv();  // 1.0.0's
     bool isTimeRangeOK() const;  // whether the time of day allows the weather
     bool isTimeup() const;
-    // both fade out over time (1.0.0's took no time; the name is 1.0.0's)
-    void fadeoutEnv(float time);
+    // Placeholder name: 1.0.0's fadeoutEnv() (same callers, same body) took no time, so its name is not carried
+    // over. What it does: fades the effect and the sound out over time and sets the fade times.
+    void fn_7100281FD8(float time);
     void update(const WeatherUpdateInfo& info);  // 1.0.0's took the fw::UpdateInfo and the fade-out flag
     bool updateFadein(const fw::UpdateInfo& info);  // true once faded in
     void createEnv();  // 1.0.0's

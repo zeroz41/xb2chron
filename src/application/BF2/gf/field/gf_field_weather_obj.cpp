@@ -13,11 +13,38 @@
 #include "gf/WeatherInfo.h"
 #include <string.h>
 #include "fw/UpdateInfo.h"
+#include "effect/SendParam.h"
+#include "classes/gf/GfBdatMaplist.h"
+#include "classes/gf/GfAllocator.h"
 
 namespace gf {
 
 bool WeatherEff::isPlay() const {
     return m_handle != 0;
+}
+
+void WeatherEff::create(WEATYPE type) {
+    if (m_handle != 0) {
+        return;
+    }
+    m_type = type;
+    if (type == 0) {
+        return;
+    }
+    if (GfGameManager::isRoom()) {
+        m_isWait = true;
+        m_alpha = 0.01f;
+    }
+    const char* name = GfDataMap::getWeatherEffName(type);
+    if (name == nullptr || name[0] == '\0') {
+        return;
+    }
+    if (fw::EffectManager::get() == nullptr || !GfFieldWeather::isDispWeather()) {
+        return;
+    }
+    effect::SendParam param;
+    param.m_flagD = true;
+    m_handle = fw::EffectManager::get()->create(name, nullptr, &param, true);
 }
 
 void WeatherEff::destroy() {
@@ -235,6 +262,21 @@ inline void WeatherSnd::applyVolume(const WeatherUpdateInfo&, float volume) {
 
 void WeatherSnd::setPause(bool) {}
 
+// the zeroed fields set again in this order: the original keeps the zero stores of m_timeMax and m_mapId
+WeatherInfo::WeatherInfo(WEATYPE type, unsigned int mapId, WEATHERID id, float time, float timeMax, float fadeTime)
+    : m_type(type), m_id(), m_time(0.0f), m_timeMax(0.0f), m_mapId(0), pad_1c(0), m_alpha(0.0f), m_fadeTime(0.0f) {
+    m_resource[0] = '\0';
+    m_fadeTimeMax = fadeTime;
+    m_id = id;
+    m_mapId = mapId;
+    m_timeMax = timeMax;
+    m_time = time;
+    strcpy(m_resource, GfBdatMaplist::get()->getMaplistresource(mapId));
+#line 466
+    m_eff = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) WeatherEff();
+    m_snd = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) WeatherSnd();
+}
+
 WeatherInfo::~WeatherInfo() {
     destroyEnv();
     if (m_eff != nullptr) {
@@ -267,7 +309,7 @@ bool WeatherInfo::isTimeup() const {
     return m_time == m_timeMax;
 }
 
-void WeatherInfo::fadeoutEnv(float time) {
+void WeatherInfo::fn_7100281FD8(float time) {
     m_eff->fadeout(time);
     m_snd->fadeout(time);
     m_fadeTime = time;
