@@ -23,17 +23,31 @@ public:
 
     static AnmInsPosFunc s_pCallAnmInsPos[9];
 
+    void setup(float frame);
     void update();
     void getAnmMatrix(mm::Mat44* mtx, float frame) const;
 
+    // The 0x70-byte block setup copies from m_res whole (one memcpy); the names are not the original's.
+    struct Data {
+        mm::Mat44 matrix;               // 0x0
+        unsigned char pad_40[0xC];
+        float radius;                   // 0x4C: times the matrix's z-axis length gives m_data.radius
+        mm::Vec3 center;                // 0x50: setup/update transform m_res->center by the matrix into m_data.center
+        unsigned char pad_60[0x10];
+    };
+
     // Field names are not the original's (DrResMdoInstPartsAnm reads and writes them).
-    unsigned char pad_0[0x20];
-    mm::Mat44 m_matrix;             // 0x20: DrResMdoInstPartsAnm::getMatrix copies it when no matrix was set
-    unsigned char pad_60[0x30];
+    unsigned char pad_0[0x10];
+    const Data* m_res;              // 0x10: setup copies it to m_data
+    unsigned char pad_18[0x8];
+    Data m_data;                    // 0x20: the current matrix and bounding sphere
     mm::Mat44 m_setMatrix[2];       // 0x90: per DrMan double-buffer stock index (DrResMdoInstPartsAnm::setMatrix)
-    unsigned char pad_110[0x40];
-    unsigned short m_setMatrixFlags;  // 0x150: bit n = m_setMatrix[n] set (DrResMdoInstPartsAnm::setMatrix)
-    unsigned short m_frameMax;      // 0x152: DrResMdoInstPartsAnm::get*PosMaxFrame scales it
+    mm::Mat44 m_anmMatrix;          // 0x110: setup's getAnmMatrix result; update saves the previous m_data.matrix here
+    // 0x150: bit n = m_setMatrix[n] set (DrResMdoInstPartsAnm::setMatrix); 0x80 = m_anmMatrix holds the previous
+    // matrix; update sets 0x4 when the bounding sphere is clipped, 0x8/0x10/0x20 from clipDirShadowChk's 0x3800 bits
+    unsigned short m_setMatrixFlags;
+    unsigned short m_frameMax;      // 0x152: DrResMdoInstPartsAnm::get*PosMaxFrame scales it; updateSwitch sets it
+    unsigned short m_frameStart;    // 0x154: DrResMdoInstPartsAnm::updateSwitch sets it
 };
 }  // namespace ml
 

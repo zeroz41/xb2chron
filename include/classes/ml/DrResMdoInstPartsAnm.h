@@ -60,10 +60,15 @@ public:
         unsigned short endFrame;    // 0xA
     };
     // One switch entry (0x24 bytes; getSwitchIndex reads its byte 2); names are not the original's.
+    // updateSwitch reads flags (0x1 = sets the node frame range, 0x2 = sets m_stockFlags bit 2) and the range.
     struct Switch {
-        unsigned char pad_0[0x2];
-        unsigned char index;  // 0x2
-        unsigned char pad_3[0x21];
+        unsigned short flags;  // 0x0
+        unsigned char index;   // 0x2
+        unsigned char pad_3[0x1];
+        // 0x4: the node frame range (bit-fields: updateSwitch reads both with one 32-bit load)
+        unsigned int startFrame : 16;
+        unsigned int endFrame : 16;
+        unsigned char pad_8[0x1C];
     };
 
     // Field names are not the original's: each follows the getter/setter that reads or writes it.

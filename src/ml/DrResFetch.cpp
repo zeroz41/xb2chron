@@ -36,6 +36,7 @@
 #include "grlib/CGLibVtxInstans.h"
 #include "ml/DrPixlMan.h"
 #include "ml/DrCalcMan.h"
+#include "ml/DrCalcClipMan.h"
 #include "ml/DrLightMan.h"
 #include "classes/ml/DrLightObjPnt.h"
 #include "classes/ml/DrLightObjSpt.h"
@@ -1252,6 +1253,56 @@ void DrResMdoInstPartsAnm::setSwitchID(unsigned char id) {
     }
 }
 
+void DrResMdoInstPartsAnm::updateSwitch() {
+    int switchMax = m_switchMax;
+    int no = -1;
+    for (int i = 0; i < switchMax; i++) {
+        if (m_switches[i].index == m_switchID) {
+            no = i;
+            break;
+        }
+    }
+    const Switch& sw = m_switches[no == -1 ? 0 : no];
+    if (sw.flags & 0x2) {
+        m_stockFlags |= 0x4;
+    } else {
+        m_stockFlags &= ~0x4;
+    }
+    if (!(sw.flags & 0x1)) {
+        return;
+    }
+    unsigned short start = sw.startFrame;
+    unsigned short num = sw.endFrame - sw.startFrame;
+    if (m_info->flags & 0x8) {
+        m_nodeFrameBase = start;
+        m_nodeFrameMax = num;
+        bool stocked = m_stockFlags & (1 << DrMan::s_nDblStockIdx);
+        float maxFrame = getNodeMaxFrame();
+        if (stocked) {
+            if (maxFrame < m_nodeFrameStock[DrMan::s_nDblStockIdx]) {
+                m_nodeFrameStock[DrMan::s_nDblStockIdx] = getNodeMaxFrame();
+            }
+            if (m_nodeFrameStock[DrMan::s_nDblStockIdx] < 0.0f) {
+                m_nodeFrameStock[DrMan::s_nDblStockIdx] = 0.0f;
+            }
+            m_oldNodeFrame = m_nodeFrameStock[DrMan::s_nDblStockIdx];
+        } else {
+            if (maxFrame < m_nodeFrame) {
+                m_nodeFrame = getNodeMaxFrame();
+            }
+            if (m_nodeFrame < 0.0f) {
+                m_nodeFrame = 0.0f;
+            }
+            m_oldNodeFrame = m_nodeFrame;
+        }
+    }
+    if (m_info->flags & 0x10) {
+        DrResMdoPosInstAnm* anm = m_posAnm;
+        anm->m_frameStart = start;
+        anm->m_frameMax = num;
+    }
+}
+
 unsigned char DrResMdoInstPartsAnm::getSwitchIndex(unsigned int idx) const {
     if (idx < m_switchMax) {
         return m_switches[idx].index;
@@ -1269,7 +1320,7 @@ void DrResMdoInstPartsAnm::getMatrix(mm::Mat44& mtx) const {
         } else {
             for (int i = 0; i < 4; i++) {
                 for (int j = 0; j < 4; j++) {
-                    mtx.m[i][j] = anm->m_matrix.m[i][j];
+                    mtx.m[i][j] = anm->m_data.matrix.m[i][j];
                 }
             }
         }

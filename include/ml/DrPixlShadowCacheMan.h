@@ -3,6 +3,7 @@
 
 #include "grlib/CGLibRenderTarget.h"
 #include "classes/ml/DrCalcClipWorkPlane.h"
+#include "mm/Vec3.h"
 
 namespace mm { class Vec3; }
 namespace grlib { class CGLibDblUniformBlock; }
@@ -48,6 +49,8 @@ public:
     void createCacheBuff();
     void resetColorBuff();
     void buffUpdate();
+    // DrResMdoPosInstAnm::update tests the 0x800/0x1000/0x2000 bits it returns
+    unsigned int clipDirShadowChk(const mm::Vec3& pos, float radius, bool skipView);
 
     // 0x0: 0x40 set by DrPixlMan::pixelEndMode, 0x80 by addShadowCacheUpdate, 0x180 by delShadowCacheUpdate,
     // 0x400 by DrPixlMan::callShadowCacheVariance
