@@ -22,10 +22,11 @@ public:
     unsigned short getWidth() const;
     unsigned short getHeight() const;
 
-    unsigned char pad_0[0x4];
+    GrlSurfaceFormat m_format;  // 0x00: the render targets' setTextureInfo store the texture's format here
     unsigned short m_width;   // 0x04
     unsigned short m_height;  // 0x06
-    unsigned char pad_8[0x4];
+    unsigned short m_level;   // 0x08: the mip level its view selects (CGLibRenderCubeMapMipMap::setTextureInfo)
+    unsigned short m_layer;   // 0x0A: the layer (cube face) its view selects
     unsigned int m_flags;     // 0x0C: 1 = set up (cleared by release)
     NVNtextureView m_view;  // 0x10
     const NVNtexture* m_pNvnTexture;  // 0x38
@@ -104,6 +105,8 @@ public:
     void releaseTexture();
     // the texture's size and format, its pixels at offset in the pool (the parameter names are not the original's)
     void setTextureInfo(float width, float height, GrlSurfaceFormat format, bool flag, unsigned int offset);
+    // makes texture's memory this target's texture (DrPixlMan::captureMainFrameBuffer's frame copy)
+    void setTextureInfo(CGLibTextureBuffer& texture);
     // makes this target current, with up to two more (the other colour buffers)
     void setRenderTarget();
     void setRenderTarget(CGLibRenderTarget& target1);
@@ -135,6 +138,10 @@ public:
     CGLibRenderVolume();
     ~CGLibRenderVolume();
     void releaseWork();
+    // a width x height x depth 3D texture with a colour buffer per slice; flag: its pixels are the pixel pool's
+    // resident area at offset (the parameter names are not the original's)
+    void setTextureInfo(float width, float height, float depth, GrlSurfaceFormat format, bool flag,
+                        unsigned int offset);
     // makes the slice current, with the same slice of other as the second colour buffer
     void setRenderTarget(unsigned int slice, CGLibRenderVolume& other);
 

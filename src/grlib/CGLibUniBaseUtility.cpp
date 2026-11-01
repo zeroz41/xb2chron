@@ -14,6 +14,7 @@
 #include "classes/grlib/context/CGLibSystemContext.h"
 #include "nvn/nvn_FuncPtrInline.h"
 #include <string.h>
+#include <new>
 #include "nn/os.h"
 #include "grlib/CGLibSampler.h"
 #include "grlib/CGLibBuffSamplerTbl.h"
@@ -1411,6 +1412,34 @@ unsigned short CGLibColorBuffer::getHeight() const {
     return m_height;
 }
 
+inline void CGLibTexture::createColorTextureBuff(CGLibColorBuffer* buffer, CGLibTextureBuffer& texture,
+                                                unsigned int width, unsigned int height, GrlSurfaceFormat format) {
+    buffer->m_width = width;
+    buffer->m_height = height;
+    buffer->m_level = 0;
+    buffer->m_layer = 0;
+    buffer->m_format = format;
+    buffer->m_flags = 1;
+    buffer->m_pNvnTexture = texture.m_pNvnTexture;
+    nvnTextureViewSetDefaults(&buffer->m_view);
+    nvnTextureViewSetFormat(&buffer->m_view, static_cast<NVNformat>(format));
+    nvnTextureViewSetTarget(&buffer->m_view, NVN_TEXTURE_TARGET_2D);
+}
+
+void CGLibRenderTarget::setTextureInfo(CGLibTextureBuffer& texture) {
+    releaseWork();
+    m_width = texture.m_width;
+    m_height = texture.m_height;
+    CGLibTextureBuffer* own = m_pTexture;
+    own->release();
+    own->m_pData = texture.m_pData;
+    own->m_dataSize = texture.m_dataSize;
+    CGLibMemPool& pool = context::CGLibSystemContext::sys()->m_pixelPool;
+    CGLibTexture_plf::setupTextureBuff(*own, texture.m_width, texture.m_height, 0, texture.m_format, pool,
+                                       own->m_pData - static_cast<unsigned char*>(pool.m_pBuffer));
+    CGLibTexture::createColorTextureBuff(&m_colorBuffer, *m_pTexture, m_width, m_height, texture.m_format);
+}
+
 unsigned int CGLibTextureBuffer::getWidth() const {
     return m_width;
 }
@@ -1999,6 +2028,86 @@ void CGLibRenderVolume::releaseWork() {
     m_width = 0;
     m_height = 0;
     m_depth = 0;
+}
+
+inline void CGLibTexture::getVolumePixelSize(unsigned int& size, unsigned int& align, unsigned int width,
+                                            unsigned int height, unsigned int depth, GrlSurfaceFormat format) {
+    NVNtextureBuilder builder;
+    nvnTextureBuilderSetDefaults(&builder);
+    nvnTextureBuilderSetDevice(&builder, &CGLibManager::sys()->m_device);
+    nvnTextureBuilderSetTarget(&builder, NVN_TEXTURE_TARGET_3D);
+    nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(format));
+    nvnTextureBuilderSetSize3D(&builder, width, height, depth);
+    nvnTextureBuilderSetFlags(&builder, 0xC);
+    size = nvnTextureBuilderGetStorageSize(&builder);
+    align = nvnTextureBuilderGetStorageAlignment(&builder);
+}
+
+inline void CGLibTexture::createVolumeTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
+                                                 unsigned int depth, GrlSurfaceFormat format) {
+    buffer.release();
+    unsigned int size;
+    unsigned int align;
+    getVolumePixelSize(size, align, width, height, depth, format);
+    buffer.m_pData = static_cast<unsigned char*>(
+        mtl::MemManager::allocate(CGLibMemHandle::s_hPxlHandle, size, align, false, "no name", 0));
+    buffer.m_dataSize = size;
+    buffer.m_flags |= 2;
+    context::CGLibSystemContext* ctx = context::CGLibSystemContext::sys();
+    CGLibTexture_plf::setupVolumeTextureBuff(buffer, width, height, depth, format, ctx->m_pixelPool,
+                                             buffer.m_pData - static_cast<unsigned char*>(ctx->m_pixelPool.m_pBuffer));
+}
+
+inline void CGLibTexture::createVolumeTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
+                                                 unsigned int depth, GrlSurfaceFormat format, unsigned int offset) {
+    buffer.release();
+    unsigned int size;
+    unsigned int align;
+    getVolumePixelSize(size, align, width, height, depth, format);
+    buffer.m_dataSize = size;
+    context::CGLibSystemContext* ctx = context::CGLibSystemContext::sys();
+    CGLibTexture_plf::setupVolumeTextureBuff(buffer, width, height, depth, format, ctx->m_pixelPool,
+                                             ctx->getPixelResAreaOffset(offset));
+}
+
+inline void CGLibTexture::createVolumeColorTextureBuff(CGLibColorBuffer* buffers, CGLibTextureBuffer& texture,
+                                                      unsigned int width, unsigned int height, unsigned int depth,
+                                                      GrlSurfaceFormat format) {
+    for (unsigned int i = 0; i < depth; i++) {
+        CGLibColorBuffer& buffer = buffers[i];
+        buffer.release();
+        buffer.m_pNvnTexture = texture.m_pNvnTexture;
+        nvnTextureViewSetDefaults(&buffer.m_view);
+        nvnTextureViewSetFormat(&buffer.m_view, static_cast<NVNformat>(format));
+        nvnTextureViewSetTarget(&buffer.m_view, NVN_TEXTURE_TARGET_3D);
+        nvnTextureViewSetLayers(&buffer.m_view, i, 1);
+        buffer.m_width = width;
+        buffer.m_height = height;
+        buffer.m_level = 0;
+        buffer.m_layer = i;
+        buffer.m_format = format;
+        buffer.m_flags = 1;
+    }
+}
+
+void CGLibRenderVolume::setTextureInfo(float width, float height, float depth, GrlSurfaceFormat format, bool flag,
+                                       unsigned int offset) {
+    releaseWork();
+    m_isSetup = flag;
+    m_width = width;
+    m_height = height;
+    m_depth = depth;
+    m_pColorBuffers = static_cast<CGLibColorBuffer*>(mtl::MemManager::allocate(
+        CGLibMemHandle::s_hMemHandle, m_depth * sizeof(CGLibColorBuffer), 0x10, false, "no name", 0));
+    for (unsigned int i = 0; i < m_depth; i++) {
+        new (&m_pColorBuffers[i]) CGLibColorBuffer();
+    }
+    if (!flag) {
+        CGLibTexture::createVolumeTextureBuff(m_texture, m_width, m_height, m_depth, format);
+    } else {
+        CGLibTexture::createVolumeTextureBuff(m_texture, m_width, m_height, m_depth, format, offset);
+    }
+    CGLibTexture::createVolumeColorTextureBuff(m_pColorBuffers, m_texture, m_width, m_height, m_depth, format);
 }
 
 CGLibRenderCubeMapMipMap::~CGLibRenderCubeMapMipMap() {

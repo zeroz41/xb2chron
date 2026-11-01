@@ -7,6 +7,7 @@ namespace grlib { class CGLibTextureBuffer; }
 namespace grlib { class CGLibVtlMemPool; }
 namespace grlib { class CGLibMemPool; }
 namespace grlib { class CGLibDepthBuffer; }
+namespace grlib { class CGLibColorBuffer; }
 
 namespace grlib {
 
@@ -101,6 +102,27 @@ public:
                                 GrlDepthFormat format);
     static void createDepthBuff(CGLibDepthBuffer& buffer, unsigned int width, unsigned int height,
                                 GrlDepthFormat format, unsigned int offset);
+    // a colour buffer over the texture's first level, a 2D view of width by height texels (the render targets'
+    // setTextureInfo inline it; the name is not the original's, it follows createArrayCubemapColorTextureBuff)
+    static void createColorTextureBuff(CGLibColorBuffer* buffer, CGLibTextureBuffer& texture, unsigned int width,
+                                       unsigned int height, GrlSurfaceFormat format);
+    // a 3D texture's bytes and alignment, the texture made from own pixel memory / the pixel pool's resident area
+    // at offset, and one colour buffer per slice (CGLibRenderVolume::setTextureInfo inlines them; the names follow
+    // getDepthPixelSize, createDepthBuff and createArrayCubemapColorTextureBuff and are not the original's)
+    static void getVolumePixelSize(unsigned int& size, unsigned int& align, unsigned int width, unsigned int height,
+                                   unsigned int depth, GrlSurfaceFormat format);
+    static void createVolumeTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
+                                        unsigned int depth, GrlSurfaceFormat format);
+    static void createVolumeTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
+                                        unsigned int depth, GrlSurfaceFormat format, unsigned int offset);
+    static void createVolumeColorTextureBuff(CGLibColorBuffer* buffers, CGLibTextureBuffer& texture,
+                                             unsigned int width, unsigned int height, unsigned int depth,
+                                             GrlSurfaceFormat format);
+    // the colour buffers of a cube map array: per face, arrayNum cubes at level 0, then the same for levels 1 to mipNum
+    // (the parameter names are not the original's)
+    static void createArrayCubemapColorTextureBuff(CGLibColorBuffer* buffers, CGLibTextureBuffer& texture,
+                                                   unsigned int width, unsigned int height, unsigned int arrayNum,
+                                                   unsigned int mipNum, GrlSurfaceFormat format);
 };
 
 }  // namespace grlib

@@ -444,6 +444,26 @@ typedef void (*PFNNVNTEXTUREPOOLREGISTERIMAGEPROC)(const NVNtexturePool* pool, i
 extern PFNNVNTEXTUREPOOLREGISTERIMAGEPROC pfnc_nvnTexturePoolRegisterImage;
 static inline void nvnTexturePoolRegisterImage(const NVNtexturePool* pool, int id, const NVNtexture* texture, const NVNtextureView* view) { pfnc_nvnTexturePoolRegisterImage(pool, id, texture, view); }
 
+typedef void (*PFNNVNTEXTUREVIEWSETDEFAULTSPROC)(NVNtextureView* view);
+extern PFNNVNTEXTUREVIEWSETDEFAULTSPROC pfnc_nvnTextureViewSetDefaults;
+static inline void nvnTextureViewSetDefaults(NVNtextureView* view) { pfnc_nvnTextureViewSetDefaults(view); }
+
+typedef void (*PFNNVNTEXTUREVIEWSETLEVELSPROC)(NVNtextureView* view, int baseLevel, int numLevels);
+extern PFNNVNTEXTUREVIEWSETLEVELSPROC pfnc_nvnTextureViewSetLevels;
+static inline void nvnTextureViewSetLevels(NVNtextureView* view, int baseLevel, int numLevels) { pfnc_nvnTextureViewSetLevels(view, baseLevel, numLevels); }
+
+typedef void (*PFNNVNTEXTUREVIEWSETLAYERSPROC)(NVNtextureView* view, int minLayer, int numLayers);
+extern PFNNVNTEXTUREVIEWSETLAYERSPROC pfnc_nvnTextureViewSetLayers;
+static inline void nvnTextureViewSetLayers(NVNtextureView* view, int minLayer, int numLayers) { pfnc_nvnTextureViewSetLayers(view, minLayer, numLayers); }
+
+typedef void (*PFNNVNTEXTUREVIEWSETFORMATPROC)(NVNtextureView* view, NVNformat format);
+extern PFNNVNTEXTUREVIEWSETFORMATPROC pfnc_nvnTextureViewSetFormat;
+static inline void nvnTextureViewSetFormat(NVNtextureView* view, NVNformat format) { pfnc_nvnTextureViewSetFormat(view, format); }
+
+typedef void (*PFNNVNTEXTUREVIEWSETTARGETPROC)(NVNtextureView* view, NVNtextureTarget target);
+extern PFNNVNTEXTUREVIEWSETTARGETPROC pfnc_nvnTextureViewSetTarget;
+static inline void nvnTextureViewSetTarget(NVNtextureView* view, NVNtextureTarget target) { pfnc_nvnTextureViewSetTarget(view, target); }
+
 typedef void (*PFNNVNPROGRAMFINALIZEPROC)(NVNprogram* program);
 extern PFNNVNPROGRAMFINALIZEPROC pfnc_nvnProgramFinalize;
 static inline void nvnProgramFinalize(NVNprogram* program) { pfnc_nvnProgramFinalize(program); }
