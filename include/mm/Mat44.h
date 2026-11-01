@@ -126,6 +126,12 @@ public:
         m[3][3] = 1.0f;
     }
     // moves the translation by (x, y, z) (the name is not the original's)
+    // the translation row becomes v, the rest is kept (the name is not the original's)
+    void setTransRow(Vec3 v) {
+        m[3][0] = v.x;
+        m[3][1] = v.y;
+        m[3][2] = v.z;
+    }
     // the translation moved by v (the name is not the original's)
     void addTrans(Vec3 v) {
         m[3][0] += v.x;

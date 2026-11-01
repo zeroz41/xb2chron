@@ -2,9 +2,8 @@
 #define CLASSES_ML_DRLIGHTOBJPNT_H
 
 #include "classes/ml/DrLightObj.h"
-
-namespace mm { class Vec3; }
-namespace mm { class Mat44; }
+#include "mm/Mat44.h"
+#include "mm/Vec3.h"
 
 namespace ml {
 // table 0x7100B7B5A8
@@ -19,10 +18,12 @@ public:
     void setMat(const mm::Mat44& mtx);
     void setPos(const mm::Vec3& pos);
 
-    unsigned char pad_30[0x40];
     // the names below are not the original's (DrShdLgtTileBasedDr::stockPntList copies them into its light entry)
-    float m_pos[3];  // 0x70, transformed by the view matrix
-    unsigned char pad_7c[0x14];
+    mm::Mat44 m_mat;  // 0x30, setMat copies it whole; setPos writes its translation row
+    // 0x70, transformed by the view matrix. An mm::Vec3 (16-aligned): its copies from setMat/setPos load x and y
+    // as one 64-bit word (ldr x; lsr), which only a 16-aligned x allows
+    mm::Vec3 m_pos;
+    unsigned char pad_80[0x10];
     float m_color[3];  // 0x90
     float m_size;  // 0x9C, set by DrEnvironmentAnim::envlgt_pnt_size (the name is not the original's)
     bool m_bLightFlag;  // 0xA0, packed into bit 31 of the entry's word 10

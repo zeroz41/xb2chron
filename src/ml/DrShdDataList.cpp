@@ -240,7 +240,7 @@ void DrShdLgtTileBasedDr::stockPntList(DrLightObjPnt* light) {
         const mm::Mat44& mtx = m_pDrMan->m_calcMan->m_pViewWork->m_view;
         m_pntBuffRest -= sizeof(PntLightEntry);
         PntLightEntry* entry = m_pPntBuff++;
-        const float* pos = light->m_pos;
+        const float* pos = &light->m_pos.x;
         float px = mtx.m[3][0] + (pos[0] * mtx.m[0][0] + pos[1] * mtx.m[1][0] + pos[2] * mtx.m[2][0]);
         float py = mtx.m[3][1] + (pos[0] * mtx.m[0][1] + pos[1] * mtx.m[1][1] + pos[2] * mtx.m[2][1]);
         float pz = (pos[0] * mtx.m[0][2] + pos[1] * mtx.m[1][2] + pos[2] * mtx.m[2][2]) + mtx.m[3][2];

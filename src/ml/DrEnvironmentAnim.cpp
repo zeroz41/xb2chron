@@ -70,6 +70,21 @@
 
 namespace ml {
 
+void DrLightObjPnt::setMat(const mm::Mat44& mtx) {
+    m_mat = mtx;
+    m_pos = m_mat.getTrans();
+}
+
+void DrLightObjPnt::setPos(const mm::Vec3& pos) {
+    m_pos = pos;
+    m_mat.setTransRow(pos);
+}
+
+void DrLightObjSpt::setPos(const mm::Vec3& pos) {
+    m_pos = pos;
+    m_mat.setTransRow(pos);
+}
+
 void DrEnvironmentAnim::envlgt_amb_color_R(const LgtAnimInf* info, float frame) {
     m_color[0] = getHermiteAttr(info, frame);
 }
@@ -598,6 +613,14 @@ DrIrrVolMan::DrIrrVolMan(DrMan* drMan)
 
 DrIrrVolMan::~DrIrrVolMan() {
     release();
+}
+
+void DrIrrVolMan::tail() {
+    m_prevPos = m_pos;
+    m_prevRate = m_rate;
+    m_prevState = m_state;
+    m_prevCascadeIdx = m_cascadeIdx;
+    m_frameParity ^= 1;
 }
 
 void DrIrrVolMan::release() {

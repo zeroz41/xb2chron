@@ -19,6 +19,8 @@ public:
     ~DrIrrVolMan();
     // deletes the cascades and forgets the settings (1.0.0 has it out of line; 3.0.1's destructor inlines it)
     void release();
+    // each frame's end (DrMan::tail): the current values become the previous ones, the frame parity flips
+    void tail();
 
     DrMan* m_drMan;  // 0x0, the constructor's
     const irrvol::SGlobalInfo* m_globalInfo;  // 0x8

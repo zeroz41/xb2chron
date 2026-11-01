@@ -8,6 +8,10 @@ namespace mm {
 // three floats in 16 bytes (Vec3::zero is 0x10 long), on a 16-byte boundary: a packet puts one after a float
 // at the next multiple of 16 (GfMoveRunControler::Packet, GfMoveJumpBackControler::Packet). Its copies are
 // its own (a Vec3 returns through x8, as a class that is not trivially copyable does) and copy x, y and z.
+// By value it is passed indirectly too (btl::HateRingManager::UpdateRing(int, Vec3, Vec3) takes x2/x3 pointers).
+// A copy whose loads come before its stores (a by-value argument's temporary, two fields of one object, a getter's
+// value, a const global) reads x and y as ONE 64-bit load (`ldr x; lsr`: GVN widens the 16-aligned x load); the
+// same copy from a float[3] or a 4-aligned pointer, or with a may-alias store in between, is three ldr w.
 // The operations are inline, so their names are not the original's (none survives in a symbol).
 class Vec3 {
 public:
