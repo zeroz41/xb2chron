@@ -10,6 +10,11 @@
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfMenuObjShop/SellFilterListener.h"
 #include "classes/gf/GfMenuObjShop/CommonListener.h"
+#include "classes/gf/GfMenuObjShop/InnActListener.h"
+#include "gf/GfGameUtilShop.h"
+#include "gf/GfDataUtil.h"
+#include "classes/gf/GfMenuObjOperationInfo.h"
+#include "classes/ui/UICtrlCursorSelect.h"
 #include "classes/gf/GfMenuObjShop/SellFilterListener.h"
 #include "classes/gf/GfMenuObjBlWeapon2.h"
 #include "classes/gf/GfDataBdat.h"
@@ -175,6 +180,15 @@ void GfMenuObjShop::sendExitEvent(unsigned int handle) {
     }
     ui::EventData event;
     event.m_type = 0x41;
+    GfMenuObject::sendEvent(handle, event, 0.0f);
+}
+
+void GfMenuObjShop::sendCloseEvent(unsigned int handle) {
+    if (handle == 0) {
+        handle = ui::UIObjectAcc(m_handle, "LAY_main").m_handle;
+    }
+    ui::EventData event;
+    event.m_type = 0x22;
     GfMenuObject::sendEvent(handle, event, 0.0f);
 }
 
@@ -362,6 +376,81 @@ void GfMenuObjShop::SellFilterListener::reciveEvent(const ui::EventData& event, 
         UIObjectListener::reciveEvent(event, handle);
         break;
     }
+}
+
+void GfMenuObjShop::InnActListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObject::disableInput(acc.m_handle);
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        m_owner->m_selectList->setIndex(index);
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        return;
+    }
+    case 0x40:
+        if (m_owner->m_selectList != nullptr && m_owner->m_selectList->getSize() != 0) {
+            GfMenuObject::resetInputSelection(acc.m_handle);
+            GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_selectList);
+            ui::UICtrlCursorSelect::CursorSetting setting;
+            setting.setType(0);
+            setting.m_dockType = 0;
+            m_owner->m_cursor = ui::UICtrlCursorSelect::create(acc.searchChild("LAY_inn_action_cursor"), setting,
+                                                               m_owner->m_selectList);
+            if (m_owner->m_cursor != nullptr) {
+                m_owner->m_cursor->setDisp(true);
+            }
+        }
+        GfMenuObject::enableInput(acc.m_handle);
+        GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        m_owner->setGuideText(0x1F);
+        m_owner->m_switchInnCloudSea = false;
+        return;
+    case 8: {
+        int index = event.m_param0;
+        int action = event.m_param1;
+        if (action == 1) {
+            if (index == m_owner->m_selectList->getSize() - 1) {
+                GfMenuObjUtil::playSECommonDecide();
+            } else {
+                unsigned int money = GfDataUtil::getMoney();
+                if (money < (*(m_owner->m_numbers + (index + 3)))->m_value) {
+                    GfMenuObjUtil::playSECommon(2);
+                    break;
+                }
+                m_owner->m_result = 1;
+                m_owner->m_resultParam = 0;
+                GfMenuObjUtil::playSE(0x18);
+                GfGameUtilShop::execPayInn(m_owner->m_shopId, m_owner->m_numbers[index + 3]->m_value, index > 0);
+                if (index > 0) {
+                    m_owner->m_switchInnCloudSea = true;
+                }
+                m_owner->m_seq.clear();
+                m_owner->m_seq.addJob(&GfMenuObjShop::seqStartSleepFade);
+                GfMenuObjUtil::playSECommonDecide();
+            }
+        } else if (action == 2) {
+            GfMenuObjUtil::playSECommonCancel();
+        } else {
+            break;
+        }
+        m_owner->sendCloseEvent(0);
+        GfMenuObject::disableInput(acc.m_handle);
+        GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+        if (m_owner->m_cursor != nullptr) {
+            m_owner->m_cursor->release();
+            m_owner->m_cursor = nullptr;
+        }
+        ui::UIObjectAcc(acc.searchSibiling("LAY_inn_action_cursor")).setDisp(false);
+        break;
+    }
+    }
+    UIObjectListener::reciveEvent(event, handle);
 }
 
 bool GfMenuObjShop::seqStartLevelUp() {

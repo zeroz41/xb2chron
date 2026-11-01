@@ -12,6 +12,10 @@
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuFieldSkillList.h"
 #include "classes/gf/GfMenuIDList.h"
+#include "classes/gf/DataParamAcc.h"
+#include "classes/gf/GfMenuReference.h"
+#include "classes/gf/GfMenuMapInfo.h"
+#include "gf/GfDataMap.h"
 #include "classes/gf/GfMenuLocation.h"
 #include "classes/gf/GfMenuZoneMapList.h"
 #include "classes/gf/GfMenuZoneMapAdapter.h"
@@ -369,6 +373,23 @@ void GfMenuObjWorldMap::refreshPointSelect(ui::UIObjectAcc& acc, GfMenuZoneMapLi
     refreshPointText(acc, list, selectList);
 }
 
+bool GfMenuObjWorldMap::isEnableJump(const MenuZoneMapInfo& info) {
+    unsigned int mapId = GfMenuReference::getReferenceWorldMapID();
+    unsigned char* fp = GfDataBdat::getFP(0x5D);
+    unsigned int allOff = static_cast<unsigned short>(Bdat::getVal(fp, "st_allOFF_cndID", mapId));
+    unsigned short off = Bdat::getVal(fp, "st_OFF_cndID", mapId);
+    if (allOff != 0 && GfGameCond::isGameCondWithMap(allOff, mapId)) {
+        return false;
+    }
+    if (off != 0 && GfGameCond::isGameCondWithMap(off, mapId)) {
+        return false;
+    }
+    if (info.m_disableCondition != 0 && GfGameCond::isGameCondWithMap(info.m_disableCondition, mapId)) {
+        return false;
+    }
+    return fn_7100495A98(info.m_mapId);
+}
+
 void GfMenuObjWorldMap::fn_710049D2A4(bool fadeFirst) {
     ui::UIObjectAcc zoneMap(m_handle, "LAY_zonemap");
     for (int i = 0; i < 9; i++) {
@@ -381,6 +402,20 @@ void GfMenuObjWorldMap::fn_710049D2A4(bool fadeFirst) {
             icon.setDisp(on);
         }
     }
+}
+
+int GfMenuObjWorldMap::getTotalFieldSkillLv(unsigned int fieldSkill) {
+    int total = 0;
+    for (unsigned short id : m_fieldSkillBlades) {
+        DataParamAcc acc(4, id, GimmickType(0));
+        for (unsigned int i = 0; i < 3; i++) {
+            if (acc.getFieldSkill(i, false) == fieldSkill) {
+                total += acc.getFieldSkillLevel(i, false);
+                break;
+            }
+        }
+    }
+    return total;
 }
 
 void GfMenuObjWorldMap::IconFilterListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
@@ -457,12 +492,64 @@ void GfMenuObjWorldMap::IconFilterListener::reciveEvent(ui::EventData const& eve
     }
 }
 
+bool GfMenuObjWorldMap::chkMapCond(unsigned int mapId, mm::Pnt<short>* pos) {
+    unsigned char* fp = GfDataBdat::getFP(0x179);
+    unsigned char* posFp = GfDataBdat::getFP(0x178);
+    int top = Bdat::getIdTop(fp);
+    for (unsigned int i = 0; i < Bdat::getIdCount(fp); i++) {
+        int row = i + top;
+        if (static_cast<unsigned short>(Bdat::getVal(fp, "mapId", row)) == mapId) {
+            mm::mtl::FixStr<32> name;
+            for (unsigned int j = 0; j < 3; j++) {
+                name.format("cond%d", j + 1);
+                bool met = GfGameCond::isGameCond(static_cast<unsigned short>(Bdat::getVal(fp, name.m_str, row)));
+                if (met) {
+                    if (pos != nullptr) {
+                        name.format("pos%d", j + 1);
+                        unsigned short posId = Bdat::getVal(fp, name.m_str, row);
+                        if (posId == 0) {
+                            pos->x = 0;
+                            pos->y = 0;
+                        } else {
+                            pos->x = Bdat::getVal(posFp, "posX", posId);
+                            pos->y = Bdat::getVal(posFp, "posY", posId);
+                        }
+                    }
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 unsigned int GfMenuObjWorldMap::getFloor() {
     if (!m_zoneList->m_groupMode) {
         return m_zoneList->getContents(m_zoneList->getIndex(false)).m_mapId;
     }
     unsigned short pointId = m_pointList->getContents(m_pointList->getIndex(false)).m_mapId;
     return static_cast<unsigned short>(Bdat::getVal(m_gmkBdat, "menuMapImage", pointId));
+}
+
+void GfMenuObjWorldMap::getFloorAABB(unsigned int mapId, unsigned int floor, mm::Aabb& aabb, mm::Pnt<short>& center) {
+    int index = GfMenuMapInfo::getMapInfoIndex(GfDataMap::getMapResourceNameByMapID(mapId));
+    if (index != -1) {
+        GfMenuMapInfo::MapAreaInfo info;
+        const char* name = reinterpret_cast<const char*>(Bdat::getVal(GfDataBdat::getFP(0x17A), "level_name", floor));
+        if (GfMenuMapInfo::getMapAreaFromName(index, name, info)) {
+            mm::Vec3 min;
+            min.x = info.m_minX;
+            min.y = info.m_minY;
+            min.z = info.m_minZ;
+            mm::Vec3 max;
+            max.x = info.m_maxX;
+            max.y = info.m_maxY;
+            max.z = info.m_maxZ;
+            aabb.set(min, max);
+            center.x = static_cast<short>((min.x + max.x) * 0.5f);
+            center.y = static_cast<short>((min.z + max.z) * 0.5f);
+        }
+    }
 }
 
 bool GfMenuObjWorldMap::fn_710049FB94(const gmk::AGmkBase* gmk) {

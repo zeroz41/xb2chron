@@ -7,11 +7,14 @@ namespace gf {
 // a GfMenuZoneMapList's content (0x18 bytes): a map or point and the name GfMenuZoneMapAdapter shows for it
 struct MenuZoneMapInfo {
     // GfMenuZoneMapList::create's inlined construction of m_dummy zeroes bytes 0 to 0x15 and leaves 0x16
-    MenuZoneMapInfo() : m_mapId(0), m_param(0), pad_8(), m_priority(0) {}
+    MenuZoneMapInfo() : m_mapId(0), m_param(0), m_disableCondition(0), pad_C(), m_priority(0) {}
     // GfMenuZoneMapAdapter::ListConverter::getMapId's (the name is not the original's); sortPriority's second key
     unsigned int m_mapId;
     unsigned int m_param;  // GfMenuZoneMapAdapter::ListConverter::getParam's (the name is not the original's)
-    unsigned char pad_8[0xC];
+    // GfMenuObjWorldMap::isEnableJump: when this game condition holds, the jump is disabled (the name is not the
+    // original's)
+    unsigned int m_disableCondition;  // 0x8
+    unsigned char pad_C[8];
     unsigned short m_priority;  // sortPriority's first key (the name is not the original's)
     // no member after m_priority: the sort's swaps assign 0x16 bytes (the tail padding is not copied)
 };

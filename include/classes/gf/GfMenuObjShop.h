@@ -7,7 +7,10 @@
 #include "mm/mtl/IntrusivePtr.h"
 #include "classes/gf/GfMenuReferenceNumber.h"
 
-namespace ui { class UISelectObjList; }
+namespace ui {
+class UICtrlCursorSelect;
+class UISelectObjList;
+}  // namespace ui
 
 namespace gf {
 class GfMenuCallContext;
@@ -85,6 +88,8 @@ public:
     void sendEnableEvent(unsigned int handle);
     // event 0x41 to that object, or to the main layer when it is 0
     void sendExitEvent(unsigned int handle);
+    // event 0x22 to that object, or to the main layer when it is 0
+    void sendCloseEvent(unsigned int handle);
 
     // sequence jobs (m_seq): each returns true when done
     // "TXT_store_sell_index" shows the current filter's name (BDAT 0x11D, list 0x14B's entry filter + 1)
@@ -101,14 +106,19 @@ public:
     bool seqStartSleepFade();
     bool seqItemGet();
 
-    unsigned char pad_24[0x28 - 0x24];
+    // the shop (GfBdatShop's shop list row): InnActListener pays the inn with it (GfGameUtilShop::execPayInn); the
+    // name is not the original's
+    unsigned int m_shopId;  // 0x24
     // the shop's mode: 3 moves "LAY_stock_num" up by 0x27, 0 shows it by the filter's item type (fn_710047688C;
     // the name is not the original's)
     int m_mode;  // 0x28
     unsigned char pad_2C[0x38 - 0x2C];
     // the guide text "TXT_common_guide" shows (setGuideText; the name is not the original's)
     unsigned int m_guideTextId;  // 0x38
-    unsigned char pad_3C[0x48 - 0x3C];  // 0x40: initialize's ui::UISelectObjList
+    unsigned char pad_3C[0x40 - 0x3C];
+    // the inn's action list (initialize's ui::UISelectObjList): InnActListener selects and runs its rows (the name
+    // is not the original's)
+    ui::UISelectObjList* m_selectList;  // 0x40
     // the items the sell list shows (initialize creates it, setupSellItemList fills it; the name is not the original's)
     GfMenuItemList* m_sellItemList;  // 0x48
     // the sell list's objects (initialize creates it; setupSellItemList's page rows; the name is not the original's)
@@ -123,7 +133,11 @@ public:
     // the item filters and the current one (setFilterIndex, fn_710047688C; the names are not the original's)
     mm::mtl::FixedVector<unsigned int, 22> m_filters;  // 0x60
     unsigned int m_filterIndex;  // 0xC0
-    unsigned char pad_C4[0x148 - 0xC4];
+    unsigned char pad_C4[0xC8 - 0xC4];
+    // the inn action list's cursor ("LAY_inn_action_cursor"): InnActListener creates it on event 0x40 and
+    // releases it when an action ends (the name is not the original's)
+    ui::UICtrlCursorSelect* m_cursor;  // 0xC8
+    unsigned char pad_D0[0x148 - 0xD0];
     // the item seqItemGet shows as got in mode 3, then clears (the name is not the original's)
     unsigned int m_getItemId;  // 0x148
     unsigned char pad_14C[0x160 - 0x14C];

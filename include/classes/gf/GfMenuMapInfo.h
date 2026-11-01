@@ -75,6 +75,8 @@ public:
     static void postUpdate(const fw::UpdateInfo& info);
     // the number of areas of that map info; -1 without the menu
     static int getMapAreaCount(int index);
+    // the index of the map info of that map resource name; -1 when none (GfMenuObjWorldMap::getFloorAABB tests it)
+    static int getMapInfoIndex(const char* name);
     static bool getMapArea(int index, unsigned int area, MapAreaInfo& info);
     static const MapAreaInfo* getMapArea(int index, unsigned int area);
     static void setCurrentMap(unsigned int mapId);
