@@ -33,6 +33,9 @@ public:
     // table it reads; update_WpnTypeWP passes 0)
     static int getWp(unsigned int driver, unsigned int wpnType, int mode);
     static unsigned int getWpnType(unsigned int arts);
+    // the symbols' name (its code is in GfDataBlade_710029064C's range; 0 for arts 0 or one outside the table).
+    // TUnk_B535D0::fn_7100290D40 (message type 13) and TUnk_B53370 test it against 0
+    static unsigned int getRangeType(unsigned int arts);
 };
 
 }  // namespace gf

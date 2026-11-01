@@ -27,6 +27,12 @@ void fn_71002906D0(::mm::mtl::FixedVector<unsigned short, 128>& ids);
 // unit and uses no argument (GfGameScene::updateControlFreeEvent calls it). What it does: answers whether
 // PtrSingleton<GfPlayComStartChallengeBattle>'s instance exists.
 bool fn_71002920F0();
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function: its code is in
+// GfDataBlade_710029064C's range and TUnk_B535D0::fn_7100290D40 tail-calls it with message type 0x13's pad_40
+// (no object).
+// What it does: finds the GfBdatBtl challenge whose condition (type 0xD) resolves to the value and, unless its row's
+// m_flag3E is set, sets it and shows SCOM_POPUP::fn_710056A3FC.
+void fn_7100290BAC(unsigned int value);
 // table 0x7100B535D0 (the fw::MessageObject base's at +0x38, offset 8); the base at 0 is
 // mm::mtl::PtrSingleton<TUnk_B535D0> (its table 0x7100B53628). No RTTI or 1.0.0 symbol names it: the arena manager
 // of gf_game_arena's unit (its constructor fn_7100290FA0 installs both tables; the arena play commands send it
@@ -84,7 +90,23 @@ public:
         // does: for each id's row, sets m_flag3E once GfGameCond::isGameCond(GfBdatBtl::fn_71001E9CEC(id)) holds; a
         // row without m_flag3C gets m_flag3C and m_flag3E then and the id goes to fn_710056A3FC.
         void fn_7100290598(const ::mm::mtl::FixedVector<unsigned short, 128>& ids);
+        // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (code in unit_7100290CC4's range and,
+        // fn_710029078C, GfDataBlade_710029064C's). Members: TUnk_B535D0::fn_7100290D40 calls them on SDataGame's
+        // table (0x11A8CC) with the message's id. What they do: fn_7100290CE0 answers bit 1 of byte 10 of row id
+        // (0 for id 0), fn_7100290CC4 sets that bit (not for id 0), fn_710029078C stores 2 in the row's m_flag3C.
+        bool fn_7100290CE0(unsigned int id);
+        void fn_7100290CC4(unsigned int id);
+        void fn_710029078C(unsigned int id);
         RuleRow m_rows[48];
+    };
+
+    // what fn_7100290D40 (message type 2) and TUnk_B52C38::fn_710028D4A4 pass to fn_71003217A0 (the name is not the
+    // original's): fn_71003217A0 copies m_mapjumpId into the first word of the GfMapjumpInfo it builds
+    struct MapjumpParam {
+        // fn_7100290D00 (out of line: TUnk_B52C38::fn_710028D4A4 calls it; fn_7100290D40 inlines it)
+        MapjumpParam();
+        unsigned int m_mapjumpId;  // 0xE1 (the name is not the original's)
+        unsigned char pad_4[4];
     };
 
     // fn_7100290FA0 (GfGameManager::initialize builds it through fn_7100291AD8; the parameter is not used)
@@ -158,6 +180,11 @@ public:
     ::fw::SoundResource* m_soundResource;
     ::fw::SoundPack* m_soundPack;
 };
+
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function: its code is in
+// unit_71003214F4 (sequential play); TUnk_B535D0::fn_7100290D40 and TUnk_B52C38::fn_710028D4A4 call it with a
+// MapjumpParam (no object). What it does: builds a GfMapjumpInfo from param's m_mapjumpId and the defaults.
+void fn_71003217A0(const TUnk_B535D0::MapjumpParam& param);
 }  // namespace gf
 
 #endif

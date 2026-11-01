@@ -33,6 +33,8 @@
 
 namespace gf {
 
+TUnk_B535D0::MapjumpParam::MapjumpParam() : m_mapjumpId(0xE1) {}
+
 bool TUnk_B535D0::recieveMessage(fw::MessageObject* sender, fw::Message& msg) {
     if (msg.m_id == 0x1000034) {
         fn_7100290D40(sender, static_cast<MsgUnk_1000034&>(msg));
@@ -80,6 +82,35 @@ void TUnk_B535D0::fn_7100291B1C() {
     TUnk_B535D0* self = sys();
     self->fn_7100291B64();
     delete self;
+}
+
+void TUnk_B535D0::fn_7100291B64() {
+    while (!fn_7100291CAC()) {
+        GfSleep(1);
+    }
+    if (m_updater != nullptr) {
+        delete m_updater;
+        m_updater = nullptr;
+    }
+    m_fsm.cleanup();
+    m_sound->fn_710028D624();
+    if (m_sound != nullptr) {
+        delete m_sound;
+        m_sound = nullptr;
+    }
+    if (m_helper != nullptr) {
+        delete m_helper;
+        m_helper = nullptr;
+    }
+    if (m_msgObj != nullptr) {
+        delete m_msgObj;
+        m_msgObj = nullptr;
+    }
+    if (m_partySetup != nullptr) {
+        delete m_partySetup;
+        m_partySetup = nullptr;
+    }
+    m_isSetUp = false;
 }
 
 void TUnk_B535D0::fn_7100291C6C(TUnk_B535D0* self) {
@@ -145,6 +176,14 @@ void TUnk_B535D0::fn_7100291F2C() {
     }
     m_soundPack = fw::SoundManager::sys()->findPack("dlc_se_btl_chbtl", nullptr);
 }
+
+// Proposed name, not the original's: the names of the arena states (IDs 0..9: 3 is the field state, 9 the one
+// fn_7100291B64 waits for). Only the strings survive in the original (.rodata lbl_710098A308..0x710098A38D, after
+// "dlc_se_btl_chbtl", no reference left): what pointed at them was unreferenced and dropped by the linker.
+const char* g_arenaStateNames[] = {
+    "ARENA_WAIT", "ARENA_SETUP", "ARENA_LEAVE", "ARENA_FIELD", "ARENA_BTL_START",
+    "ARENA_BTL", "ARENA_BTL_RESULT", "ARENA_BTL_RETURN", "ARENA_EVENT", "ARENA_DESTROY",
+};
 
 void TUnk_B535D0::fn_7100291FF0() {
     fw::SoundResource* resource = m_soundResource;
