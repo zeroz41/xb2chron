@@ -283,6 +283,15 @@ unsigned int GfMenuReference::fn_71003674A0() {
     return 0;
 }
 
+void GfMenuReference::setElemComboRootInfo(unsigned int route, const ElemComboRoot& info) {
+    if (route < 7) {
+        GfMenuReference* self = get();
+        if (self) {
+            self->m_elemComboRoot[route] = info;
+        }
+    }
+}
+
 int GfMenuReference::getElementComboRootCurrent() {
     GfMenuReference* self = get();
     if (self) {
@@ -386,6 +395,19 @@ int GfMenuReference::getBladeSetIDFromParty(unsigned int party, unsigned int slo
     return result;
 }
 
+bool GfMenuReference::fn_7100367ADC(unsigned int slot, const BladeOwner& owner) {
+    bool changed = false;
+    if (GfMenuObjUtil::fn_710048FD30(3)) {
+        GfMenuReference* self = get();
+        if (slot < 3 && self) {
+            BladeOwner& record = self->m_bladeOwner[slot];
+            changed = record.m_driver != owner.m_driver || record.m_gauge.m_type != owner.m_gauge.m_type;
+            record = owner;
+        }
+    }
+    return changed;
+}
+
 const GfMenuReference::BladeOwner* GfMenuReference::fn_7100367BD8(unsigned int blade) {
     if (GfMenuObjUtil::fn_710048FD30(3)) {
         GfMenuReference* self = get();
@@ -418,6 +440,30 @@ void GfMenuReference::fn_7100367D1C() {
                 self->m_bladeOwner[i].m_gauge.m_rate = 0.0f;
             }
         }
+    }
+}
+
+void GfMenuReference::fn_7100367D6C(unsigned int driver, const DriverGauge& gauge) {
+    if (!GfMenuObjUtil::fn_710048FD30(3)) return;
+    GfMenuReference* self = get();
+    if (!self) return;
+    unsigned int added = 0;
+    for (unsigned int i = 0; i < 3; i++) {
+        BladeOwner& record = self->m_bladeOwner[i];
+        if (record.m_driver == driver) {
+            if (!(self->m_gaugeTypeBits & (1 << gauge.m_type)) && record.m_gauge.m_type != gauge.m_type) {
+                added = 1 << gauge.m_type;
+            }
+            record.m_gauge = gauge;
+            break;
+        }
+    }
+    self->m_gaugeTypeBits |= added;
+    if ((added & 3) && (self->m_gaugeTypeBits & 3) == 3) {
+        TUnk_B60E28::fn_71003C3470();
+    }
+    if ((added & 4) && (self->m_gaugeTypeBits & 4)) {
+        TUnk_B60E28::fn_71003C34E0();
     }
 }
 

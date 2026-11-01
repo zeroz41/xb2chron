@@ -36,9 +36,10 @@ public:
     // the type, the field names are not the original's)
     struct ElemComboRoot {
         // getElementComboRootInfo's dummy is zeroed when first used
-        ElemComboRoot() : m_comboId(), pad_4() {}
+        ElemComboRoot() : m_comboId(), m_flags() {}
         unsigned int m_comboId;  // GfMenuElementComboAdapter::ReferenceRouteConverter's combo
-        unsigned char pad_4[0x4];
+        // copied through Bitflag's operator= (setElemComboRootInfo); the flags' meaning and the name are not known
+        ::mm::mtl::Bitflag<32> m_flags;
     };
     // an arts palette slot's arts (the first fields of a 0x28-byte record; the names are not the original's):
     // GfMenuBattleAdapter's arts slot callbacks read them
@@ -72,6 +73,9 @@ public:
     struct DriverGauge {
         int m_type;
         float m_rate;
+        // copied through Bitflag's operator= (fn_7100367ADC, fn_7100367D6C); the flags' meaning and the name are not
+        // known
+        ::mm::mtl::Bitflag<32> m_flags;
     };
     // a 0x10-byte record of the three at 0x4CF28 of the instance: a driver, then the gauge fn_7100367C78 answers
     // (the names are not the original's; GfMenuCharDataAdapter::ReferenceBladeOwnerDriverConverter shows the
@@ -80,7 +84,6 @@ public:
     struct BladeOwner {
         unsigned int m_driver;
         DriverGauge m_gauge;
-        unsigned char pad_C[0x4];
     };
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's
     // ReferenceBladeOwnerDriverConverter::getCharData read GfDataBlade::getSetDriver(getReferenceBladeID(index)) there).
@@ -107,6 +110,13 @@ public:
     // Its one caller, GfMenuManager::gevChangeParty, passes slots 0-2 with {driver of party slot, slot} or
     // {0, 0xFF} when the slot has no driver.
     static bool fn_7100367ADC(unsigned int slot, const BladeOwner& owner);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its address lies in
+    // gf_menu_reference's unit (after fn_7100367D1C) and it reads and writes its singleton's fields. What it does:
+    // while GfMenuObjUtil::fn_710048FD30(3) holds, copies the gauge into the record of that driver; a gauge type
+    // whose bit (1 << type) is new in m_gaugeTypeBits and differs from the record's sets it, then
+    // TUnk_B60E28::fn_71003C3470 when bits 0 and 1 are both set, fn_71003C34E0 when bit 2 is. Its one caller is
+    // btl::UIManager::UpdateMenuData.
+    static void fn_7100367D6C(unsigned int driver, const DriverGauge& gauge);
     // GfMenuFieldSkill::start sets slot 5 to 0 (the parameter names are not the original's)
     static void setReferenceBladeID(unsigned int index, unsigned int blade);
     static unsigned int getReferenceTeamID();  // GfMenuMercenariesAdapter::ReferenceTeamConverter's team
@@ -117,6 +127,8 @@ public:
     static int getReferenceNumber(unsigned int index);
     static int getReferenceNumberMin(unsigned int index);
     static int getReferenceNumberMax(unsigned int index);
+    // 1.0.0's symbol; stores a route when it is below 7 and the singleton exists (btl::UIManager::UpdateMenuData)
+    static void setElemComboRootInfo(unsigned int route, const ElemComboRoot& info);
     static const ElemComboRoot* getElementComboRootInfo(unsigned int route);  // a dummy past the 7th
     static int getElementComboRootCurrent();
     // the lists the link-jump menu shows (null without the singleton): its enemies and its items; clearLinkList
@@ -469,7 +481,9 @@ public:
     ::mm::mtl::Bitflag<32> m_layerBits;  // fn_7100368380/fn_7100368418
     LayerGauge m_layerGauge[2];          // fn_7100368498, fn_710036851C, fn_71003686A0
     LayerGimmick m_layerGimmick[3];      // fn_71003687B0
-    unsigned char pad_4CFCC[0x8];
+    // the gauge types fn_7100367D6C has seen, a bit each (the name is not the original's)
+    unsigned int m_gaugeTypeBits;
+    unsigned char pad_4CFD0[0x4];
     ComboRouteState m_comboRoute;  // fn_7100368830, fn_71003688E0, fn_71003689C0
     LayerResult m_layerResult;  // fn_7100368B40
 };

@@ -2,6 +2,7 @@
 #define MM_MTL_BITFLAG_H
 
 #include "mm/MMStdBase.h"
+#include "mm/mtl/Algorithm.h"
 
 // mm_lib's bitflag.h, as the including file's include path named it (see mm/mtl/FixStr.h)
 #ifdef MM_LIB_FROM_LIBS
@@ -69,6 +70,15 @@ public:
         } else {
             m_flags[word] &= ~mask;
         }
+    }
+
+    // copies the words through copy_n (GfMenuReference::setElemComboRootInfo, fn_7100367ADC and fn_7100367D6C copy a
+    // record's Bitflag word apart from its other fields, after a self test and algorithm.h's overlap assert)
+    Bitflag& operator=(const Bitflag& other) {
+        if (this != &other) {
+            copy_n(other.m_flags, (Size + 31) / 32, m_flags);
+        }
+        return *this;
     }
 
     bool operator[](unsigned int index) const {

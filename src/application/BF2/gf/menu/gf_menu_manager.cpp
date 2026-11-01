@@ -1251,8 +1251,7 @@ void GfMenuManager::gevChangeParty() {
         return;
     }
     unsigned int changed = 0;
-    GfMenuReference::BladeOwner owner;
-    owner = {0, {0xFF, 0.0f}};
+    GfMenuReference::BladeOwner owner = {0, {0xFF, 0.0f}};
     if (unsigned int driver = GfGameParty::getDriverBdatId(0, 0)) {
         owner.m_driver = driver;
         owner.m_gauge.m_type = 0;
@@ -1260,13 +1259,20 @@ void GfMenuManager::gevChangeParty() {
     if (GfMenuReference::fn_7100367ADC(0, owner)) {
         changed |= 1;
     }
-    owner = {0, {0xFF, 0.0f}};
+    // reset field by field (an assigned record would go through Bitflag's operator=, which the original does not call)
+    owner.m_driver = 0;
+    owner.m_gauge.m_type = 0xFF;
+    owner.m_gauge.m_rate = 0.0f;
+    owner.m_gauge.m_flags.reset();
     if (unsigned int driver = GfGameParty::getDriverBdatId(0, 1)) {
         owner.m_driver = driver;
         owner.m_gauge.m_type = 1;
     }
     changed |= GfMenuReference::fn_7100367ADC(1, owner) ? 2 : 0;
-    owner = {0, {0xFF, 0.0f}};
+    owner.m_driver = 0;
+    owner.m_gauge.m_type = 0xFF;
+    owner.m_gauge.m_rate = 0.0f;
+    owner.m_gauge.m_flags.reset();
     if (unsigned int driver = GfGameParty::getDriverBdatId(0, 2)) {
         owner.m_driver = driver;
         owner.m_gauge.m_type = 2;
