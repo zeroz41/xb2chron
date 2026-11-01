@@ -63,6 +63,11 @@
 #include "classes/gf/LocatorTalk_DummyGroup.h"
 #include "classes/gf/LocatorBat_EnemyGroupID.h"
 #include "mm/mtl/FixStr.h"
+#include "classes/gf/LocatorBat_EnemyID.h"
+#include "classes/gf/GfObjManager.h"
+#include "classes/gf/GfObjSetupEnemy.h"
+#include "gf/GfObjInfo.h"
+#include "mm/mtl/RTTI.h"
 
 namespace gf {
 
@@ -181,6 +186,108 @@ void LocatorPrecious::onTraverse(const gmk::AGmkBase& gmk) {
     m_accs.push_back(gmk::GmkAcc(info));
     m_posList.push_back(*gmk.m_pos);
 }
+void LocatorBat_EnemyID::update() {
+    if (m_enemyId == 0 || m_gmkSetId <= 0) {
+        return;
+    }
+    m_type0Accs.clear();
+    m_type1Accs.clear();
+    const gmk::GmkSet* set = gmk::GmkManager::sys()->findGmkSet(m_gmkSetId);
+    if (set == nullptr) {
+        return;
+    }
+    const gmk::IGmkList* list = set->getGmkList(gmk::GmkEnemy::TYPE);
+    if (list != nullptr) {
+        unsigned int num = list->getInstNum();
+        for (unsigned int i = 0; i != num; i++) {
+            const gmk::GmkEnemy* enemy = static_cast<const gmk::GmkEnemy*>(list->getInst(i));
+            if (enemy->isValid() && enemy->m_insts.m_popInfo.hasEneID(m_enemyId, true) && enemy->isPopCondMatched()) {
+                gmk::GmkAcc::CreateInfo info;
+                if (enemy != nullptr) {
+                    info.validate(*enemy);
+                }
+                gmk::GmkAcc acc(info);
+                m_type0Accs.push_back(acc);
+            }
+        }
+    }
+    list = set->getGmkList(gmk::GmkRoutedEnemy::TYPE);
+    if (list != nullptr) {
+        unsigned int num = list->getInstNum();
+        for (unsigned int i = 0; i != num; i++) {
+            const gmk::GmkRoutedEnemy* enemy = static_cast<const gmk::GmkRoutedEnemy*>(list->getInst(i));
+            if (enemy->isValid() && enemy->m_insts.m_popInfo.hasEneID(m_enemyId, true) && enemy->isPopCondMatched()) {
+                gmk::GmkAcc::CreateInfo info;
+                if (enemy != nullptr) {
+                    info.validate(*enemy);
+                }
+                gmk::GmkAcc acc(info);
+                m_type1Accs.push_back(acc);
+            }
+        }
+    }
+    m_posList.clear();
+    unsigned long num = m_type0Accs.size();
+    for (unsigned long i = 0; i < num; i++) {
+        const gmk::GmkAcc& acc = m_type0Accs[i];
+        if (!acc.isValid()) {
+            continue;
+        }
+        const gmk::GmkEnemy* enemy = static_cast<const gmk::GmkEnemy*>(acc.m_gmk);
+        unsigned int gobNum = enemy->getGobInstNum();
+        if (gobNum != 0) {
+            unsigned int j = 0;
+            bool found = false;
+            for (; j < gobNum; j++) {
+                GF_OBJ_HANDLE* handle = enemy->getGobInst(j);
+                GfObjAcc objAcc(handle);
+                if (objAcc.isValidTransform() && !GfGameUtil::isGameObjWait(handle) &&
+                    (!GfGameManager::fn_71002A9E68() || m_enemyId == 0 || m_enemyId == objAcc.getEnArrangeId())) {
+                    m_posList.push_back(objAcc.getWorldTransformNoSync().position);
+                    found = true;
+                }
+            }
+            if (found) {
+                continue;
+            }
+        }
+        if (enemy->getPopWait() > 0.0f || enemy->m_insts.isQuestDead()) {
+            continue;
+        }
+        m_posList.push_back(*enemy->m_pos);
+    }
+    num = m_type1Accs.size();
+    for (unsigned long i = 0; i < num; i++) {
+        const gmk::GmkAcc& acc = m_type1Accs[i];
+        if (!acc.isValid()) {
+            continue;
+        }
+        const gmk::GmkRoutedEnemy* enemy = static_cast<const gmk::GmkRoutedEnemy*>(acc.m_gmk);
+        unsigned int gobNum = enemy->getGobInstNum();
+        if (gobNum != 0) {
+            bool found = false;
+            for (unsigned int j = 0; j < gobNum; j++) {
+                GF_OBJ_HANDLE* handle = enemy->getGobInst(j);
+                GfObjAcc objAcc(handle);
+                if (objAcc.isValidTransform() && !GfGameUtil::isGameObjWait(handle) &&
+                    (!GfGameManager::fn_71002A9E68() || m_enemyId == 0 || m_enemyId == objAcc.getEnArrangeId())) {
+                    m_posList.push_back(objAcc.getWorldTransformNoSync().position);
+                    found = true;
+                }
+            }
+            if (found) {
+                continue;
+            }
+        }
+        if (enemy->getPopWait() > 0.0f || enemy->m_insts.isQuestDead()) {
+            continue;
+        }
+        mm::Vec3 pos(0.0f, 0.0f, 0.0f);
+        if (enemy->getRoutePointPos(pos, 0)) {
+            m_posList.push_back(pos);
+        }
+    }
+}
 void LocatorBat_EnemyGroupID::create(QuestID questId, unsigned short groupId) {
     dispose();
     m_questId = questId;
@@ -215,6 +322,102 @@ void LocatorBat_EnemyGroupID::create(QuestID questId, unsigned short groupId) {
     int iconId = gmk::getBdatIdOfQuestTargetIcon(
         GfQuestTarget::getIconTypeBattle(2, groupId, questId, reinterpret_cast<GF_OBJ_HANDLE*>(-1), true));
     m_iconBdatId = iconId < 0 ? 0x19f : iconId;
+}
+// an enemy's setup when its info holds one of its own kind (5), as DataParamAcc.cpp's _gfdac::getEnemySetup (inline,
+// the name is not the original's)
+static inline GfObjSetupEnemy* getEnemySetup(GF_OBJ_HANDLE* handle) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (info != nullptr && info->m_setup != nullptr && info->m_setup->m_type == info->m_obj->m_type &&
+        info->m_obj->m_type == 5) {
+        return mm::mtl::rttiCast<GfObjSetupEnemy>(info->m_setup);
+    }
+    return nullptr;
+}
+// adds the object's world position (inline; the name is not the original's)
+static inline void addObjPos(LocatorBat_EnemyGroupID* locator, GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    locator->m_posList.push_back(acc.getWorldTransformNoSync().position);
+}
+// The two passes (GmkEnemy, then GmkRoutedEnemy) share one body; the helper's name is not the original's.
+template <class T>
+static void addEnemyPos(LocatorBat_EnemyGroupID* locator, const gmk::GmkSet* set) {
+    if (!set->isValid()) {
+        return;
+    }
+    const gmk::IGmkList* list = set->getGmkList(T::TYPE);
+    if (list == nullptr || !list->isValid()) {
+        return;
+    }
+    unsigned int num = list->getInstNum();
+    for (unsigned int i = 0; i < num; i++) {
+        if (locator->m_posList.size() == locator->m_posList.capacity()) {
+            return;
+        }
+        const gmk::AGmkBase* gmk = list->getInst(i);
+        const T* enemy = static_cast<const T*>(gmk);
+        if (gmk->isValid() && enemy->isPopCondMatched()) {
+            unsigned int gobNum = enemy->getGobInstNum();
+            if (gobNum != 0) {
+                unsigned int j = 0;
+                bool found = false;
+                for (; j < gobNum; j++) {
+                    GF_OBJ_HANDLE* handle = enemy->getGobInst(j);
+                    GfObjAcc acc(handle);
+                    if (acc.isValidTransform() && !GfGameUtil::isGameObjWait(handle)) {
+                        if (GfObjSetupEnemy* setup = getEnemySetup(handle)) {
+                            bool hit = false;
+                            for (unsigned int id : locator->m_enemyIds) {
+                                if (setup->m_enArrangeId == id) {
+                                    hit = true;
+                                    break;
+                                }
+                            }
+                            if (hit) {
+                                addObjPos(locator, handle);
+                            }
+                        }
+                        found = true;
+                    }
+                }
+                if (found) {
+                    continue;
+                }
+            }
+        }
+        for (unsigned int id : locator->m_enemyIds) {
+            if (enemy->getPopWait() > 0.0f || enemy->m_insts.isQuestDead() ||
+                !enemy->m_insts.m_popInfo.hasEneID(id, true)) {
+                continue;
+            }
+            mm::Vec3 pos;
+            switch (gmk->getGmkType()) {
+            case gmk::GmkEnemy::TYPE:
+                pos = *gmk->m_pos;
+                break;
+            case gmk::GmkRoutedEnemy::TYPE:
+                if (!static_cast<const gmk::GmkRoute*>(gmk)->getRoutePointPos(pos, 0)) {
+                    continue;
+                }
+                break;
+            default:
+                continue;
+            }
+            locator->m_posList.push_back(pos);
+            break;
+        }
+    }
+}
+void LocatorBat_EnemyGroupID::update() {
+    if (m_groupId == 0 || m_gmkSetId <= 0) {
+        return;
+    }
+    m_posList.clear();
+    const gmk::GmkSet* set = gmk::GmkManager::sys()->findGmkSet(m_gmkSetId);
+    if (set == nullptr) {
+        return;
+    }
+    addEnemyPos<gmk::GmkEnemy>(this, set);
+    addEnemyPos<gmk::GmkRoutedEnemy>(this, set);
 }
 LocatorBat_EnemySpeciesID::LocatorBat_EnemySpeciesID(QuestID questId, unsigned char speciesId)
     : m_speciesId(0), m_gmkSetId(-1) {
