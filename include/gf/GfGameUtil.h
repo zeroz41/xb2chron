@@ -1,7 +1,8 @@
 #ifndef GF_GFGAMEUTIL_H
 #define GF_GFGAMEUTIL_H
 
-namespace gf { class GF_OBJ_HANDLE; struct OwnerBonus; }
+namespace gf { class GF_OBJ_HANDLE; struct OwnerBonus; struct GfItem; }
+namespace mm { namespace mtl { template <typename T, unsigned long N> class FixedVector; } }
 namespace mm { class Vec3; namespace mtl { template <int LEN> class FixStr; template <typename T, unsigned long N> class FixedList; } }
 namespace gmk { enum GmkType : int; }
 namespace gf { class GfFieldLocator; }
@@ -49,6 +50,9 @@ public:
     static bool isTurnEnd(gf::GF_OBJ_HANDLE* handle);
     static bool execActivateReserverForBlade(unsigned int blade);
     static bool execActivateUnuseForBlade(unsigned int blade, bool releaseOrbs);
+    // the boosters a released blade gives back, added to the party (GfMenuObjBladeRelease::seqExecRelease lists
+    // them): true when there are any
+    static bool execBoosterAddForReleaseBlade(mm::mtl::FixedVector<GfItem, 1024>& items, unsigned int blade);
     static bool isDriverEquipBlade(unsigned int driver, unsigned int blade);
     // the blade's kizuna link row (DataObjBlade::getLinkNum and its neighbours read BTL_Bl_KizunaLink by it)
     static unsigned int getKizunaLink(unsigned int blade);

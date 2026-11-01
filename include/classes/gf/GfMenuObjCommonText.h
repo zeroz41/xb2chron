@@ -25,6 +25,7 @@ public:
     class OwnerChangeListener;
     class SelectListener;
     class OpenNumSelectParam;
+    class OpenSubMenuParam;
     GfMenuObjCommonText(unsigned int handle);
     virtual ~GfMenuObjCommonText();  // slot 0
     virtual void initialize();  // slot 2
@@ -41,7 +42,8 @@ public:
     // a text of table 0xF6 sent straight to the window (aborts the call context when the row has no text)
     static void openMissionStop(GfMenuCallContext* context, unsigned int text, unsigned int value);
     static void openGetItem(GfMenuCallContext* context, const GfMenuItemList* items);
-    static void openSubMenu(GfMenuCallContext* context, const GfMenuIDList* ids);
+    // the param is 3.0.1's: the symbol keeps 1.0.0's two-argument spelling
+    static void openSubMenu(GfMenuCallContext* context, const GfMenuIDList* ids, const OpenSubMenuParam& param);
     // the items to choose from; `value` goes out as the open event's first word (3.0.1 added it: 1.0.0's
     // openSelectItem takes two arguments)
     static void openSelectItem(GfMenuCallContext* context, const GfMenuItemList* items, unsigned int value);
@@ -81,6 +83,15 @@ public:
     unsigned int pad_4;
     unsigned int pad_8;
     unsigned int pad_C;
+};
+// openSubMenu selects m_index's entry and sends pad_0, pad_4 and pad_6 as the open event's 16-bit parameters
+// (GfMenuObjBladeRelease::seqSubMenuOpen fills it; the field names are not the original's)
+class GfMenuObjCommonText::OpenSubMenuParam {
+public:
+    unsigned short pad_0;
+    unsigned short m_index;  // the entry selected first (setIndex)
+    unsigned char pad_4;
+    unsigned short pad_6;
 };
 }  // namespace gf
 

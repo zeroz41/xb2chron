@@ -352,6 +352,10 @@ public:
     static unsigned int getBladeAttributeIconID(unsigned int blade);  // 0x9E plus the blade's attribute
     static bool isBladeDifferentImage(unsigned int blade, unsigned int other);  // their menu ids differ
     static bool isScenarioBlade(unsigned int blade);  // a regular blade or blade 1014
+    // GfMenuObjBladeRelease::seqSubMenuOpen picks its seqSubMenuErrorOvdOnly / seqSubMenuErrorOvdLastOne jobs by
+    // them (with a null list)
+    static bool isBladeLastOneInSlot(unsigned int blade, const GfMenuBladeList* list);
+    static bool isBladeLastOne(unsigned int blade, const GfMenuBladeList* list);
     // 0 when the blade can be removed, else why not (mode 1 also asks GfGameManager::isRexAwakening)
     static int canRemoveBladeEx(unsigned int blade, unsigned int mode,
                                 const mm::mtl::FixedVector<unsigned short, 422>* list);
