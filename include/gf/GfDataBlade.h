@@ -314,6 +314,8 @@ public:
     static bool getNameWithMsgID(unsigned char*& bdat, unsigned int& id, const SDataBlade& data);
     static unsigned int getQuestRace(unsigned int blade);
     static SDataBlade* getSDataBlade(unsigned int blade);
+    // (symbols) the enhances of a blade's data; true when any (DataObjBlade's armor/rate getters sum them)
+    static bool getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, SDataBlade& data, bool flag);
     // the blade's physical and ether defense bonus (Hana's from her role part); 0 for no blade
     static unsigned int getParmor(unsigned int blade);
     static unsigned int getEarmor(unsigned int blade);

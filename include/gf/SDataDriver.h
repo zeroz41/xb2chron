@@ -33,7 +33,13 @@ public:
     unsigned short m_dex;
     unsigned short m_agility;
     unsigned short m_luck;
-    unsigned char pad_a2[0xE];
+    // 0xA2..0xA7: the base defenses and rates DataObjDriver's getPArmor/getEArmor/getCriticalRate/getGuardRate read
+    // (named after those getters; the names are not the original's)
+    unsigned short m_pArmor;
+    unsigned short m_eArmor;
+    unsigned char m_criticalRate;
+    unsigned char m_guardRate;
+    unsigned char pad_a8[0x8];
     unsigned int m_exp;  // 0xB0 (GfDataDriver::getExp; the name is not the original's)
     unsigned int m_battleExp;  // 0xB4 (GfDataDriver::getBattleExp; the name is not the original's)
     unsigned int m_skillPoint;  // 0xB8 (GfDataDriver::getSkillPoint; the name is not the original's)

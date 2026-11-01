@@ -17,6 +17,14 @@ public:
     // 1.0.0 has both out of line (names from its symbols); 3.0.1 inlines them and keeps no copy
     void setup(unsigned int id);
     void setupVirtualParam();
+    // Placeholder name: the symbols leave it unnamed in both builds (1.0.0's DataObjBlade::getCriticalRate calls
+    // its copy fn_710028FE48). A static member because it sits among DataObjBlade's functions and takes no object.
+    // What it does: adds to value the BTL_Enhance Param1 of the blade data's enhances (GfDataBlade::getValidEnhance,
+    // flag passed on) whose EnhanceEffect is addEffect, then scales value by the sum of the Param1 percents of effect
+    // rateEffect. DataObjBlade's getPArmor/getEArmor/getCriticalRate/getGuardRate and DataObjDriver's
+    // getCriticalRate/getGuardRate call it.
+    static void fn_7100228AA4(unsigned int& value, SDataBlade& data, unsigned int rateEffect, unsigned int addEffect,
+                              bool flag);
     virtual ~DataObjBlade();  // slot 0
     virtual void setMenuParam() { m_menuParam = true; }  // slot 2
     virtual bool isValid() const;  // slot 3

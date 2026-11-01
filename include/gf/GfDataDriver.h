@@ -85,6 +85,22 @@ public:
     // 1.0.0's name: GfEquipUtil::getEquipDriverAcce(driver, slot) tail-calls it in both builds (1.0.0:
     // GfDataDriver::getEquipAcce(unsigned int, unsigned int)); the symbols spell 3.0.1's copy fn_7100247794
     static unsigned int getEquipAcce(unsigned int driver, unsigned int slot);
+    // Placeholder names: new in 3.0.1 (1.0.0's DataObjDriver::getDriverArtsLevel/setDriverArtsLevel/getDriverArts read
+    // the driver's SDataDriver inline), nothing in 1.0.0's place names them. Static members because they sit in
+    // GfDataBlade's unit among GfDataDriver's functions and take a driver id (no this). What they do:
+    // fn_7100245478 returns the level byte of arts `arts` of the driver (same code as GfDataDriverArts::getArtsLevel:
+    // DLC rows 0x11-0x19 through GfDataManager::fn_7100224A10, others in getDataGame's 0x5A0-byte records);
+    // fn_710024553C stores it (DataObjDriver::setDriverArtsLevel clamps the level to 5 first).
+    static unsigned int fn_7100245478(unsigned int driver, unsigned int arts);
+    static void fn_710024553C(unsigned int driver, unsigned int arts, unsigned int level);
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (1.0.0's DataObjDriver::getDriverArts reads
+    // the SDataDriver inline). Static members for the same reason (after getEquipAcce fn_7100247794, a driver id).
+    // What they do: the 20-byte arts slot record `index` of the driver's row (fn_7100247804: +0xC0 of the row,
+    // fn_71002478C8 / fn_7100247928: two DLC-table variants); DataObjDriver::getDriverArts indexes the words of it,
+    // its third argument (0, 1, 2) picking which.
+    static unsigned int* fn_7100247804(unsigned int driver, unsigned int index);
+    static unsigned int* fn_71002478C8(unsigned int driver, unsigned int index);
+    static unsigned int* fn_7100247928(unsigned int driver, unsigned int index);
     // 1.0.0's name: GfPouchUtil::getPouch calls it in both builds (1.0.0: GfDataDriver::getPouchData(unsigned int,
     // unsigned int)); the symbols spell 3.0.1's copy fn_71002409CC
     static SDataPouch* getPouchData(unsigned int driver, unsigned int pouch);
