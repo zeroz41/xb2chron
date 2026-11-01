@@ -30,6 +30,7 @@ public:
         m_flagA = false;
         m_flagB = true;
         m_option = 0;
+        m_flagF = 0;
         m_rangeA = -1.0f;
         m_valueA = 0.0f;
         m_id = 0xFFFF;
@@ -58,7 +59,9 @@ public:
     unsigned short m_id;  // 0xFFFF by default
     bool m_flagA;
     bool m_flagB;  // true by default
-    unsigned short m_option;
+    unsigned char m_option;
+    // EffectManager::setParam(handle, mtx, scale, value) sets it (the name is not the original's)
+    unsigned char m_flagF;
     bool m_flagC;
     bool m_flagD;  // WeatherEff::create sets it
     bool m_flagE;

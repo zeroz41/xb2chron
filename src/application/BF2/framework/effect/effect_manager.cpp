@@ -1,5 +1,6 @@
 #include "classes/effect/SystemManager.h"
 #include "classes/fw/EffectManager.h"
+#include "effect/SendParam.h"
 #include "classes/fw/EffectCasterSend.h"
 #include "classes/effect/SystemManager.h"
 #include "classes/fw/EffectManager.h"
@@ -309,6 +310,40 @@ void EffectManager::setCategory(unsigned int handle, EF_CATEGORY category) {
 void EffectManager::setViewnum(unsigned int handle, unsigned int viewnum) {
     if (handle != 0) {
         effect::SystemManager::getPtr()->es_set_viewnum(handle, viewnum);
+    }
+}
+
+// no handle test here (es_set_param gets every handle). The colour is set again after the scale: the original stores
+// it after the matrix copy, where the default constructor's stores would sit before it.
+void EffectManager::setParam(unsigned int handle, const mm::Mat44& mtx, const mm::Vec3& scale, unsigned char value) {
+    effect::SendParam param;
+    param.m_mtx = mtx;
+    param.m_scale = scale;
+    param.m_color[0] = 1.0f;
+    param.m_color[1] = 1.0f;
+    param.m_color[2] = 1.0f;
+    param.m_color[3] = 1.0f;
+    param.m_flagF = value;
+    effect::SystemManager::getPtr()->es_set_param(handle, &param);
+}
+
+// as above: the colour set again after the scale
+void EffectManager::setParam(unsigned int handle, const mm::Vec3& pos, const mm::Vec3& scale) {
+    effect::SendParam param;
+    param.m_mtx.setTrans(pos);
+    param.m_scale = scale;
+    param.m_color[0] = 1.0f;
+    param.m_color[1] = 1.0f;
+    param.m_color[2] = 1.0f;
+    param.m_color[3] = 1.0f;
+    effect::SystemManager::getPtr()->es_set_param(handle, &param);
+}
+
+void EffectManager::setMatrix(unsigned int handle, const mm::Mat44& mtx) {
+    if (handle != 0) {
+        effect::SendParam param;
+        param.m_mtx = mtx;
+        effect::SystemManager::getPtr()->es_set_param_pos_only(handle, &param);
     }
 }
 

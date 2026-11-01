@@ -166,6 +166,8 @@ public:
     void destroyHateRing(unsigned int handle);
     void destroyHateRingVec(unsigned int handle);
     void destroyHateArrow(unsigned int handle);
+    // the ball at pos, scale in x (the names of the parameters are not the original's)
+    bool updateComboBall(unsigned int handle, const mm::Vec3& pos, const float& scale);
     void destroyComboBall(unsigned int handle);
     void setMasterPause(bool pause);
     void kill(unsigned int handle);
@@ -188,11 +190,16 @@ public:
     void setParam(unsigned int handle, const effect::SendParam* param);
     // the effect's matrix alone (es_set_param_pos_only with the default parameters)
     void setMatrix(unsigned int handle, const mm::Mat44& mtx);
+    // the effect's matrix and scale; value goes to SendParam::m_flagF (the names of the parameters are not the
+    // original's)
+    void setParam(unsigned int handle, const mm::Mat44& mtx, const mm::Vec3& scale, unsigned char value);
     // GfComEffectCaster::setCaster passes its caster and 1.0f (the names of the parameters are not the original's)
     void setParam(unsigned int handle, EffectCasterBase* caster, float rate);
     // BladeChangeManager::UpdateProc passes the blade's position and mm::Vec3::unit (the names of the parameters are
     // not the original's)
     void setParam(unsigned int handle, const mm::Vec3& pos, const mm::Vec3& scale);
+    // the effect at pos, turned by rot (euler angles) and scaled (the names of the parameters are not the original's)
+    void setParam(unsigned int handle, const mm::Vec3& pos, const mm::Vec3& rot, const mm::Vec3& scale);
     int getDeadFlag(unsigned int handle);
     bool isLoop(void* data) const;
     bool containsCamAxis(void* data) const;
