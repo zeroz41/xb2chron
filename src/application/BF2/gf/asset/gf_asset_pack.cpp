@@ -1,6 +1,7 @@
 #include "gf/AssetPackInfo.h"
 #include "classes/gf/GfAssetManager.h"
 #include "classes/gf/GfAssetPack.h"
+#include "classes/gf/GfAssetResource.h"
 #include "gf/GfSlotMapping.h"
 #include "gf/AssetPackInfo.h"
 #include "classes/gf/GfAssetPack.h"
@@ -13,6 +14,8 @@
 #include "gf/GfAssetUtil.h"
 #include "gf/GfUtil.h"
 #include "mm/mtl/Hash.h"
+
+#include <string.h>
 
 namespace gf {
 
@@ -53,6 +56,29 @@ GfAssetResource* GfAssetPack::getResource(GfFileIdx file) const {
     return nullptr;
 }
 
+bool GfAssetPack::isLoaded(mm::mtl::FixStr<128>*) const {
+    if (m_files.m_files.empty()) {
+        return false;
+    }
+    for (const GfAssetFiles::AssetFile* file : m_files.m_files) {
+        GfAssetResource* resource = getResource(file->m_idx);
+        if (resource != nullptr) {
+            if (!resource->isFinishLoad()) {
+                return false;
+            }
+            if (resource->getAssetSize() == 0) {
+                continue;
+            }
+        } else {
+            if (m_files.isNoFile(file->m_idx)) {
+                continue;
+            }
+            return false;
+        }
+    }
+    return true;
+}
+
 GfAssetType GfAssetPack::getAssetType() const {
     return m_files.m_type;
 }
@@ -71,6 +97,15 @@ AssetPackInfo::~AssetPackInfo() {
     }
 }
 
+GfAssetPack* AssetPackInfo::getAssetPack(GfFileIdx file) const {
+    for (GfAssetPack* pack : m_packs) {
+        if (pack->m_files.isExistFile(file)) {
+            return pack;
+        }
+    }
+    return nullptr;
+}
+
 bool AssetPackInfo::getSlotHandle(mm::mtl::FixedVector<GF_SLOT_HANDLE*, 88>& handles) const {
     for (GfAssetPack* pack : m_packs) {
         GF_SLOT_HANDLE* handle = pack->m_slotHandle;
@@ -81,20 +116,139 @@ bool AssetPackInfo::getSlotHandle(mm::mtl::FixedVector<GF_SLOT_HANDLE*, 88>& han
     return !handles.empty();
 }
 
+bool AssetPackInfo::fn_71001B1840(mm::mtl::FixedVector<const char*, 128>& names, const char* name) {
+    for (GfAssetPack* pack : m_packs) {
+        for (const GfAssetPack::Resource& resource : pack->m_resources) {
+            if (resource.m_resource != nullptr && strstr(resource.m_resource->getAssetName(), name) != nullptr) {
+                names.push_back(resource.m_resource->getAssetName());
+            }
+        }
+    }
+    return !names.empty();
+}
+
+GfAssetResource* AssetPackInfo::getResource(GfFileIdx file) {
+    for (GfAssetPack** it = m_packs.begin(); it != m_packs.end(); ++it) {
+        GfAssetPack* pack = *it;
+        for (const GfAssetPack::Resource& resource : pack->m_resources) {
+            if (resource.m_fileIdx == file) {
+                if (resource.m_resource != nullptr) {
+                    return resource.m_resource;
+                }
+                break;
+            }
+        }
+    }
+    for (GfAssetPack** it = m_packs.begin(); it != m_packs.end(); ++it) {
+        GfAssetPack* pack = *it;
+        int common = pack->m_files.getCommonResource(file);
+        if (common != -1) {
+            for (const GfAssetPack::Resource& resource : pack->m_resources) {
+                if (resource.m_fileIdx == common) {
+                    if (resource.m_resource != nullptr) {
+                        return resource.m_resource;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    return nullptr;
+}
+
+inline GfAssetResource* GfAssetPack::getResource(const char* name) const {
+    for (const Resource& resource : m_resources) {
+        if (resource.m_resource == nullptr) {
+            continue;
+        }
+        if (strcmp(resource.m_resource->getAssetName(), name) == 0) {
+            return resource.m_resource;
+        }
+    }
+    return nullptr;
+}
+
+GfAssetResource* AssetPackInfo::fn_71001B1B30(const char* name) {
+    for (GfAssetPack** it = m_packs.begin(); it != m_packs.end(); ++it) {
+        if (GfAssetResource* resource = (*it)->getResource(name)) {
+            return resource;
+        }
+    }
+    return nullptr;
+}
+
+bool AssetPackInfo::isExist(GfFileIdx file) const {
+    for (GfAssetPack* const* it = m_packs.begin(); it != m_packs.end(); ++it) {
+        if (GfAssetResource* resource = (*it)->getResource(file)) {
+            return resource->isValidData();
+        }
+    }
+    return false;
+}
+
+inline void GfAssetPack::setupStreamObject() {
+    for (const GfAssetFiles::AssetFile* file : m_files.m_files) {
+        if (file->m_isWimdo) {
+            if (GfAssetResource* resource = getResource(file->m_idx)) {
+                resource->setupStreamObject();
+            }
+        }
+    }
+}
+
+void AssetPackInfo::setupStreamObject() {
+    for (GfAssetPack* pack : m_packs) {
+        pack->setupStreamObject();
+    }
+}
+
 void AssetPackInfo::releaseEmptySlot() {
     for (GfAssetPack** it = m_packs.begin(); it != m_packs.end(); ++it) {
         (*it)->releaseEmptySlot();
     }
 }
 
-void AssetPackInfo::fn_71001B2418() {
+void GfAssetPack::releaseEmptySlot() {
+    if (!isLoaded(nullptr)) {
+        return;
+    }
+    if (m_slotHandle == reinterpret_cast<GF_SLOT_HANDLE*>(-1)) {
+        return;
+    }
+    for (const GfAssetFiles::AssetFile* file : m_files.m_files) {
+        GfAssetResource* resource = getResource(file->m_idx);
+        if (resource != nullptr && resource->getAssetSize() != 0) {
+            return;
+        }
+    }
+    releaseSlotHandle();
+}
+
+void AssetPackInfo::setLoadComplete() {
     m_reload = false;
     for (GfAssetPack* pack : m_packs) {
         (void)pack;
     }
 }
 
-void AssetPackInfo::fn_71001B2904() {
+bool AssetPackInfo::isCached() const {
+    if (m_reload) {
+        for (GfAssetPack* const* it = m_packs.begin(); it != m_packs.end(); ++it) {
+            if (!((*it)->m_refCacheCount > 9)) {
+                return false;
+            }
+        }
+    } else {
+        for (GfAssetPack* const* it = m_packs.begin(); it != m_packs.end(); ++it) {
+            if (!(*it)->isCached()) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+void AssetPackInfo::updateReloadCount() {
     for (GfAssetPack** it = m_packs.begin(); it != m_packs.end(); ++it) {
         GfAssetPack* pack = *it;
         int users = pack->m_useCount;
@@ -108,7 +262,7 @@ void AssetPackInfo::fn_71001B2904() {
     }
 }
 
-bool AssetPackInfo::fn_71001B29DC(const GfAssetPack* pack) const {
+bool AssetPackInfo::isExistAssetPack(const GfAssetPack* pack) const {
     if (pack == nullptr) {
         return false;
     }
@@ -120,7 +274,7 @@ bool AssetPackInfo::fn_71001B29DC(const GfAssetPack* pack) const {
     return false;
 }
 
-bool AssetPackInfo::fn_71001B3040() const {
+bool AssetPackInfo::isPreSizeSizeValid() const {
     for (GfAssetPack* pack : m_packs) {
         if (!pack->isPreSizeSizeValid()) {
             return false;
@@ -157,6 +311,17 @@ bool GfAssetPack::isCached() const {
 
 void AssetPackInfo::setExtendResource(unsigned int index, GfExtendResource* resource) {
     m_extendResources[index] = resource;
+}
+
+void GfAssetPack::releaseResource() {
+    destroySoundPack();
+    for (Resource& resource : m_resources) {
+        if (resource.m_resource != nullptr) {
+            resource.m_resource->release();
+            resource.m_resource = nullptr;
+        }
+    }
+    m_resources.clear();
 }
 
 void AssetPackInfo::setDestroy() {
@@ -200,6 +365,47 @@ void AssetPackInfo::setMotionName(const char* name) {
     m_motionName = util::getFilePtrFromPath(name);
 }
 
+inline fw::SoundPack* GfAssetPack::getSePackByFileIdx(GfFileIdx file) {
+    GfAssetResource* resource = getResource(file);
+    if (resource != nullptr && resource->isValidData()) {
+        return m_sePack;
+    }
+    return nullptr;
+}
+
+fw::SoundPack* AssetPackInfo::getSePackByFileIdx(GfFileIdx file) {
+    for (GfAssetPack* pack : m_packs) {
+        if (fw::SoundPack* sePack = pack->getSePackByFileIdx(file)) {
+            return sePack;
+        }
+    }
+    return nullptr;
+}
+
+bool AssetPackInfo::isSameResource(const AssetPackInfo* other) const {
+    if (m_packs.size() != other->m_packs.size()) {
+        return false;
+    }
+    for (unsigned long i = 0; i < m_packs.size(); i++) {
+        if (m_packs[i]->m_value.m_key != other->m_packs[i]->m_value.m_key) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool AssetPackInfo::fn_71001B3624(const char* name) const {
+    for (const GfAssetPack* pack : m_packs) {
+        for (const GfAssetFiles::AssetFile* file : pack->m_files.m_files) {
+            GfAssetResource* resource = pack->getResource(file->m_idx);
+            if (resource != nullptr && strstr(resource->getAssetName(), name) != nullptr) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void AssetPackInfo::setupLoadStart() {
     m_loadState = 0;
 }
@@ -232,10 +438,34 @@ AssetPackValue GfAssetPack::calcAssetPackValue(const char* name, GfAssetType typ
     return value;
 }
 
+bool GfAssetPack::releaseRefResource(void* resource) {
+    if (resource == nullptr) {
+        return false;
+    }
+    for (GfAssetFiles::AssetFile* file : m_files.m_files) {
+        GfAssetResource* loaded = getResource(file->m_idx);
+        if (loaded != nullptr && loaded->getAssetData() == resource) {
+            if (!m_refReleased) {
+                m_refReleased = true;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 GfAssetPack::~GfAssetPack() {
     destroySoundPack();
     releaseResource();
     releaseSlotHandle();
+}
+
+void GfAssetPack::setResource(GfFileIdx file, GfAssetResource* resource) {
+    Resource entry;
+    entry.m_resource = resource;
+    entry.m_fileIdx = file;
+    m_resources.push_back(entry);
+    resource->addRef();
 }
 
 bool GfAssetPack::isExistSameAsset(const GfAssetPack& other) const {

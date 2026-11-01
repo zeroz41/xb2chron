@@ -94,6 +94,44 @@ public:
     const mm::mtl::FixStr<128>& getFileName(GfFileIdx idx) const;
     // the file path under the index (1.0.0's symbols name it; the return type is not known)
     void addResource(GfFileIdx idx, const char* path);
+    // the replacement index the file map gives a file, -1 for none (1.0.0's symbols name it; inline: this build has
+    // no copy of it)
+    int getCommonResource(GfFileIdx idx) const {
+        for (unsigned int map : m_fileMap) {
+            if ((map & 0xFFFF) == static_cast<unsigned int>(idx)) {
+                return map >> 16;
+            }
+        }
+        return -1;
+    }
+    // whether the file (or the one the file map replaces it with) is one the pack has but that does not exist (its
+    // size -1) (1.0.0's symbols name it; inline: this build has no copy of it)
+    bool isNoFile(GfFileIdx idx) const {
+        int common = getCommonResource(idx);
+        if (common == -1) {
+            common = idx;
+        }
+        for (AssetFile* file : m_files) {
+            if (file->m_idx == common) {
+                return file->m_fileSize == -1;
+            }
+        }
+        return false;
+    }
+    // whether the pack has the file, or the one the file map replaces it with (1.0.0's symbols name it; inline: this
+    // build has no copy of it)
+    bool isExistFile(GfFileIdx idx) const {
+        int common = getCommonResource(idx);
+        if (common == -1) {
+            common = idx;
+        }
+        for (AssetFile* file : m_files) {
+            if (file->m_idx == common) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     GfAssetType m_type;
     unsigned int m_nameHash;  // m_name's CRC (setInitializeParam)
@@ -144,8 +182,22 @@ public:
     // the resource loaded for a file, looked up by its index, else through the file map's replacement index
     // (1.0.0's symbols name it)
     GfAssetResource* getResource(GfFileIdx file) const;
+    // the resource whose asset name is `name` (the name is not the original's; defined inline in
+    // gf_asset_pack.cpp: this build has no copy of it; AssetPackInfo::fn_71001B1B30 asks each pack)
+    GfAssetResource* getResource(const char* name) const;
     bool isLoaded(mm::mtl::FixStr<128>* name) const;
+    // each wimdo file's resource sets up its stream object (1.0.0's symbols name it; defined inline in
+    // gf_asset_pack.cpp: this build has no copy of it)
+    void setupStreamObject();
+    // the pack's sound pack when the file's resource holds valid data (1.0.0's symbols name it; defined inline in
+    // gf_asset_pack.cpp: this build has no copy of it)
+    fw::SoundPack* getSePackByFileIdx(GfFileIdx file);
     void releaseEmptySlot();
+    // the pack's sound pack made from its first loaded file's resource, or one more use of the one it has (1.0.0's
+    // symbols name it)
+    void createSoundPack();
+    // the resource held for the file, its reference added (1.0.0's symbols name it)
+    void setResource(GfFileIdx file, GfAssetResource* resource);
 
     unsigned char pad_c[0x4];
     AssetPackValue m_value;  // calcAssetPackValue's for the pack's name and type
@@ -160,7 +212,10 @@ public:
     bool m_enterLocked;  // AssetPackInfo::lockEnterRersource sets it (the name is not the original's)
     unsigned char pad_229[0x7];
     GF_SLOT_HANDLE* m_slotHandle;  // -1 while it has none
-    unsigned char pad_238[0x2];
+    // releaseRefResource sets it when one of the pack's resources holds the data it is given; the constructor clears
+    // it (the name is not the original's)
+    bool m_refReleased;
+    unsigned char pad_239[0x1];
     bool m_full;  // AssetPackInfo::isFullResource asks whether any pack has it (the name is not the original's)
     bool m_timeout;  // setTimeout sets it
     unsigned char pad_23c[0x18];
@@ -170,8 +225,8 @@ public:
     unsigned char pad_258[0x24];
     // updateCacheCount counts the updates the pack goes unused, up to 99 (the name is not the original's)
     unsigned int m_cacheCount;
-    // fn_71001B2904 counts the updates the pack goes with no reference besides its users', up to 99 (the name is not
-    // the original's)
+    // AssetPackInfo::updateReloadCount counts the updates the pack goes with no reference besides its users', up to
+    // 99 (the name is not the original's)
     unsigned int m_refCacheCount;
     unsigned char pad_284[0x24];
     fw::SoundPack* m_sePack;  // createSoundPack's; GfSound::destroyObjSePack destroys it

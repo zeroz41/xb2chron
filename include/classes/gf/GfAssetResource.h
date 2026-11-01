@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFASSETRESOURCE_H
 
 #include "classes/fw/CommonResource.h"
+#include "classes/mm/mtl/ReferenceObject.h"
 #include "classes/ml/DrStmReadCheck.h"
 #include "mm/mtl/FixStr.h"
 #include "mtl/AllocHandle.h"
@@ -11,12 +12,13 @@ namespace mm { namespace mtl { class IAllocator; } }
 
 namespace gf {
 // table 0x7100B43668: one asset's data, held in a buffer the caller gives (create(..., void*, unsigned int)) or
-// requested as a fw::CommonResource (create(..., IAllocator*, int))
-class GfAssetResource {
+// requested as a fw::CommonResource (create(..., IAllocator*, int)); counted: GfAssetPack::setResource adds a
+// reference to it (the count at +8), releaseResource releases it (reference_object.h line 60, slot 1 deletes)
+class GfAssetResource : public mm::mtl::ReferenceObject {
 public:
     // inline: this build has no copy of it, nor of destroy, destroyResource and importSample (1.0.0 has all four)
     GfAssetResource()
-        : pad_8(0), m_type(0), m_requestArg(0), m_resource(nullptr), m_allocator(nullptr), m_data(nullptr),
+        : m_type(0), m_requestArg(0), m_resource(nullptr), m_allocator(nullptr), m_data(nullptr),
           m_size(0), m_stream(nullptr), m_sampleHead(0x19283746), m_sampleTail(0x19283746) {}
     virtual ~GfAssetResource();  // slot 0
     static GfAssetResource* create(const char* label, const char* name, void* data, unsigned int size);
@@ -59,7 +61,6 @@ public:
         m_sampleTail = *reinterpret_cast<unsigned int*>(static_cast<char*>(m_data) + m_size - 4);
     }
 
-    unsigned int pad_8;  // cleared by the constructor; nothing here reads it
     // where the data is: 1 a requested fw::CommonResource, 2 a buffer of its own, 3 the caller's buffer, 0 none
     // (the field names are not the original's)
     int m_type;
