@@ -14,7 +14,10 @@ public:
     void idle();  // out of line (0x71000E7D04); term calls it unless bit 1 is set
     // bit 1: term clears it instead of calling idle; the name is not the original's
     unsigned int m_flags;  // 0x8
-    unsigned char pad_c[0x34];  // CharaObj holds one, the next command at +0x40
+    unsigned char pad_c[0x24];
+    // the action id ScriptCharaAction::doit saves for undo while the command is queued; the name is not the original's
+    int m_id;  // 0x30
+    unsigned char pad_34[0xc];  // CharaObj holds one, the next command at +0x40
 };
 }  // namespace event
 

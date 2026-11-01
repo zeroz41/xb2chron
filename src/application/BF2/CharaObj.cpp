@@ -2213,6 +2213,20 @@ void ScriptCharaSetIdle::undo(const event::Param&) {
     }
 }
 
+void ScriptCharaAction::doit(const event::Param& param) {
+    ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+    if (obj != 0) {
+        int id = param.val(0).getS32();
+        float time = param.val(1).getF32();
+        bool a = param.val(2).getBool();
+        bool b = param.val(3).getBool();
+        CharaObj* chara = obj->m_chara;
+        pad_8 = chara->m_cmdQueue0.contains(&chara->m_playAction) ? chara->m_playAction.m_id : 0;
+        mm::mtl::Singleton<ScheManager>::getPtr()->cancelTurn(obj->m_chara->m_gfHandle);
+        obj->m_chara->playAction(id, time, a, b);
+    }
+}
+
 void ScriptCharaAction::undo(const event::Param&) {
     ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
     if (obj != 0) {
@@ -2563,6 +2577,29 @@ void ScriptEffectAnim::doit(const event::Param& param) {
 }
 
 // takes the text down: the subtitle while bit 0 is set, else the window (its strings emptied)
+void ScriptPlayText::doit(const event::Param& param) {
+    const char* name = param.val(0).getStr();
+    int index = param.val(1).getS32();
+    float a = param.val(2).getF32();
+    float b = param.val(3).getF32();
+    float c = param.val(4).getF32();
+    int d = param.val(5).getS32();
+    CharaObj* chara;
+    if (index < 0) {
+        ObjectChara* obj = static_cast<ObjectChara*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(2));
+        chara = obj != 0 ? obj->m_chara : 0;
+    } else {
+        ObjectManager* mgr = mm::mtl::Singleton<ObjectManager>::getPtr();
+        mgr->updateCurrent();
+        Object* obj = mgr->m_current->m_categories[0]->m_child;
+        for (int i = 0; i != index; i++) {
+            obj = obj->m_next;
+        }
+        chara = static_cast<ObjectChara*>(obj)->m_chara;
+    }
+    mm::mtl::Singleton<TextManager>::getPtr()->play(name, chara, a, b, c, d);
+}
+
 void ScriptPlayText::undo(const event::Param&) {
     TextManager* text = mm::mtl::Singleton<TextManager>::getPtr();
     if (!(text->m_flags & 1)) {

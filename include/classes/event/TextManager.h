@@ -23,6 +23,8 @@ public:
     void render();
     // the symbol _ZN5event11TextManager5replyEPKciPNS_8CharaObjE (RandPlayer::Reply::update calls it)
     void reply(const char* msb, int id, CharaObj* chara);
+    // the symbol _ZN5event11TextManager4playEPKcPNS_8CharaObjEfffi (ScriptPlayText::doit tail-calls it)
+    void play(const char*, CharaObj*, float, float, float, int);
     // 1.0.0's TextManager::init (0x71000F3B6C); 3.0.1 inlines it into OnEventProc
     void init() {
         m_flags = 0;
