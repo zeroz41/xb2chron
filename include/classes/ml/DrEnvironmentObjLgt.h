@@ -55,6 +55,11 @@ public:
     void callback_Ren_Point(DrLightObj* light, DrShdLgtMan* shdLgtMan);
     void callback_Ren_Spot(DrLightObj* light, DrShdLgtMan* shdLgtMan);
     void callback_Ren2D_Non(DrLightObj* light, DrShdLgtMan* shdLgtMan);
+    void callback_Ren2D_LocalIBL(DrLightObj* light, DrShdLgtMan* shdLgtMan);
+
+    // indexed by LgtObjData::m_type (7 light types)
+    static void (DrEnvironmentObjLgt::*s_pCallLgtRender[7])(DrLightObj*, DrShdLgtMan*);
+    static void (DrEnvironmentObjLgt::*s_pCallLgtRender2D[7])(DrLightObj*, DrShdLgtMan*);
 };
 }  // namespace ml
 

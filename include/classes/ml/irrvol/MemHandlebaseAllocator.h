@@ -8,6 +8,7 @@ namespace ml { namespace irrvol {
 // table 0x7100B7B5F8
 class MemHandlebaseAllocator : public ::mm::mtl::IAllocator {
 public:
+    MemHandlebaseAllocator(mtl::ALLOC_HANDLE handle) : m_handle(handle) {}
     // inline: the table's complete-destructor slot holds IAllocator's
     virtual ~MemHandlebaseAllocator() {}  // slot 0
     virtual void* allocate(unsigned long, unsigned long);  // slot 2

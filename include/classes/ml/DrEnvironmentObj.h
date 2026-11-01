@@ -7,6 +7,7 @@
 namespace grlib { class CGLibTextureBuffer; }
 
 namespace ml {
+class DrEnvironmentLgtList;
 class DrFogMan;
 class DrLightMan;
 class DrMan;
@@ -136,7 +137,9 @@ public:
     void* m_work[5];         // 0x160; releaseLgt deallocates m_work[4] (the names are not the original's)
     unsigned char pad_188[0x8];
     void* m_work2;           // 0x190
-    unsigned char pad_198[0x18];
+    DrEnvironmentLgtList* m_lgtList;  // 0x198, m_lgtNum of them (debugRenderLgt2D)
+    DrEnvironmentLgtList** m_renderList;  // 0x1A0, m_renderLgtNum of them (renderLgt)
+    unsigned char pad_1a8[0x8];
     // light object arrays by type and their counts (releaseLgt destroys each element through its table; elements
     // 0x40, 0xA0, 0xC0, 0xF0, 0x250 and 0x68 bytes; the names are not the original's)
     void* m_lgtArray[6];     // 0x1B0

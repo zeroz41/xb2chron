@@ -38,6 +38,7 @@
 #include "ml/DrAPGxType.h"
 #include "ml/DrEnvColiMan.h"
 #include "ml/DrEnvironmentAnim.h"
+#include "ml/DrEnvironmentLgtList.h"
 #include "ml/DrEnvironmentMan.h"
 #include "ml/DrFogMan.h"
 #include "ml/DrIBLColiAcc.h"
@@ -62,6 +63,7 @@
 #include "ml/DrShdMan.h"
 #include "ml/MdoWrkMatRes.h"
 #include "ml/MdsMatInfoHeader.h"
+#include "ml/MlMem.h"
 #include "mm/Math.h"
 #include "mm/Vec3NA.h"
 #include "mtl/MemManager.h"
@@ -436,6 +438,18 @@ void DrEnvironmentObjLgt::setFrame(float frame) {
     }
 }
 
+void DrEnvironmentObjLgt::renderLgt() {
+    if (!(m_flags & FLAG_HIDE) && m_lgtNum != 0 && m_renderLgtNum != 0) {
+        DrShdLgtMan* shdLgtMan = m_drMan->m_shdMan->m_lgtMan;
+        DrEnvironmentLgtList** list = m_renderList;
+        for (int i = 0; i < m_renderLgtNum; ++i, ++list) {
+            DrEnvironmentLgtList* lgt = *list;
+            DrLightObj* light = lgt->m_light;
+            (this->*s_pCallLgtRender[lgt->m_data->m_type])(light, shdLgtMan);
+        }
+    }
+}
+
 void DrEnvironmentObjLgt::debugRenderLgt() {
     if (m_lgtNum != 0 && m_renderLgtNum != 0) {
         renderLgt();
@@ -568,6 +582,20 @@ void MemHandlebaseAllocator::deallocate(void* memory) {
 }  // namespace irrvol
 
 // --- DrIrrVolMan ---
+DrIrrVolMan::DrIrrVolMan(DrMan* drMan)
+    : m_drMan(drMan), m_globalInfo(nullptr), m_cascades(nullptr),
+      m_allocator(MlMem::getProductMem()), m_time(0.0f), m_frameParity(0), m_enable(true), m_debugDraw(false) {
+    const mm::Vec3 pos = mm::Vec3::zero;
+    m_rate = 1.0f;
+    m_state = 0;
+    m_cascadeIdx = 2;
+    m_pos = pos;
+    m_prevPos = pos;
+    m_prevRate = m_rate;
+    m_prevState = m_state;
+    m_prevCascadeIdx = m_cascadeIdx;
+}
+
 DrIrrVolMan::~DrIrrVolMan() {
     release();
 }
@@ -642,6 +670,26 @@ void DrEnvironmentObjLgt::callback_Relase_Spot(DrLightObj* light) {
     }
 }
 
+void (DrEnvironmentObjLgt::*DrEnvironmentObjLgt::s_pCallLgtRender[7])(DrLightObj*, DrShdLgtMan*) = {
+    &DrEnvironmentObjLgt::callback_Ren_Non,
+    &DrEnvironmentObjLgt::callback_Ren_Non,
+    &DrEnvironmentObjLgt::callback_Ren_Point,
+    &DrEnvironmentObjLgt::callback_Ren_Spot,
+    &DrEnvironmentObjLgt::callback_Ren_Non,
+    &DrEnvironmentObjLgt::callback_Ren_Non,
+    &DrEnvironmentObjLgt::callback_Ren_Non,
+};
+
+void (DrEnvironmentObjLgt::*DrEnvironmentObjLgt::s_pCallLgtRender2D[7])(DrLightObj*, DrShdLgtMan*) = {
+    &DrEnvironmentObjLgt::callback_Ren2D_Non,
+    &DrEnvironmentObjLgt::callback_Ren2D_Non,
+    &DrEnvironmentObjLgt::callback_Ren2D_Non,
+    &DrEnvironmentObjLgt::callback_Ren2D_Non,
+    &DrEnvironmentObjLgt::callback_Ren2D_Non,
+    &DrEnvironmentObjLgt::callback_Ren2D_Non,
+    &DrEnvironmentObjLgt::callback_Ren2D_LocalIBL,
+};
+
 // --- DrGlobalIBLPack ---
 bool DrGlobalIBLPack::checkFileType(const void* data) {
     const GlobalIBLFileHeader* header = static_cast<const GlobalIBLFileHeader*>(data);
@@ -697,6 +745,11 @@ void DrLightObjGlobalIBL::endOccQuery() {
 }
 
 // --- DrFogMan ---
+DrFogMan::DrFogMan(DrMan* drMan)
+    : m_drMan(drMan), m_head(nullptr), m_tail(nullptr), m_color(0.5f, 0.5f, 0.5f), m_sideColor(0.0f, 0.0f, 0.0f),
+      m_sunColor(0.0f, 0.0f, 0.0f), m_near(0.1f), m_far(10000.0f), m_str(1.0f), m_parmA(1.0f), m_pow(1.0f),
+      m_parmB{1.0f, 1.0f, 0.0f, 1.0f}, m_fogOn(false), m_enable(true) {}
+
 DrFogMan::~DrFogMan() {
     releaseAll();
 }
