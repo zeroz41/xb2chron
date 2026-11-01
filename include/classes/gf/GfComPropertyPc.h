@@ -61,6 +61,15 @@ public:
     const T* getParam(unsigned int index) const {
         return static_cast<const T*>(m_paramList->m_entries[index].m_data);
     }
+    // m_paramList's entry 1 (the names are not the original's)
+    struct GravityParam {
+        float m_gravity;  // getGravity: the PC falls with minus it
+        // StateUtil::reflectionAdsorption: the collision's adsorption on flat ground and in the air, the one it
+        // blends to as the ground's slope reaches m_slopeAngle (degrees)
+        float m_adsorption;
+        float m_slopeAdsorption;
+        float m_slopeAngle;
+    };
     // m_paramList's entry 4 (the names are not the original's)
     struct SlideParam {
         unsigned char pad_0[0x14];

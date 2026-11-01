@@ -29,6 +29,20 @@
 #include "classes/fw/LookIkSolver.h"
 #include "classes/fw/SpineRotateIKSolver.h"
 #include "classes/fw/PlacementGroundSolver.h"
+#include "classes/fw/ColiObject.h"
+#include "classes/gf/GfComAsm.h"
+#include "classes/gf/GfComCollider.h"
+#include "classes/gf/GfFieldDmg.h"
+#include "classes/gf/GfStatusProperty.h"
+#include "classes/gf/GfWeapon.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfObjAcc.h"
+#include "gf/MsgObjectDamage.h"
+#include "gf/OwnerBonus.h"
+#include "gf/SDataBlade.h"
+#include "mm/Math.h"
+#include <string.h>
+#include <math.h>
 
 namespace gf { namespace pc {
 
@@ -147,6 +161,36 @@ void StateUtil::setEnableGravity(GfComBehaviorPc& behavior, bool enable) {
     }
 }
 
+// the PC collision's adsorption: with gravity on (m_stateFlags bit 3), the parameters' m_adsorption blended toward
+// m_slopeAdsorption as the ground's slope nears m_slopeAngle; without, 0.026 while the base layer plays "S_jump_01",
+// else 0.005
+void StateUtil::reflectionAdsorption(GfComBehaviorPc& behavior) {
+    GfComPropertyPc* property = behavior.m_owner->getComponent<GfComPropertyPc>(5);
+    fw::ColiObject* coli = behavior.m_owner->getComponent<GfComCollider>(4)->getColiObject(0);
+    if (coli == nullptr) {
+        return;
+    }
+    if (property->m_stateFlags & 8) {
+        const GfComPropertyPc::GravityParam* param =
+            property->m_paramList->getAdapter(1).get<GfComPropertyPc::GravityParam>();
+        if (const EnviromentSensor::GroundInfo* ground = getGroundInfo(behavior)) {
+            float cosine = mm::clamp(ground->m_normal.dot(mm::Vec3::unitY), 0.0f, 1.0f);
+            float rate = mm::clamp(mm::acos(cosine) * 57.2957764f / param->m_slopeAngle, 0.0f, 1.0f);
+            coli->setAdsorption(param->m_adsorption * (1.0f - rate) + param->m_slopeAdsorption * rate);
+        } else {
+            coli->setAdsorption(param->m_adsorption);
+        }
+    } else {
+        float adsorption = 0.005f;
+        if (GfComAsm* anim = behavior.m_owner->getComponent<GfComAsm>(2)) {
+            if (const char* name = anim->getStateName(static_cast<AnimLayer>(0))) {
+                adsorption = strcmp(name, "S_jump_01") == 0 ? 0.026f : 0.005f;
+            }
+        }
+        coli->setAdsorption(adsorption);
+    }
+}
+
 const EnviromentSensor::GroundInfo* StateUtil::getGroundInfo(GfComBehaviorPc& behavior) {
     const EnviromentSensor* sensor = behavior.m_owner->getComponent<GfComPropertyPc>(5)->getEnvSensor();
     return (sensor->m_flags & 1) ? &sensor->m_vertical.m_ground : nullptr;
@@ -224,6 +268,25 @@ void StateUtil::resetPlacementDownDist(GfComBehaviorPc& behavior) {
     }
 }
 
+void StateUtil::changeGroundAnglesForMotion(GfComBehaviorPc& behavior, const mm::Vec3& angles) {
+    if (fw::PlacementGroundSolver* solver =
+            behavior.m_owner->getComponent<GfComIK>(3)->getSolver<fw::PlacementGroundSolver>(2)) {
+        // the half angles' sines and cosines, as for a rotation from them that nothing uses (the original keeps
+        // the calls)
+        mm::Vec3 rot = angles;
+        float halfX = rot.x * 0.5f;
+        float halfY = rot.y * 0.5f;
+        float halfZ = rot.z * 0.5f;
+        ::sinf(halfX);
+        ::cosf(halfX);
+        ::sinf(halfY);
+        ::cosf(halfY);
+        ::sinf(halfZ);
+        ::cosf(halfZ);
+        solver->setGroundAngle(angles);
+    }
+}
+
 void StateUtil::setEnvSensor(GfComBehaviorPc& behavior, unsigned int flags, bool on) {
     behavior.m_owner->getComponent<GfComPropertyPc>(5)->setEnvSensorCheckFlags(flags, on);
 }
@@ -280,6 +343,55 @@ const float* StateUtil::getActivateTimer(GfComBehaviorPc& behavior, TimerPlugin:
         return &timer.m_time;
     }
     return nullptr;
+}
+
+// percent of the PC's maximum hit points as damage (GfFieldDmg::calculateDamage), cut by the owner bonus 2 (up to
+// 0.8) plus the driver's and its blade's enhances of effect 0x108 (up to 1 in all); without pad control
+// (m_stateFlags bit 10) it leaves at least 1 hit point. Sent to the PC itself as damage type 2 (flag set) or 3.
+void StateUtil::applyDamage(GfComBehaviorPc& behavior, unsigned int percent, bool flag) {
+    GfComPropertyPc* property = behavior.m_owner->findComponent<GfComPropertyPc>(5);
+    GfStatusProperty* status = property->m_status.get();
+    if (status->m_hp == 0 || status->pad_1F) {
+        return;
+    }
+    float cut = GfGameManager::getOwnerBonus().m_values[2] * 0.01f;
+    if (cut < 0.0f) {
+        cut = 0.0f;
+    } else if (cut > 0.8f) {
+        cut = 0.8f;
+    }
+    {
+        GfObjAcc acc(static_cast<GfObj*>(behavior.m_owner)->m_handle);
+        unsigned int driver = 0;
+        if (acc.getType() == 3) {
+            driver = acc.getDriverId();
+        } else if (acc.getType() == 4) {
+            if (unsigned int blade = acc.getBladeId()) {
+                driver = GfDataBlade::getSDataBlade(blade)->m_setDriver;
+            }
+        }
+        if (driver != 0) {
+            cut += fn_71002EEBF4(driver, 0x108);
+            cut += fn_71002EECD4(driver, -1, 0x108);
+        }
+    }
+    if (cut < 0.0f) {
+        cut = 0.0f;
+    } else if (cut > 1.0f) {
+        cut = 1.0f;
+    }
+    unsigned int damage = GfFieldDmg::calculateDamage(status->m_maxHp, percent, cut);
+    if (!(property->m_stateFlags & 0x400)) {
+        unsigned int limit = status->m_hp - 1;
+        if (damage >= limit) {
+            damage = limit;
+        }
+    }
+    if (damage != 0) {
+        MsgObjectDamage msg(damage, flag ? 2 : 3);
+        GfObj* self = static_cast<GfObj*>(behavior.m_owner);
+        self->sendMessage(self, msg);
+    }
 }
 
 void StateUtil::notifyDead(GfComBehaviorPc& behavior, MsgObjectNotifyDead& msg, bool force) {

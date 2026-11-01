@@ -71,14 +71,14 @@ public:
     // switches the foot IK controller's mode: set, to its slope solver (MODE_SLOPE); clear, to its placement one
     static void switchPlacementIK(gf::GfComBehaviorPc& behavior, bool placement);
     static void setEnvSensor(gf::GfComBehaviorPc& behavior, unsigned int flags, bool on);
-    static void changeGroundAnglesForMotion(gf::GfComBehaviorPc& behavior, const mm::Vec3& normal);
+    static void changeGroundAnglesForMotion(gf::GfComBehaviorPc& behavior, const mm::Vec3& angles);
     static const gf::EnviromentSensor::WaterInfo* getWaterInfo(gf::GfComBehaviorPc& behavior);
     static const gf::EnviromentSensor::DeadPlaneInfo* getDeadPlaneInfo(gf::GfComBehaviorPc& behavior);
     static bool isOnSlideGround(gf::GfComBehaviorPc& behavior);
     static void setEnableFootStep(gf::GfComBehaviorPc& behavior, bool enable);  // (by its symbol)
     static void playVibration(gf::GfComBehaviorPc& behavior, fw::VibrationID id);  // (by its symbol)
     static void changePlacementDownDist(gf::GfComBehaviorPc& behavior, float dist);  // (by its symbol)
-    static void applyDamage(gf::GfComBehaviorPc& behavior, unsigned int damage, bool percent);
+    static void applyDamage(gf::GfComBehaviorPc& behavior, unsigned int percent, bool flag);
     static void notifyDead(gf::GfComBehaviorPc& behavior, gf::MsgObjectNotifyDead& msg, bool force);
     // the PC's revival on a heal (StateFieldDead and StateFieldWaterDead::onAlive hand it the heal message)
     static void notifyRevival(gf::GfComBehaviorPc& behavior, gf::MsgObjectNotifyHealHp& msg);

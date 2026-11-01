@@ -62,6 +62,14 @@ int fn_71002EEBE4();
 // (GfSleep(1)), runs it to its end unless its load failed, destroys it and clears that int again.
 // tl::TitleStatePlayGame::enter calls it.
 void fn_71002EEB14(int type, bool run);
+// Placeholder names: nothing names them (1.0.0's StateUtil::applyDamage calls neither). Free functions because their
+// addresses are in GfWeapon's unit after fn_71002EEBE4 and they take no object. What they do: the sum of
+// GfBdatBtl::getBTL_EnhanceParam1 over the enhances whose getBTL_EnhanceEnhanceEffect is effect, times 0.01 (0 for
+// driver 0 or none): the driver's own enhances (GfDataDriver::fn_7100247580; fn_71002EEBF4) or the orb enhances of
+// its blade in slot blade (GfDataDriver::getBlade, GfDataBlade::getEquipOrbEnance; fn_71002EECD4).
+// StateUtil::applyDamage adds both for effect 0x108 to its damage cut.
+float fn_71002EEBF4(unsigned int driver, unsigned short effect);
+float fn_71002EECD4(unsigned int driver, int blade, unsigned short effect);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfWeapon's unit and it takes nothing. What it does: false unless GfGameManager::fn_71002AC598 is true; then true
 // when GfItemUtil::getItemBoxCount(25497) is non-zero, else whether any of the five ints at

@@ -47,6 +47,9 @@ public:
     template <typename Info, typename Create>
     void createColi(const Create& create, unsigned int index, const Info& info,
                     mm::mtl::IntrusivePtr<fw::ReferenceFrame>& frame);
+    // the collision object at index (inline: the name is not the original's; StateUtil::reflectionAdsorption's
+    // code keeps the component's null check only behind a call like it)
+    fw::ColiObject* getColiObject(unsigned int index) const { return m_coliObjects[index]; }
     static mm::mtl::RTTI m_rtti;
 
     mm::mtl::Vector<fw::ColiObject*> m_coliObjects;  // its collision objects
