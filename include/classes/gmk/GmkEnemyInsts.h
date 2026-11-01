@@ -63,6 +63,8 @@ public:
         unsigned int getGobInstNum() const;  // how many objects pop
         // LocatorBat_EnemySpeciesID::update skips a gimmick when it answers true for the species with true
         bool hasTypeGenus(unsigned char genus, bool) const;
+        // GfGameUtil::clearEnemyRepopCounter asks it with the enemy id and true before clearing the counter
+        bool hasEneID(unsigned short id, bool) const;
         // seqUpdateRepopCounter calls it as the counter runs out
         void removeDefeatedNamedEnemyInfo();
         unsigned char pad_0[0x2];

@@ -25,6 +25,12 @@ public:
     static RESULT_HANA openArtsCircuit(unsigned int hana, unsigned int circuit);
     static RESULT_HANA openCondenserCircuit(unsigned int hana, unsigned int circuit);
     // whether a part can be bought for ether: 7 when the box has no room for it, 3 when there is not enough ether
+    // buys a part for ether (1.0.0's names): 7 when the box has no room for it, 3 when there is not enough ether
+    static RESULT_HANA exchangeRoleParts(unsigned int item);
+    static RESULT_HANA exchangeAttributeParts(unsigned int item);
+    static RESULT_HANA exchangeArtsParts(unsigned int item);
+    static RESULT_HANA exchangeNArtsParts(unsigned int item);
+    static RESULT_HANA exchangeCondenserParts(unsigned int item);
     static RESULT_HANA isExchangeRoleParts(unsigned int item);
     static RESULT_HANA isExchangeAttributeParts(unsigned int item);
     static RESULT_HANA isExchangeArtsParts(unsigned int item);

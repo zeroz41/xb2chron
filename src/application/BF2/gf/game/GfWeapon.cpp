@@ -144,8 +144,87 @@
 #include "gf/GfDataMercenaries.h"
 #include "gf/SDataSave.h"
 #include "classes/gmk/GmkRoutedEnemy.h"
+#include "classes/gmk/GmkTargetPoint.h"
+#include "classes/gmk/DistCond.h"
+#include "fw/Transform.h"
+#include "classes/gf/GfDataBdat.h"
+#include "plugin/Bdat.h"
 
 namespace gf {
+
+bool GfGameUtil::isUiInfoIconDistMatch(GF_OBJ_HANDLE* handle) {
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return false;
+    }
+    {
+        GfObjAcc acc(handle);
+        if (acc.m_obj == nullptr || acc.isDestroy() || acc.testFlag(17)) {
+            return false;
+        }
+    }
+    GfObjAcc acc(handle);
+    switch (acc.getType()) {
+    case 5:
+    case 6:
+    case 8:
+        break;
+    default:
+        return false;
+    }
+    Bdat::uVal val;
+    float dist;
+    gmk::AGmkBase* gmk = gmk::getBindedGmkInst(handle);
+    if (gmk != nullptr) {
+        switch (static_cast<int>(gmk->getGmkType())) {
+        case 0x9:
+        case 0x1C:
+        case 0x21:
+        case 0x23:
+        case 0x29:
+        case 0x2A:
+        case 0x3A:
+        case 0x3C:
+            dist = getUiNameDist(handle);
+            if (!(dist > 0.0f)) {
+                return false;
+            }
+            val.ulong = Bdat::getValCheck(GfDataBdat::getFP(0x7B), 0, 0x39, 8);
+            dist *= val.real;
+            break;
+        default:
+            val.ulong = Bdat::getValCheck(GfDataBdat::getFP(0x7B), 0, 0xC, 8);
+            dist = val.real;
+            break;
+        }
+    } else {
+        val.ulong = Bdat::getValCheck(GfDataBdat::getFP(0x7B), 0, 0xC, 8);
+        dist = val.real;
+    }
+    if (dist <= 0.0f) {
+        return false;
+    }
+    const mm::Vec3& pos = acc.getWorldTransform().position;
+    return gmk::DistCond::isMatch(dist * dist, pos);
+}
+
+bool GfGameUtil::isUiNameDistMatch(GF_OBJ_HANDLE* handle) {
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return false;
+    }
+    {
+        GfObjAcc acc(handle);
+        if (acc.m_obj == nullptr || acc.isDestroy() || acc.testFlag(17)) {
+            return false;
+        }
+    }
+    GfObjAcc acc(handle);
+    float dist = getUiNameDist(handle);
+    if (dist <= 0.0f) {
+        return false;
+    }
+    const mm::Vec3& pos = acc.getWorldTransform().position;
+    return gmk::DistCond::isMatch(dist * dist, pos);
+}
 
 void GfGameUtil::addMoney(int money) {
     int value = GfDataUtil::getMoney() + money;
@@ -818,6 +897,53 @@ void fn_71002DA5E4(unsigned int value) {
     }
 }
 
+bool GfGameUtil::findNpcMat44(mm::Mat44& mtx, int bdatId) {
+    if (gmk::GmkManager::sys() == nullptr) {
+        return false;
+    }
+    int mapId = gmk::getCurrentMapBdatId();
+    int setId = gmk::GmkManager::sys()->findFirstBdatId_RSC_GmkSetList(mapId);
+    if (setId <= 0) {
+        return false;
+    }
+    const gmk::GmkSet* set = gmk::GmkManager::sys()->findGmkSet(setId);
+    if (set == nullptr) {
+        return false;
+    }
+    const gmk::AGmkBase* npc = set->findFirstGmkInstByBdatId(gmk::GmkNpc::TYPE, bdatId);
+    if (npc == nullptr) {
+        return false;
+    }
+    npc->getMatrix(mtx, true);
+    return true;
+}
+
+bool GfGameUtil::getGmkTargetPointPos(mm::Vec3& pos, unsigned int id) {
+    if (id == 0) {
+        return false;
+    }
+    const gmk::GmkManager* manager = gmk::GmkManager::sys();
+    if (manager == nullptr) {
+        return false;
+    }
+    for (gmk::GmkSet* const* it = manager->m_gmkSets.begin(); it != manager->m_gmkSets.end(); ++it) {
+        gmk::IGmkList* list = (*it)->getGmkList(gmk::GmkTargetPoint::TYPE);
+        if (list == nullptr || !list->isValid() || list->getInstNum() < id) {
+            continue;
+        }
+        gmk::AGmkBase* gmk = list->getInst(id - 1);
+        if (gmk == nullptr || !gmk->isValid()) {
+            continue;
+        }
+        const mm::Vec3* point = gmk->m_pos;
+        pos.x = point->x;
+        pos.y = point->y;
+        pos.z = point->z;
+        return true;
+    }
+    return false;
+}
+
 bool GfGameUtil::getGmkTargetPointPos(mm::Vec3& pos, GF_OBJ_HANDLE* handle) {
     gmk::AGmkBase* gmk = gmk::getBindedGmkInst(handle);
     if (gmk != nullptr) {
@@ -832,6 +958,38 @@ bool GfGameUtil::getGmkTargetPointPos(mm::Vec3& pos, GF_OBJ_HANDLE* handle) {
         }
     }
     return false;
+}
+
+void GfGameUtil::clearEnemyRepopCounter(int enemy) {
+    gmk::GmkManager* manager = gmk::GmkManager::sys();
+    if (manager == nullptr) {
+        return;
+    }
+    auto f = [enemy](const gmk::AGmkBase& gmk) {
+        if (!gmk.isValid()) {
+            return;
+        }
+        switch (gmk.getGmkType()) {
+        case gmk::GmkEnemy::TYPE: {
+            const gmk::GmkEnemy& e = static_cast<const gmk::GmkEnemy&>(gmk);
+            if (e.m_insts.m_popInfo.hasEneID(enemy, true)) {
+                e.m_insts.reqClearRepopCounter();
+            }
+            break;
+        }
+        case gmk::GmkRoutedEnemy::TYPE: {
+            const gmk::GmkRoutedEnemy& e = static_cast<const gmk::GmkRoutedEnemy&>(gmk);
+            if (e.m_insts.m_popInfo.hasEneID(enemy, true)) {
+                e.m_insts.reqClearRepopCounter();
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    };
+    manager->traverseGmkInst(gmk::GmkEnemy::TYPE, f);
+    manager->traverseGmkInst(gmk::GmkRoutedEnemy::TYPE, f);
 }
 
 bool GfGameUtil::fn_71002E16F4(unsigned int driver) {
@@ -1153,10 +1311,28 @@ RESULT_HANA GfGameUtilHana::openCondenserCircuit(unsigned int hana, unsigned int
     return static_cast<RESULT_HANA>(0);
 }
 
+RESULT_HANA GfGameUtilHana::exchangeRoleParts(unsigned int item) {
+    if (getEmptyParts(item) == 0) return static_cast<RESULT_HANA>(7);
+    unsigned int ether = GfDataHana::getNeedRolePartsEther(item);
+    if (static_cast<unsigned int>(GfDataHana::getEther()) < ether) return static_cast<RESULT_HANA>(3);
+    GfGameUtil::addEther(-static_cast<int>(ether));
+    GfItemUtil::addItemBox(item, 1);
+    return static_cast<RESULT_HANA>(0);
+}
+
 RESULT_HANA GfGameUtilHana::isExchangeRoleParts(unsigned int item) {
     if (getEmptyParts(item) == 0) return static_cast<RESULT_HANA>(7);
     unsigned int ether = GfDataHana::getNeedRolePartsEther(item);
     return static_cast<RESULT_HANA>(static_cast<unsigned int>(GfDataHana::getEther()) < ether ? 3 : 0);
+}
+
+RESULT_HANA GfGameUtilHana::exchangeAttributeParts(unsigned int item) {
+    if (getEmptyParts(item) == 0) return static_cast<RESULT_HANA>(7);
+    unsigned int ether = GfDataHana::getNeedAttributePartsEther(item);
+    if (static_cast<unsigned int>(GfDataHana::getEther()) < ether) return static_cast<RESULT_HANA>(3);
+    GfGameUtil::addEther(-static_cast<int>(ether));
+    GfItemUtil::addItemBox(item, 1);
+    return static_cast<RESULT_HANA>(0);
 }
 
 RESULT_HANA GfGameUtilHana::isExchangeAttributeParts(unsigned int item) {
@@ -1165,16 +1341,43 @@ RESULT_HANA GfGameUtilHana::isExchangeAttributeParts(unsigned int item) {
     return static_cast<RESULT_HANA>(static_cast<unsigned int>(GfDataHana::getEther()) < ether ? 3 : 0);
 }
 
+RESULT_HANA GfGameUtilHana::exchangeArtsParts(unsigned int item) {
+    if (getEmptyParts(item) == 0) return static_cast<RESULT_HANA>(7);
+    unsigned int ether = GfDataHana::getNeedArtsPartsEther(item);
+    if (static_cast<unsigned int>(GfDataHana::getEther()) < ether) return static_cast<RESULT_HANA>(3);
+    GfGameUtil::addEther(-static_cast<int>(ether));
+    GfItemUtil::addItemBox(item, 1);
+    return static_cast<RESULT_HANA>(0);
+}
+
 RESULT_HANA GfGameUtilHana::isExchangeArtsParts(unsigned int item) {
     if (getEmptyParts(item) == 0) return static_cast<RESULT_HANA>(7);
     unsigned int ether = GfDataHana::getNeedArtsPartsEther(item);
     return static_cast<RESULT_HANA>(static_cast<unsigned int>(GfDataHana::getEther()) < ether ? 3 : 0);
 }
 
+RESULT_HANA GfGameUtilHana::exchangeNArtsParts(unsigned int item) {
+    if (getEmptyParts(item) == 0) return static_cast<RESULT_HANA>(7);
+    unsigned int ether = GfDataHana::getNeedNArtsPartsEther(item);
+    if (static_cast<unsigned int>(GfDataHana::getEther()) < ether) return static_cast<RESULT_HANA>(3);
+    GfGameUtil::addEther(-static_cast<int>(ether));
+    GfItemUtil::addItemBox(item, 1);
+    return static_cast<RESULT_HANA>(0);
+}
+
 RESULT_HANA GfGameUtilHana::isExchangeNArtsParts(unsigned int item) {
     if (getEmptyParts(item) == 0) return static_cast<RESULT_HANA>(7);
     unsigned int ether = GfDataHana::getNeedNArtsPartsEther(item);
     return static_cast<RESULT_HANA>(static_cast<unsigned int>(GfDataHana::getEther()) < ether ? 3 : 0);
+}
+
+RESULT_HANA GfGameUtilHana::exchangeCondenserParts(unsigned int item) {
+    if (getEmptyParts(item) == 0) return static_cast<RESULT_HANA>(7);
+    unsigned int ether = GfDataHana::getNeedCondenserPartsEther(item);
+    if (static_cast<unsigned int>(GfDataHana::getEther()) < ether) return static_cast<RESULT_HANA>(3);
+    GfGameUtil::addEther(-static_cast<int>(ether));
+    GfItemUtil::addItemBox(item, 1);
+    return static_cast<RESULT_HANA>(0);
 }
 
 RESULT_HANA GfGameUtilHana::isExchangeCondenserParts(unsigned int item) {

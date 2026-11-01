@@ -7,6 +7,7 @@ namespace gmk { enum GmkType : int; }
 namespace gf { class GfFieldLocator; }
 namespace gf { class SDataBlade; }
 namespace mm { namespace mtl { template <typename T> class Vector; } }
+namespace mm { class Mat44; }
 
 namespace gf {
 
@@ -26,6 +27,9 @@ public:
     // whether the game can be saved at a point (GfFieldGimmick::update asks it for the player's position)
     static bool isPointSavable(const mm::Vec3& pos);
     static bool getGmkTargetPointPos(mm::Vec3& pos, unsigned int id);
+    // the matrix of the current map's npc gimmick of a BDAT row (the first gimmick set of the map's RSC_GmkSetList row);
+    // false when there is none
+    static bool findNpcMat44(mm::Mat44& mtx, int bdatId);
     // SCOM_ADD_DEVELOP's request passes its second value, then its first
     static void addDevelopPoint(unsigned int, unsigned int);
     static void setHp(GF_OBJ_HANDLE* handle, unsigned int hp);
@@ -224,6 +228,8 @@ public:
     // the handle with the first one GfGameParty::getHandleDriverByBdatID gives a valid object for.
     static void fn_71002DF8B0(gf::GF_OBJ_HANDLE*& handle);
     // whether the object is near enough for its name / info icon to show
+    // how far from the interest position an object's name is shown (0 or less: never; isUiNameDistMatch squares it)
+    static float getUiNameDist(gf::GF_OBJ_HANDLE* handle);
     static bool isUiNameDistMatch(gf::GF_OBJ_HANDLE* handle);
     static bool isUiInfoIconDistMatch(gf::GF_OBJ_HANDLE* handle);
     static int getUiInfoIconBdatId(gf::GF_OBJ_HANDLE* handle);  // -1: none
