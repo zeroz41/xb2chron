@@ -14,6 +14,7 @@ namespace layer {
 // LayerObjFont::updateShaderParms.
 class LayerObjTopFont : public ::layer::LayerObjFont {
 public:
+    LayerObjTopFont();  // LayerObjManager::createStaticFontObj
     virtual ~LayerObjTopFont();  // slot 0
     void finalRender();
     virtual void setDrawList(layer::LayerSortMan*, bool);  // slot 7

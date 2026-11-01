@@ -26,7 +26,10 @@ public:
     // the action running when the object's STATE_PARTS_ACTION is set (LayerAccAction::getRunningActIdx and
     // setRunningActSec; the names are not the original's)
     float m_runningSec;
-    unsigned char pad_18[0x8];
+    // the running action's time step and its reciprocal: the actcmd_ interpolations move 1 / ((end - m_runningSec) *
+    // m_stepRate) of the way each update, none when m_stepSec is 0 (the names are not the original's)
+    float m_stepSec;   // 0x18
+    float m_stepRate;  // 0x1C
     int m_runningIdx;
 };
 }  // namespace layer
@@ -49,6 +52,12 @@ public:
     bool actcmd_priority(const unsigned char*& cmd);
     bool actcmd_wait(const unsigned char*& cmd);
     bool actcmd_ctrlspd(const unsigned char*& cmd);
+    bool actcmd_pos(const unsigned char*& cmd);
+    bool actcmd_rot(const unsigned char*& cmd);
+    bool actcmd_scl(const unsigned char*& cmd);
+    bool actcmd_numrot(const unsigned char*& cmd);
+    bool actcmd_mulcol(const unsigned char*& cmd);
+    bool actcmd_addcol(const unsigned char*& cmd);
 
     LyrActionData* m_actionData;  // its actions, or null (LayerAccAction::isActionData; the name is not the original's)
 };

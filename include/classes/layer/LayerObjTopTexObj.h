@@ -14,6 +14,7 @@ namespace layer {
 // table 0x7100B80028
 class LayerObjTopTexObj : public ::layer::LayerObj {
 public:
+    LayerObjTopTexObj(const grlib::CGLibTextureBuffer* texture);  // LayerObjManager::createStaticTexObj
     virtual ~LayerObjTopTexObj();  // slot 0
     void finalRender();
     virtual void setDrawList(layer::LayerSortMan*, bool);  // slot 7

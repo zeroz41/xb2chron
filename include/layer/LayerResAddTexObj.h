@@ -28,7 +28,10 @@ public:
     void setupResource();
     grlib::CGLibTextureBuffer* getTexObj(unsigned int index);
 
-    unsigned char pad_0[0x10];  // 0x0: both constructors zero it
+    // LayerObjResTex's lists link the objects through these (LayerObjResTex::clear walks m_next; both constructors
+    // zero them; the names are not the original's)
+    LayerResAddTexObj* m_prev;  // 0x0
+    LayerResAddTexObj* m_next;  // 0x8
     union {
         const LayerResAddTexHead* m_res;  // 0x10
         grlib::CGLibTextureBuffer* m_buffer;  // 0x10 with FLAG_BUFFER

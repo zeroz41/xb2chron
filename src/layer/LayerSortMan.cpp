@@ -159,7 +159,7 @@ void LayerVertexObj::render(unsigned int index) {
 }
 
 LayerResAddTexObj::LayerResAddTexObj(const void* res, unsigned int index)
-    : pad_0(), m_res(static_cast<const LayerResAddTexHead*>(res)), m_texObj(nullptr) {
+    : m_prev(nullptr), m_next(nullptr), m_res(static_cast<const LayerResAddTexHead*>(res)), m_texObj(nullptr) {
     m_flags = 0;
     m_index = index;
 }

@@ -1,3 +1,4 @@
+#include "math.h"
 #include "classes/layer/LayerObj.h"
 #include "classes/layer/LayerObjFont.h"
 #include "layer/LayerObjUtil.h"
@@ -37,6 +38,8 @@
 #include "classes/layer/LayerActLayout.h"
 #include "grlib/CGLibOneUniformBlock.h"
 #include "layer/LayerPolyVertex.h"
+#include "grlib/CGLibVtxVertex.h"
+#include "grlib/CGLibVtxIndex.h"
 #include "layer/LayerObjPlace.h"
 #include "classes/layer/LayerObjTopPolyObj.h"
 #include "classes/layer/LayerObjTopMemObj.h"
@@ -63,6 +66,7 @@
 #include "layer/LayerAccDefTexture.h"
 #include "layer/LayerAccDefObj.h"
 #include "layer/LayerAccLayoutObj.h"
+#include "layer/LayerAccFormat.h"
 #include "classes/layer/LayerObj.h"
 #include "classes/layer/LayerActBase.h"
 #include "classes/layer/LayerObjWork.h"
@@ -193,6 +197,20 @@ bool LayerActBase::actcmd_no(const unsigned char*& cmd) {
     cmd += 4;
     return false;
 }
+bool LayerActBase::actcmd_numrot(const unsigned char*& cmd) {
+    const LyrActionData* data = m_actionData;
+    bool wait = true;
+    if (data->m_stepSec != 0.0f) {
+        const float* arg = reinterpret_cast<const float*>(cmd);
+        wait = !(arg[2] <= data->m_runningSec);
+        float rot = fmodf(m_params[2].m_rot + data->m_stepSec * arg[1], 6.2831855f);
+        m_params[1].m_rot = rot;
+        m_params[0].m_rot = rot;
+        m_params[2].m_rot = rot;
+    }
+    cmd += 12;
+    return wait;
+}
 bool LayerActBase::actcmd_priority(const unsigned char*& cmd) {
     m_priority = reinterpret_cast<const unsigned short*>(cmd)[1];
     cmd += 4;
@@ -307,9 +325,27 @@ void LayerObjFont::setBorderWeight(float weight) {
 }
 void LayerObjFont::setSlopeRot(float rot) { m_slopeRot = rot; }
 float LayerObjFont::getSlopeRot() const { return m_slopeRot; }
+LayerBase* LayerObjManager::createStaticTexObj(const grlib::CGLibTextureBuffer& texture) {
+    return new (mm::mtl::PtrSingleton<LayerManager>::sys()->m_workHandle, nullptr, 0, 4, false) LayerObjTopTexObj(&texture);
+}
 ml::CriticalSection& LayerObjManager::getCriticalSection() {
     static ml::CriticalSection s_cs;  // lbl_71015E9CC8, guard lbl_71015E9CF0; the name is not the original's
     return s_cs;
+}
+LayerBase* LayerObjManager::createStaticMaskObj(const void* resource) {
+    const LyrFormatHeader* header = static_cast<const LyrFormatHeader*>(resource);
+    if (header->m_magic == 'DHAL' && header->m_version == 10001) {
+        return new (mm::mtl::PtrSingleton<LayerManager>::sys()->m_workHandle, nullptr, 0, 4, false) LayerObjTopMaskObj(resource);
+    }
+    return nullptr;
+}
+LayerBase* LayerObjManager::createStaticFontObj() { return new (mm::mtl::PtrSingleton<LayerManager>::sys()->m_workHandle, nullptr, 0, 4, false) LayerObjTopFont(); }
+LayerBase* LayerObjManager::createStaticMemObj(unsigned int width, unsigned int height, LayerMemType type) {
+    return new (mm::mtl::PtrSingleton<LayerManager>::sys()->m_workHandle, nullptr, 0, 4, false) LayerObjTopMemObj(width, height, type);
+}
+LayerBase* LayerObjManager::createStaticPolyObj(unsigned int width, unsigned int height, unsigned short vertexCount,
+                                                unsigned short indexCount, LayerPrimitiveType type) {
+    return new (mm::mtl::PtrSingleton<LayerManager>::sys()->m_workHandle, nullptr, 0, 4, false) LayerObjTopPolyObj(width, height, vertexCount, indexCount, type);
 }
 void LayerObjManager::finalRender(const ml::IDrDrawWorkInfo* info) {
     m_drawInfo = info;
@@ -513,6 +549,16 @@ void LayerObjTopLayout::applyEnd(LayerResUpdateInfo& info, const LayerRenderView
 void LayerObjUtil::getLayoutInfo(float* pos, const LyrLayoutPosData* data, LayerCenterType type, float sclX, float sclY) {
     s_CallDataPos[mm::mtl::PtrSingleton<LayerManager>::sys()->m_coordinate](pos, data, type, sclX, sclY);
 }
+LayerObjTopMemObj::~LayerObjTopMemObj() {
+    baseRelease();
+    m_renderTarget.release();
+    m_uniform.release();
+    m_oneUniform.release();
+    m_buffers[0].release();
+    m_buffers[1].release();
+    m_clearBuffers[0].release();
+    m_clearBuffers[1].release();
+}
 void* LayerObjTopMemObj::getBuffer() {
     unsigned int index = LayerManager::s_nDebIdx;
     return m_buffers[index].m_pBuff;
@@ -574,6 +620,16 @@ void LayerObjTopTexObj::setDrawList(LayerSortMan* sortMan, bool use3D) {
         set2DSpace(sortMan, &m_sortObj);
     }
 }
+LayerObjTopPolyObj::~LayerObjTopPolyObj() {
+    baseRelease();
+    m_uniform.release();
+    releasePoly(m_polyWork);
+    m_resTex.clear();
+    if (m_polyBuffer != nullptr) {
+        mtl::MemManager::deallocate(m_polyBuffer, 0, false);
+        m_polyBuffer = nullptr;
+    }
+}
 void LayerObjTopPolyObj::LockVertex() { m_locked = m_vertices[LayerManager::s_nStkIdx]; }
 void LayerObjTopPolyObj::setVertex(unsigned int index, const LayerPolyVertex& vertex) {
     static_cast<LayerPolyVertex*>(m_locked)[index] = vertex;
@@ -590,11 +646,32 @@ void LayerObjTopPolyObj::UnlockIndex() {
     m_updateFlags |= UPDATE_INDEX << LayerManager::s_nStkIdx;
     m_locked = nullptr;
 }
+void LayerObjTopPolyObj::setTexutre(const void* texture) { m_resTex.setAddTexture(texture, 0); }
+void LayerObjTopPolyObj::setTexutre(grlib::CGLibTextureBuffer& texture) { m_resTex.setAddTexture(texture, 0); }
 void LayerObjTopPolyObj::setIndexInfo(unsigned short start, unsigned short count) {
     int index = LayerManager::s_nStkIdx;
     m_updateFlags |= UPDATE_INDEX_INFO << index;
     m_indexStart[index] = start;
     m_indexCount[index] = count;
+}
+void LayerObjTopPolyObj::releasePoly(layPolyWork& work) {
+    for (int i = 0; i < 2; i++) {
+        if (work.m_vertex[i] != nullptr) {
+            delete work.m_vertex[i];
+            work.m_vertex[i] = nullptr;
+        }
+    }
+    for (int i = 0; i < 2; i++) {
+        if (work.m_index[i] != nullptr) {
+            delete work.m_index[i];
+            work.m_index[i] = nullptr;
+        }
+    }
+}
+void LayerObjResTex::clear() {
+    m_lists[0].deleteAll();
+    m_lists[1].deleteAll();
+    m_lists[2].deleteAll();
 }
 void LayerObjTopPolyObj::applyParams(const LayerRenderView* view, const LayerResMatrix& matrix, const LayerResColor& color) {
     m_viewData = view->m_viewData;
@@ -629,6 +706,7 @@ LayerObjTopMaskObj::~LayerObjTopMaskObj() {
         m_texture = nullptr;
     }
 }
+const grlib::CGLibTextureBuffer& LayerObjTopMaskObj::getTexture() const { return *m_texture->getTexture(0); }
 void LayerObjSortDef::finalRender() { static_cast<LayerObjTopDef*>(m_obj)->finalRender(); }
 void LayerObjSortFont::finalRender() { static_cast<LayerObjTopFont*>(m_obj)->finalRender(); }
 void LayerObjSortTexObj::finalRender() { static_cast<LayerObjTopTexObj*>(m_obj)->finalRender(); }

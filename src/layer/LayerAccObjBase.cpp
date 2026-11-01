@@ -320,7 +320,7 @@ unsigned int LayerAccMemObj::getMemHeight() const { return m_memObj->m_memHeight
 
 void LayerAccMemObj::setRender(bool render) { m_memObj->setRender(render); }
 
-grlib::CGLibTextureBuffer* LayerAccMemObj::getTexture() { return m_memObj->m_texture; }
+grlib::CGLibTextureBuffer* LayerAccMemObj::getTexture() { return m_memObj->m_renderTarget.m_pTexture; }
 
 LayerAccPolyObj::LayerAccPolyObj(LayerBase* layer) : m_layer(layer), m_polyObj(static_cast<LayerObjTopPolyObj*>(layer)) {}
 

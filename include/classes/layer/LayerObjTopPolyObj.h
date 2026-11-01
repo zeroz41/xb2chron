@@ -2,10 +2,14 @@
 #define CLASSES_LAYER_LAYEROBJTOPPOLYOBJ_H
 
 #include "classes/layer/LayerObj.h"
+#include "layer/LayerAccLayoutObj.h"
 #include "grlib/CGLibDblUniformBlock.h"
+#include "layer/LayerObjResTex.h"
 #include "classes/layer/LayerObjSortPolyObj.h"
 
 namespace grlib { class CGLibTextureBuffer; }
+namespace grlib { class CGLibVtxVertex; }
+namespace grlib { class CGLibVtxIndex; }
 namespace layer { struct LayerPolyVertex; }
 namespace layer { class LayerRenderView; }
 namespace layer { class LayerResColor; }
@@ -16,6 +20,9 @@ namespace layer {
 // table 0x7100B80088
 class LayerObjTopPolyObj : public ::layer::LayerObj {
 public:
+    // LayerObjManager::createStaticPolyObj
+    LayerObjTopPolyObj(unsigned int width, unsigned int height, unsigned short vertexCount, unsigned short indexCount,
+                       LayerPrimitiveType type);
     virtual ~LayerObjTopPolyObj();  // slot 0
     void finalRender();
     void LockVertex();
@@ -33,6 +40,14 @@ public:
     void updateVertexBuffer();
     virtual void applyParams(layer::LayerRenderView const*, layer::LayerResMatrix const&, layer::LayerResColor const&);  // slot 9
 
+    // the polygon's vertex and index buffers, two of each (releasePoly deletes them; the field names are not the
+    // original's)
+    struct layPolyWork {
+        grlib::CGLibVtxVertex* m_vertex[2];  // 0x0
+        grlib::CGLibVtxIndex* m_index[2];    // 0x10
+    };
+    void releasePoly(layPolyWork& work);
+
     // what Unlock*/setIndexInfo mark as updated, each bit shifted by LayerManager::s_nStkIdx (not the original's)
     enum {
         UPDATE_VERTEX = 0x4,  // UnlockVertex
@@ -46,7 +61,8 @@ public:
     LayerObjSortPolyObj m_sortObj;  // 0x260: what setDrawList puts in the sort lists (the name is not the original's)
     unsigned char pad_278[0x8];
     grlib::CGLibDblUniformBlock m_uniform;  // 0x280: applyParams updates it (the name is not the original's)
-    unsigned char pad_2B8[0x68];
+    LayerObjResTex m_resTex;  // 0x2B8: setTexutre adds to it, the destructor clears it (the name is not the original's)
+    layPolyWork m_polyWork;  // 0x300: the destructor releases it (the name is not the original's)
     LayerPolyVertex* m_vertices[2];  // LockVertex, indexed by LayerManager::s_nStkIdx
     unsigned short* m_indices[2];  // LockIndex, indexed by LayerManager::s_nStkIdx
     unsigned char pad_340[0x4];
@@ -54,6 +70,8 @@ public:
     unsigned short m_indexCount[2];  // setIndexInfo
     unsigned char pad_34C[0xC];
     void* m_locked;  // the buffer Lock* returned to setVertex/setIndex, cleared by Unlock*
+    unsigned char pad_360[0x8];
+    void* m_polyBuffer;  // 0x368: the destructor deallocates it (createPolyObj allocates 0x370; the name is not the original's)
 };
 }  // namespace layer
 
