@@ -66,6 +66,10 @@ public:
     // where the character stands to the target, 0-3 (Utility::AI_GetTargetDirection answers it plus 1); the bool
     // it sets makes the answer void
     unsigned char CheckAttackPosition(gf::GF_OBJ_HANDLE* target, bool, bool* out) const;
+    // takes target (or the character m_aiArtsTarget names, once) as m_subTargetHandle, with its attack position and
+    // weapon distance; the controlled character hands it to BattleGlobal
+    void SetAttackTarget(gf::GF_OBJ_HANDLE* target, bool);
+    void CheckWeaponDistance(gf::GF_OBJ_HANDLE* target);
     // what the enemy's battle states hand an animation annotation to (1.0.0's name)
     void AsmCallback(const gf::MsgObjectNotifyAsmCallback& msg);
     // the PC's battle states hand it the damage message 0x100003A they receive
@@ -89,8 +93,15 @@ public:
     // (SetCriticalRecastEnhanceEnd) and clears the buff; answers whether the buff was on. Callers: ActionArts,
     // ActionBladeArts, ActionSpAttack.
     bool fn_7100056404(unsigned int id);
+    // sends the effect caster a MsgFxRimBloom for the one-shot rim blooms 23-30
+    void SetOneShotRimBloom(int id);
+    // sets the collision object's and the object info's priority, keeping the first values they replace
+    void SetCollisionPriority(int priority);
+    void ResetCollisionPriority();
     void WriteBackChrCollisionFlag();
     bool IsDead(unsigned int) const;
+    // whether the two characters' heights (from m_pos.y up by their parameters' pad_30) overlap
+    bool IsOverlapVert(const BattleCharacter* other) const;
     bool IsControlCharacter() const;
     bool IsControlCharacterGroup() const;
     void SetWeaponType(int type);
@@ -470,7 +481,10 @@ public:
     // the id DataManager::GetCharacterParameterConst looks the parameter up by, < 0 for none (the name is not the
     // original's)
     short m_chrID;
-    unsigned char pad_EDC[0x4];
+    // the collision object's and the object info's priorities from before SetCollisionPriority, -30000 when none;
+    // ResetCollisionPriority puts them back (the names are not the original's)
+    short m_savedColiPriority;
+    short m_savedObjPriority;
     // the kind of character; 2 picks GetAnimationStateName's attack/arts names (meaning unknown, the name is not
     // the original's)
     unsigned short m_animKind : 12;
@@ -538,7 +552,10 @@ public:
     unsigned int pad_F01_3 : 1;
     // the name is not the original's: ActionCommandEndRun stays in the run action while it is set (run bit 28)
     unsigned int m_isRunHold : 1;
-    unsigned int pad_F01_5 : 4;
+    // SetExitBattle's two arguments (run bits 29 and 30; the names are not the original's)
+    unsigned int m_exitBattle : 1;
+    unsigned int m_exitBattleFlag : 1;
+    unsigned int pad_F01_7 : 2;
     // StartBackHome sets it (the name is not the original's)
     unsigned int m_reqBackHome : 1;
     unsigned int pad_F00_18 : 5;
@@ -565,7 +582,8 @@ public:
     unsigned int pad_F08 : 3;
     // whether SetBattleFace eased the battle eye animation in (the name is not the original's)
     unsigned int m_battleFace : 1;
-    unsigned int pad_F08_4 : 6;
+    unsigned int m_oneShotRimBloom : 1;  // SetOneShotRimBloom sets it (the name is not the original's)
+    unsigned int pad_F08_5 : 5;
     unsigned int pad_F09_2 : 1;  // fn_710002FD3C answers false while it is set (meaning unknown)
     unsigned int pad_F09_3 : 1;  // fn_710002B4D8's argument (meaning unknown)
     // Utility::fn_7100014958 answers false unless it is set and pad_F09_3 is clear (meaning unknown)
@@ -607,7 +625,7 @@ public:
     unsigned char pad_1074;
     // the party index of the character AI_StartActionArts aimed its arts at (-1 for none; the name is not the
     // original's)
-    unsigned char m_aiArtsTarget;
+    signed char m_aiArtsTarget;
     unsigned short pad_1076_0 : 12;
     unsigned short pad_1076_12 : 1;  // fn_7100059314 answers true while it is clear (meaning unknown)
     unsigned short pad_1076_13 : 1;  // fn_7100059314's answer once it counts (meaning unknown)
@@ -622,11 +640,19 @@ public:
     // the character index of the one attacking from behind (Utility::AI_GetBackAttackerCharacterID; the name is not
     // the original's)
     short m_backAttacker;
-    unsigned char pad_10B0[0x9];
+    unsigned char pad_10B0;
+    // SetAttackTarget keeps CheckAttackPosition's answer for its target here, 0 for none (the name is not the original's)
+    unsigned char m_attackPosition;
+    unsigned char pad_10B2[0x6];
+    // a 32-bit bitfield run (CheckWeaponDistance stores bit 22 as a word)
+    unsigned int pad_10B8 : 8;
     // Utility::AI_GetAutoAttackState answers m_autoAttackStep only while it is set (the name is not the original's)
-    unsigned char m_isAutoAttack : 1;
-    unsigned char pad_10B9_1 : 7;
-    unsigned char pad_10BA[0x66];
+    unsigned int m_isAutoAttack : 1;
+    unsigned int pad_10B9_1 : 13;
+    // CheckWeaponDistance's answer: the target is within the parameter's weapon ranges (the name is not the original's)
+    unsigned int m_inWeaponDistance : 1;
+    unsigned int pad_10BA_7 : 9;
+    unsigned char pad_10BC[0x64];
     // one 8-byte bitfield run (GetRescueTarget loads it whole): the moving kind's own state, 0x14 while it rescues
     // m_moveRescueTarget (IsRescue, GetRescueTarget, MoveStop; the names are not the original's). An unsigned char
     // bitfield: IsRescue and MoveStop compare it as a 32-bit value, GetRescueTarget as the 64-bit run.

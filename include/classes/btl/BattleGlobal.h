@@ -302,7 +302,9 @@ public:
     // the character the player controls: BattleCharacter::IsControlCharacter compares its handle with it (the name is
     // not the original's)
     gf::GF_OBJ_HANDLE* m_controlHandle;
-    unsigned char pad_18[0x18];
+    // the target BattleCharacter::SetAttackTarget gives the controlled character (the name is not the original's)
+    gf::GF_OBJ_HANDLE* m_controlTargetHandle;
+    unsigned char pad_20[0x10];
     // GetSeTag's cache of BDAT 0x3B's "tag" strings, by row id (the name is not the original's)
     mutable const char* m_seTags[0xE0];
     ShakeCameraManager* m_shakeCamera;  // ApplyBattleCameraAdjustment (the name is not the original's)
@@ -460,7 +462,9 @@ public:
     // BtlSystemBalanceAccess's m_returnHomeDistance instead of its own
     bool pad_bit30 : 1;
     unsigned char : 1;
-    unsigned char : 1;
+    // BattleCharacter::SetExitBattle sets it when the controlled character exits with its second argument set (the
+    // name is not the original's)
+    bool m_controlExitBattle : 1;
     // Utility::AI_IsKillChild returns it (the name is not the original's)
     bool m_killChild : 1;
     unsigned char : 1;

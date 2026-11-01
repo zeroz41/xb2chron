@@ -383,7 +383,12 @@ public:
     float m_specialEnhanceRate[22];
     // the unsigned short those functions store with the rate (the name is not the original's)
     unsigned short m_specialEnhanceTime[22];
-    unsigned char pad_e4[0x10];
+    unsigned char pad_e4[0x7];
+    // BattleCharacter::CheckWeaponDistance's ranges: a target within m_weaponRange and beyond m_weaponMinRange (0:
+    // none) is in weapon distance (the names are not the original's)
+    unsigned char m_weaponMinRange;
+    unsigned char m_weaponRange;
+    unsigned char pad_ed[0x7];
     // GetFightComboDataConst answers the second while m_flags622_9 is set and its id is not 0 (the name is not the
     // original's)
     FIGHT_COMBO_DATA m_fightCombos[2];

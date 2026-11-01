@@ -29,6 +29,9 @@
 #include "gf/GfDataBlade.h"
 #include "classes/gf/GfComEnvSensor.h"
 #include "classes/gf/GfComPropertyEnemy.h"
+#include "classes/gf/GfComCollider.h"
+#include "classes/fw/ColiObject.h"
+#include "gf/GfObjInfo.h"
 
 namespace btl {
 
@@ -544,6 +547,25 @@ bool BattleCharacter::CheckRandFriendEnhanceRate(int id) const {
     return ml::mtRandf1() <= rate;
 }
 
+void BattleCharacter::SetAttackTarget(gf::GF_OBJ_HANDLE* target, bool) {
+    if (m_aiArtsTarget >= 0) {
+        if (BattleCharacter* chr = mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(m_aiArtsTarget)) {
+            target = chr->m_handle;
+        }
+        m_aiArtsTarget = -1;
+    }
+    m_subTargetHandle = target;
+    if (target == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        m_attackPosition = 0;
+    } else {
+        m_attackPosition = CheckAttackPosition(target, true, nullptr);
+        CheckWeaponDistance(target);
+    }
+    if (IsControlCharacter() && target != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_controlTargetHandle = target;
+    }
+}
+
 const gf::GfComProperty* BattleCharacter::GetComPropertyConst() const {
     gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
     if (obj == nullptr) {
@@ -770,6 +792,78 @@ bool BattleCharacter::fn_710002F1F8() const {
         return param->m_isNotBlade;
     }
     return false;
+}
+
+void BattleCharacter::SetExitBattle(bool exit, bool flag) {
+    m_exitBattle = exit;
+    m_exitBattleFlag = flag;
+    if (flag && IsControlCharacter()) {
+        mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_controlExitBattle = true;
+    }
+}
+
+void BattleCharacter::SetCollisionPriority(int priority) {
+    if (priority < 0) {
+        return;
+    }
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    if (const gf::GfComCollider* collider = obj->getComponent<gf::GfComCollider>(4)) {
+        if (fw::ColiObject* coli = collider->m_coliObjects[0]) {
+            short prev = coli->getPriority();
+            coli->setPriority(priority);
+            if (m_savedColiPriority == -30000) {
+                m_savedColiPriority = prev;
+            }
+        }
+    }
+    int prev = obj->m_info->m_attachIndex;
+    obj->m_info->m_attachIndex = priority;
+    if (m_savedObjPriority == -30000) {
+        m_savedObjPriority = prev;
+    }
+}
+
+void BattleCharacter::ResetCollisionPriority() {
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    short objPriority;
+    if (m_savedColiPriority == -30000) {
+        objPriority = m_savedObjPriority;
+    } else {
+        if (const gf::GfComCollider* collider = obj->getComponent<gf::GfComCollider>(4)) {
+            if (fw::ColiObject* coli = collider->m_coliObjects[0]) {
+                coli->setPriority(m_savedColiPriority);
+            }
+        }
+        m_savedColiPriority = -30000;
+        objPriority = m_savedObjPriority;
+    }
+    if (objPriority != -30000) {
+        obj->m_info->m_attachIndex = objPriority;
+        m_savedObjPriority = -30000;
+    }
+}
+
+void BattleCharacter::WriteBackChrCollisionFlag() {
+    if (!pad_F03_5) {
+        return;
+    }
+    const gf::GfComCollider* collider = gf::GfObjUtil::getObj(m_handle)->getComponent<gf::GfComCollider>(4);
+    if (collider == nullptr) {
+        return;
+    }
+    fw::ColiObject* coli = collider->m_coliObjects[0];
+    if (coli == nullptr) {
+        return;
+    }
+    if (!pad_F03_4) {
+        coli->clearState(static_cast<fw::ColiState>(1));
+    } else {
+        if (IsDead(0)) {
+            return;
+        }
+        coli->setState(static_cast<fw::ColiState>(1));
+    }
+    pad_F03_5 = false;
 }
 
 bool BattleCharacter::fn_7100041CA4() const {

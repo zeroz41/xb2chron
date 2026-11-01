@@ -18,6 +18,8 @@ namespace Misc {
 int GetKizunaStage(int kizuna, float* ratio);
 
 bool CheckInRange(const mm::Vec3& pos, BattleCharacter* chr, float range, bool flag);
+// the same for the object handle names (BattleCharacter::CheckWeaponDistance passes its target and false)
+bool CheckInRange(const mm::Vec3& pos, gf::GF_OBJ_HANDLE* handle, float range, bool flag);
 
 // the party the object belongs to, -1 for none (PlayerParameter::Update keeps its m_groupIndex then)
 int GetPartyID(gf::GF_OBJ_HANDLE* handle);
