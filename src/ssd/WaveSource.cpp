@@ -31,12 +31,41 @@ Result WaveSource::Quit() {
     return Result(0);
 }
 
+Result WaveSource::Init(void* data, unsigned long size) {
+    fromFile_ = false;
+    referenceCount_ = 0;
+    contents_ = static_cast<AudioContents*>(data);
+    contentsSize_ = size;
+    MemoryStream stream;
+    Result result = stream.Open(data, size, IoStreamBase::OpenMode_Read);
+    if (result >= 0) {
+        result = PreLoad(&stream, false);
+    }
+    stream.Close();
+    return result;
+}
+
 Result WaveSource::InitWithFile(const TextRef& path) {
     fromFile_ = true;
     path_ = path;
     contents_ = nullptr;
     contentsSize_ = 0;
     return Result(0);
+}
+
+unsigned long WaveSource::TimeToSample(float time) const {
+    if (format_.sample.format == 3) {
+        return format_.data.sampleRate * time * 8.0f / 14.0f;
+    }
+    return format_.data.sampleRate * time;
+}
+
+unsigned long WaveSource::SampleToPosition(unsigned int sample) const {
+    unsigned long s = sample;
+    if (format_.sample.format == 3) {
+        return s * 16 / 28;
+    }
+    return format_.sample.blockAlign * s;
 }
 
 Result WaveSource::PreLoad(IoStreamBase* stream, bool headerOnly) {
@@ -98,6 +127,15 @@ unsigned int WaveSource::GetDataSize() const {
     return format_.sample.format == 3 ? contents_->dataSize : format_.data.dataSize;
 }
 
+void CommandManager::Init(int capacity) {
+    capacity_ = capacity;
+    for (int i = 0; i < 2; i++) {
+        lists_[i].entries = SoundMemory::allocator_->NewInstance<CommandEntry>(capacity);
+        lists_[i].count = 0;
+    }
+    fn_71008A22D0();
+}
+
 void CommandManager::fn_71008A22D0() {
     List* written = write_;
     List* executed = &lists_[written != &lists_[0]];
@@ -112,6 +150,13 @@ void CommandManager::ExecuteCommands() {
         command->Execute();
         command->~Command();
     }
+}
+
+void CommandManager::Quit() {
+    CommandEntry* entries = lists_[0].entries;
+    SoundMemory::allocator_->DeleteInstance(entries);
+    entries = lists_[1].entries;
+    SoundMemory::allocator_->DeleteInstance(entries);
 }
 
 Result set_result(Result result) {

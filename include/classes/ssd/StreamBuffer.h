@@ -39,6 +39,9 @@ public:
     unsigned int readPosition_;
     // the write position InData* records when its loop flag is set (the name is not the original's)
     unsigned int loopPosition_;
+    // OutData64 limits a read to loopPosition_ while it is set and reports the end once that is used up (the
+    // name is not the original's)
+    bool loopLimit_;
 };
 }  // namespace ssd
 
