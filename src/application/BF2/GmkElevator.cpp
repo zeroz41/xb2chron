@@ -1444,6 +1444,56 @@ bool GmkNpc::isDepopCondMatched() const {
     return false;
 }
 
+// whether the interest position lies within the row's Visible_XZ / Visible_Y distances of pos (the name is not the original's)
+template <class T>
+static inline bool isInsideVisibleDist(const mm::Vec3& pos, const T* info) {
+    if (!isInterestPosExist()) {
+        return false;
+    }
+    const mm::Vec3& interest = getInterestPos();
+    float dy = interest.y - pos.y;
+    if (info->m_visibleYSq < dy * dy) {
+        return false;
+    }
+    float dx = interest.x - pos.x;
+    float dz = interest.z - pos.z;
+    float xzSq = dx * dx + dz * dz;
+    return !(info->m_visibleXZSq < xzSq);
+}
+
+// whether the interest position lies beyond the row's Invisible_XZ / Invisible_Y distances of pos (the name is not the original's)
+template <class T>
+static inline bool isOutsideInvisibleDist(const mm::Vec3& pos, const T* info) {
+    if (!isInterestPosExist()) {
+        return true;
+    }
+    const mm::Vec3& interest = getInterestPos();
+    float dy = interest.y - pos.y;
+    if (info->m_invisibleYSq < dy * dy) {
+        return true;
+    }
+    float dx = interest.x - pos.x;
+    float dz = interest.z - pos.z;
+    float xzSq = dx * dx + dz * dz;
+    return info->m_invisibleXZSq < xzSq;
+}
+
+bool GmkNpc::fn_710058EF4C() const {
+    if (isValid()) {
+        const GmkNpc::BdatInfo* info = static_cast<const GmkNpc::BdatInfo*>(m_createInfo.m_bdatInfo);
+        return isInsideVisibleDist(*m_pos, info);
+    }
+    return false;
+}
+
+bool GmkNpc::fn_710058F030() const {
+    if (isValid()) {
+        const GmkNpc::BdatInfo* info = static_cast<const GmkNpc::BdatInfo*>(m_createInfo.m_bdatInfo);
+        return isOutsideInvisibleDist(*m_pos, info);
+    }
+    return false;
+}
+
 // m_pos points at the gimmick's Xform: its position, then its rotation
 bool GmkNpc::findPopPosRot(mm::Vec3& pos, mm::Vec3& rot) const {
     pos = m_pos[0];
@@ -1509,6 +1559,28 @@ bool GmkRoutedNpc::isPopCondMatched() const {
 bool GmkRoutedNpc::isDepopCondMatched() const {
     if (isValid()) {
         return !static_cast<const GmkNpc::BdatInfo*>(m_createInfo.m_bdatInfo)->isPopCommonCondMatched(*this);
+    }
+    return false;
+}
+
+bool GmkRoutedNpc::fn_710058EF4C() const {
+    if (isValid() && isPlayerExist()) {
+        mm::Vec3 pos;
+        if (getNearestPos(pos, getPlayerPos())) {
+            const GmkNpc::BdatInfo* info = static_cast<const GmkNpc::BdatInfo*>(m_createInfo.m_bdatInfo);
+            return isInsideVisibleDist(pos, info);
+        }
+    }
+    return false;
+}
+
+bool GmkRoutedNpc::fn_710058F030() const {
+    if (isValid() && isPlayerExist()) {
+        mm::Vec3 pos;
+        if (getNearestPos(pos, getPlayerPos())) {
+            const GmkNpc::BdatInfo* info = static_cast<const GmkNpc::BdatInfo*>(m_createInfo.m_bdatInfo);
+            return isOutsideInvisibleDist(pos, info);
+        }
     }
     return false;
 }
@@ -1761,6 +1833,26 @@ void GmkTbox::debugDraw() const {
     isValid();
 }
 
+bool GmkMapObj::BdatInfo::fn_710059232C(const mm::Vec3& pos) const {
+    if (!isInsideVisibleDist(pos, this)) {
+        return false;
+    }
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return false;
+    }
+    return true;
+}
+
+bool GmkMapObj::BdatInfo::fn_7100592408(const mm::Vec3& pos) const {
+    if (isOutsideInvisibleDist(pos, this)) {
+        return true;
+    }
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return true;
+    }
+    return false;
+}
+
 void GmkMapObj::reqDisposeGob(float wait, unsigned int arg) const {
     m_disposeWait = wait;
     m_disposeArg = arg;
@@ -1955,6 +2047,28 @@ IGmkList* GmkSquadLeader::getBindedSquadMemberList() const {
 void GmkSquadMember::create(const CreateInfo& info) { AGmkBase::create(info); }
 GmkRoute::~GmkRoute() { dispose(); }
 GmkRoutedNpc::~GmkRoutedNpc() { dispose(); }
+
+bool GmkRoutedMapObj::canPopGobInst() const {
+    if (m_gobInst == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) && isPlayerExist()) {
+        const GmkMapObj::BdatInfo* info = static_cast<const GmkMapObj::BdatInfo*>(m_createInfo.m_bdatInfo);
+        mm::Vec3 pos;
+        if (getNearestPos(pos, getPlayerPos())) {
+            return info->fn_710059232C(pos);
+        }
+    }
+    return false;
+}
+
+bool GmkRoutedMapObj::canDepopGobInst() const {
+    if (m_gobInst != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) && isPlayerExist()) {
+        const GmkMapObj::BdatInfo* info = static_cast<const GmkMapObj::BdatInfo*>(m_createInfo.m_bdatInfo);
+        mm::Vec3 pos;
+        if (getNearestPos(pos, getPlayerPos())) {
+            return info->fn_7100592408(pos);
+        }
+    }
+    return false;
+}
 
 void GmkRoutedMapObj::dispose() {
     if (m_gobInst != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
@@ -2355,6 +2469,8 @@ void TUnk_B6D418::fn_71005B3D64(float dt) {
     fn_71005B40D8();
 }
 
+void TUnk_B6D418::fn_71005B445C(float) {}
+
 void TUnk_B6D418::debugDraw() const {}
 
 // a gimmick set row's BDAT table name for a kind given by name, as GmkManager::getSheetnameByType reads it (the
@@ -2453,6 +2569,8 @@ void TUnk_B6D528::fn_71005B7B7C(float dt) {
         m_seq = &TUnk_B6D528::fn_71005B76B4;
     }
 }
+
+void TUnk_B6D528::fn_71005B7BA0(int) {}
 
 void TUnk_B6D528::fn_71005B7BA4(bool flag) {
     if (s_current != nullptr) {
@@ -2586,6 +2704,22 @@ void TUnk_B6D590::onPlayerAccessed(gf::GF_OBJ_HANDLE*) {
 }
 
 // ---- TUnk_B6D5F8 (placeholder slot symbols: see its header)
+bool TUnk_B6D5F8::BdatInfo::fn_71005B869C() const {
+    if (m_scenarioFlag.m_scenarioFlagMax != 0 && !m_scenarioFlag.isMatch()) {
+        return false;
+    }
+    if (m_questFlag.isSet() && !m_questFlag.isMatch()) {
+        return false;
+    }
+    if (m_timeRange.m_time != 0 && !m_timeRange.isMatch()) {
+        return false;
+    }
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return false;
+    }
+    return true;
+}
+
 void TUnk_B6D5F8::fn_71005B8764(float) {
     fw::EffectPack* pack = gf::GfFieldManager::getEffectPack();
     if (pack == nullptr) {
@@ -2625,6 +2759,34 @@ void TUnk_B6D5F8::update(float dt) {
             (this->*m_seq)(dt);
         }
     }
+}
+
+bool TUnk_B6D5F8::fn_71005B8B84() const {
+    if (isValid()) {
+        return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo)->fn_71005B869C();
+    }
+    return false;
+}
+
+bool TUnk_B6D5F8::fn_71005B8E18() {
+    bool result = false;
+    if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        const BdatInfo* info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+        if (info->fn_71005B869C() && isInsideVisibleDist(*m_pos, info) && !isOutsideInvisibleDist(*m_pos, info)) {
+            result = true;
+        }
+    }
+    return result;
+}
+
+bool TUnk_B6D5F8::fn_71005B8FA0() {
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        const BdatInfo* info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
+        if (!info->fn_71005B869C() || isOutsideInvisibleDist(*m_pos, info)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void TUnk_B6D5F8::fn_71005B9084(float) {

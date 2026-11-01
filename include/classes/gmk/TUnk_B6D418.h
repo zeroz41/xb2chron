@@ -83,6 +83,8 @@ public:
     // Placeholder names: fn_71005B3D64's helper (called with false) and what it ends with (no step: no m_seq stores it)
     void fn_71005B425C(bool);
     void fn_71005B40D8();
+    // Placeholder name: an empty step; fn_71005B40D8 stores it in m_seq when the row's kind (create info +0x28) is 1
+    void fn_71005B445C(float dt);
     gf::GF_OBJ_HANDLE* m_gob;  // 0x48: dispose destroys it unless it is -1 (the name is not the original's)
     float m_accessDistSq;  // 0x50: create squares the "0x7B" table's row 0 column 0x1E (the name is not the original's)
     unsigned char pad_54[0xc];

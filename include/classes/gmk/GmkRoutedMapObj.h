@@ -25,6 +25,9 @@ public:
     // its game object (GmkManager::collectGameObjs<GmkRoutedMapObj> reads it inline: none is -1; the names are
     // not the original's)
     gf::GF_OBJ_HANDLE* getGobInst() const { return m_gobInst; }
+    // whether update may pop / depop its game object: its row's tests at the route's point nearest the player
+    bool canPopGobInst() const;
+    bool canDepopGobInst() const;
     gf::GF_OBJ_HANDLE* m_gobInst = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     unsigned char pad_58 = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };

@@ -2,6 +2,9 @@
 #define CLASSES_GMK_TUNK_B6D5F8_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/ScenarioFlagCond.h"
+#include "classes/gmk/QuestFlagCond.h"
+#include "classes/gmk/TimeCond.h"
 
 namespace gmk {
 // Placeholder name: the gimmick of kind 0x3D (GmkSet::createGmkLists' list slot 0x3D, bdat column "npc"),
@@ -23,9 +26,23 @@ public:
     virtual void update(float);  // slot 6 (fn_71005B896C)
     virtual void debugDraw() const;  // slot 7 (fn_71005B89E8)
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8 (fn_71005B91A0)
-    // its bdat row: complete because TGmkList's inline constructor needs Vector<BdatInfo>; the size is not read
-    // yet (placeholder: no fields declared)
-    class BdatInfo {};
+    // its bdat row (TGmkList's inline constructor needs Vector<BdatInfo>). The fields are the ones
+    // fn_71005B869C, fn_71005B8E18 and fn_71005B8FA0 read, laid out as GmkNpc::BdatInfo's after its Group and
+    // BattleReaction; the size is not read yet and the names are not the original's
+    class BdatInfo {
+    public:
+        // Placeholder name (new in 3.0.1): its row's pop conditions (scenario flag range, quest state range, time
+        // range, game condition), as GmkEvent::BdatInfo::isCondMatched plus the time range
+        bool fn_71005B869C() const;
+        unsigned short m_condition;      // 0x0
+        ScenarioFlagCond m_scenarioFlag; // 0x2
+        QuestFlagCond m_questFlag;       // 0x6
+        TimeCond m_timeRange;            // 0x10
+        float m_visibleXZSq;             // 0x20: compared with the interest position's squared XZ distance
+        float m_visibleYSq;              // 0x24: likewise its squared Y distance
+        float m_invisibleXZSq;           // 0x28: fn_71005B8FA0's XZ limit
+        float m_invisibleYSq;            // 0x2C: fn_71005B8FA0's Y limit
+    };
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x3d);
     // the step update calls while the gimmick is valid (the name is not the original's)
@@ -58,6 +75,9 @@ public:
     // What it does: true when the game object should go (its BdatInfo conditions fail or the interest point is
     // outside the invisible range).
     bool fn_71005B8FA0();
+    // Placeholder name (new in 3.0.1): its BdatInfo's fn_71005B869C while it is valid (GfComBehaviorNpc's
+    // procMsgPcFieldGetAccessType calls it; its address sits among this class's functions)
+    bool fn_71005B8B84() const;
     // What it does (step): pops (fn_71005B8BC4) when fn_71005B8E18 says so, else depops (fn_71005B8870(true)) when
     // fn_71005B8FA0 says so.
     void fn_71005B9084(float);

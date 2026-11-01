@@ -17,6 +17,11 @@ public:
     public:
         BdatInfo() {}  // user-provided: Vector<BdatInfo>::resize stores only the defaults (pads left)
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
+        // Placeholder names (new in 3.0.1): whether the gimmick at pos may pop (the interest position within the
+        // Visible distances and its Condition met) and may depop (beyond the Invisible distances or its Condition
+        // unmet); GmkMapObj::update and GmkRoutedMapObj::canPopGobInst / canDepopGobInst call them
+        bool fn_710059232C(const mm::Vec3& pos) const;
+        bool fn_7100592408(const mm::Vec3& pos) const;
         unsigned short m_condition = 0;  // the row's "Condition" (a GfGameCond id; 0: none)
         unsigned char m_priority = 0;    // the row's "Priority" (when the sheet has that column)
         // squared distances from the row's Visible_XZ, Visible_Y, Invisible_XZ, Invisible_Y (an Invisible one

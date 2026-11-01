@@ -63,6 +63,9 @@ public:
     void fn_71005B7B7C(float dt);
     // fn_71005B7BA4 (btl::TUnk_B3A9C8::fn_7100025920 calls it): fn_71005B75AC on the running challenge, if any
     static void fn_71005B7BA4(bool);
+    // Placeholder name: empty (new in 3.0.1); gf::TUnk_B52C38::fn_710028C9CC calls it with s_state's word at +4 plus 1.
+    // A static member: its address sits between fn_71005B7B7C and fn_71005B7BA4
+    static void fn_71005B7BA0(int);
     // fn_71005B7344: clears s_current, s_battleId and s_state (GfAppendWire's fn_710028D1CC calls it)
     static void fn_71005B7344();
     // the running challenge, set by fn_71005B7178 (lbl_7100EB7DB0; the name is not the original's)

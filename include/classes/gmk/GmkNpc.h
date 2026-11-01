@@ -44,8 +44,8 @@ public:
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual bool isPopCondMatched() const;  // slot 11
     virtual bool isDepopCondMatched() const;  // slot 12
-    virtual void vf4();  // slot 13 (AGmkNpc slot 4)
-    virtual void vf5();  // slot 14 (AGmkNpc slot 5)
+    virtual bool fn_710058EF4C() const;  // slot 13 (AGmkNpc slot 4)
+    virtual bool fn_710058F030() const;  // slot 14 (AGmkNpc slot 5)
     virtual unsigned char* getBindedBdatFp() const;  // slot 15
     virtual int getBindedBdatId() const;  // slot 16
     virtual bool findPopPosRot(mm::Vec3&, mm::Vec3&) const;  // slot 17

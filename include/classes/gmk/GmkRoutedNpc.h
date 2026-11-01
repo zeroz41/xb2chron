@@ -26,8 +26,10 @@ public:
     virtual IGmkList* getBindedRoutePointList() const;  // slot 11
     virtual bool isPopCondMatched() const;  // slot 12
     virtual bool isDepopCondMatched() const;  // slot 13
-    virtual void vf4();  // slot 14 (AGmkNpc slot 4; its override, fn_7100590868)
-    virtual void vf5();  // slot 15 (AGmkNpc slot 5; its override, fn_71005909C0)
+    // slots 14/15 (AGmkNpc slots 4/5; its overrides, originally fn_7100590868 / fn_71005909C0): measured from the
+    // route's point nearest the player instead of the gimmick's position
+    virtual bool fn_710058EF4C() const;
+    virtual bool fn_710058F030() const;
     virtual unsigned char* getBindedBdatFp() const;  // slot 16
     virtual int getBindedBdatId() const;  // slot 17
     virtual bool findPopPosRot(mm::Vec3&, mm::Vec3&) const;  // slot 18

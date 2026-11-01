@@ -32,6 +32,8 @@ public:
     void debugDrawRoute(const mm::Col4& color) const;
     // its point at index (from its first one) in the binded route point list, none past the list's end
     AGmkBase* getRoutePoint(unsigned int index) const;
+    // the route's position nearest to pos (GmkRoutedNpc's distance tests pass the player's position)
+    bool getNearestPos(mm::Vec3& nearest, const mm::Vec3& pos) const;
     virtual ~GmkRoute();  // slot 0
     // the position of one of its route points (LocatorBat_EnemySpeciesID::update asks a routed enemy for point 0)
     bool getRoutePointPos(mm::Vec3& pos, unsigned int index) const;
