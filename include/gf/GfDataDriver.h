@@ -263,6 +263,12 @@ public:
     // functions (between fn_71002417DC and fn_71002419C8) and takes a driver id. What it does: the DLC driver record's
     // m_partyIndex for drivers 0x11-0x19, else 0.
     static unsigned int fn_710024198C(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among GfDataDriver's
+    // functions (right after fn_71002417DC) and takes a driver id. What it does: of fn_71002417DC(driver) and
+    // fn_71002416B4's list for it, the first id whose fn_710024198C value (the DLC record's 16-bit field at 0xDA8,
+    // 0 outside 0x11-0x19) equals the second argument, 0 for none. Callers: gf_menu_obj_char_select_ira's
+    // TUnk_B61178::fn_71003D3F94 (with 0), GfReqCommand::reqChangeParty.
+    static unsigned int fn_71002418CC(unsigned int driver, unsigned int);
     static unsigned int fn_71002419C8(unsigned int driver);
     // the blade in a slot (slot < 0: the engaged one, m_bladeSet), 0 for none; DLC drivers (0x11-0x19) answer
     // GfBdatChrDr::getChrDrDefBlade1 instead (DataObjDriver::getBlade)

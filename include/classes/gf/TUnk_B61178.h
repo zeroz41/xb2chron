@@ -28,6 +28,9 @@ public:
     static void fn_71003D1670();
     // the same with the close event; caller GfMenuObjCharSelect::dispOffChar
     static void fn_71003D16C8();
+    // registers full-screen layer 0x12D with a GfMenuTypes::Param whose open type is 1 and changes the handle's
+    // full-screen sub layer to it (GfMenuObject::changeFSSubLayer); caller GfMenuObjPartyForm3::DriverSelectListener
+    static void fn_71003D1730(unsigned int handle, unsigned short);
     // returns s_state; caller GfMenuObjDrArtsSet2::MainListener::reciveEvent
     static int fn_71003D1720();
     // sets the driver and blade references for the driver: when GfDataDriver::fn_7100237A94 holds, driver 0 and 1
@@ -38,22 +41,44 @@ public:
     // keeps the list's index
     void fn_71003D27B8(unsigned int driver, bool keepIndex);
     // sets m_driver to the driver, or, when GfDataDriver::isActivateUnuse holds for it, to the first id of
-    // fn_71002416B4's list for it for which it does not; m_partyId to fn_710023B1D8 of it
+    // fn_71002416B4's list for it for which it does not; m_partyId to GfDataParty::getDriverPartyID of it
+    // puts the driver alone in m_driverList2 and IMG_char_move_img into LAY_move's "character" layout, scaled and
+    // moved by GfMenuObjUtil::getImageParam(0, driver, .., 4); caller TUnk_B612A0::reciveEvent
+    // shows the sub menu's title and description (s_state 1: driver texts of BDAT 0x182, else blade texts of 0x184)
+    // for m_list580's row at the index; caller TUnk_B61278::reciveEvent
+    void fn_71003D3C34(int index);
+    // takes one of m_ids (fn_71003D4580); not written yet (0x7C4 bytes: LAY_char rows and controls)
+    void fn_71003D311C(unsigned int);
+    void fn_71003D3DCC(unsigned int driver);
     void fn_71003D3EC0(unsigned int driver);
-    // for the blade's driver (fn_7100236518, fn_71002418CC): refills the list when m_driver changes, then selects
-    // the blade's row in m_driverList
+    // for the blade's driver (fn_7100236518, GfDataDriver::fn_71002418CC): refills the list when m_driver changes,
+    // then selects the blade's row in m_driverList
     void fn_71003D3F94(unsigned int blade);
+    // stops the control on each m_selectList object and updates its layout size, then the size of each
+    // LAY_char@%02d row of pad_578's count; caller TUnk_B61200::reciveEvent
+    void fn_71003D4974();
+    // hands the full-screen input over to LAY_char (GfMenuObjMainMenu2::openCharChange 3) and sets its operation
+    // info; caller TUnk_B61200::reciveEvent
+    void fn_71003D4800();
     // m_seq jobs (they return true when done)
+    // done once no IMG_char_img@%02d%02d (rows but the last, three each) or IMG_char_img@%02d (last row) of LAY_main
+    // is streaming
+    bool fn_71003D242C();
     // sends LAY_char its open event (0)
     bool fn_71003D2558();
     // done once m_req is -1 or GfReqManager::isValid(m_req)
     bool fn_71003D4568();
     // when LAY_char runs no control: refills the list for m_driver keeping its index, sends LAY_char open event 2
+    // selects the list's driver again (fn_71003D27B8), releases m_ctrl and m_ctrl2's controls, then refreshes the
+    // rows for the selected one of m_ids (fn_71003D311C)
+    bool fn_71003D4580();
     bool fn_71003D478C();
     // the same without keeping the index, open event 1
     bool fn_71003D5C48();
     // done once IMG_char_move_img is no longer streaming
     bool fn_71003D6E94();
+    // runs a fade-in control of half preset 6's time on LAY_move
+    bool fn_71003D6EE0();
 
     // the screen's mode (0, 1, 2): the destructor clears it, a listener sets it. Proposed name, not the original's:
     // the symbols leave it unnamed (lbl_7100EAA1DC); this unit's code reaches it through the GOT, so it is not a
@@ -69,7 +94,7 @@ public:
     int m_partyId;                               // fn_71003D27B8's party id when GfGameParty has none
     GfMenuSequence<TUnk_B61178, 8> m_seq;
     GfMenuSequence<TUnk_B61178, 8> m_seq2;
-    int pad_578;
+    int pad_578;  // how many LAY_char@%02d rows fn_71003D4974 updates
     int pad_57C;
     mm::mtl::FixedVector<unsigned int, 8> m_list580;
     ui::UISelectObjList* m_selectList2;          // the constructor creates it
