@@ -19,11 +19,11 @@ public:
         m_color[1] = 1.0f;
         m_color[2] = 1.0f;
         m_color[3] = 1.0f;
+        m_colorExt[0] = 0.0f;
+        m_colorExt[1] = 0.0f;
         m_scale.y = 1.0f;
         m_scale.z = 1.0f;
         m_scale.x = 1.0f;
-        m_colorExt[0] = 0.0f;
-        m_colorExt[1] = 0.0f;
         m_rotate.x = 0.0f;
         m_rotate.y = 0.0f;
         m_rotate.z = 0.0f;

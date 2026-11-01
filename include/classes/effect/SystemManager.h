@@ -78,6 +78,10 @@ public:
     void es_set_param_pos_only(unsigned int handle, const SendParam* param);
     void es_set_param_pos_only2(unsigned int handle, const SendParam* param);
     void es_set_param(unsigned int handle, const SendParam* param);
+    // the caster's values for the effect; EffectManager::setParam(handle, caster, rate) passes "", 2, rate, 0 (the
+    // names of the parameters are not the original's)
+    void es_set_param_cas(unsigned int handle, const IEffectCallBack* cas, const char* name, int type, float rate,
+                          int flag);
     int es_isalive(unsigned int handle);  // above 0 while the handle's effect lives
     int es_getDeadFlag(unsigned int handle);  // -1 for an unknown handle
     bool es_is_loop(void* data) const;

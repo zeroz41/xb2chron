@@ -5,6 +5,7 @@
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/Vector.h"
 #include "mm/Mat44.h"
+#include "classes/effect/IEffectCallBack.h"
 
 namespace mm { class Mat44; }
 namespace fw { class EffectCasterBase; }
@@ -14,7 +15,7 @@ namespace mm { namespace mtl { class IAllocator; } }
 namespace fw {
 // table 0x7100B413D0
 // linked into one of EffectManager's caster groups (EffectManager::CasterGroup) through its node base
-class EffectCasterSend : public ::mm::mtl::IntrusiveListNodeBase {
+class EffectCasterSend : public ::effect::IEffectCallBack, public ::mm::mtl::IntrusiveListNodeBase {
 public:
     virtual ~EffectCasterSend();  // slot 0
     virtual void* getMdl();  // slot 2

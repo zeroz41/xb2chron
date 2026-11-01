@@ -327,6 +327,44 @@ void EffectManager::setParam(unsigned int handle, const mm::Mat44& mtx, const mm
     effect::SystemManager::getPtr()->es_set_param(handle, &param);
 }
 
+void EffectManager::setParam(unsigned int handle, const mm::Vec3& pos, const mm::Vec3& rot, const mm::Vec3& scale) {
+    effect::SendParam param;
+    // rot read one angle at a time (x first, then y, then z), the rows as Mat44::setRotXYZ writes them
+    float ax = rot.x;
+    float sx = ::sinf(ax);
+    float cx = ::cosf(ax);
+    float ay = rot.y;
+    float sy = ::sinf(ay);
+    float cy = ::cosf(ay);
+    float az = rot.z;
+    float sz = ::sinf(az);
+    float cz = ::cosf(az);
+    mm::Mat44& mtx = param.m_mtx;
+    mtx.m[0][0] = cy * cz;
+    mtx.m[0][1] = cy * sz;
+    mtx.m[0][2] = -sy;
+    mtx.m[0][3] = 0.0f;
+    mtx.m[1][0] = sx * sy * cz - cx * sz;
+    mtx.m[1][1] = sx * sy * sz + cx * cz;
+    mtx.m[1][2] = sx * cy;
+    mtx.m[1][3] = 0.0f;
+    mtx.m[2][0] = cx * sy * cz + sx * sz;
+    mtx.m[2][1] = cx * sy * sz - sx * cz;
+    mtx.m[2][2] = cx * cy;
+    mtx.m[2][3] = 0.0f;
+    mtx.m[3][0] = pos.x;
+    mtx.m[3][1] = pos.y;
+    mtx.m[3][2] = pos.z;
+    mtx.m[3][3] = 1.0f;
+    param.m_scale = scale;
+    param.m_color[0] = 1.0f;
+    param.m_color[1] = 1.0f;
+    param.m_color[2] = 1.0f;
+    param.m_color[3] = 1.0f;
+    effect::SystemManager::getPtr()->es_set_param(handle, &param);
+}
+
+
 // as above: the colour set again after the scale
 void EffectManager::setParam(unsigned int handle, const mm::Vec3& pos, const mm::Vec3& scale) {
     effect::SendParam param;
@@ -337,6 +375,29 @@ void EffectManager::setParam(unsigned int handle, const mm::Vec3& pos, const mm:
     param.m_color[2] = 1.0f;
     param.m_color[3] = 1.0f;
     effect::SystemManager::getPtr()->es_set_param(handle, &param);
+}
+
+// hands the caster's send (the effect system's callback for its model) to the effect; a null caster gets its own
+// call (the original's separate argument block for it)
+void EffectManager::setParam(unsigned int handle, EffectCasterBase* caster, float rate) {
+    if (handle != 0) {
+        effect::SystemManager* mgr = effect::SystemManager::getPtr();
+        if (caster != nullptr) {
+            EffectCasterSend* send = nullptr;
+            for (unsigned long i = 0; i < 32; ++i) {
+                for (CasterGroup::iterator it = m_casterGroups[i].begin(); it != m_casterGroups[i].end(); ++it) {
+                    if (it->m_caster == caster) {
+                        send = &*it;
+                        goto found;
+                    }
+                }
+            }
+        found:
+            mgr->es_set_param_cas(handle, send, "", 2, rate, 0);
+        } else {
+            mgr->es_set_param_cas(handle, nullptr, "", 2, rate, 0);
+        }
+    }
 }
 
 void EffectManager::setMatrix(unsigned int handle, const mm::Mat44& mtx) {
@@ -578,6 +639,15 @@ unsigned int EffectManager::createComboBall(unsigned int type) {
     return effect::SystemManager::getPtr()->es_create(efb, true);
 }
 
+bool EffectManager::updateComboBall(unsigned int handle, const mm::Vec3& pos, const float& scale) {
+    effect::SendParam param;
+    param.m_scale.x = scale;
+    param.m_mtx.setTrans(pos);
+    setParam(handle, &param);
+    return true;
+}
+
+
 void EffectManager::KizunaWork::term() {
     if (m_model != nullptr) {
         m_model->setDisp(false);
@@ -728,6 +798,48 @@ void EffectManager::deleteLgt(unsigned int type, void* lgt) {
         break;
     case 2:
         dr->m_lightMan->releaseInstantSptLight(static_cast<ml::DrLightObjSpt*>(lgt));
+        break;
+    }
+}
+
+// whether a light can be changed: deleteLgt's first test, shared by the setters (the helper and its name are
+// inferred: the original tests the value pointer before the light, which only a separate test of the light gives)
+static inline bool isLgtUsable(void* lgt) {
+    return lgt != nullptr && mm::mtl::PtrSingleton<Framework>::sys() != nullptr;
+}
+
+void EffectManager::setLgtPos(unsigned int type, void* lgt, void* pos) {
+    if (pos == nullptr || !isLgtUsable(lgt)) {
+        return;
+    }
+    ml::DrMan* dr = ml::DrMan::getIns();
+    if (dr == nullptr || dr->m_lightMan == nullptr) {
+        return;
+    }
+    switch (type) {
+    case 1:
+        static_cast<ml::DrLightObjPnt*>(lgt)->setPos(*static_cast<const mm::Vec3*>(pos));
+        break;
+    case 2:
+        static_cast<ml::DrLightObjSpt*>(lgt)->setPos(*static_cast<const mm::Vec3*>(pos));
+        break;
+    }
+}
+
+void EffectManager::setLgtMatrix(unsigned int type, void* lgt, void* matrix) {
+    if (matrix == nullptr || !isLgtUsable(lgt)) {
+        return;
+    }
+    ml::DrMan* dr = ml::DrMan::getIns();
+    if (dr == nullptr || dr->m_lightMan == nullptr) {
+        return;
+    }
+    switch (type) {
+    case 1:
+        static_cast<ml::DrLightObjPnt*>(lgt)->setMat(*static_cast<const mm::Mat44*>(matrix));
+        break;
+    case 2:
+        static_cast<ml::DrLightObjSpt*>(lgt)->setMat(*static_cast<const mm::Mat44*>(matrix));
         break;
     }
 }
