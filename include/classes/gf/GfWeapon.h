@@ -2,6 +2,7 @@
 #define CLASSES_GF_GFWEAPON_H
 
 #include "classes/gf/GfAppendHandles.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace fw { class SoundPack; }
 namespace gf { class QuestID; struct SDataGameSavedEvent; }
@@ -171,6 +172,23 @@ void* fn_71002EE8C4();
 // GfWeapon's unit next to fn_71002EE8C4 (no object). What it does: calls fn_7100254EF0 with type on the same
 // SSoundUiOption fn_71002EE8C4 returns (TUnk_B52C38::fn_710028CFF8 calls it).
 void fn_71002EE954(unsigned int type);
+// Placeholder name: the symbols leave it unnamed. A free function because its address is in GfWeapon's unit
+// (no object; callers GfBladeCreate::createBladeNewVersion and fn_71002EDAD4). What it does: whether the add-on
+// blade is unlocked: 0x451 asks TUnk_B54858::fn_71002A75DC(0x20101), 0x452/0x453 GfGameManager::fn_71002AC598,
+// 0x457 that one too, item 25497 in the box and a first rule value set in row 25 of SDataGame's challenge rule
+// table; every other blade is.
+bool fn_71002ED3E8(unsigned int blade);
+// Placeholder name: the symbols leave it unnamed. A free function because its address is in GfWeapon's unit
+// (right after GfGameUtilHana::setupDefaultParts, its one caller; no object). What it does: unless the party already
+// holds as many items of the item's BDAT range as GfItemUtil::getEnableStock(item) allows (item 0 skips that test),
+// takes one away (addItemBox(id, -1)) of the id of the range the box holds most of that has an unequipped handle.
+void fn_71002E8CD4(unsigned int item);
+// Placeholder name: the symbols leave it unnamed. A free function because its address is in GfWeapon's unit
+// (between GfGameUtilShop's functions; no object) and its one caller, GfPartySelect::getDriverList, is in another
+// unit. What it does: appends driver ids to the list: 17..25 for which GfDataDriver::fn_7100237A94 holds while
+// GfDataBlade::fn_71002324C8's flag is set, else 1..8 (5 left out while GfDataBlade::fn_710023220C holds); returns
+// whether the list holds any.
+bool fn_71002E66F8(mm::mtl::FixedVector<unsigned short, 32>& list);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfWeapon's unit (no this). What it does: whether a blade is available: true for most IDs; 0x451..0x453 and 0x457
 // depend on TUnk_B54858's content state and GfGameManager::fn_71002AC598. TUnk_28D7B8::fn_710028DA24 / fn_710028DAB4

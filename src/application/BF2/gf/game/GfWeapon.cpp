@@ -140,9 +140,13 @@
 #include "gf/GfDataDevelop.h"
 #include "gf/QuestListAcc.h"
 #include "classes/gf/TUnk_B535D0.h"
+#include "classes/gf/GfGameEnv.h"
 #include "classes/gf/GfGameMercenaries.h"
 #include "gf/GfDataMercenaries.h"
 #include "gf/SDataSave.h"
+#include "gf/GfGameUtilSkipTravel.h"
+#include "gf/GfDataMap.h"
+#include "classes/gf/GfGameSave.h"
 #include "classes/gmk/GmkRoutedEnemy.h"
 #include "classes/gmk/GmkTargetPoint.h"
 #include "classes/gmk/DistCond.h"
@@ -381,6 +385,58 @@ bool GfGameUtilCloudSea::isEnableChangeInn() {
 
 int GfGameUtilCloudSea::getCloudSea() {
     return GfFieldWeather::getCurrentCloudSea();
+}
+
+void fn_71002E8CD4(unsigned int item) {
+    unsigned int begin;
+    unsigned int end;
+    if (item != 0 &&
+        GfDataItem::getItemBdatCount(begin, end, static_cast<ItemType::Type>(GfDataItem::getItemType(item)))) {
+        int total = 0;
+        for (unsigned int id = begin; id < end; ++id) {
+            total += GfItemUtil::getItemBoxCount(id);
+        }
+        if (GfItemUtil::getEnableStock(item) != total) {
+            return;
+        }
+    }
+    if (GfDataItem::getItemBdatCount(begin, end, static_cast<ItemType::Type>(GfDataItem::getItemType(item)))) {
+        unsigned int bestCount = 0;
+        unsigned int best = 0;
+        for (unsigned int id = begin; id < end; ++id) {
+            unsigned int count = GfItemUtil::getItemBoxCount(id);
+            if (count > bestCount && GfItemUtil::getNoEquipItemHandle(id).m_handle != 0) {
+                best = id;
+                bestCount = count;
+            }
+        }
+        if (best != 0) {
+            GfItemUtil::addItemBox(best, -1);
+        }
+    }
+}
+
+bool GfGameUtilSkipTravel::isEnableSkipTravel(unsigned int mapJump) {
+    const char* resource = GfDataMap::getMapResourceName(mapJump);
+    mm::mtl::FixStr<64> name;
+    name.format("%s_FLD_LandmarkPop", resource);
+    unsigned char* fp = Bdat::getFP(name.m_str);
+    if (fp == nullptr) {
+        return true;
+    }
+    unsigned int id = Bdat::getIdTop(fp);
+    unsigned int end = id + Bdat::getIdCount(fp);
+    bool found = false;
+    bool enable;
+    for (; id < end; ++id) {
+        if (Bdat::getValCheckU16(fp, "MAPJUMPID", id) == mapJump) {
+            unsigned short cond = Bdat::getValCheckU16(fp, "stoff_cndID", id);
+            enable = cond == 0 || !GfGameCond::isGameCond(cond);
+            found = true;
+            break;
+        }
+    }
+    return !found || enable;
 }
 
 bool GfGameUtilNanakoori::checkCompleteMission(unsigned int mission, unsigned int flag) {
@@ -1687,6 +1743,24 @@ const char* fn_71002DF4C4(unsigned int driverId, bool flag) {
     return nullptr;
 }
 
+bool fn_71002E66F8(mm::mtl::FixedVector<unsigned short, 32>& list) {
+    if (GfDataBlade::fn_71002324C8()) {
+        for (unsigned int driver = 17; driver < 26; ++driver) {
+            if (GfDataDriver::fn_7100237A94(driver)) {
+                list.push_back(driver);
+            }
+        }
+    } else {
+        for (unsigned int driver = 1; driver < 9; ++driver) {
+            if (driver == 5 && GfDataBlade::fn_710023220C()) {
+                continue;
+            }
+            list.push_back(driver);
+        }
+    }
+    return !list.empty();
+}
+
 void GfGameUtilShop::execPayInn(unsigned int shop, unsigned int money, bool twice) {
     GfBdatShop* bdat = mm::mtl::PtrSingleton<GfBdatShop>::sys();
     unsigned int point = money;
@@ -2141,6 +2215,17 @@ bool fn_71002EE72C(unsigned int blade) {
     return GfDataBlade::getKizunaringMax(blade) == GfDataBlade::getKizunaringCompleteNum(blade);
 }
 
+void GfGameUtilSaveData::getSaveDataMenuInfo(SaveMenuInfo& info) {
+    SDataSave* save;
+    tl::TitleMain* title = mm::mtl::PtrSingleton<tl::TitleMain>::sys();
+    if (title != nullptr && title->fn_710014FB00()->m_system.m_version == 0x3A15B) {
+        save = title->getSaveBuffer();
+    } else {
+        save = GfGameSave::getGameOptionData();
+    }
+    fn_71002EAF78(info, save);
+}
+
 bool fn_71002EB3C0() {
     if (GfGameManager::fn_71002A9E68()) {
         return !GfGameCond::isGameCond(0xE86);
@@ -2181,6 +2266,45 @@ bool fn_71002ED330() {
     const TUnk_B535D0::RuleRow& row = GfDataManager::getDataGame()->m_ruleTable.m_rows[25];
     return row.m_rules[1].m_value0 != 0 || row.m_rules[0].m_value0 != 0 || row.m_rules[2].m_value0 != 0 ||
            row.m_rules[3].m_value0 != 0 || row.m_rules[4].m_value0 != 0;
+}
+
+// whether the add-on content state (TUnk_B54858) owns the encoded add-on item id, false without it (as
+// GfGameManager::fn_71002AC598 does for 0x30101). Inline: no copy exists; fn_71002ED3E8's 0x451 case needs it as a
+// call of its own to keep the original's block order. The name is not the original's.
+static inline bool isAocOwned(unsigned int id) {
+    if (TUnk_B54858* aoc = TUnk_B54858::get()) {
+        return aoc->fn_71002A75DC(id);
+    }
+    return false;
+}
+
+// blade 0x457's test, shared by fn_71002ED3E8 and fn_71002EDAD4 (both inline it): GfGameManager::fn_71002AC598,
+// item 25497 in the box and a first rule value set in row 25 of SDataGame's challenge rule table (tested in the
+// order 1, 0, 2, 3, 4). Inline: no copy exists. The name is not the original's.
+static inline bool isBlade457Unlocked() {
+    if (!GfGameManager::fn_71002AC598()) {
+        return false;
+    }
+    if (GfItemUtil::getItemBoxCount(25497) == 0) {
+        return false;
+    }
+    const TUnk_B535D0::RuleRow& row = GfDataManager::getDataGame()->m_ruleTable.m_rows[25];
+    return row.m_rules[1].m_value0 != 0 || row.m_rules[0].m_value0 != 0 || row.m_rules[2].m_value0 != 0 ||
+           row.m_rules[3].m_value0 != 0 || row.m_rules[4].m_value0 != 0;
+}
+
+bool fn_71002ED3E8(unsigned int blade) {
+    switch (blade) {
+    case 0x451:
+        return isAocOwned(0x20101);
+    case 0x452:
+    case 0x453:
+        return GfGameManager::fn_71002AC598();
+    case 0x457:
+        return isBlade457Unlocked();
+    default:
+        return true;
+    }
 }
 
 unsigned int fn_71002ED4F0(unsigned int enemy) {
@@ -2237,6 +2361,23 @@ bool fn_71002EDA2C() {
 
 bool fn_71002EDA8C() {
     return getActiveOptionData()->m_soundUi.m_flagD != 0;
+}
+
+bool fn_71002EDAD4(unsigned int blade) {
+    switch (blade) {
+    case 0x451:
+    case 0x452:
+    case 0x453:
+        return fn_71002ED3E8(blade);
+    case 0x454:
+        return GfItemUtil::getItemBoxCount(25498) != 0;
+    case 0x455:
+        return GfItemUtil::getItemBoxCount(25499) != 0;
+    case 0x457:
+        return isBlade457Unlocked();
+    default:
+        return true;
+    }
 }
 
 bool fn_71002EDBD8(unsigned int driverId, bool createTypeIn2311, bool createType3) {
