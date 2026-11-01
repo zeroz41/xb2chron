@@ -7,6 +7,7 @@
 
 namespace fw { class Transform; }
 namespace mm { class Vec3; }
+namespace mm { class Quat; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GF_MOUNT_HANDLE; }
 #include "gf/GFATTACH.h"
@@ -20,6 +21,7 @@ namespace gf { class GfAppend; }
 namespace gf { class GfAppendInfo; }
 namespace gf { enum OPTMNT : int; }
 namespace gf { class GF_ASSET_HANDLE; }
+namespace gf { class GfAssetResource; }
 namespace gf { class GF_SLOT_HANDLE; }
 namespace gf { class GfComModel; }
 namespace gf { class GfVolumeFade; }
@@ -111,6 +113,10 @@ public:
     static gf::GF_OBJ_HANDLE* getOwner(gf::GF_OBJ_HANDLE* handle);
     // whether the object's asset has a state machine resource (its extend resource 0's, a GfExtendPacking)
     static bool isExistAsm(gf::GF_OBJ_HANDLE* handle);
+    // the asset's resource for the object's kind (drivers and blades, enemies/npcs/mobs, type 8, the rest of the
+    // kinds that have one; the file indices differ by one between the two), none for the other kinds
+    static gf::GfAssetResource* getResourceEab(gf::GF_OBJ_HANDLE* handle);
+    static gf::GfAssetResource* getResourceEfb(gf::GF_OBJ_HANDLE* handle);
     // has the object rebuilt: destroyed outright when it carries user data 0, else flagged (6) and queued
     static void rebuild(gf::GF_OBJ_HANDLE* handle);
     static const char* getResourceName(gf::GF_OBJ_HANDLE* handle);  // the object's model resource name
@@ -144,6 +150,11 @@ public:
     static void setEnableFootIK(gf::GF_OBJ_HANDLE* handle, bool enable);
     static void setEnableSPCIK(gf::GF_OBJ_HANDLE* handle, bool enable);
     static void setEnableEyeIK(gf::GF_OBJ_HANDLE* handle, bool enable, float time);
+    // the rotation the object's BlowRotateIkSolver (its IK component's solver 1) turns its bone by
+    static void setBlowRotate(gf::GF_OBJ_HANDLE* handle, const mm::Quat& rotation);
+    // moves the object to another update layer: each component's changeLayer(old, layer), then m_updateBit
+    static void changeLayer(gf::GfObj* obj, unsigned int layer);
+    static void changeLayer(gf::GF_OBJ_HANDLE* handle, unsigned int layer);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in this unit
     // between getSetupObjNumberByEnArrangeId (its only caller) and the unit's other functions. What it does: counts
     // the list's objects of type 5 (DataParamAcc::getObjType) whose BDAT id (0 for an invalid one) is arrangeId;

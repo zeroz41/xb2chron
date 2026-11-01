@@ -31,6 +31,26 @@
 #include "gf/GfDataDriver.h"
 #include "classes/gf/GfObjSetupEnemy.h"
 #include "classes/fw/PadResEventManager.h"
+#include "classes/gf/GfComponent.h"
+#include "classes/gf/GfComIK.h"
+#include "classes/fw/SphericalCoordinatesIkSolver.h"
+#include "classes/fw/BlowRotateIkSolver.h"
+#include "classes/fw/RotateIkSolver.h"
+#include "classes/fw/SpineRotateIKSolver.h"
+#include "classes/fw/LookIkSolver.h"
+#include "classes/fw/SpineIkSolver.h"
+#include "classes/fw/LookAtIkSolver.h"
+#include "classes/fw/PlacementGroundSolver.h"
+#include "classes/fw/SlopeGroundSolver.h"
+#include "classes/fw/TwoCharaGroundSolver.h"
+#include "classes/gf/GfComTransform.h"
+#include "classes/gf/GfComDynamics.h"
+#include "gf/MsgUnk_1000007.h"
+#include "classes/gf/GfComBehavior.h"
+#include "classes/gf/EyeBlinkPlugin.h"
+#include "classes/gf/GfComPropertyPc.h"
+#include "gf/GfAppend.h"
+#include "classes/gf/GfObjSetupWeapon.h"
 
 namespace gf {
 
@@ -45,7 +65,42 @@ struct MountAcc {
     GFOBJ_INFO* m_info;
     GFOBJ_MOUNT* m_mount;
 };
+
+// switches a SphericalCoordinatesIkSolver on whatever enable says: the original stores 1 on both paths, yet
+// setEnableAllIK still passes its enable to setEnableSPCIK, so the source handed enable to a call inlined only
+// after dead-argument elimination (the helper and its name are not the original's)
+inline void enableSolver(fw::SphericalCoordinatesIkSolver* solver, bool) {
+    solver->m_enable = true;
+}
 }  // namespace
+
+GfAppend* GfObjUtil::getAppend(GF_OBJ_HANDLE* handle, GFATTACH attach) {
+    // a weapon set up for the second list takes its append from there
+    bool second = false;
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (info != nullptr) {
+        if (GfObjSetup* setup = info->m_setup) {
+            if (setup->m_type == info->m_obj->m_type && info->m_obj->m_type == 10) {
+                if (GfObjSetupWeapon* weapon = mm::mtl::rttiCast<GfObjSetupWeapon>(setup)) {
+                    second = weapon->pad_78 != 0;
+                }
+            }
+        }
+    }
+    MountAcc acc(handle, attach);
+    if (acc.m_info == nullptr) {
+        return nullptr;
+    }
+    int index = acc.m_mount->m_appendIndex;
+    if (index < 0) {
+        return nullptr;
+    }
+    mm::mtl::FixedVector<GfAppend*, 10>& appends = acc.m_mount->m_appendInfo.m_appends[second];
+    if (appends.size() > static_cast<unsigned int>(index)) {
+        return appends.begin()[static_cast<unsigned int>(index)];
+    }
+    return nullptr;
+}
 
 int GfObjUtil::getObjType(GF_OBJ_HANDLE* handle) {
     if (GfObj* obj = getObj(handle)) {
@@ -151,6 +206,22 @@ unsigned int GfObjUtil::getLayerSection(unsigned int layer) {
         return 10;
     }
     return 4;
+}
+
+void GfObjUtil::changeLayer(GfObj* obj, unsigned int layer) {
+    unsigned int old = obj->m_updateBit;
+    for (unsigned int i = 0; i < 12; i++) {
+        if (GfComponent* component = obj->getComponent<GfComponent>(i)) {
+            component->changeLayer(old, layer);
+        }
+    }
+    obj->m_updateBit = layer;
+}
+
+void GfObjUtil::changeLayer(GF_OBJ_HANDLE* handle, unsigned int layer) {
+    if (GfObj* obj = getObj(handle)) {
+        changeLayer(obj, layer);
+    }
 }
 
 const char* GfObjUtil::getResourceName(GF_OBJ_HANDLE* handle) {
@@ -269,6 +340,21 @@ GF_OBJ_HANDLE* GfObjUtil::fn_710054FCB4(GF_OBJ_HANDLE* handle) {
     return info->m_subHandle;
 }
 
+unsigned int GfObjUtil::fn_710054FCDC(GF_OBJ_HANDLE* handle) {
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (info == nullptr || info->m_setup == nullptr || info->m_setup->m_partyId == static_cast<unsigned int>(-1)) {
+        return 0;
+    }
+    GfObjAcc acc(handle);
+    switch (acc.getType()) {
+    case 3:
+        return GfDataDriver::fn_710024198C(acc.getDriverId());
+    case 10:
+        return fn_710054FCDC(fn_710054FCB4(handle));
+    }
+    return 0;
+}
+
 bool GfObjUtil::isLoading(GF_OBJ_HANDLE* handle) {
     GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
     if (info == nullptr) {
@@ -309,6 +395,46 @@ bool GfObjUtil::isExistAsm(GF_OBJ_HANDLE* handle) {
         return packing->m_pResASM != nullptr;
     }
     return false;
+}
+
+GfAssetResource* GfObjUtil::getResourceEab(GF_OBJ_HANDLE* handle) {
+    switch (getObjType(handle)) {
+    case 3:
+    case 4:
+        return GfAssetManager::getResource(getAssetHandle(handle), static_cast<GfFileIdx>(62), static_cast<GfAssetType>(0));
+    case 5:
+    case 6:
+    case 7:
+        return GfAssetManager::getResource(getAssetHandle(handle), static_cast<GfFileIdx>(10), static_cast<GfAssetType>(0));
+    case 8:
+        return GfAssetManager::getResource(getAssetHandle(handle), static_cast<GfFileIdx>(4), static_cast<GfAssetType>(0));
+    case 11:
+    case 13:
+    case 14:
+    case 15:
+        return GfAssetManager::getResource(getAssetHandle(handle), static_cast<GfFileIdx>(3), static_cast<GfAssetType>(0));
+    }
+    return nullptr;
+}
+
+GfAssetResource* GfObjUtil::getResourceEfb(GF_OBJ_HANDLE* handle) {
+    switch (getObjType(handle)) {
+    case 3:
+    case 4:
+        return GfAssetManager::getResource(getAssetHandle(handle), static_cast<GfFileIdx>(63), static_cast<GfAssetType>(0));
+    case 5:
+    case 6:
+    case 7:
+        return GfAssetManager::getResource(getAssetHandle(handle), static_cast<GfFileIdx>(11), static_cast<GfAssetType>(0));
+    case 8:
+        return GfAssetManager::getResource(getAssetHandle(handle), static_cast<GfFileIdx>(5), static_cast<GfAssetType>(0));
+    case 11:
+    case 13:
+    case 14:
+    case 15:
+        return GfAssetManager::getResource(getAssetHandle(handle), static_cast<GfFileIdx>(4), static_cast<GfAssetType>(0));
+    }
+    return nullptr;
 }
 
 
@@ -391,9 +517,107 @@ void GfObjUtil::setEnableAllIK(GF_OBJ_HANDLE* handle, bool enable, float time) {
     setEnableEyeIK(handle, enable, time);
 }
 
+void GfObjUtil::setEnableBodyIK(GF_OBJ_HANDLE* handle, bool enable, float time) {
+    if (GfObj* obj = getObj(handle)) {
+        if (GfComIK* ik = obj->getComponent<GfComIK>(3)) {
+            if (fw::RotateIkSolver* rotate = ik->getSolver<fw::RotateIkSolver>(0)) {
+                if (enable) {
+                    rotate->fadeIn(time);
+                } else {
+                    rotate->fadeOut(time);
+                }
+            }
+            if (fw::SpineRotateIKSolver* spine = ik->getSolver<fw::SpineRotateIKSolver>(4)) {
+                if (enable) {
+                    spine->fadeIn(time);
+                } else {
+                    spine->fadeOut(time);
+                }
+            }
+        }
+    }
+}
+
+void GfObjUtil::setEnableLookIK(GF_OBJ_HANDLE* handle, bool enable, float time) {
+    if (GfObj* obj = getObj(handle)) {
+        if (GfComIK* ik = obj->getComponent<GfComIK>(3)) {
+            if (fw::LookIkSolver* look = ik->getSolver<fw::LookIkSolver>(3)) {
+                if (enable) {
+                    look->fadeIn(time);
+                } else {
+                    look->fadeOut(time);
+                }
+            }
+            if (fw::SpineIkSolver* spine = ik->getSolver<fw::SpineIkSolver>(3)) {
+                if (enable) {
+                    spine->fadeIn(time);
+                } else {
+                    spine->fadeOut(time);
+                }
+            }
+            if (fw::LookAtIkSolver* lookAt = ik->getSolver<fw::LookAtIkSolver>(5)) {
+                if (enable) {
+                    lookAt->fadeIn(time);
+                } else {
+                    lookAt->fadeOut(time);
+                }
+            }
+        }
+    }
+}
+
+void GfObjUtil::setEnableFootIK(GF_OBJ_HANDLE* handle, bool enable) {
+    if (GfObj* obj = getObj(handle)) {
+        if (GfComIK* ik = obj->getComponent<GfComIK>(3)) {
+            if (fw::PlacementGroundSolver* placement = ik->getSolver<fw::PlacementGroundSolver>(2)) {
+                placement->m_enableDown = enable;
+                placement->setEnablePlacement(enable);
+            }
+            if (fw::SlopeGroundSolver* slope = ik->getSolver<fw::SlopeGroundSolver>(0)) {
+                slope->setEnablePlacement(enable);
+                slope->m_enableSlope = enable;
+            }
+            if (fw::TwoCharaGroundSolver* twoChara = ik->getSolver<fw::TwoCharaGroundSolver>(2)) {
+                twoChara->m_enableDown = enable;
+                twoChara->setEnablePlacement(enable);
+            }
+        }
+    }
+}
+
+void GfObjUtil::setEnableSPCIK(GF_OBJ_HANDLE* handle, bool enable) {
+    if (GfObj* obj = getObj(handle)) {
+        if (GfComIK* ik = obj->getComponent<GfComIK>(3)) {
+            if (fw::SphericalCoordinatesIkSolver* solver = ik->getSolver<fw::SphericalCoordinatesIkSolver>(8)) {
+                enableSolver(solver, enable);
+            }
+        }
+    }
+}
+
 unsigned int GfObjUtil::getEyeRotControl(GF_OBJ_HANDLE* handle) {
     DataParamAcc acc(handle);
     return acc.getEyeRotControl();
+}
+
+void GfObjUtil::setBlowRotate(GF_OBJ_HANDLE* handle, const mm::Quat& rotation) {
+    if (GfObj* obj = getObj(handle)) {
+        if (GfComIK* ik = obj->getComponent<GfComIK>(3)) {
+            if (fw::BlowRotateIkSolver* solver = ik->getSolver<fw::BlowRotateIkSolver>(1)) {
+                solver->m_rotation = rotation;
+            }
+        }
+    }
+}
+
+void GfObjUtil::setEnableEyeBlink(GF_OBJ_HANDLE* handle, bool enable) {
+    if (GfObj* obj = getObj(handle)) {
+        if (GfComBehavior* behavior = obj->getComponent<GfComBehavior>(6)) {
+            if (EyeBlinkPlugin* plugin = behavior->getPlugin<EyeBlinkPlugin>(1)) {
+                plugin->setActivate(enable);
+            }
+        }
+    }
 }
 
 GfComModel* GfObjUtil::getComModel(GF_OBJ_HANDLE* handle) {
@@ -479,6 +703,44 @@ bool GfObjUtil::isTrinityBlade(GF_OBJ_HANDLE* handle) {
         return false;
     }
     return info->m_setup->m_createType == 8;
+}
+
+bool GfObjUtil::isFollowObjNotReady(GF_OBJ_HANDLE* handle) {
+    GfObjSetup* setup = getObjSetup(handle);
+    if (setup == nullptr || setup->m_createType != 1) {
+        return false;
+    }
+    int type = getObjType(handle);
+    if (type != 3 && type != 4) {
+        return false;
+    }
+    GfComPropertyPc* property = GfObjManager::getObjInfo(handle)->m_obj->findComponent<GfComPropertyPc>(5);
+    if (property->m_setupKind == static_cast<unsigned int>(-1)) {
+        return false;
+    }
+    GfGamePlayerFormation* formation = GfGamePlayerFormation::sys();
+    unsigned int follow = formation->m_players[property->m_setupKind].m_followIndex;
+    if (follow == static_cast<unsigned int>(-1)) {
+        return false;
+    }
+    GfObjAcc acc(formation->m_players[follow].m_handle);
+    return acc.m_obj == nullptr || acc.isRebuild() || acc.isReload();
+}
+
+void GfObjUtil::setWarpTransform(GF_OBJ_HANDLE* handle, const fw::Transform& transform, bool notify) {
+    if (GfObj* obj = getObj(handle)) {
+        if (notify) {
+            MsgUnk_1000007 msg;
+            obj->sendMessage(obj, msg);
+        }
+        if (GfComTransform* com = obj->getComponent<GfComTransform>(0)) {
+            com->setPosition(transform.position);
+            com->setRotation(transform.rotation);
+        }
+        if (GfComDynamics* dynamics = obj->getComponent<GfComDynamics>(8)) {
+            dynamics->resetMovement();
+        }
+    }
 }
 
 void GfObjUtil::applyExecUpdate(GF_OBJ_HANDLE* handle) {
