@@ -41,6 +41,41 @@ void EmitterObj::remove_particle_free_tbl(ParticleObj* pParticle) {
     EmitterManager::get()->m_particleFreeList.push_front(pParticle);
 }
 
+void ParticleObj::particle_clear_union() {
+    if (m_hasMdl) {
+        if (m_pWork->m_pMdl != nullptr) {
+            ParticleManager::deleteMdl(m_pWork->m_pMdl);
+            m_pWork->m_pMdl = nullptr;
+        }
+        m_hasMdl = false;
+    }
+    if (m_hasLgt) {
+        if (m_pWork->m_pLgt != nullptr) {
+            ParticleManager::deleteLgt(m_pWork->m_lgtId, m_pWork->m_pLgt);
+            m_pWork->m_pLgt = nullptr;
+        }
+        m_hasLgt = false;
+    }
+    m_pWork->m_pEmParent = nullptr;
+    m_pWork->m_pLgt = nullptr;
+    m_pWork->m_pMdl = nullptr;
+    m_pWork->pad_118 = nullptr;
+    m_pWork->pad_120 = nullptr;
+    if (m_pWork != nullptr) {
+        if (m_hasMdl) {
+            ParticleManager::get()->deleteMdl(m_pWork->m_pMdl);
+            m_pWork->m_pMdl = nullptr;
+            m_hasMdl = false;
+        }
+        if (m_hasLgt) {
+            ParticleManager::get()->deleteLgt(m_pWork->m_lgtId, m_pWork->m_pLgt);
+            m_pWork->m_lgtId = 0;
+            m_pWork->m_pLgt = nullptr;
+            m_hasLgt = false;
+        }
+    }
+}
+
 EmitterManager* EmitterManager::get() {
 #line 21 "D:/Monolithsoft/BF2/prog/libs/eflib/proj/windows/../../../eflib/source\\ptlib/emitter/particle_emitter_manager.cpp"
     MM_ASSERT(getPtr());
@@ -62,6 +97,15 @@ void EmitterObj::unlockStream(const DrDrawWorkInfoEF* pDrInfo, unsigned int coun
 void EmitterObj::renderStreamNum(renderer::RenderSet& set, const DrDrawWorkInfoEF* pDrInfo) {
     if (m_pStream != nullptr) {
         m_pStream->renderStreamNum(set, pDrInfo);
+    }
+}
+
+void EmitterObj::releaseParticleAll() {
+    while (m_particleList.begin() != m_particleList.end()) {
+        IntrusiveList<ParticleObj>::iterator it = m_particleList.begin();
+        ParticleObj* pParticle = it.get();
+        m_particleList.erase(it);
+        EmitterManager::get()->m_particleFreeList.push_front(*pParticle);
     }
 }
 
@@ -98,6 +142,31 @@ EmitterObj* EmitterManager::getEmitterFree() {
     EmitterObj* pEmitter = it.get();
     m_emitterFreeList.erase(it);
     return pEmitter;
+}
+
+void EmitterManager::emitter_set_link(FxHeader* pHeader) {
+    if (!(m_emitterSetFreeList.m_size > 0)) {
+#line 908 "D:/Monolithsoft/BF2/prog/libs/eflib/proj/windows/../../../eflib/source\\ptlib/emitter/particle_emitter_manager.cpp"
+        MM_ASSERT(0);
+    } else {
+        IntrusiveList<EmitterSetNode>::iterator it = m_emitterSetFreeList.begin();
+        EmitterSetNode* pNode = it.get();
+        m_emitterSetFreeList.erase(it);
+        pNode->m_pHeader = pHeader;
+        m_emitterSetList.push_back(*pNode);
+    }
+}
+
+void EmitterManager::emitter_set_unlink(FxHeader* pHeader) {
+    for (IntrusiveList<EmitterSetNode>::iterator it = m_emitterSetList.begin(); it != m_emitterSetList.end();) {
+        if (it->m_pHeader == pHeader) {
+            EmitterSetNode& node = *it;
+            it = m_emitterSetList.erase(it);
+            m_emitterSetFreeList.push_back(node);
+        } else {
+            ++it;
+        }
+    }
 }
 
 void EmitterManager::emitter_set_param_pos_only(unsigned int handle, EmitterParam* pParam) {

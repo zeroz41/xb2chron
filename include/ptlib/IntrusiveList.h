@@ -77,12 +77,15 @@ public:
         }
         return end();
     }
-    void erase(iterator it) {
+    // unlinks it and returns the element after it
+    iterator erase(iterator it) {
 #line 246 PTLIB_INTRUSIVE_LIST_PATH
         MM_ASSERT(!empty());
 #line 247 PTLIB_INTRUSIVE_LIST_PATH
         MM_ASSERT(it != end());
+        iterator next(static_cast<T*>(static_cast<IntrusiveListNode*>(it.m_node)->m_next));
         unlinkCount(it.m_node);
+        return next;
     }
     void remove(T* p) { erase(find(p)); }
     // links ptr in first (the name is not the original's)
@@ -90,6 +93,17 @@ public:
 #line 221 PTLIB_INTRUSIVE_LIST_PATH
         MM_ASSERT(ptr);
         linkNode(ptr, m_root.m_next);
+        m_size++;
+    }
+    // links an element in first, without push_front(T*)'s assertion (EmitterObj::releaseParticleAll; the
+    // overload is inferred: its callers convert the element to its node without a null check)
+    void push_front(T& elem) {
+        linkNode(&elem, m_root.m_next);
+        m_size++;
+    }
+    // links an element in last (the name is not the original's; EmitterManager::emitter_set_link)
+    void push_back(T& elem) {
+        linkNode(&elem, &m_root);
         m_size++;
     }
 };

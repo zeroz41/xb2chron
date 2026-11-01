@@ -3,6 +3,7 @@
 
 #include "ptlib/IntrusiveList.h"
 #include "mm/Mat44.h"
+#include "mm/Vec3.h"
 
 namespace ptlib { class FxHeader; class DrDrawWorkInfoEF; }
 namespace ptlib { namespace renderer { class StreamObj; class RenderSet; } }
@@ -40,16 +41,52 @@ public:
 class ParticleObj : public IntrusiveListNode {
 public:
     // the particle's work block (the name is not the original's; the size is not known yet)
+    // (EmitterManager::particleAlloc's "et->getExtParam().getEmParent()" suggests it is the particle's ext param)
     struct Work {
-        unsigned char pad_0[0x110];
-        void* m_pMdl;  // 0x110: the model the DrFunc hooks drive (ParticleManager::update_model_spd)
-    };
-    void particle_clear_union();
+        unsigned char pad_0[0x8];
+        EmitterObj* getEmParent() const { return m_pEmParent; }
 
-    unsigned char pad_10[0x120];
+        EmitterObj* m_pEmParent;  // 0x8: the emitter the particle belongs to ("getEmParent()")
+        unsigned char pad_10[0xF8];
+        void* m_pLgt;  // 0x108: the light ParticleManager::deleteLgt deletes (the name is not the original's)
+        // the particle's model or, with a light, the light's id (the names are not the original's)
+        union {
+            void* m_pMdl;  // 0x110: the model the DrFunc hooks drive (ParticleManager::update_model_spd)
+            unsigned char m_lgtId;
+        };
+        void* pad_118;
+        void* pad_120;
+    };
+    // deletes the particle's model or light and clears its work
+    void particle_clear_union();
+    // the particle's work ("et->getExtParam()")
+    Work& getExtParam() { return *m_pWork; }
+    // numbers the particle and resets its state (EmitterManager::particleAlloc inlines it; idCounter is its static)
+    void initUtilObj() {
+        static unsigned int idCounter;
+        pad_14c = 0;
+        pad_13f = 0;
+        m_id = idCounter++;
+        if (idCounter > 10000) {
+            idCounter = 0;
+        }
+        pad_145 = 2;
+    }
+
+    // EmitterManager::particleAlloc starts the second at the first (the names are not the original's)
+    mm::Vec3 m_pos;
+    mm::Vec3 m_prevPos;
+    unsigned char pad_30[0x100];
     Work* m_pWork;  // 0x130
-    unsigned char pad_138[0x6];
+    unsigned int m_id;  // 0x138: initUtilObj's number (the name is not the original's)
+    unsigned char pad_13c[0x2];
     bool m_hasMdl;  // 0x13E: update_model_spd sets the speed of m_pWork->m_pMdl only when it is set (the name is not the original's)
+    unsigned char pad_13f;  // initUtilObj clears it
+    unsigned char pad_140[0x4];
+    bool m_hasLgt;  // 0x144: m_pWork holds a light (the name is not the original's)
+    unsigned char pad_145;  // initUtilObj sets it to 2
+    unsigned char pad_146[0x6];
+    unsigned int pad_14c;  // initUtilObj clears it
 };
 
 // an emitter (particle_emitter.cpp); its links are EmitterManager's active list. The field names are not the
@@ -58,7 +95,9 @@ class EmitterObj : public IntrusiveListNode {
 public:
     // what the emitter was made from (the name is not the original's; the size is not known yet)
     struct Data {
-        unsigned char pad_0[0xFD];
+        // 4: the particles carry a model, 5: a light (EmitterManager::particleAlloc; the name is not the original's)
+        unsigned char m_type;
+        unsigned char pad_1[0xFC];
         unsigned char m_hashValue;  // 0xFD: HashManager::build records it with the handle (the name is not the original's)
         unsigned char pad_fe[0x14E];
         char m_name[4];  // 0x24C: HashManager::build's entry name; the length is not known yet

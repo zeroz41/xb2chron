@@ -42,11 +42,17 @@ public:
     void moveAfter();
     // links a type-1 effect file to the emitters (ParticleManager::parseEfb; what it returns is not known yet)
     void emitter_set_link(FxHeader* pHeader);
+    // gives an effect file's nodes back to the free list (what it returns is not known yet)
+    void emitter_set_unlink(FxHeader* pHeader);
     void move();
     // what it returns is not known yet
     void emitter_update(unsigned int handle, float frames, bool flag);
     bool emitter_set_check(FxHeader* pHeader);
     IntrusiveList<EmitterObj>* getEmitterActiveList();
+    // takes a particle off the free list and links it into an emitter's particles, first or last
+    ParticleObj* particleAlloc(EmitterObj* pEmitter, bool front);
+    // takes a particle off the free list and resets it, nullptr when none is left
+    ParticleObj* getFreeParticle();
     // takes an emitter off the free list, nullptr when none is left
     EmitterObj* getEmitterFree();
     // releases an emitter's stream and particles and takes it off the active list
@@ -65,6 +71,8 @@ public:
     IntrusiveList<ParticleObj> m_particleFreeList;
     // the emitter sets' nodes (emitter_set_check walks it; the name is not the original's)
     IntrusiveList<EmitterSetNode> m_emitterSetList;
+    // the emitter sets' nodes not in use (emitter_set_link takes them; the name is not the original's)
+    IntrusiveList<EmitterSetNode> m_emitterSetFreeList;
 };
 }}  // namespace ptlib::emitter
 
