@@ -28,6 +28,13 @@ public:
     static unsigned long createArts(unsigned int, unsigned int);
     // queues an affinity chart achievement popup for a blade's skill line and level; the request's ID
     static unsigned long createAchievement(unsigned int blade, unsigned int line, unsigned int level);
+    // Placeholder names: nothing in 1.0.0's symbols names them. Members because each builds SCOM_POPUP (its table,
+    // type 75) among its create functions. fn_710056A3FC: popup type 10 with 47 once the game started,
+    // GfGameManager::fn_71002AC598 holds, item 25443 is in the box and local flag (1, 35337) is set; its argument
+    // is unused (callers TUnk_B535D0::RuleTable::fn_7100290598, fn_7100290BAC). fn_710056A4D8: popup type 11 with
+    // its three arguments unless the game is starting or GfDataDriver::isActivateUnuse(first) (caller fn_71002E6DCC).
+    static unsigned long fn_710056A3FC(unsigned int);
+    static unsigned long fn_710056A4D8(unsigned int driver, unsigned int, unsigned int);
 
     // the names are not the original's: the popup to open, and the frames exec waits first (create sets 20)
     GfMenuObjPopup::OpenParam m_param;

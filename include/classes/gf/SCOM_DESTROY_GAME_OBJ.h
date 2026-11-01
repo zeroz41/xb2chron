@@ -10,6 +10,7 @@ namespace gf {
 // table 0x7100B6B270
 class SCOM_DESTROY_GAME_OBJ : public ::gf::SCOM {
 public:
+    explicit SCOM_DESTROY_GAME_OBJ(SCOM_TYPE type) : SCOM(type) {}
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
     // queues a request destroying the object after time seconds (gf_req_scom.cpp's; GfRelSmnEnemy::disposeEnemies
     // calls it; the parameter names are not the original's)

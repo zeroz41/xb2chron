@@ -70,6 +70,7 @@
 #include "classes/gf/GfPause.h"
 #include "mm/Math.h"
 #include "classes/gf/SCOM_DEAD_PARTICLE.h"
+#include "classes/gf/SCOM_HOMURI_PARTS.h"
 #include "classes/gf/GfComAsm.h"
 #include "classes/gf/GfObj.h"
 #include "classes/gf/GfWeapon.h"
@@ -228,9 +229,31 @@ bool SCOM_OBJ_WARP_POS::exec(fw::UpdateInfo const&) {
     return true;
 }
 
+void SCOM_OBJ_WARP_POS::fn_710055AA2C(GF_OBJ_HANDLE* handle, const fw::Transform& transform, bool arg) {
+#line 782
+    SCOM_OBJ_WARP_POS* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_OBJ_WARP_POS(SCOM_TYPE(17));
+    request->m_value = handle;
+    request->m_value2 = transform;
+    request->m_value3 = arg;
+    GfReqSmallCom::addRequestParallel(request);
+}
+
 bool SCOM_DESTROY_GAME_OBJ::exec(fw::UpdateInfo const&) {
     GfGameObj::destroyGameObjWithAttribute(m_value, m_value2, m_value3);
     return true;
+}
+
+void SCOM_DESTROY_GAME_OBJ::create(GF_OBJ_HANDLE* handle, float time, unsigned int attribute) {
+    GfObjAcc acc(handle);
+    acc.setFlag(17, true);
+    acc.setAttribute(acc.getAttribute() & ~4u);
+#line 832
+    SCOM_DESTROY_GAME_OBJ* request =
+        new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_DESTROY_GAME_OBJ(SCOM_TYPE(0));
+    request->m_value = handle;
+    request->m_value2 = time;
+    request->m_value3 = attribute;
+    GfReqSmallCom::addRequestParallel(request);
 }
 
 bool SCOM_DESTROY_PARTY_OBJ::exec(fw::UpdateInfo const&) {
@@ -287,6 +310,16 @@ bool SCOM_ENBOOK_DEFEAT_ENEMY::exec(fw::UpdateInfo const&) {
 bool SCOM_ENBOOK_DEAD_PLAYER::exec(fw::UpdateInfo const&) {
     GfDataEnBook::incDeadNum(m_value);
     return true;
+}
+
+void SCOM_HOMURI_PARTS::create(unsigned int party, bool toMax, float duration) {
+#line 5826
+    SCOM_HOMURI_PARTS* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_HOMURI_PARTS(SCOM_TYPE(76));
+    request->m_party = party;
+    request->m_toMax = toMax;
+    request->m_time = 0.0f;
+    request->m_duration = duration;
+    GfReqSmallCom::addRequestParallel(request);
 }
 
 bool SCOM_DEAD_PARTICLE::exec(fw::UpdateInfo const& info) {
@@ -1186,6 +1219,20 @@ void SCOM_POPUP::fn_7100569D44(unsigned int mapId, unsigned int teamId) {
     GfMenuObjPopup::fn_710045D48C(param);
 }
 
+unsigned long SCOM_POPUP::createMercenaryAdd(unsigned int a0) {
+    if (a0 == 0 || GfGameManager::isStartGame() || !GfGameCond::isGameCond(2097)) {
+        return -1;
+    }
+    GfMenuObjPopup::OpenParam param = {};
+    param.m_type = 7;
+    param.m_value[0] = GfDataMercenaries::getMissionMapID(a0);
+#line 5649
+    SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
+    request->m_param = param;
+    request->m_wait = 20;
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
 unsigned long SCOM_POPUP::createAchievement(unsigned int blade, unsigned int line, unsigned int level) {
     if (GfGameManager::isStartGame()) {
         return -1;
@@ -1217,6 +1264,35 @@ unsigned long SCOM_POPUP::createArts(unsigned int a0, unsigned int a1) {
     request->m_param.m_value[0] = a0;
     request->m_param.m_value[1] = type;
     request->m_param.m_value[2] = a1;
+    request->m_wait = 20;
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_POPUP::fn_710056A3FC(unsigned int) {
+    if (GfGameManager::isStartGame() || !GfGameManager::fn_71002AC598() || GfItemUtil::getItemBoxCount(25443) == 0 ||
+        GfGameFlag::getLocal(1, 35337) == 0) {
+        return -1;
+    }
+#line 5765
+    SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
+    request->m_param.m_type = 10;
+    request->m_param.m_value[0] = 47;
+    request->m_param.m_value[1] = 0;
+    request->m_param.m_value[2] = 0;
+    request->m_wait = 20;
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_POPUP::fn_710056A4D8(unsigned int driver, unsigned int a1, unsigned int a2) {
+    if (GfGameManager::isStartGame() || GfDataDriver::isActivateUnuse(driver)) {
+        return -1;
+    }
+#line 5782
+    SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
+    request->m_param.m_type = 11;
+    request->m_param.m_value[0] = driver;
+    request->m_param.m_value[1] = a1;
+    request->m_param.m_value[2] = a2;
     request->m_wait = 20;
     return GfReqSmallCom::addRequestParallel(request);
 }
