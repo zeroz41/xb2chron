@@ -14,6 +14,7 @@ public:
     virtual ~DrMdoCtl() {}  // slot 0
     void setMatrix(const mm::Mat44& matrix);
     void setOffsetPos(const mm::Vec3& pos);
+    void createWeightVtx(int, unsigned int, unsigned int, bool);
 };
 }  // namespace ml
 

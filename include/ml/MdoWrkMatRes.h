@@ -94,12 +94,14 @@ struct MdoRimBloomWrk {
     unsigned int m_flags;  // 0x1C, which values were set: 1 color, 2 power, 4 black ratio, 8 emissive
 };
 
-// The initial vertex bounds MdoWrkMatRes+0x170 points to, unaligned float triples: DrMdlObj::getInitialVertexAABBMax
-// reads 0xC, getInitialVertexAABBMin 0x18. The type and field names are not the original's.
-struct MdoInitialVertexAABB {
+// One model top header, 0x44 bytes (the type name is the symbols': DrMdoCtlNom::nomRender(const MdsMdlTopHeader*, ...)
+// is given &MdoWrkMatRes::m_pMdlTop[i]). Its bounds are unaligned float triples: DrMdlObj::getInitialVertexAABBMax
+// reads the first header's 0xC, getInitialVertexAABBMin 0x18. The field names are not the original's.
+struct MdsMdlTopHeader {
     unsigned char pad_0[0xC];
     float m_max[3];  // 0xC
     float m_min[3];  // 0x18
+    unsigned char pad_24[0x20];
 };
 
 // The material data MdoWrkMatRes::m_pMatData points to; only the offset DrMdoShdSet::setOneTexShaderSet reads is
@@ -177,7 +179,11 @@ struct MdoWrkMatRes {
     MdoVanishEffectWrk* m_pVanishEffectWrk;  // 0x158, three banks per material (DrMdoMat::getVanishEffectWrk)
     MdoRimBloomWrk* m_pRimBloomWrk;  // 0x160, DrMdlObj::getRimBloomWrk (the name is not the original's)
     unsigned char pad_168[0x8];
-    MdoInitialVertexAABB* m_pInitialAABB;  // 0x170 (the name is not the original's)
+    // 0x170/0x178: the model's top headers and their count; DrMdoCtlNom's alpha passes walk them (the names are not
+    // the original's)
+    const MdsMdlTopHeader* m_pMdlTop;
+    int m_mdlTopNum;
+    unsigned char pad_17C[0x4];
 };
 }  // namespace ml
 

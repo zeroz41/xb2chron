@@ -6,6 +6,7 @@
 #include "grlib/CGLibTriUniformBlock.h"
 #include "grlib/CGLibMemHandle.h"
 #include "mtl/MemManager.h"
+#include <new>
 
 namespace grlib {
 // An array of uniform blocks (grlib::CGLibUniformArray<T>::setupArray(unsigned int) releases the old blocks,
@@ -51,6 +52,19 @@ public:
     unsigned char pad_14[0x4];
     CGLibMemType m_mem;   // 0x18
 };
+
+// Out of line: DrShdDataList and DrShdUniformBlockMan call ml/DrMdoSetup's instances (One, Dbl, Tri there, after
+// DrMdoMat::setupAvatarTbl).
+template <class T>
+void CGLibUniformArray<T>::setupArray(unsigned int num) {
+    release();
+    m_num = num;
+    m_pArray = static_cast<T*>(
+        mtl::MemManager::allocate(CGLibMemHandle::s_hMemHandle, num * sizeof(T), 8, false, "no name", 0));
+    for (unsigned int i = 0; i < m_num; i++) {
+        new (&m_pArray[i]) T();
+    }
+}
 
 // ml::DrResMdoSeamWrk*::setupWork take a CGLibTriUniformArray*: the array of triangle uniform blocks
 class CGLibTriUniformArray : public CGLibUniformArray<CGLibTriUniformBlock> {};

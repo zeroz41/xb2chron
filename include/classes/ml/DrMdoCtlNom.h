@@ -10,6 +10,12 @@ namespace ml { class DrResMdoLight; }
 namespace cloud { class CloudMdlDataObj; }
 namespace ml { class DrResMdoVtxMeshObj; }
 namespace mm { class Col3; }
+namespace ml { class DrResChkList; }
+namespace ml { class DrResMdoLodObj; }
+namespace ml { class DrResMdoSortNomFastApha; }
+namespace ml { class DrResMdoSortNomLastApha; }
+namespace ml { class DrResMdoSortNomCldBackApha; }
+namespace ml { struct MdsMdlTopHeader; }
 
 namespace ml {
 // table 0x7100B7B848
@@ -48,14 +54,35 @@ public:
     void lastAlphaCallRender();
     void fastAlphaCallRender();
     void cldBackAlphaCallRender();
+    void nomRender(const MdsMdlTopHeader*, DrResChkList*);
+    void zPrePassRender();
+    void thicknessRender(bool);
+    void shadowMapDirRender(int);
+
+    // What m_alphaSort points to: setupWorkMdl places it in the work buffer (0x30 bytes) and fills each sort object
+    // and its per-MdoWrkMatRes::m_mdlTopNum check-list table when the model has that alpha pass. The type and field
+    // names are not the original's.
+    struct AlphaSortWork {
+        DrResMdoSortNomFastApha* m_fast;  // 0x0
+        DrResMdoSortNomLastApha* m_last;  // 0x8
+        DrResMdoSortNomCldBackApha* m_cldBack;  // 0x10
+        DrResChkList** m_fastChk;  // 0x18, fastAlphaCallRender's
+        DrResChkList** m_lastChk;  // 0x20, lastAlphaCallRender's
+        DrResChkList** m_cldBackChk;  // 0x28, cldBackAlphaCallRender's
+    };
 
     // the ScnObjAcc* accessors read these when DrMdoMat::m_mdlType is 0 (the names are not the original's)
-    unsigned char pad_18C[0x4C];  // DrMdoNode ends at 0x18C
+    unsigned char pad_18C[0x2C];  // DrMdoNode ends at 0x18C
+    AlphaSortWork* m_alphaSort;  // 0x1B8 (the name is not the original's)
+    unsigned char pad_1C0[0x18];
     DrResMdoVtxMeshObj* m_vtxMesh;  // 0x1D8, ScnObjAccMdlParticle's
     // 0x1E0: setDisp and setDeleteCall pass the display state on to it (the name is not the original's)
     DrResMdoLight* m_light;
     DrResMdoMeshObj* m_mesh;  // 0x1E8, ScnObjAccResSubMesh's
-    unsigned char pad_1F0[0x10];
+    // 0x1F0: setupWorkMdl creates it in the work buffer; the alpha passes hand its m_dispBits to createWeightVtx
+    // (the name is not the original's)
+    DrResMdoLodObj* m_lodObj;
+    unsigned char pad_1F8[0x8];
     EtcParamsTable* m_etcParams;  // 0x200, ScnObjAccEtcParams's
     unsigned char pad_208[0x8];
     // 0x210: setDeleteCall stops its display (the name is not the original's)

@@ -49,6 +49,10 @@
 #include "ml/DrMdoVertexMan.h"
 #include "ml/DrPixlMdlSampler.h"
 #include "ml/DrResMdoMorpObj.h"
+#include "ml/DrResMdoLodObj.h"
+#include "ml/DrResEtcPamObj.h"
+#include "ml/DrResEtcParams.h"
+#include "ml/DrPixlShadowMan.h"
 #include "grlib/CGLibVtxInstans.h"
 #include "ml/MdsMpfMatInfoHeader.h"
 #include "ml/DrResShdMpf.h"
@@ -1414,6 +1418,145 @@ void DrMdoCtlNom::callShadowCacheUpdate(unsigned long bits) {
     m_shadowCacheBits &= ~bits;
 }
 
+void DrMdoCtlNom::lastAlphaCallRender() {
+    if (m_nodeMax != 0) {
+        grlib::CGLibCtlShader::setMemoryBarrierBit(1);
+        createWeightVtx(1, m_ctlFlags2, m_lodObj->m_dispBits, false);
+        grlib::CGLibCtlShader::setMemoryBarrierBit(0x21);
+    }
+    m_renderPass = 4;
+    m_renderTech = 1;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    m_pWrkMatRes->m_pVertex->beginVertexSetup();
+    const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop;
+    for (int i = 0; i < m_pWrkMatRes->m_mdlTopNum; i++, top++) {
+        if (m_alphaSort->m_lastChk[i] != nullptr) {
+            nomRender(top, m_alphaSort->m_lastChk[i]);
+        }
+    }
+}
+
+void DrMdoCtlNom::fastAlphaCallRender() {
+    if (m_nodeMax != 0) {
+        grlib::CGLibCtlShader::setMemoryBarrierBit(1);
+        createWeightVtx(1, m_ctlFlags2, m_lodObj->m_dispBits, false);
+        grlib::CGLibCtlShader::setMemoryBarrierBit(0x21);
+    }
+    m_renderPass = 4;
+    m_renderTech = 1;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    m_pWrkMatRes->m_pVertex->beginVertexSetup();
+    const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop;
+    for (int i = 0; i < m_pWrkMatRes->m_mdlTopNum; i++, top++) {
+        if (m_alphaSort->m_fastChk[i] != nullptr) {
+            nomRender(top, m_alphaSort->m_fastChk[i]);
+        }
+    }
+}
+
+void DrMdoCtlNom::cldBackAlphaCallRender() {
+    if (m_nodeMax != 0) {
+        grlib::CGLibCtlShader::setMemoryBarrierBit(1);
+        createWeightVtx(1, m_ctlFlags2, m_lodObj->m_dispBits, false);
+        grlib::CGLibCtlShader::setMemoryBarrierBit(0x21);
+    }
+    m_renderPass = 4;
+    m_renderTech = 1;
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    m_pWrkMatRes->m_pVertex->beginVertexSetup();
+    const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop;
+    for (int i = 0; i < m_pWrkMatRes->m_mdlTopNum; i++, top++) {
+        if (m_alphaSort->m_cldBackChk[i] != nullptr) {
+            nomRender(top, m_alphaSort->m_cldBackChk[i]);
+        }
+    }
+}
+
+void DrMdoCtlNom::callZSortNomZpreePassRender() {
+    if ((m_stateFlags & 0x300000) == 0x300000) {
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        if (m_nodeMax != 0) {
+            grlib::CGLibCtlShader::setMemoryBarrierBit(1);
+            createWeightVtx(6, m_ctlFlags2, m_lodObj->m_dispBits, false);
+            grlib::CGLibCtlShader::setMemoryBarrierBit(0x21);
+        }
+        zPrePassRender();
+    }
+}
+
+void DrMdoCtlNom::callZSortThicknessRenderFirst() {
+    if (m_stateFlags & 0x40) {
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        if (m_nodeMax != 0) {
+            grlib::CGLibCtlShader::setMemoryBarrierBit(1);
+            createWeightVtx(5, m_ctlFlags2, m_lodObj->m_dispBits, false);
+            grlib::CGLibCtlShader::setMemoryBarrierBit(0x21);
+        }
+        thicknessRender(true);
+    }
+}
+
+void DrMdoCtlNom::callZSortThicknessRenderSecond() {
+    if (m_stateFlags & 0x40) {
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        if (m_nodeMax != 0) {
+            grlib::CGLibCtlShader::setMemoryBarrierBit(1);
+            createWeightVtx(5, m_ctlFlags2, m_lodObj->m_dispBits, false);
+            grlib::CGLibCtlShader::setMemoryBarrierBit(0x21);
+        }
+        thicknessRender(false);
+    }
+}
+
+void DrMdoCtlNom::callZSortNomRender() {
+    if (m_stateFlags & 0x1) {
+        nomCallRender(0);
+        if (m_vtxMesh != nullptr) {
+            m_vtxMesh->stmRender(m_nodeMax != 0);
+        }
+        if ((m_stateFlags & 0x3800) && m_viewNum == 0 && !m_pDrMan->m_shadowRenderOff) {
+            DrPixlMan* pixl = m_pDrMan->m_pixlMan;
+            if (!(m_stateFlags & 0x80000000) || !pixl->m_objTbl->m_shadowMan->clipDirShadowChk(m_center, m_length, true)) {
+                pixl->shadowDirBegin();
+                if (m_stateFlags & 0x800) {
+                    pixl->setShadowDirRenderTarget(0);
+                    shadowMapDirRender(0);
+                }
+                if (m_stateFlags & 0x1000) {
+                    pixl->setShadowDirRenderTarget(1);
+                    shadowMapDirRender(1);
+                }
+                if (m_stateFlags & 0x2000) {
+                    pixl->setShadowDirRenderTarget(2);
+                    shadowMapDirRender(2);
+                }
+                pixl->shadowDirEnd();
+            }
+        }
+    }
+}
+
 void DrMdoCtlNom::callZSortNomAlphaRender() {
     if (m_stateFlags & 0x10) {
         nomCallRender(4);
@@ -1591,6 +1734,21 @@ DrMdoCtlSeamAll::~DrMdoCtlSeamAll() {
 
 void DrMdoCtlSeam::releaseFreeSeamMemObj(DrResMdoSeamMemObj* obj) {
     m_memMan.releaseFreeObj(obj);
+}
+
+void DrMdoCtlSeamAll::callShadowCacheUpdate(unsigned long bits) {
+    m_baseShadowCacheDone &= ~bits;
+    for (DrResMdoSeamWrkBase* wrk = m_pBaseList; wrk != nullptr; wrk = wrk->m_pLink) {
+        if (wrk->m_matRes != nullptr) {
+            wrk->callShadowCacheBaseUpdate(bits);
+        }
+    }
+    m_instShadowCacheDone &= ~bits;
+    for (DrResMdoSeamWrkInst* wrk = m_pInstList; wrk != nullptr; wrk = wrk->m_pLink) {
+        if (wrk->m_pWrkMatRes != nullptr) {
+            wrk->callShadowCacheInstUpdate(bits);
+        }
+    }
 }
 
 void DrMdoCtlSeamAll::dispOffUpdate() {
@@ -1931,7 +2089,7 @@ void DrMdoCtlSeamRead::waitBaseVertexStream(_wkSeamReadCall* call, bool ok) {
     if (ok) {
         wrk->setVertexCache(call->m_cacheIdx, call->m_pMemObj, call->m_cacheParam, this);
         m_seamRead.m_readWaitBits &= ~(1 << call->m_readIdx);
-        m_pBaseVertexRead = 0;
+        m_baseShadowCacheDone = 0;
     } else {
         wrk->m_cacheFlags |= 0x10;
         m_seamFlags |= 0x10000;
@@ -1967,7 +2125,7 @@ void DrMdoCtlSeamRead::waitInstPosStream(_wkSeamReadCall* call, bool ok) {
     DrResMdoSeamWrkInst* wrk = call->m_pInst;
     if (ok) {
         if (wrk->setEtcPosCache(m_pDrMan->m_allocHandle, call->m_cacheIdx, call->m_pMemObj, &m_instAnm)) {
-            m_pInstPosRead = nullptr;
+            m_instShadowCacheDone = 0;
         } else {
             releaseFreeSeamMemObj(call->m_pMemObj);
         }
@@ -2387,6 +2545,13 @@ void DrMdoVertexMan::begin() { m_instans->beginInstansBuff(); }
 
 void DrMdoVertexMan::end() { m_instans->updateInstansBuff(); }
 
+}  // namespace ml
+
+template void grlib::CGLibUniformArray<grlib::CGLibOneUniformBlock>::setupArray(unsigned int);
+template void grlib::CGLibUniformArray<grlib::CGLibDblUniformBlock>::setupArray(unsigned int);
+template void grlib::CGLibUniformArray<grlib::CGLibTriUniformBlock>::setupArray(unsigned int);
+
+namespace ml {
 void DrMdoVertexMan::releaseVertexObj(DrResMdoVertex* vertex) {
     if (--vertex->m_state < 0) {
         vertex->m_state = 0;
@@ -2583,6 +2748,18 @@ void DrMdoMorphing::parmsUpdate() {
     for (unsigned int i = 0; i < m_pMorpObj->m_targetNum; i++) {
         DrResMdoMorpObj::Target& target = m_pMorpObj->m_pTarget[i];
         target.m_prevWeight = target.m_weight;
+    }
+}
+
+void DrMdoMorphing::updateParms() {
+    if (m_pMorpObj->m_flag0 == 0) {
+        m_parmsState = -1;
+        for (unsigned int i = 0; i < m_pMorpObj->m_targetNum; i++) {
+            DrResMdoMorpObj::Target& target = m_pMorpObj->m_pTarget[i];
+            if (target.m_data->m_type == 7) {
+                target.m_weight = m_pPamObj->m_params[target.m_data->m_paramNo].getParams();
+            }
+        }
     }
 }
 

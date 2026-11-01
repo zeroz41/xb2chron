@@ -23,7 +23,10 @@ public:
     MdoWrkMatRes* m_pWrkMatRes;    // 0x0
     DrResMdoMorpObj* m_pMorpObj;   // 0x8
     DrResEtcPamObj* m_pPamObj;     // 0x10
-    unsigned char pad_18[0x28];    // sizeof 0x40: DrResMdoMorpObj::update's stack copy
+    unsigned char pad_18[0x4];     // sizeof 0x40: DrResMdoMorpObj::update's stack copy
+    // 0x1C: updateParms sets it to -1 before it reads the weights (no reader known; the name is not the original's)
+    int m_parmsState;
+    unsigned char pad_20[0x20];
 };
 }  // namespace ml
 

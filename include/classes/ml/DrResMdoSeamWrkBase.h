@@ -44,7 +44,10 @@ public:
         unsigned char m_flags;
     };
 
-    unsigned char pad_8[0x18];
+    // 0x8: the next work in DrMdoCtlSeam::m_pBaseList (DrMdoCtlSeamAll::callShadowCacheUpdate walks it; the name
+    // is not the original's)
+    DrResMdoSeamWrkBase* m_pLink;
+    unsigned char pad_10[0x10];
     const SeamHeader* m_header;  // 0x20 (the name is not the original's)
     unsigned char pad_28[0x10];
     const MdsSeamBaMpTreeData* m_baseMapTree;  // 0x38: the root seachDefShadowBaseMapRender walks (the name is not the original's)

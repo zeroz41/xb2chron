@@ -6,6 +6,8 @@
 #include "ml/DrResMdoSeamMemMan.h"
 #include "classes/ml/DrResMdoSeamRead.h"
 
+namespace ml { class DrResMdoSeamWrkBase; }
+
 namespace ml {
 class DrResMdoSeamMemObj;
 class DrResMdoSeamWrkInst;
@@ -71,7 +73,10 @@ public:
     // the names are not the original's
     unsigned char pad_18C[0x1C];
     const MapHead* m_pMapHead;  // 0x1A8
-    unsigned char pad_1B0[0x160];
+    unsigned char pad_1B0[0xF0];
+    // 0x2A0: the base works in use (DrMdoCtlSeamAll::callShadowCacheUpdate walks them; the name is not the original's)
+    DrResMdoSeamWrkBase* m_pBaseList;
+    unsigned char pad_2A8[0x68];
     DrResMdoSeamWrkInst* m_pInstList;  // 0x310: the instance works in use (DrMdoCtlSeamAll::occRender walks them)
     unsigned char pad_318[0x380];
     DrResMdoInstAnmObj m_instAnm;  // 0x698: releaseSeam releases it; ScnObjAccSeamPos reads it (m_mdlType 3)
@@ -107,10 +112,11 @@ public:
     unsigned char pad_C80[0x8];
     int m_lightGroup;                // 0xC88: 1 from the constructor; waitLightStream gives it to the light's object
     unsigned char pad_C8C[0x4];
-    // 0xC90: cleared by DrMdoCtlSeamRead::waitBaseVertexStream once the base vertex stream is in
-    void* m_pBaseVertexRead;
-    // 0xC98: cleared by DrMdoCtlSeamRead::waitInstPosStream once the position stream is in
-    void* m_pInstPosRead;
+    // 0xC90/0xC98: one bit per shadow cache already rendered, for the base and the instance works:
+    // DrMdoCtlSeamAll::callShadowCacheUpdate clears the bits it is given, DrMdoCtlSeamRead::waitBaseVertexStream and
+    // waitInstPosStream clear all once their stream is in (the names are not the original's)
+    unsigned long m_baseShadowCacheDone;
+    unsigned long m_instShadowCacheDone;
     unsigned char pad_CA0[0x30];
     // 0xCD0: the destructor destroys it; DrMdoCtlSeamAll::setDeleteCall cancels its reads
     DrResMdoSeamRead m_seamRead;

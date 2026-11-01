@@ -32,7 +32,11 @@ public:
     struct MdoMorphData {
         unsigned int m_ofs0;  // 0x0
         unsigned int m_ofs1;  // 0x4
-        unsigned char pad_8[0x14];
+        // 0x8: DrMdoMorphing::updateParms sets a type 7 target's weight from DrResEtcPamObj::m_params[m_paramNo]
+        // (the names are not the original's)
+        unsigned int m_type : 16;
+        unsigned int m_paramNo : 16;
+        unsigned char pad_C[0x10];
     };
     static unsigned int calcWorkSize(const unsigned char* mdo);
     static void release(DrResMdoMorpObj*& obj);

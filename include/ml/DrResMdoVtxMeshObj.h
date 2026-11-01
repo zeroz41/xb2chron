@@ -48,6 +48,8 @@ public:
     bool isRender() const;
     // DrMdoCtlNom::callZSortNomAlphaRender
     void alpRender();
+    // DrMdoCtlNom::callZSortNomRender, with whether the model has nodes
+    void stmRender(bool);
     void setActive(bool active, unsigned int index);
     // the work bytes one object takes (a constant 0x140)
     static unsigned int calcWorkSize(const unsigned char* data);
