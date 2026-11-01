@@ -125,12 +125,12 @@ void LayerObj::release() {
     m_status = 0x22;
 }
 void LayerObj::setInitPos(float x, float y) {
-    m_params[1].m_posX = x;
-    m_params[0].m_posX = x;
-    m_params[2].m_posX = x;
-    m_params[1].m_posY = y;
-    m_params[0].m_posY = y;
-    m_params[2].m_posY = y;
+    m_params[1].m_pos[0] = x;
+    m_params[0].m_pos[0] = x;
+    m_params[2].m_pos[0] = x;
+    m_params[1].m_pos[1] = y;
+    m_params[0].m_pos[1] = y;
+    m_params[2].m_pos[1] = y;
 }
 void LayerObj::applyEnd(LayerResUpdateInfo& info, const LayerRenderView* view) {
     if (m_stateFlags & STATE_NO_UPDATE) return;
@@ -147,8 +147,8 @@ void LayerObj::applyEnd(LayerResUpdateInfo& info, const LayerRenderView* view) {
 }
 void LayerObj::setPos(float x, float y) {
     int index = LayerManager::s_nStkIdx;
-    m_params[index].m_posX = x;
-    m_params[index].m_posY = y;
+    m_params[index].m_pos[0] = x;
+    m_params[index].m_pos[1] = y;
     onFlag(index, FLAG_POS);
 }
 void LayerObj::setRot(float rot) {
@@ -158,8 +158,8 @@ void LayerObj::setRot(float rot) {
 }
 void LayerObj::setScale(float x, float y) {
     int index = LayerManager::s_nStkIdx;
-    m_params[index].m_scaleX = x;
-    m_params[index].m_scaleY = y;
+    m_params[index].m_scale[0] = x;
+    m_params[index].m_scale[1] = y;
     onFlag(index, FLAG_SCALE);
 }
 void LayerObj::setMulCol(const mm::Col4& col) {
@@ -182,14 +182,14 @@ void LayerObj::setMatrix(const mm::Mat44& mtx) {
 }
 void LayerObj::getPos(float& x, float& y) const {
     const Param& param = getParam(FLAG_POS);
-    x = param.m_posX;
-    y = param.m_posY;
+    x = param.m_pos[0];
+    y = param.m_pos[1];
 }
 void LayerObj::getRot(float& rot) const { rot = getParam(FLAG_ROT).m_rot; }
 void LayerObj::getScale(float& x, float& y) const {
     const Param& param = getParam(FLAG_SCALE);
-    x = param.m_scaleX;
-    y = param.m_scaleY;
+    x = param.m_scale[0];
+    y = param.m_scale[1];
 }
 const mm::Col4& LayerObj::getMulCol() const {
     if (isFlag(LayerManager::s_nStkIdx, FLAG_MUL_COL)) {
@@ -235,6 +235,66 @@ void LayerActBase::actionEnd() { onFlag(LayerManager::s_nStkIdx, FLAG_ACTION_END
 bool LayerActBase::actcmd_no(const unsigned char*& cmd) {
     cmd += 4;
     return false;
+}
+bool LayerActBase::actcmd_pos(const unsigned char*& cmd) {
+    const LyrActionData* data = m_actionData;
+    bool wait = true;
+    if (data->m_stepSec != 0.0f) {
+        const float* arg = reinterpret_cast<const float*>(cmd);
+        float pos[2];
+        if (arg[3] <= data->m_runningSec) {
+            for (int i = 0; i < 2; i++) pos[i] = arg[1 + i];
+            wait = false;
+        } else {
+            float rate = 1.0f / ((arg[3] - data->m_runningSec) * data->m_stepRate);
+            rate = 1.0f < rate ? 1.0f : rate;
+            for (int i = 0; i < 2; i++) pos[i] = m_params[2].m_pos[i] + (arg[1 + i] - m_params[2].m_pos[i]) * rate;
+        }
+        setInitPos(pos[0], pos[1]);
+    }
+    cmd += 16;
+    return wait;
+}
+bool LayerActBase::actcmd_rot(const unsigned char*& cmd) {
+    const LyrActionData* data = m_actionData;
+    bool wait = true;
+    if (data->m_stepSec != 0.0f) {
+        const float* arg = reinterpret_cast<const float*>(cmd);
+        const float* target = arg + 1;
+        float rot;
+        if (arg[2] <= data->m_runningSec) {
+            rot = *target;
+            wait = false;
+        } else {
+            float rate = 1.0f / ((arg[2] - data->m_runningSec) * data->m_stepRate);
+            rate = 1.0f < rate ? 1.0f : rate;
+            rot = m_params[2].m_rot + (*target - m_params[2].m_rot) * rate;
+        }
+        m_params[1].m_rot = rot;
+        m_params[0].m_rot = rot;
+        m_params[2].m_rot = rot;
+    }
+    cmd += 12;
+    return wait;
+}
+bool LayerActBase::actcmd_scl(const unsigned char*& cmd) {
+    const LyrActionData* data = m_actionData;
+    bool wait = true;
+    if (data->m_stepSec != 0.0f) {
+        const float* arg = reinterpret_cast<const float*>(cmd);
+        float scl[2];
+        if (arg[3] <= data->m_runningSec) {
+            for (int i = 0; i < 2; i++) scl[i] = arg[1 + i];
+            wait = false;
+        } else {
+            float rate = 1.0f / ((arg[3] - data->m_runningSec) * data->m_stepRate);
+            rate = 1.0f < rate ? 1.0f : rate;
+            for (int i = 0; i < 2; i++) scl[i] = m_params[2].m_scale[i] + (arg[1 + i] - m_params[2].m_scale[i]) * rate;
+        }
+        setInitScale(scl[0], scl[1]);
+    }
+    cmd += 16;
+    return wait;
 }
 bool LayerActBase::actcmd_numrot(const unsigned char*& cmd) {
     const LyrActionData* data = m_actionData;

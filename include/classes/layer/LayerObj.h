@@ -110,6 +110,16 @@ public:
     void setPos(float x, float y);
     // sets the position in all three m_params
     void setInitPos(float x, float y);
+    // sets the scale in all three m_params (inlined in setInitPosScl and LayerActBase::actcmd_scl, no symbol of its
+    // own; the name is not the original's)
+    void setInitScale(float x, float y) {
+        m_params[1].m_scale[0] = x;
+        m_params[0].m_scale[0] = x;
+        m_params[2].m_scale[0] = x;
+        m_params[1].m_scale[1] = y;
+        m_params[0].m_scale[1] = y;
+        m_params[2].m_scale[1] = y;
+    }
     // setInitPos with the size too (LayerAccLayoutBinary::setLayoutObj passes a layout position's x, y, width, height)
     void setInitPosScl(float, float, float, float);
     void setRot(float rot);
@@ -165,11 +175,10 @@ public:
     // what setPos/setRot/setScale/setMulCol/setAddCol write, one per m_flags entry and a third the getters fall
     // back to (the layout is not the original's)
     struct Param {
-        float m_posX;
-        float m_posY;
+        // x, y: LayerActBase::actcmd_pos/scl interpolate them element by element
+        float m_pos[2];
         float m_rot;
-        float m_scaleX;
-        float m_scaleY;
+        float m_scale[2];
         unsigned char pad_14[0x8];
         LayerResColor m_color;  // setMulCol / setAddCol
     };
