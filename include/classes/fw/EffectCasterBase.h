@@ -7,6 +7,7 @@
 
 namespace fw { class EffectPoint; }
 namespace mm { class Mat44; }
+namespace ml { class ScnObjModel; }
 namespace mm { namespace mtl { class IAllocator; } }
 
 namespace fw { class UpdateInfo; }
@@ -36,7 +37,9 @@ public:
     // holds is unknown
     mm::mtl::IntrusivePtr<mm::mtl::ReferenceObject> pad_8;
     EffectPoint* m_pPoint;  // the constructor's, counted (the name is not the original's)
-    void* pad_18;  // the constructor clears 0x18..0x2C
+    // the constructor clears 0x18..0x2C; GfComEffectCaster::setupCaster stores its model's getInterface() here and
+    // EffectCasterSend::getMdl reads it as a ml::ScnObjModelDrSys (the name is not the original's)
+    ml::ScnObjModel* m_pModel;
     void* pad_20;
     unsigned int pad_28;
     unsigned char pad_2c[0x4];

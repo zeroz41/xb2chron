@@ -7,6 +7,7 @@
 #include "classes/fw/EffectPoint.h"
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/DrMdlObj.h"
+#include "classes/ml/ScnObjModelDrSys.h"
 #include "classes/ml/DrMdoGrpObj.h"
 #include "classes/ml/DrMan.h"
 #include "ml/DrCreator.h"
@@ -18,9 +19,30 @@
 #include "classes/ml/DrLightObjSpt.h"
 #include "ml/ScnObjAccVolumeFade.h"
 #include "classes/fw/AssetManager.h"
+#include "classes/mm/mtl/IAllocator.h"
+#include "ptlib/ParticleSystem.h"
 #include <string.h>
 
 namespace fw {
+
+// the original's new names effect_caster_impl.h: the EffectCasterSend members come from that header
+EffectCasterSend* EffectCasterSend::create(EffectCasterBase* caster, mm::mtl::IAllocator* allocator,
+                                           unsigned int count) {
+#line 196 "D:/Monolithsoft/BF2/prog/application/BF2\\framework/effect/effect_caster_impl.h"
+    EffectCasterSend* send = new (allocator, 16, __FILE__, __LINE__) EffectCasterSend(allocator);
+#line 32 "D:/Monolithsoft/BF2/prog/application/BF2/framework/effect/effect_manager.cpp"
+    if (send) {
+        send->m_caster = caster;
+        send->m_mtxAndNames[0].reserve(count);
+        send->m_mtxAndNames[1].reserve(count);
+        MtxAndName entry;
+        for (unsigned int i = count; i != 0; i--) {
+            send->m_mtxAndNames[0].push_back(entry);
+            send->m_mtxAndNames[1].push_back(entry);
+        }
+    }
+    return send;
+}
 
 EffectCasterSend::~EffectCasterSend() {}
 
@@ -76,6 +98,66 @@ float EffectCasterSend::getMdlFrame() {
 
 float EffectCasterSend::getMdlScl() {
     return m_scl[!effect::SystemManager::getPtr()->m_secondBuffer];
+}
+
+bool EffectCasterSend::getMdlMat(mm::Mat44& mtx) {
+    if (effect::SystemManager::getPtr() == nullptr) {
+        return true;
+    }
+    bool second = effect::SystemManager::getPtr()->m_secondBuffer;
+    unsigned int hash = AssetManager::getHash("root");
+    if (second) {
+        for (unsigned int i = 0; i < m_mtxAndNames[0].size(); i++) {
+            if (hash == m_mtxAndNames[0][i].m_hash && strcmp(m_mtxAndNames[0][i].m_name, "root") == 0) {
+                mtx = m_mtxAndNames[0][i].m_mtx;
+                return true;
+            }
+        }
+    } else {
+        for (unsigned int i = 0; i < m_mtxAndNames[1].size(); i++) {
+            if (hash == m_mtxAndNames[1][i].m_hash && strcmp(m_mtxAndNames[1][i].m_name, "root") == 0) {
+                mtx = m_mtxAndNames[1][i].m_mtx;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool EffectCasterSend::getEfpMat(mm::Mat44& mtx, const char* name) {
+    if (effect::SystemManager::getPtr() != nullptr && name != nullptr) {
+        bool second = effect::SystemManager::getPtr()->m_secondBuffer;
+        unsigned int hash = AssetManager::getHash(name);
+        if (second) {
+            for (unsigned int i = 0; i < m_mtxAndNames[0].size(); i++) {
+                if (hash == m_mtxAndNames[0][i].m_hash && strcmp(m_mtxAndNames[0][i].m_name, name) == 0) {
+                    mtx = m_mtxAndNames[0][i].m_mtx;
+                    return true;
+                }
+            }
+        } else {
+            for (unsigned int i = 0; i < m_mtxAndNames[1].size(); i++) {
+                if (hash == m_mtxAndNames[1][i].m_hash && strcmp(m_mtxAndNames[1][i].m_name, name) == 0) {
+                    mtx = m_mtxAndNames[1][i].m_mtx;
+                    return true;
+                }
+            }
+        }
+        getMdlMat(mtx);
+    } else {
+        getMdlMat(mtx);
+        if (name == nullptr) {
+            ptlib::efWng("error EFP null");
+        } else {
+            ptlib::efWng("error EFP %s", name);
+        }
+    }
+    return false;
+}
+
+void* EffectCasterSend::getMdl() {
+    m_mdl = static_cast<ml::ScnObjModelDrSys*>(m_caster->m_pModel)->m_pMdlObj;
+    return m_mdl;
 }
 
 bool EffectManager::initialize() {
@@ -428,6 +510,25 @@ unsigned int EffectManager::createKizunaLine() {
     return 0;
 }
 
+void EffectManager::destroyKizunaLine(unsigned int handle) {
+    if (handle - 1 < 7) {
+        KizunaWork& work = m_kizunaWorks[handle];
+        work.m_inUse = false;
+        work.m_start = mm::Vec3::zero;
+        work.m_end = mm::Vec3::zero;
+        if (work.m_model != nullptr) {
+            work.m_model->setDisp(false);
+        }
+        for (int i = 0; i < 8; ++i) {
+            unsigned int effect = work.m_effects[i];
+            if (effect != 0) {
+                effect::SystemManager::getPtr()->es_fade_core(nullptr, effect, -1);
+                work.m_effects[i] = 0;
+            }
+        }
+    }
+}
+
 void EffectManager::updateKizunaLine(unsigned int handle, const mm::Vec3& start, const mm::Vec3& end,
                                      unsigned int count) {
     if (handle - 1 < 7) {
@@ -622,6 +723,30 @@ bool EffectManager::fn_71001765D0() {
 
 bool EffectManager::finalize() {
     return fn_71001765E8();
+}
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B415B0). fn_7100177028's folder.
+const char* s_commonEffectDir = "effect/common";
+
+bool EffectManager::fn_7100177028(mm::mtl::FixStr<32>& path) {
+    path = s_commonEffectDir;
+    if (m_gfManagerFlag) {
+        path += "_dlc";
+    }
+    path += "/";
+    return true;
+}
+
+void RimBloomCalc::calcEndFrame() {
+    if (m_endFrame < m_curves[0].m_keys.back().m_frame) {
+        m_endFrame = m_curves[0].m_keys.back().m_frame;
+    }
+    if (m_endFrame < m_curves[1].m_keys.back().m_frame) {
+        m_endFrame = m_curves[1].m_keys.back().m_frame;
+    }
+    if (m_endFrame < m_curves[2].m_keys.back().m_frame) {
+        m_endFrame = m_curves[2].m_keys.back().m_frame;
+    }
 }
 
 void EffectManager::updateLayer(const UpdateInfo& info, unsigned int layers) {

@@ -9,6 +9,7 @@
 namespace mm { class Mat44; }
 namespace fw { class EffectCasterBase; }
 namespace fw { class EffectPoint; }
+namespace mm { namespace mtl { class IAllocator; } }
 
 namespace fw {
 // table 0x7100B413D0
@@ -23,8 +24,15 @@ public:
     virtual void* getBindData(unsigned int& size);  // slot 4
     virtual float getMdlFrame();  // slot 5
     virtual float getMdlScl();  // slot 6
-    virtual void getMdlMat(mm::Mat44&);  // slot 7
-    virtual void getEfpMat(mm::Mat44&, char const*);  // slot 8
+    // the "root" matrix of the half effect::SystemManager reads (true also when there is no system)
+    virtual bool getMdlMat(mm::Mat44&);  // slot 7
+    // the named point's matrix of that half; getMdlMat's and false when there is none
+    virtual bool getEfpMat(mm::Mat44&, char const*);  // slot 8
+    // create inlines it: the list node, both halves from allocator, empty state names (the original has no
+    // out-of-line copy; the parameter name is not the original's)
+    explicit EffectCasterSend(mm::mtl::IAllocator* allocator)
+        : m_mtxAndNames{mm::mtl::Vector<MtxAndName>(allocator), mm::mtl::Vector<MtxAndName>(allocator)},
+          m_caster(nullptr), m_allocator(allocator), m_mdl(nullptr) {}
     // EffectManager::sendCaster and sendCasterStateName hand a caster's values on to these
     // a send for caster with count matrices per half, from allocator (EffectManager::addCaster passes the caster's own;
     // the names of the parameters are not the original's)
@@ -48,7 +56,7 @@ public:
     // the caster's point (EffectManager::updateLayer updates it before the caster and marks its points dirty; the
     // name is not the original's)
     EffectPoint* m_point;
-    unsigned char pad_78[0x8];
+    mm::mtl::IAllocator* m_allocator;  // create's allocator (the name is not the original's)
     void* m_mdl;  // getMdl's last model (the name is not the original's)
     // per half of effect::SystemManager's double buffer (m_secondBuffer picks one): EffectCasterBase::setScl's and
     // setMotionFrame's values (the names are not the original's)

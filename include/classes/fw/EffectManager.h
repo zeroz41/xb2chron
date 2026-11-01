@@ -70,6 +70,10 @@ public:
     // itself). A member: finalize and update call it on this. What it does: sets m_inactive, clears the effect
     // system (es_clearall), the caster groups, the texture buffers and the common packs; true once done.
     bool fn_71001765E8();
+    // Placeholder name: new in 3.0.1 (a plain fn_ symbol), nothing in 1.0.0's place names it. A member: commonLoaded
+    // calls it on this and it reads m_gfManagerFlag. What it does: sets path to the common effect folder,
+    // "effect/common" with "_dlc" appended while m_gfManagerFlag is set, then "/"; true.
+    bool fn_7100177028(mm::mtl::FixStr<32>& path);
     virtual void update(fw::UpdateInfo const&);  // slot 4
     virtual void updateLayer(fw::UpdateInfo const&, unsigned int);  // slot 5
     virtual void updateLayerPost(fw::UpdateInfo const&, unsigned int);  // slot 6

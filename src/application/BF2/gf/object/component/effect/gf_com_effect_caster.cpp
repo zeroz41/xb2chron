@@ -49,7 +49,7 @@ void GfComEffectCaster::setupCaster(const fw::EffectPoint* point) {
         if (GfComModel* model = m_owner->getComponent<GfComModel>(1)) {
             if (model->m_model) {
                 EffectCaster* caster = m_caster;
-                caster->pad_18 = model->m_model->getInterface();
+                caster->m_pModel = model->m_model->getInterface();
             }
         }
     }

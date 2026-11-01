@@ -130,7 +130,7 @@ void EffectCasterBase::tail() {
 }
 
 EffectCasterBase::EffectCasterBase(const EffectPoint* point, unsigned int layer)
-    : pad_18(nullptr), pad_20(nullptr), pad_28(0), m_isDead(false) {
+    : m_pModel(nullptr), pad_20(nullptr), pad_28(0), m_isDead(false) {
     if (this != nullptr && mm::mtl::PtrSingleton<EffectManager>::sys() != nullptr) {
         m_pointCount = 1;
         m_pPoint = nullptr;
