@@ -38,6 +38,7 @@
 #include <math.h>
 #include "classes/ml/CacheDraw.h"
 #include "classes/ml/WorkObjFlowSystemPause.h"
+#include "classes/ml/ProcException.h"
 
 // the lock both conversions hold (inline in both: its static and guard are unnamed in the symbols)
 static const ml::CriticalSection& getCriticalSection() {
@@ -1302,9 +1303,38 @@ void (*s_initializeNotify)();
 void (*s_updateNotify)();
 void (*s_finalizeNotify)();
 mm::mtl::FixStr<128> s_selectAppName;
-mm::mtl::FixStr<128> s_revision;
+// the static initializer copies the build's __DATE__ " " __TIME__ into it (written out: that is the original's text)
+mm::mtl::FixStr<128> s_revision("Aug 13 2026 12:19:45");
 
 }  // namespace _dsk
+
+// The file statics GlobalMerge places in one .bss block (lbl_7100ECFBD0, 0xB8 bytes), in the block's order. Proposed
+// names, not the original's: the symbols leave them unnamed. 1.0.0's users name what they hold:
+// ProcException::entry/remove count and store the exceptions (+0, +0x38), WinView::getDefaultTitleBarColor returns
+// +0x4, setInitialBackCol stores +0x14, setDefaultFrameColor stores +0x24.
+static int s_exceptionNum;
+static mm::Col4 s_defaultTitleBarColor(0.4f, 0.5f, 0.6f, 1.0f);
+static mm::Col4 s_initialBackCol(0.6f, 0.6f, 0.6f, 1.0f);
+static mm::Col4 s_defaultFrameColor(mm::Col4::white);
+static IException* s_exceptions[16];
+
+// 1.0.0 only (3.0.1's linker dropped ProcException): they keep the list above in the file's merged block
+void ProcException::entry(IException* exception) {
+    s_exceptions[s_exceptionNum++] = exception;
+}
+
+void ProcException::remove(IException* exception) {
+    for (int i = 0; i < s_exceptionNum; i++) {
+        if (s_exceptions[i] == exception) {
+            int num = s_exceptionNum - 1;
+            for (; i < num; i++) {
+                s_exceptions[i] = s_exceptions[i + 1];
+            }
+            s_exceptionNum = num;
+            return;
+        }
+    }
+}
 
 void ProcDesktop::entryTable(DESKTOP_ICON_DEF* table, bool flag) {
     _dsk::s_pIconTable = table;
@@ -1633,6 +1663,10 @@ bool WinView::wkStandbyLogout() {
         return WorkObj::wkStandbyLogout();
     }
     return false;
+}
+
+void WinView::setInitialBackCol(const mm::Col4& col) {
+    s_initialBackCol = col;
 }
 
 bool WinViewRoot::isCurrentChild(const WinView* parent, const WinView* view) {
