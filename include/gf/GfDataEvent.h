@@ -2,6 +2,7 @@
 #define GF_GFDATAEVENT_H
 
 namespace gf { class SDataGame; }
+namespace mm { class Vec3; }
 
 namespace gf {
 // the events' data (functions, by its symbols; the code lives in the GfDataBlade unit)
@@ -47,6 +48,23 @@ public:
     static bool fn_710024F454(const SDataGame& game, unsigned int event);
     // whether game's saved events (SDataGame::m_savedEvents) hold event (GfGameUtil::setWatchedEvent calls it)
     static bool isSavedEvent(unsigned int event, const SDataGame& game);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among GfDataEvent's functions (after isBladeCreateEvent) and takes an event. What it does: true for events
+    // 20707..21210; else the MNU_EventTheater row (GfBdatShop, getMNU_EventTheaterStart to End) whose event_id is the
+    // event and whether its category is 2 (false for none). Callers: tl::TitleStatePlayEvent::enter,
+    // GfGameUtil::setWatchedEvent.
+    static bool fn_710024F1B4(unsigned int event);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among GfDataEvent's functions (after getBladeQuestDriver) and takes an event. What it does: for the first
+    // MNU_EventTheater row whose event_id is the event, its blade_id when above 1000, else a blade id (1007..1109)
+    // picked by the row's maincast (1..35, 0 for others); 0 when no row has the event.
+    // Caller: tl::TitleStatePlayEvent::enter.
+    static unsigned int fn_710024F720(unsigned int event);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among GfDataEvent's functions and reads the event table fn_710024EBD8 picks, like getEventType. What it
+    // does: the event row's float columns zoneX/Y/Z into pos and zoneR (degrees) as radians into angle; false when
+    // there is no table. Caller: GfManager::startEventTheater.
+    static bool fn_710024F844(mm::Vec3& pos, float& angle, unsigned int event);
 };
 }  // namespace gf
 

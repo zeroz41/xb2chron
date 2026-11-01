@@ -73,6 +73,11 @@ public:
     static bool getListParty(mm::mtl::FixedVector<unsigned short, 422>& list, bool, bool);
     // fills list with the regular blades 1001 to 1011 (not 1012, 1013); false when it stays empty
     static bool getListRegular(mm::mtl::FixedVector<unsigned short, 422>& list);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit between getListRegular and getlistCommon and fills the same list. What it does: appends blades 1014..1050
+    // and 1104, returns whether the list is not empty. Callers: GfGameUtil::setPartyChange10010,
+    // GfItemUtil::getEquipChar, GfMenuItemUtil::searchEquipOrb and searchEquipHanaParts.
+    static bool fn_71002390F0(mm::mtl::FixedVector<unsigned short, 422>& list);
     // fills list with the common blades 1197 to 1396 that are in use or unselectable
     static bool getlistCommon(mm::mtl::FixedVector<unsigned short, 422>& list);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
@@ -217,6 +222,16 @@ public:
     // 0xFF (GfGameFlag::getLocal/setLocal); GfGameUtil::incEnemySuppress calls it for a named enemy counted the
     // first time.
     static void fn_71002355AC();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among its functions (before isHikariCurrent) and takes a blade. What it does: false for blade 0, else
+    // whether one of the first three party members' drivers has the blade (GfDataParty::fn_710024BAE0 for 0, 1, 2).
+    // Callers: GfAssetSetupDriver::setup, SCOM_PARTY_ADD::exec.
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among its functions (before fn_71002356BC) and takes a blade. What it does: false unless blades 1001 and
+    // 1002 are both or neither in the party (fn_71002356BC); then for 1001 whether isHikariCurrent, for 1002 whether
+    // not, false for others. Caller: GfGameScene::requestFieldBladeChange.
+    static bool fn_71002355E4(unsigned int blade);
+    static bool fn_71002356BC(unsigned int blade);
     static bool getTaskSkillMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line);
     static bool getTaskTitleMessage(unsigned char*& bdat, unsigned int& id, unsigned int blade, unsigned int line,
                                     unsigned int level);
@@ -279,6 +294,15 @@ public:
     // returns whether that id is nonzero. GfMenuObjTargetInfo::openOther passes a type-6 object's BDAT id
     // (GfObjAcc::fn_7100523B74) and shows the text at bdat/id as the other's shop name.
     static bool fn_710024D8C4(unsigned char*& bdat, unsigned int& id, unsigned int blade);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit next to fn_710024D8C4 (same ids). What it does: 0 for an id up to 2000; else RSC_NpcList's message id for
+    // the row (GfBdatRsc): fn_7100219E78 when condition fn_7100219DF0 holds (GfGameCond::isGameCond), else
+    // fn_7100219F88 when condition fn_7100219F00 holds, else fn_7100219D68. fn_710024D9C4 calls it.
+    static unsigned int fn_710024D92C(unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason as
+    // fn_710024D8C4, whose shape it has. What it does: false for ids below 2001; else bdat = GfDataBdat::getFP(435)
+    // and id = fn_710024D92C(rsc), true when that id is nonzero. Caller: fn_710041F2A0.
+    static bool fn_710024D9C4(unsigned char*& bdat, unsigned int& id, unsigned int rsc);
     // the driver's slot (0..4) the blade is set in; SCOM_CURRENT_BLADE::exec passes it to GfDataDriver::setEquipBlade
     static unsigned int getDriverSetID(unsigned int blade);
     static AchievInfo* getAchievInfo(unsigned int blade, unsigned int line);
@@ -515,6 +539,10 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit among GfDataBlade's functions. What it does: sets local flag 0xD863 (type 1) to flag.
     static void fn_710024EA00(bool flag);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions (its only caller is fn_71002CAE30). What it does: looks up the
+    // FLD_MapGimmick table (result unused) and counts the set local flags (type 1) 0xABFA and 0xAC00-0xAC08.
+    static unsigned int fn_710024EA10();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit among GfDataBlade's functions. What it does: sets local flags 0xD77E and 0xD87E (type 1) to flag (the two fn_710023217C tests).
     static void fn_71002321D4(bool flag);

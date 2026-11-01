@@ -93,6 +93,7 @@
 #include "gf/SDataGame.h"
 #include "classes/gf/GfDataManager.h"
 #include "classes/gf/GfGameFlag.h"
+#include "classes/gf/GfGameCond.h"
 #include "ml/MtRand.h"
 #include "classes/gf/GfEvent.h"
 #include "classes/gf/GfBdatMsg.h"
@@ -1198,6 +1199,23 @@ unsigned int GfDataDriver::getLevel(unsigned int driver) {
 
 bool GfDataEvent::isBladeCreateEvent(unsigned int event) {
     return event >= 19001 && event < 19062;
+}
+
+bool GfDataEvent::fn_710024F1B4(unsigned int event) {
+    if (event - 20707 < 504) {
+        return true;
+    }
+    GfBdatShop* shop = GfBdatShop::get();
+    unsigned int row = shop->getMNU_EventTheaterStart();
+    unsigned int end = shop->getMNU_EventTheaterEnd();
+    for (; row < end; row++) {
+        if (shop->getMNU_EventTheaterevent_id(row) == event) {
+            goto found;
+        }
+    }
+    return false;
+found:
+    return shop->getMNU_EventTheatercategory(row) == 2;
 }
 
 unsigned int GfDataMercenaries::getLevelMax() {
@@ -2467,6 +2485,28 @@ bool GfDataBlade::fn_710024D8C4(unsigned char*& bdat, unsigned int& id, unsigned
     return id != 0;
 }
 
+unsigned int GfDataBlade::fn_710024D92C(unsigned int id) {
+    if (id <= 2000) {
+        return 0;
+    }
+    if (GfGameCond::isGameCond(static_cast<unsigned short>(GfBdatRsc::get()->fn_7100219DF0(id)))) {
+        return GfBdatRsc::get()->fn_7100219E78(id);
+    }
+    if (GfGameCond::isGameCond(static_cast<unsigned short>(GfBdatRsc::get()->fn_7100219F00(id)))) {
+        return GfBdatRsc::get()->fn_7100219F88(id);
+    }
+    return GfBdatRsc::get()->fn_7100219D68(id);
+}
+
+bool GfDataBlade::fn_710024D9C4(unsigned char*& bdat, unsigned int& id, unsigned int rsc) {
+    if (rsc <= 2000) {
+        return false;
+    }
+    bdat = GfDataBdat::getFP(435);
+    id = fn_710024D92C(rsc);
+    return id != 0;
+}
+
 bool GfDataBlade::fn_710024DA20(unsigned char*& bdat, unsigned int& id, unsigned int rsc) {
     if (rsc <= 2000) {
         return false;
@@ -2802,6 +2842,14 @@ bool GfDataBlade::getListRegular(mm::mtl::FixedVector<unsigned short, 422>& list
             list.push_back(blade);
         }
     }
+    return !list.empty();
+}
+
+bool GfDataBlade::fn_71002390F0(mm::mtl::FixedVector<unsigned short, 422>& list) {
+    for (unsigned int blade = 1014; blade < 1051; blade++) {
+        list.push_back(blade);
+    }
+    list.push_back(1104);
     return !list.empty();
 }
 
@@ -3357,6 +3405,32 @@ void GfDataBlade::fn_71002355AC() {
     GfGameFlag::setLocal(8, 0x874, count + 1);
 }
 
+bool GfDataBlade::fn_71002355E4(unsigned int blade) {
+    if (fn_71002356BC(1001) != fn_71002356BC(1002)) {
+        return false;
+    }
+    SDataGame* game = GfDataManager::getDataGame();
+    (void)game;
+    if (blade == 1002) {
+        if (!isHikariCurrent()) {
+            return true;
+        }
+    } else if (blade == 1001) {
+        if (isHikariCurrent()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GfDataBlade::fn_71002356BC(unsigned int blade) {
+    if (blade == 0) {
+        return false;
+    }
+    return GfDataParty::fn_710024BAE0(0, blade) || GfDataParty::fn_710024BAE0(1, blade) ||
+           GfDataParty::fn_710024BAE0(2, blade);
+}
+
 bool GfDataBlade::isDummyBlade(unsigned int blade) {
     return blade - 1124 < 9 || blade - 1012 < 2 || blade == 1073 || blade == 1110;
 }
@@ -3710,6 +3784,16 @@ bool GfDataBlade::isActivateParty(unsigned int blade) {
     }
     unsigned int driver = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_setDriver;
     return static_cast<unsigned int>(GfDataParty::getDriverPartyID(driver)) < 3;
+}
+
+int GfDataDriver::fn_710023B6A8(unsigned int driver) {
+    SDataDriver* data = getSDataDriver(driver);
+    for (int slot = 0; slot < 3; slot++) {
+        if (GfDataBlade::isDummyBlade(data->m_blades[slot])) {
+            return slot;
+        }
+    }
+    return -1;
 }
 
 int GfDataBlade::fn_710023B798(unsigned int driver, unsigned int blade, int slot) {
@@ -4079,6 +4163,19 @@ mm::Vec3* GfDataParty::getSaveRot(unsigned int index, bool flag) {
     return &game->m_saveRot2[index];
 }
 
+bool GfDataParty::fn_710024BAE0(unsigned int index, unsigned int blade) {
+    PartyMember& member = GfDataManager::getDataGame()->m_party.m_members[index];
+    if (member.m_driver == 0) {
+        return false;
+    }
+    for (int i = 0; i < GfDataDriver::getMaxSetBladeNum(member.m_driver); i++) {
+        if (GfDataDriver::getBlade(member.m_driver, i) == blade) {
+            return true;
+        }
+    }
+    return false;
+}
+
 unsigned int GfDataEnemy::getRscIdByArrangeId(unsigned int arrange) {
     unsigned int param = GfBdatChrEnArrange::get()->getChrEnArrangeParamID(arrange);
     if (param == 0) {
@@ -4296,6 +4393,88 @@ bool GfDataEvent::isSavedEvent(unsigned int event, const SDataGame& game) {
     return false;
 }
 
+unsigned int GfDataEvent::fn_710024F720(unsigned int event) {
+    GfBdatShop* shop = GfBdatShop::get();
+    unsigned int row = shop->getMNU_EventTheaterStart();
+    unsigned int end = shop->getMNU_EventTheaterEnd();
+    for (; row < end; row++) {
+        if (shop->getMNU_EventTheaterevent_id(row) != event) {
+            continue;
+        }
+        unsigned int blade = shop->getMNU_EventTheaterblade_id(row);
+        if (blade > 1000) {
+            return blade;
+        }
+        switch (shop->getMNU_EventTheatermaincast(row)) {
+        case 1:
+            return 1007;
+        case 2:
+            return 1015;
+        case 3:
+            return 1016;
+        case 4:
+            return 1017;
+        case 5:
+            return 1020;
+        case 6:
+            return 1022;
+        case 7:
+            return 1021;
+        case 8:
+            return 1038;
+        case 9:
+            return 1023;
+        case 11:
+            return 1024;
+        case 12:
+            return 1025;
+        case 13:
+            return 1026;
+        case 14:
+            return 1027;
+        case 15:
+            return 1028;
+        case 16:
+            return 1029;
+        case 17:
+            return 1030;
+        case 18:
+            return 1031;
+        case 19:
+            return 1032;
+        case 20:
+            return 1033;
+        case 21:
+            return 1034;
+        case 22:
+            return 1035;
+        case 23:
+            return 1036;
+        case 24:
+            return 1037;
+        case 25:
+            return 1039;
+        case 26:
+            return 1040;
+        case 27:
+            return 1018;
+        case 28:
+            return 1019;
+        case 29:
+            return 1041;
+        case 30:
+            return 1104;
+        case 34:
+            return 1108;
+        case 35:
+            return 1109;
+        default:
+            return 0;
+        }
+    }
+    return 0;
+}
+
 unsigned int GfDataEvent::fn_710024F7CC(unsigned int event) {
     GfBdatChrBl* bl = GfBdatChrBl::get();
     unsigned int row = bl->getChrBlStart();
@@ -4307,6 +4486,23 @@ unsigned int GfDataEvent::fn_710024F7CC(unsigned int event) {
         }
     }
     return 0;
+}
+
+bool GfDataEvent::fn_710024F844(mm::Vec3& pos, float& angle, unsigned int event) {
+    unsigned char* fp = GfDataBdat::getFP(fn_710024EBD8(event));
+    if (fp == nullptr) {
+        return false;
+    }
+    Bdat::uVal val;
+    val.uint = Bdat::getValCheck(fp, "zoneX", event, 8);
+    pos.x = val.real;
+    val.uint = Bdat::getValCheck(fp, "zoneY", event, 8);
+    pos.y = val.real;
+    val.uint = Bdat::getValCheck(fp, "zoneZ", event, 8);
+    pos.z = val.real;
+    val.uint = Bdat::getValCheck(fp, "zoneR", event, 8);
+    angle = val.real * 0.017453292f;
+    return true;
 }
 
 bool GfDataEvent::fn_710024F910(unsigned int event) {
@@ -4756,6 +4952,38 @@ bool GfDataParty::empty() {
     return true;
 }
 
+unsigned int GfDataParty::fn_710024BC9C(unsigned int handle, unsigned int driver) {
+    if (driver - 0x11 < 9) {
+        switch (fn_710024BCEC(driver)) {
+        case 1:
+            return getFixedHandleForBlade(handle, 0);
+        case 2:
+            return getFixedHandleForBlade(handle, 1);
+        }
+    }
+    return handle;
+}
+
+unsigned int GfDataParty::fn_710024BCEC(unsigned int driver) {
+    GfBdatChrDr* bdat = GfBdatChrDr::get();
+    unsigned int ira = bdat->fn_71001F13E0(driver);
+    if (ira != 0) {
+        unsigned int group = bdat->fn_71001F172C(ira);
+        unsigned int row = bdat->fn_71001F15D4();
+        unsigned int end = bdat->fn_71001F15E0();
+        unsigned int count = 0;
+        for (; row < end; row++) {
+            if (bdat->fn_71001F161C(row) == driver) {
+                return count;
+            }
+            if (bdat->fn_71001F172C(row) == group) {
+                count++;
+            }
+        }
+    }
+    return 0;
+}
+
 unsigned int GfDataHana::getRole(unsigned int hana) {
     GfBdatItem* bdat = GfBdatItem::get();
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)];
@@ -5066,6 +5294,16 @@ void GfDataBlade::fn_710024E9CC(bool flag) {
 
 void GfDataBlade::fn_710024EA00(bool flag) {
     GfGameFlag::setLocal(1, 0xD863, flag);
+}
+
+unsigned int GfDataBlade::fn_710024EA10() {
+    Bdat::getFP("FLD_MapGimmick");
+    unsigned int count = 0;
+    if (GfGameFlag::getLocal(1, 0xABFA) != 0) count++;
+    for (int flag = 0xAC00; flag <= 0xAC08; flag++) {
+        if (GfGameFlag::getLocal(1, flag) != 0) count++;
+    }
+    return count;
 }
 
 unsigned int GfDataEvent::fn_710024ED1C(unsigned int event) {

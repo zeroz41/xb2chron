@@ -51,6 +51,21 @@ public:
     static mm::Vec3* getSavePos(unsigned int index, bool flag);
     static mm::Vec3* getSaveRot(unsigned int index, bool flag);
     static bool empty();  // no driver in the first three members
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among GfDataParty's functions (after getSaveRot). What it does: whether the driver of the game data's
+    // party member at index (SDataParty::m_members) has blade in one of its getMaxSetBladeNum slots
+    // (GfDataDriver::getBlade). Callers: GfAssetSetupBlade::setup, GfDataBlade::fn_71002356BC and fn_71002376E8.
+    static bool fn_710024BAE0(unsigned int index, unsigned int blade);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
+    // unit among GfDataParty's functions (after empty, before getFixedHandleForBlade) and calls fn_710024BCEC.
+    // What it does: handle unchanged unless driver is a DLC driver (0x11..0x19); then fn_710024BCEC(driver) 1 or 2
+    // gives getFixedHandleForBlade(handle, 0 or 1). Caller: GfObjFactory::createDriver.
+    static unsigned int fn_710024BC9C(unsigned int handle, unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason as
+    // fn_710024BC9C (its only caller). What it does: takes the driver's CHR_Ir row (GfBdatChrDr::fn_71001F13E0) and
+    // its GroupID, then counts the CHR_Ir rows of that group before the row whose driverID is the driver
+    // (0 for no row or no match).
+    static unsigned int fn_710024BCEC(unsigned int driver);
 };
 
 // the party's part of the game data (GfDataParty::getSDataParty points at it); the name is not the original's

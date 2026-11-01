@@ -65,6 +65,11 @@ public:
     // getSDataDriver uses: driver - 0x11 for a DLC row (0x11-0x19), else driver - 1 clamped to 1 past 0x10
     // (caller fn_71002EAF78).
     static unsigned int fn_710024229C(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it takes a driver row and
+    // reads its data the getSDataDriver way (inlined), next to GfDataBlade::fn_710023B798's driver functions. What it
+    // does: the first of the driver's three blade slots (SDataDriver::m_blades) holding a GfDataBlade::isDummyBlade
+    // blade, -1 for none. Caller: gf::fn_71002EC268.
+    static int fn_710023B6A8(unsigned int driver);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among GfDataDriver's
     // functions (right before fn_71002417DC) and takes a driver row. What it does: for a DLC driver row (0x11-0x19)
     // collects every GfBdatChrDr row of type 1 whose group (fn_71001F172C) equals the driver's into the list
