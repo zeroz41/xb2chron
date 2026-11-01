@@ -71,6 +71,10 @@ public:
     unsigned int m_seed1;
 };
 
+// Placeholder name (1.0.0 leaves it unnamed too): a color drawn between two HSV keys (key[0..2], key[3..5]) from
+// seed, written to out as red, green and blue (KeyFrameIP::get_ip3_col and mul_ip3_col call it)
+void fn_7100853550(mm::Vec3* out, const float* key, unsigned int& seed);
+
 }}  // namespace ptlib::math
 
 #endif

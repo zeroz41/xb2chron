@@ -14,7 +14,8 @@
 
 namespace ptlib { namespace math {
 
-// the library's random sequence (fxMath_RandI; the symbols leave it unnamed, the name is not the original's)
+// the library's random sequence (fxMath_RandI, randf2). Proposed name, not the original's: the symbols leave it
+// unnamed (lbl_71015E9D50)
 static unsigned int s_randSeed;
 
 float fxMath_rsqrt(float x) {
@@ -63,8 +64,181 @@ void KeyFrameIP::setup_keyrand(EPkey* key, int count, unsigned int& seed) {
     m_seed1 = key->m_seed[1];
 }
 
-// get_ip1, get_ip2, get_ip3_col, fn_7100853550, mul_ip3_col, keyrand_get_ip1 and both keyrand_get_ip3 (and
-// keyrand_mul_ip3, which calls one) are not identical yet: see the report
+// a key's value drawn from seed: the base values, then their ranges scaled by randf2 (KeyFrameIP's get_ functions;
+// the names are not the original's)
+inline float randKey1(const float* key, unsigned int& seed) {
+    return key[0] + key[1] * randf2(seed);
+}
+inline void randKey2(vec2f* out, const float* key, unsigned int& seed) {
+    out->x = key[0] + key[2] * randf2(seed);
+    out->y = key[1] + key[3] * randf2(seed);
+}
+inline void randKey3(mm::Vec3NA* out, const float* key, unsigned int& seed) {
+    out->x = key[0] + key[3] * randf2(seed);
+    out->y = key[1] + key[4] * randf2(seed);
+    out->z = key[2] + key[5] * randf2(seed);
+}
+
+float KeyFrameIP::get_ip1(int index) {
+    float value0 = randKey1(m_key0 + index, m_seed0);
+    float value1 = randKey1(m_key1 + index, m_seed1);
+    float rate = m_rate;
+    return rate * value1 + (1.0f - rate) * value0;
+}
+
+void KeyFrameIP::get_ip2(vec2f* out, int index) {
+    vec2f value0;
+    vec2f value1;
+    randKey2(&value0, m_key0 + index, m_seed0);
+    randKey2(&value1, m_key1 + index, m_seed1);
+    float rate = m_rate;
+    float inv = 1.0f - rate;
+    out->x = value0.x * inv + rate * value1.x;
+    out->y = value0.y * inv + rate * value1.y;
+}
+
+void KeyFrameIP::get_ip3(mm::Vec3NA* out, int index) {
+    mm::Vec3NA value0;
+    mm::Vec3NA value1;
+    randKey3(&value0, m_key0 + index, m_seed0);
+    randKey3(&value1, m_key1 + index, m_seed1);
+    float rate = m_rate;
+    float inv = 1.0f - rate;
+    out->x = value0.x * inv + value1.x * rate;
+    out->y = value0.y * inv + rate * value1.y;
+    out->z = value0.z * inv + rate * value1.z;
+}
+
+void KeyFrameIP::get_ip3(mm::Vec3* out, int index) {
+    mm::Vec3NA value0;
+    mm::Vec3NA value1;
+    randKey3(&value0, m_key0 + index, m_seed0);
+    randKey3(&value1, m_key1 + index, m_seed1);
+    float rate = m_rate;
+    float inv = 1.0f - rate;
+    out->x = value0.x * inv + value1.x * rate;
+    out->y = value0.y * inv + rate * value1.y;
+    out->z = value0.z * inv + rate * value1.z;
+}
+
+void KeyFrameIP::get_ip3_col(mm::Vec3* out, int index) {
+    mm::Vec3 color0;
+    mm::Vec3 color1;
+    fn_7100853550(&color0, m_key0 + index, m_seed0);
+    fn_7100853550(&color1, m_key1 + index, m_seed1);
+    float rate = m_rate;
+    float inv = 1.0f - rate;
+    out->x = inv * color0.x + rate * color1.x;
+    out->y = inv * color0.y + rate * color1.y;
+    out->z = inv * color0.z + rate * color1.z;
+}
+
+// a value drawn between a and b from seed (fn_7100853550's; the name is not the original's)
+inline float randRange(float a, float b, unsigned int& seed) {
+    return a + fabsf(randf2(seed)) * (b - a);
+}
+
+// Placeholder name: 1.0.0 has it unnamed too (fn_710092F800, called by get_ip3_col and mul_ip3_col). What it
+// does: a hue, saturation and value each drawn between the key's two values (key[0..2] and key[3..5]; the hues
+// the shorter way round the circle) from seed, converted to red, green and blue in out.
+// A sector of 6 (a hue of exactly 1) is sector 0 again; past that (NaN) the color is black.
+void fn_7100853550(mm::Vec3* out, const float* key, unsigned int& seed) {
+    float h1, h0;
+    h0 = key[0];
+    h1 = key[3];
+    if (fabsf(h0 - h1) > 0.5f) {
+        if (h1 < h0) {
+            h1 += 1.0f;
+        } else {
+            h0 += 1.0f;
+        }
+    }
+    float h = randRange(h0, h1, seed);
+    float s = randRange(key[1], key[4], seed);
+    float v = randRange(key[2], key[5], seed);
+    if (h > 1.0f) {
+        h -= 1.0f;
+    }
+    float h6 = h * 6.0f;
+    int sector = static_cast<int>(floorf(h6));
+    float f = h6 - sector;
+    float p = (1.0f - s) * v;
+    float q = v * (1.0f - s * f);
+    float t = v * (1.0f - s * (1.0f - f));
+    switch (sector) {
+    case 0:
+        out->x = v;
+        out->y = t;
+        out->z = p;
+        break;
+    case 1:
+        out->x = q;
+        out->y = v;
+        out->z = p;
+        break;
+    case 2:
+        out->x = p;
+        out->y = v;
+        out->z = t;
+        break;
+    case 3:
+        out->x = p;
+        out->y = q;
+        out->z = v;
+        break;
+    case 4:
+        out->x = t;
+        out->y = p;
+        out->z = v;
+        break;
+    case 5:
+        out->x = v;
+        out->y = p;
+        out->z = q;
+        break;
+    case 6:
+        out->x = v;
+        out->y = t;
+        out->z = p;
+        break;
+    default:
+        out->x = 0.0f;
+        out->y = 0.0f;
+        out->z = 0.0f;
+        break;
+    }
+}
+
+void KeyFrameIP::mul_ip3_col(mm::Vec3* out, int index) {
+    mm::Vec3 color;
+    get_ip3_col(&color, index);
+    out->x = color.x * out->x;
+    out->y = color.y * out->y;
+    out->z = color.z * out->z;
+}
+
+float KeyFrameIP::keyrand_get_ip1(EPkey* key, unsigned int& seed) {
+    setup_keyrand(key, 1, seed);
+    return get_ip1(0);
+}
+
+void KeyFrameIP::keyrand_get_ip3(mm::Vec3NA* out, EPkey* key, unsigned int& seed) {
+    setup_keyrand(key, 3, seed);
+    get_ip3(out, 0);
+}
+
+void KeyFrameIP::keyrand_get_ip3(mm::Vec3* out, EPkey* key, unsigned int& seed) {
+    setup_keyrand(key, 3, seed);
+    get_ip3(out, 0);
+}
+
+void KeyFrameIP::keyrand_mul_ip3(mm::Vec3NA* out, EPkey* key, unsigned int& seed) {
+    mm::Vec3NA value;
+    keyrand_get_ip3(&value, key, seed);
+    out->x = value.x * out->x;
+    out->y = value.y * out->y;
+    out->z = value.z * out->z;
+}
 
 }}  // namespace ptlib::math
 
