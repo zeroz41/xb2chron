@@ -410,6 +410,49 @@ bool GfMenuObjBladeRelease::seqSubMenuErrorOvdLastOne() {
     return true;
 }
 
+bool GfMenuObjBladeRelease::seqSubMenuDrChange() {
+    if (!m_seqStep) {
+        const MenuBladeInfo& info = m_bladeList->getContents(m_bladeList->getIndex(false));
+        MenuDriverInfo driver;
+        driver.m_driver = 0;
+        unsigned int owner = info.m_creator;
+        m_driverList->clear();
+        // m_drivers[i] read twice: the loop test folds the first index check away, the second one stays
+        for (unsigned int i = 0; i < m_drivers.size(); i++) {
+            if (m_drivers[i] != owner) {
+                driver.m_driver = m_drivers[i];
+                m_driverList->addContents(driver);
+            }
+        }
+        m_context->reset();
+        GfMenuObjCommonText::openDrChange(m_context, owner, m_driverList);
+        m_seqStep = true;
+        return false;
+    }
+    if (!m_context->isTerm()) {
+        return false;
+    }
+    GfMenuCallContext::GfMenuResult result;
+    if (!m_context->m_results.empty() && m_context->popResult(result) && result.m_value == 0) {
+        const MenuBladeInfo& info = m_bladeList->getContents(m_bladeList->getIndex(false));
+        if (GfDataBlade::isActivateDriver(info.m_blade)) {
+            int slot = GfDataBlade::getDriverSetID(info.m_blade);
+            if (slot != -1) {
+                SCOM_PARTY_ADD::removeBlade(info.m_creator, slot, true);
+            }
+        }
+        m_driverList->setIndex(result.m_id);
+        unsigned int blade = info.m_blade;
+        GfDataBlade::setCreator(blade, m_driverList->getContents(m_driverList->getIndex(false)).m_driver);
+        GfItemUtil::addItemBox(0x6340, -1);
+        m_seq.addJob(&GfMenuObjBladeRelease::seqSubMenuOwnerChange);
+    } else {
+        m_seq.addJob(&GfMenuObjBladeRelease::seqSubMenuOpen);
+    }
+    m_seqStep = false;
+    return true;
+}
+
 bool GfMenuObjBladeRelease::seqSubMenuConfSetRex() {
     if (!m_seqStep) {
         m_context->reset();
