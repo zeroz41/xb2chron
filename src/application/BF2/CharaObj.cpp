@@ -72,6 +72,7 @@
 #include "classes/event/Extend.h"
 #include "classes/event/CharaEvaPlayerEff.h"
 #include "classes/event/CharaWpnAsm.h"
+#include "classes/event/CharaEvaPlayer.h"
 #include "classes/gf/GfEvtModel.h"
 #include "classes/event/CamEvaPlayer.h"
 #include "classes/event/CamEvaPlayerEff.h"
@@ -483,6 +484,17 @@ void CharaWinkPlayer::idle_waiting() {
 }
 
 void CharaMount::init() {}
+
+// undoes the mount: the model leaves its parent and gets its saved transform back
+void CharaMount::term() {
+    if (m_model && m_parent) {
+        gf::GfComTransform* transform = gf::GfObjUtil::getObj(m_model->m_handle)->getComponent<gf::GfComTransform>(0);
+        m_model->resetMount(m_parent);
+        transform->setPosition(m_pos);
+        transform->setRotation(m_rot);
+        m_parent = nullptr;
+    }
+}
 
 int CharaFade::update(const ICmd::Param& param) {
     float step = static_cast<CharaObj*>(param.m_param.val(0).getUserdata())->m_frameInfo.m_step;
@@ -1501,6 +1513,25 @@ void CharaObj::stopRimBloom() {
 
 CharaWpnAsm::~CharaWpnAsm() {}
 
+void CharaEvaPlayer::setBattleWeapon(int weapon) {
+    CharaWpnAsm::CMD cmd = static_cast<CharaWpnAsm::CMD>(weapon - 1);
+    switch (m_model->m_modelType) {
+    // the cases in this order (the two-weapon ones apart): the original tests 0, 1, then 2
+    case 2:
+        m_wpnRight.execCmd(m_model, cmd, false, nullptr);
+        break;
+    case 1:
+        m_wpnRight.execCmd(m_model, cmd, false, nullptr);
+        m_wpnLeft.execCmd(m_model, cmd, true, nullptr);
+        break;
+    case 0:
+        m_wpnRight.execCmd(m_model, cmd, false, nullptr);
+        m_wpnLeft.execCmd(m_model, cmd, true, nullptr);
+        break;
+    }
+    m_battleWeapon = weapon;
+}
+
 CharaEvaPlayerEff::~CharaEvaPlayerEff() {
     if (m_rcha) {
         delete m_rcha;
@@ -1788,6 +1819,10 @@ void StatusManager::OnEventProc(event::MSG_TYPE msg) {
 #include "classes/event/FadeManager.h"
 
 namespace event {
+
+DofManager::DofManager()
+    : pad_10(0), pad_14(0), pad_18(1), pad_1c(0.0f), pad_20(0.0f), pad_24(5.0f), pad_28(false), pad_2c(0.0f),
+      pad_30(0.1f), pad_34(5.0f), pad_38(0.6f), pad_3c(4.0f), pad_40(1.0f), pad_44(0), pad_48(false), pad_50("") {}
 
 DofManager::~DofManager() {}
 
@@ -4143,6 +4178,31 @@ int SeqManager::play_start::update(const ICmd::Param& param) {
         SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
         manager->m_flags &= ~4;
         manager->m_seqName = "play start";
+    }
+    if (gf::GfScriptManager::isScriptLoadError(2)) {
+        gf::GfScriptManager::destroyScript(2);
+        static_cast<SeqManager*>(param.m_param.val(0).getUserdata())->m_flags |= 1;
+    }
+    return false;
+}
+
+int SeqManager::play_next::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        gf::SCOM_SCRIPT::create(2, param.m_param.val(1).getStr(), false);
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        // a 64-bit mask as mm::mtl::Bitflag::set builds it (m_flags may be a Bitflag<32>): the select tests eq
+        unsigned long mask = 1UL << 2;
+        if (param.m_param.val(2).getBool()) {
+            manager->m_flags |= mask;
+        } else {
+            manager->m_flags &= ~mask;
+        }
+        UIManager* ui = mm::mtl::Singleton<UIManager>::getPtr();
+        if (!(ui->m_flags & 1)) {
+            gf::GfMenuObjFade::dispLoading(true, 0);
+            ui->m_flags |= 1;
+        }
+        manager->m_seqName = "play next";
     }
     if (gf::GfScriptManager::isScriptLoadError(2)) {
         gf::GfScriptManager::destroyScript(2);
