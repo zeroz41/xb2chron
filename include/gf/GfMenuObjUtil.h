@@ -271,6 +271,32 @@ public:
     // ui::UIUtil::fn_7100696970(3) and GfGameManager::fn_71002A9E68 hold and fn_71002EB3C0 does not;
     // GfMenuCharDataAdapter::update_DR_BtlFace then shows face 0xB for driver 0x14.
     static bool fn_710048FCF8();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has isBladeCurrent before
+    // canRemoveBladeEx, a different body). A member because its address lies among GfMenuObjUtil's functions (unit
+    // GfMenuObjUtil, right before canRemoveBladeEx). What it does: whether blade is one of 1043..1049
+    // (GfMenuObjBlWeapon2::ItemSelectListener::reciveEvent).
+    static bool fn_7100491990(unsigned int blade);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // GfMenuObjUtil's functions (unit GfMenuObjUtil, between fn_7100490CE0 and convMenuBladeID). What it does: the
+    // same body as getBladeSlotMax (1, 2 once local flag 0x89FF is 1, 3 once 0x8A00 is 1); callers
+    // GfMenuObjSaveLoad2::refreshSave and fn_71002EAF78.
+    static unsigned int fn_7100490D28();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // GfMenuObjUtil's functions (unit GfMenuObjUtil, after fn_71004903F4). What it does: 0 unless
+    // GfGameManager::isClearGame; then the first of blades 1005, 1006, 1007 that GfDataBlade::fn_71002383C8 holds
+    // for, else 0 (GfMenuObjBladeSet2::BladeListListener::reciveEvent).
+    static unsigned int fn_7100490440();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // GfMenuObjUtil's functions (unit GfMenuObjUtil, after fn_7100490440). What it does: false once the game is
+    // cleared and driver 4 is GfDataDriver::isActivateUnuse; true when driver 4 is not isActivateParty; else whether
+    // more than one of party slots 0-2 has a driver (GfGameParty::getDriverBdatId(slot, 0) != 0)
+    // (GfMenuBladeList::setupFromTeam).
+    static bool fn_71004904A0();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
+    // GfMenuObjUtil's functions (unit GfMenuObjUtil, after getName). What it does: GfDataBlade::fn_7100239934(blade,
+    // flag), and for blade 1001/1002 the same for both, for 1005..1007 for all three (the blade release, blade set
+    // and mercenary form listeners call it).
+    static void fn_71004922BC(unsigned int blade, bool flag);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
     // GfMenuObjUtil's functions (unit GfMenuObjUtil). What it does: true when bit 2 of byte 4 of
     // ui::UIUtil::getPadData() is set, else that byte's bit 1 (GfMenuObjFieldSkill::update stops its voice when this
@@ -361,6 +387,18 @@ public:
     static unsigned int getMissionCondBladeCount(const GfRequestBladeData& data, const GfMenuBladeList* list);
     // the list's blades meet every blade condition of the mission
     static bool checkMissionCond(unsigned int mission, const GfMenuBladeList* list);
+    // a mercenary mission's data as GfMenuObjMercenaryTop::updateMissionList shows it (getMissionInfo fills it from
+    // GfDataMercenaries; the names are not the original's)
+    struct MissionInfo {
+        int m_category;                // getMissionCategory
+        unsigned int m_reward;         // getMissionRewardID
+        unsigned int m_map;            // getMissionMapID
+        unsigned int m_flags;          // bit 0 new, bit 1/2/3 mission flag 1/2/3
+        unsigned int m_team;           // getTeamIDByMissionID
+        unsigned int m_fieldSkills[3]; // getFieldSkill1..3
+    };
+    // false for mission 0
+    static bool getMissionInfo(unsigned int mission, MissionInfo& info);
 };
 }  // namespace gf
 

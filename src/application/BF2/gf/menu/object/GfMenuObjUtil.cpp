@@ -57,6 +57,11 @@
 #include "classes/ui/UIColorLibrary.h"
 #include "mm/Col3.h"
 #include "mm/Col4.h"
+#include "classes/gf/GfQuestManager.h"
+#include "classes/gf/GfWeapon.h"
+#include "ui/UIStr.h"
+#include "gf/GfDataMercenaries.h"
+#include "classes/gf/GfBdatBgm.h"
 
 namespace gf {
 namespace {
@@ -433,6 +438,10 @@ bool GfMenuObjUtil::isExitDriver(unsigned int index) {
     return GfGameParty::getHandleDriver(index, 0) != reinterpret_cast<GF_OBJ_HANDLE*>(-1);
 }
 
+bool GfMenuObjUtil::fn_710048FCF8() {
+    return ui::UIUtil::fn_7100696970(3) && GfGameManager::fn_71002A9E68() && !fn_71002EB3C0();
+}
+
 bool GfMenuObjUtil::fn_710048FD30(unsigned int layer) {
     if (ui::UIUtil::fn_7100696970(layer)) {
         if (layer == 1) {
@@ -448,6 +457,35 @@ bool GfMenuObjUtil::fn_710048FD30(unsigned int layer) {
         }
     }
     return false;
+}
+
+unsigned int GfMenuObjUtil::getDriverClassBuffType(unsigned int driverClass, unsigned int index) {
+    if (driverClass == 0) {
+        return 0;
+    }
+    unsigned char* fp = GfDataBdat::getFP(0x18);
+    if (fp == nullptr) {
+        return 0;
+    }
+    unsigned int column = 0;
+    unsigned int count = 0;
+    unsigned int found;
+    bool hate;
+    int value;
+    do {
+        do {
+            if (column >= 5) {
+                return 0;
+            }
+            found = column;
+            hate = column - 3 < 2;
+            unsigned long raw = Bdat::getVal(fp, s_classBuffColumns[column], driverClass);
+            value = hate ? static_cast<int>(static_cast<signed char>(raw))
+                         : static_cast<int>(static_cast<unsigned char>(raw));
+            column++;
+        } while (value == 0);
+    } while (count++ != index);
+    return found - 3 < 2 && value < 0 ? found + 3 : found + 1;
 }
 
 unsigned int GfMenuObjUtil::getDriverClassBuffRatio(unsigned int driverClass, unsigned int index) {
@@ -493,6 +531,35 @@ bool GfMenuObjUtil::fn_71004903F4() {
     return GfDataBlade::fn_71002383C8(1007);
 }
 
+unsigned int GfMenuObjUtil::fn_7100490440() {
+    if (!GfGameManager::isClearGame()) {
+        return 0;
+    }
+    if (GfDataBlade::fn_71002383C8(1005)) {
+        return 1005;
+    }
+    if (GfDataBlade::fn_71002383C8(1006)) {
+        return 1006;
+    }
+    return GfDataBlade::fn_71002383C8(1007) ? 1007 : 0;
+}
+
+bool GfMenuObjUtil::fn_71004904A0() {
+    if (!GfGameManager::isClearGame() || GfDataDriver::isActivateUnuse(4)) {
+        return false;
+    }
+    if (!GfDataDriver::isActivateParty(4)) {
+        return true;
+    }
+    unsigned int count = 0;
+    for (unsigned int slot = 0; slot < 3; slot++) {
+        if (GfGameParty::getDriverBdatId(slot, 0) != 0) {
+            count++;
+        }
+    }
+    return count >= 2;
+}
+
 bool GfMenuObjUtil::isBladeEnableOffset(unsigned int driver, int offset) {
     if (ui::UIUtil::fn_7100696970(3) && GfGameManager::fn_71002A9E68()) {
         return true;
@@ -521,6 +588,19 @@ gf::GF_OBJ_HANDLE* GfMenuObjUtil::getBladeHandleFromPartySlot(unsigned int drive
         return reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     }
     return GfGameParty::getHandleBlade(driver, set);
+}
+
+unsigned int GfMenuObjUtil::getBladeIDFromPartySlot(unsigned int driver, int slot, bool flag) {
+    if (driver > 9) {
+        return 0;
+    }
+    DataParamAcc acc(3, GfDataParty::getDriver(driver, 0), static_cast<GimmickType>(0));
+    int set = getSetBladeID(driver, slot, flag);
+    unsigned int blade = 0;
+    if (set != -1) {
+        blade = acc.getBlade(set, false);
+    }
+    return blade;
 }
 
 unsigned int GfMenuObjUtil::getBladeSlotMax() {
@@ -560,8 +640,44 @@ unsigned short GfMenuObjUtil::getBladeAttributeID(unsigned int blade) {
     return GfDataBlade::getSDataBlade(blade)->m_attribute;
 }
 
+unsigned int GfMenuObjUtil::fn_7100490D28() {
+    unsigned int max = 1;
+    if (GfGameFlag::getLocal(1, 0x89FF) == 1) {
+        max = 2;
+    }
+    if (GfGameFlag::getLocal(1, 0x8A00) == 1) {
+        max = 3;
+    }
+    return max;
+}
+
 bool GfMenuObjUtil::isBladeDifferentImage(unsigned int blade, unsigned int other) {
     return convMenuBladeID(blade) != convMenuBladeID(other);
+}
+
+unsigned int GfMenuObjUtil::getBladeCorrectiveType(unsigned int blade) {
+    if (!GfDataBlade::isValid(blade)) {
+        return 0;
+    }
+    if (GfDataBlade::getHpMaxRev(blade) * 0.01f > 0.0f) {
+        return 1;
+    }
+    if (GfDataBlade::getStrengthRev(blade) * 0.01f > 0.0f) {
+        return 2;
+    }
+    if (GfDataBlade::getPowerEtherRev(blade) * 0.01f > 0.0f) {
+        return 3;
+    }
+    if (GfDataBlade::getDexRev(blade) * 0.01f > 0.0f) {
+        return 4;
+    }
+    if (GfDataBlade::getAgilityRev(blade) != 0) {
+        return 5;
+    }
+    if (GfDataBlade::getLuckRev(blade) != 0) {
+        return 6;
+    }
+    return 0;
 }
 
 unsigned int GfMenuObjUtil::getBladeRank(unsigned int blade) {
@@ -590,6 +706,10 @@ unsigned int GfMenuObjUtil::getBladeRarity(unsigned int blade) {
         return 2;
     }
     return GfDataBlade::isRareBlade(blade);
+}
+
+bool GfMenuObjUtil::fn_7100491990(unsigned int blade) {
+    return blade - 1043 < 7;
 }
 
 bool GfMenuObjUtil::canRemoveBlade(unsigned int blade, const mm::mtl::FixedVector<unsigned short, 422>* list) {
@@ -621,6 +741,18 @@ unsigned int GfMenuObjUtil::playSE(const char* se) {
         return sound->playSe(se, nullptr, 1.0f, static_cast<fw::SoundCategory>(3));
     }
     return 0;
+}
+
+void GfMenuObjUtil::fn_71004922BC(unsigned int blade, bool flag) {
+    GfDataBlade::fn_7100239934(blade, flag);
+    if (blade - 1001 < 2) {
+        GfDataBlade::fn_7100239934(1001, flag);
+        GfDataBlade::fn_7100239934(1002, flag);
+    } else if (blade - 1005 < 3) {
+        GfDataBlade::fn_7100239934(1005, flag);
+        GfDataBlade::fn_7100239934(1006, flag);
+        GfDataBlade::fn_7100239934(1007, flag);
+    }
 }
 
 bool GfMenuObjUtil::isEnemyNamed(gf::GF_OBJ_HANDLE* handle) {
@@ -695,6 +827,23 @@ void GfMenuObjUtil::stopSE(unsigned int handle, float time) {
     }
 }
 
+unsigned int GfMenuObjUtil::playBGM(unsigned int bgm, bool loop, fw::SoundCategory category) {
+    if (mm::mtl::PtrSingleton<fw::SoundManager>::get() != nullptr &&
+        mm::mtl::PtrSingleton<GfBdatBgm>::get() != nullptr) {
+        unsigned short resource =
+            static_cast<unsigned short>(Bdat::getVal(GfDataBdat::getFP(0x188), "resource", bgm));
+        if (resource) {
+            const char* name = mm::mtl::PtrSingleton<GfBdatBgm>::get()->getBgmListfilename(resource);
+            if (name != nullptr && name[0] != '\0') {
+                mm::mtl::FixStr<128> path;
+                path.format("stream/bgm/%s", name);
+                return mm::mtl::PtrSingleton<fw::SoundManager>::get()->playBgm(path.m_str, 1.0f, loop, -1, category);
+            }
+        }
+    }
+    return 0;
+}
+
 void GfMenuObjUtil::stopBGM(unsigned int handle, float time) {
     if (handle != 0) {
         if (fw::SoundManager* sound = mm::mtl::PtrSingleton<fw::SoundManager>::get()) {
@@ -731,12 +880,49 @@ void GfMenuObjUtil::playVibration(fw::VibrationID id, float scale) {
     fw::PadManager::playVibration(info);
 }
 
+ui::UIStr GfMenuObjUtil::getEnemyArtsName(unsigned int arts) {
+    unsigned char* fp = GfDataBdat::getFP(6);
+    unsigned char* ms = GfDataBdat::getFP(0x192);
+    if (GfMenuBdat::isValidBdatID(fp, arts)) {
+        unsigned short name = static_cast<unsigned short>(Bdat::getVal(fp, "Name", arts));
+        if (name != 0) {
+            return ui::UIStr(ms, name);
+        }
+    }
+    return ui::UIStr();
+}
+
+ui::UIStr GfMenuObjUtil::getElementComboName(unsigned int combo) {
+    unsigned char* fp = Bdat::getFP("BTL_ElementalCombo");
+    if (!GfMenuBdat::isValidBdatID(fp, combo)) {
+        return ui::UIStr();
+    }
+    unsigned char name = static_cast<unsigned char>(Bdat::getVal(fp, "Name", combo));
+    if (name == 0) {
+        return ui::UIStr(reinterpret_cast<const char*>(Bdat::getVal(fp, "DebugName", combo)), false);
+    }
+    return ui::UIStr(Bdat::getFP("btl_elementalcombo_ms"), name);
+}
+
 unsigned char GfMenuObjUtil::getElementComboAtr(unsigned int combo) {
     unsigned char* fp = Bdat::getFP("BTL_ElementalCombo");
     if (!GfMenuBdat::isValidBdatID(fp, combo)) {
         return 0;
     }
     return static_cast<unsigned char>(Bdat::getVal(fp, "Atr", combo));
+}
+
+ui::UIStr GfMenuObjUtil::getElementComboEffectName(unsigned int combo) {
+    unsigned char* fp = Bdat::getFP("BTL_ElementalCombo");
+    if (GfMenuBdat::isValidBdatID(fp, combo)) {
+        unsigned char atr = static_cast<unsigned char>(Bdat::getVal(fp, "Atr", combo));
+        unsigned char name =
+            static_cast<unsigned char>(Bdat::getVal(Bdat::getFP("BTL_ElementalEffect"), "Name", atr));
+        if (name != 0) {
+            return ui::UIStr(Bdat::getFP("btl_elementaleffect_ms"), name);
+        }
+    }
+    return ui::UIStr();
 }
 
 unsigned char GfMenuObjUtil::getElementComboEffect(unsigned int combo) {
@@ -757,8 +943,70 @@ bool GfMenuObjUtil::isInBattle(gf::GF_OBJ_HANDLE* handle) {
     return false;
 }
 
+QuestID GfMenuObjUtil::getCurrentQuest(unsigned int type) {
+    QuestID quest;
+    if (type == 0) {
+        quest = GfQuestManager::getProgressCurrentQuest(static_cast<QTYPE>(1));
+    } else if (type == 1) {
+        quest = GfQuestManager::getProgressCurrentQuest(static_cast<QTYPE>(3));
+        if (quest.empty()) {
+            quest = GfQuestManager::getProgressCurrentQuest(static_cast<QTYPE>(2));
+        }
+    }
+    if (!quest.empty() && GfQuestInfo::isQuestOrder(quest)) {
+        return quest;
+    }
+    return QuestID();
+}
+
 bool GfMenuObjUtil::isQuestCompleted(QuestID id) {
     return GfQuestInfo::isQuestFin(id);
+}
+
+bool GfMenuObjUtil::getMissionInfo(unsigned int mission, MissionInfo& info) {
+    if (mission == 0) {
+        return false;
+    }
+    info.m_category = GfDataMercenaries::getMissionCategory(mission);
+    info.m_map = GfDataMercenaries::getMissionMapID(mission);
+    info.m_team = GfDataMercenaries::getTeamIDByMissionID(mission);
+    info.m_reward = GfDataMercenaries::getMissionRewardID(mission);
+    info.m_flags = 0;
+    switch (GfDataMercenaries::getMissionFlag(mission)) {
+    case 1:
+        info.m_flags |= 2;
+        break;
+    case 2:
+        info.m_flags |= 4;
+        break;
+    case 3:
+        info.m_flags |= 8;
+        break;
+    }
+    if (GfDataMercenaries::isNewMission(mission)) {
+        info.m_flags |= 1;
+    }
+    info.m_fieldSkills[0] = GfDataMercenaries::getFieldSkill1(mission);
+    info.m_fieldSkills[1] = GfDataMercenaries::getFieldSkill2(mission);
+    info.m_fieldSkills[2] = GfDataMercenaries::getFieldSkill3(mission);
+    return true;
+}
+
+unsigned int GfMenuObjUtil::convMenuDriverID(unsigned int driver) {
+    unsigned char* fp = GfDataBdat::getFP(0x175);
+    DataParamAcc acc(3, driver, static_cast<GimmickType>(0));
+    unsigned int id = 0;
+    if (acc.isValid()) {
+        int top = Bdat::getIdTop(fp);
+        int face = getFaceIconID(acc);
+        for (int i = 0; i < Bdat::getIdCount(fp); i++) {
+            if (face == static_cast<unsigned short>(Bdat::getVal(fp, "icon_id", top + i))) {
+                id = i + 1;
+                break;
+            }
+        }
+    }
+    return id;
 }
 
 bool GfMenuObjUtil::getMenuCondition(unsigned int condition) {
@@ -767,6 +1015,18 @@ bool GfMenuObjUtil::getMenuCondition(unsigned int condition) {
         return false;
     }
     return GfGameCond::isGameCond(static_cast<unsigned short>(Bdat::getVal(fp, "cond", condition)));
+}
+
+void GfMenuObjUtil::placeObjectHLeft(unsigned int handle, const char* format, unsigned int count,
+                                     const mm::Pnt<short>& left, unsigned int width) {
+    mm::mtl::FixStr<32> name;
+    unsigned int x = static_cast<unsigned short>(left.x);
+    short y = left.y;
+    for (int i = 0; i < static_cast<int>(count); x += width) {
+        name.format(format, ++i);
+        ui::UIObjectAcc acc(handle, name.m_str);
+        acc.setPosCenter(mm::Pnt<short>(x, y));
+    }
 }
 
 unsigned int GfMenuObjUtil::getFavoriteStat(unsigned int type, unsigned int id, FAVORITE favorite) {
