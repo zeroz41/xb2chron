@@ -9,6 +9,9 @@ namespace ml { class DrEnvironmentLgtList; }
 namespace ml { class DrLightObj; }
 namespace ml { class DrShdLgtMan; }
 namespace ml { struct LgtObjData; }
+namespace ml { struct LgtPosTreeRange; }
+namespace ml { struct LgtPosData; }
+namespace ml { class DrLightObjPnt; }
 
 namespace ml {
 // table 0x7100B7B270
@@ -21,10 +24,10 @@ public:
         m_work2 = nullptr;
         m_captureMode = 0;
         m_lgtArray[0] = nullptr;
-        m_work[3] = nullptr;
-        m_work[4] = nullptr;
+        m_work3 = nullptr;
+        m_work4 = nullptr;
         m_work[1] = nullptr;
-        m_work[2] = nullptr;
+        m_posTree = nullptr;
         m_resource = resource;
         m_weatherNum = 0;
         m_work[0] = nullptr;
@@ -43,6 +46,12 @@ public:
 
     void releaseLgt();
     void setupLgt(int);
+    void setupPoint(DrEnvironmentLgtList* list, DrLightObjPnt* light, const LgtObjData* data, const LgtPosData* pos);
+    void updatePosLgt();
+    void setupOfsPos();
+    void setupCalcMatrix();
+    void calcTreePos(const LgtPosTreeRange* node, DrCalcViewWork* work);
+    void calcLgtObj(int idx, DrCalcViewWork* work);
 
     // per light type callbacks (s_pCallEnvRelase, s_pCallEnvChk, s_pCallCalcEnv, s_pCallLgtRender, s_pCallLgtRender2D)
     void callback_Relase_Non(DrLightObj* light);

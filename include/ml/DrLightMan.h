@@ -2,6 +2,7 @@
 #define ML_DRLIGHTMAN_H
 
 #include "classes/ml/DrLightObj.h"
+#include "mm/Col3.h"
 
 namespace ml {
 class DrMan;
@@ -86,7 +87,9 @@ public:
     int m_instantSptNum;  // 0x10C
     unsigned char pad_110[0x10];
     float m_lumColor[3];  // 0x120, getSkyLuminance weighs it with m_ambColor (the name is not the original's)
-    float m_ambColor[3];  // 0x12C: DrCalcViewWork::unistatic_lightAmb's colour (the name is not the original's)
+    // 0x12C: DrCalcViewWork::unistatic_lightAmb's colour; DrEnvironmentObjLgt::updatePosLgt copies its m_ambColor
+    // here (the name is not the original's)
+    mm::Col3 m_ambColor;
     unsigned char pad_138[0x30];
     // stockBegin clears both (the names are not the original's)
     int m_stockCount;  // 0x168

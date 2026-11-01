@@ -566,10 +566,10 @@ void DrMdoMpfMan::updateUniformWork() {
         buff += 24;
     }
     m_windBlock.updateData();
-    const float* amb = m_pDrMan->m_lightMan->m_ambColor;
-    float r = amb[0];
-    float g = amb[1];
-    float b = amb[2];
+    const mm::Col3& amb = m_pDrMan->m_lightMan->m_ambColor;
+    float r = amb.r;
+    float g = amb.g;
+    float b = amb.b;
     r *= 0.5f;
     g *= 0.5f;
     b *= 0.5f;

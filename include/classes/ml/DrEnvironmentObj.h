@@ -1,6 +1,7 @@
 #ifndef CLASSES_ML_DRENVIRONMENTOBJ_H
 #define CLASSES_ML_DRENVIRONMENTOBJ_H
 
+#include "mm/Col3.h"
 #include "mm/Mat44.h"
 #include "mm/Vec3.h"
 #include "ml/DrEnvironmentAnim.h"
@@ -9,6 +10,7 @@ namespace grlib { class CGLibTextureBuffer; }
 
 namespace ml {
 class DrEnvironmentLgtList;
+struct LgtPosTreeRange;
 class DrResWrkClipList;
 class DrFogMan;
 class DrLightMan;
@@ -17,7 +19,8 @@ class DrMan;
 // a 16-byte record of the light resource: DrEnvironmentObjLgt::setFrame clamps the frame to its m_endFrame (the
 // type and field names are not the original's)
 struct EnvFrameRange {
-    unsigned char pad_0[0xC];
+    unsigned char pad_0[0x8];
+    float m_loopFrame;  // 0x8, calcLgtObj wraps a frame past m_endFrame back by the excess from it
     float m_endFrame;  // 0xC
 };
 
@@ -132,17 +135,25 @@ public:
     int m_lgtArg;  // 0x150, DrEnvironmentMan's m_lgtArg; resourceInit passes it to setupLgt
     unsigned char pad_154[0x4];
     const void* m_resource;  // 0x158, createObj's resource
-    void* m_work[5];         // 0x160; releaseLgt deallocates m_work[4] (the names are not the original's)
-    unsigned char pad_188[0x8];
+    void* m_work[2];         // 0x160 (the names are not the original's)
+    // 0x170, the light position tree's nodes; updatePosLgt walks it from node 0 with calcTreePos (name inferred)
+    const LgtPosTreeRange* m_posTree;
+    void* m_work3;           // 0x178
+    void* m_work4;           // 0x180, releaseLgt deallocates it
+    // 0x188, a bit per light: calcLgtObj sets the bits of the lights it adds to m_renderList (updatePosLgt clears
+    // them each frame; the name is not the original's)
+    unsigned int* m_calcBits;
     DrResWrkClipList* m_work2;  // 0x190, setupLgt sets its work up when the resource has a clip list
     DrEnvironmentLgtList* m_lgtList;  // 0x198, m_lgtNum of them (debugRenderLgt2D)
     DrEnvironmentLgtList** m_renderList;  // 0x1A0, m_renderLgtNum of them (renderLgt)
-    unsigned char pad_1a8[0x8];
+    // 0x1A8, the previous frame's m_renderList: updatePosLgt swaps the two and releases the lights it no longer
+    // calculates (the name is not the original's)
+    DrEnvironmentLgtList** m_prevRenderList;
     // light object arrays by type and their counts (releaseLgt destroys each element through its table; elements
     // 0x40, 0xA0, 0xC0, 0xF0, 0x250 and 0x68 bytes; the names are not the original's)
     void* m_lgtArray[6];     // 0x1B0
     int m_renderLgtNum;  // 0x1E0, renderLgt's light count
-    unsigned char pad_1e4[0x4];
+    int m_prevRenderLgtNum;  // 0x1E4, m_prevRenderList's count (the name is not the original's)
     int m_lgtArrayNum[5];    // 0x1E8
     int m_lgtNum;  // 0x1FC, setupLgt reads it from the resource; debugRenderLgt2D's light count
     int m_lgtArray5Num;      // 0x200, m_lgtArray[5]'s count
@@ -150,7 +161,12 @@ public:
     int m_weatherNum;        // 0x208, update compares DrPixlPostParm's +0x107C with it
     unsigned char pad_20c[0x4];
     mm::Vec3 m_viewPos;  // 0x210, the s_pCallEnvChk callbacks measure each light's distance to it (name inferred)
-    unsigned char pad_220[0x1C];
+    // 0x220, the m_offsetPos the lights were last set up for: updatePosLgt calls setupOfsPos when it changes (name
+    // inferred)
+    mm::Vec3 m_prevOfsPos;
+    // 0x230, updatePosLgt copies it to DrLightMan::m_ambColor when m_updateReq has bit 1 (the name is not the
+    // original's)
+    mm::Col3 m_ambColor;
     // 0x23C, ScnObjLightDrSys::setFromCaptureTool sets 2 (the name is not the original's)
     unsigned char m_captureMode;
 };

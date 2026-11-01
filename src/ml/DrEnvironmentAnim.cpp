@@ -38,6 +38,7 @@
 #include "math.h"
 #include "ml/CriticalSection.h"
 #include "ml/DrAPGxType.h"
+#include "ml/DrCalcMan.h"
 #include "ml/DrCalcViewWork.h"
 #include "ml/DrEnvColiMan.h"
 #include "ml/DrEnvironmentAnim.h"
@@ -455,6 +456,101 @@ void DrEnvironmentObjLgt::setFrame(float frame) {
     for (int i = 0; i < m_anim.m_rangeNum; i++) {
         float end = m_anim.m_frameRange[i].m_endFrame;
         m_anim.m_rangeFrame[i] = end < frame ? end : frame;
+    }
+}
+
+void DrEnvironmentObjLgt::updatePosLgt() {
+    unsigned int bitsSize = (m_lgtNum / 32 + 1) * 4;
+    memset(m_calcBits, 0, bitsSize + (-bitsSize & 0x1F));
+    DrEnvironmentLgtList** renderList = m_renderList;
+    m_renderList = m_prevRenderList;
+    m_prevRenderList = renderList;
+    m_renderList[0] = nullptr;
+    m_prevRenderLgtNum = m_renderLgtNum;
+    m_renderLgtNum = 0;
+    if (m_work2 != nullptr) {
+        m_work2->update(m_drMan->m_calcMan->m_pClipMan);
+    }
+    DrCalcViewWork* work = m_drMan->m_calcMan->m_pViewWork;
+    m_frame += m_frameSpd;
+    if (m_maxFrame < m_frame) {
+        m_frame = 0.0f;
+    }
+    m_viewPos.x = work->m_viewPos.x - m_offsetPos.x;
+    m_viewPos.y = work->m_viewPos.y - m_offsetPos.y;
+    m_viewPos.z = work->m_viewPos.z - m_offsetPos.z;
+    if (!(m_flags & FLAG_OFS_MATRIX)) {
+        if (m_offsetPos.x != m_prevOfsPos.x || m_offsetPos.y != m_prevOfsPos.y || m_offsetPos.z != m_prevOfsPos.z) {
+            m_prevOfsPos.x = m_offsetPos.x;
+            m_prevOfsPos.y = m_offsetPos.y;
+            m_prevOfsPos.z = m_offsetPos.z;
+            setupOfsPos();
+        }
+        calcTreePos(m_posTree, work);
+    } else {
+        setupCalcMatrix();
+        for (int i = 0; i < m_lgtNum; i++) {
+            calcLgtObj(i, work);
+        }
+    }
+    DrEnvironmentLgtList** prevList = m_prevRenderList;
+    for (int i = 0; i < m_prevRenderLgtNum; i++, prevList++) {
+        DrEnvironmentLgtList* list = *prevList;
+        int idx = list->m_idx;
+        if ((m_calcBits[idx >> 5] & (1 << (idx & 0x1F))) == 0) {
+            (this->*s_pCallEnvRelase[list->m_data->m_type])(list->m_light);
+        }
+    }
+    if (m_updateReq & 2) {
+        m_lightMan->m_ambColor = m_ambColor;
+    }
+}
+
+void DrEnvironmentObjLgt::calcTreePos(const LgtPosTreeRange* node, DrCalcViewWork* work) {
+    int lgtNum = node->m_lgtNum;
+    if (lgtNum != 0) {
+        const int* lgt = reinterpret_cast<const int*>(static_cast<const char*>(m_resource) + node->m_lgtOfs);
+        for (int i = 0; i < lgtNum; i++) {
+            calcLgtObj(*lgt++, work);
+        }
+    }
+    int childNum = node->m_childNum;
+    if (childNum != 0) {
+        const unsigned short* child =
+            reinterpret_cast<const unsigned short*>(static_cast<const char*>(m_resource) + node->m_childOfs);
+        for (int i = 0; i < childNum; i++, child++) {
+            const LgtPosTreeRange* range = m_posTree + *child;
+            if (range->m_max[0] < m_viewPos.x || range->m_min[0] > m_viewPos.x || range->m_max[1] < m_viewPos.y ||
+                range->m_min[1] > m_viewPos.y || range->m_max[2] < m_viewPos.z || range->m_min[2] > m_viewPos.z) {
+                continue;
+            }
+            calcTreePos(range, work);
+        }
+    }
+}
+
+void DrEnvironmentObjLgt::calcLgtObj(int idx, DrCalcViewWork* work) {
+    DrEnvironmentLgtList* list = &m_lgtList[idx];
+    const LgtObjData* data = list->m_data;
+    if (data->m_animFlags & 1) {
+        unsigned int anim = data->m_animIdx;
+        const EnvFrameRange* range = &m_anim.m_frameRange[anim];
+        float* frame = &m_anim.m_rangeFrame[anim];
+        *frame += m_frameSpd;
+        if (*frame > range->m_endFrame) {
+            *frame = (range->m_endFrame - *frame) + range->m_loopFrame;
+        }
+    }
+    if (data->m_calcFlags & 4) {
+        list->m_rate = 1.0f;
+    } else if (!(this->*s_pCallEnvChk[data->m_type])(list, work, data)) {
+        return;
+    }
+    if ((this->*s_pCallCalcEnv[data->m_type])(list, work)) {
+        m_calcBits[idx >> 5] |= 1 << (idx & 0x1F);
+        list->m_light->update(m_lightMan);
+        m_renderList[m_renderLgtNum] = list;
+        m_renderLgtNum++;
     }
 }
 
@@ -1129,9 +1225,9 @@ float DrLightMan::getSkyLuminance() const {
     const DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
     float ambRate = parm->m_skyLumAmbRate;
     float colorRate = parm->m_skyLumColorRate;
-    float r = ambRate * m_ambColor[0] + colorRate * m_lumColor[0];
-    float g = ambRate * m_ambColor[1] + colorRate * m_lumColor[1];
-    float b = ambRate * m_ambColor[2] + colorRate * m_lumColor[2];
+    float r = ambRate * m_ambColor.r + colorRate * m_lumColor[0];
+    float g = ambRate * m_ambColor.g + colorRate * m_lumColor[1];
+    float b = ambRate * m_ambColor.b + colorRate * m_lumColor[2];
     return r * 0.299f + g * 0.587f + b * 0.114f;
 }
 
