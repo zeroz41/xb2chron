@@ -11,6 +11,9 @@
     "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../../MCL/mm_lib/source\\mm_mtl/fixed_list.h"
 #elif defined(MM_LIB_FROM_LIBS)
 #define MM_MTL_FIXED_LIST_PATH "../../../mcl/mm_lib/source\\mm_mtl/fixed_list.h"
+#elif defined(MM_LIB_FROM_XBRD)
+// xbrd's (ml::DrIBLObj's list erase cites it so)
+#define MM_MTL_FIXED_LIST_PATH "D:/Monolithsoft/BF2/prog/libs/xbrd/proj/windows/../../../mcl/mm_lib/source\\mm_mtl/fixed_list.h"
 #else
 #define MM_MTL_FIXED_LIST_PATH \
     "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/fixed_list.h"

@@ -1,3 +1,5 @@
+// xbrd's library (its vector.h, algorithm.h and fixed_list.h assertions cite xbrd's mcl path)
+#define MM_LIB_FROM_XBRD
 #include "classes/ml/DrLightObj.h"
 #include "classes/ml/DrLightObjDir.h"
 #include "classes/ml/DrLightObjPnt.h"
@@ -7,6 +9,7 @@
 #include "ml/DrPixlMan.h"
 #include "ml/DrPixlShadowMan.h"
 #include "ml/DrAPGxType.h"
+#include "ml/DrShdLgtGlobalIBL.h"
 #include "ml/DrShdLgtMan.h"
 #include "classes/ml/DrFogObjGbl.h"
 #include "classes/ml/DrGlobalIBLPack.h"
@@ -39,6 +42,8 @@
 #include "ml/DrFogMan.h"
 #include "ml/DrIBLColiAcc.h"
 #include "ml/DrIniSys.h"
+#include "ml/DrIrrVolMan.h"
+#include "ml/irrvol/DrIrrVolCascade.h"
 #include "ml/DrLightObjGlobalIBL.h"
 #include "ml/DrLightMan.h"
 #include "ml/DrMdoAnim.h"
@@ -51,6 +56,8 @@
 #include "ml/DrPixlShadowCacheMan.h"
 #include "ml/DrPixlShadowMan.h"
 #include "ml/DrResMdoMat.h"
+#include "ml/DrResQueryObj.h"
+#include "ml/DrShdLgtGlobalIBL.h"
 #include "ml/DrShdLgtMan.h"
 #include "ml/DrShdMan.h"
 #include "ml/MdoWrkMatRes.h"
@@ -560,6 +567,27 @@ void MemHandlebaseAllocator::deallocate(void* memory) {
 }
 }  // namespace irrvol
 
+// --- DrIrrVolMan ---
+DrIrrVolMan::~DrIrrVolMan() {
+    release();
+}
+
+void DrIrrVolMan::release() {
+    if (m_globalInfo != nullptr) {
+        for (unsigned int i = 0; i < m_globalInfo->m_cascadeNum; ++i) {
+            if (m_cascades[i] != nullptr) {
+                delete m_cascades[i];
+                m_cascades[i] = nullptr;
+            }
+        }
+        if (m_cascades != nullptr) {
+            delete[] m_cascades;
+            m_cascades = nullptr;
+        }
+        m_globalInfo = nullptr;
+    }
+}
+
 // --- DrEnvironmentObjLgt render / release callbacks ---
 DrEnvironmentMan::DrEnvironmentMan(DrMan* drMan, DrLightMan* lightMan, DrFogMan* fogMan, int lgtArg) {
     m_drMan = drMan;
@@ -623,9 +651,49 @@ bool DrGlobalIBLPack::checkFileType(const void* data) {
     return header->m_version == 10100 || header->m_version == 20000;
 }
 
+DrGlobalIBLPack::DrGlobalIBLPack(const void* data, int viewIdx)
+    : m_prev(nullptr), m_next(nullptr), m_viewIdx(viewIdx), m_data(data), m_flags(0), m_prevFlags(0),
+      m_captureMode(1) {}
+
+DrGlobalIBLPack::~DrGlobalIBLPack() {
+    for (unsigned int i = 0; i < m_lights.size(); ++i) {
+        if (m_lights[i] != nullptr) {
+            delete m_lights[i];
+            m_lights[i] = nullptr;
+        }
+    }
+    m_lights.destroy();
+    m_memPool.release();
+}
+
+void DrGlobalIBLPack::release() {
+    DrMan* man = DrMan::getIns();
+    for (unsigned int i = 0; i < m_lights.size(); ++i) {
+        man->m_lightMan->m_shdLgtMan->m_pGlobalIBL->removeObj(m_lights[i], m_viewIdx);
+    }
+}
+
 // --- DrLightObjGlobalIBL ---
+void DrLightObjGlobalIBL::bindVertex(unsigned int index) {
+    m_bindIndex = index;
+    grlib::CGLibCtlVertex::setVertex(m_meshes[index].m_vertex);
+}
+
+void DrLightObjGlobalIBL::drawVertex() {
+    m_meshes[m_bindIndex].m_index.drawIndex();
+}
+
 unsigned int DrLightObjGlobalIBL::getPriority() const {
     return m_priority;
+}
+
+void DrLightObjGlobalIBL::beginOccQuery() {
+    DrPixlOccQuery* occ = DrMan::getIns()->m_pixlMan->m_occQuery;
+    m_meshes[m_bindIndex].m_query->begin(occ);
+}
+
+void DrLightObjGlobalIBL::endOccQuery() {
+    m_meshes[m_bindIndex].m_query->end();
 }
 
 // --- DrFogMan ---
@@ -657,6 +725,25 @@ void DrLightMan::stockBegin() {
     m_stockState = 0;
     m_stockCount = 0;
     m_drMan->m_shdMan->m_lgtMan->stockBegin();
+}
+
+void DrLightMan::update() {
+    updateAmb();
+    updateDir();
+    LightList& pnt = m_stockList[DrLightObj::TYPE_PNT][DrMan::s_nDblIdx];
+    for (DrLightObj* obj = pnt.m_head; obj != nullptr;) {
+        DrLightObj* next = obj->m_next;
+        m_list[DrLightObj::TYPE_PNT].append(obj);
+        obj = next;
+    }
+    pnt.m_head = pnt.m_tail = nullptr;
+    LightList& spt = m_stockList[DrLightObj::TYPE_SPT][DrMan::s_nDblIdx];
+    for (DrLightObj* obj = spt.m_head; obj != nullptr;) {
+        DrLightObj* next = obj->m_next;
+        m_list[DrLightObj::TYPE_SPT].append(obj);
+        obj = next;
+    }
+    spt.m_head = spt.m_tail = nullptr;
 }
 
 void DrLightMan::stockEnd() {
