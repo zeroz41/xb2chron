@@ -11,16 +11,19 @@ namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfGameObj; }
 namespace gf { class GfGameObjEnemy; }
 namespace gf { class GfObj; }
+namespace gf { class GfObjAcc; }
 namespace gf { class GfSetupParam; }
 #include "classes/gf/IGfObjListener.h"
 
 namespace fw { class UpdateInfo; }
+namespace mm { class Vec3; }
 namespace gf {
 // a message GfGameObj queues for an object (FixedList<gf::ObjMsg, 256>::erase is this unit's; 16 bytes, 8-aligned:
 // the list's nodes are 24 bytes)
 struct ObjMsg {
-    unsigned long pad_0;
-    unsigned long pad_8;
+    // destroyGameObjWithAttribute queues the object and its attribute (the names are not the original's)
+    GF_OBJ_HANDLE* m_handle;
+    unsigned int m_attr;
 };
 
 // table 0x7100B550B8 (0x55C78 bytes, GfGameObj::build): the game's objects by type, and the ones entering and
@@ -46,6 +49,12 @@ public:
     GfGameObj(const GfSetupParam& param);
     static void build(const GfSetupParam& param);
     void initialize(const GfSetupParam& param);
+    static void destroy();
+    // the enter/leave fades, the search lists, the enemies, the first stale message, then the camera fades
+    static void update(const fw::UpdateInfo& info);
+    void updateEnterLeaveObj(const fw::UpdateInfo& info);  // the in and out lists' fades
+    // a list's objects too near the camera (or not at full alpha) recalculate their camera alpha
+    void calcCameraFade(const ObjList& list, const mm::Vec3& camPos);
     // SCOM_DESTROY_GAME_OBJ passes its request's object, time and attribute
     static void destroyGameObjWithAttribute(gf::GF_OBJ_HANDLE* handle, float fadeTime, unsigned int);
     int getObjNumberByEnArrangeId(unsigned int arrangeId);  // the live objects of an enemy arrange id
@@ -59,6 +68,8 @@ public:
     // false when the object is not faded out but must be destroyed at once (destroyGameObj)
     bool addOutObj(GF_OBJ_HANDLE* handle, float fadeTime, bool);
     void removeGameObj(GF_OBJ_HANDLE* handle);
+    // on: the object is in the game (flag 14, collision, components) and joins the entered list, else the left one
+    void enableGameObj(GfObjAcc& acc, bool on);
     // the list of a type's objects (5: the enemies', or the enemy blades' when handle is one)
     ObjList* getListType(unsigned int kind, GF_OBJ_HANDLE* handle);
     static ObjList* getListEnemyBlade();
@@ -73,6 +84,7 @@ public:
     static void enterStayObject(GF_OBJ_HANDLE* handle);
     static void enterStayObjectMount(GF_OBJ_HANDLE* handle, GFATTACH attach);
     static void enterStayObjectWithVolumeFade(GF_OBJ_HANDLE* handle);
+    static void enterStayObjectMountWithVolumeFade(GF_OBJ_HANDLE* handle, GFATTACH attach);
     static void destroyGameObj(gf::GF_OBJ_HANDLE* handle, float fadeTime);
     static bool isDestroyGameObj(gf::GF_OBJ_HANDLE* handle);
     static GfObj* getObj(GF_OBJ_HANDLE* handle);

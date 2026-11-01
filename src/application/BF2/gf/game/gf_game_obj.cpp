@@ -11,12 +11,29 @@
 #include "classes/gf/GfMountManager.h"
 #include "gf/GfObjAcc.h"
 #include "gf/GfObjUtil.h"
+#include "gf/GfObjInfo.h"
+#include "gf/GfGameUtil.h"
+#include "gf/GfDataBlade.h"
+#include "classes/gf/GfGameParty.h"
+#include "classes/gf/GfGameSearchObj.h"
+#include "classes/gf/GfObjSetupBlade.h"
+#include "classes/gf/GfObjSetupWeapon.h"
+#include "mm/mtl/RTTI.h"
+#include "classes/gf/GfPause.h"
+#include "classes/gf/GfInfo.h"
 
 namespace gf {
 
 GfGameObj::GfGameObj(const GfSetupParam& param) : m_enemy(nullptr), pad_55c70(false) {
     initialize(param);
     GfObjManager::addListener(this, static_cast<IGfObjListener::OBJEVT>(0));
+}
+
+void GfGameObj::initialize(const GfSetupParam& param) {
+#line 234
+    m_enemy = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfGameObjEnemy();
+    GfGameSearchObj::build(param);
+    pad_55c70 = true;
 }
 
 GfGameObj::~GfGameObj() {
@@ -26,6 +43,38 @@ GfGameObj::~GfGameObj() {
 void GfGameObj::build(const GfSetupParam& param) {
 #line 213
     new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfGameObj(param);
+}
+
+void GfGameObj::destroy() {
+    GfGameObj* self = get();
+    self->m_msgs.clear();
+    GfGameSearchObj::destroy();
+    if (self->m_enemy != nullptr) {
+        delete self->m_enemy;
+        self->m_enemy = nullptr;
+    }
+    self->pad_55c70 = false;
+    delete self;
+}
+
+void GfGameObj::calcCameraFade(const ObjList& list, const mm::Vec3& camPos) {
+    for (ObjList::const_iterator it = list.begin(); it != list.end(); ++it) {
+        GfObjAcc acc(*it);
+        if (acc.getObj()->m_execUpdate) {
+            mm::Vec3 pos = acc.getWorldTransformNoSync().position;
+            float radius = acc.getModelRadius();
+            if (radius >= 50.0f) {
+                acc.setCalcCameraAlpha();
+                continue;
+            }
+            pos.y += radius;
+            mm::Vec3 diff = pos - camPos;
+            if (diff.x * diff.x + diff.y * diff.y + diff.z * diff.z < 400.0f || acc.getAlphaCamera() < 1.0f ||
+                acc.getAlpha() != acc.getModelAlpha()) {
+                acc.setCalcCameraAlpha();
+            }
+        }
+    }
 }
 
 void GfGameObj::postUpdate(const fw::UpdateInfo& info) {
@@ -101,6 +150,21 @@ GfGameObj::ObjList* GfGameObj::getListEnemyBlade() {
     return &get()->m_listEnemyBlade;
 }
 
+void GfGameObj::enableGameObj(GfObjAcc& acc, bool on) {
+    acc.setFlag(14, on);
+    acc.setCollisionChar(on);
+    acc.getObj()->setUpdateComponent(on);
+    if (!on) {
+        if (acc.isPartyObj() && GfGameParty::getPartyId(acc.getHandle()) != -1 &&
+            (acc.getType() == 3 || acc.getType() == 4)) {
+            GfGameUtil::resetFormationParam(acc.getHandle());
+        }
+        m_leaveObjs.push_back(acc.getHandle());
+    } else {
+        m_enterObjs.push_back(acc.getHandle());
+    }
+}
+
 void GfGameObj::flushEvent() {
     for (GF_OBJ_HANDLE** it = m_enterObjs.begin(); it != m_enterObjs.end(); ++it) {
         if (m_enemy != nullptr) {
@@ -147,12 +211,48 @@ bool GfGameObj::isEnterGameObj(GF_OBJ_HANDLE* handle) {
     return false;
 }
 
+void GfGameObj::setupEnterGameObj(GF_OBJ_HANDLE* handle, float fadeTime) {
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    GfObjAcc acc(handle);
+    mm::mtl::FixedList<INOUT, 1024>& list = get()->m_inList;
+    for (mm::mtl::FixedList<INOUT, 1024>::iterator it = list.begin(); it != list.end(); ++it) {
+        if (it->m_handle == handle) {
+            if (acc.getType() == 4 && GfDataBlade::isDummyBlade(acc.getBladeId())) {
+                return;
+            }
+            it->m_fadeTime = fadeTime < 1e-6f ? 0.0f : fadeTime;
+            acc.setAlphaLife(fadeTime == 0.0f ? 1.0f : 0.0f);
+            return;
+        }
+    }
+}
+
 void GfGameObj::setupEnterGameObjMount(GF_OBJ_HANDLE* handle, GFATTACH attach, float fadeTime) {
     GfGameMount* mount = GfMountManager::getMount(GfObjUtil::getMountHandle(handle, attach));
     if (mount != nullptr) {
         unsigned int count = mount->getAllWeapons();
         for (unsigned int i = 0; i < count; ++i) {
             setupEnterGameObj(mount->getAllWeapons(i), fadeTime);
+        }
+    }
+}
+
+void GfGameObj::setupLeaveGameObj(GF_OBJ_HANDLE* handle, float fadeTime) {
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    GfGameObj* self = get();
+    GfObjAcc acc(handle);
+    if (self->addOutObj(handle, fadeTime, true)) {
+        acc.setCollisionChar(false);
+        if (acc.testFlag(8)) {
+            if (acc.getType() == 4) {
+                mm::mtl::rttiCast<GfObjSetupBlade>(GfObjManager::getObjInfo(handle)->m_setup)->pad_70 = true;
+            } else if (acc.getType() == 10) {
+                mm::mtl::rttiCast<GfObjSetupWeapon>(GfObjManager::getObjInfo(handle)->m_setup)->pad_70 = true;
+            }
         }
     }
 }
@@ -191,6 +291,66 @@ void GfGameObj::enterStayObjectWithVolumeFade(GF_OBJ_HANDLE* handle) {
     GfObjManager::enterStayObject(handle);
 }
 
+void GfGameObj::enterStayObjectMountWithVolumeFade(GF_OBJ_HANDLE* handle, GFATTACH attach) {
+    GfGameMount* mount = GfMountManager::getMount(GfObjUtil::getMountHandle(handle, attach));
+    if (mount != nullptr) {
+        unsigned int count = mount->getAllWeapons();
+        for (unsigned int i = 0; i < count; ++i) {
+            enterStayObjectWithVolumeFade(mount->getAllWeapons(i));
+        }
+    }
+}
+
+bool GfGameObj::isEmpty() {
+    GfGameObj* self = get();
+    if (self == nullptr) {
+        return true;
+    }
+    if (!self->m_listEnemy.empty()) {
+        return false;
+    }
+    if (!self->m_listEnemyBlade.empty()) {
+        return false;
+    }
+    if (!self->m_listType6.empty()) {
+        return false;
+    }
+    if (!self->m_listType7.empty()) {
+        return false;
+    }
+    if (!self->m_listType11.empty()) {
+        return false;
+    }
+    if (!self->m_listDriver.empty()) {
+        return false;
+    }
+    if (!self->m_listBlade.empty()) {
+        return false;
+    }
+    if (!self->m_listType8.empty()) {
+        return false;
+    }
+    if (!self->m_listType9.empty()) {
+        return false;
+    }
+    if (!self->m_listType10.empty()) {
+        return false;
+    }
+    if (!self->m_listType12.empty()) {
+        return false;
+    }
+    if (!self->m_listType0.empty()) {
+        return false;
+    }
+    if (!self->m_listType13.empty()) {
+        return false;
+    }
+    if (!self->m_inList.empty()) {
+        return false;
+    }
+    return self->m_outList.empty();
+}
+
 GfObj* GfGameObj::getObj(GF_OBJ_HANDLE* handle) {
     GfGameObj* self = get();
     GfObjAcc acc(handle);
@@ -205,5 +365,7 @@ GfObj* GfGameObj::getObj(GF_OBJ_HANDLE* handle) {
     }
     return GfObjUtil::getObj(handle);
 }
+
+GfGameObjEnemy::~GfGameObjEnemy() {}
 
 }  // namespace gf

@@ -256,6 +256,8 @@ public:
         bool m_aggressive;
         bool m_link;
     };
+    // GfGameObj::enableGameObj calls it for a party driver or blade leaving the game
+    static void resetFormationParam(gf::GF_OBJ_HANDLE* handle);
 };
 
 }  // namespace gf
