@@ -11,6 +11,8 @@ namespace mm { class Vec3; }
 
 namespace btl { namespace Utility {
 void GetArtsData(ARTS_DATA::DATA_TYPE type, int id, ARTS_DATA& data);
+// the id of the arts' enhance at index (1-based; ARTS_DATA::m_enhances[index - 1])
+unsigned short GetArtsEnhance(const ARTS_DATA& data, int index);
 int GetElementalEffectID();
 int GetUniteComboID(int, int);
 float GetDyingHpRate();
@@ -78,6 +80,10 @@ bool IsBattleStart(gf::GF_OBJ_HANDLE* handle);
 enum ENBOOK_TYPE : int;
 void RegisterEnemyBook(ENBOOK_TYPE type, gf::GF_OBJ_HANDLE* handle, int value);
 int AI_GetDeadCharacterNum(gf::GF_OBJ_HANDLE* handle, CHECK_CHR_NUM_MODE mode);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. In btl::Utility because its address sits
+// between AI_GetDeadCharacterNum and AI_AddKizuna. What it does: as AI_GetDeadCharacterNum with GetCharacterList
+// flags 0x64 instead of 0x65 (its only caller is fn_7100038984).
+int fn_7100014448(gf::GF_OBJ_HANDLE* handle, CHECK_CHR_NUM_MODE mode);
 // read by the btl_ai script plugin (ScriptCamMotion's unit)
 int AI_GetTargetedCharacterID(gf::GF_OBJ_HANDLE* handle);
 int AI_GetAimCharacterNum(gf::GF_OBJ_HANDLE* handle);
@@ -139,6 +145,11 @@ int fn_710001165C(int blade);
 // the siren battle singleton (lbl_7100B939D0) returns true; PadField's action and axis handlers ignore the pad
 // while it is true (3.0.1's PadField::decideAction etc. call it where 1.0.0's had nothing).
 bool fn_710000FBC4();
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. In btl::Utility because its address sits
+// between Utility functions (fn_710000FBC4, GetLeader) in the unit that holds them and it reads only singletons.
+// What it does: false while BattleGlobal::IsPause(-1), BattleGlobal's ButtonChallenge runs, ChainAttackManager::IsProc(true)
+// or BattleGlobal::fn_7100007554 holds, else true (BattleGlobal::UpdateProc, BattleCharacter::DropItem).
+bool fn_710000FC08();
 // What it does: sets btl::DataManager's byte at +0x15D1A to 1 (the btl_ai entry after setKizunaStage).
 void fn_7100010D84();
 // What it does: stores its argument at BattleGlobal +0x5DD8 (the last btl_ai entry; the script passes an int).

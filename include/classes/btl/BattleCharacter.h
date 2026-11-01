@@ -550,7 +550,9 @@ public:
     unsigned int pad_F08_4 : 6;
     unsigned int pad_F09_2 : 1;  // fn_710002FD3C answers false while it is set (meaning unknown)
     unsigned int pad_F09_3 : 1;  // fn_710002B4D8's argument (meaning unknown)
-    unsigned int pad_F09_4 : 20;
+    // Utility::fn_7100014958 answers false unless it is set and pad_F09_3 is clear (meaning unknown)
+    unsigned int pad_F09_4 : 1;
+    unsigned int pad_F09_5 : 19;
     unsigned int pad_F0C : 16;
     unsigned char pad_F0E[0x12];
     // the commands GetFreeCommand hands out, m_commandNum of them in use (the names are not the original's)
@@ -636,7 +638,10 @@ public:
     unsigned char pad_11B2 : 8;
     unsigned char pad_11B3_0 : 1;
     unsigned char pad_11B3_1 : 1;  // formation_change_manager's fn_710009ED18 returns it
-    unsigned char pad_11B3_2 : 6;
+    unsigned char m_useNavi : 1;  // Utility::AI_SetUseNavi sets it (the name is not the original's)
+    // Utility::AI_IsBattleOpening answers it and clears it (the name is not the original's)
+    unsigned char m_battleOpening : 1;
+    unsigned char pad_11B3_4 : 4;
     unsigned char pad_11B4 : 8;
     unsigned char pad_11B5[0xB];
 };

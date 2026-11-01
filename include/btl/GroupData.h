@@ -157,7 +157,10 @@ public:
     unsigned char pad_110[0x2];
     bool pad_112;  // while clear, ProgressCoolTime raises tutorial condition 25 when the cool time ends
     signed char m_buddyBladeIndex;
-    unsigned char pad_114[0x5];
+    unsigned char pad_114[0x1];
+    // Utility::AI_GetSpAttackLevel answers it + 1 (4 for 15) unless it is below 0
+    signed char pad_115;
+    unsigned char pad_116[0x3];
     bool pad_bit0 : 1;
     bool m_needPermit : 1;  // named after 1.0.0's SetNeedPermit
     // BattleCharacter::ResetRequestPermit clears both bits (the name is not the original's)
