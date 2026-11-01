@@ -19,6 +19,9 @@ struct Col4 : public Col3 {
     static const Col4 black;
     static const Col4 gray;  // GmkRoutedNpc::debugDraw passes it while its pop condition fails
     static const Col4 yellow;  // GmkRoute/GmkRoutedFootPrint::debugDraw pass it to debugDrawRoute
+    static const Col4 red;
+    static const Col4 green;
+    static const Col4 blue;
 };
 
 }  // namespace mm

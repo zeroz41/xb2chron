@@ -3,6 +3,7 @@
 
 #include "classes/gmk/AGmkBase.h"
 #include "plugin/Bdat.h"
+#include "mm/Vec3.h"
 
 namespace gmk {
 // table 0x7100B6D890
@@ -14,6 +15,13 @@ public:
         // inline and empty: initGmkBdatInfo reads the table pointer (getBindedBdatFp) and stores nothing
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {}
     };
+    // its data in the gimmick section (m_createInfo.m_data): debugDraw draws a line from m_pos - pad_10 to
+    // m_pos + pad_10 (pad_10's meaning not known)
+    struct Data {
+        mm::Vec3 m_pos;  // the point's position: GmkRoute::getRoutePointPos copies it (the name is not the original's)
+        mm::Vec3 pad_10;
+    };
+    const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     GmkRoutePoint() : pad_48(nullptr) {}  // inline: resize/extend construct in place with these stores
     virtual ~GmkRoutePoint();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2

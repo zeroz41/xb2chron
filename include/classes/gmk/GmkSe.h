@@ -40,6 +40,13 @@ public:
         BootedGmkCond m_bootedGmk;          // 0x38: the row's gimmickType/ID, no prefix (must be booted)
         BootedGmkCond m_bootedGmkNot;       // 0x3C: the row's OP_gimmickType/ID (must NOT be booted)
     };
+    // its data in the gimmick section (m_createInfo.m_data): debugDraw draws circles of radius pad_4 (blue) and
+    // pad_0 (red) around the gimmick (meanings not known)
+    struct Data {
+        float pad_0;
+        float pad_4;
+    };
+    const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     GmkSe() {}  // inline: construct_n<GmkSe> constructs in place with these stores
     virtual ~GmkSe();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
@@ -51,7 +58,10 @@ public:
     // 0x58..0x60: padding (the copies of Vector<T>::expand copy nothing there)
     GmkPhantom m_phantom;  // 0x60 (the name is not the original's)
     // fields the constructor clears (meaning unknown)
-    unsigned short pad_f0 = 0;
+    // 0xf0: update stores BdatInfo::isPopCondMatched's answer here and acts when it changes; debugDraw draws only
+    // while it is set (the name is not the original's)
+    bool m_popCondMatched = false;
+    unsigned char pad_f1 = 0;
     unsigned char pad_f2[0x2];
     unsigned m_seHandle = 0;  // 0xf4: the playing sound (dispose stops it; the name is not the original's)
     int pad_f8 = 0;

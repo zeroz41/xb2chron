@@ -1326,6 +1326,21 @@ void GmkRoute::dispose() { AGmkBase::dispose(); }
 void GmkRoutePoint::dispose() { AGmkBase::dispose(); }
 void GmkSquadLeader::dispose() { AGmkBase::dispose(); }
 void GmkSquadMember::dispose() { AGmkBase::dispose(); }
+
+// the colour is filled member by member (the original stores r alone, then g and b as one pair, then a)
+void GmkRoutePoint::debugDraw() const {
+    AGmkBase::debugDraw();
+    if (isValid()) {
+        mm::Col4 col;
+        const mm::Col3& cyan = mm::Col3::cyan;
+        col.r = cyan.r;
+        col.g = cyan.g;
+        col.b = cyan.b;
+        col.a = 0.8f;
+        const Data* data = getData();
+        fw::debug::drawLine(data->m_pos + data->pad_10, data->m_pos - data->pad_10, col);
+    }
+}
 // kinds whose create is the base one
 void GmkRoute::create(const CreateInfo& info) { AGmkBase::create(info); }
 
@@ -1401,6 +1416,15 @@ const GmkRoutePoint* GmkRoute::getRoutePoint(unsigned int index) const {
         }
     }
     return nullptr;
+}
+
+bool GmkRoute::getRoutePointPos(mm::Vec3& pos, unsigned int index) const {
+    const GmkRoutePoint* point = getRoutePoint(index);
+    if (point != nullptr && point->isValid()) {
+        pos = point->getData()->m_pos;
+        return true;
+    }
+    return false;
 }
 
 void GmkRoute::debugDraw() const {
@@ -3210,6 +3234,16 @@ void GmkSe::dispose() {
 }
 
 GmkSe::~GmkSe() { dispose(); }
+
+void GmkSe::debugDraw() const {
+    if (isValid() && m_popCondMatched) {
+        mm::Mat44 mtx;
+        mtx.setTrans(*m_pos);
+        const Data* data = getData();
+        fw::debug::drawCircleLine(mtx, data->pad_4, mm::Col4::blue);
+        fw::debug::drawCircleLine(mtx, data->pad_0, mm::Col4::red);
+    }
+}
 
 void GmkSeLine::dispose() {
     if (m_seHandle != 0) {

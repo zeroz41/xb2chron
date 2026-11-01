@@ -26,6 +26,13 @@ public:
         ScenarioFlagCond m_scenarioFlag;  // the row's ScenarioFlagMin (up to 0xFFFF when set)
         QuestFlagCond m_questFlag;        // the row's QuestFlag/Min/Max
     };
+    // its data in the gimmick section (m_createInfo.m_data): debugDraw prints pad_0 and pad_8 as "%s:%d" (meanings
+    // not known)
+    struct Data {
+        const char* pad_0;
+        int pad_8;
+    };
+    const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     GmkTutorial() {}  // inline: construct_n<GmkTutorial> constructs in place with these stores
     virtual ~GmkTutorial();  // slot 0
     virtual gmk::GmkType getGmkType() const;  // slot 2
