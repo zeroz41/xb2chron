@@ -46,6 +46,10 @@ public:
                                    const void* shape);
     static void createBaPosPoli(mm::Vec3& pos, mm::Vec3& offset, bool& flag, float& radius, float& height,
                                 const void* shape);
+    // the shape creators by IDColiObjBase::m_shapeType (IDColiObjPhantom::sizeUpdate, IDColiObjChar's constructor)
+    static void (*s_CallPrimSet[8])(void* base, IDColiBaseType& type, const mm::Mat44& matrix, const mm::Vec3& size);
+    // the bounding box creators by IDColiBaseType (IDColiObjPhantom::sizeUpdate)
+    static void (*s_CallAaBb[8])(mm::Vec3& max, mm::Vec3& min, const void* shape);
 };
 }  // namespace idcoli
 

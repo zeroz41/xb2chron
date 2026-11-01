@@ -58,6 +58,14 @@ public:
         return reinterpret_cast<const unsigned short*>(reinterpret_cast<const char*>(m_binary) +
                                                        info->m_primIndexOffset);
     }
+    IDColiObjData(IDColiTreeTop* tree) : IDColiObjBase(tree) {
+        m_binary = nullptr;
+        m_work = nullptr;
+        m_primWork = nullptr;
+        m_boneNum = 0;
+        m_primNum = 0;
+        m_subObj = nullptr;
+    }
     void createBinary(const void* data);
     void calcNodeMatrix(mm::Mat44& out, const mm::Mat44& parent, const CHCLBaseData* data, const CHCLBaseInfo* info);
     void calcLinkNodeMatrix(mm::Mat44& out, const CHCLBaseInfo* info);
@@ -100,7 +108,9 @@ public:
     IDColiObj* m_subObj;  // 0x200
     unsigned char pad_208[8];
     int pad_210;  // IDColiObjChar::update zeroes it
-    float pad_214[2];  // IDColiObjChar::update zeroes them
+    // two floats, not an array: IDColiObjChar::update zeroes them with one 8-byte store, not 0x210 with 0x214
+    float pad_214;  // IDColiObjChar::update zeroes it
+    float pad_218;  // IDColiObjChar::update zeroes it
     unsigned char pad_21c[4];
     float m_adsorption;  // 0x220, IDColiParmsCharacter::setAdsorption
 };

@@ -7,6 +7,7 @@
 #include "idcoli/IDColiResult.h"
 #include "idcoli/IDColiPrimitive.h"
 #include "idcoli/IDColiUtilColi.h"
+#include "idcoli/IDColiShapeWork.h"
 #include "classes/idcoli/IDColiObjBase.h"
 #include "idcoli/IDColiObjData.h"
 #include "classes/idcoli/IDColiObjChar.h"
@@ -71,6 +72,8 @@ void IDColiObjBase::sweepTreeMax(IdSweepAxisType axis, IdVectorAxisType componen
     }
 }
 
+IDColiObjCharCheck::IDColiObjCharCheck(IDColiTreeTop* tree) : IDColiObjChar(tree) {}
+
 bool IDColiObjCharCheck::testCheckBox(IDColiResult& result, const IDColiInput& input) {
     const void* base = m_base;
     if ((result.m_ignoreMaterial & m_materialBit) == 0 && (m_state & 2) && !(m_flags & 3)) {
@@ -87,10 +90,50 @@ void IDColiObjData::setBoneMatrix(int index, const mm::Mat44& matrix) {
     m_boneMatrix[index] = matrix;
 }
 
+void IDColiObjData::primset_sphere(void* base, IDColiBaseType& type, const CHCLBaseData* data, const CHCLBaseInfo* info) {
+    mm::Mat44 matrix;
+    calcNodeMatrix(matrix, m_matrix, data, info);
+    CLSphereWork* sphere = static_cast<CLSphereWork*>(base);
+    mm::Vec3 axis(matrix.m[0][0] + matrix.m[1][0] + matrix.m[2][0], matrix.m[0][1] + matrix.m[1][1] + matrix.m[2][1],
+                  matrix.m[0][2] + matrix.m[1][2] + matrix.m[2][2]);
+    float radius = axis.length() * IDColiObj::OBJ_CALC_RADIUS;
+    sphere->m_radius = data->m_size.x * radius;
+    sphere->m_center = matrix.getTrans();
+    type = IDCOLI_BASE_SPHERE;
+}
+
 void IDColiObjData::primset_capsule(void* base, IDColiBaseType& type, const CHCLBaseData* data, const CHCLBaseInfo* info) {
     mm::Mat44 matrix;
     calcNodeMatrix(matrix, m_matrix, data, info);
     IDColiPrimitive::createBaseCapsule(base, type, matrix, data->m_size);
+}
+
+void IDColiObjData::primset_bone_capsule(void* base, IDColiBaseType& type, const CHCLBaseData* data,
+                                         const CHCLBaseInfo* info) {
+    mm::Mat44 matrix;
+    calcNodeMatrix(matrix, m_matrix, data, info);
+    mm::Mat44 link;
+    calcLinkNodeMatrix(link, info);
+    CLCapsuleWork* capsule = static_cast<CLCapsuleWork*>(base);
+    capsule->m_pos = matrix.getTrans();
+    capsule->m_end = link.getTrans();
+    mm::Vec3 axis(matrix.m[0][0] + matrix.m[1][0] + matrix.m[2][0], matrix.m[0][1] + matrix.m[1][1] + matrix.m[2][1],
+                  matrix.m[0][2] + matrix.m[1][2] + matrix.m[2][2]);
+    float radius = axis.length() * IDColiObj::OBJ_CALC_RADIUS;
+    float dx = capsule->m_pos.x - capsule->m_end.x;
+    float dy = capsule->m_pos.y - capsule->m_end.y;
+    float dz = capsule->m_pos.z - capsule->m_end.z;
+    if (dx * dx + dy * dy + dz * dz <= 0.001f) {
+        // both ends at one point: a sphere
+        CLSphereWork* sphere = static_cast<CLSphereWork*>(base);
+        sphere->m_radius = radius * data->m_size.x;
+        sphere->m_center = matrix.getTrans();
+        type = IDCOLI_BASE_SPHERE;
+    } else {
+        capsule->m_radius = radius * data->m_size.x;
+        IDColiPrimitive::calcCapsuleSetup(capsule);
+        type = IDCOLI_BASE_CAPSULE;
+    }
 }
 
 void IDColiObjData::primset_box(void* base, IDColiBaseType& type, const CHCLBaseData* data, const CHCLBaseInfo* info) {
@@ -128,12 +171,23 @@ void IDColiObjChar::release() {
     releaseSubObj();
 }
 
+void IDColiObjChar::update() {
+    if (!(m_flags & 0x80)) {
+        pad_210 = 0;
+        pad_214 = 0.0f;
+        pad_218 = 0.0f;
+        sizeUpdate();
+    }
+}
+
 void IDColiObjChar::consistentUpdate() {
     m_treeIndex = -1;
     if (!(m_flags & 0x80)) {
         m_treeIndex = m_tree->setupTreeList(&m_treeObj, m_max, m_min);
     }
 }
+
+IDColiObjPhantomCheck::IDColiObjPhantomCheck(IDColiTreeTop* tree) : IDColiObjPhantom(tree) {}
 
 bool IDColiObjPhantomCheck::testResultLine(IDColiResult& result, const IDColiInput& input) {
     const void* base = m_base;
@@ -183,6 +237,15 @@ bool IDColiObjPhantomCheck::testCheckCapsule(IDColiResult& result, const IDColiI
     return IDColiUtilColiSimple::s_CallCapsule[m_baseType](result, input, base);
 }
 
+void IDColiObjPhantom::sizeUpdate() {
+    if (!(m_flags & 0x80)) {
+        IDColiPrimitive::s_CallPrimSet[m_shapeType](m_base, m_baseType, m_matrix, m_size);
+        m_max = mm::Vec3(-100000.0f, -100000.0f, -100000.0f);
+        m_min = mm::Vec3(100000.0f, 100000.0f, 100000.0f);
+        IDColiPrimitive::s_CallAaBb[m_baseType](m_max, m_min, m_base);
+    }
+}
+
 void IDColiObjPhantom::update() {
     sizeUpdate();
 }
@@ -199,6 +262,15 @@ IDColiTreeTop::~IDColiTreeTop() {}
 ColiLinkList<IDColiTreeObj>* IDColiTreeTop::getObjList(int x, int z, int level) {
     unsigned int index = COLI_TBL_INDEX[level] + x + COLI_TBL_GRID[level] * z;
     return &m_objList[index];
+}
+
+void IDColiTreeTop::begin() {
+    m_prevMax = m_max;
+    m_prevMin = m_min;
+    updateTree();
+    m_max = mm::Vec3(-1000000.0f, -1000000.0f, -1000000.0f);
+    m_min = mm::Vec3(1000000.0f, 1000000.0f, 1000000.0f);
+    m_flags &= ~1;
 }
 
 }  // namespace idcoli

@@ -42,6 +42,29 @@ public:
 // IDColiManager::createColiPhantom allocates its IDColiObjPhantomCheck so). The names are not the original's.
 class IDColiObjBase : public ::idcoli::IDColiObj {
 public:
+    // the defaults IDColiObjCharCheck's and IDColiObjPhantomCheck's constructors store (a character shape of size
+    // 0.5, 2, 0.5)
+    IDColiObjBase(IDColiTreeTop* tree) : m_tree(tree) {
+        m_treeObj.m_prev = nullptr;
+        m_treeObj.m_next = nullptr;
+        m_treeObj.m_owner = this;
+        m_size = mm::Vec3(0.5f, 2.0f, 0.5f);
+        m_matrix = mm::Mat44::identity;
+        m_shapeType = 3;
+        m_sweepNext[0] = nullptr;
+        m_sweepNext[1] = nullptr;
+        m_baseType = IDCOLI_BASE_CHARACTER;
+        m_priority = 100;
+        m_treeIndex = -1;
+        m_max = mm::Vec3(1.0f, 1.0f, 1.0f);
+        m_min = mm::Vec3(-1.0f, -1.0f, -1.0f);
+        m_materialBit = 0;
+        m_offMaterialBit = 0;
+        m_sweepPrev[0] = nullptr;
+        m_sweepPrev[1] = nullptr;
+        m_sweepMax[0] = 0.0f;
+        m_sweepMax[1] = 0.0f;
+    }
     // the ; keeps the table store clang skips for an empty body
     virtual ~IDColiObjBase() { ; }  // slot 0
     void sweepPush(IDColiObjBase* next);
@@ -53,7 +76,9 @@ public:
     mm::Vec3 m_min;  // 0x60, IDColiParmsBase::getMin
     mm::Mat44 m_matrix;  // 0x70, IDColiParmsBase::setMatrix
     mm::Vec3 m_size;  // 0xB0, the shape's extents (a sphere's radius in all three)
-    int m_shapeType;  // 0xC0, 0 sphere, 1 box, 2 capsule, 3 character, 6/7 the box/capsule with flag 0x400
+    // 0xC0, 0 sphere, 1 box, 2 capsule, 3 character, 6/7 the box/capsule with flag 0x400; indexes
+    // IDColiPrimitive::s_CallPrimSet (unsigned: IDColiObjPhantom::sizeUpdate loads it with ldr w, not ldrsw)
+    unsigned int m_shapeType;
     IDColiBaseType m_baseType;  // 0xC4, indexes the IDColiUtilColi tables
     unsigned int m_offMaterialBit;  // 0xC8, IDColiParmsBase::setOffMaterialBit
     unsigned char pad_cc[4];
