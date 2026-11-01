@@ -32,6 +32,7 @@
 #include "ml/DrShdDataList.h"
 #include "ml/DrShdDataObj.h"
 #include "grlib/CGLibCtl.h"
+#include "grlib/CGLibUniformArray.h"
 #include "grlib/CGLibVtxInstans.h"
 #include "ml/DrPixlMan.h"
 #include "ml/DrCalcMan.h"
@@ -1256,6 +1257,50 @@ unsigned char DrResMdoInstPartsAnm::getSwitchIndex(unsigned int idx) const {
         return m_switches[idx].index;
     }
     return 0;
+}
+
+void DrResMdoInstPartsAnm::getMatrix(mm::Mat44& mtx) const {
+    if (m_info->flags & 0x10) {
+        DrResMdoPosInstAnm* anm = m_posAnm;
+        if (anm->m_setMatrixFlags & (1 << DrMan::s_nDblStockIdx)) {
+            mtx = anm->m_setMatrix[DrMan::s_nDblStockIdx];
+        } else if (anm->m_setMatrixFlags & (1 << DrMan::s_nDblMemIdx)) {
+            mtx = anm->m_setMatrix[DrMan::s_nDblMemIdx];
+        } else {
+            for (int i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++) {
+                    mtx.m[i][j] = anm->m_matrix.m[i][j];
+                }
+            }
+        }
+    } else if (m_info->flags & 0x20) {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                mtx.m[i][j] = m_matrix->m[i][j];
+            }
+        }
+    }
+}
+
+void DrResMdoInstPartsAnm::getAnmMatrix(mm::Mat44& mtx) const {
+    if (m_info->flags & 0x10) {
+        m_posAnm->getAnmMatrix(&mtx, m_posFrame * m_nodeFrameRate);
+    } else if (m_info->flags & 0x20) {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                mtx.m[i][j] = m_matrix->m[i][j];
+            }
+        }
+    }
+}
+
+void DrResMdoInstPartsAnm::setMatrix(const mm::Mat44& mtx) {
+    if (m_info->flags & 0x10) {
+        DrResMdoPosInstAnm* anm = m_posAnm;
+        int idx = DrMan::s_nDblStockIdx;
+        anm->m_setMatrix[idx] = mtx;
+        anm->m_setMatrixFlags |= 1 << idx;
+    }
 }
 
 void DrResShdStreamOut::setupStreamShader(unsigned int idx) {
@@ -5260,6 +5305,12 @@ const DrResMdoVertex::WeightInfo* DrResMdoVertex::getWeightVertexInfo(int no, in
 void DrResMdoVertex::setEtcVertexBind(int index, int slot) {
     m_bindVertex = -1;
     grlib::CGLibCtlVertex::setAddVertex(m_etcVertex[m_bindTbl[index].vertexNo], 0, slot, 0);
+}
+
+void DrResMdoVertex::setMofBlendVertexBind(grlib::CGLibOneUniformArray* array, int index, int slot) {
+    m_bindVertex = -1;
+    unsigned int no = m_bindTbl[index].uniformNo;
+    grlib::CGLibCtlVertex::setUniformVertex(array->m_pArray[no], m_etcData[no].stride, 0, slot, 0);
 }
 
 void DrResMdoVertex::setVertexBind(int index) {

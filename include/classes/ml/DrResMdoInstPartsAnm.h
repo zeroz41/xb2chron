@@ -2,6 +2,7 @@
 #define CLASSES_ML_DRRESMDOINSTPARTSANM_H
 
 #include "classes/ml/DrResMdoInstPartsObj.h"
+#include "ml/DrResMdoPosInstAnm.h"
 
 namespace ml {
 // table 0x7100B7D8A8
@@ -12,13 +13,13 @@ public:
     virtual float getPosFrame() const { return m_posFrame; }  // slot 3
     virtual float getPosMaxFrame() const {
         if (m_posAnm) {
-            return m_posAnm->frameMax * m_frameScale;
+            return m_posAnm->m_frameMax * m_frameScale;
         }
         return 0.0f;
     }  // slot 4
     virtual float getPosStartFrame() const {
         if (m_posAnm && m_info->startFrame) {
-            return m_info->startFrame * (1.0f / 255.0f) * m_posAnm->frameMax;
+            return m_info->startFrame * (1.0f / 255.0f) * m_posAnm->m_frameMax;
         }
         return 0.0f;
     }  // slot 5
@@ -45,10 +46,18 @@ public:
 
     void updateSwitch();
 
-    // The position animation the part reads (0x30); type and field names are not the original's.
-    struct PosAnm {
-        unsigned char pad_0[0x152];
-        unsigned short frameMax;  // 0x152: get*PosMaxFrame scales it
+    // One visibility key (8 bytes) and the key header update reads; names are not the original's.
+    struct VisKey {
+        float value;           // 0x0: visible when above 0.001
+        unsigned short frame;  // 0x4
+        unsigned char pad_6[0x2];
+    };
+    struct VisAnm {
+        unsigned int keyOffset;   // 0x0: from m_data
+        unsigned char pad_4[0x2];
+        unsigned short keyNum;    // 0x6
+        unsigned short startFrame;  // 0x8
+        unsigned short endFrame;    // 0xA
     };
     // One switch entry (0x24 bytes; getSwitchIndex reads its byte 2); names are not the original's.
     struct Switch {
@@ -59,10 +68,12 @@ public:
 
     // Field names are not the original's: each follows the getter/setter that reads or writes it.
     unsigned int m_stockFlags;          // 0x8: bit n = m_nodeFrameStock[n] set (setNodeFrame)
-    unsigned char pad_c[0xC];
+    unsigned char pad_c[0x4];
+    const unsigned char* m_data;        // 0x10: update finds the visibility keys at m_data + m_visAnm->keyOffset
     const DrResMdoInstPartsObj::Info* m_info;  // 0x18
-    unsigned char pad_20[0x10];
-    const PosAnm* m_posAnm;             // 0x30
+    const mm::Mat44* m_matrix;         // 0x20: getAnmMatrix copies it when the info has a matrix (flag 0x20)
+    unsigned char pad_28[0x8];
+    DrResMdoPosInstAnm* m_posAnm;       // 0x30: getAnmMatrix calls its getAnmMatrix
     unsigned char pad_38[0x8];
     float m_posFrame;                   // 0x40
     float m_nodeFrame;                  // 0x44
@@ -72,7 +83,7 @@ public:
     float m_nodeFrameRate;              // 0x58 (getCalc*NodeFrame)
     unsigned short m_nodeFrameBase;     // 0x5C (getCalc*NodeFrame)
     unsigned short m_nodeFrameMax;      // 0x5E (getNode*Frame)
-    unsigned char pad_60[0x8];
+    const VisAnm* m_visAnm;             // 0x60: update sets m_stockFlags bit 3 from it (0 = none)
     const Switch* m_switches;           // 0x68
     unsigned char m_switchID;           // 0x70
     unsigned char m_switchMax;          // 0x71

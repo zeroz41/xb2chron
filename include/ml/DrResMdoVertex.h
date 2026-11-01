@@ -29,7 +29,14 @@ public:
     struct BindEntry {
         unsigned short pad_0;
         unsigned short vertexNo;  // 0x2
-        unsigned char pad_4[0x8];
+        unsigned short uniformNo;  // 0x4: setMofBlendVertexBind's uniform block and etc entry
+        unsigned char pad_6[0x6];
+    };
+    // one 0x10-byte entry of the etc data (0x38): setMofBlendVertexBind binds its uniform block with this stride
+    struct EtcEntry {
+        unsigned char pad_0[0x8];
+        int stride;  // 0x8
+        unsigned char pad_C[0x4];
     };
     // the head of the vertex data (0x28): the weight vertex buffer number per weight index from 0x10 (0 = none)
     struct VertexHead {
@@ -56,6 +63,8 @@ public:
     const WeightInfo* getWeightVertexInfo(int no, int lv);
     void setVertexBind(int index);
     void setEtcVertexBind(int index, int slot);
+    // binds the uniform block of the bind entry as a vertex stream (the morph blend weights, as the name says)
+    void setMofBlendVertexBind(grlib::CGLibOneUniformArray* array, int index, int slot);
     // binds the weight vertex buffer of the index; returns its vertex count (0 when it has none)
     int setWeightVertexBind(int index);
 
@@ -66,7 +75,7 @@ public:
     void* m_work;  // 0x20: allocated by setupVertex, freed by vertexRelease
     const unsigned char* m_vtxData;  // 0x28
     const BindEntry* m_bindTbl;  // 0x30
-    const unsigned char* m_etcData;  // 0x38
+    const EtcEntry* m_etcData;  // 0x38
     const WeightHead* m_weight;  // 0x40
     unsigned short m_vertexNum;  // 0x48
     unsigned short m_indexNum;  // 0x4A
