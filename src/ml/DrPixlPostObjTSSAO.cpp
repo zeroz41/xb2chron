@@ -1,3 +1,4 @@
+#define MM_LIB_FROM_XBRD
 #include "classes/ml/DrAPCache.h"
 #include "classes/ml/DrCalcClipWorkCone.h"
 #include "classes/ml/DrCalcClipWorkPlane.h"
@@ -16,9 +17,11 @@
 #include "classes/navi/NvmshManager.h"
 #include "classes/navi/NvmshResMan.h"
 #include "grlib/CGLibCtl.h"
+#include "mm/Math.h"
 #include "mtl/MemManager.h"
 #include "grlib/CGLibUniBaseUtility.h"
 #include "grlib/CGLibVtxIndex.h"
+#include "grlib/CGLibVtxVertex.h"
 #include "idcoli/IDColiGrandObj.h"
 #include "idcoli/IDColiInput.h"
 #include "idcoli/IDColiTreeTop.h"
@@ -85,6 +88,27 @@ void DrPixlPostObjCapture::render() {
 
 unsigned int DrPixlPostObjCubeMapMultiIBL::getPremMipCount() const { return m_premMipCount; }
 
+bool DrPixlPostObjCubeMapMultiIBL::requestIBL(DrRequetIBL& request) {
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    if (!parm->m_multiIBL || m_requests.full()) {
+        return false;
+    }
+    int count = 0;
+    for (mm::mtl::FixedQueue<DrRequetIBL, 30>::iterator it = m_requests.begin(); it != m_requests.end(); ++it) {
+        if ((*it).m_id == request.m_id) {
+            if (*(*it).m_pState == 1) {
+                return false;
+            }
+            if (++count == 4) {
+                return false;
+            }
+        }
+    }
+    *request.m_pState = 1;
+    m_requests.push_back(request);
+    return true;
+}
+
 void DrPixlPostObjCubeMapMultiIBL::cancelIBL(unsigned long id) {
     const mm::mtl::FixedQueue<DrRequetIBL, 30>& requests = m_requests;
     for (mm::mtl::FixedQueue<DrRequetIBL, 30>::const_iterator it = requests.begin(); it != requests.end(); ++it) {
@@ -131,6 +155,52 @@ void DrPixlPostObjGlassBr::render() {
     }
 }
 
+DrPixlPostObjMotionBlur2::DrPixlPostObjMotionBlur2(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)
+    : DrPixlPostObj(drMan, pixlMan, postMan), m_blurOut(nullptr), m_velocityBuff(), m_vertexIdx(0), m_blurOn(true) {
+    m_velocityBuff[0] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    m_velocityBuff[1] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    m_workOutA = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    m_maskBuff = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    m_workOutB = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    m_blurOut = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    for (int i = 0; i < 2; i++) {
+        m_vertex[i] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) grlib::CGLibVtxVertex();
+    }
+    calcBludBuffColorBuff();
+    m_state = 0;
+}
+
+DrPixlPostObjMotionBlur2::~DrPixlPostObjMotionBlur2() {
+    for (int i = 0; i < 2; i++) {
+        if (m_vertex[i]) {
+            delete m_vertex[i];
+            m_vertex[i] = nullptr;
+        }
+    }
+    for (int i = 0; i < 2; i++) {
+        if (m_velocityBuff[i]) {
+            delete m_velocityBuff[i];
+            m_velocityBuff[i] = nullptr;
+        }
+    }
+    if (m_workOutA) {
+        delete m_workOutA;
+        m_workOutA = nullptr;
+    }
+    if (m_maskBuff) {
+        delete m_maskBuff;
+        m_maskBuff = nullptr;
+    }
+    if (m_workOutB) {
+        delete m_workOutB;
+        m_workOutB = nullptr;
+    }
+    if (m_blurOut) {
+        delete m_blurOut;
+        m_blurOut = nullptr;
+    }
+}
+
 void DrPixlPostObjMotionBlur2::resetColorBuff() { calcBludBuffColorBuff(); }
 
 void DrPixlPostObjMotionBlur2::update() {}
@@ -156,6 +226,17 @@ void DrPixlPostObjMotionBlur2::render() {
     }
 }
 
+DrPixlPostObjSSR::DrPixlPostObjSSR(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)
+    : DrPixlPostObj(drMan, pixlMan, postMan), m_flags(0) {
+    m_buffFirst = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    for (int i = 0; i < 2; i++) {
+        m_reflectionBuff[i] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    }
+    m_buffLast = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    m_flags |= 3;
+    resetColorBuff();
+}
+
 DrPixlPostObjSSR::~DrPixlPostObjSSR() {
     for (int i = 0; i < 2; i++) {
         if (m_reflectionBuff[i]) {
@@ -173,7 +254,37 @@ DrPixlPostObjSSR::~DrPixlPostObjSSR() {
     }
 }
 
+void DrPixlPostObjSSR::render() {
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    if (!parm->getSSROn()) {
+        m_flags |= 2;
+        return;
+    }
+    if (m_flags & 2) {
+        m_flags &= ~2;
+        for (int i = 0; i < 2; i++) {
+            m_reflectionBuff[i]->clearTexture(mm::Col4(0.0f, 0.0f, 0.0f, 0.0f), (GrlClaerMask)0xF);
+        }
+    }
+    if (m_flags & 1) {
+        m_reflectionBuff[DrMan::s_nDblIdx]->clearTexture(mm::Col4(0.0f, 0.0f, 0.0f, 0.0f), (GrlClaerMask)0xF);
+        m_flags &= ~1;
+    } else {
+        raymarch2();
+        temporalSuperSampling2();
+    }
+}
+
 DrPixlRenderTarget* DrPixlPostObjSSR::getReflectionTexture() const { return m_reflectionBuff[DrMan::s_nDblIdx]; }
+
+DrPixlPostObjTMAA::DrPixlPostObjTMAA(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)
+    : DrPixlPostObj(drMan, pixlMan, postMan), m_flags(0) {
+    for (int i = 0; i < 2; i++) {
+        m_colorBuff[i] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+        m_bloomBuff[i] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    }
+    m_flags |= 1;
+}
 
 DrPixlPostObjTMAA::~DrPixlPostObjTMAA() {
     for (int i = 0; i < 2; i++) {
@@ -185,6 +296,33 @@ DrPixlPostObjTMAA::~DrPixlPostObjTMAA() {
             delete m_bloomBuff[i];
             m_bloomBuff[i] = nullptr;
         }
+    }
+}
+
+void DrPixlPostObjTMAA::render() {
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    if (!parm->getTMAAOn()) {
+        return;
+    }
+    if (m_flags & 2) {
+        for (int i = 0; i < 2; i++) {
+            m_colorBuff[i]->clearTexture(mm::Col4(0.0f, 0.0f, 0.0f, 0.0f), (GrlClaerMask)0xF);
+            m_bloomBuff[i]->clearTexture(mm::Col4(0.0f, 0.0f, 0.0f, 0.0f), (GrlClaerMask)0xF);
+        }
+        m_flags &= ~2;
+    }
+    if (parm->m_tmaaReset) {
+        m_flags |= 1;
+        m_drMan->m_postParm[m_drMan->m_postParmIdx]->m_tmaaReset = false;
+    }
+    if (m_flags & 1) {
+        m_flags &= ~4;
+    } else {
+        m_flags |= 4;
+    }
+    renderTMAA();
+    if (m_flags & 1) {
+        m_flags &= ~1;
     }
 }
 
@@ -201,7 +339,87 @@ void DrPixlPostObjTMAA::renderSharpness() {
     renderSharpnessImpl(SHARPNESS_TYPE_2);
 }
 
+DrPixlPostObjTSSAO::DrPixlPostObjTSSAO(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)
+    : DrPixlPostObj(drMan, pixlMan, postMan), m_flags(0), m_extraBuff(), m_frame(0) {
+    m_workBuff = new (drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(drMan);
+    for (int i = 0; i < 2; i++) {
+        m_ssaoBuff[i] = new (drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(drMan);
+        m_historyBuff[i] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(drMan);
+    }
+    m_blurBuffA = new (drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(drMan);
+    m_blurBuffB = new (drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(drMan);
+    m_outBuff = new (drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(drMan);
+    resetColorBuff(true);
+}
+
+DrPixlPostObjTSSAO::~DrPixlPostObjTSSAO() {
+    if (m_blurBuffB) {
+        delete m_blurBuffB;
+        m_blurBuffB = nullptr;
+    }
+    for (int i = 1; i >= 0; i--) {
+        if (m_extraBuff[i]) {
+            delete m_extraBuff[i];
+            m_extraBuff[i] = nullptr;
+        }
+    }
+    if (m_outBuff) {
+        delete m_outBuff;
+        m_outBuff = nullptr;
+    }
+    if (m_blurBuffA) {
+        delete m_blurBuffA;
+        m_blurBuffA = nullptr;
+    }
+    for (int i = 0; i < 2; i++) {
+        if (m_ssaoBuff[i]) {
+            delete m_ssaoBuff[i];
+            m_ssaoBuff[i] = nullptr;
+        }
+        if (m_historyBuff[i]) {
+            delete m_historyBuff[i];
+            m_historyBuff[i] = nullptr;
+        }
+    }
+    if (m_workBuff) {
+        delete m_workBuff;
+        m_workBuff = nullptr;
+    }
+}
+
 void DrPixlPostObjTSSAO::update() { m_postMan->setDownDepth(); }
+
+void DrPixlPostObjTSSAO::render_beforeTemporal() {
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    if (parm->m_ssao) {
+        if (parm->m_ssaoQuaterNormal) {
+            passQuaterNormal();
+        }
+        passSSAO();
+        grlib::CGLibCtlShader::setMemoryBarrierBit(2);
+        float blur = m_drMan->m_postParm[m_drMan->m_postParmIdx]->m_ssaoBlur;
+        passBlur_Sub(BLUR_AXIS_1, blur, m_workBuff, m_blurBuffA, false);
+        grlib::CGLibCtlShader::setMemoryBarrierBit(2);
+        passBlur_Sub(BLUR_AXIS_2, blur, m_blurBuffA, m_workBuff, false);
+        passTemporalFiltering();
+    }
+}
+
+void DrPixlPostObjTSSAO::render_afterTemporal() {
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    if (parm->m_ssao) {
+        float blur = parm->m_ssaoBlurAfter;
+        DrPixlRenderTarget* buff = m_ssaoBuff[DrMan::s_nDblIdx];
+        float weights[4];
+        for (int i = 0; i < 4; i++) {
+            weights[i] = gaussianDistribution(static_cast<float>(i), 0.0f, 1.0f);
+        }
+        passBlur_Sub(BLUR_AXIS_1, blur, buff, m_blurBuffA, false);
+        grlib::CGLibCtlShader::setMemoryBarrierBit(2);
+        passBlur_Sub(BLUR_AXIS_2, blur, m_blurBuffA, buff, false);
+        passUpScaleToMiddle();
+    }
+}
 
 DrPixlPostObjUnbranchToDepth::DrPixlPostObjUnbranchToDepth(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)
     : DrPixlPostObj(drMan, pixlMan, postMan) {}
@@ -213,6 +431,15 @@ void DrPixlPostObjUnbranchToDepth::render() {
     if (m_drMan->m_unbranchQuater) {
         renderQuater();
     }
+}
+
+DrPixlShadowRaytrace::DrPixlShadowRaytrace(DrMan* drMan) : m_drMan(drMan), m_blurOn(true) {
+    m_buffFirst = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    for (int i = 0; i < 2; i++) {
+        m_temporalBuff[i] = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    }
+    m_buffFourth = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
+    m_buffLast = new (m_drMan->m_workHandle, nullptr, 0, 4, false) DrPixlRenderTarget(m_drMan);
 }
 
 DrPixlShadowRaytrace::~DrPixlShadowRaytrace() {

@@ -6,10 +6,17 @@
 
 namespace ml {
 
-// the screen-space reflection post object. The constructor makes four DrPixlRenderTargets at 0x20..0x38; the field names are not the original's.
+// the screen-space reflection post object. The constructor makes four DrPixlRenderTargets at 0x20..0x38;
+// the field names are not the original's.
 class DrPixlPostObjSSR : public DrPixlPostObj {
 public:
+    DrPixlPostObjSSR(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan);
+    void resetColorBuff();
     ~DrPixlPostObjSSR();
+    void update();
+    void render();
+    void raymarch2();
+    void temporalSuperSampling2();
     // the current frame's reflection buffer (DrShdLgtGlobalIBL::renderByLinkList reads it)
     DrPixlRenderTarget* getReflectionTexture() const;
 

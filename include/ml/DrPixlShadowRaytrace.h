@@ -17,6 +17,7 @@ public:
         BLUR_AXIS_2 = 2,
     };
 
+    DrPixlShadowRaytrace(DrMan* drMan);
     ~DrPixlShadowRaytrace();
     void render_beforeTemporal();
     void raytracePass();

@@ -17,7 +17,10 @@ public:
         SHARPNESS_TYPE_4 = 4,
     };
 
+    DrPixlPostObjTMAA(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan);
     ~DrPixlPostObjTMAA();
+    void render();
+    void renderTMAA();
     // the current frame's bloom buffer (DrPixlPostObjBloom::calculateDownScaleImpl reads it)
     DrPixlRenderTarget* getBloomTexture();
     void renderSharpness();

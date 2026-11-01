@@ -112,7 +112,14 @@ public:
     // by SHARPNESS_TYPE; getTMAASharpness reads m_tmaaSharpnessAlt while DrMan::m_qualityMode is 0 (names inferred)
     float m_tmaaSharpness[6];  // 0x114
     float m_tmaaSharpnessAlt[6];  // 0x12C
-    unsigned char pad_144[0x86];
+    unsigned char pad_144[0x14];
+    // 0x158, DrPixlPostObjTMAA::render restarts the history (its flag 1) and clears it (the name is not the original's)
+    bool m_tmaaReset;
+    unsigned char pad_159[0x1B];
+    bool m_ssao;  // 0x174, DrPixlPostObjTSSAO::render_beforeTemporal runs its passes only while set (name inferred)
+    unsigned char pad_175[0x13];
+    float m_ssaoBlurAfter;  // 0x188, DrPixlPostObjTSSAO::render_afterTemporal's passBlur_Sub value (name inferred)
+    unsigned char pad_18C[0x3E];
     bool m_motBlur;  // 0x1CA
     unsigned char pad_1CB[0x2];
     // 0x1CD: DrPixlPostObjMotionBlur2::render runs calcVelocityBlur while it is set (the name is not the original's)
@@ -137,7 +144,10 @@ public:
     int m_dofFocusNum;
     unsigned char pad_240[0x4];
     float m_dofFocusMin;
-    unsigned char pad_248[0x22];
+    unsigned char pad_248[0x21];
+    // 0x269, DrPixlPostObjCubeMapMultiIBL::requestIBL refuses requests while it is clear
+    // (the name is not the original's)
+    bool m_multiIBL;
     bool m_colTbl;  // 0x26A, getColTblOn
     unsigned char pad_26B[0x35];
     float m_toonDirLightScale;  // 0x2A0, getToonDirLightScale when DrMan::m_toonDirLightScale is set
@@ -169,7 +179,15 @@ public:
     stOverrideParm m_override[2];  // 0x518, by DrMan::s_nDblIdx
     unsigned char pad_F58[0x1A];
     bool m_blm2PassExtract;  // 0xF72, isBlm2PassExtract (with m_tmaa)
-    unsigned char pad_F73[0x40];
+    unsigned char pad_F73[0x15];
+    // 0xF88: DrPixlPostObjSSR::update fades it to 1 over m_ssrFadeTime * 30 frames (the names are not the original's)
+    float m_ssrFade;
+    float m_ssrFadeTime;  // 0xF8C
+    unsigned char pad_F90[0x4];
+    float m_ssaoBlur;  // 0xF94, DrPixlPostObjTSSAO::render_beforeTemporal's passBlur_Sub value (name inferred)
+    unsigned char pad_F98[0x19];
+    bool m_ssaoQuaterNormal;  // 0xFB1, render_beforeTemporal runs passQuaterNormal first while set (name inferred)
+    unsigned char pad_FB2[0x1];
     bool m_reduction;  // 0xFB3, calcReductionBuffer scales by m_reductionScale when set
     unsigned char pad_FB4[0xC];
     float m_reductionScale[2];  // 0xFC0, width, height
