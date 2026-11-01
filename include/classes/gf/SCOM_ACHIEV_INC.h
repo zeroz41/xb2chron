@@ -59,6 +59,13 @@ public:
     static void fn_7100564CAC(GF_OBJ_HANDLE*);
     static void fn_7100564DC0(GF_OBJ_HANDLE*, unsigned int);
     static void fn_7100564FE8(GF_OBJ_HANDLE*, unsigned int);
+    // placeholders, members because they follow fn_7100564FE8 in this class's run of gf_req_scom and, like it, add to
+    // GfDataAchievement::addTotalCount; their one caller is GfGameScene::BattleAchievement::addDamage (a type-3 object's
+    // damage with its value, then the handle alone when the damage has attack flag 2; fn_71005653A4 the latter for the
+    // notice's handle)
+    static void fn_7100565210(GF_OBJ_HANDLE*, unsigned int);
+    static void fn_71005653A4(GF_OBJ_HANDLE*);
+    static void fn_7100565534(GF_OBJ_HANDLE*);
 
     // type-0x22 requests not yet counted: exec adds them as one (GfAchievManager::incAchiev(0x22, 1))
     static unsigned int s_countSalvageShop;

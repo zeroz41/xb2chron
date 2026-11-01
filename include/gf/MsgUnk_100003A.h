@@ -2,7 +2,7 @@
 #define GF_MSGUNK_100003A_H
 
 #include "fw/Message.h"
-namespace gf { class MsgObjectDamage; }
+namespace gf { class MsgObjectDamage; class GF_OBJ_HANDLE; }
 
 namespace gf {
 
@@ -12,6 +12,9 @@ namespace gf {
 class MsgObjectNotifyDamage : public ::fw::Message {
 public:
     const gf::MsgObjectDamage* m_damage;  // the damage (none: nothing; the name is not the original's)
+    // an object the notice names: GfGameScene::BattleAchievement::addDamage credits it (and its party's blade) when
+    // a type-5 object takes the damage (the name is not the original's)
+    gf::GF_OBJ_HANDLE* m_handle;
 };
 
 }  // namespace gf

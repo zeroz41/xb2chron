@@ -64,6 +64,12 @@
 #include "btl/Utility.h"
 #include "classes/gf/GfLayerPause.h"
 #include "classes/gf/GfItemBox.h"
+#include "classes/gf/GfGameInsideBattleLock.h"
+#include "classes/gf/GfPlayComWaitBattleEnd.h"
+#include "gf/GfPouchUtil.h"
+#include "classes/gf/SCOM_ACHIEV_INC.h"
+#include "gf/MsgObjectDamage.h"
+#include "gf/MsgUnk_100003A.h"
 
 namespace gf {
 
@@ -91,6 +97,34 @@ void GfGameScene::EvtPlayerStop::setPlayerStop(bool stop) {
         }
         m_state = 0;
     }
+}
+
+void GfGameScene::BattleAchievement::addDamage(GF_OBJ_HANDLE* handle, const MsgObjectNotifyDamage& msg) {
+    switch (GfObjUtil::getObjType(handle)) {
+    case 5: {
+        unsigned int party = GfObjUtil::getPartyID(msg.m_handle);
+        if (party != 0xFFFFFFFF) {
+            GF_OBJ_HANDLE* blade = GfGameParty::getHandleBlade(party, -1);
+            if (blade != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                SCOM_ACHIEV_INC::fn_7100564DC0(blade, msg.m_damage->m_damage);
+            }
+        }
+        SCOM_ACHIEV_INC::fn_7100564FE8(msg.m_handle, msg.m_damage->m_damage);
+        if (msg.m_damage->m_attackFlags & 2) {
+            SCOM_ACHIEV_INC::fn_71005653A4(msg.m_handle);
+        }
+        break;
+    }
+    case 3:
+        SCOM_ACHIEV_INC::fn_7100565210(handle, msg.m_damage->m_damage);
+        if (msg.m_damage->m_attackFlags & 2) {
+            SCOM_ACHIEV_INC::fn_7100565534(handle);
+        }
+        break;
+    default:
+        return;
+    }
+    m_damageCount++;
 }
 
 GfGameScene::~GfGameScene() {}
@@ -784,6 +818,17 @@ void GfGameScene::updateParam(const fw::UpdateInfo&) {
     updatePlayerState();
 }
 
+void GfGameScene::updatePartyBattle(const fw::UpdateInfo&) {
+    for (unsigned int i = 0; i < 3; i++) {
+        GfObjAcc acc(GfGameParty::getHandleDriver(i, 0));
+        if (acc.isBattle() && m_partyBattleStartCount[i] < 3) {
+            m_partyBattleStartCount[i]++;
+            GfGameParty::setupBattleStart(i);
+            GfObjUtil::setDisableAutoHeal(acc.getHandle(), false);
+        }
+    }
+}
+
 void GfGameScene::updateBladeChangeInField(const fw::UpdateInfo& info) {
     float time = m_fieldBladeChangeTime;
     m_fieldBladeChangeTime = 0.0f;
@@ -847,6 +892,16 @@ void GfGameScene::setRideOn(unsigned int id) {
         if (!GfGameRide::testRideOn()) {
             m_rideRequest = true;
         }
+    }
+}
+
+void GfGameScene::fn_71002CC890(unsigned int driver, const fw::UpdateInfo& info) {
+    if (GfGameManager::isEvent(false) || GfGameManager::isTalking() || GfGameManager::isMapjump() ||
+        GfGameManager::isStartGame()) {
+        return;
+    }
+    for (unsigned int i = 0; i < 3; i++) {
+        GfPouchUtil::updatePouch(driver, i, GfPouchUtil::getPouch(driver, i), info);
     }
 }
 

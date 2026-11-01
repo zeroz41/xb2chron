@@ -64,6 +64,8 @@ public:
     bool isDisableJumpForRide() const;
     void setHomuriWeaponExtraMesh(bool, float);
     void updateParam(const fw::UpdateInfo&);
+    void updatePartyMover(const fw::UpdateInfo&);  // 1.0.0 symbol
+    void updatePartyBattle(const fw::UpdateInfo&);  // 1.0.0 symbol
     void updateRideRequest(const fw::UpdateInfo& info);
     // the field blade change time counts up while the leader driver and its blade are out of battle in a free field
     void updateBladeChangeInField(const fw::UpdateInfo& info);
@@ -143,6 +145,10 @@ public:
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // gf_game_scene's unit and GfGameManager::fn_71002AC9C0 tail-calls it on the scene with its update info.
     void fn_71002CC060(const ::fw::UpdateInfo& info);
+    // Placeholder name: new in 3.0.1. Placed here because its address follows update in gf_game_scene's unit and update
+    // calls it with a driver index (no scene in x0, so static); unless an event, a talk, a map jump or the game start
+    // runs, it updates the driver's three pouches (GfPouchUtil::updatePouch on each GfPouchUtil::getPouch)
+    static void fn_71002CC890(unsigned int driver, const ::fw::UpdateInfo& info);
     void refreshGimmickFlag();
     bool isRide(unsigned int id) const;
     // GfGameParty::gevPartyIDMemberOK passes the party id it is told about (1.0.0's symbol)
@@ -261,7 +267,10 @@ public:
     unsigned char pad_1E1[0x7];
     // setPlayerStopFlag's requests: a PLSTOP, with 0x80 when it stops
     mm::mtl::FixedQueue<unsigned char, 64> m_playerStopQueue;
-    unsigned char pad_238[0x1C];
+    // updatePartyBattle's: how many times each party driver's battle start was set up (up to 3; the name is not the
+    // original's)
+    unsigned long m_partyBattleStartCount[3];  // 0x238
+    unsigned char pad_250[0x4];
     // GfGameManager::isEnableOpenMainMenu opens the main menu only while it is 0 or 1 (the name is not the original's)
     int m_openMainMenuState;
     // isEnableRideCondition lets a riding driver ride from 3 on (the name is not the original's)
@@ -294,7 +303,9 @@ public:
     unsigned char pad_3B1[0xF];
     // enterExtraControlForHanaJS pushes the object (bdat id 1005) here (the name is not the original's)
     mm::mtl::FixedVector<GF_OBJ_HANDLE*, 8> m_hanaJSObjs;  // 0x3C0
-    unsigned char pad_408[0x18];
+    // updatePartyMover's: the party's movers (GfGameParty::getHandleMover 0 to 2) of the last update, to tell
+    // GfEvent::callPartyMover which joined and which left (the name is not the original's)
+    GF_OBJ_HANDLE* m_partyMovers[3];  // 0x408
     bool m_maskMainMenu;  // isMaskMainMenu's
     bool m_playEvent;  // isPlayEvent's
     unsigned char pad_422[0x6];
