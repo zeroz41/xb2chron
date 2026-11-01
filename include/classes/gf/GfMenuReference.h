@@ -4,6 +4,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "ui/UIStr.h"
 #include "mm/mtl/Bitflag.h"
+#include "mm/mtl/FixedList.h"
 
 namespace ui { class UIStr; }
 namespace gf { class GfMenuReference; }
@@ -147,6 +148,10 @@ public:
     static bool isReversePaletteBtnState(unsigned int slot, unsigned int state);
     // 1.0.0 symbols; the parameter names are not the original's
     static void setReversePaletteBtnState(unsigned int slot, unsigned int state, bool on);
+    // the blade set `party`'s driver puts `slot` on (set + slot wrapped at getBladeSlotMax; the set is the one the
+    // battle started with in battle, the slot of blade 1001 for driver 1's sets 3 and 4), -1 for an invalid driver
+    // or slot (1.0.0 symbol; the parameter names are not the original's)
+    static int getBladeSetIDFromParty(unsigned int party, unsigned int slot);
     static void postReset();  // clears state 2 of every slot's reverse palette button
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfMenuObjItemList2::refreshItemList
     // has no call where 3.0.1's calls it). A member because its unit is gf_menu_reference and it reads this class's
@@ -379,7 +384,11 @@ public:
     // fn_7100368BAC: tail-calls TUnk_B63AE0::fn_7100448F44(context, pair's two words); caller fn_7100008554.
     static void fn_7100368BAC(GfMenuCallContext* context, const ResultPair& pair);
 
-    unsigned char pad_8[0x4CA38];
+    unsigned char pad_8[0x4C590];
+    // a list of REFLISTs (the name is not the original's): postUpdate walks it with the list at 0x4C7D8 and calls
+    // FixedList<REFLIST*, 32>::erase, the destructor clears it, finalize waits until it is empty
+    ::mm::mtl::FixedList<REFLIST*, 32> m_refList;
+    unsigned char pad_4C7D8[0x268];
     bool m_initialized;  // isInitialized
     unsigned char pad_4CA41[0x7F];
     ArtsPaletteSlot m_artsPalette[3];  // slots 0..2

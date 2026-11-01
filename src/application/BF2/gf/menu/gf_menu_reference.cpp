@@ -17,6 +17,10 @@
 #include "classes/gf/GfObjPropertyEnemy.h"
 #include "gf/GfObjAcc.h"
 #include "gf/GfObjUtil.h"
+#include "classes/gf/DataParamAcc.h"
+#include "classes/gf/GfGameParty.h"
+#include "gf/GfSelectBlade.h"
+#include "classes/gf/GfInfo.h"
 
 namespace gf {
 
@@ -31,6 +35,21 @@ void GfMenuReference::destroy() {
     GfMenuReference* menu = get();
     menu->finalize();
     delete menu;
+}
+
+void GfMenuReference::finalize() {
+    if (m_enemyLinkList) {
+        m_enemyLinkList->release();
+        m_enemyLinkList = nullptr;
+    }
+    if (m_itemLinkList) {
+        m_itemLinkList->release();
+        m_itemLinkList = nullptr;
+    }
+    while (!m_refList.empty()) {
+        GfSleep(1);
+    }
+    m_initialized = false;
 }
 
 bool GfMenuReference::isInitialized() {
@@ -335,6 +354,36 @@ bool GfMenuReference::isReversePaletteBtnState(unsigned int slot, unsigned int s
     GfMenuReference* self = get();
     if (slot < 4 && self) return self->m_reversePaletteBtnState[slot].test(state);
     return false;
+}
+
+int GfMenuReference::getBladeSetIDFromParty(unsigned int party, unsigned int slot) {
+    DataParamAcc acc(GfGameParty::getHandleDriver(party, 0));
+    int result = -1;
+    if (acc.isValid()) {
+        unsigned int max = GfMenuObjUtil::getBladeSlotMax();
+        if (slot < max) {
+            int set = acc.getBladeSet(false);
+            if (GfMenuManager::isBattleState(0) || GfMenuManager::isBattleState(1)) {
+                set = GfSelectBlade::getStartBattleSetId(party);
+            }
+            int top = set;
+            if (acc.isValid() && acc.getObjType() == 3) {
+                unsigned int driver = acc.getBdatId();
+                if ((set == 3 || set == 4) && driver == 1) {
+                    for (int i = 0; i < 3; i++) {
+                        if (acc.getBlade(i, false) == 1001) {
+                            top = i;
+                            break;
+                        }
+                    }
+                }
+            }
+            unsigned int index = top + slot;
+            if (index >= max) index -= max;
+            result = index;
+        }
+    }
+    return result;
 }
 
 const GfMenuReference::BladeOwner* GfMenuReference::fn_7100367BD8(unsigned int blade) {
