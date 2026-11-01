@@ -23,7 +23,6 @@ public:
     virtual const float* getParmTbl() const { return m_sptParmTbl; }  // slot 11
 
     DrCalcClipWorkCone m_clip;  // 0x1A0 (the name is not the original's)
-    unsigned char pad_1b0[0x50];
     float m_sptParmTbl[0xC];  // 0x200: what getParmTbl returns (the name and element type are not the original's)
     float m_clipRange;  // 0x230: clipChk/clipTypeChk reject spheres larger than it (the name is not the original's)
 };

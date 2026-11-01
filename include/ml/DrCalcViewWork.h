@@ -106,7 +106,6 @@ public:
     float m_near;                   // 0x4C8: 0.1 from the constructor (the name is not the original's)
     unsigned char pad_4CC[0x14];
     DrCalcClipWorkViewPlane m_clipPlane;  // 0x4E0: set from m_proj by the constructor (the name is not the original's)
-    unsigned char pad_4F0[0xA0];
     // 0x590: DrPixlShadowMan::clipDirShadowChk tests the shadow direction's line against it (the name is not the
     // original's)
     DrCalcClipWorkViewPoli m_clipPoli;

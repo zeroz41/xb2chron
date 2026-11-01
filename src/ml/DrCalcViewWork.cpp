@@ -378,9 +378,219 @@ void DrCalcCpPlaneObj::release() {
 
 DrCalcClipWorkCone::DrCalcClipWorkCone() { m_type = 2; }
 
+void DrCalcClipWorkCone::setConeWork(const mm::Vec3& pos, const mm::Vec3& dir, float angle, float length) {
+    m_pos = pos;
+    m_dir = dir;
+    m_axis = dir * length;
+    m_dirDotPos = m_dir.dot(m_pos);
+    m_angle = angle;
+    m_sin = sinf(angle);
+    m_cosHalf = cosf(angle * 0.5f);
+    m_length = length;
+}
+
+bool DrCalcClipWorkCone::clipTest(const mm::Vec3& pos, float radius) const {
+    mm::Vec3 v = pos - m_pos;
+    float range = m_length + radius;
+    float lenSq = v.dot(v);
+    if (lenSq > range * range) {
+        return false;
+    }
+    if (-(pos.dot(m_dir) - m_dirDotPos) > radius) {
+        return false;
+    }
+    float len = sqrtf(lenSq);
+    mm::Vec3 n;
+    if (len <= 1e-6f) {
+        n = mm::Vec3::zero;
+    } else {
+        n = v * (1.0f / len);
+    }
+    if (n.dot(m_dir) - m_cosHalf > 0.0f) {
+        return true;
+    }
+    mm::Vec3 side = v.cross(m_dir);
+    mm::Vec3 out = m_dir.cross(side);
+    float outLen = out.length();
+    if (outLen <= 1e-6f) {
+        out = mm::Vec3::zero;
+    } else {
+        float scale = 1.0f / outLen;
+        out.x = out.x * scale;
+        out.y = out.y * scale;
+        out.z = out.z * scale;
+    }
+    mm::Vec3 edge = m_dir + out * m_sin;
+    mm::Vec3 normal = edge.cross(side);
+    float normalLen = normal.length();
+    if (normalLen <= 1e-6f) {
+        normal = mm::Vec3::zero;
+    } else {
+        float scale = 1.0f / normalLen;
+        normal.x = scale * normal.x;
+        normal.y = scale * normal.y;
+        normal.z = scale * normal.z;
+    }
+    return normal.dot(pos) - normal.dot(m_pos) <= radius;
+}
+
+// the same test as clipTest: 0 outside, 1 touching or inside
+int DrCalcClipWorkCone::clipTypeTest(const mm::Vec3& pos, float radius) const {
+    mm::Vec3 v = pos - m_pos;
+    float range = m_length + radius;
+    float lenSq = v.dot(v);
+    if (lenSq > range * range) {
+        return 0;
+    }
+    if (-(pos.dot(m_dir) - m_dirDotPos) > radius) {
+        return 0;
+    }
+    float len = sqrtf(lenSq);
+    mm::Vec3 n;
+    if (len <= 1e-6f) {
+        n = mm::Vec3::zero;
+    } else {
+        n = v * (1.0f / len);
+    }
+    if (n.dot(m_dir) - m_cosHalf > 0.0f) {
+        return 1;
+    }
+    mm::Vec3 side = v.cross(m_dir);
+    mm::Vec3 out = m_dir.cross(side);
+    float outLen = out.length();
+    if (outLen <= 1e-6f) {
+        out = mm::Vec3::zero;
+    } else {
+        float scale = 1.0f / outLen;
+        out.x = out.x * scale;
+        out.y = out.y * scale;
+        out.z = out.z * scale;
+    }
+    mm::Vec3 edge = m_dir + out * m_sin;
+    mm::Vec3 normal = edge.cross(side);
+    float normalLen = normal.length();
+    if (normalLen <= 1e-6f) {
+        normal = mm::Vec3::zero;
+    } else {
+        float scale = 1.0f / normalLen;
+        normal.x = scale * normal.x;
+        normal.y = scale * normal.y;
+        normal.z = scale * normal.z;
+    }
+    return normal.dot(pos) - normal.dot(m_pos) <= radius;
+}
+
 DrCalcClipWorkPlane::DrCalcClipWorkPlane() {}
 
 DrCalcClipWorkShadowPlane::DrCalcClipWorkShadowPlane() {}
+
+bool DrCalcClipWorkPlane::clipTest(const mm::Vec3& pos, float radius) const {
+    for (int i = 0; i < 6; i++) {
+        if (pos.dot(m_planes[i].normal) + m_planes[i].d > radius) {
+            return false;
+        }
+    }
+    return true;
+}
+
+int DrCalcClipWorkPlane::clipTypeTest(const mm::Vec3& pos, float radius) const {
+    int type = 1;
+    for (int i = 0; i < 6; i++) {
+        float dist = pos.dot(m_planes[i].normal) + m_planes[i].d;
+        if (dist > radius) {
+            return 0;
+        }
+        if (radius - dist < radius + radius) {
+            type = 2;
+        }
+    }
+    return type;
+}
+
+bool DrCalcClipWorkViewPlane::clipTest(const mm::Vec3& pos, float radius) const {
+    for (int i = 0; i < 5; i++) {
+        if (pos.dot(m_planes[i].normal) + m_planes[i].d > radius) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// an axis-aligned box (center, half size) is out when all eight corners lie on the outer side of one plane
+bool DrCalcClipWorkViewPlane::clipTest(const float* center, const float* size) const {
+    float maxX = center[0] + size[0];
+    float maxY = center[1] + size[1];
+    float maxZ = center[2] + size[2];
+    float minX = center[0] - size[0];
+    float minY = center[1] - size[1];
+    float minZ = center[2] - size[2];
+    for (int i = 0; i < 5; i++) {
+        const mm::Plane& plane = m_planes[i];
+        if (mm::Vec3(maxX, maxY, maxZ).dot(plane.normal) + plane.d < 0.0f) continue;
+        if (mm::Vec3(maxX, maxY, minZ).dot(plane.normal) + plane.d < 0.0f) continue;
+        if (mm::Vec3(minX, maxY, maxZ).dot(plane.normal) + plane.d < 0.0f) continue;
+        if (mm::Vec3(minX, maxY, minZ).dot(plane.normal) + plane.d < 0.0f) continue;
+        if (mm::Vec3(maxX, minY, maxZ).dot(plane.normal) + plane.d < 0.0f) continue;
+        if (mm::Vec3(maxX, minY, minZ).dot(plane.normal) + plane.d < 0.0f) continue;
+        if (mm::Vec3(minX, minY, maxZ).dot(plane.normal) + plane.d < 0.0f) continue;
+        if (mm::Vec3(minX, minY, minZ).dot(plane.normal) + plane.d < 0.0f) continue;
+        return false;
+    }
+    return true;
+}
+
+// points are out when all of them lie on the outer side of one plane
+bool DrCalcClipWorkViewPlane::clipTest(const mm::Vec3* points, int num) const {
+    for (int i = 0; i < 5; i++) {
+        int j;
+        for (j = 0; j < num; j++) {
+            if (points[j].dot(m_planes[i].normal) + m_planes[i].d < 0.0f) {
+                break;
+            }
+        }
+        if (j >= num) {
+            return false;
+        }
+    }
+    return true;
+}
+
+int DrCalcClipWorkViewPlane::clipTypeTest(const mm::Vec3& pos, float radius) const {
+    int type = 1;
+    for (int i = 0; i < 5; i++) {
+        float dist = pos.dot(m_planes[i].normal) + m_planes[i].d;
+        if (dist > radius) {
+            return 0;
+        }
+        if (radius - dist < radius + radius) {
+            type = 2;
+        }
+    }
+    return type;
+}
+
+bool DrCalcClipWorkShadowPlane::clipTest(const mm::Vec3& pos, float radius) const {
+    for (int i = 0; i < 4; i++) {
+        if (pos.dot(m_planes[i].normal) + m_planes[i].d > radius) {
+            return false;
+        }
+    }
+    return true;
+}
+
+int DrCalcClipWorkShadowPlane::clipTypeTest(const mm::Vec3& pos, float radius) const {
+    int type = 1;
+    for (int i = 0; i < 4; i++) {
+        float dist = pos.dot(m_planes[i].normal) + m_planes[i].d;
+        if (dist > radius) {
+            return 0;
+        }
+        if (radius - dist < radius + radius) {
+            type = 2;
+        }
+    }
+    return type;
+}
 
 void DrCalcMan::renderEnd() {
     DrCalcViewWork* pWork = m_pViewWork;

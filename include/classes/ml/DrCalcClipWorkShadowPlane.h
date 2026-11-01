@@ -2,6 +2,7 @@
 #define CLASSES_ML_DRCALCCLIPWORKSHADOWPLANE_H
 
 #include "classes/ml/DrCalcClipWork.h"
+#include "mm/Plane.h"
 
 namespace mm { class Vec3; }
 
@@ -13,6 +14,9 @@ public:
     ~DrCalcClipWorkShadowPlane();  // not virtual: no table slot; its owners' destructors call it
     virtual bool clipTest(mm::Vec3 const&, float) const;  // slot 0
     virtual int clipTypeTest(mm::Vec3 const&, float) const;  // slot 4
+    // 0x10: clipTest rejects a sphere when d + normal.dot(pos) > radius for any of them (the name is not the
+    // original's)
+    mm::Plane m_planes[4];
 };
 }  // namespace ml
 

@@ -23,7 +23,6 @@ public:
     short m_cacheIdx;  // 0x8F2: index of this cache's buffer in a seam's buffer list (the name is not the original's)
     unsigned char pad_8F4[0xC];
     DrCalcClipWorkPlane m_clip;  // 0x900
-    unsigned char pad_910[0xC0];
 };
 
 // DrPixlMan's shadow cache manager (DrPixlMan::m_shadowCacheMan). Only what DrPixlMan.cpp's recovered functions use

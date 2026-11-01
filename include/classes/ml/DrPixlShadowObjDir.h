@@ -22,7 +22,6 @@ public:
     bool setAddObjPos(mm::Vec3 const& pos, float radius);
 
     DrCalcClipWorkPlane m_clip;  // 0x1A0 (the name is not the original's)
-    unsigned char pad_1b0[0xC0];
     // 0x270: DrPixlShadowMan::clipDirShadowChk keeps only spheres wholly behind it (the name is not the original's)
     mm::Plane m_shadowPlane;
     unsigned char pad_290[0x70];
