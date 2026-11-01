@@ -178,6 +178,11 @@ public:
         unsigned char pad_21[0x3];
         unsigned int m_disable;  // getArtsPaletteDisable
     };
+    // a virtual blade's equipped orb and the orb's slot (8 bytes; the names are not the original's)
+    struct BladeVirtualOrb {
+        unsigned int m_orb;
+        unsigned int m_slot;
+    };
     GfMenuReference(const GfSetupParam& param);
     void finalize();
     static void setArtsPaletteEnable(unsigned char slot, bool enable, unsigned int disable);
@@ -421,8 +426,10 @@ public:
     unsigned int m_driverVirtualEquipAccSlot;
     int m_driverAddIdeaLv[4];
     unsigned int m_bladeVirtualEquipWpnChip;
-    unsigned int m_bladeVirtualEquipOrb;
-    unsigned int m_bladeVirtualEquipOrbSlot;
+    // the virtual blade's orb and its slot (set/getBladeVirtualEquipOrb, set/getBladeVirtualEquipOrbSlot): one
+    // record, as resetBladeVirtual's single 8-byte clear after the chip's 4-byte one shows (the type's and its
+    // fields' names are not the original's)
+    BladeVirtualOrb m_bladeVirtualEquipOrb;
     unsigned char pad_4CCEC[0x4];
     ui::UIStr m_referenceString[13];  // getReferenceString/setReferenceString
     ArtsPaletteSlot m_artsPaletteEx[6];  // slots 3..8

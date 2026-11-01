@@ -13,6 +13,10 @@
 #include "classes/gf/TUnk_B60E28.h"
 #include "classes/gf/TUnk_B63AE0.h"
 #include "gf/GfMenuObjUtil.h"
+#include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfObjPropertyEnemy.h"
+#include "gf/GfObjAcc.h"
+#include "gf/GfObjUtil.h"
 
 namespace gf {
 
@@ -50,11 +54,48 @@ void GfMenuReference::resetDriverVirtual() {
     }
 }
 
+void GfMenuReference::resetBladeVirtual() {
+    GfMenuReference* self = get();
+    if (self) {
+        self->m_bladeVirtualEquipWpnChip = 0;
+        self->m_bladeVirtualEquipOrb = BladeVirtualOrb();
+    }
+}
+
+void GfMenuReference::fn_7100366074(const unsigned int* values) {
+    GfMenuReference* self = get();
+    if (self) {
+        for (unsigned int i = 0; i < 4; i++) {
+            LayerCommand& command = self->m_layerCommand[i];
+            command.m_value = values[i];
+            command.m_flags.reset();
+            command.m_flags.set(0, true);
+            command.m_state = 0;
+        }
+    }
+}
+
 void GfMenuReference::postReset() {
     GfMenuReference* self = get();
     if (self) {
         for (unsigned int i = 0; i < 4; i++) {
             self->m_reversePaletteBtnState[i].set(2, false);
+        }
+    }
+}
+
+// slots 0..2 also store into the extended record at slot - 3 (no else between the two tests, as the original's
+// code shows)
+void GfMenuReference::setArtsPaletteEnable(unsigned char slot, bool enable, unsigned int disable) {
+    GfMenuReference* self = get();
+    if (self) {
+        if (slot < 3) {
+            self->m_artsPalette[slot].m_enable = enable;
+            self->m_artsPalette[slot].m_disable = disable;
+        }
+        if (slot < 9) {
+            self->m_artsPaletteEx[slot - 3].m_enable = enable;
+            self->m_artsPaletteEx[slot - 3].m_disable = disable;
         }
     }
 }
@@ -223,6 +264,30 @@ unsigned int GfMenuReference::fn_71003674A0() {
     return 0;
 }
 
+int GfMenuReference::getElementComboRootCurrent() {
+    GfMenuReference* self = get();
+    if (self) {
+        GF_OBJ_HANDLE* target = GfMenuManager::getTargetObjHandle();
+        if (target != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            if (GfObjAcc(target).getType() == 5) {
+                GfObjProperty* property = GfObjUtil::getProperty(target);
+                if (property) {
+                    GfObjPropertyEnemy* enemy = property->getEnemy();
+                    if (enemy) {
+                        unsigned int combo = enemy->m_elementComboId;
+                        if (combo != 0) {
+                            for (int i = 0; i < 7; i++) {
+                                if (self->m_elemComboRoot[i].m_comboId == combo) return i;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return 7;
+}
+
 void GfMenuReference::setElementComboParty(unsigned int index, unsigned int party, float timeLeft) {
     if (index < 2) {
         GfMenuReference* self = get();
@@ -264,6 +329,12 @@ void GfMenuReference::setPaletteModeReverse(bool reverse) {
         if (self->m_paletteModeReverse != reverse) GfMenuObjArtsPalette::reverse(reverse);
         self->m_paletteModeReverse = reverse;
     }
+}
+
+bool GfMenuReference::isReversePaletteBtnState(unsigned int slot, unsigned int state) {
+    GfMenuReference* self = get();
+    if (slot < 4 && self) return self->m_reversePaletteBtnState[slot].test(state);
+    return false;
 }
 
 const GfMenuReference::BladeOwner* GfMenuReference::fn_7100367BD8(unsigned int blade) {
@@ -750,23 +821,23 @@ unsigned int GfMenuReference::getBladeVirtualEquipWpnChip() {
 
 void GfMenuReference::setBladeVirtualEquipOrb(unsigned int value) {
     GfMenuReference* self = get();
-    if (self) self->m_bladeVirtualEquipOrb = value;
+    if (self) self->m_bladeVirtualEquipOrb.m_orb = value;
 }
 
 unsigned int GfMenuReference::getBladeVirtualEquipOrb() {
     GfMenuReference* self = get();
-    if (self) return self->m_bladeVirtualEquipOrb;
+    if (self) return self->m_bladeVirtualEquipOrb.m_orb;
     return 0;
 }
 
 void GfMenuReference::setBladeVirtualEquipOrbSlot(unsigned int value) {
     GfMenuReference* self = get();
-    if (self) self->m_bladeVirtualEquipOrbSlot = value;
+    if (self) self->m_bladeVirtualEquipOrb.m_slot = value;
 }
 
 unsigned int GfMenuReference::getBladeVirtualEquipOrbSlot() {
     GfMenuReference* self = get();
-    if (self) return self->m_bladeVirtualEquipOrbSlot;
+    if (self) return self->m_bladeVirtualEquipOrb.m_slot;
     return 0;
 }
 
