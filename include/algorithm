@@ -163,6 +163,17 @@ inline const _Tp& min(const _Tp& __a, const _Tp& __b) {
     return std::min(__a, __b, __less<_Tp>());
 }
 
+// std::max, the same way round (vector's __recommend)
+template <class _Tp, class _Compare>
+inline const _Tp& max(const _Tp& __a, const _Tp& __b, _Compare __comp) {
+    return __comp(__a, __b) ? __b : __a;
+}
+
+template <class _Tp>
+inline const _Tp& max(const _Tp& __a, const _Tp& __b) {
+    return std::max(__a, __b, __less<_Tp>());
+}
+
 // std::fill, as libc++ writes it: a random-access range goes to fill_n with its length (anm::Blender's samplers
 // clear their weights so: a memset of the counted loop)
 template <class _OutputIterator, class _Size, class _Tp>

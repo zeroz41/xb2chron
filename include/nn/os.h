@@ -50,6 +50,11 @@ struct alignas(8) ThreadType {
     unsigned char pad_0[0x1C0];  // mm::threading::ThreadNx holds one at 0x30, its EventWait follows at 0x1F0
 };
 
+// 8-aligned (it holds pointers); 0x50 bytes: MovieDecoderPlayer keeps its video and audio input queues 0x50 apart
+struct alignas(8) MessageQueueType {
+    unsigned char pad_0[0x50];
+};
+
 typedef void (*ThreadFunction)(void* argument);
 
 // the system tick count, returned by value in one register
@@ -138,6 +143,9 @@ void FinalizeMutex(MutexType* mutex);
 void LockMutex(MutexType* mutex);
 void UnlockMutex(MutexType* mutex);
 bool IsMutexLockedByCurrentThread(const MutexType* mutex);
+
+void SendMessageQueue(MessageQueueType* queue, unsigned long data);
+void ReceiveMessageQueue(unsigned long* data, MessageQueueType* queue);
 
 void InitializeReaderWriterLock(ReaderWriterLockType* lock);
 void FinalizeReaderWriterLock(ReaderWriterLockType* lock);

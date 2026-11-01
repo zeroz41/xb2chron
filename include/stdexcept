@@ -1,0 +1,50 @@
+#ifndef STDEXCEPT_H
+#define STDEXCEPT_H
+
+// The C++ library's exception classes, as the SDK's libc++ 3.9.1 declares them (the classes in std, the helper in std::__1; the classes' constructors,
+// what() and destructors live in the SDK's libc++), and its no-exceptions __libcpp_throw: print what() to stderr
+// and abort. Only what the game's code reaches.
+#include <__config>
+#include <stdio.h>
+#include <stdlib.h>
+
+namespace std {
+
+class exception {
+public:
+    exception() noexcept {}
+    virtual ~exception() noexcept;
+    virtual const char* what() const noexcept;
+};
+
+class __libcpp_refstring {
+    const char* __imp_;
+};
+
+class logic_error : public exception {
+    __libcpp_refstring __imp_;
+
+public:
+    explicit logic_error(const char*);
+    virtual ~logic_error() noexcept;
+    virtual const char* what() const noexcept;
+};
+
+class length_error : public logic_error {
+public:
+    _LIBCPP_INLINE_VISIBILITY explicit length_error(const char* __s) : logic_error(__s) {}
+    virtual ~length_error() noexcept;
+};
+
+inline namespace __1 {
+
+template <class _Exception>
+_LIBCPP_INLINE_VISIBILITY inline void __libcpp_throw(_Exception const& __e) {
+    fprintf(stderr, "%s\n", __e.what());
+    abort();
+}
+
+}  // inline namespace __1
+}  // namespace std
+
+#endif

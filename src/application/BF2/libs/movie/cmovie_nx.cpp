@@ -170,6 +170,24 @@ void AudioOutRendererThreadFunction(void* arg) {
     }
 }
 
+void AudioOutRenderer::OnOutputAvailable(int index, long presentationTimeUs, unsigned int flags) {
+    audioData data;
+    data.m_index = index;
+    data.m_presentationTimeUs = presentationTimeUs;
+    data.m_flags = flags;
+    nn::os::LockMutex(&m_outputMutex);
+    m_outputBuffers.push_back(data);
+    nn::os::UnlockMutex(&m_outputMutex);
+    GenerateFixedSizeAudioFrame();
+    if (m_startTimeUs == -1) {
+        MediaClock* clock = m_mediaClock;
+        nn::os::LockMutex(&clock->m_mutex);
+        clock->m_anchorTimeUs = presentationTimeUs;
+        nn::os::UnlockMutex(&clock->m_mutex);
+        m_startTimeUs = presentationTimeUs;
+    }
+}
+
 void* MultimediaAllocate(unsigned long size, unsigned long alignment, void* userPtr) {
     CMovieNX::CMovie* movie = static_cast<CMovieNX::CMovie*>(ICMovie::get());
     if (movie == nullptr) {
@@ -188,6 +206,34 @@ void MultimediaFree(void* address, void* userPtr) {
 
 void* MultimediaReallocate(void* address, unsigned long size, void* userPtr) {
     return mtl::MemManager::reallocate(address, size, false);
+}
+
+void VideoInputReadThreadFunction(void* arg) {
+    MovieDecoderPlayer* player = static_cast<MovieDecoderPlayer*>(arg);
+    for (;;) {
+        unsigned long message;
+        nn::os::ReceiveMessageQueue(&message, &player->m_videoInputQueue);
+        if (message == 1) {
+            player->CheckForInputBuffersAndReadVideoInputData();
+        } else if (message == 2) {
+            break;
+        }
+    }
+    player->m_videoInputThreadDone = true;
+}
+
+void AudioInputReadThreadFunction(void* arg) {
+    MovieDecoderPlayer* player = static_cast<MovieDecoderPlayer*>(arg);
+    for (;;) {
+        unsigned long message;
+        nn::os::ReceiveMessageQueue(&message, &player->m_audioInputQueue);
+        if (message == 3) {
+            player->CheckForInputBuffersAndReadAudioInputData();
+        } else if (message == 4) {
+            break;
+        }
+    }
+    player->m_audioInputThreadDone = true;
 }
 
 namespace CMovieNX {

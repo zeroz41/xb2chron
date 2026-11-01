@@ -10,18 +10,26 @@
 #include <string.h>
 #include <new>
 #include <utility>
+#include <stdexcept>
 
 namespace std { inline namespace __1 {
 
-// The default allocator: operator new / operator delete.
+// The default allocator: operator new / operator delete as libc++'s __allocate calls them (the builtin forms, which
+// let the optimizer keep values loaded before the allocation), and its size check.
 template <class _Tp>
 class allocator {
 public:
     allocator() noexcept {}
     template <class _Up>
     allocator(const allocator<_Up>&) noexcept {}
-    _Tp* allocate(size_t __n) { return static_cast<_Tp*>(::operator new(__n * sizeof(_Tp))); }
-    void deallocate(_Tp* __p, size_t) noexcept { ::operator delete((void*)__p); }
+    size_t max_size() const noexcept { return size_t(~0) / sizeof(_Tp); }
+    _Tp* allocate(size_t __n) {
+        if (__n > max_size())
+            __libcpp_throw(length_error("allocator<T>::allocate(size_t n)"
+                                        " 'n' exceeds maximum supported size"));
+        return static_cast<_Tp*>(__builtin_operator_new(__n * sizeof(_Tp)));
+    }
+    void deallocate(_Tp* __p, size_t) noexcept { __builtin_operator_delete((void*)__p); }
 };
 
 template <class _Size>

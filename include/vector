@@ -1,0 +1,201 @@
+#ifndef VECTOR_H
+#define VECTOR_H
+
+// The C++ library's <vector>, as the SDK's libc++ 3.9.1 writes it (std::__1): the growth path push_back and
+// emplace_back take when the storage is full (__recommend, __split_buffer, __swap_out_circular_buffer), with
+// trivially movable elements moved by one memcpy and the others copied back to front. Only what the game's code
+// instantiates.
+#include <__config>
+#include <stddef.h>
+#include <string.h>
+#include <new>
+#include <utility>
+#include <algorithm>
+#include <memory>
+
+namespace std { inline namespace __1 {
+
+template <bool>
+class __vector_base_common {
+protected:
+    __vector_base_common() {}
+    void __throw_length_error() const;
+    void __throw_out_of_range() const;
+};
+
+extern template class __vector_base_common<true>;
+
+// the buffer a growing vector builds the new storage in (libc++ holds a reference to the vector's allocator)
+template <class _Tp, class _Allocator>
+struct __split_buffer {
+    typedef _Tp* pointer;
+    typedef size_t size_type;
+
+    pointer __first_;
+    pointer __begin_;
+    pointer __end_;
+    pointer __end_cap_;
+    _Allocator __alloc_;
+
+    _LIBCPP_INLINE_VISIBILITY __split_buffer(size_type __cap, size_type __start, _Allocator __a)
+        : __end_cap_(nullptr), __alloc_(__a) {
+        __first_ = __cap != 0 ? __alloc_.allocate(__cap) : nullptr;
+        __begin_ = __end_ = __first_ + __start;
+        __end_cap_ = __first_ + __cap;
+    }
+    _LIBCPP_INLINE_VISIBILITY ~__split_buffer() {
+        clear();
+        if (__first_)
+            __alloc_.deallocate(__first_, capacity());
+    }
+    _LIBCPP_INLINE_VISIBILITY size_type capacity() const { return static_cast<size_type>(__end_cap_ - __first_); }
+    _LIBCPP_INLINE_VISIBILITY void clear() noexcept { __destruct_at_end(__begin_); }
+    _LIBCPP_INLINE_VISIBILITY void __destruct_at_end(pointer __new_last) noexcept {
+        while (__new_last != __end_)
+            (--__end_)->~_Tp();
+    }
+};
+
+template <class _Tp, class _Allocator>
+class __vector_base : protected __vector_base_common<true> {
+protected:
+    typedef _Tp* pointer;
+    typedef size_t size_type;
+
+    pointer __begin_;
+    pointer __end_;
+    pointer __end_cap_;  // libc++ pairs it with the (empty) allocator in a __compressed_pair: no space
+
+    _LIBCPP_INLINE_VISIBILITY _Allocator __alloc() const noexcept { return _Allocator(); }
+
+    _LIBCPP_INLINE_VISIBILITY __vector_base() noexcept : __begin_(nullptr), __end_(nullptr), __end_cap_(nullptr) {}
+    _LIBCPP_INLINE_VISIBILITY ~__vector_base() {
+        if (__begin_ != nullptr) {
+            clear();
+            __alloc().deallocate(__begin_, capacity());
+        }
+    }
+    _LIBCPP_INLINE_VISIBILITY size_type capacity() const noexcept { return static_cast<size_type>(__end_cap_ - __begin_); }
+    _LIBCPP_INLINE_VISIBILITY void clear() noexcept { __destruct_at_end(__begin_); }
+    _LIBCPP_INLINE_VISIBILITY void __destruct_at_end(pointer __new_last) noexcept {
+        pointer __soon_to_be_end = __end_;
+        while (__new_last != __soon_to_be_end)
+            (--__soon_to_be_end)->~_Tp();
+        __end_ = __new_last;
+    }
+};
+
+template <class _Tp, class _Allocator = allocator<_Tp> >
+class vector : private __vector_base<_Tp, _Allocator> {
+    typedef __vector_base<_Tp, _Allocator> __base;
+
+public:
+    typedef _Tp value_type;
+    typedef _Tp& reference;
+    typedef const _Tp& const_reference;
+    typedef _Tp* pointer;
+    typedef _Tp* iterator;
+    typedef const _Tp* const_iterator;
+    typedef size_t size_type;
+    typedef long difference_type;
+
+    _LIBCPP_INLINE_VISIBILITY vector() noexcept {}
+
+    _LIBCPP_INLINE_VISIBILITY iterator begin() noexcept { return this->__begin_; }
+    _LIBCPP_INLINE_VISIBILITY const_iterator begin() const noexcept { return this->__begin_; }
+    _LIBCPP_INLINE_VISIBILITY iterator end() noexcept { return this->__end_; }
+    _LIBCPP_INLINE_VISIBILITY const_iterator end() const noexcept { return this->__end_; }
+
+    _LIBCPP_INLINE_VISIBILITY size_type size() const noexcept { return static_cast<size_type>(this->__end_ - this->__begin_); }
+    _LIBCPP_INLINE_VISIBILITY size_type capacity() const noexcept { return __base::capacity(); }
+    _LIBCPP_INLINE_VISIBILITY bool empty() const noexcept { return this->__begin_ == this->__end_; }
+    _LIBCPP_INLINE_VISIBILITY size_type max_size() const noexcept {
+        return std::min<size_type>(this->__alloc().max_size(), static_cast<size_type>(__PTRDIFF_MAX__));
+    }
+
+    _LIBCPP_INLINE_VISIBILITY reference operator[](size_type __n) { return this->__begin_[__n]; }
+    _LIBCPP_INLINE_VISIBILITY const_reference operator[](size_type __n) const { return this->__begin_[__n]; }
+    _LIBCPP_INLINE_VISIBILITY reference front() { return *this->__begin_; }
+    _LIBCPP_INLINE_VISIBILITY reference back() { return *(this->__end_ - 1); }
+
+    _LIBCPP_INLINE_VISIBILITY void clear() noexcept { __base::clear(); }
+
+    _LIBCPP_INLINE_VISIBILITY void push_back(const_reference __x) {
+        if (this->__end_ != this->__end_cap_) {
+            ::new ((void*)this->__end_) _Tp(__x);
+            ++this->__end_;
+        } else
+            __push_back_slow_path(__x);
+    }
+
+    template <class... _Args>
+    _LIBCPP_INLINE_VISIBILITY void emplace_back(_Args&&... __args) {
+        if (this->__end_ < this->__end_cap_) {
+            ::new ((void*)this->__end_) _Tp(std::forward<_Args>(__args)...);
+            ++this->__end_;
+        } else
+            __emplace_back_slow_path(std::forward<_Args>(__args)...);
+    }
+
+private:
+    _LIBCPP_INLINE_VISIBILITY size_type __recommend(size_type __new_size) const {
+        const size_type __ms = max_size();
+        if (__new_size > __ms)
+            this->__throw_length_error();
+        const size_type __cap = capacity();
+        if (__cap >= __ms / 2)
+            return __ms;
+        return std::max<size_type>(2 * __cap, __new_size);
+    }
+
+    // the old elements move to the front of the new storage: a trivially movable type in one memcpy, any other one
+    // copy-constructed back to front
+    _LIBCPP_INLINE_VISIBILITY static void __construct_backward(pointer __begin1, pointer __end1, pointer& __end2) {
+        if (__is_trivially_constructible(_Tp, _Tp&&)) {
+            long _Np = __end1 - __begin1;
+            __end2 -= _Np;
+            if (_Np > 0)
+                ::memcpy(__end2, __begin1, _Np * sizeof(_Tp));
+        } else {
+            while (__end1 != __begin1) {
+                ::new ((void*)(__end2 - 1)) _Tp(*--__end1);
+                --__end2;
+            }
+        }
+    }
+
+    _LIBCPP_INLINE_VISIBILITY void __swap_out_circular_buffer(__split_buffer<_Tp, _Allocator>& __v) {
+        __construct_backward(this->__begin_, this->__end_, __v.__begin_);
+        std::swap(this->__begin_, __v.__begin_);
+        std::swap(this->__end_, __v.__end_);
+        std::swap(this->__end_cap_, __v.__end_cap_);
+        __v.__first_ = __v.__begin_;
+    }
+
+    template <class _Up>
+    void __push_back_slow_path(_Up&& __x);
+    template <class... _Args>
+    void __emplace_back_slow_path(_Args&&... __args);
+};
+
+template <class _Tp, class _Allocator>
+template <class _Up>
+void vector<_Tp, _Allocator>::__push_back_slow_path(_Up&& __x) {
+    __split_buffer<_Tp, _Allocator> __v(__recommend(size() + 1), size(), this->__alloc());
+    ::new ((void*)__v.__end_) _Tp(std::forward<_Up>(__x));
+    __v.__end_++;
+    __swap_out_circular_buffer(__v);
+}
+
+template <class _Tp, class _Allocator>
+template <class... _Args>
+void vector<_Tp, _Allocator>::__emplace_back_slow_path(_Args&&... __args) {
+    __split_buffer<_Tp, _Allocator> __v(__recommend(size() + 1), size(), this->__alloc());
+    ::new ((void*)__v.__end_) _Tp(std::forward<_Args>(__args)...);
+    __v.__end_++;
+    __swap_out_circular_buffer(__v);
+}
+
+}}  // namespace std::__1
+
+#endif
