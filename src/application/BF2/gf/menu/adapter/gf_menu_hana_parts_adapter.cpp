@@ -46,17 +46,17 @@ GfMenuHanaPartsAdapter* GfMenuHanaPartsAdapter::create(unsigned int handle, unsi
     GfMenuHanaPartsAdapter* adapter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
         GfMenuHanaPartsAdapter(plugin, changed);
     adapter->m_update.set(adapter, setup.func);
-    adapter->m_partsId = partsId;
+    adapter->m_parts.m_partsId = partsId;
     plugin->release();
     return adapter;
 }
 
 bool GfMenuHanaPartsAdapter::update_partsText() {
-    if (m_partsId == 0) {
+    if (m_parts.m_partsId == 0) {
         return false;
     }
     unsigned char* message = GfDataBdat::getFP(0xF5);
-    unsigned short name = (unsigned short)Bdat::getVal(GfDataBdat::getFP(0x17C), "name", m_partsId);
+    unsigned short name = (unsigned short)Bdat::getVal(GfDataBdat::getFP(0x17C), "name", m_parts.m_partsId);
     if (name == 0) {
         return false;
     }
@@ -66,10 +66,10 @@ bool GfMenuHanaPartsAdapter::update_partsText() {
 }
 
 bool GfMenuHanaPartsAdapter::update_partsIcon() {
-    if (m_partsId == 0) {
+    if (m_parts.m_partsId == 0) {
         return false;
     }
-    unsigned short icon = (unsigned short)Bdat::getVal(GfDataBdat::getFP(0x17C), "icon", m_partsId);
+    unsigned short icon = (unsigned short)Bdat::getVal(GfDataBdat::getFP(0x17C), "icon", m_parts.m_partsId);
     if (icon == 0) {
         return false;
     }
@@ -77,7 +77,59 @@ bool GfMenuHanaPartsAdapter::update_partsIcon() {
     return true;
 }
 
-// update_needEther: not written yet (the original reloads the blade and part for its switch)
+// the ether a part of type `type` needs next (its circuit's opening, or the power rank-up); false for a type that
+// needs none. The blade and part come by value: the original reloads both as one after the switch on the adapter's
+// part. The name is not the original's.
+static inline bool getNeedEther(GfMenuHanaPartsAdapter::HanaParts parts, unsigned int type, int& ether) {
+    unsigned int hana = parts.m_hanaId;
+    unsigned int id = parts.m_partsId;
+    switch (type) {
+    case 9:
+    case 10:
+    case 11:
+    case 16:
+    case 17:
+    case 18: {
+        unsigned int circuit = id > 15 ? id - 16 : id - 9;
+        if (GfGameUtilHana::isOpenArtsCircuit(hana, circuit) == 10) {
+            ether = GfGameUtilHana::getEtherForOpenArtsCircuit(hana, circuit);
+        }
+        return true;
+    }
+    case 12:
+    case 13:
+    case 14:
+    case 19:
+    case 20:
+    case 21: {
+        unsigned int circuit = id > 18 ? id - 19 : id - 12;
+        if (GfGameUtilHana::isOpenCondenserCircuit(hana, circuit) == 10) {
+            ether = GfGameUtilHana::getEtherForOpenCondenserCircuit(hana, circuit);
+        }
+        return true;
+    }
+    case 15: {
+        unsigned int rank = GfGameUtilHana::getPowerRank(hana) + 1;
+        if (GfGameUtilHana::isExecPowerRankup(hana, rank) != 6) {
+            ether = GfGameUtilHana::getNeedEtherForExecPowerRankup(hana, rank);
+        }
+        return true;
+    }
+    }
+    return false;
+}
+
+bool GfMenuHanaPartsAdapter::update_needEther() {
+    if (m_parts.m_partsId == 0) {
+        return false;
+    }
+    int ether = 0;
+    if (!getNeedEther(m_parts, m_parts.m_partsId, ether)) {
+        return false;
+    }
+    setNumber(ether);
+    return true;
+}
 
 GfMenuHanaPartsAdapter* GfMenuHanaPartsAdapter::createFromCoverter(unsigned int handle, unsigned int type,
                                                                    IConverter* converter, bool changed) {
@@ -105,8 +157,8 @@ GfMenuHanaPartsAdapter* GfMenuHanaPartsAdapter::createFromReference(
 void GfMenuHanaPartsAdapter::update(const fw::UpdateInfo& info) {
     if (m_converter != nullptr) {
         unsigned int partsId = m_converter->getPartsId();
-        if (m_partsId != partsId) {
-            m_partsId = partsId;
+        if (m_parts.m_partsId != partsId) {
+            m_parts.m_partsId = partsId;
             setChange();
         }
     }

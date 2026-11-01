@@ -75,7 +75,7 @@ public:
         GfMenuHanaPartsAdapter* adapter =
             GfMenuHanaPartsAdapter::createFromReference(acc.searchChild("TXT_ndetl_num"), 2, number, true);
         if (adapter != nullptr) {
-            adapter->m_hanaId = hana;
+            adapter->m_parts.m_hanaId = hana;
         }
     }
     static void refreshEquipListSub(ui::UIObjectAcc& acc, unsigned int hana, unsigned int slot, unsigned int type);

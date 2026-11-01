@@ -22,9 +22,19 @@ public:
         bool (GfMenuHanaPartsAdapter::*func)();
         GfMenuAdapter::PluginSetup plugin;
     };
+    // a blade and one of its parts, copied as one: update_needEther passes it by value (the original's one 8-byte
+    // reload of both after its switch on the part); the type and its name are not the original's
+    struct HanaParts {
+        // the blade whose circuits update_needEther asks GfGameUtilHana about (nothing in this unit sets it; the name
+        // is not the original's)
+        unsigned int m_hanaId;
+        unsigned int m_partsId;  // GfDataBdat 0x17C's row; 0 shows nothing
+    };
     // inline: 1.0.0 has it out of line (it leaves the part unset), 3.0.1 none
     GfMenuHanaPartsAdapter(ui::UIObjectPlugin* plugin, bool changed)
-        : GfMenuAdapter(plugin, false, changed), m_converter(nullptr), m_hanaId(0) {}
+        : GfMenuAdapter(plugin, false, changed), m_converter(nullptr) {
+        m_parts.m_hanaId = 0;
+    }
     virtual ~GfMenuHanaPartsAdapter();  // slot 0
     virtual void update(fw::UpdateInfo const&);  // slot 2
     static GfMenuHanaPartsAdapter* create(unsigned int handle, unsigned int type, unsigned int partsId, bool changed);
@@ -41,10 +51,7 @@ public:
                                                        bool changed);
     mm::mtl::Delegate<bool()> m_update;  // its type's update_*; update shows what it returns
     IConverter* m_converter;  // update takes the part from it; owned
-    // the blade whose circuits update_needEther asks GfGameUtilHana about (nothing in this unit sets it; the name is
-    // not the original's)
-    unsigned int m_hanaId;
-    unsigned int m_partsId;  // GfDataBdat 0x17C's row; 0 shows nothing
+    HanaParts m_parts;
 };
 }  // namespace gf
 
