@@ -137,6 +137,15 @@ inline _InputIterator find(_InputIterator __first, _InputIterator __last, const 
     return __first;
 }
 
+// libc++'s for_each: the range by value, so the end iterator is worked out before the first test (fw::ModelManager::
+// update and fw::AnimationManager::updateControls compute the list's end ahead of begin's null-checked cast)
+template <class _InputIterator, class _Function>
+inline _Function for_each(_InputIterator __first, _InputIterator __last, _Function __f) {
+    for (; __first != __last; ++__first)
+        __f(*__first);
+    return __f;
+}
+
 template <class _T1, class _T2 = _T1>
 struct __less {
     bool operator()(const _T1& __x, const _T1& __y) const { return __x < __y; }
