@@ -5,6 +5,13 @@
 #include "gf/GfFieldPitchRollController.h"
 #include "gf/GfGameDepopMeter.h"
 #include "gf/GfBigObjUnique.h"
+#include "gf/GfFieldLookIk.h"
+#include "gf/GfObjAcc.h"
+#include "classes/gf/GfObj.h"
+#include "classes/gf/GfComIK.h"
+#include "classes/fw/LookIkSolver.h"
+#include "gf/MsgPcGetLookPoint.h"
+#include "fw/Transform.h"
 #include "classes/gf/GfFieldLocalSteer.h"
 #include "gf/GfFieldUndulator.h"
 #include "gf/GfFieldPitchRollController.h"
@@ -163,6 +170,71 @@ void GfEnemyFieldMoveSpeed::setSpeedKmph(float speed, float rate) {
     m_tween.m_from = speedNow;
     m_tween.m_value = rate == 0.0f ? speed : speedNow;
     m_tween.m_rate = rate;
+}
+
+GfFieldLookIk::GfFieldLookIk(GF_OBJ_HANDLE* handle)
+    : m_handle(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), m_solverIndex(3), pad_c(5.0f), pad_10(2.35619450f),
+      pad_14(1.04719758f), m_fadeTime(0.7f), pad_1c(true), pad_20(mm::Vec3::zero), pad_30(false) {
+    if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        dispose();
+        m_handle = handle;
+    }
+}
+
+void GfFieldLookIk::dispose() {
+    pad_30 = false;
+    if (m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        GfObjAcc acc(m_handle);
+        if (!acc.isDestroy() && !acc.testFlag(17)) {
+            if (GfObj* obj = acc.getObj()) {
+                if (GfComIK* ik = obj->getComponent<GfComIK>(3)) {
+                    if (fw::LookIkSolver* solver = ik->getSolver<fw::LookIkSolver>(m_solverIndex)) {
+                        solver->fadeOut(m_fadeTime);
+                    }
+                }
+            }
+        }
+        m_handle = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+}
+
+// the GfComIK solver of each LookAt value (lbl_71009BB654; the name is not the original's)
+static const unsigned int s_lookAtSolvers[] = {9, 5, 3};
+
+void GfFieldLookIk::create(GF_OBJ_HANDLE* handle, const CBdatWrapper& bdat, int id) {
+    dispose();
+    m_handle = handle;
+    unsigned char lookAt = Bdat::getValCheckU8(bdat.m_fp, "LookAt", id);
+    if (lookAt != 0) {
+        pad_c = Bdat::getValCheckU16(bdat.m_fp, "LookAtRange", id);
+        if (lookAt >= 3) {
+            dispose();
+        } else {
+            m_solverIndex = s_lookAtSolvers[lookAt];
+            pad_1c = true;
+        }
+    } else {
+        pad_1c = false;
+    }
+}
+
+bool GfFieldLookIk::findPos(mm::Vec3& pos) const {
+    GfObjAcc acc(m_handle);
+    GfObj* obj = acc.getObj();
+    if (obj == nullptr) {
+        return false;
+    }
+    MsgPcGetLookPoint msg;
+    bool taken = static_cast<fw::MessageObject*>(obj)->recieveMessage(obj, msg);
+    if (msg.m_found && taken) {
+        pos = msg.m_point;
+        return true;
+    }
+    if (acc.isValidTransform()) {
+        pos = acc.getWorldTransform().position;
+        return true;
+    }
+    return false;
 }
 
 GfGameDepopMeter::GfGameDepopMeter(const CreateInfo* info)
