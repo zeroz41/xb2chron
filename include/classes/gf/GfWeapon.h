@@ -153,6 +153,11 @@ int fn_71002EDC4C(const char* name);
 // GfGameScene::fn_71002C5994, which calls it on every object of list 5). A free function: its class is not known.
 void fn_71002E0F28(GF_OBJ_HANDLE* handle);
 void fn_71002EDD60();
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit among its free placeholders and it takes no object. What it does: for drivers 1, 2, 3, 5 and 6
+// sets their blades back (mercenary blades by GfGameUtil::execEquipMercenariesBlade, then the equipped one) and
+// answers whether one was equipped; TUnk_28D7B8::fn_710028DAB4 passes (false, true).
+bool fn_71002EC268(bool, bool);
 fw::SoundPack* fn_71002EE5A0(const char* name);
 const char* fn_71002EE5C0(const char* name);
 void* fn_71002EE8C4();

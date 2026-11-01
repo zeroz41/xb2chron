@@ -37,14 +37,24 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x710028E15C, GfAppendWire's unit
     // range). A member: TUnk_B52C38::fn_710028D584 calls it on its arena's +0xB8 object (GEV 4, the map jump).
     void fn_710028E15C();
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: fn_710028E4E8 calls them on this
+    // object with its key (code next to it). fn_710028E3F8 (this not used) answers whether the challenge's party
+    // can be set up: true for a mode-3 challenge, else GfBdatBtl's fn_71001EA2D4 drivers 0..2 must be in the party
+    // (0 and 7 and 9 always count). fn_710028DF1C fills m_lists.m_list38 (fn_71002907A0), sets each driver's
+    // level to the challenge's and copies the list to the arena's record; fn_710028E050 the same for m_listE0
+    // (fn_71002908DC, no levels).
+    bool fn_710028E3F8(const GfGameManager::BattleChallengeRecord::Key& key);
+    // fn_710028DB70: fades out, keeps the party (GfGameParty::getCurrentPartyInfo into m_party) and changes it to
+    // the challenge's drivers and blades (GfReqCommand::reqChangeParty).
+    void fn_710028DB70(const GfGameManager::BattleChallengeRecord::Key& key);
+    void fn_710028DF1C(const GfGameManager::BattleChallengeRecord::Key& key);
+    void fn_710028E050(const GfGameManager::BattleChallengeRecord::Key& key);
     TUnk_B535D0* m_owner;  // (the name is not the original's)
     unsigned char pad_8[0x8];
     RQ_SETUP_PARTY m_party;  // the constructor builds it (the name is not the original's)
-    unsigned char pad_250[0xA0];
-    // cleared by the constructor; the destructor clears it when set (what it holds is unknown)
-    void* pad_2F0;
-    unsigned char pad_2F8[0x9E8];
-    void* pad_CE0;  // as pad_2F0
+    // the lists fn_710028DF1C / fn_710028E050 fill and copy to the arena's record; fn_710028E15C empties them and
+    // copies them there whole (fn_710028E234, the Lists copy) (the name is not the original's)
+    GfGameManager::BattleChallengeRecord::Lists m_lists;
     unsigned char pad_CE8[0x8];
 };
 }  // namespace gf

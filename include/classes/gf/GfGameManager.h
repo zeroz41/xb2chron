@@ -84,12 +84,20 @@ public:
     // 0x28/0x2C and floats at 0xAD0; gf_menu_obj_btl_time reads m_kind; gf_menu_btlch_adapter's callbacks (TUnk_B5A648)
     // read most of the rest. 0xAF0 bytes: the 0xAF0-byte frames of those callbacks hold one.
     struct BattleChallengeRecord {
-        // the elements of the two lists are not known (gf_game_arena fills them): room of 0xA0 and 0x9E8 bytes
+        // the elements of the two lists: three shorts each (the copies divide by 6; room for 26 and 422).
+        // Entry38 is a party driver's id, its level and the level the challenge sets (fn_71002907A0 fills them;
+        // TUnk_28D7B8's fn_710028DF1C sets m_challengeLevel, fn_710028E15C puts m_level back). The names are not the
+        // original's.
         struct Entry38 {
-            unsigned char pad_00[0x8];
+            unsigned short m_driver;
+            unsigned short m_level;
+            unsigned short m_challengeLevel;
         };
+        // filled by fn_71002908DC; what the shorts hold is not recovered
         struct EntryE0 {
-            unsigned char pad_00[0x9E8];
+            unsigned short pad_0;
+            unsigned short pad_2;
+            unsigned short pad_4;
         };
         // 12 bytes the arena copies from GfDataGame's table (row * 0x40 + type * 12 at 0x11A8CC)
         struct Rule {
@@ -186,8 +194,8 @@ public:
             // the same for m_listE0.
             void fn_71002907A0(const Key& key);
             void fn_71002908DC(const Key& key);
-            mm::mtl::FixedVector<Entry38, 20> m_list38;
-            mm::mtl::FixedVector<EntryE0, 1> m_listE0;
+            mm::mtl::FixedVector<Entry38, 26> m_list38;
+            mm::mtl::FixedVector<EntryE0, 422> m_listE0;
         };
         // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code in unit_710028EBB0's range). A
         // member: fn_7100291E40 calls it on the record with the challenge id. What it does: clears the record and
