@@ -10,6 +10,10 @@ namespace event {
 class CharaEvaPlayerEff {
 public:
     virtual ~CharaEvaPlayerEff();  // slot 0
+    void play(gf::GfEvtModel*, CharaEffectPlayer*, void*);
+    void update(float);
+    // 1.0.0's CharaEvaPlayerEff::stop (0x71000CB5AC); 3.0.1 inlines it into CharaPlayEvaEff::update
+    void stop();
     // play (0x71000E2E28) stores its model and player here, then a new RchaChrEff it sets up (the names are not the
     // original's)
     gf::GfEvtModel* m_model;  // 0x8

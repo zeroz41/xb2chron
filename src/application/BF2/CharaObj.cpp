@@ -72,6 +72,7 @@
 #include "classes/event/Extend.h"
 #include "classes/event/CharaEvaPlayerEff.h"
 #include "classes/event/CharaWpnAsm.h"
+#include "classes/gf/GfEvtModel.h"
 #include "classes/event/CamEvaPlayer.h"
 #include "classes/event/CamEvaPlayerEff.h"
 #include "classes/event/EffectCtrl.h"
@@ -376,6 +377,67 @@ void CharaPlayTalk::init() {
 
 void CharaPlayTalk::term() {
     idle();
+}
+
+int CharaPlayEvaEff::update(const ICmd::Param& param) {
+    if (m_model != nullptr && gf::GfObjUtil::getObj(m_model->m_handle) != nullptr) {
+        float step = static_cast<CharaObj*>(param.m_param.val(0).getUserdata())->m_frameInfo.m_step;
+        if (param.m_frame <= 0) {
+            const char* name =
+                mm::mtl::Singleton<Extend>::getPtr()->replaceString(param.m_param.val(1).getStr(), "event", "effect");
+            void* data;
+            unsigned long size;
+            if (!mm::mtl::Singleton<CharaManager>::getPtr()->isStreamMode()) {
+                ResManager::Item* item = mm::mtl::Singleton<ResManager>::getPtr()->search(
+                    mm::mtl::Singleton<Extend>::getPtr()->effeva(name));
+                if (item == nullptr || item->m_data == nullptr || item->m_size == 0) {
+                    return 1;
+                }
+                data = item->m_data;
+                size = item->m_size;
+            } else {
+                data = mm::mtl::Singleton<MotstmManager>::getPtr()->adr(
+                    mm::mtl::Singleton<Extend>::getPtr()->effeva(name), &size);
+                if (data == nullptr) {
+                    return 1;
+                }
+            }
+            m_player.play(m_model, m_effectPlayer, data);
+            m_time = param.m_param.val(2).getF32();
+            m_data = data;
+            m_flags |= 1;
+            if (m_time <= 0.0f) {
+                m_flags |= 2;
+            } else {
+                m_flags &= ~2;
+            }
+        }
+        m_player.update(step * param.m_param.val(3).getF32());
+        if (m_flags & 2) {
+            return 2;
+        }
+        m_time -= step;
+        if (!(m_time < 0.0f)) {
+            return 2;
+        }
+        m_player.stop();
+    }
+    if (mm::mtl::Singleton<CharaManager>::getPtr()->isStreamMode() && m_data != nullptr) {
+        mm::mtl::Singleton<MotstmManager>::getPtr()->free(m_data);
+    }
+    m_data = nullptr;
+    m_flags &= ~1;
+    return 1;
+}
+
+void CharaPlayEvaEff::term() {
+    if (m_flags & 1) {
+        if (mm::mtl::Singleton<CharaManager>::getPtr()->isStreamMode() && m_data != nullptr) {
+            mm::mtl::Singleton<MotstmManager>::getPtr()->free(m_data);
+        }
+        m_data = nullptr;
+        m_flags &= ~1;
+    }
 }
 
 void CharaHideWpn::term() {
@@ -834,6 +896,12 @@ const char* Extend::eva(const char* pszName) {
     return m_path.m_str;
 }
 
+const char* Extend::effeva(const char* pszName) {
+    m_path = pszName;
+    m_path += "_eff.eva";
+    return m_path.m_str;
+}
+
 const char* Extend::lgt(const char* pszName) {
     m_path = pszName;
     m_path += ".wilgt";
@@ -868,6 +936,25 @@ const char* Extend::filename(const char* pszPath) {
         return p + 1;
     }
     return pszPath;
+}
+
+const char* Extend::replaceString(const char* str, const char* from, const char* to) {
+    // the buffer's name is not the original's
+    static char s_buf[256];
+    memset(s_buf, 0, sizeof(s_buf));
+    unsigned long fromLen = strlen(from);
+    unsigned long toLen = strlen(to);
+    char* dst = s_buf;
+    while (*str != '\0') {
+        if (memcmp(str, from, fromLen) == 0) {
+            memcpy(dst, to, toLen);
+            str += fromLen;
+            dst += toLen;
+        } else {
+            *dst++ = *str++;
+        }
+    }
+    return s_buf;
 }
 
 PosAxis::PosAxis() : m_type(1), m_value(mm::Vec3::zero) {}
@@ -1399,6 +1486,15 @@ void CharaObj::stopRimBloom() {
 CharaWpnAsm::~CharaWpnAsm() {}
 
 CharaEvaPlayerEff::~CharaEvaPlayerEff() {
+    if (m_rcha) {
+        delete m_rcha;
+        m_rcha = nullptr;
+    }
+    m_model = nullptr;
+    m_player = nullptr;
+}
+
+void CharaEvaPlayerEff::stop() {
     if (m_rcha) {
         delete m_rcha;
         m_rcha = nullptr;

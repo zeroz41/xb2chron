@@ -110,7 +110,6 @@ public:
     CharaPlayEva m_playEva;  // 0x750
     unsigned char pad_790[0x150];
     CharaPlayEvaEff m_playEvaEff;  // 0x8e0
-    unsigned char pad_910[0x28];
     CharaHideWpn m_hideWpn;  // 0x938
     CharaPlayHead m_playHead;  // 0x950
     CharaStopHead m_stopHead;  // 0x988
