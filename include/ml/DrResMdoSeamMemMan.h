@@ -9,6 +9,13 @@ namespace ml {
 template <class T>
 class DrResChankList {
 public:
+    // the links a T can take from a base (DrCalcTexStmObj does: its constructor zeroes them before its table is
+    // stored; the name is not the original's)
+    struct Node {
+        Node() : m_prev(), m_next() {}
+        T* m_prev;
+        T* m_next;
+    };
     void changeList(T* obj, T* next);
     // unlinks obj (inline: the name is not the original's)
     void remove(T* obj) {

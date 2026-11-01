@@ -103,7 +103,9 @@ public:
     short m_idleFrame[2];
     unsigned char pad_90[0x14];
     short m_texNum;              // 0xA4: the stream's textures (DrResMdoTexList::createStmTexInfoList; the name is not the original's)
-    unsigned char pad_a6[0x2];
+    // 0xA6: release counts it down to 0; DrCalcTexStreamMan::update clears m_curUseMode while it is 0 (the name is
+    // not the original's)
+    short m_useCount;
     short m_errWait;             // 0xA8: frames an error waits (60 before the read is tried again)
     short m_reqWait;             // 0xAA: frames texstm_requestWait waits
     unsigned char pad_ac[0x4];

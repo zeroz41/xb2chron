@@ -24,6 +24,7 @@
 #include "classes/ml/DrCalcTexStmObj.h"
 #include "grlib/CGLibTextureBuffer.h"
 #include "grlib/CGLibRenderTarget.h"
+#include "ml/MlMem.h"
 #include "ml/DrIniSys.h"
 #include "classes/ml/DrCalcTexStreamMan.h"
 #include "classes/ml/DrMan.h"
@@ -245,6 +246,17 @@ int DrCalcViewWork::unistatic_depth_change(float* pDst, bool) {
     return DrResMdoUniformBlock::s_nVarSizeTbl[25];
 }
 
+int DrCalcViewWork::unistatic_digher_val(float* pDst, bool) {
+    grlib::CGLibTextureBuffer* pTex = &m_pDrMan->m_iniSys->m_texture[1];
+    float w = static_cast<unsigned short>(pTex->getWidth());
+    float h = static_cast<unsigned short>(pTex->getHeight());
+    pDst[0] = m_pDrMan->m_curViewInfo->m_width * 0.25f;
+    pDst[1] = (1.0f / h) * m_pDrMan->m_curViewInfo->m_height;
+    pDst[2] = 4.0f / w;
+    pDst[3] = w * 0.25f;
+    return DrResMdoUniformBlock::s_nVarSizeTbl[26];
+}
+
 int DrCalcViewWork::unistatic_screenSize(float* pDst, bool) {
     mm::Vec4 size = mm::Vec4::unit;
     grlib::CGLibRenderTarget* pObj = m_pDrMan->m_pixlMan->getPixlObj(5);
@@ -381,6 +393,11 @@ void DrCalcMan::renderEnd() {
 
 void DrCalcMan::shadowEnd() { m_pViewWork->m_billboard = m_pViewWork->m_saveBillboard; }
 
+CriticalSection& DrCalcTexStreamMan::getCriticalSection() {
+    static CriticalSection s_cs;  // Proposed name, not the original's (lbl_71015E9BF8)
+    return s_cs;
+}
+
 DrCalcTexStreamMan::~DrCalcTexStreamMan() { release(); }
 
 unsigned int DrCalcTexStreamMan::jobUpdate(void* man, void*) {
@@ -509,6 +526,13 @@ bool DrCalcStmListObj::texstm_defupdate() {
         m_func = &DrCalcStmListObj::texstm_checkTexStm;
     }
     return false;
+}
+
+void DrCalcStmListObj::release() {
+    CS cs(DrCalcTexStreamMan::getCriticalSection());
+    if (--m_useCount < 0) {
+        m_useCount = 0;
+    }
 }
 
 bool DrCalcStmListObj::OnFileEvent(EventFileTh* pEvent) {
