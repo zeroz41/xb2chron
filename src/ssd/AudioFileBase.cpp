@@ -8,6 +8,7 @@
 #include "classes/ssd/AudioFileBase.h"
 #include "classes/ssd/AudioFileSadf.h"
 #include "classes/ssd/AudioFileWave.h"
+#include "classes/ssd/AudioFileAiff.h"
 
 namespace ssd {
 
@@ -21,6 +22,60 @@ void AudioFileBase::DeleteReadBuffer() {
         readBuffer_ = nullptr;
         ownsReadBuffer_ = false;
     }
+}
+
+AudioFileBase* AudioFileBase::CreateFileBase(MediaFileType type, unsigned char* buffer) {
+    AudioFileBase* file = nullptr;
+    bool heap;
+    if (buffer != nullptr) {
+        switch (type) {
+        case 1:
+            file = new (buffer) AudioFileAiff;
+            break;
+        case 2:
+            file = new (buffer) AudioFileWave;
+            break;
+        case 3:
+            file = new (buffer) AudioFileSadf;
+            break;
+        }
+        heap = false;
+    } else {
+        switch (type) {
+        case 1:
+            file = new AudioFileAiff;
+            break;
+        case 2:
+            file = new AudioFileWave;
+            break;
+        case 3:
+            file = new AudioFileSadf;
+            break;
+        }
+        heap = true;
+    }
+    if (file != nullptr) {
+        file->heap_ = heap;
+    }
+    return file;
+}
+
+Result AudioFileBase::CloseFileBase(AudioFileBase** file) {
+    if (file != nullptr && *file != nullptr) {
+        AudioFileBase* reader = *file;
+        reader->Close();
+        if (reader->ownsStream_ && reader->stream_ != nullptr) {
+            reader->stream_->Close();
+            reader->stream_ = nullptr;
+        }
+        if (!reader->heap_) {
+            reader->~AudioFileBase();
+        } else {
+            delete reader;
+        }
+        *file = nullptr;
+    }
+    return Result(0);
 }
 
 Result AudioFileBase::Open(IoStreamBase*) {
