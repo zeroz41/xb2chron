@@ -5,12 +5,18 @@
 #include "ml/DrResMdoInstAnmObj.h"
 #include "ml/DrResMdoSeamMemMan.h"
 #include "classes/ml/DrResMdoSeamRead.h"
+#include "ml/DrResMdoSeamParmRead.h"
 
 namespace ml { class DrResMdoSeamWrkBase; }
 
 namespace ml {
 class DrResMdoSeamMemObj;
 class DrResMdoSeamWrkInst;
+class DrResMdoSeamVertex;
+class DrResMdoSeamWrkLow;
+class DrResMdoSeamWrkMpf;
+class DrResMdoSeamWrkEnv;
+class DrResMdoSeamWrkLight;
 
 // table 0x7100B7BA10
 class DrMdoCtlSeam : public ::ml::DrMdlObj {
@@ -21,6 +27,9 @@ public:
     bool calcBegin();
     void calcEnd();
     void releaseFreeSeamMemObj(DrResMdoSeamMemObj* obj);
+    void releaseFreeSeamVertex(DrResMdoSeamVertex* vertex, bool);
+    void updateVertexSeam();
+    void releaseSeam();
 
     // a placed effect position (0x10; ScnObjAccPartsEtcPos reads it). Type and field names are not the original's.
     struct EtcPos {
@@ -73,12 +82,26 @@ public:
     // the names are not the original's
     unsigned char pad_18C[0x1C];
     const MapHead* m_pMapHead;  // 0x1A8
-    unsigned char pad_1B0[0xF0];
+    unsigned char pad_1B0[0x80];
+    // 0x230: the vertex resources in use; updateVertexSeam walks them through DrResMdoSeamVertex::m_prev (0x08), so
+    // by DrResChankList's naming this is a list's tail (the name is not the original's)
+    DrResMdoSeamVertex* m_pVertexList;
+    unsigned char pad_238[0x68];
     // 0x2A0: the base works in use (DrMdoCtlSeamAll::callShadowCacheUpdate walks them; the name is not the original's)
     DrResMdoSeamWrkBase* m_pBaseList;
-    unsigned char pad_2A8[0x68];
+    unsigned char pad_2A8[0x30];
+    // 0x2D8, 0x348, 0x380, 0x3B8: the low, mpf, env and light works in use, each walked through the work's 0x08
+    // (DrMdoCtlSeamAll::releaseSeamAll; the names are not the original's)
+    DrResMdoSeamWrkLow* m_pLowList;
+    unsigned char pad_2E0[0x30];
     DrResMdoSeamWrkInst* m_pInstList;  // 0x310: the instance works in use (DrMdoCtlSeamAll::occRender walks them)
-    unsigned char pad_318[0x380];
+    unsigned char pad_318[0x30];
+    DrResMdoSeamWrkMpf* m_pMpfList;  // 0x348
+    unsigned char pad_350[0x30];
+    DrResMdoSeamWrkEnv* m_pEnvList;  // 0x380
+    unsigned char pad_388[0x30];
+    DrResMdoSeamWrkLight* m_pLightList;  // 0x3B8
+    unsigned char pad_3C0[0x2D8];
     DrResMdoInstAnmObj m_instAnm;  // 0x698: releaseSeam releases it; ScnObjAccSeamPos reads it (m_mdlType 3)
     EtcPosList m_etcPos;           // 0x6C8 (m_mdlType 3)
     unsigned char pad_6D8[0x8];
@@ -103,7 +126,15 @@ public:
     unsigned char pad_C18[0x1C];
     int m_textureMemSize;            // 0xC34: the texture memory read in
     int m_vertexMemSize;             // 0xC38: the vertex memory read in
-    unsigned char pad_C3C[0x30];
+    unsigned char pad_C3C[0x4];
+    // 0xC40, 0xC44, 0xC50: cleared by DrMdoCtlSeamAll::releaseSeamAll once the base, low and env works are freed
+    // (0xC40 again after the mpf works); by m_vertexMemSize, the memory sizes of those works (the names are not the
+    // original's)
+    int m_baseMemSize;
+    int m_lowMemSize;
+    unsigned char pad_C48[0x8];
+    int m_envMemSize;
+    unsigned char pad_C54[0x18];
     int m_lightMemSize;              // 0xC6C: the light memory read in
     unsigned char pad_C70[0xC];
     // 0xC7C: DrMdoCtlSeamRead::wait*Stream set bit 16 when a stream ends without its data (and bit 10 while
@@ -117,9 +148,16 @@ public:
     // waitInstPosStream clear all once their stream is in (the names are not the original's)
     unsigned long m_baseShadowCacheDone;
     unsigned long m_instShadowCacheDone;
-    unsigned char pad_CA0[0x30];
+    unsigned char pad_CA0[0x28];
+    // 0xCC8: updateVertexSeam frees every vertex resource while it is set (the name is not the original's)
+    bool m_releaseVertexAll;
+    unsigned char pad_CC9[0x7];
     // 0xCD0: the destructor destroys it; DrMdoCtlSeamAll::setDeleteCall cancels its reads
     DrResMdoSeamRead m_seamRead;
+    unsigned char pad_D28[0x8];
+    // 0xD30: destroyed by the destructor (DrMdoCtlSeamBaseMap.h); updateVertexSeam keeps the vertex resources 10
+    // frames instead of 60 while it holds positions (the name is not the original's)
+    DrResMdoSeamParmRead m_parmRead;
 };
 }  // namespace ml
 

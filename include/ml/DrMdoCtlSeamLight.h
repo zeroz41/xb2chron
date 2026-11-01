@@ -4,11 +4,13 @@
 #include "ml/DrMdoCtlSeamEnvMap.h"
 
 namespace ml {
+class DrResMdoSeamWrkLight;
 // One part of the seam model control: the DrMdoCtlSeam* classes have no table of their own and DrMdoCtlSeamAll's
 // methods call each part's methods on the same object (this unchanged), so they form one chain of bases between
 // DrMdoCtlSeam and DrMdoCtlSeamAll. The order of the chain is not proven (every part sits at offset 0).
 class DrMdoCtlSeamLight : public ::ml::DrMdoCtlSeamEnvMap {
 public:
+    void releaseFreeSeamLight(DrResMdoSeamWrkLight* wrk);
 };
 }  // namespace ml
 

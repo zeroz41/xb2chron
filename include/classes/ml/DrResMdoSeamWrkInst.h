@@ -8,6 +8,8 @@ class DrResMdoInstAnmObj;
 struct MdoWrkMatRes;
 class DrResMdoSeamMemObj;
 class DrResMdoSeamWrkPosInst;
+class DrPixlShadowObj;
+class DrMdoCtlSeamInstMap;
 // table 0x7100B7DB48
 class DrResMdoSeamWrkInst {
 public:
@@ -24,6 +26,7 @@ public:
     // DrMdoCtlSeamRead::waitInstPosStream: false when the position stream's data cannot be kept (the block is freed)
     bool setEtcPosCache(mtl::ALLOC_HANDLE handle, int cacheIdx, DrResMdoSeamMemObj* memObj, const DrResMdoInstAnmObj* anm);
     void occRender();
+    void seachDefShadowInstMapRender(DrPixlShadowObj* shadow, DrMdoCtlSeamInstMap* ctl);
     // 0x08: the next work of DrMdoCtlSeam::m_pInstList (the name is not the original's)
     DrResMdoSeamWrkInst* m_pLink;
     unsigned char pad_10[0x40];

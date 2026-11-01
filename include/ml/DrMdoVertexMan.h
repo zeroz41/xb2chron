@@ -13,6 +13,8 @@ public:
     DrMdoVertexMan();
     ~DrMdoVertexMan();
     void update();
+    // the vertex resource of the stream: a listed one gains a reference, else a new one is linked at the end
+    DrResMdoVertex* createVertexObj(DrCalcStmListObj* stm);
     // drops a reference to vertex; the last one unlinks and deletes it
     void releaseVertexObj(DrResMdoVertex* vertex);
     void begin();

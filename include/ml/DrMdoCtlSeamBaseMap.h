@@ -4,6 +4,7 @@
 #include "classes/ml/DrMdoCtlSeam.h"
 
 namespace ml { class DrResMdoSeamWrkBase; }
+namespace ml { class DrPixlShadowObj; }
 
 namespace ml {
 // One part of the seam model control: the DrMdoCtlSeam* classes have no table of their own and DrMdoCtlSeamAll's
@@ -15,6 +16,8 @@ public:
     void createBaseZPrePassDisplayList();
     void createBaseThicknesPassDisplayList(bool first);
     void renderSeamBaseMap(int pass);
+    void callShadowMapRenderSeamBaseMap(DrPixlShadowObj* shadow);
+    void releaseFreeSeamBase(DrResMdoSeamWrkBase* wrk);
 
     // The seam fields are DrMdoCtlSeam's: its destructor destroys members up to 0xD30 (DrResMdoSeamMemMan at
     // 0x6E0, DrResMdoSeamRead at 0xCD0, DrResMdoSeamParmRead at 0xD30).

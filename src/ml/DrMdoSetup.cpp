@@ -18,6 +18,8 @@
 #include "classes/ml/DrResMdoSeamVertex.h"
 #include "classes/ml/DrResMdoSeamWrkInst.h"
 #include "classes/ml/DrResMdoSeamWrkLight.h"
+#include "classes/ml/DrResMdoSeamWrkLow.h"
+#include "classes/ml/DrResMdoSeamWrkEnv.h"
 #include "classes/ml/DrEnvironmentObj.h"
 #include "classes/ml/DrResMdoSeamWrkMpf.h"
 #include "classes/ml/DrShdLgtClustered.h"
@@ -35,6 +37,9 @@
 #include "ml/DrIniSys.h"
 #include "ml/DrMdoAnim.h"
 #include "ml/DrMdoCtlMpfInst.h"
+#include "classes/ml/DrCalcStmListObj.h"
+#include "classes/ml/DrPixlShadowObj.h"
+#include "classes/ml/DrLightObj.h"
 #include "ml/DrMdoMorphing.h"
 #include "ml/DrMdoSamplerMan.h"
 #include "ml/DrMdoShdSetMpf.h"
@@ -1787,6 +1792,24 @@ void DrMdoCtlPos::callShadowCacheUpdate(unsigned long bits) {
     }
 }
 
+void DrMdoCtlPos::shadowRender() {
+    m_renderTech = 0;
+    m_renderPass = 6;
+    DrPixlShadowObj* shadow = m_pDrMan->m_pixlMan->m_shadowObj;
+    if (shadow->m_lightObj->isInstMapShadow()) {
+        m_pViewWork = m_pDrMan->m_calcMan->m_pViewWork;
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        const PosHead* head = m_pPosHead;
+        for (int i = 0; i < head->m_treeNum; i++) {
+            nomTreeShadowRenderMdl(&m_pRangeTree[i], shadow);
+        }
+    }
+}
+
 void DrMdoCtlPos::callZpreePassRenderPosAll() {
     if (m_stateFlags & 0x100000) {
         createZBuffRenderDisplayList();
@@ -1889,6 +1912,80 @@ DrMdoCtlSeamAll::~DrMdoCtlSeamAll() {
 
 void DrMdoCtlSeam::releaseFreeSeamMemObj(DrResMdoSeamMemObj* obj) {
     m_memMan.releaseFreeObj(obj);
+}
+
+void DrMdoCtlSeam::updateVertexSeam() {
+    if (m_releaseVertexAll) {
+        DrResMdoSeamVertex::SEAMRES_CNTMAX = 10;
+        DrResMdoSeamVertex* vtx = m_pVertexList;
+        while (vtx != nullptr) {
+            DrResMdoSeamVertex* next = vtx->m_prev;
+            releaseFreeSeamVertex(vtx, false);
+            vtx = next;
+        }
+        m_vertexMemSize = 0;
+    } else {
+        DrResMdoSeamVertex::SEAMRES_CNTMAX = m_parmRead.m_posCnt == 0 ? 60 : 10;
+        DrResMdoSeamVertex* vtx = m_pVertexList;
+        while (vtx != nullptr) {
+            if (vtx->update()) {
+                DrResMdoSeamVertex* next = vtx->m_prev;
+                const MapHead::ResSize* tbl = reinterpret_cast<const MapHead::ResSize*>(
+                    reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_vertexTblOfs);
+                m_vertexMemSize -= tbl[vtx->m_dataIdx].m_size;
+                releaseFreeSeamVertex(vtx, false);
+                vtx = next;
+            } else {
+                if (vtx->m_readIn != 0) {
+                    vtx->changeMemVertex();
+                }
+                vtx = vtx->m_prev;
+            }
+        }
+    }
+}
+
+void DrMdoCtlSeamAll::releaseSeamAll() {
+    if (m_viewNum == 0) {
+        m_pDrMan->m_pixlMan->m_shadowCacheMan->delShadowCacheUpdate();
+    }
+    for (DrResMdoSeamWrkBase* wrk = m_pBaseList; wrk != nullptr;) {
+        DrResMdoSeamWrkBase* next = wrk->m_pLink;
+        releaseFreeSeamBase(wrk);
+        wrk = next;
+    }
+    m_baseMemSize = 0;
+    for (DrResMdoSeamWrkLow* wrk = m_pLowList; wrk != nullptr;) {
+        DrResMdoSeamWrkLow* next = wrk->m_prev;
+        releaseFreeSeamLow(wrk);
+        wrk = next;
+    }
+    m_lowMemSize = 0;
+    for (DrResMdoSeamWrkInst* wrk = m_pInstList; wrk != nullptr;) {
+        DrResMdoSeamWrkInst* next = wrk->m_pLink;
+        releaseFreeSeamInst(wrk);
+        wrk = next;
+    }
+    for (DrResMdoSeamWrkMpf* wrk = m_pMpfList; wrk != nullptr;) {
+        DrResMdoSeamWrkMpf* next = wrk->m_pLink;
+        releaseFreeSeamMpf(wrk);
+        wrk = next;
+    }
+    m_baseMemSize = 0;
+    for (DrResMdoSeamWrkEnv* wrk = m_pEnvList; wrk != nullptr;) {
+        DrResMdoSeamWrkEnv* next = wrk->m_prev;
+        releaseFreeSeamEnvMap(wrk);
+        wrk = next;
+    }
+    m_envMemSize = 0;
+    for (DrResMdoSeamWrkLight* wrk = m_pLightList; wrk != nullptr;) {
+        DrResMdoSeamWrkLight* next = wrk->m_prev;
+        releaseFreeSeamLight(wrk);
+        wrk = next;
+    }
+    m_lightMemSize = 0;
+    m_lightNum = 0;
+    releaseSeam();
 }
 
 void DrMdoCtlSeamAll::callShadowCacheUpdate(unsigned long bits) {
@@ -2170,6 +2267,27 @@ void DrMdoCtlSeamAll::shadowCacheAddRender(int idx) {
     if ((m_dispFlags & 1) && !(m_seamFlags & 0x10000000)) {
         m_pDrMan->m_pixlMan->setupShadowUnifrom(idx);
         callInstShadowCacheAddRender(idx);
+    }
+}
+
+void DrMdoCtlSeamBaseMap::callShadowMapRenderSeamBaseMap(DrPixlShadowObj* shadow) {
+    if (m_pDrMan->m_seamBaseShadowOff) {
+        return;
+    }
+    DrCalcViewWork* view = m_pDrMan->m_calcMan->m_pViewWork;
+    grlib::CGLibEtcUniformBlock block;
+    grlib::ShdMat44TransposeMat44(static_cast<float*>(block.getBuff()), view->m_view);
+    block.updateData(0x40);
+    m_pEtcBlock = &block;
+    for (DrResMdoSeamWrkBase* wrk = m_pBaseList; wrk != nullptr; wrk = wrk->m_pLink) {
+        m_pWrkMatRes = wrk->m_matRes;
+        if (m_pWrkMatRes != nullptr && (wrk->m_cacheFlags & 0x8)) {
+            m_curShaderIdx = -1;
+            m_curBindIdx = -1;
+            m_bindFlags[1] = 0;
+            m_bindFlags[0] |= 0x10;
+            wrk->seachDefShadowBaseMapRender(shadow, this);
+        }
     }
 }
 
@@ -2764,6 +2882,22 @@ template void grlib::CGLibUniformArray<grlib::CGLibDblUniformBlock>::setupArray(
 template void grlib::CGLibUniformArray<grlib::CGLibTriUniformBlock>::setupArray(unsigned int);
 
 namespace ml {
+DrResMdoVertex* DrMdoVertexMan::createVertexObj(DrCalcStmListObj* stm) {
+    for (DrResMdoVertex* vertex = m_vertexList.m_pHead; vertex != nullptr; vertex = vertex->m_pNext) {
+        if (vertex->m_resData == static_cast<const void*>(stm)) {
+            vertex->m_state++;
+            return vertex;
+        }
+    }
+    DrCalcStmListObj::ResTexObj* res = stm->getResVertexObj();
+    DrResMdoVertex* vertex = new (DrMan::getIns()->m_resHandle, nullptr, 0, 4, false) DrResMdoVertex(res->m_pData);
+    vertex->m_stream = stm;
+    if (vertex != nullptr) {
+        m_vertexList.pushBack(vertex);
+    }
+    return vertex;
+}
+
 void DrMdoVertexMan::releaseVertexObj(DrResMdoVertex* vertex) {
     if (--vertex->m_state < 0) {
         vertex->m_state = 0;

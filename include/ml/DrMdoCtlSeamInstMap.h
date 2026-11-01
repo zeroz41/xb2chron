@@ -12,6 +12,7 @@ namespace ml {
 class DrMdoCtlSeamInstMap : public ::ml::DrMdoCtlSeamBaseMap {
 public:
     void initInstMapParts(DrResMdoSeamWrkInst* wrk, DrResMdoSeamWrkInst* wrk2);
+    void releaseFreeSeamInst(DrResMdoSeamWrkInst* wrk);
     void createInstZPrePassDisplayList();
     void createInstThicknessPassDisplayList(bool first);
     void renderSeamInstMap(int pass);

@@ -12,6 +12,7 @@ namespace ml {
 class DrMdoCtlSeamLowMap : public ::ml::DrMdoCtlSeamMpfMap {
 public:
     void initLowMapParts(DrResMdoSeamWrkLow* wrk);
+    void releaseFreeSeamLow(DrResMdoSeamWrkLow* wrk);
     void createLowZPrePassDisplayList();
     void renderSeamLowMap(int pass);
 };

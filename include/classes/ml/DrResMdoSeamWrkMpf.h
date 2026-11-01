@@ -12,7 +12,10 @@ public:
     void setEtcMpfCache(int idx, DrResMdoSeamMemObj* mem);
     void setMpfPoliCache(int idx, DrResMdoSeamMemObj* mem);
 
-    unsigned char pad_8[0x10];
+    // 0x8: the next work of DrMdoCtlSeam::m_pMpfList (DrMdoCtlSeamAll::releaseSeamAll walks it; the name is not
+    // the original's)
+    DrResMdoSeamWrkMpf* m_pLink;
+    unsigned char pad_10[0x8];
     unsigned long m_readState;  // 0x18: cleared by the destructor (the name is not the original's)
     unsigned char pad_20[0x2C];
     unsigned short pad_4C;      // 0x4C: zeroed by the constructor

@@ -12,6 +12,7 @@ namespace ml {
 class DrMdoCtlSeamEnvMap : public ::ml::DrMdoCtlSeamLowMap {
 public:
     void initEnvMapParts(DrResMdoSeamWrkEnv* wrk);
+    void releaseFreeSeamEnvMap(DrResMdoSeamWrkEnv* wrk);
     void callRenderSeamEnvMap();
     void callGBuffRenderSeamEnvMap();
     void callLightPrePassRenderSeamEnvMap();

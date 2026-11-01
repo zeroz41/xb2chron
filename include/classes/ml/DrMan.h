@@ -245,7 +245,9 @@ public:
     unsigned char pad_1D7E[0x6];
     // 0x1D84: DrMdlMan::shadowRender renders nothing while set (the name is not the original's)
     bool m_mdlShadowOff;
-    unsigned char pad_1D85[0x1];
+    // 0x1D85: DrMdoCtlSeamBaseMap::callShadowMapRenderSeamBaseMap renders nothing while set (the name is not the
+    // original's)
+    bool m_seamBaseShadowOff;
     // 0x1D86: DrMdoCtlSeamAll::occRender renders nothing while set (the name is not the original's)
     bool m_seamOccRenderOff;
     unsigned char pad_1D87[0x5];
