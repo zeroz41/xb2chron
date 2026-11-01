@@ -78,6 +78,43 @@
 #include "classes/ml/DevFileTh.h"
 #include "classes/gf/GfGameEnv.h"
 #include "ui/UIUtil.h"
+#include "mm/mtl/FixStr.h"
+#include "classes/gf/GfFieldGimmick.h"
+#include "gf/GfObjUtil.h"
+#include "classes/gf/GfObjProperty.h"
+#include "classes/gf/GfObjPropertyEnemy.h"
+#include "classes/gf/GfDataBdat.h"
+#include "classes/gf/GfGameFlag.h"
+#include "gf/GfPlayFactory.h"
+#include "plugin/Bdat.h"
+#include "classes/gf/GfGameParty.h"
+#include "classes/gf/TUnk_B60E28.h"
+#include "classes/gf/GfMenuObjChainAttack.h"
+#include "classes/gf/GfMenuObjTargetInfo.h"
+#include "classes/ui/UIInputManager.h"
+#include "classes/gf/GfMenuReference.h"
+#include "classes/gf/GfMenuCallManager.h"
+#include "classes/gf/GfMenuAdapterManager.h"
+#include "classes/gf/GfMenuFade.h"
+#include "classes/gf/GfMenuFullScreen.h"
+#include "classes/gf/GfMenuHUD.h"
+#include "classes/gf/GfMenuStatus.h"
+#include "classes/gf/GfMenuEquip.h"
+#include "classes/gf/GfMenuMain.h"
+#include "classes/gf/GfMenuShop.h"
+#include "classes/gf/GfMenuPrecious.h"
+#include "classes/gf/GfMenuKizunaring.h"
+#include "classes/gf/GfMenuQuest.h"
+#include "classes/gf/GfMenuMinimap.h"
+#include "classes/gf/GfMenuScriptManager.h"
+#include "classes/gf/GfMenuFieldSkill.h"
+#include "classes/gf/GfMenuManyObjects.h"
+#include "classes/gf/GfMenuOrderMgr.h"
+#include "classes/gf/GfMenuLocation.h"
+#include "classes/gf/GfMenuMapInfo.h"
+#include "classes/gf/GfMenuSoundManager.h"
+#include "classes/gf/TUnk_B60848.h"
+#include "classes/gf/TUnk_B64C98.h"
 
 namespace gf {
 
@@ -89,7 +126,7 @@ GfMenuManager::GfMenuManager(const GfSetupParam& param)
     : m_objs(), m_initialized(false), m_locked(false), pad_4092(0), m_list(), pad_40B0(0), m_targetObjHandle((GF_OBJ_HANDLE*)-1),
       m_accessObjHandle((GF_OBJ_HANDLE*)-1), m_targetChanged(false), m_accessChanged(false), m_battleStateEnable(false),
       m_curCameraType(0), m_callContext(nullptr), m_commonWindowResult(0), m_battleState(), pad_40E0(), m_dispHud(),
-      pad_40E8(0), pad_40F0(0), m_updateDT(0.0f), pad_40FC(), m_openBtlModelView(false), m_openNameSelect(false),
+      pad_40E8(0), pad_40F0(0), m_updateDT(0.0f), m_comboRouteOpen(), m_openBtlModelView(false), m_openNameSelect(false),
       m_openOpeningTelop(false), m_hideAll(false), m_enableQuestOpen(false), m_evTheaterFlag(false), m_layer101Open(false),
       m_layer72Open(false), m_layer300Open(false), m_region(0), m_optionFlag(false), m_regionJP(false),
       m_baseGameFlag(false), pad_4113(1), m_bladeBookFlag(), pad_4118(0), pad_4120(), m_latestCommonWinID(0),
@@ -143,6 +180,32 @@ void GfMenuManager::destroy() {
     delete self;
 }
 
+bool GfMenuManager::isInitialized() {
+    GfMenuManager* mgr = get();
+    return mgr != nullptr && mgr->m_initialized && !mgr->pad_40B0 &&
+           GfMenuReference::isInitialized() &&
+           GfMenuCallManager::isInitialized() &&
+           GfMenuAdapterManager::isInitialized() &&
+           GfMenuFade::isInitialized() &&
+           GfMenuFullScreen::isInitialized() &&
+           GfMenuHUD::isInitialized() &&
+           GfMenuStatus::isInitialized() &&
+           GfMenuEquip::isInitialized() &&
+           GfMenuMain::isInitialized() &&
+           GfMenuShop::isInitialized() &&
+           GfMenuPrecious::isInitialized() &&
+           GfMenuKizunaring::isInitialized() &&
+           GfMenuQuest::isInitialized() &&
+           GfMenuMinimap::isInitialized() &&
+           GfMenuScriptManager::isInitialized() &&
+           GfMenuFieldSkill::isInitialized() &&
+           GfMenuManyObjects::isInitialized() &&
+           GfMenuOrderMgr::isInitialized() &&
+           GfMenuLocation::isInitialized() &&
+           GfMenuMapInfo::isInitialized() &&
+           GfMenuSoundManager::isInitialized();
+}
+
 bool GfMenuManager::isRegionJP() {
     GfMenuManager* mgr = get();
     if (mgr == nullptr) {
@@ -169,6 +232,19 @@ bool GfMenuManager::isFading(unsigned int layer) {
         return false;
     }
     return GfMenuFade::isFading(layer);
+}
+
+bool GfMenuManager::isFading() {
+    GfMenuManager* mgr = get();
+    if (mgr == nullptr || !mgr->m_initialized) {
+        return false;
+    }
+    for (unsigned int layer = 0; layer < 3; ++layer) {
+        if (isFading(layer)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void GfMenuManager::getFadeColor(unsigned int layer, mm::Col4& color) {
@@ -725,6 +801,60 @@ bool GfMenuManager::fn_710035A6BC() {
     return true;
 }
 
+bool GfMenuManager::startTutorial(unsigned int id) {
+    unsigned char* fp = GfDataBdat::getFP(0xFF);
+    if (fp == nullptr) {
+        return false;
+    }
+    if (GfMenuObjUtil::fn_710048FD30(3)) {
+        if (unsigned char* fpLayer = GfDataBdat::getFP(0x100)) {
+            Bdat::getIdTop(fpLayer);
+            fp = fpLayer;
+        }
+    }
+    int index = id - Bdat::getIdTop(fp);
+    if (index < 0) {
+        return false;
+    }
+    int flag = index + 0xC710;
+    if (GfGameFlag::getLocal(1, flag) == 1) {
+        return false;
+    }
+    GfMenuManager* mgr = get();
+    if (mgr == nullptr) {
+        return false;
+    }
+    mgr->m_titleValue = Bdat::getMember(fp, "start_id") != nullptr ? static_cast<unsigned char>(Bdat::getVal(fp, "start_id", id)) : 0;
+    GfPlayFactory::createStartTutorial(id, nullptr);
+    GfGameFlag::setLocal(1, flag, 1);
+    return true;
+}
+
+bool GfMenuManager::fn_710035A388(unsigned int menuId) {
+    GfMenuManager* mgr = get();
+    if (mgr == nullptr) {
+        return false;
+    }
+    if (GfMenuObjUtil::fn_710048FD30(3)) {
+        if (mgr->m_titleCount == 0) {
+            ui::UIManager::get()->createLayer(302);
+            TUnk_B64C98::fn_71004879F0(menuId);
+        } else {
+            TUnk_B64C98::fn_7100487A1C(menuId);
+        }
+    } else {
+        if (mgr->m_titleCount == 0) {
+            ui::UIManager::get()->createLayer(103);
+            fn_710035A460();
+            TUnk_B60848::fn_71003B2A90(menuId);
+        } else {
+            TUnk_B60848::fn_71003B2ABC(menuId);
+        }
+    }
+    mgr->m_titleCount = menuId;
+    return true;
+}
+
 void GfMenuManager::fn_710035A460() {
     if (get() != nullptr && GfMenuObjUtil::fn_710048FD30(1)) {
         ui::UIManager::get()->createLayer(102);
@@ -825,6 +955,37 @@ void GfMenuManager::fn_710035A844(const GfGmkLocatorAtlas::CreateInfo& info) {
     mgr->m_mapjumpAtlasInfo = info;
 }
 
+void GfMenuManager::fn_710035ADA0() {
+    GF_OBJ_HANDLE* handle = getTargetObjHandle();
+    if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        GfObjAcc acc(handle);
+        if (acc.getType() != 5) {
+            return;
+        }
+        GfObjProperty* prop = GfObjUtil::getProperty(handle);
+        if (prop == nullptr) {
+            return;
+        }
+        GfObjPropertyEnemy* enemy = prop->getEnemy();
+        if (enemy == nullptr) {
+            return;
+        }
+        bool combo = enemy->m_elementComboId != 0;
+        if (m_comboRouteOpen != combo) {
+            if (combo) {
+                GfMenuObjComboRoute::open();
+            } else {
+                GfMenuObjComboRoute::close();
+            }
+            m_comboRouteOpen = combo;
+        }
+    } else if (GfMenuObjUtil::fn_710048FD30(1) && GfGameManager::fn_71002AC580() && m_comboRouteOpen &&
+               !isBattleState(0)) {
+        GfMenuObjComboRoute::close();
+        m_comboRouteOpen = false;
+    }
+}
+
 bool GfMenuManager::fn_710035A800() {
     GfMenuManager* mgr = GfMenuManager::get();
     if (mgr == nullptr) {
@@ -842,10 +1003,54 @@ bool GfMenuManager::fn_710035DE04() {
     return mgr->m_hideAll;
 }
 
+bool GfMenuManager::isDispHud(int hud) {
+    GfMenuManager* mgr = GfMenuManager::get();
+    if (mgr == nullptr || mgr->m_locked) {
+        return false;
+    }
+    return mgr->m_dispHud.test(hud);
+}
+
+void GfMenuManager::qevChangeTaskState(const QuestTaskParam& param) {
+    if (param.m_questId == QuestID()) {
+        return;
+    }
+    GfMenuLocation::refreshLocator(0);
+    GfMenuLocation::refreshLocator(1);
+    if (param.m_state == TASK_STATE(1)) {
+        GfMenuObjQuestLog::completeTask(param);
+        return;
+    }
+    GfGameScene* scene = GfGameScene::get();
+    if (scene == nullptr) {
+        return;
+    }
+    if (param.m_questId == scene->getQuestIdForTaskLog()) {
+        GfMenuObjQuestLog::updateTask();
+    }
+}
+
 void GfMenuManager::fn_710035CE3C() {
     if (get() != nullptr && GfMenuObjUtil::fn_710048FD30(1)) {
         ui::UIManager::get()->terminateLayer(102, true);
         GfMenuObjPartyGauge::fn_71004569F8();
+    }
+}
+
+void GfMenuManager::gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo&) {
+    GfMenuObjComboRoute::close();
+    GfMenuObjPartyGauge::close();
+    if (static_cast<int>(gev) == 2) {
+        GfGmkLocatorAtlas& atlas = GfFieldGimmick::get()->m_locatorAtlas;
+        if (atlas.m_info.m_mapId >= 1) {
+            m_mapjumpAtlasInfo = atlas.m_info;
+            atlas.dispose();
+        }
+    } else if (static_cast<int>(gev) == 6) {
+        if (m_mapjumpAtlasInfo.m_mapId >= 1) {
+            GfFieldGimmick::get()->m_locatorAtlas.create(m_mapjumpAtlasInfo);
+            m_mapjumpAtlasInfo = GfGmkLocatorAtlas::CreateInfo();
+        }
     }
 }
 
@@ -856,6 +1061,44 @@ void GfMenuManager::gevBattleEnd() {
     GfMenuObjPartyGauge::close();
     if (GfMenuObjUtil::fn_710048FD30(3)) {
         GfMenuReference::fn_7100367D1C();
+    }
+}
+
+void GfMenuManager::gevPlayEvent(gf::GEV gev, unsigned int) {
+    if (GfMenuFullScreen::isOpen()) {
+        return;
+    }
+    switch (static_cast<int>(gev)) {
+    case 10:
+        GfMenuObjComboRoute::close();
+        GfMenuObjPartyStatus::close(true);
+        m_dispHud.set(1, false);
+        m_dispHud.set(2, false);
+        break;
+    case 12:
+        m_battleState.reset();
+        m_battleStateEnable = false;
+        GfMenuObjPartyGauge::close();
+        GfMenuObjPartyStatus::close(true);
+        GfMenuObjComboRoute::close();
+        GfMenuObjChainAttack::closeResult();
+        break;
+    case 13:
+        if (ui::UIInputManager* input = ui::UIInputManager::get()) {
+            input->enable();
+        }
+        break;
+    case 14:
+        GfMenuObjDamageValue::closeAll();
+        GfMenuObjDamageBuff::closeAll();
+        GfMenuObjDropItem::closeAll();
+        GfMenuObjExpGet::closeAll();
+        GfMenuObjPartyGauge::close();
+        GfMenuObjChainAttack::closeResult();
+        GfMenuObjComboRoute::close();
+        GfMenuObjPartyStatus::close(true);
+        GfMenuObjTargetInfo::disp(false);
+        break;
     }
 }
 
@@ -874,6 +1117,20 @@ bool GfMenuManager::fn_7100359570() {
         return false;
     }
     return mgr->m_baseGameFlag;
+}
+
+void GfMenuManager::update(const fw::UpdateInfo&) {
+    if (get() == nullptr) {
+        return;
+    }
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EA6F70, its guard); nothing reads it
+    // (1.0.0's update is only this static).
+    static mm::mtl::FixStr<16> s_work;
+    if (GfMenuObjUtil::fn_710048FD30(1) && GfGameManager::fn_71002AC580()) {
+        GfMenuAdapterManager::addActiveCategory(4);
+    } else {
+        GfMenuAdapterManager::delActiveCategory(4);
+    }
 }
 
 bool GfMenuManager::fn_710035DB80() {
@@ -986,6 +1243,40 @@ void GfMenuManager::gevItemAdd(unsigned int item, int num) {
         }
     } else {
         GfMenuObjHanaPartsMake::fn_71004181A8();
+    }
+}
+
+void GfMenuManager::gevChangeParty() {
+    if (!GfMenuObjUtil::fn_710048FD30(3) || m_battleState.test(0) || m_battleState.test(1)) {
+        return;
+    }
+    unsigned int changed = 0;
+    GfMenuReference::BladeOwner owner;
+    owner = {0, {0xFF, 0.0f}};
+    if (unsigned int driver = GfGameParty::getDriverBdatId(0, 0)) {
+        owner.m_driver = driver;
+        owner.m_gauge.m_type = 0;
+    }
+    if (GfMenuReference::fn_7100367ADC(0, owner)) {
+        changed |= 1;
+    }
+    owner = {0, {0xFF, 0.0f}};
+    if (unsigned int driver = GfGameParty::getDriverBdatId(0, 1)) {
+        owner.m_driver = driver;
+        owner.m_gauge.m_type = 1;
+    }
+    changed |= GfMenuReference::fn_7100367ADC(1, owner) ? 2 : 0;
+    owner = {0, {0xFF, 0.0f}};
+    if (unsigned int driver = GfGameParty::getDriverBdatId(0, 2)) {
+        owner.m_driver = driver;
+        owner.m_gauge.m_type = 2;
+    }
+    bool changed2 = GfMenuReference::fn_7100367ADC(2, owner);
+    if (changed == 3) {
+        TUnk_B60E28::fn_71003C3470();
+    }
+    if (changed2) {
+        TUnk_B60E28::fn_71003C34E0();
     }
 }
 

@@ -99,6 +99,13 @@ public:
     // records at 0x4CF28 (0x10 apart) whose +0 word is the argument, 0xFF when none is. GfMenuCharDataAdapter's
     // fn_71003391AC / fn_7100339224 / fn_710033929C pass it a driver id and compare the answer with 0, 1 and 2.
     static int fn_7100367EF4(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
+    // GfMenuReference's accessors (before fn_7100367BD8) and reads its singleton. What it does: false unless
+    // GfMenuObjUtil::fn_710048FD30(3) holds, slot < 3 and the singleton exists; else whether the record at
+    // 0x4CF28 + slot * 0x10 differs from the argument in its first two words, then copies the argument into it.
+    // Its one caller, GfMenuManager::gevChangeParty, passes slots 0-2 with {driver of party slot, slot} or
+    // {0, 0xFF} when the slot has no driver.
+    static bool fn_7100367ADC(unsigned int slot, const BladeOwner& owner);
     // GfMenuFieldSkill::start sets slot 5 to 0 (the parameter names are not the original's)
     static void setReferenceBladeID(unsigned int index, unsigned int blade);
     static unsigned int getReferenceTeamID();  // GfMenuMercenariesAdapter::ReferenceTeamConverter's team

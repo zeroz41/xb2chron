@@ -35,6 +35,7 @@ public:
     static bool createJump(GF_OBJ_HANDLE* handle);
     static bool createWarp(GF_OBJ_HANDLE* handle);
     static bool createGmkTutorial(const char* name, unsigned int id);
+    static bool createStartTutorial(unsigned int id, GfSequentialPlaySignal* signal);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address sits between
     // GfPlayFactory's unit and gf_sequential_play's and its body is a create* sequence: when isScenarioGame and not
     // isLeaveGameForDebug, beginCommand(0), pushState(6), addEventPlayerStop(true), fn_7100322C64(name, id),

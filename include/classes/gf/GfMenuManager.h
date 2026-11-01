@@ -55,6 +55,13 @@ public:
     static bool isFading(unsigned int layer);  // the fade of that layer runs
     static void update(const fw::UpdateInfo& info);
     void postUpdate(const fw::UpdateInfo& info);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's postUpdate has no such call). A
+    // member because postUpdate calls it with its own this and it reads the manager's fields. What it does: with a
+    // target (getTargetObjHandle) that is an enemy (GfObjAcc type 5), opens or closes GfMenuObjComboRoute when
+    // whether the enemy has an elemental combo (GfObjPropertyEnemy::m_elementComboId) differs from
+    // m_comboRouteOpen and records it; without a target, closes it when GfMenuObjUtil::fn_710048FD30(1) and
+    // GfGameManager::fn_71002AC580() hold, it is open and battle state 0 is off.
+    void fn_710035ADA0();
     // the elements of the manager's fixed_size_alloc_inside<OBJ, 512>: the constructor places 512 of 0x20 bytes
     // (0x4000) before the in-use bits
     struct OBJ {
@@ -92,6 +99,10 @@ public:
     // fn_710024DAB0(id) is nonzero and GfDataBlade::fn_710024DE6C(id) answers true, appends the id to that list.
     // Caller: the fld plugin's setNpcMeet when the id's flag changed.
     static void fn_710035A764(unsigned int id);
+    // 1.0.0's startTutorial (0x71003C2F50: same caller btl::UIManager::UpdateTutorial, flag 0xC710 + id - the
+    // table's first id, createStartTutorial); 3.0.1 also reads the tutorial table 0x100 when
+    // GfMenuObjUtil::fn_710048FD30(3) holds and keeps its start_id in m_titleValue
+    static bool startTutorial(unsigned int id);
     static int fn_710035A364();  // m_titleValue, 0 without a manager (one caller, fn_710066AA7C)
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
     // GfMenuManager's functions in gf_menu_manager's unit and reads the manager singleton. What it does: false
@@ -135,7 +146,7 @@ public:
     static void setBattleState(unsigned int state, bool on);
     static void applyOptionData(const SDataOption& option);
     static bool isClearCheck();  // tl::TitleMain's clear flag, false without a TitleMain
-    static bool isDispHud(int hud);  // false while m_locked; garbage without a manager, as the original
+    static bool isDispHud(int hud);  // m_dispHud bit hud; false without a manager or while m_locked
     // the object the menu targets, -1 without a manager or a target
     static GF_OBJ_HANDLE* getTargetObjHandle();
     static bool isOpenFullScreen();
@@ -245,7 +256,9 @@ public:
     unsigned char pad_40EC[0x4];
     unsigned long pad_40F0;  // the constructor clears it
     float m_updateDT;  // 0x40F8 getUpdateDT
-    unsigned char pad_40FC[0x1];
+    // 0x40FC whether fn_710035ADA0 opened GfMenuObjComboRoute for the target's elemental combo (the name is not
+    // the original's)
+    bool m_comboRouteOpen;
     bool m_openBtlModelView;  // 0x40FD isOpenBtlModelView
     bool m_openNameSelect;  // 0x40FE isOpenNameSelect, openNameSelect sets it
     bool m_openOpeningTelop;  // 0x40FF openOpeningTelop sets it (the name is not the original's)
