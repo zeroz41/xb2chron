@@ -261,18 +261,4 @@ void GfGameManager::BattleChallengeRecord::Rule::fn_71002904F4(BattleChallengeRe
     record->m_value30 = value;
 }
 
-void fn_710029064C(unsigned int id) {
-    GfBdatBtl* btl = mm::mtl::PtrSingleton<GfBdatBtl>::sys();
-    if (unsigned int map = btl->fn_71001E979C(id)) {
-        unsigned int mapId = GfDataMap::getMapID(map);
-        unsigned int weather = btl->fn_71001E9824(id);
-        MapEnvData* env = GfDataBlade::fn_710024E1C8(mapId);
-        if (env->m_mapId == mapId) {
-            env->m_id = static_cast<WEATHERID>(weather < 4 ? weather + 1 : 5);
-            env->m_time = 0.0f;
-            env->m_timeMax = 100.0f;
-        }
-    }
-}
-
 }  // namespace gf

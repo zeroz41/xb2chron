@@ -1163,12 +1163,12 @@ application/BF2/gf/unit_710028E5BC.cpp:
 	.rodata      start:0x0098A25A end:0x0098A268
 
 application/BF2/gf/unit_710028EBB0.cpp:
-	.text        start:0x0028F250 end:0x002906D0
+	.text        start:0x0028F250 end:0x0029064C
 	.rodata      start:0x0098A268 end:0x0098A2AE
 	.data        start:0x00B52C68 end:0x00B535D0
 
-application/BF2/gf/data/GfDataBlade_71002906D0.cpp:
-	.text        start:0x002906D0 end:0x00290CC4
+application/BF2/gf/data/GfDataBlade_710029064C.cpp:
+	.text        start:0x0029064C end:0x00290CC4
 
 application/BF2/gf/unit_7100290CC4.cpp:
 	.text        start:0x00290CC4 end:0x00290D00
@@ -1456,12 +1456,12 @@ application/BF2/gf/game/GfQuestTask.cpp:
 	.rodata      start:0x009BC1F8 end:0x009BC328
 
 application/BF2/gf/game/QuestTaskParam.cpp:
-	.text        start:0x0030FC50 end:0x00313330
+	.text        start:0x0030FC50 end:0x003136C0
 	.rodata      start:0x0098B63B end:0x0098B646
 	.rodata      start:0x009BC328 end:0x009BC47C
 
 application/BF2/gf/game/salvage/gf_game_salvage.cpp:
-	.text        start:0x00313330 end:0x003166A4
+	.text        start:0x003136C0 end:0x003166A4
 	.rodata      start:0x0098B709 end:0x0098BA7C
 	.rodata      start:0x009BC47C end:0x009BC498
 	.data        start:0x00B56ED8 end:0x00B577B0
@@ -3391,13 +3391,13 @@ application/BF2/gf/object/GfObj.cpp:
 	.bss         start:0x00EACD48 end:0x00EACE60
 
 application/BF2/gf/object/GfObjAcc.cpp:
-	.text        start:0x00522090 end:0x0052478C
+	.text        start:0x00522090 end:0x00524818
 	.rodata      start:0x009A3903 end:0x009A394B
 	.data        start:0x00B69E80 end:0x00B69EE0
 	.bss         start:0x00EACE60 end:0x00EACEB8
 
 application/BF2/gf/object/GfObjAlpha.cpp:
-	.text        start:0x0052478C end:0x00524970
+	.text        start:0x00524818 end:0x00524970
 	.rodata      start:0x009A394B end:0x009A3957
 	.init_array  start:0x00B8FBE8 end:0x00B8FBF0
 	.bss         start:0x00EACEB8 end:0x00EACED0
