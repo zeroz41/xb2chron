@@ -944,6 +944,12 @@ mm::mtl::FixStr<128> s_dvdRoot;  // +0x260 (DevFileTh::getDvdRoot returns it out
 mm::mtl::FixStr<256> s_path3D8;  // +0x3D8
 }  // namespace
 
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100ECDDE0). 1.0.0's ml::setRomMountMode/
+// isRomMountMode store and read it; 3.0.1 inlines them. DevFileNxTh::initializeSDK sets it once "rom" is mounted.
+// The original keeps it out of the unit's merged .bss block (at its own address, 0x7100ECDDE0, among the
+// definition-ordered globals), which clang's GlobalMerge does only for a global kept by `used`.
+__attribute__((used)) static bool s_romMountMode;
+
 void Device::initializeSDK(const InitParam& param) {
     DeviceNx::initializeSDK(param);
 }
@@ -1994,6 +2000,14 @@ DevFileNxTh::DevFileNxTh(mtl::ALLOC_HANDLE handle)
 
 DevFileNxTh::~DevFileNxTh() {}
 
+const char* DevFileNxTh::getMediaRootPath() const {
+    return s_romMountMode ? "rom:" : s_dvdRoot.m_str;
+}
+
+const char* DevFileTh::getDvdRoot() {
+    return s_romMountMode ? "rom:" : s_dvdRoot.m_str;
+}
+
 DevFileJobTh* DevFileNxTh::createLoader(mtl::ALLOC_HANDLE handle) {
     return new (handle, nullptr, 0, 4, false) DevFileJobTh();
 }
@@ -2124,6 +2138,10 @@ DevFileArchiveNx::DevFileArchiveNx(mtl::ALLOC_HANDLE handle)
 
 DevFileArchiveNx::~DevFileArchiveNx() {
     m_impl->finalize();
+}
+
+const char* DevFileArchiveNx::getMediaRootPath() const {
+    return s_romMountMode ? "rom:" : s_dvdRoot.m_str;
 }
 
 DevFileJobTh* DevFileArchiveNx::createLoader(mtl::ALLOC_HANDLE handle) {

@@ -81,6 +81,8 @@ public:
     static void cancel(FileHandleTh* handle, bool flag);
     // path as the file system takes it (fw::SoundResource::update; the parameter names are not the original's)
     static void normalizeDvdFileName(mm::mtl::FixStr<256>& out, const char* path);
+    // named by the symbols: the media root ("rom:" in rom mount mode, else the dvd root path)
+    static const char* getDvdRoot();
     // opens the file a parameter names for reading in parts (forwards to its Impl; the parameter name is not the
     // original's)
     static FileHandleTh* rfOpen(const DevFileParamTh& param);
