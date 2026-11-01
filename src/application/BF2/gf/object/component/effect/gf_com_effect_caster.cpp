@@ -24,6 +24,10 @@
 #include "gf/GfDataWeapon.h"
 #include "classes/gf/DataParamAcc.h"
 #include "classes/fw/EffectPack.h"
+#include "effect/SendParam.h"
+#include "gf/GfEffectGround.h"
+#include "gf/GfEnvProperty.h"
+#include "classes/gf/GfComProperty.h"
 #include <stdlib.h>
 #include <string.h>
 #include "classes/fw/EffectResData.h"
@@ -38,6 +42,18 @@ namespace gf {
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EABD68). setupCaster sets it (and the
 // caster's flag at 0xA0) for the first caster of the party leader; the destructor clears it.
 static bool s_leaderCasterSet;
+
+void GfComEffectCaster::procMsgFxForceCancel(fw::MessageObject*, MsgFxForceCancel&) {
+    if (m_resData) {
+        for (fw::EffectAnnotationData* it = m_resData->m_annotations.begin(); it != m_resData->m_annotations.end();
+             ++it) {
+            if (it->pad_f8 && it->pad_10c) {
+                effectEnd(it->pad_10c);
+                it->pad_10c = 0;
+            }
+        }
+    }
+}
 
 GfComEffectCaster::~GfComEffectCaster() {
     s_leaderCasterSet = false;
@@ -172,6 +188,77 @@ void GfComEffectCaster::registerAsmCallbackEffect(GF_OBJ_HANDLE*, anm::ResASM* a
     }
 }
 
+// 1.0.0's GfComEffectCaster::effectEnd(unsigned int) (0x71005076BC, the same loop without the zero check); 3.0.1
+// inlines every call
+inline void GfComEffectCaster::effectEnd(unsigned int handle) {
+    if (handle == 0) {
+        return;
+    }
+    for (Param& param : m_params) {
+        if (param.m_id == handle && param.m_id != 0) {
+            mm::mtl::PtrSingleton<fw::EffectManager>::sys()->dead(handle);
+            param.pad_ba = true;
+            return;
+        }
+    }
+}
+
+void GfComEffectCaster::updateParam(GfComEffectCaster* caster, Param* param, float rate, bool) {
+    effect::SendParam sendParam;
+    calcMtxAndScale(caster, param, rate, false, sendParam);
+    switch (calcFollowAnnotetionTag(param, sendParam)) {
+    case 0:
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setParam(param->m_id, &sendParam);
+        break;
+    case 1:
+        sendParam.m_flagB = false;
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setParam(param->m_id, &sendParam);
+        break;
+    case 2:
+        // kills the running effect, once
+        if (!param->pad_ba) {
+            effectEnd(param->m_id);
+        }
+        break;
+    }
+}
+
+int GfComEffectCaster::calcFollowAnnotetionTag(Param* param, effect::SendParam& sendParam) {
+    int result;
+    switch (param->m_followKind) {
+    case 0:
+        return 0;
+    default:
+        return GfEffectGround::isOnWaterSurface(this) ? 2 : 0;
+    case 4:
+        GfEffectGround::calcSwimEffectParam(this, false, false, sendParam);
+        return 0;
+    case 7:
+    case 8:
+    case 9:
+    case 13:
+        result = GfEffectGround::calcSwimEffectParam(this, false, false, sendParam);
+        break;
+    case 10:
+    case 11:
+        result = GfEffectGround::calcSwimEffectParam(this, false, true, sendParam);
+        break;
+    case 12:
+        result = GfEffectGround::calcSwimEffectParam(this, true, false, sendParam);
+        break;
+    case 14: {
+        GfEnvProperty* env = m_owner->findComponent<GfComProperty>(5)->m_env.get();
+        // the flags are read before the null check (the original loads them first)
+        if (!(env->m_flags & 2) || env == nullptr) {
+            return 0;
+        }
+        GfObjAcc acc(static_cast<GfObj*>(m_owner));
+        return acc.getWorldTransform().position.y - env->m_grounds[0].m_position.y > 3.0f ? 0 : 2;
+    }
+    }
+    return static_cast<unsigned int>(result) < 3 ? result : 0;
+}
+
 GfComEffectCaster::Param* GfComEffectCaster::findEffectCasterParam(unsigned int id) {
     for (Param* it = m_params.begin(); it != m_params.end(); ++it) {
         if (it->m_id == id) {
@@ -227,6 +314,15 @@ const char* GfComEffectCaster::getEfpData(const char* name, mm::Mat44& mtx) {
         return parent;
     }
     return nullptr;
+}
+
+void GfComEffectCaster::createFromFileName(const mm::Mat44& mtx, const char* fileName) const {
+    effect::SendParam param;
+    param.m_mtx = mtx;
+    unsigned int handle = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->create(fileName, nullptr, &param, true);
+    if (m_viewnum) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->setViewnum(handle, m_viewnum);
+    }
 }
 
 bool GfComEffectCaster::removeMountEffectEv(unsigned int id) {
