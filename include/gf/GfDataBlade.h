@@ -340,6 +340,8 @@ public:
     static bool getEquipOrb(mm::mtl::FixedArray<unsigned short, 3ul>& orbs, unsigned int blade);
     // the item handles of the blade's equipped orbs, by slot (empty past getEquipOrbMax or for no blade)
     static GfItemHandle getEquipOrbHandle(unsigned int blade, unsigned int slot);
+    // whether every orb slot up to getEquipOrbMax holds an orb (false for no blade; symbols)
+    static bool isEquipOrbFull(unsigned int blade);
     static bool setEquipOrbHandle(unsigned int blade, GfItemHandle handle, unsigned int slot);
     // the enhancements of the blade's equipped orbs (false for no blade)
     static bool getEquipOrbEnance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int blade);
@@ -358,6 +360,10 @@ public:
     static unsigned int makeNormalTalkByPersonality(unsigned int personality);
     static const BladeArtsSlot* getNArts(unsigned int blade, unsigned int index);
     static unsigned int getFavorite(unsigned int blade, FAVORITE favorite);
+    // whether the item's category is one of the blade's two favorite categories (symbols)
+    static bool isFavoriteCategory(unsigned int blade, unsigned int item);
+    // whether the item is one of the blade's two favorite items (symbols)
+    static bool isFavoriteItem(unsigned int blade, unsigned int item);
     static bool isUsedFavorite(unsigned int blade, FAVORITE favorite);  // whether the favorite has been used (seen)
     static int getOffsetID(unsigned int blade);  // its menu offset id
     static unsigned int getBladePower(unsigned int blade);
@@ -365,6 +371,9 @@ public:
     static bool isFemale(unsigned int blade);
     static bool isAnimal(unsigned int blade);
     static unsigned char getAttribute(unsigned int blade);
+    // the idea type of the blade's attribute (getAttribute): 0 for 1 and 2, 1 for 3 and 6, 2 for 4 and 5, 3 for 7 and
+    // 8, else 0 (symbols)
+    static unsigned int getIdeaTypeByAttribute(unsigned int blade);
     static bool getExtraParts(const SDataBlade& data, unsigned int part);
     static unsigned int getBladePower(SDataBlade& data);
     static unsigned int getRoleByWpnType(unsigned int wpnType);
@@ -453,9 +462,14 @@ public:
     static bool fn_710023217C(const SDataGame& game);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit among GfDataBlade's functions and it takes the game as they do. What it does: true when
-    // gf::fn_71002229C0(n) is below the game's word at 0x117360 + 4 * (n - 1), minus 1, for any n of 1 to 4
+    // TUnk_B4C840::fn_71002229C0(n) is below the game's m_aocIds[n] minus 1, for any n of 1 to 4
     // (title_main's fn_710014FD74 calls it on the save buffer's game).
     static bool fn_71002325AC(const SDataGame& game);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit right before fn_71002325AC, which checks what it stores. What it does: stores
+    // TUnk_B4C840::fn_71002229C0(n) + 1 into the game's SDataGame::m_aocIds[n] for n 0 to 4
+    // (GfGameUtilSaveData::setupGameSaveData calls it).
+    static void fn_7100232518(SDataGame& game);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
     // unit between GfDataBlade::fn_71002325AC and fn_7100232660 (no this). What it does: returns entry index of a
     // 9-entry unsigned int table in the unit's .rodata ({300, 4, 3, 1, 2, 0, 0, 0, 0}, no bounds check);

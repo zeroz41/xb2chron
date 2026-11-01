@@ -152,7 +152,11 @@ public:
     // event ids; the names are not the original's)
     SDataGameSavedEvent m_savedEvents[500];
     unsigned int m_savedEventCount;
-    unsigned char pad_1171D8[0x36F4];
+    unsigned char pad_1171D8[0x194];
+    // 0x11736C: the add-on ids + 1 the game was saved with (GfDataBlade::fn_7100232518 stores
+    // TUnk_B4C840::fn_71002229C0(n) + 1, fn_71002325AC compares; the name is not the original's)
+    int m_aocIds[5];
+    unsigned char pad_117380[0x354C];
     // 0x11A8CC: the challenge battle rule table (TUnk_B535D0::fn_7100291CF4 returns it, fn_7100291D14 a rule of
     // it, fn_7100291CC0 / fn_7100291E40 read and mark its rows; the constructor runs its fn_71001528A0; the name is
     // not the original's)

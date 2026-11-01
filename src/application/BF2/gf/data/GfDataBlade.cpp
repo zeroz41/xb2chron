@@ -49,6 +49,7 @@
 #include "gf/GfDataMercenaries.h"
 #include "gf/GfDataMob.h"
 #include "gf/GfDataNanakoori.h"
+#include "gf/GfDataSalvage.h"
 #include "gf/GfDataSound.h"
 #include "gf/GfDataUtil.h"
 #include "gf/GfDataWeapon.h"
@@ -338,6 +339,16 @@ unsigned int GfDataDriverArts::getLevelCap(unsigned int arts, unsigned int index
 
 unsigned int GfDataDriverArts::getNameID(unsigned int arts) {
     return GfBdatBtl::get()->getArtsDrName(arts);
+}
+
+unsigned int GfDataDriverArts::getCaptionID(unsigned int arts) {
+    unsigned int caption = GfBdatBtl::get()->getArtsDrCaption(arts);
+    unsigned int param = static_cast<unsigned short>(Bdat::getValCheck(GfDataBdat::getFP(30), "Param01", 0, 2));
+    btl::BattleManager* battle = btl::BattleManager::get();
+    if (param == arts && battle != nullptr && btl::Utility::IsSatisfyCondition(0)) {
+        caption++;
+    }
+    return caption;
 }
 
 unsigned int GfDataDriverArts::getIconID(unsigned int arts) {
@@ -1014,6 +1025,24 @@ SDataPouch* GfDataDriver::getPouchData(unsigned int driver, unsigned int pouch) 
     return getSDataDriver(driver)->m_pouches + pouch;
 }
 
+unsigned int GfDataBlade::getIdeaTypeByAttribute(unsigned int blade) {
+    switch (getAttribute(blade)) {
+    case 1:
+    case 2:
+        return 0;
+    case 3:
+    case 6:
+        return 1;
+    case 4:
+    case 5:
+        return 2;
+    case 7:
+    case 8:
+        return 3;
+    }
+    return 0;
+}
+
 bool GfDataBlade::isNeedChangeWeapon(unsigned int blade) {
     return (blade >= 1043 && blade < 1051) || blade == 1039;
 }
@@ -1414,6 +1443,18 @@ bool GfDataBlade::isKizunaringComplete(unsigned int blade) {
 bool GfDataBlade::isReleasedRareBlade(unsigned int blade) {
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
     return data.m_attachedParty == 2;
+}
+
+bool GfDataBlade::isActivateReserver(unsigned int blade) {
+    if (GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)].m_dataType != 1) {
+        return false;
+    }
+    unsigned int driver = getSetDriver(blade);
+    if (driver == 0) {
+        return true;
+    }
+    unsigned int party = GfDataParty::getDriverPartyID(driver);
+    return party > 2 && party != 0xFFFFFFFF;
 }
 
 unsigned int GfDataBlade::getTrustRank(unsigned int blade) {
@@ -1961,12 +2002,49 @@ bool GfDataMercenaries::isTeamStateReward(unsigned int teamId) {
     return GfGameFlag::getLocal(4, team->m_mission + 5) == 3;
 }
 
+void GfDataMercenaries::setMissionFlag(unsigned int mission, unsigned int flag) {
+    GfGameFlag::setLocal(4, mission + 5, flag);
+    int state = GfGameFlag::getLocal(2, mission + 0x87CF);
+    if (state >= 2) {
+        return;
+    }
+    int value;
+    switch (flag) {
+    case 2:
+    case 3:
+        value = 1;
+        break;
+    case 4:
+        value = 2;
+        break;
+    default:
+        value = 0;
+        break;
+    }
+    if (state != value) {
+        GfGameFlag::setLocal(2, mission + 0x87CF, value);
+        GfGameFlag::setLocal(2, mission + 0x89C4, value);
+    }
+}
+
 unsigned int GfDataMercenaries::getTeamID(unsigned int blade) {
     SDataGame* game = GfDataManager::getDataGame();
     for (Team* team = game->m_teams.begin(); team != game->m_teams.end(); ++team) {
         for (int i = 0; i < 6; i++) {
             if (team->m_members[i] == blade) {
                 return team->m_teamId;
+            }
+        }
+    }
+    return 0;
+}
+
+unsigned int GfDataMercenaries::getMissionIdByBlade(unsigned int blade) {
+    SDataGame* game = GfDataManager::getDataGame();
+    for (Team* team = game->m_teams.begin(); team != game->m_teams.end(); ++team) {
+        for (int i = 0; i < 6; i++) {
+            if (team->m_members[i] == blade) {
+                return team->m_mission;
             }
         }
     }
@@ -3797,6 +3875,22 @@ const char* GfDataMap::getMapResourceName(unsigned int mapId) {
     return GfBdatMaplist::get()->getMaplistresource(id);
 }
 
+unsigned int GfDataMap::getMapID(unsigned int mapJumpId) {
+    if (mapJumpId == 0) {
+        return 0;
+    }
+    unsigned char* jump = GfDataBdat::getFP(182);
+    unsigned char* jumpDlc = GfDataBdat::getFP(183);
+    int id = mapJumpId;
+    unsigned char map = 0;
+    if (id >= Bdat::getIdTop(jump) && id < Bdat::getIdTop(jump) + Bdat::getIdCount(jump)) {
+        map = Bdat::getValCheck(jump, "MapList", id, 1);
+    } else if (id >= Bdat::getIdTop(jumpDlc) && id < Bdat::getIdTop(jumpDlc) + Bdat::getIdCount(jumpDlc)) {
+        map = Bdat::getValCheck(jumpDlc, "MapList", id, 1);
+    }
+    return map;
+}
+
 const char* GfDataDriver::getBelongingModelName(const GfInitParamDriver& param) {
     if (param.m_objId == 1) {
         return param.m_createType == 9 || param.m_createType == 13 ? "oj/oj300002" : "oj/oj300001";
@@ -4883,11 +4977,30 @@ void GfDataBlade::fn_71002324FC(SDataGame* game, bool flag) {
     GfGameFlag::setLocal(game->m_gameFlag, 1, 0xD860, flag);
 }
 
+void GfDataBlade::fn_7100232518(SDataGame& game) {
+    game.m_aocIds[0] = TUnk_B4C840::fn_71002229C0(0) + 1;
+    game.m_aocIds[1] = TUnk_B4C840::fn_71002229C0(1) + 1;
+    game.m_aocIds[2] = TUnk_B4C840::fn_71002229C0(2) + 1;
+    game.m_aocIds[3] = TUnk_B4C840::fn_71002229C0(3) + 1;
+    game.m_aocIds[4] = TUnk_B4C840::fn_71002229C0(4) + 1;
+}
+
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BA04C)
 static const unsigned int s_componentValues[9] = {300, 4, 3, 1, 2, 0, 0, 0, 0};
 
 unsigned int GfDataBlade::fn_7100232650(unsigned int index) {
     return s_componentValues[index];
+}
+
+bool GfDataBlade::fn_7100232660(const DataParamAcc& acc) {
+    if (acc.getObjType() == 4 && acc.isValid() && acc.getBdatId() == 1009) {
+        return true;
+    }
+    if (acc.getObjType() == 3 && acc.isValid()) {
+        unsigned int driver = acc.getObjType() == 3 ? acc.getBdatId() : 0;
+        return driver == 24;
+    }
+    return false;
 }
 
 unsigned int GfDataBlade::fn_71002326F0(unsigned int id) {
