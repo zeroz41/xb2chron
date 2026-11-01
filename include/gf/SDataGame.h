@@ -162,7 +162,10 @@ public:
     // 0x11736C: the add-on ids + 1 the game was saved with (GfDataBlade::fn_7100232518 stores
     // TUnk_B4C840::fn_71002229C0(n) + 1, fn_71002325AC compares; the name is not the original's)
     int m_aocIds[5];
-    unsigned char pad_117380[0x354C];
+    unsigned char pad_117380[0x30C];
+    // 0x11768C: the 16 drivers' arts records past the ones their data keeps (GfDataDriver::fn_7100247804 and
+    // fn_7100245478 index it like getSDataDriver's m_drivers; the name is not the original's)
+    SDataDriverArtsEx m_driverArtsEx[16];
     // 0x11A8CC: the challenge battle rule table (TUnk_B535D0::fn_7100291CF4 returns it, fn_7100291D14 a rule of
     // it, fn_7100291CC0 / fn_7100291E40 read and mark its rows; the constructor runs its fn_71001528A0; the name is
     // not the original's)

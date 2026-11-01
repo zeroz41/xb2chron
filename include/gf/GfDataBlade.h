@@ -549,7 +549,18 @@ public:
     // GfDataBlade's unit among GfDataBlade's functions (before addRareBlade). What it does: getCreator on the given game
     // data: the blade's 16-bit m_creator, 0 for blade 0 (tl::TitleStatePlayEvent::enter calls it).
     static int fn_710023C478(const SDataGame& game, unsigned int blade);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // GfDataBlade's unit among GfDataBlade's functions (after getDriverSetID, which it calls). What it does: the slot
+    // DataObjDriver::setVirtualSetBlade engages a blade in: for driver 1, 4 for blade 1003 and 3 for blade 1002 while
+    // blade 1001 has no driver set (getDriverSetID); else the slot it is given.
+    static int fn_710023B798(unsigned int driver, unsigned int blade, int slot);
 };
+
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because nothing ties it to a
+// class: it lies in GfDataBlade's unit between GfDataWeapon's and GfDataSalvage's functions and takes a row id. What it
+// does: the "mdo" string of the row of RSC_dropitemListIra (while GfDataBlade::fn_71002324C8's flag is set) or
+// RSC_dropitemList, "" when there is none; GfObjUtil::addDebugName uses it.
+const char* fn_710024FFF4(unsigned int id);
 
 }  // namespace gf
 

@@ -11,7 +11,7 @@ namespace gf { class GfDataManager; }
 namespace gf { class SDataGame; }
 namespace gf { class SDataSystem; }
 namespace gf { class SDataOption; }
-namespace gf { struct SDataDriverDlc; }
+namespace gf { struct SDataDlc; }
 namespace gf { enum RELOAD_BDAT : int; }
 
 namespace gf {
@@ -34,9 +34,9 @@ public:
     static SDataOption* getDataOption();  // GfDataStore's
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address follows
     // getDataGame's in this unit and, like it, it only forwards to a GfDataStore function (fn_710022D440). What it
-    // does: returns the DLC drivers' data, 0xDAC-byte records for driver rows 0x11-0x19 (GfDataDriver::getSDataDriver
-    // indexes it with row - 0x11).
-    static SDataDriverDlc* fn_7100224A10();
+    // does: returns the DLC drivers' data (GfDataDriver::getSDataDriver indexes its 0xDAC-byte driver records with
+    // row - 0x11).
+    static SDataDlc* fn_7100224A10();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in this
     // unit and it takes no object (GfDataManager's statics fill the unit). What it does: GfDataItem::getItemType of
     // item, then by the type (1..0x14, jump table 0x71009B9BCC) a per-type function on the matching parts of the

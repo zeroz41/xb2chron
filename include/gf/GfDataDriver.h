@@ -3,7 +3,7 @@
 
 namespace gf { class SDataDriver; enum DBSLOT : int; struct GfItemHandle; }
 namespace gf { struct SDataPouch; }
-namespace gf { struct SDataDriverDlc; }
+namespace gf { struct SDataDriverDlc; struct SDataDriverArtsEx; }
 namespace gf { enum FAVORITE : int; }
 namespace gf { struct SDataIdea; class GfInitParamDriver; }
 
@@ -24,9 +24,16 @@ public:
     // const SDataDriver&)). Room for 50 in 3.0.1: GfMenuObjDrArtsSet2 holds one with its count 0xC8 bytes past the
     // room (1.0.0 named the type with 27)
     static void getEquipWpnType(mm::mtl::FixedVector<unsigned int, 50>& types, unsigned int driver);
+    // the weapon types (1-4) of the driver's arts types 1-49 (CHR_Dr's weapon type columns); room for 50 in 3.0.1 (its
+    // push_back checks 50, its count sits 0xC8 bytes past the room; 1.0.0's symbol named the type with 27)
+    static void getEquipWpnType(mm::mtl::FixedVector<unsigned int, 50>& types, const SDataDriver& data);
     // 1.0.0's names (the symbols still spell 3.0.1's copies fn_<address>: same call sites, same arguments; 3.0.1's
     // also cover the DLC drivers)
     static SDataDriver* getSDataDriver(unsigned int driver);  // fn_7100231C64
+    // the driver's arts records past the ones its data keeps, found the getSDataDriver way (DLC rows 0x11-0x19 in
+    // GfDataManager::fn_7100224A10's, others in getDataGame's 16, clamped as getSDataDriver clamps); inline in
+    // fn_7100247804, fn_7100245478, fn_710024553C and GfDataDriverArts::getArtsLevel. The name is not the original's.
+    static SDataDriverArtsEx* getSDataDriverArtsEx(unsigned int driver);
     static unsigned int getLevel(const SDataDriver& data);  // fn_710024572C
     // 1.0.0's name: its getLevel(unsigned int) has the same callers (GfMenuObjDrArtsSet2::ArtsListListener,
     // GfMenuObjLvupSelect's listeners) and reads getLevel(*getSDataDriver(driver)); the symbols spell fn_7100234674
@@ -48,6 +55,16 @@ public:
     // fn_7100241E10(driver, list) for a local list (a 0x350-byte buffer and its size, cleared afterwards);
     // GfGameUtil::fn_71002E16F4 does nothing for a driver it holds for.
     static bool fn_7100241DD4(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies in GfDataBlade's
+    // unit right after fn_7100241DD4, which passes it a driver id and a FixedVector<unsigned short, 424> (0x350-byte
+    // room). What it does: fills the list with GfDataBlade::getListReserver's blades, drops those already listed and
+    // the ones GameFlag / GfDataDriver::isEnableEquipBlade reject, and answers whether one is left (0x440 bytes).
+    static bool fn_7100241E10(unsigned int driver, mm::mtl::FixedVector<unsigned short, 424>& list);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies in GfDataBlade's
+    // unit among GfDataDriver's functions (after fn_7100241E10) and takes a driver id. What it does: the index
+    // getSDataDriver uses: driver - 0x11 for a DLC row (0x11-0x19), else driver - 1 clamped to 1 past 0x10
+    // (caller fn_71002EAF78).
+    static unsigned int fn_710024229C(unsigned int driver);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among GfDataDriver's
     // functions (right before fn_71002417DC) and takes a driver row. What it does: for a DLC driver row (0x11-0x19)
     // collects every GfBdatChrDr row of type 1 whose group (fn_71001F172C) equals the driver's into the list

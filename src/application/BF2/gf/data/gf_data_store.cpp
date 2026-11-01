@@ -35,8 +35,8 @@ SDataSystem& GfDataStore::getDataSystem() {
     return get()->m_system;
 }
 
-SDataDriverDlc (&GfDataStore::fn_710022D440())[16] {
-    return get()->m_dlcDrivers;
+SDataDlc& GfDataStore::fn_710022D440() {
+    return get()->m_dlc;
 }
 
 SDataOption& GfDataStore::getDataOption() {

@@ -4,6 +4,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "gf/SDataOption.h"
 #include "gf/SDataSave.h"
+#include "gf/SDataDlc.h"
 
 namespace gf { class GfDataStore; class GfSetupParam; }
 
@@ -25,7 +26,7 @@ public:
     static SDataOption& getDataOption();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads the singleton's
     // object like getDataGame. What it does: returns the DLC drivers (GfDataDriver::getSDataDriver's rows 0x11-0x19).
-    static SDataDriverDlc (&fn_710022D440())[16];
+    static SDataDlc& fn_710022D440();
     // 1.0.0's GfDataManager::setupGame calls setGameData; 3.0.1's calls fn_710022D7DC (the symbols spell it so), which
     // copies the three blocks and calls fn_710022D478: this is setGameData
     static void setGameData(const SDataSystem* system, const SDataGame* game, const SDataOption* option);
@@ -39,9 +40,8 @@ public:
     SDataSystem m_system;  // 0x8 (the member names are not the original's)
     SDataGame m_game;  // 0x20
     SDataOption m_option;  // 0x126DA0
-    SDataDriverDlc m_dlcDrivers[16];  // 0x126E28
-    // 0x1348E8: the block a save keeps after its DLC drivers (SDataSave's pad_134850)
-    unsigned char m_dlcBlock[0x32C0];
+    // 0x126E28: the DLC drivers and the block a save keeps after them (SDataSave's m_dlcDrivers and pad_134850)
+    SDataDlc m_dlc;
     bool m_initialized;  // 0x137BA8: destroy clears it, initialize sets it
 };
 }  // namespace gf

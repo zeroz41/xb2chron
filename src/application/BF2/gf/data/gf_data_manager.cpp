@@ -137,8 +137,8 @@ SDataGame* GfDataManager::getDataGame() {
     return &GfDataStore::getDataGame();
 }
 
-SDataDriverDlc* GfDataManager::fn_7100224A10() {
-    return GfDataStore::fn_710022D440();
+SDataDlc* GfDataManager::fn_7100224A10() {
+    return &GfDataStore::fn_710022D440();
 }
 
 SDataOption* GfDataManager::getDataOption() {
