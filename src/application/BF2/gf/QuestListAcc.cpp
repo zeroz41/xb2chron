@@ -3762,9 +3762,23 @@ void QuestListAcc::addTaskCategory(unsigned short id, unsigned int category, CBd
     m_taskCount++;
 }
 
-
-
-
+// 1.0.0 calls out-of-line getCollectUseFlagIndexOldVersion/NewVersion here; 3.0.1 has no copy of either (one body)
+int QuestListAcc::getCollectUseFlagIndex(const QuestTaskParam& param) const {
+    if (!GfDataUtil::isCollectFlagNewVersion()) {
+        unsigned short entry = m_taskInfoIndex[param.m_questId.m_id * 4 + param.m_task];
+        if (entry == 0) {
+            return 0;
+        }
+        return m_taskInfo[entry - 1];
+    }
+    if (param.m_taskType == 3) {
+        return param.m_taskId;
+    }
+    if (param.m_taskType == 4) {
+        return param.m_taskId + 350;
+    }
+    return 0;
+}
 
 void QuestListAcc::rebuild() {
     clear();
@@ -3978,6 +3992,32 @@ void QuestListAcc::rebuild() {
     _gfbqa::initTaskTaskCondition4(*GfBdatQuest::get()->m_fpTask);
 }
 
+unsigned int QuestListAcc::getTaskFlag(unsigned int purposeId, unsigned int task) const {
+    QuestRow row(purposeId);
+    findRow(*this, row);
+    unsigned int base;
+    switch (row.m_category) {
+    case 1:
+        base = 4002;
+        break;
+    case 2:
+        base = 39876;
+        break;
+    case 3:
+        base = 5804;
+        break;
+    case 5:
+        base = 40877;
+        break;
+    case 6:
+        base = 4603;
+        break;
+    default:
+        base = 0;
+        break;
+    }
+    return base + (row.m_row - row.m_begin) * 4 + task;
+}
 
 // a save built when the program starts and destroyed at its end (_GLOBAL__sub_I_QuestListAcc.cpp builds it, 0x137B10
 // bytes of .bss after the file's two Vec3s; reached through the GOT, so not file-local). Nothing else in 3.0.1
