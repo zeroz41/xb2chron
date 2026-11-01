@@ -1,22 +1,36 @@
 #include "classes/gf/TUnk_B60AA8.h"
 #include "gf/gf_menu_obj_camp_menu.h"
+#include "gf/GfMenuObjUtil.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
+#include "classes/gf/GfMenuObjShop.h"
 #include "plugin/Bdat.h"
 #include "classes/gf/GfFieldTime.h"
+#include "classes/gf/GfGameCond.h"
+#include "classes/gf/GfGameFlag.h"
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/GfGameVoice.h"
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuDriverList.h"
 #include "classes/gf/GfMenuFade.h"
 #include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfMenuReference.h"
+#include "classes/gf/GfWeapon.h"
+#include "classes/gf/SCOM_FIELD_VOICE.h"
+#include "classes/ui/UICtrlCursorSelect.h"
 #include "classes/ui/UIManager.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UISelectObjList.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfMenuBdat.h"
 #include "gf/GfMenuFlag.h"
 #include "mm/Col4.h"
+#include "mm/Pnt.h"
+#include "mm/Rect.h"
+#include "mm/mtl/FixStr.h"
 #include "ui/EventData.h"
+#include "ui/UIStr.h"
 
 namespace gf {
 
@@ -25,7 +39,7 @@ int g_campMenuState;
 
 TUnk_B60AA8::TUnk_B60AA8(unsigned int handle)
     : GfMenuObject(handle), m_seq(this), m_jobStarted(false), m_driverList0(nullptr), m_driverList1(nullptr),
-      m_selectList(nullptr), pad_2D8(nullptr), m_context(nullptr), m_voice(nullptr), m_sound(0) {
+      m_selectList(nullptr), m_cursor(nullptr), m_context(nullptr), m_voice(nullptr), m_sound(0) {
     m_driverList0 = GfMenuDriverList::create();
     m_driverList1 = GfMenuDriverList::create();
     ui::UISelectObjList::CreateParam create;
@@ -39,9 +53,9 @@ TUnk_B60AA8::~TUnk_B60AA8() {
         m_context->release();
         m_context = nullptr;
     }
-    if (pad_2D8 != nullptr) {
-        pad_2D8->release();
-        pad_2D8 = nullptr;
+    if (m_cursor != nullptr) {
+        m_cursor->release();
+        m_cursor = nullptr;
     }
     if (m_selectList != nullptr) {
         m_selectList->release();
@@ -112,6 +126,28 @@ void TUnk_B60AA8::update() {
     GfMenuObject::update();
 }
 
+void TUnk_B60AA8::fn_71003BCCD4() {
+    ui::UIObjectAcc main(m_handle, "LAY_main");
+    main.setDispChild(false, "IMG_select_sleep_notice");
+    main.setDispChild(false, "IMG_select_craft_notice");
+    main.setDispChild(false, "IMG_select_talk_notice");
+    mm::mtl::FixStr<32> name;
+    bool craft = false;
+    for (unsigned int i = 0; i < m_driverList0->getSize(); i++) {
+        bool notice = fn_71003BE8C4(m_driverList0->getContents(i).m_driver);
+        name.format("IMG_craft_item_notice@%02d", i + 1);
+        main.setDispChild(notice, name.m_str);
+        craft |= notice;
+    }
+    main.setDispChild(craft, "IMG_select_craft_notice");
+    if (GfGameFlag::getLocal(1, 0xC6C9) == 0) {
+        main.setDispChild(true, "IMG_select_talk_notice");
+    }
+    if (GfMenuFlag::get1(0x54) == 0) {
+        main.setDispChild(true, "IMG_select_talk_notice");
+    }
+}
+
 bool TUnk_B60AA8::fn_71003BCEAC() {
     if (!m_jobStarted) {
         GfMenuManager::openCommonWindow(0x11F);
@@ -157,6 +193,141 @@ bool TUnk_B60AA8::fn_71003BCFB8() {
     return true;
 }
 
+bool TUnk_B60AA8::fn_71003BD058() {
+    m_seq.addJob(&TUnk_B60AA8::fn_71003BE178);
+    m_seq.addJob(&TUnk_B60AA8::fn_71003BE1A0);
+    if (fn_71002EDA8C()) {
+        m_seq.addJob(&TUnk_B60AA8::fn_71003BE1BC);
+        m_seq.addJob(&TUnk_B60AA8::fn_71003BE1EC);
+    }
+    m_seq.addJob(&TUnk_B60AA8::fn_71003BE1F4);
+    return true;
+}
+
+void TUnk_B60AA8::TUnk_B60B20::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        if (index != -1) {
+            m_owner->m_driverList0->setIndex(index);
+            m_owner->m_selectList->setIndex(index);
+            m_owner->m_cursor->setDisp(true);
+            m_owner->fn_71003BD69C();
+        }
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 0x22: {
+        GfMenuObjUtil::setCommonFadeOut(acc.searchChild("LAY_craft_base"), 0, 0);
+        int ctrl = GfMenuObjUtil::setCommonFadeOut(acc.searchChild("LAY_craft_select"), 2, 1);
+        GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        m_owner->m_cursor->setDisp(false);
+        break;
+    }
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+            GfMenuObject::resetInputSelection(acc.m_handle);
+            GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_driverList0);
+        }
+        break;
+    case 8:
+        if (event.m_param1 == 1) {
+            GfMenuDriverList* list = m_owner->m_driverList0;
+            unsigned int driver = list->getContents(list->getIndex(false)).m_driver;
+            if (driver != 0) {
+                if (m_owner->m_voice != nullptr) {
+                    GfGameVoice::playStop(m_owner->m_voice);
+                    m_owner->m_voice = nullptr;
+                }
+                m_owner->m_voice = fn_71005693C0(driver);
+            }
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_shop"), 0, 0.0f);
+            GfMenuObject::sendCloseEvent(acc.m_handle, 1, 0.0f);
+            GfMenuObjUtil::playSECommonDecide();
+        } else if (event.m_param1 == 2) {
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_menu"), 1, 0.0f);
+            GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+            GfMenuObjUtil::playSECommonCancel();
+        }
+        break;
+    case 0x21: {
+        acc.setDisp(true);
+        unsigned int count = acc.countChild("LAY_craft_item@%02d", 1);
+        mm::mtl::FixStr<32> name;
+        m_owner->m_selectList->clear();
+        for (unsigned int i = 0; i < count; i++) {
+            unsigned int size = m_owner->m_driverList0->getSize();
+            name.format("LAY_craft_item@%02d", i + 1);
+            if (i < size) {
+                m_owner->m_selectList->addObject(acc.searchChild(name.m_str));
+            }
+            acc.setDispChild(i < size, name.m_str);
+        }
+        mm::Rect<short> center;
+        mm::Rect<short> range;
+        acc.getLayoutRect("character_center", center);
+        acc.getLayoutRect("character_range", range);
+        GfMenuObjUtil::placeObjectH(m_owner->m_selectList,
+                                    mm::Pnt<short>(center.x + center.w / 2, center.y + center.h / 2),
+                                    range.x - center.x);
+        GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_craft_base"), 0, 0);
+        int ctrl = GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_craft_select"), 1, 1);
+        GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        m_owner->m_cursor->setDisp(false);
+        m_owner->fn_71003BCCD4();
+        m_owner->fn_71003BD69C();
+        break;
+    }
+    }
+}
+
+void TUnk_B60AA8::fn_71003BD69C() {
+    ui::UIObjectAcc main(m_handle, "LAY_main");
+    unsigned short info[2];
+    if (fn_71003BE7EC(m_driverList0->getContents(m_driverList0->getIndex(false)).m_driver, info)) {
+        GfMenuReference::setReferenceShopID(info[0]);
+        if (info[1] != 0) {
+            ui::UIObjectAcc text(main.m_handle, "TXT_craft_info");
+            text.setText(ui::UIStr(GfDataBdat::getFP(0x13C), info[1]));
+        }
+    }
+}
+
+void TUnk_B60AA8::TUnk_B60B48::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        break;
+    case 0x21:
+        GfMenuObjOperationInfo::close();
+        m_owner->m_jobStarted = false;
+        m_owner->m_seq.clear();
+        m_owner->m_seq.addJob(&TUnk_B60AA8::fn_71003BD924);
+        m_owner->m_seq.addJob(&TUnk_B60AA8::fn_71003BD978);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 bool TUnk_B60AA8::fn_71003BD924() {
     if (!m_jobStarted) {
         GfMenuFade::setFade(2, 30, mm::Col4::black);
@@ -164,6 +335,87 @@ bool TUnk_B60AA8::fn_71003BD924() {
         return false;
     }
     return !GfMenuManager::isFading();
+}
+
+bool TUnk_B60AA8::fn_71003BD978() {
+    GfMenuManager::openFullScreen(5, true, true);
+    m_seq.addJob(&TUnk_B60AA8::fn_71003BEB30);
+    if (fn_71002EDA8C()) {
+        m_seq.addJob(&TUnk_B60AA8::fn_71003BE1BC);
+        m_seq.addJob(&TUnk_B60AA8::fn_71003BE1EC);
+    }
+    m_seq.addJob(&TUnk_B60AA8::fn_71003BEB4C);
+    m_jobStarted = false;
+    return true;
+}
+
+void TUnk_B60AA8::TUnk_B60B70::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        break;
+    case 3:
+        if (event.m_param0 == 2) {
+            if (m_mode == 1) {
+                g_campMenuState = 1;
+                if (GfDataBlade::fn_7100231884() > 0x2AFE && GfDataBlade::fn_7100231884() < 0x2B01) {
+                    m_owner->m_seq.addJob(&TUnk_B60AA8::fn_71003BE178);
+                    m_owner->m_seq.addJob(&TUnk_B60AA8::fn_71003BE1A0);
+                    if (fn_71002EDA8C()) {
+                        m_owner->m_seq.addJob(&TUnk_B60AA8::fn_71003BE1BC);
+                        m_owner->m_seq.addJob(&TUnk_B60AA8::fn_71003BE1EC);
+                    }
+                    m_owner->m_seq.addJob(&TUnk_B60AA8::fn_71003BE1F4);
+                }
+                GfMenuObjOperationInfo::close();
+            }
+            GfMenuReference::setReferenceDriverID(0, 0);
+        }
+        break;
+    case 0x21: {
+        GfMenuObjShop::OpenParam param;
+        param.m_shopId = m_owner->fn_71003BDF70();
+        param.m_option = true;
+        m_owner->m_context->reset();
+        GfMenuObjShop::open(m_owner->m_context, param);
+        m_owner->m_jobStarted = false;
+        m_owner->m_seq.clear();
+        m_owner->m_seq.addJob(&TUnk_B60AA8::fn_71003BE0FC);
+        acc.setDisp(true);
+        int ctrl = GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_shop_header"), 1, 1);
+        GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        if (static_cast<unsigned int>(m_owner->m_driverList0->getSize()) > 1) {
+            GfMenuObject::sendOpenEvent(acc.searchChild("LAY_chr_change"), 0, 0.0f);
+        }
+        m_mode = 0;
+        break;
+    }
+    case 0x22: {
+        if (m_mode == 0) {
+            GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_craft"), 0, 0.0f);
+        }
+        int ctrl = GfMenuObjUtil::setCommonFadeOut(acc.searchChild("LAY_shop_header"), 2, 1);
+        GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        if (static_cast<unsigned int>(m_owner->m_driverList0->getSize()) > 1) {
+            GfMenuObject::sendCloseEvent(acc.searchChild("LAY_chr_change"), 0, 0.0f);
+        }
+        break;
+    }
+    case 0x101:
+        m_mode = 1;
+        break;
+    case 0x102: {
+        unsigned int index = event.m_param0;
+        m_owner->m_driverList0->setIndex(index);
+        m_owner->fn_71003BDF70();
+        GfMenuObjShop::fn_7100477960();
+        break;
+    }
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 bool TUnk_B60AA8::fn_71003BE0FC() {
@@ -199,6 +451,69 @@ bool TUnk_B60AA8::fn_71003BE1F4() {
     mm::mtl::PtrSingleton<ui::UIManager>::sys()->terminateLayer(m_fsLayer, true);
     m_jobStarted = false;
     return true;
+}
+
+void TUnk_B60AA8::TUnk_B60B98::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            TUnk_B60AA8* owner = m_owner;
+            owner->fn_71003BE490(owner->m_driverList1->getIndex(false));
+            GfMenuObject::enableInput(acc.m_handle);
+            GfMenuObject::resetInputSelection(acc.m_handle);
+            GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_driverList1);
+        }
+        break;
+    case 6: {
+        int index = event.m_param0;
+        if (index != -1) {
+            int prev = event.m_param1;
+            m_owner->m_driverList1->setIndex(index);
+            m_owner->fn_71003BE490(index);
+            ui::EventData parent;
+            parent.m_type = 0x102;
+            parent.m_param0 = index;
+            GfMenuObject::sendEventToParent(acc.m_handle, parent, 0.0f);
+            if (prev != -1 && index != prev) {
+                GfMenuObjUtil::playSECommonTab();
+            }
+        }
+        break;
+    }
+    case 0x21: {
+        acc.setDisp(true);
+        m_owner->m_driverList1->setIndex(0);
+        m_owner->m_driverList1->setIndex(m_owner->m_driverList0->getIndex(false));
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_in_r";
+        param.m_setDefault = true;
+        param.m_startFlags = 8;
+        param.m_eventId = 1;
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        m_owner->fn_71003BE490(-1);
+        break;
+    }
+    case 0x22: {
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_out_r";
+        param.m_setDefault = true;
+        param.m_startFlags = 10;
+        param.m_eventId = 2;
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        break;
+    }
+    }
 }
 
 bool TUnk_B60AA8::fn_71003BE7EC(unsigned int driver, unsigned short* shop) {

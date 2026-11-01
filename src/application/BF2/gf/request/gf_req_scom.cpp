@@ -1770,12 +1770,12 @@ void fn_7100569228() {
     SCOM_FIELD_VOICE::fn_7100568E1C(names);
 }
 
-void fn_71005693C0(unsigned int blade) {
+GAME_VOICE_HANDLE* fn_71005693C0(unsigned int blade) {
     SCOM_FIELD_VOICE::VoiceList names;
     names.m_names[0] = "680101";
     names.m_names[1] = "680102";
     names.m_count = 2;
-    fn_7100569264(blade, names);
+    return fn_7100569264(blade, names);
 }
 
 void fn_71005695D0(unsigned int blade) {

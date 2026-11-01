@@ -126,7 +126,7 @@ public:
 // (caller GfMenuObjDrArtsSet2::ArtsListListener::reciveEvent), fn_7100569618 "710101".."710103" (caller
 // GfMenuObjDrKizunaRing::seqSkillAnime).
 GAME_VOICE_HANDLE* fn_7100569264(unsigned int blade, const SCOM_FIELD_VOICE::VoiceList& names);
-void fn_71005693C0(unsigned int blade);
+GAME_VOICE_HANDLE* fn_71005693C0(unsigned int blade);  // fn_7100569264's voice (fn_71003BD208 keeps it)
 void fn_71005695D0(unsigned int blade);
 void fn_7100569618(unsigned int blade);
 }  // namespace gf
