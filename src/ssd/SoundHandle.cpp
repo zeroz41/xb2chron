@@ -50,6 +50,22 @@ bool SoundHandle::IsValidHandle() const {
     return core->GetVoiceHandle(voiceId_) != nullptr;
 }
 
+Result SoundHandle::AddDelegateInternal(Delegate::Handle* handle) {
+    SystemCore* core = static_cast<SystemCore*>(SoundCore::instance_);
+    Result result;
+    {
+        ScopedLock lock(core->audioLock_);
+        int size = delegates_.size_;
+        if (delegates_.capacity_ <= size) {
+            delegates_.SetArraySize(delegates_.capacity_ + 16);
+        }
+        delegates_.data_[delegates_.size_] = handle;
+        delegates_.size_++;
+        result = notify_.AddDelegate(handle);
+    }
+    return set_result(result);
+}
+
 void SoundHandle::ClearDelegate() {
     SystemCore* core = static_cast<SystemCore*>(SoundCore::instance_);
     if (core == nullptr) {
@@ -75,6 +91,21 @@ Result SoundHandle::Stop(float fadeTime) {
         return Result(-29);
     }
     return set_result(voice->Stop(fadeTime));
+}
+
+Result SoundHandle::Pause(bool pause, float fadeTime) {
+    if (!valid_ || entry_ == nullptr) {
+        return Result(-5);
+    }
+    SystemCore* core = static_cast<SystemCore*>(SoundCore::instance_);
+    if (core == nullptr) {
+        return Result(-12);
+    }
+    VoiceHandle* voice = core->GetVoiceHandle(voiceId_);
+    if (voice == nullptr) {
+        return Result(-29);
+    }
+    return set_result(voice->Pause(pause, fadeTime));
 }
 
 int SoundHandle::GetState() const {
