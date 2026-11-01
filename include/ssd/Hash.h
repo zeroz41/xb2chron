@@ -16,7 +16,7 @@ public:
         const unsigned char* bytes = static_cast<const unsigned char*>(data);
         unsigned int hash = value;
         for (unsigned int i = 0; i < size; i++) {
-            hash = hash * 0x89 ^ bytes[i];
+            hash = hash * 0x89 ^ *bytes++;
         }
         value = hash;
         this->size += size;

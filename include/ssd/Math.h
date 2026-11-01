@@ -19,12 +19,17 @@ struct Mat34 {
 
 // v scaled to unit length; out is left as it is when v has no length (the name is not the original's)
 inline void Vec3Normalize(Vec3* out, const Vec3* v) {
-    float lengthSq = v->x * v->x + v->y * v->y + v->z * v->z;
-    if (lengthSq != 0.0f) {
+    float x = v->x;
+    float y = v->y;
+    float z = v->z;
+    float lengthSq = x * x + y * y + z * z;
+    if (lengthSq == 0.0f) {
+        // nothing to scale (an empty branch: the original's block layout needs it)
+    } else {
         float scale = 1.0f / sqrtf(lengthSq);
-        out->x = v->x * scale;
-        out->y = v->y * scale;
-        out->z = v->z * scale;
+        out->x = x * scale;
+        out->y = y * scale;
+        out->z = z * scale;
     }
 }
 

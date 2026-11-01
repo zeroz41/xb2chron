@@ -33,7 +33,8 @@ inline unsigned long GetTextLength(const T* text) {
 template <typename T>
 inline void CopyText(T* buffer, const T* text, unsigned long size) {
     T* out = buffer;
-    while (*text != 0 && static_cast<unsigned int>(out - buffer) < size - 1) {
+    unsigned long last = size - 1;
+    while (*text != 0 && static_cast<unsigned int>(out - buffer) < last) {
         *out++ = *text++;
     }
     *out = 0;

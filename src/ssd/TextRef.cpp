@@ -9,6 +9,29 @@
 
 namespace ssd {
 
+Mat34* Mat34LookAt(Mat34* out, const Vec3* eye, const Vec3* direction, const Vec3* up) {
+    Vec3 zAxis;
+    Vec3Normalize(&zAxis, direction);
+    Vec3 xAxis;
+    Vec3Cross(&xAxis, up, &zAxis);
+    Vec3Normalize(&xAxis, &xAxis);
+    Vec3 yAxis;
+    Vec3Cross(&yAxis, &zAxis, &xAxis);
+    out->m[0][0] = xAxis.x;
+    out->m[1][0] = xAxis.y;
+    out->m[2][0] = xAxis.z;
+    out->m[3][0] = -Vec3Dot(&xAxis, eye);
+    out->m[0][1] = yAxis.x;
+    out->m[1][1] = yAxis.y;
+    out->m[2][1] = yAxis.z;
+    out->m[3][1] = -Vec3Dot(&yAxis, eye);
+    out->m[0][2] = zAxis.x;
+    out->m[1][2] = zAxis.y;
+    out->m[2][2] = zAxis.z;
+    out->m[3][2] = -Vec3Dot(&zAxis, eye);
+    return out;
+}
+
 Vec3* Vec3Transform(const Mat34* m, const Vec3* v, Vec3* out) {
     float x = v->x * m->m[0][0] + v->y * m->m[1][0] + v->z * m->m[2][0] + m->m[3][0];
     float y = v->x * m->m[0][1] + v->y * m->m[1][1] + v->z * m->m[2][1] + m->m[3][1];
@@ -64,6 +87,22 @@ void TextRef::GetText(MemoryBlock* block, TextEncodeType type) const {
         Utf8ToUTF16(utf8_, block);
     } else {
         Utf16ToUTF8(tchar_, block);
+    }
+}
+
+void TextRef::GetText(void* buffer, unsigned long size, TextEncodeType type) const {
+    if (type_ == type) {
+        if (type_ == TextEncodeType_Utf8) {
+            CopyText(static_cast<char*>(buffer), utf8_, size);
+        } else {
+            CopyText(static_cast<char16_t*>(buffer), tchar_, size);
+        }
+        return;
+    }
+    if (type_ == TextEncodeType_Utf8) {
+        Utf8ToUTF16(utf8_, static_cast<char16_t*>(buffer), size);
+    } else {
+        Utf16ToUTF8(tchar_, static_cast<char*>(buffer), size);
     }
 }
 

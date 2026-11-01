@@ -26,6 +26,10 @@ public:
 
     typedef void (*Function)(void* argument, void* userData);
 
+    // the alignment CreateThreadImpl's assertion demands of the stack ("CheckAlign( stackBuffer,
+    // STACK_ALIGNMENT_SIZE )"); nn::os::CreateThread needs 0x1000
+    static const unsigned long STACK_ALIGNMENT_SIZE = 0x1000;
+
     Thread();
     ~Thread();
 
