@@ -21,6 +21,14 @@ public:
     unsigned short m_blades[5];
 };
 
+// the party's drivers alone (GfGameParty::getCurrentPartyInfo fills the ten members' drivers, then the game data's
+// leader). The field names are not the original's.
+class RQ_SETUP_PARTY_DRIVER {
+public:
+    unsigned short m_drivers[10];
+    unsigned int m_leader;
+};
+
 // the party to set up: ten drivers, each with the blades it engages. The names are not the original's.
 class RQ_SETUP_PARTY {
 public:

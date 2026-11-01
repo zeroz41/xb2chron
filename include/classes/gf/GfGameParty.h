@@ -66,6 +66,10 @@ public:
     static void setPartyGauge(unsigned short gauge);
     static gf::GfObj* getLeaderTransformObj();  // the controlled mover's object
     void createdObject(gf::GF_OBJ_HANDLE* handle);
+    // createdObject's blade and weapon cases: the blade goes into its party slot's handle of its set (a trinity
+    // blade's ninth handle is only checked), the weapon into its driver's GfWeapon list by its mount index
+    void buildObjBlade(gf::GF_OBJ_HANDLE* handle);
+    void buildObjWeapon(gf::GF_OBJ_HANDLE* handle);
     // gives the member at an index a new status property with the hit points given (the second argument is unused)
     static void createPartyStatusProperty(unsigned int index, unsigned int, unsigned int hp);
     // the driver slot's blade set to start battles with: its driver's current one
@@ -85,6 +89,9 @@ public:
     // the leader's level (getLevel of its DataParamAcc; GfMenuObjTargetCursor::update compares a target's with it)
     static unsigned int getLeaderLevel();
     static void getCurrentPartyInfo(RQ_SETUP_PARTY& info);
+    static void getCurrentPartyInfo(RQ_SETUP_PARTY_DRIVER& info);
+    // the hierarchy of a party member's driver or blade (0 for none; the return type is not proven)
+    static unsigned int getHierarchyByHandle(gf::GF_OBJ_HANDLE* handle);
     static bool isBtlLeaderDirver();
     static bool isLeaderDriver(gf::GF_OBJ_HANDLE* handle);
     // the bdat ID of the party member driver at an index, and of the blade in a slot of its driver
@@ -103,6 +110,8 @@ public:
     static gf::GF_OBJ_HANDLE* getHandleBlade(unsigned int index, int slot);
     // the handle of the party driver of a driver id (GfGameUtil::refreshEnhanceState)
     static gf::GF_OBJ_HANDLE* getHandleDriverByBdatID(unsigned int driver);
+    // the handle of the party blade of a blade id (the members 0-2's current blades)
+    static gf::GF_OBJ_HANDLE* getHandleBladeByBdatID(unsigned int blade);
     // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (1.0.0's GfPlayComResetBlade::update
     // has no such calls). Statics of GfGameParty: their addresses lie in gf_game_party's unit and they read
     // PtrSingleton<GfGameParty> (the driver handle of party slot `slot`, entries of 0x50 from +0x10; -1 for

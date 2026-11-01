@@ -31,6 +31,13 @@
 #include "gf/GfObjAcc.h"
 #include "gf/GfObjUtil.h"
 #include "gf/GfSelectBlade.h"
+#include "classes/gf/GfObjSetupBlade.h"
+#include "classes/gf/GfObjSetupDriver.h"
+#include "classes/gf/GfObjSetupWeapon.h"
+#include "classes/gf/GfWeapon.h"
+#include "gf/GfAppend.h"
+#include "gf/GfObjInfo.h"
+#include "mm/mtl/RTTI.h"
 
 namespace gf {
 
@@ -104,6 +111,27 @@ unsigned int GfGameParty::getBladeBdatId(unsigned int index, int slot) {
     }
     DataParamAcc acc(3, driver, GimmickType(0));
     return acc.getBlade(slot, false);
+}
+
+GF_OBJ_HANDLE* GfGameParty::getHandleDriverByBdatID(unsigned int driver) {
+    GfGameParty* self = get();
+    for (unsigned int i = 0; i < 3; ++i) {
+        for (unsigned int& party : self->m_hierarchy) {
+            if (GfDataParty::getPartyMember(i, party)->m_driver == driver) {
+                return getHandleDriver(i, party);
+            }
+        }
+    }
+    return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+}
+
+GF_OBJ_HANDLE* GfGameParty::getHandleBladeByBdatID(unsigned int blade) {
+    for (unsigned int i = 0; i < 3; ++i) {
+        if (getBladeBdatId(i, -1) == blade) {
+            return getHandleBlade(i, -1);
+        }
+    }
+    return reinterpret_cast<GF_OBJ_HANDLE*>(-1);
 }
 
 void GfGameParty::gevGameObjEnter(GF_OBJ_HANDLE* handle) {
@@ -264,6 +292,42 @@ void GfGameParty::listenerGfObj(IGfObjListener::OBJEVT evt, GF_OBJ_HANDLE* handl
     }
 }
 
+// the slot lookups' results go unused (3.0.1 keeps only their calls)
+void GfGameParty::destroyedObject(GF_OBJ_HANDLE* handle) {
+    switch (GfObjUtil::getObjType(handle)) {
+    case 3: {
+        GfObjSetupDriver* setup =
+            mm::mtl::rttiCast<GfObjSetupDriver>(GfObjManager::getObjInfo(handle)->m_setup);
+        if (setup->m_partyId != static_cast<unsigned int>(-1)) {
+            GfObjUtil::fn_710054FCDC(handle);
+        }
+        break;
+    }
+    case 4: {
+        GfObjSetupBlade* setup = mm::mtl::rttiCast<GfObjSetupBlade>(GfObjManager::getObjInfo(handle)->m_setup);
+        if (setup->m_partyId != static_cast<unsigned int>(-1)) {
+            getBladeSetId(setup->m_partyId, setup->pad_6c);
+            GfObjUtil::isTrinityBlade(handle);
+        }
+        break;
+    }
+    }
+    if (m_leader == handle) {
+        m_leader = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    }
+    GfObjAcc acc(handle);
+    unsigned int id = acc.getPartyID();
+    if (id != static_cast<unsigned int>(-1)) {
+        int ok = m_partyIdMemberOK[id];
+        if (ok != 0) {
+            m_partyIdMemberOK[id] = 0;
+            if (ok == 2) {
+                GfEvent::callPartyIDMemberOK(false, id);
+            }
+        }
+    }
+}
+
 void GfGameParty::fn_71002B8D3C() {
     if (!m_currentPartyValid) {
         getCurrentPartyInfo(m_currentParty);
@@ -277,6 +341,41 @@ void GfGameParty::fn_71002B8D74(GEV gev, unsigned int) {
     if (gev == GEV(10)) {
         fn_71002B8D88(m_currentParty);
     }
+}
+
+void GfGameParty::buildObjBlade(GF_OBJ_HANDLE* handle) {
+    GfObjSetupBlade* setup = mm::mtl::rttiCast<GfObjSetupBlade>(GfObjManager::getObjInfo(handle)->m_setup);
+    if (setup->m_partyId == static_cast<unsigned int>(-1)) {
+        return;
+    }
+    int set = getBladeSetId(setup->m_partyId, setup->pad_6c);
+    GfMemberInfo& member = m_members[setup->m_partyId];
+    if (GfObjUtil::isTrinityBlade(handle)) {
+        if (member.m_handles[8] == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            member.m_handles[8] = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+        }
+    } else if (member.m_handles[3 + set] == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        member.m_handles[3 + set] = handle;
+    }
+}
+
+void GfGameParty::getCurrentPartyInfo(RQ_SETUP_PARTY_DRIVER& info) {
+    for (unsigned int i = 0; i < 10; ++i) {
+        info.m_drivers[i] = GfDataParty::getPartyMember(i, 0)->m_driver;
+    }
+    info.m_leader = GfDataParty::getSDataParty()->m_leader;
+}
+
+void GfGameParty::gevChangeBlade(GF_OBJ_HANDLE* handle, int, int) {
+    unsigned int index = getPartyId(handle);
+    GF_OBJ_HANDLE* driver = getHandleDriver(index, 0);
+    if (driver == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    OPTMNT type = GfMountManager::getMountType(driver, GFATTACH(0));
+    GfMountManager::removeMountHandle(driver, GFATTACH(0));
+    GfMountManager::addMountHandle(GfObjUtil::getMountHandle(getHandleBlade(index, -1), GFATTACH(0)), driver);
+    GfMountManager::setMountType(driver, GFATTACH(0), type);
 }
 
 unsigned int GfGameParty::getLeaderLevel() {
