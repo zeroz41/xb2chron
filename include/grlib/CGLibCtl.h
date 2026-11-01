@@ -4,7 +4,7 @@
 #include "grlib/GrlTypes.h"
 
 namespace grlib { class CGLibDecShader; class CGLibSampler; class CGLibTextureBuffer; class CGLibVtxFetch; }
-namespace grlib { class CGLibVtxVertex; class CGLibVtxInstans; class CGLibVtxOneInstans; class CGLibVtxStmOut; class CGLibOneUniformBlock; }
+namespace grlib { class CGLibVtxVertex; class CGLibVtxInstans; class CGLibVtxOneInstans; class CGLibVtxStmOut; class CGLibOneUniformBlock; class CGLibDblUniformBlock; }
 namespace grlib { class CGLibColorBuffer; class CGLibDecShader; class CGLibDecShdExtTbl; class CGLibDepthBuffer; }
 namespace mtl { class ALLOC_HANDLE; }
 namespace mm { struct Col4; }
@@ -21,6 +21,8 @@ public:
     // names are not the original's)
     static void setAddVertex(CGLibVtxVertex& vertex, int offset, int slot, unsigned int divisor);
     static void setUniformVertex(CGLibOneUniformBlock& block, int stride, int offset, int slot, unsigned int divisor);
+    // binds the frame's buffer of the block (CGLibManager::s_nDblNowIdx) from offset bytes on as stream slot
+    static void setUniformVertex(CGLibDblUniformBlock& block, int stride, int offset, int slot, unsigned int divisor);
     static void setStreamOutVertex(CGLibVtxStmOut& vertex, int stride, int offset, int slot, unsigned int divisor);
     // draws count vertices of the bound vertex buffer as the primitive type (once per instance)
     static void renderVertex(GrlPrimitiveType type, int count);
@@ -78,11 +80,12 @@ public:
     // depth test on/off, depth write on/off, the comparison (layer::LayerShdManager::setDepthBufferCheckOn/Off;
     // the parameter names are not the original's)
     static void setDepthControl(unsigned char test, unsigned char write, GrlCompare compare);
-    // the depth then the stencil state (ml::DrAPGxType::setupStencilTest; the parameter names are not the original's)
+    // the depth then the stencil state (ml::DrAPGxType::setupStencilTest; the parameter names are not the original's:
+    // the first GrlStencil goes to NVN's depthPass, the last to fail)
     static void setDepthStencilControl(unsigned char depthTest, unsigned char depthWrite, GrlCompare depthCompare,
                                        unsigned char stencilTest, GrlCompare stencilCompare, unsigned int ref,
-                                       unsigned int mask, unsigned int writeMask, GrlStencil fail,
-                                       GrlStencil depthFail, GrlStencil pass);
+                                       unsigned int mask, unsigned int writeMask, GrlStencil pass,
+                                       GrlStencil depthFail, GrlStencil fail);
     static void clearColorBuffer(CGLibColorBuffer& buffer, const mm::Col4& color, GrlClaerMask mask);
     static void clearIntColorBuffer(CGLibColorBuffer& buffer, const int* values, GrlClaerMask mask);
     // clears the depth buffer (what the flag selects is not known)

@@ -70,6 +70,10 @@ public:
     void releaseDelayMempool(NVNmemoryPool* pool, void* buffer);
     // finalizes and frees the texture, frees the memory and the descriptor ids once the GPU is done with them
     void releaseDelayTexture(NVNtexture* texture, void* mem, int textureId, int samplerId);
+    // drops the sampler object once the GPU is done with it
+    void releaseDelaySampler(CGLibBuffResSamObj* sampler);
+    // the lock of m_releaseTbl (1.0.0 has it out of line, first in the file; 3.0.1 inlines it everywhere)
+    static const ml::CriticalSection& getCriticalSection();
 
     // 0x8: the command buffer being recorded (CGLibCmdBuffer::call calls its commands into it; the name is not the
     // original's)

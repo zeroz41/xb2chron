@@ -1403,11 +1403,11 @@ void CGLibTexture_plf::setupCubeMapTextureArrayBuff(CGLibTextureBuffer& buffer, 
 
 void CGLibRenderTargetBase::setColorInvalidate() {}
 
-unsigned int CGLibColorBuffer::getWidth() const {
+unsigned short CGLibColorBuffer::getWidth() const {
     return m_width;
 }
 
-unsigned int CGLibColorBuffer::getHeight() const {
+unsigned short CGLibColorBuffer::getHeight() const {
     return m_height;
 }
 
@@ -1480,11 +1480,11 @@ float CGLibTextureBuffer::get1PixelTextureInfo() {
     return value;
 }
 
-unsigned int CGLibDepthBuffer::getWidth() const {
+unsigned short CGLibDepthBuffer::getWidth() const {
     return m_width;
 }
 
-unsigned int CGLibDepthBuffer::getHeight() const {
+unsigned short CGLibDepthBuffer::getHeight() const {
     return m_height;
 }
 

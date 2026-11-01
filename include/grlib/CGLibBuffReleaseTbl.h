@@ -24,7 +24,7 @@ public:
         unsigned int m_mempool : 1; // bit 1: m_pObj is a pool of the context's m_memPoolTbl to finalize
         unsigned int m_texture : 1; // bit 2: m_pObj is a texture to finalize
         unsigned int m_pad : 13;
-        unsigned int m_type : 16;   // bits 16..31: the s_callRelease index
+        unsigned short m_type;      // 0x1A: the s_callRelease index
         unsigned int pad_1C;
     };
     static void release_mempool(wrkRelease& work);

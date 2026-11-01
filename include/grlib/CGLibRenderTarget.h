@@ -18,8 +18,9 @@ public:
     CGLibColorBuffer() : m_flags(0) {}
     ~CGLibColorBuffer() { release(); }
     void release() { m_flags &= ~1; }
-    unsigned int getWidth() const;
-    unsigned int getHeight() const;
+    // unsigned short: CGLibDepthCtl's clears zero-extend what they return
+    unsigned short getWidth() const;
+    unsigned short getHeight() const;
 
     unsigned char pad_0[0x4];
     unsigned short m_width;   // 0x04
@@ -34,8 +35,9 @@ public:
 class CGLibDepthBuffer {
 public:
     void invalidate();
-    unsigned int getWidth() const;
-    unsigned int getHeight() const;
+    // unsigned short: CGLibDepthCtl's clears zero-extend what they return
+    unsigned short getWidth() const;
+    unsigned short getHeight() const;
     // frees the texture and the memory it owns (1.0.0 names it; 3.0.1's callers inline it)
     void release();
 

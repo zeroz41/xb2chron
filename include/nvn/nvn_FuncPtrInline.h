@@ -119,6 +119,26 @@ typedef void (*PFNNVNDEPTHSTENCILSTATESETSTENCILTESTENABLEPROC)(NVNdepthStencilS
 extern PFNNVNDEPTHSTENCILSTATESETSTENCILTESTENABLEPROC pfnc_nvnDepthStencilStateSetStencilTestEnable;
 static inline void nvnDepthStencilStateSetStencilTestEnable(NVNdepthStencilState* depth, NVNboolean enable) { pfnc_nvnDepthStencilStateSetStencilTestEnable(depth, enable); }
 
+typedef void (*PFNNVNCOMMANDBUFFERSETSTENCILREFPROC)(NVNcommandBuffer* cmdBuf, NVNface faces, int ref);
+extern PFNNVNCOMMANDBUFFERSETSTENCILREFPROC pfnc_nvnCommandBufferSetStencilRef;
+static inline void nvnCommandBufferSetStencilRef(NVNcommandBuffer* cmdBuf, NVNface faces, int ref) { pfnc_nvnCommandBufferSetStencilRef(cmdBuf, faces, ref); }
+
+typedef void (*PFNNVNCOMMANDBUFFERSETSTENCILVALUEMASKPROC)(NVNcommandBuffer* cmdBuf, NVNface faces, int mask);
+extern PFNNVNCOMMANDBUFFERSETSTENCILVALUEMASKPROC pfnc_nvnCommandBufferSetStencilValueMask;
+static inline void nvnCommandBufferSetStencilValueMask(NVNcommandBuffer* cmdBuf, NVNface faces, int mask) { pfnc_nvnCommandBufferSetStencilValueMask(cmdBuf, faces, mask); }
+
+typedef void (*PFNNVNCOMMANDBUFFERSETSTENCILMASKPROC)(NVNcommandBuffer* cmdBuf, NVNface faces, int mask);
+extern PFNNVNCOMMANDBUFFERSETSTENCILMASKPROC pfnc_nvnCommandBufferSetStencilMask;
+static inline void nvnCommandBufferSetStencilMask(NVNcommandBuffer* cmdBuf, NVNface faces, int mask) { pfnc_nvnCommandBufferSetStencilMask(cmdBuf, faces, mask); }
+
+typedef void (*PFNNVNDEPTHSTENCILSTATESETSTENCILOPPROC)(NVNdepthStencilState* depth, NVNface faces, NVNstencilOp fail, NVNstencilOp depthFail, NVNstencilOp depthPass);
+extern PFNNVNDEPTHSTENCILSTATESETSTENCILOPPROC pfnc_nvnDepthStencilStateSetStencilOp;
+static inline void nvnDepthStencilStateSetStencilOp(NVNdepthStencilState* depth, NVNface faces, NVNstencilOp fail, NVNstencilOp depthFail, NVNstencilOp depthPass) { pfnc_nvnDepthStencilStateSetStencilOp(depth, faces, fail, depthFail, depthPass); }
+
+typedef void (*PFNNVNDEPTHSTENCILSTATESETSTENCILFUNCPROC)(NVNdepthStencilState* depth, NVNface faces, NVNstencilFunc func);
+extern PFNNVNDEPTHSTENCILSTATESETSTENCILFUNCPROC pfnc_nvnDepthStencilStateSetStencilFunc;
+static inline void nvnDepthStencilStateSetStencilFunc(NVNdepthStencilState* depth, NVNface faces, NVNstencilFunc func) { pfnc_nvnDepthStencilStateSetStencilFunc(depth, faces, func); }
+
 typedef void (*PFNNVNVERTEXSTREAMSTATESETSTRIDEPROC)(NVNvertexStreamState* stream, ptrdiff_t stride);
 extern PFNNVNVERTEXSTREAMSTATESETSTRIDEPROC pfnc_nvnVertexStreamStateSetStride;
 static inline void nvnVertexStreamStateSetStride(NVNvertexStreamState* stream, ptrdiff_t stride) { pfnc_nvnVertexStreamStateSetStride(stream, stride); }
@@ -184,6 +204,14 @@ static inline void nvnCommandBufferSetScissor(NVNcommandBuffer* cmdBuf, int x, i
 typedef void (*PFNNVNCOMMANDBUFFERCLEARCOLORPROC)(NVNcommandBuffer* cmdBuf, int index, const float* color, int mask);
 extern PFNNVNCOMMANDBUFFERCLEARCOLORPROC pfnc_nvnCommandBufferClearColor;
 static inline void nvnCommandBufferClearColor(NVNcommandBuffer* cmdBuf, int index, const float* color, int mask) { pfnc_nvnCommandBufferClearColor(cmdBuf, index, color, mask); }
+
+typedef void (*PFNNVNCOMMANDBUFFERCLEARCOLORIPROC)(NVNcommandBuffer* cmdBuf, int index, const int* color, int mask);
+extern PFNNVNCOMMANDBUFFERCLEARCOLORIPROC pfnc_nvnCommandBufferClearColori;
+static inline void nvnCommandBufferClearColori(NVNcommandBuffer* cmdBuf, int index, const int* color, int mask) { pfnc_nvnCommandBufferClearColori(cmdBuf, index, color, mask); }
+
+typedef void (*PFNNVNCOMMANDBUFFERCLEARDEPTHSTENCILPROC)(NVNcommandBuffer* cmdBuf, float depthValue, NVNboolean depthMask, int stencilValue, int stencilMask);
+extern PFNNVNCOMMANDBUFFERCLEARDEPTHSTENCILPROC pfnc_nvnCommandBufferClearDepthStencil;
+static inline void nvnCommandBufferClearDepthStencil(NVNcommandBuffer* cmdBuf, float depthValue, NVNboolean depthMask, int stencilValue, int stencilMask) { pfnc_nvnCommandBufferClearDepthStencil(cmdBuf, depthValue, depthMask, stencilValue, stencilMask); }
 
 typedef void (*PFNNVNCOMMANDBUFFERDRAWARRAYSPROC)(NVNcommandBuffer* cmdBuf, NVNdrawPrimitive mode, int first, int count);
 extern PFNNVNCOMMANDBUFFERDRAWARRAYSPROC pfnc_nvnCommandBufferDrawArrays;
@@ -339,6 +367,14 @@ static inline void nvnVertexAttribStateSetStreamIndex(NVNvertexAttribState* attr
 typedef uint64_t (*PFNNVNDEVICEGETTIMESTAMPINNANOSECONDSPROC)(const NVNdevice* device, const NVNcounterData* counterData);
 extern PFNNVNDEVICEGETTIMESTAMPINNANOSECONDSPROC pfnc_nvnDeviceGetTimestampInNanoseconds;
 static inline uint64_t nvnDeviceGetTimestampInNanoseconds(const NVNdevice* device, const NVNcounterData* counterData) { return pfnc_nvnDeviceGetTimestampInNanoseconds(device, counterData); }
+
+typedef NVNtextureHandle (*PFNNVNDEVICEGETTEXTUREHANDLEPROC)(const NVNdevice* device, int textureID, int samplerID);
+extern PFNNVNDEVICEGETTEXTUREHANDLEPROC pfnc_nvnDeviceGetTextureHandle;
+static inline NVNtextureHandle nvnDeviceGetTextureHandle(const NVNdevice* device, int textureID, int samplerID) { return pfnc_nvnDeviceGetTextureHandle(device, textureID, samplerID); }
+
+typedef NVNimageHandle (*PFNNVNDEVICEGETIMAGEHANDLEPROC)(const NVNdevice* device, int imageID);
+extern PFNNVNDEVICEGETIMAGEHANDLEPROC pfnc_nvnDeviceGetImageHandle;
+static inline NVNimageHandle nvnDeviceGetImageHandle(const NVNdevice* device, int imageID) { return pfnc_nvnDeviceGetImageHandle(device, imageID); }
 
 typedef void (*PFNNVNDEVICEBUILDERSETDEFAULTSPROC)(NVNdeviceBuilder* builder);
 extern PFNNVNDEVICEBUILDERSETDEFAULTSPROC pfnc_nvnDeviceBuilderSetDefaults;
