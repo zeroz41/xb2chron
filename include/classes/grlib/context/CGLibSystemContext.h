@@ -47,6 +47,8 @@ public:
     bool isRelease();
     // the bytes of one counter report (CGLibOcclusionQuery double-buffers its reports)
     static unsigned int s_nvReportCounterSize;
+    // the row pitch a linear texture's rows are padded to (CGLibTexture_plf::setupTextureBuff)
+    static unsigned int s_nLinerTextureStride;
     // the device's texture and sampler descriptor sizes and the descriptors it reserves at the start of each pool
     // (CGLibTexDescriptor/CGLibSamplerDescriptor::setup and the _plf register calls)
     static unsigned int s_nvTextureSize;

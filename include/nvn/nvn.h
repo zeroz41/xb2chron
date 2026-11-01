@@ -26,11 +26,27 @@ typedef enum NVNindexType { NVN_INDEX_TYPE_LARGE = 0x7FFFFFFF } NVNindexType;
 typedef enum NVNformat { NVN_FORMAT_LARGE = 0x7FFFFFFF } NVNformat;
 typedef enum NVNtextureTarget {
     NVN_TEXTURE_TARGET_2D = 1,
+    NVN_TEXTURE_TARGET_3D = 2,
     NVN_TEXTURE_TARGET_2D_ARRAY = 4,
+    NVN_TEXTURE_TARGET_CUBEMAP = 8,
     NVN_TEXTURE_TARGET_CUBEMAP_ARRAY = 9,
     NVN_TEXTURE_TARGET_LARGE = 0x7FFFFFFF
 } NVNtextureTarget;
 typedef int NVNtextureFlags;
+typedef enum NVNtextureSwizzle {
+    NVN_TEXTURE_SWIZZLE_ZERO = 0,
+    NVN_TEXTURE_SWIZZLE_ONE = 1,
+    NVN_TEXTURE_SWIZZLE_R = 2,
+    NVN_TEXTURE_SWIZZLE_G = 3,
+    NVN_TEXTURE_SWIZZLE_B = 4,
+    NVN_TEXTURE_SWIZZLE_A = 5,
+    NVN_TEXTURE_SWIZZLE_LARGE = 0x7FFFFFFF
+} NVNtextureSwizzle;
+typedef enum NVNtextureDepthStencilMode {
+    NVN_TEXTURE_DEPTH_STENCIL_MODE_DEPTH = 0,
+    NVN_TEXTURE_DEPTH_STENCIL_MODE_STENCIL = 1,
+    NVN_TEXTURE_DEPTH_STENCIL_MODE_LARGE = 0x7FFFFFFF
+} NVNtextureDepthStencilMode;
 typedef enum NVNdeviceInfo { NVN_DEVICE_INFO_LARGE = 0x7FFFFFFF } NVNdeviceInfo;
 typedef enum NVNdepthMode { NVN_DEPTH_MODE_LARGE = 0x7FFFFFFF } NVNdepthMode;
 typedef enum NVNwindowOriginMode { NVN_WINDOW_ORIGIN_MODE_LARGE = 0x7FFFFFFF } NVNwindowOriginMode;

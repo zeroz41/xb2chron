@@ -26,6 +26,7 @@
 #include "grlib/CGLibDecShader.h"
 #include "grlib/CGLibState.h"
 #include "mtl/MemManager.h"
+#include "grlib/CGLibMemHandle.h"
 
 namespace grlib {
 
@@ -1161,6 +1162,243 @@ void CGLibSamplerParam::releaseParams() {
 }
 
 
+void CGLibTexture::createTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
+                                     GrlSurfaceFormat format) {
+    buffer.release();
+    NVNtextureBuilder builder;
+    nvnTextureBuilderSetDefaults(&builder);
+    nvnTextureBuilderSetDevice(&builder, &CGLibManager::sys()->m_device);
+    nvnTextureBuilderSetTarget(&builder, NVN_TEXTURE_TARGET_2D);
+    nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(format));
+    nvnTextureBuilderSetSize2D(&builder, width, height);
+    nvnTextureBuilderSetDepth(&builder, 1);
+    nvnTextureBuilderSetLevels(&builder, 1);
+    nvnTextureBuilderSetFlags(&builder, 0xC);
+    unsigned int size = nvnTextureBuilderGetStorageSize(&builder);
+    unsigned int align = nvnTextureBuilderGetStorageAlignment(&builder);
+    buffer.m_pData = static_cast<unsigned char*>(
+        mtl::MemManager::allocate(CGLibMemHandle::s_hPxlHandle, size, align, false, "no name", 0));
+    buffer.m_dataSize = size;
+    buffer.m_flags |= 2;
+    context::CGLibSystemContext* ctx = context::CGLibSystemContext::sys();
+    CGLibTexture_plf::setupTextureBuff(buffer, width, height, 0, format, ctx->m_pixelPool,
+                                       buffer.m_pData - static_cast<unsigned char*>(ctx->m_pixelPool.m_pBuffer));
+}
+
+void CGLibTexture_plf::allocTextureID(CGLibTextureBuffer& buffer, bool image) {
+    CGLibTexDescriptor& descriptor = context::CGLibSystemContext::sys()->m_texDescriptor;
+    if (buffer.m_textureId != -1) {
+        descriptor.freeID(buffer.m_textureId);
+    }
+    if (buffer.m_samplerId != -1) {
+        descriptor.freeID(buffer.m_samplerId);
+    }
+    buffer.m_textureId = descriptor.allocID();
+    buffer.m_samplerId = image ? static_cast<int>(descriptor.allocID()) : -1;
+    descriptor.bindTexture(buffer, buffer.m_textureId, buffer.m_samplerId);
+}
+
+void CGLibTexture_plf::setupTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
+                                        unsigned int mip, GrlSurfaceFormat format, CGLibMemPool& pool,
+                                        unsigned int offset) {
+    buffer.m_type = 0;
+    buffer.m_width = width;
+    buffer.m_height = height;
+    buffer.m_depth = 0;
+    buffer.m_arrayNum = 0;
+    buffer.m_mipmap = mip;
+    buffer.m_format = format;
+    buffer.m_flags |= 1;
+    NVNtextureBuilder builder;
+    nvnTextureBuilderSetDefaults(&builder);
+    nvnTextureBuilderSetDevice(&builder, &CGLibManager::sys()->m_device);
+    bool isImage;
+    if (buffer.m_flags & 8) {
+        nvnTextureBuilderSetDepthStencilMode(&builder, NVN_TEXTURE_DEPTH_STENCIL_MODE_DEPTH);
+        nvnTextureBuilderSetFlags(&builder, 0xC);
+        isImage = false;
+    } else if (buffer.m_flags & 0x10) {
+        nvnTextureBuilderSetDepthStencilMode(&builder, NVN_TEXTURE_DEPTH_STENCIL_MODE_STENCIL);
+        nvnTextureBuilderSetFlags(&builder, 0xC);
+        isImage = false;
+    } else if (buffer.m_flags & 0x20) {
+        nvnTextureBuilderSetFlags(&builder, 0x14);
+        unsigned int pitch = getTexelSize(format) * width;
+        unsigned int stride = context::CGLibSystemContext::s_nLinerTextureStride;
+        nvnTextureBuilderSetStride(&builder, pitch + (stride - pitch % stride) % stride);
+        isImage = true;
+    } else {
+        if (buffer.m_flags & 4) {
+            nvnTextureBuilderSetFlags(&builder, 0xD);
+        } else {
+            nvnTextureBuilderSetFlags(&builder, 0xC);
+        }
+        isImage = true;
+    }
+    nvnTextureBuilderSetTarget(&builder, NVN_TEXTURE_TARGET_2D);
+    nvnTextureBuilderSetLevels(&builder, mip + 1);
+    nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(format));
+    nvnTextureBuilderSetSize2D(&builder, width, height);
+    nvnTextureBuilderSetStorage(&builder, pool.m_pPool, offset);
+    context::CGLibSystemContext* ctx = context::CGLibSystemContext::sys();
+    unsigned int textureIdx = ctx->m_textureAlloc.allocID();
+    buffer.m_pNvnTexture = reinterpret_cast<NVNtexture*>(ctx->m_textureAlloc.m_pTop) + textureIdx;
+    buffer.m_pStorage = reinterpret_cast<void*>(nvnMemoryPoolGetBufferAddress(pool.m_pPool) + offset);
+    nvnTextureInitialize(buffer.m_pNvnTexture, &builder);
+    allocTextureID(buffer, isImage);
+}
+
+void CGLibTexture_plf::setupDepthBuff(CGLibDepthBuffer& buffer, unsigned int width, unsigned int height,
+                                      GrlDepthFormat format, CGLibMemPool& pool, unsigned int offset) {
+    buffer.m_width = width;
+    buffer.m_height = height;
+    buffer.m_format = format;
+    buffer.m_flags = 1;
+    NVNtextureBuilder builder;
+    nvnTextureBuilderSetDefaults(&builder);
+    nvnTextureBuilderSetDevice(&builder, &CGLibManager::sys()->m_device);
+    nvnTextureBuilderSetTarget(&builder, NVN_TEXTURE_TARGET_2D);
+    nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(format));
+    nvnTextureBuilderSetSize2D(&builder, width, height);
+    nvnTextureBuilderSetStorage(&builder, pool.m_pPool, offset);
+    nvnTextureBuilderSetFlags(&builder, 8);
+    context::CGLibSystemContext* ctx = context::CGLibSystemContext::sys();
+    unsigned int textureIdx = ctx->m_textureAlloc.allocID();
+    buffer.m_pNvnTexture = reinterpret_cast<NVNtexture*>(ctx->m_textureAlloc.m_pTop) + textureIdx;
+    buffer.m_pStorage = reinterpret_cast<void*>(nvnMemoryPoolGetBufferAddress(pool.m_pPool) + offset);
+    nvnTextureInitialize(buffer.m_pNvnTexture, &builder);
+}
+
+void CGLibDepthBuffer::release() {
+    if (m_flags & 2) {
+        if (m_pData != nullptr) {
+            mtl::MemManager::deallocate(m_pData, 0, false);
+            m_pData = nullptr;
+        }
+    } else {
+        m_pData = nullptr;
+    }
+    m_pStorage = nullptr;
+    m_dataSize = 0;
+    if (m_flags & 1) {
+        nvnTextureFinalize(m_pNvnTexture);
+        ::grlib::context::CGLibSystemContext::sys()->m_textureAlloc.freeBuffer(m_pNvnTexture);
+    }
+    m_flags &= ~3;
+}
+
+void CGLibTexture::createDepthBuff(CGLibDepthBuffer& buffer, unsigned int width, unsigned int height,
+                                   GrlDepthFormat format) {
+    buffer.release();
+    unsigned int size;
+    unsigned int align;
+    getDepthPixelSize(size, align, width, height, format);
+    buffer.m_pData = mtl::MemManager::allocate(CGLibMemHandle::s_hPxlHandle, size, align, false, "no name", 0);
+    buffer.m_dataSize = size;
+    context::CGLibSystemContext* ctx = context::CGLibSystemContext::sys();
+    CGLibTexture_plf::setupDepthBuff(buffer, width, height, format, ctx->m_pixelPool,
+                                     static_cast<unsigned char*>(buffer.m_pData) -
+                                         static_cast<unsigned char*>(ctx->m_pixelPool.m_pBuffer));
+    buffer.m_flags |= 2;
+}
+
+void CGLibTexture::createDepthBuff(CGLibDepthBuffer& buffer, unsigned int width, unsigned int height,
+                                   GrlDepthFormat format, unsigned int offset) {
+    buffer.release();
+    unsigned int size;
+    unsigned int align;
+    getDepthPixelSize(size, align, width, height, format);
+    buffer.m_dataSize = size;
+    context::CGLibSystemContext* ctx = context::CGLibSystemContext::sys();
+    CGLibTexture_plf::setupDepthBuff(buffer, width, height, format, ctx->m_pixelPool,
+                                     ctx->getPixelResAreaOffset(offset));
+}
+
+void CGLibTexture_plf::setupCubemapTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
+                                               unsigned int mip, GrlSurfaceFormat format, CGLibMemPool& pool,
+                                               unsigned int offset) {
+    buffer.m_type = 3;
+    buffer.m_width = width;
+    buffer.m_height = height;
+    buffer.m_depth = 0;
+    buffer.m_arrayNum = 0;
+    buffer.m_mipmap = mip;
+    buffer.m_format = format;
+    buffer.m_flags |= 1;
+    NVNtextureBuilder builder;
+    nvnTextureBuilderSetDefaults(&builder);
+    nvnTextureBuilderSetDevice(&builder, &CGLibManager::sys()->m_device);
+    nvnTextureBuilderSetTarget(&builder, NVN_TEXTURE_TARGET_CUBEMAP);
+    nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(format));
+    nvnTextureBuilderSetSize2D(&builder, width, height);
+    nvnTextureBuilderSetLevels(&builder, mip + 1);
+    nvnTextureBuilderSetStorage(&builder, pool.m_pPool, offset);
+    nvnTextureBuilderSetFlags(&builder, 0xC);
+    context::CGLibSystemContext* ctx = context::CGLibSystemContext::sys();
+    unsigned int textureIdx = ctx->m_textureAlloc.allocID();
+    buffer.m_pNvnTexture = reinterpret_cast<NVNtexture*>(ctx->m_textureAlloc.m_pTop) + textureIdx;
+    buffer.m_pStorage = reinterpret_cast<void*>(nvnMemoryPoolGetBufferAddress(pool.m_pPool) + offset);
+    nvnTextureInitialize(buffer.m_pNvnTexture, &builder);
+    allocTextureID(buffer, true);
+}
+
+void CGLibTexture_plf::setupVolumeTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
+                                              unsigned int depth, GrlSurfaceFormat format, CGLibMemPool& pool,
+                                              unsigned int offset) {
+    buffer.m_type = 5;
+    buffer.m_width = width;
+    buffer.m_height = height;
+    buffer.m_depth = depth;
+    buffer.m_arrayNum = 0;
+    buffer.m_mipmap = 0;
+    buffer.m_format = format;
+    buffer.m_flags |= 1;
+    NVNtextureBuilder builder;
+    nvnTextureBuilderSetDefaults(&builder);
+    nvnTextureBuilderSetDevice(&builder, &CGLibManager::sys()->m_device);
+    nvnTextureBuilderSetTarget(&builder, NVN_TEXTURE_TARGET_3D);
+    nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(format));
+    nvnTextureBuilderSetSize3D(&builder, width, height, depth);
+    nvnTextureBuilderSetStorage(&builder, pool.m_pPool, offset);
+    nvnTextureBuilderSetFlags(&builder, 0xC);
+    context::CGLibSystemContext* ctx = context::CGLibSystemContext::sys();
+    unsigned int textureIdx = ctx->m_textureAlloc.allocID();
+    buffer.m_pNvnTexture = reinterpret_cast<NVNtexture*>(ctx->m_textureAlloc.m_pTop) + textureIdx;
+    buffer.m_pStorage = reinterpret_cast<void*>(nvnMemoryPoolGetBufferAddress(pool.m_pPool) + offset);
+    nvnTextureInitialize(buffer.m_pNvnTexture, &builder);
+    allocTextureID(buffer, true);
+}
+
+void CGLibTexture_plf::setupCubeMapTextureArrayBuff(CGLibTextureBuffer& buffer, unsigned int width,
+                                                    unsigned int height, unsigned int arrayNum, unsigned int mip,
+                                                    GrlSurfaceFormat format, CGLibMemPool& pool,
+                                                    unsigned int offset) {
+    buffer.m_type = 4;
+    buffer.m_width = width;
+    buffer.m_height = height;
+    buffer.m_depth = 0;
+    buffer.m_arrayNum = arrayNum;
+    buffer.m_mipmap = mip;
+    buffer.m_format = format;
+    buffer.m_flags |= 1;
+    NVNtextureBuilder builder;
+    nvnTextureBuilderSetDefaults(&builder);
+    nvnTextureBuilderSetDevice(&builder, &CGLibManager::sys()->m_device);
+    nvnTextureBuilderSetTarget(&builder, NVN_TEXTURE_TARGET_CUBEMAP_ARRAY);
+    nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(format));
+    nvnTextureBuilderSetSize2D(&builder, width, height);
+    nvnTextureBuilderSetDepth(&builder, arrayNum * 6);
+    nvnTextureBuilderSetLevels(&builder, mip + 1);
+    nvnTextureBuilderSetStorage(&builder, pool.m_pPool, offset);
+    nvnTextureBuilderSetFlags(&builder, 0xC);
+    context::CGLibSystemContext* ctx = context::CGLibSystemContext::sys();
+    unsigned int textureIdx = ctx->m_textureAlloc.allocID();
+    buffer.m_pNvnTexture = reinterpret_cast<NVNtexture*>(ctx->m_textureAlloc.m_pTop) + textureIdx;
+    buffer.m_pStorage = reinterpret_cast<void*>(nvnMemoryPoolGetBufferAddress(pool.m_pPool) + offset);
+    nvnTextureInitialize(buffer.m_pNvnTexture, &builder);
+    allocTextureID(buffer, true);
+}
+
 // ---- small accessors ----
 
 void CGLibRenderTargetBase::setColorInvalidate() {}
@@ -1264,6 +1502,33 @@ void CGLibTexture::getDepthPixelSize(unsigned int& size, unsigned int& align, un
 }
 
 void CGLibDepthBuffer::invalidate() {}
+
+
+void CGLibTexture::changeTextureImagePtrs(CGLibTextureBuffer& buffer, unsigned int size, CGLibVtlMemPool& pool,
+                                          unsigned int offset) {
+    unsigned char* image = pool.m_pMem + offset;
+    const CGLibTexImageFooter* footer = reinterpret_cast<const CGLibTexImageFooter*>(
+        reinterpret_cast<unsigned long>(image) + size - sizeof(CGLibTexImageFooter));
+    unsigned long storageOffset = pool.m_offset + offset;
+    buffer.delayRelease();
+    buffer.m_flags |= 1;
+    NVNtextureBuilder builder;
+    nvnTextureBuilderSetDefaults(&builder);
+    nvnTextureBuilderSetTarget(&builder, static_cast<NVNtextureTarget>(footer->m_target));
+    nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(footer->m_format));
+    nvnTextureBuilderSetSize2D(&builder, footer->m_width, footer->m_height);
+    nvnTextureBuilderSetDepth(&builder, footer->m_depth);
+    nvnTextureBuilderSetLevels(&builder, footer->m_levels);
+    nvnTextureBuilderSetPackagedTextureData(&builder, image);
+    nvnTextureBuilderSetDevice(&builder, &CGLibManager::sys()->m_device);
+    nvnTextureBuilderSetStorage(&builder, pool.m_pPool, storageOffset);
+    context::CGLibSystemContext* ctx = context::CGLibSystemContext::sys();
+    unsigned int textureIdx = ctx->m_textureAlloc.allocID();
+    buffer.m_pNvnTexture = reinterpret_cast<NVNtexture*>(ctx->m_textureAlloc.m_pTop) + textureIdx;
+    buffer.m_pStorage = reinterpret_cast<void*>(pool.m_gpuAddress + storageOffset);
+    nvnTextureInitialize(buffer.m_pNvnTexture, &builder);
+    CGLibTexture_plf::allocTextureID(buffer, false);
+}
 
 // ---- CGLibDecShader / CGLibDecShdExtTbl ----
 

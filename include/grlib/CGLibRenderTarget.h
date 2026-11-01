@@ -36,12 +36,18 @@ public:
     void invalidate();
     unsigned int getWidth() const;
     unsigned int getHeight() const;
+    // frees the texture and the memory it owns (1.0.0 names it; 3.0.1's callers inline it)
+    void release();
 
-    unsigned char pad_0[0x4];
+    GrlDepthFormat m_format;  // 0x00 (CGLibTexture_plf::setupDepthBuff)
     unsigned short m_width;   // 0x04
     unsigned short m_height;  // 0x06
-    unsigned char pad_8[0x8];
-    const NVNtexture* m_pNvnTexture;  // 0x10
+    unsigned int m_flags;     // 0x08: 1 = texture initialized, 2 = owns m_pData
+    unsigned char pad_C[0x4];
+    NVNtexture* m_pNvnTexture;  // 0x10: from CGLibSystemContext::m_textureAlloc
+    void* m_pStorage;           // 0x18: the texture's memory (pool memory + offset)
+    void* m_pData;              // 0x20
+    unsigned int m_dataSize;    // 0x28
 };
 
 // the render targets' base: DrPixlMan calls its setColorInvalidate on its CGLibRenderTarget objects (that

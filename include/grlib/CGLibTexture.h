@@ -5,6 +5,8 @@
 
 namespace grlib { class CGLibTextureBuffer; }
 namespace grlib { class CGLibVtlMemPool; }
+namespace grlib { class CGLibMemPool; }
+namespace grlib { class CGLibDepthBuffer; }
 
 namespace grlib {
 
@@ -15,6 +17,44 @@ struct CGLibTexSwizzle {
     unsigned int g;
     unsigned int b;
     unsigned int a;
+};
+
+// the end of an image file, its last 0x38 bytes: the image's size, target, format and levels are its last 0x20
+// (the struct and field names are not the original's; the code reaches the fields from the struct's start)
+struct CGLibTexImageFooter {
+    unsigned char pad_0[0x18];
+    unsigned int m_width;     // 0x18
+    unsigned int m_height;    // 0x1C
+    unsigned int m_depth;     // 0x20
+    unsigned int m_target;    // 0x24: NVNtextureTarget
+    unsigned int m_format;    // 0x28: NVNformat
+    unsigned int m_levels;    // 0x2C
+    unsigned char pad_30[0x8];
+};
+
+// the platform part: the NVN texture of a buffer, its storage at offset of pool, and its descriptor ids (the
+// parameter names are not the original's)
+class CGLibTexture_plf {
+public:
+    // a 2D texture of mip + 1 levels; flags 8/0x10 of the buffer make it depth/stencil, 0x20 linear, 4 adds the
+    // display flag
+    static void setupTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
+                                 unsigned int mip, GrlSurfaceFormat format, CGLibMemPool& pool, unsigned int offset);
+    static void setupCubemapTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
+                                        unsigned int mip, GrlSurfaceFormat format, CGLibMemPool& pool,
+                                        unsigned int offset);
+    static void setupVolumeTextureBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
+                                       unsigned int depth, GrlSurfaceFormat format, CGLibMemPool& pool,
+                                       unsigned int offset);
+    static void setupCubeMapTextureArrayBuff(CGLibTextureBuffer& buffer, unsigned int width, unsigned int height,
+                                             unsigned int arrayNum, unsigned int mip, GrlSurfaceFormat format,
+                                             CGLibMemPool& pool, unsigned int offset);
+    // a depth texture at offset of pool (1.0.0 names it; 3.0.1's callers inline it)
+    static void setupDepthBuff(CGLibDepthBuffer& buffer, unsigned int width, unsigned int height,
+                               GrlDepthFormat format, CGLibMemPool& pool, unsigned int offset);
+    // frees the buffer's descriptor ids, takes a texture id (and an image id when image is set) and binds the
+    // texture to them (1.0.0 names it; 3.0.1's callers inline it)
+    static void allocTextureID(CGLibTextureBuffer& buffer, bool image);
 };
 
 class CGLibTexture {
@@ -55,6 +95,12 @@ public:
     // the same for a depth texture without mips (the parameter names are not the original's)
     static void getDepthPixelSize(unsigned int& size, unsigned int& align, unsigned int width, unsigned int height,
                                   GrlDepthFormat format);
+    // depth buffers of width by height texels: pixel memory of their own / the pixel pool's resident area at offset
+    // (the parameter names are not the original's)
+    static void createDepthBuff(CGLibDepthBuffer& buffer, unsigned int width, unsigned int height,
+                                GrlDepthFormat format);
+    static void createDepthBuff(CGLibDepthBuffer& buffer, unsigned int width, unsigned int height,
+                                GrlDepthFormat format, unsigned int offset);
 };
 
 }  // namespace grlib

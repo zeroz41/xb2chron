@@ -30,9 +30,10 @@ public:
     GrlSurfaceFormat m_format;     // 0x00
     unsigned short m_width;        // 0x04
     unsigned short m_height;       // 0x06
-    unsigned char pad_8[0x4];
+    unsigned short m_depth;        // 0x08: a 3D texture's depth (setupVolumeTextureBuff; the name is not the original's)
+    unsigned short m_arrayNum;     // 0x0A: a cube map array's cubes (setupCubeMapTextureArrayBuff; the name is not the original's)
     unsigned short m_mipmap;       // 0x0C: getMipmap
-    unsigned short m_type;         // 0x0E: 1 = 1D (isTexture1D), 5 = 3D (isTexture3D)
+    unsigned short m_type;         // 0x0E: 0 = 2D, 1 = 1D (isTexture1D), 3 = cube map, 4 = cube map array, 5 = 3D (isTexture3D)
     unsigned int m_flags;          // 0x10: 1 = initialized, 2 = owns m_pData, 0x20 = linear (not block-linear) layout
     unsigned char pad_14[0x4];
     NVNtexture* m_pNvnTexture;     // 0x18: from CGLibSystemContext::m_textureAlloc

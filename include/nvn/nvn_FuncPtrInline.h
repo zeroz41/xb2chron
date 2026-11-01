@@ -51,6 +51,34 @@ typedef size_t (*PFNNVNTEXTUREBUILDERGETSTORAGEALIGNMENTPROC)(const NVNtextureBu
 extern PFNNVNTEXTUREBUILDERGETSTORAGEALIGNMENTPROC pfnc_nvnTextureBuilderGetStorageAlignment;
 static inline size_t nvnTextureBuilderGetStorageAlignment(const NVNtextureBuilder* builder) { return pfnc_nvnTextureBuilderGetStorageAlignment(builder); }
 
+typedef void (*PFNNVNTEXTUREBUILDERSETSIZE3DPROC)(NVNtextureBuilder* builder, int width, int height, int depth);
+extern PFNNVNTEXTUREBUILDERSETSIZE3DPROC pfnc_nvnTextureBuilderSetSize3D;
+static inline void nvnTextureBuilderSetSize3D(NVNtextureBuilder* builder, int width, int height, int depth) { pfnc_nvnTextureBuilderSetSize3D(builder, width, height, depth); }
+
+typedef void (*PFNNVNTEXTUREBUILDERSETPACKAGEDTEXTUREDATAPROC)(NVNtextureBuilder* builder, const void* data);
+extern PFNNVNTEXTUREBUILDERSETPACKAGEDTEXTUREDATAPROC pfnc_nvnTextureBuilderSetPackagedTextureData;
+static inline void nvnTextureBuilderSetPackagedTextureData(NVNtextureBuilder* builder, const void* data) { pfnc_nvnTextureBuilderSetPackagedTextureData(builder, data); }
+
+typedef void (*PFNNVNTEXTUREBUILDERSETSWIZZLEPROC)(NVNtextureBuilder* builder, NVNtextureSwizzle r, NVNtextureSwizzle g, NVNtextureSwizzle b, NVNtextureSwizzle a);
+extern PFNNVNTEXTUREBUILDERSETSWIZZLEPROC pfnc_nvnTextureBuilderSetSwizzle;
+static inline void nvnTextureBuilderSetSwizzle(NVNtextureBuilder* builder, NVNtextureSwizzle r, NVNtextureSwizzle g, NVNtextureSwizzle b, NVNtextureSwizzle a) { pfnc_nvnTextureBuilderSetSwizzle(builder, r, g, b, a); }
+
+typedef void (*PFNNVNTEXTUREBUILDERSETSTORAGEPROC)(NVNtextureBuilder* builder, const NVNmemoryPool* pool, ptrdiff_t offset);
+extern PFNNVNTEXTUREBUILDERSETSTORAGEPROC pfnc_nvnTextureBuilderSetStorage;
+static inline void nvnTextureBuilderSetStorage(NVNtextureBuilder* builder, const NVNmemoryPool* pool, ptrdiff_t offset) { pfnc_nvnTextureBuilderSetStorage(builder, pool, offset); }
+
+typedef void (*PFNNVNTEXTUREBUILDERSETDEPTHSTENCILMODEPROC)(NVNtextureBuilder* builder, NVNtextureDepthStencilMode mode);
+extern PFNNVNTEXTUREBUILDERSETDEPTHSTENCILMODEPROC pfnc_nvnTextureBuilderSetDepthStencilMode;
+static inline void nvnTextureBuilderSetDepthStencilMode(NVNtextureBuilder* builder, NVNtextureDepthStencilMode mode) { pfnc_nvnTextureBuilderSetDepthStencilMode(builder, mode); }
+
+typedef void (*PFNNVNTEXTUREBUILDERSETSTRIDEPROC)(NVNtextureBuilder* builder, ptrdiff_t stride);
+extern PFNNVNTEXTUREBUILDERSETSTRIDEPROC pfnc_nvnTextureBuilderSetStride;
+static inline void nvnTextureBuilderSetStride(NVNtextureBuilder* builder, ptrdiff_t stride) { pfnc_nvnTextureBuilderSetStride(builder, stride); }
+
+typedef NVNboolean (*PFNNVNTEXTUREINITIALIZEPROC)(NVNtexture* texture, const NVNtextureBuilder* builder);
+extern PFNNVNTEXTUREINITIALIZEPROC pfnc_nvnTextureInitialize;
+static inline NVNboolean nvnTextureInitialize(NVNtexture* texture, const NVNtextureBuilder* builder) { return pfnc_nvnTextureInitialize(texture, builder); }
+
 typedef NVNbufferAddress (*PFNNVNMEMORYPOOLGETBUFFERADDRESSPROC)(const NVNmemoryPool* pool);
 extern PFNNVNMEMORYPOOLGETBUFFERADDRESSPROC pfnc_nvnMemoryPoolGetBufferAddress;
 static inline NVNbufferAddress nvnMemoryPoolGetBufferAddress(const NVNmemoryPool* pool) { return pfnc_nvnMemoryPoolGetBufferAddress(pool); }
