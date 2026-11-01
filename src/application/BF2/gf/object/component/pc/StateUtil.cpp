@@ -14,6 +14,21 @@
 #include "classes/gf/pc/FallDamagePlugin.h"
 #include "gf/GfObjUtil.h"
 #include "fw/Message.h"
+#include "classes/fw/PadManager.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/FootStepPlugin.h"
+#include "classes/gf/LipSyncPlugin.h"
+#include "classes/gf/pc/FallDistanceAchievPlugin.h"
+#include "classes/gf/pc/TimerPlugin.h"
+#include "gf/GfPlayFactory.h"
+#include "gf/GfTargetProperty.h"
+#include "gf/MsgObjectNotifyDead.h"
+#include "gf/pc/StateUtilField.h"
+#include "classes/gf/GfComIK.h"
+#include "classes/gf/pc/TargetIKPlugin.h"
+#include "classes/fw/LookIkSolver.h"
+#include "classes/fw/SpineRotateIKSolver.h"
+#include "classes/fw/PlacementGroundSolver.h"
 
 namespace gf { namespace pc {
 
@@ -97,6 +112,10 @@ bool StateUtil::isManualCamera() {
     return GfGamePlayerCamera::isManualCamera();
 }
 
+GF_OBJ_HANDLE* StateUtil::getTarget(const GfComBehaviorPc& behavior) {
+    return behavior.m_owner->findComponent<GfComProperty>(5)->m_target.get()->m_target;
+}
+
 void StateUtil::setTargetLock(bool lock) {
     GfGameTarget::lockTarget(lock);
 }
@@ -151,8 +170,76 @@ void StateUtil::switchPlacementIK(GfComBehaviorPc& behavior, bool placement) {
     }
 }
 
+// sets or clears flag in the property's m_stateFlags (the helper and its name are not the original's: the select
+// setEnableLookIK's flag update compiles to needs a function of its own, inlined)
+static void setStateFlag(GfComPropertyPc& property, unsigned int flag, bool on) {
+    if (on) {
+        property.m_stateFlags |= flag;
+    } else {
+        property.m_stateFlags &= ~flag;
+    }
+}
+
+void StateUtil::setEnableLookIK(GfComBehaviorPc& behavior, bool enable) {
+    StateUtilField::setLookAtFlag(behavior, enable);
+    if (TargetIKPlugin* plugin = behavior.getPlugin<TargetIKPlugin>(6)) {
+        if (enable) {
+            if (getTarget(behavior) != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                plugin->setActivate(true);
+            }
+        } else {
+            plugin->setActivate(false);
+        }
+    }
+    if (GfComPropertyPc* property = behavior.m_owner->getComponent<GfComPropertyPc>(5)) {
+        setStateFlag(*property, 0x100, enable);
+    }
+}
+
+void StateUtil::setEnableSpineIK(GfComBehaviorPc& behavior, bool enable) {
+    if (fw::LookIkSolver* solver = behavior.m_owner->getComponent<GfComIK>(3)->getSolver<fw::LookIkSolver>(3)) {
+        solver->setEnableSpine(enable);
+    }
+}
+
+void StateUtil::setSpineRotateAngles(GfComBehaviorPc& behavior, float angleX, float angleY) {
+    if (fw::SpineRotateIKSolver* solver =
+            behavior.m_owner->getComponent<GfComIK>(3)->getSolver<fw::SpineRotateIKSolver>(4)) {
+        solver->m_angleX = angleX;
+        solver->m_angleY = angleY;
+    }
+}
+
+void StateUtil::changePlacementDownDist(GfComBehaviorPc& behavior, float dist) {
+    if (fw::PlacementGroundSolver* solver =
+            behavior.m_owner->getComponent<GfComIK>(3)->getSolver<fw::PlacementGroundSolver>(2)) {
+        solver->overwriteRaycastDown(dist);
+    }
+}
+
+void StateUtil::resetPlacementDownDist(GfComBehaviorPc& behavior) {
+    if (fw::PlacementGroundSolver* solver =
+            behavior.m_owner->getComponent<GfComIK>(3)->getSolver<fw::PlacementGroundSolver>(2)) {
+        solver->resetRaycastDown();
+    }
+}
+
 void StateUtil::setEnvSensor(GfComBehaviorPc& behavior, unsigned int flags, bool on) {
     behavior.m_owner->getComponent<GfComPropertyPc>(5)->setEnvSensorCheckFlags(flags, on);
+}
+
+const EnviromentSensor::WallInfo* StateUtil::getClimbWallInfo(GfComBehaviorPc& behavior) {
+    const EnviromentSensor* sensor = behavior.m_owner->getComponent<GfComPropertyPc>(5)->getEnvSensor();
+    const EnviromentSensor::WallInfo* wall = sensor->getWallInfo();
+    if (wall != nullptr && (wall->m_flags & 0x10)) {
+        return wall;
+    }
+    return nullptr;
+}
+
+const EnviromentSensor::GroundInfo* StateUtil::getClimbEndGroundInfo(GfComBehaviorPc& behavior) {
+    const EnviromentSensor* sensor = behavior.m_owner->getComponent<GfComPropertyPc>(5)->getEnvSensor();
+    return (sensor->m_flags & 0x100) ? &sensor->m_ground2 : nullptr;
 }
 
 const EnviromentSensor::WaterInfo* StateUtil::getWaterInfo(GfComBehaviorPc& behavior) {
@@ -163,6 +250,104 @@ const EnviromentSensor::WaterInfo* StateUtil::getWaterInfo(GfComBehaviorPc& beha
 const EnviromentSensor::DeadPlaneInfo* StateUtil::getDeadPlaneInfo(GfComBehaviorPc& behavior) {
     const EnviromentSensor* sensor = behavior.m_owner->getComponent<GfComPropertyPc>(5)->getEnvSensor();
     return (sensor->m_flags & 4) ? &sensor->m_vertical.m_deadPlane : nullptr;
+}
+
+void StateUtil::setEnableHeadDetectForSwitcher(GfComBehaviorPc& behavior, bool enable) {
+    if (FootIkControllerPlugin* plugin = behavior.getPlugin<FootIkControllerPlugin>(3)) {
+        if (plugin->m_switcher) {
+            GfComPropertyPc* property = behavior.m_owner->findComponent<GfComPropertyPc>(5);
+            if (enable) {
+                property->m_stateFlags |= 0x4000;
+            } else {
+                property->m_stateFlags &= ~0x4000;
+            }
+        }
+    }
+}
+
+void StateUtil::setActivateTimer(GfComBehaviorPc& behavior, TimerPlugin::TYPE type, bool activate) {
+    if (TimerPlugin* plugin = behavior.getPlugin<TimerPlugin>(8)) {
+        plugin->setActivateTimer(type, activate);
+    }
+}
+
+const float* StateUtil::getActivateTimer(GfComBehaviorPc& behavior, TimerPlugin::TYPE type) {
+    if (TimerPlugin* plugin = behavior.getPlugin<TimerPlugin>(8)) {
+        const TimerPlugin::Timer& timer = plugin->m_timers[type];
+        if (!timer.m_activate) {
+            return nullptr;
+        }
+        return &timer.m_time;
+    }
+    return nullptr;
+}
+
+void StateUtil::notifyDead(GfComBehaviorPc& behavior, MsgObjectNotifyDead& msg, bool force) {
+    GfComPropertyPc* property = behavior.m_owner->getComponent<GfComPropertyPc>(5);
+    if (!(property->m_stateFlags & 0x800)) {
+        property->m_stateFlags |= 0x800;
+    }
+    if ((property->m_stateFlags & 0x400) && force) {
+        if (!(property->m_stateFlags & 0x1000)) {
+            property->m_stateFlags |= 0x1000;
+            GfPlayFactory::createPlayerDead(static_cast<GfPlayerDead>(msg.m_deadType));
+        } else if (msg.m_deadType == 4) {
+            GfPlayFactory::createPlayerDead(static_cast<GfPlayerDead>(4));
+        }
+    }
+}
+
+void StateUtil::notifyRevival(GfComBehaviorPc& behavior, MsgObjectNotifyHealHp&) {
+    behavior.m_owner->findComponent<GfComPropertyPc>(5)->m_stateFlags &= ~0x800;
+}
+
+bool StateUtil::isOnSlideGround(GfComBehaviorPc& behavior) {
+    GfComPropertyPc* property = behavior.m_owner->findComponent<GfComPropertyPc>(5);
+    if (!(property->m_stateFlags & 0x10)) {
+        return false;
+    }
+    const EnviromentSensor* sensor = property->getEnvSensor();
+    if (!(sensor->m_flags & 1)) {
+        return false;
+    }
+    return (sensor->m_vertical.m_ground.m_attr >> 5) & 1;
+}
+
+void StateUtil::setEnableAttach(GfComBehaviorPc& behavior, bool enable) {
+    if (Plugin* plugin = behavior.m_pluginManager.m_plugins[12]) {
+        plugin->setActivate(enable);
+    }
+}
+
+void StateUtil::setEnableTimer(GfComBehaviorPc& behavior, bool enable) {
+    if (Plugin* plugin = behavior.m_pluginManager.m_plugins[8]) {
+        plugin->setActivate(enable);
+    }
+}
+
+void StateUtil::setLipSpeed(GfComBehaviorPc& behavior, float speed) {
+    if (LipSyncPlugin* plugin = behavior.getPlugin<LipSyncPlugin>(2)) {
+        plugin->setSpeed(speed);
+    }
+}
+
+void StateUtil::playVibration(GfComBehaviorPc& behavior, fw::VibrationID id) {
+    GfComPropertyPc* property = behavior.m_owner->findComponent<GfComPropertyPc>(5);
+    if ((property->m_stateFlags & 0x400) && !GfGameManager::fn_71002AC6D8()) {
+        fw::PadManager::playVibration(ml::PadVibrationInfo(id));
+    }
+}
+
+void StateUtil::setEnableFallDistChecker(GfComBehaviorPc& behavior, bool enable) {
+    if (FallDistanceAchievPlugin* plugin = behavior.getPlugin<FallDistanceAchievPlugin>(21)) {
+        plugin->setActivate(enable);
+    }
+}
+
+void StateUtil::setEnableFootStep(GfComBehaviorPc& behavior, bool enable) {
+    if (FootStepPlugin* plugin = behavior.getPlugin<FootStepPlugin>(0)) {
+        plugin->setActivate(enable);
+    }
 }
 
 }}  // namespace gf::pc

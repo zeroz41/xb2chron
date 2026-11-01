@@ -14,6 +14,7 @@ namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { enum MAINMENU : int; }
 namespace gf { class MenuCommonWindowParam; }
 namespace gmk { enum GmkType : int; }
+namespace gf { enum GfPlayerDead : int; }
 #include "classes/gf/GfMenuObjCommonText.h"
 
 namespace gf {
@@ -41,6 +42,8 @@ public:
     // true. Caller: the sys plugin's playTutorial (a string and an int from the script).
     static bool fn_7100321924(const char* name, unsigned int id);
     static bool createGmkCamera(mm::mtl::IntrusivePtr<fw::Camera> camera);
+    // queues the player's death of a kind (StateUtil::notifyDead's); true when queued or a running one took the kind
+    static bool createPlayerDead(GfPlayerDead type);
     static bool createGameOver();
     static bool createTalk(const GfSetupPfTalk& talk);
     static bool createMapjump(const GfMapjumpInfo& info);

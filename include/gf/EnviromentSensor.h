@@ -22,7 +22,9 @@ public:
         mm::Vec3 m_normal;       // the ground's plane: its normal (the constructor: unit Y)
         float m_planeDist;       // and the plane's distance term, -m_normal.dot(m_pos)
         unsigned char pad_24[0xC];
-        unsigned long pad_30;  // the constructor: 0
+        // what kind of ground it is: bit 5 a ground the PC slides on (StateUtil::isOnSlideGround; the name is not the
+        // original's). The constructor: 0
+        unsigned long m_attr;
         // the object the ground belongs to, -1 for none (AttachPlugin::update attaches the PC to it; the name is
         // not the original's)
         gf::GF_OBJ_HANDLE* m_obj;

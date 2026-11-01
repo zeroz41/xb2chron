@@ -23,6 +23,9 @@ public:
     static void reflectionAdsorption(gf::GfComBehaviorPc& behavior);
     // StateFieldFall::enter's (by its symbol): switches the PC's TimerPlugin timer
     static void setActivateTimer(gf::GfComBehaviorPc& behavior, TimerPlugin::TYPE type, bool activate);
+    // the time of the TimerPlugin's timer of a type while it is active, else none (by its symbol; the return type
+    // is inferred)
+    static const float* getActivateTimer(gf::GfComBehaviorPc& behavior, TimerPlugin::TYPE type);
     // StateFieldAir::enter's and leave's (by its symbol)
     static void setEnableFallDistChecker(gf::GfComBehaviorPc& behavior, bool enable);
     static void broadcastPlayer(gf::GfComBehaviorPc& behavior, fw::Message& msg);
@@ -41,12 +44,19 @@ public:
     static gf::GF_OBJ_HANDLE* getTarget(const gf::GfComBehaviorPc& behavior);
     // the sensor's wall (its m_flags bit 6) when that wall's m_flags bit 4 is set, else none (by its symbol)
     static const gf::EnviromentSensor::WallInfo* getClimbWallInfo(gf::GfComBehaviorPc& behavior);
+    // the sensor's second ground (its m_flags bit 8), else none (by its symbol)
+    static const gf::EnviromentSensor::GroundInfo* getClimbEndGroundInfo(gf::GfComBehaviorPc& behavior);
     static void setTargetLock(bool lock);
-    static void setTarget(gf::GfComBehaviorPc& behavior, gf::GF_OBJ_HANDLE* target);  // (by its symbol)
+    // the property's target, then the change told to the PC itself (the game target's when m_setupKind is 0: its
+    // answer; else false) (by its symbol; the return type from its code)
+    static bool setTarget(gf::GfComBehaviorPc& behavior, gf::GF_OBJ_HANDLE* target);
     static void setEnableHeadDetectForSwitcher(gf::GfComBehaviorPc& behavior, bool enable);  // (by its symbol)
     static void setEnableSpineIK(gf::GfComBehaviorPc& behavior, bool enable);  // (by its symbol)
+    static void setEnableSpineRotate(gf::GfComBehaviorPc& behavior, bool enable, float time);  // (by its symbol)
+    static void setSpineRotateAngles(gf::GfComBehaviorPc& behavior, float angleX, float angleY);  // (by its symbol)
     static void setEnableAttach(gf::GfComBehaviorPc& behavior, bool enable);  // (by its symbol)
     static void setEnableTimer(gf::GfComBehaviorPc& behavior, bool enable);  // (by its symbol)
+    static void setLipSpeed(gf::GfComBehaviorPc& behavior, float speed);  // (by its symbol)
     static unsigned int getFwPadKey(const char* name);
     static void setEnableAgentField(gf::GfComBehaviorPc& behavior, bool enable);
     static void setEnableAgentBattle(gf::GfComBehaviorPc& behavior, bool enable);
