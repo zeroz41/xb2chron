@@ -417,10 +417,15 @@ public:
     static bool isMale(unsigned int blade);
     static bool isFemale(unsigned int blade);
     static bool isAnimal(unsigned int blade);
+    // the attribute suffix of a blade's base effect file ("_fire" .. "_dark", "" for none): `attribute`'s, or when it
+    // is 0 the blade's own (getAttribute) for a Hana or a common blade, "" for any other
+    static const char* getBaseEfbAttributeName(unsigned int blade, unsigned int attribute);
     static unsigned char getAttribute(unsigned int blade);
     // the idea type of the blade's attribute (getAttribute): 0 for 1 and 2, 1 for 3 and 6, 2 for 4 and 5, 3 for 7 and
     // 8, else 0 (symbols)
     static unsigned int getIdeaTypeByAttribute(unsigned int blade);
+    // whether the idea type of the blade's attribute (as getIdeaTypeByAttribute maps it) is `idea`; false for no attribute
+    static bool isMatchIdeaAttribute(unsigned int blade, unsigned int idea);
     static bool getExtraParts(const SDataBlade& data, unsigned int part);
     static unsigned int getBladePower(SDataBlade& data);
     static unsigned int getRoleByWpnType(unsigned int wpnType);

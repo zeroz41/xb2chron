@@ -170,6 +170,22 @@ unsigned int GfDataEnemy::getSavedHpType(unsigned int arrange) {
     return GfBdatChrEnArrange::get()->getChrEnArrangeHpOver(arrange);
 }
 
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B50DC8)
+__attribute__((used)) static const char* s_attributeEfbSuffixes[9] = {
+    "", "_fire", "_water", "_wind", "_earth", "_volt", "_ice", "_light", "_dark",
+};
+
+const char* GfDataBlade::getBaseEfbAttributeName(unsigned int blade, unsigned int attribute) {
+    if (attribute != 0) {
+        return s_attributeEfbSuffixes[attribute];
+    }
+    unsigned char own = getAttribute(blade);
+    if (!GfDataHana::isValid(blade) && !isCommonBlade(blade)) {
+        return s_attributeEfbSuffixes[0];
+    }
+    return s_attributeEfbSuffixes[own];
+}
+
 unsigned char GfDataBlade::getAttribute(unsigned int blade) {
     if (blade == 0) {
         return 0;
@@ -1081,6 +1097,24 @@ SDataPouch* GfDataDriver::getPouchData(unsigned int driver, unsigned int pouch) 
     return getSDataDriver(driver)->m_pouches + pouch;
 }
 
+bool GfDataBlade::isMatchIdeaAttribute(unsigned int blade, unsigned int idea) {
+    switch (getAttribute(blade)) {
+    case 1:
+    case 2:
+        return idea == 0;
+    case 3:
+    case 6:
+        return idea == 1;
+    case 4:
+    case 5:
+        return idea == 2;
+    case 7:
+    case 8:
+        return idea == 3;
+    }
+    return false;
+}
+
 unsigned int GfDataBlade::getIdeaTypeByAttribute(unsigned int blade) {
     switch (getAttribute(blade)) {
     case 1:
@@ -1152,6 +1186,31 @@ unsigned int GfDataBlade::getActBlade2CommonBlade(unsigned int blade) {
 
 bool GfDataHana::isValid(unsigned int blade) {
     return blade >= 1005 && blade < 1008;
+}
+
+bool GfDataDriver::fn_7100248DB0(unsigned int driver, unsigned int index) {
+    if (driver == 0) {
+        return false;
+    }
+    if (index >= 0x1C) {
+        SDataDriverArtsEx* ex = getSDataDriverArtsEx(driver);
+        return ex->m_flags.test(index - 0x1C);
+    }
+    SDataDriver* data = getSDataDriver(driver);
+    return data->m_flags.test(index);
+}
+
+void GfDataDriver::fn_7100248EB0(unsigned int driver, unsigned int index) {
+    if (driver == 0) {
+        return;
+    }
+    if (index >= 0x1C) {
+        SDataDriverArtsEx* ex = getSDataDriverArtsEx(driver);
+        ex->m_flags.set(index - 0x1C);
+        return;
+    }
+    SDataDriver* data = getSDataDriver(driver);
+    data->m_flags.set(index);
 }
 
 bool GfDataDriver::isDriver(unsigned int driver) {
@@ -1281,6 +1340,32 @@ unsigned int GfDataNanakoori::getItemForVisualLevelUp() {
 
 unsigned int GfDataNanakoori::getItemForSoulLevelUp() {
     return 25177;
+}
+
+unsigned int GfDataNanakoori::getClearMissionForSpecial() {
+    // Proposed name, not the original's (the loop is unrolled; the array leaves no data)
+    static const unsigned short s_specialMissions[6] = {0xC5, 0xC6, 0xC7, 0xD0, 0xD1, 0xD2};
+    unsigned int count = 0;
+    for (int i = 0; i < 6; i++) {
+        unsigned int offset = getNanakooriMissionClearFlg1Offset(s_specialMissions[i]);
+        if (offset != 0 && GfGameFlag::getLocal(1, offset) != 0) {
+            count++;
+        }
+    }
+    return count;
+}
+
+unsigned int GfDataNanakoori::getClearMissionForLive() {
+    // Proposed name, not the original's (the loop is unrolled; the array leaves no data)
+    static const unsigned short s_liveMissions[9] = {0xC1, 0xC2, 0xC3, 0xC4, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF};
+    unsigned int count = 0;
+    for (int i = 0; i < 9; i++) {
+        unsigned int offset = getNanakooriMissionClearFlg1Offset(s_liveMissions[i]);
+        if (offset != 0 && GfGameFlag::getLocal(1, offset) != 0) {
+            count++;
+        }
+    }
+    return count;
 }
 
 unsigned int GfDataNanakoori::getClearMissionForLesson() {
@@ -4770,6 +4855,47 @@ bool GfDataEvent::fn_710024F910(unsigned int event) {
     return static_cast<bool>(static_cast<unsigned char>(Bdat::getValCheck(fp, "noRetarget", event, 1)));
 }
 
+
+int GfDataItem::getRarity(unsigned int item) {
+    ItemType::Type type;
+    unsigned int index;
+    int kind = getItemType(type, index, item) ? static_cast<int>(type) : 0;
+    int rarity = 0;
+    GfBdatItem* bdat = GfBdatItem::get();
+    switch (kind) {
+    case 1:
+        rarity = bdat->getPcWpnChipRarity(item);
+        break;
+    case 2:
+        rarity = bdat->getPcEquipRarity(item);
+        break;
+    case 3:
+        rarity = bdat->getEquipOrbRarity(item);
+        break;
+    case 5:
+        rarity = bdat->getSalvageRarity(item);
+        break;
+    case 7:
+        rarity = bdat->getCollectionListRarity(item);
+        break;
+    case 8:
+        rarity = bdat->getTresureRarity(item);
+        break;
+    case 9:
+        rarity = bdat->getEmptyOrbRarity(item);
+        break;
+    case 10:
+        rarity = bdat->getFavoriteRarity(item);
+        break;
+    case 11:
+        rarity = bdat->getCrystalListRarity(item);
+        break;
+    case 12:
+        rarity = bdat->getBoosterRarity(item);
+        break;
+    }
+    return rarity;
+}
 
 unsigned int GfDataItem::getTypeByItemCategory(unsigned int category) {
     if (category < 4) {

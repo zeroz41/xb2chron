@@ -4,6 +4,7 @@
 #include "gf/SDataBlade.h"
 #include "gf/SDataPouch.h"
 #include "gf/GfItemInfo.h"
+#include "mm/mtl/Bitflag.h"
 
 namespace gf {
 // an accessory slot of a driver (GfDataDriver::getEquipAcce; the names are not the original's)
@@ -22,7 +23,9 @@ struct SDataDriverAcce {
 struct SDataDriverArtsEx {
     unsigned int m_arts[24][5];
     unsigned char m_artsLevels[0x140];
-    unsigned int m_word;
+    // 0x320: the driver's flags 0x1C.. (GfDataDriver::fn_7100248DB0 tests and fn_7100248EB0 sets flag index - 0x1C,
+    // asserting index < 28 at bitflag.h's lines 133 and 77; SDataSave() copies it with copy_n)
+    mm::mtl::Bitflag<28> m_flags;
 };
 
 // no table: a driver's data, 0x5A0 bytes (DataObjDriver::setupVirtualParam allocates one for its virtual settings;
@@ -81,7 +84,9 @@ public:
     unsigned char m_kizunaRingFlags;
     SDataDriverAcce m_equipAcce[2];  // 0x574 (GfDataDriver::getEquipAcce's slots 0 and 1)
     SDataPouch m_pouches[3];  // 0x584 (GfDataDriver::getPouchData; the count is not known)
-    unsigned char pad_59c[0x4];
+    // 0x59C: the driver's flags 0..0x1B (GfDataDriver::fn_7100248DB0 / fn_7100248EB0 for indexes below 0x1C; the
+    // size of 28 is SDataDriverArtsEx::m_flags's, the name is not the original's)
+    mm::mtl::Bitflag<28> m_flags;
 };
 
 // a DLC driver's data, 0xDAC bytes: a driver's data and more (GfDataDriver::fn_7100241BB4 returns one;

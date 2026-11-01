@@ -141,7 +141,8 @@ public:
     // unit among GfDataDriver's functions and takes a driver row. What it does: for a DLC driver (0x11-0x19) the
     // 16-bit item id at +0x5A4 of its row of GfDataManager::fn_7100224A10's driver table, else 0.
     static unsigned int fn_7100247474(unsigned int driver);
-    static void setEquipBlade(unsigned int driver, bool engage, int slot);
+    // false for a negative slot, or (engaging) when the slot's blade is not set to this driver: the slot is cleared
+    static bool setEquipBlade(unsigned int driver, bool engage, int slot);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among
     // GfDataDriver's functions and DataObjDriver passes it a driver's row. What it does: true for rows 0x11 to 0x19
     // (the DLC drivers, whose data GfDataDriver::getSDataDriver reads from a separate table of 0xDAC-byte records).
@@ -276,6 +277,12 @@ public:
     // What it does: opens the driver's arts (all of them when arts is 0, else the one whose id matches) and, per
     // opened art, calls GfEvent::callGetArts(driver, art, event).
     static void fn_7100244A44(unsigned int driver, unsigned int arts, bool event);
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because they sit among
+    // GfDataDriver's functions (between setUsedFavoriteItemForPouch and isDriver) and take a driver. What they do:
+    // test / set flag `index` of the driver's 56 flags, 0..0x1B in its SDataDriver's m_flags, 0x1C.. in its
+    // SDataDriverArtsEx's (fn_7100244A44 tests them, addRareBlade and addCommonBlade set them); false for driver 0.
+    static bool fn_7100248DB0(unsigned int driver, unsigned int index);
+    static void fn_7100248EB0(unsigned int driver, unsigned int index);
     // GfBdatChrDr::getChrDrDefBlade(driver, slot) (title event, three unnamed callers)
     static unsigned int fn_7100241640(unsigned int driver, unsigned int slot);
     // GfBdatChrDr::fn_71001F183C of the driver's GfBdatChrDr::fn_71001F13E0 row, false for none
