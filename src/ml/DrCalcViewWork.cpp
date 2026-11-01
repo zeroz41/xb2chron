@@ -605,6 +605,72 @@ void DrCalcClipObj::seachCheckTree(const MdsClipListTreeData* pTree, const mm::V
     }
 }
 
+void DrCalcClipObj::seachOffTree(const MdsClipListTreeData* pTree, const mm::Vec3& pos, float radius) {
+    if (pTree->max[0] < pos.x || pTree->min[0] > pos.x || pTree->max[2] < pos.z || pTree->min[2] > pos.z ||
+        pTree->max[1] < pos.y || pTree->min[1] > pos.y) {
+        return;
+    }
+    int childNum = pTree->childNum;
+    if (childNum != 0) {
+        const unsigned short* pChildren = reinterpret_cast<const unsigned short*>(getResData(pTree->childOfs));
+        for (int i = 0; i < childNum; i++) {
+            seachOffTree(m_pTree + pChildren[i], pos, radius);
+        }
+    }
+    int leafNum = pTree->leafNum;
+    if (leafNum != 0) {
+        const unsigned short* pLeaves = reinterpret_cast<const unsigned short*>(getResData(pTree->leafOfs));
+        for (int i = 0; i < leafNum; i++, pLeaves++) {
+            const ShapeEntry* pShape = m_pShapeData + *pLeaves;
+            if (m_pBitWork[pShape->bit >> 5] & (1 << (pShape->bit & 31))) {
+                const CheckEntry* pCheck = m_pCheckData + *pLeaves;
+                if (pCheck->dispBit == 0 ||
+                    !(DrMan::getIns()->m_dispOffBits[pCheck->dispBit >> 5] & (1 << (pCheck->dispBit & 31)))) {
+                    const BitInfo* pBit = m_pBitData + pShape->bit;
+                    if (!(pBit->range < radius) && pBit->priority >= m_hitPriority) {
+                        if ((this->*s_pColiCheck[pShape->type])(
+                                reinterpret_cast<const unsigned char*>(m_pRes) + pShape->dataOfs, pos)) {
+                            for (int j = 0; j < m_hitNum; j++) {
+                                if (m_hits[j] == pShape->bit) {
+                                    m_pBitWork[pShape->bit >> 5] &= ~(1 << (pShape->bit & 31));
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+bool DrCalcClipObj::clipcoli_box(const unsigned char* pData, const mm::Vec3& pos) {
+    const RotShapeData* pShape = reinterpret_cast<const RotShapeData*>(pData);
+    float dx = pos.x - pShape->pos[0];
+    float dy = pos.y - pShape->pos[1];
+    float dz = pos.z - pShape->pos[2];
+    if (!(dx * dx + dy * dy + dz * dz <= pShape->radiusSq)) {
+        return false;
+    }
+    float lx = dx * pShape->mtx[0][0] + dy * pShape->mtx[1][0] + dz * pShape->mtx[2][0];
+    if (!(pShape->size[0] >= lx && lx >= -pShape->size[0])) {
+        return false;
+    }
+    float lz = dx * pShape->mtx[0][2] + dy * pShape->mtx[1][2] + dz * pShape->mtx[2][2];
+    if (!(pShape->size[2] >= lz && lz >= -pShape->size[2])) {
+        return false;
+    }
+    float ly = dx * pShape->mtx[0][1] + dy * pShape->mtx[1][1] + dz * pShape->mtx[2][1];
+    if (!(pShape->size[1] >= ly)) {
+        return false;
+    }
+    if (!(ly >= -pShape->size[1])) {
+        return false;
+    }
+    return true;
+}
+
+
 bool DrCalcClipObj::clipcoli_cylinder(const unsigned char* pData, const mm::Vec3& pos) {
     const RotShapeData* pShape = reinterpret_cast<const RotShapeData*>(pData);
     float dx = pos.x - pShape->pos[0];
