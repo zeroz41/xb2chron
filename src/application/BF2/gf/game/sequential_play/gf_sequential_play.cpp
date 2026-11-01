@@ -250,6 +250,11 @@ void GfSequentialPlay::addEvent(int id, unsigned int, unsigned int, bool) {
     addCommand(GfPlayComEventWeather::fn_7100318730(WEATYPE(id)));
 }
 
+void GfSequentialPlay::fn_71003227B8(unsigned int id, unsigned int first, unsigned int second, const char* bgm,
+                                     const mm::Vec3* pos, float time) {
+    addCommand(GfPlayComEvent::fn_7100319674(id, first, second, bgm, pos, time));
+}
+
 void GfSequentialPlay::addCallbackEventSequence(int id, bool begin) {
     addCommand(GfPlayComCallbackEventSequence::create(id, begin));
 }
@@ -425,6 +430,20 @@ void GfSequentialPlay::fn_7100322C64(const char* name, int startId) {
     addCommand(GfPlayComScriptTutorialSeq::fn_710031E044(name, startId));
 }
 
+bool GfSequentialPlay::hasCommand(PCOMTYPE type, GfPlayCom* com) {
+    CommandList& list = get()->m_list;
+    CommandList::iterator it = list.find(com);
+    if (list.end() != it) {
+        for (++it; it != list.end(); ++it) {
+            GfPlayCom* next = *it;
+            if (next->pad_08 && next->m_kind == type) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool GfSequentialPlay::isExistResetBladeParty(unsigned int slot) {
     GfSequentialPlay* self = get();
     for (CommandList::iterator it = self->m_list.begin(); it != self->m_list.end(); ++it) {
@@ -435,6 +454,16 @@ bool GfSequentialPlay::isExistResetBladeParty(unsigned int slot) {
         }
     }
     return false;
+}
+
+bool GfSequentialPlay::isSequenceSpecialAction() {
+    bool exist = false;
+    if (mm::mtl::PtrSingleton<GfPlayComCollect>::get() || mm::mtl::PtrSingleton<GfPlayComFieldTbox>::get() ||
+        mm::mtl::PtrSingleton<GfPlayComFieldSeq>::get() || mm::mtl::PtrSingleton<GfPlayComTalk>::get()) {
+        exist = true;
+    }
+    bool menu = GfPlayComMenuObjCommonText::s_activate > 0;
+    return menu || exist || GfPlayComEvent::m_activate != 0;
 }
 
 bool GfSequentialPlay::isExistPauseType(GfPlayCom* com, unsigned int pause) const {

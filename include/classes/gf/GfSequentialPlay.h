@@ -8,6 +8,7 @@
 #include "classes/gf/GfInfo.h"
 #include "mm/mtl/FixedQueue.h"
 #include "classes/gf/GfPlayCom.h"
+#include "mm/Vec3.h"
 
 namespace gf { class GfSequentialPlay; }
 namespace gf { class ParamReturnTitle; }
@@ -91,7 +92,11 @@ public:
     static void addMiniGame();
     static void addEventFade();
     static void addEvent(int id, unsigned int, unsigned int, bool flag);
-    static void addEvent(const char* name, unsigned int, unsigned int, bool flag);
+    // Placeholder name: the symbols spelled 1.0.0's addEvent(char const*, unsigned int, unsigned int, bool) here (same
+    // GfPlayFactory callers), but 3.0.1's takes an event id, two values, a BGM name, a position and a time: the name is
+    // withdrawn. What it does: hands them all to GfPlayComEvent::fn_7100319674 and adds the command it makes.
+    static void fn_71003227B8(unsigned int id, unsigned int, unsigned int, const char* bgm, const mm::Vec3* pos,
+                              float time);
     static void addPlayerDead(GfPlayerDead dead);
     static void addMenuZone(unsigned int id);
     static void addMenuChapter(unsigned int id);

@@ -15,8 +15,13 @@ namespace gf {
 class GfPlayComEvent : public GfPlayCom, public ::gf::IGfEvent {
 public:
     static GfPlayComEvent* create(unsigned int id, unsigned int, unsigned int, bool flag);
-    // fn_7100319674 in the 3.0.1 symbols: 1.0.0's addEvent(char const*, ...) calls this name at the same site
-    static GfPlayComEvent* create(const char* name, unsigned int, unsigned int, bool flag);
+    // Placeholder name: the symbols spelled 1.0.0's create(char const*, unsigned int, unsigned int, bool) here (called
+    // from the same addEvent site), but 3.0.1's takes what its constructor fn_710031930C stores: the event id and two
+    // values (0x18, 0x1C, 0x20), a BGM name copied into m_bgm, a position copied into m_pos with the time into m_time
+    // (both only when the position is given): the name is withdrawn. What it does: allocates the 0x90-byte command
+    // (as 1.0.0's create(unsigned int, unsigned int, unsigned int, bool) did; 3.0.1 has no other create).
+    static GfPlayComEvent* fn_7100319674(unsigned int id, unsigned int, unsigned int, const char* bgm,
+                                         const mm::Vec3* pos, float time);
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfPlayComEvent();  // slot 1
     virtual const char* getFuncName() const {  // slot 3
