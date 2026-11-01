@@ -88,6 +88,18 @@ public:
     // "Reward" and false); true when it has any
     static bool getReward(GfQuestReward& reward, unsigned int id, bool);
 };
+
+// Placeholder names (no symbol; these are new since 1.0.0, so no donor name):
+// counts the quest's collect tasks as used up while the party holds their limit (GfGameScene::gevItemAdd, update)
+void fn_7100313330(QuestID id);
+// orders or resets a few fixed quests and flags whose conditions are met (GfGameScene::update)
+void fn_7100313414();
+// a condition task's flag conditions: adds how many there are to total and how many hold to met; false when the task
+// is no condition task or its condition has a premise (GfQuestUtil::getMsgQuestTaskLog)
+bool fn_71003134FC(const QuestTaskParam& param, unsigned int& total, unsigned int& met);
+// a condition task's first flag condition: its minimum and the flag's value capped at it; false when its first
+// condition is no flag (GfQuestUtil::getMsgQuestTaskLog)
+bool fn_71003135E4(const QuestTaskParam& param, unsigned int& min, unsigned int& value);
 }  // namespace gf
 
 #endif

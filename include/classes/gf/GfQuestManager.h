@@ -31,6 +31,8 @@ public:
     static void build(const GfSetupParam& param);
     static void destroy();
     static void resetQuest(QuestID id);
+    // orders the quest
+    void acceptOrder(QuestID id);
     // the quests linked to id (GfMenuLocation::refreshLocatorFromQuest makes locators for the uncompleted ones)
     static void getLinkQuest(mm::mtl::FixedVector<QuestID, 16>& quests, QuestID id);
     void destroyEvent();

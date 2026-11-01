@@ -15,6 +15,8 @@ public:
     // the same, for a map (GfQuestTask::isEnableTaskCondition passes 6 for quest 2020)
     static bool isGameCondWithoutEnv(unsigned int condition);
     static bool isGameCondWithMap(unsigned int condition, unsigned int map);
+    // whether a flag condition (a ConditionFlag row) holds
+    static bool isFlag(unsigned int condition, bool*, bool*);
 };
 }  // namespace gf
 

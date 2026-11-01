@@ -19,6 +19,8 @@
 #include "classes/gf/GfAchievManager.h"
 #include "classes/gf/GfDataManager.h"
 #include "classes/gf/GfQuestManager.h"
+#include "classes/gf/GfBdatCond.h"
+#include "classes/gf/GfGameCond.h"
 
 namespace gf {
 
@@ -459,6 +461,106 @@ bool GfQuestUtil::getResultIdea(unsigned int& idea, unsigned int& count, unsigne
         }
     }
     return result;
+}
+
+void fn_7100313330(QuestID id) {
+    if (id.empty() || GfQuestInfo::isParent(id)) {
+        return;
+    }
+    for (unsigned int task = 0; task < 4; task++) {
+        QuestTaskParam param(id, task, TASK_STATE(0));
+        if (param.m_taskType != 3) {
+            continue;
+        }
+        unsigned int item = QuestListAcc::get()->getCollectItemID(param.m_taskId);
+        if (item == 0) {
+            continue;
+        }
+        unsigned int limit = GfQuestInfo::getCollectUseLimit(param);
+        if (limit == 0) {
+            continue;
+        }
+        unsigned int count = GfQuestInfo::getCollectUseCount(param);
+        if (limit > count) {
+            unsigned int rest = limit - count;
+            if (static_cast<unsigned int>(GfItemUtil::getItemBoxCount(item)) >= limit) {
+                for (unsigned int i = 0; i < rest; i++) {
+                    GfQuestInfo::incCollectUseCount(param, item);
+                }
+            }
+        }
+    }
+}
+
+void fn_7100313414() {
+    if (GfQuestInfo::getState(QuestID(0x13BB)) >= 2 && GfQuestInfo::getState(QuestID(0x13BC)) == 0) {
+        if (GfQuestManager* manager = mm::mtl::PtrSingleton<GfQuestManager>::get()) {
+            manager->acceptOrder(QuestID(0x13BC));
+        }
+    }
+    if (GfQuestInfo::getState(QuestID(0x14E2)) >= 2 && GfQuestInfo::getState(QuestID(0x14D1)) == 0) {
+        GfQuestManager::resetQuest(QuestID(0x14E2));
+        if (GfQuestManager* manager = mm::mtl::PtrSingleton<GfQuestManager>::get()) {
+            manager->acceptOrder(QuestID(0x14E2));
+        }
+    }
+    if (GfGameFlag::getLocal(1, 0xC5E3) == 0 && GfGameFlag::getLocal(1, 0xC424) == 1) {
+        GfGameFlag::setLocal(1, 0xC5E3, 1);
+        unsigned int value = GfGameFlag::getLocal(8, 0x85B);
+        if (value < 0xFF) {
+            value++;
+        }
+        GfGameFlag::setLocal(8, 0x85B, value);
+    }
+}
+
+bool fn_71003134FC(const QuestTaskParam& param, unsigned int& total, unsigned int& met) {
+    QuestListAcc* acc = QuestListAcc::get();
+    if (param.m_taskType != 10) {
+        return false;
+    }
+    GfBdatCond* cond = mm::mtl::PtrSingleton<GfBdatCond>::get();
+    unsigned int id = acc->getConditionConditionID(param.m_taskId);
+    if (id == 0 || cond->getConditionListPremise(id) != 0) {
+        return false;
+    }
+    for (unsigned int i = 0; i < 8; i++) {
+        if (cond->getConditionListConditionType(id, i) != 4) {
+            continue;
+        }
+        unsigned int flag = cond->getConditionListCondition(id, i);
+        if (flag == 0 || flag == 0x581) {
+            continue;
+        }
+        total++;
+        if (GfGameCond::isFlag(flag, nullptr, nullptr)) {
+            met++;
+        }
+    }
+    return true;
+}
+
+bool fn_71003135E4(const QuestTaskParam& param, unsigned int& min, unsigned int& value) {
+    QuestListAcc* acc = QuestListAcc::get();
+    if (param.m_taskType != 10) {
+        return false;
+    }
+    GfBdatCond* cond = mm::mtl::PtrSingleton<GfBdatCond>::get();
+    unsigned int id = acc->getConditionConditionID(param.m_taskId);
+    if (id == 0) {
+        return false;
+    }
+    if (cond->getConditionListConditionType(id, 0) != 4) {
+        return false;
+    }
+    unsigned int flag = cond->getConditionListCondition(id, 0);
+    if (flag == 0) {
+        return false;
+    }
+    min = cond->getConditionFlagFlagMin(flag);
+    value = GfGameFlag::getLocal(8, cond->getConditionFlagFlagID(flag));
+    value = value > min ? min : value;
+    return true;
 }
 
 }  // namespace gf

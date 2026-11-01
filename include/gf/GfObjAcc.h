@@ -123,6 +123,11 @@ public:
     unsigned int getPartyID() const;
     bool isCollideModelClip() const;
     void setEnableCollideModelClip(bool on);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies at the end of
+    // GfObjAcc's unit and reads this's object and bdat id. What it does: the extra access distance of the object: 4
+    // for the type-6 object of row 0xE4D, the kind-0x3E gimmick's float at 0x58 for a gimmick object (type 8), else 0.
+    // Callers: GfGameSearchObj::updateObj, gf::pc::isActiveRange (adds it to the access range).
+    float fn_710052478C() const;
 
     GFOBJ_INFO* m_info;  // GfObjManager::getObjInfo's for the handle
     GfObj* m_obj;  // the GfObj constructor's argument

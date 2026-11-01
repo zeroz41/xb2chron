@@ -316,6 +316,36 @@ bool GfGameSalvage::applyPartyForm() const {
     return applied;
 }
 
+// draws the dive's treasures, then disposes the treasure box objects (data kind 2) of every salvage point within 1
+// of this one, marking them not accessed
+void GfGameSalvage::execRaffle(const RaffleInfo& info) {
+    gmk::GmkSalvage* salvage = static_cast<gmk::GmkSalvage*>(gmk::getBindedGmkInst(get()->m_pHandle));
+    gmk::GmkSalvage::RaffleInfo raffle;
+    raffle.m_grade = info.m_grade;
+    raffle.m_point = info.m_point;
+    raffle.m_skillLevel = info.m_skillLevel;
+    salvage->createRaffle(raffle);
+    const mm::Vec3* pos = salvage->m_pos;
+    auto dispose = [&](const gmk::AGmkBase& gmk) {
+        const gmk::GmkSalvage& other = static_cast<const gmk::GmkSalvage&>(gmk);
+        float dx = other.m_pos->x - pos->x;
+        float dy = other.m_pos->y - pos->y;
+        float dz = other.m_pos->z - pos->z;
+        if (dx * dx + dy * dy + dz * dz > 1.0f) {
+            return;
+        }
+        unsigned int num = other.m_tboxLocators.size();
+        for (unsigned int i = 0; i < num; i++) {
+            gmk::GmkSalvageLocator* locator = other.m_tboxLocators[i];
+            if (locator != nullptr && locator->m_createInfo.m_data[0] == 2) {
+                locator->m_isAccessed = false;
+                locator->disposeGobInst(true);
+            }
+        }
+    };
+    mm::mtl::PtrSingleton<gmk::GmkManager>::get()->traverseGmkInst(gmk::GmkSalvage::TYPE, dispose);
+}
+
 void GfGameSalvage::execPop() {
     static_cast<gmk::GmkSalvage*>(gmk::getBindedGmkInst(get()->m_pHandle))->popByRaffleResult();
 }

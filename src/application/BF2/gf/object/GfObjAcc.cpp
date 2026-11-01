@@ -38,6 +38,8 @@
 #include "ml/ScnObjAccEtcParams.h"
 #include "classes/btl/CharacterManager.h"
 #include "classes/btl/CharacterParameter.h"
+#include "classes/gmk/AGmkBase.h"
+#include "classes/gmk/TUnk_B6D660.h"
 
 namespace gf {
 
@@ -661,6 +663,22 @@ void GfObjAcc::setEnableCollideModelClip(bool on) {
             }
         }
     }
+}
+
+float GfObjAcc::fn_710052478C() const {
+    if (m_obj != nullptr) {
+        if (m_obj->m_type == 8) {
+            gmk::AGmkBase* gmk = gmk::getBindedGmkInst(getHandle());
+            if (gmk != nullptr && gmk->getGmkType() == gmk::TUnk_B6D660::TYPE) {
+                return static_cast<gmk::TUnk_B6D660*>(gmk)->pad_58;
+            }
+        } else if (m_obj->m_type == 6) {
+            if (getBdatId() == 0xE4D) {
+                return 4.0f;
+            }
+        }
+    }
+    return 0.0f;
 }
 
 }  // namespace gf

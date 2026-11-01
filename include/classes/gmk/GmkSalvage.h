@@ -86,6 +86,15 @@ public:
     static const gmk::GmkType TYPE = gmk::GmkType(31);
     // its party formation gimmick: the GmkSet's TGmkFormPc list's element at the data's index (GfGameSalvage::applyPartyForm)
     gmk::AGmkBase* getGmkFormPc() const;
+    // what createRaffle draws from (GfGameSalvage::execRaffle copies its gf::GfGameSalvage::RaffleInfo into one;
+    // the field names are not the original's: the grade is the BDAT row createRaffle reads "ColleTable<n>" from)
+    struct RaffleInfo {
+        unsigned int m_grade;
+        float m_point;
+        unsigned int m_skillLevel;
+    };
+    // draws the treasures, drops and enemies of a dive (GfGameSalvage::execRaffle)
+    void createRaffle(const RaffleInfo& info);
     // pops the treasures the salvage's raffle drew (GfGameSalvage::execPop)
     void popByRaffleResult();
     // ends what the last raffle placed (createRaffle and dispose call it)
