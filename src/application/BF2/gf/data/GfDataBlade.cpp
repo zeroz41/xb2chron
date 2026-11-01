@@ -523,6 +523,54 @@ int GfDataWeapon::getStability(unsigned int weapon) {
     return GfBdatItem::get()->getPcWpnStability(weapon);
 }
 
+unsigned int GfDataWeapon::fn_710024FA88(unsigned int driver) {
+    if (driver - 0x11 > 2) {
+        return 0;
+    }
+    unsigned int row = driver - 0x10;
+    unsigned int level = GfDataDriver::getLevel(driver) - 1;
+    GfBdatItem* item = GfBdatItem::get();
+    unsigned int min = item->fn_7100206894(row);
+    unsigned int max = item->fn_710020691C(row);
+    return min + (max - min) * level / 98;
+}
+
+unsigned int GfDataWeapon::fn_710024FB98(unsigned int driver) {
+    if (driver - 0x11 > 2) {
+        return 0;
+    }
+    unsigned int row = driver - 0x10;
+    unsigned int level = GfDataDriver::getLevel(driver) - 1;
+    GfBdatItem* item = GfBdatItem::get();
+    unsigned int min = item->fn_7100206BC4(row);
+    unsigned int max = item->fn_7100206C4C(row);
+    return min + (max - min) * level / 98;
+}
+
+unsigned int GfDataWeapon::fn_710024FCA8(unsigned int driver) {
+    if (driver - 0x11 > 2) {
+        return 0;
+    }
+    unsigned int row = driver - 0x10;
+    unsigned int level = GfDataDriver::getLevel(driver) - 1;
+    GfBdatItem* item = GfBdatItem::get();
+    unsigned int min = item->fn_7100206AB4(row);
+    unsigned int max = item->fn_7100206B3C(row);
+    return min + (max - min) * level / 98;
+}
+
+unsigned int GfDataWeapon::fn_710024FDB8(unsigned int driver) {
+    if (driver - 0x11 > 2) {
+        return 0;
+    }
+    unsigned int row = driver - 0x10;
+    unsigned int level = GfDataDriver::getLevel(driver) - 1;
+    GfBdatItem* item = GfBdatItem::get();
+    unsigned int min = item->fn_71002069A4(row);
+    unsigned int max = item->fn_7100206A2C(row);
+    return min + (max - min) * level / 98;
+}
+
 unsigned int GfDataWeapon::getEnhance(unsigned int weapon) {
     return GfBdatItem::get()->getPcWpnEnhance1(weapon);
 }
@@ -3906,6 +3954,56 @@ const char* GfDataEvent::getEventAfterScriptName(unsigned int event) {
     return reinterpret_cast<const char*>(Bdat::getValCheck(fp, "scriptName", event, 7));
 }
 
+// the id of the row of the event table fp whose "evtName" is name, 0 for none (getEventID's per-table search;
+// inlined, so the name is not the original's)
+static unsigned int findEventID(unsigned char* fp, const char* name) {
+    unsigned int top = Bdat::getIdTop(fp);
+    unsigned int end = top + Bdat::getIdCount(fp);
+    for (unsigned int id = top; id < end; id++) {
+        const char* evtName = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "evtName", id, 7));
+        if (evtName == nullptr) {
+            continue;
+        }
+        if (strcmp(evtName, name) == 0) {
+            return id;
+        }
+    }
+    return 0;
+}
+
+unsigned int GfDataEvent::getEventID(const char* name) {
+    for (unsigned int i = 0; i < 5; i++) {
+        unsigned int id = findEventID(GfDataBdat::getFP(s_eventBdats[i].m_bdat), name);
+        if (id != 0) {
+            return id;
+        }
+    }
+    return 0;
+}
+
+int GfDataEvent::getEventPlayFlag(unsigned int event) {
+    if (event == 0) {
+        return -1;
+    }
+    int offset = 0;
+    for (int i = 0; i < 5; i++) {
+        unsigned char* fp = GfDataBdat::getFP(s_eventBdats[i].m_bdat);
+        int top = Bdat::getIdTop(fp);
+        if (static_cast<int>(event) < top + static_cast<int>(Bdat::getIdCount(fp))) {
+            if (static_cast<int>(Bdat::getIdCount(fp)) >= static_cast<int>(s_eventBdats[i].m_value)) {
+                return -1;
+            }
+            int flag = Bdat::getIdTop(fp) - event + offset;
+            if (flag >= 2000) {
+                return -1;
+            }
+            return flag + 35423;
+        }
+        offset += s_eventBdats[i].m_value;
+    }
+    return -1;
+}
+
 
 SDataBlade* GfDataBlade::getSDataBlade(unsigned int blade) {
     return &GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
@@ -4546,6 +4644,10 @@ bool GfDataEvent::isSavedEvent(unsigned int event, const SDataGame& game) {
         }
     }
     return false;
+}
+
+int GfDataEvent::getBladeQuestDriver(unsigned int event) {
+    return GfDataBlade::getCreator(fn_710024F720(event));
 }
 
 unsigned int GfDataEvent::fn_710024F720(unsigned int event) {
@@ -5384,6 +5486,90 @@ bool GfDataBlade::fn_710024E9A8() {
 
 bool GfDataBlade::fn_710024E9DC() {
     return GfGameFlag::getLocal(1, 0xD863) != 0;
+}
+
+void GfDataBlade::fn_710024DAD8(unsigned int id, unsigned int value) {
+    unsigned int flag = getHitonowaFlag(id);
+    if (flag == 0) {
+        return;
+    }
+    unsigned int old = GfGameFlag::getLocal(2, flag);
+    GfGameFlag::setLocal(2, flag, value);
+    fn_710024DB98(id, value);
+    unsigned int rank = fn_710024DCAC();
+    if (GfGameFlag::getLocal(4, 652) < rank) {
+        GfGameFlag::setLocal(4, 652, rank);
+    }
+    if (old != value) {
+        GfEvent::fn_7100328604(id);
+    }
+}
+
+void GfDataBlade::fn_710024DB98(unsigned int id, unsigned int mode) {
+    unsigned int flag = getHitonowaFlag(id);
+    if (flag == 0) {
+        return;
+    }
+    int base;
+    switch (mode) {
+    case 0:
+        if (!fn_710024DE6C(id)) {
+            return;
+        }
+        base = 0x10C4;
+        break;
+    case 1:
+        if (!fn_710024DE6C(id)) {
+            return;
+        }
+        base = 0x11C5;
+        break;
+    case 2:
+        base = 0x12C6;
+        break;
+    case 3:
+        base = 0x11C5;
+        break;
+    default:
+        return;
+    }
+    unsigned int value = flag - 0xED02;
+    for (unsigned int i = 0; i < 256; i++) {
+        unsigned int cur = GfGameFlag::getLocal(8, base + i);
+        if (cur == value) {
+            return;
+        }
+        if (cur == 0) {
+            GfGameFlag::setLocal(8, base + i, value);
+            return;
+        }
+    }
+}
+
+unsigned int GfDataBlade::fn_710024DCAC() {
+    int set;
+    int total;
+    fn_7100255550(set, total);
+    GfBdatBtl* btl = GfBdatBtl::get();
+    if (btl->getWildcardDatavalueU2(95) <= set) {
+        return 6;
+    }
+    if (btl->getWildcardDatavalueU2(80) <= set) {
+        return 5;
+    }
+    if (btl->getWildcardDatavalueU2(79) <= set) {
+        return 4;
+    }
+    if (btl->getWildcardDatavalueU2(78) <= set) {
+        return 3;
+    }
+    if (btl->getWildcardDatavalueU2(77) <= set) {
+        return 2;
+    }
+    if (btl->getWildcardDatavalueU2(76) <= set) {
+        return 1;
+    }
+    return 0;
 }
 
 unsigned int GfDataBlade::fn_710024DD88() {

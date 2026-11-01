@@ -14,6 +14,11 @@ public:
     // the script GfPlayComAfterEventScript runs after the event, and the start id it sets first
     static int getEventAfterScriptStartID(unsigned int event);
     static const char* getEventAfterScriptName(unsigned int event);
+    // the event whose "evtName" is name, searching the event tables fn_710024EBD8 walks (0 for none)
+    static unsigned int getEventID(const char* name);
+    // the event's played flag: a flag number from 35423 on (each event table holding the second value of its
+    // s_eventBdats entry flags in turn), -1 when the event lies in no table or beyond its share
+    static int getEventPlayFlag(unsigned int event);
     static bool isSaveScenarioEvent(unsigned int event);  // one of 213 scenario events
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its callers are
     // getEventType, getEventAfterScriptStartID and getEventAfterScriptName, in this unit, and it takes their event.
@@ -54,6 +59,8 @@ public:
     // event and whether its category is 2 (false for none). Callers: tl::TitleStatePlayEvent::enter,
     // GfGameUtil::setWatchedEvent.
     static bool fn_710024F1B4(unsigned int event);
+    // the creator (GfDataBlade::getCreator) of the blade fn_710024F720 picks for the event
+    static int getBladeQuestDriver(unsigned int event);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
     // unit among GfDataEvent's functions (after getBladeQuestDriver) and takes an event. What it does: for the first
     // MNU_EventTheater row whose event_id is the event, its blade_id when above 1000, else a blade id (1007..1109)

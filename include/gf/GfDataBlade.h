@@ -279,6 +279,18 @@ public:
     // local game flag GfGameFlag::getLocal(2, flag). GfMenuGfObjAdapter::fn_7100340094 passes a type-6 object's
     // BDAT id (GfObjAcc::fn_7100523B74) and switches on 0..3.
     static unsigned int fn_710024DD94(unsigned int id);
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because they sit in GfDataBlade's
+    // unit between fn_710024DAB0 and fn_710024DD88 and take its NPC ids (no this). What they do: fn_710024DAD8, for
+    // an id above 2000 with a GfBdatRsc::fn_7100219C58 value v, sets local flag v (type 2) to value, calls
+    // fn_710024DB98, raises local flag 652 (type 4) to fn_710024DCAC's result and, when the value changed, calls
+    // GfEvent::fn_7100328604 (caller: event::UIManager::fn_7100105B40). fn_710024DB98, for such an id and mode 0..3,
+    // records v - 0xED02 in the first free one of the 256 type-8 local flags from 0x10C4 (mode 0) / 0x11C5 (1, 3) /
+    // 0x12C6 (2) unless already there (modes 0 and 1 only when fn_710024DE6C answers true; fn_710024DDDC passes 0).
+    // fn_710024DCAC: 0..6 by how many hitonowa entries fn_7100255550 counts set, against GfBdatBtl's wildcard
+    // values 76..80 and 95.
+    static void fn_710024DAD8(unsigned int id, unsigned int value);
+    static void fn_710024DB98(unsigned int id, unsigned int mode);
+    static unsigned int fn_710024DCAC();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (no callers left). A member because it sits in
     // GfDataBlade's unit next to fn_710024DA88 and fn_710024D890 (same ids). What it does: false for an id up to
     // 2000, else whether GfBdatRsc::fn_7100219574(id) is nonzero.

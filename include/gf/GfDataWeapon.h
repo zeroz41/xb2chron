@@ -17,10 +17,13 @@ public:
     // GfDataBlade's unit among GfDataWeapon's functions (between getStability and getEnhance) and take a driver row
     // (no this). What they do: 0 unless the row is 0x11-0x13; then they follow the row's linked rows
     // (GfDataDriver::fn_71002417DC) and interpolate two GfBdatItem columns of that row by the driver's level
-    // (min + (max - min) * (level - 1) / 98): fn_710024FB98 the guard rate, fn_710024FCA8 the critical rate
-    // DataObjDriver::getGuardRate / getCriticalRate add for a DLC driver.
+    // (min + (max - min) * (level - 1) / 98): fn_710024FA88 the damage (PcWpnIr AtkLv1/AtkLv99), fn_710024FB98 the
+    // guard rate, fn_710024FCA8 the critical rate, fn_710024FDB8 the stability (StbLv1/StbLv99) that
+    // DataObjDriver::getWeaponDamage / getGuardRate / getCriticalRate / getWeaponStability add for a DLC driver.
+    static unsigned int fn_710024FA88(unsigned int driver);
     static unsigned int fn_710024FB98(unsigned int driver);
     static unsigned int fn_710024FCA8(unsigned int driver);
+    static unsigned int fn_710024FDB8(unsigned int driver);
     static unsigned int getEnhance(unsigned int weapon);
     // its weapon type's name message; false when it has none
     static bool getWeaponTypeNameByItem(unsigned char*& bdat, unsigned int& id, unsigned int weapon);
