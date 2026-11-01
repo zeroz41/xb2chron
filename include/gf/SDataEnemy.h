@@ -33,7 +33,10 @@ public:
     // the percent DataObjEnemy::getLevelGold scales the level's gold by (the name is not the original's; the
     // arrangement bdat has a GoldRev column)
     unsigned short m_goldRev;
-    unsigned char pad_14[0xB];
+    unsigned char pad_14[0xA];
+    // 0..3: which of gf::ChainAttackCamera's bdat rows fit it (the EnSize column's bits 1, 2, 4, 8; the name is not
+    // the original's)
+    unsigned char m_enSize;
     unsigned char m_linkRadius;  // getLinkRadius
     unsigned char pad_20[0x14];
     unsigned short m_paramId;  // its GfBdatChrEnParam row (the stat getters' revisions)

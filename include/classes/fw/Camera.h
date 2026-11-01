@@ -35,6 +35,10 @@ public:
     // name is not the original's)
     void setScnCam(ml::ScnObjCam* cam) { m_pScnCam = cam; }
     void setLookAt(const mm::Vec3& eye, const mm::Vec3& target, float roll);
+    // by value: gf::ChainAttackCameraEntity::setPoint hands them to CameraUtilities::updateCollision's const float&
+    // parameters as copies, reloaded before each call (the names are not the original's)
+    float getFov() const { return m_fov; }
+    float getNearClip() const { return m_nearClip; }
     static mm::mtl::RTTI m_rtti;
 
     // the layer's scene camera: CameraLayer::push sets it from its own, the constructor clears it (the name is not
