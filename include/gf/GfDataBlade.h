@@ -67,6 +67,9 @@ public:
     static unsigned int getBladeID(unsigned int index);  // the blade in list slot index (0..421), 0 for none
     // fills list with the party's blades (SCOM_ACHIEV_INC::createParty and createCrystal)
     static void getListPartyAll(mm::mtl::FixedVector<unsigned short, 422>& list);
+    // fills list with the party's blades (the flags' meaning is not known: GfAchievManager::incAchiev passes true,
+    // false); whether the list is non-empty
+    static bool getListParty(mm::mtl::FixedVector<unsigned short, 422>& list, bool, bool);
     // fills list with the regular blades 1001 to 1011 (not 1012, 1013); false when it stays empty
     static bool getListRegular(mm::mtl::FixedVector<unsigned short, 422>& list);
     // fills list with the common blades 1197 to 1396 that are in use or unselectable

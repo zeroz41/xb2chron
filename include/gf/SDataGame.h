@@ -14,10 +14,14 @@
 #include "mm/Vec3.h"
 
 namespace gf {
-// one of the game data's task achievements: 12 bytes (fn_71002E9D10 steps them by 12); the fields are not known
-// (the type name is not the original's)
+// one of the game data's task achievements: 12 bytes (fn_71002E9D10 steps them by 12; the type name is not the
+// original's). GfAchievManager::incAchiev reads the fields (the field names are not the original's).
 struct TaskAchieve {
-    unsigned char pad_0[0xC];
+    unsigned short m_questId;    // the quest (QuestTaskParam's)
+    unsigned short m_purposeId;  // QuestListAcc::getTaskTaskID's purpose
+    unsigned short m_task;       // and task
+    unsigned char pad_6[0x2];
+    unsigned int m_count;  // the achievement count so far
 };
 
 // the game's data, as GfDataManager::getDataGame hands it out (1.0.0's GfGameUtil::setupNewGameParam takes one;
