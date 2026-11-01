@@ -8,6 +8,7 @@
 #include "fw/LangUtil.h"
 #include "classes/gf/DataParamAcc.h"
 #include "mm/mtl/FixStr.h"
+#include "classes/gf/GfReqSmallCom.h"
 
 namespace gf {
 namespace _gfgvo {
@@ -81,12 +82,43 @@ inline void VoiceInfo::addStop(CV_PRIO prio) {
     }
 }
 
+void VoiceInfo::addPlay(GAME_VOICE_HANDLE* voice, const ParamObj& obj, const GfVoiceName& name, CV_PRIO prio) {
+    if (!m_jobs.full()) {
+        m_obj = obj;
+#line 894
+        m_jobs.push_back(new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+                             PJOB_PLAY(this, voice, obj, name, prio));
+    }
+}
+
 GAME_VOICE_HANDLE* GfGameVoice::playVoice(GF_OBJ_HANDLE* handle, const char* name, CV_PRIO prio) {
     return playVoice(ParamObj(handle), name, prio, false);
 }
 
 GAME_VOICE_HANDLE* GfGameVoice::playVoice(unsigned int type, unsigned int id, const char* name, CV_PRIO prio) {
     return playVoice(ParamObj(type, id), name, prio, false);
+}
+
+GAME_VOICE_HANDLE* GfGameVoice::fn_71002F1D20(unsigned int type, unsigned int id, const char* name, CV_PRIO prio) {
+    return playVoice(ParamObj(type, id), name, prio, true);
+}
+
+GAME_VOICE_HANDLE* GfGameVoice::fn_71002F1D5C(GF_OBJ_HANDLE* handle, const char* name, CV_PRIO prio) {
+    GAME_VOICE_HANDLE* voice = playVoice(ParamObj(handle), name, prio, false);
+    if (voice != nullptr) {
+        GfGameVoice* self = sys();
+        for (mm::mtl::FixedList<VoiceInfo*, 6>::iterator it = self->m_playList.begin();
+             it != self->m_playList.end(); ++it) {
+            VoiceInfo* info = *it;
+            if (info->m_voice == voice) {
+                if (info != nullptr) {
+                    info->m_waitForOthers = true;
+                }
+                return voice;
+            }
+        }
+    }
+    return voice;
 }
 
 void GfGameVoice::playStop(GAME_VOICE_HANDLE* voice) {
@@ -104,6 +136,10 @@ void GfGameVoice::playStop(GAME_VOICE_HANDLE* voice) {
             return;
         }
     }
+}
+
+void GfGameVoice::fn_71002F1F64(long voice) {
+    fn_7100566E60(voice);
 }
 
 void GfGameVoice::gevLayerPause(unsigned int layer, bool pause) {

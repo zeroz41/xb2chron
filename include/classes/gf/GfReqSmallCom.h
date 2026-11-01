@@ -29,6 +29,11 @@ void fn_710056B914(float a, float b, unsigned int id);
 // BDAT id 1..6 or 9, plays one of two voices (ml::mtRand(2)) from the tables at 0x7100B6ADD8.. (the row picked by
 // flag) through GfGameVoice::playVoice. Caller: TUnk_28E618::fn_710028F00C (handles of party drivers 0..2).
 void fn_710056B9CC(GF_OBJ_HANDLE* const* handles, unsigned int count, bool flag);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x7100566E60, gf_req_scom's unit). A
+// free function like its gf_req_scom neighbours: it takes no this, only its argument and GfReqSmallCom's instance.
+// What it does: finds the request whose value at +8 is value in the list at +8, else the one at +0x9028, and sets
+// its byte at +0xD3. Its one caller is GfGameVoice::fn_71002F1F64 (a tail call).
+void fn_7100566E60(long value);
 
 // table 0x7100B6AF20; GfReqManager makes one (0x1B078 bytes, 3.0.1's new) and updates it after its own commands
 class GfReqSmallCom : public ::mm::mtl::PtrSingleton< ::gf::GfReqSmallCom> {

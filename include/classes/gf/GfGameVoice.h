@@ -90,6 +90,22 @@ public:
     // queues a stop unless the queue is full or nothing plays (GfGameVoice::destroyVoiceAll; the name is not the
     // original's)
     inline void addStop(CV_PRIO prio);
+    // the slot plays voice or has a job for it (1.0.0's gf::VoiceInfo::isEnableVoiceHandle(GAME_VOICE_HANDLE*) const,
+    // 0x710035ADAC; 3.0.1 inlines it into getResult)
+    bool isEnableVoiceHandle(GAME_VOICE_HANDLE* voice) const {
+        if (voice == nullptr) {
+            return false;
+        }
+        if (m_voice == voice) {
+            return true;
+        }
+        for (mm::mtl::FixedQueue<PJOB*, 16>::const_iterator it = m_jobs.begin(); it != m_jobs.end(); ++it) {
+            if ((*it)->getVoiceHandle() == voice) {
+                return true;
+            }
+        }
+        return false;
+    }
     // nothing plays and no job is queued (1.0.0's gf::VoiceInfo::isEmpty() const, 0x7100358E44; 3.0.1 inlines it)
     bool isEmpty() const { return !m_sound.isValid() && m_jobs.empty(); }
 
@@ -155,16 +171,30 @@ public:
     static GAME_VOICE_HANDLE* playVoice(const char* name);
     static CV_RESULT getResult(GAME_VOICE_HANDLE* voice);
     static CV_RESULT getResult(GF_OBJ_HANDLE* handle);  // the voice of an object (GfGameUtil::isPlayVoice: 2 playing)
+    // the slot playing obj's voice (1.0.0's gf::GfGameVoice::getPlayInfo(ParamObj const&), 0x71003590C0; 3.0.1
+    // inlines it)
+    static VoiceInfo* getPlayInfo(const ParamObj& obj) {
+        GfGameVoice* self = sys();
+        mm::mtl::FixedList<VoiceInfo*, 6>::iterator it = self->m_playList.begin();
+        for (; it != self->m_playList.end(); ++it) {
+            if ((*it)->m_obj == obj) {
+                break;
+            }
+        }
+        return it != self->m_playList.end() ? *it : nullptr;
+    }
     bool isPlayEnemyVoice() const;
     static void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
     bool isPlayVoice(gf::GF_OBJ_HANDLE* handle) const;
 
-    // keeps how a voice ended, dropping the oldest when full (the name is not the original's)
-    void addResult(const ParamObj& obj, GAME_VOICE_HANDLE* voice, CV_RESULT result) {
-        if (m_results.full()) {
-            m_results.pop();
+    // keeps how a voice ended, dropping the oldest when full (1.0.0's static gf::GfGameVoice::addResult, 0x710035A7AC;
+    // 3.0.1 inlines it)
+    static void addResult(const ParamObj& obj, GAME_VOICE_HANDLE* voice, CV_RESULT result) {
+        GfGameVoice* self = sys();
+        if (self->m_results.full()) {
+            self->m_results.pop();
         }
-        m_results.push_back(Result(obj, voice, result));
+        self->m_results.push_back(Result(obj, voice, result));
     }
 
     bool m_isInitialized;
