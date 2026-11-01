@@ -22,6 +22,8 @@
 #include "classes/gf/TUnk_B63860.h"
 #include "classes/ui/UIInputManager.h"
 #include "ui/UIUtil.h"
+#include "classes/ui/UICtrlCursorSelect.h"
+#include "classes/ui/UIListInfoBase.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfDataItem.h"
 #include "gf/GfMenuItemUtil.h"
@@ -589,6 +591,87 @@ void GfMenuObjCommonText::MainListener::reciveEvent(const ui::EventData& event, 
         }
     }
     UIObjectListener::reciveEvent(event, handle);
+}
+
+void GfMenuObjCommonText::DrChangeListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObject::disableInput(acc.m_handle);
+        acc.setDisp(false);
+        acc.setSuspend(true);
+        m_shown = 0;
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        s_pChangeDrList->setIndex(index);
+        m_owner->m_drChangeListInfo->setIndex(index);
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 0x22: {
+        GfMenuObjUtil::CtrlParam param;
+        param.m_time = 0.25f;
+        param.m_eventId = 2;
+        param.m_methods = 2;
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        GfMenuObject::disableInput(acc.m_handle);
+        m_shown = 0;
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+            m_owner->m_drChangeCursor->setDisp(true);
+        } else if (event.m_param0 == 2) {
+            if (m_shown == 0) {
+                acc.setSuspend(true);
+            }
+        }
+        break;
+    case 8: {
+        int input = event.m_param1;
+        if (input == 1) {
+            unsigned int result = event.m_param0;
+            GfMenuObject::addResultCallContext(acc.getParentHandle(), result, 0);
+            GfMenuObjUtil::playSE(10);
+        } else if (input == 2) {
+            GfMenuObjUtil::playSECommonCancel();
+        } else {
+            break;
+        }
+        GfMenuObjCommonText::close();
+        m_owner->m_drChangeCursor->setDisp(true);
+        break;
+    }
+    case 0x21: {
+        acc.setAlpha(1.0f);
+        mm::Rect<short> rect;
+        {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_time = 0.25f;
+            param.m_eventId = 1;
+            param.m_methods = 1;
+            GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        }
+        mm::Rect<short> next;
+        acc.getLayoutRect("dr_select", rect);
+        acc.getLayoutRect("dr_select_next", next);
+        GfMenuObjUtil::placeObjectH(acc.m_handle, "LAY_dr_change@%02d", s_pChangeDrList->getSize(),
+                                    mm::Pnt<short>(rect.x + rect.w / 2, rect.y + rect.h / 2), next.x - rect.x);
+        m_owner->m_drChangeCursor->setDisp(false);
+        GfMenuObject::resetInputSelection(acc.m_handle);
+        GfMenuObject::setupInputSelectionFromList(acc.m_handle, *s_pChangeDrList);
+        m_shown = 1;
+        break;
+    }
+    }
 }
 
 void GfMenuObjCommonText::fn_71003E1F60(GfMenuCallContext* context, unsigned int text, unsigned short row) {

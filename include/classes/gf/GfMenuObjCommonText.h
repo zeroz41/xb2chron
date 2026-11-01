@@ -7,6 +7,8 @@ namespace gf { class GfMenuDriverList; }
 namespace gf { class GfMenuIDList; }
 namespace gf { class GfMenuItemList; }
 namespace gf { class MenuCommonWindowParam; }
+namespace ui { class UICtrlCursorSelect; }
+namespace ui { class UIListInfoBase; }
 
 namespace gf {
 // table 0x7100B61478
@@ -66,6 +68,17 @@ public:
     // event (0x22) closes that dialog (TUnk_B63860::fn_7100445258) and clears it. Proposed name, not the original's:
     // the symbols leave it unnamed (lbl_7100EAA200)
     static bool s_isNamedDialogOpen;
+
+    // the fields from 0x24 (in GfMenuObject's tail padding) are not modelled yet: the constructor stores an object
+    // at 0x40, the destructor releases pointers at 0x40, 0x48, 0x68, 0x70, 0x78 and 0x80 (session 20 notes); the
+    // real size is not measured
+    unsigned char pad_24[0x44];
+    // the driver change list's selection, which DrChangeListener's event 6 keeps at s_pChangeDrList's index (the
+    // name is not the original's)
+    ui::UIListInfoBase* m_drChangeListInfo;
+    // the selection cursor DrChangeListener hides while the driver change window is open (event 0x21) and shows
+    // again when it closes (the name is not the original's)
+    ui::UICtrlCursorSelect* m_drChangeCursor;
 };
 // openKizunaDialog registers the text UIStr(m_bdat, m_id) and sends it with m_value (the field names are not
 // the original's)
