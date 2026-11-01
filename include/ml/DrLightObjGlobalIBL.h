@@ -9,6 +9,7 @@
 #include "mm/mtl/Vector.h"
 #include "mm/Mat44.h"
 #include "mm/Vec3.h"
+#include "mm/Vec4.h"
 
 namespace ml {
 class DrResUseQueryObj;
@@ -42,22 +43,32 @@ public:
     void beginOccQuery();
     void endOccQuery();
 
-    unsigned char pad_0[0x8];
+    void* pad_0;
     unsigned int m_version;  // 0x8
     unsigned int m_priority;  // 0xC, getPriority (the name follows it)
-    unsigned char pad_10[0x4];
+    unsigned int pad_10;
     unsigned int m_textureNum;  // 0x14
-    unsigned char pad_18[0x8];
+    unsigned int pad_18;
+    unsigned char pad_1c[0x4];
     mm::mtl::Vector<MeshData> m_meshes;  // 0x20 (the name is not the original's)
-    unsigned char pad_48[0x28];
+    unsigned int pad_48;
+    unsigned char pad_4c[0x4];
+    mm::Vec3 pad_50;
+    mm::Vec3 pad_60;
     unsigned int m_bindIndex;  // 0x70, bindVertex's mesh (the name is not the original's)
     unsigned char pad_74[0x4];
     grlib::CGLibTextureBuffer m_texture[7];  // 0x78, the constructor builds seven
-    unsigned char pad_388[0x18];
+    unsigned char pad_388[0x8];
+    mm::Vec3 pad_390;
     mm::Vec3 m_additionalAmbient;  // 0x3A0
     float m_skyIntensity;  // 0x3B0
     float m_dirLightIntensity;  // 0x3B4
-    unsigned char pad_3b8[0x488];
+    unsigned long pad_3b8;
+    unsigned int pad_3c0;
+    bool pad_3c4;
+    unsigned char pad_3c5[0x4B];
+    mm::Vec4 pad_410[4];
+    unsigned char pad_450[0x3F0];
     mm::Mat44 m_shMatrix[4];  // 0x840, by index * 4 + term (getSHMatrix); the bound is not proven
 };
 }  // namespace ml

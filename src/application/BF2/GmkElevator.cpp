@@ -1130,6 +1130,25 @@ bool GmkCamera::CreateInfo::validateTransform(unsigned short lodId) {
     return true;
 }
 
+GmkCamera::GmkCamera(const CreateInfo* info) : m_camera(nullptr), m_seq(nullptr) {
+    if (info != nullptr) {
+        create(*info);
+    }
+}
+
+void GmkCamera::create(const CreateInfo& info) {
+    dispose();
+    m_info = info;
+    if (info.m_hasTransform) {
+        m_camera = gf::GimmickCamera::create(info.m_name.m_str, info.m_pos, info.m_rotY);
+    } else {
+        m_camera = gf::GimmickCamera::create(info.m_name.m_str);
+    }
+    m_camera.get()->setAuto(info.pad_105);
+    m_seq = &GmkCamera::seqWaitToLoaded;
+    gf::GfGameManager::setStopMainMenuOpenForGimmick(true);
+}
+
 bool GmkCamera::isLoaded() const { return m_camera.get()->isLoaded(); }
 
 bool GmkCamera::isEnd() const {
@@ -1140,7 +1159,7 @@ bool GmkCamera::isEnd() const {
 }
 
 void GmkCamera::update(float dt) {
-    if (m_name.length() > 0 && m_seq) {
+    if (m_info.m_name.length() > 0 && m_seq) {
         (this->*m_seq)(dt);
     }
 }

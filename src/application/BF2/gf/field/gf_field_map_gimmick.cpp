@@ -454,7 +454,7 @@ void GfFieldMapGimmick::create(GF_OBJ_HANDLE* handle) {
             if (m_bdatInfo.m_camGimAtr != 0) {
                 camInfo.m_attr = m_bdatInfo.m_camGimAtr;
             }
-            camInfo.pad_105 = 0;
+            camInfo.pad_105 = false;
             if (m_bdatInfo.m_gmkCamPos) {
                 if (m_lodAnim > 0) {
                     camInfo.validateTransform(m_lodAnim);
@@ -494,7 +494,7 @@ void GfFieldMapGimmick::update(float dt) {
         return;
     }
     bool wasEnd = isEnd();
-    if (m_camera.m_name.m_nLen > 0) {
+    if (m_camera.m_info.m_name.m_nLen > 0) {
         m_camera.update(dt);
         if (m_seqCamera) {
             (this->*m_seqCamera)(dt);
@@ -523,7 +523,7 @@ void GfFieldMapGimmick::update(float dt) {
 }
 
 void GfFieldMapGimmick::onFsSucceeded() {
-    if (m_camera.m_name.m_nLen > 0) {
+    if (m_camera.m_info.m_name.m_nLen > 0) {
         m_camera.play();
     }
     m_lodStep = 1;
