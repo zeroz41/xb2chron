@@ -32,6 +32,8 @@
 #include "classes/gf/GfObjManager.h"
 #include "gf/GfObjAcc.h"
 #include "gf/GfObjInfo.h"
+#include "mm/mtl/FixedVector.h"
+#include "mm/Math.h"
 
 namespace gf {
 
@@ -106,11 +108,186 @@ unsigned int DataObjEnemy::getBdatId() const {
     return m_sdata->m_id;
 }
 
+unsigned int DataObjEnemy::getHpMax(bool) const {
+    float value = m_sdata->m_hpMax;
+    if (fn_7100229CEC(value, getBdatIdEnArrange(), 1, 11)) {
+        float rate = GfDataBlade::getHpMaxRev(GfDataEnemy::getEquipBlade(getBdatIdEnArrange())) * 0.01f;
+        value += value * rate;
+    }
+    if (m_sdata->m_paramId != 0) {
+        unsigned int rev = GfBdatChrEnParam::sys()->getChrEnParamRevHpMaxRev(m_sdata->m_paramId);
+        if (rev != 0) {
+            value = rev * 0.001f * value;
+        }
+    }
+    if (value > 1000000000.0f) {
+        value = 1000000000.0f;
+    }
+    return value;
+}
+
+bool DataObjEnemy::fn_7100229CEC(float& value, unsigned int arrange, unsigned int rateEffect, unsigned int addEffect) {
+    if (GfDataEnemy::getEquipBlade(arrange) == 0) {
+        return false;
+    }
+    mm::mtl::FixedVector<unsigned short, 64> enhances;
+    GfDataEnemy::getValidEnhance(enhances, arrange);
+    float base = value;
+    GfBdatBtl* btl = GfBdatBtl::sys();
+    for (const unsigned short* it = enhances.begin(); it != enhances.end(); ++it) {
+        if (btl->getBTL_EnhanceEnhanceEffect(*it) == addEffect) {
+            base += btl->getBTL_EnhanceParam1(*it);
+        }
+    }
+    float rate = 0.0f;
+    for (const unsigned short* it = enhances.begin(); it != enhances.end(); ++it) {
+        if (btl->getBTL_EnhanceEnhanceEffect(*it) == rateEffect) {
+            rate += btl->getBTL_EnhanceParam1(*it) * 0.01f;
+        }
+    }
+    value = base + base * rate;
+    return true;
+}
+
 unsigned int DataObjEnemy::getHp() const {
     if (m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
         return GfObjUtil::getHp(m_handle);
     }
     return getHpMax(false);
+}
+
+unsigned int DataObjEnemy::getStrength(bool) const {
+    float value = m_sdata->m_strength;
+    if (fn_7100229CEC(value, getBdatIdEnArrange(), 2, 12)) {
+        float rate = GfDataBlade::getStrengthRev(GfDataEnemy::getEquipBlade(getBdatIdEnArrange())) * 0.01f;
+        value += value * rate;
+    }
+    if (m_sdata->m_paramId != 0) {
+        unsigned int rev = GfBdatChrEnParam::sys()->getChrEnParamRevStrengthRev(m_sdata->m_paramId);
+        if (rev != 0) {
+            value = rev * 0.001f * value;
+        }
+    }
+    if (value > 9999.0f) {
+        value = 9999.0f;
+    }
+    return value;
+}
+
+unsigned int DataObjEnemy::getPowerEther(bool) const {
+    float value = m_sdata->m_powerEther;
+    if (fn_7100229CEC(value, getBdatIdEnArrange(), 3, 13)) {
+        float rate = GfDataBlade::getPowerEtherRev(GfDataEnemy::getEquipBlade(getBdatIdEnArrange())) * 0.01f;
+        value += value * rate;
+    }
+    if (m_sdata->m_paramId != 0) {
+        unsigned int rev = GfBdatChrEnParam::sys()->getChrEnParamRevPowEtherRev(m_sdata->m_paramId);
+        if (rev != 0) {
+            value = rev * 0.001f * value;
+        }
+    }
+    if (value > 9999.0f) {
+        value = 9999.0f;
+    }
+    return value;
+}
+
+unsigned int DataObjEnemy::getDex(bool) const {
+    float value = m_sdata->m_dex;
+    if (fn_7100229CEC(value, getBdatIdEnArrange(), 4, 14)) {
+        float rate = GfDataBlade::getDexRev(GfDataEnemy::getEquipBlade(getBdatIdEnArrange())) * 0.01f;
+        value += value * rate;
+    }
+    if (m_sdata->m_paramId != 0) {
+        unsigned int rev = GfBdatChrEnParam::sys()->getChrEnParamRevDexRev(m_sdata->m_paramId);
+        if (rev != 0) {
+            value = rev * 0.001f * value;
+        }
+    }
+    if (value > 9999.0f) {
+        value = 9999.0f;
+    }
+    return value;
+}
+
+unsigned int DataObjEnemy::getAgility(bool) const {
+    float value = m_sdata->m_agility;
+    if (fn_7100229CEC(value, getBdatIdEnArrange(), 5, 15)) {
+        float rate = GfDataBlade::getAgilityRev(GfDataEnemy::getEquipBlade(getBdatIdEnArrange())) * 0.01f;
+        value += value * rate;
+    }
+    if (m_sdata->m_paramId != 0) {
+        unsigned int rev = GfBdatChrEnParam::sys()->getChrEnParamRevAgilityRev(m_sdata->m_paramId);
+        if (rev != 0) {
+            value = rev * 0.001f * value;
+        }
+    }
+    if (value > 999.0f) {
+        value = 999.0f;
+    }
+    return value;
+}
+
+unsigned int DataObjEnemy::getLuck(bool) const {
+    float value = m_sdata->m_luck;
+    if (fn_7100229CEC(value, getBdatIdEnArrange(), 6, 16)) {
+        float rate = GfDataBlade::getLuckRev(GfDataEnemy::getEquipBlade(getBdatIdEnArrange())) * 0.01f;
+        value += value * rate;
+    }
+    if (m_sdata->m_paramId != 0) {
+        unsigned int rev = GfBdatChrEnParam::sys()->getChrEnParamRevLuckRev(m_sdata->m_paramId);
+        if (rev != 0) {
+            value = rev * 0.001f * value;
+        }
+    }
+    if (value > 999.0f) {
+        value = 999.0f;
+    }
+    return value;
+}
+
+unsigned int DataObjEnemy::getPArmor(bool) const {
+    float value = m_sdata->m_pArmor;
+    if (GfDataEnemy::getEquipBlade(getBdatIdEnArrange()) != 0) {
+        fn_7100229CEC(value, getBdatIdEnArrange(), 8, 18);
+    }
+    if (value > 100.0f) {
+        value = 100.0f;
+    }
+    return value;
+}
+
+unsigned int DataObjEnemy::getEArmor(bool) const {
+    float value = m_sdata->m_eArmor;
+    if (GfDataEnemy::getEquipBlade(getBdatIdEnArrange()) != 0) {
+        fn_7100229CEC(value, getBdatIdEnArrange(), 9, 19);
+    }
+    if (value > 100.0f) {
+        value = 100.0f;
+    }
+    return value;
+}
+
+unsigned int DataObjEnemy::getCriticalRate(bool) const {
+    float value = m_sdata->m_criticalRate;
+    if (GfDataEnemy::getEquipBlade(getBdatIdEnArrange()) != 0) {
+        fn_7100229CEC(value, getBdatIdEnArrange(), 7, 17);
+    }
+    if (value > 100.0f) {
+        value = 100.0f;
+    }
+    return value;
+}
+
+unsigned int DataObjEnemy::getGuardRate(bool) const {
+    float value = m_sdata->m_guardRate;
+    if (GfDataEnemy::getEquipBlade(getBdatIdEnArrange()) != 0) {
+        fn_7100229CEC(value, getBdatIdEnArrange(), 10, 20);
+    }
+    if (value > 100.0f) {
+        value = 100.0f;
+    }
+    return value;
 }
 
 unsigned int DataObjEnemy::getFootStep() const {
@@ -135,6 +312,13 @@ unsigned int DataObjEnemy::getWeaponType(bool, int) const {
         return 0;
     }
     return GfDataBlade::getBladeWpnType(blade);
+}
+
+bool DataObjEnemy::isEnbaleTarget() const {
+    if (GfBdatChrEnArrange::sys()->getChrEnArrangeBladeID(getBdatId()) != 0) {
+        return false;
+    }
+    return !GfBdatChrEnArrange::sys()->isChrEnArrangeFlagNoTarget(getBdatId());
 }
 
 unsigned int DataObjEnemy::getChestHeight() const {
@@ -191,6 +375,37 @@ unsigned int DataObjEnemy::getResistanceCombo() const {
 
 unsigned int DataObjEnemy::getInvincibleCombo() const {
     return m_sdata->m_invincibleCombo;
+}
+
+unsigned int DataObjEnemy::getLevelGold() const {
+    GfBdatBtl* btl = GfBdatBtl::sys();
+    unsigned int level = getLevel(false);
+    mm::clamp(level, btl->getGrowStart(), btl->getGrowEnd() - 1);
+    return btl->getGrowEnemyGold(level) * static_cast<float>(m_sdata->m_goldRev) / 100.0f;
+}
+
+unsigned int DataObjEnemy::getLevelExp() const {
+    GfBdatBtl* btl = GfBdatBtl::sys();
+    unsigned int level = getLevel(false);
+    mm::clamp(level, btl->getGrowStart(), btl->getGrowEnd() - 1);
+    float value = btl->getGrowEnemyExp(level);
+    return value * GfBdatChrEnArrange::sys()->getChrEnArrangeExpRev(getBdatId()) / 100.0f;
+}
+
+unsigned int DataObjEnemy::getLevelWp() const {
+    GfBdatBtl* btl = GfBdatBtl::sys();
+    unsigned int level = getLevel(false);
+    mm::clamp(level, btl->getGrowStart(), btl->getGrowEnd() - 1);
+    float value = btl->getGrowEnemyWP(level);
+    return value * GfBdatChrEnArrange::sys()->getChrEnArrangeWPRev(getBdatId()) / 100.0f;
+}
+
+unsigned int DataObjEnemy::getLevelSp() const {
+    GfBdatBtl* btl = GfBdatBtl::sys();
+    unsigned int level = getLevel(false);
+    mm::clamp(level, btl->getGrowStart(), btl->getGrowEnd() - 1);
+    float value = btl->getGrowEnemySP(level);
+    return value * GfBdatChrEnArrange::sys()->getChrEnArrangeSPRev(getBdatId()) / 100.0f;
 }
 
 unsigned int DataObjEnemy::getGenus() const {

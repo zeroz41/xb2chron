@@ -2,6 +2,7 @@
 #define GF_GFDATAENEMY_H
 
 namespace gf { class SDataEnemy; }
+namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
 
 namespace gf {
 // the enemies' data, by their row ids (functions, by its symbols)
@@ -20,6 +21,8 @@ public:
     // GfBdatRsc::getRscEnExtraParts(rsc, part) is 2. DataObjEnemy's new table slot 42 returns it for its part.
     static bool fn_7100235424(unsigned int rsc, unsigned int part);
     static const char* getSePack(unsigned int arrange);
+    // the BTL_Enhance rows of the enemy's blade's valid enhances (DataObjEnemy's stat helper reads them)
+    static void getValidEnhance(mm::mtl::FixedVector<unsigned short, 64>& enhances, unsigned int arrange);
     static unsigned int getBladeID(unsigned int arrange);
     static unsigned int getEquipBladeEnArrangeID(unsigned int arrange);
     static bool isNamed(unsigned int arrange);

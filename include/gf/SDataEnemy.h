@@ -29,7 +29,11 @@ public:
     // a GfBdatChrEnParam row: ai::AiData::getScoutStartHp passes it to getChrEnParamScoutStartHp (the name is not the
     // original's)
     unsigned short m_scoutParamId;
-    unsigned char pad_a[0x15];
+    unsigned char pad_a[0x8];
+    // the percent DataObjEnemy::getLevelGold scales the level's gold by (the name is not the original's; the
+    // arrangement bdat has a GoldRev column)
+    unsigned short m_goldRev;
+    unsigned char pad_14[0xB];
     unsigned char m_linkRadius;  // getLinkRadius
     unsigned char pad_20[0x14];
     unsigned short m_paramId;  // its GfBdatChrEnParam row (the stat getters' revisions)
@@ -66,8 +70,11 @@ public:
     unsigned int m_hpMax;
     unsigned short m_strength;
     unsigned short m_powerEther;
+    unsigned short m_dex;      // getDex
+    unsigned short m_agility;  // getAgility
+    unsigned short m_luck;     // getLuck
     // sizeof is 0xbc: GfObjSetup::createSetupParam(GfInitParamEnemy) allocates that much
-    unsigned char pad_b4[0x8];
+    unsigned char pad_ba[0x2];
 };
 }  // namespace gf
 

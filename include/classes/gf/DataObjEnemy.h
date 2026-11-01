@@ -74,6 +74,13 @@ public:
     virtual unsigned int getGoldDivideRev() const;  // slot 131
     virtual const SDataEnemy* getSDataEnemy() const;  // slot 132
 
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's stat getters call an unnamed
+    // fn_710029100C). A member because its address lies among DataObjEnemy's functions and only its stat getters
+    // call it. What it does: when the arrangement has an equipped blade (GfDataEnemy::getEquipBlade), adds the Param1
+    // of its valid enhances (GfDataEnemy::getValidEnhance) of BTL_Enhance effect addEffect to value, then scales value
+    // by the summed Param1 percents of effect rateEffect; false when there is no blade.
+    static bool fn_7100229CEC(float& value, unsigned int arrange, unsigned int rateEffect, unsigned int addEffect);
+
     GF_OBJ_HANDLE* m_handle;  // the object's, -1 for data read by row id alone (the name is not the original's)
     SDataEnemy* m_sdata;  // the setup's, or m_sdataOwn (the name is not the original's)
     SDataEnemy m_sdataOwn;  // what DataObjEnemy(unsigned int) reads (the name is not the original's)
