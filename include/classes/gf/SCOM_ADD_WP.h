@@ -10,7 +10,11 @@ namespace gf {
 // table 0x7100B6B060
 class SCOM_ADD_WP : public ::gf::SCOM {
 public:
+    explicit SCOM_ADD_WP(SCOM_TYPE type) : SCOM(type) {}
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
+    // Placeholder name: nothing in 1.0.0's place names it. A member: it builds this class (type 7, its table) in mode
+    // 3 for a driver; its caller is btl::CharacterManager::AddExpWpSp.
+    static unsigned long fn_71005595B0(unsigned int driver, int, unsigned int);
 
     // the names are not the original's: what exec reads
     union {

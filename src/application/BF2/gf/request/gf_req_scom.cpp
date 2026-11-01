@@ -124,6 +124,8 @@
 #include "gf/MsgUnk_1000034.h"
 #include "classes/gf/GfScriptManager.h"
 #include "ml/MTRand.h"
+#include "classes/gf/SCOM_ADD_ITEM.h"
+#include "gf/GfItemUtil.h"
 namespace gf {
 bool SCOM_ADD_MONEY::exec(fw::UpdateInfo const&) {
     GfGameUtil::addMoney(m_money);
@@ -430,6 +432,19 @@ unsigned long GfReqSmallCom::addRequestParallel(SCOM* request) {
     return request->m_handle;
 }
 
+unsigned long SCOM_ADD_EXP::fn_71005593AC(unsigned int a0, int a1) {
+    if (!a0) {
+        return -1;
+    }
+#line 264
+    SCOM_ADD_EXP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ADD_EXP(SCOM_TYPE(4));
+    request->m_value = a0;
+    request->m_value2 = a1;
+    request->m_value3 = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    request->m_value4 = 0;
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
 unsigned long SCOM_ADD_EXP::createInnExp(unsigned int a0) {
     if (!a0) {
         return -1;
@@ -553,6 +568,61 @@ unsigned long SCOM_ADD_TRUST::create(unsigned int a0, unsigned int a1) {
     request->m_value = a1;
     request->m_value2 = a0;
     return GfReqSmallCom::addRequestParallel(request);
+}
+
+bool SCOM_ADD_ITEM::exec(fw::UpdateInfo const&) {
+    if (m_count < 0) {
+        int room = GfItemUtil::getEnableStock(m_item) - GfItemUtil::getItemBoxCount(m_item);
+        int count = m_count < room ? m_count : room;
+        int rest = m_count > room ? m_count - room : 0;
+        if (GfItemUtil::isEnableAddItemBox(m_item, count) && GfItemUtil::addItemBox(m_item, count)) {
+            if (m_showPrecious && count > 0 && GfItemUtil::isPrecious(m_item)) {
+                GfPlayFactory::createMenuPrecious(m_item, true);
+            }
+        }
+        if (rest > 0) {
+            ItemPrice price;
+            GfItemUtil::getPrice(price, m_item, 0);
+            GfGameUtil::addMoney(price.m_sellPrice * rest);
+        }
+    } else {
+        ItemPrice price;
+        GfItemUtil::getPrice(price, m_item, 0);
+        for (int i = 0; i < m_count; i++) {
+            if (GfItemUtil::isEnableAddItemBox(m_item, 1)) {
+                if (GfItemUtil::addItemBox(m_item, 1) && m_showPrecious && GfItemUtil::isPrecious(m_item)) {
+                    GfPlayFactory::createMenuPrecious(m_item, true);
+                }
+            } else {
+                GfGameUtil::addMoney(price.m_sellPrice);
+            }
+        }
+    }
+    return true;
+}
+
+unsigned long SCOM_ADD_ITEM::create(unsigned int a0, int a1) {
+    if (!a0 || !a1) {
+        return -1;
+    }
+#line 739
+    SCOM_ADD_ITEM* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ADD_ITEM(SCOM_TYPE(13));
+    request->m_item = a0;
+    request->m_count = a1;
+    request->m_showPrecious = false;
+    return GfReqSmallCom::addRequest(request);
+}
+
+unsigned long SCOM_ADD_ITEM::createForBattle(unsigned int a0, int a1) {
+    if (!a0 || !a1) {
+        return -1;
+    }
+#line 746
+    SCOM_ADD_ITEM* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ADD_ITEM(SCOM_TYPE(13));
+    request->m_item = a0;
+    request->m_count = a1;
+    request->m_showPrecious = true;
+    return GfReqSmallCom::addRequest(request);
 }
 
 unsigned long SCOM_DESTROY_FIELD_OBJ::create() {
@@ -1735,6 +1805,19 @@ bool SCOM_ADD_WP::exec(fw::UpdateInfo const&) {
     }
     GfGameUtil::addWpForObject(driver, m_value2, m_value);
     return true;
+}
+
+unsigned long SCOM_ADD_WP::fn_71005595B0(unsigned int driver, int a1, unsigned int a2) {
+    if (!a1) {
+        return -1;
+    }
+#line 382
+    SCOM_ADD_WP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_ADD_WP(SCOM_TYPE(7));
+    request->m_driver = driver;
+    request->m_value = a1;
+    request->m_value2 = a2;
+    request->m_mode = 3;
+    return GfReqSmallCom::addRequestParallel(request);
 }
 
 bool SCOM_MISSION_COMPLETE::exec(fw::UpdateInfo const&) {
