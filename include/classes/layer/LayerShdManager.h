@@ -9,8 +9,9 @@
 #include "grlib/CGLibVtxFetch.h"
 #include "grlib/CGLibVtxIndex.h"
 #include "grlib/CGLibVtxVertex.h"
+#include "layer/LayerResViewPortInfo.h"
 
-namespace ml { class EventFileTh; class IDrDrawWorkInfo; }
+namespace ml { class EventFileTh; class FileHandleTh; class IDrDrawWorkInfo; }
 namespace grlib { class CGLibDblUniformBlock; class CGLibRenderTarget; class CGLibVtxInstans; class CGLibVtxOneInstans; }
 
 namespace layer {
@@ -19,7 +20,6 @@ class LayerObjTopMaskObj;
 class LayerResSecTexture;
 class LayerTextureMan;
 class LayerVertexMan;
-class LayerResViewPortInfo;
 class LayerVertexObj;
 
 // the sampler and default vertex buffer a draw selects (LayerShdManager::setupTexture/setupVertex index arrays with
@@ -67,12 +67,16 @@ public:
     void setupMainRenderTarget();
     void setViewPort(LayerResViewPortInfo* info);
     void setShaderMaskMode(const LayerObjTopMaskObj* maskObj);
+    // sets the viewport of a rectangle unless it is the one set (inline in setViewPort and setShaderMaskMode; the name
+    // is not the original's)
+    void setViewPortRect(const LayerShdViewPort& viewPort);
     void setSecTexture(LayerResSecTexture* texture);
     void setShaderMaskOff();
     void setDepthBufferCheckOn();
     void setDepthBufferCheckOff();
     void set3DSpaceMode(grlib::CGLibDblUniformBlock* block);
-    void setupShader(grlib::CGLibDblUniformBlock* block);
+    // selects the shader of m_select's type and binds the blocks and textures of the mask and the second texture
+    grlib::CGLibDecShader* setupShader(grlib::CGLibDblUniformBlock* block);
     void setupTexture(const grlib::CGLibTextureBuffer& texture, LayerSamplerType sampler, unsigned int location);
     grlib::CGLibDecShader* setupShader();
     grlib::CGLibRenderTarget* getDefRenderTarget();
@@ -125,27 +129,39 @@ public:
     static void (*s_CallBlend[8])();
 
     // Field names are not the original's: they follow the accessors and functions that read and write them.
-    unsigned char pad_08[0x30];
+    void* m_pShdData;  // 0x08: "/monolib/shader/shd_layout.wishp" (OnFileEvent takes it, shaderRelease frees it)
+    void* m_pLutData;  // 0x10: "/monolib/shader/layer_lut.witx"
+    int m_lutSize;     // 0x18: the lut read's m_result
+    LayerManager* m_pManager;  // 0x20, the constructor's argument (readShader reads with its data handle)
+    ml::FileHandleTh* m_hShdFile;  // 0x28, readShader's reads (null once OnFileEvent took the data)
+    ml::FileHandleTh* m_hLutFile;  // 0x30
     // the constructor creates both (new, over the manager's work handle); the names are not the original's
     LayerVertexMan* m_vertexMan;    // 0x38
     LayerTextureMan* m_textureMan;  // 0x40: LayerResAddTexObj/LayerResSecTexture share its texture objects
     LayerShdDeclOfs* m_pDeclOfs;  // 0x48, one per shader (the init functions fill it)
     const LayerObjTopMaskObj* m_pMaskObj;  // 0x50, setShaderMaskMode
-    unsigned char pad_58[0x18];  // 0x58, 0x60: setSecTexture stores the texture and the resource's +0x18
+    grlib::CGLibTextureBuffer* m_pSecTexture;  // 0x58, setSecTexture (null: none)
+    grlib::CGLibDblUniformBlock* m_pSecUniform;  // 0x60, the LayerResSecTexture's block
+    unsigned char pad_68[0x8];
     grlib::CGLibVtxFetch m_fetches[5];  // 0x70
     grlib::CGLibSampler m_samplers[9];  // 0xC0, setupTexture by LayerSamplerType
     grlib::CGLibShdListData m_shdList;  // 0x1E0, the shaders (the init functions read their declarations)
     grlib::CGLibVtxVertex m_defVertices[5];  // 0x238, setupVertex by LayerDefVertType
-    grlib::CGLibVtxIndex m_quadIndices[2];  // 0x300, renderQuadsIndex draws the first
+    grlib::CGLibVtxIndex m_quadIndex;  // 0x300, renderQuadsIndex/renderInstaceQuadsIndex draw it
+    grlib::CGLibVtxIndex m_quadIndex2;  // 0x328, a second index buffer (the destructor destroys it on its own: not an array)
     grlib::CGLibDblUniformBlock* m_p3DSpaceBlock;  // 0x350, set3DSpaceMode (null after setDepthBufferCheckOn/Off)
-    void* m_pMaskWork;  // 0x358, cleared whenever the mask mode changes (what sets it is not known yet)
+    grlib::CGLibDblUniformBlock* m_pMaskWork;  // 0x358, setViewPort's LayerResViewPortInfo block (cleared by the mask modes)
     grlib::CGLibRenderTarget* m_pRenderTarget;  // 0x360, getDefRenderTarget (the main one when null)
-    unsigned char pad_368[0x188];
+    grlib::CGLibTextureBuffer m_lut;  // 0x368, shaderRelease releases it
+    unsigned char pad_3D8[0x118];
     LayerShdSelect m_select;   // 0x4F0, what the next draw asks for (setupShader selects by its shader type)
     LayerShdSelect m_current;  // 0x4FE, what the select functions last set the shader up with
-    unsigned char pad_50C[0x1D];
+    LayerShdViewPort m_viewPort;  // 0x50C, the last viewport set (layout units)
+    unsigned char pad_51C[0xC];
+    bool m_viewPortSet;  // 0x528, a viewport other than the full screen is set (resetViewPort resets it)
     bool m_depthCheck;  // 0x529, whether the depth test is on (setDepthBufferCheckOn/Off)
-    unsigned char pad_52A[0x6];
+    bool m_renderTargetSet;  // 0x52A, setViewPort bound a render target (the next viewport is set unconditionally)
+    unsigned char pad_52B[0x5];
     float m_screenWidth;  // LayerAccManager::getScreenWidth
     float m_screenHeight;  // LayerAccManager::getScreenHeight
     float m_screenDivWidth;  // LayerManager::getScreenDivWidth
@@ -154,7 +170,12 @@ public:
     float m_screenCalcPosHeight;  // LayerManager::getScreenCalcPosHeight
     float m_screenCalcSclWidth;  // LayerManager::getScreenCalcSclWidth
     float m_screenCalcSclHeight;  // LayerManager::getScreenCalcSclHeight
-    unsigned char pad_550[0x28];
+    float m_baseWidth;   // 0x550, resetViewPort's width
+    float m_baseHeight;  // 0x554, resetViewPort's height
+    float m_viewPortScale;  // 0x558, layout units to pixels (setViewPort/setShaderMaskMode)
+    float m_viewPortSclWidth;   // 0x55C, resetViewPort's width scale
+    float m_viewPortSclHeight;  // 0x560
+    unsigned char pad_564[0x14];
     float m_gamma;  // LayerAccManager::setGamma
     unsigned char pad_57C[0x4];
 };

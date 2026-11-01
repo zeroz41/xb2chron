@@ -4,6 +4,7 @@
 #include "classes/layer/LayerObj.h"
 #include "grlib/CGLibDblUniformBlock.h"
 #include "layer/LayerTextureObj.h"
+#include "layer/LayerResViewPortInfo.h"
 
 namespace grlib { class CGLibTextureBuffer; }
 namespace layer { class LayerRenderView; }
@@ -25,7 +26,9 @@ public:
     const grlib::CGLibTextureBuffer& getTexture() const;
 
     // The field names follow LayerAccDefObj's accessors (its objects of type 7; not the original's).
-    unsigned char pad_250[0x40];
+    unsigned char pad_250[0x8];
+    LayerShdViewPort m_viewPort;  // 0x258: LayerShdManager::setShaderMaskMode sets it (the name is not the original's)
+    unsigned char pad_268[0x28];
     grlib::CGLibDblUniformBlock m_uniform;  // 0x290: the destructor releases it (the name is not the original's)
     LayerTextureObj* m_texture;  // resourceInit sets it up; getTexture returns its first (the name is not the original's)
     unsigned short m_iconNum;  // setIconNum / getIconNum
