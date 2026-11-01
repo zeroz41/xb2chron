@@ -3,6 +3,7 @@
 
 #include "grlib/CGLibDblUniformBlock.h"
 #include "grlib/CGLibRenderTarget.h"
+#include "ml/DrPixlShadowMan.h"
 #include "mm/Mat44.h"
 
 namespace mm { class Vec3; }
@@ -37,7 +38,7 @@ public:
     grlib::CGLibDblUniformBlock m_uniform;
     // 0x40: the shadow depth target from DrPixlShadowMan's pool (create*Shadow set it up); renderEnd invalidates its
     // depth buffer (the name is not the original's)
-    grlib::CGLibDepthTarget* m_depthTarget;
+    DrPixlShadowMan::TexWork* m_depthTarget;
     unsigned char pad_48[0x4];
     // 0x4C: DrPixlShadowMan::setSptCalcPos skips an object while it is 0 (the name is not the original's)
     unsigned short m_active;

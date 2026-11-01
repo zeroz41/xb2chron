@@ -603,8 +603,6 @@ DrPixlMemMan::DrPixlMemMan() { setupMemBuff(); }
 
 DrPixlMemMan::~DrPixlMemMan() {}
 
-
-
 DrPixlPostObj::DrPixlPostObj(DrMan* drMan, DrPixlMan* pixlMan, DrPixlPostMan* postMan)
     : m_drMan(drMan), m_pixlMan(pixlMan), m_postMan(postMan) {}
 
@@ -637,6 +635,60 @@ void DrPixlPostObj::calc1PixlOfs(float& width, float& height) {
 
 DrPixlTileParm::~DrPixlTileParm() {}
 
+float DrPixlPostObjBloom::BLOOMTEX_SCALE = 0.25f;
+
+void DrPixlPostObjBloom::resetColorBuff(bool all) {
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    float width;
+    float height;
+    if (parm->m_reduction) {
+        DrMan* drMan = DrMan::getIns();
+        float scale = parm->m_bloomReductionScale[0];
+        if (drMan->m_qualityMode == 0) {
+            width = scale * parm->m_bloomAspect[0];
+            height = parm->m_bloomReductionScale[1] * parm->m_bloomAspect[1];
+            DrMan::ViewInfo* view = m_drMan->m_curViewInfo;
+            float screen = (scale * (float)view->m_captureWidth) / (scale * (float)view->m_captureHeight);
+            float target = (parm->m_bloomAspect[0] / parm->m_bloomAspect[1]) * screen;
+            if (screen < target) {
+                height *= target / screen;
+            } else {
+                width *= screen / target;
+            }
+        } else {
+            width = scale;
+            height = parm->m_bloomReductionScale[1];
+        }
+    } else {
+        width = 1.0f;
+        height = 1.0f;
+    }
+    DrMan::ViewInfo* view = m_drMan->m_curViewInfo;
+    createBloomTexture(width * ((float)view->m_captureWidth * BLOOMTEX_SCALE),
+                       height * (BLOOMTEX_SCALE * (float)view->m_captureHeight), all);
+}
+
+void DrPixlPostObjBloom::releaseColorBuff(bool all) {
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    if (parm->m_iblColorMode == 3 || all) {
+        m_dblBuff[0]->releaseTexture();
+        m_dblBuff[1]->releaseTexture();
+    } else {
+        m_dblBuff[DrMan::s_nDblIdx]->releaseTexture();
+    }
+    if (parm->m_iblColorMode == 2 && !all) {
+        return;
+    }
+    m_bloomBuff[0]->releaseTexture();
+    m_bloomBuff[1]->releaseTexture();
+    for (int i = 0; i < 5; i++) {
+        m_scaleBuff[i]->releaseTexture();
+        m_scaleWorkBuff[i]->releaseTexture();
+    }
+    m_bloomBuff[2]->releaseTexture();
+    m_bloomBuff[3]->releaseTexture();
+}
+
 void DrPixlPostObjMotionBlur::render() {
     DrAPGxType::setupScreenQuads(false);
     calcBlurWork();
@@ -652,6 +704,35 @@ void DrPixlPostObjMotionBlur::render() {
     lastRender();
 }
 
+void DrPixlPostObjBloom::calcRender() {
+    DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
+    int type = parm->m_bloomType;
+    if (m_bloomType != type) {
+        BLOOMTEX_SCALE = type == 1 ? 0.25f : 0.5f;
+        releaseColorBuff(true);
+        resetColorBuff(true);
+        m_flags |= 1;
+        m_bloomType = type;
+    }
+    DrAPGxType::setupScreenQuads(false);
+    if (m_drMan->m_postParm[m_drMan->m_postParmIdx]->isBlm2PassExtract()) {
+        calculateDownScaleImpl(DownScale_2PassFirst);
+        grlib::CGLibCtlShader::setMemoryBarrierBit(2);
+        calculateDownScaleImpl(DownScale_2PassSecond);
+    } else {
+        calculateDownScaleImpl(DownScale_Normal);
+    }
+    calculateGaussBlur();
+}
+
+grlib::CGLibTextureBuffer* DrPixlPostMan::getToonGradTex() const {
+    return m_toonGrad != nullptr ? &m_toonGrad->getGradTex() : nullptr;
+}
+
+grlib::CGLibTextureBuffer* DrPixlPostMan::getToonDarkGradTex() const {
+    return m_toonGrad != nullptr ? &m_toonGrad->getDarkGradTex() : nullptr;
+}
+
 void DrPixlPostObjBloom::calculateGaussBlur() {
     DrPixlPostParm* parm = m_drMan->m_postParm[m_drMan->m_postParmIdx];
     calculateGaussBlurImplPS();
@@ -659,9 +740,9 @@ void DrPixlPostObjBloom::calculateGaussBlur() {
         calculateFlareBuff();
         calculateLensFlare();
         DrAPGxType::setupBlend(2);
-        m_compositeBuff->setRenderTarget();
+        m_scaleBuff[2]->setRenderTarget();
         setScaleShader(m_bloomBuff[3]);
-        m_compositeBuff->setColorInvalidate();
+        m_scaleBuff[2]->setColorInvalidate();
         DrAPGxType::setupBlend(0);
     }
 }
@@ -853,6 +934,37 @@ void DrPixlShadowCacheMan::callSelectShadowCacheUpdate(unsigned long mask) { m_s
 
 bool DrPixlShadowCacheObj::clipTest(mm::Vec3 const& pos, float radius) { return m_clip.clipTest(pos, radius); }
 
+DrPixlShadowMan::~DrPixlShadowMan() { releaseTexWork(); }
+
+void DrPixlShadowMan::releaseTexWork() {
+    for (int i = 0; i < 16; i++) {
+        if (m_texWork[i].m_useCount != 0) {
+            m_texWork[i].release();
+        }
+    }
+}
+
+void DrPixlShadowMan::releaseShadow(DrPixlShadowObj* obj) {
+    for (int i = 0; i < m_objNum; i++) {
+        if (m_objs[i] == obj) {
+            TexWork* work = obj->m_depthTarget;
+            if (work->m_useCount != 0 && --work->m_useCount == 0) {
+                work->release();
+                work->m_type = 0;
+                work->m_index = 0;
+                work->m_size = 0.0f;
+                work->m_useCount = 0;
+            }
+            delete obj;
+            for (int j = i + 1; j < m_objNum; j++) {
+                m_objs[j - 1] = m_objs[j];
+            }
+            m_objNum--;
+            return;
+        }
+    }
+}
+
 bool DrPixlShadowMan::setAddObjPos(mm::Vec3 const& pos, float radius) {
     DrMan* drMan = m_drMan;
     if (drMan->m_postParm[drMan->m_postParmIdx]->m_shadowAddObjPos && m_dirShadow) {
@@ -908,6 +1020,17 @@ DrPixlShadowObjDir::~DrPixlShadowObjDir() {
 }
 
 bool DrPixlShadowObjDir::dispChk() { return (m_flags >> 1) & 1; }
+
+bool DrPixlShadowObjDir::clipChk(mm::Vec3 const& pos, float radius, bool noLineTest) {
+    if (!(m_flags & 8) || m_typeClipRange <= radius) {
+        return false;
+    }
+    bool hit = m_clip.clipTest(pos, radius);
+    if (noLineTest || !hit) {
+        return hit;
+    }
+    return m_drMan->m_calcMan->m_pViewWork->m_clipPoli.clipLineTest(pos, m_shadowDir, radius);
+}
 
 int DrPixlShadowObjDir::clipTypeChk(mm::Vec3 const& pos, float radius) {
     if (!(m_flags & 8) || m_typeClipRange <= radius) {

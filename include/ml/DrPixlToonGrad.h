@@ -11,8 +11,10 @@ class DrPixlToonGrad {
 public:
     DrPixlToonGrad(DrMan* drMan);
     ~DrPixlToonGrad();
-    grlib::CGLibTextureBuffer* getGradTex() const;
-    grlib::CGLibTextureBuffer* getDarkGradTex() const;
+    // references: DrPixlPostMan::getToonGradTex/getToonDarkGradTex make a framed call, not a tail call, which a
+    // pointer return would allow (a dereferenceable return attribute blocks it)
+    grlib::CGLibTextureBuffer& getGradTex() const;
+    grlib::CGLibTextureBuffer& getDarkGradTex() const;
     void render();
 
     DrMan* m_drMan;                          // 0x00

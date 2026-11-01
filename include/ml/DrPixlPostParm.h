@@ -177,7 +177,10 @@ public:
     float m_glassBrParm[15];  // 0x4D8, setGlassBrk's values (their meanings are not known)
     unsigned char pad_514[0x4];
     stOverrideParm m_override[2];  // 0x518, by DrMan::s_nDblIdx
-    unsigned char pad_F58[0x1A];
+    // 0xF58: DrPixlPostObjBloom::calcRender rebuilds its buffers when it changes, at a quarter scale for 1 and half
+    // otherwise (the name is not the original's)
+    int m_bloomType;
+    unsigned char pad_F5C[0x16];
     bool m_blm2PassExtract;  // 0xF72, isBlm2PassExtract (with m_tmaa)
     unsigned char pad_F73[0x15];
     // 0xF88: DrPixlPostObjSSR::update fades it to 1 over m_ssrFadeTime * 30 frames (the names are not the original's)
@@ -189,10 +192,15 @@ public:
     bool m_ssaoQuaterNormal;  // 0xFB1, render_beforeTemporal runs passQuaterNormal first while set (name inferred)
     unsigned char pad_FB2[0x1];
     bool m_reduction;  // 0xFB3, calcReductionBuffer scales by m_reductionScale when set
-    unsigned char pad_FB4[0xC];
+    unsigned char pad_FB4[0x4];
+    // 0xFB8: DrPixlPostObjBloom::resetColorBuff's buffer scale while m_reduction is set (the names are not the original's)
+    float m_bloomReductionScale[2];
     float m_reductionScale[2];  // 0xFC0, width, height
     unsigned int m_ofsRenderCheck;  // 0xFC8, calcOfsRenderCheck: x * 100 | y * 100 << 8
-    unsigned char pad_FCC[0x18];
+    // 0xFCC: the width and height whose aspect DrPixlPostObjBloom::resetColorBuff keeps when DrMan::m_qualityMode is 0
+    // (the name is not the original's)
+    float m_bloomAspect[2];
+    unsigned char pad_FD4[0x10];
     // 0xFE4, DrShdLgtGlobalIBL::resetColorBuff resets the view's IBL colour buffer only when it is 3 (the name is not
     // the original's)
     int m_iblColorMode;

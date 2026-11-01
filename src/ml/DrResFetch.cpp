@@ -4383,12 +4383,12 @@ DrPixlToonGrad::~DrPixlToonGrad() {
     }
 }
 
-grlib::CGLibTextureBuffer* DrPixlToonGrad::getGradTex() const {
-    return m_gradTarget[DrMan::s_nDblIdx]->m_pTexture;
+grlib::CGLibTextureBuffer& DrPixlToonGrad::getGradTex() const {
+    return *m_gradTarget[DrMan::s_nDblIdx]->m_pTexture;
 }
 
-grlib::CGLibTextureBuffer* DrPixlToonGrad::getDarkGradTex() const {
-    return m_darkGradTarget[DrMan::s_nDblIdx]->m_pTexture;
+grlib::CGLibTextureBuffer& DrPixlToonGrad::getDarkGradTex() const {
+    return *m_darkGradTarget[DrMan::s_nDblIdx]->m_pTexture;
 }
 
 DrResEtcTexList::~DrResEtcTexList() {
