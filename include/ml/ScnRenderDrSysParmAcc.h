@@ -75,6 +75,7 @@ public:
     void setToonAmbient(bool enable);
     void setPlayerPos(const mm::Vec3& pos);
     void setCameraLight(bool enable);
+    void createAddRenderView(ScnRenderDrViewCtrl* view);
     void deleteAddRenderView(ScnRenderDrViewCtrl* view);
     void setModelTexture(const ScnRenderDrMdlTexture& texture);
     void resetModelTexture(unsigned int slot);

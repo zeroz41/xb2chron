@@ -15,7 +15,7 @@ public:
     int getBoneIndex(const char* name) const;
     const char* getBoneName(int index) const;
     void setBoneMat(int index, const mm::Mat44& mat);
-    mm::Mat44 getBoneMat(int index) const;
+    const mm::Mat44& getBoneMat(int index) const;
     mm::Mat44* getBoneMatPtr(int index);
 
     DrMdlObj* m_drMdl;

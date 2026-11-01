@@ -17,6 +17,8 @@ namespace ml {
 // table 0x7100B7A000
 class ScnRenderDrSys : public ::ml::ScnRender {
 public:
+    // inline (defined in ScnRenderDrSysParmAcc.cpp): the symbols have no copy; thDrSysInitialize news it
+    ScnRenderDrSys(Scn* scn);
     virtual ~ScnRenderDrSys();  // slot 0
     virtual void setDefaultEvn();  // slot 8
     virtual void applyCamera(ml::ScnObjCam*);  // slot 9
@@ -40,6 +42,8 @@ public:
 
     void setCallBack(IDrDrawCallback* callback);
     void releaseCallBack(IDrDrawCallback* callback);
+    static void createDrRender(Scn* scn);
+    static unsigned int thDrSysInitialize(void* arg, void*);
 
     DrMan* m_drMan;  // ScnRenderDrSys::thDrSysInitialize makes it; the renderer's calls go to it
 };

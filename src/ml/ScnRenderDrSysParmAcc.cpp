@@ -15,11 +15,14 @@
 #include "grlib/CGLibBuffFixAlloc.h"
 #include "grlib/CGLibMemPoolAdder.h"
 #include "grlib/CGLibMemPool.h"
+#include "grlib/CGLibCmdBuffer.h"
 #include "classes/grlib/context/CGLibSystemContext.h"
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/ScnRender.h"
 #include "classes/ml/ScnRenderDrSys.h"
 #include "classes/ml/DrMan.h"
+#include "classes/ml/Scn.h"
+#include "classes/ml/WorkCpu.h"
 #include "classes/cloud/CloudMan.h"
 #include "ml/DrIniSys.h"
 #include "ml/DrPixlPostParm.h"
@@ -126,6 +129,32 @@ CGLibVtxStmOut::CGLibVtxStmOut() {}
 CGLibVtxStmOut::~CGLibVtxStmOut() { CGLibMemHandle::free(m_mem); }
 
 void CGLibVtxStmOut::release() { CGLibMemHandle::free(m_mem); }
+
+void CGLibVtxStmOut::createWorkBuff(int size) {
+    CGLibMemHandle::free(m_mem);
+    size += (4 - size % 4) % 4;
+    CGLibMemHandle::allocVertex(m_mem, size);
+    m_stride = 0;
+    m_used = 0;
+    m_size = size;
+    context::CGLibSystemContext::sys()->getVertexGpuAddress(m_gpuAddress, m_mem);
+}
+
+void CGLibVtxStmOut::begin(int stride) {
+    m_stride = stride;
+    context::CGLibSystemContext* pSys = context::CGLibSystemContext::sys();
+    nvnCommandBufferSetRasterizerDiscard(pSys->m_pipeline.m_pCmdBuf, true);
+    nvnCommandBufferBindTransformFeedbackBuffer(pSys->m_pipeline.m_pCmdBuf, 0, m_gpuAddress, m_size);
+    nvnCommandBufferBeginTransformFeedback(pSys->m_pipeline.m_pCmdBuf, m_gpuAddress + m_size);
+}
+
+void CGLibVtxStmOut::end(unsigned int count) {
+    m_used = m_stride * count;
+    context::CGLibSystemContext* pSys = context::CGLibSystemContext::sys();
+    nvnCommandBufferEndTransformFeedback(pSys->m_pipeline.m_pCmdBuf, m_gpuAddress + m_used);
+    nvnCommandBufferSetRasterizerDiscard(pSys->m_pipeline.m_pCmdBuf, false);
+    nvnCommandBufferBarrier(pSys->m_pipeline.m_pCmdBuf, 0x21);
+}
 
 void CGLibVtxStmOut::setStorageBuffer(unsigned int location) {
     if (location != 0xFFFFFFFF) {
@@ -584,6 +613,66 @@ void CGLibReleaseObj_plf::release_vertex(wrkRelease& work) { CGLibMemHandle::fre
 void (*CGLibReleaseObj_plf::s_callRelease[4])(wrkRelease& work) = {release_mempool, release_textrue, release_sampler,
                                                                    release_vertex};
 
+CGLibCmdBuffer::CGLibCmdBuffer() : m_cmdUsed(0), m_ctrlUsed(0), m_init(false) {}
+
+CGLibCmdBuffer::~CGLibCmdBuffer() { release(); }
+
+void CGLibCmdBuffer::release() {
+    if (m_init) {
+        nvnCommandBufferFinalize(&m_cmdBuf);
+        m_memPool.release();
+    }
+}
+
+}  // namespace grlib
+
+// Placeholder name: 1.0.0 leaves it unnamed too (fn_71007B29FC). A file static: CGLibCmdBuffer::setup installs it
+// as the buffer's memory callback (callback data: the CGLibCmdBuffer). What it does: nothing for the two
+// out-of-memory events (0, 1), NN_UNEXPECTED_DEFAULT for any other.
+static void fn_71007084DC(NVNcommandBuffer*, NVNcommandBufferMemoryEvent event, size_t, void*) {
+    switch (event) {
+    case 0:
+    case 1:
+        break;
+    default:
+        nn::detail::UnexpectedDefaultImpl("", "", 0);
+    }
+}
+
+namespace grlib {
+
+void CGLibCmdBuffer::setup(unsigned int offset, unsigned int size, CGLibMemPool& pool, unsigned int ctrlSize) {
+    release();
+    nvnCommandBufferInitialize(&m_cmdBuf, &CGLibManager::sys()->m_device);
+    m_pPool = &pool;
+    m_offset = offset;
+    m_cmdSize = size - ctrlSize;
+    m_ctrlSize = ctrlSize;
+    nvnCommandBufferSetMemoryCallback(&m_cmdBuf, fn_71007084DC);
+    nvnCommandBufferSetMemoryCallbackData(&m_cmdBuf, this);
+    m_init = true;
+}
+
+void CGLibCmdBuffer::begin() {
+    nvnCommandBufferAddCommandMemory(&m_cmdBuf, m_pPool->m_pPool, m_offset + m_ctrlSize, m_cmdSize);
+    nvnCommandBufferAddControlMemory(&m_cmdBuf, static_cast<unsigned char*>(m_pPool->m_pBuffer) + m_offset, m_ctrlSize);
+    nvnCommandBufferBeginRecording(&m_cmdBuf);
+    m_cmdUsed = 0;
+    m_ctrlUsed = 0;
+}
+
+void CGLibCmdBuffer::end() {
+    m_handle = nvnCommandBufferEndRecording(&m_cmdBuf);
+    m_cmdUsed = nvnCommandBufferGetCommandMemoryUsed(&m_cmdBuf);
+    m_ctrlUsed = nvnCommandBufferGetControlMemoryUsed(&m_cmdBuf);
+}
+
+void CGLibCmdBuffer::call() {
+    if ((m_cmdUsed | m_ctrlUsed) != 0) {
+        nvnCommandBufferCallCommands(context::CGLibSystemContext::sys()->m_pCmdBuf, 1, &m_handle);
+    }
+}
+
 CGLibTexDescriptor::CGLibTexDescriptor() {}
 
 CGLibTexDescriptor::~CGLibTexDescriptor() { release(); }
@@ -790,6 +879,8 @@ const char* ScnObjAccResNode::getBoneName(int index) const {
 }
 
 void ScnObjAccResNode::setBoneMat(int index, const mm::Mat44& mat) { m_drMdl->setResBoneMat(index, mat); }
+
+const mm::Mat44& ScnObjAccResNode::getBoneMat(int index) const { return m_drMdl->getResBoneMat(index); }
 
 mm::Mat44* ScnObjAccResNode::getBoneMatPtr(int index) { return m_drMdl->getResBoneMatPtr(index); }
 
@@ -1191,6 +1282,23 @@ ScnObjIBL* ScnRenderDrSys::createIBL(Scn* scn, const void* res, int view) { retu
 
 void ScnRenderDrSys::createEnvColi(Scn* scn, const void* res, int view) { ScnObjEnvColiDr::create(scn, res, view); }
 
+inline ScnRenderDrSys::ScnRenderDrSys(Scn* scn) : ScnRender(scn) {
+    m_drMan = new (scn->m_allocHandle, nullptr, 0, 4, false) DrMan(scn);
+}
+
+void ScnRenderDrSys::createDrRender(Scn* scn) {
+    WorkCpu::runThread(WorkCpu::getRenderCPUID(), thDrSysInitialize, scn, nullptr, nullptr, true,
+                       static_cast<WKCPU_SYNC>(1));
+}
+
+unsigned int ScnRenderDrSys::thDrSysInitialize(void* arg, void*) {
+    Scn* scn = static_cast<Scn*>(arg);
+    if (scn->m_renderDrSys == nullptr) {
+        scn->m_renderDrSys = new (scn->m_allocHandle, nullptr, 0, 4, false) ScnRenderDrSys(scn);
+    }
+    return 0;
+}
+
 ScnRenderDrEnvColi::ScnRenderDrEnvColi(int view) { m_envColi = DrMan::getIns()->m_envMan[view]->m_envColiMan; }
 
 ScnRenderDrEnvColi::~ScnRenderDrEnvColi() {}
@@ -1350,6 +1458,22 @@ void ScnRenderDrSysParmAcc::setPlayerPos(const mm::Vec3& pos) {}
 
 void ScnRenderDrSysParmAcc::setCameraLight(bool enable) { m_drMan->m_cameraLight = enable; }
 
+void ScnRenderDrSysParmAcc::createAddRenderView(ScnRenderDrViewCtrl* view) {
+    DR_VIEW_PARAM param;
+    param.m_width = view->m_width;
+    param.m_height = view->m_height;
+    param.m_viewNo = view->m_viewIndex + 1;
+    param.m_clear = view->m_clear;
+    param.m_flagA = view->m_flagA;
+    param.m_flagB = view->m_flagB;
+    param.m_texture = &view->m_texture;
+    param.m_isReady = &view->m_isReady;
+    param.m_color = view->m_color;
+    param.m_scaleX = &view->m_scaleX;
+    param.m_scaleY = &view->m_scaleY;
+    m_drMan->createAddRenderSystem(&param);
+}
+
 void ScnRenderDrSysParmAcc::deleteAddRenderView(ScnRenderDrViewCtrl* view) {
     m_drMan->deleteAddRenderSystem(view->m_viewIndex + 1);
 }
@@ -1389,6 +1513,11 @@ void ScnRenderDrSysParmAcc::setCaptureMode(bool enable) {
     } else {
         drMan->m_captureMode[DrMan::s_nDblStockIdx] = 2;
     }
+}
+
+void ScnRenderDrSysParmAcc::fn_710070A2F4(bool flag) {
+    DrMan* drMan = DrMan::get();
+    drMan->m_commonFlag = flag;
 }
 
 }  // namespace ml

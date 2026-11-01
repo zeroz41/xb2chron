@@ -69,7 +69,9 @@ public:
     // finalizes and frees the texture, frees the memory and the descriptor ids once the GPU is done with them
     void releaseDelayTexture(NVNtexture* texture, void* mem, int textureId, int samplerId);
 
-    unsigned char pad_8[0x8];
+    // 0x8: the command buffer being recorded (CGLibCmdBuffer::call calls its commands into it; the name is not the
+    // original's)
+    NVNcommandBuffer* m_pCmdBuf;
     // 0x10, 0x38, 0x60: three pool lists, separate members (the destructor reaches the first through its own base
     // register, not an array's); the names are not the original's
     CGLibMemPoolList m_memPoolList0;

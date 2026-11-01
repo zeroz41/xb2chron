@@ -23,10 +23,25 @@ namespace ml { class DrPixlPostParm; }
 namespace ml { class IDrDrawCallback; }
 namespace ml { class WinProc; }
 namespace ml { class CriticalSection; }
+namespace ml { class Scn; }
 
 namespace ml {
-// what ScnRenderDrSysParmAcc::createAddRenderView builds from a ScnRenderDrViewCtrl
-struct DR_VIEW_PARAM;
+// what ScnRenderDrSysParmAcc::createAddRenderView builds from a ScnRenderDrViewCtrl; createAddRenderSystem copies
+// its 0x38 bytes into the double-buffered list (the field names are not the original's: each is named after the
+// ScnRenderDrViewCtrl field it is built from)
+struct DR_VIEW_PARAM {
+    unsigned int m_width;
+    unsigned int m_height;
+    int m_viewNo;  // the view's render system index (ScnRenderDrViewCtrl::m_viewIndex + 1)
+    bool m_clear;
+    bool m_flagA;
+    bool m_flagB;
+    float* m_color;
+    bool* m_isReady;
+    float* m_scaleX;
+    float* m_scaleY;
+    grlib::CGLibTextureBuffer** m_texture;
+};
 class DrEnvironmentMan;
 
 // a texture a scene's models are drawn with (ScnRenderDrSysParmAcc::setModelTexture builds it; the field names are
@@ -39,6 +54,8 @@ struct DR_MODEL_TEXTURE {
 // table 0x7100B7ABB0
 class DrMan : public ::ml::IWorkBackground {
 public:
+    // ScnRenderDrSys::thDrSysInitialize news it (0x1E30 bytes) with the scene's handle
+    DrMan(Scn* scn);
     virtual ~DrMan();  // slot 0
     virtual void bkgHomeMenu(bool);  // slot 2
 
@@ -209,7 +226,9 @@ public:
     unsigned int* m_dispOffBits;  // 0x1D20: a bit per display index, set = hidden (ScnObjAccPartsEtcPos::isDisp; name inferred)
     unsigned char pad_1D28[0x8];
     mm::Vec3 m_globalWind[2];           // 0x1D30, by s_nDblNowIdx (getGlobalWind)
-    unsigned char pad_1D50[0x4];
+    // 0x1D50: ScnRenderDrSysParmAcc::fn_710070A2F4 stores its flag here (fw::CommonResource passes it); what reads
+    // it is not known (the name is not the original's)
+    int m_commonFlag;
     // 0x1D54: 1 makes DrIniSys load the DLC toon gradients and filter LUT (the name is not the original's)
     int m_dlcShaderMode;
     unsigned char pad_1D58[0x25];

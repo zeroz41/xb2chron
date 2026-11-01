@@ -52,6 +52,11 @@ bool NotNullImpl(unsigned long pointer);
 
 }}  // namespace nn::diag
 
+namespace nn { namespace detail {
+// what NN_UNEXPECTED_DEFAULT calls (the release build passes empty texts and line 0)
+[[noreturn]] void UnexpectedDefaultImpl(const char* functionName, const char* fileName, int lineNumber);
+}}  // namespace nn::detail
+
 // the SDK's log macro: the call site's line, file and function travel with the text
 #define NN_LOG(...)                                                       \
     do {                                                                  \

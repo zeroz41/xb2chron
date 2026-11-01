@@ -199,6 +199,50 @@ typedef NVNboolean (*PFNNVNMEMORYPOOLINITIALIZEPROC)(NVNmemoryPool* pool, const 
 extern PFNNVNMEMORYPOOLINITIALIZEPROC pfnc_nvnMemoryPoolInitialize;
 static inline NVNboolean nvnMemoryPoolInitialize(NVNmemoryPool* pool, const NVNmemoryPoolBuilder* builder) { return pfnc_nvnMemoryPoolInitialize(pool, builder); }
 
+typedef void (*PFNNVNCOMMANDBUFFERMEMORYCALLBACKPROC)(NVNcommandBuffer* cmdBuf, NVNcommandBufferMemoryEvent event,
+                                                     size_t minSize, void* callbackData);
+typedef NVNboolean (*PFNNVNCOMMANDBUFFERINITIALIZEPROC)(NVNcommandBuffer* cmdBuf, NVNdevice* device);
+extern PFNNVNCOMMANDBUFFERINITIALIZEPROC pfnc_nvnCommandBufferInitialize;
+static inline NVNboolean nvnCommandBufferInitialize(NVNcommandBuffer* cmdBuf, NVNdevice* device) { return pfnc_nvnCommandBufferInitialize(cmdBuf, device); }
+typedef void (*PFNNVNCOMMANDBUFFERFINALIZEPROC)(NVNcommandBuffer* cmdBuf);
+extern PFNNVNCOMMANDBUFFERFINALIZEPROC pfnc_nvnCommandBufferFinalize;
+static inline void nvnCommandBufferFinalize(NVNcommandBuffer* cmdBuf) { pfnc_nvnCommandBufferFinalize(cmdBuf); }
+typedef void (*PFNNVNCOMMANDBUFFERSETMEMORYCALLBACKPROC)(NVNcommandBuffer* cmdBuf, PFNNVNCOMMANDBUFFERMEMORYCALLBACKPROC callback);
+extern PFNNVNCOMMANDBUFFERSETMEMORYCALLBACKPROC pfnc_nvnCommandBufferSetMemoryCallback;
+static inline void nvnCommandBufferSetMemoryCallback(NVNcommandBuffer* cmdBuf, PFNNVNCOMMANDBUFFERMEMORYCALLBACKPROC callback) { pfnc_nvnCommandBufferSetMemoryCallback(cmdBuf, callback); }
+typedef void (*PFNNVNCOMMANDBUFFERSETMEMORYCALLBACKDATAPROC)(NVNcommandBuffer* cmdBuf, void* callbackData);
+extern PFNNVNCOMMANDBUFFERSETMEMORYCALLBACKDATAPROC pfnc_nvnCommandBufferSetMemoryCallbackData;
+static inline void nvnCommandBufferSetMemoryCallbackData(NVNcommandBuffer* cmdBuf, void* callbackData) { pfnc_nvnCommandBufferSetMemoryCallbackData(cmdBuf, callbackData); }
+typedef void (*PFNNVNCOMMANDBUFFERADDCOMMANDMEMORYPROC)(NVNcommandBuffer* cmdBuf, const NVNmemoryPool* pool, ptrdiff_t offset, size_t size);
+extern PFNNVNCOMMANDBUFFERADDCOMMANDMEMORYPROC pfnc_nvnCommandBufferAddCommandMemory;
+static inline void nvnCommandBufferAddCommandMemory(NVNcommandBuffer* cmdBuf, const NVNmemoryPool* pool, ptrdiff_t offset, size_t size) { pfnc_nvnCommandBufferAddCommandMemory(cmdBuf, pool, offset, size); }
+typedef void (*PFNNVNCOMMANDBUFFERADDCONTROLMEMORYPROC)(NVNcommandBuffer* cmdBuf, void* memory, size_t size);
+extern PFNNVNCOMMANDBUFFERADDCONTROLMEMORYPROC pfnc_nvnCommandBufferAddControlMemory;
+static inline void nvnCommandBufferAddControlMemory(NVNcommandBuffer* cmdBuf, void* memory, size_t size) { pfnc_nvnCommandBufferAddControlMemory(cmdBuf, memory, size); }
+typedef void (*PFNNVNCOMMANDBUFFERBEGINRECORDINGPROC)(NVNcommandBuffer* cmdBuf);
+extern PFNNVNCOMMANDBUFFERBEGINRECORDINGPROC pfnc_nvnCommandBufferBeginRecording;
+static inline void nvnCommandBufferBeginRecording(NVNcommandBuffer* cmdBuf) { pfnc_nvnCommandBufferBeginRecording(cmdBuf); }
+typedef NVNcommandHandle (*PFNNVNCOMMANDBUFFERENDRECORDINGPROC)(NVNcommandBuffer* cmdBuf);
+extern PFNNVNCOMMANDBUFFERENDRECORDINGPROC pfnc_nvnCommandBufferEndRecording;
+static inline NVNcommandHandle nvnCommandBufferEndRecording(NVNcommandBuffer* cmdBuf) { return pfnc_nvnCommandBufferEndRecording(cmdBuf); }
+typedef size_t (*PFNNVNCOMMANDBUFFERGETCOMMANDMEMORYUSEDPROC)(const NVNcommandBuffer* cmdBuf);
+extern PFNNVNCOMMANDBUFFERGETCOMMANDMEMORYUSEDPROC pfnc_nvnCommandBufferGetCommandMemoryUsed;
+static inline size_t nvnCommandBufferGetCommandMemoryUsed(const NVNcommandBuffer* cmdBuf) { return pfnc_nvnCommandBufferGetCommandMemoryUsed(cmdBuf); }
+typedef size_t (*PFNNVNCOMMANDBUFFERGETCONTROLMEMORYUSEDPROC)(const NVNcommandBuffer* cmdBuf);
+extern PFNNVNCOMMANDBUFFERGETCONTROLMEMORYUSEDPROC pfnc_nvnCommandBufferGetControlMemoryUsed;
+static inline size_t nvnCommandBufferGetControlMemoryUsed(const NVNcommandBuffer* cmdBuf) { return pfnc_nvnCommandBufferGetControlMemoryUsed(cmdBuf); }
+typedef void (*PFNNVNCOMMANDBUFFERCALLCOMMANDSPROC)(NVNcommandBuffer* cmdBuf, int numCommands, const NVNcommandHandle* handles);
+extern PFNNVNCOMMANDBUFFERCALLCOMMANDSPROC pfnc_nvnCommandBufferCallCommands;
+static inline void nvnCommandBufferCallCommands(NVNcommandBuffer* cmdBuf, int numCommands, const NVNcommandHandle* handles) { pfnc_nvnCommandBufferCallCommands(cmdBuf, numCommands, handles); }
+typedef void (*PFNNVNCOMMANDBUFFERBINDTRANSFORMFEEDBACKBUFFERPROC)(NVNcommandBuffer* cmdBuf, int index, NVNbufferAddress buffer, size_t size);
+extern PFNNVNCOMMANDBUFFERBINDTRANSFORMFEEDBACKBUFFERPROC pfnc_nvnCommandBufferBindTransformFeedbackBuffer;
+static inline void nvnCommandBufferBindTransformFeedbackBuffer(NVNcommandBuffer* cmdBuf, int index, NVNbufferAddress buffer, size_t size) { pfnc_nvnCommandBufferBindTransformFeedbackBuffer(cmdBuf, index, buffer, size); }
+typedef void (*PFNNVNCOMMANDBUFFERBEGINTRANSFORMFEEDBACKPROC)(NVNcommandBuffer* cmdBuf, NVNbufferAddress buffer);
+extern PFNNVNCOMMANDBUFFERBEGINTRANSFORMFEEDBACKPROC pfnc_nvnCommandBufferBeginTransformFeedback;
+static inline void nvnCommandBufferBeginTransformFeedback(NVNcommandBuffer* cmdBuf, NVNbufferAddress buffer) { pfnc_nvnCommandBufferBeginTransformFeedback(cmdBuf, buffer); }
+typedef void (*PFNNVNCOMMANDBUFFERENDTRANSFORMFEEDBACKPROC)(NVNcommandBuffer* cmdBuf, NVNbufferAddress buffer);
+extern PFNNVNCOMMANDBUFFERENDTRANSFORMFEEDBACKPROC pfnc_nvnCommandBufferEndTransformFeedback;
+static inline void nvnCommandBufferEndTransformFeedback(NVNcommandBuffer* cmdBuf, NVNbufferAddress buffer) { pfnc_nvnCommandBufferEndTransformFeedback(cmdBuf, buffer); }
 typedef void (*PFNNVNMEMORYPOOLFINALIZEPROC)(NVNmemoryPool* pool);
 extern PFNNVNMEMORYPOOLFINALIZEPROC pfnc_nvnMemoryPoolFinalize;
 static inline void nvnMemoryPoolFinalize(NVNmemoryPool* pool) { pfnc_nvnMemoryPoolFinalize(pool); }

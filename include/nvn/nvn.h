@@ -11,6 +11,7 @@ typedef unsigned long NVNbufferAddress;
 typedef unsigned long NVNtextureHandle;
 typedef unsigned long NVNimageHandle;
 typedef unsigned long uint64_t;
+typedef uint64_t NVNcommandHandle;
 
 typedef enum NVNblendEquation { NVN_BLEND_EQUATION_LARGE = 0x7FFFFFFF } NVNblendEquation;
 typedef enum NVNblendFunc { NVN_BLEND_FUNC_LARGE = 0x7FFFFFFF } NVNblendFunc;
@@ -31,6 +32,7 @@ typedef enum NVNminFilter { NVN_MIN_FILTER_LARGE = 0x7FFFFFFF } NVNminFilter;
 typedef enum NVNmagFilter { NVN_MAG_FILTER_LARGE = 0x7FFFFFFF } NVNmagFilter;
 typedef enum NVNcompareMode { NVN_COMPARE_MODE_LARGE = 0x7FFFFFFF } NVNcompareMode;
 typedef enum NVNcompareFunc { NVN_COMPARE_FUNC_LARGE = 0x7FFFFFFF } NVNcompareFunc;
+typedef enum NVNcommandBufferMemoryEvent { NVN_COMMAND_BUFFER_MEMORY_EVENT_LARGE = 0x7FFFFFFF } NVNcommandBufferMemoryEvent;
 
 typedef struct NVNblendState { char reserved[8]; } NVNblendState;
 typedef struct NVNchannelMaskState { char reserved[4]; } NVNchannelMaskState;
