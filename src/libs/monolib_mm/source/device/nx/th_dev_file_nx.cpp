@@ -1729,6 +1729,15 @@ namespace dev_touch_detail {
 mm::Vec2 s_initPos(-1.0f, -1.0f);
 }  // namespace dev_touch_detail
 
+void DevTouch::itUp(unsigned int id, float, float) {
+    for (Touch* it = m_touch.begin(); it != m_touch.end(); ++it) {
+        if (it->m_id == id) {
+            m_touch.erase(it);
+            return;
+        }
+    }
+}
+
 void DevTouch::updateDevice() {}
 
 void DevTouch::wkUpdate() {
