@@ -1,3 +1,4 @@
+#include "gf/FileStaticVec3.h"
 #include "gf/SDataDriver.h"
 #include "gf/SDataDlc.h"
 #include "classes/gf/GfBdatBlade.h"
@@ -3154,6 +3155,63 @@ const char* GfDataSound::getSeFileByWeaponType(unsigned int type) {
     return s_weaponTypeSeFiles[type];
 }
 
+// the event tables fn_710024EBD8 and getEventID walk: a GfDataBdat table id each, with a second value (100 in each;
+// nothing seen here reads it). The type and its names are not the original's (its constructor is not constexpr:
+// the static initialiser stores the pairs).
+struct EventBdat {
+    EventBdat(unsigned int bdat, unsigned int value) : m_bdat(bdat), m_value(value) {}
+    unsigned int m_bdat;
+    unsigned int m_value;
+};
+
+static EventBdat s_eventBdats[5] = {EventBdat(0xE8, 100), EventBdat(0xEC, 100), EventBdat(0xE9, 100),
+                                    EventBdat(0xEA, 100), EventBdat(0xEB, 100)};
+// the maps' weather records when the game data has no free or matching one (fn_710024E0D0, fn_710024E1C8; the
+// name is not the original's)
+static SDataWeather s_weather;
+
+WeatherParam* GfDataBlade::fn_710024E0D0() {
+    SDataGame* game = GfDataManager::getDataGame();
+    int i = game->m_weather.find(0);
+    if (i >= 0) {
+        return &game->m_weather.m_params[i];
+    }
+    i = s_weather.find(0);
+    if (i >= 0) {
+        return &s_weather.m_params[i];
+    }
+    static WeatherParam s_param;
+    return &s_param;
+}
+
+WeatherParam* GfDataBlade::fn_710024E1C8(unsigned int map) {
+    static WeatherParam s_param;
+    if (map != 0) {
+        SDataGame* game = GfDataManager::getDataGame();
+        int i;
+        if (GfBdatMaplist::get()->getMaplistresource(map) != nullptr && (i = game->m_weather.find(map)) >= 0) {
+            return &game->m_weather.m_params[i];
+        }
+        if (GfBdatMaplist::get()->getMaplistresource(map) != nullptr && (i = s_weather.find(map)) >= 0) {
+            return &s_weather.m_params[i];
+        }
+        s_param.m_mapId = 0;
+    }
+    return &s_param;
+}
+
+unsigned int GfDataEvent::fn_710024EBD8(unsigned int event) {
+    for (int i = 0; i < 5; i++) {
+        unsigned char* fp = GfDataBdat::getFP(s_eventBdats[i].m_bdat);
+        unsigned int top = Bdat::getIdTop(fp);
+        unsigned int count = Bdat::getIdCount(fp);
+        if (top <= event && event < top + count) {
+            return s_eventBdats[i].m_bdat;
+        }
+    }
+    return 0;
+}
+
 void fn_7100254DC4(SSoundUiOption* option, unsigned int index, unsigned char value) {
     if (GfBdatBtl::get() == nullptr) {
         return;
@@ -3168,6 +3226,103 @@ unsigned char fn_71002550C0(const SSoundUiOption* option, unsigned int index) {
         return 0;
     }
     return option->m_list[index - 1];
+}
+
+// the hitonowa list with one NPC per hitonowa flag value (fn_7100255238 fills it): a function-static list whose
+// accessor every user inlines (no copy of its own), so the name is not the original's
+static mm::mtl::FixedVector<unsigned short, 256>& getHitonowaFlagNpcList();
+
+// the NPC's hitonowa flag value (GfBdatRsc::fn_7100219C58) for an id above 2000, else 0 (inlined: the name is not
+// the original's)
+static unsigned int getHitonowaFlag(unsigned int id) {
+    if (id <= 2000) {
+        return 0;
+    }
+    return GfBdatRsc::get()->fn_7100219C58(id);
+}
+
+void GfDataBlade::fn_71002550E8() {
+    fn_71002554E4().clear();
+    getHitonowaFlagNpcList().clear();
+}
+void GfDataBlade::fn_7100255190() {
+    fn_71002554E4().clear();
+    getHitonowaFlagNpcList().clear();
+}
+void GfDataBlade::fn_7100255238() {
+    fn_71002554E4().clear();
+    getHitonowaFlagNpcList().clear();
+    GfBdatRsc* bdat = GfBdatRsc::get();
+    for (unsigned int id = bdat->getRscNpcListStart(), end = bdat->getRscNpcListEnd(); id < end; id++) {
+        unsigned int flag = getHitonowaFlag(id);
+        if (flag == 0) {
+            continue;
+        }
+        fn_71002554E4().push_back(id);
+        mm::mtl::FixedVector<unsigned short, 256>& list = getHitonowaFlagNpcList();
+        bool found = false;
+        for (unsigned short other : list) {
+            if (getHitonowaFlag(other) == flag) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            getHitonowaFlagNpcList().push_back(id);
+        }
+    }
+}
+mm::mtl::FixedVector<unsigned short, 256>& GfDataBlade::fn_71002554E4() {
+    static mm::mtl::FixedVector<unsigned short, 256> s_list;
+    return s_list;
+}
+
+static mm::mtl::FixedVector<unsigned short, 256>& getHitonowaFlagNpcList() {
+    static mm::mtl::FixedVector<unsigned short, 256> s_list;
+    return s_list;
+}
+
+void GfDataBlade::fn_7100255550(int& set, int& total) {
+    set = 0;
+    total = 0;
+    mm::mtl::FixedVector<unsigned short, 256>& list = getHitonowaFlagNpcList();
+    for (const unsigned short& id : list) {
+        total++;
+        unsigned int flag = getHitonowaFlag(id);
+        if (flag != 0) {
+            unsigned int state = GfGameFlag::getLocal(2, flag);
+            if (state == 1 || state == 3) {
+                set++;
+            }
+        }
+    }
+}
+
+int GfDataBlade::fn_7100255638() {
+    int count = 0;
+    mm::mtl::FixedVector<unsigned short, 256>& list = getHitonowaFlagNpcList();
+    for (unsigned short id : list) {
+        if (id > 2000) {
+            unsigned int flag = GfBdatRsc::get()->fn_7100219CE0(id);
+            if (flag != 0 && GfGameFlag::getLocal(1, flag) != 0) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+int GfDataBlade::fn_71002556FC() {
+    int count = 0;
+    mm::mtl::FixedVector<unsigned short, 256>& list = getHitonowaFlagNpcList();
+    for (unsigned short id : list) {
+        unsigned int flag = getHitonowaFlag(id);
+        unsigned int state = flag != 0 ? GfGameFlag::getLocal(2, flag) : 0;
+        if (state == 1) {
+            count++;
+        }
+    }
+    return count;
 }
 
 unsigned int GfDataBlade::fn_71002557C8(unsigned int id) {

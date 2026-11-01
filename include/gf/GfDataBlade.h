@@ -3,6 +3,7 @@
 
 #include "gf/AchievQuest.h"
 #include "mm/mtl/FixedVector.h"
+#include "gf/SDataWeather.h"
 
 namespace gf { class SDataBlade; enum ActivateType : int; enum CLOUD_SEA : int; enum WEATYPE : int; enum WEATHERID : int; }
 namespace gf { struct BladeArtsSlot; }
@@ -26,19 +27,6 @@ struct AchievInfo {
 };
 
 // the blades' game data (functions, by its symbols)
-// a map's record in the game data (0x20 bytes; GfDataBlade's fn_710024E1C8 finds it by m_mapId; GfFieldWeather keeps
-// each map's weather in it). The type name is 1.0.0's: GfFieldWeather::updateEvent hands fn_710024E1C8's record to
-// createWeather(const WeatherParam&, float). The field names are not the original's.
-struct WeatherParam {
-    char m_resource[8];  // GfBdatMaplist::getMaplistresource's name (GfFieldWeather::setupGame copies it in)
-    WEATYPE m_type;  // the map's weather, its id, time and length (GfFieldWeather's fn_7100280F84 saves them)
-    WEATHERID m_id;
-    float m_time;
-    float m_timeMax;
-    unsigned int m_mapId;
-    unsigned int m_cloudSea;  // fn_710024E8F4 stores (cloudSea != 0); GfFieldWeather::getCloudSea reads it
-};
-
 class GfDataBlade {
 public:
     // fills an affinity chart quest from its chart (GfQuestTask::setupOrderTask passes GfDataQuest::getAchievQuest's)
@@ -105,6 +93,18 @@ public:
     // walks GfBdatRsc's NPC list (getRscNpcListStart..End, fn_7100219C58) into the same function-static lists;
     // GfDataManager::setupGame and gevReloadBdat (type 1) call it.
     static void fn_7100255238();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in GfDataBlade's
+    // unit right after fn_7100255238 (no this). What it does: returns the first function-static list (the NPCs above
+    // 2000 with a GfBdatRsc::fn_7100219C58 hitonowa flag, filled by fn_7100255238); fn_710041D568 (hitonowa menu) reads it.
+    static mm::mtl::FixedVector<unsigned short, 256>& fn_71002554E4();
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members for the same reason. What they do:
+    // walk the second function-static list (one NPC per hitonowa flag value). fn_7100255550: total = its count, set =
+    // the entries whose flag's local value (type 2) is 1 or 3 (fn_710024DCAC, fn_710041D568 call it); fn_7100255638:
+    // the entries whose GfBdatRsc::fn_7100219CE0 flag is set (type 1); fn_71002556FC: the entries whose type-2 local
+    // value is 1 (both called by fn_71002CAE30).
+    static void fn_7100255550(int& set, int& total);
+    static int fn_7100255638();
+    static int fn_71002556FC();
     // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members because they sit in GfDataBlade's
     // unit after its fn_7100255238 (no class of their own; no this). What they do: for an id above 2000 with a
     // GfBdatRsc::fn_7100219C58 value v, the 1-based slot i of the 8-bit local flags 0x10C4 + i (fn_71002557C8) or

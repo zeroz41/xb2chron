@@ -12,6 +12,7 @@
 #include "gf/QuestID.h"
 #include "mm/mtl/FixedVector.h"
 #include "mm/Vec3.h"
+#include "gf/SDataWeather.h"
 
 namespace gf {
 // one of the game data's task achievements: 12 bytes (fn_71002E9D10 steps them by 12; the type name is not the
@@ -135,7 +136,7 @@ public:
     // add/remove/getLastOrderParentQuest; room for 256) and (0x10A538) their count. The names are not the original's.
     QuestID m_orderParentQuests[256];
     unsigned int m_orderParentQuestCount;
-    unsigned char pad_10A53C[0x800];
+    SDataWeather m_weather;  // 0x10A53C (SDataGame::SDataGame calls its clear(); the name is not the original's)
     unsigned int m_ether;  // 0x10AD3C (named after its accessors; the name is not the original's)
     // 0x10AD40: GfDataUtil::getMoveDistance/setMoveDistance, [0] for AMOVE 0, [1] for 1 (the name is not the
     // original's)
