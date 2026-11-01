@@ -4,6 +4,7 @@
 #include "classes/mtl/IMemAllocator.h"
 #include "ml/CriticalSection.h"
 #include "mm/mtl/IntrusiveList.h"
+#include "mtl/CallStackInfo.h"
 
 namespace mtl {
 
@@ -11,6 +12,18 @@ namespace mtl {
 // createAllocator's type 1; 0x88 bytes). Member names other than m_name are not the original's
 class DlAllocator : public IMemAllocator {
 public:
+    // what allocate puts at the end of every allocation (initFooter, 1.0.0): the name and field names are
+    // not the original's
+    struct Footer {
+        unsigned int m_magic;  // FOOTER_MAGIC
+        long pad_8;  // initFooter's last argument
+        CallStackInfo* m_info;  // CallStackManager::regist's record, or null
+    };
+    static const unsigned int FOOTER_MAGIC = 0x44434241;  // "ABCD" (name not the original's)
+
+    // 1.0.0: the footer at the end of allocation p and the offset it is at (null and 0 when p has no room for one)
+    static Footer* getNewInfo(const void* p, unsigned long& size);
+
     DlAllocator() : m_mspace(nullptr), m_base(nullptr), m_size(0) {}
     virtual ~DlAllocator();  // slot 0
     virtual void create(void* p, unsigned long size, const char* pszName);  // slot 2
