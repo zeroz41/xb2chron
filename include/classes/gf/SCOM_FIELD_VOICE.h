@@ -41,8 +41,9 @@ public:
         GAME_VOICE_HANDLE* m_voice;
     };
 
-    SCOM_FIELD_VOICE()
-        : SCOM(SCOM_TYPE(0x3f)), m_flagD0(false), m_flagD1(false), m_stopOnEvent(false),
+    // the party voices (createSkipTravel) pass true: they are cut short by an event
+    SCOM_FIELD_VOICE(bool stopOnEvent = false)
+        : SCOM(SCOM_TYPE(0x3f)), m_flagD0(false), m_flagD1(false), m_stopOnEvent(stopOnEvent),
           m_flagD3(false) {}
     // inline: the create functions queue their voices in place
     void add(const ParamObj& obj, CV_FIELD field, CV_PRIO prio, float wait = 0.0f) {
@@ -53,12 +54,15 @@ public:
     // plays at once (no request) for the object the player controls
     static GAME_VOICE_HANDLE* create(CV_FIELD field, CV_PRIO prio);
     // the bad weather voice and a time range's voice (GfGameScene::gevChangeWeather and gevChangeTimeRange call them
-    // and ignore what they return, so the return type is not established)
+    // and ignore what they return; createTime returns the request handle or -1, outside battle, for a party slot
+    // fn_71005680B0 picks whose driver has HP and is valid: the driver's voice, then its partner's)
     static void createBadWeather();
-    static void createTime(CV_FIELD field);
-    // the voice for leaving an inn (GfMenuObjShop::seqStartSleepFade calls it and ignores what it returns, so the
-    // return type is not established)
-    static void createExitInn();
+    static unsigned long createTime(CV_FIELD field);
+    // the voice for leaving an inn (GfMenuObjShop::seqStartSleepFade calls it and ignores what it returns): the
+    // partner's voice, then the driver's (field 9), with m_flagD0 set; the request handle or -1
+    static unsigned long createExitInn();
+    // the restart voice (GfPlayComPlayerDead::update): like createTime (no battle test), each voice 0.5 s late
+    static unsigned long createRestart(CV_FIELD field);
     // plays at once for obj, or for the object the player controls when obj names nothing (1.0.0 has it out of line;
     // 3.0.1 inlines every call)
     static GAME_VOICE_HANDLE* create(const ParamObj& obj, CV_FIELD field, CV_PRIO prio);
@@ -70,6 +74,9 @@ public:
     static GAME_VOICE_HANDLE* createReleaseBlade(unsigned int id);
     static GAME_VOICE_HANDLE* createAchievement(unsigned int id, unsigned int);
     static GAME_VOICE_HANDLE* createEngage(unsigned int id);
+    // the blade's voice (field 27) and, queued after it, its set driver's (or else its creator's) for the same field
+    // (GfMenuObjBlKizunaRing::seqComplete); the request handle or -1
+    static unsigned long createAchievementAll(unsigned int id);
     // the favourite voice of a driver or blade (GfMenuObjPouch2::procFavFlag returns what it returns)
     static GAME_VOICE_HANDLE* createFavorite(unsigned int id, FAVORITE favorite);
     static unsigned long createMercenariesStart(unsigned int id);
@@ -98,7 +105,11 @@ public:
     static GAME_VOICE_HANDLE* createFieldSkillMiss(unsigned int);
     static unsigned long createMercenariesEnd(unsigned int id);
     static unsigned long createMercenariesResult(unsigned int id);
+    // the landmark (field 5) and unexplored-area (field 6) voices: outside battle, once GfGameScene::m_value634 is
+    // 60 or more, for a party slot fn_71005680B0 picks whose driver has HP (createUnexplored: and is valid): the
+    // driver (priority 1), then its partner (priority 3); the request handle or -1
     static unsigned long createLandmark();
+    static unsigned long createUnexplored();
 
     // Placeholder name: nothing names it (1.0.0 has it unnamed too, at 0x71005CFB94, called from the same three
     // create functions). A member because only SCOM_FIELD_VOICE's createMercenariesStart/End/Result call it, in this
@@ -106,6 +117,17 @@ public:
     // (16-bit blade IDs) in a 32-entry mm::mtl::FixedVector on its stack, and returns one picked by
     // ml::mtRand(count), or 0 when none; the callers queue a second voice for that blade (ParamObj(3, blade)).
     static unsigned int fn_7100567A44();
+    // the skip-travel voice (field 19 when the argument holds, else 20) for the driver and its blade (Torna mode:
+    // its second driver) of a party slot fn_71005680B0 picks; queued with m_stopOnEvent. Returns -1 whatever it
+    // queues (GfReqCommand::execMapjump calls it).
+    static unsigned long createSkipTravel(bool start);
+    // Placeholder name: new in 3.0.1 (1.0.0 has no Torna-mode test in its place). A member because only
+    // SCOM_FIELD_VOICE's create functions (createLandmark, createUnexplored, createExitInn, createSkipTravel,
+    // createRestart, createBadWeather, createTime) call it. What it does: collects the party slots 0..2 whose
+    // driver and blade are valid game objects (GfGameObj::isValidGameObj(handle, true, null); when
+    // GfGameManager::fn_71002A9E68 holds, whose two GfGameParty::getDriverBdatId(slot, 0/1) are non-zero) in a
+    // 32-entry mm::mtl::FixedVector<unsigned short> and returns one picked by ml::mtRand(count), or -1 when none.
+    static int fn_71005680B0();
 
     // true while the voices are to be cut short: 1.0.0 has it out of line (m_stopOnEvent and
     // GfGameManager::isPlayEvent()); 3.0.1's exec inlines it and also tests m_flagD3

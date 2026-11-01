@@ -303,7 +303,9 @@ public:
     // GfGameManager::fn_71002AC384 answers whether it is above 0 (btl::BattleCharacter::IsProcAI asks; the name is
     // not the original's)
     int m_value630;
-    unsigned char pad_634[0x4];
+    // SCOM_FIELD_VOICE::createLandmark and createUnexplored play nothing while it is below 60 (+0x624 in 1.0.0;
+    // the name is not the original's)
+    unsigned int m_value634;
     EvtPlayerStop m_eventPlayerStop;  // setEventPlayerStop's
     EvtPlayerStop m_resetBladePlayerStop;  // setResetBladePlayerStop's
     EvtPlayerStop m_gimmickPlayerStop;  // fn_71002C345C's (GfFieldMapGimmick::update calls it)

@@ -128,6 +128,9 @@
 #include "classes/gf/SCOM_ADD_ITEM.h"
 #include "gf/GfItemUtil.h"
 #include "gf/GfQuestUtil.h"
+#include "gf/QuestListAcc.h"
+#include "gf/GfDataField.h"
+#include "gf/GfDataParty.h"
 namespace gf {
 bool SCOM_ADD_MONEY::exec(fw::UpdateInfo const&) {
     GfGameUtil::addMoney(m_money);
@@ -1852,6 +1855,124 @@ GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createMercenariesLeader(unsigned int id) {
     return create(ParamObj(4, id), CV_FIELD(14), CV_PRIO(1));
 }
 
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createJump(const ParamObj& obj) {
+    if (GfGameManager::getControlMover() != obj.m_handle || !GfGameManager::isControlFree()) {
+        return 0;
+    }
+    SCOM_ACHIEV_INC::addTotalCount(2, 1);
+    SCOM_ACHIEV_INC::create(2, 1, 0);
+    if (ml::mtRandf1() < 0.4f) {
+        return 0;
+    }
+    return create(obj, CV_FIELD(0), CV_PRIO(1));
+}
+
+unsigned long SCOM_FIELD_VOICE::createLandmark() {
+    if (GfGameManager::isBattle()) {
+        return -1;
+    }
+    if (GfGameScene::sys() != nullptr && GfGameScene::sys()->m_value634 < 60) {
+        return -1;
+    }
+    int party = fn_71005680B0();
+    if (party == -1) {
+        return -1;
+    }
+    bool torna = GfGameManager::fn_71002A9E68();
+    GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
+    GF_OBJ_HANDLE* partner;
+    if (torna) {
+        partner = GfGameParty::getHandleDriver(party, 1);
+    } else {
+        partner = GfGameParty::getHandleBlade(party, -1);
+    }
+    unsigned int hp;
+    {
+        DataParamAcc acc(driver);
+        hp = acc.getHp();
+    }
+    if (hp == 0) {
+        return -1;
+    }
+#line 4611
+    SCOM_FIELD_VOICE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_FIELD_VOICE(true);
+    if (request == 0) {
+        return -1;
+    }
+    request->add(ParamObj(driver), CV_FIELD(5), CV_PRIO(1));
+    request->add(ParamObj(partner), CV_FIELD(5), CV_PRIO(3));
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_FIELD_VOICE::createUnexplored() {
+    if (GfGameManager::isBattle()) {
+        return -1;
+    }
+    if (GfGameScene::sys() != nullptr && GfGameScene::sys()->m_value634 < 60) {
+        return -1;
+    }
+    int party = fn_71005680B0();
+    if (party == -1) {
+        return -1;
+    }
+    bool torna = GfGameManager::fn_71002A9E68();
+    GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
+    GF_OBJ_HANDLE* partner;
+    if (torna) {
+        partner = GfGameParty::getHandleDriver(party, 1);
+    } else {
+        partner = GfGameParty::getHandleBlade(party, -1);
+    }
+    unsigned int hp;
+    {
+        DataParamAcc acc(driver);
+        hp = acc.getHp();
+    }
+    if (hp == 0 || !GfGameObj::isValidGameObj(driver, true, nullptr)) {
+        return -1;
+    }
+#line 4649
+    SCOM_FIELD_VOICE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_FIELD_VOICE(true);
+    if (request == 0) {
+        return -1;
+    }
+    request->add(ParamObj(driver), CV_FIELD(6), CV_PRIO(1));
+    request->add(ParamObj(partner), CV_FIELD(6), CV_PRIO(3));
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_FIELD_VOICE::createExitInn() {
+    int party = fn_71005680B0();
+    if (party == -1) {
+        return -1;
+    }
+    bool torna = GfGameManager::fn_71002A9E68();
+    GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
+    GF_OBJ_HANDLE* partner;
+    if (torna) {
+        partner = GfGameParty::getHandleDriver(party, 1);
+    } else {
+        partner = GfGameParty::getHandleBlade(party, -1);
+    }
+    unsigned int hp;
+    {
+        DataParamAcc acc(driver);
+        hp = acc.getHp();
+    }
+    if (hp == 0 || !GfGameObj::isValidGameObj(partner, true, nullptr)) {
+        return -1;
+    }
+#line 4715
+    SCOM_FIELD_VOICE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_FIELD_VOICE();
+    if (request == 0) {
+        return -1;
+    }
+    request->add(ParamObj(partner), CV_FIELD(9), CV_PRIO(1));
+    request->add(ParamObj(driver), CV_FIELD(9), CV_PRIO(1));
+    request->m_flagD0 = true;
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
 unsigned long SCOM_FIELD_VOICE::createMercenariesStart(unsigned int id) {
     unsigned int blade = fn_7100567A44();
 #line 4793
@@ -1864,6 +1985,20 @@ unsigned long SCOM_FIELD_VOICE::createMercenariesStart(unsigned int id) {
         request->add(ParamObj(3, blade), CV_FIELD(15), CV_PRIO(1));
     }
     return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned int SCOM_FIELD_VOICE::fn_7100567A44() {
+    mm::mtl::FixedVector<unsigned short, 32> drivers;
+    for (unsigned int i = 0; i < 5; i++) {
+        unsigned int driver = GfDataParty::getDriver(i, 0);
+        if (driver != 0) {
+            drivers.push_back(driver);
+        }
+    }
+    if (drivers.size() == 0) {
+        return 0;
+    }
+    return drivers[ml::mtRand(drivers.size())];
 }
 
 unsigned long SCOM_FIELD_VOICE::createMercenariesEnd(unsigned int id) {
@@ -1906,8 +2041,129 @@ GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createAchievement(unsigned int id, unsigned
     return GfFieldVoice::playVoice(obj, CV_FIELD(25), level / 3, level % 3, CV_PRIO(1));
 }
 
+unsigned long SCOM_FIELD_VOICE::createSkipTravel(bool start) {
+    CV_FIELD field = start ? CV_FIELD(19) : CV_FIELD(20);
+    int party = fn_71005680B0();
+    if (party != -1) {
+        bool torna = GfGameManager::fn_71002A9E68();
+        GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
+        GF_OBJ_HANDLE* partner =
+            torna ? GfGameParty::getHandleDriver(party, 1) : GfGameParty::getHandleBlade(party, -1);
+#line 4858
+        SCOM_FIELD_VOICE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_FIELD_VOICE(true);
+        if (request != 0) {
+            request->add(ParamObj(driver), field, CV_PRIO(1));
+            request->add(ParamObj(partner), field, CV_PRIO(1));
+            GfReqSmallCom::addRequestParallel(request);
+        }
+    }
+    return -1;
+}
+
+unsigned long SCOM_FIELD_VOICE::createRestart(CV_FIELD field) {
+    int party = fn_71005680B0();
+    if (party == -1) {
+        return -1;
+    }
+    bool torna = GfGameManager::fn_71002A9E68();
+    GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
+    GF_OBJ_HANDLE* partner;
+    if (torna) {
+        partner = GfGameParty::getHandleDriver(party, 1);
+    } else {
+        partner = GfGameParty::getHandleBlade(party, -1);
+    }
+    unsigned int hp;
+    {
+        DataParamAcc acc(driver);
+        hp = acc.getHp();
+    }
+    if (hp == 0 || !GfGameObj::isValidGameObj(driver, true, nullptr)) {
+        return -1;
+    }
+#line 4886
+    SCOM_FIELD_VOICE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_FIELD_VOICE(true);
+    if (request == 0) {
+        return -1;
+    }
+    request->add(ParamObj(driver), field, CV_PRIO(1), 0.5f);
+    request->add(ParamObj(partner), field, CV_PRIO(1), 0.5f);
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+int SCOM_FIELD_VOICE::fn_71005680B0() {
+    mm::mtl::FixedVector<unsigned short, 32> parties;
+    for (unsigned int i = 0; i < 3; i++) {
+        bool valid;
+        if (GfGameManager::fn_71002A9E68()) {
+            valid = GfGameParty::getDriverBdatId(i, 0) != 0 && GfGameParty::getDriverBdatId(i, 1) != 0;
+        } else {
+            valid = GfGameObj::isValidGameObj(GfGameParty::getHandleDriver(i, 0), true, nullptr) &&
+                    GfGameObj::isValidGameObj(GfGameParty::getHandleBlade(i, -1), true, nullptr);
+        }
+        if (valid) {
+            parties.push_back(i);
+        }
+    }
+    if (parties.size() == 0) {
+        return -1;
+    }
+    return parties[ml::mtRand(parties.size())];
+}
+
+unsigned long SCOM_FIELD_VOICE::createAchievementAll(unsigned int id) {
+    unsigned int driver = GfDataBlade::getSetDriver(id);
+    if (driver == 0) {
+        driver = GfDataBlade::getCreator(id);
+    }
+#line 4931
+    SCOM_FIELD_VOICE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_FIELD_VOICE();
+    if (request == 0) {
+        return -1;
+    }
+    request->add(ParamObj(4, id), CV_FIELD(27), CV_PRIO(1));
+    if (driver != 0) {
+        request->add(ParamObj(3, driver), CV_FIELD(27), CV_PRIO(1));
+    }
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
 GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createEngage(unsigned int id) {
     return GfFieldVoice::playVoice(ParamObj(4, id), CV_FIELD(36), 0, 0, CV_PRIO(1));
+}
+
+unsigned long SCOM_FIELD_VOICE::createTime(CV_FIELD field) {
+    if (GfGameManager::isBattle()) {
+        return -1;
+    }
+    int party = fn_71005680B0();
+    if (party == -1) {
+        return -1;
+    }
+    bool torna = GfGameManager::fn_71002A9E68();
+    GF_OBJ_HANDLE* driver = GfGameParty::getHandleDriver(party, 0);
+    GF_OBJ_HANDLE* partner;
+    if (torna) {
+        partner = GfGameParty::getHandleDriver(party, 1);
+    } else {
+        partner = GfGameParty::getHandleBlade(party, -1);
+    }
+    unsigned int hp;
+    {
+        DataParamAcc acc(driver);
+        hp = acc.getHp();
+    }
+    if (hp == 0 || !GfGameObj::isValidGameObj(driver, true, nullptr)) {
+        return -1;
+    }
+#line 5142
+    SCOM_FIELD_VOICE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_FIELD_VOICE(true);
+    if (request == 0) {
+        return -1;
+    }
+    request->add(ParamObj(driver), field, CV_PRIO(1));
+    request->add(ParamObj(partner), field, CV_PRIO(1));
+    return GfReqSmallCom::addRequestParallel(request);
 }
 
 GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createFieldSkillStart(unsigned int blade, unsigned int skill) {
@@ -1916,6 +2172,45 @@ GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createFieldSkillStart(unsigned int blade, u
         return nullptr;
     }
     return GfGameVoice::playVoice(ParamObj(4, blade), name, CV_PRIO(1), false);
+}
+
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::fn_7100568D34(unsigned int skill) {
+    if (GfGameManager::fn_71002A9E68()) {
+        VoiceList names;
+        names.m_names[0] = "750101";
+        names.m_names[1] = "750102";
+        names.m_names[2] = "750103";
+        names.m_count = 3;
+        return fn_7100568E1C(names);
+    }
+    QuestListAcc* quests = QuestListAcc::get();
+    DataParamAcc leader(GfGameManager::getPartyLeaderDriver());
+    unsigned int category = quests->getFLD_FieldSkillSettingSuccessVoiceCategory(skill);
+    const char* name = GfDataField::getFieldSkillVoice(
+        leader.isValid() && leader.getObjType() == 3 ? leader.getBdatId() : 0, category);
+    if (name == nullptr) {
+        return nullptr;
+    }
+    return GfGameVoice::playVoice(GfGameManager::getPartyLeaderDriver(), name, CV_PRIO(1));
+}
+
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createFieldSkillMiss(unsigned int skill) {
+    if (GfGameManager::fn_71002A9E68()) {
+        VoiceList names;
+        names.m_names[0] = "760101";
+        names.m_names[1] = "760102";
+        names.m_count = 2;
+        return fn_7100568E1C(names);
+    }
+    QuestListAcc* quests = QuestListAcc::get();
+    DataParamAcc leader(GfGameManager::getPartyLeaderDriver());
+    unsigned int category = quests->getFLD_FieldSkillSettingMissVoiceCategory(skill);
+    const char* name = GfDataField::getFieldSkillVoice(
+        leader.isValid() && leader.getObjType() == 3 ? leader.getBdatId() : 0, category);
+    if (name == nullptr) {
+        return nullptr;
+    }
+    return GfGameVoice::playVoice(GfGameManager::getPartyLeaderDriver(), name, CV_PRIO(1));
 }
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B6AAC0)
