@@ -40,6 +40,8 @@ struct SDataGameSavedEvent {
 
 class SDataGame {
 public:
+    // out of line in title_main's unit (0x710014FDE0); SDataSave() and TitleMain::createSaveBuffer call it
+    SDataGame();
     // Proposed name, not the original's: the second entry area of each item type (0x11D27C, 0x1B04 bytes;
     // GfDataManager::fn_7100223650 sums a type's counts over ItemBox's list and this one; places and sizes from its
     // offsets and the counts' bounds). The member names are not the original's (by item type).

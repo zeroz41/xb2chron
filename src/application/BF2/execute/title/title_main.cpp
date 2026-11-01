@@ -41,6 +41,13 @@
 #include "classes/gf/GfFieldLod.h"
 #include "classes/gf/GfGameManager.h"
 #include "gf/GfDataBlade.h"
+#include "gf/GfDataDriver.h"
+#include "gf/GfReqParam.h"
+#include "gf/SDataOption.h"
+#include "mm/Math.h"
+#include "ml/WorkRootMem.h"
+#include "mtl/MemManager.h"
+#include <new>
 
 namespace tl {
 
@@ -164,6 +171,22 @@ void TitleMain::destroy() {
     delete title;
 }
 
+void TitleMain::createSaveBuffer() {
+    if (gf::SDataSave* save = m_saveBuffer) {
+        save->m_system.m_version = 0x3A15B;
+        save->m_system.m_systemValue = 0;
+        new (&save->m_game) gf::SDataGame();
+    } else {
+        m_saveBuffer = new (ml::WorkRootMem::getMemTMP(), nullptr, 0, 4, false) gf::SDataSave();
+    }
+    if (m_optionBuffer == nullptr) {
+        m_optionBuffer = new (ml::WorkRootMem::getMemTMP(), nullptr, 0, 4, false) gf::SDataOption();
+    } else {
+        m_optionBuffer->clear();
+    }
+    gf::GfMenuManager::initOptionData(*m_optionBuffer);
+}
+
 void TitleMain::stopTitleBGM(float time) {
     if (m_titleBgm.isValid()) {
         gf::GfSound* sound = gf::GfSound::sys();
@@ -215,6 +238,19 @@ void TitleMain::setupTitleOptionToGameOption() {
     if (m_optionBuffer != nullptr) {
         gf::GfManager::setupOptionData(*m_optionBuffer);
     }
+}
+
+// the chapter of the saved scenario (scenario flag 1 / 1000, 1 to 10); 0 without a valid save or scenario
+unsigned int TitleMain::getChapterIdFromSaveData() {
+    gf::SDataSave* save = m_saveBuffer;
+    if (save->m_system.m_version != 0x3A15B) {
+        return 0;
+    }
+    unsigned short scenario = save->m_game.m_gameFlag.m_flag16[1];
+    if (scenario == 0) {
+        return 0;
+    }
+    return mm::clamp<unsigned int>(scenario / 1000, 1, 10);
 }
 
 void TitleMain::playTitleEvent(unsigned int eventID) {
@@ -465,6 +501,29 @@ inline void TitleStateWarning::onEnter(void* owner, ai::State* prev) {
 inline void TitleStateWarning::onLeave(void* owner, ai::State* next) {}
 inline void TitleStateWarning::onStep(void* owner, const void* arg) {
     fn_71001565A8(static_cast<TitleMain*>(owner), *static_cast<const fw::UpdateInfo*>(arg));
+}
+
+void fn_710015678C(gf::RQ_SETUP_PARTY& party, unsigned int driver, unsigned int blade) {
+    if (driver == 0) {
+        return;
+    }
+    for (int i = 0; i < 10; i++) {
+        if (party.m_drivers[i].m_driver == driver) {
+            return;
+        }
+    }
+    for (int i = 0; i < 10; i++) {
+        gf::RQ_SETUP_PARTY::Driver& entry = party.m_drivers[i];
+        if (entry.m_driver == 0) {
+            entry.m_driver = driver;
+            if (blade == 0) {
+                blade = gf::GfDataDriver::fn_7100241640(driver, 0);
+            }
+            entry.m_blades[0] = blade;
+            entry.m_activeIndex = 0;
+            return;
+        }
+    }
 }
 
 // the title screen's menus
