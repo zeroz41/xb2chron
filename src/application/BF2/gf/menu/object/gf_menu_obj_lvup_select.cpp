@@ -55,6 +55,67 @@ void GfMenuObjLvupSelect::openLevelSelect(GfMenuCallContext* context, unsigned i
     }
 }
 
+void GfMenuObjLvupSelect::initialize() {
+    ui::UIObjectAcc acc(m_handle, "LAY_main");
+#line 119
+    MainListener* mainListener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) MainListener(this);
+    mainListener->m_RefCount = 1;
+    ui::UIEventManager::get()->registObjectListener(acc.m_handle, mainListener);
+    if (mainListener != nullptr) {
+        mainListener->release();
+    }
+    GfMenuObject::attachExternalCall(0x57, acc.m_handle);
+    if (GfMenuObjUtil::fn_710048FD30(3)) {
+        GfMenuAdapterManager::beginAddAfter();
+    }
+    {
+        ui::UIObjectAcc select(acc.m_handle, "LAY_lvup_sellect");
+        int count = select.countChild("LAY_lvslc_lvset@%02d", 1);
+        int offset = -(count / 2);
+        mm::mtl::FixStr<32> name;
+        for (int i = 0; i < count; i++) {
+            name.format("TXT_lvslc_lvnum@%02d", i + 1);
+            GfMenuReferenceAdapter* adapter =
+                GfMenuReferenceAdapter::create(select.searchChild(name.m_str), m_levelNumber, true);
+            if (adapter != nullptr) {
+                adapter->m_offset = offset;
+                offset++;
+                name.format("LAY_lvslc_lvset@%02d", i + 1);
+                adapter->m_rowHandle = select.searchChild(name.m_str);
+            }
+        }
+#line 156
+        SelectListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SelectListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(select.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    {
+        ui::UIObjectAcc image(acc.m_handle, "LAY_dr_img");
+        GfMenuCharDataAdapter::createFromReferenceDriver(image.searchChild("IMG_dr_img"), 0x1C, 0, false);
+#line 167
+        DrImgListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) DrImgListener(this);
+        listener->m_RefCount = 1;
+        ui::UIEventManager::get()->registObjectListener(image.m_handle, listener);
+        if (listener != nullptr) {
+            listener->release();
+        }
+    }
+    {
+        ui::UIObjectAcc bonus(acc.m_handle, "LAY_bonus_exp");
+        GfMenuReferenceAdapter::create(bonus.searchChild("TXT_bonus_exp_num"), m_bonusExp, false);
+        m_bonusExp->m_value = 0;
+        m_bonusExp->m_min = 0;
+        m_bonusExp->m_max = 999999999;
+    }
+    if (GfMenuObjUtil::fn_710048FD30(3)) {
+        GfMenuAdapterManager::endAddAfter();
+    }
+    GfMenuObject::initialize();
+}
+
 void GfMenuObjLvupSelect::finalize() {
     GfMenuObject::finalize();
 }
