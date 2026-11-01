@@ -89,6 +89,17 @@ void ClearEvent(EventType* event);
 void WaitEvent(EventType* event);
 bool TimedWaitEvent(EventType* event, TimeSpan timeout);
 
+// the SDK's timer event (ml::pad_detail::g_TimerEvent drives the vibration node thread; its size is not known
+// here: the .bss leaves it up to 0xAC0 bytes before the next global's 0x1000-aligned start; 0x60 is the SDK's)
+struct alignas(8) TimerEventType {
+    unsigned char pad_0[0x60];
+};
+void InitializeTimerEvent(TimerEventType* event, EventClearMode clearMode);
+void FinalizeTimerEvent(TimerEventType* event);
+void StartPeriodicTimerEvent(TimerEventType* event, TimeSpan first, TimeSpan interval);
+void StopTimerEvent(TimerEventType* event);
+void WaitTimerEvent(TimerEventType* event);
+
 // 0x30 bytes; its state byte at 0x28 (0: not initialized) is what SystemEvent's destructor tests
 // (ssd::SystemCorePlatform's destructor reads it at 0x160 of the event at 0x138)
 struct alignas(8) SystemEventType {

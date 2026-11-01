@@ -75,6 +75,9 @@ public:
     void setCol(const mm::Col4& col);
     // named by the symbols: the same with the colour's parts (the parameter names are not the original's)
     void setCol(float r, float g, float b, float a);
+    // named by the symbols: an rgb colour and its alpha (the cache gets the colour opaque; the parameter names are
+    // not the original's)
+    void setCol(const mm::Col3& col, float a);
     void setDoubleSide(bool doubleSide);
     void setZComp(bool on);
     void setZWrite(bool on);

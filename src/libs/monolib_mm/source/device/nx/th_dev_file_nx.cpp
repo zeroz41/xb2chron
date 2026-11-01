@@ -1362,6 +1362,52 @@ void DebDraw::setOrtho() {
     m_flags &= ~8;
 }
 
+// the cache gets the colour opaque, the draw keeps the alpha
+void DebDraw::setCol(const mm::Col3& col, float a) {
+    CacheDraw* cache = m_cache;
+    mm::Col4 opaque;
+    opaque.r = col.r;
+    opaque.g = col.g;
+    opaque.b = col.b;
+    opaque.a = 1.0f;
+    if (cache->setCol(opaque)) {
+        return;
+    }
+    m_col.r = col.r;
+    m_col.g = col.g;
+    m_col.b = col.b;
+    m_col.a = a;
+    if (m_col.r < 0.0f) {
+        m_col.r = 0.0f;
+    }
+    if (m_col.g < 0.0f) {
+        m_col.g = 0.0f;
+    }
+    if (m_col.b < 0.0f) {
+        m_col.b = 0.0f;
+    }
+    if (m_col.a < 0.0f) {
+        m_col.a = 0.0f;
+    }
+    if (m_col.r > 1.0f) {
+        m_col.r = 1.0f;
+    }
+    if (m_col.g > 1.0f) {
+        m_col.g = 1.0f;
+    }
+    if (m_col.b > 1.0f) {
+        m_col.b = 1.0f;
+    }
+    if (m_col.a > 1.0f) {
+        m_col.a = 1.0f;
+    }
+    m_flags &= ~4;
+}
+
+void DebDraw::setCol(float r, float g, float b, float a) {
+    setCol(mm::Col4(r, g, b, a));
+}
+
 unsigned int DebDrawCmd::thInitialize(void* p, void*) {
     DebDrawCmd* self = static_cast<DebDrawCmd*>(p);
     self->m_size = 0xC00000;
@@ -1912,10 +1958,56 @@ void DevGraphNx::entrySasakiFont(const char* name) {
     s_sasakiFontName = name;
 }
 
+bool pad_detail::g_IsQuitRequired;
+nn::os::ThreadType pad_detail::g_thread;
+nn::os::TimerEventType pad_detail::g_TimerEvent;
+alignas(0x1000) unsigned char pad_detail::g_ThreadStack1[0x2000];
+
+namespace pad_detail {
+// the lock around the vibration node update (the thread function and initializeVibration share it; the names are
+// not the original's)
+static CriticalSection& getVibrationSection() {
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100ECDE48, guard lbl_7100ECDE70)
+    static CriticalSection section;
+    return section;
+}
+}  // namespace pad_detail
+
+void pad_detail::VibrationNodeThreadFunction(void*) {
+    while (!g_IsQuitRequired) {
+        nn::os::WaitTimerEvent(&g_TimerEvent);
+        CS lock(getVibrationSection());
+        nn::hid::VibrationNode::Update();
+    }
+    nn::os::StopTimerEvent(&g_TimerEvent);
+}
+
 void DevPadNx::Impl::stateUpdate(float) {
     if (m_stateId == 2) {
         updateNpad();
     }
+}
+
+void DevPadNx::Impl::stateFinalize(float) {
+    pad_detail::g_IsQuitRequired = true;
+    nn::os::WaitThread(&pad_detail::g_thread);
+    nn::os::DestroyThread(&pad_detail::g_thread);
+    nn::os::FinalizeTimerEvent(&pad_detail::g_TimerEvent);
+    for (int i = 0; i < m_padCount; ++i) {
+        stopVibration(getPad(i, i < 4));
+    }
+    for (VibPlayerData& player : m_players) {
+        if (player.m_data != nullptr) {
+            player.m_player.Stop();
+            if (player.m_data != nullptr) {
+                mtl::MemManager::deallocate(player.m_data, 0, false);
+                player.m_data = nullptr;
+            }
+        }
+        player.m_size = 0;
+        player.m_id = -1;
+    }
+    m_state.m_invoker = nullptr;
 }
 
 DevPadNx::~DevPadNx() {}
@@ -1966,6 +2058,10 @@ void DevPadNx::loadLocalVibration(unsigned int id, void* file, unsigned long siz
         player.m_player.Load(player.m_data, size);
         player.m_player.SetLoop(false);
     }
+}
+
+void DevPadNx::stopLocalVibration(int pad) {
+    m_impl->stopVibration(m_impl->getPadData(pad));
 }
 
 void DevPadNx::setUserSelectControllerID(unsigned int id) {

@@ -2,6 +2,7 @@
 #define NN_HID_H
 
 #include "nn/result.h"
+#include "nn/os.h"
 
 namespace nn { namespace hid {
 
@@ -34,6 +35,15 @@ class VibrationTarget {
 public:
     ~VibrationTarget();
     unsigned char pad_0[0x48];
+};
+// the SDK's controller setup (ml::DevPadNx::Impl::stateInitialize calls it)
+void InitializeNpad();
+// the SDK's vibration node graph: Update runs it one sample on (ml::pad_detail::VibrationNodeThreadFunction calls it
+// once per DefaultVibrationSampleInterval, the period its timer event runs at)
+class VibrationNode {
+public:
+    static void Update();
+    static const TimeSpan DefaultVibrationSampleInterval;
 };
 // the SDK's mouse and keyboard setup (ml::DeviceNx::initializeSDK calls them)
 void InitializeMouse();

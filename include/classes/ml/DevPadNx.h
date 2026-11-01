@@ -104,13 +104,42 @@ public:
             }
         }
 
+        // named by the symbols: the pad setup stateInitialize runs first
+        void initPad();
         // named by the symbols: the state functions m_state runs (stateInitialize stores stateUpdate), the npad update
         // stateUpdate runs, the release releaseDevice forwards to
+        void stateInitialize(float);
         void stateUpdate(float);
+        void stateFinalize(float);
         void updateNpad();
         void release();
         // named by the symbols: starts a vibration on a pad's state (playLocalVibration forwards to it)
         void playVibration(PadData&, const PadVibrationInfo&);
+        // stops a connected full-key or joy-dual pad's playing vibration and resets its state (stopLocalVibration's
+        // and stateFinalize's inline work; the name is not the original's)
+        void stopVibration(PadData& pad) {
+            if (pad.m_connect && pad.m_vibOn && (pad.m_style == 1 || pad.m_style == 3)) {
+                unsigned int id = pad.m_vibId;
+                if (id != 0) {
+                    bool valid = id - 1 < 63;
+                    nn::hid::VibrationPlayer& player = m_players[id].m_player;
+                    if (valid && player.IsLoaded()) {
+                        player.Stop();
+                        pad.m_vibConnect0.Disconnect();
+                        pad.m_vibConnect1.Disconnect();
+                        pad.m_vibId = 0;
+                        pad.m_vibState = 3;
+                        pad.m_vibScale0 = 1.0f;
+                        pad.m_vibScale1 = 1.0f;
+                        pad.m_vibScale2 = 1.0f;
+                        pad.m_vibScale3 = 1.0f;
+                        pad.m_vibValue = 0;
+                        pad.m_vibOn = false;
+                        pad.m_vib7d = false;
+                    }
+                }
+            }
+        }
 
         mm::mtl::Delegate<void(float)> m_state;   // 0x0 (updateDevice calls it; the name is not the original's)
         int m_stateId;                              // 0x20 (stateUpdate updates the npads in state 2)
@@ -123,7 +152,8 @@ public:
         mm::mtl::FixedArray<PadData, 4> pad_3c38;  // 0x3C38
         PadData m_selectPad;                        // 0x4238
         PadData m_emptyPad;                         // 0x43B8
-        unsigned char pad_4538[8];
+        unsigned char pad_4538[4];
+        int m_padCount;                             // 0x453C (stateFinalize stops the first m_padCount pads; the name is not the original's)
         int m_userSelect;                           // 0x4540
         int m_userSelectController;                 // 0x4544 (setUserSelectControllerID stores the matching index)
         int m_selectPadId;                          // 0x4548
@@ -152,6 +182,16 @@ public:
     unsigned char pad_544[4];
     mm::mtl::UniquePtr<Impl> m_impl;  // 0x548 (the name is not the original's)
 };
+
+// the vibration node thread (named by the symbols): DevPadNx::Impl::stateInitialize starts it and the periodic timer
+// event it waits on, stateFinalize sets the quit flag and waits for it
+namespace pad_detail {
+extern bool g_IsQuitRequired;
+extern nn::os::ThreadType g_thread;
+extern nn::os::TimerEventType g_TimerEvent;
+extern unsigned char g_ThreadStack1[0x2000];
+void VibrationNodeThreadFunction(void*);
+}  // namespace pad_detail
 }  // namespace ml
 
 #endif
