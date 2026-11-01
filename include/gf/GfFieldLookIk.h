@@ -20,6 +20,13 @@ public:
     // the point to look at on the object: its answer to MsgPcGetLookPoint, else its world position; false when it
     // has neither
     bool findPos(mm::Vec3& pos) const;
+    // the point the object looks at: the gimmicks' interest position in mode 1, else the party leader's answer to
+    // MsgPcGetLookPoint; false when there is none
+    bool findTargetPos(mm::Vec3& pos) const;
+    bool isCondMatched(const mm::Vec3& pos) const;
+    // fades the solver in or out by isCondMatched and eases pad_20 towards the target position
+    template <typename T>
+    void updateIkSolver(T& solver);
 
     GF_OBJ_HANDLE* m_handle;  // -1 without one
     // which of the object's GfComIK solvers dispose fades out (3 at first; the name is not the original's)

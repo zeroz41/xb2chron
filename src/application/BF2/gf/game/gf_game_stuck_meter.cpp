@@ -27,6 +27,7 @@
 #include "classes/gf/GfSpeedTween.h"
 #include "gf/GfFieldMoveSpeed.h"
 #include "classes/gf/GfGameDepopMeterManager.h"
+#include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfObj.h"
 #include "classes/gf/GfComAsm.h"
 #include "gf/GfObjAcc.h"
@@ -218,6 +219,36 @@ void GfFieldLookIk::create(GF_OBJ_HANDLE* handle, const CBdatWrapper& bdat, int 
     }
 }
 
+void GfFieldLookIk::update(float) {
+    if (m_handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1) || !pad_1c) {
+        return;
+    }
+    GfObjAcc acc(m_handle);
+    GfObj* obj = acc.getObj();
+    if (obj == nullptr) {
+        dispose();
+        return;
+    }
+    GfComIK* ik = obj->getComponent<GfComIK>(3);
+    if (ik == nullptr) {
+        return;
+    }
+    switch (m_solverIndex) {
+    case 3:
+        if (fw::LookIkSolver* solver = ik->getSolver<fw::LookIkSolver>(3)) {
+            updateIkSolver(*solver);
+        }
+        break;
+    case 5:
+        if (fw::LookIkSolver* solver = ik->getSolver<fw::LookIkSolver>(3)) {
+            if (fw::LookAtIkSolver* lookAt = solver->m_lookAt.get()) {
+                updateIkSolver(*lookAt);
+            }
+        }
+        break;
+    }
+}
+
 bool GfFieldLookIk::findPos(mm::Vec3& pos) const {
     GfObjAcc acc(m_handle);
     GfObj* obj = acc.getObj();
@@ -242,6 +273,30 @@ GfGameDepopMeter::GfGameDepopMeter(const CreateInfo* info)
     if (info) {
         create(*info);
     }
+}
+
+void GfGameDepopMeter::dispose() {
+    if (m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        GfGameDepopMeter* cursor = &*GfGameDepopMeterManager::sys()->m_cursor;
+        GfGameDepopMeterManager* manager = GfGameDepopMeterManager::sys();
+        if (cursor == this) {
+            ++manager->m_cursor;
+        }
+        manager->m_meters.remove(this);
+        manager = GfGameDepopMeterManager::sys();
+        if (manager->m_meters.end() == manager->m_cursor) {
+            manager->m_cursor = manager->m_meters.begin();
+        }
+    }
+    m_handle = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+    pad_40 = false;
+    pad_18 = true;
+}
+
+void GfGameDepopMeterManager::create(unsigned int updateCount) {
+    dispose();
+#line 1598
+    new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfGameDepopMeterManager(updateCount);
 }
 
 void GfGameStuckMeter::CreateInfo::dispose() {
