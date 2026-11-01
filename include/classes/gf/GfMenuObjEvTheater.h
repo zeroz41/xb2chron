@@ -21,6 +21,7 @@ class GfMenuObjEvTheater : public ::gf::GfMenuObject {
 public:
     class HeaderListener;
     class TUnk_B62178;  // the listener of table 0x7100B62178 (unnamed)
+    class SubListener;
     // TitleMenu::setupEventTheater / openEventTheater / fadeoutEventTheater pass their call context
     static bool attach(GfMenuCallContext* context);
     static void fadein(GfMenuCallContext* context);
@@ -93,6 +94,9 @@ public:
     bool fn_710040132C(unsigned int index);
     // plays "select" on the selected row's IMG_select_frame@NN and "non" on the others (1.0.0's name)
     void refreshSelctList();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: SubListener's reciveEvent calls it
+    // on its owner (x0 = this object) after it moves m_msgList's selection (event 6) and on open (0x21).
+    void fn_71004016B8();
     // 0x71004047B8 (the symbols name it GfMenuObjOption::refreshLevel, but its this is this class and its only caller
     // is this class's listener) shows m_levels row by row; left out until the symbol is renamed
 
@@ -100,7 +104,9 @@ public:
     int m_title;  // 0x24: which TXT_header_title@%02d / TXT_header_input@%02d (from 1) HeaderListener shows
     unsigned char pad_28[0x50 - 0x28];
     GfMenuMsgList* m_msgList;  // 0x50: HeaderListener shows its selected entry's text
-    unsigned char pad_58[0x60 - 0x58];
+    // 0x58: initialize creates it for "LAY_sub" (UISelectObjList::create, rows LAY_sub_item@%02d); SubListener shows
+    // LAY_sub_arrow while m_msgList holds more entries than it (the name is not the original's)
+    ui::UISelectObjList* m_subObjList;
     GfMenuIDList* m_selectIdList;          // 0x60: the constructor creates it; its page index is the selected row
     ui::UISelectObjList* m_selectObjList;  // 0x68: the rows refreshSelctList animates
     unsigned char pad_70[0xA8 - 0x70];
