@@ -7,6 +7,7 @@ namespace ssd {
 // clears size bytes at address (AudioFileBase.cpp's; the converted texts' buffers are cleared so)
 void ClearMemory8(void* address, unsigned long size);
 void ClearMemory16(void* address, unsigned long size);
+void ClearMemory32(void* address, unsigned long size);
 // copy size bytes from source to destination in 8- to 64-bit units (StreamBuffer::InData*/OutData* call them)
 void CopyMemory8(const void* source, void* destination, unsigned long size);
 void CopyMemory16(const void* source, void* destination, unsigned long size);

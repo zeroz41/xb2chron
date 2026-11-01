@@ -35,6 +35,14 @@ public:
 
     Result CreateThreadImpl(void* argument, Function function, const Param& param);
     static void ThreadEntryProc(void* thread);
+
+    // forgets the function and its arguments (the constructor's; the name is inferred: the original's three
+    // stores are merged in a function of their own before the constructor takes them in)
+    void ClearFunction() {
+        argument_ = nullptr;
+        function_ = nullptr;
+        userData_ = nullptr;
+    }
     Result CloseThread();
     Result Sleep(float time);
 

@@ -19,6 +19,12 @@ Thread::Param::Param()
     : userData(nullptr), priority(0), idealCore(-1), coreMask(nn::os::GetThreadAvailableCoreMask()), pad_18(0),
       stackSize(0), interval(0.0f) {}
 
+Thread::Thread() : created_(false), running_(false), closing_(false), sleeping_(false) {
+    stack_.address = nullptr;
+    stack_.size = 0;
+    ClearFunction();
+}
+
 Thread::~Thread() {}
 
 Result Thread::CreateThreadImpl(void* argument, Function function, const Param& param) {
