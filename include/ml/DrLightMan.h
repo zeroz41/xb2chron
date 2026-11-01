@@ -5,6 +5,8 @@
 
 namespace ml {
 class DrMan;
+class DrLightObjAmb;
+class DrLightObjDir;
 class DrLightObjPnt;
 class DrLightObjSpt;
 class DrShdLgtMan;
@@ -14,6 +16,9 @@ class DrLightMan {
 public:
     DrLightObjPnt* createInstantPntLight();
     DrLightObjSpt* createInstantSptLight();
+    // 1.0.0 has both out of line (3.0.1 inlines them into releaseFastLight and drops the copies)
+    void releaseAmbLight(DrLightObjAmb* light);
+    void releaseDirLight(DrLightObjDir* light);
     void releasePntLight(DrLightObjPnt* light);
     void releaseSptLight(DrLightObjSpt* light);
     void releaseInstantPntLight(DrLightObjPnt* light);

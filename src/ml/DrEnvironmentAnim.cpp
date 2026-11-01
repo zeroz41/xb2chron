@@ -24,6 +24,7 @@
 #include "classes/ml/DrLightObj.h"
 #include "classes/ml/DrLightObjAmb.h"
 #include "classes/ml/DrLightObjDir.h"
+#include "classes/ml/DrLightObjLocalIBL.h"
 #include "classes/ml/DrLightObjPnt.h"
 #include "classes/ml/DrLightObjSpt.h"
 #include "classes/ml/DrMan.h"
@@ -36,6 +37,7 @@
 #include "math.h"
 #include "ml/CriticalSection.h"
 #include "ml/DrAPGxType.h"
+#include "ml/DrCalcViewWork.h"
 #include "ml/DrEnvColiMan.h"
 #include "ml/DrEnvironmentAnim.h"
 #include "ml/DrEnvironmentLgtList.h"
@@ -58,6 +60,7 @@
 #include "ml/DrPixlShadowMan.h"
 #include "ml/DrResMdoMat.h"
 #include "ml/DrResQueryObj.h"
+#include "ml/DrResWrkClipList.h"
 #include "ml/DrShdLgtGlobalIBL.h"
 #include "ml/DrShdLgtMan.h"
 #include "ml/DrShdMan.h"
@@ -447,9 +450,9 @@ void DrEnvironmentObjLgt::resourceInit() {
 
 void DrEnvironmentObjLgt::setFrame(float frame) {
     m_frame = frame;
-    for (int i = 0; i < m_rangeNum; i++) {
-        float end = m_frameRange[i].m_endFrame;
-        m_rangeFrame[i] = end < frame ? end : frame;
+    for (int i = 0; i < m_anim.m_rangeNum; i++) {
+        float end = m_anim.m_frameRange[i].m_endFrame;
+        m_anim.m_rangeFrame[i] = end < frame ? end : frame;
     }
 }
 
@@ -471,8 +474,122 @@ void DrEnvironmentObjLgt::debugRenderLgt() {
     }
 }
 
+bool DrEnvironmentObjLgt::callback_Chk_Ambinet_Directional(DrEnvironmentLgtList* list, DrCalcViewWork*,
+                                                           const LgtObjData* data) {
+    if (data->m_flags & 1) {
+        const LgtPosData* pos = list->m_posData;
+        float dx = m_viewPos.x - pos->m_pos[0];
+        float dy = m_viewPos.y - pos->m_pos[1];
+        float dz = m_viewPos.z - pos->m_pos[2];
+        if (dx * dx + dy * dy + dz * dz > pos->m_radius * pos->m_radius) {
+            return false;
+        }
+    }
+    if (data->m_group != 0 && (m_flags & 4) && m_group != data->m_group) {
+        return false;
+    }
+    list->m_rate = 1.0f;
+    return true;
+}
+
+bool DrEnvironmentObjLgt::callback_Chk_Point(DrEnvironmentLgtList* list, DrCalcViewWork* work, const LgtObjData* data) {
+    const LgtPosData* pos = list->m_posData;
+    if (pos->m_id != 0) {
+        int idx = pos->m_id - 1;
+        if ((m_work2->m_work[idx >> 5] & (1 << (idx & 0x1F))) != 0) {
+            return false;
+        }
+    }
+    unsigned int dispIdx = pos->m_dispIdx;
+    if (dispIdx != 0 && (*(m_drMan->m_dispOffBits + (dispIdx >> 5)) & (1 << (dispIdx & 0x1F))) != 0) {
+        return false;
+    }
+    if (data->m_flags & 1) {
+        float dx = m_viewPos.x - pos->m_pos[0];
+        float dy = m_viewPos.y - pos->m_pos[1];
+        float dz = m_viewPos.z - pos->m_pos[2];
+        float dist2 = dx * dx + dy * dy + dz * dz;
+        float range = pos->m_radius + pos->m_range;
+        if (dist2 > range * range) {
+            return false;
+        }
+        float inner = range * 0.75f;
+        if (dist2 > inner * inner) {
+            list->m_rate = 1.0f - (sqrtf(dist2) - inner) / (range - inner);
+        } else {
+            list->m_rate = 1.0f;
+        }
+    } else {
+        list->m_rate = 1.0f;
+    }
+    if (data->m_group != 0 && (m_flags & 4) && m_group != data->m_group) {
+        return false;
+    }
+    DrLightObjPnt* light = static_cast<DrLightObjPnt*>(list->m_light);
+    if (data->m_animFlags & 4) {
+        m_anim.calcAnimTransPnt(light, data, m_offsetPos);
+    }
+    float range = pos->m_range;
+    const mm::Vec3& lightPos = light->m_pos;
+    return work->m_clipPlane.clipTest(lightPos, range);
+}
+
+bool DrEnvironmentObjLgt::callback_Chk_Spot(DrEnvironmentLgtList* list, DrCalcViewWork* work, const LgtObjData* data) {
+    const LgtPosData* pos = list->m_posData;
+    if (pos->m_id != 0) {
+        int idx = pos->m_id - 1;
+        if ((m_work2->m_work[idx >> 5] & (1 << (idx & 0x1F))) != 0) {
+            return false;
+        }
+    }
+    unsigned int dispIdx = pos->m_dispIdx;
+    if (dispIdx != 0 && (*(m_drMan->m_dispOffBits + (dispIdx >> 5)) & (1 << (dispIdx & 0x1F))) != 0) {
+        return false;
+    }
+    if (data->m_flags & 1) {
+        float dx = m_viewPos.x - pos->m_pos[0];
+        float dy = m_viewPos.y - pos->m_pos[1];
+        float dz = m_viewPos.z - pos->m_pos[2];
+        float dist2 = dx * dx + dy * dy + dz * dz;
+        float range = pos->m_radius + pos->m_range;
+        if (dist2 > range * range) {
+            return false;
+        }
+        float inner = range * 0.75f;
+        if (dist2 > inner * inner) {
+            list->m_rate = 1.0f - (sqrtf(dist2) - inner) / (range - inner);
+        } else {
+            list->m_rate = 1.0f;
+        }
+    } else {
+        list->m_rate = 1.0f;
+    }
+    if (data->m_group != 0 && (m_flags & 4) && m_group != data->m_group) {
+        return false;
+    }
+    DrLightObjSpt* light = static_cast<DrLightObjSpt*>(list->m_light);
+    if (data->m_animFlags & 4) {
+        m_anim.calcAnimTransSpt(light, data, m_offsetPos);
+    }
+    float range = pos->m_range;
+    const mm::Vec3& lightPos = light->m_pos;
+    return work->m_clipPlane.clipTest(lightPos, range);
+}
+
 bool DrEnvironmentObjLgt::callback_Chk_non(DrEnvironmentLgtList*, DrCalcViewWork*, const LgtObjData*) {
     return false;
+}
+
+bool DrEnvironmentObjLgt::callback_Chk_LocalIBL(DrEnvironmentLgtList* list, DrCalcViewWork* work, const LgtObjData*) {
+    const LgtPosData* pos = list->m_posData;
+    DrLightObjLocalIBL* light = static_cast<DrLightObjLocalIBL*>(list->m_light);
+    const mm::Vec3& lightPos = light->m_pos;
+    list->m_rate = 1.0f;
+    unsigned int dispIdx = pos->m_dispIdx;
+    if (dispIdx != 0 && (*(m_drMan->m_dispOffBits + (dispIdx >> 5)) & (1 << (dispIdx & 0x1F))) != 0) {
+        return false;
+    }
+    return work->m_clipPlane.clipTest(lightPos, light->m_radius);
 }
 
 bool DrEnvironmentObjLgt::callback_Calc_Non(DrEnvironmentLgtList*, DrCalcViewWork*) {
@@ -583,6 +700,33 @@ DrLightObjSpt::~DrLightObjSpt() {
     releaseSpt();
 }
 
+// --- irrvol::convertSHMatrix ---
+namespace irrvol {
+void convertSHMatrix(mm::Mat44& mtx, const float* sh) {
+    const float c1 = 0.429043f;
+    const float c2 = 0.511664f;
+    const float c3 = 0.743125f;
+    const float c4 = 0.886227f;
+    const float c5 = 0.247708f;
+    mtx.m[0][0] = c1 * sh[8];
+    mtx.m[0][1] = c1 * sh[4];
+    mtx.m[0][2] = c1 * sh[7];
+    mtx.m[0][3] = c2 * sh[3];
+    mtx.m[1][0] = c1 * sh[4];
+    mtx.m[1][1] = -c1 * sh[8];
+    mtx.m[1][2] = c1 * sh[5];
+    mtx.m[1][3] = c2 * sh[1];
+    mtx.m[2][0] = c1 * sh[7];
+    mtx.m[2][1] = c1 * sh[5];
+    mtx.m[2][2] = c3 * sh[6];
+    mtx.m[2][3] = c2 * sh[2];
+    mtx.m[3][0] = c2 * sh[3];
+    mtx.m[3][1] = c2 * sh[1];
+    mtx.m[3][2] = c2 * sh[2];
+    mtx.m[3][3] = c4 * sh[0] - c5 * sh[6];
+}
+}  // namespace irrvol
+
 // --- irrvol::MemHandlebaseAllocator ---
 namespace irrvol {
 void* MemHandlebaseAllocator::allocate(unsigned long size, unsigned long alignment) {
@@ -667,6 +811,17 @@ DrEnvironmentObj* DrEnvironmentMan::createObj(const void* resource) {
     return obj;
 }
 
+void DrLightMan::releaseFastLight() {
+    if (m_ambLight != nullptr) {
+        releaseAmbLight(static_cast<DrLightObjAmb*>(m_ambLight));
+        m_ambLight = nullptr;
+    }
+    if (m_dirLight != nullptr) {
+        releaseDirLight(static_cast<DrLightObjDir*>(m_dirLight));
+        m_dirLight = nullptr;
+    }
+}
+
 void DrEnvironmentObjLgt::callback_Ren_Point(DrLightObj* light, DrShdLgtMan* shdLgtMan) {
     DrAPGxType::setupCullingFront();
     DrAPGxType::setupDepthContl(1, 1, 3);
@@ -692,6 +847,37 @@ void DrEnvironmentObjLgt::callback_Relase_Spot(DrLightObj* light) {
         static_cast<DrLightObjSpt*>(light)->deleteSptShadow();
     }
 }
+
+void (DrEnvironmentObjLgt::*DrEnvironmentObjLgt::s_pCallEnvRelase[7])(DrLightObj*) = {
+    &DrEnvironmentObjLgt::callback_Relase_Non,
+    &DrEnvironmentObjLgt::callback_Relase_Non,
+    &DrEnvironmentObjLgt::callback_Relase_Point,
+    &DrEnvironmentObjLgt::callback_Relase_Spot,
+    &DrEnvironmentObjLgt::callback_Relase_Non,
+    &DrEnvironmentObjLgt::callback_Relase_Non,
+    &DrEnvironmentObjLgt::callback_Relase_Non,
+};
+
+bool (DrEnvironmentObjLgt::*DrEnvironmentObjLgt::s_pCallEnvChk[7])(DrEnvironmentLgtList*, DrCalcViewWork*,
+                                                                    const LgtObjData*) = {
+    &DrEnvironmentObjLgt::callback_Chk_Ambinet_Directional,
+    &DrEnvironmentObjLgt::callback_Chk_Ambinet_Directional,
+    &DrEnvironmentObjLgt::callback_Chk_Point,
+    &DrEnvironmentObjLgt::callback_Chk_Spot,
+    &DrEnvironmentObjLgt::callback_Chk_non,
+    &DrEnvironmentObjLgt::callback_Chk_non,
+    &DrEnvironmentObjLgt::callback_Chk_LocalIBL,
+};
+
+bool (DrEnvironmentObjLgt::*DrEnvironmentObjLgt::s_pCallCalcEnv[7])(DrEnvironmentLgtList*, DrCalcViewWork*) = {
+    &DrEnvironmentObjLgt::callback_Calc_Ambient,
+    &DrEnvironmentObjLgt::callback_Calc_Directional,
+    &DrEnvironmentObjLgt::callback_Calc_Point,
+    &DrEnvironmentObjLgt::callback_Calc_Spot,
+    &DrEnvironmentObjLgt::callback_Calc_Non,
+    &DrEnvironmentObjLgt::callback_Calc_Non,
+    &DrEnvironmentObjLgt::callback_Calc_LocalIBL,
+};
 
 void (DrEnvironmentObjLgt::*DrEnvironmentObjLgt::s_pCallLgtRender[7])(DrLightObj*, DrShdLgtMan*) = {
     &DrEnvironmentObjLgt::callback_Ren_Non,
@@ -854,6 +1040,22 @@ void DrLightMan::releaseInstantSptLight(DrLightObjSpt* light) {
     light->m_flags |= DrLightObj::FLAG_RELEASE << DrMan::s_nDblStockIdx;
     if (--m_instantSptNum < 0) {
         m_instantSptNum = 0;
+    }
+}
+
+void DrLightMan::releaseAmbLight(DrLightObjAmb* light) {
+    CS lock(*DrMan::getCriticalSection());
+    light->m_flags |= DrLightObj::FLAG_RELEASE << DrMan::s_nDblStockIdx;
+    if (--m_ambNum < 0) {
+        m_ambNum = 0;
+    }
+}
+
+void DrLightMan::releaseDirLight(DrLightObjDir* light) {
+    CS lock(*DrMan::getCriticalSection());
+    light->m_flags |= DrLightObj::FLAG_RELEASE << DrMan::s_nDblStockIdx;
+    if (--m_dirNum < 0) {
+        m_dirNum = 0;
     }
 }
 

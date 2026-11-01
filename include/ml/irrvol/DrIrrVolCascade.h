@@ -1,7 +1,13 @@
 #ifndef ML_IRRVOL_DRIRRVOLCASCADE_H
 #define ML_IRRVOL_DRIRRVOLCASCADE_H
 
+namespace mm { class Mat44; }
+
 namespace ml { namespace irrvol {
+// The irradiance matrix of 9 spherical harmonics coefficients (Ramamoorthi-Hanrahan constants); called by
+// DrLightObjGlobalIBL::initializeFromBuffer and DrLightObjLocalIBL::setup.
+void convertSHMatrix(mm::Mat44& mtx, const float* sh);
+
 // The irradiance volume's settings (1.0.0's DrIrrVolCascade constructor takes them as const SGlobalInfo*). Only what
 // DrIrrVolMan reads is declared; the field names are not the original's.
 struct SGlobalInfo {

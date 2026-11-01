@@ -23,7 +23,7 @@ public:
     const unsigned char* m_list;  // 0x08: the entries
     int m_num;                    // 0x10
     int m_workSize;               // 0x14
-    unsigned char* m_work;        // 0x18: the bits
+    unsigned int* m_work;         // 0x18: the bits, one per entry in 32-bit words (update, DrEnvironmentObjLgt::callback_Chk_Point)
 };
 }  // namespace ml
 

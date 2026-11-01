@@ -3,11 +3,13 @@
 
 #include "mm/Mat44.h"
 #include "mm/Vec3.h"
+#include "ml/DrEnvironmentAnim.h"
 
 namespace grlib { class CGLibTextureBuffer; }
 
 namespace ml {
 class DrEnvironmentLgtList;
+class DrResWrkClipList;
 class DrFogMan;
 class DrLightMan;
 class DrMan;
@@ -78,8 +80,8 @@ public:
         m_time.m_flag = 0;
         m_time.m_weather = 0;
         m_time.m_weatherFrameMax = 0.0f;
-        m_rangeFrame = nullptr;
-        m_rangeNum = 0;
+        m_anim.m_rangeFrame = nullptr;
+        m_anim.m_rangeNum = 0;
     }
     virtual ~DrEnvironmentObj() {}  // slot 0
     virtual void resourceInit() {}  // slot 2
@@ -122,13 +124,9 @@ public:
     unsigned char pad_a4[0x4];
     DrEnvironmentTime m_time;             // 0xA8
     unsigned char pad_d8[0x8];
-    // setFrame clamps the frame to each range's end into m_rangeFrame (the names are not the original's)
-    const EnvFrameRange* m_frameRange;  // 0xE0
-    unsigned char pad_e8[0x20];
-    int m_rangeNum;  // 0x108
-    unsigned char pad_10c[0x4];
-    float* m_rangeFrame;  // 0x110
-    unsigned char pad_118[0x38];
+    // 0xE0, DrEnvironmentObjLgt's light animation (callback_Chk_Point passes it to calcAnimTransPnt; the name is not
+    // the original's)
+    DrEnvironmentAnim m_anim;
     // DrEnvironmentObjLgt's (DrEnvironmentMan::createObj stores them in its inlined constructor; the names are
     // not the original's)
     int m_lgtArg;  // 0x150, DrEnvironmentMan's m_lgtArg; resourceInit passes it to setupLgt
@@ -136,7 +134,7 @@ public:
     const void* m_resource;  // 0x158, createObj's resource
     void* m_work[5];         // 0x160; releaseLgt deallocates m_work[4] (the names are not the original's)
     unsigned char pad_188[0x8];
-    void* m_work2;           // 0x190
+    DrResWrkClipList* m_work2;  // 0x190, setupLgt sets its work up when the resource has a clip list
     DrEnvironmentLgtList* m_lgtList;  // 0x198, m_lgtNum of them (debugRenderLgt2D)
     DrEnvironmentLgtList** m_renderList;  // 0x1A0, m_renderLgtNum of them (renderLgt)
     unsigned char pad_1a8[0x8];
@@ -150,7 +148,9 @@ public:
     int m_lgtArray5Num;      // 0x200, m_lgtArray[5]'s count
     int m_updateReq;         // 0x204, the constructor sets 1, update clears it (the name is not the original's)
     int m_weatherNum;        // 0x208, update compares DrPixlPostParm's +0x107C with it
-    unsigned char pad_20c[0x30];
+    unsigned char pad_20c[0x4];
+    mm::Vec3 m_viewPos;  // 0x210, the s_pCallEnvChk callbacks measure each light's distance to it (name inferred)
+    unsigned char pad_220[0x1C];
     // 0x23C, ScnObjLightDrSys::setFromCaptureTool sets 2 (the name is not the original's)
     unsigned char m_captureMode;
 };

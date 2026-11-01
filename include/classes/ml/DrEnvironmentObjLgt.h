@@ -48,7 +48,15 @@ public:
     void callback_Relase_Non(DrLightObj* light);
     void callback_Relase_Point(DrLightObj* light);
     void callback_Relase_Spot(DrLightObj* light);
+    bool callback_Chk_Ambinet_Directional(DrEnvironmentLgtList* list, DrCalcViewWork* work, const LgtObjData* data);
+    bool callback_Chk_Point(DrEnvironmentLgtList* list, DrCalcViewWork* work, const LgtObjData* data);
+    bool callback_Chk_Spot(DrEnvironmentLgtList* list, DrCalcViewWork* work, const LgtObjData* data);
     bool callback_Chk_non(DrEnvironmentLgtList* list, DrCalcViewWork* work, const LgtObjData* data);
+    bool callback_Chk_LocalIBL(DrEnvironmentLgtList* list, DrCalcViewWork* work, const LgtObjData* data);
+    bool callback_Calc_Ambient(DrEnvironmentLgtList* list, DrCalcViewWork* work);
+    bool callback_Calc_Directional(DrEnvironmentLgtList* list, DrCalcViewWork* work);
+    bool callback_Calc_Point(DrEnvironmentLgtList* list, DrCalcViewWork* work);
+    bool callback_Calc_Spot(DrEnvironmentLgtList* list, DrCalcViewWork* work);
     bool callback_Calc_Non(DrEnvironmentLgtList* list, DrCalcViewWork* work);
     bool callback_Calc_LocalIBL(DrEnvironmentLgtList* list, DrCalcViewWork* work);
     void callback_Ren_Non(DrLightObj* light, DrShdLgtMan* shdLgtMan);
@@ -58,6 +66,9 @@ public:
     void callback_Ren2D_LocalIBL(DrLightObj* light, DrShdLgtMan* shdLgtMan);
 
     // indexed by LgtObjData::m_type (7 light types)
+    static void (DrEnvironmentObjLgt::*s_pCallEnvRelase[7])(DrLightObj*);
+    static bool (DrEnvironmentObjLgt::*s_pCallEnvChk[7])(DrEnvironmentLgtList*, DrCalcViewWork*, const LgtObjData*);
+    static bool (DrEnvironmentObjLgt::*s_pCallCalcEnv[7])(DrEnvironmentLgtList*, DrCalcViewWork*);
     static void (DrEnvironmentObjLgt::*s_pCallLgtRender[7])(DrLightObj*, DrShdLgtMan*);
     static void (DrEnvironmentObjLgt::*s_pCallLgtRender2D[7])(DrLightObj*, DrShdLgtMan*);
 };

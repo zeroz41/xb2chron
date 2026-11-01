@@ -689,7 +689,7 @@ int DrResWrkClipList::setupWork(unsigned char* work, const unsigned char* data, 
     m_data = data;
     m_num = head->m_num;
     m_list = data + head->m_ofs;
-    m_work = work;
+    m_work = reinterpret_cast<unsigned int*>(work);
     int size = (m_num / 32) * 4 + 4;
     m_workSize = size + (0x20 - size % 0x20) % 0x20;
     return m_workSize;

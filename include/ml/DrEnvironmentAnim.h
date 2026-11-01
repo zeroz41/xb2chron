@@ -6,7 +6,11 @@
 #include "classes/ml/DrLightObjPnt.h"
 #include "classes/ml/DrLightObjSpt.h"
 
+namespace mm { class Vec3; }
+
 namespace ml {
+struct EnvFrameRange;
+struct LgtObjData;
 
 // One animated attribute: a run of keys in the anim file (field names are not the original's).
 struct LgtAnimInf {
@@ -31,6 +35,9 @@ struct LgtAnimKey {
 class DrEnvironmentAnim {
 public:
     float getHermiteAttr(const LgtAnimInf*, float);
+    // the s_pCallEnvChk callbacks animate a light's position with these
+    void calcAnimTransPnt(DrLightObjPnt*, const LgtObjData*, const mm::Vec3&);
+    void calcAnimTransSpt(DrLightObjSpt*, const LgtObjData*, const mm::Vec3&);
 
     void envlgt_amb_color_R(const LgtAnimInf*, float);
     void envlgt_amb_color_G(const LgtAnimInf*, float);
@@ -100,9 +107,15 @@ public:
     static void (DrEnvironmentAnim::*s_pTransAnim[3])(const LgtAnimInf*, float);
     static void (DrEnvironmentAnim::*s_pFogAnim[13])(DrFogObjGbl*, const LgtAnimInf*, float);
 
-    unsigned char pad_0[0x10];
+    // DrEnvironmentObj embeds one at 0xE0; DrEnvironmentObjLgt::setFrame clamps the frame to each range's end into
+    // m_rangeFrame (the names are not the original's)
+    const EnvFrameRange* m_frameRange;  // 0x0
+    unsigned char pad_8[0x8];
     const LgtAnimKey* m_hermiteKeys;  // 0x10, filled by setupAnim
-    unsigned char pad_18[0x20];
+    unsigned char pad_18[0x10];
+    int m_rangeNum;  // 0x28
+    unsigned char pad_2c[0x4];
+    float* m_rangeFrame;  // 0x30
     float m_color[3];  // 0x38
     float m_sideColor[3];  // 0x44
     float m_sunColor[3];  // 0x50
