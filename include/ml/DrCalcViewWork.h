@@ -18,6 +18,7 @@ public:
     typedef int (DrCalcViewWork::*StockStaticFunc)(float*, bool);
     typedef int (DrCalcViewWork::*StockFunc)(float*);
 
+    DrCalcViewWork(DrMan* drMan);
     void begin(int);
     void end();
     // the shadow pass's billboard: the light's matrix without its translation (DrCalcMan::shadowEnd restores it)
@@ -111,14 +112,16 @@ public:
     unsigned char pad_780[0x30];
     // view uniform blocks DrMdoSetup's uniformBlock_ callbacks bind (names from those callbacks, not the original's)
     grlib::CGLibDblUniformBlock m_staticBlock;  // 0x7B0
-    unsigned char pad_7E8[0x38];
+    grlib::CGLibDblUniformBlock m_staticNonJitterBlock;  // 0x7E8: end stocks s_pStockStatic with bJitter false
     grlib::CGLibDblUniformBlock m_fogBlock;     // 0x820
     grlib::CGLibDblUniformBlock m_toonBlock;    // 0x858
     grlib::CGLibDblUniformBlock m_toon2Block;   // 0x890
     grlib::CGLibDblUniformBlock m_lightBlock;   // 0x8C8
     // 0x900: DrMdoShdSetMpf::mpfshd_* bind it first for every mpf shader (the name is not the original's)
     grlib::CGLibDblUniformBlock m_mpfBlock;
-    unsigned char pad_938[0x71];
+    grlib::CGLibDblUniformBlock m_ditherBlock;     // 0x938: end stocks s_pStockDither into it
+    grlib::CGLibDblUniformBlock m_invDitherBlock;  // 0x970: end stocks s_pStockInvDither into it
+    unsigned char pad_9A8[0x1];
     // 0x9A9, DrPixlPostObjMotionBlur::render skips calcVelocityBlur while set (the name is not the original's)
     bool m_velocityBlurOff;
     // DrGpuCheckObj::setWorldPos/update treat every check object as visible while it is set (the name is not the
@@ -137,6 +140,7 @@ public:
     // 0xB20: updateDitherMatrix's Bayer values (0..63); unistatic_dither_matrix / unistatic_inv_dither_matrix hand
     // them to the shader as four 4x4 matrices (the name is not the original's)
     unsigned int m_ditherMatrix[8][8];
+    unsigned char pad_C20[0x40];  // DrCalcMan news 0xC60 bytes
 };
 }  // namespace ml
 

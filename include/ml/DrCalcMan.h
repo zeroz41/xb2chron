@@ -4,11 +4,14 @@
 namespace ml {
 class DrCalcViewWork;
 class DrCalcClipMan;
+class DrMan;
 
 // The renderer's calculation manager. Only what begin/end use is declared so far (the field names are not the
 // original's).
 class DrCalcMan {
 public:
+    DrCalcMan(DrMan* drMan, int viewIdx);
+    ~DrCalcMan();
     void begin();
     void end();
     // the view's matrices kept as last frame's (m_oldView, m_oldBillboard)
@@ -16,7 +19,7 @@ public:
     // the view's billboard as it was before DrCalcViewWork::shadowBegin
     void shadowEnd();
 
-    unsigned char pad_0[0x8];
+    DrMan* m_pDrMan;  // 0x0
     int m_viewIdx;  // 0x8: begin passes it to DrCalcViewWork::begin
     DrCalcViewWork* m_pViewWork;  // 0x10
     DrCalcClipMan* m_pClipMan;  // 0x18

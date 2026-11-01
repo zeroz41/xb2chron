@@ -23,6 +23,7 @@
 #include "classes/ml/DrCalcStmListObj.h"
 #include "classes/ml/DrCalcTexStmObj.h"
 #include "grlib/CGLibTextureBuffer.h"
+#include "grlib/CGLibRenderTarget.h"
 #include "ml/DrIniSys.h"
 #include "classes/ml/DrCalcTexStreamMan.h"
 #include "classes/ml/DrMan.h"
@@ -37,6 +38,9 @@
 #include "ml/DrCalcGpuCost.h"
 #include "ml/DrCalcMan.h"
 #include "ml/DrCalcViewWork.h"
+#include "ml/DrPixlMan.h"
+#include "ml/DrPixlPostMan.h"
+#include "ml/DrPixlPostObjCubeMapMultiIBL.h"
 #include "ml/DrPixlPostObjExpStencil.h"
 #include "ml/DrPixlPostObjUnbranchToDepth.h"
 #include "ml/DrResMdoUniformBlock.h"
@@ -208,6 +212,62 @@ DrCalcClipWorkShadowPlane::~DrCalcClipWorkShadowPlane() {}
 
 DrCalcGpuCost::~DrCalcGpuCost() {}
 
+DrCalcMan::DrCalcMan(DrMan* drMan, int viewIdx) {
+    m_pDrMan = drMan;
+    m_viewIdx = viewIdx;
+    m_pViewWork = new (drMan->m_workHandle, nullptr, 0, 4, false) DrCalcViewWork(drMan);
+    m_pClipMan = new (m_pDrMan->m_workHandle, nullptr, 0, 4, false) DrCalcClipMan(drMan, m_pViewWork);
+}
+
+DrCalcMan::~DrCalcMan() {
+    if (m_pViewWork != nullptr) {
+        delete m_pViewWork;
+        m_pViewWork = nullptr;
+    }
+    if (m_pClipMan != nullptr) {
+        delete m_pClipMan;
+        m_pClipMan = nullptr;
+    }
+}
+
+void DrCalcViewWork::shadowBegin(const mm::Mat44& mtx) {
+    m_billboard = mtx;
+    m_billboard.m[3][1] = 0.0f;
+    m_billboard.m[3][0] = 0.0f;
+    m_billboard.m[3][2] = 0.0f;
+}
+
+int DrCalcViewWork::unistatic_depth_change(float* pDst, bool) {
+    pDst[0] = m_depthParm.x;
+    pDst[1] = m_depthParm.y;
+    pDst[2] = m_depthParm.z;
+    pDst[3] = m_pDrMan->m_pixlMan->m_rate;
+    return DrResMdoUniformBlock::s_nVarSizeTbl[25];
+}
+
+int DrCalcViewWork::unistatic_screenSize(float* pDst, bool) {
+    mm::Vec4 size = mm::Vec4::unit;
+    grlib::CGLibRenderTarget* pObj = m_pDrMan->m_pixlMan->getPixlObj(5);
+    if (pObj != nullptr) {
+        size = mm::Vec4(1.0f / pObj->m_width, 1.0f / pObj->m_height, 0.0f, 0.0f);
+    }
+    grlib::ShdF32SetVec4(pDst, &size.x);
+    return DrResMdoUniformBlock::s_nVarSizeTbl[62];
+}
+
+int DrCalcViewWork::unistatic_specularIBL(float* pDst) {
+    DrPixlPostObjCubeMapMultiIBL* pIBL = m_pDrMan->m_pixlMan->m_objTbl->m_postMan->m_cubeMapMultiIBL;
+    if (pIBL != nullptr) {
+        bool bSkip = m_pDrMan->isIBLSkip();
+        mm::Vec4 parm = mm::Vec4::zero;
+        if (!bSkip) {
+            parm.x = pIBL->getPremMipCount();
+        }
+        grlib::ShdF32SetVec4(pDst, &parm.x);
+    }
+    return DrResMdoUniformBlock::s_nVarSizeTbl[59];
+}
+
 // DrCalcClipWork's own virtuals: the base tests nothing (its derived classes' tables share these slots)
 bool DrCalcClipWork::clipLineTest(mm::Vec3 const&, mm::Vec3 const&, float) const { return false; }
 bool DrCalcClipWork::clipTest(float const*, float const*) const { return false; }
@@ -242,6 +302,62 @@ bool DrCalcClipMan::testPlaneClip(const mm::Vec3& pos, float radius) {
 }
 
 void DrCalcClipObj::release() { m_relFlag |= 1 << DrMan::s_nDblStockIdx; }
+
+bool DrCalcClipObj::clipcoli_sphere(const unsigned char* pData, const mm::Vec3& pos) {
+    const ShapeData* pShape = reinterpret_cast<const ShapeData*>(pData);
+    float dx = pos.x - pShape->pos[0];
+    float dy = pos.y - pShape->pos[1];
+    float dz = pos.z - pShape->pos[2];
+    return dx * dx + dy * dy + dz * dz <= pShape->radiusSq;
+}
+
+bool DrCalcClipObj::clipcoli_cylinder(const unsigned char* pData, const mm::Vec3& pos) {
+    const RotShapeData* pShape = reinterpret_cast<const RotShapeData*>(pData);
+    float dx = pos.x - pShape->pos[0];
+    float dy = pos.y - pShape->pos[1];
+    float dz = pos.z - pShape->pos[2];
+    if (!(dx * dx + dy * dy + dz * dz <= pShape->radiusSq)) {
+        return false;
+    }
+    float ly = dx * pShape->mtx[0][1] + dy * pShape->mtx[1][1] + dz * pShape->mtx[2][1];
+    if (!(pShape->size[1] >= ly && ly >= -pShape->size[1])) {
+        return false;
+    }
+    float lx = dx * pShape->mtx[0][0] + dy * pShape->mtx[1][0] + dz * pShape->mtx[2][0];
+    float lz = dx * pShape->mtx[0][2] + dy * pShape->mtx[1][2] + dz * pShape->mtx[2][2];
+    return lx * lx + lz * lz <= pShape->size[0];
+}
+
+bool DrCalcClipObj::clipcoli_notrot_box(const unsigned char* pData, const mm::Vec3& pos) {
+    const ShapeData* pShape = reinterpret_cast<const ShapeData*>(pData);
+    float dx = pos.x - pShape->pos[0];
+    float dy = pos.y - pShape->pos[1];
+    float dz = pos.z - pShape->pos[2];
+    if (!(dx * dx + dy * dy + dz * dz <= pShape->radiusSq)) {
+        return false;
+    }
+    if (!(pShape->size[0] >= dx && dx >= -pShape->size[0])) {
+        return false;
+    }
+    if (!(pShape->size[2] >= dz && dz >= -pShape->size[2])) {
+        return false;
+    }
+    if (pShape->size[1] >= dy) {
+        return dy >= -pShape->size[1];
+    }
+    return false;
+}
+
+bool DrCalcClipObj::clipcoli_notrot_cylinder(const unsigned char* pData, const mm::Vec3& pos) {
+    const ShapeData* pShape = reinterpret_cast<const ShapeData*>(pData);
+    float dy = pos.y - pShape->pos[1];
+    if (!(pShape->size[0] >= dy && dy >= -pShape->size[0])) {
+        return false;
+    }
+    float dx = pos.x - pShape->pos[0];
+    float dz = pos.z - pShape->pos[2];
+    return dx * dx + dz * dz <= pShape->radiusSq;
+}
 
 void DrCalcCpPlaneObj::release() {
     m_relFlag |= 1 << DrMan::s_nDblStockIdx;
