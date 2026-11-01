@@ -26,6 +26,9 @@ public:
     void setupRender();
     void lastRender();
     enum { RENDER_ON = 0x4 };  // the name is not the original's
+    // set by the constructor; resourceInit clears it once it has set the render target up (the name is not the
+    // original's)
+    enum { RENDER_INIT = 0x8 };
 
     // The field names follow LayerAccMemObj's accessors that read them (not the original's).
     // The field names follow the functions that use them (not the original's).
@@ -41,7 +44,9 @@ public:
     grlib::CGLibOneUniformBlock m_clearBuffers[2];  // updateBufer zeroes its first 16 bytes before flushing
     unsigned int m_memWidth;  // getMemWidth
     unsigned int m_memHeight;  // getMemHeight
-    unsigned char pad_748[0x18];  // createStaticMemObj allocates 0x760
+    unsigned char pad_748[0x8];
+    LayerMemType m_memType;  // 0x750: the constructor's; resourceInit halves the second size pair for 3
+    unsigned char pad_754[0xC];  // createStaticMemObj allocates 0x760
     virtual void resourceInit();  // slot 3
     virtual void setDrawList(layer::LayerSortMan*, bool);  // slot 7
     virtual void applyParams(layer::LayerRenderView const*, layer::LayerResMatrix const&, layer::LayerResColor const&);  // slot 9

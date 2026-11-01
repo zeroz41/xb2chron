@@ -2,6 +2,7 @@
 #define CLASSES_LAYER_LAYEROBJFONT_H
 #include "classes/layer/LayerObj.h"
 #include "layer/LayerAccFontObj.h"
+#include "classes/layer/LayerFontDrawBuffer.h"
 
 namespace layer { class LayerFontIconObj; }
 namespace layer { class LayerFontResObj; }
@@ -24,7 +25,13 @@ public:
     // LayerObjTopFont::applyParams
     void updateShaderParms(const LayerRenderView* view, const LayerResMatrix& matrix, const LayerResColor& color);
 
-    unsigned char pad_250[0x28];
+    // the text's work (LayerFontDrawBuffer::createChar): setMsg makes one per LayerManager::s_nStkIdx,
+    // applyPartsSetup moves the s_nDebIdx one to m_work, the old one to m_oldWork, and frees that one a frame later
+    // (the names are not the original's)
+    LayerFontDrawBuffer::Work* m_work;
+    LayerFontDrawBuffer::Work* m_newWork[2];  // 0x258
+    LayerFontDrawBuffer::Work* m_oldWork;  // 0x268
+    unsigned char pad_270[0x8];
     // what setMsg(text) draws with (named after setMsg's parameters)
     const LayerFontResObj* m_font;
     const LayerFontStyleObj* m_style;

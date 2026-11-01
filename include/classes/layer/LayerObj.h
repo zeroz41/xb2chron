@@ -12,6 +12,7 @@
 namespace layer { class LayerRenderView; }
 namespace layer { class LayerSortMan; }
 namespace layer { class LayerSortObj; }
+namespace layer { class LayerAnimeObj; class LayerResSecTexture; }
 namespace grlib { class CGLibDblUniformBlock; }
 namespace grlib { class CGLibRenderTarget; }
 
@@ -127,6 +128,8 @@ public:
     // The field names follow LayerAccObjBase's accessors that read and write them (not the original's).
     // the bits m_flags[LayerManager::s_nStkIdx] collects: what was set this frame (the names are not the original's)
     enum {
+        // release: LayerObjManager::begin moves the object to its delete list (the name is not the original's)
+        FLAG_RELEASE = 0x1,
         FLAG_POS = 0x2,  // setPos
         FLAG_SCALE = 0x4,  // setScale
         FLAG_ROT = 0x8,  // setRot
@@ -223,7 +226,11 @@ public:
     // call_uniform_noImage; the name is not the original's)
     float m_posZ;
     float m_depth;  // setDrawList's set3DSpace distance (the name is not the original's)
-    unsigned char pad_204[0x3C];
+    unsigned char pad_204[0x4];
+    // what baseRelease deletes (the names are not the original's)
+    LayerAnimeObj* m_animeObj[3];  // 0x208
+    LayerResSecTexture* m_secTexture[3];  // 0x220
+    grlib::CGLibDblUniformBlock* m_defUniform;  // 0x238
     const LayerBase* m_maskObj;  // setMaskObj
     // the mask object it draws with: m_maskObj, else its parent's (applyEnd; the name is not the original's)
     const LayerBase* m_curMaskObj;

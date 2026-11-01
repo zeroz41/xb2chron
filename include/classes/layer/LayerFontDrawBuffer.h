@@ -3,7 +3,8 @@
 
 #include "classes/layer/LayerFontTag.h"
 
-namespace layer { class LayerObjFont; }
+namespace grlib { class CGLibDblUniformBlock; class CGLibVtxOneInstans; }
+namespace layer { class LayerObjFont; class LayerObjSortFont; }
 
 namespace layer {
 // table 0x7100B805C8
@@ -36,13 +37,22 @@ public:
     // what createWorkBuffer allocates and createChar returns (0x70 bytes, then its buffers; the names are not the
     // original's)
     struct Work {
-        unsigned char pad_0[0x48];
+        unsigned char pad_0[0x38];
+        // 0x38: a LayerObjSortFont constructed in its buffers; LayerObjTopFont::setDrawList sorts it
+        LayerObjSortFont* m_sortObj;
+        unsigned char pad_40[0x8];
         Line* m_lines;  // 0x48: one per line
-        unsigned char pad_50[0x20];
+        unsigned char pad_50[0x10];
+        // 0x60, 0x68: constructed in place in its buffers; LayerObjFont destroys them before it frees the work
+        grlib::CGLibVtxOneInstans* m_instans;
+        grlib::CGLibDblUniformBlock* m_uniform;
     };
 
     // The field names are not the original's.
-    unsigned char pad_4A8[0x8];
+    // 0x4A4 (in LayerFontTag's tail padding), 0x4A8: LayerObjFont::setMsg copies the object's alignment in
+    LayerFontHorizontal m_horizontal;
+    LayerFontVertical m_vertical;
+    unsigned char pad_4AC[0x4];
     Work* m_buffer;  // 0x4B0: what createChar returns
     LayerObjFont* m_obj;  // 0x4B8: the constructor's
     int m_charIndex;  // 0x4C0: the next character's index

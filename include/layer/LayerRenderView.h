@@ -11,8 +11,9 @@ public:
     // the TopTexObj/TopMemObj/TopPolyObj applyParams copy it into the object (the name and type are not the
     // original's)
     const void* m_viewData;
-    // LayerObjManager::apply zeroes the halfword at 0x10 with m_viewData; its meaning is not known
-    unsigned char pad_10[0x8];
+    // LayerObjManager::apply zeroes it with m_viewData; its meaning is not known (the name is not the original's)
+    unsigned short m_mode;  // 0x10
+    unsigned char pad_12[0x6];
 };
 }  // namespace layer
 

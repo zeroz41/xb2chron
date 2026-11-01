@@ -14,6 +14,9 @@
 #include "classes/layer/LayerObjWork.h"
 #include "classes/layer/LayerObjLayout.h"
 #include "classes/layer/LayerObjManager.h"
+#include "classes/ml/IDrDrawWorkInfo.h"
+#include "layer/LayerAnimeObj.h"
+#include "layer/LayerResSecTexture.h"
 #include "classes/layer/LayerObjTopDef.h"
 #include "classes/layer/LayerObjTopMemObj.h"
 #include "classes/layer/LayerObjTopTexObj.h"
@@ -29,6 +32,7 @@
 #include "classes/layer/LayerObjTopDef.h"
 #include "grlib/CGLibUniformArray.h"
 #include "grlib/CGLibDblUniformBlock.h"
+#include "grlib/CGLibVtxOneInstans.h"
 #include "layer/LayerObjUtil.h"
 #include "classes/layer/LayerObjTopMaskObj.h"
 #include "layer/LayerTextureObj.h"
@@ -97,8 +101,26 @@
 
 namespace layer {
 
+void LayerObj::baseRelease() {
+    if (m_defUniform != nullptr) {
+        delete m_defUniform;
+        m_defUniform = nullptr;
+    }
+    for (int i = 0; i < 3; i++) {
+        if (m_animeObj[i] != nullptr) {
+            delete m_animeObj[i];
+            m_animeObj[i] = nullptr;
+        }
+    }
+    for (int i = 0; i < 3; i++) {
+        if (m_secTexture[i] != nullptr) {
+            delete m_secTexture[i];
+            m_secTexture[i] = nullptr;
+        }
+    }
+}
 void LayerObj::release() {
-    onFlag(LayerManager::s_nStkIdx, 1);
+    onFlag(LayerManager::s_nStkIdx, FLAG_RELEASE);
     m_objType = 0;
     m_status = 0x22;
 }
@@ -168,6 +190,23 @@ void LayerObj::getScale(float& x, float& y) const {
     const Param& param = getParam(FLAG_SCALE);
     x = param.m_scaleX;
     y = param.m_scaleY;
+}
+const mm::Col4& LayerObj::getMulCol() const {
+    if (isFlag(LayerManager::s_nStkIdx, FLAG_MUL_COL)) {
+        return m_params[LayerManager::s_nStkIdx].m_color.m_mulCol;
+    }
+    if (isFlag(LayerManager::s_nDebIdx, FLAG_MUL_COL)) {
+        return m_params[LayerManager::s_nDebIdx].m_color.m_mulCol;
+    }
+    return m_params[2].m_color.m_mulCol;
+}
+const mm::Mat44& LayerObj::getMatrix() const {
+    if (isFlag(LayerManager::s_nStkIdx, FLAG_MATRIX)) {
+        if (m_matrixIdx) return m_matrix[0];
+        return m_matrix[1];
+    }
+    if (m_matrixIdx) return m_matrix[1];
+    return m_matrix[0];
 }
 void LayerObj::setDisp(bool disp) {
     if (disp) {
@@ -314,6 +353,36 @@ void LayerObjDraw::draw_call_icon(grlib::CGLibDblUniformBlock* block, const LyrD
     }
     shdManager->renderQuadsIndex();
 }
+// frees a text work and its in-place buffers (inline in workRelease, setMsg and applyPartsSetup; the name is not
+// the original's)
+static inline void releaseFontWork(LayerFontDrawBuffer::Work*& work) {
+    if (work != nullptr) {
+        work->m_instans->~CGLibVtxOneInstans();
+        work->m_uniform->~CGLibDblUniformBlock();
+        if (work != nullptr) {
+            mtl::MemManager::deallocate(work, 0, false);
+            work = nullptr;
+        }
+    }
+}
+void LayerObjFont::workRelease() {
+    releaseFontWork(m_work);
+    releaseFontWork(m_newWork[0]);
+    releaseFontWork(m_newWork[1]);
+    releaseFontWork(m_oldWork);
+}
+void LayerObjFont::setMsg(const unsigned char* text, const LayerFontResObj* font, const LayerFontStyleObj* style,
+                          const LayerFontIconObj* icon, unsigned int styleIndex) {
+    releaseFontWork(m_newWork[LayerManager::s_nStkIdx]);
+    m_font = font;
+    m_style = style;
+    m_styleIndex = styleIndex;
+    m_icon = icon;
+    LayerFontDrawBuffer buffer(font, style, style->getStyleData(styleIndex), m_icon, m_dispSetting, this);
+    buffer.m_horizontal = m_horizontal;
+    buffer.m_vertical = m_vertical;
+    m_newWork[LayerManager::s_nStkIdx] = buffer.createChar(text);
+}
 void LayerObjFont::setColorMap(const LayerFontIconObj* colorMap, unsigned int pattern) {
     m_colorMap = colorMap;
     m_colorMapPattern = pattern;
@@ -323,6 +392,15 @@ void LayerObjFont::setBorderWeight(float weight) {
     m_borderWeight[index] = weight;
     m_borderWeightFlags |= 1 << index;
 }
+float LayerObjFont::getBorderWeight() const {
+    if (m_borderWeightFlags & (1 << LayerManager::s_nStkIdx)) {
+        return m_borderWeight[LayerManager::s_nStkIdx];
+    }
+    if (m_borderWeightFlags & (1 << LayerManager::s_nDebIdx)) {
+        return m_borderWeight[LayerManager::s_nDebIdx];
+    }
+    return m_borderWeightDef;
+}
 void LayerObjFont::setSlopeRot(float rot) { m_slopeRot = rot; }
 float LayerObjFont::getSlopeRot() const { return m_slopeRot; }
 LayerBase* LayerObjManager::createStaticTexObj(const grlib::CGLibTextureBuffer& texture) {
@@ -331,6 +409,16 @@ LayerBase* LayerObjManager::createStaticTexObj(const grlib::CGLibTextureBuffer& 
 ml::CriticalSection& LayerObjManager::getCriticalSection() {
     static ml::CriticalSection s_cs;  // lbl_71015E9CC8, guard lbl_71015E9CF0; the name is not the original's
     return s_cs;
+}
+LayerObjManager::~LayerObjManager() {
+    m_objList.deleteAll();
+    m_setupList[0].deleteAll();
+    m_setupList[1].deleteAll();
+    m_deleteList.deleteAll();
+    if (m_sortMan != nullptr) {
+        delete m_sortMan;
+        m_sortMan = nullptr;
+    }
 }
 LayerBase* LayerObjManager::createStaticMaskObj(const void* resource) {
     const LyrFormatHeader* header = static_cast<const LyrFormatHeader*>(resource);
@@ -346,6 +434,39 @@ LayerBase* LayerObjManager::createStaticMemObj(unsigned int width, unsigned int 
 LayerBase* LayerObjManager::createStaticPolyObj(unsigned int width, unsigned int height, unsigned short vertexCount,
                                                 unsigned short indexCount, LayerPrimitiveType type) {
     return new (mm::mtl::PtrSingleton<LayerManager>::sys()->m_workHandle, nullptr, 0, 4, false) LayerObjTopPolyObj(width, height, vertexCount, indexCount, type);
+}
+void LayerObjManager::begin() {
+    m_deleteList.deleteAll();
+    for (LayerBase* obj = m_setupList[LayerManager::s_nDebIdx].m_head; obj != nullptr;) {
+        LayerBase* next = obj->m_next;
+        m_setupList[LayerManager::s_nDebIdx].removeList(obj);
+        static_cast<LayerObj*>(obj)->resourceInit();
+        m_objList.addListNotNull(obj);
+        obj = next;
+    }
+    m_setupList[LayerManager::s_nDebIdx].m_num = 0;
+    m_setupList[LayerManager::s_nDebIdx].m_head = nullptr;
+    m_setupList[LayerManager::s_nDebIdx].m_tail = nullptr;
+    for (LayerBase* obj = m_objList.m_head; obj != nullptr;) {
+        LayerBase* next = obj->m_next;
+        if (static_cast<LayerObj*>(obj)->isFlag(LayerManager::s_nDebIdx, LayerObj::FLAG_RELEASE)) {
+            m_objList.removeList(obj);
+            m_deleteList.addListNotNull(obj);
+        }
+        obj = next;
+    }
+}
+void LayerObjManager::apply(const ml::IDrDrawWorkInfo* info) {
+    m_drawInfo = info;
+    m_view.m_mode = 0;
+    m_view.m_viewData = nullptr;
+    m_sortMan->begin(info->m_eyePos);
+    for (LayerBase* obj = m_objList.m_head; obj != nullptr;) {
+        LayerBase* next = obj->m_next;
+        static_cast<LayerObj*>(obj)->apply(m_sortMan, &m_view);
+        obj = next;
+    }
+    m_sortMan->end();
 }
 void LayerObjManager::finalRender(const ml::IDrDrawWorkInfo* info) {
     m_drawInfo = info;
@@ -515,6 +636,31 @@ LayerObjTopFont::~LayerObjTopFont() {
     baseRelease();
     workRelease();
 }
+void LayerObjTopFont::applyPartsSetup() {
+    releaseFontWork(m_oldWork);
+    if (m_newWork[LayerManager::s_nDebIdx] != nullptr) {
+        m_oldWork = m_work;
+        m_work = m_newWork[LayerManager::s_nDebIdx];
+        m_newWork[LayerManager::s_nDebIdx] = nullptr;
+    }
+    if (m_borderWeightFlags & (1 << LayerManager::s_nDebIdx)) {
+        m_borderWeightDef = m_borderWeight[LayerManager::s_nDebIdx];
+        m_borderWeightFlags &= ~(1 << LayerManager::s_nDebIdx);
+    }
+}
+void LayerObjTopFont::setDrawList(LayerSortMan* sortMan, bool use3D) {
+    if (m_stateFlags & STATE_NO_DRAW) return;
+    if (m_work == nullptr) return;
+    if (use3D) {
+        if (m_stateFlags & STATE_3D_SPACE) {
+            mm::mtl::PtrSingleton<LayerManager>::sys()->m_objManager->m_sortMan->set3DSpace(m_work->m_sortObj, m_depth);
+        } else {
+            set2DSpace(sortMan, m_work->m_sortObj);
+        }
+    } else {
+        set2DSpace(sortMan, m_work->m_sortObj);
+    }
+}
 void LayerObjTopFont::applyParams(const LayerRenderView* view, const LayerResMatrix& matrix, const LayerResColor& color) {
     updateShaderParms(view, matrix, color);
 }
@@ -570,6 +716,24 @@ void LayerObjTopMemObj::updateBufer() {
     clear[1] = 0;
     m_clearBuffers[index].updateData();
     m_buffers[index].updateData();
+}
+void LayerObjTopMemObj::resourceInit() {
+    if (m_renderFlags & RENDER_INIT) {
+        m_renderFlags &= ~RENDER_INIT;
+        m_renderTarget.setTextureInfo(m_memWidth, m_memHeight, static_cast<GrlSurfaceFormat>(37), false, 0);
+        m_renderTarget.clearTexture(mm::Col4(0.0f, 0.0f, 0.0f, 0.0f), static_cast<GrlClaerMask>(15));
+        unsigned int* size = reinterpret_cast<unsigned int*>(m_oneUniform.m_pBuff);
+        size[0] = m_memWidth;
+        size[1] = m_memHeight;
+        if (m_memType == 3) {
+            size[2] = m_memWidth >> 1;
+            size[3] = m_memHeight >> 1;
+        } else {
+            size[2] = m_memWidth;
+            size[3] = m_memHeight;
+        }
+        m_oneUniform.updateData();
+    }
 }
 void LayerObjTopMemObj::setRender(bool render) {
     if (render) {
