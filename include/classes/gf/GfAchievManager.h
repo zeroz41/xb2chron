@@ -57,8 +57,8 @@ public:
     mm::mtl::FixedQueue<IncQuest, 512> m_incQueue;
 };
 
-// Placeholder name: 1.0.0 has it unnamed too (no symbol: file-local in the original, defined in gf_achiev_manager.cpp
-// once it matches). What it does: for each of the blade's affinity chart lines (9 to 0), finds the line's current
+// Placeholder name: 1.0.0 has it unnamed too (no symbol: file-local in the original; defined in
+// gf_achiev_manager.cpp). What it does: for each of the blade's affinity chart lines (9 to 0), finds the line's current
 // quest (the first not finished; a finished one without flag bit 0 ends the search) and, when it is ordered and
 // counts the statistic type, adds value's count to it. incAchiev, incAchievWithBlade and fn_710028A720 call it.
 void fn_710028A448(unsigned int type, int value, unsigned int blade);

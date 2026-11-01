@@ -62,6 +62,46 @@ void GfAchievManager::flushEventIncAchiev(const IncQuest& inc) {
     }
 }
 
+void fn_710028A448(unsigned int type, int value, unsigned int blade) {
+    for (int line = 9; line >= 0; --line) {
+        AchievInfo* info;
+        int index;
+        for (index = 0; index < 5; ++index) {
+            info = GfDataBlade::getAchievInfo(blade, line);
+            if (info->m_achievementId == 0 || info->m_quests[index].m_questId.empty()) {
+                continue;
+            }
+            if (GfQuestInfo::isQuestFin(info->m_quests[index].m_questId)) {
+                if (!(info->m_quests[index].m_flags & 1)) {
+                    break;
+                }
+                continue;
+            }
+            // the original jumps out to the line's quest (a found flag or pointer test lays out the last check
+            // differently)
+            goto found;
+        }
+        continue;
+    found:
+        AchievQuest* quest = &info->m_quests[index];
+        if (!GfQuestInfo::isQuestOrder(quest->m_questId) || info->m_quests[index].m_stats != type) {
+            continue;
+        }
+        unsigned int add;
+        unsigned int total;
+        GfAchievStats::getAchievementAddCount(add, total, type, value, info->m_quests[index].m_count & 0x3FFFFFFF,
+                                              info->m_quests[index].m_countMax & 0x3FFFFFFF);
+        if (add == 0 && total != 0) {
+            if ((info->m_quests[index].m_count & 0x3FFFFFFF) < total) {
+                quest->setCount(total);
+            }
+        } else {
+            quest->incleseCount(add);
+            GfQuestManager::eventAchievementCount(quest->m_questId);
+        }
+    }
+}
+
 // counts value for a task achievement of the statistic type, completing the task when it fills (inline: the
 // original keeps its locals above incAchiev's blade list and builds the task's quest per call; the name is not the
 // original's)
