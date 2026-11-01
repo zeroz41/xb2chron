@@ -8,6 +8,7 @@ namespace mm { class Vec3; }
 #include "mm/mtl/Bitflag.h"
 #include "mm/mtl/FixedQueue.h"
 #include "mm/mtl/FixedList.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace gf { class GfGameScene; class GfAppendWire; }
 namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
@@ -64,6 +65,10 @@ public:
     void setHomuriWeaponExtraMesh(bool, float);
     void updateParam(const fw::UpdateInfo&);
     void updateRideRequest(const fw::UpdateInfo& info);
+    // the field blade change time counts up while the leader driver and its blade are out of battle in a free field
+    void updateBladeChangeInField(const fw::UpdateInfo& info);
+    // m_questIdForTaskLog follows the current quest (at once while it is empty, else when the game allows it)
+    void updateQuestTaskLog(const fw::UpdateInfo& info);
     void updatePlayerState();
     bool isEnableRideCondition(unsigned int id) const;
     bool isPlayerStopFlag(PLSTOP);
@@ -153,6 +158,11 @@ public:
     GfAppendWire* getAppendControl(GF_OBJ_HANDLE* handle);
     // the wire whose wire object or owner is handle deleted and taken off the list (gevGameObjLeave)
     void destroyDriverAppendModelControl(GF_OBJ_HANDLE* handle);
+    // starts the wire of a driver's append model (gevGameObjEnter, for an object of type 13)
+    void createDriverAppendModelControl(GF_OBJ_HANDLE* handle);
+    // keeps Hana JS (bdat id 1005, not set up with create type 2, 3 or 11) in m_hanaJSObjs (gevGameObjEnter, for
+    // types 4 and 6)
+    void enterExtraControlForHanaJS(GF_OBJ_HANDLE* handle);
     const mm::Vec3& getEnableSavePos() const;
     bool isResetBladePlay() const;
     bool isNeedResetBladeForBattleEndForBattleEnd() const;
@@ -226,7 +236,17 @@ public:
     unsigned int m_battle : 1;  // isBattle's
     unsigned int m_playerCameraPause : 1;  // setPlayerCameraPause's
     unsigned int : 29;
-    unsigned char pad_14C[0x6C];
+    unsigned char pad_14C[0x24];
+    // a player state check the constructor pushes (a value, a state id, the static test it calls); the names are
+    // not the original's
+    struct PlayerStateCheck {
+        unsigned int m_value;
+        unsigned int m_state;
+        bool (*m_test)();
+    };
+    // the constructor's two checks (isPlayerSwimOnCloud with 0x3E, isPlayerWalkAndRun with 0x3C; the name is not
+    // the original's)
+    mm::mtl::FixedVector<PlayerStateCheck, 4> m_playerStateChecks;  // 0x170
     bool m_autoBattle;  // setAutoBattle's
     bool m_completeQuest;  // qevCompleteQuest and a completed mercenary mission set it
     unsigned char pad_1BA[0xE];
@@ -234,7 +254,10 @@ public:
     unsigned char pad_1CC[0xD];
     bool m_startGame;
     bool m_enableRoomForHikariLv4;
-    unsigned char pad_1DB[0x5];
+    // enterBattle sets it when a battle starts with blade 1003 (Homura) in party slot 3 (the name is not the
+    // original's)
+    bool m_homuraBattle;
+    unsigned char pad_1DC[0x4];
     bool m_stopMainMenuOpenForGimmick;
     unsigned char pad_1E1[0x7];
     // setPlayerStopFlag's requests: a PLSTOP, with 0x80 when it stops
@@ -242,7 +265,9 @@ public:
     unsigned char pad_238[0x1C];
     // GfGameManager::isEnableOpenMainMenu opens the main menu only while it is 0 or 1 (the name is not the original's)
     int m_openMainMenuState;
-    unsigned char pad_258[0x5];
+    // isEnableRideCondition lets a riding driver ride from 3 on (the name is not the original's)
+    int m_value258;
+    unsigned char pad_25C[0x1];
     // GfGameManager::isEnableOpenMainMenu answers false while it is set (the name is not the original's)
     bool m_disableOpenMainMenu;
     unsigned char pad_25E[0x22];
@@ -267,10 +292,15 @@ public:
     };
     SavePos m_savePos[7];  // getEnableSavePos returns the first enabled one's position
     bool m_flag3B0;  // cleared by applyMapjumpForStart (the name is not the original's)
-    unsigned char pad_3B1[0x6F];
+    unsigned char pad_3B1[0xF];
+    // enterExtraControlForHanaJS pushes the object (bdat id 1005) here (the name is not the original's)
+    mm::mtl::FixedVector<GF_OBJ_HANDLE*, 8> m_hanaJSObjs;  // 0x3C0
+    unsigned char pad_408[0x18];
     bool m_maskMainMenu;  // isMaskMainMenu's
     bool m_playEvent;  // isPlayEvent's
-    unsigned char pad_422[0x20E];
+    unsigned char pad_422[0x6];
+    // setEraseQuestEnemyForEventStart pushes the quest's enemies here (the name is not the original's)
+    mm::mtl::FixedVector<GF_OBJ_HANDLE*, 64> m_eraseQuestEnemies;  // 0x428
     // GfGameManager::fn_71002AC384 answers whether it is above 0 (btl::BattleCharacter::IsProcAI asks; the name is
     // not the original's)
     int m_value630;
@@ -299,7 +329,19 @@ public:
     // applyMapjumpForEnd moves it on to m_flag6A1 (the names are not the original's)
     bool m_flag6A0;
     bool m_flag6A1;
-    unsigned char pad_6A2[0x216];
+    unsigned char pad_6A2[0x6];
+    // fn_71002C4C0C's (handle, target, kind) records (the names are not the original's)
+    struct AppendRecord {
+        GF_OBJ_HANDLE* m_handle;
+        GF_OBJ_HANDLE* m_target;
+        unsigned int m_kind;
+        bool m_flag;
+        unsigned char pad_15[0x3];
+        int m_value18;
+        unsigned char pad_1C[0x4];
+    };
+    mm::mtl::FixedVector<AppendRecord, 16> m_appendRecords;  // 0x6A8
+    unsigned char pad_8B0[0x8];
     // GfPlayComIraCampSave::start clears it and requests solo party 22 (GfReqCommand::reqSoloParty) while it is set;
     // the name is not the original's
     bool m_iraCampSolo;
@@ -312,6 +354,15 @@ public:
     void qevCompleteQuest(const gf::QuestCompleteParam& param);
     void gevMapjump(gf::GEV gev, const gf::MapjumpCallbackInfo& info);
     void gevPlayEvent(gf::GEV gev, unsigned int id);
+    // gevPlayEvent's handlers for its GEVs 12, 13 and 11
+    void playEventSequenceStart(unsigned int id);
+    void playEventSequenceEnd(unsigned int id);
+    void playEventPlayEnd(unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because gevPlayEvent (its only
+    // caller) passes the scene and the event id on for GEV 14. What it does: 0x620 bytes that, in a scenario game,
+    // read the controlled mover's position (GfGameManager::getControlMoverPosition, fn_71002AB894), destroy party
+    // objects (SCOM_DESTROY_PARTY_OBJ::create) and set the scene's sound category volumes.
+    void fn_71002C6D48(unsigned int id);
     void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int);
     void clear();
     bool isPlayEvent() const;

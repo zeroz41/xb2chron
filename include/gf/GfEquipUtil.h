@@ -27,6 +27,9 @@ public:
     // equips an accessory in a driver's slot (GfGameUtil::execEquipDriverDefaultAcce: slot 0, an empty handle)
     static void equipDriverAcce(unsigned int driver, unsigned int slot, unsigned int accessory, GfItemHandle handle);
     static unsigned int getEquipOrbMax(unsigned int blade);
+    // equips an orb on a blade (GfGameScene::gevBladeActivate empties every slot of blade 1008 so: item 0, each slot
+    // index, an empty handle)
+    static void equipBladeOrb(unsigned int blade, unsigned int, unsigned int, GfItemHandle);
     static unsigned int getEquipBladeOrb(unsigned int blade, unsigned int slot);
 };
 }  // namespace gf

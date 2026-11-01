@@ -50,6 +50,20 @@
 #include "gf/MapjumpCallbackInfo.h"
 #include "classes/gf/SCOM_ZONE.h"
 #include "classes/gf/GfWeapon.h"
+#include "classes/gf/SCOM_HOMURI_PARTS.h"
+#include "gf/GfEquipUtil.h"
+#include "gf/SDataDriver.h"
+#include "gf/GfDataDriver.h"
+#include "gf/GfItemUtil.h"
+#include "classes/gf/GfGameTarget.h"
+#include "classes/gf/GfArtsMovie.h"
+#include "classes/gf/GfChainAttack.h"
+#include "gf/QuestListAcc.h"
+#include "classes/gf/GfQuestManager.h"
+#include "fw/UpdateInfo.h"
+#include "btl/Utility.h"
+#include "classes/gf/GfLayerPause.h"
+#include "classes/gf/GfItemBox.h"
 
 namespace gf {
 
@@ -78,6 +92,8 @@ void GfGameScene::EvtPlayerStop::setPlayerStop(bool stop) {
         m_state = 0;
     }
 }
+
+GfGameScene::~GfGameScene() {}
 
 void GfGameScene::build(const GfSetupParam& param) {
 #line 461
@@ -139,11 +155,52 @@ bool GfGameScene::isControlFree() const {
     return false;
 }
 
+void GfGameScene::setHomuriWeaponExtraMesh(bool flag, float value) {
+    if (GfGameManager::isClearGame()) {
+        unsigned int party = GfGameParty::getPartyId(3, 1);
+        if (party != 0xFFFFFFFF) {
+            DataParamAcc acc(GfGameParty::getHandleBlade(party, -1));
+            if (acc.isValid() && acc.getBdatId() == 1003) {
+                SCOM_HOMURI_PARTS::create(party, flag, value);
+            }
+        }
+    }
+}
+
 bool GfGameScene::isEnableFieldBladeChange() const {
     if (m_fieldBladeChangeTime >= 0.5f && GfGameManager::isEnableOpenMainMenu()) {
         return GfGameManager::isControlFree();
     }
     return false;
+}
+
+bool GfGameScene::isEnableRideCondition(unsigned int id) const {
+    if (id != 0) {
+        return true;
+    }
+    if (GfGameRide::testRideOn()) {
+        return false;
+    }
+    if (GfGameManager::isPlayerDeadSequence()) {
+        return false;
+    }
+    GfObjAcc acc(GfGameManager::getPartyLeaderDriver());
+    if (acc.isBattle()) {
+        return false;
+    }
+    if (acc.getPartyID() != 0) {
+        return true;
+    }
+    if (!GfDataParty::isRideChar(acc.getDriverId())) {
+        return true;
+    }
+    if (m_value258 < 3) {
+        return false;
+    }
+    if (GfLayerPause::isLayerPause(4)) {
+        return false;
+    }
+    return m_openMainMenuState != 2;
 }
 
 void GfGameScene::setForceBossBattleBgm(bool force) {
@@ -249,6 +306,34 @@ void GfGameScene::destroyDriverAppendModelControl(GF_OBJ_HANDLE* handle) {
         delete *it;
         m_appendWires.erase(it);
     }
+}
+
+void GfGameScene::enterExtraControlForHanaJS(GF_OBJ_HANDLE* handle) {
+    if (m_hanaJSObjs.size() == m_hanaJSObjs.capacity()) {
+        return;
+    }
+    GfObjAcc acc(handle);
+    if (acc.getBdatId() != 1005) {
+        return;
+    }
+    GfObjSetup* setup = GfObjUtil::getObjSetup(handle);
+    if (setup == nullptr) {
+        return;
+    }
+    bool skip = false;
+    switch (setup->m_createType) {
+    case 2:
+    case 3:
+    case 11:
+        skip = true;
+        break;
+    default:
+        break;
+    }
+    if (skip) {
+        return;
+    }
+    m_hanaJSObjs.push_back(handle);
 }
 
 GfAppendWire* GfGameScene::getAppendControl(GF_OBJ_HANDLE* handle) {
@@ -411,6 +496,45 @@ void GfGameScene::fn_71002C5994() {
     }
 }
 
+void GfGameScene::gevDriverActivate(unsigned int driver, ActivateType from, ActivateType to) {
+    if (from != 0 && to == 0) {
+        switch (driver) {
+        case 5:
+            if (GfDataBlade::fn_710023220C()) {
+                GfGameUtil::execDriverDead(5);
+            }
+            break;
+        case 12: {
+            unsigned int acce = GfEquipUtil::getEquipDriverAcce(12, 0);
+            GfGameUtil::execDriverDead(12);
+            if (acce != 0) {
+                GfItemUtil::addItemBox(acce, -1);
+            }
+            GfDataDriver::getSDataDriver(12)->m_defaultAcceDone = false;
+            break;
+        }
+        }
+    } else if (from == 0 && to != 0) {
+        GfGameUtil::execEquipDriverDefaultAcce(driver);
+        GfGameUtil::fn_71002EB4B8(driver);
+    }
+}
+
+void GfGameScene::gevBladeActivate(unsigned int blade, ActivateType from, ActivateType to) {
+    if (blade == 1008 && from != 0 && to == 0) {
+        if (GfDataBlade::fn_7100231884() == 3048 && GfDataBlade::getEquipOrbMax(1008) != 0) {
+            unsigned int slot = 0;
+            do {
+                GfEquipUtil::equipBladeOrb(1008, 0, slot, GfItemHandle());
+                slot++;
+            } while (slot < GfDataBlade::getEquipOrbMax(1008));
+        }
+    }
+    if (from == 0 && to != 0 && !GfDataBlade::isUnselect(blade)) {
+        GfGameUtil::execSaveAchievementPopup(blade);
+    }
+}
+
 void GfGameScene::gevBladeUnselect(unsigned int blade, bool flag) {
     if (!flag && !GfDataBlade::isActivateUnuse(blade)) {
         GfGameUtil::execSaveAchievementPopup(blade);
@@ -451,6 +575,24 @@ void GfGameScene::gevMapjump(GEV gev, const MapjumpCallbackInfo& info) {
     }
 }
 
+void GfGameScene::gevGameObjEnter(GF_OBJ_HANDLE* handle) {
+    GfObjAcc acc(handle);
+    switch (acc.getType()) {
+    case 13:
+        createDriverAppendModelControl(handle);
+        break;
+    case 6:
+        enterExtraControlForHanaJS(handle);
+        break;
+    case 4: {
+        enterExtraControlForHanaJS(handle);
+        ActivateType type = GfDataBlade::getBladeActivateType(acc.getBladeId());
+        GfEvent::callBladeActivate(acc.getBladeId(), type, type);
+        break;
+    }
+    }
+}
+
 void GfGameScene::gevChangeWeather(unsigned int weather, unsigned int arg) {
     int controlFree = GfGameManager::isControlFree();
     if (weather - 3 <= 2 && arg == 0 && controlFree) {
@@ -486,6 +628,39 @@ void GfGameScene::gevBattleStart() {
 void GfGameScene::gevMercenariesMissionFlag(unsigned int mission, unsigned int flag, unsigned int) {
     if (GfGameUtilNanakoori::checkCompleteMission(mission, flag)) {
         m_completeQuest = true;
+    }
+}
+
+void GfGameScene::gevPlayEvent(GEV gev, unsigned int id) {
+    switch (gev) {
+    case 8:
+        if (!GfManager::isExecModeThater()) {
+            GfGameUtil::setWatchedEvent(id);
+        }
+        break;
+    case 10:
+        if (!m_eraseQuestEnemies.empty()) {
+            for (GF_OBJ_HANDLE* handle : m_eraseQuestEnemies) {
+                GfObjUtil::destroy(handle);
+            }
+            m_eraseQuestEnemies.clear();
+        }
+        m_playEvent = true;
+        break;
+    case 11:
+        playEventPlayEnd(id);
+        break;
+    case 12:
+        playEventSequenceStart(id);
+        break;
+    case 13:
+        playEventSequenceEnd(id);
+        break;
+    case 14:
+        fn_71002C6D48(id);
+        break;
+    default:
+        break;
     }
 }
 
@@ -538,6 +713,31 @@ void GfGameScene::setPlayerCameraPause(bool pause) {
     }
 }
 
+void GfGameScene::enterBattle(bool battle) {
+    if (battle != m_battle) {
+        if (battle) {
+            m_battle = true;
+            GfEvent::callBattleStart();
+        } else {
+            m_battle = false;
+            GfEvent::callBattleEnd();
+        }
+    }
+    m_homuraBattle = false;
+    if (battle) {
+        unsigned int party = GfGameParty::getPartyId(3, 1);
+        if (party != 0xFFFFFFFF) {
+            DataParamAcc acc(GfGameParty::getHandleBlade(party, -1));
+            if (acc.isValid() && acc.getBdatId() == 1003) {
+                m_homuraBattle = true;
+            }
+        }
+    }
+    for (unsigned int i = 0; i < 3; i++) {
+        GfObjUtil::setDisableAutoHeal(GfGameParty::getHandleDriver(i, 0), false);
+    }
+}
+
 void GfGameScene::setForceBattleTime(float time) {
     GfGameScene* scene = get();
     if (scene != nullptr) {
@@ -582,6 +782,45 @@ void GfGameScene::updateParam(const fw::UpdateInfo&) {
         }
     }
     updatePlayerState();
+}
+
+void GfGameScene::updateBladeChangeInField(const fw::UpdateInfo& info) {
+    float time = m_fieldBladeChangeTime;
+    m_fieldBladeChangeTime = 0.0f;
+    if (!GfGameManager::isControlFree() || GfGameManager::isBattle() || GfManager::isDestroyNow() ||
+        !btl::Utility::IsEnableFieldBladeChange()) {
+        return;
+    }
+    GfObjAcc acc(GfGameManager::getPartyLeaderDriver());
+    if (acc.isBattle()) {
+        return;
+    }
+    if (!GfGameObj::isValidGameObj(acc.getHandle(), false, nullptr)) {
+        return;
+    }
+    if (!GfGameObj::isValidGameObj(GfGameParty::getHandleBlade(GfGameParty::getPartyId(acc.getHandle()), -1), false,
+                                   nullptr)) {
+        return;
+    }
+    m_fieldBladeChangeTime = time + info.m_deltaTime;
+}
+
+void GfGameScene::updateQuestTaskLog(const fw::UpdateInfo&) {
+    QuestID id = GfQuestManager::getProgressCurrentQuest(QTYPE(0));
+    if (m_questIdForTaskLog.empty()) {
+        if (!id.empty()) {
+            m_questIdForTaskLog = id;
+        }
+        return;
+    }
+    if (m_questIdForTaskLog == id) {
+        return;
+    }
+    if (GfGameManager::isFadeout() ||
+        (GfGameManager::isControlFree() && !GfGameManager::isTalking() && !GfGameManager::isEvent(false)) ||
+        GfGameManager::isFullScreenMenu()) {
+        m_questIdForTaskLog = id;
+    }
 }
 
 void GfGameScene::updateRideRequest(const fw::UpdateInfo&) {

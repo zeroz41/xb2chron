@@ -55,6 +55,13 @@ public:
     static void getOwnerBonus(OwnerBonus& bonus);  // GfGameScene::updateParam refreshes its owner bonus with it
     // hands a driver its default accessory once (CHR_Dr's DefAcce) and equips it in slot 0
     static void execEquipDriverDefaultAcce(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies between
+    // execEquipDriverDefaultAcce and execDriverDead among GfGameUtil's functions. What it does: when
+    // GfDataDriver::fn_7100237A94(driver) holds and fn_7100247474(driver) is 0, takes the accessory GfBdatChrDr's
+    // fn_71001F17B4(fn_71001F13E0(driver)) names, adds it to the item box silently (if there is room) and hands it
+    // to GfItemUtil's unit's fn_71002FCD68 with an empty handle. Its one caller, GfGameScene::gevDriverActivate,
+    // calls it right after execEquipDriverDefaultAcce when a driver becomes active.
+    static void fn_71002EB4B8(unsigned int driver);
     // SCOM_POPUP::createAchievement passes its blade, line and level; when it returns true no popup is queued
     static bool setupSaveAchievementPopup(unsigned int, unsigned int, unsigned int);
     static bool isCondDriverModel(unsigned int);
