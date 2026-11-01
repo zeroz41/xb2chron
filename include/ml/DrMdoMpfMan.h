@@ -6,6 +6,7 @@
 #include "ml/DrMdoCtlMpfWindCalc.h"
 
 namespace ml { class DrMan; }
+namespace ml { struct _MPFWorkAutoInf; }
 
 namespace ml {
 // Owns the frame's MPF work memory (no vtable: its constructor stores no table). Only the fields this unit's
@@ -20,6 +21,7 @@ public:
     void updateUniformWork();
     void addMpfObj();
     bool delMpfObj();
+    void freeMemWork(_MPFWorkAutoInf* inf);
 
     // Hands out the next `size` bytes of the frame work buffer (inlined into DrMdoCtlMpfWork's *Set functions;
     // the name is not the original's).
@@ -47,7 +49,10 @@ public:
     int m_frameWorkUsed;  // 0x3D20, cleared by begin()
     float m_windScale;  // 0x3D24, 1.0f from begin(); update scales the wind by it
     void* m_pWorkBuff;  // 0x3D28: the constructor's allocation (0x2E5A20 bytes), freed by the destructor
-    unsigned char pad_3D30[0x10];  // to 0x3D40, the size DrMdlMan::addMpfObj allocates
+    // 0x3D30: update sets bit 0 each call and runs (clearing it) only while bit 1 is set (the name is not the
+    // original's)
+    unsigned int m_updateFlags;
+    unsigned char pad_3D34[0xC];  // to 0x3D40, the size DrMdlMan::addMpfObj allocates
 };
 }  // namespace ml
 

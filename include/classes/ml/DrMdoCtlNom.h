@@ -2,6 +2,7 @@
 #define CLASSES_ML_DRMDOCTLNOM_H
 
 #include "classes/ml/DrMdlObj.h"
+#include "ml/DrMdoNomClone.h"
 
 namespace ml { class DrMdlObj; }
 namespace ml { class DrPixlShadowCacheObj; }
@@ -21,7 +22,7 @@ namespace ml { struct MdsMdlTopHeader; }
 
 namespace ml {
 // table 0x7100B7B848
-class DrMdoCtlNom : public ::ml::DrMdlObj {
+class DrMdoCtlNom : public ::ml::DrMdlObj, public ::ml::DrMdoNomClone {
 public:
     virtual ~DrMdoCtlNom();  // slot 0
     virtual void update();  // slot 2

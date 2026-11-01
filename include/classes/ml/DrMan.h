@@ -210,7 +210,9 @@ public:
     unsigned char m_captureMode[2];     // by s_nDblStockIdx: 1 on, 2 off
     unsigned char pad_1C83[0x1];
     float m_glbSpd;
-    unsigned char pad_1C88[0x8];
+    unsigned char pad_1C88[0x4];
+    // 0x1C8C: DrMdoMpfMan::update scales its wind calculators' update by it (the name is not the original's)
+    float m_mpfWindPower;
     float m_gamma;
     unsigned char pad_1C94[0x4];
     int m_postParmIdx;                  // 0x1C98, DrMdoMat::matCall_OutLineVal reads m_postParm[this] (name inferred)
@@ -255,7 +257,9 @@ public:
     // 0x1D96: DrMdlMan::shadowRender renders nothing while set (the name is not the original's)
     bool m_shadowRenderOff;
     bool m_mdlDblPause;
-    unsigned char pad_1D98[0x20];
+    // 0x1D98: DrMdoMpfMan::update skips the wind calculators while set (the name is not the original's)
+    bool m_mpfWindStop;
+    unsigned char pad_1D99[0x1F];
     bool m_allMiddelTexStmChk[2];       // 0x1DB8, by s_nDblStockIdx
     bool m_seamMapStmOk[2];             // 0x1DBA, setSeamMapStmOk writes [s_nDblIdx]
     // 0x1DBC: fn_710071E75C (DrMdoCtlSeam::calcBegin's call) sets [s_nDblIdx], fn_710071E77C reads [s_nDblStockIdx]

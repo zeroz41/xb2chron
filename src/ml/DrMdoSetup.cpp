@@ -539,6 +539,24 @@ void DrMdoMpfMan::begin() {
     m_listCount = 0;
 }
 
+void DrMdoMpfMan::update() {
+    m_updateFlags |= 1;
+    if (!(m_updateFlags & 2)) {
+        return;
+    }
+    m_updateFlags &= ~2;
+    DrMan* drMan = m_pDrMan;
+    if (!drMan->m_mpfWindStop) {
+        float power = m_windScale * 0.4f * drMan->m_mpfWindPower;
+        if (power != 0.0f) {
+            for (int i = 0; i < 64; i++) {
+                m_windCalc[i].calcUpdate(1.0f, power, 1.0f);
+            }
+        }
+    }
+    updateUniformWork();
+}
+
 void DrMdoMpfMan::updateUniformWork() {
     float* buff = reinterpret_cast<float*>(m_windBlock.getBuff());
     for (int i = 0; i < 64; i++) {
@@ -1228,9 +1246,84 @@ void DrMdoCtlMpfInst::setupInstMpf(const unsigned char* data) {
 
 DrMdoCtlMpfInst::DrMdoCtlMpfInst() {}
 
+int DrMdoCtlMpfAuto::calcWorkSize(const unsigned char* data) {
+    const MdsMpfAutoHead* head = reinterpret_cast<const MdsMpfAutoHead*>(data);
+    int size = 0;
+    if (head->m_poliOfs == 0) {
+        size = 0x78;
+    }
+    size += head->m_num * 0x10;
+    size += 0x50;
+    size += (0x10 - size % 0x10) % 0x10;
+    size += head->m_num * 0x10;
+    size += (0x10 - size % 0x10) % 0x10;
+    return size;
+}
+
+void DrMdoCtlMpfAuto::autoMpfRelease() {
+    if (m_pHeader == nullptr) {
+        return;
+    }
+    int num = m_pHeader->m_num;
+    for (int i = 0; i < num; i++) {
+        _MPFWorkAutoInf* inf = m_pWorkTbl[i];
+        while (inf != nullptr) {
+            _MPFWorkAutoInf* next = inf->m_pNext;
+            m_pMpfMan->freeMemWork(inf);
+            inf = next;
+        }
+        m_pWorkTbl[i] = nullptr;
+        m_pWorkLast[i] = nullptr;
+    }
+    m_pHeader = nullptr;
+    m_buffNum = 0;
+}
+
+DrMdoCtlMpfAuto::DrMdoCtlMpfAuto() {
+    m_buffNum = 0;
+    m_autoFlags = 0;
+    m_lodMask = 0;
+    m_workNum = 0;
+    m_workNum2 = 0;
+    m_pos[0] = m_pos[1] = m_pos[2] = 0.0f;
+    m_pHeader = nullptr;
+    m_pPoliData = nullptr;
+}
+
+DrMdoCtlMpfAuto::~DrMdoCtlMpfAuto() {
+    autoMpfRelease();
+}
+
+void DrMdoCtlMpfAuto::resetPrePos() {
+    for (int i = 0; i < m_pHeader->m_num; i++) {
+        mm::Vec3* pos = &m_pPrePos[i];
+        pos->x = -100000.0f;
+        pos->y = -100000.0f;
+        pos->z = -100000.0f;
+    }
+}
+
 void DrMdoCtlMpfAuto::setBuffTbl(_wkMpfAutoBuff** buffTbl, int buffNum) {
     m_pBuffTbl = buffTbl;
     m_buffNum = buffNum;
+}
+
+void DrMdoCtlMpfAuto::gridInstColiCalc() {
+    m_hitNum = 0;
+    for (int i = 0; i < m_buffNum; i++) {
+        m_pCurBuff = m_pBuffTbl[i];
+        if (m_pCurBuff->m_min[0] > m_pos[0] || m_pCurBuff->m_max[0] < m_pos[0] ||
+            m_pCurBuff->m_min[1] > m_pos[2] || m_pCurBuff->m_max[1] < m_pos[2]) {
+            continue;
+        }
+        if (m_pCurBuff->m_pTree != nullptr) {
+            gridTreeColiCalc(m_pCurBuff->m_pTree);
+        }
+        if (m_pCurBuff->m_pInstData != nullptr) {
+            seachInstTree(m_pCurBuff->m_pPosTree);
+        }
+    }
+    StockPoint();
 }
 
 DrMdoCtlMpfWork::DrMdoCtlMpfWork() {}
@@ -1660,6 +1753,14 @@ void DrMdoCtlNom::callCldBackAlphaNomRender() {
     if (m_stateFlags & 0x8000000) {
         cldBackAlphaCallRender();
     }
+}
+
+bool DrMdoCtlNom::cloneMdlObj(DrMdlObj* obj) {
+    bool cloned = DrMdoNomClone::cloneMdlObj(static_cast<DrMdoCtlNom*>(obj), this);
+    if (cloned) {
+        m_dispFlags &= ~0x60;
+    }
+    return cloned;
 }
 
 DrMdoCtlPos::~DrMdoCtlPos() {
@@ -2153,6 +2254,44 @@ void DrMdoCtlSeamRead::waitBaseVertexStream(_wkSeamReadCall* call, bool ok) {
     }
 }
 
+void DrMdoCtlSeamRead::waitVertexStream(_wkSeamReadCall* call, bool ok) {
+    DrResMdoSeamVertex* vtx = call->m_pVertex;
+    vtx->m_cnt = 0;
+    if (ok) {
+        const MapHead::ResSize* tbl = reinterpret_cast<const MapHead::ResSize*>(
+            reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_vertexTblOfs);
+        vtx->createVertex();
+        m_vertexMemSize += tbl[vtx->m_dataIdx].m_size;
+        unsigned short idx = vtx->m_dataIdx;
+        m_pVertexNo[idx] = vtx->m_no + 1;
+        m_seamRead.m_readWaitBits &= ~(1 << call->m_readIdx);
+    } else {
+        m_seamFlags |= 0x10000;
+        if (m_pDrMan->m_seamReadErrMode >= 3) {
+            m_seamFlags |= 0x400;
+        }
+    }
+}
+
+void DrMdoCtlSeamRead::waitTexutreStream(_wkSeamReadCall* call, bool ok) {
+    DrResMdoSeamTexture* tex = call->m_pTexture;
+    tex->m_cnt = 0;
+    if (ok) {
+        const MapHead::TexSize* tbl = reinterpret_cast<const MapHead::TexSize*>(
+            reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_textureTblOfs);
+        tex->createTexture(tbl[tex->m_dataIdx].m_size);
+        m_textureMemSize += tbl[tex->m_dataIdx].m_size;
+        unsigned short idx = tex->m_dataIdx;
+        m_pTextureNo[idx] = tex->m_no + 1;
+        m_seamRead.m_readWaitBits &= ~(1 << call->m_readIdx);
+    } else {
+        m_seamFlags |= 0x10000;
+        if (m_pDrMan->m_seamReadErrMode >= 4) {
+            m_seamFlags |= 0x400;
+        }
+    }
+}
+
 void DrMdoCtlSeamRead::waitHeightTexutreStream(_wkSeamReadCall* call, bool ok) {
     DrResMdoSeamTexture* tex = call->m_pTexture;
     tex->m_cnt = 0;
@@ -2172,6 +2311,25 @@ void DrMdoCtlSeamRead::waitHeightTexutreStream(_wkSeamReadCall* call, bool ok) {
         tex->m_heightReady = 1;
         m_textureMemSize += entry->m_heightSize;
         m_seamRead.m_readWaitBits &= ~(1 << call->m_readIdx);
+    }
+}
+
+void DrMdoCtlSeamRead::waitTexListStream(_wkSeamReadCall* call, bool ok) {
+    DrResMdoSeamTexList* list = call->m_pTexList;
+    list->m_cnt = 0;
+    if (ok) {
+        const MapHead::ResSize* tbl = reinterpret_cast<const MapHead::ResSize*>(
+            reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_texListTblOfs);
+        list->createTextureList(m_pDrMan->m_allocHandle);
+        m_textureMemSize += tbl[list->m_dataIdx].m_size;
+        unsigned short idx = list->m_dataIdx;
+        m_pTexListNo[idx] = list->m_no + 1;
+        m_seamRead.m_readWaitBits &= ~(1 << call->m_readIdx);
+    } else {
+        m_seamFlags |= 0x10000;
+        if (m_pDrMan->m_seamReadErrMode >= 2) {
+            m_seamFlags |= 0x400;
+        }
     }
 }
 
