@@ -11,7 +11,7 @@ class CharaStopAction : public ::event::ICmd {
 public:
     // the table's slot 0 holds ICmd's destructor: inline, update is the key function
     virtual ~CharaStopAction() {}  // slot 0
-    virtual bool update(event::ICmd::Param const&);  // slot 3
+    virtual int update(event::ICmd::Param const&);  // slot 3
     // the object whose event animation update returns to idle; the name is not the original's
     gf::GF_OBJ_HANDLE* m_handle;  // 0x8
 };

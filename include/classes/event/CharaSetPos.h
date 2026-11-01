@@ -11,7 +11,7 @@ class CharaSetPos : public ::event::ICmd {
 public:
     // the table's slot 0 holds ICmd's destructor: inline, update is the key function
     virtual ~CharaSetPos() {}  // slot 0
-    virtual bool update(event::ICmd::Param const&);  // slot 3
+    virtual int update(event::ICmd::Param const&);  // slot 3
     // the object update moves (-1: none; CharaObj's constructor stores -1); the name is not the original's
     gf::GF_OBJ_HANDLE* m_handle;  // 0x8
 };

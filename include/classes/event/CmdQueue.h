@@ -3,6 +3,7 @@
 
 #include "classes/event/CmdItem.h"
 #include "classes/event/ICmd.h"
+#include "classes/event/ICmd/Param.h"
 #include "mm/mtl/FixedVector.h"
 
 namespace event {
@@ -43,6 +44,47 @@ void CmdQueue<T0, T1>::erase(const ICmd* cmd) {
             it->m_cmd->term();
             m_items.erase(it);
             return;
+        }
+    }
+}
+
+// runs the queued commands from the first until one waits: a command returning 2 keeps running and the next one
+// runs too, 1 is finished (terminated, erased, the queue run again from the first after the running ones), 0 stops
+// the queue; then every item's wait counts down
+template <unsigned long T0, int T1>
+void CmdQueue<T0, T1>::update() {
+    unsigned int running = 0;
+    unsigned int i = 0;
+    CmdItem* it = m_items.begin();
+    while (true) {
+        if (it == m_items.end() || it->m_wait > 0) {
+            break;
+        }
+        if (running > i) {
+            ++it;
+            i++;
+            continue;
+        }
+        int result = it->m_cmd->update(ICmd::Param(it->m_param, it->m_count));
+        if (it->m_count != 0x7fffffff) {
+            it->m_count++;
+        }
+        if (result == 2) {
+            ++it;
+            running++;
+            i++;
+        } else if (result == 1) {
+            it->m_cmd->term();
+            m_items.erase(it);
+            i = 0;
+            it = m_items.begin();
+        } else if (result == 0) {
+            break;
+        }
+    }
+    for (unsigned int j = 0; j < m_items.size(); j++) {
+        if (m_items[j].m_wait > 0) {
+            m_items[j].m_wait--;
         }
     }
 }

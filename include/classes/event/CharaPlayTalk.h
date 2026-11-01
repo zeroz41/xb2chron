@@ -9,7 +9,7 @@ class CharaPlayTalk : public ::event::ICmd {
 public:
     virtual ~CharaPlayTalk() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
     virtual void init();  // slot 2
-    virtual bool update(event::ICmd::Param const&);  // slot 3
+    virtual int update(event::ICmd::Param const&);  // slot 3
     virtual void term();  // slot 4
     void idle();  // out of line (0x71000EC400); term calls it
     // bit 3: playTalk with its first argument false does not requeue a running talk; the name is not the original's

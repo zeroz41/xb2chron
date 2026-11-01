@@ -8,7 +8,7 @@ namespace event {
 class CharaWalkPos : public ::event::ICmd {
 public:
     virtual ~CharaWalkPos();  // slot 0
-    virtual bool update(event::ICmd::Param const&);  // slot 3
+    virtual int update(event::ICmd::Param const&);  // slot 3
     virtual void term();  // slot 4
 };
 }  // namespace event

@@ -8,7 +8,7 @@ namespace event {
 class EffectLinearPos : public ::event::ICmd {
 public:
     virtual ~EffectLinearPos();  // slot 0
-    virtual bool update(event::ICmd::Param const&);  // slot 3
+    virtual int update(event::ICmd::Param const&);  // slot 3
 };
 }  // namespace event
 

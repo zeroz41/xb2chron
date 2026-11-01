@@ -20,31 +20,31 @@ public:
     class play_start : public ::event::ICmd {
     public:
         virtual ~play_start() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3EB88
     class play_next : public ::event::ICmd {
     public:
         virtual ~play_next() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3EBC0
     class start : public ::event::ICmd {
     public:
         virtual ~start() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3EBF8
     class start_fadeout : public ::event::ICmd {
     public:
         virtual ~start_fadeout() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3EC30
     class start_areajump : public ::event::ICmd {
     public:
         virtual ~start_areajump() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
         // update's GfReqCommand::reqMapjump handle (it waits on GfReqManager::isValid); the name is not the original's
         unsigned int m_req;
         unsigned char pad_c[0x4];
@@ -53,21 +53,21 @@ public:
     class start_notice : public ::event::ICmd {
     public:
         virtual ~start_notice() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3E920
     class start_loading : public ::event::ICmd {
     public:
         start_loading() : pad_8(0) {}
         virtual ~start_loading() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
         unsigned char pad_8;
     };
     // table 0x7100B3ECA0
     class start_other : public ::event::ICmd {
     public:
         virtual ~start_other() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
         // the objects update creates (createGfObjPcByWalkID's results); the name is not the original's
         mm::mtl::FixedVector<Object*, 8> m_objs;
     };
@@ -75,50 +75,50 @@ public:
     class start_form : public ::event::ICmd {
     public:
         virtual ~start_form() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3ED10
     class start_change : public ::event::ICmd {
     public:
         virtual ~start_change() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3ED48
     class start_env_seam : public ::event::ICmd {
     public:
         virtual ~start_env_seam() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3ED80
     class start_weather : public ::event::ICmd {
     public:
         virtual ~start_weather() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3E958
     class start_streaming0 : public ::event::ICmd {
     public:
         virtual ~start_streaming0() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3E990
     class start_capture_wait : public ::event::ICmd {
     public:
         virtual ~start_capture_wait() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3E9C8
     class start_streaming1 : public ::event::ICmd {
     public:
         virtual ~start_streaming1() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3EA00
     class exec : public ::event::ICmd {
     public:
         exec() : pad_8(0), pad_9(0), pad_a(0), pad_c(0), pad_18(0) {}
         virtual ~exec() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
         unsigned char pad_8;  // SeqManager::OnEventProc sets it (msg 9) with a byte store
         unsigned char pad_9;
         unsigned char pad_a;
@@ -130,39 +130,39 @@ public:
     class exec_fadeout : public ::event::ICmd {
     public:
         virtual ~exec_fadeout() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3EA70
     class exec_grass : public ::event::ICmd {
     public:
         virtual ~exec_grass() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3EDB8
     class end_change : public ::event::ICmd {
     public:
         virtual ~end_change() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
         unsigned char pad_8[0x8];
     };
     // table 0x7100B3EAA8
     class end_eff : public ::event::ICmd {
     public:
         virtual ~end_eff() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3EAE0
     class end_stream : public ::event::ICmd {
     public:
         virtual ~end_stream() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3EB18
     class end_wait : public ::event::ICmd {
     public:
         end_wait() : pad_8(0), pad_c(0) {}
         virtual ~end_wait() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
         unsigned char pad_8;
         unsigned int pad_c;
     };
@@ -170,7 +170,7 @@ public:
     class end_areajump : public ::event::ICmd {
     public:
         virtual ~end_areajump() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
         // update's GfReqCommand::reqMapjump handle (it waits on GfReqManager::isValid); the name is not the original's
         unsigned int m_req;
         unsigned char pad_c[0x4];
@@ -179,31 +179,31 @@ public:
     class end_env_seam : public ::event::ICmd {
     public:
         virtual ~end_env_seam() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3EE60
     class end_fadewait : public ::event::ICmd {
     public:
         virtual ~end_fadewait() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3EE98
     class end_fadein : public ::event::ICmd {
     public:
         virtual ~end_fadein() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3EED0
     class end_notice : public ::event::ICmd {
     public:
         virtual ~end_notice() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3EF08
     class end : public ::event::ICmd {
     public:
         virtual ~end() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     SeqManager() : m_flags(0), m_dispFlags(0), pad_2718(0), pad_2760(0), pad_2764(0), pad_2768(0), pad_276c(0), pad_2770(""), pad_2778(0), pad_277c(0), pad_2780(""), pad_2788(0), pad_278c(0), pad_2790(0), pad_2794(0), pad_2798(0), pad_279c(0), pad_27a0(0), pad_27a8(0), pad_27b0(0), pad_27b4(0), pad_27b8(0), pad_27bc(0), pad_27c0(0), pad_27c8(0), pad_27d0(0), pad_27d8(1), pad_27d9(0), pad_27da(0), pad_27db(0), pad_27dc(0), pad_27dd(0), pad_27e4(0), pad_27e8(0), pad_27f0(0), pad_27f8(0), pad_2800(0), pad_2808(0), pad_280c(0), pad_2810(0), pad_2814(0), pad_2818(0), pad_2820(""), pad_2830(0), pad_2838(0), pad_2840(0), pad_2848(0) {}
     // inline: its D2/D0 are in the unit's inline tail (0x710014A6F4); OnEventProc is the key function

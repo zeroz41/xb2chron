@@ -14,25 +14,25 @@ public:
     class Warp : public ::event::ICmd {
     public:
         virtual ~Warp() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3F058
     class Wait : public ::event::ICmd {
     public:
         virtual ~Wait() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3F090
     class Reply : public ::event::ICmd {
     public:
         virtual ~Reply() {}  // slot 0 (inline: its D0 0x710014B068 is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3F0C8
     class Reset : public ::event::ICmd {
     public:
         virtual ~Reset() {}  // slot 0 (inline: its D0 0x710014B06C is in the unit's inline tail)
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     RandPlayer() : m_flags(0) {}
     virtual ~RandPlayer();  // slot 0

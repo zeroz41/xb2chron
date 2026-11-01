@@ -8,7 +8,7 @@ namespace event { namespace ShakerUpdater {
 class Update : public ::event::ICmd {
 public:
     virtual ~Update();  // slot 0
-    virtual bool update(event::ICmd::Param const&);  // slot 3
+    virtual int update(event::ICmd::Param const&);  // slot 3
 };
 }}  // namespace event::ShakerUpdater
 

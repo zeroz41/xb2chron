@@ -20,28 +20,28 @@ public:
     public:
         // inline: the table's complete-object slot holds ICmd's destructor, D0 sits in CharaObj's tail
         virtual ~SetEnable() {}  // slot 0
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3EFB0
     class SetFov : public ::event::ICmd {
     public:
         // inline: the table's complete-object slot holds ICmd's destructor, D0 sits in CharaObj's tail
         virtual ~SetFov() {}  // slot 0
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3EFE8
     class SetNearfar : public ::event::ICmd {
     public:
         // inline: the table's complete-object slot holds ICmd's destructor, D0 sits in CharaObj's tail
         virtual ~SetNearfar() {}  // slot 0
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     // table 0x7100B3EF78
     class SetTargetPos : public ::event::ICmd {
     public:
         // inline: the table's complete-object slot holds ICmd's destructor, D0 sits in CharaObj's tail
         virtual ~SetTargetPos() {}  // slot 0
-        virtual bool update(event::ICmd::Param const&);  // slot 3
+        virtual int update(event::ICmd::Param const&);  // slot 3
     };
     virtual ~CamObj();  // slot 0
     virtual void update(event::FrameInfo const&);  // slot 2

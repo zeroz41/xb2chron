@@ -47,6 +47,9 @@
 #include "classes/gf/GfComEvtAnim.h"
 #include "classes/gf/GfComTransform.h"
 #include "classes/gf/GfObj.h"
+#include "gf/MsgGameLipAction.h"
+#include "gf/MsgGameTalkAction.h"
+#include "plugin/Bdat.h"
 #include "classes/event/CmdItem.h"
 #include "classes/event/CmdQueue.h"
 #include "classes/event/CharaEffectPlayer.h"
@@ -232,6 +235,29 @@ void CamField::update(const event::FrameInfo&) {}
 
 void CharaTurnRot::init() {}
 
+CharaPlayActionAuto::~CharaPlayActionAuto() {
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    if (obj != nullptr && (m_flags & 4)) {
+        if (!(m_flags & 1)) {
+            const char* cmd = reinterpret_cast<const char*>(Bdat::getValCheck(Bdat::getFP("EVT_acttype"), "cmd2", 1, 7));
+            const char* stat = reinterpret_cast<const char*>(Bdat::getValCheck(Bdat::getFP("EVT_acttype"), "stat2", 1, 7));
+            gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2);
+            if (anim != nullptr) {
+                anim->execCmd(cmd);
+                if (strcmp(anim->getStateName() ? anim->getStateName() : "", stat) != 0) {
+                    anim->setState(stat);
+                }
+            }
+        } else {
+            gf::MsgGameTalkAction msg;
+            msg.m_action = 2;
+            msg.m_setState = false;
+            msg.m_result = false;
+            static_cast<fw::MessageObject*>(obj)->recieveMessage(obj, msg);
+        }
+    }
+}
+
 void CharaPlayActionAuto::init() {}
 
 void CharaPlayActionAuto::term() {}
@@ -243,6 +269,15 @@ void CharaPlayAction::term() {
         m_flags &= ~2;
     } else {
         idle();
+    }
+}
+
+CharaPlayTalkAuto::~CharaPlayTalkAuto() {
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    if (obj != nullptr && (m_flags & 5) == 5) {
+        gf::MsgGameLipAction msg;
+        msg.m_action = 1;
+        static_cast<fw::MessageObject*>(obj)->recieveMessage(obj, msg);
     }
 }
 
@@ -1106,7 +1141,7 @@ CharaEvaPlayerEff::~CharaEvaPlayerEff() {
     m_player = nullptr;
 }
 
-bool CharaSetPos::update(const ICmd::Param& param) {
+int CharaSetPos::update(const ICmd::Param& param) {
     if (m_handle == (gf::GF_OBJ_HANDLE*)-1) {
         return true;
     }
@@ -1119,7 +1154,7 @@ bool CharaSetPos::update(const ICmd::Param& param) {
     return true;
 }
 
-bool CharaStopAction::update(const ICmd::Param&) {
+int CharaStopAction::update(const ICmd::Param&) {
     gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
     if (obj != nullptr) {
         gf::GfComEvtAnim* anim = obj->getComponent<gf::GfComEvtAnim>(2);
@@ -3553,7 +3588,7 @@ void EnvManager::resetScene() {
 
 namespace event {
 
-bool SeqManager::start::update(const ICmd::Param& param) {
+int SeqManager::start::update(const ICmd::Param& param) {
     if (param.m_frame <= 0) {
         SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
         manager->m_seqName = "start";
@@ -3561,7 +3596,7 @@ bool SeqManager::start::update(const ICmd::Param& param) {
     return true;
 }
 
-bool SeqManager::end::update(const ICmd::Param& param) {
+int SeqManager::end::update(const ICmd::Param& param) {
     if (param.m_frame <= 0) {
         SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
         manager->m_flags |= 2;
@@ -3570,7 +3605,7 @@ bool SeqManager::end::update(const ICmd::Param& param) {
     return true;
 }
 
-bool SeqManager::end_areajump::update(const ICmd::Param& param) {
+int SeqManager::end_areajump::update(const ICmd::Param& param) {
     if (param.m_frame <= 0) {
         gf::GfMapjumpInfo info(param.m_param.val(1).getS32());
         m_req = gf::GfReqCommand::reqMapjump(info);
@@ -3580,7 +3615,7 @@ bool SeqManager::end_areajump::update(const ICmd::Param& param) {
     return !gf::GfReqManager::isValid(m_req);
 }
 
-bool SeqManager::end_env_seam::update(const ICmd::Param& param) {
+int SeqManager::end_env_seam::update(const ICmd::Param& param) {
     if (param.m_frame <= 0) {
         EnvManager* env = mm::mtl::Singleton<EnvManager>::getPtr();
         if (env->m_event.pad_1c == 1) {
@@ -3594,7 +3629,7 @@ bool SeqManager::end_env_seam::update(const ICmd::Param& param) {
     return true;
 }
 
-bool SeqManager::end_fadein::update(const ICmd::Param& param) {
+int SeqManager::end_fadein::update(const ICmd::Param& param) {
     if (param.m_frame <= 0) {
         SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
         manager->m_seqName = "end fadein";
@@ -3602,7 +3637,7 @@ bool SeqManager::end_fadein::update(const ICmd::Param& param) {
     return true;
 }
 
-bool SeqManager::start_streaming1::update(const ICmd::Param& param) {
+int SeqManager::start_streaming1::update(const ICmd::Param& param) {
     if (param.m_frame <= 0) {
         SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
         manager->m_seqName = "start stream1";
@@ -3610,7 +3645,7 @@ bool SeqManager::start_streaming1::update(const ICmd::Param& param) {
     return true;
 }
 
-bool SeqManager::start_change::update(const ICmd::Param& param) {
+int SeqManager::start_change::update(const ICmd::Param& param) {
     if (param.m_frame <= 0) {
         SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
         manager->m_seqName = "start change";
@@ -3623,7 +3658,7 @@ bool SeqManager::start_change::update(const ICmd::Param& param) {
     return true;
 }
 
-bool SeqManager::start_env_seam::update(const ICmd::Param& param) {
+int SeqManager::start_env_seam::update(const ICmd::Param& param) {
     if (param.m_frame <= 0) {
         unsigned int id = param.m_param.val(1).getS32();
         EnvManager* env = mm::mtl::Singleton<EnvManager>::getPtr();
@@ -3638,7 +3673,7 @@ bool SeqManager::start_env_seam::update(const ICmd::Param& param) {
     return true;
 }
 
-bool SeqManager::start_capture_wait::update(const ICmd::Param& param) {
+int SeqManager::start_capture_wait::update(const ICmd::Param& param) {
     if (param.m_frame <= 0) {
         SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
         manager->m_seqName = "start capture wait";
@@ -3646,7 +3681,7 @@ bool SeqManager::start_capture_wait::update(const ICmd::Param& param) {
     return param.m_frame >= 30;
 }
 
-bool SeqManager::start_notice::update(const ICmd::Param& param) {
+int SeqManager::start_notice::update(const ICmd::Param& param) {
     if (param.m_frame <= 0) {
         SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
         manager->m_seqName = "start notice";
@@ -3656,7 +3691,7 @@ bool SeqManager::start_notice::update(const ICmd::Param& param) {
     return true;
 }
 
-bool SeqManager::start_areajump::update(const ICmd::Param& param) {
+int SeqManager::start_areajump::update(const ICmd::Param& param) {
     if (param.m_frame <= 0) {
         gf::GfMapjumpInfo info(param.m_param.val(1).getS32());
         m_req = gf::GfReqCommand::reqMapjump(info);
@@ -3666,7 +3701,7 @@ bool SeqManager::start_areajump::update(const ICmd::Param& param) {
     return !gf::GfReqManager::isValid(m_req);
 }
 
-bool SeqManager::end_notice::update(const ICmd::Param& param) {
+int SeqManager::end_notice::update(const ICmd::Param& param) {
     if (param.m_frame <= 0) {
         SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
         manager->m_seqName = "end notice";
@@ -3676,7 +3711,7 @@ bool SeqManager::end_notice::update(const ICmd::Param& param) {
     return true;
 }
 
-bool SeqManager::play_start::update(const ICmd::Param& param) {
+int SeqManager::play_start::update(const ICmd::Param& param) {
     if (param.m_frame <= 0) {
         gf::SCOM_SCRIPT::create(2, param.m_param.val(1).getStr(), false);
         SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
@@ -3690,7 +3725,7 @@ bool SeqManager::play_start::update(const ICmd::Param& param) {
     return false;
 }
 
-bool RandPlayer::Warp::update(const ICmd::Param& param) {
+int RandPlayer::Warp::update(const ICmd::Param& param) {
     if (param.m_frame == 0) {
         gf::GfGameParty::judgeRandomTalkWarp();
     }
@@ -3698,7 +3733,7 @@ bool RandPlayer::Warp::update(const ICmd::Param& param) {
 }
 
 // waits while the character with the id is not yet standing by to talk, at most 60 frames
-bool RandPlayer::Wait::update(const ICmd::Param& param) {
+int RandPlayer::Wait::update(const ICmd::Param& param) {
     Object* obj = RandUtil::searchByID(param.m_param.val(0).getS32());
     if (param.m_frame < 60 && obj->m_type == 2 &&
         !gf::GfObjUtil::isStanbyTalkingPlayer(static_cast<ObjectChara*>(obj)->m_chara->m_gfHandle)) {
@@ -3709,7 +3744,7 @@ bool RandPlayer::Wait::update(const ICmd::Param& param) {
 
 // on its first frame: when val 1 is set and the id names a character, aims it at the val 2..4 target (val 5 set) or
 // drops its queued target command
-bool RandPlayer::Reset::update(const ICmd::Param& param) {
+int RandPlayer::Reset::update(const ICmd::Param& param) {
     if (param.m_frame == 0) {
         int id = param.m_param.val(0).getS32();
         bool enable = param.m_param.val(1).getBool();
@@ -3732,7 +3767,7 @@ bool RandPlayer::Reset::update(const ICmd::Param& param) {
 }
 
 // the looked-up character is unused (1.0.0 0x71000D4630 is the same)
-bool CharaStopHead::update(const ICmd::Param& param) {
+int CharaStopHead::update(const ICmd::Param& param) {
     gf::GfObjUtil::getObj(m_handle);
     return true;
 }
