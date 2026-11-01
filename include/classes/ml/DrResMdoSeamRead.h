@@ -9,6 +9,7 @@ namespace ml {
 // table 0x7100B7DA28
 class DrResMdoSeamRead : public ::ml::IWorkEvent {
 public:
+    DrResMdoSeamRead();
     virtual ~DrResMdoSeamRead();  // slot 0
     void release();
     // true while a file read is busy

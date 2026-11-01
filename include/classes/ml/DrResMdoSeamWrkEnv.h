@@ -3,6 +3,7 @@
 
 #include "mm/Vec3.h"
 #include "mtl/MemManager.h"
+#include "ml/DrResMdoSeamMemMan.h"
 
 namespace grlib { class CGLibTriUniformArray; }
 
@@ -17,7 +18,9 @@ struct MdsSeamEnvMapData {
 };
 
 // table 0x7100B7DB20. 0xA0 bytes (setInfo writes 0x90..0x9C). Field names are not the original's.
-class DrResMdoSeamWrkEnv {
+// 0x8/0x10 are DrResChankList node links (a base, as in DrCalcTexStmObj: the constructor zeroes them before it
+// stores the table).
+class DrResMdoSeamWrkEnv : public DrResChankList<DrResMdoSeamWrkEnv>::Node {
 public:
     DrResMdoSeamWrkEnv();
     virtual ~DrResMdoSeamWrkEnv();  // slot 0
@@ -33,8 +36,6 @@ public:
 
     enum { FLAG_MEM_MASK = 0x3, FLAG_READ = 1 << 4 };
 
-    void* pad_8;                          // the constructor clears it
-    void* pad_10;                         // the constructor clears it
     const MdsSeamEnvMapHead* m_head;      // 0x18
     const MdsSeamEnvMapData* m_data;      // 0x20
     void* m_matBits;                      // 0x28: one bit per material, allocated by setupWork

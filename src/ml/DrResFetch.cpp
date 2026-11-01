@@ -1393,12 +1393,40 @@ void DrResShdPrePass::preshdset_Obj_Al() {
     m_shaderSel[1] = 1;
 }
 
+void DrResShdPrePass::preshdset_ObjT_Al_Fs() {
+    m_shaderSel[5] = 2;
+    m_shaderSel[6] = 0;
+    m_shaderSel[9] = 4;
+    m_shaderSel[8] = 1;
+    // The original stores entries 0 and 1 as one 64-bit write: it copies them from a two-entry table (form
+    // inferred from the code; the table's name is not the original's).
+    const int texAlphaSel[2] = {0, 1};
+    for (int i = 0; i < 2; i++) {
+        m_shaderSel[i] = texAlphaSel[i];
+    }
+    m_shaderSel[2] = 5;
+}
+
 void DrResShdPrePass::preshdset_Mot_Al() {
     m_shaderSel[5] = 2;
     m_shaderSel[6] = 0;
     m_shaderSel[9] = 4;
     m_shaderSel[8] = 1;
     m_shaderSel[1] = 1;
+}
+
+void DrResShdPrePass::preshdset_MotT_Al_Fs() {
+    m_shaderSel[5] = 2;
+    m_shaderSel[6] = 0;
+    m_shaderSel[9] = 4;
+    m_shaderSel[8] = 1;
+    // The original stores entries 0 and 1 as one 64-bit write: it copies them from a two-entry table (form
+    // inferred from the code; the table's name is not the original's).
+    const int texAlphaSel[2] = {0, 1};
+    for (int i = 0; i < 2; i++) {
+        m_shaderSel[i] = texAlphaSel[i];
+    }
+    m_shaderSel[2] = 5;
 }
 
 void DrResShdPrePass::preshdset_Inst_Al() {
@@ -1449,6 +1477,22 @@ void DrResShdPrePass::preshdset_FwT() {
     m_shaderSel[4] = 4;
 }
 
+void DrResShdPrePass::preshdset_FwT_Al() {
+    m_shaderSel[5] = 2;
+    m_shaderSel[6] = 0;
+    m_shaderSel[9] = 4;
+    m_shaderSel[8] = 1;
+    m_shaderSel[10] = 3;
+    // The original stores entries 0 and 1 as one 64-bit write: it copies them from a two-entry table (form
+    // inferred from the code; the table's name is not the original's).
+    const int texAlphaSel[2] = {0, 1};
+    for (int i = 0; i < 2; i++) {
+        m_shaderSel[i] = texAlphaSel[i];
+    }
+    m_shaderSel[3] = 3;
+    m_shaderSel[4] = 4;
+}
+
 void DrResShdPrePass::preshdset_Fw_Al() {
     m_shaderSel[5] = 2;
     m_shaderSel[6] = 0;
@@ -1457,6 +1501,23 @@ void DrResShdPrePass::preshdset_Fw_Al() {
     m_shaderSel[3] = 3;
     m_shaderSel[1] = 1;
     m_shaderSel[10] = 3;
+    m_shaderSel[4] = 4;
+}
+
+void DrResShdPrePass::preshdset_FwT_Al_Fs() {
+    m_shaderSel[5] = 2;
+    m_shaderSel[6] = 0;
+    m_shaderSel[9] = 4;
+    m_shaderSel[8] = 1;
+    m_shaderSel[10] = 3;
+    // The original stores entries 0 and 1 as one 64-bit write: it copies them from a two-entry table (form
+    // inferred from the code; the table's name is not the original's).
+    const int texAlphaSel[2] = {0, 1};
+    for (int i = 0; i < 2; i++) {
+        m_shaderSel[i] = texAlphaSel[i];
+    }
+    m_shaderSel[2] = 5;
+    m_shaderSel[3] = 3;
     m_shaderSel[4] = 4;
 }
 
@@ -4378,6 +4439,10 @@ void DrGpuCheckObj::setWorldPos(const mm::Vec3& pos, float radius) {
 
 
 
+DrStmReadCheck::DrStmReadCheck(const char* name) : m_flags(0) {
+    m_list = DrMan::get()->m_texStreamMan->createTexStmListObj(name);
+}
+
 DrStmReadCheck::~DrStmReadCheck() {
     if (m_list != nullptr) {
         m_list->release();
@@ -4579,6 +4644,10 @@ void DrResMdoSeamParmRead::addPos(const mm::Vec3& pos) {
     m_posCnt++;
 }
 
+DrResMdoSeamWrkEnv::DrResMdoSeamWrkEnv()
+    : m_matBits(nullptr), m_work0(nullptr), m_work1(nullptr), m_work2(nullptr), m_matRes(nullptr), m_memObj(nullptr),
+      m_flags(0), m_dispNum(0) {}
+
 void DrResMdoSeamWrkEnv::release() {
     if (m_matRes) {
         mtl::MemManager::deallocate(m_matRes, 0, false);
@@ -4738,6 +4807,11 @@ void DrResMdoSeamMemMan::releaseFreeObj(DrResMdoSeamMemObj* obj) {
             if (m_cache[i] == obj) m_cache[i] = nullptr;
         }
     }
+}
+
+// Zeroes 0x8-0x58 as one block, then sets the flags.
+DrResMdoSeamRead::DrResMdoSeamRead() : pad_8(), m_readWaitBits(0), pad_4A(), m_flags(0), pad_50() {
+    m_flags = FLAG_READ_ASYNC;
 }
 
 DrResMdoSeamRead::~DrResMdoSeamRead() { release(); }

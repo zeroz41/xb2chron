@@ -1,13 +1,17 @@
 #ifndef CLASSES_ML_DRSTMREADCHECK_H
 #define CLASSES_ML_DRSTMREADCHECK_H
 
+#include "ml/DrResMdoSeamMemMan.h"
+
 namespace ml { class DrCalcStmListObj; }
 
 namespace ml {
 // table 0x7100B7D728
 // a reader of a named texture stream: DrMdlMan::createStmLoadObj makes it and links it into its list (m_prev,
 // m_next). The field and flag names are not the original's.
-class DrStmReadCheck {
+// The list links at 0x8/0x10 come from a DrResChankList node base: the constructor zeroes them before it stores the
+// table, as DrCalcTexStmObj's does.
+class DrStmReadCheck : public DrResChankList<DrStmReadCheck>::Node {
 public:
     DrStmReadCheck(const char* name);
     virtual ~DrStmReadCheck();  // slot 0
@@ -20,8 +24,6 @@ public:
         FLAG_READY = 1 << 2,    // update leaves the use mode alone; getAdder asks the list
     };
 
-    DrStmReadCheck* m_prev;      // 0x8
-    DrStmReadCheck* m_next;      // 0x10
     int m_mode;                  // 0x18, 1 and 2 pass on as the list's use mode, others as 0
     unsigned int m_flags;        // 0x1C
     DrCalcStmListObj* m_list;    // 0x20, DrCalcTexStreamMan::createTexStmListObj's
