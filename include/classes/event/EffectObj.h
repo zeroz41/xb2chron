@@ -6,6 +6,9 @@
 #include "mm/Vec3.h"
 #include "mm/Col4.h"
 #include "event/CvType.h"
+#include "classes/event/EffectLinearPos.h"
+#include "classes/event/EffectLinearRot.h"
+#include "classes/event/EffectLinearCol.h"
 
 namespace event {
 // table 0x7100B3CE90
@@ -20,20 +23,24 @@ public:
 
     unsigned char pad_8[0x48];
     EffectCtrl m_ctrl;  // 0x50; the name is not the original's
-    unsigned char pad_58[0x178];
-    // the scale ScriptEffectScale sets on all three axes (doit saves it first, undo restores it); the name is not
-    // the original's
-    mm::Vec3 m_scale;  // 0x1d0
     // 1.0.0's EffectObj::end (0x71000DCE8C; 3.0.1 inlines it into ObjectEffect::end): the queued commands erased
     // first to last, then the effect killed
     void end() {
         m_cmdQueue.eraseAll();
         m_ctrl.kill();
     }
-    // the colour colorTo fades from (ScriptEffectColor saves and restores it); the name is not the original's
-    mm::Col4 m_color;  // 0x1e0
     unsigned char pad_1f0[0x70];
     CmdQueue<6, 0> m_cmdQueue;  // 0x260; erased by end (CmdQueue<6,0>::erase); the name is not the original's
+    unsigned char pad_960[0x70];  // the EffectPlayEff (0x960) and EffectPlayEva (0x988) commands
+    // the commands moveTo/turnTo/colorTo queue (the constructor builds them); the names are not the original's
+    EffectLinearPos m_linearPos;  // 0x9d0
+    EffectLinearRot m_linearRot;  // 0xbd0
+    EffectLinearCol m_linearCol;  // 0xdd0
+    unsigned long pad_fb8;
+    unsigned int pad_fc0;
+    // the step the linear commands advance their curves by each update; the name is not the original's
+    float m_step;  // 0xfc4
+    unsigned int pad_fc8;
 };
 }  // namespace event
 

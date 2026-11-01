@@ -14,11 +14,26 @@ public:
 
     unsigned int pad_8;  // UIManager's constructor stores 1
     mm::mtl::FixedVector<float, 16> m_keys;  // @0x10, count @0x50 (the key frames)
+    void update(float step);
+    // 1.0.0's AnmBase::clear (0x7100091E28); inline in 3.0.1
+    void clear() {
+        m_keys.clear();
+        pad_58 = 1;
+        pad_8 = 1;
+        pad_5c = 0.0f;
+        pad_68 = 0;
+        pad_70 = 0.0f;
+        pad_60 = 0.0f;
+    }
+    // the curve has not reached its end yet (the linear commands' updates return 2 while it holds); the name is not
+    // the original's
+    bool isPlaying() const { return !(pad_60 <= pad_5c); }
+
     unsigned int pad_58;  // UIManager's constructor stores 1
-    unsigned int pad_5c;
-    unsigned int pad_60;
-    unsigned long pad_68;
-    unsigned int pad_70;
+    float pad_5c;  // compared with pad_60 (the linear commands' updates)
+    float pad_60;
+    unsigned long pad_68;  // calcEvalute's key index
+    float pad_70;  // calcEvalute's blend
 };
 }  // namespace event
 

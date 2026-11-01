@@ -376,6 +376,88 @@ void EffectPlayEff::term() {
     pad_20 = -1.0f;
 }
 
+void AnmVec::update(float step) {
+    AnmBase::update(step);
+    if (pad_8 & 2) {
+        mm::Vec3& value = m_value;
+        mm::Vec3 result = calcEvalute(pad_68, pad_70);
+        if (&value != &result) {
+            value = result;
+        }
+    }
+}
+
+void AnmCol::update(float step) {
+    AnmBase::update(step);
+    if (pad_8 & 2) {
+        m_value = calcEvalute(pad_68, pad_70);
+    }
+}
+
+int EffectLinearCol::update(const ICmd::Param& param) {
+    if (m_ctrl == nullptr) {
+        return 1;
+    }
+    EffectObj* obj = static_cast<EffectObj*>(param.m_param.val(0).getUserdata());
+    float step = obj->m_step;
+    if (param.m_frame == 0) {
+        mm::Col4 color(param.m_param.val(1).getF32(), param.m_param.val(2).getF32(), param.m_param.val(3).getF32(),
+                       param.m_param.val(4).getF32());
+        m_anm.clear();
+        m_anm.append(0.0f, obj->m_ctrl.m_color, static_cast<CV_TYPE>(0));
+        m_anm.append(param.m_param.val(5).getF32(), color, static_cast<CV_TYPE>(param.m_param.val(6).getS32()));
+    }
+    m_anm.update(step);
+    m_ctrl->m_color = m_anm.m_value;
+    if (m_anm.isPlaying()) {
+        return 2;
+    }
+    m_anm.clear();
+    return 1;
+}
+
+int EffectLinearRot::update(const ICmd::Param& param) {
+    if (m_ctrl == nullptr) {
+        return 1;
+    }
+    EffectObj* obj = static_cast<EffectObj*>(param.m_param.val(0).getUserdata());
+    float step = obj->m_step;
+    if (param.m_frame == 0) {
+        mm::Vec3 rot(param.m_param.val(1).getF32(), param.m_param.val(2).getF32(), param.m_param.val(3).getF32());
+        m_anm.clear();
+        m_anm.append(0.0f, obj->m_ctrl.m_rot, static_cast<CV_TYPE>(0));
+        m_anm.append(param.m_param.val(4).getF32(), rot, static_cast<CV_TYPE>(param.m_param.val(5).getS32()));
+    }
+    m_anm.update(step);
+    m_ctrl->m_rot = m_anm.m_value;
+    if (m_anm.isPlaying()) {
+        return 2;
+    }
+    m_anm.clear();
+    return 1;
+}
+
+int EffectLinearPos::update(const ICmd::Param& param) {
+    if (m_ctrl == nullptr) {
+        return 1;
+    }
+    EffectObj* obj = static_cast<EffectObj*>(param.m_param.val(0).getUserdata());
+    float step = obj->m_step;
+    if (param.m_frame == 0) {
+        mm::Vec3 pos(param.m_param.val(1).getF32(), param.m_param.val(2).getF32(), param.m_param.val(3).getF32());
+        m_anm.clear();
+        m_anm.append(0.0f, obj->m_ctrl.m_pos, static_cast<CV_TYPE>(0));
+        m_anm.append(param.m_param.val(4).getF32(), pos, static_cast<CV_TYPE>(param.m_param.val(5).getS32()));
+    }
+    m_anm.update(step);
+    m_ctrl->m_pos = m_anm.m_value;
+    if (m_anm.isPlaying()) {
+        return 2;
+    }
+    m_anm.clear();
+    return 1;
+}
+
 void FormManager::OnEventProc(event::MSG_TYPE) {}
 
 void MercenariesManager::OnEventProc(event::MSG_TYPE) {}
@@ -2042,14 +2124,14 @@ void ScriptEffectTurn::redo(const event::Param& param) {
 void ScriptEffectScale::doit(const event::Param& param) {
     ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
     if (obj != 0) {
-        mm::Vec3 scalePrev = obj->m_effect->m_scale;
+        mm::Vec3 scalePrev = obj->m_effect->m_ctrl.m_scale;
         m_prevScale = scalePrev;
         float scale = param.val(0).getF32();
         EffectObj* effect = obj->m_effect;
         if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
-            effect->m_scale.x = scale;
-            effect->m_scale.y = scale;
-            effect->m_scale.z = scale;
+            effect->m_ctrl.m_scale.x = scale;
+            effect->m_ctrl.m_scale.y = scale;
+            effect->m_ctrl.m_scale.z = scale;
         }
     }
 }
@@ -2059,9 +2141,9 @@ void ScriptEffectScale::undo(const event::Param&) {
     if (obj != 0) {
         EffectObj* effect = obj->m_effect;
         if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
-            effect->m_scale.x = m_prevScale.x;
-            effect->m_scale.y = m_prevScale.y;
-            effect->m_scale.z = m_prevScale.z;
+            effect->m_ctrl.m_scale.x = m_prevScale.x;
+            effect->m_ctrl.m_scale.y = m_prevScale.y;
+            effect->m_ctrl.m_scale.z = m_prevScale.z;
         }
     }
 }
@@ -2072,9 +2154,9 @@ void ScriptEffectScale::redo(const event::Param& param) {
         float scale = param.val(0).getF32();
         EffectObj* effect = obj->m_effect;
         if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
-            effect->m_scale.x = scale;
-            effect->m_scale.y = scale;
-            effect->m_scale.z = scale;
+            effect->m_ctrl.m_scale.x = scale;
+            effect->m_ctrl.m_scale.y = scale;
+            effect->m_ctrl.m_scale.z = scale;
         }
     }
 }
@@ -2083,7 +2165,7 @@ void ScriptEffectColor::doit(const event::Param& param) {
     ObjectEffect* obj = static_cast<ObjectEffect*>(mm::mtl::Singleton<ObjectManager>::getPtr()->getActive(4));
     if (obj != 0) {
         mm::Col4 color(param.val(0).getF32(), param.val(1).getF32(), param.val(2).getF32(), param.val(3).getF32());
-        const mm::Col4& cur = obj->m_effect->m_color;
+        const mm::Col4& cur = obj->m_effect->m_ctrl.m_color;
         m_prevColor = mm::Col4(cur.r, cur.g, cur.b, cur.a);
         float time = param.val(4).getF32();
         CV_TYPE type = static_cast<CV_TYPE>(param.val(5).getS32());
@@ -2097,7 +2179,7 @@ void ScriptEffectColor::undo(const event::Param&) {
     if (obj != 0) {
         EffectObj* effect = obj->m_effect;
         if (!mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
-            effect->m_color = prev;
+            effect->m_ctrl.m_color = prev;
         }
     }
 }
