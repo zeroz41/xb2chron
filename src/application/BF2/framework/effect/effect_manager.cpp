@@ -503,6 +503,7 @@ unsigned int EffectManager::createHateRing() {
     return effect::SystemManager::getPtr()->es_create(efb, true);
 }
 
+
 unsigned int EffectManager::createHateRingVec() {
     void* efb = nullptr;
     for (CommonPack& entry : m_commonPacks) {
@@ -517,6 +518,20 @@ unsigned int EffectManager::createHateRingVec() {
     return effect::SystemManager::getPtr()->es_create(efb, true);
 }
 
+bool EffectManager::updateHateRingVec(unsigned int handle, const mm::Vec3& pos, const float& angle, const float& scale,
+                                      const mm::Col4& color) {
+    effect::SendParam param;
+    memcpy(param.m_color, &color, sizeof(param.m_color));
+    param.m_scale.x = scale;
+    mm::Mat44 rot;
+    rot.setRotY(angle);
+    param.m_mtx = param.m_mtx * rot;
+    param.m_mtx.setTransRow(pos);
+    param.m_id = 4;
+    setParam(handle, &param);
+    return true;
+}
+
 unsigned int EffectManager::createHateArrow() {
     void* efb = nullptr;
     for (CommonPack& entry : m_commonPacks) {
@@ -529,6 +544,19 @@ unsigned int EffectManager::createHateArrow() {
         return 0;
     }
     return effect::SystemManager::getPtr()->es_create(efb, true);
+}
+
+bool EffectManager::updateHateArrow(unsigned int handle, const mm::Vec3& pos, const float& angle, const float& scale,
+                                    const mm::Col4& color) {
+    effect::SendParam param;
+    memcpy(param.m_color, &color, sizeof(param.m_color));
+    param.m_scale.x = scale;
+    mm::Mat44 rot;
+    rot.setRotY(angle);
+    param.m_mtx = param.m_mtx * rot;
+    param.m_mtx.setTransRow(pos);
+    setParam(handle, &param);
+    return true;
 }
 
 unsigned int EffectManager::createComboBall(unsigned int type) {

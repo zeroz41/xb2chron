@@ -5,6 +5,7 @@
 #include "mm/Mat44.h"
 #include "mm/Vec3.h"
 #include "mm/Col3.h"
+#include "mm/Col4.h"
 #include "classes/ml/IScnRender.h"
 #include "classes/ml/IDrDrawCallback.h"
 #include "classes/mm/mtl/ReferenceObject.h"
@@ -163,6 +164,15 @@ public:
     // the handle (1..7) of a free bond line work, initialised; 0 when all are taken
     unsigned int createKizunaLine();
     void updateKizunaLine(unsigned int handle, const mm::Vec3& start, const mm::Vec3& end, unsigned int count);
+    // the ring at pos turned by angle about y, scaled in x; flag picks the colour (the names of the parameters
+    // are not the original's)
+    bool updateHateRing(unsigned int handle, const mm::Vec3& pos, const float& angle, bool flag, const float& scale);
+    // as updateHateRing with the colour given (id 4 like the ring)
+    bool updateHateRingVec(unsigned int handle, const mm::Vec3& pos, const float& angle, const float& scale,
+                           const mm::Col4& color);
+    // as updateHateRingVec, the id left at its default
+    bool updateHateArrow(unsigned int handle, const mm::Vec3& pos, const float& angle, const float& scale,
+                         const mm::Col4& color);
     void destroyHateRing(unsigned int handle);
     void destroyHateRingVec(unsigned int handle);
     void destroyHateArrow(unsigned int handle);
