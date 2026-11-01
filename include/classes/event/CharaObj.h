@@ -23,6 +23,7 @@
 #include "classes/event/CharaSetRot.h"
 #include "classes/event/CharaSetTar.h"
 #include "classes/event/CharaTurnRot.h"
+#include "classes/event/CharaLinerPos.h"
 #include "classes/event/CharaLinerRot.h"
 #include "mm/Vec3.h"
 
@@ -87,12 +88,13 @@ public:
     CharaSetPos m_setPos;  // 0x8
     // the command setRot queues (CharaObj's constructor builds it); the name is not the original's
     CharaSetRot m_setRot;  // 0x18
-    unsigned char pad_28[0x2e8];
+    unsigned char pad_28[0xd8];
+    // the liner position command linerPos queues (CharaObj's constructor builds it); the name is not the original's
+    CharaLinerPos m_linerPos;  // 0x100
     // the turn and liner rotation commands (RandPlayer::Reply::update tests whether either is queued); the names are
     // not the original's
     CharaTurnRot m_turnRot;  // 0x310
     CharaLinerRot m_linerRot;  // 0x330
-    unsigned char pad_338[0x1f8];
     // the command setTar queues in m_cmdQueue2 (ScriptCharaTgt::doit tests whether it is queued); the name is not
     // the original's
     CharaSetTar m_setTar;  // 0x530

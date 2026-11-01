@@ -1,6 +1,9 @@
 #include "classes/event/ModelObj.h"
 #include "classes/event/ScheManager.h"
 #include "classes/event/CharaUtil.h"
+#include "classes/event/AlphaManager.h"
+#include "classes/event/CharaDysUpdater.h"
+#include "classes/event/CharaIKUpdater.h"
 #include "classes/event/PosAxis.h"
 #include "classes/event/RotAxis.h"
 #include "classes/event/TarAxis.h"
@@ -237,6 +240,55 @@ void CamField::update(const event::FrameInfo&) {}
 
 void CharaTurnRot::init() {}
 
+int CharaLinerPos::update(const ICmd::Param& param) {
+    if (m_ik == nullptr || m_dys == nullptr) {
+        return 2;
+    }
+    CharaObj* chara = static_cast<CharaObj*>(param.m_param.val(0).getUserdata());
+    float step = chara->m_frameInfo.m_step;
+    if (param.m_frame == 0) {
+        mm::Vec3 pos(param.m_param.val(1).getF32(), param.m_param.val(2).getF32(), param.m_param.val(3).getF32());
+        m_anm.clear();
+        m_anm.append(0.0f, chara->m_pos, static_cast<CV_TYPE>(0));
+        m_anm.append(param.m_param.val(4).getF32(), pos, static_cast<CV_TYPE>(param.m_param.val(5).getS32()));
+        if (m_gravity == 0) {
+            CharaUtil::setGravity(chara->m_gfHandle, false);
+        }
+        m_ik->setFootIK(false, static_cast<CharaIKUpdater::FOOT_TYPE>(0));
+        m_dys->resetMovement(0);
+    }
+    m_anm.update(step);
+    chara->setPos(m_anm.m_value);
+    if (m_anm.isPlaying()) {
+        return 2;
+    }
+    m_anm.clear();
+    return 1;
+}
+
+int CharaLinerRot::update(const ICmd::Param& param) {
+    if (m_dys == nullptr) {
+        return 2;
+    }
+    CharaObj* chara = static_cast<CharaObj*>(param.m_param.val(0).getUserdata());
+    float step = chara->m_frameInfo.m_step;
+    if (param.m_frame == 0) {
+        mm::Vec3 from = chara->m_rot;
+        mm::Vec3 rot(param.m_param.val(1).getF32(), param.m_param.val(2).getF32(), param.m_param.val(3).getF32());
+        m_anm.clear();
+        m_anm.append(0.0f, from, static_cast<CV_TYPE>(0));
+        m_anm.append(param.m_param.val(4).getF32(), rot, static_cast<CV_TYPE>(param.m_param.val(5).getS32()));
+        m_dys->resetMovement(0);
+    }
+    m_anm.update(step);
+    chara->setRot(m_anm.m_value);
+    if (m_anm.isPlaying()) {
+        return 2;
+    }
+    m_anm.clear();
+    return 1;
+}
+
 CharaPlayActionAuto::~CharaPlayActionAuto() {
     gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
     if (obj != nullptr && (m_flags & 4)) {
@@ -362,6 +414,35 @@ void CharaWinkPlayer::idle_waiting() {
 
 void CharaMount::init() {}
 
+int CharaFade::update(const ICmd::Param& param) {
+    float step = static_cast<CharaObj*>(param.m_param.val(0).getUserdata())->m_frameInfo.m_step;
+    if (param.m_frame == 0) {
+        float from = 1.0f;
+        if (m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            gf::GfObjAcc acc(m_handle);
+            from = acc.getAlphaEvent();
+        }
+        float to = param.m_param.val(1).getBool() ? 0.0f : 1.0f;
+        float time = param.m_param.val(2).getF32();
+        m_anm.clear();
+        m_anm.append(0.0f, from, static_cast<CV_TYPE>(0));
+        m_anm.append(time, to, static_cast<CV_TYPE>(1));
+    }
+    m_anm.update(step);
+    if (m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        mm::mtl::Singleton<AlphaManager>::getPtr()->setAlpha(m_handle, static_cast<ALPHA_ATTR>(1), m_anm.m_value, 1.0f);
+    }
+    if (m_anm.isPlaying()) {
+        return 2;
+    }
+    m_anm.clear();
+    if (m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        mm::mtl::Singleton<AlphaManager>::getPtr()->setAlpha(m_handle, static_cast<ALPHA_ATTR>(1),
+                                                             param.m_param.val(1).getBool() ? 0.0f : 1.0f, 1.0f);
+    }
+    return 1;
+}
+
 void BlurManager::OnEventProc(event::MSG_TYPE) {}
 
 EffectEvaPlayer::~EffectEvaPlayer() {
@@ -384,6 +465,13 @@ void AnmVec::update(float step) {
         if (&value != &result) {
             value = result;
         }
+    }
+}
+
+void AnmF32::update(float step) {
+    AnmBase::update(step);
+    if (pad_8 & 2) {
+        m_value = calcEvalute(pad_68, pad_70);
     }
 }
 
