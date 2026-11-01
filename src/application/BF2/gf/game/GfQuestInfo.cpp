@@ -18,6 +18,7 @@
 #include "classes/gf/GfBdatMsg.h"
 #include "gf/GfKizunaringBlade.h"
 #include "mm/mtl/FixedVector.h"
+#include "gf/GfItemUtil.h"
 
 namespace gf {
 
@@ -133,6 +134,26 @@ unsigned int GfQuestInfo::getSuppressLimit(const QuestTaskParam& param) {
         return quest->m_countMax & 0x3FFFFFFF;
     }
     return QuestListAcc::get()->getBattleCount(param.m_taskId);
+}
+
+bool GfQuestInfo::incCollectUseCount(const QuestTaskParam& param, unsigned int item) {
+    if (param.m_questId.m_achieveId != 0) {
+        AchievQuest* quest = GfDataQuest::getAchievQuest(param.m_questId);
+        if (quest == nullptr || !GfKizunaringBlade::isCompleteLevel(*quest)) {
+            return false;
+        }
+        return quest->incleseCount(1);
+    }
+    if (param.m_questId.m_id == 2745 && GfItemUtil::getNoEquipItemHandle(item).m_handle == 0) {
+        return false;
+    }
+    int flag = QuestListAcc::get()->getCollectUseFlagIndex(param) + 0x5EF;
+    unsigned int count = GfGameFlag::getLocal(8, flag);
+    if (count >= 0xFF) {
+        return false;
+    }
+    GfGameFlag::setLocal(8, flag, count + 1);
+    return true;
 }
 
 bool GfQuestInfo::decCollectUseCount(const QuestTaskParam& param) {
