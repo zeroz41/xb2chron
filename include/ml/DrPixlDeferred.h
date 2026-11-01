@@ -9,6 +9,8 @@ namespace ml {
 class DrPixlDeferred {
 public:
     ~DrPixlDeferred();
+    void debugRender();
+    void lgtCalcRender();
     grlib::CGLibTextureBuffer* getShadowMapTexture() const;
     void displayUpdate();
     void lastDeferredRender();

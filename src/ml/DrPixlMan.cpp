@@ -43,6 +43,11 @@
 #include "mtl/MemManager.h"
 #include "ml/DrPixlPostObjDepthofField.h"
 #include "ml/DrPixlPostObjMotionBlur2.h"
+#include "ml/DrPixlPostObjUnbranchToDepth.h"
+#include "ml/DrPixlPostObjExpStencil.h"
+#include "ml/DrPixlPostObjTSSAO.h"
+#include "ml/DrPixlPostObjSSR.h"
+#include "ml/DrPixlShadowRaytrace.h"
 #include <math.h>
 #include <string.h>
 
@@ -59,6 +64,24 @@ DrPixlDeferred::~DrPixlDeferred() {
             m_shadowTargetDbl[i] = nullptr;
         }
     }
+}
+
+void DrPixlDeferred::lgtCalcRender() {
+    DrPixlMan* pixlMan = m_pixlMan;
+    pixlMan->m_renderTarget = 6;
+    grlib::CGLibState::beginRegisterRenderTarget();
+    grlib::CGLibState::setRegisterRenderTarget(*pixlMan->m_objTbl->m_obj[5][0], (grlib::GrlMrtType)0);
+    grlib::CGLibState::setRegisterRenderTarget(*pixlMan->m_objTbl->m_obj[6][0], (grlib::GrlMrtType)1);
+    grlib::CGLibState::setRegisterRenderTarget(**(pixlMan->m_objTbl->m_obj[9] + DrMan::s_nDblIdx), (grlib::GrlMrtType)2);
+    grlib::CGLibState::setRegisterDepthTarget(*pixlMan->m_objTbl->m_depth[DrMan::s_nDblIdx]->m_pDepthBuffer);
+    grlib::CGLibState::endRegisterRenderTarget();
+    DrAPGxType::setupCullingOff();
+    DrAPGxType::setupBlend(7);
+    pixlMan = m_pixlMan;
+    grlib::CGLibState::beginRegisterRenderTarget();
+    grlib::CGLibState::setRegisterRenderTarget(*pixlMan->m_objTbl->m_obj[5][0], (grlib::GrlMrtType)0);
+    grlib::CGLibState::setRegisterDepthTarget(*pixlMan->m_objTbl->m_depth[DrMan::s_nDblIdx]->m_pDepthBuffer);
+    grlib::CGLibState::endRegisterRenderTarget();
 }
 
 DrPixlMan::~DrPixlMan() { releaseColorBuffer(); }
@@ -134,6 +157,68 @@ void DrPixlMan::thicknessFirstBegin() {
     grlib::CGLibState::endRegisterRenderTarget();
 }
 
+bool DrPixlMan::selectGBuffRenderTarget(unsigned int target) {
+    if (m_renderTarget == 2 && m_renderTargetSub == (int)target) {
+        return false;
+    }
+    m_renderTarget = 2;
+    m_renderTargetSub = target;
+    grlib::CGLibState::beginRegisterRenderTarget();
+    // the pixel object entry of each target bit (name inferred)
+    const int objIdx[11] = {0, 1, 2, 3, 4, 8, 5, 6, 7, 15, 18};
+    int mrt = 0;
+    for (int i = 0; i < 11; i++) {
+        if ((1 << i) & target) {
+            grlib::CGLibState::setRegisterRenderTarget(*getPixlObj(objIdx[i]), (grlib::GrlMrtType)mrt);
+            mrt++;
+        }
+    }
+    grlib::CGLibState::setRegisterDepthTarget(*m_objTbl->m_depth[DrMan::s_nDblIdx]->m_pDepthBuffer);
+    grlib::CGLibState::endRegisterRenderTarget();
+    return true;
+}
+
+void DrPixlMan::selectLightRenderTarget() {
+    if (m_renderTarget != 14) {
+        m_renderTarget = 14;
+        grlib::CGLibState::beginRegisterRenderTarget();
+        grlib::CGLibState::setRegisterRenderTarget(*m_objTbl->m_obj[5][0], (grlib::GrlMrtType)0);
+        grlib::CGLibState::setRegisterRenderTarget(*m_objTbl->m_obj[6][0], (grlib::GrlMrtType)1);
+        grlib::CGLibState::setRegisterDepthTarget(*m_objTbl->m_lightDepth->m_pDepthBuffer);
+        grlib::CGLibState::endRegisterRenderTarget();
+        grlib::CGLibColorCtl::setMrtBlendControl((grlib::GrlMrtType)0, (GrlBlendFunc)2, (GrlBlendFunc)2, (GrlBlendCombine)1);
+        grlib::CGLibColorCtl::setMrtBlendControl((grlib::GrlMrtType)1, (GrlBlendFunc)2, (GrlBlendFunc)2, (GrlBlendCombine)1);
+    }
+    setMainViewPort();
+    DrAPGxType::setupDepthContl(1, 0, 2);
+}
+
+void DrPixlMan::selectSubtractLightRenderTarget() {
+    if (m_renderTarget != 16) {
+        m_renderTarget = 16;
+        grlib::CGLibState::beginRegisterRenderTarget();
+        grlib::CGLibState::setRegisterRenderTarget(*m_objTbl->m_gBuff[2][0], (grlib::GrlMrtType)0);
+        grlib::CGLibState::setRegisterDepthTarget(*m_objTbl->m_depth[DrMan::s_nDblIdx]->m_pDepthBuffer);
+        grlib::CGLibState::endRegisterRenderTarget();
+        grlib::CGLibColorCtl::setBlendControl((GrlBlendFunc)2, (GrlBlendFunc)2, (GrlBlendCombine)4, (GrlLogicType)3);
+    }
+    setMainViewPort();
+    DrAPGxType::setupStencilTest(0, 0, 7, 1, 0, 8, 5, 0, 0, 0);
+}
+
+void DrPixlMan::skyRenderTarget() {
+    if (m_renderTarget != 12) {
+        m_renderTarget = 12;
+        grlib::CGLibState::beginRegisterRenderTarget();
+        grlib::CGLibState::setRegisterRenderTarget(*m_objTbl->m_obj[5][0], (grlib::GrlMrtType)0);
+        grlib::CGLibState::setRegisterRenderTarget(*m_objTbl->m_gBuff[3][0], (grlib::GrlMrtType)1);
+        grlib::CGLibState::setRegisterDepthTarget(*m_objTbl->m_depth[DrMan::s_nDblIdx]->m_pDepthBuffer);
+        grlib::CGLibState::endRegisterRenderTarget();
+        grlib::CGLibColorCtl::setColorChannelMask((grlib::GrlMrtType)1, 1, 1, 0, 1);
+        setMainViewPort();
+    }
+}
+
 void DrPixlMan::selectGBuffRenderTarget() { selectGBuffRenderTarget(0xFF); }
 
 void DrPixlMan::endGBuffRenderTarget() {
@@ -171,6 +256,23 @@ void DrPixlMan::refractionGBuffInvalidate() {
     m_objTbl->m_gBuff[2][0]->setColorInvalidate();
     m_objTbl->m_gBuff[3][0]->setColorInvalidate();
     m_objTbl->m_gBuff[4][0]->setColorInvalidate();
+}
+
+bool DrPixlMan::renderRefractionBegin() {
+    m_drMan->m_apCache->begin();
+    m_renderTarget = 5;
+    grlib::CGLibState::beginRegisterRenderTarget();
+    grlib::CGLibState::setRegisterDepthTarget(*m_objTbl->m_depth[DrMan::s_nDblIdx]->m_pDepthBuffer);
+    grlib::CGLibState::endRegisterRenderTarget();
+    m_drMan->m_tileParm->begin((DrPixlTileParm::TileType)2);
+    DrPixlPostMan* postMan = m_objTbl->m_postMan;
+    if (!(postMan->m_flags & 0x200000)) {
+        return false;
+    }
+    if (postMan->m_refractionQuery != nullptr) {
+        postMan->m_refractionQuery->begin(postMan->m_pixlMan->m_occQuery);
+    }
+    return true;
 }
 
 void DrPixlMan::renderRefractionMap(bool useTarget, bool useHalfTarget) { m_objTbl->m_postMan->renderRefractionMap(useTarget, useHalfTarget); }
@@ -307,6 +409,38 @@ void DrPixlMan::fastRender() {
     }
 }
 
+void DrPixlShadowCacheMan::fastRender() {
+    if (m_flags & 0x28) {
+        if ((m_flags & 0x8) && m_updateCount != 0 && !DrMan::get()->m_shadowRenderOff) {
+            shadowmapRender(0);
+            shadowmapRender(1);
+            shadowmapRender(2);
+        } else {
+            m_workTbl[0].m_dirDepth.clearDepth(false);
+            m_workTbl[1].m_dirDepth.clearDepth(false);
+            m_workTbl[2].m_dirDepth.clearDepth(false);
+            m_workTbl[3].m_dirDepth.clearDepth(false);
+        }
+        shadowmapRender(3);
+        m_flags &= ~0x20;
+    }
+}
+
+void DrPixlMan::lastRender() {
+    m_objTbl->m_postMan->render();
+    if (m_drMan->m_postParm[m_drMan->m_postParmIdx]->m_dbgShadow) {
+        m_objTbl->m_shadowMan->shadowRender();
+    } else if (m_drMan->m_postParm[m_drMan->m_postParmIdx]->m_dbgShadowCache) {
+        m_shadowCacheMan->debugShadowCacheRender();
+    }
+    if (m_drMan->m_postParm[m_drMan->m_postParmIdx]->m_dbgDeferred) {
+        m_objTbl->m_deferred->debugRender();
+    }
+    if (m_drMan->m_postParm[m_drMan->m_postParmIdx]->m_dbgReduction) {
+        debugReductionRender();
+    }
+}
+
 void DrPixlMan::callShadowCacheVariance() { m_shadowCacheMan->m_flags |= 0x400; }
 
 void DrPixlMan::pixelEndMode() { m_shadowCacheMan->m_flags |= 0x40; }
@@ -346,6 +480,28 @@ grlib::CGLibRenderTarget* DrPixlPostMan::getDownDepth() { return m_downDepth[DrM
 grlib::CGLibRenderTarget* DrPixlPostMan::getOldDownDepth() { return m_downDepth[DrMan::s_nDblStockIdx]; }
 
 bool DrPixlPostMan::isDepthDown() { return (m_flags >> 19) & 1; }
+
+void DrPixlPostMan::renderDeferredFast() {
+    bool tmaa = m_drMan->isTemporalUPSToGlobalIBL() || m_drMan->m_postParm[m_drMan->m_postParmIdx]->m_tmaa;
+    if (m_downDepth[DrMan::s_nDblIdx] != nullptr) {
+        renderDownDepth(true, tmaa, true);
+    }
+    if (m_unbranchToDepth != nullptr) {
+        m_unbranchToDepth->render();
+    }
+    if (m_expStencil != nullptr) {
+        m_expStencil->render();
+    }
+    if (m_tssao != nullptr) {
+        m_tssao->render_beforeTemporal();
+    }
+    if (m_shadowRaytrace != nullptr) {
+        m_shadowRaytrace->render_beforeTemporal();
+    }
+    if (m_ssr != nullptr) {
+        m_ssr->render();
+    }
+}
 
 DrPixlOccQuery::DrPixlOccQuery(DrMan* drMan, DrPixlMan* pixlMan)
     : m_drMan(drMan), m_pixlMan(pixlMan), m_renderCount(0), m_freeHead(nullptr), m_freeTail(nullptr),

@@ -11,6 +11,7 @@ namespace ml {
 class DrPixlShadowMan {
 public:
     void releaseShadow(DrPixlShadowObj* obj);
+    void shadowRender();
     bool setAddObjPos(mm::Vec3 const& pos, float radius);
     // forwards to every active object's setSptCalcPos; true when any of them returned true
     bool setSptCalcPos(mm::Vec3 const& pos, float radius);

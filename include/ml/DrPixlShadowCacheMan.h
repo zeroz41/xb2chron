@@ -44,6 +44,8 @@ public:
     void callSelectShadowCacheUpdate(unsigned long mask);
     void shadowCacheRender();
     void fastRender();
+    void shadowmapRender(int index);
+    void debugShadowCacheRender();
     void createCacheBuff();
     void resetColorBuff();
     void buffUpdate();

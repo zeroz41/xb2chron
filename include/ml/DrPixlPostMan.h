@@ -13,6 +13,7 @@ namespace ml { class DrPixlPostObjVolume; }
 namespace mm { class Vec3; }
 namespace ml { class DrMan; class DrPixlMan; class DrPixlPostObjDepthofField; class DrPixlPostObjMotionBlur; class DrPixlPostObjMotionBlur2; }
 namespace ml { class DrPixlPostObjCapture; }
+namespace ml { class DrPixlPostObjSSR; class DrPixlPostObjTSSAO; class DrPixlPostObjExpStencil; class DrPixlShadowRaytrace; class DrPixlPostObjUnbranchToDepth; }
 
 namespace ml {
 // DrPixlObjTbl::m_postMan. Only what DrMdoSetup reads is known; the field names are not the original's.
@@ -24,6 +25,9 @@ public:
     bool isDepthDown();
     // Parameter names inferred, not the original's: each turns on one render target (+0xD0, the half-size +0xD8).
     void renderRefractionMap(bool useTarget, bool useHalfTarget);
+    void render();
+    void renderDeferredFast();
+    void renderDownDepth(bool, bool, bool);
     grlib::CGLibTextureBuffer* getToonGradTex() const;
     grlib::CGLibTextureBuffer* getToonDarkGradTex() const;
     void setVolumePos(const mm::Vec3& pos);
@@ -42,12 +46,17 @@ public:
     DrPixlPostObjCubeMapIBL* m_cubeMapIBL;  // 0x48, varStTex_SpecularIBLTex binds its premultiplied texture
     DrPixlPostObjMotionBlur* m_motionBlur;  // 0x50, setBlur deletes it (name inferred)
     DrPixlPostObjMotionBlur2* m_motionBlur2;  // 0x58, setBlur creates and deletes it (name inferred)
-    unsigned char pad_60[0x30];
+    unsigned char pad_60[0x10];
+    // 0x70..0x88: renderDeferredFast renders each when set (names inferred)
+    DrPixlPostObjSSR* m_ssr;  // 0x70
+    DrPixlPostObjTSSAO* m_tssao;  // 0x78
+    DrPixlPostObjExpStencil* m_expStencil;  // 0x80
+    DrPixlShadowRaytrace* m_shadowRaytrace;  // 0x88
     DrPixlSkyDome* m_skyDome;  // 0x90, DrPixlMan::renderSkyDome/renderSkyGodRay when set
     DrPixlToonGrad* m_toonGrad;  // 0x98, getToonGradTex/getToonDarkGradTex when set
     unsigned char pad_A0[0x10];
     DrPixlPostObjCapture* m_capture;  // 0xB0, DrPixlMan::lastCapRender when set
-    unsigned char pad_B8[0x8];
+    DrPixlPostObjUnbranchToDepth* m_unbranchToDepth;  // 0xB8, renderDeferredFast renders it when set (name inferred)
     grlib::CGLibRenderTarget* m_downDepth[2];  // 0xC0, getDownDepth by DrMan::s_nDblIdx, getOldDownDepth by s_nDblStockIdx
     grlib::CGLibRenderTarget* m_refraction;  // 0xD0, varStTex_RefractionMap/RefractionAfterTex bind it when set
     unsigned char pad_D8[0x18];

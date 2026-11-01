@@ -198,14 +198,22 @@ public:
     int m_iblColorMode;
     unsigned char pad_FE8[0x3C];
     bool m_shwRaytraceTemporal;  // 0x1024, isShwRaytraceTemporalWithOthers (with DrMan::isIBLHalfRes)
-    unsigned char pad_1025[0x19];
+    // 0x1025..0x1028: the debug views DrPixlMan::lastRender draws (names inferred): the shadow map
+    // (DrPixlShadowMan::shadowRender), the deferred buffers, the shadow caches (only without the shadow map view)
+    bool m_dbgShadow;
+    unsigned char pad_1026[0x1];
+    bool m_dbgDeferred;  // 0x1027
+    bool m_dbgShadowCache;  // 0x1028
+    unsigned char pad_1029[0x15];
     bool m_shadowAddObjPos;  // 0x103E, DrPixlShadowMan::setAddObjPos forwards only when set (name inferred)
     unsigned char pad_103F[0x22];
     bool m_iblSel;  // 0x1061, DrPixlMan::getSpecIBLObj/getDiffIBLObj pick the second IBL pair when set (name inferred)
     unsigned char pad_1062[0x22];
     int m_weather;  // 0x1084
     float m_weatherFrame[2];  // 0x1088, set by DrMan::s_nDblStockIdx, read by s_nDblIdx; reset to 60
-    unsigned char pad_1090[0x74];
+    unsigned char pad_1090[0x6E];
+    bool m_dbgReduction;  // 0x10FE, DrPixlMan::lastRender then draws debugReductionRender (name inferred)
+    unsigned char pad_10FF[0x5];
     // 0x1104, getSSROn is false while set and DrCalcViewWork::m_gpuCheckAllVisible is (name inferred)
     bool m_ssrGpuCheckOff;
     bool m_resetScene[2];  // 0x1105, resetScene sets [DrMan::s_nDblStockIdx]
