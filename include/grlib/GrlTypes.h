@@ -14,6 +14,7 @@ enum GrlLogicType {};
 enum GrlBlendFunc {};
 enum GrlBlendCombine {};
 enum GrlSurfaceFormat {};
+enum GrlDepthFormat {};
 enum GrlCompare {};
 enum GrlStencil {};
 enum GrlClaerMask {};

@@ -11,6 +11,46 @@ typedef void (*PFNNVNTEXTUREFINALIZEPROC)(NVNtexture* texture);
 extern PFNNVNTEXTUREFINALIZEPROC pfnc_nvnTextureFinalize;
 static inline void nvnTextureFinalize(NVNtexture* texture) { pfnc_nvnTextureFinalize(texture); }
 
+typedef void (*PFNNVNTEXTUREBUILDERSETDEFAULTSPROC)(NVNtextureBuilder* builder);
+extern PFNNVNTEXTUREBUILDERSETDEFAULTSPROC pfnc_nvnTextureBuilderSetDefaults;
+static inline void nvnTextureBuilderSetDefaults(NVNtextureBuilder* builder) { pfnc_nvnTextureBuilderSetDefaults(builder); }
+
+typedef void (*PFNNVNTEXTUREBUILDERSETDEVICEPROC)(NVNtextureBuilder* builder, NVNdevice* device);
+extern PFNNVNTEXTUREBUILDERSETDEVICEPROC pfnc_nvnTextureBuilderSetDevice;
+static inline void nvnTextureBuilderSetDevice(NVNtextureBuilder* builder, NVNdevice* device) { pfnc_nvnTextureBuilderSetDevice(builder, device); }
+
+typedef void (*PFNNVNTEXTUREBUILDERSETTARGETPROC)(NVNtextureBuilder* builder, NVNtextureTarget target);
+extern PFNNVNTEXTUREBUILDERSETTARGETPROC pfnc_nvnTextureBuilderSetTarget;
+static inline void nvnTextureBuilderSetTarget(NVNtextureBuilder* builder, NVNtextureTarget target) { pfnc_nvnTextureBuilderSetTarget(builder, target); }
+
+typedef void (*PFNNVNTEXTUREBUILDERSETFORMATPROC)(NVNtextureBuilder* builder, NVNformat format);
+extern PFNNVNTEXTUREBUILDERSETFORMATPROC pfnc_nvnTextureBuilderSetFormat;
+static inline void nvnTextureBuilderSetFormat(NVNtextureBuilder* builder, NVNformat format) { pfnc_nvnTextureBuilderSetFormat(builder, format); }
+
+typedef void (*PFNNVNTEXTUREBUILDERSETSIZE2DPROC)(NVNtextureBuilder* builder, int width, int height);
+extern PFNNVNTEXTUREBUILDERSETSIZE2DPROC pfnc_nvnTextureBuilderSetSize2D;
+static inline void nvnTextureBuilderSetSize2D(NVNtextureBuilder* builder, int width, int height) { pfnc_nvnTextureBuilderSetSize2D(builder, width, height); }
+
+typedef void (*PFNNVNTEXTUREBUILDERSETDEPTHPROC)(NVNtextureBuilder* builder, int depth);
+extern PFNNVNTEXTUREBUILDERSETDEPTHPROC pfnc_nvnTextureBuilderSetDepth;
+static inline void nvnTextureBuilderSetDepth(NVNtextureBuilder* builder, int depth) { pfnc_nvnTextureBuilderSetDepth(builder, depth); }
+
+typedef void (*PFNNVNTEXTUREBUILDERSETLEVELSPROC)(NVNtextureBuilder* builder, int numLevels);
+extern PFNNVNTEXTUREBUILDERSETLEVELSPROC pfnc_nvnTextureBuilderSetLevels;
+static inline void nvnTextureBuilderSetLevels(NVNtextureBuilder* builder, int numLevels) { pfnc_nvnTextureBuilderSetLevels(builder, numLevels); }
+
+typedef void (*PFNNVNTEXTUREBUILDERSETFLAGSPROC)(NVNtextureBuilder* builder, NVNtextureFlags flags);
+extern PFNNVNTEXTUREBUILDERSETFLAGSPROC pfnc_nvnTextureBuilderSetFlags;
+static inline void nvnTextureBuilderSetFlags(NVNtextureBuilder* builder, NVNtextureFlags flags) { pfnc_nvnTextureBuilderSetFlags(builder, flags); }
+
+typedef size_t (*PFNNVNTEXTUREBUILDERGETSTORAGESIZEPROC)(const NVNtextureBuilder* builder);
+extern PFNNVNTEXTUREBUILDERGETSTORAGESIZEPROC pfnc_nvnTextureBuilderGetStorageSize;
+static inline size_t nvnTextureBuilderGetStorageSize(const NVNtextureBuilder* builder) { return pfnc_nvnTextureBuilderGetStorageSize(builder); }
+
+typedef size_t (*PFNNVNTEXTUREBUILDERGETSTORAGEALIGNMENTPROC)(const NVNtextureBuilder* builder);
+extern PFNNVNTEXTUREBUILDERGETSTORAGEALIGNMENTPROC pfnc_nvnTextureBuilderGetStorageAlignment;
+static inline size_t nvnTextureBuilderGetStorageAlignment(const NVNtextureBuilder* builder) { return pfnc_nvnTextureBuilderGetStorageAlignment(builder); }
+
 typedef NVNbufferAddress (*PFNNVNMEMORYPOOLGETBUFFERADDRESSPROC)(const NVNmemoryPool* pool);
 extern PFNNVNMEMORYPOOLGETBUFFERADDRESSPROC pfnc_nvnMemoryPoolGetBufferAddress;
 static inline NVNbufferAddress nvnMemoryPoolGetBufferAddress(const NVNmemoryPool* pool) { return pfnc_nvnMemoryPoolGetBufferAddress(pool); }
@@ -343,6 +383,14 @@ static inline void nvnTexturePoolRegisterImage(const NVNtexturePool* pool, int i
 typedef void (*PFNNVNPROGRAMFINALIZEPROC)(NVNprogram* program);
 extern PFNNVNPROGRAMFINALIZEPROC pfnc_nvnProgramFinalize;
 static inline void nvnProgramFinalize(NVNprogram* program) { pfnc_nvnProgramFinalize(program); }
+
+typedef NVNboolean (*PFNNVNPROGRAMINITIALIZEPROC)(NVNprogram* program, NVNdevice* device);
+extern PFNNVNPROGRAMINITIALIZEPROC pfnc_nvnProgramInitialize;
+static inline NVNboolean nvnProgramInitialize(NVNprogram* program, NVNdevice* device) { return pfnc_nvnProgramInitialize(program, device); }
+
+typedef NVNboolean (*PFNNVNPROGRAMSETSHADERSPROC)(NVNprogram* program, int count, const NVNshaderData* stageData);
+extern PFNNVNPROGRAMSETSHADERSPROC pfnc_nvnProgramSetShaders;
+static inline NVNboolean nvnProgramSetShaders(NVNprogram* program, int count, const NVNshaderData* stageData) { return pfnc_nvnProgramSetShaders(program, count, stageData); }
 
 typedef void (*PFNNVNSAMPLERBUILDERSETDEFAULTSPROC)(NVNsamplerBuilder* builder);
 extern PFNNVNSAMPLERBUILDERSETDEFAULTSPROC pfnc_nvnSamplerBuilderSetDefaults;

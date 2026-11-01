@@ -737,6 +737,26 @@ unsigned int CGLibShader::getUniformBlockOfs(const char* name) const {
     return -1;
 }
 
+unsigned int CGLibShader::getUniformBlockValOfs(unsigned int location, const char* name) const {
+    const CGLibShaderResourceTbl& tbl = m_pInfo->m_uniformBlocks;
+    if (location <= tbl.m_locationNum) {
+        unsigned int idx = (m_pData + tbl.m_locationTblOfs)[location];
+        if (idx != 0xFF) {
+            const CGLibShaderBufferInfo& info = reinterpret_cast<const CGLibShaderBufferInfo*>(m_pData + tbl.m_entryOfs)[idx];
+            unsigned int num = info.m_valNum;
+            const CGLibShaderValInfo* pVal =
+                reinterpret_cast<const CGLibShaderValInfo*>(m_pData + m_pInfo->m_valTblOfs) + info.m_valIdx;
+            for (unsigned int i = 0; i < num; i++, pVal++) {
+                if (strcmp(reinterpret_cast<const char*>(m_pData + pVal->m_nameOfs), name) == 0) {
+                    return pVal->m_ofs;
+                }
+            }
+        }
+        return -1;
+    }
+    return 0;
+}
+
 CGLibDblUniformBlock::CGLibDblUniformBlock() {}
 
 CGLibDblUniformBlock::~CGLibDblUniformBlock() {
@@ -1181,6 +1201,37 @@ bool CGLibTextureBuffer::isTexture3D() const {
     return m_type == 5;
 }
 
+void CGLibTexture::getArrayCubePixelSize(unsigned int& size, unsigned int& align, unsigned int width,
+                                         unsigned int height, unsigned int arrayNum, unsigned int mip,
+                                         GrlSurfaceFormat format) {
+    NVNtextureBuilder builder;
+    nvnTextureBuilderSetDefaults(&builder);
+    nvnTextureBuilderSetDevice(&builder, &CGLibManager::sys()->m_device);
+    nvnTextureBuilderSetTarget(&builder, NVN_TEXTURE_TARGET_CUBEMAP_ARRAY);
+    nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(format));
+    nvnTextureBuilderSetSize2D(&builder, width, height);
+    nvnTextureBuilderSetDepth(&builder, arrayNum * 6);
+    nvnTextureBuilderSetLevels(&builder, mip + 1);
+    nvnTextureBuilderSetFlags(&builder, 0xC);
+    size = nvnTextureBuilderGetStorageSize(&builder);
+    align = nvnTextureBuilderGetStorageAlignment(&builder);
+}
+
+void CGLibTexture::getDefPixelSize(unsigned int& size, unsigned int& align, unsigned int width, unsigned int height,
+                                   unsigned int mip, GrlSurfaceFormat format) {
+    NVNtextureBuilder builder;
+    nvnTextureBuilderSetDefaults(&builder);
+    nvnTextureBuilderSetDevice(&builder, &CGLibManager::sys()->m_device);
+    nvnTextureBuilderSetTarget(&builder, NVN_TEXTURE_TARGET_2D);
+    nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(format));
+    nvnTextureBuilderSetSize2D(&builder, width, height);
+    nvnTextureBuilderSetDepth(&builder, 1);
+    nvnTextureBuilderSetLevels(&builder, mip + 1);
+    nvnTextureBuilderSetFlags(&builder, 0xC);
+    size = nvnTextureBuilderGetStorageSize(&builder);
+    align = nvnTextureBuilderGetStorageAlignment(&builder);
+}
+
 bool CGLibTextureBuffer::isInitialized() const {
     return m_flags & 1;
 }
@@ -1197,6 +1248,19 @@ unsigned int CGLibDepthBuffer::getWidth() const {
 
 unsigned int CGLibDepthBuffer::getHeight() const {
     return m_height;
+}
+
+void CGLibTexture::getDepthPixelSize(unsigned int& size, unsigned int& align, unsigned int width, unsigned int height,
+                                     GrlDepthFormat format) {
+    NVNtextureBuilder builder;
+    nvnTextureBuilderSetDefaults(&builder);
+    nvnTextureBuilderSetDevice(&builder, &CGLibManager::sys()->m_device);
+    nvnTextureBuilderSetTarget(&builder, NVN_TEXTURE_TARGET_2D);
+    nvnTextureBuilderSetFormat(&builder, static_cast<NVNformat>(format));
+    nvnTextureBuilderSetSize2D(&builder, width, height);
+    nvnTextureBuilderSetFlags(&builder, 8);
+    size = nvnTextureBuilderGetStorageSize(&builder);
+    align = nvnTextureBuilderGetStorageAlignment(&builder);
 }
 
 void CGLibDepthBuffer::invalidate() {}
@@ -1238,6 +1302,23 @@ void CGLibDecShader::release() {
     m_memPool.release();
 }
 
+unsigned int CGLibDecShader::calcWorkSize(const void* data, bool flag) {
+    const CGLibDecShaderData* pData = static_cast<const CGLibDecShaderData*>(data);
+    if (pData->m_magic != 0x54434C53) {
+        return 0;
+    }
+    if ((pData->m_version >> 1) != 0x801) {
+        return 0;
+    }
+    unsigned int size = pData->m_shaderNum * sizeof(CGLibShader);
+    if (flag) {
+        unsigned int declNum = pData->m_declNum;
+        unsigned int pad = (declNum & 3) ? 4 - (declNum & 3) : 0;
+        size = declNum + size + pad;
+    }
+    return size;
+}
+
 unsigned int CGLibDecShader::calcTblSize(const void* data) {
     const CGLibDecShaderData* pData = static_cast<const CGLibDecShaderData*>(data);
     if (pData->m_magic != 0x54434C53) {
@@ -1249,8 +1330,112 @@ unsigned int CGLibDecShader::calcTblSize(const void* data) {
     return pData->m_declNum;
 }
 
+unsigned int CGLibDecShader::createCopyShader(mtl::ALLOC_HANDLE handle, const void* data, bool flag) {
+    unsigned int size = calcWorkSize(data, flag);
+    release();
+    void* work = mtl::MemManager::allocate(handle, size, 0x10, false, "no name", 0);
+    m_pCopyBuff = work;
+    setupWork(static_cast<const CGLibDecShaderData*>(data), work, flag);
+    setupDataShader(true);
+    return size;
+}
+
+unsigned int CGLibDecShader::createMemPoolShader(void* work, const unsigned char* data, const unsigned char* programs,
+                                                 CGLibVtlMemPool* pool, bool flag) {
+    unsigned int size = calcWorkSize(data, flag);
+    release();
+    setupMemPoolShader(data, programs, pool, static_cast<unsigned char*>(work), flag);
+    return size;
+}
+
+void CGLibDecShader::setupMemPoolShader(const unsigned char* data, const unsigned char* programs, CGLibVtlMemPool* pool,
+                                        unsigned char* work, bool flag) {
+    setupWork(reinterpret_cast<const CGLibDecShaderData*>(data), work, flag);
+    const CGLibDecShaderData* pData = m_pData;
+    const unsigned char* pControl = programs + pData->m_controlOfs;
+    const unsigned int* pInfo = reinterpret_cast<const unsigned int*>(reinterpret_cast<const unsigned char*>(pData) +
+                                                                      pData->m_shaderInfoTblOfs);
+    const CGLibDecShaderCode* pCode = reinterpret_cast<const CGLibDecShaderCode*>(
+        reinterpret_cast<const unsigned char*>(pData) + pData->m_codeTblOfs);
+    // the original passes createShader no set type: the call leaves the register as it is (createShader does not
+    // read it)
+    CGLibShderType type;
+    for (int i = 0; i < m_shaderNum; i++, pInfo += 2, pCode++) {
+        m_pShaders[i].createShader(reinterpret_cast<const unsigned char*>(m_pData) + *pInfo,
+                                   pData->m_codeOfs + pCode->m_codeOfs, pControl + pCode->m_controlOfs, pool, type);
+    }
+}
+
+void CGLibDecShader::setupDataShader(bool flag) {
+    const CGLibDecShaderData* pData = m_pData;
+    const unsigned int* pInfo = reinterpret_cast<const unsigned int*>(reinterpret_cast<const unsigned char*>(pData) +
+                                                                      pData->m_shaderInfoTblOfs);
+    // the original passes createShader no set type (see setupMemPoolShader)
+    CGLibShderType type;
+    if (pData->m_version == 0x1002) {
+        for (int i = 0; i < m_shaderNum; i++, pInfo += 2) {
+            const unsigned char* pShader = reinterpret_cast<const unsigned char*>(m_pData) + *pInfo;
+            m_pShaders[i].createShader(pShader, 0, pShader, nullptr, type);
+        }
+        return;
+    }
+    const unsigned char* pCodeData = reinterpret_cast<const unsigned char*>(pData) + pData->m_codeOfs;
+    if (flag) {
+        unsigned int size = pData->m_codeSize + 4;
+        size = size + (0x1000 - size % 0x1000) % 0x1000;
+        m_pAllocBuff = mtl::MemManager::allocate(CGLibMemHandle::s_hShdHandle, size, 0x1000, false, "no name", 0);
+        memcpy(m_pAllocBuff, pCodeData, pData->m_codeSize);
+        nn::os::FlushDataCache(m_pAllocBuff, pData->m_codeSize);
+        m_memPool.setupBuffer(m_pAllocBuff, size);
+    } else {
+        unsigned int size = pData->m_codeSize;
+        size = size + (0x1000 - size % 0x1000) % 0x1000;
+        m_memPool.setupBuffer(const_cast<unsigned char*>(pCodeData), size);
+    }
+    unsigned int controlOfs = pData->m_controlOfs;
+    const unsigned char* pControl = reinterpret_cast<const unsigned char*>(m_pData) + controlOfs;
+    const CGLibDecShaderCode* pCode = reinterpret_cast<const CGLibDecShaderCode*>(
+        reinterpret_cast<const unsigned char*>(m_pData) + pData->m_codeTblOfs);
+    for (int i = 0; i < m_shaderNum; i++, pInfo += 2, pCode++) {
+        m_pShaders[i].createShader(reinterpret_cast<const unsigned char*>(m_pData) + *pInfo, pCode->m_codeOfs,
+                                   pControl + pCode->m_controlOfs, &m_memPool, type);
+    }
+}
+
+void CGLibShader::createShader(const unsigned char* data, unsigned int codeOfs, const unsigned char* control,
+                               CGLibVtlMemPool* pool, CGLibShderType type) {
+    releaseProgram();
+    setupProgram(data, codeOfs, control, pool);
+}
+
+void CGLibDecShader::changeMemPoolSetMem(const unsigned char* data, const unsigned char* programs,
+                                         CGLibVtlMemPool* pool) {
+    m_pData = reinterpret_cast<const CGLibDecShaderData*>(data);
+    const CGLibDecShaderData* pData = reinterpret_cast<const CGLibDecShaderData*>(data);
+    const unsigned char* pControl = programs + pData->m_controlOfs;
+    const unsigned int* pInfo = reinterpret_cast<const unsigned int*>(data + pData->m_shaderInfoTblOfs);
+    const CGLibDecShaderCode* pCode = reinterpret_cast<const CGLibDecShaderCode*>(data + pData->m_codeTblOfs);
+    for (int i = 0; i < m_shaderNum; i++, pInfo += 2, pCode++) {
+        m_pShaders[i].setupProgram(reinterpret_cast<const unsigned char*>(m_pData) + *pInfo,
+                                   pData->m_codeOfs + pCode->m_codeOfs, pControl + pCode->m_controlOfs, pool);
+    }
+}
+
 unsigned int CGLibDecShader::getDeclarationMax() const {
     return m_pData->m_declNum;
+}
+
+unsigned int CGLibDecShader::getDeclarationOfs(const char* name) const {
+    const CGLibDecShaderData* pData = m_pData;
+    int num = pData->m_declNum;
+    const CGLibDecShaderDecl* pDecl = reinterpret_cast<const CGLibDecShaderDecl*>(
+        reinterpret_cast<const unsigned char*>(pData) + pData->m_declOfs);
+    for (int i = 0; i < num; i++, pDecl++) {
+        if (strcmp(name, reinterpret_cast<const char*>(pData) + pDecl->m_nameOfs) == 0) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 CGLibDecShdExtTbl::CGLibDecShdExtTbl() {
@@ -1271,7 +1456,6 @@ void CGLibDecShdExtTbl::setObj(CGLibDecShader* pDecShader) {
     }
     m_current = 0;
 }
-
 
 }  // namespace grlib
 

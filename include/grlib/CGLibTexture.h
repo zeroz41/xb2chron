@@ -49,6 +49,12 @@ public:
     // original's)
     static void getDefPixelSize(unsigned int& size, unsigned int& align, unsigned int width, unsigned int height,
                                 unsigned int mip, GrlSurfaceFormat format);
+    // the same for a cube map array of arrayNum cubes (the parameter names are not the original's)
+    static void getArrayCubePixelSize(unsigned int& size, unsigned int& align, unsigned int width, unsigned int height,
+                                      unsigned int arrayNum, unsigned int mip, GrlSurfaceFormat format);
+    // the same for a depth texture without mips (the parameter names are not the original's)
+    static void getDepthPixelSize(unsigned int& size, unsigned int& align, unsigned int width, unsigned int height,
+                                  GrlDepthFormat format);
 };
 
 }  // namespace grlib

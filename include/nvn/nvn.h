@@ -24,6 +24,13 @@ typedef enum NVNtiledCacheAction { NVN_TILED_CACHE_ACTION_LARGE = 0x7FFFFFFF } N
 typedef enum NVNcounterType { NVN_COUNTER_TYPE_LARGE = 0x7FFFFFFF } NVNcounterType;
 typedef enum NVNindexType { NVN_INDEX_TYPE_LARGE = 0x7FFFFFFF } NVNindexType;
 typedef enum NVNformat { NVN_FORMAT_LARGE = 0x7FFFFFFF } NVNformat;
+typedef enum NVNtextureTarget {
+    NVN_TEXTURE_TARGET_2D = 1,
+    NVN_TEXTURE_TARGET_2D_ARRAY = 4,
+    NVN_TEXTURE_TARGET_CUBEMAP_ARRAY = 9,
+    NVN_TEXTURE_TARGET_LARGE = 0x7FFFFFFF
+} NVNtextureTarget;
+typedef int NVNtextureFlags;
 typedef enum NVNdeviceInfo { NVN_DEVICE_INFO_LARGE = 0x7FFFFFFF } NVNdeviceInfo;
 typedef enum NVNdepthMode { NVN_DEPTH_MODE_LARGE = 0x7FFFFFFF } NVNdepthMode;
 typedef enum NVNwindowOriginMode { NVN_WINDOW_ORIGIN_MODE_LARGE = 0x7FFFFFFF } NVNwindowOriginMode;
@@ -46,6 +53,7 @@ typedef struct NVNmemoryPool { char reserved[256]; } NVNmemoryPool;
 typedef struct NVNmemoryPoolBuilder { char reserved[64]; } NVNmemoryPoolBuilder;
 typedef struct NVNpolygonState { char reserved[4]; } NVNpolygonState;
 typedef struct NVNprogram { char reserved[192]; } NVNprogram;
+typedef struct NVNshaderData { NVNbufferAddress data; const void* control; } NVNshaderData;
 typedef struct NVNqueue { char reserved[8192]; } NVNqueue;
 typedef struct NVNqueueBuilder { char reserved[64]; } NVNqueueBuilder;
 typedef struct __attribute__((aligned(8))) NVNsampler { char reserved[96]; } NVNsampler;  // 8-aligned as the SDK declares it (releaseParams reads 0x60..0x67 as one word)
@@ -53,6 +61,7 @@ typedef struct NVNsamplerBuilder { char reserved[96]; } NVNsamplerBuilder;
 typedef struct NVNsamplerPool { char reserved[32]; } NVNsamplerPool;
 typedef struct NVNsync { char reserved[64]; } NVNsync;
 typedef struct NVNtexture { char reserved[192]; } NVNtexture;
+typedef struct NVNtextureBuilder { char reserved[128]; } NVNtextureBuilder;
 typedef struct NVNtexturePool { char reserved[32]; } NVNtexturePool;
 typedef struct NVNwindow { char reserved[384]; } NVNwindow;
 typedef struct NVNtextureView { char reserved[40]; } NVNtextureView;
