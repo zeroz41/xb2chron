@@ -1,4 +1,5 @@
 #include "anm/Util.h"
+#include "anm/Factory.h"
 #include "classes/anm/ResASM.h"
 #include "anm/StateMachine.h"
 #include "classes/anm/ASMControl.h"
@@ -15,6 +16,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/Quat.h"
 #include "mm/Vec3.h"
+#include "classes/gf/GfComModel.h"
 
 namespace gf {
 
@@ -26,6 +28,41 @@ GfComAsm::GfComAsm()
 }
 
 GfComAsm::~GfComAsm() {}
+
+void GfComAsm::setup(const SetupInfo& info) {
+    if (info.m_res == nullptr) {
+        return;
+    }
+    GfComModel* model = m_owner->getComponent<GfComModel>(1);
+    if (model == nullptr) {
+        return;
+    }
+    anm::Pose* pose = model->m_pose;
+    if (pose == nullptr) {
+        return;
+    }
+    anm::ExtraTruckBuffer* extra = model->m_extraTruckBuffer;
+    m_control = anm::Factory::createASMControl(*info.m_res, *getAllocator(ALLOCATOR(7)));
+    if (m_control != nullptr) {
+        m_control->setListener(&m_asmListener);
+        if (info.m_state != nullptr) {
+            m_control->m_stateMachines[0].setState(info.m_state, anm::StartFrameType(info.m_startFrame));
+        }
+        if (fw::AnimationManager* manager = mm::mtl::PtrSingleton<fw::AnimationManager>::get()) {
+            m_updater.bind(m_control);
+            if (m_updater.isBind()) {
+                manager->addControlUpdater(getLayer(), m_updater);
+            }
+            fw::AnimAsmPoseSampler& sampler = m_sampler;
+            sampler.m_sampleFlag = info.m_sampleFlag;
+            sampler.bind(m_control, pose, extra);
+            if (sampler.isBind()) {
+                manager->addPoseSampler(getLayer(), sampler);
+            }
+        }
+    }
+    m_caches.reserve(32, 8);
+}
 
 void GfComAsm::cleanup() {
     m_caches.clear();
@@ -155,6 +192,13 @@ bool GfComAsm::easeOut(const char* state, float time, AnimLayer layer) {
     if (layer <= 6 && m_control != nullptr) {
         return m_control->m_stateMachines[layer].doEaseOutAdditive(state, time, anm::InterpolateType(1),
                                                                    anm::InterpolateCurve(0));
+    }
+    return false;
+}
+
+bool GfComAsm::isActiveAdditiveState(const char* state, AnimLayer layer) {
+    if (layer <= 6 && m_control != nullptr) {
+        return m_control->m_stateMachines[layer].isActiveAdditiveState(state);
     }
     return false;
 }
