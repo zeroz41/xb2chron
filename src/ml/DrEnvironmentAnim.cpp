@@ -32,6 +32,7 @@
 #include "classes/ml/DrMdoCtlSeamAll.h"
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/DrMdoZSortObj.h"
+#include "classes/ml/FileResTh.h"
 #include "classes/ml/irrvol/MemHandlebaseAllocator.h"
 #include "grlib/CGLibCtl.h"
 #include "math.h"
@@ -44,6 +45,7 @@
 #include "ml/DrEnvironmentMan.h"
 #include "ml/DrFogMan.h"
 #include "ml/DrIBLColiAcc.h"
+#include "ml/DrIBLObj.h"
 #include "ml/DrIniSys.h"
 #include "ml/DrIrrVolMan.h"
 #include "ml/irrvol/DrIrrVolCascade.h"
@@ -738,6 +740,20 @@ void MemHandlebaseAllocator::deallocate(void* memory) {
         mtl::MemManager::deallocate(memory, 0, false);
     }
 }
+
+DrIrrVolCascade::~DrIrrVolCascade() {
+    for (int i = 0; i < BLOCK_NUM; ++i) {
+        if (m_blocks[i] != nullptr) {
+            delete m_blocks[i];
+            m_blocks[i] = nullptr;
+        }
+    }
+    memset(m_blockInfo, 0, sizeof(m_blockInfo));
+    if (m_resMan != nullptr) {
+        delete m_resMan;
+        m_resMan = nullptr;
+    }
+}
 }  // namespace irrvol
 
 // --- DrIrrVolMan ---
@@ -791,6 +807,24 @@ DrEnvironmentMan::DrEnvironmentMan(DrMan* drMan, DrLightMan* lightMan, DrFogMan*
     m_lgtArg = lgtArg;
     memset(m_objList, 0, 0x48);
     m_envColiMan = new (drMan->m_workHandle, nullptr, 0, 4, false) DrEnvColiMan(drMan);
+}
+
+DrEnvironmentMan::~DrEnvironmentMan() {
+    if (m_extra != nullptr) {
+        FileResTh* camLight = m_drMan->m_iniSys->m_camLight;
+        if (camLight != nullptr) {
+            camLight->Release();
+        }
+    }
+    if (m_envColiMan != nullptr) {
+        delete m_envColiMan;
+        m_envColiMan = nullptr;
+    }
+    for (int i = 0; i < 2; ++i) {
+        m_objList[i].deleteAll();
+    }
+    m_subList[1].deleteAll();
+    m_subList[0].deleteAll();
 }
 
 DrEnvironmentObj* DrEnvironmentMan::createObj(const void* resource) {
@@ -1186,5 +1220,24 @@ bool (DrIBLColiAcc::*DrIBLColiAcc::s_pColiTest[5])(const unsigned char*, const m
     &DrIBLColiAcc::envcoli_box,        &DrIBLColiAcc::envcoli_sphere,          &DrIBLColiAcc::envcoli_cylinder,
     &DrIBLColiAcc::envcoli_notrot_box, &DrIBLColiAcc::envcoli_notrot_cylinder,
 };
+
+DrIBLObj::~DrIBLObj() {
+    if (m_coliAcc != nullptr) {
+        delete m_coliAcc;
+        m_coliAcc = nullptr;
+    }
+    for (unsigned int i = 0; i < m_texNum; ++i) {
+        m_texA[i].release();
+        m_texB[i].release();
+    }
+    if (m_texA != nullptr) {
+        delete[] m_texA;
+        m_texA = nullptr;
+    }
+    if (m_texB != nullptr) {
+        delete[] m_texB;
+        m_texB = nullptr;
+    }
+}
 
 }  // namespace ml

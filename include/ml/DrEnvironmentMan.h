@@ -1,6 +1,8 @@
 #ifndef ML_DRENVIRONMENTMAN_H
 #define ML_DRENVIRONMENTMAN_H
 
+#include "classes/ml/DrEnvironmentObj.h"
+
 namespace ml {
 class DrEnvColiMan;
 class DrEnvironmentObj;
@@ -18,6 +20,18 @@ public:
 
     // a head/tail list of environment objects (the destructor deletes each through its table, walking m_next)
     struct ObjList {
+        // deletes every object through its table, walking m_next, and empties the list (inline: no symbol; the
+        // name is not the original's)
+        void deleteAll() {
+            DrEnvironmentObj* obj = m_head;
+            while (obj != nullptr) {
+                DrEnvironmentObj* next = obj->m_next;
+                delete obj;
+                obj = next;
+            }
+            m_head = nullptr;
+            m_tail = nullptr;
+        }
         DrEnvironmentObj* m_head;
         DrEnvironmentObj* m_tail;
     };
@@ -31,7 +45,7 @@ public:
     // 0x28: objects by DrMan::s_nDblStockIdx (createObj appends there), then two more lists (names not the original's)
     ObjList m_objList[2];        // 0x28
     ObjList m_subList[2];        // 0x48
-    void* m_extra;               // 0x68, the destructor calls into DrMan's +0x70 object when it is set
+    void* m_extra;               // 0x68, when set the destructor releases DrIniSys::m_camLight
 };
 }  // namespace ml
 

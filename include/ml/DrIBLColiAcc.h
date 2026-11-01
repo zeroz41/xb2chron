@@ -2,6 +2,7 @@
 #define ML_DRIBLCOLIACC_H
 
 #include "mm/Vec3.h"
+#include "mm/mtl/ReservedBitflag.h"
 
 namespace ml {
 // the IBL collision tests (DrIBLMan::update calls testTreeInvalidColi). Like DrEnvColiObj's tests, but each shape
@@ -18,6 +19,17 @@ public:
 
     // the test of each shape type (testTreeColi and testTreeInvalidColi call through it)
     static bool (DrIBLColiAcc::*s_pColiTest[5])(const unsigned char*, const mm::Vec3&, float);
+
+    // inline (no symbol): DrIBLObj's destructor deletes its accessor
+    ~DrIBLColiAcc() { m_bits.destroy(); }
+
+    // DrIBLObj::initialize allocates 0x40 bytes and fills these from the IBL resource; DrIBLMan::update passes
+    // m_invalidTree/m_tree to testTreeInvalidColi/testTreeColi (the field names are not the original's)
+    unsigned char pad_0[0x10];
+    const void* m_tree;  // 0x10
+    const void* m_invalidTree;  // 0x18
+    unsigned char pad_20[0x8];
+    mm::mtl::ReservedBitflag m_bits;  // 0x28, cleared by DrIBLMan::update before the tests
 };
 }  // namespace ml
 
