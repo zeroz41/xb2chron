@@ -158,7 +158,8 @@ public:
         return nullptr;
     }
     int GetPlayVoiceID(int chr) const;
-    void NotifyTrigger(int, TRIGGER, int, int);
+    // whether a voice was triggered (CharacterManager::PlayEnemyWinVoice stops at the first true)
+    bool NotifyTrigger(int, TRIGGER, int, int);
     // the entry's 64-bit value, 0 when none plays (Utility::AI_PlayVoice returns it)
     unsigned long PlayVoice(int, int);
     unsigned long PlayVoice(int, const char*);

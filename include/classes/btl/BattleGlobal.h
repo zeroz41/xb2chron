@@ -433,7 +433,10 @@ public:
     bool pad_bit2 : 1;
     bool m_challengeAnySuccess : 1;  // ButtonChallenge's results 1-3 (not only 3) achieve its condition 0xC
     // the rest of the unit: fn_710000A724 reads bits 35, 49 and 50, fn_71000068F8 bits 49 and 50
-    unsigned char : 3;
+    unsigned char : 2;
+    // CharacterManager::PreUpdateProc sets it once an enemy in battle belongs to a quest with an active task
+    // (gf::GfQuestUtil::getCurrentEnemyWithEvent; meaning unknown)
+    bool pad_bit6 : 1;
     bool pad_bit7 : 1;  // Utility::fn_71000100F0 sets it
     unsigned char : 8;
     bool pad_bit16 : 1;  // fn_710000D468 holds while it is set
@@ -448,7 +451,10 @@ public:
     bool m_controlCharacterDead : 1;
     // while set, IsGameOver holds without asking GfGameManager (the name is not the original's)
     bool m_gameOver : 1;
-    unsigned char : 5;
+    unsigned char : 4;
+    // CharacterManager::PostUpdateProc sets it to whether an enemy answers BattleCharacter::IsScout (meaning
+    // unknown)
+    bool pad_bit29 : 1;
     // while set, an enemy's GfEnemyBattleProperty::GetReturnHomeDistance and GetReturnHomeCharacterDistance give
     // BtlSystemBalanceAccess's m_returnHomeDistance instead of its own
     bool pad_bit30 : 1;

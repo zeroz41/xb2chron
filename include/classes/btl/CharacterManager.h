@@ -64,7 +64,31 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it walks the enemy slots. What
     // it does: calls BattleCharacter::fn_710002B868 on every enemy in use (BattleGlobal::PreUpdateProc calls it).
     void fn_710007C1E0();
+    int GetAliveBossNum() const;
+    bool IsCharacterDead(gf::GF_OBJ_HANDLE* handle) const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it walks the enemy slots. What it
+    // does: false unless BattleGlobal's m_challengeAnySuccess is set; then whether an enemy in use answers
+    // BattleCharacter::GetWeaponEffectCaster (BattleGlobal::BattleStartInitialize calls it).
+    bool fn_710007C240() const;
+    bool IsExistAlivePlayer() const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it walks the enemy slots. What it
+    // does: whether an enemy in use that is no blade is alive (IsDead(0) false), with battleOnly only one in battle
+    // (IsBattle) (BattleGlobal::PreUpdateProc and BattleCharacter::DeadProc call it).
+    bool fn_710007C36C(bool battleOnly) const;
+    void BattleEndInitialize();
+    bool IsExistBattlePlayer() const;
     bool IsExistBattleEnemy(bool* result, gf::GF_OBJ_HANDLE* handle, bool flag) const;
+    bool IsExistEnArrange(unsigned int bdatID) const;
+    bool IsExistHikariSp() const;
+    bool IsExistAlwaysKakusei() const;
+    bool IsExistHomuri() const;
+    // the highest level of an enemy in use with m_hasHateTarget set and alive, +15 for a named one with addNamed
+    int GetBattleEnemyMaxLevel(bool addNamed) const;
+    void PlayEnemyWinVoice();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it walks the enemy slots. What it
+    // does: sets BattleCharacter::pad_F06_1 on every dead enemy in use (IsDead(0)) that does not have it yet
+    // (fn_7100025870 calls it).
+    void fn_710007D594();
 
     CHARACTER_SLOT m_slots[CHARACTER_NUM];
     // the indices of the slots in use, sorted by their character's handle (SearchCharacter's binary search; the

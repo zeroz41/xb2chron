@@ -107,6 +107,12 @@ public:
     bool IsAngry() const;
     bool IsBlade() const;
     bool IsBattle() const;
+    void BattleEndInitialize();
+    // 1.0.0's names: 1.0.0's CharacterManager::PreUpdateProc and PostUpdateProc call them first on every character
+    // with their UpdateInfo, where 3.0.1's call fn_7100036084 and fn_7100039050
+    void PreManagerUpdate(const fw::UpdateInfo& info);
+    void PostManagerUpdate(const fw::UpdateInfo& info);
+    void UpdateHateRingData();
     // the arts slot a blade art would use (BladeArtsManager::RegisterBladeArts registers none below 0)
     int IsActBladeArts(int, bool) const;
     // CharacterManager::Register gives the character its handle and its slot index
@@ -517,7 +523,11 @@ public:
     unsigned int m_isPlayer : 1;
     // IsBattle returns it (the name is not the original's)
     unsigned int m_isBattle : 1;
-    unsigned int pad_F00_1 : 9;
+    unsigned int pad_F00_1 : 2;
+    // CharacterManager::IsExistBattlePlayer passes over a player in battle while it is set (run bit 19; meaning
+    // unknown)
+    unsigned int pad_F00_3 : 1;
+    unsigned int pad_F00_4 : 6;
     // ActionRun sets it when it draws the weapon of a character the player does not control and that does not fly
     // (the name is not the original's)
     unsigned int m_isAutoRun : 1;
@@ -540,7 +550,11 @@ public:
     // ActionCommandEndBladeArts clears both when it ends the action (meaning unknown)
     unsigned int pad_F04_4 : 1;
     unsigned int pad_F04_5 : 1;
-    unsigned int pad_F04_6 : 19;
+    unsigned int pad_F04_6 : 11;
+    // CharacterManager::fn_710007D594 sets it on every dead enemy that does not have it yet (run bit 65; meaning
+    // unknown)
+    unsigned int pad_F06_1 : 1;
+    unsigned int pad_F06_2 : 7;
     // the name is not the original's: fn_710002F368 treats the character as out of battle while it is set
     unsigned int m_isBattleIgnore : 1;
     unsigned int pad_F07_2 : 6;
