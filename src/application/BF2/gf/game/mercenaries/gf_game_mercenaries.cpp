@@ -17,8 +17,55 @@
 #include "classes/gf/GfGameManager.h"
 #include "classes/gf/SCOM_POPUP.h"
 #include "classes/gf/SCOM_SET_MERCENARIES_LEVEL.h"
+#include "classes/gf/GfQuestManager.h"
+#include "gf/GfQuestReward.h"
+#include "gf/GfQuestUtil.h"
+#include "gf/GfKizunaringUtil.h"
+#include "gf/GfDataBlade.h"
+#include "gf/GfDataDriver.h"
+#include "classes/gf/GfBdatBlade.h"
+#include "classes/gf/GfBdatChrDr.h"
+#include "ml/MtRand.h"
 
 namespace gf {
+
+bool GfKizunaringUtil::getCompleteKizunaringReward(GfQuestReward& reward, unsigned int blade) {
+    // the first create config row of each crown point count (proposed name, not the original's: the symbols leave
+    // it unnamed, lbl_71009BC0FC)
+    static const unsigned short s_crownConfigRow[] = {0, 0x31, 0x35, 0x39, 0x3D, 0x41};
+    unsigned int id;
+    if (GfDataBlade::fn_71002364B8(blade)) {
+        GfBdatChrDr* chrDr = GfBdatChrDr::get();
+        unsigned int driver = GfDataBlade::fn_7100236518(blade);
+        if (driver == 0) {
+            return false;
+        }
+        id = chrDr->fn_71001F19DC(chrDr->fn_71001F13E0(driver));
+    } else {
+        unsigned int row = s_crownConfigRow[GfDataBlade::getCrownPoint(blade)] + ml::mtRand(4);
+        id = GfBdatBlade::get()->getCreateConfigValue(row);
+    }
+    if (id == 0) {
+        return false;
+    }
+    if (!GfQuestUtil::getReward(reward, id, false)) {
+        return false;
+    }
+    reward.m_trustBlade = blade;
+    return true;
+}
+
+bool GfKizunaringUtil::fn_71002FF4C4(GfQuestReward& reward, unsigned int driver, bool second) {
+    if (GfDataDriver::fn_710023F9A8(driver)) {
+        GfBdatChrDr* chrDr = GfBdatChrDr::get();
+        unsigned int row = chrDr->fn_71001F13E0(driver);
+        unsigned int id = second ? chrDr->fn_71001F1A64(row) : chrDr->fn_71001F19DC(row);
+        if (id != 0 && GfQuestUtil::getReward(reward, id, false)) {
+            return true;
+        }
+    }
+    return GfQuestUtil::getReward(reward, 0x3A3, false);
+}
 
 GfGameMercenaries::~GfGameMercenaries() {}
 
@@ -50,6 +97,24 @@ void GfGameMercenaries::update(const fw::UpdateInfo& info) {
         return;
     }
     get()->updateMercenariesTeam(info);
+}
+
+void GfGameMercenaries::updateMercenariesTeam(const fw::UpdateInfo& info) {
+    unsigned int num = GfDataMercenaries::getTeamNum();
+    unsigned int max = GfDataMercenaries::getTeamMax();
+    if (num < max) {
+        for (unsigned int i = 0; i < max - num; i++) {
+            GfDataMercenaries::addTeam();
+        }
+    }
+    if (!GfGameManager::isStartGame() && !m_stopMissionTime) {
+        mm::mtl::FixedVector<unsigned short, 3> teams;
+        getTeam(teams);
+        for (unsigned short team : teams) {
+            GfDataMercenaries::decTeamMissionTime(team, info.m_frameTime);
+        }
+    }
+    checkTeamMissionComplete();
 }
 
 int GfGameMercenaries::getMissionFlag(unsigned int mission) {
@@ -117,6 +182,35 @@ bool GfGameMercenaries::getZoneMission(mm::mtl::FixedVector<unsigned short, 500>
     return !missions.empty();
 }
 
+void GfGameMercenaries::cancelMission(unsigned int mission) {
+    if (mission == 0) {
+        return;
+    }
+    unsigned int flag = GfDataMercenaries::getMissionFlag(mission);
+    if (flag == 0) {
+        return;
+    }
+    QuestID quest = GfDataMercenaries::getMissionQuestID(mission);
+    GfDataMercenaries::Team* team = GfDataMercenaries::getTeamByMissionID(mission);
+    unsigned int current = GfDataMercenaries::getMissionFlag(mission);
+    if (team != nullptr && current == 3) {
+        SCOM_POPUP::fn_7100569D44(GfDataMercenaries::getMissionMapID(mission), team->m_teamId);
+    }
+    if (team != nullptr) {
+        team->m_quest = QuestID();
+        team->m_mission = 0;
+        team->m_secondCount = 0.0f;
+        team->m_missionTime = ElapseTime();
+        team->m_missionTimeTotal = ElapseTime();
+    }
+    bool enable = GfDataMercenaries::isEnableOrder(mission);
+    if (enable) {
+        setMissionFlag(mission, 1);
+    } else if (flag != 4) {
+        setMissionFlag(mission, 1);
+    }
+}
+
 void GfGameMercenaries::qevOrderQuest(const QuestOrderParam& param) {
     if (GfGameManager::fn_71002A9E68()) {
         return;
@@ -156,6 +250,110 @@ bool GfGameMercenaries::isQuestMission(QuestID quest) {
         }
     }
     return false;
+}
+
+int GfGameMercenaries::getRewardGold(unsigned int mission, bool) {
+    GfQuestReward reward;
+    unsigned int gold = GfQuestUtil::getReward(reward, GfDataMercenaries::getMissionRewardID(mission), false)
+                            ? reward.m_items[0].m_value
+                            : 0;
+    return gold + getRewardGoldHosei(mission, false);
+}
+
+int GfGameMercenaries::getRewardExp(unsigned int mission, bool) {
+    GfQuestReward reward;
+    unsigned int exp = GfQuestUtil::getReward(reward, GfDataMercenaries::getMissionRewardID(mission), false)
+                           ? reward.m_items[3].m_value
+                           : 0;
+    float base = exp;
+    unsigned int level = GfDataMercenaries::getLevel();
+    float rate = level != 0 ? QuestListAcc::get()->getFLD_MercenariesConfigValue(level + 10) : 0.0f;
+    return static_cast<unsigned int>(base * rate * 0.01f) + exp;
+}
+
+int GfGameMercenaries::getRewardDevelop(unsigned int mission, bool) {
+    GfQuestReward reward;
+    unsigned int develop = GfQuestUtil::getReward(reward, GfDataMercenaries::getMissionRewardID(mission), false)
+                               ? reward.m_items[4].m_value & 0xFFFF
+                               : 0;
+    return develop + getRewardDevelopHosei(mission, false);
+}
+
+int GfGameMercenaries::getRewardTrust(unsigned int mission) {
+    GfQuestReward reward;
+    return GfQuestUtil::getReward(reward, GfDataMercenaries::getMissionRewardID(mission), false)
+               ? reward.m_items[5].m_value & 0xFFFF
+               : 0;
+}
+
+int GfGameMercenaries::getRewardMercenariesPoint(unsigned int mission) {
+    GfQuestReward reward;
+    if (!GfQuestUtil::getReward(reward, GfDataMercenaries::getMissionRewardID(mission), false)) {
+        return 0;
+    }
+    return reward.m_items[7].m_value & 0xFFFF;
+}
+
+void GfGameMercenaries::execMissionRewardByTeamID(unsigned int teamId) {
+    execMissionReward(GfDataMercenaries::getTeamMission(teamId));
+    GfQuestManager::requestOrderAchievementQuestForce();
+}
+
+void GfGameMercenaries::setMissionCompleteForce(unsigned int mission) {
+    if (GfDataMercenaries::Team* team = GfDataMercenaries::getTeamByMissionID(mission)) {
+        team->m_missionTime = ElapseTime();
+        team->m_missionTimeTotal = ElapseTime();
+        team->m_missionEnd = true;
+    }
+}
+
+int GfGameMercenaries::getRewardGoldHosei(unsigned int mission, bool) {
+    GfQuestReward reward;
+    float gold = 0.0f;
+    if (GfQuestUtil::getReward(reward, GfDataMercenaries::getMissionRewardID(mission), false)) {
+        gold = reward.m_items[0].m_value;
+    }
+    float rate = 0.0f;
+    if (unsigned int level = GfDataMercenaries::getLevel()) {
+        rate = QuestListAcc::get()->getFLD_MercenariesConfigValue(level + 10);
+    }
+    return static_cast<unsigned int>(gold * rate * 0.01f);
+}
+
+int GfGameMercenaries::getRewardDevelopHosei(unsigned int mission, bool) {
+    GfQuestReward reward;
+    float develop = 0.0f;
+    if (GfQuestUtil::getReward(reward, GfDataMercenaries::getMissionRewardID(mission), false)) {
+        develop = static_cast<unsigned short>(reward.m_items[4].m_value);
+    }
+    float rate = 0.0f;
+    if (unsigned int level = GfDataMercenaries::getLevel()) {
+        rate = QuestListAcc::get()->getFLD_MercenariesConfigValue(level + 10);
+    }
+    return static_cast<unsigned int>(develop * rate * 0.01f);
+}
+
+bool GfGameMercenaries::getRewardItem(unsigned int& item, unsigned int& count, unsigned int mission,
+                                      QUEST_REWARD slot) {
+    GfQuestReward reward;
+    if (!GfQuestUtil::getReward(reward, GfDataMercenaries::getMissionRewardID(mission), false)) {
+        return false;
+    }
+    unsigned int value = reward.m_items[slot].m_value;
+    item = value & 0xFFFF;
+    count = value >> 16;
+    return item != 0;
+}
+
+void GfGameMercenaries::fn_7100301C60() {
+    if (GfGameManager::fn_71002A9E68()) {
+        return;
+    }
+    unsigned int start = GfDataMercenaries::getStartMissionID();
+    unsigned int end = GfDataMercenaries::getEndMissionID();
+    for (unsigned int mission = start; mission < end; mission++) {
+        setMissionFlag(mission, 0);
+    }
 }
 
 void GfGameMercenaries::stopMissionTime(bool stop) {
