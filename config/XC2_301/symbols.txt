@@ -23515,9 +23515,9 @@ _ZN3gmk8TGmkListINS_13GmkRoutePointENS1_8BdatInfoELj1414550595ELj2ENS_22GmkRoute
 _ZN3gmk13GmkCollection8BdatInfo6createE12CBdatWrapperiRKNS_8AGmkBaseE = .text:0x0059BC6C; // type:function size:0x1A8 scope:global
 _ZNK3gmk13GmkCollection8BdatInfo26isPopCondMatchedExceptDistEv = .text:0x0059BE14; // type:function size:0xA8 scope:global
 fn_710059BEBC = .text:0x0059BEBC; // type:function size:0xD8 scope:global
-fn_710059BF94 = .text:0x0059BF94; // type:function size:0x68 scope:global
+_ZNK3gmk13GmkCollection13fn_710059BF94Ev = .text:0x0059BF94; // type:function size:0x68 scope:global
 _ZNK3gmk13GmkCollection13fn_710059BFFCEt = .text:0x0059BFFC; // type:function size:0x48 scope:global
-fn_710059C044 = .text:0x0059C044; // type:function size:0x60 scope:global
+_ZNK3gmk13GmkCollection13fn_710059C044Ev = .text:0x0059C044; // type:function size:0x60 scope:global
 _ZNK3gmk13GmkCollection11isWaitRepopEv = .text:0x0059C0A4; // type:function size:0x2C scope:global
 _ZN3gmk13GmkCollection6createERKNS_8AGmkBase10CreateInfoE = .text:0x0059C0D0; // type:function size:0xD0 scope:global
 _ZN3gmk13GmkCollection13setTargetableEb = .text:0x0059C1A0; // type:function size:0x168 scope:global

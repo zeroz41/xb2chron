@@ -11,6 +11,8 @@ namespace gf { class GF_OBJ_HANDLE; }
 
 namespace gmk {
 class GmkSalvageLocator;
+template <gmk::GmkType T0, typename T1> class TGmkFormPc;
+template <gmk::GmkType T0> class TGmkFormPcnpc;
 // table 0x7100B6C990
 class GmkSalvage : public ::gmk::AGmkBase {
 public:
@@ -28,8 +30,9 @@ public:
     // are not the original's)
     struct Data {
         unsigned char pad_0[8];
-        int m_formPcIdx;  // 0x8: its formation's element in the TGmkFormPc list
-        int pad_c;        // 0xc: getGmkFormPc gives none unless it exceeds m_formPcIdx
+        unsigned int m_formPcIdx;  // 0x8: its formation's element in the TGmkFormPc list
+        // 0xc: getGmkFormPc gives none unless it exceeds m_formPcIdx (its difference is a count: an int)
+        unsigned int pad_c;
     };
     const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     // what the last raffle drew (createRaffle fills it, disposeRaffle resets it; GfGameSalvage::getRaffleResult reads
@@ -85,7 +88,8 @@ public:
     // name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(31);
     // its party formation gimmick: the GmkSet's TGmkFormPc list's element at the data's index (GfGameSalvage::applyPartyForm)
-    gmk::AGmkBase* getGmkFormPc() const;
+    // (the return type: its call of getInst does not become a tail call, so the source converts getInst's answer)
+    const TGmkFormPc<gmk::GmkType(24), TGmkFormPcnpc<gmk::GmkType(25)> >* getGmkFormPc() const;
     // what createRaffle draws from (GfGameSalvage::execRaffle copies its gf::GfGameSalvage::RaffleInfo into one;
     // the field names are not the original's: the grade is the BDAT row createRaffle reads "ColleTable<n>" from)
     struct RaffleInfo {

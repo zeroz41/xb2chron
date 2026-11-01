@@ -427,6 +427,15 @@ gmk::AGmkBase* GmkSalvageLocatorList::getInst(unsigned int index) const {
     return const_cast<GmkSalvageLocator*>(&m_gmks[index]);
 }
 
+void GmkManager::update(float dt) {
+    if (m_bdat.m_seq) {
+        (m_bdat.*m_bdat.m_seq)(dt);
+    }
+    if (m_seq) {
+        (this->*m_seq)(dt);
+    }
+}
+
 bool GmkManager::isValid() const {
     return m_bdat.m_assetData != 0 && fw::BdatManager::isEnableBdat(m_bdat.m_createInfo.m_param) && m_bdatFp != nullptr;
 }
@@ -1383,6 +1392,17 @@ void GmkRouteNavi::dispose() {
 unsigned int GmkRoute::getRoutePointNum() const { return getData()->m_pointEnd - getData()->m_pointBegin; }
 bool GmkRoute::isClosed() const { return getData()->m_flags & 1; }
 
+const GmkRoutePoint* GmkRoute::getRoutePoint(unsigned int index) const {
+    const IGmkList* list = getBindedRoutePointList();
+    if (list != nullptr) {
+        unsigned int pointIdx = getData()->m_pointBegin + index;
+        if (list->getInstNum() > pointIdx) {
+            return static_cast<const GmkRoutePoint*>(list->getInst(pointIdx));
+        }
+    }
+    return nullptr;
+}
+
 void GmkRoute::debugDraw() const {
     AGmkBase::debugDraw();
     if (isValid()) {
@@ -1656,6 +1676,18 @@ void GmkEvent::create(const CreateInfo& info) { AGmkBase::create(info); }
 void GmkBattleLock::create(const CreateInfo& info) { AGmkBase::create(info); }
 void GmkFieldLock::create(const CreateInfo& info) { AGmkBase::create(info); }
 
+void GmkCollection::create(const CreateInfo& info) {
+    AGmkBase::create(info);
+    if (!isValid()) {
+        dispose();
+        return;
+    }
+    setTargetable(gf::GfGameManager::isMapjumpWithSaveData() ? !isWaitRepop() : true);
+    Bdat::uVal popDist;
+    popDist.ulong = Bdat::getValCheck(gf::GfDataBdat::getFP(0x7B), 0, 1, 8);
+    m_popDistSq = popDist.real * popDist.real;
+}
+
 void GmkCollection::dispose() {
     disposeIcon(false);
     if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
@@ -1894,6 +1926,20 @@ void GmkJump::reqRecreateIcon() {
             createIcon();
         }
     }
+}
+
+const TGmkFormPc<GmkType(24), TGmkFormPcnpc<GmkType(25)> >* GmkSalvage::getGmkFormPc() const {
+    typedef TGmkFormPc<GmkType(24), TGmkFormPcnpc<GmkType(25)> > FormPc;
+    const Data* data = getData();
+    unsigned int idx = data->m_formPcIdx;
+    int num = data->pad_c - idx;
+    if (num > 0) {
+        const IGmkList* list = static_cast<const GmkSalvageList*>(m_list)->m_gmkSet.m_gmkLists[FormPc::TYPE];
+        if (list->getInstNum() > idx) {
+            return static_cast<const FormPc*>(list->getInst(idx));
+        }
+    }
+    return nullptr;
 }
 
 void GmkSalvage::disposeRaffle(bool req) {
@@ -2157,6 +2203,27 @@ GmkElevator::~GmkElevator() { dispose(); }
 // ---- GmkDmgGimmick
 void GmkDmgGimmick::seqWaitToCreateChild(float) {
     m_seq = &GmkDmgGimmick::seqUpdatePopDepop;
+}
+
+void GmkDmgGimmick::create(const CreateInfo& info) {
+    AGmkBase::create(info);
+    if (!isValid()) {
+        dispose();
+        return;
+    }
+    fw::EffectPack* pack = gf::GfFieldManager::getEffectPack();
+    if (pack != nullptr) {
+        const char* name = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo)->m_effectName;
+        if (name != nullptr && *name != '\0') {
+            pad_58 = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->search(name, pack);
+            if (pad_58 == nullptr) {
+                // the original asks the list's CreateInfo here and does not use it (a message compiled out)
+                m_list->getCreateInfo();
+            }
+        }
+    }
+    pad_60 = mm::mtl::PtrSingleton<gf::GfFieldSound>::sys()->getMapPack();
+    m_seq = &GmkDmgGimmick::seqWaitToCreateChild;
 }
 
 void GmkDmgGimmick::dispose() {
@@ -2968,6 +3035,14 @@ void GmkTbox::setTargetable(bool targetable) const {
     }
 }
 
+void GmkTbox::create(const CreateInfo& info) {
+    AGmkBase::create(info);
+    if (gf::GfGameManager::fn_71002A9E68() && getBdatInfo()->m_noponBarrel &&
+        gf::GfGameFlag::getLocal(1, m_createInfo.m_bdatId + 54134) != 0) {
+        gf::GfGameFlag::setLocal(2, m_createInfo.m_bdatId + 31765, 1);
+    }
+}
+
 void GmkTbox::dispose() {
     if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         gf::GfObjAcc acc(m_gob);
@@ -3146,6 +3221,16 @@ void GmkSeLine::dispose() {
 }
 
 GmkSeLine::~GmkSeLine() { dispose(); }
+
+void GmkTrigger::create(const CreateInfo& info) {
+    AGmkBase::create(info);
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set == nullptr || !set->m_createInfo.m_flag) {
+        m_phantom.create(*this, nullptr, false);
+    }
+    applyPopCondMatched(false);
+    m_seq = &GmkTrigger::seqWaitToValidLinkGmkList;
+}
 
 void GmkTrigger::dispose() {
     m_seq = nullptr;
@@ -5133,8 +5218,31 @@ bool GmkCollection::BdatInfo::isPopCondMatchedExceptDist() const {
     return true;
 }
 
+bool GmkCollection::fn_710059BF94() const {
+    if (gf::GfGameManager::fn_71002A9E68()) {
+        unsigned int id = m_createInfo.m_bdatId;
+        if (id >= 4401 && id - 4401 < 500) {
+            return gf::GfGameFlag::getLocal(1, id + 51429) != 0;
+        }
+    }
+    return true;
+}
+
 bool GmkCollection::fn_710059BFFC(unsigned short collectionId) const {
     return isValid() && getBdatInfo()->m_collectionTable == collectionId;
+}
+
+unsigned int GmkCollection::fn_710059C044() const {
+    if (isValid()) {
+        const BdatInfo* info = getBdatInfo();
+        if (info->m_collectionTable != 0) {
+            unsigned char* fp = gf::GfDataBdat::getFP(0x1e0);
+            if (fp != nullptr) {
+                return Bdat::getValCheck(fp, "categoryName", info->m_collectionTable, 2);
+            }
+        }
+    }
+    return 0;
 }
 
 bool GmkCollection::isWaitRepop() const { return gf::GfGameFlag::getLocal(1, m_createInfo.m_bdatId + 29020) != 0; }

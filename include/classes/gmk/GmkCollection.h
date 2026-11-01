@@ -46,6 +46,15 @@ public:
     // (GmkElevator.cpp's unit, next to isWaitRepop). What it does: isValid() and its BdatInfo's CollectionTable
     // (m_collectionTable) equals the given BDAT 0x1E0 row (gf_field_locator's collection locator update passes its row)
     bool fn_710059BFFC(unsigned short collectionId) const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this gimmick's
+    // row id (m_createInfo.m_bdatId) and sits among its functions (GmkElevator.cpp's unit, before fn_710059BFFC).
+    // What it does: true unless fn_71002A9E68() holds and the row id is in 4401..4900, then whether local flag
+    // (1, id + 51429) is set (GfGmkLocator::getPosNum calls it).
+    bool fn_710059BF94() const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this gimmick's
+    // BdatInfo (m_collectionTable) and sits among its functions (after fn_710059BFFC). What it does: while
+    // isValid(), its CollectionTable row's "categoryName" in BDAT 0x1E0, else 0 (GfComBehaviorGmk::createMenuObj).
+    unsigned int fn_710059C044() const;
     bool isWaitRepop() const;
     void setTargetable(bool targetable);
     void seqUpdateRepopCounter(float dt);
@@ -57,7 +66,8 @@ public:
     // its game object (dispose clears its user data, destroys it and stores -1; the name is not the original's)
     gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     unsigned int m_iconEffect = 0;  // an EffectManager handle (disposeIcon removes it; the name is not the original's)
-    unsigned int pad_54 = 0;
+    // BDAT 0x7B's row 1 member 0, squared (create stores it; the name is not the original's)
+    float m_popDistSq = 0.0f;
     // the step update runs (seqUpdateRepopCounter is one; the name is not the original's)
     void (GmkCollection::*m_seq)(float dt) = nullptr;
     float m_repopCounter = 0.0f;  // seqUpdateRepopCounter counts it down (the name is not the original's)

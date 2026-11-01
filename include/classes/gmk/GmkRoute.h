@@ -5,6 +5,7 @@
 #include "mm/Col4.h"
 #include "plugin/Bdat.h"
 namespace gmk { class GmkRouteGob; }
+namespace gmk { class GmkRoutePoint; }
 
 namespace gmk {
 // table 0x7100B6C810
@@ -31,7 +32,8 @@ public:
     // draws the route (debugDraw passes mm::Col4::yellow while the gimmick is valid)
     void debugDrawRoute(const mm::Col4& color) const;
     // its point at index (from its first one) in the binded route point list, none past the list's end
-    AGmkBase* getRoutePoint(unsigned int index) const;
+    // (the return type: its call of getInst does not become a tail call, so the source converts getInst's answer)
+    const GmkRoutePoint* getRoutePoint(unsigned int index) const;
     // the route's position nearest to pos (GmkRoutedNpc's distance tests pass the player's position)
     bool getNearestPos(mm::Vec3& nearest, const mm::Vec3& pos) const;
     virtual ~GmkRoute();  // slot 0
