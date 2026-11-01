@@ -74,6 +74,8 @@ public:
     static float getScreenScaleW();
     // opens the frame: the display list, CGLibManager, the debug draw, then the device
     static void renderBegin();
+    // named by the symbols: closes the frame: the outer renders, the device, CGLibManager, then the display list
+    static void renderEnd();
     static void renderSync();
     // sets a render state (DevGraphNx::renderEndSys passes 1)
     static void setRenderState(RSTAT state);
@@ -131,7 +133,8 @@ public:
     reslist<DevGraphCB*> m_cbList;  // 0x1B8
     unsigned char pad_1f8[0x10];
     mm::Rect<int> m_viewport;  // 0x208 getViewport returns it (the name is not the original's)
-    unsigned char pad_218[0x100];
+    unsigned char pad_218[0xFC];
+    RSTAT m_renderState;  // 0x314 setRenderState stores it under its lock (the name is not the original's)
     // grSetClearCol copies the colour in and sets 0x328 to 1 (the names are not the original's)
     mm::Col4 m_clearCol;  // 0x318
     float m_clearDepth;   // 0x328

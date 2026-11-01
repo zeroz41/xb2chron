@@ -2034,6 +2034,17 @@ DevFileBlackListNxTh::~DevFileBlackListNxTh() {
     }
 }
 
+bool DevFileTh::isInitialized() {
+    DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
+    if (dev != nullptr) {
+        if (dev->m_impl == nullptr) {
+            return false;
+        }
+        return dev->m_impl->m_initialized;
+    }
+    return false;
+}
+
 void* DevFileUtilNx::zlibAlloc(void*, unsigned int items, unsigned int size) {
     unsigned int total = items * size;
     void* ptr = mtl::MemManager::allocate(WorkRoot::getMemTMP(), total, 4, false, "no name", 0);
@@ -2170,6 +2181,30 @@ void DevFileTh::cancel(FileHandleTh* handle, bool) {
 DevFileTh::~DevFileTh() {}
 
 void DevFileTh::wkUpdate() {}
+
+bool DevFileTh::wkStandbyLogin() {
+    if (!Device::isColdStartReady()) {
+        return false;
+    }
+    if (!isInitialized()) {
+        DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
+        if (dev == nullptr || !dev->m_impl->initialize()) {
+            return false;
+        }
+    }
+    return WorkObj::wkStandbyLogin();
+}
+
+bool DevFileTh::wkStandbyLogout() {
+    if (m_child.size() == 0 && WorkSystem::get() == nullptr && LibMain::get() == nullptr) {
+        DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
+        if (dev != nullptr && !dev->m_impl->finalize()) {
+            return false;
+        }
+        return WorkObj::wkStandbyLogout();
+    }
+    return false;
+}
 
 void DevFileTh::wkTail() {
     DevFileTh* dev = mm::mtl::PtrSingleton<DevFileTh>::get();
@@ -2635,6 +2670,53 @@ void DevGraph::renderBegin() {
     }
 }
 
+void DevGraph::renderEnd() {
+    DevGraph* dev = get();
+    if (dev != nullptr) {
+        for (int i = 0; i < 4; ++i) {
+            if (dev->m_outerRender[i] != nullptr) {
+                dev->m_outerRender[i]();
+            }
+        }
+        dev->renderEndSys();
+        grlib::CGLibManager* lib = mm::mtl::PtrSingleton<grlib::CGLibManager>::get();
+        if (lib != nullptr) {
+            lib->end();
+        }
+        cmdCloseDisplayList();
+    }
+}
+
+void DevGraph::setRenderState(RSTAT state) {
+    // lbl_7100EC7110, guard lbl_7100EC7138 (only setRenderState uses it). Proposed name, not the original's
+    static CriticalSection s_cs;
+    CS lock(s_cs);
+    DevGraph* dev = get();
+    if (dev != nullptr) {
+        dev->m_renderState = state;
+    }
+}
+
+void DevGraph::wkTail() {
+    cmdTermDisplayListSys();
+    m_que->flip();
+    cmdSetupDisplayListSys();
+    if (dg::s_nVSync != dg::s_nVSyncOld) {
+        dg::s_nVSyncOld = dg::s_nVSync;
+    }
+    ErrViewer::tail();
+    grlib::CGLibManager* lib = mm::mtl::PtrSingleton<grlib::CGLibManager>::get();
+    if (lib != nullptr) {
+        lib->tail();
+    }
+}
+
+GraphQue* DevGraphQue::createQue(unsigned int size) {
+    GraphQue* que = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) GraphQue(this, size);
+    m_ques.push_back(que);
+    return que;
+}
+
 void DevGraph::renderSync() {
     DevGraph* dev = get();
     if (dev != nullptr) {
@@ -2739,6 +2821,13 @@ DevGraphCB::DevGraphCB() {
     DevGraph* dev = DevGraph::get();
     if (dev != nullptr) {
         dev->m_cbList.push_back(this);
+    }
+}
+
+GraphQue::~GraphQue() {
+    if (m_buf[0] != nullptr) {
+        mtl::MemManager::deallocate(m_buf[0], 0, false);
+        m_buf[0] = nullptr;
     }
 }
 

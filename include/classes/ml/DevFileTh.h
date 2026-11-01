@@ -38,8 +38,13 @@ public:
         FileHandleTh* rfOpen(const DevFileParamTh& param);
         void rfClose(FileHandleTh* handle);
         void cancelRequest(FileHandleTh* handle);
+        // named by the symbols: start and stop the thread's work (DevFileTh::wkStandbyLogin/wkStandbyLogout)
+        bool initialize();
+        bool finalize();
 
-        unsigned char pad_0[0x5CC18];
+        unsigned char pad_0[0x5B134];
+        bool m_initialized;  // 0x5B134 (DevFileTh::isInitialized reads it; the name is not the original's)
+        unsigned char pad_5b135[0x1AE3];
         IWorkEvent* m_eventCb;  // 0x5CC18 (entryCb sets it, removeCb clears it; the name is not the original's)
     };
     // what setup copies for Impl's constructor (nnMain fills it)
