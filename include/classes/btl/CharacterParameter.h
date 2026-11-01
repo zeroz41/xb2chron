@@ -10,33 +10,54 @@ namespace btl {
 // one palette slot (ARTS_PALETTE_DATA::GetSlotDataConst); 0x18 bytes (the palette's stride; EnemyParameter's
 // constructor, ResetAllRecast)
 struct ARTS_SLOT_DATA {
-    ARTS_SLOT_DATA() : m_artsID(0), m_dataType(0), pad_0_14(0), m_recast(0), pad_8(1.0f) {}
+    ARTS_SLOT_DATA()
+        : m_artsID(0), m_dataType(0), pad_0_14(0), pad_0_18(0), m_level(0), m_charaIndex(0), pad_0_31(0), m_recast(0),
+          pad_8(1.0f) {}
     // DataManager's arts data for the slot's arts
     void GetArtsData(ARTS_DATA& data) const;
+    // adds to the recast (scaled by the level's recast time when the flag is set); what was added, in recast time.
+    // A full recast tells the tutorial (conditions 2-4) for the controlled character
+    float AddRecast(float add, bool scaled);
+    // empties the recast; with the first flag, starts it from the arts data's initial recast (percent)
+    void ResetRecast(bool initial, bool);
 
     // BattleCharacter::GetArtsSlotIndex looks the slot holding an arts up by it (the name is not the original's)
     unsigned int m_artsID : 11;
     unsigned int m_dataType : 3;  // the arts data's ARTS_DATA::DATA_TYPE (GetArtsData; the name is not the original's)
-    unsigned int pad_0_14 : 18;
-    float m_recast;  // ARTS_PALETTE_DATA::ResetAllRecast clears it (the name is not the original's)
+    unsigned int pad_0_14 : 4;  // AddRecast tells tutorial condition 4 when it is 2 (meaning unknown)
+    unsigned int pad_0_18 : 3;
+    unsigned int m_level : 3;  // 1-6 picks m_recastTime[level - 1], else the first (the name is not the original's)
+    unsigned int m_charaIndex : 7;  // CharacterManager's index of the owner (AddRecast; the name is not the original's)
+    // BattleCharacter::IsEnableRecastSpAttack and AddRecast: no recast while it is set (meaning unknown)
+    unsigned int pad_0_31 : 1;
+    // ARTS_PALETTE_DATA::ResetAllRecast clears it; 0-1, 1 when full (the name is not the original's)
+    float m_recast;
     float pad_8;  // 1 after construction; meaning unknown
-    unsigned char pad_c[0xC];
+    // the recast time by level (AddRecast; the name is not the original's)
+    unsigned short m_recastTime[6];
 };
 // what CharacterParameter's slot 16 (1.0.0's GetArtsPaletteDataConst) returns (EnemyParameter holds one at 0x628,
 // up to its hate data). GetSlotDataConst answers m_slots[slot] (slot + 16 for its bool), m_slots[19] for slot 15;
 // ResetAllRecast walks all 23
 struct ARTS_PALETTE_DATA {
-    ARTS_PALETTE_DATA() : pad_0(-1), pad_230(0) {}
+    ARTS_PALETTE_DATA() : pad_0(-1), pad_230(0), pad_230_19(0) {}
     // slot 15 is the talent slot; with the flag, slots 0-2 read entries 16-18 instead
     const ARTS_SLOT_DATA* GetSlotDataConst(int slot, bool) const;
     const ARTS_SLOT_DATA* GetSupportSlotDataConst(int slot) const;
     void ResetAllRecast();
+    // adds to the first 16 slots' recasts but the excepted one; whether one became full
+    bool AddArtsRecast(float add, bool scaled, int except);
+    // ResetRecast(true) on the 19 slots with the flag, else empties their recasts
+    void ResetArtsRecast(bool initial);
     long long pad_0;  // -1 after construction; meaning unknown
     // the field names are not the original's
     ARTS_SLOT_DATA m_slots[19];
     ARTS_SLOT_DATA m_talentSlot;  // GetSlotDataConst's slot 15
     ARTS_SLOT_DATA m_supportSlots[3];  // GetSupportSlotDataConst
-    unsigned int pad_230;  // 0 after construction; meaning unknown
+    // 0 after construction; AddArtsRecast adds to the slots in order, the first that takes it, while it is 1
+    // (meaning unknown)
+    unsigned int pad_230 : 19;
+    unsigned int pad_230_19 : 13;
     unsigned char pad_234[0x4];
 };
 // table 0x7100B3B2F0

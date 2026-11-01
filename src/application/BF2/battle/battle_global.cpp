@@ -31,12 +31,140 @@
 
 namespace btl {
 
+float ARTS_DATA::GetHitWeightRate(int hit) const {
+    float rate = 0.0f;
+    if (static_cast<unsigned int>(hit) < 16) {
+        unsigned int total = m_hitWeightTotal;
+        if (total != 0) {
+            unsigned int weight = m_hits[hit].weight;
+            if (weight != 0) {
+                if (weight < total) {
+                    rate = static_cast<float>(weight) / static_cast<float>(static_cast<int>(total));
+                } else {
+                    rate = 1.0f;
+                }
+                if (pad_8_28 >= 2) {
+                    rate /= static_cast<float>(pad_8_28);
+                }
+                if (pad_10_23 >= 2) {
+                    rate /= static_cast<float>(pad_10_23);
+                }
+                if (m_hitRow != 0) {
+                    unsigned char num = Bdat::getValCheckU8(gf::GfDataBdat::getFP(0x12), "AddAtkNum", m_hitRow);
+                    if (num != 0) {
+                        rate *= 1.0f / static_cast<float>(num + 1);
+                    }
+                }
+            }
+        }
+    }
+    return rate;
+}
+
+int ARTS_DATA::fn_7100003910(int index) const {
+    if (m_kind == 3) {
+        return 1;
+    }
+    if (index >= 1) {
+        unsigned short enhance = m_enhances[index - 1].id;
+        if (enhance != 0) {
+            ENHANCE_EFFECT_DATA data;
+            if (DataManager::GetEnhanceData(enhance, data, false) && data.m_effect == 0x182) {
+                return 2;
+            }
+        }
+    }
+    return 0;
+}
+
+float ARTS_SLOT_DATA::AddRecast(float add, bool scaled) {
+    float added = 0.0f;
+    if (pad_0_31 || m_artsID == 0) {
+        return added;
+    }
+    unsigned short time = m_recastTime[(m_level == 0 || m_level == 7) ? 0 : m_level - 1];
+    if (time == 0) {
+        m_recast = 1.0f;
+        added = 0.0f;
+    } else {
+        float full = static_cast<float>(time);
+        added = scaled ? full * add : add;
+        float current = full * m_recast;
+        float recast = added + current;
+        if (recast >= full) {
+            added = full - current;
+            m_recast = 1.0f;
+        } else if (recast <= 0.0f) {
+            m_recast = 0.0f;
+            return -current;
+        } else {
+            m_recast = recast / full;
+            return added;
+        }
+    }
+    switch (m_dataType) {
+    case 0:
+        if (pad_0_14 <= 2) {
+            BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(m_charaIndex);
+            if (chr != nullptr && chr->IsControlCharacter()) {
+                BattleGlobal::sys()->Tutorial(static_cast<BTL_TUTORIAL_COND>(2), 0, nullptr);
+            }
+        }
+        break;
+    case 1: {
+        BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(m_charaIndex);
+        if (chr != nullptr && chr->IsControlCharacterGroup()) {
+            BattleGlobal::sys()->Tutorial(static_cast<BTL_TUTORIAL_COND>(3), 0, nullptr);
+            if (pad_0_14 == 2) {
+                BattleGlobal::sys()->Tutorial(static_cast<BTL_TUTORIAL_COND>(4), 0, nullptr);
+            }
+        }
+        break;
+    }
+    }
+    return added;
+}
+
+void ARTS_SLOT_DATA::ResetRecast(bool initial, bool) {
+    if (m_artsID == 0) {
+        return;
+    }
+    m_recast = 0.0f;
+    if (pad_0_31 || !initial) {
+        return;
+    }
+    ARTS_DATA data;
+    GetArtsData(data);
+    unsigned int initialRecast = data.m_initialRecast;
+    if (initialRecast != 0) {
+        m_recast = static_cast<float>(initialRecast) * 0.01f;
+    }
+}
+
+void ARTS_PALETTE_DATA::ResetArtsRecast(bool initial) {
+    if (initial) {
+        for (int i = 0; i < 19; i++) {
+            m_slots[i].ResetRecast(true, false);
+        }
+    } else {
+        for (int i = 0; i < 19; i++) {
+            if (m_slots[i].m_artsID != 0) {
+                m_slots[i].m_recast = 0.0f;
+            }
+        }
+    }
+}
+
 void BattleGlobal::PreUpdate(const fw::UpdateInfo& info) {
     sys()->PreUpdateProc(info);
 }
 
 bool BattleGlobal::IsEnableBattle() const {
     return !gf::GfGameManager::isBattleStop();
+}
+
+void BattleGlobal::SetPause(int kind, bool pause) {
+    m_pause[kind >> 3] = pause ? m_pause[kind >> 3] | (1 << (kind & 7)) : m_pause[kind >> 3] & ~(1 << (kind & 7));
 }
 
 bool BattleGlobal::fn_71000068F8() {
@@ -871,4 +999,22 @@ void BattleGlobal::DeleteElementalComboSlow() {
         }
     }
 }
+
+void BattleGlobal::RegisterElementalComboSlow() {
+    DeleteElementalComboSlow();
+    unsigned int id = RegisterSlow(0.01f, 10.0f, 0.0f);
+    if (id != 0) {
+        m_elementalComboSlowId = id;
+        for (int i = 0; i < 2; i++) {
+            if (m_elementalComboSlowEffect[i] != 0) {
+                if (m_elementalComboSlowCaster[i] != nullptr) {
+                    m_elementalComboSlowCaster[i]->setSpeed(m_elementalComboSlowEffect[i], 100.0f);
+                } else if (fw::EffectManager::sys() != nullptr) {
+                    fw::EffectManager::sys()->setSpeed(m_elementalComboSlowEffect[i], 100.0f);
+                }
+            }
+        }
+    }
+}
+
 }  // namespace btl

@@ -13,6 +13,18 @@ namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfMenuCallContext; }
 
 namespace btl {
+// one enhance's effect as DataManager::GetEnhanceData fills it from BDAT table 0x2C (the type name is the symbol's;
+// the field names are not the original's)
+struct ENHANCE_EFFECT_DATA {
+    unsigned short m_effect;  // the row's "EnhanceEffect"
+    unsigned short pad_2;
+    unsigned char pad_4;
+    unsigned char pad_5;
+    unsigned char pad_6;
+    unsigned char pad_7;
+    unsigned int pad_8;
+};
+
 // an art's data as DataManager::GetArtsData fills it (layout not recovered yet)
 // DataManager::GetArtsData fills it; only what BattleCharacter reads is recovered (two runs of unsigned int
 // bitfields at 0x8 and 0x18: clang reads each as one 64-bit unit)
@@ -23,25 +35,58 @@ struct alignas(16) ARTS_DATA {
     enum DATA_TYPE : int;
     // clears the bit fields (the first 0x20 bytes) only
     ARTS_DATA()
-        : pad_0(), pad_8_0(0), m_category(0), pad_8_11(0), m_fightCombo(0), pad_C_3(0), pad_10(), pad_18(0),
-          m_distance(0), pad_1C_12(0) {}
-    unsigned char pad_0[0x8];
+        : pad_0_0(0), m_kind(0), pad_0_29(0), m_hitWeightTotal(0), m_initialRecast(0), pad_8_0(0), m_category(0),
+          pad_8_11(0), pad_8_28(0), m_fightCombo(0), pad_C_3(0), m_hitRow(0), pad_10_12(0), pad_10_23(0),
+          pad_10_28(0), pad_14(0), pad_18(0), m_distance(0), pad_1C_12(0) {}
+    // the share of the hits' damage that hit takes (the hits' weights, divided by the two counts and the BDAT
+    // table 0x12 row's "AddAtkNum" + 1)
+    float GetHitWeightRate(int hit) const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among ARTS_DATA's
+    // and ARTS_SLOT_DATA's members and reads this record only. What it does: 1 when m_kind is 3; else 2 when the
+    // enhance of m_enhance[index - 1] (DataManager::GetEnhanceData) is effect 0x182; else 0 (BattleCharacter::ActionArts).
+    int fn_7100003910(int index) const;
+    unsigned long long pad_0_0 : 24;
+    unsigned long long m_kind : 5;  // fn_7100003910 answers 1 for 3 (the name is not the original's)
+    unsigned long long pad_0_29 : 16;
+    unsigned long long m_hitWeightTotal : 12;  // the hits' weights' total (GetHitWeightRate; the name is not the original's)
+    unsigned long long m_initialRecast : 7;  // percent (ARTS_SLOT_DATA::ResetRecast; the name is not the original's)
     unsigned int pad_8_0 : 5;
     // unknown: GetArtsAttackDistance adds enhance 195's value for 12 (the name is not the original's)
     unsigned int m_category : 6;
-    unsigned int pad_8_11 : 21;
+    unsigned int pad_8_11 : 17;
+    unsigned int pad_8_28 : 4;  // GetHitWeightRate divides by it from 2 on (meaning unknown)
     // the fight combo it starts, 0 for none (GfMenuBattleAdapter::update_ArtsFightComboIcon shows it less 1; the
     // name is not the original's)
     unsigned int m_fightCombo : 3;
     unsigned int pad_C_3 : 29;
-    unsigned char pad_10[0x8];
+    unsigned int m_hitRow : 12;  // the BDAT table 0x12 row GetHitWeightRate reads (the name is not the original's)
+    unsigned int pad_10_12 : 11;
+    unsigned int pad_10_23 : 5;  // GetHitWeightRate divides by it from 2 on (meaning unknown)
+    unsigned int pad_10_28 : 4;
+    unsigned int pad_14 : 32;
     unsigned int pad_18 : 32;
     // the distance GetArtsAttackDistance starts from (the name is not the original's)
     unsigned int m_distance : 12;
     unsigned int pad_1C_12 : 20;
     // GfMenuBattleAdapter::update_ArtsFightComboIcon and GfMenuObjUtil::getArtsIconInfo construct one, clearing only
     // the first 0x20 bytes
-    unsigned char pad_20[0xC8];
+    unsigned char pad_20[0x10];
+    // one hit's share (GetHitWeightRate; the names are not the original's)
+    struct HIT {
+        unsigned char pad_0[0x2];
+        unsigned char weight;
+        unsigned char pad_3[0x3];
+    };
+    HIT m_hits[16];
+    unsigned char pad_90[0x4];
+    // an enhance of the arts (fn_7100003910 reads entry index - 1; the count is not recovered, the names are not the
+    // original's)
+    struct ENHANCE {
+        unsigned short id;
+        unsigned char pad_2[0x4];
+    };
+    ENHANCE m_enhances[3];
+    unsigned char pad_a6[0x42];
 };
 
 // an enemy group: RegisterEnemyGroup fills a free one with its two objects, ReleaseEnemyGroup marks each released
@@ -78,6 +123,8 @@ public:
     // ElementalComboManager::Update passes an entry of its element table and its character index
     void SetElementalEffect(int, int);
     static bool IsValidDeadEnhance(int enhance);
+    // the enhance's effect (BDAT table 0x2C); false when it has none
+    static bool GetEnhanceData(int enhance, ENHANCE_EFFECT_DATA& data, bool);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because Create calls it on the
     // new instance and fn_710009673C forwards to it. What it does: when m_criticalSection is enabled calls the
     // unnamed 0x71008B2B70 on it, empties the four arts caches (the counts at 0x73D8, 0xCEB0, 0xF7A0, 0x112F8, as the

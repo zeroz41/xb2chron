@@ -43,6 +43,13 @@ public:
     void DeleteSlow(unsigned int id);
     // deletes the elemental combo's slow-motion request and sets its slowed effects back to speed 1
     void DeleteElementalComboSlow();
+    // a slow-motion request; its id (0 when none was taken)
+    unsigned int RegisterSlow(float, float, float);
+    // replaces the elemental combo's slow-motion request and slows its registered effects to 100
+    void RegisterElementalComboSlow();
+    // the effect (with its caster; none: EffectManager's) of that side to slow with the elemental combo, slowed now
+    // when the request runs
+    void RegisterElementalComboInvalidSlowEffect(int side, unsigned int effect, gf::GfComEffectCaster* caster);
     // runs the character's dynamics (GfComDynamics, component 8) at speed percent while the slow-motion request lasts
     void SetSlowDynamicsSpeed(unsigned int id, int chara, unsigned int speed);
     bool IsGameOver() const;
