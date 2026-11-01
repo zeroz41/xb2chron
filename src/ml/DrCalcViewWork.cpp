@@ -53,6 +53,12 @@
 
 namespace ml {
 
+bool (DrCalcClipObj::*DrCalcClipObj::s_pColiCheck[5])(const unsigned char*, const mm::Vec3&) = {
+    &DrCalcClipObj::clipcoli_box,        &DrCalcClipObj::clipcoli_sphere,
+    &DrCalcClipObj::clipcoli_cylinder,   &DrCalcClipObj::clipcoli_notrot_box,
+    &DrCalcClipObj::clipcoli_notrot_cylinder,
+};
+
 void DrCalcClipWorkCone::debugDraw() {}
 
 int DrCalcViewWork::unistatic_view(float* pDst, bool) {
@@ -295,8 +301,146 @@ void DrCalcMan::begin() {
 
 void DrCalcMan::end() { m_pViewWork->end(); }
 
+void DrCalcClipMan::release() {
+    DrCalcClipObj* pObj = m_clipList.m_head;
+    while (pObj != nullptr) {
+        DrCalcClipObj* pNext = pObj->m_next;
+        delete pObj;
+        pObj = pNext;
+    }
+    m_clipList.m_head = nullptr;
+    m_clipList.m_tail = nullptr;
+    for (int i = 0; i < 2; i++) {
+        pObj = m_clipStockLists[i].m_head;
+        while (pObj != nullptr) {
+            DrCalcClipObj* pNext = pObj->m_next;
+            delete pObj;
+            pObj = pNext;
+        }
+        m_clipStockLists[i].m_head = nullptr;
+        m_clipStockLists[i].m_tail = nullptr;
+    }
+    DrCalcCpPlaneObj* pPlaneObj = m_cpPlaneList.m_head;
+    while (pPlaneObj != nullptr) {
+        DrCalcCpPlaneObj* pNext = pPlaneObj->m_next;
+        delete pPlaneObj;
+        pPlaneObj = pNext;
+    }
+    m_cpPlaneList.m_head = nullptr;
+    m_cpPlaneList.m_tail = nullptr;
+    for (int i = 0; i < 2; i++) {
+        pPlaneObj = m_cpPlaneStockLists[i].m_head;
+        while (pPlaneObj != nullptr) {
+            DrCalcCpPlaneObj* pNext = pPlaneObj->m_next;
+            delete pPlaneObj;
+            pPlaneObj = pNext;
+        }
+        m_cpPlaneStockLists[i].m_head = nullptr;
+        m_cpPlaneStockLists[i].m_tail = nullptr;
+    }
+    if (m_pBitTbl != nullptr) {
+        mtl::MemManager::deallocate(m_pBitTbl, 0, false);
+        m_pBitTbl = nullptr;
+    }
+}
+
+void DrCalcClipMan::update() {
+    int idx = DrMan::s_nDblIdx;
+    m_flags &= ~6;
+    DrResChankList<DrCalcClipObj>& stock = m_clipStockLists[idx];
+    DrCalcClipObj* pObj = stock.m_head;
+    while (pObj != nullptr) {
+        DrCalcClipObj* pNext = pObj->m_next;
+        m_clipList.pushBack(pObj);
+        m_flags |= 1;
+        pObj = pNext;
+    }
+    stock.m_head = nullptr;
+    stock.m_tail = nullptr;
+    if (m_flags & 1) {
+        calcBitTbl();
+    }
+    if (m_bitTblSize != 0) {
+        memset(m_pBitTbl, 0, m_bitTblSize);
+        pObj = m_clipList.m_head;
+        while (pObj != nullptr) {
+            DrCalcClipObj* pNext;
+            if (pObj->m_relFlag & (1 << idx)) {
+                pNext = pObj->m_next;
+                m_clipList.remove(pObj);
+                delete pObj;
+                m_flags |= 1;
+            } else {
+                const mm::Vec3& viewPos = m_pViewWork->m_viewPos;
+                pObj->m_pBitTbl = m_pBitTbl;
+                pObj->m_relFlag &= ~0xC;
+                pObj->seachTree(pObj->m_pTree, viewPos);
+                if (pObj->m_relFlag & 4) {
+                    m_flags |= 2;
+                }
+                if (pObj->m_relFlag & 8) {
+                    m_flags |= 4;
+                }
+                pNext = pObj->m_next;
+            }
+            pObj = pNext;
+        }
+    }
+    DrResChankList<DrCalcCpPlaneObj>& planeStock = m_cpPlaneStockLists[idx];
+    DrCalcCpPlaneObj* pPlaneObj = planeStock.m_head;
+    while (pPlaneObj != nullptr) {
+        DrCalcCpPlaneObj* pNext = pPlaneObj->m_next;
+        m_cpPlaneList.pushBack(pPlaneObj);
+        pPlaneObj = pNext;
+    }
+    planeStock.m_head = nullptr;
+    planeStock.m_tail = nullptr;
+    pPlaneObj = m_cpPlaneList.m_head;
+    while (pPlaneObj != nullptr) {
+        DrCalcCpPlaneObj* pNext;
+        if (!(pPlaneObj->m_relFlag & (1 << idx))) {
+            pPlaneObj->update(m_pViewWork);
+            pNext = pPlaneObj->m_next;
+        } else {
+            pNext = pPlaneObj->m_next;
+            m_cpPlaneList.remove(pPlaneObj);
+            delete pPlaneObj;
+        }
+        pPlaneObj = pNext;
+    }
+}
+
+void DrCalcClipMan::calcBitTbl() {
+    m_flags &= ~1;
+    int bitNum = 0;
+    for (DrCalcClipObj* pObj = m_clipList.m_head; pObj != nullptr; pObj = pObj->m_next) {
+        if (bitNum < pObj->m_bitNum) {
+            bitNum = pObj->m_bitNum;
+        }
+    }
+    if (bitNum != 0) {
+        int size = bitNum / 32 * 4 + 4;
+        size += (32 - size % 32) % 32;
+        if (m_bitTblSize != size) {
+            if (m_pBitTbl != nullptr) {
+                mtl::MemManager::deallocate(m_pBitTbl, 0, false);
+                m_pBitTbl = nullptr;
+            }
+            m_bitTblSize = size;
+            m_pBitTbl = static_cast<unsigned int*>(
+                mtl::MemManager::allocate(m_pDrMan->m_allocHandle, size, 0x20, false, "no name", 0));
+        }
+    } else {
+        if (m_pBitTbl != nullptr) {
+            mtl::MemManager::deallocate(m_pBitTbl, 0, false);
+            m_pBitTbl = nullptr;
+        }
+        m_bitTblSize = 0;
+    }
+}
+
 bool DrCalcClipMan::testObjectClip(const mm::Vec3& pos, float radius) {
-    for (DrCalcClipObj* pObj = m_pClipObj; pObj != nullptr; pObj = pObj->m_pNext) {
+    for (DrCalcClipObj* pObj = m_clipList.m_head; pObj != nullptr; pObj = pObj->m_next) {
         if (pObj->testObjectClip(pos, radius, m_pBitTbl)) {
             return true;
         }
@@ -305,12 +449,71 @@ bool DrCalcClipMan::testObjectClip(const mm::Vec3& pos, float radius) {
 }
 
 bool DrCalcClipMan::testPlaneClip(const mm::Vec3& pos, float radius) {
-    for (DrCalcCpPlaneObj* pObj = m_pCpPlaneObj; pObj != nullptr; pObj = pObj->m_pNext) {
+    for (DrCalcCpPlaneObj* pObj = m_cpPlaneList.m_head; pObj != nullptr; pObj = pObj->m_next) {
         if (!pObj->testClip(pos, radius)) {
             return false;
         }
     }
     return true;
+}
+
+DrCalcClipObj* DrCalcClipMan::createClipObj(const void* resource) {
+    CS lock(*DrMan::getCriticalSection());
+    DrCalcClipObj* pObj = new (m_pDrMan->m_workHandle, nullptr, 0, 4, false)
+        DrCalcClipObj(static_cast<const unsigned char*>(resource), m_pDrMan);
+    m_clipStockLists[DrMan::s_nDblStockIdx].pushBack(pObj);
+    return pObj;
+}
+
+DrCalcCpPlaneObj* DrCalcClipMan::createCpPlaneObj(const void* resource) {
+    CS lock(*DrMan::getCriticalSection());
+    DrCalcCpPlaneObj* pObj = new (m_pDrMan->m_workHandle, nullptr, 0, 4, false) DrCalcCpPlaneObj(resource);
+    m_cpPlaneStockLists[DrMan::s_nDblStockIdx].pushBack(pObj);
+    return pObj;
+}
+
+bool DrCalcClipObj::testObjectClip(const mm::Vec3& pos, float radius, unsigned int* pBitTbl) {
+    if (m_pBitData == nullptr) {
+        return false;
+    }
+    m_pBitTbl = pBitTbl;
+    memset(m_pBitWork, 0, m_bitWorkSize);
+    m_hitPriority = -1;
+    m_hitNum = 0;
+    const ResHeader* pRes = m_pRes;
+    seachCheckTree(getTree(pRes->checkTreeOfs), pos, radius);
+    seachOffTree(getTree(pRes->offTreeOfs), pos, radius);
+    bool clip = false;
+    for (int i = 0; i < m_hitNum; i++) {
+        unsigned short bit = m_hits[i];
+        if (m_pBitWork[bit >> 5] & (1 << (bit & 31))) {
+            clip = !(m_pBitData[bit].flags & 1);
+        }
+    }
+    return clip;
+}
+
+void DrCalcClipObj::setupClip(const unsigned char* pRes, DrMan* drMan) {
+    const ResHeader* pHeader = reinterpret_cast<const ResHeader*>(pRes);
+    m_pRes = pHeader;
+    m_pShapeData = reinterpret_cast<const ShapeEntry*>(getResData(pHeader->shapeOfs));
+    m_pTree = getTree(pHeader->treeOfs);
+    m_bitNum = pHeader->bitNum;
+    m_pCheckData = reinterpret_cast<const CheckEntry*>(getResData(pHeader->checkDataOfs));
+    if (m_pBitWork != nullptr) {
+        mtl::MemManager::deallocate(m_pBitWork, 0, false);
+        m_pBitWork = nullptr;
+    }
+    if (pHeader->bitDataNum != 0) {
+        m_pBitData = reinterpret_cast<const BitInfo*>(getResData(pHeader->bitDataOfs));
+        short size = pHeader->bitDataNum / 32 * 4 + 4;
+        size += (32 - size % 32) % 32;
+        m_bitWorkSize = size;
+        m_pBitWork = static_cast<unsigned int*>(
+            mtl::MemManager::allocate(drMan->m_allocHandle, m_bitWorkSize, 0x20, false, "no name", 0));
+    } else {
+        m_pBitData = nullptr;
+    }
 }
 
 void DrCalcClipObj::release() { m_relFlag |= 1 << DrMan::s_nDblStockIdx; }
@@ -321,6 +524,85 @@ bool DrCalcClipObj::clipcoli_sphere(const unsigned char* pData, const mm::Vec3& 
     float dy = pos.y - pShape->pos[1];
     float dz = pos.z - pShape->pos[2];
     return dx * dx + dy * dy + dz * dz <= pShape->radiusSq;
+}
+
+void DrCalcClipObj::seachTree(const MdsClipListTreeData* pTree, const mm::Vec3& pos) {
+    if (pTree->max[0] < pos.x || pTree->min[0] > pos.x || pTree->max[2] < pos.z || pTree->min[2] > pos.z ||
+        pTree->max[1] < pos.y || pTree->min[1] > pos.y) {
+        return;
+    }
+    int childNum = pTree->childNum;
+    if (childNum != 0) {
+        const unsigned short* pChildren = reinterpret_cast<const unsigned short*>(getResData(pTree->childOfs));
+        for (int i = 0; i < childNum; i++) {
+            seachTree(m_pTree + pChildren[i], pos);
+        }
+    }
+    int leafNum = pTree->leafNum;
+    if (leafNum != 0) {
+        const unsigned short* pLeaves = reinterpret_cast<const unsigned short*>(getResData(pTree->leafOfs));
+        for (int i = 0; i < leafNum; i++) {
+            const ShapeEntry* pShape = m_pShapeData + pLeaves[i];
+            if (!(m_pBitTbl[pShape->bit >> 5] & (1 << (pShape->bit & 31)))) {
+                const CheckEntry* pCheck = m_pCheckData + pLeaves[i];
+                if (pCheck->dispBit == 0 ||
+                    !(DrMan::getIns()->m_dispOffBits[pCheck->dispBit >> 5] & (1 << (pCheck->dispBit & 31)))) {
+                    if ((this->*s_pColiCheck[pShape->type])(reinterpret_cast<const unsigned char*>(m_pRes) + pShape->dataOfs, pos)) {
+                        m_pBitTbl[pShape->bit >> 5] |= 1 << (pShape->bit & 31);
+                        if (m_pBitData != nullptr) {
+                            const BitInfo* pBit = m_pBitData + pShape->bit;
+                            if (pBit->flags & 8) {
+                                m_relFlag |= 4;
+                            }
+                            if (pBit->flags & 4) {
+                                m_relFlag |= 8;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void DrCalcClipObj::seachCheckTree(const MdsClipListTreeData* pTree, const mm::Vec3& pos, float radius) {
+    if (pTree->max[0] < pos.x || pTree->min[0] > pos.x || pTree->max[2] < pos.z || pTree->min[2] > pos.z ||
+        pTree->max[1] < pos.y || pTree->min[1] > pos.y) {
+        return;
+    }
+    int childNum = pTree->childNum;
+    if (childNum != 0) {
+        const unsigned short* pChildren = reinterpret_cast<const unsigned short*>(getResData(pTree->childOfs));
+        for (int i = 0; i < childNum; i++) {
+            seachCheckTree(m_pTree + pChildren[i], pos, radius);
+        }
+    }
+    int leafNum = pTree->leafNum;
+    if (leafNum != 0) {
+        const unsigned short* pLeaves = reinterpret_cast<const unsigned short*>(getResData(pTree->leafOfs));
+        for (int i = 0; i < leafNum; i++) {
+            const ShapeEntry* pShape = m_pShapeData + pLeaves[i];
+            const BitInfo* pBit = m_pBitData + pShape->bit;
+            if (!(pBit->flags & 2) && (m_pBitTbl[pShape->bit >> 5] & (1 << (pShape->bit & 31)))) {
+                const CheckEntry* pCheck = m_pCheckData + pLeaves[i];
+                if ((pCheck->dispBit == 0 ||
+                     !(DrMan::getIns()->m_dispOffBits[pCheck->dispBit >> 5] & (1 << (pCheck->dispBit & 31)))) &&
+                    !(pBit->range < radius) && pBit->priority >= m_hitPriority &&
+                    !(m_pBitWork[pShape->bit >> 5] & (1 << (pShape->bit & 31)))) {
+                    if ((this->*s_pColiCheck[pShape->type])(reinterpret_cast<const unsigned char*>(m_pRes) + pShape->dataOfs,
+                                                            pos) &&
+                        m_hitNum < 8) {
+                        if (pBit->priority > m_hitPriority) {
+                            m_hitNum = 0;
+                            m_hitPriority = pBit->priority;
+                        }
+                        m_hits[m_hitNum++] = pShape->bit;
+                        m_pBitWork[pShape->bit >> 5] |= 1 << (pShape->bit & 31);
+                    }
+                }
+            }
+        }
+    }
 }
 
 bool DrCalcClipObj::clipcoli_cylinder(const unsigned char* pData, const mm::Vec3& pos) {
