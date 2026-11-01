@@ -59,6 +59,19 @@ void SoundParam::Init() {
     value90_ = 1.0f;
 }
 
+SoundParam::Name& SoundParam::Name::operator=(const TextRef& text) {
+    if (text.type_ == TextEncodeType_Utf8) {
+        Utf8ToUTF16(text.utf8_, text_, 0x20);
+        hash_.Clear();
+        hash_.CalcTextHash(text_);
+    } else {
+        CopyText(text_, text.tchar_, 0x20);
+        hash_.Clear();
+        hash_ = text.hash_;
+    }
+    return *this;
+}
+
 SystemCore::SystemCore() : pad_2e8(), pad_4a0(nullptr) {}
 
 SystemCore::~SystemCore() {}
@@ -123,6 +136,37 @@ const SoundCore::DebugInfo* SystemCore::GetDebugInfo() const {
     return &debugInfo_;
 }
 
+Result SystemCore::SetCategory(const SoundCategory& category) {
+    if (category.id_ == 0) {
+        return Result(-1);
+    }
+    for (int i = 1; i < categories_.size_; i++) {
+        if (categories_.data_[i].id_ == category.id_) {
+            categories_.data_[i] = category;
+            {
+                ScopedLock lock(audioLock_);
+                for (VoiceHandle* voice = static_cast<VoiceHandle*>(playVoices_.head_.next);
+                     voice != static_cast<VoiceHandle*>(&playVoices_.head_);
+                     voice = static_cast<VoiceHandle*>(voice->next)) {
+                    SoundHandle* handle = voice->handle_;
+                    if (handle != nullptr && handle->category_.id_ == category.id_) {
+                        handle->category_ = category;
+                    }
+                }
+            }
+            return set_result(Result(0));
+        }
+    }
+    ScopedLock lock(audioLock_);
+    int size = categories_.size_;
+    if (categories_.capacity_ <= size) {
+        categories_.SetSize(categories_.capacity_ + 16);
+    }
+    categories_.data_[categories_.size_] = category;
+    categories_.size_++;
+    return set_result(Result(0));
+}
+
 SoundCategory* SystemCore::GetCategory(int id) const {
     SoundCategory* category = categories_.data_;
     if (id != 0) {
@@ -135,6 +179,34 @@ SoundCategory* SystemCore::GetCategory(int id) const {
     return category;
 }
 
+Result SystemCore::GetCategory(int id, SoundCategory* category) const {
+    for (SoundCategory* it = categories_.data_; it != categories_.data_ + categories_.size_; ++it) {
+        if (it->id_ == id) {
+            *category = *it;
+            return set_result(Result(0));
+        }
+    }
+    return set_result(Result(-42));
+}
+
+Result SystemCore::AllocVoiceHandle(int kind, VoiceHandle** voice) {
+    VoiceHandle* handle = static_cast<VoiceHandle*>(freeVoices_.head_.next);
+    if (static_cast<VoiceHandle*>(&freeVoices_.head_) == handle) {
+        handle = nullptr;
+    } else {
+        freeVoices_.Remove(handle);
+        playVoices_.PushBack(handle);
+        int serial = voiceSerial_;
+        handle->state_ = 5;
+        handle->allocated_ = 1;
+        handle->id_ = handle->index_ + (serial << 8);
+        voiceSerial_ = voiceSerial_ > 0xFFFFE ? 1 : voiceSerial_ + 1;
+        handle->source_ = nullptr;
+    }
+    *voice = handle;
+    return set_result(Result(0));
+}
+
 void SystemCore::FreeVoiceHandle(VoiceHandle* voice) {
     playVoices_.Remove(voice);
     freeVoices_.PushBack(voice);
@@ -144,10 +216,132 @@ void SystemCore::FreeVoiceHandle(VoiceHandle* voice) {
     set_result(Result(0));
 }
 
+VoiceHandle* SystemCore::GetVoiceHandle(unsigned int id) const {
+    set_result(Result(0));
+    if (id == 0) {
+        return nullptr;
+    }
+    unsigned int index = id & 0xFF;
+    VoiceHandle* voice = &voices_[index];
+    return voice->id_ == id ? voice : nullptr;
+}
+
+void SystemCore::StopActor(SoundActor* actor, float fadeTime) {
+    set_result(Result(0));
+    ScopedLock lock(audioLock_);
+    for (VoiceHandle* voice = static_cast<VoiceHandle*>(playVoices_.head_.next);
+         voice != static_cast<VoiceHandle*>(&playVoices_.head_); voice = static_cast<VoiceHandle*>(voice->next)) {
+        SoundHandle* handle = voice->handle_;
+        if (handle != nullptr && handle->actor_ == actor) {
+            handle->Stop(fadeTime);
+        }
+    }
+}
+
+void SystemCore::PauseActor(SoundActor* actor, bool pause, float fadeTime) {
+    set_result(Result(0));
+    ScopedLock lock(audioLock_);
+    for (VoiceHandle* voice = static_cast<VoiceHandle*>(playVoices_.head_.next);
+         voice != static_cast<VoiceHandle*>(&playVoices_.head_); voice = static_cast<VoiceHandle*>(voice->next)) {
+        SoundHandle* handle = voice->handle_;
+        if (handle != nullptr && handle->actor_ == actor) {
+            handle->Pause(pause, fadeTime);
+        }
+    }
+}
+
+int SystemCore::GetPlaySoundHandleFromActor(const SoundActor* actor, Array<SoundHandle*>* handles) const {
+    set_result(Result(0));
+    ScopedLock lock(audioLock_);
+    for (const VoiceHandle* voice = static_cast<const VoiceHandle*>(playVoices_.head_.next);
+         voice != static_cast<const VoiceHandle*>(&playVoices_.head_); voice = static_cast<const VoiceHandle*>(voice->next)) {
+        SoundHandle* handle = voice->handle_;
+        if (handle != nullptr && handle->actor_ == actor) {
+            int size = handles->size_;
+            if (handles->capacity_ <= size) {
+                handles->SetArraySize(handles->capacity_ + 16);
+            }
+            handles->data_[handles->size_] = handle;
+            handles->size_++;
+        }
+    }
+    return handles->size_;
+}
+
+void SystemCore::ConnectActor(SoundActor* actor) {
+    ScopedLock lock(audioLock_);
+    actors_.PushBack(actor);
+    actor->linked_ = true;
+}
+
+void SystemCore::DisconnectActor(SoundActor* actor) {
+    ScopedLock lock(audioLock_);
+    for (VoiceHandle* voice = static_cast<VoiceHandle*>(playVoices_.head_.next);
+         voice != static_cast<VoiceHandle*>(&playVoices_.head_); voice = static_cast<VoiceHandle*>(voice->next)) {
+        SoundHandle* handle = voice->handle_;
+        if (handle != nullptr && handle->actor_ == actor) {
+            handle->actor_ = nullptr;
+        }
+    }
+    if (actor->linked_) {
+        actor->linked_ = false;
+        actors_.Remove(actor);
+    }
+}
+
+void SystemCore::StopSound(float fadeTime) {
+    set_result(Result(0));
+    ScopedLock lock(audioLock_);
+    for (VoiceHandle* voice = static_cast<VoiceHandle*>(playVoices_.head_.next);
+         voice != static_cast<VoiceHandle*>(&playVoices_.head_); voice = static_cast<VoiceHandle*>(voice->next)) {
+        if (voice->handle_ != nullptr) {
+            voice->handle_->Stop(fadeTime);
+        }
+    }
+}
+
 void SystemCore::RemoveBank(SoundBank* bank) {
     ScopedLock lock(audioLock_);
     banks_.Remove(bank);
     set_result(Result(0));
+}
+
+void SystemCore::AddBank(SoundBank* bank) {
+    ScopedLock lock(audioLock_);
+    banks_.PushBack(bank);
+    set_result(Result(0));
+}
+
+void SystemCore::StopBank(SoundBank* bank, float fadeTime) {
+    ScopedLock lock(audioLock_);
+    for (VoiceHandle* voice = static_cast<VoiceHandle*>(playVoices_.head_.next);
+         voice != static_cast<VoiceHandle*>(&playVoices_.head_); voice = static_cast<VoiceHandle*>(voice->next)) {
+        if (voice->entry_->bank_ == bank) {
+            voice->handle_->Stop(fadeTime);
+        }
+    }
+    set_result(Result(0));
+}
+
+void SystemCore::AddSoundListener(SoundListener* listener) {
+    ScopedLock lock(audioLock_);
+    int index = -1;
+    for (int i = 0; i < listeners_.size_; i++) {
+        if (listeners_.data_[i] == listener) {
+            index = i;
+            break;
+        }
+    }
+    if (index < 0) {
+        int size = listeners_.size_;
+        if (listeners_.capacity_ <= size) {
+            listeners_.SetArraySize(listeners_.capacity_ + 16);
+        }
+        listeners_.data_[listeners_.size_] = listener;
+        listeners_.size_++;
+    }
+    // a listener added again rebuilds its matrix
+    listener->dirty_.changed = true;
 }
 
 void SystemCore::StreamThreadEntry(SystemCore* core, void* userData) {
