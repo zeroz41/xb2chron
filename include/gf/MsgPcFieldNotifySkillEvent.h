@@ -9,6 +9,9 @@ namespace gf {
 // for an object (GfComBehaviorGmk: 0 hides a jump or warp gimmick's effects, else recreates its icon)
 class MsgPcFieldNotifySkillEvent : public ::fw::Message {
 public:
+    // StateUtilField::notifySkillAct sends it with category 0x40
+    explicit MsgPcFieldNotifySkillEvent(int event) : fw::Message(0x100001E, 0x40), m_event(event) {}
+
     int m_event;  // (the name is not the original's)
 };
 

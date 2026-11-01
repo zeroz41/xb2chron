@@ -139,6 +139,17 @@ public:
     static bool isWallIdleMotion(gf::GfComAsm& comAsm);  // (by its symbol)
     // no climbable wall (StateUtil::getClimbWallInfo) or the fall action asked for (m_actions bit 3; by its symbol)
     static bool isWallFall(gf::GfComPropertyPc& property);
+    // on ground (sensor flag 0, ground attribute bit 4 clear) more than m_downLanding1Height below the PC: the PC
+    // lets go of the wall (by its symbol)
+    static bool isWallDetach(gf::GfComPropertyPc& property);
+    // modes 0, 1 and 7 climb up (by its symbol)
+    static bool isWallUpMove(gf::pc::GfPropertyField::WALL_MOVE_MODE mode);
+    // whether the PC can climb on in a wall move mode (0-7; none upwards while status bit 7 is set): with a wall
+    // object and sensor flag 8, upwards only while the second ground lies more than m_climbUpTime + 1.3 above
+    // (by its symbol)
+    static bool isMovableWall(gf::GfComPropertyPc& property, gf::pc::GfPropertyField::WALL_MOVE_MODE mode);
+    // whether the PC falls fast enough for the big splash (GravityParam m_bigSplashFallSpeed; by its symbol)
+    static bool isBigSplashFallSpeed(gf::GfComBehaviorPc& behavior);
     // off the ground, or slide parameter m_fallHeight above it (by its symbol)
     static bool isFallFromSlideState(gf::GfComPropertyPc& property);
 };

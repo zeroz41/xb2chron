@@ -44,7 +44,11 @@ public:
         unsigned char pad_0[0x4];
         // StateUtilField::isStop: the PC stops once the stick has given nothing for this many frames
         unsigned int m_stopFrames;
-        unsigned char pad_8[0xC];
+        unsigned char pad_8[0x4];
+        // StateUtilField::isTurnEndRangeCacheInput: a turn ends once the PC's direction is within this angle of the
+        // input's (the name is not the original's)
+        float m_turnEndRange;
+        unsigned char pad_10[0x4];
         // StateUtilField::isBackRangeAir: the stick turned at least this far from the PC's direction counts as back
         // (the name is not the original's)
         float m_backRangeAir;
@@ -67,7 +71,9 @@ public:
     struct WaterParam {
         float m_sinkTime;      // StateFieldWaterSink::update: how long the PC sinks before it rises
         float m_sinkDepth;     // and how deep (the child frame's height below the surface) it sinks at most
-        unsigned char pad_8[0x4];
+        // StateUtilField::isSwimMoveFromAir: falling in at least this fast with the stick held swims on (the name is
+        // not the original's)
+        float m_swimMoveFromAirSpeed;
         float m_swimSinkTime;  // StateFieldWaterSwimSink::update: how long the PC sinks swimming
         unsigned char pad_10[0x8];
         float m_warpDiveTime;  // StateFieldWaterWarpDive: how long the dive into a warp lasts

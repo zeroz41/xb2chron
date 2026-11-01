@@ -61,6 +61,9 @@ public:
     const T* getParam(unsigned int index) const {
         return static_cast<const T*>(m_paramList->m_entries[index].m_data);
     }
+    // m_paramList's entry index, none past its end (inline: the name is not the original's; StateUtilField's
+    // isBigSplashFallSpeed keeps its component's null check only behind a member call)
+    fw::ParamAdapter getParamAdapter(unsigned int index) const { return m_paramList->getAdapter(index); }
     // m_paramList's entry 1 (the names are not the original's)
     struct GravityParam {
         float m_gravity;  // getGravity: the PC falls with minus it
@@ -69,6 +72,10 @@ public:
         float m_adsorption;
         float m_slopeAdsorption;
         float m_slopeAngle;
+        unsigned char pad_10[0xC];
+        // StateUtilField::isBigSplashFallSpeed: a fall at least this fast makes the big splash (the name is not the
+        // original's)
+        float m_bigSplashFallSpeed;
     };
     // m_paramList's entry 4 (the names are not the original's)
     struct SlideParam {
@@ -123,7 +130,10 @@ public:
     mm::Vec2 m_moveVec2;
     Locomotion m_locomotion;  // setLocomotion's translation and rotation
     float m_moveSpeed;
-    unsigned char pad_c4[0x3C];
+    unsigned char pad_c4[0x10];
+    // StateUtilField::isBigSplashFallSpeed adds m_moveSpeed times it to the fall speed (meaning not known)
+    float pad_d4;
+    unsigned char pad_d8[0x28];
     mm::Vec3 m_colVel;          // ColVelCalculatorPlugin::update's: the ground's movement it carries the PC with
     // bit 4: ColVelCalculatorPlugin::update takes the ground's movement; bit 10: DeadColCheckPlugin::testDead asks
     // the first collision object instead of the dead plane

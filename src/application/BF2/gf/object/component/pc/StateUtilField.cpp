@@ -20,8 +20,26 @@
 #include "gf/pc/AgentUtilField.h"
 #include "classes/gf/GfObjProperty.h"
 #include "gf/GfTargetProperty.h"
+#include "gf/MsgPcFieldNotifySkillEvent.h"
+#include "classes/gf/pc/FadePlugin.h"
+#include "classes/gf/GfGamePlayerCamera.h"
 
 namespace gf { namespace pc {
+
+void StateUtilField::notifySkillAct(gf::GfComBehaviorPc& behavior, bool act) {
+    GfComPropertyPc* property = behavior.m_owner->getComponent<GfComPropertyPc>(5);
+    if (property == nullptr) {
+        return;
+    }
+    if (GfObj* obj = GfObjUtil::getObj(property->m_field.m_noticeSender)) {
+        MsgPcFieldNotifySkillEvent msg(!act);
+        fw::MessageObject* sender = &static_cast<fw::MessageObject&>(*static_cast<GfObj*>(behavior.m_owner));
+        static_cast<fw::MessageObject*>(obj)->recieveMessage(sender, msg);
+        if (!act) {
+            property->m_field.m_noticeSender = reinterpret_cast<GF_OBJ_HANDLE*>(-1);
+        }
+    }
+}
 
 bool StateUtilField::execAsmCmd(gf::GfComAsm& comAsm, ASM_CMD_ID_FIELD id) {
     return comAsm.execCmd(getASMCmdNameField(id), gf::AnimLayer(0));
@@ -110,6 +128,11 @@ bool StateUtilField::isInputInverseDir(gf::GfComPropertyPc& property) {
     return dir.dot(property.m_moveDir) < 0.0f;
 }
 
+bool StateUtilField::isTurnEndRangeCacheInput(gf::GfComPropertyPc& property, const mm::Vec3& dir) {
+    float angle = mm::acos(mm::clamp(dir.dot(property.m_moveDir), -1.0f, 1.0f));
+    return property.m_field.getParam<GfPropertyField::MoveParam>(0)->m_turnEndRange >= angle;
+}
+
 bool StateUtilField::isBackRangeAir(gf::GfComPropertyPc& property) {
     float angle = calcInputDiffAngleVel(property);
     return angle >= property.m_field.getParam<GfPropertyField::MoveParam>(0)->m_backRangeAir;
@@ -166,6 +189,30 @@ void StateUtilField::setEnableWaterIn(gf::GfComBehaviorPc& behavior, bool enable
     }
 }
 
+bool StateUtilField::isBigSplashFallSpeed(gf::GfComBehaviorPc& behavior) {
+    GfComPropertyPc* property = behavior.m_owner->getComponent<GfComPropertyPc>(5);
+    const GfComPropertyPc::GravityParam* param =
+        property->getParamAdapter(1).get<GfComPropertyPc::GravityParam>();
+    float speed = property->getLocomotion()->m_translation.y + property->m_moveSpeed * property->pad_d4;
+    speed = property->m_colVel.y + speed;
+    speed = property->m_moveVec2.x + speed;
+    return speed <= -param->m_bigSplashFallSpeed;
+}
+
+bool StateUtilField::isSwimMoveFromAir(gf::GfComPropertyPc& property) {
+    const GfPropertyField::WaterParam* param =
+        property.m_field.m_paramList->getAdapter(9).get<GfPropertyField::WaterParam>();
+    float speed = property.m_velocity.length();
+    if (!property.existInputXY()) {
+        return false;
+    }
+    return speed >= param->m_swimMoveFromAirSpeed;
+}
+
+void StateUtilField::startWaterWarpFade(gf::GfComBehaviorPc& behavior) {
+    behavior.getPlugin<FadePlugin>(11)->setActivate(true);
+}
+
 bool StateUtilField::isInterruptionWater(gf::GfComPropertyPc& property) {
     float surface = property.pad_118 - property.m_chestHeight;
     return property.m_pos.y - surface >= 0.2f;
@@ -202,6 +249,10 @@ const GfPropertyField::WallInfo* StateUtilField::getWallInfoBase(gf::GfComProper
         }
     }
     return info;
+}
+
+bool StateUtilField::isWallUpMove(GfPropertyField::WALL_MOVE_MODE mode) {
+    return (mode == 0 || mode == 1) | (mode == 7);
 }
 
 ASM_CMD_ID_FIELD StateUtilField::getAsmID(GfPropertyField::WALL_MOVE_MODE mode) {
@@ -253,6 +304,49 @@ bool StateUtilField::isEnableWallPrepare(gf::GfComPropertyPc& property) {
         return false;
     }
     return GfObjUtil::getProperty(handle)->m_target->m_state == 3;
+}
+
+bool StateUtilField::isMovableWall(gf::GfComPropertyPc& property, GfPropertyField::WALL_MOVE_MODE mode) {
+    bool movable = static_cast<unsigned int>(mode) < 8;
+    if (property.m_field.m_statusFlags & 0x80) {
+        movable &= !isWallUpMove(mode);
+    }
+    const EnviromentSensor* sensor = property.getEnvSensor();
+    if (!movable) {
+        return false;
+    }
+    if (!(sensor->m_flags & 2) || sensor->m_wallObj == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return true;
+    }
+    if (!isWallUpMove(mode) || !(sensor->m_flags & 0x100)) {
+        return true;
+    }
+    float height = fmaxf(property.m_field.m_climbUpTime + 1.3f, 0.0f);
+    if (sensor->m_ground2.m_pos.y - property.m_pos.y <= height) {
+        return false;
+    }
+    return true;
+}
+
+bool StateUtilField::isWallDetach(gf::GfComPropertyPc& property) {
+    const EnviromentSensor* sensor = property.getEnvSensor();
+    if (!(sensor->m_flags & 1) || (sensor->m_vertical.m_ground.m_attr & 0x10)) {
+        return false;
+    }
+    const EnviromentSensor::GroundInfo& ground = sensor->m_vertical.m_ground;
+    float dist = property.m_pos.dot(ground.m_normal) + ground.m_planeDist;
+    return dist < -property.m_field.m_downLanding1Height;
+}
+
+void StateUtilField::resetCameraForWall(gf::GfComBehaviorPc& behavior, Timing timing) {
+    // the camera timing each Timing resets with (proposed name, not the original's: the symbols leave it
+    // unnamed, lbl_71009C5A44)
+    static const ResetCameraWallTiming TIMINGS[] = {
+        ResetCameraWallTiming(0), ResetCameraWallTiming(1), ResetCameraWallTiming(2)};
+    GfComPropertyPc* property = behavior.m_owner->findComponent<GfComPropertyPc>(5);
+    if (property->m_stateFlags & 0x400) {
+        GfGamePlayerCamera::resetCameraClimb(TIMINGS[timing]);
+    }
 }
 
 bool StateUtilField::isFallFromSlideState(gf::GfComPropertyPc& property) {
