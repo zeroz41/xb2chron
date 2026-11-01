@@ -24,6 +24,8 @@
 #include "classes/gf/GfComAsm.h"
 #include "gf/GfObjAcc.h"
 #include "ml/MTRand.h"
+#include "gf/GfGameStuckMeter.h"
+#include "classes/fw/ColiMoveObject.h"
 
 
 namespace gf {
@@ -167,6 +169,113 @@ GfGameDepopMeter::GfGameDepopMeter(const CreateInfo* info)
     : m_handle(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), pad_18(true), pad_20(true), pad_30(mm::Vec3::zero), pad_40(false) {
     if (info) {
         create(*info);
+    }
+}
+
+void GfGameStuckMeter::CreateInfo::dispose() {
+    if (m_coli != nullptr) {
+        m_coli->release();
+        m_coli = nullptr;
+    }
+}
+
+void GfGameStuckMeter::CreateInfo::setColiObj(fw::ColiMoveObject* coli) {
+    dispose();
+    m_coli = coli;
+    if (coli != nullptr) {
+        coli->addRef();
+    }
+}
+
+GfGameStuckMeter::GfGameStuckMeter(const CreateInfo* info)
+    : m_height(0.0f), m_radius(0.0f), m_scale(1.0f), m_pos(mm::Vec3::zero), m_avgPos(mm::Vec3::zero),
+      m_freeTime(0.0f), m_stuckTime(0.0f) {
+    if (info) {
+        create(*info);
+    }
+}
+
+void GfGameStuckMeter::create(const CreateInfo& info) {
+    dispose();
+    m_info.pad_0 = info.pad_0;
+    m_info.m_stuckDelay = info.m_stuckDelay;
+    m_info.m_coli = info.m_coli;
+    if (m_info.m_coli != nullptr) {
+        m_info.m_coli->addRef();
+    }
+    m_info.m_minSpeedSq = info.m_minSpeedSq;
+    // written as a test: the original keeps a null constant on the path without one
+    fw::ColiMoveObject* coli = m_info.m_coli != nullptr ? m_info.m_coli : nullptr;
+    fw::ColiShape* shape = coli->m_shape.get();
+    if (shape != nullptr && shape->m_kind == 3) {
+        fw::ColiShapeCharacter* character = static_cast<fw::ColiShapeCharacter*>(shape);
+        m_height = character->m_height;
+        m_radius = character->m_radius;
+    } else {
+        m_scale = coli->m_scale;
+    }
+    m_pos = coli->getMatrix().getTrans();
+    m_avgPos = m_pos;
+    m_freeTime = 0.0f;
+    m_stuckTime = 0.0f;
+}
+
+void GfGameStuckMeter::dispose() {
+    if (m_info.m_coli != nullptr) {
+        m_info.m_coli->resetCharacter(m_height, m_radius);
+        m_info.dispose();
+    }
+}
+
+void GfGameStuckMeter::update(float deltaTime) {
+    if (deltaTime <= 0.0f || m_info.m_coli == nullptr) {
+        return;
+    }
+    bool restore;
+    if (checkStuck(deltaTime)) {
+        m_freeTime = 0.0f;
+        m_stuckTime += deltaTime;
+        restore = false;
+    } else {
+        m_freeTime += deltaTime;
+        restore = false;
+        if (m_freeTime > 3.0f) {
+            m_stuckTime = 0.0f;
+            restore = true;
+        }
+    }
+    fw::ColiMoveObject* coli = m_info.m_coli;
+    if (static_cast<int>(coli->m_followType) != 1) {
+        return;
+    }
+    fw::ColiShape* shape = coli->m_shape.get();
+    fw::ColiShapeCharacter* character =
+        shape != nullptr && shape->m_kind == 3 ? static_cast<fw::ColiShapeCharacter*>(shape) : nullptr;
+    if (m_info.m_stuckDelay <= m_stuckTime) {
+        if (character != nullptr) {
+            float height = character->m_height * 0.99f;
+            height = height < 0.05f ? 0.05f : height;
+            float radius = character->m_radius * 0.99f;
+            radius = radius < 0.05f ? 0.05f : radius;
+            coli->resetCharacter(height, radius);
+        } else {
+            float scale = coli->m_scale * 0.99f;
+            coli->m_scale = scale < 0.05f ? 0.05f : scale;
+        }
+    } else {
+        if (!restore) {
+            return;
+        }
+        if (character != nullptr) {
+            float height = character->m_height * 1.1f;
+            height = m_height < height ? m_height : height;
+            float radius = character->m_radius * 1.1f;
+            radius = m_radius < radius ? m_radius : radius;
+            coli->resetCharacter(height, radius);
+        } else {
+            float scale = coli->m_scale * 1.1f;
+            coli->m_scale = m_scale < scale ? m_scale : scale;
+        }
     }
 }
 
