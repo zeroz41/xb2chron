@@ -12,6 +12,7 @@
 #include "grlib/CGLibVtlMemPool.h"
 #include "grlib/CGLibVtxIndex.h"
 #include "grlib/CGLibVtxVertex.h"
+#include "layer/LayerAnimeObj.h"
 #include "layer/LayerLinkList.h"
 #include "layer/LayerObjUtil.h"
 #include "layer/LayerResAddTexObj.h"
@@ -26,11 +27,73 @@
 
 namespace layer {
 
+namespace {
+// size rounded up to the sort manager's 32-byte alignment (the name is not the original's)
+inline int alignSize(int size) {
+    return size + (32 - size % 32) % 32;
+}
+
+// the lock createTextureObj and releaseTextureObj share (one static and its guard); the function holding it is
+// inline everywhere
+ml::CriticalSection& getTextureCS() {
+    static ml::CriticalSection s_textureCS;
+    return s_textureCS;
+}
+}  // namespace
+
+LayerAnimeObj::~LayerAnimeObj() {
+    m_num = 0;
+    if (m_handle.m_handle != 0 && m_infos != nullptr) {
+        mtl::MemManager::deallocate(m_infos, 0, false);
+        m_infos = nullptr;
+    }
+    m_capacity = 0;
+    m_infos = nullptr;
+    m_handle.m_handle = 0;
+}
+
+void LayerAnimeObj::calcParm(LayerResParmInfo& info, const LayerAnimeInfo& anime, float frame) {
+    if (anime.m_flags & LayerAnimeInfo::FLAG_POS) {
+        info.m_pos[0] += (anime.m_pos[0] - info.m_pos[0]) * frame;
+        info.m_pos[1] += (anime.m_pos[1] - info.m_pos[1]) * frame;
+    }
+    if (anime.m_flags & LayerAnimeInfo::FLAG_ROT) {
+        info.m_rot += (anime.m_rot - info.m_rot) * frame;
+    }
+    if (anime.m_flags & LayerAnimeInfo::FLAG_SCALE) {
+        info.m_scale[0] += (anime.m_scale[0] - info.m_scale[0]) * frame;
+        info.m_scale[1] += (anime.m_scale[1] - info.m_scale[1]) * frame;
+    }
+    if (anime.m_flags & LayerAnimeInfo::FLAG_SIZE) {
+        info.m_size[0] += (anime.m_size[0] - info.m_size[0]) * frame;
+        info.m_size[1] += (anime.m_size[1] - info.m_size[1]) * frame;
+    }
+    if (anime.m_flags & LayerAnimeInfo::FLAG_PARM) {
+        info.m_parm[0] += (anime.m_parm[0] - info.m_parm[0]) * frame;
+        info.m_parm[1] += (anime.m_parm[1] - info.m_parm[1]) * frame;
+        info.m_parm[2] += (anime.m_parm[2] - info.m_parm[2]) * frame;
+    }
+    if (anime.m_flags & LayerAnimeInfo::FLAG_COLOR) {
+        info.m_color[0] += (anime.m_color[0] - info.m_color[0]) * frame;
+        info.m_color[1] += (anime.m_color[1] - info.m_color[1]) * frame;
+        info.m_color[2] += (anime.m_color[2] - info.m_color[2]) * frame;
+        info.m_color[3] += (anime.m_color[3] - info.m_color[3]) * frame;
+    }
+}
+
 LayerSortMan::~LayerSortMan() {
     if (m_mem != nullptr) {
         mtl::MemManager::deallocate(m_mem, 0, false);
         m_mem = nullptr;
     }
+}
+
+void LayerSortMan::begin(const mm::Vec3& pos) {
+    int size = alignSize(m_2DBitSize + m_3DBitSize);
+    memset(m_2DBits, 0, size);
+    m_pos = pos;
+    m_top = nullptr;
+    m_last = nullptr;
 }
 
 void LayerSortMan::set2DSpace(LayerSortObj* obj, unsigned int priority) {
@@ -52,6 +115,31 @@ void LayerSortMan::stock2DObj(LayerSortObj* obj, int index) {
     m_2DTail[index] = obj;
 }
 
+void LayerSortMan::end() {
+    for (unsigned int i = 0; i < m_3DNum; i++) {
+        if (m_3DBits[i >> 5] & (1 << (i & 31))) {
+            if (m_top != nullptr) {
+                LayerSortObj* last = m_last;
+                last->m_next = m_3DHead[i];
+            } else {
+                m_top = m_3DHead[i];
+            }
+            m_last = m_3DTail[i];
+        }
+    }
+    for (unsigned int i = 0; i < m_2DNum; i++) {
+        if (m_2DBits[i >> 5] & (1 << (i & 31))) {
+            if (m_top != nullptr) {
+                LayerSortObj* last = m_last;
+                last->m_next = m_2DHead[i];
+            } else {
+                m_top = m_2DHead[i];
+            }
+            m_last = m_2DTail[i];
+        }
+    }
+}
+
 void LayerSortMan::finalRender() {
     for (LayerSortObj* obj = m_top; obj != nullptr; obj = obj->m_next) {
         obj->finalRender();
@@ -61,6 +149,13 @@ void LayerSortMan::finalRender() {
 LayerTextureMan::LayerTextureMan(LayerManager* manager) : m_manager(manager) {}
 
 LayerTextureMan::~LayerTextureMan() { deleteAll(); }
+
+void LayerTextureMan::releaseTextureObj(LayerTextureObj* obj) {
+    ml::CS lock(getTextureCS());
+    if (obj->subRef()) {
+        deleteList(obj);
+    }
+}
 
 void LayerTextureObj::setupTexture(const unsigned char* res, LayerManager* manager) {
     textureRelease();
@@ -162,6 +257,25 @@ LayerResAddTexObj::LayerResAddTexObj(const void* res, unsigned int index)
     : m_prev(nullptr), m_next(nullptr), m_res(static_cast<const LayerResAddTexHead*>(res)), m_texObj(nullptr) {
     m_flags = 0;
     m_index = index;
+}
+
+LayerResAddTexObj::LayerResAddTexObj(grlib::CGLibTextureBuffer* buffer, unsigned int index)
+    : m_prev(nullptr), m_next(nullptr) {
+    m_flags = FLAG_BUFFER;
+    m_index = index;
+    m_buffer = buffer;
+    m_texObj = nullptr;
+}
+
+LayerResAddTexObj::~LayerResAddTexObj() {
+    release();
+}
+
+inline void LayerResAddTexObj::release() {
+    if (m_texObj != nullptr) {
+        m_texObj->release();
+        m_texObj = nullptr;
+    }
 }
 
 grlib::CGLibTextureBuffer* LayerResAddTexObj::getTexObj(unsigned int index) {
