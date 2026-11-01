@@ -122,6 +122,12 @@ public:
     // 16-bit item id at +0x5A4 of its row of GfDataManager::fn_7100224A10's driver table, else 0.
     // GfMenuItemAdapter::ReferenceDriverEquipConverter shows it as slot 0's accessory of such a driver on menu layer 3.
     static unsigned int fn_71002FCD64(unsigned int driver);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies among GfItemUtil's
+    // functions right after fn_71002FCD64 and takes no object. What it does: puts the item on the driver's DLC
+    // accessory slot (GfDataDriver::fn_71002474F4 / fn_7100247534 with the handle), returning the old accessory to
+    // the item box (or selling it when the box is full); returns true. GfGameUtil::fn_71002EB4B8 and
+    // GfMenuObjDrEquip2's removeItem / ItemListListener::reciveEvent call it.
+    static bool fn_71002FCD68(unsigned int driver, unsigned int item, GfItemHandle handle);
 };
 
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in

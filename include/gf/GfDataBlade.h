@@ -398,6 +398,8 @@ public:
     static const char* getResourceNameModel(unsigned int blade);
     static bool isKizunaringComplete(unsigned int blade);
     static bool isReleasedRareBlade(unsigned int blade);
+    // whether the blade has completed its affinity chart (GfGameUtil::addTrustPoint raises its trust rank only then)
+    static bool isCompleteAchievement(unsigned int blade);
     static unsigned int getTrustRank(unsigned int blade);
     // named by the symbols (its second parameter's type GfIdea too); GfGameUtil::addTrustRankForKizunaRing passes the
     // rank above getTrustRank's

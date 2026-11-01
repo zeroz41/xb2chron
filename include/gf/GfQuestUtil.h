@@ -88,6 +88,8 @@ public:
     // fills the reward with the rewards of that reward id (GfMenuObjShop's exchange tasks pass a QUEST_EXCHANGE row's
     // "Reward" and false); true when it has any
     static bool getReward(GfQuestReward& reward, unsigned int id, bool);
+    // gives the party the reward (gf::fn_71002EE640 passes an affinity chart reward)
+    static void execReward(const GfQuestReward& reward);
     // whether the enemy is one of the enemy group's 12 (GfBdatChrEnParam::getEnemyGroupEnemyID); false for no group
     static bool isEnemyGroup(unsigned int group, unsigned int enemy);
     // counts a field skill use for the first ordered, unfinished affinity chart quest of the blade whose field skill

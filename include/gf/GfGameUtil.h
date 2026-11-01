@@ -228,6 +228,9 @@ public:
     // fn_7100245F50 and the placeholders fn_710024487C/fn_71002448D8/fn_7100244988, the 999999999 experience cap).
     // GfMenuObjLvupSelect::seqExecLevelUp calls it instead of execLevelUp when the chosen level is lower.
     static void fn_71002DB338(unsigned int driver, unsigned int level);
+    // raises the driver's level of the arts toward level (at most 5) while its weapon type's points cover
+    // GfBdatBtl::getArtsDrNeedWP, spending them
+    static void execDriverArtsLevelUp(unsigned int driver, unsigned int arts, unsigned int level);
     // the HP the UI shows for an object and its maximum (false when it has none)
     static bool getNowHpForUi(gf::GF_OBJ_HANDLE* handle, unsigned int* hp);
     static bool getMaxHpForUi(gf::GF_OBJ_HANDLE* handle, unsigned int* hp);

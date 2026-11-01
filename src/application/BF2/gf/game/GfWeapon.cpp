@@ -158,6 +158,12 @@
 #include "gf/GfDataAchievement.h"
 #include "classes/gf/SCOM_ADD_IDEA.h"
 #include "classes/gf/SCOM_PARTY_ADD.h"
+#include "gf/GfQuestUtil.h"
+#include "gf/GfQuestReward.h"
+#include "gf/GfKizunaringUtil.h"
+#include "classes/gf/GfQuestManager.h"
+#include "gf/OwnerBonus.h"
+#include "classes/gf/GfBdatBlade.h"
 
 namespace gf {
 
@@ -891,6 +897,47 @@ void fn_71002DAB40(unsigned int driver, unsigned int exp) {
     }
 }
 
+// inline: adds the driver's battle experience to its experience (capped at 999999999) and clears it; the name is
+// not the original's
+static inline void flushDriverBattleExp(unsigned int driver) {
+    unsigned int exp = GfDataDriver::fn_7100245EFC(driver) + GfDataDriver::fn_7100245EA8(driver);
+    GfDataDriver::fn_71002448D8(driver, exp > 999999999 ? 999999999 : exp);
+    GfDataDriver::fn_7100244988(driver, 0);
+}
+
+void GfGameUtil::fn_71002DB338(unsigned int driver, unsigned int level) {
+    unsigned int current = GfDataDriver::getLevel(driver);
+    if (current <= level) {
+        return;
+    }
+    flushDriverBattleExp(driver);
+    do {
+        current--;
+        GfDataDriver::fn_710024487C(driver, current);
+        GfDataDriver::fn_7100244988(driver, GfDataDriver::fn_7100245F50(driver));
+        flushDriverBattleExp(driver);
+    } while (level != current);
+}
+
+void GfGameUtil::execDriverArtsLevelUp(unsigned int driver, unsigned int arts, unsigned int level) {
+    GfBdatBtl* bdat = mm::mtl::PtrSingleton<GfBdatBtl>::sys();
+    DataParamAcc acc(3, driver, GimmickType(0));
+    if (!acc.isScenarioMask()) {
+        unsigned int type = bdat->getArtsDrWpnType(arts);
+        unsigned int current = acc.getDriverArtsLevel(arts);
+        while (current < level && current < 5) {
+            unsigned int point = acc.getWeaponPoint(type);
+            unsigned int need = bdat->getArtsDrNeedWP(arts, current + 1);
+            if (point < need) {
+                break;
+            }
+            acc.setDriverArtsLevel(arts, current + 1);
+            acc.addWeaponPoint(type, -need);
+            current = acc.getDriverArtsLevel(arts);
+        }
+    }
+}
+
 void GfGameUtil::addWp(unsigned int driver, unsigned int id, int wp) {
     if (driver == 0) {
         GfObjAcc acc(GfGameManager::getPartyLeaderDriver());
@@ -947,6 +994,71 @@ void GfGameUtil::addDevelopPoint(unsigned int zone, unsigned int point) {
     SCOM_LEVELUP_DEVELOP::create();
 }
 
+void GfGameUtil::execDevelopLevelUp() {
+    if (GfGameManager::fn_71002A9E68()) {
+        return;
+    }
+    QuestListAcc* acc = QuestListAcc::get();
+    unsigned int level1 = acc->getFLD_DevelopmentLevelValue(3);
+    unsigned int level2 = acc->getFLD_DevelopmentLevelValue(4);
+    unsigned int level3 = acc->getFLD_DevelopmentLevelValue(5);
+    unsigned int level4 = acc->getFLD_DevelopmentLevelValue(6);
+    unsigned int level5 = acc->getFLD_DevelopmentLevelValue(7);
+    // the map of each development zone (1-8), for the popup
+    static const unsigned int s_zoneMaps[8] = {3, 6, 9, 10, 14, 12, 13, 15};
+    for (unsigned int zone = 1; zone <= 8; zone++) {
+        unsigned int level = GfDataDevelop::getLevel(zone);
+        unsigned int point = GfDataDevelop::getPoint(zone);
+        if (level < level5 && point >= level5) {
+            GfDataDevelop::setLevel(zone, 5);
+        } else if (level < level4 && point >= level4) {
+            GfDataDevelop::setLevel(zone, 4);
+        } else if (level < level3 && point >= level3) {
+            GfDataDevelop::setLevel(zone, 3);
+        } else if (level < level2 && point >= level2) {
+            GfDataDevelop::setLevel(zone, 2);
+        } else if (level < level1 && point >= level1) {
+            GfDataDevelop::setLevel(zone, 1);
+        }
+        unsigned int now = GfDataDevelop::getLevel(zone);
+        if (level != now) {
+            SCOM_POPUP::createDevelop(s_zoneMaps[zone - 1], now);
+        }
+    }
+    GfQuestManager::eventCheckTaskAll();
+}
+
+void GfGameUtil::addTrustPoint(unsigned int blade, unsigned int point) {
+    unsigned int trust = GfDataBlade::getTrustPoint(blade) + point;
+    if (GfGameManager::fn_71002A9E68()) {
+        trust += GfGameManager::getOwnerBonus().m_values[14] * 50;
+    }
+    if (trust > 0xFFFF) {
+        trust = 0xFFFF;
+    }
+    GfDataBlade::setTrustPoint(blade, trust);
+    GfEvent::callDebugChangeIdea(4, blade, 0, 0);
+    int before = GfDataBlade::getTrustRank(blade);
+    if (GfDataBlade::isCompleteAchievement(blade)) {
+        int rank = GfDataBlade::getTrustRank(blade);
+        while (rank >= 6 && rank <= 15 &&
+               mm::mtl::PtrSingleton<GfBdatBlade>::sys()->getFLD_IdeaTableTrustPoint(rank) <= trust) {
+            GfDataBlade::setTrustRank(blade, static_cast<GfIdea>(rank + 1));
+            rank = GfDataBlade::getTrustRank(blade);
+        }
+        if (before < static_cast<int>(GfDataBlade::getTrustRank(blade))) {
+            unsigned int driver = GfDataBlade::getSetDriver(blade);
+            if (driver == 0) {
+                driver = GfDataBlade::getCreator(blade);
+            }
+            if (driver != 0) {
+                SCOM_POPUP::createAffinity(blade, driver, GfDataBlade::getTrustRank(blade));
+            }
+        }
+    }
+    GfQuestManager::eventCheckTaskAll();
+}
+
 void GfGameUtil::addTrustRankForKizunaRing(unsigned int blade) {
     int rank = GfDataBlade::getTrustRank(blade);
     if (rank > 5) {
@@ -965,6 +1077,29 @@ void GfGameUtil::addTrustRankForKizunaRing(unsigned int blade) {
     if (driver != 0) {
         SCOM_POPUP::createAffinity(blade, driver, next);
     }
+}
+
+bool fn_71002D9B5C(GF_OBJ_HANDLE* handle) {
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return false;
+    }
+    {
+        GfObjAcc acc(handle);
+        if (acc.m_obj == nullptr || acc.isDestroy() || acc.testFlag(0x11)) {
+            return false;
+        }
+    }
+    {
+        GfObjAcc acc(handle);
+        if (acc.getType() != 6) {
+            return false;
+        }
+    }
+    gmk::AGmkBase* gimmick = gmk::getBindedGmkInst(handle);
+    if (gimmick == nullptr || gimmick->getGmkType() != static_cast<gmk::GmkType>(3)) {
+        return false;
+    }
+    return Bdat::getFlagVal(gimmick->getBindedBdatFp(), "flag", gimmick->m_createInfo.m_bdatId, "HITONOWAGET") != 0;
 }
 
 void fn_71002DA4FC(int value) {
@@ -1276,6 +1411,20 @@ void GfGameUtil::execEquipDriverDefaultAcce(unsigned int driver) {
             GfItemUtil::addItemBoxWithSilent(accessory, 1);
         }
         GfEquipUtil::equipDriverAcce(driver, 0, accessory, GfItemHandle());
+    }
+}
+
+void GfGameUtil::fn_71002EB4B8(unsigned int driver) {
+    if (!GfDataDriver::fn_7100237A94(driver) || GfDataDriver::fn_7100247474(driver) != 0) {
+        return;
+    }
+    unsigned int id = mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->fn_71001F13E0(driver);
+    unsigned int accessory = mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->fn_71001F17B4(id);
+    if (accessory != 0) {
+        if (GfItemUtil::isEnableAddItemBox(accessory, 1)) {
+            GfItemUtil::addItemBoxWithSilent(accessory, 1);
+        }
+        GfItemUtil::fn_71002FCD68(driver, accessory, GfItemHandle());
     }
 }
 
@@ -1834,6 +1983,21 @@ bool fn_71002EE5E0(QuestID quest, unsigned int task) {
     return quest.m_id == 0x80B && task == 1;
 }
 
+void fn_71002EE640(unsigned int blade) {
+    if (!GfGameManager::fn_71002A9E68() || GfDataBlade::getTrustRank(blade) != 5) {
+        return;
+    }
+    if (GfDataBlade::getKizunaringMax(blade) > GfDataBlade::getKizunaringCompleteNum(blade)) {
+        return;
+    }
+    GfDataBlade::getSDataBlade(blade)->m_kizunaringComplete = 0;
+    GfGameUtil::addTrustRankForKizunaRing(blade);
+    GfQuestReward reward;
+    if (GfKizunaringUtil::getCompleteKizunaringReward(reward, blade)) {
+        GfQuestUtil::execReward(reward);
+    }
+}
+
 bool fn_71002EE72C(unsigned int blade) {
     if (!GfGameManager::fn_71002A9E68() || GfDataBlade::getTrustRank(blade) != 5) {
         return false;
@@ -1869,6 +2033,18 @@ unsigned int fn_71002EC674(GF_OBJ_HANDLE* handle) {
 unsigned int fn_71002EC6F4(GF_OBJ_HANDLE* handle) {
     DataParamAcc acc(handle);
     return acc.getWeaponStability(false);
+}
+
+bool fn_71002ED330() {
+    if (!GfGameManager::fn_71002AC598()) {
+        return false;
+    }
+    if (GfItemUtil::getItemBoxCount(25497) == 0) {
+        return false;
+    }
+    const TUnk_B535D0::RuleRow& row = GfDataManager::getDataGame()->m_ruleTable.m_rows[25];
+    return row.m_rules[1].m_value0 != 0 || row.m_rules[0].m_value0 != 0 || row.m_rules[2].m_value0 != 0 ||
+           row.m_rules[3].m_value0 != 0 || row.m_rules[4].m_value0 != 0;
 }
 
 unsigned int fn_71002ED4F0(unsigned int enemy) {
@@ -2035,6 +2211,50 @@ void fn_71002EEB14(int type, bool run) {
 
 int fn_71002EEBE4() {
     return g_bootType;
+}
+
+float fn_71002EEBF4(unsigned int driver, unsigned short effect) {
+    if (driver == 0) {
+        return 0.0f;
+    }
+    mm::mtl::FixedVector<unsigned short, 64> enhances;
+    if (!GfDataDriver::fn_7100247580(enhances, driver)) {
+        return 0.0f;
+    }
+    float sum = 0.0f;
+    if (enhances.size() != 0) {
+        GfBdatBtl* bdat = mm::mtl::PtrSingleton<GfBdatBtl>::sys();
+        for (unsigned short id : enhances) {
+            if (static_cast<unsigned short>(bdat->getBTL_EnhanceEnhanceEffect(id)) == effect) {
+                sum += bdat->getBTL_EnhanceParam1(id);
+            }
+        }
+    }
+    return sum * 0.01f;
+}
+
+float fn_71002EECD4(unsigned int driver, int blade, unsigned short effect) {
+    float sum = 0.0f;
+    if (driver == 0) {
+        return sum;
+    }
+    unsigned int id = GfDataDriver::getBlade(driver, blade);
+    if (id == 0) {
+        return sum;
+    }
+    mm::mtl::FixedVector<unsigned short, 64> enhances;
+    if (!GfDataBlade::getEquipOrbEnance(enhances, id)) {
+        return 0.0f;
+    }
+    if (enhances.size() != 0) {
+        GfBdatBtl* bdat = mm::mtl::PtrSingleton<GfBdatBtl>::sys();
+        for (unsigned short id : enhances) {
+            if (static_cast<unsigned short>(bdat->getBTL_EnhanceEnhanceEffect(id)) == effect) {
+                sum += bdat->getBTL_EnhanceParam1(id);
+            }
+        }
+    }
+    return sum * 0.01f;
 }
 
 }  // namespace gf
