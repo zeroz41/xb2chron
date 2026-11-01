@@ -56,6 +56,8 @@
 #include "classes/ml/DrResMdoSeamWrkLow.h"
 #include "classes/ml/DrResMdoSeamWrkInst.h"
 #include "classes/ml/DrResMdoSeamWrkBase.h"
+#include "ml/DrResMdoSeamWrkPosInst.h"
+#include "ml/DrPixlShadowCacheMan.h"
 #include "classes/ml/DrCalcStmListObj.h"
 #include "classes/ml/DrCalcTexStreamMan.h"
 #include "ml/MdsMpfMatInfoHeader.h"
@@ -229,6 +231,19 @@ void DrResMdoShdObj::setDecShdParm(unsigned int idx, unsigned int parm) {
     if (idx < m_num) {
         m_entries[idx].m_decShdParm = parm;
     }
+}
+
+unsigned int DrResMdoShdObj::calcWorkSize(const unsigned char* mdo) {
+    const ShdHeader* header =
+        reinterpret_cast<const ShdHeader*>(mdo + reinterpret_cast<const MdoHeader*>(mdo)->m_shdOfs);
+    const ShdData* data =
+        reinterpret_cast<const ShdData*>(reinterpret_cast<const unsigned char*>(header) + header->m_dataOfs);
+    unsigned int size = 0;
+    for (int i = 0; i < header->m_num; i++, data++) {
+        size += data->m_workNum;
+    }
+    size += -size & 3;
+    return size + header->m_num * sizeof(Entry) + sizeof(DrResMdoShdObj);
 }
 
 unsigned int DrResMdoMorpObj::calcWorkSize(const unsigned char* mdo) {
@@ -3770,6 +3785,20 @@ DrResMdoSeamWrkInst::MdlInfo* DrResMdoSeamWrkInst::getMdlInfo() {
     return nullptr;
 }
 
+void DrResMdoSeamWrkInst::callShadowCacheInstUpdate(unsigned long mask) {
+    for (unsigned long i = 0; i < 36; i++) {
+        if ((1UL << i) & mask) {
+            for (int j = 0; j < m_posInstNum; j++) {
+                DrResMdoSeamWrkPosInst* pos = m_posInstList[j];
+                if (pos->m_shadowCacheBufSize != 0) {
+                    memset(pos->m_shadowCacheBuf[i], 0, pos->m_shadowCacheBufSize);
+                }
+            }
+        }
+    }
+    m_shadowCacheDone &= ~mask;
+}
+
 mm::Mat44* DrResOccUniformObj::getMatTbl(int idx) {
     return m_matTbl + idx;
 }
@@ -4665,6 +4694,67 @@ int DrResMdoSeamVertex::SEAMRES_CNTMAX = 0x3C;
 
 DrResMdoSeamWrkBase::~DrResMdoSeamWrkBase() { release(); }
 
+void DrResMdoSeamWrkBase::release() {
+    if (m_vertexList != nullptr) {
+        for (int i = 0; i < m_vertexNum; i++) {
+            VertexEntry& entry = m_vertexList[i];
+            if (entry.vertex != nullptr) {
+                delete entry.vertex;
+                entry.vertex = nullptr;
+            }
+            entry.memObj = nullptr;
+        }
+    }
+    grlib::CGLibVtxInstans* instans = m_instans;
+    if (instans != nullptr) {
+        instans->release();
+        instans->~CGLibVtxInstans();
+        m_instans = nullptr;
+    }
+    m_vertexList = nullptr;
+    m_vertexNum = 0;
+    m_nodeBits = nullptr;
+    m_nodeWork = nullptr;
+    for (int i = 0; i < m_bufNum; i++) {
+        if (m_bufList[i] != nullptr) {
+            mtl::MemManager::deallocate(m_bufList[i], 0, false);
+            m_bufList[i] = nullptr;
+        }
+    }
+    m_bufNum = 0;
+    if (m_matRes != nullptr) {
+        mtl::MemManager::deallocate(m_matRes, 0, false);
+        m_matRes = nullptr;
+    }
+    if (m_matWork != nullptr) {
+        mtl::MemManager::deallocate(m_matWork, 0, false);
+        m_matWork = nullptr;
+    }
+    m_readMask = 0;
+}
+
+void DrResMdoSeamWrkBase::releaseCache(DrMdoCtlSeamBaseMap* ctl) {
+    if (m_vertexList != nullptr) {
+        for (int i = 0; i < m_vertexNum; i++) {
+            VertexEntry& entry = m_vertexList[i];
+            DrResMdoSeamMemObj* memObj = entry.memObj;
+            if (entry.vertex != nullptr) {
+                delete entry.vertex;
+                entry.vertex = nullptr;
+            }
+            entry.memObj = nullptr;
+            if (memObj != nullptr) {
+                ctl->releaseFreeSeamMemObj(memObj);
+            }
+        }
+    }
+    m_vertexList = nullptr;
+    m_nodeBits = nullptr;
+    m_nodeWork = nullptr;
+    m_vertexNum = 0;
+    release();
+}
+
 bool DrResMdoSeamWrkEnv::update(const mm::Vec3&, bool force) {
     m_flags &= ~FLAG_READ;
     if (m_matRes == nullptr) {
@@ -4791,6 +4881,33 @@ void DrResMdoSeamWrkBase::selectVertex(int index) {
         m_matRes->m_pVertex->beginVertexSetup();
         m_selectVertex = index;
     }
+}
+
+void DrResMdoSeamWrkBase::callShadowCacheBaseUpdate(unsigned long mask) {
+    for (unsigned long i = 0; i < 36; i++) {
+        if ((1UL << i) & mask) {
+            memset(m_shadowCacheBuf[i], 0, m_shadowCacheBufSize);
+        }
+    }
+    m_shadowCacheDone &= ~mask;
+}
+
+bool DrResMdoSeamWrkBase::seachShadowBaseMapRender(DrPixlShadowCacheObj& cache, DrMdoCtlSeamBaseMap* ctl) {
+    if (m_shadowCacheDone & cache.m_cacheBit) {
+        return false;
+    }
+    if (!(m_header->m_flags & 4)) {
+        unsigned int idx = cache.m_cacheIdx;
+        m_curShadowCacheBuf = m_shadowCacheBuf[idx];
+        beginRender();
+        bool hit = seachShadowBaseMapRenderChild(cache, ctl, m_baseMapTree);
+        endRender();
+        if (hit) {
+            return true;
+        }
+    }
+    m_shadowCacheDone |= cache.m_cacheBit;
+    return false;
 }
 
 void DrResMdoSeamWrkBase::seachDefShadowBaseMapRender(DrPixlShadowObj* shadow, DrMdoCtlSeamBaseMap* ctl) {

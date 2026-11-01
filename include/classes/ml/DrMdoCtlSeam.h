@@ -5,10 +5,13 @@
 #include "ml/DrResMdoInstAnmObj.h"
 
 namespace ml {
+class DrResMdoSeamMemObj;
+
 // table 0x7100B7BA10
 class DrMdoCtlSeam : public ::ml::DrMdlObj {
 public:
     virtual ~DrMdoCtlSeam();  // slot 0
+    void releaseFreeSeamMemObj(DrResMdoSeamMemObj* obj);
 
     // a placed effect position (0x10; ScnObjAccPartsEtcPos reads it). Type and field names are not the original's.
     struct EtcPos {

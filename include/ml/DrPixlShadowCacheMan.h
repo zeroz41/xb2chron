@@ -17,7 +17,11 @@ public:
     bool clipTest(mm::Vec3 const& pos, float radius);
 
     grlib::CGLibDepthTarget m_depth;  // 0x0
-    unsigned char pad_800[0x100];
+    unsigned char pad_800[0xE8];
+    unsigned long m_cacheBit;  // 0x8E8: this cache's bit in a seam's done mask (the name is not the original's)
+    unsigned char pad_8F0[0x2];
+    short m_cacheIdx;  // 0x8F2: index of this cache's buffer in a seam's buffer list (the name is not the original's)
+    unsigned char pad_8F4[0xC];
     DrCalcClipWorkPlane m_clip;  // 0x900
     unsigned char pad_910[0xC0];
 };

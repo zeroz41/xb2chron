@@ -2,6 +2,7 @@
 #define CLASSES_ML_DRRESMDOSEAMWRKINST_H
 
 namespace ml {
+class DrResMdoSeamWrkPosInst;
 // table 0x7100B7DB48
 class DrResMdoSeamWrkInst {
 public:
@@ -14,10 +15,17 @@ public:
     void beginMdl();
     // the next of the m_mdlNum model infos (0x20 bytes each), null after the last
     MdlInfo* getMdlInfo();
-    unsigned char pad_8[0x144];
+    void callShadowCacheInstUpdate(unsigned long mask);
+    unsigned char pad_8[0x118];
+    DrResMdoSeamWrkPosInst** m_posInstList;  // 0x120: the m_posInstNum position works set up (the name is not the original's)
+    unsigned char pad_128[0x18];
+    int m_posInstNum;         // 0x140 (the name is not the original's)
+    unsigned char pad_144[0x8];
     int m_mdlNum;             // 0x14C (the name is not the original's)
     unsigned short m_mdlCnt;  // 0x150: beginMdl clears it (the name is not the original's)
-    unsigned char pad_152[0x4E];
+    unsigned char pad_152[0x6];
+    unsigned int m_shadowCacheDone;  // 0x158: callShadowCacheInstUpdate clears the bits it is given (the name is not the original's)
+    unsigned char pad_15C[0x44];
     MdlInfo* m_mdlInfo;       // 0x1A0 (the name is not the original's)
 };
 }  // namespace ml
