@@ -3,6 +3,7 @@
 
 #include "classes/gf/GfObjProperty.h"
 #include "classes/gf/GfObjPropertyCharacter.h"
+#include "gf/GfTargetProperty.h"
 
 namespace gf {
 class GfObjPropertyBlade : public ::gf::GfObjProperty {
@@ -11,7 +12,10 @@ public:
     virtual ~GfObjPropertyBlade() {}  // slot 0
 
     GfObjPropertyCharacter m_characterPart;  // 0x88: m_character points at it
-    unsigned char pad_C0[0x1A4 - 0xC0];
+    TargetInfo m_targetPart;                 // 0xC0: m_target points at it (the name is not the original's)
+    // set by the constructor and again by its body
+    unsigned int pad_190;
+    unsigned char pad_194[0xE];  // 1 at 0x194, 0x19A and 0x1A0, else 0
     // what GfMenuGfObjAdapter's update_BL_* show (the field names are not the original's)
     int m_kizuna;              // btl::Misc::GetKizunaStage's
     unsigned int m_specialLv;  // the special level reached

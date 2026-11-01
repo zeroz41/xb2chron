@@ -19,7 +19,10 @@ namespace mm {
 // their names are not the original's (none survives in a symbol).
 class Quat {
 public:
-    Quat() {}
+    // trivial: GfObjPropertyDriver's and GfObjPropertyBlade's constructors (gf_obj_property) copy the identity into
+    // their target info's Quats off the object's register, which a user-provided empty constructor's early member
+    // address prevents
+    Quat() = default;
     Quat(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
 
     // each component within 1e-6 of zero's

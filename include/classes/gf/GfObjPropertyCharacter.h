@@ -18,17 +18,8 @@ public:
         unsigned int pad_4;
     };
 
-    GfObjPropertyCharacter() {
-        memset(&m_uiMaxHp, 0, 0xE);  // m_uiMaxHp to pad_C
-        pad_28 = -1;
-        pad_30 = false;
-        unsigned char* fp = Bdat::getFP("BTL_Buff");
-        if (fp != nullptr && Bdat::getIdCount(fp) != 0) {
-            m_buffs.setAllocator(getAllocator(ALLOCATOR(0)));
-            m_buffs.reserve(Bdat::getIdCount(fp));
-            reset();
-        }
-    }
+    // clears its fields and sizes m_buffs by the BTL_Buff table (out of line in gf_obj_property)
+    GfObjPropertyCharacter();
     // clears what the constructor clears and every entry of m_buffs (the constructors of the three properties
     // that hold one call it again)
     void reset() {

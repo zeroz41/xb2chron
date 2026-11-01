@@ -452,7 +452,7 @@ bool GfMenuGfObjAdapter::update_EN_ResAttrOn(GF_OBJ_HANDLE* handle) {
     if (enemy == nullptr) {
         return false;
     }
-    if (enemy->m_resAttrCount > m_index) {
+    if (enemy->m_resAttrList.size() > m_index) {
         unsigned int attr = enemy->m_resAttrList[m_index];
         if (attr >= 1 && attr <= 8) {
             return enemy->m_resAttrs[attr].m_flags & 1;
@@ -466,7 +466,7 @@ bool GfMenuGfObjAdapter::update_EN_ResAttrTarget(GF_OBJ_HANDLE* handle) {
     if (enemy == nullptr) {
         return false;
     }
-    if (enemy->m_resAttrCount > m_index) {
+    if (enemy->m_resAttrList.size() > m_index) {
         unsigned int attr = enemy->m_resAttrList[m_index];
         if (attr >= 1 && attr <= 8) {
             unsigned short flags = enemy->m_resAttrs[attr].m_flags;
@@ -483,7 +483,7 @@ bool GfMenuGfObjAdapter::update_EN_ResAttrBurst(GF_OBJ_HANDLE* handle) {
     if (enemy == nullptr) {
         return false;
     }
-    if (enemy->m_resAttrCount > m_index) {
+    if (enemy->m_resAttrList.size() > m_index) {
         unsigned int attr = enemy->m_resAttrList[m_index];
         if (attr >= 1 && attr <= 8) {
             return (enemy->m_resAttrs[attr].m_flags >> 2) & 1;
@@ -497,7 +497,7 @@ bool GfMenuGfObjAdapter::update_EN_ResAttrHP(GF_OBJ_HANDLE* handle) {
     if (enemy == nullptr) {
         return false;
     }
-    if (enemy->m_resAttrCount > m_index) {
+    if (enemy->m_resAttrList.size() > m_index) {
         unsigned int attr = enemy->m_resAttrList[m_index];
         if (attr >= 1 && attr <= 8) {
             const GfObjPropertyEnemy::ResAttr& res = enemy->m_resAttrs[attr];

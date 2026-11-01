@@ -16,8 +16,12 @@ namespace gf {
 // GfObjPropertyMap/Driver/Blade/Enemy/Npc/Mob/Gimmick..., chosen by GfObjUtil::getObjType
 class GfObjProperty {
 public:
-    explicit GfObjProperty(GF_OBJ_HANDLE* handle)
-        : m_handle(handle), m_character(nullptr), m_target(nullptr), pad_40(false), pad_80(0) {
+    // what m_target points at (gf/GfTargetProperty.h; the name is not the original's)
+    class TargetInfo;
+    // a driver, blade or enemy passes its character part (and the first two their target info) on
+    explicit GfObjProperty(GF_OBJ_HANDLE* handle, GfObjPropertyCharacter* character = nullptr,
+                           TargetInfo* target = nullptr)
+        : m_handle(handle), m_character(character), m_target(target), pad_40(false), pad_80(0) {
         pad_20 = mm::Vec3::zero;
         pad_30 = mm::Quat::identity;
     }
@@ -28,8 +32,6 @@ public:
     GfObjPropertyDriver* getDriver();  // itself when its object is a driver (GfObjUtil::getObjType 3), else none
     GfObjPropertyBlade* getBlade();  // itself when its object is a blade (GfObjUtil::getObjType 4), else none
     GfObjPropertyEnemy* getEnemy();  // itself when its object is an enemy (GfObjUtil::getObjType 5), else none
-    // what m_target points at (gf/GfTargetProperty.h; the name is not the original's)
-    class TargetInfo;
     GF_OBJ_HANDLE* m_handle;  // create's; getEnemy asks GfObjUtil::getObjType about it
     // the character part of a driver, blade or enemy (GfObjPropertyDriver's and GfObjPropertyEnemy's constructors
     // point it at their GfObjPropertyCharacter at 0x88), none for the others; the name is not the original's

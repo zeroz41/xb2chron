@@ -380,13 +380,13 @@ void GfMenuObjChainAttack::StatusListener::reciveEvent(const ui::EventData& even
             mm::Rect<short> range;
             acc.getLayoutRect("elem2_center", center);
             acc.getLayoutRect("elem2_center_range", range);
-            GfMenuObjUtil::placeObjectH(acc.m_handle, "LAY_status_elem@%02d", enemy->m_resAttrCount,
+            GfMenuObjUtil::placeObjectH(acc.m_handle, "LAY_status_elem@%02d", enemy->m_resAttrList.size(),
                                         mm::Pnt<short>(center.x + center.w / 2, center.y + center.h / 2),
                                         range.x - center.x);
-            GfMenuObjUtil::placeObjectH(acc.m_handle, "IMG_status_elem_base_dummy@%02d", enemy->m_resAttrCount,
+            GfMenuObjUtil::placeObjectH(acc.m_handle, "IMG_status_elem_base_dummy@%02d", enemy->m_resAttrList.size(),
                                         mm::Pnt<short>(center.x + center.w / 2, center.y + center.h / 2),
                                         range.x - center.x);
-            acc.setDispChild(static_cast<unsigned int>(enemy->m_resAttrCount) != 0, "IMG_status_elem_base");
+            acc.setDispChild(static_cast<unsigned int>(enemy->m_resAttrList.size()) != 0, "IMG_status_elem_base");
         }
         for (int& level : m_owner->m_resLevel) {
             level = 3;
@@ -471,7 +471,7 @@ void GfMenuObjChainAttack::StatusListener::reciveEvent(const ui::EventData& even
                     GfObjProperty* property = GfObjUtil::getProperty(GfMenuManager::getTargetObjHandle());
                     if (property != nullptr) {
                         GfObjPropertyEnemy* enemy = property->getEnemy();
-                        if (type == 4 && enemy != nullptr && enemy->m_resAttrCount > index) {
+                        if (type == 4 && enemy != nullptr && enemy->m_resAttrList.size() > index) {
                             unsigned int element = enemy->m_resAttrList[index];
                             if (element != 0) {
                                 int level = element * 4 - (value + 1);

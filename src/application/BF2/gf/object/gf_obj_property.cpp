@@ -81,8 +81,66 @@ GfObjProperty* GfObjProperty::create(GF_OBJ_HANDLE* handle) {
     return property;
 }
 
-// GfObjPropertyDriver's, GfObjPropertyBlade's and GfObjPropertyEnemy's constructors (0x710054A958, 0x710054ABB8,
-// 0x710054AE7C) are not here yet: they construct a GfTargetProperty (Driver, Blade) and fields not modelled yet.
+GfObjPropertyDriver::GfObjPropertyDriver(GF_OBJ_HANDLE* handle)
+    : GfObjProperty(handle, &m_characterPart, &m_targetPart) {
+    m_characterPart.reset();
+    pad_190 = 0;
+    pad_198 = 0;
+    pad_1A0 = 0;
+}
+
+GfObjPropertyBlade::GfObjPropertyBlade(GF_OBJ_HANDLE* handle)
+    : GfObjProperty(handle, &m_characterPart, &m_targetPart), pad_190(0),
+      pad_194{1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0}, m_comboReady(0) {
+    m_characterPart.reset();
+    pad_190 = 0;
+    // the body sets the 14 bytes again as one loop (its stores are not the initializer's: 0x1A0 is one halfword)
+    for (int i = 0; i < 0xE; i++) {
+        pad_194[i] = i % 6 == 0;
+    }
+    m_kizuna = 0;
+    m_specialLv = 0;
+    m_specialGauge = 0.0f;
+    m_changeRecast = 0.0f;
+}
+
+GfObjPropertyEnemy::GfObjPropertyEnemy(GF_OBJ_HANDLE* handle) : GfObjProperty(handle, &m_characterPart) {
+    m_characterPart.reset();
+    pad_150 = 0;
+    pad_154 = false;
+    pad_155 = false;
+    pad_C0 = 0;
+    m_scout = false;
+    pad_C3 = 0;
+    m_artsId = 0;
+    pad_C8 = 0;
+    pad_D0 = 0;
+    m_weakAttr = 0;
+    m_elementComboId = 0;
+    m_elementComboTime = 0.0f;
+    m_elementComboSuspend = false;
+    m_elementComboLv = 0;
+    m_fightCombo = 0;
+    m_fightComboTime = 0.0f;
+    m_fightComboSuspend = false;
+    m_elemEffId = 0;
+    for (int i = 0; i < 9; i++) {
+        m_resAttrs[i].m_flags = 0;
+        m_resAttrs[i].m_level = 0;
+    }
+}
+
+GfObjPropertyCharacter::GfObjPropertyCharacter() {
+    memset(&m_uiMaxHp, 0, 0xE);  // m_uiMaxHp to pad_C
+    pad_28 = -1;
+    pad_30 = false;
+    unsigned char* fp = Bdat::getFP("BTL_Buff");
+    if (fp != nullptr && Bdat::getIdCount(fp) != 0) {
+        m_buffs.setAllocator(getAllocator(ALLOCATOR(0)));
+        m_buffs.reserve(Bdat::getIdCount(fp));
+        reset();
+    }
+}
 
 GfObjPropertyDriver* GfObjProperty::getDriver() {
     return GfObjUtil::getObjType(m_handle) == 3 ? static_cast<GfObjPropertyDriver*>(this) : nullptr;
