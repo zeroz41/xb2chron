@@ -36,6 +36,16 @@ Result SoundActor::Quit() {
     return set_result(Result(0));
 }
 
+Result SoundActor::Play(SoundHandle* handle, const SoundEntry* entry, float volume, float pitch) {
+    if (!connected_) {
+        Init();
+    }
+    if (!connected_) {
+        return Result(-12);
+    }
+    return Result(handle->Play(entry, this, volume, pitch));
+}
+
 Result SoundActor::Stop(float fadeTime) {
     static_cast<SystemCore*>(SoundCore::instance_)->StopActor(this, fadeTime);
     return Result(0);
@@ -76,6 +86,16 @@ Result SoundActor3D::Init() {
     velocitySet_ = false;
     listener_ = nullptr;
     return Result(0);
+}
+
+Result SoundActor3D::Play(SoundHandle* handle, const SoundEntry* entry, float volume, float pitch) {
+    if (!connected_) {
+        Init();
+    }
+    if (!connected_) {
+        return Result(-12);
+    }
+    return Result(handle->Play(entry, this, volume, pitch));
 }
 
 void SoundActor3D::SetListener(const SoundListener* listener) {

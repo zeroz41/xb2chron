@@ -37,9 +37,14 @@ void Array<T0>::SetArraySize(int size) {
     if (capacity_ <= size) {
         T0* old = data_;
         data_ = SoundMemory::allocator_->NewInstance<T0>(size + 1);
-        // the early return for an empty array keeps the function out of line, as the original calls it (inline
-        // cost 275 against the 275 threshold; with one shared tail it is 270 and AddSoundGroup inlines it)
         if (old == nullptr) {
+            capacity_ = size;
+            return;
+        }
+        // the empty-array exit (codegen merges it with the loop guard) keeps the function out of line as the
+        // original calls it: clang 4.0.1 inlines the form without it (inline cost 245 against the 250 threshold)
+        if (capacity_ <= 0) {
+            SoundMemory::allocator_->DeleteInstance(old);
             capacity_ = size;
             return;
         }

@@ -105,6 +105,29 @@ bool FileStream::IsOpen() const {
     return handle_.handle != nullptr;
 }
 
+Result FileStream::Seek(SeekMode mode, unsigned long offset, unsigned long* position) {
+    if (!IsOpen()) {
+        return Result(-1);
+    }
+    switch (mode) {
+    case SeekMode_Current:
+        position_ += offset;
+        break;
+    case SeekMode_Begin:
+        position_ = offset;
+        break;
+    case SeekMode_End:
+        position_ = size_ - offset;
+        break;
+    default:
+        break;
+    }
+    if (position != nullptr) {
+        *position = position_;
+    }
+    return Result(0);
+}
+
 Result FileStream::Tell(unsigned long* position) {
     if (!IsOpen()) {
         return Result(-1);

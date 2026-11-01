@@ -14,6 +14,11 @@ public:
         buffer_[0] = 0;
     }
 
+    TextFixed& operator=(const TextRef& text) {
+        Set(text);
+        return *this;
+    }
+
     char16_t buffer_[T0];
 };
 }  // namespace ssd

@@ -202,6 +202,22 @@
         ],
         "source_root": "D:/Monolithsoft/BF2/prog",
         "units": {
+          "ssd/*": {
+            "compiler": "build/compilers/clang+llvm-4.0.1-x86_64-linux-gnu-debian8/bin/clang++",
+            "compiler_version": "clang version 4.0.1",
+            "clang_plugins": [],
+            "compiler_download": {
+              "url": "https://releases.llvm.org/4.0.1/clang+llvm-4.0.1-x86_64-linux-gnu-debian8.tar.xz",
+              "sha256": "ca48a4def4cbc9dd6af3f46ce1dc2bd903d26c7ad51387f57884ad1eaa58e42f"
+            }
+          },
+          "ssd/Delegate/MultiCast.cpp": {
+            "compiler": "build/compilers/clang+llvm-3.9.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang++",
+            "compiler_version": "clang version 3.9.1",
+            "clang_plugins": [
+              "bare-return-atexit"
+            ]
+          },
           "libs/mcl/mm_lib/source/*": {
             "source_root": "C:/MonolithSoft/BF2/prog",
             "extra_cflags": [

@@ -91,7 +91,7 @@ Result SoundBank::Init(int id, const TextRef& name) {
         return Result(-1);
     }
     id_ = id;
-    name_.Set(name);
+    name_ = name;
     static_cast<SystemCore*>(core)->AddBank(this);
     return set_result(Result(0));
 }

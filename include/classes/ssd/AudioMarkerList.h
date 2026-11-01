@@ -9,6 +9,9 @@ namespace ssd {
 class AudioMarkerList : public ::ssd::List< ::ssd::AudioMarker> {
 public:
     virtual ~AudioMarkerList() {}  // slot 0
+
+    // the first marker whose id_ is id, or null
+    AudioMarker* GetMarkerDataByID(int id);
 };
 }  // namespace ssd
 

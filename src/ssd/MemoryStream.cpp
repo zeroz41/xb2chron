@@ -19,6 +19,16 @@ bool MemoryStream::IsOpen() const {
     return data_ != nullptr;
 }
 
+Result MemoryStream::Open(void* data, unsigned long size, OpenMode mode) {
+    if (mode == OpenMode_Read) {
+        data_ = data;
+        size_ = size;
+        position_ = 0;
+        return Result(0);
+    }
+    return Result(-1);
+}
+
 Result MemoryStream::Close() {
     data_ = nullptr;
     return Result(0);
@@ -27,7 +37,7 @@ Result MemoryStream::Close() {
 Result MemoryStream::Read(unsigned long size, void* buffer, unsigned long* readSize) {
     unsigned long read = CheckAccessSize(size);
     if (read != 0) {
-        memcpy(buffer, &static_cast<unsigned char*>(data_)[position_], read);
+        memcpy(buffer, position_ + static_cast<unsigned char*>(data_), read);
         position_ += read;
     }
     if (readSize != nullptr) {
@@ -38,6 +48,26 @@ Result MemoryStream::Read(unsigned long size, void* buffer, unsigned long* readS
 
 Result MemoryStream::Write(unsigned long, const void*, unsigned long*) {
     return Result(-1);
+}
+
+Result MemoryStream::Seek(SeekMode mode, unsigned long offset, unsigned long* position) {
+    switch (mode) {
+    case SeekMode_Current:
+        position_ += CheckAccessSize(offset);
+        break;
+    case SeekMode_Begin:
+        position_ = CheckAccessSize(offset);
+        break;
+    case SeekMode_End: {
+        unsigned long size = CheckAccessSize(offset);
+        position_ = size_ - size;
+        break;
+    }
+    }
+    if (position != nullptr) {
+        *position = position_;
+    }
+    return Result(0);
 }
 
 Result MemoryStream::Tell(unsigned long* position) {

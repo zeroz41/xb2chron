@@ -8,7 +8,10 @@ namespace ssd {
 // its own destructor is inline; AudioFileBase's destructor deletes the markers in instance blocks of 0x248 bytes)
 class AudioMarker : public ::ssd::List< ::ssd::AudioMarker>::Node {
 public:
-    unsigned char pad_18[0x230];
+    // the marker's ID (AudioMarkerList::GetMarkerDataByID compares it as 16 bits, as an AIFF MARK entry's id;
+    // the name is inferred)
+    unsigned short id_;
+    unsigned char pad_1A[0x22E];
 };
 }  // namespace ssd
 

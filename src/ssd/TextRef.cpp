@@ -47,18 +47,17 @@ void TextRef::Set(const char16_t*) {
 void TextRef::GetText(MemoryBlock* block, TextEncodeType type) const {
     if (type_ == type) {
         unsigned long length = GetTextLength(utf8_);
-        void* buffer;
         if (type == TextEncodeType_Utf8) {
             char* text = SoundMemory::allocator_->NewBuffer<char>(length + 1);
             CopyText(text, utf8_, length + 1);
-            buffer = text;
+            block->address = text;
+            block->size = length;
         } else {
             char16_t* text = SoundMemory::allocator_->NewBuffer<char16_t>(length + 1);
             CopyText(text, tchar_, (length + 1) * sizeof(char16_t));
-            buffer = text;
+            block->address = text;
+            block->size = length;
         }
-        block->address = buffer;
-        block->size = length;
         return;
     }
     if (type_ == TextEncodeType_Utf8) {
