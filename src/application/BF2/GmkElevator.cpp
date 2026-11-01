@@ -3,6 +3,7 @@
 #include "classes/gmk/GmkPhantomManager.h"
 #include "classes/gmk/GmkLandmarkManager.h"
 #include "classes/gmk/GmkBgmCondInfoManager.h"
+#include "classes/gf/GfMenuObjLocationTelop.h"
 #include "classes/gmk/GmkSquadManager.h"
 #include "classes/gmk/TGmkActiveList.h"
 #include "classes/gmk/GmkManager.h"
@@ -1383,6 +1384,15 @@ void GmkRoute::debugDraw() const {
 IGmkList* GmkRoutedEnemy::getBindedRoutePointList() const {
     return static_cast<const GmkSet*>(m_list->getCreateInfo().m_param)->m_gmkLists[GmkRoutedEnemyPoint::TYPE];
 }
+
+GmkRouteNavi* GmkRoutedEnemy::findRouteNavi(gf::GF_OBJ_HANDLE* handle) const {
+    for (std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi>* it = m_navis.begin(); it != m_navis.end(); ++it) {
+        if (it->first == handle) {
+            return &it->second;
+        }
+    }
+    return nullptr;
+}
 gf::GF_OBJ_HANDLE* GmkNpc::getGobInst() const {
     if (m_npcIdInfo == nullptr) {
         return reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
@@ -1546,6 +1556,15 @@ IGmkList* GmkRoutedMapObj::getBindedRoutePointList() const {
 IGmkList* GmkRoutedMob::getBindedRoutePointList() const {
     return static_cast<const GmkSet*>(m_list->getCreateInfo().m_param)->m_gmkLists[20];
 }
+
+GmkRouteNavi* GmkRoutedMob::findRouteNavi(gf::GF_OBJ_HANDLE* handle) const {
+    for (std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi>* it = m_navis.begin(); it != m_navis.end(); ++it) {
+        if (it->first == handle) {
+            return &it->second;
+        }
+    }
+    return nullptr;
+}
 IGmkList* GmkRoute::getBindedRoutePointList() const {
     return static_cast<const GmkSet*>(m_list->getCreateInfo().m_param)->m_gmkLists[GmkRoutePoint::TYPE];
 }
@@ -1670,6 +1689,17 @@ const mm::Vec3& getPlayerPos() {
     }
     gf::GfObj* obj = gf::GfObjUtil::getObj(gf::GfGameManager::fn_71002AA074());
     return obj->getComponent<gf::GfComTransform>(0)->getPosition();
+}
+
+AGmkBase* getBindedGmkInst(gf::GF_OBJ_HANDLE* handle) {
+    if (handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return nullptr;
+    }
+    gf::GfObjAcc acc(handle);
+    if (acc.m_obj == nullptr || acc.isDestroy() || acc.testFlag(0x11) || acc.getObj() == nullptr) {
+        return nullptr;
+    }
+    return reinterpret_cast<AGmkBase*>(acc.getUserData(gf::GfObjUserData(0)));
 }
 
 bool isNaviMeshExist(const mm::Vec3& pos) {
@@ -2006,6 +2036,11 @@ void GmkDmgGimmick::debugDraw() const {
 GmkDmgGimmick::~GmkDmgGimmick() { dispose(); }
 
 GmkAntiBladeArea::~GmkAntiBladeArea() { dispose(); }
+
+void GmkAntiBladeAreaManager::dispose() {
+    m_active = nullptr;
+    m_areas.clear();
+}
 
 // ---- GmkSalvageLocator
 GmkSalvageLocator::~GmkSalvageLocator() { dispose(); }
@@ -2840,6 +2875,12 @@ void GmkAreaBgm::dispose() {
     AGmkBase::dispose();
 }
 
+void GmkAreaBgm::onLeavePhantom(const IGmkPhantomEventListener::OnLeaveInfo&) {
+    for (int i = 0; i < 4; i++) {
+        m_condInfos[i].dispose();
+    }
+}
+
 void GmkSe::dispose() {
     if (m_seHandle != 0) {
         mm::mtl::PtrSingleton<fw::SoundManager>::sys()->stopSe(m_seHandle, 1.0f);
@@ -3070,6 +3111,17 @@ void GmkMob::dispose() {
 
 GmkMob::~GmkMob() { dispose(); }
 
+void GmkMobInsts::validateDisp(gf::GF_OBJ_HANDLE* handle) const {
+    if (AGmkBase* gmk = getBindedGmkInst(handle)) {
+        gmk->getGmkType();
+        bool disp = pad_a0;
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setDisp(gf::OBJDISP(8), disp);
+        }
+    }
+}
+
 void GmkRoutedMob::dispose() {
     if (m_navis.size() != 0) {
         m_navis.destroy();
@@ -3146,8 +3198,48 @@ unsigned char* GmkRoutedNpc::getBindedBdatFp() const { return m_list->getBindedB
 
 int GmkRoutedNpc::getBindedBdatId() const { return m_createInfo.m_bdatId; }
 
+void GmkNpcList::createGmk(void* data) {
+    TGmkList::createGmk(data);
+    GmkSet* set = static_cast<GmkSet*>(getCreateInfo().m_param);
+    unsigned int num = getInstNum();
+    for (unsigned int i = 0; i < num; i++) {
+        set->m_npcManager.addGmkNpc(&m_gmks[i]);
+    }
+}
+
+void GmkNpcList::disposeGmk() {
+    GmkSet* set = static_cast<GmkSet*>(getCreateInfo().m_param);
+    if (set != nullptr) {
+        unsigned int num = getInstNum();
+        for (unsigned int i = 0; i < num; i++) {
+            set->m_npcManager.removeGmkNpc(&m_gmks[i]);
+        }
+    }
+    TGmkList::disposeGmk();
+}
+
 GmkNpcList::~GmkNpcList() {
     dispose();
+}
+
+void GmkRoutedNpcList::createGmk(void* data) {
+    TGmkList::createGmk(data);
+    GmkSet* set = static_cast<GmkSet*>(getCreateInfo().m_param);
+    unsigned int num = getInstNum();
+    for (unsigned int i = 0; i < num; i++) {
+        set->m_npcManager.addGmkNpc(&m_gmks[i]);
+    }
+}
+
+void GmkRoutedNpcList::disposeGmk() {
+    GmkSet* set = static_cast<GmkSet*>(getCreateInfo().m_param);
+    if (set != nullptr) {
+        unsigned int num = getInstNum();
+        for (unsigned int i = 0; i < num; i++) {
+            set->m_npcManager.removeGmkNpc(&m_gmks[i]);
+        }
+    }
+    TGmkList::disposeGmk();
 }
 
 GmkRoutedNpcList::~GmkRoutedNpcList() {
@@ -3263,6 +3355,45 @@ void GmkBdat::seqWaitResourceLoaded(float) {
 
 GmkLandmarkManager::~GmkLandmarkManager() {
     dispose();
+}
+
+void GmkLandmark::onLeavePhantom(const IGmkPhantomEventListener::OnLeaveInfo&) {
+    if (gf::GfGameManager::fn_71002A9E68() && gf::GfGameManager::fn_71002AA074() == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    if (!pad_f1) {
+        return;
+    }
+    pad_f1 = false;
+    gf::GfMenuObjLocationTelop::cancel();
+    if (GmkLandmarkManager::sys() != nullptr) {
+        GmkLandmarkManager::sys()->m_list.remove(this);
+        if (GmkLandmarkManager::sys()->m_list.empty()) {
+            GmkLandmarkManager::sys()->m_currentLandmark = nullptr;
+        } else {
+            GmkLandmarkManager::sys()->m_currentLandmark = GmkLandmarkManager::sys()->m_list.front();
+        }
+    }
+}
+
+void GmkLandmarkManager::addGmkLandmark(GmkLandmark* landmark) {
+    unsigned char category = landmark->getBdatInfo()->m_category;
+    GmkLandmarkManager* manager = sys();
+    mm::mtl::IntrusiveList<GmkLandmark>::iterator it = manager->m_list.begin();
+    for (; it != manager->m_list.end(); ++it) {
+        if (it->getBdatInfo()->m_category >= category) {
+            manager->m_list.insert_before(it, landmark);
+            goto inserted;
+        }
+    }
+    manager->m_list.push_back(landmark);
+inserted:
+    sys()->m_currentLandmark = sys()->m_list.front();
+}
+
+void GmkLandmarkManager::dispose() {
+    m_currentLandmark = nullptr;
+    m_list.clear();
 }
 
 GmkSquadManager::~GmkSquadManager() {
@@ -4640,6 +4771,24 @@ bool GmkEnemyInsts::isQuestDead() const {
         }
     }
     return true;
+}
+
+void GmkEnemyInsts::validateDisp(gf::GF_OBJ_HANDLE* handle) const {
+    if (AGmkBase* gmk = getBindedGmkInst(handle)) {
+        gmk->getGmkType();
+        bool disp = pad_140 != 0;
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setDisp(gf::OBJDISP(8), disp);
+        }
+    }
+}
+
+void GmkEnemyInsts::validateDisp() const {
+    unsigned int num = m_popInfo.getGobInstNum();
+    for (unsigned int i = 0; i < num; i++) {
+        validateDisp(getGobInst(i));
+    }
 }
 
 bool GmkEnemyInsts::reqClearRepopCounter() const {

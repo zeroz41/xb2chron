@@ -14,10 +14,13 @@ public:
     virtual ~GmkLandmarkManager();  // slot 0
     // not virtual: the destructor and its callers call it directly
     void dispose();
+    // landmark linked before the first landmark of the same or a higher category (BdatInfo::m_category), last when
+    // none; m_currentLandmark then the list's first
+    static void addGmkLandmark(GmkLandmark* landmark);
     // inline: GmkManager's constructor inlines it (no symbol)
     GmkLandmarkManager() : m_currentLandmark(nullptr) {}
-    // 0x8: a list (GmkManager's constructor builds it; its element type and name are not known)
-    mm::mtl::IntrusiveListBase m_list;
+    // 0x8: the landmarks (GmkManager's constructor builds it; each links its 0x50 base; the name is not known)
+    mm::mtl::IntrusiveList<GmkLandmark> m_list;
     // the landmark entered last (GmkLandmark::onLeavePhantom sets it to the front of the entered list, null when that
     // empties; the name is not the original's)
     GmkLandmark* m_currentLandmark;  // 0x20

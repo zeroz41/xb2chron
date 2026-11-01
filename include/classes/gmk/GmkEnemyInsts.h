@@ -141,6 +141,10 @@ public:
     void disposeGobInsts(bool, bool);
     gf::GF_OBJ_HANDLE* getGobInst(unsigned int index) const;  // the handle of one of them
     bool isQuestDead() const;
+    // shows or hides one of its objects by pad_140 (display bit 8) when the object is bound to a gimmick
+    void validateDisp(gf::GF_OBJ_HANDLE* handle) const;
+    // every object's display by validateDisp(handle)
+    void validateDisp() const;
     // pops the gimmick's objects now (GfSmnEnemyManager::execAbsSummon)
     void reqForcePopGobInst(const ForcePopEnemyInfo& info) const;
     // asks a running repop counter to restart from 0 (true when the sequence is seqUpdateRepopCounter)

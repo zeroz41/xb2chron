@@ -26,6 +26,8 @@ public:
     virtual void debugDraw() const;  // slot 7
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
     virtual IGmkList* getBindedRoutePointList() const;  // slot 11
+    // the route navigation of one of its objects (null when the object has none)
+    GmkRouteNavi* findRouteNavi(gf::GF_OBJ_HANDLE* handle) const;
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(19);
     // its game objects, as GmkManager::collectGameObjsUnbound<T> reads them inline (-1: none; the names are not
@@ -37,7 +39,8 @@ public:
     GmkMobInsts m_insts;
     // 0x120: each object's route navigator (dispose destroys it when it has any, with destruct_n<std::pair<
     // GF_OBJ_HANDLE*, GmkRouteNavi>>; the name is not the original's); size 0x148 from TGmkList::getInst's stride
-    mm::mtl::Vector<std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi> > m_navis;
+    // mutable: the const findRouteNavi walks it with the non-const begin()/end() (vector.h line 68 asserts)
+    mutable mm::mtl::Vector<std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi> > m_navis;
 };
 }  // namespace gmk
 

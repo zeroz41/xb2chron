@@ -8,15 +8,13 @@
 namespace gmk { class GmkLandmarkGob; }
 
 namespace gmk {
-// a base of gmk::GmkLandmark no evidence names yet
-class TUnk_B6C7B0 {
-public:
-    virtual void onEnterPhantom(gmk::IGmkPhantomEventListener::OnEnterInfo const&) = 0;
-    virtual void vf1();
-};
-// table 0x7100B6C738; base at 0x48 unknown (TUnk_B6C7B0)
+// table 0x7100B6C738; base at 0x48 IGmkPhantomEventListener (its secondary table 0x7100B6C7B0: offset -0x48, the
+// override thunks of onEnterPhantom and onLeavePhantom, slot 16 0x710059A610 calls onLeavePhantom with this - 0x48);
+// base at 0x50 mm::mtl::IntrusiveListNodeBase: GmkLandmarkManager's list links it there (addGmkLandmark,
+// onLeavePhantom and GmkLandmarkManager::dispose find the landmark at node - 0x50)
 // 16-aligned: TGmkList::createGmk reserves its Vector with alignment 16 (the 16-aligned field is not typed yet)
-class alignas(16) GmkLandmark : public ::gmk::AGmkBase, public TUnk_B6C7B0 {
+class alignas(16) GmkLandmark : public ::gmk::AGmkBase, public IGmkPhantomEventListener,
+                                public ::mm::mtl::IntrusiveListNodeBase {
 public:
     // its size: the element size of Vector<BdatInfo>::resize 0x71005F51B8 (whose constructor sets its fields; their defaults are not written yet)
     class BdatInfo {
@@ -48,9 +46,12 @@ public:
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(21);
     void disposeGmkPhantom();
-    unsigned char pad_50[0x10];
     GmkPhantom m_phantom;  // 0x60: the destructor destroys it (the name is not the original's)
-    unsigned char pad_f0[0x10];  // fields: size from TGmkList::getInst's stride (0x100)
+    unsigned char pad_f0;
+    // 0xf1: onLeavePhantom cancels the location telop and leaves GmkLandmarkManager's list only while it is set,
+    // clearing it (the name is not known)
+    bool pad_f1;
+    unsigned char pad_f2[0xe];  // fields: size from TGmkList::getInst's stride (0x100)
 };
 }  // namespace gmk
 

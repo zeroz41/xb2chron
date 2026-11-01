@@ -43,7 +43,8 @@ public:
     // 0x1d8: each object's route navigator (the destructor destroys it with destruct_n<std::pair<GF_OBJ_HANDLE*,
     // GmkRouteNavi>>; copy_construct_n<gmk::GmkRoutedEnemy> assigns it; the name is not the original's); size 0x200:
     // TGmkList<GmkRoutedEnemy>::getInst's stride (index << 9)
-    mm::mtl::Vector<std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi> > m_navis;
+    // mutable: the const findRouteNavi walks it with the non-const begin()/end() (vector.h line 68 asserts)
+    mutable mm::mtl::Vector<std::pair<gf::GF_OBJ_HANDLE*, GmkRouteNavi> > m_navis;
 };
 }  // namespace gmk
 

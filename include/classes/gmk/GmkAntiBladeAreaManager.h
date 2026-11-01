@@ -14,7 +14,8 @@ public:
     virtual ~GmkAntiBladeAreaManager();  // slot 0
     void dispose();
     // the areas addGmk registered (GfFieldGimmick's constructor builds it; the name is not the original's)
-    ::mm::mtl::IntrusiveListBase m_areas;
+    // (dispose erases each element, the node at GmkAntiBladeArea's 0x50 base)
+    ::mm::mtl::IntrusiveList< ::gmk::GmkAntiBladeArea> m_areas;
     // the area the player is in, none outside every area (GfFieldGimmick::getBdatIdOfActiveGmkAntiBladeArea reads
     // its row id; the name is not the original's)
     GmkAntiBladeArea* m_active;

@@ -29,6 +29,10 @@ public:
     void update(float dt);
     const GmkNpcIdInfo* getNpcIdInfoByNpcId(int npcId) const;
     static int getNpcIdInfoIdxFromNpcId(int npcId);
+    // an NPC gimmick entered into / taken out of its NPC id's entry (GmkNpcList's and GmkRoutedNpcList's createGmk
+    // and disposeGmk pass each gimmick's AGmkNpc base)
+    void addGmkNpc(AGmkNpc* npc);
+    void removeGmkNpc(AGmkNpc* npc);
     // 0x8: its NPC ids' entries (the destructor destroys them; the name is not the original's)
     ::mm::mtl::Vector<GmkNpcIdInfo> m_npcIdInfos;
 };

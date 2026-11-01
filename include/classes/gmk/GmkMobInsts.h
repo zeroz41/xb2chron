@@ -29,13 +29,17 @@ public:
         }
     }
     void dispose();
+    // shows or hides one of its objects by pad_a0 (display bit 8) when the object is bound to a gimmick
+    void validateDisp(gf::GF_OBJ_HANDLE* handle) const;
     void disposeGobInsts(bool);
     unsigned char pad_0[0x90];
     void* pad_90;
     // 0x98: 1 makes the pop finders pop at the gimmick's own position, else somewhere in its shape
     // (GmkMob::PopXformFinder::findPosRot)
     int pad_98;
-    unsigned char pad_9c[0xc];
+    unsigned char pad_9c[0x4];
+    bool pad_a0;  // validateDisp(handle) shows the objects while it is set
+    unsigned char pad_a1[0x7];
     mm::mtl::Vector<gf::GF_OBJ_HANDLE*>* m_gobInsts;  // 0xa8: GmkMob's game objects (the name is not the original's)
     // 0xb0: the squad its objects join; the pop finders place the objects by it while it has room (the name is not
     // the original's)
