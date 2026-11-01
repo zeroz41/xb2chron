@@ -2034,6 +2034,21 @@ bool DevFileJobValidNxTh::asyncUpdate() {
     return false;
 }
 
+bool DevFileArchiver::getFileInfo(MEDIA media, const char* path, FileInfoResult& result) const {
+    const MediaArchives& list = m_medias[media];
+    for (Archive* const* it = list.m_archives.begin(); it != list.m_archives.end(); ++it) {
+        const Archive* archive = *it;
+        int id = archive->m_dictionary.exactMatchSearch(path);
+        if (id >= 0) {
+            result.m_media = media;
+            result.m_entry = archive->m_files[id];
+            result.m_archiveName = archive->m_name84;
+            return true;
+        }
+    }
+    return false;
+}
+
 DevFileBlackListNxTh::~DevFileBlackListNxTh() {
     if (m_buffer != nullptr) {
         mtl::MemManager::deallocate(m_buffer, 0, false);

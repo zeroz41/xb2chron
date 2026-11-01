@@ -12,7 +12,8 @@ namespace ml { enum ERR_DECIDE : int; }
 namespace ml { class DevFileParamTh; }
 namespace ml { class FileHandleTh; }
 namespace ml { class IDevFileEvent; }
-namespace ml { enum MEDIA : int; }
+// MEDIA is unsigned: DevFileArchiver::getFileInfo zero-extends it to index m_medias (umaddl)
+namespace ml { enum MEDIA : unsigned int; }
 namespace mm { namespace mtl { template <int LEN> class FixStr; } }
 
 namespace ml {
