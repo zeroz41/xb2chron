@@ -11,6 +11,8 @@
 #include "classes/ml/DevFileArchiveNx.h"
 #include "classes/ml/DevFileNxTh.h"
 #include "classes/ml/DevFileTh.h"
+#include "classes/ml/DevFileArchiver.h"
+#include "classes/ml/DevFileJob.h"
 #include "classes/ml/DevFileJobValidArcNxTh.h"
 #include "classes/ml/DevFileJobValidNxTh.h"
 #include "classes/ml/DevFileWriterNx.h"
@@ -918,6 +920,11 @@ mtl::ALLOC_HANDLE device_detail::hMemFile;
 namespace {
 mm::mtl::FixStr<64> s_name08;  // +0x8 (Device::isAllReady/isColdStartReady read it)
 mm::mtl::FixStr<64> s_name4C;  // +0x4C
+}  // namespace
+
+mm::mtl::FixedList<unsigned int, 512> DevFileJob::s_jobs;
+
+namespace {
 DevSettingNx::LangCode s_langCodes[15] = {  // +0x2E8 (DevSettingNx::getLang)
     DevSettingNx::LangCode(LangType(0), "ja"),     DevSettingNx::LangCode(LangType(1), "en-US"),
     DevSettingNx::LangCode(LangType(2), "fr"),     DevSettingNx::LangCode(LangType(3), "de"),
@@ -2379,6 +2386,24 @@ void FileResTh::setMem(void* data, int size, const char* path, bool ownsData) {
     m_data = data;
     m_size = size;
     SetName(PathUtil::getFilePtrFromPath(path));
+}
+
+DevFileArchiver::DevFileArchiver(mtl::ALLOC_HANDLE handle) : m_handle(handle), m_dicAllocator(handle) {
+    for (int i = 0; i < 8; i++) {
+        m_medias[i].m_media = static_cast<MEDIA>(i);
+        m_medias[i].m_valid = true;
+    }
+}
+
+DevFileArchiver::~DevFileArchiver() {
+    for (int i = 0; i < 8; i++) {
+        for (Archive** it = m_medias[i].m_archives.begin(); it != m_medias[i].m_archives.end(); ++it) {
+            if (*it != nullptr) {
+                delete *it;
+            }
+        }
+        m_medias[i].m_archives.clear();
+    }
 }
 
 int DevPad::getPadMax() {
