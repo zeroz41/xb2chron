@@ -1982,6 +1982,20 @@ void pad_detail::VibrationNodeThreadFunction(void*) {
     nn::os::StopTimerEvent(&g_TimerEvent);
 }
 
+void DevPadNx::Impl::stateInitialize(float) {
+    nn::hid::InitializeNpad();
+    initPad();
+    pad_detail::g_IsQuitRequired = false;
+    nn::os::InitializeTimerEvent(&pad_detail::g_TimerEvent, nn::os::EventClearMode_AutoClear);
+    nn::os::CreateThread(&pad_detail::g_thread, pad_detail::VibrationNodeThreadFunction, nullptr,
+                         pad_detail::g_ThreadStack1, sizeof(pad_detail::g_ThreadStack1), 16);
+    nn::os::StartThread(&pad_detail::g_thread);
+    nn::os::StartPeriodicTimerEvent(&pad_detail::g_TimerEvent, nn::hid::VibrationNode::DefaultVibrationSampleInterval,
+                                    nn::hid::VibrationNode::DefaultVibrationSampleInterval);
+    m_stateId = 2;
+    m_state.set(this, &Impl::stateUpdate);
+}
+
 void DevPadNx::Impl::stateUpdate(float) {
     if (m_stateId == 2) {
         updateNpad();
