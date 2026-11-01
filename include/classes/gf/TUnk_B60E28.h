@@ -49,6 +49,16 @@ public:
     // LAY_chain has that many LAY_chain@NN), hides IMG_chain_recast@NN and colours IMG_chain_face@NN white when
     // m_chainFlags[index] has bit 2, else shows the recast and colours the face gray. Caller: fn_71003C6EBC.
     void fn_71003C5164(unsigned int index);
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. fn_71003C4450 refreshes LAY_char2 for
+    // a bool mode (false from fn_71003C5278, true from fn_71003C5408). fn_71003C4DFC: for character index (0 or 1,
+    // LAY_main's IMG_char2_recast@NN there), shows the recast and colours the faces by m_charFlags[index] (caller:
+    // fn_71003C56C0). fn_71003C5278: refreshes with false and, unless pad_1C0, slides LAY_char2@01/@02 apart by the
+    // distance between LAY_char2's active_up and active_down rectangles. fn_71003C5408: refreshes with true and
+    // moves LAY_char2_active@NN/LAY_char2_reserve@NN of each blade-owning driver 0/1 (callers: fn_71003C56C0).
+    void fn_71003C4450(bool mode);
+    void fn_71003C4DFC(unsigned int index);
+    void fn_71003C5278();
+    void fn_71003C5408();
 
     unsigned int pad_24;  // -1 from the constructor
     bool pad_28;
@@ -56,13 +66,25 @@ public:
     bool pad_2A;          // true from the constructor
     unsigned char pad_2B[5];
     GfMenuSequence<TUnk_B60E28, 4> m_seq;  // 0x30
-    unsigned int pad_190[3];
+    // the two characters' flags (LAY_char2 @01/@02): fn_71003C4DFC shows character N's recast with bit 1 clear and
+    // plays its "select" animation once with bit 2 (then clears bit 2); the name is not the original's
+    unsigned int m_charFlags[3];
     // the chain's members' flags: fn_71003C5164 shows member N's recast lit with bit 2 (value-initialized with
-    // pad_190: the constructor zeroes 0x190-0x1B3; the name is not the original's)
-    unsigned int m_chainFlags[6];
-    unsigned int pad_1B4;
-    unsigned int pad_1B8;  // -1 from the constructor
-    unsigned int pad_1BC;
+    // m_charFlags: the constructor zeroes 0x190-0x1AF; the name is not the original's)
+    unsigned int m_chainFlags[3];
+    unsigned int pad_1A8;
+    unsigned int pad_1AC;
+    unsigned int pad_1B0;  // fn_71003C5408 moves the active/reserve rows only while it is not 0
+    // what update last gave GfMenuReference::fn_7100368380 for bits 0 and 1 (the party's second and third
+    // characters shown while pad_1B8 is -1)
+    bool pad_1B4;
+    bool pad_1B5;
+    unsigned char pad_1B6[2];
+    unsigned int pad_1B8;  // -1 from the constructor; update sets it back to -1 once GfReqManager::isValid fails
+    bool pad_1BC;  // update: GfGameManager::isBattle() as last sent (event 0x10E to LAY_main)
+    bool pad_1BD;  // update: GfMenuManager::isBattleState(0) as last sent (event 0x110 to LAY_main), outside battle
+    bool pad_1BE;
+    bool pad_1BF;
     bool pad_1C0;
     GfMenuArtsList* m_artsList;  // 0x1C8: made by the constructor (two rows, one column), released by the destructor
 };
