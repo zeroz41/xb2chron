@@ -11,6 +11,8 @@
 #include "classes/ml/DrResMdoSortGrp.h"
 #include "classes/ml/DrResMdoSortSeamEnvMap.h"
 #include "classes/ml/DrResMdoSortCloud.h"
+#include "classes/ml/DrMdlBase.h"
+#include "classes/cloud/CloudMan.h"
 #include "classes/ml/DrShdLgtClustered.h"
 #include "classes/navi/NvmshAcObjBaseGbl.h"
 #include "ml/DrResEtcParams.h"
@@ -561,6 +563,12 @@ DrResMdoSortCloud::DrResMdoSortCloud(void* owner) : DrMdoZSortObj(owner) {}
 
 DrResMdoSortCloud::~DrResMdoSortCloud() {}
 
+void DrResMdoSortCloud::alphaRender() {
+    cloud::CloudMan* cloudMan = static_cast<cloud::CloudMan*>(m_owner);
+    DrMan* man = DrMan::getIns();
+    cloudMan->alphaRender(&man->m_drawWorkInfo[man->m_postParmIdx]);
+}
+
 float DrResEtcParams::getParams() const {
     return m_params;
 }
@@ -805,6 +813,12 @@ DrResMdoTexList::DrResMdoTexList(const unsigned char* data, DrCalcStmListObj* st
     createTexList(m_data, m_mem);
 }
 
+DrResMdoTexList::~DrResMdoTexList() {
+    releaseTexInfo();
+    m_pool.release();
+    m_flags = 0;
+}
+
 void DrResMdoTexList::update() {
     texStmUpdate();
     m_flags &= ~(FLAG_STM_READ | FLAG_STM_READ_ALL);
@@ -893,6 +907,14 @@ int DrResMdoUniformBlock::getRimBloomCalcUniformBlockSize() {
 
 int DrResMdoUniformBlock::getMpfMaterialUniformBlockSize() {
     return 0x30;
+}
+
+int DrResMdoUniformBlock::getValWork(int type, int num) {
+    int size = s_nVarSizeTbl[type];
+    if (num == 0) {
+        num = 1;
+    }
+    return size * num * 4;
 }
 
 void DrResFetch::vert_set_VEC3(int offset, unsigned int location, grlib::CGLibVtxAttr& attr) {
@@ -4716,10 +4738,34 @@ unsigned int DrResMdoInstMdlInfo::create(unsigned char* work, DrResMdoInstMdlInf
     out = info;
     info->m_name[0] = '\0';
     info->pad_110 = 0;
-    info->pad_120 = 0;
+    info->m_deleteFlags = 0;
     info->m_num = 0;
     info->m_list = nullptr;
     return out->setup(work + sizeof(DrResMdoInstMdlInfo), data, name);
+}
+
+void DrResMdoInstMdlInfo::releaseCall() {
+    for (int i = 0; i < m_num; i++) {
+        DrMdlBase* mdl = m_list[i].m_mdl;
+        if (mdl != nullptr) {
+            mdl->setDeleteCall(DrMan::s_nDblStockIdx);
+        }
+    }
+    m_num = 0;
+    m_deleteFlags |= 2 << DrMan::s_nDblStockIdx;
+}
+
+void DrResMdoInstMdlInfo::release(DrResMdoInstMdlInfo*& info) {
+    DrResMdoInstMdlInfo* obj = info;
+    for (int i = 0; i < obj->m_num; i++) {
+        Entry& entry = obj->m_list[i];
+        if (entry.m_mdl != nullptr) {
+            entry.m_mdl->setDeleteCall(DrMan::s_nDblStockIdx);
+            entry.m_mdl = nullptr;
+        }
+    }
+    obj->m_num = 0;
+    info = nullptr;
 }
 
 DrResMdoSeamMemMan::DrResMdoSeamMemMan() {

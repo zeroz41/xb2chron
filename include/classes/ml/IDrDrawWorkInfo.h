@@ -13,6 +13,7 @@ public:
     unsigned char pad_C0[0x4A0];
     // layer::LayerManager's apply and finalRender draw only when it is 0 (the name is not the original's)
     int m_subPass;
+    unsigned char pad_564[0x1C];  // sizeof 0x580: DrMan keeps one per view at 0x660
 };
 }  // namespace ml
 

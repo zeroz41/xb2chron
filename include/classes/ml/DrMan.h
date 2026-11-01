@@ -4,6 +4,7 @@
 #include "mtl/AllocHandle.h"
 #include "classes/ml/IWorkBackground.h"
 #include "mm/Vec3.h"
+#include "classes/ml/IDrDrawWorkInfo.h"
 
 namespace cloud { class CloudMan; }
 namespace grlib { class CGLibTextureBuffer; }
@@ -194,7 +195,10 @@ public:
     unsigned char pad_5D0[0x8];
     IDrDrawCallback* m_callBack[16];    // 0x5D8, setCallBack/releaseCallBack
     int m_callBackNum;                  // 0x658
-    unsigned char pad_65C[0x1604];
+    unsigned char pad_65C[0x4];
+    // 0x660: one per view; DrResMdoSortCloud::alphaRender hands the one m_postParmIdx selects to
+    // cloud::CloudMan::alphaRender (the name is not the original's)
+    IDrDrawWorkInfo m_drawWorkInfo[4];
     // 0x1C60: DrPixlTileParm::update turns tiled caching on (table 1) while it is 0, and
     // DrPixlPostParm::getTMAASharpness then reads its second table (the name is not the original's)
     int m_qualityMode;
