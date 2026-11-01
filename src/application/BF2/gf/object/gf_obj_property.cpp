@@ -113,8 +113,8 @@ GfObjPropertyEnemy::GfObjPropertyEnemy(GF_OBJ_HANDLE* handle) : GfObjProperty(ha
     m_scout = false;
     pad_C3 = 0;
     m_artsId = 0;
-    pad_C8 = 0;
-    pad_D0 = 0;
+    m_artsNameId = 0;
+    m_artsNameBdat = nullptr;
     m_weakAttr = 0;
     m_elementComboId = 0;
     m_elementComboTime = 0.0f;

@@ -20,8 +20,10 @@ public:
     bool m_scout;
     unsigned char pad_C3;
     unsigned int m_artsId;  // the art it is using (0: none)
-    unsigned int pad_C8;
-    unsigned long pad_D0;
+    // a message for the art (TUnk_B64F50::reciveEvent shows it in TXT_arts, its id as 16 bits, 0 read as 1) and
+    // the message data it is in (the names are not the original's)
+    unsigned int m_artsNameId;
+    unsigned char* m_artsNameBdat;
     unsigned int m_weakAttr;  // bit n: weak to element n (1..8)
     // the elemental combo on the enemy and its level (1.0.0's GfMenuElementComboAdapter::getTargetElementComboId
     // and getTargetElementComboLv return them; the field names are not the original's)

@@ -45,8 +45,8 @@ public:
     // (the close event); fn_7100495820 hides the parts and plays se_btl_bl_shulk19; fn_71004958B4 waits for
     // m_animHandle's animation.
     // fn_7100494F1C, fn_71004950AC and fn_710049523C fade LAY_en, LAY_arts and LAY_char in one after another (each
-    // queues a 3-frame wait and the next); fn_710049553C shows IMG_eff's start animation and queues fn_7100495820,
-    // fn_71004958B4 and fn_7100495918
+    // queues a 3-frame wait and the next); fn_710049553C shows IMG_eff's start animation and queues a 9-frame wait,
+    // fn_7100495820, fn_71004958B4 and fn_7100495918
     bool fn_7100494DEC();
     bool fn_7100494F1C();
     bool fn_71004950AC();
@@ -73,7 +73,10 @@ public:
     // its code zeroes 0xC-0x1B after storing its table: its own fields, as other menus' listeners use theirs
     TUnk_B64F50(TUnk_B64F08* owner) : pad_0C(), m_owner(owner) {}
     virtual ~TUnk_B64F50() {}  // slot 0: its D1 slot is the base's destructor
-    virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
+    // slot 2. 0x21 (fn_7100494708's open): shows the driver (0: the set one) and the art's name in TXT_arts (the
+    // event's message, else the target enemy's) and restarts the sequence at fn_7100494DEC; 1 hides the object;
+    // 0x22 ends the call context, clears the sequence and hides the parts; 0x100: 3 closes, others are m_result
+    virtual void reciveEvent(ui::EventData const&, unsigned int);
     unsigned char pad_0C[0x10];
     TUnk_B64F08* m_owner;  // what initialize makes it for
 };
