@@ -2,15 +2,20 @@
 #define CLASSES_GF_GFMENUOBJBLADECHANGE_BLADELISTENER_H
 
 #include "classes/gf/GfMenuObjBladeChange.h"
+#include "classes/ui/UIObjectListener.h"
 
-namespace ui { class EventData; }
+namespace ui { struct EventData; }
 
 namespace gf {
 // table 0x7100B5FEC0
-class GfMenuObjBladeChange::BladeListener {
+class GfMenuObjBladeChange::BladeListener : public ::ui::UIObjectListener {
 public:
-    virtual ~BladeListener();  // slot 0
+    // initialize news it (0x28 bytes) for LAY_main: its code zeroes 0xC-0x1B and stores the owner
+    BladeListener(GfMenuObjBladeChange* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~BladeListener() {}  // slot 0: weak in the original (its D0 is in the unit's tail)
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
+    unsigned char pad_0C[0x10];  // reciveEvent compares 0xC with an end event's parameter and clears 0x10 on event 1
+    GfMenuObjBladeChange* m_owner;  // what initialize makes it for
 };
 }  // namespace gf
 
