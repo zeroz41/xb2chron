@@ -350,6 +350,29 @@ bool LayerActDef::actcmd_animicon(const unsigned char*& cmd) {
     cmd = cmd + reinterpret_cast<const unsigned short*>(anim)[1] * 2 + 0xC;
     return wait;
 }
+bool LayerActDef::actcmd_animfrm(const unsigned char*& cmd) {
+    if (m_actionData->m_flags & LyrActionData::FLAG_CMD_START) {
+        const unsigned short* anim = reinterpret_cast<const unsigned short*>(cmd);
+        m_texRefs->m_frameStart = anim[2];
+        m_texRefs->m_frameEnd = anim[3];
+        m_frames->m_frame = m_texRefs->m_frameStart;
+    }
+    m_frames->m_frame = m_texRefs->m_frameStart + m_actionData->m_runningSec * m_texRefs->m_anim->m_frameRate;
+    cmd += 8;
+    return !(m_texRefs->m_frameEnd <= m_frames->m_frame);
+}
+bool LayerActDef::actcmd_animdef(const unsigned char*& cmd) {
+    int num = static_cast<const ResData*>(m_resData)->m_frameNum;
+    for (int i = 0; i < num; i++) {
+        m_frames[i].m_frame = 0.0f;
+        m_frames[i].pad_4 = 0.0f;
+    }
+    m_texRefs->m_frameEnd = m_texRefs->m_anim->m_frameNum;
+    m_texRefs->m_frameStart = 0.0f;
+    m_frameTime = 0.0f;
+    cmd += 4;
+    return false;
+}
 bool LayerActLayout::actcmd_notcmd01(const unsigned char*& cmd) {
     cmd += 4;
     return false;
@@ -411,6 +434,31 @@ void LayerObjDraw::draw_call_icon(grlib::CGLibDblUniformBlock* block, const LyrD
             shdManager->setupTexture(*m_textures[refs[i].m_texIdx], static_cast<LayerSamplerType>(m_texFilterType), i);
         }
     }
+    shdManager->renderQuadsIndex();
+}
+void LayerObjDraw::draw_call_number(grlib::CGLibDblUniformBlock* block, const LyrDrawData* data) {
+    LayerShdManager* shdManager = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager;
+    shdManager->setupVertex(static_cast<LayerDefVertType>(2));
+    shdManager->m_select.m_shaderType = 5;
+    shdManager->setupShader(block);
+    shdManager->setupInstaceVertex(*m_texRefs->m_number->m_instans, 0x24, 0);
+    unsigned char texNum = data->m_texNum;
+    if (texNum != 0) {
+        const TexRef* refs = m_texRefs->m_refs + data->m_texIdx;
+        for (unsigned int i = 0; i != texNum; i++) {
+            shdManager->setupTexture(*m_textures[refs[i].m_texIdx], static_cast<LayerSamplerType>(m_texFilterType), i);
+        }
+    }
+    shdManager->renderInstaceQuadsIndex(m_texRefs->m_number->m_num);
+}
+void LayerObjDraw::draw_call_hdr(grlib::CGLibDblUniformBlock* block, const LyrDrawData* data) {
+    LayerShdManager* shdManager = mm::mtl::PtrSingleton<LayerManager>::sys()->m_shdManager;
+    shdManager->setupVertex(static_cast<LayerDefVertType>(1));
+    shdManager->m_select.m_shaderType = 10;
+    shdManager->setupShader(block);
+    const TexRef* ref = m_texRefs->m_refs + data->m_texIdx;
+    shdManager->setupTexture(*m_textures[ref->m_texIdx], static_cast<LayerSamplerType>(m_texFilterType), 0);
+    shdManager->setupTexture(shdManager->m_lut, static_cast<LayerSamplerType>(m_texFilterType), 1);
     shdManager->renderQuadsIndex();
 }
 // frees a text work and its in-place buffers (inline in workRelease, setMsg and applyPartsSetup; the name is not
@@ -535,6 +583,26 @@ void LayerObjManager::finalRender(const ml::IDrDrawWorkInfo* info) {
 void LayerObjManager::end() {}
 void LayerObjMesh::call_uniform_win_ga_X(LayerArgMdlRenInf& arg) { setUniformWinGaX(arg, false); }
 void LayerObjMesh::call_uniform_win_ga_Y(LayerArgMdlRenInf& arg) { setUniformWinGaY(arg, false); }
+void LayerObjMesh::call_uniform_icon(LayerArgMdlRenInf& arg) {
+    LayerObjUtil::updatePosMatrixUniformBlock(arg.m_buff, arg.m_matrix, *arg.m_viewMatrix, m_posZ,
+                                              (m_stateFlags & STATE_RAW_POS) != 0);
+    arg.m_buff += 8;
+    if (m_iconNum >= m_iconMax) m_iconNum = m_iconMax - 1;
+    const ResData* res = static_cast<const ResData*>(m_resData);
+    const IconData* icons = reinterpret_cast<const IconData*>(reinterpret_cast<const unsigned char*>(res) + res->m_iconOfs);
+    const IconInfo* info =
+        reinterpret_cast<const IconInfo*>(reinterpret_cast<const unsigned char*>(icons) + icons->m_infoOfs) + m_iconNum;
+    float* buff = arg.m_buff;
+    buff[0] = info->m_pos[0];
+    buff[1] = info->m_pos[1];
+    buff[2] = 0.0f;
+    buff[3] = 0.0f;
+    buff[4] = info->m_uv[0];
+    buff[5] = info->m_uv[1];
+    buff[6] = info->m_uv[2];
+    buff[7] = info->m_uv[3];
+    arg.m_buff += 8;
+}
 void LayerObjMesh::call_uniform_noImage(LayerArgMdlRenInf& arg) {
     LayerObjUtil::updatePosMatrixUniformBlock(arg.m_buff, arg.m_matrix, *arg.m_viewMatrix, m_posZ,
                                               (m_stateFlags & STATE_RAW_POS) != 0);
@@ -872,6 +940,22 @@ void LayerObjTopPolyObj::UnlockIndex() {
 }
 void LayerObjTopPolyObj::setTexutre(const void* texture) { m_resTex.setAddTexture(texture, 0); }
 void LayerObjTopPolyObj::setTexutre(grlib::CGLibTextureBuffer& texture) { m_resTex.setAddTexture(texture, 0); }
+void LayerObjResTex::setAddTexture(const void* res, unsigned int index) {
+    for (LayerResAddTexObj* obj = m_list.m_head; obj != nullptr; obj = obj->m_next) {
+        if (obj->m_index == index) obj->m_flags |= 1 << LayerManager::s_nStkIdx;
+    }
+    LayerResAddTexObj* obj =
+        new (mm::mtl::PtrSingleton<LayerManager>::sys()->m_workHandle, nullptr, 0, 4, false) LayerResAddTexObj(res, index);
+    m_addLists[LayerManager::s_nStkIdx].addListNotNull(obj);
+}
+void LayerObjResTex::setAddTexture(grlib::CGLibTextureBuffer& texture, unsigned int index) {
+    for (LayerResAddTexObj* obj = m_list.m_head; obj != nullptr; obj = obj->m_next) {
+        if (obj->m_index == index) obj->m_flags |= 1 << LayerManager::s_nStkIdx;
+    }
+    LayerResAddTexObj* obj = new (mm::mtl::PtrSingleton<LayerManager>::sys()->m_workHandle, nullptr, 0, 4, false)
+        LayerResAddTexObj(&texture, index);
+    m_addLists[LayerManager::s_nStkIdx].addListNotNull(obj);
+}
 void LayerObjTopPolyObj::setIndexInfo(unsigned short start, unsigned short count) {
     int index = LayerManager::s_nStkIdx;
     m_updateFlags |= UPDATE_INDEX_INFO << index;
@@ -893,9 +977,9 @@ void LayerObjTopPolyObj::releasePoly(layPolyWork& work) {
     }
 }
 void LayerObjResTex::clear() {
-    m_lists[0].deleteAll();
-    m_lists[1].deleteAll();
-    m_lists[2].deleteAll();
+    m_list.deleteAll();
+    m_addLists[0].deleteAll();
+    m_addLists[1].deleteAll();
 }
 void LayerObjTopPolyObj::applyParams(const LayerRenderView* view, const LayerResMatrix& matrix, const LayerResColor& color) {
     m_viewData = view->m_viewData;

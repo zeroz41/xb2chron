@@ -22,13 +22,8 @@ public:
     virtual void setDrawList(layer::LayerSortMan*, bool);  // slot 7
     void updateParams(LayerArgMdlRenInf& arg, const LayerRenderView* view);
 
-    // the head of its resource (m_resData; the type and field names are not the original's)
-    struct ResData {
-        unsigned char pad_0[0x10];
-        unsigned int m_vertexOfs;  // 0x10: its vertex data, from the head (0: none); resourceInit
-    };
+    // its resource head is LayerActDef::ResData
 
-    unsigned char pad_2AA[0x16];
     LayerObjResTex m_resTex;  // 0x2C0: ~LayerObjTopDef clears it (the name is not the original's)
     LayerObjSortDef m_sortObj;  // 0x308: what setDrawList puts in the sort lists (the name is not the original's)
 };

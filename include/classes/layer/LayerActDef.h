@@ -6,6 +6,7 @@
 namespace layer { class LyrActionData; }
 namespace layer { class LayerVertexObj; }
 namespace grlib { class CGLibTextureBuffer; }
+namespace grlib { class CGLibVtxInstans; }
 namespace grlib { class CGLibDblUniformBlock; }
 namespace grlib { template <class T> class CGLibUniformArray; }
 namespace layer { class LayerTextureObj; }
@@ -21,6 +22,8 @@ public:
     // and returns whether the action waits)
     bool actcmd_iconnum(const unsigned char*& cmd);
     bool actcmd_animicon(const unsigned char*& cmd);
+    bool actcmd_animfrm(const unsigned char*& cmd);
+    bool actcmd_animdef(const unsigned char*& cmd);
 
     // The field names follow LayerAccDefObj's accessors (its objects of type 1; not the original's). They are
     // LayerActDef's: actcmd_iconnum and actcmd_animicon write m_iconNum (LayerObjMesh and LayerObjTopDef add none).
@@ -37,17 +40,61 @@ public:
         unsigned short m_texIdx;
         unsigned short pad_4;
     };
+    // the animation m_texRefs plays: actcmd_animdef sets its end frame from m_frameNum, actcmd_animfrm steps it by
+    // m_frameRate a second (the type and field names are not the original's)
+    struct AnimInfo {
+        unsigned char pad_0[0x18];
+        unsigned int m_frameNum;  // 0x18
+        float m_frameRate;  // 0x1C
+    };
+    // the per-instance vertices of a number draw (the type and field names are not the original's)
+    struct NumberWork {
+        grlib::CGLibVtxInstans* m_instans;  // 0x0
+        unsigned int m_num;  // 0x8: the instances to draw
+    };
     struct TexRefList {
-        unsigned char pad_0[0x8];
+        const AnimInfo* m_anim;  // 0x0
         const TexRef* m_refs;  // a LyrDrawData's m_texNum entries from its m_texIdx
         unsigned char pad_10[0x58];
         grlib::CGLibUniformArray<grlib::CGLibDblUniformBlock>* m_uniforms;  // 0x68: ~LayerObjTopDef releases it
+        unsigned char pad_70[0x8];
+        NumberWork* m_number;  // 0x78: LayerObjDraw::draw_call_number draws its instances
+        float m_frameEnd;  // 0x80: actcmd_animfrm runs while the frame is below it
+        float m_frameStart;  // 0x84
     };
-    const TexRefList* m_texRefs;  // 0x298 (the name is not the original's)
+    // what m_frames points to: actcmd_animdef zeroes ResData::m_frameNum of them, actcmd_animfrm sets the first
+    // one's m_frame (the type and names are not the original's)
+    struct Frame {
+        float m_frame;
+        float pad_4;
+    };
+    // the head of its resource (m_resData; the type and field names are not the original's)
+    struct ResData {
+        unsigned char pad_0[0x10];
+        unsigned int m_vertexOfs;  // 0x10: its vertex data, from the head (0: none); LayerObjTopDef::resourceInit
+        unsigned char pad_14[0x14];
+        int m_frameNum;  // 0x28: m_frames' count
+        unsigned int m_iconOfs;  // 0x2C: its IconData, from the head
+    };
+    // the icons of a resource (LayerObjMesh::call_uniform_icon; the types and field names are not the original's)
+    struct IconInfo {
+        float m_pos[2];  // 0x0
+        float m_uv[4];  // 0x8
+        unsigned char pad_18[0x4];
+    };
+    struct IconData {
+        unsigned char pad_0[0x18];
+        unsigned int m_infoOfs;  // 0x18: its IconInfo table, from IconData
+    };
+    TexRefList* m_texRefs;  // 0x298 (the name is not the original's)
     float m_param;  // setParm
     unsigned short m_iconNum;  // setIconNum / getIconNum
     unsigned short m_iconMax;  // getIconMax
     unsigned short m_gauge;  // setGauge / getGauge (a LAYER_GAUGE)
+    unsigned char pad_2AA[0x6];
+    Frame* m_frames;  // 0x2B0 (the name is not the original's)
+    float m_frameTime;  // 0x2B8: actcmd_animdef zeroes it (the name is not the original's)
+    unsigned char pad_2BC[0x4];
 };
 }  // namespace layer
 

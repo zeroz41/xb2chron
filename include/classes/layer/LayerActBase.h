@@ -31,6 +31,10 @@ public:
     float m_stepSec;   // 0x18
     float m_stepRate;  // 0x1C
     int m_runningIdx;
+    // bit 0 (FLAG_CMD_START) is set when the running action's commands start over: LayerActDef::actcmd_animfrm then
+    // takes the command's start and end frames (the names are not the original's)
+    enum { FLAG_CMD_START = 0x1 };
+    unsigned char m_flags;  // 0x24
 };
 }  // namespace layer
 
