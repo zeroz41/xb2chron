@@ -75,6 +75,17 @@ public:
     void SetHP(unsigned int hp);
     unsigned int GetMaxHP() const;
     bool IsBuffInfinite(int buff) const;
+    // 1.0.0's GetBuffEffect(int) const (0x710006681C): BattleCharacter::CheckPowerCharge calls it between IsBuff and
+    // the damage rate in both builds. 3.0.1's first walks to the first non-blade (m_isNotBlade) up the driver chain
+    // (none when m_flags622_6 is set or a driver is missing: 0) and answers the effect of that parameter's buff
+    // (its symbols spell fn_7100080E08)
+    float GetBuffEffect(int buff) const;
+    // Placeholder name: 1.0.0's ClearBuff(int, bool) (0x7100065F68) has its place (CheckPowerCharge clears the
+    // infinite buff with it), but 3.0.1's takes one more bool, so its signature is not 1.0.0's. What it does: removes
+    // the buff from the list (the last entry moves into its place), clears its bit, and when notify is set tells
+    // the character at pad_5e9 and the driver BattleCharacter::NotifyBuffEnd(buff, time, the first bool); then
+    // recomputes m_flags622_7 from BattleGlobal's buff mask.
+    void fn_7100080130(int buff, bool, bool notify);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it walks this parameter's
     // driver chain. What it does: from this parameter up through its drivers (fn_710007D990) while slot 65
     // (fn_7100085314(false)) does not hold, answers the first holder's pad_5da (0 when the chain ends);

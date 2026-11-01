@@ -24,6 +24,11 @@
 #include "classes/gf/GfDataBdat.h"
 #include "plugin/Bdat.h"
 #include "btl/Utility.h"
+#include "classes/btl/TalkManager.h"
+#include "gf/GfObjAcc.h"
+#include "gf/GfDataBlade.h"
+#include "classes/gf/GfComEnvSensor.h"
+#include "classes/gf/GfComPropertyEnemy.h"
 
 namespace btl {
 
@@ -264,6 +269,15 @@ int BattleCharacter::GetAlphaSetID(ALPHA_PROC_ID id) {
 
 bool BattleCharacter::IsEnableBattleFace() const {
     return m_isPlayer;
+}
+
+const gf::EnviromentSensor* BattleCharacter::GetEnviromentSensor() const {
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    if (m_isPlayer) {
+        return obj->getComponent<gf::GfComPropertyPc>(5)->getEnvSensor();
+    }
+    gf::GfComPropertyEnemy* enemy = obj->findComponent<gf::GfComPropertyEnemy>(5);
+    return &enemy->m_owner->getComponent<gf::GfComEnvSensor>(11)->getSensor();
 }
 
 void BattleCharacter::NotifyHateElse() {
@@ -546,6 +560,92 @@ gf::GfComEffectCaster* BattleCharacter::GetEffectCaster() {
     return obj->getComponent<gf::GfComEffectCaster>(7);
 }
 
+bool BattleCharacter::StartBladeSupport(int param) {
+    const CharacterParameter* chrParam = GetCharacterParameter(false);
+    if (chrParam->m_hasHateTarget && !chrParam->m_isNotBlade) {
+        gf::GfObjAcc acc(m_handle);
+        if (!gf::GfDataBlade::isDummyBlade(acc.getBdatId()) && ((1 << m_state) & 0x12) != 0) {
+            SetAction(static_cast<ACTION_ID>(13), false, false, param, 0.0f);
+            return true;
+        }
+    }
+    return false;
+}
+
+void BattleCharacter::fn_71000550B8(int value) {
+    pad_102C = 0xFFFF;
+    pad_1030 = 0.0f;
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (!param->m_flags622_6) {
+        const BattleCharacter* driver =
+            mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(param->m_driverHandle);
+        if (driver == nullptr) {
+            if (!mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_challengeAnySuccess) {
+                return;
+            }
+        } else if (!driver->m_isBattle) {
+            return;
+        }
+    }
+    pad_102C = 0;
+    pad_102E = value;
+    pad_1030 = value * 8;
+}
+
+bool BattleCharacter::fn_71000561E4(unsigned int id) {
+    if (!mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_challengeAnySuccess) {
+        const CharacterParameter* param = GetCharacterParameterConst(false);
+        if (param == nullptr || !param->fn_710008527C(false)) {
+            return false;
+        }
+    }
+    CharacterParameter* param = GetCharacterParameter(false);
+    if (param == nullptr) {
+        return false;
+    }
+    if (!param->IsBuff(3)) {
+        return false;
+    }
+    float rate = param->GetBuffEffect(3) * 0.01f + 1.0f;
+    mm::mtl::PtrSingleton<BattleGlobal>::sys()->MulDamageRate(id, rate, false);
+    if (param->IsBuffInfinite(3)) {
+        param->fn_7100080130(3, false, true);
+    }
+    return true;
+}
+
+bool BattleCharacter::CheckPowerCharge(unsigned int id) {
+    CharacterParameter* param = GetCharacterParameter(false);
+    if (param == nullptr) {
+        return false;
+    }
+    if (param->m_isNotBlade && param->IsBuff(0x20)) {
+        float rate = param->GetBuffEffect(0x20) * 0.01f;
+        mm::mtl::PtrSingleton<BattleGlobal>::sys()->AddDamageRate(id, rate, false);
+        mm::mtl::PtrSingleton<BattleGlobal>::sys()->fn_710000B4D0(id);
+        if (param->IsBuffInfinite(0x20)) {
+            param->fn_7100080130(0x20, false, true);
+        }
+        return true;
+    }
+    return false;
+}
+
+bool BattleCharacter::fn_7100056404(unsigned int id) {
+    CharacterParameter* param = GetCharacterParameter(false);
+    if (param == nullptr) {
+        return false;
+    }
+    if (!param->IsBuff(0x23)) {
+        return false;
+    }
+    float rate = param->GetBuffEffect(0x23) * 0.01f;
+    mm::mtl::PtrSingleton<BattleGlobal>::sys()->AddDamageRate(id, rate, false);
+    mm::mtl::PtrSingleton<BattleGlobal>::sys()->SetCriticalRecastEnhanceEnd(id);
+    param->fn_7100080130(0x23, false, true);
+    return true;
+}
+
 void BattleCharacter::DeleteKizunaLinkEffect(bool playSE) {
     if (m_effects[1] != 0) {
         mm::mtl::PtrSingleton<fw::EffectManager>::sys()->destroyKizunaLine(m_effects[1]);
@@ -714,6 +814,18 @@ void BattleCharacter::fn_7100042E90() {
     if (IsBlade()) {
         fn_710002FC0C(14);
     }
+}
+
+void BattleCharacter::NotifyChangeAttr(gf::GF_OBJ_HANDLE* handle, unsigned int attr, unsigned int) {
+    if (m_targetHandle != handle && m_subTargetHandle != handle) {
+        return;
+    }
+    const BattleCharacter* target = mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(handle);
+    if (target == nullptr || target->IsDead(0)) {
+        return;
+    }
+    mm::mtl::PtrSingleton<TalkManager>::sys()->NotifyTrigger(m_voiceIndex, static_cast<TalkManager::TRIGGER>(0x15),
+                                                              attr, 0);
 }
 
 void BattleCharacter::UpdateBuffEffect(int id) {

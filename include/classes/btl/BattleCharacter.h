@@ -15,6 +15,7 @@ namespace navi { class NvmshAcObj; }
 namespace gf { class GfObj; }
 namespace gf { class GfComProperty; }
 namespace gf { class GfComEffectCaster; }
+namespace gf { class EnviromentSensor; }
 namespace gf { class MsgObjectNotifyAsmCallback; }
 namespace gf { class MsgObjectNotifyDead; }
 namespace gf { class MsgObjectNotifyDamage; }
@@ -72,6 +73,23 @@ public:
     // the PC's battle action states call it (true, false) on message 0x100000B
     void SetExitBattle(bool, bool);
     void NotifyChangeAttr(gf::GF_OBJ_HANDLE* handle, unsigned int attr, unsigned int prevAttr);
+    bool StartBladeSupport(int param);
+    // the sensor of the object's GfComEnvSensor (a player's through GfComPropertyPc::getEnvSensor, else slot 11 of
+    // its property's owner)
+    const gf::EnviromentSensor* GetEnviromentSensor() const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
+    // functions and reads its parameter. What it does: as CheckPowerCharge for buff 3, multiplying BattleGlobal's
+    // damage rate of the id by 1 + its effect / 100; unless BattleGlobal's m_challengeAnySuccess is set it needs the
+    // parameter's slot 64 (fn_710008527C(false)) to hold first. Answers whether the buff was on.
+    bool fn_71000561E4(unsigned int id);
+    bool CheckPowerCharge(unsigned int id);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
+    // functions and reads its parameter. What it does: as CheckPowerCharge for buff 0x23: while the buff is on, adds
+    // its effect / 100 to BattleGlobal's damage rate of the id, marks the id's critical recast enhance as ended
+    // (SetCriticalRecastEnhanceEnd) and clears the buff; answers whether the buff was on. Callers: ActionArts,
+    // ActionBladeArts, ActionSpAttack.
+    bool fn_7100056404(unsigned int id);
+    void WriteBackChrCollisionFlag();
     bool IsDead(unsigned int) const;
     bool IsControlCharacter() const;
     bool IsControlCharacterGroup() const;
@@ -210,6 +228,7 @@ public:
     void NotifyHateElse();
     void SetBladeSupportCondition(int condition);
     bool IsEnableBattleFace() const;
+    void SetBattleFace(bool on, float time);
     int GetWeaponType(bool asmType) const;
     void StartBladeTimer(BLADE_TIMER_MODE mode);
     void EndBladeTimer(BLADE_TIMER_MODE mode);
@@ -334,6 +353,19 @@ public:
     // m_reactionID is non-zero or while pad_F09_2 is set; else true. Callers: TalkManager, Utility.
     bool fn_710002FD3C(bool flag);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
+    // functions and writes its fields. What it does: sets pad_F09_3 to the argument; when set, or when it was set
+    // before, keeps (m_state == 8, or true when cleared) in pad_F03_4/pad_F03_7 (pad_F03_5 set, then
+    // WriteBackChrCollisionFlag) when it changed or pad_F09_3 is set; a false value resets pad_D0 to
+    // mm::Vec3::zero and pad_E0 to 1. Callers: ChainAttackManager::UpdateProc, formation_change_manager's
+    // fn_710009E008.
+    void fn_710002B4D8(bool on);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
+    // functions and writes its fields. What it does: sets pad_102C to -1 and pad_1030 to 0; then, when the
+    // parameter's m_flags622_6 is set, or its m_driverHandle's character is in battle (or there is none and
+    // BattleGlobal's m_challengeAnySuccess is set), sets pad_102C to 0, pad_102E to the argument and pad_1030 to
+    // the argument * 8. Caller: ChainAttackManager::UpdateProc.
+    void fn_71000550B8(int value);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
     // functions and counts in pad_1073. What it does: true while pad_1076_12 is clear, while BattleGlobal's
     // m_challengeAnySuccess is clear or once pad_1073 reached 150; else counts pad_1073 up and answers pad_1076_13.
     bool fn_7100059314();
@@ -371,7 +403,13 @@ public:
     unsigned char pad_20[0x90];
     // the movement of this frame: GetMoveDataPerSec scales it by 30 (the name is not the original's)
     mm::Vec3 m_moveData;
-    unsigned char pad_C0[0x58];
+    unsigned char pad_C0[0x10];
+    // fn_710002B4D8 clears them (to mm::Vec3::zero and 1, 1) when its flag pad_F03_7 ends up clear (meaning
+    // unknown)
+    float pad_D0[3];
+    unsigned char pad_DC[0x4];
+    float pad_E0[2];
+    unsigned char pad_E8[0x30];
     // the character's object: Utility::AI_GetCharacterHandle returns it (the name is not the original's)
     gf::GF_OBJ_HANDLE* m_handle;
     // the object the character targets, (GF_OBJ_HANDLE*)-1 for none: Utility::AI_GetTargetCharacterID reads it
@@ -492,7 +530,12 @@ public:
     unsigned int pad_F00_18 : 5;
     // Utility::AI_IsFly returns it (the name is not the original's)
     unsigned int m_isFly : 1;
-    unsigned int pad_F00_24 : 8;
+    unsigned int pad_F03_0 : 4;
+    // fn_710002B4D8's: the value it last wrote back, set once written, and the value it keeps (meaning unknown)
+    unsigned int pad_F03_4 : 1;
+    unsigned int pad_F03_5 : 1;
+    unsigned int pad_F03_6 : 1;
+    unsigned int pad_F03_7 : 1;
     unsigned int pad_F04 : 4;
     // ActionCommandEndBladeArts clears both when it ends the action (meaning unknown)
     unsigned int pad_F04_4 : 1;
@@ -501,9 +544,13 @@ public:
     // the name is not the original's: fn_710002F368 treats the character as out of battle while it is set
     unsigned int m_isBattleIgnore : 1;
     unsigned int pad_F07_2 : 6;
-    unsigned int pad_F08 : 10;
+    unsigned int pad_F08 : 3;
+    // whether SetBattleFace eased the battle eye animation in (the name is not the original's)
+    unsigned int m_battleFace : 1;
+    unsigned int pad_F08_4 : 6;
     unsigned int pad_F09_2 : 1;  // fn_710002FD3C answers false while it is set (meaning unknown)
-    unsigned int pad_F09_3 : 21;
+    unsigned int pad_F09_3 : 1;  // fn_710002B4D8's argument (meaning unknown)
+    unsigned int pad_F09_4 : 20;
     unsigned int pad_F0C : 16;
     unsigned char pad_F0E[0x12];
     // the commands GetFreeCommand hands out, m_commandNum of them in use (the names are not the original's)
@@ -523,7 +570,13 @@ public:
     unsigned char pad_1000[0xC];
     // the name is not the original's: SetAction's float argument
     float m_actionValue;
-    unsigned char pad_1010[0x60];
+    unsigned char pad_1010[0x1C];
+    // fn_71000550B8 sets them: -1 and 0 first, then 0, its argument and the argument * 8 (meaning unknown)
+    unsigned short pad_102C;
+    unsigned char pad_102E;
+    unsigned char pad_102F;
+    float pad_1030;
+    unsigned char pad_1034[0x3C];
     unsigned int pad_1070 : 16;
     // Utility::AI_GetReactionID returns it (the name is not the original's)
     unsigned int m_reactionID : 5;
