@@ -76,6 +76,50 @@ Result AddDeviceSink(AudioRendererConfig* config, DeviceSinkType* sink, FinalMix
                      const signed char* input, int inputCount, const char* name);
 int ListAudioDeviceName(AudioDeviceName* names, int count);
 
+// effects (ssd::SystemCorePlatform's InitDelayEffect / InitI3dl2ReverbEffect / QuitEffect / DeleteEffect)
+unsigned long GetRequiredBufferSizeForDelay(TimeSpan delayTimeMax, int sampleRate, int channelCount);
+Result AddDelay(AudioRendererConfig* config, DelayType* delay, void* buffer, unsigned long bufferSize,
+                FinalMixType* finalMix, TimeSpan delayTimeMax, int channelCount);
+void* RemoveDelay(AudioRendererConfig* config, DelayType* delay, FinalMixType* finalMix);
+bool IsDelayRemovable(const DelayType* delay);
+void SetDelayInputOutput(DelayType* delay, const signed char* input, const signed char* output, int count);
+void SetDelayTime(DelayType* delay, TimeSpan time);
+void SetDelayChannelSpread(DelayType* delay, float channelSpread);
+void SetDelayDryGain(DelayType* delay, float dryGain);
+void SetDelayFeedbackGain(DelayType* delay, float feedbackGain);
+void SetDelayInGain(DelayType* delay, float inGain);
+void SetDelayLowPassAmount(DelayType* delay, float lowPassAmount);
+void SetDelayEnabled(DelayType* delay, bool enabled);
+
+unsigned long GetRequiredBufferSizeForI3dl2Reverb(int sampleRate, int channelCount);
+Result AddI3dl2Reverb(AudioRendererConfig* config, I3dl2ReverbType* reverb, void* buffer, unsigned long bufferSize,
+                      FinalMixType* finalMix, int channelCount);
+void* RemoveI3dl2Reverb(AudioRendererConfig* config, I3dl2ReverbType* reverb, FinalMixType* finalMix);
+bool IsI3dl2ReverbRemovable(const I3dl2ReverbType* reverb);
+void SetI3dl2ReverbInputOutput(I3dl2ReverbType* reverb, const signed char* input, const signed char* output,
+                               int count);
+void SetI3dl2ReverbRoomGain(I3dl2ReverbType* reverb, float gain);
+void SetI3dl2ReverbRoomHfGain(I3dl2ReverbType* reverb, float gain);
+void SetI3dl2ReverbLateReverbDecayTime(I3dl2ReverbType* reverb, TimeSpan time);
+void SetI3dl2ReverbLateReverbHfDecayRatio(I3dl2ReverbType* reverb, float ratio);
+void SetI3dl2ReverbReflectionsGain(I3dl2ReverbType* reverb, float gain);
+void SetI3dl2ReverbReflectionDelayTime(I3dl2ReverbType* reverb, TimeSpan time);
+void SetI3dl2ReverbReverbGain(I3dl2ReverbType* reverb, float gain);
+void SetI3dl2ReverbLateReverbDelayTime(I3dl2ReverbType* reverb, TimeSpan time);
+void SetI3dl2ReverbLateReverbDiffusion(I3dl2ReverbType* reverb, float diffusion);
+void SetI3dl2ReverbLateReverbDensity(I3dl2ReverbType* reverb, float density);
+void SetI3dl2ReverbHfReference(I3dl2ReverbType* reverb, float hfReference);
+void SetI3dl2ReverbDryGain(I3dl2ReverbType* reverb, float gain);
+void SetI3dl2ReverbEnabled(I3dl2ReverbType* reverb, bool enabled);
+
+Result AddBufferMixer(AudioRendererConfig* config, BufferMixerType* mixer, FinalMixType* finalMix);
+void RemoveBufferMixer(AudioRendererConfig* config, BufferMixerType* mixer, FinalMixType* finalMix);
+bool IsBufferMixerRemovable(const BufferMixerType* mixer);
+void SetBufferMixerVolume(BufferMixerType* mixer, int index, float volume);
+void SetBufferMixerInputOutput(BufferMixerType* mixer, const signed char* input, const signed char* output,
+                               int count);
+void SetBufferMixerEnabled(BufferMixerType* mixer, bool enabled);
+
 // a voice's source buffer (the SDK's field names)
 struct WaveBuffer {
     void* buffer;

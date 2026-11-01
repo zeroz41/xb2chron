@@ -45,16 +45,19 @@ public:
     // an effect's bus: the effect, its buffer mixer and their channels (the field names are not the original's;
     // InitAudioDevice sets up two, on channels 6/7 and 8/9 after the six main ones)
     struct EffectBusInfo {
-        bool activeFlags[2];  // the bus counts as active while either is set (SystemCore::IsActiveEffect)
-        unsigned char busNumber;  // 0xFF: none
-        signed char input;
-        signed char output;
+        // the bus counts as active while either is set (SystemCore::IsActiveEffect); [1]: QuitEffect took the
+        // effect down and DeleteEffect has not freed it yet
+        bool activeFlags[2];
+        unsigned char effectType;  // SoundEffecter::type_ of the effect (0xFF: none)
+        signed char channels[2];  // the effect's input/output channels
         unsigned char pad_5[0x3];
         float volume;
         unsigned char pad_c[0x4];
         SoundEffecter* effect;  // 0x10: InitEffect's effect (none: 0)
-        void* pad_18[0x3];
-        unsigned char pad_30[0x8];
+        void* buffer;  // 0x18: the effect's work buffer, from effectAllocator_
+        nn::audio::BufferMixerType mixer;
+        nn::audio::DelayType delay;
+        nn::audio::I3dl2ReverbType reverb;
     };
 
     void InitPlatform(const SoundCore::InitParam& param);
@@ -62,6 +65,10 @@ public:
     // RemoveSoundEffecter call them under the audio lock)
     Result InitEffect(unsigned char bus, SoundEffecter* effect);
     Result QuitEffect(SoundEffecter* effect);
+    // InitEffect's two kinds; DeleteEffect frees a bus QuitEffect took down once the renderer lets it go
+    Result InitDelayEffect(unsigned char bus, SoundDelayEffecter* effect);
+    Result InitI3dl2ReverbEffect(unsigned char bus, SoundI3dl2ReverbEffecter* effect);
+    void DeleteEffect(EffectBusInfo& bus);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because SystemCore::Init, which
     // runs SystemCorePlatform's InitPlatform and InitAudioDevice, calls it between them and it sits in this
     // unit's code. What it does: returns 0x400 (1024, InitAudioDevice's voice-count ceiling); reads nothing.
