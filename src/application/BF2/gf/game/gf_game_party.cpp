@@ -328,6 +328,29 @@ void GfGameParty::destroyedObject(GF_OBJ_HANDLE* handle) {
     }
 }
 
+void GfGameParty::createdObject(GF_OBJ_HANDLE* handle) {
+    switch (GfObjUtil::getObjType(handle)) {
+    case 3: {
+        GfObjSetupDriver* setup =
+            mm::mtl::rttiCast<GfObjSetupDriver>(GfObjManager::getObjInfo(handle)->m_setup);
+        unsigned int index = setup->m_partyId;
+        if (index != static_cast<unsigned int>(-1)) {
+            GF_OBJ_HANDLE*& slot = m_members[index].m_handles[GfObjUtil::fn_710054FCDC(handle)];
+            if (slot == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                slot = handle;
+            }
+        }
+        break;
+    }
+    case 4:
+        buildObjBlade(handle);
+        break;
+    case 10:
+        buildObjWeapon(handle);
+        break;
+    }
+}
+
 void GfGameParty::fn_71002B8D3C() {
     if (!m_currentPartyValid) {
         getCurrentPartyInfo(m_currentParty);
@@ -356,6 +379,24 @@ void GfGameParty::buildObjBlade(GF_OBJ_HANDLE* handle) {
         }
     } else if (member.m_handles[3 + set] == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
         member.m_handles[3 + set] = handle;
+    }
+}
+
+void GfGameParty::buildObjWeapon(GF_OBJ_HANDLE* handle) {
+    GfObjSetupWeapon* setup = mm::mtl::rttiCast<GfObjSetupWeapon>(GfObjManager::getObjInfo(handle)->m_setup);
+    if (setup->m_partyId == static_cast<unsigned int>(-1)) {
+        return;
+    }
+    GfWeapon* weapon = GfMountManager::getGfWeapon(handle, GFATTACH(0));
+    GfAppend* append = GfObjUtil::getAppend(handle, GFATTACH(0));
+    if (weapon == nullptr || append == nullptr) {
+        return;
+    }
+    bool second = setup->pad_78;
+    unsigned short index = append->getMountIndex();
+    if (weapon->getObjHandle(index, second) == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        index = append->getMountIndex();
+        (weapon->m_useSecond ? weapon->m_secondHandles : weapon->m_handles)[index] = handle;
     }
 }
 
