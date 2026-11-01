@@ -28,6 +28,10 @@
 #include "gf/GfMenuTypes.h"
 #include "gf/QuestListAcc.h"
 #include "ui/EventData.h"
+#include "gf/QuestTaskParam.h"
+#include "gf/GfQuestUtil.h"
+#include "gf/GfItemUtil.h"
+#include "mm/mtl/FixStr.h"
 
 namespace gf {
 
@@ -154,6 +158,66 @@ void GfMenuObjQuestList::update() {
     GfMenuObject::update();
 }
 
+void GfMenuObjQuestList::setupList(unsigned int quest) {
+    GfMenuQuestList::SetupParam param;
+    param.m_categoryMask = 7;
+    param.m_stateMask = 3;
+    param.m_pageRowSize = m_selectLists[0]->getSize();
+    param.m_pageScroll = true;
+    switch (m_menuFlag2) {
+    case 0:
+        param.m_categoryMask = 7;
+        break;
+    case 1:
+        param.m_categoryMask = 4;
+        break;
+    case 2:
+        param.m_categoryMask = 1;
+        break;
+    case 3:
+        param.m_categoryMask = 2;
+        break;
+    }
+    if (m_menuFlag3 == 0) {
+        param.m_stateMask = 1;
+    } else if (m_menuFlag3 == 1) {
+        param.m_stateMask = 2;
+    }
+    m_questLists[0]->clear();
+    m_questLists[1]->clear();
+    m_questLists[0]->setup(param);
+    if (m_questLists[0]->getSize() != 0) {
+        for (unsigned int i = 0; i < (unsigned int)m_selectLists[1]->getSize(); i++) {
+            if (i < (unsigned int)m_questLists[0]->getSize()) {
+                m_questLists[1]->addContents(m_questLists[0]->getContents(i));
+            }
+        }
+    }
+    unsigned int pages = (unsigned int)m_questLists[0]->getSize() / (unsigned int)m_selectLists[1]->getSize();
+    if ((unsigned int)m_questLists[0]->getSize() % (unsigned int)m_selectLists[1]->getSize() != 0) {
+        pages++;
+    }
+    m_numbers[0]->m_value = 0;
+    m_numbers[1]->m_value = pages;
+    {
+        ui::UIObjectAcc page(m_handle, "LAY_thumb_page");
+        page.setDisp(m_numbers[1]->m_value > 0);
+    }
+    m_questLists[0]->setIndex(0);
+    m_questLists[1]->setIndex(0);
+    if (quest != 0) {
+        QuestID id(quest);
+        if (!id.empty()) {
+            id = GfQuestInfo::getParentQuest(id);
+            for (unsigned int i = 0; i < (unsigned int)m_questLists[0]->getSize(); i++) {
+                if (m_questLists[0]->getContents(i) == id) {
+                    m_questLists[0]->setIndex(i);
+                }
+            }
+        }
+    }
+}
+
 void GfMenuObjQuestList::changeView(unsigned int view) {
     if (m_view == view) {
         return;
@@ -172,6 +236,36 @@ void GfMenuObjQuestList::changeView(unsigned int view) {
         return;
     }
     m_view = view;
+}
+
+bool GfMenuObjQuestList::changeThumbPage(int page) {
+    int count = m_numbers[1]->m_value;
+    if (count < 2) {
+        return false;
+    }
+    int next = page;
+    if (page < 0) {
+        next = count - 1;
+    }
+    if (page >= count) {
+        next = 0;
+    }
+    m_questLists[1]->clear();
+    for (unsigned int i = 0; i < (unsigned int)m_selectLists[1]->getSize(); i++) {
+        unsigned int index = i + m_selectLists[1]->getSize() * next;
+        if (index < (unsigned int)m_questLists[0]->getSize()) {
+            m_questLists[1]->addContents(m_questLists[0]->getContents(index));
+        }
+    }
+    {
+        ui::UIObjectAcc thumb(m_handle, "LAY_thumb");
+        m_questLists[1]->setIndex(0);
+        GfMenuObject::resetInputSelection(thumb.m_handle);
+        GfMenuObject::setupInputSelectionFromList(thumb.m_handle, *m_questLists[1]);
+        GfMenuObject::setupPadLineSelection(thumb.m_handle, 3);
+    }
+    m_numbers[0]->m_value = next;
+    return true;
 }
 
 void GfMenuObjQuestList::ListListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
@@ -246,6 +340,100 @@ void GfMenuObjQuestList::ListListener::reciveEvent(const ui::EventData& event, u
     }
 }
 
+void GfMenuObjQuestList::ThumbListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObject::disableInput(acc.m_handle);
+        acc.setDispChild(m_owner->m_questLists[0]->getSize() != 0 && m_owner->m_numbers[1]->m_value > 1,
+                         "LAY_thumb_input");
+        acc.setDisp(false);
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        if (index != -1) {
+            m_owner->m_questLists[1]->setIndex(index);
+            m_owner->m_selectLists[1]->setIndex(m_owner->m_questLists[1]->getIndex(true));
+        }
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 8:
+        if (event.m_param1 == 1 && m_owner->m_questLists[0]->getSize() != 0) {
+            GfMenuQuestList* list = m_owner->m_questLists[0];
+            if (list->getContents(list->getIndex(false)).m_id != 0) {
+                m_owner->sendMenuEvent(acc.m_handle, 0x101);
+                list = m_owner->m_questLists[1];
+                m_owner->m_quest = list->getContents(list->getIndex(false)).m_id;
+                GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_detail"), 0, 0.0f);
+                GfMenuObjMainMenu2::setSystemKeyEnable(false);
+                GfMenuObjUtil::playSECommonDecide();
+                GfMenuObject::sendCloseEvent(acc.searchSibiling("LAY_tab_open"), 0, 0.0f);
+                GfMenuObject::disableInput(acc.m_handle);
+                GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            }
+        }
+        break;
+    case 9: {
+        GfMenuObjQuestList* owner;
+        int page;
+        if (event.m_param0 == 3) {
+            owner = m_owner;
+            page = owner->m_numbers[0]->m_value + 1;
+        } else if (event.m_param0 == 4) {
+            owner = m_owner;
+            page = owner->m_numbers[0]->m_value - 1;
+        } else {
+            break;
+        }
+        if (owner->changeThumbPage(page)) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 0x21:
+        acc.setDisp(true);
+        break;
+    case 0x22:
+        acc.setDisp(false);
+        break;
+    case 0x101:
+        acc.setDispChild(false, "IMG_thumb_cursor");
+        if (m_owner->m_view == 0) {
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+        }
+        break;
+    case 0x102:
+        if (m_owner->m_view == 0) {
+            GfMenuObject::enableInput(acc.m_handle);
+            GfMenuObjMainMenu2::setSystemKeyEnable(true);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+            int size = m_owner->m_questLists[0]->getSize();
+            if (size != 0) {
+                acc.setDispChild(true, "IMG_thumb_cursor");
+            } else {
+                acc.setDispChild(false, "IMG_thumb_cursor");
+            }
+            acc.setDispChild(size != 0 && m_owner->m_numbers[1]->m_value > 1, "LAY_thumb_input");
+            GfMenuObjOperationInfo::setActionEnable(acc.m_handle, 1, size != 0);
+            GfMenuObject::resetInputSelection(acc.m_handle);
+            GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_questLists[1]);
+            GfMenuObject::setupPadLineSelection(acc.m_handle, 3);
+        }
+        break;
+    case 0x104:
+        m_owner->changeThumbPage(0);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 void GfMenuObjQuestList::TabOpenListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
@@ -298,6 +486,89 @@ bool GfMenuObjQuestList::seqActivateStart() {
         m_seq.addJob(&GfMenuObjQuestList::seqEnd);
     }
     return true;
+}
+
+void GfMenuObjQuestList::TaskListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObject::disableInput(acc.m_handle);
+        acc.setDisp(false);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        }
+        break;
+    case 8:
+        if (event.m_param1 == 2) {
+            GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+            m_owner->sendMenuEvent(acc.getParentHandle(), 0x102);
+            GfMenuObjUtil::playSECommonCloseSubMenu();
+        }
+        break;
+    case 0x21: {
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_in_l";
+        param.m_eventId = 1;
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        QuestID id;
+        QuestID progress;
+        m_owner->m_references[0]->getQuest(id);
+        progress = GfQuestInfo::getProgressQuest(id);
+        if (!progress.empty()) {
+            id = progress;
+        }
+        bool needs;
+        {
+            mm::mtl::FixedVector<unsigned short, 32> characters;
+            GfQuestUtil::getNeedCharacterByQuestTask(characters, id, 0);
+            needs = characters.size() != 0;
+        }
+        acc.setDispChild(needs, "LAY_detail_task_cond_pt");
+        unsigned int count = acc.countChild("LAY_detail_task@%02d", 1);
+        mm::mtl::FixStr<32> name;
+        unsigned int taskCount;
+        unsigned int complete;
+        GfQuestInfo::getQuestTaskInfo(taskCount, complete, id);
+        m_owner->m_itemList->clear();
+        for (unsigned int i = 0; i < count; i++) {
+            bool show = false;
+            MenuItemInfo item;
+            if (i < taskCount) {
+                QuestTaskParam task(id, i, TASK_STATE(0));
+                GfQuestTaskLogResult result;
+                if (GfQuestInfo::getTaskHide(task) != 1 && GfQuestUtil::getMsgQuestTaskLog(result, task)) {
+                    item.m_id = result.m_count2;
+                    item.m_count = 1;
+                    item.m_type = GfItemUtil::getType(item.m_id);
+                    show = result.m_count != 0;
+                }
+            }
+            m_owner->m_itemList->addItem(item, false);
+            name.format("LAY_detail_task_item@%02d", i + 1);
+            acc.setDispChild(show, name.m_str);
+        }
+        break;
+    }
+    case 0x22: {
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_out_l";
+        param.m_startFlags = 10;
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        GfMenuObject::disableInput(acc.m_handle);
+        GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+        break;
+    }
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 bool GfMenuObjQuestList::seqActivateSelect() {

@@ -34,11 +34,11 @@ public:
     static void registOpenParam(const OpenParam& param);
     virtual void initialize();  // slot 2
     void initializeSub(ui::UIObjectAcc& main);
-    void setupList(unsigned int kind);
+    void setupList(unsigned int quest);  // selects the parent of that quest when it is listed
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
     void changeView(unsigned int view);
-    void changeThumbPage(int page);
+    bool changeThumbPage(int page);  // false when there is one page or none
     bool seqActivateStart();
     bool seqActivateSelect();
     bool seqEnd();
