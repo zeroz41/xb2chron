@@ -97,6 +97,211 @@ int StreamBuffer::Free() {
     return 0;
 }
 
+Result StreamBuffer::InData8(const void* data, unsigned long size, bool loop) {
+    unsigned int count = size;
+    if (count > GetFreeSize()) {
+        return Result(-9);
+    }
+    unsigned int position = writePosition_;
+    if (loop) {
+        loopPosition_ = position;
+    }
+    unsigned char* destination = buffer_ + position;
+    dataSize_ += count;
+    if (count <= bufferSize_ - position) {
+        CopyMemory8(data, destination, count);
+        writePosition_ += count;
+        if (writePosition_ < bufferSize_) {
+            return Result(0);
+        }
+        writePosition_ = 0;
+    } else {
+        unsigned int rest = bufferSize_ - position;
+        CopyMemory8(data, destination, rest);
+        CopyMemory8(static_cast<const unsigned char*>(data) + rest, buffer_, count - rest);
+        writePosition_ = count - rest;
+    }
+    return Result(0);
+}
+
+Result StreamBuffer::InData16(const void* data, unsigned long size, bool loop) {
+    unsigned int count = size;
+    if (count > GetFreeSize()) {
+        return Result(-9);
+    }
+    unsigned int position = writePosition_;
+    if (loop) {
+        loopPosition_ = position;
+    }
+    unsigned char* destination = buffer_ + position;
+    dataSize_ += count;
+    if (count <= bufferSize_ - position) {
+        CopyMemory16(data, destination, count);
+        writePosition_ += count;
+        if (writePosition_ < bufferSize_) {
+            return Result(0);
+        }
+        writePosition_ = 0;
+    } else {
+        unsigned int rest = bufferSize_ - position;
+        CopyMemory16(data, destination, rest);
+        CopyMemory16(static_cast<const unsigned char*>(data) + rest, buffer_, count - rest);
+        writePosition_ = count - rest;
+    }
+    return Result(0);
+}
+
+Result StreamBuffer::InData32(const void* data, unsigned long size, bool loop) {
+    unsigned int count = size;
+    if (count > GetFreeSize()) {
+        return Result(-9);
+    }
+    unsigned int position = writePosition_;
+    if (loop) {
+        loopPosition_ = position;
+    }
+    unsigned char* destination = buffer_ + position;
+    dataSize_ += count;
+    if (count <= bufferSize_ - position) {
+        CopyMemory32(data, destination, count);
+        writePosition_ += count;
+        if (writePosition_ < bufferSize_) {
+            return Result(0);
+        }
+        writePosition_ = 0;
+    } else {
+        unsigned int rest = bufferSize_ - position;
+        CopyMemory32(data, destination, rest);
+        CopyMemory32(static_cast<const unsigned char*>(data) + rest, buffer_, count - rest);
+        writePosition_ = count - rest;
+    }
+    return Result(0);
+}
+
+Result StreamBuffer::InData64(const void* data, unsigned long size, bool loop) {
+    unsigned int count = size;
+    if (count > GetFreeSize()) {
+        return Result(-9);
+    }
+    unsigned int position = writePosition_;
+    if (loop) {
+        loopPosition_ = position;
+    }
+    unsigned char* destination = buffer_ + position;
+    dataSize_ += count;
+    if (count <= bufferSize_ - position) {
+        CopyMemory64(data, destination, count);
+        writePosition_ += count;
+        if (writePosition_ < bufferSize_) {
+            return Result(0);
+        }
+        writePosition_ = 0;
+    } else {
+        unsigned int rest = bufferSize_ - position;
+        CopyMemory64(data, destination, rest);
+        CopyMemory64(static_cast<const unsigned char*>(data) + rest, buffer_, count - rest);
+        writePosition_ = count - rest;
+    }
+    return Result(0);
+}
+
+Result StreamBuffer::OutData8(void* data, unsigned long size, unsigned long* outSize, bool* end) {
+    unsigned int count = size;
+    if (count > dataSize_) {
+        count = dataSize_;
+    }
+    if (outSize != nullptr) {
+        *outSize = count;
+    }
+    dataSize_ -= count;
+    const unsigned char* source = buffer_ + readPosition_;
+    unsigned int rest = bufferSize_ - readPosition_;
+    if (count <= rest) {
+        CopyMemory8(source, data, count);
+        readPosition_ += count;
+        if (readPosition_ < bufferSize_) {
+            return Result(0);
+        }
+        readPosition_ = 0;
+    } else {
+        CopyMemory8(source, data, rest);
+        CopyMemory8(buffer_, static_cast<unsigned char*>(data) + rest, count - rest);
+        readPosition_ = count - rest;
+    }
+    return Result(0);
+}
+
+Result StreamBuffer::OutData16(void* data, unsigned long size, unsigned long* outSize, bool* end) {
+    if (dataSize_ == 0) {
+        *outSize = 0;
+        return Result(0);
+    }
+    unsigned int count = size;
+    if (count > dataSize_) {
+        count = dataSize_;
+    }
+    if (outSize != nullptr) {
+        *outSize = count;
+    }
+    dataSize_ -= count;
+    const unsigned char* source = buffer_ + readPosition_;
+    unsigned int rest = bufferSize_ - readPosition_;
+    if (count <= rest) {
+        CopyMemory16(source, data, count);
+        readPosition_ += count;
+        if (readPosition_ < bufferSize_) {
+            return Result(0);
+        }
+        readPosition_ = 0;
+    } else {
+        CopyMemory16(source, data, rest);
+        CopyMemory16(buffer_, static_cast<unsigned char*>(data) + rest, count - rest);
+        readPosition_ = count - rest;
+    }
+    return Result(0);
+}
+
+Result StreamBuffer::OutData64(void* data, unsigned long size, unsigned long* outSize, bool* end) {
+    if (dataSize_ == 0) {
+        *outSize = 0;
+        return Result(0);
+    }
+    unsigned int count = size;
+    if (count > dataSize_) {
+        count = dataSize_;
+    }
+    *end = false;
+    if (loopLimit_) {
+        if (loopPosition_ != 0) {
+            if (count > loopPosition_) {
+                count = loopPosition_;
+            }
+            loopPosition_ -= count;
+        } else {
+            *end = true;
+        }
+    }
+    if (outSize != nullptr) {
+        *outSize = count;
+    }
+    dataSize_ -= count;
+    const unsigned char* source = buffer_ + readPosition_;
+    unsigned int rest = bufferSize_ - readPosition_;
+    if (count <= rest) {
+        CopyMemory64(source, data, count);
+        readPosition_ += count;
+        if (readPosition_ < bufferSize_) {
+            return Result(0);
+        }
+        readPosition_ = 0;
+    } else {
+        CopyMemory64(source, data, rest);
+        CopyMemory64(buffer_, static_cast<unsigned char*>(data) + rest, count - rest);
+        readPosition_ = count - rest;
+    }
+    return Result(0);
+}
+
 Result AudioFileAiff::Open(IoStreamBase* stream) {
     stream_ = stream;
     return Result(0);
