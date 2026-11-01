@@ -13,17 +13,8 @@ namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfMenuCallContext; }
 
 namespace btl {
-// one enhance's effect as DataManager::GetEnhanceData fills it from BDAT table 0x2C (the type name is the symbol's;
-// the field names are not the original's)
-struct ENHANCE_EFFECT_DATA {
-    unsigned short m_effect;  // the row's "EnhanceEffect"
-    unsigned short pad_2;
-    unsigned char pad_4;
-    unsigned char pad_5;
-    unsigned char pad_6;
-    unsigned char pad_7;
-    unsigned int pad_8;
-};
+// ENHANCE_EFFECT_DATA: in classes/btl/CharacterParameter.h (CharacterParameter holds them; included through
+// PlayerParameter.h)
 
 // an art's data as DataManager::GetArtsData fills it (layout not recovered yet)
 // DataManager::GetArtsData fills it; only what BattleCharacter reads is recovered (two runs of unsigned int
@@ -142,6 +133,9 @@ public:
     bool IsSpecialEffects(int effect) const;
     // BattleCharacter::GetCharacterParameter passes the character's id
     CharacterParameter* GetCharacterParameterConst(int id) const;
+    // CharacterParameter::SetAdditionalEnhance asks it for the driver's parameter when CharacterManager has no
+    // character for the handle
+    CharacterParameter* SearchCharacterParameterConst(gf::GF_OBJ_HANDLE* handle, bool) const;
     void FluctuatePartyGauge(int value, int groupIndex);
     // BattleCharacter::AddPartyGauge passes its value, its group index and true
     void AddPartyGauge(float value, int groupIndex, bool);

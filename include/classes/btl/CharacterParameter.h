@@ -7,6 +7,18 @@ namespace mm { class Vec3; }
 namespace gf { class GF_OBJ_HANDLE; }
 
 namespace btl {
+// one enhance's effect as DataManager::GetEnhanceData fills it from BDAT table 0x2C (the type name is the symbol's;
+// the field names are not the original's)
+struct ENHANCE_EFFECT_DATA {
+    unsigned short m_effect;  // the row's "EnhanceEffect"
+    unsigned short pad_2;
+    unsigned char pad_4;
+    unsigned char pad_5;
+    unsigned char pad_6;
+    unsigned char pad_7;
+    unsigned int pad_8;
+};
+
 // one palette slot (ARTS_PALETTE_DATA::GetSlotDataConst); 0x18 bytes (the palette's stride; EnemyParameter's
 // constructor, ResetAllRecast)
 struct ARTS_SLOT_DATA {
@@ -68,6 +80,23 @@ public:
         float m_value;  // the name is not the original's
         unsigned char pad_4[0x4];
     };
+    // the enumerators are not known (1.0.0's symbols give the type names only)
+    enum SPECIAL_ENHANCE_TYPE {};
+    enum ADD_ENHANCE_TYPE : unsigned int {};  // enumerators unknown; the original indexes it unsigned (uxtw, b.hi)
+    // the rate (and its time) of the type, on the driver's parameter while slot 64 (fn_710008527C(false)) holds;
+    // types 0-21
+    void SetSpecialEnhanceRate(SPECIAL_ENHANCE_TYPE type, float rate, unsigned short time);
+    void AddSpecialEnhanceRate(SPECIAL_ENHANCE_TYPE type, float rate, unsigned short time);
+    void MinSpecialEnhanceRate(SPECIAL_ENHANCE_TYPE type, float rate, unsigned short time);
+    float GetSpecialEnhanceRate(SPECIAL_ENHANCE_TYPE type, int* time) const;
+    // one additional enhance (SetAdditionalEnhance; the struct's and the field names are not the original's)
+    struct ADD_ENHANCE_DATA {
+        ENHANCE_EFFECT_DATA m_data;  // DataManager::GetEnhanceData's, zero for none
+        int m_id;  // the enhance
+    };
+    // sets the enhance of the type on this parameter and, while the type is above 2 or BattleGlobal's
+    // m_challengeAnySuccess is clear, on the driver's (CharacterManager's, else DataManager's)
+    void SetAdditionalEnhance(ADD_ENHANCE_TYPE type, int id);
     bool GetAdditionalEnhanceEffect(ENHANCE_DATA& data, int id, int* out) const;
     bool GetEnhanceEffect(ENHANCE_DATA& data, int id) const;
     // the fight combo the character is in; Utility::AI_GetFightComboID returns its first byte (the struct's and
@@ -81,10 +110,30 @@ public:
         unsigned short m_id;  // the buff (IsBuffInfinite compares it with its argument)
         unsigned char pad_2[0x2];
         float m_time;  // negative for a buff without end (IsBuffInfinite)
-        unsigned char pad_8[0x8];
+        float m_effect;  // GetBuffEffect answers it (the name is not the original's)
+        unsigned char pad_c[0x4];
     };
     const FIGHT_COMBO_DATA* GetFightComboDataConst() const;
     bool IsBuff(int buff) const;
+    // what slot 80 (CalcDamageArmorEx) leaves of the damage after buff 5's armor (the buff's effect) takes its
+    // share: an armor the damage breaks ends the buff
+    unsigned int CalcDamageArmor(unsigned int damage);
+    // SetSpecialEnhanceRate(type, 0, 0) for types 0-21; without the flag, only 0-14 while BattleGlobal's pad_bit1 is set
+    void ResetSpecialEnhanceRate(bool all);
+    // removes every buff (fn_7100080130(buff, false, true) for each set one of buffs 1-35), then clears the list
+    void ClearAllBuff();
+    // GetHP over GetMaxHP, 0 when either is not positive, at most 1
+    float GetHPRate() const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it works on this
+    // parameter's flags. What it does: sets m_isNotBlade, while BattleGlobal's m_challengeAnySuccess is set, to
+    // IsEnemyParameter() or Utility::fn_7100011EA0(m_handle), else to the negation of slot 65
+    // (fn_7100085314(false)); ChainAttackManager::UpdateProc, fn_7100011390 and fn_710009E008 call it.
+    void fn_710007EFC8();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this parameter's
+    // buffs. What it does: while BattleGlobal's m_challengeAnySuccess is set and IsBuff(29) holds, answers the
+    // BDAT 0x11 row 29 "BaseRecast" (u16) times 0.01, else 0; BattleCharacter::ActionCommandRun, ActionAttack and
+    // ActionArts call it.
+    float fn_7100080FC0() const;
     // ElementalComboManager::Update passes its running combo id and that stage's pad_78 (-1 for none)
     void SetElementalComboID(int id, int);
     int GetLevel() const;
@@ -329,17 +378,24 @@ public:
     float pad_30;
     unsigned char pad_34[0x8];
     float pad_3c;  // see pad_30
-    unsigned char pad_40[0xB4];
+    unsigned char pad_40[0x20];
+    // Set/Add/Min/GetSpecialEnhanceRate's rate by SPECIAL_ENHANCE_TYPE (22 of them; the name is not the original's)
+    float m_specialEnhanceRate[22];
+    // the unsigned short those functions store with the rate (the name is not the original's)
+    unsigned short m_specialEnhanceTime[22];
+    unsigned char pad_e4[0x10];
     // GetFightComboDataConst answers the second while m_flags622_9 is set and its id is not 0 (the name is not the
     // original's)
     FIGHT_COMBO_DATA m_fightCombos[2];
     unsigned char pad_124[0x304];
     void* pad_428;  // cleared by the destructor when set; meaning unknown
-    unsigned char pad_430[0x60];
+    ADD_ENHANCE_DATA m_addEnhances[6];  // by ADD_ENHANCE_TYPE (the name is not the original's)
     BUFF_DATA m_buffs[20];  // the names are not the original's; 20 fill the space up to m_buffNum
     unsigned char m_buffNum;
-    // IsBuff tests bit (buff & 7) of byte buff >> 3 (the name is not the original's)
-    unsigned char m_buffFlags[7];
+    // IsBuff tests bit (buff & 7) of byte buff >> 3 (the name is not the original's); ClearAllBuff clears m_buffs up
+    // to the end of these 5 bytes (one memset of 0x146)
+    unsigned char m_buffFlags[5];
+    unsigned char pad_5d6[0x2];
     unsigned short pad_5d8;  // Utility::fn_71000126C0 passes it on
     unsigned short pad_5da;  // fn_7100081D64 answers it
     unsigned char pad_5dc[0x3];
@@ -378,7 +434,9 @@ public:
     unsigned short m_flags622_6 : 1;
     unsigned short m_flags622_7 : 2;  // unknown
     unsigned short m_flags622_9 : 1;  // GetFightComboDataConst answers the second fight combo while set (unknown)
-    unsigned short m_flags622_10 : 2;  // unknown
+    unsigned short m_flags622_10 : 1;  // unknown
+    // fn_710007E0E8 sets it (a dummy blade's or a scenario-masked character's; meaning unknown)
+    unsigned short m_flags622_11 : 1;
     mutable unsigned short m_flags622_12 : 1;  // InitializeEnhance sets it (unknown)
     // set for a character that is not a blade: BattleCharacter::IsBlade answers its negation (the name is not the
     // original's)

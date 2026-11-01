@@ -1,16 +1,23 @@
 #include "classes/btl/CharacterParameter.h"
 #include "classes/btl/BattleCharacter.h"
 #include "classes/btl/BattleGlobal.h"
+#include "classes/btl/BladeChangeManager.h"
 #include "classes/btl/ChainAttackManager.h"
+#include "classes/btl/DataManager.h"
 #include "classes/btl/CharacterManager.h"
+#include "classes/btl/EnemyParameter.h"
 #include "classes/gf/DataParamAcc.h"
+#include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfComProperty.h"
 #include "classes/gf/GfObj.h"
 #include "classes/gf/GfStatusProperty.h"
 #include "btl/Utility.h"
+#include "btl/formation_change_manager.h"
+#include "gf/GfDataBlade.h"
 #include "gf/GfGameUtil.h"
 #include "gf/GfObjUtil.h"
 #include "mm/Vec3.h"
+#include "plugin/Bdat.h"
 
 namespace btl {
 
@@ -33,6 +40,19 @@ CharacterParameter* CharacterParameter::fn_710007D990() const {
     return chr->GetCharacterParameterConst(true);
 }
 
+void CharacterParameter::fn_710007E0E8(gf::GF_OBJ_HANDLE* handle) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess) {
+        m_flags622_11 = false;
+        return;
+    }
+    if (fn_7100085314(false)) {
+        m_flags622_11 = gf::GfDataBlade::isDummyBlade(m_enArrangeID);
+    } else {
+        gf::DataParamAcc acc(handle);
+        m_flags622_11 = acc.isScenarioMask();
+    }
+}
+
 int CharacterParameter::GetLevel() const {
     gf::DataParamAcc acc(fn_7100085314(true) ? m_driverHandle : m_handle);
     return acc.getLevel(false);
@@ -43,9 +63,46 @@ bool CharacterParameter::InitializeEnhance() const {
     return true;
 }
 
+void CharacterParameter::BattleStart(int) {
+    InitializeArtsPalette(0);
+    if (pad_20 != BattleGlobal::sys()->pad_a9c && !BladeChangeManager::sys()->IsRegister(m_handle) &&
+        !TUnk_B3BC20::sys()->fn_710009EB70(m_handle)) {
+        ResetRecast();
+    }
+    pad_20 = BattleGlobal::sys()->pad_a9c;
+    m_hasHateTarget = true;
+}
+
 void CharacterParameter::BattleEnd() {
     ResetRecast();
     m_hasHateTarget = false;
+}
+
+void CharacterParameter::fn_710007EFC8() {
+    bool notBlade;
+    if (BattleGlobal::sys()->m_challengeAnySuccess) {
+        notBlade = IsEnemyParameter() || Utility::fn_7100011EA0(m_handle);
+    } else {
+        notBlade = !fn_7100085314(false);
+    }
+    m_isNotBlade = notBlade;
+}
+
+void CharacterParameter::ResetSpecialEnhanceRate(bool all) {
+    int last = all ? 21 : (BattleGlobal::sys()->pad_bit1 ? 14 : 21);
+    for (int type = 0; type <= last; type++) {
+        SetSpecialEnhanceRate(static_cast<SPECIAL_ENHANCE_TYPE>(type), 0.0f, 0);
+    }
+}
+
+float CharacterParameter::GetHPRate() const {
+    int hp = GetHP();
+    int maxHp = GetMaxHP();
+    float rate = 0.0f;
+    if (hp > 0 && maxHp > 0) {
+        rate = hp < maxHp ? static_cast<float>(hp) / static_cast<float>(maxHp) : 1.0f;
+    }
+    return rate;
 }
 
 void CharacterParameter::PostUpdate(const fw::UpdateInfo&) {}
@@ -77,6 +134,25 @@ unsigned int CharacterParameter::GetMaxHP() const {
     return hp;
 }
 
+unsigned int CharacterParameter::CalcDamageArmor(unsigned int damage) {
+    unsigned int result = CalcDamageArmorEx(damage);
+    if (result == 0 || !IsBuff(5)) {
+        return result;
+    }
+    for (int i = 0; i < m_buffNum; i++) {
+        if (m_buffs[i].m_id == 5) {
+            unsigned int armor = static_cast<unsigned int>(m_buffs[i].m_effect);
+            if (result > armor) {
+                fn_7100080130(5, false, true);
+                return result - armor;
+            }
+            m_buffs[i].m_effect = static_cast<float>(armor - result);
+            return 0;
+        }
+    }
+    return result;
+}
+
 bool CharacterParameter::IsBuff(int buff) const {
     if (m_isNotBlade) {
         return (m_buffFlags[buff >> 3] & (1 << (buff & 7))) != 0;
@@ -103,6 +179,34 @@ const CharacterParameter::FIGHT_COMBO_DATA* CharacterParameter::GetFightComboDat
     return &m_fightCombos[0];
 }
 
+void EnemyParameter::AddHate(int index, int kind, float add) {
+    if ((unsigned int)kind < 2) {
+        HATE_DATA& data = m_hateData[(unsigned int)index < 3 ? index : 0];
+        data.Set(kind, data.m_hate[kind] + add);
+    }
+}
+
+float CharacterParameter::GetBuffEffect(int buff) const {
+    float effect = 0.0f;
+    const CharacterParameter* param = this;
+    while (!param->m_isNotBlade) {
+        if (param->m_flags622_6) {
+            return effect;
+        }
+        param = param->fn_710007D990();
+        if (param == nullptr) {
+            return effect;
+        }
+    }
+    for (int i = 0; i < param->m_buffNum; i++) {
+        if (param->m_buffs[i].m_id == buff) {
+            effect = param->m_buffs[i].m_effect;
+            break;
+        }
+    }
+    return effect;
+}
+
 bool CharacterParameter::IsBuffInfinite(int buff) const {
     for (int i = 0; i < m_buffNum; i++) {
         if (m_buffs[i].m_id == buff) {
@@ -110,6 +214,42 @@ bool CharacterParameter::IsBuffInfinite(int buff) const {
         }
     }
     return false;
+}
+
+float CharacterParameter::fn_7100080FC0() const {
+    float rate = 0.0f;
+    if (BattleGlobal::sys()->m_challengeAnySuccess && IsBuff(29)) {
+        rate = Bdat::getValCheckU16(gf::GfDataBdat::getFP(0x11), "BaseRecast", 29) * 0.01f;
+    }
+    return rate;
+}
+
+void CharacterParameter::fn_71000812C0(int count) {
+    if (m_isNotBlade) {
+        int value = pad_5df + count;
+        pad_5df = value < 0 ? 0 : (value > 255 ? 255 : value);
+        return;
+    }
+    if (m_flags622_6) {
+        return;
+    }
+    gf::GF_OBJ_HANDLE* driver = m_driverHandle;
+    BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(driver);
+    if (chr == nullptr) {
+        return;
+    }
+    CharacterParameter* param = chr->GetCharacterParameter(true);
+    if (param != nullptr && param->m_isNotBlade) {
+        param->fn_71000812C0(count);
+    }
+}
+
+bool CharacterParameter::fn_7100081334() {
+    if (pad_5df != 0) {
+        pad_5df -= 1;
+        return true;
+    }
+    return BattleGlobal::sys()->fn_710000DE34(IsPlayerParameter());
 }
 
 bool CharacterParameter::GetBlowRotAxis(mm::Vec3& axis) const {
@@ -154,6 +294,82 @@ bool CharacterParameter::IsProgressCoolTime() const {
         return false;
     }
     return m_flags622_3;
+}
+
+void CharacterParameter::SetSpecialEnhanceRate(SPECIAL_ENHANCE_TYPE type, float rate, unsigned short time) {
+    if (fn_710008527C(false)) {
+        BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(m_driverHandle);
+        if (chr == nullptr) {
+            return;
+        }
+        CharacterParameter* param = chr->GetCharacterParameter(true);
+        if (param != nullptr) {
+            param->SetSpecialEnhanceRate(type, rate, 0);
+        }
+        return;
+    }
+    if (type >= 0 && type < 22) {
+        m_specialEnhanceRate[type] = rate;
+        m_specialEnhanceTime[type] = time;
+    }
+}
+
+void CharacterParameter::AddSpecialEnhanceRate(SPECIAL_ENHANCE_TYPE type, float rate, unsigned short time) {
+    if (fn_710008527C(false)) {
+        BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(m_driverHandle);
+        if (chr == nullptr) {
+            return;
+        }
+        CharacterParameter* param = chr->GetCharacterParameter(true);
+        if (param != nullptr) {
+            param->AddSpecialEnhanceRate(type, rate, time);
+        }
+        return;
+    }
+    if (type >= 0 && type < 22 && rate != 0.0f) {
+        m_specialEnhanceRate[type] += rate;
+        m_specialEnhanceTime[type] = time;
+    }
+}
+
+void CharacterParameter::MinSpecialEnhanceRate(SPECIAL_ENHANCE_TYPE type, float rate, unsigned short time) {
+    if (fn_710008527C(false)) {
+        BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(m_driverHandle);
+        if (chr == nullptr) {
+            return;
+        }
+        CharacterParameter* param = chr->GetCharacterParameter(true);
+        if (param != nullptr) {
+            param->MinSpecialEnhanceRate(type, rate, time);
+        }
+        return;
+    }
+    if (type >= 0 && type < 22 && rate != 0.0f) {
+        float current = m_specialEnhanceRate[type];
+        m_specialEnhanceRate[type] = current == 0.0f ? rate : (current < rate ? current : rate);
+        m_specialEnhanceTime[type] = time;
+    }
+}
+
+float CharacterParameter::GetSpecialEnhanceRate(SPECIAL_ENHANCE_TYPE type, int* time) const {
+    if (fn_710008527C(false)) {
+        BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(m_driverHandle);
+        if (chr == nullptr) {
+            return 0.0f;
+        }
+        CharacterParameter* param = chr->GetCharacterParameter(true);
+        if (param == nullptr) {
+            return 0.0f;
+        }
+        return param->GetSpecialEnhanceRate(type, time);
+    }
+    if (type >= 0 && type < 22) {
+        if (time != nullptr) {
+            *time = m_specialEnhanceTime[type];
+        }
+        return m_specialEnhanceRate[type];
+    }
+    return 0.0f;
 }
 
 unsigned short CharacterParameter::fn_7100081D64() const {

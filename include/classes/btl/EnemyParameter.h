@@ -101,6 +101,7 @@ public:
 
     void ResetHate(int index, bool clearFlag);
     void MulHate(int index, int kind, float rate);
+    void AddHate(int index, int kind, float add);
     void CheckChangeAttr();
     void AngryInfection(float range);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because PreUpdate tail-calls it
