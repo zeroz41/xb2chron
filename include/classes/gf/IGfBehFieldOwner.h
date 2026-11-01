@@ -11,7 +11,7 @@ public:
     virtual const fw::Transform& getTransform() const = 0;
     virtual const fw::Transform& getTransformToSearchPlayer() const = 0;
     virtual unsigned int getBdatId_CHR_EnArrange() const = 0;
-    virtual void getGmkBattleLockInfo(int&, int&) const = 0;
+    virtual bool getGmkBattleLockInfo(int&, int&) const = 0;
 };
 }  // namespace gf
 

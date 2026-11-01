@@ -1,3 +1,4 @@
+#include "gf/FileStaticVec3.h"
 #include "classes/fw/IColiEventListener.h"
 #include "classes/gf/GfComBehaviorEnemy.h"
 #include "classes/gf/GfFieldEnemySensor.h"
@@ -43,8 +44,18 @@
 #include "gf/GfMenuBdat.h"
 #include "gf/GfGameUtil.h"
 #include "math.h"
+#include "classes/fw/Camera.h"
+#include "btl/siren_battle_manager.h"
+#include "classes/gmk/GmkSet.h"
+#include "classes/gmk/IGmkList.h"
+#include "classes/btl/CharacterManager.h"
+#include "classes/btl/BattleCharacter.h"
+#include "classes/btl/CharacterParameter.h"
+#include "gf/GfObjUtil.h"
 
 namespace gf {
+
+mm::mtl::RTTI GfComBehaviorEnemy::m_rtti("GfComBehaviorEnemy", &GfComBehavior::m_rtti, nullptr);
 
 fw::ColiMoveObject* GfBehaviorEnemyField::getColiObject() const {
     GfObjAcc acc(m_handle);
@@ -297,6 +308,20 @@ unsigned int GfComBehaviorEnemy::getBdatId_CHR_EnArrange() const {
     return setup->m_enArrangeId;
 }
 
+bool GfComBehaviorEnemy::getGmkBattleLockInfo(int& setId, int& lockId) const {
+    gmk::AGmkBase* gmk = gmk::getBindedGmkInst(static_cast<GfObj*>(m_owner)->m_handle);
+    if (gmk == nullptr) {
+        return false;
+    }
+    setId = static_cast<const gmk::GmkSet*>(gmk->m_list->getCreateInfo().m_param)->m_createInfo.m_bdatId;
+    unsigned char* fp = gmk->getBindedBdatFp();
+    if (fp == nullptr) {
+        return false;
+    }
+    lockId = Bdat::getValCheckU16(fp, "battlelockname", gmk->m_createInfo.m_bdatId) - 1;
+    return true;
+}
+
 void GfComBehaviorEnemy::disposeMenuObj() {
     if (m_menuContext != nullptr) {
         GfMenuObjTargetInfo::close(m_menuContext);
@@ -425,6 +450,167 @@ bool GfComBehaviorEnemy::isOtherMemberHome() const {
         }
     }
     return false;
+}
+
+void GfComBehaviorEnemy::fn_71004BE49C(const fw::UpdateInfo& info) {
+    m_field.update(info.m_deltaTime);
+    GfObjAcc acc(static_cast<GfObj*>(m_owner)->m_handle);
+    if (acc.isEnemyBlade()) {
+        GF_OBJ_HANDLE* driverHandle = btl::CharacterManager::sys()
+                                          ->GetCharacterConst(static_cast<GfObj*>(m_owner)->m_handle)
+                                          ->GetCharacterParameterConst(true)
+                                          ->m_driverHandle;
+        const btl::BattleCharacter* driver = btl::CharacterManager::sys()->GetCharacterConst(driverHandle);
+        if (driver != nullptr && driver->IsBattle()) {
+            fn_71004BEC5C(static_cast<enemy::STATE_ID>(0));
+        }
+    }
+    if (getStateId() != 13 && m_field.pad_52a0[9]) {
+        m_hfsm.setState(13);
+    }
+}
+
+void GfComBehaviorEnemy::fn_71004BEC5C(enemy::STATE_ID state) {
+    if (state == 0) {
+        pad_54e2 = false;
+        m_reqChangeBattle = false;
+        pad_5508 = 0;
+        m_field.m_pitchRoll.pad_30 = 0x101;
+        GfObjSetupEnemy* setup =
+            mm::mtl::rttiCast<GfObjSetupEnemy>(GfObjManager::getObjInfo(static_cast<GfObj*>(m_owner)->m_handle)->m_setup);
+        btl::TUnk_B3BD68* siren = btl::TUnk_B3BD68::sys();
+        if (siren->m_params[0].m_arrangeID != setup->m_enArrangeId &&
+            siren->m_params[1].m_arrangeID != setup->m_enArrangeId) {
+            static_cast<GfObj*>(m_owner)->pad_110 |= 4;
+            GfObjUtil::setInvincible(static_cast<GfObj*>(m_owner)->m_handle, false, false);
+        }
+        if (m_field.pad_37) {
+            reqChangeBattleToOtherMember<gmk::GmkEnemy>();
+            reqChangeBattleToOtherMember<gmk::GmkRoutedEnemy>();
+        }
+    }
+    m_hfsm.setState(state);
+}
+
+template <typename T>
+void GfComBehaviorEnemy::reqChangeBattleToOtherMember() const {
+    gmk::AGmkBase* gmk = gmk::getBindedGmkInst(static_cast<GfObj*>(m_owner)->m_handle);
+    if (gmk == nullptr || gmk->getGmkType() != T::TYPE) {
+        return;
+    }
+    const T* members = static_cast<const T*>(gmk);
+    GF_OBJ_HANDLE* self = static_cast<GfObj*>(m_owner)->m_handle;
+    unsigned int num = members->getGobInstNum();
+    for (unsigned int i = 0; i < num; i++) {
+        GF_OBJ_HANDLE* handle = members->getGobInst(i);
+        if (self == handle) {
+            continue;
+        }
+        GfObjAcc acc(handle);
+        GfObj* obj = acc.getObj();
+        if (obj == nullptr || acc.isBattle()) {
+            continue;
+        }
+        GfComBehaviorEnemy* behavior = obj->getComponent<GfComBehaviorEnemy>(6);
+        if (behavior != nullptr && behavior->getStateId() != 13) {
+            behavior->reqChangeBattle();
+        }
+    }
+}
+
+template <typename T>
+bool GfComBehaviorEnemy::isOtherMemberBattle() const {
+    if (!m_field.pad_37) {
+        return false;
+    }
+    gmk::AGmkBase* gmk = gmk::getBindedGmkInst(static_cast<GfObj*>(m_owner)->m_handle);
+    if (gmk == nullptr || gmk->getGmkType() != T::TYPE) {
+        return false;
+    }
+    const T* members = static_cast<const T*>(gmk);
+    GF_OBJ_HANDLE* self = static_cast<GfObj*>(m_owner)->m_handle;
+    unsigned int num = members->getGobInstNum();
+    for (unsigned int i = 0; i < num; i++) {
+        GF_OBJ_HANDLE* handle = members->getGobInst(i);
+        if (self == handle) {
+            continue;
+        }
+        GfObjAcc acc(handle);
+        if (acc.getObj() != nullptr && acc.isBattle()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void GfComBehaviorEnemy::onPopped() {
+    createBehField();
+    GfObjSetupEnemy* setup = nullptr;
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(static_cast<GfObj*>(m_owner)->m_handle);
+    if (info != nullptr && info->m_setup != nullptr && info->m_setup->m_type == info->m_obj->m_type &&
+        info->m_obj->m_type == 5) {
+        setup = mm::mtl::rttiCast<GfObjSetupEnemy>(info->m_setup);
+    }
+    btl::TUnk_B3BD68* siren = btl::TUnk_B3BD68::sys();
+    unsigned int arrangeId = setup->m_enArrangeId;
+    enemy::STATE_ID state;
+    if (siren->m_params[0].m_arrangeID == arrangeId || siren->m_params[1].m_arrangeID == arrangeId) {
+        state = static_cast<enemy::STATE_ID>(0);
+    } else {
+        GfObjAcc acc(static_cast<GfObj*>(m_owner)->m_handle);
+        if (acc.isEnemyBlade()) {
+            state = static_cast<enemy::STATE_ID>(15);
+        } else {
+            gmk::AGmkBase* gmk = gmk::getBindedGmkInst(static_cast<GfObj*>(m_owner)->m_handle);
+            if (gmk == nullptr) {
+                state = static_cast<enemy::STATE_ID>(1);
+                if (setup->pad_b2) {
+                    pad_54e2 = true;
+                }
+            } else {
+                unsigned char* fp = gmk->getBindedBdatFp();
+                unsigned char popType = fp != nullptr ? Bdat::getValCheckU8(fp, "pop_act_type", gmk->m_createInfo.m_bdatId) : 0;
+                switch (popType) {
+                case 0:
+                    state = setup->pad_b1 ? static_cast<enemy::STATE_ID>(0) : getNextFieldStateId();
+                    break;
+                case 1:
+                    state = static_cast<enemy::STATE_ID>(4);
+                    break;
+                case 2:
+                    state = static_cast<enemy::STATE_ID>(5);
+                    break;
+                case 3:
+                case 5:
+                    state = static_cast<enemy::STATE_ID>(6);
+                    break;
+                case 4:
+                case 6:
+                    state = static_cast<enemy::STATE_ID>(7);
+                    break;
+                default:
+                    state = static_cast<enemy::STATE_ID>(1);
+                    break;
+                }
+                pad_550d = popType == 5 || popType == 6;
+                if (m_field.pad_37 &&
+                    (isOtherMemberBattle<gmk::GmkEnemy>() || isOtherMemberBattle<gmk::GmkRoutedEnemy>())) {
+                    state = static_cast<enemy::STATE_ID>(0);
+                }
+                switch (popType) {
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                    if (setup->pad_b1) {
+                        pad_54e2 = true;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    fn_71004BEC5C(state);
 }
 
 void GfComBehaviorEnemy::reqChangeBattle() {

@@ -27,7 +27,12 @@ namespace gf {
 // table 0x7100B65E30; its IGfBehFieldOwner at 0x98
 class GfComBehaviorEnemy : public ::gf::GfComBehavior, public IGfBehFieldOwner {
 public:
-    class Listener;
+    // table 0x7100B65F28; the constructor builds one at 0x54f0 (a member, so defined here; Listener.h includes this)
+    class Listener {
+    public:
+        virtual void onWkStandbyLogout();  // slot 0
+        GfComBehaviorEnemy* m_owner;  // the behavior it listens for (the name is not the original's)
+    };
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     // the table's key function: takes the enemy out of its battle lock's count, cleans up, then the members go
     virtual ~GfComBehaviorEnemy();  // slot 1
@@ -40,7 +45,9 @@ public:
     virtual const fw::Transform& getTransform() const;  // slot 8
     // its setup's CHR_EnArrange row
     virtual unsigned int getBdatId_CHR_EnArrange() const;  // slot 9
-    virtual void getGmkBattleLockInfo(int&, int&) const;  // slot 10
+    // its squad gimmick's set row (the GmkSet's RSC_GmkSetList row) and the gimmick's battlelockname - 1; false when
+    // its object is bound to no gimmick or the gimmick has no BDAT table
+    virtual bool getGmkBattleLockInfo(int&, int&) const;  // slot 10
     // an animation callback of the field (empty; StateFieldHome's unit holds it)
     void callbackField(gf::GfComAsm* asmCom, const gf::CallBackCache& cache);
     // an animation callback of the battle (empty; GfEnemyBattleProperty's unit holds it)
@@ -61,6 +68,29 @@ public:
     // reqChangeBattle and validatePopPos and reads this class's state machine. What it does: sets pad_54e2 (the
     // flag before reqChangeBattle's) unless the state machine is in state 0 (battle), reqChangeBattle's shape.
     void fn_71004C1D20();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because update calls it with this
+    // and it reads this class's field movement and state machine. What it does: updates the field movement by the
+    // frame's delta time; for an enemy blade whose driver's character is in battle it takes state 0 (battle,
+    // fn_71004BEC5C); then it takes state 13 (home) when m_field.pad_52a9 is set and it is not in that state already.
+    void fn_71004BE49C(const fw::UpdateInfo& info);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because update, onPopped and
+    // fn_71004BE49C call it with this and it sets this class's state machine. What it does: sets the state machine to
+    // state; for state 0 (battle) it first clears pad_54e2, m_reqChangeBattle and pad_5508, sets m_pitchRoll.pad_30
+    // to 0x101, gives its object flag bit 2 (pad_110 |= 4) and takes its invincibility off unless its setup's arrange
+    // row is one of the siren battle's two (TUnk_B3BD68 m_params[].m_arrangeID), and has a squad member's others ask
+    // for battle (reqChangeBattleToOtherMember).
+    void fn_71004BEC5C(gf::enemy::STATE_ID state);
+    // has every other member of its squad gimmick (T: GmkEnemy, GmkRoutedEnemy) that is not in battle, nor in state
+    // 0 or 13 (home), ask for battle (reqChangeBattle)
+    template <typename T>
+    void reqChangeBattleToOtherMember() const;
+    // whether another member of its squad gimmick (T: GmkEnemy, GmkRoutedEnemy) is in battle (GfObjAcc::isBattle)
+    template <typename T>
+    bool isOtherMemberBattle() const;
+    // makes the field movement (createBehField), then takes its first state: battle (0) for the siren battle's
+    // enemies, 15 for an enemy blade, else by its gimmick's pop_act_type; battle when a squad member is in battle
+    void onPopped();
+    void createBehField();
     // its menu object (the enemy's gauge): StateFieldSpawn disposes of it while spawning, makes it on leaving
     void disposeMenuObj();
     void createMenuObj();
@@ -125,6 +155,14 @@ public:
     bool m_reqChangeBattle;
     unsigned char pad_54e4[0x4];
     void* pad_54e8;  // its Listener clears it on a standby logout
+    // the constructor's listener (the name is not the original's)
+    Listener m_listener;
+    bool pad_5500;  // updateWeapon
+    bool pad_5501;  // updateWeapon
+    unsigned char pad_5502[0x6];
+    int pad_5508;  // fn_71004BEC5C clears it on entering battle
+    bool pad_550c;  // zeroed by the constructor
+    bool pad_550d;  // onPopped: set for pop action types 5 and 6
 };
 }  // namespace gf
 

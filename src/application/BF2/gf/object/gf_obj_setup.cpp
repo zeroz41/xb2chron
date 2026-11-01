@@ -479,7 +479,7 @@ void GfInitParamWeapon::setupBladeForEventLeftCS(unsigned int bladeId) {
 
 GfObjSetupEnemy::GfObjSetupEnemy(const GfInitParamEnemy& param)
     : GfObjSetup(5, param), pad_6c(param.m_arrangeId), m_enArrangeId(param.m_paramId), m_stateName(), pad_98(false),
-      m_sdata(nullptr), m_actMoveId(0), pad_ac(0), pad_b0(0), pad_b2(0), pad_b4(0), m_bladeId(param.m_bladeId), pad_c0(nullptr) {
+      m_sdata(nullptr), m_actMoveId(0), pad_ac(0), pad_b0(0), pad_b1(false), pad_b2(0), pad_b4(0), m_bladeId(param.m_bladeId), pad_c0(nullptr) {
     m_stateName = "S_idle";
     if (m_bladeId != 0) {
 #line 662

@@ -34,7 +34,10 @@ public:
     // its actMove row (BDAT 0x6e): isFlyInsect/isFlyCircle read its actMove_Atr (the name is not the original's)
     unsigned int m_actMoveId;
     unsigned int pad_ac;
-    unsigned short pad_b0;
+    unsigned char pad_b0;
+    // GfComBehaviorEnemy::onPopped: a gimmick-bound enemy without a pop action row starts in battle, and pop action
+    // types 3 to 6 set the behavior's pad_54e2
+    bool pad_b1;
     unsigned char pad_b2;
     unsigned char pad_b3[0xb4 - 0xb3];
     unsigned int pad_b4;
