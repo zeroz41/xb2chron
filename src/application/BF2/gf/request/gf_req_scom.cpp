@@ -127,6 +127,7 @@
 #include "ml/MTRand.h"
 #include "classes/gf/SCOM_ADD_ITEM.h"
 #include "gf/GfItemUtil.h"
+#include "gf/GfQuestUtil.h"
 namespace gf {
 bool SCOM_ADD_MONEY::exec(fw::UpdateInfo const&) {
     GfGameUtil::addMoney(m_money);
@@ -868,6 +869,108 @@ bool SCOM_OBJ_VFADE::exec(fw::UpdateInfo const& info) {
         GfReqSmallCom::addRequestParallel(request);
     }
     return true;
+}
+
+// the name is not the original's (inlined everywhere): the effect types a fade takes: 2..8 and 16 as they are, 1
+// becomes 16 for an object GfDataBlade::fn_7100232660 accepts; false for any other
+static inline bool checkVFadeEffect(GF_OBJ_HANDLE* obj, unsigned int& effect) {
+    switch (effect) {
+    case 1: {
+        DataParamAcc param(obj);
+        effect = GfDataBlade::fn_7100232660(param) ? 16 : 1;
+        break;
+    }
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 16:
+        break;
+    default:
+        return false;
+    }
+    return true;
+}
+
+inline unsigned long SCOM_OBJ_VFADE::create(GF_OBJ_HANDLE* obj, float time, float ratio, VFPARTS parts, VFACC acc,
+                                            VFEFF effect) {
+#line 1691
+    SCOM_OBJ_VFADE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_OBJ_VFADE(
+        reinterpret_cast<GF_SCOM_HANDLE*>(GfReqSmallCom::sys()->newHandle()), obj, time, ratio, parts, acc, effect, false, false);
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_OBJ_VFADE::createParts(GF_OBJ_HANDLE* obj, float time, float ratio, VFPARTS parts, VFACC acc) {
+    DataParamAcc param(obj);
+    unsigned int type = param.getAttribute(-1, false);
+    if (!checkVFadeEffect(obj, type)) {
+        return -1;
+    }
+    return create(obj, time, ratio, parts, acc, VFEFF(type));
+}
+
+unsigned long SCOM_OBJ_VFADE::createPartsWithSingle(GF_OBJ_HANDLE* obj, float time, float ratio, VFPARTS parts,
+                                                    VFACC acc) {
+    DataParamAcc param(obj);
+    unsigned int type = param.getAttribute(-1, false);
+    if (!checkVFadeEffect(obj, type)) {
+        return -1;
+    }
+#line 1746
+    SCOM_OBJ_VFADE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_OBJ_VFADE(
+        reinterpret_cast<GF_SCOM_HANDLE*>(GfReqSmallCom::sys()->newHandle()), obj, time, ratio, parts, acc, VFEFF(type), false, true);
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+float SCOM_OBJ_VFADE::createDead(GF_OBJ_HANDLE* obj, unsigned int effect) {
+    float time = 0.0f;
+    if (!checkVFadeEffect(obj, effect)) {
+        return time;
+    }
+    if (GfObjUtil::getVolumeFade(obj) != nullptr) {
+#line 1711
+        SCOM_OBJ_VFADE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_OBJ_VFADE(
+            reinterpret_cast<GF_SCOM_HANDLE*>(GfReqSmallCom::sys()->newHandle()), obj, 1.0f, 1.0f, VFPARTS(-1), VFACC(0), VFEFF(effect), true, false);
+        GfReqSmallCom::addRequestParallel(request);
+        if (request != nullptr) {
+            request->pad_71 = true;
+            time = request->getKeyFrameSec();
+        }
+    }
+    return time;
+}
+
+unsigned long SCOM_OBJ_VFADE::createBattle(GF_OBJ_HANDLE* obj, float ratio, unsigned int effect) {
+    if (obj == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return -1;
+    }
+    if (!checkVFadeEffect(obj, effect)) {
+        return -1;
+    }
+    return create(obj, 0.0f, ratio, VFPARTS(-1), VFACC(4), VFEFF(effect));
+}
+
+void SCOM_OBJ_VFADE::fn_710055E1A4(GF_OBJ_HANDLE* obj, float ratio, unsigned int effect) {
+    if (obj == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    if (!checkVFadeEffect(obj, effect)) {
+        return;
+    }
+#line 1792
+    SCOM_OBJ_VFADE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_OBJ_VFADE(
+        reinterpret_cast<GF_SCOM_HANDLE*>(GfReqSmallCom::sys()->newHandle()), obj, 0.0f, ratio, VFPARTS(-1), VFACC(4), VFEFF(effect), false, false);
+    if (request != nullptr) {
+        fw::UpdateInfo info;
+        info.m_speed = 1.0f;
+        info.m_frameTime = GfInfo::m_fSecPerFrame;
+        info.m_deltaTime = GfInfo::m_fSecPerFrame;
+        request->updateFade(info);
+        delete request;
+    }
 }
 
 unsigned long SCOM_QUEST_REACH::createArriveLandmark(unsigned int a0) {
@@ -1629,6 +1732,89 @@ void fn_71005665D8() {
     if (count < 0xFF) {
         GfGameFlag::setLocal(8, 0x880, count + 1);
     }
+}
+
+// counts the field skill use (m_value) for m_value2's blade, or for every blade the party's drivers engage
+bool SCOM_FIELD_SKILL::exec(const fw::UpdateInfo&) {
+    if (m_value2 == 0) {
+        if (!GfGameManager::isControlFree()) {
+            return false;
+        }
+        for (unsigned int i = 0; i < 3; i++) {
+            DataParamAcc driver(3, GfGameParty::getDriverBdatId(i, 0), GimmickType(0));
+            if (driver.isValid()) {
+                unsigned int driverId = 0;
+                if (driver.isValid() && driver.getObjType() == 3) {
+                    driverId = driver.getBdatId();
+                }
+                int num = GfDataDriver::getMaxSetBladeNum(driverId);
+                for (int slot = 0; slot < num; slot++) {
+                    unsigned int blade = driver.getBlade(slot, false);
+                    if (blade != 0) {
+                        GfQuestUtil::incFieldSkillTask(blade, m_value);
+                    }
+                }
+            }
+        }
+    } else {
+        GfQuestUtil::incFieldSkillTask(m_value2, m_value);
+    }
+    return true;
+}
+
+// 1.0.0 has it out of line; 3.0.1 has no copy (exec inlines it)
+inline bool SCOM_FIELD_VOICE::isStopVoice() const {
+    return (m_stopOnEvent && GfGameManager::isPlayEvent()) || m_flagD3;
+}
+
+// plays the first queued voice once its wait ran out and the player has control, waits for it, then takes it off;
+// done when none is left
+bool SCOM_FIELD_VOICE::exec(const fw::UpdateInfo& info) {
+    if (m_flagD0) {
+        if (!GfGameManager::isControlFree()) {
+            return false;
+        }
+        m_flagD0 = false;
+        m_flagD1 = true;
+    }
+    if (m_flagD1) {
+        if (!GfGameManager::isControlFree()) {
+            return true;
+        }
+    }
+    Voice& voice = m_voices.first();
+    if (voice.m_state == 0) {
+        voice.m_wait -= info.m_deltaTime;
+        if (voice.m_wait > 0.0f) {
+            return false;
+        }
+        if (isStopVoice()) {
+            voice.m_voice = 0;
+        } else {
+            voice.m_voice = GfFieldVoice::playVoice(voice.m_obj, voice.m_field, voice.m_prio);
+            if (voice.m_voice != 0) {
+                voice.m_state = CV_RESULT(2);
+                return false;
+            }
+        }
+        voice.m_state = CV_RESULT(3);
+    } else if (voice.m_state == 2) {
+        if (isStopVoice() && voice.m_voice != 0) {
+            GfGameVoice::playStop(voice.m_voice);
+            voice.m_voice = 0;
+        }
+        voice.m_state = GfGameVoice::getResult(voice.m_voice);
+        if (voice.m_state == 2) {
+            return false;
+        }
+    }
+    if (voice.m_state >= 3) {
+        m_voices.pop();
+        if (m_voices.empty()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::create(CV_FIELD field, CV_PRIO prio) {
