@@ -111,6 +111,7 @@ public:
     // 1.0.0's names: 1.0.0's CharacterManager::PreUpdateProc and PostUpdateProc call them first on every character
     // with their UpdateInfo, where 3.0.1's call fn_7100036084 and fn_7100039050
     void PreManagerUpdate(const fw::UpdateInfo& info);
+    void ManagerUpdate(const fw::UpdateInfo& info);
     void PostManagerUpdate(const fw::UpdateInfo& info);
     void UpdateHateRingData();
     // the arts slot a blade art would use (BladeArtsManager::RegisterBladeArts registers none below 0)
@@ -527,7 +528,10 @@ public:
     // CharacterManager::IsExistBattlePlayer passes over a player in battle while it is set (run bit 19; meaning
     // unknown)
     unsigned int pad_F00_3 : 1;
-    unsigned int pad_F00_4 : 6;
+    // CharacterManager::fn_710007C43C counts only enemies with it set while GfGameInsideBattleLock holds a lock
+    // (run bit 20; meaning unknown)
+    unsigned int pad_F00_4 : 1;
+    unsigned int pad_F00_5 : 5;
     // ActionRun sets it when it draws the weapon of a character the player does not control and that does not fly
     // (the name is not the original's)
     unsigned int m_isAutoRun : 1;

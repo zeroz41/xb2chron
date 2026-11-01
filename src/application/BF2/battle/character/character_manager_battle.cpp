@@ -7,6 +7,9 @@
 #include "classes/btl/CharacterParameter.h"
 #include "classes/btl/TalkManager.h"
 #include "gf/GfQuestUtil.h"
+#include "classes/gf/GfGameInsideBattleLock.h"
+#include "btl/siren_battle_manager.h"
+#include "classes/gf/GfGameParty.h"
 
 namespace btl {
 
@@ -41,6 +44,34 @@ int CharacterManager::SearchCharacter(gf::GF_OBJ_HANDLE* handle) const {
                 low = mid + 1;
             }
         }
+    }
+    return -1;
+}
+
+int CharacterManager::Register(gf::GF_OBJ_HANDLE* handle, bool isEnemy) {
+    int found = SearchCharacter(handle);
+    if (found >= 0) {
+        return found;
+    }
+    for (int last = (isEnemy ? CHARACTER_NUM - 1 : PLAYER_NUM - 1), i = (isEnemy ? PLAYER_NUM : 0); i <= last;
+         i++) {
+        CHARACTER_SLOT& slot = m_slots[i];
+        if (slot.m_isUsed) continue;
+        slot.m_isUsed = true;
+        bool inserted = false;
+        for (mm::mtl::FixedVector<unsigned char, CHARACTER_NUM>::iterator it = m_sortedSlots.begin();
+             it != m_sortedSlots.end(); ++it) {
+            if (handle < GetCharacterConst(*it)->m_handle) {
+                m_sortedSlots.insert(it, i);
+                inserted = true;
+                break;
+            }
+        }
+        if (!inserted) {
+            m_sortedSlots.push_back(i);
+        }
+        slot.m_chr.Initialize(handle, i);
+        return i;
     }
     return -1;
 }
@@ -117,6 +148,17 @@ bool CharacterManager::IsControlCharacter(gf::GF_OBJ_HANDLE* handle) {
     return m_slots[index].m_chr.m_handle == handle;
 }
 
+BattleCharacter* CharacterManager::GetBattleEnemyCharacter(bool aliveOnly, bool skipFn28D0C) {
+    for (int i = PLAYER_NUM; i < CHARACTER_NUM; i++) {
+        BattleCharacter* chr = GetCharacterConst(i);
+        if (chr != nullptr && chr->IsBattle() && (!skipFn28D0C || !chr->fn_7100028D0C(false)) &&
+            (!aliveOnly || !chr->IsDead(0))) {
+            return chr;
+        }
+    }
+    return nullptr;
+}
+
 int CharacterManager::GetAliveBossNum() const {
     int num = 0;
     for (int i = PLAYER_NUM; i < CHARACTER_NUM; i++) {
@@ -169,6 +211,97 @@ void CharacterManager::PreUpdateProc(const fw::UpdateInfo& info) {
 
 void CharacterManager::Update(const fw::UpdateInfo& info) {
     sys()->UpdateProc(info);
+}
+
+void CharacterManager::UpdateProc(const fw::UpdateInfo& info) {
+    m_enhanceCount = 0;
+    AssignAiChrID();
+    int control = -1;
+    for (unsigned char index : m_sortedSlots) {
+        BattleCharacter* chr = &m_slots[index].m_chr;
+        chr->ManagerUpdate(info);
+        if (control < 0 && chr->IsControlCharacter()) {
+            control = index;
+        }
+    }
+    m_controlIndex = control >= 0 ? control : CHARACTER_NUM;
+    BattleGlobal* global = BattleGlobal::sys();
+    if (global->m_challengeAnySuccess) {
+        TUnk_B3BD68* siren = TUnk_B3BD68::sys();
+        if (siren->pad_1cb && siren->m_sides[0].pad_12_0) {
+            fn_710007C020(3);
+        }
+    }
+    int rest = 3 - m_enhanceCount;
+    global->pad_83c9 = rest < 0 ? 0 : (rest > 3 ? 3 : rest);
+}
+
+void CharacterManager::AssignAiChrID() {
+    bool inBattle = false;
+    for (unsigned char index : m_sortedSlots) {
+        if (m_slots[index].m_chr.IsBattle()) {
+            inBattle = true;
+            break;
+        }
+    }
+    if (inBattle) {
+        for (int i = 0; i < PLAYER_NUM; i++) {
+            BattleCharacter* chr = GetCharacterConst(i);
+            if (chr == nullptr) continue;
+            int aiChrID = chr->m_index;
+            if (aiChrID >= 0) continue;
+            const CharacterParameter* param = chr->GetCharacterParameterConst(true);
+            if (param == nullptr) continue;
+            if (BattleGlobal::sys()->m_challengeAnySuccess) {
+                // the index the handle carries in its low byte
+                aiChrID = static_cast<unsigned char>(reinterpret_cast<unsigned long>(chr->m_handle));
+            } else {
+                int group = param->m_groupIndex;
+                if (param->fn_7100085314(false)) {
+                    // a blade: 3 past five ids for each party member before its driver's
+                    for (int blade = 0; blade < 5; blade++) {
+                        if (gf::GfGameParty::getHandleBlade(group, blade) == chr->m_handle) {
+                            aiChrID = group * 5 + blade + 3;
+                            break;
+                        }
+                    }
+                } else {
+                    aiChrID = group;
+                }
+            }
+            if (aiChrID >= 0) {
+                chr->m_index = aiChrID;
+                m_aiChrTable.m_player[aiChrID] = i;
+            }
+        }
+    } else {
+        for (int i = 0; i < PLAYER_NUM; i++) {
+            BattleCharacter* chr = GetCharacterConst(i);
+            if (chr != nullptr && chr->m_index >= 0) {
+                int aiChrID = chr->m_index;
+                chr->m_index = -1;
+                m_aiChrTable.m_player[aiChrID] = 0xFF;
+            }
+        }
+    }
+    if (inBattle) {
+        for (int i = PLAYER_NUM; i < CHARACTER_NUM; i++) {
+            BattleCharacter* chr = GetCharacterConst(i);
+            if (chr != nullptr && chr->m_index < 0) {
+                chr->m_index = i - PLAYER_NUM;
+                m_aiChrTable.m_enemy[i - PLAYER_NUM] = i;
+            }
+        }
+    } else {
+        for (int i = PLAYER_NUM; i < CHARACTER_NUM; i++) {
+            BattleCharacter* chr = GetCharacterConst(i);
+            if (chr != nullptr && chr->m_index >= 0) {
+                int aiChrID = chr->m_index;
+                chr->m_index = -1;
+                m_aiChrTable.m_enemy[aiChrID] = 0xFF;
+            }
+        }
+    }
 }
 
 void CharacterManager::PostUpdate(const fw::UpdateInfo& info) {
@@ -243,6 +376,19 @@ bool CharacterManager::fn_710007C36C(bool battleOnly) const {
     for (int i = PLAYER_NUM; i < CHARACTER_NUM; i++) {
         BattleCharacter* chr = GetCharacterConst(i);
         if (chr != nullptr && (!battleOnly || chr->IsBattle()) && !chr->IsBlade() && !chr->IsDead(0)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool CharacterManager::fn_710007C43C() const {
+    bool locked = gf::GfGameInsideBattleLock::sys()->m_hasLock;
+    for (int i = PLAYER_NUM; i < CHARACTER_NUM; i++) {
+        BattleCharacter* chr = GetCharacterConst(i);
+        if (chr == nullptr || (locked && !chr->pad_F00_4)) continue;
+        CharacterParameter* param = chr->GetCharacterParameterConst(false);
+        if (param != nullptr && (param->fn_7100088FE4() || chr->IsBattle()) && param->m_isNotBlade && !chr->IsDead(0)) {
             return true;
         }
     }
@@ -338,6 +484,34 @@ void CharacterManager::PlayEnemyWinVoice() {
             if (mm::mtl::PtrSingleton<TalkManager>::sys()->NotifyTrigger(i, static_cast<TalkManager::TRIGGER>(23), 0, 0)) {
                 return;
             }
+        }
+    }
+}
+
+void CharacterManager::fn_710007D348(bool battleOnly, bool includeDead) {
+    bool found = false;
+    for (int i = PLAYER_NUM; i < CHARACTER_NUM; i++) {
+        BattleCharacter* chr = GetCharacterConst(i);
+        if (chr == nullptr || (battleOnly && !chr->IsBattle()) || chr->IsDead(0)) continue;
+        CharacterParameter* param = chr->GetCharacterParameter(true);
+        if (param == nullptr) continue;
+        if (!found) {
+            BattleGlobal::sys()->fn_710000903C();
+        }
+        param->SetupBGM();
+        found = true;
+    }
+    if (!found && includeDead) {
+        for (int i = PLAYER_NUM; i < CHARACTER_NUM; i++) {
+            BattleCharacter* chr = GetCharacterConst(i);
+            if (chr == nullptr || (battleOnly && !chr->IsBattle())) continue;
+            CharacterParameter* param = chr->GetCharacterParameter(true);
+            if (param == nullptr) continue;
+            if (!found) {
+                BattleGlobal::sys()->fn_710000903C();
+            }
+            param->SetupBGM();
+            found = true;
         }
     }
 }

@@ -424,7 +424,8 @@ public:
     // the highest level of an enemy that joined through a link, +15 for a named one (NotifyLinkJoinBattle; the name
     // is not the original's)
     unsigned char m_linkJoinLevel;
-    unsigned char pad_83c9[0x1];
+    // CharacterManager::UpdateProc stores 3 less m_enhanceCount there, kept in 0-3 (meaning unknown)
+    unsigned char pad_83c9;
     // flags (the names are not the original's): one storage unit of 7 bytes, as their reads load it
     // while set, BattleCharacter::NotifyAngryEnd removes the angry effect at once instead of fading it out (the name
     // is not the original's)

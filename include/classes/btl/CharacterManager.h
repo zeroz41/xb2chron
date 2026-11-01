@@ -55,6 +55,9 @@ public:
     gf::GF_OBJ_HANDLE* GetCharacterHandle(int index) const;  // the handle of the character at index
     BattleCharacter* GetControlCharacter();
     bool IsControlCharacter(gf::GF_OBJ_HANDLE* handle);
+    // the first enemy in use in battle (IsBattle), with skipFn28D0C one fn_7100028D0C(false) refuses, with aliveOnly
+    // one alive (IsDead(0) false); BattleCharacter::UpdateTarget calls it
+    BattleCharacter* GetBattleEnemyCharacter(bool aliveOnly, bool skipFn28D0C);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it writes m_enhanceCount. What
     // it does: adds count to m_enhanceCount, holding it at 255 (BattleCharacter::SetupSpecialEnhanceData calls it).
     void fn_710007C020(int count);
@@ -75,6 +78,11 @@ public:
     // does: whether an enemy in use that is no blade is alive (IsDead(0) false), with battleOnly only one in battle
     // (IsBattle) (BattleGlobal::PreUpdateProc and BattleCharacter::DeadProc call it).
     bool fn_710007C36C(bool battleOnly) const;
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it walks the enemy slots. What it
+    // does: whether an enemy in use (while GfGameInsideBattleLock holds a lock only one with pad_F00_4 set) has a
+    // parameter that answers slot 73 (fn_7100088FE4) or is in battle (IsBattle), is no blade (m_isNotBlade) and is
+    // alive (IsDead(0) false) (TUnk_B3A9C8::fn_7100025920 calls it).
+    bool fn_710007C43C() const;
     void BattleEndInitialize();
     bool IsExistBattlePlayer() const;
     bool IsExistBattleEnemy(bool* result, gf::GF_OBJ_HANDLE* handle, bool flag) const;
@@ -85,6 +93,11 @@ public:
     // the highest level of an enemy in use with m_hasHateTarget set and alive, +15 for a named one with addNamed
     int GetBattleEnemyMaxLevel(bool addNamed) const;
     void PlayEnemyWinVoice();
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it walks the enemy slots. What it
+    // does: calls CharacterParameter::SetupBGM on every alive enemy in use (in battle with battleOnly), calling
+    // BattleGlobal::fn_710000903C before the first; when none was found and includeDead is set, the same over the
+    // dead ones too (BattleGlobal::UpdateProc, UpdateJingle, StopJingle and TUnk_B3A9C8::fn_7100025920 call it).
+    void fn_710007D348(bool battleOnly, bool includeDead);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it walks the enemy slots. What it
     // does: sets BattleCharacter::pad_F06_1 on every dead enemy in use (IsDead(0)) that does not have it yet
     // (fn_7100025870 calls it).
