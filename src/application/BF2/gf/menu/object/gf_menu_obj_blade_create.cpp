@@ -19,6 +19,9 @@
 #include "classes/gf/GfMenuObjBladeCreate/IdeagramListener.h"
 #include "classes/gf/GfMenuObjBladeCreate/ResultListener.h"
 #include "classes/gf/GfMenuObjBladeCreate/BoosterNumListener.h"
+#include "classes/gf/GfMenuObjBladeCreate/ConfirmListener.h"
+#include "classes/gf/GfMenuCallContext.h"
+#include "classes/gf/GfMenuObjCommonText.h"
 #include "classes/gf/GfMenuItemList.h"
 #include "classes/gf/GfMenuObjCmnStatus.h"
 #include "classes/gf/GfMenuReference.h"
@@ -249,6 +252,90 @@ void GfMenuObjBladeCreate::MainListener::reciveEvent(const ui::EventData& event,
                 if (owner->m_se[i] != 0) {
                     GfMenuObjUtil::stopSE(owner->m_se[i], 0.0f);
                 }
+            }
+        }
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+inline void GfMenuObjBladeCreate::dispGuideText(bool disp) {
+    ui::UIObjectAcc guide(m_handle, "LAY_guide");
+    guide.setDisp(disp);
+}
+
+inline void GfMenuObjBladeCreate::returnPage(unsigned int handle, PageContext* context, bool) {
+    unsigned int page = 0;
+    switch (context->m_page) {
+    case 1:
+        break;
+    case 2:
+        page = 1;
+        break;
+    case 3:
+        page = context->m_skipPage2 ? 1 : 2;
+        break;
+    case 4:
+        page = 3;
+        break;
+    default:
+        return;
+    }
+    changePage(handle, context, page, true, true);
+}
+
+void GfMenuObjBladeCreate::ConfirmListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        break;
+    case 0x21:
+        m_context->m_confirmed = false;
+        m_context->m_callContext->reset();
+        if (m_owner->pad_11B4) {
+            GfMenuObjCommonText::open(m_context->m_callContext, 0x114, 0);
+        } else {
+            GfMenuObjCommonText::open(m_context->m_callContext, 0x113, 0);
+        }
+        GfMenuObject::setCallContextEventHandler(m_context->m_callContext, acc.m_handle);
+        GfMenuObjOperationInfo::setDisp(false);
+        m_owner->dispGuideText(false);
+        if (!m_owner->pad_11B4) {
+            GfMenuObjMainMenu2::setCloseKeyEnable(false);
+        }
+        break;
+    case 0x22:
+        break;
+    case 0x41: {
+        int id = event.m_param0;
+        if (m_context->m_callContext->m_id == id) {
+            // the text's answer: m_param3 1 with m_param2 1 for a yes, m_param3 0 on a decision (m_param2 0: next)
+            unsigned long answer = event.m_param23;
+            int choice = static_cast<int>(answer);
+            switch (static_cast<int>(answer >> 32)) {
+            case 0:
+                if ((answer & 0xFFFFFFFF) == 0) {
+                    ui::EventData send;
+                    send.m_type = 0x22;
+                    GfMenuObject::sendEvent(acc.searchSibiling("LAY_dr_idea"), send, 0.0f);
+                    m_owner->nextPage(acc.m_handle, m_context, true);
+                } else {
+                    GfMenuObjOperationInfo::setDisp(true);
+                    m_owner->dispGuideText(true);
+                    m_owner->returnPage(acc.m_handle, m_context, true);
+                    if (!m_owner->pad_11B4) {
+                        GfMenuObjMainMenu2::setCloseKeyEnable(true);
+                    }
+                }
+                break;
+            case 1:
+                if (choice == 1) {
+                    m_context->m_confirmed = true;
+                }
+                break;
             }
         }
         break;

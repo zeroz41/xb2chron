@@ -50,6 +50,10 @@ public:
     void setDetailBladePos(unsigned int index);
     void updateBladeCount(bool, bool);
     void refreshBladeList();
+    // inline (no copy in the original): sends an open event (0x21) with that first parameter to the handle's object,
+    // or to LAY_form_main when the handle is 0 (the Form listener's events 3 and 0x103). The name is not the
+    // original's
+    void sendOpenOrFormMain(unsigned int handle, int param);
 
     unsigned int m_teamId;                    // 0x24: GfMenuReference::getReferenceTeamID's
     GfMenuBladeList* m_unitBlades;            // 0x28: the team's blades (initialize)

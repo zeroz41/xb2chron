@@ -9,6 +9,9 @@
 #include "classes/gf/GfMenuObjMercenaryForm/MainListener.h"
 #include "classes/gf/GfMenuObjMercenaryForm/ApplyListener.h"
 #include "classes/gf/GfMenuObjMercenaryForm/BlImgListener.h"
+#include "classes/gf/GfMenuObjMercenaryForm/FormListener.h"
+#include "classes/gf/GfMenuObjCmnStatus.h"
+#include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/gf/GfMenuReferenceNumber.h"
 #include "classes/ui/UICtrlCursorSelect.h"
 #include "classes/ui/UISelectObjList.h"
@@ -157,6 +160,58 @@ void GfMenuObjMercenaryForm::MainListener::reciveEvent(const ui::EventData& even
         param.m_preset = 6;
         param.m_startFlag1 = true;
         GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
+inline void GfMenuObjMercenaryForm::sendOpenOrFormMain(unsigned int handle, int param) {
+    unsigned int target = handle != 0 ? handle : ui::UIObjectAcc(m_handle, "LAY_form_main").m_handle;
+    ui::EventData open;
+    open.m_type = 0x21;
+    open.m_param0 = param;
+    GfMenuObject::sendEvent(target, open, 0.0f);
+}
+
+void GfMenuObjMercenaryForm::FormListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        pad_0C = 0;
+        pad_10 = 0;
+        GfMenuObjOperationInfo::setGuideText(0x25, 0);
+        GfMenuObjCmnStatus::openBlStatus(0, -1);
+        break;
+    case 3:
+        if (event.m_param0 == 0) {
+            break;
+        }
+        if (event.m_param0 == 2) {
+            m_owner->sendOpenOrFormMain(acc.searchSibiling("LAY_leader"), 0);
+        }
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 0x102: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 1;
+        param.m_eventId = 2;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        GfMenuObjCmnStatus::closeBlStatus();
+        break;
+    }
+    case 0x103: {
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 6;
+        param.m_out = 0;
+        param.m_eventId = 1;
+        GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        m_owner->sendOpenOrFormMain(acc.searchChild("LAY_form_list_bl"), 1);
+        GfMenuObjOperationInfo::setGuideText(0x25, 0);
+        GfMenuObjCmnStatus::openBlStatus(0, -1);
         break;
     }
     default:
