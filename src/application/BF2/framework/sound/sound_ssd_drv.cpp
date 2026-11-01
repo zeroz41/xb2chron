@@ -32,6 +32,8 @@
 #include "classes/fw/FrameworkMemory.h"
 #include "classes/fw/SoundManager.h"
 #include "classes/ssd/SoundListener.h"
+#include "classes/fw/SoundPoolMemory.h"
+#include "classes/fw/SsdObjectAllocator.h"
 
 #define SOUND_SSD_DRV_PATH "D:/Monolithsoft/BF2/prog/application/BF2/framework/sound/sound_ssd_drv.cpp"
 
@@ -203,6 +205,50 @@ SoundSsdDriver::~SoundSsdDriver() {
 
 bool SoundSsdDriver::isDeviceEnable() const {
     return m_core != nullptr && !m_core->pad_11;
+}
+
+void SoundSsdDriver::attachPoolMemory(void* memory, unsigned int size) {
+    ml::CS lock(m_cs2);
+    for (mm::mtl::FixedList<SoundPoolMemory*, 256>::iterator it = m_poolMemories.begin();
+         it != m_poolMemories.end(); ++it) {
+        if ((*it)->m_memory == memory && (*it)->m_size == size) {
+            return;
+        }
+    }
+#line 1569 SOUND_SSD_DRV_PATH
+    SoundPoolMemory* pool = new (FrameworkMemory::getAllocator(5), 8, __FILE__, __LINE__) SoundPoolMemory(memory, size);
+    m_poolMemories.push_back(pool);
+}
+
+void SoundSsdDriver::detachPoolMemory(void* memory, unsigned int size) {
+    ml::CS lock(m_cs2);
+    // the walk stops on the pool, which is detached after it
+    mm::mtl::FixedList<SoundPoolMemory*, 256>::iterator it = m_poolMemories.begin();
+    SoundPoolMemory* pool = nullptr;
+    for (; it != m_poolMemories.end(); ++it) {
+        pool = *it;
+        if (pool->m_memory == memory && pool->m_size == size) {
+            break;
+        }
+    }
+    if (it != m_poolMemories.end()) {
+        pool->detach();
+    }
+}
+
+void SoundSsdDriver::updatePoolMemory() {
+    ml::CS lock(m_cs2);
+    for (mm::mtl::FixedList<SoundPoolMemory*, 256>::iterator it = m_poolMemories.begin();
+         it != m_poolMemories.end(); ++it) {
+        SoundPoolMemory* pool = *it;
+        if (pool->m_state == 2) {
+            pool->release();
+            it = m_poolMemories.erase(it);
+            if (pool != nullptr) {
+                SsdObjectAllocator::deleteObject(pool);
+            }
+        }
+    }
 }
 
 void SoundSsdDriver::updateDebugInfo(mm::mtl::FixedVector<SoundHandleDebugInfo, 128ul>&,

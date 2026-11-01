@@ -196,6 +196,8 @@ public:
     ssd::Result SoundHandleDelegate(ssd::Delegate::Handle* delegate, ssd::SoundHandle* handle,
                                     ssd::SoundHandle::Notify::Type type);
     void releaseHandle(ssd::SoundHandle* handle);
+    // releases the pools whose detach finished (each list entry it erases skips the next one)
+    void updatePoolMemory();
     // loads m_bgmVolumes: sound/ira_vol.csvb when the argument (SoundManager's m_dlc when negative) is set, else
     // sound/bgm_vol.csvb (the constructor's tail inlines it with a negative argument)
     void fn_71001A39C8(int dlc);

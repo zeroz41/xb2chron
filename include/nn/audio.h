@@ -39,6 +39,8 @@ struct FinalMixType {
     void* _pMixInfo;
 };
 struct MemoryPoolType {
+    // the pool's state (GetMemoryPoolState; fw::SoundPoolMemory compares it with 3) (values not declared here)
+    enum State : int;
     void* _pMemoryPoolInfo;
 };
 struct DeviceSinkType {
@@ -72,6 +74,10 @@ void InitializeAudioRendererConfig(AudioRendererConfig* config, const AudioRende
 bool AcquireFinalMix(AudioRendererConfig* config, FinalMixType* finalMix, int bufferCount);
 bool AcquireMemoryPool(AudioRendererConfig* config, MemoryPoolType* pool, void* address, unsigned long size);
 bool RequestAttachMemoryPool(MemoryPoolType* pool);
+// fw::SoundPoolMemory's detach and release
+bool RequestDetachMemoryPool(MemoryPoolType* pool);
+MemoryPoolType::State GetMemoryPoolState(const MemoryPoolType* pool);
+void ReleaseMemoryPool(AudioRendererConfig* config, MemoryPoolType* pool);
 Result AddDeviceSink(AudioRendererConfig* config, DeviceSinkType* sink, FinalMixType* finalMix,
                      const signed char* input, int inputCount, const char* name);
 int ListAudioDeviceName(AudioDeviceName* names, int count);

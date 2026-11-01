@@ -69,6 +69,12 @@ public:
     virtual void LockAudio() const = 0;  // slot 16
     virtual void UnlockAudio() const = 0;  // slot 17
     virtual void* GetPlatformDataImpl(char const* name) = 0;  // slot 18
+    // the typed reading of GetPlatformDataImpl (fw::SoundPoolMemory reads the renderer config through it: the name
+    // is loaded before the table) (the name is not the original's)
+    template <typename T>
+    T* GetPlatformData(const char* name) {
+        return static_cast<T*>(GetPlatformDataImpl(name));
+    }
     virtual ~SoundCore();  // slot 19
     virtual const DebugInfo* GetDebugInfo() const = 0;  // slot 21
 
