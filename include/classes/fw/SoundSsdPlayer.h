@@ -17,9 +17,14 @@ namespace fw { enum SoundType : int; }
 namespace fw {
 // one playing sound of fw::SoundSsdDriver (its handle functions reach it through the driver's PointerMap).
 // 1.0.0 has its members out of line in sound_ssd_drv.cpp; 3.0.1 keeps none of them (inlined into the driver).
-// Field names are not the original's.
-class SoundSsdPlayer : public ::ssd::SoundActor3D {
+// Field names are not the original's. It holds its SoundActor3D as a member, not as a base: the constructor calls the
+// complete-object SoundActor3D constructor and stores no table of its own (the original has no SoundSsdPlayer table),
+// and the destructor (deleteObject<SoundSsdPlayer>) calls Quit and the member's destructor directly.
+class SoundSsdPlayer {
 public:
+    ~SoundSsdPlayer() { m_actor.Quit(); }
+    // the actor through a pointer (stop() calls Stop through its table; the name is not the original's)
+    ssd::SoundActor3D* getActor() { return &m_actor; }
     bool isValid() const { return m_handle != nullptr && m_handle->IsValidHandle(); }
     bool isPlaying() const { return m_handle != nullptr && m_handle->IsPlay(); }
     bool isReady() const { return m_handle != nullptr && m_handle->GetState() == 8; }
@@ -35,14 +40,14 @@ public:
         if (m_handle->GetState() != 8) {
             return false;
         }
-        return m_handle->Start(this, m_volume, m_pitch) >= 0;
+        return m_handle->Start(&m_actor, m_volume, m_pitch) >= 0;
     }
     void stop(float fadeTime) {
         if (isValid()) {
             m_volume = 0.0f;
             m_pauseCount = 0;
             m_handle->Stop(fadeTime);
-            Stop(fadeTime);
+            getActor()->Stop(fadeTime);
         }
     }
     bool getTotalTime(float& time) const {
@@ -115,7 +120,7 @@ public:
             m_flags &= ~0x8;
         }
         m_listener = listener;
-        SetListener(listener);
+        m_actor.SetListener(listener);
     }
     void setVolume(float volume, float fadeTime) {
         if (isValid()) {
@@ -154,7 +159,7 @@ public:
     void setPos(const mm::Vec3& pos) { setPos(pos.x, pos.y, pos.z); }
     void setPos(float x, float y, float z) {
         ssd::Vec3 position = {x, y, z};
-        SetPosition(position);
+        m_actor.SetPosition(position);
     }
     void setCategory(fw::SoundCategory category) {
         m_category = category;
@@ -163,6 +168,7 @@ public:
         }
     }
 
+    ssd::SoundActor3D m_actor;  // 0x0
     SoundPack* m_pack;  // 0x78
     mm::mtl::IntrusivePtr<SoundSsdSource> m_source;  // 0x80 (the constructor adds a reference)
     ssd::SoundHandle* m_handle;  // 0x88

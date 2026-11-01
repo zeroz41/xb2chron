@@ -34,6 +34,7 @@
 #include "classes/ssd/SoundListener.h"
 #include "classes/fw/SoundPoolMemory.h"
 #include "classes/fw/SsdObjectAllocator.h"
+#include "classes/ssd/Delegate/Object.h"
 
 #define SOUND_SSD_DRV_PATH "D:/Monolithsoft/BF2/prog/application/BF2/framework/sound/sound_ssd_drv.cpp"
 
@@ -249,6 +250,28 @@ void SoundSsdDriver::updatePoolMemory() {
             }
         }
     }
+}
+
+void SoundSsdDriver::releaseHandle(ssd::SoundHandle* handle) {
+    if (handle == nullptr) {
+        return;
+    }
+    ssd::Delegate::Object<SoundSsdDriver, ssd::SoundHandle*, ssd::SoundHandle::Notify::Type> delegate(
+        this, &SoundSsdDriver::SoundHandleDelegate);
+    ssd::Delegate::Handle* found = handle->notify_.FindDelegate(&delegate);
+    if (found != nullptr) {
+        handle->RemoveDelegateInternal(found);
+        ssd::SoundMemory::allocator_->DeleteInstance(found);
+    }
+    if (mm::mtl::Map<ssd::SoundHandle*, SoundSsdPlayer*>::node* n = m_handlePlayers.find(handle)) {
+        SoundSsdPlayer* player = n->value.second;
+        m_players.remove(player->m_soundHandle);
+        m_handlePlayers.erase(handle);
+        if (player != nullptr) {
+            SsdObjectAllocator::deleteObject(player);
+        }
+    }
+    m_handleAllocator.free(handle);
 }
 
 void SoundSsdDriver::updateDebugInfo(mm::mtl::FixedVector<SoundHandleDebugInfo, 128ul>&,

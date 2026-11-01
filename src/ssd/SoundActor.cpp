@@ -78,8 +78,6 @@ SoundActor3D::SoundActor3D()
     is3D_ = true;
 }
 
-SoundActor3D::~SoundActor3D() {}
-
 Result SoundActor3D::Init() {
     SoundActor::Init();
     positionSet_ = false;

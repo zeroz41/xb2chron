@@ -35,6 +35,30 @@ public:
         }
     }
 
+    // whether p lies in the slots (array.h's const begin and end: lines 44 and 46)
+    bool valid_pointer(const T* p) const {
+        const unsigned long* word = reinterpret_cast<const unsigned long*>(p);
+        return m_buffer.begin() <= word && word <= m_buffer.end();
+    }
+    // the slot of an object (the name is not the original's)
+    unsigned int index_of(const T* p) const {
+#line 81 MM_MTL_OBJECT_ALLOCATOR_PATH
+        MM_ASSERT(valid_pointer(p));
+        return static_cast<unsigned int>(reinterpret_cast<const char*>(p) -
+                                         reinterpret_cast<const char*>(&m_buffer[0])) /
+               static_cast<unsigned int>(sizeof(T));
+    }
+    // destroys one object and gives its slot back (fw::SoundSsdDriver::releaseHandle inlines it; the name is not the
+    // original's)
+    void free(T* p) {
+#line 238 MM_MTL_OBJECT_ALLOCATOR_PATH
+        MM_ASSERT(m_allocated > 0);
+        unsigned int index = index_of(p);
+        p->~T();
+        m_used.clrLocal(index);
+        --m_allocated;
+    }
+
     Array<unsigned long> m_buffer;  // 0x00: the slots, in words
     ReservedBitflag m_used;  // 0x18: a flag per slot in use
     unsigned int m_allocated;  // 0x30: the slots in use

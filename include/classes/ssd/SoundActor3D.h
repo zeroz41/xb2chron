@@ -14,7 +14,7 @@ namespace ssd {
 class SoundActor3D : public ::ssd::SoundActor {
 public:
     SoundActor3D();
-    virtual ~SoundActor3D();  // slot 0
+    virtual ~SoundActor3D() {}  // slot 0
     virtual Result Init();  // slot 2
     virtual Result Quit() { return SoundActor::Quit(); }  // slot 3
     virtual Result Play(SoundHandle* handle, const SoundEntry* entry, float volume, float pitch);  // slot 4
