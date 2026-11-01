@@ -67,6 +67,10 @@ public:
     static unsigned int getBladeID(unsigned int index);  // the blade in list slot index (0..421), 0 for none
     // fills list with the party's blades (SCOM_ACHIEV_INC::createParty and createCrystal)
     static void getListPartyAll(mm::mtl::FixedVector<unsigned short, 422>& list);
+    // fills list with the regular blades 1001 to 1011 (not 1012, 1013); false when it stays empty
+    static bool getListRegular(mm::mtl::FixedVector<unsigned short, 422>& list);
+    // fills list with the common blades 1197 to 1396 that are in use or unselectable
+    static bool getlistCommon(mm::mtl::FixedVector<unsigned short, 422>& list);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
     // unit (before fn_7100237B70) and fills a 422-entry blade list. What it does: walks the blade rows (local game flag
     // 0xD860 picks the walk) adding blades to the list; returns a bool. Callers: SCOM_ACHIEV_INC::fn_71005645F0 (when
@@ -154,6 +158,8 @@ public:
     // BDAT tables 0x137 and 0x138 (GfMenuCharDataAdapter::update_BL_CVName/update_BL_IlustName); 0 for none
     static unsigned int getMenuCastName(unsigned int blade);
     static unsigned int getMenuIlustName(unsigned int blade);
+    // the blade's menu voice file name in voice slot slot (GfBdatChrBl::getChrBlMnuVoice; GfMenuObjBladeBook's preview)
+    static const char* getMenuVoiceName(unsigned int blade, unsigned int slot);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
     // unit among its functions (no this). What it does: stores (cloudSea != 0) at 0x1C of the record fn_710024E1C8
     // returns for the map; GfGameUtilCloudSea::setInnCloudSea passes (GfGameManager::getMapID(), its cloud sea),
@@ -221,6 +227,9 @@ public:
     static bool isActivateParty(unsigned int blade);
     static unsigned int getKizunaringCompleteNum(unsigned int blade);
     static unsigned int getKizunaringMax(unsigned int blade);
+    // 5 for the regular and rare blades; for a common blade 1 + how many of the BTL wildcard values 0x3F-0x42 its
+    // kizuna ring maximum exceeds (at most 4), 1 for any other blade
+    static unsigned int getCrownPoint(unsigned int blade);
     // the scale of a blade's weapon (GfGameMount::attach scales the weapon's models by it at option 3)
     static float getWpnScale(unsigned int blade);
     static bool isRareBlade(unsigned int blade);

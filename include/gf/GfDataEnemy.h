@@ -3,6 +3,7 @@
 
 namespace gf { class SDataEnemy; }
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
+namespace mm { namespace mtl { template <int> class FixStr; }}
 
 namespace gf {
 // the enemies' data, by their row ids (functions, by its symbols)
@@ -14,6 +15,12 @@ public:
     static const char* getVoiceStr(unsigned int arrange);
     static const char* getResourceNameModel(unsigned int arrange);  // its resource row's model name, nullptr for none
     static unsigned int getEquipBlade(unsigned int arrange);  // the enemy's blade, 0 for none
+    static unsigned int getWeaponType(unsigned int arrange);  // its blade's weapon type, 0 for none
+    // the driver enemy's added animation "<model>_<index>" (two digits); false when the enemy has no data
+    static bool getDriverAddAnim(mm::mtl::FixStr<128>& name, unsigned int arrange, unsigned int index);
+    // the same name in name and the model's in model
+    static bool getDriverEffect(mm::mtl::FixStr<128>& model, mm::mtl::FixStr<128>& name, unsigned int arrange,
+                                unsigned int index);
     static bool getExtraParts(unsigned int rsc, unsigned int part);
     static void setupSDataEnemy(SDataEnemy& data, unsigned int arrange, unsigned int arg);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address lies among

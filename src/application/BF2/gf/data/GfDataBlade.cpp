@@ -140,6 +140,14 @@ unsigned int GfDataEnemy::getEquipBladeEnArrangeID(unsigned int arrange) {
     return GfBdatChrEnArrange::get()->getChrEnArrangeEnemyBladeID(arrange);
 }
 
+unsigned int GfDataEnemy::getWeaponType(unsigned int arrange) {
+    unsigned int blade = getEquipBlade(arrange);
+    if (blade == 0) {
+        return 0;
+    }
+    return GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(blade)].m_weaponType;
+}
+
 bool GfDataEnemy::isNamed(unsigned int arrange) {
     if (GfBdatChrEnArrange* bdat = GfBdatChrEnArrange::get()) {
         return bdat->isChrEnArrangeFlagNamed(arrange);
@@ -280,6 +288,26 @@ const char* GfDataDriver::getDebugName(unsigned int driver) {
 
 unsigned int GfDataDriver::getAiID(unsigned int driver) {
     return GfBdatChrDr::get()->getChrDrAiID(driver);
+}
+
+bool GfDataDriver::getDriverAddAnim(mm::mtl::FixStr<128>& name, unsigned int driver, unsigned int weaponType) {
+    GfBdatChrDr* bdat = GfBdatChrDr::get();
+    DataParamAcc acc(3, driver, static_cast<GimmickType>(0));
+    bool result = false;
+    if (acc.isValid()) {
+        if (bdat->getChrDrWpnType(driver, weaponType - 1) == 0) {
+            result = false;
+        } else {
+            const char* model = acc.getModelResourceName();
+            if (weaponType >= 10) {
+                name.format("%s_%d", model, weaponType);
+            } else {
+                name.format("%s_0%d", model, weaponType);
+            }
+            result = true;
+        }
+    }
+    return result;
 }
 
 unsigned int GfDataDriver::getExtraMountNpcRsc(unsigned int driver) {
@@ -931,6 +959,27 @@ bool GfDataBlade::isCommonBlade(unsigned int blade) {
     return blade >= 1197 && blade < 1423;
 }
 
+unsigned int GfDataBlade::getCrownPoint(unsigned int blade) {
+    // Proposed name, not the original's: the symbols leave it unnamed (lbl_71009BA070)
+    static const unsigned short s_crownDatavalues[4] = {0x3F, 0x40, 0x41, 0x42};
+    if (blade - 1001 < 13) {
+        return 5;
+    }
+    if (blade >= 1014 && blade < GfBdatChrBl::get()->getChrBlEnd()) {
+        return 5;
+    }
+    if (blade - 1197 < 226) {
+        GfBdatBtl* btl = GfBdatBtl::get();
+        unsigned int max = getKizunaringMax(blade);
+        for (unsigned long i = 0; i < 4; i++) {
+            if (max <= btl->getWildcardDatavalueU2(s_crownDatavalues[i])) {
+                return i + 1;
+            }
+        }
+    }
+    return 1;
+}
+
 bool GfDataBlade::isRegularBlade(unsigned int blade) {
     return blade >= 1001 && blade < 1014;
 }
@@ -1191,6 +1240,38 @@ unsigned int GfDataBlade::getBladeWpnType(unsigned int blade) {
     return data.m_weaponType;
 }
 
+bool GfDataEnemy::getDriverAddAnim(mm::mtl::FixStr<128>& name, unsigned int arrange, unsigned int index) {
+    DataParamAcc acc(5, arrange, static_cast<GimmickType>(0));
+    bool result = false;
+    if (acc.isValid()) {
+        const char* model = acc.getModelResourceName();
+        if (index >= 10) {
+            name.format("%s_%d", model, index);
+        } else {
+            name.format("%s_0%d", model, index);
+        }
+        result = true;
+    }
+    return result;
+}
+
+bool GfDataEnemy::getDriverEffect(mm::mtl::FixStr<128>& model, mm::mtl::FixStr<128>& name, unsigned int arrange,
+                                  unsigned int index) {
+    DataParamAcc acc(5, arrange, static_cast<GimmickType>(0));
+    bool result = false;
+    if (acc.isValid()) {
+        const char* resource = acc.getModelResourceName();
+        if (index >= 10) {
+            name.format("%s_%d", resource, index);
+        } else {
+            name.format("%s_0%d", resource, index);
+        }
+        model.format("%s", acc.getModelResourceName());
+        result = true;
+    }
+    return result;
+}
+
 bool GfDataBlade::isEnableEngageRex(unsigned int blade) {
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
     return data.m_enableEngageRex != 0;
@@ -1202,6 +1283,39 @@ unsigned int GfDataBlade::getBornTime(unsigned int blade) {
     }
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
     return data.m_bornTime;
+}
+
+// the blade whose menu data (voice actor, illustrator, voices) a blade shows: for a common blade, 1051 unless a compare
+// of its SE resource name matches (it compares the blade's own entry with itself, so the blade itself); any other
+// blade itself. Inlined into all three users (1.0.0's too, no copy): the name is not the original's.
+static inline unsigned int getMenuDataBlade(unsigned int blade) {
+    unsigned int id = blade;
+    if (blade - 1197 < 226) {
+        const char* name = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(blade)].m_seName;
+        id = 1051;
+        for (unsigned int i = 1051; i <= 1072; i++) {
+            if (strcmp(GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(blade)].m_seName, name) == 0) {
+                id = blade;
+                break;
+            }
+        }
+    }
+    return id;
+}
+
+unsigned int GfDataBlade::getMenuCastName(unsigned int blade) {
+    unsigned int id = getMenuDataBlade(blade);
+    return GfBdatChrBl::get()->getChrBlMnuCastName(id);
+}
+
+unsigned int GfDataBlade::getMenuIlustName(unsigned int blade) {
+    unsigned int id = getMenuDataBlade(blade);
+    return GfBdatChrBl::get()->getChrBlMnuIlustName(id);
+}
+
+const char* GfDataBlade::getMenuVoiceName(unsigned int blade, unsigned int slot) {
+    unsigned int id = getMenuDataBlade(blade);
+    return GfBdatChrBl::get()->getChrBlMnuVoice(id, slot);
 }
 
 SDataIdea* GfDataBlade::getSDataIdea(unsigned int blade) {
@@ -2031,6 +2145,52 @@ unsigned int GfDataDriverSkill::getEnhanceFromBdat(unsigned int driver, unsigned
     return GfBdatBtl::get()->getBTL_Skill_DrEnhance(skill);
 }
 
+bool GfDataDriverSkill::isSkillLevelUnlock(unsigned int driver, unsigned int level, bool round) {
+    if (level < 2) {
+        return true;
+    }
+    unsigned char* fp = Bdat::getFP("BTL_SystemBalance");
+    unsigned int need = 0;
+    if (level == 2) {
+        need = static_cast<short>(Bdat::getValCheck(fp, "Param", 136, 5));
+    } else if (level == 3) {
+        need = static_cast<short>(Bdat::getValCheck(fp, "Param", 137, 5));
+    }
+    return need <= getValidSkillNum(driver, round);
+}
+
+unsigned int GfDataDriverSkill::getSkillLevelUnlockNum(unsigned int driver, unsigned int level, bool round) {
+    if (level < 2) {
+        return 0;
+    }
+    unsigned char* fp = Bdat::getFP("BTL_SystemBalance");
+    unsigned int need = 0;
+    if (level == 2) {
+        need = static_cast<short>(Bdat::getValCheck(fp, "Param", 136, 5));
+    } else if (level == 3) {
+        need = static_cast<short>(Bdat::getValCheck(fp, "Param", 137, 5));
+    }
+    unsigned int num = getValidSkillNum(driver, round);
+    return need > num ? need - num : 0;
+}
+
+bool GfDataDriverSkill::isSkillUnlock(unsigned int driver, unsigned int line, unsigned int level, bool round) {
+    if (level == 0) {
+        return false;
+    }
+    if (level == 1) {
+        return true;
+    }
+    unsigned char* fp = Bdat::getFP("BTL_SystemBalance");
+    unsigned int need = 0;
+    if (level == 2) {
+        need = static_cast<short>(Bdat::getValCheck(fp, "Param", 136, 5));
+    } else if (level == 3) {
+        need = static_cast<short>(Bdat::getValCheck(fp, "Param", 137, 5));
+    }
+    return need <= getValidSkillNum(driver, round);
+}
+
 bool GfDataWeapon::getWeaponTypeName(unsigned char*& bdat, unsigned int& id, unsigned int row) {
     id = GfBdatItem::get()->getPcWpnTypeName(row);
     bdat = GfBdatMsg::getFpPcWpnType();
@@ -2429,6 +2589,21 @@ void GfDataBlade::setEnableEngageRex(unsigned int blade, bool enable) {
     data.m_enableEngageRex = enable;
 }
 
+unsigned int GfDataBlade::getBLD_NameList(unsigned int blade) {
+    if (blade - 1197 < 226) {
+        SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+        if (data.m_nameMsgAlt != 0) {
+            GfBdatBlade* bdat = GfBdatBlade::get();
+            for (unsigned int i = bdat->getNameListStart(), end = bdat->getNameListEnd(); i < end; i++) {
+                if (bdat->getNameListCategory(i) == data.m_nameMsgAlt) {
+                    return i;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 void GfDataBlade::setUnselect(unsigned int blade, bool unselect) {
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
     data.m_unselect = unselect;
@@ -2515,6 +2690,24 @@ unsigned int GfDataDriver::getBlade(unsigned int driver, int slot) {
         return 0;
     }
     return data->m_blades[index];
+}
+
+bool GfDataBlade::getListRegular(mm::mtl::FixedVector<unsigned short, 422>& list) {
+    for (unsigned int blade = 1001; blade < 1014; blade++) {
+        if (blade != 1012 && blade != 1013) {
+            list.push_back(blade);
+        }
+    }
+    return !list.empty();
+}
+
+bool GfDataBlade::getlistCommon(mm::mtl::FixedVector<unsigned short, 422>& list) {
+    for (unsigned int blade = 1197; blade < 1397; blade++) {
+        if (!isActivateUnuse(blade) || isUnselect(blade)) {
+            list.push_back(blade);
+        }
+    }
+    return !list.empty();
 }
 
 const char* GfDataDriver::getVoiceStr(const SDataDriver& data) {
@@ -2889,6 +3082,23 @@ int GfDataMap::getWeatherType(unsigned int mapId, WEATHERID id) {
         return 0x15;
     }
     return GfBdatMaplist::get()->getMaplistw_type(mapId, index);
+}
+
+unsigned int GfDataMap::getWeatherIdByWeaType(unsigned int mapId, WEATYPE type) {
+    GfBdatMaplist* bdat = GfBdatMaplist::get();
+    if (bdat->getMaplistw_type(mapId, 0) == type) {
+        return 1;
+    }
+    if (bdat->getMaplistw_type(mapId, 1) == type) {
+        return 2;
+    }
+    if (bdat->getMaplistw_type(mapId, 2) == type) {
+        return 3;
+    }
+    if (bdat->getMaplistw_type(mapId, 3) == type) {
+        return 4;
+    }
+    return 5;
 }
 
 CLOUD_SEA GfDataBlade::fn_710024E8D4(unsigned int map) {
@@ -3519,6 +3729,22 @@ unsigned int GfDataParty::getFixedHandleForBlade(unsigned int driver, int index)
     return driver * 5 + 3 + index;
 }
 
+bool GfDataParty::isNiaByakko(unsigned int id) {
+    if (id == 0xFFFFFFFF) {
+        return false;
+    }
+    SDataGame* game = GfDataManager::getDataGame();
+    if (game->m_party.m_members[id].m_driver != 2) {
+        return false;
+    }
+    DataParamAcc acc(3, 2, static_cast<GimmickType>(0));
+    bool result = false;
+    if (acc.getBlade(-1, false) == 1004) {
+        result = game->m_party.m_leader == 2 || game->m_party.m_leader == 1004;
+    }
+    return result;
+}
+
 bool GfDataBlade::getExtraParts(const SDataBlade& data, unsigned int part) {
     return data.m_extraParts[part] != 0;
 }
@@ -3682,6 +3908,33 @@ unsigned int GfDataQuest::getListQuestCategory(QuestID id) {
         return 2;
     }
     if (quest < 7000) {
+        return 5;
+    }
+    return 6;
+}
+
+unsigned int GfDataQuest::getQuestCategory(QuestID id) {
+    if (id.empty()) {
+        return 0;
+    }
+    unsigned int category = QuestListAcc::get()->getListQuestCategory(id);
+    if (category != 0) {
+        return category;
+    }
+    unsigned int prt = getListPRTQuestID(id).m_id;
+    if (prt == 0) {
+        return 0;
+    }
+    if (prt < 1000) {
+        return 1;
+    }
+    if (prt < 5000) {
+        return 3;
+    }
+    if (prt < 6000) {
+        return 2;
+    }
+    if (prt < 7000) {
         return 5;
     }
     return 6;
@@ -3876,6 +4129,66 @@ unsigned int GfDataItem::getTypeByItemCategory(unsigned int category) {
         return 6;
     }
     return 0;
+}
+
+bool GfDataItem::isNoMultiple(unsigned int item) {
+    unsigned int flag;
+    switch (getItemType(item)) {
+    case 11: {
+        unsigned int index = GfBdatItem::get()->getCrystalListNoMultiple(item);
+        if (index == 0) {
+            return false;
+        }
+        flag = index + 51061;
+        break;
+    }
+    case 6: {
+        unsigned int index;
+        if (item - 25501 < 499) {
+            index = GfBdatItem::get()->fn_71002018A4(item);
+        } else {
+            index = GfBdatItem::get()->getPreciousNoMultiple(item);
+        }
+        if (index == 0) {
+            return false;
+        }
+        flag = index + 51091;
+        break;
+    }
+    default:
+        return false;
+    }
+    return GfGameFlag::getLocal(1, flag) != 0;
+}
+
+void GfDataItem::setNoMultiple(unsigned int item, bool set) {
+    unsigned int flag;
+    switch (getItemType(item)) {
+    case 11: {
+        unsigned int index = GfBdatItem::get()->getCrystalListNoMultiple(item);
+        if (index == 0) {
+            return;
+        }
+        flag = index + 51061;
+        break;
+    }
+    case 6: {
+        unsigned int index;
+        if (item - 25501 < 499) {
+            index = GfBdatItem::get()->fn_71002018A4(item);
+        } else {
+            index = GfBdatItem::get()->getPreciousNoMultiple(item);
+        }
+        if (index == 0) {
+            return;
+        }
+        flag = index + 51091;
+        break;
+    }
+    default:
+        return;
+    }
+    GfGameFlag::setLocal(1, flag, set);
 }
 
 unsigned int GfDataMercenaries::getReserverMax() {
@@ -4335,9 +4648,41 @@ int GfDataHana::getPowerCapacity(unsigned int hana) {
     return GfBdatBtl::get()->getBTL_HanaPowerPowerNum(rank, hana - 1005);
 }
 
+int GfDataHana::getPartsPower(unsigned int parts) {
+    GfBdatItem* bdat = GfBdatItem::get();
+    int power = 0;
+    switch (GfDataItem::getItemType(parts)) {
+    case 16:
+        power = bdat->getITM_HanaRoleNeedPow(parts);
+        break;
+    case 17:
+        power = bdat->getITM_HanaAtrNeedPow(parts);
+        break;
+    case 18:
+        power = bdat->getITM_HanaArtsEnhNeedPow(parts);
+        break;
+    case 19:
+        power = bdat->getITM_HanaNArtsSetNeedPow(parts);
+        break;
+    case 20:
+        power = bdat->getITM_HanaAssistNeedPow(parts);
+        break;
+    }
+    return power;
+}
+
 bool GfDataHana::isOpenCircuit(unsigned int hana, unsigned int circuit) {
     SDataBlade& data = GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)];
     return (data.m_openCircuit & (1 << circuit)) != 0;
+}
+
+void GfDataHana::setOpenCircuit(unsigned int hana, unsigned int circuit, bool open) {
+    unsigned short bit = 1 << circuit;
+    if (open) {
+        GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)].m_openCircuit |= bit;
+    } else {
+        GfDataManager::getDataGame()->m_blades[GfDataBlade::getBladeIndex(hana)].m_openCircuit &= ~bit;
+    }
 }
 
 unsigned int GfDataBlade::getBladePower(unsigned int blade) {

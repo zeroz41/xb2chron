@@ -33,6 +33,8 @@ public:
     static void setMapCompleteFlag(unsigned int mapId);
     static unsigned int getZoneIdForDevelopPoint(unsigned int point);
     static int getWeatherType(unsigned int mapId, WEATHERID id);
+    // the weather id (1 to 4) whose type is type on the map, 5 when none is
+    static unsigned int getWeatherIdByWeaType(unsigned int mapId, WEATYPE type);
     // the time range's name in FLD_TimeInfo's msg (GfFieldTime::getTimeRangeName passes its range); false for none
     static bool getTimeRangeName(unsigned char*& bdat, unsigned int& id, unsigned int range);
 };
