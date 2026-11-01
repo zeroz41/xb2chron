@@ -321,6 +321,26 @@ void CharaPlayTalk::term() {
     idle();
 }
 
+void CharaHideWpn::term() {
+    if (m_flags & 4) {
+        ObjectList* scene = mm::mtl::Singleton<ObjectManager>::getPtr()->m_current;
+        if (scene != nullptr && scene->m_categories[0] != nullptr) {
+            unsigned int id = m_id;
+            for (Object* obj = scene->m_categories[0]->m_child; obj != nullptr; obj = obj->m_next) {
+                if (obj->m_type == 2) {
+                    gf::GfObjAcc acc(static_cast<ObjectChara*>(obj)->m_chara->m_gfHandle);
+                    if (acc.getType() == 3 && acc.getBdatId() == id) {
+                        static_cast<ObjectChara*>(obj)->m_chara->setHideWeapon(static_cast<WPNHIDEID>(2), false,
+                                                                                m_flags & 2);
+                        break;
+                    }
+                }
+            }
+        }
+        m_flags &= ~4u;
+    }
+}
+
 void CharaWinkPlayer::idle_start() {
     m_count = ml::mtRand(60) + 90;
     m_state = &CharaWinkPlayer::idle_waiting;
