@@ -21,6 +21,7 @@ public:
     void getOptionFileNameBin(mm::mtl::FixStr<256>& out);
     // named by 1.0.0: call-site (1.0.0's OnFileEvent calls phaseBinData where 3.0.1's calls this)
     void phaseBinData();
+    void execGameLoadWithMicroThread(SDataSave& save);
 
     // (the field names are not the original's)
     bool m_ira;            // GfGameManager::fn_71002A9E68 as it was made: the Torna ("ira") files' names are used

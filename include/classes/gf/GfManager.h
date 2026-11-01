@@ -54,6 +54,7 @@ public:
     static bool isExecModeThater();
     static void setupContinueGame(const SDataSystem& system, const SDataGame& game, const SDataOption& option);
     static void setupReturnTitle();
+    static void execToAdvertize();
     static void setupOptionData(const SDataOption& option);
     static bool isContinueGame();
     static bool isNewGame();

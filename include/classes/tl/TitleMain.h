@@ -6,6 +6,7 @@
 #include "fw/UpdateInfo.h"
 #include "gf/SoundHandle.h"
 #include "classes/tl/TitleMenu.h"
+#include "mm/mtl/FixStr.h"
 
 namespace gf { class SDataOption; }
 namespace gf { class SDataSave; }
@@ -93,6 +94,20 @@ public:
     // passes the bool to GfManager::fn_710032A1FC, then clears m_isClear and m_newGameAdv.
     void fn_710014FDB8(bool flag);
 
+    // an event to play from the title: 0x54 bytes (the constructor's stores; eventMenuResult copies the first 16 bytes
+    // as two words and the string with FixStr's assignment). The type and member names are not the original's.
+    struct EventRequest {
+        unsigned short m_event;  // TitleStatePlayEvent::enter passes it to GfDataEvent::isBladeCreateEvent
+        // two zeroed halfwords as made (the constructor's zero stores merge with the previous member's; one zeroed
+        // 4-byte block does not): what they hold is not known
+        unsigned short pad_2;
+        unsigned short pad_4;
+        unsigned char pad_6 = 0x15;  // 0x15 as made; what it holds is not known
+        unsigned char pad_7[0x9];
+        mm::mtl::FixStr<64> m_text;  // a 64-character string, empty as made; what it holds is not known
+        EventRequest() : m_event(0), pad_2(0), pad_4(0), pad_7() {}
+    };
+
     ai::Fsm m_fsm;
     MicroUpdater<TitleMain>* m_updater;  // initialize's; runs fnUpdate (the name is not the original's)
     fw::UpdateInfo m_updateInfo;  // what fnUpdate steps the states with (the name is not the original's)
@@ -107,13 +122,22 @@ public:
     // the slot returnTitle was given; TitleMain(), TitleStateLoad::update and TitleStateWarning's step set -1 (the name
     // is not the original's)
     gf::SAVESLOT m_returnSlot;
-    unsigned char pad_A8[0x88];
+    // a 128-character string the constructor empties; nothing in this unit reads it (the type is the constructor's
+    // stores: the first char and the length at 0x128; the name stays a placeholder)
+    mm::mtl::FixStr<128> pad_A8;
+    unsigned char pad_12C[0x4];
     gf::SDataSave* m_saveBuffer;  // createSaveBuffer's (getSaveBuffer; the name is not the original's)
     gf::SDataOption* m_optionBuffer;  // createSaveBuffer's (getOptionBuffer; the name is not the original's)
-    unsigned char pad_140[0x58];
+    // the event TitleStatePlayEvent::enter plays (it copies it and reads the event id): TitleStateMainScreen::update
+    // changes to state 4 when it holds one, TitleStateSelectEvent::eventMenuResult fills it from m_eventTemplate with
+    // the event theater's choice (the name is not the original's)
+    EventRequest m_eventRequest;
+    unsigned char pad_194[0x4];
     // the title's menus (TitleStateMainScreen::dispTitleMenu calls them on this+0x198; the name is not the original's)
     TitleMenu m_menu;
-    unsigned char pad_1A8[0x58];
+    // what eventMenuResult copies into m_eventRequest (all but the event id; the name is not the original's)
+    EventRequest m_eventTemplate;
+    unsigned char pad_1FC[0x4];
     unsigned int m_playTitleEvent;  // playTitleEvent's (the name is not the original's)
     unsigned char pad_204[0x4];
     // fn_710014F5FC's sound category handle, made on first use; the constructor sets -1 (the name is not the original's)

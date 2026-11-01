@@ -24,6 +24,12 @@ public:
     virtual void onLeave(void*, ai::State*);  // slot 4
     virtual void onStep(void*, void const*);  // slot 5
     void update(TitleMain* title, const fw::UpdateInfo& info);
+    void loadSaveDataForTitle(TitleMain* title);
+    void playTitleEvent(TitleMain* title);
+    // opens the title menu and waits for it; true when the title is to be destroyed meanwhile (state 9 requested)
+    bool dispTitleMenu(TitleMain* title, bool flag);
+    bool checkMenuResult(TitleMain* title);
+    void waitTitleMenuDestroy(TitleMain* title);
     virtual void gevPlayEvent(gf::GEV gev, unsigned int arg);  // slot 7
 
     int m_playEvent;  // gevPlayEvent sets 1 for GEV 0xE (the name is not the original's)

@@ -48,8 +48,19 @@
 #include "ml/WorkRootMem.h"
 #include "mtl/MemManager.h"
 #include <new>
+#include "classes/gf/GfSequentialPlay.h"
+#include "classes/gf/GfReqManager.h"
+#include "classes/gf/GfMapManager.h"
 
 namespace tl {
+
+TitleMain::TitleMain()
+    : m_fsm(fw::FrameworkMemory::getAllocator(5)), m_updater(nullptr), m_reqDestroy(false), m_reqReturnTitle(false),
+      m_titleBgm(0), m_isTitleBgm(false), m_returnSlot(static_cast<gf::SAVESLOT>(-1)), m_saveBuffer(nullptr),
+      m_optionBuffer(nullptr), m_playTitleEvent(0),
+      m_seCategory(reinterpret_cast<gf::GF_SE_CATEGORY_HANDLE*>(-1)),
+      m_seCategorySub(reinterpret_cast<gf::GF_SE_CATEGORY_HANDLE*>(-1)), m_isClear(false), m_newGameAdv(false),
+      pad_21A(), m_flag21B(false) {}
 
 TitleMain* TitleMain::create() {
 #line 107
@@ -666,6 +677,26 @@ void TitleMenu::fadeoutEventTheater() {
         m_context = gf::GfMenuCallContext::create();
     }
     gf::GfMenuObjEvTheater::fadeout(m_context);
+}
+
+void TitleStateToTitle::update(TitleMain* title, const fw::UpdateInfo& info) {
+    gf::GfManager::execToAdvertize();
+    title->m_menu.m_request = 0;
+    while (gf::GfSequentialPlay::isPlay()) {
+        TitleMain::sleep(1);
+    }
+    while (gf::GfReqManager::isExistCommand(nullptr)) {
+        TitleMain::sleep(1);
+    }
+    while (!gf::GfMapManager::isMapReady()) {
+        TitleMain::sleep(1);
+    }
+    gf::GfManager::setupReturnTitle();
+    if (title->m_reqDestroy) {
+        requestState(9);
+    } else {
+        requestState(2);
+    }
 }
 
 }  // namespace tl

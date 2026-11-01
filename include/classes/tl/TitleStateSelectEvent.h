@@ -24,6 +24,8 @@ public:
     virtual void onStep(void*, void const*);  // slot 5
     void enter(TitleMain* title, ai::State* prev);
     void update(TitleMain* title, const fw::UpdateInfo& info);
+    // reads the event theater menu's result; true when the state changed or the title is to be destroyed
+    bool eventMenuResult(TitleMain* title);
 };
 }  // namespace tl
 

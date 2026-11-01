@@ -9,6 +9,7 @@ namespace tl {
 // known: its functions read only +0x8; the title states use +0x0.
 class TitleMenu {
 public:
+    TitleMenu() : m_request(0), m_context(nullptr) {}
     void destroyMenuCallContext();
     void openTitle(bool flag);
     bool isOpenTitle() const;
