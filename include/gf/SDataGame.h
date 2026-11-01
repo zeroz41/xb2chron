@@ -8,6 +8,7 @@
 #include "gf/SDataDriver.h"
 #include "gf/GfDataMercenaries.h"
 #include "gf/GfDataParty.h"
+#include "gf/ItemBox.h"
 #include "gf/QuestID.h"
 #include "mm/mtl/FixedVector.h"
 #include "mm/Vec3.h"
@@ -39,6 +40,31 @@ struct SDataGameSavedEvent {
 
 class SDataGame {
 public:
+    // Proposed name, not the original's: the second entry area of each item type (0x11D27C, 0x1B04 bytes;
+    // GfDataManager::fn_7100223650 sums a type's counts over ItemBox's list and this one; places and sizes from its
+    // offsets and the counts' bounds). The member names are not the original's (by item type).
+    struct ItemBoxEx {
+        GfItemInfo m_type1[8];
+        GfItemInfo m_type2[8];
+        GfItemInfo m_type3[8];
+        GfItemInfo m_type5[8];
+        GfItemInfo m_type6[200];
+        GfItemInfo m_type14[50];
+        GfItemInfo m_type15[8];
+        GfItemInfo m_type7[200];
+        GfItemInfo m_type8[8];
+        GfItemInfo m_type9[8];
+        GfItemInfo m_type10[8];
+        GfItemInfo m_type11[8];
+        GfItemInfo m_type12[8];
+        GfItemInfo m_type16[8];
+        GfItemInfo m_type17[8];
+        GfItemInfo m_type18[8];
+        GfItemInfo m_type19[8];
+        GfItemInfo m_type20[8];
+        unsigned char pad_1AB8[0x4C];
+    };
+
     unsigned int m_money;  // 0x0 (named after its accessors; the name is not the original's)
     // 0x4-0x24: the landmark point, its position and Y rotation (1.0.0's GfFieldManager::setLandmarkPoint stores them,
     // getLandmarkPoint/Pos/RotY read them; the names are not the original's)
@@ -60,8 +86,8 @@ public:
     SDataParty m_party;  // 0xE9884: GfDataParty::getSDataParty (the name is not the original's)
     unsigned char pad_E98D4[0x4];  // (m_party is 0x50 bytes: m_leader aligns it to 4)
     // 0xE98D8: GfDataItem::getFavoriteItemType returns it; GfItemBox::fn_71002FA0F4 keeps it at +0x308 and clears its
-    // 0x122EC bytes (named after its accessor; the type and name are not the original's)
-    unsigned char m_favoriteItemType[0x122EC];
+    // 0x122EC bytes (the type is 1.0.0's, see ItemBox; named after its accessor, the name is not the original's)
+    ItemBox m_favoriteItemType;
     GameFlag m_gameFlag;  // GfGameFlag's (the name is not the original's)
     QuestID m_scenario;  // 0x1097E4 (setScenario stores its halves one by one) (named after its accessors; the name is not the original's)
     QuestID m_select;  // 0x1097E8 (setSelect stores its halves one by one) (named after its accessors; the name is not the original's)
@@ -146,7 +172,7 @@ public:
     unsigned short m_enemySuppressCount[800];
     // 0x11D27C: GfDataItem::getItemBox returns it; GfItemBox::fn_71002FA0F4 keeps it at +0x310 and clears its 0x1B04
     // bytes (named after its accessor; the type and name are not the original's)
-    unsigned char m_itemBox[0x1B04];
+    ItemBoxEx m_itemBox;
     unsigned char pad_11ED80[0x8000];
 };
 }  // namespace gf

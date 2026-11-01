@@ -1939,7 +1939,7 @@ bool GfGameUtilSaveData::fn_71002EDC78() {
             game = &title->getSaveBuffer()->m_game;
         }
     }
-    return GfDataManager::fn_7100223650(game->m_favoriteItemType, game->m_itemBox, 25495) != 0;
+    return GfDataManager::fn_7100223650(&game->m_favoriteItemType, &game->m_itemBox, 25495) != 0;
 }
 
 bool GfGameUtilSaveData::fn_71002EDCEC() {
@@ -1949,7 +1949,7 @@ bool GfGameUtilSaveData::fn_71002EDCEC() {
             game = &title->getSaveBuffer()->m_game;
         }
     }
-    return GfDataManager::fn_7100223650(game->m_favoriteItemType, game->m_itemBox, 25496) != 0;
+    return GfDataManager::fn_7100223650(&game->m_favoriteItemType, &game->m_itemBox, 25496) != 0;
 }
 
 void fn_71002EDD60() {

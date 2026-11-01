@@ -3,6 +3,8 @@
 
 #include "classes/gf/IGfEvent.h"
 #include "classes/mm/mtl/PtrSingleton.h"
+#include "gf/GfMenuItemUtil.h"
+#include "gf/SDataGame.h"
 
 namespace gf { class GfSetupParam; }
 namespace gf { class GfDataManager; }
@@ -38,11 +40,18 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in this
     // unit and it takes no object (GfDataManager's statics fill the unit). What it does: GfDataItem::getItemType of
     // item, then by the type (1..0x14, jump table 0x71009B9BCC) a per-type function on the matching parts of the
-    // favorite item area (SDataGame::m_favoriteItemType) and the item box (SDataGame::m_itemBox); 0 for an unknown
-    // item. GfGameUtilSaveData::fn_71002EDC78 / fn_71002EDCEC pass items 25495 / 25496 and test it against 0.
-    static unsigned int fn_7100223650(unsigned char* favorite, unsigned char* box, unsigned int item);
+    // item box (SDataGame::m_favoriteItemType, an ItemBox) and the second entry area (SDataGame::m_itemBox); 0 for an
+    // unknown item. GfGameUtilSaveData::fn_71002EDC78 / fn_71002EDCEC pass items 25495 / 25496 and test it against 0.
+    static unsigned int fn_7100223650(const ItemBox* box, const SDataGame::ItemBoxEx* boxEx, unsigned int item);
 
 private:
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (named after its first instance,
+    // 0x7100223974; one instance per item type, those of types 6, 14 and 7 inline in fn_7100223650). A member because
+    // fn_7100223650 is its only caller. What it does: the sum of the stack counts of the entries of both lists whose
+    // id is id.
+    template <ItemType::Type TYPE, int N, int M>
+    static unsigned int fn_7100223974(const GfItemInfo (&list)[N], const GfItemInfo (&box)[M], unsigned short id);
+
     // 1.0.0's initialize and finalize (the constructor and destroy hold their bodies in 3.0.1)
     void initialize(const GfSetupParam& param);
     void finalize();

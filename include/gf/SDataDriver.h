@@ -3,7 +3,7 @@
 
 #include "gf/SDataBlade.h"
 #include "gf/SDataPouch.h"
-#include "classes/gf/GfItemBox.h"
+#include "gf/GfItemInfo.h"
 
 namespace gf {
 // an accessory slot of a driver (GfDataDriver::getEquipAcce; the names are not the original's)

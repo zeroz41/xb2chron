@@ -2,6 +2,7 @@
 #define GF_GFDATAITEM_H
 
 #include "gf/GfMenuItemUtil.h"
+#include "gf/SDataGame.h"
 
 namespace gf {
 // the items' data, by their item id (functions, by its symbols)
@@ -33,8 +34,8 @@ public:
     static unsigned int getTypeByItemCategory(unsigned int category);
     // SDataGame::m_favoriteItemType. No parameter: its body reads none and its one caller (GfItemBox::fn_71002FA0F4)
     // passes none (1.0.0's getFavoriteItemType(unsigned int) is a different function: a GfBdatItem lookup).
-    static unsigned char* getFavoriteItemType();
-    static unsigned char* getItemBox();  // SDataGame::m_itemBox
+    static ItemBox* getFavoriteItemType();
+    static SDataGame::ItemBoxEx* getItemBox();  // SDataGame::m_itemBox
 };
 }  // namespace gf
 

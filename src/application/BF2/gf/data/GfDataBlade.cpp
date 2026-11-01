@@ -4729,12 +4729,12 @@ int GfDataDriver::getMaxSetBladeNum(unsigned int driver) {
     return getMaxSetBladeNum(*getSDataDriver(driver));
 }
 
-unsigned char* GfDataItem::getFavoriteItemType() {
-    return GfDataManager::getDataGame()->m_favoriteItemType;
+ItemBox* GfDataItem::getFavoriteItemType() {
+    return &GfDataManager::getDataGame()->m_favoriteItemType;
 }
 
-unsigned char* GfDataItem::getItemBox() {
-    return GfDataManager::getDataGame()->m_itemBox;
+SDataGame::ItemBoxEx* GfDataItem::getItemBox() {
+    return &GfDataManager::getDataGame()->m_itemBox;
 }
 
 unsigned short GfDataBlade::fn_7100231EB8(const SDataGame& game) {

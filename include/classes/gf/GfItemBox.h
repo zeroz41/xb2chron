@@ -3,37 +3,13 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "gf/GfMenuItemUtil.h"
+#include "gf/GfItemInfo.h"
+#include "gf/SDataGame.h"
 #include "mm/mtl/Array.h"
 
 namespace gf { class GfItemBox; }
 
 namespace gf {
-// a handle to one item box entry (1.0.0's symbols take it by value; 3.0.1's callers pass a copy by address, so it
-// is not trivially copyable). The field name is not the original's.
-struct GfItemHandle {
-    GfItemHandle() : m_handle(0) {}
-    GfItemHandle(const GfItemHandle& other) : m_handle(other.m_handle) {}
-    unsigned int m_handle;
-};
-
-// one item box entry (1.0.0's symbols: GfItemInfo, 12 bytes: its constructor zeroes 8 bytes then 4). The id is the
-// index in the type's BDAT range (getItemID adds getItemStartID - 1). Field names are not the original's.
-struct GfItemInfo {
-    ItemType::Type getType() const { return static_cast<ItemType::Type>(m_type); }
-    GfItemHandle getHandle() const;
-    unsigned short getItemID() const;
-    void setType(ItemType::Type type);
-
-    unsigned int m_id : 13;
-    unsigned int m_type : 6;
-    unsigned int m_count : 10;  // the stack count (GfItemBoxBase::fn_71002F9DD4 sums it)
-    unsigned int pad_0_29 : 1;
-    unsigned int m_equip : 1;  // setEquipFlag
-    unsigned int pad_0_31 : 1;
-    unsigned int m_time;  // getItemTime
-    unsigned int m_serial;  // the handle's bits 6-31 (getHandle)
-};
-
 class GfItemBoxBase;
 
 // walks a type's entries (1.0.0's symbols: item_iterator::operator++ returns a copy). Field names are not the
@@ -127,12 +103,13 @@ public:
     // StoreListListener and GfMenuGameAdapter's type 20 call it.
     int fn_71002F9F6C(ItemType::Type type);
     // Placeholder name: new in 3.0.1 (1.0.0 had setItemBox(ItemBox*, bool) instead). GfItemBox::fn_71002FA0F4 calls it
-    // with SDataGame's favorite item types and item box; it sets up the 19 type lists from them.
-    void fn_71002F3F98(unsigned char* favoriteItemType, unsigned char* itemBox);
+    // with SDataGame's item box (ItemBox) and its second entry area (SDataGame::ItemBoxEx); it sets up the 19 type
+    // lists from them.
+    void fn_71002F3F98(ItemBox* favoriteItemType, SDataGame::ItemBoxEx* itemBox);
 
     ItemTypeInfo m_info[19];
-    unsigned char* m_favoriteItemType;  // GfDataItem::getFavoriteItemType
-    unsigned char* m_itemBox;  // GfDataItem::getItemBox
+    ItemBox* m_favoriteItemType;  // GfDataItem::getFavoriteItemType
+    SDataGame::ItemBoxEx* m_itemBox;  // GfDataItem::getItemBox
     ::mm::mtl::Array<GfItemInfo*> m_lists[19];
 };
 
