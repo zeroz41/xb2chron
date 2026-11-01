@@ -131,6 +131,9 @@
 #include "gf/QuestListAcc.h"
 #include "gf/GfDataField.h"
 #include "gf/GfDataParty.h"
+#include "gf/GfDataItem.h"
+#include "classes/gf/GfBdatItem.h"
+#include "mm/mtl/FixStr.h"
 namespace gf {
 bool SCOM_ADD_MONEY::exec(fw::UpdateInfo const&) {
     GfGameUtil::addMoney(m_money);
@@ -1770,6 +1773,18 @@ inline bool SCOM_FIELD_VOICE::isStopVoice() const {
     return (m_stopOnEvent && GfGameManager::isPlayEvent()) || m_flagD3;
 }
 
+bool SCOM_FIELD_VOICE::fn_7100566B24(mm::mtl::FixedVector<GF_OBJ_HANDLE*, 9>& handles) {
+    for (unsigned int i = 0; i < 3; i++) {
+        for (unsigned int j = 0; j < 3; j++) {
+            GF_OBJ_HANDLE* handle = GfGameParty::getHandleDriver(i, j);
+            if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+                handles.push_back(handle);
+            }
+        }
+    }
+    return !handles.empty();
+}
+
 // plays the first queued voice once its wait ran out and the player has control, waits for it, then takes it off;
 // done when none is left
 bool SCOM_FIELD_VOICE::exec(const fw::UpdateInfo& info) {
@@ -2177,10 +2192,9 @@ GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createFieldSkillStart(unsigned int blade, u
 GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::fn_7100568D34(unsigned int skill) {
     if (GfGameManager::fn_71002A9E68()) {
         VoiceList names;
-        names.m_names[0] = "750101";
-        names.m_names[1] = "750102";
-        names.m_names[2] = "750103";
-        names.m_count = 3;
+        names.push_back("750101");
+        names.push_back("750102");
+        names.push_back("750103");
         return fn_7100568E1C(names);
     }
     QuestListAcc* quests = QuestListAcc::get();
@@ -2197,9 +2211,8 @@ GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::fn_7100568D34(unsigned int skill) {
 GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createFieldSkillMiss(unsigned int skill) {
     if (GfGameManager::fn_71002A9E68()) {
         VoiceList names;
-        names.m_names[0] = "760101";
-        names.m_names[1] = "760102";
-        names.m_count = 2;
+        names.push_back("760101");
+        names.push_back("760102");
         return fn_7100568E1C(names);
     }
     QuestListAcc* quests = QuestListAcc::get();
@@ -2211,6 +2224,34 @@ GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createFieldSkillMiss(unsigned int skill) {
         return nullptr;
     }
     return GfGameVoice::playVoice(GfGameManager::getPartyLeaderDriver(), name, CV_PRIO(1));
+}
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B6AB50). The blade names (bdat ids
+// 0x11..0x19) a voice name is appended to. The original reaches it directly (file-local) yet keeps FixStr's
+// "pszName != 0" check on the entry it reads, so the compiler did not fold it to its initial values: `used`
+// reproduces that (as the GlobalMerge statics elsewhere).
+__attribute__((used)) static const char* s_bladeVoiceIds[9] = {"701", "702", "703", "704", "705", "706", "707", "708", "709"};
+
+// the blade id of a blade object, 0 for anything else (the original computes it at each use)
+static inline unsigned int getBladeBdatId(const DataParamAcc& acc) {
+    return acc.isValid() && acc.getObjType() == 3 ? acc.getBdatId() : 0;
+}
+
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::fn_7100568E1C(const VoiceList& names) {
+    if (!GfGameManager::fn_71002A9E68()) {
+        return nullptr;
+    }
+    mm::mtl::FixedVector<GF_OBJ_HANDLE*, 9> handles;
+    if (!fn_7100566B24(handles)) {
+        return nullptr;
+    }
+    DataParamAcc blade(handles[ml::mtRand(handles.size())]);
+    if (getBladeBdatId(blade) < 0x11 || getBladeBdatId(blade) > 0x19) {
+        return nullptr;
+    }
+    mm::mtl::FixStr<32> name(s_bladeVoiceIds[getBladeBdatId(blade) - 0x11]);
+    name += names[ml::mtRand(names.size())];
+    return GfGameVoice::fn_71002F1D5C(blade.m_handle, name.m_str, CV_PRIO(3));
 }
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B6AAC0)
@@ -2229,51 +2270,82 @@ GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createDriverKizuna(unsigned int id) {
 
 void SCOM_FIELD_VOICE::fn_71005691B0() {
     VoiceList names;
-    names.m_names[0] = "670101";
-    names.m_names[1] = "670102";
-    names.m_count = 2;
+    names.push_back("670101");
+    names.push_back("670102");
     fn_7100568E1C(names);
 }
 
 void SCOM_FIELD_VOICE::fn_71005691EC() {
     VoiceList names;
-    names.m_names[0] = "670103";
-    names.m_names[1] = "670104";
-    names.m_count = 2;
+    names.push_back("670103");
+    names.push_back("670104");
     fn_7100568E1C(names);
 }
 
 void fn_7100569228() {
     SCOM_FIELD_VOICE::VoiceList names;
-    names.m_names[0] = "670105";
-    names.m_names[1] = "670106";
-    names.m_count = 2;
+    names.push_back("670105");
+    names.push_back("670106");
     SCOM_FIELD_VOICE::fn_7100568E1C(names);
+}
+
+GAME_VOICE_HANDLE* fn_7100569264(unsigned int blade, const SCOM_FIELD_VOICE::VoiceList& names) {
+    if (!GfGameManager::fn_71002A9E68() || blade - 0x11 > 8) {
+        return nullptr;
+    }
+    mm::mtl::FixStr<32> name(s_bladeVoiceIds[blade - 0x11]);
+    name += names[ml::mtRand(names.size())];
+    return GfGameVoice::fn_71002F1D20(3, blade, name.m_str, CV_PRIO(3));
 }
 
 GAME_VOICE_HANDLE* fn_71005693C0(unsigned int blade) {
     SCOM_FIELD_VOICE::VoiceList names;
-    names.m_names[0] = "680101";
-    names.m_names[1] = "680102";
-    names.m_count = 2;
+    names.push_back("680101");
+    names.push_back("680102");
     return fn_7100569264(blade, names);
+}
+
+GAME_VOICE_HANDLE* fn_71005694C0(unsigned int item, unsigned int blade) {
+    if (GfDataItem::getItemType(item) == 10) {
+        unsigned int category = GfBdatItem::sys()->getFavoriteCategory(item);
+        SCOM_FIELD_VOICE::VoiceList names;
+        if (GfDataItem::isFavoriteCategoryFood(category)) {
+            names.push_back("690101");
+        } else {
+            names.push_back("690102");
+        }
+        return fn_7100569264(blade, names);
+    }
+    return nullptr;
+}
+
+GAME_VOICE_HANDLE* fn_7100569548(unsigned int item, unsigned int blade) {
+    if (GfDataItem::getItemType(item) == 10) {
+        unsigned int category = GfBdatItem::sys()->getFavoriteCategory(item);
+        SCOM_FIELD_VOICE::VoiceList names;
+        if (GfDataItem::isFavoriteCategoryFood(category)) {
+            names.push_back("690103");
+        } else {
+            names.push_back("690104");
+        }
+        return fn_7100569264(blade, names);
+    }
+    return nullptr;
 }
 
 void fn_71005695D0(unsigned int blade) {
     SCOM_FIELD_VOICE::VoiceList names;
-    names.m_names[0] = "700101";
-    names.m_names[1] = "700102";
-    names.m_names[2] = "700103";
-    names.m_count = 3;
+    names.push_back("700101");
+    names.push_back("700102");
+    names.push_back("700103");
     fn_7100569264(blade, names);
 }
 
 void fn_7100569618(unsigned int blade) {
     SCOM_FIELD_VOICE::VoiceList names;
-    names.m_names[0] = "710101";
-    names.m_names[1] = "710102";
-    names.m_names[2] = "710103";
-    names.m_count = 3;
+    names.push_back("710101");
+    names.push_back("710102");
+    names.push_back("710103");
     fn_7100569264(blade, names);
 }
 

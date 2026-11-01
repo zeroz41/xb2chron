@@ -4,6 +4,7 @@
 #include "classes/gf/SCOM.h"
 #include "gf/ParamObj.h"
 #include "mm/mtl/FixedQueue.h"
+#include "mm/mtl/FixedVector.h"
 
 namespace fw { class UpdateInfo; }
 namespace gf { enum CV_FIELD : int; enum CV_PRIO : int; }  // the field voice's kind and priority
@@ -13,19 +14,22 @@ namespace gf {
 // table 0x7100B6B690
 class SCOM_FIELD_VOICE : public ::gf::SCOM {
 public:
-    // the voice names fn_7100568E1C and fn_7100569264 pick one of (ml::mtRand(m_count)); their callers fill it on the
-    // stack. Up to five (m_count at 0x28); no destructor code follows the calls, so it is not mm::mtl::FixedVector
-    // (that one clears its size on destruction). The name and the field names are not the original's.
-    struct VoiceList {
-        const char* m_names[5];
-        unsigned long m_count;
-    };
+    // the voice names fn_7100568E1C and fn_7100569264 pick one of (ml::mtRand(size())); their callers push them on
+    // the stack. mm::mtl::FixedVector of five: fn_7100569264 asserts "index < size()" (FixedVector line 181) and
+    // fn_71005693FC pushes with "size() < capacity()"; the destructor's size clear folds once the callees are
+    // defined in this unit (their parameter becomes readonly). The typedef name is not the original's.
+    typedef ::mm::mtl::FixedVector<const char*, 5> VoiceList;
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because SCOM_FIELD_VOICE's
     // fn_71005691B0, fn_71005691EC, fn_7100568D34 and createFieldSkillMiss call it and it sits among its create
     // functions. What it does: when GfGameManager::fn_71002A9E68 holds, picks a party blade (fn_7100566B24,
-    // ml::mtRand) of bdat id 0x11 and up and plays one of names (ml::mtRand(m_count)) for it, with the blade's name
+    // ml::mtRand) of bdat id 0x11 and up and plays one of names (ml::mtRand(size())) for it, with the blade's name
     // from the table at 0x7100B6AB50; 0 when it plays nothing (not recovered).
     static GAME_VOICE_HANDLE* fn_7100568E1C(const VoiceList& names);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its two callers are
+    // SCOM_FIELD_VOICE's: fn_7100568E1C and fn_71005687A4 (createBadWeather's voice pair); kept out of line in both.
+    // What it does: pushes the handles GfGameParty::getHandleDriver(i, 0..2) gives for the party slots i 0..2 that
+    // are not -1; true when it found any.
+    static bool fn_7100566B24(::mm::mtl::FixedVector<GF_OBJ_HANDLE*, 9>& handles);
     // the names below are not the original's (what the create functions store and exec reads)
     // one voice to play: exec waits m_wait seconds, plays it (GfFieldVoice::playVoice(m_obj, m_field, m_prio)),
     // then waits for GfGameVoice::getResult(m_voice)
@@ -142,13 +146,21 @@ public:
 
 // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions: they take no this, and their
 // callers are menu code outside any SCOM class. What fn_7100569264 does: when GfGameManager::fn_71002A9E68 holds and
-// blade is a bdat id 0x11..0x19, plays one of names (ml::mtRand(m_count)) appended to the blade's name (table
+// blade is a bdat id 0x11..0x19, plays one of names (ml::mtRand(size())) appended to the blade's name (table
 // 0x7100B6AB50) for the blade (GfGameVoice::fn_71002F1D20(3, blade, ...)); 0 otherwise (not recovered). The others
 // pass it fixed lists: fn_71005693C0 "680101"/"680102" (caller fn_71003BD208), fn_71005695D0 "700101".."700103"
 // (caller GfMenuObjDrArtsSet2::ArtsListListener::reciveEvent), fn_7100569618 "710101".."710103" (caller
 // GfMenuObjDrKizunaRing::seqSkillAnime).
 GAME_VOICE_HANDLE* fn_7100569264(unsigned int blade, const SCOM_FIELD_VOICE::VoiceList& names);
 GAME_VOICE_HANDLE* fn_71005693C0(unsigned int blade);  // fn_7100569264's voice (fn_71003BD208 keeps it)
+// Placeholder name, as above (caller GfMenuObjShop::seqWaitExchange): fn_7100569264 with "680103" (left out for
+// blade 0x13 unless GfGameCond::isGameCond(0xE3F)), "680104", "680105".
+void fn_71005693FC(unsigned int blade);
+// Placeholder names, as above (caller GfPouchUtil::updatePouch): for an item of type 10, fn_7100569264 with
+// "690101" (fn_71005694C0) / "690103" (fn_7100569548) when the item's favorite category is food
+// (GfDataItem::isFavoriteCategoryFood), else "690102" / "690104"; 0 for other items.
+GAME_VOICE_HANDLE* fn_71005694C0(unsigned int item, unsigned int blade);
+GAME_VOICE_HANDLE* fn_7100569548(unsigned int item, unsigned int blade);
 void fn_71005695D0(unsigned int blade);
 void fn_7100569618(unsigned int blade);
 }  // namespace gf
