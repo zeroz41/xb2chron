@@ -170,7 +170,10 @@ public:
     // syncDirection stores -m_moveDir here; the turn states turn to it when the stick gives no direction
     // (the name is not the original's)
     mm::Vec3 m_moveDirInv;
-    unsigned char pad_200[0x90];
+    // AgentUtilField::setFollowWallEndInput sets the stick's x by the target's side along it, as its y by m_frontDir
+    // (the name is not the original's)
+    mm::Vec3 m_sideDir;
+    unsigned char pad_210[0x80];
     // two of updateWorldDirs' world directions: the ones the stick's y and x move the PC along
     // (TaskFieldWallEscape::update picks the stick's signs by them; the names are not the original's)
     mm::Vec3 m_stickFrontDir;

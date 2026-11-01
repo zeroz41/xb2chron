@@ -12,6 +12,7 @@ public:
     Vec2(const Vec2& v) : x(v.x), y(v.y) {}
     // trivial: an assignment copies the 8 data bytes at once (UICtrlMethodScale::setup, UICtrlMethodMotion::setup)
     Vec2& operator=(const Vec2& v) = default;
+    static const Vec2 zero;  // AgentUtilField::calcFollowWallInput starts its input from it
     float x;
     float y;
 } __attribute__((aligned(16)));

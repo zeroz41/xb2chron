@@ -80,6 +80,11 @@ public:
     static bool isWallJumpAnyPlayer();
 };
 
+// setFollowInput's two halves (by their symbols): the stick toward the navigation's move direction, its power the
+// distance's place between the parameter block's powMinDist and powMaxDist (entry WATER_ID in deep water)
+template <typename PARAM, PARAM_ID_FIELD_AI ID, PARAM_ID_FIELD_AI WATER_ID>
+float funcFollowInput(float distance, navi::NvmshAcObj* nvmshAcObj, gf::GfComPropertyPc& property);
+
 }}  // namespace gf::pc
 
 #endif

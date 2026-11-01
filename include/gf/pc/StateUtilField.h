@@ -61,6 +61,8 @@ public:
     enum Timing : unsigned int {};
     static void resetCameraForWall(gf::GfComBehaviorPc& behavior, Timing timing);
     static void setAsmSpeedSlideBrake(gf::GfComPropertyPc& property);
+    // whether a player is within range of pos (AgentUtilField::isWallEndMove asks it for the wall's end)
+    static bool isNearPlayer(gf::GfComPropertyPc& property, const mm::Vec3& pos, float range);
     static void setWallMoveMode(gf::GfComBehaviorPc& behavior, bool on);
     static void notifySkillAct(gf::GfComBehaviorPc& behavior, bool act);
     static void notifyRiderEvent(gf::GfComBehaviorPc& behavior, VehicleEvent event);

@@ -208,7 +208,6 @@ public:
     bool m_ownerBonusDirty;
     unsigned char pad_51[0x3];
     OwnerBonus m_ownerBonus;  // getOwnerBonus's
-    unsigned char pad_72[0x6];
     // the drivers' wires (getAppendControl finds one by its wire object or owner; the name is not the original's)
     mm::mtl::FixedList<GfAppendWire*, 8> m_appendWires;  // 0x78
     float m_moneyLogTime;  // addMoneyLog sets 0.5

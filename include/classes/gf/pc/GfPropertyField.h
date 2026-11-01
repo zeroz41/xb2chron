@@ -39,6 +39,13 @@ public:
     void flashWallInfo(const gf::GfComPropertyPc& property);
     float getWallHeightOffset() const;
 
+    // m_paramList's entry 3: MoveUtilField::updateLandBrake keeps a speed between them by how far the stick points
+    // ahead (the names are not the original's)
+    struct LandBrakeParam {
+        float m_minSpeed;
+        float m_maxSpeed;
+    };
+
     // m_paramList's entry 0 (the names are not the original's)
     struct MoveParam {
         unsigned char pad_0[0x4];
@@ -54,7 +61,10 @@ public:
         float m_backRangeAir;
         // StateUtilField::ignoreOnGroundJump: a jump ignores the ground until this time
         float m_groundIgnoreTime;
-        unsigned char pad_1c[0x8];
+        // MoveUtilField::getSpeedEffect takes it off the run speed's rate in shallow water (water level 2), the second
+        // while the property's state flags have bit 13 (the names are not the original's)
+        float m_wadeSpeedDown;
+        float m_wadeSpeedDownFlagged;
         // StateFieldStopBrake::update runs its stop motion (asm command 5) once the PC is this slow; at 0 it has
         // none and goes to C_idle when the PC stands
         float m_brakeStopSpeed;
