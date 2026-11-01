@@ -62,6 +62,8 @@
 #include "mm/mtl/FixStr.h"
 #include <string.h>
 #include "ml/ScnSetup.h"
+#include "ml/MlMem.h"
+#include "ml/PathUtil.h"
 #include "classes/ml/IScnRender.h"
 
 namespace ml {
@@ -164,6 +166,33 @@ ScnDebugManipuObj::~ScnDebugManipuObj() {}
 
 ScnRender::~ScnRender() {}
 
+Scn::Scn(const ScnSetup* setup)
+    : m_pool(nullptr), m_camMan(nullptr), m_debug(nullptr), m_renderDrSys(nullptr), pad_40(false), pad_60(0),
+      pad_B0(false), m_grpHandle(-1), m_renderCBNum(0), pad_DF8(false), m_renderStop(false) {
+    m_allocHandle = mtl::ALLOC_HANDLE();
+    mtl::ALLOC_HANDLE parent = setup->pad_c;
+    if (parent.m_handle == 0) {
+        parent = MlMem::getProductMem();
+    }
+    mm::mtl::FixStr<64> name;
+    name.format("Scn(%s)", setup->m_name.m_str);
+    if (name.length() >= 32) {
+        name = "Scn";
+    }
+    m_allocHandle = mtl::MemManager::create(parent, setup->pad_8, name.m_str, true, "no name", 0);
+    m_cs = new (m_allocHandle, nullptr, 0, 4, false) CriticalSection;
+    m_entryResCs = new (m_allocHandle, nullptr, 0, 4, false) CriticalSection;
+    m_setup = *setup;
+    for (int i = 0; i < 10; i++) {
+        m_debDraw[i].pad_0 = i;
+        m_debDraw[i].m_prio = static_cast<SCNPRIO_CB>(-1);
+    }
+    m_grpHandle = WorkCpu::createGroupHandle(1);
+    WorkCpu::entryJobThread(m_grpHandle, thUpAfter, 0xF, this, nullptr, static_cast<CPUID>(1), true, false);
+    WorkCpu::entryAutoExecGrp(m_grpHandle, static_cast<CPUID>(1), 0xF);
+    init();
+}
+
 unsigned int Scn::thUpAfter(void* scn, void*) {
     Scn* self = static_cast<Scn*>(scn);
     for (int i = 0; i < self->m_renderCBNum; i++) {
@@ -175,6 +204,13 @@ unsigned int Scn::thUpAfter(void* scn, void*) {
         }
     }
     return 0;
+}
+
+void Scn::init() {
+    mtl::ALLOC_HANDLE mem = m_allocHandle;
+    m_debug = new (mem, nullptr, 0, 4, false) ScnDebug(this, mem);
+    m_pool = new (mem, nullptr, 0, 4, false) ScnPoolObj(this);
+    m_camMan = new (mem, nullptr, 0, 4, false) ScnCamMan(this);
 }
 
 Scn::~Scn() {
@@ -222,6 +258,19 @@ void Scn::term() {
     }
 }
 
+FileResTh* Scn::allocEntryRes(const char* path) {
+    CS cs(*m_entryResCs);
+    for (FileResTh** it = m_entryRes.begin(); it != m_entryRes.end(); ++it) {
+        mm::mtl::FixStr<128> name;
+        (*it)->GetName(name);
+        if (strcmp(name.m_str, PathUtil::getFilePtrFromPath(path)) == 0) {
+            (*it)->AddRef();
+            return *it;
+        }
+    }
+    return nullptr;
+}
+
 void Scn::addRenderCB(IScnRender* render, SCNPRIO_CB prio, bool after, bool flag) {
     RENDER_CB cb;
     cb.m_render = render;
@@ -251,7 +300,7 @@ void Scn::removeRenderCB(IScnRender* render) {
 ScnObjModel* Scn::createMdl(const void* resource, const char* name, int arg) {
     ScnObjModel* mdl = m_renderDrSys->createMdl(this, resource, name, arg);
     if (mdl != nullptr) {
-        mdl->setAlwaysTexStm(!m_noAlwaysTexStm);
+        mdl->setAlwaysTexStm(!m_setup.pad_44);
     }
     return mdl;
 }
@@ -287,6 +336,42 @@ void ScnCamMan::setView(WinView* view, int index) {
 
 WinView* Scn::getView(int index) {
     return m_camMan->getView(index);
+}
+
+void Scn::move() {
+    for (int i = 0; i < m_renderCBNum; i++) {
+        RENDER_CB& cb = m_renderCB[i];
+        if (!cb.m_removed) {
+            cb.m_render->cbPreUpdate(this, cb.m_prio);
+        }
+    }
+    m_camMan->update();
+    m_pool->update();
+    if (!pad_B0) {
+        pad_B0 = true;
+        if (m_renderDrSys != nullptr) {
+            m_renderDrSys->update();
+        }
+    }
+}
+
+void ScnPoolObj::apply() {
+    CS cs(m_cs0);
+    for (reslist<ScnObj*>::iterator it = m_cam.begin(); it != m_cam.end(); ++it) {
+        (*it)->apply();
+    }
+    for (reslist<ScnObj*>::iterator it = m_lgt.begin(); it != m_lgt.end(); ++it) {
+        (*it)->apply();
+    }
+    for (reslist<ScnObj*>::iterator it = m_ibl.begin(); it != m_ibl.end(); ++it) {
+        (*it)->apply();
+    }
+    for (reslist<ScnObj*>::iterator it = m_mdl.begin(); it != m_mdl.end();) {
+        ScnObj* obj = *it++;
+        if (!obj->m_delete) {
+            obj->apply();
+        }
+    }
 }
 
 ScnCamMan::~ScnCamMan() {

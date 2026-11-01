@@ -13,7 +13,7 @@ public:
     ScnSetup() : pad_0(nullptr), pad_8(0x300000), pad_34(0x14000000), pad_38(0x80), pad_3c(0x1000), pad_44(true) {}
 
     void* pad_0;
-    unsigned int pad_8;
+    int pad_8;  // the size of the allocator the scene creates (Scn::Scn sign-extends it)
     mtl::ALLOC_HANDLE pad_c;
     // 0x10 the build thread names the scene after its process (the name is not the original's)
     mm::mtl::FixStr<32> m_name;

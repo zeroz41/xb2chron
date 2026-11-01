@@ -29,6 +29,24 @@ public:
     void insert(ScnObj* item);
     // ScnObjLightDrSys's constructor releases the view's fast light when this is false
     bool isExistLgtEnv() const;
+    // every camera's, light's and image-based light's apply, then every model's but those set for deletion, under
+    // the lock
+    void apply();
+    // every camera's and model's update but those set for deletion, under the lock (1.0.0 keeps it out of line;
+    // 3.0.1's Scn::move inlines it)
+    void update() {
+        CS cs(m_cs0);
+        for (reslist<ScnObj*>::iterator it = m_cam.begin(); it != m_cam.end(); ++it) {
+            if (!(*it)->m_delete) {
+                (*it)->update();
+            }
+        }
+        for (reslist<ScnObj*>::iterator it = m_mdl.begin(); it != m_mdl.end(); ++it) {
+            if (!(*it)->m_delete) {
+                (*it)->update();
+            }
+        }
+    }
     // the camera numbered index: the cameras' list's, else a camera among all objects; none without one (1.0.0
     // keeps it out of line; 3.0.1's Scn::getCam inlines it)
     ScnObjCam* getCam(int index) {

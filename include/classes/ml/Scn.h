@@ -7,6 +7,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/mtl/FixedVector.h"
 #include "mm/mtl/FixedQueue.h"
+#include "ml/ScnSetup.h"
 
 namespace ml { class FileResTh; }
 namespace ml { class ScnObjCam; }
@@ -20,7 +21,6 @@ namespace ml { class ScnPoolObj; }
 namespace ml { class ScnCamMan; }
 namespace ml { class WinView; }
 namespace ml { class IScnRender; }
-namespace ml { class ScnSetup; }
 namespace ml { enum SCNCAM : int; }
 namespace ml { enum SCNPRIO_CB : int; }
 
@@ -31,6 +31,8 @@ class Scn : public ::ml::IWorkEvent, public ::mm::mtl::ReferenceObject, public :
 public:
     virtual ~Scn();  // slot 0
     void term();
+    // the constructor's last step
+    void init();
     // the frame's tail and drawing (FrameworkLauncher::wkTail and drawTask call them on the launcher's scene)
     void tail();
     // the entry resource of the file (DrShdLgtMan::reloadShader takes its shader package from it)
@@ -66,8 +68,8 @@ public:
 
     // one per camera: the priority the debug drawing renders at (the struct and its names are not the original's)
     struct DEBDRAW {
-        SCNPRIO_CB m_prio;  // setDebDraw's
-        int pad_4;          // the constructor numbers them 1 to 9
+        int pad_0;          // the constructor numbers them 0 to 9
+        SCNPRIO_CB m_prio;  // setDebDraw's; the constructor sets -1
     };
     // one render callback (the struct and its names are not the original's)
     struct RENDER_CB {
@@ -82,13 +84,17 @@ public:
     ScnCamMan* m_camMan;  // 0x28 setView's (the name is not the original's)
     ScnDebug* m_debug;  // 0x30 init news it, term deletes it (the name is not the original's)
     ScnRenderDrSys* m_renderDrSys;  // what UIScreenObject gives ScnRenderDrSysParmAcc (the name is not the original's)
-    unsigned char pad_40[0x24];
-    // 0x64 ScnObjModelDrSysStandard::create news the model from it (the name is not the original's)
+    bool pad_40;  // the constructor clears it
+    unsigned char pad_41[0x1F];
+    unsigned int pad_60;  // the constructor clears it
+    // 0x64 the scene's own allocator, which the constructor creates under the setup's (or the product memory);
+    // ScnObjModelDrSysStandard::create news the model from it (the name is not the original's)
     mtl::ALLOC_HANDLE m_allocHandle;
-    unsigned char pad_68[0x44];
-    // 0xAC createMdl passes its negation to each new model's setAlwaysTexStm (the name is not the original's)
-    bool m_noAlwaysTexStm;
-    unsigned char pad_AD[0x7];
+    // 0x68 the constructor copies the setup here; createMdl passes the negation of its 0x44 flag to each new model's
+    // setAlwaysTexStm (the name is not the original's)
+    ScnSetup m_setup;
+    bool pad_B0;  // the constructor clears it
+    unsigned char pad_B1[0x3];
     // 0xB4 the job group the constructor creates and entryAutoExecGrp's; term removes and releases it (the name is
     // not the original's)
     int m_grpHandle;
@@ -104,11 +110,11 @@ public:
     // 0xCF0 the entry resources: term releases each, allocEntryRes finds one by file name (the name is not the
     // original's)
     mm::mtl::FixedVector<FileResTh*, 32> m_entryRes;
-    unsigned char pad_DF8[0x1];
+    bool pad_DF8;  // the constructor clears it
     bool m_renderStop;  // 0xDF9 renderStop sets it (the name is not the original's)
-    unsigned char pad_DFA[0x6];
-    DEBDRAW m_debDraw[9];  // 0xE00 setDebDraw's (the name is not the original's)
-    unsigned char pad_E48[0x8];
+    unsigned char pad_DFA[0x2];
+    DEBDRAW m_debDraw[10];  // 0xDFC setDebDraw's (the name is not the original's)
+    unsigned char pad_E4C[0x4];
 };
 }  // namespace ml
 

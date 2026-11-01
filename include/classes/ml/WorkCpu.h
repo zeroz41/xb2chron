@@ -48,6 +48,9 @@ public:
     static void sync(int group, WKCPU_SYNC sync, CPUID cpu);
     // the undoing of a job group's entryAutoExecGrp and createGroupHandle (navi::NvmshManager's destructor)
     static void removeAutoExecGrp(int group);
+    // enters a job group in the groups beginUpdate wakes, on cpu (Scn's constructor: its thUpAfter group on CPU 1,
+    // 0xF; the unnamed parameter is not known yet)
+    static void entryAutoExecGrp(int group, CPUID cpu, unsigned int);
     static void releaseGroupHandle(int group);
     // a job group of count threads' room (Device::wkStandbyLogin makes one for its jobUpdate; the parameter name is
     // not the original's)

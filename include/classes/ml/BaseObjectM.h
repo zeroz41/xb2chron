@@ -34,6 +34,11 @@ public:
         CS cs(m_cs);
         m_name = name;
     }
+    // copies the name out under the lock (Scn::allocEntryRes inlines it; the name is not the original's)
+    void GetName(mm::mtl::FixStr<128>& name) const {
+        CS cs(m_cs);
+        name = m_name;
+    }
     int m_refCount;  // 0x8: 1 when built (the name is not the original's)
     mm::mtl::FixStr<128> m_name;  // SetName's
     CriticalSection m_cs;  // 0x90 (~BaseObjectM destroys it; the name is not the original's)

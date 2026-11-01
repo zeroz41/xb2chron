@@ -19,6 +19,8 @@ public:
     virtual ~ScnCamMan();  // slot 0
     // attaches the scene to the view as slot index, detaching it from the slot's previous view
     void setView(WinView* view, int index);
+    // Scn::move calls it each frame
+    void update();
     // the view of slot index; a negative index the current slot's (1.0.0 keeps it out of line; 3.0.1's
     // Scn::getView inlines it)
     WinView* getView(short index) {
