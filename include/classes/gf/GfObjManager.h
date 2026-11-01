@@ -108,14 +108,17 @@ public:
     void destroyAllObj(bool flag);
     void destroyLayerObj(unsigned int layer);
     bool hasReloadObjForDebug();
-    void getWaitingMultiBindObj(ResultList& list, unsigned int id) const;
+    // the bind id's bound objects added to list; false when no bind has the id or the list stays empty
+    bool getWaitingMultiBindObj(ResultList& list, unsigned int id) const;
     GfAssetMultiBind* getAssetMultiBind(unsigned int id) const;
     void setMultiBind(GF_OBJ_HANDLE* handle, unsigned int a, unsigned int b, bool flag);
-    GfAssetMultiBind* getMultiBindList(GF_OBJ_HANDLE* handle) const;
+    // the objects bound with the handle's object (its multi-bind id's), nullptr when none or the bind's flag is set
+    const mm::mtl::FixedList<GF_OBJ_HANDLE*, 32>* getMultiBindList(GF_OBJ_HANDLE* handle) const;
     void addFollowObj(GF_OBJ_HANDLE* handle);
     void addDestroyObj(GF_OBJ_HANDLE* handle, bool flag);
     void checkDeleteFollowObj(GF_OBJ_HANDLE* handle);
-    void getFollowObj(ResultList& list, GF_OBJ_HANDLE* handle);
+    // the followed objects whose GFOBJ_INFO::m_subHandle is handle, added to list; whether the list holds any
+    bool getFollowObj(ResultList& list, GF_OBJ_HANDLE* handle);
     void addApplyParamObj(GfObj* obj);
     // has the object's parameters (its alpha) applied again (GfObjAcc::setAlpha asks once one changed)
     void addApplyParam(GF_OBJ_HANDLE* handle);

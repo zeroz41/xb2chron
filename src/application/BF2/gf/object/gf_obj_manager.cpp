@@ -6,6 +6,7 @@
 #include "gf/GfObjUtil.h"
 #include "classes/gf/GfAssetMultiBind.h"
 #include "classes/gf/GfObjProperty.h"
+#include "classes/gf/GfAssetManager.h"
 #include <string.h>
 
 namespace gf {
@@ -42,6 +43,25 @@ void GfObjManager::update(const fw::UpdateInfo& info) {
     applyModelLayerPauseSpeed();
 }
 
+void GfObjManager::applyModelLayerPauseSpeed() {
+    bool request = false;
+    for (unsigned int layer = 0; layer < 32; ++layer) {
+        if (GfObjLayerSpeed::isRequest(layer)) {
+            request = true;
+            break;
+        }
+    }
+    if (!request) {
+        return;
+    }
+    for (HandleList2048::iterator it = m_updateObj.begin(); it != m_updateObj.end(); ++it) {
+        GfObjAcc acc(*it);
+        if (GfObjLayerSpeed::isRequest(acc.getLayer())) {
+            acc.setFrameSpeed(GfObjLayerSpeed::getSpeed(acc.getLayer()));
+        }
+    }
+}
+
 int GfObjManager::getGfObjCapacity(unsigned int type) {
     unsigned long index = type;
     if (index > 15) {
@@ -61,6 +81,39 @@ void GfObjManager::addHandle(GF_OBJ_HANDLE* handle) {
     setStateLoading(handle);
 }
 
+void GfObjManager::setStateLoading(GF_OBJ_HANDLE* handle) {
+    setObjState(handle, 1);
+    if (m_loadingObj.find(handle) != m_loadingObj.end()) {
+        return;
+    }
+    m_loadingObj.push_back(handle);
+    GfAssetManager::setupLoadStart(GfObjUtil::getAssetHandle(handle));
+}
+
+bool GfObjManager::isFinishLoadState(GfObjAcc& acc, bool flag) {
+    GF_OBJ_HANDLE* handle = acc.getHandle();
+    unsigned int id = acc.getMultiBindUniqId();
+    if (id != 0) {
+        for (mm::mtl::FixedList<GfAssetMultiBind*, 64>::iterator it = m_multiBind.begin(); it != m_multiBind.end(); ++it) {
+            if ((*it)->m_id == id) {
+                (*it)->loadedAsset(handle);
+                break;
+            }
+        }
+    }
+    if (!isValidMultiBind(acc.getHandle(), acc.getMultiBindUniqId()) && !flag) {
+        return false;
+    }
+    if (!acc.isLoadedWaitOK()) {
+        return false;
+    }
+    if (acc.isLayerPause()) {
+        acc.setDisp(OBJDISP(4), false);
+        acc.applyDisp();
+    }
+    return true;
+}
+
 const GfObjManager::HandleList& GfObjManager::getLoadingObj() const {
     return m_loadingObj;
 }
@@ -73,12 +126,63 @@ bool GfObjManager::hasReloadObjForDebug() {
     return false;
 }
 
+bool GfObjManager::getWaitingMultiBindObj(ResultList& list, unsigned int id) const {
+    GfObjManager* self = const_cast<GfObjManager*>(this);
+    for (mm::mtl::FixedList<GfAssetMultiBind*, 64>::iterator it = self->m_multiBind.begin(); it != self->m_multiBind.end(); ++it) {
+        GfAssetMultiBind* bind = *it;
+        if (bind->m_id == id) {
+            for (mm::mtl::FixedList<GF_OBJ_HANDLE*, 32>::iterator obj = bind->m_bindObj.begin(); obj != bind->m_bindObj.end(); ++obj) {
+                list.push_back(*obj);
+            }
+            return !list.empty();
+        }
+    }
+    return false;
+}
+
+void GfObjManager::addApplyParamObj(GfObj* obj) {
+    if (obj == nullptr) {
+        return;
+    }
+    if (m_applyParamObj.find(obj->m_info->m_handle) != m_applyParamObj.end()) {
+        return;
+    }
+    m_applyParamObj.push_back(obj->m_info->m_handle);
+    mm::mtl::IntrusiveList<fw::UpdatableObject>& children = obj->m_children;
+    for (mm::mtl::IntrusiveList<fw::UpdatableObject>::iterator it = children.begin(); it != children.end(); ++it) {
+        fw::UpdatableObject* child = (*it).m_handle.get();
+        if (child != nullptr && child->getRTTI()->isKindOf(&GfObj::m_rtti)) {
+            addApplyParamObj(static_cast<GfObj*>(child));
+        }
+    }
+}
+
 void GfObjManager::addApplyParam(GF_OBJ_HANDLE* handle) {
     addApplyParamObj(GfObjUtil::getObj(handle));
 }
 
 bool GfObjManager::isSuspendUpdate() const {
     return m_suspendUpdate;
+}
+
+void GfObjManager::gevMapjump(GEV gev, const MapjumpCallbackInfo&) {
+    if (gev == 2) {
+        m_suspendUpdate = true;
+        for (HandleList::iterator it = m_loadingObj.begin(); it != m_loadingObj.end(); ++it) {
+            GfObjUtil::applyExecUpdate(*it);
+        }
+        for (HandleList2048::iterator it = m_updateObj.begin(); it != m_updateObj.end(); ++it) {
+            GfObjUtil::applyExecUpdate(*it);
+        }
+    } else if (gev == 6) {
+        m_suspendUpdate = false;
+        for (HandleList::iterator it = m_loadingObj.begin(); it != m_loadingObj.end(); ++it) {
+            GfObjUtil::applyExecUpdate(*it);
+        }
+        for (HandleList2048::iterator it = m_updateObj.begin(); it != m_updateObj.end(); ++it) {
+            GfObjUtil::applyExecUpdate(*it);
+        }
+    }
 }
 
 void GfObjManager::enterStayObject(GF_OBJ_HANDLE* handle) {
@@ -151,6 +255,46 @@ GfAssetMultiBind* GfObjManager::getAssetMultiBind(unsigned int id) const {
         }
     }
     return nullptr;
+}
+
+void GfObjManager::addFollowObj(GF_OBJ_HANDLE* handle) {
+    if (m_followObj.find(handle) == m_followObj.end()) {
+        m_followObj.push_back(handle);
+    }
+}
+
+void GfObjManager::addDestroyObj(GF_OBJ_HANDLE* handle, bool flag) {
+    GfObjAcc acc(handle);
+    if (acc.m_obj == nullptr) {
+        return;
+    }
+    if (m_destroyRequestObj.find(handle) != m_destroyRequestObj.end()) {
+        return;
+    }
+    if (m_destroyObj.find(handle) != m_destroyObj.end()) {
+        return;
+    }
+    m_destroyRequestObj.push_back(handle);
+    GfAssetManager::isReload(acc.getAssetHandle());
+    if (!acc.isRebuild()) {
+        checkDeleteFollowObj(handle);
+    }
+    if (flag) {
+        GfObjAcc bound(handle);
+        if (bound.m_obj != nullptr) {
+            for (mm::mtl::FixedList<GfAssetMultiBind*, 64>::iterator it = m_multiBind.begin(); it != m_multiBind.end(); ++it) {
+                GfAssetMultiBind* bind = *it;
+                if (bind->m_id == bound.getMultiBindUniqId()) {
+                    if (bind != nullptr && !bind->m_flag) {
+                        for (mm::mtl::FixedList<GF_OBJ_HANDLE*, 32>::iterator obj = bind->m_bindObj.begin(); obj != bind->m_bindObj.end(); ++obj) {
+                            GfObjUtil::destroy(*obj);
+                        }
+                    }
+                    return;
+                }
+            }
+        }
+    }
 }
 
 void GfObjManager::setStateUpdate(GF_OBJ_HANDLE* handle) {
