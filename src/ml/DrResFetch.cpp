@@ -4576,7 +4576,7 @@ int DrResMdoSeamTexList::SEAMRES_TEXLIST_CNTMAX = 0x3C;
 
 DrResMdoSeamTexList::DrResMdoSeamTexList(int no)
     : m_prev(nullptr), m_next(nullptr), pad_18(nullptr), m_texture(nullptr), pad_28(nullptr), m_buf(nullptr),
-      m_no(no), pad_3A(0), pad_3C(0), pad_3D(0), m_num(0) {}
+      m_no(no), m_cnt(0), pad_3B(0), m_dataIdx(0), m_num(0) {}
 
 DrResMdoSeamTexList::~DrResMdoSeamTexList() {
     release();
@@ -4604,7 +4604,7 @@ int DrResMdoSeamTexture::SEAMRES_HEIGHT_CNTMAX = 0x3C;
 
 DrResMdoSeamTexture::DrResMdoSeamTexture(int no)
     : m_prev(nullptr), m_next(nullptr), m_memObj(nullptr), m_heightMemObj(nullptr), m_heightOffset(0), m_no(no),
-      pad_9E(0), m_cnt(0), m_readIn(0), m_heightCnt(0), m_heightReady(0) {}
+      m_dataIdx(0), m_cnt(0), m_readIn(0), m_heightCnt(0), m_heightReady(0) {}
 
 DrResMdoSeamTexture::~DrResMdoSeamTexture() {
     release();
@@ -4660,7 +4660,7 @@ void DrResMdoSeamTexture::changeMemTexture(int size, int size2) {
 }
 
 DrResMdoSeamVertex::DrResMdoSeamVertex(int no)
-    : m_prev(nullptr), m_next(nullptr), m_memObj(nullptr), m_vertex(nullptr), m_no(no), m_cnt(0), pad_2C(0),
+    : m_prev(nullptr), m_next(nullptr), m_memObj(nullptr), m_vertex(nullptr), m_no(no), m_cnt(0), m_dataIdx(0),
       m_readIn(0) {}
 
 DrResMdoSeamVertex::~DrResMdoSeamVertex() { release(); }
@@ -4772,7 +4772,7 @@ bool DrResMdoSeamWrkEnv::update(const mm::Vec3&, bool force) {
 DrResMdoSeamWrkInst::~DrResMdoSeamWrkInst() { release(); }
 
 DrResMdoSeamWrkLight::DrResMdoSeamWrkLight()
-    : m_prev(nullptr), m_next(nullptr), m_envObj(nullptr), m_memObj(nullptr), pad_30(0), m_id(0), pad_38(0),
+    : m_prev(nullptr), m_next(nullptr), m_envObj(nullptr), m_memObj(nullptr), m_dataIdx(0), m_id(0), pad_38(0),
       pad_3A(0) {}
 
 DrResMdoSeamWrkLight::~DrResMdoSeamWrkLight() { release(); }

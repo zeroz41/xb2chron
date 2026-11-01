@@ -25,7 +25,7 @@ public:
     DrResMdoVertex* m_vertex;      // 0x20: built by createVertex
     short m_no;                    // 0x28: the constructor's argument
     short m_cnt;                   // 0x2A: frames since created, against SEAMRES_CNTMAX
-    unsigned short pad_2C;         // 0x2C: zeroed by the constructor
+    unsigned short m_dataIdx;      // 0x2C: its entry in the seam map's vertex table; zeroed by the constructor
     short m_readIn;                // 0x2E: set by update when the memory block is read in
 };
 }  // namespace ml

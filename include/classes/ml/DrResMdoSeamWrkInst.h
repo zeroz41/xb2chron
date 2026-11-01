@@ -1,7 +1,12 @@
 #ifndef CLASSES_ML_DRRESMDOSEAMWRKINST_H
 #define CLASSES_ML_DRRESMDOSEAMWRKINST_H
 
+#include "mtl/MemManager.h"
+
 namespace ml {
+class DrResMdoInstAnmObj;
+struct MdoWrkMatRes;
+class DrResMdoSeamMemObj;
 class DrResMdoSeamWrkPosInst;
 // table 0x7100B7DB48
 class DrResMdoSeamWrkInst {
@@ -16,7 +21,19 @@ public:
     // the next of the m_mdlNum model infos (0x20 bytes each), null after the last
     MdlInfo* getMdlInfo();
     void callShadowCacheInstUpdate(unsigned long mask);
-    unsigned char pad_8[0x118];
+    // DrMdoCtlSeamRead::waitInstPosStream: false when the position stream's data cannot be kept (the block is freed)
+    bool setEtcPosCache(mtl::ALLOC_HANDLE handle, int cacheIdx, DrResMdoSeamMemObj* memObj, const DrResMdoInstAnmObj* anm);
+    void occRender();
+    // 0x08: the next work of DrMdoCtlSeam::m_pInstList (the name is not the original's)
+    DrResMdoSeamWrkInst* m_pLink;
+    unsigned char pad_10[0x40];
+    // 0x50: DrMdoCtlSeamAll::occRender renders with it (the name is not the original's)
+    MdoWrkMatRes* m_pWrkMatRes;
+    unsigned char pad_58[0x32];
+    // 0x8A: waitInstPosStream sets bit 5 when the position stream ends without its data (the name is not the
+    // original's)
+    unsigned short m_cacheFlags;
+    unsigned char pad_8C[0x94];
     DrResMdoSeamWrkPosInst** m_posInstList;  // 0x120: the m_posInstNum position works set up (the name is not the original's)
     unsigned char pad_128[0x18];
     int m_posInstNum;         // 0x140 (the name is not the original's)

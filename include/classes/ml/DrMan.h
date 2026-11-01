@@ -237,7 +237,10 @@ public:
     unsigned char pad_1D7E[0x6];
     // 0x1D84: DrMdlMan::shadowRender renders nothing while set (the name is not the original's)
     bool m_mdlShadowOff;
-    unsigned char pad_1D85[0x7];
+    unsigned char pad_1D85[0x1];
+    // 0x1D86: DrMdoCtlSeamAll::occRender renders nothing while set (the name is not the original's)
+    bool m_seamOccRenderOff;
+    unsigned char pad_1D87[0x5];
     // 0x1D8C: DrShdLgtHybrid::render skips the clustered lights' render while set (the name is not the original's)
     bool m_clusteredRenderOff;
     unsigned char pad_1D8D[0x4];

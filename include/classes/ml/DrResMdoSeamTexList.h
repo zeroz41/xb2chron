@@ -1,6 +1,8 @@
 #ifndef CLASSES_ML_DRRESMDOSEAMTEXLIST_H
 #define CLASSES_ML_DRRESMDOSEAMTEXLIST_H
 
+#include "mtl/MemManager.h"
+
 namespace grlib { class CGLibTextureBuffer; }
 
 namespace ml {
@@ -11,6 +13,8 @@ public:
     DrResMdoSeamTexList(int no);
     virtual ~DrResMdoSeamTexList();  // slot 0
     void release();
+    // DrMdoCtlSeamRead::waitTexListStream builds the list once its stream is in
+    void createTextureList(mtl::ALLOC_HANDLE handle);
     static void setListCnt(int cnt);
 
     static int SEAMRES_TEXLIST_CNTMAX;
@@ -22,9 +26,9 @@ public:
     void* pad_28;                          // 0x28: zeroed by the constructor and release
     void* m_buf;                           // 0x30: the allocation release deallocates
     short m_no;                            // 0x38: the constructor's argument
-    unsigned short pad_3A;                 // 0x3A: zeroed by the constructor
-    unsigned char pad_3C;                  // 0x3C
-    unsigned char pad_3D;                  // 0x3D
+    unsigned char m_cnt;                   // 0x3A: zeroed by the constructor and waitTexListStream
+    unsigned char pad_3B;                  // 0x3B: zeroed by the constructor
+    unsigned short m_dataIdx;              // 0x3C: its entry in the seam map's texture list table
     unsigned short m_num;                  // 0x3E
 };
 }  // namespace ml

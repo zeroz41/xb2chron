@@ -5,6 +5,10 @@
 
 namespace ml { class DrResMdoSeamMemObj; }
 namespace ml { class DrResMdoSeamWrkMpf; }
+namespace ml { class DrResMdoSeamVertex; }
+namespace ml { class DrResMdoSeamTexture; }
+namespace ml { class DrResMdoSeamTexList; }
+namespace ml { class DrResMdoSeamWrkLight; }
 
 namespace ml {
 // One stream request DrMdoCtlSeamRead::wait*Stream completes (the field names are not the original's)
@@ -17,6 +21,10 @@ struct _wkSeamReadCall {
         DrResMdoSeamWrkInst* m_pInst;
         DrResMdoSeamWrkEnv* m_pEnv;
         DrResMdoSeamWrkMpf* m_pMpf;
+        DrResMdoSeamVertex* m_pVertex;
+        DrResMdoSeamTexture* m_pTexture;
+        DrResMdoSeamTexList* m_pTexList;
+        DrResMdoSeamWrkLight* m_pLight;
     };
     DrResMdoSeamWrkInst* m_pInst2;  // 0x10: initInstMapParts' second work
     unsigned short m_cacheIdx;  // 0x18: the cache slot the work's set*Cache fills
@@ -38,6 +46,12 @@ public:
     void waitMpfEtcStream(_wkSeamReadCall* call, bool ok);
     void waitMpfPoliStream(_wkSeamReadCall* call, bool ok);
     void waitBaseVertexStream(_wkSeamReadCall* call, bool ok);
+    void waitVertexStream(_wkSeamReadCall* call, bool ok);
+    void waitTexutreStream(_wkSeamReadCall* call, bool ok);
+    void waitHeightTexutreStream(_wkSeamReadCall* call, bool ok);
+    void waitTexListStream(_wkSeamReadCall* call, bool ok);
+    void waitInstPosStream(_wkSeamReadCall* call, bool ok);
+    void waitLightStream(_wkSeamReadCall* call, bool ok);
 };
 }  // namespace ml
 

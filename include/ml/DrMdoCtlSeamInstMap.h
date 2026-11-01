@@ -17,6 +17,7 @@ public:
     void renderSeamInstMap(int pass);
     void beginResAll(MdoWrkMatRes* res);
     void endResAll();
+    void callInstShadowCacheAddRender(int idx);
 };
 }  // namespace ml
 

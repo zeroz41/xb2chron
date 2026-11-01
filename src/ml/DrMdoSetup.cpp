@@ -13,6 +13,12 @@
 #include "classes/ml/DrMdoMat.h"
 #include "classes/ml/DrMdoZSortObj.h"
 #include "classes/ml/DrResMdoSeamWrkBase.h"
+#include "classes/ml/DrResMdoSeamTexList.h"
+#include "classes/ml/DrResMdoSeamTexture.h"
+#include "classes/ml/DrResMdoSeamVertex.h"
+#include "classes/ml/DrResMdoSeamWrkInst.h"
+#include "classes/ml/DrResMdoSeamWrkLight.h"
+#include "classes/ml/DrEnvironmentObj.h"
 #include "classes/ml/DrResMdoSeamWrkMpf.h"
 #include "classes/ml/DrShdLgtClustered.h"
 #include "classes/ml/DrShdLgtHybrid.h"
@@ -1583,6 +1589,42 @@ DrMdoCtlSeamAll::~DrMdoCtlSeamAll() {
     releaseSeamAll();
 }
 
+void DrMdoCtlSeam::releaseFreeSeamMemObj(DrResMdoSeamMemObj* obj) {
+    m_memMan.releaseFreeObj(obj);
+}
+
+void DrMdoCtlSeamAll::dispOffUpdate() {
+    if (m_ctlFlags2 & 0x40000) {
+        m_ctlFlags2 &= ~0x30000;
+    } else {
+        unsigned int bit = 0x10000 << DrMan::s_nDblIdx;
+        if (m_ctlFlags2 & bit) {
+            m_ctlFlags2 &= ~bit;
+            m_singleAlpha = m_alpha[DrMan::s_nDblIdx];
+        }
+    }
+    if (calcBegin()) {
+        callDeleteUpdate();
+    }
+    calcEnd();
+}
+
+void DrMdoCtlSeamAll::noOffScreenUpdate() {
+    m_offScreenCnt++;
+    if (!m_seamRead.isRead()) {
+        m_seamRead.release();
+        if (m_offScreenCnt >= 4) {
+            m_dispFlags |= 0x18;
+        }
+    }
+    if (!(m_seamFlags & 0x1000)) {
+        m_seamFlags |= 0x1000;
+        if (m_viewNum == 0) {
+            m_pDrMan->m_pixlMan->m_shadowCacheMan->delShadowCacheUpdate();
+        }
+    }
+}
+
 void DrMdoCtlSeamInstMap::beginResAll(MdoWrkMatRes* res) {
     m_pSavedWrkMatRes = m_pWrkMatRes;
     m_pWrkMatRes = res;
@@ -1811,10 +1853,35 @@ void DrMdoCtlSeamAll::callRefractionRenderSeamEnvMap() {
     DrMdoCtlSeamEnvMap::callRefractionRenderSeamEnvMap();
 }
 
+void DrMdoCtlSeamAll::shadowCacheAddRender(int idx) {
+    if ((m_dispFlags & 1) && !(m_seamFlags & 0x10000000)) {
+        m_pDrMan->m_pixlMan->setupShadowUnifrom(idx);
+        callInstShadowCacheAddRender(idx);
+    }
+}
+
+void DrMdoCtlSeamAll::occRender() {
+    if (!(m_dispFlags & 1) || (m_seamFlags & 0x10000000) || m_pDrMan->m_seamOccRenderOff) {
+        return;
+    }
+    for (DrResMdoSeamWrkInst* wrk = m_pInstList; wrk != nullptr; wrk = wrk->m_pLink) {
+        m_pWrkMatRes = wrk->m_pWrkMatRes;
+        if (m_pWrkMatRes != nullptr) {
+            wrk->occRender();
+        }
+    }
+}
+
+void DrMdoCtlSeamAll::setDeleteCall(int idx) {
+    m_seamFlags |= 0x40000000 << idx;
+    m_seamRead.readCancel();
+    resourceRelease();
+}
+
 void DrMdoCtlSeamRead::waitBaseMapStream(_wkSeamReadCall* call, bool ok) {
     if (ok) {
         initBaseMapParts(call->m_pBase);
-        m_readWaitBits &= ~(1 << call->m_readIdx);
+        m_seamRead.m_readWaitBits &= ~(1 << call->m_readIdx);
     } else {
         m_seamFlags |= 0x10000;
         if (m_pDrMan->m_seamReadErrMode >= 1) {
@@ -1826,7 +1893,7 @@ void DrMdoCtlSeamRead::waitBaseMapStream(_wkSeamReadCall* call, bool ok) {
 void DrMdoCtlSeamRead::waitLowMdlStream(_wkSeamReadCall* call, bool ok) {
     if (ok) {
         initLowMapParts(call->m_pLow);
-        m_readWaitBits &= ~(1 << call->m_readIdx);
+        m_seamRead.m_readWaitBits &= ~(1 << call->m_readIdx);
     } else {
         m_seamFlags |= 0x10000;
         if (m_pDrMan->m_seamReadErrMode >= 1) {
@@ -1838,7 +1905,7 @@ void DrMdoCtlSeamRead::waitLowMdlStream(_wkSeamReadCall* call, bool ok) {
 void DrMdoCtlSeamRead::waitInstMapStream(_wkSeamReadCall* call, bool ok) {
     if (ok) {
         initInstMapParts(call->m_pInst, call->m_pInst2);
-        m_readWaitBits &= ~(1 << call->m_readIdx);
+        m_seamRead.m_readWaitBits &= ~(1 << call->m_readIdx);
     } else {
         m_seamFlags |= 0x10000;
         if (m_pDrMan->m_seamReadErrMode >= 1) {
@@ -1850,7 +1917,7 @@ void DrMdoCtlSeamRead::waitInstMapStream(_wkSeamReadCall* call, bool ok) {
 void DrMdoCtlSeamRead::waitEnvMdlStream(_wkSeamReadCall* call, bool ok) {
     if (ok) {
         initEnvMapParts(call->m_pEnv);
-        m_readWaitBits &= ~(1 << call->m_readIdx);
+        m_seamRead.m_readWaitBits &= ~(1 << call->m_readIdx);
     } else {
         m_seamFlags |= 0x10000;
         if (m_pDrMan->m_seamReadErrMode >= 1) {
@@ -1863,7 +1930,7 @@ void DrMdoCtlSeamRead::waitBaseVertexStream(_wkSeamReadCall* call, bool ok) {
     DrResMdoSeamWrkBase* wrk = call->m_pBase;
     if (ok) {
         wrk->setVertexCache(call->m_cacheIdx, call->m_pMemObj, call->m_cacheParam, this);
-        m_readWaitBits &= ~(1 << call->m_readIdx);
+        m_seamRead.m_readWaitBits &= ~(1 << call->m_readIdx);
         m_pBaseVertexRead = 0;
     } else {
         wrk->m_cacheFlags |= 0x10;
@@ -1874,11 +1941,51 @@ void DrMdoCtlSeamRead::waitBaseVertexStream(_wkSeamReadCall* call, bool ok) {
     }
 }
 
+void DrMdoCtlSeamRead::waitHeightTexutreStream(_wkSeamReadCall* call, bool ok) {
+    DrResMdoSeamTexture* tex = call->m_pTexture;
+    tex->m_cnt = 0;
+    tex->m_heightCnt = 0;
+    if (tex->m_heightMemObj != nullptr) {
+        DrResMdoSeamMemObj* memObj = tex->m_memObj;
+        tex->m_memObj = tex->m_heightMemObj;
+        tex->m_heightMemObj = nullptr;
+        releaseFreeSeamMemObj(memObj);
+    }
+    if (ok) {
+        const MapHead::TexSize* tbl = reinterpret_cast<const MapHead::TexSize*>(
+            reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_textureTblOfs);
+        const MapHead::TexSize* entry = &tbl[tex->m_dataIdx];
+        unsigned int rest = entry->m_heightSize & 0xFFF;
+        tex->createHeightTexture((rest == 0 ? 0 : 0x1000 - rest) + entry->m_heightSize, entry->m_size);
+        tex->m_heightReady = 1;
+        m_textureMemSize += entry->m_heightSize;
+        m_seamRead.m_readWaitBits &= ~(1 << call->m_readIdx);
+    }
+}
+
+void DrMdoCtlSeamRead::waitInstPosStream(_wkSeamReadCall* call, bool ok) {
+    DrResMdoSeamWrkInst* wrk = call->m_pInst;
+    if (ok) {
+        if (wrk->setEtcPosCache(m_pDrMan->m_allocHandle, call->m_cacheIdx, call->m_pMemObj, &m_instAnm)) {
+            m_pInstPosRead = nullptr;
+        } else {
+            releaseFreeSeamMemObj(call->m_pMemObj);
+        }
+        m_seamRead.m_readWaitBits &= ~(1 << call->m_readIdx);
+    } else {
+        m_seamFlags |= 0x10000;
+        if (m_pDrMan->m_seamReadErrMode >= 1) {
+            m_seamFlags |= 0x400;
+        }
+        wrk->m_cacheFlags |= 0x20;
+    }
+}
+
 void DrMdoCtlSeamRead::waitMpfEtcStream(_wkSeamReadCall* call, bool ok) {
     DrResMdoSeamWrkMpf* wrk = call->m_pMpf;
     if (ok) {
         wrk->setEtcMpfCache(call->m_cacheIdx, call->m_pMemObj);
-        m_readWaitBits &= ~(1 << call->m_readIdx);
+        m_seamRead.m_readWaitBits &= ~(1 << call->m_readIdx);
     } else {
         m_seamFlags |= 0x10000;
         wrk->m_cacheFlags |= 1;
@@ -1892,10 +1999,32 @@ void DrMdoCtlSeamRead::waitMpfPoliStream(_wkSeamReadCall* call, bool ok) {
     DrResMdoSeamWrkMpf* wrk = call->m_pMpf;
     if (ok) {
         wrk->setMpfPoliCache(call->m_cacheIdx, call->m_pMemObj);
-        m_readWaitBits &= ~(1 << call->m_readIdx);
+        m_seamRead.m_readWaitBits &= ~(1 << call->m_readIdx);
     } else {
         m_seamFlags |= 0x10000;
         wrk->m_cacheFlags |= 1;
+        if (m_pDrMan->m_seamReadErrMode >= 1) {
+            m_seamFlags |= 0x400;
+        }
+    }
+}
+
+void DrMdoCtlSeamRead::waitLightStream(_wkSeamReadCall* call, bool ok) {
+    if (ok) {
+        DrResMdoSeamWrkLight* lgt = call->m_pLight;
+        const MdsSeamLgtMapData* tbl = reinterpret_cast<const MdsSeamLgtMapData*>(
+            reinterpret_cast<const unsigned char*>(m_pMapHead) + m_pMapHead->m_lightTblOfs);
+        const MdsSeamLgtMapData* data = &tbl[lgt->m_dataIdx];
+        m_lightMemSize += data->id;
+        m_pLightBits[static_cast<unsigned int>(lgt->m_dataIdx) >> 5] |= 1 << (lgt->m_dataIdx & 0x1F);
+        m_lightNum++;
+        lgt->setupWork(data);
+        DrEnvironmentObj* env = lgt->m_envObj;
+        env->m_flags |= 4;
+        env->m_group = m_lightGroup;
+        m_seamRead.m_readWaitBits &= ~(1 << call->m_readIdx);
+    } else {
+        m_seamFlags |= 0x10000;
         if (m_pDrMan->m_seamReadErrMode >= 1) {
             m_seamFlags |= 0x400;
         }

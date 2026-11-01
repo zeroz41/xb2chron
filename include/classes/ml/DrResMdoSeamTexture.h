@@ -33,7 +33,7 @@ public:
     DrResMdoSeamMemObj* m_heightMemObj;   // 0x90: the height image (createHeightMoveTexture)
     int m_heightOffset;                   // 0x98
     short m_no;                           // 0x9C: the constructor's argument
-    unsigned short pad_9E;                // 0x9E: zeroed by the constructor
+    unsigned short m_dataIdx;             // 0x9E: its entry in the seam map's texture table; zeroed by the constructor
     unsigned char m_cnt;                  // 0xA0: frames since created, against SEAMRES_NOM_CNTMAX
     unsigned char m_readIn;               // 0xA1: set by update when the memory block is read in
     unsigned char m_heightCnt;            // 0xA2: against SEAMRES_HEIGHT_CNTMAX
