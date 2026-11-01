@@ -12,6 +12,7 @@
 #include "gf/GfFieldUndulator.h"
 #include "mm/mtl/IntrusivePtr.h"
 
+namespace fw { class ColiMoveObject; }
 namespace fw { class Message; }
 namespace fw { class MessageObject; }
 namespace fw { class UpdateInfo; }
@@ -65,11 +66,28 @@ public:
     void createMenuObj();
     // turns the enemy to rotY (the turn command; ...Accurately: the exact direction)
     void execTurnCmd(float rotY);
+    // the same with the turn's threshold (CreateInfo::pad_c), speed (pad_14) and delay (pad_18) given
+    void execTurnCmd(float rotY, float speed, float threshold, float delay);
+    // its object's first collision object when that is a move object (GfComBehaviorNpc::getColiObject's shape)
+    fw::ColiMoveObject* getColiObject() const;
+    // hands dir to its object's first collision object (ColiObject::setDir)
+    void moveProc(mm::Vec3& dir);
+    // turns its object's world rotation by rotY about the y axis / by rot (StateBattleActionBase::AfterUpdate)
+    void rotProc(float rotY);
+    void rotProc(const mm::Quat& rot);
+    // half the diagonal of its first collision object's bounding box (0 without one)
+    float getCollisionRadius() const;
+    // whether another member of its squad gimmick (T: GmkEnemy, GmkRoutedEnemy) is in the home state (13)
+    bool isOtherMemberHome() const;
+    template <typename T>
+    bool isOtherMemberHome() const;
     // the field state to take next, and whether a state may be taken (its isCondMatch): StateFieldAreaWalk's
     // seqChangeState asks both
     gf::enemy::STATE_ID getNextFieldStateId() const;
     bool isStateCondMatch(gf::enemy::STATE_ID state) const;
     void execTurnCmdAccurately(float rotY);
+    // turns the enemy toward its move direction (GfBehaviorEnemyField::getMoveDir) in the xz plane
+    void execTurnCmdToGoal();
     // (re)makes its state machine: the enemy's 16 states (battle, field idle/spawn/walk/home/squad/blade)
     void createFsm();
     // disposes the field movement, the state machine and the menu object, cleans the plugins up and lets the

@@ -9,6 +9,7 @@
 #include "gf/GfFieldMoveSpeed.h"
 #include "gf/GfFieldPitchRollController.h"
 
+namespace fw { class ColiMoveObject; }
 namespace gf { class GfComBehaviorEnemy; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class IGfBehFieldOwner; }
@@ -31,7 +32,14 @@ public:
     bool isArrivedToGoal() const;
     // the route navigation of its gimmick, none without one
     gmk::GmkRouteNavi* getGmkRouteNavi() const;
+    // its object's first collision object when that is a move object (GfComBehaviorNpc::getColiObject's shape)
+    fw::ColiMoveObject* getColiObject() const;
     void moveToGoal(float dt);
+    // moves its navigation mesh object on toward the goal unless it arrived (isArrivedToGoal)
+    void updateNaviMeshObj(float dt);
+    // the direction to move in: its navigation mesh object's move vector, else toward the goal (level unless it
+    // flies), normalized
+    void getMoveDir(mm::Vec3& dir) const;
     void applyFieldMoveSpeed(enemy::STATE_ID state, GfComBehaviorEnemy& owner);
     // the move speed a state runs at (1.0.0's name; inline in this build): 0 for states 1..7, 1 for 8, 9 and
     // 13..15, 2 for 10 and 11, else 0
@@ -71,22 +79,24 @@ public:
     float pad_1c;
     // 3 (flying, SDataEnemy::m_actType's value) counts the height in isArrivedToGoal's distance
     unsigned char pad_20;
-    unsigned char pad_21[0x15];
+    unsigned char pad_21[0xf];
+    // the turn threshold GfComBehaviorEnemy::execTurnCmd(float) passes to its turn command (CreateInfo::pad_c)
+    float pad_30;
+    unsigned char pad_34[0x2];
     // its getEnemeyMoveParam index (applyFieldMoveSpeed)
     unsigned char pad_36;
-    unsigned char pad_37[0x9];
+    // set while the enemy belongs to a squad gimmick's members (GfComBehaviorEnemy::isOtherMemberHome)
+    bool pad_37;
+    unsigned char pad_38[0x8];
     // its navigation mesh object (StateFieldAreaWalk::seqMoveToGoal asks canGetMoveVec of it)
     navi::NvmshAcObj* pad_40;
     unsigned char pad_48[0x8];
     // its place in its squad (the name is not the original's)
     gmk::GmkSquadNavi m_squadNavi;
     unsigned char pad_90[0x30];
-    // the goal position (isArrivedToGoal; the field states set it before turning or moving to it). Three floats:
-    // an mm::Vec3 would make the class 16-aligned
-    float pad_c0;
-    float pad_c4;
-    float pad_c8;
-    unsigned char pad_cc[0x4];
+    // the goal position (isArrivedToGoal; updateNaviMeshObj hands it to its navigation mesh object as the end
+    // position, so it is a Vec3; the name is not the original's)
+    mm::Vec3 m_goalPos;
     // the names of these four are not the original's
     GfFieldEnemySensor m_sensor;
     GfEnemyFieldMoveSpeed m_moveSpeed;

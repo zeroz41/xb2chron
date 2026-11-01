@@ -34,8 +34,33 @@
 #include "gf/MsgObjectNotifyAsmCallback.h"
 #include "gf/CallBackCache.h"
 #include "gf/GfParamEnemyReflection.h"
+#include "gf/GfObjAcc.h"
+#include "classes/gf/GfComCollider.h"
+#include "classes/fw/ColiMoveObject.h"
+#include "classes/gf/GfFieldLocalSteer.h"
+#include "classes/gmk/GmkEnemy.h"
+#include "classes/navi/NvmshAcObj.h"
+#include "gf/GfMenuBdat.h"
+#include "gf/GfGameUtil.h"
+#include "math.h"
 
 namespace gf {
+
+fw::ColiMoveObject* GfBehaviorEnemyField::getColiObject() const {
+    GfObjAcc acc(m_handle);
+    GfObj* obj = acc.getObj();
+    if (obj != nullptr) {
+        const GfComCollider* collider = obj->getComponent<GfComCollider>(4);
+        if (collider != nullptr) {
+            fw::ColiObject* coli = collider->m_coliObjects[0];
+            if (coli != nullptr) {
+                return coli->getRTTI()->isKindOf(&fw::ColiMoveObject::m_rtti) ? static_cast<fw::ColiMoveObject*>(coli)
+                                                                             : nullptr;
+            }
+        }
+    }
+    return nullptr;
+}
 
 gmk::GmkRouteNavi* GfBehaviorEnemyField::getGmkRouteNavi() const {
     gmk::AGmkBase* gmk = gmk::getBindedGmkInst(m_handle);
@@ -43,6 +68,24 @@ gmk::GmkRouteNavi* GfBehaviorEnemyField::getGmkRouteNavi() const {
         return static_cast<gmk::GmkRoutedEnemy*>(gmk)->findRouteNavi(m_handle);
     }
     return nullptr;
+}
+
+bool GfBehaviorEnemyField::isArrivedToGoal() const {
+    if (m_localSteer.isTimeOutCollide()) {
+        return true;
+    }
+    const mm::Vec3& pos = m_owner->getTransform().position;
+    float dy = m_goalPos.y - pos.y;
+    if (pad_1c < dy) {
+        return false;
+    }
+    float dx = m_goalPos.x - pos.x;
+    float dz = m_goalPos.z - pos.z;
+    if (pad_20 != 3) {
+        dy = 0.0f;
+    }
+    float dist = dx * dx + dy * dy + dz * dz;
+    return !(pad_18 * pad_18 < dist);
 }
 
 void GfBehaviorEnemyField::applyFieldMoveSpeed(enemy::STATE_ID state, GfComBehaviorEnemy& owner) {
@@ -119,6 +162,18 @@ const fw::Transform& GfComBehaviorEnemy::getTransformToSearchPlayer() const {
     return getTransform();
 }
 
+fw::ColiMoveObject* GfComBehaviorEnemy::getColiObject() const {
+    const GfComCollider* collider = m_owner->getComponent<GfComCollider>(4);
+    if (collider != nullptr) {
+        fw::ColiObject* coli = collider->m_coliObjects[0];
+        if (coli != nullptr) {
+            return coli->getRTTI()->isKindOf(&fw::ColiMoveObject::m_rtti) ? static_cast<fw::ColiMoveObject*>(coli)
+                                                                         : nullptr;
+        }
+    }
+    return nullptr;
+}
+
 void GfComBehavior::changeLayer(unsigned int, unsigned int) {}
 
 void GfComBehavior::procAnimCallback(GfComAsm*, const CallBackCache&) {}
@@ -165,6 +220,29 @@ void GfComBehaviorEnemy::createFsm() {
     m_hfsm.registerState<enemy::StateFieldBlade>(15, -1);
     m_hfsm.endSetup();
     m_buildingFsm = false;
+}
+
+void GfComBehaviorEnemy::createMenuObj() {
+    disposeMenuObj();
+    m_menuContext = GfMenuCallContext::create();
+    GfMenuObjTargetInfo::OpenEnemyParam param;
+    MenuOffset& offset = param.m_offset;
+    param.m_obj = static_cast<GfObj*>(m_owner)->m_handle;
+    int offsetId = GfGameUtil::getUiOffsetId(param.m_obj);
+    offset.m_bone = nullptr;
+    offset.m_offset = mm::Vec3::zero;
+    GfMenuBdat::getMenuOffset(offsetId, offset);
+    GfMenuObjTargetInfo::openEnemy(m_menuContext, param);
+}
+
+float GfComBehaviorEnemy::getCollisionRadius() const {
+    const GfComCollider* collider = m_owner->getComponent<GfComCollider>(4);
+    mm::Vec3 min;
+    mm::Vec3 max;
+    if (collider->m_coliObjects[0]->getAABB(min, max)) {
+        return (max - min).length() * 0.5f;
+    }
+    return 0.0f;
 }
 
 void GfFieldEnemySensor::enter(const fw::IColiEventListener::EnterInfo& info) {
@@ -258,6 +336,95 @@ bool GfComBehaviorEnemy::isStateCondMatch(enemy::STATE_ID state) const {
     default:
         return false;
     }
+}
+
+void GfComBehaviorEnemy::moveProc(mm::Vec3& dir) {
+    const GfComCollider* collider = m_owner->getComponent<GfComCollider>(4);
+    if (collider != nullptr) {
+        fw::ColiObject* coli = collider->m_coliObjects[0];
+        if (coli != nullptr) {
+            coli->setDir(dir);
+        }
+    }
+}
+
+void GfComBehaviorEnemy::execTurnCmd(float rotY) {
+    getTransform();
+    TFieldExecCmdTurn<GfComAsm>::CreateInfo info;
+    info.handle = static_cast<GfObj*>(m_owner)->m_handle;
+    info.pad_8 = m_field.m_localSteer.getCurAngle() + rotY;
+    info.pad_c = m_field.pad_30;
+    m_turnCmd.create(info);
+    if (!m_turnCmd.pad_6c) {
+        m_field.m_moveSpeed.setSpeedKmph(m_field.m_moveSpeed.m_speedMin, 0.0f);
+    }
+}
+
+void GfComBehaviorEnemy::execTurnCmd(float rotY, float speed, float threshold, float delay) {
+    TFieldExecCmdTurn<GfComAsm>::CreateInfo info;
+    info.handle = static_cast<GfObj*>(m_owner)->m_handle;
+    info.pad_8 = m_field.m_localSteer.getCurAngle() + rotY;
+    info.pad_c = threshold;
+    info.pad_14 = speed;
+    info.pad_18 = delay;
+    m_turnCmd.create(info);
+    if (!m_turnCmd.pad_6c) {
+        m_field.m_moveSpeed.setSpeedKmph(m_field.m_moveSpeed.m_speedMin, 0.0f);
+    }
+}
+
+void GfComBehaviorEnemy::execTurnCmdAccurately(float rotY) {
+    getTransform();
+    TFieldExecCmdTurn<GfComAsm>::CreateInfo info;
+    info.handle = static_cast<GfObj*>(m_owner)->m_handle;
+    info.pad_8 = m_field.m_localSteer.getCurAngle() + rotY;
+    info.pad_c = 0.0f;
+    m_turnCmd.create(info);
+    if (!m_turnCmd.pad_6c) {
+        m_field.m_moveSpeed.setSpeedKmph(m_field.m_moveSpeed.m_speedMin, 0.0f);
+    }
+}
+
+void GfComBehaviorEnemy::execTurnCmdToGoal() {
+    mm::Vec3 dir;
+    m_field.getMoveDir(dir);
+    dir.y = 0.0f;
+    dir.normalize();
+    execTurnCmd(::atan2f(dir.x, dir.z));
+}
+
+bool GfComBehaviorEnemy::isOtherMemberHome() const {
+    return isOtherMemberHome<gmk::GmkEnemy>() || isOtherMemberHome<gmk::GmkRoutedEnemy>();
+}
+
+template <typename T>
+bool GfComBehaviorEnemy::isOtherMemberHome() const {
+    if (!m_field.pad_37) {
+        return false;
+    }
+    gmk::AGmkBase* gmk = gmk::getBindedGmkInst(static_cast<GfObj*>(m_owner)->m_handle);
+    if (gmk == nullptr || gmk->getGmkType() != T::TYPE) {
+        return false;
+    }
+    const T* members = static_cast<const T*>(gmk);
+    GF_OBJ_HANDLE* self = static_cast<GfObj*>(m_owner)->m_handle;
+    unsigned int num = members->getGobInstNum();
+    for (unsigned int i = 0; i < num; i++) {
+        GF_OBJ_HANDLE* handle = members->getGobInst(i);
+        if (self == handle) {
+            continue;
+        }
+        GfObjAcc acc(handle);
+        GfObj* obj = acc.getObj();
+        if (obj == nullptr) {
+            continue;
+        }
+        const GfComBehaviorEnemy* behavior = obj->getComponent<GfComBehaviorEnemy>(6);
+        if (behavior != nullptr && behavior->getStateId() == 13) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void GfComBehaviorEnemy::reqChangeBattle() {
