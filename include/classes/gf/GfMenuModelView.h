@@ -86,6 +86,9 @@ public:
     void setObjectVanishRatio(GF_OBJ_HANDLE* handle, float ratio);
     unsigned int addCamera(mm::mtl::IntrusivePtr<fw::Camera> camera);
     void popCamera(float time);
+    void pushCamera(unsigned int index, float time);
+    void resetCamera(unsigned int index, float time);
+    void stopCameraMotion();  // GfMenuObjBladeCreate::seqResultEnd calls it before popCamera
     void playEffect(unsigned int slot, const char* name, const mm::Vec3& pos, GF_OBJ_HANDLE* handle);
     void playEffectFromCAS(unsigned int slot, const char* name, GF_OBJ_HANDLE* handle);
     void stopEffect(unsigned int slot);

@@ -30,8 +30,29 @@
 #include "classes/gf/GfSound.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "ui/EventData.h"
+#include "classes/gf/GfMenuDriverList.h"
+#include "classes/gf/GfMenuFade.h"
+#include "classes/gf/GfSequentialPlay.h"
+#include "mm/Col4.h"
+#include <string.h>
+#include "classes/gf/GfDataBdat.h"
+#include "plugin/Bdat.h"
+#include "ui/UIStr.h"
+#include "gf/GfObjAcc.h"
+#include "classes/gf/GfMenuCallContext.h"
+#include "classes/ui/UIManager.h"
 
 namespace gf {
+
+namespace {
+// the pages' UI objects, by page (lbl_7100B5FF58; getPageObject's). Proposed name, not the original's
+const char* s_pageNames[6] = {
+    "LAY_dr_select", "LAY_core_select", "LAY_bst_select", "LAY_confirm", "LAY_create", "LAY_result",
+};
+// what changePage adds to pad_11A0 for the camera it pushes, by page (lbl_71009BDE6C). Proposed name, not the
+// original's
+const unsigned int s_pageCameras[6] = {0, 1, 2, 3, 4, 4};
+}  // namespace
 
 GfMenuObjBladeCreate::~GfMenuObjBladeCreate() {
     m_camera = nullptr;
@@ -58,6 +79,78 @@ GfMenuObjBladeCreate::~GfMenuObjBladeCreate() {
     }
 }
 
+inline unsigned int GfMenuObjBladeCreate::getPageObject(unsigned int handle, unsigned int page, bool sibling) {
+    unsigned int object = 0;
+    if (handle != 0 && page < 6) {
+        ui::UIObjectAcc acc(handle);
+        object = sibling ? acc.searchSibiling(s_pageNames[page]) : acc.searchChild(s_pageNames[page]);
+    }
+    return object;
+}
+
+void GfMenuObjBladeCreate::changePage(unsigned int handle, PageContext* context, unsigned int page, bool sibling,
+                                      bool popCamera) {
+    ui::UIObjectAcc prev(getPageObject(handle, context->m_page, sibling));
+    ui::UIObjectAcc next(getPageObject(handle, page, sibling));
+    ui::EventData event(0);
+    if (next.m_object != nullptr) {
+        event.m_type = 0x22;
+        ui::UIManager::get()->requestObjectEvent(prev.m_handle, event, 0.0f);
+        if (next.m_object != nullptr) {
+            event.m_type = 0x21;
+            ui::UIManager::get()->requestObjectEvent(next.m_handle, event, 0.0f);
+        }
+        context->m_prevPage = context->m_page;
+        context->m_page = page;
+        GfMenuObject::disableFSInput();
+        if (popCamera) {
+            context->m_modelView->popCamera(0.5f);
+        }
+        if (page == 0) {
+            context->m_modelView->resetCamera(pad_1198, 0.0f);
+        } else {
+            context->m_modelView->pushCamera(s_pageCameras[page] + pad_11A0, 0.5f);
+        }
+    }
+}
+
+void GfMenuObjBladeCreate::updateIdea(bool keep) {
+    int levels[4] = {0, 0, 0, 0};
+    GfMenuReference::resetDriverAddIdeaLv();
+    if (m_pageContext.m_page > 1 && m_number->m_value > 0) {
+        GfMenuItemList* list = m_pageContext.m_boosterList;
+        unsigned int id = list->getContents(list->getIndex(false)).m_id;
+        int index = id - Bdat::getIdTop(GfDataBdat::getFP(0xA2));
+        int number = m_number->m_value;
+        levels[index] = number;
+        if (keep) {
+            int booster = m_pageContext.m_boosterList->getIndex(false);
+            m_boosterNumbers[booster] = number;
+        }
+    }
+    for (unsigned int i = 0; i < 4; i++) {
+        GfMenuReference::setDriverAddIdeaLv(i, levels[i]);
+    }
+}
+
+void GfMenuObjBladeCreate::setGuideText(unsigned int id) {
+    ui::UIObjectAcc acc(m_handle, "TXT_guide");
+    unsigned int name = Bdat::getVal(GfDataBdat::getFP(0x146), "name", id) & 0xFFFF;
+    {
+        ui::UIStr str(GfDataBdat::getFP(0x118), name);
+        acc.setText(str);
+    }
+    acc.setDisp(true);
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x10000000;
+    param.m_motionLib = "cmn_fade_motion_lr";
+    param.m_motion = "fade_in_l";
+    param.m_startFlags = 8;
+    param.m_setDefault = true;
+    param.m_time = 0.2f;
+    GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+}
+
 bool GfMenuObjBladeCreate::seqStart() {
     ml::ScnRenderDrSysParmAcc acc;
     if (acc.isSeamMapRead()) {
@@ -69,18 +162,61 @@ bool GfMenuObjBladeCreate::seqStart() {
 }
 
 bool GfMenuObjBladeCreate::seqWaitLoading() {
-    return !m_modelView->isLoading();
+    return !m_pageContext.m_modelView->isLoading();
+}
+
+bool GfMenuObjBladeCreate::seqSetupDriverObj() {
+    {
+        ui::UIObjectAcc acc(m_handle, "LAY_main");
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 1;
+        param.m_time = 0.25f;
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+    }
+    changePage(m_handle, &m_pageContext, 0, false, false);
+    m_pageContext.m_modelView->playEffect(8, "bc_30_000", mm::Vec3(0.0f, 0.0f, 0.0f),
+                                          reinterpret_cast<GF_OBJ_HANDLE*>(-1));
+    m_se[0] = GfMenuObjUtil::playSE("se_fld_allmap_701");
+    return true;
+}
+
+void GfMenuObjBladeCreate::finalize() {
+    if (m_pageContext.m_modelView != nullptr) {
+        delete m_pageContext.m_modelView;
+        m_pageContext.m_modelView = nullptr;
+    }
+    if (m_pageContext.m_driverList != nullptr) {
+        m_pageContext.m_driverList->release();
+        m_pageContext.m_driverList = nullptr;
+    }
+    if (m_pageContext.m_boosterList != nullptr) {
+        m_pageContext.m_boosterList->release();
+        m_pageContext.m_boosterList = nullptr;
+    }
+    if (m_pageContext.pad_48 != nullptr) {
+        m_pageContext.pad_48->release();
+        m_pageContext.pad_48 = nullptr;
+    }
+    if (m_pageContext.pad_30 != nullptr) {
+        m_pageContext.pad_30->release();
+        m_pageContext.pad_30 = nullptr;
+    }
+    if (m_pageContext.m_callContext != nullptr) {
+        m_pageContext.m_callContext->release();
+        m_pageContext.m_callContext = nullptr;
+    }
+    GfMenuObject::finalize();
 }
 
 bool GfMenuObjBladeCreate::seqEnd() {
-    enableFSInput(m_page);
+    enableFSInput(m_pageContext.m_page);
     return true;
 }
 
 void GfMenuObjBladeCreate::update() {
     m_seq.update();
-    if (m_modelView != nullptr) {
-        m_modelView->update();
+    if (m_pageContext.m_modelView != nullptr) {
+        m_pageContext.m_modelView->update();
     }
     GfMenuObject::update();
 }
@@ -274,7 +410,7 @@ void GfMenuObjBladeCreate::BoosterNumListener::reciveEvent(const ui::EventData& 
             fadeIn(acc.m_handle);
             m_shown = 1;
             m_decided = 0;
-            GfMenuItemList* list = m_owner->m_boosterList;
+            GfMenuItemList* list = m_owner->m_pageContext.m_boosterList;
             // the count is read signed (ldrsh) and capped unsigned
             short have = list->getContents(list->getIndex(false)).m_count;
             unsigned int count = have;
@@ -300,12 +436,40 @@ void GfMenuObjBladeCreate::BoosterNumListener::reciveEvent(const ui::EventData& 
     }
 }
 
+bool GfMenuObjBladeCreate::fn_7100399180() {
+    if (GfMenuManager::isFading()) {
+        return false;
+    }
+    nextPage(m_handle, &m_pageContext, false);
+    return true;
+}
+
+bool GfMenuObjBladeCreate::seqCreateStartDriver() {
+    GfMenuDriverList* list = m_pageContext.m_driverList;
+    GfMenuModelView* view = m_pageContext.m_modelView;
+    unsigned int driver = list->getContents(list->getIndex(false)).m_driver;
+    view->sendObjectCommand(view->findGfObj(3, driver), "C_hold_00");
+    GfMenuObjUtil::playSE("se_fld_allmap_711");
+    return true;
+}
+
 bool GfMenuObjBladeCreate::seqCreateStartSE() {
     if (m_se[1] != 0) {
         GfMenuObjUtil::stopSE(m_se[1], 0.0f);
         m_se[1] = 0;
     }
     m_se[2] = GfMenuObjUtil::playSE("se_fld_allmap_715");
+    return true;
+}
+
+bool GfMenuObjBladeCreate::seqCreateWaitDriver() {
+    GfMenuDriverList* list = m_pageContext.m_driverList;
+    unsigned int driver = list->getContents(list->getIndex(false)).m_driver;
+    GfMenuModelView* view = m_pageContext.m_modelView;
+    if (strcmp(view->getObjectAnimationState(view->findGfObj(3, driver)), "S_hold_01") != 0) {
+        return false;
+    }
+    GfMenuFade::setFade(2, 30, mm::Col4(0.0f, 0.0f, 0.0f, 0.0f));
     return true;
 }
 
@@ -320,6 +484,35 @@ bool GfMenuObjBladeCreate::seqCreatePlayJingle() {
 }
 
 bool GfMenuObjBladeCreate::seqCreatePlayBgmAfter() {
+    return true;
+}
+
+bool GfMenuObjBladeCreate::seqCreateWaitEvent() {
+    if (m_eventSignal->m_active) {
+        return false;
+    }
+    if (m_eventSignal != nullptr) {
+        delete m_eventSignal;
+        m_eventSignal = nullptr;
+    }
+    GfMenuObjBladeName::close();
+    nextPage(m_handle, &m_pageContext, false);
+    return true;
+}
+
+bool GfMenuObjBladeCreate::seqResultEnd() {
+    unsigned int blade = m_pageContext.m_blade;
+    m_pageContext.m_modelView->delGfObj(4, blade);
+    m_pageContext.m_modelView->stopCameraMotion();
+    if (m_pageContext.m_confirmed) {
+        m_pageContext.m_modelView->popCamera(0.5f);
+    }
+    nextPage(m_handle, &m_pageContext, false);
+    for (unsigned int i = 0; i < m_pageContext.m_driverList->getSize(); i++) {
+        unsigned int driver = m_pageContext.m_driverList->getContents(i).m_driver;
+        GfObjAcc acc(m_pageContext.m_modelView->findGfObj(3, driver));
+        acc.setDisp(static_cast<OBJDISP>(1), true);
+    }
     return true;
 }
 
