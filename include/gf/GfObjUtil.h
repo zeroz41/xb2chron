@@ -25,6 +25,7 @@ namespace gf { class GfAssetResource; }
 namespace gf { class GF_SLOT_HANDLE; }
 namespace gf { class GfComModel; }
 namespace gf { class GfVolumeFade; }
+namespace fw { class SoundPack; }
 
 namespace gf {
 
@@ -176,6 +177,8 @@ public:
     static void applyExecUpdate(gf::GF_OBJ_HANDLE* handle);
     // fills slots with the asset's slot handles for a type 7 object (GfAssetManager::getSlotHandle); whether any
     static bool getMobSlotHandle(mm::mtl::FixedVector<gf::GF_SLOT_HANDLE*, 88>& slots, gf::GF_OBJ_HANDLE* handle);
+    // adds the object's SE packs to packs; whether packs holds any (GfSound::getSePack's kind 4)
+    static bool getSePackAll(mm::mtl::FixedVector<fw::SoundPack*, 4>& packs, gf::GF_OBJ_HANDLE* handle);
     static void copyTransformToSetup(gf::GF_OBJ_HANDLE* src, gf::GF_OBJ_HANDLE* dst);
     // the setup's initial position and rotation (its 0x30)
     static void copyTransformToSetup(gf::GF_OBJ_HANDLE* handle, const mm::Vec3& pos, const mm::Vec3& rot);

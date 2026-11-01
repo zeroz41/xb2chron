@@ -7,6 +7,7 @@
 #include "classes/ml/fixed_size_alloc_inside.h"
 #include "mm/mtl/FixedArray.h"
 #include "mm/mtl/FixedList.h"
+#include "mm/mtl/FixedVector.h"
 
 #include "gf/SoundHandle.h"
 #include "classes/fw/SoundManager.h"
@@ -18,6 +19,12 @@ namespace gf { class GF_SE_CATEGORY_HANDLE; }
 namespace gf { class GfSound; }
 namespace gf { class SoundParam; }
 namespace fw { class SoundPack; }
+namespace gf { class GfAssetResource; }
+namespace gf {
+// what a GfSound SE entry plays (stored in its SeParam): playBgm stores 0, playSe(path, category) passes 5,
+// playSe(param) its SoundParam's pack kind (the values have no names)
+enum SEINFO : unsigned char {};
+}
 
 namespace gf {
 // the master volumes GfSound applies to its categories (GfSound+0x6690; 1.0.0's setters name the volumes, in order)
@@ -79,7 +86,7 @@ public:
     // a playing SE (1.0.0's GfSound::SeParam::clear: 0, -1, an empty SoundHandle; the names are not the original's)
     class SeParam {
     public:
-        unsigned char pad_0;
+        SEINFO m_info;  // playSeWithPack's info, 0 for a BGM
         unsigned char m_kind;
         unsigned char pad_2;
         unsigned char m_pause;
@@ -124,6 +131,11 @@ public:
     bool isPlaying(SoundHandle handle) const;
     bool isPreparing(SoundHandle handle) const;
     SoundHandle playSe(const SoundParam& param);
+    // the packs param's pack kind names (1 the common pack, 2 the field's common pack, 3 the map's, 4 the object's);
+    // whether packs holds any
+    bool getSePack(mm::mtl::FixedVector<fw::SoundPack*, 4>& packs, const SoundParam& param);
+    SoundHandle playSeWithPack(const SoundParam& param, mm::mtl::FixedVector<fw::SoundPack*, 4>& packs, SEINFO info);
+    SoundHandle playSe(const char* path, fw::SoundCategory category);
     void stopSe(SoundHandle handle, float time);
     void setVolume(SoundHandle handle, float volume, float time);
     float getVolume(SoundHandle handle);
@@ -170,12 +182,13 @@ public:
     void setPauseGameSe(bool pause);
     void setPauseGameWeatherSe(bool pause);
     void setPauseEventSe(bool pause);
+    fw::SoundPack* createObjSePack(GfAssetResource* resource);  // a category 13 pack of the resource's data
     void destroyObjSePack(fw::SoundPack*& pack);
 
     // the field names are not the original's
     bool m_isEnable;  // the constructor's last store, destroy clears it
     bool m_isVolumeDirty;  // update clears it after calcCategoryVolume
-    unsigned long pad_18;
+    unsigned long m_handleSerial;  // createCategoryHandle's count, the handle's bits 8 and up
     mm::mtl::FixedArray<CategoryVolume, 32> m_categoryVolumes;  // by category handle
     ml::fixed_size_alloc_inside<SeParam, 384> m_seParams;
     mm::mtl::FixedList<unsigned short, 512> m_seList;  // indices into m_seParams
