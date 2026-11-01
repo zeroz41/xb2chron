@@ -35,6 +35,12 @@ public:
     // the objects: one of the two sets of ten, by m_useSecond (inline: the name is not the original's;
     // GfTrinityAttack::isLoading waits for each that is set)
     gf::GF_OBJ_HANDLE* const* getObjHandles() const { return m_useSecond ? m_secondHandles.m_data : m_handles.m_data; }
+    // the object at index of the set second picks (inline: the name is not the original's).
+    // GfGameParty::buildObjWeapon selects the element (csel ..., ne on the flag): only a bool parameter keeps the
+    // flag's own test in the select; written in the caller the branch is canonicalized and the select inverts
+    gf::GF_OBJ_HANDLE* getObjHandle(unsigned int index, bool second) const {
+        return second ? m_secondHandles[index] : m_handles[index];
+    }
 
     // (the field names are not the original's)
     mm::mtl::FixedArray<gf::GF_OBJ_HANDLE*, 10> m_handles;        // destroy(FixedArray&)'s symbol types them

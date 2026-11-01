@@ -306,6 +306,20 @@ void GfObjManager::setMultiBind(GF_OBJ_HANDLE* handle, unsigned int id, unsigned
     info->m_multiBindUniqId = id;
 }
 
+const mm::mtl::FixedList<GF_OBJ_HANDLE*, 32>* GfObjManager::getMultiBindList(GF_OBJ_HANDLE* handle) const {
+    GFOBJ_INFO* info = getObjInfo(handle);
+    if (info->m_multiBindUniqId != 0) {
+        GfObjManager* self = const_cast<GfObjManager*>(this);
+        for (mm::mtl::FixedList<GfAssetMultiBind*, 64>::iterator it = self->m_multiBind.begin(); it != self->m_multiBind.end(); ++it) {
+            GfAssetMultiBind* bind = *it;
+            if (bind->m_id == info->m_multiBindUniqId) {
+                return bind->m_flag ? nullptr : &bind->m_bindObj;
+            }
+        }
+    }
+    return nullptr;
+}
+
 void GfObjManager::addFollowObj(GF_OBJ_HANDLE* handle) {
     if (m_followObj.find(handle) == m_followObj.end()) {
         m_followObj.push_back(handle);
