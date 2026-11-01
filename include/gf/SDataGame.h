@@ -29,13 +29,20 @@ struct TaskAchieve {
 // a saved event row of the game data, 0x64 bytes (GfDataEvent::isSavedEvent; the names are not the original's)
 struct SDataGameSavedEvent {
     unsigned short m_event;
-    unsigned char pad_2[0x4A];
-    unsigned int : 12;
-    // 0x4C bits 12-16: the hour the event plays at (title_main's fn_710014FD10 returns it, 12 for an event not saved;
-    // fn_7100400410 uses it when the event's bdat row has no fixed_time; the name is not the original's)
-    unsigned int m_hour : 5;
-    unsigned int : 15;
-    unsigned char pad_50[0x2];
+    unsigned char pad_2[0xC];
+    // 0xE / 0x2E: drivers 1-9's equipped weapon and blade (DataParamAcc getEquipWeapon / getBlade) when the event
+    // was saved (fn_71002EEDC0 fills them; the names are not the original's)
+    unsigned short m_weapons[9];
+    unsigned char pad_20[0xE];
+    unsigned short m_blades[9];
+    unsigned char pad_40[0xC];
+    // 0x4C: the time of day (GfFieldTime::getGameTime, fn_71002EEDC0); its hour is the one the event plays at
+    // (title_main's fn_710014FD10 returns it, 12 for an event not saved; fn_7100400410 uses it when the event's bdat
+    // row has no fixed_time; the name is not the original's)
+    GameTime m_time;
+    // 0x50: the map's weather id (GfFieldWeather::getCurrentMapWeatherID, fn_71002EEDC0; the name is not the
+    // original's)
+    unsigned short m_mapWeather;
     // 0x52: the weather (title_main's fn_710014FCB0 returns it, 0 for an event not saved; fn_7100400410 uses it unless
     // the row has a fixed_weather; the name is not the original's)
     unsigned short m_weather;

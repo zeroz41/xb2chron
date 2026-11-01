@@ -307,7 +307,7 @@ unsigned int TitleMain::fn_710014FD10(unsigned int event) {
     if (m_saveBuffer != nullptr) {
         for (gf::SDataGameSavedEvent& row : m_saveBuffer->m_game.m_savedEvents) {
             if (row.m_event == event) {
-                return row.m_hour;
+                return row.m_time.hour;
             }
         }
     }

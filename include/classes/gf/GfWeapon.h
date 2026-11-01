@@ -4,7 +4,7 @@
 #include "classes/gf/GfAppendHandles.h"
 
 namespace fw { class SoundPack; }
-namespace gf { class QuestID; }
+namespace gf { class QuestID; struct SDataGameSavedEvent; }
 namespace gf {
 // table 0x7100B54DE8: its slot 0 is GfAppendHandles's destructor, so the destructor is inline
 class GfWeapon : public ::gf::GfAppendHandles {
@@ -70,6 +70,12 @@ void fn_71002EEB14(int type, bool run);
 // StateUtil::applyDamage adds both for effect 0x108 to its damage cut.
 float fn_71002EEBF4(unsigned int driver, unsigned short effect);
 float fn_71002EECD4(unsigned int driver, int blade, unsigned short effect);
+// Placeholder name: new in 3.0.1 and unnamed in 1.0.0 too (1.0.0's fn_7100356C34, called at the same places of
+// GfGameUtil::setWatchedEvent). A free function because its address is in GfWeapon's unit among free placeholders
+// and it takes no object of a class. What it does: fills a saved event row: the event, the time of day
+// (GfFieldTime::getGameTime when GfFieldTime exists), the map weather id and weather type
+// (GfFieldWeather::getCurrentMapWeatherID / getCurrentWtrType(false)) and drivers 1-9's equipped weapon and blade.
+void fn_71002EEDC0(SDataGameSavedEvent& row, unsigned int event);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfWeapon's unit and it takes nothing. What it does: false unless GfGameManager::fn_71002AC598 is true; then true
 // when GfItemUtil::getItemBoxCount(25497) is non-zero, else whether any of the five ints at
@@ -209,6 +215,12 @@ bool fn_71002EE5E0(QuestID quest, unsigned int task);
 // MsgUnk_1000034 of type 0xE (fn_71002DA4FC), 0xF (fn_71002DA570) or 0x10 (fn_71002DA5E4) carrying value in its
 // parameter word 0x30, 0x34 or 0x38. Callers: the exec of the requests TUnk_B6AF70 and TUnk_B6AFA0 (their value at
 // 0x1C) and gf_req_scom's fn_7100558E88.
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit among free placeholders and it takes only a handle. What it does: false unless the object is a
+// driver (GfObjUtil::getObjType 3); true when it is driver 0x11 whose GfComAsm (component 2) plays a layer-0 state
+// whose name holds "btstart", else whether GfMountManager::getMountType(handle, 0) is 1 or 3.
+// PlayerCameraTarget::writeTargetInfo takes it as m_isRiding in a battle.
+bool fn_71002DA394(GF_OBJ_HANDLE* handle);
 void fn_71002DA4FC(int value);
 void fn_71002DA570(int value);
 void fn_71002DA5E4(unsigned int value);

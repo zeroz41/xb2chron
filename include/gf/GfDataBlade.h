@@ -198,8 +198,15 @@ public:
     static ActivateType getBladeActivateType(const SDataBlade& blade);
     static ActivateType getBladeActivateType(unsigned int blade);
     static unsigned int addRareBlade(const SDataBlade& data);  // (symbols) the new blade, 0 for none
+    // (1.0.0's symbols: its GfGameUtil::execAddCommonBlade calls addCommonBlade(data) where 3.0.1's fn_71002E1B64
+    // calls this function, followed by the same code; the symbols still spell it fn_710023C934) the new blade, 0 for none
+    static unsigned int addCommonBlade(const SDataBlade& data);
     static bool isActivateReserver(unsigned int blade);
     static bool setActivateReserver(unsigned int blade);
+    // (1.0.0's symbols: its GfGameUtil::execEquipMercenariesBlade calls setActivateDriver(blade, -1, driver, 0) where
+    // 3.0.1's calls this function with the same arguments; the symbols still spell it fn_710022F584) activates the
+    // blade for the driver; 3.0.1's code returns a bool
+    static bool setActivateDriver(unsigned int blade, int slot, unsigned int driver, unsigned int type);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
     // unit among its functions (no this). What it does: sets local game flag 0xBDCD (width 1) of the game data's
     // GameFlag (game + 0xFBBC4) to flag; GfGameUtil::incGameClearCount passes getDataGame() and true.

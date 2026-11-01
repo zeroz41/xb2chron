@@ -73,7 +73,10 @@ public:
     // SCOM_POPUP::createAchievement passes its blade, line and level; when it returns true no popup is queued
     static bool setupSaveAchievementPopup(unsigned int, unsigned int, unsigned int);
     static bool isCondDriverModel(unsigned int);
-    static void execDriverSkillLevelUp(unsigned int driver, unsigned int line, unsigned int level, bool round);
+    // 0 when done; else checkDriverSkillLevelUp's answer (1 line at its top, 2 not the next level, 3 too few
+    // skill points, 4 locked); it inlines that check (3.0.1's code returns it in w0)
+    static int execDriverSkillLevelUp(unsigned int driver, unsigned int line, unsigned int level, bool round);
+    static int checkDriverSkillLevelUp(unsigned int driver, unsigned int line, unsigned int level, bool round);
     // the blade's model condition holds (GfGameCond), outside battle (no forced normal Homura, its driver of party
     // 4 not in battle)
     static bool isCondBladeModel(unsigned int blade);
@@ -105,7 +108,24 @@ public:
     static void addExpInn(unsigned int exp);
     static void addExpBattle(unsigned int driver, unsigned int exp);
     // SCOM_ADD_SP::exec: (driver, value)
+    // 0x71002DBA88 (3.0.1's addSP): fn_71002DB9D4 unless GfGameManager::fn_71002A9E68 holds; then fn_71002DBB58 on
+    // the ChrDr fn_71001F172C value of the driver (of each of the ten party drivers for driver 0)
     static void addSP(unsigned int driver, int sp);
+    // Placeholder name: new in 3.0.1 (1.0.0's setFormationParam, 0x20C bytes, holds this loop itself), nothing names
+    // it. A member because its only caller is GfGameUtil::setFormationParam, right before it. What it does: -1 for a
+    // trinity blade; else the index (0-8) of the first GfGamePlayerFormation player whose object setup has the
+    // handle's party id (GfGameParty::getPartyId) and whose GfObjUtil::getObjType and fn_710054FCDC equal the
+    // handle's; -1 when none does.
+    static int fn_71002DE83C(GF_OBJ_HANDLE* handle);
+    // Placeholder name: 1.0.0's GfGameUtil::addSP has this body (same callees, recursive over
+    // GfPartySelect::getDriverList(2) for driver 0); in 3.0.1 addSP wraps it, so 1.0.0's name is taken. A member
+    // for that reason (its own unit, between addWpForObject and addSP). What it does: for a driver whose
+    // DataParamAcc is not scenario-masked, adds sp to its skill points (GfDataDriver::fn_7100247E88).
+    static void fn_71002DB9D4(unsigned int driver, int sp);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because addSP (its unit, right
+    // before it) tail-calls it with its sp. What it does: for the DLC driver rows 0x11 to 0x19 whose GfBdatChrDr
+    // fn_71001F172C (of fn_71001F13E0) equals id and that are not GfDataDriver::isActivateUnuse, adds sp.
+    static void fn_71002DBB58(unsigned int id, int sp);
     // SCOM_ADD_IDEA::exec: (driver, its third value, value)
     static void addIdeaPoint(unsigned int driver, unsigned int type, int point);
     // SCOM_ADD_WP::exec, by its mode: 0 addWp, 1 and 3 addWpForObject (driver, its second value, value), 2 addWpForReserve (value)
@@ -160,6 +180,13 @@ public:
     // 0x3FE's creator to 1050, marks its m_createEvent watched (setWatchedEvent) and calls GfEvent::callBladeActivate
     // from its previous activate type to 1; returns the new blade (0 for none)
     static unsigned int execAddRareBlade(const SDataBlade& data);
+    // Placeholder name: 1.0.0 has GfGameUtil::execAddCommonBlade(const SDataBlade&) in its place (same caller
+    // GfMenuObjBladeCreate::CreationListener::reciveEvent, same tail), but 3.0.1's takes a second argument, so the
+    // mangled name is not proven. A member for that reason. What it does: when GfDataBlade::fn_7100231FF8 holds and
+    // data's blade is GfDataBlade::getStartCommonBlade, re-activates it (setActivateReserver) and returns it; else
+    // sets data's blade to getStartCommonBlade for item 45010 (0 otherwise), adds it (GfDataBlade::addCommonBlade)
+    // and does execAddRareBlade's watched-event and callBladeActivate(blade, 0, 1) steps; returns the new blade.
+    static unsigned int fn_71002E1B64(SDataBlade& data, unsigned int item);
     static void setWatchedEvent(unsigned int event);  // (symbols)
     // named by the symbols: raises the blade's trust rank by one up to 6 (GfDataBlade::setTrustRank), tells
     // GfEvent::callDebugChangeIdea(4, blade) and shows SCOM_POPUP::createAffinity for its driver (its set driver, else

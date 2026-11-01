@@ -164,6 +164,12 @@
 #include "classes/gf/GfQuestManager.h"
 #include "gf/OwnerBonus.h"
 #include "classes/gf/GfBdatBlade.h"
+#include "gf/SDataDlc.h"
+#include "gf/GfDataDriverSkill.h"
+#include "classes/gf/GfComAsm.h"
+#include "classes/gf/GfObjSetup.h"
+#include "classes/gf/GfGamePlayerFormation.h"
+#include "classes/gf/GfFieldTime.h"
 
 namespace gf {
 
@@ -938,6 +944,33 @@ void GfGameUtil::execDriverArtsLevelUp(unsigned int driver, unsigned int arts, u
     }
 }
 
+int GfGameUtil::execDriverSkillLevelUp(unsigned int driver, unsigned int line, unsigned int level, bool round) {
+    int result = checkDriverSkillLevelUp(driver, line, level, round);
+    if (result != 0) {
+        return result;
+    }
+    GfDataDriver::fn_7100247E88(driver, -static_cast<int>(GfDataDriverSkill::getNextSkillPoint(driver, line, round)));
+    GfDataDriverSkill::fn_710024ADFC(driver, line, level, round);
+    return 0;
+}
+
+int GfGameUtil::checkDriverSkillLevelUp(unsigned int driver, unsigned int line, unsigned int level, bool round) {
+    unsigned int now = GfDataDriverSkill::fn_710024AD38(driver, line, round);
+    if (now > 2) {
+        return 1;
+    }
+    if (now + 1 != level) {
+        return 2;
+    }
+    if (!GfDataDriverSkill::isSkillUnlock(driver, line, level, round)) {
+        return 4;
+    }
+    if (GfDataDriverSkill::getNextSkillPoint(driver, line, round) > GfDataDriver::fn_7100247E28(driver)) {
+        return 3;
+    }
+    return 0;
+}
+
 void GfGameUtil::addWp(unsigned int driver, unsigned int id, int wp) {
     if (driver == 0) {
         GfObjAcc acc(GfGameManager::getPartyLeaderDriver());
@@ -952,6 +985,39 @@ void GfGameUtil::addWp(unsigned int driver, unsigned int id, int wp) {
             id = acc.getWeaponType(-1, false);
         }
         acc.addWeaponPoint(id, wp);
+    }
+}
+
+void GfGameUtil::fn_71002DB9D4(unsigned int driver, int sp) {
+    if (driver == 0) {
+        mm::mtl::FixedVector<unsigned short, 32> drivers;
+        GfPartySelect::getDriverList(drivers, static_cast<GfPartySelect::LIST_TYPE>(2), 0);
+        for (unsigned short* it = drivers.begin(); it != drivers.end(); ++it) {
+            fn_71002DB9D4(*it, sp);
+        }
+    } else {
+        DataParamAcc acc(3, driver, static_cast<GimmickType>(0));
+        if (!acc.isScenarioMask()) {
+            GfDataDriver::fn_7100247E88(driver, sp);
+        }
+    }
+}
+
+void GfGameUtil::addSP(unsigned int driver, int sp) {
+    if (!GfGameManager::fn_71002A9E68()) {
+        fn_71002DB9D4(driver, sp);
+        return;
+    }
+    if (driver != 0) {
+        GfBdatChrDr* bdat = mm::mtl::PtrSingleton<GfBdatChrDr>::sys();
+        fn_71002DBB58(bdat->fn_71001F172C(bdat->fn_71001F13E0(driver)), sp);
+        return;
+    }
+    for (unsigned int i = 0; i < 10; i++) {
+        if (unsigned int id = GfGameParty::getDriverBdatId(i, 0)) {
+            GfBdatChrDr* bdat = mm::mtl::PtrSingleton<GfBdatChrDr>::sys();
+            fn_71002DBB58(bdat->fn_71001F172C(bdat->fn_71001F13E0(id)), sp);
+        }
     }
 }
 
@@ -1102,6 +1168,25 @@ bool fn_71002D9B5C(GF_OBJ_HANDLE* handle) {
     return Bdat::getFlagVal(gimmick->getBindedBdatFp(), "flag", gimmick->m_createInfo.m_bdatId, "HITONOWAGET") != 0;
 }
 
+bool fn_71002DA394(GF_OBJ_HANDLE* handle) {
+    if (GfObjUtil::getObjType(handle) == 3) {
+        GfObjAcc acc(handle);
+        if (acc.getDriverId() == 0x11) {
+            if (GfComAsm* comAsm = acc.getObj()->getComponent<GfComAsm>(2)) {
+                if (comAsm->getStateName(static_cast<AnimLayer>(0)) != nullptr &&
+                    strstr(comAsm->getStateName(static_cast<AnimLayer>(0)), "btstart") != nullptr) {
+                    return true;
+                }
+            }
+        }
+        OPTMNT type = GfMountManager::getMountType(handle, static_cast<GFATTACH>(0));
+        if (type == 1 || type == 3) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void fn_71002DA4FC(int value) {
     if (TUnk_B535D0* arena = mm::mtl::PtrSingleton<TUnk_B535D0>::sys()) {
         MsgUnk_1000034 msg(0xE);
@@ -1221,6 +1306,25 @@ void GfGameUtil::clearEnemyRepopCounter(int enemy) {
     manager->traverseGmkInst(gmk::GmkRoutedEnemy::TYPE, f);
 }
 
+int GfGameUtil::fn_71002DE83C(GF_OBJ_HANDLE* handle) {
+    if (GfObjUtil::isTrinityBlade(handle)) {
+        return -1;
+    }
+    unsigned int party = GfGameParty::getPartyId(handle);
+    int type = GfObjUtil::getObjType(handle);
+    unsigned int id = GfObjUtil::fn_710054FCDC(handle);
+    GfGamePlayerFormation* formation = mm::mtl::PtrSingleton<GfGamePlayerFormation>::sys();
+    for (unsigned long i = 0; i < 9; i++) {
+        GfObjSetup* setup = GfObjUtil::getObjSetup(formation->m_players[i].m_handle);
+        if (setup != nullptr && setup->m_partyId == party &&
+            GfObjUtil::getObjType(formation->m_players[i].m_handle) == type &&
+            GfObjUtil::fn_710054FCDC(formation->m_players[i].m_handle) == id) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 bool GfGameUtil::execActivateUnuseForBlade(unsigned int blade, bool releaseOrbs) {
     if (GfDataBlade::isCommonBlade(blade)) {
         GfKizunaringBlade::removeAchievement(blade);
@@ -1255,6 +1359,21 @@ bool GfGameUtil::fn_71002E16F4(unsigned int driver) {
         return execEquipMercenariesBlade(6, 1009, false);
     }
     return false;
+}
+
+bool GfGameUtil::execEquipMercenariesBlade(unsigned int driver, unsigned int blade, bool flag) {
+    if (!GfDataBlade::fn_71002383C8(blade)) {
+        return false;
+    }
+    if (flag || GfDataDriver::getBladeSet(driver) < 0 || GfDataBlade::isDummyBlade(GfDataDriver::getBlade(driver, -1))) {
+        unsigned int team = GfDataMercenaries::getTeamID(blade);
+        GfGameMercenaries::cancelMission(GfDataMercenaries::getMissionIdByBlade(blade));
+        GfGameMercenaries::clearTeamMember(team);
+        if (GfDataBlade::isActivateReserver(blade)) {
+            GfDataBlade::setActivateDriver(blade, -1, driver, 0);
+        }
+    }
+    return true;
 }
 
 void fn_71002E1824() {
@@ -1305,6 +1424,23 @@ unsigned int GfGameUtil::execAddRareBlade(const SDataBlade& data) {
             setWatchedEvent(sdata->m_createEvent);
         }
         GfEvent::callBladeActivate(blade, from, static_cast<ActivateType>(1));
+    }
+    return blade;
+}
+
+unsigned int GfGameUtil::fn_71002E1B64(SDataBlade& data, unsigned int item) {
+    if (GfDataBlade::fn_7100231FF8() && data.m_bladeId == GfDataBlade::getStartCommonBlade()) {
+        GfDataBlade::setActivateReserver(data.m_bladeId);
+        return data.m_bladeId;
+    }
+    data.m_bladeId = item == 45010 ? GfDataBlade::getStartCommonBlade() : 0;
+    unsigned int blade = GfDataBlade::addCommonBlade(data);
+    if (blade != 0) {
+        SDataBlade* sdata = GfDataBlade::getSDataBlade(blade);
+        if (sdata->m_createEvent != 0) {
+            setWatchedEvent(sdata->m_createEvent);
+        }
+        GfEvent::callBladeActivate(blade, static_cast<ActivateType>(0), static_cast<ActivateType>(1));
     }
     return blade;
 }
@@ -2085,6 +2221,20 @@ void fn_71002ED99C(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag) {
     }
 }
 
+bool fn_71002ED9CC() {
+    if (GfDataManager::fn_7100224A10()->m_word2 == 0) {
+        return false;
+    }
+    return mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->fn_71001F1AEC(GfDataManager::fn_7100224A10()->m_word2) != 0;
+}
+
+bool fn_71002EDA2C() {
+    if (GfDataManager::fn_7100224A10()->m_word2 == 0) {
+        return false;
+    }
+    return mm::mtl::PtrSingleton<GfBdatChrDr>::sys()->fn_71001F1B74(GfDataManager::fn_7100224A10()->m_word2) != 0;
+}
+
 bool fn_71002EDA8C() {
     return getActiveOptionData()->m_soundUi.m_flagD != 0;
 }
@@ -2255,6 +2405,20 @@ float fn_71002EECD4(unsigned int driver, int blade, unsigned short effect) {
         }
     }
     return sum * 0.01f;
+}
+
+void fn_71002EEDC0(SDataGameSavedEvent& row, unsigned int event) {
+    row.m_event = event;
+    if (GfFieldTime* time = mm::mtl::PtrSingleton<GfFieldTime>::sys()) {
+        row.m_time = time->getGameTime();
+    }
+    row.m_mapWeather = GfFieldWeather::getCurrentMapWeatherID(false);
+    row.m_weather = GfFieldWeather::getCurrentWtrType(false);
+    for (unsigned int i = 0; i < 9; i++) {
+        DataParamAcc acc(3, i + 1, static_cast<GimmickType>(0));
+        row.m_weapons[i] = acc.getEquipWeapon(-1, false);
+        row.m_blades[i] = acc.getBlade(-1, false);
+    }
 }
 
 }  // namespace gf
