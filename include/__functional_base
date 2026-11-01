@@ -1,0 +1,20 @@
+#ifndef __FUNCTIONAL_BASE_H
+#define __FUNCTIONAL_BASE_H
+
+// The C++ library's <__functional_base>, as the SDK's libc++ 3.9.1 writes it (std::__1): the comparison function
+// objects and the primary std::hash. Only what the game's code instantiates.
+#include <__config>
+
+namespace std { inline namespace __1 {
+
+template <class _Tp>
+struct equal_to {
+    _LIBCPP_INLINE_VISIBILITY bool operator()(const _Tp& __x, const _Tp& __y) const { return __x == __y; }
+};
+
+template <class _Tp>
+struct hash;
+
+}}  // namespace std::__1
+
+#endif

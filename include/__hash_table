@@ -1,0 +1,411 @@
+#ifndef __HASH_TABLE_H
+#define __HASH_TABLE_H
+
+// The C++ library's hash table behind std::unordered_map, as the SDK's libc++ 3.9.1 writes it (std::__1, built
+// without debug mode or exceptions). Only what the game's code instantiates. Layout: the bucket array (pointer, then
+// its deleter: bucket count and pointer allocator), the before-begin node and the node allocator, the element count
+// (and the empty hasher), the max load factor (and the empty key_equal). libc++ keeps each pair in a
+// __compressed_pair; the empty members take no space, so only the others are stored here.
+#include <__config>
+#include <memory>
+#include <stddef.h>
+
+namespace std { inline namespace __1 {
+
+size_t __next_prime(size_t __n);
+
+template <class _NodePtr>
+struct __hash_node_base {
+    typedef __hash_node_base __first_node;
+    _NodePtr __next_;
+    _LIBCPP_INLINE_VISIBILITY __hash_node_base() noexcept : __next_(nullptr) {}
+};
+
+template <class _Tp, class _VoidPtr>
+struct __hash_node : public __hash_node_base<__hash_node<_Tp, _VoidPtr>*> {
+    typedef _Tp __node_value_type;
+    size_t __hash_;
+    __node_value_type __value_;
+};
+
+inline _LIBCPP_INLINE_VISIBILITY bool __is_hash_power2(size_t __bc) {
+    return __bc > 2 && !(__bc & (__bc - 1));
+}
+
+inline _LIBCPP_INLINE_VISIBILITY size_t __constrain_hash(size_t __h, size_t __bc) {
+    return !(__bc & (__bc - 1)) ? __h & (__bc - 1) : (__h < __bc ? __h : __h % __bc);
+}
+
+// (libc++'s <algorithm> helper)
+inline _LIBCPP_INLINE_VISIBILITY unsigned long __clz(unsigned long __x) {
+    return static_cast<unsigned long>(__builtin_clzl(__x));
+}
+
+inline _LIBCPP_INLINE_VISIBILITY size_t __next_hash_pow2(size_t __n) {
+    return size_t(1) << (64 - __clz(__n - 1));
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY const _Tp& __hash_max(const _Tp& __a, const _Tp& __b) {
+    return __a < __b ? __b : __a;
+}
+
+template <class _NodePtr>
+class __hash_iterator {
+public:
+    _NodePtr __node_;
+
+    _LIBCPP_INLINE_VISIBILITY __hash_iterator() noexcept : __node_(nullptr) {}
+    _LIBCPP_INLINE_VISIBILITY explicit __hash_iterator(_NodePtr __node) noexcept : __node_(__node) {}
+    _LIBCPP_INLINE_VISIBILITY __hash_iterator& operator++() {
+        __node_ = __node_->__next_;
+        return *this;
+    }
+    _LIBCPP_INLINE_VISIBILITY bool operator==(const __hash_iterator& __y) const { return __node_ == __y.__node_; }
+    _LIBCPP_INLINE_VISIBILITY bool operator!=(const __hash_iterator& __y) const { return __node_ != __y.__node_; }
+};
+
+template <class _ConstNodePtr>
+class __hash_const_iterator {
+public:
+    _ConstNodePtr __node_;
+
+    _LIBCPP_INLINE_VISIBILITY __hash_const_iterator() noexcept : __node_(nullptr) {}
+    _LIBCPP_INLINE_VISIBILITY explicit __hash_const_iterator(_ConstNodePtr __node) noexcept : __node_(__node) {}
+    template <class _NodePtr>
+    _LIBCPP_INLINE_VISIBILITY __hash_const_iterator(const __hash_iterator<_NodePtr>& __x) noexcept
+        : __node_(__x.__node_) {}
+    _LIBCPP_INLINE_VISIBILITY bool operator==(const __hash_const_iterator& __y) const { return __node_ == __y.__node_; }
+    _LIBCPP_INLINE_VISIBILITY bool operator!=(const __hash_const_iterator& __y) const { return __node_ != __y.__node_; }
+};
+
+// Deletes the bucket array through the pointer allocator it keeps with the bucket count.
+template <class _Alloc>
+class __bucket_list_deallocator {
+public:
+    typedef typename _Alloc::value_type* pointer;
+    typedef size_t size_type;
+
+    _LIBCPP_INLINE_VISIBILITY __bucket_list_deallocator() : __size_(0) {}
+    _LIBCPP_INLINE_VISIBILITY size_type& size() noexcept { return __size_; }
+    _LIBCPP_INLINE_VISIBILITY size_type size() const noexcept { return __size_; }
+    _LIBCPP_INLINE_VISIBILITY _Alloc& __alloc() noexcept { return __alloc_; }
+    _LIBCPP_INLINE_VISIBILITY void operator()(pointer __p) noexcept { __alloc_.deallocate(__p, size()); }
+
+private:
+    size_type __size_;
+    _Alloc __alloc_;
+};
+
+// Deletes a node: destroys its value when it was constructed, then gives the node back.
+template <class _Alloc>
+class __hash_node_destructor {
+public:
+    typedef typename _Alloc::value_type* pointer;
+
+    _Alloc& __na_;
+    bool __value_constructed;
+
+    _LIBCPP_INLINE_VISIBILITY explicit __hash_node_destructor(_Alloc& __na, bool __constructed = false) noexcept
+        : __na_(__na), __value_constructed(__constructed) {}
+    _LIBCPP_INLINE_VISIBILITY void operator()(pointer __p) noexcept {
+        if (__value_constructed)
+            (&__p->__value_.__cc)->~__value_type();
+        if (__p)
+            __na_.deallocate(__p, 1);
+    }
+
+private:
+    typedef typename _Alloc::value_type::__node_value_type::value_type __value_type;
+};
+
+template <class _Tp, class _Hash, class _Equal, class _Alloc>
+class __hash_table {
+public:
+    typedef _Tp value_type;
+    typedef typename _Tp::value_type __container_value_type;
+    typedef _Hash hasher;
+    typedef _Equal key_equal;
+    typedef size_t size_type;
+    typedef __hash_node<_Tp, void*> __node;
+    typedef __node* __node_pointer;
+    typedef const __node* __node_const_pointer;
+    typedef __hash_node_base<__node_pointer> __first_node;
+    typedef typename _Alloc::template rebind<__node>::other __node_allocator;
+    typedef typename _Alloc::template rebind<__node_pointer>::other __pointer_allocator;
+    typedef __bucket_list_deallocator<__pointer_allocator> __bucket_list_deleter;
+    typedef unique_ptr<__node_pointer[], __bucket_list_deleter> __bucket_list;
+    typedef __hash_node_destructor<__node_allocator> _Dp;
+    typedef unique_ptr<__node, _Dp> __node_holder;
+    typedef __hash_iterator<__node_pointer> iterator;
+    // libc++ 3.9.1 instantiates its const iterator on the non-const node pointer (remove's mangled name)
+    typedef __hash_const_iterator<__node_pointer> const_iterator;
+
+private:
+    __bucket_list __bucket_list_;
+    __first_node __p1_first_;
+    __node_allocator __p1_second_;
+    size_type __p2_first_;
+    float __p3_first_;
+
+    _LIBCPP_INLINE_VISIBILITY size_type& size() noexcept { return __p2_first_; }
+    _LIBCPP_INLINE_VISIBILITY __node_allocator& __node_alloc() noexcept { return __p1_second_; }
+
+public:
+    _LIBCPP_INLINE_VISIBILITY size_type size() const noexcept { return __p2_first_; }
+    _LIBCPP_INLINE_VISIBILITY hasher hash_function() const { return hasher(); }
+    _LIBCPP_INLINE_VISIBILITY key_equal key_eq() const { return key_equal(); }
+    _LIBCPP_INLINE_VISIBILITY float max_load_factor() const noexcept { return __p3_first_; }
+    _LIBCPP_INLINE_VISIBILITY size_type bucket_count() const noexcept { return __bucket_list_.get_deleter().size(); }
+
+    _LIBCPP_INLINE_VISIBILITY iterator end() noexcept { return iterator(nullptr); }
+    _LIBCPP_INLINE_VISIBILITY const_iterator end() const noexcept { return const_iterator(nullptr); }
+
+    ~__hash_table();
+
+    template <class _Key, class _KeyArg>
+    _LIBCPP_INLINE_VISIBILITY pair<iterator, bool> __emplace_unique_key_args(_Key const& __k, _KeyArg&& __karg);
+
+    void rehash(size_type __n);
+
+    template <class _Key>
+    iterator find(const _Key& __x);
+    template <class _Key>
+    const_iterator find(const _Key& __x) const;
+
+    iterator erase(const_iterator __p);
+    __node_holder remove(const_iterator __p) noexcept;
+
+private:
+    void __rehash(size_type __n);
+    void __deallocate(__node_pointer __np) noexcept;
+
+    template <class _KeyArg>
+    __node_holder __construct_node_hash(size_t __hash, _KeyArg&& __karg);
+};
+
+template <class _Tp, class _Hash, class _Equal, class _Alloc>
+__hash_table<_Tp, _Hash, _Equal, _Alloc>::~__hash_table() {
+    __deallocate(__p1_first_.__next_);
+}
+
+template <class _Tp, class _Hash, class _Equal, class _Alloc>
+void __hash_table<_Tp, _Hash, _Equal, _Alloc>::__deallocate(__node_pointer __np) noexcept {
+    __node_allocator& __na = __node_alloc();
+    while (__np != nullptr) {
+        __node_pointer __next = __np->__next_;
+        (&__np->__value_.__cc)->~__container_value_type();
+        __na.deallocate(__np, 1);
+        __np = __next;
+    }
+}
+
+template <class _Tp, class _Hash, class _Equal, class _Alloc>
+template <class _Key, class _KeyArg>
+_LIBCPP_INLINE_VISIBILITY pair<typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator, bool>
+__hash_table<_Tp, _Hash, _Equal, _Alloc>::__emplace_unique_key_args(_Key const& __k, _KeyArg&& __karg) {
+    size_t __hash = hash_function()(__k);
+    size_type __bc = bucket_count();
+    bool __inserted = false;
+    __node_pointer __nd;
+    size_t __chash;
+    if (__bc != 0) {
+        __chash = __constrain_hash(__hash, __bc);
+        __nd = __bucket_list_[__chash];
+        if (__nd != nullptr) {
+            for (__nd = __nd->__next_; __nd != nullptr && __constrain_hash(__nd->__hash_, __bc) == __chash;
+                 __nd = __nd->__next_) {
+                if (key_eq()(__nd->__value_, __k))
+                    goto __done;
+            }
+        }
+    }
+    {
+        __node_holder __h = __construct_node_hash(__hash, static_cast<_KeyArg&&>(__karg));
+        if (size() + 1 > __bc * max_load_factor() || __bc == 0) {
+            rehash(__hash_max<size_type>(2 * __bc + !__is_hash_power2(__bc),
+                                         size_type(__builtin_ceilf(float(size() + 1) / max_load_factor()))));
+            __bc = bucket_count();
+            __chash = __constrain_hash(__hash, __bc);
+        }
+        // insert_after __bucket_list_[__chash], or __first_node if bucket is null
+        __node_pointer __pn = __bucket_list_[__chash];
+        if (__pn == nullptr) {
+            __pn = static_cast<__node_pointer>(static_cast<void*>(&__p1_first_));
+            __h->__next_ = __pn->__next_;
+            __pn->__next_ = __h.get();
+            // fix up __bucket_list_
+            __bucket_list_[__chash] = __pn;
+            if (__h->__next_ != nullptr)
+                __bucket_list_[__constrain_hash(__h->__next_->__hash_, __bc)] = __h.get();
+        } else {
+            __h->__next_ = __pn->__next_;
+            __pn->__next_ = __h.get();
+        }
+        __nd = __h.release();
+        // increment size
+        ++size();
+        __inserted = true;
+    }
+__done:
+    return pair<iterator, bool>(iterator(__nd), __inserted);
+}
+
+template <class _Tp, class _Hash, class _Equal, class _Alloc>
+void __hash_table<_Tp, _Hash, _Equal, _Alloc>::rehash(size_type __n) {
+    if (__n == 1)
+        __n = 2;
+    else if (__n & (__n - 1))
+        __n = __next_prime(__n);
+    size_type __bc = bucket_count();
+    if (__n > __bc)
+        __rehash(__n);
+    else if (__n < __bc) {
+        __n = __hash_max<size_type>(__n, __is_hash_power2(__bc)
+                                             ? __next_hash_pow2(size_t(__builtin_ceilf(float(size()) / max_load_factor())))
+                                             : __next_prime(size_t(__builtin_ceilf(float(size()) / max_load_factor()))));
+        if (__n < __bc)
+            __rehash(__n);
+    }
+}
+
+template <class _Tp, class _Hash, class _Equal, class _Alloc>
+void __hash_table<_Tp, _Hash, _Equal, _Alloc>::__rehash(size_type __nbc) {
+    __pointer_allocator& __npa = __bucket_list_.get_deleter().__alloc();
+    __bucket_list_.reset(__nbc > 0 ? __npa.allocate(__nbc) : nullptr);
+    __bucket_list_.get_deleter().size() = __nbc;
+    if (__nbc > 0) {
+        for (size_type __i = 0; __i < __nbc; ++__i)
+            __bucket_list_[__i] = nullptr;
+        __node_pointer __pp(static_cast<__node_pointer>(static_cast<void*>(&__p1_first_)));
+        __node_pointer __cp = __pp->__next_;
+        if (__cp != nullptr) {
+            size_type __chash = __constrain_hash(__cp->__hash_, __nbc);
+            __bucket_list_[__chash] = __pp;
+            size_type __phash = __chash;
+            for (__pp = __cp, __cp = __cp->__next_; __cp != nullptr; __cp = __pp->__next_) {
+                __chash = __constrain_hash(__cp->__hash_, __nbc);
+                if (__chash == __phash)
+                    __pp = __cp;
+                else {
+                    if (__bucket_list_[__chash] == nullptr) {
+                        __bucket_list_[__chash] = __pp;
+                        __pp = __cp;
+                        __phash = __chash;
+                    } else {
+                        __node_pointer __np = __cp;
+                        for (; __np->__next_ != nullptr && key_eq()(__cp->__value_, __np->__next_->__value_);
+                             __np = __np->__next_)
+                            ;
+                        __pp->__next_ = __np->__next_;
+                        __np->__next_ = __bucket_list_[__chash]->__next_;
+                        __bucket_list_[__chash]->__next_ = __cp;
+                    }
+                }
+            }
+        }
+    }
+}
+
+template <class _Tp, class _Hash, class _Equal, class _Alloc>
+template <class _Key>
+typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator __hash_table<_Tp, _Hash, _Equal, _Alloc>::find(
+    const _Key& __k) {
+    size_t __hash = hash_function()(__k);
+    size_type __bc = bucket_count();
+    if (__bc != 0) {
+        size_t __chash = __constrain_hash(__hash, __bc);
+        __node_pointer __nd = __bucket_list_[__chash];
+        if (__nd != nullptr) {
+            for (__nd = __nd->__next_;
+                 __nd != nullptr && (__nd->__hash_ == __hash || __constrain_hash(__nd->__hash_, __bc) == __chash);
+                 __nd = __nd->__next_) {
+                if ((__nd->__hash_ == __hash) && key_eq()(__nd->__value_, __k))
+                    return iterator(__nd);
+            }
+        }
+    }
+    return end();
+}
+
+template <class _Tp, class _Hash, class _Equal, class _Alloc>
+template <class _Key>
+typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::const_iterator __hash_table<_Tp, _Hash, _Equal, _Alloc>::find(
+    const _Key& __k) const {
+    size_t __hash = hash_function()(__k);
+    size_type __bc = bucket_count();
+    if (__bc != 0) {
+        size_t __chash = __constrain_hash(__hash, __bc);
+        __node_const_pointer __nd = __bucket_list_[__chash];
+        if (__nd != nullptr) {
+            for (__nd = __nd->__next_;
+                 __nd != nullptr && (__hash == __nd->__hash_ || __constrain_hash(__nd->__hash_, __bc) == __chash);
+                 __nd = __nd->__next_) {
+                if ((__nd->__hash_ == __hash) && key_eq()(__nd->__value_, __k))
+                    return const_iterator(const_cast<__node_pointer>(__nd));
+            }
+        }
+    }
+    return end();
+}
+
+template <class _Tp, class _Hash, class _Equal, class _Alloc>
+template <class _KeyArg>
+typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_holder
+__hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node_hash(size_t __hash, _KeyArg&& __karg) {
+    __node_allocator& __na = __node_alloc();
+    __node_holder __h(__na.allocate(1), _Dp(__na));
+    // piecewise: the key moved in, the mapped value value-initialized
+    ::new ((void*)&__h->__value_.__cc.first) typename _Tp::key_type(static_cast<_KeyArg&&>(__karg));
+    ::new ((void*)&__h->__value_.__cc.second) typename _Tp::mapped_type();
+    __h.get_deleter().__value_constructed = true;
+    __h->__hash_ = __hash;
+    __h->__next_ = nullptr;
+    return __h;
+}
+
+template <class _Tp, class _Hash, class _Equal, class _Alloc>
+typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator __hash_table<_Tp, _Hash, _Equal, _Alloc>::erase(
+    const_iterator __p) {
+    __node_pointer __np = const_cast<__node_pointer>(__p.__node_);
+    iterator __r(__np);
+    ++__r;
+    remove(__p);
+    return __r;
+}
+
+template <class _Tp, class _Hash, class _Equal, class _Alloc>
+typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_holder __hash_table<_Tp, _Hash, _Equal, _Alloc>::remove(
+    const_iterator __p) noexcept {
+    // current node
+    __node_pointer __cn = const_cast<__node_pointer>(__p.__node_);
+    size_type __bc = bucket_count();
+    size_t __chash = __constrain_hash(__cn->__hash_, __bc);
+    // find previous node
+    __node_pointer __pn = __bucket_list_[__chash];
+    for (; __pn->__next_ != __cn; __pn = __pn->__next_)
+        ;
+    // Fix up __bucket_list_
+    // if __pn is not in same bucket (before begin is not in same bucket) &&
+    //    if __cn->__next_ is not in same bucket (nullptr is not in same bucket)
+    if (__pn == static_cast<__node_pointer>(static_cast<void*>(&__p1_first_)) ||
+        __constrain_hash(__pn->__hash_, __bc) != __chash) {
+        if (__cn->__next_ == nullptr || __constrain_hash(__cn->__next_->__hash_, __bc) != __chash)
+            __bucket_list_[__chash] = nullptr;
+    }
+    // if __cn->__next_ is not in same bucket (nullptr is in same bucket)
+    if (__cn->__next_ != nullptr) {
+        size_t __nhash = __constrain_hash(__cn->__next_->__hash_, __bc);
+        if (__nhash != __chash)
+            __bucket_list_[__nhash] = __pn;
+    }
+    // remove __cn
+    __pn->__next_ = __cn->__next_;
+    __cn->__next_ = nullptr;
+    --size();
+    return __node_holder(__cn, _Dp(__node_alloc(), true));
+}
+
+}}  // namespace std::__1
+
+#endif

@@ -1,0 +1,88 @@
+#ifndef UNORDERED_MAP_H
+#define UNORDERED_MAP_H
+
+// The C++ library's std::unordered_map, as the SDK's libc++ 3.9.1 writes it (std::__1): a __hash_table of
+// __hash_value_type nodes keyed through __unordered_map_hasher / __unordered_map_equal (the empty hash and equal_to
+// are their bases). Only what the game's code instantiates.
+#include <__config>
+#include <__functional_base>
+#include <__hash_table>
+#include <memory>
+#include <utility>
+
+namespace std { inline namespace __1 {
+
+template <class _Key, class _Tp>
+union __hash_value_type {
+    typedef _Key key_type;
+    typedef _Tp mapped_type;
+    typedef pair<const key_type, mapped_type> value_type;
+
+    value_type __cc;
+
+    ~__hash_value_type() = delete;
+};
+
+template <class _Key, class _Cp, class _Hash, bool _IsEmpty>
+class __unordered_map_hasher : private _Hash {
+public:
+    _LIBCPP_INLINE_VISIBILITY __unordered_map_hasher() {}
+    _LIBCPP_INLINE_VISIBILITY size_t operator()(const _Cp& __x) const {
+        return static_cast<const _Hash&>(*this)(__x.__cc.first);
+    }
+    _LIBCPP_INLINE_VISIBILITY size_t operator()(const _Key& __x) const { return static_cast<const _Hash&>(*this)(__x); }
+};
+
+template <class _Key, class _Cp, class _Pred, bool _IsEmpty>
+class __unordered_map_equal : private _Pred {
+public:
+    _LIBCPP_INLINE_VISIBILITY __unordered_map_equal() {}
+    _LIBCPP_INLINE_VISIBILITY bool operator()(const _Cp& __x, const _Cp& __y) const {
+        return static_cast<const _Pred&>(*this)(__x.__cc.first, __y.__cc.first);
+    }
+    _LIBCPP_INLINE_VISIBILITY bool operator()(const _Cp& __x, const _Key& __y) const {
+        return static_cast<const _Pred&>(*this)(__x.__cc.first, __y);
+    }
+    _LIBCPP_INLINE_VISIBILITY bool operator()(const _Key& __x, const _Cp& __y) const {
+        return static_cast<const _Pred&>(*this)(__x, __y.__cc.first);
+    }
+};
+
+template <class _Key, class _Tp, class _Hash = hash<_Key>, class _Pred = equal_to<_Key>,
+          class _Alloc = allocator<pair<const _Key, _Tp> > >
+class unordered_map {
+public:
+    typedef _Key key_type;
+    typedef _Tp mapped_type;
+    typedef pair<const key_type, mapped_type> value_type;
+
+private:
+    typedef __hash_value_type<key_type, mapped_type> __value_type;
+    typedef __unordered_map_hasher<key_type, __value_type, _Hash, true> __hasher;
+    typedef __unordered_map_equal<key_type, __value_type, _Pred, true> __key_equal;
+    typedef typename _Alloc::template rebind<__value_type>::other __allocator_type;
+
+    typedef __hash_table<__value_type, __hasher, __key_equal, __allocator_type> __table;
+
+    __table __table_;
+
+public:
+    typedef typename __table::iterator iterator;
+    typedef typename __table::const_iterator const_iterator;
+
+    _LIBCPP_INLINE_VISIBILITY iterator end() noexcept { return __table_.end(); }
+    _LIBCPP_INLINE_VISIBILITY iterator find(const key_type& __k) { return __table_.find(__k); }
+    _LIBCPP_INLINE_VISIBILITY const_iterator find(const key_type& __k) const { return __table_.find(__k); }
+    _LIBCPP_INLINE_VISIBILITY iterator erase(const_iterator __p) { return __table_.erase(__p); }
+
+    mapped_type& operator[](key_type&& __k);
+};
+
+template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
+_Tp& unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::operator[](key_type&& __k) {
+    return __table_.__emplace_unique_key_args(__k, static_cast<key_type&&>(__k)).first.__node_->__value_.__cc.second;
+}
+
+}}  // namespace std::__1
+
+#endif

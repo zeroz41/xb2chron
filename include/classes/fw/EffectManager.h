@@ -14,6 +14,9 @@
 #include "mm/mtl/IntrusivePtr.h"
 #include "classes/fw/EffectCasterSend.h"
 #include "classes/fw/RimBloomCalc.h"
+#include "ml/StlCustomAllocator.h"
+#include <string>
+#include <unordered_map>
 
 namespace effect { class SendParam; }
 namespace fw { class EffectData; }
@@ -94,6 +97,11 @@ public:
     bool fn_71001765AC();
     void fn_71001765C0();
     bool fn_71001765D0();
+    // the pack map's: files a pack under its name, takes it out, the one filed under a name (null for none)
+    void addPack(EffectPack* pack);
+    void removePack(EffectPack* pack);
+    EffectPack* findPack(const char* name);
+    // the data map's, filed under getName()
     void addData(EffectData* data);
     // EffectCasterBase's setters hand their values on to these
     void addCaster(EffectCasterBase* caster);
@@ -213,7 +221,16 @@ public:
     mtl::ALLOC_HANDLE m_resHandle;
     unsigned char pad_34[0x14];
     mm::mtl::FixedArray<CasterGroup, 32> m_casterGroups;  // by layer (changeLayerCaster moves a send between them)
-    unsigned char pad_348[0x418];
+    // packs and data by name, each in an allocator-backed std::unordered_map (the names are not the original's)
+    typedef std::unordered_map<std::string, EffectPack*, std::hash<std::string>, std::equal_to<std::string>,
+                               ml::StlCustomAllocator<std::pair<const std::string, EffectPack*> > >
+        PackMap;
+    typedef std::unordered_map<std::string, EffectData*, std::hash<std::string>, std::equal_to<std::string>,
+                               ml::StlCustomAllocator<std::pair<const std::string, EffectData*> > >
+        DataMap;
+    PackMap* m_packMap;
+    DataMap* m_dataMap;
+    unsigned char pad_358[0x408];
     // gf::EffectCaster::postUpdate copies the party leader's caster matrix in (the name is not the original's)
     mm::Mat44 m_leaderMtx;
     unsigned char pad_7a0[0x1818];

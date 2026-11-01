@@ -19,6 +19,7 @@
 #include "classes/ml/DrLightObjSpt.h"
 #include "ml/ScnObjAccVolumeFade.h"
 #include "classes/fw/AssetManager.h"
+#include "classes/fw/EffectData.h"
 #include "classes/mm/mtl/IAllocator.h"
 #include "ptlib/ParticleSystem.h"
 #include <string.h>
@@ -166,6 +167,36 @@ bool EffectManager::initialize() {
 
 bool EffectManager::isCommonLoaded() {
     return commonLoaded();
+}
+
+void EffectManager::addPack(EffectPack* pack) {
+    (*m_packMap)[std::string(pack->m_name.m_str)] = pack;
+}
+
+void EffectManager::removePack(EffectPack* pack) {
+    PackMap::iterator it = m_packMap->find(std::string(pack->m_name.m_str));
+    if (it != m_packMap->end()) {
+        m_packMap->erase(it);
+    }
+}
+
+EffectPack* EffectManager::findPack(const char* name) {
+    PackMap::iterator it = m_packMap->find(std::string(name));
+    if (it != m_packMap->end()) {
+        return it.__node_->__value_.__cc.second;
+    }
+    return nullptr;
+}
+
+void EffectManager::addData(EffectData* data) {
+    (*m_dataMap)[std::string(data->getName())] = data;
+}
+
+void EffectManager::removeData(EffectData* data) {
+    DataMap::iterator it = m_dataMap->find(std::string(data->getName()));
+    if (it != m_dataMap->end()) {
+        m_dataMap->erase(it);
+    }
 }
 
 void EffectManager::setMasterPause(bool pause) {

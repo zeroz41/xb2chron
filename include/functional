@@ -8,19 +8,9 @@
 #include <stddef.h>
 #include <new>
 #include <utility>
+#include <memory>
 
 namespace std { inline namespace __1 {
-
-// The default allocator (libc++'s <memory>): operator new / operator delete.
-template <class _Tp>
-class allocator {
-public:
-    allocator() noexcept {}
-    template <class _Up>
-    allocator(const allocator<_Up>&) noexcept {}
-    _Tp* allocate(size_t __n) { return static_cast<_Tp*>(::operator new(__n * sizeof(_Tp))); }
-    void deallocate(_Tp* __p, size_t) noexcept { ::operator delete((void*)__p); }
-};
 
 template <class _Fp>
 class function;

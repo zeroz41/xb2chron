@@ -1,0 +1,9 @@
+#ifndef __CONFIG_H
+#define __CONFIG_H
+
+// The C++ library's configuration, as the SDK's libc++ 3.9.1 spells the attributes its headers use: members marked
+// _LIBCPP_INLINE_VISIBILITY are always inlined, so only the others (and explicitly instantiated externs such as
+// basic_string<char>'s) are called out of line.
+#define _LIBCPP_INLINE_VISIBILITY __attribute__((__visibility__("hidden"), __always_inline__))
+
+#endif
