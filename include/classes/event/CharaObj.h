@@ -3,6 +3,7 @@
 
 #include "classes/event/CharaEffectPlayer.h"
 #include "classes/event/CmdQueue.h"
+#include "classes/event/FrameInfo.h"
 #include "classes/event/CharaFade.h"
 #include "classes/event/CharaHideWpn.h"
 #include "classes/event/CharaPlayEva.h"
@@ -143,6 +144,12 @@ public:
     // the rotation a queued turn or liner rotation heads for (RandPlayer::Reply::update reads it instead of m_rot while
     // one is queued); the name is not the original's
     mm::Vec3 m_rotGoal;  // 0x2fe0
+    unsigned char pad_2ff0[0x40];
+    // update stores its FrameInfo here; the commands read it through val(0)'s CharaObj (the name is not the
+    // original's)
+    FrameInfo m_frameInfo;  // 0x3030
+    // ObjectChara::createGfObj allocates 0x3060 bytes
+    unsigned char pad_3044[0x1c];
 };
 }  // namespace event
 

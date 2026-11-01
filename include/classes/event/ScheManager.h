@@ -32,6 +32,24 @@ public:
     // clears the turn step (flag 0x4) of handle's scheduler (inlined by ScriptCharaTurnRot::doit, which turns the
     // character itself); the name is not the original's
     void cancelTurn(gf::GF_OBJ_HANDLE* handle) { cancelStep(handle, 0x4); }
+    // whether a scheduler still runs its motion-end/turn chain: any scheduler for handle -1, else handle's
+    // (inlined by CharaPlayTalkAuto/CharaPlayActionAuto::update, which wait for it); the name is not the original's
+    bool isTurnBusy(gf::GF_OBJ_HANDLE* handle) {
+        if (handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            for (Scheduler** it = m_schedulers.begin(); it != m_schedulers.end(); ++it) {
+                if ((*it)->m_turnFunc) {
+                    return true;
+                }
+            }
+        } else {
+            for (Scheduler** it = m_schedulers.begin(); it != m_schedulers.end(); ++it) {
+                if ((*it)->m_handle == handle && (*it)->m_turnFunc) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
 private:
     unsigned int pad_10;

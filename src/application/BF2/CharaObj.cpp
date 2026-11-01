@@ -1,4 +1,6 @@
 #include "classes/event/ModelObj.h"
+#include "classes/event/ScheManager.h"
+#include "classes/event/CharaUtil.h"
 #include "classes/event/PosAxis.h"
 #include "classes/event/RotAxis.h"
 #include "classes/event/TarAxis.h"
@@ -259,6 +261,28 @@ CharaPlayActionAuto::~CharaPlayActionAuto() {
 }
 
 void CharaPlayActionAuto::init() {}
+
+int CharaPlayActionAuto::update(const ICmd::Param& param) {
+    gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+    if (obj != nullptr) {
+        float step = static_cast<CharaObj*>(param.m_param.val(0).getUserdata())->m_frameInfo.m_cmdStep;
+        if (param.m_frame <= 0) {
+            m_time = param.m_param.val(1).getF32();
+            m_flags |= 2;
+        }
+        if (!(m_flags & 4) && !CharaUtil::isActionBusy(obj) &&
+            !mm::mtl::Singleton<ScheManager>::getPtr()->isTurnBusy(m_handle)) {
+            play(obj);
+            m_flags |= 4;
+        }
+        m_time -= step;
+        if (!(m_time < 0.0f)) {
+            return 0;
+        }
+        idle();
+    }
+    return 1;
+}
 
 void CharaPlayActionAuto::term() {}
 

@@ -4,6 +4,7 @@
 #include "classes/event/ICmd.h"
 
 namespace gf { class GF_OBJ_HANDLE; }
+namespace event { class CharaPlayAction; }
 
 namespace event {
 // table 0x7100B3CCD8
@@ -19,7 +20,13 @@ public:
     unsigned int m_flags;  // 0x8
     unsigned char pad_c[0x4];
     gf::GF_OBJ_HANDLE* m_handle;  // 0x10: the character the command plays on (the name is not the original's)
-    unsigned char pad_18[0x10];
+    // CharaObj::initModel points it at the CharaObj's CharaPlayAction (update skips the lip start while its
+    // m_flags bit 7 is set); the name is not the original's
+    CharaPlayAction* m_playAction;  // 0x18
+    // the time left: update sets it from val(1) and counts it down by the CharaObj's FrameInfo::m_cmdStep (the name
+    // is not the original's)
+    float m_time;  // 0x20
+    unsigned char pad_24[0x4];
 };
 }  // namespace event
 
