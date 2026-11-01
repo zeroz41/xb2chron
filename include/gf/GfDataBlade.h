@@ -237,7 +237,8 @@ public:
     static void setHomuriNameHikari(bool hikari);
     static bool isHomuriNameHikari();  // the flag setHomuriNameHikari sets (local flag 0x89FB, 1 bit)
     static bool isActivateUnuse(unsigned int blade);
-    static void setActivateUnuse(unsigned int blade);  // (symbols)
+    static bool setActivateUnuse(unsigned int blade);  // (symbols; returns whether the blade changed state)
+    static void resetAttachedParty(unsigned int blade);  // (symbols)
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A GfDataBlade member because its address
     // lies in GfDataBlade's unit. What it does: returns one of three blade ids (a table at 0x71009BA374) by which
     // of three SDataGame shorts (0x7CBC, 0x8560, 0x8E04) is 2, else 0; ScriptPlayText's pt setDriverEnable takes
@@ -301,6 +302,8 @@ public:
     static void fn_7100239934(unsigned int blade, bool flag);
     // the release level of a skill line: lines 0-2 the arts, 3-5 the skills, 6-8 the field skills, 9 the key
     static unsigned int getAchievReleaseLevel(unsigned int blade, unsigned int line);
+    static bool setAchievReleaseLevel(unsigned int blade, unsigned int line, unsigned int level);  // (symbols)
+    static unsigned int getAchievementID(unsigned int blade, unsigned int line, unsigned int level);  // (symbols)
     static void setSkillLineLevel(unsigned int blade, unsigned int line, unsigned int level);
     static unsigned int getBladeWpnType(unsigned int blade);
     // the voice name a blade says when it starts field skill skill, or null (SCOM_FIELD_VOICE::createFieldSkillStart)

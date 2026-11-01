@@ -48,8 +48,12 @@ public:
     static void execTurnCmd(const ExecTurnCmdInfo& info);
     static bool isTurnEnd(gf::GF_OBJ_HANDLE* handle);
     static bool execActivateReserverForBlade(unsigned int blade);
+    static bool execActivateUnuseForBlade(unsigned int blade, bool releaseOrbs);
+    static bool isDriverEquipBlade(unsigned int driver, unsigned int blade);
     // the blade's kizuna link row (DataObjBlade::getLinkNum and its neighbours read BTL_Bl_KizunaLink by it)
     static unsigned int getKizunaLink(unsigned int blade);
+    static int getTrustRank(unsigned int blade);
+    static void setAchievementReleaseLevel(unsigned int blade, unsigned int line, unsigned int level);
     // sends the driver's party object its maximum hit points again (DataParamAcc::getHpMax)
     static void refreshEnhanceState(unsigned int driver);
     static void getOwnerBonus(OwnerBonus& bonus);  // GfGameScene::updateParam refreshes its owner bonus with it

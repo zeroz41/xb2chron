@@ -1,0 +1,15 @@
+#ifndef GF_GFGAMEUTILSHOP_H
+#define GF_GFGAMEUTILSHOP_H
+
+namespace gf {
+// the shops' helpers (functions, by its symbols)
+class GfGameUtilShop {
+public:
+    // pays an inn's price and adds development points for the zone (the parameter names are not the original's)
+    static void execPayInn(unsigned int shop, unsigned int money, bool twice);
+    // an inn's price after the zone's development discount, at least 1; 0 when the shop is no inn
+    static unsigned int getNeedMoneyForInn(unsigned int shop);
+};
+}  // namespace gf
+
+#endif

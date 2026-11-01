@@ -149,6 +149,15 @@
 #include "fw/Transform.h"
 #include "classes/gf/GfDataBdat.h"
 #include "plugin/Bdat.h"
+#include "gf/GfGameUtilShop.h"
+#include "classes/gf/GfBdatShop.h"
+#include "classes/gf/SCOM_ADD_MONEY.h"
+#include "classes/gf/SCOM_ADD_DEVELOP.h"
+#include "gf/GfKizunaringBlade.h"
+#include "gf/GfAchievementRelease.h"
+#include "gf/GfDataAchievement.h"
+#include "classes/gf/SCOM_ADD_IDEA.h"
+#include "classes/gf/SCOM_PARTY_ADD.h"
 
 namespace gf {
 
@@ -702,6 +711,28 @@ void GfGameUtil::makeWeaponCommandBattle(mm::mtl::FixStr<32>& out, unsigned int 
     out += battle ? "btstart" : "btend";
 }
 
+unsigned int GfGameUtil::getKizunaLink(unsigned int blade) {
+    GfBdatBtl* bdat = mm::mtl::PtrSingleton<GfBdatBtl>::sys();
+    unsigned int set = GfDataBlade::getSDataBlade(blade)->m_kizunaLinkSet;
+    unsigned int type = bdat->getBTL_Bl_KizunaLinkSetLinkChType(set);
+    unsigned int num = bdat->getBTL_Bl_KizunaLinkSetLinkChNum(set);
+    switch (type) {
+    case 0:
+        return bdat->getBTL_Bl_KizunaLinkSetKizunaLink1(set);
+    case 1:
+        if (getTrustRank(blade) >= static_cast<int>(num)) {
+            return bdat->getBTL_Bl_KizunaLinkSetKizunaLink2(set);
+        }
+        return bdat->getBTL_Bl_KizunaLinkSetKizunaLink1(set);
+    case 2:
+        if (GfGameCond::isGameCond(num)) {
+            return bdat->getBTL_Bl_KizunaLinkSetKizunaLink2(set);
+        }
+        return bdat->getBTL_Bl_KizunaLinkSetKizunaLink1(set);
+    }
+    return 0;
+}
+
 void GfGameUtil::makeCommandBattle(mm::mtl::FixStr<32>& out, bool battle) {
     out = "C_";
     out += battle ? "btstart" : "btend";
@@ -726,6 +757,28 @@ void GfGameUtil::makeStateBattleByBlade(mm::mtl::FixStr<32>& out, unsigned int b
     out += battle ? "btstart" : "btend";
 }
 
+void GfGameUtil::setPartyChange10020() {
+    for (unsigned int i = 0; i != 422; i++) {
+        unsigned int blade = GfDataBlade::getBladeID(i);
+        if (blade != 0 && GfDataBlade::isUnselect(blade)) {
+            if (GfDataBlade::isRegularBlade(blade) && GfDataBlade::isUnselect(blade) &&
+                GfDataBlade::isActivateUnuse(blade)) {
+                GfDataBlade::setActivateReserver(blade);
+            }
+            GfDataBlade::setUnselect(blade, false);
+        }
+    }
+    if (!GfGameManager::isClearGame()) {
+        SCOM_PARTY_ADD::addBlade(1002, 1, -1);
+        SCOM_PARTY_ADD::addBlade(1001, 1, -1);
+        SCOM_PARTY_ADD::addBlade(1003, 1, -1);
+    }
+    SCOM_PARTY_ADD::addDriver(2, -1);
+    SCOM_PARTY_ADD::addDriver(4, -1);
+    SCOM_PARTY_ADD::addDriver(6, -1);
+    SCOM_PARTY_ADD::addDriver(3, -1);
+}
+
 bool GfGameUtil::isBladeInVillage(unsigned int blade) {
     if (blade - 1001 < 3) return false;
     if (GfDataHana::isValid(blade)) return false;
@@ -747,6 +800,28 @@ namespace gf {
 
 void GfGameUtil::setTrustPointForDebug(unsigned int driver, unsigned int point) {
     addTrustPoint(GfDataBlade::fn_7100237B70(driver, -1), point);
+}
+
+void GfGameUtil::setAchievementReleaseLevel(unsigned int blade, unsigned int line, unsigned int level) {
+    if (level > 5) {
+        level = 5;
+    }
+    ACHIEVEMENT_TYPE type;
+    unsigned int index;
+    if (!GfDataAchievement::getAchievementType(type, index, line)) return;
+    if (!GfDataBlade::setAchievReleaseLevel(blade, line, level)) return;
+    if (unsigned int id = GfDataBlade::getAchievementID(blade, line, level)) {
+        QuestListAcc* acc = QuestListAcc::get();
+        unsigned int category = acc->getFLD_AchievementListIdeaCategory(id);
+        if (int point = acc->getFLD_AchievementListIdeaCategory(id)) {
+            SCOM_ADD_IDEA::create(reinterpret_cast<GF_OBJ_HANDLE*>(-1), category, point);
+        }
+    }
+    GfAchievementRelease release;
+    release.m_blade = blade;
+    release.m_type = type;
+    release.m_level = level;
+    GfEvent::callAchievmentRelease(release);
 }
 
 bool GfGameUtil::execActivateMercenaryTeamForBlade(unsigned int blade) {
@@ -830,6 +905,25 @@ void GfGameUtil::addWp(unsigned int driver, unsigned int id, int wp) {
             id = acc.getWeaponType(-1, false);
         }
         acc.addWeaponPoint(id, wp);
+    }
+}
+
+void GfGameUtil::addIdeaPoint(unsigned int driver, unsigned int type, int point) {
+    point += GfGameManager::getOwnerBonus().m_values[4];
+    if (driver == 0) {
+        mm::mtl::FixedVector<unsigned short, 32> drivers;
+        GfPartySelect::getDriverList(drivers, static_cast<GfPartySelect::LIST_TYPE>(2), 0);
+        for (unsigned short* it = drivers.begin(); it != drivers.end(); ++it) {
+            addIdeaPoint(*it, type, point);
+        }
+    } else {
+        DataParamAcc acc(3, driver, static_cast<GimmickType>(0));
+        DataIdeaAcc idea(acc);
+        unsigned int level = idea.getLevel(type);
+        idea.addPoint(type, point);
+        if (level != idea.getLevel(type)) {
+            SCOM_POPUP::createIdea(driver, type, idea.getLevel(type));
+        }
     }
 }
 
@@ -990,6 +1084,25 @@ void GfGameUtil::clearEnemyRepopCounter(int enemy) {
     };
     manager->traverseGmkInst(gmk::GmkEnemy::TYPE, f);
     manager->traverseGmkInst(gmk::GmkRoutedEnemy::TYPE, f);
+}
+
+bool GfGameUtil::execActivateUnuseForBlade(unsigned int blade, bool releaseOrbs) {
+    if (GfDataBlade::isCommonBlade(blade)) {
+        GfKizunaringBlade::removeAchievement(blade);
+    }
+    if (releaseOrbs) {
+        for (unsigned int slot = 0; slot < GfDataBlade::getEquipOrbMax(blade); slot++) {
+            GfEquipUtil::equipBladeOrb(blade, 0, slot, GfItemHandle());
+        }
+    }
+    ActivateType from = GfDataBlade::getBladeActivateType(*GfDataBlade::getSDataBlade(blade));
+    if (GfDataBlade::setActivateUnuse(blade)) {
+        if (releaseOrbs && GfDataBlade::isRareBlade(blade)) {
+            GfDataBlade::resetAttachedParty(blade);
+        }
+        GfEvent::callBladeActivate(blade, from, static_cast<ActivateType>(0));
+    }
+    return false;
 }
 
 bool GfGameUtil::fn_71002E16F4(unsigned int driver) {
@@ -1287,6 +1400,28 @@ const char* fn_71002DF4C4(unsigned int driverId, bool flag) {
         return name;
     }
     return nullptr;
+}
+
+void GfGameUtilShop::execPayInn(unsigned int shop, unsigned int money, bool twice) {
+    GfBdatShop* bdat = mm::mtl::PtrSingleton<GfBdatShop>::sys();
+    unsigned int point = money;
+    if (bdat->getShopListShopType(shop) == 2) {
+        point = bdat->getShopInnPrice(bdat->getShopListTableID(shop)) << twice;
+    }
+    SCOM_ADD_MONEY::create(-money);
+    unsigned int zone = GfGameManager::getMapZoneID();
+    float rate = QuestListAcc::get()->getFLD_DevelopmentLevelValue(1) / 10000.0f;
+    SCOM_ADD_DEVELOP::create(zone, point * rate);
+}
+
+unsigned int GfGameUtilShop::getNeedMoneyForInn(unsigned int shop) {
+    GfBdatShop* bdat = mm::mtl::PtrSingleton<GfBdatShop>::sys();
+    if (bdat->getShopListShopType(shop) != 2) return 0;
+    unsigned int price = bdat->getShopInnPrice(bdat->getShopListTableID(shop));
+    if (int level = GfDataDevelop::getLevel(GfGameManager::getMapZoneID())) {
+        price -= static_cast<unsigned int>(static_cast<float>(price) * bdat->getShopListDiscount(shop, level - 1) * 0.01f);
+    }
+    return price == 0 ? 1 : price;
 }
 
 RESULT_HANA GfGameUtilHana::openArtsCircuit(unsigned int hana, unsigned int circuit) {
