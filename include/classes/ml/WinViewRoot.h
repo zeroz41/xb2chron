@@ -30,6 +30,9 @@ public:
     static bool isCurrentChild(const WinView* parent, const WinView* view);
     // forgets view as the current view (WinView::wkStandbyLogout calls it; the parameter name is not the original's)
     static void invalidCurrent(WinView* view);
+    // renders every view under the root, then darkens the screen by the flow pause's rate; nothing while cut off
+    // or with no desktop
+    static void renderView();
     virtual ~WinViewRoot();  // slot 0
     virtual bool wkStandbyLogin();  // slot 14
     virtual bool wkStandbyLogout();  // slot 15

@@ -32,6 +32,12 @@
 #include "ml/WorkRoot.h"
 #include "ml/WorkRootState.h"
 #include "ml/WorkUtil.h"
+#include "ml/TimeUtil.h"
+#include "classes/ml/DevClock.h"
+#include "nn/time.h"
+#include <math.h>
+#include "classes/ml/CacheDraw.h"
+#include "classes/ml/WorkObjFlowSystemPause.h"
 
 // the lock both conversions hold (inline in both: its static and guard are unnamed in the symbols)
 static const ml::CriticalSection& getCriticalSection() {
@@ -1261,6 +1267,28 @@ bool mlUTF8toUTF16(unsigned short* dst, int size, const char* src) {
 
 
 namespace ml {
+
+bool TimeUtil::getTime(TimeInfo& info) {
+    nn::time::PosixTime posix;
+    if (nn::time::StandardUserSystemClock::GetCurrentTime(&posix).IsFailure()) {
+        return false;
+    }
+    nn::time::CalendarTime calendar;
+    nn::time::CalendarAdditionalInfo additional;
+    nn::time::ToCalendarTime(&calendar, &additional, posix);
+    info.year = calendar.year;
+    info.month = calendar.month;
+    info.day = calendar.day;
+    info.yday = additional.yearDay;
+    info.hour = calendar.hour;
+    info.min = calendar.minute;
+    info.sec = calendar.second;
+    long clock;
+    DevClock::getClockNow(clock);
+    info.msec = fmodf(DevClock::getClock2Sec(clock), 1.0f) * 1000.0f;
+    return true;
+}
+
 namespace _dsk {
 
 // the desktop's state, in the original's .bss order (the names are the original's)
@@ -1439,6 +1467,40 @@ WinProcRoot* WinProcRoot::create(WorkObj* parent) {
     WinProcRoot* root = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) WinProcRoot("WinProcRoot", parent);
     WorkRootState::entryWork(root, parent, false);
     return root;
+}
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100ECFB98). WinViewRoot::cutOff sets it
+// (1.0.0), the constructor clears it and renderView renders nothing while it is set.
+static bool s_cutOff;
+
+WinViewRoot::WinViewRoot(const char* name, WorkObj* parent)
+    : WorkObj(name, parent, 128), m_current(nullptr), m_currentWork(nullptr), m_currentProc(nullptr), m_prevWid(-1) {
+    m_currentList.create(128, m_mem);
+    s_cutOff = false;
+}
+
+void WinViewRoot::cutOff(bool off) {
+    s_cutOff = off;
+}
+
+void WinViewRoot::renderView() {
+    WinViewRoot* root = get();
+    if (root == nullptr || s_cutOff || ((root->m_flags & 1) | root->m_updateStop) ||
+        mm::mtl::PtrSingleton<ProcDesktop>::get() == nullptr) {
+        return;
+    }
+    for (reslist<WorkObj*>::iterator it = root->wkGetChild()->begin(); it != get()->wkGetChild()->end(); ++it) {
+        static_cast<WinView*>(*it)->renderView();
+    }
+    float rate = WorkObjFlowSystemPause::getRate();
+    if (rate != 0.0f) {
+        DebDraw* draw = DebDraw::get(0xFFFFFFFF);
+        draw->setOrtho();
+        draw->setZComp(false);
+        draw->setZWrite(false);
+        draw->setCol(0.0f, 0.0f, 0.0f, rate);
+        draw->renderRectFill(0, 0, DevGraph::getRootWidth(), DevGraph::getRootHeight());
+    }
 }
 
 WinViewRoot::~WinViewRoot() {}

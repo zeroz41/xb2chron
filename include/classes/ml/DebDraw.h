@@ -73,6 +73,8 @@ public:
     void setMatrix(const mm::Mat44& mtx);
     void setTex(grlib::CGLibTextureBuffer* tex);
     void setCol(const mm::Col4& col);
+    // named by the symbols: the same with the colour's parts (the parameter names are not the original's)
+    void setCol(float r, float g, float b, float a);
     void setDoubleSide(bool doubleSide);
     void setZComp(bool on);
     void setZWrite(bool on);
