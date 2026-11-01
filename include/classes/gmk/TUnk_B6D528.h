@@ -56,6 +56,13 @@ public:
     // fn_71005B7178, fn_71005B76B4: the steps create and the first step store in m_seq
     void fn_71005B7178(float dt);
     void fn_71005B76B4(float dt);
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. fn_71005B75AC (members: its address sits
+    // among this class's functions; fn_71005B7BA4 calls it on s_current with a bool).
+    void fn_71005B75AC(bool);
+    // fn_71005B7B7C (step, next to fn_71005B76B4's family): counts m_timer down by dt, below 0 goes back to fn_71005B76B4
+    void fn_71005B7B7C(float dt);
+    // fn_71005B7BA4 (btl::TUnk_B3A9C8::fn_7100025920 calls it): fn_71005B75AC on the running challenge, if any
+    static void fn_71005B7BA4(bool);
     // fn_71005B7344: clears s_current, s_battleId and s_state (GfAppendWire's fn_710028D1CC calls it)
     static void fn_71005B7344();
     // the running challenge, set by fn_71005B7178 (lbl_7100EB7DB0; the name is not the original's)

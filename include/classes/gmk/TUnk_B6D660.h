@@ -35,6 +35,11 @@ public:
         // GfGameCond::isGameCond of it (a condition id).
         bool fn_71005B94AC() const;
     };
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address (0x71005B98FC)
+    // sits between this class's debugDraw (0x71005B98F0) and onPlayerAccessed (0x71005B9928) and it reads this's
+    // bdat id. What it does: true when the local game flag 0xD869 + bdat id (type 1) is set; onPlayerAccessed sets that
+    // flag. Caller gf::GfGmkLocator::getPosNum.
+    bool fn_71005B98FC() const;
     const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x3e);

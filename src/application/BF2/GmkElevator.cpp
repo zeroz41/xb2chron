@@ -2331,7 +2331,73 @@ void TUnk_B6D528::update(float dt) {
 
 void TUnk_B6D528::debugDraw() const {}
 
+void TUnk_B6D528::fn_71005B7B7C(float dt) {
+    m_timer -= dt;
+    if (m_timer < 0.0f) {
+        m_seq = &TUnk_B6D528::fn_71005B76B4;
+    }
+}
+
+void TUnk_B6D528::fn_71005B7BA4(bool flag) {
+    if (s_current != nullptr) {
+        s_current->fn_71005B75AC(flag);
+    }
+}
+
 // ---- TUnk_B6D590 (placeholder slot symbols: see its header)
+unsigned int TUnk_B6D590::fn_71005B7BC4() const {
+    unsigned char* fp = gf::GfDataBdat::getFP(0x4D);
+    mm::mtl::FixStr<32> column;
+    column.format("TresureResource%d", m_index + 1);
+    return Bdat::getValCheckU16(fp, column.m_str, m_bdatRow);
+}
+
+unsigned int TUnk_B6D590::fn_71005B7C2C() const {
+    unsigned char* fp = gf::GfDataBdat::getFP(0x4D);
+    mm::mtl::FixStr<16> column;
+    column.format("TresureSet%d", m_index + 1);
+    return Bdat::getValCheckU16(fp, column.m_str, m_bdatRow);
+}
+
+void TUnk_B6D590::fn_71005B7C94(bool targetable) const {
+    gf::GF_OBJ_HANDLE* gob = m_gob;
+    if (gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    gf::GfObjAcc acc(gob);
+    if (acc.m_obj != nullptr) {
+        gf::GfObjSetupGimmick* setup = mm::mtl::rttiCast<gf::GfObjSetupGimmick>(gf::GfObjManager::getObjInfo(gob)->m_setup);
+        if (targetable) {
+            setup->pad_6c |= 7;
+        } else {
+            setup->pad_6c &= ~7;
+        }
+    }
+    if (gf::GfObj* obj = acc.getObj()) {
+        if (targetable) {
+            obj->pad_110 |= 7;
+        } else {
+            obj->pad_110 &= ~7;
+        }
+    }
+}
+
+void TUnk_B6D590::fn_71005B7D44(float waitTime) {
+    m_waitTime = waitTime;
+    m_timer = 0.0f;
+    m_seq = &TUnk_B6D590::fn_71005B7D5C;
+}
+
+void TUnk_B6D590::fn_71005B7D5C(float dt) {
+    m_timer += dt;
+    if (m_timer > m_waitTime) {
+        if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            fn_71005B810C();
+        }
+        m_seq = &TUnk_B6D590::fn_71005B8400;
+    }
+}
+
 void TUnk_B6D590::dispose() {
     m_isAccessed = false;
     if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
@@ -2352,6 +2418,47 @@ void TUnk_B6D590::update(float dt) {
     }
 }
 
+void TUnk_B6D590::onGobEvent(gf::IGfObjListener::OBJEVT event, gf::GF_OBJ_HANDLE* handle) {
+    if (event == gf::IGfObjListener::OBJEVT(3) && handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+    }
+    if (event == gf::IGfObjListener::OBJEVT(3) && m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    }
+}
+
+void TUnk_B6D590::fn_71005B8400(float) {
+    if (m_isAccessed) {
+        m_timer = 0.0f;
+        m_seq = &TUnk_B6D590::fn_71005B841C;
+    }
+}
+
+void TUnk_B6D590::fn_71005B841C(float dt) {
+    unsigned char* fp = gf::GfDataBdat::getFP(0x7B);
+    unsigned int value = Bdat::getValCheck(fp, 0, 0x52, 8);
+    float waitTime = *reinterpret_cast<float*>(&value);
+    m_timer += dt;
+    if (m_timer > waitTime) {
+        gf::GF_OBJ_HANDLE* gob = m_gob;
+        if (gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+            gf::GfObjAcc acc(gob);
+            if (acc.getObj() != nullptr && !acc.isDestroy() && !acc.testFlag(17)) {
+                gf::SCOM_DESTROY_GAME_OBJ::create(gob, 1.0f, 0);
+            }
+        }
+        m_seq = nullptr;
+    }
+}
+
 TUnk_B6D590::~TUnk_B6D590() { dispose(); }
 
 gmk::GmkType TUnk_B6D590::getGmkType() const { return TYPE; }
@@ -2363,12 +2470,82 @@ void TUnk_B6D590::onPlayerAccessed(gf::GF_OBJ_HANDLE*) {
 }
 
 // ---- TUnk_B6D5F8 (placeholder slot symbols: see its header)
+void TUnk_B6D5F8::fn_71005B8764(float) {
+    fw::EffectPack* pack = gf::GfFieldManager::getEffectPack();
+    if (pack == nullptr) {
+        return;
+    }
+    m_portalEffect0 = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->search("ex_portal_01", pack);
+    if (m_portalEffect0 == nullptr) {
+        return;
+    }
+    m_portalEffect1 = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->search("ex_portal_02", pack);
+    if (m_portalEffect1 == nullptr) {
+        return;
+    }
+    m_seq = &TUnk_B6D5F8::fn_71005B9084;
+}
+
+void TUnk_B6D5F8::dispose() {
+    if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->kill(m_effectHandle0);
+        m_effectHandle0 = 0;
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->kill(m_effectHandle1);
+        m_effectHandle1 = 0;
+    }
+    AGmkBase::dispose();
+}
+
 void TUnk_B6D5F8::update(float dt) {
     if (isValid()) {
         AGmkBase::update(dt);
         if (m_seq) {
             (this->*m_seq)(dt);
         }
+    }
+}
+
+void TUnk_B6D5F8::fn_71005B9084(float) {
+    if (fn_71005B8E18()) {
+        fn_71005B8BC4();
+    } else if (fn_71005B8FA0()) {
+        fn_71005B8870(true);
+    }
+}
+
+void TUnk_B6D5F8::fn_71005B919C(float) {}
+
+void TUnk_B6D5F8::onGobEvent(gf::IGfObjListener::OBJEVT event, gf::GF_OBJ_HANDLE* handle) {
+    if (event == gf::IGfObjListener::OBJEVT(3) && handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(handle);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+    }
+    if (event == gf::IGfObjListener::OBJEVT(3) && m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
+        gf::GfObjAcc acc(m_gob);
+        if (acc.m_obj != nullptr) {
+            acc.setUserData(gf::GfObjUserData(0), 0);
+        }
+        gf::GfObjUtil::destroy(m_gob);
+        m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->kill(m_effectHandle0);
+        m_effectHandle0 = 0;
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->kill(m_effectHandle1);
+        m_effectHandle1 = 0;
+    }
+}
+
+void TUnk_B6D5F8::fn_71005B9268(float dt) {
+    m_timer -= dt;
+    if (m_timer <= 0.0f) {
+        m_seq = &TUnk_B6D5F8::fn_71005B919C;
     }
 }
 
@@ -2402,6 +2579,8 @@ void TUnk_B6D660::dispose() {
 }
 
 void TUnk_B6D660::debugDraw() const { AGmkBase::debugDraw(); }
+
+bool TUnk_B6D660::fn_71005B98FC() const { return gf::GfGameFlag::getLocal(1, m_createInfo.m_bdatId + 0xD869) != 0; }
 
 TUnk_B6D660::~TUnk_B6D660() { dispose(); }
 
