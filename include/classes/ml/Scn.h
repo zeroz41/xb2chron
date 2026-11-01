@@ -6,6 +6,7 @@
 #include "classes/mm/mtl/ReferenceObject.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/mtl/FixedVector.h"
+#include "mm/mtl/FixedQueue.h"
 
 namespace ml { class FileResTh; }
 namespace ml { class ScnObjCam; }
@@ -18,6 +19,8 @@ namespace ml { class ScnRenderDrSys; }
 namespace ml { class ScnPoolObj; }
 namespace ml { class ScnCamMan; }
 namespace ml { class WinView; }
+namespace ml { class IScnRender; }
+namespace ml { class ScnSetup; }
 namespace ml { enum SCNCAM : int; }
 namespace ml { enum SCNPRIO_CB : int; }
 
@@ -50,11 +53,29 @@ public:
     void renderStop();
     // a job thread's function (WorkCpu::entryJobThread's type): deletes the scene's renderer
     static unsigned int thRenderKillTerminate(void* scn, void* arg);
+    // a job thread's function: calls cbRenderAfter of every render callback added with the after flag, at the
+    // callback's DebDraw priority
+    static unsigned int thUpAfter(void* scn, void* arg);
+    // a render callback queued for the next tail (the array takes it there); full at 64
+    void addRenderCB(IScnRender* render, SCNPRIO_CB prio, bool after, bool flag);
+    // on the scene the singleton holds: queues the callback's removal and marks its entry removed
+    static void removeRenderCB(IScnRender* render);
+    // a scene in the work memory, from the setup (a default one when none), with one reference taken
+    static Scn* create(const ScnSetup* setup);
+    explicit Scn(const ScnSetup* setup);
 
     // one per camera: the priority the debug drawing renders at (the struct and its names are not the original's)
     struct DEBDRAW {
         SCNPRIO_CB m_prio;  // setDebDraw's
         int pad_4;          // the constructor numbers them 1 to 9
+    };
+    // one render callback (the struct and its names are not the original's)
+    struct RENDER_CB {
+        IScnRender* m_render;
+        SCNPRIO_CB m_prio;  // thUpAfter sets it as the DebDraw priority around the call
+        bool pad_c;         // addRenderCB's last argument
+        bool m_after;       // thUpAfter calls cbRenderAfter only for these
+        bool m_removed;     // removeRenderCB sets it; move skips these
     };
 
     ScnPoolObj* m_pool;  // 0x20 releaseItem gives items back to it (the name is not the original's)
@@ -71,7 +92,12 @@ public:
     // 0xB4 the job group the constructor creates and entryAutoExecGrp's; term removes and releases it (the name is
     // not the original's)
     int m_grpHandle;
-    unsigned char pad_B8[0xC28];
+    // 0xB8 the render callbacks (the names are not the original's)
+    RENDER_CB m_renderCB[64];
+    int m_renderCBNum;  // 0x4B8
+    unsigned char pad_4BC[0x4];
+    mm::mtl::FixedQueue<RENDER_CB, 64> m_addRenderCB;     // 0x4C0 addRenderCB's (the name is not the original's)
+    mm::mtl::FixedQueue<RENDER_CB, 64> m_removeRenderCB;  // 0x8D0 removeRenderCB's (the name is not the original's)
     // 0xCE0, 0xCE8 the constructor news both; allocEntryRes locks the second (the names are not the original's)
     CriticalSection* m_cs;
     CriticalSection* m_entryResCs;

@@ -61,6 +61,8 @@
 #include "mtl/MemManager.h"
 #include "mm/mtl/FixStr.h"
 #include <string.h>
+#include "ml/ScnSetup.h"
+#include "classes/ml/IScnRender.h"
 
 namespace ml {
 
@@ -134,11 +136,46 @@ bool ScnObjIBL::isDisp() const {
 
 void ScnObjModel::renderDebug(ml::DebDraw*) {}
 
-ScnPoolObj::~ScnPoolObj() {}
+ScnPoolObj::ScnPoolObj(Scn* scn) : m_scn(scn), pad_228(0) {
+    m_cam.create(10, scn->m_allocHandle);
+    m_mdl.create(0x200, scn->m_allocHandle);
+    m_list3.create(0x200, scn->m_allocHandle);
+    m_lgt.create(16, scn->m_allocHandle);
+    m_ibl.create(64, scn->m_allocHandle);
+    m_list6.create(8, scn->m_allocHandle);
+    m_all.create(0x200, scn->m_allocHandle);
+}
+
+ScnPoolObj::~ScnPoolObj() {
+    m_cs0.lock();
+    m_cs0.unlock();
+    release(1);
+    release(2);
+    release(3);
+    release(4);
+    release(5);
+    release(6);
+    for (reslist<ScnObj*>::iterator it = m_all.begin(); it != m_all.end(); ++it) {
+        delete *it;
+    }
+}
 
 ScnDebugManipuObj::~ScnDebugManipuObj() {}
 
 ScnRender::~ScnRender() {}
+
+unsigned int Scn::thUpAfter(void* scn, void*) {
+    Scn* self = static_cast<Scn*>(scn);
+    for (int i = 0; i < self->m_renderCBNum; i++) {
+        RENDER_CB& cb = self->m_renderCB[i];
+        if (cb.m_after) {
+            DebDraw::setCurrentPrio(cb.m_prio);
+            cb.m_render->cbRenderAfter(self, cb.m_prio);
+            DebDraw::setCurrentPrio(-1);
+        }
+    }
+    return 0;
+}
 
 Scn::~Scn() {
     term();
@@ -182,6 +219,32 @@ void Scn::term() {
     if (m_allocHandle.m_handle != 0) {
         mtl::MemManager::erase(m_allocHandle);
         m_allocHandle = mtl::ALLOC_HANDLE();
+    }
+}
+
+void Scn::addRenderCB(IScnRender* render, SCNPRIO_CB prio, bool after, bool flag) {
+    RENDER_CB cb;
+    cb.m_render = render;
+    cb.m_prio = prio;
+    cb.pad_c = flag;
+    cb.m_after = after;
+    cb.m_removed = false;
+    m_addRenderCB.push_back(cb);
+}
+
+void Scn::removeRenderCB(IScnRender* render) {
+    Scn* scn = PtrSingleton<Scn>::sys();
+    if (scn == nullptr) {
+        return;
+    }
+    RENDER_CB cb;
+    cb.m_render = render;
+    scn->m_removeRenderCB.push_back(cb);
+    for (int i = 0; i < scn->m_renderCBNum; i++) {
+        if (scn->m_renderCB[i].m_render == render) {
+            scn->m_renderCB[i].m_removed = true;
+            break;
+        }
     }
 }
 
@@ -245,6 +308,18 @@ ScnObjCam* ScnPoolObj::getCam(const WinView* view) {
         }
     }
     return nullptr;
+}
+
+Scn* Scn::create(const ScnSetup* setup) {
+    ScnSetup defaultSetup;
+    if (setup == nullptr) {
+        setup = &defaultSetup;
+    }
+    Scn* scn = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) Scn(setup);
+    if (scn != nullptr) {
+        scn->addRef();
+    }
+    return scn;
 }
 
 ScnObjCam* ScnObjCam::create(Scn* scn, int index) {

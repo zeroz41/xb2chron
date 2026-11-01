@@ -19,6 +19,26 @@
 
 namespace mm { namespace mtl {
 
+// the word a FixedQueue's storage is declared in: an unsigned integer as wide as the element's alignment, up to eight
+// bytes (the name is not the original's). The original addresses a slot as its index times the element's words:
+// ml::Scn::addRenderCB's 16-byte elements are `(index * 2) & 0x7E` words of 8 bytes
+template <unsigned long Align>
+struct FixedQueueWord {
+    typedef unsigned long type;
+};
+template <>
+struct FixedQueueWord<1> {
+    typedef unsigned char type;
+};
+template <>
+struct FixedQueueWord<2> {
+    typedef unsigned short type;
+};
+template <>
+struct FixedQueueWord<4> {
+    typedef unsigned int type;
+};
+
 // mm_lib's fixed_queue: a ring of N elements in place, then their count and the index of the first. Its iterator
 // (fixed_queue_iterator, named by FixedQueue<...>::insert's signature) holds the ring and an index that runs past
 // the ring's end: the end is the first's index plus the count, and an element is the index modulo N.
@@ -119,7 +139,7 @@ public:
 #line 625 MM_MTL_FIXED_QUEUE_PATH
         MM_ASSERT(!full());
         m_head = (m_head + N - 1) % N;
-        new (static_cast<void*>(&m_buffer[m_head])) T(value);
+        new (static_cast<void*>(&m_buffer[m_head * kWords])) T(value);
         ++m_size;
     }
     void push_back(const T& value) {
@@ -127,7 +147,7 @@ public:
         MM_ASSERT(!full());
         // by the element's own storage: GfEvtBgm's pushes address the slot from the owner (its index times the
         // element size plus the queue's offset), where data()[i] keeps the ring's start in a register
-        new (static_cast<void*>(&m_buffer[(m_head + m_size) % N])) T(value);
+        new (static_cast<void*>(&m_buffer[(m_head + m_size) % N * kWords])) T(value);
         ++m_size;
     }
     // the element index places after the first (fixed_queue.h asserts `index < N` at line 376: ml::LibMain::
@@ -147,7 +167,7 @@ public:
 #line 110 MM_MTL_FIXED_QUEUE_PATH
         MM_ASSERT(index < N);
         // by the element's own storage, as push_back (ai::Fsm::setStateImpl's pop_front reads the slot from the owner)
-        return *reinterpret_cast<T*>(&m_buffer[index]);
+        return *reinterpret_cast<T*>(&m_buffer[index * kWords]);
     }
     // the first element, asserting there is one (fixed_queue.h line 354: ai::Hfsm::setStateImpl inlines it; the name
     // is not the original's)
@@ -207,10 +227,9 @@ public:
         return reinterpret_cast<const T*>(m_buffer);
     }
     // one element's storage (see push_back)
-    struct Storage {
-        alignas(T) unsigned char m_bytes[sizeof(T)];
-    };
-    Storage m_buffer[N];
+    typedef typename FixedQueueWord<alignof(T)>::type word_type;
+    static const unsigned long kWords = sizeof(T) / sizeof(word_type);
+    alignas(T) word_type m_buffer[N * kWords];
     unsigned long m_size;  // size()
     unsigned long m_head;  // the first element's index
 };

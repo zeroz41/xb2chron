@@ -15,8 +15,14 @@ namespace ml {
 // table 0x7100B78078
 class ScnPoolObj : public ::ml::IWorkEvent, public ::ml::IScnRender {
 public:
+    // Scn::init news it (0x230 bytes); each list gets its nodes from the scene's allocator
+    explicit ScnPoolObj(Scn* scn);
     virtual ~ScnPoolObj();  // slot 0
-    void release(ScnObj* item);
+    // marks the object deleted and moves it to the list of all objects (a model also gets its display request
+    // cleared); always true
+    bool release(ScnObj* item);
+    // every object of a type (ScnObj::m_type 1 to 6; the destructor releases each type in turn)
+    void release(unsigned short type);
     // ScnObjModelDrSysStandard::create asks it for room for one before it makes a model (the parameter name is not
     // the original's)
     bool isValidInsert(unsigned short num) const;
@@ -95,6 +101,7 @@ public:
     reslist<ScnObj*> m_list6;  // 0x1A8
     // 0x1E8 objects of any type: Scn::getCam looks for a camera here after m_cam (the name is not the original's)
     reslist<ScnObj*> m_all;
+    unsigned short pad_228;  // the constructor zeroes it
 };
 }  // namespace ml
 
