@@ -12,6 +12,11 @@ extern "C" {
 int vsnprintf(char* buffer, size_t size, const char* format, va_list arguments);
 int snprintf(char* buffer, size_t size, const char* format, ...);
 
+// the stream dlmalloc's malloc_stats prints to
+typedef struct _IO_FILE FILE;
+extern FILE* const stderr;
+int fprintf(FILE* stream, const char* format, ...);
+
 #ifdef __cplusplus
 }
 #endif
