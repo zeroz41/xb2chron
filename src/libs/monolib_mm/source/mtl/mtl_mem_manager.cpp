@@ -1,6 +1,8 @@
 #define MM_LIB_FROM_MONOLIB_MM
 #include "mm/mtl/FixStr.h"
 #include "mtl/MemManager.h"
+#include "mtl/MemManagerRegion.h"
+#include "ml/CriticalSection.h"
 #include "classes/mtl/IMemAllocator.h"
 #include "classes/mtl/DlAllocator.h"
 #include "classes/mtl/NullAllocator.h"
@@ -15,6 +17,8 @@ namespace mtl {
 // the heap createAllocator makes the allocators in
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100ED26D0)
 static mm::mtl::HeapAllocator s_allocatorHeap;
+
+mm::mtl::FixedVector<MemManager::HandleRegion, 512> MemManager::_existHandle;
 
 DlAllocator::~DlAllocator() {}
 
@@ -42,6 +46,11 @@ const char* DlAllocator::getName() const {
 
 ALLOC_HANDLE MemManager::create(void* p, unsigned long size, const char* name, bool flag) {
     return create(p, size, name, flag, static_cast<AllocatorType>(1));
+}
+
+ALLOC_HANDLE MemManager::create(ALLOC_HANDLE parent, unsigned long size, const char* name, bool flag, const char* file,
+                                int line) {
+    return create(parent, size, name, flag, static_cast<AllocatorType>(1), 16, file, line);
 }
 
 void MemManager::deallocate(void* p, unsigned long size, bool flag) {

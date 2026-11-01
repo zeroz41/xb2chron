@@ -14,7 +14,7 @@ namespace mm { namespace mtl {
 // N objects of T in place, a flag per slot (mm_mtl/internal/fixed_object_allocator.h; its assertions name the count
 // `m_allocated` and test `valid_pointer(p)`). The class's name follows the file's; it and the other members' names
 // are not the original's. Layout per ml::DevFileArchiveNx::Param (T of 0x118 bytes, N 16).
-template <typename T, unsigned int N>
+template <typename T, unsigned long N>
 class FixedObjectAllocator {
 public:
     FixedObjectAllocator() : m_allocated(0), m_capacity(N) { m_used.reset(); }
@@ -26,6 +26,13 @@ public:
         }
         m_allocated = 0;
     }
+
+    // a free slot's object, constructed (mtl::MemManager::Region's copy 0x71006E8910); not written yet
+    T* allocate();
+    // gives p's slot back (Region's copy 0x71006E8600); not written yet
+    void deallocate(T* p);
+    // every slot given back (Region's copy 0x71006EB948); not written yet
+    void clear();
 
     struct Storage {
         alignas(T) unsigned char m_bytes[sizeof(T)];
