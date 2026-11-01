@@ -60,6 +60,8 @@
 #include "ml/DrPixlShadowCacheMan.h"
 #include "classes/ml/DrCalcStmListObj.h"
 #include "classes/ml/DrCalcTexStreamMan.h"
+#include "ml/MdoWrkVanishEffect.h"
+#include "ml/MdsMatVertexInfo.h"
 #include "ml/MdsMpfMatInfoHeader.h"
 #include "ml/DrCalcViewWork.h"
 #include "mm/Math.h"
@@ -102,6 +104,7 @@
 #include "ml/DrResMdoVtxMeshObj.h"
 #include "ml/DrResMdoTexList.h"
 #include "ml/DrResMdoPntAlphaMan.h"
+#include "ml/DrMdoMorphing.h"
 
 namespace ml {
 
@@ -185,6 +188,45 @@ void DrResEtcPamObj::mdonode_etcpam_etcmesh_disp(const MdsEtcParamsCallBack* cb,
     parts->m_flags &= ~6;
 }
 
+void DrResEtcPamObj::mdonode_etcpam_volfadeanm(const MdsEtcParamsCallBack* cb, DrResEtcParams* params, wrkCallbackArg& arg) {
+    if (m_flags & 1) {
+        unsigned int idx = arg.m_mesh->m_parts[cb->m_meshNo].m_vanishNo * 3 + 2;
+        float value = params->getParams();
+        if (value <= 0.01f) {
+            arg.m_vanishEffect[idx].m_alpha = arg.m_vanishEffect[idx].m_baseAlpha;
+        } else if (value > 1.0f) {
+            arg.m_vanishEffect[idx].m_alpha = arg.m_vanishEffect[idx].m_baseAlpha + 1.0f;
+        } else {
+            arg.m_vanishEffect[idx].m_alpha = value + arg.m_vanishEffect[idx].m_baseAlpha;
+        }
+        float& alpha = arg.m_vanishEffect[idx].m_alpha;
+        if (alpha > 1.0f) {
+            alpha = 1.0f;
+        } else if (alpha < 0.0f) {
+            alpha = 0.0f;
+        }
+    }
+}
+
+DrResEtcPamObj::NodeFunc DrResEtcPamObj::s_pMdoNodeEtcParm[2] = {
+    &DrResEtcPamObj::mdonode_etcpam_etcmesh_disp,
+    &DrResEtcPamObj::mdonode_etcpam_volfadeanm,
+};
+
+void DrResEtcPamObj::update() {
+    for (unsigned int i = 0; i < m_paramNum; i++) {
+        DrResEtcParams& params = m_params[i];
+        if (params.m_flags & (1 << DrMan::s_nDblMemIdx)) {
+            params.m_flags &= ~(1 << DrMan::s_nDblMemIdx);
+            params.m_params = params.m_value[DrMan::s_nDblMemIdx];
+        }
+        if ((4 << DrMan::s_nDblMemIdx) & params.m_flags) {
+            params.m_flags &= ~(4 << DrMan::s_nDblMemIdx);
+            params.m_params = params.m_preValue[DrMan::s_nDblMemIdx];
+        }
+    }
+}
+
 unsigned int DrResEtcPamObj::calcWorkSize(const unsigned char* mdo) {
     const MdoHeader* header = reinterpret_cast<const MdoHeader*>(mdo);
     const MdoEtcPams* pams = reinterpret_cast<const MdoEtcPams*>(mdo + header->m_etcPamOfs);
@@ -210,6 +252,22 @@ int DrResMdoMeshObj::getIdx(const char* name) const {
         }
     }
     return -1;
+}
+
+DrResMdoMeshObj& DrResMdoMeshObj::operator=(const DrResMdoMeshObj& other) {
+    for (unsigned int i = 0; i < m_num; i++) {
+        DrResMdoMeshParts* dst = m_parts;
+        const DrResMdoMeshParts* src = other.m_parts;
+        if (dst[i].m_flags & DrResMdoMeshParts::FLAG_WORK) {
+            memcpy(dst[i].m_work, src[i].m_work, 0x40);
+        }
+        dst[i].m_alpha[0] = src[i].m_alpha[0];
+        dst[i].m_alpha[1] = src[i].m_alpha[1];
+        dst[i].m_alpha[2] = src[i].m_alpha[2];
+        dst[i].m_flags = src[i].m_flags;
+        dst[i].m_vanishNo = src[i].m_vanishNo;
+    }
+    return *this;
 }
 
 void DrResMdoMeshObj::release(DrResMdoMeshObj*& obj) {
@@ -244,6 +302,25 @@ unsigned int DrResMdoShdObj::calcWorkSize(const unsigned char* mdo) {
     }
     size += -size & 3;
     return size + header->m_num * sizeof(Entry) + sizeof(DrResMdoShdObj);
+}
+
+void DrResMdoMorpObj::update(MdoWrkMatRes* wrkMatRes, DrResEtcPamObj* pamObj) {
+    DrMdoMorphing morphing(wrkMatRes, this, pamObj);
+    morphing.updateParms();
+    int blend = morphing.isBlendCheck();
+    if (blend != 0) {
+        morphing.resetDefVertex();
+        if (blend != 1) {
+            morphing.blendVertex();
+        }
+        m_blended = true;
+        morphing.parmsUpdate();
+    } else if (m_blended) {
+        if (m_oldPos) {
+            morphing.oldPosVertex();
+        }
+        m_blended = false;
+    }
 }
 
 unsigned int DrResMdoMorpObj::calcWorkSize(const unsigned char* mdo) {
@@ -1039,6 +1116,97 @@ void DrResMdoInstPartsObj::getMatrix(mm::Mat44& m) const {
 
 int DrResMdoPntAlphaMan::getWrkSize(int num) { return num * 0x18 + 0x18; }
 
+void DrResMdoPntAlphaMan::update(float delta) {
+    int num = 0;
+    for (int i = 0; i < m_activeNum; i++) {
+        m_active[num] = m_active[i];
+        Entry* entry = m_active[i];
+        if (entry->m_touched) {
+            entry->m_flags &= ~FLAG_TOUCHED;
+            if (entry->m_flags & FLAG_FADEIN) {
+                entry->m_alpha += delta * 0.1f;
+                if (entry->m_alpha > 1.0f) {
+                    entry->m_alpha = 1.0f;
+                }
+            } else {
+                entry->m_alpha -= delta * 0.1f;
+                if (entry->m_alpha < 0.0f) {
+                    entry->m_alpha = 0.0f;
+                }
+            }
+            num++;
+        } else {
+            entry->m_flags = 0;
+            entry->m_alpha = 1.0f;
+        }
+    }
+    m_activeNum = num;
+}
+
+float DrResMdoPntAlphaMan::getAlphaObj(const void* obj, bool fadeIn) {
+    for (int i = 0; i < m_activeNum; i++) {
+        Entry* entry = m_active[i];
+        if (entry->m_obj == obj) {
+            entry->m_flags |= FLAG_TOUCHED;
+            if (fadeIn) {
+                entry->m_flags |= FLAG_FADEIN;
+            } else {
+                entry->m_flags &= ~FLAG_FADEIN;
+            }
+            return entry->m_alpha;
+        }
+    }
+    for (int i = 0; i < m_entryNum; i++) {
+        if (!m_entry[i].m_used) {
+            m_active[m_activeNum] = &m_entry[i];
+            Entry* claimed = m_active[m_activeNum];
+            claimed->m_obj = obj;
+            claimed->m_flags = FLAG_USED;
+            Entry* entry = m_active[m_activeNum++];
+            entry->m_flags |= FLAG_TOUCHED;
+            if (fadeIn) {
+                entry->m_flags |= FLAG_FADEIN;
+            } else {
+                entry->m_flags &= ~FLAG_FADEIN;
+            }
+            return entry->m_alpha;
+        }
+    }
+    return 1.0f;
+}
+
+void DrResMdoPntAlphaMan::setAlphaReset(const void* obj, bool fadeIn) {
+    for (int i = 0; i < m_activeNum; i++) {
+        Entry* entry = m_active[i];
+        if (entry->m_obj == obj) {
+            entry->m_flags |= FLAG_TOUCHED;
+            if (fadeIn) {
+                entry->m_flags |= FLAG_FADEIN;
+            } else {
+                entry->m_flags &= ~FLAG_FADEIN;
+            }
+            entry->m_alpha = fadeIn ? 1.0f : 0.0f;
+            return;
+        }
+    }
+    for (int i = 0; i < m_entryNum; i++) {
+        if (!m_entry[i].m_used) {
+            m_active[m_activeNum] = &m_entry[i];
+            Entry* claimed = m_active[m_activeNum];
+            claimed->m_obj = obj;
+            claimed->m_flags = FLAG_USED;
+            Entry* entry = m_active[m_activeNum++];
+            entry->m_flags |= FLAG_TOUCHED;
+            if (fadeIn) {
+                entry->m_flags |= FLAG_FADEIN;
+            } else {
+                entry->m_flags &= ~FLAG_FADEIN;
+            }
+            entry->m_alpha = fadeIn ? 1.0f : 0.0f;
+        }
+    }
+}
+
 void DrResMdoInstPartsAnm::setNodeFrame(float frame) {
     m_nodeFrameStock[DrMan::s_nDblStockIdx] = frame;
     m_stockFlags |= 1 << DrMan::s_nDblStockIdx;
@@ -1138,6 +1306,14 @@ DrResFetch::~DrResFetch() {
 
 void DrResFetch::clearWork() {
     release();
+}
+
+void DrResFetch::setMdlVertexParam(int num, const MdsMatVertexInfo* info) {
+    grlib::CGLibVtxAttr attr[52];
+    for (int i = 0; i < num; i++, info++) {
+        s_callSetVert[info->m_attr](info->m_size, i, attr[i]);
+    }
+    createFetchObj(attr, num);
 }
 
 void DrResFetch::setDefVertexParam(int type) {

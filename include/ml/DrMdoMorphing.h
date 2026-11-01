@@ -15,10 +15,15 @@ public:
     // changing away from a non-zero value (the meaning of the values is inferred)
     int isBlendCheck() const;
     void parmsUpdate();
+    void updateParms();
+    void resetDefVertex();
+    void blendVertex();
+    void oldPosVertex();
 
     MdoWrkMatRes* m_pWrkMatRes;    // 0x0
     DrResMdoMorpObj* m_pMorpObj;   // 0x8
     DrResEtcPamObj* m_pPamObj;     // 0x10
+    unsigned char pad_18[0x28];    // sizeof 0x40: DrResMdoMorpObj::update's stack copy
 };
 }  // namespace ml
 
