@@ -40,7 +40,7 @@ public:
     virtual unsigned int getFootStepEffect() const;  // slot 35
     virtual unsigned int getAttribute(bool, int) const;  // slot 40
     virtual bool isDispInitExtraParts(unsigned int) const;  // slot 41
-    virtual bool vf42(unsigned int part) const;  // slot 42
+    virtual bool fn_710022BD80(unsigned int part) const;  // slot 42
     virtual const char* getVoiceStr() const;  // slot 45
     virtual bool isEnbaleTarget() const;  // slot 54
     virtual int getMenuOffset() const;  // slot 55

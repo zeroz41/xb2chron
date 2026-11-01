@@ -28,7 +28,7 @@ public:
     // place names them. Members because they sit among DataParamAcc's forwarders and read this->m_obj. What they do:
     // fn_71002208A4 forwards its three arguments to IDataObj slot 76 (1.0.0's two-argument getDriverArts; 3.0.1's
     // DataObjDriver override picks its arts table by the third), 0 for an invalid object; fn_7100221170 forwards a
-    // part to slot 42 (new in 3.0.1; DataObjEnemy's vf42), true for an invalid object; fn_7100221F88 forwards an
+    // part to slot 42 (new in 3.0.1; DataObjEnemy's override), true for an invalid object; fn_7100221F88 forwards an
     // item to slot 52 (new in 3.0.1; DataObjDriver's override asks GfDataItem::getItemType of it).
     unsigned int getObjType() const;
     const char* getModelResourceName() const;

@@ -126,16 +126,11 @@ application/BF2/battle/character/CharacterParameter.cpp:
 	.rodata      start:0x009B7418 end:0x009B7530
 
 application/BF2/battle/character/character_parameter_battle.cpp:
-	.text        start:0x00083130 end:0x00085320
-	.rodata      start:0x0097D21F end:0x0097D2B2
-	.data        start:0x00B3B588 end:0x00B3B830
-
-application/BF2/battle/EnemyParameter.cpp:
-	.text        start:0x00085320 end:0x00088F94
-	.rodata      start:0x0097D2B2 end:0x0097D397
+	.text        start:0x00083130 end:0x00088F94
+	.rodata      start:0x0097D21F end:0x0097D397
 	.rodata      start:0x009B5368 end:0x009B536C
 	.rodata      start:0x009B7530 end:0x009B7548
-	.data        start:0x00B3B830 end:0x00B3BAD8
+	.data        start:0x00B3B588 end:0x00B3BAD8
 
 application/BF2/battle/character/CharacterParameter_7100088F94.cpp:
 	.text        start:0x00088F94 end:0x00089174
@@ -980,15 +975,11 @@ application/BF2/gf/data/gf_data_manager.cpp:
 	.bss         start:0x00C294D0 end:0x00C294D8
 
 application/BF2/gf/data/gf_data_obj.cpp:
-	.text        start:0x00224A98 end:0x00229510
+	.text        start:0x00224A98 end:0x0022C0FC
 	.rodata      start:0x009887FC end:0x0098883D
-	.rodata      start:0x009B9C1C end:0x009B9C2C
-	.data        start:0x00B4DC58 end:0x00B4E4D8
-
-application/BF2/gf/data/IDataObj.cpp:
-	.text        start:0x00229510 end:0x0022C0FC
 	.rodata      start:0x009B546C end:0x009B5470
-	.data        start:0x00B4E4D8 end:0x00B50B18
+	.rodata      start:0x009B9C1C end:0x009B9C2C
+	.data        start:0x00B4DC58 end:0x00B50B18
 
 application/BF2/gf/data/GfDataSave.cpp:
 	.text        start:0x0022C0FC end:0x0022CB44

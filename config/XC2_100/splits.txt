@@ -84,12 +84,8 @@ application/BF2/battle/character/CharacterParameter.cpp:
 	.data        start:0x01171F30 end:0x011720D8
 
 application/BF2/battle/character/character_parameter_battle.cpp:
-	.text        start:0x00068B9C end:0x00069E88
-	.data        start:0x011720D8 end:0x01172290
-
-application/BF2/battle/EnemyParameter.cpp:
-	.text        start:0x00069E88 end:0x0006C69C
-	.data        start:0x01172290 end:0x01172448
+	.text        start:0x00068B9C end:0x0006C69C
+	.data        start:0x011720D8 end:0x01172448
 
 application/BF2/battle/ElementalComboManager.cpp:
 	.text        start:0x0006C69C end:0x00071160
@@ -764,12 +760,8 @@ application/BF2/gf/data/gf_data_manager.cpp:
 	.bss         start:0x01261BB0 end:0x01261BB8
 
 application/BF2/gf/data/gf_data_obj.cpp:
-	.text        start:0x0028C068 end:0x002908B4
-	.data        start:0x011844B0 end:0x01184D10
-
-application/BF2/gf/data/IDataObj.cpp:
-	.text        start:0x002908B4 end:0x0029367C
-	.data        start:0x01184D10 end:0x011872C0
+	.text        start:0x0028C068 end:0x0029367C
+	.data        start:0x011844B0 end:0x011872C0
 
 application/BF2/gf/data/GfDataSave.cpp:
 	.text        start:0x0029367C end:0x00293E7C

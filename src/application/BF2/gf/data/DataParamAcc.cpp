@@ -442,7 +442,7 @@ bool DataParamAcc::isDispInitExtraParts(unsigned int index) const {
 
 bool DataParamAcc::fn_7100221170(unsigned int index) const {
     if (isValid()) {
-        return m_obj->vf42(index);
+        return m_obj->fn_710022BD80(index);
     }
     return true;
 }
@@ -696,7 +696,7 @@ void DataParamAcc::setVirtualEquipOrb(unsigned int index, unsigned int index2) {
 
 void DataParamAcc::fn_7100221F88(unsigned int index) {
     if (isValid()) {
-        m_obj->vf52(index);
+        m_obj->fn_710022BDB8(index);
     }
 }
 
