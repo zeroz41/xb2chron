@@ -46,12 +46,9 @@ Allocator::Block* Allocator::NewInstanceImpl(unsigned long size, unsigned long c
     return MemoryManager::memoryManager_.AllocInstance(this, size, count, alignment);
 }
 
-// not identical yet: the inlined FreeBlock schedules the UnlockMutex argument early and zeroes data/allocAdrs_ before allocator (23 words)
-/*
 void Allocator::DeleteInstanceImpl(Block* block) {
     MemoryManager::memoryManager_.FreeInstance(this, block);
 }
-*/
 
 Allocator::Block* Allocator::NewBufferImpl(unsigned long size, unsigned long count, unsigned long alignment) {
     return MemoryManager::memoryManager_.AllocBuffer(this, size, count, alignment);
@@ -77,8 +74,6 @@ Allocator::Block* Allocator::GetMemoryBlock(void* address) {
     return MemoryManager::memoryManager_.GetAllocatorBlock(address);
 }
 
-// not identical yet: the new BlockNode[] constructor loop computes its trip count differently (77 words)
-/*
 void MemoryManager::Init(int blockCount, Allocator* allocator) {
     memoryManager_.mutex_.Initialize();
     SoundMemory::allocator_ = allocator;
@@ -95,10 +90,7 @@ void MemoryManager::Init(int blockCount, Allocator* allocator) {
     memoryManager_.numStream_ = 0;
     memoryManager_.initialized_ = true;
 }
-*/
 
-// not identical yet: 10 words differ (not investigated)
-/*
 void MemoryManager::Quit() {
     if (memoryManager_.initialized_) {
         memoryManager_.useList_.Clear();
@@ -118,7 +110,6 @@ void MemoryManager::Quit() {
         memoryManager_.mutex_.Finalize();
     }
 }
-*/
 
 Allocator::Block* MemoryManager::AllocInstance(Allocator* allocator, unsigned long size, unsigned long count,
                                                unsigned long alignment) {
@@ -173,18 +164,17 @@ Allocator::Block* MemoryManager::AllocStream(Allocator* allocator, unsigned long
     return block;
 }
 
-// not identical yet: the search loop's blocks are laid out differently (latch placed before body in the original; 36 words)
-/*
 Allocator::Block* MemoryManager::GetAllocatorBlock(void* address) {
     Allocator::Block* freeBlock = nullptr;
     mutex_.Lock();
     if (address != nullptr) {
-        for (List<BlockNode>::Node* node = useList_.head_.next; node != &useList_.head_; node = node->next) {
-            Allocator::Block& block = *static_cast<BlockNode*>(node);
-            if (block.data == address) {
-                freeBlock = &block;
+        List<BlockNode>::Node* node = useList_.head_.next;
+        while (node != &useList_.head_) {
+            if (static_cast<BlockNode*>(node)->data == address) {
+                freeBlock = static_cast<BlockNode*>(node);
                 break;
             }
+            node = node->next;
         }
     }
     mutex_.Unlock();
@@ -192,7 +182,6 @@ Allocator::Block* MemoryManager::GetAllocatorBlock(void* address) {
     SSD_ASSERT_MSG(freeBlock != nullptr, u"検索したメモリアドレスは管理外でした。");
     return freeBlock;
 }
-*/
 
 // not identical yet: the original multiplies count*size in 32 bits and adds (size + alignment) - 1; ours reassociates (12 words)
 /*
