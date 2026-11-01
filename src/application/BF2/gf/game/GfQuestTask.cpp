@@ -379,4 +379,58 @@ QuestTaskParam::QuestTaskParam(QuestID id, unsigned int task, unsigned int purpo
     }
 }
 
+bool AchievQuest::setCount(unsigned int count) {
+    unsigned int prev = m_count & 0x3FFFFFFF;
+    unsigned int countMax = m_countMax & 0x3FFFFFFF;
+    if (count > countMax) {
+        count = countMax;
+    }
+    unsigned int added = count > prev ? count - prev : 0;
+    m_count = count;
+    if ((m_count & 0x3FFFFFFF) >= countMax) {
+        setCountComplete();
+    }
+    if (added != 0 && GfAchievManager::get() != nullptr) {
+        GfAchievManager::get()->incleaseAchievCount(m_questId, prev, added);
+    }
+    return added != 0;
+}
+
+bool AchievQuest::incleseCount(unsigned int count) {
+    if (count == 0) {
+        return false;
+    }
+    unsigned int prev = m_count & 0x3FFFFFFF;
+    if (prev == 0x3FFFFFFF) {
+        return false;
+    }
+    if (prev >= (m_countMax & 0x3FFFFFFF)) {
+        return false;
+    }
+    m_count += count;
+    if ((m_count & 0x3FFFFFFF) >= (m_countMax & 0x3FFFFFFF)) {
+        setCountComplete();
+        m_count = m_countMax & 0x3FFFFFFF;
+    }
+    if (GfAchievManager::get() != nullptr) {
+        GfAchievManager::get()->incleaseAchievCount(m_questId, prev, count);
+    }
+    return true;
+}
+
+bool AchievQuest::decleseCount(unsigned int count) {
+    if (count == 0) {
+        return false;
+    }
+    if ((m_count & 0x3FFFFFFF) == 0) {
+        return false;
+    }
+    for (unsigned int i = 0; i < count; i++) {
+        if ((m_count & 0x3FFFFFFF) == 0) {
+            break;
+        }
+        m_count--;
+    }
+    return true;
+}
 }  // namespace gf

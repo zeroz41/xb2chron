@@ -612,7 +612,7 @@ application/BF2/framework/PadManager.cpp:
 	.data        start:0x00B42630 end:0x00B428E0
 	.bss         start:0x00C24190 end:0x00C241B0
 
-application/BF2/framework/ReferenceObject.cpp:
+application/BF2/framework/PadEventImporter.cpp:
 	.text        start:0x00196B94 end:0x00196C04
 	.data        start:0x00B428E0 end:0x00B42900
 
@@ -1452,11 +1452,11 @@ application/BF2/gf/game/GfQuestTarget.cpp:
 	.data        start:0x00B56DF8 end:0x00B56ED8
 
 application/BF2/gf/game/GfQuestTask.cpp:
-	.text        start:0x0030C28C end:0x0030FC50
+	.text        start:0x0030C28C end:0x00310164
 	.rodata      start:0x009BC1F8 end:0x009BC328
 
-application/BF2/gf/game/QuestTaskParam.cpp:
-	.text        start:0x0030FC50 end:0x003136C0
+application/BF2/gf/game/GfQuestUtil.cpp:
+	.text        start:0x00310164 end:0x003136C0
 	.rodata      start:0x0098B63B end:0x0098B646
 	.rodata      start:0x009BC328 end:0x009BC47C
 
@@ -4368,13 +4368,16 @@ idcoli/IDColiObjData.cpp:
 	.data        start:0x00B7F0F0 end:0x00B7F560
 
 idcoli/IDColiUtilColiSimple.cpp:
-	.text        start:0x0080A2FC end:0x0081117C
+	.text        start:0x0080A2FC end:0x00812968
+	.rodata      start:0x009AD4E9 end:0x009AD549
+	.rodata      start:0x009B5748 end:0x009B574C
+	.data        start:0x00B7F560 end:0x00B7F5A0
 
 idcoli/IDColiGrandMesh.cpp:
-	.text        start:0x0081117C end:0x008190E0
-	.rodata      start:0x009AD4E9 end:0x009AD5B1
-	.rodata      start:0x009B5748 end:0x009B5750
-	.data        start:0x00B7F560 end:0x00B7F6C0
+	.text        start:0x00812968 end:0x008190E0
+	.rodata      start:0x009AD549 end:0x009AD5B1
+	.rodata      start:0x009B574C end:0x009B5750
+	.data        start:0x00B7F5A0 end:0x00B7F6C0
 	.bss         start:0x015E9C78 end:0x015E9CB0
 
 navi/NvmshAcObjBase.cpp:

@@ -446,7 +446,7 @@ application/BF2/framework/PadManager.cpp:
 	.data        start:0x01179288 end:0x011795A0
 	.bss         start:0x0125D170 end:0x0125D188
 
-application/BF2/framework/ReferenceObject.cpp:
+application/BF2/framework/PadEventImporter.cpp:
 	.text        start:0x00194FD8 end:0x001950B0
 	.data        start:0x011795A0 end:0x011795C0
 
@@ -1105,10 +1105,10 @@ application/BF2/gf/game/GfQuestTarget.cpp:
 	.data        start:0x0118C758 end:0x0118C838
 
 application/BF2/gf/game/GfQuestTask.cpp:
-	.text        start:0x00372AD8 end:0x003766B0
+	.text        start:0x00372AD8 end:0x003769F8
 
-application/BF2/gf/game/QuestTaskParam.cpp:
-	.text        start:0x003766B0 end:0x0037A5CC
+application/BF2/gf/game/GfQuestUtil.cpp:
+	.text        start:0x003769F8 end:0x0037A5CC
 
 application/BF2/gf/game/salvage/gf_game_salvage.cpp:
 	.text        start:0x0037A5CC end:0x0037D5CC
@@ -3840,11 +3840,11 @@ unit_71009A8C80.cpp:
 	.text        start:0x009A8C80 end:0x009A9C08
 
 nn/gfx/detail/GlslcDll.cpp:
-	.text        start:0x009A9C08 end:0x009AD7DC
+	.text        start:0x009A9C08 end:0x009AD7F8
 	.bss         start:0x01BD9EE0 end:0x01BDAD28
 
-nn/gfx/detail/GlslcDll_71009AD7DC.cpp:
-	.text        start:0x009AD7DC end:0x009AD8B8
+nn/gfx/detail/GlslcDll_71009AD7F8.cpp:
+	.text        start:0x009AD7F8 end:0x009AD8B8
 
 unit_71009AD8B8.cpp:
 	.text        start:0x009AD8B8 end:0x009AD920
