@@ -6,6 +6,8 @@
 #include "mm/Vec3.h"
 #include "mm/Col3.h"
 #include "classes/ml/IScnRender.h"
+#include "classes/ml/IDrDrawCallback.h"
+#include "classes/mm/mtl/ReferenceObject.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "fw/VolumeFadeParams.h"
 #include "mtl/AllocHandle.h"
@@ -30,26 +32,17 @@ namespace ml { class IDrDrawWorkInfo; }
 namespace ml { struct VolumeFadeParams; }
 namespace ml { struct DrMdlAfterImageParams; }
 namespace ml { class DrMdlBase; }
+namespace ml { class Scn; }
+namespace mm { namespace mtl { class IAllocator; } }
+namespace grlib { class CGLibTextureBuffer; }
 
 namespace fw {
 // effect categories (setCategory hands one to effect::SystemManager::es_set_category)
 enum EF_CATEGORY : int;
 
-// a base of fw::EffectManager no evidence names yet
-class TUnk_B41508 {
-public:
-    virtual ~TUnk_B41508();
-    virtual void begin() = 0;
-    virtual void end() = 0;
-    virtual void apply(ml::IDrDrawWorkInfo const*) = 0;
-    virtual void opacityRender(ml::IDrDrawWorkInfo const*) = 0;
-    virtual void alphaRender(ml::IDrDrawWorkInfo const*) = 0;
-    virtual void lastRender(ml::IDrDrawWorkInfo const*) = 0;
-    virtual void blurRender(ml::IDrDrawWorkInfo const*) = 0;
-    virtual void finalRender(ml::IDrDrawWorkInfo const*) = 0;
-};
-// table 0x7100B41428; base at 0x18 unknown (TUnk_B41508)
-class EffectManager : public ::mm::mtl::PtrSingleton< ::fw::EffectManager>, public ::fw::ManagerObject, public TUnk_B41508, public ::ml::IScnRender {
+// table 0x7100B41428; the base at 0x18 is ml::IDrDrawCallback (the destructor hands it to
+// ScnRenderDrSys::releaseCallBack; its secondary table's slots are IDrDrawCallback's begin..finalRender)
+class EffectManager : public ::mm::mtl::PtrSingleton< ::fw::EffectManager>, public ::fw::ManagerObject, public ::ml::IDrDrawCallback, public ::ml::IScnRender {
 public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in effect_manager's unit and
     // GfManager::fn_710032A1FC calls it on PtrSingleton<fw::EffectManager>'s instance. What it does: stores its bool at 0x2FD8
@@ -214,12 +207,17 @@ public:
         return m_volumeFadeParams[type];
     }
 
-    unsigned char pad_28[0x4];
+    // a third allocator the destructor erases (the name is not the original's)
+    mtl::ALLOC_HANDLE m_heapHandle;
     // the allocators effectAllocSys and effectAllocRes take from (effectSysHandle and effectResHandle hand them out;
     // the names are not the original's)
     mtl::ALLOC_HANDLE m_sysHandle;
     mtl::ALLOC_HANDLE m_resHandle;
-    unsigned char pad_34[0x14];
+    unsigned char pad_34[0x4];
+    // what the constructor is handed: its allocator and the scene (the destructor releases the draw callback from the
+    // scene's ScnRenderDrSys; the names are not the original's)
+    mm::mtl::IAllocator* m_allocator;
+    ml::Scn* m_scn;
     mm::mtl::FixedArray<CasterGroup, 32> m_casterGroups;  // by layer (changeLayerCaster moves a send between them)
     // packs and data by name, each in an allocator-backed std::unordered_map (the names are not the original's)
     typedef std::unordered_map<std::string, EffectPack*, std::hash<std::string>, std::equal_to<std::string>,
@@ -233,15 +231,32 @@ public:
     unsigned char pad_358[0x408];
     // gf::EffectCaster::postUpdate copies the party leader's caster matrix in (the name is not the original's)
     mm::Mat44 m_leaderMtx;
-    unsigned char pad_7a0[0x1818];
+    // a resource commonLoaded requests (RenderResource::request) and a counted object pushed as null with it; the
+    // destructor releases both, the second first (the names are not the original's)
+    struct ResourceEntry {
+        RenderResource* m_resource;
+        mm::mtl::ReferenceObject* m_object;
+    };
+    // the resources commonLoaded requests for BTL_VolumeFade's rows (their data goes to m_volumeFadeParams),
+    // BTL_HitEffectRim's (rim blooms) and BTL_VtxParticle's (the names are not the original's)
+    mm::mtl::FixedVector<ResourceEntry, 128> m_volumeFadeResources;  // 0x7A0
+    mm::mtl::FixedVector<ResourceEntry, 128> m_rimBloomResources;  // 0xFA8
+    mm::mtl::FixedVector<ResourceEntry, 128> m_vtxParticleResources;  // 0x17B0
     // one of the common effect packs commonLoaded requests: its resource and, once loaded, its pack (the names are not
-    // the original's)
+    // the original's). The destructor releases both by hand and its FixedVector clears destroy nothing, so the
+    // original's element is trivially destructible (a raw pointer here loses search/createHateRing* by 2 words of
+    // latch order; see the worker notes)
     struct CommonPack {
         RenderResource* m_resource;
         mm::mtl::IntrusivePtr<EffectPack> m_pack;
     };
     mm::mtl::FixedVector<CommonPack, 128> m_commonPacks;  // 0x1FB8 (the name is not the original's)
-    unsigned char pad_27c0[0x815];
+    int m_loadState;  // commonLoaded's step (it switches on it; the name is not the original's)
+    unsigned char pad_27c4[0x4];
+    // the resources commonLoaded requests for EFF_KizunaLink's rows, step by step (the names are not the original's)
+    mm::mtl::FixedVector<ResourceEntry, 128> m_kizunaLinkResources;  // 0x27C8
+    int m_kizunaLoadState;
+    unsigned char pad_2fd4;  // the constructor clears it
     bool m_masterPause;  // what setMasterPause last handed effect::SystemManager::es_pause (the name is not the original's)
     // set when finalize starts, cleared once update's pending commonLoaded succeeds; update and the renders skip
     // while it is set (the name is not the original's)
@@ -264,6 +279,8 @@ public:
     // 0 stays unused: handle 0 is none); updateKizunaLine sets its two ends and its count (the names are not the
     // original's)
     struct KizunaWork {
+        // EffectManager's destructor inlines it: term, then m_object's release
+        ~KizunaWork() { term(); }
         void init();
         void term();
         void update();
@@ -290,13 +307,18 @@ public:
         bool m_inUse;  // createKizunaLine takes a work whose flag is clear and sets it (the name is not the original's)
         bool pad_45a;   // init sets it
         bool pad_45b;   // init sets it
-        unsigned char pad_45c[0xC];
+        unsigned char pad_45c[0x4];
+        // a counted object the work's destructor releases, null from the constructor (the name is not the original's)
+        mm::mtl::IntrusivePtr<mm::mtl::ReferenceObject> m_object;
         // a model term hides and hands to setDeleteCall (DrMdlBase slots 15/16, as deleteMdl) and clears (the name is
         // not the original's)
         ml::DrMdlBase* m_model;
     };
     KizunaWork m_kizunaWorks[8];  // 0x353E0, by handle (the name is not the original's)
-    unsigned char pad_37760[0x1F8];
+    // the texture buffers apply makes from the kizuna link resources; the destructor deletes them (the name is not the
+    // original's)
+    mm::mtl::FixedVector<grlib::CGLibTextureBuffer*, 32> m_textureBuffers;  // 0x37760
+    unsigned char pad_37868[0xF0];
     // an effect speed per category: apply hands each to effect::SystemManager::setCategorySpd, gf::MapEff::update
     // sets category 1's from the frame's update speed (the name is not the original's)
     float m_categorySpeed[8];
