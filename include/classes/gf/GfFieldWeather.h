@@ -8,7 +8,7 @@
 namespace gf { class GfFieldWeather; enum WEATYPE : int; enum WEATHERID : int; }
 namespace gf { class GfSetupParam; class MapjumpCallbackInfo; class GF_OBJ_HANDLE; enum GEV : int; enum RELOAD_BDAT : int; enum CLOUD_SEA : int; enum CLOUD_SEA_HANDLE : int; }
 namespace fw { class UpdateInfo; }
-namespace gf { struct MapEnvData; struct WeatherParam; }
+namespace gf { struct WeatherParam; }
 
 namespace gf {
 // table 0x7100B526C0
@@ -57,7 +57,7 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in this class's
     // unit among its functions and applyNowMapWeather hands it this. What it does: brings the weather list to the
     // map's record (0x6E0 bytes, not written yet). Caller: applyNowMapWeather with the new map's record.
-    void fn_710027F598(MapEnvData* data);
+    void fn_710027F598(WeatherParam* data);
     void updateEvent(const fw::UpdateInfo& info);
     void updateWeather(const fw::UpdateInfo& info);
     static bool isDispWeather();  // whether the weather shows (WeatherEff and WeatherSnd play only then)  // the weather now (GfMenuBdat::getIconIDFromWeatherType takes it)

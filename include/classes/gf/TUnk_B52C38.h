@@ -11,8 +11,8 @@ namespace gf { class TUnk_B535D0; }
 namespace gf {
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function: no this, only the BTL_ChBtl row
 // id; TUnk_B52C38::fn_710028CF40 calls it (code in GfDataBlade_710029064C). What it does: when GfBdatBtl's
-// fn_71001E979C gives the row's map, sets that map's MapEnvData weather id from fn_71001E9824 (+1, at most 5), time 0,
-// length 100.
+// fn_71001E979C gives the row's map, sets that map's WeatherParam weather id from fn_71001E9824 (+1, at most 5),
+// time 0, length 100.
 void fn_710029064C(unsigned int id);
 
 // table 0x7100B52C38 (no RTTI; a fw::MessageObject secondary table, slots 0x710028C998/CE38/CEB8): the 0xF8-byte

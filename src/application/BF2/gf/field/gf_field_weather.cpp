@@ -25,7 +25,26 @@ namespace _gffwt {
 
 mm::mtl::FixedList<WeatherInfo*, 16> s_list;
 
-void destroyList();
+void destroyList() {
+    for (mm::mtl::FixedList<WeatherInfo*, 16>::iterator it = s_list.begin(); it != s_list.end(); ++it) {
+        if (*it != nullptr) {
+            delete *it;
+            *it = nullptr;
+        }
+    }
+    s_list.clear();
+}
+
+// the weathers that fade out: every one but the newest
+void destroyFadeWeather() {
+    // a signed count: the original tests it with b.lt
+    while (static_cast<int>(s_list.size()) > 1) {
+        if (s_list.front() != nullptr) {
+            delete s_list.front();
+        }
+        s_list.pop_front();
+    }
+}
 
 // the cloud sea for updateCloudSea to set, when the weather is built (the name is not the original's)
 inline void requestCloudSea(CLOUD_SEA cloudSea) {
@@ -111,14 +130,14 @@ void GfFieldWeather::setupGame() {
     GfDataManager::getDataGame();
     GfBdatMaplist* maplist = GfBdatMaplist::get();
     for (unsigned int map = maplist->getMaplistStart(); map < maplist->getMaplistEnd(); map++) {
-        MapEnvData* data = GfDataBlade::fn_710024E1C8(map);
+        WeatherParam* data = GfDataBlade::fn_710024E1C8(map);
         if (data->m_mapId == 0) {
             data = GfDataBlade::fn_710024E0D0();
             strcpy(data->m_resource, maplist->getMaplistresource(map));
             data->m_mapId = map;
         }
     }
-    MapEnvData* data = GfDataBlade::fn_710024E1C8(GfDataMap::getMapID(GfDataManager::getDataGame()->m_skipTravelID));
+    WeatherParam* data = GfDataBlade::fn_710024E1C8(GfDataMap::getMapID(GfDataManager::getDataGame()->m_skipTravelID));
     _gffwt::requestCloudSea(CLOUD_SEA(data->m_cloudSea));
 }
 
