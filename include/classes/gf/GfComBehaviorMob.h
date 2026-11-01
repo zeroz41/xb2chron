@@ -6,6 +6,7 @@
 #include "mm/Quat.h"
 #include "classes/gf/GfComBehavior.h"
 #include "classes/gf/GfFieldLocalSteer.h"
+#include "classes/gf/GfFieldLocalSteer/TIsTargetNotSameSquad.h"
 #include "classes/gf/TFieldExecCmdTurn.h"
 #include "classes/gmk/GmkSquadNavi.h"
 #include "gf/GfGameStuckMeter.h"
@@ -27,7 +28,13 @@ namespace gf {
 // table 0x7100B66500
 class GfComBehaviorMob : public ::gf::GfComBehavior {
 public:
-    class Listener;
+    // table 0x7100B66570; the constructor installs it at 0x53c0
+    class Listener {
+    public:
+        Listener() : m_owner(nullptr) {}
+        virtual void onWkStandbyLogout();  // slot 0
+        GfComBehaviorMob* m_owner;  // the behavior it listens for (the name is not the original's)
+    };
     GfComBehaviorMob();
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfComBehaviorMob();  // slot 1
@@ -63,6 +70,9 @@ public:
     // either pad_b8, a place in a squad, or a bound gimmick whose INFO shape is not 1
     bool isMove() const;
     void execTurnCmdToPos(const mm::Vec3& pos);
+    // turns to the given yaw plus its steering's angle (the same body as GfComBehaviorNpc's execTurnCmd, with
+    // CreateInfo's defaults; mob::StateMove's fn_71004D82FC calls it). Inferred name: execTurnCmd
+    void fn_71004D459C(float rotY);
     // turns toward its navigation mesh object's move vector, or toward pad_110 when it has none
     void execTurnCmdToGoal();
     // where it walks to: pad_110 (no copy of it exists; StateBattle's sequences store the goal in place)
@@ -75,6 +85,10 @@ public:
     // same name ("ReactionRange", ...): the field names follow the columns and are not the original's
     class BdatInfo {
     public:
+        // the constructor clears all of it (two 8-byte stores)
+        BdatInfo()
+            : m_reactionRangeSq(0.0f), m_reactionPercent(0), m_reactionMot(0), m_battleReaction(0), m_battleMot(0),
+              m_approachDistSq(0.0f) {}
         void create(const CBdatWrapper& bdat, int row);
         // ReactionRange squared: StateReaction keeps reacting while the player is within it
         float m_reactionRangeSq;
@@ -106,13 +120,14 @@ public:
     TFieldExecCmdTurn<GfComAsm> m_turnCmd;
     // execTurnCmdToPos adds its current angle to the turn (the name is not the original's)
     GfFieldLocalSteer m_localSteer;
-    unsigned char pad_5320[0x8];
+    // the filter its steering asks about targets (the name is not the original's)
+    GfFieldLocalSteer::TIsTargetNotSameSquad<GfComBehaviorMob> m_steerFilter;
     ai::Hfsm m_hfsm;
     // set while createFsm cleans up and sets the machine up again (the name is not the original's)
     bool m_buildingFsm;
     unsigned char pad_53b1[0x7];
     void* pad_53b8;  // its Listener clears it on a standby logout
-    unsigned char pad_53c0[0x10];
+    Listener m_listener;  // (the name is not the original's)
     float pad_53d0;
     float pad_53d4;  // mob::StateApproachPc's fn_71004D7468 needs it at most 4
     unsigned char pad_53d8;

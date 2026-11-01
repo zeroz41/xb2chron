@@ -51,6 +51,9 @@ public:
     // a position inside the gimmick's shape (out of line, 0x71005798CC; returns pos; the pop finders of GmkMob and
     // GmkEnemy call it with false when the gimmick does not pop at its own position)
     mm::Vec3& getPositionInShape(mm::Vec3& pos, bool) const;
+    // whether pos snapped onto the ground (out of line, 0x710057A4FC; StateAreaMove<GfComBehaviorMob>::seqInitGoalPos
+    // passes the same vector twice and true)
+    bool getPositionAppliedYSnap(mm::Vec3& out, const mm::Vec3& from, bool) const;
     // the list holding it (TGmkList::createGmk stores the list there; isValid tests it, the destructor clears it;
     // the name is not the original's)
     IGmkList* m_list;

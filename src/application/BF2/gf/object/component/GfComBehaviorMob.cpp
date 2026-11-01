@@ -1,3 +1,4 @@
+#include "classes/gmk/AGmkBase.h"
 #include "gf/FileStaticVec3.h"
 #include "classes/gf/TFieldExecCmd.h"
 #include "classes/gf/TFieldExecCmdTurn.h"
@@ -35,6 +36,11 @@
 #include "classes/navi/NvmshAcObj.h"
 #include "classes/gmk/Lvlb.h"
 #include "mm/mtl/FixStr.h"
+#include "fw/NaviUtil.h"
+#include "mm/Math.h"
+#include "classes/gmk/GmkSquadLeader.h"
+#include "fw/Allocator.h"
+#include "gf/MsgObjectGetVelocity.h"
 
 namespace gf {
 
@@ -54,6 +60,26 @@ void GfComBehaviorMob::BdatInfo::create(const CBdatWrapper& bdat, int row) {
 }
 
 mm::mtl::RTTI GfComBehaviorMob::m_rtti("GfComBehaviorMob", &GfComBehavior::m_rtti, nullptr);
+
+bool GfComBehaviorMob::recieveMessage(fw::MessageObject*, fw::Message& msg) {
+    bool result = false;
+    switch (msg.m_id) {
+    case 0x1000003:
+        result = true;
+        break;
+    case 0x1000049:
+        static_cast<MsgObjectGetVelocity&>(msg).m_velocity = pad_100;
+        result = true;
+        break;
+    }
+    return result;
+}
+
+GfComBehaviorMob::GfComBehaviorMob()
+    : pad_a8(nullptr), pad_b0(0), pad_b8(nullptr), pad_100(mm::Vec3::zero), pad_110(mm::Vec3::zero),
+      m_reactionRot(mm::Quat::identity), m_stuckMeter(nullptr), m_depopMeter(nullptr), m_moveSpeed(nullptr),
+      m_lookIk(reinterpret_cast<GF_OBJ_HANDLE*>(-1)), m_localSteer(nullptr), m_hfsm(fw::Allocator::getProcAllocator()),
+      m_buildingFsm(true), pad_53b8(nullptr), pad_53d0(1e12f), pad_53d4(1e12f), pad_53d8(0), pad_53d9(true) {}
 
 GfComBehaviorMob::~GfComBehaviorMob() {
     cleanup();
@@ -186,6 +212,55 @@ void GfComBehaviorMob::execTurnCmdToPos(const mm::Vec3& pos) {
     m_turnCmd.create(info);
 }
 
+void GfComBehaviorMob::fn_71004D459C(float rotY) {
+    float steer = m_localSteer.m_info.m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) ? m_localSteer.getCurAngle() : 0.0f;
+    TFieldExecCmdTurn<GfComAsm>::CreateInfo info(static_cast<GfObj*>(m_owner)->m_handle, steer + rotY);
+    m_turnCmd.create(info);
+}
+
+// walks toward the goal: its navigation mesh object's move vector, or the ground-plane way to pad_110, at its
+// speed (km/h to m/s, by the setup's scale) into pad_100 through its steering; then turns a tenth of the way to it
+void GfComBehaviorMob::moveToGoal(float) {
+    const mm::Vec3& pos = getPos();
+    mm::Vec3 dir(0.0f, 0.0f, 0.0f);
+    if (!getMoveVec(dir, pad_a8)) {
+        dir = pad_110 - pos;
+        dir.y = 0.0f;
+    }
+    if (!dir.isZero()) {
+        float length = dir.length();
+        if (length <= 1e-6f) {
+            dir = mm::Vec3::zero;
+        } else {
+            float scale = 1.0f / length;
+            dir.x = scale * dir.x;
+            dir.y = scale * dir.y;
+            dir.z = scale * dir.z;
+        }
+    }
+    GfObjSetup* setup = GfObjManager::getObjInfo(static_cast<GfObj*>(m_owner)->m_handle)->m_setup;
+    const GfObjSetupMob* mob =
+        setup->getRTTI()->isKindOf(&GfObjSetupMob::m_rtti) ? static_cast<GfObjSetupMob*>(setup) : nullptr;
+    float speed = m_moveSpeed.m_speed * 0.2777778f * mob->m_initialScale.x;
+    dir.x *= speed;
+    dir.y *= speed;
+    dir.z *= speed;
+    pad_100.x = dir.x;
+    pad_100.z = dir.z;
+    if (m_localSteer.m_info.m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        m_localSteer.apply(pad_100, pad_100);
+    }
+    fw::Transform& transform = m_owner->getComponent<GfComTransform>(0)->getFrame()->getWorldTransformForWrite();
+    float goal = atan2f(pad_100.x, pad_100.z);
+    mm::Vec3 front = transform.rotation.rotate(mm::Vec3::unitZ);
+    float cur = atan2f(front.x, front.z);
+    float half = (cur + mm::normalizeRadian(goal - cur) * 0.1f) * 0.5f;
+    transform.rotation.y = sinf(half);
+    transform.rotation.w = cosf(half);
+    transform.rotation.x = 0.0f;
+    transform.rotation.z = 0.0f;
+}
+
 bool GfComBehaviorMob::isArrivedToGoal() const {
     if (m_localSteer.isTimeOutCollide()) {
         return true;
@@ -216,6 +291,46 @@ bool GfComBehaviorMob::isArrivedToGoal() const {
     mm::Vec3 diff(pad_110.x - pos.x, 0.0f, pad_110.z - pos.z);
     float distSq = diff.dot(diff);
     return !(radius * radius < distSq);
+}
+
+// true unless the target is a GfComBehaviorMob of the steering object's squad and the squad's leader gimmick's data
+// starts with 1
+template <typename T>
+bool GfFieldLocalSteer::TIsTargetNotSameSquad<T>::operator()(const GfFieldLocalSteer& steer,
+                                                           GF_OBJ_HANDLE* target) const {
+    gmk::GmkSquad* squad;
+    {
+        GfObjAcc acc(steer.m_info.m_handle);
+        GfObj* obj = acc.getObj();
+        if (obj == nullptr) {
+            return true;
+        }
+        T* owner = obj->getComponent<T>(6);
+        if (owner == nullptr) {
+            return true;
+        }
+        squad = owner->m_squadNavi.m_info.m_squad;
+        if (squad == nullptr) {
+            return true;
+        }
+    }
+    gmk::GmkSquad* targetSquad = nullptr;
+    {
+        GfObjAcc acc(target);
+        GfObj* obj = acc.getObj();
+        T* other = obj != nullptr ? obj->getComponent<T>(6) : nullptr;
+        if (other != nullptr) {
+            targetSquad = other->m_squadNavi.m_info.m_squad;
+        }
+    }
+    if (squad != targetSquad) {
+        return true;
+    }
+    gmk::GmkSquadLeader* leader = squad->getBindedGmkSquadLeader();
+    if (leader != nullptr && *reinterpret_cast<const unsigned int*>(leader->m_createInfo.m_data) == 1) {
+        return false;
+    }
+    return true;
 }
 
 void GfComBehaviorMob::Listener::onWkStandbyLogout() {
@@ -269,6 +384,31 @@ void StateReaction<T>::endReaction(const T& owner) {
     m_execCmd.create(TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, name.m_str));
 }
 
+// turns back to the bound gimmick's facing: a point one unit ahead of it along its rotation (m_pos[1] is the
+// gimmick's euler rotation, m_pos[0] its position), or toward the origin when it is bound to none
+template <typename T>
+void StateReaction<T>::seqTurnToPrev(T& owner, const fw::UpdateInfo&) {
+    if (m_execCmd.m_done) {
+        mm::Vec3 pos = mm::Vec3::zero;
+        if (gmk::AGmkBase* gmk = owner.getBindedGmkInst()) {
+            mm::Vec3 front = mm::Vec3::unitZ;
+            mm::Vec3 rot = gmk->m_pos[1];
+            mm::Vec3 half = rot * 0.5f;
+            float sx = sinf(half.x);
+            float cx = cosf(half.x);
+            float sy = sinf(half.y);
+            float cy = cosf(half.y);
+            float sz = sinf(half.z);
+            float cz = cosf(half.z);
+            mm::Quat q(sx * cy * cz - cx * sy * sz, sx * cy * sz + cx * sy * cz, cx * cy * sz - sx * sy * cz,
+                       cx * cy * cz + sx * sy * sz);
+            pos = gmk->m_pos[0] + q.rotate(front);
+        }
+        owner.execTurnCmdToPos(pos);
+        m_seq = &StateReaction::seqWaitTurnToPrevEnd;
+    }
+}
+
 template <typename T>
 void StateReaction<T>::seqWaitTurnToPrevEnd(T& owner, const fw::UpdateInfo&) {
     if (owner.m_turnCmd.pad_6c) {
@@ -311,8 +451,47 @@ void StateBattle<T>::seqWaitTurnEnd(T& owner, const fw::UpdateInfo&) {
     }
 }
 
-// StateAreaMove's sequences below are emitted once onEnter (which starts the chain) is written; each was compared
-// identical through a stub onEnter (wip/test_stubs.cpp), and seqWaitTurnToPrevEnd through a stub seqTurnToPrev.
+template <typename T>
+void StateAreaMove<T>::onEnter(void* p, ai::State*) {
+    T& owner = *static_cast<T*>(p);
+    gmk::AGmkBase* gmk = owner.getBindedGmkInst();
+    if (gmk != nullptr) {
+        int type = gmk->getGmkType();
+        if ((type == 3 || type == 0x12) && gmk->m_info->m_shape != 1) {
+            m_seq = &StateAreaMove::seqInitGoalPos;
+            return;
+        }
+    }
+    requestState(0);
+}
+
+// a goal inside the bound gimmick's shape, snapped onto the ground and reachable on the navigation mesh within half
+// the shape's height (m_pos[2] is the gimmick's scale, see AGmkBase::getYSnapRayLength)
+template <typename T>
+void StateAreaMove<T>::seqInitGoalPos(T& owner, const fw::UpdateInfo&) {
+    gmk::AGmkBase* gmk = owner.getBindedGmkInst();
+    if (gmk == nullptr) {
+        return;
+    }
+    mm::Vec3 pos;
+    gmk::AGmkBase* shape = owner.getBindedGmkInst();
+    if (shape == nullptr) {
+        return;
+    }
+    shape->getPositionInShape(pos, false);
+    if (!shape->getPositionAppliedYSnap(pos, pos, true)) {
+        return;
+    }
+    float range = gmk->m_pos[2].y * 0.5f;
+    if (fw::NaviUtil::testNaviFindPos(owner.getPos(), range, range, 0.1f, pos, range, range, 0.1f, 0) != 3) {
+        return;
+    }
+    owner.init(true);
+    owner.setGoalPos(pos);
+    owner.execTurnCmdToPos(pos);
+    m_seq = &StateAreaMove::seqWaitTurnEnd;
+}
+
 template <typename T>
 void StateAreaMove<T>::seqWaitTurnEnd(T& owner, const fw::UpdateInfo&) {
     if (owner.m_turnCmd.pad_6c) {
@@ -320,6 +499,25 @@ void StateAreaMove<T>::seqWaitTurnEnd(T& owner, const fw::UpdateInfo&) {
         m_seq = &StateAreaMove::seqMoveToGoal;
     }
 }
+
+template <typename T>
+void StateAreaMove<T>::seqMoveToGoal(T& owner, const fw::UpdateInfo& info) {
+    m_execCmd.update(info.m_deltaTime);
+    if (m_execCmd.m_done) {
+        if (!canGetMoveVec(owner.pad_a8)) {
+            m_seq = &StateAreaMove::seqInitGoalPos;
+            return;
+        }
+        if (owner.isArrivedToGoal()) {
+            owner.m_moveSpeed.setSpeedKmph(owner.m_moveSpeed.m_speedMin, 0.5f);
+            m_execCmd.create(
+                TFieldExecCmd<GfComAsm>::CreateInfo(static_cast<GfObj*>(owner.m_owner)->m_handle, "C_walkend"));
+            m_seq = &StateAreaMove::seqWaitMoveEnd;
+        }
+        owner.moveToGoal(info.m_deltaTime);
+    }
+}
+
 template <typename T>
 void StateAreaMove<T>::seqWaitMoveEnd(T& owner, const fw::UpdateInfo& info) {
     m_execCmd.update(info.m_deltaTime);

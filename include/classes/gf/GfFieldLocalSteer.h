@@ -41,6 +41,9 @@ public:
     bool isTimeOutCollide() const;
     // the steering angle: the tween's value (the name is getCurAngle's)
     float getCurAngle() const;
+    // in turned by the steering into out (GfComBehaviorMob::moveToGoal passes its velocity as both; out of line,
+    // 0x71002D0C94)
+    void apply(mm::Vec3& out, const mm::Vec3& in) const;
 
     CreateInfo m_info;
     bool pad_20;

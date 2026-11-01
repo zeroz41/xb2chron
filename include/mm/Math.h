@@ -42,6 +42,31 @@ inline float asin(float r) {
     return ::asinf(r);
 }
 
+// neither infinite nor NaN, nor the 0xCCCCCCCC of uninitialized memory (the name is the assertion's)
+inline bool isFinite(float r) {
+    union {
+        float f;
+        unsigned int bits;
+    } value;
+    value.f = r;
+    return value.bits != 0xCCCCCCCC && (value.bits & 0x7F800000) != 0x7F800000;
+}
+
+// an angle brought into [-pi, pi] (GfComBehaviorMob::moveToGoal inlines it; the name is not the original's)
+inline float normalizeRadian(float r) {
+#line 1014 MM_MATH_PATH
+    MM_ASSERT(mm::isFinite(r));
+    if (mm::fabs(r) > 6.28318548f) {
+        r -= static_cast<float>(static_cast<int>(r / 6.28318548f)) * 6.28318548f;
+    }
+    if (r > 3.14159274f) {
+        r -= 6.28318548f;
+    } else if (r < -3.14159274f) {
+        r += 6.28318548f;
+    }
+    return r;
+}
+
 // a value's magnitude in its own type: a short's comes back as a short (UIObjectOffsetPlugin::execute)
 template <typename T>
 inline T abs(T x) {
