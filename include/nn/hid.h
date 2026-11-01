@@ -15,6 +15,8 @@ public:
     void SetLoop(bool loop);
     bool IsLoaded() const;
     void Stop();
+    // out of line in the SDK (FixedArray<DevPadNx::Impl::VibPlayerData, 64>'s destructor calls it per entry)
+    ~VibrationPlayer();
     unsigned char pad_0[0xC0];
 };
 // the SDK's link between two vibration nodes (ml::DevPadNx::stopLocalVibration disconnects a pad's two; the size is
@@ -22,7 +24,16 @@ public:
 class VibrationNodeConnection {
 public:
     void Disconnect();
+    // out of line in the SDK (DevPadNx::Impl::PadData's destructor calls it for both connections)
+    ~VibrationNodeConnection();
     unsigned char pad_0[0x38];
+};
+// the SDK's vibration output node (DevPadNx::Impl::PadData holds two at 0x80 and 0xC8, its destructor calls this
+// destructor for both; the size is the room between them, its fields are not known)
+class VibrationTarget {
+public:
+    ~VibrationTarget();
+    unsigned char pad_0[0x48];
 };
 // the SDK's mouse and keyboard setup (ml::DeviceNx::initializeSDK calls them)
 void InitializeMouse();

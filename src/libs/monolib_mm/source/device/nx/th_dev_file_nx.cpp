@@ -42,6 +42,7 @@
 #include "nn/os.h"
 #include "nn/time.h"
 #include "nn/account.h"
+#include "nn/diag.h"
 
 #include "classes/ml/CacheDraw/DRLINE.h"
 #include "classes/ml/CacheDraw/DRLINE_PNT.h"
@@ -1908,6 +1909,8 @@ void DevPadNx::Impl::stateUpdate(float) {
     }
 }
 
+DevPadNx::~DevPadNx() {}
+
 bool DevPadNx::isLocalConnect(int pad) const {
     return m_impl->getPadData(pad).m_connect;
 }
@@ -2174,6 +2177,16 @@ bool DevTouchNx::createDevice() {
 void DevTouchNx::releaseDevice() {}
 
 DevSettingNx::~DevSettingNx() {}
+
+void DevSettingNx::initialize() {
+    LangType lang = getLang();
+    if (lang == 15) {
+#line 40 "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../source\\device/nx/dev_setting_nx.cpp"
+        NN_LOG("getLang() is DEV_LANG_INVALID!!\n");
+    } else {
+        DevSetting::m_defaultLang = lang;
+    }
+}
 
 void DevSettingNx::finalize() {}
 

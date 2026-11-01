@@ -40,7 +40,11 @@ public:
             int m_vibValue;            // 0x78
             bool m_vibOn;              // 0x7C
             bool m_vib7d;              // 0x7D
-            unsigned char pad_7e[0x92];
+            unsigned char pad_7e[2];
+            // the two vibration targets the connections link (DevPadNx's destructor destroys them; the names are
+            // not the original's)
+            nn::hid::VibrationTarget m_vibTarget0;  // 0x80
+            nn::hid::VibrationTarget m_vibTarget1;  // 0xC8
             nn::hid::VibrationNodeConnection m_vibConnect0;  // 0x110
             nn::hid::VibrationNodeConnection m_vibConnect1;  // 0x148
         };
@@ -114,7 +118,9 @@ public:
         unsigned char pad_34[4];
         mm::mtl::FixedArray<VibPlayerData, 64> m_players;  // 0x38 (the name is not the original's)
         mm::mtl::FixedArray<PadData, 4> m_pads;     // 0x3638
-        unsigned char pad_3c38[0x600];
+        // a second set of pad states (DevPadNx's destructor destroys it with the same FixedArray<PadData, 4>
+        // destructor as m_pads; its use is not known)
+        mm::mtl::FixedArray<PadData, 4> pad_3c38;  // 0x3C38
         PadData m_selectPad;                        // 0x4238
         PadData m_emptyPad;                         // 0x43B8
         unsigned char pad_4538[8];
@@ -123,6 +129,7 @@ public:
         int m_selectPadId;                          // 0x4548
     };
 
+    // the key function: its body is empty, the Impl (m_impl) and the bases are destroyed inline
     virtual ~DevPadNx();  // slot 0
     virtual bool isLocalConnect(int) const;  // slot 17
     virtual int getLocalStyle(int) const;  // slot 18
