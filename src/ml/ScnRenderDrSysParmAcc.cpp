@@ -11,6 +11,7 @@
 #include "grlib/CGLibBuffReleaseTbl.h"
 #include "nvn/nvn_FuncPtrInline.h"
 #include "mtl/MemManager.h"
+#include "ml/MlMem.h"
 #include "grlib/CGLibDeviceObj.h"
 #include "grlib/CGLibBuffFixAlloc.h"
 #include "grlib/CGLibMemPoolAdder.h"
@@ -324,6 +325,35 @@ CGLibMemPool* CGLibMemPoolAdder::getMemPool(const void* p) {
     return nullptr;
 }
 
+void CGLibMemPoolAdder::releaseAdder(void* buffer) {
+    ml::CS lock(getCriticalSection());
+    for (CGLibPartsMemPool* pPool = m_pHead; pPool != nullptr; pPool = pPool->m_pNext) {
+        if (pPool->m_pool.m_pBuffer == buffer) {
+            CGLibPartsMemPool* pPrev = pPool->m_pPrev;
+            CGLibPartsMemPool* pNext = pPool->m_pNext;
+            if (pPrev == nullptr) {
+                if (pNext == nullptr) {
+                    m_pHead = nullptr;
+                    m_pTail = nullptr;
+                } else {
+                    m_pHead = pNext;
+                    pNext->m_pPrev = nullptr;
+                }
+            } else if (pNext == nullptr) {
+                m_pTail = pPrev;
+                pPrev->m_pNext = nullptr;
+            } else {
+                pPool->m_pPrev->m_pNext = pPool->m_pNext;
+                pPool->m_pNext->m_pPrev = pPool->m_pPrev;
+            }
+            pPool->m_pPrev = nullptr;
+            pPool->m_pNext = nullptr;
+            delete pPool;
+            break;
+        }
+    }
+}
+
 void CGLibMemPoolAdder::addAdder(mtl::ALLOC_HANDLE handle) {
     addAdder(mtl::MemManager::getTopAdr(handle), mtl::MemManager::getTotalSize(handle));
 }
@@ -345,6 +375,136 @@ const ml::CriticalSection& CGLibMemHandle::getCriticalSection() {
     // Proposed name, not the original's: the symbols leave it unnamed (lbl_71015E9338, its guard lbl_71015E9360)
     static ml::CriticalSection s_cs;
     return s_cs;
+}
+
+void CGLibMemHandle::setup(const ArgMemInfo& info) {
+    release();
+    unsigned int defSize = info.m_topSize + info.m_etc128Size + info.m_etc256Size + info.m_etc512Size +
+                           info.m_etc768Size + info.m_etc1024Size;
+    unsigned int topSize = defSize + info.m_pxlSize + info.m_vtxSize + info.m_uniSize + info.m_memSize +
+                           info.m_fetSize + info.m_shdSize + 0x20000;
+    s_hTop = mtl::MemManager::create(ml::MlMem::getGraphicMem(), topSize, "GLIBTOP", false, mtl::AllocatorType(1),
+                                     0x10000, "no name", 0);
+    s_hCntHandle = mtl::MemManager::create(ml::MlMem::getGraphicMem(), info.m_cntSize, "GLIBCNT", true,
+                                           mtl::AllocatorType(1), 0x1000, "no name", 0);
+    s_hDefHandle = mtl::MemManager::create(s_hTop, defSize, "GLIBDEF", true, mtl::AllocatorType(1), 0x1000, "no name", 0);
+    s_hPxlHandle =
+        mtl::MemManager::create(s_hTop, info.m_pxlSize, "GLIBPXL", true, mtl::AllocatorType(1), 0x10000, "no name", 0);
+    s_hVtxHandle =
+        mtl::MemManager::create(s_hTop, info.m_vtxSize, "GLIBVTX", false, mtl::AllocatorType(1), 0x1000, "no name", 0);
+    s_hUniHandle =
+        mtl::MemManager::create(s_hTop, info.m_uniSize, "GLIBUNI", false, mtl::AllocatorType(1), 0x1000, "no name", 0);
+    s_hMemHandle =
+        mtl::MemManager::create(s_hTop, info.m_memSize, "GLIBMEM", true, mtl::AllocatorType(1), 0x1000, "no name", 0);
+    s_hFchHandle =
+        mtl::MemManager::create(s_hTop, info.m_fetSize, "GLIBFET", true, mtl::AllocatorType(1), 0x1000, "no name", 0);
+    s_hShdHandle =
+        mtl::MemManager::create(s_hTop, info.m_shdSize, "GLIBSHD", true, mtl::AllocatorType(1), 0x1000, "no name", 0);
+}
+
+void CGLibMemHandle::release() {
+    if (s_hDefHandle.m_handle != 0) {
+        mtl::MemManager::erase(s_hDefHandle);
+        s_hDefHandle = mtl::ALLOC_HANDLE();
+    }
+    if (s_hPxlHandle.m_handle != 0) {
+        mtl::MemManager::erase(s_hPxlHandle);
+        s_hPxlHandle = mtl::ALLOC_HANDLE();
+    }
+    if (s_hVtxHandle.m_handle != 0) {
+        mtl::MemManager::erase(s_hVtxHandle);
+        s_hVtxHandle = mtl::ALLOC_HANDLE();
+    }
+    if (s_hUniHandle.m_handle != 0) {
+        mtl::MemManager::erase(s_hUniHandle);
+        s_hUniHandle = mtl::ALLOC_HANDLE();
+    }
+    if (s_hMemHandle.m_handle != 0) {
+        mtl::MemManager::erase(s_hMemHandle);
+        s_hMemHandle = mtl::ALLOC_HANDLE();
+    }
+    if (s_hFchHandle.m_handle != 0) {
+        mtl::MemManager::erase(s_hFchHandle);
+        s_hFchHandle = mtl::ALLOC_HANDLE();
+    }
+    if (s_hShdHandle.m_handle != 0) {
+        mtl::MemManager::erase(s_hShdHandle);
+        s_hShdHandle = mtl::ALLOC_HANDLE();
+    }
+    if (s_hCntHandle.m_handle != 0) {
+        mtl::MemManager::erase(s_hCntHandle);
+        s_hCntHandle = mtl::ALLOC_HANDLE();
+    }
+    if (s_hTop.m_handle != 0) {
+        mtl::MemManager::erase(s_hTop);
+        s_hTop = mtl::ALLOC_HANDLE();
+    }
+    s_hTop = mtl::ALLOC_HANDLE();
+    s_hDefHandle = mtl::ALLOC_HANDLE();
+    s_hPxlHandle = mtl::ALLOC_HANDLE();
+    s_hVtxHandle = mtl::ALLOC_HANDLE();
+    s_hUniHandle = mtl::ALLOC_HANDLE();
+    s_hMemHandle = mtl::ALLOC_HANDLE();
+    s_hFchHandle = mtl::ALLOC_HANDLE();
+    s_hShdHandle = mtl::ALLOC_HANDLE();
+}
+
+void CGLibMemHandle::setMemBuff(CGLibMemType& mem, void* buffer) {
+    ml::CS lock(getCriticalSection());
+    mem.m_pMem = buffer;
+    mem.m_type = 5;
+}
+
+void CGLibMemHandle::allocVertex(CGLibMemType& mem, unsigned int size) {
+    ml::CS lock(getCriticalSection());
+    if (size <= 128) {
+        mem.m_type = 0;
+        CGLibBuffMinUniform& buff = context::CGLibSystemContext::sys()->m_etcBuffer[0];
+        mem.m_pMem = buff.getBuffer(buff.allocID());
+    } else if (size <= 256) {
+        mem.m_type = 1;
+        CGLibBuffMinUniform& buff = context::CGLibSystemContext::sys()->m_etcBuffer[1];
+        mem.m_pMem = buff.getBuffer(buff.allocID());
+    } else if (size <= 512) {
+        mem.m_type = 2;
+        CGLibBuffMinUniform& buff = context::CGLibSystemContext::sys()->m_etcBuffer[2];
+        mem.m_pMem = buff.getBuffer(buff.allocID());
+    } else if (size <= 768) {
+        mem.m_type = 3;
+        CGLibBuffMinUniform& buff = context::CGLibSystemContext::sys()->m_etcBuffer[3];
+        mem.m_pMem = buff.getBuffer(buff.allocID());
+    } else if (size <= 1024) {
+        mem.m_type = 4;
+        CGLibBuffMinUniform& buff = context::CGLibSystemContext::sys()->m_etcBuffer[4];
+        mem.m_pMem = buff.getBuffer(buff.allocID());
+    } else {
+        mem.m_pMem = mtl::MemManager::allocate(s_hVtxHandle, size, 4, false, "no name", 0);
+        mem.m_type = 6;
+    }
+}
+
+void CGLibMemHandle::allocUniform(CGLibMemType& mem, unsigned int size) {
+    ml::CS lock(getCriticalSection());
+    if (size <= 256) {
+        mem.m_type = 1;
+        CGLibBuffMinUniform& buff = context::CGLibSystemContext::sys()->m_etcBuffer[1];
+        mem.m_pMem = buff.getBuffer(buff.allocID());
+    } else if (size <= 512) {
+        mem.m_type = 2;
+        CGLibBuffMinUniform& buff = context::CGLibSystemContext::sys()->m_etcBuffer[2];
+        mem.m_pMem = buff.getBuffer(buff.allocID());
+    } else if (size <= 768) {
+        mem.m_type = 3;
+        CGLibBuffMinUniform& buff = context::CGLibSystemContext::sys()->m_etcBuffer[3];
+        mem.m_pMem = buff.getBuffer(buff.allocID());
+    } else if (size <= 1024) {
+        mem.m_type = 4;
+        CGLibBuffMinUniform& buff = context::CGLibSystemContext::sys()->m_etcBuffer[4];
+        mem.m_pMem = buff.getBuffer(buff.allocID());
+    } else {
+        mem.m_pMem = mtl::MemManager::allocate(s_hUniHandle, size, 0x100, false, "no name", 0);
+        mem.m_type = 6;
+    }
 }
 
 void CGLibBuffFixAlloc::freeBuffer(void* p) {

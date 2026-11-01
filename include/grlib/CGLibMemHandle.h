@@ -13,7 +13,9 @@ struct CGLibMemType {
     }
 
     void* m_pMem;  // 0x0
-    int m_type;  // 0x8, 5 until a CGLibMemHandle call fills the block
+    // 0x8: 0..4 a block of the context's m_etcBuffer[m_type] (free indexes it unsigned), 5 until a
+    // CGLibMemHandle call fills the block, 6 allocated from an allocator
+    unsigned int m_type;
 };
 
 // the allocator of CGLibMemType blocks (static members: the callers pass only the block)
