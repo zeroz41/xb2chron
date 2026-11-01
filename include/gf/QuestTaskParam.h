@@ -2,20 +2,21 @@
 #define GF_QUESTTASKPARAM_H
 
 #include "gf/QuestID.h"
+#include "gf/QuestParam.h"
 
 namespace gf {
 
 // a quest task's state (1.0.0's QuestTaskParam constructors take one); no value has a name yet
 enum TASK_STATE {};
 
-// one task of a quest, looked up by the constructor (0x20 bytes; the field names are not the original's)
-class QuestTaskParam {
+// one task of a quest, looked up by the constructor (0x20 bytes; the field names are not the original's). Kind 0
+// of GfQuestManager's event parameters (flushEventParam passes it to qevChangeTaskState)
+class QuestTaskParam : public QuestParam {
 public:
     QuestTaskParam(QuestID id, unsigned int task, TASK_STATE state);
     // the same for a purpose already known (looked up when zero and the quest is set)
     QuestTaskParam(QuestID id, unsigned int task, unsigned int purposeId, TASK_STATE state);
 
-    unsigned int pad_0;  // the constructors zero it
     QuestID m_questId;
     unsigned int m_purposeId;  // the constructor's GfDataQuest::getListPurposeID
     unsigned int m_task;

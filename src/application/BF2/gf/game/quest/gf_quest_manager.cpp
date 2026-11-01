@@ -19,8 +19,20 @@
 #include "gf/GfQuestTask.h"
 #include "gf/GfQuestUtil.h"
 #include "gf/GfGameUtil.h"
+#include "gf/GfPlayFactory.h"
+#include "gf/QuestChangeParam.h"
+#include "gf/QuestCompleteChildParam.h"
+#include "gf/QuestCompleteParam.h"
+#include "gf/QuestOrderParam.h"
+#include "gf/QuestStateParam.h"
+#include "gf/QuestTaskParam.h"
+#include "gf/AchievQuest.h"
 
 namespace gf {
+
+GfQuestManager::~GfQuestManager() {
+    s_pThis = nullptr;
+}
 
 void GfQuestManager::build(const GfSetupParam& param) {
 #line 101
@@ -41,6 +53,13 @@ void GfQuestManager::destroy() {
     s_bdat = nullptr;
     self->m_active = false;
     delete self;
+}
+
+void GfQuestManager::destroyEvent() {
+    while (!m_eventParams.empty()) {
+        delete m_eventParams.front();
+        m_eventParams.pop_front();
+    }
 }
 
 void GfQuestManager::removeEvent(IQuestEvent* event) {
@@ -73,6 +92,17 @@ void GfQuestManager::requestRefreshQuestTaskState() {
     }
 }
 
+void GfQuestManager::eventCompleteChildQuest(QuestID id) {
+    if (!id.empty()) {
+        GfQuestManager* self = s_pThis;
+        if (static_cast<int>(self->m_eventParams.size()) < 256) {
+#line 1854
+            QuestParam* param = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) QuestCompleteChildParam(id);
+            self->m_eventParams.push_back(param);
+        }
+    }
+}
+
 QuestID GfQuestManager::getPrevCompleteQuest() {
     if (!s_pThis->m_completeQuest.empty()) {
         return s_pThis->m_completeQuest.back();
@@ -100,6 +130,43 @@ void GfQuestManager::setCurrentQuestForScenario() {
 
 void GfQuestManager::eventCheckTask(QuestID id) {
     GfQuestTask::updateQuestTask(id);
+}
+
+void GfQuestManager::eventOrderQuest(QuestID id) {
+    if (!id.empty()) {
+        GfQuestManager* self = s_pThis;
+        if (static_cast<int>(self->m_eventParams.size()) < 256) {
+#line 1800
+            QuestParam* param = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) QuestOrderParam(id);
+            self->m_eventParams.push_back(param);
+        }
+    }
+}
+
+bool GfQuestManager::compEntryQuest::operator()(const QuestData& data) const {
+    int category = GfDataQuest::getListQuestCategory(m_id);
+    int other = GfDataQuest::getListQuestCategory(data.m_id);
+    if (category < other) {
+        return true;
+    }
+    if (category == 6) {
+        if (m_id.m_achieveId != 0) {
+            if (data.m_id.m_achieveId == 0) {
+                return true;
+            }
+        } else if (data.m_id.m_achieveId != 0) {
+            return false;
+        }
+        AchievQuest* quest = GfDataQuest::getAchievQuest(m_id);
+        AchievQuest* otherQuest = GfDataQuest::getAchievQuest(data.m_id);
+        if (quest != nullptr && otherQuest != nullptr) {
+            if (otherQuest->m_line != 9 && quest->m_line == 9) {
+                return true;
+            }
+            return quest->m_level < otherQuest->m_level;
+        }
+    }
+    return m_id.m_id < data.m_id.m_id;
 }
 
 void GfQuestManager::entryOrderAchievQuest(QuestID id) {
@@ -147,6 +214,59 @@ QuestID GfQuestManager::getReduceHpQuest(unsigned int index) {
 
 QuestID GfQuestManager::getLastOrder() {
     return s_pThis->m_lastOrder;
+}
+
+void GfQuestManager::eventCompleteQuest(QuestID id, QSTATE state) {
+    if (!id.empty()) {
+        GfQuestManager* self = s_pThis;
+        if (static_cast<int>(self->m_eventParams.size()) < 256) {
+#line 1810
+            QuestParam* param = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) QuestCompleteParam(id, state);
+            self->m_eventParams.push_back(param);
+        }
+    }
+}
+
+void GfQuestManager::eventChangeQuestState(QuestID id, QSTATE before, QSTATE after) {
+    if (!id.empty() && after != before) {
+        GfQuestManager* self = s_pThis;
+        if (static_cast<int>(self->m_eventParams.size()) < 256) {
+#line 1833
+            QuestParam* param =
+                new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) QuestStateParam(id, before, after);
+            self->m_eventParams.push_back(param);
+        }
+    }
+}
+
+void GfQuestManager::eventChangeTaskState(const QuestTaskParam& task) {
+    GfQuestManager* self = s_pThis;
+    if (static_cast<int>(self->m_eventParams.size()) < 256) {
+#line 1843
+        QuestParam* param = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+            QuestTaskParam(task.m_questId, task.m_task, task.m_state);
+        self->m_eventParams.push_back(param);
+    }
+}
+
+void GfQuestManager::eventChangeCurrentQuest(QuestID before, QuestID after) {
+    if (!(after == before)) {
+        GfQuestManager* self = s_pThis;
+        if (static_cast<int>(self->m_eventParams.size()) < 256) {
+#line 1865
+            QuestParam* param = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) QuestChangeParam(before, after);
+            self->m_eventParams.push_back(param);
+        }
+    }
+}
+
+void GfQuestManager::eventAchievementCount(QuestID id) {
+    GfQuestManager* self = s_pThis;
+    if (static_cast<int>(self->m_eventParams.size()) < 256) {
+#line 1873
+        QuestParam* param = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) QuestOrderParam(id);
+        self->m_eventParams.push_back(param);
+    }
 }
 
 void GfQuestManager::eventCheckTaskAll() {
@@ -229,6 +349,22 @@ void GfQuestManager::gevChangeTimeRange(unsigned int) {
 
 void GfQuestManager::gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int) {
     eventCheckTaskAll();
+}
+
+void GfQuestManager::gevMapjump(GEV gev, const MapjumpCallbackInfo& info) {
+    if (gev == 6) {
+        if (GfQuestManager* self = get()) {
+            self->m_requestOrderAchievementQuest = true;
+            self->m_requestOrderQuest = true;
+            self->setupParallelTaskCheck();
+        }
+        if (s_pThis != nullptr) {
+            refreshQuestTaskState();
+        }
+    }
+    if (GfQuestTarget::get() != nullptr) {
+        GfQuestTarget::get()->gevMapjump(gev, info);
+    }
 }
 
 }  // namespace gf

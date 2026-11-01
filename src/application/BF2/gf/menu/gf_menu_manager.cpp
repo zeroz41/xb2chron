@@ -707,7 +707,7 @@ void GfMenuManager::gevBattleStart() {
 
 
 void GfMenuManager::qevCompleteChildQuest(const QuestCompleteChildParam& param) {
-    if (param.m_questId.m_id == 0 && param.m_questId.m_achieveId == 0) {
+    if (param.m_questId == QuestID()) {
         return;
     }
     GfMenuLocation::refreshLocator(0);

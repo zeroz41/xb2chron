@@ -351,7 +351,7 @@ bool GfQuestTask::resetBattleTaskForBattleEnd(::mm::mtl::FixedVector<unsigned sh
 }
 
 QuestTaskParam::QuestTaskParam(QuestID id, unsigned int task, TASK_STATE state)
-    : pad_0(0), m_questId(id), m_task(task), m_taskType(0), m_taskId(0), m_state(state), m_taskUi(false) {
+    : QuestParam(0), m_questId(id), m_task(task), m_taskType(0), m_taskId(0), m_state(state), m_taskUi(false) {
     QuestListAcc* acc = QuestListAcc::get();
     m_purposeId = GfDataQuest::getListPurposeID(id);
     if (m_purposeId != 0) {
@@ -364,7 +364,7 @@ QuestTaskParam::QuestTaskParam(QuestID id, unsigned int task, TASK_STATE state)
 }
 
 QuestTaskParam::QuestTaskParam(QuestID id, unsigned int task, unsigned int purposeId, TASK_STATE state)
-    : pad_0(0), m_questId(id), m_purposeId(purposeId), m_task(task), m_taskType(0), m_taskId(0), m_state(state),
+    : QuestParam(0), m_questId(id), m_purposeId(purposeId), m_task(task), m_taskType(0), m_taskId(0), m_state(state),
       m_taskUi(false) {
     QuestListAcc* acc = QuestListAcc::get();
     if (!id.empty() && m_purposeId == 0) {

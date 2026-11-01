@@ -173,6 +173,21 @@ public:
         init_free_index();
     }
 
+    // the first element unlinked and its node back on the free stack (the assertion's line 230, `!empty()`, with
+    // no in_list check: GfQuestManager::destroyEvent) (the name is not the original's)
+    void pop_front() {
+#line 230 MM_MTL_FIXED_LIST_PATH
+        MM_ASSERT(!empty());
+        ListNode* erased = node(node(0)->m_next);
+        reinterpret_cast<T*>(erased->m_value)->~T();
+        m_free_index[++m_free_index_top] = erased->m_index;
+        node(erased->m_prev)->m_next = erased->m_next;
+        node(erased->m_next)->m_prev = erased->m_prev;
+        erased->m_prev = erased->m_index;
+        erased->m_next = erased->m_index;
+        --m_num_nodes;
+    }
+
     // value linked last, in a node off the free stack
     void push_back(const T& value) {
 #line 241 MM_MTL_FIXED_LIST_PATH

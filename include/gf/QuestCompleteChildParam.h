@@ -2,14 +2,15 @@
 #define GF_QUESTCOMPLETECHILDPARAM_H
 
 #include "gf/QuestID.h"
+#include "gf/QuestParam.h"
 
 namespace gf {
 
 // What IQuestEvent::qevCompleteChildQuest passes. Only the quest id is known: GfMenuManager::qevCompleteChildQuest
 // tests its two halves at 4 and 6 as qevChangeTaskState tests QuestTaskParam's.
-class QuestCompleteChildParam {
+class QuestCompleteChildParam : public QuestParam {
 public:
-    unsigned char pad_0[0x4];
+    QuestCompleteChildParam(QuestID id) : QuestParam(4), m_questId(id) {}
     QuestID m_questId;
 };
 

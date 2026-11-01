@@ -3,10 +3,12 @@
 
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "gf/QuestID.h"
-namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
 #include "gf/QuestListAcc.h"
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedQueue.h"
+#include "mm/mtl/FixedList.h"
+#include "mm/mtl/FixedVector.h"
+#include "gf/QuestParam.h"
 #include "gf/GfQuestInfo.h"
 #include "gf/GfQuestReward.h"
 
@@ -97,6 +99,22 @@ public:
     // fn_710030EB68 passes a collect task whose count changed
     static void eventChangeTaskState(const QuestTaskParam& param);
     static void checkQuestComplete(gf::QuestID id, gf::QSTATE state);
+    // the event* functions queue their parameters (kinds of QuestParam) for flushEventParam
+    static void eventOrderQuest(QuestID id);
+    static void eventCompleteQuest(QuestID id, QSTATE state);
+    static void eventCompleteChildQuest(QuestID id);
+    static void eventAchievementCount(QuestID id);
+    // passes the parameters to every event of m_events, by their kind
+    static void flushEventParam(const QuestParam* param);
+    // a member whose body never uses this (openOrder calls it with whatever x0 holds); whether the quest is ordered
+    bool setOrder(QuestID id);
+    // addEntryQuest's ordering of the entries (the queue's insert position) against the quest it holds
+    class compEntryQuest {
+    public:
+        bool operator()(const QuestData& data) const;
+
+        QuestID m_id;  // the name is not the original's
+    };
 
     static GfQuestManager* s_pThis;
     static GfBdatQuest* s_bdat;
@@ -109,13 +127,29 @@ public:
     bool m_active;
     ::mm::mtl::FixedQueue<QuestData, 8000> m_orderQuest;  // getOrderQuest
     ::mm::mtl::FixedQueue<QuestData, 15000> m_orderAchievementQuest;  // getOrderAchievementQuest
-    unsigned char pad_16820[0x2DF50 - 0x16820];
+    // three more queues of 8000 (resetQuest picks one by the quest's category: 2, 3, 4 or 5); the element types are
+    // inferred from their size
+    ::mm::mtl::FixedQueue<QuestData, 8000> pad_16820;
+    ::mm::mtl::FixedQueue<QuestData, 8000> pad_1E530;
+    ::mm::mtl::FixedQueue<QuestData, 8000> pad_26240;
     ::mm::mtl::FixedQueue<QuestID, 128> m_completeQuest;  // getPrevCompleteQuest reads its last (name not original)
-    unsigned char pad_2E160[0x2E780 - 0x2E160];
+    ::mm::mtl::FixedQueue<QuestID, 128> pad_2E160;  // setCompleteState pushes the quest
+    // a quest and its state (updateOrderQuest passes each to checkQuestComplete; the names are not the original's)
+    struct CompleteCheck {
+        QuestID m_id;
+        QSTATE m_state;
+    };
+    ::mm::mtl::FixedQueue<CompleteCheck, 128> pad_2E370;
     QuestID m_lastOrder;  // getLastOrder
-    unsigned char pad_2E784[0x3F428 - 0x2E784];
+    // the event parameters the event* functions queue, flushed by flushEventParam, deleted by destroyEvent (the
+    // name is not the original's)
+    ::mm::mtl::FixedList<QuestParam*, 256> m_eventParams;
+    ::mm::mtl::FixedQueue<QuestData, 15000> pad_2F9A8;  // the element type is inferred from its size
+    ::mm::mtl::FixedQueue<QuestID, 1024> pad_3E418;  // the element type is inferred from its size
     ::mm::mtl::FixedQueue<QuestID, 1024> m_reduceHpQuest;  // getReduceHpQuest (the name is not the original's)
-    unsigned char pad_40438[0x41640 - 0x40438];
+    // per quest, the quests linked to it, the first being the quest itself (reqistLinkQuest adds, getLinkQuest
+    // copies one out; the name is not the original's)
+    ::mm::mtl::FixedVector< ::mm::mtl::FixedVector<QuestID, 16>, 64> m_linkQuest;
     // set by requestRefreshQuestTaskState, requestOrderAchievementQuestForce and requestOrderQuestForce (the names
     // are not the original's)
     bool m_requestRefreshQuestTaskState;
