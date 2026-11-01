@@ -11,6 +11,8 @@
 #include "fw/UpdateInfo.h"
 #include "string.h"
 
+#include <algorithm>
+
 namespace fw {
 
 AnimationManager::AnimationManager() : m_threadPool(nullptr), m_jobQueue(nullptr) {
@@ -49,9 +51,16 @@ void AnimationManager::removeControlUpdater(unsigned int layer, AnimControlUpdat
     m_groups[layer].m_controls.remove(&item);
 }
 
-// updateControls (0x7100159564) is not written yet: the closest attempt is 2 words off, one csel scheduled before the end
-// iterator's address where the original computes that address first (cached list, uncached list, while and
-// cached-end forms and zkit sweep tried).
+// every control updater of the groups whose bits layerMask holds, updated in list order (through for_each: the
+// end iterator is worked out with begin, as for by-value arguments)
+void AnimationManager::updateControls(const UpdateInfo& info, unsigned int layerMask) {
+    for (unsigned int i = 0; i < 32; i++) {
+        if (((1 << i) & layerMask) != 0) {
+            std::for_each(m_groups[i].m_controls.begin(), m_groups[i].m_controls.end(),
+                          [&info](AnimControlUpdaterInterface& item) { item.update(info); });
+        }
+    }
+}
 
 void AnimationManager::addPoseSampler(unsigned int layer, AnimPoseSamplerInterface& item) {
     m_groups[layer].m_samplers.push_back(&item);
