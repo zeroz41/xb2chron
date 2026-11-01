@@ -1811,6 +1811,14 @@ void CGLibRenderTarget::setRenderTargetImpl(CGLibRenderTarget** targets, unsigne
     CGLibState::endRegisterRenderTarget();
 }
 
+CGLibRenderArrayCubeMap::CGLibRenderArrayCubeMap() {
+    m_pColorBuffers = nullptr;
+    m_isSetup = false;
+    m_width = 0;
+    m_height = 0;
+    m_mipNum = 0;
+    m_arrayNum = 0;
+}
 
 CGLibRenderArrayCubeMap::~CGLibRenderArrayCubeMap() {
     releaseWork();
@@ -1845,6 +1853,14 @@ void CGLibRenderArrayCubeMap::setMipmapRenderTarget(GrlCubeMapFace face, unsigne
 }
 
 
+CGLibRenderTarget::CGLibRenderTarget() {
+    m_width = 0;
+    m_height = 0;
+    m_isSetup = false;
+    m_mipNum = 0;
+    memset(m_mipWork, 0, sizeof(m_mipWork));
+}
+
 CGLibRenderTarget::~CGLibRenderTarget() {
     releaseWork();
     for (int i = 0; i < 6; i++) {
@@ -1869,6 +1885,47 @@ void CGLibRenderTarget::releaseTexture() {
     m_height = 0;
 }
 
+inline void CGLibDepthBuffer::delayRelease() {
+    unsigned int flags = m_flags;
+    if ((flags & 3) == 0) {
+        return;
+    }
+    void* mem = (flags & 2) ? m_pData : nullptr;
+    m_pData = nullptr;
+    m_dataSize = 0;
+    NVNtexture* texture = (flags & 1) ? m_pNvnTexture : nullptr;
+    m_flags = flags & ~3;
+    ::grlib::context::CGLibSystemContext::sys()->releaseDelayTexture(texture, mem, -1, -1);
+}
+
+CGLibDepthTarget::CGLibDepthTarget() {
+    m_isSetup = false;
+    m_width = 0;
+    m_height = 0;
+    m_pDepthBuffer = &m_depthBuffer;
+    m_pSubTexture = &m_subTexture;
+    m_pTexture = &m_texture;
+    m_mipNum = 0;
+    memset(m_mipWork, 0, sizeof(m_mipWork));
+}
+
+CGLibDepthTarget::~CGLibDepthTarget() {
+    releaseWork();
+    for (int i = 0; i < 6; i++) {
+        m_mipDepthBuffers[i].delayRelease();
+        m_mipSubTextures[i].delayRelease();
+        m_mipTextures[i].delayRelease();
+    }
+    m_mipNum = 0;
+}
+
+void CGLibDepthTarget::releaseWork() {
+    m_depthBuffer.delayRelease();
+    m_subTexture.delayRelease();
+    m_texture.delayRelease();
+    m_isSetup = false;
+}
+
 void CGLibDepthTarget::release() {
     releaseWork();
 }
@@ -1887,6 +1944,13 @@ void CGLibDepthTarget::setRenderTarget() {
     CGLibState::endRegisterRenderTarget();
 }
 
+CGLibRenderCubeMapMipMap::CGLibRenderCubeMapMipMap() {
+    m_width = 0.0f;
+    m_height = 0.0f;
+    m_mipNum = 0;
+    m_isSetup = false;
+}
+
 void CGLibRenderCubeMapMipMap::setRenderTarget(GrlCubeMapFace face, unsigned int mip) {
     CGLibColorBuffer& buffer = m_colorBuffers[face][mip];
     float width = buffer.m_width;
@@ -1898,6 +1962,14 @@ void CGLibRenderCubeMapMipMap::setRenderTarget(GrlCubeMapFace face, unsigned int
     CGLibState::endRegisterRenderTarget();
 }
 
+
+CGLibRenderVolume::CGLibRenderVolume() {
+    m_pColorBuffers = nullptr;
+    m_width = 0;
+    m_height = 0;
+    m_isSetup = false;
+    m_depth = 0;
+}
 
 CGLibRenderVolume::~CGLibRenderVolume() {
     releaseWork();
@@ -1962,12 +2034,12 @@ void CGLibTextureBuffer::delayRelease() {
 
 CGLibTextureBuffer::CGLibTextureBuffer() {
     m_flags = 0;
-    m_pNvnTexture = nullptr;
-    m_pStorage = nullptr;
     m_pData = nullptr;
-    m_textureId = -1;
     m_dataSize = 0;
+    m_textureId = -1;
     m_samplerId = -1;
+    m_pStorage = nullptr;
+    m_pNvnTexture = nullptr;
 }
 
 CGLibTextureBuffer::~CGLibTextureBuffer() {

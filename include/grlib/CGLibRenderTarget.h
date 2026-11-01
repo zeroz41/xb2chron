@@ -50,6 +50,18 @@ public:
     void* m_pStorage;           // 0x18: the texture's memory (pool memory + offset)
     void* m_pData;              // 0x20
     unsigned int m_dataSize;    // 0x28
+
+    // CGLibDepthTarget's constructor and destructor inline these (the name delayRelease is not the original's;
+    // CGLibTextureBuffer::delayRelease without the ids and the memory pool)
+    CGLibDepthBuffer() {
+        m_flags = 0;
+        m_dataSize = 0;
+        m_pStorage = nullptr;
+        m_pData = nullptr;
+    }
+    ~CGLibDepthBuffer() { release(); }
+    // defined inline in CGLibUniBaseUtility.cpp, its only user
+    void delayRelease();
 };
 
 // the render targets' base: DrPixlMan calls its setColorInvalidate on its CGLibRenderTarget objects (that
@@ -112,7 +124,8 @@ public:
     unsigned int m_width;  // 0xBC
     unsigned int m_height;  // 0xC0
     unsigned short m_mipNum;          // 0xC4: cleared by the destructor
-    unsigned char m_mipWork[0x60];    // 0xC8: zeroed by the constructor (contents unknown)
+    unsigned char pad_c6[2];          // 0xC6
+    unsigned char m_mipWork[0x60];    // 0xC8: zeroed by the constructor (contents unknown; the memset starts at 0xC8)
     CGLibTextureBuffer m_mipTextures[6];  // 0x128 (0x3C8 bytes: CGLibDisplay holds an array of two)
 };
 
@@ -146,10 +159,12 @@ public:
     CGLibColorBuffer m_colorBuffers[6][16];  // 0x78
     bool m_isSetup;                          // 0x1878
     unsigned int m_mipNum;                   // 0x187C
+    float m_width;                           // 0x1880: setTextureInfo's width
+    float m_height;                          // 0x1884: setTextureInfo's height
 };
 
-// a depth render target (the field names are not the original's; the fields from 0x8 to 0x120, among them
-// textures, are not known yet)
+// a depth render target (the field names are not the original's; the layout is the constructor's and the
+// destructor's)
 class CGLibDepthTarget {
 public:
     // out of line (CGLibUniBaseUtility's unit); CGLibDisplay's constructor and destructor call them
@@ -164,14 +179,21 @@ public:
 
     unsigned int m_width;   // 0x00
     unsigned int m_height;  // 0x04
-    unsigned char pad_8[0x118];
-    CGLibDepthBuffer* m_pDepthBuffer;  // 0x120
-    unsigned char pad_128[0x8];
-    // 0x130: the texture DrMdoSetup::fn_710077C23C binds (DrPixlMan::getDepthObj's); the name is not the original's
+    bool m_isSetup;         // 0x08: cleared by releaseWork
+    CGLibDepthBuffer m_depthBuffer;      // 0x10
+    CGLibTextureBuffer m_subTexture;     // 0x40
+    CGLibTextureBuffer m_texture;        // 0xB0
+    CGLibDepthBuffer* m_pDepthBuffer;    // 0x120: &m_depthBuffer
+    CGLibTextureBuffer* m_pSubTexture;   // 0x128: &m_subTexture
+    // 0x130: &m_texture, the texture DrMdoSetup::fn_710077C23C binds (DrPixlMan::getDepthObj's)
     CGLibTextureBuffer* m_pTexture;
-    // 0x138..0x800: the constructor builds CGLibVtlMemPools up to 0x7D8 (0x800 bytes: CGLibDisplay's memory pool
-    // follows it at 0x800, SHCACHE_WORK_TBL ends 0x800 after its one)
-    unsigned char pad_138[0x6C8];
+    unsigned short m_mipNum;             // 0x138: cleared by the destructor
+    unsigned char pad_13a[2];            // 0x13A
+    unsigned char m_mipWork[0x60];       // 0x13C: zeroed by the constructor (contents unknown)
+    CGLibDepthBuffer m_mipDepthBuffers[6];     // 0x1A0
+    // two arrays, not one [2][6]: the destructor destroys them from two base registers
+    CGLibTextureBuffer m_mipSubTextures[6];    // 0x2C0
+    CGLibTextureBuffer m_mipTextures[6];       // 0x560 (0x800 bytes: CGLibDisplay's memory pool follows at 0x800)
 };
 
 }  // namespace grlib

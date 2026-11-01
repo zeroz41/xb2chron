@@ -22,7 +22,6 @@ public:
     DrPixlRenderCubeMapMipMap(DrMan* drMan);
     ~DrPixlRenderCubeMapMipMap();
 
-    unsigned char pad_1880[0x8];
     DrMan* m_drMan;  // 0x1888
 };
 }  // namespace ml
