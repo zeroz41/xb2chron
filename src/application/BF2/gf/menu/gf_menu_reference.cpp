@@ -119,6 +119,22 @@ void GfMenuReference::setArtsPaletteEnable(unsigned char slot, bool enable, unsi
     }
 }
 
+const GfMenuReference::ArtsPaletteInfo* GfMenuReference::getArtsPaletteInfo(unsigned char slot) {
+    static ArtsPaletteInfo s_dummy;
+    GfMenuReference* self = get();
+    if (!self) return &s_dummy;
+    if (slot < 3) return &self->m_artsPalette[slot].m_info;
+    return slot < 9 ? &self->m_artsPaletteEx[slot - 3].m_info : &s_dummy;
+}
+
+const GfMenuReference::ArtsPaletteIconInfo* GfMenuReference::getArtsPaletteIconInfo(unsigned char slot) {
+    static ArtsPaletteIconInfo s_dummy;
+    GfMenuReference* self = get();
+    if (!self) return &s_dummy;
+    if (slot < 3) return &self->m_artsPalette[slot].m_iconInfo;
+    return slot < 9 ? &self->m_artsPaletteEx[slot - 3].m_iconInfo : &s_dummy;
+}
+
 int GfMenuReference::getArtsPaletteElementType(unsigned char slot) {
     GfMenuReference* self = get();
     if (self) {
@@ -290,6 +306,13 @@ void GfMenuReference::setElemComboRootInfo(unsigned int route, const ElemComboRo
             self->m_elemComboRoot[route] = info;
         }
     }
+}
+
+const GfMenuReference::ElemComboRoot* GfMenuReference::getElementComboRootInfo(unsigned int route) {
+    static ElemComboRoot s_dummy;
+    GfMenuReference* self = get();
+    if (self && route < 7) return &self->m_elemComboRoot[route];
+    return &s_dummy;
 }
 
 int GfMenuReference::getElementComboRootCurrent() {
@@ -626,6 +649,16 @@ void GfMenuReference::fn_7100368744(unsigned int index, unsigned int gimmickId, 
     }
 }
 
+const GfMenuReference::LayerGimmick* GfMenuReference::fn_71003687B0(unsigned int index) {
+    static LayerGimmick s_dummy;
+    const LayerGimmick* gimmick = &s_dummy;
+    if (GfMenuObjUtil::fn_710048FD30(3)) {
+        GfMenuReference* self = get();
+        if (index < 3 && self) gimmick = &self->m_layerGimmick[index];
+    }
+    return gimmick;
+}
+
 const GfMenuReference::ComboRouteState* GfMenuReference::fn_71003689C0() {
     static ComboRouteState s_dummy;
     const ComboRouteState* state = &s_dummy;
@@ -657,6 +690,13 @@ void GfMenuReference::fn_7100368A4C(const LayerResult& result) {
         if (current.m_ratio > 1.0f) current.m_ratio = 1.0f;
         if (result.m_ratio > ratio) TUnk_B63AE0::fn_7100448FFC();
     }
+}
+
+const GfMenuReference::LayerResult* GfMenuReference::fn_7100368B40() {
+    static LayerResult s_dummy;
+    GfMenuReference* self = get();
+    if (self) return &self->m_layerResult;
+    return &s_dummy;
 }
 
 void GfMenuReference::fn_7100368BAC(GfMenuCallContext* context, const ResultPair& pair) {
@@ -695,6 +735,26 @@ GfMenuItemList* GfMenuReference::getItemLinkList() {
     GfMenuReference* self = get();
     if (self) return self->m_itemLinkList;
     return nullptr;
+}
+
+void GfMenuReference::fn_7100368E98() {
+    GfMenuReference* self = get();
+    if (self) {
+        for (int i = 0; i < 8; i++) self->m_referenceDriverID[i] = 0;
+    }
+    self = get();
+    if (self) {
+        for (int i = 0; i < 8; i++) self->m_referenceBladeID[i] = 0;
+        self->m_referenceTeamID = 0;
+        self->m_referenceZoneID = 0;
+        self->m_referenceMissionID = 0;
+        self->m_referenceShopID = 0;
+        self->m_referenceWorldMapID = 0;
+        self->m_challengeBattleMode = 0;
+        self->m_referenceItemType = 0;
+    }
+    resetDriverVirtual();
+    resetBladeVirtual();
 }
 
 void GfMenuReference::setReferenceDriverID(unsigned int index, unsigned int driver) {

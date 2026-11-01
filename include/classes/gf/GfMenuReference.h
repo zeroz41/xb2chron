@@ -395,6 +395,10 @@ public:
     static void fn_7100368A4C(const LayerResult& result);
     // fn_7100368BAC: tail-calls TUnk_B63AE0::fn_7100448F44(context, pair's two words); caller fn_7100008554.
     static void fn_7100368BAC(GfMenuCallContext* context, const ResultPair& pair);
+    // fn_7100368E98: with the singleton, zeroes the reference driver/blade ids, the team/zone/mission/shop/world
+    // map ids, the challenge battle mode, the item type, and the driver and blade virtual records (resetDriverVirtual
+    // and resetBladeVirtual's stores); caller fn_71003597B0 (gf_menu_manager).
+    static void fn_7100368E98();
 
     unsigned char pad_8[0x4C590];
     // a list of REFLISTs (the name is not the original's): postUpdate walks it with the list at 0x4C7D8 and calls
