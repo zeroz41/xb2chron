@@ -88,10 +88,12 @@ public:
         }
         return nullptr;
     }
-    // whether the element of index is in use
+    // whether the element of index is in use (GfObjManager::getObjInfo; the word index is computed before the
+    // mask: written the other way round, the mask is scheduled after the m_pBits load)
     bool isUsed(unsigned int index) const {
+        unsigned int word = index >> 5;
         unsigned int mask = 1u << (index & 31);
-        return (m_pBits[index >> 5] & mask) != 0;
+        return (m_pBits[word] & mask) != 0;
     }
     // gives an element allocate returned back (~DataParamAcc)
     void deallocate(T0* p) {
