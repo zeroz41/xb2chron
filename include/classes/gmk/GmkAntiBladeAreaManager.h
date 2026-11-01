@@ -13,6 +13,10 @@ public:
     GmkAntiBladeAreaManager() : m_active(nullptr) {}
     virtual ~GmkAntiBladeAreaManager();  // slot 0
     void dispose();
+    // area unlinked when it is linked, the first remaining area (none when empty) made the active one
+    // (GmkAntiBladeArea::onLeavePhantom inlines it: a null check of the area before its node, as in
+    // TGmkActiveList::removeGmk; inline, defined in GmkElevator.cpp; the name is not the original's)
+    static inline void removeArea(GmkAntiBladeArea* area);
     // the areas addGmk registered (GfFieldGimmick's constructor builds it; the name is not the original's)
     // (dispose erases each element, the node at GmkAntiBladeArea's 0x50 base)
     ::mm::mtl::IntrusiveList< ::gmk::GmkAntiBladeArea> m_areas;

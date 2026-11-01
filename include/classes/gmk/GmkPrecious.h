@@ -9,7 +9,7 @@
 #include "classes/gmk/TimeCond.h"
 #include "classes/gmk/WeatherCond.h"
 
-namespace gf { class GF_OBJ_HANDLE; }
+namespace gf { class GF_OBJ_HANDLE; class GfMenuCallContext; }
 #include "classes/gf/IGfObjListener.h"
 namespace gmk { class GmkPreciousGob; }
 
@@ -57,10 +57,14 @@ public:
         return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
     }
     static const gmk::GmkType TYPE = gmk::GmkType(34);
-    long pad_58 = -1;
-    unsigned int pad_60 = 0;
+    // shows its menu icon while its game object's model renders (both must exist)
+    void updateMenuIcon();
+    // 0x58: its game object, -1 when none (the name is not the original's)
+    gf::GF_OBJ_HANDLE* m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    unsigned int m_effectHandle = 0;  // 0x60: dispose removes the effect (the name is not the original's)
     unsigned char pad_64[0x4];
-    void* pad_68 = nullptr;
+    // 0x68: its field menu icon, given to GfMenuObjFieldIcon::disp (the name is not the original's)
+    gf::GfMenuCallContext* m_menuIcon = nullptr;
     float m_popDistSq = 0.0f;  // 0x70: create squares BDAT 0x7B's row 0 member 0x22 into it (the name is not the original's)
     unsigned char pad_74 = 1;  // the data ends here: Vector<T>::expand's implicit copy copies up to it; the rest is alignment
 };

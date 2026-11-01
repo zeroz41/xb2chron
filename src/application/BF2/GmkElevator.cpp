@@ -76,6 +76,7 @@
 #include "gf/GfQuestInfo.h"
 #include "gf/GfObjAcc.h"
 #include "classes/gf/GfComBehaviorNpc.h"
+#include "classes/gf/GfComModel.h"
 #include "gf/GfObjUtil.h"
 #include "classes/gmk/GmkEnemy.h"
 #include "classes/gmk/GmkRoutedEnemy.h"
@@ -536,6 +537,16 @@ void GmkRoutedEnemyList::debugDraw() const {
 
 GmkEnemyList::GmkEnemyList(unsigned int updateGmkNumPerFrame)
     : TGmkList(updateGmkNumPerFrame), m_triggerList(-1), m_waveList(-1), pad_8d0(nullptr) {}
+
+// the wave list is set through an IGmkList pointer to it (the original calls its slot)
+void GmkEnemyList::setUpdateGmkNumPerFrame(unsigned int num) {
+    TGmkList::setUpdateGmkNumPerFrame(num);
+    m_triggerList.setUpdateGmkNumPerFrame(num);
+    IGmkList* waveList = &m_waveList;
+    if (gf::GfGameManager::fn_71002AC598() || gf::GfGameManager::fn_71002A9E68()) {
+        waveList->setUpdateGmkNumPerFrame(num);
+    }
+}
 
 void GmkEnemyList::create(const IGmkList::CreateInfo& info) {
     if (m_bdatInfo.create()) {
@@ -1691,6 +1702,25 @@ const mm::Vec3& getPlayerPos() {
     return obj->getComponent<gf::GfComTransform>(0)->getPosition();
 }
 
+// the icon row of a quest target icon type (BDAT 0x7B member 1, rows 15..19), -1 for the others
+int getBdatIdOfQuestTargetIcon(unsigned int iconType) {
+    unsigned char* fp = gf::GfDataBdat::getFP(0x7b);
+    switch (iconType) {
+    case 1:
+        return (unsigned short)Bdat::getValCheck(fp, 1, 0xf, 2);
+    case 2:
+        return (unsigned short)Bdat::getValCheck(fp, 1, 0x10, 2);
+    case 3:
+        return (unsigned short)Bdat::getValCheck(fp, 1, 0x11, 2);
+    case 4:
+        return (unsigned short)Bdat::getValCheck(fp, 1, 0x12, 2);
+    case 6:
+        return (unsigned short)Bdat::getValCheck(fp, 1, 0x13, 2);
+    default:
+        return -1;
+    }
+}
+
 AGmkBase* getBindedGmkInst(gf::GF_OBJ_HANDLE* handle) {
     if (handle == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         return nullptr;
@@ -2036,6 +2066,38 @@ void GmkDmgGimmick::debugDraw() const {
 GmkDmgGimmick::~GmkDmgGimmick() { dispose(); }
 
 GmkAntiBladeArea::~GmkAntiBladeArea() { dispose(); }
+
+// its phantom (listened to by itself) is made unless the gimmick set says otherwise
+void GmkAntiBladeArea::create(const CreateInfo& info) {
+    AGmkBase::create(info);
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
+    if (set == nullptr || !set->m_createInfo.m_flag) {
+        m_phantom.create(*this, this, false);
+    }
+}
+
+// the player entered it: it becomes the manager's first area and the active one
+void GmkAntiBladeArea::onEnterPhantom(const IGmkPhantomEventListener::OnEnterInfo&) {
+    GmkAntiBladeAreaManager::sys()->m_areas.push_front(this);
+    GmkAntiBladeAreaManager::sys()->m_active = GmkAntiBladeAreaManager::sys()->m_areas.front();
+}
+
+inline void GmkAntiBladeAreaManager::removeArea(GmkAntiBladeArea* area) {
+    if (area != nullptr && area->intoNode()) {
+        if (sys() != nullptr) {
+            sys()->m_areas.remove(area);
+            if (sys()->m_areas.empty()) {
+                sys()->m_active = nullptr;
+            } else {
+                sys()->m_active = sys()->m_areas.front();
+            }
+        }
+    }
+}
+
+void GmkAntiBladeArea::onLeavePhantom(const IGmkPhantomEventListener::OnLeaveInfo&) {
+    GmkAntiBladeAreaManager::removeArea(this);
+}
 
 void GmkAntiBladeAreaManager::dispose() {
     m_active = nullptr;
@@ -2610,6 +2672,13 @@ gmk::GmkType TUnk_B6D5F8::getGmkType() const { return TYPE; }
 bool TUnk_B6D5F8::isValid() const { return m_list != nullptr && m_createInfo.m_data != nullptr; }
 
 // ---- TUnk_B6D660, TUnk_B6D6C8 (placeholder slot symbols: see their headers)
+bool TUnk_B6D660::BdatInfo::fn_71005B94AC() const {
+    if (m_condition != 0 && !gf::GfGameCond::isGameCond(m_condition)) {
+        return false;
+    }
+    return true;
+}
+
 void TUnk_B6D660::create(const CreateInfo& info) {
     AGmkBase::create(info);
     unsigned char* fp = gf::GfDataBdat::getFP(0x7B);
@@ -2771,6 +2840,19 @@ void GmkKizunaTalk::dispose() {
         m_gob = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
     }
     AGmkBase::dispose();
+}
+
+void GmkBlade::bindToGameObj(gf::GF_OBJ_HANDLE* handle) const {
+    {
+        gf::GfObjAcc acc(handle);
+        acc.setUserData(gf::GfObjUserData(0), reinterpret_cast<unsigned long>(this));
+    }
+    gf::GfObjAcc acc(handle);
+    if (gf::GfObj* obj = acc.getObj()) {
+        if (gf::GfComBehaviorNpc* behavior = obj->getComponent<gf::GfComBehaviorNpc>(6)) {
+            behavior->validateBindedGmkInstInfo(false);
+        }
+    }
 }
 
 void GmkBlade::dispose() {
@@ -4920,6 +5002,36 @@ void GmkPrecious::debugDraw() const {
     if (isValid()) {
         fn_71005A4238();
     }
+}
+
+void GmkPrecious::dispose() {
+    if (m_menuIcon != nullptr) {
+        gf::GfMenuObjFieldIcon::close(m_menuIcon);
+        if (m_menuIcon != nullptr) {
+            m_menuIcon->release();
+            m_menuIcon = nullptr;
+        }
+    }
+    if (m_effectHandle != 0) {
+        mm::mtl::PtrSingleton<fw::EffectManager>::sys()->remove(m_effectHandle);
+        m_effectHandle = 0;
+    }
+    disposeGobInst(false);
+    AGmkBase::dispose();
+}
+
+void GmkPrecious::updateMenuIcon() {
+    if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) || m_menuIcon == nullptr) {
+        return;
+    }
+    gf::GfObjAcc acc(m_gob);
+    bool render = false;
+    if (gf::GfObj* obj = acc.getObj()) {
+        if (gf::GfComModel* model = obj->getComponent<gf::GfComModel>(1)) {
+            render = model->isRender();
+        }
+    }
+    gf::GfMenuObjFieldIcon::disp(m_menuIcon, render);
 }
 
 void GmkPrecious::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* handle) {

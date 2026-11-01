@@ -38,6 +38,9 @@ public:
     virtual void dispose();  // slot 5
     virtual void update(float);  // slot 6
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8
+    // handle's object gets this as its gimmick user data; its npc behavior's binded info is validated with false
+    // (createGobInst calls it)
+    void bindToGameObj(gf::GF_OBJ_HANDLE* handle) const;
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(47);
     // its game object (dispose clears its user data, destroys it and stores -1; the name is not the original's)
