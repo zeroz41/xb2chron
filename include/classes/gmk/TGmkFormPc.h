@@ -14,6 +14,17 @@ class TGmkFormPc : public ::gmk::AGmkBase {
 public:
     // its row of the list's BDAT table: nothing of it is kept (Vector<BdatInfo>::resize allocates a byte an element)
     class BdatInfo {};
+    // what m_createInfo.m_data points at (GmkForm::create<T, U> reads it: the first position and rotation, then the
+    // bound TGmkFormPcnpc list's elements m_npcFirst..m_npcLast; the struct and field names are not the original's)
+    struct Data {
+        float m_posX;
+        float m_posY;
+        float m_posZ;
+        float m_rotY;
+        unsigned int m_npcFirst;
+        unsigned int m_npcLast;
+    };
+    const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
     TGmkFormPc() : pad_48(nullptr) {}  // inline: resize/extend construct in place with these stores
     virtual ~TGmkFormPc() { dispose(); }  // slot 0
     virtual gmk::GmkType getGmkType() const { return T0; }  // slot 2

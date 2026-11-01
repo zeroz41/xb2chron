@@ -39,6 +39,18 @@
 #include "ml/MTRand.h"
 #include "ml/PadVibrationInfo.h"
 #include "gf/GfDataBlade.h"
+#include "classes/gf/GfGameSpeed.h"
+#include "classes/gf/GfGameFlag.h"
+#include "classes/gf/GfGameParty.h"
+#include "classes/gf/GfFieldSound.h"
+#include "classes/fw/SoundManager.h"
+#include "classes/gmk/GmkSalvageLocator.h"
+#include "classes/gmk/GmkForm.h"
+#include "classes/gmk/GmkManager.h"
+#include "classes/gmk/TGmkFormPc.h"
+#include "classes/gmk/TGmkFormPcnpc.h"
+#include "classes/gf/GfDataBdat.h"
+#include "mm/Mat44.h"
 
 namespace gf {
 
@@ -109,6 +121,10 @@ namespace _gfgs {
 // the original's)
 template <unsigned long N>
 inline const char* getName(const char* (&table)[N], unsigned int index) {
+    return table[index];
+}
+template <unsigned long N>
+inline const char* getName(const char* (&table)[N], int index) {
     return table[index];
 }
 }  // namespace _gfgs
@@ -226,6 +242,33 @@ bool GfGameSalvage::isCameraDive() {
     return true;
 }
 
+// whether a salvage point within 1 of this one has a treasure box locator (its data's kind 2) whose box is out and
+// not yet opened
+bool GfGameSalvage::isTboxExist() const {
+    const mm::Vec3* pos = gmk::getBindedGmkInst(get()->m_pHandle)->m_pos;
+    bool exist = false;
+    auto check = [&](const gmk::AGmkBase& gmk) {
+        const gmk::GmkSalvage& salvage = static_cast<const gmk::GmkSalvage&>(gmk);
+        float dx = salvage.m_pos->x - pos->x;
+        float dy = salvage.m_pos->y - pos->y;
+        float dz = salvage.m_pos->z - pos->z;
+        if (dx * dx + dy * dy + dz * dz > 1.0f) {
+            return;
+        }
+        unsigned int num = salvage.m_tboxLocators.size();
+        for (unsigned int i = 0; i < num; i++) {
+            const gmk::GmkSalvageLocator* locator = salvage.m_tboxLocators[i];
+            if (locator != nullptr && locator->m_createInfo.m_data[0] == 2 &&
+                locator->m_gob != reinterpret_cast<GF_OBJ_HANDLE*>(-1) && !locator->m_isAccessed) {
+                exist = true;
+                break;
+            }
+        }
+    };
+    mm::mtl::PtrSingleton<gmk::GmkManager>::get()->traverseGmkInst(gmk::GmkSalvage::TYPE, check);
+    return exist;
+}
+
 unsigned char* GfGameSalvage::getBindedBdatFp() const {
     return gmk::getBindedGmkInst(get()->m_pHandle)->getBindedBdatFp();
 }
@@ -234,8 +277,66 @@ unsigned int GfGameSalvage::getBindedBdatId() const {
     return gmk::getBindedGmkInst(get()->m_pHandle)->m_createInfo.m_bdatId;
 }
 
+bool GfGameSalvage::getEventOrigin(mm::Mat44& mtx) const {
+    const gmk::GmkSalvage* salvage = static_cast<const gmk::GmkSalvage*>(gmk::getBindedGmkInst(get()->m_pHandle));
+    if (salvage->m_eventLocator != nullptr) {
+        salvage->m_eventLocator->getMatrix(mtx, true);
+        return true;
+    }
+    return false;
+}
+
+bool GfGameSalvage::getEventTbox(mm::Mat44& mtx) const {
+    const gmk::GmkSalvage* salvage = static_cast<const gmk::GmkSalvage*>(gmk::getBindedGmkInst(get()->m_pHandle));
+    const gmk::GmkSalvageLocator* locator = salvage->m_tboxLocators[0];
+    if (locator != nullptr) {
+        locator->getMatrix(mtx, true);
+        return true;
+    }
+    return false;
+}
+
+bool GfGameSalvage::applyPartyForm() const {
+    typedef gmk::TGmkFormPcnpc<gmk::GmkType(25)> FormPcnpc;
+    typedef gmk::TGmkFormPc<gmk::GmkType(24), FormPcnpc> FormPc;
+    const gmk::AGmkBase* formPc =
+        static_cast<gmk::GmkSalvage*>(gmk::getBindedGmkInst(get()->m_pHandle))->getGmkFormPc();
+    if (formPc == nullptr) {
+        return false;
+    }
+    gmk::GmkForm form(nullptr);
+    bool applied;
+    if (form.create<FormPc, FormPcnpc>(*static_cast<const FormPc*>(formPc))) {
+        form.apply(4.0f);
+        applied = true;
+    } else {
+        applied = false;
+    }
+    form.dispose();
+    return applied;
+}
+
 void GfGameSalvage::execPop() {
     static_cast<gmk::GmkSalvage*>(gmk::getBindedGmkInst(get()->m_pHandle))->popByRaffleResult();
+}
+
+bool GfGameSalvage::getRaffleResult(RaffleRet& ret) const {
+    const gmk::GmkSalvage* salvage = static_cast<const gmk::GmkSalvage*>(gmk::getBindedGmkInst(get()->m_pHandle));
+    const gmk::GmkSalvage::RaffleResult& result = salvage->m_raffleResult;
+    ret.m_tboxNum = result.m_tboxDrawn.count();
+    ret.m_enemyDrawn = result.m_enemyDrawn.any();
+    ret.m_powerfulEnemy = result.isPowerfullEnemyExist();
+    unsigned char* fp = GfDataBdat::getFP(0x77);
+    ret.m_rank = 0;
+    for (int i = 0; i < 3; i++) {
+        if (result.m_tboxIds[i] > 0) {
+            unsigned int rank = Bdat::getValCheckU16(fp, "RSC_ID", result.m_tboxIds[i]);
+            if (ret.m_rank < rank) {
+                ret.m_rank = rank;
+            }
+        }
+    }
+    return true;
 }
 
 void GfGameSalvage::createModel() {
@@ -332,6 +433,79 @@ GfComBehaviorSalvage* GfGameSalvage::getGfComBehaviorSalvage() const {
 
 
 
+// the button challenges' columns in the salvage point's sheet (the name is not the original's)
+static const char* s_buttonChallengeColumns[3] = {"BtnChallenge0", "BtnChallenge1", "BtnChallenge2"};
+
+int GfGameSalvage::getButtonChallengeId(int index) {
+    unsigned char* fp = getBindedBdatFp();
+    unsigned int id = getBindedBdatId();
+    return Bdat::getValCheckU16(fp, _gfgs::getName(s_buttonChallengeColumns, index), id);
+}
+
+void GfGameSalvage::setPartyDisp(bool disp) {
+    int num = GfGameParty::getHierarchyMax();
+    for (int i = 0; i < num; i++) {
+        GfObjAcc acc(GfGameParty::getHandleByHierarchy(i + 1));
+        acc.setAlphaEvent(disp ? 1.0f : 0.0f);
+    }
+}
+
+void GfGameSalvage::fn_7100315A84(bool flag) {
+    GF_OBJ_HANDLE* mover = GfGameManager::getControlMover();
+    bool stop = !flag;
+    for (unsigned int i = 0; i < 3; i++) {
+        GfObjAcc driver(GfGameParty::getHandleDriver(i, 0));
+        GfObjAcc blade(GfGameParty::getHandleBlade(i, -1));
+        if (i == 0 && driver.getDriverId() == 2 && blade.getBladeId() == 1004) {
+            continue;
+        }
+        if (driver.getHandle() != mover) {
+            GfGameUtil::changeStopLayer(driver.getHandle(), stop);
+            GfGameUtil::changeStopLayer(blade.getHandle(), stop);
+        }
+    }
+    GfGameSpeed::setLayerSpeed(1, flag ? 1.0f : 0.0f);
+}
+
+void GfGameSalvage::playVoice(VoiceType type) {
+    if (m_pModel == nullptr) {
+        return;
+    }
+    GF_OBJ_HANDLE* handle = m_pModel->m_handle;
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    int random = static_cast<int>(ml::mtRand()) % 2;
+    int voice;
+    switch (type) {
+    case 0:
+        voice = random;
+        break;
+    case 1:
+        voice = random + 2;
+        break;
+    case 2:
+        voice = random + 4;
+        break;
+    case 3:
+        voice = random + 6;
+        break;
+    case 4:
+        voice = 8;
+        break;
+    case 5:
+        voice = 9;
+        break;
+    case 6:
+        voice = random + 10;
+        break;
+    default:
+        voice = 0;
+        break;
+    }
+    m_pVoice = SCOM_SALVAGE_VOICE::create(handle, CV_SALVAGE(voice));
+}
+
 bool GfGameSalvage::isVoiceEnd() {
     if (m_pVoice != nullptr) {
         return SCOM_SALVAGE_VOICE::isPlayEnd(m_pVoice);
@@ -339,10 +513,123 @@ bool GfGameSalvage::isVoiceEnd() {
     return true;
 }
 
+namespace _gfgs {
+// how many entries of a row of calcClimb's tables come before its first -1 (the row goes to the helper by reference:
+// the tables stay writable data, as the original's are; the name is not the original's)
+template <unsigned long N>
+inline unsigned long getNum(const int (&row)[N]) {
+    unsigned long num = 0;
+    for (int v : row) {
+        if (v == -1) {
+            break;
+        }
+        num++;
+    }
+    return num;
+}
+// an entry of a row of calcClimb's tables (the name is not the original's)
+template <unsigned long N>
+inline int getAt(const int (&row)[N], unsigned long index) {
+    return row[index];
+}
+}  // namespace _gfgs
+
+namespace _gfgs {
+// calcClimb's tables, one object (lbl_7100B575D0; the type and field names are not the original's): the climb's kind
+// (1-9) by the raffle's rank (RSC_ID 4-6, else row 0) and enemy (none, an enemy, a powerful one), then for each kind
+// the climb animations (AnimationType), the vibrations and the result voices (CV_SALVAGE_RESULT) to draw from
+struct ClimbTable {
+    int m_types[4][3];
+    int m_animations[9][3];
+    int m_vibrations[9][4];
+    int m_results[9][5];
+};
+}  // namespace _gfgs
+
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B575D0)
+static _gfgs::ClimbTable s_climbTable = {
+    {{1, 5, 9}, {2, 6, 9}, {3, 7, 9}, {4, 8, 9}},
+    {{5, 6, 7}, {5, 6, 7}, {7, 8, 9}, {8, 9, -1}, {5, 6, 7}, {5, 6, 7}, {7, 8, 9}, {8, 9, -1}, {10, -1, -1}},
+    {{4, -1, -1, -1}, {4, 5, -1, -1}, {4, 18, -1, -1}, {4, 19, -1, -1}, {20, 4, -1, -1}, {20, 5, -1, -1},
+     {20, 18, -1, -1}, {20, 19, -1, -1}, {6, 18, 19, 5}},
+    {{0, 1, 10, -1, -1}, {3, 4, 10, -1, -1}, {2, 3, 9, 10, -1}, {4, 5, 9, -1, -1}, {0, 1, 6, 10, -1},
+     {3, 4, 6, 10, -1}, {2, 3, 6, 9, 10}, {4, 5, 6, 9, -1}, {7, 8, -1, -1, -1}},
+};
+
+void GfGameSalvage::calcClimb() {
+    RaffleRet ret;
+    getRaffleResult(ret);
+    unsigned long rank;
+    switch (ret.m_rank) {
+    case 4:
+        rank = 1;
+        break;
+    case 5:
+        rank = 2;
+        break;
+    case 6:
+        rank = 3;
+        break;
+    default:
+        rank = 0;
+        break;
+    }
+    unsigned long enemy;
+    if (ret.m_powerfulEnemy) {
+        enemy = 2;
+    } else {
+        enemy = ret.m_enemyDrawn;
+    }
+    unsigned int type = _gfgs::getAt(s_climbTable.m_types[rank], enemy) - 1;
+    unsigned long num = _gfgs::getNum(s_climbTable.m_animations[type]);
+    unsigned int index = static_cast<int>(ml::mtRand()) % num;
+    m_climbAnimType = AnimationType(_gfgs::getAt(s_climbTable.m_animations[type], index));
+    num = _gfgs::getNum(s_climbTable.m_results[type]);
+    index = static_cast<int>(ml::mtRand()) % num;
+    m_climbResult = _gfgs::getAt(s_climbTable.m_results[type], index);
+    // the original draws the vibration's entry by the vibrations' count but reads it from the result voices' row
+    num = _gfgs::getNum(s_climbTable.m_vibrations[type]);
+    index = static_cast<int>(ml::mtRand()) % num;
+    m_vibration = _gfgs::getAt(s_climbTable.m_results[type], index);
+}
+
 void GfGameSalvage::playDiveVibration() {
     if (m_vibration != 0) {
         fw::PadManager::playVibration(ml::PadVibrationInfo(m_vibration));
     }
+}
+
+void GfGameSalvage::playClimbReady() {
+    if (m_pModel == nullptr || m_pModel->m_handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    playAnimation(m_climbAnimType);
+    GfGameSpeed::setSalvageCharacterSpeed(0.01f);
+}
+
+void GfGameSalvage::playClimb() {
+    if (m_pModel == nullptr) {
+        return;
+    }
+    GF_OBJ_HANDLE* handle = m_pModel->m_handle;
+    if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    GfGameSpeed::setSalvageCharacterSpeed(1.0f);
+    SCOM_SALVAGE_VOICE::createResult(handle, CV_SALVAGE_RESULT(m_climbResult));
+    playSE(SEID(m_climbAnimType + 600));
+}
+
+void GfGameSalvage::playSE(SEID id) {
+    fw::SoundManager* sound = mm::mtl::PtrSingleton<fw::SoundManager>::get();
+    if (sound == nullptr) {
+        return;
+    }
+    GfFieldSound* fieldSound = mm::mtl::PtrSingleton<GfFieldSound>::get();
+    if (fieldSound == nullptr) {
+        return;
+    }
+    sound->playSe(id, fieldSound->getCommonPack(), 1.0f, fw::SoundCategory(0));
 }
 
 bool GfGameSalvage::isClimbEnd() {
@@ -374,6 +661,17 @@ void GfGameSalvage::playWireStart(float time, float param1, float param2) {
     }
 }
 
+void GfGameSalvage::addSalvagerPoint(unsigned int point) {
+    if (point == 0) {
+        return;
+    }
+    unsigned int value = GfGameFlag::getLocal(8, 0x854);
+    if (value < 0xFF) {
+        value += point;
+        GfGameFlag::setLocal(8, 0x854, value > 0xFF ? 0xFF : value);
+    }
+}
+
 // whether Kiku's chase runs in Supervia: map 10 with GfDataBlade::fn_7100231884()'s value in 0xFBD..0xFC9 (the name is the
 // original's)
 bool GfGameSalvage::isChaseKikuInSupervia() {
@@ -389,7 +687,7 @@ bool GfGameSalvage::isChaseKikuInSupervia() {
 unsigned int GfGameSalvage::getTBoxNum() {
     RaffleRet ret;
     getRaffleResult(ret);
-    return ret.m_unk0;
+    return ret.m_tboxNum;
 }
 
 void GfGameSalvage::createLog() {}

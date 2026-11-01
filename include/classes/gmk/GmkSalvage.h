@@ -70,7 +70,7 @@ public:
     };
     // the stores Vector<GmkSalvage>::resize (construct_n) makes in each element
     GmkSalvage()
-        : m_seq(nullptr), m_gob(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_popDistSq(0.0f), pad_64(0.0f), pad_a8(0),
+        : m_seq(nullptr), m_gob(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)), m_popDistSq(0.0f), pad_64(0.0f), m_eventLocator(nullptr),
           pad_d0(false), pad_d1(false), pad_128(1), pad_129(0) {}
     virtual ~GmkSalvage();  // slot 0
     const BdatInfo* getBdatInfo() const { return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo); }
@@ -104,7 +104,9 @@ public:
     // disposes the third's objects (the names are not the original's)
     mm::mtl::FixedVector<GmkSalvageLocator*, 3> m_dropLocators;
     mm::mtl::FixedVector<GmkSalvageLocator*, 3> m_tboxLocators;
-    unsigned long pad_a8;  // dispose clears it
+    // 0xA8: the locator the salvage's event happens at (seqValidateGmkSalvageLocatorDetails keeps the first of its
+    // kind; GfGameSalvage::getEventOrigin reads its matrix; dispose clears it; the name is not the original's)
+    GmkSalvageLocator* m_eventLocator;
     mm::mtl::FixedVector<GmkSalvageLocator*, 3> m_enemyLocators;
     bool pad_d0;  // disposeRaffle does its work only when it is set, then clears it and pad_d1
     bool pad_d1;  // seqUpdatePopDepop goes through m_enemyLocators only when it is set

@@ -1794,7 +1794,7 @@ void GmkSalvage::dispose() {
     disposeRaffle(false);
     m_seq = nullptr;
     m_enemyLocators.clear();
-    pad_a8 = 0;
+    m_eventLocator = nullptr;
     m_tboxLocators.clear();
     m_dropLocators.clear();
     if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {

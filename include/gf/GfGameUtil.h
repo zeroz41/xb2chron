@@ -140,6 +140,8 @@ public:
     static void startWire(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* target, float time);
     static void startWireWithClose(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* target, float time, float, float);
     static void endWire(gf::GF_OBJ_HANDLE* handle, float time);
+    // stops or resumes the object's update layer (GfGameSalvage::fn_7100315A84 stops the party's members with it)
+    static void changeStopLayer(gf::GF_OBJ_HANDLE* handle, bool stop);
     // the objects of an enemy arrange id: live ones plus ones still set up
     static int getObjNumberByEnArrangeId(unsigned int arrangeId);
     static void setMaxPartyGauge();  // the battle party gauge to 300

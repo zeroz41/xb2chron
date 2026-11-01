@@ -34,13 +34,15 @@ public:
     // what getRaffleResult reports (the names are not the original's: StateSalvageResultUi reads m_rank)
     struct RaffleRet {
         RaffleRet() {
-            m_unk8 = 0;
-            m_unk0 = 0;
+            m_enemyDrawn = false;
+            m_powerfulEnemy = false;
+            m_tboxNum = 0;
             m_rank = 0;
         }
-        unsigned int m_unk0;
-        unsigned int m_rank;
-        unsigned short m_unk8;
+        unsigned int m_tboxNum;  // how many treasure boxes the raffle drew (getTBoxNum)
+        unsigned int m_rank;     // the highest RSC_ID (BDAT 0x77) of the drawn treasure boxes
+        bool m_enemyDrawn;       // the raffle drew an enemy
+        bool m_powerfulEnemy;    // GmkSalvage::RaffleResult::isPowerfullEnemyExist
     };
 
     // inline (1.0.0's is out of line at 0x710037A5CC; 3.0.1's build has it inline)
@@ -109,7 +111,7 @@ public:
     int getButtonChallengeId(int index);
     GfComBehaviorSalvage* getGfComBehaviorSalvage() const;
     void execRaffle(const RaffleInfo& info);
-    void getRaffleResult(RaffleRet& ret) const;
+    bool getRaffleResult(RaffleRet& ret) const;  // true
     void execPop();
     unsigned int getTBoxNum();
     void addSalvagerPoint(unsigned int point);
