@@ -26,7 +26,7 @@ public:
 
     // inline: D2/D0 and the thunks sit in CharaObj's tail; OnEventProc is the key function
     virtual ~UIManager() {}  // slot 0
-    UIManager();  // out of line: Singleton<UIManager>::getPtr calls C1 (0x71001024A0)
+    UIManager();  // 0x71001024A0, out of line; Singleton<UIManager>::getPtr inlines it
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     void clear();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because the evt_ex plugin's
@@ -77,17 +77,27 @@ public:
     unsigned int m_openFlags;  // 0x10
     // bit 0: logout() hides the loading display; the name is not the original's
     unsigned int m_flags;  // 0x14
-    unsigned char pad_18[0x38 - 0x18];
+    // the constructor zeroes these (0x1c: 1); not known yet
+    unsigned int pad_18;
+    bool pad_1c;
+    unsigned char pad_1d[0x20 - 0x1D];
+    unsigned long pad_20;
+    unsigned long pad_28;
+    unsigned long pad_30;
     // evt_pay.getResult's value (getPayoffUI); the name is not the original's
     int m_payoffResult;  // 0x38
-    unsigned char pad_3c[0x48 - 0x3C];
+    unsigned char pad_3c[0x40 - 0x3C];
+    unsigned long pad_40;  // the constructor zeroes it
     // evt_ex.getResult's value (fn_7100104AE8); the name is not the original's
     int m_exResult;  // 0x48
-    unsigned char pad_4c[0x58 - 0x4C];
+    unsigned char pad_4c[0x50 - 0x4C];
+    unsigned long pad_50;  // the constructor zeroes it
     // the call context openBladeNameUI releases and creates for GfMenuObjBladeCreate::openCreatedBladeName; the
     // name is not the original's
     gf::GfMenuCallContext* m_bladeNameContext;  // 0x58
-    unsigned char pad_60[0x70 - 0x60];
+    unsigned long pad_60;  // the constructor zeroes it
+    unsigned int pad_68;  // the constructor zeroes it
+    unsigned char pad_6c[0x70 - 0x6C];
     // the call contexts openAvanTitleUI and openZoneTelopUI create; the names are not the original's
     gf::GfMenuCallContext* m_avanTitleContext;  // 0x70
     gf::GfMenuCallContext* m_zoneTelopContext;  // 0x78

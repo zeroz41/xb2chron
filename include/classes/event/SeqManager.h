@@ -299,6 +299,8 @@ public:
     inline void clear();
     void init();
     void setupScene();
+    // Manager::setupSceneEnd waits on it (0x7100148CC8, 3.0.1 symbol)
+    bool isSetupSceneEnd() const;
     void startScene();
     void render();
     void end();

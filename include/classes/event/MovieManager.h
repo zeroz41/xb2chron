@@ -25,6 +25,9 @@ public:
     void play(const char* name, bool obj, bool arg);
     void setScriptFlag(bool enable);
     bool isLoadedAuto(const char* name, bool obj) const;
+    // builds the movie's file path for name (0x71000F9EA4; isLoadedAuto passes its own path and the name in x0/x1,
+    // so it takes no this); the return type is not known
+    static void makePath(mm::mtl::FixStr<256>& path, const char* name);
     // setScriptFlag's bit; the name is not the original's
     bool isScriptFlag() const { return (pad_10 & 0x100) != 0; }
     // fields the constructor initializes; what they hold is not known yet

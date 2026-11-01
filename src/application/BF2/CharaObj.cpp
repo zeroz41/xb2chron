@@ -96,6 +96,9 @@
 #include "gf/GfReqCommand.h"
 #include "gf/GfReqParam.h"
 #include "gf/GfObjUtil.h"
+#include "classes/gf/GfComModel.h"
+#include "classes/fw/ModelObject.h"
+#include "ml/ScnObjAccResMdlInfo.h"
 #include "classes/event/RandPlayer/Warp.h"
 #include "classes/event/RandPlayer/Wait.h"
 #include "classes/event/RandUtil.h"
@@ -1459,6 +1462,19 @@ void CharaObj::playFade(bool a, float b) {
         m_flags |= 0x20;
     } else {
         m_flags &= ~0x20;
+    }
+}
+
+void CharaEffectPlayer::stopAfterImage() {
+    if (m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1) && (m_flags & 8)) {
+        gf::GfObj* obj = gf::GfObjUtil::getObj(m_handle);
+        if (obj != nullptr) {
+            if (gf::GfComModel* model = obj->getComponent<gf::GfComModel>(1)) {
+                ml::ScnObjAccResMdlInfo info(model->m_model->getInterface());
+                info.releaseAfterImage();
+            }
+        }
+        m_flags &= ~8;
     }
 }
 
@@ -3064,6 +3080,11 @@ void SkipManager::setSkipVolume(bool skip) {
     }
 }
 
+UIManager::UIManager()
+    : m_openFlags(0), m_flags(0), pad_18(0), pad_1c(true), pad_20(0), pad_28(0), pad_30(0), m_payoffResult(0),
+      pad_40(0), pad_50(0), m_bladeNameContext(nullptr), pad_60(0), pad_68(0), m_avanTitleContext(nullptr),
+      m_zoneTelopContext(nullptr), pad_2a0(0), pad_2a8(0) {}
+
 int UIManager::getPayoffUI() const {
     return m_payoffResult;
 }
@@ -3089,6 +3110,17 @@ void UIManager::openAvanTitleUI(unsigned int id) {
         m_avanTitleContext = gf::GfMenuCallContext::create();
         gf::GfMenuObjChapterTelop::openAvanTitle(m_avanTitleContext, id);
         m_openFlags |= 0x800;
+    }
+}
+
+void UIManager::closeAvanTitleUI(int frame) {
+    if (m_openFlags & 0x800) {
+        gf::GfMenuObjChapterTelop::close(frame);
+        if (m_avanTitleContext != nullptr) {
+            m_avanTitleContext->release();
+            m_avanTitleContext = nullptr;
+        }
+        m_openFlags &= ~0x800;
     }
 }
 
@@ -3701,6 +3733,18 @@ void MovieManager::setScriptFlag(bool enable) {
     }
 }
 
+bool MovieManager::isLoadedAuto(const char* name, bool obj) const {
+    mm::mtl::FixStr<256> path;
+    makePath(path, name);
+    if (pad_10 & 2) {
+        if (strcmp(pad_14.m_str, path.m_str) == 0 && pad_118 == obj) {
+            return mm::mtl::PtrSingleton<gf::GfMovieManager>::sys()->isstandby();
+        }
+        return false;
+    }
+    return false;
+}
+
 // 1.0.0's OutsiderManager::render
 inline void OutsiderManager::render() {
     if (m_dispFlags.test(0) && (m_flags & 1)) {
@@ -3864,6 +3908,22 @@ void Manager::tail() {
 }
 
 void Manager::post() {}
+
+void Manager::finishNewGameWait() {
+    mm::mtl::Singleton<UIManager>::getPtr()->m_openFlags |= 0x80000;
+}
+
+bool Manager::setupSceneEnd() {
+    if (!(m_flags & 2)) {
+        sendMessage(static_cast<MSG_TYPE>(6));
+        m_flags |= 2;
+    }
+    if (mm::mtl::Singleton<SeqManager>::getPtr()->isSetupSceneEnd()) {
+        m_flags &= ~2;
+        return true;
+    }
+    return false;
+}
 
 void Manager::setLanguageMode(bool enable, LANGUAGE_MODE mode) {
     m_languageMode = enable ? mode : LANGUAGE_MODE_NONE;

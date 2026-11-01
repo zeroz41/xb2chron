@@ -132,7 +132,7 @@ public:
     unsigned char pad_d60[0x630];
     // playVolumeFade/playRimBloom and their stops forward to it; the name is not the original's
     CharaEffectPlayer m_effectPlayer;  // 0x1390
-    unsigned char pad_1398[0x3a0];
+    unsigned char pad_13a8[0x390];
     // three command queues ObjectChara::clear empties (1.0.0's CharaObj::clear); the names are not the original's
     CmdQueue<8, 0> m_cmdQueue0;  // 0x1738
     CmdQueue<8, 0> m_cmdQueue1;  // 0x2088

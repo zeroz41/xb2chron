@@ -3,6 +3,8 @@
 
 namespace mm { class Vec3; }
 
+namespace gf { class GF_OBJ_HANDLE; }
+
 namespace event {
 // table 0x7100B3CA98
 class CharaEffectPlayer {
@@ -15,6 +17,11 @@ public:
     void stopVolumeFade(VF_TYPE type);
     void playRimBloom(int type);
     void stopRimBloom();
+    void stopAfterImage();
+
+    // bit 3: an after image is on (stopAfterImage releases it); the name is not the original's
+    unsigned int m_flags;  // 0x8
+    gf::GF_OBJ_HANDLE* m_handle;  // 0x10, -1 when none; the name is not the original's
 };
 }  // namespace event
 
