@@ -16,11 +16,14 @@
 #include "gf/GfDataBlade.h"
 #include "gf/GfQuestReward.h"
 #include "mm/mtl/FixStr.h"
+#include "mm/mtl/FixedArray.h"
+#include "mm/mtl/FixedVector.h"
 #include "classes/gf/GfAchievManager.h"
 #include "classes/gf/GfDataManager.h"
 #include "classes/gf/GfQuestManager.h"
 #include "classes/gf/GfBdatCond.h"
 #include "classes/gf/GfGameCond.h"
+#include "classes/gmk/AGmkBase.h"
 
 namespace gf {
 
@@ -50,6 +53,54 @@ bool AchievQuest::decleseCount(unsigned int count) {
         m_count--;
     }
     return true;
+}
+
+bool GfQuestUtil::isEnemyGroup(unsigned int group, unsigned int enemy) {
+    if (group == 0) {
+        return false;
+    }
+    GfBdatChrEnParam* enParam = GfBdatChrEnParam::get();
+    for (unsigned int slot = 0; slot < 12; slot++) {
+        if (enParam->getEnemyGroupEnemyID(group, slot) == enemy) {
+            return true;
+        }
+    }
+    return false;
+}
+
+QuestID GfQuestUtil::getCurrentTBoxWithEvent(GF_OBJ_HANDLE* handle) {
+    gmk::AGmkBase* gimmick = gmk::getBindedGmkInst(handle);
+    if (gimmick == nullptr || gimmick->getGmkType() != gmk::GmkType(9)) {
+        return QuestID();
+    }
+    gimmick->getBindedBdatFp();  // the original fetches the row's BDAT and does not use it
+    unsigned int tbox = gimmick->m_createInfo.m_bdatId;
+    if (tbox == 0) {
+        return QuestID();
+    }
+    QuestListAcc* acc = QuestListAcc::get();
+    unsigned int max = GfQuestManager::getOrderQuestMax();
+    for (unsigned int i = 0; i < max; i++) {
+        QuestID quest = GfQuestManager::getOrderQuest(i);
+        if (quest.empty()) {
+            continue;
+        }
+        if (GfDataQuest::getListCallEventA(quest) == 0) {
+            continue;
+        }
+        unsigned int purposeId = GfDataQuest::getListPurposeID(quest);
+        if (purposeId == 0) {
+            continue;
+        }
+        for (unsigned int task = 0; task < 4; task++) {
+            QuestTaskParam param(quest, task, purposeId, TASK_STATE(0));
+            if (param.m_taskType == 8 && !GfQuestInfo::isCompleteTask(param) &&
+                acc->getGimmickTboxPopID(param.m_taskId) == tbox) {
+                return quest;
+            }
+        }
+    }
+    return QuestID();
 }
 
 void GfQuestUtil::removeQuestItem(const QuestTaskParam& param) {
@@ -267,6 +318,36 @@ void GfQuestUtil::clearOrderParentQuest() {
     GfDataManager::getDataGame()->m_orderParentQuestCount = 0;
 }
 
+bool GfQuestUtil::getNeedCharacterByQuestTask(mm::mtl::FixedVector<unsigned short, 32>& characters, QuestID id,
+                                              unsigned int task) {
+    characters.clear();
+    if (GfQuestInfo::isParent(id)) {
+        id = GfQuestInfo::getProgressQuest(id);
+    }
+    QuestListAcc* acc = QuestListAcc::get();
+    unsigned int condition = acc->getTaskTaskCondition(acc->getListPurposeID(id), task);
+    QuestListAcc::get();  // the original fetches the accessor once more and does not use it
+    if (condition != 0) {
+        GfBdatCond* cond = mm::mtl::PtrSingleton<GfBdatCond>::get();
+        for (unsigned int i = 0; i < 8; i++) {
+            if (cond->getConditionListConditionType(condition, i) != 6) {
+                continue;
+            }
+            unsigned int party = cond->getConditionListCondition(condition, i);
+            if (party == 0 || cond->getConditionPTCategory(party) != 0) {
+                continue;
+            }
+            for (unsigned int slot = 0; slot < 3; slot++) {
+                unsigned int pc = cond->getConditionPTPCID(party, slot);
+                if (pc != 0) {
+                    characters.push_back(pc);
+                }
+            }
+        }
+    }
+    return characters.size() != 0;
+}
+
 unsigned short GfQuestUtil::getBladeID(QuestID id) {
     AchievQuest* quest = GfDataQuest::getAchievQuest(id);
     if (quest == nullptr) {
@@ -323,6 +404,31 @@ bool GfQuestUtil::getTalkNpcInfo(unsigned int& condId, unsigned int npc, QuestID
         }
     }
     return false;
+}
+
+void GfQuestUtil::incFieldSkillTask(unsigned int blade, unsigned int skill) {
+    QuestListAcc* acc = QuestListAcc::get();
+    for (unsigned int line = 0; line < 10; line++) {
+        AchievInfo* info = GfDataBlade::getAchievInfo(blade, line);
+        if (info->m_achievementId == 0) {
+            continue;
+        }
+        for (unsigned int level = 1; level <= 5; level++) {
+            AchievQuest& quest = info->m_quests[level - 1];
+            if (quest.m_countType != 11) {
+                continue;
+            }
+            if (!GfQuestInfo::isQuestOrder(quest.m_questId) || quest.isCountComplete()) {
+                continue;
+            }
+            QuestTaskParam param(GfDataQuest::getListNextQuestA(quest.m_questId), 0, TASK_STATE(0));
+            if (acc->getFieldSkillCountFieldSkillID(param.m_taskId) == skill) {
+                quest.incleseCount(1);
+                GfQuestTask::updateQuestTask(quest.m_questId);
+                return;
+            }
+        }
+    }
 }
 
 int GfQuestUtil::getClearChildQuest(QuestID id) {
@@ -391,10 +497,9 @@ static int fn_7100312E00(QuestID id, unsigned int enemy) {
             unsigned int group = acc->getBattleEnemyGroupID(param.m_taskId);
             if (group != 0) {
                 GfBdatChrEnParam* enParam = GfBdatChrEnParam::get();
-                for (unsigned int slot = 0; slot < 12; slot++) {
+                for (unsigned int slot = 0; slot < 12 && !found; slot++) {
                     if (enParam->getEnemyGroupEnemyID(group, slot) == enemy) {
                         found = true;
-                        break;
                     }
                 }
             } else {
@@ -461,6 +566,34 @@ bool GfQuestUtil::getResultIdea(unsigned int& idea, unsigned int& count, unsigne
         }
     }
     return result;
+}
+
+bool GfQuestUtil::getTaskMap(mm::mtl::FixedArray<unsigned short, 4>& maps, QuestID id) {
+    if (id.empty()) {
+        return false;
+    }
+    if (GfQuestInfo::isParent(id)) {
+        return false;
+    }
+    for (unsigned int task = 0; task < 4; task++) {
+        QuestTaskParam param(id, task, TASK_STATE(0));
+        maps[task] = GfQuestTask::getTaskMap(param);
+        if (maps[task] == 0) {
+            mm::mtl::FixedVector<QuestID, 16> links;
+            GfQuestManager::getLinkQuest(links, id);
+            for (QuestID& link : links) {
+                if (link == id) {
+                    continue;
+                }
+                QuestTaskParam linked(GfDataQuest::getListNextQuestA(link), task, TASK_STATE(0));
+                maps[task] = GfQuestTask::getTaskMap(linked);
+                if (maps[task] != 0) {
+                    break;
+                }
+            }
+        }
+    }
+    return true;
 }
 
 void fn_7100313330(QuestID id) {

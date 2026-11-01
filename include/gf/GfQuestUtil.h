@@ -8,6 +8,7 @@ namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class QuestTaskParam; }
 namespace gf { struct GfQuestReward; }
 namespace mm { namespace mtl { template <typename, unsigned long> class FixedVector; }}
+namespace mm { namespace mtl { template <typename T, unsigned long N> class FixedArray; }}
 
 namespace gmk { enum GmkType : int; }
 
@@ -87,6 +88,14 @@ public:
     // fills the reward with the rewards of that reward id (GfMenuObjShop's exchange tasks pass a QUEST_EXCHANGE row's
     // "Reward" and false); true when it has any
     static bool getReward(GfQuestReward& reward, unsigned int id, bool);
+    // whether the enemy is one of the enemy group's 12 (GfBdatChrEnParam::getEnemyGroupEnemyID); false for no group
+    static bool isEnemyGroup(unsigned int group, unsigned int enemy);
+    // counts a field skill use for the first ordered, unfinished affinity chart quest of the blade whose field skill
+    // count task wants that skill (SCOM_FIELD_SKILL::exec)
+    static void incFieldSkillTask(unsigned int blade, unsigned int skill);
+    // each of the quest's 4 tasks' map (GfQuestTask::getTaskMap), from a linked quest's next quest when the quest's
+    // own has none; false for no quest or a parent quest
+    static bool getTaskMap(mm::mtl::FixedArray<unsigned short, 4>& maps, QuestID id);
 };
 
 // Placeholder names (no symbol; these are new since 1.0.0, so no donor name):

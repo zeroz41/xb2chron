@@ -17,7 +17,8 @@ public:
     unsigned short m_flags;
     // the statistic the quest counts (GfAchievStats::getAchievementTotalCount reads its total for it)
     unsigned short m_stats;
-    unsigned char pad_10[0x2];
+    // the kind of count (GfQuestUtil::incFieldSkillTask counts 11, field skill uses). The name is not the original's.
+    unsigned short m_countType;
     unsigned short m_line;      // the blade's skill line (isCompleteLevel(AchievQuest&) passes the three on)
     unsigned short m_level;     // the line's level (getSkillLevel counts one done at 1 even without its quest)
     unsigned short m_blade;

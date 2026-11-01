@@ -44,6 +44,8 @@ public:
     static void resetBattleTaskForPlayerDead(QuestID id);
     // whether enemies holds any (GfQuestInfo::getBattleTaskEnemy adds a reset battle task's)
     static bool resetBattleTaskForBattleEnd(::mm::mtl::FixedVector<unsigned short, 128>& enemies, QuestID id);
+    // the map of the task's target, 0 for none (GfQuestUtil::getTaskMap stores it per task)
+    static unsigned short getTaskMap(const QuestTaskParam& param);
 };
 }  // namespace gf
 
