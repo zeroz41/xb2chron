@@ -43,6 +43,9 @@ public:
     void DeleteSlow(unsigned int id);
     // deletes the elemental combo's slow-motion request and sets its slowed effects back to speed 1
     void DeleteElementalComboSlow();
+    void DeleteElementalComboCamera();
+    // DeleteElementalComboCamera, then handle and camera become the elemental combo's (the camera is not pushed)
+    void RegisterElementalComboCamera(::mm::mtl::IntrusivePtr<fw::Camera> camera, gf::GF_OBJ_HANDLE* handle);
     // a slow-motion request; its id (0 when none was taken)
     unsigned int RegisterSlow(float, float, float);
     // replaces the elemental combo's slow-motion request and slows its registered effects to 100
@@ -80,7 +83,8 @@ public:
     // Placeholder name: nothing in 1.0.0's ButtonChallenge::ResultProc names it (no call there). A member: as
     // fn_710000A724. What it does: ButtonChallenge::ResultProc passes it the challenge id and whether the result was
     // -1 (failed), for challenges of kind 3.
-    void fn_710000BAE0(int id, bool failed);
+    // the result is an int switched on (0 and 1): 3.0.1 compares it with 1, then with 0
+    void fn_710000BAE0(int id, int result);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's ai::AiData::isValid makes no call
     // there). A member: ai::AiData::isValid passes PtrSingleton<BattleGlobal>::sys(). What it does: returns bit 1 of
     // the byte at 0x83D0; while it is clear, isValid refuses the party's leader driver (GfGameParty::isLeaderDriver).
@@ -283,6 +287,10 @@ public:
     bool fn_710000B8CC(unsigned int id) const;  // whether a chain attack was running when the record was made
     void fn_710000BA08(unsigned int id, bool on);  // clears flag bit 8, stores flag bit 9
     int fn_710000BA74(unsigned int id) const;  // 1 when flag bit 8 is set, else 2 when bit 9 is, else 0
+    // 3.0.1's symbols spell these SetDamageRate(unsigned int, float, bool) and Utility::AchieveCondition (1.0.0's
+    // positions); their code takes this BattleGlobal, an id and an int (no float) and reads the record's byte at 0x12
+    void fn_710000BD64(unsigned int id, int index);  // clears pad_bit18 (index 0) or pad_bit19 (index 1)
+    bool fn_710000BDD4(unsigned int id, int index) const;  // pad_bit18 (0) or pad_bit19 (1); true otherwise
 
     // every attack accessor's lookup (inline: no copy of its own in either version)
     AttackDamageData* findAttackData(unsigned int id) const {
@@ -356,7 +364,12 @@ public:
         unsigned short nbaClear : 1;  // set when the row's "nba" flag is clear
         unsigned char atk;
         unsigned char def;
+        // the constructor's values for every entry (and fn_710000CE5C's guarded static default)
+        MapRev() : kizunaCap(1000), artSp(4), nbaClear(true), atk(100), def(100) {}
     };
+    // Placeholder name: GROUP_BLADE_DATA::Initialize passes the party character (1-12) and whether the area's
+    // revision applies; m_mapRev's entry for it (nullptr out of range), or a default entry when it does not apply
+    const MapRev* fn_710000CE5C(int chara, bool apply) const;
     MapRev m_mapRev[12];
     int m_mapRevAreaId;  // the anti-blade area id m_mapRev was read for (the name is not the original's)
     // the chain count and the narration level it reached (AddChainCount; the names are not the original's)
@@ -365,17 +378,21 @@ public:
         unsigned int level : 4;
     };
     ChainCount m_chainCount;
-    unsigned char pad_5cd0[0x8];
-    gf::GF_OBJ_HANDLE* m_elementalComboImmortal;  // SetElementalComboImmortal (the name is not the original's)
-    // the elemental combo's camera (RegisterElementalComboCamera; the name is not the original's)
-    ::mm::mtl::IntrusivePtr<fw::Camera> m_elementalComboCamera;
-    // the effects slowed with the elemental combo, with their casters (none: EffectManager's); DeleteElementalComboSlow
-    // sets them back to speed 1 (the names are not the original's)
-    gf::GfComEffectCaster* m_elementalComboSlowCaster[2];
-    unsigned int m_elementalComboSlowEffect[2];
-    // the elemental combo's slow-motion request (DeleteDelayElementalComboSlow; the name is not the original's)
-    unsigned int m_elementalComboSlowId;
-    unsigned char pad_5d04[0x4];
+    // the elemental combo's work at 0x5CD0: one object of its own (RegisterElementalComboInvalidSlowEffect addresses
+    // its slowed casters and effects from its start). The type and field names are not the original's.
+    struct ElementalComboWork {
+        gf::GF_OBJ_HANDLE* pad_0;  // DeleteElementalComboCamera sets it to -1 (no handle)
+        gf::GF_OBJ_HANDLE* m_immortal;  // SetElementalComboImmortal
+        // the elemental combo's camera (RegisterElementalComboCamera)
+        ::mm::mtl::IntrusivePtr<fw::Camera> m_camera;
+        // the effects slowed with the elemental combo, with their casters (none: EffectManager's);
+        // DeleteElementalComboSlow sets them back to speed 1
+        gf::GfComEffectCaster* m_slowCaster[2];
+        unsigned int m_slowEffect[2];
+        // the elemental combo's slow-motion request (DeleteDelayElementalComboSlow)
+        unsigned int m_slowId;
+    };  // 0x38 bytes (4 of tail padding)
+    ElementalComboWork m_elementalCombo;
     // ElementalComboManager deletes the unite combo direction when its character is this one, while pad_5d3f is
     // clear (meaning unknown)
     gf::GF_OBJ_HANDLE* pad_5d08;
@@ -391,12 +408,15 @@ public:
     // non-zero while something runs that many BattleCharacter input/AI functions ask about (fn_7100007554);
     // fn_710000C648 tests it for 3-7
     int pad_5d54;
-    unsigned char pad_5d58[0x8];
+    unsigned int pad_5d58;  // an attack record id (fn_710000BAE0 flags that record)
+    unsigned char pad_5d5c[0x4];
     float pad_5d60;  // fn_710000C610 tests it for <= 0
-    unsigned char pad_5d64[0x4];
+    int pad_5d64;  // fn_710000BAE0 acts only for this challenge id
     // an arts reference: data type in bits 0-2, arts id above (fn_710000C660 asks DataManager::GetArtsData for it)
     unsigned short pad_5d68;
-    unsigned char pad_5d6a[0xE];
+    unsigned char pad_5d6a[0x4];
+    unsigned char pad_5d6e;  // fn_710000BAE0 sends a menu event once while it is set, then clears it
+    unsigned char pad_5d6f[0x9];
     unsigned int pad_5d78[3];  // fn_710000DD4C adds to an entry, up to 99999999
     unsigned char pad_5d84[0x18];
     int pad_5d9c;  // fn_710000DA48/DA8C/DAD8/DD4C read it while m_challengeAnySuccess is clear
@@ -441,7 +461,9 @@ public:
     // (gf::GfQuestUtil::getCurrentEnemyWithEvent; meaning unknown)
     bool pad_bit6 : 1;
     bool pad_bit7 : 1;  // Utility::fn_71000100F0 sets it
-    unsigned char : 8;
+    unsigned char : 4;
+    bool pad_bit12 : 1;  // DeleteElementalComboCamera clears it
+    unsigned char : 3;
     bool pad_bit16 : 1;  // fn_710000D468 holds while it is set
     bool pad_bit17 : 1;  // EnemyParameter::MulHate changes no hate while it is set
     bool pad_bit18 : 1;  // fn_710000CEF4 returns it

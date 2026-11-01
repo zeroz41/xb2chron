@@ -15,7 +15,7 @@
 namespace btl {
 
 ElementalComboManager::~ElementalComboManager() {
-    if (BattleGlobal::sys()->m_elementalComboImmortal == m_handle) {
+    if (BattleGlobal::sys()->m_elementalCombo.m_immortal == m_handle) {
         BattleGlobal::sys()->SetElementalComboImmortal(reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1));
     }
     if (BattleGlobal::sys()->pad_5d08 == m_handle && !BattleGlobal::sys()->pad_5d3f) {

@@ -28,6 +28,8 @@
 #include "classes/gf/GfComDynamics.h"
 #include "classes/btl/ShakeCameraElementRandom.h"
 #include "classes/btl/ShakeCameraElementCameraAxis.h"
+#include "classes/gf/TUnk_B64F08.h"
+#include "classes/fw/CameraManager.h"
 
 namespace btl {
 
@@ -172,7 +174,7 @@ bool BattleGlobal::fn_71000068F8() {
 }
 
 void BattleGlobal::SetElementalComboImmortal(gf::GF_OBJ_HANDLE* handle) {
-    m_elementalComboImmortal = handle;
+    m_elementalCombo.m_immortal = handle;
 }
 
 void BattleGlobal::Update(const fw::UpdateInfo& info) {
@@ -181,6 +183,16 @@ void BattleGlobal::Update(const fw::UpdateInfo& info) {
 
 void BattleGlobal::PostUpdate(const fw::UpdateInfo& info) {
     sys()->PostUpdateProc(info);
+}
+
+void BattleGlobal::DeleteElementalComboCamera() {
+    DeleteElementalComboSlow();
+    if (m_elementalCombo.m_camera) {
+        fw::CameraManager::get()->m_layers[0].pop(m_elementalCombo.m_camera, 0.0f);
+        m_elementalCombo.m_camera = nullptr;
+    }
+    m_elementalCombo.pad_0 = reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
+    pad_bit12 = false;
 }
 
 bool BattleGlobal::fn_710000A6CC() {
@@ -379,6 +391,24 @@ int BattleGlobal::fn_710000BA74(unsigned int id) const {
     return 0;
 }
 
+void BattleGlobal::fn_710000BAE0(int id, int result) {
+    if (pad_5d54 != 0 && pad_5d64 == id) {
+        AttackDamageData* data = findAttackData(pad_5d58);
+        switch (result) {
+        case 0:
+            data->pad_bit8 = true;
+            break;
+        case 1:
+            data->pad_bit9 = true;
+            break;
+        }
+        if (pad_5d6e) {
+            gf::TUnk_B64F08::fn_71004947C4(data->pad_bit8 ? 1 : 2, nullptr);
+            pad_5d6e = 0;
+        }
+    }
+}
+
 void BattleGlobal::SetShootBullet(unsigned int id, bool shoot) {
     AttackDamageData* data = findAttackData(id);
     if (data != nullptr) {
@@ -402,6 +432,33 @@ bool BattleGlobal::IsValidAttackRange(unsigned int id) const {
     AttackDamageData* data = findAttackData(id);
     if (data != nullptr) {
         return data->validAttackRange;
+    }
+    return true;
+}
+
+void BattleGlobal::fn_710000BD64(unsigned int id, int index) {
+    AttackDamageData* data = findAttackData(id);
+    if (data != nullptr) {
+        switch (index) {
+        case 0:
+            data->pad_bit18 = false;
+            break;
+        case 1:
+            data->pad_bit19 = false;
+            break;
+        }
+    }
+}
+
+bool BattleGlobal::fn_710000BDD4(unsigned int id, int index) const {
+    AttackDamageData* data = findAttackData(id);
+    if (data != nullptr) {
+        switch (index) {
+        case 0:
+            return data->pad_bit18;
+        case 1:
+            return data->pad_bit19;
+        }
     }
     return true;
 }
@@ -612,12 +669,43 @@ void BattleGlobal::fn_710000C660(ARTS_DATA& data) const {
     DataManager::sys()->GetArtsData(static_cast<ARTS_DATA::DATA_TYPE>(pad_5d68 & 7), pad_5d68 >> 3, data);
 }
 
+const BattleGlobal::MapRev* BattleGlobal::fn_710000CE5C(int chara, bool apply) const {
+    static const MapRev s_default;  // the name is not the original's
+    if (!apply) {
+        return &s_default;
+    }
+    if (chara < 1 || chara > 12) {
+        return nullptr;
+    }
+    return &m_mapRev[chara - 1];
+}
+
 bool BattleGlobal::fn_710000CEF4() const {
     return pad_bit18;
 }
 
 bool BattleGlobal::fn_710000CF04() const {
     return pad_bit21;
+}
+
+void BattleGlobal::RegisterElementalComboInvalidSlowEffect(int side, unsigned int effect, gf::GfComEffectCaster* caster) {
+    if (static_cast<unsigned int>(side) < 2) {
+        if (m_elementalCombo.m_slowId != 0) {
+            if (caster != nullptr) {
+                caster->setSpeed(effect, 100.0f);
+            } else if (fw::EffectManager::sys() != nullptr) {
+                fw::EffectManager::sys()->setSpeed(effect, 100.0f);
+            }
+        }
+        m_elementalCombo.m_slowCaster[side] = caster;
+        m_elementalCombo.m_slowEffect[side] = effect;
+    }
+}
+
+void BattleGlobal::RegisterElementalComboCamera(::mm::mtl::IntrusivePtr<fw::Camera> camera, gf::GF_OBJ_HANDLE* handle) {
+    DeleteElementalComboCamera();
+    m_elementalCombo.pad_0 = handle;
+    m_elementalCombo.m_camera = camera;
 }
 
 void BattleGlobal::fn_710000DE04(bool side, int add) {
@@ -977,7 +1065,7 @@ void BattleGlobal::SetSlowDynamicsSpeed(unsigned int id, int chara, unsigned int
 }
 
 void BattleGlobal::DeleteDelayElementalComboSlow(float delay) {
-    SLOW_PROC_DATA* data = GetSlowProcData(m_elementalComboSlowId);
+    SLOW_PROC_DATA* data = GetSlowProcData(m_elementalCombo.m_slowId);
     if (data != nullptr) {
         data->deleteDelay = delay;
         data->pad_8 = 0;
@@ -985,17 +1073,17 @@ void BattleGlobal::DeleteDelayElementalComboSlow(float delay) {
 }
 
 void BattleGlobal::DeleteElementalComboSlow() {
-    DeleteSlow(m_elementalComboSlowId);
-    m_elementalComboSlowId = 0;
+    DeleteSlow(m_elementalCombo.m_slowId);
+    m_elementalCombo.m_slowId = 0;
     for (int i = 0; i < 2; i++) {
-        if (m_elementalComboSlowEffect[i] != 0) {
-            if (m_elementalComboSlowCaster[i] != nullptr) {
-                m_elementalComboSlowCaster[i]->setSpeed(m_elementalComboSlowEffect[i], 1.0f);
+        if (m_elementalCombo.m_slowEffect[i] != 0) {
+            if (m_elementalCombo.m_slowCaster[i] != nullptr) {
+                m_elementalCombo.m_slowCaster[i]->setSpeed(m_elementalCombo.m_slowEffect[i], 1.0f);
             } else if (fw::EffectManager::sys() != nullptr) {
-                fw::EffectManager::sys()->setSpeed(m_elementalComboSlowEffect[i], 1.0f);
+                fw::EffectManager::sys()->setSpeed(m_elementalCombo.m_slowEffect[i], 1.0f);
             }
-            m_elementalComboSlowCaster[i] = nullptr;
-            m_elementalComboSlowEffect[i] = 0;
+            m_elementalCombo.m_slowCaster[i] = nullptr;
+            m_elementalCombo.m_slowEffect[i] = 0;
         }
     }
 }
@@ -1004,13 +1092,13 @@ void BattleGlobal::RegisterElementalComboSlow() {
     DeleteElementalComboSlow();
     unsigned int id = RegisterSlow(0.01f, 10.0f, 0.0f);
     if (id != 0) {
-        m_elementalComboSlowId = id;
+        m_elementalCombo.m_slowId = id;
         for (int i = 0; i < 2; i++) {
-            if (m_elementalComboSlowEffect[i] != 0) {
-                if (m_elementalComboSlowCaster[i] != nullptr) {
-                    m_elementalComboSlowCaster[i]->setSpeed(m_elementalComboSlowEffect[i], 100.0f);
+            if (m_elementalCombo.m_slowEffect[i] != 0) {
+                if (m_elementalCombo.m_slowCaster[i] != nullptr) {
+                    m_elementalCombo.m_slowCaster[i]->setSpeed(m_elementalCombo.m_slowEffect[i], 100.0f);
                 } else if (fw::EffectManager::sys() != nullptr) {
-                    fw::EffectManager::sys()->setSpeed(m_elementalComboSlowEffect[i], 100.0f);
+                    fw::EffectManager::sys()->setSpeed(m_elementalCombo.m_slowEffect[i], 100.0f);
                 }
             }
         }
