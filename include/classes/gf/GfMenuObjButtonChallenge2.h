@@ -106,11 +106,12 @@ public:
     float m_speedFactor;             // 0x9C
     GfMenuSequence<GfMenuObjButtonChallenge2, 8> m_seq;  // 0xA0
     mm::mtl::FixedVector<unsigned int, 4> pad_330;
-    mm::mtl::FixedVector<unsigned int, 2> pad_348;
+    mm::mtl::FixedVector<float, 1> pad_348;  // 0x348: seqMoveMashing keeps m_ctrl0's latest value in it
     bool pad_358;
     bool m_resultSent;               // 0x359: nextChallenge sent the result
     unsigned short pad_35A;
-    unsigned int pad_35C;
+    unsigned short m_resultWait;     // 0x35C: frames seqResultWait waits before it fades the result out
+    unsigned short pad_35E;
     mm::Pnt<short> m_guidePos;       // 0x360: LAY_guide_contents' center
     ui::UICtrlSimple<1> m_ctrl0;     // 0x368
     ui::UICtrlSimpleUpdater<ui::UICtrlSimple<1> > m_updater0;  // 0x390
@@ -122,8 +123,10 @@ public:
     ui::UICtrlSimpleUpdater<ui::UICtrlSimple<1> > m_updater2;  // 0x428
     ui::UICtrlSimple<1> m_ctrl3;     // 0x448
     ui::UICtrlSimpleUpdater<ui::UICtrlSimple<1> > m_updater3;  // 0x470
-    unsigned long pad_490;
-    unsigned long pad_498;
+    unsigned int pad_490;            // 0x490: seqWaitMashingV2 counts frames in it up to pad_498
+    float pad_494;
+    unsigned int pad_498;
+    unsigned int pad_49C;
     bool pad_4A0;
 };
 }  // namespace gf
