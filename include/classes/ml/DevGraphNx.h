@@ -45,7 +45,7 @@ public:
     // named by the symbols: keeps the name of the font file initGL loads (a FixStr<64> file static of the unit)
     static void entrySasakiFont(const char* name);
 
-    unsigned char pad_350[0x28];
+    unsigned char pad_370[0x8];
     FontSys m_font;  // 0x378 (the destructor destroys it; the name is not the original's)
     void* m_fontData;  // 0x6D0 freed after m_font is destroyed by wkStandbyLogout (the name is not the original's)
 };
@@ -59,6 +59,9 @@ void deallocateFile(void* ptr, unsigned long size);
 // zlib's allocator hooks
 class DevFileUtilNx {
 public:
+    // items * size bytes of the temporary memory; clears the first size bytes (the parameter names are not the
+    // original's)
+    static void* zlibAlloc(void* opaque, unsigned int items, unsigned int size);
     static void zlibFree(void* opaque, void* ptr);
 };
 }  // namespace ml

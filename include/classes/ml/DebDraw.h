@@ -78,6 +78,9 @@ public:
     void setZWrite(bool on);
     void renderRect(const mm::Rect<int>& rect);
     void renderRectFill(const mm::Rect<int>& rect);
+    // named by the symbols: the same with the rectangle's parts (the parameter names are not the original's)
+    void renderRect(int x, int y, int w, int h);
+    void renderRectFill(int x, int y, int w, int h);
     void renderCube(const mm::Vec3& min, const mm::Vec3& max);
     void renderCircle(const mm::Mat44& mtx, float radius, int div);
     void renderAxis(float length);

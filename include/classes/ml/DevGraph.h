@@ -48,12 +48,21 @@ public:
     }
     static int getRootWidth();
     static int getRootHeight();
-    static float getVSyncSec();
+    // the frame time its object reports, 0 when there is none (inline: the symbols have no copy; getFrameSyncSec)
+    static float getVSyncSec() {
+        DevGraph* dev = get();
+        if (dev != nullptr) {
+            return dev->getVSyncSecSys();
+        }
+        return 0.0f;
+    }
     static float getFrameSyncSec();
     static void setVSync(int vsync);
     static bool isIgnore();
     static int fontGetWidth(const char* text, FONT_STYLE style, float scale);
     static void grSetClearCol(const mm::Col4& col);
+    // named by the symbols: the object's grInitContextSys, then its queue's flushViewport (WinView::renderView)
+    static void grInitContext();
     static void* cmdOpenDisplayList(unsigned int size);
     static bool cmdCloseDisplayList();
     static void cmdExecDisplayList();
@@ -131,6 +140,10 @@ public:
     WorkBuf* m_workBuf;  // 0x338 (the name is not the original's)
     unsigned char pad_340[0x8];
     float m_frameSpd;     // 0x348 setFrameSpd (the name is not the original's)
+    unsigned char pad_34c[0x4];
+    // up to four render functions addOuterRender keeps in the first free entry and removeOuterRender clears
+    // (ErrViewer's fnRender; the name is not the original's)
+    void (*m_outerRender[4])();  // 0x350
 };
 }  // namespace ml
 

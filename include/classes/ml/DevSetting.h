@@ -20,7 +20,8 @@ class DevSetting : public ::mm::mtl::PtrSingleton< ::ml::DevSetting> {
 public:
     virtual ~DevSetting();  // slot 0
     static LangType getLang();  // the device's language
-    static void getLangList(mm::mtl::FixedVector<LangType, 15>& list);  // the languages there are
+    // the languages there are; returns list (the null-object path returns it, the other its impl's answer)
+    static mm::mtl::FixedVector<LangType, 15>& getLangList(mm::mtl::FixedVector<LangType, 15>& list);
     static void setAutoSleepExtended(SleepExtendType type);
 
     // 0x08 the platform object: the destructor deletes it, the statics forward to it (the name is not the original's)

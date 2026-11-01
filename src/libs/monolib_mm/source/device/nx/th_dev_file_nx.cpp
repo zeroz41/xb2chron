@@ -96,6 +96,7 @@
 #include "classes/ml/DevFileReaderTh.h"
 #include "classes/ml/DevKeyboard.h"
 #include "classes/ml/FileHandleTh.h"
+#include "classes/ml/detail/FileLoader.h"
 #include "nn/fs.h"
 #include "ml/EventFileTh.h"
 #include "ml/PathUtil.h"
@@ -1672,6 +1673,15 @@ LangType DevSetting::getLang() {
     return m_defaultLang;
 }
 
+mm::mtl::FixedVector<LangType, 15>& DevSetting::getLangList(mm::mtl::FixedVector<LangType, 15>& list) {
+    list.clear();
+    DevSetting* dev = get();
+    if (dev != nullptr) {
+        return dev->m_impl->fn_71006AEDA8(list);
+    }
+    return list;
+}
+
 void DevSetting::setAutoSleepExtended(SleepExtendType type) {
     DevSetting* dev = get();
     if (dev != nullptr) {
@@ -1997,6 +2007,12 @@ bool DevFileNxTh::rfIsUsedChannel(unsigned int channel) {
     return m_impl->m_params[channel].m_isOpen;
 }
 
+bool DevFileNxTh::deleteFileBlock(const char* name) {
+    mm::mtl::FixStr<256> path;
+    getMediaPath(path, name);
+    return nn::fs::DeleteFile(path.m_str).IsSuccess();
+}
+
 bool DevFileJobValidNxTh::asyncUpdate() {
     mm::mtl::FixStr<256> path;
     DevFileNxTh::getMediaPath(path, m_handle->m_path);
@@ -2018,9 +2034,54 @@ DevFileBlackListNxTh::~DevFileBlackListNxTh() {
     }
 }
 
+void* DevFileUtilNx::zlibAlloc(void*, unsigned int items, unsigned int size) {
+    unsigned int total = items * size;
+    void* ptr = mtl::MemManager::allocate(WorkRoot::getMemTMP(), total, 4, false, "no name", 0);
+    if (size != 0 && ptr != nullptr) {
+        memset(ptr, 0, size);
+    }
+    return ptr;
+}
+
 void DevFileUtilNx::zlibFree(void*, void* ptr) {
     mtl::MemManager::deallocate(ptr, 0, false);
 }
+
+namespace detail {
+FileLoader::~FileLoader() {
+    if (m_buffer != nullptr) {
+        mtl::MemManager::deallocate(m_buffer, 0, false);
+        m_buffer = nullptr;
+    }
+    if (m_isOpen) {
+        m_isOpen = false;
+        nn::fs::CloseFile(m_handle);
+    }
+}
+
+void FileLoader::readFile() {
+    if (!m_isOpen) {
+        return;
+    }
+    long fileSize = 0;
+    long size = nn::fs::GetFileSize(&fileSize, m_handle).IsSuccess() ? fileSize : -1;
+    if (size < 1) {
+        return;
+    }
+    m_size = size;
+    m_buffer = malloc(size + 1);
+    if (m_buffer == nullptr) {
+        return;
+    }
+    if (nn::fs::ReadFile(m_handle, 0, m_buffer, size).IsFailure()) {
+        if (m_buffer != nullptr) {
+            mtl::MemManager::deallocate(m_buffer, 0, false);
+            m_buffer = nullptr;
+        }
+        m_size = 0;
+    }
+}
+}  // namespace detail
 
 DevFileArchiveNx::DevFileArchiveNx(mtl::ALLOC_HANDLE handle)
     : m_alloc(handle), pad_18(0), m_impl(new (handle, nullptr, 0, 4, false) Param()) {
@@ -2142,6 +2203,12 @@ void* DevFileTh::checkValidFile(const char* path, IWorkEvent* listener) {
 bool DevFileTh::checkValidFileBlock(const char* path) {
     return getFileSize(path, nullptr) >= 0;
 }
+
+namespace dvfl_detail {
+mm::mtl::FixedVector<ReserveArchiveParam, 8> g_reserveArchives;
+mm::mtl::FixedVector<LoadMediaParam, 8> g_loadMedia;
+mm::mtl::FixedVector<IDevFileEvent*, 8> g_FileEventListener;
+}  // namespace dvfl_detail
 
 void DevFileTh::addMediaPath(MEDIA media, const char* path, int prio) {
     if (path != nullptr && path[0] != '\0') {
@@ -2466,6 +2533,38 @@ void DevGraph::grSetClearCol(const mm::Col4& col) {
     }
 }
 
+void DevGraph::addOuterRender(void (*render)()) {
+    DevGraph* dev = get();
+    if (dev != nullptr) {
+        for (int i = 0; i < 4; i++) {
+            if (dev->m_outerRender[i] == nullptr) {
+                dev->m_outerRender[i] = render;
+                break;
+            }
+        }
+    }
+}
+
+void DevGraph::removeOuterRender(void (*render)()) {
+    DevGraph* dev = get();
+    if (dev != nullptr) {
+        for (int i = 0; i < 4; i++) {
+            if (dev->m_outerRender[i] == render) {
+                dev->m_outerRender[i] = nullptr;
+                break;
+            }
+        }
+    }
+}
+
+void DevGraph::grInitContext() {
+    DevGraph* dev = get();
+    if (dev != nullptr) {
+        dev->grInitContextSys();
+        get()->m_que->flushViewport();
+    }
+}
+
 int DevGraph::getRootWidth() {
     DevGraph* dev = get();
     if (dev != nullptr) {
@@ -2597,6 +2696,20 @@ float DevGraph::getCost() {
         return dev->getCostSys();
     }
     return 0.0f;
+}
+
+void DebDraw::renderRectFill(int x, int y, int w, int h) {
+    if (m_cache->renderRectFill(mm::Rect<int>(x, y, w, h))) {
+        return;
+    }
+    renderRectFill(mm::Rect<int>(x, y, w, h));
+}
+
+void DebDraw::renderRect(int x, int y, int w, int h) {
+    if (m_cache->renderRect(mm::Rect<int>(x, y, w, h))) {
+        return;
+    }
+    renderRect(mm::Rect<int>(x, y, w, h));
 }
 
 void DevGraph::setVSync(int vsync) {

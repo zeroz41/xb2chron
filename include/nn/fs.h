@@ -18,6 +18,8 @@ Result OpenFile(FileHandle* handle, const char* path, int mode);
 void CloseFile(FileHandle handle);
 Result GetFileSize(long* size, FileHandle handle);
 Result ReadFile(unsigned long* readSize, FileHandle handle, long offset, void* buffer, unsigned long size);
+// reads size bytes at offset, failing unless all of them come (ml::detail::FileLoader::readFile)
+Result ReadFile(FileHandle handle, long offset, void* buffer, unsigned long size);
 
 // the file system's allocator hooks (ml::DeviceNx::initializeSDK hands it device_detail::allocateFile and
 // deallocateFile)
@@ -29,6 +31,9 @@ enum DirectoryEntryType {
 };
 // whether path names a file or a directory (ml::DevFileJobValidNxTh::asyncUpdate)
 Result GetEntryType(DirectoryEntryType* type, const char* path);
+
+// deletes the file at path (ml::DevFileNxTh::deleteFileBlock)
+Result DeleteFile(const char* path);
 
 // commits a mounted save data's writes (DevFileTh::flushSave passes "save")
 Result CommitSaveData(const char* name);

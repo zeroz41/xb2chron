@@ -11,6 +11,7 @@ namespace ml { class IWorkEvent; }
 namespace ml { enum ERR_DECIDE : int; }
 namespace ml { class DevFileParamTh; }
 namespace ml { class FileHandleTh; }
+namespace ml { class IDevFileEvent; }
 namespace ml { enum MEDIA : int; }
 namespace mm { namespace mtl { template <int LEN> class FixStr; } }
 
@@ -106,6 +107,16 @@ public:
 namespace dvfl_detail {
 // 0x71006B580C (this unit)
 void addMediaPath(MEDIA media, const char* path, int prio);
+// named by the symbols: an archive DevFileTh::registArchive keeps in g_reserveArchives (0x320 bytes: the
+// FixedVector<ReserveArchiveParam, 8>'s size sits at 0x1900; fields not read yet)
+struct ReserveArchiveParam {
+    unsigned char pad_0[0x320];
+};
+// named by the symbols: a search path addMediaPath inserts into g_loadMedia (0x118 bytes: the FixedVector<
+// LoadMediaParam, 8>'s size sits at 0x8C0; fields not read yet)
+struct LoadMediaParam {
+    unsigned char pad_0[0x118];
+};
 }  // namespace dvfl_detail
 }  // namespace ml
 
