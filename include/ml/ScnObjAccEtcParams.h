@@ -3,6 +3,7 @@
 
 namespace ml { class ScnObjModel; }
 #include "classes/ml/DrMdlObj.h"
+namespace ml { class DrResEtcPamObj; }
 namespace ml {
 class ScnObjAccEtcParams {
 public:
@@ -15,7 +16,7 @@ public:
     void setInitParams(unsigned int index, float value);
     void setRimBloom(bool on);
 
-    DrMdlObj::EtcParamsTable* m_table;  // the model's (null for a non-DrMdoCtlNom model; the name is not the original's)
+    DrResEtcPamObj* m_table;  // the model's (null for a non-DrMdoCtlNom model; the name is not the original's)
 };
 }  // namespace ml
 

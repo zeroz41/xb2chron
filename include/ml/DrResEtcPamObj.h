@@ -43,12 +43,19 @@ public:
     static unsigned int calcWorkSize(const unsigned char* mdo);
     static void release(DrResEtcPamObj*& obj);
 
+    // one parameter's name entry of m_data, 0x10 bytes (ScnObjAccEtcParams::getName; the names are not the original's)
+    struct ParamName {
+        unsigned int m_nameOfs;  // from m_pams
+        unsigned char pad_4[0xC];
+    };
+
     // Names below are not the original's.
     const MdoEtcPams* m_pams;   // 0x0
-    const void* m_data;         // 0x8
+    const void* m_data;         // 0x8: m_paramNum ParamName entries
     DrResEtcParams* m_params;   // 0x10: MdoEtcPams::m_num entries (the name is not the original's)
     unsigned int m_paramNum;    // 0x18 (the name is not the original's)
-    unsigned int m_flags;       // 0x1C: bit 0 (set by create) lets mdonode_etcpam_volfadeanm work
+    // 0x1C: bit 0 (set by create, ScnObjAccEtcParams::setRimBloom) lets mdonode_etcpam_volfadeanm work
+    unsigned int m_flags;
 };
 }  // namespace ml
 

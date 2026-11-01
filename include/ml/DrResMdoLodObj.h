@@ -26,7 +26,10 @@ public:
     static unsigned int create(unsigned char* work, const unsigned char* data);
     unsigned int setup(const unsigned char* data, unsigned char* work);
     static void release(DrResMdoLodObj*& obj);
-    unsigned char pad_0[0x1C];  // create places the object's data 0x30 bytes after it
+    unsigned char pad_0[0x18];  // create places the object's data 0x30 bytes after it
+    // 0x18, bit 1: DrMdoCtlNom::callNomSetupRender updates the morph object only while it is set (the name is not
+    // the original's)
+    unsigned int m_flags;
     // 0x1C: DrMdoCtlNom's alpha passes pass it to DrMdoCtl::createWeightVtx, which tests bit i per part (the name is
     // not the original's)
     unsigned int m_dispBits;

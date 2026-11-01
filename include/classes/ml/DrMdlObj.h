@@ -46,18 +46,6 @@ public:
     const mm::Vec3& getCenter() const { return m_center; }
     float getLength() const { return m_length; }
 
-    // the model's etc-parameter table (ScnObjAccEtcParams reads it; field names are not the original's)
-    struct EtcParamsName {
-        unsigned int m_nameOfs;  // from m_strBase
-        unsigned char pad_4[0xC];
-    };
-    struct EtcParamsTable {
-        const char* m_strBase;
-        const EtcParamsName* m_names;
-        DrResEtcParams* m_params;
-        unsigned int m_num;
-        unsigned int m_flags;  // bit 0: rim bloom (ScnObjAccEtcParams::setRimBloom)
-    };
 
     int getNodeIdx(const char* name) const;
     const char* getNodeName(int index) const;

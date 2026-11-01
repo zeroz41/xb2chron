@@ -13,7 +13,7 @@ public:
     unsigned char pad_18[0x10];
     unsigned int m_flags;  // 0x28: setDefAlpha sets bit 1 << DrMan::s_nDblStockIdx
     float m_alpha[3];      // 0x2C: [0], [1] by double buffer index (setDefAlpha); DrResEtcPamObj::mdonode_etcpam_etcmesh_disp sets all three
-    unsigned char pad_38[0x2];
+    short m_triIdx;  // 0x38: the shadow/pre-pass shader setters' tri uniform block index when m_flags bit 0 is set
     unsigned char m_vanishNo;  // 0x3A: DrResEtcPamObj::mdonode_etcpam_volfadeanm's vanish-effect index (x3 + 2)
     unsigned char pad_3B[0x5];
     enum { FLAG_WORK = 0x8000000 };

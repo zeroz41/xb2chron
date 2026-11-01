@@ -98,10 +98,23 @@ struct MdoRimBloomWrk {
 // is given &MdoWrkMatRes::m_pMdlTop[i]). Its bounds are unaligned float triples: DrMdlObj::getInitialVertexAABBMax
 // reads the first header's 0xC, getInitialVertexAABBMin 0x18. The field names are not the original's.
 struct MdsMdlTopHeader {
-    unsigned char pad_0[0xC];
+    // 0x0: from MdoWrkMatRes::m_pMdlInfo, this header's MdsMdlInfoHeader array (DrMdoCtlNom::shwRender)
+    unsigned int m_infoOfs;
+    unsigned char pad_4[0x8];
     float m_max[3];  // 0xC
     float m_min[3];  // 0x18
     unsigned char pad_24[0x20];
+};
+
+// One model part, 0x30 bytes (the struct name is from DrMdoCtl::partsShadowRender's mangling): the check lists of
+// DrMdoCtlNom's passes index a top header's array of them. The field names are not the original's.
+struct MdsMdlInfoHeader {
+    unsigned int m_flags;  // 0x0, bit 8: m_meshNo names a DrResMdoMeshObj part
+    unsigned char pad_4[0x12];
+    unsigned short m_meshNo;  // 0x16
+    unsigned char pad_18[0x4];
+    unsigned short m_shaderOfs;  // 0x1C, added to the shadow shader index (plus 1 with nodes) when there is no part
+    unsigned char pad_1E[0x12];
 };
 
 // The material data MdoWrkMatRes::m_pMatData points to; only the offset DrMdoShdSet::setOneTexShaderSet reads is
@@ -139,7 +152,8 @@ struct MdoWrkMatRes {
 
     unsigned char pad_0[0x10];
     const unsigned char* m_pMatData;  // 0x10, base of the offsets in m_pCallBackTbl
-    unsigned char pad_18[0x8];
+    // 0x18: base of MdsMdlTopHeader::m_infoOfs (the name is not the original's)
+    const unsigned char* m_pMdlInfo;
     const MdoMdlData* m_pMdlData;  // 0x20
     const MdsMatInfoHeader* m_pMatInfo;  // 0x28, DrMdlObj::getMaterialHeader returns it
     int m_matNum;  // 0x30, ... and this as the count

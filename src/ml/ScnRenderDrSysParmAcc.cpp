@@ -34,6 +34,7 @@
 #include "classes/ml/DrMdlObj.h"
 #include "classes/ml/DrMdoCtlNom.h"
 #include "ml/DrResEtcParams.h"
+#include "ml/DrResEtcPamObj.h"
 #include "ml/DrResMdoMeshObj.h"
 #include "ml/DrResMdoVtxMeshObj.h"
 #include "ml/DrCreator.h"
@@ -1057,23 +1058,25 @@ unsigned int ScnObjAccEtcParams::getMax() const {
     if (m_table == nullptr) {
         return 0;
     }
-    return m_table->m_num;
+    return m_table->m_paramNum;
 }
 
 const char* ScnObjAccEtcParams::getName(unsigned int index) const {
     if (m_table == nullptr) {
         return nullptr;
     }
-    if (index >= m_table->m_num) {
+    if (index >= m_table->m_paramNum) {
         return nullptr;
     }
-    return m_table->m_strBase + m_table->m_names[index].m_nameOfs;
+    return reinterpret_cast<const char*>(m_table->m_pams) +
+           static_cast<const DrResEtcPamObj::ParamName*>(m_table->m_data)[index].m_nameOfs;
 }
 
 int ScnObjAccEtcParams::getIndex(const char* name) const {
     if (m_table != nullptr) {
-        for (unsigned long i = 0; i < m_table->m_num; i++) {
-            if (strcmp(name, m_table->m_strBase + m_table->m_names[i].m_nameOfs) == 0) {
+        for (unsigned long i = 0; i < m_table->m_paramNum; i++) {
+            if (strcmp(name, reinterpret_cast<const char*>(m_table->m_pams) +
+                                 static_cast<const DrResEtcPamObj::ParamName*>(m_table->m_data)[i].m_nameOfs) == 0) {
                 return i;
             }
         }
@@ -1082,19 +1085,19 @@ int ScnObjAccEtcParams::getIndex(const char* name) const {
 }
 
 void ScnObjAccEtcParams::setParams(unsigned int index, float value) {
-    if (m_table != nullptr && index < m_table->m_num) {
+    if (m_table != nullptr && index < m_table->m_paramNum) {
         m_table->m_params[index].setParams(value);
     }
 }
 
 void ScnObjAccEtcParams::setPreParams(unsigned int index, float value) {
-    if (m_table != nullptr && index < m_table->m_num) {
+    if (m_table != nullptr && index < m_table->m_paramNum) {
         m_table->m_params[index].setPreParams(value);
     }
 }
 
 void ScnObjAccEtcParams::setInitParams(unsigned int index, float value) {
-    if (m_table != nullptr && index < m_table->m_num) {
+    if (m_table != nullptr && index < m_table->m_paramNum) {
         m_table->m_params[index].setInitParams(value);
     }
 }

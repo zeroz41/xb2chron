@@ -50,6 +50,8 @@
 #include "ml/DrPixlMdlSampler.h"
 #include "ml/DrResMdoMorpObj.h"
 #include "ml/DrResMdoLodObj.h"
+#include "ml/DrResChkList.h"
+#include "ml/DrResMdoMeshObj.h"
 #include "ml/DrResEtcPamObj.h"
 #include "ml/DrResEtcParams.h"
 #include "ml/DrPixlShadowMan.h"
@@ -1418,6 +1420,52 @@ void DrMdoCtlNom::callShadowCacheUpdate(unsigned long bits) {
     m_shadowCacheBits &= ~bits;
 }
 
+void DrMdoCtlNom::nomCallRender(int pass) {
+    // by pass: the createWeightVtx type and m_renderTech (proposed names, not the original's: the symbols leave
+    // them unnamed, lbl_71009D4910 and lbl_71009D4916)
+    static const unsigned char s_weightType[] = {0, 3, 2, 4, 1, 1};
+    static const short s_renderTech[] = {0, 7, 8, 4, 1, 1};
+    if (m_nodeMax != 0) {
+        grlib::CGLibCtlShader::setMemoryBarrierBit(1);
+        if (pass == 0) {
+            unsigned int dispBits = m_lodObj->m_dispBits;
+            if (m_vtxMesh != nullptr) {
+                dispBits |= m_vtxMesh->isRender();
+            }
+            createWeightVtx(0, m_ctlFlags2, dispBits, false);
+            createWeightVtx(0, m_ctlFlags2, dispBits, true);
+        } else {
+            createWeightVtx(s_weightType[pass], m_ctlFlags2, m_lodObj->m_dispBits, false);
+        }
+        grlib::CGLibCtlShader::setMemoryBarrierBit(0x21);
+    }
+    if (pass == 0 && !(m_stateFlags & 0x200000)) {
+        DrAPCache* cache = m_pDrMan->m_apCache;
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        cache->beginMdlZRender();
+        zPrePassRender();
+        cache->endMdlZRender();
+    }
+    m_renderPass = pass;
+    m_renderTech = s_renderTech[pass];
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    m_pWrkMatRes->m_pVertex->beginVertexSetup();
+    const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop;
+    for (int i = 0; i < m_pWrkMatRes->m_mdlTopNum; i++, top++) {
+        DrResChkList* chk = *(m_passChk[i] + m_renderPass);
+        if (chk != nullptr) {
+            nomRender(top, chk);
+        }
+    }
+}
+
 void DrMdoCtlNom::lastAlphaCallRender() {
     if (m_nodeMax != 0) {
         grlib::CGLibCtlShader::setMemoryBarrierBit(1);
@@ -1478,6 +1526,12 @@ void DrMdoCtlNom::cldBackAlphaCallRender() {
         if (m_alphaSort->m_cldBackChk[i] != nullptr) {
             nomRender(top, m_alphaSort->m_cldBackChk[i]);
         }
+    }
+}
+
+void DrMdoCtlNom::callNomSetupRender() {
+    if ((m_ctlFlags & 0x1) && m_morpObj != nullptr && (m_lodObj->m_flags & 0x2)) {
+        m_morpObj->update(m_pWrkMatRes, m_etcParams);
     }
 }
 
