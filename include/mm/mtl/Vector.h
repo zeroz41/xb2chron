@@ -391,9 +391,11 @@ typename Vector<T>::iterator Vector<T>::erase(iterator it) {
     MM_ASSERT(valid_iterator(it));
     iterator last = end();
     if (it != last) {
-        // one memcpy only for a trivially copyable T: Vector<ui::UIParticleEmitter::Particle> (trivially
-        // assignable, but mm::Vec2's user copy constructor) assigns element by element (a memcpy of 0x60 each)
-        if (__is_trivially_copyable(T)) {
+        // one memcpy only for a T with a trivial copy constructor (as copy_construct_n tests):
+        // Vector<ui::UIParticleEmitter::Particle> (trivially assignable, but mm::Vec2's user copy constructor) assigns
+        // element by element (a memcpy of 0x60 each); Vector<std::pair<PopInfo*, GF_OBJ_HANDLE*>> (libc++'s pair:
+        // user-written assignments, defaulted copy constructor) is one memcpy
+        if (__has_trivial_copy(T)) {
             memcpy(it, it + 1, (last - (it + 1)) * sizeof(T));
         } else {
             // the ones after it assigned down one by one (Vector<ui::UIGroup::RootObjInfo>'s: a FixStr's copy)

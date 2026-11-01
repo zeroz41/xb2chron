@@ -46,10 +46,30 @@ inline void swap(_Tp& __x, _Tp& __y) {
     __y = std::move(__t);
 }
 
+// libc++ 3.9.1's pair (its <utility>): copy and move constructors defaulted, both assignments user-written, so a
+// pair is never trivially assignable or trivially copyable (std::sort's insertion limit, Vector::erase's test)
 template <class T1, class T2>
 struct pair {
+    typedef T1 first_type;
+    typedef T2 second_type;
+
     pair() : first(), second() {}
     pair(const T1& a, const T2& b) : first(a), second(b) {}
+
+    pair(const pair&) = default;
+    pair(pair&&) = default;
+
+    pair& operator=(const pair& __p) {
+        first = __p.first;
+        second = __p.second;
+        return *this;
+    }
+
+    pair& operator=(pair&& __p) {
+        first = std::forward<first_type>(__p.first);
+        second = std::forward<second_type>(__p.second);
+        return *this;
+    }
 
     T1 first;
     T2 second;
