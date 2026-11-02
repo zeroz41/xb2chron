@@ -23,10 +23,6 @@ class GfSetupParam;
 // m_ids (its code is in GfDataBlade_71002906D0's unit range, called only by the arena's setup). What it does: clears
 // the vector, then pushes every ID from GfBdatBtl::fn_71001E9534() up to (not including) GfBdatBtl::fn_71001E9540().
 void fn_71002906D0(::mm::mtl::FixedVector<unsigned short, 128>& ids);
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function: its code is in gf_game_arena's
-// unit and uses no argument (GfGameScene::updateControlFreeEvent calls it). What it does: answers whether
-// PtrSingleton<GfPlayComStartChallengeBattle>'s instance exists.
-bool fn_71002920F0();
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function: its code is in
 // GfDataBlade_710029064C's range and TUnk_B535D0::fn_7100290D40 tail-calls it with message type 0x13's pad_40
 // (no object).
@@ -66,6 +62,11 @@ public:
     // PtrSingleton<TUnk_B535D0>'s instance while fn_7100291D54 holds. What it does: passes m_msgObj's key and the
     // handle to m_partySetup's fn_710028E5BC.
     unsigned int fn_7100291E14(GF_OBJ_HANDLE* handle);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in gf_game_arena's unit
+    // and GfGameScene::updateControlFreeEvent calls it with PtrSingleton<TUnk_B535D0>'s instance in x0 (after testing
+    // it for null), though the body reads no this. What it does: answers whether
+    // PtrSingleton<GfPlayComStartChallengeBattle>'s instance exists.
+    bool fn_71002920F0();
 
     // one row of the challenge rules (the arena keeps 48, SDataGame another 48 at 0x11A8CC; fn_7100291E40 copies
     // m_rules[mode] of row id into a record, fn_7100291CC0 sets the flags; the names are not the original's)

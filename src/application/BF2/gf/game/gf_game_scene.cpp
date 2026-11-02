@@ -58,6 +58,18 @@
 #include "classes/gf/GfGameTarget.h"
 #include "classes/gf/GfArtsMovie.h"
 #include "classes/gf/GfChainAttack.h"
+#include "gf/GfUtil.h"
+#include "fw/Transform.h"
+#include "classes/fw/CameraManager.h"
+#include "classes/fw/SoundManager.h"
+#include "mm/Mat44.h"
+#include "classes/fw/EffectManager.h"
+#include "effect/SendParam.h"
+#include "classes/gf/GfGameEvent.h"
+#include "classes/gf/TUnk_B535D0.h"
+#include "classes/gf/GfSequentialPlay.h"
+#include "classes/gf/GfPlayComQuestCompleteUI.h"
+#include "classes/gf/GfPlayComGmkTutorialSeq.h"
 #include "gf/QuestListAcc.h"
 #include "classes/gf/GfQuestManager.h"
 #include "fw/UpdateInfo.h"
@@ -698,6 +710,38 @@ void GfGameScene::gevPlayEvent(GEV gev, unsigned int id) {
     }
 }
 
+void GfGameScene::createSepiaFilter() {
+    fw::EffectManager* manager = fw::EffectManager::get();
+    if (manager == nullptr) {
+        return;
+    }
+    if (m_value68C != 0) {
+        if (manager->isExist(m_value68C)) {
+            return;
+        }
+        m_value68C = 0;
+    }
+    GfGameEvent::setColorFilter(true, 5000, 5000, 0.0f);
+    unsigned int handle = fw::EffectManager::get()->create("cmn_205_000", nullptr, true);
+    m_value68C = handle;
+    // the matrix, scale, colour, first range and first flag set again: the original stores them after the matrix
+    // copy, where the default constructor's stores would sit before it
+    effect::SendParam param;
+    param.m_mtx = mm::Mat44::identity;
+    param.m_scale.x = 1.0f;
+    param.m_scale.y = 1.0f;
+    param.m_scale.z = 1.0f;
+    param.m_color[0] = 1.0f;
+    param.m_color[1] = 1.0f;
+    param.m_color[2] = 1.0f;
+    param.m_color[3] = 1.0f;
+    param.m_rangeA = 1.0f;
+    param.m_valueA = 0.0f;
+    param.m_flagA = false;
+    manager->setViewnum(handle, 0);
+    manager->setParam(m_value68C, &param);
+}
+
 void GfGameScene::fn_71002C7C44() {
     if (GfGameManager::fn_71002A9E68()) {
         return;
@@ -825,6 +869,76 @@ void GfGameScene::updatePartyBattle(const fw::UpdateInfo&) {
             m_partyBattleStartCount[i]++;
             GfGameParty::setupBattleStart(i);
             GfObjUtil::setDisableAutoHeal(acc.getHandle(), false);
+        }
+    }
+}
+
+void GfGameScene::updateHikariLv4Room(const fw::UpdateInfo&) {
+    if (GfGameManager::fn_71002A9E68()) {
+        return;
+    }
+    m_enableRoomForHikariLv4 = false;
+    if (GfGameManager::isMapjump()) {
+        return;
+    }
+    unsigned int party = GfGameParty::getPartyId(3, 1);
+    if (party == static_cast<unsigned int>(-1)) {
+        return;
+    }
+    unsigned int blade = 0;
+    {
+        DataParamAcc acc(GfGameParty::getHandleBlade(party, -1));
+        if (acc.isValid()) {
+            blade = acc.getBdatId();
+        }
+    }
+    if (blade == 1002 && !GfGameManager::isRoom()) {
+        GfObjAcc acc(GfGameParty::getHandleDriver(0, 0));
+        mm::Vec3 hit;
+        mm::Vec3 from = acc.getWorldTransform().position + mm::Vec3(0.0f, 1.0f, 0.0f);
+        if (!util::getUpperHitCollision(hit, from, 100.0f)) {
+            m_enableRoomForHikariLv4 = true;
+        }
+    }
+}
+
+void GfGameScene::updateControlFreeEvent(const fw::UpdateInfo&) {
+    if (GfManager::isExecModeThater()) {
+        return;
+    }
+    // whether the player has free control (written as a lambda: the original's early returns are threaded into the
+    // branches; the helper's name, if it had one, is not known)
+    bool controlFree = [] {
+        if (TUnk_B535D0::get() != nullptr && TUnk_B535D0::get()->fn_71002920F0()) {
+            return false;
+        }
+        if (GfPlayComQuestCompleteUI::s_active > 0) {
+            return false;
+        }
+        if (GfPlayComGmkTutorialSeq::s_activate > 0) {
+            return true;
+        }
+        if (GfGameManager::isBladeChange() && !GfSequentialPlay::isInnerState(static_cast<GF_STATE>(11))) {
+            return true;
+        }
+        return GfGameManager::isControlFree();
+    }();
+    if (controlFree) {
+        if (GfManager::isExecModeAdvertize()) {
+            return;
+        }
+        if (m_controlFreeCount < 10) {
+            if (++m_controlFreeCount == 10 && m_controlFreeEvent != 15) {
+                m_controlFreeEvent = 15;
+                GfEvent::callPlayerControl(GEV(15));
+            }
+        }
+    } else {
+        if (m_controlFreeCount > 0) {
+            if (--m_controlFreeCount == 0 && m_controlFreeEvent != 16) {
+                m_controlFreeEvent = 16;
+                GfEvent::callPlayerControl(GEV(16));
+            }
         }
     }
 }

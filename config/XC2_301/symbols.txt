@@ -10727,7 +10727,7 @@ _ZN2gf11TUnk_B535D013fn_7100291E40EPNS_13GfGameManager21BattleChallengeRecordEjj
 _ZN2gf11TUnk_B535D013fn_7100291F2CEv = .text:0x00291F2C; // type:function size:0xC4 scope:global
 _ZN2gf11TUnk_B535D013fn_7100291FF0Ev = .text:0x00291FF0; // type:function size:0x70 scope:global
 _ZN2gf11TUnk_B535D013fn_7100292060ERKN2fw10UpdateInfoE = .text:0x00292060; // type:function size:0x90 scope:global
-_ZN2gf13fn_71002920F0Ev = .text:0x002920F0; // type:function size:0x18 scope:global
+_ZN2gf11TUnk_B535D013fn_71002920F0Ev = .text:0x002920F0; // type:function size:0x18 scope:global
 _ZN2mm3mtl12PtrSingletonIN2gf11TUnk_B535D0EED2Ev = .text:0x00292108; // type:function size:0x20 scope:global
 _ZN2mm3mtl12PtrSingletonIN2gf11TUnk_B535D0EED0Ev = .text:0x00292128; // type:function size:0x20 scope:global
 _ZN2gf11TUnk_B52C686createEPv = .text:0x00292148; // type:function size:0x24 scope:global

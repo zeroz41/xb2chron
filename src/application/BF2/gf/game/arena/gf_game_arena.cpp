@@ -216,7 +216,7 @@ unsigned int TUnk_B535D0::fn_7100292060(const fw::UpdateInfo& info) {
     return GfGameFlag::getLocal(1, 0xDC0D);
 }
 
-bool fn_71002920F0() {
+bool TUnk_B535D0::fn_71002920F0() {
     return ::mm::mtl::PtrSingleton<GfPlayComStartChallengeBattle>::sys() != nullptr;
 }
 

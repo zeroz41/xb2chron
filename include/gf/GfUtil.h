@@ -17,6 +17,8 @@ mm::mtl::FixStr<64> getNoPathExtName(const char* path);
 // a collision hit on the segment from `from` to `to`, written to `hit`; false when nothing is hit
 // (GfAppendWire::checkAndSetupSalvagePoint drops a salvage point with it)
 bool getHitCollision(mm::Vec3& hit, const mm::Vec3& from, const mm::Vec3& to);
+// a collision hit above `from` (up to `height`), written to `hit`; false when nothing is hit
+bool getUpperHitCollision(mm::Vec3& hit, const mm::Vec3& from, float height);
 
 }}  // namespace gf::util
 

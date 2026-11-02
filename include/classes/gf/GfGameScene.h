@@ -66,6 +66,18 @@ public:
     void updateParam(const fw::UpdateInfo&);
     void updatePartyMover(const fw::UpdateInfo&);  // 1.0.0 symbol
     void updatePartyBattle(const fw::UpdateInfo&);  // 1.0.0 symbol
+    // m_enableRoomForHikariLv4 set while blade 1002 is in party slot 3, out of a room, with nothing above the
+    // leader driver (gf::util::getUpperHitCollision 100 up from 1 above it)
+    void updateHikariLv4Room(const fw::UpdateInfo& info);
+    // the free-control counter at 0x1D0 counts to 10 / down to 0; at either end GfEvent's listeners hear 15 / 16
+    void updateControlFreeEvent(const fw::UpdateInfo& info);
+    // GfSound's listening point: the camera's matrix at the controlled mover (1.5 up), or a set position once
+    void updateListeningPoint(const fw::UpdateInfo& info);
+    // the sepia filter: a colour filter and effect "cmn_205_000" (its handle in m_value68C), unless it still exists
+    void createSepiaFilter();
+    // the sepia filter on (createSepiaFilter) in maps 7, 17 and 19 outside events while the scenario value
+    // (GfDataBlade::fn_7100231884) is 10012, 10014 or 10017, off (its effect killed, the colour filter reset) otherwise
+    void updateSepia(const fw::UpdateInfo& info);
     void updateRideRequest(const fw::UpdateInfo& info);
     // the field blade change time counts up while the leader driver and its blade are out of battle in a free field
     void updateBladeChangeInField(const fw::UpdateInfo& info);
@@ -256,7 +268,12 @@ public:
     bool m_completeQuest;  // qevCompleteQuest and a completed mercenary mission set it
     unsigned char pad_1BA[0xE];
     mm::mtl::Bitflag<6> m_playerStopFlag;  // isPlayerStopFlag's, by PLSTOP
-    unsigned char pad_1CC[0xD];
+    unsigned char pad_1CC[0x4];
+    // updateControlFreeEvent's: frames of free control counted up to 10 and down to 0, and the GEV it last sent
+    // GfEvent's listeners at either end (15 at 10, 16 at 0); the names are not the original's
+    int m_controlFreeCount;
+    int m_controlFreeEvent;
+    unsigned char pad_1D8[0x1];
     bool m_startGame;
     bool m_enableRoomForHikariLv4;
     // enterBattle sets it when a battle starts with blade 1003 (Homura) in party slot 3 (the name is not the
@@ -287,7 +304,13 @@ public:
     // the point GfFieldMapSe measures its map sounds' distances from (x, y, z; floats, not an mm::Vec3, see above;
     // the name is not the original's)
     float m_listenerPos[3];
-    unsigned char pad_29C[0x24];
+    unsigned char pad_29C[0x4];
+    // a listening point updateListeningPoint uses once, instead of the camera's, while m_setListener is set (it
+    // clears the flag); floats, see above; the names are not the original's
+    float m_setListenerPos[3];
+    unsigned char pad_2AC[0x4];
+    bool m_setListener;
+    unsigned char pad_2B1[0xF];
     // cleared with the save positions by applyMapjumpForStart (floats, see above; the name is not the original's)
     float m_pos2C0[3];
     unsigned char pad_2CC[0x4];
