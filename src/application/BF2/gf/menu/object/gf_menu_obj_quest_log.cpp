@@ -296,6 +296,24 @@ bool GfMenuObjQuestLog::seqLogCloseEnd() {
     return true;
 }
 
+bool GfMenuObjQuestLog::seqCompleteStart() {
+    ui::UIObjectAcc(m_handle, "IMG_complete_base").startAnimation("start", false);
+    ui::UIObjectAcc(m_handle, "IMG_complete_eff").startAnimation("start", false);
+    GfMenuObjUtil::CtrlParam param;
+    param.m_methods = 0x10000000;
+    param.m_motionLib = "sample";
+    param.m_motion = "fadein";
+    GfMenuObjUtil::startCtrl(m_handle, param, "TXT_complete");
+    m_orderSeq.addWait(0x36);
+    m_orderSeq.addJob(&GfMenuObjQuestLog::seqCompleteWaitCtrl);
+    return true;
+}
+
+bool GfMenuObjQuestLog::fn_710046D648() {
+    GfMenuObjUtil::playJingle(7);
+    return true;
+}
+
 bool GfMenuObjQuestLog::seqTitleFadeInText() {
     GfMenuObjUtil::CtrlParam param;
     param.m_time = 0.2f;
@@ -382,6 +400,43 @@ bool GfMenuObjQuestLog::seqOrderActivation() {
     event.m_type = 0x103;
     GfMenuObject::sendEvent(order.m_handle, event, 0.0f);
     pad_940 = false;
+    return true;
+}
+
+void GfMenuObjQuestLog::OrderListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    if (event.m_type == 1) {
+        acc.setDisp(false);
+        GfMenuObject::disableInput(acc.m_handle);
+    } else if (event.m_type == 0x21) {
+        m_owner->pad_948 = true;
+        ui::EventData open;
+        open.m_type = 0x21;
+        open.m_param0 = event.m_param0;
+        GfMenuObject::sendEvent(acc.searchSibiling("LAY_title"), open, 0.0f);
+        m_owner->getRef<GfMenuReferenceQuest>(2)->m_quest = QuestID(event.m_param0);
+        bool layer3 = GfMenuObjUtil::fn_710048FD30(3);
+        m_owner->m_orderSeq.clear();
+        if (!layer3) {
+            m_owner->m_orderSeq.addWait(0x4B);
+            m_owner->m_orderSeq.addJob(&GfMenuObjQuestLog::seqOrderStart);
+        } else {
+            m_owner->m_orderSeq.addWait(0xE);
+            m_owner->m_orderSeq.addJob(&GfMenuObjQuestLog::fn_710046CDFC);
+            m_owner->m_orderSeq.addWait(0x2D);
+            m_owner->m_orderSeq.addJob(&GfMenuObjQuestLog::seqOrderStart);
+        }
+        acc.setDisp(true);
+    } else if (event.m_type == 0x103) {
+        m_owner->getRef<GfMenuReferenceQuest>(2)->m_quest = QuestID();
+        GfMenuObject::termCallContext(acc.m_handle);
+    } else {
+        ui::UIObjectListener::reciveEvent(event, handle);
+    }
+}
+
+bool GfMenuObjQuestLog::fn_710046CDFC() {
+    GfMenuObjUtil::playJingle(6);
     return true;
 }
 

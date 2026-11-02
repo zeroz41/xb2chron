@@ -64,6 +64,7 @@ public:
     bool seqLogCloseEnd();
     bool seqOrderActivation();
     bool seqOrderWaitCtrl();
+    bool seqCompleteStart();  // CompleteListener queues it
     bool seqCompleteWaitCtrl();
     bool seqCompleteWait();
 
