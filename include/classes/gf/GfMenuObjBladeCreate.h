@@ -143,11 +143,20 @@ public:
     bool seqCreatePlayJingle();
     bool seqCreatePlayBgmAfter();
     bool seqSetupDriverObj();
+    bool seqSetupCrystal();
+    void refreshCrystalList();
+    bool seqCreateSetup();
     // placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (between seqCreateSetup and
     // seqCreateStartDriver): once no fade runs, steps the page sequence on
     bool fn_7100399180();
+    // placeholder name: new in 3.0.1 (1.0.0's seqCreateStart is followed by ResultListener::reciveEvent);
+    // CreationListener queues it: once no fade runs, idles the driver, hides the drivers and the crystals and
+    // queues fn_7100399180
+    bool fn_71003983C4();
     bool seqCreateStartDriver();
     bool seqCreateWaitDriver();
+    bool seqCreateBuildBlade();
+    bool seqCreateStartEvent();
     bool seqCreateWaitEvent();
     bool seqResultEnd();
 
@@ -159,10 +168,14 @@ public:
     // seqCreateStartEvent's (handed to GfPlayFactory::createBlEvent); seqCreateWaitEvent waits for it to clear and
     // deletes it. The name is not the original's
     GfSequentialPlaySignal* m_eventSignal;
-    bool pad_1120;  // cleared by the constructor, seqStart and seqResultStart; nothing in 3.0.1 sets it
+    // seqResultConfirm sets it once it opened its common window (7); cleared by the constructor, seqStart,
+    // seqResultStart and seqResultConfirm once the window is answered
+    bool pad_1120;
     mm::mtl::FixedVector<unsigned int, 4> pad_1128;  // a FixedVector of 0x10 bytes (element type unknown)
     unsigned long pad_1140;  // the constructor sets 4
-    unsigned char pad_1148[8];
+    // seqCreateSetup clears it; seqCreateStartEvent stops the model view's effect one past it
+    unsigned int pad_1148;
+    unsigned char pad_114C[4];
     // reference-counted objects the destructor releases (in the order 0x1160, 0x1168, 0x1150, 0x1158, 0x11A8)
     mm::mtl::ReferenceObject* pad_1150;
     mm::mtl::ReferenceObject* pad_1158;
@@ -185,7 +198,8 @@ public:
     unsigned int m_saveReq;
     bool pad_11B4;
     unsigned int pad_11B8;
-    unsigned char pad_11BC[4];
+    bool pad_11BC;  // seqResultConfirm adds the blade to the party straight away while it and pad_11B4 are set
+    unsigned char pad_11BD[3];
     unsigned int m_bgm;  // the handle seqCreatePlayJingle stops (GfMenuObjUtil::stopBGM); the name is not the original's
     // three sound handles MainListener's event 2 stops in a loop (the name is not the original's): [1] is the one
     // seqCreateStartSE stops first, [2] its "se_fld_allmap_715"

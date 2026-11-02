@@ -76,7 +76,8 @@ public:
     static bool getObjectEffectPoint(GF_OBJ_HANDLE* handle, const char* name, mm::Vec3& pos);
     static void setObjectScale(GF_OBJ_HANDLE* handle, const mm::Vec3& scale);
     static void setObjectDisp(GF_OBJ_HANDLE* handle, bool disp);
-    unsigned short getMapObjID(unsigned int index);
+    // a 16-bit Bdat value, zero-extended (its code masks it; its callers pass it on unmasked)
+    unsigned int getMapObjID(unsigned int index);
     void sendObjectCommand(GF_OBJ_HANDLE* handle, const char* cmd);
     void attachObject(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* parent, const char* bone);
     void startObjectCtrl(const CtrlParam& param);

@@ -25,6 +25,9 @@ public:
     static bool createReturnTitle(const ParamReturnTitle& param);
     static bool createOpenMenu(unsigned int menu, GfSequentialPlaySignal* signal);
     static bool createOpenMenu2(unsigned int menu, MAINMENU main, GfSequentialPlaySignal* signal);
+    // GfMenuObjBladeCreate::seqCreateStartEvent passes the blade's GfDataBlade::getCreateEvent, 1, the blade and its
+    // signal (the return type is unproven; the caller ignores it)
+    static bool createBlEvent(unsigned int event, unsigned int, unsigned int blade, GfSequentialPlaySignal* signal);
     // these return nothing: their code leaves the leave-game check's result in the return register
     static void createMiniGame();
     static bool createSalvage(GF_OBJ_HANDLE* handle);

@@ -7,6 +7,9 @@
 #include "classes/gf/GfMenuReferenceNumber.h"
 #include "classes/mm/mtl/ReferenceObject.h"
 #include "classes/gf/GfMenuFullScreen.h"
+#include "classes/gf/GfMenuObjBladeSet2.h"
+#include "classes/gf/SCOM_PARTY_ADD.h"
+#include "gf/GfPlayFactory.h"
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfMenuObjBladeName.h"
 #include "classes/gf/GfMenuObjFade.h"
@@ -262,6 +265,38 @@ void GfMenuObjBladeCreate::MainListener::reciveEvent(const ui::EventData& event,
     }
 }
 
+bool GfMenuObjBladeCreate::seqSetupCrystal() {
+    GfMenuDriverList* list = m_pageContext.m_driverList;
+    unsigned int driver = list->getContents(list->getIndex(false)).m_driver;
+    {
+        GfMenuModelView* view = m_pageContext.m_modelView;
+        GF_OBJ_HANDLE* driverObj = view->findGfObj(3, driver);
+        view->attachObject(view->findGfObj(0xF, view->getMapObjID(1)), driverObj, "EX_wp_R");
+    }
+    {
+        GfMenuModelView* view = m_pageContext.m_modelView;
+        GF_OBJ_HANDLE* driverObj = view->findGfObj(3, driver);
+        view->attachObject(view->findGfObj(0xF, view->getMapObjID(2)), driverObj, "EX_wp_R");
+    }
+    mm::Vec3 scale;
+    scale.x = scale.y = scale.z = 0.7f;
+    {
+        GfMenuModelView* view = m_pageContext.m_modelView;
+        GfMenuModelView::setObjectScale(view->findGfObj(0xF, view->getMapObjID(1)), scale);
+    }
+    {
+        GfMenuModelView* view = m_pageContext.m_modelView;
+        GfMenuModelView::setObjectScale(view->findGfObj(0xF, view->getMapObjID(2)), scale);
+    }
+    {
+        GfMenuModelView* view = m_pageContext.m_modelView;
+        GfMenuModelView::setObjectDisp(view->findGfObj(0xF, view->getMapObjID(2)), false);
+    }
+    m_se[1] = GfMenuObjUtil::playSE("se_fld_allmap_706");
+    refreshCrystalList();
+    return true;
+}
+
 inline void GfMenuObjBladeCreate::dispGuideText(bool disp) {
     ui::UIObjectAcc guide(m_handle, "LAY_guide");
     guide.setDisp(disp);
@@ -358,6 +393,37 @@ bool GfMenuObjBladeCreate::seqSaveWait() {
     }
     GfMenuObjFade::dispSaving(false, 0);
     m_saveReq = -1;
+    return true;
+}
+
+bool GfMenuObjBladeCreate::fn_71003983C4() {
+    if (GfMenuManager::isFading()) {
+        return false;
+    }
+    GfMenuModelView* view = m_pageContext.m_modelView;
+    GfMenuDriverList* list = m_pageContext.m_driverList;
+    unsigned int driver = list->getContents(list->getIndex(false)).m_driver;
+    view->sendObjectCommand(view->findGfObj(3, driver), "C_idle");
+    for (unsigned int i = 0; i < m_pageContext.m_driverList->getSize(); i++) {
+        unsigned int other = m_pageContext.m_driverList->getContents(i).m_driver;
+        GfObjAcc acc(m_pageContext.m_modelView->findGfObj(3, other));
+        acc.setDisp(static_cast<OBJDISP>(1), false);
+    }
+    {
+        GfMenuModelView* view = m_pageContext.m_modelView;
+        view->delGfObj(0xF, view->getMapObjID(1));
+    }
+    {
+        GfMenuModelView* view = m_pageContext.m_modelView;
+        view->delGfObj(0xF, view->getMapObjID(2));
+    }
+    if (m_se[1] != 0) {
+        GfMenuObjUtil::stopSE(m_se[1], 0.0f);
+        m_se[1] = 0;
+    }
+    GfMenuFade::setFade(2, 30, mm::Col4(0.0f, 0.0f, 0.0f, 0.0f));
+    pad_1128.clear();
+    m_seq.addJob(&GfMenuObjBladeCreate::fn_7100399180);
     return true;
 }
 
@@ -574,6 +640,36 @@ bool GfMenuObjBladeCreate::seqCreatePlayBgmAfter() {
     return true;
 }
 
+bool GfMenuObjBladeCreate::seqCreateStartEvent() {
+    for (unsigned int i = 0; i < m_pageContext.m_driverList->getSize(); i++) {
+        unsigned int driver = m_pageContext.m_driverList->getContents(i).m_driver;
+        GfObjAcc acc(m_pageContext.m_modelView->findGfObj(3, driver));
+        acc.setDisp(static_cast<OBJDISP>(1), false);
+    }
+    unsigned int event = GfDataBlade::getCreateEvent(m_pageContext.m_blade);
+#line 3049
+    m_eventSignal = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfSequentialPlaySignal();
+    GfPlayFactory::createBlEvent(event, 1, m_pageContext.m_blade, m_eventSignal);
+    m_seq.addJob(&GfMenuObjBladeCreate::seqCreateWaitEvent);
+    {
+        GfMenuModelView* view = m_pageContext.m_modelView;
+        view->delGfObj(0xF, view->getMapObjID(1));
+    }
+    {
+        GfMenuModelView* view = m_pageContext.m_modelView;
+        view->delGfObj(0xF, view->getMapObjID(2));
+    }
+    m_pageContext.m_modelView->stopEffect(6);
+    m_pageContext.m_modelView->stopEffect(7);
+    m_pageContext.m_modelView->stopEffect(0);
+    m_pageContext.m_modelView->stopEffect(pad_1148 + 1);
+    if (m_se[2] != 0) {
+        GfMenuObjUtil::stopSE(m_se[2], 0.0f);
+        m_se[2] = 0;
+    }
+    return true;
+}
+
 bool GfMenuObjBladeCreate::seqCreateWaitEvent() {
     if (m_eventSignal->m_active) {
         return false;
@@ -584,6 +680,49 @@ bool GfMenuObjBladeCreate::seqCreateWaitEvent() {
     }
     GfMenuObjBladeName::close();
     nextPage(m_handle, &m_pageContext, false);
+    return true;
+}
+
+bool GfMenuObjBladeCreate::seqResultConfirm() {
+    if (!pad_1120) {
+        if (pad_11B4 && pad_11BC) {
+            GfMenuDriverList* list = m_pageContext.m_driverList;
+            unsigned int driver = list->getContents(list->getIndex(false)).m_driver;
+            SCOM_PARTY_ADD::addBlade(m_pageContext.m_blade, driver, 1);
+            if (!pad_11B4) {
+                GfMenuObjMainMenu2::setCloseKeyEnable(true);
+            }
+            GfMenuObjOperationInfo::close();
+            returnFSSubLayer(this);
+            return true;
+        }
+        GfMenuManager::openCommonWindow(7);
+        pad_1120 = true;
+    }
+    if (GfMenuManager::isOpenCommonWindow()) {
+        return false;
+    }
+    unsigned short result = GfMenuManager::getCommonWindowResult();
+    if (result != 0) {
+        if (!pad_11B4) {
+            m_seq.addJob(&GfMenuObjBladeCreate::seqResultEnd);
+        } else {
+            GfMenuObjMainMenu2::setCloseKeyEnable(true);
+            GfMenuObjOperationInfo::close();
+            returnFSSubLayer(this);
+        }
+        pad_1120 = false;
+        return true;
+    }
+    if (!pad_11B4 || pad_11B8 == 0) {
+        GfMenuObjBladeSet2::setCloseToReturn();
+    } else {
+        GfMenuObjBladeSet2::setCloseToFSClose();
+    }
+    if (pad_11B4) {
+        GfMenuObjMainMenu2::setCloseKeyEnable(true);
+    }
+    changeFSSubLayer(m_handle, GfMenuFullScreen::getLayerGroup(m_fsLayer), getMenuLayerID(0x1E), true);
     return true;
 }
 
