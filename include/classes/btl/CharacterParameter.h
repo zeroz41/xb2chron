@@ -52,7 +52,7 @@ struct ARTS_SLOT_DATA {
 // up to its hate data). GetSlotDataConst answers m_slots[slot] (slot + 16 for its bool), m_slots[19] for slot 15;
 // ResetAllRecast walks all 23
 struct ARTS_PALETTE_DATA {
-    ARTS_PALETTE_DATA() : pad_0(-1), pad_230(0), pad_230_19(0) {}
+    ARTS_PALETTE_DATA() : pad_0(-1), pad_230(0), pad_230_19(0), m_fightComboMask(0) {}
     // slot 15 is the talent slot; with the flag, slots 0-2 read entries 16-18 instead
     const ARTS_SLOT_DATA* GetSlotDataConst(int slot, bool) const;
     const ARTS_SLOT_DATA* GetSupportSlotDataConst(int slot) const;
@@ -61,6 +61,9 @@ struct ARTS_PALETTE_DATA {
     bool AddArtsRecast(float add, bool scaled, int except);
     // ResetRecast(true) on the 19 slots with the flag, else empties their recasts
     void ResetArtsRecast(bool initial);
+    // Placeholder name: BattleCharacter::AI_BladeChange's. The fight combos (bit m_fightCombo of ARTS_DATA) of slots
+    // first-last holding an arts whose recast is at least the given one; m_fightComboMask for all slots at 0 or less
+    unsigned int fn_7100003EF4(float recast, int first, int last) const;
     long long pad_0;  // -1 after construction; meaning unknown
     // the field names are not the original's
     ARTS_SLOT_DATA m_slots[19];
@@ -69,7 +72,9 @@ struct ARTS_PALETTE_DATA {
     // 0 after construction; AddArtsRecast adds to the slots in order, the first that takes it, while it is 1
     // (meaning unknown)
     unsigned int pad_230 : 19;
-    unsigned int pad_230_19 : 13;
+    unsigned int pad_230_19 : 5;
+    // fn_7100003EF4's answer for every slot (0-18) at any recast (meaning unknown; the name is not the original's)
+    unsigned int m_fightComboMask : 8;
     unsigned char pad_234[0x4];
 };
 // table 0x7100B3B2F0

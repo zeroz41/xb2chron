@@ -157,6 +157,23 @@ void ARTS_PALETTE_DATA::ResetArtsRecast(bool initial) {
     }
 }
 
+unsigned int ARTS_PALETTE_DATA::fn_7100003EF4(float recast, int first, int last) const {
+    if (recast <= 0.0f && first == 0 && last == 18) {
+        return m_fightComboMask;
+    }
+    unsigned int mask = 0;
+    for (int i = first; i <= last; i++) {
+        const ARTS_SLOT_DATA& slot = m_slots[i];
+        if (slot.m_artsID == 0 || slot.m_recast < recast) {
+            continue;
+        }
+        ARTS_DATA data;
+        slot.GetArtsData(data);
+        mask |= data.m_fightCombo != 0 ? 1u << data.m_fightCombo : 0u;
+    }
+    return mask;
+}
+
 void BattleGlobal::PreUpdate(const fw::UpdateInfo& info) {
     sys()->PreUpdateProc(info);
 }
@@ -524,6 +541,31 @@ int BattleGlobal::GetNormalAttackArtsID(int chara, int weapon, int step) const {
         id = m_normalAttackArtsID[0][weapon][step];
     }
     return id;
+}
+
+void BattleGlobal::fn_7100004C10() {
+    for (int i = 0; i < 9; i++) {
+        pad_8374[i] = 0;
+    }
+    unsigned char* fp = gf::GfDataBdat::getFP(1);
+    int top = Bdat::getIdTop(fp);
+    int id = Bdat::getIdCount(fp) + top;
+    unsigned int found = 0;
+    while (id > top) {
+        id--;
+        if (Bdat::getValCheckU8(fp, "IrType", id) != 3) {
+            continue;
+        }
+        int driver = Bdat::getValCheckU8(fp, "Driver", id) - 17;
+        if (static_cast<unsigned int>(driver) > 8) {
+            continue;
+        }
+        pad_8374[driver] = id;
+        found |= 1 << driver;
+        if (found == 0x1FF) {
+            break;
+        }
+    }
 }
 
 unsigned short BattleGlobal::fn_71000053C4(int id) const {

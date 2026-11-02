@@ -12,7 +12,7 @@ namespace gf { class GfComEffectCaster; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace mm { class Vec3; }
-namespace btl { class ShakeCameraManager; struct ARTS_DATA; }
+namespace btl { class ShakeCameraManager; struct ARTS_DATA; class BattleCharacter; }
 
 namespace btl {
 // The tutorial condition BattleGlobal::Tutorial takes (the type's name is the symbol's; its values are not named).
@@ -178,8 +178,14 @@ public:
     void PlayErrorSE();  // 1.0.0's PlayErrorSE (3.0.1's symbols spell fn_710000C3C8)
     // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: they read this BattleGlobal's
     // fields (callers pass PtrSingleton<BattleGlobal>::sys()). What they do:
+    // Initialize: clears pad_8374[0-8], then keeps in pad_8374[driver - 17] the last row of BDAT table 1 whose
+    // "IrType" is 3 for each "Driver" 17-25
+    void fn_7100004C10();
     unsigned short fn_71000053C4(int id) const;  // pad_8374[id - 17]; PlayerParameter::InitializeArtsPalette
     const ELEMENTAL_COMBO_FLOW_DATA& fn_71000053F8(int id) const;  // the flow entry, no range check
+    // the elements (bit element) of the final steps (stage above 2) reachable from step id through the children
+    // pad_0[1-8] whose bit is in mask (BattleCharacter::AI_BladeChange), masked by it
+    unsigned int fn_710000540C(int id, unsigned int mask) const;
     bool fn_7100007554() const;  // pad_5d54 != 0 (13 callers: BattleCharacter input/AI, CheckBattle, ...)
     void fn_710000903C();  // clears pad_83b2, sets pad_83b4 to 0xFF (BattleManager::CheckBattle)
     // takes id (a row of BDAT table 0xB1) into pad_83b2 when none is held (pad_83b4 0xFF) or its "Priority" is
@@ -370,6 +376,10 @@ public:
     // Placeholder name: GROUP_BLADE_DATA::Initialize passes the party character (1-12) and whether the area's
     // revision applies; m_mapRev's entry for it (nullptr out of range), or a default entry when it does not apply
     const MapRev* fn_710000CE5C(int chara, bool apply) const;
+    // Placeholder name: DataManager::UpdateProc passes a character and its driver; fn_710000CE5C's entry for the
+    // character's m_bdatID, applied unless the driver's parameter slot 75 says otherwise, when it is a player
+    // (m_isPlayer) that fn_71000290BC(true) accepts and m_challengeAnySuccess is clear; else nullptr
+    const MapRev* fn_710000CD60(BattleCharacter* chara, BattleCharacter* driver) const;
     MapRev m_mapRev[12];
     int m_mapRevAreaId;  // the anti-blade area id m_mapRev was read for (the name is not the original's)
     // the chain count and the narration level it reached (AddChainCount; the names are not the original's)
