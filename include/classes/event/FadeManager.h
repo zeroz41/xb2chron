@@ -19,10 +19,17 @@ public:
     // the symbol _ZNK5event11FadeManager8isFadingEv (SeqManager::end_fadewait::update waits while it is true)
     bool isFading() const;
     // color null: the fade keeps its color
-    void play(bool in, unsigned int frame, FadeCtrl::PRIO prio, const mm::Col4* color);
+    // out: FadeCtrl::fadeout on prio's layer, else FadeCtrl::fadein on every layer; nothing while fades are
+    // disabled (pad_10 bit 0), frame 0 while event::SkipManager skips
+    void play(bool out, unsigned int frame, FadeCtrl::PRIO prio, const mm::Col4* color);
+    void update();  // FadePlanner::update by FrameManager's step, then FadeCtrl::update
+    // 1.0.0's name (out of line there at 0x71000E0648); inline in 3.0.1
+    void request(FadePlanner::TYPE type) {
+        if (!(pad_10 & 1)) pad_18.request(type);
+    }
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
 
-    unsigned int pad_10;  // 0x10 (the constructor zeroes it)
+    unsigned int pad_10;  // 0x10 (the constructor zeroes it): bit 0 disables fades (setDisableFade)
     unsigned int pad_14;  // 0x14 (the constructor zeroes it)
     FadePlanner pad_18;  // 0x18 (update calls its update)
 };

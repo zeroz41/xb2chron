@@ -1,8 +1,10 @@
 #ifndef CLASSES_EVENT_FRAMEMANAGER_H
 #define CLASSES_EVENT_FRAMEMANAGER_H
 
+#include <math.h>
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedVector.h"
+#include "classes/event/FrameInfo.h"
 #include "classes/event/IManager.h"
 #include "classes/mm/mtl/Singleton.h"
 
@@ -26,6 +28,21 @@ public:
     void setSkipAbleFrame(float frame);
     float getFrame() const;
     float getMaxFrame() const;
+    // inline (1.0.0 had it out of line at 0x71000AA78C with no callers; FadeManager::update and OnEventProc inline
+    // it): computes this frame's FrameInfo from the frame counters and the pause bits at 0x18
+    const FrameInfo& frameInfo() {
+        m_frameInfo.pad_0 = m_frame;
+        float step = pad_164 - m_frame;
+        if (pad_18 != 0) step = 0.0f;
+        m_frameInfo.pad_4 = step;
+        m_frameInfo.m_cmdStep = step;
+        if ((pad_18 & 0x67f4) && step <= 0.0f) m_frameInfo.m_cmdStep = fmaxf(pad_188, 0.0f) + 1.0f;
+        m_frameInfo.m_step = step;
+        if (!(pad_10 & 1)) m_frameInfo.m_step = fmaxf(pad_188, 0.0f) + 1.0f;
+        if (pad_18 & 0x38300a) m_frameInfo.m_step = 0.0f;
+        m_frameInfo.pad_10 = pad_188;
+        return m_frameInfo;
+    }
 
 private:
     // the fields below up to m_frame are set by the constructor; no reader seen yet
@@ -49,16 +66,15 @@ private:
     unsigned char pad_174[0xc];
     float m_skipAbleFrame;  // 0x180 setSkipAbleFrame stores its argument (the name is not the original's)
     int pad_184;
-    unsigned char pad_188[0x8];
+    float pad_188;  // 0x188 (frameInfo reads it)
+    unsigned char pad_18c[0x4];
     // what addKeyFrame keeps sorted by frame (asserts `size() < capacity()`); the names are not the original's
     struct KeyFrame {
         float frame;
         bool flag;
     };
     mm::mtl::FixedVector<KeyFrame, 512> m_keyFrames;  // 0x190 (count at 0x1190)
-    long pad_1198;
-    long pad_11a0;
-    int pad_11a8;
+    FrameInfo m_frameInfo;  // 0x1198: what frameInfo fills and returns (the name is not the original's)
 };
 }  // namespace event
 

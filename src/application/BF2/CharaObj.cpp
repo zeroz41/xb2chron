@@ -1832,6 +1832,19 @@ FadeManager::~FadeManager() {}
 
 FadeCtrl::~FadeCtrl() {}
 
+void FadeCtrl::clear() {
+    for (int i = 0; i < 3; i++) {
+        pad_8[i].update();
+        pad_8[i].pad_4 = false;
+        pad_8[i].pad_c = false;
+    }
+    pad_68 = 0;
+}
+
+void FadeCtrl::update() {
+    for (int i = 0; i < 3; i++) pad_8[i].update();
+}
+
 void DofManager::clear() {
     stop();
 }
@@ -1903,12 +1916,34 @@ void FadePlanner::play(TYPE type) {
 
 FadeManager::FadeManager() : pad_10(0), pad_14(0) {}
 
+void FadeManager::update() {
+    const FrameInfo& info = mm::mtl::Singleton<FrameManager>::getPtr()->frameInfo();
+    pad_18.update(info.pad_4);
+    mm::mtl::Singleton<FadeCtrl>::getPtr()->update();
+}
+
 bool FadeManager::isFading() const {
     FadeCtrl* ctrl = mm::mtl::Singleton<FadeCtrl>::getPtr();
     for (int i = 0; i < 3; i++) {
         if (ctrl->pad_8[i].pad_4 || gf::GfGameManager::isFading(ctrl->pad_8[i].pad_0)) return true;
     }
     return false;
+}
+
+void FadeManager::OnEventProc(event::MSG_TYPE msg) {
+    switch (msg) {
+    case 1:
+        // 1.0.0's FadeManager::clear (out of line there at 0x71000E00B8)
+        pad_18.clear();
+        mm::mtl::Singleton<FadeCtrl>::getPtr()->clear();
+        pad_14 = 0;
+        break;
+    case 15:
+        update();
+        break;
+    default:
+        break;
+    }
 }
 
 }  // namespace event
@@ -3162,7 +3197,7 @@ namespace event {
 
 FrameManager::FrameManager()
     : pad_18(0), pad_d0(), m_frame(0.0f), pad_15c(0.0f), pad_160(0.0f), pad_164(0.0f), pad_16c(0),
-      m_maxFrame(1000.0f), pad_184(1), m_keyFrames(), pad_1198(0), pad_11a0(0), pad_11a8(0) {
+      m_maxFrame(1000.0f), pad_184(1), m_keyFrames(), m_frameInfo() {
     pad_10 = 0;
     pad_14 = 2;
     for (int i = 0; i < 22; i++) {
