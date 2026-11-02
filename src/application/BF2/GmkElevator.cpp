@@ -460,6 +460,22 @@ bool GmkSet::isGmkListsCreated() const {
     return true;
 }
 
+bool GmkManager::updateImmediate() {
+    if (!isValid() || &GmkManager::seqUpdate != m_seq) {
+        update(0.0f);
+        return false;
+    }
+    if (m_gmkSets.size() == 0) {
+        return true;
+    }
+    for (GmkSet* const* it = m_gmkSets.begin(); it != m_gmkSets.end(); ++it) {
+        if (!(*it)->updateImmediate()) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void GmkManager::update(float dt) {
     if (m_bdat.m_seq) {
         (m_bdat.*m_bdat.m_seq)(dt);
@@ -551,6 +567,46 @@ bool GmkManager::isBdatIdOfGmkInstExist(int id, GmkType type, int bdatId) const 
         }
     }
     return false;
+}
+
+bool GmkManager::isValidView() const {
+    if (!isValid() || &GmkManager::seqUpdate != m_seq) {
+        return false;
+    }
+    for (GmkSet* const* it = m_gmkSets.begin(); it != m_gmkSets.end(); ++it) {
+        if (!(*it)->isValid() || !(*it)->isValidView()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool GmkSet::isValidView() const {
+    if (!isValid() || &GmkSet::seqUpdate != m_seq) {
+        return false;
+    }
+    for (IGmkList* const* it = m_gmkLists; it != m_gmkLists + GMK_LIST_NUM; ++it) {
+        IGmkList* list = *it;
+        if (list == nullptr) {
+            continue;
+        }
+        const IGmkList::CreateInfo& info = list->getCreateInfo();
+        if (info.m_allocHandle.m_handle == 0 || info.m_path.length() == 0) {
+            continue;
+        }
+        if (!list->isValid()) {
+            return false;
+        }
+        list->getGmkType();  // the original calls it and drops the result
+        unsigned int num = list->getInstNum();
+        for (unsigned int i = 0; i < num; ++i) {
+            AGmkBase* gmk = list->getInst(i);
+            if (gmk != nullptr && gmk->isValid() && !isGmkInstValidView(*gmk)) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 void GmkRoutedEnemyList::setUpdateGmkNumPerFrame(unsigned int num) {

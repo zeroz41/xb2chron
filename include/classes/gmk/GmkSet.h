@@ -33,9 +33,15 @@ public:
     // whether the set has reached its update step and none of its lists is still loading (a list with a memory
     // handle and a path that is not valid yet)
     bool isGmkListsCreated() const;
+    // whether the set has reached its update step and every valid gimmick of its loaded lists passes
+    // isGmkInstValidView
+    bool isValidView() const;
+    static bool isGmkInstValidView(const AGmkBase& gmk);
     void create(const CreateInfo& info);
     void dispose();
     void update(float delta);
+    // GmkManager::updateImmediate's step for each set: false while the set is not in its update step
+    bool updateImmediate();
     // its list of the gimmicks of a kind, none when it has none
     const IGmkList* getGmkList(GmkType type) const;
     IGmkList* getGmkList(GmkType type);
