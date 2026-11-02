@@ -32,11 +32,42 @@ struct TimeRange {
 }  // namespace
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B52658)
-static TimeRange s_timeRanges[6] = {
-    {7, 0, 11, 59}, {12, 0, 15, 59}, {16, 0, 18, 59}, {19, 0, 23, 59}, {0, 0, 4, 59}, {5, 0, 6, 59},
+// the six ranges of the day, then day (7:00 to 18:59, getTimeRangeDN's 6), night (19:00 to 6:59, 7) and the whole day
+static TimeRange s_timeRanges[9] = {
+    {7, 0, 11, 59}, {12, 0, 15, 59}, {16, 0, 18, 59}, {19, 0, 23, 59}, {0, 0, 4, 59},
+    {5, 0, 6, 59},  {7, 0, 18, 59},  {19, 0, 6, 59},  {0, 0, 23, 59},
 };
 
 GfFieldTime::~GfFieldTime() {}
+
+void GfFieldTime::clear() {
+    m_flags.reset();
+    m_startPlayTime = ElapseTime();
+    m_playTime = ElapseTime();
+    pad_28 = 0;
+    m_gameTime = GameTime();
+    m_time = 0.0f;
+    m_prevTime = 0.0f;
+    pad_38 = 0.0f;
+    pad_3C = 1.0f;
+    pad_4C = 0;
+    m_timeRange = getTimeRange(0, 0);
+    m_prevTimeRange = m_timeRange;
+    m_timeRangeDN = getTimeRangeDN();
+    m_playSec = 0.0f;
+    m_gameSec = 0.0f;
+    getRealTime(m_startRealTime);
+    m_realTime = m_startRealTime;
+    m_time = m_prevTime = 7 * 1800.0f;
+    pad_38 = 0.0f;
+    m_gameTime.hour = 7;
+    m_gameTime.min = 0;
+    m_gameTime.sec = 0;
+    m_timeRange = getTimeRange(7, 0);
+    m_timeRangeDN = getTimeRangeDN();
+    saveRealTime();
+    GfDataManager::getDataGame()->m_gameTime = m_gameTime;
+}
 
 int GfFieldTime::getTimeRange(unsigned int hour, unsigned int min) const {
     for (int i = 0; i < 6; i++) {
@@ -80,6 +111,12 @@ void GfFieldTime::setTime(unsigned int hour, unsigned int min) {
 
 const GameTime& GfFieldTime::getGameTime() const {
     return m_gameTime;
+}
+
+void GfFieldTime::setupGame() {
+    setElapseTime(GfDataManager::getDataGame()->m_playTime);
+    setGameTime(GfDataManager::getDataGame()->m_gameTime);
+    setTimeStop(GfDataManager::getDataGame()->m_timeStop != 0);
 }
 
 void GfFieldTime::setElapseTime(const ElapseTime& time) {
