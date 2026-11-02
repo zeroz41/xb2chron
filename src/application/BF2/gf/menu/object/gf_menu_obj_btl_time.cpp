@@ -284,6 +284,63 @@ bool TUnk_B60928::fn_71003B5B28() {
     return true;
 }
 
+void TUnk_B60928::TUnk_B609C0::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        acc.setSuspend(true);
+        m_open = 0;
+        m_ctrl = -1;
+        break;
+    case 3:
+        if (event.m_param0 == 2 && m_open == 0) {
+            acc.setSuspend(true);
+        }
+        break;
+    case 0x21:
+        if (m_open != 1) {
+            int kind = event.m_param0;
+            acc.setDispChild(kind == 0, "LAY_score_index_score");
+            acc.setDispChild(kind == 1, "LAY_score_index_kill");
+            acc.setDispChild(kind == 0, "LAY_score_num");
+            acc.setDispChild(kind == 1, "LAY_score_num_max");
+            GfMenuObjUtil::PresetCtrlParam param;
+            param.m_preset = 0;
+            param.m_out = 0;
+            param.m_slot = m_ctrl;
+            param.m_startFlag4 = true;
+            param.m_eventId = 1;
+            param.m_delay = GfGameManager::fn_71002AC580() ? 0.5f : 0.0f;
+            int ctrl = GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+            if (ctrl != -1) {
+                m_open = 1;
+                m_ctrl = ctrl;
+            }
+            acc.setSuspend(false);
+        }
+        break;
+    case 0x22:
+        if (m_open != 0) {
+            GfMenuObjUtil::PresetCtrlParam param;
+            param.m_preset = 0;
+            param.m_out = 1;
+            param.m_slot = m_ctrl;
+            param.m_startFlag4 = true;
+            param.m_eventId = 2;
+            int ctrl = GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+            if (ctrl != -1) {
+                m_open = 0;
+                m_ctrl = ctrl;
+            }
+        }
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 bool TUnk_B60928::fn_71003B5E54() {
     GfMenuObjUtil::playSE(0x22);
     return true;
