@@ -92,8 +92,9 @@ public:
     bool pad_940;  // cleared by the constructor
     int m_infoCtrl;  // seqLogNextWaitInfo waits for this control to finish (the name is not the original's)
     bool pad_948;  // cleared by the constructor; seqTitleFadeInText tests it
-    // released (and cleared) by the destructor; the type is not known yet
-    mm::mtl::ReferenceObject* pad_950;
+    // the reward window's call context: CompleteListener creates it on the first complete event (0x21) and opens
+    // GfMenuObjQuestReward under it; the destructor releases it (the name is not the original's)
+    GfMenuCallContext* m_rewardContext;
     // setupLog: the quest's task count (GfQuestInfo::getQuestTaskInfo; the name is not the original's)
     unsigned int m_taskCount;
     unsigned char pad_95C[4];

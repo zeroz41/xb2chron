@@ -12,6 +12,8 @@
 #include "classes/gf/GfMenuObjQuestLog/OrderListener.h"
 #include "classes/gf/GfMenuObjQuestLog/TitleListener.h"
 #include "classes/gf/GfMenuObject.h"
+#include "classes/gf/GfMenuCallContext.h"
+#include "classes/gf/GfMenuObjQuestReward.h"
 #include "classes/gf/GfMenuReferenceQuest.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuFlag.h"
@@ -25,6 +27,8 @@
 #include "gf/QuestListAcc.h"
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfQuestManager.h"
+#include "classes/gf/GfGameScene.h"
+#include "classes/gf/GfGameManager.h"
 #include "classes/gf/SCOM_FIELD_VOICE.h"
 #include "ui/EventData.h"
 
@@ -32,15 +36,15 @@ namespace gf {
 
 GfMenuObjQuestLog::GfMenuObjQuestLog(unsigned int handle)
     : GfMenuObject(handle), m_refs(), pad_58(), m_logOpened(), pad_5A(), m_listVisible(), m_titleSeq(this), m_logSeq(this), m_orderSeq(this), pad_940(false),
-      pad_948(false), pad_950(nullptr), m_taskCount(0), pad_95C() {}
+      pad_948(false), m_rewardContext(nullptr), m_taskCount(0), pad_95C() {}
 
 GfMenuObjQuestLog::~GfMenuObjQuestLog() {
     for (int i = 0; i < 6; ++i) {
         m_refs[i] = nullptr;
     }
-    if (pad_950 != nullptr) {
-        pad_950->release();
-        pad_950 = nullptr;
+    if (m_rewardContext != nullptr) {
+        m_rewardContext->release();
+        m_rewardContext = nullptr;
     }
 }
 
@@ -165,6 +169,32 @@ void GfMenuObjQuestLog::completeTask(const QuestTaskParam& param) {
         event.m_param1 = param.m_task;
         GfMenuObject::sendEvent(log.m_handle, event, 0.0f);
     }
+}
+
+void GfMenuObjQuestLog::update() {
+    m_titleSeq.update();
+    m_logSeq.update();
+    m_orderSeq.update();
+    QuestID id;
+    getRef<GfMenuReferenceQuest>(1)->getQuest(id);
+    GfGameScene* scene = GfGameScene::sys();
+    if (scene != nullptr) {
+        QuestID current = scene->getQuestIdForTaskLog();
+        if (!(id == current)) {
+            getRef<GfMenuReferenceQuest>(1)->m_quest = scene->getQuestIdForTaskLog();
+            ui::UIObjectAcc main(GfMenuObject::getAttachedObject(0x20));
+            if (main.m_object != nullptr) {
+                ui::EventData event;
+                event.m_type = 0x101;
+                GfMenuObject::sendEvent(main.searchChild("LAY_log"), event, 0.0f);
+            }
+        }
+    }
+    {
+        ui::UIObjectAcc detail(m_handle, "LAY_log_to_detail_main");
+        detail.setAlpha(GfGameManager::isEnableOpenMainMenu() ? 1.0f : 0.5f);
+    }
+    GfMenuObject::update();
 }
 
 void GfMenuObjQuestLog::setupLog() {
@@ -453,6 +483,74 @@ bool GfMenuObjQuestLog::seqOrderStart() {
         GfMenuObjUtil::playJingle(6);
     }
     return true;
+}
+
+void GfMenuObjQuestLog::CompleteListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        GfMenuObject::disableInput(acc.m_handle);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+        } else if (event.m_param0 == 2) {
+            m_owner->getRef<GfMenuReferenceQuest>(2)->m_quest = QuestID();
+            GfMenuObject::termCallContext(acc.m_handle);
+            acc.setDisp(false);
+        }
+        break;
+    case 8:
+        if (event.m_param1 == 1) {
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "cmn_fade_motion_lr";
+            param.m_motion = "fade_out_l";
+            param.m_startFlags = 10;
+            param.m_eventId = 2;
+            int ctrl = GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_comp_result");
+            GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObjUtil::playSECommonDecide();
+        }
+        break;
+    case 0x21: {
+        if (m_owner->m_rewardContext == nullptr) {
+            m_owner->m_rewardContext = GfMenuCallContext::create();
+            GfMenuObjQuestReward::OpenParam param;
+            param.m_quest = m_owner->m_refs[2];
+            param.m_handle = acc.searchChild("LAY_comp_ret_reward");
+            GfMenuObjQuestReward::create(m_owner->m_rewardContext, param, false);
+        }
+        m_owner->pad_948 = false;
+        ui::EventData open;
+        open.m_type = 0x21;
+        open.m_param0 = event.m_param0;
+        GfMenuObject::sendEvent(acc.searchSibiling("LAY_title"), open, 0.0f);
+        m_owner->getRef<GfMenuReferenceQuest>(2)->m_quest = QuestID(event.m_param0);
+        m_owner->m_orderSeq.clear();
+        m_owner->m_orderSeq.addWait(0x4B);
+        m_owner->m_orderSeq.addJob(&GfMenuObjQuestLog::seqCompleteStart);
+        GfMenuObjQuestReward::open(m_owner->m_rewardContext, false);
+        acc.setDisp(true);
+        break;
+    }
+    case 0x103: {
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_in_l";
+        param.m_setDefault = true;
+        param.m_eventId = 1;
+        int ctrl = GfMenuObjUtil::startCtrl(acc.m_handle, param, "LAY_comp_result");
+        GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        break;
+    }
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 bool GfMenuObjQuestLog::seqOrderWaitCtrl() {
