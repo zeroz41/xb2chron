@@ -1,17 +1,22 @@
 #include "classes/gf/TGfTween.h"
 #include "classes/gf/GfFieldLocalSteer.h"
 #include "classes/navi/NvmshAcObjBase.h"
+#include "classes/gmk/GmkRouteNavi.h"
 #include "gf/GfFieldUndulator.h"
 #include "gf/GfFieldPitchRollController.h"
 #include "gf/GfGameDepopMeter.h"
 #include "gf/GfBigObjUnique.h"
 #include "gf/GfFieldLookIk.h"
 #include "gf/GfObjAcc.h"
+#include "gf/GfExecSchedule.h"
+#include "mm/mtl/FixStr.h"
+#include "classes/fw/ComponentObject.h"
 #include "classes/gf/GfObj.h"
 #include "classes/gf/GfComIK.h"
 #include "classes/fw/LookIkSolver.h"
 #include "gf/MsgPcGetLookPoint.h"
 #include "fw/Transform.h"
+#include "mm/Mat44.h"
 #include "classes/gf/GfFieldLocalSteer.h"
 #include "gf/GfFieldUndulator.h"
 #include "gf/GfFieldPitchRollController.h"
@@ -38,12 +43,37 @@
 
 namespace gf {
 
+void validateGmkRouteNaviConsideringGfLocalSteer(gmk::GmkRouteNavi& navi, const GfFieldLocalSteer& steer,
+                                                 const mm::Vec3& pos) {
+    if (navi.m_info.isValid() && navi.m_acc.isValid() && navi.pad_80 &&
+        steer.m_info.m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) && steer.pad_20) {
+        if ((navi.pad_90 - pos).length() < steer.m_info.pad_8) {
+            navi.updateNextPos();
+        }
+    }
+}
+
 bool getMoveVec(mm::Vec3& out, const navi::NvmshAcObj* obj) {
     if (obj != nullptr && (obj->m_flags & 2) && obj->m_state == 1) {
         out = obj->getMoveVec();
         return true;
     }
     return false;
+}
+
+bool execEndSchedule(fw::ComponentObject& com) {
+    GfComAsm* comAsm = com.m_owner->getComponent<GfComAsm>(2);
+    if (comAsm == nullptr) {
+        return false;
+    }
+    const char* state = comAsm->getStateName(AnimLayer(0));
+    if (state == nullptr || strstr(state, "S_schedule_") == nullptr) {
+        return false;
+    }
+    mm::mtl::FixStr<32> cmd(state);
+    cmd.m_str[0] = 'C';
+    cmd[cmd.length() - 1] = '2';
+    return comAsm->execCmd(cmd.m_str, AnimLayer(0));
 }
 
 GfFieldLocalSteer::GfFieldLocalSteer(const CreateInfo* info) : pad_20(false), pad_24(0.0f), pad_5040(nullptr), pad_5050(0), pad_5054(false) {
@@ -79,6 +109,19 @@ float GfFieldLocalSteer::getCurAngle() const {
 
 void GfFieldLocalSteer::dispose() {
     m_info = CreateInfo();
+}
+
+void GfFieldLocalSteer::apply(mm::Vec3& out, const mm::Vec3& in) const {
+    float angle = getCurAngle();
+    if (angle == 0.0f) {
+        out = in;
+        return;
+    }
+    mm::Mat44 rot;
+    rot.setRotY(angle);
+    out = mm::Vec3(in.x * rot.m[0][0] + in.y * rot.m[1][0] + in.z * rot.m[2][0],
+                   in.x * rot.m[0][1] + in.y * rot.m[1][1] + in.z * rot.m[2][1],
+                   in.x * rot.m[0][2] + in.y * rot.m[1][2] + in.z * rot.m[2][2]);
 }
 
 void GfFieldUndulator::create(const CreateInfo& info) {
@@ -139,11 +182,73 @@ GfFieldMoveSpeed::GfFieldMoveSpeed(const CreateInfo* info)
     }
 }
 
+void GfFieldMoveSpeed::create(const CreateInfo& info) {
+    dispose();
+    m_handle = info.m_handle;
+    GfObjAcc acc(m_handle);
+    GfObj* obj = acc.getObj();
+    // one early exit for both misses (separate exits leave the minimum reloaded at the end)
+    GfComAsm* comAsm = obj != nullptr ? obj->getComponent<GfComAsm>(2) : nullptr;
+    if (comAsm == nullptr) {
+        setSpeedKmph(m_speedMin, 0.0f);
+        return;
+    }
+    const anm::ResASM* res = comAsm->getResource();
+    if (res == nullptr) {
+        dispose();
+        return;
+    }
+    anm::Util::getVariableMinMax(*res, s_S_move, s_V_speed, &m_speedMin, &m_speedMax);
+    if (m_speedMin < 1e-6f) {
+        m_speedMin = 1e-6f;
+    }
+    if (m_speedMax < m_speedMin) {
+        m_speedMax = m_speedMin;
+    }
+    setSpeedKmph(m_speedMin, 0.0f);
+}
+
 void GfFieldMoveSpeed::setSpeedKmph(float speed, float duration) {
     m_tween.m_from = m_speed;
     m_tween.m_to = speed;
     m_tween.m_duration = duration;
     m_tween.m_time = 0.0f;
+}
+
+void GfFieldMoveSpeed::update(float deltaTime) {
+    if (m_handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    if (m_tween.m_time < m_tween.m_duration) {
+        float time = m_tween.m_time + deltaTime;
+        m_tween.m_time = m_tween.m_duration < time ? m_tween.m_duration : time;
+    }
+    m_speed = m_tween.getValue();
+    GfObjAcc acc(m_handle);
+    GfObj* obj = acc.getObj();
+    if (obj == nullptr) {
+        return;
+    }
+    GfComAsm* comAsm = obj->getComponent<GfComAsm>(2);
+    if (comAsm == nullptr) {
+        return;
+    }
+    comAsm->setVariable(s_V_speed, m_speed);
+    float playSpeed;
+    if (m_speedMin < 1e-6f) {
+        playSpeed = 0.0f;
+    } else {
+        float rate = m_speed / m_speedMin;
+        float maxRate;
+        if (rate < 1.0f) {
+            playSpeed = rate;
+        } else if ((maxRate = m_speedMax / m_speedMin) < rate) {
+            playSpeed = rate / maxRate;
+        } else {
+            playSpeed = 1.0f;
+        }
+    }
+    comAsm->setSpeed(playSpeed, AnimLayer(0));
 }
 
 void GfFieldMoveSpeed::dispose() {
@@ -171,6 +276,34 @@ void GfEnemyFieldMoveSpeed::setSpeedKmph(float speed, float rate) {
     m_tween.m_from = speedNow;
     m_tween.m_value = rate == 0.0f ? speed : speedNow;
     m_tween.m_rate = rate;
+}
+
+void GfEnemyFieldMoveSpeed::update(float deltaTime) {
+    if (m_handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        return;
+    }
+    if (m_tween.m_from < m_tween.m_to) {
+        m_tween.m_value += m_tween.m_rate * deltaTime;
+        if (m_tween.m_to <= m_tween.m_value) {
+            m_tween.m_value = m_tween.m_to;
+        }
+    } else {
+        m_tween.m_value -= m_tween.m_rate * deltaTime;
+        if (m_tween.m_value <= m_tween.m_to) {
+            m_tween.m_value = m_tween.m_to;
+        }
+    }
+    m_speed = m_tween.m_value;
+    GfObjAcc acc(m_handle);
+    GfObj* obj = acc.getObj();
+    if (obj == nullptr) {
+        return;
+    }
+    GfComAsm* comAsm = obj->getComponent<GfComAsm>(2);
+    if (comAsm == nullptr) {
+        return;
+    }
+    comAsm->setVariable(s_V_speed, m_speed);
 }
 
 GfFieldLookIk::GfFieldLookIk(GF_OBJ_HANDLE* handle)

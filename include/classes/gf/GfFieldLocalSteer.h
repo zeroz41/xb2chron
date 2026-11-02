@@ -65,6 +65,10 @@ public:
     unsigned char pad_5055[0xB];
 };
 
+// advances navi to its next point once the steering is on and pos is within the steering's pad_8 of the next
+// point (all its callers are behaviour states)
+void validateGmkRouteNaviConsideringGfLocalSteer(gmk::GmkRouteNavi& navi, const GfFieldLocalSteer& steer,
+                                                 const mm::Vec3& pos);
 // whether the navigation object holds a move vector to read (flag bit 1, state 1)
 bool canGetMoveVec(const navi::NvmshAcObj* obj);
 // the navigation object's move vector into out when canGetMoveVec; returns whether it did
