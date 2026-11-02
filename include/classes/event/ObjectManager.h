@@ -56,6 +56,10 @@ public:
     void updateCurrent();
     // a new scene (an ObjectList named name, m_flags bit 0 passed on), added to m_scenes (1.0.0's name)
     ObjectList* createScene(const char* name);
+    // 1.0.0's names (0x710011D99C, 0x710011C900; 3.0.1 inlines them): the current scene's effects alive, and
+    // every scene's effects stopped (SeqManager::end_eff)
+    inline bool isUsingEffect();
+    inline void stopEffect();
 
     // bit 0 is passed to each new ObjectList (1.0.0's createScene); the name is not the original's
     unsigned int m_flags;  // 0x10

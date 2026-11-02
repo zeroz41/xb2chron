@@ -24,6 +24,10 @@ public:
     void renderSub(Object* obj);
     void tailSub(Object* obj);
     bool isLoadingSub(Object* obj) const;
+    // 1.0.0's names (0x710011C018, 0x710011C0C4; 3.0.1 inlines them): whether an effect of the list is alive,
+    // and stop every effect (category 2 holds the ObjectEffects)
+    inline bool isUsingEffect();
+    inline void stopEffect();
     // the object below obj (obj included) with that name, else null (static: the original passes obj in x0)
     static Object* searchByNameSub(Object* obj, const char* name);
     Object* createCamera(const char* name, unsigned int id);

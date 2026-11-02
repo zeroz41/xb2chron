@@ -49,6 +49,15 @@ public:
     virtual bool isFailure() const;  // slot 8
     // a new pack named by the first name, its header and data requested by the other two (SeqManager::setupScene)
     void loadStream(const char* name, const char* header, const char* data);
+    // 1.0.0's StmPackMemory::isBusy (0x71000A3D14, out of line there): a pack's data still reading
+    bool isBusy() {
+        for (unsigned long i = 0; i < pad_5860.size(); i++) {
+            if (pad_5860[i]->m_data.isBusy()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     unsigned int pad_8;  // flags: bit 0 the buffer is allocated, bit 1 waiting for a cut, bit 2 stop
     mtl::ALLOC_HANDLE pad_c;  // MotstmManager::create's handle

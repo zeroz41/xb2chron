@@ -29,6 +29,14 @@ public:
         pad_8 = 0;
     }
 
+    // 1.0.0's StmPackData::isBusy (0x71000A3968, out of line there)
+    bool isBusy() const {
+        if (pad_8 & 1) {
+            return true;
+        }
+        return ml::DevFileTh::rfIsBusy(pad_90);
+    }
+
     unsigned int pad_8;  // bit 0 cleared by OnFileEvent when a read ended (event kind 2)
     mm::mtl::FixStr<128> pad_c;  // create's name
     ml::FileHandleTh* pad_90;  // the handle the destructor closes (DevFileTh::rfClose)

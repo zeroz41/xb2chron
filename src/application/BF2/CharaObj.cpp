@@ -4374,6 +4374,52 @@ int SeqManager::play_next::update(const ICmd::Param& param) {
     return false;
 }
 
+inline bool ObjectList::isUsingEffect() {
+    for (unsigned int i = 0; i < m_counts[2]; i++) {
+        Object* obj = m_categories[2]->m_child;
+        for (unsigned int j = 0; j < i; j++) {
+            obj = obj->m_next;
+        }
+        if (static_cast<ObjectEffect*>(obj)->m_effect->m_ctrl.pad_110 != nullptr) {
+            return true;
+        }
+    }
+    return false;
+}
+
+inline void ObjectList::stopEffect() {
+    for (unsigned int i = 0; i < m_counts[2]; i++) {
+        Object* obj = m_categories[2]->m_child;
+        for (unsigned int j = 0; j < i; j++) {
+            obj = obj->m_next;
+        }
+        static_cast<ObjectEffect*>(obj)->m_effect->stop();
+    }
+}
+
+inline bool ObjectManager::isUsingEffect() {
+    if (m_current == nullptr) {
+        return false;
+    }
+    return m_current->isUsingEffect();
+}
+
+inline void ObjectManager::stopEffect() {
+    for (unsigned long i = 0; i < m_scenes.size(); i++) {
+        m_scenes[i]->stopEffect();
+    }
+}
+
+int SeqManager::end_eff::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        manager->m_seqName = "end eff";
+    }
+    bool busy = mm::mtl::Singleton<ObjectManager>::getPtr()->isUsingEffect();
+    mm::mtl::Singleton<ObjectManager>::getPtr()->stopEffect();
+    return !busy;
+}
+
 int RandPlayer::Warp::update(const ICmd::Param& param) {
     if (param.m_frame == 0) {
         gf::GfGameParty::judgeRandomTalkWarp();

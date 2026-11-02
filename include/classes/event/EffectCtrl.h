@@ -15,7 +15,10 @@ public:
     void update();
     void setCaster(IAttachActor* caster);
 
-    unsigned char pad_8[0x158];
+    unsigned char pad_8[0x108];
+    // non-null while the effect is alive: 1.0.0's ObjectList::isUsingEffect tests it, EffectCtrl::dead reads it
+    void* pad_110;
+    unsigned char pad_118[0x48];
     // the transform and colour EffectObj's linear commands write (EffectObj::play hands them &EffectObj::m_ctrl);
     // ScriptEffectScale and ScriptEffectColor save and restore m_scale and m_color; the names are not the original's
     mm::Vec3 m_pos;  // 0x160

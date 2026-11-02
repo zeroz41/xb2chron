@@ -23,6 +23,18 @@ public:
     // 1.0.0's clear and render (3.0.1 inlines them into OnEventProc; defined inline in CharaObj.cpp)
     void clear();
     void render();
+    // 1.0.0's MotstmManager::stop and isBusy (0x71000A8540, 0x71000A8560; 3.0.1 inlines them)
+    void stop() {
+        if (m_flags.test(0)) {
+            m_stmManager.stopStream();
+        }
+    }
+    bool isBusy() {
+        if (!m_flags.test(0)) {
+            return false;
+        }
+        return m_stmManager.isBusy();
+    }
     // 0x10 bit 0: create sets it, render needs it, clear zeroes it (the name is not the original's). A Bitflag:
     // render loads it 4-aligned (GVN does not widen it over m_dispFlags)
     mm::mtl::Bitflag<32> m_flags;

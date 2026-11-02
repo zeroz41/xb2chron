@@ -2,6 +2,7 @@
 #define CLASSES_EVENT_STMMANAGER_H
 
 #include "classes/event/IStmMemory.h"
+#include "classes/event/StmPackMemory.h"
 #include "mm/mtl/FixStr.h"
 
 namespace event {
@@ -26,11 +27,23 @@ public:
             m_stm->free(p, n);
         }
     }
+    // 1.0.0's StmManager::stopStream and isBusy (0x71000A51C8, 0x71000A51E0; 3.0.1 inlines them)
+    void stopStream() {
+        if (m_stm != nullptr) {
+            m_stm->pad_8 |= 4;
+        }
+    }
+    bool isBusy() {
+        if (m_stm == nullptr) {
+            return false;
+        }
+        return m_stm->isBusy();
+    }
     unsigned int pad_8;  // destroy zeroes it
     mm::mtl::FixStr<64> pad_c;  // the constructor's name (MotstmManager's: "streaming 1(eva lgt hkt)")
     // 0x50: MotstmManager::create stores a new StmPackMemory here; destroy and the destructor delete it (the
-    // name is not the original's)
-    IStmMemory* m_stm;
+    // name is not the original's); a StmPackMemory: 1.0.0's stopStream and isBusy read its fields directly
+    StmPackMemory* m_stm;
 };
 }  // namespace event
 
