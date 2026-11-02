@@ -247,6 +247,26 @@ bool WorkRoot::isErrorStop() {
     return _wroot::s_bErrorStop;
 }
 
+TJOB* WorkCpuThread::transferJob(WorkCpuThread* dst) {
+    CS lock(*m_jobLock);
+    if (!m_job.empty()) {
+        for (mm::mtl::FixedList<TJOB*, 64>::iterator it = m_job.begin(); it != m_job.end(); ++it) {
+            TJOB* job = *it;
+            if (job->pad_30 == 0) {
+                {
+                    CS dstLock(*dst->m_jobLock);
+                    dst->m_transferJob = job;
+                }
+                m_job.erase(it);
+                pad_1c4--;
+                pad_1c8--;
+                return job;
+            }
+        }
+    }
+    return nullptr;
+}
+
 int WorkCpu::getEven() {
     return get()->m_bank;
 }
@@ -329,9 +349,60 @@ unsigned long WorkCpu::getCurrentThreadId() {
     return reinterpret_cast<unsigned long>(ThreadUtil::getCurrentID());
 }
 
+bool WorkCpu::registErrorCB(IErrorCB* callback) {
+    WorkCpu* cpu = get();
+    if (callback == nullptr || cpu == nullptr) {
+        return false;
+    }
+    {
+        CSNC lock(cpu->m_errorCBLock);
+        mm::mtl::FixedList<IErrorCB*, 32>::iterator it = cpu->m_errorCB.begin();
+        for (; it != cpu->m_errorCB.end(); ++it) {
+        }
+        if (cpu->m_errorCB.size() == 32) {
+            return false;
+        }
+        cpu->m_errorCB.push_back(callback);
+    }
+    return true;
+}
+
+bool WorkCpu::unregistErrorCB(IErrorCB* callback) {
+    WorkCpu* cpu = get();
+    if (callback == nullptr || cpu == nullptr) {
+        return false;
+    }
+    CSNC lock(cpu->m_errorCBLock);
+    mm::mtl::FixedList<IErrorCB*, 32>::iterator it = cpu->m_errorCB.find(callback);
+    if (it != cpu->m_errorCB.end()) {
+        cpu->m_errorCB.erase(it);
+    }
+    return true;
+}
+
 unsigned long WorkCpu::getMainThreadId() {
     if (WorkCpu* cpu = get()) {
         return cpu->m_mainThreadId;
+    }
+    return 0;
+}
+
+unsigned long WorkCpu::getThreadId(CPUID cpu) {
+    WorkCpu* work = get();
+    if (work == nullptr) {
+        return 0;
+    }
+    if (cpu == CPUID(1)) {
+        return work->m_mainThreadId;
+    }
+    for (unsigned int i = 1; i < work->m_cpuNum; i++) {
+        WorkCpuThread* thread = work->m_thread[i];
+        if (thread == nullptr) {
+            continue;
+        }
+        if (thread->m_cpu == cpu) {
+            return thread->m_threadId;
+        }
     }
     return 0;
 }
@@ -530,6 +601,16 @@ bool WorkSystem::wkStandbyLogout() {
     return WorkObj::wkStandbyLogout();
 }
 
+WorkCpuThread::WorkCpuThread(const char* name, WorkObj* parent)
+    : WorkObj(name, parent, 0), m_cpu(CPUID(1)), m_threadId(0), m_th(nullptr), pad_1c0(0), pad_1c4(0), pad_1c8(0),
+      m_frameClock(0), m_frameClockCopy(0), m_frameCount(0), pad_1e4(0), m_jobLock(nullptr), m_transferJob(nullptr),
+      m_color((unsigned int)(mm::Col3::yellow.r * 255.0f) | ((unsigned int)(mm::Col3::yellow.g * 255.0f) << 8) |
+              ((unsigned int)(mm::Col3::yellow.b * 255.0f) << 16) | 0xFF000000),
+      pad_660(0), pad_668(0), pad_670(0), pad_672(0) {
+    m_jobLock = new (WorkUtil::getWorkMem(), nullptr, 0, 4, false) CriticalSection();
+    m_jobLock->setCostIgnore(true);
+}
+
 WorkCpuThread::~WorkCpuThread() {
     if (m_jobLock != nullptr) {
         delete m_jobLock;
@@ -627,6 +708,22 @@ CPUID WorkCpu::getCurrentCPUID() {
         }
     }
     return ThreadUtil::getCurrentCPUID();
+}
+
+bool WorkCpuThread::create(WorkCpuThread** thread, CPUID cpu, WorkObj* parent) {
+    mm::mtl::FixStr<16> name;
+    name.format("CPU(%d)", cpu);
+    WorkCpuThread* work = WorkUtil::createWork<WorkCpuThread>(name.m_str, parent, false);
+    *thread = work;
+    work->m_cpu = cpu;
+    if (cpu == CPUID(1)) {
+        work->m_threadId = reinterpret_cast<unsigned long>(ThreadUtil::getCurrentID());
+    } else {
+        Thread::create(&work->m_th, work->m_name.m_str, false, threadFunc, work, 0x40000, cpu, 0);
+        work->m_threadId = reinterpret_cast<unsigned long>(work->m_th->getID());
+        work->m_th->resume();
+    }
+    return true;
 }
 
 unsigned int WorkCpu::thRender(void* arg, void* param) {
