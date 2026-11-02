@@ -54,6 +54,8 @@ public:
     static void execMissionAchievementForBlade(unsigned int mission);
     static void execMissionRewardByTeamID(unsigned int teamId);  // the reward of the team's mission
     static void clearTeamMember(unsigned int team);
+    // (symbols) adds the blade to the team; GfMenuObjMercenaryForm::seqDepartureEnd adds each of its team list's
+    static bool addTeamMember(unsigned int teamId, unsigned int blade);
     static bool getZoneMission(mm::mtl::FixedVector<unsigned short, 500>& missions, unsigned int zone);  // a zone's missions
     static bool orderMission(unsigned int teamId, unsigned int mission);
     static void cancelMission(unsigned int mission);  // (symbols)
