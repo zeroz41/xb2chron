@@ -16,7 +16,18 @@ public:
     CallStackInfo* regist(unsigned int, const char*, unsigned int);
     void remove(CallStackInfo* info);
 
+    // the counters MemManager::initialize clears
+    static unsigned int m_maxAllocate;
+    static unsigned int m_nowAllocate;
+    static unsigned int m_maxAllocateSize;
+    static unsigned int m_nowAllocateSize;
+    static unsigned int m_maxRefCount;
     static mm::mtl::HeapAllocator m_allocator;  // where the records live (1.0.0: 0x19F8 bytes .bss)
+    // m_allocator's memory: MAX_ALLOCATE_SIZE records of 0xA8 bytes from malloc (MemManager::initialize; terminate
+    // frees it)
+    static void* m_buffer;
+    static unsigned long m_bufferSize;
+    static unsigned int MAX_ALLOCATE_SIZE;  // 0x4000
 
     mm::mtl::IntrusiveList<CallStackInfo> m_list;
     ml::CriticalSection m_cs;  // +0x18

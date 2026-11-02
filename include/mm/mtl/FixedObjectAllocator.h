@@ -29,16 +29,34 @@ public:
 
     // a free slot's object, constructed (mtl::MemManager::Region's copy 0x71006E8910); not written yet
     T* allocate();
-    // gives p's slot back (Region's copy 0x71006E8600); not written yet
-    void deallocate(T* p);
+    // gives p's slot back: its object destroyed and its flag cleared (Region's copy 0x71006E8600)
+    void deallocate(T* p) {
+        if (p == nullptr) {
+            return;
+        }
+#line 240 MM_MTL_FIXED_OBJECT_ALLOCATOR_PATH
+        MM_ASSERT(m_allocated > 0);
+        unsigned int index = index_of(p);
+        p->~T();
+        m_used.resetAt(index);
+        --m_allocated;
+    }
     // every slot given back (Region's copy 0x71006EB948); not written yet
     void clear();
+    // p's slot (deallocate's; the name is not the original's)
+    unsigned int index_of(const T* p) const {
+#line 86 MM_MTL_FIXED_OBJECT_ALLOCATOR_PATH
+        MM_ASSERT(valid_pointer(p));
+        return static_cast<unsigned int>(reinterpret_cast<const unsigned char*>(p) - m_buffer) /
+               static_cast<unsigned int>(sizeof(T));
+    }
+    // whether p is inside the slots (index_of's assertion; the name is the assertion's)
+    bool valid_pointer(const T* p) const {
+        return reinterpret_cast<const unsigned char*>(p) <= &m_buffer[N * sizeof(T)] &&
+               &m_buffer[0] <= reinterpret_cast<const unsigned char*>(p);
+    }
 
-    struct Storage {
-        alignas(T) unsigned char m_bytes[sizeof(T)];
-    };
-
-    Storage m_buffer[N];
+    unsigned char m_buffer[sizeof(T) * N];  // the slots
     Bitflag<N> m_used;  // a flag per slot in use
     unsigned int m_allocated;  // the slots in use
     unsigned int m_capacity;  // N

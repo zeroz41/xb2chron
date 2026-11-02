@@ -6411,11 +6411,22 @@ static void fn_71006EB61C(mstate m, mtl::MemoryInfo* info, bool log, bool detail
 
 namespace mtl {
 
+unsigned int CallStackManager::m_maxAllocate;
+unsigned int CallStackManager::m_nowAllocate;
+unsigned int CallStackManager::m_maxAllocateSize;
+unsigned int CallStackManager::m_nowAllocateSize;
+unsigned int CallStackManager::m_maxRefCount;
 mm::mtl::HeapAllocator CallStackManager::m_allocator;
+void* CallStackManager::m_buffer;
+unsigned long CallStackManager::m_bufferSize;
+unsigned int CallStackManager::MAX_ALLOCATE_SIZE = 0x4000;
 
 // the heap createAllocator makes the allocators in
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100ED26D0)
 static mm::mtl::HeapAllocator s_allocatorHeap;
+// s_allocatorHeap's memory (initialize creates the heap in it as "MemManagerHeap")
+// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EDA160)
+static unsigned char s_allocatorHeapBuffer[0x700000];
 
 // the critical sections the manager's functions hold (function-local statics, guarded and made on first use)
 // Proposed names, not the original's: the symbols leave them unnamed (lbl_71015DA160, lbl_71015DA188, lbl_71015DA1B0)
@@ -6586,6 +6597,42 @@ bool DlAllocator::hasMemory(const void* p) const {
         }
     }
     return result;
+}
+
+void MemManager::initialize() {
+    CallStackManager::m_maxAllocate = 0;
+    CallStackManager::m_nowAllocate = 0;
+    CallStackManager::m_maxAllocateSize = 0;
+    CallStackManager::m_nowAllocateSize = 0;
+    CallStackManager::m_bufferSize = 0;
+    CallStackManager::m_maxRefCount = 0;
+    unsigned long size = CallStackManager::MAX_ALLOCATE_SIZE * 0xA8UL;
+    CallStackManager::m_buffer = malloc(size);
+    if (CallStackManager::m_buffer != nullptr) {
+        CallStackManager::m_allocator.create(CallStackManager::m_buffer, size, "CallStackAllocator");
+        CallStackManager::m_bufferSize = size;
+    }
+    s_allocatorHeap.create(s_allocatorHeapBuffer, sizeof(s_allocatorHeapBuffer), "MemManagerHeap");
+    s_ptrMap.clear();
+    _region = new (s_allocatorHeap.allocate(sizeof(::mm::mtl::FixedObjectAllocator<Region, 512>), 8))
+        ::mm::mtl::FixedObjectAllocator<Region, 512>();
+    s_bInitialize = true;
+}
+
+void MemManager::terminate() {
+    clear();
+    if (CallStackManager::m_buffer != nullptr) {
+        CallStackManager::m_allocator.destroy(false);
+        free(CallStackManager::m_buffer);
+        CallStackManager::m_buffer = nullptr;
+        CallStackManager::m_bufferSize = 0;
+    }
+    s_bInitialize = false;
+    _region->clear();
+    s_allocatorHeap.deallocate(_region);
+    _region = nullptr;
+    s_ptrMap.clear();
+    s_allocatorHeap.destroy(true);
 }
 
 ALLOC_HANDLE MemManager::create(void* p, unsigned long size, const char* name, bool flag, AllocatorType type) {

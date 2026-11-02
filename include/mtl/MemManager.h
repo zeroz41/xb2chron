@@ -33,6 +33,8 @@ public:
     MemManager() {}
     static void initialize();
     static void terminate();
+    // every region create made destroyed and given back, under the handle lock (terminate's first step)
+    static void clear();
     // size bytes at the alignment from the handle's allocator, under a name and line (csvb's pass "no name", 0);
     // the parameter names are not the original's
     static void* allocate(ALLOC_HANDLE handle, unsigned long size, unsigned long alignment, bool flag, const char* name,
@@ -140,6 +142,15 @@ public:
             } while (slot->m_region != nullptr);
             slot->m_handle = m_lastHandle;
             return m_lastHandle;
+        }
+
+        // every slot emptied (initialize and terminate; the name is not the original's)
+        void clear() {
+            Slot* slot = m_slots;
+            for (unsigned long i = 0; i < 512; i++, slot++) {
+                slot->m_region = nullptr;
+                slot->m_handle = 0;
+            }
         }
 
         // the region into the handle's slot

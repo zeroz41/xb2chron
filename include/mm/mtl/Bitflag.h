@@ -68,6 +68,16 @@ public:
         m_flags[0] &= ~mask;
     }
 
+    // clears one flag in its word (mm::mtl::FixedObjectAllocator's deallocate asserts at line 169; the
+    // name is not the original's)
+    void resetAt(unsigned int index) {
+#line 169 MM_MTL_BITFLAG_PATH
+        MM_ASSERT(index < Size);
+        unsigned int word = index >> 5;
+        unsigned int mask = 1UL << (index & 31UL);
+        m_flags[word] &= ~mask;
+    }
+
     // sets or clears a flag in its word (GfObjUtil::setFlag; the name is not the original's)
     void change(unsigned int index, bool on) {
 #line 89 MM_MTL_BITFLAG_PATH
