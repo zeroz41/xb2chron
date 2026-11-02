@@ -20,10 +20,10 @@ public:
     static ai::State* create(void* buffer) { return new (buffer) TitleStatePlayEvent; }
     // inline: the deleting destructor only frees it
     virtual ~TitleStatePlayEvent() {}  // slot 0
-    virtual const char* getName() const;  // slot 2
-    virtual void onEnter(void*, ai::State*);  // slot 3
-    virtual void onLeave(void*, ai::State*);  // slot 4
-    virtual void onStep(void*, void const*);  // slot 5
+    inline virtual const char* getName() const;  // slot 2
+    inline virtual void onEnter(void*, ai::State*);  // slot 3
+    inline virtual void onLeave(void*, ai::State*);  // slot 4
+    inline virtual void onStep(void*, void const*);  // slot 5
     void enter(TitleMain* title, ai::State* prev);
     void update(TitleMain* title, const fw::UpdateInfo& info);
     // its table's slot 7 and IGfEvent's slot 36 (thunk) hold it: gevPlayEvent (new in 3.0.1's table)

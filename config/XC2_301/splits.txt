@@ -246,11 +246,21 @@ application/BF2/TitleApplet.cpp:
 	.bss         start:0x00C232E0 end:0x00C232E8
 
 application/BF2/execute/title/title_main.cpp:
-	.text        start:0x0014E74C end:0x0015791C
-	.rodata      start:0x0097FFD0 end:0x00980258
+	.text        start:0x0014E74C end:0x00153094
+	.rodata      start:0x0097FFD0 end:0x00980163
+	.data        start:0x00B40138 end:0x00B403B8
+	.bss         start:0x00C232E8 end:0x00C232F0
+
+application/BF2/TitleStateLoad.cpp:
+	.text        start:0x00153094 end:0x00153694
+	.rodata      start:0x00980163 end:0x009801D8
+
+application/BF2/TitleStateMainScreen.cpp:
+	.text        start:0x00153694 end:0x0015791C
+	.rodata      start:0x009801D8 end:0x00980258
 	.rodata      start:0x009B94EC end:0x009B9548
-	.data        start:0x00B40138 end:0x00B40B20
-	.bss         start:0x00C232E8 end:0x00C23320
+	.data        start:0x00B403B8 end:0x00B40B20
+	.bss         start:0x00C232F0 end:0x00C23320
 
 application/BF2/execute/title/title_theater.cpp:
 	.text        start:0x0015791C end:0x00157C60

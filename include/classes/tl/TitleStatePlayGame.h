@@ -19,10 +19,10 @@ public:
     static ai::State* create(void* buffer) { return new (buffer) TitleStatePlayGame; }
     // inline: the deleting destructor only frees it
     virtual ~TitleStatePlayGame() {}  // slot 0
-    virtual const char* getName() const;  // slot 2
-    virtual void onEnter(void*, ai::State*);  // slot 3
-    virtual void onLeave(void*, ai::State*);  // slot 4
-    virtual void onStep(void*, void const*);  // slot 5
+    inline virtual const char* getName() const;  // slot 2
+    inline virtual void onEnter(void*, ai::State*);  // slot 3
+    inline virtual void onLeave(void*, ai::State*);  // slot 4
+    inline virtual void onStep(void*, void const*);  // slot 5
     void enter(TitleMain* title, ai::State* prev);
     virtual void gevPlayEvent(gf::GEV gev, unsigned int arg);  // slot 7
 
