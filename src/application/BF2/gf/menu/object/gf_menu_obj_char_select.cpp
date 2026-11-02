@@ -28,6 +28,13 @@
 #include "classes/gf/GfMenuReference.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
+#include "classes/gf/GfMenuObjCommonText.h"
+#include "classes/gf/GfMenuObjPartyStatus.h"
+#include "classes/gf/GfGameManager.h"
+#include "classes/gf/GfGameParty.h"
+#include "gf/GfDataBlade.h"
+#include "classes/gf/DataParamAcc.h"
+#include "mm/mtl/FixStr.h"
 
 namespace gf {
 
@@ -136,6 +143,26 @@ void GfMenuObjCharSelect::update() {
     GfMenuObject::update();
 }
 
+void GfMenuObjCharSelect::setPartyData(mm::mtl::FixedArray<DriverData, 5>& drivers, GfMenuDriverList* list) {
+    for (unsigned int i = 0; i < 5; i++) {
+        unsigned int driver = list->getContents(i).m_driver;
+        drivers[i].m_driver = driver;
+        DataParamAcc acc(3, driver, GimmickType(0));
+        if (acc.isValid()) {
+            drivers[i].m_blades[0] = 0;
+            drivers[i].m_blades[1] = 0;
+            drivers[i].m_blades[2] = 0;
+            mm::mtl::FixedVector<unsigned short, 422> blades;
+            GfMenuBladeList::getBladeFromDriver(driver, blades, true);
+            unsigned int j = 0;
+            for (unsigned short* it = blades.begin(); it != blades.end(); ++it) {
+                drivers[i].m_blades[j] = *it;
+                j++;
+            }
+        }
+    }
+}
+
 bool GfMenuObjCharSelect::seqStreamWaitStatDr() {
     s_charBusy = true;
     ui::UIObjectAcc acc(m_handle);
@@ -157,6 +184,36 @@ bool GfMenuObjCharSelect::seqStreamWaitStatBl() {
     }
     ui::UIObjectAcc move(acc.searchChild("LAY_char_bl_move"));
     GfMenuObject::hookCtrlEvent(move.m_handle, startFadeIn(move.m_handle, 1));
+    return true;
+}
+
+bool GfMenuObjCharSelect::fn_71003CBC84() {
+    if (!pad_6C0) {
+        if (pad_748 != 4) {
+            return true;
+        }
+        m_subContext->reset();
+        GfMenuObjCommonText::openSelectItem(m_subContext, m_itemList, 2);
+        pad_6C0 = true;
+    }
+    if (!m_subContext->isTerm()) {
+        return false;
+    }
+    int index = -1;
+    if (!m_subContext->m_results.empty()) {
+        GfMenuCallContext::GfMenuResult result;
+        m_subContext->popResult(result);
+        index = result.m_id;
+    }
+    GfMenuObjMainMenu2::setCloseKeyEnable(true);
+    if (index != -1) {
+        m_itemList->setIndex(index);
+        m_seq.addJob(&GfMenuObjCharSelect::fn_71003D0B9C);
+        pad_6C0 = false;
+        return true;
+    }
+    m_seq.addJob(&GfMenuObjCharSelect::seqReturn);
+    pad_6C0 = false;
     return true;
 }
 
@@ -232,6 +289,27 @@ bool GfMenuObjCharSelect::seqWaitSelect() {
     GfMenuObjOperationInfo::changeText(chr.m_handle, 9, !GfMenuObjUtil::getMenuCondition(0x23));
     updateSpecialOperation();
     return true;
+}
+
+void GfMenuObjCharSelect::adjustBladeList(mm::mtl::FixedArray<DriverData, 5>& drivers,
+                                          mm::mtl::FixedVector<unsigned short, 422>& blades,
+                                          mm::mtl::FixedArray<GfMenuBladeList*, 3>& lists, unsigned int driver) {
+    for (int i = 0; i < 5; i++) {
+        if (drivers[i].m_driver == driver) {
+            for (int j = 0; j < 3; j++) {
+                unsigned int blade = drivers[i].m_blades[j];
+                lists[j]->clear();
+                if (blade != 0 && GfMenuObjUtil::isValidBlade(blade)) {
+                    MenuBladeInfo info;
+                    info.m_blade = blade;
+                    info.m_creator = driver;
+                    lists[j]->addContents(info);
+                    lists[j]->setIndex(0);
+                }
+            }
+            return;
+        }
+    }
 }
 
 bool GfMenuObjCharSelect::getCharBusy() {
@@ -349,6 +427,35 @@ bool GfMenuObjCharSelect::seqSpHikariToHomura() {
     return true;
 }
 
+bool GfMenuObjCharSelect::seqSpNiaChangeBl() {
+    SCOM_NIA_BLADE::create(true);
+    unsigned int num = 0;
+    for (unsigned int i = 0; i < 3; i++) {
+        if (GfGameParty::getDriverBdatId(i, 0) != 0) {
+            num++;
+        }
+    }
+    for (unsigned int i = 0; i < num; i++) {
+        if (m_driverList->getContents(i).m_driver == 2) {
+            unsigned short member = 0;
+            switch (i) {
+            case 0:
+                member = num;
+                break;
+            case 1:
+                member = num;
+                break;
+            case 2:
+                member = 3;
+                break;
+            }
+            GfMenuObjPartyStatus::memberChange(member, 0);
+            return true;
+        }
+    }
+    return true;
+}
+
 bool GfMenuObjCharSelect::seqSpNiaChangeDr() {
     SCOM_NIA_BLADE::create(false);
     return true;
@@ -357,6 +464,25 @@ bool GfMenuObjCharSelect::seqSpNiaChangeDr() {
 bool GfMenuObjCharSelect::seqReturn() {
     ui::UIObjectAcc acc(m_handle, "LAY_char");
     requestEvent(acc.m_handle, 0x107, 0);
+    return true;
+}
+
+bool GfMenuObjCharSelect::seqSpUpdateParty() {
+    unsigned int driver = m_driverList->getContents(m_driverList->getIndex(false)).m_driver;
+    GfMenuDriverList::PartySetup setup;
+    setup.m_skipUnused = false;
+    setup.m_convertDriver = false;
+    setup.m_selectFlag = false;
+    setup.m_type = 2;
+    m_driverList->setupFromParty(setup);
+    m_driverList->setIndex(0);
+    for (unsigned int i = 0; i < m_driverList->getSize(); i++) {
+        if (m_driverList->getContents(i).m_driver == driver) {
+            m_driverList->setIndex(i);
+            break;
+        }
+    }
+    setPartyData(m_drivers, m_driverList);
     return true;
 }
 

@@ -79,6 +79,21 @@ public:
     bool seqSpHomuraToHikari();
     bool seqSpHikariToHomura();
     bool seqSpNiaChangeDr();
+    bool seqSpNiaChangeBl();
+    // refills the three blade lists with the driver's blades from the party data (none when the driver is not in it)
+    static void adjustBladeList(mm::mtl::FixedArray<DriverData, 5>& drivers,
+                                mm::mtl::FixedVector<unsigned short, 422>& blades,
+                                mm::mtl::FixedArray<GfMenuBladeList*, 3>& lists, unsigned int driver);
+    // a sequence job: with special operation 4 (pad_748), opens the item select once (pad_6C0) and waits for it; a
+    // picked item selects it in m_itemList and adds fn_71003D0B9C, otherwise seqReturn
+    bool fn_71003CBC84();
+    bool fn_71003D0B9C();
+    // fills the party data from the list's first five drivers: each valid driver's blades (getBladeFromDriver)
+    static void setPartyData(mm::mtl::FixedArray<DriverData, 5>& drivers, GfMenuDriverList* list);
+    // rebuilds the driver list (setupFromParty, type 2) keeping the selected driver, then the party data
+    bool seqSpUpdateParty();
+    // waits for the driver's layout and the three blade images to stream in, then fades LAY_main in (unless pad_768)
+    bool seqStreamWait();
 
     unsigned char pad_24[4];
     GfMenuDriverList* m_driverList;                        // initialize creates them
