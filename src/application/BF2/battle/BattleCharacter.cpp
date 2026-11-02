@@ -23,6 +23,7 @@
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfDataBdat.h"
 #include "plugin/Bdat.h"
+#include "gf/MsgFxComboBuff.h"
 #include "btl/Utility.h"
 #include "classes/btl/TalkManager.h"
 #include "gf/GfObjAcc.h"
@@ -439,11 +440,11 @@ bool BattleCharacter::fn_710002FC0C(int id) {
         return false;
     }
     int trigger;
-    if (pad_ED4 == id) {
+    if (pad_ED4[0].m_id == id) {
         trigger = 0x29;
-    } else if (pad_ED6 == id) {
+    } else if (pad_ED4[1].m_id == id) {
         trigger = 0x2A;
-    } else if (pad_ED8 == id) {
+    } else if (pad_ED4[2].m_id == id) {
         trigger = 0x2B;
     } else {
         return false;
@@ -504,6 +505,37 @@ void BattleCharacter::fn_71000301D4() {
         }
     }
     pad_F01_0 = 1;
+}
+
+void BattleCharacter::SetWarpPostureByDir(const mm::Vec3& dir) {
+    const mm::Vec3& from = mm::Vec3::unitZ;
+    float d = from.dot(dir);
+    if (d < -0.9999f) {
+        pad_A0 = mm::Quat(0.0f, 1.0f, 0.0f, 0.0f);
+    } else {
+        mm::Vec3 axis = from.cross(dir);
+        float s = sqrtf((d + 1.0f) * 2.0f);
+        float inv = 1.0f / s;
+        pad_A0 = mm::Quat(axis.x * inv, axis.y * inv, axis.z * inv, s * 0.5f);
+    }
+    pad_F00_7 = true;
+}
+
+void BattleCharacter::CalcLocomotionMoveRate(float rate) {
+    float length = GetAnimationMoveLength(0.0f, 1.0f, true);
+    if (length <= 0.0f) {
+        return;
+    }
+    gf::GF_OBJ_HANDLE* target = m_subTargetHandle;
+    mm::Vec3 pos;
+    if (!GetObjectNearPosition(m_handle, target, pos, nullptr, nullptr)) {
+        return;
+    }
+    float dist = Misc::CalcLengthXZ(m_pos, pos);
+    float moveRate = (dist - GetCharacterParameterConst(false)->m_radius) / length;
+    float max = rate < 0.0f ? 1.0f : rate;
+    pad_CFC = mm::clamp(moveRate, 0.15f, max);
+    pad_D00 = 1.0f;
 }
 
 void BattleCharacter::ManagerUpdate_Attack() {
@@ -864,6 +896,47 @@ void BattleCharacter::NotifyLostHateTarget(int) {
     fn_710002FC0C(5);
 }
 
+void BattleCharacter::CreateElementalEffect(int id) {
+    gf::GfComEffectCaster* caster = GetEffectCaster();
+    if (caster == nullptr) {
+        return;
+    }
+    unsigned char* fp = gf::GfDataBdat::getFP(0x24);
+    gf::MsgFxComboBuff msg;
+    msg.m_name = reinterpret_cast<const char*>(Bdat::getValCheck(fp, "Effect", id, 7));
+    if (*msg.m_name == '\0') {
+        return;
+    }
+    const gf::GfComProperty* prop = GetComPropertyConst();
+    if (prop != nullptr) {
+        gf::GfObj* owner = static_cast<gf::GfObj*>(prop->m_owner);
+        caster->recieveMessage(owner, msg);
+    }
+}
+
+void BattleCharacter::ResetAllEffect() {
+    CharacterParameter* param = GetCharacterParameter(false);
+    if (param != nullptr) {
+        param->pad_5d8 = 0;
+        param->ClearAllBuff();
+        param->pad_5df = 0;
+        CharacterParameter::FIGHT_COMBO_DATA& combo = param->m_fightCombos[0];
+        combo.m_id = 0;
+        combo.pad_1 = 0x5A;
+        memset(combo.pad_2, 0, sizeof(combo.pad_2));
+        param->SetAngry(false, -1.0f);
+        param->ResetSpecialEnhanceRate(true);
+        param->fn_7100088F4C(false);
+    }
+    m_elementalCombo.Reset(false);
+    if (pad_106C != 0) {
+        mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_buttonChallenge.Cancel(pad_106C);
+        pad_106C = 0;
+    }
+    pad_102C = 0xFFFF;
+    pad_1030 = 0.0f;
+}
+
 void BattleCharacter::fn_710006AEE8(unsigned int damage, int type, BattleCharacter* attacker) {
     DIRECT_DAMAGE_DATA data;
     data.m_attacker = attacker;
@@ -1056,6 +1129,66 @@ bool BattleCharacter::fn_71000290BC(bool flag) {
     return false;
 }
 
+void BattleCharacter::fn_7100042C30(gf::GF_OBJ_HANDLE*, int value) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess) {
+        const CharacterParameter* param = GetCharacterParameterConst(false);
+        if (param != nullptr && param->m_isNotBlade) {
+            return;
+        }
+        if (pad_F09_3) {
+            return;
+        }
+    }
+    const unsigned int bit = 1 << 11;
+    if ((pad_ECC & bit) == 0 || (pad_ED0 & bit) != 0) {
+        return;
+    }
+    const TalkTriggerEntry* entry;
+    if (pad_ED4[0].m_id == 11) {
+        entry = &pad_ED4[0];
+    } else if (pad_ED4[1].m_id == 11) {
+        entry = &pad_ED4[1];
+    } else if (pad_ED4[2].m_id == 11) {
+        entry = &pad_ED4[2];
+    } else {
+        return;
+    }
+    if (entry->m_value != 0 && entry->m_value != value) {
+        return;
+    }
+    fn_710002FC0C(11);
+}
+
+void BattleCharacter::NotifyBuddySufferFightCombo(int, int value) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess) {
+        const CharacterParameter* param = GetCharacterParameterConst(false);
+        if (param != nullptr && param->m_isNotBlade) {
+            return;
+        }
+        if (pad_F09_3) {
+            return;
+        }
+    }
+    const unsigned int bit = 1 << 12;
+    if ((pad_ECC & bit) == 0 || (pad_ED0 & bit) != 0) {
+        return;
+    }
+    const TalkTriggerEntry* entry;
+    if (pad_ED4[0].m_id == 12) {
+        entry = &pad_ED4[0];
+    } else if (pad_ED4[1].m_id == 12) {
+        entry = &pad_ED4[1];
+    } else if (pad_ED4[2].m_id == 12) {
+        entry = &pad_ED4[2];
+    } else {
+        return;
+    }
+    if (entry->m_value != 0 && entry->m_value != value) {
+        return;
+    }
+    fn_710002FC0C(12);
+}
+
 void BattleCharacter::fn_7100042E30() {
     if (IsBlade()) {
         fn_710002FC0C(13);
@@ -1066,6 +1199,36 @@ void BattleCharacter::fn_7100042E90() {
     if (IsBlade()) {
         fn_710002FC0C(14);
     }
+}
+
+bool BattleCharacter::fn_7100042F70(int value) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess) {
+        const CharacterParameter* param = GetCharacterParameterConst(false);
+        if (param != nullptr && param->m_isNotBlade) {
+            return false;
+        }
+        if (pad_F09_3) {
+            return false;
+        }
+    }
+    const unsigned int bit = 1 << 6;
+    if ((pad_ECC & bit) == 0 || (pad_ED0 & bit) != 0) {
+        return false;
+    }
+    const TalkTriggerEntry* entry;
+    if (pad_ED4[0].m_id == 6) {
+        entry = &pad_ED4[0];
+    } else if (pad_ED4[1].m_id == 6) {
+        entry = &pad_ED4[1];
+    } else if (pad_ED4[2].m_id == 6) {
+        entry = &pad_ED4[2];
+    } else {
+        return false;
+    }
+    if (entry->m_value > value) {
+        return false;
+    }
+    return fn_710002FC0C(6);
 }
 
 void BattleCharacter::NotifyChangeAttr(gf::GF_OBJ_HANDLE* handle, unsigned int attr, unsigned int) {

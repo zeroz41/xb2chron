@@ -2,6 +2,7 @@
 #define CLASSES_BTL_BATTLECHARACTER_H
 
 #include "btl/ActionCommand.h"
+#include "mm/Quat.h"
 #include "mm/Vec3.h"
 #include "mm/mtl/FixStr.h"
 #include "classes/btl/ElementalComboManager.h"
@@ -368,6 +369,15 @@ public:
     // fn_710002FC0C(13) / fn_710002FC0C(14).
     void fn_7100042E30();
     void fn_7100042E90();
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: they call fn_710002FC0C.
+    // What they do: fn_710002FC0C's own checks for id 11 / id 6, then the talk trigger entry (pad_ED4) whose id
+    // matches; fn_7100042C30 notifies fn_710002FC0C(11) when the entry's value is 0 or equals the int (the handle
+    // is not read; caller CharacterParameter::SetFightCombo), fn_7100042F70 returns fn_710002FC0C(6) when the
+    // entry's value is at most the int (else false; caller NotifyDamage).
+    void fn_7100042C30(gf::GF_OBJ_HANDLE*, int value);
+    bool fn_7100042F70(int value);
+    // as fn_7100042C30 for id 12 (the first int is not read)
+    void NotifyBuddySufferFightCombo(int, int value);
     // Talk trigger: when the BattleGlobal flag (+0x83CA bit 3) allows, and the id bit (1 << id) is set in the
     // word at 0xECC and clear in 0xED0, notifies TalkManager::NotifyTrigger with trigger 0x29/0x2A/0x2B by which
     // byte of 0xED4/0xED6/0xED8 equals id, and on success sets the bit in 0xED0. Returns whether it notified.
@@ -419,6 +429,15 @@ public:
     // What it does: sends message 0x100004C (second word 0x80) to the effect caster, from the property's owner
     // object, then clears pad_F04_1. Callers: SetAction, BeforeUpdate, ActionDead, fn_7100052CE0.
     void fn_710003D478();
+    void ResetAllEffect();
+    void SetWarpPostureByDir(const mm::Vec3& dir);
+    float GetAnimationMoveLength(float, float, bool);
+    bool GetObjectNearPosition(gf::GF_OBJ_HANDLE* handle, gf::GF_OBJ_HANDLE* target, mm::Vec3& out, mm::Vec3*,
+                               mm::Vec3*) const;
+    void CalcLocomotionMoveRate(float rate);
+    // starts the elemental effect BDAT table 0x24's "Effect" column names for the id (MsgFxComboBuff to the
+    // effect caster); caller DataManager::SetElementalEffect
+    void CreateElementalEffect(int id);
     bool CheckAttackAction(ACTION_ID id, bool flag) const;
     int GetDriverType() const;
     int GetArtsSlotIndex(int artsID) const;
@@ -441,7 +460,9 @@ public:
     unsigned char pad_8[0x8];
     // where the character stands: EnemyParameter::AngryInfection measures from it (the name is not the original's)
     mm::Vec3 m_pos;
-    unsigned char pad_20[0x90];
+    unsigned char pad_20[0x80];
+    // SetWarpPostureByDir sets it to the rotation of mm::Vec3::unitZ onto its direction (then sets pad_F00_7)
+    mm::Quat pad_A0;
     // the movement of this frame: GetMoveDataPerSec scales it by 30 (the name is not the original's)
     mm::Vec3 m_moveData;
     unsigned char pad_C0[0x10];
@@ -485,7 +506,11 @@ public:
     unsigned char pad_CEC[0x4];
     // the blade timer StartBladeTimer sets for its mode and EndBladeTimer clears (the name is not the original's)
     float m_bladeTimer;
-    unsigned char pad_CF4[0xE4];
+    unsigned char pad_CF4[0x8];
+    // CalcLocomotionMoveRate sets pad_CFC to the clamped rate and pad_D00 to 1 (meanings unknown)
+    float pad_CFC;
+    float pad_D00;
+    unsigned char pad_D04[0xD4];
     // what GetIKData hands out while m_ikType is set (the names are not the original's)
     float m_ikValue0;
     float m_ikValue1;
@@ -508,13 +533,13 @@ public:
     // fn_710002FC0C's talk trigger ids: allowed (bit 1 << id) and already notified (meaning unknown)
     unsigned int pad_ECC;
     unsigned int pad_ED0;
-    // fn_710002FC0C's three trigger ids (the bytes it compares the id with, for triggers 0x29/0x2A/0x2B)
-    unsigned char pad_ED4;
-    unsigned char pad_ED5;
-    unsigned char pad_ED6;
-    unsigned char pad_ED7;
-    unsigned char pad_ED8;
-    unsigned char pad_ED9;
+    // fn_710002FC0C's three talk triggers: the id it compares with (for triggers 0x29/0x2A/0x2B) and a value
+    // fn_7100042C30 / fn_7100042F70 compare their argument with (the type and field names are not the original's)
+    struct TalkTriggerEntry {
+        unsigned char m_id;
+        unsigned char m_value;
+    };
+    TalkTriggerEntry pad_ED4[3];
     // the id DataManager::GetCharacterParameterConst looks the parameter up by, < 0 for none (the name is not the
     // original's)
     short m_chrID;
@@ -582,7 +607,9 @@ public:
     // CharacterManager::fn_710007C43C counts only enemies with it set while GfGameInsideBattleLock holds a lock
     // (run bit 20; meaning unknown)
     unsigned int pad_F00_4 : 1;
-    unsigned int pad_F00_5 : 3;
+    unsigned int pad_F00_5 : 2;
+    // SetWarpPostureByDir sets it with pad_A0 (run bit 23; meaning unknown)
+    unsigned int pad_F00_7 : 1;
     // fn_71000301D4 sets it (run bit 24; meaning unknown)
     unsigned int pad_F01_0 : 1;
     unsigned int pad_F01_1 : 1;
@@ -659,7 +686,9 @@ public:
     unsigned char pad_102E;
     unsigned char pad_102F;
     float pad_1030;
-    unsigned char pad_1034[0x3C];
+    unsigned char pad_1034[0x38];
+    // a ButtonChallenge id: ResetAllEffect cancels it (BattleGlobal's m_buttonChallenge) when not 0 and clears it
+    unsigned int pad_106C;
     unsigned int pad_1070 : 16;
     // Utility::AI_GetReactionID returns it (the name is not the original's)
     unsigned int m_reactionID : 5;

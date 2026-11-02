@@ -102,8 +102,11 @@ public:
     // the fight combo the character is in; Utility::AI_GetFightComboID returns its first byte (the struct's and
     // the field's names are not the original's)
     struct FIGHT_COMBO_DATA {
+        // the constructor, BattleCharacter::ResetAllEffect and SetFightCombo(0, ..) reset a combo to id 0,
+        // pad_1 0x5A, the rest zero
         unsigned char m_id;
-        unsigned char pad_1[0x17];  // the stride: GetFightComboDataConst picks one of two at 0xF4 and 0x10C
+        unsigned char pad_1;  // meaning unknown
+        unsigned char pad_2[0x16];  // the stride: GetFightComboDataConst picks one of two at 0xF4 and 0x10C
     };
     // one buff the character carries (IsBuffInfinite walks m_buffNum of them; the names are not the original's)
     struct BUFF_DATA {
