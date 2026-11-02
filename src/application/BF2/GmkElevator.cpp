@@ -427,6 +427,39 @@ gmk::AGmkBase* GmkSalvageLocatorList::getInst(unsigned int index) const {
     return const_cast<GmkSalvageLocator*>(&m_gmks[index]);
 }
 
+bool GmkManager::isGmkSetsReady() const {
+    if (!isValid() || m_gmkSets.size() == 0) {
+        return false;
+    }
+    for (GmkSet* const* it = m_gmkSets.begin(); it != m_gmkSets.end(); ++it) {
+        if (!(*it)->isValid() || !(*it)->isGmkListsCreated()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool GmkSet::isGmkListsCreated() const {
+    // the step's constant first: clang folds the null-pointer case of the member pointer compare away
+    if (&GmkSet::seqUpdate != m_seq) {
+        return false;
+    }
+    for (unsigned int i = 0; i < GMK_LIST_NUM; ++i) {
+        const IGmkList* list = m_gmkLists[i];
+        if (list == nullptr) {
+            continue;
+        }
+        const IGmkList::CreateInfo& info = list->getCreateInfo();
+        if (info.m_allocHandle.m_handle == 0 || info.m_path.length() == 0) {
+            continue;
+        }
+        if (!list->isValid()) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void GmkManager::update(float dt) {
     if (m_bdat.m_seq) {
         (m_bdat.*m_bdat.m_seq)(dt);
@@ -462,6 +495,15 @@ int GmkManager::getMapBdatId(int id) const {
         return -1;
     }
     return static_cast<unsigned short>(Bdat::getValCheck(fp, "mapId", id, 2));
+}
+
+GmkSet* GmkManager::findGmkSet(int bdatId) const {
+    for (GmkSet* const* it = m_gmkSets.begin(); it != m_gmkSets.end(); ++it) {
+        if (*it != nullptr && (*it)->m_createInfo.m_bdatId == bdatId) {
+            return *it;
+        }
+    }
+    return nullptr;
 }
 
 int GmkManager::findFirstBdatId_RSC_GmkSetList(GmkType type, int bdatId) const {

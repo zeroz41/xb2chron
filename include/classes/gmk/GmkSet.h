@@ -30,6 +30,9 @@ public:
     virtual void createGmkLists(int);  // slot 2
     // whether the set is usable (gf_field_locator's collection locator tests it after GmkManager::findGmkSet)
     bool isValid() const;
+    // whether the set has reached its update step and none of its lists is still loading (a list with a memory
+    // handle and a path that is not valid yet)
+    bool isGmkListsCreated() const;
     void create(const CreateInfo& info);
     void dispose();
     void update(float delta);
