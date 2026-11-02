@@ -100,7 +100,10 @@ struct MdoRimBloomWrk {
 struct MdsMdlTopHeader {
     // 0x0: from MdoWrkMatRes::m_pMdlInfo, this header's MdsMdlInfoHeader array (DrMdoCtlNom::shwRender)
     unsigned int m_infoOfs;
-    unsigned char pad_4[0x8];
+    // 0x4: how many MdsMdlInfoHeaders follow m_infoOfs (DrMdoCtlSeamEnvMap's passes walk them; the name is not the
+    // original's)
+    unsigned int m_infoNum;
+    unsigned char pad_8[0x4];
     float m_max[3];  // 0xC
     float m_min[3];  // 0x18
     unsigned char pad_24[0x20];
@@ -110,7 +113,14 @@ struct MdsMdlTopHeader {
 // DrMdoCtlNom's passes index a top header's array of them. The field names are not the original's.
 struct MdsMdlInfoHeader {
     unsigned int m_flags;  // 0x0, bit 8: m_meshNo names a DrResMdoMeshObj part
-    unsigned char pad_4[0x12];
+    // 0x4: the passes the part is drawn in; DrMdoCtlSeamEnvMap's passes test bit 0 (render), 3 (gbuffer),
+    // 5 (light pre-pass), 1 (alpha), 6 (sp alpha), 2 (refraction). The name is not the original's.
+    unsigned char m_passFlags;
+    unsigned char pad_5[0x9];
+    // 0xE: index into MdoWrkMatRes::m_pResMat; the part is drawn while that material's alpha is above 0 (the name
+    // is not the original's)
+    unsigned short m_matIdx;
+    unsigned char pad_10[0x6];
     unsigned short m_meshNo;  // 0x16
     unsigned char pad_18[0x4];
     unsigned short m_shaderOfs;  // 0x1C, added to the shadow shader index (plus 1 with nodes) when there is no part

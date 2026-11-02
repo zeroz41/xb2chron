@@ -2214,6 +2214,39 @@ void DrMdoCtlSeamAll::callRefractionRenderSeamAll() {
     renderSeamLowMap(2);
 }
 
+void DrMdoCtlSeamEnvMap::callRenderSeamEnvMap() {
+    if (m_pDrMan->m_seamEnvRenderOff) {
+        return;
+    }
+    for (DrResMdoSeamWrkEnv* wrk = m_pEnvList; wrk != nullptr; wrk = wrk->m_prev) {
+        m_pWrkMatRes = wrk->m_matRes;
+        if (m_pWrkMatRes == nullptr || !(wrk->m_type & 0x1)) {
+            continue;
+        }
+        m_renderPass = 0;
+        m_renderTech = 0;
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        DrResMdoMat* mats = m_pWrkMatRes->m_pResMat;
+        // draws the parts of one top header that are in this pass and visible
+        auto renderParts = [&](const MdsMdlInfoHeader* info, int num) {
+            for (int j = 0; j < num; j++, info++) {
+                if ((info->m_passFlags & 0x1) && mats[info->m_matIdx].m_color.a > 0.0f) {
+                    partsDefRender(info, 0, 0, false);
+                }
+            }
+        };
+        const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop;
+        for (int i = 0; i < m_pWrkMatRes->m_mdlTopNum; i++, top++) {
+            renderParts(reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs),
+                        top->m_infoNum);
+        }
+    }
+}
+
 void DrMdoCtlSeamAll::callRenderSeamEnvMap() {
     if (!(m_stateFlags & 0x1) || m_pDrMan->m_seamRenderOff) {
         return;
@@ -2225,6 +2258,39 @@ void DrMdoCtlSeamAll::callRenderSeamEnvMap() {
     m_bindFlags[0] = 0x10;
     m_bindFlags[1] = 0;
     DrMdoCtlSeamEnvMap::callRenderSeamEnvMap();
+}
+
+void DrMdoCtlSeamEnvMap::callGBuffRenderSeamEnvMap() {
+    if (m_pDrMan->m_seamEnvRenderOff) {
+        return;
+    }
+    for (DrResMdoSeamWrkEnv* wrk = m_pEnvList; wrk != nullptr; wrk = wrk->m_prev) {
+        m_pWrkMatRes = wrk->m_matRes;
+        if (m_pWrkMatRes == nullptr || !(wrk->m_type & 0x2)) {
+            continue;
+        }
+        m_renderPass = 1;
+        m_renderTech = 7;
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        DrResMdoMat* mats = m_pWrkMatRes->m_pResMat;
+        // draws the parts of one top header that are in this pass and visible
+        auto renderParts = [&](const MdsMdlInfoHeader* info, int num) {
+            for (int j = 0; j < num; j++, info++) {
+                if ((info->m_passFlags & 0x8) && mats[info->m_matIdx].m_color.a > 0.0f) {
+                    partsDefRender(info, 0, 0, false);
+                }
+            }
+        };
+        const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop;
+        for (int i = 0; i < m_pWrkMatRes->m_mdlTopNum; i++, top++) {
+            renderParts(reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs),
+                        top->m_infoNum);
+        }
+    }
 }
 
 void DrMdoCtlSeamAll::callGBuffRenderSeamEnvMap() {
@@ -2240,6 +2306,39 @@ void DrMdoCtlSeamAll::callGBuffRenderSeamEnvMap() {
     DrMdoCtlSeamEnvMap::callGBuffRenderSeamEnvMap();
 }
 
+void DrMdoCtlSeamEnvMap::callLightPrePassRenderSeamEnvMap() {
+    if (m_pDrMan->m_seamEnvRenderOff) {
+        return;
+    }
+    for (DrResMdoSeamWrkEnv* wrk = m_pEnvList; wrk != nullptr; wrk = wrk->m_prev) {
+        m_pWrkMatRes = wrk->m_matRes;
+        if (m_pWrkMatRes == nullptr || !(wrk->m_type & 0x8)) {
+            continue;
+        }
+        m_renderPass = 3;
+        m_renderTech = 4;
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        DrResMdoMat* mats = m_pWrkMatRes->m_pResMat;
+        // draws the parts of one top header that are in this pass and visible
+        auto renderParts = [&](const MdsMdlInfoHeader* info, int num) {
+            for (int j = 0; j < num; j++, info++) {
+                if ((info->m_passFlags & 0x20) && mats[info->m_matIdx].m_color.a > 0.0f) {
+                    partsDefRender(info, 0, 0, false);
+                }
+            }
+        };
+        const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop;
+        for (int i = 0; i < m_pWrkMatRes->m_mdlTopNum; i++, top++) {
+            renderParts(reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs),
+                        top->m_infoNum);
+        }
+    }
+}
+
 void DrMdoCtlSeamAll::callLightPrePassRenderSeamEnvMap() {
     if (!(m_stateFlags & 0x8) || m_pDrMan->m_seamRenderOff) {
         return;
@@ -2251,6 +2350,39 @@ void DrMdoCtlSeamAll::callLightPrePassRenderSeamEnvMap() {
     m_bindFlags[0] = 0x10;
     m_bindFlags[1] = 0;
     DrMdoCtlSeamEnvMap::callLightPrePassRenderSeamEnvMap();
+}
+
+void DrMdoCtlSeamEnvMap::callAlphaRenderSeamEnvMap() {
+    if (m_pDrMan->m_seamEnvRenderOff) {
+        return;
+    }
+    for (DrResMdoSeamWrkEnv* wrk = m_pEnvList; wrk != nullptr; wrk = wrk->m_prev) {
+        m_pWrkMatRes = wrk->m_matRes;
+        if (m_pWrkMatRes == nullptr || !(wrk->m_type & 0x10)) {
+            continue;
+        }
+        m_renderPass = 4;
+        m_renderTech = 1;
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        DrResMdoMat* mats = m_pWrkMatRes->m_pResMat;
+        // draws the parts of one top header that are in this pass and visible
+        auto renderParts = [&](const MdsMdlInfoHeader* info, int num) {
+            for (int j = 0; j < num; j++, info++) {
+                if ((info->m_passFlags & 0x2) && mats[info->m_matIdx].m_color.a > 0.0f) {
+                    partsDefRender(info, 0, 0, false);
+                }
+            }
+        };
+        const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop;
+        for (int i = 0; i < m_pWrkMatRes->m_mdlTopNum; i++, top++) {
+            renderParts(reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs),
+                        top->m_infoNum);
+        }
+    }
 }
 
 void DrMdoCtlSeamAll::callAlphaRenderSeamEnvMap() {
@@ -2266,6 +2398,39 @@ void DrMdoCtlSeamAll::callAlphaRenderSeamEnvMap() {
     DrMdoCtlSeamEnvMap::callAlphaRenderSeamEnvMap();
 }
 
+void DrMdoCtlSeamEnvMap::callSpAlphaRenderSeamEnvMap() {
+    if (m_pDrMan->m_seamEnvRenderOff) {
+        return;
+    }
+    for (DrResMdoSeamWrkEnv* wrk = m_pEnvList; wrk != nullptr; wrk = wrk->m_prev) {
+        m_pWrkMatRes = wrk->m_matRes;
+        if (m_pWrkMatRes == nullptr || !(wrk->m_type & 0x20)) {
+            continue;
+        }
+        m_renderPass = 5;
+        m_renderTech = 1;
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        DrResMdoMat* mats = m_pWrkMatRes->m_pResMat;
+        // draws the parts of one top header that are in this pass and visible
+        auto renderParts = [&](const MdsMdlInfoHeader* info, int num) {
+            for (int j = 0; j < num; j++, info++) {
+                if ((info->m_passFlags & 0x40) && mats[info->m_matIdx].m_color.a > 0.0f) {
+                    partsDefRender(info, 0, 0, false);
+                }
+            }
+        };
+        const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop;
+        for (int i = 0; i < m_pWrkMatRes->m_mdlTopNum; i++, top++) {
+            renderParts(reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs),
+                        top->m_infoNum);
+        }
+    }
+}
+
 void DrMdoCtlSeamAll::callSpAlphaRenderSeamEnvMap() {
     if (!(m_stateFlags & 0x20) || m_pDrMan->m_seamRenderOff) {
         return;
@@ -2277,6 +2442,39 @@ void DrMdoCtlSeamAll::callSpAlphaRenderSeamEnvMap() {
     m_bindFlags[0] = 0x10;
     m_bindFlags[1] = 0;
     DrMdoCtlSeamEnvMap::callSpAlphaRenderSeamEnvMap();
+}
+
+void DrMdoCtlSeamEnvMap::callRefractionRenderSeamEnvMap() {
+    if (m_pDrMan->m_seamEnvRenderOff) {
+        return;
+    }
+    for (DrResMdoSeamWrkEnv* wrk = m_pEnvList; wrk != nullptr; wrk = wrk->m_prev) {
+        m_pWrkMatRes = wrk->m_matRes;
+        if (m_pWrkMatRes == nullptr || !(wrk->m_type & 0x4)) {
+            continue;
+        }
+        m_renderPass = 2;
+        m_renderTech = 8;
+        m_curShaderIdx = -1;
+        m_curBindIdx = -1;
+        m_bindFlags[0] = 0x10;
+        m_bindFlags[1] = 0;
+        m_pWrkMatRes->m_pVertex->beginVertexSetup();
+        DrResMdoMat* mats = m_pWrkMatRes->m_pResMat;
+        // draws the parts of one top header that are in this pass and visible
+        auto renderParts = [&](const MdsMdlInfoHeader* info, int num) {
+            for (int j = 0; j < num; j++, info++) {
+                if ((info->m_passFlags & 0x4) && mats[info->m_matIdx].m_color.a > 0.0f) {
+                    partsDefRender(info, 0, 0, false);
+                }
+            }
+        };
+        const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop;
+        for (int i = 0; i < m_pWrkMatRes->m_mdlTopNum; i++, top++) {
+            renderParts(reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs),
+                        top->m_infoNum);
+        }
+    }
 }
 
 void DrMdoCtlSeamAll::callRefractionRenderSeamEnvMap() {

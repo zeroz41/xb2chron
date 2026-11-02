@@ -25,6 +25,8 @@ public:
           m_center(0.0f, 0.0f, 0.0f), pad_140(1.0f, 1.0f, 1.0f), pad_150(0.0f, 0.0f, 0.0f), m_length(0.0f), pad_164(0),
           m_mdlFlags(0), pad_16A(0), pad_16B(0), m_nodeMax(0), pad_182(0), pad_184(0), pad_188(0) {}
 
+    void updateMpfMatUniformBlock();
+
     // Static texture callbacks: s_pStaticTexture[id] binds texture id at the shader location.
     void varStTex_ColorTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);
     void varStTex_NormalTex(const MdsMatInfoHeader* info, unsigned int location, unsigned int matIdx);

@@ -13,6 +13,7 @@ public:
     void createMpfZPrePassDisplayList();
     void createMpfMapDisplayList();
     void releaseFreeSeamMpf(DrResMdoSeamWrkMpf* wrk);
+    void updateMpfMapRenderList();
 };
 }  // namespace ml
 

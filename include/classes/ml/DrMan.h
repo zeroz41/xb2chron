@@ -266,7 +266,10 @@ public:
     bool m_seamBaseShadowOff;
     // 0x1D86: DrMdoCtlSeamAll::occRender renders nothing while set (the name is not the original's)
     bool m_seamOccRenderOff;
-    unsigned char pad_1D87[0x5];
+    unsigned char pad_1D87[0x1];
+    // 0x1D88: DrMdoCtlSeamEnvMap's render passes draw nothing while set (the name is not the original's)
+    bool m_seamEnvRenderOff;
+    unsigned char pad_1D89[0x3];
     // 0x1D8C: DrShdLgtHybrid::render skips the clustered lights' render while set (the name is not the original's)
     bool m_clusteredRenderOff;
     unsigned char pad_1D8D[0x4];

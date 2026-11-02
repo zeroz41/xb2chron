@@ -17,6 +17,7 @@ public:
     void setMatrix(const mm::Mat44& matrix);
     void setOffsetPos(const mm::Vec3& pos);
     void createWeightVtx(int, unsigned int, unsigned int, bool);
+    void partsDefRender(const MdsMdlInfoHeader*, int, int, bool);
     void partsShadowRender(const MdsMdlInfoHeader*, int, int, int);
     void partsShadowDirRender(const MdsMdlInfoHeader*, int, int);
 };

@@ -1,6 +1,8 @@
 #ifndef CLASSES_ML_DRRESMDOSEAMWRKMPF_H
 #define CLASSES_ML_DRRESMDOSEAMWRKMPF_H
 
+namespace grlib { class CGLibVtxInstans; }
+namespace ml { class DrCalcViewWork; class DrMdoCtlSeamMpfMap; }
 namespace ml { struct MdoWrkMatRes; class DrResMdoSeamMemObj; class DrMdoCtlMpfWork; class DrMdoCtlMpfAuto; class DrMdoCtlMpfInst; }
 
 namespace ml {
@@ -11,6 +13,9 @@ public:
     virtual ~DrResMdoSeamWrkMpf();  // slot 0
     void setEtcMpfCache(int idx, DrResMdoSeamMemObj* mem);
     void setMpfPoliCache(int idx, DrResMdoSeamMemObj* mem);
+    // returns the state bits DrMdoCtlSeamMpfMap::updateMpfMapRenderList ors into the control's flags (0: nothing
+    // changed)
+    unsigned int updateRenderList(DrCalcViewWork* view, grlib::CGLibVtxInstans* inst, DrMdoCtlSeamMpfMap* ctl);
 
     // 0x8: the next work of DrMdoCtlSeam::m_pMpfList (DrMdoCtlSeamAll::releaseSeamAll walks it; the name is not
     // the original's)
@@ -25,7 +30,9 @@ public:
     // 0x5C: DrMdoCtlSeamRead::waitMpfEtcStream/waitMpfPoliStream set bit 0 when the stream ends without data (the
     // name is not the original's)
     unsigned int m_cacheFlags;
-    unsigned char pad_60[0x10];
+    // 0x60..0x6C: four counts DrMdoCtlSeamMpfMap::updateMpfMapRenderList adds to the control's m_mpfRenderNum
+    // (the name is not the original's)
+    int m_renderNum[4];
     // Field names below are not the original's.
     MdoWrkMatRes* m_matRes;      // 0x70: setupWork's matRes; the destructor frees it
     unsigned char* m_workBuf;    // 0x78: setupWork's work memory, holding the three objects below

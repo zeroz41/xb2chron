@@ -134,7 +134,10 @@ public:
     int m_lowMemSize;
     unsigned char pad_C48[0x8];
     int m_envMemSize;
-    unsigned char pad_C54[0x18];
+    unsigned char pad_C54[0x8];
+    // 0xC5C..0xC68: DrMdoCtlSeamMpfMap::updateMpfMapRenderList adds each mpf work's m_renderNum (the name is not the
+    // original's)
+    int m_mpfRenderNum[4];
     int m_lightMemSize;              // 0xC6C: the light memory read in
     unsigned char pad_C70[0xC];
     // 0xC7C: DrMdoCtlSeamRead::wait*Stream set bit 16 when a stream ends without its data (and bit 10 while
