@@ -58,6 +58,7 @@ public:
     bool texstm_defRead();
     bool texstm_deTexCheck();
     bool texstm_notfileWait();
+    bool texstm_stmchk_topLast();
     bool texstm_oldVerWait();
     bool texstm_stmchk_setWait();
     bool texstm_defErrWait();

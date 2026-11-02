@@ -37,6 +37,8 @@ public:
     // the stream lists stocked this frame (s_nDblStockIdx's) run their API updates, the stock emptied
     void apiUpdate();
     void clearMemObj(DrCalcTexStmObj* obj);
+    // while bit 0 of pad_2068 is set: the m_memCache entries not in use (bit 1 of their flags) given back
+    void cntMemUpdate();
 
     // (the list names are not the original's) 0x8: the memory objects covering m_mem; 0x18: the spare ones
     DrResChankList<DrCalcTexStmObj> m_memList;

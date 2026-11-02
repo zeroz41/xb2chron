@@ -995,6 +995,39 @@ void DrCalcTexStreamMan::apiUpdate() {
     m_stockNum[DrMan::s_nDblStockIdx] = 0;
 }
 
+void DrCalcTexStreamMan::cntMemUpdate() {
+    if (pad_2068 & 1) {
+        if (pad_2488++ < 1) {
+            int freeNum = 0;
+            for (int i = 0; i < pad_248C; i++) {
+                DrCalcTexStmObj* pObj = m_memCache[i];
+                if (pObj == nullptr) {
+                    freeNum++;
+                } else if (!(pObj->m_flags & 2)) {
+                    clearMemObj(pObj);
+                    m_memCache[i] = nullptr;
+                    freeNum++;
+                }
+            }
+            if (freeNum == pad_248C) {
+                pad_2488 = 0;
+                pad_248C = 0;
+                pad_2068 &= ~1;
+            }
+        } else {
+            pad_2488 = 0;
+            pad_2068 &= ~1;
+            for (int i = 0; i < pad_248C; i++) {
+                if (m_memCache[i] != nullptr) {
+                    clearMemObj(m_memCache[i]);
+                    m_memCache[i] = nullptr;
+                }
+            }
+            pad_248C = 0;
+        }
+    }
+}
+
 bool DrCalcStmListObj::isResTex() const { return (m_flags & (FLAG_RESTEX << DrMan::s_nDblStockIdx)) != 0; }
 
 bool DrCalcStmListObj::isResSub() const { return (m_flags & (FLAG_RESSUB << DrMan::s_nDblStockIdx)) != 0; }
@@ -1055,6 +1088,32 @@ bool DrCalcStmListObj::texstm_notfileWait() {
     m_stateNo = 19;
     m_flags |= FLAG_NOTFILE;
     end();
+    return false;
+}
+
+bool DrCalcStmListObj::texstm_stmchk_topLast() {
+    m_stateNo = 2;
+    m_idleFrame[0] = 0;
+    m_idleFrame[1] = 0;
+    DrCalcTexStreamMan* pMan = DrCalcTexStreamMan::get();
+    if (pMan->pad_2498 >= 0) {
+        pMan->pad_2498 = 0;
+    }
+    if (m_flags & FLAG_READ) {
+        DrMan::get()->setAllMiddelTexStmChk(true);
+    } else if (!(m_flags & FLAG_KEEPMEM)) {
+        end();
+    } else if (m_flags & FLAG_READERR) {
+        m_flags &= ~FLAG_READERR;
+        if (m_pMemObj) {
+            DrCalcTexStreamMan::get()->clearMemObj(m_pMemObj);
+            m_pMemObj = nullptr;
+        }
+        m_func = &DrCalcStmListObj::texstm_notfileWait;
+    } else {
+        m_func = &DrCalcStmListObj::texstm_stmchk_setWait;
+        m_flags |= 0x4000;
+    }
     return false;
 }
 
