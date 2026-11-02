@@ -13,6 +13,10 @@ class FixedObjectAllocator;
 }  // namespace mtl
 }  // namespace mm
 
+namespace ml {
+class CriticalSectionNC;
+}  // namespace ml
+
 namespace mtl {
 
 // the kind of allocator MemManager::create makes (fw::MemorySectionInfo's default is 1): createAllocator makes a
@@ -20,6 +24,7 @@ namespace mtl {
 enum AllocatorType : int;
 
 class IMemAllocator;
+struct MemoryInfo;
 
 // monolib's memory manager (its functions, by its symbols)
 class MemManager {
@@ -39,12 +44,24 @@ public:
     static unsigned long getTotalSize(ALLOC_HANDLE handle);
     // the largest block the handle's memory can still give (GfAssetManager::initialize sizes the slots with it)
     static unsigned long maxAllocSize(ALLOC_HANDLE handle);
+    // deallocate's work: memory create(void*, ...) was not handed goes back to free; the rest to its region's
+    // allocator, under the region's lock unless told not to (the parameter names are not the original's)
     static void deallocate_section(void* p, unsigned long size, bool flag);
     // allocate's work, done under its critical section (the parameters as allocate's)
     static void* allocate_section(ALLOC_HANDLE handle, unsigned long size, unsigned long alignment, bool flag,
                                   const char* name, int line);
     // p's memory resized to size (MultimediaReallocate's, flag false)
     static void* reallocate(void* p, unsigned long size, bool flag);
+    // reallocate's work, done under its critical section (1.0.0 has it out of line; 3.0.1 inlines it)
+    static void* reallocate_section(void* p, unsigned long size, bool flag);
+    // the handle's allocator's figures into info; false for no region or no allocator
+    static bool getMemoryInfo(ALLOC_HANDLE handle, MemoryInfo* info);
+    // the handle's allocator's log (log_section's work under the critical section)
+    static void log(ALLOC_HANDLE handle, bool flag, MemoryInfo* info);
+    static void log_section(ALLOC_HANDLE handle, bool flag, MemoryInfo* info);
+    // whether the handle names a region whose allocator is valid (valid_section's work under the critical section)
+    static bool valid(const ALLOC_HANDLE& handle, bool flag);
+    static bool valid_section(const ALLOC_HANDLE& handle, bool flag);
     // a new allocator of size bytes in the memory at p (the type's default, 1: a DlAllocator)
     static ALLOC_HANDLE create(void* p, unsigned long size, const char* name, bool flag, AllocatorType type);
     static ALLOC_HANDLE create(void* p, unsigned long size, const char* name, bool flag);
@@ -76,6 +93,8 @@ public:
 
     // the allocator over the handle's memory (the entry of _existHandle whose handle and region it names), or nullptr
     static ::mm::mtl::IAllocator* getAllocator(const ALLOC_HANDLE& handle);
+    // the region whose memory holds p, searched from the handle's region (none: every region)
+    static Region* getArea_section(const ALLOC_HANDLE& handle, const void* p);
 
     static ::mm::mtl::FixedObjectAllocator<Region, 512>* _region;  // the regions (initialize makes it)
     static ::mm::mtl::FixedVector<HandleRegion, 512> _existHandle;
@@ -109,16 +128,18 @@ public:
         // a new handle: the next after the last one (wrapping in the range) whose slot holds no region, which the
         // slot takes; 0 when every slot is taken
         unsigned int issue() {
-            for (unsigned int i = 1; i < m_capacity; i++) {
-                unsigned int next = m_lastHandle + 1;
-                m_lastHandle = next < m_minHandle || next > m_maxHandle ? m_minHandle : next;
-                Slot& slot = m_slots[m_lastHandle % m_capacity];
-                if (slot.m_region == nullptr) {
-                    slot.m_handle = m_lastHandle;
-                    return m_lastHandle;
+            unsigned int count = 0;
+            Slot* slot;
+            do {
+                if (++count >= m_capacity) {
+                    return 0;
                 }
-            }
-            return 0;
+                unsigned int next = m_lastHandle + 1;
+                m_lastHandle = next > m_maxHandle || next < m_minHandle ? m_minHandle : next;
+                slot = &m_slots[m_lastHandle % m_capacity];
+            } while (slot->m_region != nullptr);
+            slot->m_handle = m_lastHandle;
+            return m_lastHandle;
         }
 
         // the region into the handle's slot
@@ -138,6 +159,9 @@ public:
     };
 
     static bool s_bInitialize;  // initialize sets it, terminate clears it
+    static ALLOC_HANDLE s_hLastFree;  // the handle of the region deallocate_section gave memory back to last
+    static ::ml::CriticalSectionNC _sectionRegionCD;
+    static ::ml::CriticalSectionNC _sectionRegionTC;
     static RegionMap s_ptrMap;
 };
 

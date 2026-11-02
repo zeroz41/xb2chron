@@ -11,6 +11,9 @@
 #include "classes/mtl/MemHandlebaseAllocator.h"
 #include "classes/mtl/AssetAllocator.h"
 #include "classes/mm/mtl/HeapAllocator.h"
+#include "mm/threading/SpinLock.h"
+#include "mm/mtl/FixedVector.h"
+#include "mm/mtl/FixedObjectAllocator.h"
 #include <new>
 #include <stdlib.h>
 
@@ -6412,7 +6415,50 @@ mm::mtl::HeapAllocator CallStackManager::m_allocator;
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100ED26D0)
 static mm::mtl::HeapAllocator s_allocatorHeap;
 
+// the critical sections the manager's functions hold (function-local statics, guarded and made on first use)
+// Proposed names, not the original's: the symbols leave them unnamed (lbl_71015DA160, lbl_71015DA188, lbl_71015DA1B0)
+static ml::CriticalSection& getHandleCS() {
+    static ml::CriticalSection s_handleCS;
+    return s_handleCS;
+}
+
+// the critical section held while the memories create(void*, ...) was handed are read or recorded
+static ml::CriticalSection& getCreatedMemoryCS() {
+    static ml::CriticalSection s_createdMemoryCS;
+    return s_createdMemoryCS;
+}
+
+// the critical section allocate, deallocate_section and the queries hold
+static ml::CriticalSection& getAllocCS() {
+    static ml::CriticalSection s_allocCS;
+    return s_allocCS;
+}
+
+namespace {
+
+// a memory create(void*, ...) was handed and its size (the type has internal linkage: its vector's destructor is a
+// local function, fn_71006E80B4). The name is not the original's
+struct CreatedMemory {
+    CreatedMemory(void* p, unsigned long size) : m_memory(p), m_size(size) {}
+
+    void* m_memory;
+    unsigned long m_size;
+};
+
+}  // namespace
+
+// the memories create(void*, ...) was handed, and a lock 3.0.1 constructs but no kept code takes
+// Proposed names, not the original's: the symbols leave them unnamed (lbl_71015DA1E0, merged with the guards)
+static mm::mtl::FixedVector<CreatedMemory, 16> s_createdMemory;
+static mm::threading::SpinLock s_createdMemoryLock;
+
 mm::mtl::FixedVector<MemManager::HandleRegion, 512> MemManager::_existHandle;
+ALLOC_HANDLE MemManager::s_hLastFree;
+ml::CriticalSectionNC MemManager::_sectionRegionCD;
+ml::CriticalSectionNC MemManager::_sectionRegionTC;
+MemManager::RegionMap MemManager::s_ptrMap;
+bool MemManager::s_bInitialize;
+::mm::mtl::FixedObjectAllocator<MemManager::Region, 512>* MemManager::_region;
 
 DlAllocator::~DlAllocator() {}
 
@@ -6540,6 +6586,28 @@ bool DlAllocator::hasMemory(const void* p) const {
     return result;
 }
 
+ALLOC_HANDLE MemManager::create(void* p, unsigned long size, const char* name, bool flag, AllocatorType type) {
+    ml::CS cs(getHandleCS());
+    ALLOC_HANDLE handle;
+    IMemAllocator* allocator = createAllocator(type);
+    if (allocator == nullptr) {
+        return handle;
+    }
+    Region* region = _region->allocate();
+    region->initialize(allocator, p, size, name, false, flag);
+    region->m_flags |= Region::FLAG_OWN_MEMORY;
+    {
+        ml::CS memoryCS(getCreatedMemoryCS());
+        s_createdMemory.push_back(CreatedMemory(p, size));
+    }
+    unsigned int id = s_ptrMap.issue();
+    handle.m_handle = id;
+    region->m_handle.m_handle = id;
+    s_ptrMap.set(id, region);
+    _existHandle.push_back(HandleRegion(id, region));
+    return handle;
+}
+
 ALLOC_HANDLE MemManager::create(void* p, unsigned long size, const char* name, bool flag) {
     return create(p, size, name, flag, static_cast<AllocatorType>(1));
 }
@@ -6549,10 +6617,175 @@ ALLOC_HANDLE MemManager::create(ALLOC_HANDLE parent, unsigned long size, const c
     return create(parent, size, name, flag, static_cast<AllocatorType>(1), 16, file, line);
 }
 
+void* MemManager::allocate(ALLOC_HANDLE handle, unsigned long size, unsigned long alignment, bool flag, const char* name,
+                           int line) {
+    ml::CS cs(getAllocCS());
+    return allocate_section(handle, size, alignment, flag, name, line);
+}
+
 void MemManager::deallocate(void* p, unsigned long size, bool flag) {
     if (s_bInitialize) {
         deallocate_section(p, size, flag);
     }
+}
+
+inline void MemManager::Region::deallocate(void* p, unsigned long, bool flag) {
+    if ((m_flags & FLAG_LOCKED) && !flag) {
+        ml::CSNC lock(m_cs);
+        if (p != nullptr && m_allocator != nullptr) {
+            m_allocator->deallocate(p, 0);
+            m_allocCount--;
+        }
+    } else if (p != nullptr && m_allocator != nullptr) {
+        m_allocator->deallocate(p, 0);
+        m_allocCount--;
+    }
+}
+
+void MemManager::deallocate_section(void* p, unsigned long size, bool flag) {
+    if (p == nullptr) {
+        return;
+    }
+    // an int, not a bool: the original tests it with cbz after the unlock (a bool's i1 gives tbz #0)
+    int created;
+    {
+        ml::CS cs(getCreatedMemoryCS());
+        created = [&]() -> int {
+            unsigned long address = reinterpret_cast<unsigned long>(p);
+            for (const CreatedMemory& memory : s_createdMemory) {
+                unsigned long top = reinterpret_cast<unsigned long>(memory.m_memory);
+                if (top <= address && address < memory.m_size + top) {
+                    return 1;
+                }
+            }
+            return 0;
+        }();
+    }
+    if (!created) {
+        free(p);
+        return;
+    }
+    ml::CS cs(getAllocCS());
+    Region* region = getArea_section(ALLOC_HANDLE(), p);
+    if (region == nullptr) {
+        free(p);
+        return;
+    }
+    region->deallocate(p, size, flag);
+    s_hLastFree = region->m_handle;
+}
+
+inline void* MemManager::Region::reallocate(void* p, unsigned long size, bool flag) {
+    if ((m_flags & FLAG_LOCKED) && !flag) {
+        ml::CSNC lock(m_cs);
+        if (m_allocator == nullptr) {
+            return nullptr;
+        }
+        return m_allocator->reallocate(p, size);
+    }
+    if (m_allocator == nullptr) {
+        return nullptr;
+    }
+    return m_allocator->reallocate(p, size);
+}
+
+inline void* MemManager::reallocate_section(void* p, unsigned long size, bool flag) {
+    Region* region = getArea_section(ALLOC_HANDLE(), p);
+    if (region == nullptr) {
+        return nullptr;
+    }
+    return region->reallocate(p, size, flag);
+}
+
+void* MemManager::reallocate(void* p, unsigned long size, bool flag) {
+    ml::CS cs(getAllocCS());
+    return reallocate_section(p, size, flag);
+}
+
+inline void MemManager::Region::memoryInfo(MemoryInfo* info) {
+    ml::CSNC lock(m_cs);
+    if (m_allocator != nullptr) {
+        m_allocator->memoryInfo(info);
+    }
+    info->m_top = m_top;
+}
+
+inline unsigned long MemManager::Region::maxAllocSize() {
+    ml::CSNC lock(m_cs);
+    MemoryInfo info;
+    memoryInfo(&info);
+    return info.m_maxFreeSize > 0x38 ? info.m_maxFreeSize - 0x38 : info.m_maxFreeSize;
+}
+
+unsigned long MemManager::maxAllocSize(ALLOC_HANDLE handle) {
+    ml::CS cs(getAllocCS());
+    if (handle.m_handle == 0) {
+        return 0;
+    }
+    Region* region = s_ptrMap.find(handle.m_handle);
+    if (region == nullptr) {
+        return 0;
+    }
+    return region->maxAllocSize();
+}
+
+inline bool MemManager::Region::empty() const {
+    return m_allocator == nullptr;
+}
+
+bool MemManager::getMemoryInfo(ALLOC_HANDLE handle, MemoryInfo* info) {
+    ml::CS cs(getAllocCS());
+    if (handle.m_handle == 0) {
+        return false;
+    }
+    Region* region = s_ptrMap.find(handle.m_handle);
+    if (region == nullptr || region->empty()) {
+        return false;
+    }
+    region->memoryInfo(info);
+    return true;
+}
+
+inline void MemManager::Region::log(MemoryInfo* info, bool flag) {
+    if (m_name.m_str[0] != '\0' && m_allocator != nullptr) {
+        m_allocator->log(info, flag);
+    }
+}
+
+inline void MemManager::log_section(ALLOC_HANDLE handle, bool flag, MemoryInfo* info) {
+    if (handle.m_handle == 0) {
+        return;
+    }
+    Region* region = s_ptrMap.find(handle.m_handle);
+    if (region != nullptr) {
+        region->log(info, flag);
+    }
+}
+
+void MemManager::log(ALLOC_HANDLE handle, bool flag, MemoryInfo* info) {
+    ml::CS cs(getAllocCS());
+    log_section(handle, flag, info);
+}
+
+inline bool MemManager::valid_section(const ALLOC_HANDLE& handle, bool flag) {
+    if (handle.m_handle == 0) {
+        return false;
+    }
+    Region* region = s_ptrMap.find(handle.m_handle);
+    if (region == nullptr) {
+        return false;
+    }
+    if (region->empty() || !region->m_allocator->valid()) {
+        return false;
+    }
+    MemoryInfo info;
+    region->memoryInfo(&info);
+    return true;
+}
+
+bool MemManager::valid(const ALLOC_HANDLE& handle, bool flag) {
+    ml::CS cs(getAllocCS());
+    return valid_section(handle, flag);
 }
 
 IMemAllocator* MemManager::createAllocator(AllocatorType type) {
@@ -6619,6 +6852,30 @@ IMemAllocator::~IMemAllocator() {}
 }  // namespace mtl
 
 namespace mtl {
+
+void* MemManager::getTopAdr(const ALLOC_HANDLE& handle) {
+    ml::CS cs(getAllocCS());
+    if (handle.m_handle == 0) {
+        return nullptr;
+    }
+    Region* region = s_ptrMap.find(handle.m_handle);
+    if (region == nullptr) {
+        return nullptr;
+    }
+    return region->m_top;
+}
+
+unsigned long MemManager::getTotalSize(ALLOC_HANDLE handle) {
+    ml::CS cs(getAllocCS());
+    if (handle.m_handle == 0) {
+        return 0;
+    }
+    Region* region = s_ptrMap.find(handle.m_handle);
+    if (region == nullptr) {
+        return 0;
+    }
+    return region->m_size;
+}
 
 void MemManager::setHaltAlloc(ALLOC_HANDLE handle, bool flag) {
     if (handle.m_handle == 0) {
