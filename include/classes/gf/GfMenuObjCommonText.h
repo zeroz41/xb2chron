@@ -2,13 +2,17 @@
 #define CLASSES_GF_GFMENUOBJCOMMONTEXT_H
 
 #include "classes/gf/GfMenuObject.h"
+#include "classes/gf/GfMenuReferenceNumber.h"
+#include "mm/mtl/IntrusivePtr.h"
 
+namespace gf { class GfMenuBladeList; }
 namespace gf { class GfMenuDriverList; }
 namespace gf { class GfMenuIDList; }
 namespace gf { class GfMenuItemList; }
 namespace gf { class MenuCommonWindowParam; }
 namespace ui { class UICtrlCursorSelect; }
 namespace ui { class UIListInfoBase; }
+namespace ui { class UISelectObjList; }
 
 namespace gf {
 // table 0x7100B61478
@@ -39,6 +43,8 @@ public:
     // an item's text (GfMenuManager::openPreciousWindow passes kind 11 and the item id)
     static void openItem(GfMenuCallContext* context, unsigned int kind, unsigned int item);
     static void close();
+    // the dialog layout's plugins: both window images fit the text, the cursor follows its base
+    static void setupDialog(unsigned int handle);
     // an error text: row `error` of table 0x149 ("name" in table 0x11F), with `value` as the window's pad_44
     static void openError(GfMenuCallContext* context, unsigned int error, unsigned int value);
     // a text of table 0xF6 sent straight to the window (aborts the call context when the row has no text)
@@ -69,16 +75,29 @@ public:
     // the symbols leave it unnamed (lbl_7100EAA200)
     static bool s_isNamedDialogOpen;
 
-    // the fields from 0x24 (in GfMenuObject's tail padding) are not modelled yet: the constructor stores an object
-    // at 0x40, the destructor releases pointers at 0x40, 0x48, 0x68, 0x70, 0x78 and 0x80 (session 20 notes); the
-    // real size is not measured
-    unsigned char pad_24[0x44];
-    // the driver change list's selection, which DrChangeListener's event 6 keeps at s_pChangeDrList's index (the
-    // name is not the original's)
-    ui::UIListInfoBase* m_drChangeListInfo;
+    // the fields from 0x28 (in GfMenuObject's tail padding; the constructor zeroes 0x28..0x8C in one memset): what
+    // the constructor, initialize and the listeners store there, released by the destructor. The field names are
+    // not the original's.
+    ui::UICtrlCursorSelect* m_dialogCursor;  // 0x28: DialogListener's open (GfMenuObjUtil::createCursor)
+    ui::UISelectObjList* m_merSelect;        // 0x30: MerListener's open (UISelectObjList::create)
+    ui::UICtrlCursorSelect* m_merCursor;     // 0x38: MerListener's open, over m_merSelect
+    // 0x40, 0x48: MerListener's numbers (the constructor creates both)
+    mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_merNumber1;
+    mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_merNumber2;
+    GfMenuBladeList* m_bladeList;    // 0x50: the constructor's; KizunaListener makes its chara adapter from it
+    GfMenuDriverList* m_driverList;  // 0x58: the constructor's; KizunaListener makes its chara adapter from it
+    ui::UISelectObjList* m_kizunaSelect;  // 0x60: KizunaListener's open (UISelectObjList::create)
+    // the driver change list's selection (initialize's UISelectObjList "LAY_dr_change@%02d"), which DrChangeListener's
+    // event 6 keeps at s_pChangeDrList's index
+    ui::UISelectObjList* m_drChangeListInfo;
     // the selection cursor DrChangeListener hides while the driver change window is open (event 0x21) and shows
-    // again when it closes (the name is not the original's)
+    // again when it closes
     ui::UICtrlCursorSelect* m_drChangeCursor;
+    // 0x78, 0x80: NumSelectListener's numbers (the constructor creates both)
+    mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_numSelectNumber1;
+    mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_numSelectNumber2;
+    // 0x88: NumSelectListener's open stores OpenNumSelectParam::pad_C here; a number's value is a multiple of it
+    unsigned int m_numSelectStep;
 };
 // openKizunaDialog registers the text UIStr(m_bdat, m_id) and sends it with m_value (the field names are not
 // the original's)

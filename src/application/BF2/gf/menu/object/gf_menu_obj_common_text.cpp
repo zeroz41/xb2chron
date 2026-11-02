@@ -24,7 +24,10 @@
 #include "ui/UIUtil.h"
 #include "classes/ui/UICtrlCursorSelect.h"
 #include "classes/ui/UIListInfoBase.h"
+#include "classes/ui/UISelectObjList.h"
+#include "classes/gf/GfMenuBladeList.h"
 #include "classes/ui/UIObjectAcc.h"
+#include "classes/ui/UIObjectSyncPlugin.h"
 #include "gf/GfDataItem.h"
 #include "gf/GfMenuItemUtil.h"
 #include "gf/GfMenuObjUtil.h"
@@ -36,12 +39,105 @@
 
 namespace gf {
 
+GfMenuObjCommonText::GfMenuObjCommonText(unsigned int handle)
+    : GfMenuObject(handle), m_dialogCursor(nullptr), m_merSelect(nullptr), m_merCursor(nullptr), m_merNumber1(),
+      m_merNumber2(), m_bladeList(nullptr), m_driverList(nullptr), m_kizunaSelect(nullptr), m_drChangeListInfo(nullptr),
+      m_drChangeCursor(nullptr), m_numSelectNumber1(), m_numSelectNumber2(), m_numSelectStep(0) {
+    m_merNumber1 = GfMenuReferenceNumber::create();
+    m_merNumber1->m_value = 0;
+    m_merNumber2 = GfMenuReferenceNumber::create();
+    m_merNumber2->m_value = 0;
+    m_bladeList = GfMenuBladeList::create();
+    m_driverList = GfMenuDriverList::create();
+    s_pItemList = GfMenuItemList::create();
+    s_pSubMenuIDList = GfMenuIDList::create();
+    ui::UIListInfoBase::SetupParam param;
+    param.m_pageRowSize = 4;
+    s_pSubMenuIDList->setup(getAllocator(ALLOCATOR(0)), param);
+    s_pChangeDrList = GfMenuDriverList::create();
+    m_numSelectNumber1 = GfMenuReferenceNumber::create();
+    m_numSelectNumber1->m_value = 0;
+    m_numSelectNumber2 = GfMenuReferenceNumber::create();
+    m_numSelectNumber2->m_value = 0;
+}
+
+GfMenuObjCommonText::~GfMenuObjCommonText() {
+    m_merNumber1 = nullptr;
+    m_merNumber2 = nullptr;
+    if (m_drChangeCursor != nullptr) {
+        m_drChangeCursor->release();
+        m_drChangeCursor = nullptr;
+    }
+    if (m_drChangeListInfo != nullptr) {
+        m_drChangeListInfo->release();
+        m_drChangeListInfo = nullptr;
+    }
+    if (s_pChangeDrList != nullptr) {
+        s_pChangeDrList->release();
+        s_pChangeDrList = nullptr;
+    }
+    if (s_pSubMenuIDList != nullptr) {
+        s_pSubMenuIDList->release();
+        s_pSubMenuIDList = nullptr;
+    }
+    if (s_pItemList != nullptr) {
+        s_pItemList->release();
+        s_pItemList = nullptr;
+    }
+    if (m_merSelect != nullptr) {
+        m_merSelect->release();
+        m_merSelect = nullptr;
+    }
+    if (m_merCursor != nullptr) {
+        m_merCursor->release();
+        m_merCursor = nullptr;
+    }
+    if (m_kizunaSelect != nullptr) {
+        m_kizunaSelect->release();
+        m_kizunaSelect = nullptr;
+    }
+    if (m_bladeList != nullptr) {
+        m_bladeList->release();
+        m_bladeList = nullptr;
+    }
+    if (m_driverList != nullptr) {
+        m_driverList->release();
+        m_driverList = nullptr;
+    }
+    if (m_dialogCursor != nullptr) {
+        m_dialogCursor->release();
+        m_dialogCursor = nullptr;
+    }
+    m_numSelectNumber1 = nullptr;
+    m_numSelectNumber2 = nullptr;
+}
+
 void GfMenuObjCommonText::finalize() {
     GfMenuObject::finalize();
 }
 
 void GfMenuObjCommonText::update() {
     GfMenuObject::update();
+}
+
+void GfMenuObjCommonText::setupDialog(unsigned int handle) {
+    GfMenuObjUtil::FitOption option;
+    option.m_addHalfSize = true;
+    option.m_keepScaleX = true;
+    unsigned int text = ui::UIUtil::searchChild(handle, "LAY_dialog_text");
+    GfMenuObjUtil::createFitPlugin(ui::UIUtil::searchChild(handle, "IMG_dialog_win@01"), text, 0, 0, option);
+    GfMenuObjUtil::createFitPlugin(ui::UIUtil::searchChild(handle, "IMG_dialog_win@02"), text, 0, 0, option);
+    unsigned int cursor = ui::UIUtil::searchChild(handle, "LAY_dialog_cursor");
+    ui::UIObjectSyncPlugin* plugin;
+    {
+        ui::UIObjectAcc acc(cursor);
+        plugin = ui::UIObjectSyncPlugin::create(acc.searchSibiling("LAY_dialog_cursor_base"));
+    }
+    plugin->setTargetObject(cursor);
+    plugin->setTargetFlag(0x3E);
+    if (plugin != nullptr) {
+        plugin->release();
+    }
 }
 
 void GfMenuObjCommonText::close() {
