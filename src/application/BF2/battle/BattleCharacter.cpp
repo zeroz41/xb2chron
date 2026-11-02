@@ -21,6 +21,7 @@
 #include "classes/gf/GfComEffectCaster.h"
 #include "classes/gf/GfComSound.h"
 #include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfMenuObjDamageBuff.h"
 #include "classes/gf/GfDataBdat.h"
 #include "plugin/Bdat.h"
 #include "gf/MsgFxComboBuff.h"
@@ -472,6 +473,45 @@ void BattleCharacter::PlaySystemSE(BTL_SE se, int no, bool flag0, bool flag1) {
         name.format("btl_%s_%03d", tag, no);
         sound->playSe2D(name.m_str, 1.0f, flag0, flag1);
     }
+}
+
+bool BattleCharacter::PlaySE(BTL_SE se, int no, const mm::Vec3* pos, bool follow) {
+    int attr = m_seAttribute;
+    if (attr < 9) {
+        m_seAttribute = 9;
+    } else {
+        const CharacterParameter* param = GetCharacterParameterConst(false);
+        if (param != nullptr) {
+            attr = param->GetAttribute();
+        }
+    }
+    bool hidden = gf::GfMenuManager::fn_710035DE04();
+    if (se == 0 || no == 0 || hidden) {
+        return false;
+    }
+    const char* tag = mm::mtl::PtrSingleton<BattleGlobal>::sys()->GetSeTag(se);
+    if (tag == nullptr) {
+        return false;
+    }
+    gf::GfComSound* sound = gf::GfObjUtil::getObj(m_handle)->getComponent<gf::GfComSound>(10);
+    if (sound == nullptr) {
+        return false;
+    }
+    mm::mtl::FixStr<32> name;
+    name.format("btl_%s_%03d", tag, no);
+    mm::Vec3 offset;
+    if (pos != nullptr) {
+        offset.x = pos->x - m_pos.x;
+        offset.y = pos->y - m_pos.y;
+        offset.z = pos->z - m_pos.z;
+    } else {
+        offset = mm::Vec3::zero;
+    }
+    int saved = sound->getAttributeVariable();
+    sound->setAttributeVariable(attr);
+    bool played = sound->playSe(name.m_str, 1.0f, offset, follow);
+    sound->setAttributeVariable(saved);
+    return played;
 }
 
 void BattleCharacter::StopSE(BTL_SE se, int no) {
@@ -1229,6 +1269,21 @@ bool BattleCharacter::fn_7100042F70(int value) {
         return false;
     }
     return fn_710002FC0C(6);
+}
+
+void BattleCharacter::fn_7100043070(int buff, bool playSe) {
+    if (buff == 0x1E) {
+        fn_710004315C(1, 1, nullptr, false, nullptr, nullptr, false);
+    }
+    CreateBuffEffect(buff, true);
+    if (!playSe || GetBuffEffectIndex(buff) < 0) {
+        return;
+    }
+    unsigned char* fp = gf::GfDataBdat::getFP(0x11);
+    if (Bdat::getFlagVal(fp, "Flag", buff, "SE") == 0) {
+        return;
+    }
+    PlaySE(static_cast<BTL_SE>(1), Bdat::getFlagVal(fp, "Flag", buff, "Buff") != 0 ? 0x35 : 0x36, nullptr, true);
 }
 
 void BattleCharacter::NotifyChangeAttr(gf::GF_OBJ_HANDLE* handle, unsigned int attr, unsigned int) {

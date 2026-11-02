@@ -57,8 +57,11 @@ public:
     };
     CharacterParameter* GetCharacterParameter(bool);
     CharacterParameter* GetCharacterParameterConst(bool) const;
-    // plays a battle sound effect (ElementalComboManager::CreateBreakEffect passes (1, 0x1F, nullptr, true))
-    void PlaySE(BTL_SE se, int, const mm::Vec3* pos, bool);
+    // plays a battle sound effect (ElementalComboManager::CreateBreakEffect passes (1, 0x1F, nullptr, true)): the
+    // "btl_<GetSeTag>_<no>" sound of the GfComSound at pos (relative to m_pos), with its attribute variable set to
+    // m_seAttribute once when that is below 9 (then reset to 9), else to the parameter's GetAttribute; answers
+    // GfComSound::playSe
+    bool PlaySE(BTL_SE se, int no, const mm::Vec3* pos, bool follow);
     void PlaySystemSE(BTL_SE se, int no, bool, bool);
     void StopSE(BTL_SE se, int no);
     // 3.0.1's body answers its parameter's slot 74 (a bool) for a living non-player character in battle while
@@ -376,6 +379,23 @@ public:
     // entry's value is at most the int (else false; caller NotifyDamage).
     void fn_7100042C30(gf::GF_OBJ_HANDLE*, int value);
     bool fn_7100042F70(int value);
+    // combo (the sixth argument of fn_710004315C) points at the three words CharacterParameter::SetFightCombo(int, int,
+    // unsigned int) is called with (id, character, flags); the original's type for it is unknown
+    // Placeholder name. A reaction (blow/down/etc. id, level) from an attacker: CheckResistReaction (its result
+    // in *result), the combo, SetAction 0x10/0x11/0x12 and the talk trigger; when the last flag is set,
+    // DispReactionUI. Answers whether it was not resisted. Body not written yet.
+    bool fn_710004315C(int reaction, int level, BattleCharacter* attacker, bool, int* result,
+                       const unsigned int* combo, bool disp);
+    // Placeholder name. Caller CharacterParameter::SetBuff: CreateBuffEffect, then (when the flag is set and the
+    // buff has an effect) its BDAT 0x11 "SE" flag plays SE 0x35 (with the "Buff" flag) or 0x36; buff 0x1E first
+    // applies reaction 1 (fn_710004315C(1, 1, ...))
+    void fn_7100043070(int buff, bool playSe);
+    // the chance of an enhance's condition (the bool is passed false by CheckRandSatisfyEnhanceCondition)
+    float SatisfyEnhanceCondition(int type, int, float, void*, bool);
+    // rolls SatisfyEnhanceCondition's chance; on success shows m_enhanceNameId's name above the character
+    bool CheckRandSatisfyEnhanceCondition(int type, int, float, void*);
+    void CreateBuffEffect(int buff, bool);
+    int GetBuffEffectIndex(int buff) const;
     // as fn_7100042C30 for id 12 (the first int is not read)
     void NotifyBuddySufferFightCombo(int, int value);
     // Talk trigger: when the BattleGlobal flag (+0x83CA bit 3) allows, and the id bit (1 << id) is set in the
@@ -560,7 +580,10 @@ public:
     unsigned int pad_EE8_3 : 6;
     // the BLADE_TIMER_MODE m_bladeTimer runs for (the name is not the original's)
     unsigned int m_bladeTimerMode : 3;
-    unsigned int pad_EE8_12 : 20;
+    // a one-shot attribute for PlaySE's sound (9 = none: PlaySE then uses the parameter's GetAttribute; the
+    // name is not the original's)
+    unsigned int m_seAttribute : 4;
+    unsigned int pad_EE8_16 : 16;
     // SetRimBloom's: bit 0 for RIMBLOOM_ID 0, one of bits 1-8 for the ids 1-8 (the name is not the original's)
     unsigned short m_rimBloomFlags;
     unsigned char pad_EEE;
@@ -737,7 +760,13 @@ public:
     // CheckWeaponDistance's answer: the target is within the parameter's weapon ranges (the name is not the original's)
     unsigned int m_inWeaponDistance : 1;
     unsigned int pad_10BA_7 : 9;
-    unsigned char pad_10BC[0x64];
+    unsigned char pad_10BC[0x22];
+    // CheckRandSatisfyEnhanceCondition's buff name: its id in BDAT 0x196 (0 for none) and whether it is a buff
+    // (set: GfMenuObjDamageBuff type 0) or a debuff (type 1; the names are not the original's)
+    unsigned short m_enhanceNameId : 8;
+    unsigned short m_enhanceNameBuff : 1;
+    unsigned short pad_10DF_1 : 7;
+    unsigned char pad_10E0[0x40];
     // one 8-byte bitfield run (GetRescueTarget loads it whole): the moving kind's own state, 0x14 while it rescues
     // m_moveRescueTarget (IsRescue, GetRescueTarget, MoveStop; the names are not the original's). An unsigned char
     // bitfield: IsRescue and MoveStop compare it as a 32-bit value, GetRescueTarget as the 64-bit run.
