@@ -17,6 +17,8 @@
 #include "classes/ui/UISelectObjList.h"
 #include "mm/Pnt.h"
 #include "plugin/Bdat.h"
+#include "classes/gf/GfMenuIDList.h"
+#include "gf/GfDataBlade.h"
 
 namespace gf {
 
@@ -80,6 +82,21 @@ void TUnk_B62AA0::fn_710041F864() {
     ui::UIObjectAcc(level.m_handle, "TXT_level_num").setAlpha(max ? 0.0f : 1.0f);
     level.setDispChild(true, "TXT_level_max");
     ui::UIObjectAcc(level.m_handle, "TXT_level_max").setAlpha(max ? 1.0f : 0.0f);
+}
+
+// the list kinds fn_710042113C and fn_7100420B00 walk (lbl_71009C1D58; the name is not the original's)
+static const unsigned int s_newIconKinds[] = {1, 2, 3};
+
+void TUnk_B62AA0::fn_710042113C() {
+    for (int i = 0; i < 3; i++) {
+        unsigned int kind = s_newIconKinds[i];
+        GfMenuIDList* ids = m_idLists[kind];
+        for (unsigned int j = 0; j < ids->getSize(); j++) {
+            unsigned int id = ids->getContents(j).m_id;
+            ui::UIObjectAcc icon(m_selectLists[kind]->getObject(j), "TXT_icon_new");
+            icon.setAlpha(GfDataBlade::fn_710024DF88(id) ? 0.0f : 1.0f);
+        }
+    }
 }
 
 bool TUnk_B62AA0::fn_71004238EC() {

@@ -5,8 +5,9 @@
 #include "classes/ui/UIObjectListener.h"
 #include "gf/GfMenuSequence.h"
 #include "mm/mtl/FixedVector.h"
+#include "mm/mtl/IntrusivePtr.h"
 
-namespace gf { class GAME_VOICE_HANDLE; }
+namespace gf { class GAME_VOICE_HANDLE; class GfMenuIDList; class GfMenuReferenceNumber; }
 namespace mm { template <typename T> class Pnt; }
 namespace ui { class UIObjectAcc; struct EventData; class UISelectObjList; }
 
@@ -58,6 +59,11 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in this unit, after
     // fn_710041EB48. What it does: places list's objects on a grid of columns columns from origin, each cell
     // width - 14 wide and height - 14 high (setPosCenter).
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in this unit and it
+    // reads this's lists; called by initialize (fn_710041D568). What it does: unless the list of kind (below 4)
+    // already holds an id of the same GfDataBlade::fn_710024DA88 group, adds id with fn_7100255848's (kind 0) or
+    // fn_71002557C8's value, sorts the list ascending (fn_7100371F98) and stores its size in m_refNums[kind].
+    void fn_710041E6F8(unsigned char kind, unsigned int id);
     static void fn_710041EE6C(ui::UISelectObjList* list, const mm::Pnt<short>& origin, int width, int height,
                               unsigned int columns);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in this unit and it
@@ -82,6 +88,15 @@ public:
 
     // m_seq jobs. Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them; members of this class, as
     // their code and their callers' addJob calls show (Delegate<bool()>::memberFuncInvoker of this class).
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in this unit and
+    // reads this's lists. What it does: for the lists of kinds 1, 2 and 3, hides each entry's TXT_icon_new when
+    // GfDataBlade::fn_710024DF88 holds for its id (alpha 0, else 1).
+    void fn_710042113C();
+    // start control 0 (fn_7100423514) or 1 (fn_7100423700) into m_busyCtrl, then add to m_seq: wait for it, 30
+    // frames, fn_7100424D68, wait again, then fn_7100424E00 (0) or fn_7100426270 (1). Reached by address from the
+    // LAY_main listener's reciveEvent (fn_7100421588).
+    bool fn_7100423514();
+    bool fn_7100423700();
     // adds fn_7100426B44 to m_seq
     bool fn_71004238EC();
     // sends LAY_main event 0x102
@@ -118,6 +133,8 @@ public:
     bool fn_7100424AD8();
     // fades LAY_telop out (0.2) into m_busyCtrl
     bool fn_7100424D68();
+    // m_seq's job fn_7100423514 adds last (not written yet)
+    bool fn_7100424E00();
     // sets up the list object at m_cursor with m_ids[m_cursor] (fn_710041F998), enables LAY_result's input and its
     // operation info, clears m_resultDone and calls fn_7100569228
     bool fn_710042537C();
@@ -138,7 +155,12 @@ public:
     // m_seq's job fn_71004238EC adds (not written yet)
     bool fn_7100426B44();
 
-    unsigned char pad_24[0x74];
+    unsigned char pad_24[0x4];
+    // the id lists the ctor creates (GfMenuIDList::create) and the select lists showing them, by kind (0-3; the
+    // ctor and destructor create and release four of each; the names are not the original's)
+    GfMenuIDList* m_idLists[4];
+    ui::UISelectObjList* m_selectLists[4];
+    unsigned char pad_68[0x30];
     // the m_list entry the jobs work on, fn_7100427230 moves it on (the name is not the original's)
     unsigned int m_cursor;
     // TUnk_B62B10 sets it when LAY_result reports event 8 with 1; fn_7100425EF8 clears it (the name is not the
@@ -158,7 +180,10 @@ public:
     unsigned char pad_AA8[0x429];
     // fn_7100425440 slides LAY_result out when it is set, and clears it (the name is not the original's)
     bool m_resultFadeOut;
-    unsigned char pad_ED2[0x26];
+    unsigned char pad_ED2[0x6];
+    // the counts shown for the id lists, by kind (fn_710041E6F8 stores each list's size; the name is not the
+    // original's)
+    mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_refNums[4];
     // the voice the voice jobs play (the name is not the original's)
     GAME_VOICE_HANDLE* m_voice;
 };
