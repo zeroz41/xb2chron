@@ -198,7 +198,7 @@ void TitleStateToTitle::update(TitleMain* title, const fw::UpdateInfo& info) {
 
 void fn_7100154638() {
     gf::SDataOption* option = gf::GfDataManager::getDataOption();
-    gf::SDataOption* titleOption = TitleMain::sys()->getOptionBuffer();
+    gf::SDataOption* titleOption = &TitleMain::sys()->getOptionBuffer();
     if (!gf::GfGameManager::fn_71002A9E68() && !gf::GfGameUtilSaveData::fn_71002EDC78()) {
         option->m_soundUi.m_flagA = 0;
         option->m_soundUi.m_flagB = 0;

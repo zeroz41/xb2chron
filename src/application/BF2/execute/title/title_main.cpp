@@ -241,8 +241,8 @@ gf::SDataSave* TitleMain::getSaveBuffer() {
     return m_saveBuffer;
 }
 
-gf::SDataOption* TitleMain::getOptionBuffer() {
-    return m_optionBuffer;
+gf::SDataOption& TitleMain::getOptionBuffer() {
+    return *m_optionBuffer;
 }
 
 void TitleMain::setupTitleOptionToGameOption() {

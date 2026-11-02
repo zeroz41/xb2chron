@@ -46,7 +46,7 @@ public:
         float m_arg2;
         float m_arg3;
     };
-    static void execTurnCmd(const ExecTurnCmdInfo& info);
+    static bool execTurnCmd(const ExecTurnCmdInfo& info);  // false when no behavior component took it
     static bool isTurnEnd(gf::GF_OBJ_HANDLE* handle);
     static bool execActivateReserverForBlade(unsigned int blade);
     static bool execActivateUnuseForBlade(unsigned int blade, bool releaseOrbs);
@@ -289,6 +289,9 @@ public:
     };
     // GfGameObj::enableGameObj calls it for a party driver or blade leaving the game
     static void resetFormationParam(gf::GF_OBJ_HANDLE* handle);
+    // the object's formation index: its rebuilt driver's or blade's setup id when that is set, else its party
+    // hierarchy - 1; -1 for a trinity blade or an object outside the party
+    static int getFormationPlayerID(gf::GF_OBJ_HANDLE* handle);
 };
 
 }  // namespace gf

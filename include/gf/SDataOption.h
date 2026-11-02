@@ -55,7 +55,9 @@ struct SSoundUiOption {
     // the event subtitles' option: GfMenuObjEventSubtitle shows a first line that is not vertical only when it is
     // set (the name is not the original's)
     bool m_eventSubtitle;
-    unsigned char pad_1D[0x1];
+    // fw::LangUtil::getLangType's language as a byte: GfGameUtilSaveData::setupOptionSaveData stores it (the name is
+    // not the original's)
+    unsigned char m_langType;
     // 0x1E-0x3C: what these hold is not known; the names are not the original's. clear() stores 0 at 0x1E;
     // fn_710022E334 stores the 0x1F-0x22 key (one 32-bit run of bitfields: a single unaligned store, separate loads in
     // fn_710022E380), 6 at 0x23, clears m_list and 0x3B, and clears the flags after fn_7100254EF0. The flags

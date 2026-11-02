@@ -43,7 +43,9 @@ public:
     // (GfGameManager::isClearGame, GfGameUtilSaveData::setupGameSaveData, GfMenuObjTitle::initialize...).
     gf::SDataSave* fn_710014FB00();
     gf::SDataSave* getSaveBuffer();
-    gf::SDataOption* getOptionBuffer();
+    // returns a reference: GfGameUtilSaveData::getValidOptionData calls it without a tail call, which a pointer
+    // return would give (the callee's nonnull/dereferenceable return attributes stop clang's tail call)
+    gf::SDataOption& getOptionBuffer();
     void setupTitleOptionToGameOption();
     // the chapter of the save buffer's game: 0 for no save (wrong version) or no scenario, else the scenario
     // flag / 1000, 1 to 10
