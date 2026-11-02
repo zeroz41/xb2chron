@@ -6863,12 +6863,44 @@ void MemHandlebaseAllocator::deallocate(void* memory) {
 }
 
 template <int N>
+void AssetAllocator<N>::create(void* p, unsigned long size, const char* pszName) {
+    m_top = static_cast<unsigned char*>(p);
+    m_totalBlocks = size >> 4;
+    m_size = (size >> 4) << 4;
+    m_blockSize = 16;
+    m_name = pszName != nullptr ? pszName : "no name";
+    m_freeList.clear();
+    m_usedList.clear();
+    SMemChunk chunk;
+    chunk.m_block = 0;
+    chunk.m_numBlocks = m_totalBlocks;
+    m_freeList.push_back(chunk);
+}
+
+template <int N>
 void AssetAllocator<N>::destroy() {
     m_totalBlocks = 0;
     m_size = 0;
     m_top = nullptr;
     m_freeList.clear();
     m_usedList.clear();
+}
+
+template <int N>
+void AssetAllocator<N>::deallocate(void* p, unsigned long size) {
+    if (p == nullptr) {
+        return;
+    }
+    SMemChunk chunk;
+    chunk.m_block = (static_cast<unsigned char*>(p) - m_top) / m_blockSize;
+    typename ChunkList::iterator it = m_usedList.find(chunk);
+    if (m_usedList.end() != it) {
+        chunk = *it;
+        m_usedList.erase(it);
+        // the original walks the used list for the run once more and keeps no result
+        m_usedList.find(chunk);
+        merge(p, chunk);
+    }
 }
 
 template <int N>

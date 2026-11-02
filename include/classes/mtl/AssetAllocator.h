@@ -16,12 +16,19 @@ public:
     // a run of blocks (getAllocSize: m_numBlocks blocks of 16 bytes; its address m_top + m_blockSize * m_block);
     // allocate keeps its file and line in the run it hands out
     struct SMemChunk {
+        // a user constructor: deallocate copies the run it finds into its local by assignment over 0x14 bytes, the
+        // data size of a non-POD struct (a POD's assignment copies its whole 0x18). It leaves m_block alone:
+        // deallocate's key stores the other fields' zeros before it divides for the block
+        SMemChunk() : m_file(nullptr), m_line(0), pad_A(0), m_numBlocks(0) {}
+
         const char* m_file;
         unsigned short m_line;
         unsigned short pad_A;  // allocate zeroes it
-        unsigned int m_block;  // the run's first block
+        int m_block;  // the run's first block (addFreeList orders the free runs by it, signed)
         int m_numBlocks;  // its length in blocks
-        unsigned char pad_14[0x4];
+
+        // deallocate finds a run by its first block
+        bool operator==(const SMemChunk& other) const { return m_block == other.m_block; }
     };
 
     AssetAllocator() : m_top(nullptr), m_size(0), m_blockSize(0x80), m_totalBlocks(0) {}
@@ -48,6 +55,11 @@ public:
     virtual bool dummy() const { return m_name.m_str[0] != '\0'; }  // slot 21
 
     typedef mm::mtl::FixedList<SMemChunk, N> ChunkList;
+
+    // chunk linked into the free list in block order
+    void addFreeList(const SMemChunk& chunk);
+    // chunk joined to the free runs it borders, or added as a run of its own
+    void merge(void* p, const SMemChunk& chunk);
 
     mm::mtl::FixStr<32> m_name;  // create's name
     ChunkList m_freeList;  // the runs not handed out (hasMemory walks it first)
