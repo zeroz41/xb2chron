@@ -376,10 +376,19 @@ public:
     // the argument is not read: as fn_710002FC0C's own checks for id 5, then a blade of role 1 (GfDataBlade::getRole)
     // with a parameter whose m_isNotBlade is clear notifies fn_710002FC0C(5)
     void NotifyLostHateTarget(int);
+    // Placeholder name: new in 3.0.1. A member: it sits among BattleCharacter's functions and calls its members.
+    // What it does: for the controlled character plays system SE (1, 0x32) when BattleGlobal::fn_710000C440(0)
+    // allows; unless the flag is set, notifies fn_710002FC0C(4). The int is not read. Caller: HateRingManager::SetData.
+    void fn_7100041E4C(int, bool flag);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
     // functions and reads its fields. What it does: false when dead (IsDead(0), unless the flag is set), while
     // m_reactionID is non-zero or while pad_F09_2 is set; else true. Callers: TalkManager, Utility.
     bool fn_710002FD3C(bool flag);
+    // Placeholder name: new in 3.0.1. A member: it sits among BattleCharacter's functions and writes its fields.
+    // What it does: for a character whose parameter's m_isNotBlade is clear, sets pad_F01_0 unless, with the
+    // BattleGlobal flag (+0x83CA bit 3) set, pad_F09_3 is set or TUnk_B3BC20::fn_710009EB70 answers true for the
+    // character's object or its parameter's m_driverHandle. Caller: SetPosition.
+    void fn_71000301D4();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
     // functions and writes its fields. What it does: sets pad_F09_3 to the argument; when set, or when it was set
     // before, keeps (m_state == 8, or true when cleared) in pad_F03_4/pad_F03_7 (pad_F03_5 set, then
@@ -406,6 +415,10 @@ public:
     void fn_710005F554(int slot, bool, bool, float value);
     // fn_710005F554(~(slot < 0 ? 16 : slot), flag0, flag1, value). Caller: Utility::AI_AddBladeArtsRecast.
     void fn_710003D114(bool flag0, int slot, bool flag1, float value);
+    // Placeholder name: new in 3.0.1. A member: it sits among BattleCharacter's functions and writes its fields.
+    // What it does: sends message 0x100004C (second word 0x80) to the effect caster, from the property's owner
+    // object, then clears pad_F04_1. Callers: SetAction, BeforeUpdate, ActionDead, fn_7100052CE0.
+    void fn_710003D478();
     bool CheckAttackAction(ACTION_ID id, bool flag) const;
     int GetDriverType() const;
     int GetArtsSlotIndex(int artsID) const;
@@ -495,7 +508,13 @@ public:
     // fn_710002FC0C's talk trigger ids: allowed (bit 1 << id) and already notified (meaning unknown)
     unsigned int pad_ECC;
     unsigned int pad_ED0;
-    unsigned char pad_ED4[0x6];
+    // fn_710002FC0C's three trigger ids (the bytes it compares the id with, for triggers 0x29/0x2A/0x2B)
+    unsigned char pad_ED4;
+    unsigned char pad_ED5;
+    unsigned char pad_ED6;
+    unsigned char pad_ED7;
+    unsigned char pad_ED8;
+    unsigned char pad_ED9;
     // the id DataManager::GetCharacterParameterConst looks the parameter up by, < 0 for none (the name is not the
     // original's)
     short m_chrID;
@@ -563,7 +582,10 @@ public:
     // CharacterManager::fn_710007C43C counts only enemies with it set while GfGameInsideBattleLock holds a lock
     // (run bit 20; meaning unknown)
     unsigned int pad_F00_4 : 1;
-    unsigned int pad_F00_5 : 5;
+    unsigned int pad_F00_5 : 3;
+    // fn_71000301D4 sets it (run bit 24; meaning unknown)
+    unsigned int pad_F01_0 : 1;
+    unsigned int pad_F01_1 : 1;
     // ActionRun sets it when it draws the weapon of a character the player does not control and that does not fly
     // (the name is not the original's)
     unsigned int m_isAutoRun : 1;
@@ -585,7 +607,10 @@ public:
     unsigned int pad_F03_5 : 1;
     unsigned int pad_F03_6 : 1;
     unsigned int pad_F03_7 : 1;
-    unsigned int pad_F04 : 4;
+    unsigned int pad_F04_0 : 1;
+    // fn_710003D478 clears it (run bit 49; meaning unknown)
+    unsigned int pad_F04_1 : 1;
+    unsigned int pad_F04_2 : 2;
     // ActionCommandEndBladeArts clears both when it ends the action (meaning unknown)
     unsigned int pad_F04_4 : 1;
     unsigned int pad_F04_5 : 1;

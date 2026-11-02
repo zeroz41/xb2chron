@@ -32,6 +32,8 @@
 #include "classes/gf/GfComCollider.h"
 #include "classes/fw/ColiObject.h"
 #include "gf/GfObjInfo.h"
+#include "btl/formation_change_manager.h"
+#include "fw/Message.h"
 
 namespace btl {
 
@@ -422,6 +424,38 @@ bool BattleCharacter::GetWeaponEffectCaster() {
     return false;
 }
 
+bool BattleCharacter::fn_710002FC0C(int id) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess) {
+        const CharacterParameter* param = GetCharacterParameterConst(false);
+        if (param != nullptr && param->m_isNotBlade) {
+            return false;
+        }
+        if (pad_F09_3) {
+            return false;
+        }
+    }
+    unsigned int bit = 1 << id;
+    if ((pad_ECC & bit) == 0 || (pad_ED0 & bit) != 0) {
+        return false;
+    }
+    int trigger;
+    if (pad_ED4 == id) {
+        trigger = 0x29;
+    } else if (pad_ED6 == id) {
+        trigger = 0x2A;
+    } else if (pad_ED8 == id) {
+        trigger = 0x2B;
+    } else {
+        return false;
+    }
+    if (!mm::mtl::PtrSingleton<TalkManager>::sys()->NotifyTrigger(m_voiceIndex,
+                                                                 static_cast<TalkManager::TRIGGER>(trigger), 0, 0)) {
+        return false;
+    }
+    pad_ED0 |= bit;
+    return true;
+}
+
 void BattleCharacter::PlaySystemSE(BTL_SE se, int no, bool flag0, bool flag1) {
     bool hidden = gf::GfMenuManager::fn_710035DE04();
     if (no == 0 || hidden) {
@@ -450,6 +484,26 @@ void BattleCharacter::StopSE(BTL_SE se, int no) {
         name.format("btl_%s_%03d", tag, no);
         sound->stopSe(name.m_str);
     }
+}
+
+void BattleCharacter::fn_71000301D4() {
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr || param->m_isNotBlade) {
+        return;
+    }
+    if (BattleGlobal::sys()->m_challengeAnySuccess) {
+        if (pad_F09_3) {
+            return;
+        }
+        if (TUnk_B3BC20::sys()->fn_710009EB70(m_handle)) {
+            return;
+        }
+        param = GetCharacterParameterConst(false);
+        if (TUnk_B3BC20::sys()->fn_710009EB70(param->m_driverHandle)) {
+            return;
+        }
+    }
+    pad_F01_0 = 1;
 }
 
 void BattleCharacter::ManagerUpdate_Attack() {
@@ -509,6 +563,19 @@ int BattleCharacter::GetKizunaStage(float* ratio) const {
 
 void BattleCharacter::fn_710003D114(bool flag0, int slot, bool flag1, float value) {
     fn_710005F554(~(slot < 0 ? 16 : slot), flag0, flag1, value);
+}
+
+void BattleCharacter::fn_710003D478() {
+    gf::GfComEffectCaster* caster = GetEffectCaster();
+    if (caster != nullptr) {
+        const gf::GfComProperty* prop = GetComPropertyConst();
+        if (prop != nullptr) {
+            fw::Message msg(0x100004C, 0x80);
+            gf::GfObj* owner = static_cast<gf::GfObj*>(prop->m_owner);
+            caster->recieveMessage(owner, msg);
+        }
+    }
+    pad_F04_1 = 0;
 }
 
 bool BattleCharacter::fn_7100041728() const {
@@ -763,6 +830,15 @@ void BattleCharacter::HealHpRate(float rate, int type, BattleCharacter* attacker
     data.m_type = type;
     data.m_damage = heal;
     NotifyDirectDamage(data);
+}
+
+void BattleCharacter::fn_7100041E4C(int, bool flag) {
+    if (IsControlCharacter() && mm::mtl::PtrSingleton<BattleGlobal>::sys()->fn_710000C440(0)) {
+        PlaySystemSE(static_cast<BTL_SE>(1), 0x32, true, false);
+    }
+    if (!flag) {
+        fn_710002FC0C(4);
+    }
 }
 
 void BattleCharacter::NotifyLostHateTarget(int) {
