@@ -5,6 +5,9 @@
 #include "classes/gf/GfMenuAdapter.h"
 #include "classes/gf/GfMenuBattleAdapter.h"
 #include "classes/gf/GfMenuCharDataAdapter.h"
+#include "classes/gf/GfMenuManager.h"
+#include "classes/gf/GfMenuObjBladeChange.h"
+#include "classes/gf/GfMenuObjSpecialGauge.h"
 #include "classes/gf/GfMenuObject.h"
 #include "classes/gf/GfMenuReference.h"
 #include "classes/ui/UIEventManager.h"
@@ -230,6 +233,209 @@ void GfMenuObjArtsPalette::update() {
     m_slotSeqs[2]->update();
     m_elemSeq.update();
     GfMenuObject::update();
+}
+
+void GfMenuObjArtsPalette::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 0x100:
+        if (GfMenuManager::isBattleState(0)) {
+            if (m_state.open == 0) {
+                GfMenuObjUtil::PresetCtrlParam param;
+                param.m_preset = 0;
+                param.m_out = 0;
+                param.m_startFlag4 = true;
+                param.m_slot = m_ctrlSlot;
+                m_ctrlSlot = GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+                m_state.open = 1;
+                GfMenuObject::enableInput(acc.m_handle);
+            }
+            ui::UIObjectAcc range(acc.m_handle, "IMG_elem_range");
+            range.startAnimation("loop", false);
+            range.setDisp(true);
+            m_owner->m_elemSeq.clear();
+        }
+        break;
+    case 1:
+        acc.setDisp(false);
+        m_ctrlSlot = -1;
+        {  // a constant-initialized local: copied as one 8-byte store, as the original does
+            State state = {0, 1};
+            m_state = state;
+        }
+        GfMenuObject::disableInput(acc.m_handle);
+        break;
+    case 0x101:
+        if (m_state.open == 1) {
+            GfMenuObjUtil::PresetCtrlParam param;
+            param.m_preset = 0;
+            param.m_out = 1;
+            param.m_startFlag4 = true;
+            param.m_slot = m_ctrlSlot;
+            param.m_eventId = 10;
+            m_ctrlSlot = GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+            m_state.open = 0;
+            GfMenuObject::disableInput(acc.m_handle);
+            ui::UIObjectAcc range(acc.m_handle, "IMG_elem_range");
+            range.stopAnimation();
+            range.setDisp(false);
+            m_owner->m_elemSeq.clear();
+        }
+        break;
+    case 0x10A: {
+        unsigned int slot = event.m_param0;
+        if (m_state.open == 1) {
+            if (GfMenuReference::isArtsPaletteEnable(slot) && GfMenuReference::getArtsPaletteInfo(slot)->m_recast == 1.0f) {
+                GfMenuObjUtil::playSE(0x23);
+                m_owner->m_slotFlags[slot] |= 4;
+            } else {
+                GfMenuObjUtil::playSE(0x24);
+            }
+        }
+        break;
+    }
+    case 0x10B:
+        m_owner->ctrlPalletteDisp(event.m_param0 == 1, 0);
+        break;
+    case 0x10C: {
+        int param = event.m_param0;
+        int ctrl = m_owner->ctrlPalletteDisp(param == 1, 1);
+        if (ctrl != -1) {
+            GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+        }
+        if (param == 1) {
+            GfMenuObject::sendOpenEvent(acc.searchChild("LAY_reverse"), 0, 0.0f);
+        } else {
+            acc.setDispChild(true, "IMG_frame");
+            GfMenuObject::sendCloseEvent(acc.searchChild("LAY_reverse"), 0, 0.0f);
+        }
+        GfMenuObjSpecialGauge::reverse(param == 1);
+        break;
+    }
+    case 0x10D:
+        GfMenuObject::sendEvent(acc.searchChild("LAY_reverse"), event, 0.0f);
+        break;
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 8:
+        if (event.m_param1 == 9) {
+            bool disp = m_state.infoDisp == 0;
+            {
+                ui::UIObjectAcc info(GfMenuObject::getAttachedObject(0x27));
+                if (info.m_object != nullptr && !info.isTerm()) {
+                    info.setDispChild(disp, "LAY_arts_info");
+                    GfMenuObjBladeChange::dispInfo(disp);
+                }
+            }
+            m_state.infoDisp = disp;
+        }
+        break;
+    case 0xC:
+        break;
+    case 0xD: {
+        int state = event.m_param0;
+        int kind = event.m_param1;
+        unsigned int slot = event.m_param2;
+        mm::mtl::FixStr<32> name;
+        name.format("LAY_arts_icon@%02d", slot + 1);
+        ui::UIObjectAcc icon(acc.m_handle, name.m_str);
+        switch (kind) {
+        case 0: {
+                name.format("LAY_recast@%02d", slot + 1);
+                ui::UIObjectAcc recast(acc.m_handle, name.m_str);
+                name.format("IMG_arts_eff@%02d", slot + 1);
+                ui::UIObjectAcc eff(acc.m_handle, name.m_str);
+                if (state == 1) {
+                    GfMenuObjUtil::playSE(0x22);
+                    recast.setDisp(false);
+                    if (eff.m_object != nullptr && m_owner->m_ctrlIds[slot] == -1) {
+                        eff.setDisp(true);
+                        m_owner->m_slotSeqs[slot]->clear();
+                        m_owner->m_slotSeqs[slot]->addAnimJob(eff.m_handle, "standbye");
+                    }
+                    m_owner->m_slotFlags[slot] |= 1;
+                } else {
+                    if (m_owner->m_slotFlags[slot] & 4) {
+                        eff.startAnimation("select", false);
+                        m_owner->m_slotFlags[slot] &= ~4;
+                    } else {
+                        eff.setDisp(false);
+                    }
+                    recast.setDisp(true);
+                    m_owner->m_slotSeqs[slot]->clear();
+                    if (m_owner->m_ctrlIds[slot] != -1) {
+                        GfMenuObjUtil::stopCtrl(m_owner->m_ctrlIds[slot]);
+                        m_owner->m_ctrlIds[slot] = -1;
+                    }
+                    m_owner->m_slotFlags[slot] &= ~1;
+                }
+                m_owner->updateIconColor(slot);
+            break;
+        }
+        case 1:
+                if (state == 5) {
+                    m_owner->m_slotFlags[slot] |= 2;
+                } else {
+                    m_owner->m_slotFlags[slot] &= ~2;
+                }
+                m_owner->updateIconColor(slot);
+            break;
+        case 2:
+                if (state == 5) {
+                    {
+                        ui::UIObjectAcc range(acc.m_handle, "IMG_elem_range");
+                        m_owner->m_elemSeq.addAnimJob(range.m_handle, "start");
+                        m_owner->m_elemSeq.addAnimJob(range.m_handle, "loop");
+                    }
+                    ui::UIObjectAcc rangeIcon(acc.m_handle, "IMG_elem_range_icon");
+                    GfMenuObjUtil::CtrlParam param;
+                    param.m_methods = 0x10000000;
+                    param.m_motionLib = "mnu004_range_anim_elem";
+                    param.m_motion = "start";
+                    param.m_setDefault = true;
+                    param.m_eventId = 1;
+                    param.m_startFlags = 0xC;
+                    int ctrl = GfMenuObjUtil::startCtrl(rangeIcon.m_handle, param, nullptr);
+                    GfMenuObject::hookCtrlEvent(acc.m_handle, ctrl);
+                } else {
+                    {
+                        ui::UIObjectAcc range(acc.m_handle, "IMG_elem_range");
+                        range.startAnimation("loop", false);
+                        m_owner->m_elemSeq.clear();
+                    }
+                    ui::UIObjectAcc rangeIcon(acc.m_handle, "IMG_elem_range_icon");
+                    int ctrl = GfMenuObjUtil::getCtrlID(rangeIcon.m_handle);
+                    if (ctrl != -1) {
+                        GfMenuObjUtil::stopCtrl(ctrl);
+                    }
+                }
+            break;
+        }
+        break;
+    }
+    case 3:
+        if (event.m_param0 == 1) {
+            ui::UIObjectAcc rangeIcon(acc.m_handle, "IMG_elem_range_icon");
+            GfMenuObjUtil::CtrlParam param;
+            param.m_methods = 0x10000000;
+            param.m_motionLib = "mnu004_range_anim_elem";
+            param.m_motion = "loop";
+            param.m_setDefault = true;
+            param.m_reserve = true;
+            param.m_startFlags = 8;
+            GfMenuObjUtil::startCtrl(rangeIcon.m_handle, param, nullptr);
+        } else if (event.m_param0 == 10) {
+            if (!GfMenuManager::isBattleState(1)) {
+                m_owner->m_slotFlags[0] &= ~4;
+                m_owner->m_slotFlags[1] &= ~4;
+                m_owner->m_slotFlags[2] &= ~4;
+            }
+        } else if (event.m_param0 == 8) {
+            acc.setDispChild(false, "IMG_frame");
+        }
+        break;
+    }
 }
 
 void GfMenuObjArtsPalette::ReverseListener::reciveEvent(const ui::EventData& event, unsigned int handle) {

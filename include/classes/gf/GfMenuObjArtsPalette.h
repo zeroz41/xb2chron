@@ -25,6 +25,18 @@ public:
     // menu parameters' time, 1 in 0.1 seconds, others at once; the last icon's control slot (parameter names
     // are not the original's)
     int ctrlPalletteDisp(bool reverse, unsigned int mode);
+    // an arts slot's icon in white once its arts is ready and usable (slot flags 1 and 2), gray otherwise: inline
+    // in MainListener::reciveEvent, whose frame has its locals first (the name is not the original's)
+    void updateIconColor(unsigned int slot) {
+        ::mm::mtl::FixStr<32> name;
+        name.format("LAY_arts_icon@%02d", slot + 1);
+        ::ui::UIObjectAcc icon(m_handle, name.m_str);
+        if ((m_slotFlags[slot] & 3) == 3) {
+            icon.setMulColor("white");
+        } else {
+            icon.setMulColor("gray");
+        }
+    }
     class MainListener;
     class ReverseListener;
     virtual ~GfMenuObjArtsPalette();  // slot 0

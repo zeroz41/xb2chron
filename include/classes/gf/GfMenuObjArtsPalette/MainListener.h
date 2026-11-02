@@ -11,10 +11,14 @@ namespace gf {
 class GfMenuObjArtsPalette::MainListener : public ::ui::UIObjectListener {
 public:
     // initialize zeroes 0xC-0x1B after storing its table: its own fields
-    MainListener(GfMenuObjArtsPalette* owner) : pad_0C(), m_owner(owner) {}
+    MainListener(GfMenuObjArtsPalette* owner)
+        : m_ctrlSlot(0), m_state(), pad_18(), m_owner(owner) {}
     virtual ~MainListener() {}  // slot 0
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
-    unsigned char pad_0C[0x10];
+    // the field names are not the original's (reciveEvent's use of them)
+    int m_ctrlSlot;   // the slot of the palette's fade control: event 1 sets -1, 0x100/0x101 the preset's
+    struct State { int open; int infoDisp; } m_state;
+    unsigned char pad_18[0x4];
     GfMenuObjArtsPalette* m_owner;  // what initialize makes it for
 };
 }  // namespace gf
