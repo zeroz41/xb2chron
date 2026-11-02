@@ -1,6 +1,7 @@
 // Script VM plugins of this unit (their tables, entries and Regist functions). The entries are static and nothing
-// names them: they keep placeholder fn_ names. Not written yet: pt.setDriverEnable (declared only) (and
-// ocThreadRegist).
+// names them: they keep placeholder fn_ names. Not written yet: pt.setDriverEnable (declared only).
+// The thread class's methods (0x710066AC34-0x710066AD8C) are this file's (ocThreadRegist's class table points at
+// them), though the split hands their addresses to ui_animation_manager.cpp.
 #include "vm/yvm2.h"
 #include "classes/mm/mtl/Singleton.h"
 #include "classes/event/CamManager.h"
@@ -1447,4 +1448,79 @@ static VMPluginFunc s_waitPlugin[] = {
 
 void pluginWaitRegist() {
     vmPluginRegist("wait", s_waitPlugin);
+}
+
+// The thread script class: a script makes a thread of one of its functions (thread(func)) and starts, ends, joins,
+// sleeps and wakes it by the thread's id, which is the object's value. The methods are the table's strings.
+
+// thread(func): a thread of the script function func
+static int fn_710066ABB0(VMThread* th, void* unused, unsigned long ocId) {
+    VMData ret;
+    int func = vmArgFunctionGet(1, vmArgPtrGet(th, 1));
+    int id;
+    if (!vmThreadGetOC(th, func, &id)) {
+        vmOCExceptionThrow(th);
+        return 0;
+    }
+    ret.type = VMDATA_OC;
+    ret.hi = ocId;
+    ret.v.obj = reinterpret_cast<void*>(static_cast<unsigned long>(static_cast<unsigned int>(id)));
+    vmRetValSet(th, &ret);
+    return 1;
+}
+
+// thread.start
+static int fn_710066AC34(VMThread* th, int id) {
+    vmThreadStart(th, id);
+    return 0;
+}
+
+// thread.end
+static int fn_710066AC4C(VMThread* th, int id) {
+    vmThreadEnd(id);
+    return 0;
+}
+
+// thread.isAlive
+static int fn_710066AC68(VMThread* th, int id) {
+    vmRetBoolSet(th, vmThreadIsAlive(id));
+    return 1;
+}
+
+// thread.join: waits while the thread runs
+static int fn_710066ACB4(VMThread* th, int id) {
+    if (vmThreadIsAlive(id)) {
+        vmWaitModeSet(th);
+    }
+    return 0;
+}
+
+// thread.sleep
+static int fn_710066ACE8(VMThread* th, int id) {
+    vmThreadSleep(id);
+    return 0;
+}
+
+// thread.wakeup
+static int fn_710066AD04(VMThread* th, int id) {
+    vmThreadWakeup(id);
+    return 0;
+}
+
+// The thread class's methods. Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B74278).
+static VMOCMethod s_threadMethods[] = {
+    {"start", reinterpret_cast<void*>(&fn_710066AC34), 0},
+    {"end", reinterpret_cast<void*>(&fn_710066AC4C), 0},
+    {"isAlive", reinterpret_cast<void*>(&fn_710066AC68), 0},
+    {"join", reinterpret_cast<void*>(&fn_710066ACB4), 0},
+    {"sleep", reinterpret_cast<void*>(&fn_710066ACE8), 0},
+    {"wakeup", reinterpret_cast<void*>(&fn_710066AD04), 0},
+    {nullptr, nullptr, 0},
+};
+
+// The thread script class. Proposed name, not the original's: the symbols leave it unnamed (lbl_7100B74258).
+static VMOC s_threadOC = {"thread", reinterpret_cast<void*>(&fn_710066ABB0), nullptr, s_threadMethods};
+
+void ocThreadRegist() {
+    vmOCRegist(&s_threadOC);
 }

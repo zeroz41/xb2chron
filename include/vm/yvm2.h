@@ -105,6 +105,17 @@ void vmStart(void* program);
 // runs the started threads one step (fw::ScriptManager::update calls it each frame)
 void vmExec(void);
 int vmThreadIsFinish(void* program);
+// Script threads by id (the thread script class's methods): vmThreadGetOC makes a thread of the script function
+// func (from vmArgFunctionGet) and stores its id, nonzero on success; vmThreadStart starts the thread of that id
+// with the running call's arguments (its return value is not known: its caller ignores it).
+int vmThreadGetOC(VMThread* pThread, int func, int* pId);
+void vmThreadStart(VMThread* pThread, int id);
+int vmThreadEnd(int id);
+int vmThreadIsAlive(int id);
+int vmThreadSleep(int id);
+int vmThreadWakeup(int id);
+// Raises a script exception on the thread (an OC constructor that could not make its object).
+void vmOCExceptionThrow(VMThread* pThread);
 
 // Reports an argument of the wrong type for the current thread (s_vmWork.pCurThread).
 void vmArgErr(void);
