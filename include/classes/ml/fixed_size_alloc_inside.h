@@ -35,9 +35,10 @@ public:
     }
     // the element of index back (GfPause::destroyPauseHandle)
     void free(unsigned int index) {
+        unsigned int word = index >> 5;
         unsigned int mask = 1u << (index & 31);
-        if (m_pBits[index >> 5] & mask) {
-            m_pBits[index >> 5] &= ~mask;
+        if (m_pBits[word] & mask) {
+            m_pBits[word] &= ~mask;
             --m_count;
         }
     }

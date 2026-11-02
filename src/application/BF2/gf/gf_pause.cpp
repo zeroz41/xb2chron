@@ -27,6 +27,15 @@ void GfPause::destroy() {
     delete self;
 }
 
+void GfPause::destroyPauseHandle(GF_PAUSE_HANDLE* handle) {
+    unsigned int index = reinterpret_cast<unsigned long>(handle) & 0x3F;
+    m_kinds.free(index);
+    HandleList::iterator it = m_handles.find(handle);
+    if (it != m_handles.end()) {
+        m_handles.erase(it);
+    }
+}
+
 void GfPause::destroyHandle(GF_PAUSE_HANDLE* handle) {
     if (handle != reinterpret_cast<GF_PAUSE_HANDLE*>(-1)) {
         get()->m_releases.push_back(handle);
