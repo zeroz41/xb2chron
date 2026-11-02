@@ -35,6 +35,8 @@ public:
     // the same for every blade in the party (GfDataBlade::getListPartyAll)
     static unsigned long createParty(unsigned int type, int value);
     static void addTotalCount(unsigned int type, unsigned int value);
+    // counts and queues achievement 49 (value 1) and adds 50 for every blade in the party
+    static void createBladeCreate();
     static void createCrystal();
     // placeholders (callers: one dispatch at 0x710000FDEC): fn_7100564360 counts type-1 once, then type for every
     // blade fn_7100563BB4 lists for the handle; the wrappers pass a fixed type and value 1

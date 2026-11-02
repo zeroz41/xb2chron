@@ -11,7 +11,9 @@ namespace gf {
 // table 0x7100B6B420
 class SCOM_EXEC_MOUNT : public ::gf::SCOM {
 public:
+    explicit SCOM_EXEC_MOUNT(SCOM_TYPE type) : SCOM(type) {}
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
+    static unsigned long create(GF_OBJ_HANDLE* obj, OPTMNT mount);
 
     // the names are not the original's: what the create functions store (their arguments, in order)
     unsigned char pad_1c[0x4];

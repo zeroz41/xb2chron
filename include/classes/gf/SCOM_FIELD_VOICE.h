@@ -73,6 +73,12 @@ public:
     static GAME_VOICE_HANDLE* createHighLanding(const ParamObj& obj);
     static GAME_VOICE_HANDLE* createJump(const ParamObj& obj);  // (by its symbol; the return type is not established)
     static GAME_VOICE_HANDLE* createFallDead(const ParamObj& obj);
+    // the level-up voice (field and wait from the party member); queued to stop on events unless talking
+    static unsigned long createLevelup(const ParamObj& obj);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it follows createLevelup
+    // and wraps it. What it does: createLevelup(obj), then clears that request's m_stopOnEvent; returns the handle
+    // (caller GfGameUtil::execLevelUp).
+    static unsigned long fn_7100567634(const ParamObj& obj);
     static GAME_VOICE_HANDLE* createMercenariesIn(unsigned int id);
     static GAME_VOICE_HANDLE* createMercenariesLeader(unsigned int id);
     static GAME_VOICE_HANDLE* createReleaseBlade(unsigned int id);

@@ -3,6 +3,7 @@
 
 #include "classes/gf/SCOM.h"
 #include "classes/gf/GfMenuObjPopup.h"
+#include "gf/QuestID.h"
 
 namespace fw { class UpdateInfo; }
 
@@ -17,6 +18,7 @@ public:
     static unsigned long createPouch(unsigned int, unsigned int, unsigned int);
     static unsigned long createDevelop(unsigned int, unsigned int);
     static unsigned long createCrystalOK(unsigned int);
+    static unsigned long createQuest(QuestID);
     static unsigned long createMercenaryReturn(unsigned int, unsigned int);
     static unsigned long createMercenaryAdd(unsigned int);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address sits among

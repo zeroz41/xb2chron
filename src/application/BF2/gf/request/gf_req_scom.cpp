@@ -129,6 +129,7 @@
 #include "gf/GfItemUtil.h"
 #include "gf/GfQuestUtil.h"
 #include "gf/QuestListAcc.h"
+#include "classes/gf/GfFieldBgm.h"
 #include "gf/GfDataField.h"
 #include "gf/GfDataParty.h"
 #include "gf/GfDataItem.h"
@@ -290,6 +291,14 @@ bool SCOM_EXEC_MOUNT::exec(fw::UpdateInfo const&) {
     return true;
 }
 
+unsigned long SCOM_EXEC_MOUNT::create(GF_OBJ_HANDLE* obj, OPTMNT mount) {
+#line 1323
+    SCOM_EXEC_MOUNT* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_EXEC_MOUNT(SCOM_TYPE(35));
+    request->m_value = obj;
+    request->m_value2 = mount;
+    return GfReqSmallCom::addRequest(request);
+}
+
 bool SCOM_OBJ_VFADE_OFF::exec(fw::UpdateInfo const&) {
     GfObjUtil::setVolumeFadeUserFlag(m_value, false);
     return true;
@@ -302,6 +311,14 @@ bool SCOM_QUEST_GIMMICK::exec(fw::UpdateInfo const&) {
 
 bool SCOM_BATTLE_BGM::exec(fw::UpdateInfo const&) {
     return true;
+}
+
+unsigned long SCOM_BATTLE_BGM::create(unsigned int id) {
+    GfFieldBgm::sys()->setRscBattleBgmID(id);
+#line 4357
+    SCOM_BATTLE_BGM* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_BATTLE_BGM(SCOM_TYPE(62));
+    request->m_value = id;
+    return GfReqSmallCom::addRequest(request);
 }
 
 bool SCOM_ENBOOK_IN_BATTLE::exec(fw::UpdateInfo const&) {
@@ -400,6 +417,45 @@ bool SCOM_BC_PARTICLE::exec(fw::UpdateInfo const& info) {
         }
     }
     return true;
+}
+
+inline SCOM_BC_PARTICLE::SCOM_BC_PARTICLE(GF_OBJ_HANDLE* obj, float time)
+    : SCOM(SCOM_TYPE(77)), m_obj(obj), m_step(0), m_time(time), m_totalTime(time), m_isStop(false) {
+    DataParamAcc acc(obj);
+    m_particle = acc.getAttribute(-1, false);
+    if (GfDataBlade::fn_7100232660(acc)) {
+        m_particle = 0x11;
+    }
+}
+
+unsigned long SCOM_BC_PARTICLE::fn_710056ABC4(GF_OBJ_HANDLE* obj, float time) {
+    if (obj == reinterpret_cast<GF_OBJ_HANDLE*>(-1) || time < 1e-6f) {
+        return -1;
+    }
+#line 5963
+    SCOM_BC_PARTICLE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_BC_PARTICLE(obj, time);
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_BC_PARTICLE::fn_710056ACD8(GF_OBJ_HANDLE* obj, float time) {
+    if (obj == reinterpret_cast<GF_OBJ_HANDLE*>(-1) || time < 1e-6f) {
+        return -1;
+    }
+#line 5971
+    SCOM_BC_PARTICLE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_BC_PARTICLE(obj, time);
+    request->m_particle = 10;
+    return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_BC_PARTICLE::fn_710056ADF4(GF_OBJ_HANDLE* obj, float time) {
+    if (obj == reinterpret_cast<GF_OBJ_HANDLE*>(-1) || time < 1e-6f) {
+        return -1;
+    }
+#line 5982
+    SCOM_BC_PARTICLE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_BC_PARTICLE(obj, time);
+    request->m_particle = 10;
+    request->m_isStop = true;
+    return GfReqSmallCom::addRequestParallel(request);
 }
 
 bool SCOM_REFRESH_COMPASS::exec(fw::UpdateInfo const&) {
@@ -979,6 +1035,15 @@ void SCOM_OBJ_VFADE::fn_710055E1A4(GF_OBJ_HANDLE* obj, float ratio, unsigned int
     }
 }
 
+unsigned long SCOM_QUEST_REACH::createDiscoverLandmark(unsigned int a0) {
+#line 1944
+    SCOM_QUEST_REACH* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_QUEST_REACH(SCOM_TYPE(42));
+    request->m_value = 1;
+    request->m_value2 = a0;
+    GfReqSmallCom::addRequestParallel(request);
+    return createArriveLandmark(a0);
+}
+
 unsigned long SCOM_QUEST_REACH::createArriveLandmark(unsigned int a0) {
 #line 1951
     SCOM_QUEST_REACH* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_QUEST_REACH(SCOM_TYPE(42));
@@ -1194,6 +1259,45 @@ unsigned long SCOM_QUEST_GIMMICK::createTresure(unsigned int id, float time) {
     return GfReqSmallCom::addRequest(request);
 }
 
+unsigned long SCOM_QUEST_GIMMICK::fn_710055F284(unsigned int id, float time) {
+    if (time > 0.0f) {
+        GfPlayFactory::createGimmickTaskComplete(gmk::GmkType(58), id, time);
+        return -1;
+    }
+#line 2133
+    SCOM_QUEST_GIMMICK* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_QUEST_GIMMICK(SCOM_TYPE(43));
+    request->m_value = gmk::GmkType(58);
+    request->m_value2 = id;
+    request->m_value3 = time;
+    return GfReqSmallCom::addRequest(request);
+}
+
+unsigned long SCOM_QUEST_GIMMICK::fn_710055F40C(unsigned int id, float time) {
+    if (time > 0.0f) {
+        GfPlayFactory::createGimmickTaskComplete(gmk::GmkType(62), id, time);
+        return -1;
+    }
+#line 2152
+    SCOM_QUEST_GIMMICK* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_QUEST_GIMMICK(SCOM_TYPE(43));
+    request->m_value = gmk::GmkType(62);
+    request->m_value2 = id;
+    request->m_value3 = time;
+    return GfReqSmallCom::addRequest(request);
+}
+
+unsigned long SCOM_QUEST_GIMMICK::fn_710055F594(unsigned int id, float time) {
+    if (time > 0.0f) {
+        GfPlayFactory::createGimmickTaskComplete(gmk::GmkType(28), id, time);
+        return -1;
+    }
+#line 2171
+    SCOM_QUEST_GIMMICK* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_QUEST_GIMMICK(SCOM_TYPE(43));
+    request->m_value = gmk::GmkType(28);
+    request->m_value2 = id;
+    request->m_value3 = time;
+    return GfReqSmallCom::addRequest(request);
+}
+
 unsigned long SCOM_ENBOOK_IN_BATTLE::create(GF_OBJ_HANDLE* handle) {
     DataParamAcc acc(handle);
 #line 5464
@@ -1304,6 +1408,23 @@ unsigned long SCOM_POPUP::createCrystalOK(unsigned int a0) {
     return GfReqSmallCom::addRequestParallel(request);
 }
 
+unsigned long SCOM_POPUP::createQuest(QuestID id) {
+    if (GfGameManager::isStartGame()) {
+        return -1;
+    }
+    if (!QuestListAcc::get()->getListVisible(id)) {
+        return -1;
+    }
+#line 5607
+    SCOM_POPUP* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_POPUP(SCOM_TYPE(75));
+    // a zeroed local copied in: the original stores the two unused values as one 8-byte zero
+    GfMenuObjPopup::OpenParam param = {};
+    param.m_type = 9;
+    param.m_value[0] = id.m_id;
+    request->m_param = param;
+    request->m_wait = 20;
+    return GfReqSmallCom::addRequestParallel(request);
+}
 unsigned long SCOM_POPUP::createMercenaryReturn(unsigned int a0, unsigned int a1) {
     if (GfGameManager::isStartGame()) {
         return -1;
@@ -1636,6 +1757,16 @@ void SCOM_ACHIEV_INC::fn_7100564FE8(GF_OBJ_HANDLE* handle, unsigned int value) {
     }
 }
 
+void SCOM_ACHIEV_INC::createBladeCreate() {
+    addTotalCount(49, 1);
+    create(49, 1, 0);
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    GfDataBlade::getListPartyAll(blades);
+    if (GfAchievManager* manager = GfAchievManager::sys()) {
+        manager->incAchievWithBlade(50, 1, blades);
+    }
+}
+
 void SCOM_ACHIEV_INC::createCrystal() {
     mm::mtl::FixedVector<unsigned short, 422> blades;
     GfDataBlade::getListPartyAll(blades);
@@ -1870,6 +2001,31 @@ GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createMercenariesLeader(unsigned int id) {
     return create(ParamObj(4, id), CV_FIELD(14), CV_PRIO(1));
 }
 
+// the queued or running request with that handle, or nullptr (the name is not the original's)
+static SCOM* findRequest(unsigned long handle) {
+    GfReqSmallCom* com = GfReqSmallCom::sys();
+    if (com == nullptr) {
+        return nullptr;
+    }
+    for (GfReqSmallCom::RequestList::iterator it = com->m_list.begin(); it != com->m_list.end(); ++it) {
+        if ((*it)->m_handle == handle) {
+            return *it;
+        }
+    }
+    for (GfReqSmallCom::RequestList::iterator it = com->m_parallelList.begin(); it != com->m_parallelList.end(); ++it) {
+        if ((*it)->m_handle == handle) {
+            return *it;
+        }
+    }
+    return nullptr;
+}
+
+void fn_7100566E60(long value) {
+    if (SCOM_FIELD_VOICE* request = static_cast<SCOM_FIELD_VOICE*>(findRequest(value))) {
+        request->m_flagD3 = true;
+    }
+}
+
 GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createJump(const ParamObj& obj) {
     if (GfGameManager::getControlMover() != obj.m_handle || !GfGameManager::isControlFree()) {
         return 0;
@@ -1954,6 +2110,14 @@ unsigned long SCOM_FIELD_VOICE::createUnexplored() {
     request->add(ParamObj(driver), CV_FIELD(6), CV_PRIO(1));
     request->add(ParamObj(partner), CV_FIELD(6), CV_PRIO(3));
     return GfReqSmallCom::addRequestParallel(request);
+}
+
+unsigned long SCOM_FIELD_VOICE::fn_7100567634(const ParamObj& obj) {
+    unsigned long handle = createLevelup(obj);
+    if (SCOM_FIELD_VOICE* request = static_cast<SCOM_FIELD_VOICE*>(findRequest(handle))) {
+        request->m_stopOnEvent = false;
+    }
+    return handle;
 }
 
 unsigned long SCOM_FIELD_VOICE::createExitInn() {
@@ -2551,6 +2715,14 @@ bool SCOM_CURRENT_BLADE::exec(fw::UpdateInfo const&) {
         GfDataBlade::setHikariCurrent(true);
     }
     return true;
+}
+
+unsigned long SCOM_CURRENT_BLADE::create(unsigned int blade) {
+    SCOM_PARTY_ADD::setCurrentBlade(blade);
+#line 6017
+    SCOM_CURRENT_BLADE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_CURRENT_BLADE(SCOM_TYPE(78));
+    request->m_value = blade;
+    return GfReqSmallCom::addRequest(request);
 }
 
 GAME_VOICE_HANDLE* SCOM_SALVAGE_VOICE::create(GF_OBJ_HANDLE* handle, CV_SALVAGE voice) {
