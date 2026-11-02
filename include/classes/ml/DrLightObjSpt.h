@@ -23,12 +23,18 @@ public:
     mm::Vec3 m_pos;  // 0x70, setMat's translation row
     unsigned char pad_80[0x10];
     mm::Vec3 m_dir;  // 0x90, setMat's -z axis, normalized
-    unsigned char pad_a0[0x1C];
+    unsigned char pad_a0[0x10];
+    float m_color[3];  // 0xB0, set by fw::EffectManager::setLgtParam (the name is not the original's)
     float m_angle;  // 0xBC, set by DrEnvironmentAnim::envlgt_spt_angle (the name is not the original's)
     float m_size;  // 0xC0, set by DrEnvironmentAnim::envlgt_spt_size (the name is not the original's)
-    unsigned char pad_c4[0x10];
+    unsigned char pad_c4[0x4];
+    float m_lightParam;  // 0xC8, set by fw::EffectManager::setLgtParam (the name is not the original's)
+    unsigned char pad_cc[0x8];
     float m_speIntensity;  // 0xD4, set by DrEnvironmentAnim::envlgt_spt_spe_Intensity (the name is not the original's)
-    unsigned char pad_d8[0x18];  // DrLightMan::createInstantSptLight allocates 0xF0
+    unsigned char pad_d8[0x4];
+    float m_lightParam2;  // 0xDC, set by fw::EffectManager::setLgtParam (the name is not the original's)
+    float pad_e0;  // set by fw::EffectManager::setLgtParam
+    unsigned char pad_e4[0xC];  // DrLightMan::createInstantSptLight allocates 0xF0
 };
 }  // namespace ml
 

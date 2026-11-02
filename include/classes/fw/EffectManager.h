@@ -152,6 +152,23 @@ public:
     static void deleteLgt(unsigned int type, void* lgt);
     static void setLgtPos(unsigned int type, void* lgt, void* pos);
     static void setLgtMatrix(unsigned int type, void* lgt, void* matrix);
+    // the record the effect library hands setLgtParam (as void*): the struct, its name and its field names are
+    // inferred from what setLgtParam copies where
+    struct LgtParam {
+        float m_lightParam;  // 0x0, kept unless above -1 (point 0xA4, spot 0xC8)
+        float m_size;  // 0x4, kept unless above -1
+        mm::Col3 m_color;  // 0x8
+        float m_angle;  // 0x14, spot only
+        float m_param18;  // 0x18, spot 0xE0
+        float m_lightParam2;  // 0x1C (point 0xB4, spot 0xDC)
+        float m_subtract;  // 0x20, above 0 turns setSubtractOn on
+    };
+    // a light's parameters from a LgtParam (the parameter names are not the original's)
+    static void setLgtParam(unsigned int type, void* lgt, void* param);
+    static void debugRenderer(void* data);
+    // hands the effect library these callbacks and creates its effect::SystemManager (once: not while pad_2fda is
+    // set or a manager exists); apply calls it
+    void efSystemStart(const ml::IDrDrawWorkInfo* info);
     // an effect resource (efb) by name: from pack first, else from the common packs (null for none)
     void* search(const char* name, EffectPack* pack);
     // the common packs' battle effects, by their efb names (cmn_000_000, cmn_000_001, cmn_000_002); 0 for none

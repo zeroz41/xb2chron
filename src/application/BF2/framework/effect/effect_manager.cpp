@@ -23,6 +23,8 @@
 #include "classes/fw/EffectData.h"
 #include "classes/mm/mtl/IAllocator.h"
 #include "ptlib/ParticleSystem.h"
+#include "ml/DevFileParamTh.h"
+#include "classes/ml/DevFileTh.h"
 #include <string.h>
 
 namespace fw {
@@ -442,6 +444,20 @@ bool EffectManager::containsCamAxis(void* data) const {
     return effect::SystemManager::getPtr()->es_contais_cam_axis(data);
 }
 
+void EffectManager::efSystemStart(const ml::IDrDrawWorkInfo* info) {
+    if (pad_2fda != 0 || effect::SystemManager::getPtr() != nullptr) {
+        return;
+    }
+    effect::SystemManager::setUserAllocFunc(effectAllocSys, effectFreeSys, effectAllocRes, effectFreeRes,
+                                            effectSysHandle, effectResHandle);
+    effect::SystemManager::setUserFileFunc(debugReadFile, debugReadFileEnd);
+    effect::SystemManager::setUserOutputString(debugOutputString, warnOutputString);
+    effect::SystemManager::setUserDrFunc(createMdl, deleteMdl, createLgt, deleteLgt, setMdlPos, setMdlMatrix,
+                                         setMdlColor, setMdlAlpha, setMdlSpeed, setLgtPos, setLgtMatrix, setLgtParam,
+                                         debugRenderer, createGroup, destroyGroup);
+    effect::SystemManager::create(reinterpret_cast<const ptlib::DrDrawWorkInfoEF*>(info));
+}
+
 void* EffectManager::effectAllocSys(void* user, unsigned int size, unsigned int alignment, const char* name,
                                      unsigned int line) {
     return mtl::MemManager::allocate(get()->m_sysHandle, size, alignment, false, "no name", 0);
@@ -504,6 +520,14 @@ unsigned int EffectManager::create(const char* name, EffectPack* pack, const eff
         return 0;
     }
     return effect::SystemManager::getPtr()->es_create(efb, param, flag);
+}
+
+void* EffectManager::debugReadFile(const char* path, int& size) {
+    ml::DevFileParamTh param;
+    param.m_hMem = get()->m_resHandle;
+    param.m_align = 0x1000;
+    param.m_path = path;
+    return ml::DevFileTh::readFileBlock(param, &size, nullptr);
 }
 
 void EffectManager::debugReadFileEnd(void* data) {
@@ -784,6 +808,25 @@ void EffectManager::deleteMdl(void* mdl) {
     }
 }
 
+// the original reads the view's light manager before it tests DrMan for null (the order its code keeps)
+void* EffectManager::createLgt(unsigned int type, int viewNum) {
+    if (mm::mtl::PtrSingleton<Framework>::sys() == nullptr) {
+        return nullptr;
+    }
+    ml::DrMan* dr = ml::DrMan::getIns();
+    ml::DrLightMan* lightMan = dr->m_viewLightMan[viewNum];
+    if (dr == nullptr || lightMan == nullptr) {
+        return nullptr;
+    }
+    switch (type) {
+    case 1:
+        return lightMan->createInstantPntLight();
+    case 2:
+        return lightMan->createInstantSptLight();
+    }
+    return nullptr;
+}
+
 void EffectManager::deleteLgt(unsigned int type, void* lgt) {
     if (lgt == nullptr || mm::mtl::PtrSingleton<Framework>::sys() == nullptr) {
         return;
@@ -841,6 +884,58 @@ void EffectManager::setLgtMatrix(unsigned int type, void* lgt, void* matrix) {
     case 2:
         static_cast<ml::DrLightObjSpt*>(lgt)->setMat(*static_cast<const mm::Mat44*>(matrix));
         break;
+    }
+}
+
+void EffectManager::setLgtParam(unsigned int type, void* lgt, void* param) {
+    if (param == nullptr || !isLgtUsable(lgt)) {
+        return;
+    }
+    ml::DrMan* dr = ml::DrMan::getIns();
+    if (dr == nullptr || dr->m_lightMan == nullptr) {
+        return;
+    }
+    const LgtParam* src = static_cast<const LgtParam*>(param);
+    switch (type) {
+    case 1: {
+        ml::DrLightObjPnt* pnt = static_cast<ml::DrLightObjPnt*>(lgt);
+        if (src->m_lightParam > -1.0f) {
+            pnt->m_lightParam = src->m_lightParam;
+        }
+        const mm::Col3 color = src->m_color;
+        pnt->m_color[0] = color.r;
+        pnt->m_color[1] = color.g;
+        pnt->m_color[2] = color.b;
+        if (src->m_size > -1.0f) {
+            pnt->m_size = src->m_size;
+        }
+        pnt->m_lightParam2 = src->m_lightParam2;
+        break;
+    }
+    case 2: {
+        ml::DrLightObjSpt* spt = static_cast<ml::DrLightObjSpt*>(lgt);
+        if (src->m_lightParam > -1.0f) {
+            spt->m_lightParam = src->m_lightParam;
+        }
+        const mm::Col3 color = src->m_color;
+        spt->m_color[0] = color.r;
+        spt->m_color[1] = color.g;
+        spt->m_color[2] = color.b;
+        if (src->m_size > -1.0f) {
+            spt->m_size = src->m_size;
+        }
+        spt->m_angle = src->m_angle;
+        spt->m_lightParam2 = src->m_lightParam2;
+        spt->pad_e0 = src->m_param18;
+        break;
+    }
+    default:
+        return;
+    }
+    if (src->m_subtract > 0.0f) {
+        static_cast<ml::DrLightObj*>(lgt)->setSubtractOn(true);
+    } else {
+        static_cast<ml::DrLightObj*>(lgt)->setSubtractOn(false);
     }
 }
 
