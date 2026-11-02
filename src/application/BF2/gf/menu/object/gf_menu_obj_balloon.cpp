@@ -1,4 +1,5 @@
 #include "classes/gf/GfMenuObjBalloon.h"
+#include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/gf/GfMenuCallManager.h"
 #include "classes/gf/GfMenuStrLinker.h"
@@ -9,7 +10,13 @@
 #include "classes/ui/UICtrlCursorSelect.h"
 #include "classes/ui/UIObjectAcc.h"
 #include "classes/ui/UISelectObjList.h"
+#include "gf/GfDataHana.h"
+#include "gf/GfDataItem.h"
+#include "gf/GfItemUtil.h"
+#include "gf/GfMenuItemUtil.h"
 #include "gf/GfReqCommand.h"
+#include "mm/mtl/FixStr.h"
+#include "plugin/Bdat.h"
 #include "ui/EventData.h"
 #include "ui/UIStr.h"
 #include "ui/UIUtil.h"
@@ -55,6 +62,37 @@ bool GfMenuObjBalloon::seqSaveWait() {
     GfMenuObjFade::dispSaving(false, 0);
     m_saveRequest = -1;
     GfMenuObject::addResultCallContext(ui::UIObjectAcc(m_handle, "LAY_select").m_handle, 2, 0);
+    return true;
+}
+
+bool GfMenuObjBalloon::fn_710038A458() {
+    if (m_moneyType != 0) {
+        unsigned char* bdat = GfDataBdat::getFP(0xDD);
+        unsigned int row = m_moneyType;
+        mm::mtl::FixStr<32> column;
+        if (bdat == nullptr) {
+            return false;
+        }
+        for (int i = 1; i <= 3; i++) {
+            column.format("ItemID%d", i);
+            unsigned int id = static_cast<unsigned short>(Bdat::getVal(bdat, column.m_str, row));
+
+            column.format("ItemNumber%d", i);
+            signed char num = Bdat::getVal(bdat, column.m_str, row);
+            int count;
+            if (GfMenuItemUtil::canCountStack(GfDataItem::getItemType(id))) {
+                count = GfItemUtil::getItemBoxCount(id);
+            } else {
+                count = GfItemUtil::getCountByType(static_cast<ItemType::Type>(GfDataItem::getItemType(id)));
+            }
+            if (static_cast<unsigned int>(count + num) > static_cast<unsigned int>(GfItemUtil::getEnableStock(id))) {
+                return false;
+            }
+        }
+    }
+    if (m_money != 0 && GfDataHana::getEther() + m_money > 999999999) {
+        return false;
+    }
     return true;
 }
 

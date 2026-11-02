@@ -76,9 +76,19 @@ public:
     static void openEventSelectMoney(GfMenuCallContext* context, const OpenSelectMoneyParam& param);
     // false when the row has no item to show (its context aborted when every item was skipped)
     static bool openGetItem(GfMenuCallContext* context, const OpenGetItemParam& param);
+    // 1.0.0's name: shows a talk balloon's text (TXT_ev_talk_msg, the message's ML:Feeling tag); EvTalkListener
+    // calls it on open (0x100, the event's text and kind) and on 0x104 (kind -1)
+    static void setupEvTalk(unsigned int handle, int msgId, int);
+    // 1.0.0's name: fills an event selection (EvSelectListener's): the title (TXT_ev_select_msg_title), the name
+    // (TXT_ev_select_name, none for -1) and the two answers from GfMenuCallManager's select strings
+    static void setupEvSelect(unsigned int handle, int msgId, int nameId);
     // the save the money selection's listener queues: a save request and the saving display, then waits for it
     bool seqSave();
     bool seqSaveWait();
+    // SelMoneyListener's check of the selected reward (inferred, the name is not known): whether the item box can
+    // take the items of BDAT 0xDD's row m_moneyType (ItemID1-3, ItemNumber1-3) and m_money more ether stays
+    // within 999999999
+    bool fn_710038A458();
 
     // the field names are not the original's
     unsigned int pad_24;
