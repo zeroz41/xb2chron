@@ -1817,6 +1817,8 @@ void StatusManager::OnEventProc(event::MSG_TYPE msg) {
 
 #include "classes/event/DofManager.h"
 #include "classes/event/FadeManager.h"
+#include "classes/event/SkipManager.h"
+#include "classes/gf/GfGameManager.h"
 
 namespace event {
 
@@ -1852,6 +1854,61 @@ void DofManager::OnEventProc(event::MSG_TYPE msg) {
     default:
         break;
     }
+}
+
+void FadePlanner::update(float step) {
+    for (int i = 0; i < 4; i++) {
+        Entry& entry = pad_c[i];
+        if (entry.pad_0 & 4) {
+            entry.pad_20 -= step;
+            if (entry.pad_20 < 0.0f) {
+                play(static_cast<TYPE>(i));
+                entry.pad_0 &= ~4;
+            }
+        }
+    }
+}
+
+void FadePlanner::play(TYPE type) {
+    Entry& entry = pad_c[type];
+    unsigned int frame = entry.pad_4;
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkip()) frame = 0;
+    // odd types fade every layer in, even ones fade entry's layer out (inferred from the stores)
+    bool in = type & 1;
+    FadeCtrl* ctrl = mm::mtl::Singleton<FadeCtrl>::getPtr();
+    if (!in) {
+        FadeCtrl::Layer& layer = ctrl->pad_8[entry.pad_c];
+        layer.pad_4 = true;
+        layer.pad_5 = true;
+        layer.pad_8 = frame;
+        layer.pad_c = true;
+        layer.pad_10 = entry.pad_10;
+    } else {
+        ctrl->pad_8[0].pad_4 = true;
+        ctrl->pad_8[0].pad_5 = false;
+        ctrl->pad_8[0].pad_8 = frame;
+        ctrl->pad_8[0].pad_c = false;
+        ctrl->pad_8[1].pad_4 = true;
+        ctrl->pad_8[1].pad_5 = false;
+        ctrl->pad_8[1].pad_8 = frame;
+        ctrl->pad_8[1].pad_c = false;
+        if (!(ctrl->pad_68 & 1)) {
+            ctrl->pad_8[2].pad_4 = true;
+            ctrl->pad_8[2].pad_5 = false;
+            ctrl->pad_8[2].pad_8 = frame;
+            ctrl->pad_8[2].pad_c = false;
+        }
+    }
+}
+
+FadeManager::FadeManager() : pad_10(0), pad_14(0) {}
+
+bool FadeManager::isFading() const {
+    FadeCtrl* ctrl = mm::mtl::Singleton<FadeCtrl>::getPtr();
+    for (int i = 0; i < 3; i++) {
+        if (ctrl->pad_8[i].pad_4 || gf::GfGameManager::isFading(ctrl->pad_8[i].pad_0)) return true;
+    }
+    return false;
 }
 
 }  // namespace event
@@ -4137,6 +4194,14 @@ int SeqManager::end_env_seam::update(const ICmd::Param& param) {
         manager->m_seqName = "end envseam";
     }
     return true;
+}
+
+int SeqManager::end_fadewait::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        manager->m_seqName = "exec fadewait";
+    }
+    return !mm::mtl::Singleton<FadeManager>::getPtr()->isFading();
 }
 
 int SeqManager::end_fadein::update(const ICmd::Param& param) {
