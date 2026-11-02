@@ -132,6 +132,54 @@ void GfQuestManager::eventCheckTask(QuestID id) {
     GfQuestTask::updateQuestTask(id);
 }
 
+bool GfQuestManager::openOrder(QuestID id, bool notify) {
+    if (!GfQuestInfo::isParent(id)) {
+        QuestID parent = GfQuestInfo::getParentQuest(id);
+        if (parent.empty()) {
+            return false;
+        }
+        id = parent;
+    }
+    if (GfQuestInfo::isQuestOrder(id)) {
+        return false;
+    }
+    if (GfQuestInfo::isQuestFin(id)) {
+        return false;
+    }
+    if (!s_pThis->setOrder(id)) {
+        return false;
+    }
+    if (GfQuestInfo::isDispUI(id)) {
+        GfPlayFactory::createQuestUIOrder(id, notify, true);
+    }
+    return true;
+}
+
+bool GfQuestManager::setOrder(QuestID id) {
+    if (GfQuestInfo::isQuestOrder(id)) {
+        return false;
+    }
+    if (GfQuestInfo::isQuestFin(id)) {
+        return false;
+    }
+    if (GfDataQuest::getListNextQuestA(id).empty()) {
+        return false;
+    }
+    if (s_pThis != nullptr) {
+        // the original keeps this part's QuestID in the frame slot an inlined callee's local gets (above the
+        // condition's temporary): a helper whose name is unknown, written as a local lambda
+        [&] {
+            s_pThis->acceptOrder(id);
+            QuestID next = GfDataQuest::getListNextQuestA(id);
+            if (!next.empty()) {
+                s_pThis->acceptOrder(next);
+            }
+        }();
+        eventOrderQuest(id);
+    }
+    return true;
+}
+
 void GfQuestManager::eventOrderQuest(QuestID id) {
     if (!id.empty()) {
         GfQuestManager* self = s_pThis;
