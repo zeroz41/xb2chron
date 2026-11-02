@@ -18,6 +18,8 @@
 #include "plugin/Bdat.h"
 #include "ui/UIStr.h"
 #include "mm/Vec2.h"
+#include "mm/Rect.h"
+#include "mm/Pnt.h"
 #include "mm/mtl/FixStr.h"
 #include "ui/EventData.h"
 
@@ -33,6 +35,9 @@ inline int startHalfFadeIn(unsigned int handle, int eventId) {
     param.m_eventId = eventId;
     return GfMenuObjUtil::startCtrl(handle, param, nullptr);
 }
+// the LAY_char layouts of a row's three image slots (driver, front and back blade): fn_71003D38E0 fits each
+// IMG_char_img@ image to one. Proposed name, not the original's (lbl_7100B611C0)
+const char* const sCharFrames[] = {"character_dr", "character_bl_front", "character_bl_back"};
 }  // namespace
 
 int TUnk_B61178::s_state;
@@ -189,6 +194,64 @@ void TUnk_B61178::fn_71003D2EA4() {
         m_ids.push_back(1);
     } else if (m_driverList->getSize() == 1) {
         m_ids.push_back(0);
+    }
+}
+
+void TUnk_B61178::fn_71003D38E0() {
+    ui::UIObjectAcc layout(m_handle, "LAY_char");
+    mm::Vec2 scale;
+    GfMenuObjUtil::ImageParam param;
+    mm::mtl::FixStr<32> imageName;
+    mm::mtl::FixStr<32> glowName;
+    param.m_x = 0;
+    param.m_y = 0;
+    param.m_scale = 1.0f;
+    for (unsigned int row = 0; row < pad_578; row++) {
+        unsigned int size = m_driverList->getSize();
+        bool last = row >= pad_578 - 1;
+        unsigned int count = last ? 1 : size;
+        for (unsigned int i = 0; i < count; i++) {
+            if (i < m_driverList->getSize()) {
+                unsigned int driver = m_driverList->getContents(i).m_driver;
+                unsigned int slot = 0;
+                if (count == 3) {
+                    if (!GfDataDriver::fn_7100237A94(driver)) {
+                        slot = i == 2 ? 2 : 1;
+                    }
+                } else if (count == 2) {
+                    if (row != i) {
+                        continue;
+                    }
+                }
+                GfMenuObjUtil::getImageParam(0, driver, param, 0);
+                const char* frame;
+                if (!last) {
+                    frame = sCharFrames[slot];
+                    imageName.format("IMG_char_img@%02d%02d", slot + 1, row + 1);
+                    glowName.format("IMG_char_glow@%02d%02d", slot + 1, row + 1);
+                } else {
+                    imageName.format("IMG_char_img@%02d", row + 1);
+                    glowName.format("IMG_char_glow@%02d", row + 1);
+                    frame = "character_solo";
+                }
+                ui::UIObjectAcc image(layout.m_handle, imageName.m_str);
+                ui::UIObjectAcc glow(layout.m_handle, glowName.m_str);
+                mm::Rect<short> frameRect;
+                layout.getLayoutRect(frame, frameRect);
+                mm::Rect<short> imageRect;
+                image.getRect(imageRect, 0);
+                scale.x = (float)frameRect.w / (float)imageRect.w;
+                scale.y = (float)frameRect.h / (float)imageRect.h;
+                scale.x *= param.m_scale;
+                scale.y *= param.m_scale;
+                image.setScale(scale);
+                glow.setScale(scale);
+                frameRect.x += param.m_x;
+                frameRect.y += param.m_y;
+                image.setPosCenter(mm::Pnt<short>(frameRect.x + frameRect.w / 2, frameRect.y + frameRect.h / 2));
+                glow.setPosCenter(mm::Pnt<short>(frameRect.x + frameRect.w / 2, frameRect.y + frameRect.h / 2));
+            }
+        }
     }
 }
 
