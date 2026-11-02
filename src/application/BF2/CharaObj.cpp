@@ -1828,6 +1828,8 @@ DofManager::~DofManager() {}
 
 FadeManager::~FadeManager() {}
 
+FadeCtrl::~FadeCtrl() {}
+
 void DofManager::clear() {
     stop();
 }
@@ -3391,6 +3393,16 @@ MovieManager::~MovieManager() {}
 
 TodoManager::TodoManager() : pad_10(0), pad_14(0), pad_8c20(0) {}
 
+// makes the command, queues it with a copy of the parameters and runs the next queued one (pad_8c20 counts them)
+void TodoManager::add(ITodo* (*exec)(), const Param& param) {
+    float frame = FrameManager::getPtr()->getFrame();
+    updateAdd();
+    m_items.push_back(TodoItem(frame, exec, exec(), param));
+    long next = pad_8c20;
+    m_items[next].m_todo->doit(m_items[next].m_param);
+    pad_8c20++;
+}
+
 // 1.0.0's SeqManager::login
 inline void SeqManager::login() {
     pad_2860 = 1;
@@ -4537,6 +4549,28 @@ void Scheduler::func_item_loop(gf::GfObj* obj) {
         }
     }
     m_actFunc = nullptr;
+}
+
+// a scheduler for handle's object: a running one is replaced by a new one that keeps its flags and ids
+void ScheManager::push(gf::GF_OBJ_HANDLE* handle, unsigned int type) {
+    for (Scheduler** it = m_schedulers.begin(); it != m_schedulers.end(); ++it) {
+        if ((*it)->m_handle == handle) {
+            Scheduler* scheduler = new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false)
+                Scheduler(**it, type);
+            scheduler->setup();
+            m_schedulers.push_back(scheduler);
+            if (*it) {
+                delete *it;
+                *it = nullptr;
+            }
+            m_schedulers.erase(it);
+            return;
+        }
+    }
+    Scheduler* scheduler =
+        new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) Scheduler(handle, type);
+    scheduler->setup();
+    m_schedulers.push_back(scheduler);
 }
 
 }  // namespace event

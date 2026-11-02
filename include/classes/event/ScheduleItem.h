@@ -10,6 +10,8 @@ namespace event {
 class ScheduleItem {
 public:
     typedef void (ScheduleItem::*Func)(gf::GF_OBJ_HANDLE*);
+    // ScheManager::push's (inline: no symbol): the object's handle, no step, fully visible
+    explicit ScheduleItem(gf::GF_OBJ_HANDLE* handle) : m_handle(handle), m_func(), m_alpha(1.0f) {}
     virtual ~ScheduleItem() {}  // slot 0
     void clear();
     void func_fadeout(gf::GF_OBJ_HANDLE* handle);

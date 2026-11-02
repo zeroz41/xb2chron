@@ -2,6 +2,7 @@
 #define CLASSES_EVENT_SCHEDULER_H
 
 #include "classes/event/ScheduleItem.h"
+#include "gf/GfObjAcc.h"
 
 namespace gf { class GF_OBJ_HANDLE; class GfObj; }
 
@@ -15,6 +16,16 @@ namespace event {
 class Scheduler {
 public:
     typedef void (Scheduler::*Func)(gf::GfObj*);
+    // ScheManager::push's (inline: no symbols): a new object's scheduler (its bdat id read through GfObjAcc), and
+    // the one replacing an object's running scheduler (its flags and ids kept); m_frame is left unset by both
+    Scheduler(gf::GF_OBJ_HANDLE* handle, unsigned int type)
+        : m_state(0), m_flags(0), m_handle(handle), m_bdatId(gf::GfObjAcc(handle).getBdatId()), m_type(type),
+          m_aimType(static_cast<EVT_aimtype>(0)), m_item(handle), m_turnFunc(&Scheduler::func_stanby),
+          m_lookFunc(&Scheduler::func_stanby), m_actFunc(&Scheduler::func_stanby) {}
+    Scheduler(const Scheduler& other, unsigned int type)
+        : m_state(0), m_flags(other.m_flags), m_handle(other.m_handle), m_bdatId(other.m_bdatId), m_type(type),
+          m_aimType(static_cast<EVT_aimtype>(0)), m_item(other.m_handle), m_turnFunc(&Scheduler::func_stanby),
+          m_lookFunc(&Scheduler::func_stanby), m_actFunc(&Scheduler::func_stanby) {}
     virtual ~Scheduler();  // slot 0
     void setup();
     void exec();

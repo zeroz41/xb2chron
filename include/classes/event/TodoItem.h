@@ -10,10 +10,13 @@ class ITodo;
 // creator, a copy of the parameters, the command it made)
 class TodoItem {
 public:
+    // TodoManager::add's item (inline: no symbol); the parameter order is not the original's
+    TodoItem(float frame, ITodo* (*exec)(), ITodo* todo, const Param& param)
+        : pad_8(frame), pad_10(exec), m_param(param), m_todo(todo) {}
     virtual ~TodoItem() {}  // slot 0
     // the parameters' text (TodoManager::update dumps each item's into its string list)
     void createString(mm::mtl::FixStr<256>& str);
-    unsigned int pad_8;  // FrameManager's frame count when added
+    float pad_8;  // FrameManager::getFrame() when added (add copies the float unconverted)
     ITodo* (*pad_10)();  // the creator add was given
     Param m_param;  // 0x18; the name is not the original's
     ITodo* m_todo;  // 0x110; what the creator made (deleted by clear); the name is not the original's

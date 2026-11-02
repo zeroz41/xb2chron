@@ -20,6 +20,7 @@ public:
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     // the script plugins' commands: exec makes the command, which then runs with a copy of the parameters
     void add(ITodo* (*exec)(), const Param& param);
+    void updateAdd();
     static Param s_zero;
     void update();
     void render();

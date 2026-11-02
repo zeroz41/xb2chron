@@ -15,6 +15,8 @@ public:
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     // the inlined getPtr's constructor zeroes only the word at 0x10
     ScheManager() : pad_10(0) {}
+    // starts a scheduler for handle's object (replacing its running one); type becomes Scheduler::m_type
+    void push(gf::GF_OBJ_HANDLE* handle, unsigned int type);
     // clears the step flag of handle's scheduler (the first scheduler with that handle); the name is not the original's
     void cancelStep(gf::GF_OBJ_HANDLE* handle, unsigned int flag) {
         for (Scheduler** it = m_schedulers.begin(); it != m_schedulers.end(); ++it) {
