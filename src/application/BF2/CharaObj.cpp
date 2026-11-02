@@ -4085,6 +4085,20 @@ void Manager::tail() {
 
 void Manager::post() {}
 
+bool Manager::end() {
+    if (isPlaying()) {
+        if (!(m_flags & 0x20)) {
+            sendMessage(static_cast<MSG_TYPE>(11));
+            m_flags |= 0x20;
+        }
+        if (m_flags & 1) {
+            return false;
+        }
+        m_flags &= ~0x20;
+    }
+    return true;
+}
+
 void Manager::finishNewGameWait() {
     mm::mtl::Singleton<UIManager>::getPtr()->m_openFlags |= 0x80000;
 }

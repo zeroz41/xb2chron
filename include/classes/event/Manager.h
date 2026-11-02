@@ -6,6 +6,7 @@
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/FixedVector.h"
+#include "mm/mtl/Bitflag.h"
 #include "classes/event/IManager.h"
 
 namespace event { class Manager; }
@@ -58,7 +59,7 @@ public:
     void finishNewGameWait();  // GfGameEvent::finishNewGameWait's
     // MstxtRes::OnResEvent calls it when its text fails to load (3.0.1 symbol)
     void failureSkip();
-    bool isPlaying() const { return m_playing; }
+    bool isPlaying() const { return m_state.test(0); }
     // sends msg to every manager in turn; the name is not the original's (no symbol: inline everywhere)
     void sendMessage(event::MSG_TYPE msg) {
         for (unsigned int i = 0; i < m_managers.size(); i++) {
@@ -66,8 +67,10 @@ public:
         }
     }
 
-    unsigned int m_playing : 1;  // end and stop act only while it is set; GfGameTalk::isPlaying returns it
-    unsigned int pad_18_1 : 31;  // the rest of the word, which isPlaying loads whole
+    // bit 0: playing (end and stop act only while it is set; GfGameTalk::isPlaying returns it). A 4-aligned word
+    // read through its own methods: end's byte test of 0x18 is not merged with the 0x1c load (the name is not the
+    // original's)
+    mm::mtl::Bitflag<32> m_state;  // 0x18
     // bit 0: tail sends messages 18 and 19 (else only 19); bit 1: setupSceneEnd sent message 6 and waits for the
     // SeqManager; bit 5: end sent message 11 (the name is not the original's)
     unsigned int m_flags;  // 0x1c

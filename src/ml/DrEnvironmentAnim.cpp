@@ -451,6 +451,34 @@ void DrEnvironmentObjLgt::resourceInit() {
     setupLgt(m_lgtArg);
 }
 
+void DrEnvironmentObjLgt::setupPoint(DrEnvironmentLgtList* list, DrLightObjPnt* light, const LgtObjData* data,
+                                     const LgtPosData* pos) {
+    mm::Col3 col(data->m_color[0], data->m_color[1], data->m_color[2]);
+    float g = col.g * data->m_intensity;
+    float r = col.r * data->m_intensity;
+    float b = col.b * data->m_intensity;
+    const LgtParamData* param =
+        reinterpret_cast<const LgtParamData*>(static_cast<const char*>(m_resource) + data->m_paramOfs);
+    light->m_color[0] = r;
+    light->m_color[1] = g;
+    light->m_color[2] = b;
+    light->setMat(pos->m_mat);
+    light->m_speIntensity = param->m_speIntensity;
+    light->m_size = pos->m_range;
+    light->m_paramC = param->m_paramC;
+    light->m_lightParam = data->m_param == 0.0f ? 1.0f : data->m_param;
+    if (data->m_flags & 0x10) {
+        light->m_flags |= 0x800;
+    }
+    if (param->m_kind == 1) {
+        light->m_flags |= 2;
+    }
+    if (data->m_flags2 & 0x10) {
+        light->m_flags |= DrLightObj::FLAG_SUBTRACT;
+    }
+    list->m_light = light;
+}
+
 void DrEnvironmentObjLgt::setFrame(float frame) {
     m_frame = frame;
     for (int i = 0; i < m_anim.m_rangeNum; i++) {
