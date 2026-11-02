@@ -99,6 +99,7 @@
 #include "classes/gf/GfEvent.h"
 #include "classes/gf/GfBdatMsg.h"
 #include "gf/QuestListAcc.h"
+#include "gf/QuestTaskParam.h"
 #include "classes/gf/TUnk_B4C840.h"
 #include "gf/SDataOption.h"
 #include "gf/GfDataNpc.h"
@@ -212,6 +213,17 @@ unsigned int GfDataBlade::getRoleByWpnType(unsigned int wpnType) {
         return 1;
     }
     return GfBdatItem::get()->getPcWpnTypeRole(wpnType);
+}
+
+unsigned int GfDataBlade::getRole(unsigned int blade) {
+    if (blade == 0) {
+        return 0;
+    }
+    SDataBlade& data = GfDataManager::getDataGame()->m_blades[getBladeIndex(blade)];
+    if (GfDataHana::isValid(blade)) {
+        return GfDataHana::getRole(blade);
+    }
+    return getRoleByWpnType(data.m_weaponType);
 }
 
 unsigned int GfDataHana::getCondenserNum(unsigned int hana) {
@@ -2392,6 +2404,25 @@ unsigned int GfDataDriverSkill::getEnhanceFromBdat(unsigned int driver, unsigned
     return GfBdatBtl::get()->getBTL_Skill_DrEnhance(skill);
 }
 
+unsigned int GfDataDriverSkill::getSkill(unsigned int driver, unsigned int line, unsigned int level, bool round) {
+    if (level == 0) {
+        return 0;
+    }
+    SDataDriver* data = GfDataDriver::getSDataDriver(driver);
+    unsigned int index = level - 1;
+    if (index >= 3) {
+        return 0;
+    }
+    unsigned int id = data->m_id;
+    if (id - 1 >= 6 && id - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(id)) != 0) {
+            return 0;
+        }
+    }
+    return (round ? data->m_roundSkills : data->m_skills)[line][index];
+}
+
 bool GfDataDriverSkill::isSkillLevelUnlock(unsigned int driver, unsigned int level, bool round) {
     if (level < 2) {
         return true;
@@ -3352,6 +3383,69 @@ void fn_7100254DC4(SSoundUiOption* option, unsigned int index, unsigned char val
     option->m_keyD = 4;
     option->m_list[index - 1] = value;
     fn_7100254DF0(option);
+}
+
+// a BTL_DifSetting row's value for slot (0 without GfBdatBtl); every user inlines it, so the name is not the
+// original's
+static unsigned int getDifSettingValue(unsigned int id, unsigned int slot) {
+    GfBdatBtl* bdat = GfBdatBtl::get();
+    if (bdat == nullptr) {
+        return 0;
+    }
+    return bdat->fn_71001E9520(id, slot);
+}
+
+// a BTL_DifSetting value as a level: (value - ParamMin) / Interval, 0 without GfBdatBtl or with Interval 0; every
+// user inlines it, so the name is not the original's
+static unsigned char getDifSettingLevel(unsigned int id, unsigned int value) {
+    GfBdatBtl* bdat = GfBdatBtl::get();
+    if (bdat == nullptr) {
+        return 0;
+    }
+    unsigned int min = bdat->fn_71001E91E8(id);
+    bdat->fn_71001E9270(id);
+    unsigned int interval = bdat->fn_71001E92F8(id);
+    if (interval == 0) {
+        return 0;
+    }
+    return (value - min) / interval;
+}
+
+void fn_7100254DF0(SSoundUiOption* option) {
+    option->m_list[11 - 1] = getDifSettingLevel(11, getDifSettingValue(11, 0));
+    option->m_list[12 - 1] = getDifSettingLevel(12, getDifSettingValue(12, 0));
+}
+
+void fn_7100254EF0(SSoundUiOption* option, unsigned int type) {
+    option->m_keyD = 6;
+    if (GfBdatBtl::get() == nullptr) {
+        return;
+    }
+    if (type == 4) {
+        fn_7100254DF0(option);
+    } else {
+        for (unsigned int i = 0; i < 0xF; i++) {
+            option->m_list[i] = getDifSettingLevel(i + 1, getDifSettingValue(i + 1, type));
+        }
+    }
+    option->m_keyD = type;
+}
+
+unsigned int fn_7100254FDC(SSoundUiOption* option, unsigned int index) {
+    GfBdatBtl* bdat = GfBdatBtl::get();
+    if (bdat == nullptr) {
+        return 0;
+    }
+    unsigned char level;
+    if (option->m_keyD == 4) {
+        level = option->m_list[index - 1];
+    } else {
+        level = getDifSettingLevel(index, getDifSettingValue(index, option->m_keyD));
+    }
+    unsigned int min = bdat->fn_71001E91E8(index);
+    bdat->fn_71001E9270(index);
+    unsigned int interval = bdat->fn_71001E92F8(index);
+    return min + interval * level;
 }
 
 unsigned char fn_71002550C0(const SSoundUiOption* option, unsigned int index) {
@@ -5127,6 +5221,31 @@ int GfDataAchievement::fn_710024B4D0(unsigned short stats) {
         return stats + 3834;
     }
     return -1;
+}
+
+bool GfDataAchievement::isAddAchievementBonusCount(const AchievQuest& quest) {
+    // the statistics that always count (lbl_71009BA138; the name is not the original's)
+    static const unsigned short s_bonusStats[67] = {
+        0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xF, 0x10, 0x11, 0x12, 0x43, 0x18, 0x19,
+        0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x32, 0x37, 0x3D, 0x3F, 0x42, 0x44, 0x5D, 0x5E, 0x5F,
+        0x62, 0x61, 0x64, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, 0x70, 0x71,
+        0x97, 0x98, 0x99, 0x9A, 0x73, 0x75, 0x77, 0x79, 0x7B, 0x7D, 0x7F, 0x81, 0x83, 0x85, 0x87,
+        0x89, 0x8B, 0x8D, 0x8F, 0x91, 0x95, 0x96,
+    };
+    for (unsigned long i = 0; i < 67; i++) {
+        if (s_bonusStats[i] == quest.m_stats) {
+            return true;
+        }
+    }
+    QuestTaskParam param(GfDataQuest::getListNextQuestA(quest.m_questId), 0, TASK_STATE(0));
+    switch (param.m_taskType) {
+    case 1:
+    case 4:
+    case 6:
+    case 11:
+        return true;
+    }
+    return false;
 }
 
 unsigned int GfDataAchievement::getTotalCount(unsigned int stats) {

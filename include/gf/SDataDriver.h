@@ -37,7 +37,12 @@ public:
     unsigned short m_id;  // its row, 0 for none (DataObjDriver::isValid)
     short m_bladeSet;  // the slot of its engaged blade, -1 for none (DataObjDriver::setBladeSet)
     unsigned short m_blades[3];  // the blade in each slot (DataObjDriver::getBlade); the count is not known
-    unsigned char pad_2c[0x68];
+    unsigned char pad_2c[0x4];
+    // 0x30: the learned skill of each skill tree line's three levels (0x62: the same for round, the tree a second
+    // playthrough uses); GfDataDriverSkill::getSkill reads them (the names are not the original's; 5 x 5 halves
+    // fill the space up to m_level)
+    unsigned short m_skills[5][5];
+    unsigned short m_roundSkills[5][5];
     unsigned short m_level;  // 0x94 (GfDataDriver::getLevel; the name is not the original's)
     unsigned short m_hpMax;  // 0x96: DataObjDriver::getHpMax's base (the name is not the original's)
     // 0x98..0xA0: the base stats DataObjDriver's getters read before enhances and GfDataDriver's *Rev corrections
