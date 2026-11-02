@@ -23,16 +23,9 @@ public:
     // what create sets the solver up with (0x30 bytes: createImpl copies it whole); the field names are not the
     // original's
     struct Description {
-        Description() : param() {
-            boneNames[0] = "";
-            boneNames[1] = "";
-            boneNames[2] = "";
-            pad_18[0] = 180.0f;
-            pad_18[1] = 20.0f;
-            pad_18[2] = 0.1f;
-            pad_24 = false;
-            pad_25 = false;
-        }
+        // every field initialized ahead of param: the original stores the two bools before param's
+        Description()
+            : boneNames{"", "", ""}, pad_18{180.0f, 20.0f, 0.1f}, pad_24(false), pad_25(false), param() {}
 
         const char* boneNames[3];  // createImpl finds the three bones by these names
         float pad_18[3];           // two angles (degrees; createImpl hands on their cosines) and the toe's length
