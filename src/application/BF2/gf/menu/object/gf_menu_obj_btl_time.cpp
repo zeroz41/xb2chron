@@ -239,6 +239,105 @@ void TUnk_B60928::fn_71003B4E18() {
     }
 }
 
+void TUnk_B60928::TUnk_B60970::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1: {
+        acc.setDisp(false);
+        acc.setSuspend(true);
+        m_open = 0;
+        State state = {-1, 0};
+        m_state = state;
+        m_first = 1;
+        break;
+    }
+    case 3:
+        if (event.m_param0 == 2 && m_open == 0) {
+            acc.setSuspend(true);
+        }
+        break;
+    case 0x21:
+        if (m_open != 1) {
+            float delay = (m_first == 1 && GfGameManager::fn_71002AC580()) ? 0.5f : 0.0f;
+            GfMenuObjUtil::PresetCtrlParam param;
+            param.m_preset = 1;
+            param.m_out = 0;
+            param.m_slot = m_state.m_ctrl;
+            param.m_startFlag4 = true;
+            param.m_eventId = 1;
+            param.m_delay = delay;
+            int ctrl = GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+            if (ctrl != -1) {
+                m_open = 1;
+                m_state.m_ctrl = ctrl;
+            }
+            acc.setDispChild(false, "LAY_time_new_record");
+            m_owner->m_seq.clear();
+            m_state.m_closePending = 0;
+            acc.setSuspend(false);
+            m_first = 0;
+        } else if (m_state.m_closePending != 0) {
+            acc.setDispChild(false, "LAY_time_new_record");
+            m_owner->m_seq.clear();
+            m_state.m_closePending = 0;
+        }
+        break;
+    case 0x22:
+        if (m_open != 0) {
+            if (!m_owner->m_seq.m_jobs.empty()) {
+                m_state.m_closePending = 1;
+                break;
+            }
+            GfMenuObjUtil::PresetCtrlParam param;
+            param.m_preset = 1;
+            param.m_out = 1;
+            param.m_slot = m_state.m_ctrl;
+            param.m_startFlag4 = true;
+            param.m_eventId = 2;
+            int ctrl = GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+            if (ctrl != -1) {
+                m_open = 0;
+                m_state.m_ctrl = ctrl;
+            }
+            m_owner->m_seq.clear();
+            acc.setDispChild(false, "LAY_time_new_record");
+            m_state.m_closePending = 0;
+        }
+        break;
+    case 0x100:
+        if (m_open != 0) {
+            m_owner->m_seq.clear();
+            m_owner->m_seq.addJob(&TUnk_B60928::fn_71003B52DC);
+        }
+        break;
+    case 0x101: {
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x2000000;
+        param.m_color = GfMenuObjUtil::getPresetColor("tgt_cursor_lv01");
+        param.m_reserve = true;
+        param.m_curve = 3;
+        param.m_startFlags = 8;
+        param.m_time = 1.0f;
+        GfMenuObjUtil::startCtrl(acc.searchChild("LAY_time_info"), param, nullptr);
+        break;
+    }
+    case 0x102:
+        if (m_state.m_closePending != 0) {
+            TUnk_B60928::fn_71003B4C24(0);
+        }
+        break;
+    case 0x103: {
+        ui::UIObjectAcc info(acc.m_handle, "LAY_time_info");
+        GfMenuObjUtil::stopCtrl(GfMenuObjUtil::getCtrlID(info.m_handle));
+        m_first = 1;
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
+}
+
 bool TUnk_B60928::fn_71003B52DC() {
     ui::UIObjectAcc record(m_handle, "LAY_time_new_record");
     record.setDisp(true);
@@ -261,6 +360,142 @@ bool TUnk_B60928::fn_71003B52DC() {
     m_seq.addJob(&TUnk_B60928::fn_71003B5E54);
     m_seq.addJob(&TUnk_B60928::fn_71003B5E70);
     return true;
+}
+
+// An inferred helper (no symbol: inlined; the name is not the original's): stops and hides the owner's
+// TXT_ether_box_get. Its accessor takes the top stack slot as an inlined callee's does.
+static inline void hideEtherBoxGet(unsigned int handle) {
+    ui::UIObjectAcc get(handle, "TXT_ether_box_get");
+    if (get.m_object != nullptr) {
+        GfMenuObjUtil::stopCtrl(GfMenuObjUtil::getCtrlID(get.m_handle));
+        get.setDisp(false);
+    }
+}
+
+void TUnk_B60928::TUnk_B60998::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        acc.setSuspend(true);
+        m_open = 0;
+        m_ctrl = -1;
+        break;
+    case 3:
+        if (event.m_param0 == 2 && m_open == 0) {
+            acc.setSuspend(true);
+        }
+        break;
+    case 0xC: {
+        int box = event.m_param0 + 1;
+        mm::mtl::FixStr<32> name;
+        name.format("IMG_ether_box_icon_eff@%02d", box);
+        ui::UIObjectAcc eff(acc.m_handle, name.m_str);
+        if (eff.isDisp()) {
+            name.format("LAY_ether_box_icon@%02d", box);
+            ui::UIObjectAcc icon(acc.m_handle, name.m_str);
+            name.format("LAY_ether_box_loop@%02d", box);
+            ui::UIObjectAcc loop(acc.m_handle, name.m_str);
+            icon.setDisp(false);
+            loop.setAlpha(1.0f);
+        }
+        break;
+    }
+    case 0xD: {
+        int state = event.m_param0;
+        if (event.m_param1 != 1) {
+            break;
+        }
+        int box = event.m_param2;
+        mm::mtl::FixStr<32> name;
+        name.format("IMG_ether_box_icon@%02d", box + 1);
+        ui::UIObjectAcc icon(acc.m_handle, name.m_str);
+        name.format("IMG_ether_box_icon_eff@%02d", box + 1);
+        ui::UIObjectAcc eff(acc.m_handle, name.m_str);
+        if (icon.m_object != nullptr && eff.m_object != nullptr) {
+            if (state == 1) {
+                icon.setAlpha(0.0f);
+                eff.setDisp(true);
+                eff.startAnimation("get", false);
+                GfMenuObject::hookAnimationEvent(acc.m_handle, eff.m_handle, box);
+                GfMenuObjUtil::playSE("dlc_se_btl_chbtl006");
+                m_owner->m_etherBox = box;
+                m_owner->m_seq2.clear();
+                m_owner->m_seq2.addJob(&TUnk_B60928::fn_71003B5B28);
+            } else if (state == 2) {
+                name.format("LAY_ether_box_icon@%02d", box + 1);
+                ui::UIObjectAcc lay(acc.m_handle, name.m_str);
+                name.format("LAY_ether_box_loop@%02d", box + 1);
+                ui::UIObjectAcc loop(acc.m_handle, name.m_str);
+                icon.setAlpha(1.0f);
+                eff.setDisp(false);
+                lay.setDisp(true);
+                loop.setAlpha(0.0f);
+            }
+        }
+        break;
+    }
+    case 0x21:
+        if (m_open != 1) {
+            GfMenuObjUtil::PresetCtrlParam param;
+            param.m_preset = 1;
+            param.m_out = 0;
+            param.m_slot = m_ctrl;
+            param.m_startFlag4 = true;
+            param.m_eventId = 1;
+            param.m_delay = GfGameManager::fn_71002AC580() ? 0.5f : 0.0f;
+            int ctrl = GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+            if (ctrl != -1) {
+                m_open = 1;
+                m_ctrl = ctrl;
+            }
+            m_owner->m_etherBox = 0;
+            hideEtherBoxGet(m_owner->m_handle);
+            acc.setSuspend(false);
+        }
+        break;
+    case 0x22: {
+        if (m_open == 0) {
+            break;
+        }
+        GfMenuObjUtil::PresetCtrlParam param;
+        param.m_preset = 1;
+        param.m_out = 1;
+        param.m_slot = m_ctrl;
+        param.m_startFlag4 = true;
+        param.m_eventId = 2;
+        int ctrl = GfMenuObjUtil::startPresetCtrl(acc.m_handle, param);
+        if (ctrl != -1) {
+            m_open = 0;
+            m_ctrl = ctrl;
+        }
+        hideEtherBoxGet(m_owner->m_handle);
+        break;
+    }
+    case 0x103: {
+        mm::mtl::FixStr<32> name;
+        for (int i = 1; i < 4; i++) {
+            name.format("LAY_ether_box_icon@%02d", i);
+            ui::UIObjectAcc lay(acc.m_handle, name.m_str);
+            name.format("IMG_ether_box_icon@%02d", i);
+            ui::UIObjectAcc icon(acc.m_handle, name.m_str);
+            name.format("IMG_ether_box_icon_eff@%02d", i);
+            ui::UIObjectAcc eff(acc.m_handle, name.m_str);
+            name.format("LAY_ether_box_loop@%02d", i);
+            ui::UIObjectAcc loop(acc.m_handle, name.m_str);
+            lay.setDisp(true);
+            eff.setDisp(false);
+            icon.setAlpha(1.0f);
+            icon.startAnimation("percent", true);
+            loop.setAlpha(0.0f);
+        }
+        m_owner->m_etherBox = 0;
+        break;
+    }
+    default:
+        UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 bool TUnk_B60928::fn_71003B5B28() {
