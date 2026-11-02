@@ -13,7 +13,8 @@ public:
     MenuItemInfo() : m_type(0), m_id(0), m_count(0) {}
     unsigned int m_type;     // its ItemType::Type
     unsigned int m_id;       // the item's id
-    unsigned short m_count;
+    // signed: decItem subtracts from it and erases the item at 0 or below (ldrsh), and hands it on sign-extended
+    short m_count;
     // the list position sort(1) stores, its time table's index (the name is not the original's)
     unsigned short m_sortIndex;
     // the item's handle in the box (setupFromBox copies the entry's third word; sort(1) passes it to
@@ -53,7 +54,12 @@ public:
         ui::UIListInfoBase::SetupParam m_setup;  // the list's
         unsigned int m_shop;                     // the shop
     };
-    struct ItemShopExcSetup;
+    // what setupFromShopExcTask lists: the SetItem/SetNumber columns of a row of BDAT file 0xF2 (the names are not
+    // the original's)
+    struct ItemShopExcSetup {
+        ui::UIListInfoBase::SetupParam m_setup;  // the list's
+        unsigned int m_id;                       // the row
+    };
     // what setupFromQuestReward lists: a reward id's items (GfMenuObjShop::getExcTaskReward; the names are not the
     // original's)
     struct QuestRewardSetup {
@@ -81,7 +87,15 @@ public:
     void updateCount();
     void setupFromHanaParts(const HanaPartsSetup& setup);  // every part of the type that needs ether  // the stackable items' counts from the item box
     void decItem(const MenuItemInfo& item, bool);
+    // takes count off the item at index (erasing it at 0 or below); with the bool, a SCOM_ADD_ITEM request of -count
+    void decItem(unsigned int index, unsigned int count, bool);
+    // Placeholder names: nothing in 1.0.0's place names them. fn_7100375BF4: decItem of the item fn_7100375C50
+    // finds (GfMenuObjShop::NumSelectListener); fn_7100375C50: the index of the item with the same type, id and
+    // box handle, -1 when none
+    void fn_7100375BF4(const MenuItemInfo& item, bool);
+    unsigned int fn_7100375C50(const MenuItemInfo& item);
     void setupFromShop(const ItemShopSetup& setup);
+    void setupFromShopExcTask(const ItemShopExcSetup& setup);
     void sort(unsigned int order, bool);
     // the sort orders (comparators for UIListInfo::sort): each orders by its key, then by item id
     static bool sortNameDescending(const MenuItemInfo& a, const MenuItemInfo& b);

@@ -10,6 +10,7 @@
 #include "gf/GfMenuObjUtil.h"
 #include "classes/gf/GfBdatBtl.h"
 #include "classes/gf/GfBdatItem.h"
+#include "classes/gf/SCOM_ADD_ITEM.h"
 #include "plugin/Bdat.h"
 
 namespace gf {
@@ -109,6 +110,79 @@ void GfMenuItemList::setupFromHanaParts(const HanaPartsSetup& setup) {
             addContents(item);
         }
     }
+}
+
+void GfMenuItemList::addItem(const MenuItemInfo& item, bool request) {
+    unsigned int type = item.m_type;
+    unsigned int id = item.m_id;
+    unsigned int index = 0xFFFFFFFF;
+    for (unsigned int i = 0; i < getSize(); ++i) {
+        const MenuItemInfo& contents = getContents(i);
+        if (contents.m_type == type && contents.m_id == id) {
+            index = i;
+            break;
+        }
+    }
+    if (index != 0xFFFFFFFF) {
+        getContents(index).m_count += item.m_count;
+    } else {
+        addContents(item);
+    }
+    if (request) {
+        SCOM_ADD_ITEM::create(item.m_id, item.m_count);
+    }
+}
+
+void GfMenuItemList::decItem(const MenuItemInfo& item, bool request) {
+    unsigned int type = item.m_type;
+    unsigned int id = item.m_id;
+    unsigned int index = 0xFFFFFFFF;
+    for (unsigned int i = 0; i < getSize(); ++i) {
+        const MenuItemInfo& contents = getContents(i);
+        if (contents.m_type == type && contents.m_id == id) {
+            index = i;
+            break;
+        }
+    }
+    if (index != 0xFFFFFFFF) {
+        decItem(index, item.m_count, request);
+    }
+}
+
+void GfMenuItemList::decItem(unsigned int index, unsigned int count, bool request) {
+    if (index >= getSize()) {
+        return;
+    }
+    MenuItemInfo& item = getContents(index);
+    unsigned int id = item.m_id;
+    int rest = item.m_count - count;
+    if (rest <= 0) {
+        m_list.erase(m_list.begin() + index);
+        subSize(1);
+        m_changed = true;
+    } else {
+        item.m_count = rest;
+    }
+    if (request) {
+        SCOM_ADD_ITEM::create(id, -count);
+    }
+}
+
+void GfMenuItemList::fn_7100375BF4(const MenuItemInfo& item, bool request) {
+    unsigned int index = fn_7100375C50(item);
+    if (index != 0xFFFFFFFF) {
+        decItem(index, item.m_count, request);
+    }
+}
+
+unsigned int GfMenuItemList::fn_7100375C50(const MenuItemInfo& item) {
+    for (unsigned int i = 0; i < getSize(); ++i) {
+        const MenuItemInfo& contents = getContents(i);
+        if (contents.m_type == item.m_type && contents.m_id == item.m_id && contents.m_entry.m_handle == item.m_entry.m_handle) {
+            return i;
+        }
+    }
+    return 0xFFFFFFFF;
 }
 
 void GfMenuItemList::sort(unsigned int order, bool ascending) {
