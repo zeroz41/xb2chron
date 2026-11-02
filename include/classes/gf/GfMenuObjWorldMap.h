@@ -34,10 +34,13 @@ public:
     class WorldMapListener;
     class ZoneMapListener;
     class ZoneSelectListener;
-    // 0x18 bytes: Array<MapJumpInfo>::erase (fn_710049FDF4) steps 0x18; trivially destructible (the destructor
-    // frees the array without destroying elements). Fields not known yet.
+    // 8 bytes: Array<MapJumpInfo>::reserve allocates size * 8 and constructs each element with (0, -1), as
+    // seqTexDelete's reset writes them; trivially destructible (the destructor frees the array without destroying
+    // elements). What the fields hold is not known yet.
     struct MapJumpInfo {
-        unsigned char pad_0[0x18];
+        MapJumpInfo() : pad_0(0), pad_4(-1) {}
+        unsigned int pad_0;
+        int pad_4;
     };
 
     GfMenuObjWorldMap(unsigned int handle);
@@ -78,7 +81,20 @@ public:
     // What it does: clears the list, then adds each map of the selectable-map table whose chkMapCond holds: maps 52
     // and 53 when add-on menu layer 3 is usable (GfMenuObjUtil::fn_710048FD30(3)), else 3-6, 9-16, 18, 20 and 21.
     static void fn_710049761C(GfMenuIDList* list);
+    // fills list with the zone rows (GfDataBdat 0x17B) whose include_map is the referenced world map's resource and
+    // whose condition does not hold, when a gimmick row of the zone's menuGroup has a MAPJUMPID and is on the current
+    // floor or its jump flag is set; true when it holds any
+    bool setupZoneList(GfMenuZoneMapList* list);
     static void refreshMapSelect(ui::UIObjectAcc& acc, GfMenuIDList* list, ui::UISelectObjList* selectList, int index);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its code sits in
+    // gf_menu_obj_world_map's .text among GfMenuObjWorldMap's functions (after ZoneSelectListener::reciveEvent, which
+    // calls it with its UIObjectAcc and m_zoneList). What it does: setupPointSelect's work for the zone list (9
+    // TXT_zonename_@NN adapters with their LAY_zonespot@NN rows, IMG_sonestay_@NN hidden, the zone scroll bar), and
+    // the scroll bar synced to LAY_zone_focus when add-on menu layer 3 is usable.
+    static void fn_710049A6E8(ui::UIObjectAcc& acc, GfMenuZoneMapList* list);
+    // starts each of the list's first count objects' return control (the selected one's move back, the others'
+    // fade-in motion) and gives them display priority 8; the last control's slot, -1 for none
+    static int ctrlGroupReturn(ui::UISelectObjList* list, unsigned int count);
     static void setupPointSelect(ui::UIObjectAcc& acc, GfMenuZoneMapList* list);
     static bool chkMapCond(unsigned int mapId, mm::Pnt<short>* pos);
     static void setupMapSelect(ui::UIObjectAcc& acc, GfMenuIDList* list);
@@ -109,8 +125,15 @@ public:
     static void getFloorAABB(unsigned int mapId, unsigned int floor, mm::Aabb& aabb, mm::Pnt<short>& center);
     int getTotalFieldSkillLv(unsigned int fieldSkill);
     void refreshIconFilter();
+    // when the floor shown changed: queues the floor image's reload (seqTexDelete .. seqNext)
+    void loadTex();
+    bool seqTexDelete();
     bool seqTexDeleteWait();
+    bool seqTexLoad();
     bool seqTexLoadWait();
+    bool seqTexDraw();
+    bool seqGimik();
+    bool seqNext();
 
     // the names of the members are not the original's; types from initialize's create calls
     GfMenuIDList* m_mapList;                    // 0x28
@@ -144,7 +167,7 @@ public:
     GfMenuCallContext* m_context;               // 0x2F68
     bool pad_2F70;
     unsigned char* m_gmkBdat;                   // 0x2F78: initialize's Bdat::getFP of the gimmick sheet
-    unsigned short pad_2F80;
+    unsigned short m_floor;                     // 0x2F80: the floor loadTex last loaded (the name is not the original's)
     unsigned int m_iconFilter;                  // 0x2F84: one bit per icon filter row (GfMenuFlag 1)
     ui::UISelectObjList* m_iconFilterList;      // 0x2F88
     ui::UICtrlCursorSelect* m_iconFilterCursor;  // 0x2F90

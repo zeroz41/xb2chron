@@ -67,7 +67,7 @@ GfMenuObjWorldMap::GfMenuObjWorldMap(unsigned int handle)
       m_zoneSelectList(nullptr), m_seq(this), m_list2E0(nullptr), m_mapScale(1.0f), m_pointList(nullptr),
       m_pointSelectList(nullptr), pad_318(0), m_zoneMapList1(nullptr), m_zoneMapList2(nullptr), m_fieldSkillList(nullptr), m_floorLoaded(false),
       m_floorImage(), m_iconSelectList(nullptr), m_iconTables(), pad_2F18(0), pad_2F60(false),
-      pad_2F61(false), m_context(nullptr), pad_2F70(false), m_gmkBdat(nullptr), pad_2F80(0), m_iconFilter(0),
+      pad_2F61(false), m_context(nullptr), pad_2F70(false), m_gmkBdat(nullptr), m_floor(0), m_iconFilter(0),
       m_iconFilterList(nullptr), m_iconFilterCursor(nullptr), pad_2FD0(0), pad_2FD4(false) {
     m_jumpInfos.setAllocator(getAllocator(ALLOCATOR(0)));
 }
@@ -210,6 +210,39 @@ void GfMenuObjWorldMap::fn_710049761C(GfMenuIDList* list) {
     }
 }
 
+bool GfMenuObjWorldMap::setupZoneList(GfMenuZoneMapList* list) {
+    const char* mapName = GfDataMap::getMapResourceNameByMapID(GfMenuReference::getReferenceWorldMapID());
+    list->clear();
+    unsigned char* fp = GfDataBdat::getFP(0x17B);
+    int top = Bdat::getIdTop(fp);
+    for (unsigned int i = 0; i < Bdat::getIdCount(fp); i++) {
+        unsigned int row = top + i;
+        const char* includeMap = reinterpret_cast<const char*>(Bdat::getVal(fp, "include_map", row));
+        if (includeMap != nullptr && strcmp(mapName, includeMap) == 0) {
+            MenuZoneMapInfo info;
+            info.m_mapId = row;
+            unsigned short cond = Bdat::getVal(fp, "condition", row);
+            if (cond == 0 || !GfGameCond::isGameCond(cond)) {
+                unsigned char* gmkFp = m_gmkBdat;
+                int gmkTop = Bdat::getIdTop(gmkFp);
+                unsigned int gmkCount = Bdat::getIdCount(gmkFp);
+                unsigned int floor = GfMenuMapInfo::fn_7100361DC0();
+                for (unsigned int j = 0; j < gmkCount; j++) {
+                    int gmkRow = gmkTop + j;
+                    unsigned short group = Bdat::getVal(gmkFp, "menuGroup", gmkRow);
+                    unsigned short jump = Bdat::getVal(gmkFp, "MAPJUMPID", gmkRow);
+                    unsigned short image = Bdat::getVal(gmkFp, "menuMapImage", gmkRow);
+                    if (jump != 0 && group == info.m_mapId && (image == floor || fn_7100495A98(gmkRow))) {
+                        list->addContents(info);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    return list->getSize() != 0;
+}
+
 void GfMenuObjWorldMap::MainListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
@@ -326,6 +359,26 @@ void GfMenuObjWorldMap::refreshMapSelect(ui::UIObjectAcc& acc, GfMenuIDList* lis
     }
 }
 
+void GfMenuObjWorldMap::fn_710049A6E8(ui::UIObjectAcc& acc, GfMenuZoneMapList* list) {
+    mm::mtl::FixStr<32> name;
+    for (int i = 0; i < 9; i++) {
+        name.format("TXT_zonename_@%02d", i + 1);
+        GfMenuZoneMapAdapter* adapter = GfMenuZoneMapAdapter::createFromList(acc.searchChild(name.m_str), 0, list, i, true, false);
+        name.format("LAY_zonespot@%02d", i + 1);
+        if (adapter != nullptr) {
+            adapter->m_rowHandle = acc.searchChild(name.m_str);
+        }
+        name.format("IMG_sonestay_@%02d", i + 1);
+        GfMenuObjUtil::setChildDisp(acc.m_handle, name.m_str, false);
+    }
+    GfMenuObjUtil::createVScrollBarPlugin(acc.searchChild("IMG_zone_scroll_bar"), list, "IMG_zone_scroll_bar_base", true);
+    if (GfMenuObjUtil::fn_710048FD30(3)) {
+        ui::UIObjectAcc bar(acc.m_handle, "LAY_zone_scroll_bar");
+        GfMenuObjUtil::createSyncPlugin(acc.searchChild("LAY_zone_focus"), acc.searchChild("LAY_zone_scroll_bar"), 0x10);
+        bar.setAlpha(0.0f);
+    }
+}
+
 void GfMenuObjWorldMap::setupPointSelect(ui::UIObjectAcc& acc, GfMenuZoneMapList* list) {
     mm::mtl::FixStr<32> name;
     for (int i = 0; i < 9; i++) {
@@ -371,6 +424,35 @@ void GfMenuObjWorldMap::refreshPointSelect(ui::UIObjectAcc& acc, GfMenuZoneMapLi
         }
     }
     refreshPointText(acc, list, selectList);
+}
+
+void GfMenuObjWorldMap::refreshPointText(ui::UIObjectAcc& acc, GfMenuZoneMapList* list,
+                                         ui::UISelectObjList* selectList) {
+    mm::mtl::FixStr<32> name;
+    for (unsigned int i = 0; i < selectList->getSize(); i++) {
+        list->getContents(list->getPageIndex(i));
+        name.format("TXT_pointname_@%02d", i + 1);
+        ui::UIObjectAcc text(acc.m_handle, name.m_str);
+        if (isEnableJump(list->getContents(list->getPageIndex(i)))) {
+            GfMenuObjUtil::setColMulandAdd(text.m_handle, "txt_normal2");
+        } else {
+            GfMenuObjUtil::setColMulandAdd(text.m_handle, "txt_disable");
+        }
+    }
+}
+
+void GfMenuObjWorldMap::loadTex() {
+    if (m_floor != getFloor()) {
+        m_floor = getFloor();
+        m_seq.clear();
+        m_seq.addJob(&GfMenuObjWorldMap::seqTexDelete);
+        m_seq.addJob(&GfMenuObjWorldMap::seqTexDeleteWait);
+        m_seq.addJob(&GfMenuObjWorldMap::seqTexLoad);
+        m_seq.addJob(&GfMenuObjWorldMap::seqTexLoadWait);
+        m_seq.addJob(&GfMenuObjWorldMap::seqTexDraw);
+        m_seq.addJob(&GfMenuObjWorldMap::seqGimik);
+        m_seq.addJob(&GfMenuObjWorldMap::seqNext);
+    }
 }
 
 bool GfMenuObjWorldMap::isEnableJump(const MenuZoneMapInfo& info) {
@@ -529,6 +611,27 @@ unsigned int GfMenuObjWorldMap::getFloor() {
     }
     unsigned short pointId = m_pointList->getContents(m_pointList->getIndex(false)).m_mapId;
     return static_cast<unsigned short>(Bdat::getVal(m_gmkBdat, "menuMapImage", pointId));
+}
+
+bool GfMenuObjWorldMap::seqTexLoad() {
+    ui::UIObjectAcc main(ui::UIObjectAcc(m_handle).searchChild("LAY_main"));
+    GfDataMap::getMapResourceNameByMapID(GfMenuReference::getReferenceWorldMapID());
+    unsigned int floor = getFloor();
+    unsigned char* fp = GfDataBdat::getFP(0x17A);
+    const char* level = reinterpret_cast<const char*>(Bdat::getVal(fp, "level_name", floor));
+    unsigned short cond = Bdat::getVal(fp, "condition", floor);
+    if (cond != 0 && GfGameCond::isGameCond(cond)) {
+        level = reinterpret_cast<const char*>(Bdat::getVal(fp, "level_name2", floor));
+    }
+    mm::mtl::FixStr<32> file;
+    file.format("%s_map", level);
+    mm::mtl::FixStr<32> image;
+    image.format("%s%d", "IMG_floor", floor);
+    mm::mtl::PtrSingleton<ui::UIStreamManager>::sys()->createImage(image, main.searchChild("LAY_floor"), file.m_str, 0);
+    m_floorLoaded = true;
+    m_floorImage = image;
+    main.setDispChild(false, "LAY_frame_cursor");
+    return true;
 }
 
 void GfMenuObjWorldMap::getFloorAABB(unsigned int mapId, unsigned int floor, mm::Aabb& aabb, mm::Pnt<short>& center) {

@@ -19042,7 +19042,7 @@ _ZN2gf17GfMenuObjWorldMap14setupMapSelectERN2ui11UIObjectAccEPNS_12GfMenuIDListE
 _ZN2gf17GfMenuObjWorldMap16refreshMapSelectERN2ui11UIObjectAccEPNS_12GfMenuIDListEPNS1_15UISelectObjListEi = .text:0x004996CC; // type:function size:0xF0 scope:global
 _ZN2gf17GfMenuObjWorldMap10isEnterMapEj = .text:0x004997BC; // type:function size:0xE0 scope:global
 _ZN2gf17GfMenuObjWorldMap18ZoneSelectListener11reciveEventERKN2ui9EventDataEj = .text:0x0049989C; // type:function size:0xE4C scope:global
-fn_710049A6E8 = .text:0x0049A6E8; // type:function size:0x17C scope:global
+_ZN2gf17GfMenuObjWorldMap13fn_710049A6E8ERN2ui11UIObjectAccEPNS_17GfMenuZoneMapListE = .text:0x0049A6E8; // type:function size:0x17C scope:global
 _ZN2gf17GfMenuObjWorldMap11ctrlGroupUpEPN2ui15UISelectObjListEj = .text:0x0049A864; // type:function size:0x1FC scope:global
 _ZN2gf17GfMenuObjWorldMap17refreshZoneSelectERN2ui11UIObjectAccEPNS_17GfMenuZoneMapListEPNS1_15UISelectObjListEi = .text:0x0049AA60; // type:function size:0x25C scope:global
 _ZN2gf17GfMenuObjWorldMap15ctrlGroupReturnEPN2ui15UISelectObjListEj = .text:0x0049ACBC; // type:function size:0x180 scope:global
@@ -19081,7 +19081,7 @@ _ZN2gf17GfMenuObjWorldMap18ZoneSelectListenerD0Ev = .text:0x0049FDE4; // type:fu
 _ZN2gf17GfMenuObjWorldMap19PointSelectListenerD0Ev = .text:0x0049FDE8; // type:function size:0x4 scope:weak
 _ZN2gf17GfMenuObjWorldMap15ZoneMapListenerD0Ev = .text:0x0049FDEC; // type:function size:0x4 scope:weak
 _ZN2gf17GfMenuObjWorldMap18IconFilterListenerD0Ev = .text:0x0049FDF0; // type:function size:0x4 scope:weak
-fn_710049FDF4 = .text:0x0049FDF4; // type:function size:0x10C scope:global
+_ZN2mm3mtl6VectorIN2gf15MenuZoneMapInfoEE5eraseEPS3_ = .text:0x0049FDF4; // type:function size:0x10C scope:global
 _ZN2mm3mtl8DelegateIFbvEE17memberFuncInvokerIN2gf17GfMenuObjWorldMapEEEbPKS3_ = .text:0x0049FF00; // type:function size:0x1C scope:weak
 _ZN2gf18GfMenuObjZoneTelopC1Ej = .text:0x0049FF1C; // type:function size:0x4C scope:global
 _ZN2gf18GfMenuObjZoneTelopD1Ev = .text:0x0049FF68; // type:function size:0x38 scope:global
