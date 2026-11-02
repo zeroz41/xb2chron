@@ -7,6 +7,8 @@
 #include "classes/mtl/DlAllocator.h"
 #include "mtl/CallStackManager.h"
 #include "mtl/MemoryInfo.h"
+#include "mtl/MemoryInfo1.h"
+#include "mtl/MemImageHead.h"
 #include "classes/mtl/NullAllocator.h"
 #include "classes/mtl/MemHandlebaseAllocator.h"
 #include "classes/mtl/AssetAllocator.h"
@@ -6811,6 +6813,111 @@ void* MemHandlebaseAllocator::allocate(unsigned long size, unsigned long alignme
 
 void MemHandlebaseAllocator::deallocate(void* memory) {
     MemManager::deallocate(memory, 0, false);
+}
+
+template <int N>
+void AssetAllocator<N>::destroy() {
+    m_totalBlocks = 0;
+    m_size = 0;
+    m_top = nullptr;
+    m_freeList.clear();
+    m_usedList.clear();
+}
+
+template <int N>
+bool AssetAllocator<N>::hasMemory(const void* p) const {
+    for (typename ChunkList::const_iterator it = m_freeList.begin(); it != m_freeList.end(); ++it) {
+        unsigned int block = it->m_block;
+        if (m_top + block * m_blockSize == p) {
+            return true;
+        }
+    }
+    for (typename ChunkList::const_iterator it = m_usedList.begin(); it != m_usedList.end(); ++it) {
+        unsigned int block = it->m_block;
+        if (m_top + block * m_blockSize == p) {
+            return true;
+        }
+    }
+    return false;
+}
+
+template <int N>
+unsigned long AssetAllocator<N>::getAllocSize(const void* p) const {
+    for (typename ChunkList::const_iterator it = m_usedList.begin(); it != m_usedList.end(); ++it) {
+        unsigned int block = it->m_block;
+        if (m_top + block * m_blockSize == p) {
+            return static_cast<unsigned long>(it->m_numBlocks) << 4;
+        }
+    }
+    return 0;
+}
+
+template <int N>
+void AssetAllocator<N>::memoryInfo(MemoryInfo* info) const {
+    if (info == nullptr) {
+        return;
+    }
+    unsigned long freeSize = 0;
+    unsigned long maxFree = 0;
+    for (typename ChunkList::const_iterator it = m_freeList.begin(); it != m_freeList.end(); ++it) {
+        unsigned int n = it->m_numBlocks;
+        unsigned long size = m_blockSize * n;
+        freeSize += size;
+        if (size > maxFree) {
+            maxFree = size;
+        }
+    }
+    unsigned long used = 0;
+    for (typename ChunkList::const_iterator it = m_usedList.begin(); it != m_usedList.end(); ++it) {
+        unsigned int n = it->m_numBlocks;
+        used += m_blockSize * n;
+    }
+    unsigned int freeNodes = m_freeList.size();
+    unsigned int usedNodes = m_usedList.size();
+    unsigned int nodes = usedNodes + freeNodes;
+    info->m_name = getName();
+    info->m_totalSize = m_size;
+    info->m_freeSize = freeSize;
+    info->m_usedSize = used;
+    info->m_maxFreeSize = maxFree;
+    info->m_usedRate = used * 100.0f / m_size;
+    info->m_chunkUsedRate = usedNodes * 100.0f / nodes;
+    info->m_footerCount = m_usedList.size();
+}
+
+template <int N>
+void AssetAllocator<N>::getMemImage(MEMIMAGE_HEAD* head) const {
+    unsigned long count = 0;
+    MEMIMAGE_HEAD::Image* image = head->m_images;
+    for (typename ChunkList::const_iterator it = m_usedList.begin(); it != m_usedList.end(); ++it) {
+        if (count < head->m_num) {
+            unsigned int block = it->m_block;
+            image->m_addr = m_top + block * m_blockSize;
+            unsigned long n = static_cast<unsigned int>(it->m_numBlocks);
+            image->m_size = m_blockSize * n;
+            image++;
+            count++;
+        }
+    }
+    head->m_num = count;
+}
+
+template <int N>
+int AssetAllocator<N>::getMemInfo1(MemoryInfo1* info, unsigned int num) const {
+    unsigned int count = 0;
+    for (typename ChunkList::const_iterator it = m_usedList.begin(); it != m_usedList.end(); ++it) {
+        if (count < num) {
+            unsigned int block = it->m_block;
+            info->m_addr = m_top + block * m_blockSize;
+            unsigned long n = static_cast<unsigned int>(it->m_numBlocks);
+            info->m_size = m_blockSize * n;
+            info->m_file = it->m_file != nullptr ? it->m_file : "";
+            info->m_line = it->m_line;
+            info++;
+            count++;
+        }
+    }
+    return count != 0;
 }
 
 }  // namespace mtl

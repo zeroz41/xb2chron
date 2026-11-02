@@ -17,7 +17,7 @@ public:
     // allocate keeps its file and line in the run it hands out
     struct SMemChunk {
         const char* m_file;
-        short m_line;
+        unsigned short m_line;
         unsigned short pad_A;  // allocate zeroes it
         unsigned int m_block;  // the run's first block
         int m_numBlocks;  // its length in blocks
