@@ -29,6 +29,11 @@ public:
     int m_playEvent;  // gevPlayEvent sets 2 for GEV 0xE, 0 for GEV 0xD (the name is not the original's)
     unsigned char pad_24[0x4];
 };
+// Placeholder name: nothing names it (no symbol). A free function because it takes nothing and reaches the title
+// through TitleMain::sys(); TitleStatePlayGame::enter calls it for menu result 5. What it does: clears the sound UI
+// option flags A..C of the game's and the title's options unless fn_71002A9E68 or GfGameUtilSaveData::fn_71002EDC78
+// holds, and resets their m_keyD above 1 to 0 unless the game is cleared (isClearGame / fn_71002EDCEC).
+void fn_7100154638();
 }  // namespace tl
 
 #endif

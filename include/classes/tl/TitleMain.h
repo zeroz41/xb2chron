@@ -147,7 +147,9 @@ public:
     bool m_isClear;  // GfMenuManager::isClearCheck returns it (the name is not the original's)
     // GfMenuObjTitle::isEnableNewGameAdv answers it when there is save data (the name is not the original's)
     bool m_newGameAdv;
-    unsigned char pad_21A[0x1];
+    // TitleStateMainScreen::checkMenuResult takes and clears it as the title menu's result 6 (TitleStateChangeGameType)
+    // (the name is not the original's)
+    bool m_reqChangeGameType;
     bool m_flag21B;  // GfGameManager::fn_71002AC908 answers it (the name is not the original's)
     unsigned char pad_21C[0x4];
 };

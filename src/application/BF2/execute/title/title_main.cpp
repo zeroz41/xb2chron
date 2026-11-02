@@ -60,7 +60,7 @@ TitleMain::TitleMain()
       m_optionBuffer(nullptr), m_playTitleEvent(0),
       m_seCategory(reinterpret_cast<gf::GF_SE_CATEGORY_HANDLE*>(-1)),
       m_seCategorySub(reinterpret_cast<gf::GF_SE_CATEGORY_HANDLE*>(-1)), m_isClear(false), m_newGameAdv(false),
-      pad_21A(), m_flag21B(false) {}
+      m_reqChangeGameType(false), m_flag21B(false) {}
 
 TitleMain* TitleMain::create() {
 #line 107

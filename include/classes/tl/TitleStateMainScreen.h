@@ -24,12 +24,15 @@ public:
     inline virtual void onLeave(void*, ai::State*);  // slot 4
     inline virtual void onStep(void*, void const*);  // slot 5
     void update(TitleMain* title, const fw::UpdateInfo& info);
-    void loadSaveDataForTitle(TitleMain* title);
+    // loads the save and option data for the title; true when the save buffer holds no current save (version not 0x3A15B)
+    bool loadSaveDataForTitle(TitleMain* title);
     void playTitleEvent(TitleMain* title);
     // opens the title menu and waits for it; true when the title is to be destroyed meanwhile (state 9 requested)
     bool dispTitleMenu(TitleMain* title, bool flag);
+    // waits for the title menu's result (into TitleMenu::m_request); true when a state change was requested instead
     bool checkMenuResult(TitleMain* title);
-    void waitTitleMenuDestroy(TitleMain* title);
+    // closes the title menu and requests the state its result names; always true
+    bool waitTitleMenuDestroy(TitleMain* title);
     virtual void gevPlayEvent(gf::GEV gev, unsigned int arg);  // slot 7
 
     int m_playEvent;  // gevPlayEvent sets 1 for GEV 0xE (the name is not the original's)

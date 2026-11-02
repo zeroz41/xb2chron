@@ -47,6 +47,14 @@
 #include "classes/gf/GfReqManager.h"
 #include "classes/gf/GfMapManager.h"
 #include "classes/gf/GfDataManager.h"
+#include "classes/gf/SCOM_FADE.h"
+#include "classes/gf/GfGameEvent.h"
+#include "classes/fw/Framework.h"
+#include "classes/ml/Scn.h"
+#include "fw/RenderParam.h"
+#include "ml/MTRand.h"
+#include "ml/ScnRenderDrSysParmAcc.h"
+#include "mm/Col4.h"
 #include "gf/GfGameUtilSaveData.h"
 
 // the title states with their own tables (MainScreen, PlayGame, PlayEvent) and the other states' updates
@@ -56,6 +64,43 @@ void TitleStateMainScreen::gevPlayEvent(gf::GEV gev, unsigned int arg) {
     if (gev == static_cast<gf::GEV>(0xE)) {
         m_playEvent = 1;
     }
+}
+
+namespace {
+// the title events playTitleEvent picks one of at random (lbl_71009B9508) and by the save data's chapter
+// (lbl_71009B950E); the names are not the original's
+const unsigned short s_randomTitleEvents[3] = {0x296F, 0x2970, 0x2971};
+const unsigned short s_chapterTitleEvents[11] = {0x2711, 0x2908, 0x2909, 0x290A, 0x290B, 0x290C,
+                                                 0x290D, 0x290E, 0x290F, 0x2910, 0x2911};
+}  // namespace
+
+void TitleStateMainScreen::playTitleEvent(TitleMain* title) {
+    m_playEvent = 0;
+    gf::SCOM_FADE::create(0, 0, mm::Col4::black);
+    gf::SCOM_FADE::create(1, 0, mm::Col4::black);
+    gf::SCOM_FADE::create(2, 0, mm::Col4::black);
+    unsigned short event;
+    if (gf::GfManager::fn_710032A1DC()) {
+        event = title->fn_710014FC5C() ? 0x29D6 : 0x29D5;
+    } else if (gf::GfDataBlade::fn_71002320C8(title->fn_710014FB00()->m_game)) {
+        unsigned int index = ml::mtRand(3);
+        event = s_randomTitleEvents[index > 2 ? 2 : index];
+    } else if (title->fn_710014FC5C()) {
+        event = gf::GfDataBlade::fn_7100235F94(title->fn_710014FB00()->m_game) ? 0x296E : 0x296D;
+    } else {
+        unsigned int chapter = title->getChapterIdFromSaveData();
+        event = s_chapterTitleEvents[chapter > 11 ? 11 : chapter];
+    }
+    title->playTitleEvent(event);
+    while (m_playEvent != 1) {
+        TitleMain::sleep(1);
+    }
+    fw::RenderParam::resetScene();
+    ml::ScnRenderDrSysParmAcc acc(fw::Framework::sys()->m_scn->m_renderDrSys, 0);
+    acc.getWeatherFrame();
+    gf::SCOM_FADE::create(0, 15, mm::Col4::zero);
+    gf::SCOM_FADE::create(1, 15, mm::Col4::zero);
+    gf::SCOM_FADE::create(2, 15, mm::Col4::zero);
 }
 
 bool TitleStateMainScreen::dispTitleMenu(TitleMain* title, bool flag) {
@@ -71,6 +116,34 @@ bool TitleStateMainScreen::dispTitleMenu(TitleMain* title, bool flag) {
     }
     menu.setupTitle();
     return false;
+}
+
+bool TitleStateMainScreen::checkMenuResult(TitleMain* title) {
+    TitleMenu& menu = title->m_menu;
+    while (true) {
+        if (menu.hasResultSelect()) {
+            menu.m_request = menu.getResult();
+            return false;
+        }
+        if (title->m_reqReturnTitle) {
+            menu.closeTitle(true, true);
+            title->m_reqReturnTitle = false;
+            requestState(8);
+            return true;
+        }
+        if (title->m_reqDestroy) {
+            menu.closeTitle(true, true);
+            requestState(9);
+            return true;
+        }
+        bool change = title->m_reqChangeGameType;
+        title->m_reqChangeGameType = false;
+        if (change) {
+            menu.m_request = 6;
+            return false;
+        }
+        TitleMain::sleep(1);
+    }
 }
 
 void TitleStateMainScreen::update(TitleMain* title, const fw::UpdateInfo& info) {
@@ -123,6 +196,29 @@ void TitleStateToTitle::update(TitleMain* title, const fw::UpdateInfo& info) {
     }
 }
 
+void fn_7100154638() {
+    gf::SDataOption* option = gf::GfDataManager::getDataOption();
+    gf::SDataOption* titleOption = TitleMain::sys()->getOptionBuffer();
+    if (!gf::GfGameManager::fn_71002A9E68() && !gf::GfGameUtilSaveData::fn_71002EDC78()) {
+        option->m_soundUi.m_flagA = 0;
+        option->m_soundUi.m_flagB = 0;
+        option->m_soundUi.m_flagC = 0;
+        titleOption->m_soundUi.m_flagA = 0;
+        titleOption->m_soundUi.m_flagB = 0;
+        titleOption->m_soundUi.m_flagC = 0;
+    }
+    bool clear = gf::GfGameManager::fn_71002A9E68() ? gf::GfGameManager::isClearGame()
+                                                     : gf::GfGameUtilSaveData::fn_71002EDCEC();
+    if (!clear) {
+        if (option->m_soundUi.m_keyD > 1) {
+            option->m_soundUi.m_keyD = 0;
+        }
+        if (titleOption->m_soundUi.m_keyD > 1) {
+            titleOption->m_soundUi.m_keyD = 0;
+        }
+    }
+}
+
 bool TitleStateSelectEvent::eventMenuResult(TitleMain* title) {
     TitleMenu& menu = title->m_menu;
     while (true) {
@@ -146,6 +242,25 @@ bool TitleStateSelectEvent::eventMenuResult(TitleMain* title) {
         }
         TitleMain::sleep(1);
     }
+}
+
+void TitleStateSelectEvent::enter(TitleMain* title, ai::State* prev) {
+    gf::GfGameEvent::stop();
+    while (gf::GfGameEvent::isPlaying()) {
+        TitleMain::sleep(1);
+    }
+    if (gf::GfGameManager::getMapJumpID() != static_cast<unsigned int>(-1)) {
+        gf::GfMapjumpInfo info(static_cast<unsigned int>(-1));
+        gf::GfPlayFactory::createMapjump(info);
+        TitleMain::sleep(30);
+        while (gf::GfGameManager::isMapjump()) {
+            TitleMain::sleep(1);
+        }
+    }
+    gf::GfManager::setExec(static_cast<gf::EXEC_STATE>(3));
+    gf::SCOM_FADE::create(0, 0, mm::Col4::black);
+    gf::SCOM_FADE::create(1, 15, mm::Col4::zero);
+    gf::SCOM_FADE::create(2, 15, mm::Col4::zero);
 }
 
 void TitleStateSelectEvent::update(TitleMain* title, const fw::UpdateInfo& info) {
