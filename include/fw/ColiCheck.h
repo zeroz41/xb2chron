@@ -92,6 +92,8 @@ public:
                          const ColiCheckConfig& config);
     static bool testCapsule(TColiCheckResult<256>& result, const mm::Vec3& start, const mm::Vec3& end, float radius,
                             const ColiCheckConfig& config);
+    // the ground below from (pos gets the hit when it returns true; FormManager::replace passes 6.0 and ~0)
+    static bool getSnapPos(mm::Vec3& pos, const mm::Vec3& from, float, unsigned int);
 };
 
 }  // namespace fw

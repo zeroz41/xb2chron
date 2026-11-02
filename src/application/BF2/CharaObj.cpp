@@ -161,6 +161,8 @@
 #include "classes/event/CmdVariable.h"
 #include "classes/event/CopydataManager.h"
 #include "classes/event/FormManager.h"
+#include "fw/ColiCheck.h"
+#include "gf/GfGameUtil.h"
 #include "classes/event/MercenariesManager.h"
 #include "classes/event/ObjectCamera.h"
 #include "classes/event/ObjectEffect.h"
@@ -1944,6 +1946,64 @@ void FadeManager::OnEventProc(event::MSG_TYPE msg) {
     default:
         break;
     }
+}
+
+// puts the current scene's characters at the EVT_formation rows from id on (ofsX/ofsZ in mtx's frame, snapped to
+// the ground; rot in degrees added to mtx's yaw); a named row after the first starts the next formation
+bool FormManager::replace(unsigned int id, const mm::Mat44& mtx) {
+    unsigned char* fp = Bdat::getFP("EVT_formation");
+    unsigned int end = Bdat::getIdTop(fp) + Bdat::getIdCount(fp);
+    ObjectManager* objects = mm::mtl::Singleton<ObjectManager>::getPtr();
+    if (objects->m_current) {
+        unsigned int num = objects->m_current->m_counts[0];
+        unsigned int row = id;
+        for (unsigned int i = 0; i < num; i++, row++) {
+            if (row >= end) {
+                break;
+            }
+            Bdat::uVal ofsX, ofsZ, rot;
+            ofsX.ulong = Bdat::getVal(fp, "ofsX", row);
+            ofsZ.ulong = Bdat::getVal(fp, "ofsZ", row);
+            rot.ulong = Bdat::getVal(fp, "rot", row);
+            const char* name = reinterpret_cast<const char*>(Bdat::getVal(fp, "name", row));
+            float rotY = rot.real * 0.017453292f;
+            if (row > id && name[0] != '\0') {
+                break;
+            }
+            mm::Vec3 ofs(ofsX.real, 0.0f, ofsZ.real);
+            mm::Vec3 pos(ofs.x * mtx.m[0][0] + ofs.y * mtx.m[1][0] + ofs.z * mtx.m[2][0] + mtx.m[3][0],
+                         ofs.x * mtx.m[0][1] + ofs.y * mtx.m[1][1] + ofs.z * mtx.m[2][1] + mtx.m[3][1],
+                         ofs.x * mtx.m[0][2] + ofs.y * mtx.m[1][2] + ofs.z * mtx.m[2][2] + mtx.m[3][2]);
+            {
+                mm::Vec3 snap = pos;
+                if (fw::ColiCheck::getSnapPos(snap, mm::Vec3(pos.x, pos.y + 1.0f, pos.z), 6.0f, 0xFFFFFFFF)) {
+                    pos = snap;
+                }
+            }
+            mm::Vec3 front(0.0f, 0.0f, 1.0f);
+            rotY += atan2f(front.x * mtx.m[0][0] + front.y * mtx.m[1][0] + front.z * mtx.m[2][0],
+                           front.x * mtx.m[0][2] + front.y * mtx.m[1][2] + front.z * mtx.m[2][2]);
+            ObjectChara* chara = mm::mtl::Singleton<ObjectManager>::getPtr()->getChara(i);
+            chara->setPosAxis(PosAxis(1, pos.x, pos.y, pos.z));
+            chara->setRotAxis(RotAxis(1, 0.0f, rotY, 0.0f));
+        }
+    }
+    return true;
+}
+
+inline bool FormManager::replace(unsigned int id, int npc) {
+    mm::Mat44 mtx = mm::Mat44::identity;
+    if (!gf::GfGameUtil::findNpcMat44(mtx, npc)) {
+        return false;
+    }
+    return replace(id, mtx);
+}
+
+inline bool FormManager::replace(unsigned int id, const mm::Vec3& pos, float rotY) {
+    mm::Mat44 mtx;
+    mtx.setRotY(rotY);
+    mtx.addTrans(pos);
+    return replace(id, mtx);
 }
 
 }  // namespace event
@@ -4267,6 +4327,25 @@ int SeqManager::start_streaming1::update(const ICmd::Param& param) {
         manager->m_seqName = "start stream1";
     }
     return true;
+}
+
+// val 1 the form's id, val 2 an NPC's id whose matrix places it (0: val 3..5 its position, val 6 its y rotation)
+int SeqManager::start_form::update(const ICmd::Param& param) {
+    if (param.m_frame <= 0) {
+        SeqManager* manager = static_cast<SeqManager*>(param.m_param.val(0).getUserdata());
+        manager->m_seqName = "start form";
+    }
+    unsigned int id = param.m_param.val(1).getS32();
+    int npc = param.m_param.val(2).getS32();
+    float x = param.m_param.val(3).getF32();
+    float y = param.m_param.val(4).getF32();
+    float z = param.m_param.val(5).getF32();
+    float rotY = param.m_param.val(6).getF32();
+    FormManager* form = mm::mtl::Singleton<FormManager>::getPtr();
+    if (npc == 0) {
+        return form->replace(id, mm::Vec3(x, y, z), rotY);
+    }
+    return form->replace(id, npc);
 }
 
 int SeqManager::start_change::update(const ICmd::Param& param) {
