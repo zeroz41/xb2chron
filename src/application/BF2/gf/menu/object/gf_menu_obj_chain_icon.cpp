@@ -3,6 +3,13 @@
 #include "classes/gf/GfMenuObjChainIcon/ListListener.h"
 #include "classes/gf/GfMenuManyObjects.h"
 #include "gf/GfMenuObjUtil.h"
+#include "classes/gf/GfMenuFieldPosAdapter.h"
+#include "classes/gf/GfDataBdat.h"
+#include "gf/GfMenuBdat.h"
+#include "gf/MenuOffset.h"
+#include "gf/GfObjAcc.h"
+#include "fw/Transform.h"
+#include "plugin/Bdat.h"
 #include "ui/EventData.h"
 #include "classes/gf/GfMenuObject.h"
 #include "classes/gf/GfAllocator.h"
@@ -113,7 +120,46 @@ void GfMenuObjChainIcon::ListListener::reciveEvent(const ui::EventData& event, u
     }
 }
 
-// open (0x71003C1540) is not here yet: see the report
+// the object's block ends before the event: its GfObjAcc shares a stack slot with add's dequeued info, the
+// MenuOffset with the event (the original's frame)
+unsigned int GfMenuObjChainIcon::open(const OpenParam& param) {
+    if (GfMenuObjUtil::isMenuObjectFull()) {
+        return 0;
+    }
+    unsigned int root = GfMenuObject::getAttachedObject(0x41);
+    if (ui::UIObjectAcc(root).m_object == nullptr) {
+        return 0;
+    }
+    if (ui::UIObjectAcc(root).isTerm()) {
+        return 0;
+    }
+    unsigned int screen = ui::UIObjectAcc(root).duplicateChild("LAY_chain_icon_root");
+    if (ui::UIObjectAcc(screen).m_object == nullptr) {
+        return 0;
+    }
+    {
+        GfObjAcc obj(param.m_obj);
+        if (obj.m_obj == nullptr || obj.getType() != 3) {
+            return 0;
+        }
+        unsigned short id = Bdat::getVal(GfDataBdat::getFP(0x88), "OffsetID", obj.getBdatId());
+        int offsetId = id == 0 ? 1 : id;
+        MenuOffset offset;
+        offset.m_offset = mm::Vec3(0.0f, 0.0f, 0.0f);
+        offset.m_bone = nullptr;
+        GfMenuBdat::getMenuOffset(offsetId, offset);
+        const fw::Transform& transform = obj.getWorldTransform();
+        mm::Vec3 pos = transform.position;
+        pos.y += offset.m_offset.y + -1.0f;
+        GfMenuFieldPosAdapter::create(ui::UIObjectAcc(screen).searchChild("LAY_chain_icon"), pos);
+    }
+    ui::EventData event;
+    event.m_type = 0x21;
+    event.m_param0Short = ui::UIObjectAcc(screen).getDuplicateIndex();
+    GfMenuObject::sendEvent(root, event, 0.0f);
+    GfMenuManyObjects::add<ChainIconInfo>(2, ChainIconInfo(screen), close);
+    return screen;
+}
 
 void GfMenuObjChainIcon::close(unsigned int handle) {
     ui::UIObjectAcc root(GfMenuObject::getAttachedObject(0x41));

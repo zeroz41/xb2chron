@@ -8,6 +8,7 @@ namespace gf {
 // table 0x7100B60D88: an open chain icon in GfMenuManyObjects' queue 2
 class GfMenuObjChainIcon::ChainIconInfo : public ::gf::GfMenuManyObjects::InfoType {
 public:
+    ChainIconInfo() {}
     ChainIconInfo(unsigned int handle) : InfoType(handle) {}
 };
 }  // namespace gf

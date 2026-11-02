@@ -65,9 +65,11 @@ public:
     template <typename T>
     static void closeAll(unsigned int index, void (*close)(unsigned int));
     // queues a kind's new object; when the queue is full its oldest goes first, handed to close and disposed
-    // (inlined into GfMenuObjPopup::open; the name is not the original's)
+    // (inlined into GfMenuObjPopup::open and GfMenuObjChainIcon::open; the name is not the original's). The info
+    // comes by value: GfMenuObjChainIcon::open's temporary takes its own stack slot below every other local
+    // (a reference-bound temporary shares the slot of the icon's position)
     template <typename T>
-    static void add(unsigned int index, const T& info, void (*close)(unsigned int));
+    static void add(unsigned int index, T info, void (*close)(unsigned int));
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member template because it works on any
     // kind's queue like remove and closeAll (its code checks index < 8 and reads m_queues[index]); its one instance
     // (PopupInfo, kind 7) sits in gf_menu_obj_popup between that unit's callers of it. What it does: disposes and
@@ -117,7 +119,7 @@ void GfMenuManyObjects::closeAll(unsigned int index, void (*close)(unsigned int)
     }
 }
 template <typename T>
-void GfMenuManyObjects::add(unsigned int index, const T& info, void (*close)(unsigned int)) {
+void GfMenuManyObjects::add(unsigned int index, T info, void (*close)(unsigned int)) {
     mm::mtl::Queue<T>* queue = getQueue<T>(index);
     if (queue != nullptr) {
         if (queue->full()) {
