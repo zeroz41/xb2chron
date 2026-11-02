@@ -940,6 +940,25 @@ int DrCalcClipWorkShadowPlane::clipTypeTest(const mm::Vec3& pos, float radius) c
     return type;
 }
 
+void DrCalcClipWorkViewPoli::createLineNormal(mm::Vec3& out, const mm::Vec3& origin, const mm::Vec3& dir,
+                                              const mm::Vec3& point) const {
+    float lenSq = dir.dot(dir);
+    float t = dir.dot(point - origin) / lenSq;
+    mm::Vec3 pos = origin + dir * t;
+    out.x = point.x - pos.x;
+    out.y = point.y - pos.y;
+    out.z = point.z - pos.z;
+    float len = out.length();
+    if (len <= 1e-6f) {
+        out = mm::Vec3::zero;
+    } else {
+        float scale = 1.0f / len;
+        out.x = scale * out.x;
+        out.y = scale * out.y;
+        out.z = scale * out.z;
+    }
+}
+
 void DrCalcMan::renderEnd() {
     DrCalcViewWork* pWork = m_pViewWork;
     if (pWork->m_renderReq) {
@@ -1105,6 +1124,58 @@ bool DrCalcStmListObj::OnFileEvent(EventFileTh* pEvent) {
     m_flags = (m_flags & ~FLAG_READSTATE) | FLAG_READERR;
     m_pFile = nullptr;
     return false;
+}
+
+int DrCalcViewWork::unistatic_lightDir(float* pDst) {
+    DrLightMan* pLightMan = m_pDrMan->m_lightMan;
+    int num = pLightMan->m_stockCount;
+    int n = num > 2 ? 2 : num;
+    const mm::Vec3* pDir = pLightMan->m_stockDir;
+    for (int i = 0; i < n; i++, pDir++) {
+        float x = -pDir->x;
+        float y = -pDir->y;
+        float z = -pDir->z;
+        mm::Vec3 dir(m_view.m[0][0] * x + m_view.m[1][0] * y + m_view.m[2][0] * z,
+                     m_view.m[0][1] * x + m_view.m[1][1] * y + m_view.m[2][1] * z,
+                     m_view.m[0][2] * x + m_view.m[1][2] * y + m_view.m[2][2] * z);
+        float len = dir.length();
+        if (len <= 1e-6f) {
+            dir = mm::Vec3::zero;
+        } else {
+            float scale = 1.0f / len;
+            dir.x = dir.x * scale;
+            dir.y = dir.y * scale;
+            dir.z = scale * dir.z;
+        }
+        pDst[i * 4 + 0] = dir.x;
+        pDst[i * 4 + 1] = dir.y;
+        pDst[i * 4 + 2] = dir.z;
+    }
+    for (int i = n; i < 2; i++) {
+        pDst[i * 4 + 0] = 0.0f;
+        pDst[i * 4 + 1] = 0.0f;
+        pDst[i * 4 + 2] = 1.0f;
+    }
+    pDst[3] = 1.0f / m_pDrMan->m_pixlMan->m_objTbl->m_toneMapVal[0];
+    return DrResMdoUniformBlock::s_nVarSizeTbl[28];
+}
+
+int DrCalcViewWork::unistatic_lightCol(float* pDst) {
+    DrLightMan* pLightMan = m_pDrMan->m_lightMan;
+    int num = pLightMan->m_stockCount;
+    int n = num > 2 ? 2 : num;
+    const mm::Col3* pCol = pLightMan->m_stockColor;
+    for (int i = 0; i < n; i++, pCol++) {
+        pDst[i * 4 + 0] = pCol->r;
+        pDst[i * 4 + 1] = pCol->g;
+        pDst[i * 4 + 2] = pCol->b;
+    }
+    for (int i = n; i < 2; i++) {
+        pDst[i * 4 + 0] = 0.0f;
+        pDst[i * 4 + 1] = 0.0f;
+        pDst[i * 4 + 2] = 0.0f;
+    }
+    return DrResMdoUniformBlock::s_nVarSizeTbl[29];
 }
 
 int DrCalcViewWork::unistatic_diffuseIBL(float* pDst) {

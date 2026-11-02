@@ -3,6 +3,7 @@
 
 #include "classes/ml/DrLightObj.h"
 #include "mm/Col3.h"
+#include "mm/Vec3.h"
 
 namespace ml {
 class DrMan;
@@ -93,7 +94,14 @@ public:
     unsigned char pad_138[0x30];
     // stockBegin clears both (the names are not the original's)
     int m_stockCount;  // 0x168
-    unsigned char pad_16c[0x4C];
+    // 0x16C: the stocked directional lights' colours; DrCalcViewWork::unistatic_lightCol hands the first
+    // m_stockCount (at most 2) to the shader (the name is not the original's)
+    mm::Col3 m_stockColor[2];
+    unsigned char pad_184[0xC];
+    // 0x190: the stocked directional lights' directions; DrCalcViewWork::unistatic_lightDir hands them, negated
+    // and turned into view space, to the shader (the name is not the original's)
+    mm::Vec3 m_stockDir[2];
+    unsigned char pad_1B0[0x8];
     short m_stockState;  // 0x1B8
 };
 }  // namespace ml
