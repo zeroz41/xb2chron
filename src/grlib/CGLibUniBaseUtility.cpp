@@ -258,6 +258,27 @@ void CGLibAcc2DTexture::unlock() {
     }
 }
 
+void CGLibAccUtilTexture::setInt(const int* value, unsigned int x, unsigned int y) {
+    unsigned int pos;
+    if (m_isLinear) {
+        pos = y * m_width + x;
+    } else {
+        // block-linear: blocks of 2 x 16 GOBs, a GOB of 2 x 2 sectors
+        unsigned int gobsPerRow = m_width / m_gobWidth;
+        unsigned int gobX = x / m_gobWidth;
+        unsigned int gobY = y / m_gobHeight;
+        unsigned int block = (gobY & ~0xF) * gobsPerRow + ((gobX >> 1) << 5 | (gobY & 0xF) << 1 | (gobX & 1));
+        unsigned int gobNum = m_gobWidth * m_gobHeight;
+        unsigned int inY = y % m_gobHeight;
+        unsigned int inX = x % m_gobWidth;
+        unsigned int sector = inX / m_sectorWidth + (inY / m_sectorHeight) * m_sectorHeight;
+        pos = x % m_sectorWidth + (y % m_sectorHeight) * m_sectorWidth + sector * (m_sectorWidth * m_sectorHeight) + block * gobNum;
+    }
+    unsigned int ofs = pos * m_texelSize;
+    m_pTexel = m_pData + ofs;
+    (this->*s_pWriteIntChannel[m_channelIdx])(value);
+}
+
 void CGLibAcc2DTexture::setInt(int value, unsigned int x, unsigned int y) {
     int texel[4] = {value, 0, 0, 0};
     CGLibAccUtilTexture::setInt(texel, x, y);
@@ -1020,6 +1041,7 @@ const NVNcompareFunc s_compareFuncTbl[8] = {
 
 }  // namespace
 
+CGLibSampler::CGLibSampler() : m_params(), m_pSamObj(nullptr) {}
 
 CGLibSampler::~CGLibSampler() {
     release();
@@ -1098,7 +1120,12 @@ void CGLibOcclusionQuery::beginQuery() {
     nvnCommandBufferResetCounter(context::CGLibSystemContext::sys()->m_pipeline.m_pCmdBuf, static_cast<NVNcounterType>(1));
 }
 
-
+unsigned int CGLibOcclusionQuery::getQueryPixel() {
+    if (!(m_validMask & (1 << m_readIdx))) {
+        return 0;
+    }
+    return *reinterpret_cast<const unsigned int*>(m_pReport + context::CGLibSystemContext::s_nvReportCounterSize * m_writeIdx);
+}
 
 // ---- CGLibPixlCounter ----
 

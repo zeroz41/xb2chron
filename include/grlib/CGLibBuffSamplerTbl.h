@@ -11,7 +11,10 @@ namespace grlib {
 // positions are CGLibSampler's setters'; the field names are not the original's.
 struct CGLibWkrSamplerParams {
     CGLibWkrSamplerParams() : m_clampS(0), m_clampT(0), m_clampR(0), m_compare(0), m_magFilter(0), m_minFilter(0),
-        m_aniso(0), m_border(0), m_pad(0), m_borderColor(1.0f, 1.0f, 1.0f, 1.0f), m_lod(0.0f) {}
+        m_aniso(0), m_border(0), m_pad(0) {
+        m_borderColor.r = m_borderColor.g = m_borderColor.b = m_borderColor.a = 1.0f;
+        m_lod = 0.0f;
+    }
 
     unsigned int m_clampS : 4;     // bits 0..3
     unsigned int m_clampT : 4;     // bits 4..7
