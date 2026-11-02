@@ -3715,14 +3715,14 @@ bool QuestListAcc::getQuestListByIndex(CBdatWrapper*& bdat, unsigned short& id, 
 qlist_iterator QuestListAcc::begin(QTYPE type) const {
     qlist_iterator it(type);
     if (type == 0 || (static_cast<unsigned int>(type - 1) < 6 && !m_list[type - 1].m_ids.empty())) {
-        it.m_index = 0;
+        it.m_pos.m_index = 0;
     }
     return it;
 }
 
 qlist_iterator QuestListAcc::end(QTYPE type) const {
     qlist_iterator it(type);
-    it.m_index = -1;
+    it.m_pos.m_index = -1;
     return it;
 }
 
@@ -3760,6 +3760,31 @@ void QuestListAcc::addTaskCategory(unsigned short id, unsigned int category, CBd
         task.m_end++;
     }
     m_taskCount++;
+}
+
+// steps from a copy of m_pos: the original tests m_index, then loads the pair again as one 64-bit value; the
+// category test reads m_index, the new position is the copy's index + 1 (the other path reloads it after the call)
+qlist_iterator qlist_iterator::operator++() {
+    if (m_pos.m_index >= 0) {
+        [this](Position pos) {
+            if (pos.m_type != 0) {
+                if (static_cast<int>(m_category->m_ids.size()) > m_pos.m_index + 1) {
+                    m_pos.m_index = pos.m_index + 1;
+                } else {
+                    m_pos.m_index = -1;
+                }
+            } else {
+                CBdatWrapper* bdat;
+                unsigned short id;
+                if (m_acc->getQuestListByIndex(bdat, id, pos.m_index + 1)) {
+                    m_pos.m_index++;
+                } else {
+                    m_pos.m_index = -1;
+                }
+            }
+        }(m_pos);
+    }
+    return *this;
 }
 
 // 1.0.0 calls out-of-line getCollectUseFlagIndexOldVersion/NewVersion here; 3.0.1 has no copy of either (one body)

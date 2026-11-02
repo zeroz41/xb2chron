@@ -44,11 +44,17 @@ public:
     QuestID getQuestID() const;
     qlist_iterator operator++();
     // the walk compares positions only (GfMenuQuestList::setup reads the words at 0xC)
-    bool operator!=(const qlist_iterator& other) const { return m_index != other.m_index; }
+    bool operator!=(const qlist_iterator& other) const { return m_pos.m_index != other.m_pos.m_index; }
+
+    // the list walked and the position in it, one 8-byte pair: operator++ loads it as one 64-bit value (an ldp
+    // after its own load of m_index) and steps from that copy (the names are not the original's)
+    struct Position {
+        QTYPE m_type;  // the list walked (0 all of them, else category m_type)
+        int m_index;   // the position (-1 past the end, 1.0.0's operator++)
+    };
 
     QuestListAcc* m_acc;  // what 1.0.0's operator++ asks getQuestListByIndex; the name is not the original's
-    QTYPE m_type;         // the list walked (0 all of them, else category m_type); the name is not the original's
-    int m_index;  // the position (-1 past the end, 1.0.0's operator++); the name is not the original's
+    Position m_pos;
     const QuestCategory<8096>* m_category;  // m_type's category (begin, end); the name is not the original's
 };
 
@@ -277,7 +283,7 @@ public:
 };
 
 inline qlist_iterator::qlist_iterator(QTYPE type)
-    : m_type(type), m_index(-1) {
+    : m_pos{type, -1} {
     m_acc = QuestListAcc::get();
     m_category = type != 0 ? &m_acc->m_list[type - 1] : nullptr;
 }
