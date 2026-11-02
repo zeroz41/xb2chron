@@ -6,6 +6,7 @@
 #include "mm/Vec3.h"
 #include "mm/mtl/FixStr.h"
 #include "classes/btl/ElementalComboManager.h"
+#include "classes/gf/pc/InputID.h"
 
 namespace btl { class CharacterParameter; }
 namespace btl { struct ARTS_SLOT_DATA; struct ARTS_DATA; }
@@ -272,6 +273,13 @@ public:
     bool IsMove() const;
     bool IsScout() const;
     void GetMoveDataPerSec(mm::Vec3& move) const;
+    // whether the controlled character may take the action and its pad asked for it: false outside battle, during
+    // a chain attack unless it selects actions, and (but for inputs 14, 15 and 23) while the character or the
+    // battle is held
+    bool IsInputButton(gf::pc::InputID id) const;
+    // whether the player-side character's pad asked for the action this frame (GfComPropertyPc's m_inputFlags; the
+    // chain attack's leader's while one runs)
+    bool IsInputButtonDirect(gf::pc::InputID id) const;
     unsigned int GetIKData(float& value0, float& value1) const;
     int GetAlphaSetID(ALPHA_PROC_ID id);
     unsigned long GetAnimSpecialProcData(ANIM_SPDATA_TYPE type) const;

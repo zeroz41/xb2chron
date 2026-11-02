@@ -196,7 +196,7 @@ void StateFieldWaterNormal::leave(GfComBehaviorPc* behavior, ai::State* next) {
 void StateFieldWaterNormal::update(GfComBehaviorPc* behavior, const fw::UpdateInfo&) {
     GfComPropertyPc* property = behavior->m_owner->getComponent<GfComPropertyPc>(5);
     GfObj* target = StateUtilField::getAccessTarget(*behavior);
-    if (target != nullptr && (property->m_inputFlags.m_actions & 1) != 0) {
+    if (target != nullptr && property->m_inputFlags[0]) {
         MsgPcFieldGetAccessType msg;
         static_cast<GfObj*>(behavior->m_owner)->sendMessage(target, msg);
         if (msg.m_type == 4) {

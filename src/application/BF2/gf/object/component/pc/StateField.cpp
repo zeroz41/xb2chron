@@ -132,7 +132,7 @@ inline void StateField::onLeave(void* owner, ai::State* next) {
 inline void StateField::onStep(void* owner, const void* arg) {
     GfComBehaviorPc* behavior = static_cast<GfComBehaviorPc*>(owner);
     GfComPropertyPc& property = *behavior->m_owner->findComponent<GfComPropertyPc>(5);
-    if (property.m_inputFlags.m_actions & 2) {
+    if (property.m_inputFlags[1]) {
         StateUtilField::flipAutoRun(property);
     }
     if (StateUtilField::isInputInverseDirAutoRun(property)) {

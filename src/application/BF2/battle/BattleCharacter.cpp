@@ -36,6 +36,9 @@
 #include "gf/GfObjInfo.h"
 #include "btl/formation_change_manager.h"
 #include "fw/Message.h"
+#include "classes/btl/SpAttackManager.h"
+#include "classes/btl/UIManager.h"
+#include "btl/siren_battle_manager.h"
 
 namespace btl {
 
@@ -148,6 +151,47 @@ void BattleCharacter::GetMoveDataPerSec(mm::Vec3& move) const {
     move.x = m_moveData.x * 30.0f;
     move.y = m_moveData.y * 30.0f;
     move.z = m_moveData.z * 30.0f;
+}
+
+bool BattleCharacter::IsInputButton(gf::pc::InputID id) const {
+    if (!IsControlCharacter() || !BattleGlobal::sys()->IsEnableBattle()) {
+        return false;
+    }
+    // while the character is held (run hold, a formation change request outside a chain attack's action select) or
+    // the battle is (unite or elemental combo camera, a special attack's camera, ...), only inputs 14, 15 and 23 pass
+    if (m_isRunHold ||
+        ((pad_EF4_0 || pad_EF4_1 || pad_EF4_2 || pad_EF4_4 || pad_EF4_5) &&
+         !ChainAttackManager::sys()->IsSelectAction()) ||
+        BattleGlobal::sys()->m_uniteComboCamera || BattleGlobal::sys()->pad_bit12 ||
+        BattleGlobal::sys()->m_elementalCombo.m_camera || SpAttackManager::sys()->m_camera ||
+        TUnk_B3BD68::sys()->fn_71000A6DFC() || UIManager::sys()->pad_bit17 || BattleGlobal::sys()->fn_7100007554()) {
+        switch (id) {
+        case 14:
+        case 15:
+        case 23:
+            break;
+        default:
+            return false;
+        }
+    }
+    if (ChainAttackManager::sys()->IsProc(false) && !ChainAttackManager::sys()->IsSelectAction()) {
+        return false;
+    }
+    return IsInputButtonDirect(id);
+}
+
+bool BattleCharacter::IsInputButtonDirect(gf::pc::InputID id) const {
+    if (!m_isPlayer) {
+        return false;
+    }
+    gf::GfObj* obj;
+    if (mm::mtl::PtrSingleton<ChainAttackManager>::sys()->IsProc(false)) {
+        obj = gf::GfObjUtil::getObj(mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_leaderHandle);
+    } else {
+        obj = gf::GfObjUtil::getObj(m_handle);
+    }
+    gf::GfComPropertyPc* property = obj->getComponent<gf::GfComPropertyPc>(5);
+    return property->m_inputFlags[id];
 }
 
 namespace {

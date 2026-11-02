@@ -129,7 +129,7 @@ inline void TaskFieldWallFall::update(BlackBoardField& bb) {
     GfComPropertyPc* property = bb.m_property;
     const WallAiParam* param = AgentUtilField::getAIParamAdapter(*property, PARAM_ID_FIELD_AI(5)).get<WallAiParam>();
     if (m_time >= param->fallDelay) {
-        property->m_inputFlags.m_actions |= 8;
+        property->m_inputFlags.set(3);
     }
 }
 

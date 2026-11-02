@@ -23,7 +23,7 @@ bool TaskFieldJump::testCondition(const BlackBoardField& bb) {
 void TaskFieldJump::update(BlackBoardField& bb) {
     GfComPropertyPc* property = bb.m_property;
     const Param* param = AgentUtilField::getAIParamAdapter(*property, PARAM_ID_FIELD_AI(4)).get<Param>();
-    property->m_inputFlags.m_actions |= 4;
+    property->m_inputFlags.set(2);
     float speed = property->m_velocity.length();
     if (!(speed > param->m_minSpeed)) {
         speed = param->m_minSpeed;

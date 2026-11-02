@@ -139,7 +139,8 @@ public:
     static const GfPropertyField::WallInfo* getWallInfoBase(gf::GfComPropertyPc& property);
     static bool isSlideStop(gf::GfComPropertyPc& property);  // (by its symbol)
     static bool isWallIdleMotion(gf::GfComAsm& comAsm);  // (by its symbol)
-    // no climbable wall (StateUtil::getClimbWallInfo) or the fall action asked for (m_actions bit 3; by its symbol)
+    // no climbable wall (StateUtil::getClimbWallInfo) or the fall action asked for (m_inputFlags flag 3; by its
+    // symbol)
     static bool isWallFall(gf::GfComPropertyPc& property);
     // on ground (sensor flag 0, ground attribute bit 4 clear) more than m_downLanding1Height below the PC: the PC
     // lets go of the wall (by its symbol)

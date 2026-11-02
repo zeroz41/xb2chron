@@ -144,11 +144,7 @@ inline bool PadBattle::isInputEnable() const {
 }
 
 inline void PadBattle::setInput(InputID id) const {
-    if (id < 32) {
-        m_property->m_inputFlags.m_actions |= 1u << id;
-    } else {
-        m_property->m_inputFlags.m_actionsHigh |= 1u << (id - 32);
-    }
+    m_property->m_inputFlags.change(id, true);
 }
 
 void PadBattle::battleStart() const {

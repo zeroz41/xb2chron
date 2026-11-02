@@ -8,6 +8,7 @@
 #include "mm/Vec3.h"
 #include "mm/Quat.h"
 #include "mm/mtl/IntrusivePtr.h"
+#include "mm/mtl/Bitflag.h"
 #include "classes/gf/pc/GfPropertyField.h"
 #include "classes/gf/pc/GfPropertyBattle.h"
 
@@ -103,13 +104,6 @@ public:
         float x;
         float y;
     };
-    // the actions asked for this frame: the pad's action handlers set bits in m_actions (bit 0, 3 and 4 from
-    // PadField's), TaskFieldJump::update bit 2; PadAgent::update clears the whole word pair each frame
-    struct InputFlags {
-        unsigned int m_actions;
-        // bits 32-63 of the action set: PadBattle's "spskill" sets bit 32 (the name is not the original's)
-        unsigned int m_actionsHigh;
-    };
 
     // StateFieldOnGround::update: at 1 a battle start hands m_battle MsgPcBattleStart(0) and goes to state 0x3F,
     // otherwise it asks StateUtilField::requestBattleStart (the name is not the original's)
@@ -120,9 +114,13 @@ public:
     unsigned char pad_44[0xC];
     mm::Vec3 m_headColiPos;  // resetHeadColPosition's: what calcHeadColiPos computes (the name is not the original's)
     InputDir m_inputDir;
-    InputFlags m_inputFlags;
-    InputDir m_prevInputDir;      // PadAgent::update's copy of last frame's m_inputDir
-    InputFlags m_prevInputFlags;  // and of m_inputFlags
+    // the actions asked for this frame, by gf::pc::InputID: the pad's action handlers set them (0 to 4 from
+    // PadField's, PadBattle's up to 32 for "spskill"), TaskFieldJump::update 2; PadAgent::update clears them each
+    // frame. A Bitflag<40>: BattleCharacter::IsInputButtonDirect's operator[] asserts index < Size against 0x28
+    // (the name is not the original's)
+    mm::mtl::Bitflag<40> m_inputFlags;
+    InputDir m_prevInputDir;                // PadAgent::update's copy of last frame's m_inputDir
+    mm::mtl::Bitflag<40> m_prevInputFlags;  // and of m_inputFlags
     mm::Vec3 m_velocity;        // TaskFieldJump::update keeps its speed, turned along m_moveDir
     // two more of its motions: 1.0.0's procMsgObjectFlushProperty counts the PC as moving while either (or the
     // velocity or the locomotion) is not zero; isFollowBuddyPc keeps following while m_moveVec2.y is not, the

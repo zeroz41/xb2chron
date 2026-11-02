@@ -274,6 +274,13 @@ ASM_CMD_ID_FIELD StateUtilField::getAsmID(GfPropertyField::WALL_MOVE_MODE mode) 
     }
 }
 
+bool StateUtilField::isWallFall(gf::GfComPropertyPc& property) {
+    // the sensor is fetched but not read (the call stays in the original)
+    const EnviromentSensor* sensor = property.getEnvSensor();
+    GfComBehaviorPc* behavior = property.m_owner->getComponent<GfComBehaviorPc>(6);
+    return (StateUtil::getClimbWallInfo(*behavior) == nullptr) | property.m_inputFlags[3];
+}
+
 mm::Vec3 StateUtilField::calcWallPreparePosition(gf::GfComPropertyPc& property, const mm::Vec3& wallPos,
                                                  const mm::Plane& wallPlane) {
     mm::Vec3 pos = wallPos;

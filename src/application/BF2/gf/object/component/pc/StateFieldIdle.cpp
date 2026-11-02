@@ -281,7 +281,7 @@ void StateFieldLand::update(GfComBehaviorPc* behavior, const fw::UpdateInfo& inf
             requestState(0xF);
             return;
         }
-        if ((property->m_inputFlags.m_actions & 4) && (property->m_field.m_statusFlags & 0x20000) &&
+        if (property->m_inputFlags[2] && (property->m_field.m_statusFlags & 0x20000) &&
             StateUtilField::execAsmCmd(*comAsm, ASM_CMD_ID_FIELD(2))) {
             property->m_moveSpeed = 0.0f;
             requestState(0xC);

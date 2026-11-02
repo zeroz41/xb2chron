@@ -2,6 +2,7 @@
 #define CLASSES_GF_PC_PADFIELD_H
 
 #include "fw/PadRelay.h"  // the tree: "fw/PadRelay.h"
+#include "classes/gf/pc/InputID.h"
 
 namespace anm { class ResASM; }
 namespace fw { class UpdateInfo; }
@@ -9,9 +10,6 @@ namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { class GfComPropertyPc; }
 
 namespace gf { namespace pc {
-// the bit PadField::setInput sets in GfComPropertyPc's action flags (1.0.0's symbols name the type; the values'
-// names are not known)
-enum InputID : int {};
 
 // table 0x7100B67E60
 class PadField {

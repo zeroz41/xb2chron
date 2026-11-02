@@ -431,7 +431,7 @@ void PadField::update(const fw::UpdateInfo& info, GfComPropertyPc& property) {
 
 void PadField::setInput(InputID id) const {
     if (m_property != nullptr) {
-        m_property->m_inputFlags.m_actions |= 1u << id;
+        m_property->m_inputFlags.set(id);
     }
 }
 

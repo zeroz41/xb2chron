@@ -29,7 +29,7 @@ void PadAgent::cleanup(GfComPropertyPc& property) {
 void PadAgent::update(const fw::UpdateInfo& info, GfComPropertyPc& property) {
     property.m_prevInputDir = property.m_inputDir;
     property.m_prevInputFlags = property.m_inputFlags;
-    property.m_inputFlags = GfComPropertyPc::InputFlags();
+    property.m_inputFlags.reset();
     m_battle.update(info, property);
     m_field.update(info, property);
 }
