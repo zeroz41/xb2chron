@@ -172,6 +172,26 @@ void TUnk_B61178::fn_71003D273C(unsigned int driver) {
     }
 }
 
+void TUnk_B61178::fn_71003D2EA4() {
+    m_ids.clear();
+    if (m_driverList->getSize() == 3) {
+        if (GfDataDriver::fn_7100237A94(m_driverList->getContents(0).m_driver)) {
+            m_ids.push_back(0);
+            m_ids.push_back(1);
+            m_ids.push_back(2);
+        } else {
+            m_ids.push_back(0);
+            m_ids.push_back(2);
+            m_ids.push_back(1);
+        }
+    } else if (m_driverList->getSize() == 2) {
+        m_ids.push_back(0);
+        m_ids.push_back(1);
+    } else if (m_driverList->getSize() == 1) {
+        m_ids.push_back(0);
+    }
+}
+
 void TUnk_B61178::fn_71003D3C34(int index) {
     ui::UIObjectAcc acc(m_handle, "LAY_sub_menu");
     unsigned char* bdat;

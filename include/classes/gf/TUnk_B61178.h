@@ -40,6 +40,12 @@ public:
     // fills m_driverList for the driver (GfGameParty::getPartyId(3, driver), m_partyId when that is -1); keepIndex
     // keeps the list's index
     void fn_71003D27B8(unsigned int driver, bool keepIndex);
+    // refills m_ids by m_driverList's size: 3 -> 0, 1, 2 (0, 2, 1 unless GfDataDriver::fn_7100237A94 holds for the
+    // first driver), 2 -> 0, 1, 1 -> 0; caller fn_71003D27B8
+    void fn_71003D2EA4();
+    // scales and centres each LAY_char row's IMG_char_img@/IMG_char_glow@ pair on its slot's layout (sCharFrames, or
+    // character_solo on the last row) by GfMenuObjUtil::getImageParam(0, driver, .., 0); caller fn_71003D311C
+    void fn_71003D38E0();
     // sets m_driver to the driver, or, when GfDataDriver::isActivateUnuse holds for it, to the first id of
     // fn_71002416B4's list for it for which it does not; m_partyId to GfDataParty::getDriverPartyID of it
     // puts the driver alone in m_driverList2 and IMG_char_move_img into LAY_move's "character" layout, scaled and
