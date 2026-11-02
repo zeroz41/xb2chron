@@ -35,13 +35,15 @@ struct OpenReadParam {
     };
 
     OpenReadParam()
-        : m_handle(), m_isOpen(false), pad_10D(), pad_110(0), pad_118(0), pad_120(0), pad_128(0), pad_130(0),
+        : m_handle(), m_isOpen(false), pad_10D(), pad_10E(), pad_10F(), pad_110(0), pad_118(0), pad_120(0), pad_128(0), pad_130(0),
           pad_158(), pad_178(1), pad_17C(0), pad_180(0), pad_188(10), pad_18C(true), pad_18D() {}
 
     nn::fs::FileHandle m_handle;
     mm::mtl::FixStr<256> m_path;
     bool m_isOpen;
-    unsigned char pad_10D[3];
+    bool pad_10D;  // cleared before the channel's file is closed
+    bool pad_10E;
+    bool pad_10F;  // when set, rfClose leaves the file open and sets pad_110
     bool pad_110;
     unsigned long pad_118;
     unsigned long pad_120;

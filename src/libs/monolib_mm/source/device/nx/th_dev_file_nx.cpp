@@ -94,6 +94,7 @@
 #include "classes/ml/DevFontLayer.h"
 #include "classes/mm/Sphere.h"
 #include "classes/ml/FileResTh.h"
+#include "classes/mm/mtl/IAllocator.h"
 #include "classes/ml/DevFontNx.h"
 #include "classes/ml/DevFileBlackListNxTh.h"
 #include "classes/ml/DevFileReaderTh.h"
@@ -2142,8 +2143,50 @@ DevFileJobTh* DevFileNxTh::createFileValid(mtl::ALLOC_HANDLE handle) {
     return new (handle, nullptr, 0, 4, false) DevFileJobValidNxTh();
 }
 
+bool DevFileNxTh::readBlock(FileHandleTh* handle, const char* path) {
+    void* buf = mtl::MemManager::allocate(WorkRoot::getMemTMP(), 0x20000, 4, false, "no name", 0);
+    bool result = readBlockSlice(handle, path, buf, 0x20000);
+    if (buf != nullptr) {
+        mtl::MemManager::deallocate(buf, 0, false);
+    }
+    return result;
+}
+
 int DevFileNxTh::addressAlignment() {
     return 0x10;
+}
+
+bool DevFileNxTh::rfOpen(FileHandleTh* handle, const char* path) {
+    OpenReadParam& param = get()->m_impl->m_params[handle->m_channel];
+    mm::threading::WriteLockGuard lock(param.m_lock);
+    DevFileTh::makeMediaFileName(param.m_path, path, handle->m_path);
+    if (!param.m_isOpen) {
+        if (!nn::fs::OpenFile(&param.m_handle, param.m_path.m_str, 1).IsSuccess()) {
+            return false;
+        }
+        param.m_isOpen = true;
+        param.pad_10D = false;
+        param.pad_10E = false;
+        param.pad_110 = false;
+    }
+    return true;
+}
+
+bool DevFileNxTh::rfClose(FileHandleTh* handle) {
+    OpenReadParam& param = get()->m_impl->m_params[handle->m_channel];
+    mm::threading::WriteLockGuard lock(param.m_lock);
+    if (param.pad_10F) {
+        __atomic_store_n(&handle->m_canceled, true, __ATOMIC_SEQ_CST);
+        handle->m_listener = nullptr;
+        param.pad_110 = true;
+        return false;
+    }
+    if (param.pad_10D) {
+        param.pad_10D = false;
+    }
+    nn::fs::CloseFile(param.m_handle);
+    param.m_isOpen = false;
+    return true;
 }
 
 bool DevFileNxTh::rfIsUsedChannel(unsigned int channel) {
@@ -2276,6 +2319,24 @@ DevFileWriterTh* DevFileArchiveNx::createWriter(mtl::ALLOC_HANDLE) {
 
 DevFileJobTh* DevFileArchiveNx::createFileValid(mtl::ALLOC_HANDLE handle) {
     return new (handle, nullptr, 0, 4, false) DevFileJobValidArcNxTh();
+}
+
+// the result is false either way
+bool DevFileArchiveNx::rfClose(FileHandleTh* handle) {
+    OpenReadParam& param = get()->m_impl->m_params[handle->m_channel];
+    mm::threading::WriteLockGuard lock(param.m_lock);
+    if (param.pad_10F) {
+        __atomic_store_n(&handle->m_canceled, true, __ATOMIC_SEQ_CST);
+        handle->m_listener = nullptr;
+        param.pad_110 = true;
+    } else {
+        if (param.pad_10D) {
+            param.pad_10D = false;
+        }
+        nn::fs::CloseFile(param.m_handle);
+        param.m_isOpen = false;
+    }
+    return false;
 }
 
 bool DevFileArchiveNx::rfIsUsedChannel(unsigned int channel) {
@@ -2516,7 +2577,7 @@ void* EventFileTh::moveFileData() {
 FileResTh::FileResTh()
     : m_handle(nullptr), m_data(nullptr), m_size(-1), m_ownsData(true) {
     m_state = 0;
-    m_userValue = 0;
+    m_allocator = nullptr;
     m_timeStamp = 0;
 }
 
@@ -2528,6 +2589,29 @@ bool FileResTh::isExist() const {
     return m_data != nullptr;
 }
 
+void FileResTh::release() {
+    if (m_handle != nullptr) {
+        m_handle->m_listener = nullptr;
+        if (m_handle != nullptr) {
+            DevFileTh::cancel(m_handle, false);
+            m_handle = nullptr;
+        }
+    }
+    if (m_ownsData && m_data != nullptr) {
+        if (m_allocator != nullptr) {
+            m_allocator->deallocate(m_data);
+            m_data = nullptr;
+            m_allocator = nullptr;
+        } else {
+            mtl::MemManager::deallocate(m_data, 0, false);
+            m_data = nullptr;
+        }
+    }
+    m_size = -1;
+    m_state = 0;
+    m_timeStamp = 0;
+}
+
 bool FileResTh::OnFileEvent(EventFileTh* event) {
     int state;
     if (event->m_kind == 2) {
@@ -2535,7 +2619,7 @@ bool FileResTh::OnFileEvent(EventFileTh* event) {
         m_size = m_handle->m_size;
         m_extra = m_handle->m_extra;
         m_timeStamp = m_handle->m_timeStamp;
-        m_userValue = m_handle->m_userValue;
+        m_allocator = m_handle->m_allocator;
         state = 2;
     } else {
         m_size = -2;
@@ -2948,6 +3032,34 @@ void DebDraw::swap() {
     cache->m_fontScaleX = 1.0f;
     cache->m_fontScaleY = 1.0f;
     cache->m_zWrite = true;
+}
+
+void DevGraph::cb(RCB rcb) {
+    if (get() == nullptr) {
+        return;
+    }
+    for (reslist<DevGraphCB*>::iterator it = get()->m_cbList.begin(); it != get()->m_cbList.end(); ++it) {
+        DevGraphCB* cb = *it;
+        switch (static_cast<int>(rcb)) {
+        case 0:
+            cb->viBeginFrame();
+            break;
+        case 1:
+            cb->viBeforeDrawDone();
+            break;
+        case 2:
+            cb->viAfterDrawDone();
+            break;
+        case 3:
+            cb->viAfterSync();
+            break;
+        case 4:
+            cb->viAfterRenderCall();
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 void DevGraph::getPers(mm::Mat44& mtx, float fovy, float nearZ, float farZ) {

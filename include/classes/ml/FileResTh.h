@@ -40,8 +40,9 @@ public:
     bool m_ownsData;  // cleared when fw::AssetData::AssignFromMemory takes the data over
     unsigned char pad_f1[0x3];
     int m_state;  // 0 when built, 2 when a read ended, 3 when it failed (OnFileEvent; the name is not the original's)
-    unsigned long m_userValue;  // the handle's, set by OnFileEvent (the name is not the original's); to 0x100, the
-                                // size DrShdLgtMan::reloadShader allocates
+    // the handle's, set by OnFileEvent (the name is not the original's): release frees m_data through it when set
+    // (slot 3), else through mtl::MemManager; to 0x100, the size DrShdLgtMan::reloadShader allocates
+    mm::mtl::IAllocator* m_allocator;
 };
 }  // namespace ml
 
