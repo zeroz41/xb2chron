@@ -179,6 +179,10 @@
 #include "classes/gf/GfComBehaviorNpc.h"
 #include "classes/gf/GfObjSetupDriver.h"
 #include "classes/gf/GfObjSetupBlade.h"
+#include "classes/gf/GfObjSetupEnemy.h"
+#include "classes/gf/GfBdatChrEnParam.h"
+#include "gf/GfDataEnemy.h"
+#include "gf/GfObjInfo.h"
 #include "classes/gf/GfObjManager.h"
 #include "mm/mtl/RTTI.h"
 
@@ -488,6 +492,29 @@ unsigned int GfGameUtil::getNowHp(GF_OBJ_HANDLE* handle, unsigned int type, unsi
     return acc.getHpMax(true);
 }
 
+void GfGameUtil::changeStopLayer(GF_OBJ_HANDLE* handle, bool stop) {
+    GfObjAcc acc(handle);
+    if (acc.m_obj == nullptr) {
+        return;
+    }
+    unsigned int layer = stop ? 1 : 4;
+    GfObj* obj = acc.getObj();
+    unsigned int section = GfObjUtil::getLayerSection(layer);
+    unsigned int current = acc.getLayer();
+    unsigned int currentSection = GfObjUtil::getLayerSection(current);
+    if (section != currentSection && GfObjUtil::getParentHandle(handle) == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        int diff = section - currentSection;
+        mm::mtl::IntrusiveList<fw::UpdatableObject>& children = obj->m_children;
+        for (mm::mtl::IntrusiveList<fw::UpdatableObject>::iterator it = children.begin(), end = children.end();
+             it != end; ++it) {
+            fw::UpdatableObject& child = *it;
+            GfObj* childObj = child.getRTTI()->isKindOf(&GfObj::m_rtti) ? static_cast<GfObj*>(&child) : nullptr;
+            GfObjUtil::changeLayer(childObj, childObj->m_updateBit + diff);
+        }
+        GfObjUtil::changeLayer(obj, current + diff);
+    }
+}
+
 void GfGameUtil::fn_71002DF8B0(GF_OBJ_HANDLE*& handle) {
     DataParamAcc acc(handle);
     if (GfObjUtil::isValid(handle) && acc.getObjType() == 3 &&
@@ -528,6 +555,51 @@ bool GfGameUtil::getNowHpForUi(GF_OBJ_HANDLE* handle, unsigned int* hp) {
         return true;
     }
     return false;
+}
+
+void GfGameUtil::setGameObjWait(GF_OBJ_HANDLE* handle, bool wait) {
+    GfObjUtil::setFlag(handle, 0x10, wait);
+    GfObjManager::ResultList list;
+    GfObjManager* manager = mm::mtl::PtrSingleton<GfObjManager>::sys();
+    if (manager != nullptr && manager->getFollowObj(list, handle)) {
+        for (GfObjManager::ResultList::iterator it = list.begin(); it != list.end(); ++it) {
+            setGameObjWait(*it, wait);
+        }
+    }
+}
+
+void GfGameUtil::levelupForEnemy(GF_OBJ_HANDLE* handle, unsigned int add) {
+    DataParamAcc acc(handle);
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (info == nullptr || info->m_setup == nullptr) {
+        return;
+    }
+    GfObjSetup* setup = info->m_setup;
+    if (setup->m_type != info->m_obj->m_type || info->m_obj->m_type != 5) {
+        return;
+    }
+    GfObjSetupEnemy* enemy = mm::mtl::rttiCast<GfObjSetupEnemy>(setup);
+    if (enemy == nullptr) {
+        return;
+    }
+    unsigned int last = mm::mtl::PtrSingleton<GfBdatChrEnParam>::sys()->getChrEnParamTableEnd() - 1;
+    unsigned int level = acc.getLevel(false) + add;
+    if (level > last) {
+        level = last;
+    }
+    GfDataEnemy::setupGameParamForLevel(*enemy->m_sdata, level);
+    GfObj* obj = GfObjUtil::getObj(handle);
+    MsgObjectMaxHp maxHp(acc.getHpMax(false));
+    obj->sendMessage(obj, maxHp);
+    unsigned int hpMax = acc.getHpMax(false);
+    unsigned int hp = acc.getHp();
+    if (hpMax > hp) {
+        MsgObjectHealHp msg(hpMax - hp, 0);
+        msg.m_flags = MsgObjectHealHp::Flags();
+        GfObj* healed = GfObjUtil::getObj(handle);
+        healed->sendMessage(healed, msg);
+    }
+    fn_71002E0F28(handle);
 }
 
 bool GfGameUtil::getMaxHpForUi(GF_OBJ_HANDLE* handle, unsigned int* hp) {

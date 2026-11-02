@@ -232,6 +232,11 @@ public:
     static gf::GF_OBJ_HANDLE* getDriverWeaponRight(gf::GF_OBJ_HANDLE* handle);
     static gf::GF_OBJ_HANDLE* getDriverWeaponLeft(gf::GF_OBJ_HANDLE* handle);  // the active anti-blade area gimmick's row
     static bool isGameObjWait(gf::GF_OBJ_HANDLE* handle);  // the object's flag 0x10
+    // sets or clears the object's flag 0x10, then the same for every object following it (GfObjManager::getFollowObj)
+    static void setGameObjWait(gf::GF_OBJ_HANDLE* handle, bool wait);
+    // an enemy set up again at its level plus add (at most the last ChrEnParam row), its maximum hit points
+    // sent and the hit points it gains healed
+    static void levelupForEnemy(gf::GF_OBJ_HANDLE* handle, unsigned int add);
     static gf::GF_OBJ_HANDLE* getBlade(gf::GF_OBJ_HANDLE* handle);  // the blade mounted on a driver
 
     // the text the action window shows for an object (the names are not the original's)
