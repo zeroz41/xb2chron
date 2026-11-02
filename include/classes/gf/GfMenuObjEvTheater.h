@@ -21,7 +21,9 @@ class GfMenuObjEvTheater : public ::gf::GfMenuObject {
 public:
     class HeaderListener;
     class TUnk_B62178;  // the listener of table 0x7100B62178 (unnamed)
+    class TopListener;
     class SubListener;
+    class TUnk_B621A0;  // the listener of table 0x7100B621A0 (unnamed)
     // TitleMenu::setupEventTheater / openEventTheater / fadeoutEventTheater pass their call context
     static bool attach(GfMenuCallContext* context);
     static void fadein(GfMenuCallContext* context);
@@ -97,12 +99,21 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: SubListener's reciveEvent calls it
     // on its owner (x0 = this object) after it moves m_msgList's selection (event 6) and on open (0x21).
     void fn_71004016B8();
+    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: TopListener's reciveEvent calls
+    // them on its owner (x0 = this object) when a top item is decided: fn_71003FFD50 for m_title 1, 2 and 4 (then
+    // "LAY_sub" opens), fn_7100400054 with m_selectIdList for the others (then "LAY_select" opens). What their
+    // return values are (the caller uses none) and what fn_7100400054's last parameter is (TopListener passes 0;
+    // it is passed on) are not known.
+    void fn_71003FFD50(unsigned int title);
+    void fn_7100400054(GfMenuIDList* list, unsigned int title, unsigned int);
     // 0x71004047B8 (the symbols name it GfMenuObjOption::refreshLevel, but its this is this class and its only caller
     // is this class's listener) shows m_levels row by row; left out until the symbol is renamed
 
     // the names of the fields below are not the original's
     int m_title;  // 0x24: which TXT_header_title@%02d / TXT_header_input@%02d (from 1) HeaderListener shows
-    unsigned char pad_28[0x50 - 0x28];
+    // 0x28: the top menu's items (their TXT_top_item_*@NN numbers, m_title values) by row; TopListener selects them
+    // (the name is not the original's)
+    mm::mtl::FixedVector<unsigned int, 8> m_topItems;
     GfMenuMsgList* m_msgList;  // 0x50: HeaderListener shows its selected entry's text
     // 0x58: initialize creates it for "LAY_sub" (UISelectObjList::create, rows LAY_sub_item@%02d); SubListener shows
     // LAY_sub_arrow while m_msgList holds more entries than it (the name is not the original's)

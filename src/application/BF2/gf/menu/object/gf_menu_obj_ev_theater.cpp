@@ -2,6 +2,7 @@
 #include "classes/gf/GfMenuObjEvTheater/HeaderListener.h"
 #include "classes/gf/GfMenuObjEvTheater/SubListener.h"
 #include "classes/gf/GfMenuObjEvTheater/TUnk_B62178.h"
+#include "classes/gf/GfMenuObjEvTheater/TUnk_B621A0.h"
 #include "classes/gf/GfMenuMsgList.h"
 #include "classes/gf/GfMenuIDList.h"
 #include "classes/ui/UISelectObjList.h"
@@ -379,6 +380,61 @@ void GfMenuObjEvTheater::TUnk_B62178::reciveEvent(const ui::EventData& event, un
     default:
         ui::UIObjectListener::reciveEvent(event, handle);
         break;
+    }
+}
+
+void GfMenuObjEvTheater::TUnk_B621A0::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        acc.setDisp(false);
+        GfMenuObject::disableInput(acc.m_handle);
+        m_guideOpen = 0;
+        break;
+    case 0x105:
+        GfMenuObjOperationInfo::open(acc.m_handle, 0, 0, 0);
+        GfMenuObjOperationInfo::setGuideDisp(false);
+        m_guideOpen = 1;
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 8:
+        if (event.m_param1 == 2) {
+            GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_sub"), 0, 0.0f);
+            GfMenuObjUtil::playSECommonCancel();
+            GfMenuObject::disableInput(acc.m_handle);
+            GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+            m_owner->m_seq.clear();
+            if (m_guideOpen == 1) {
+                GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            } else {
+                GfMenuObjOperationInfo::open(0, 0, 0, 0);
+                GfMenuObjOperationInfo::setGuideDisp(false);
+            }
+        }
+        break;
+    case 0x22:
+        GfMenuObjUtil::setCommonFadeOut(acc.m_handle, 2, 0);
+        break;
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableInput(acc.m_handle);
+            m_owner->m_seq.clear();
+            m_owner->m_seq.addWait(60);
+            m_owner->m_seq.addJob(&GfMenuObjEvTheater::fn_7100405294);
+        }
+        break;
+    case 0x21: {
+        unsigned short image = Bdat::getVal(m_owner->m_msgList->m_dataBdat, "image_id", event.m_param0);
+        ui::UIObjectAcc preview(acc.m_handle, "IMG_preview");
+        preview.setImageIndex(image);
+        m_owner->m_seq.clear();
+        m_owner->m_seq.addJob(&GfMenuObjEvTheater::fn_71004051EC);
+        GfMenuObjOperationInfo::close();
+        m_guideOpen = 0;
+        break;
+    }
     }
 }
 
