@@ -5,6 +5,8 @@
 #include "ml/CriticalSection.h"
 #include "classes/mtl/IMemAllocator.h"
 #include "classes/mtl/DlAllocator.h"
+#include "mtl/CallStackManager.h"
+#include "mtl/MemoryInfo.h"
 #include "classes/mtl/NullAllocator.h"
 #include "classes/mtl/MemHandlebaseAllocator.h"
 #include "classes/mtl/AssetAllocator.h"
@@ -6343,9 +6345,68 @@ void mspace_set_stats(mspace msp, const char* name) {
   }
 }
 
+// not in stock dlmalloc: the figures DlAllocator::log and memoryInfo give for an mspace (the symbols leave it
+// unnamed; detail is set by log only)
+static void fn_71006EB61C(mstate m, mtl::MemoryInfo* info, bool log, bool detail) {
+  ensure_initialization();
+  if (is_initialized(m)) {
+    size_t total = m->max_footprint;
+    long used = m->footprint - TOP_FOOT_SIZE - m->topsize;
+    size_t inuse = TOP_FOOT_SIZE;
+    size_t sum = TOP_FOOT_SIZE;
+    size_t maxfree = 0;
+    int nchunks = 0;
+    int nfooters = 0;
+    size_t nfree = 0;
+    int nlogged = 0;
+    for (msegmentptr s = &m->seg; s != 0; s = s->next) {
+      mchunkptr q = align_as_chunk(s->base);
+      while (segment_holds(s, q) && q != m->top && q->head != FENCEPOST_HEAD) {
+        size_t sz = chunksize(q);
+        sum += sz;
+        if (!is_inuse(q)) {
+          used -= sz;
+          ++nfree;
+          if (maxfree < sz) {
+            maxfree = sz;
+          }
+        } else {
+          inuse += sz;
+          unsigned long offset;
+          mtl::DlAllocator::Footer* footer = mtl::DlAllocator::getNewInfo(chunk2mem(q), offset);
+          // the first chunk holds the mstate itself
+          if (nchunks > 0 && offset == footer->m_offset) {
+            ++nfooters;
+          }
+          // the release build drops the call stacks log printed; their count stays (the two loop copies)
+          if (log && detail && footer->m_info != nullptr) {
+            ++nlogged;
+          }
+        }
+        q = next_chunk(q);
+        ++nchunks;
+      }
+      if (sum < total && total - sum > maxfree) {
+        maxfree = total - sum;
+      }
+    }
+    if (info != nullptr) {
+      info->m_totalSize = total;
+      info->m_freeSize = total - inuse;
+      info->m_usedSize = used;
+      info->m_maxFreeSize = maxfree;
+      info->m_usedRate = (float)used * 100.0f / (float)total;
+      info->m_chunkUsedRate = (float)(nchunks - nfree) * 100.0f / (float)nchunks;
+      info->m_footerCount = nfooters;
+    }
+  }
+}
+
 // ---- end of dlmalloc ----
 
 namespace mtl {
+
+mm::mtl::HeapAllocator CallStackManager::m_allocator;
 
 // the heap createAllocator makes the allocators in
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100ED26D0)
@@ -6382,6 +6443,71 @@ void DlAllocator::destroy() {
 
 void* DlAllocator::allocate(unsigned long size, unsigned long alignment) {
     return allocate(size, 16, "no name", 0);
+}
+
+// 1.0.0 has it out of line (0x710077DF90); 3.0.1 inlines it in deallocate and log_callSTack
+DlAllocator::Footer* DlAllocator::getNewInfo(const void* p, unsigned long& size) {
+    size = 0;
+    if (p == nullptr) {
+        return nullptr;
+    }
+    size = mspace_usable_size(p) - sizeof(Footer);
+    return reinterpret_cast<Footer*>(size + reinterpret_cast<unsigned long>(p));
+}
+
+void CallStackManager::remove(CallStackInfo* info) {
+    if (info == nullptr) {
+        return;
+    }
+    if (info->m_refCount == 1) {
+        m_list.remove(info);
+    }
+    if (info->release() == 0) {
+        ml::CS cs(m_cs);
+        m_allocator.deallocate(info);
+    }
+}
+
+void DlAllocator::deallocate(void* p, unsigned long size) {
+    if (p != nullptr && m_mspace != nullptr) {
+        unsigned long offset;
+        Footer* footer = getNewInfo(p, offset);
+        if (footer != nullptr && static_cast<int>(offset) > 0 && footer->m_info != nullptr) {
+            m_callStack.remove(footer->m_info);
+            footer->m_info = nullptr;
+        }
+        mspace_free(m_mspace, p);
+    }
+}
+
+void DlAllocator::log(MemoryInfo* info, bool flag) const {
+    mstate ms = static_cast<mstate>(m_mspace);
+    if (ms != nullptr && ok_magic(ms)) {
+        fn_71006EB61C(ms, info, true, flag);
+    }
+}
+
+void DlAllocator::log_callSTack(void* p) const {
+    if (p != nullptr && m_mspace != nullptr) {
+        unsigned long size;
+        Footer* footer = getNewInfo(p, size);
+        if (static_cast<int>(size) > 0 && footer != nullptr && footer->m_info != nullptr &&
+            footer->m_magic == FOOTER_MAGIC) {
+            footer->m_info->log();
+        }
+    }
+}
+
+void DlAllocator::memoryInfo(MemoryInfo* info) const {
+    mstate ms = static_cast<mstate>(m_mspace);
+    if (ms != nullptr) {
+        if (ok_magic(ms)) {
+            fn_71006EB61C(ms, info, false, false);
+        }
+        if (info != nullptr) {
+            info->m_name = getName();
+        }
+    }
 }
 
 const char* DlAllocator::getName() const {

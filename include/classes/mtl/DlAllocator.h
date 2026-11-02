@@ -5,6 +5,7 @@
 #include "ml/CriticalSection.h"
 #include "mm/mtl/IntrusiveList.h"
 #include "mtl/CallStackInfo.h"
+#include "mtl/CallStackManager.h"
 
 namespace mtl {
 
@@ -16,7 +17,8 @@ public:
     // not the original's
     struct Footer {
         unsigned int m_magic;  // FOOTER_MAGIC
-        long pad_8;  // initFooter's last argument
+        long m_offset;  // initFooter's last argument: the footer's own offset in the allocation (the mspace walk
+                        // counts the chunks whose footer holds it)
         CallStackInfo* m_info;  // CallStackManager::regist's record, or null
     };
     static const unsigned int FOOTER_MAGIC = 0x44434241;  // "ABCD" (name not the original's)
@@ -50,8 +52,7 @@ public:
     void* m_mspace;  // the dlmalloc mspace create made in m_base (destroy forgets it)
     void* m_base;  // the memory create was handed
     unsigned long m_size;  // its size
-    mm::mtl::IntrusiveListBase m_list;  // (its use is not read yet)
-    ml::CriticalSection m_cs;
+    CallStackManager m_callStack;  // +0x48: the footers' call stack records
 };
 
 }  // namespace mtl

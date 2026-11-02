@@ -9,6 +9,10 @@ namespace std { inline namespace __1 { struct bidirectional_iterator_tag; } }
 // mm_lib's intrusive_list.h, as the including file's include path named it (see mm/mtl/FixStr.h)
 #ifdef MM_LIB_FROM_LIBS
 #define MM_MTL_INTRUSIVE_LIST_PATH "../../../mcl/mm_lib/source\\mm_mtl/intrusive_list.h"
+#elif defined(MM_LIB_FROM_MONOLIB_MM)
+// monolib_mm's (mtl::CallStackManager::remove cites it so)
+#define MM_MTL_INTRUSIVE_LIST_PATH \
+    "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../../MCL/mm_lib/source\\mm_mtl/intrusive_list.h"
 #else
 #define MM_MTL_INTRUSIVE_LIST_PATH \
     "D:/Monolithsoft/BF2/prog/application/BF2//../../libs/mcl/mm_lib/source\\mm_mtl/intrusive_list.h"
