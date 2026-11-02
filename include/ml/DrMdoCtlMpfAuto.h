@@ -54,6 +54,10 @@ public:
     void StockPoint();
     void gridInstColiCalc();
     void seachInstTree(const MdsMpfAutoPosTree* tree);
+    bool gridColiInstPosRangeChk(const MdsMpfAutoPosTree* tree);
+    // true when a buffer overlapping the x/z rectangle has a hit in its tree or its instance trees
+    bool gridChkColiRange(float maxX, float minX, float maxZ, float minZ);
+    bool gridColiRangeChk(const MdsMpfAutoTree* tree);
 
     const MdsMpfAutoHead* m_pHeader;  // 0x0, setupAutoMpf's head argument
     unsigned char pad_8[0x20];
@@ -67,7 +71,9 @@ public:
     unsigned char pad_74[0xC];
     int m_workNum;  // 0x80: autoMpfCalc's loop bound
     int m_workNum2;  // 0x84: cleared with m_workNum by the constructor
-    unsigned char pad_88[0x38];
+    float m_rangeMin[2];  // 0x88: x, z of gridChkColiRange's rectangle
+    float m_rangeMax[2];  // 0x90: x, z
+    unsigned char pad_98[0x28];
     mm::Vec3* m_pPrePos;  // 0xC0: m_pHeader->m_num positions, resetPrePos sets them to -100000
     unsigned char pad_C8[0x8];
     float m_pos[3];  // 0xD0: x, y, z; gridInstColiCalc tests x and z against each buffer's rectangle

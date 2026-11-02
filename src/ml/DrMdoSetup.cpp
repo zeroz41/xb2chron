@@ -1331,6 +1331,35 @@ void DrMdoCtlMpfAuto::gridInstColiCalc() {
     StockPoint();
 }
 
+bool DrMdoCtlMpfAuto::gridChkColiRange(float maxX, float minX, float maxZ, float minZ) {
+    int num = m_buffNum;
+    m_rangeMin[0] = minX;
+    m_rangeMin[1] = minZ;
+    m_rangeMax[0] = maxX;
+    m_rangeMax[1] = maxZ;
+    _wkMpfAutoBuff** tbl = m_pBuffTbl;
+    _wkMpfAutoBuff* buf;
+    for (int i = 0; i < num; i++) {
+        buf = tbl[i];
+        m_pCurBuff = buf;
+        if (buf->m_min[0] > maxX || buf->m_max[0] < minX || buf->m_min[1] > maxZ || buf->m_max[1] < minZ) {
+            continue;
+        }
+        if (buf->m_pTree != nullptr) {
+            if (gridColiRangeChk(buf->m_pTree)) {
+                return true;
+            }
+            if (buf->m_pInstData == nullptr) {
+                continue;
+            }
+        }
+        if (gridColiInstPosRangeChk(buf->m_pPosTree)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 DrMdoCtlMpfWork::DrMdoCtlMpfWork() {}
 
 void DrMdoCtlMpfWork::changeMemWork(const MdsMpfObjData* objData) {
