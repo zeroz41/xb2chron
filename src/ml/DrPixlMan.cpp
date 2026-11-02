@@ -747,6 +747,31 @@ void DrPixlPostObjBloom::calculateGaussBlur() {
     }
 }
 
+DrPixlPostObjDepthofField::~DrPixlPostObjDepthofField() {
+    for (int i = 0; i < 3; i++) {
+        if (m_calcBuff[i] != nullptr) {
+            delete m_calcBuff[i];
+            m_calcBuff[i] = nullptr;
+        }
+    }
+    if (m_lastBuff != nullptr) {
+        delete m_lastBuff;
+        m_lastBuff = nullptr;
+    }
+    if (m_autoBuff != nullptr) {
+        delete m_autoBuff;
+        m_autoBuff = nullptr;
+    }
+    if (m_calcSampBuff != nullptr) {
+        delete m_calcSampBuff;
+        m_calcSampBuff = nullptr;
+    }
+    if (m_float2Buff != nullptr) {
+        delete m_float2Buff;
+        m_float2Buff = nullptr;
+    }
+}
+
 DrPixlPostObjMotionBlur::~DrPixlPostObjMotionBlur() {
     for (int i = 0; i < 2; i++) {
         if (m_blurVel[i] != nullptr) {
@@ -915,6 +940,31 @@ void DrPixlShadowCacheMan::buffUpdate() {
     }
     m_flags |= 2;
     resetColorBuff();
+}
+
+unsigned int DrPixlShadowCacheMan::clipDirShadowChk(const mm::Vec3& pos, float radius, bool skipView) {
+    if (!(m_flags & 8)) {
+        return 0;
+    }
+    if (!skipView) {
+        DrCalcViewWork* viewWork = DrMan::get()->m_calcMan->m_pViewWork;
+        const mm::Vec3& dir = m_lightDir;
+        if (!viewWork->m_clipPoli.clipLineTest(pos, dir, radius)) {
+            return 0;
+        }
+    }
+    unsigned int result = 0;
+    for (int i = 0; i < 3; i++) {
+        int type = m_dirClip[i].clipTypeTest(pos, radius);
+        if (type == 0) {
+            continue;
+        }
+        result |= 0x800 << i;
+        if (type != 2) {
+            break;
+        }
+    }
+    return result;
 }
 
 void DrPixlShadowCacheMan::addShadowCacheUpdate(bool) {

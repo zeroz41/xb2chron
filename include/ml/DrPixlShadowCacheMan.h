@@ -3,6 +3,7 @@
 
 #include "grlib/CGLibRenderTarget.h"
 #include "classes/ml/DrCalcClipWorkPlane.h"
+#include "classes/ml/DrCalcClipWorkShadowPlane.h"
 #include "mm/Vec3.h"
 
 namespace mm { class Vec3; }
@@ -58,7 +59,13 @@ public:
     DrPixlMan* m_pixlMan;  // 0x8: the constructor's argument
     SHCACHE_WORK_TBL m_workTbl[4];  // 0x10
     grlib::CGLibDblUniformBlock* m_uniforms;  // 0x18510: one per DrPixlMan::setupShadowUnifrom index
-    unsigned char pad_18518[0x294];
+    unsigned char pad_18518[0x28];
+    // 0x18540: the constructor builds four 0x90 apart; clipDirShadowChk tests the first three, giving
+    // 0x800 << i (the name is not the original's)
+    DrCalcClipWorkShadowPlane m_dirClip[4];
+    unsigned char pad_18780[0x10];
+    mm::Vec3 m_lightDir;  // 0x18790: clipDirShadowChk's clipLineTest direction (the name is not the original's)
+    unsigned char pad_187A0[0xC];
     int m_updateCount;  // 0x187AC: addShadowCacheUpdate counts up, delShadowCacheUpdate down to 0
     unsigned long m_selectUpdate;  // 0x187B0: callSelectShadowCacheUpdate clears the bits it is given
 };
