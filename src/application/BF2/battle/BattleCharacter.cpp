@@ -111,6 +111,31 @@ void BattleCharacter::EndBladeTimer(BLADE_TIMER_MODE mode) {
     }
 }
 
+bool BattleCharacter::IsOverlapVert(const BattleCharacter* other) const {
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr) {
+        return false;
+    }
+    const CharacterParameter* otherParam = other->GetCharacterParameterConst(false);
+    if (otherParam == nullptr) {
+        return false;
+    }
+    float top = param->pad_30 + m_pos.y;
+    float otherTop = otherParam->pad_30 + other->m_pos.y;
+    float bottom = m_pos.y;
+    float otherBottom = other->m_pos.y;
+    if (otherBottom <= bottom && bottom <= otherTop) {
+        return true;
+    }
+    if (otherBottom <= top && top <= otherTop) {
+        return true;
+    }
+    if (bottom <= otherBottom && otherBottom <= top) {
+        return true;
+    }
+    return otherTop <= top && bottom <= otherTop;
+}
+
 bool BattleCharacter::IsEnableTurnAI() const {
     return ((1 << m_state) & ((1 << 1) | (1 << 4))) != 0;
 }
@@ -427,6 +452,40 @@ void BattleCharacter::StopSE(BTL_SE se, int no) {
     }
 }
 
+void BattleCharacter::ManagerUpdate_Attack() {
+    float time = pad_F07_0 ? 0.0f : pad_CE0 * pad_EC8;
+    if (pad_108C > 0.0f) {
+        float rest = pad_108C - time;
+        rest = rest > 0.0f ? rest : 0.0f;
+        pad_108C = rest;
+    }
+    if (m_superArmorTime > 0.0f) {
+        float rest = m_superArmorTime - time;
+        rest = rest > 0.0f ? rest : 0.0f;
+        m_superArmorTime = rest;
+    }
+    if (pad_1094 > 0.0f) {
+        float rest = pad_1094 - time;
+        rest = rest > 0.0f ? rest : 0.0f;
+        pad_1094 = rest;
+    }
+    if (pad_1098 > 0.0f) {
+        pad_1098 -= time;
+        if (pad_1098 <= 0.0f) {
+            pad_1098 = 0.0f;
+            pad_10B8 = 0;
+        }
+    }
+    pad_109C += time;
+    if (pad_10A2 != 0) {
+        int sub = static_cast<int>(time * 4096.0f);
+        pad_10A2 = pad_10A2 > sub ? pad_10A2 - sub : 0;
+    }
+    if (pad_107C > 0.0f) {
+        pad_107C -= pad_CE4;
+    }
+}
+
 int BattleCharacter::GetKizunaStage(float* ratio) const {
     if (Utility::IsThirdCharacter(m_handle)) {
         return 6;
@@ -704,6 +763,29 @@ void BattleCharacter::HealHpRate(float rate, int type, BattleCharacter* attacker
     data.m_type = type;
     data.m_damage = heal;
     NotifyDirectDamage(data);
+}
+
+void BattleCharacter::NotifyLostHateTarget(int) {
+    if (BattleGlobal::sys()->m_challengeAnySuccess) {
+        const CharacterParameter* param = GetCharacterParameterConst(false);
+        if (param != nullptr && param->m_isNotBlade) {
+            return;
+        }
+        if (pad_F09_3) {
+            return;
+        }
+    }
+    if ((pad_ECC & (1 << 5)) == 0 || (pad_ED0 & (1 << 5)) != 0) {
+        return;
+    }
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr || param->m_isNotBlade) {
+        return;
+    }
+    if (gf::GfDataBlade::getRole(m_bdatID) != 1) {
+        return;
+    }
+    fn_710002FC0C(5);
 }
 
 void BattleCharacter::fn_710006AEE8(unsigned int damage, int type, BattleCharacter* attacker) {
@@ -1065,6 +1147,20 @@ void BattleCharacter::AddKizunaStage(int add) {
         return;
     }
     const_cast<GROUP_BLADE_DATA*>(data.GetBladeDataConst(-1))->SetKizunaStage(stage, 0.5f, false);
+}
+
+bool BattleCharacter::IsEnableCancelReaction() const {
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param != nullptr && param->fn_7100085314(true)) {
+        return false;
+    }
+    if (!m_isPlayer) {
+        param = GetCharacterParameterConst(false);
+        if (param == nullptr || !param->fn_710008527C(false) || m_driverType != 0) {
+            return false;
+        }
+    }
+    return m_bladeArtsState != 1 && m_bladeArtsState != 2;
 }
 
 void BattleCharacter::FluctuatePartyGauge(int value) {

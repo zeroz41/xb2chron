@@ -123,6 +123,7 @@ public:
     // with their UpdateInfo, where 3.0.1's call fn_7100036084 and fn_7100039050
     void PreManagerUpdate(const fw::UpdateInfo& info);
     void ManagerUpdate(const fw::UpdateInfo& info);
+    void ManagerUpdate_Attack();
     void PostManagerUpdate(const fw::UpdateInfo& info);
     void UpdateHateRingData();
     // the arts slot a blade art would use (BladeArtsManager::RegisterBladeArts registers none below 0)
@@ -152,6 +153,9 @@ public:
     float GetKizunaMoveSpeedRate() const;
     void SetScout(bool);
     void SetSuperArmorTime(float);
+    // answers for a player character while BattleGlobal's pad_bit17 is set: first true, second whether the BDAT ID
+    // is 1 (while parameter slot 64 holds) or 1003; both false while m_challengeAnySuccess is set
+    void IsKakuseiEffect(bool&, bool&) const;
     bool IsInAttackRange(int, float*) const;
     bool IsEnableTurnAI() const;
     void TurnTarget(bool, bool, bool);
@@ -247,6 +251,9 @@ public:
     void SetBladeSupportCondition(int condition);
     bool IsEnableBattleFace() const;
     void SetBattleFace(bool on, float time);
+    // false while parameter slot 65 holds for true; a non-player needs slot 64 and driver type 0; then whether
+    // m_bladeArtsState is neither 1 nor 2
+    bool IsEnableCancelReaction() const;
     int GetWeaponType(bool asmType) const;
     void StartBladeTimer(BLADE_TIMER_MODE mode);
     void EndBladeTimer(BLADE_TIMER_MODE mode);
@@ -366,6 +373,9 @@ public:
     // byte of 0xED4/0xED6/0xED8 equals id, and on success sets the bit in 0xED0. Returns whether it notified.
     // Callers: NotifyDirectDamage, AfterUpdate, NotifyLostHateTarget, DeadProc, AttackProc, DropHeadPot, others.
     bool fn_710002FC0C(int id);
+    // the argument is not read: as fn_710002FC0C's own checks for id 5, then a blade of role 1 (GfDataBlade::getRole)
+    // with a parameter whose m_isNotBlade is clear notifies fn_710002FC0C(5)
+    void NotifyLostHateTarget(int);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
     // functions and reads its fields. What it does: false when dead (IsDead(0), unless the flag is set), while
     // m_reactionID is non-zero or while pad_F09_2 is set; else true. Callers: TalkManager, Utility.
@@ -453,7 +463,10 @@ public:
     // the animation state names GetAnimationStateName formats (the names are not the original's)
     mutable mm::mtl::FixStr<20> m_animStateName;
     mutable mm::mtl::FixStr<24> m_animName;
-    unsigned char pad_CD0[0x18];
+    unsigned char pad_CD0[0x10];
+    // ManagerUpdate_Attack counts its timers down by pad_CE0 * pad_EC8 (pad_107C by pad_CE4; meaning unknown)
+    float pad_CE0;
+    float pad_CE4;
     // Utility::AI_GetBdatID returns it (the name is not the original's)
     int m_bdatID;
     unsigned char pad_CEC[0x4];
@@ -477,7 +490,12 @@ public:
     ALPHA_ANIMATION m_alphaAnimations[9];
     // one alpha rate per alpha set; ResetAlphaRate sets them to -1 (the name is not the original's)
     float m_alphaRate[3];
-    unsigned char pad_EB8[0x22];
+    unsigned char pad_EB8[0x10];
+    float pad_EC8;  // see pad_CE0
+    // fn_710002FC0C's talk trigger ids: allowed (bit 1 << id) and already notified (meaning unknown)
+    unsigned int pad_ECC;
+    unsigned int pad_ED0;
+    unsigned char pad_ED4[0x6];
     // the id DataManager::GetCharacterParameterConst looks the parameter up by, < 0 for none (the name is not the
     // original's)
     short m_chrID;
@@ -575,7 +593,9 @@ public:
     // CharacterManager::fn_710007D594 sets it on every dead enemy that does not have it yet (run bit 65; meaning
     // unknown)
     unsigned int pad_F06_1 : 1;
-    unsigned int pad_F06_2 : 7;
+    unsigned int pad_F06_2 : 6;
+    // while set, ManagerUpdate_Attack counts its timers down by 0 (run bit 72; meaning unknown)
+    unsigned int pad_F07_0 : 1;
     // the name is not the original's: fn_710002F368 treats the character as out of battle while it is set
     unsigned int m_isBattleIgnore : 1;
     unsigned int pad_F07_2 : 6;
@@ -630,10 +650,21 @@ public:
     unsigned short pad_1076_12 : 1;  // fn_7100059314 answers true while it is clear (meaning unknown)
     unsigned short pad_1076_13 : 1;  // fn_7100059314's answer once it counts (meaning unknown)
     unsigned short pad_1076_14 : 2;
-    unsigned char pad_1078[0x18];
+    unsigned char pad_1078[0x4];
+    // timers ManagerUpdate_Attack counts down (pad_108C, m_superArmorTime, pad_1094 and pad_1098 kept at 0 or
+    // more; pad_1098 clears pad_10B8 when it runs out) or up (pad_109C); meaning unknown
+    float pad_107C;
+    unsigned char pad_1080[0xC];
+    float pad_108C;
     // SetSuperArmorTime keeps the longer time (the name is not the original's)
     float m_superArmorTime;
-    unsigned char pad_1094[0x13];
+    float pad_1094;  // see pad_107C
+    float pad_1098;
+    float pad_109C;
+    unsigned char pad_10A0[0x2];
+    // ManagerUpdate_Attack counts it down by 4096 per time unit, to 0 at least (meaning unknown)
+    unsigned short pad_10A2;
+    unsigned char pad_10A4[0x3];
     // Utility::AI_GetAutoAttackState answers it plus 1, kept in 0-3 (the name is not the original's)
     signed char m_autoAttackStep;
     unsigned char pad_10A8[0x6];
