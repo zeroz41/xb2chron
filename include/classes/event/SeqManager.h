@@ -254,7 +254,7 @@ public:
     unsigned char pad_2788;  // 0x2788
     unsigned int pad_278c;  // 0x278C
     unsigned char pad_2790;  // 0x2790
-    unsigned int pad_2794;  // 0x2794
+    int pad_2794;  // 0x2794: start_fadeout converts it to float as a signed int (VolumeSeamless::start)
     unsigned int pad_2798;  // 0x2798
     unsigned char pad_279c;  // 0x279C
     unsigned long pad_27a0;  // 0x27A0

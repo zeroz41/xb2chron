@@ -13,6 +13,7 @@ public:
         pad_48 = 0;
     }
     virtual ~VolumeSeamless() {}  // slot 0
+    void start(float);  // out of line (0x7100111A18); SeqManager::start_fadeout passes SeqManager's pad_2794
     void update();  // 1.0.0's VolumeSeamless::update (0x71000FFAEC); inlined into VolumeManager's
     // bits 1 and 2: update counts m_timer down; bit 2 is cleared once it runs out (the name is not the original's)
     unsigned int m_flags;  // 0x8

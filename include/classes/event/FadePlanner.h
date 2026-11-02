@@ -31,12 +31,13 @@ public:
     void request(TYPE type) {
         Entry& entry = pad_c[type];
         if (entry.pad_0 & 1) {
+            unsigned int delay = entry.pad_8;
             entry.pad_0 |= 2;
-            if (entry.pad_8 == 0) {
+            if (delay == 0) {
                 play(type);
             } else {
                 entry.pad_0 |= 4;
-                entry.pad_20 = entry.pad_8;
+                entry.pad_20 = delay;
             }
         }
     }

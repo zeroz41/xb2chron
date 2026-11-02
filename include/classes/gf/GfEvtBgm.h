@@ -15,18 +15,26 @@ namespace gf {
 // queue keep a copy, and GfEvtBgm holds the one that plays
 class EventBgmSetup {
 public:
-    EventBgmSetup() : m_volume(1.0f), m_volumeTime(0.0f), pad_4c(), m_delay(0.0f), m_stopTime(0.0f),
-                      m_overTime(0.0f), m_noBgm(false), pad_61(), m_silentIfEmpty(false) {}
+    EventBgmSetup() : m_volume(1.0f), m_volumeTime(0.0f), pad_4c(0.0f), pad_50(0.0f), m_delay(0.0f), m_stopTime(0.0f),
+                      m_overTime(0.0f), m_noBgm(false), pad_61(false), pad_62(false), pad_63(false), pad_64(false),
+                      m_silentIfEmpty(false) {}
 
     mm::mtl::FixStr<64> m_name;  // the BGM's name (setPlayBgmTakeOver sets it)
     float m_volume;  // EvtBgmTaskVolume moves the playing volume to it; the name is not the original's
     float m_volumeTime;  // how long EvtBgmTaskVolume takes to; the name is not the original's
-    unsigned char pad_4c[8];
+    // a time in seconds: event::SeqManager::start_fadeout stores its frame count / 30 here, with m_noBgm set
+    float pad_4c;
+    float pad_50;  // 1.0.0's event::BgmManager::stop clears it with the times around it
     float m_delay;  // EvtBgmTaskDelay waits it out before the BGM plays; the name is not the original's
     float m_stopTime;  // EvtBgmTaskDelayStop waits it out before the BGM stops; the name is not the original's
     float m_overTime;  // cancelOverTime clears it; stopBgm queues no stop while it is set
     bool m_noBgm;  // EvtBgmTaskDelay::start plays no BGM for it; the name is not the original's
-    unsigned char pad_61[4];
+    // flags: start_fadeout sets pad_62 with m_noBgm for its fade, and pad_62..pad_64 for the stop that follows
+    // (1.0.0's event::BgmManager::stop sets the same three)
+    bool pad_61;
+    bool pad_62;
+    bool pad_63;
+    bool pad_64;
     bool m_silentIfEmpty;  // setPlayParam names "SilentBgm" for a setup without a name; the name is not the original's
 };
 

@@ -92,6 +92,7 @@ public:
     static bool isMapLodDisp(unsigned int lodId);
     static void setMapLodAnim(unsigned int lodId, bool flag0, bool flag1);
     static bool isMapLodAnimReverse(unsigned int lodId);
+    static void playBgm(const EventBgmSetup& setup);
     static void stopBgm(const EventBgmSetup& setup);
     static void cancelOverTime();
     static void changeVolume(const EventBgmSetup& setup);
