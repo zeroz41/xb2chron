@@ -11,6 +11,7 @@
 #include "gf/GfDataAchievement.h"
 #include "mm/Pnt.h"
 #include "gf/GfKizunaringBlade.h"
+#include "gf/GfMenuObjUtil.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfGameVoice.h"
 #include "classes/gf/GfMenuAchievementAdapter.h"
@@ -299,6 +300,115 @@ void GfMenuObjBlKizunaRing::movePointer(unsigned int handle, int index, ui::UISe
         acc.getPosCenter(pos);
     }
     GfMenuObject::changePointerPos(handle, pos);
+}
+
+void GfMenuObjBlKizunaRing::RingPadListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
+    ui::UIObjectAcc owner(m_owner->m_handle);
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        GfMenuObject::setupInputSelection(handle, 0, 10);
+        GfMenuObject::disableInput(handle);
+        break;
+    case 6:
+        break;
+    case 8: {
+        int next;
+        int index;
+        switch (event.m_param1) {
+        case 2: {
+            unsigned int main = owner.searchChild("LAY_main");
+            ui::EventData close;
+            close.m_type = 0x22;
+            ui::UIManager::get()->requestObjectEvent(main, close, 0.0f);
+            GfMenuObject::disableInput(handle);
+            if (m_owner->m_mode == 0) {
+                GfMenuObjMainMenu2::disableCharChange();
+            }
+            GfMenuObjUtil::playSECommonCancel();
+            return;
+        }
+        // case 10 before case 9 and index at the outer scope: the original's branch layout (case 9's tail merge) and its
+        // case 0xB test (one `||` without a scope-exit selector) need both
+        case 10: {
+            index = m_owner->m_selected;
+            if (index < 0) {
+                return;
+            }
+            unsigned int row = index / 10U;
+            unsigned int column = index % 10U;
+            if (column < 5) {
+                if (index < 10U) {
+                    return;
+                }
+                next = (row - 1) * 10 + column;
+            } else {
+                if (row + 1 > 4) {
+                    return;
+                }
+                next = (row + 1) * 10 + column;
+            }
+            break;
+        }
+        case 9: {
+            index = m_owner->m_selected;
+            if (index < 0) {
+                return;
+            }
+            unsigned int row = index / 10U;
+            unsigned int column = index % 10U;
+            if (!(column >= 5)) {
+                if (row + 1 > 4) {
+                    return;
+                }
+                next = (row + 1) * 10 + column;
+            } else {
+                if (index < 10U) {
+                    return;
+                }
+                next = (row - 1) * 10 + column;
+            }
+            break;
+        }
+        case 0xB: {
+            index = m_owner->m_selected;
+            if (index < 0) {
+                return;
+            }
+            if (index % 10U < 9) {
+                next = index + 1;
+            } else {
+                return;
+            }
+            break;
+        }
+        case 0xC: {
+            index = m_owner->m_selected;
+            if (index < 0 || index % 10U == 0) {
+                return;
+            }
+            next = index - 1;
+            break;
+        }
+        default:
+            return;
+        }
+        GfMenuObject::changePointerPos(owner.searchChild("LAY_kizunaring"), mm::Pnt<short>(0, 0));
+        movePointer(owner.searchChild("LAY_kizunaring"), next, m_owner->m_ringList);
+        GfMenuObjUtil::playSECommonTab();
+        sendEvent(handle, 0x101, 0);
+        break;
+    }
+    case 0x101:
+        m_owner->m_seq.clear();
+        m_owner->m_seq.addWait(1);
+        m_owner->m_seq.addJob(&GfMenuObjBlKizunaRing::seqWait);
+        GfMenuObject::disableInput(handle);
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    }
 }
 
 void GfMenuObjBlKizunaRing::openForMercenary(unsigned int handle, unsigned int value, unsigned short group) {
