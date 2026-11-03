@@ -1031,3 +1031,7 @@ inline void LocatorBat_EnemySpeciesID::fn_7100272430(GF_OBJ_HANDLE* handle) {
     }
 }
 }  // namespace gf
+
+// the locator vectors' growth (their users are not written yet)
+template void mm::mtl::Vector<gf::GfGmkLocators>::expand(size_t, size_t);
+template void mm::mtl::Vector<gf::GfGmkLocators>::push_back(const gf::GfGmkLocators&);

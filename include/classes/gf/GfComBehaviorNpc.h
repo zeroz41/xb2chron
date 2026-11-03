@@ -18,6 +18,7 @@ namespace fw { class Message; }
 namespace fw { class MessageObject; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GfComAsm; }
+namespace gf { class MsgGameLipAction; }
 namespace gf { class GfMenuCallContext; }
 namespace fw { class ReferenceFrame; }
 namespace navi { class NvmshAcObj; }
@@ -107,6 +108,8 @@ public:
     // whether it reached m_goalPos: its steering timed out, or the goal is within its collision's height and radius
     bool isArrivedToGoal() const;
     virtual bool recieveMessage(fw::MessageObject*, fw::Message&);  // slot 4
+    // MsgGameLipAction's action 0 forces the lip sync plugin to play, 1 stops forcing it (recieveMessage's)
+    void procMsgGameLipAction(fw::MessageObject* from, MsgGameLipAction& msg);
     virtual void update(fw::UpdateInfo const&);  // slot 5
     // its object's asm component (slot 2), none when the slot holds another kind
     virtual GfComAsm* getComAsm() const;  // slot 7

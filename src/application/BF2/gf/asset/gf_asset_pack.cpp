@@ -14,6 +14,7 @@
 #include "gf/GfAssetUtil.h"
 #include "gf/GfUtil.h"
 #include "mm/mtl/Hash.h"
+#include "fw/Reflection.h"
 
 #include <string.h>
 
@@ -492,3 +493,6 @@ void GfAssetFiles::setInitializeParam(const GfAssetFilesInfo& info) {
 }
 
 }  // namespace gf
+
+// the reflection value vector's growth (its user is not written yet)
+template void mm::mtl::Vector<fw::ReflectionValueStruct*>::expand(size_t, size_t);

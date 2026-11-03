@@ -101,8 +101,7 @@ struct ResClipData {
     mm::mtl::FixedArray<mm::mtl::Vector<AsmKeyframeAnnotation>, 5> m_frameAnnotations;  // per kind (AsmClip::update)
     // set by ResStateData::setFrameAnnotation: ResStateData::sortAnnotation sorts only a clip that has it (the name
     // is not the original's)
-    bool m_unsorted;
-    unsigned char pad_e1[0x7];
+    bool m_unsorted;  // (0xE1..0xE7: tail padding, which Vector<ResClipData>::extend does not copy)
 };
 
 // orders frame annotations by frame (ResClipData::sortAnnotation's std::sort comparator)

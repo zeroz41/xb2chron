@@ -199,3 +199,7 @@ bool GfSmnEnemyManager::execRelSummon(const RelSmnInfo& info) {
 }
 
 }  // namespace gf
+
+// the pop vectors' growth (their users are not written yet)
+template void mm::mtl::Vector<std::pair<gf::GfRelSmnEnemy::PopInfo*, gf::GF_OBJ_HANDLE*> >::expand(size_t, size_t);
+template void mm::mtl::Vector<gf::GF_OBJ_HANDLE*>::expand(size_t, size_t);

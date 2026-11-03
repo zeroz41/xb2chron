@@ -1365,3 +1365,6 @@ DrIBLObj::~DrIBLObj() {
 }
 
 }  // namespace ml
+
+// the IBL vectors' growth (their users are not written yet)
+template void mm::mtl::Vector<ml::DrLightObjGlobalIBL*>::resize(size_t);

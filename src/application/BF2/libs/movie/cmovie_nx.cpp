@@ -297,3 +297,6 @@ void CMovie::doHomeMenu(bool homeMenu) {
 }
 
 }  // namespace CMovieNX
+
+// VideoRenderer::OnOutputAvailable's growth path (its caller, MovieDecoderPlayer::VideoOutputBufferAvailableEvent, is not written yet)
+template void std::vector<VideoRenderer::VideoData>::__push_back_slow_path<const VideoRenderer::VideoData&>(const VideoRenderer::VideoData&);

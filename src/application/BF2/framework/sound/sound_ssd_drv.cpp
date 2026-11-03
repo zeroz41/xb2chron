@@ -673,3 +673,9 @@ void ISoundDriver::attachPoolMemory(void*, unsigned int) {}
 void ISoundDriver::detachPoolMemory(void*, unsigned int) {}
 
 }  // namespace fw
+
+// playStream/playSeLocal (not written yet) add a handle's player
+template mm::mtl::Map<ssd::SoundHandle*, fw::SoundSsdPlayer*>::node* mm::mtl::Map<ssd::SoundHandle*, fw::SoundSsdPlayer*>::tree_type::insert(const mm::mtl::Map<ssd::SoundHandle*, fw::SoundSsdPlayer*>::tree_type::value_type&);
+
+// FixStr<256>'s insert (its caller is not written yet)
+template mm::mtl::FixStr<256>& mm::mtl::FixStr<256>::insert(int, const char*, int);

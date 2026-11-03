@@ -1,4 +1,5 @@
 #include "classes/fw/AnimPoseModifier.h"
+#include "mm/mtl/Vector.h"
 
 namespace fw {
 
@@ -12,3 +13,6 @@ void AnimPoseModifier::unbindReferenceFrame(mm::mtl::IntrusivePtr<ReferenceFrame
 }
 
 }  // namespace fw
+
+// a short vector's resize (its user is not written yet)
+template void mm::mtl::Vector<short>::resize(size_t);

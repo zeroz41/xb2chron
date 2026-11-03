@@ -150,3 +150,7 @@ void GfMenuObjEnemyStatus::disp(bool disp) {
 }
 
 }  // namespace gf
+
+// the sequence's animation jobs (their callers are not written yet)
+template void gf::GfMenuSequence<gf::GfMenuObjEnemyStatus, 4>::addAnimJob(unsigned int, const char*);
+template bool gf::GfMenuSequence<gf::GfMenuObjEnemyStatus, 4>::wait_anim();

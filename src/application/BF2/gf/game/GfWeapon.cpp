@@ -18,6 +18,7 @@
 #include "classes/gmk/GmkMapObj.h"
 #include "classes/gmk/GmkRoutedMapObj.h"
 #include "classes/gmk/GmkNpc.h"
+#include "classes/gf/GfFieldLocator.h"
 #include "classes/gmk/GmkRoutedNpc.h"
 #include "classes/gmk/GmkManager.h"
 #include "classes/gmk/GmkEnemy.h"
@@ -3076,3 +3077,7 @@ void fn_71002EEDC0(SDataGameSavedEvent& row, unsigned int event) {
 }
 
 }  // namespace gf
+
+// the field locator vector's growth (its user is not written yet)
+template void mm::mtl::Vector<gf::GfFieldLocator>::expand(size_t, size_t);
+template void mm::mtl::Vector<gf::GfFieldLocator>::push_back(const gf::GfFieldLocator&);

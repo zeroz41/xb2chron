@@ -218,3 +218,6 @@ void GfMenuObjDropItem::closeAll() {
 }
 
 }  // namespace gf
+
+// the info queue's push_back (its caller, open, is not written yet)
+template void mm::mtl::Queue<gf::GfMenuObjDropItem::DropItemInfo>::push_back(const gf::GfMenuObjDropItem::DropItemInfo&);

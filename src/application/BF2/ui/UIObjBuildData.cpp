@@ -101,3 +101,9 @@ bool UIObjBuildData::getObjectParam(unsigned int index, const char* name, Value&
 }
 
 }  // namespace ui
+
+// the object and parameter vectors' growth (their users are not written yet)
+template void mm::mtl::Vector<ui::UIObjBuildData::ObjData>::expand(size_t, size_t);
+template void mm::mtl::Vector<ui::UIObjBuildData::Parameter>::assign(const mm::mtl::Vector<ui::UIObjBuildData::Parameter>&);
+template void mm::mtl::Vector<ui::UIObjBuildData::Parameter>::expand(size_t, size_t);
+template void mm::mtl::Vector<ui::UIObjBuildData::ObjData>::push_back(const ui::UIObjBuildData::ObjData&);

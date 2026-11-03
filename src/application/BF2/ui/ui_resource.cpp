@@ -125,3 +125,8 @@ UIResource::Capture* UIResource::searchCapture(const char* name) {
 }
 
 }  // namespace ui
+
+// the resource vectors' growth (their users are not written yet)
+template void mm::mtl::Vector<ui::UIResource::ResourceInfo>::expand(size_t, size_t);
+template void mm::mtl::Vector<ui::UIResource::RenderViewInfo>::expand(size_t, size_t);
+template void mm::mtl::Vector<ui::UIResource::CaptureInfo>::expand(size_t, size_t);

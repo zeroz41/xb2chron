@@ -77,3 +77,7 @@ bool GfGameVisible::isVisible(GF_OBJ_HANDLE* handle) {
 GfGameVisible::~GfGameVisible() {}
 
 }  // namespace gf
+
+// searchObj (not written yet) adds an Info per handle: the map's insert and rebalance are emitted here
+template gf::GfGameVisible::InfoMap::node* gf::GfGameVisible::InfoMap::tree_type::insert(
+    const gf::GfGameVisible::InfoMap::tree_type::value_type&);

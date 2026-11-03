@@ -180,3 +180,6 @@ namespace gmk {
 GmkCtrlVolSeManager::~GmkCtrlVolSeManager() {}
 
 }  // namespace gmk
+
+// GfMobSlotManager::update (not written yet) adds slots
+template mm::mtl::Map<gf::GF_SLOT_HANDLE*, float>::node* mm::mtl::Map<gf::GF_SLOT_HANDLE*, float>::tree_type::insert(const mm::mtl::Map<gf::GF_SLOT_HANDLE*, float>::tree_type::value_type&);

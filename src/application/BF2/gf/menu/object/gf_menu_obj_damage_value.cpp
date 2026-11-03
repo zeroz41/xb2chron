@@ -110,3 +110,7 @@ void GfMenuObjDamageValue::closeAll() {
 }
 
 }  // namespace gf
+
+// the info queue's operations (their callers, open and the list listener's, are not written yet)
+template void mm::mtl::Queue<gf::GfMenuObjDamageValue::DamageInfo>::push_back(const gf::GfMenuObjDamageValue::DamageInfo&);
+template void gf::GfMenuManyObjects::remove<gf::GfMenuObjDamageValue::DamageInfo>(unsigned int, unsigned int);

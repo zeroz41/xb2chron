@@ -12,6 +12,7 @@
 #include "classes/gf/GfBdatItem.h"
 #include "classes/gf/SCOM_ADD_ITEM.h"
 #include "plugin/Bdat.h"
+#include "classes/gf/GfMenuIDList.h"
 
 namespace gf {
 
@@ -898,3 +899,6 @@ void GfMenuItemList::fn_710037835C(unsigned int order) {
 }
 
 }  // namespace gf
+
+// the ID list's comparator swap (GfMenuIDList::fn_7100371F98, gf_menu_id_list, calls it; the original keeps its copy here)
+template void std::function<bool(const gf::MenuID&, const gf::MenuID&)>::swap(std::function<bool(const gf::MenuID&, const gf::MenuID&)>&);

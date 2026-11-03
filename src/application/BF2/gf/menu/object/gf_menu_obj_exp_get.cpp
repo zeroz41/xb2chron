@@ -227,3 +227,7 @@ void GfMenuObjExpGet::closeAll() {
 }
 
 }  // namespace gf
+
+// the info queue's operations (their callers, open and the list listener's, are not written yet)
+template void mm::mtl::Queue<gf::GfMenuObjExpGet::ExpGetInfo>::push_back(const gf::GfMenuObjExpGet::ExpGetInfo&);
+template void gf::GfMenuManyObjects::remove<gf::GfMenuObjExpGet::ExpGetInfo>(unsigned int, unsigned int);

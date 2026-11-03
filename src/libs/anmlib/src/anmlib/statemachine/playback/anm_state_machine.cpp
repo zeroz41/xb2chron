@@ -282,3 +282,10 @@ bool StateMachine::setAdditiveStateSpeed(const char* state, float speed) {
 }
 
 }  // namespace anm
+
+// the additive and state maps' tree operations (their callers are not written yet)
+template void anm::StateMachine::AdditiveMap::tree_type::rebalance_after_erase(anm::StateMachine::AdditiveMap::node*);
+template anm::StateMachine::AdditiveMap::node* anm::StateMachine::AdditiveMap::tree_type::insert(const anm::StateMachine::AdditiveMap::tree_type::value_type&);
+
+// 
+template anm::StateMachine::StateMap::node* anm::StateMachine::StateMap::tree_type::insert(const anm::StateMachine::StateMap::tree_type::value_type&);

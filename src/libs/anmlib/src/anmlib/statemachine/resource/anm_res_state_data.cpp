@@ -29,3 +29,7 @@ void ResStateData::cleanup() {
 }
 
 }  // namespace anm
+
+// the clip and annotation vectors' growth (their users are not written yet)
+template void mm::mtl::Vector<anm::ResClipData>::resize(size_t);
+template void mm::mtl::Vector<anm::AsmKeyframeAnnotation>::assign(const mm::mtl::Vector<anm::AsmKeyframeAnnotation>&);

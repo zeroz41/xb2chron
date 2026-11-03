@@ -283,3 +283,7 @@ void Util::samplePoseSmartFromControl(Control* control, Pose* pose, bool flag) {
 }
 
 }  // namespace anm
+
+// FixStr<64>'s insert and replace (their callers are not written yet)
+template mm::mtl::FixStr<64>& mm::mtl::FixStr<64>::insert(int, const char*, int);
+template mm::mtl::FixStr<64>& mm::mtl::FixStr<64>::replace(int, int, const char*);

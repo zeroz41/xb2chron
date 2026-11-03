@@ -481,3 +481,11 @@ int GfFobjDropitem::getResBdatIdFromItemId(int itemId) {
 }
 
 }  // namespace gf
+
+// GfFobjSeManager::createSe (not written yet) adds a sound's time
+template mm::mtl::Map<unsigned short, float>::node* mm::mtl::Map<unsigned short, float>::tree_type::insert(const mm::mtl::Map<unsigned short, float>::tree_type::value_type&);
+
+// the pair vector's growth (its user is not written yet)
+template void mm::mtl::Vector<std::pair<int, float> >::expand(size_t, size_t);
+template void mm::mtl::Vector<gf::GfFobjGottenEffectManager::EffectInfo>::push_back(const gf::GfFobjGottenEffectManager::EffectInfo&);
+template gf::GfFobjGottenEffectManager::EffectInfo* mm::mtl::Vector<gf::GfFobjGottenEffectManager::EffectInfo>::erase(gf::GfFobjGottenEffectManager::EffectInfo*);

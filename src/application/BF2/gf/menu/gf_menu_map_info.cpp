@@ -222,3 +222,7 @@ bool GfMenuMapInfo::fn_71003620FC(mm::Rect<int>& rect) {
 }
 
 }  // namespace gf
+
+// the segment vector's growth (its user is not written yet)
+template void mm::mtl::Vector<gf::GfMenuMapInfo::SegInfo>::expand(size_t, size_t);
+template void mm::mtl::Vector<gf::GfMenuMapInfo::MiniIcon>::push_back(const gf::GfMenuMapInfo::MiniIcon&);

@@ -28,6 +28,8 @@
 #include "classes/fw/UpdatableObject.h"
 #include "classes/fw/ReferenceFrame.h"
 #include "plugin/Bdat.h"
+#include "gf/MsgGameLipAction.h"
+#include "classes/gf/LipSyncPlugin.h"
 #include "math.h"
 #include "ml/MTRand.h"
 #include "classes/fw/NaviManager.h"
@@ -67,6 +69,18 @@ bool GfComBehaviorNpc::LocalSteerIsTargetNotPlayer::operator()(const GfFieldLoca
 
 gmk::AGmkBase* GfComBehaviorNpc::getBindedGmkInst() const {
     return gmk::getBindedGmkInst(static_cast<GfObj*>(m_owner)->m_handle);
+}
+
+void GfComBehaviorNpc::procMsgGameLipAction(fw::MessageObject* from, MsgGameLipAction& msg) {
+    if (msg.m_action == 0) {
+        if (LipSyncPlugin* lipSync = getPlugin<LipSyncPlugin>(2)) {
+            lipSync->m_forcePlay = true;
+        }
+    } else if (msg.m_action == 1) {
+        if (LipSyncPlugin* lipSync = getPlugin<LipSyncPlugin>(2)) {
+            lipSync->m_forcePlay = false;
+        }
+    }
 }
 
 mm::mtl::RTTI GfComBehaviorNpc::m_rtti("GfComBehaviorNpc", &GfComBehavior::m_rtti, nullptr);

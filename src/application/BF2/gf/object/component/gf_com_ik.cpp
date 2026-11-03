@@ -92,3 +92,7 @@ const mm::Vec3* GfComIK::FootGround::getHitPos() const {
 mm::mtl::RTTI GfComIK::m_rtti("GfComIK", &GfComponent::m_rtti, nullptr);
 
 }  // namespace gf
+
+// the solver vector's resize (its user is not written yet)
+template void mm::mtl::Vector<mm::mtl::IntrusivePtr<fw::IkSolver> >::resize(size_t, const mm::mtl::IntrusivePtr<fw::IkSolver>&);
+template void mm::mtl::FixedVector<gf::GfComIK::FootGround, 6>::resize(size_t, const gf::GfComIK::FootGround&);

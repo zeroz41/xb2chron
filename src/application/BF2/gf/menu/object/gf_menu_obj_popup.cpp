@@ -276,3 +276,7 @@ bool GfMenuObjPopup::fn_710045DA2C() {
 }
 
 }  // namespace gf
+
+// the popup queue's remove and the sequence's wait (their callers are not written yet)
+template void gf::GfMenuManyObjects::remove<gf::GfMenuObjPopup::PopupInfo>(unsigned int, unsigned int);
+template bool gf::GfMenuSequence<gf::GfMenuObjPopup, 8>::wait();

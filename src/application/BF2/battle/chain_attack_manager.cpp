@@ -1,6 +1,8 @@
 #include "classes/btl/ChainAttackManager.h"
 #include "classes/btl/ChainAttackManager.h"
 #include "classes/gf/GfAllocator.h"
+#include "classes/gf/GfFobjDropitem.h"
+#include "mm/mtl/Vector.h"
 
 namespace btl {
 
@@ -112,3 +114,6 @@ bool ChainAttackManager::IsStopTime() const {
 }
 
 }  // namespace btl
+
+// the drop item vector's growth (its user is not written yet)
+template void mm::mtl::Vector<gf::GfDropitemInfo>::expand(size_t, size_t);
