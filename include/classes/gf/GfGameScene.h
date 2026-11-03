@@ -79,11 +79,15 @@ public:
     // (GfDataBlade::fn_7100231884) is 10012, 10014 or 10017, off (its effect killed, the colour filter reset) otherwise
     void updateSepia(const fw::UpdateInfo& info);
     void updateRideRequest(const fw::UpdateInfo& info);
+    // an enemy with a saved hit-point value (its setup's word at 0xB4) gets it back once it is in battle, then the value is cleared
+    void updateEnemySaveHp(const fw::UpdateInfo& info);
     // the field blade change time counts up while the leader driver and its blade are out of battle in a free field
     void updateBladeChangeInField(const fw::UpdateInfo& info);
     // m_questIdForTaskLog follows the current quest (at once while it is empty, else when the game allows it)
     void updateQuestTaskLog(const fw::UpdateInfo& info);
     void updatePlayerState();
+    void updatePartyObjFlag(const fw::UpdateInfo& info);
+    void updateCrystalPopup(const fw::UpdateInfo& info);
     bool isEnableRideCondition(unsigned int id) const;
     bool isPlayerStopFlag(PLSTOP);
     void setPlayerStopFlag(PLSTOP, bool);
@@ -383,7 +387,8 @@ public:
     // fn_71002C4B80 sets it for the "aoc_tut24", "aoc_tut04" and "aoc_tut10" scripts; fn_71002C4BE4 clears it and
     // calls GfEvent::callPlayerControl(15) (the name is not the original's)
     bool m_tutorialPlayerControl;
-    unsigned char pad_8BA[0x6];
+    unsigned char pad_8BA[0x2];
+    int pad_8BC;  // setupGame and playEventSequenceEnd clear it (the name is not the original's)
     bool m_flag8C0;  // GfGameManager::fn_71002AC6F0 sets it (the name is not the original's)
     unsigned char pad_8C1[0xF];  // build allocates 0x8D0 bytes
     void qevCompleteQuest(const gf::QuestCompleteParam& param);
@@ -400,8 +405,10 @@ public:
     void fn_71002C6D48(unsigned int id);
     void gevMercenariesMissionFlag(unsigned int, unsigned int, unsigned int);
     void clear();
+    void setEraseQuestEnemyForEventStart(QuestID quest);
     bool isPlayEvent() const;
     bool isBattleStop();
+    void checkFieldBladeChange();
     bool isNeedFieldBladeChange(unsigned int index) const;
 };
 }  // namespace gf

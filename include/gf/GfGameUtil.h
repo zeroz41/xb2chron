@@ -188,6 +188,7 @@ public:
     // and does execAddRareBlade's watched-event and callBladeActivate(blade, 0, 1) steps; returns the new blade.
     static unsigned int fn_71002E1B64(SDataBlade& data, unsigned int item);
     static void setWatchedEvent(unsigned int event);  // (symbols)
+    static void addTrusuPointByLastKizunaTalk();  // (symbols)
     // named by the symbols: raises the blade's trust rank by one up to 6 (GfDataBlade::setTrustRank), tells
     // GfEvent::callDebugChangeIdea(4, blade) and shows SCOM_POPUP::createAffinity for its driver (its set driver, else
     // its creator; with GfGameManager::fn_71002A9E68 GfDataDriver::fn_71002417DC of GfDataBlade::fn_7100236518)

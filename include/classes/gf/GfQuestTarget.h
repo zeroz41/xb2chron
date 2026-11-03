@@ -95,6 +95,8 @@ public:
                                               unsigned int mapId, bool flag);
     static unsigned int getIconTypeTalk(unsigned int npcId, QuestID questId, unsigned int mapId, bool flag);
     static unsigned int getIconTypeTalk(GF_OBJ_HANDLE* handle, QuestID questId, unsigned int mapId, bool flag);
+    // GfGameScene::setEraseQuestEnemyForEventStart passes each enemy and the event's quest
+    static unsigned int getIconType(GF_OBJ_HANDLE* handle, QuestID questId);
 
     ::mm::mtl::FixedList<TargetCache, 512> m_targetCache;  // 0x10
 };
