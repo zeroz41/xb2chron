@@ -8,7 +8,7 @@
 #include "classes/event/IManager.h"
 #include "classes/mm/mtl/Singleton.h"
 
-namespace event { enum MSG_TYPE : int; }
+namespace event { enum MSG_TYPE : int; class IResEvent; }
 #include "classes/event/IResPackEvent.h"
 
 namespace event {
@@ -18,6 +18,8 @@ public:
     virtual ~ResManager() {}  // slot 0
     ResManager();  // out of line (Singleton<ResManager>::getPtr calls it)
     void loadPack(const char* name);
+    // named by the symbols (CamManager/CharaManager/EffectManager::loadResource tail-call it)
+    void load(const char* name, IResEvent* event, bool);
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2
     virtual void OnPackEvent(event::IResPackEvent::PARAM const&);  // slot 3
     void clear();

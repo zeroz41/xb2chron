@@ -18,6 +18,9 @@ public:
     void playAnim(const char* name, float frame);
     void play(const char* name, float a, float b, float c, int d, int e);
     void stop();
+    // named by the symbols: queue a move / turn of the effect to the vector over the time
+    void moveTo(const mm::Vec3& pos, float time, CV_TYPE type);
+    void turnTo(const mm::Vec3& rot, float time, CV_TYPE type);
     // fades m_color to the colour over the time (ScriptEffectColor::doit)
     void colorTo(const mm::Col4& color, float time, CV_TYPE type);
 

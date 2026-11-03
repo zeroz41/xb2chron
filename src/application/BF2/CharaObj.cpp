@@ -855,6 +855,20 @@ void MstxtRes::OnResEvent(const IResEvent::PARAM& param) {
     m_flags &= ~1;
 }
 
+void MstxtManager::load(const char* name) {
+    MstxtRes* found = nullptr;
+    for (unsigned long i = 0; i < m_res.size(); i++) {
+        if (strcmp(name, m_res[i]->m_name.m_str) == 0) {
+            found = m_res[i];
+            break;
+        }
+    }
+    if (found != nullptr) {
+        return;
+    }
+    m_res.push_back(new (mm::mtl::Singleton<MemoryManager>::getPtr()->m_handle, nullptr, 0, 4, false) MstxtRes(name));
+}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void MstxtManager::OnEventProc(event::MSG_TYPE msg) {
     if (msg == 12) {
@@ -1289,6 +1303,13 @@ void CamObj::tail() {
     if (m_activeCam) {
         m_cmdQueue.update();
     }
+}
+
+void CamManager::loadResource(const char* name) {
+    if (pad_10 & 1) {
+        return;
+    }
+    mm::mtl::Singleton<ResManager>::getPtr()->load(mm::mtl::Singleton<Extend>::getPtr()->eva(name), nullptr, false);
 }
 
 void CamManager::setFocal(bool focal) {
@@ -1812,6 +1833,13 @@ Object* ObjectManager::searchByName(const char* name) {
 namespace event {
 
 CharaManager::CharaManager() : m_modeFlags(0), m_dispFlags(0), m_offscrID(0), m_reuseFlag(0) {}
+
+void CharaManager::loadResource(const char* name) {
+    if (isStreamMode()) {
+        return;
+    }
+    mm::mtl::Singleton<ResManager>::getPtr()->load(mm::mtl::Singleton<Extend>::getPtr()->anm(name), nullptr, false);
+}
 
 CharaManager::~CharaManager() {}
 
@@ -3558,6 +3586,49 @@ void DebugManager::OnEventProc(event::MSG_TYPE msg) {
 
 namespace event {
 
+void EffectObj::moveTo(const mm::Vec3& pos, float time, CV_TYPE type) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setF32(pos.x);
+    param.val(2).setF32(pos.y);
+    param.val(3).setF32(pos.z);
+    param.val(4).setF32(time);
+    param.val(5).setS32(type);
+    m_cmdQueue.push_back(&m_linearPos, param);
+}
+
+void EffectObj::turnTo(const mm::Vec3& rot, float time, CV_TYPE type) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setF32(rot.x);
+    param.val(2).setF32(rot.y);
+    param.val(3).setF32(rot.z);
+    param.val(4).setF32(time);
+    param.val(5).setS32(type);
+    m_cmdQueue.push_back(&m_linearRot, param);
+}
+
+void EffectObj::colorTo(const mm::Col4& color, float time, CV_TYPE type) {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    CmdParam param;
+    param.val(0).setUserdata(this);
+    param.val(1).setF32(color.r);
+    param.val(2).setF32(color.g);
+    param.val(3).setF32(color.b);
+    param.val(4).setF32(color.a);
+    param.val(5).setF32(time);
+    param.val(6).setS32(type);
+    m_cmdQueue.push_back(&m_linearCol, param);
+}
+
 EffectRes::~EffectRes() {
     if (m_pack != nullptr) {
         m_pack->release();
@@ -3576,6 +3647,13 @@ void EffectRes::OnResEvent(const IResEvent::PARAM& param) {
 }
 
 EffectManager::EffectManager() : m_flags(0), m_dispFlags(0), pad_a0(0), m_offscrID(0), pad_ac(0) {}
+
+void EffectManager::loadResource(const char* name) {
+    if (m_flags & 1) {
+        return;
+    }
+    mm::mtl::Singleton<ResManager>::getPtr()->load(mm::mtl::Singleton<Extend>::getPtr()->eva(name), nullptr, false);
+}
 
 LightManager::LightManager() : m_flags(0), m_modeFlags(0), m_offScrLights(), m_evtLight(nullptr) {}
 
