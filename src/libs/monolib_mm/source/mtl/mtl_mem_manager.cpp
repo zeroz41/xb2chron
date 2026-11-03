@@ -16,6 +16,8 @@
 #include "mm/threading/SpinLock.h"
 #include "mm/mtl/FixedVector.h"
 #include "mm/mtl/FixedObjectAllocator.h"
+#include "ml/ml_misc.h"
+#include "nn/diag.h"
 #include <new>
 #include <stdlib.h>
 
@@ -6635,6 +6637,31 @@ void MemManager::terminate() {
     s_allocatorHeap.destroy(true);
 }
 
+void MemManager::Region::destroy() {
+    if (m_parent.m_handle != 0 && !valid_section(m_parent, false)) {
+        m_flags &= ~FLAG_CREATED;
+    }
+    if (m_flags & FLAG_CREATED) {
+        m_flags |= FLAG_RELEASED;
+        deallocate_section(m_top, 0, false);
+    }
+    if (m_allocator != nullptr) {
+        // the original asks the allocator its type (vtable slot 4) and destroys every type the same way
+        switch (m_allocator->getType()) {
+        default:
+            if (IMemAllocator* allocator = m_allocator) {
+                allocator->~IMemAllocator();
+                s_allocatorHeap.deallocate(allocator);
+            }
+            break;
+        }
+        m_size = 0;
+        m_allocCount = 0;
+        m_allocator = nullptr;
+        m_memory = nullptr;
+    }
+}
+
 ALLOC_HANDLE MemManager::create(void* p, unsigned long size, const char* name, bool flag, AllocatorType type) {
     ml::CS cs(getHandleCS());
     ALLOC_HANDLE handle;
@@ -6664,6 +6691,104 @@ ALLOC_HANDLE MemManager::create(void* p, unsigned long size, const char* name, b
 ALLOC_HANDLE MemManager::create(ALLOC_HANDLE parent, unsigned long size, const char* name, bool flag, const char* file,
                                 int line) {
     return create(parent, size, name, flag, static_cast<AllocatorType>(1), 16, file, line);
+}
+
+ALLOC_HANDLE MemManager::create(ALLOC_HANDLE parent, unsigned long size, const char* name, bool flag, AllocatorType type,
+                                unsigned long alignment, const char* file, int line) {
+    ml::CS cs(getHandleCS());
+    ALLOC_HANDLE handle;
+    IMemAllocator* allocator = createAllocator(type);
+    if (allocator != nullptr) {
+        if (alignment < 16) {
+            alignment = 16;
+        }
+        void* p = allocate_section(parent, size, alignment, false, file, line);
+        if (p == nullptr) {
+            return ALLOC_HANDLE();
+        }
+        Region* region = _region->allocate();
+        region->initialize(allocator, p, size, name, true, flag);
+        region->m_flags &= ~Region::FLAG_OWN_MEMORY;
+        unsigned int id = s_ptrMap.issue();
+        handle.m_handle = id;
+        region->m_handle.m_handle = id;
+        s_ptrMap.set(id, region);
+        if (parent.m_handle != 0) {
+            if (Region* parentRegion = s_ptrMap.find(parent.m_handle)) {
+                parentRegion->m_children.push_back(handle);
+            }
+        }
+        region->m_parent = parent;
+        _existHandle.push_back(HandleRegion(id, region));
+    }
+    return handle;
+}
+
+inline void* MemManager::Region::allocate(unsigned long size, unsigned long alignment, bool flag, const char* file,
+                                         int line) {
+    if (m_alignment > 1) {
+        size = (size + m_alignment - 1) / m_alignment * m_alignment;
+    }
+    if ((m_flags & FLAG_LOCKED) && !flag) {
+        ml::CSNC lock(m_cs);
+        if (m_allocator == nullptr) {
+            return nullptr;
+        }
+        void* p = m_allocator->allocate(size, alignment, file, line);
+        if (p != nullptr) {
+            m_allocCount++;
+        }
+        return p;
+    }
+    if (m_allocator == nullptr) {
+        return nullptr;
+    }
+    void* p = m_allocator->allocate(size, alignment, file, line);
+    if (p != nullptr) {
+        m_allocCount++;
+    }
+    return p;
+}
+
+void* MemManager::allocate_section(ALLOC_HANDLE handle, unsigned long size, unsigned long alignment, bool flag,
+                                   const char* file, int line) {
+    Region* region = nullptr;
+    if (handle.m_handle != 0) {
+        region = s_ptrMap.find(handle.m_handle);
+    }
+    if (region != nullptr) {
+        void* p = region->allocate(size, alignment, flag, file, line);
+        if (p != nullptr) {
+            return p;
+        }
+    }
+    mlStackTrace(nullptr);
+    if (region->m_flags & (Region::FLAG_HALT_ALLOC | Region::FLAG_LOG_ALLOC)) {
+        region->log(nullptr, true);
+    }
+    if (region->m_flags & Region::FLAG_HALT_ALLOC) {
+        nn::diag::detail::AbortImpl("", "", "", 0);
+    }
+    return nullptr;
+}
+
+mm::mtl::IAllocator* MemManager::getAllocator(const ALLOC_HANDLE& handle) {
+    ml::CS cs(getHandleCS());
+    if (handle.m_handle != 0) {
+        Region* region = s_ptrMap.find(handle.m_handle);
+        if (region != nullptr) {
+            HandleRegion* it = _existHandle.begin();
+            for (; it != _existHandle.end(); ++it) {
+                if (it->m_handle.m_handle == handle.m_handle && it->m_region == region) {
+                    break;
+                }
+            }
+            if (it != _existHandle.end()) {
+                return &it->m_allocator;
+            }
+        }
+    }
+    return nullptr;
 }
 
 void* MemManager::allocate(ALLOC_HANDLE handle, unsigned long size, unsigned long alignment, bool flag, const char* name,

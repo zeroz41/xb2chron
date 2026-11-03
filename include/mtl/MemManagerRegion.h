@@ -20,6 +20,7 @@ public:
     enum {
         FLAG_CREATED = 1 << 0,  // initialize's first flag (destroy gives m_top back to the parent while it is set)
         FLAG_LOCKED = 1 << 1,  // initialize's second flag: allocate_section takes m_cs unless told not to
+        FLAG_RELEASED = 1 << 2,  // destroy sets it before it gives m_top back to the parent (the name is inferred)
         FLAG_HALT_ALLOC = 1 << 3,  // setHaltAlloc's bit
         FLAG_WARN_ALLOC = 1 << 4,  // setWarnAlloc's bit
         FLAG_LOG_ALLOC = 1 << 5,  // setLogAlloc's bit
@@ -30,6 +31,9 @@ public:
     // allocator create itself in the memory
     void initialize(IMemAllocator* allocator, void* p, unsigned long size, const char* name, bool created, bool locked);
     void destroy();
+    // rounds size up to m_alignment and has the allocator give it, under m_cs while FLAG_LOCKED is set unless told
+    // not to; counts what it gives (3.0.1 inlines it into allocate_section; the name is inferred from deallocate's)
+    void* allocate(unsigned long size, unsigned long alignment, bool flag, const char* file, int line);
     // gives p back to the allocator, under m_cs while FLAG_LOCKED is set unless told not to (1.0.0 has it out of
     // line; 3.0.1 only inside deallocate_section, so it is defined inline in mtl_mem_manager.cpp)
     void deallocate(void* p, unsigned long size, bool flag);
