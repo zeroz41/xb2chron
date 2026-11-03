@@ -294,4 +294,12 @@ cite (`__FILE__`) are that folder plus the unit's path. The build compiles each 
 (`source_root`), so the strings come out the same; a cited line number (`__LINE__`) is the original's when the
 statement follows a `#line` directive giving it.
 
+The compiler differs from the stock 3.9.1 release in at least one optimizer rule, which zkit's clang plugins
+(`clang_plugins`) put back. Its AArch64 load/store optimizer is from before LLVM commit 173b14db (February
+2016): an `add/sub xN, xN, #imm` that starts a block stays unfolded before the `ldr [xN]` that follows it, where
+3.9.1 makes one `ldr [xN, #imm]!` (`pre-index-skips-block-start`). Every such pair in the original is in a block
+other than the function's entry block: dlmalloc's `mspace_free`, `dispose_chunk` and `try_realloc_chunk`, and
+the `this`-adjusting thunk of `gf::GfComBehaviorEnemy::getTransformToSearchPlayer`. Entry blocks still fold:
+`idcoli::IDColiPrimitive::calcBoxAaBb` merges its stack allocation into a store.
+
 `xc2.project.json` pins all of this: the original's SHA-1, the compiler archive and its SHA-256, and the flags.

@@ -194,7 +194,8 @@
           "-nostdlibinc"
         ],
         "clang_plugins": [
-          "bare-return-atexit"
+          "bare-return-atexit",
+          "pre-index-skips-block-start"
         ],
         "includes": [
           "include",
@@ -215,7 +216,8 @@
             "compiler": "build/compilers/clang+llvm-3.9.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang++",
             "compiler_version": "clang version 3.9.1",
             "clang_plugins": [
-              "bare-return-atexit"
+              "bare-return-atexit",
+              "pre-index-skips-block-start"
             ]
           },
           "libs/mcl/mm_lib/source/*": {
