@@ -20,6 +20,8 @@ public:
     // bit 12; 1.0.0 inlines these tests too); the name is not the original's
     bool testFlag(unsigned int bit) const { return (m_flags >> bit) & 1; }
     void render();
+    // formats the message into a 512-byte buffer and shows it for 90 frames (bit 1)
+    void playMessage(const char* format, ...);
     // 1.0.0's DebugManager::update (0x7100096898); 3.0.1 inlines it into OnEventProc
     void update() {
         if (m_flags & 2) {
@@ -37,7 +39,7 @@ public:
 private:
     // 1.0.0's setX(bool)/isX() pairs set and test its bits (setMovieDebug: bit 16); the name is not the original's
     unsigned int m_flags;  // 0x10
-    mm::mtl::FixStr<256> pad_14;
+    mm::mtl::FixStr<256> m_message;  // 0x14: playMessage's text; the name is not the original's
     // frames left of the message (bit 1) and the warning (bit 2); the name is not the original's
     int m_messageTime;  // 0x118
     mm::mtl::FixStr<256> pad_11c;

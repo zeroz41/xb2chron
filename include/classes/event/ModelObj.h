@@ -5,6 +5,7 @@
 #include "mm/mtl/FixStr.h"
 
 namespace gf { class GfEvtModel; class GF_OBJ_HANDLE; }
+namespace ml { class DrStmReadCheck; }
 
 namespace event {
 // which model setupModel makes: 1 a driver, 2 a blade, 3 an NPC, 4 an enemy, 5 a weapon (the GfGameEvent creator
@@ -46,7 +47,10 @@ public:
     unsigned char pad_c[0x5C - 0xC];
     // the constructor's last argument; setupModel passes it as the init parameter's pad_24
     unsigned int pad_5c;
-    unsigned char pad_60[0x120 - 0x60];
+    unsigned char pad_60[0x118 - 0x60];
+    // the stream reader setupModel makes (ml::ScnObjAccStmReadObj::create); the destructor releases it; the name is
+    // not the original's
+    ml::DrStmReadCheck* m_stmReader;  // 0x118
     // the model's object: setupModel copies m_model's handle (-1 from the constructor; the name is not the
     // original's)
     gf::GF_OBJ_HANDLE* m_handle;

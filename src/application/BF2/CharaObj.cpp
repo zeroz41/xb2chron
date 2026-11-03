@@ -58,6 +58,9 @@
 #include "classes/event/CmdItem.h"
 #include "classes/event/CmdQueue.h"
 #include "classes/event/CharaEffectPlayer.h"
+#include "classes/event/CharaTarPlayer.h"
+#include "classes/event/CharaTarPlayerMot.h"
+#include "classes/event/CharaWeightItem.h"
 #include "classes/event/CharaObj.h"
 #include "string.h"
 #include "classes/RchaEff.h"
@@ -74,6 +77,7 @@
 #include "classes/event/CharaWpnAsm.h"
 #include "classes/event/CharaEvaPlayer.h"
 #include "classes/gf/GfEvtModel.h"
+#include "classes/ml/DrStmReadCheck.h"
 #include "classes/event/CamEvaPlayer.h"
 #include "classes/event/CamEvaPlayerEff.h"
 #include "classes/event/EffectCtrl.h"
@@ -166,6 +170,7 @@
 #include "classes/event/MercenariesManager.h"
 #include "classes/event/ObjectCamera.h"
 #include "classes/event/ObjectEffect.h"
+#include "classes/event/ObjectTree.h"
 #include "classes/event/ParamVariable.h"
 #include "classes/event/ScriptCharaMotion.h"
 #include "classes/event/ScriptCharaMotionABC.h"
@@ -885,6 +890,9 @@ void EvtxtManager::OnEventProc(event::MSG_TYPE msg) {
 
 }  // namespace event
 
+// the MstxtRes constructor's (not written yet) and the other 27 callers' text formatting
+template mm::mtl::FixStr<64>& mm::mtl::FixStr<64>::format(const char* format, ...);
+
 #include "classes/event/Extend.h"
 
 namespace event {
@@ -1077,6 +1085,17 @@ bool SkipManager::isSkip() const {
     return m_flags & 1;
 }
 
+void DebugManager::playMessage(const char* format, ...) {
+    char buffer[512];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+    m_message = buffer;
+    m_messageTime = 90;
+    m_flags |= 2;
+}
+
 bool DebugManager::isMovieDebug() const {
     return (m_flags >> 16) & 1;
 }
@@ -1200,6 +1219,8 @@ Object::~Object() {
     }
 }
 
+ObjectTree::~ObjectTree() {}
+
 Object* Object::searchByPath(const char* path) {
     unsigned long len = strlen(m_name.m_str);
     if (len <= strlen(path) && memcmp(path, m_name.m_str, len) == 0) {
@@ -1296,6 +1317,10 @@ void CharaObj::playWink(int a, float b, bool c, float d, float e, int f, bool g,
     m_cmdQueue1.push_back(&m_playWink, param);
 }
 
+// run by CharaObj::tail (not written yet); the table is built by the CharaObj constructor (not written yet)
+template void CmdQueue<5, 0>::update();
+template CmdQueue<5, 0>::~CmdQueue();
+
 void CharaObj::setPos(const mm::Vec3& pos) {
     if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
         return;
@@ -1369,6 +1394,17 @@ void CharaObj::playMotionABC(const char* a, const char* b, const char* c, float 
     param.val(8).setF32(h);
     param.val(9).setF32(i);
     m_cmdQueue1.push_back(&m_playMotionABC, param);
+}
+
+void CharaObj::stopAction() {
+    if (mm::mtl::Singleton<SkipManager>::getPtr()->isSkipFast()) {
+        return;
+    }
+    if (m_cmdQueue0.contains(&m_playAction)) {
+        m_cmdQueue0.erase(&m_playAction);
+        CmdParam param;
+        m_cmdQueue0.push_back(&m_stopAction, param);
+    }
 }
 
 void CharaObj::playHead(int id, float time, bool a, bool b, float c, float d) {
@@ -1491,6 +1527,14 @@ void CharaEffectPlayer::stopAfterImage() {
         m_flags &= ~8;
     }
 }
+
+CharaEffectPlayer::~CharaEffectPlayer() {}
+
+CharaTarPlayerMot::~CharaTarPlayerMot() {}
+
+CharaTarPlayer::~CharaTarPlayer() {}
+
+CharaWeightItem::~CharaWeightItem() {}
 
 void CharaObj::playVolumeFade(CharaEffectPlayer::VF_TYPE type, int a, const mm::Vec3& b, const mm::Vec3& c, float d,
                               float e, int f, float g) {
@@ -1626,6 +1670,19 @@ ObjectEffect::~ObjectEffect() {
         m_effect = nullptr;
     }
 }
+
+void ObjectEffect::end() {
+    if (m_effect) {
+        m_effect->end();
+    }
+}
+
+// run by ObjectEffect::update and queued by EffectObj::play, moveTo, turnTo, colorTo, playAnim (not written yet);
+// the table is built by the EffectObj constructor (not written yet)
+template void CmdQueue<6, 0>::update();
+template void CmdQueue<6, 0>::erase(const ICmd* cmd);
+template void CmdQueue<6, 0>::push_back(ICmd* cmd, const CmdParam& param);
+template CmdQueue<6, 0>::~CmdQueue();
 
 void ObjectEffect::tail() {
     m_effect->m_ctrl.update();
@@ -3442,6 +3499,17 @@ void ModelObj::setupModel(const DESC& desc) {
     m_handle = m_model->m_handle;
 }
 
+ModelObj::~ModelObj() {
+    if (m_model) {
+        m_model->release();
+        m_model = nullptr;
+    }
+    if (m_stmReader) {
+        m_stmReader->release();
+        m_stmReader = nullptr;
+    }
+}
+
 // the message numbers are compared as numbers: no evidence names MSG_TYPE's enumerators yet
 void ModelManager::OnEventProc(event::MSG_TYPE msg) {
     if (msg == 14) {
@@ -3579,6 +3647,17 @@ inline void SeqManager::clear() {
 }
 
 // the key function: emits SeqManager's table (its destructor is inline)
+SeqManager::SeqManager()
+    : m_flags(0), m_dispFlags(0), pad_2718(0), pad_2760(0), pad_2764(0), pad_2768(0), pad_276c(0), pad_2770(""),
+      pad_2778(0), pad_277c(0), pad_2780(""), pad_2788(0), pad_278c(0), pad_2790(0), pad_2794(0), pad_2798(0),
+      pad_279c(0), pad_27a0(0), pad_27a8(0), pad_27b0(0), pad_27b4(0), pad_27b8(0), pad_27bc(0), pad_27c0(0),
+      pad_27c8(0), pad_27d0(0), pad_27d8(1), pad_27d9(0), pad_27da(0), pad_27db(0), pad_27dc(0), pad_27dd(0),
+      pad_27e4(0), pad_27e8(0), pad_27f0(0), pad_27f8(0), pad_2800(0), pad_2808(0), pad_280c(0), pad_2810(0),
+      pad_2814(0), pad_2818(0), pad_2820(""), pad_2830(0), pad_2838(0), pad_2840(0), pad_2848(0) {}
+
+// queued by SeqManager::init, setupScene, startScene, end and play (not written yet)
+template void CmdQueue<32, 0>::push_back(ICmd* cmd, const CmdParam& param);
+
 void SeqManager::OnEventProc(event::MSG_TYPE msg) {
     switch (msg) {
     case 1:
@@ -3620,6 +3699,7 @@ void SeqManager::OnEventProc(event::MSG_TYPE msg) {
     }
 }
 
+// the fixed target axes 4 and 5 are the radian ones; any other id names an object (looked up, never radian)
 DataManager::DataManager() : m_flags(0), m_sceneName("default"), m_current(0) {}
 
 

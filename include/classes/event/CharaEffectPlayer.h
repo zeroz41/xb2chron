@@ -1,6 +1,8 @@
 #ifndef CLASSES_EVENT_CHARAEFFECTPLAYER_H
 #define CLASSES_EVENT_CHARAEFFECTPLAYER_H
 
+#include "classes/event/AnmF32.h"
+
 namespace mm { class Vec3; }
 
 namespace gf { class GF_OBJ_HANDLE; }
@@ -22,6 +24,10 @@ public:
     // bit 3: an after image is on (stopAfterImage releases it); the name is not the original's
     unsigned int m_flags;  // 0x8
     gf::GF_OBJ_HANDLE* m_handle;  // 0x10, -1 when none; the name is not the original's
+    unsigned char pad_18[0x68];
+    // the two curves the destructor tears down (last first); the names are not the original's
+    AnmF32 m_anm0;  // 0x80
+    AnmF32 m_anm1;  // 0x190
 };
 }  // namespace event
 

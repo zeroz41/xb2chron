@@ -205,7 +205,8 @@ public:
         virtual ~end() {}  // slot 0 (inline: its D0 is in the unit's inline tail)
         virtual int update(event::ICmd::Param const&);  // slot 3
     };
-    SeqManager() : m_flags(0), m_dispFlags(0), pad_2718(0), pad_2760(0), pad_2764(0), pad_2768(0), pad_276c(0), pad_2770(""), pad_2778(0), pad_277c(0), pad_2780(""), pad_2788(0), pad_278c(0), pad_2790(0), pad_2794(0), pad_2798(0), pad_279c(0), pad_27a0(0), pad_27a8(0), pad_27b0(0), pad_27b4(0), pad_27b8(0), pad_27bc(0), pad_27c0(0), pad_27c8(0), pad_27d0(0), pad_27d8(1), pad_27d9(0), pad_27da(0), pad_27db(0), pad_27dc(0), pad_27dd(0), pad_27e4(0), pad_27e8(0), pad_27f0(0), pad_27f8(0), pad_2800(0), pad_2808(0), pad_280c(0), pad_2810(0), pad_2814(0), pad_2818(0), pad_2820(""), pad_2830(0), pad_2838(0), pad_2840(0), pad_2848(0) {}
+    // out of line (0x710013CE34): GfGameEvent::updateCsEventCategoryVolume calls it; getPtr inlines it here
+    SeqManager();
     // inline: its D2/D0 are in the unit's inline tail (0x710014A6F4); OnEventProc is the key function
     virtual ~SeqManager() {}  // slot 0
     virtual void OnEventProc(event::MSG_TYPE);  // slot 2

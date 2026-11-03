@@ -18,6 +18,7 @@
 #include "classes/event/CharaPlayWink.h"
 #include "classes/event/CharaPlayAction.h"
 #include "classes/event/CharaPlayActionAuto.h"
+#include "classes/event/CharaStopAction.h"
 #include "classes/event/CharaSetIdle.h"
 #include "classes/event/CharaSetPos.h"
 #include "classes/event/CharaSetRot.h"
@@ -62,6 +63,7 @@ public:
     // replaces a queued m_playHead with m_stopHead
     void stopHead();
     void playAction(int id, float time, bool a, bool b);
+    // replaces a queued m_playAction with m_stopAction (as stopHead does for m_playHead)
     void stopAction();
     void mount(CharaObj* parent, const char* name, const mm::Vec3& pos, const mm::Vec3& rot);
     void playAutoTalk(float time);
@@ -103,7 +105,7 @@ public:
     CharaSetIdle m_setIdle;  // 0x5e0
     CharaPlayActionAuto m_playActionAuto;  // 0x608
     CharaPlayAction m_playAction;  // 0x630
-    unsigned char pad_670[0x10];
+    CharaStopAction m_stopAction;  // 0x670 (the constructor installs its table); the name is not the original's
     // the commands the play*/set* functions queue (CharaObj's constructor builds them); the names are not the original's
     CharaPlayMotion m_playMotion;  // 0x680
     CharaPlayMotionABC m_playMotionABC;  // 0x6d0
@@ -132,7 +134,7 @@ public:
     unsigned char pad_d60[0x630];
     // playVolumeFade/playRimBloom and their stops forward to it; the name is not the original's
     CharaEffectPlayer m_effectPlayer;  // 0x1390
-    unsigned char pad_13a8[0x390];
+    unsigned char pad_1630[0x108];
     // three command queues ObjectChara::clear empties (1.0.0's CharaObj::clear); the names are not the original's
     CmdQueue<8, 0> m_cmdQueue0;  // 0x1738
     CmdQueue<8, 0> m_cmdQueue1;  // 0x2088
