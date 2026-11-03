@@ -21,7 +21,7 @@ public:
     static unsigned int m_nowAllocate;
     static unsigned int m_maxAllocateSize;
     static unsigned int m_nowAllocateSize;
-    static unsigned int m_maxRefCount;
+    static int m_maxRefCount;  // regist compares the records' counts with it signed
     static mm::mtl::HeapAllocator m_allocator;  // where the records live (1.0.0: 0x19F8 bytes .bss)
     // m_allocator's memory: MAX_ALLOCATE_SIZE records of 0xA8 bytes from malloc (MemManager::initialize; terminate
     // frees it)

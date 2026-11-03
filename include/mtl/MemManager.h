@@ -173,6 +173,9 @@ public:
     static ALLOC_HANDLE s_hLastFree;  // the handle of the region deallocate_section gave memory back to last
     static ::ml::CriticalSectionNC _sectionRegionCD;
     static ::ml::CriticalSectionNC _sectionRegionTC;
+    // DlAllocator's allocate and reallocate record the caller's stack in the footer when it is set (nothing in this
+    // build sets it)
+    static bool m_collectCallstack;
     static RegionMap s_ptrMap;
 };
 

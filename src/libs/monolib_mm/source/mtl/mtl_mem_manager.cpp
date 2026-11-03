@@ -17,6 +17,7 @@
 #include "mm/mtl/FixedVector.h"
 #include "mm/mtl/FixedObjectAllocator.h"
 #include "ml/ml_misc.h"
+#include "mm/Math.h"
 #include "nn/diag.h"
 #include <algorithm>
 #include <new>
@@ -6418,7 +6419,7 @@ unsigned int CallStackManager::m_maxAllocate;
 unsigned int CallStackManager::m_nowAllocate;
 unsigned int CallStackManager::m_maxAllocateSize;
 unsigned int CallStackManager::m_nowAllocateSize;
-unsigned int CallStackManager::m_maxRefCount;
+int CallStackManager::m_maxRefCount;
 mm::mtl::HeapAllocator CallStackManager::m_allocator;
 void* CallStackManager::m_buffer;
 unsigned long CallStackManager::m_bufferSize;
@@ -6472,6 +6473,7 @@ mm::mtl::FixedVector<MemManager::HandleRegion, 512> MemManager::_existHandle;
 ALLOC_HANDLE MemManager::s_hLastFree;
 ml::CriticalSectionNC MemManager::_sectionRegionCD;
 ml::CriticalSectionNC MemManager::_sectionRegionTC;
+bool MemManager::m_collectCallstack;
 MemManager::RegionMap MemManager::s_ptrMap;
 bool MemManager::s_bInitialize;
 ::mm::mtl::FixedObjectAllocator<MemManager::Region, 512>* MemManager::_region;
@@ -6543,6 +6545,47 @@ void DlAllocator::checkLeakMemory() {
     }
 }
 
+void* DlAllocator::allocate(unsigned long size, unsigned long alignment, const char* file, int line) {
+    // only the bounds' assertion is left of it
+    mm::clamp(alignment, alignment, 0x10000000UL);
+    if (m_mspace == nullptr) {
+        return nullptr;
+    }
+    unsigned long allocSize = size + sizeof(Footer);
+    if ((allocSize & 0xF) != 0) {
+        allocSize = allocSize + 0x10 - (allocSize & 0xF);
+    }
+    void* p = mspace_memalign(m_mspace, alignment, allocSize);
+    if (p != nullptr) {
+        if (allocSize < 0x10) {
+            mm::mtl::fill_4byte(p, 0xF3F3F3F3, allocSize);
+        } else {
+            mm::mtl::fill_4byte(p, 0xF3F3F3F3, 0x10);
+        }
+        unsigned long offset = mspace_usable_size(p) - sizeof(Footer);
+        Footer* footer = reinterpret_cast<Footer*>(static_cast<char*>(p) + offset);
+        if (footer != nullptr) {
+            int pos = -1;
+            if (file != nullptr) {
+                int len = strlen(file);
+                for (int i = 0; i < len; ++i) {
+                    if (file[i] == '\\' || file[i] == '/') {
+                        pos = i;
+                    }
+                }
+            }
+            footer->m_magic = FOOTER_MAGIC;
+            footer->m_offset = static_cast<int>(offset);
+            if (MemManager::m_collectCallstack) {
+                footer->m_info = m_callStack.regist(4, pos < 0 ? file : file + (pos + 1), line);
+            } else {
+                footer->m_info = nullptr;
+            }
+        }
+    }
+    return p;
+}
+
 void CallStackManager::remove(CallStackInfo* info) {
     if (info == nullptr) {
         return;
@@ -6566,6 +6609,51 @@ void DlAllocator::deallocate(void* p, unsigned long size) {
         }
         mspace_free(m_mspace, p);
     }
+}
+
+void* DlAllocator::reallocate(void* p, unsigned long size) {
+    if (p == nullptr || m_mspace == nullptr) {
+        return nullptr;
+    }
+    unsigned long oldOffset = mspace_usable_size(p) - sizeof(Footer);
+    const Footer* oldFooter = reinterpret_cast<const Footer*>(static_cast<char*>(p) + oldOffset);
+    const char* file;
+    int line;
+    if (oldFooter->m_info == nullptr) {
+        line = 0;
+        file = "noname";
+    } else {
+        file = oldFooter->m_info->m_file;
+        line = oldFooter->m_info->m_line;
+    }
+    unsigned long allocSize = size + sizeof(Footer);
+    if ((allocSize & 0xF) != 0) {
+        allocSize = allocSize + 0x10 - (allocSize & 0xF);
+    }
+    void* q = mspace_realloc(m_mspace, p, allocSize);
+    if (q != nullptr) {
+        unsigned long offset = mspace_usable_size(q) - sizeof(Footer);
+        Footer* footer = reinterpret_cast<Footer*>(static_cast<char*>(q) + offset);
+        if (footer != nullptr) {
+            int pos = -1;
+            if (file != nullptr) {
+                int len = strlen(file);
+                for (int i = 0; i < len; ++i) {
+                    if (file[i] == '\\' || file[i] == '/') {
+                        pos = i;
+                    }
+                }
+            }
+            footer->m_magic = FOOTER_MAGIC;
+            footer->m_offset = static_cast<int>(offset);
+            if (MemManager::m_collectCallstack) {
+                footer->m_info = m_callStack.regist(4, pos < 0 ? file : file + (pos + 1), line);
+            } else {
+                footer->m_info = nullptr;
+            }
+        }
+    }
+    return q;
 }
 
 void DlAllocator::log(MemoryInfo* info, bool flag) const {

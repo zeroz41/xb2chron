@@ -10,6 +10,9 @@
 // mm_lib's algorithm.h, as the including file's include path named it (see mm/mtl/FixStr.h)
 #ifdef MM_LIB_FROM_LIBS
 #define MM_MTL_ALGORITHM_PATH "../../../mcl/mm_lib/source\\mm_mtl/algorithm.h"
+#elif defined(MM_LIB_FROM_MONOLIB_MM)
+// monolib_mm's (mtl::DlAllocator::allocate's fill cites it so)
+#define MM_MTL_ALGORITHM_PATH "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../../MCL/mm_lib/source\\mm_mtl/algorithm.h"
 #elif defined(MM_LIB_FROM_XBRD)
 // xbrd's (ml::DrEnvironmentAnim's unit carries it)
 #define MM_MTL_ALGORITHM_PATH "D:/Monolithsoft/BF2/prog/libs/xbrd/proj/windows/../../../mcl/mm_lib/source\\mm_mtl/algorithm.h"
@@ -112,6 +115,35 @@ inline void move_n(const T* from, size_t n, T* result) {
         memmove(result, from, n * sizeof(T));
     } else {
         copy_n(from, n, result);
+    }
+}
+
+// fills size bytes from top with value, 4 bytes at a time, unrolled by 8 (DlAllocator::allocate inlines it to mark
+// new memory; algorithm.h asserts top's alignment at line 465; the name is not the original's)
+inline void fill_4byte(void* top, unsigned int value, size_t size) {
+#line 465 MM_MTL_ALGORITHM_PATH
+    MM_ASSERT((reinterpret_cast<size_t>(top) & 0x03) == 0);
+    unsigned int* p = static_cast<unsigned int*>(top);
+    unsigned int* end = p + size / 4;
+    switch ((size / 4) & 7) {
+        case 0:
+            while (p != end) {
+                *p++ = value;
+                case 7:
+                    *p++ = value;
+                case 6:
+                    *p++ = value;
+                case 5:
+                    *p++ = value;
+                case 4:
+                    *p++ = value;
+                case 3:
+                    *p++ = value;
+                case 2:
+                    *p++ = value;
+                case 1:
+                    *p++ = value;
+            }
     }
 }
 

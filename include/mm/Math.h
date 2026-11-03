@@ -9,6 +9,9 @@
 // application/BF2, the libraries under libs/ (MM_LIB_FROM_LIBS) from their own build folder
 #ifdef MM_LIB_FROM_LIBS
 #define MM_MATH_PATH "../../../mcl/mm_lib/source\\mm_math/mm_math.h"
+#elif defined(MM_LIB_FROM_MONOLIB_MM)
+// monolib_mm's (mtl::DlAllocator::allocate's clamp cites it so)
+#define MM_MATH_PATH "D:/Monolithsoft/BF2/prog/libs/monolib_mm/proj/windows/../../../MCL/mm_lib/source\\mm_math/mm_math.h"
 #elif defined(MM_LIB_FROM_XBRD)
 // xbrd's (DrShdLgtClustered::planeVsCone's acos cites it so)
 #define MM_MATH_PATH "D:/Monolithsoft/BF2/prog/libs/xbrd/proj/windows/../../../mcl/mm_lib/source\\mm_math/mm_math.h"

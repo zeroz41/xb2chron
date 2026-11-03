@@ -22,10 +22,11 @@ public:
     // returns is inferred
     int release() { return --m_refCount; }
 
-    unsigned char pad_10[0x4];
+    unsigned int m_magic;  // +0x10: regist stores 'CSI1' (0x43534931) (the name is not the original's)
     int m_refCount;  // +0x14: CallStackManager::remove unlinks the record at 1 and frees it at 0
     unsigned long m_trace[16];  // the return addresses mlStackTrace logs (extent inferred)
-    unsigned char pad_98[0xC];
+    const char* m_file;  // +0x98: regist's file ("noname" when null; DlAllocator::getMemInfo1 reports it)
+    int m_line;  // +0xA0: regist's line
     unsigned short m_traceCount;  // +0xA4
 };
 
