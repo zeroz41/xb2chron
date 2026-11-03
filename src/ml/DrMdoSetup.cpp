@@ -1656,6 +1656,38 @@ void DrMdoCtlNom::cldBackAlphaCallRender() {
     }
 }
 
+void DrMdoCtlNom::shadowMapDirRender(int idx) {
+    m_pDrMan->m_pixlMan->setupShadowUnifrom(idx);
+    m_curShaderIdx = -1;
+    m_curBindIdx = -1;
+    m_bindFlags[0] = 0x10;
+    m_bindFlags[1] = 0;
+    m_pWrkMatRes->m_pVertex->beginVertexSetup();
+    const MdsMdlTopHeader* top = m_pWrkMatRes->m_pMdlTop;
+    for (int i = 0; i < m_pWrkMatRes->m_mdlTopNum; i++, top++) {
+        DrResChkList* chk = m_passChk[i][6];
+        if (chk != nullptr) {
+            const MdsMdlInfoHeader* infos =
+                reinterpret_cast<const MdsMdlInfoHeader*>(m_pWrkMatRes->m_pMdlInfo + top->m_infoOfs);
+            bool hasNode = m_nodeMax != 0;
+            for (;;) {
+                const MdsMdlInfoHeader* info = &infos[chk->m_idx];
+                const DrResMdoMeshParts* parts;
+                if ((info->m_flags & 0x100) && ((parts = (m_mesh->m_parts + info->m_meshNo))->m_flags & 1)) {
+                    partsShadowDirRender(info, parts->m_triIdx, 0);
+                } else {
+                    partsShadowDirRender(info, 0, info->m_shaderOfs + hasNode);
+                }
+                unsigned int next = chk->m_next;
+                if (next == 0) {
+                    break;
+                }
+                chk = &m_chkPool[next - 1];
+            }
+        }
+    }
+}
+
 void DrMdoCtlNom::callNomSetupRender() {
     if ((m_ctlFlags & 0x1) && m_morpObj != nullptr && (m_lodObj->m_flags & 0x2)) {
         m_morpObj->update(m_pWrkMatRes, m_etcParams);
