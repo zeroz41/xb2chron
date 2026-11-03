@@ -3,25 +3,64 @@
 
 #include "mm/mtl/FixedVector.h"
 #include "ptlib/forcefield/FfManager.h"
+#include "effect/SendParam.h"
 
 namespace mtl { class ALLOC_HANDLE; }
 namespace ptlib { class DrDrawWorkInfoEF; }
 
 namespace effect {
-class SendParam;
 class IEffectCallBack;
 
 // table 0x7100B80770
 class SystemManager {
 public:
     // one queued request of the es_ functions, run by es_command_core (the field names are not the original's)
+    // the es_ functions build one on the stack (the send parameters default-constructed) and copy it into the queue
     struct Command {
         unsigned int m_type;
-        unsigned char pad_4[0xC];
+        unsigned char pad_4[0x4];
+        unsigned long m_data;  // the resource, pack or instance the command works on
         unsigned int m_handle;
-        unsigned char pad_14[0xDC];
-    } __attribute__((aligned(16)));
-    struct KizunaWork;
+        SendParam m_param;
+        // the arguments of the command types that need more than the send parameters
+        union {
+            bool m_flag;  // es_create's flag
+            int m_disp;   // es_set_disp's value
+            // es_set_param_cas's caster and values; es_fade_core (null caster) and es_remove_cas use the caster and
+            // the frames
+            struct {
+                const void* m_cas;
+                union {
+                    int m_frames;
+                    struct {
+                        bool m_hasName;
+                        unsigned char m_type;
+                        unsigned short m_flag;
+                    } m_info;
+                };
+                float m_rate;
+                char m_name[16];
+            } m_cas;
+        };
+    };
+    // one bond (kizuna) line's points as the emitters read them: the emitter manager keeps two sets of eight
+    // (fw::EffectManager::update hands each line's to updateKizunaPos; the field names are not the original's)
+    struct KizunaWork {
+        mm::Vec3 m_points[20];
+        unsigned long pad_140;
+        bool pad_148[4][2];  // updateKizunaPos copies the first of each pair, then the second
+        bool pad_150;
+        bool pad_151;
+        bool pad_152;
+        float pad_154;
+        float pad_158;
+        float pad_15c;
+        float pad_160;
+        // updateKizunaPos adds the new value and keeps the sum within -100..100 (the names are not the original's)
+        float m_scrollA;
+        float m_scrollB;
+        float pad_16c;
+    };
 
     SystemManager()
         : m_enableUpdate(true), m_enableAlphaRender(true), m_dispEmitterList(false), m_flagC(true), m_clearAllFlag(false),
@@ -56,6 +95,9 @@ public:
     // registers effect resource `data` (`size` bytes); null when it cannot
     void* es_regist(void* data, unsigned int size);
     void es_free(void* handle);
+    // the same for an effect pack's resource; returns `data`
+    void* es_pack_regist(void* data, unsigned int size);
+    void es_pack_free(unsigned long pack);
     void es_pause(bool pause);
     // an effect from an effect resource (efb), its handle
     unsigned int es_create(void* efb, bool flag);
@@ -100,6 +142,7 @@ public:
     void tail(bool flag);
     void moveMain();
     void getNum(unsigned int& a, unsigned int& b, unsigned int& c);
+    void updateKizunaPos(int index, KizunaWork& work);
 
     // the field names are not the original's
     unsigned char pad_8[0x1];

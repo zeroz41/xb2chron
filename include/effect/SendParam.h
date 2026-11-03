@@ -3,6 +3,7 @@
 
 #include "mm/Mat44.h"
 #include "mm/Vec3.h"
+#include "string.h"
 
 namespace effect {
 
@@ -41,24 +42,32 @@ public:
         m_rangeB[0] = -1.0f;
         m_rangeB[1] = -1.0f;
         m_rangeC = -1.0f;
-        m_valueB = 0.0f;
+        m_category = 0;
         m_flagE = false;
     }
+    // copied whole, checked against itself first: the SystemManager's command queue copies it so (es_pause); an
+    // assignment copies it member by member (es_set_param)
+    SendParam(const SendParam& other) {
+        if (this != &other) {
+            memcpy(this, &other, sizeof(SendParam));
+        }
+    }
+    SendParam& operator=(const SendParam& other) = default;
 
     mm::Mat44 m_mtx;  // where the effect sits (GfEffectGround::calcSwimEffectParam sets its height)
     float m_color[4];  // 1 each by default (es_conv_param copies it whole)
     float m_colorExt[2];  // 0 each by default (es_conv_param copies it as one 8-byte value)
-    unsigned char pad_58[8];
     mm::Vec3 m_scale;  // 1 each by default (es_conv_param reads x only)
     mm::Vec3 m_rotate;  // 0 each by default
     float m_rangeA;  // -1 by default
     float m_valueA;
     float m_rangeB[4];  // -1 each by default
     float m_rangeC;  // -1 by default
-    float m_valueB;
+    unsigned int m_category;  // es_set_category stores the category here (the name is not the original's)
     unsigned short m_id;  // 0xFFFF by default
     bool m_flagA;
-    bool m_flagB;  // true by default
+    // true by default; es_set_viewnum stores its view number here (a byte, not a bool)
+    unsigned char m_flagB;
     unsigned char m_option;
     // EffectManager::setParam(handle, mtx, scale, value) sets it (the name is not the original's)
     unsigned char m_flagF;

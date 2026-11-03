@@ -2,6 +2,7 @@
 #define PTLIB_EMITTER_EMITTERMANAGER_H
 
 #include "ptlib/IntrusiveList.h"
+#include "classes/effect/SystemManager.h"
 
 namespace ptlib { class FxHeader; }
 
@@ -58,7 +59,9 @@ public:
     // releases an emitter's stream and particles and takes it off the active list
     void removeEmitterActive(EmitterObj* pEmitter);
 
-    unsigned char pad_0[0x1700];
+    // two sets of the bond lines' points: SystemManager::updateKizunaPos writes set m_flip, tail copies it to the
+    // other (the name is not the original's)
+    effect::SystemManager::KizunaWork m_kizunaWorks[2][8];
     float m_categorySpeed[1];  // indexed by category; the count is not known yet
     unsigned char pad_1704[0x8C];
     // ParticleManager::tail flips it between 0 and 1 after moveAfter each frame (the name is not the original's)

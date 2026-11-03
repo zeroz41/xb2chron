@@ -8,6 +8,8 @@
 #include "ptlib/renderer/RendererStream.h"
 #include "ptlib/renderer/ScreenRenderManager.h"
 #include "mm/MMStdBase.h"
+#include "effect/SendParam.h"
+#include "string.h"
 
 namespace effect {
 
@@ -98,9 +100,307 @@ void SystemManager::setUserDrFunc(void* (*a)(const void*, const char*, int, cons
     ptlib::ParticleManager::setUserDrFunc(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o);
 }
 
+void SystemManager::es_pause(bool pause) {
+    Command command;
+    command.m_type = 1;
+    command.m_handle = pause;
+    if (m_clearAllCount != 0) {
+        ptlib::efMsg("addCommandError!!");
+        return;
+    }
+    mm::mtl::FixedVector<Command, 1152>& commands = m_writeSide == 0 ? m_commands[0] : m_commands[1];
+    if (commands.size() < 1024) {
+        commands.push_back(command);
+    } else {
+        ptlib::efWng("command buffer over > 1024");
+    }
+}
+
+void* SystemManager::es_pack_regist(void* data, unsigned int size) {
+    Command command;
+    command.m_type = 21;
+    command.m_data = reinterpret_cast<unsigned long>(data);
+    command.m_handle = size;
+    if (m_clearAllCount != 0) {
+        ptlib::efMsg("addCommandError!!");
+        return data;
+    }
+    mm::mtl::FixedVector<Command, 1152>& commands = m_writeSide == 0 ? m_commands[0] : m_commands[1];
+    if (commands.size() < commands.capacity()) {
+        commands.push_back(command);
+    }
+    return data;
+}
+
+void SystemManager::es_pack_free(unsigned long pack) {
+    Command command;
+    command.m_type = 22;
+    command.m_data = pack;
+    if (m_clearAllCount != 0) {
+        ptlib::efMsg("addCommandError!!");
+        return;
+    }
+    mm::mtl::FixedVector<Command, 1152>& commands = m_writeSide == 0 ? m_commands[0] : m_commands[1];
+    if (commands.size() < commands.capacity()) {
+        commands.push_back(command);
+    }
+}
+
+void* SystemManager::es_regist(void* data, unsigned int size) {
+    Command command;
+    command.m_type = 20;
+    command.m_data = reinterpret_cast<unsigned long>(data);
+    command.m_handle = size;
+    if (m_clearAllCount != 0) {
+        ptlib::efMsg("addCommandError!!");
+        return data;
+    }
+    mm::mtl::FixedVector<Command, 1152>& commands = m_writeSide == 0 ? m_commands[0] : m_commands[1];
+    if (commands.size() < commands.capacity()) {
+        commands.push_back(command);
+    }
+    return data;
+}
+
 void SystemManager::es_free(void* handle) {
     if (handle != nullptr) {
         ptlib::ParticleManager::get()->emitter_set_free(static_cast<ptlib::FxHeader*>(handle), 0);
+    }
+}
+
+unsigned int SystemManager::es_create(void* efb, bool flag) {
+    if (efb == nullptr) {
+        return 0;
+    }
+    unsigned int handle = ptlib::HashManager::get()->get_create_key();
+    Command command;
+    command.m_type = 2;
+    command.m_data = reinterpret_cast<unsigned long>(efb);
+    command.m_handle = handle;
+    command.m_flag = flag;
+    if (m_clearAllCount != 0) {
+        ptlib::efMsg("addCommandError!!");
+        return handle;
+    }
+    mm::mtl::FixedVector<Command, 1152>& commands = m_writeSide == 0 ? m_commands[0] : m_commands[1];
+    if (commands.size() < commands.capacity()) {
+        commands.push_back(command);
+    }
+    return handle;
+}
+
+void SystemManager::es_set_param_pos_only(unsigned int handle, const SendParam* param) {
+    Command command;
+    command.m_type = 6;
+    command.m_data = 0;
+    command.m_handle = handle;
+    command.m_param = *param;
+    if (m_clearAllCount != 0) {
+        ptlib::efMsg("addCommandError!!");
+        return;
+    }
+    mm::mtl::FixedVector<Command, 1152>& commands = m_writeSide == 0 ? m_commands[0] : m_commands[1];
+    if (commands.size() < 1024) {
+        commands.push_back(command);
+    } else {
+        ptlib::efWng("command buffer over > 1024");
+    }
+}
+
+void SystemManager::es_set_param_pos_only2(unsigned int handle, const SendParam* param) {
+    Command command;
+    command.m_type = 7;
+    command.m_data = 0;
+    command.m_handle = handle;
+    command.m_param = *param;
+    if (m_clearAllCount != 0) {
+        ptlib::efMsg("addCommandError!!");
+        return;
+    }
+    mm::mtl::FixedVector<Command, 1152>& commands = m_writeSide == 0 ? m_commands[0] : m_commands[1];
+    if (commands.size() < 1024) {
+        commands.push_back(command);
+    } else {
+        ptlib::efWng("command buffer over > 1024");
+    }
+}
+
+void SystemManager::es_set_category(unsigned int handle, unsigned int category) {
+    Command command;
+    command.m_type = 18;
+    command.m_data = 0;
+    command.m_handle = handle;
+    command.m_param.m_category = category;
+    if (m_clearAllCount != 0) {
+        ptlib::efMsg("addCommandError!!");
+        return;
+    }
+    mm::mtl::FixedVector<Command, 1152>& commands = m_writeSide == 0 ? m_commands[0] : m_commands[1];
+    if (commands.size() < 1024) {
+        commands.push_back(command);
+    } else {
+        ptlib::efWng("command buffer over > 1024");
+    }
+}
+
+void SystemManager::es_set_param(unsigned int handle, const SendParam* param) {
+    Command command;
+    command.m_type = 9;
+    command.m_data = 0;
+    command.m_handle = handle;
+    command.m_param = *param;
+    if (m_clearAllCount != 0) {
+        ptlib::efMsg("addCommandError!!");
+        return;
+    }
+    mm::mtl::FixedVector<Command, 1152>& commands = m_writeSide == 0 ? m_commands[0] : m_commands[1];
+    if (commands.size() < 1024) {
+        commands.push_back(command);
+    } else {
+        ptlib::efWng("command buffer over > 1024");
+    }
+}
+
+void SystemManager::es_set_alpha(unsigned int handle, float alpha) {
+    Command command;
+    command.m_type = 13;
+    command.m_data = 0;
+    command.m_handle = handle;
+    command.m_param.m_color[3] = alpha;
+    if (m_clearAllCount != 0) {
+        ptlib::efMsg("addCommandError!!");
+        return;
+    }
+    mm::mtl::FixedVector<Command, 1152>& commands = m_writeSide == 0 ? m_commands[0] : m_commands[1];
+    if (commands.size() < 1024) {
+        commands.push_back(command);
+    } else {
+        ptlib::efWng("command buffer over > 1024");
+    }
+}
+
+void SystemManager::es_set_viewnum(unsigned int handle, int viewnum) {
+    Command command;
+    command.m_type = 14;
+    command.m_data = 0;
+    command.m_handle = handle;
+    command.m_param.m_flagB = viewnum;
+    if (m_clearAllCount != 0) {
+        ptlib::efMsg("addCommandError!!");
+        return;
+    }
+    mm::mtl::FixedVector<Command, 1152>& commands = m_writeSide == 0 ? m_commands[0] : m_commands[1];
+    if (commands.size() < 1024) {
+        commands.push_back(command);
+    } else {
+        ptlib::efWng("command buffer over > 1024");
+    }
+}
+
+unsigned int SystemManager::es_create(void* efb, const SendParam* param, bool flag) {
+    if (efb == nullptr) {
+        return 0;
+    }
+    unsigned int handle = ptlib::HashManager::get()->get_create_key();
+    Command command;
+    command.m_type = 3;
+    command.m_data = reinterpret_cast<unsigned long>(efb);
+    command.m_handle = handle;
+    command.m_flag = flag;
+    command.m_param = *param;
+    if (m_clearAllCount != 0) {
+        ptlib::efMsg("addCommandError!!");
+        return handle;
+    }
+    mm::mtl::FixedVector<Command, 1152>& commands = m_writeSide == 0 ? m_commands[0] : m_commands[1];
+    if (commands.size() < commands.capacity()) {
+        commands.push_back(command);
+    }
+    return handle;
+}
+
+void SystemManager::es_set_param_cas(unsigned int handle, const IEffectCallBack* cas, const char* name, int type,
+                                     float rate, int flag) {
+    Command command;
+    command.m_type = 12;
+    command.m_handle = handle;
+    command.m_cas.m_cas = cas;
+    if (name != nullptr) {
+        command.m_cas.m_info.m_hasName = true;
+        strcpy(command.m_cas.m_name, name);
+    } else {
+        command.m_cas.m_info.m_hasName = false;
+    }
+    command.m_cas.m_info.m_type = type;
+    command.m_cas.m_info.m_flag = flag;
+    command.m_cas.m_rate = rate;
+    if (m_clearAllCount != 0) {
+        ptlib::efMsg("addCommandError!!");
+        return;
+    }
+    mm::mtl::FixedVector<Command, 1152>& commands = m_writeSide == 0 ? m_commands[0] : m_commands[1];
+    if (commands.size() < 1024) {
+        commands.push_back(command);
+    } else {
+        ptlib::efWng("command buffer over > 1024");
+    }
+}
+
+void SystemManager::es_set_disp(unsigned int handle, int disp) {
+    Command command;
+    command.m_type = 16;
+    command.m_data = 0;
+    command.m_handle = handle;
+    command.m_disp = disp;
+    if (m_clearAllCount != 0) {
+        ptlib::efMsg("addCommandError!!");
+        return;
+    }
+    mm::mtl::FixedVector<Command, 1152>& commands = m_writeSide == 0 ? m_commands[0] : m_commands[1];
+    if (commands.size() < 1024) {
+        commands.push_back(command);
+    } else {
+        ptlib::efWng("command buffer over > 1024");
+    }
+}
+
+void SystemManager::es_fade_core(void* instance, unsigned int handle, int frames) {
+    if (instance == nullptr && handle == 0) {
+        return;
+    }
+    Command command;
+    command.m_type = 19;
+    command.m_data = reinterpret_cast<unsigned long>(instance);
+    command.m_handle = handle;
+    command.m_cas.m_cas = nullptr;
+    command.m_cas.m_frames = frames;
+    if (m_clearAllCount != 0) {
+        ptlib::efMsg("addCommandError!!");
+        return;
+    }
+    mm::mtl::FixedVector<Command, 1152>& commands = m_writeSide == 0 ? m_commands[0] : m_commands[1];
+    if (commands.size() < commands.capacity()) {
+        commands.push_back(command);
+    }
+}
+
+void SystemManager::es_remove_cas(void* cas) {
+    if (cas == nullptr) {
+        return;
+    }
+    Command command;
+    command.m_type = 19;
+    command.m_data = 0;
+    command.m_handle = 0;
+    command.m_cas.m_cas = cas;
+    command.m_cas.m_frames = -1;
+    if (m_clearAllCount != 0) {
+        ptlib::efMsg("addCommandError!!");
+        return;
+    }
+    mm::mtl::FixedVector<Command, 1152>& commands = m_writeSide == 0 ? m_commands[0] : m_commands[1];
+    if (commands.size() < commands.capacity()) {
+        commands.push_back(command);
     }
 }
 
@@ -158,6 +458,48 @@ void SystemManager::moveMain() {
     // the original passes nothing it sets: the call goes out with whatever s0 holds
     float delta;
     testUpdate(delta);
+}
+
+void SystemManager::updateKizunaPos(int index, KizunaWork& work) {
+    ptlib::emitter::EmitterManager* manager = ptlib::emitter::EmitterManager::getPtr();
+    if (manager == nullptr) {
+        return;
+    }
+    KizunaWork& dst = *(manager->m_kizunaWorks[manager->m_flip] + index);
+    for (int i = 0; i < 20; i++) {
+        dst.m_points[i] = work.m_points[i];
+    }
+    dst.pad_154 = work.pad_154;
+    dst.pad_158 = work.pad_158;
+    dst.pad_15c = work.pad_15c;
+    dst.pad_160 = work.pad_160;
+    float scrollA = dst.m_scrollA + work.m_scrollA;
+    if (scrollA > 100.0f) {
+        scrollA -= 100.0f;
+    }
+    if (scrollA < -100.0f) {
+        scrollA += 100.0f;
+    }
+    dst.m_scrollA = scrollA;
+    float scrollB = dst.m_scrollB + work.m_scrollB;
+    if (scrollB > 100.0f) {
+        scrollB -= 100.0f;
+    }
+    if (scrollB < -100.0f) {
+        scrollB += 100.0f;
+    }
+    dst.m_scrollB = scrollB;
+    dst.pad_16c = work.pad_16c;
+    for (int i = 0; i < 4; i++) {
+        dst.pad_148[i][0] = work.pad_148[i][0];
+    }
+    for (int i = 0; i < 4; i++) {
+        dst.pad_148[i][1] = work.pad_148[i][1];
+    }
+    dst.pad_150 = work.pad_150;
+    dst.pad_140 = work.pad_140;
+    dst.pad_151 = work.pad_151;
+    dst.pad_152 = work.pad_152;
 }
 
 }  // namespace effect
