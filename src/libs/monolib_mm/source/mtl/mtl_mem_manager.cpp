@@ -6788,6 +6788,41 @@ unsigned long DlAllocator::getAllocSize(const void* p) const {
     return result;
 }
 
+int DlAllocator::getMemInfo1(MemoryInfo1* info, unsigned int num) const {
+    mstate ms = static_cast<mstate>(m_mspace);
+    if (ms != nullptr && ok_magic(ms)) {
+        ensure_initialization();
+        if (is_initialized(ms)) {
+            int nchunks = 0;
+            unsigned int count = 0;
+            for (msegmentptr s = &ms->seg; s != 0; s = s->next) {
+                mchunkptr q = align_as_chunk(s->base);
+                while (segment_holds(s, q) && q != ms->top && q->head != FENCEPOST_HEAD) {
+                    if (is_inuse(q)) {
+                        void* mem = chunk2mem(q);
+                        // the first chunk holds the mstate itself
+                        if (nchunks > 0) {
+                            unsigned long offset = mspace_usable_size(mem) - sizeof(Footer);
+                            Footer* footer = reinterpret_cast<Footer*>(static_cast<char*>(mem) + offset);
+                            if (count < num) {
+                                MemoryInfo1& out = info[count];
+                                out.m_addr = mem;
+                                out.m_size = footer->m_offset;
+                                out.m_file = footer->m_info != nullptr ? footer->m_info->m_file : "noname";
+                                out.m_line = footer->m_info != nullptr ? footer->m_info->m_line : 0;
+                                ++count;
+                            }
+                        }
+                    }
+                    q = next_chunk(q);
+                    ++nchunks;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 void MemManager::initialize() {
     CallStackManager::m_maxAllocate = 0;
     CallStackManager::m_nowAllocate = 0;
