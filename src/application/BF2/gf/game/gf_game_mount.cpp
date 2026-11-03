@@ -276,6 +276,54 @@ GF_OBJ_HANDLE* GfGameMount::getHandle(OPTMNT option) {
     }
 }
 
+inline bool GfGameMount::isEnableOption() const {
+    int count = 0;
+    int valid = 0;
+    for (unsigned int i = 0; i < 10; i++) {
+        GF_OBJ_HANDLE* handle = m_weapon->getObjHandles()[i];
+        if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            continue;
+        }
+        count++;
+        if (!GfGameObj::isValidGameObj(handle, true, nullptr)) {
+            return false;
+        }
+        valid++;
+    }
+    return valid == count && valid != 0;
+}
+
+bool GfGameMount::execMount(OPTMNT option) {
+    if (!isEnableOption()) {
+        m_option = option;
+        return true;
+    }
+    setWeaponOwner(option);
+    switch (option) {
+    case 0:
+        detach();
+        m_mountType = static_cast<OPTMNT>(0);
+        return true;
+    case 1:
+        detach();
+        attach(static_cast<OPTMNT>(1), m_owner);
+        m_mountType = static_cast<OPTMNT>(1);
+        return true;
+    case 2:
+        detach();
+        attach(static_cast<OPTMNT>(2), m_owner);
+        m_mountType = static_cast<OPTMNT>(2);
+        return true;
+    case 4:
+        detach();
+        attach(static_cast<OPTMNT>(4), m_owner);
+        m_mountType = static_cast<OPTMNT>(4);
+        return true;
+    default:
+        return false;
+    }
+}
+
 inline void GfGameMount::setScaleMount(float scale) {
     for (int i = 0; i < 10; i++) {
         GF_OBJ_HANDLE* object = m_weapon->getObjHandles()[i];
