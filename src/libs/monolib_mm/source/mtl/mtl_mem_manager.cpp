@@ -6516,6 +6516,32 @@ DlAllocator::Footer* DlAllocator::getNewInfo(const void* p, unsigned long& size)
     return reinterpret_cast<Footer*>(size + reinterpret_cast<unsigned long>(p));
 }
 
+void DlAllocator::checkLeakMemory() {
+    mstate ms = static_cast<mstate>(m_mspace);
+    if (ms != nullptr) {
+        ensure_initialization();
+        if (is_initialized(ms)) {
+            int nchunks = 0;
+            for (msegmentptr s = &ms->seg; s != 0; s = s->next) {
+                mchunkptr q = align_as_chunk(s->base);
+                while (segment_holds(s, q) && q != ms->top && q->head != FENCEPOST_HEAD) {
+                    // the first chunk holds the mstate itself
+                    if (nchunks > 0 && is_inuse(q)) {
+                        void* mem = chunk2mem(q);
+                        unsigned long offset = mspace_usable_size(mem) - sizeof(Footer);
+                        Footer* footer = reinterpret_cast<Footer*>(static_cast<char*>(mem) + offset);
+                        if (footer->m_info != nullptr) {
+                            footer->m_info->log();
+                        }
+                    }
+                    q = next_chunk(q);
+                    ++nchunks;
+                }
+            }
+        }
+    }
+}
+
 void CallStackManager::remove(CallStackInfo* info) {
     if (info == nullptr) {
         return;
@@ -6571,6 +6597,45 @@ void DlAllocator::memoryInfo(MemoryInfo* info) const {
     }
 }
 
+void DlAllocator::getMemImage(MEMIMAGE_HEAD* head) const {
+    mstate ms = static_cast<mstate>(m_mspace);
+    if (ms != nullptr) {
+        if (ok_magic(ms)) {
+            ensure_initialization();
+            if (is_initialized(ms)) {
+                int nchunks = 0;
+                unsigned int num = 0;
+                MEMIMAGE_HEAD::Image* image = head->m_images;
+                for (msegmentptr s = &ms->seg; s != 0; s = s->next) {
+                    mchunkptr q = align_as_chunk(s->base);
+                    while (segment_holds(s, q) && q != ms->top && q->head != FENCEPOST_HEAD) {
+                        // the first chunk holds the mstate itself
+                        if (nchunks > 0 && is_inuse(q)) {
+                            size_t sz = chunksize(q);
+                            void* mem = chunk2mem(q);
+                            unsigned long offset = mspace_usable_size(mem) - sizeof(Footer);
+                            Footer* footer = reinterpret_cast<Footer*>(static_cast<char*>(mem) + offset);
+                            if (offset == footer->m_offset && num < head->m_num) {
+                                image->m_addr = q;
+                                image->m_size = sz;
+                                ++image;
+                                ++num;
+                            }
+                        }
+                        q = next_chunk(q);
+                        ++nchunks;
+                    }
+                }
+                head->m_num = num;
+            }
+        }
+    } else {
+        head->pad_8 = 0;
+        head->m_num = 0;
+        head->pad_0 = 0;
+    }
+}
+
 const char* DlAllocator::getName() const {
     return m_name.m_str;
 }
@@ -6595,6 +6660,39 @@ bool DlAllocator::hasMemory(const void* p) const {
                 if (mem == p) {
                     return true;
                 }
+            }
+        }
+    }
+    return result;
+}
+
+unsigned long DlAllocator::getAllocSize(const void* p) const {
+    unsigned long result = 0;
+    if (m_mspace != nullptr && p != nullptr) {
+        mstate ms = static_cast<mstate>(m_mspace);
+        if (!ok_magic(ms)) {
+            return 0;
+        }
+        ensure_initialization();
+        if (!is_initialized(ms)) {
+            return 0;
+        }
+        int nchunks = 0;
+        for (msegmentptr s = &ms->seg; s != 0; s = s->next) {
+            mchunkptr q = align_as_chunk(s->base);
+            while (segment_holds(s, q) && q != ms->top && q->head != FENCEPOST_HEAD) {
+                // the first chunk holds the mstate itself
+                void* mem = chunk2mem(q);
+                size_t sz = chunksize(q);
+                if (is_inuse(q) && nchunks > 0 && mem == p) {
+                    unsigned long offset = mspace_usable_size(mem) - sizeof(Footer);
+                    const Footer* footer = reinterpret_cast<const Footer*>(static_cast<const char*>(p) + offset);
+                    if (offset == footer->m_offset) {
+                        return sz;
+                    }
+                }
+                q = chunk_plus_offset(q, sz);
+                ++nchunks;
             }
         }
     }
