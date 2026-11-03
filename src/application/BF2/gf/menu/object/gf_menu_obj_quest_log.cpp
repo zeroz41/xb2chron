@@ -280,6 +280,57 @@ void GfMenuObjQuestLog::TitleListener::reciveEvent(ui::EventData const& event, u
     }
 }
 
+bool GfMenuObjQuestLog::seqTitleStart() {
+    ui::UIObjectAcc acc(m_handle, "IMG_title_base");
+    QuestID id;
+    getRef<GfMenuReferenceQuest>(0)->getQuest(id);
+    int category = QuestListAcc::get()->getListQuestCategory(id);
+    bool layer3 = GfMenuObjUtil::fn_710048FD30(3);
+    if (!layer3 || pad_948) {
+        if (category == 1) {
+            acc.startAnimation("start_scenario", false);
+            m_titleSeq.addWait(0x14);
+            m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleFadeInText);
+            m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleFadeInScenario);
+            m_titleSeq.addWait(0x77);
+            m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleFadeOutScenario);
+        } else {
+            acc.startAnimation("start", false);
+            m_titleSeq.addWait(0x14);
+            m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleFadeInText);
+            m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleFadeInNormal);
+            m_titleSeq.addWait(0x77);
+            m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleFadeOutNormal);
+        }
+    } else {
+        if (category == 1) {
+            acc.startAnimation("start_scenario", false);
+            m_titleSeq.addWait(9);
+            m_titleSeq.addJob(&GfMenuObjQuestLog::fn_710046D648);
+            m_titleSeq.addWait(10);
+            m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleFadeInText);
+            m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleFadeInScenario);
+            m_titleSeq.addWait(0x77);
+            m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleFadeOutScenario);
+        } else {
+            acc.startAnimation("start", false);
+            m_titleSeq.addWait(9);
+            m_titleSeq.addJob(&GfMenuObjQuestLog::fn_710046D648);
+            m_titleSeq.addWait(10);
+            m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleFadeInText);
+            m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleFadeInNormal);
+            m_titleSeq.addWait(0x77);
+            m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleFadeOutNormal);
+        }
+    }
+    m_titleSeq.addJob(&GfMenuObjQuestLog::seqTitleEndWait);
+    if (pad_948) {
+        m_titleSeq.addJob(&GfMenuObjQuestLog::seqOrderActivation);
+    }
+    acc.setDisp(true);
+    return true;
+}
+
 bool GfMenuObjQuestLog::seqLogNext() {
     ui::UIObjectAcc log(m_handle, "LAY_log");
     // the task reference is asserted held and not used further (operator-> only)
