@@ -343,6 +343,29 @@ int BattleCharacter::GetAlphaSetID(ALPHA_PROC_ID id) {
     }
 }
 
+void BattleCharacter::DispBladeLine(bool disp, float time) {
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr || !param->fn_7100085314(false)) {
+        return;
+    }
+    if (!disp && !m_dispBladeLine) {
+        return;
+    }
+    if (gf::GfObjUtil::getObj(m_handle) == nullptr) {
+        return;
+    }
+    gf::GfComAsm* com = gf::GfObjUtil::getObj(m_handle)->getComponent<gf::GfComAsm>(2);
+    if (com == nullptr) {
+        return;
+    }
+    if (disp) {
+        com->easeIn("S_skinline", time, static_cast<gf::AnimLayer>(6));
+    } else {
+        com->easeOut("S_skinline", time, static_cast<gf::AnimLayer>(6));
+    }
+    m_dispBladeLine = disp;
+}
+
 bool BattleCharacter::IsEnableBattleFace() const {
     return m_isPlayer;
 }
@@ -571,6 +594,28 @@ void BattleCharacter::StopSE(BTL_SE se, int no) {
     }
 }
 
+void BattleCharacter::SetPosition(const mm::Vec3& pos, bool flag) {
+    pad_20 = pos;
+    pad_F00_5 = true;
+    pad_F00_6 = flag;
+    pad_D0[0] = mm::Vec3::zero.x;
+    pad_D0[1] = mm::Vec3::zero.y;
+    pad_D0[2] = mm::Vec3::zero.z;
+    pad_E0[0] = 1.0f;
+    pad_E0[1] = 1.0f;
+    if (BattleGlobal::sys()->m_challengeAnySuccess && pad_F09_3) {
+        return;
+    }
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr) {
+        return;
+    }
+    gf::GF_OBJ_HANDLE* driver = param->m_driverHandle;
+    if (BattleCharacter* chr = mm::mtl::PtrSingleton<CharacterManager>::sys()->GetCharacterConst(driver)) {
+        chr->fn_71000301D4();
+    }
+}
+
 void BattleCharacter::fn_71000301D4() {
     const CharacterParameter* param = GetCharacterParameterConst(false);
     if (param == nullptr || param->m_isNotBlade) {
@@ -620,6 +665,36 @@ void BattleCharacter::CalcLocomotionMoveRate(float rate) {
     float max = rate < 0.0f ? 1.0f : rate;
     pad_CFC = mm::clamp(moveRate, 0.15f, max);
     pad_D00 = 1.0f;
+}
+
+void BattleCharacter::CreateDeadEffect() {
+    if (!m_isPlayer) {
+        return;
+    }
+    if (IsBlade()) {
+        return;
+    }
+    BattleGlobal* global = mm::mtl::PtrSingleton<BattleGlobal>::sys();
+    if (global->m_removeEffect || global->pad_bit25) {
+        return;
+    }
+    if (m_effects[0] != 0) {
+        return;
+    }
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr || param->m_flags622_11) {
+        return;
+    }
+    fw::EffectManager* effect = mm::mtl::PtrSingleton<fw::EffectManager>::sys();
+    unsigned int handle = effect->create("cmn_000_022", nullptr, true);
+    if (handle == 0) {
+        return;
+    }
+    m_effects[0] = handle;
+    float s = param->m_distanceScale;
+    effect->setParam(handle, m_pos, mm::Vec3(s, s, s));
+    pad_D0[2] = 0.0f;
+    pad_D0[0] = 0.0f;
 }
 
 void BattleCharacter::ManagerUpdate_Attack() {
@@ -1385,6 +1460,21 @@ void BattleCharacter::StartBladeTimer(BLADE_TIMER_MODE mode) {
     m_bladeTimerMode = mode;
 }
 
+void BattleCharacter::NotifyAngryStart() {
+    if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->fn_710000C440(6)) {
+        PlaySE(static_cast<BTL_SE>(1), 0x3C, nullptr, true);
+    }
+    mm::mtl::PtrSingleton<TalkManager>::sys()->NotifyTrigger(m_voiceIndex, static_cast<TalkManager::TRIGGER>(0x2F), 0,
+                                                              0);
+    m_effects[6] = mm::mtl::PtrSingleton<fw::EffectManager>::sys()->create("cmn_000_025", nullptr, true);
+    float scale = pad_EE4 * 0.01f;
+    const CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param != nullptr) {
+        scale *= param->m_distanceScale;
+    }
+    fn_710003B0F4(6, nullptr, scale, nullptr, nullptr);
+}
+
 void BattleCharacter::NotifyAngryEnd() {
     if (m_effects[6] != 0) {
         if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_removeEffect) {
@@ -1509,6 +1599,37 @@ void BattleCharacter::FluctuatePartyGauge(int value) {
     mm::mtl::PtrSingleton<DataManager>::sys()->FluctuatePartyGauge(value, group);
 }
 
+void BattleCharacter::UpdateBladeGuardEffect(const mm::Vec3* pos) {
+    if (m_effects[3] == 0) {
+        return;
+    }
+    fw::EffectManager* effect = mm::mtl::PtrSingleton<fw::EffectManager>::sys();
+    if (!effect->isExist(m_effects[3])) {
+        m_effects[3] = 0;
+        return;
+    }
+    mm::Vec3 nodePos;
+    Misc::GetNodePosition(m_handle, reinterpret_cast<const char*>(pad_C50), nodePos);
+    nodePos.x = m_pos.x;
+    nodePos.z = m_pos.z;
+    float s = GetCharacterParameterConst(false)->m_distanceScale;
+    mm::Vec3 scale(s, s, s);
+    float rotY;
+    if (pos != nullptr) {
+        mm::Vec3 dir;
+        dir.x = pos->x - m_pos.x;
+        dir.y = pos->y - m_pos.y;
+        dir.z = pos->z - m_pos.z;
+        Misc::NormalizeXZ(dir);
+        rotY = Misc::CalcRotY(dir);
+        pad_1088 = rotY;
+    } else {
+        rotY = pad_1088;
+    }
+    mm::Vec3 rot(0.0f, rotY, 0.0f);
+    effect->setParam(m_effects[3], nodePos, rot, scale);
+}
+
 bool BattleCharacter::CheckAttackAction(ACTION_ID id, bool flag) const {
     switch (id) {
     case ACTION_ARTS:
@@ -1588,6 +1709,27 @@ void BattleCharacter::ActionCommandKizunaMax(const ActionCommand*, ActionCommand
 
 void BattleCharacter::ActionCommandEndKizunaMax() {}
 
+void BattleCharacter::ActionCommandAttack(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type) {
+    switch (type) {
+    case ActionCommand::COMMAND_MOVE_DIR_RATE: {
+        mm::Vec3 dir;
+        static_cast<const act_cmd::MOVE_DIR_RATE*>(cmd)->GetDirection(dir);
+        TurnDirection(dir, false, true);
+        SetAction(ACTION_KIZUNA_MAX, false, false, 0, 0.0f);
+        break;
+    }
+    case ActionCommand::COMMAND_MOVE_LOCK:
+        TurnTarget(false, false, true);
+        SetAction(ACTION_KIZUNA_MAX, false, false, 0, 0.0f);
+        break;
+    case ActionCommand::COMMAND_ATTACK_REPELLED:
+        SetAction(static_cast<ACTION_ID>(15), false, false, 0, 0.0f);
+        break;
+    default:
+        break;
+    }
+}
+
 void BattleCharacter::ActionCommandEndAttack() {}
 
 void BattleCharacter::ActionCommandSpAttack(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
@@ -1621,6 +1763,32 @@ void BattleCharacter::ActionCommandEndBreak() {}
 void BattleCharacter::ActionCommandDead(const ActionCommand*, ActionCommand::COMMAND_TYPE) {}
 
 void BattleCharacter::ActionCommandEndDead() {}
+
+void BattleCharacter::ActionCommandArts(const ActionCommand* cmd, ActionCommand::COMMAND_TYPE type) {
+    switch (type) {
+    case ActionCommand::COMMAND_MOVE_DIR_RATE:
+        if (pad_10BA_1) {
+            mm::Vec3 dir;
+            static_cast<const act_cmd::MOVE_DIR_RATE*>(cmd)->GetDirection(dir);
+            TurnDirection(dir, false, true);
+            SetAction(ACTION_KIZUNA_MAX, false, false, 0, 0.0f);
+        }
+        break;
+    case ActionCommand::COMMAND_MOVE_LOCK:
+        if (pad_10BA_1) {
+            if (static_cast<const act_cmd::MOVE_LOCK*>(cmd)->IsTurnTarget()) {
+                TurnTarget(false, false, true);
+            }
+            SetAction(ACTION_KIZUNA_MAX, false, false, 0, 0.0f);
+        }
+        break;
+    case ActionCommand::COMMAND_ATTACK_REPELLED:
+        SetAction(static_cast<ACTION_ID>(15), false, false, 0, 0.0f);
+        break;
+    default:
+        break;
+    }
+}
 
 void BattleCharacter::ActionCommandEndArts() {}
 

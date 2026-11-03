@@ -486,7 +486,9 @@ public:
     bool m_controlCharacterDead : 1;
     // while set, IsGameOver holds without asking GfGameManager (the name is not the original's)
     bool m_gameOver : 1;
-    unsigned char : 4;
+    // BattleCharacter::CreateDeadEffect creates no dead effect while it or m_removeEffect is set (meaning unknown)
+    bool pad_bit25 : 1;
+    unsigned char : 3;
     // CharacterManager::PostUpdateProc sets it to whether an enemy answers BattleCharacter::IsScout (meaning
     // unknown)
     bool pad_bit29 : 1;

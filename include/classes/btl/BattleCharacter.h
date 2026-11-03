@@ -256,6 +256,7 @@ public:
     void SetBladeSupportCondition(int condition);
     bool IsEnableBattleFace() const;
     void SetBattleFace(bool on, float time);
+    void DispBladeLine(bool disp, float time);
     // false while parameter slot 65 holds for true; a non-player needs slot 64 and driver type 0; then whether
     // m_bladeArtsState is neither 1 nor 2
     bool IsEnableCancelReaction() const;
@@ -263,6 +264,8 @@ public:
     void StartBladeTimer(BLADE_TIMER_MODE mode);
     void EndBladeTimer(BLADE_TIMER_MODE mode);
     const ARTS_SLOT_DATA* GetArtsSlotData(int slot, bool, int palette) const;
+    void NotifyAngryStart();
+    void CreateDeadEffect();
     void NotifyAngryEnd();
     void ActionRun();
     bool IsBladeArtsEnd() const;
@@ -286,6 +289,7 @@ public:
     void ResetAlphaRate(int id);
     void RegisterAlphaAnimation(ALPHA_PROC_ID id, float rate, float time, bool all);
     void AlphaAnimation(ALPHA_PROC_ID id);
+    void DeleteAnimSpecialProc();
     // 1.0.0's name: its ResetAlphaAnimation (0x710001F77C) has the same three BladeChangeManager callers and the
     // same body over 17 entries (3.0.1's symbols spell fn_7100028A40)
     void ResetAlphaAnimation();
@@ -425,8 +429,10 @@ public:
     // Placeholder name: new in 3.0.1. A member: it sits among BattleCharacter's functions and writes its fields.
     // What it does: for a character whose parameter's m_isNotBlade is clear, sets pad_F01_0 unless, with the
     // BattleGlobal flag (+0x83CA bit 3) set, pad_F09_3 is set or TUnk_B3BC20::fn_710009EB70 answers true for the
-    // character's object or its parameter's m_driverHandle. Caller: SetPosition.
+    // character's object or its parameter's m_driverHandle. Caller: SetPosition, on its
+    // parameter's driver character.
     void fn_71000301D4();
+    void SetPosition(const mm::Vec3& pos, bool flag);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
     // functions and writes its fields. What it does: sets pad_F09_3 to the argument; when set, or when it was set
     // before, keeps (m_state == 8, or true when cleared) in pad_F03_4/pad_F03_7 (pad_F03_5 set, then
@@ -479,6 +485,7 @@ public:
     // updates the target lock arrow, the others their effect's position and scale (3.0.1's symbols spell
     // fn_7100043CF4)
     void UpdateBuffEffect(int id);
+    void UpdateBladeGuardEffect(const mm::Vec3* pos);
     void UpdateTargetLockArrow();
     // Placeholder name: 1.0.0's UpdateEffectPositionScale(int, const char*, float) has its callers and body, but
     // 3.0.1's takes two more pointers (each read as three floats when given), so its signature is not 1.0.0's.
@@ -488,7 +495,9 @@ public:
     unsigned char pad_8[0x8];
     // where the character stands: EnemyParameter::AngryInfection measures from it (the name is not the original's)
     mm::Vec3 m_pos;
-    unsigned char pad_20[0x80];
+    // SetPosition stores its position here (then sets pad_F00_5 and pad_F00_6; meaning unknown)
+    mm::Vec3 pad_20;
+    unsigned char pad_30[0x70];
     // SetWarpPostureByDir sets it to the rotation of mm::Vec3::unitZ onto its direction (then sets pad_F00_7)
     mm::Quat pad_A0;
     // the movement of this frame: GetMoveDataPerSec scales it by 30 (the name is not the original's)
@@ -638,7 +647,9 @@ public:
     // CharacterManager::fn_710007C43C counts only enemies with it set while GfGameInsideBattleLock holds a lock
     // (run bit 20; meaning unknown)
     unsigned int pad_F00_4 : 1;
-    unsigned int pad_F00_5 : 2;
+    // SetPosition sets pad_F00_5 and stores its bool argument in pad_F00_6 (run bits 21 and 22; meaning unknown)
+    unsigned int pad_F00_5 : 1;
+    unsigned int pad_F00_6 : 1;
     // SetWarpPostureByDir sets it with pad_A0 (run bit 23; meaning unknown)
     unsigned int pad_F00_7 : 1;
     // fn_71000301D4 sets it (run bit 24; meaning unknown)
@@ -672,7 +683,10 @@ public:
     // ActionCommandEndBladeArts clears both when it ends the action (meaning unknown)
     unsigned int pad_F04_4 : 1;
     unsigned int pad_F04_5 : 1;
-    unsigned int pad_F04_6 : 11;
+    unsigned int pad_F04_6 : 6;
+    // DeleteAnimSpecialProc fades alpha set 6 back in and remounts only while it is set (run bit 60; meaning unknown)
+    unsigned int pad_F05_4 : 1;
+    unsigned int pad_F05_5 : 4;
     // CharacterManager::fn_710007D594 sets it on every dead enemy that does not have it yet (run bit 65; meaning
     // unknown)
     unsigned int pad_F06_1 : 1;
@@ -682,7 +696,9 @@ public:
     // the name is not the original's: fn_710002F368 treats the character as out of battle while it is set
     unsigned int m_isBattleIgnore : 1;
     unsigned int pad_F07_2 : 6;
-    unsigned int pad_F08 : 3;
+    unsigned int pad_F08 : 2;
+    // whether DispBladeLine eased the blade's "S_skinline" animation in (run bit 74; the name is not the original's)
+    unsigned int m_dispBladeLine : 1;
     // whether SetBattleFace eased the battle eye animation in (the name is not the original's)
     unsigned int m_battleFace : 1;
     unsigned int m_oneShotRimBloom : 1;  // SetOneShotRimBloom sets it (the name is not the original's)
@@ -739,7 +755,10 @@ public:
     // timers ManagerUpdate_Attack counts down (pad_108C, m_superArmorTime, pad_1094 and pad_1098 kept at 0 or
     // more; pad_1098 clears pad_10B8 when it runs out) or up (pad_109C); meaning unknown
     float pad_107C;
-    unsigned char pad_1080[0xC];
+    unsigned char pad_1080[0x8];
+    // the Y rotation UpdateBladeGuardEffect turns the blade guard effect to (Misc::CalcRotY of the XZ direction to
+    // its position; meaning unknown)
+    float pad_1088;
     float pad_108C;
     // SetSuperArmorTime keeps the longer time (the name is not the original's)
     float m_superArmorTime;
@@ -764,7 +783,10 @@ public:
     unsigned int pad_10B8 : 8;
     // Utility::AI_GetAutoAttackState answers m_autoAttackStep only while it is set (the name is not the original's)
     unsigned int m_isAutoAttack : 1;
-    unsigned int pad_10B9_1 : 13;
+    unsigned int pad_10B9_1 : 8;
+    // ActionCommandArts turns the character only while it is set (run bit 17; meaning unknown)
+    unsigned int pad_10BA_1 : 1;
+    unsigned int pad_10BA_2 : 4;
     // CheckWeaponDistance's answer: the target is within the parameter's weapon ranges (the name is not the original's)
     unsigned int m_inWeaponDistance : 1;
     unsigned int pad_10BA_7 : 9;
