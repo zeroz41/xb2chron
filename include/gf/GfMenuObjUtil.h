@@ -199,6 +199,7 @@ public:
     // a world position in view space (out = GfInfo::m_viewMat applied to in)
     static void convViewSpace(mm::Vec3& out, const mm::Vec3& in);
     static unsigned int getLeaderPartyID();  // always 0
+    static unsigned int getDriverPartyID(unsigned int driver);  // the driver's party slot, -1 for none
     static bool isExitDriver(unsigned int index);  // a driver in that party slot (index modulo 3)
     // the other common sounds (BDAT 0x187 rows 5, 0xB, 0xC, 0xE)
     static unsigned int playSECommonTab();
@@ -332,13 +333,14 @@ public:
     static unsigned int convMenuBladeID(unsigned int blade);    // the blade's menu id
     static unsigned int getDriverClassBuffRatio(unsigned int driverClass, unsigned int index);
     // the level (1-based; 0 for none) of a driver class's buff index (GfMenuCharDataAdapter::update_DR_ClassBuffLv)
-    static unsigned char getDriverClassBuffLv(unsigned int driverClass, unsigned int index);
+    static unsigned int getDriverClassBuffLv(unsigned int driverClass, unsigned int index);
     // the name message (BDAT table 0x127) of a driver class's buff index; 0 for none
     static unsigned int getDriverClassBuffType(unsigned int driverClass, unsigned int index);
     static unsigned short getBladeRareIconID(unsigned int blade);  // 0 for none
     static unsigned short getBladeAttributeID(unsigned int blade);
     static bool isBladeSelectable(unsigned int blade, const GfMenuBladeList* list);
     static bool isBladeReleasable(unsigned int blade, const GfMenuBladeList* list);
+    static bool isBladeAchivementReleased(unsigned int blade);  // a bond line's achievement released at some level
     static unsigned int getBladeRank(unsigned int blade);
     static unsigned int getBladeRarity(unsigned int blade);
     static unsigned int getBladeCorrectiveType(unsigned int blade);  // 0 for none

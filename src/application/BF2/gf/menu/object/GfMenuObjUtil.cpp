@@ -62,6 +62,10 @@
 #include "ui/UIStr.h"
 #include "gf/GfDataMercenaries.h"
 #include "classes/gf/GfBdatBgm.h"
+#include "classes/ui/UISelectObjList.h"
+#include "classes/gf/GfAllocator.h"
+#include "gf/GfKizunaringBlade.h"
+#include "classes/gf/GfGameMercenaries.h"
 
 namespace gf {
 namespace {
@@ -179,6 +183,22 @@ unsigned int GfMenuObjUtil::playAnime(unsigned int handle, const char* child, co
     acc.setDisp(true);
     acc.startAnimation(anime, false);
     return acc.m_handle;
+}
+
+bool GfMenuObjUtil::checkMissionCond(unsigned int mission, const GfMenuBladeList* list) {
+    GfRequestBladeData data = {};
+    if (GfGameMercenaries::getMissionFlag(mission) != 1) {
+        return false;
+    }
+    for (unsigned int i = 0; i < 3; i++) {
+        if (GfDataMercenaries::getRequestCondition(data, mission, i) && list != nullptr) {
+            if (getMissionCondBladeCount(data, list) <
+                static_cast<unsigned int>(data.m_count == 0 ? 1 : data.m_count)) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 void GfMenuObjUtil::setDockPos(unsigned int handle, unsigned int target, unsigned char pos, bool outer) {
@@ -420,6 +440,31 @@ float GfMenuObjUtil::getCtrlMotionTime(const char* motionLib, const char* motion
     return data->getMotionLength(data->searchMotion(motion));
 }
 
+ui::UICtrlCursorSelect* GfMenuObjUtil::createCursor(CursorParam& param) {
+    ui::UISelectObjList::CreateParam create;
+    create.m_allocator = getAllocator(ALLOCATOR(0));
+    ui::UISelectObjList* list = ui::UISelectObjList::create(create);
+    if (list == nullptr) {
+        return nullptr;
+    }
+    if (param.m_pickup != nullptr) {
+        list->pickupObject(param.m_parent, param.m_pickup, 1);
+    } else if (param.m_names != nullptr) {
+        ui::UIObjectAcc acc(param.m_parent);
+        for (unsigned short i = 0; i < param.m_nameCount; i++) {
+            unsigned int child = acc.searchChild(param.m_names[i]);
+            if (child != 0) {
+                list->addContents(child);
+            }
+        }
+    }
+    list->getSize();  // the count is not used (the call is the original's)
+    param.m_setting.setType(param.m_type);
+    ui::UICtrlCursorSelect* cursor = ui::UICtrlCursorSelect::create(param.m_cursor, param.m_setting, list);
+    list->release();
+    return cursor;
+}
+
 const char* GfMenuObjUtil::getMenuMS(unsigned int id) {
     if (id == 0) {
         return nullptr;
@@ -513,6 +558,36 @@ unsigned int GfMenuObjUtil::getDriverClassBuffRatio(unsigned int driverClass, un
     return value < 0 ? 0 : value;
 }
 
+unsigned int GfMenuObjUtil::getDriverClassBuffLv(unsigned int driverClass, unsigned int index) {
+    if (driverClass == 0) {
+        return 0;
+    }
+    unsigned char* fp = GfDataBdat::getFP(0x18);
+    if (fp == nullptr) {
+        return 0;
+    }
+    const char* columns[5] = {"DamageDown", "DamageUP", "HealUP", "AutoHate", "ArtsHate"};
+    unsigned int count = 0;
+    for (unsigned int column = 0; column < 5; column++) {
+        if (static_cast<unsigned char>(Bdat::getVal(fp, columns[column], driverClass)) != 0) {
+            if (count == index) {
+                return static_cast<unsigned char>(Bdat::getVal(fp, s_classBuffNumColumns[column], driverClass));
+            }
+            count++;
+        }
+    }
+    return 0;
+}
+
+unsigned int GfMenuObjUtil::getDriverPartyID(unsigned int driver) {
+    for (unsigned int i = 0; i < 10; i++) {
+        if (GfDataParty::getDriver(i, 0) == driver) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 bool GfMenuObjUtil::isValidBlade(unsigned int blade) {
     return blade != 0 && !GfDataBlade::isDummyBlade(blade);
 }
@@ -603,6 +678,45 @@ unsigned int GfMenuObjUtil::getBladeIDFromPartySlot(unsigned int driver, int slo
     return blade;
 }
 
+unsigned int GfMenuObjUtil::getBladeIDFromPartyBackSlot(unsigned int driver, int slot, bool flag) {
+    if (GfDataParty::getDriver(driver, 0) != 1) {
+        return 0;
+    }
+    int set;
+    if (GfDataDriver::getBlade(1, 0) == 1001) {
+        set = 0;
+    } else if (GfDataDriver::getBlade(1, 1) == 1001) {
+        set = 1;
+    } else if (GfDataDriver::getBlade(1, 2) == 1001) {
+        set = 2;
+    } else {
+        return 0;
+    }
+    unsigned int blade = 0;
+    int current = getSetBladeID(driver, slot, flag);
+    if (current != -1 && current == set) {
+        int back = 3;
+        {
+            DataParamAcc acc(3, 1, static_cast<GimmickType>(0));
+            if (static_cast<unsigned int>(acc.getBladeSet(false)) >= 3) {
+                acc.getBladeSet(false);
+                back = set;
+            }
+        }
+        blade = GfDataDriver::getBlade(1, back);
+    }
+    return blade;
+}
+
+unsigned int GfMenuObjUtil::getBladeIDFromDriverSlot(unsigned int driver, int slot) {
+    for (unsigned int i = 0; i < 10; i++) {
+        if (GfDataParty::getDriver(i, 0) == driver) {
+            return getBladeIDFromPartySlot(i, slot, false);
+        }
+    }
+    return 0;
+}
+
 unsigned int GfMenuObjUtil::getBladeSlotMax() {
     unsigned int max = 1;
     if (GfGameFlag::getLocal(1, 0x89FF) == 1) {
@@ -655,6 +769,47 @@ bool GfMenuObjUtil::isBladeDifferentImage(unsigned int blade, unsigned int other
     return convMenuBladeID(blade) != convMenuBladeID(other);
 }
 
+unsigned int GfMenuObjUtil::convMenuBladeID(unsigned int blade) {
+    unsigned char* fp = GfDataBdat::getFP(0x176);
+    DataParamAcc acc(4, blade, static_cast<GimmickType>(0));
+    unsigned int id = 0;
+    if (acc.isValid()) {
+        int top = Bdat::getIdTop(fp);
+        int face = getFaceIconID(acc);
+        for (int i = 0; i < Bdat::getIdCount(fp); i++) {
+            if (face == static_cast<unsigned short>(Bdat::getVal(fp, "icon_id", top + i))) {
+                id = i + 1;
+                // the common blades' menu ids follow by weapon type, four apart
+                if (GfDataBlade::isCommonBlade(acc.isValid() ? acc.getBdatId() : 0)) {
+                    if (acc.getWeaponType(-1, false) == 10) {
+                        id += 0;
+                    }
+                    if (acc.getWeaponType(-1, false) == 11) {
+                        id += 4;
+                    }
+                    if (acc.getWeaponType(-1, false) == 12) {
+                        id += 8;
+                    }
+                    if (acc.getWeaponType(-1, false) == 13) {
+                        id += 12;
+                    }
+                    if (acc.getWeaponType(-1, false) == 14) {
+                        id += 16;
+                    }
+                    if (acc.getWeaponType(-1, false) == 15) {
+                        id += 20;
+                    }
+                    if (acc.getWeaponType(-1, false) == 16) {
+                        id += 24;
+                    }
+                }
+                break;
+            }
+        }
+    }
+    return id;
+}
+
 unsigned int GfMenuObjUtil::getBladeCorrectiveType(unsigned int blade) {
     if (!GfDataBlade::isValid(blade)) {
         return 0;
@@ -678,6 +833,30 @@ unsigned int GfMenuObjUtil::getBladeCorrectiveType(unsigned int blade) {
         return 6;
     }
     return 0;
+}
+
+unsigned int GfMenuObjUtil::getBladeCorrectiveRatio(unsigned int blade) {
+    if (!GfDataBlade::isValid(blade)) {
+        return 0;
+    }
+    float ratio;
+    if (GfDataBlade::getHpMaxRev(blade) * 0.01f > 0.0f) {
+        ratio = GfDataBlade::getHpMaxRev(blade) * 0.01f;
+    } else if (GfDataBlade::getStrengthRev(blade) * 0.01f > 0.0f) {
+        ratio = GfDataBlade::getStrengthRev(blade) * 0.01f;
+    } else if (GfDataBlade::getPowerEtherRev(blade) * 0.01f > 0.0f) {
+        ratio = GfDataBlade::getPowerEtherRev(blade) * 0.01f;
+    } else if (GfDataBlade::getDexRev(blade) * 0.01f > 0.0f) {
+        ratio = GfDataBlade::getDexRev(blade) * 0.01f;
+    } else if (GfDataBlade::getAgilityRev(blade) != 0) {
+        ratio = GfDataBlade::getAgilityRev(blade) * 0.01f;
+    } else if (GfDataBlade::getLuckRev(blade) != 0) {
+        ratio = GfDataBlade::getLuckRev(blade) * 0.01f;
+    } else {
+        return 0;
+    }
+    float percent = ratio * 100.0f;
+    return static_cast<int>(percent + (percent > 0.0f ? 0.5f : -0.5f));
 }
 
 unsigned int GfMenuObjUtil::getBladeRank(unsigned int blade) {
@@ -741,6 +920,20 @@ unsigned int GfMenuObjUtil::playSE(const char* se) {
         return sound->playSe(se, nullptr, 1.0f, static_cast<fw::SoundCategory>(3));
     }
     return 0;
+}
+
+bool GfMenuObjUtil::isBladeAchivementReleased(unsigned int blade) {
+    if (blade == 0 || GfDataBlade::isDummyBlade(blade)) {
+        return false;
+    }
+    for (unsigned int level = 0; level < 5; level++) {
+        for (unsigned int line = 0; line < 10; line++) {
+            if (GfKizunaringBlade::getReleaseAchievement(blade, line, level + 1) == 3) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 void GfMenuObjUtil::fn_71004922BC(unsigned int blade, bool flag) {
@@ -1027,6 +1220,24 @@ void GfMenuObjUtil::placeObjectHLeft(unsigned int handle, const char* format, un
         ui::UIObjectAcc acc(handle, name.m_str);
         acc.setPosCenter(mm::Pnt<short>(x, y));
     }
+}
+
+void GfMenuObjUtil::placeObjectHRatio(unsigned int base, unsigned int point, float ratio, short offset) {
+    mm::Rect<short> baseRect;
+    ui::UIObjectAcc baseAcc(base);
+    ui::UIObjectAcc pointAcc(point);
+    mm::Rect<short> pointRect;
+    mm::Pnt<short> pos;
+    baseAcc.getRect(baseRect, 2);
+    pointAcc.getRect(pointRect, 2);
+    pointRect.w += offset;
+    pointAcc.getPosCenter(pos);
+    if (baseRect.w < pointRect.w) {
+        pos.x = baseRect.x + baseRect.w / 2;
+    } else {
+        pos.x = baseRect.x + pointRect.w / 2 + static_cast<int>((baseRect.w - pointRect.w) * ratio);
+    }
+    pointAcc.setPosCenter(pos);
 }
 
 unsigned int GfMenuObjUtil::getFavoriteStat(unsigned int type, unsigned int id, FAVORITE favorite) {
