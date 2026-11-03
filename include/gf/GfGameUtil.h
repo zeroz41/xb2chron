@@ -193,6 +193,8 @@ public:
     // GfEvent::callDebugChangeIdea(4, blade) and shows SCOM_POPUP::createAffinity for its driver (its set driver, else
     // its creator; with GfGameManager::fn_71002A9E68 GfDataDriver::fn_71002417DC of GfDataBlade::fn_7100236518)
     static void addTrustRankForKizunaRing(unsigned int blade);
+    static void setSaikaLensOff(gf::GF_OBJ_HANDLE* handle);
+    static void setSaikaLensOff();
     // named by the symbols: DataParamAcc::setBladeSet(select) on the object and, when it has a GfObj, sends it a
     // MsgUnk_1000045 with its attribute after and before the change
     static void setBladeSelect(gf::GF_OBJ_HANDLE* handle, int select);

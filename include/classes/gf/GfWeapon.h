@@ -243,6 +243,15 @@ void fn_71002DA4FC(int value);
 void fn_71002DA570(int value);
 void fn_71002DA5E4(unsigned int value);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit among free placeholders (no this). What it does: GfGameUtil::addExpBattle's per-driver step
+// (it tail-calls it for one driver and calls it for each party driver): the driver's battle experience, level up
+// (GfDataDriver::fn_710024487C, SCOM_FIELD_VOICE::createLevelup, SCOM_MAXIMUM_HEAL, GfEvent::callDriverLevel).
+void fn_71002DAD5C(unsigned int driver, unsigned int exp);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
+// GfWeapon's unit among free placeholders (no this). What it does: GfGameUtil::addExpInn's per-driver step (also
+// called by fn_71002DAD5C and itself): adds experience through DataParamAcc and GfDataDriver.
+void fn_71002DA8FC(unsigned int driver, unsigned int exp);
+// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfWeapon's unit and it takes no object. What it does: for blade 1001, else 1002 (the first GfDataBlade::fn_71002383C8
 // holds for), cancels the mission of the blade's mercenary team (GfGameMercenaries::cancelMission of
 // GfDataMercenaries::getMissionIdByBlade) and clears that team's members (clearTeamMember of getTeamID);

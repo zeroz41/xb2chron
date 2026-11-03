@@ -185,6 +185,12 @@
 #include "gf/GfObjInfo.h"
 #include "classes/gf/GfObjManager.h"
 #include "mm/mtl/RTTI.h"
+#include "classes/gf/GfObjSetupWeapon.h"
+#include "classes/gf/GfObjSetupNpc.h"
+#include "classes/gmk/GmkFieldVolume.h"
+#include <algorithm>
+#include "classes/gf/SCOM_MAXIMUM_HEAL.h"
+#include "classes/gf/SCOM_FIELD_VOICE.h"
 
 namespace gf {
 
@@ -1123,6 +1129,84 @@ void GfGameUtil::addWp(unsigned int driver, unsigned int id, int wp) {
     }
 }
 
+void GfGameUtil::execLevelUp(unsigned int driver, unsigned int level) {
+    DataParamAcc acc(3, driver, static_cast<GimmickType>(0));
+    if (acc.isScenarioMask()) {
+        return;
+    }
+    unsigned int prev = acc.getLevel(false);
+    unsigned int exp = acc.getExp();
+    exp += acc.getBattleExp();
+    if (prev >= 99) {
+        return;
+    }
+    GfBdatBtl* btl = mm::mtl::PtrSingleton<GfBdatBtl>::sys();
+    for (unsigned int lv = acc.getLevel(false); lv < level; lv = acc.getLevel(false)) {
+        if (lv < btl->getGrowStart() || lv >= btl->getGrowEnd() - 1) {
+            break;
+        }
+        unsigned int need = GfDataBlade::fn_71002326F0(lv + 1);
+        if (exp < need) {
+            break;
+        }
+        exp -= need;
+        GfDataDriver::fn_710024487C(driver, lv + 1);
+    }
+    if (acc.getLevel(false) == prev) {
+        return;
+    }
+    GfDataDriver::fn_71002448D8(driver, exp);
+    GfDataDriver::fn_7100244988(driver, 0);
+    if (GfDataDriver::fn_710023F9A8(driver)) {
+        GfDataDriver::fn_71002417DC(driver);
+    }
+    if (GfMenuManager::fn_710035DC94()) {
+        SCOM_FIELD_VOICE::fn_7100567634(ParamObj(3, driver));
+    } else {
+        SCOM_FIELD_VOICE::createLevelup(ParamObj(3, driver));
+    }
+    GF_OBJ_HANDLE* handle = GfGameParty::getHandleDriverByBdatID(driver);
+    if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+        SCOM_MAXIMUM_HEAL::create(handle);
+    }
+    GfEvent::callDriverLevel(driver, acc.getLevel(false), prev);
+    GfDataDriver::openDriverArtsForLevelup(driver);
+    if (GfDataDriver::fn_7100237A94(driver)) {
+        mm::mtl::FixedVector<unsigned short, 32> list;
+        GfDataDriver::fn_71002416B4(list, driver);
+        for (const unsigned short& id : list) {
+            if (GfDataDriver::fn_7100249170(id)) {
+                GfDataDriver::openDriverArtsForLevelup(id);
+            }
+        }
+    }
+}
+
+void GfGameUtil::addWpForObject(unsigned int driver, unsigned int id, int wp) {
+    if (!GfDataDriver::fn_710023F9A8(driver)) {
+        addWp(driver, id, wp);
+        return;
+    }
+    mm::mtl::FixedVector<unsigned short, 32> drivers;
+    drivers.push_back(driver);
+    unsigned int base = GfDataDriver::fn_71002417DC(driver);
+    if (std::find(drivers.begin(), drivers.end(), static_cast<unsigned short>(base)) == drivers.end() &&
+        GfDataDriver::fn_7100249170(base)) {
+        drivers.push_back(base);
+    }
+    mm::mtl::FixedVector<unsigned short, 32> list;
+    GfDataDriver::fn_71002416B4(list, base);
+    for (const unsigned short& other : list) {
+        if (GfDataDriver::fn_7100249170(other) && std::find(drivers.begin(), drivers.end(), other) == drivers.end()) {
+            drivers.push_back(other);
+        }
+    }
+    for (const unsigned short& target : drivers) {
+        unsigned int blade = GfDataBlade::fn_7100237B70(target, -1);
+        addWp(target, GfDataBlade::getBladeWpnType(blade), wp);
+    }
+}
+
 void GfGameUtil::fn_71002DB9D4(unsigned int driver, int sp) {
     if (driver == 0) {
         mm::mtl::FixedVector<unsigned short, 32> drivers;
@@ -1285,6 +1369,27 @@ unsigned int fn_71002DC130(unsigned int driver) {
     return mm::mtl::PtrSingleton<GfBdatBtl>::sys()->fn_71001EA310(total, group - 1);
 }
 
+bool GfGameUtil::isPointSavable(const mm::Vec3& pos) {
+    const gmk::GmkManager* manager = gmk::GmkManager::sys();
+    if (manager == nullptr) {
+        return true;
+    }
+    for (gmk::GmkSet* const* it = manager->m_gmkSets.begin(); it != manager->m_gmkSets.end(); ++it) {
+        gmk::IGmkList* list = (*it)->getGmkList(gmk::GmkFieldVolume::TYPE);
+        if (list == nullptr) {
+            continue;
+        }
+        unsigned int num = list->getInstNum();
+        for (unsigned int i = 0; i < num; i++) {
+            gmk::AGmkBase* gmk = list->getInst(i);
+            if (gmk != nullptr && gmk->isValid() && gmk->isInsideShape(pos, 0.0f)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 void GfGameUtil::addTrustRankForKizunaRing(unsigned int blade) {
     int rank = GfDataBlade::getTrustRank(blade);
     if (rank > 5) {
@@ -1368,6 +1473,69 @@ void fn_71002DA5E4(unsigned int value) {
         MsgUnk_1000034 msg(0x10);
         msg.pad_30 = value;
         static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
+    }
+}
+
+void GfGameUtil::addExpInn(unsigned int exp) {
+    if (exp == 0) {
+        return;
+    }
+    mm::mtl::FixedVector<unsigned short, 32> drivers;
+    GfPartySelect::getDriverList(drivers, static_cast<GfPartySelect::LIST_TYPE>(8), 0);
+    GfPartySelect::getDriverList(drivers, static_cast<GfPartySelect::LIST_TYPE>(7), 0);
+    if (!GfGameManager::fn_71002A9E68()) {
+        for (int id = 1; id < 7; id++) {
+            if (std::find(drivers.begin(), drivers.end(), static_cast<unsigned short>(id)) != drivers.end()) {
+                continue;
+            }
+            if (id == 5 && GfDataBlade::fn_7100231884() > 0xBE8) {
+                continue;
+            }
+            drivers.push_back(id);
+        }
+    }
+    if (GfGameManager::fn_71002A9E68()) {
+        unsigned int seen = 0;
+        for (unsigned short* it = drivers.begin(); it != drivers.end();) {
+            unsigned int bit = 1 << GfDataDriver::fn_71002419C8(*it);
+            if (seen & bit) {
+                it = drivers.erase(it);
+            } else {
+                seen |= bit;
+                ++it;
+            }
+        }
+    }
+    for (unsigned short id : drivers) {
+        fn_71002DA8FC(id, exp);
+    }
+}
+
+void GfGameUtil::addExpBattle(unsigned int driver, unsigned int exp) {
+    if (exp == 0) {
+        return;
+    }
+    if (driver != 0) {
+        fn_71002DAD5C(driver, exp);
+        return;
+    }
+    mm::mtl::FixedVector<unsigned short, 32> drivers;
+    GfPartySelect::getDriverList(drivers, static_cast<GfPartySelect::LIST_TYPE>(8), 0);
+    GfPartySelect::getDriverList(drivers, static_cast<GfPartySelect::LIST_TYPE>(7), 0);
+    if (GfGameManager::fn_71002A9E68()) {
+        unsigned int seen = 0;
+        for (unsigned short* it = drivers.begin(); it != drivers.end();) {
+            unsigned int bit = 1 << GfDataDriver::fn_71002419C8(*it);
+            if (seen & bit) {
+                it = drivers.erase(it);
+            } else {
+                seen |= bit;
+                ++it;
+            }
+        }
+    }
+    for (unsigned short id : drivers) {
+        fn_71002DAD5C(id, exp);
     }
 }
 
@@ -1629,6 +1797,77 @@ void fn_71002E1824() {
     GfGameMercenaries::clearTeamMember(team);
 }
 
+void GfGameUtil::setSaikaLensOff(GF_OBJ_HANDLE* handle) {
+    unsigned short progress = GfDataBlade::fn_7100231884();
+    GfObjAcc acc(handle);
+    switch (acc.getType()) {
+    case 4:
+        if (acc.getBladeId() != 0x3F2) {
+            return;
+        }
+        break;
+    case 5:
+        if (mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys()->getChrEnArrangeBladeID(acc.getEnArrangeId()) != 0x3F2) {
+            return;
+        }
+        break;
+    case 6: {
+        GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+        if (info != nullptr && info->m_setup != nullptr) {
+            GfObjSetup* setup = info->m_setup;
+            if (setup->m_type == info->m_obj->m_type && info->m_obj->m_type == 6) {
+                GfObjSetupNpc* npc = mm::mtl::rttiCast<GfObjSetupNpc>(setup);
+                if (npc != nullptr && npc->m_bdatId != 0x3F2) {
+                    return;
+                }
+            }
+        }
+        break;
+    }
+    }
+    int left = acc.getExtMeshIdx("mt_lens_L");
+    if (left >= 0) {
+        acc.setExtMeshAlpha(left, progress > 7024 ? 0.0f : 1.0f);
+    }
+    int right = acc.getExtMeshIdx("mt_lens_R");
+    if (right >= 0) {
+        acc.setExtMeshAlpha(right, progress > 7024 ? 0.0f : 1.0f);
+    }
+}
+
+void GfGameUtil::setSaikaLensOff() {
+    mm::mtl::FixedVector<GF_OBJ_HANDLE*, 8> handles;
+    GfGameObj::ObjList& blades = *GfGameObj::getList(4);
+    for (GfGameObj::ObjList::iterator it = blades.begin(); it != blades.end(); ++it) {
+        DataParamAcc acc(*it);
+        if (acc.isValid() && acc.getBdatId() == 0x3F2) {
+            handles.push_back(*it);
+        }
+    }
+    GfBdatChrEnArrange* arrange = mm::mtl::PtrSingleton<GfBdatChrEnArrange>::sys();
+    GfGameObj::ObjList& enemyBlades = *GfGameObj::getListEnemyBlade();
+    for (GfGameObj::ObjList::iterator it = enemyBlades.begin(); it != enemyBlades.end(); ++it) {
+        DataParamAcc acc(*it);
+        unsigned int id = 0;
+        if (acc.isValid()) {
+            id = acc.getBdatId();
+        }
+        if (arrange->getChrEnArrangeBladeID(id) == 0x3F2) {
+            handles.push_back(*it);
+        }
+    }
+    GfGameObj::ObjList& npcs = *GfGameObj::getList(6);
+    for (GfGameObj::ObjList::iterator it = npcs.begin(); it != npcs.end(); ++it) {
+        DataParamAcc acc(*it);
+        if (acc.isValid() && acc.getBdatId() == 0x3F2) {
+            handles.push_back(*it);
+        }
+    }
+    for (GF_OBJ_HANDLE* handle : handles) {
+        setSaikaLensOff(handle);
+    }
+}
+
 void fn_71002E24C0(GF_OBJ_HANDLE* handle, bool show) {
     if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
         return;
@@ -1638,6 +1877,27 @@ void fn_71002E24C0(GF_OBJ_HANDLE* handle, bool show) {
     if (mesh >= 0) {
         acc.setExtMeshAlpha(mesh, show ? 1.0f : 0.0f);
     }
+}
+
+GF_OBJ_HANDLE* GfGameUtil::getWeaponOwner(GF_OBJ_HANDLE* handle) {
+    GF_OBJ_HANDLE* owner = GfObjUtil::getOwner(handle);
+    const GfAppendInfo* append = GfObjUtil::getAppendInfo(handle, static_cast<GFATTACH>(0));
+    if (append == nullptr) {
+        return owner;
+    }
+    GFOBJ_INFO* info = GfObjManager::getObjInfo(handle);
+    if (info == nullptr || info->m_setup == nullptr) {
+        return owner;
+    }
+    GfObjSetup* setup = info->m_setup;
+    if (setup->m_type != info->m_obj->m_type || info->m_obj->m_type != 10) {
+        return owner;
+    }
+    GfObjSetupWeapon* weapon = mm::mtl::rttiCast<GfObjSetupWeapon>(setup);
+    if (weapon == nullptr || append->m_appends[1].size() == 0 || weapon->m_param.pad_98.m_secondList) {
+        return owner;
+    }
+    return GfMountManager::getHandle(owner, static_cast<GFATTACH>(0), static_cast<OPTMNT>(3));
 }
 
 void GfGameUtil::setBladeSelect(GF_OBJ_HANDLE* handle, int select) {
