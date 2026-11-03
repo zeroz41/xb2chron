@@ -111,7 +111,23 @@ void GfMenuObjBladeName::MainListener::reciveEvent(const ui::EventData& event, u
     }
 }
 
-// seqStart (0x710039B604) is not here yet: no candidate is identical (see the report)
+bool GfMenuObjBladeName::seqStart() {
+    ui::UIObjectAcc acc(m_handle, "LAY_main");
+    unsigned int blade = GfMenuReference::getReferenceBladeID(0);
+    if (blade == 0) {
+        GfMenuObject::termCallContext(acc.m_handle);
+    }
+    if (GfDataBlade::isRareBlade(blade)) {
+        m_seq.addJob(&GfMenuObjBladeName::seqApperRare);
+        m_seq.addWait(25);
+        m_seq.addJob(&GfMenuObjBladeName::seqApperWait);
+    } else {
+        m_seq.addJob(&GfMenuObjBladeName::seqApperNormal);
+        m_seq.addJob(&GfMenuObjBladeName::seqApperWait);
+    }
+    acc.setDisp(true);
+    return true;
+}
 
 bool GfMenuObjBladeName::seqApperRare() {
     ui::UIObjectAcc base(m_handle, "IMG_bl_name_base");
