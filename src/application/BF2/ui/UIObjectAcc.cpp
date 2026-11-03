@@ -210,6 +210,13 @@ void UIObjectAcc::setPosCenter(const mm::Pnt<short>& pos) {
     }
 }
 
+void UIObjectAcc::getScale(mm::Vec2& scale) {
+    scale = mm::Vec2(0.0f, 0.0f);
+    if (m_object != nullptr) {
+        scale = m_object->m_transform.m_scale;
+    }
+}
+
 void UIObjectAcc::setScale(const mm::Vec2& scale) {
     if (m_object != nullptr) {
         m_object->m_transform.setScale(scale.x, scale.y);
