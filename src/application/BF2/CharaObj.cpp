@@ -221,14 +221,44 @@ bool AttachActorBase::getMat(mm::Mat44& mat) const {
     return true;
 }
 
+bool AttachActorBase::getMtpMatGlobal(mm::Mat44& mat, const char* name) const {
+    mm::Mat44 m;
+    if (!getMtpMat(m, name)) {
+        mat = m_mat;
+        return false;
+    }
+    mat.mulCopy(m, m_mat);
+    return true;
+}
+
 bool AttachActorBase::hasMtp(const char* name) const {
     mm::Mat44 mat;
     return getMtpMat(mat, name);
 }
 
+bool AttachActorBase::getEfpMatGlobal(mm::Mat44& mat, const char* name) const {
+    mm::Mat44 m;
+    if (!getEfpMat(m, name)) {
+        mat = m_mat;
+        return false;
+    }
+    mat.mulCopy(m, m_mat);
+    return true;
+}
+
 bool AttachActorBase::hasEfp(const char* name) const {
     mm::Mat44 mat;
     return getEfpMat(mat, name);
+}
+
+bool AttachActorBase::getBoneMatGlobal(mm::Mat44& mat, const char* name) const {
+    mm::Mat44 m;
+    if (!getBoneMat(m, name)) {
+        mat = m_mat;
+        return false;
+    }
+    mat.mulCopy(m, m_mat);
+    return true;
 }
 
 bool AttachActorBase::hasBone(const char* name) const {

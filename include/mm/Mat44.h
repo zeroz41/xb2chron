@@ -168,6 +168,39 @@ public:
         r.m[3][3] = ma.m[3][0] * mb.m[0][3] + ma.m[3][1] * mb.m[1][3] + ma.m[3][2] * mb.m[2][3] + ma.m[3][3] * mb.m[3][3];
         return r;
     }
+    // this = ma * mb; when this is one of them the product is built in a copy first (the name is not the
+    // original's)
+    __attribute__((always_inline)) void mulSafe(const Mat44& ma, const Mat44& mb) {
+        if (this == &ma || this == &mb) {
+            Mat44 t = ma * mb;
+            *this = t;
+        } else {
+            m[0][0] = ma.m[0][0] * mb.m[0][0] + ma.m[0][1] * mb.m[1][0] + ma.m[0][2] * mb.m[2][0] + ma.m[0][3] * mb.m[3][0];
+            m[0][1] = ma.m[0][0] * mb.m[0][1] + ma.m[0][1] * mb.m[1][1] + ma.m[0][2] * mb.m[2][1] + ma.m[0][3] * mb.m[3][1];
+            m[0][2] = ma.m[0][0] * mb.m[0][2] + ma.m[0][1] * mb.m[1][2] + ma.m[0][2] * mb.m[2][2] + ma.m[0][3] * mb.m[3][2];
+            m[0][3] = ma.m[0][0] * mb.m[0][3] + ma.m[0][1] * mb.m[1][3] + ma.m[0][2] * mb.m[2][3] + ma.m[0][3] * mb.m[3][3];
+            m[1][0] = ma.m[1][0] * mb.m[0][0] + ma.m[1][1] * mb.m[1][0] + ma.m[1][2] * mb.m[2][0] + ma.m[1][3] * mb.m[3][0];
+            m[1][1] = ma.m[1][0] * mb.m[0][1] + ma.m[1][1] * mb.m[1][1] + ma.m[1][2] * mb.m[2][1] + ma.m[1][3] * mb.m[3][1];
+            m[1][2] = ma.m[1][0] * mb.m[0][2] + ma.m[1][1] * mb.m[1][2] + ma.m[1][2] * mb.m[2][2] + ma.m[1][3] * mb.m[3][2];
+            m[1][3] = ma.m[1][0] * mb.m[0][3] + ma.m[1][1] * mb.m[1][3] + ma.m[1][2] * mb.m[2][3] + ma.m[1][3] * mb.m[3][3];
+            m[2][0] = ma.m[2][0] * mb.m[0][0] + ma.m[2][1] * mb.m[1][0] + ma.m[2][2] * mb.m[2][0] + ma.m[2][3] * mb.m[3][0];
+            m[2][1] = ma.m[2][0] * mb.m[0][1] + ma.m[2][1] * mb.m[1][1] + ma.m[2][2] * mb.m[2][1] + ma.m[2][3] * mb.m[3][1];
+            m[2][2] = ma.m[2][0] * mb.m[0][2] + ma.m[2][1] * mb.m[1][2] + ma.m[2][2] * mb.m[2][2] + ma.m[2][3] * mb.m[3][2];
+            m[2][3] = ma.m[2][0] * mb.m[0][3] + ma.m[2][1] * mb.m[1][3] + ma.m[2][2] * mb.m[2][3] + ma.m[2][3] * mb.m[3][3];
+            m[3][0] = ma.m[3][0] * mb.m[0][0] + ma.m[3][1] * mb.m[1][0] + ma.m[3][2] * mb.m[2][0] + ma.m[3][3] * mb.m[3][0];
+            m[3][1] = ma.m[3][0] * mb.m[0][1] + ma.m[3][1] * mb.m[1][1] + ma.m[3][2] * mb.m[2][1] + ma.m[3][3] * mb.m[3][1];
+            m[3][2] = ma.m[3][0] * mb.m[0][2] + ma.m[3][1] * mb.m[1][2] + ma.m[3][2] * mb.m[2][2] + ma.m[3][3] * mb.m[3][2];
+            m[3][3] = ma.m[3][0] * mb.m[0][3] + ma.m[3][1] * mb.m[1][3] + ma.m[3][2] * mb.m[2][3] + ma.m[3][3] * mb.m[3][3];
+        }
+    }
+    // ma * mb as a new matrix, built by mulSafe (the name is not the original's)
+    static __attribute__((always_inline)) Mat44 product(const Mat44& ma, const Mat44& mb) {
+        Mat44 r;
+        r.mulSafe(ma, mb);
+        return r;
+    }
+    // this = ma * mb through a new matrix (the name is not the original's)
+    __attribute__((always_inline)) void mulCopy(const Mat44& ma, const Mat44& mb) { *this = product(ma, mb); }
     // the euler angles of the rotation part, setRotXYZ's inverse up to their sign (the name is not the original's)
     __attribute__((always_inline)) void getRotXYZ(Vec3& r) const {
         r.y = mm::asin(m[0][2]);
