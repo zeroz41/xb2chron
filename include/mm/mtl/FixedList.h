@@ -120,6 +120,14 @@ public:
         init_free_index();
         unlink_end();
     }
+    // other's elements copied in order: the end node unlinked, then assign over other's const iterators
+    // (mtl::MemManager::erase copies a region's children so: 3.0.1's out-of-line
+    // FixedList<ALLOC_HANDLE, 128>::assign<node_iterator<const ALLOC_HANDLE, const ListNode*>> after only the end
+    // node's three index stores)
+    FixedList(const FixedList& other) {
+        unlink_end();
+        assign(other.begin(), other.end());
+    }
     ~FixedList() {
         clear();
     }
@@ -133,7 +141,9 @@ public:
     iterator begin() { return iterator(node(node(0)->m_next), this); }
     iterator end() { return iterator(node(0), this); }
     // a const list's walk (GfSequentialPlay::isExistEvent)
-    typedef node_iterator<const T, ListNode*> const_iterator;
+    // (its node is a const ListNode*: 3.0.1's FixedList<ALLOC_HANDLE, 128>::assign is instantiated on
+    // node_iterator<const ALLOC_HANDLE, const ListNode*>)
+    typedef node_iterator<const T, const ListNode*> const_iterator;
     const_iterator begin() const {
         FixedList* self = const_cast<FixedList*>(this);
         return const_iterator(self->node(self->node(0)->m_next), self);
@@ -199,6 +209,14 @@ public:
         --m_num_nodes;
     }
 
+    // the elements from first to last, after the list is cleared (mtl::MemManager::erase's copy constructor)
+    template <typename InputIterator>
+    void assign(InputIterator first, InputIterator last) {
+        clear();
+        for (; first != last; ++first) {
+            push_back(*first);
+        }
+    }
     // value linked last, in a node off the free stack
     void push_back(const T& value) {
 #line 241 MM_MTL_FIXED_LIST_PATH

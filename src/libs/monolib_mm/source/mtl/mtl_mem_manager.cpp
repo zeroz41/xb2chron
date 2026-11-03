@@ -6972,6 +6972,72 @@ void* MemManager::allocate_section(ALLOC_HANDLE handle, unsigned long size, unsi
     return nullptr;
 }
 
+void MemManager::erase(ALLOC_HANDLE handle) {
+    ml::CS cs(getHandleCS());
+    if (handle.m_handle == 0) {
+        return;
+    }
+    Region* region = s_ptrMap.find(handle.m_handle);
+    if (region == nullptr) {
+        return;
+    }
+    {
+        // the children erased from a copy: each erase removes its child from this region's list
+        mm::mtl::FixedList<ALLOC_HANDLE, 128> children(region->m_children);
+        for (mm::mtl::FixedList<ALLOC_HANDLE, 128>::iterator it = children.begin(); it != children.end(); ++it) {
+            erase(*it);
+        }
+    }
+    Region* parent = nullptr;
+    if (region->m_parent.m_handle != 0) {
+        parent = s_ptrMap.find(region->m_parent.m_handle);
+    }
+    log_section(handle, true, nullptr);
+    region->checkLeakMemory();
+    if (parent != nullptr) {
+        // the handle read once, before the walk (a copy, as FixedList's find walks with its value)
+        mm::mtl::FixedList<ALLOC_HANDLE, 128>::iterator it = [parent, handle]() {
+            mm::mtl::FixedList<ALLOC_HANDLE, 128>::iterator first = parent->m_children.begin();
+            mm::mtl::FixedList<ALLOC_HANDLE, 128>::iterator last = parent->m_children.end();
+            for (; first != last; ++first) {
+                if ((*first).m_handle == handle.m_handle) {
+                    return first;
+                }
+            }
+            return last;
+        }();
+        if (it != parent->m_children.end()) {
+            parent->m_children.erase(it);
+        }
+    }
+    if (region->m_flags & Region::FLAG_OWN_MEMORY) {
+        unsigned long address = reinterpret_cast<unsigned long>(region->m_top);
+        ml::CS memoryCS(getCreatedMemoryCS());
+        for (CreatedMemory* it = s_createdMemory.begin(); it != s_createdMemory.end(); ++it) {
+            unsigned long top = reinterpret_cast<unsigned long>(it->m_memory);
+            if (top <= address && address < it->m_size + top) {
+                s_createdMemory.erase(it);
+                break;
+            }
+        }
+    }
+    HandleRegion* it = _existHandle.begin();
+    for (; it != _existHandle.end(); ++it) {
+        if (it->m_handle.m_handle == handle.m_handle && it->m_region == region) {
+            break;
+        }
+    }
+    if (it != _existHandle.end()) {
+        _existHandle.erase(it);
+    }
+    if (s_hLastFree.m_handle == handle.m_handle) {
+        s_hLastFree = ALLOC_HANDLE();
+    }
+    region->destroy();
+    _region->deallocate(region);
+    s_ptrMap.remove(handle.m_handle);
+}
+
 mm::mtl::IAllocator* MemManager::getAllocator(const ALLOC_HANDLE& handle) {
     ml::CS cs(getHandleCS());
     if (handle.m_handle != 0) {
@@ -7123,6 +7189,12 @@ bool MemManager::getMemoryInfo(ALLOC_HANDLE handle, MemoryInfo* info) {
 inline void MemManager::Region::log(MemoryInfo* info, bool flag) {
     if (m_name.m_str[0] != '\0' && m_allocator != nullptr) {
         m_allocator->log(info, flag);
+    }
+}
+
+inline void MemManager::Region::checkLeakMemory() {
+    if (m_name.m_str[0] != '\0' && m_allocator != nullptr) {
+        m_allocator->checkLeakMemory();
     }
 }
 

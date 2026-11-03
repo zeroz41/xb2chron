@@ -161,6 +161,18 @@ public:
             m_slots[(handle & m_mask) % m_capacity].m_region = region;
         }
 
+        // the handle's slot emptied when it holds a region (erase; the name is not the original's)
+        void remove(unsigned int handle) {
+            if (m_capacity == 0) {
+                return;
+            }
+            Slot& slot = m_slots[(handle & m_mask) % m_capacity];
+            if (slot.m_region != nullptr) {
+                slot.m_region = nullptr;
+                slot.m_handle = 0;
+            }
+        }
+
         Slot m_slots[512];
         unsigned int m_capacity;
         unsigned int m_lastHandle;  // the handle issue gave out last

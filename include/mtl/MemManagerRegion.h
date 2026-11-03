@@ -47,6 +47,9 @@ public:
     void memoryInfo(MemoryInfo* info);
     // the allocator's log, for a named region
     void log(MemoryInfo* info, bool flag);
+    // the allocator's checkLeakMemory while the region is named and has one, as log (MemManager::erase inlines it;
+    // the name is inferred from the allocator's slot)
+    void checkLeakMemory();
 
     IMemAllocator* m_allocator;  // 0x0
     void* m_memory;  // 0x8 (initialize's p)
