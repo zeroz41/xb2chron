@@ -4,6 +4,9 @@
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gmk/GmkPhantom.h"
 #include "classes/gmk/TUnk_B6D418.h"
+#include "classes/gmk/QuestFlagCond.h"
+#include "classes/gmk/ScenarioFlagCond.h"
+#include "plugin/Bdat.h"
 
 namespace gmk {
 // Placeholder name: the gimmick of kind 0x3B (table 0x7100B6D528), new in 3.0.1. Element (0x100 bytes) of the list
@@ -20,7 +23,20 @@ public:
     virtual void dispose();  // slot 5 (fn_71005B726C, 0xD8)
     virtual void update(float);  // slot 6 (fn_71005B7374, 0x70)
     virtual void debugDraw() const;  // slot 7 (fn_71005B73E4, empty)
-    class BdatInfo {};
+    // its bdat row (0xA bytes: createGmk's stride; read by initGmkBdatInfo fn_71005D55B4, which inlines create; the
+    // column names are the original's, the field names not)
+    class BdatInfo {
+    public:
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+            m_scenarioFlag = ScenarioFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMin", row, 2), (unsigned short)Bdat::getValCheck(bdat.m_fp, "ScenarioFlagMax", row, 2));
+            m_questFlag = QuestFlagCond((unsigned short)Bdat::getValCheck(bdat.m_fp, "QuestFlag", row, 2), (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMin", row, 1),
+                                        (unsigned char)Bdat::getValCheck(bdat.m_fp, "QuestFlagMax", row, 1));
+            m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "Condition", row, 2);
+        }
+        ScenarioFlagCond m_scenarioFlag;  // 0x0
+        QuestFlagCond m_questFlag;  // 0x4
+        unsigned short m_condition;  // 0x8: "Condition"
+    };
     static const gmk::GmkType TYPE = gmk::GmkType(0x3b);
     // its data (m_createInfo.m_data): the range of waves (TUnk_B6D418, GmkEnemyList's m_waveList) it runs, by index
     // (the names are not the original's)

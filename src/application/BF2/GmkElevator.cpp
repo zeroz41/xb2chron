@@ -953,7 +953,7 @@ void GmkSet::createGmkLists(int id) {
     m_gmkLists[60] = new (fw::FrameworkMemory::getMem(5), nullptr, 0, 4, false) TUnk_B6ED38(3);
     m_gmkLists[61] = new (fw::FrameworkMemory::getMem(5), nullptr, 0, 4, false) TUnk_B6EE88(1);
     m_gmkLists[62] = gf::GfGameManager::fn_71002A9E68() ? 
-        new (fw::FrameworkMemory::getMem(5), nullptr, 0, 4, false) TGmkList<TUnk_B6D660, TUnk_B6D660::BdatInfo, 1347240259u, 1u, TUnk_B6D660Gob>(1) : nullptr;
+        new (fw::FrameworkMemory::getMem(5), nullptr, 0, 4, false) TGmkList<TUnk_B6D660, TUnk_B6D660::BdatInfo, 1347240259u, 4u, TUnk_B6D660Gob>(1) : nullptr;
     m_gmkLists[63] = gf::GfGameManager::fn_71002A9E68() ? 
         new (fw::FrameworkMemory::getMem(5), nullptr, 0, 4, false) TUnk_B6E340(1) : nullptr;
     for (int i = 0; i < GMK_LIST_NUM; ++i) {

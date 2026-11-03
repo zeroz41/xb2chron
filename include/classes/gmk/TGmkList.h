@@ -42,6 +42,23 @@ struct GmkBdatRow<T1, false> {
     static const bool HAS_ROW = false;
     static void create(T1&, unsigned char*, int, const gmk::AGmkBase&) {}
 };
+class GmkEffect;
+class GmkTutorial;
+// The kinds whose gimmick records start with a name stored as an offset into the resource's strings (GmkEffect's
+// effect name, GmkTutorial's Data::pad_0): their createGmk turns each record's offset into a pointer, next to the
+// LvlbInfo names. The original's mechanism for picking them is not known (the code is the same).
+template <typename T0>
+struct GmkDataHasName {
+    static const bool VALUE = false;
+};
+template <>
+struct GmkDataHasName<GmkEffect> {
+    static const bool VALUE = true;
+};
+template <>
+struct GmkDataHasName<GmkTutorial> {
+    static const bool VALUE = true;
+};
 // the gimmicks of one kind (T0), read from a resource whose gimmick section carries the magic T2, with their rows
 // (T1) in a BDAT table; 55 instances in the module
 template <typename T0, typename T1, unsigned int T2, unsigned int T3, typename T4>
@@ -339,6 +356,14 @@ void TGmkList<T0, T1, T2, T3, T4>::createGmk(void* data) {
             unsigned int count = m_infoSection->m_count;
             for (unsigned int i = 0; i < count; ++i) {
                 infos[i].m_name += reinterpret_cast<unsigned long>(m_strings);
+            }
+        }
+        if (GmkDataHasName<T0>::VALUE) {
+            unsigned int count = m_gmkSection->m_count;
+            for (unsigned int i = 0; i < count; ++i) {
+                const char*& name =
+                    *reinterpret_cast<const char**>(const_cast<unsigned char*>(m_gmkData + m_gmkSection->m_stride * i));
+                name = m_strings + reinterpret_cast<unsigned long>(name);
             }
         }
         gmkSection = m_gmkSection;

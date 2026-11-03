@@ -9,7 +9,7 @@ namespace gmk {
 // list of kind 0x3D, new in 3.0.1; nothing in 1.0.0 names it. GmkSet::createGmkLists constructs it inline
 // (the base's table, then this one).
 // It overrides the deleting destructor.
-class TUnk_B6EE88 : public ::gmk::TGmkList< ::gmk::TUnk_B6D5F8, ::gmk::TUnk_B6D5F8::BdatInfo, 1347568450u, 1u, ::gmk::TUnk_B6D5F8Gob> {
+class TUnk_B6EE88 : public ::gmk::TGmkList< ::gmk::TUnk_B6D5F8, ::gmk::TUnk_B6D5F8::BdatInfo, 1347568450u, 3u, ::gmk::TUnk_B6D5F8Gob> {
 public:
     explicit TUnk_B6EE88(unsigned int updateGmkNumPerFrame)
         : TGmkList(updateGmkNumPerFrame) {}

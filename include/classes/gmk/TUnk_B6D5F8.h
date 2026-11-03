@@ -2,6 +2,7 @@
 #define CLASSES_GMK_TUNK_B6D5F8_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "plugin/Bdat.h"
 #include "classes/gmk/ScenarioFlagCond.h"
 #include "classes/gmk/QuestFlagCond.h"
 #include "classes/gmk/TimeCond.h"
@@ -31,6 +32,9 @@ public:
     // BattleReaction; the size is not read yet and the names are not the original's
     class BdatInfo {
     public:
+        // its row reader: out of line (fn_71005B84D0), called by initGmkBdatInfo (fn_71005D3388) where the template
+        // calls T1::create (so the name is the template's; the CBdatWrapper parameter as GmkElevator::BdatInfo's)
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
         // Placeholder name (new in 3.0.1): its row's pop conditions (scenario flag range, quest state range, time
         // range, game condition), as GmkEvent::BdatInfo::isCondMatched plus the time range
         bool fn_71005B869C() const;

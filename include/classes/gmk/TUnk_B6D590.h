@@ -2,6 +2,7 @@
 #define CLASSES_GMK_TUNK_B6D590_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "plugin/Bdat.h"
 
 namespace gmk {
 // Placeholder name: the gimmick of kind 0x3C (GmkSet::createGmkLists' list slot 0x3C, bdat column "mapObj"),
@@ -24,9 +25,13 @@ public:
     virtual void debugDraw() const;  // slot 7 (fn_71005B7E80)
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8 (fn_71005B8360)
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9 (fn_71005C3F70)
-    // its bdat row: complete because TGmkList's inline constructor needs Vector<BdatInfo>; the size is not read
-    // yet (placeholder: no fields declared)
-    class BdatInfo {};
+    // its bdat row: empty (its Vector<BdatInfo>::resize stores nothing; createGmk's stride is 1)
+    class BdatInfo {
+    public:
+        // inline and empty: initGmkBdatInfo (fn_71005D12B4) reads the table pointer (getBindedBdatFp) and stores
+        // nothing, as GmkMob's
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {}
+    };
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x3c);
     // the step update calls (the name is not the original's)

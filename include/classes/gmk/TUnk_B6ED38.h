@@ -9,7 +9,7 @@ namespace gmk {
 // list of kind 0x3C, new in 3.0.1; nothing in 1.0.0 names it. GmkSet::createGmkLists constructs it inline
 // (the base's table, then this one).
 // It overrides the destructor and getInst (slot 6, fn_71005CF9E8: the base's code).
-class TUnk_B6ED38 : public ::gmk::TGmkList< ::gmk::TUnk_B6D590, ::gmk::TUnk_B6D590::BdatInfo, 1465008962u, 1u, ::gmk::TUnk_B6D590Gob> {
+class TUnk_B6ED38 : public ::gmk::TGmkList< ::gmk::TUnk_B6D590, ::gmk::TUnk_B6D590::BdatInfo, 1465008962u, 3u, ::gmk::TUnk_B6D590Gob> {
 public:
     explicit TUnk_B6ED38(unsigned int updateGmkNumPerFrame)
         : TGmkList(updateGmkNumPerFrame) {}

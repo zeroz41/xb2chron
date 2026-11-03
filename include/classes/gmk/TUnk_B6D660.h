@@ -2,6 +2,7 @@
 #define CLASSES_GMK_TUNK_B6D660_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "plugin/Bdat.h"
 #include "classes/gf/IGfObjListener.h"
 
 namespace gmk {
@@ -24,8 +25,7 @@ public:
     virtual void update(float);  // slot 6 (fn_71005B95CC)
     virtual void debugDraw() const;  // slot 7 (fn_71005B98F0)
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9 (fn_71005B9928)
-    // its bdat row: complete because TGmkList's inline constructor needs Vector<BdatInfo>; the size is not read
-    // yet (only the field fn_71005B94AC reads is declared)
+    // its bdat row (4 bytes: Vector<BdatInfo>::expand fn_710062C6F4 and initGmkBdatInfo fn_710062C5C4 match)
     class BdatInfo {
     public:
         // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address
@@ -34,8 +34,15 @@ public:
         // their BdatInfo's isPopCondMatched. What it does: true when the u16 at the row's offset 0 is 0, else
         // GfGameCond::isGameCond of it (a condition id).
         bool fn_71005B94AC() const;
-        // 0x0: the condition fn_71005B94AC tests (the name is not the original's)
-        unsigned short m_condition;
+        // inline: initGmkBdatInfo (fn_710062C5C4) inlines it; the column names are the original's
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk) {
+            m_condition = (unsigned short)Bdat::getValCheck(bdat.m_fp, "ConditionID", row, 2);
+            m_campPointName = (unsigned short)Bdat::getValCheck(bdat.m_fp, "CampPointName", row, 2);
+        }
+        // 0x0: the condition fn_71005B94AC tests, "ConditionID" (the name is not the original's)
+        unsigned short m_condition = 0;
+        // 0x2: "CampPointName" (the name is not the original's; 4-byte stride in createGmk, zeroed by resize)
+        unsigned short m_campPointName = 0;
     };
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address (0x71005B98FC)
     // sits between this class's debugDraw (0x71005B98F0) and onPlayerAccessed (0x71005B9928) and it reads this's

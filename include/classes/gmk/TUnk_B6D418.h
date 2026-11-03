@@ -2,6 +2,7 @@
 #define CLASSES_GMK_TUNK_B6D418_H
 
 #include "classes/gmk/AGmkBase.h"
+#include "plugin/Bdat.h"
 #include "classes/gmk/GmkAcc.h"
 #include "classes/gmk/GmkPhantom.h"
 #include "mm/mtl/FixedVector.h"
@@ -29,6 +30,9 @@ public:
     // its row (0x40 bytes: TGmkList::createGmk's stride; the names are not the original's)
     class BdatInfo {
     public:
+        // its row reader: out of line (fn_71005B3600), called by initGmkBdatInfo (fn_7100634E2C) where the template
+        // calls T1::create (so the name is the template's; the CBdatWrapper parameter as GmkElevator::BdatInfo's)
+        void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
         unsigned char pad_0[0x2c];
         unsigned short m_mapGimmickId;  // 0x2C: the map gimmick (GmkType 0x21) fn_71005B3D64 reaches with m_secondAcc
         unsigned char pad_2e[0x2];
