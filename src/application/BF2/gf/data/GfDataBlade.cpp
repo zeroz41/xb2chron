@@ -238,6 +238,22 @@ unsigned int GfDataBlade::getBladeWeaponRank(unsigned int blade) {
     return GfBdatItem::get()->getPcWpnRank(weapon);
 }
 
+bool GfDataDriver::fn_71002416B4(mm::mtl::FixedVector<unsigned short, 32>& list, unsigned int driver) {
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        unsigned int group = bdat->fn_71001F172C(bdat->fn_71001F13E0(driver));
+        unsigned int row = bdat->fn_71001F15D4();
+        unsigned int end = bdat->fn_71001F15E0();
+        for (; row < end; row++) {
+            if (bdat->fn_71001F16A4(row) == 1 && bdat->fn_71001F172C(row) == group) {
+                list.push_back(bdat->fn_71001F161C(row));
+            }
+        }
+        return !list.empty();
+    }
+    return false;
+}
+
 unsigned int GfDataDriver::fn_71002417DC(unsigned int driver) {
     if (driver - 0x11 < 9) {
         GfBdatChrDr* bdat = GfBdatChrDr::get();
@@ -2963,6 +2979,174 @@ unsigned int GfDataDriver::getBattleExp(const SDataDriver& data) {
         }
     }
     return data.m_battleExp;
+}
+
+unsigned int GfDataDriver::getBattleExpNextLevel(const SDataDriver& data) {
+    unsigned int driver = data.m_id;
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
+            return getBattleExpNextLevel(*getSDataDriver(fn_71002417DC(data.m_id)));
+        }
+    }
+    unsigned int level = getLevel(data);
+    unsigned int exp = getBattleExp(data);
+    unsigned int next = GfDataBlade::fn_71002326F0(level + 1);
+    if (exp > next) {
+        return next;
+    }
+    if (level >= 99) {
+        return 0;
+    }
+    return next - exp;
+}
+
+unsigned int GfDataDriver::getExpNextLevel(const SDataDriver& data) {
+    unsigned int driver = data.m_id;
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
+            return getExpNextLevel(*getSDataDriver(fn_71002417DC(data.m_id)));
+        }
+    }
+    unsigned int level = getLevel(data);
+    unsigned int exp = getBattleExp(data);
+    unsigned int next = GfDataBlade::fn_71002326F0(level + 1);
+    if (exp > next) {
+        return next;
+    }
+    if (level >= 99) {
+        return 0;
+    }
+    return next - exp;
+}
+
+unsigned int GfDataDriver::getExpUsed(unsigned int driver) {
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(driver)) != 0) {
+            return getExpUsed(fn_71002417DC(driver));
+        }
+    }
+    unsigned int level = getLevel(*getSDataDriver(driver));
+    unsigned int exp = 0;
+    for (unsigned int i = 0; i < level; i++) {
+        exp += GfDataBlade::fn_71002326F0(i + 1);
+    }
+    return exp;
+}
+
+unsigned int GfDataDriver::fn_7100246694(const SDataDriver& data) {
+    unsigned int driver = data.m_id;
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
+            return fn_7100246694(*getSDataDriver(fn_71002417DC(data.m_id)));
+        }
+    }
+    unsigned int rev = 0;
+    bool set1002 = false;
+    for (int i = 0; i < getMaxSetBladeNum(data); i++) {
+        unsigned int blade = fn_7100244E78(data, i);
+        if (blade != 0) {
+            rev += GfDataBlade::getHpMaxRev(blade);
+            set1002 |= blade == 1002;
+        }
+    }
+    if (data.m_id == 1 && !GfDataBlade::isActivateUnuse(1002) && !set1002) {
+        rev += GfDataBlade::getHpMaxRev(1002);
+    }
+    return rev;
+}
+
+unsigned int GfDataDriver::getStrengthRev(const SDataDriver& data) {
+    unsigned int driver = data.m_id;
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
+            return getStrengthRev(*getSDataDriver(fn_71002417DC(data.m_id)));
+        }
+    }
+    unsigned int rev = 0;
+    for (int i = 0; i < getMaxSetBladeNum(data); i++) {
+        unsigned int blade = fn_7100244E78(data, i);
+        if (blade != 0) {
+            rev += GfDataBlade::getStrengthRev(blade);
+        }
+    }
+    return rev;
+}
+
+unsigned int GfDataDriver::getPowEtherRev(const SDataDriver& data) {
+    unsigned int driver = data.m_id;
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
+            return getPowEtherRev(*getSDataDriver(fn_71002417DC(data.m_id)));
+        }
+    }
+    unsigned int rev = 0;
+    for (int i = 0; i < getMaxSetBladeNum(data); i++) {
+        unsigned int blade = fn_7100244E78(data, i);
+        if (blade != 0) {
+            rev += GfDataBlade::getPowerEtherRev(blade);
+        }
+    }
+    return rev;
+}
+
+unsigned int GfDataDriver::getDexRev(const SDataDriver& data) {
+    unsigned int driver = data.m_id;
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
+            return getDexRev(*getSDataDriver(fn_71002417DC(data.m_id)));
+        }
+    }
+    unsigned int rev = 0;
+    for (int i = 0; i < getMaxSetBladeNum(data); i++) {
+        unsigned int blade = fn_7100244E78(data, i);
+        if (blade != 0) {
+            rev += GfDataBlade::getDexRev(blade);
+        }
+    }
+    return rev;
+}
+
+unsigned int GfDataDriver::getAgilityRev(const SDataDriver& data) {
+    unsigned int driver = data.m_id;
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
+            return getAgilityRev(*getSDataDriver(fn_71002417DC(data.m_id)));
+        }
+    }
+    unsigned int rev = 0;
+    for (int i = 0; i < getMaxSetBladeNum(data); i++) {
+        unsigned int blade = fn_7100244E78(data, i);
+        if (blade != 0) {
+            rev += GfDataBlade::getAgilityRev(blade);
+        }
+    }
+    return rev;
+}
+
+unsigned int GfDataDriver::getLuckRev(const SDataDriver& data) {
+    unsigned int driver = data.m_id;
+    if (driver - 0x11 < 9) {
+        GfBdatChrDr* bdat = GfBdatChrDr::get();
+        if (bdat->fn_71001F16A4(bdat->fn_71001F13E0(data.m_id)) != 0) {
+            return getLuckRev(*getSDataDriver(fn_71002417DC(data.m_id)));
+        }
+    }
+    unsigned int rev = 0;
+    for (int i = 0; i < getMaxSetBladeNum(data); i++) {
+        unsigned int blade = fn_7100244E78(data, i);
+        if (blade != 0) {
+            rev += GfDataBlade::getLuckRev(blade);
+        }
+    }
+    return rev;
 }
 
 unsigned int GfDataDriver::getSkillPoint(const SDataDriver& data) {
