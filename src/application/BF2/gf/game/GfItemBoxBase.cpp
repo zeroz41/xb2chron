@@ -110,6 +110,21 @@ void GfItemBoxBase::setEquipFlag(unsigned int item, GfItemHandle handle, bool eq
     }
 }
 
+GfItemInfo* GfItemBoxBase::findItemHandle(unsigned int item, GfItemHandle handle) {
+    ItemType::Type type;
+    unsigned int index;
+    GfDataItem::getItemType(type, index, item);
+    item_iterator it = begin(type);
+    item_iterator last = end(type);
+    for (; it.m_cur != last.m_cur; ++it) {
+        GfItemInfo* info = *it.m_cur;
+        if (info->getType() == type && info->m_id == index && info->getHandle().m_handle == handle.m_handle) {
+            return info;
+        }
+    }
+    return nullptr;
+}
+
 GfItemHandle GfItemInfo::getHandle() const {
     GfItemHandle handle;
     handle.m_handle = m_type;
@@ -123,6 +138,33 @@ unsigned int GfItemBoxBase::updateSerialLocal(ItemType::Type type) {
     next += next == 0;
     *serial = next;
     return next;
+}
+
+bool GfItemBoxBase::fn_71002F87F8(ItemType::Type type, unsigned int serial) {
+    item_iterator it = begin(type);
+    item_iterator last = end(type);
+    for (; it.m_cur != last.m_cur; ++it) {
+        GfItemInfo* info = *it.m_cur;
+        if (info->getIndex() != 0 && (info->getHandle().m_handle >> 6) == serial) {
+            return true;
+        }
+    }
+    return false;
+}
+
+GfItemInfo* GfItemBoxBase::findItem(unsigned int item) {
+    ItemType::Type type;
+    unsigned int index;
+    GfDataItem::getItemType(type, index, item);
+    item_iterator it = begin(type);
+    item_iterator last = end(type);
+    for (; it.m_cur != last.m_cur; ++it) {
+        GfItemInfo* info = *it.m_cur;
+        if (info->getType() == type && info->m_id == index) {
+            return info;
+        }
+    }
+    return nullptr;
 }
 
 void GfItemInfo::setType(ItemType::Type type) {

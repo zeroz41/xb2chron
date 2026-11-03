@@ -35,6 +35,7 @@
 #include "classes/gf/SCOM_EXEC_CURRENT_BLADE.h"
 #include "classes/gf/SCOM_NIA_BLADE.h"
 #include "classes/gf/SCOM_ACHIEV_INC.h"
+#include "classes/gf/SCOM_SET_BLADE.h"
 #include "classes/gf/SCOM_FIELD_SKILL.h"
 #include "classes/gf/SCOM_ZONE.h"
 #include "classes/gf/SCOM_SOLO_REX.h"
@@ -1757,6 +1758,20 @@ void SCOM_ACHIEV_INC::fn_7100564FE8(GF_OBJ_HANDLE* handle, unsigned int value) {
     }
 }
 
+void SCOM_ACHIEV_INC::fn_7100565210(GF_OBJ_HANDLE* handle, unsigned int value) {
+    addTotalCount(0x90, value);
+    create(0x90, value, 0);
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    fn_7100563BB4(blades, handle, true);
+    if (!blades.empty()) {
+        unsigned short* it = blades.begin();
+        unsigned short* end = blades.end();
+        do {
+            create(0x91, value, *it);
+        } while (++it != end);
+    }
+}
+
 void SCOM_ACHIEV_INC::fn_71005653A4(GF_OBJ_HANDLE* handle) {
     addTotalCount(0x72, 1);
     create(0x72, 1, 0);
@@ -1781,6 +1796,20 @@ void SCOM_ACHIEV_INC::fn_7100565534(GF_OBJ_HANDLE* handle) {
         unsigned short* end = blades.end();
         do {
             create(0x75, 1, *it);
+        } while (++it != end);
+    }
+}
+
+void SCOM_ACHIEV_INC::fn_71005656C4(GF_OBJ_HANDLE* handle) {
+    addTotalCount(0x76, 1);
+    create(0x76, 1, 0);
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    fn_7100563BB4(blades, handle, true);
+    if (!blades.empty()) {
+        unsigned short* it = blades.begin();
+        unsigned short* end = blades.end();
+        do {
+            create(0x77, 1, *it);
         } while (++it != end);
     }
 }
@@ -2988,6 +3017,22 @@ void SCOM_PARTY_ADD::fn_7100562048(unsigned int party) {
     }
     s_party = party;
     create();
+}
+
+unsigned long SCOM_SET_BLADE::create(const RQ_SETUP_BLADE& info) {
+    if (info.m_driver == 0) {
+        return -1;
+    }
+    RQ_SETUP_BLADE setup = info;
+    if (GfGameManager::isClearGame()) {
+        bool pyra = setup.m_blades[0] == 1001 || setup.m_blades[1] == 1001 || setup.m_blades[2] == 1001 ||
+                    setup.m_blades[3] == 1001 || setup.m_blades[4] == 1001;
+        setup.m_blades[3] = pyra ? 1002 : 0;
+        setup.m_blades[4] = pyra ? 1003 : 0;
+    }
+#line 3114
+    SCOM_SET_BLADE* request = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) SCOM_SET_BLADE(SCOM_TYPE(81), setup);
+    return GfReqSmallCom::addRequest(request);
 }
 
 bool SCOM_QUEST_REACH::exec(const fw::UpdateInfo&) {

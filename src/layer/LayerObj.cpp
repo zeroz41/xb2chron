@@ -528,6 +528,12 @@ LayerObjManager::~LayerObjManager() {
         m_sortMan = nullptr;
     }
 }
+LayerBase* LayerObjManager::createMaskObj(const void* resource) {
+    ml::CS cs(getCriticalSection());
+    LayerBase* obj = createStaticMaskObj(resource);
+    m_setupList[LayerManager::s_nStkIdx].addListNotNull(obj);
+    return obj;
+}
 LayerBase* LayerObjManager::createStaticMaskObj(const void* resource) {
     const LyrFormatHeader* header = static_cast<const LyrFormatHeader*>(resource);
     if (header->m_magic == 'DHAL' && header->m_version == 10001) {
@@ -536,8 +542,27 @@ LayerBase* LayerObjManager::createStaticMaskObj(const void* resource) {
     return nullptr;
 }
 LayerBase* LayerObjManager::createStaticFontObj() { return new (mm::mtl::PtrSingleton<LayerManager>::sys()->m_workHandle, nullptr, 0, 4, false) LayerObjTopFont(); }
+LayerBase* LayerObjManager::createTexObj(const grlib::CGLibTextureBuffer& texture) {
+    ml::CS cs(getCriticalSection());
+    LayerBase* obj = createStaticTexObj(texture);
+    m_setupList[LayerManager::s_nStkIdx].addListNotNull(obj);
+    return obj;
+}
+LayerBase* LayerObjManager::createMemObj(unsigned int width, unsigned int height, LayerMemType type) {
+    ml::CS cs(getCriticalSection());
+    LayerBase* obj = createStaticMemObj(width, height, type);
+    m_setupList[LayerManager::s_nStkIdx].addListNotNull(obj);
+    return obj;
+}
 LayerBase* LayerObjManager::createStaticMemObj(unsigned int width, unsigned int height, LayerMemType type) {
     return new (mm::mtl::PtrSingleton<LayerManager>::sys()->m_workHandle, nullptr, 0, 4, false) LayerObjTopMemObj(width, height, type);
+}
+LayerBase* LayerObjManager::createPolyObj(unsigned int width, unsigned int height, unsigned short vertexCount,
+                                          unsigned short indexCount, LayerPrimitiveType type) {
+    ml::CS cs(getCriticalSection());
+    LayerBase* obj = createStaticPolyObj(width, height, vertexCount, indexCount, type);
+    m_setupList[LayerManager::s_nStkIdx].addListNotNull(obj);
+    return obj;
 }
 LayerBase* LayerObjManager::createStaticPolyObj(unsigned int width, unsigned int height, unsigned short vertexCount,
                                                 unsigned short indexCount, LayerPrimitiveType type) {

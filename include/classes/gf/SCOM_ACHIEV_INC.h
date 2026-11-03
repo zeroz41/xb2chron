@@ -70,6 +70,10 @@ public:
     static void fn_7100565210(GF_OBJ_HANDLE*, unsigned int);
     static void fn_71005653A4(GF_OBJ_HANDLE*);
     static void fn_7100565534(GF_OBJ_HANDLE*);
+    // placeholder, a member because it follows fn_7100565534 in this class's run of gf_req_scom and has its shape:
+    // counts achievement 0x76 once and 0x77 for every blade fn_7100563BB4 lists for the handle; its one caller is the
+    // dispatch at 0x710000FDEC
+    static void fn_71005656C4(GF_OBJ_HANDLE*);
 
     // type-0x22 requests not yet counted: exec adds them as one (GfAchievManager::incAchiev(0x22, 1))
     static unsigned int s_countSalvageShop;

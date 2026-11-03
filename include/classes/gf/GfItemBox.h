@@ -86,6 +86,10 @@ public:
     unsigned int getItemTime(unsigned int item, GfItemHandle handle);
     void setEquipFlag(unsigned int item, GfItemHandle handle, bool equip);
     GfItemHandle getNoEquipItemHandle(unsigned int item);
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
+    // GfItemBoxBase's functions (between updateSerialLocal and findItem) and walks this box from begin(type). What it
+    // does: true when an item of the type with an id has the serial (its handle's bits 6-31); addItem calls it.
+    bool fn_71002F87F8(ItemType::Type type, unsigned int serial);
     // 1.0.0's name: its canAddItem(unsigned int) sits at the same place (after setType, before decItem) and its
     // GfItemBox::addItem(unsigned, unsigned) calls it at the same site as 3.0.1's (fn_71002F9004 in the symbols)
     bool canAddItem(unsigned int item);
