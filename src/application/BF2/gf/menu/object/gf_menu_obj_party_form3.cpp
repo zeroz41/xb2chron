@@ -18,6 +18,7 @@
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuObjUtil.h"
 #include "gf/GfMenuTypes.h"
+#include "mm/mtl/Delegate.h"
 
 namespace gf {
 
@@ -171,5 +172,10 @@ void GfMenuObjPartyForm3::BGListener::reciveEvent(const ui::EventData& event, un
         break;
     }
 }
+}  // namespace gf
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuObjPartyForm3>(const mm::mtl::Delegate<bool()>*);
+
+namespace gf {
 
 }  // namespace gf

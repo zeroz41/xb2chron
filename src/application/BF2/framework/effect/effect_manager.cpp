@@ -26,6 +26,7 @@
 #include "ml/DevFileParamTh.h"
 #include "classes/ml/DevFileTh.h"
 #include <string.h>
+#include "classes/mm/mtl/PtrSingleton.h"
 
 namespace fw {
 
@@ -1116,6 +1117,11 @@ void EffectManager::end() {
         effect::SystemManager::getPtr()->end();
     }
 }
+}  // namespace fw
+
+template mm::mtl::PtrSingleton<fw::EffectManager>::~PtrSingleton();
+
+namespace fw {
 
 #define FW_EFFECT_RENDER(NAME)                                                                                       \
     void EffectManager::NAME(ml::IDrDrawWorkInfo const* info) {                                                      \

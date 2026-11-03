@@ -56,6 +56,12 @@ void GfGameObj::destroy() {
     self->pad_55c70 = false;
     delete self;
 }
+}  // namespace gf
+
+// instantiated for gf::GfGameObj::removeGameObj, gf::GfGameObj::update (not written yet)
+template mm::mtl::FixedList<gf::ObjMsg, 256>::iterator mm::mtl::FixedList<gf::ObjMsg, 256>::erase(mm::mtl::FixedList<gf::ObjMsg, 256>::iterator);
+
+namespace gf {
 
 void GfGameObj::calcCameraFade(const ObjList& list, const mm::Vec3& camPos) {
     for (ObjList::const_iterator it = list.begin(); it != list.end(); ++it) {
@@ -145,6 +151,12 @@ GfGameObj::ObjList* GfGameObj::getListType(unsigned int kind, GF_OBJ_HANDLE* han
 mm::mtl::FixedList<GF_OBJ_HANDLE*, 1024>* GfGameObj::getList(unsigned int kind) {
     return get()->getListType(kind, reinterpret_cast<GF_OBJ_HANDLE*>(-1));
 }
+}  // namespace gf
+
+// instantiated for gf::GfGameObj::addOutObj, gf::GfGameObj::removeGameObj, gf::GfObjManager::checkLoadingAndCreate (not written yet)
+template mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 1024>::iterator mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 1024>::erase(mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 1024>::iterator);
+
+namespace gf {
 
 GfGameObj::ObjList* GfGameObj::getListEnemyBlade() {
     return &get()->m_listEnemyBlade;
@@ -164,6 +176,12 @@ void GfGameObj::enableGameObj(GfObjAcc& acc, bool on) {
         m_enterObjs.push_back(acc.getHandle());
     }
 }
+}  // namespace gf
+
+// instantiated for gf::GfGameObj::removeGameObj, gf::GfGameObj::updateEnterLeaveObj (not written yet)
+template mm::mtl::FixedList<gf::GfGameObj::INOUT, 1024>::iterator mm::mtl::FixedList<gf::GfGameObj::INOUT, 1024>::erase(mm::mtl::FixedList<gf::GfGameObj::INOUT, 1024>::iterator);
+
+namespace gf {
 
 void GfGameObj::flushEvent() {
     for (GF_OBJ_HANDLE** it = m_enterObjs.begin(); it != m_enterObjs.end(); ++it) {
@@ -365,6 +383,18 @@ GfObj* GfGameObj::getObj(GF_OBJ_HANDLE* handle) {
     }
     return GfObjUtil::getObj(handle);
 }
+}  // namespace gf
+
+// instantiated for gf::GfGameObjEnemy::leaveEnemyObj, gf::GfObjManager::checkTerminate (not written yet)
+template mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 256>::iterator mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 256>::erase(mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 256>::iterator);
+
+// instantiated for gf::GfGameObjEnemy::leaveEnemyObj (not written yet)
+template mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 64>::iterator mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 64>::erase(mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 64>::iterator);
+
+// instantiated for gf::GfGameObjEnemy::leaveEnemyObj (not written yet)
+template mm::mtl::FixedList<gf::GfGameObjEnemy::GINFO, 64>::iterator mm::mtl::FixedList<gf::GfGameObjEnemy::GINFO, 64>::erase(mm::mtl::FixedList<gf::GfGameObjEnemy::GINFO, 64>::iterator);
+
+namespace gf {
 
 GfGameObjEnemy::~GfGameObjEnemy() {}
 

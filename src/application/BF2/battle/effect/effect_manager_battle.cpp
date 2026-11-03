@@ -51,6 +51,12 @@ EffectObject* EffectManager::GetEffect(unsigned int id) {
     }
     return nullptr;
 }
+}  // namespace btl
+
+// instantiated for btl::EffectManager::UpdateProc (not written yet)
+template mm::mtl::FixedList<btl::EffectManager::REGISTER_PROC_DATA, 30>::iterator mm::mtl::FixedList<btl::EffectManager::REGISTER_PROC_DATA, 30>::erase(mm::mtl::FixedList<btl::EffectManager::REGISTER_PROC_DATA, 30>::iterator);
+
+namespace btl {
 
 bool EffectManager::IsExistChrHitEffect(gf::GF_OBJ_HANDLE* handle) const {
     for (mm::mtl::FixedList<PROC_DATA, 90>::const_iterator it = m_procList.begin(); it != m_procList.end();
@@ -66,6 +72,12 @@ bool EffectManager::IsExistChrHitEffect(gf::GF_OBJ_HANDLE* handle) const {
 float EffectManager::fn_7100099748(int index) const {
     return m_rates[index] * 0.01f;
 }
+}  // namespace btl
+
+// instantiated for btl::EffectManager::~EffectManager (not written yet)
+template mm::mtl::FixedList<btl::EffectManager::REGISTER_PROC_DATA, 30>::~FixedList();
+
+namespace btl {
 
 
 }  // namespace btl

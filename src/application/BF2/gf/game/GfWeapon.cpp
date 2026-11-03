@@ -192,6 +192,7 @@
 #include <algorithm>
 #include "classes/gf/SCOM_MAXIMUM_HEAL.h"
 #include "classes/gf/SCOM_FIELD_VOICE.h"
+#include "mm/mtl/UniquePtr.h"
 
 namespace gf {
 
@@ -2986,6 +2987,11 @@ bool fn_71002EEAC4() {
 void SDataOption::fn_71002EEB0C() {
     fn_7100254DF0(&m_soundUi);
 }
+}  // namespace gf
+
+template void mm::mtl::UniquePtr<gf::GfTargetProperty, mm::mtl::UniquePtrDefaultDeleter<gf::GfTargetProperty> >::_safe_bool_helper::safe_bool_function() const;
+
+namespace gf {
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EA4890). Not static: the original
 // reaches it through the GOT.

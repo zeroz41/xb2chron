@@ -20,6 +20,7 @@
 #include "ui/EventData.h"
 #include "ui/UIStr.h"
 #include "ui/UIUtil.h"
+#include "mm/mtl/Delegate.h"
 
 namespace gf {
 
@@ -208,5 +209,10 @@ void GfMenuObjBalloon::openEventSelectMoney(GfMenuCallContext* context, const Op
         ui::UIObjectAcc(handle).setSuspend(false);
     }
 }
+}  // namespace gf
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuObjBalloon>(const mm::mtl::Delegate<bool()>*);
+
+namespace gf {
 
 }  // namespace gf

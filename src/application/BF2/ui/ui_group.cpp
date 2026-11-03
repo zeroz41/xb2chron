@@ -86,6 +86,12 @@ void UIGroup::disp(bool disp) {
         m_flags |= 4;
     }
 }
+}  // namespace ui
+
+// instantiated for ui::UIGroup::updateObject (not written yet)
+template mm::mtl::Vector<ui::UIGroup::RootObjInfo>::iterator mm::mtl::Vector<ui::UIGroup::RootObjInfo>::erase(ui::UIGroup::RootObjInfo*);
+
+namespace ui {
 
 void UIGroup::applyObject() {
     if (m_objList == nullptr || (m_flags & 2) != 0) {

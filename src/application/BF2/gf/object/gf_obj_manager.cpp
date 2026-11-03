@@ -90,6 +90,12 @@ GFOBJ_INFO* GfObjManager::getObjInfo(GF_OBJ_HANDLE* handle) {
     }
     return info;
 }
+}  // namespace gf
+
+// instantiated for gf::GfObjManager::checkLoadingAndCreate, gf::GfObjManager::updateLayerPauseObjects (not written yet)
+template mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 4096>::iterator mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 4096>::erase(mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 4096>::iterator);
+
+namespace gf {
 
 int GfObjManager::getGfObjCapacity(unsigned int type) {
     unsigned long index = type;
@@ -269,6 +275,12 @@ void GfObjManager::addListener(IGfObjListener* listener, IGfObjListener::OBJEVT 
     entry.m_evt = evt;
     m_aListenerObj.push_back(entry);
 }
+}  // namespace gf
+
+// instantiated for gf::GfObjManager::removeListener (not written yet)
+template mm::mtl::FixedList<gf::GfObjManager::ObjListener, 256>::iterator mm::mtl::FixedList<gf::GfObjManager::ObjListener, 256>::erase(mm::mtl::FixedList<gf::GfObjManager::ObjListener, 256>::iterator);
+
+namespace gf {
 
 void GfObjManager::destroyLayerObj(unsigned int layer) {
     for (HandleList::iterator it = m_loadingObj.begin(); it != m_loadingObj.end(); ++it) {
@@ -319,6 +331,12 @@ const mm::mtl::FixedList<GF_OBJ_HANDLE*, 32>* GfObjManager::getMultiBindList(GF_
     }
     return nullptr;
 }
+}  // namespace gf
+
+// instantiated for gf::GfObjManager::checkTerminate (not written yet)
+template mm::mtl::FixedList<gf::GfAssetMultiBind*, 64>::iterator mm::mtl::FixedList<gf::GfAssetMultiBind*, 64>::erase(mm::mtl::FixedList<gf::GfAssetMultiBind*, 64>::iterator);
+
+namespace gf {
 
 void GfObjManager::addFollowObj(GF_OBJ_HANDLE* handle) {
     if (m_followObj.find(handle) == m_followObj.end()) {
@@ -377,6 +395,12 @@ void GfObjManager::setStateUpdate(GF_OBJ_HANDLE* handle) {
     m_updateObj.push_back(handle);
     m_firstObj.push_back(handle);
 }
+}  // namespace gf
+
+// instantiated for gf::GfObjManager::checkTerminate (not written yet)
+template mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 2048>::iterator mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 2048>::erase(mm::mtl::FixedList<gf::GF_OBJ_HANDLE*, 2048>::iterator);
+
+namespace gf {
 
 bool GfObjManager::isExistLayerObj(unsigned int layer) const {
     GfObjManager* self = const_cast<GfObjManager*>(this);

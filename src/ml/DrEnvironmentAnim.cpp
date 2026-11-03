@@ -73,6 +73,8 @@
 #include "mm/Math.h"
 #include "mm/Vec3NA.h"
 #include "mtl/MemManager.h"
+#include "mm/mtl/Vector.h"
+#include "mm/mtl/FixedList.h"
 
 namespace ml {
 
@@ -1123,6 +1125,12 @@ void DrLightObjGlobalIBL::beginOccQuery() {
 void DrLightObjGlobalIBL::endOccQuery() {
     m_meshes[m_bindIndex].m_query->end();
 }
+}  // namespace ml
+
+// instantiated for ml::DrLightObjGlobalIBL::initializeFromBuffer, ml::DrLightObjGlobalIBL::~DrLightObjGlobalIBL (not written yet)
+template void mm::mtl::Vector<ml::DrLightObjGlobalIBL::MeshData>::destroy();
+
+namespace ml {
 
 // --- DrFogMan ---
 DrFogMan::DrFogMan(DrMan* drMan)
@@ -1339,6 +1347,12 @@ bool DrIBLColiAcc::envcoli_notrot_cylinder(const unsigned char* data, const mm::
     float r = d[3] + range;
     return dx * dx + dz * dz <= r * r;
 }
+}  // namespace ml
+
+// instantiated for ml::DrIBLMan::update (not written yet)
+template mm::mtl::FixedList<ml::DrIBLObj*, 32>::iterator mm::mtl::FixedList<ml::DrIBLObj*, 32>::erase(mm::mtl::FixedList<ml::DrIBLObj*, 32>::iterator);
+
+namespace ml {
 
 bool (DrIBLColiAcc::*DrIBLColiAcc::s_pColiTest[5])(const unsigned char*, const mm::Vec3&, float) = {
     &DrIBLColiAcc::envcoli_box,        &DrIBLColiAcc::envcoli_sphere,          &DrIBLColiAcc::envcoli_cylinder,

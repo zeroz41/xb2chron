@@ -35,6 +35,8 @@
 #include "gf/GfDataBlade.h"
 #include "classes/gf/DataParamAcc.h"
 #include "mm/mtl/FixStr.h"
+#include "gf/GfMenuSequence.h"
+#include "mm/mtl/Delegate.h"
 
 namespace gf {
 
@@ -520,6 +522,13 @@ bool GfMenuObjCharSelect::attach(GfMenuCallContext* context) {
     }
     return false;
 }
+}  // namespace gf
+
+template bool gf::GfMenuSequence<gf::GfMenuObjCharSelect, 8>::wait();
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuSequence<gf::GfMenuObjCharSelect, 8>>(const mm::mtl::Delegate<bool()>*);
+
+namespace gf {
 
 void GfMenuObjCharSelect::dispOffCopyChar(ui::UIObjectAcc& acc, unsigned int blade) {
     GfMenuObjUtil::CtrlParam param;

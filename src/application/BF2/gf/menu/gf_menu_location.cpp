@@ -165,3 +165,7 @@ void GfMenuLocation::fn_71003569B8() {
 }
 
 }  // namespace gf
+
+// updateDataNum's std::sort (not written yet) instantiates the libc++ sort core for the order list.
+template void std::__sort<gf::GfMenuLocation::CompareOrder&, gf::GfMenuLocation::OrderInfo*>(
+    gf::GfMenuLocation::OrderInfo*, gf::GfMenuLocation::OrderInfo*, gf::GfMenuLocation::CompareOrder&);

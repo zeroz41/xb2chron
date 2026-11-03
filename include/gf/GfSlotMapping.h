@@ -42,6 +42,10 @@ public:
         unsigned int m_prio;
         float m_timeout;  // seconds left; at 0 the pack changes to its backup asset type or times out
     };
+    // orders requests by their pack's priority, biggest first (requestSlotLoad's std::sort)
+    struct BiggerPrio {
+        inline bool operator()(const REQ& a, const REQ& b) const;
+    };
 
     GfSlotAllocator* m_slotAllocator;  // the slots' memory (not the original's)
     GfSlotAll* m_slotAll;               // (not the original's)

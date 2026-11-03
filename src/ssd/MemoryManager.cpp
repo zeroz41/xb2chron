@@ -110,6 +110,11 @@ void MemoryManager::Quit() {
         memoryManager_.mutex_.Finalize();
     }
 }
+}  // namespace ssd
+
+template ssd::List<ssd::MemoryManager::BlockNode>::Node::~Node();
+
+namespace ssd {
 
 Allocator::Block* MemoryManager::AllocInstance(Allocator* allocator, unsigned long size, unsigned long count,
                                                unsigned long alignment) {

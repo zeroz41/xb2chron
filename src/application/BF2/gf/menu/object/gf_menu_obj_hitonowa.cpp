@@ -19,6 +19,8 @@
 #include "plugin/Bdat.h"
 #include "classes/gf/GfMenuIDList.h"
 #include "gf/GfDataBlade.h"
+#include "mm/mtl/Vector.h"
+#include "classes/fw/AssetData.h"
 
 namespace gf {
 
@@ -337,5 +339,11 @@ bool TUnk_B62AA0::fn_7100427230() {
     }
     return true;
 }
+}  // namespace gf
+
+// instantiated for gf::TUnk_B62AA0::fn_710041F0A8 (not written yet)
+template mm::mtl::Vector<fw::AssetCsvb*>::iterator mm::mtl::Vector<fw::AssetCsvb*>::erase(fw::AssetCsvb**);
+
+namespace gf {
 
 }  // namespace gf

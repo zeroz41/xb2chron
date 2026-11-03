@@ -39,6 +39,8 @@
 #include "classes/ml/CacheDraw.h"
 #include "classes/ml/WorkObjFlowSystemPause.h"
 #include "classes/ml/ProcException.h"
+#include "classes/ml/MsgParam.h"
+#include "classes/ml/reslist.h"
 
 // the lock both conversions hold (inline in both: its static and guard are unnamed in the symbols)
 static const ml::CriticalSection& getCriticalSection() {
@@ -1579,6 +1581,13 @@ bool ProcDesktopException::wkStandbyLogout() {
     }
     return WinProc::wkStandbyLogout();
 }
+}  // namespace _dsk
+}  // namespace ml
+
+template ml::reslist<ml::IWorkEvent*>::~reslist();
+
+namespace ml {
+namespace _dsk {
 
 }  // namespace _dsk
 
@@ -1591,6 +1600,11 @@ void WinView::getViewOfs(mm::Rect<int>& rect, bool) {
     rect.w = 0;
     rect.h = 0;
 }
+}  // namespace ml
+
+template ml::MsgParam<10>::~MsgParam();
+
+namespace ml {
 
 void WinView::destroyCtrlMemory() {
     for (reslist<WorkObj*>::iterator it = wkGetChild()->begin(); it != wkGetChild()->end(); ++it) {

@@ -93,6 +93,12 @@ void GfMenuReference::fn_7100366074(const unsigned int* values) {
         }
     }
 }
+}  // namespace gf
+
+// instantiated for gf::GfMenuReference::postUpdate (not written yet)
+template mm::mtl::FixedList<gf::GfMenuReference::REFLIST*, 32>::iterator mm::mtl::FixedList<gf::GfMenuReference::REFLIST*, 32>::erase(mm::mtl::FixedList<gf::GfMenuReference::REFLIST*, 32>::iterator);
+
+namespace gf {
 
 void GfMenuReference::postReset() {
     GfMenuReference* self = get();

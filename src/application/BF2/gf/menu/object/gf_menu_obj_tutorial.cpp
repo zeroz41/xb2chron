@@ -9,6 +9,8 @@
 #include "gf/GfMenuObjUtil.h"
 #include "ui/EventData.h"
 #include "ui/UIStr.h"
+#include "mm/mtl/Delegate.h"
+#include "gf/GfMenuSequence.h"
 
 namespace gf {
 
@@ -126,5 +128,14 @@ void GfMenuObjTutorial::update() {
     m_seq.update();
     GfMenuObject::update();
 }
+}  // namespace gf
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuObjTutorial>(const mm::mtl::Delegate<bool()>*);
+
+template bool gf::GfMenuSequence<gf::GfMenuObjTutorial, 8>::wait();
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuSequence<gf::GfMenuObjTutorial, 8>>(const mm::mtl::Delegate<bool()>*);
+
+namespace gf {
 
 }  // namespace gf

@@ -29,6 +29,8 @@
 #include "classes/gf/GfMenuObjMainMenu2.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/gf/GfMenuObjCharSelect.h"
+#include "gf/GfMenuSequence.h"
+#include "mm/mtl/Delegate.h"
 
 namespace gmo_dr_kizuna_ring {
 float rateTbl[2] = {1.0f, 0.5f};
@@ -333,6 +335,15 @@ bool GfMenuObjDrKizunaRing::seqEndAnime() {
     GfMenuObjMainMenu2::openCharChange(ring.m_handle, 0, false);
     return true;
 }
+}  // namespace gf
+
+template bool gf::GfMenuSequence<gf::GfMenuObjDrKizunaRing, 8>::wait();
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuSequence<gf::GfMenuObjDrKizunaRing, 8>>(const mm::mtl::Delegate<bool()>*);
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuObjDrKizunaRing>(const mm::mtl::Delegate<bool()>*);
+
+namespace gf {
 
 void GfMenuObjDrKizunaRing::MainListener::reciveEvent(ui::EventData const& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);

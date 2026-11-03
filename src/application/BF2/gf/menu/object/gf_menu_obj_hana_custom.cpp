@@ -21,6 +21,7 @@
 #include "classes/gf/GfMenuItemAdapter.h"
 #include "mm/mtl/FixStr.h"
 #include "classes/gf/GfMenuReference.h"
+#include "mm/mtl/Delegate.h"
 
 namespace gf {
 
@@ -376,5 +377,10 @@ void GfMenuObjHanaCustom::EquipListListener::reciveEvent(ui::EventData const& ev
         break;
     }
 }
+}  // namespace gf
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuObjHanaCustom>(const mm::mtl::Delegate<bool()>*);
+
+namespace gf {
 
 }  // namespace gf

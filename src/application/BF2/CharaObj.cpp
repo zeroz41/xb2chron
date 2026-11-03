@@ -1570,6 +1570,11 @@ void CharaObj::playVolumeFade(CharaEffectPlayer::VF_TYPE type, int a, const mm::
                               float e, int f, float g) {
     m_effectPlayer.playVolumeFade(type, a, b, c, d, e, f, g);
 }
+}  // namespace event
+
+template mm::mtl::PtrSingleton<event::Manager>::~PtrSingleton();
+
+namespace event {
 
 void CharaObj::playVolumeFadeAnim(CharaEffectPlayer::VF_TYPE type, float time, float delay) {
     m_effectPlayer.playVolumeFadeAnim(type, time, delay);

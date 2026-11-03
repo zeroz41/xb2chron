@@ -10,6 +10,7 @@
 #include "mm/mtl/FixedVector.h"
 #include "classes/ml/WinView.h"
 #include "mtl/MemManager.h"
+#include "classes/ml/fixed_size_alloc_inside.h"
 
 namespace gf {
 
@@ -45,6 +46,11 @@ AssetPackInfo* GfAssetManager::getAssetPackInfo(GF_ASSET_HANDLE* handle) {
     unsigned int mask = 1u << (index & 0x1F);
     return (infos.m_pBits[word] & mask) != 0 ? info : nullptr;
 }
+}  // namespace gf
+
+template ml::fixed_size_alloc_inside<gf::AssetPackInfo, 1024>::~fixed_size_alloc_inside();
+
+namespace gf {
 
 void GfAssetManager::enableGameResource(GF_ASSET_HANDLE* handle) {
     AssetPackInfo* info = getAssetPackInfo(handle);
@@ -263,6 +269,12 @@ const char* GfAssetManager::getMotionInfo(GF_ASSET_HANDLE* handle) {
     }
     return "";
 }
+}  // namespace gf
+
+// instantiated for gf::GfAssetManager::updateCheckCacheReload, gf::GfAssetManager::updateCheckDestroy, gf::GfAssetManager::updateCheckLoading (not written yet)
+template mm::mtl::FixedList<gf::GF_ASSET_HANDLE*, 1024>::iterator mm::mtl::FixedList<gf::GF_ASSET_HANDLE*, 1024>::erase(mm::mtl::FixedList<gf::GF_ASSET_HANDLE*, 1024>::iterator);
+
+namespace gf {
 
 void GfAssetManager::releaseRefResource(void* resource) {
     for (mm::mtl::FixedList<GfAssetPack*, 2048>::iterator it = m_assetPacks.begin(); it != m_assetPacks.end(); ++it) {

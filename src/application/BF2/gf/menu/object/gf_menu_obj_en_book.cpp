@@ -24,6 +24,8 @@
 #include "plugin/Bdat.h"
 #include "ui/UIStr.h"
 #include "ui/EventData.h"
+#include "mm/mtl/Delegate.h"
+#include "gf/GfMenuSequence.h"
 
 namespace gf {
 
@@ -588,5 +590,14 @@ void GfMenuObjEnBook::DetailListener::reciveEvent(const ui::EventData& event, un
         break;
     }
 }
+}  // namespace gf
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuObjEnBook>(const mm::mtl::Delegate<bool()>*);
+
+template bool gf::GfMenuSequence<gf::GfMenuObjEnBook, 8>::wait();
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuSequence<gf::GfMenuObjEnBook, 8>>(const mm::mtl::Delegate<bool()>*);
+
+namespace gf {
 
 }  // namespace gf

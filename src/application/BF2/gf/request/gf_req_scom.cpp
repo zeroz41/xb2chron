@@ -136,6 +136,7 @@
 #include "gf/GfDataItem.h"
 #include "classes/gf/GfBdatItem.h"
 #include "mm/mtl/FixStr.h"
+#include "classes/mm/mtl/PtrSingleton.h"
 namespace gf {
 bool SCOM_ADD_MONEY::exec(fw::UpdateInfo const&) {
     GfGameUtil::addMoney(m_money);
@@ -3193,5 +3194,10 @@ bool GfReqSmallCom::updateParallel(const fw::UpdateInfo& info) {
     }
     return true;
 }
+}  // namespace gf
+
+template mm::mtl::PtrSingleton<gf::SCOM_PARTY_ADD>::~PtrSingleton();
+
+namespace gf {
 
 }  // namespace gf

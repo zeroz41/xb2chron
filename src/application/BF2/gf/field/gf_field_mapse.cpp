@@ -94,3 +94,7 @@ float GfFieldMapSe::getVolume(const SEOBJ* obj) {
 }
 
 }  // namespace gf
+
+// updateSeObjDataForActivate's std::sort (not written yet) instantiates the libc++ sort core for the sound list.
+template void std::__sort<gf::GfFieldMapSe::DistCompare&, gf::GfFieldMapSe::SEOBJ**>(
+    gf::GfFieldMapSe::SEOBJ**, gf::GfFieldMapSe::SEOBJ**, gf::GfFieldMapSe::DistCompare&);

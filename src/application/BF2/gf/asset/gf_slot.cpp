@@ -54,6 +54,12 @@ void GfSizeAlloc::resize(unsigned long bufferSize) {
     memset(m_blocks, 0, static_cast<unsigned long>(m_blockNum) * 4);
     m_blocks[0] = m_blockNum;
 }
+}  // namespace gf
+
+// instantiated for gf::GfSizeAlloc::alloc, gf::GfSizeAlloc::free (not written yet)
+template mm::mtl::FixedList<unsigned int, 64>::iterator mm::mtl::FixedList<unsigned int, 64>::erase(mm::mtl::FixedList<unsigned int, 64>::iterator);
+
+namespace gf {
 
 // alloc and free (and the FixedList<unsigned int, 64>::erase they instantiate): not written yet (not identical)
 

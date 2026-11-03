@@ -29,6 +29,7 @@
 #include "gf/MsgUnk_1000046.h"
 #include "gf/MsgUnk_1000047.h"
 #include "gf/MsgUnk_1000048.h"
+#include "mm/mtl/UniquePtr.h"
 
 namespace gf {
 
@@ -71,6 +72,11 @@ void GfComProperty::setAlpha(unsigned int kind, float alpha) {
         }
     }
 }
+}  // namespace gf
+
+template void mm::mtl::UniquePtr<gf::GfDebugStatusProperty, mm::mtl::UniquePtrDefaultDeleter<gf::GfDebugStatusProperty> >::_safe_bool_helper::safe_bool_function() const;
+
+namespace gf {
 
 mm::mtl::RTTI GfComProperty::m_rtti("GfComProperty", &GfComponent::m_rtti, nullptr);
 

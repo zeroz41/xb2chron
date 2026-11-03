@@ -52,6 +52,7 @@
 #include "classes/btl/BattleCharacter.h"
 #include "classes/btl/CharacterParameter.h"
 #include "gf/GfObjUtil.h"
+#include "mm/mtl/Delegate.h"
 
 namespace gf {
 
@@ -634,5 +635,12 @@ void GfComBehaviorEnemy::procAnimCallback(GfComAsm* asmCom, const CallBackCache&
 void GfComBehaviorEnemy::Listener::onWkStandbyLogout() {
     m_owner->pad_54e8 = nullptr;
 }
+}  // namespace gf
+
+template void mm::mtl::Delegate<void(gf::GfComAsm*, const gf::CallBackCache&)>::memberFuncInvoker<gf::GfComBehavior>(const mm::mtl::Delegate<void(gf::GfComAsm*, const gf::CallBackCache&)>*, gf::GfComAsm*, const gf::CallBackCache&);
+
+template void mm::mtl::Delegate<void(gf::GfComAsm*, const gf::CallBackCache&)>::memberFuncInvoker<gf::GfComBehaviorEnemy>(const mm::mtl::Delegate<void(gf::GfComAsm*, const gf::CallBackCache&)>*, gf::GfComAsm*, const gf::CallBackCache&);
+
+namespace gf {
 
 }  // namespace gf

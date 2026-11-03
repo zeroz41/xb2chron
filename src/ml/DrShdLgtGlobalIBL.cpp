@@ -3,6 +3,7 @@
 #include "ml/DrLightObjGlobalIBL.h"
 #include "ml/DrPixlPostParm.h"
 #include "ml/DrShdLgtGlobalIBL.h"
+#include "algorithm"
 
 namespace ml {
 namespace _dr_shd_lgt_glb_ibl {
@@ -41,3 +42,10 @@ void DrShdLgtGlobalIBL::updateUniformBlock(int viewIdx) {
     updateUniformBlockImpl(viewIdx);
 }
 }  // namespace ml
+
+// m_objList's destructors (the class destructor, not written yet, runs them)
+template mm::mtl::List<ml::DrLightObjGlobalIBL*>::~List();
+template mm::mtl::_ReslistBase<ml::DrLightObjGlobalIBL*>::~_ReslistBase();
+// updateView's std::sort with CompareByPriority (updateView is not written yet)
+template void std::__sort<bool (*&)(const ml::DrLightObjGlobalIBL*, const ml::DrLightObjGlobalIBL*), ml::DrLightObjGlobalIBL**>(
+    ml::DrLightObjGlobalIBL**, ml::DrLightObjGlobalIBL**, bool (*&)(const ml::DrLightObjGlobalIBL*, const ml::DrLightObjGlobalIBL*));

@@ -47,6 +47,9 @@
 #include "gf/GfObjAcc.h"
 #include "classes/gf/GfMenuCallContext.h"
 #include "classes/ui/UIManager.h"
+#include "mm/mtl/Vector.h"
+#include "gf/GfMenuSequence.h"
+#include "mm/mtl/Delegate.h"
 
 namespace gf {
 
@@ -757,6 +760,16 @@ GfMenuBladeCreateCamera::~GfMenuBladeCreateCamera() {}
 const char* GfMenuBladeCreateCamera::getName() const {
     return "GfMenuBladeCreateCamera";
 }
+}  // namespace gf
+
+// instantiated for gf::GfMenuObjBladeCreate::initialize, gf::GfMenuObjMainMenu2::openChrChangeSub, gf::GfMenuObjPartyForm3::DriverSelectListener::reciveEvent (not written yet)
+template mm::mtl::Vector<gf::MenuDriverInfo>::iterator mm::mtl::Vector<gf::MenuDriverInfo>::erase(gf::MenuDriverInfo*);
+
+template bool gf::GfMenuSequence<gf::GfMenuObjBladeCreate, 20>::wait();
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuSequence<gf::GfMenuObjBladeCreate, 20>>(const mm::mtl::Delegate<bool()>*);
+
+namespace gf {
 
 mm::mtl::RTTI GfMenuBladeCreateCamera::m_rtti("GfMenuBladeCreateCamera", &::fw::Camera::m_rtti, nullptr);
 

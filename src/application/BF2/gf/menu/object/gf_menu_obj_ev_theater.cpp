@@ -22,6 +22,7 @@
 #include "mm/Math.h"
 #include "ui/UIStr.h"
 #include "ui/EventData.h"
+#include "mm/mtl/Vector.h"
 
 namespace gf {
 
@@ -558,5 +559,11 @@ bool GfMenuObjEvTheater::fn_7100405294() {
     GfMenuObject::sendEvent(acc.m_handle, event, 0.0f);
     return true;
 }
+}  // namespace gf
+
+// instantiated for gf::GfMenuObjOption::ItemListListener::reciveEvent, gf::TUnk_B62AA0::fn_710041F0A8, ui::UISelectObjList::delObject (not written yet)
+template mm::mtl::Vector<unsigned int>::iterator mm::mtl::Vector<unsigned int>::erase(unsigned int*);
+
+namespace gf {
 
 }  // namespace gf

@@ -8,6 +8,7 @@
 #include "mm/mtl/FixStr.h"
 #include "mm/mtl/Hash.h"
 #include "string.h"
+#include "mm/mtl/Vector.h"
 
 namespace ui {
 
@@ -153,6 +154,12 @@ UIUioLibrary::UIUioLibrary() {}
 UIUioLibrary::~UIUioLibrary() {
     reset();
 }
+}  // namespace ui
+
+// instantiated for ui::UIUioLibrary::update (not written yet)
+template mm::mtl::Vector<ui::UIUioLibrary::UioInfo>::iterator mm::mtl::Vector<ui::UIUioLibrary::UioInfo>::erase(ui::UIUioLibrary::UioInfo*);
+
+namespace ui {
 
 void UIUioLibrary::reset() {
     if (m_uios.capacity() != 0) {

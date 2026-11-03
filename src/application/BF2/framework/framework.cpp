@@ -51,6 +51,7 @@
 #include "ml/MlMem.h"
 #include "classes/ml/Scn.h"
 #include "math.h"
+#include "classes/mm/mtl/PtrSingleton.h"
 
 namespace fw {
 
@@ -422,6 +423,13 @@ void CameraManager::update(const UpdateInfo& info) {
 void CameraManager::Listener::onWkStandbyLogout() {
     m_owner->m_pViewer = nullptr;
 }
+}  // namespace fw
+
+template mm::mtl::PtrSingleton<fw::ModelManager>::~PtrSingleton();
+
+template mm::mtl::PtrSingleton<fw::MovieManager>::~PtrSingleton();
+
+namespace fw {
 
 TransformManager::~TransformManager() {}
 

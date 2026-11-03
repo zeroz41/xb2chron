@@ -10,6 +10,8 @@
 #include "classes/ui/UIObjectAcc.h"
 #include "gf/GfMenuObjUtil.h"
 #include "ui/EventData.h"
+#include "gf/GfMenuSequence.h"
+#include "mm/mtl/Delegate.h"
 
 namespace gf {
 
@@ -163,5 +165,12 @@ bool GfMenuObjMercenaryReport::seqWaitEndKizuna() {
     m_seq.addJob(&GfMenuObjMercenaryReport::seqCheckAchive);
     return true;
 }
+}  // namespace gf
+
+template bool gf::GfMenuSequence<gf::GfMenuObjMercenaryReport, 10>::wait();
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuSequence<gf::GfMenuObjMercenaryReport, 10>>(const mm::mtl::Delegate<bool()>*);
+
+namespace gf {
 
 }  // namespace gf

@@ -10,6 +10,7 @@
 #include "classes/ssd/TextRef.h"
 #include "classes/ssd/VoiceHandle.h"
 #include "ssd/Debug.h"
+#include "classes/ssd/List.h"
 
 namespace ssd {
 
@@ -212,5 +213,10 @@ void SoundHandle::UpdateAudioFrame(float frameTime) {
     pitch_.Update(frameTime);
     volume_.Update(frameTime);
 }
+}  // namespace ssd
+
+template ssd::List<ssd::Delegate::Handle>::Node::~Node();
+
+namespace ssd {
 
 }  // namespace ssd

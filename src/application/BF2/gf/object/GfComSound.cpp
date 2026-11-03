@@ -105,6 +105,11 @@ void GfComSound::changeLayer(unsigned int prevLayer, unsigned int layer) {
         }
     }
 }
+}  // namespace gf
+
+template mm::mtl::List<gf::GfComSound::SoundInfo>::~List();
+
+namespace gf {
 
 mm::mtl::RTTI GfComSound::m_rtti("GfComSound", &GfComponent::m_rtti, nullptr);
 

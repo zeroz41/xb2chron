@@ -53,6 +53,12 @@ GF_SEARCH_OBJ* GfGameSearchObj::createObj(const GfSearchParam& param) {
     }
     return handle;
 }
+}  // namespace gf
+
+// instantiated for gf::GfGameSearchObj::destroyObj (not written yet)
+template mm::mtl::FixedList<gf::GF_SEARCH_OBJ*, 64>::iterator mm::mtl::FixedList<gf::GF_SEARCH_OBJ*, 64>::erase(mm::mtl::FixedList<gf::GF_SEARCH_OBJ*, 64>::iterator);
+
+namespace gf {
 
 void GfGameSearchObj::setEnable(GF_SEARCH_OBJ* obj, bool enable) {
     if (obj != reinterpret_cast<GF_SEARCH_OBJ*>(-1) && get() != nullptr) {

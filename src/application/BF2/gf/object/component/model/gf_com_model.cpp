@@ -32,6 +32,7 @@
 #include "classes/anm/Skeleton.h"
 #include "classes/anm/Pose.h"
 #include "classes/anm/ExtraTruckBuffer.h"
+#include "mm/mtl/Delegate.h"
 
 namespace gf {
 namespace mob {
@@ -191,6 +192,11 @@ void GfComModel::ViewerListener::onWkStandbyLogout() {
         m_pOwner->m_pViewer = nullptr;
     }
 }
+}  // namespace gf
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfComModel>(const mm::mtl::Delegate<bool()>*);
+
+namespace gf {
 
 namespace {
 // the index of the skeleton's mount named name, 0xFFFF when none is (the name is not the original's)

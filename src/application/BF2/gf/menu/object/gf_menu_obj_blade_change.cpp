@@ -14,6 +14,11 @@
 #include "gf/GfMenuObjUtil.h"
 #include "mm/mtl/FixStr.h"
 #include "ui/EventData.h"
+#include "mm/mtl/Vector.h"
+#include "classes/gf/GfMenuBladeList.h"
+
+// instantiated for gf::GfMenuObjBladeRelease::seqExecRelease, gf::GfMenuObjMercenaryForm::ListListener::reciveEvent, gf::GfMenuObjMercenaryForm::StartListener::reciveEvent, gf::GfMenuObjMercenaryForm::UnitListener::reciveEvent, gf::GfMenuObjMercenaryForm::updateBladeCount, gf::GfMenuObjMercenaryReport::seqCheckAchive (not written yet)
+template mm::mtl::Vector<gf::MenuBladeInfo>::iterator mm::mtl::Vector<gf::MenuBladeInfo>::erase(gf::MenuBladeInfo*);
 
 namespace gf {
 

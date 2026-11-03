@@ -330,6 +330,12 @@ void GfSound::destroyObjSePack(fw::SoundPack*& pack) {
         pack = nullptr;
     }
 }
+}  // namespace gf
+
+// instantiated for gf::GfSound::updateSeParamList (not written yet)
+template mm::mtl::FixedList<unsigned short, 512>::iterator mm::mtl::FixedList<unsigned short, 512>::erase(mm::mtl::FixedList<unsigned short, 512>::iterator);
+
+namespace gf {
 
 void GfSound::setPauseGameSe(bool pause) {
     float volume = pause ? 0.0f : 1.0f;

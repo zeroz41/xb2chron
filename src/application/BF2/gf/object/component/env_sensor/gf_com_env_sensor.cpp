@@ -12,6 +12,8 @@
 #include "fw/ColiCheck.h"
 #include "gf/GfEnvProperty.h"
 #include "mm/Plane.h"
+#include "mm/mtl/Delegate.h"
+#include "mm/mtl/UniquePtr.h"
 
 namespace gf {
 
@@ -151,6 +153,13 @@ bool GfComEnvSensor::flushGroundSingle(GfEnvProperty* property, const mm::Vec3& 
 void GfComEnvSensor::EnvListener::onWkStandbyLogout() {
     m_owner->m_pViewer = nullptr;
 }
+}  // namespace gf
+
+template void mm::mtl::Delegate<void()>::memberFuncInvoker<gf::GfComEnvSensor>(const mm::mtl::Delegate<void()>*);
+
+template void mm::mtl::UniquePtr<gf::GfEnemySensor, mm::mtl::UniquePtrDefaultDeleter<gf::GfEnemySensor> >::_safe_bool_helper::safe_bool_function() const;
+
+namespace gf {
 
 mm::mtl::RTTI GfComEnvSensor::m_rtti("GfComEnvSensor", &GfComponent::m_rtti, nullptr);
 

@@ -28,6 +28,7 @@
 #include "classes/ui/UISelectObjList.h"
 #include "gf/GfMenuObjUtil.h"
 #include "ui/EventData.h"
+#include "mm/mtl/Delegate.h"
 
 namespace gf {
 
@@ -353,5 +354,10 @@ void GfMenuObjPouch2::getFilterText(unsigned int filter, ui::UIStr& text) {
         text.copy(str);
     }
 }
+}  // namespace gf
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuObjPouch2>(const mm::mtl::Delegate<bool()>*);
+
+namespace gf {
 
 }  // namespace gf

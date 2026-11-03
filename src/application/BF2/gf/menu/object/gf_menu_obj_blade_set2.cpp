@@ -20,6 +20,8 @@
 #include "gf/GfMenuObjUtil.h"
 #include "gf/GfMenuTypes.h"
 #include "ui/EventData.h"
+#include "mm/mtl/Delegate.h"
+#include "gf/GfMenuSequence.h"
 
 namespace gf {
 
@@ -178,5 +180,14 @@ bool GfMenuObjBladeSet2::seqReturnBlSlot() {
     refreshBladeList();
     return true;
 }
+}  // namespace gf
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuObjBladeSet2>(const mm::mtl::Delegate<bool()>*);
+
+template bool gf::GfMenuSequence<gf::GfMenuObjBladeSet2, 8>::wait();
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuSequence<gf::GfMenuObjBladeSet2, 8>>(const mm::mtl::Delegate<bool()>*);
+
+namespace gf {
 
 }  // namespace gf

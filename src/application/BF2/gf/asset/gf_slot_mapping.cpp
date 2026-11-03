@@ -3,8 +3,14 @@
 #include "classes/gf/GfSlotAllocator.h"
 #include "classes/gf/GfAllocator.h"
 #include "mtl/MemManager.h"
+#include "classes/gf/GfAssetPack.h"
+#include "algorithm"
 
 namespace gf {
+
+inline bool GfSlotMapping::BiggerPrio::operator()(const REQ& a, const REQ& b) const {
+    return a.m_pack->m_prio > b.m_pack->m_prio;
+}
 
 unsigned long GfSlotMapping::getAllSize() {
     return 0x24eb0000;
@@ -58,3 +64,7 @@ bool GfSlotMapping::deallocateSize(void* memory) {
 }
 
 }  // namespace gf
+
+// requestSlotLoad's std::sort (not written yet) instantiates the libc++ sort core for the requests.
+template void std::__sort<gf::GfSlotMapping::BiggerPrio&, gf::GfSlotMapping::REQ*>(
+    gf::GfSlotMapping::REQ*, gf::GfSlotMapping::REQ*, gf::GfSlotMapping::BiggerPrio&);

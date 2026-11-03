@@ -114,6 +114,8 @@
 #include "mm/threading/SpinLock.h"
 #include "classes/ml/ControllerApplet.h"
 #include "nn/ec.h"
+#include "classes/ml/_reslist_base.h"
+#include "classes/ml/reslist.h"
 
 namespace mm { namespace threading {
 
@@ -2342,6 +2344,12 @@ bool DevFileArchiveNx::rfClose(FileHandleTh* handle) {
 bool DevFileArchiveNx::rfIsUsedChannel(unsigned int channel) {
     return m_impl->m_params[channel].m_isOpen;
 }
+}  // namespace ml
+
+// instantiated for ml::DevFileTh::Impl::thUpdate, ml::DevFileTh::Impl::updateCancel (not written yet)
+template mm::mtl::FixedList<ml::DevFileJobTh*, 640>::iterator mm::mtl::FixedList<ml::DevFileJobTh*, 640>::erase(mm::mtl::FixedList<ml::DevFileJobTh*, 640>::iterator);
+
+namespace ml {
 
 void DevPerfNx::resumeApplication() {}
 
@@ -3132,6 +3140,15 @@ GraphQue::~GraphQue() {
         m_buf[0] = nullptr;
     }
 }
+}  // namespace ml
+
+template ml::reslist<ml::IDevFontInfo*>::~reslist();
+
+template ml::reslist<ml::DevGraphCB*>::~reslist();
+
+template ml::reslist<ml::GraphQue*>::~reslist();
+
+namespace ml {
 
 DevGraphCB::~DevGraphCB() {
     DevGraph* dev = DevGraph::get();
@@ -3147,4 +3164,9 @@ DevGraphCB::~DevGraphCB() {
         }
     }
 }
+}  // namespace ml
+
+template ml::_reslist_base<ml::GraphQue*>::~_reslist_base();
+
+namespace ml {
 }  // namespace ml

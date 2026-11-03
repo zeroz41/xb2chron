@@ -56,6 +56,7 @@
 #include "classes/ml/threadval.h"
 #include "classes/ml/TJOB.h"
 #include <algorithm>
+#include "classes/ml/reslist.h"
 
 namespace ml {
 
@@ -270,6 +271,12 @@ TJOB* WorkCpuThread::transferJob(WorkCpuThread* dst) {
 int WorkCpu::getEven() {
     return get()->m_bank;
 }
+}  // namespace ml
+
+// instantiated for ml::WorkCpu::releaseGroupHandle (not written yet)
+template mm::mtl::FixedList<ml::WorkCpu::GRPLIST, 128>::iterator mm::mtl::FixedList<ml::WorkCpu::GRPLIST, 128>::erase(mm::mtl::FixedList<ml::WorkCpu::GRPLIST, 128>::iterator);
+
+namespace ml {
 
 bool WorkCpu::isShutdown() {
     if (WorkCpu* cpu = get()) {
@@ -337,6 +344,15 @@ void WorkSystem::wkUpdate() {}
 void WorkUtil::setDispLogH(bool dispLogH) {
     _wkut::s_bDispLogH = dispLogH;
 }
+}  // namespace ml
+
+template ml::reslist<ml::IThreadValue*>::~reslist();
+
+template ml::reslist<ml::TJOB*>::~reslist();
+
+template ml::_reslist_base<ml::TJOB*>::~_reslist_base();
+
+namespace ml {
 
 bool WorkObj::wkCheckTimeout(unsigned int timeout, bool done, const char* message) {
     if (m_flags & 2) {
@@ -406,6 +422,12 @@ unsigned long WorkCpu::getThreadId(CPUID cpu) {
     }
     return 0;
 }
+}  // namespace ml
+
+// instantiated for ml::WorkCpu::removeAutoExecGrp (not written yet)
+template mm::mtl::FixedList<ml::WorkCpu::AUTO_EXEC, 32>::iterator mm::mtl::FixedList<ml::WorkCpu::AUTO_EXEC, 32>::erase(mm::mtl::FixedList<ml::WorkCpu::AUTO_EXEC, 32>::iterator);
+
+namespace ml {
 
 CPUID WorkCpu::getRenderCPUID() {
     if (s_bRenderSubCpu) {

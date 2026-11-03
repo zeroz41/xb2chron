@@ -24,6 +24,7 @@
 #include "gf/GfObjFactory.h"
 #include "gf/GfObjUtil.h"
 #include "ml/ScnObjAccVolumeFade.h"
+#include "mm/mtl/Vector.h"
 
 namespace gf {
 
@@ -261,5 +262,11 @@ void GfMenuModelView::CtrlParam::setMoveVanish(float ratio) {
     m_flags |= 0x100;
     m_vanishRatio = ratio;
 }
+}  // namespace gf
+
+// instantiated for gf::GfMenuModelView::GfMenuModelView, gf::GfMenuModelView::~GfMenuModelView (not written yet)
+template void mm::mtl::Vector<mm::mtl::IntrusivePtr<fw::Camera> >::destroy();
+
+namespace gf {
 
 }  // namespace gf

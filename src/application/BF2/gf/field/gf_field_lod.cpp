@@ -12,6 +12,7 @@
 #include "ml/ScnObjAccPartsPos.h"
 #include "plugin/Bdat.h"
 #include <string.h>
+#include "mm/mtl/Vector.h"
 
 namespace gf {
 
@@ -75,6 +76,12 @@ int GfFieldLod::findBdatIdByLodId(unsigned short lodId) const {
     }
     return m_idTop - 1;
 }
+}  // namespace gf
+
+// instantiated for gf::GfFieldLodColiAnim::createPosInfos (not written yet)
+template void mm::mtl::Vector<gf::GfFieldLodColiAnim::PosInfo>::push_back(gf::GfFieldLodColiAnim::PosInfo const&);
+
+namespace gf {
 
 bool GfFieldLod::isAnimReverse(int bdatId) const {
     return GfGameFlag::getLocal(1, bdatId + 0x9631 - m_idTop) != 0;
@@ -275,6 +282,12 @@ bool GfFieldLod::isAnimReverseOfInit(int bdatId) {
 const mm::mtl::RTTI* GfFieldLodColiAnim::ColiUserData::getRTTI() const {
     return &m_rtti;
 }
+}  // namespace gf
+
+// instantiated for gf::GfFieldLodColiAnim::createPosInfos, mm::mtl::Vector<gf::GfFieldLodColiAnim::PosInfo>::push_back (not written yet)
+template void mm::mtl::Vector<gf::GfFieldLodColiAnim::PosInfo>::expand(unsigned long, unsigned long);
+
+namespace gf {
 
 mm::mtl::RTTI GfFieldLodColiAnim::ColiUserData::m_rtti("gf::GfFieldLodColiAnim::ColiUserData", &fw::ColiUserData::m_rtti, nullptr);
 

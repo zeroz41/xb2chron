@@ -38,6 +38,7 @@
 #include "gf/GfMenuObjUtil.h"
 #include "mm/mtl/FixStr.h"
 #include "plugin/Bdat.h"
+#include "mm/mtl/Vector.h"
 
 namespace gf {
 
@@ -689,5 +690,11 @@ mm::Col3 GfMenuObjWorldMap::fn_710049FD30(unsigned int id) {
     }
     return colors[id];
 }
+}  // namespace gf
+
+// instantiated for gf::GfMenuObjWorldMap::ZoneSelectListener::reciveEvent, gf::GfMenuObjWorldMap::initialize (not written yet)
+template mm::mtl::Vector<gf::MenuZoneMapInfo>::iterator mm::mtl::Vector<gf::MenuZoneMapInfo>::erase(gf::MenuZoneMapInfo*);
+
+namespace gf {
 
 }  // namespace gf

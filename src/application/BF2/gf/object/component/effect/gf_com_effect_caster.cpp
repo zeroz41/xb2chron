@@ -33,6 +33,7 @@
 #include "classes/fw/EffectResData.h"
 #include "classes/gf/EffectCaster.h"
 #include "classes/gf/GfComEffectCaster.h"
+#include "mm/mtl/Delegate.h"
 
 // the ASM annotation name registerAsmCallbackEffect registers effects under
 const char* ASM_CB_NAME_EFFECT = "asm_effect";
@@ -390,6 +391,13 @@ void GfComEffectCaster::fn_71004B3B68(const mm::Mat44& mtx) {
         m_caster->fn_71004B3B78(mtx);
     }
 }
+}  // namespace gf
+
+template void mm::mtl::Delegate<void(gf::GfComAsm*, const gf::CallBackCache&)>::memberFuncInvoker<gf::GfComEffectCaster>(const mm::mtl::Delegate<void(gf::GfComAsm*, const gf::CallBackCache&)>*, gf::GfComAsm*, const gf::CallBackCache&);
+
+template void mm::mtl::Delegate<void(gf::GfComEvtAnim*, const gf::CallBackCache&)>::memberFuncInvoker<gf::GfComEffectCaster>(const mm::mtl::Delegate<void(gf::GfComEvtAnim*, const gf::CallBackCache&)>*, gf::GfComEvtAnim*, const gf::CallBackCache&);
+
+namespace gf {
 
 mm::mtl::RTTI GfComEffectCaster::m_rtti("GfComEffectCaster", &GfComEffect::m_rtti, nullptr);
 

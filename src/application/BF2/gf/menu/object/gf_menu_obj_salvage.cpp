@@ -17,6 +17,8 @@
 #include "classes/gf/TUnk_B5A648.h"
 #include "mm/Rect.h"
 #include "mm/Pnt.h"
+#include "gf/GfMenuSequence.h"
+#include "mm/mtl/Delegate.h"
 
 namespace gf {
 
@@ -412,5 +414,12 @@ bool GfMenuObjSalvage::fn_710047122C() {
     m_time->m_value = 0;
     return true;
 }
+}  // namespace gf
+
+template bool gf::GfMenuSequence<gf::GfMenuObjSalvage, 12>::wait();
+
+template bool mm::mtl::Delegate<bool()>::memberFuncInvoker<gf::GfMenuSequence<gf::GfMenuObjSalvage, 12>>(const mm::mtl::Delegate<bool()>*);
+
+namespace gf {
 
 }  // namespace gf

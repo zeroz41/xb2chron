@@ -182,6 +182,7 @@
 #include "classes/ml/ScnObjCam.h"
 #include "classes/gmk/GmkSquadNavi.h"
 #include "fw/FwDebug.h"
+#include "mm/mtl/Vector.h"
 
 namespace gf {
 // the resident sound sources' files, by index (getSoundSourceFileName reads it; bindGFSoundSource loads each)
@@ -343,6 +344,12 @@ void TUnk_B6D480::debugUpdateMmf() {
     TGmkList::debugUpdateMmf();
     m_subList.debugUpdateMmf();
 }
+}  // namespace gmk
+
+// instantiated for gmk::GmkRoutedEnemy::createRouteNavis, gmk::GmkRoutedMob::createRouteNavis (not written yet)
+template void mm::mtl::Vector<std::pair<gf::GF_OBJ_HANDLE*, gmk::GmkRouteNavi> >::expand(unsigned long, unsigned long);
+
+namespace gmk {
 
 void TUnk_B6D480::debugDraw() const {
     TGmkList::debugDraw();
@@ -495,6 +502,12 @@ void GmkManager::seqWaitValidateResDefBdatFp(float) {
         m_seq = &GmkManager::seqUpdate;
     }
 }
+}  // namespace gmk
+
+// instantiated for gmk::GmkManager::disposeGmkSet (not written yet)
+template mm::mtl::Vector<gmk::GmkSet*>::iterator mm::mtl::Vector<gmk::GmkSet*>::erase(gmk::GmkSet**);
+
+namespace gmk {
 
 const char* GmkManager::getSheetnameByType(int id, GmkType type) const {
     mm::mtl::FixStr<256> column;
@@ -1097,6 +1110,15 @@ AGmkBase::~AGmkBase() {
     m_pos = nullptr;
     m_info = nullptr;
 }
+}  // namespace gmk
+
+// instantiated for gmk::GmkSquad::seqInit, mm::mtl::Vector<mm::Vec3>::push_back (not written yet)
+template void mm::mtl::Vector<mm::Vec3>::expand(unsigned long, unsigned long);
+
+// instantiated for anm::Control::Control, gmk::GmkSquad::seqInit (not written yet)
+template void mm::mtl::Vector<float>::expand(unsigned long, unsigned long);
+
+namespace gmk {
 
 // valid while its route point list holds points
 bool GmkRoute::isValid() const {
@@ -4771,6 +4793,12 @@ void GmkWarp::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* hand
         }
     }
 }
+}  // namespace gmk
+
+// instantiated for gmk::GmkSquad::seqInit, mm::mtl::Vector<mm::Vec3>::resize (not written yet)
+template void mm::mtl::Vector<mm::Vec3>::push_back(mm::Vec3 const&);
+
+namespace gmk {
 
 void GmkWarp::clearGobInsts() {
     if (m_firstHandle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
@@ -5285,6 +5313,12 @@ void GmkEnemy::dispose() {
     m_insts.dispose();
     AGmkBase::dispose();
 }
+}  // namespace gmk
+
+// instantiated for gmk::GmkManager::create, gmk::GmkManager::createGmkSet (not written yet)
+template void mm::mtl::Vector<gmk::GmkSet*>::expand(unsigned long, unsigned long);
+
+namespace gmk {
 
 GmkEnemy::~GmkEnemy() { dispose(); }
 

@@ -5,6 +5,7 @@
 #include "classes/fw/ColiManager/Impl.h"
 
 #include "classes/fw/ColiManager/Impl.h"
+#include "classes/mm/mtl/List.h"
 
 namespace fw {
 
@@ -145,6 +146,13 @@ void ColiManager::setGblId(unsigned int id, bool clear) {
         coli->setGblId(id, clear);
     }
 }
+}  // namespace fw
+
+template mm::mtl::List<fw::ColiManager::Impl::ContactParam>::~List();
+
+template mm::mtl::_ReslistBase<fw::ColiManager::Impl::ContactParam>::~_ReslistBase();
+
+namespace fw {
 
 ColiManager::Impl::~Impl() {
     finalize();

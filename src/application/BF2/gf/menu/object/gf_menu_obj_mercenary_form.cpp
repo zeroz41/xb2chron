@@ -24,6 +24,7 @@
 #include "mm/Pnt.h"
 #include "mm/Rect.h"
 #include "ui/EventData.h"
+#include "mm/mtl/Vector.h"
 
 namespace gf {
 
@@ -735,5 +736,11 @@ bool GfMenuObjMercenaryForm::seqRevertBladeSet() {
     }
     return done;
 }
+}  // namespace gf
+
+// instantiated for gf::GfMenuObjMercenaryForm::StartListener::reciveEvent (not written yet)
+template mm::mtl::Vector<gf::MenuBladeInfo>::iterator mm::mtl::Vector<gf::MenuBladeInfo>::insert(gf::MenuBladeInfo*, gf::MenuBladeInfo const&);
+
+namespace gf {
 
 }  // namespace gf
