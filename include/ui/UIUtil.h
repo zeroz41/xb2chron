@@ -69,6 +69,10 @@ void makeMenuImageFileName(mm::mtl::FixStr<128>& path, const char* name);
 void makeMenuFontDataFileName(mm::mtl::FixStr<128>& path, const char* name);
 void makeMenuFontStyleFileName(mm::mtl::FixStr<128>& path, const char* name);
 void makeMSProjFileName(mm::mtl::FixStr<128>& path, const char* name);
+// the paths of a menu layout, particle and environment file (by their symbols)
+void makeMenuLayoutFileName(mm::mtl::FixStr<128>& path, const char* name);
+void makeMenuUIPFileName(mm::mtl::FixStr<128>& path, const char* name);
+void makeMenuEnvFileName(mm::mtl::FixStr<128>& path, const char* name);
 UIObject* getObject(unsigned int handle);
 // drops a handle: a duplicate's input goes back, its event listener and its handle's map entry go
 void releaseObject(unsigned int handle);

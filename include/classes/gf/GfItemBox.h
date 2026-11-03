@@ -106,6 +106,15 @@ public:
     // with SDataGame's item box (ItemBox) and its second entry area (SDataGame::ItemBoxEx); it sets up the 19 type
     // lists from them.
     void fn_71002F3F98(ItemBox* favoriteItemType, SDataGame::ItemBoxEx* itemBox);
+    // Placeholder name (one template, 18 instances: fn_71002F42F4..fn_71002F7DF4, all without symbols): new in 3.0.1,
+    // fn_71002F3F98 calls one instance per item type. It points list `index` at the type's N ItemBox entries (and,
+    // when multi, its M entries of the second area) and fills ItemTypeInfo `index` (1.0.0's
+    // GfItemBoxBase::setItemTypeInfo set the same fields). Nine instances share N=200, M=8 yet are separate
+    // functions, so the template takes one more argument; the item type is inferred, not the original's.
+    template <ItemType::Type Type, size_t N, size_t M>
+    static void fn_71002F42F4(ItemBox* box, unsigned int index, ItemTypeInfo* infos,
+                              ::mm::mtl::Array<GfItemInfo*>* lists, GfItemInfo (&items)[N], GfItemInfo (&extra)[M],
+                              unsigned short maxStack, bool multi);
 
     ItemTypeInfo m_info[19];
     ItemBox* m_favoriteItemType;  // GfDataItem::getFavoriteItemType

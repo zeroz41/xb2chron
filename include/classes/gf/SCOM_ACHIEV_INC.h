@@ -38,6 +38,8 @@ public:
     // counts and queues achievement 49 (value 1) and adds 50 for every blade in the party
     static void createBladeCreate();
     static void createCrystal();
+    // counts achievement 99 once and 100 for every blade fn_7100563BB4 lists for the handle (the enemy killer)
+    static void createKillEnemy(GF_OBJ_HANDLE*);
     // placeholders (callers: one dispatch at 0x710000FDEC): fn_7100564360 counts type-1 once, then type for every
     // blade fn_7100563BB4 lists for the handle; the wrappers pass a fixed type and value 1
     static void fn_7100563BB4(mm::mtl::FixedVector<unsigned short, 422>&, GF_OBJ_HANDLE*, bool);

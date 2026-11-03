@@ -74,6 +74,78 @@ void IDColiObjBase::sweepTreeMax(IdSweepAxisType axis, IdVectorAxisType componen
 
 IDColiObjCharCheck::IDColiObjCharCheck(IDColiTreeTop* tree) : IDColiObjChar(tree) {}
 
+bool IDColiObjCharCheck::testResultLine(IDColiResult& result, const IDColiInput& input) {
+    const void* base = m_base;
+    if ((result.m_ignoreMaterial & m_materialBit) == 0 && (m_state & 2) && !(m_flags & 3)) {
+        if (!(m_flags & 0x100)) {
+            return IDColiUtilColiResult::s_CallLine[m_baseType](result, input, base);
+        }
+        bool hit = false;
+        const CHCLInfo* info = getInfo();
+        const unsigned short* index = getPrimIndices(info);
+        for (int i = 0; i < info->m_primIndexNum; i++, index++) {
+            PrimWork& work = m_primWork[*index];
+            hit |= IDColiUtilColiResult::s_CallLine[work.m_baseType](result, input, work.m_base);
+        }
+        return hit;
+    }
+    return false;
+}
+
+bool IDColiObjCharCheck::testResultRay(IDColiResult& result, const IDColiInput& input) {
+    const void* base = m_base;
+    if ((result.m_ignoreMaterial & m_materialBit) == 0 && (m_state & 2) && !(m_flags & 3)) {
+        if (!(m_flags & 0x100)) {
+            return IDColiUtilColiResult::s_CallRay[m_baseType](result, input, base);
+        }
+        bool hit = false;
+        const CHCLInfo* info = getInfo();
+        const unsigned short* index = getPrimIndices(info);
+        for (int i = 0; i < info->m_primIndexNum; i++, index++) {
+            PrimWork& work = m_primWork[*index];
+            hit |= IDColiUtilColiResult::s_CallRay[work.m_baseType](result, input, work.m_base);
+        }
+        return hit;
+    }
+    return false;
+}
+
+bool IDColiObjCharCheck::testResultSphere(IDColiResult& result, const IDColiInput& input) {
+    const void* base = m_base;
+    if ((result.m_ignoreMaterial & m_materialBit) == 0 && (m_state & 2) && !(m_flags & 3)) {
+        if (!(m_flags & 0x100)) {
+            return IDColiUtilColiResult::s_CallSphere[m_baseType](result, input, base);
+        }
+        bool hit = false;
+        const CHCLInfo* info = getInfo();
+        const unsigned short* index = getPrimIndices(info);
+        for (int i = 0; i < info->m_primIndexNum; i++, index++) {
+            PrimWork& work = m_primWork[*index];
+            hit |= IDColiUtilColiResult::s_CallSphere[work.m_baseType](result, input, work.m_base);
+        }
+        return hit;
+    }
+    return false;
+}
+
+bool IDColiObjCharCheck::testResultCapsule(IDColiResult& result, const IDColiInput& input) {
+    const void* base = m_base;
+    if ((result.m_ignoreMaterial & m_materialBit) == 0 && (m_state & 2) && !(m_flags & 3)) {
+        if (!(m_flags & 0x100)) {
+            return IDColiUtilColiResult::s_CallCapsule[m_baseType](result, input, base);
+        }
+        bool hit = false;
+        const CHCLInfo* info = getInfo();
+        const unsigned short* index = getPrimIndices(info);
+        for (int i = 0; i < info->m_primIndexNum; i++, index++) {
+            PrimWork& work = m_primWork[*index];
+            hit |= IDColiUtilColiResult::s_CallCapsule[work.m_baseType](result, input, work.m_base);
+        }
+        return hit;
+    }
+    return false;
+}
+
 bool IDColiObjCharCheck::testCheckBox(IDColiResult& result, const IDColiInput& input) {
     const void* base = m_base;
     if ((result.m_ignoreMaterial & m_materialBit) == 0 && (m_state & 2) && !(m_flags & 3)) {

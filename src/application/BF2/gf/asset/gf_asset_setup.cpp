@@ -52,6 +52,9 @@
 #include "classes/gf/GfBdatChrEnArrange.h"
 #include "gf/GfDataHana.h"
 #include "classes/gf/GfInitParamDriver.h"
+#include "classes/gf/GfInitParamEnWeapon.h"
+#include "classes/gf/GfInitParamBelonging.h"
+#include "classes/gf/GfInitParamExtra.h"
 #include "classes/gf/GfAssetPack.h"
 #include "gf/GfDataWeapon.h"
 #include <string.h>
@@ -1217,6 +1220,25 @@ const char* GfAssetSetupWeaponEventCS::getEvtPath() const {
 
 GfAssetSetupEnWeapon::GfAssetSetupEnWeapon() {}
 
+void GfAssetSetupEnWeapon::setup(GF_ASSET_HANDLE* handle, const GfInitParamEnWeapon& param) {
+    setupParam(handle, param);
+    m_append = param.m_append;
+    if (getMdlFile(getAssetType()) == nullptr || *getMdlFile(getAssetType()) == '\0') {
+        GfAssetManager::destroy(m_handle);
+        m_handle = reinterpret_cast<GF_ASSET_HANDLE*>(-1);
+        return;
+    }
+    mm::mtl::FixStr<128> name;
+    GfAssetFilesInfo info;
+    info.m_handle = handle;
+    info.m_type = getAssetType();
+    info.m_name = name.m_str;
+    info.pad_40 = param.pad_44;
+    makeAssetNamePrefix(name, info.m_type, getMdlFile(info.m_type), getMotFile(info.m_type));
+    GfAssetPack* core = GfAssetManager::createAssetFiles(info);
+    requestCoreResource(core, handle, info.m_type);
+}
+
 const char* GfAssetSetupEnWeapon::getMdlFile(GfAssetType type) {
     RefResource* resource = findRefResource(getMdlSlot());
     if (resource == nullptr || resource->m_name.m_nLen == 0) {
@@ -1259,6 +1281,25 @@ const char* GfAssetSetupEnWeapon::getPath() const {
 
 GfAssetSetupBelonging::GfAssetSetupBelonging() {}
 
+void GfAssetSetupBelonging::setup(GF_ASSET_HANDLE* handle, const GfInitParamBelonging& param) {
+    setupParam(handle, param);
+    m_append = param.m_append;
+    if (getMdlFile(getAssetType()) == nullptr || *getMdlFile(getAssetType()) == '\0') {
+        GfAssetManager::destroy(m_handle);
+        m_handle = reinterpret_cast<GF_ASSET_HANDLE*>(-1);
+        return;
+    }
+    mm::mtl::FixStr<128> name;
+    GfAssetFilesInfo info;
+    info.m_handle = handle;
+    info.m_type = getAssetType();
+    info.m_name = name.m_str;
+    info.pad_40 = param.pad_44;
+    makeAssetNamePrefix(name, info.m_type, getMdlFile(info.m_type), getMotFile(info.m_type));
+    GfAssetPack* core = GfAssetManager::createAssetFiles(info);
+    requestCoreResource(core, handle, info.m_type);
+}
+
 const char* GfAssetSetupBelonging::getMdlFile(GfAssetType type) {
     RefResource* resource = findRefResource(getMdlSlot());
     if (resource == nullptr || resource->m_name.m_nLen == 0) {
@@ -1295,6 +1336,25 @@ const char* GfAssetSetupBelonging::getPath() const {
 }
 
 GfAssetSetupExtra::GfAssetSetupExtra() {}
+
+void GfAssetSetupExtra::setup(GF_ASSET_HANDLE* handle, const GfInitParamExtra& param) {
+    setupParam(handle, param);
+    m_append = param.m_append;
+    if (getMdlFile(getAssetType()) == nullptr || *getMdlFile(getAssetType()) == '\0') {
+        GfAssetManager::destroy(m_handle);
+        m_handle = reinterpret_cast<GF_ASSET_HANDLE*>(-1);
+        return;
+    }
+    mm::mtl::FixStr<128> name;
+    GfAssetFilesInfo info;
+    info.m_handle = handle;
+    info.m_type = getAssetType();
+    info.m_name = name.m_str;
+    info.pad_40 = param.pad_44;
+    makeAssetNamePrefix(name, info.m_type, getMdlFile(info.m_type), getMotFile(info.m_type));
+    GfAssetPack* core = GfAssetManager::createAssetFiles(info);
+    requestCoreResource(core, handle, info.m_type);
+}
 
 const char* GfAssetSetupExtra::getMdlFile(GfAssetType type) {
     RefResource* resource = findRefResource(getMdlSlot());

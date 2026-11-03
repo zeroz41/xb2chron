@@ -1757,6 +1757,34 @@ void SCOM_ACHIEV_INC::fn_7100564FE8(GF_OBJ_HANDLE* handle, unsigned int value) {
     }
 }
 
+void SCOM_ACHIEV_INC::fn_71005653A4(GF_OBJ_HANDLE* handle) {
+    addTotalCount(0x72, 1);
+    create(0x72, 1, 0);
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    fn_7100563BB4(blades, handle, true);
+    if (!blades.empty()) {
+        unsigned short* it = blades.begin();
+        unsigned short* end = blades.end();
+        do {
+            create(0x73, 1, *it);
+        } while (++it != end);
+    }
+}
+
+void SCOM_ACHIEV_INC::fn_7100565534(GF_OBJ_HANDLE* handle) {
+    addTotalCount(0x74, 1);
+    create(0x74, 1, 0);
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    fn_7100563BB4(blades, handle, true);
+    if (!blades.empty()) {
+        unsigned short* it = blades.begin();
+        unsigned short* end = blades.end();
+        do {
+            create(0x75, 1, *it);
+        } while (++it != end);
+    }
+}
+
 void SCOM_ACHIEV_INC::createBladeCreate() {
     addTotalCount(49, 1);
     create(49, 1, 0);
@@ -2679,6 +2707,20 @@ bool SCOM_CHAR_DEAD::exec(fw::UpdateInfo const&) {
         }
     }
     return true;
+}
+
+void SCOM_ACHIEV_INC::createKillEnemy(GF_OBJ_HANDLE* handle) {
+    addTotalCount(0x63, 1);
+    create(0x63, 1, 0);
+    mm::mtl::FixedVector<unsigned short, 422> blades;
+    fn_7100563BB4(blades, handle, true);
+    if (!blades.empty()) {
+        unsigned short* it = blades.begin();
+        unsigned short* end = blades.end();
+        do {
+            create(0x64, 1, *it);
+        } while (++it != end);
+    }
 }
 
 bool SCOM_DESTROY_GMK_SET::exec(fw::UpdateInfo const&) {

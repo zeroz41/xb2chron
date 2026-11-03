@@ -205,6 +205,113 @@ unsigned char* fn_7100696A28(unsigned int dlc) {
     return nullptr;
 }
 
+// the file name of path (after its last '/' or '\\') in lower case, unless it holds a character past 0x80 (every
+// makeMenu*FileName inlines it; the name is not the original's)
+static inline void lowerFileName(mm::mtl::FixStr<128>& path) {
+    int pos = path.findLast('/');
+    if (pos == -1) {
+        pos = path.findLast('\\');
+    }
+    int start = pos == -1 ? 0 : pos;
+    for (int i = start; i < path.m_nLen; i++) {
+        if (static_cast<unsigned char>(path.m_str[i]) > 0x80) {
+            return;
+        }
+    }
+    for (int i = start; i < path.m_nLen; i++) {
+        if (path.m_str[i] >= 'A' && path.m_str[i] <= 'Z') {
+            path.m_str[i] += 0x20;
+        }
+    }
+}
+
+void makeMenuFontDataFileName(mm::mtl::FixStr<128>& path, const char* name) {
+    path.format("/%s/font/%s", s_menuDir, name);
+    if (strstr(name, ".wifnt") == nullptr) {
+        path += ".wifnt";
+    }
+    lowerFileName(path);
+}
+
+void makeMenuFontStyleFileName(mm::mtl::FixStr<128>& path, const char* name) {
+    path.format("/%s/font/%s", s_menuDir, name);
+    if (strstr(name, ".wisty") == nullptr) {
+        path += ".wisty";
+    }
+    lowerFileName(path);
+}
+
+void makeMSProjFileName(mm::mtl::FixStr<128>& path, const char* name) {
+    path.format("/%s/msproj/%s", s_menuDir, name);
+    if (strstr(name, ".msbp") == nullptr) {
+        path += ".msbp";
+    }
+    lowerFileName(path);
+}
+
+void makeMenuImageFileName(mm::mtl::FixStr<128>& path, const char* name) {
+    path.format("/%s/image/%s", s_menuDir, name);
+    if (strstr(name, ".wilay") == nullptr) {
+        path += ".wilay";
+    }
+    lowerFileName(path);
+}
+
+void makeMenuLayoutFileName(mm::mtl::FixStr<128>& path, const char* name) {
+    path.format("/%s/layout/%s", s_menuDir, name);
+    if (strstr(name, ".wilay") == nullptr) {
+        path += ".wilay";
+    }
+    lowerFileName(path);
+}
+
+void makeMenuUIOFileName(mm::mtl::FixStr<128>& path, const char* name) {
+    if (s_uioReplaceNo != 0) {
+        unsigned char* fp = s_BdatFPs[16];
+        if (fp != nullptr) {
+            mm::mtl::FixStr<32> column;
+            column.format("replace%02d", s_uioReplaceNo);
+            if (Bdat::getMember(fp, column.m_str) != nullptr) {
+                for (int i = 0; i < Bdat::getIdCount(fp); i++) {
+                    int id = Bdat::getIdTop(fp) + i;
+                    if (strcmp(name, reinterpret_cast<const char*>(Bdat::getVal(fp, "file", id))) == 0) {
+                        name = reinterpret_cast<const char*>(Bdat::getVal(fp, column.m_str, id));
+                    }
+                }
+            }
+        }
+    }
+    path.format("/%s/object/%s", s_menuDir, name);
+    if (strstr(name, ".uio") == nullptr) {
+        path += ".uio";
+    }
+    lowerFileName(path);
+}
+
+void makeMenuUIMFileName(mm::mtl::FixStr<128>& path, const char* name) {
+    path.format("/%s/motion/%s", s_menuDir, name);
+    if (strstr(name, ".uim") == nullptr) {
+        path += ".uim";
+    }
+    lowerFileName(path);
+}
+
+void makeMenuUIPFileName(mm::mtl::FixStr<128>& path, const char* name) {
+    path.format("/%s/particle/%s", s_menuDir, name);
+    if (strstr(name, ".uip") == nullptr) {
+        path += ".uip";
+    }
+    lowerFileName(path);
+}
+
+void makeMenuEnvFileName(mm::mtl::FixStr<128>& path, const char* name) {
+    path.format("/map/%s", name);
+    if (strstr(name, ".wismhd") == nullptr) {
+        path += ".wismhd";
+    }
+    lowerFileName(path);
+}
+
 mm::mtl::IAllocator* getResourceAllocator() {
     return &s_ResAllocator;
 }

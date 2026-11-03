@@ -27,7 +27,9 @@ struct ItemBox {
     GfItemInfo m_type18[200];
     GfItemInfo m_type19[200];
     GfItemInfo m_type20[700];
-    unsigned char pad_122A0[0x4C];
+    // one serial counter per ItemTypeInfo (GfItemBoxBase::fn_71002F3F98's set-up points each type's m_serial at
+    // its own; the name is not the original's)
+    unsigned int m_serials[19];
 };
 }  // namespace gf
 
