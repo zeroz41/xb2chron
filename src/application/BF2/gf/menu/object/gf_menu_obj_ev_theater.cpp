@@ -1,5 +1,6 @@
 #include "classes/gf/GfMenuObjEvTheater.h"
 #include "classes/gf/GfMenuObjEvTheater/HeaderListener.h"
+#include "classes/gf/GfMenuObjEvTheater/TopListener.h"
 #include "classes/gf/GfMenuObjEvTheater/SubListener.h"
 #include "classes/gf/GfMenuObjEvTheater/TUnk_B62178.h"
 #include "classes/gf/GfMenuObjEvTheater/TUnk_B621A0.h"
@@ -149,6 +150,106 @@ void GfMenuObjEvTheater::refreshSelctList() {
         name.format("IMG_select_frame@%02d", i + 1);
         ui::UIObjectAcc frame(m_selectObjList->getObject(i), name.m_str);
         frame.startAnimation(selected == i ? "select" : "non", false);
+    }
+}
+
+void GfMenuObjEvTheater::TopListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+    ui::UIObjectAcc acc(handle);
+    switch (event.m_type) {
+    case 1:
+        break;
+    default:
+        ui::UIObjectListener::reciveEvent(event, handle);
+        break;
+    case 0x21: {
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_in_l";
+        param.m_setDefault = true;
+        param.m_eventId = 1;
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        unsigned int selected = 0;
+        for (unsigned int i = 0; i < m_owner->m_topItems.size(); i++) {
+            if (m_owner->m_topItems[i] == static_cast<unsigned int>(m_owner->m_title)) {
+                selected = i;
+                break;
+            }
+        }
+        GfMenuObject::resetInputSelection(acc.m_handle);
+        GfMenuObject::setupInputSelection(acc.m_handle, selected, m_owner->m_topItems.size());
+        break;
+    }
+    case 0x22: {
+        GfMenuObjUtil::CtrlParam param;
+        param.m_methods = 0x10000000;
+        param.m_motionLib = "cmn_fade_motion_lr";
+        param.m_motion = "fade_out_l";
+        param.m_startFlags = 10;
+        param.m_eventId = 2;
+        GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
+        break;
+    }
+    case 3:
+        if (event.m_param0 == 1) {
+            GfMenuObject::enableFSInput(0);
+            GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
+        }
+        break;
+    case 6: {
+        int index = event.m_param0;
+        int prev = event.m_param1;
+        if (index != -1) {
+            mm::mtl::FixStr<32> name;
+            if (prev != -1) {
+                unsigned int item = m_owner->m_topItems[prev];
+                name.format("IMG_top_item_base@%02d", item);
+                ui::UIObjectAcc base(acc.m_handle, name.m_str);
+                base.startAnimation("non", false);
+                name.format("TXT_top_item_sel@%02d", item);
+                acc.setDispChild(false, name.m_str);
+                name.format("TXT_top_item_def@%02d", item);
+                acc.setDispChild(true, name.m_str);
+            }
+            {
+                unsigned int item = m_owner->m_topItems[index];
+                name.format("IMG_top_item_base@%02d", item);
+                ui::UIObjectAcc base(acc.m_handle, name.m_str);
+                base.startAnimation("select", false);
+                name.format("TXT_top_item_sel@%02d", item);
+                acc.setDispChild(true, name.m_str);
+                name.format("TXT_top_item_def@%02d", item);
+                acc.setDispChild(false, name.m_str);
+            }
+            m_owner->m_title = m_owner->m_topItems[index];
+        }
+        if (prev != -1 && index != prev) {
+            GfMenuObjUtil::playSECommonCursor();
+        }
+        break;
+    }
+    case 8:
+        if (event.m_param1 == 1) {
+            GfMenuObjEvTheater* owner = m_owner;
+            unsigned int title = owner->m_title;
+            if (title == 1 || title == 2 || title == 4) {
+                owner->fn_71003FFD50(title);
+                GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_sub"), 0, 0.0f);
+            } else {
+                owner->fn_7100400054(owner->m_selectIdList, title, 0);
+                GfMenuObject::sendOpenEvent(acc.searchSibiling("LAY_select"), 0, 0.0f);
+            }
+            GfMenuObject::sendCloseEvent(acc.m_handle, 0, 0.0f);
+            GfMenuObject::disableFSInput();
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            GfMenuObjUtil::playSECommonDecide();
+        } else if (event.m_param1 == 2) {
+            GfMenuObject::disableFSInput();
+            GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);
+            GfMenuObject::closeFSLayer(acc.m_handle, true, true);
+            GfMenuObjUtil::playSECommonCancel();
+        }
+        break;
     }
 }
 

@@ -103,9 +103,10 @@ public:
     // them on its owner (x0 = this object) when a top item is decided: fn_71003FFD50 for m_title 1, 2 and 4 (then
     // "LAY_sub" opens), fn_7100400054 with m_selectIdList for the others (then "LAY_select" opens). What their
     // return values are (the caller uses none) and what fn_7100400054's last parameter is (TopListener passes 0;
-    // it is passed on) are not known.
+    // it is passed on) are not known. fn_7100400054 masks its last two parameters with 0xffff on entry
+    // (and w20/w27, #0xffff): unsigned short.
     void fn_71003FFD50(unsigned int title);
-    void fn_7100400054(GfMenuIDList* list, unsigned int title, unsigned int);
+    void fn_7100400054(GfMenuIDList* list, unsigned short title, unsigned short);
     // 0x71004047B8 (the symbols name it GfMenuObjOption::refreshLevel, but its this is this class and its only caller
     // is this class's listener) shows m_levels row by row; left out until the symbol is renamed
 
