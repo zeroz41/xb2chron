@@ -18,6 +18,7 @@
 #include "mm/mtl/FixedObjectAllocator.h"
 #include "ml/ml_misc.h"
 #include "nn/diag.h"
+#include <algorithm>
 #include <new>
 #include <stdlib.h>
 
@@ -7123,6 +7124,138 @@ void AssetAllocator<N>::destroy() {
 }
 
 template <int N>
+void* AssetAllocator<N>::allocate(unsigned long size, unsigned long alignment, const char* file, int line) {
+    size = std::max(m_blockSize, size);
+    alignment = std::max(4UL, alignment);
+    unsigned long numBlocks = size / m_blockSize;
+    if (size % m_blockSize != 0) {
+        numBlocks++;
+    }
+    unsigned long alignedBlocks = (size + alignment) / m_blockSize;
+    if ((size + alignment) % m_blockSize != 0) {
+        alignedBlocks++;
+    }
+    typename ChunkList::iterator best = m_freeList.end();
+    bool exact = false;
+    for (typename ChunkList::iterator it = m_freeList.begin(); it != m_freeList.end(); ++it) {
+        unsigned int block = it->m_block;
+        // the original unswitches its walk on alignment == 0
+        bool aligned = alignment == 0 || reinterpret_cast<unsigned long>(m_top + m_blockSize * block) % alignment == 0;
+        unsigned long need = aligned ? numBlocks : alignedBlocks;
+        int rest = it->m_numBlocks - need;
+        if (rest >= 0) {
+            if (best == m_freeList.end()) {
+                best = it;
+                exact = aligned;
+            } else if (rest < static_cast<int>(best->m_numBlocks - need)) {
+                best = it;
+                exact = aligned;
+            }
+        }
+    }
+    void* result = nullptr;
+    if (m_freeList.end() != best) {
+        unsigned int block = best->m_block;
+        unsigned char* p = m_top + m_blockSize * block;
+        if (exact) {
+            SMemChunk chunk;
+            chunk.m_block = block;
+            chunk.m_numBlocks = numBlocks;
+            chunk.m_file = file;
+            chunk.m_line = line;
+            m_usedList.push_back(chunk);
+            best->m_numBlocks -= numBlocks;
+            best->m_block += numBlocks;
+            if (best->m_numBlocks == 0) {
+                m_freeList.erase(best);
+            }
+            result = p;
+        } else {
+            unsigned long misalign = reinterpret_cast<unsigned long>(p) % alignment;
+            unsigned long pad = 0;
+            if (misalign != 0) {
+                pad = (alignment - misalign) / m_blockSize;
+            }
+            int total = best->m_numBlocks;
+            if (pad + numBlocks > total) {
+                return nullptr;
+            }
+            // read again (the add takes the run's block first, as a load after the pad does)
+            block = best->m_block + pad;
+            result = m_top + block * m_blockSize;
+            SMemChunk chunk;
+            chunk.m_block = block;
+            chunk.m_numBlocks = numBlocks;
+            chunk.m_file = file;
+            chunk.m_line = line;
+            m_usedList.push_back(chunk);
+            best->m_numBlocks = block - best->m_block;
+            int remain = total - best->m_numBlocks - numBlocks;
+            if (remain > 0) {
+                chunk.m_block = block + numBlocks;
+                chunk.m_numBlocks = remain;
+                chunk.m_file = file;
+                chunk.m_line = line;
+                addFreeList(chunk);
+            }
+            if (best->m_numBlocks == 0) {
+                m_freeList.erase(best);
+            }
+        }
+    }
+    return result;
+}
+
+template <int N>
+void* AssetAllocator<N>::allocate_tail(unsigned long size, unsigned long alignment, const char* file, int line) {
+    void* result = nullptr;
+    if (!m_freeList.empty()) {
+        size = std::max(m_blockSize, size);
+        int numBlocks = size / m_blockSize;
+        alignment = std::max(4UL, alignment);
+        if (size % m_blockSize != 0) {
+            numBlocks++;
+        }
+        typename ChunkList::iterator first = m_freeList.begin();
+        --first;
+        typename ChunkList::iterator it = m_freeList.end();
+        --it;
+        SMemChunk chunk;
+        for (; it != first; --it) {
+            int rest = it->m_numBlocks - numBlocks;
+            if (rest >= 0) {
+                unsigned int block = it->m_block + rest;
+                unsigned long misalign = reinterpret_cast<unsigned long>(m_top + m_blockSize * block) % alignment;
+                int pad = 0;
+                if (misalign != 0) {
+                    pad = misalign / m_blockSize;
+                }
+                if (pad <= rest) {
+                    block -= pad;
+                    chunk.m_file = file;
+                    chunk.m_line = line;
+                    chunk.m_block = block;
+                    chunk.m_numBlocks = numBlocks;
+                    m_usedList.push_back(chunk);
+                    if (pad > 0) {
+                        chunk.m_block = block + numBlocks;
+                        chunk.m_numBlocks = pad;
+                        addFreeList(chunk);
+                    }
+                    it->m_numBlocks -= pad + numBlocks;
+                    if (it->m_block == block) {
+                        m_freeList.erase(it);
+                    }
+                    result = m_top + block * m_blockSize;
+                    break;
+                }
+            }
+        }
+    }
+    return result;
+}
+
+template <int N>
 void AssetAllocator<N>::deallocate(void* p, unsigned long size) {
     if (p == nullptr) {
         return;
@@ -7233,6 +7366,58 @@ int AssetAllocator<N>::getMemInfo1(MemoryInfo1* info, unsigned int num) const {
         }
     }
     return count != 0;
+}
+
+template <int N>
+void AssetAllocator<N>::addFreeList(const SMemChunk& chunk) {
+    typename ChunkList::iterator it = std::lower_bound(
+        m_freeList.begin(), m_freeList.end(), chunk,
+        [](const SMemChunk& a, const SMemChunk& b) { return a.m_block < b.m_block; });
+    if (m_freeList.end() == it) {
+        m_freeList.push_back(chunk);
+    } else {
+        m_freeList.insert(it, chunk);
+    }
+}
+
+template <int N>
+void AssetAllocator<N>::merge(void* p, const SMemChunk& chunk) {
+    int numBlocks = chunk.m_numBlocks;
+    int block = chunk.m_block;
+    int end = block + numBlocks;
+    int merged = 0;
+    typename ChunkList::iterator prev = m_freeList.end();
+    typename ChunkList::iterator i = m_freeList.begin();
+    for (; i != m_freeList.end(); ++i) {
+        if (block == i->m_block + i->m_numBlocks) {
+            prev = i;
+            break;
+        }
+    }
+    typename ChunkList::iterator it = m_freeList.begin();
+    // tested on the walk's iterator: the flag stays an int set here (cbnz at the end, not a bool tbnz)
+    if (i != m_freeList.end()) {
+        numBlocks = prev->m_numBlocks + chunk.m_numBlocks;
+        block = prev->m_block;
+        end = block + numBlocks;
+        prev->m_numBlocks = numBlocks;
+        merged = 1;
+        it = prev;
+        ++it;
+    }
+    for (; it != m_freeList.end(); ++it) {
+        if (end == it->m_block) {
+            it->m_block = block;
+            it->m_numBlocks += numBlocks;
+            if (merged) {
+                m_freeList.erase(prev);
+            }
+            return;
+        }
+    }
+    if (!merged) {
+        addFreeList(chunk);
+    }
 }
 
 }  // namespace mtl

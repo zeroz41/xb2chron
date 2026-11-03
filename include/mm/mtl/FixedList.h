@@ -4,6 +4,9 @@
 #include <new>
 #include "mm/MMStdBase.h"
 
+// the category its iterator states (defined in <algorithm>, which the users of std::lower_bound include)
+namespace std { inline namespace __1 { struct bidirectional_iterator_tag; } }
+
 // mm_lib's fixed_list.h, as the including file's include path named it (see mm/mtl/IntrusiveList.h)
 #if defined(MM_LIB_FROM_MONOLIB_MM)
 // monolib_mm's own files (ml::WorkCpu::addBackgroundListener's push_back cites it so)
@@ -77,6 +80,14 @@ public:
     template <typename V, typename NodePtr>
     class node_iterator {
     public:
+        // bidirectional: mtl::AssetAllocator<N>::addFreeList finds a run's place with std::lower_bound, whose advance
+        // steps back for a negative count
+        typedef std::bidirectional_iterator_tag iterator_category;
+        typedef V value_type;
+        typedef long difference_type;
+        typedef V* pointer;
+        typedef V& reference;
+
         node_iterator(NodePtr node, FixedList* list) : m_node(node), m_list(list) {}
         V& operator*() const {
 #line 84 MM_MTL_FIXED_LIST_PATH

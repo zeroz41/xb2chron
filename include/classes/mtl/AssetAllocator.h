@@ -17,9 +17,10 @@ public:
     // allocate keeps its file and line in the run it hands out
     struct SMemChunk {
         // a user constructor: deallocate copies the run it finds into its local by assignment over 0x14 bytes, the
-        // data size of a non-POD struct (a POD's assignment copies its whole 0x18). It leaves m_block alone:
-        // deallocate's key stores the other fields' zeros before it divides for the block
-        SMemChunk() : m_file(nullptr), m_line(0), pad_A(0), m_numBlocks(0) {}
+        // data size of a non-POD struct (a POD's assignment copies its whole 0x18). m_block starts at -1:
+        // allocate_tail's run, declared before its walk, is stored {-1, 0} as one word (deallocate's key
+        // overwrites it, so that store is dead there)
+        SMemChunk() : m_file(nullptr), m_line(0), pad_A(0), m_block(-1), m_numBlocks(0) {}
 
         const char* m_file;
         unsigned short m_line;
