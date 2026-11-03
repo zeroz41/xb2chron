@@ -3762,6 +3762,46 @@ void QuestListAcc::addTaskCategory(unsigned short id, unsigned int category, CBd
     m_taskCount++;
 }
 
+void QuestListAcc::makeQuestTaskInfo(bool) {
+    memset(m_taskInfoIndex, 0, sizeof(m_taskInfoIndex));
+    m_taskInfo.clear();
+    // the count flags of each id range start at their own base (the names are not the original's); the flag is
+    // one conditional expression (a flag variable assigned in an if chain keeps -1 in a register and spills main)
+    int other = 0;
+    int extra = 420;
+    int side = 470;
+    int main = 400;
+    for (qlist_iterator it = begin(QTYPE(0)); it != end(QTYPE(0)); ++it) {
+        unsigned int purposeId = GfDataQuest::getListPurposeID(it.getQuestID());
+        if (purposeId == 0) {
+            continue;
+        }
+        for (unsigned int task = 0; task < 4; task++) {
+            unsigned int type = getTaskTaskType(purposeId, task);
+            if (type == 3 || type == 4) {
+                unsigned short id = it.getQuestID().m_id;
+                m_taskInfo.push_back(id >= 1 && id < 1000 ? ++main : id >= 2830 && id < 5000 ? ++side
+                                     : id >= 5293 && id < 6000 ? ++extra : ++other);
+                unsigned short& entry = m_taskInfoIndex[it.getQuestID().m_id * 4 + task];
+                entry = m_taskInfo.size();
+            }
+        }
+    }
+}
+
+// reads a copy; the category id goes through FixedVector's const operator[] (its word room gives the original's
+// second asr after the assert)
+QuestID qlist_iterator::getQuestID() const {
+    qlist_iterator it = *this;
+    if (it.m_pos.m_type != 0) {
+        return QuestID(it.m_category->m_ids[it.m_pos.m_index]);
+    }
+    QuestID id;
+    CBdatWrapper* bdat;
+    it.m_acc->getQuestListByIndex(bdat, id.m_id, it.m_pos.m_index);
+    return id;
+}
+
 // steps from a copy of m_pos: the original tests m_index, then loads the pair again as one 64-bit value; the
 // category test reads m_index, the new position is the copy's index + 1 (the other path reloads it after the call)
 qlist_iterator qlist_iterator::operator++() {
