@@ -30,6 +30,11 @@ public:
 class GfQuestManager : public ::mm::mtl::PtrSingleton< ::gf::GfQuestManager> {
 public:
     GfQuestManager(const GfSetupParam& param);
+    // inline (no symbol in either build): the constructor's setup after the member initializers. The name follows
+    // the gf managers' own initialize(const GfSetupParam&) symbols (GfAssetManager, GfFieldManager, GfGameManager...),
+    // not this class's; the constructor must pass param on for build() to hand it over (dead-argument elimination
+    // drops it otherwise).
+    void initialize(const GfSetupParam& param);
     static void build(const GfSetupParam& param);
     static void destroy();
     static void resetQuest(QuestID id);

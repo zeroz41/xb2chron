@@ -16,7 +16,10 @@ public:
     unsigned int m_flags;  // 0x8
     // the name it was made with (the constructor copies it; MstxtManager::load compares it); the name is not the original's
     mm::mtl::FixStr<32> m_name;  // 0xc
-    unsigned char pad_30[0x28];
+    // the name's file part with "_ms" appended: the constructor loads bdat/<language>/<it>.bdat (the name is not the
+    // original's)
+    mm::mtl::FixStr<32> m_fileName;  // 0x30
+    unsigned char pad_54[0x4];
 };
 }  // namespace event
 

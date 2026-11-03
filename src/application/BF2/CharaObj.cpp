@@ -838,6 +838,15 @@ void MotstmManager::OnEventProc(event::MSG_TYPE msg) {
 
 MotstmManager::~MotstmManager() {}
 
+MstxtRes::MstxtRes(const char* name) : m_flags(0), m_name(name) {
+    m_fileName = mm::mtl::Singleton<Extend>::getPtr()->filename(name);
+    m_fileName += "_ms";
+    mm::mtl::FixStr<64> path;
+    path.format("bdat/%s/%s.bdat", fw::LangUtil::getLangFolder().m_str, m_fileName.m_str);
+    mm::mtl::Singleton<ResManager>::getPtr()->load(path.m_str, this, false);
+    m_flags |= 1;
+}
+
 MstxtRes::~MstxtRes() {
     if (m_flags & 4) {
         gf::GfMenuObjEventSubtitle::endText();

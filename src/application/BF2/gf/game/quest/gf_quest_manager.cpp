@@ -30,6 +30,24 @@
 
 namespace gf {
 
+inline void GfQuestManager::initialize(const GfSetupParam& param) {
+    s_pThis = this;
+    s_bdat = GfBdatQuest::get();
+#line 317
+    s_event = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfQuestEvent;
+#line 321
+    s_target = new (getAllocator(ALLOCATOR(1)), __FILE__, __LINE__, 8) GfQuestTarget;
+    GfQuestUtil::clearOrderParentQuest();
+    m_requestRefreshQuestTaskState = false;
+    m_requestOrderAchievementQuest = false;
+    m_requestOrderQuest = false;
+    m_active = true;
+}
+
+GfQuestManager::GfQuestManager(const GfSetupParam& param) : m_active(false) {
+    initialize(param);
+}
+
 GfQuestManager::~GfQuestManager() {
     s_pThis = nullptr;
 }
