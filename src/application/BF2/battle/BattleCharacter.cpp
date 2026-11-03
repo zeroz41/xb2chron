@@ -449,6 +449,34 @@ ActionCommand* BattleCharacter::GetFreeCommand() {
     return cmd;
 }
 
+bool BattleCharacter::IsRescue() const {
+    if (m_state == 0x14) {
+        return true;
+    }
+    if (m_state == 4 && m_moveKind == 1 && m_moveState == 0x14) {
+        return true;
+    }
+    return false;
+}
+
+bool BattleCharacter::MoveStop(bool flag) {
+    if (m_moveKind != 1) {
+        return false;
+    }
+    if (m_moveState != 1) {
+        return false;
+    }
+    if (m_isScout) {
+        return false;
+    }
+    if (flag) {
+        m_moveStopReqArg = true;
+    } else {
+        m_moveStopReq = true;
+    }
+    return true;
+}
+
 gf::GF_OBJ_HANDLE* BattleCharacter::GetRescueTarget() const {
     int target;
     if (m_state == 0x14) {
@@ -1020,6 +1048,48 @@ void BattleCharacter::HealHpRate(float rate, int type, BattleCharacter* attacker
     data.pad_10 = 1;
     data.m_type = type;
     data.m_damage = heal;
+    NotifyDirectDamage(data);
+}
+
+void BattleCharacter::ArtsGravityProc(const ARTS_DATA& arts, int stage) {
+    if (arts.m_gravity.m_startStage == 0 && arts.m_gravity.m_startFrame == 0 && arts.m_gravity.m_endStage == 0 &&
+        arts.m_gravity.m_endFrame == 0) {
+        return;
+    }
+    pad_F05_3 = false;
+    float frame = GetAnimationFrame();
+    const ARTS_DATA::GRAVITY& gravity = arts.m_gravity;
+    if (gravity.m_endStage < stage ||
+        (gravity.m_endStage == stage && frame >= static_cast<unsigned int>(gravity.m_endFrame))) {
+        pad_F03_7 = true;
+    } else if (gravity.m_startStage < stage ||
+               (gravity.m_startStage == stage && frame >= static_cast<unsigned int>(gravity.m_startFrame))) {
+        pad_F03_7 = false;
+    }
+}
+
+void BattleCharacter::ReviveHeal(BattleCharacter* rescuer) {
+    float rate = mm::mtl::PtrSingleton<BtlSystemBalanceAccess>::sys()->m_reviveHealRate * 0.01f;
+    rate += SatisfyEnhanceCondition(0xA8, 0, 0.0f, nullptr, true);
+    if (rescuer != nullptr) {
+        rate += rescuer->SatisfyEnhanceCondition(0xA9, 0, 0.0f, nullptr, true);
+    }
+    rate = rate < 1.0f ? rate : 1.0f;
+    CharacterParameter* param = GetCharacterParameterConst(false);
+    if (param == nullptr) {
+        return;
+    }
+    float hp = param->GetMaxHP() * rate;
+    unsigned int heal = (unsigned int)hp;
+    heal += hp - heal > 0.998f;
+    if (heal <= 1) {
+        heal = 1;
+    }
+    DIRECT_DAMAGE_DATA data;
+    data.m_attacker = rescuer;
+    data.m_type = 7;
+    data.m_damage = heal;
+    data.pad_10 = 1;
     NotifyDirectDamage(data);
 }
 

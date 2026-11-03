@@ -113,6 +113,10 @@ public:
     void NotifyDirectDamage(const DIRECT_DAMAGE_DATA& data);
     // heals rate of the max HP (at least 1) as a direct damage of the given type from attacker
     void HealHpRate(float rate, int type, BattleCharacter* attacker);
+    // heals the balance's revive rate plus enhances 0xA8 (own) and 0xA9 (the rescuer's), at most all of the max HP
+    void ReviveHeal(BattleCharacter* rescuer);
+    // sets or clears pad_F03_7 by the arts' gravity window against the stage and the animation frame
+    void ArtsGravityProc(const ARTS_DATA& arts, int stage);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its x0 flows as this into
     // NotifyDirectDamage. What it does: NotifyDirectDamage of a DIRECT_DAMAGE_DATA {attacker, type, damage} with
     // pad_10 = 1, as HealHpRate builds it; only caller fn_7100011390.
@@ -683,7 +687,9 @@ public:
     // ActionCommandEndBladeArts clears both when it ends the action (meaning unknown)
     unsigned int pad_F04_4 : 1;
     unsigned int pad_F04_5 : 1;
-    unsigned int pad_F04_6 : 6;
+    unsigned int pad_F04_6 : 5;
+    // ArtsGravityProc clears it on every call with arts gravity data (run bit 59; meaning unknown)
+    unsigned int pad_F05_3 : 1;
     // DeleteAnimSpecialProc fades alpha set 6 back in and remounts only while it is set (run bit 60; meaning unknown)
     unsigned int pad_F05_4 : 1;
     unsigned int pad_F05_5 : 4;
@@ -797,12 +803,12 @@ public:
     unsigned short m_enhanceNameBuff : 1;
     unsigned short pad_10DF_1 : 7;
     unsigned char pad_10E0[0x40];
-    // one 8-byte bitfield run (GetRescueTarget loads it whole): the moving kind's own state, 0x14 while it rescues
-    // m_moveRescueTarget (IsRescue, GetRescueTarget, MoveStop; the names are not the original's). An unsigned char
-    // bitfield: IsRescue and MoveStop compare it as a 32-bit value, GetRescueTarget as the 64-bit run.
-    unsigned char m_moveState : 8;
+    // the moving kind's own state, 0x14 while it rescues m_moveRescueTarget (IsRescue, GetRescueTarget, MoveStop;
+    // the names are not the original's). A 32-bit bitfield run and a plain int: IsRescue and MoveStop compare the
+    // state as a 32-bit value, GetRescueTarget's one 8-byte load is GVN widening its two loads.
+    unsigned int m_moveState : 8;
     unsigned int pad_1120_8 : 24;
-    int m_moveRescueTarget : 32;
+    int m_moveRescueTarget;
     unsigned char pad_1128[0xC];
     // SetScout adds 10 to it when scouting starts (the name is not the original's)
     float m_scoutTime;

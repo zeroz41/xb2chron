@@ -61,7 +61,16 @@ struct alignas(16) ARTS_DATA {
     unsigned int pad_1C_12 : 20;
     // GfMenuBattleAdapter::update_ArtsFightComboIcon and GfMenuObjUtil::getArtsIconInfo construct one, clearing only
     // the first 0x20 bytes
-    unsigned char pad_20[0x10];
+    // ArtsGravityProc's window: from start stage/frame on it clears BattleCharacter's pad_F03_7, from end
+    // stage/frame on it sets it; all zero for none (the struct's and the names are not the original's)
+    struct GRAVITY {
+        unsigned int m_startStage : 3;
+        unsigned int m_startFrame : 13;
+        unsigned int m_endStage : 3;
+        unsigned int m_endFrame : 13;
+    };
+    GRAVITY m_gravity;
+    unsigned char pad_24[0xC];
     // one hit's share (GetHitWeightRate; the names are not the original's)
     struct HIT {
         unsigned char pad_0[0x2];

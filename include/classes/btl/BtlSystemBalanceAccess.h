@@ -74,7 +74,10 @@ public:
     unsigned char pad_f0[0x4];
     // PlayerParameter's slot 52 starts its 0x638 timer at this many thirtieths of a second; meaning unknown
     unsigned short pad_f4;
-    unsigned char pad_f6[0x16];
+    unsigned char pad_f6[0x9];
+    // ReviveHeal's base heal, a percentage of the max HP (meaning inferred; the name is not the original's)
+    unsigned char m_reviveHealRate;
+    unsigned char pad_100[0xC];
     float pad_10c;  // PlayerParameter's slot 43 starts its 0x634 timer at it; meaning unknown
     // PlayerParameter's slots 45-48 answer them as percentages; meaning unknown
     unsigned short pad_110[4];
