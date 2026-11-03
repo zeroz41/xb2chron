@@ -85,12 +85,22 @@ public:
         // not the original's)
         float m_swimMoveFromAirSpeed;
         float m_swimSinkTime;  // StateFieldWaterSwimSink::update: how long the PC sinks swimming
-        unsigned char pad_10[0x8];
+        unsigned char pad_10[0x4];
+        // StateUtilField::setAsmSpeedSwim: the swim motion's playback speed at the slowest swim (SwimSpeedParam's
+        // m_minSpeed); it rises to 1 at m_maxSpeed (the name is not the original's)
+        float m_swimMinAnimSpeed;
         float m_warpDiveTime;  // StateFieldWaterWarpDive: how long the dive into a warp lasts
         float m_maxSinkSpeed;  // StateFieldWaterDeadSink::enter limits the downward speed to it
         // StateUtilField::isSwimFromAir: falling into water no faster than it (m_moveVec2.x at least it) swims on
         // (the name is not the original's)
         float m_swimFromAirSpeed;
+    };
+
+    // m_paramList's entry 10: StateUtilField::setAsmSpeedSwim scales the swim motion's speed between them (the
+    // names are not the original's)
+    struct SwimSpeedParam {
+        float m_minSpeed;
+        float m_maxSpeed;
     };
 
     // the wall the PC is on: the sensor's kind (StateUtilField::getWallInfoBase returns it while status bit 0x40 is
@@ -145,8 +155,10 @@ public:
     // idle motion, the length of its capsule (0: no test; the name is not the original's)
     float m_uniqueIdleSpace;
     unsigned char pad_58[0x8];
-    mm::Vec3 pad_60;    // the constructor sets zero
-    int pad_70;         // and 0
+    // StateUtilField::setAutoRun's: the stick's direction on the ground when the auto-run starts (the PC's move
+    // direction without one), and the stick's power (the names are not the original's)
+    mm::Vec3 m_autoRunDir;
+    float m_autoRunPower;
     unsigned char pad_74[0x4];
     // the object that sent the last wall jump or warp notice (StateFieldWallPrepareJump::procMsgPcFieldNotifyWallJump
     // and StateFieldWaterPrepareWarp store it; the constructor sets none, -1; the name is not the original's)

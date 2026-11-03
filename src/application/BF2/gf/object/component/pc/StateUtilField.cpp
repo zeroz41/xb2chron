@@ -23,6 +23,9 @@
 #include "gf/MsgPcFieldNotifySkillEvent.h"
 #include "classes/gf/pc/FadePlugin.h"
 #include "classes/gf/GfGamePlayerCamera.h"
+#include "gf/pc/MoveUtilField.h"
+#include "float.h"
+#include "string.h"
 
 namespace gf { namespace pc {
 
@@ -119,6 +122,35 @@ bool StateUtilField::isStop(gf::GfComPropertyPc& property, unsigned int noInputF
     return property.m_field.getParam<GfPropertyField::MoveParam>(0)->m_stopFrames <= noInputFrames;
 }
 
+void StateUtilField::setAutoRun(gf::GfComPropertyPc& property, bool on) {
+    if (on) {
+        property.m_field.m_statusFlags |= 0x100;
+    } else {
+        property.m_field.m_statusFlags &= ~0x100;
+    }
+    if (on) {
+        mm::Vec3 dir =
+            property.m_inputDir.x * property.m_stickSideDir + property.m_inputDir.y * property.m_groundFrontDir;
+        float power = 0.0f;
+        if (!dir.isZero()) {
+            power = dir.length();
+            float length = dir.length();
+            if (length <= 1e-6f) {
+                dir = mm::Vec3::zero;
+            } else {
+                float scale = 1.0f / length;
+                dir.x *= scale;
+                dir.y *= scale;
+                dir.z *= scale;
+            }
+        } else {
+            dir = property.m_moveDir;
+        }
+        property.m_field.m_autoRunDir = dir;
+        property.m_field.m_autoRunPower = power;
+    }
+}
+
 bool StateUtilField::testAutoRun(gf::GfComPropertyPc& property) {
     return (property.m_field.m_statusFlags & 0x100) != 0;
 }
@@ -126,6 +158,20 @@ bool StateUtilField::testAutoRun(gf::GfComPropertyPc& property) {
 bool StateUtilField::isInputInverseDir(gf::GfComPropertyPc& property) {
     mm::Vec3 dir = property.m_inputDir.y * property.m_groundFrontDir + property.m_inputDir.x * property.m_stickSideDir;
     return dir.dot(property.m_moveDir) < 0.0f;
+}
+
+float StateUtilField::setAsmSpeedMove(gf::GfComPropertyPc& property) {
+    GfComAsm* comAsm = property.m_owner->getComponent<GfComAsm>(2);
+    float speed = property.m_velocity.length();
+    if (property.m_setupKind & 1) {
+        float effect = MoveUtilField::getSpeedEffect(property) + 1.0f;
+        speed = speed / effect;
+        float maxSpeed = property.m_field.getParam<GfPropertyField::LandBrakeParam>(3)->m_maxSpeed;
+        speed = effect * (speed < maxSpeed ? speed : maxSpeed);
+    }
+    float asmSpeed = speed * 60.0f * 60.0f / 1000.0f;
+    comAsm->setVariable("V_speed", asmSpeed);
+    return asmSpeed;
 }
 
 bool StateUtilField::isTurnEndRangeCacheInput(gf::GfComPropertyPc& property, const mm::Vec3& dir) {
@@ -230,6 +276,23 @@ void StateUtilField::setChildFrameHeight(gf::GfComponent& component, float heigh
     transform->m_childFrame->getLocalTransformForWrite().position.y = height;
 }
 
+void StateUtilField::setAsmSpeedSwim(gf::GfComPropertyPc& property) {
+    const GfPropertyField::SwimSpeedParam* param =
+        property.m_field.m_paramList->getAdapter(10).get<GfPropertyField::SwimSpeedParam>();
+    float speed = property.m_velocity.length();
+    float range = param->m_maxSpeed - param->m_minSpeed;
+    float rate;
+    if (mm::fabs(range) > FLT_EPSILON) {
+        rate = (speed - param->m_minSpeed) / range;
+    } else {
+        rate = 0.0f;
+    }
+    rate = mm::clamp(rate, 0.0f, 1.0f);
+    const GfPropertyField::WaterParam* water = property.m_field.getParam<GfPropertyField::WaterParam>(9);
+    rate = rate + (1.0f - rate) * water->m_swimMinAnimSpeed;
+    property.m_owner->getComponent<GfComAsm>(2)->setSpeed(rate, AnimLayer(0));
+}
+
 bool StateUtilField::isSwimFromAir(gf::GfComPropertyPc& property) {
     const GfPropertyField::WaterParam* param = property.m_field.getParam<GfPropertyField::WaterParam>(9);
     return property.m_moveVec2.x >= param->m_swimFromAirSpeed;
@@ -238,6 +301,17 @@ bool StateUtilField::isSwimFromAir(gf::GfComPropertyPc& property) {
 bool StateUtilField::testCloud(gf::GfComPropertyPc& property) {
     const EnviromentSensor* sensor = property.getEnvSensor();
     return (sensor->m_flags & 2) && sensor->m_vertical.m_water.m_kind == 11;
+}
+
+bool StateUtilField::isWallIdleMotion(gf::GfComAsm& comAsm) {
+    const char* name = comAsm.getStateName(AnimLayer(0));
+    if (name == nullptr) {
+        return false;
+    }
+    if (strcmp(name, "S_climbidle_base") != 0 && strcmp(name, "S_climbidle_mirror") != 0) {
+        return false;
+    }
+    return true;
 }
 
 const GfPropertyField::WallInfo* StateUtilField::getWallInfoBase(gf::GfComPropertyPc& property) {
@@ -313,6 +387,45 @@ bool StateUtilField::isEnableWallPrepare(gf::GfComPropertyPc& property) {
     return GfObjUtil::getProperty(handle)->m_target->m_state == 3;
 }
 
+bool StateUtilField::isEnableWallAdsorptionStart(gf::GfComPropertyPc& property, const mm::Vec3& wallPos,
+                                                 const mm::Vec3& preparePos) {
+    const WallAiParam* param = AgentUtilField::getAIParamAdapter(property, PARAM_ID_FIELD_AI(5)).get<WallAiParam>();
+    float minDistSq = param->minDist * param->minDist;
+    GfGamePlayerFormation* formation = GfGamePlayerFormation::sys();
+    for (unsigned int i = 0; i < 6; i++) {
+        if (i == property.m_setupKind) {
+            continue;
+        }
+        GF_OBJ_HANDLE* handle = formation->m_players[i].m_handle;
+        if (handle == reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            continue;
+        }
+        const GfObjProperty::TargetInfo* target = GfObjUtil::getProperty(handle)->m_target;
+        if (target->m_state != 3) {
+            continue;
+        }
+        mm::Vec3 diff = wallPos - target->pad_10;
+        if (diff.dot(diff) <= minDistSq) {
+            return false;
+        }
+    }
+    return isWallPreparePosition(property, preparePos);
+}
+
+bool StateUtilField::isNearPlayer(gf::GfComPropertyPc& property, const mm::Vec3& pos, float range) {
+    float rangeSq = range * range;
+    GfGamePlayerFormation* formation = GfGamePlayerFormation::sys();
+    for (unsigned int i = 0; i < 6; i++) {
+        if (i != property.m_setupKind && formation->m_players[i].m_handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {
+            mm::Vec3 diff = pos - GfObjUtil::getProperty(formation->m_players[i].m_handle)->m_target->pad_10;
+            if (diff.dot(diff) <= rangeSq) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool StateUtilField::isMovableWall(gf::GfComPropertyPc& property, GfPropertyField::WALL_MOVE_MODE mode) {
     bool movable = static_cast<unsigned int>(mode) < 8;
     if (property.m_field.m_statusFlags & 0x80) {
@@ -344,6 +457,7 @@ bool StateUtilField::isWallDetach(gf::GfComPropertyPc& property) {
     float dist = property.m_pos.dot(ground.m_normal) + ground.m_planeDist;
     return dist < -property.m_field.m_downLanding1Height;
 }
+
 
 void StateUtilField::resetCameraForWall(gf::GfComBehaviorPc& behavior, Timing timing) {
     // the camera timing each Timing resets with (proposed name, not the original's: the symbols leave it

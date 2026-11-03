@@ -13,6 +13,7 @@ namespace gf { class GfComponent; }
 namespace gf { class GfObj; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace mm { class Plane; }
+namespace fw { class Message; }
 
 namespace gf { namespace pc {
 // the PC's field asm commands execAsmCmd takes: an index into getASMCmdNameField's TABLE of command names (the type
@@ -63,6 +64,9 @@ public:
     static void setAsmSpeedSlideBrake(gf::GfComPropertyPc& property);
     // whether a player is within range of pos (AgentUtilField::isWallEndMove asks it for the wall's end)
     static bool isNearPlayer(gf::GfComPropertyPc& property, const mm::Vec3& pos, float range);
+    // msg sent to every player that follows the PC (formation index 1-8), and with the PC the leader (index 0) to every
+    // standalone one (by its symbol)
+    static void sendMessageWallChilds(gf::GfComPropertyPc& property, fw::Message& msg);
     static void setWallMoveMode(gf::GfComBehaviorPc& behavior, bool on);
     static void notifySkillAct(gf::GfComBehaviorPc& behavior, bool act);
     static void notifyRiderEvent(gf::GfComBehaviorPc& behavior, VehicleEvent event);
@@ -113,7 +117,8 @@ public:
     // the turn states' enter tail-calls it (by its symbol)
     static void notifyTurn(gf::GfComBehaviorPc& behavior);
     static bool isStop(gf::GfComPropertyPc& property, unsigned int noInputFrames);  // (by its symbol)
-    static void setAsmSpeedMove(gf::GfComPropertyPc& property);  // (by its symbol)
+    // sets the asm variable "V_speed" (km/h) from the PC's speed and returns it (by its symbol)
+    static float setAsmSpeedMove(gf::GfComPropertyPc& property);
     // (by their symbols)
     static bool isWallAdsorptionAir(gf::GfComPropertyPc& property);
     static bool isWallAdsorption(gf::GfComPropertyPc& property);
@@ -155,6 +160,9 @@ public:
     static bool isBigSplashFallSpeed(gf::GfComBehaviorPc& behavior);
     // off the ground, or slide parameter m_fallHeight above it (by its symbol)
     static bool isFallFromSlideState(gf::GfComPropertyPc& property);
+    // climbing up with no wall object in front and a climb-end ground (StateUtil::getClimbEndGroundInfo) at most
+    // 0.9 off level that lies no more than m_downLanding1Height below the PC (by its symbol)
+    static bool isWallClimbEnd(gf::GfComPropertyPc& property);
 };
 
 }}  // namespace gf::pc

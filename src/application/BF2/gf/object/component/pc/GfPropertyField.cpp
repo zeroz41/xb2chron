@@ -47,7 +47,7 @@ GfPropertyField::GfPropertyField()
       m_upLanding1Dist(0.0f), m_upLanding1Height(0.0f), m_downLanding0Dist(0.0f), m_downLanding0Height(0.0f),
       m_downLanding1Dist(0.0f), m_downLanding1Height(0.0f), m_climbUpTime(0.0f), m_climbDownTime(0.0f),
       m_climbSideTime(0.0f), m_climbJumpHeight(0.0f), m_wallBlendTarget(0.25f), m_warpRiseDepth(5.0f),
-      m_uniqueIdleSpace(0.0f), pad_60(mm::Vec3::zero), pad_70(0),
+      m_uniqueIdleSpace(0.0f), m_autoRunDir(mm::Vec3::zero), m_autoRunPower(0.0f),
       m_noticeSender(reinterpret_cast<GF_OBJ_HANDLE*>(-1)) {}
 
 void GfPropertyField::resetStatus(const gf::GfComPropertyPc& property) {
