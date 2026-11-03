@@ -65,21 +65,47 @@ struct FixedVectorStorage {
 // indexes from the object (fw::SoundPack::findSourceFromID: one this + i * 8 for both of its vectors), while the
 // other accesses address the bytes (GfMenuObjBalloon::update's erase, FixedVector<IntrusivePtr<.>, 6>::resize,
 // GfFileSizePool::recalcFileSizeCache's operator[], the destructors' clear). stride: cursor's units per element
-template <typename T, unsigned long N, bool Arithmetic = __is_arithmetic(T)>
+// For a T whose size is a power of two the room is an array of words (an unsigned integer as wide as the element's
+// alignment, up to eight bytes) and element() addresses it in words: an element's byte offset divided by the word's
+// size (MemManager::clear: its `and #0x1ffffffffffffffc; lsl #3` of the 32-byte HandleRegion's offset in 8-byte
+// words). Other sizes keep the byte units: gmk::TUnk_B6D418::create reads its 24-byte Entry's field at +0x14 from the
+// object ([this, #0x15c]), which a word room cannot express (the field stays on begin(), kept in a register).
+// The size rule is measured on the matched functions, not known from the original header.
+template <typename T, unsigned long N, bool Arithmetic = __is_arithmetic(T),
+          bool Words = (sizeof(T) & (sizeof(T) - 1)) == 0>
 struct FixedVectorRoom {
+    typedef typename FixedVectorAligner<(alignof(T) < 8 ? alignof(T) : 8)>::type word;
+    typedef word type[N * sizeof(T) / sizeof(word)];
+    static T* element(type& room, unsigned long index) {
+        return reinterpret_cast<T*>(&room[index * sizeof(T) / sizeof(word)]);
+    }
+    static const T* element(const type& room, unsigned long index) {
+        return reinterpret_cast<const T*>(&room[index * sizeof(T) / sizeof(word)]);
+    }
+};
+template <typename T, unsigned long N>
+struct FixedVectorRoom<T, N, false, false> {
     struct unit {
         alignas(T) unsigned char m_data[sizeof(T)];
     };
     typedef unit type[N];
-    typedef unsigned char* cursor;
-    static const unsigned long stride = sizeof(T);
+    static T* element(type& room, unsigned long index) {
+        return reinterpret_cast<T*>(reinterpret_cast<unsigned char*>(room) + index * sizeof(T));
+    }
+    static const T* element(const type& room, unsigned long index) {
+        return reinterpret_cast<const T*>(&room[index]);
+    }
 };
-template <typename T, unsigned long N>
-struct FixedVectorRoom<T, N, true> {
+template <typename T, unsigned long N, bool Words>
+struct FixedVectorRoom<T, N, true, Words> {
     typedef typename FixedVectorStorage<sizeof(T), alignof(T)>::type unit;
     typedef unit type[N];
-    typedef unit* cursor;
-    static const unsigned long stride = 1;
+    static T* element(type& room, unsigned long index) {
+        return reinterpret_cast<T*>(&room[index * sizeof(T) / sizeof(T)]);
+    }
+    static const T* element(const type& room, unsigned long index) {
+        return reinterpret_cast<const T*>(&room[index * sizeof(T) / sizeof(T)]);
+    }
 };
 
 // mm_lib's fixed_vector.h: room for N elements in place, then their count (its iterators are pointers into the room,
@@ -153,7 +179,7 @@ public:
         // container (GfMenuObjMercenaryRoot::MainListener::reciveEvent), and checks it for null (folded away where
         // the container is not at the start of its object; ptlib's MaterialManager::initSub keeps it)
         T* element =
-            reinterpret_cast<T*>(reinterpret_cast<typename Room::cursor>(m_buffer) + m_size * Room::stride);
+            Room::element(m_buffer, m_size);
         if (element != nullptr) {
             new (element) T(value);
         }
@@ -168,7 +194,7 @@ public:
             // destroyed at its offset in the room, checked for null (as push_back constructs it:
             // FixedVector<IntrusivePtr<FootPlacementIKSolver>, 6>::resize in ik_two_chara_ground_solver keeps it)
             T* element =
-                reinterpret_cast<T*>(reinterpret_cast<typename Room::cursor>(m_buffer) + m_size * Room::stride);
+                Room::element(m_buffer, m_size);
             if (element != nullptr) {
                 element->~T();
             }
@@ -262,12 +288,12 @@ public:
     }
     // the index-th unit of the room (fw::SoundPack::findSource, findSourceFromID); the name is not the original's
     const T* at(unsigned long index) const {
-        return reinterpret_cast<const T*>(&m_buffer[index]);
+        return Room::element(m_buffer, index);
     }
     // an element's address from the room (GfMenuStrLinker's destructors and fw::ManagerRegister::finalize
     // add the room's offset to the element's last); the name is not the original's
     T* at(unsigned long index) {
-        return reinterpret_cast<T*>(reinterpret_cast<typename Room::cursor>(m_buffer) + index * Room::stride);
+        return Room::element(m_buffer, index);
     }
 
     typedef FixedVectorRoom<T, N> Room;

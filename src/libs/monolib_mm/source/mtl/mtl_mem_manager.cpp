@@ -6735,6 +6735,19 @@ void MemManager::terminate() {
     s_allocatorHeap.destroy(true);
 }
 
+void MemManager::clear() {
+    ml::CS cs(getHandleCS());
+    for (int i = _existHandle.size(); i > 0; i--) {
+        Region* region = _existHandle[i - 1].m_region;
+        if (region != nullptr) {
+            region->destroy();
+            _region->deallocate(region);
+        }
+    }
+    _existHandle.clear();
+    s_hLastFree = ALLOC_HANDLE();
+}
+
 void MemManager::Region::destroy() {
     if (m_parent.m_handle != 0 && !valid_section(m_parent, false)) {
         m_flags &= ~FLAG_CREATED;
