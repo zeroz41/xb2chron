@@ -178,7 +178,7 @@
 #include "classes/gf/GfPlayComWaitArenaStateField.h"
 #include "classes/gf/GfPlayComStartChallengeBattle.h"
 #include "classes/gf/GfGameArena.h"
-#include "gf/MsgUnk_1000034.h"
+#include "gf/MsgGameBtlArena.h"
 #include "classes/gf/GfPlayComScriptTutorialSeq.h"
 #include "classes/gf/GfPlayCom.h"
 #include "classes/gf/GfPlayComEventFade.h"
@@ -1172,14 +1172,14 @@ GfPlayComMenuObjCommonText* GfPlayComMenuObjCommonText::create(GfMenuObjCommonTe
 void GfPlayComMapjumpForLeaveArena::start() {
     m_started = true;
     if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
-        MsgUnk_1000034 msg(9);
+        MsgGameBtlArena msg(9);
         static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
     }
 }
 
 void GfPlayComMapjumpForLeaveArena::end() {
     if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
-        MsgUnk_1000034 msg(10);
+        MsgGameBtlArena msg(10);
         static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
     }
 }
@@ -1210,7 +1210,7 @@ void GfPlayComMapjumpForBattleMapFromArena::start() {
 
 void GfPlayComMapjumpForBattleMapFromArena::end() {
     if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
-        MsgUnk_1000034 msg(1);
+        MsgGameBtlArena msg(1);
         static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
     }
 }
@@ -1245,9 +1245,8 @@ GfPlayComWaitArenaStateField* GfPlayComWaitArenaStateField::create() {
 void GfPlayComStartChallengeBattle::start() {
     GfEvent::addEventCallback(this);
     if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
-        MsgUnk_1000034 msg(13);
-        msg.m_param8 = m_param.pad_8;
-        msg.m_param0 = m_param.pad_0;
+        MsgGameBtlArena msg(13);
+        msg.m_start = m_param;
         static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
     }
 }
@@ -1260,9 +1259,9 @@ void GfPlayComStartChallengeBattle::gevMapjump(GEV gev, const MapjumpCallbackInf
     }
 }
 
-GfPlayComStartChallengeBattle* GfPlayComStartChallengeBattle::create(const MsgUnk_1000034::Param& param) {
+GfPlayComStartChallengeBattle* GfPlayComStartChallengeBattle::create(const ArenaBattleStart& start) {
 #line 3851
-    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComStartChallengeBattle(param);
+    return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComStartChallengeBattle(start);
 }
 
 // hand5: end

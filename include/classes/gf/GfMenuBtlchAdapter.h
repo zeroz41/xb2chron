@@ -12,7 +12,7 @@ namespace gf { class GfMenuIDList; }
 
 namespace gf {
 // table 0x7100B5A648; gf_menu_btlch_adapter.cpp's adapter (a battle challenge's data: the callbacks read
-// GfGameManager::BattleChallengeRecord). 2.0.0's symbols name it (no RTTI; 1.0.0 has no such file: its
+// ArenaMenuInfo). 2.0.0's symbols name it (no RTTI; 1.0.0 has no such file: its
 // gf_menu_blade_data_adapter.cpp sat here, with another table).
 class GfMenuBtlchAdapter : public ::gf::GfMenuAdapter {
 public:
@@ -31,7 +31,7 @@ public:
     // 2.0.0's symbols name them. create: a plugin of that type on the handle (an entry of the 0x20-byte table) and an
     // adapter for it with the challenge id, null without one (the adapters' create).
     static GfMenuBtlchAdapter* create(unsigned int handle, unsigned int type, unsigned int id, bool changed);
-    // The callbacks (the table's entries 0..14): each fills a GfGameManager::BattleChallengeRecord for the id and
+    // The callbacks (the table's entries 0..14): each fills an ArenaMenuInfo for the id and
     // GfMenuReference::getReferenceBtlchDifficulty()'s mode and shows one of its fields (false when there is none):
     // update_TextTitle: text 0x1A1's message m_valueE; update_DispComplete: whether m_rule.m_value0 is set;
     // update_NumDifficulty: number m_valueC - 1 (none for 0); update_TextSummary: text 0x1A1's message m_value10;

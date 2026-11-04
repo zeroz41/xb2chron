@@ -920,7 +920,7 @@ unsigned int GfGameManager::getBattleArenaEtherCube() {
     return 0;
 }
 
-GfGameManager::BattleChallengeRecord* GfGameManager::getBattleArenaMenuInfo() {
+ArenaMenuInfo* GfGameManager::getBattleArenaMenuInfo() {
     return &GfGameArena::get()->m_record;
 }
 
@@ -931,9 +931,9 @@ unsigned int GfGameManager::getBattleArenaScore() {
     return 0;
 }
 
-bool GfGameManager::fn_71002AC60C(BattleChallengeRecord* record, unsigned int id, unsigned int mode) {
+bool GfGameManager::getBattleArenaMenuInfo(ArenaMenuInfo& info, unsigned int id, GFDIFF diff) {
     if (GfGameArena* arena = GfGameArena::get()) {
-        arena->fn_7100291E40(record, id, mode);
+        arena->getMenuInfo(info, id, diff);
         return true;
     }
     return false;

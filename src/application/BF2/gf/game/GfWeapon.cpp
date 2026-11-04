@@ -134,7 +134,7 @@
 #include "gf/GfDataEvent.h"
 #include "gf/QuestTaskParam.h"
 #include "gf/GfPartySelect.h"
-#include "gf/MsgUnk_1000034.h"
+#include "gf/MsgGameBtlArena.h"
 #include "gf/MsgUnk_1000045.h"
 #include "classes/gf/SCOM_POPUP.h"
 #include "classes/gf/SCOM_LEVELUP_DEVELOP.h"
@@ -1461,7 +1461,7 @@ bool GfGameUtil::isBattleWeapon(GF_OBJ_HANDLE* handle) {
 
 void GfGameUtil::addEtherCube(unsigned int value) {
     if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
-        MsgUnk_1000034 msg(0xE);
+        MsgGameBtlArena msg(0xE);
         msg.pad_28 = value;
         static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
     }
@@ -1469,7 +1469,7 @@ void GfGameUtil::addEtherCube(unsigned int value) {
 
 void GfGameUtil::addScore(unsigned int value) {
     if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
-        MsgUnk_1000034 msg(0xF);
+        MsgGameBtlArena msg(0xF);
         msg.pad_2C = value;
         static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
     }
@@ -1477,7 +1477,7 @@ void GfGameUtil::addScore(unsigned int value) {
 
 void GfGameUtil::applyClearTimeForArena(unsigned int value) {
     if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
-        MsgUnk_1000034 msg(0x10);
+        MsgGameBtlArena msg(0x10);
         msg.pad_30 = value;
         static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
     }
@@ -2783,7 +2783,7 @@ bool GfGameUtil::isEnableBladeElma() {
     if (GfItemUtil::getItemBoxCount(25497) == 0) {
         return false;
     }
-    const GfGameArena::RuleRow& row = GfDataManager::getDataGame()->m_ruleTable.m_rows[25];
+    const ChBtlInfo& row = GfDataManager::getDataGame()->m_ruleTable.m_rows[25];
     return row.m_rules[1].m_value0 != 0 || row.m_rules[0].m_value0 != 0 || row.m_rules[2].m_value0 != 0 ||
            row.m_rules[3].m_value0 != 0 || row.m_rules[4].m_value0 != 0;
 }
@@ -2808,7 +2808,7 @@ static inline bool isBlade457Unlocked() {
     if (GfItemUtil::getItemBoxCount(25497) == 0) {
         return false;
     }
-    const GfGameArena::RuleRow& row = GfDataManager::getDataGame()->m_ruleTable.m_rows[25];
+    const ChBtlInfo& row = GfDataManager::getDataGame()->m_ruleTable.m_rows[25];
     return row.m_rules[1].m_value0 != 0 || row.m_rules[0].m_value0 != 0 || row.m_rules[2].m_value0 != 0 ||
            row.m_rules[3].m_value0 != 0 || row.m_rules[4].m_value0 != 0;
 }

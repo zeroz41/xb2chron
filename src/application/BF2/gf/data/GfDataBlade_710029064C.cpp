@@ -1,11 +1,11 @@
-#include "classes/gf/GfArenaBattle.h"
+#include "gf/GfArenaUtil.h"
 #include "classes/gf/GfBdatBtl.h"
 #include "gf/GfDataMap.h"
 #include "gf/GfDataBlade.h"
 
 namespace gf {
 
-void fn_710029064C(unsigned int id) {
+void GfArenaUtil::setupBattleMapWeather(unsigned int id) {
     GfBdatBtl* btl = mm::mtl::PtrSingleton<GfBdatBtl>::sys();
     if (unsigned int map = btl->getBTL_ChBtlMapJump(id)) {
         unsigned int mapId = GfDataMap::getMapID(map);

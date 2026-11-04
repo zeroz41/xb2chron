@@ -31,9 +31,9 @@ public:
     static unsigned long createAchievement(unsigned int blade, unsigned int line, unsigned int level);
     // 2.0.0's symbols name them. createChBtlNewChallenge: popup type 10 with 47 once the game started,
     // GfGameManager::isInstalledBattleArenaContents holds, item 25443 is in the box and local flag (1, 35337) is set;
-    // its argument is unused (callers GfGameArena::RuleTable::fn_7100290598, fn_7100290BAC). createCraft: popup type 11
-    // with its three arguments unless the game is starting or GfDataDriver::isActivateUnuse(first) (caller
-    // GfGameUtilShop::execIraCraftPopupCheck).
+    // its argument is unused (callers GfArenaUtil::applyChallengeStatus, GfArenaUtil::createPopupForKillEnemy).
+    // createCraft: popup type 11 with its three arguments unless the game is starting or
+    // GfDataDriver::isActivateUnuse(first) (caller GfGameUtilShop::execIraCraftPopupCheck).
     static unsigned long createChBtlNewChallenge(unsigned int);
     static unsigned long createCraft(unsigned int driver, unsigned int, unsigned int);
 

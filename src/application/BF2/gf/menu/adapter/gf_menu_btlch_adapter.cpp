@@ -62,8 +62,8 @@ GfMenuBtlchAdapter* GfMenuBtlchAdapter::create(unsigned int handle, unsigned int
 }
 
 bool GfMenuBtlchAdapter::update_TextTitle(unsigned int id) {
-    GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
+    ArenaMenuInfo record;
+    if (!GfGameManager::getBattleArenaMenuInfo(record, id, static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()))) {
         return false;
     }
     ui::UIStr text(GfDataBdat::getFP(0x1A1), record.m_valueE);
@@ -72,16 +72,16 @@ bool GfMenuBtlchAdapter::update_TextTitle(unsigned int id) {
 }
 
 bool GfMenuBtlchAdapter::update_DispComplete(unsigned int id) {
-    GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
+    ArenaMenuInfo record;
+    if (!GfGameManager::getBattleArenaMenuInfo(record, id, static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()))) {
         return false;
     }
     return record.m_rule.m_value0 != 0;
 }
 
 bool GfMenuBtlchAdapter::update_NumDifficulty(unsigned int id) {
-    GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
+    ArenaMenuInfo record;
+    if (!GfGameManager::getBattleArenaMenuInfo(record, id, static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()))) {
         return false;
     }
     if (record.m_valueC == 0) {
@@ -92,8 +92,8 @@ bool GfMenuBtlchAdapter::update_NumDifficulty(unsigned int id) {
 }
 
 bool GfMenuBtlchAdapter::update_TextSummary(unsigned int id) {
-    GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
+    ArenaMenuInfo record;
+    if (!GfGameManager::getBattleArenaMenuInfo(record, id, static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()))) {
         return false;
     }
     ui::UIStr text(GfDataBdat::getFP(0x1A1), record.m_value10);
@@ -102,11 +102,11 @@ bool GfMenuBtlchAdapter::update_TextSummary(unsigned int id) {
 }
 
 bool GfMenuBtlchAdapter::update_TextNotAvailable(unsigned int id) {
-    GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
+    ArenaMenuInfo record;
+    if (!GfGameManager::getBattleArenaMenuInfo(record, id, static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()))) {
         return false;
     }
-    GfGameManager::BattleChallengeRecord::Text text14 = record.getText14();
+    ArenaMenuInfo::Text text14 = record.getText14();
     unsigned int message;
     if (record.m_flag12) {
         if (text14.m_flag != 0) {
@@ -122,8 +122,8 @@ bool GfMenuBtlchAdapter::update_TextNotAvailable(unsigned int id) {
 }
 
 bool GfMenuBtlchAdapter::update_TimeLimit(unsigned int id) {
-    GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
+    ArenaMenuInfo record;
+    if (!GfGameManager::getBattleArenaMenuInfo(record, id, static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()))) {
         return false;
     }
     unsigned int seconds = record.m_value4;
@@ -138,8 +138,8 @@ bool GfMenuBtlchAdapter::update_TimeLimit(unsigned int id) {
 }
 
 bool GfMenuBtlchAdapter::update_NumLimitLv(unsigned int id) {
-    GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
+    ArenaMenuInfo record;
+    if (!GfGameManager::getBattleArenaMenuInfo(record, id, static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()))) {
         return false;
     }
     if (record.m_value8 == 0) {
@@ -150,8 +150,8 @@ bool GfMenuBtlchAdapter::update_NumLimitLv(unsigned int id) {
 }
 
 bool GfMenuBtlchAdapter::update_DispLimitLv(unsigned int id) {
-    GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
+    ArenaMenuInfo record;
+    if (!GfGameManager::getBattleArenaMenuInfo(record, id, static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()))) {
         return false;
     }
     if (record.m_kind == 3) {
@@ -161,8 +161,8 @@ bool GfMenuBtlchAdapter::update_DispLimitLv(unsigned int id) {
 }
 
 bool GfMenuBtlchAdapter::update_DispWpnLimit(unsigned int id) {
-    GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
+    ArenaMenuInfo record;
+    if (!GfGameManager::getBattleArenaMenuInfo(record, id, static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()))) {
         return false;
     }
     if (record.m_kind == 3) {
@@ -172,8 +172,8 @@ bool GfMenuBtlchAdapter::update_DispWpnLimit(unsigned int id) {
 }
 
 bool GfMenuBtlchAdapter::update_DispPartyLimit(unsigned int id) {
-    GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
+    ArenaMenuInfo record;
+    if (!GfGameManager::getBattleArenaMenuInfo(record, id, static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()))) {
         return false;
     }
     if (record.m_valueA < 3) {
@@ -193,8 +193,8 @@ bool GfMenuBtlchAdapter::update_NumWaveCount(unsigned int id) {
 }
 
 bool GfMenuBtlchAdapter::update_TimeRecord(unsigned int id) {
-    GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
+    ArenaMenuInfo record;
+    if (!GfGameManager::getBattleArenaMenuInfo(record, id, static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()))) {
         return false;
     }
     unsigned int seconds = record.m_rule.m_value0;
@@ -209,8 +209,8 @@ bool GfMenuBtlchAdapter::update_TimeRecord(unsigned int id) {
 }
 
 bool GfMenuBtlchAdapter::update_NumRecordEcube(unsigned int id) {
-    GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
+    ArenaMenuInfo record;
+    if (!GfGameManager::getBattleArenaMenuInfo(record, id, static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()))) {
         return false;
     }
     setNumber(record.getRule().m_value8);
@@ -220,21 +220,21 @@ bool GfMenuBtlchAdapter::update_NumRecordEcube(unsigned int id) {
 bool GfMenuBtlchAdapter::update_NumRecordScore(unsigned int id) {
     bool found;
     {
-        GfGameManager::BattleChallengeRecord record;
-        found = GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty()) && record.m_kind != 0;
+        ArenaMenuInfo record;
+        found = GfGameManager::getBattleArenaMenuInfo(record, id, static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty())) && record.m_kind != 0;
     }
     if (!found) {
         return false;
     }
-    GfGameManager::BattleChallengeRecord record;
-    GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty());
+    ArenaMenuInfo record;
+    GfGameManager::getBattleArenaMenuInfo(record, id, static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()));
     setNumber(record.m_rule.m_value4);
     return true;
 }
 
 bool GfMenuBtlchAdapter::update_TimeClear(unsigned int id) {
-    GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty()) || !record.m_flagAEC) {
+    ArenaMenuInfo record;
+    if (!GfGameManager::getBattleArenaMenuInfo(record, id, static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty())) || !record.m_flagAEC) {
         return false;
     }
     unsigned int seconds = GfGameManager::getBattleArenaMenuInfo()->m_value30;
@@ -269,8 +269,8 @@ GfMenuBtlchAdapter* GfMenuBtlchAdapter::createFromReference(unsigned int handle,
 }
 
 unsigned short GfMenuBtlchAdapter::getScoreType(unsigned int id) {
-    GfGameManager::BattleChallengeRecord record;
-    if (!GfGameManager::fn_71002AC60C(&record, id, GfMenuReference::getReferenceBtlchDifficulty())) {
+    ArenaMenuInfo record;
+    if (!GfGameManager::getBattleArenaMenuInfo(record, id, static_cast<GFDIFF>(GfMenuReference::getReferenceBtlchDifficulty()))) {
         return 0;
     }
     return record.m_kind;

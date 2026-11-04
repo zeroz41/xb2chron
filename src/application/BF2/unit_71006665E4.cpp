@@ -61,7 +61,7 @@
 #include "classes/gf/SCOM_SOLO_REX.h"
 #include "classes/gf/ScriptCamera.h"
 #include "classes/gf/ShipRollPlugin.h"
-#include "classes/gmk/GmkElevator.h"
+#include "classes/gmk/GmkBattleChallengePortal.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "gf/GfDataBlade.h"
 #include "gf/GfDataDriver.h"
@@ -788,7 +788,7 @@ static int fn_710066978C(VMThread* pThread) {
 // gmk.openPortal
 static int fn_71006697CC(VMThread* pThread) {
     gf::GfEvent::callOpenPortal();
-    if (!gmk::GmkElevator::fn_71005B928C()) {
+    if (!gmk::GmkBattleChallengePortal::openPortal()) {
         vmWaitModeSet(pThread);
     }
     return 0;
@@ -1151,7 +1151,7 @@ static int fn_710066A430(VMThread* pThread) {
 // ui.isOpenPartyForm
 static int fn_710066A450(VMThread* pThread) {
     gf::GfSequentialPlay* play = mm::mtl::PtrSingleton<gf::GfSequentialPlay>::sys();
-    vmRetBoolSet(pThread, play != nullptr && play->fn_7100323420(0x24, 0));
+    vmRetBoolSet(pThread, play != nullptr && play->isOpenMenu2(0x24, static_cast<gf::MAINMENU>(0)));
     return 1;
 }
 
@@ -1188,7 +1188,7 @@ static int fn_710066A508(VMThread* pThread) {
 static int fn_710066A57C(VMThread* pThread) {
     if (gf::GfMenuObjUtil::isValidExpansion(3)) {
         gf::GfSequentialPlay* play = mm::mtl::PtrSingleton<gf::GfSequentialPlay>::sys();
-        if (play != nullptr && play->fn_7100323420(0x24, 0)) {
+        if (play != nullptr && play->isOpenMenu2(0x24, static_cast<gf::MAINMENU>(0))) {
             vmWaitModeSet(pThread);
         }
     }

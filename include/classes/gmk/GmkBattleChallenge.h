@@ -79,7 +79,7 @@ public:
     void seqWaitNextWave(float dt);
     // suspend (btl::ChallengeBattleManager::UpdateProc calls it): suspendAll on the running challenge, if any
     static void suspend(bool);
-    // 2.0.0's symbols name it. Empty (new in 3.0.1); gf::GfArenaBattle::fn_710028C9CC calls it with sm_battleStatus's word at +4 plus 1.
+    // 2.0.0's symbols name it. Empty (new in 3.0.1); gf::GfArenaBattle::procMsgGameBtlArena calls it with sm_battleStatus's word at +4 plus 1.
     // A static member: its address sits between seqWaitNextWave and suspend
     static void debugChangeWave(unsigned int);
     // terminate: clears sm_activeInstance, sm_targetGmkBdatId and sm_battleStatus (GfAppendWire's execBattle calls it)

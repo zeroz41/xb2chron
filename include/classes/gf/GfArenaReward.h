@@ -7,6 +7,7 @@
 #include "mm/Mat44.h"
 #include "mm/mtl/IntrusivePtr.h"
 #include "mm/mtl/FixedVector.h"
+#include "gf/ArenaBattleInfo.h"
 
 namespace gf { class GfGameArena; }
 namespace gmk { class AGmkBase; }
@@ -38,21 +39,21 @@ public:
     void playCameraCut01();
     // listUpTBox: refills m_gmks with up to 8 gimmicks of type 0x3C from every GmkManager set.
     void listUpTBox();
-    // fn_710028E7DC: how many of the score's row TresureNeed1..3 values (GfBdatBtl getBTL_ChBtlTresureNeed slots 0-2) the
-    // score's m_value reaches (0..3).
-    int fn_710028E7DC(const GfArenaBattle::Score& score);
-    // fn_710028E69C / fn_710028E878: the result step's two branches (fn_710028E7DC's answer nonzero / zero); not
+    // getTresureBoxNum: how many of the info's row TresureNeed1..3 values (GfBdatBtl getBTL_ChBtlTresureNeed slots 0-2)
+    // the info's m_value reaches (0..3).
+    int getTresureBoxNum(const ArenaBattleInfo& info) const;
+    // createTresureBox / createMoney: the result step's two branches (getTresureBoxNum's answer nonzero / zero); not
     // recovered.
-    void fn_710028E69C(const GfArenaBattle::Score& score);
-    void fn_710028E878(const GfArenaBattle::Score& score);
-    // fn_710028EF70: plays one of four voices (ml::mtRand(4)) from the table at 0x7100B6AD58, row = fn_710028E7DC's count.
-    void fn_710028EF70(const GfArenaBattle::Score& score);
+    void createTresureBox(const ArenaBattleInfo& info);
+    void createMoney(const ArenaBattleInfo& info);
+    // playVoice: plays one of four voices (ml::mtRand(4)) from the table at 0x7100B6AD58, row = getTresureBoxNum's count.
+    void playVoice(const ArenaBattleInfo& info);
     // playReturnVoice: counts the drivers GfGameParty::getHandleDriver(0..2, 0) gives and passes them, (count != 0)
     // and flag to createReturnVoice.
     void playReturnVoice(bool flag);
-    // fn_710028F0A4: when the score's row has a ClearReward (GfBdatBtl getBTL_ChBtlClearReward), GfFobjDropitem::emitDropitems
-    // with that item.
-    void fn_710028F0A4(const GfArenaBattle::Score& score);
+    // dropClearReward: when the info's row has a ClearReward (GfBdatBtl getBTL_ChBtlClearReward),
+    // GfFobjDropitem::emitDropitems with that item.
+    void dropClearReward(const ArenaBattleInfo& info);
 
     GfGameArena* m_owner;  // (the name is not the original's)
     // GimmickCamera::create's camera cut (the name is not the original's)

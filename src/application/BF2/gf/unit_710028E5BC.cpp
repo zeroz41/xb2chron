@@ -8,19 +8,20 @@
 #include "classes/gf/GfGameParty.h"
 #include "classes/gmk/AGmkBase.h"
 #include "classes/gf/DataParamAcc.h"
+#include "gf/GfArenaUtil.h"
 
 namespace gf {
 
-unsigned int GfArenaParty::fn_710028E5BC(const GfGameManager::BattleChallengeRecord::Key& key, GF_OBJ_HANDLE* handle) {
+unsigned int GfArenaParty::getWeaponDamage(const ArenaBattleStart& key, GF_OBJ_HANDLE* handle) const {
     DataParamAcc acc(handle);
-    return key.fn_7100290AE4(acc.getBlade(-1, false));
+    return GfArenaUtil::getWeaponDamage(key, acc.getBlade(-1, false));
 }
 
 GfArenaReward::GfArenaReward(GfGameArena* owner) : m_owner(owner) {}
 
 GfArenaReward::~GfArenaReward() {}
 
-int GfArenaReward::fn_710028E7DC(const GfArenaBattle::Score& score) {
+int GfArenaReward::getTresureBoxNum(const ArenaBattleInfo& score) const {
     GfBdatBtl* btl = GfBdatBtl::get();
     return (btl->getBTL_ChBtlTresureNeed(score.m_id, 0) <= score.m_value) + (btl->getBTL_ChBtlTresureNeed(score.m_id, 1) <= score.m_value) +
            (btl->getBTL_ChBtlTresureNeed(score.m_id, 2) <= score.m_value);
@@ -56,8 +57,8 @@ void GfArenaReward::playCameraCut01() {
     }
 }
 
-void GfArenaReward::fn_710028EF70(const GfArenaBattle::Score& score) {
-    SCOM_BATTLE_ARENA::createAfterVoice(fn_710028E7DC(score));
+void GfArenaReward::playVoice(const ArenaBattleInfo& score) {
+    SCOM_BATTLE_ARENA::createAfterVoice(getTresureBoxNum(score));
 }
 
 void GfArenaReward::playReturnVoice(bool flag) {

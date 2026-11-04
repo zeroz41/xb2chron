@@ -53,7 +53,7 @@ public:
     // the GfObj's flags (0x110), as GmkSalvageLocator::setTargetable (caller gf::GfFieldTbox::seqCheckFs).
     void setTargetable(bool) const;
     // What it does: stores the wait time, clears m_timer and starts the step seqWaitPop (caller
-    // gf::GfArenaReward::fn_710028E69C).
+    // gf::GfArenaReward::createTresureBox).
     void initWaitPopTime(float);
     // What it does (step): adds dt to m_timer; past m_waitTime it pops the game object (createTboxGobInst) when there is
     // none and goes to seqWait.

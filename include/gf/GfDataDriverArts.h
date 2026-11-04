@@ -37,7 +37,7 @@ public:
     static void addWp(unsigned int driver, unsigned int wpnType, int point);
     static unsigned int getWpnType(unsigned int arts);
     // the symbols' name (its code is in GfDataBlade_710029064C's range; 0 for arts 0 or one outside the table).
-    // GfGameArena::fn_7100290D40 (message type 13) and StateArenaEvent test it against 0
+    // GfGameArena::procMsgGameBtlArena (message type 13) and StateArenaEvent test it against 0
     static unsigned int getRangeType(unsigned int arts);
 };
 

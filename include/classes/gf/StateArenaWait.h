@@ -25,7 +25,7 @@ public:
         GfEvent::addEventCallback(this);
         m_arenaFlagSeen = false;
         arena->m_partySetup->removeFieldBlade();
-        MsgUnk_1000034 msg(0xC);
+        MsgGameBtlArena msg(0xC);
         arena->sendMessage(arena, msg);
         arena->destroyMapSound();
     }

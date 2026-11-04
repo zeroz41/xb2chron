@@ -45,6 +45,10 @@ public:
     };
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x3d);
+    // 2.0.0's symbols name it (its address is in GmkElevator's unit). What it does: walks PtrSingleton<GmkManager>'s
+    // gimmick vector (0xF358 buffer, 0xF360 count, "m_buffer != 0") and answers a flag over them; the gmk plugin's
+    // openPortal (gmk.openPortal) waits while it answers false. It installs seqOpen and seqFinish.
+    static bool openPortal();
     // the step update calls while the gimmick is valid (the name is not the original's)
     void (GmkBattleChallengePortal::*m_seq)(float dt);
     // fields: size from the stride 0x80: Vector<GmkBattleChallengePortal>::resize resize
@@ -77,10 +81,10 @@ public:
     // What it does (step): pops (createGobInst) when canPopGobInst says so, else depops (disposeGobInst(true)) when
     // canDepopGobInst says so.
     void seqUpdate(float);
-    // What it does (step; GmkElevator::fn_71005B928C installs it): pops the game object (createEffect(true)), plays
+    // What it does (step; openPortal installs it): pops the game object (createEffect(true)), plays
     // the map's portal sound (map 0x3A: 2, 9: 0x10, 3: 0xD, else 0) and waits m_timer in seqWait.
     void seqOpen(float);
-    // What it does (step): nothing (the end step seqWait and GmkElevator::fn_71005B928C install).
+    // What it does (step): nothing (the end step seqWait and openPortal install).
     void seqFinish(float);
     // What it does (step): counts m_timer down by dt, then goes to seqFinish.
     void seqWait(float);

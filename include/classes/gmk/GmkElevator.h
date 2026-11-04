@@ -100,10 +100,6 @@ public:
     void seqWaitToValidate_GfFieldLod(float dt);
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(42);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
-    // GmkElevator's unit. What it does: walks PtrSingleton<GmkManager>'s gimmick vector (0xF358 buffer, 0xF360
-    // count, "m_buffer != 0") and answers a flag over them; the gmk plugin's openPortal waits while it answers false.
-    static bool fn_71005B928C();
     // 0x50..0x288: four phantoms, 0x2b0: four sound controls; the destructor destroys them in reverse
     // (the names are not the original's)
     // a FixedArray: the constructor calls FixedArray<GmkPhantom, 4>'s (out of line, 0x71005ACCD8)

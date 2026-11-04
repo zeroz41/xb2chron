@@ -33,11 +33,11 @@
 
 namespace gf {
 
-GfGameArena::MapjumpParam::MapjumpParam() : m_mapjumpId(0xE1) {}
+MapJumpForReturnBattle::MapJumpForReturnBattle() : m_mapjumpId(0xE1) {}
 
 bool GfGameArena::recieveMessage(fw::MessageObject* sender, fw::Message& msg) {
     if (msg.m_id == 0x1000034) {
-        fn_7100290D40(sender, static_cast<MsgUnk_1000034&>(msg));
+        procMsgGameBtlArena(sender, static_cast<MsgGameBtlArena&>(msg));
         return true;
     }
     return false;
@@ -65,7 +65,7 @@ void GfGameArena::initialize(const GfSetupParam& param) {
 #line 130
     m_updater = new (fw::FrameworkMemory::getAllocator(5), 16, __FILE__, __LINE__) MicroUpdater<GfGameArena>();
     m_updater->start(this, &fnUpdate);
-    fn_71002906D0(m_ids);
+    GfArenaUtil::setupChBtlList(m_ids);
     m_sound->initialize();
     GfGameFlag::setLocal(1, 0xDC0D, 0);
     m_isSetUp = true;
@@ -159,7 +159,7 @@ void GfGameArena::sleep(unsigned int frames) {
 }
 
 unsigned int GfGameArena::getWeaponDamage(GF_OBJ_HANDLE* handle) const {
-    return m_partySetup->fn_710028E5BC(m_msgObj->m_key, handle);
+    return m_partySetup->getWeaponDamage(m_msgObj->m_key, handle);
 }
 
 void GfGameArena::createMapSound() {
@@ -195,16 +195,18 @@ void GfGameArena::destroyMapSound() {
 }
 
 void GfGameArena::setupGame() {
-    GfDataManager::getDataGame()->m_ruleTable.fn_7100290510(m_ids);
+    GfArenaUtil::setupSaveData(GfDataManager::getDataGame()->m_ruleTable, m_ids);
 }
 
-GfGameArena::RuleTable* GfGameArena::getSaveInfo() const {
+SaveChBtl* GfGameArena::getSaveInfo() const {
     return &GfDataManager::getDataGame()->m_ruleTable;
 }
 
-GfGameManager::BattleChallengeRecord::Rule* GfGameArena::fn_7100291D14(unsigned int id, unsigned int mode) {
-    RuleRow* rows = GfDataManager::getDataGame()->m_ruleTable.m_rows;
-    return &rows[id].m_rules[mode];
+// the difficulty indexes as an unsigned value (umaddl): GFDIFF's own underlying type is unsigned, while the tree
+// declares it `enum GFDIFF : int`
+ChBtlInfo::ChBtlDiff* GfGameArena::getSaveInfo(unsigned int id, GFDIFF diff) const {
+    mm::mtl::FixedArray<ChBtlInfo, 48>& rows = GfDataManager::getDataGame()->m_ruleTable.m_rows;
+    return &rows[id].m_rules[static_cast<unsigned int>(diff)];
 }
 
 unsigned int GfGameArena::update(const fw::UpdateInfo& info) {

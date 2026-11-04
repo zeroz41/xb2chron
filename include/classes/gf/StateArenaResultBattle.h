@@ -36,7 +36,8 @@ public:
     // for the fade, calls the helper's playReturnVoice, then F964 (opens GfMenuObjSalvage's openBtlchRecord) or F99C
     // (drops the camera, asks for state 3); F9F0 waits for the menu, FA24 runs the helper's E69C/E878, m_timer
     // 0.5, FAA8 counts it down, FAD0 opens GfMenuObjSalvage::openResult and plays a voice, FB2C waits for the menu
-    // and drops the camera, FB70 counts m_timer up to 1 and emits the reward drop (fn_710028F0A4), then F99C.
+    // and drops the camera, FB70 counts m_timer up to 1 and emits the reward drop
+    // (GfArenaReward::dropClearReward), then F99C.
     void updateStart(GfGameArena* arena, fw::UpdateInfo const& info);
     void updateCamera(GfGameArena* arena, fw::UpdateInfo const& info);
     void updateFadeWait(GfGameArena* arena, fw::UpdateInfo const& info);

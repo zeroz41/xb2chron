@@ -3,6 +3,8 @@
 
 #include "classes/gf/GfGameManager.h"
 #include "gf/GfReqParam.h"
+#include "gf/ArenaBattleStart.h"
+#include "gf/ArenaChanged.h"
 
 namespace gf { class GfGameArena; }
 
@@ -17,42 +19,42 @@ public:
     explicit GfArenaParty(GfGameArena* owner);
     // fn_710028DA08 (placeholder code address; GfGameArena::finalize runs it before freeing the object)
     ~GfArenaParty();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x710028E5BC, its own unit). A
-    // member: GfGameArena::getWeaponDamage calls it on the arena's +0xB8 object. What it does: answers the key's
-    // fn_7100290AE4 for the blade of the handle (DataParamAcc(handle).getBlade(-1, false)); it reads nothing of this.
-    unsigned int fn_710028E5BC(const GfGameManager::BattleChallengeRecord::Key& key, GF_OBJ_HANDLE* handle);
+    // 2.0.0's symbols name it (code at 0x710028E5BC, its own unit). GfGameArena::getWeaponDamage calls it on the
+    // arena's +0xB8 object. What it does: answers GfArenaUtil::getWeaponDamage for the start and the blade of the
+    // handle (DataParamAcc(handle).getBlade(-1, false)); it reads nothing of this.
+    unsigned int getWeaponDamage(const ArenaBattleStart& start, GF_OBJ_HANDLE* handle) const;
 
     // 2.0.0's symbols name them. The arena states call them on the arena's +0xB8 object (StateArenaField's onEnter
     // addFieldBlade; StateArenaWait's onEnter and StateArenaLeave's enter removeFieldBlade). What they do: walk this
     // object's party entries; removeFieldBlade ends with GfGameUtil::execPartyBladeFollow(0, 1).
     void addFieldBlade();
     void removeFieldBlade();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x710028E4E8, GfAppendWire's unit
-    // range). A member: StateArenaStartBattle's step calls it on the arena's +0xB8 object with the +0xC0 object's m_key and
-    // goes to state 5 when it answers true, else to 3.
-    bool fn_710028E4E8(const GfGameManager::BattleChallengeRecord::Key& key);
+    // 2.0.0's symbols name it (code at 0x710028E4E8, GfAppendWire's unit range). StateArenaStartBattle's step calls
+    // it on the arena's +0xB8 object with the +0xC0 object's m_key and goes to state 5 when it answers true, else to 3.
+    bool setupParty(const ArenaBattleStart& start);
 
     // 2.0.0's symbols name it. GfArenaBattle::mapjumpForReturnFieldForObjCleanup calls it on its arena's +0xB8 object
     // (GEV 4, the map jump).
     void setupLevelForBattleEnd();
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: fn_710028E4E8 calls them on this
-    // object with its key (code next to it). fn_710028E3F8 (this not used) answers whether the challenge's party
-    // can be set up: true for a mode-3 challenge, else GfBdatBtl's getBTL_ChBtlDriver drivers 0..2 must be in the party
-    // (0 and 7 and 9 always count). fn_710028DF1C fills m_lists.m_list38 (fn_71002907A0), sets each driver's
-    // level to the challenge's and copies the list to the arena's record; fn_710028E050 the same for m_listE0
-    // (fn_71002908DC, no levels).
-    bool fn_710028E3F8(const GfGameManager::BattleChallengeRecord::Key& key);
+    // 2.0.0's symbols name them. setupParty calls them on this object with its start (code next to it). checkDriver
+    // (this not used) answers whether the challenge's party can be set up: true for a mode-3 challenge, else
+    // GfBdatBtl's getBTL_ChBtlDriver drivers 0..2 must be in the party (0 and 7 and 9 always count).
+    // setupLevelForBattleStart fills m_lists.m_list38 (GfArenaUtil::setupLevelForBattleStart), sets each driver's
+    // level to the challenge's and copies the list to the arena's record; setupWeaponParamForBattleStart the same for
+    // m_listE0 (GfArenaUtil::setupRankForBattleStart, no levels).
+    bool checkDriver(const ArenaBattleStart& start);
     // changePartyForStartBattle: fades out, keeps the party (GfGameParty::getCurrentPartyInfo into m_party) and changes it to
     // the challenge's drivers and blades (GfReqCommand::reqChangeParty).
-    void changePartyForStartBattle(const GfGameManager::BattleChallengeRecord::Key& key);
-    void fn_710028DF1C(const GfGameManager::BattleChallengeRecord::Key& key);
-    void fn_710028E050(const GfGameManager::BattleChallengeRecord::Key& key);
+    void changePartyForStartBattle(const ArenaBattleStart& start);
+    void setupLevelForBattleStart(const ArenaBattleStart& start);
+    void setupWeaponParamForBattleStart(const ArenaBattleStart& start);
     GfGameArena* m_owner;  // (the name is not the original's)
     unsigned char pad_8[0x8];
     RQ_SETUP_PARTY m_party;  // the constructor builds it (the name is not the original's)
-    // the lists fn_710028DF1C / fn_710028E050 fill and copy to the arena's record; setupLevelForBattleEnd empties them and
-    // copies them there whole (fn_710028E234, the Lists copy) (the name is not the original's)
-    GfGameManager::BattleChallengeRecord::Lists m_lists;
+    // the lists setupLevelForBattleStart / setupWeaponParamForBattleStart fill and copy to the arena's record;
+    // setupLevelForBattleEnd empties them and copies them there whole (ArenaChanged::operator=, 0x710028E234) (the name
+    // is not the original's)
+    ArenaChanged m_lists;
     unsigned char pad_CE8[0x8];
 };
 }  // namespace gf

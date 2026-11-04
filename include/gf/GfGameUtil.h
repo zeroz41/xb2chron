@@ -300,7 +300,7 @@ public:
     // calls it.
     static bool getUiGetHitonowa(GF_OBJ_HANDLE* handle);
     // 2.0.0's symbols name it. What they do: when the arena game mode (GfGameArena::sys()) exists, send it a
-    // MsgUnk_1000034 of type 0xE (GfGameUtil::addEtherCube), 0xF (GfGameUtil::addScore) or 0x10
+    // MsgGameBtlArena of type 0xE (GfGameUtil::addEtherCube), 0xF (GfGameUtil::addScore) or 0x10
     // (GfGameUtil::applyClearTimeForArena) carrying value in its parameter word 0x30, 0x34 or 0x38. Callers: the exec
     // of the requests SCOM_ADD_ECUBE and SCOM_ADD_SCORE (their value at 0x1C) and gf_req_scom's SCOM_CLEAR_TIME::create.
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in

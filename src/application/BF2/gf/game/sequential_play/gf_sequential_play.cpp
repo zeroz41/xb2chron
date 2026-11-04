@@ -204,8 +204,8 @@ void GfSequentialPlay::addWaitArenaStateField() {
     addCommand(GfPlayComWaitArenaStateField::create());
 }
 
-void GfSequentialPlay::fn_71003226B0(const MsgUnk_1000034::Param& param) {
-    addCommand(GfPlayComStartChallengeBattle::create(param));
+void GfSequentialPlay::addStartChallengeBattle(const ArenaBattleStart& start) {
+    addCommand(GfPlayComStartChallengeBattle::create(start));
 }
 
 void GfSequentialPlay::addWaitBattleEnd(unsigned int id) {

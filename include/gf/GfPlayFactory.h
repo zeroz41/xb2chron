@@ -13,6 +13,7 @@ namespace fw { class Camera; }
 namespace gf { class GF_OBJ_HANDLE; }
 namespace gf { enum MAINMENU : int; }
 namespace gf { class MenuCommonWindowParam; }
+namespace gf { struct MapJumpForReturnBattle; }
 namespace gmk { enum GmkType : int; }
 namespace gf { enum GfPlayerDead : int; }
 #include "classes/gf/GfMenuObjCommonText.h"
@@ -92,6 +93,15 @@ public:
     static bool createMenuPrecious(unsigned int id, bool flag);
     // queues a quest's completion UI; GfQuestEvent::openResult keeps the result as its result UI's flag
     static bool createQuestUIComplete(QuestID id);
+    // 2.0.0's symbols name it (code in sequential_play's unit_71003214F4, which has no source yet). StateArenaField's
+    // onStep calls it with true and moves to state 2 when it answers true. What it does: unless the bool is set,
+    // answers false when GfGameManager::isLeaveGameForDebug, else needs isEnableOpenMainMenu and isBattleArenaActive;
+    // then builds a map-jump request on the stack.
+    static bool createLeaveBattleArena(bool force);
+    // 2.0.0's symbols name it (code in unit_71003214F4). GfGameArena::procMsgGameBtlArena (message type 2) and
+    // GfArenaBattle::mapjumpForReturnField call it. What it does: builds a GfMapjumpInfo from param's m_mapjumpId and
+    // the defaults.
+    static void createMapJumpForReturnBattle(const MapJumpForReturnBattle& param);
 };
 }  // namespace gf
 

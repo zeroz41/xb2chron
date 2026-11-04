@@ -7,16 +7,11 @@
 #include "classes/gf/GfEvent.h"
 #include "classes/gf/GfGameArena.h"
 #include "classes/gf/GfArenaParty.h"
+#include "gf/GfPlayFactory.h"
 
 namespace gf { class MapjumpCallbackInfo; enum GEV : int; }
 
 namespace gf {
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code in sequential_play's unit_71003214F4, which
-// has no source yet). A free function: callers pass only a bool. What it does: unless the bool is set, answers false
-// when GfGameManager::isLeaveGameForDebug, else needs isEnableOpenMainMenu and isBattleArenaActive; then builds a map-jump
-// request on the stack. StateArenaField's onStep calls it with true and moves to state 2 when it answers true.
-bool fn_71003214F4(bool force);
-
 // table 0x7100B52EC0 (no RTTI): an arena state (getName "StateArenaField"; GfGameArena's setup initialize registers it
 // as state 3, sizeof 0x20); its owner is GfGameArena. Its slots and its key function gevMapjump (0x710028F4B8)
 // are in unit_710028EBB0, which defines them (inline slots in the class, gevMapjump in the .cpp is the key function).
@@ -30,7 +25,7 @@ public:
         GfGameArena* arena = static_cast<GfGameArena*>(owner);
         GfEvent::addEventCallback(this);
         arena->m_partySetup->addFieldBlade();
-        arena->getSaveInfo()->fn_7100290598(arena->m_ids);
+        GfArenaUtil::applyChallengeStatus(*arena->getSaveInfo(), arena->m_ids);
     }
     virtual void onLeave(void*, ai::State*) { GfEvent::removeEventCallback(this); }  // slot 4
     virtual void onStep(void* owner, void const*) {  // slot 5
@@ -38,7 +33,7 @@ public:
         if (arena->isDestroyNow()) {
             if (GfGameManager::isMapjump()) {
                 requestState(0);
-            } else if (fn_71003214F4(true)) {
+            } else if (GfPlayFactory::createLeaveBattleArena(true)) {
                 requestState(2);
             }
         }

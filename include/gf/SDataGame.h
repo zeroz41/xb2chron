@@ -3,6 +3,7 @@
 
 #include "classes/gf/GfFieldTime.h"
 #include "classes/gf/GfGameArena.h"
+#include "gf/SaveChBtl.h"
 #include "gf/GameFlag.h"
 #include "gf/SDataBlade.h"
 #include "gf/SDataDriver.h"
@@ -149,10 +150,10 @@ public:
     // 0x11768C: the 16 drivers' arts records past the ones their data keeps (GfDataDriver::getDriverWeaponType and
     // getDriverArtsLevel index it like getSDataDriver's m_drivers; the name is not the original's)
     SDataDriverArtsEx m_driverArtsEx[16];
-    // 0x11A8CC: the challenge battle rule table (GfGameArena::getSaveInfo returns it, fn_7100291D14 a rule of
-    // it, setupGame / fn_7100291E40 read and mark its rows; the constructor runs its fn_71001528A0; the name is
-    // not the original's)
-    GfGameArena::RuleTable m_ruleTable;
+    // 0x11A8CC: the challenge battle records (GfGameArena::getSaveInfo() returns it, getSaveInfo(id, diff) a ChBtlDiff
+    // of it, setupGame / getMenuInfo read and mark its rows; the constructor runs its clear; the name is not the
+    // original's)
+    SaveChBtl m_ruleTable;
     // 0x11B4CC: one record per row of GfBdatChrEnArrange's named-enemy range (gf::GfGameUtil::getNamedListIndex gives the row, 0 for
     // none): four times (the columns of modes 0, 1, 2 and 4: gf::GfGameUtil::getClearNamedTime / GfGameUtil::getClearNamedTime) and a flag byte with
     // one bit per mode (gf::GfGameUtil::isDefeatNamed). The type and names are not the original's.

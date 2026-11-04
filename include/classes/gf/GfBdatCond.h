@@ -56,7 +56,8 @@ public:
     // the handle is null or id is out of range (callers fn_71002A48D4; 1.0.0 has no such table).
     unsigned int getConditionMapGimmickMapGimmickID(unsigned int id) const;
     // 2.0.0's symbols name it. What it does: row id's FLD_ConditionNamed "Named" value (16 bits), 0 when the handle is
-    // null or id is out of range (callers fn_7100290BAC, fn_71002A48D4; 1.0.0 has no such table).
+    // null or id is out of range (callers GfArenaUtil::createPopupForKillEnemy, fn_71002A48D4; 1.0.0 has no such
+    // table).
     unsigned int getConditionNamedNamed(unsigned int id) const;
     CBdatWrapper* m_fpConditionList;  // 0x10, FLD_ConditionList (the name is not the original's)
     CBdatWrapper* m_fpConditionScenario;  // 0x18, FLD_ConditionScenario (the name is not the original's)

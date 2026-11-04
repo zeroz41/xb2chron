@@ -303,7 +303,7 @@ bool GfMenuBattleAdapter::update_BtlChBoxRate() {
     unsigned int index = m_index;
     GfGameManager::getBattleArenaMenuInfo();
     if (index < 3) {
-        const GfGameManager::BattleChallengeRecord* record = GfGameManager::getBattleArenaMenuInfo();
+        const ArenaMenuInfo* record = GfGameManager::getBattleArenaMenuInfo();
         setNumber(record->m_ratios[m_index] * 100.0f);
         return true;
     }

@@ -124,7 +124,7 @@
 #include "classes/gf/SCOM_DESTROY_PARTY_OBJ.h"
 #include "gf/GfGameUnit.h"
 #include "classes/gf/GfGameArena.h"
-#include "gf/MsgUnk_1000034.h"
+#include "gf/MsgGameBtlArena.h"
 #include "classes/gf/GfScriptManager.h"
 #include "ml/MTRand.h"
 #include "classes/gf/SCOM_ADD_ITEM.h"
@@ -2850,8 +2850,8 @@ bool SCOM_SOLO_REX::exec(fw::UpdateInfo const&) {
 bool SCOM_BATTLE_ARENA::exec(fw::UpdateInfo const&) {
     if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
         unsigned int value = m_param;
-        MsgUnk_1000034 msg(m_type);
-        msg.m_param0.pad_0 = value;
+        MsgGameBtlArena msg(m_type);
+        msg.m_start.m_id = value;
         static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
     }
     return true;
@@ -2889,7 +2889,7 @@ unsigned long SCOM_BATTLE_ARENA::createLoseStart() {
 
 void SCOM_BATTLE_ARENA::createPlayJingle(unsigned int id, float a, float b) {
     if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
-        MsgUnk_1000034 msg(0x12);
+        MsgGameBtlArena msg(0x12);
         msg.pad_34 = a;
         msg.pad_38 = b;
         msg.pad_3C = id;

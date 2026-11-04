@@ -21,6 +21,7 @@
 #include "gf/GfDataBlade.h"
 #include "gf/MapjumpCallbackInfo.h"
 #include "btl/Utility.h"
+#include "gf/GfArenaUtil.h"
 
 namespace gf {
 
@@ -29,7 +30,7 @@ void StateArenaWait::gevMapjump(gf::GEV gev, gf::MapjumpCallbackInfo const& info
     case 1:
         if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
             if (!arena->isActiveArena() && GfDataMap::getMapID(info.m_mapJumpId) == 0x3A) {
-                MsgUnk_1000034 msg(0xB);
+                MsgGameBtlArena msg(0xB);
                 static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
             }
         }
@@ -69,7 +70,7 @@ void StateArenaField::gevMapjump(gf::GEV gev, gf::MapjumpCallbackInfo const& inf
     if (gev == 1) {
         if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
             if (arena->isActiveArena() && GfDataMap::getMapID(info.m_mapJumpId) != 0x3A) {
-                MsgUnk_1000034 msg(0xA);
+                MsgGameBtlArena msg(0xA);
                 static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
             }
         }
@@ -81,7 +82,7 @@ void StateArenaStartBattle::enter(GfGameArena*, ai::State*) {}
 void StateArenaStartBattle::leave(GfGameArena*, ai::State*) {}
 
 void StateArenaStartBattle::update(GfGameArena* arena, fw::UpdateInfo const&) {
-    if (arena->m_partySetup->fn_710028E4E8(arena->m_msgObj->m_key)) {
+    if (arena->m_partySetup->setupParty(arena->m_msgObj->m_key)) {
         GfMenuManager::loadBchUI();
         arena->m_msgObj->mapjumpForBattleStart();
         requestState(5);
@@ -116,7 +117,7 @@ void StateArenaResultBattle::enter(GfGameArena* arena, ai::State*) {
 }
 
 void StateArenaResultBattle::updateStart(GfGameArena* arena, fw::UpdateInfo const&) {
-    if (arena->m_msgObj->m_result == 2 || arena->m_helper->fn_710028E7DC(arena->m_msgObj->m_score)) {
+    if (arena->m_msgObj->m_result == 2 || arena->m_helper->getTresureBoxNum(arena->m_msgObj->m_score)) {
         m_step = &StateArenaResultBattle::updateCamera;
     } else {
         m_step = &StateArenaResultBattle::updateFadeWait;
@@ -150,7 +151,7 @@ void StateArenaResultBattle::updateCamera(GfGameArena* arena, fw::UpdateInfo con
 
 void StateArenaResultBattle::updateFadeWait(GfGameArena* arena, fw::UpdateInfo const&) {
     if (!GfGameManager::isFading(static_cast<unsigned int>(-1))) {
-            bool clear = arena->m_msgObj->m_result == 2 || arena->m_helper->fn_710028E7DC(arena->m_msgObj->m_score);
+            bool clear = arena->m_msgObj->m_result == 2 || arena->m_helper->getTresureBoxNum(arena->m_msgObj->m_score);
         if (clear) {
             arena->m_helper->playReturnVoice(arena->m_msgObj->m_result == 2);
             m_step = &StateArenaResultBattle::updateResult;
@@ -180,10 +181,10 @@ void StateArenaResultBattle::updateResultWait(GfGameArena*, fw::UpdateInfo const
 }
 
 void StateArenaResultBattle::updateTBox(GfGameArena* arena, fw::UpdateInfo const&) {
-    if (arena->m_helper->fn_710028E7DC(arena->m_msgObj->m_score)) {
-        arena->m_helper->fn_710028E69C(arena->m_msgObj->m_score);
+    if (arena->m_helper->getTresureBoxNum(arena->m_msgObj->m_score)) {
+        arena->m_helper->createTresureBox(arena->m_msgObj->m_score);
     } else {
-        arena->m_helper->fn_710028E878(arena->m_msgObj->m_score);
+        arena->m_helper->createMoney(arena->m_msgObj->m_score);
     }
     m_timer = 0.5f;
     m_step = &StateArenaResultBattle::updateTBoxWait;
@@ -208,7 +209,7 @@ void StateArenaResultBattle::updateUI(GfGameArena* arena, fw::UpdateInfo const&)
     GfMenuObjSalvage::ResultParam param;
     param.m_unk2 = 1;
     GfMenuObjSalvage::openResult(m_context, param);
-    arena->m_helper->fn_710028EF70(arena->m_msgObj->m_score);
+    arena->m_helper->playVoice(arena->m_msgObj->m_score);
     m_step = &StateArenaResultBattle::updateUIWait;
 }
 
@@ -223,7 +224,7 @@ void StateArenaResultBattle::updateUIWait(GfGameArena* arena, fw::UpdateInfo con
 void StateArenaResultBattle::updateReturnCamera(GfGameArena* arena, fw::UpdateInfo const& info) {
     m_timer += info.m_deltaTime;
     if (m_timer > 1.0f) {
-            arena->m_helper->fn_710028F0A4(arena->m_msgObj->m_score);
+            arena->m_helper->dropClearReward(arena->m_msgObj->m_score);
         m_step = &StateArenaResultBattle::updateFinish;
     }
 }
@@ -239,18 +240,18 @@ void StateArenaEvent::gevPlayEvent(gf::GEV gev, unsigned int) {
     }
 }
 
-void GfGameManager::BattleChallengeRecord::Rule::fn_71002904DC(BattleChallengeRecord* record, unsigned int value) {
-    if (m_value4 < value) {
-        m_value4 = value;
+void GfArenaUtil::setupMenuInfoForScore(ChBtlInfo::ChBtlDiff& diff, ArenaMenuInfo& info, unsigned int value) {
+    if (diff.m_value4 < value) {
+        diff.m_value4 = value;
     }
-    record->m_value28 = value;
+    info.m_value28 = value;
 }
 
-void GfGameManager::BattleChallengeRecord::Rule::fn_71002904F4(BattleChallengeRecord* record, unsigned int value) {
-    if (m_value0 == 0 || value < m_value0) {
-        m_value0 = value;
+void GfArenaUtil::setupMenuInfoForClearTime(ChBtlInfo::ChBtlDiff& diff, ArenaMenuInfo& info, unsigned int value) {
+    if (diff.m_value0 == 0 || value < diff.m_value0) {
+        diff.m_value0 = value;
     }
-    record->m_value30 = value;
+    info.m_value30 = value;
 }
 
 }  // namespace gf

@@ -167,8 +167,8 @@ public:
     // GfMenuObjItemList2's and GfMenuObjHanaPartsMake's refreshItemList read it.
     static unsigned int getReferenceItemType();
     // 2.0.0's symbols name it. What it does: the singleton's word at 0x4CCB4 (0 without the singleton);
-    // gf_menu_btlch_adapter's callbacks pass it to GfGameManager::fn_71002AC60C as the record's mode and its adapter's
-    // update marks itself changed when it changes.
+    // gf_menu_btlch_adapter's callbacks pass it to GfGameManager::getBattleArenaMenuInfo as the record's mode and
+    // its adapter's update marks itself changed when it changes.
     static unsigned int getReferenceBtlchDifficulty();
     // 2.0.0's symbols name it. What it does: stores the word getReferenceBtlchDifficulty reads (0x4CCB4); callers
     // fn_71003ADAD0, refreshDifficulty, fn_7100445830, updateNamedIDList.

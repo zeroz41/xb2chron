@@ -1,12 +1,12 @@
-#include "classes/gf/GfGameArena.h"
+#include "gf/GfArenaUtil.h"
 
 namespace gf {
 
-bool GfGameArena::RuleTable::fn_7100290CE0(unsigned int id) {
+bool GfArenaUtil::isPlayEvent(const mm::mtl::FixedArray<ChBtlInfo, 48>& infos, unsigned int id) {
     if (id == 0) {
         return false;
     }
-    return m_rows[id].m_rules[0].m_flag8 & 1;
+    return infos[id].m_rules[0].m_flag8 & 1;
 }
 
 }  // namespace gf

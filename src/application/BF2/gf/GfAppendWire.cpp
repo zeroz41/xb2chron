@@ -8,6 +8,7 @@
 #include "classes/gf/GfEvent.h"
 #include "gf/GfDataBlade.h"
 #include "classes/gf/GfGameArena.h"
+#include "gf/GfArenaUtil.h"
 #include "classes/gf/GfMenuObjBtlchTelop.h"
 #include "btl/Utility.h"
 #include "classes/gf/GfBdatBtl.h"
@@ -204,7 +205,7 @@ void GfAppendWire::updateState(const fw::UpdateInfo& info) {
 
 bool GfArenaBattle::recieveMessage(fw::MessageObject* sender, fw::Message& msg) {
     if (msg.m_id == 0x1000034) {
-        fn_710028C9CC(sender, static_cast<MsgUnk_1000034&>(msg));
+        procMsgGameBtlArena(sender, static_cast<MsgGameBtlArena&>(msg));
         return true;
     }
     return false;
@@ -357,16 +358,16 @@ void GfArenaParty::removeFieldBlade() {
     GfGameUtil::execPartyBladeFollow(false, true);
 }
 
-void GfArenaParty::fn_710028DF1C(const GfGameManager::BattleChallengeRecord::Key& key) {
-    m_lists.fn_71002907A0(key);
-    for (const GfGameManager::BattleChallengeRecord::Entry38& entry : m_lists.m_list38) {
+void GfArenaParty::setupLevelForBattleStart(const ArenaBattleStart& key) {
+    GfArenaUtil::setupLevelForBattleStart(m_lists, key);
+    for (const ArenaChanged::Entry38& entry : m_lists.m_list38) {
         GfDataDriver::setLevel(entry.m_driver, entry.m_challengeLevel);
     }
     m_owner->m_record.m_lists.m_list38 = m_lists.m_list38;
 }
 
-void GfArenaParty::fn_710028E050(const GfGameManager::BattleChallengeRecord::Key& key) {
-    m_lists.fn_71002908DC(key);
+void GfArenaParty::setupWeaponParamForBattleStart(const ArenaBattleStart& key) {
+    GfArenaUtil::setupRankForBattleStart(m_lists, key);
     m_owner->m_record.m_lists.m_listE0 = m_lists.m_listE0;
 }
 
@@ -376,7 +377,7 @@ void GfArenaParty::setupLevelForBattleEnd() {
     for (unsigned int blade : blades) {
         GfDataBlade::setUnselect(blade, false);
     }
-    for (const GfGameManager::BattleChallengeRecord::Entry38& entry : m_lists.m_list38) {
+    for (const ArenaChanged::Entry38& entry : m_lists.m_list38) {
         GfDataDriver::setLevel(entry.m_driver, entry.m_level);
     }
     GfGameParty::setupRequestData(m_party);
@@ -385,7 +386,7 @@ void GfArenaParty::setupLevelForBattleEnd() {
     m_owner->m_record.m_lists = m_lists;
 }
 
-bool GfArenaParty::fn_710028E3F8(const GfGameManager::BattleChallengeRecord::Key& key) {
+bool GfArenaParty::checkDriver(const ArenaBattleStart& key) {
     if (key.m_id == 0) {
         return false;
     }

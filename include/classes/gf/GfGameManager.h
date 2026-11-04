@@ -5,6 +5,7 @@
 #include "classes/gf/IQuestEvent.h"
 #include "classes/mm/mtl/PtrSingleton.h"
 #include "mm/mtl/FixedVector.h"
+#include "gf/ArenaMenuInfo.h"
 
 namespace gf { class GfSetupParam; }
 namespace mm { class Vec3; }
@@ -23,6 +24,7 @@ namespace gf { enum GEV : int; }
 namespace gf { enum GF_STATE : int; }
 namespace gf { enum RELOAD_BDAT : int; }
 namespace gf { enum GfPlayerDead : int; }
+namespace gf { enum GFDIFF : int; }
 
 namespace gf {
 // table 0x7100B54938; IGfEvent at 0x8 (1.0.0's table names the overrides), IQuestEvent at 0x10
@@ -69,146 +71,15 @@ public:
     // btl::BattleGlobal::PreUpdateProc, gf::GfGameUtil::getClearNamedTime (picks a record column 0/1/2/4 with it),
     // SCOM_ENBOOK_BOSS_TIME::exec.
     static unsigned int getBtlDifficult();
-    // The record getBattleArenaMenuInfo() returns and fn_71002AC60C fills (the name and its fields' names are not the
-    // original's): one battle challenge's data (gf_game_arena's setupMenuInfoForChBtl clears it the way the constructor
-    // does, then fills it from GfBdatBtl's row). GfMenuBattleAdapter's callbacks read its short at 0x1C, ints at
-    // 0x28/0x2C and floats at 0xAD0; gf_menu_obj_btl_time reads m_kind; gf_menu_btlch_adapter's callbacks (GfMenuBtlchAdapter)
-    // read most of the rest. 0xAF0 bytes: the 0xAF0-byte frames of those callbacks hold one.
-    struct BattleChallengeRecord {
-        // the elements of the two lists: three shorts each (the copies divide by 6; room for 26 and 422).
-        // Entry38 is a party driver's id, its level and the level the challenge sets (fn_71002907A0 fills them;
-        // GfArenaParty's fn_710028DF1C sets m_challengeLevel, setupLevelForBattleEnd puts m_level back). The names are not the
-        // original's.
-        struct Entry38 {
-            unsigned short m_driver;
-            unsigned short m_level;
-            unsigned short m_challengeLevel;
-        };
-        // filled by fn_71002908DC; what the shorts hold is not recovered
-        struct EntryE0 {
-            unsigned short pad_0;
-            unsigned short pad_2;
-            unsigned short pad_4;
-        };
-        // 12 bytes the arena copies from GfDataGame's table (row * 0x40 + type * 12 at 0x11A8CC)
-        struct Rule {
-            Rule() : m_value0(0), m_value4(0), m_value8(0), m_flag8(0) {}
-            // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: GfArenaBattle's
-            // fn_710028C9CC calls them on its Rule at +0xB0 with the arena's record (code in unit_710028EBB0). What
-            // they do: setupMenuInfoForCube keeps a larger value in m_value8, sets the record's m_value2C to the value and
-            // its m_ratios from GfBdatBtl's getBTL_ChBtlTresureNeed thresholds 0..2; fn_71002904DC keeps a larger value in
-            // m_value4 and sets the record's m_value28; fn_71002904F4 keeps a smaller one in m_value0 (0 counts as
-            // none) and sets the record's m_value30.
-            void setupMenuInfoForCube(BattleChallengeRecord* record, unsigned int value);
-            void fn_71002904DC(BattleChallengeRecord* record, unsigned int value);
-            void fn_71002904F4(BattleChallengeRecord* record, unsigned int value);
-            unsigned int m_value0;
-            unsigned int m_value4;
-            unsigned int m_value8 : 17;  // also stored at 0x2C
-            unsigned int m_flag8 : 7;
-        };
-        BattleChallengeRecord() {
-            clear();
-            m_ratios[0] = 0.0f;
-            m_ratios[1] = 0.0f;
-            m_ratios[2] = 0.0f;
-            m_rule = Rule();
-            m_valueAE8 = 1;
-            m_flagAEC = false;
-        }
-        // what the constructor and gf_game_arena's setupMenuInfoForChBtl zero first
-        void clear() {
-            m_id = 0;
-            m_value4 = 0;
-            m_kind = 0;
-            m_value8 = 0;
-            m_valueA = 0;
-            m_valueC = 0;
-            m_valueE = 0;
-            m_value10 = 0;
-            m_flag12 = false;
-            m_text14.m_message = 0;
-            m_flag1A = false;
-            m_value1C = 0;
-            m_values1E[0] = 0;
-            m_values1E[1] = 0;
-            m_values1E[2] = 0;
-            m_value24 = 0;
-            m_value28 = 0;
-            m_value2C = 0;
-            m_value30 = 0;
-        }
-        unsigned int m_id;
-        unsigned short m_value4;  // seconds
-        unsigned short m_kind;  // gf_menu_obj_btl_time's openFromChallengeBattle opens LAY_score with 0 for 1, with 1 for 3
-        unsigned short m_value8;
-        unsigned short m_valueA;
-        unsigned short m_valueC;
-        unsigned short m_valueE;
-        unsigned short m_value10;  // with m_flag12: 0x10..0x1B hold three {message, flag} pairs
-        bool m_flag12;
-        unsigned char pad_13[0x1];
-        // a message of GfDataBdat 0x1A1 and its flag (the names are not the original's)
-        struct Text {
-            unsigned short m_message;
-            unsigned char m_flag;
-        };
-        Text m_text14;  // the constructor sets only the message
-        Text getText14() const { return m_text14; }
-        unsigned short m_value18;  // not set by the constructor
-        bool m_flag1A;
-        unsigned char pad_1B[0x1];
-        unsigned short m_value1C;
-        unsigned short m_values1E[3];
-        unsigned int m_value24;
-        unsigned int m_value28;
-        unsigned int m_value2C;
-        unsigned int m_value30;  // seconds
-        unsigned char pad_34[0x4];
-        // the challenge id and mode the lists are built for (gf_game_arena's fn_7100291E40 builds one on the stack,
-        // GfArenaBattle keeps one at +0x20; the names are not the original's)
-        struct Key {
-            unsigned int m_id;
-            unsigned int m_mode;
-            bool m_flag8;  // fn_7100291E40 clears it
-            // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code in unit_710028EBB0's range).
-            // A member: fn_71002908DC and GfArenaParty::fn_710028E5BC call it on a key with a blade ID. What it does:
-            // reads GfBdatBtl's rows for m_id against the blade's weapon rank and weapon type.
-            unsigned int fn_7100290AE4(unsigned int blade) const;
-        };
-        // the two lists gf_game_arena's fn_7100291E40 fills (both helpers take this object; the name is not the
-        // original's)
-        struct Lists {
-            // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (code in unit_710028EBB0's
-            // range). Members: fn_7100291E40 calls both on the record's lists with its key. What they do:
-            // fn_71002907A0 clears m_list38 and fills it from GfBdatBtl's rows for the key's id, fn_71002908DC
-            // the same for m_listE0.
-            void fn_71002907A0(const Key& key);
-            void fn_71002908DC(const Key& key);
-            mm::mtl::FixedVector<Entry38, 26> m_list38;
-            mm::mtl::FixedVector<EntryE0, 422> m_listE0;
-        };
-        // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code in unit_710028EBB0's range). A
-        // member: fn_7100291E40 calls it on the record with the challenge id. What it does: clears the record and
-        // fills its header from GfBdatBtl's row for the id.
-        void setupMenuInfoForChBtl(unsigned int id);
-        Lists m_lists;
-        float m_ratios[3];
-        Rule m_rule;
-        Rule getRule() const { return m_rule; }
-        int m_valueAE8;
-        bool m_flagAEC;
-    };
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in
-    // gf_game_manager's unit among GfGameManager's functions and takes no instance. What it does: when the instance
-    // the pointer at 0x7100B94428 holds exists, has gf_game_arena's fn_7100291E40 fill the record for the id and
-    // mode it is given and returns true; false otherwise. gf_menu_btlch_adapter's callbacks pass the mode
-    // GfMenuReference::getReferenceBtlchDifficulty answers.
-    static bool fn_71002AC60C(BattleChallengeRecord* record, unsigned int id, unsigned int mode);
+    // 2.0.0's symbols name it. A static member: its code is in gf_game_manager's unit among GfGameManager's functions
+    // and takes no instance. What it does: when the instance the pointer at 0x7100B94428 holds exists, has
+    // GfGameArena::getMenuInfo fill the record for the id and difficulty it is given and returns true; false otherwise.
+    // gf_menu_btlch_adapter's callbacks pass the difficulty GfMenuReference::getReferenceBtlchDifficulty answers.
+    static bool getBattleArenaMenuInfo(ArenaMenuInfo& info, unsigned int id, GFDIFF diff);
     // 2.0.0's symbols name it. What it does: returns the address 0xD8 bytes into the instance the pointer at
     // 0x7100B94428 holds (the one isBattleArenaActive asks); 12 callers (GfMenuBattleAdapter, the battle challenge
     // manager, gf_menu_obj_btl_time, gf_menu_btlch_adapter).
-    static BattleChallengeRecord* getBattleArenaMenuInfo();
+    static ArenaMenuInfo* getBattleArenaMenuInfo();
     // 2.0.0's symbols name it. What it does: when PtrSingleton<GfGameAoc> exists, passes it and its bool to
     // GfGameAoc::setupGame (as GfGameManager::setupGame does); GfManager::resetGameType calls it
     static void resetGameType(bool flag);

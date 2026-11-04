@@ -7,7 +7,7 @@ namespace fw { class UpdateInfo; }
 
 namespace gf {
 // table 0x7100B6AF70 (no RTTI name): a type-0x53 request whose exec passes m_value to GfWeapon's unit's GfGameUtil::addEtherCube (a
-// MsgUnk_1000034 to the arena game mode); create queues it (2.0.0's symbols name the class and create)
+// MsgGameBtlArena to the arena game mode); create queues it (2.0.0's symbols name the class and create)
 class SCOM_ADD_ECUBE : public ::gf::SCOM {
 public:
     explicit SCOM_ADD_ECUBE(int value) : SCOM(SCOM_TYPE(0x53)), m_value(value) {}
