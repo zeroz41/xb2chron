@@ -171,7 +171,7 @@ int Utility::GetDamageAttackerType(gf::GF_OBJ_HANDLE* object, gf::GF_OBJ_HANDLE*
     return isEnemy ? 2 : 0;
 }
 
-void Utility::fn_7100010900(int value) {
+void Utility::PickupEtherCube(int value, gf::GF_OBJ_HANDLE*) {
     ChallengeBattleManager::sys()->AddEtherCube(value);
 }
 
@@ -183,8 +183,8 @@ unsigned int Utility::GetTrustRank(int blade) {
     return gf::GfDataBlade::getTrustRank(blade);
 }
 
-unsigned int Utility::fn_7100010D3C(int blade) {
-    return gf::GfDataBlade::fn_7100237B70(fn_7100011638(blade), fn_710001165C(blade));
+unsigned int Utility::GetIraDummyBladeID(unsigned int blade) {
+    return gf::GfDataBlade::fn_7100237B70(GetIraGroupDriverID(blade), GetIraBladeSlot(blade));
 }
 
 void Utility::FullCoolTime() {
@@ -213,7 +213,7 @@ bool Utility::IsEnableFieldBladeChange() {
     return true;
 }
 
-void Utility::fn_7100010DD8(gf::GF_OBJ_HANDLE* handle, float radius, unsigned char group) {
+void Utility::EntangleEnemy(gf::GF_OBJ_HANDLE* handle, float radius, int group) {
     gf::GfSmnEnemyManager::AbsSmnInfo info;
     info.handle = handle;
     info.flagBit = 0;
@@ -246,7 +246,7 @@ bool Utility::IsForward(gf::GF_OBJ_HANDLE* handle) {
     return false;
 }
 
-int Utility::fn_7100011638(int blade) {
+int Utility::GetIraGroupDriverID(unsigned int blade) {
     switch (blade) {
     case 17: return 17;
     case 18: return 18;
@@ -259,7 +259,7 @@ int Utility::fn_7100011638(int blade) {
     }
 }
 
-int Utility::fn_710001165C(int blade) {
+int Utility::GetIraBladeSlot(unsigned int blade) {
     switch (blade) {
     case 20: return 0;
     case 21: return 1;
@@ -1175,7 +1175,7 @@ void Utility::AI_SetBladeArtsRecastByLevel(gf::GF_OBJ_HANDLE* handle, int level,
     if (!chr) {
         return;
     }
-    if (chr->fn_71000290BC(false)) {
+    if (chr->IsDriver(false)) {
         CharacterParameter* param = chr->GetCharacterParameterConst(true);
         chr = CharacterManager::sys()->GetCharacterConst(param->m_driverHandle);
         if (!chr) {

@@ -217,7 +217,7 @@ void GfGameTarget::selectRight() {
     }
     if (btl::UIManager::get()->pad_bit15) {
         btl::BattleGlobal* global = btl::BattleGlobal::get();
-        if (!global->pad_bit40 || testLockTarget() || global->fn_71000068F8()) {
+        if (!global->pad_bit40 || testLockTarget() || global->IsPlayerAutoOperate()) {
             return;
         }
     }
@@ -236,7 +236,7 @@ void GfGameTarget::selectLeft() {
     }
     if (btl::UIManager::get()->pad_bit15) {
         btl::BattleGlobal* global = btl::BattleGlobal::get();
-        if (!global->pad_bit40 || testLockTarget() || global->fn_71000068F8()) {
+        if (!global->pad_bit40 || testLockTarget() || global->IsPlayerAutoOperate()) {
             return;
         }
     }
@@ -250,7 +250,7 @@ void GfGameTarget::selectLeft() {
 }
 
 void GfGameTarget::startNearTarget() {
-    if (btl::UIManager::get()->pad_bit15 && btl::BattleGlobal::get()->fn_71000068F8()) {
+    if (btl::UIManager::get()->pad_bit15 && btl::BattleGlobal::get()->IsPlayerAutoOperate()) {
         return;
     }
     if (btl::BattleGlobal::get()->IsPause(-1) || GfMenuManager::isOpenCommonWindow()) {
@@ -266,7 +266,7 @@ void GfGameTarget::judgeNearTarget() {
     if (m_nearHold) {
         const Param* param = static_cast<const Param*>(m_paramList->m_entries->m_data);
         if (m_nearTimer < param->m_resetKeyTime) {
-            if (!(btl::UIManager::get()->pad_bit15 && btl::BattleGlobal::get()->fn_71000068F8()) &&
+            if (!(btl::UIManager::get()->pad_bit15 && btl::BattleGlobal::get()->IsPlayerAutoOperate()) &&
                 !btl::BattleGlobal::get()->IsPause(-1) && !GfMenuManager::isOpenCommonWindow()) {
                 m_reqNearTarget = true;
             }

@@ -214,7 +214,7 @@ GfArenaBattle::~GfArenaBattle() {
     }
 }
 
-void GfArenaBattle::fn_710028D128() {
+void GfArenaBattle::execBattleStart(fw::UpdateInfo const&) {
     m_isDone = false;
     pad_A8 = 1;
     while (GfGameManager::isFading(-1)) {
@@ -236,28 +236,28 @@ void GfArenaBattle::fn_710028D128() {
     }
 }
 
-void GfArenaBattle::fn_710028D1CC() {
+void GfArenaBattle::execBattle(fw::UpdateInfo const&) {
     pad_7C = 0;
     pad_98 = true;
     m_isDone = false;
-    gmk::GmkBattleChallenge::s_battleId = m_key.m_id;
+    gmk::GmkBattleChallenge::sm_targetGmkBdatId = m_key.m_id;
     unsigned int mode = GfBdatBtl::get()->getBTL_ChBtlType(m_key.m_id);
     if (pad_7C == 0) {
         if (mode == 3) {
             do {
-                if (m_result == 2 || m_owner->fn_7100291D68()) {
+                if (m_result == 2 || m_owner->isDestroyNow()) {
                     break;
                 }
                 m_owner->sleep(0);
             } while (pad_7C == 0);
         } else {
             do {
-                if (m_result == 2 || m_owner->fn_7100291D68()) {
+                if (m_result == 2 || m_owner->isDestroyNow()) {
                     break;
                 }
-                unsigned int wave = gmk::GmkBattleChallenge::s_state.m_waveIndex;
+                unsigned int wave = gmk::GmkBattleChallenge::sm_battleStatus.m_waveIndex;
                 if (pad_A8 != wave) {
-                    int result = gmk::GmkBattleChallenge::s_state.m_result;
+                    int result = gmk::GmkBattleChallenge::sm_battleStatus.m_result;
                     if (m_context != nullptr || (m_context = GfMenuCallContext::create()) != nullptr) {
                         m_context->reset();
                         GfMenuObjBtlchTelop::OpenParam param;

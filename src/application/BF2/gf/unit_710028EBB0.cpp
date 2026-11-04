@@ -28,7 +28,7 @@ void StateArenaWait::gevMapjump(gf::GEV gev, gf::MapjumpCallbackInfo const& info
     switch (static_cast<int>(gev)) {
     case 1:
         if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
-            if (!arena->fn_7100291DB4() && GfDataMap::getMapID(info.m_mapJumpId) == 0x3A) {
+            if (!arena->isActiveArena() && GfDataMap::getMapID(info.m_mapJumpId) == 0x3A) {
                 MsgUnk_1000034 msg(0xB);
                 static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
             }
@@ -36,7 +36,7 @@ void StateArenaWait::gevMapjump(gf::GEV gev, gf::MapjumpCallbackInfo const& info
         break;
     case 6:
         if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
-            if (arena->fn_7100291DB4()) {
+            if (arena->isActiveArena()) {
                 m_arenaFlagSeen = true;
             }
         }
@@ -44,32 +44,31 @@ void StateArenaWait::gevMapjump(gf::GEV gev, gf::MapjumpCallbackInfo const& info
     }
 }
 
-void StateArenaSetup::fn_710028F3F0(void* owner, ai::State*) {
-    static_cast<GfGameArena*>(owner)->createMapSound();
+void StateArenaSetup::enter(GfGameArena* arena, ai::State*) {
+    arena->createMapSound();
 }
 
-void StateArenaSetup::fn_710028F3F8(void*, ai::State*) {}
+void StateArenaSetup::leave(GfGameArena*, ai::State*) {}
 
-void StateArenaSetup::fn_710028F3FC(void*, void const*) {
+void StateArenaSetup::update(GfGameArena*, fw::UpdateInfo const&) {
     requestState(3);
 }
 
-void StateArenaLeave::fn_710028F444(void* owner, ai::State*) {
-    GfGameArena* arena = static_cast<GfGameArena*>(owner);
+void StateArenaLeave::enter(GfGameArena* arena, ai::State*) {
     arena->m_partySetup->removeFieldBlade();
     arena->destroyMapSound();
 }
 
-void StateArenaLeave::fn_710028F46C(void*, ai::State*) {}
+void StateArenaLeave::leave(GfGameArena*, ai::State*) {}
 
-void StateArenaLeave::fn_710028F470(void*, void const*) {
+void StateArenaLeave::update(GfGameArena*, fw::UpdateInfo const&) {
     requestState(9);
 }
 
 void StateArenaField::gevMapjump(gf::GEV gev, gf::MapjumpCallbackInfo const& info) {
     if (gev == 1) {
         if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
-            if (arena->fn_7100291DB4() && GfDataMap::getMapID(info.m_mapJumpId) != 0x3A) {
+            if (arena->isActiveArena() && GfDataMap::getMapID(info.m_mapJumpId) != 0x3A) {
                 MsgUnk_1000034 msg(0xA);
                 static_cast<fw::MessageObject*>(arena)->recieveMessage(arena, msg);
             }
@@ -77,12 +76,11 @@ void StateArenaField::gevMapjump(gf::GEV gev, gf::MapjumpCallbackInfo const& inf
     }
 }
 
-void StateArenaStartBattle::fn_710028F5F8(void*, ai::State*) {}
+void StateArenaStartBattle::enter(GfGameArena*, ai::State*) {}
 
-void StateArenaStartBattle::fn_710028F5FC(void*, ai::State*) {}
+void StateArenaStartBattle::leave(GfGameArena*, ai::State*) {}
 
-void StateArenaStartBattle::fn_710028F600(void* owner, void const*) {
-    GfGameArena* arena = static_cast<GfGameArena*>(owner);
+void StateArenaStartBattle::update(GfGameArena* arena, fw::UpdateInfo const&) {
     if (arena->m_partySetup->fn_710028E4E8(arena->m_msgObj->m_key)) {
         GfMenuManager::loadBchUI();
         arena->m_msgObj->mapjumpForBattleStart();
@@ -92,14 +90,14 @@ void StateArenaStartBattle::fn_710028F600(void* owner, void const*) {
     }
 }
 
-void StateArenaExecBattle::fn_710028F694(void*, ai::State*) {
+void StateArenaExecBattle::enter(GfGameArena*, ai::State*) {
     btl::Utility::StartChallengeBattleCallback();
 }
 
-void StateArenaExecBattle::fn_710028F698(void*, ai::State*) {}
+void StateArenaExecBattle::leave(GfGameArena*, ai::State*) {}
 
-void StateArenaExecBattle::fn_710028F69C(void* owner, void const* arg) {
-    static_cast<GfGameArena*>(owner)->m_msgObj->fn_710028CFF8(arg);
+void StateArenaExecBattle::update(GfGameArena* arena, fw::UpdateInfo const& info) {
+    arena->m_msgObj->execBattleSequence(info);
     requestState(7);
 }
 
@@ -111,36 +109,34 @@ void StateArenaReturnBattle::gevMapjump(gf::GEV gev, gf::MapjumpCallbackInfo con
     }
 }
 
-void StateArenaResultBattle::fn_710028F738(void* owner, ai::State*) {
-    static_cast<GfGameArena*>(owner)->m_helper->listUpTBox();
-    m_step = &StateArenaResultBattle::fn_710028F770;
+void StateArenaResultBattle::enter(GfGameArena* arena, ai::State*) {
+    arena->m_helper->listUpTBox();
+    m_step = &StateArenaResultBattle::updateStart;
     m_context = GfMenuCallContext::create();
 }
 
-void StateArenaResultBattle::fn_710028F770(void* owner, void const*) {
-    GfGameArena* arena = static_cast<GfGameArena*>(owner);
+void StateArenaResultBattle::updateStart(GfGameArena* arena, fw::UpdateInfo const&) {
     if (arena->m_msgObj->m_result == 2 || arena->m_helper->fn_710028E7DC(arena->m_msgObj->m_score)) {
-        m_step = &StateArenaResultBattle::fn_710028F858;
+        m_step = &StateArenaResultBattle::updateCamera;
     } else {
-        m_step = &StateArenaResultBattle::fn_710028F8D8;
+        m_step = &StateArenaResultBattle::updateFadeWait;
     }
 }
 
-void StateArenaResultBattle::fn_710028F7C4(void*, ai::State*) {
+void StateArenaResultBattle::leave(GfGameArena*, ai::State*) {
     if (m_context != nullptr) {
         m_context->release();
         m_context = nullptr;
     }
 }
 
-void StateArenaResultBattle::fn_710028F830(void* owner, void const* arg) {
+void StateArenaResultBattle::update(GfGameArena* arena, fw::UpdateInfo const& info) {
     if (m_step) {
-        (this->*m_step)(owner, arg);
+        (this->*m_step)(arena, info);
     }
 }
 
-void StateArenaResultBattle::fn_710028F858(void* owner, void const*) {
-    GfGameArena* arena = static_cast<GfGameArena*>(owner);
+void StateArenaResultBattle::updateCamera(GfGameArena* arena, fw::UpdateInfo const&) {
     mm::Mat44 mtx;
     if (arena->m_helper->getActionOrigin(mtx)) {
         mm::Vec3 pos(mtx.m[3][0], mtx.m[3][1], mtx.m[3][2]);
@@ -149,90 +145,86 @@ void StateArenaResultBattle::fn_710028F858(void* owner, void const*) {
     }
     arena->m_helper->playCameraCut01();
     m_timer = 0.5f;
-    m_step = &StateArenaResultBattle::fn_710028FA80;
+    m_step = &StateArenaResultBattle::updateCameraWait;
 }
 
-void StateArenaResultBattle::fn_710028F8D8(void* owner, void const*) {
+void StateArenaResultBattle::updateFadeWait(GfGameArena* arena, fw::UpdateInfo const&) {
     if (!GfGameManager::isFading(static_cast<unsigned int>(-1))) {
-        GfGameArena* arena = static_cast<GfGameArena*>(owner);
-        bool clear = arena->m_msgObj->m_result == 2 || arena->m_helper->fn_710028E7DC(arena->m_msgObj->m_score);
+            bool clear = arena->m_msgObj->m_result == 2 || arena->m_helper->fn_710028E7DC(arena->m_msgObj->m_score);
         if (clear) {
             arena->m_helper->playReturnVoice(arena->m_msgObj->m_result == 2);
-            m_step = &StateArenaResultBattle::fn_710028F964;
+            m_step = &StateArenaResultBattle::updateResult;
         } else {
             arena->m_helper->playReturnVoice(false);
-            m_step = &StateArenaResultBattle::fn_710028F99C;
+            m_step = &StateArenaResultBattle::updateFinish;
         }
     }
 }
 
-void StateArenaResultBattle::fn_710028F964(void*, void const*) {
+void StateArenaResultBattle::updateResult(GfGameArena*, fw::UpdateInfo const&) {
     m_context->reset();
     GfMenuObjSalvage::openBtlchRecord(m_context);
-    m_step = &StateArenaResultBattle::fn_710028F9F0;
+    m_step = &StateArenaResultBattle::updateResultWait;
 }
 
-void StateArenaResultBattle::fn_710028F99C(void* owner, void const*) {
-    static_cast<GfGameArena*>(owner)->m_helper->destroyCameraCut01();
+void StateArenaResultBattle::updateFinish(GfGameArena* arena, fw::UpdateInfo const&) {
+    arena->m_helper->destroyCameraCut01();
     requestState(3);
     m_step = nullptr;
 }
 
-void StateArenaResultBattle::fn_710028F9F0(void*, void const*) {
+void StateArenaResultBattle::updateResultWait(GfGameArena*, fw::UpdateInfo const&) {
     if (m_context->isTerm()) {
-        m_step = &StateArenaResultBattle::fn_710028FA24;
+        m_step = &StateArenaResultBattle::updateTBox;
     }
 }
 
-void StateArenaResultBattle::fn_710028FA24(void* owner, void const*) {
-    GfGameArena* arena = static_cast<GfGameArena*>(owner);
+void StateArenaResultBattle::updateTBox(GfGameArena* arena, fw::UpdateInfo const&) {
     if (arena->m_helper->fn_710028E7DC(arena->m_msgObj->m_score)) {
         arena->m_helper->fn_710028E69C(arena->m_msgObj->m_score);
     } else {
         arena->m_helper->fn_710028E878(arena->m_msgObj->m_score);
     }
     m_timer = 0.5f;
-    m_step = &StateArenaResultBattle::fn_710028FAA8;
+    m_step = &StateArenaResultBattle::updateTBoxWait;
 }
 
-void StateArenaResultBattle::fn_710028FA80(void*, void const* arg) {
-    m_timer -= static_cast<const float*>(arg)[0];
+void StateArenaResultBattle::updateCameraWait(GfGameArena*, fw::UpdateInfo const& info) {
+    m_timer -= info.m_frameTime;
     if (m_timer < 0.0f) {
-        m_step = &StateArenaResultBattle::fn_710028F8D8;
+        m_step = &StateArenaResultBattle::updateFadeWait;
     }
 }
 
-void StateArenaResultBattle::fn_710028FAA8(void*, void const* arg) {
-    m_timer -= static_cast<const float*>(arg)[1];
+void StateArenaResultBattle::updateTBoxWait(GfGameArena*, fw::UpdateInfo const& info) {
+    m_timer -= info.m_deltaTime;
     if (m_timer < 0.0f) {
-        m_step = &StateArenaResultBattle::fn_710028FAD0;
+        m_step = &StateArenaResultBattle::updateUI;
     }
 }
 
-void StateArenaResultBattle::fn_710028FAD0(void* owner, void const*) {
+void StateArenaResultBattle::updateUI(GfGameArena* arena, fw::UpdateInfo const&) {
     m_context->reset();
     GfMenuObjSalvage::ResultParam param;
     param.m_unk2 = 1;
     GfMenuObjSalvage::openResult(m_context, param);
-    GfGameArena* arena = static_cast<GfGameArena*>(owner);
     arena->m_helper->fn_710028EF70(arena->m_msgObj->m_score);
-    m_step = &StateArenaResultBattle::fn_710028FB2C;
+    m_step = &StateArenaResultBattle::updateUIWait;
 }
 
-void StateArenaResultBattle::fn_710028FB2C(void* owner, void const*) {
+void StateArenaResultBattle::updateUIWait(GfGameArena* arena, fw::UpdateInfo const&) {
     if (m_context->isTerm()) {
-        static_cast<GfGameArena*>(owner)->m_helper->destroyCameraCut01();
+        arena->m_helper->destroyCameraCut01();
         m_timer = 0.0f;
-        m_step = &StateArenaResultBattle::fn_710028FB70;
+        m_step = &StateArenaResultBattle::updateReturnCamera;
     }
 }
 
-void StateArenaResultBattle::fn_710028FB70(void* owner, void const* arg) {
-    m_timer += static_cast<const float*>(arg)[1];
+void StateArenaResultBattle::updateReturnCamera(GfGameArena* arena, fw::UpdateInfo const& info) {
+    m_timer += info.m_deltaTime;
     if (m_timer > 1.0f) {
-        GfGameArena* arena = static_cast<GfGameArena*>(owner);
-        arena->m_helper->fn_710028F0A4(arena->m_msgObj->m_score);
-        m_step = &StateArenaResultBattle::fn_710028F99C;
+            arena->m_helper->fn_710028F0A4(arena->m_msgObj->m_score);
+        m_step = &StateArenaResultBattle::updateFinish;
     }
 }
 

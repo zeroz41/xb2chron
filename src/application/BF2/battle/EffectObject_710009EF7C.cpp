@@ -65,7 +65,7 @@ int GROUP_BLADE_DATA::GetTrustRank() const {
     unsigned int blade = m_blade;
     // the original tests bit 3 of the flag unit (tbz w, #3), the bit ButtonChallenge sets as m_challengeAnySuccess
     if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->m_challengeAnySuccess && m_isPlayer) {
-        blade = Utility::fn_7100010D3C(blade);
+        blade = Utility::GetIraDummyBladeID(blade);
     }
     return Utility::GetTrustRank(blade);
 }

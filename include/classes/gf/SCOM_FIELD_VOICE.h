@@ -8,15 +8,15 @@
 
 namespace fw { class UpdateInfo; }
 namespace gf { enum CV_FIELD : int; enum CV_PRIO : int; }  // the field voice's kind and priority
-namespace gf { enum FAVORITE : int; enum CV_RESULT : int; class GAME_VOICE_HANDLE; }
+namespace gf { enum FAVORITE : int; enum CV_RESULT : int; class GAME_VOICE_HANDLE; class GF_SCOM_HANDLE; }
 
 namespace gf {
 // table 0x7100B6B690
 class SCOM_FIELD_VOICE : public ::gf::SCOM {
 public:
-    // the voice names createInPartyForIra and fn_7100569264 pick one of (ml::mtRand(size())); their callers push them on
-    // the stack. mm::mtl::FixedVector of five: fn_7100569264 asserts "index < size()" (FixedVector line 181) and
-    // fn_71005693FC pushes with "size() < capacity()"; the destructor's size clear folds once the callees are
+    // the voice names createInPartyForIra and createDriverForIra pick one of (ml::mtRand(size())); their callers push them on
+    // the stack. mm::mtl::FixedVector of five: createDriverForIra asserts "index < size()" (FixedVector line 181) and
+    // createCraftSuccess pushes with "size() < capacity()"; the destructor's size clear folds once the callees are
     // defined in this unit (their parameter becomes readonly). The typedef name is not the original's.
     typedef ::mm::mtl::FixedVector<const char*, 5> VoiceList;
     // 2.0.0's symbols name it. What it does: when GfGameManager::isGameTypeIra holds, picks a party blade
@@ -130,6 +130,33 @@ public:
     // 32-entry mm::mtl::FixedVector<unsigned short> and returns one picked by ml::mtRand(count), or -1 when none.
     static int fn_71005680B0();
 
+    // 2.0.0's symbols name them. Static members (no request is made; the callers are menu code). What createDriverForIra does: when GfGameManager::isGameTypeIra holds and
+    // blade is a bdat id 0x11..0x19, plays one of names (ml::mtRand(size())) appended to the blade's name (table
+    // 0x7100B6AB50) for the blade (GfGameVoice::playVoiceParty(3, blade, ...)); 0 otherwise (not recovered). The others
+    // pass it fixed lists: createCraftSelect "680101"/"680102" (caller fn_71003BD208), createArtsSetIra "700101".."700103"
+    // (caller GfMenuObjDrArtsSet2::ArtsListListener::reciveEvent), createSkillGetIra "710101".."710103" (caller
+    // GfMenuObjDrKizunaRing::seqSkillAnime).
+    static GAME_VOICE_HANDLE* createDriverForIra(unsigned int blade, const VoiceList& names);
+    static GAME_VOICE_HANDLE* createCraftSelect(unsigned int blade);  // createDriverForIra's voice (fn_71003BD208 keeps it)
+    // 2.0.0's symbols name it (caller GfMenuObjShop::seqWaitExchange): createDriverForIra with "680103" (left out for
+    // blade 0x13 unless GfGameCond::isGameCond(0xE3F)), "680104", "680105".
+    static void createCraftSuccess(unsigned int blade);
+    // 2.0.0's symbols name them (caller GfPouchUtil::updatePouch): for an item of type 10, createDriverForIra with
+    // "690101" (createPouchAutoAdd) / "690103" (createPouchAutoAddFailed) when the item's favorite category is food
+    // (GfDataItem::isFavoriteCategoryFood), else "690102" / "690104"; 0 for other items.
+    static GAME_VOICE_HANDLE* createPouchAutoAdd(unsigned int item, unsigned int blade);
+    static GAME_VOICE_HANDLE* createPouchAutoAddFailed(unsigned int item, unsigned int blade);
+    static void createArtsSetIra(unsigned int blade);
+    static void createSkillGetIra(unsigned int blade);
+    // 2.0.0's symbols name them. createHitonowaGet (code at 0x7100569228): passes createInPartyForIra a stack list of
+    // the two strings "670105" and "670106" (count 2); callers GfMenuObjHitonowa::seqDispResult and fn_7100447D88.
+    // playStop (code at 0x7100566E60): finds the request whose value at +8 is the handle in GfReqSmallCom's list at +8,
+    // else the one at +0x9028, and sets its byte at +0xD3; its one caller is GfGameVoice::playStop (a tail call).
+    // createChangeWeatherIra (0x71005687A4) is not written yet.
+    static void createHitonowaGet();
+    static void playStop(GF_SCOM_HANDLE* handle);
+    static void createChangeWeatherIra();
+
     // true while the voices are to be cut short: 1.0.0 has it out of line (m_stopOnEvent and
     // GfGameManager::isPlayEvent()); 3.0.1's exec inlines it and also tests m_flagD3
     bool isStopVoice() const;
@@ -141,25 +168,6 @@ public:
     bool m_flagD3;
 };
 
-// Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions: they take no this, and their
-// callers are menu code outside any SCOM class. What fn_7100569264 does: when GfGameManager::isGameTypeIra holds and
-// blade is a bdat id 0x11..0x19, plays one of names (ml::mtRand(size())) appended to the blade's name (table
-// 0x7100B6AB50) for the blade (GfGameVoice::playVoiceParty(3, blade, ...)); 0 otherwise (not recovered). The others
-// pass it fixed lists: fn_71005693C0 "680101"/"680102" (caller fn_71003BD208), fn_71005695D0 "700101".."700103"
-// (caller GfMenuObjDrArtsSet2::ArtsListListener::reciveEvent), fn_7100569618 "710101".."710103" (caller
-// GfMenuObjDrKizunaRing::seqSkillAnime).
-GAME_VOICE_HANDLE* fn_7100569264(unsigned int blade, const SCOM_FIELD_VOICE::VoiceList& names);
-GAME_VOICE_HANDLE* fn_71005693C0(unsigned int blade);  // fn_7100569264's voice (fn_71003BD208 keeps it)
-// Placeholder name, as above (caller GfMenuObjShop::seqWaitExchange): fn_7100569264 with "680103" (left out for
-// blade 0x13 unless GfGameCond::isGameCond(0xE3F)), "680104", "680105".
-void fn_71005693FC(unsigned int blade);
-// Placeholder names, as above (caller GfPouchUtil::updatePouch): for an item of type 10, fn_7100569264 with
-// "690101" (fn_71005694C0) / "690103" (fn_7100569548) when the item's favorite category is food
-// (GfDataItem::isFavoriteCategoryFood), else "690102" / "690104"; 0 for other items.
-GAME_VOICE_HANDLE* fn_71005694C0(unsigned int item, unsigned int blade);
-GAME_VOICE_HANDLE* fn_7100569548(unsigned int item, unsigned int blade);
-void fn_71005695D0(unsigned int blade);
-void fn_7100569618(unsigned int blade);
 }  // namespace gf
 
 #endif

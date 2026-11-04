@@ -21,6 +21,10 @@ enum BTL_TUTORIAL_COND {};
 // table 0x7100B3A3E0
 class BattleGlobal : public ::mm::mtl::PtrSingleton< ::btl::BattleGlobal> {
 public:
+    // 2.0.0's symbols name these parameter types; their values are not named
+    enum FUTURE_VIEW_BTN_RESULT_TYPE {};  // FutureViewButtonChllengeResultProc's result (0, 1)
+    enum ATTACK_ONCE_SE_TYPE {};  // EndAttackSE / IsPlayAttackSE (0, 1)
+    enum SE_ONCE_ID {};  // CheckOnceSE's flag index
     BattleGlobal();
     virtual ~BattleGlobal();  // slot 0
     void Initialize();
@@ -71,22 +75,21 @@ public:
     void NotifyShiftTimeOver();
     // 2.0.0's symbols name it. What it does: clears flag bits 40 and 41 (bits 0 and 1 of the byte at 0x83CF).
     void NotifyShiftNone();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: ButtonChallenge passes
+    // 2.0.0's symbols name it. A member: ButtonChallenge passes
     // PtrSingleton<BattleGlobal>::sys(). What it does: tests flag bits at 0x83CE (bits 17 and 18 both set, or bit 3).
     // ButtonChallenge::OpenButtonChallenge skips opening its menu when it holds.
-    bool fn_710000A724();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: as fn_710000A724. What it does:
+    bool IsButtonChallengeAutoSuccess() const;
+    // 2.0.0's symbols name it. A member: as IsButtonChallengeAutoSuccess. What it does:
     // tests bits 1 and 2 of the byte at 0x83D0 both set; ButtonChallenge::OpenButtonChallenge asks it for kinds other than 0.
-    bool fn_71000068F8();
-    // Placeholder name: nothing in 1.0.0's ButtonChallenge::ResultProc names it (no call there). A member: as
-    // fn_710000A724. What it does: ButtonChallenge::ResultProc passes it the challenge id and whether the result was
+    bool IsPlayerAutoOperate() const;
+    // 2.0.0's symbols name it. A member: as
+    // IsButtonChallengeAutoSuccess. What it does: ButtonChallenge::ResultProc passes it the challenge id and whether the result was
     // -1 (failed), for challenges of kind 3.
     // the result is an int switched on (0 and 1): 3.0.1 compares it with 1, then with 0
-    void fn_710000BAE0(int id, int result);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's ai::AiData::isValid makes no call
-    // there). A member: ai::AiData::isValid passes PtrSingleton<BattleGlobal>::sys(). What it does: returns bit 1 of
+    void FutureViewButtonChllengeResultProc(unsigned int id, FUTURE_VIEW_BTN_RESULT_TYPE result);
+    // 2.0.0's symbols name it. A member: ai::AiData::isValid passes PtrSingleton<BattleGlobal>::sys(). What it does: returns bit 1 of
     // the byte at 0x83D0; while it is clear, isValid refuses the party's leader driver (GfGameParty::isLeaderDriver).
-    bool fn_710000A6CC();
+    bool IsValidAutoMode() const;
 
     // One step of an elemental combo (1.0.0's name: GetElementalComboEffectFlagByFlow takes one); the field names
     // are not the original's
@@ -179,27 +182,27 @@ public:
     // clears pad_8374[0-8], then keeps in pad_8374[driver - 17] the last row of BDAT table 1 whose "IrType" is 3 for
     // each "Driver" 17-25
     void InitializeIraTalentArtsID();
-    unsigned short fn_71000053C4(int id) const;  // pad_8374[id - 17]; PlayerParameter::InitializeArtsPalette
+    unsigned short GetIraTalentArtsID(unsigned int id) const;  // pad_8374[id - 17]; PlayerParameter::InitializeArtsPalette
     const ELEMENTAL_COMBO_FLOW_DATA& GetElementalComboFlowDataFast(int id) const;  // the flow entry, no range check
     // the elements (bit element) of the final steps (stage above 2) reachable from step id through the children
     // pad_0[1-8] whose bit is in mask (BattleCharacter::AI_BladeChange), masked by it
-    unsigned int fn_710000540C(int id, unsigned int mask) const;
+    unsigned int GetElementalComboEffectFlag(int id, unsigned int mask) const;
     bool IsFutureView() const;  // pad_5d54 != 0 (13 callers: BattleCharacter input/AI, CheckBattle, ...)
     void ResetBGM();  // clears pad_83b2, sets pad_83b4 to 0xFF (BattleManager::CheckBattle)
     // takes id (a row of BDAT table 0xB1) into pad_83b2 when none is held (pad_83b4 0xFF) or its "Priority" is
     // above the held one's (kept in pad_83b4); whether it took it
     bool SetBGM(unsigned int id);
-    bool fn_710000A7FC(int index) const;  // tests flag index of pad_83b8
-    void fn_710000AC7C(int index);  // clears flag index of pad_83b8
+    bool IsEndTutorialCondition(BTL_TUTORIAL_COND index) const;  // tests flag index of pad_83b8
+    void ClearEndTutorialConditionFlag(BTL_TUTORIAL_COND index);  // clears flag index of pad_83b8
     void SetTutorialBattleFlag(int index);  // sets flag index of pad_83bc
-    bool fn_710000C440(int index);  // sets flag index of pad_83bf; false when it was set already
+    bool CheckOnceSE(SE_ONCE_ID index) const;  // sets flag index of pad_83bf; false when it was set already
     bool IsEndFutureViewCoolTime() const;  // pad_5d60 <= 0
     bool IsFutureViewEnemy(gf::GF_OBJ_HANDLE* handle) const;  // pad_5d54 != 0 and pad_5d48 is handle
     bool IsFutureViewFilter() const;  // pad_5d54 in 3-7
     bool IsKakuseiFinished() const;  // pad_bit18
     bool IsMindEyeFinished() const;  // pad_bit21
     void AddPartyPerfectAvoidNum(bool side, int add);  // adds to pad_83c0[!side], kept in 0-255 (CharacterParameter::SetBuff)
-    bool fn_710000DE34(bool side);
+    bool UsePartyPerfectAvoid(bool side) const;
     void SwitchPlayerAutoOperate();
     // the next ones read pad_5d9c (and do nothing, or answer false) while m_challengeAnySuccess is set
     bool IsOCG() const;  // pad_5d9c != 0
@@ -294,8 +297,8 @@ public:
     int GetFutureViewResult(unsigned int id) const;  // 1 when flag bit 8 is set, else 2 when bit 9 is, else 0
     // 3.0.1's symbols spell these SetDamageRate(unsigned int, float, bool) and Utility::AchieveCondition (1.0.0's
     // positions); their code takes this BattleGlobal, an id and an int (no float) and reads the record's byte at 0x12
-    void fn_710000BD64(unsigned int id, int index);  // clears pad_bit18 (index 0) or pad_bit19 (index 1)
-    bool fn_710000BDD4(unsigned int id, int index) const;  // pad_bit18 (0) or pad_bit19 (1); true otherwise
+    void EndAttackSE(unsigned int id, ATTACK_ONCE_SE_TYPE index);  // clears pad_bit18 (index 0) or pad_bit19 (index 1)
+    bool IsPlayAttackSE(unsigned int id, ATTACK_ONCE_SE_TYPE index) const;  // pad_bit18 (0) or pad_bit19 (1); true otherwise
 
     // every attack accessor's lookup (inline: no copy of its own in either version)
     AttackDamageData* findAttackData(unsigned int id) const {
@@ -349,13 +352,13 @@ public:
     mutable ::mm::mtl::FixedVector<AttackDamageData, 1000> m_attackData;
     // the elemental combo flow, by combo id (the name is not the original's)
     ELEMENTAL_COMBO_FLOW_DATA m_elementalComboFlow[66];
-    // by stage 1-2 and index, what ELEMENTAL_COMBO_FLOW_DATA::fn_71000054F4 returns for an empty step
+    // by stage 1-2 and index, what ELEMENTAL_COMBO_FLOW_DATA::GetNextID returns for an empty step
     unsigned char pad_5bf0[2][9];
-    unsigned char pad_5c02;  // ELEMENTAL_COMBO_FLOW_DATA::fn_71000054F4 reads pad_5bf0 while it is 2
+    unsigned char pad_5c02;  // ELEMENTAL_COMBO_FLOW_DATA::GetNextID reads pad_5bf0 while it is 2
     unsigned char pad_5c03[0x49];
     // EnemyParameter::ApplyStatusEnhance scales every enhanced value by it (the name is not the original's)
     float m_statusEnhanceRate;
-    // the challenge battle unit's fn_7100026D08 returns it; meaning unknown
+    // the challenge battle unit's GetDropEtherCubeRate returns it; meaning unknown
     float pad_5c50;
     unsigned char pad_5c54[0x24];
     // the playing jingle's sound handle, -1 when none plays (IsJinglePlaying; the name is not the original's)
@@ -369,16 +372,16 @@ public:
         unsigned short nbaClear : 1;  // set when the row's "nba" flag is clear
         unsigned char atk;
         unsigned char def;
-        // the constructor's values for every entry (and fn_710000CE5C's guarded static default)
+        // the constructor's values for every entry (and GetMapDriverRevDataByBdatID's guarded static default)
         MapRev() : kizunaCap(1000), artSp(4), nbaClear(true), atk(100), def(100) {}
     };
-    // Placeholder name: GROUP_BLADE_DATA::Initialize passes the party character (1-12) and whether the area's
+    // 2.0.0's symbols name it. GROUP_BLADE_DATA::Initialize passes the party character (1-12) and whether the area's
     // revision applies; m_mapRev's entry for it (nullptr out of range), or a default entry when it does not apply
-    const MapRev* fn_710000CE5C(int chara, bool apply) const;
-    // Placeholder name: DataManager::UpdateProc passes a character and its driver; fn_710000CE5C's entry for the
+    const MapRev* GetMapDriverRevDataByBdatID(int chara, bool apply) const;
+    // 2.0.0's symbols name it. DataManager::UpdateProc passes a character and its driver; GetMapDriverRevDataByBdatID's entry for the
     // character's m_bdatID, applied unless the driver's parameter slot 75 says otherwise, when it is a player
-    // (m_isPlayer) that fn_71000290BC(true) accepts and m_challengeAnySuccess is clear; else nullptr
-    const MapRev* fn_710000CD60(BattleCharacter* chara, BattleCharacter* driver) const;
+    // (m_isPlayer) that IsDriver(true) accepts and m_challengeAnySuccess is clear; else nullptr
+    const MapRev* GetMapDriverRevData(const BattleCharacter* chara, const BattleCharacter* driver) const;
     MapRev m_mapRev[12];
     int m_mapRevAreaId;  // the anti-blade area id m_mapRev was read for (the name is not the original's)
     // the chain count and the narration level it reached (AddChainCount; the names are not the original's)
@@ -417,14 +420,14 @@ public:
     // non-zero while something runs that many BattleCharacter input/AI functions ask about (IsFutureView);
     // IsFutureViewFilter tests it for 3-7
     int pad_5d54;
-    unsigned int pad_5d58;  // an attack record id (fn_710000BAE0 flags that record)
+    unsigned int pad_5d58;  // an attack record id (FutureViewButtonChllengeResultProc flags that record)
     unsigned char pad_5d5c[0x4];
     float pad_5d60;  // IsEndFutureViewCoolTime tests it for <= 0
-    int pad_5d64;  // fn_710000BAE0 acts only for this challenge id
+    int pad_5d64;  // FutureViewButtonChllengeResultProc acts only for this challenge id
     // an arts reference: data type in bits 0-2, arts id above (GetFutureViewArtsData asks DataManager::GetArtsData for it)
     unsigned short pad_5d68;
     unsigned char pad_5d6a[0x4];
-    unsigned char pad_5d6e;  // fn_710000BAE0 sends a menu event once while it is set, then clears it
+    unsigned char pad_5d6e;  // FutureViewButtonChllengeResultProc sends a menu event once while it is set, then clears it
     unsigned char pad_5d6f[0x9];
     unsigned int pad_5d78[3];  // AddOCGDamage adds to an entry, up to 99999999
     unsigned char pad_5d84[0x18];
@@ -441,16 +444,16 @@ public:
     // each normal attack's arts id by [character][weapon][combo step]; row 0 is the default (GetNormalAttackArtsID;
     // the name is not the original's; the meaning of the indices is inferred from 1.0.0's InitializeNormalAttackArtsID)
     unsigned short m_normalAttackArtsID[32][50][3];
-    unsigned short pad_8374[31];  // fn_71000053C4 reads entry id - 17
+    unsigned short pad_8374[31];  // GetIraTalentArtsID reads entry id - 17
     unsigned short pad_83b2;  // the id SetBGM took; ResetBGM clears it
     unsigned char pad_83b4;  // its priority; ResetBGM sets it to 0xFF (none)
     unsigned char m_jingleRequest;  // RequestJingle (the name is not the original's)
     // pause flags by kind, 8 to a byte; IsPause(-1) asks for any (the name is not the original's)
     unsigned char m_pause[2];
-    unsigned char pad_83b8[4];  // flags by index, 8 to a byte (fn_710000A7FC tests, fn_710000AC7C clears)
+    unsigned char pad_83b8[4];  // flags by index, 8 to a byte (IsEndTutorialCondition tests, ClearEndTutorialConditionFlag clears)
     unsigned char pad_83bc[3];  // flags by index, 8 to a byte (SetTutorialBattleFlag sets)
-    unsigned char pad_83bf[1];  // flags by index, 8 to a byte (fn_710000C440 tests and sets)
-    unsigned char pad_83c0[2];  // two counters by side (AddPartyPerfectAvoidNum adds, fn_710000DE34 counts down)
+    mutable unsigned char pad_83bf[1];  // (mutable: 2.0.0's symbols make CheckOnceSE const) flags by index, 8 to a byte (CheckOnceSE tests and sets)
+    mutable unsigned char pad_83c0[2];  // (mutable: 2.0.0's symbols make UsePartyPerfectAvoid const) two counters by side (AddPartyPerfectAvoidNum adds, UsePartyPerfectAvoid counts down)
     unsigned char pad_83c2[0x6];
     // the highest level of an enemy that joined through a link, +15 for a named one (NotifyLinkJoinBattle; the name
     // is not the original's)
@@ -464,7 +467,7 @@ public:
     bool pad_bit1 : 1;
     bool pad_bit2 : 1;
     bool m_challengeAnySuccess : 1;  // ButtonChallenge's results 1-3 (not only 3) achieve its condition 0xC
-    // the rest of the unit: fn_710000A724 reads bits 35, 49 and 50, fn_71000068F8 bits 49 and 50
+    // the rest of the unit: IsButtonChallengeAutoSuccess reads bits 35, 49 and 50, IsPlayerAutoOperate bits 49 and 50
     unsigned char : 2;
     // CharacterManager::PreUpdateProc sets it once an enemy in battle belongs to a quest with an active task
     // (gf::GfQuestUtil::getCurrentEnemyWithEvent; meaning unknown)
@@ -501,7 +504,7 @@ public:
     // Utility::AI_IsKillChild returns it (the name is not the original's)
     bool m_killChild : 1;
     unsigned char : 1;
-    bool pad_bit35 : 1;  // fn_710000A724 holds while it is set
+    bool pad_bit35 : 1;  // IsButtonChallengeAutoSuccess holds while it is set
     unsigned char : 4;
     // GfGameTarget's selectRight/selectLeft change no target while it is clear (the name is not the original's)
     bool pad_bit40 : 1;
@@ -511,7 +514,7 @@ public:
     // set once PlayErrorSE played its sound, which it then does not play again (the name is not the original's)
     bool m_errorSePlayed : 1;
     bool pad_bit48 : 1;
-    bool pad_bit49 : 1;  // fn_710000A6CC returns it; fn_71000068F8 asks for it with pad_bit50
+    bool pad_bit49 : 1;  // IsValidAutoMode returns it; IsPlayerAutoOperate asks for it with pad_bit50
     bool pad_bit50 : 1;
     unsigned char : 3;
     bool pad_bit54 : 1;  // GROUP_DATA::ProgressCoolTime advances the group's own cool time while it is set

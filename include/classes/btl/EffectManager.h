@@ -97,7 +97,7 @@ public:
     // between IsExistChrHitEffect and the destructor and works on m_rates. What it does: adds the value to
     // m_rates[index], clamped to 0..0xFFFF, and sets m_ratesDirty so UpdateProc clears them all next frame.
     // EffectObject::ReturnLinkObj calls it.
-    void fn_710009970C(int index, int value);
+    void AddCircleDamageBonus(int index, int value);
     // 2.0.0's symbols name it. What it does: m_rates[index] / 100 (times 0.01f). BattleCharacter::GetDamageEnhanceRate
     // calls it.
     float GetCircleDamageBonusRate(int index) const;
@@ -107,7 +107,7 @@ public:
     REGISTER_DATA m_registers[30];
     mm::mtl::FixedList<REGISTER_PROC_DATA, 30> m_registerList;
     int m_nextId;  // the next effect's id: 1 first, skips -1 (the name is not the original's)
-    // fn_710009970C's values by index, cleared each frame they changed (the names are not the original's)
+    // AddCircleDamageBonus's values by index, cleared each frame they changed (the names are not the original's)
     unsigned short m_rates[90];
     bool m_ratesDirty;
 };

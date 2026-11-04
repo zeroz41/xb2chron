@@ -174,7 +174,7 @@ public:
     // 0x11768C: the 16 drivers' arts records past the ones their data keeps (GfDataDriver::getDriverWeaponType and
     // getDriverArtsLevel index it like getSDataDriver's m_drivers; the name is not the original's)
     SDataDriverArtsEx m_driverArtsEx[16];
-    // 0x11A8CC: the challenge battle rule table (GfGameArena::fn_7100291CF4 returns it, fn_7100291D14 a rule of
+    // 0x11A8CC: the challenge battle rule table (GfGameArena::getSaveInfo returns it, fn_7100291D14 a rule of
     // it, setupGame / fn_7100291E40 read and mark its rows; the constructor runs its fn_71001528A0; the name is
     // not the original's)
     GfGameArena::RuleTable m_ruleTable;

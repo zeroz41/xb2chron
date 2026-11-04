@@ -85,7 +85,7 @@ void GfGameArena::destroy() {
 }
 
 void GfGameArena::finalize() {
-    while (!fn_7100291CAC()) {
+    while (!isStateDestroy()) {
         GfSleep(1);
     }
     if (m_updater != nullptr) {
@@ -120,37 +120,37 @@ void GfGameArena::fnUpdate(GfGameArena* self) {
     }
 }
 
-bool GfGameArena::fn_7100291CAC() {
+bool GfGameArena::isStateDestroy() const {
     return m_fsm.m_pState->m_stateID == 9;
 }
 
-bool GfGameArena::fn_7100291D54() {
+bool GfGameArena::isBattleNow() const {
     return m_fsm.m_pState->m_stateID == 5;
 }
 
-bool GfGameArena::fn_7100291D68() {
+bool GfGameArena::isDestroyNow() const {
     if (GfManager::isDestroyNow()) {
         return true;
     }
     return m_isEnd;
 }
 
-bool GfGameArena::fn_7100291DA0() {
+bool GfGameArena::isEnableStartBattle() const {
     return m_fsm.m_pState->m_stateID == 3;
 }
 
-bool GfGameArena::fn_7100291DB4() {
+bool GfGameArena::isActiveArena() const {
     return GfGameFlag::getLocal(1, 0xDC0D) != 0;
 }
 
-bool GfGameArena::fn_7100291DD8() {
+bool GfGameArena::isInvalidTutorial() const {
     if (m_msgObj->m_isDone) {
         return true;
     }
     return m_fsm.m_pState->m_stateID == 7;
 }
 
-bool GfGameArena::fn_7100291E00() {
+bool GfGameArena::isPlayEvent() const {
     return m_fsm.m_pState->m_stateID == 8;
 }
 
@@ -158,7 +158,7 @@ void GfGameArena::sleep(unsigned int frames) {
     ml::MicroThread::sys()->sleep(frames, true);
 }
 
-unsigned int GfGameArena::fn_7100291E14(GF_OBJ_HANDLE* handle) {
+unsigned int GfGameArena::getWeaponDamage(GF_OBJ_HANDLE* handle) const {
     return m_partySetup->fn_710028E5BC(m_msgObj->m_key, handle);
 }
 
@@ -198,7 +198,7 @@ void GfGameArena::setupGame() {
     GfDataManager::getDataGame()->m_ruleTable.fn_7100290510(m_ids);
 }
 
-GfGameArena::RuleTable* GfGameArena::fn_7100291CF4() {
+GfGameArena::RuleTable* GfGameArena::getSaveInfo() const {
     return &GfDataManager::getDataGame()->m_ruleTable;
 }
 
@@ -216,7 +216,7 @@ unsigned int GfGameArena::update(const fw::UpdateInfo& info) {
     return GfGameFlag::getLocal(1, 0xDC0D);
 }
 
-bool GfGameArena::fn_71002920F0() {
+bool GfGameArena::isBusy() const {
     return ::mm::mtl::PtrSingleton<GfPlayComStartChallengeBattle>::sys() != nullptr;
 }
 

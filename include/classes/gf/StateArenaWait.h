@@ -32,9 +32,9 @@ public:
     virtual void onLeave(void*, ai::State*) { GfEvent::removeEventCallback(this); }  // slot 4
     virtual void onStep(void* owner, void const*) {  // slot 5
         GfGameArena* arena = static_cast<GfGameArena*>(owner);
-        if (arena->fn_7100291D68()) {
+        if (arena->isDestroyNow()) {
             requestState(9);
-        } else if (arena->fn_7100291DB4() && m_arenaFlagSeen) {
+        } else if (arena->isActiveArena() && m_arenaFlagSeen) {
             requestState(1);
         }
     }

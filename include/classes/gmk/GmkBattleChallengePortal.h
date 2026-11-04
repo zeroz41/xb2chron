@@ -21,27 +21,27 @@ public:
     virtual bool isValid() const;  // slot 3 (fn_71005C3FFC)
     virtual void dispose();  // slot 5 (fn_71005B87E0)
     virtual void update(float);  // slot 6 (fn_71005B896C)
-    virtual void debugDraw() const;  // slot 7 (fn_71005B89E8)
+    virtual void debugDraw() const;  // slot 7 (debugDraw)
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8 (fn_71005B91A0)
     // its bdat row (TGmkList's inline constructor needs Vector<BdatInfo>). The fields are the ones
-    // fn_71005B869C, fn_71005B8E18 and fn_71005B8FA0 read, laid out as GmkNpc::BdatInfo's after its Group and
+    // isPopCommonCondMatched, canPopGobInst and canDepopGobInst read, laid out as GmkNpc::BdatInfo's after its Group and
     // BattleReaction; the size is not read yet and the names are not the original's
     class BdatInfo {
     public:
-        // its row reader: out of line (fn_71005B84D0), called by initGmkBdatInfo (fn_71005D3388) where the template
+        // its row reader: out of line (create), called by initGmkBdatInfo (fn_71005D3388) where the template
         // calls T1::create (so the name is the template's; the CBdatWrapper parameter as GmkElevator::BdatInfo's)
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
         // Placeholder name (new in 3.0.1): its row's pop conditions (scenario flag range, quest state range, time
         // range, game condition), as GmkEvent::BdatInfo::isCondMatched plus the time range
-        bool fn_71005B869C() const;
+        bool isPopCommonCondMatched(const AGmkBase& gmk) const;
         unsigned short m_condition;      // 0x0
         ScenarioFlagCond m_scenarioFlag; // 0x2
         QuestFlagCond m_questFlag;       // 0x6
         TimeCond m_timeRange;            // 0x10
         float m_visibleXZSq;             // 0x20: compared with the interest position's squared XZ distance
         float m_visibleYSq;              // 0x24: likewise its squared Y distance
-        float m_invisibleXZSq;           // 0x28: fn_71005B8FA0's XZ limit
-        float m_invisibleYSq;            // 0x2C: fn_71005B8FA0's Y limit
+        float m_invisibleXZSq;           // 0x28: canDepopGobInst's XZ limit
+        float m_invisibleYSq;            // 0x2C: canDepopGobInst's Y limit
     };
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
     static const gmk::GmkType TYPE = gmk::GmkType(0x3d);
@@ -53,7 +53,7 @@ public:
     unsigned int m_effectHandle0;  // 0x68: disposeGobInst kills or fades it out (the name is not the original's)
     unsigned int m_effectHandle1;  // 0x6c: likewise (the name is not the original's)
     gf::GF_OBJ_HANDLE* m_gob;  // 0x70: dispose destroys it unless it is -1 (the name is not the original's)
-    float m_timer;  // 0x78: fn_71005B90D8 sets it from BDAT table 0x7B's member 0 at row 0x55; seqWait counts it down (the name is not the original's)
+    float m_timer;  // 0x78: seqOpen sets it from BDAT table 0x7B's member 0 at row 0x55; seqWait counts it down (the name is not the original's)
     unsigned char pad_7c[0x4];
 
     // 2.0.0's symbols name them. What it does (step; Vector<GmkBattleChallengePortal>::resize installs it): finds the
@@ -62,24 +62,24 @@ public:
     // What it does: destroys the game object (true: requests SCOM_DESTROY_GAME_OBJ, false: destroys it now) and
     // fades out (true) or kills (false) both effect handles; dispose and onGobEvent do its false case.
     void disposeGobInst(bool);
-    // What it does (called by seqUpdate): pops the game object (fn_71005B8D1C) and plays its effects.
+    // What it does (called by seqUpdate): pops the game object (createEffect) and plays its effects.
     void createGobInst();
-    // What it does: creates the game object and its effects (true from fn_71005B90D8).
-    void fn_71005B8D1C(bool);
+    // What it does: creates the game object and its effects (true from seqOpen).
+    void createEffect(bool);
     // What it does: true when the gimmick should pop its game object (BdatInfo conditions, distance to the
     // interest point).
-    bool fn_71005B8E18();
+    bool canPopGobInst() const;
     // What it does: true when the game object should go (its BdatInfo conditions fail or the interest point is
     // outside the invisible range).
-    bool fn_71005B8FA0();
+    bool canDepopGobInst() const;
     // 2.0.0's symbols name it.
     bool isPopCondMatchedExceptDist() const;
-    // What it does (step): pops (createGobInst) when fn_71005B8E18 says so, else depops (disposeGobInst(true)) when
-    // fn_71005B8FA0 says so.
+    // What it does (step): pops (createGobInst) when canPopGobInst says so, else depops (disposeGobInst(true)) when
+    // canDepopGobInst says so.
     void seqUpdate(float);
-    // What it does (step; GmkElevator::fn_71005B928C installs it): pops the game object (fn_71005B8D1C(true)), plays
+    // What it does (step; GmkElevator::fn_71005B928C installs it): pops the game object (createEffect(true)), plays
     // the map's portal sound (map 0x3A: 2, 9: 0x10, 3: 0xD, else 0) and waits m_timer in seqWait.
-    void fn_71005B90D8(float);
+    void seqOpen(float);
     // What it does (step): nothing (the end step seqWait and GmkElevator::fn_71005B928C install).
     void seqFinish(float);
     // What it does (step): counts m_timer down by dt, then goes to seqFinish.

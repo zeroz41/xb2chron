@@ -12,15 +12,8 @@ namespace btl { class BattleCharacter; }
 namespace fw { class UpdateInfo; }
 
 namespace btl {
-// Placeholder name. A free function: btl::BattleManager::Initialize calls it after DataManager's create. What it
-// does: allocates the unit's ChallengeBattleManager (the new cites "battle/challenge_battle_manager.cpp"), whose PtrSingleton
-// constructor asserts get()==0.
-void fn_71000254E4();
-// Placeholder name. A free function: as fn_71000254E4. What it does: deletes that object; btl::BattleManager::Finalize
-// calls it between BladeArtsManager::Destroy and DataManager's (the reverse of the create order).
-void fn_7100025588();
 
-// table 0x7100B3A9C8 (slot 0 its destructor, which only clears the singleton); 0x30 bytes (fn_71000254E4 allocates
+// table 0x7100B3A9C8 (slot 0 its destructor, which only clears the singleton); 0x30 bytes (Create allocates
 // so many)
 class ChallengeBattleManager : public ::mm::mtl::PtrSingleton< ::btl::ChallengeBattleManager> {
 public:
@@ -28,6 +21,20 @@ public:
         : pad_8(nullptr), pad_10(0.0f), pad_14(0.0f), pad_18(0.0f), pad_1c(0.0f), pad_20(0), pad_22(0), pad_24(0),
           pad_26(0), pad_27(0), pad_28(0), pad_29(4), pad_2a(0), pad_2b(0), pad_2c(0), pad_2d(0) {}
     virtual ~ChallengeBattleManager() {}  // slot 0
+    // 2.0.0's symbols name it. btl::BattleManager::Initialize calls it after DataManager's create. What it
+    // does: allocates the unit's ChallengeBattleManager (the new cites "battle/challenge_battle_manager.cpp"), whose PtrSingleton
+    // constructor asserts get()==0.
+    static void Create();
+    // 2.0.0's symbols name it. What it does: deletes that object; btl::BattleManager::Finalize
+    // calls it between BladeArtsManager::Destroy and DataManager's (the reverse of the create order).
+    static void Destroy();
+    // 2.0.0's symbols name it. btl::BattleManager::update calls it with its update info between
+    // CharacterManager::Update and BladeArtsManager::Update (the managers' static Update(const fw::UpdateInfo&) slot).
+    // What it does: the singleton's UpdateProc(info).
+    static void Update(const fw::UpdateInfo& info);
+    // 2.0.0's symbols name it (a const member that reads no ChallengeBattleManager). What it does: BattleGlobal's pad_5c50
+    // (BattleCharacter::DropItem).
+    float GetDropEtherCubeRate() const;
 
     // 2.0.0's symbols name them. What they do: IsProc: pad_26 != 0 (25 callers: BattleGlobal::PreUpdateProc,
     // BattleManager::CheckBattle, Utility::IsEnableEventStart, ...)
@@ -46,19 +53,19 @@ public:
     bool IsExit() const;
     // 2.0.0's symbols name it. What it does: returns the byte at 0x8 of the .bss object 0x7100EB7DBC (this unused).
     bool IsWaveFinished() const;
-    // fn_7100026C18: pad_24 = value while pad_26 is set (EnemyParameter's SetupBGM passes its BGM id)
-    void fn_7100026C18(unsigned short value);
-    // fn_7100026C28: while pad_26 is set, fn_7100026CBC(BDAT 78's "Score" of id, false), then character's
+    // SetBGMID: pad_24 = value while pad_26 is set (EnemyParameter's SetupBGM passes its BGM id)
+    void SetBGMID(unsigned int value);
+    // AddScoreByID: while pad_26 is set, AddScore(BDAT 78's "Score" of id, false), then character's
     //   DropEtherCubeByScoreID(id) when one is given (BattleCharacter::DeadProc, CharacterParameter::SetElementalComboID)
-    void fn_7100026C28(int id, BattleCharacter* character);
-    // fn_7100026CBC: while pad_26 is set, gf::fn_7100558D28(score) for a score, unless pad_29 is 2 or 3 and not
+    void AddScoreByID(int id, BattleCharacter* character);
+    // AddScore: while pad_26 is set, gf::SCOM_ADD_SCORE::create(score) for a score, unless pad_29 is 2 or 3 and not
     //   always (BattleCharacter::DeadProc)
-    void fn_7100026CBC(int score, bool always);
-    // AddEtherCube: gf::fn_7100558BAC(value) for a value while pad_26 is set
+    void AddScore(int score, bool always);
+    // AddEtherCube: gf::SCOM_ADD_ECUBE::create(value) for a value while pad_26 is set
     void AddEtherCube(int value);
-    // fn_7100026D20: while pad_26 is 160, BtlSystemBalanceAccess's pad_120 less pad_18 (0 when not above 0, -1
-    //   otherwise) and in *flag whether it is at most 5, or not above 0, or below 30% of pad_120
-    float fn_7100026D20(bool* flag) const;
+    // GetWinWalkRestTime: while pad_26 is 160, BtlSystemBalanceAccess's pad_120 less pad_18 (0 when not above 0, -1
+    //   otherwise) and in flag whether it is at most 5, or not above 0, or below 30% of pad_120
+    float GetWinWalkRestTime(bool& flag) const;
     // IsRetryProc: pad_26 is 201 and GfGameManager::isFadeout()
     bool IsRetryProc() const;
     // IsWaveInterval: pad_26 in 100..149
@@ -97,14 +104,6 @@ public:
     unsigned char pad_2d;
 };
 
-// Placeholder name. A free function: btl::BattleManager::update calls it with its update info between
-// CharacterManager::Update and BladeArtsManager::Update (the managers' static Update(const fw::UpdateInfo&) slot).
-// What it does: the singleton's UpdateProc(info).
-void fn_7100025908(const fw::UpdateInfo& info);
-
-// Placeholder name. A free function: it reads no ChallengeBattleManager. What it does: BattleGlobal's pad_5c50
-// (BattleCharacter::DropItem).
-float fn_7100026D08();
 }  // namespace btl
 
 #endif

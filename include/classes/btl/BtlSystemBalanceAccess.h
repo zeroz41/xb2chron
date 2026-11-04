@@ -78,7 +78,7 @@ public:
     // PlayerParameter's slots 45-48 answer them as percentages; meaning unknown
     unsigned short pad_110[4];
     unsigned char pad_118[0x8];
-    // the challenge battle unit's fn_7100026D20 compares its object's float at 0x18 with it; meaning unknown
+    // the challenge battle unit's GetWinWalkRestTime compares its object's float at 0x18 with it; meaning unknown
     unsigned char pad_120;
     // percentages GetTemporaryDamageChangeRate picks by a rate in tenths; meaning unknown
     unsigned char pad_121[0x9];

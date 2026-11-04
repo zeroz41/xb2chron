@@ -134,7 +134,7 @@ public:
     float GetHPRate() const;
     // 2.0.0's symbols name it. What it does: sets m_isNotBlade, while BattleGlobal's m_challengeAnySuccess is set, to
     // IsEnemyParameter() or Utility::IsForward(m_handle), else to the negation of slot 65 (IsBlade(false));
-    // ChainAttackManager::UpdateProc, fn_7100011390 and fn_710009E008 call it.
+    // ChainAttackManager::UpdateProc, SwitchFormationForIra and BladeChangeProc call it.
     void CheckFormationPosition();
     // 2.0.0's symbols name it. What it does: while BattleGlobal's m_challengeAnySuccess is set and IsBuff(29) holds,
     // answers the BDAT 0x11 row 29 "BaseRecast" (u16) times 0.01, else 0; BattleCharacter::ActionCommandRun,
@@ -170,7 +170,7 @@ public:
     void AddPerfectAvoid(int count);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it counts this
     // parameter's pad_5df down. What it does: while pad_5df is not zero, decrements it and answers true; else
-    // answers BattleGlobal::fn_710000DE34(IsPlayerParameter()) (BattleGlobal's per-side counters).
+    // answers BattleGlobal::UsePartyPerfectAvoid(IsPlayerParameter()) (BattleGlobal's per-side counters).
     bool fn_7100081334();
     bool GetBlowRotAxis(mm::Vec3& axis) const;
     bool IsBlowRot() const;
@@ -203,13 +203,13 @@ public:
     virtual void WritebackRecast(btl::GROUP_DATA*);  // slot 19
     virtual unsigned int GetWeakAttributeFlag() const;  // slot 20 (1 << the anti attribute of GetAttribute, 0 for none)
     virtual bool InitializeEnhance() const;  // slot 21
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it; a member as slot 22 of this table.
-    // What it does: does nothing; EnemyParameter's override is fn_7100088A44.
-    virtual void fn_7100088B68();  // slot 22
+    // 2.0.0's symbols name it; a member as slot 22 of this table.
+    // What it does: does nothing; EnemyParameter's override is SetResistantAttr.
+    virtual void SetResistantAttr(int, int, bool);  // slot 22
     virtual bool IsPlayerParameter() const;  // slot 23
     virtual bool IsEnemyParameter() const;  // slot 24
     virtual bool IsInvalidWarp() const;  // slot 25
-    // 2.0.0's symbols name it. What it does: does nothing; EnemyParameter's override is fn_7100088568.
+    // 2.0.0's symbols name it. What it does: does nothing; EnemyParameter's override is UpdateLadyTarget.
     virtual void UpdateLadyTarget();  // slot 26
     // 2.0.0's symbols name it. What it does: returns false; EnemyParameter's returns bit 12 of its flags at 0x8B6.
     virtual bool IsLadyTarget() const;  // slot 27

@@ -9,31 +9,6 @@ namespace gf { class GfReqSmallCom; class SCOM; class GF_SCOM_HANDLE; class GF_O
 namespace fw { class UpdateInfo; }
 
 namespace gf {
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x7100569228, gf_req_scom's unit). A
-// free function: it takes nothing and reads no object. What it does: passes createInPartyForIra a stack list of the two
-// strings "670105" and "670106" (count 2). Callers: GfMenuObjHitonowa::seqDispResult (when the Hitonowa menu's result
-// is closed) and fn_7100447D88.
-void fn_7100569228();
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x710056B988, gf_req_scom's unit). A
-// free function: it reads no object, only its argument. What it does: GfGameVoice::playVoice(6, 0xDC3,
-// table 0x7100B6AD58[row][ml::mtRand(4)], CV_PRIO 3) (rows of four const char*). Caller: GfArenaReward::fn_710028EF70
-// with GfArenaReward::fn_710028E7DC's count.
-void fn_710056B988(unsigned int row);
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x710056B914, gf_req_scom's unit). A
-// free function: it reads only its arguments and PtrSingleton<GfGameArena>'s instance. What it does: when the arena
-// exists, sends it MsgUnk_1000034 type 0x12 with a and b in pad_34 / pad_38 and id in pad_3C (recieveMessage).
-// Caller: btl::ChallengeBattleManager::UpdateProc (0.0, 0.2 and 0x82 or 0x71, as Ghidra reads the call).
-void fn_710056B914(float a, float b, unsigned int id);
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x710056B9CC, gf_req_scom's unit). A
-// free function: it reads only its arguments. What it does: for the first count handles that are valid drivers of
-// BDAT id 1..6 or 9, plays one of two voices (ml::mtRand(2)) from the tables at 0x7100B6ADD8.. (the row picked by
-// flag) through GfGameVoice::playVoice. Caller: GfArenaReward::playReturnVoice (handles of party drivers 0..2).
-void fn_710056B9CC(GF_OBJ_HANDLE* const* handles, unsigned int count, bool flag);
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x7100566E60, gf_req_scom's unit). A
-// free function like its gf_req_scom neighbours: it takes no this, only its argument and GfReqSmallCom's instance.
-// What it does: finds the request whose value at +8 is value in the list at +8, else the one at +0x9028, and sets
-// its byte at +0xD3. Its one caller is GfGameVoice::fn_71002F1F64 (a tail call).
-void fn_7100566E60(long value);
 
 // table 0x7100B6AF20; GfReqManager makes one (0x1B078 bytes, 3.0.1's new) and updates it after its own commands
 class GfReqSmallCom : public ::mm::mtl::PtrSingleton< ::gf::GfReqSmallCom> {
@@ -72,20 +47,5 @@ public:
 };
 }  // namespace gf
 
-namespace gf {
-// Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions: they fill
-// gf/request/gf_req_scom.cpp next to the SCOM_*::create functions, but the requests they make have classes nothing
-// names. What they do: without value -1; else they allocate a 0x20-byte request (fn_7100558D28: table
-// 0x7100B6AFA0, fn_7100558BAC: table 0x7100B6AF70; the new cites "gf/request/gf_req_scom.cpp"), keep value at 0x1C,
-// queue it with a new handle and return the handle. Their only callers are the challenge battle unit's
-// ChallengeBattleManager::fn_7100026CBC / fn_7100026C28 (a BDAT 78 "Score" value) and AddEtherCube.
-unsigned long fn_7100558D28(int value);
-unsigned long fn_7100558BAC(int value);
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x7100558E88, right after
-// fn_7100558D28). A free function: it takes no this. What it does: passes value straight to GfWeapon's unit's
-// fn_71002DA5E4 (a type-0x10 MsgUnk_1000034 to the arena game mode), with no request. Its one caller is the challenge
-// battle unit's UpdateProc (an unsigned value it compares with a GfGameManager::getBattleArenaMenuInfo field).
-void fn_7100558E88(unsigned int value);
-}  // namespace gf
 
 #endif

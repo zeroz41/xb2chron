@@ -158,7 +158,7 @@ void GfMenuObjBlKizunaRing::finalize() {
         m_voice = nullptr;
     }
     if (m_voiceRequest != -1) {
-        GfGameVoice::fn_71002F1F64(m_voiceRequest);
+        GfGameVoice::playStop(reinterpret_cast<GF_SCOM_HANDLE*>(m_voiceRequest));
         m_voiceRequest = -1;
     }
     GfMenuObject::finalize();

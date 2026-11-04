@@ -19,7 +19,7 @@ public:
         unsigned int m_kind : 4;       // whose result it is: 0 an attack, 1 a chain attack turn, 2 an enemy's, 3
                                        // BattleGlobal's; 4 none (IsProc)
         unsigned int : 0;
-        unsigned int m_flag : 16;       // ResultProc passes it (as a bool) to BattleCharacter::fn_710006760C
+        unsigned int m_flag : 16;       // ResultProc passes it (as a bool) to BattleCharacter::GetWeaponAttack
         unsigned int m_stat : 16;       // ResultProc's damage base: 1 the strength, 2 the ether power
         int m_target;                  // the character ResultProc damages
         unsigned char m_character;     // the character that challenges (CharacterManager::GetCharacterConst(int))
@@ -37,8 +37,8 @@ public:
     bool IsEnemyChallengeSuccess();
 
     // 2.0.0's symbols name it. What it does: opens GfMenuObjButtonChallenge2 (its sequence for menu type 0xF9) on a new
-    // or reset m_context, unless BattleGlobal::fn_710000A724 holds (and, for a kind other than 0,
-    // BattleGlobal::fn_71000068F8 too): then it drops m_context and marks the challenge skipped.
+    // or reset m_context, unless BattleGlobal::IsButtonChallengeAutoSuccess holds (and, for a kind other than 0,
+    // BattleGlobal::IsPlayerAutoOperate too): then it drops m_context and marks the challenge skipped.
     void OpenButtonChallenge(const BUTTON_CHALLENGE_PARAM& param);
     // 2.0.0's symbols name it. What it does: plays the result's pad vibration, applies the result by the challenge's
     // kind (damage, the chain attack turn, the enemy's success, BattleGlobal's), plays the narration voice when the

@@ -83,17 +83,17 @@ void ATTACK_REPELLED::Initialize() {
     SetActionID(7);
 }
 
-}  // namespace act_cmd
-
-void ActionCommand::fn_7100027124() {
+void BLADE_GUARD::Initialize() {
     m_type = 5;
     SetActionID(BattleCharacter::ACTION_PUT_OUT_WEAPON);
     SetActionID(BattleCharacter::ACTION_KIZUNA_MAX);
 }
 
-void ActionCommand::fn_7100027140() {
+void CHAIN_IRA_CHANGE::Initialize() {
     m_type = 6;
     SetActionID(BattleCharacter::ACTION_PUT_OUT_WEAPON);
 }
+
+}  // namespace act_cmd
 
 }  // namespace btl

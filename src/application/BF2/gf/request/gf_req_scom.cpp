@@ -120,6 +120,7 @@
 #include "classes/gf/SCOM_BATTLE_ARENA.h"
 #include "classes/gf/SCOM_ADD_ECUBE.h"
 #include "classes/gf/SCOM_ADD_SCORE.h"
+#include "classes/gf/SCOM_CLEAR_TIME.h"
 #include "classes/gf/SCOM_DESTROY_PARTY_OBJ.h"
 #include "gf/GfGameUnit.h"
 #include "classes/gf/GfGameArena.h"
@@ -171,7 +172,7 @@ bool SCOM_ADD_ECUBE::exec(fw::UpdateInfo const&) {
     return true;
 }
 
-unsigned long fn_7100558BAC(int value) {
+unsigned long SCOM_ADD_ECUBE::create(unsigned int value) {
     if (value == 0) {
         return -1;
     }
@@ -185,7 +186,7 @@ bool SCOM_ADD_SCORE::exec(fw::UpdateInfo const&) {
     return true;
 }
 
-unsigned long fn_7100558D28(int value) {
+unsigned long SCOM_ADD_SCORE::create(unsigned int value) {
     if (value == 0) {
         return -1;
     }
@@ -194,7 +195,7 @@ unsigned long fn_7100558D28(int value) {
     return GfReqSmallCom::addRequest(request);
 }
 
-void fn_7100558E88(unsigned int value) {
+void SCOM_CLEAR_TIME::create(unsigned int value) {
     fn_71002DA5E4(value);
 }
 
@@ -530,7 +531,7 @@ unsigned long GfReqSmallCom::addRequestParallel(SCOM* request) {
     return request->m_handle;
 }
 
-unsigned long SCOM_ADD_EXP::fn_71005593AC(unsigned int a0, int a1) {
+unsigned long SCOM_ADD_EXP::createBattleExp(unsigned int a0, unsigned int a1) {
     if (!a0) {
         return -1;
     }
@@ -1833,7 +1834,7 @@ void SCOM_ACHIEV_INC::createCrystal() {
     }
 }
 
-void fn_7100566168() {
+void SCOM_ACHIEV_INC::createOverKill() {
     mm::mtl::FixedVector<unsigned short, 422> blades;
     GfDataBlade::getListParty(blades);
     if (GfAchievManager* manager = GfAchievManager::sys()) {
@@ -1841,7 +1842,7 @@ void fn_7100566168() {
     }
 }
 
-void fn_71005661C0(unsigned int value) {
+void SCOM_ACHIEV_INC::createCbCube(unsigned int value) {
     if (!GfGameManager::isInstalledBattleArenaContents()) {
         return;
     }
@@ -1853,7 +1854,7 @@ void fn_71005661C0(unsigned int value) {
     }
 }
 
-void fn_71005663BC() {
+void SCOM_ACHIEV_INC::createKizunaTalk() {
     unsigned int count = 0;
     for (int i = 1; i <= 100; ++i) {
         if (GfGameFlag::getLocal(2, i) == 2) {
@@ -1865,7 +1866,7 @@ void fn_71005663BC() {
     GfDataAchievement::addTotalCount(75, count);
 }
 
-void fn_7100566424(unsigned int type) {
+void SCOM_ACHIEV_INC::createTiger(unsigned int type) {
     mm::mtl::FixedVector<unsigned short, 422> blades;
     GfDataBlade::getListParty(blades);
     if (GfAchievManager* manager = GfAchievManager::sys()) {
@@ -1873,7 +1874,7 @@ void fn_7100566424(unsigned int type) {
     }
 }
 
-void fn_7100566480(GF_OBJ_HANDLE* handle) {
+void SCOM_ACHIEV_INC::createDriverCombo2(GF_OBJ_HANDLE* handle) {
     if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) && handle != GfGameManager::getPartyLeaderDriver()) {
         return;
     }
@@ -1886,7 +1887,7 @@ void fn_7100566480(GF_OBJ_HANDLE* handle) {
     }
 }
 
-void fn_71005664E8(GF_OBJ_HANDLE* handle) {
+void SCOM_ACHIEV_INC::createDriverCombo4(GF_OBJ_HANDLE* handle) {
     if (handle != reinterpret_cast<GF_OBJ_HANDLE*>(-1) && handle != GfGameManager::getPartyLeaderDriver()) {
         return;
     }
@@ -1899,7 +1900,7 @@ void fn_71005664E8(GF_OBJ_HANDLE* handle) {
     }
 }
 
-void fn_7100566550() {
+void SCOM_ACHIEV_INC::createBladeCombo2(GF_OBJ_HANDLE*) {
     if (!GfQuestInfo::isQuestOrder(0x8F3)) {
         return;
     }
@@ -1909,7 +1910,7 @@ void fn_7100566550() {
     }
 }
 
-void fn_7100566594() {
+void SCOM_ACHIEV_INC::createBladeCombo3(GF_OBJ_HANDLE*) {
     if (!GfQuestInfo::isQuestOrder(0x8F6)) {
         return;
     }
@@ -1919,7 +1920,7 @@ void fn_7100566594() {
     }
 }
 
-void fn_71005665D8() {
+void SCOM_ACHIEV_INC::createFusionCombo(GF_OBJ_HANDLE*) {
     if (!GfQuestInfo::isQuestOrder(0x8F9)) {
         return;
     }
@@ -2078,8 +2079,8 @@ static SCOM* findRequest(unsigned long handle) {
     return nullptr;
 }
 
-void fn_7100566E60(long value) {
-    if (SCOM_FIELD_VOICE* request = static_cast<SCOM_FIELD_VOICE*>(findRequest(value))) {
+void SCOM_FIELD_VOICE::playStop(GF_SCOM_HANDLE* handle) {
+    if (SCOM_FIELD_VOICE* request = static_cast<SCOM_FIELD_VOICE*>(findRequest(reinterpret_cast<unsigned long>(handle)))) {
         request->m_flagD3 = true;
     }
 }
@@ -2504,14 +2505,14 @@ void SCOM_FIELD_VOICE::createQuestCompleteIra() {
     createInPartyForIra(names);
 }
 
-void fn_7100569228() {
+void SCOM_FIELD_VOICE::createHitonowaGet() {
     SCOM_FIELD_VOICE::VoiceList names;
     names.push_back("670105");
     names.push_back("670106");
     SCOM_FIELD_VOICE::createInPartyForIra(names);
 }
 
-GAME_VOICE_HANDLE* fn_7100569264(unsigned int blade, const SCOM_FIELD_VOICE::VoiceList& names) {
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createDriverForIra(unsigned int blade, const VoiceList& names) {
     if (!GfGameManager::isGameTypeIra() || blade - 0x11 > 8) {
         return nullptr;
     }
@@ -2520,14 +2521,14 @@ GAME_VOICE_HANDLE* fn_7100569264(unsigned int blade, const SCOM_FIELD_VOICE::Voi
     return GfGameVoice::playVoiceParty(3, blade, name.m_str, CV_PRIO(3));
 }
 
-GAME_VOICE_HANDLE* fn_71005693C0(unsigned int blade) {
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createCraftSelect(unsigned int blade) {
     SCOM_FIELD_VOICE::VoiceList names;
     names.push_back("680101");
     names.push_back("680102");
-    return fn_7100569264(blade, names);
+    return createDriverForIra(blade, names);
 }
 
-GAME_VOICE_HANDLE* fn_71005694C0(unsigned int item, unsigned int blade) {
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createPouchAutoAdd(unsigned int item, unsigned int blade) {
     if (GfDataItem::getItemType(item) == 10) {
         unsigned int category = GfBdatItem::sys()->getFavoriteCategory(item);
         SCOM_FIELD_VOICE::VoiceList names;
@@ -2536,12 +2537,12 @@ GAME_VOICE_HANDLE* fn_71005694C0(unsigned int item, unsigned int blade) {
         } else {
             names.push_back("690102");
         }
-        return fn_7100569264(blade, names);
+        return createDriverForIra(blade, names);
     }
     return nullptr;
 }
 
-GAME_VOICE_HANDLE* fn_7100569548(unsigned int item, unsigned int blade) {
+GAME_VOICE_HANDLE* SCOM_FIELD_VOICE::createPouchAutoAddFailed(unsigned int item, unsigned int blade) {
     if (GfDataItem::getItemType(item) == 10) {
         unsigned int category = GfBdatItem::sys()->getFavoriteCategory(item);
         SCOM_FIELD_VOICE::VoiceList names;
@@ -2550,25 +2551,25 @@ GAME_VOICE_HANDLE* fn_7100569548(unsigned int item, unsigned int blade) {
         } else {
             names.push_back("690104");
         }
-        return fn_7100569264(blade, names);
+        return createDriverForIra(blade, names);
     }
     return nullptr;
 }
 
-void fn_71005695D0(unsigned int blade) {
+void SCOM_FIELD_VOICE::createArtsSetIra(unsigned int blade) {
     SCOM_FIELD_VOICE::VoiceList names;
     names.push_back("700101");
     names.push_back("700102");
     names.push_back("700103");
-    fn_7100569264(blade, names);
+    createDriverForIra(blade, names);
 }
 
-void fn_7100569618(unsigned int blade) {
+void SCOM_FIELD_VOICE::createSkillGetIra(unsigned int blade) {
     SCOM_FIELD_VOICE::VoiceList names;
     names.push_back("710101");
     names.push_back("710102");
     names.push_back("710103");
-    fn_7100569264(blade, names);
+    createDriverForIra(blade, names);
 }
 
 unsigned long SCOM_ADD_ETHER::create(int a0) {
@@ -2658,7 +2659,7 @@ bool SCOM_ADD_WP::exec(fw::UpdateInfo const&) {
     return true;
 }
 
-unsigned long SCOM_ADD_WP::fn_71005595B0(unsigned int driver, int a1, unsigned int a2) {
+unsigned long SCOM_ADD_WP::createForBdatid(int driver, int a1, unsigned int a2) {
     if (!a1) {
         return -1;
     }
@@ -2885,7 +2886,7 @@ unsigned long SCOM_BATTLE_ARENA::createLoseStart() {
     return GfReqSmallCom::addRequestParallel(request);
 }
 
-void fn_710056B914(float a, float b, unsigned int id) {
+void SCOM_BATTLE_ARENA::createPlayJingle(unsigned int id, float a, float b) {
     if (GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys()) {
         MsgUnk_1000034 msg(0x12);
         msg.pad_34 = a;
@@ -2903,7 +2904,7 @@ static const char* const s_scoreVoices[4][4] = {
     {"650490109", "650490110", "650490107", "650490108"},
 };
 
-void fn_710056B988(unsigned int row) {
+void SCOM_BATTLE_ARENA::createAfterVoice(unsigned int row) {
     unsigned int index = ml::mtRand(4);
     GfGameVoice::playVoice(6, 0xDC3, s_scoreVoices[row][index], CV_PRIO(3));
 }

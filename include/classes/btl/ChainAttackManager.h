@@ -74,7 +74,7 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it reads this unit's
     // ChainAttackManager (BattleCharacter::AI_Move passes the singleton). What it does: true when the proc state
     // (0x1A00) is 12 or 13.
-    bool fn_7100024A0C() const;
+    bool IsIraChange() const;
     bool IsStopTime() const;
 
     // ElementalComboManager::CreateBreakEffect compares it with its character's handle (meaning unknown)

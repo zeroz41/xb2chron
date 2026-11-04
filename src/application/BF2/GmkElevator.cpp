@@ -306,11 +306,11 @@ static inline const char* getGmkKindName(const char** names, unsigned int type) 
 
 namespace gmk {
 
-// ---- GmkEnemyWave's pop settings reader (placeholder symbol: see its header)
-void GmkEnemyWave::fn_7100581E54(const GmkEnemy& enemy, Entry::PopInfo& info) const {
+// ---- GmkEnemyWaveExtension's pop settings reader
+void GmkEnemyWaveExtension::getWavePopInfo(const GmkEnemy* enemy, WavePopInfo& info) const {
     if (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) {
-        unsigned char* fp = enemy.m_list->getBindedBdatFp();
-        int row = enemy.m_createInfo.m_bdatId;
+        unsigned char* fp = enemy->m_list->getBindedBdatFp();
+        int row = enemy->m_createInfo.m_bdatId;
         info.m_partyFlag = Bdat::getValCheck(fp, "party_flag", row, 1);
         info.m_popPriority = Bdat::getValCheck(fp, "Wpop_Priority", row, 1);
         info.m_popTimerCond = Bdat::getValCheck(fp, "Wpop_TimerCond", row, 2);
@@ -2551,18 +2551,18 @@ void GmkSalvageLocator::onEnemyDead(gf::GF_OBJ_HANDLE*) { pad_f1 = 1; }
 void GmkSalvageLocator::onEnemyHomeToPlayerAccess(gf::GF_OBJ_HANDLE*) { pad_f2 = 1; }
 
 // ---- GmkEnemyWave (GmkEnemyList's wave; placeholder slot symbols: see its header)
-unsigned int fn_71005B3814(const AGmkBase* gmk) {
-    const GmkEnemyWave::Data* data = static_cast<const GmkEnemyWave*>(gmk)->getData();
+unsigned int GmkEnemyWave::getBindedEnemyNum() const {
+    const Data* data = getData();
     return data->m_enemyEnd - data->m_enemyBegin;
 }
 
-GmkEnemy* fn_71005B3824(const AGmkBase* gmk, unsigned int index) {
-    const GmkSet* set = static_cast<const GmkSet*>(gmk->m_list->getCreateInfo().m_param);
+GmkEnemy* GmkEnemyWave::getBindedEnemy(unsigned int index) {
+    const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
     GmkEnemyList* enemies = static_cast<GmkEnemyList*>(set->m_gmkLists[GmkEnemy::TYPE]);
     if (enemies == nullptr) {
         return nullptr;
     }
-    unsigned int enemyIndex = static_cast<const GmkEnemyWave*>(gmk)->getData()->m_enemyBegin + index;
+    unsigned int enemyIndex = getData()->m_enemyBegin + index;
     if (enemies->getInstNum() <= enemyIndex) {
         return nullptr;
     }
@@ -2584,8 +2584,8 @@ static inline bool isGmkListLoading(const IGmkList* list) {
 // step
 void GmkEnemyWave::create(const CreateInfo& info) {
     AGmkBase::create(info);
-    for (unsigned short i = 0; i < fn_71005B3814(this); i++) {
-        GmkEnemy* enemy = fn_71005B3824(this, i);
+    for (unsigned short i = 0; i < getBindedEnemyNum(); i++) {
+        GmkEnemy* enemy = getBindedEnemy(i);
         if (enemy->isValid()) {
             if (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra()) {
                 enemy->m_insts.m_waveFlags |= 2;
@@ -2594,8 +2594,8 @@ void GmkEnemyWave::create(const CreateInfo& info) {
                 (gf::GfGameManager::isInstalledBattleArenaContents() || gf::GfGameManager::isGameTypeIra())) {
                 enemy->m_insts.m_waveFlags |= 1;
             }
-            Entry::PopInfo popInfo;
-            fn_7100581E54(*enemy, popInfo);
+            GmkEnemyWaveExtension::WavePopInfo popInfo;
+            enemy->pad_1d0.getWavePopInfo(enemy, popInfo);
             m_entries.push_back(Entry(enemy, i, popInfo));
         }
     }
@@ -2709,9 +2709,9 @@ void GmkEnemyWaveList::createGmk(void* data) {
 }
 
 // ---- GmkBattleChallenge (GmkEnemyList's battle challenge; placeholder slot symbols: see its header)
-GmkBattleChallenge* GmkBattleChallenge::s_current;
-unsigned int GmkBattleChallenge::s_battleId;
-GmkBattleChallenge::State GmkBattleChallenge::s_state;
+GmkBattleChallenge* GmkBattleChallenge::sm_activeInstance;
+unsigned int GmkBattleChallenge::sm_targetGmkBdatId;
+GmkBattleChallenge::State GmkBattleChallenge::sm_battleStatus;
 
 inline GmkEnemyWave* GmkBattleChallenge::getWave(unsigned int index) const {
     const GmkSet* set = static_cast<const GmkSet*>(m_list->getCreateInfo().m_param);
@@ -2751,16 +2751,16 @@ void GmkBattleChallenge::create(const CreateInfo& info) {
 void GmkBattleChallenge::dispose() {
     m_seq = nullptr;
     m_phantom.dispose();
-    if (s_current == this) {
+    if (sm_activeInstance == this) {
         terminate();
     }
     AGmkBase::dispose();
 }
 
 void GmkBattleChallenge::terminate() {
-    s_state.clear();
-    s_battleId = 0;
-    s_current = nullptr;
+    sm_battleStatus.clear();
+    sm_targetGmkBdatId = 0;
+    sm_activeInstance = nullptr;
 }
 
 void GmkBattleChallenge::update(float dt) {
@@ -2781,11 +2781,11 @@ void GmkBattleChallenge::seqWaitNextWave(float dt) {
     }
 }
 
-void GmkBattleChallenge::fn_71005B7BA0(int) {}
+void GmkBattleChallenge::debugChangeWave(unsigned int) {}
 
 void GmkBattleChallenge::suspend(bool flag) {
-    if (s_current != nullptr) {
-        s_current->suspendAll(flag);
+    if (sm_activeInstance != nullptr) {
+        sm_activeInstance->suspendAll(flag);
     }
 }
 
@@ -2915,7 +2915,7 @@ void GmkBattleChallengeReward::onPlayerAccessed(gf::GF_OBJ_HANDLE*) {
 }
 
 // ---- GmkBattleChallengePortal (placeholder slot symbols: see its header)
-bool GmkBattleChallengePortal::BdatInfo::fn_71005B869C() const {
+bool GmkBattleChallengePortal::BdatInfo::isPopCommonCondMatched(const AGmkBase&) const {
     if (m_scenarioFlag.m_scenarioFlagMax != 0 && !m_scenarioFlag.isMatch()) {
         return false;
     }
@@ -2974,26 +2974,26 @@ void GmkBattleChallengePortal::update(float dt) {
 
 bool GmkBattleChallengePortal::isPopCondMatchedExceptDist() const {
     if (isValid()) {
-        return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo)->fn_71005B869C();
+        return static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo)->isPopCommonCondMatched(*this);
     }
     return false;
 }
 
-bool GmkBattleChallengePortal::fn_71005B8E18() {
+bool GmkBattleChallengePortal::canPopGobInst() const {
     bool result = false;
     if (m_gob == reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         const BdatInfo* info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
-        if (info->fn_71005B869C() && isInsideVisibleDist(*m_pos, info) && !isOutsideInvisibleDist(*m_pos, info)) {
+        if (info->isPopCommonCondMatched(*this) && isInsideVisibleDist(*m_pos, info) && !isOutsideInvisibleDist(*m_pos, info)) {
             result = true;
         }
     }
     return result;
 }
 
-bool GmkBattleChallengePortal::fn_71005B8FA0() {
+bool GmkBattleChallengePortal::canDepopGobInst() const {
     if (m_gob != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1)) {
         const BdatInfo* info = static_cast<const BdatInfo*>(m_createInfo.m_bdatInfo);
-        if (!info->fn_71005B869C() || isOutsideInvisibleDist(*m_pos, info)) {
+        if (!info->isPopCommonCondMatched(*this) || isOutsideInvisibleDist(*m_pos, info)) {
             return true;
         }
     }
@@ -3001,9 +3001,9 @@ bool GmkBattleChallengePortal::fn_71005B8FA0() {
 }
 
 void GmkBattleChallengePortal::seqUpdate(float) {
-    if (fn_71005B8E18()) {
+    if (canPopGobInst()) {
         createGobInst();
-    } else if (fn_71005B8FA0()) {
+    } else if (canDepopGobInst()) {
         disposeGobInst(true);
     }
 }
@@ -3123,13 +3123,13 @@ gmk::GmkType GmkSealedStone::getGmkType() const { return TYPE; }
 void GmkSealedStoneList::create(const IGmkList::CreateInfo& info) {
     TGmkList::create(info);
 #line 641 "D:/Monolithsoft/BF2/prog/application/BF2\\gmk/gmk_sealed_stone/gmk_sealed_stone_impl.h"
-    m_effects = new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) EffectList();
-    m_effects->fn_71005BAA98();
+    m_effects = new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) GmkSealedStoneEnergyEffectManager();
+    m_effects->create();
 }
 
 void GmkSealedStoneList::dispose() {
     if (m_effects != nullptr) {
-        m_effects->fn_71005BAC78();
+        m_effects->dispose();
         if (m_effects != nullptr) {
             delete m_effects;
             m_effects = nullptr;
@@ -3144,9 +3144,9 @@ void GmkSealedStoneList::dispose() {
     TGmkList::dispose();
 }
 
-void GmkSealedStoneList::EffectList::fn_71005BAC78() {
+void GmkSealedStoneEnergyEffectManager::dispose() {
     if (m_entries.size() != 0) {
-        for (Entry& entry : m_entries) {
+        for (EffectInfo& entry : m_entries) {
             mm::mtl::PtrSingleton<fw::EffectManager>::sys()->kill(entry.m_effectHandle);
         }
         m_entries.destroy();
@@ -3994,9 +3994,9 @@ void GmkJump::onGobEvent(gf::IGfObjListener::OBJEVT evt, gf::GF_OBJ_HANDLE* hand
     }
 }
 
-void GmkJump::fn_71005A7770() {
+void GmkJump::onFsSucceeded() const {
     if (gf::GfGameManager::isGameTypeIra() && getBdatInfo()->m_type == 1) {
-        fn_71005A748C();
+        suceededBigJump();
     }
 }
 

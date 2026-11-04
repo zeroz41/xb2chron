@@ -1,6 +1,7 @@
 #include "classes/gf/GfArenaReward.h"
 #include "classes/gf/GfArenaParty.h"
 #include "classes/gf/GfReqSmallCom.h"
+#include "classes/gf/SCOM_BATTLE_ARENA.h"
 #include "classes/gf/GimmickCamera.h"
 #include "classes/fw/CameraManager.h"
 #include "classes/gf/GfBdatBtl.h"
@@ -56,7 +57,7 @@ void GfArenaReward::playCameraCut01() {
 }
 
 void GfArenaReward::fn_710028EF70(const GfArenaBattle::Score& score) {
-    fn_710056B988(fn_710028E7DC(score));
+    SCOM_BATTLE_ARENA::createAfterVoice(fn_710028E7DC(score));
 }
 
 void GfArenaReward::playReturnVoice(bool flag) {
@@ -68,7 +69,7 @@ void GfArenaReward::playReturnVoice(bool flag) {
             ++count;
         }
     }
-    fn_710056B9CC(handles, count != 0, flag);
+    SCOM_BATTLE_ARENA::createReturnVoice(handles, count != 0, flag);
 }
 
 }  // namespace gf

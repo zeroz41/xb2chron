@@ -30,12 +30,12 @@ public:
         GfGameArena* arena = static_cast<GfGameArena*>(owner);
         GfEvent::addEventCallback(this);
         arena->m_partySetup->addFieldBlade();
-        arena->fn_7100291CF4()->fn_7100290598(arena->m_ids);
+        arena->getSaveInfo()->fn_7100290598(arena->m_ids);
     }
     virtual void onLeave(void*, ai::State*) { GfEvent::removeEventCallback(this); }  // slot 4
     virtual void onStep(void* owner, void const*) {  // slot 5
         GfGameArena* arena = static_cast<GfGameArena*>(owner);
-        if (arena->fn_7100291D68()) {
+        if (arena->isDestroyNow()) {
             if (GfGameManager::isMapjump()) {
                 requestState(0);
             } else if (fn_71003214F4(true)) {

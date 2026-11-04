@@ -38,6 +38,7 @@
 #include "gf/GfQuestInfo.h"
 #include "gf/GfGameUtil.h"
 #include "classes/gmk/GmkEnemy.h"
+#include "classes/gmk/GmkEnemyWave.h"
 #include "classes/gf/GfGameManager.h"
 #include "fw/Transform.h"
 #include "plugin/Bdat.h"
@@ -752,7 +753,7 @@ void LocatorGimmick::update() {
         break;
     }
     case 0x3a:
-        if (!gmk::fn_71005B38EC(gmk)) {
+        if (!static_cast<const gmk::GmkEnemyWave*>(gmk)->isPopCondMatched()) {
             return;
         }
         m_pos = *gmk->m_pos;
@@ -781,16 +782,17 @@ void LocatorGimmickEnemyWave::update() {
     int iconId = gmk::getBdatIdOfQuestTargetIcon(GfQuestInfo::isScenarioQuest(m_questId) ? 1 : 3);
     m_iconBdatId = iconId < 0 ? 0x19f : iconId;
     m_posList.clear();
-    const gmk::AGmkBase* gmk = gmk::GmkManager::sys()->findFirstGmkInstByBdatId(gmk::GmkType(0x3a), m_enemyWaveId);
+    gmk::GmkEnemyWave* gmk = static_cast<gmk::GmkEnemyWave*>(
+        gmk::GmkManager::sys()->findFirstGmkInstByBdatId(gmk::GmkType(0x3a), m_enemyWaveId));
     if (gmk == nullptr || !gmk->isValid()) {
         return;
     }
-    if (!gmk->isValid() || !gmk::fn_71005B38EC(gmk)) {
+    if (!gmk->isValid() || !gmk->isPopCondMatched()) {
         return;
     }
-    unsigned int num = gmk::fn_71005B3814(gmk);
+    unsigned int num = gmk->getBindedEnemyNum();
     for (unsigned int i = 0; i != num; i++) {
-        const gmk::GmkEnemy* enemy = gmk::fn_71005B3824(gmk, i);
+        const gmk::GmkEnemy* enemy = gmk->getBindedEnemy(i);
         if (!enemy->isValid()) {
             continue;
         }

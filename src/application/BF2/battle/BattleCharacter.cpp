@@ -780,8 +780,8 @@ int BattleCharacter::GetKizunaStage(float* ratio) const {
     return 3;
 }
 
-void BattleCharacter::fn_710003D114(bool flag0, int slot, bool flag1, float value) {
-    fn_710005F554(~(slot < 0 ? 16 : slot), flag0, flag1, value);
+void BattleCharacter::AddRecast(float value, bool flag0, int slot, bool flag1) {
+    AddSlotRecast(~(slot < 0 ? 16 : slot), value, flag0, flag1);
 }
 
 void BattleCharacter::ForceDeleteEffect() {
@@ -801,7 +801,7 @@ bool BattleCharacter::IsAutoHeal() const {
     return m_isPlayer && !m_isBattle;
 }
 
-bool BattleCharacter::fn_710004232C() {
+bool BattleCharacter::NotifyEnemyAngry(gf::GF_OBJ_HANDLE*) {
     return PlayCustomVoice(7);
 }
 
@@ -837,7 +837,7 @@ float BattleCharacter::GetKizunaMoveSpeedRate() const {
     return Bdat::getValCheckU16(gf::GfDataBdat::getFP(0x33), "MoveSpeedRev", id) * 0.01f;
 }
 
-bool BattleCharacter::fn_7100059314() {
+bool BattleCharacter::IsIraEventGetupEnd() const {
     if (!pad_1076_12) {
         return true;
     }
@@ -869,7 +869,7 @@ void BattleCharacter::StartSirenSpAttack(bool flag, int param) {
     m_actionID = 7;
 }
 
-void BattleCharacter::fn_7100059D54(int param, float value) {
+void BattleCharacter::StartSirenDown(float value, int param) {
     m_actionParam = param;
     m_actionValue = value;
     m_actionID = 10;
@@ -885,7 +885,7 @@ void BattleCharacter::DropEtherCubeByScoreID(int type) {
 }
 
 bool BattleCharacter::CheckRandFriendEnhanceRate(int id) const {
-    float rate = const_cast<BattleCharacter*>(this)->fn_710005F0D8(id, 0, 0);
+    float rate = GetFriendEnhanceRate(id, false, false);
     if (rate <= 0.0f) {
         return false;
     }
@@ -1094,7 +1094,7 @@ void BattleCharacter::ReviveHeal(BattleCharacter* rescuer) {
 }
 
 void BattleCharacter::NotifyGetHateTarget(int, bool flag) {
-    if (IsControlCharacter() && mm::mtl::PtrSingleton<BattleGlobal>::sys()->fn_710000C440(0)) {
+    if (IsControlCharacter() && mm::mtl::PtrSingleton<BattleGlobal>::sys()->CheckOnceSE(BattleGlobal::SE_ONCE_ID(0))) {
         PlaySystemSE(static_cast<BTL_SE>(1), 0x32, true, false);
     }
     if (!flag) {
@@ -1351,7 +1351,7 @@ bool BattleCharacter::fn_7100028D0C(bool flag) {
     return false;
 }
 
-bool BattleCharacter::fn_71000290BC(bool flag) {
+bool BattleCharacter::IsDriver(bool flag) const {
     if (const CharacterParameter* param = GetCharacterParameterConst(false)) {
         return param->IsDriver(flag);
     }
@@ -1418,13 +1418,13 @@ void BattleCharacter::NotifyBuddySufferFightCombo(int, int value) {
     PlayCustomVoice(12);
 }
 
-void BattleCharacter::fn_7100042E30() {
+void BattleCharacter::NotifyElementalCombo(gf::GF_OBJ_HANDLE*, int, bool) {
     if (IsBlade()) {
         PlayCustomVoice(13);
     }
 }
 
-void BattleCharacter::fn_7100042E90() {
+void BattleCharacter::NotifySufferElementalCombo(int, int) {
     if (IsBlade()) {
         PlayCustomVoice(14);
     }
@@ -1462,7 +1462,7 @@ bool BattleCharacter::NotifyBuddyAvoid(int value) {
 
 void BattleCharacter::NotifyBuffStart(int buff, bool playSe) {
     if (buff == 0x1E) {
-        fn_710004315C(1, 1, nullptr, false, nullptr, nullptr, false);
+        SetReaction(1, 1, nullptr, false, nullptr, nullptr, false);
     }
     CreateBuffEffect(buff, true);
     if (!playSe || GetBuffEffectIndex(buff) < 0) {
@@ -1531,7 +1531,7 @@ void BattleCharacter::StartBladeTimer(BLADE_TIMER_MODE mode) {
 }
 
 void BattleCharacter::NotifyAngryStart() {
-    if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->fn_710000C440(6)) {
+    if (mm::mtl::PtrSingleton<BattleGlobal>::sys()->CheckOnceSE(BattleGlobal::SE_ONCE_ID(6))) {
         PlaySE(static_cast<BTL_SE>(1), 0x3C, nullptr, true);
     }
     mm::mtl::PtrSingleton<TalkManager>::sys()->NotifyTrigger(m_voiceIndex, static_cast<TalkManager::TRIGGER>(0x2F), 0,

@@ -123,7 +123,7 @@ public:
     // m_seq's job seqStartGet adds last (not written yet)
     bool seqMoveGet();
     // sets up the list object at m_cursor with m_ids[m_cursor] (dispResult), enables LAY_result's input and its
-    // operation info, clears m_resultDone and calls fn_7100569228
+    // operation info, clears m_resultDone and calls createHitonowaGet
     bool seqDispResult();
     // waits for m_resultDone; then, when m_resultFadeOut is set, slides LAY_result out ("cmn_fade_motion_lr"
     // "fade_out_l") and clears it

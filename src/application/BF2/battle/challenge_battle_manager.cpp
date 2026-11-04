@@ -7,6 +7,7 @@
 #include "classes/btl/BattleCharacter.h"
 #include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfReqSmallCom.h"
+#include "classes/gf/SCOM_ADD_ECUBE.h"
 #include "plugin/Bdat.h"
 #include "classes/btl/BattleGlobal.h"
 #include "classes/btl/BtlSystemBalanceAccess.h"
@@ -17,12 +18,12 @@
 
 namespace btl {
 
-void fn_71000254E4() {
+void ChallengeBattleManager::Create() {
 #line 98
     new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) ChallengeBattleManager;
 }
 
-void fn_7100025588() {
+void ChallengeBattleManager::Destroy() {
     delete ChallengeBattleManager::get();
 }
 
@@ -35,7 +36,7 @@ void ChallengeBattleManager::NotifyStartTelop() {
     pad_1c = 2.75f;
 }
 
-void fn_7100025908(const fw::UpdateInfo& info) {
+void ChallengeBattleManager::Update(const fw::UpdateInfo& info) {
     ChallengeBattleManager::get()->UpdateProc(info);
 }
 
@@ -47,7 +48,7 @@ bool ChallengeBattleManager::IsExit() const {
     return pad_26 > 199;
 }
 
-void ChallengeBattleManager::fn_7100026C18(unsigned short value) {
+void ChallengeBattleManager::SetBGMID(unsigned int value) {
     if (pad_26 != 0) {
         pad_24 = value;
     }
@@ -55,17 +56,17 @@ void ChallengeBattleManager::fn_7100026C18(unsigned short value) {
 
 void ChallengeBattleManager::AddEtherCube(int value) {
     if (value != 0 && pad_26 != 0) {
-        gf::fn_7100558BAC(value);
+        gf::SCOM_ADD_ECUBE::create(value);
     }
 }
 
-float fn_7100026D08() {
+float ChallengeBattleManager::GetDropEtherCubeRate() const {
     return BattleGlobal::get()->pad_5c50;
 }
 
-float ChallengeBattleManager::fn_7100026D20(bool* flag) const {
+float ChallengeBattleManager::GetWinWalkRestTime(bool& flag) const {
     if (pad_26 != 160) {
-        *flag = false;
+        flag = false;
         return -1.0f;
     }
     float limit = BtlSystemBalanceAccess::get()->pad_120;
@@ -80,7 +81,7 @@ float ChallengeBattleManager::fn_7100026D20(bool* flag) const {
     } else {
         low = rest / limit < 0.3f;
     }
-    *flag = rest <= 5.0f || low;
+    flag = rest <= 5.0f || low;
     return rest;
 }
 

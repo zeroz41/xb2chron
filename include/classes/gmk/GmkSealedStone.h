@@ -16,7 +16,7 @@ public:
     virtual gmk::GmkType getGmkType() const;  // slot 2 (fn_71005C41E8)
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4 (fn_71005B9B7C)
     virtual void dispose();  // slot 5 (fn_71005B9BEC)
-    virtual void update(float);  // slot 6 (fn_71005B9D44)
+    virtual void update(float);  // slot 6 (update)
     virtual void debugDraw() const;  // slot 7 (fn_71005BA220)
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8 (fn_71005BA890)
     // its bdat row: complete because TGmkList's inline constructor needs Vector<BdatInfo>; the size is not read
@@ -31,7 +31,7 @@ public:
     // installs seqValidateResHandle, which installs seqUpdate (an empty step).
     void seqValidateResHandle(float);
     void seqUpdate(float);
-    unsigned char pad_48[0x10];  // fields: size from the stride 0x78: Vector<GmkSealedStone>::resize fn_7100637D9C
+    unsigned char pad_48[0x10];  // fields: size from the stride 0x78: Vector<GmkSealedStone>::resize resize
     // 0x58: the step update runs while the gimmick is valid (create installs seqValidateResHandle; the name is not the
     // original's)
     void (GmkSealedStone::*m_seq)(float);

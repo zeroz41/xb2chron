@@ -1188,7 +1188,7 @@ bool GfPlayComMapjumpForLeaveArena::update(const fw::UpdateInfo& info, bool flag
         return true;
     }
     GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys();
-    if (arena && !arena->fn_7100291CAC()) {
+    if (arena && !arena->isStateDestroy()) {
         return false;
     }
     if (m_req == -1) {
@@ -1229,7 +1229,7 @@ GfPlayComMapjumpForBattleMapFromArena* GfPlayComMapjumpForBattleMapFromArena::cr
 bool GfPlayComWaitArenaStateField::update(const fw::UpdateInfo& info, bool flag) {
     if (!flag) {
         GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys();
-        if (arena && !arena->fn_7100291DA0()) {
+        if (arena && !arena->isEnableStartBattle()) {
             return false;
         }
     }
@@ -1738,7 +1738,7 @@ bool GfPlayComScriptTutorialSeq::update(const fw::UpdateInfo& info, bool flag) {
     return !mm::mtl::PtrSingleton<GfReqSmallCom>::sys()->isValid(m_script);
 }
 
-GfPlayComScriptTutorialSeq* GfPlayComScriptTutorialSeq::fn_710031E044(const char* name, int startId) {
+GfPlayComScriptTutorialSeq* GfPlayComScriptTutorialSeq::create(const char* name, unsigned int startId) {
 #line 3922
     return new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfPlayComScriptTutorialSeq(name, startId);
 }

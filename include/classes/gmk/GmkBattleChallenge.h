@@ -73,23 +73,24 @@ public:
     void seqCheckCondition(float dt);
     void seqWaveStart(float dt);
     // 2.0.0's symbols name them. suspendAll (members: its address sits among this class's functions; suspend calls it
-    // on s_current with a bool).
+    // on sm_activeInstance with a bool).
     void suspendAll(bool);
     // seqWaitNextWave (step, next to seqWaveStart's family): counts m_timer down by dt, below 0 goes back to seqWaveStart
     void seqWaitNextWave(float dt);
     // suspend (btl::ChallengeBattleManager::UpdateProc calls it): suspendAll on the running challenge, if any
     static void suspend(bool);
-    // Placeholder name: empty (new in 3.0.1); gf::GfArenaBattle::fn_710028C9CC calls it with s_state's word at +4 plus 1.
+    // 2.0.0's symbols name it. Empty (new in 3.0.1); gf::GfArenaBattle::fn_710028C9CC calls it with sm_battleStatus's word at +4 plus 1.
     // A static member: its address sits between seqWaitNextWave and suspend
-    static void fn_71005B7BA0(int);
-    // terminate: clears s_current, s_battleId and s_state (GfAppendWire's fn_710028D1CC calls it)
+    static void debugChangeWave(unsigned int);
+    // terminate: clears sm_activeInstance, sm_targetGmkBdatId and sm_battleStatus (GfAppendWire's execBattle calls it)
     static void terminate();
-    // the running challenge, set by seqCheckCondition (lbl_7100EB7DB0; the name is not the original's)
-    static GmkBattleChallenge* s_current;
-    // set by GfAppendWire's fn_710028D1CC from its message (lbl_7100EB7DB8; the name is not the original's)
-    static unsigned int s_battleId;
-    // lbl_7100EB7DBC (the name is not the original's)
-    static State s_state;
+    // the running challenge, set by seqCheckCondition (lbl_7100EB7DB0). 2.0.0's symbols name the three statics (in this
+    // order; 2.0.0's sm_battleStatus is 0x10 bytes, 3.0.1's 0x14)
+    static GmkBattleChallenge* sm_activeInstance;
+    // set by GfAppendWire's execBattle from its message (lbl_7100EB7DB8)
+    static unsigned int sm_targetGmkBdatId;
+    // lbl_7100EB7DBC
+    static State sm_battleStatus;
     unsigned char pad_48[0x8];
     GmkPhantom m_phantom;  // 0x50 (the name is not the original's)
     void (GmkBattleChallenge::*m_seq)(float dt);  // 0xE0: create sets seqCheckCondition, dispose clears it (the name is not the original's)
@@ -99,7 +100,7 @@ public:
     bool m_isAccCounted;  // 0xF8: create clears it, seqCheckCondition sets it after counting the access (the name is not the original's)
     bool m_isPaused;  // 0xF9: update skips m_seq when set (the name is not the original's)
     unsigned char pad_fa[0x2];
-    int m_result;  // 0xFC: copied to s_state.m_result (the name is not the original's)
+    int m_result;  // 0xFC: copied to sm_battleStatus.m_result (the name is not the original's)
 };
 }  // namespace gmk
 

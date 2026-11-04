@@ -37,7 +37,7 @@ ButtonChallenge::~ButtonChallenge() {
 }
 
 void ButtonChallenge::OpenButtonChallenge(const BUTTON_CHALLENGE_PARAM& param) {
-    if (!BattleGlobal::sys()->fn_710000A724() || (param.m_kind != 0 && !BattleGlobal::sys()->fn_71000068F8())) {
+    if (!BattleGlobal::sys()->IsButtonChallengeAutoSuccess() || (param.m_kind != 0 && !BattleGlobal::sys()->IsPlayerAutoOperate())) {
         if (m_context != nullptr) {
             m_context->reset();
         } else {

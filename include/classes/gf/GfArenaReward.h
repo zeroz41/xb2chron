@@ -48,7 +48,7 @@ public:
     // fn_710028EF70: plays one of four voices (ml::mtRand(4)) from the table at 0x7100B6AD58, row = fn_710028E7DC's count.
     void fn_710028EF70(const GfArenaBattle::Score& score);
     // playReturnVoice: counts the drivers GfGameParty::getHandleDriver(0..2, 0) gives and passes them, (count != 0)
-    // and flag to fn_710056B9CC.
+    // and flag to createReturnVoice.
     void playReturnVoice(bool flag);
     // fn_710028F0A4: when the score's row has a ClearReward (GfBdatBtl getBTL_ChBtlClearReward), GfFobjDropitem::emitDropitems
     // with that item.

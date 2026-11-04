@@ -76,21 +76,6 @@ public:
 // the gimmick bound to an object, null for none
 AGmkBase* getBindedGmkInst(gf::GF_OBJ_HANDLE* handle);
 class GmkEnemy;
-// Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions because their gimmick's class
-// (GmkType 0x3A, the one gf_field_locator's enemy wave locator finds by its "EnemyWaveID") is not known yet; all three
-// are defined in GmkElevator.cpp's unit and take that gimmick.
-// What fn_71005B38EC does: false unless every entry of its array at 0x148 (0x18 bytes each, count at 0x448) holds a
-// valid gimmick with data at 0x48/0x50, a positive count at 0x58 and a set byte at 0xE2; then its flags at 0x142, or
-// its BdatInfo's conditions (GfGameManager event state, GfGameCond::isGameCond). LocatorGimmick and GfGmkLocator call
-// it too.
-bool fn_71005B38EC(const AGmkBase* gmk);
-// What fn_71005B3814 does: its data's (m_createInfo.m_data) u32 at 0x10 minus its u32 at 0xC: how many enemies
-// fn_71005B3824 can return
-unsigned int fn_71005B3814(const AGmkBase* gmk);
-// What fn_71005B3824 does: the GmkEnemy (0x1D8-byte element) at its data's u32 at 0xC plus index in the enemy list of
-// its list's create info (0x1B8), none when that list is missing or shorter
-// (not const: GmkEnemyWave::create sets its insts' flags through it; the return type is not in the symbol)
-GmkEnemy* fn_71005B3824(const AGmkBase* gmk, unsigned int index);
 // whether the player's object exists (defined in GmkElevator.cpp's unit; StateFieldHome::isCondMatch is its tail
 // call)
 bool isPlayerExist();

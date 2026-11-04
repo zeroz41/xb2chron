@@ -164,7 +164,7 @@ bool AiData::isValid() const {
     if (m_invalid || m_handle == INVALID_HANDLE) {
         return false;
     }
-    if (!btl::BattleGlobal::sys()->fn_710000A6CC() && gf::GfGameParty::isLeaderDriver(m_handle)) {
+    if (!btl::BattleGlobal::sys()->IsValidAutoMode() && gf::GfGameParty::isLeaderDriver(m_handle)) {
         return false;
     }
     gf::GfObjAcc acc(m_handle);

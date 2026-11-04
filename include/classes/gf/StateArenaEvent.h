@@ -3,6 +3,8 @@
 
 #include "classes/ai/State.h"
 #include <new>
+namespace gf { class GfGameArena; }
+namespace fw { class UpdateInfo; }
 #include "classes/gf/IGfEvent.h"
 #include "classes/gf/GfEvent.h"
 
@@ -16,7 +18,7 @@ public:
     static ai::State* create(void* buffer) { return new (buffer) StateArenaEvent; }
     virtual ~StateArenaEvent() {}  // slot 0
     virtual const char* getName() const { return "StateArenaEvent"; }  // slot 2
-    virtual void onEnter(void* owner, ai::State* prev) { fn_710028FBC0(owner, prev); }  // slot 3
+    virtual void onEnter(void* owner, ai::State* prev) { enter(static_cast<GfGameArena*>(owner), prev); }  // slot 3
     virtual void onLeave(void*, ai::State*) { GfEvent::removeEventCallback(this); }  // slot 4
     virtual void onStep(void*, void const*) {  // slot 5
         if (m_playState == 3) {
@@ -26,10 +28,10 @@ public:
     // the key function (defined in the .cpp)
     virtual void gevMapjump(gf::GEV, gf::MapjumpCallbackInfo const&);  // slot 7
     virtual void gevPlayEvent(gf::GEV gev, unsigned int);  // slot 8
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because onEnter tail-calls it
+    // 2.0.0's symbols name it. A member because onEnter tail-calls it
     // with its own arguments. What it does (0x160 bytes, not written yet): adds the state as event callback,
     // reads GfDataDriverArts::getRangeType, fn_710024EB0C, and GfPlayFactory::createMap... play commands.
-    void fn_710028FBC0(void* owner, ai::State* prev);
+    void enter(GfGameArena* arena, ai::State* prev);
 
     // 1/3/2 for GEV 0xC/0xD/0xE (gevPlayEvent); onStep asks for state 4 at 3 (the name is not the original's)
     int m_playState;

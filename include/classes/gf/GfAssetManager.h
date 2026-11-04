@@ -104,7 +104,7 @@ public:
     static GfAssetResource* getResource(GF_ASSET_HANDLE* handle, const char* name);
     // 2.0.0's symbols name it. What it does: whether one of the asset's resource names contains `name`
     // (AssetPackInfo::isExistResourceName), false for an unknown handle. Callers: fn_71002C5208,
-    // GfGameScene::fn_71002C56D4.
+    // GfGameScene::gevAcceParam.
     static bool isExistResourceName(GF_ASSET_HANDLE* handle, const char* name);
 
     // the asset packs' records, one per handle: a handle's low ten bits index them (the name is not the original's)

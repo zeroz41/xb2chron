@@ -18,7 +18,7 @@ public:
     // fn_710028DA08 (placeholder code address; GfGameArena::finalize runs it before freeing the object)
     ~GfArenaParty();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code at 0x710028E5BC, its own unit). A
-    // member: GfGameArena::fn_7100291E14 calls it on the arena's +0xB8 object. What it does: answers the key's
+    // member: GfGameArena::getWeaponDamage calls it on the arena's +0xB8 object. What it does: answers the key's
     // fn_7100290AE4 for the blade of the handle (DataParamAcc(handle).getBlade(-1, false)); it reads nothing of this.
     unsigned int fn_710028E5BC(const GfGameManager::BattleChallengeRecord::Key& key, GF_OBJ_HANDLE* handle);
 
@@ -42,9 +42,9 @@ public:
     // level to the challenge's and copies the list to the arena's record; fn_710028E050 the same for m_listE0
     // (fn_71002908DC, no levels).
     bool fn_710028E3F8(const GfGameManager::BattleChallengeRecord::Key& key);
-    // fn_710028DB70: fades out, keeps the party (GfGameParty::getCurrentPartyInfo into m_party) and changes it to
+    // changePartyForStartBattle: fades out, keeps the party (GfGameParty::getCurrentPartyInfo into m_party) and changes it to
     // the challenge's drivers and blades (GfReqCommand::reqChangeParty).
-    void fn_710028DB70(const GfGameManager::BattleChallengeRecord::Key& key);
+    void changePartyForStartBattle(const GfGameManager::BattleChallengeRecord::Key& key);
     void fn_710028DF1C(const GfGameManager::BattleChallengeRecord::Key& key);
     void fn_710028E050(const GfGameManager::BattleChallengeRecord::Key& key);
     GfGameArena* m_owner;  // (the name is not the original's)

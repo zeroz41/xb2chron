@@ -12,22 +12,21 @@ namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; }
 
 namespace btl {
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function: its unit's class has no name.
-// What it does: allocates the unit's FormationChangeManager (the new cites "battle/formation_change_manager.cpp"), whose
-// PtrSingleton constructor asserts get()==0, then resets it (NotifyMapChange). btl::BattleManager::Initialize calls it
-// after BladeChangeManager::Create.
-void fn_710009D7B8();
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function: as fn_710009D7B8. What it does:
-// deletes that object; btl::BattleManager::Finalize calls it between SpAttackManager::Destroy and BladeChangeManager::Destroy (the reverse of the create order).
-void fn_710009D90C();
 
-// table 0x7100B3BC20 (slot 0 its destructor, which only clears the singleton); 0x2A0 bytes (fn_710009D7B8 allocates
+// table 0x7100B3BC20 (slot 0 its destructor, which only clears the singleton); 0x2A0 bytes (Create allocates
 // so many)
 class FormationChangeManager : public ::mm::mtl::PtrSingleton< ::btl::FormationChangeManager> {
 public:
+    // 2.0.0's symbols name it. What it does: allocates the unit's FormationChangeManager (the new cites "battle/formation_change_manager.cpp"), whose
+    // PtrSingleton constructor asserts get()==0, then resets it (NotifyMapChange). btl::BattleManager::Initialize calls it
+    // after BladeChangeManager::Create.
+    static void Create();
+    // 2.0.0's symbols name it. What it does:
+    // deletes that object; btl::BattleManager::Finalize calls it between SpAttackManager::Destroy and BladeChangeManager::Destroy (the reverse of the create order).
+    static void Destroy();
     // One queued request (the struct's and the fields' names are not the original's): type 1 (RegisterFormationChange) fades
-    // a pair of characters, run by fn_710009DCAC; type 2 (RegisterBladeChange) changes one character's group driver, run
-    // by fn_710009E008. 0x40 bytes (the Vec3 aligns it to 16).
+    // a pair of characters, run by FormationChangeProc; type 2 (RegisterBladeChange) changes one character's group driver, run
+    // by BladeChangeProc. 0x40 bytes (the Vec3 aligns it to 16).
     struct Request {
         Request() { clear(); }
         void clear() {
@@ -58,7 +57,7 @@ public:
         float m_time;                   // time in the step (the update's delta added up)
         unsigned char m_type;           // 1 or 2; 0 unused
         unsigned char m_doneFlags;      // type 1, step 3: bit 0 the first, bit 1 the second character done
-        bool m_flag32;                  // set by SetEnableCancel, tested by fn_710009ED18
+        bool m_flag32;                  // set by SetEnableCancel, tested by IsEnableCancel
         bool m_end;                     // set by ForceExit or when a character left; ends the run
     };
 
@@ -66,26 +65,26 @@ public:
     virtual ~FormationChangeManager();  // slot 0
 
     // 2.0.0's symbols name them. What they do: NotifyMapChange: m_serial = 1 and every request cleared
-    // (BattleManager::gevMapjump; fn_710009D7B8)
+    // (BattleManager::gevMapjump; Create)
     void NotifyMapChange();
     // PreUpdate / Update: BattleManager::update calls them with its UpdateInfo, the first beside the
     //   other managers' PreUpdate (it does nothing), the second beside their Update (singleton's UpdateProc)
     static void PreUpdate(const fw::UpdateInfo& info);
     static void Update(const fw::UpdateInfo& info);
-    // UpdateProc: runs each request by type (fn_710009DCAC / fn_710009E008, given the UpdateInfo's delta) and
+    // UpdateProc: runs each request by type (FormationChangeProc / BladeChangeProc, given the UpdateInfo's delta) and
     //   removes it (the last moves into its place) when the run ends or the type is unknown
     void UpdateProc(const fw::UpdateInfo& info);
-    // fn_710009DCAC / fn_710009E008: one step of a type 1 / type 2 request; true when it ended
-    bool fn_710009DCAC(float delta, Request& request);
-    bool fn_710009E008(float delta, Request& request);
+    // FormationChangeProc / BladeChangeProc: one step of a type 1 / type 2 request; true when it ended
+    bool FormationChangeProc(float delta, Request& request);
+    bool BladeChangeProc(float delta, Request& request);
     // RegisterFormationChange: queues a type 1 request for two battling characters that are not in one already (at most 10)
     bool RegisterFormationChange(gf::GF_OBJ_HANDLE* first, gf::GF_OBJ_HANDLE* second);
     // RegisterBladeChange: queues a type 2 request for a battling character that is not in one already (at most 10)
     bool RegisterBladeChange(gf::GF_OBJ_HANDLE* handle, bool flag);
     // ForceExit / SetEnableCancel: sets m_end / m_flag32 of the request the character is in
     void ForceExit(gf::GF_OBJ_HANDLE* handle);
-    // fn_710009EB1C: the request the character is in, else nullptr
-    Request* fn_710009EB1C(gf::GF_OBJ_HANDLE* handle);
+    // GetBasePos: the request the character is in, else nullptr
+    const Request* GetBasePos(gf::GF_OBJ_HANDLE* handle) const;
     // IsRegister: whether the character is in a request
     bool IsRegister(gf::GF_OBJ_HANDLE* handle) const;
     // IsRegisterGroup: whether a request's m_groupIndex is group
@@ -94,9 +93,9 @@ public:
     bool IsRegisterBladeChange(gf::GF_OBJ_HANDLE* handle) const;
     bool IsRegisterFormationChange(gf::GF_OBJ_HANDLE* handle) const;
     void SetEnableCancel(gf::GF_OBJ_HANDLE* handle);
-    // fn_710009ED18: for the character's request, true when m_flag32 is set, else the character's flag bit at
+    // IsEnableCancel: for the character's request, true when m_flag32 is set, else the character's flag bit at
     //   0x11B3 when IsForward and IsControlCharacterGroup hold; true when it is in none
-    bool fn_710009ED18(gf::GF_OBJ_HANDLE* handle);
+    bool IsEnableCancel(gf::GF_OBJ_HANDLE* handle) const;
 
     Request m_requests[10];
     int m_count;            // requests in use

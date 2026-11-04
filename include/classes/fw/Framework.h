@@ -91,7 +91,7 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0 has no update thread). A member
     // because initialize starts it as the "PosuUpdateThread" thread's entry with &m_postUpdateThread. What it does:
     // until m_threadExit, runs ColiManager::postUpdate while m_threadFlag is set, then waits on m_threadEvent; 0.
-    static unsigned int fn_7100183D34(void* arg);
+    static unsigned int fnThread(void* arg);
     bool finalizeManager();
     void destroyApplet();
     static mtl::ALLOC_HANDLE getMemHandle();  // the memory resources are made in (ResourceManager::getMemSYS)

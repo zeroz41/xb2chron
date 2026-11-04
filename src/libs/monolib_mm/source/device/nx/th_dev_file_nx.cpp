@@ -179,9 +179,7 @@ bool ControllerApplet::showApplet() {
     return result.IsSuccess();
 }
 
-}  // namespace ml
-
-bool fn_7100698EE0(int flag) {
+bool ShopAddOnContentApplet::showApplet(int flag) {
     nn::ApplicationId id;
     if (flag != 0) {
         id.value = 0x0100E95004038000ul;
@@ -192,7 +190,7 @@ bool fn_7100698EE0(int flag) {
     return true;
 }
 
-bool fn_7100698F20(int flag) {
+bool ShopApplicationApplet::showApplet(int flag) {
     nn::ApplicationId id;
     if (flag != 0) {
         id.value = 0x0100E95004038000ul;
@@ -202,8 +200,6 @@ bool fn_7100698F20(int flag) {
     nn::ec::ShowShopApplicationInformation(id);
     return true;
 }
-
-namespace ml {
 
 // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EC7360). The debug draw the statics
 // work on; every user (ml/CacheDraw's code too) reaches it without the GOT, so it is file-static
@@ -1740,7 +1736,7 @@ mm::mtl::FixedVector<LangType, 15>& DevSetting::getLangList(mm::mtl::FixedVector
     list.clear();
     DevSetting* dev = get();
     if (dev != nullptr) {
-        return dev->m_impl->fn_71006AEDA8(list);
+        return dev->m_impl->getLangList(list);
     }
     return list;
 }

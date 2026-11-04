@@ -18,7 +18,7 @@ public:
     virtual bool isValid() const;  // slot 3 (fn_71005C3F50)
     virtual void dispose();  // slot 5 (fn_71005B7DAC)
     virtual void update(float);  // slot 6 (fn_71005B7E18)
-    virtual void debugDraw() const;  // slot 7 (fn_71005B7E80)
+    virtual void debugDraw() const;  // slot 7 (debugDraw)
     virtual void onGobEvent(gf::IGfObjListener::OBJEVT, gf::GF_OBJ_HANDLE*);  // slot 8 (fn_71005B8360)
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9 (fn_71005C3F70)
     // its bdat row: empty (its Vector<BdatInfo>::resize stores nothing; createGmk's stride is 1)
@@ -40,7 +40,7 @@ public:
     float m_timer;  // 0x68: the seq steps add dt to it (the name is not the original's)
     int m_bdatRow;  // 0x6c: the row of BDAT table 0x4D getBdatId_RSC_TboxList/getBdatId_BTL_ChBtlRewardSet read (the name is not the original's)
     int m_index;  // 0x70: those getters read column TresureResource<m_index + 1> / TresureSet<m_index + 1> (the name is not the original's)
-    bool m_isDispOn;  // 0x74: fn_71005B801C shows the game object and activates its collision when set (the name is not the original's)
+    bool m_isDispOn;  // 0x74: validateDisp shows the game object and activates its collision when set (the name is not the original's)
     unsigned char pad_75[0x3];
 
     // 2.0.0's symbols name them. What it does: the u16 column TresureResource<m_index + 1> of BDAT table 0x4D at row
@@ -60,7 +60,7 @@ public:
     void seqWaitPop(float);
     // What it does (caller gmk::fn_71005D3C54): applies m_isDispOn to the game object's display flag 8 and to its
     // GfComBehaviorGmk collision.
-    void fn_71005B801C();
+    void validateDisp();
     // What it does: creates the game object (BDAT columns, setDisp, GfObjSetupGimmick); called by seqWaitPop.
     void createTboxGobInst();
     // What it does (step): once onPlayerAccessed set m_isAccessed, clears m_timer and goes to seqDepopWait.

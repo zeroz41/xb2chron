@@ -517,7 +517,7 @@ bool GfGameScene::isDisableJumpForRide() const {
     return m_rideActive;
 }
 
-bool GfGameScene::fn_71002C4A14() {
+bool GfGameScene::isFullScreenMenuAfter() const {
     return m_frameCount690 < 30;
 }
 
@@ -544,7 +544,7 @@ bool GfGameScene::isBattle() const {
     return scene != nullptr && scene->m_battle;
 }
 
-bool GfGameScene::fn_71002C4B38() {
+bool GfGameScene::isOpenPreciousMenu() const {
     return m_value698 < 2;
 }
 
@@ -566,7 +566,7 @@ void GfGameScene::eventTutorialSequence() {
     }
 }
 
-bool GfGameScene::fn_71002C4BFC() {
+bool GfGameScene::isSepiaFilter() const {
     return m_value68C != 0;
 }
 
@@ -779,7 +779,7 @@ void GfGameScene::playEventSequenceEnd(unsigned int id) {
     if (!GfManager::isExecModeThater()) {
         GfGameUtil::setWatchedEvent(id);
     }
-    fn_71005663BC();
+    SCOM_ACHIEV_INC::createKizunaTalk();
     if (GfGameEvent::getPlayEventId() == 21671) {
         m_flag6A1 = false;
     }
@@ -1035,7 +1035,7 @@ void GfGameScene::updateControlFreeEvent(const fw::UpdateInfo&) {
     // whether the player has free control (written as a lambda: the original's early returns are threaded into the
     // branches; the helper's name, if it had one, is not known)
     bool controlFree = [] {
-        if (GfGameArena::get() != nullptr && GfGameArena::get()->fn_71002920F0()) {
+        if (GfGameArena::get() != nullptr && GfGameArena::get()->isBusy()) {
             return false;
         }
         if (GfPlayComQuestCompleteUI::s_active > 0) {

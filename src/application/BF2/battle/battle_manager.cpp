@@ -27,17 +27,17 @@ void BattleManager::Initialize(const gf::GfSetupParam& param) {
     BtlSystemBalanceAccess::Create();
     CharacterManager::Create();
     DataManager::Create();
-    fn_71000254E4();
+    ChallengeBattleManager::Create();
     BladeArtsManager::Create();
     BladeChangeManager::Create();
-    fn_710009D7B8();
+    FormationChangeManager::Create();
     SpAttackManager::Create();
     ChainAttackManager::Create();
     HateRingManager::Create();
     EffectManager::Create();
     TalkManager::Create();
     UIManager::Create();
-    fn_71000A52CC();
+    SirenBattleManager::Create();
     mm::mtl::Singleton<ai::AiManager>::getPtr()->init();
     m_initialized = true;
     pad_15 = true;
@@ -62,17 +62,17 @@ void BattleManager::destroy() {
 
 void BattleManager::Finalize() {
     mm::mtl::Singleton<ai::AiManager>::getPtr()->destroy();
-    fn_71000A571C();
+    SirenBattleManager::Destroy();
     UIManager::Destroy();
     TalkManager::Destroy();
     EffectManager::Destroy();
     HateRingManager::Destroy();
     ChainAttackManager::Destroy();
     SpAttackManager::Destroy();
-    fn_710009D90C();
+    FormationChangeManager::Destroy();
     BladeChangeManager::Destroy();
     BladeArtsManager::Destroy();
-    fn_7100025588();
+    ChallengeBattleManager::Destroy();
     DataManager::Destroy();
     CharacterManager::Destroy();
     BtlSystemBalanceAccess::Destroy();

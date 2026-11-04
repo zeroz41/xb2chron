@@ -14,7 +14,7 @@ public:
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
     // Placeholder name: nothing in 1.0.0's place names it. A member: it builds this class (type 4, its table) with
     // no object (m_value3 -1); its caller is btl::CharacterManager::AddExpWpSp.
-    static unsigned long fn_71005593AC(unsigned int, int);
+    static unsigned long createBattleExp(unsigned int, unsigned int);
     static unsigned long createInnExp(unsigned int);
 
     // the names are not the original's: what the create functions store (their arguments, in order)

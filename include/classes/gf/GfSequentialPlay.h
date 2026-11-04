@@ -92,10 +92,9 @@ public:
     static void addMiniGame();
     static void addEventFade();
     static void addEvent(int id, unsigned int, unsigned int, bool flag);
-    // Placeholder name: the symbols spelled 1.0.0's addEvent(char const*, unsigned int, unsigned int, bool) here (same
-    // GfPlayFactory callers), but 3.0.1's takes an event id, two values, a BGM name, a position and a time: the name is
-    // withdrawn. What it does: hands them all to GfPlayComEvent::create and adds the command it makes.
-    static void fn_71003227B8(unsigned int id, unsigned int, unsigned int, const char* bgm, const mm::Vec3* pos,
+    // 2.0.0's symbols name it (3.0.1's symbols spelled 1.0.0's addEvent(char const*, unsigned int, unsigned int, bool)
+    // here; same GfPlayFactory callers). What it does: hands them all to GfPlayComEvent::create and adds the command it makes.
+    static void addEvent(int id, unsigned int, unsigned int, const char* bgm, const mm::Vec3* pos,
                               float time);
     static void addPlayerDead(GfPlayerDead dead);
     static void addMenuZone(unsigned int id);
@@ -159,13 +158,13 @@ public:
     static void addMapjumpForBattleMapFromArena(const GfMapjumpInfo& info);
     static void addWaitArenaStateField();
     static void fn_71003226B0(const MsgUnk_1000034::Param& param);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member because it fills
+    // 2.0.0's symbols name it. A static member because it fills
     // GfSequentialPlay's unit after addMenuObjCommonText and does what the add functions do. What it does:
-    // addCommand(GfPlayComScriptTutorialSeq::fn_710031E044(name, startId)); its one caller is
+    // addCommand(GfPlayComScriptTutorialSeq::create(name, startId)); its one caller is
     // GfPlayFactory::createTutorialScript(const char*, unsigned int).
-    static void fn_7100322C64(const char* name, int startId);
+    static void addTutorialScript(const char* name, unsigned int startId);
     // 2.0.0's symbols name it. What it does: addCommand(GfPlayComOpenNpcEntry::create(entries)); its one caller is
-    // GfPlayFactory's fn_7100320D44 (GfMenuManager::gevPlayerControl's), between pushState(6) and popState.
+    // GfPlayFactory's createNpcEntry (GfMenuManager::gevPlayerControl's), between pushState(6) and popState.
     static void addOpenNpcEntry(const mm::mtl::FixedVector<unsigned short, 256>& entries);
     // what GfPlayComPause and GfPlayComState run when they start
     static void pauseOn(unsigned int pause);

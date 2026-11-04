@@ -60,7 +60,7 @@ public:
 
     static mm::mtl::FixedQueue<Info, 16> s_info;
     // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EB6CE8). setIraParty stores its
-    // argument here before create(); GfReqSmallCom's constructor zeroes it; fn_7100560390 reads it.
+    // argument here before create(); GfReqSmallCom's constructor zeroes it; execForIra (0x7100560390, not yet written) reads it.
     static unsigned int s_party;
 
     unsigned char pad_28[0x8];

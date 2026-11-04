@@ -71,7 +71,7 @@ public:
     static GF_OBJ_HANDLE* emitDropgold(unsigned char paramId, unsigned int gold);
     // 2.0.0's symbols name it. What it does: makes the field object of row 30 (paramId picks its "paramid<n>" column,
     // as emitDropgold's) and gives its setup the amount (m_amount, which applyGetItem hands to
-    // btl::Utility::fn_7100010900); returns the object's handle.
+    // btl::Utility::PickupEtherCube); returns the object's handle.
     static GF_OBJ_HANDLE* emitDropEtherCube(unsigned char paramId, unsigned int amount);
     static int getResBdatIdFromItemId(int itemId);
     // drops info's items around info.m_pos; returns the longest appear delay it gave a drop (-1 when there is

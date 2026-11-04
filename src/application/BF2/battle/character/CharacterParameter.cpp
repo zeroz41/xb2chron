@@ -249,7 +249,7 @@ bool CharacterParameter::fn_7100081334() {
         pad_5df -= 1;
         return true;
     }
-    return BattleGlobal::sys()->fn_710000DE34(IsPlayerParameter());
+    return BattleGlobal::sys()->UsePartyPerfectAvoid(IsPlayerParameter());
 }
 
 bool CharacterParameter::GetBlowRotAxis(mm::Vec3& axis) const {

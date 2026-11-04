@@ -79,7 +79,7 @@ enum ENBOOK_TYPE : int;
 void RegisterEnemyBook(ENBOOK_TYPE type, gf::GF_OBJ_HANDLE* handle, int value);
 int AI_GetDeadCharacterNum(gf::GF_OBJ_HANDLE* handle, CHECK_CHR_NUM_MODE mode);
 // 2.0.0's symbols name it. What it does: as AI_GetDeadCharacterNum with GetCharacterList flags 0x64 instead of 0x65
-// (its only caller is fn_7100038984).
+// (its only caller is CheckTalentArtsCondition).
 int AI_GetDeadCharacterNumIncludeNoBattle(gf::GF_OBJ_HANDLE* handle, CHECK_CHR_NUM_MODE mode);
 // read by the btl_ai script plugin (ScriptCamMotion's unit)
 int AI_GetTargetedCharacterID(gf::GF_OBJ_HANDLE* handle);
@@ -106,14 +106,14 @@ bool AI_IsKillChild();
 bool IsPause();
 // 2.0.0's symbols name StartChallengeBattleCallback, EndChallengeBattleCallback, RetryChallengeBattleCallback,
 // ChallengeBattleStartTelopCallback, IsBattleAutoHeal; the fn_ names are placeholders. What they do: call
-// ChallengeBattleManager (the challenge battle singleton) Start (fn_710028F694 calls it), End (fn_710028FFF4), Retry
-// (execAfterBattle), NotifyStartTelop (fn_710028D128), AddEtherCube(value) (GfFobjDropitem::applyGetItem) and
+// ChallengeBattleManager (the challenge battle singleton) Start (enter calls it), End (fn_710028FFF4), Retry
+// (execAfterBattle), NotifyStartTelop (execBattleStart), AddEtherCube(value) (GfFobjDropitem::applyGetItem) and
 // IsEnableAutoHeal (GfGameScene::updateAutoHeal).
 void StartChallengeBattleCallback();
 void EndChallengeBattleCallback();
 void RetryChallengeBattleCallback();
 void ChallengeBattleStartTelopCallback();
-void fn_7100010900(int value);
+void PickupEtherCube(int value, gf::GF_OBJ_HANDLE*);
 bool IsBattleAutoHeal();
 // What it does: BattleCharacter::NotifyDead(msg) on the handle's character when it has one
 // (GfComBehaviorPc::procMsgObjectNotifyDead).
@@ -124,20 +124,20 @@ bool IsEnableEnemyBattle();
 // What it does: BattleCharacter::IsAutoHeal on the handle's character, true without one
 // (GfGameScene::updateAutoHeal).
 bool IsCharacterAutoHeal(gf::GF_OBJ_HANDLE* handle);
-// What they do: fn_7100011638 maps ids 17-23 to a driver (17, 18, 19, 17, 17, 18, 18; else 19), fn_710001165C ids
-// 20-25 to a slot (0, 1, 0, 1, 0, 1; else -1); fn_7100010D3C passes both to GfDataBlade::fn_7100237B70.
+// What they do: GetIraGroupDriverID maps ids 17-23 to a driver (17, 18, 19, 17, 17, 18, 18; else 19), GetIraBladeSlot ids
+// 20-25 to a slot (0, 1, 0, 1, 0, 1; else -1); GetIraDummyBladeID passes both to GfDataBlade::fn_7100237B70.
 // What it does: when the second handle is a battle character, 0 for a non-player, 2 for one of the controlled group,
 // 1 for another; else 2 when the first handle is an enemy object (GfObjUtil::getObjType 5) and 0 otherwise, the
 // other way round when the flag is set (the parameter names are not the original's).
 int GetDamageAttackerType(gf::GF_OBJ_HANDLE* object, gf::GF_OBJ_HANDLE* attacker, bool);
-// 2.0.0's symbols name IsForward; the fn_ names are placeholders. fn_7100010DD8:
-// GfSmnEnemyManager::execAbsSummon({handle, radius, group, 0}) (BattleCharacter::JoinProc, fn_7100009F10). IsForward:
+// 2.0.0's symbols name them. EntangleEnemy:
+// GfSmnEnemyManager::execAbsSummon({handle, radius, group, 0}) (BattleCharacter::JoinProc, BattleEndInitialize). IsForward:
 // whether the handle is the driver of party group 0, 1 or 2 (none for -1; CharacterParameter::PreUpdate,
 // PlayerParameter::Initialize).
-void fn_7100010DD8(gf::GF_OBJ_HANDLE* handle, float radius, unsigned char group);
+void EntangleEnemy(gf::GF_OBJ_HANDLE* handle, float radius, int group);
 bool IsForward(gf::GF_OBJ_HANDLE* handle);
-int fn_7100011638(int blade);
-int fn_710001165C(int blade);
+int GetIraGroupDriverID(unsigned int blade);
+int GetIraBladeSlot(unsigned int blade);
 // What it does: true unless ChallengeBattleManager::IsEnableOperate (true without a challenge battle) holds and IsEnableOperate on
 // the siren battle singleton (lbl_7100B939D0) returns true; PadField's action and axis handlers ignore the pad
 // while it is true (3.0.1's PadField::decideAction etc. call it where 1.0.0's had nothing).
@@ -217,11 +217,11 @@ bool AI_IsEnableTalentArts(gf::GF_OBJ_HANDLE* handle, int);
 int AI_GetBladeBdatID(gf::GF_OBJ_HANDLE* handle);
 // GROUP_BLADE_DATA::Initialize and InitializeCoolTime pass the blade's id
 float GetBladeCoolTime(int blade);
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function of the Utility namespace: it
+// 2.0.0's symbols name it. A free function of the Utility namespace: it
 // sits in Utility's unit among its functions (no this). What it does: maps an id through the tables at
 // 0x71009B5BD0 (ids 17-23) and 0x71009B5BF0 (ids 20-25) to a blade id; GROUP_BLADE_DATA::GetTrustRank passes its
 // blade's id when BattleGlobal::pad_bit35 is set and asks the trust rank of the result.
-unsigned int fn_7100010D3C(int blade);
+unsigned int GetIraDummyBladeID(unsigned int blade);
 }}  // namespace btl::Utility
 
 #endif

@@ -9,6 +9,7 @@
 #include "classes/gf/DataParamAcc.h"
 #include "mm/mtl/FixStr.h"
 #include "classes/gf/GfReqSmallCom.h"
+#include "classes/gf/SCOM_FIELD_VOICE.h"
 
 namespace gf {
 namespace _gfgvo {
@@ -138,8 +139,8 @@ void GfGameVoice::playStop(GAME_VOICE_HANDLE* voice) {
     }
 }
 
-void GfGameVoice::fn_71002F1F64(long voice) {
-    fn_7100566E60(voice);
+void GfGameVoice::playStop(GF_SCOM_HANDLE* voice) {
+    SCOM_FIELD_VOICE::playStop(voice);
 }
 
 void GfGameVoice::gevLayerPause(unsigned int layer, bool pause) {

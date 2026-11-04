@@ -117,7 +117,7 @@ void GfMenuObjMercenaryForm::update() {
             m_seq.clear();
             m_seq.addJob(&GfMenuObjMercenaryForm::seqLeaveBlade);
             if (m_leaveVoice != -1) {
-                GfGameVoice::fn_71002F1F64(m_leaveVoice);
+                GfGameVoice::playStop(reinterpret_cast<GF_SCOM_HANDLE*>(m_leaveVoice));
                 m_leaveVoice = -1;
             }
             m_leaveRequest = false;
@@ -160,7 +160,7 @@ bool GfMenuObjMercenaryForm::seqLeaveBlade() {
         m_leaveRequest = false;
     } else {
         if (m_leaveVoice != -1 && GfMenuObjUtil::isVoiceSkip()) {
-            GfGameVoice::fn_71002F1F64(m_leaveVoice);
+            GfGameVoice::playStop(reinterpret_cast<GF_SCOM_HANDLE*>(m_leaveVoice));
             m_leaveVoice = -1;
         }
         if (!GfMenuObjUtil::isBusyCtrl(GfMenuObjUtil::getCtrlID(image.m_handle))) {

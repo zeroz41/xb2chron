@@ -236,7 +236,7 @@ void ElementalComboManager::CreateBreakEffect(int element) {
     }
     manager->setParam(effect, m_balls[element].m_pos, mm::Vec3::unit);
     if (ChainAttackManager::sys()->IsProc(true) && ChainAttackManager::sys()->pad_8 == m_handle &&
-        BattleGlobal::sys()->fn_710000C440(5)) {
+        BattleGlobal::sys()->CheckOnceSE(BattleGlobal::SE_ONCE_ID(5))) {
         BattleCharacter* chr = CharacterManager::sys()->GetCharacterConst(m_charaID);
         if (chr != nullptr) {
             chr->PlaySE(static_cast<BTL_SE>(1), 0x1F, nullptr, true);

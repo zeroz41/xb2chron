@@ -115,11 +115,11 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its callers
     // (ChainAttackManager::UpdateProc, DataManager::UpdateProc) pass a group, and it sits among GROUP_DATA's
     // functions. What it does: SetBuddyBladeIndex with the index of the blade whose m_blade is blade, -1 for none.
-    void fn_71000A0348(unsigned int blade);
+    void SetIraBuddyBladeIndex(unsigned int blade);
     const GROUP_BLADE_DATA* GetBladeDataConst(int index) const;
     void SetNeedPermit(bool need);  // 1.0.0's name (3.0.1's symbols spell fn_71000A0460)
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member as fn_71000A0348. What it does:
-    // the valid blade whose m_blade is blade, else blade 0 (fn_71000784E0, fn_710009E008 call it).
+    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member as SetIraBuddyBladeIndex. What it does:
+    // the valid blade whose m_blade is blade, else blade 0 (AI_IraFormationChange, BladeChangeProc call it).
     GROUP_BLADE_DATA* fn_71000A03D4(unsigned int blade);
     // 1.0.0's name (its ProgressCoolTime(float) has the same blade loop and stands in the same place, after
     // Update); 3.0.1's symbols spell fn_71000A0F24
@@ -132,7 +132,7 @@ public:
     // 2.0.0's symbols name it. What it does: m_coolTime / m_coolTimeMax, not below 0 (UIManager::UpdateMenuData calls
     // it).
     float GetFormationChangeCoolTimeRate() const;
-    // 2.0.0's symbols name it. What it does: whether m_coolTime reached m_coolTimeMax (fn_71000784E0 calls it).
+    // 2.0.0's symbols name it. What it does: whether m_coolTime reached m_coolTimeMax (AI_IraFormationChange calls it).
     bool IsEndFormationChangeCoolTime() const;
     // 2.0.0's symbols name it. What it does: SetTemporaryDamage(pad_108 + value) (BattleCharacter::NotifyDamage calls
     // it).

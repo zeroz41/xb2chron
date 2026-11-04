@@ -251,7 +251,7 @@ void GfMenuObjCampMenu::CraftListener::reciveEvent(const ui::EventData& event, u
                     GfGameVoice::playStop(m_owner->m_voice);
                     m_owner->m_voice = nullptr;
                 }
-                m_owner->m_voice = fn_71005693C0(driver);
+                m_owner->m_voice = SCOM_FIELD_VOICE::createCraftSelect(driver);
             }
             GfMenuObject::disableInput(acc.m_handle);
             GfMenuObjOperationInfo::remove(acc.m_handle, 0, 0, 0);

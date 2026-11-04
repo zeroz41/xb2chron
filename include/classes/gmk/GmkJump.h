@@ -26,7 +26,7 @@ public:
         bool isPopCondMatched() const;
         unsigned short m_condition = 0;  // the row's "Condition" (a GfGameCond id; 0: none)
         // which message GfFieldJump::onFsSucceeded sends (0: MsgPcFieldNotifyWallJump, 1: MsgPcFieldNotifyBigJump, which also plays
-        // fn_71005A7770's effect; the name is not the original's)
+        // onFsSucceeded's effect; the name is not the original's)
         unsigned char m_type = 0;  // the row's "jumpType"
         unsigned short m_nameRadius = 10;  // the row's "nameRadius"
     };
@@ -52,16 +52,14 @@ public:
     virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*) {}  // slot 9
     virtual void debugUpdateMmf();  // slot 10
     // its kind (TGmkList::getGmkType returns it; the name is not the original's)
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among GmkJump's
-    // functions (GmkElevator.cpp's unit) and reads this gimmick's BdatInfo type byte. What it does: when
-    // GfGameManager::isGameTypeIra() answers true and the row's type is 1, tail-calls fn_71005A748C, which creates
+    // 2.0.0's symbols name it (new in 3.0.1). What it does: when
+    // GfGameManager::isGameTypeIra() answers true and the row's type is 1, tail-calls suceededBigJump, which creates
     // the effect "ma40a_01_101_dlc" from GfFieldManager::getEffectPack(). GfFieldJump::onFsSucceeded calls it after
     // sending MsgPcFieldNotifyBigJump (when isGameTypeIra answers true).
-    void fn_71005A7770();
-    // Placeholder name: new in 3.0.1. A member because its only caller, fn_71005A7770, passes this and it sits among
-    // GmkJump's functions (between reqRecreateIcon and onGobEvent). What it does: creates the effect
+    void onFsSucceeded() const;
+    // 2.0.0's symbols name it (new in 3.0.1; between reqRecreateIcon and onGobEvent). What it does: creates the effect
     // "ma40a_01_101_dlc" from GfFieldManager::getEffectPack() (0x71005A748C).
-    void fn_71005A748C();
+    void suceededBigJump() const;
     void createIcon();
     void reqRecreateIcon();
     // sets the flag reqRecreateIcon tests and removes the icon effect (fw::EffectManager::dead)

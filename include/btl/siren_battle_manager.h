@@ -13,26 +13,25 @@ namespace gf { class GF_OBJ_HANDLE; }
 namespace btl { class BattleCharacter; }
 
 namespace btl {
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function: its unit's class has no name.
-// What it does: allocates the unit's SirenBattleManager (the new cites "battle/siren_battle_manager.cpp"), whose PtrSingleton
-// constructor asserts get()==0, then loads its BDAT rows (Initialize). btl::BattleManager::Initialize calls it
-// last, after UIManager::Create.
-void fn_71000A52CC();
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function: as fn_71000A52CC. What it does:
-// resets that object (Finalize) and deletes it; btl::BattleManager::Finalize calls it first, before
-// UIManager::Destroy (the reverse of the create order).
-void fn_71000A571C();
 
-// table 0x7100B3BD68 (slot 0 its destructor, which releases m_camera); 0x1D0 bytes (fn_71000A52CC allocates so many)
+// table 0x7100B3BD68 (slot 0 its destructor, which releases m_camera); 0x1D0 bytes (Create allocates so many)
 class SirenBattleManager : public ::mm::mtl::PtrSingleton< ::btl::SirenBattleManager> {
 public:
+    // 2.0.0's symbols name it. What it does: allocates the unit's SirenBattleManager (the new cites "battle/siren_battle_manager.cpp"), whose PtrSingleton
+    // constructor asserts get()==0, then loads its BDAT rows (Initialize). btl::BattleManager::Initialize calls it
+    // last, after UIManager::Create.
+    static void Create();
+    // 2.0.0's symbols name it. What it does:
+    // resets that object (Finalize) and deletes it; btl::BattleManager::Finalize calls it first, before
+    // UIManager::Destroy (the reverse of the create order).
+    static void Destroy();
     // One row of BDAT table 0x3C, as Initialize reads it; fields named after the columns (the struct's name is not
     // the original's). Level 0 of each array is not in the table: damage 0, gauge 1, down 250, shots 0.
     struct Param {
         float m_damage[5];     // "DamageLV%d" / 100
         float m_gauge[5];      // "GaugeLV%d" / 100
         float m_gaugeBonus;    // "GaugeBonus" / 100
-        unsigned short m_arrangeID;  // "ArrangeID": the BattleCharacter's BDAT id (fn_71000A6C68)
+        unsigned short m_arrangeID;  // "ArrangeID": the BattleCharacter's BDAT id (SetSirenObject)
         unsigned short m_gun;        // "Gun"
         unsigned short m_lance;      // "Lance"
         unsigned char m_down[5];     // "DownLV%d"
@@ -44,7 +43,7 @@ public:
     struct Side {
         gf::GF_OBJ_HANDLE* m_handle;  // the BattleCharacter's handle; (GF_OBJ_HANDLE*)-1 while none
         float m_gauge;                // AddSirenSpGaugeRate adds to it, never below 0
-        unsigned char pad_c;          // 1 after a reset; fn_71000A5870 passes it to TalkManager::NotifyTrigger
+        unsigned char pad_c;          // 1 after a reset; NotifyInputSpAttack passes it to TalkManager::NotifyTrigger
         bool pad_d;                   // GetShootBulletNum returns it
         bool pad_e;                   // while set AddSirenSpGaugeRate also sets the party gauge
         unsigned char pad_f;
@@ -93,13 +92,13 @@ public:
     bool GetShootBulletNum(bool flag) const;
     // GetShootBulletIntrevalSec: the side's ShotFrame in seconds (frames / 30)
     float GetShootBulletIntrevalSec(bool flag) const;
-    // fn_71000A6C68: while pad_1cb is clear, takes the character whose BDAT id is a side's ArrangeID as that side;
+    // SetSirenObject: while pad_1cb is clear, takes the character whose BDAT id is a side's ArrangeID as that side;
     //   pad_d0 = 1 once both sides have one
-    void fn_71000A6C68(BattleCharacter* character);
+    void SetSirenObject(const BattleCharacter* character);
     // IsRegisterSiren: a side has a character
     bool IsRegisterSiren() const;
-    // fn_71000A6CF0: pops the current camera, then holds the given one
-    void fn_71000A6CF0(::mm::mtl::IntrusivePtr<fw::Camera>& camera);
+    // SetGimmickCamera: pops the current camera, then holds the given one
+    void SetGimmickCamera(::mm::mtl::IntrusivePtr<fw::Camera> camera);
     // IsCameraProc: pad_1cb set and (a camera held, pad_d0 in 12..18, or TalkManager's IsTalkSirenSp)
     bool IsCameraProc() const;
     // IsEnableOperate: true without pad_1cb, else pad_d0 is 11 or above 18 and nothing of IsCameraProc holds
@@ -114,7 +113,7 @@ public:
 
     Param m_params[2];
     Side m_sides[2];
-    ::mm::mtl::IntrusivePtr<fw::Camera> m_camera;  // the camera fn_71000A6CF0 holds
+    ::mm::mtl::IntrusivePtr<fw::Camera> m_camera;  // the camera SetGimmickCamera holds
     int pad_c0;
     float pad_c4;
     unsigned char pad_c8[0x8];
@@ -126,7 +125,7 @@ public:
         unsigned short m_bpos;  // "Bpos"
     } m_positions[20];  // by situation
     unsigned char pad_1c8;
-    unsigned char pad_1c9;  // GfGameParty::getHandleDriver's first argument (fn_71000A59E0)
+    unsigned char pad_1c9;  // GfGameParty::getHandleDriver's first argument (IsEnableSpAttack)
     unsigned char pad_1ca;
     unsigned char pad_1cb;  // set while a siren battle runs (most functions test it)
     unsigned char pad_1cc;

@@ -126,7 +126,7 @@ void fn_71002ED774(unsigned int enemy, unsigned int time, unsigned int mode);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfWeapon's unit (no this). What it does: the address 0x4C bytes into the option data: tl::TitleMain's
 // getOptionBuffer when GfManager::isExecModeAdvertize or isExecModeThater holds and TitleMain exists, else
-// GfDataManager::getDataOption(). GfArenaBattle::mapjumpForReturnFieldForObjCleanup / fn_710028CFF8 copy 0x3C bytes into it.
+// GfDataManager::getDataOption(). GfArenaBattle::mapjumpForReturnFieldForObjCleanup / execBattleSequence copy 0x3C bytes into it.
 // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions because their addresses are
 // in GfWeapon's unit (no object). What they do: fn_71002EB3FC: whether GfDataBlade::fn_7100231884() lies in
 // 11100..11130 (caller fn_7100543F98). fn_71002EDC24 / fn_71002EDC4C: whether a model name contains "pc110601"
@@ -170,7 +170,7 @@ const char* fn_71002EE5C0(const char* name);
 void* fn_71002EE8C4();
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfWeapon's unit next to fn_71002EE8C4 (no object). What it does: calls fn_7100254EF0 with type on the same
-// SSoundUiOption fn_71002EE8C4 returns (GfArenaBattle::fn_710028CFF8 calls it).
+// SSoundUiOption fn_71002EE8C4 returns (GfArenaBattle::execBattleSequence calls it).
 void fn_71002EE954(unsigned int type);
 // Placeholder name: the symbols leave it unnamed. A free function because its address is in GfWeapon's unit
 // (no object; callers GfBladeCreate::createBladeNewVersion and fn_71002EDAD4). What it does: whether the add-on
@@ -232,7 +232,7 @@ bool fn_71002EE5E0(QuestID quest, unsigned int task);
 // GfWeapon's unit (no this). What they do: when the arena game mode (GfGameArena::sys()) exists, send it a
 // MsgUnk_1000034 of type 0xE (fn_71002DA4FC), 0xF (fn_71002DA570) or 0x10 (fn_71002DA5E4) carrying value in its
 // parameter word 0x30, 0x34 or 0x38. Callers: the exec of the requests SCOM_ADD_ECUBE and SCOM_ADD_SCORE (their value at
-// 0x1C) and gf_req_scom's fn_7100558E88.
+// 0x1C) and gf_req_scom's SCOM_CLEAR_TIME::create.
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
 // GfWeapon's unit among free placeholders and it takes only a handle. What it does: false unless the object is a
 // driver (GfObjUtil::getObjType 3); true when it is driver 0x11 whose GfComAsm (component 2) plays a layer-0 state
@@ -258,8 +258,8 @@ void fn_71002DA8FC(unsigned int driver, unsigned int exp);
 // GfGameScene::gevChangeScenarioFlag calls it.
 void fn_71002E1824();
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
-// GfWeapon's unit and it takes only a handle (no this). What it does: in the arena (GfGameArena::fn_7100291D54 holds)
-// GfGameArena::fn_7100291E14(handle), else DataParamAcc(handle).getWeaponDamage(false), as fn_71002EC6F4 does for the
+// GfWeapon's unit and it takes only a handle (no this). What it does: in the arena (GfGameArena::isBattleNow holds)
+// GfGameArena::getWeaponDamage(handle), else DataParamAcc(handle).getWeaponDamage(false), as fn_71002EC6F4 does for the
 // stability; btl::PlayerParameter::InitializeAttackParam calls it.
 unsigned int fn_71002EC674(GF_OBJ_HANDLE* handle);
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function because its address is in
@@ -274,7 +274,7 @@ void fn_71002DAB40(unsigned int driver, unsigned int exp);
 // calls it.
 void fn_71002E24C0(GF_OBJ_HANDLE* handle, bool show);
 // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions because their addresses are
-// in GfWeapon's unit (no this). What they do: when GfGameScene is up, GfGameScene::fn_71002C4C0C(handle, target,
+// in GfWeapon's unit (no this). What they do: when GfGameScene is up, GfGameScene::setIraBoneMount(handle, target,
 // flag) with kind 0 (fn_71002ED96C) or 1 (fn_71002ED99C); btl::BattleCharacter::SetAction / AsmCallback call them.
 void fn_71002ED96C(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag);
 void fn_71002ED99C(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag);

@@ -99,7 +99,7 @@ public:
     // walk the second function-static list (one NPC per hitonowa flag value). fn_7100255550: total = its count, set =
     // the entries whose flag's local value (type 2) is 1 or 3 (fn_710024DCAC, GfMenuObjHitonowa::initialize call it); fn_7100255638:
     // the entries whose GfBdatRsc::getRscNpcListNpcMeetFlag flag is set (type 1); fn_71002556FC: the entries whose type-2 local
-    // value is 1 (both called by fn_71002CAE30).
+    // value is 1 (both called by updateAutoFlag).
     static void fn_7100255550(int& set, int& total);
     static int fn_7100255638();
     static int fn_71002556FC();
@@ -518,7 +518,7 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lives in GfDataBlade's
     // unit between GfDataBlade::fn_71002325AC and fn_7100232660 (no this). What it does: returns entry index of a
     // 9-entry unsigned int table in the unit's .rodata ({300, 4, 3, 1, 2, 0, 0, 0, 0}, no bounds check);
-    // GfObjFactory::createComponent and fn_7100552CF0 call it.
+    // GfObjFactory::createComponent and replaceColisionPrio call it.
     static unsigned int fn_7100232650(unsigned int index);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
     // GfDataBlade's unit among GfDataBlade's functions. What it does: fn_710023217C's test on GfDataManager::getDataGame()'s flags.
@@ -555,7 +555,7 @@ public:
     // GfDataBlade's unit among GfDataBlade's functions. What it does: sets local flag 0xD863 (type 1) to flag.
     static void fn_710024EA00(bool flag);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
-    // GfDataBlade's unit among GfDataBlade's functions (its only caller is fn_71002CAE30). What it does: looks up the
+    // GfDataBlade's unit among GfDataBlade's functions (its only caller is updateAutoFlag). What it does: looks up the
     // FLD_MapGimmick table (result unused) and counts the set local flags (type 1) 0xABFA and 0xAC00-0xAC08.
     static unsigned int fn_710024EA10();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in

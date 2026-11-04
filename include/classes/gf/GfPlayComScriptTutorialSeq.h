@@ -16,10 +16,10 @@ public:
         m_name = name;
         m_startId = startId;
     }
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: it allocates this class
+    // 2.0.0's symbols name it. A static member: it allocates this class
     // (table 0x7100B582D0, kind 30). What it does: news a 0x60-byte command holding the script name and the
     // after-event start id start passes to GfGameEvent::setAfterEventStartID.
-    static GfPlayComScriptTutorialSeq* fn_710031E044(const char* name, int startId);
+    static GfPlayComScriptTutorialSeq* create(const char* name, unsigned int startId);
     virtual const mm::mtl::RTTI* getRTTI() const { return &m_rtti; }  // slot 0
     virtual ~GfPlayComScriptTutorialSeq();  // slot 1
     virtual const char* getFuncName() const {  // slot 3

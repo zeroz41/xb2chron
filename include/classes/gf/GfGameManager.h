@@ -26,11 +26,6 @@ namespace gf { enum GfPlayerDead : int; }
 
 namespace gf {
 // table 0x7100B54938; IGfEvent at 0x8 (1.0.0's table names the overrides), IQuestEvent at 0x10
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function (the symbols spell it in gf's
-// namespace) in gf_game_manager's unit. What it does: the int at 0x104 of PtrSingleton<GfGameArena>'s instance (its
-// record's m_value2C), 0 when there is none.
-unsigned int fn_71002AC5B8();
-
 class GfGameManager : public ::mm::mtl::PtrSingleton< ::gf::GfGameManager>, public ::gf::IGfEvent, public ::gf::IQuestEvent {
 public:
     GfGameManager() : m_initialized(false), m_leaveGameForDebug(false) {}
@@ -65,7 +60,7 @@ public:
     // (GEV 0xE) and mm::Vec3::zero (GEV 0xD).
     static void setControlMoverPositionForNoPlayer(const mm::Vec3& pos);
     // 2.0.0's symbols name it. What it does: when the instance the pointer at 0x7100B94428 holds exists, tail-calls
-    // fn_7100291DB4 on it (that one reads local game flag type 1 index 0xDC0D); false otherwise. 23 callers
+    // isActiveArena on it (that one reads local game flag type 1 index 0xDC0D); false otherwise. 23 callers
     // (GfGameUtil::incEnemySuppress skips counting while it holds, GfFieldWeather::updateWeather,
     // GfGameScene::setEnemyDead, GfMenuBattleAdapter).
     static bool isBattleArenaActive();
@@ -74,8 +69,8 @@ public:
     // btl::BattleGlobal::PreUpdateProc, gf::fn_71002ED6B8 (picks a record column 0/1/2/4 with it),
     // SCOM_ENBOOK_BOSS_TIME::exec.
     static unsigned int getBtlDifficult();
-    // The record getBattleArenaMenuInfo returns and fn_71002AC60C fills (the name and its fields' names are not the
-    // original's): one battle challenge's data (gf_game_arena's fn_7100290130 clears it the way the constructor
+    // The record getBattleArenaMenuInfo() returns and fn_71002AC60C fills (the name and its fields' names are not the
+    // original's): one battle challenge's data (gf_game_arena's setupMenuInfoForChBtl clears it the way the constructor
     // does, then fills it from GfBdatBtl's row). GfMenuBattleAdapter's callbacks read its short at 0x1C, ints at
     // 0x28/0x2C and floats at 0xAD0; gf_menu_obj_btl_time reads m_kind; gf_menu_btlch_adapter's callbacks (GfMenuBtlchAdapter)
     // read most of the rest. 0xAF0 bytes: the 0xAF0-byte frames of those callbacks hold one.
@@ -100,11 +95,11 @@ public:
             Rule() : m_value0(0), m_value4(0), m_value8(0), m_flag8(0) {}
             // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: GfArenaBattle's
             // fn_710028C9CC calls them on its Rule at +0xB0 with the arena's record (code in unit_710028EBB0). What
-            // they do: fn_71002903AC keeps a larger value in m_value8, sets the record's m_value2C to the value and
+            // they do: setupMenuInfoForCube keeps a larger value in m_value8, sets the record's m_value2C to the value and
             // its m_ratios from GfBdatBtl's getBTL_ChBtlTresureNeed thresholds 0..2; fn_71002904DC keeps a larger value in
             // m_value4 and sets the record's m_value28; fn_71002904F4 keeps a smaller one in m_value0 (0 counts as
             // none) and sets the record's m_value30.
-            void fn_71002903AC(BattleChallengeRecord* record, unsigned int value);
+            void setupMenuInfoForCube(BattleChallengeRecord* record, unsigned int value);
             void fn_71002904DC(BattleChallengeRecord* record, unsigned int value);
             void fn_71002904F4(BattleChallengeRecord* record, unsigned int value);
             unsigned int m_value0;
@@ -121,7 +116,7 @@ public:
             m_valueAE8 = 1;
             m_flagAEC = false;
         }
-        // what the constructor and gf_game_arena's fn_7100290130 zero first
+        // what the constructor and gf_game_arena's setupMenuInfoForChBtl zero first
         void clear() {
             m_id = 0;
             m_value4 = 0;
@@ -196,7 +191,7 @@ public:
         // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (code in unit_710028EBB0's range). A
         // member: fn_7100291E40 calls it on the record with the challenge id. What it does: clears the record and
         // fills its header from GfBdatBtl's row for the id.
-        void fn_7100290130(unsigned int id);
+        void setupMenuInfoForChBtl(unsigned int id);
         Lists m_lists;
         float m_ratios[3];
         Rule m_rule;
@@ -218,7 +213,7 @@ public:
     // GfGameAoc::fn_71002A7430 (as GfGameManager::setupGame does); GfManager::resetGameType calls it
     static void resetGameType(bool flag);
     // 2.0.0's symbols name it. What it does: tail-calls fn_710024DD88, which returns bits 16-19 of the u32 at 0x101D08
-    // of GfDataManager::getDataGame(). Callers: fn_71002CBBD0 and gf_menu_obj_hitonowa's GfMenuObjHitonowa::setupGame
+    // of GfDataManager::getDataGame(). Callers: updateCloud2ForIra and gf_menu_obj_hitonowa's GfMenuObjHitonowa::setupGame
     // (keeps it in a file static), initialize and seqNextGet.
     static unsigned int getHitonowaLevel();
     static void build(const GfSetupParam& param);
@@ -353,10 +348,13 @@ public:
     // 2.0.0's symbols name it. What it does: the int at 0x100 of PtrSingleton<GfGameArena>'s instance (its record's
     // m_value28), 0 when there is none.
     static unsigned int getBattleArenaScore();
+    // 2.0.0's symbols name it. What it does: the int at 0x104 of PtrSingleton<GfGameArena>'s instance (its record's
+    // m_value2C), 0 when there is none.
+    static unsigned int getBattleArenaEtherCube();
     // 2.0.0's symbols name it. What it does: sets the byte at 0x8C0 of PtrSingleton<GfGameScene>'s instance when there
     // is one.
     static void reqestCraftPopupForIra();
-    // 2.0.0's symbols name it. What it does: GfGameScene::fn_71002C4BFC() when there is a GfGameScene, else false.
+    // 2.0.0's symbols name it. What it does: GfGameScene::isSepiaFilter() when there is a GfGameScene, else false.
     static bool isSepiaFilter();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
     // GfGameManager's functions and takes no instance. What it does: when GfGameAoc's instance exists with mode 1,
@@ -368,7 +366,7 @@ public:
     static bool isEnableSpecialBgm();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member: its code is in gf_game_manager's unit among
     // GfGameManager's functions and takes no instance. What it does: whether id is 0 or one of 30255..30258.
-    static bool fn_71002AC8E4(unsigned int id);
+    static bool isEventTutorial(unsigned int id);
     // 2.0.0's symbols name it. What it does: the byte at 0x21B of PtrSingleton<tl::TitleMain>'s instance is set (false
     // without one).
     static bool isCompleteBothGame();
@@ -382,7 +380,7 @@ public:
     static bool isEnableAutoButtonChallenge();
     static bool isEnableEnemyAgg();
     // 2.0.0's symbols name it. What it does: true while GfPlayComQuestCompleteUI::s_active is above 0 or
-    // PtrSingleton<GfPlayComOpenNpcEntry>'s instance exists; else GfGameScene::fn_71002C4B38() when there is a
+    // PtrSingleton<GfPlayComOpenNpcEntry>'s instance exists; else GfGameScene::isOpenPreciousMenu() when there is a
     // GfGameScene, false otherwise. Caller: GfGameScene::isBattleStop.
     static bool isInvalidBattleStop();
     // 2.0.0's symbols name it. What it does: whether the int at 0x630 of PtrSingleton<GfGameScene>'s instance is above

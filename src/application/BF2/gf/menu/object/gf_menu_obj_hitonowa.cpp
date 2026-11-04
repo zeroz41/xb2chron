@@ -12,6 +12,7 @@
 #include "classes/gf/GfMenuFullScreen.h"
 #include "classes/gf/GfMenuObjOperationInfo.h"
 #include "classes/gf/GfReqSmallCom.h"
+#include "classes/gf/SCOM_FIELD_VOICE.h"
 #include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfGameCond.h"
 #include "classes/ui/UISelectObjList.h"
@@ -246,7 +247,7 @@ bool GfMenuObjHitonowa::seqDispResult() {
     GfMenuObject::enableInput(result.m_handle);
     GfMenuObjOperationInfo::add(result.m_handle, 0, 0, 0);
     m_resultDone = false;
-    fn_7100569228();
+    SCOM_FIELD_VOICE::createHitonowaGet();
     return true;
 }
 

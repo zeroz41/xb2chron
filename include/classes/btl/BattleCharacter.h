@@ -117,7 +117,7 @@ public:
     // sets or clears pad_F03_7 by the arts' gravity window against the stage and the animation frame
     void ArtsGravityProc(const ARTS_DATA& arts, int stage);
     // 2.0.0's symbols name it. What it does: NotifyDirectDamage of a DIRECT_DAMAGE_DATA {attacker, type, damage} with
-    // pad_10 = 1, as HealHpRate builds it; only caller fn_7100011390.
+    // pad_10 = 1, as HealHpRate builds it; only caller SwitchFormationForIra.
     void HealDirect(unsigned int damage, int type, BattleCharacter* attacker);
     void AddBladeArtsRecast(int, float);
     void FluctuateKizuna(int, float);
@@ -174,17 +174,17 @@ public:
     // trigger 0x31; then fades out (or, with BattleGlobal's flag bit 0, removes) the effect whose id it keeps at 0x15C
     // and clears the id.
     void NotifyMindEyeEnd(bool);
-    // Placeholder name: 1.0.0's ResultProc calls GetWeaponAttack(bool, bool) const in its place, with one argument
+    // 2.0.0's symbols name it; 1.0.0's ResultProc calls GetWeaponAttack(bool, bool) const in its place, with one argument
     // fewer. A member: as fn_7100028D0C. What it does: gives the attack ButtonChallenge adds to the stat for its
     // damage; ButtonChallenge passes its param's flag, false, false.
-    float fn_710006760C(bool, bool, bool);
-    // Placeholder name: 1.0.0's ResultProc calls GetFriendEnhanceRate(int, bool) const in its place, with one
+    float GetWeaponAttack(bool, bool, unsigned int) const;
+    // 2.0.0's symbols name it; 1.0.0's ResultProc calls GetFriendEnhanceRate(int, bool) const in its place, with one
     // argument fewer. A member: as fn_7100028D0C. What it does: ButtonChallenge passes 0xB9, 0, 0 and adds a positive
     // result to the party gauge.
-    float fn_710005F0D8(int, int, int);
-    // Placeholder name: 1.0.0's ResultProc calls AchieveCondition(int, unsigned int) const in its place, with the
+    float GetFriendEnhanceRate(int, bool, bool) const;
+    // 2.0.0's symbols name it; 1.0.0's ResultProc calls AchieveCondition(int, unsigned int) const in its place, with the
     // same arguments (0xC, 0): the rename's evidence. A member: as fn_7100028D0C.
-    void fn_7100041D00(int, unsigned int);
+    void AchieveCondition(int, unsigned int) const;
 
     // the index into m_aActionFuncList (its Action/ActionCommand/ActionCommandEnd triples); the enumerator names
     // follow 1.0.0's function names in that table, they are not the original's. 7 and 10 are 3.0.1's new actions.
@@ -367,18 +367,18 @@ public:
     // m_actionParam = flag ? param : -param, then m_actionID = 7.
     void StartSirenSpAttack(bool flag, int param);
     // m_actionParam = param, m_actionValue = value, then m_actionID = 10.
-    void fn_7100059D54(int param, float value);
+    void StartSirenDown(float value, int param);
     // 2.0.0's symbols name it. What it does: the parameter's m_isNotBlade (false without a parameter).
     bool IsForward() const;
     // 2.0.0's symbols name it. What it does: the parameter's slot 42 (false without a parameter).
     bool IsElementalAwake() const;
-    // Placeholder name: as IsForward; callers Utility::AI_AddBladeArtsRecast and ten others. What it does:
+    // 2.0.0's symbols name it. As IsForward; callers Utility::AI_AddBladeArtsRecast and ten others. What it does:
     // the parameter's slot 64 with the flag (false without a parameter).
-    bool fn_71000290BC(bool);
-    // Placeholder names: new in 3.0.1. Members: they call PlayCustomVoice. What they do: for a blade (IsBlade),
+    bool IsDriver(bool) const;
+    // 2.0.0's symbols name them. Members: they call PlayCustomVoice. What they do: for a blade (IsBlade),
     // PlayCustomVoice(13) / PlayCustomVoice(14).
-    void fn_7100042E30();
-    void fn_7100042E90();
+    void NotifyElementalCombo(gf::GF_OBJ_HANDLE*, int, bool);
+    void NotifySufferElementalCombo(int, int);
     // 2.0.0's symbols name them. They call PlayCustomVoice. What they do: PlayCustomVoice's own checks for id 11 / id
     // 6, then the talk trigger entry (pad_ED4) whose id matches; NotifyBuddyFightCombo notifies PlayCustomVoice(11)
     // when the entry's value is 0 or equals the int (the handle is not read; caller CharacterParameter::SetFightCombo),
@@ -386,16 +386,17 @@ public:
     // NotifyDamage).
     void NotifyBuddyFightCombo(gf::GF_OBJ_HANDLE*, int value);
     bool NotifyBuddyAvoid(int value);
-    // combo (the sixth argument of fn_710004315C) points at the three words CharacterParameter::SetFightCombo(int, int,
-    // unsigned int) is called with (id, character, flags); the original's type for it is unknown
-    // Placeholder name. A reaction (blow/down/etc. id, level) from an attacker: CheckResistReaction (its result
+    // combo (the sixth argument of SetReaction) points at the three words CharacterParameter::SetFightCombo(int, int,
+    // unsigned int) is called with (id, character, flags); 2.0.0's symbols name its type (its fields are not written)
+    struct RACTION_FCOMBO_DATA;
+    // 2.0.0's symbols name it. A reaction (blow/down/etc. id, level) from an attacker: CheckResistReaction (its result
     // in *result), the combo, SetAction 0x10/0x11/0x12 and the talk trigger; when the last flag is set,
     // DispReactionUI. Answers whether it was not resisted. Body not written yet.
-    bool fn_710004315C(int reaction, int level, BattleCharacter* attacker, bool, int* result,
-                       const unsigned int* combo, bool disp);
+    bool SetReaction(int reaction, int level, BattleCharacter* attacker, bool, int* result,
+                       const RACTION_FCOMBO_DATA* combo, bool disp);
     // 2.0.0's symbols name it. Caller CharacterParameter::SetBuff: CreateBuffEffect, then (when the flag is set and the
     // buff has an effect) its BDAT 0x11 "SE" flag plays SE 0x35 (with the "Buff" flag) or 0x36; buff 0x1E first applies
-    // reaction 1 (fn_710004315C(1, 1, ...))
+    // reaction 1 (SetReaction(1, 1, ...))
     void NotifyBuffStart(int buff, bool playSe);
     // the chance of an enhance's condition (the bool is passed false by CheckRandSatisfyEnhanceCondition)
     float SatisfyEnhanceCondition(int type, int, float, void*, bool);
@@ -414,46 +415,46 @@ public:
     // with a parameter whose m_isNotBlade is clear notifies PlayCustomVoice(5)
     void NotifyLostHateTarget(int);
     // 2.0.0's symbols name it. What it does: for the controlled character plays system SE (1, 0x32) when
-    // BattleGlobal::fn_710000C440(0) allows; unless the flag is set, notifies PlayCustomVoice(4). The int is not read.
+    // BattleGlobal::CheckOnceSE(0) allows; unless the flag is set, notifies PlayCustomVoice(4). The int is not read.
     // Caller: HateRingManager::SetData.
     void NotifyGetHateTarget(int, bool flag);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
+    // 2.0.0's symbols name it. A member: it sits among BattleCharacter's
     // functions and reads its fields. What it does: false when dead (IsDead(0), unless the flag is set), while
     // m_reactionID is non-zero or while pad_F09_2 is set; else true. Callers: TalkManager, Utility.
-    bool fn_710002FD3C(bool flag);
+    bool IsEnableSpeakVoice(bool flag) const;
     // 2.0.0's symbols name it. What it does: for a character whose parameter's m_isNotBlade is clear, sets pad_F01_0
     // unless, with the BattleGlobal flag (+0x83CA bit 3) set, pad_F09_3 is set or FormationChangeManager::IsRegister
     // answers true for the character's object or its parameter's m_driverHandle. Caller: SetPosition, on its
     // parameter's driver character.
     void NotifyBuddyWarp();
     void SetPosition(const mm::Vec3& pos, bool flag);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
+    // 2.0.0's symbols name it. A member: it sits among BattleCharacter's
     // functions and writes its fields. What it does: sets pad_F09_3 to the argument; when set, or when it was set
     // before, keeps (m_state == 8, or true when cleared) in pad_F03_4/pad_F03_7 (pad_F03_5 set, then
     // WriteBackChrCollisionFlag) when it changed or pad_F09_3 is set; a false value resets pad_D0 to
     // mm::Vec3::zero and pad_E0 to 1. Callers: ChainAttackManager::UpdateProc, formation_change_manager's
-    // fn_710009E008.
-    void fn_710002B4D8(bool on);
+    // BladeChangeProc.
+    void SetIraReserve(bool on);
     // 2.0.0's symbols name it. What it does: sets pad_102C to -1 and pad_1030 to 0; then, when the parameter's
     // m_flags622_6 is set, or its m_driverHandle's character is in battle (or there is none and BattleGlobal's
     // m_challengeAnySuccess is set), sets pad_102C to 0, pad_102E to the argument and pad_1030 to the argument * 8.
     // Caller: ChainAttackManager::UpdateProc.
     void StartFullBurst(int value);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: it sits among BattleCharacter's
+    // 2.0.0's symbols name it. A member: it sits among BattleCharacter's
     // functions and counts in pad_1073. What it does: true while pad_1076_12 is clear, while BattleGlobal's
     // m_challengeAnySuccess is clear or once pad_1073 reached 150; else counts pad_1073 up and answers pad_1076_13.
-    bool fn_7100059314();
+    bool IsIraEventGetupEnd() const;
     // PlayCustomVoice(7).
-    bool fn_710004232C();
+    bool NotifyEnemyAngry(gf::GF_OBJ_HANDLE*);
     // DropItem((DROP_ITEM_TYPE)(type + 5), false).
     void DropEtherCubeByScoreID(int type);
-    // Blade arts recast: called by fn_710003D114 (and so by Utility::AI_AddBladeArtsRecast) with a slot code
+    // Blade arts recast: called by AddRecast (and so by Utility::AI_AddBladeArtsRecast) with a slot code
     // (~slot, ~16 for a negative slot), two flags and a float; 0x3B0 bytes, not written yet.
-    void fn_710005F554(int slot, bool, bool, float value);
-    // fn_710005F554(~(slot < 0 ? 16 : slot), flag0, flag1, value). Caller: Utility::AI_AddBladeArtsRecast.
-    void fn_710003D114(bool flag0, int slot, bool flag1, float value);
+    void AddSlotRecast(int slot, float value, bool, bool);
+    // AddSlotRecast(~(slot < 0 ? 16 : slot), value, flag0, flag1). Caller: Utility::AI_AddBladeArtsRecast.
+    void AddRecast(float value, bool flag0, int slot, bool flag1);
     // 2.0.0's symbols name it. What it does: sends message 0x100004C (second word 0x80) to the effect caster, from the
-    // property's owner object, then clears pad_F04_1. Callers: SetAction, BeforeUpdate, ActionDead, fn_7100052CE0.
+    // property's owner object, then clears pad_F04_1. Callers: SetAction, BeforeUpdate, ActionDead, SirenActionProc.
     void ForceDeleteEffect();
     void ResetAllEffect();
     void SetWarpPostureByDir(const mm::Vec3& dir);
@@ -493,7 +494,7 @@ public:
     // the movement of this frame: GetMoveDataPerSec scales it by 30 (the name is not the original's)
     mm::Vec3 m_moveData;
     unsigned char pad_C0[0x10];
-    // fn_710002B4D8 clears them (to mm::Vec3::zero and 1, 1) when its flag pad_F03_7 ends up clear (meaning
+    // SetIraReserve clears them (to mm::Vec3::zero and 1, 1) when its flag pad_F03_7 ends up clear (meaning
     // unknown)
     float pad_D0[3];
     unsigned char pad_DC[0x4];
@@ -604,9 +605,9 @@ public:
     unsigned char pad_EF2[0x2];
     // flags formation_change_manager's requests set while they run (the names are not the original's)
     unsigned char pad_EF4_0 : 1;
-    unsigned char pad_EF4_1 : 1;  // a type 2 request's character (fn_710009E008)
+    unsigned char pad_EF4_1 : 1;  // a type 2 request's character (BladeChangeProc)
     unsigned char pad_EF4_2 : 2;
-    unsigned char pad_EF4_4 : 1;  // a type 1 request's characters (fn_710009DCAC)
+    unsigned char pad_EF4_4 : 1;  // a type 1 request's characters (FormationChangeProc)
     unsigned char pad_EF4_5 : 3;
     // a separate bitfield run: the original reads and writes 0xEF5 as one byte, apart from 0xEF4
     unsigned char : 0;
@@ -661,7 +662,7 @@ public:
     // Utility::AI_IsFly returns it (the name is not the original's)
     unsigned int m_isFly : 1;
     unsigned int pad_F03_0 : 4;
-    // fn_710002B4D8's: the value it last wrote back, set once written, and the value it keeps (meaning unknown)
+    // SetIraReserve's: the value it last wrote back, set once written, and the value it keeps (meaning unknown)
     unsigned int pad_F03_4 : 1;
     unsigned int pad_F03_5 : 1;
     unsigned int pad_F03_6 : 1;
@@ -695,8 +696,8 @@ public:
     unsigned int m_battleFace : 1;
     unsigned int m_oneShotRimBloom : 1;  // SetOneShotRimBloom sets it (the name is not the original's)
     unsigned int pad_F08_5 : 5;
-    unsigned int pad_F09_2 : 1;  // fn_710002FD3C answers false while it is set (meaning unknown)
-    unsigned int pad_F09_3 : 1;  // fn_710002B4D8's argument (meaning unknown)
+    unsigned int pad_F09_2 : 1;  // IsEnableSpeakVoice answers false while it is set (meaning unknown)
+    unsigned int pad_F09_3 : 1;  // SetIraReserve's argument (meaning unknown)
     // Utility::AI_IsEnableTalentArts answers false unless it is set and pad_F09_3 is clear (meaning unknown)
     unsigned int pad_F09_4 : 1;
     unsigned int pad_F09_5 : 19;
@@ -734,14 +735,14 @@ public:
     // IsBladeArtsEnd holds while it is not 1 (the name is not the original's)
     unsigned int m_bladeArtsState : 3;
     // a 3-byte run: IsBladeArtsEnd loads the byte at 0x1072 shifted, the byte at 0x1073 is a counter of its own
-    unsigned char pad_1073;
+    mutable unsigned char pad_1073;  // mutable: 2.0.0's symbols make IsIraEventGetupEnd, which counts it up, const
     unsigned char pad_1074;
     // the party index of the character AI_StartActionArts aimed its arts at (-1 for none; the name is not the
     // original's)
     signed char m_aiArtsTarget;
     unsigned short pad_1076_0 : 12;
-    unsigned short pad_1076_12 : 1;  // fn_7100059314 answers true while it is clear (meaning unknown)
-    unsigned short pad_1076_13 : 1;  // fn_7100059314's answer once it counts (meaning unknown)
+    unsigned short pad_1076_12 : 1;  // IsIraEventGetupEnd answers true while it is clear (meaning unknown)
+    unsigned short pad_1076_13 : 1;  // IsIraEventGetupEnd's answer once it counts (meaning unknown)
     unsigned short pad_1076_14 : 2;
     unsigned char pad_1078[0x4];
     // timers ManagerUpdate_Attack counts down (pad_108C, m_superArmorTime, pad_1094 and pad_1098 kept at 0 or
@@ -814,10 +815,10 @@ public:
     int m_stamp;
     // CharacterManager's slots are 0x11D0 apart with their in-use flag at 0x11C0, after the character
     unsigned char pad_11AC[0x6];
-    // one bitfield run of 3 bytes (fn_710009ED18 reads it with a halfword load at 0x11B2, as a 3-byte unit loads)
+    // one bitfield run of 3 bytes (IsEnableCancel reads it with a halfword load at 0x11B2, as a 3-byte unit loads)
     unsigned char pad_11B2 : 8;
     unsigned char pad_11B3_0 : 1;
-    unsigned char pad_11B3_1 : 1;  // formation_change_manager's fn_710009ED18 returns it
+    unsigned char pad_11B3_1 : 1;  // formation_change_manager's IsEnableCancel returns it
     unsigned char m_useNavi : 1;  // Utility::AI_SetUseNavi sets it (the name is not the original's)
     // Utility::AI_IsBattleOpening answers it and clears it (the name is not the original's)
     unsigned char m_battleOpening : 1;

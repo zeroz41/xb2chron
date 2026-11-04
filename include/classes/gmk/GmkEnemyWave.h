@@ -6,11 +6,12 @@
 #include "classes/gmk/GmkAcc.h"
 #include "classes/gmk/GmkPhantom.h"
 #include "mm/mtl/FixedVector.h"
+#include "classes/gmk/GmkEnemyWaveExtension.h"
 
 namespace gmk {
 // 2.0.0's symbols name it. Element (0x4A0 bytes) of the list TGmkList<GmkEnemyWave, ..., 'ENEW', ...> (table
 // 0x7100B6F140) that GmkEnemyList's member at 0x470 derives from. Inferred: the enemy wave gimmick gf_field_locator
-// finds by "EnemyWaveID" (AGmkBase.h's fn_71005B38EC notes); the name is not proven, so it stays TUnk_.
+// finds by "EnemyWaveID" (isPopCondMatched's notes below).
 class GmkEnemyWaveGob;
 class GmkEnemy;
 class GmkSealedStone;
@@ -29,7 +30,7 @@ public:
     // its row (0x40 bytes: TGmkList::createGmk's stride; the names are not the original's)
     class BdatInfo {
     public:
-        // its row reader: out of line (fn_71005B3600), called by initGmkBdatInfo (fn_7100634E2C) where the template
+        // its row reader: out of line (create), called by initGmkBdatInfo (fn_7100634E2C) where the template
         // calls T1::create (so the name is the template's; the CBdatWrapper parameter as GmkElevator::BdatInfo's)
         void create(CBdatWrapper bdat, int row, const AGmkBase& gmk);
         unsigned char pad_0[0x2c];
@@ -50,21 +51,12 @@ public:
         unsigned int m_enemyEnd;    // 0x10
     };
     const Data* getData() const { return reinterpret_cast<const Data*>(m_createInfo.m_data); }
-    // one entry of the array fn_71005B38EC walks (0x18 bytes): one of its enemies; create sorts them by priority, then
+    // one entry of the array isPopCondMatched walks (0x18 bytes): one of its enemies; create sorts them by priority, then
     // index
     struct Entry {
-        // the enemy's wave pop settings, read by fn_7100581E54 from its row (field names from the BDAT columns:
-        // "party_flag", "Wpop_Priority", "Wpop_PopNumCond", "battlelockname" minus 1, "Wpop_TimerCond")
-        struct PopInfo {
-            unsigned char m_partyFlag;
-            unsigned char m_popPriority;
-            unsigned char m_popNumCond;
-            short m_battleLockName;
-            unsigned short m_popTimerCond;
-        };
         Entry() {}
-        // the pop settings copied member by member (create's stores skip the PopInfo's padding byte)
-        Entry(GmkEnemy* enemy, unsigned short index, const PopInfo& popInfo) : m_enemy(enemy), pad_8(0), m_index(index), pad_e(0) {
+        // the pop settings copied member by member (create's stores skip the WavePopInfo's padding byte)
+        Entry(GmkEnemy* enemy, unsigned short index, const GmkEnemyWaveExtension::WavePopInfo& popInfo) : m_enemy(enemy), pad_8(0), m_index(index), pad_e(0) {
             m_popInfo.m_partyFlag = popInfo.m_partyFlag;
             m_popInfo.m_popPriority = popInfo.m_popPriority;
             m_popInfo.m_popNumCond = popInfo.m_popNumCond;
@@ -75,12 +67,19 @@ public:
         unsigned int pad_8;  // create and seqWaitToValidLinkGmkList clear it
         unsigned short m_index;  // 0xC: its index in the data's range (the name is not the original's)
         unsigned short pad_e;  // create and seqWaitToValidLinkGmkList clear it
-        PopInfo m_popInfo;  // 0x10 (the name is not the original's)
+        GmkEnemyWaveExtension::WavePopInfo m_popInfo;  // 0x10 (the name is not the original's)
     };
-    // Placeholder name (no symbol): reads enemy's PopInfo from its row while isInstalledBattleArenaContents or isGameTypeIra holds; a
-    // member whose this is unused (the original's callers leave x0 unset). Its class is inferred from its only caller,
-    // create; it sits after BootedGmkCond::isMatch
-    void fn_7100581E54(const GmkEnemy& enemy, Entry::PopInfo& info) const;
+    // 2.0.0's symbols name the next three (defined in GmkElevator.cpp's unit).
+    // What isPopCondMatched does: false unless every entry of m_entries holds a valid gimmick with data at 0x48/0x50, a
+    // positive count at 0x58 and a set byte at 0xE2; then its flags at 0x142, or its BdatInfo's conditions
+    // (GfGameManager event state, GfGameCond::isGameCond). gf_field_locator's LocatorGimmick, LocatorGimmickEnemyWave
+    // and GfGmkLocator call it.
+    bool isPopCondMatched() const;
+    // What getBindedEnemyNum does: its data's m_enemyEnd minus m_enemyBegin: how many enemies getBindedEnemy can return
+    unsigned int getBindedEnemyNum() const;
+    // What getBindedEnemy does: the GmkEnemy (0x1D8-byte element) at its data's m_enemyBegin plus index in the enemy
+    // list of its list's create info (0x1B8), none when that list is missing or shorter
+    GmkEnemy* getBindedEnemy(unsigned int index);
     // 2.0.0's symbols name it.
     void seqWaitToValidLinkGmkList(float dt);
     // 2.0.0's symbols name them.
@@ -96,7 +95,7 @@ public:
     void (GmkEnemyWave::*m_seq)(float dt);  // 0x130: dispose clears it (the name is not the original's)
     bool m_isAccCounted;  // 0x140: create clears it after creating m_acc (the name is not the original's)
     // 0x141..0x145: flags the battle challenge (GmkBattleChallenge) reads and sets (the names are not the original's)
-    bool m_isCleared;     // 0x141: fn_71005B77B8 counts the waves up to the last one set
+    bool m_isCleared;     // 0x141: seqWaveUpdate counts the waves up to the last one set
     bool m_isChallenge;   // 0x142: GmkBattleChallenge::create sets it
     bool m_isStarted;     // 0x143: GmkBattleChallenge::seqWaveStart sets it
     unsigned char pad_144;

@@ -75,6 +75,34 @@ public:
     // dispatch at 0x710000FDEC
     static void createKizuna(GF_OBJ_HANDLE*);
 
+    // 2.0.0's symbols name them. Static members: they make no request; their code sits among SCOM_ACHIEV_INC's functions in gf_req_scom and their one caller is the same dispatch
+    // (AchieveCondition) that calls SCOM_ACHIEV_INC's achievement wrappers. What they do: while a quest is ordered
+    // (GfQuestInfo::isQuestOrder), raise a local flag 8 counter by one up to 0xFF: quest 0x8ED flag 0x87C
+    // (createDriverCombo2) and quest 0x8F0 flag 0x87D (createDriverCombo4), both only for handle -1 or the party leader driver
+    // (GfGameManager::getPartyLeaderDriver); quest 0x8F3 flag 0x87E (createBladeCombo2), 0x8F6 / 0x87F (createBladeCombo3),
+    // 0x8F9 / 0x880 (createFusionCombo).
+    static void createDriverCombo2(GF_OBJ_HANDLE* handle);
+    static void createDriverCombo4(GF_OBJ_HANDLE* handle);
+    static void createBladeCombo2(GF_OBJ_HANDLE* handle);
+    static void createBladeCombo3(GF_OBJ_HANDLE* handle);
+    static void createFusionCombo(GF_OBJ_HANDLE* handle);
+    // 2.0.0's symbols name them. Static members for the same reasons (no request; between SCOM_ACHIEV_INC's functions). What they do: fill a blade list with
+    // GfDataBlade::getListParty and pass it to GfAchievManager::incAchievWithBlade(type, 1, list): type 0x9B
+    // (createOverKill, caller the dispatch AchieveCondition) or the type given (createTiger, caller
+    // minigame::tora::MinigameUpdatableObject::update).
+    static void createOverKill();
+    // 2.0.0's symbols name it (not written yet, code at 0x7100566230): GfArenaBattle::execBattleSequence passes m_key's
+    // id when m_result is 2. What it does: counts achievements 0x9F and 0x9E and, for ids below 0x1C, the id's
+    // achievement from two tables, then queues a SCOM_ACHIEV_INC.
+    static void createCbClearStage(unsigned int id);
+    // 2.0.0's symbols name it: StateArenaReturnBattle::onStep calls it each step with GfGameManager::getBattleArenaEtherCube's answer
+    static void createCbCube(unsigned int value);
+    static void createTiger(unsigned int type);
+    // 2.0.0's symbols name it. A static member for the same reasons (no request; between SCOM_ACHIEV_INC's functions). What it does: counts the local flags 2/1..100 that are 2,
+    // adds local flag 0x20/0x141, and sets achievement total 75 to that: GfDataAchievement::setTotalCount(75, 0), then
+    // addTotalCount(75, count). Caller: GfGameScene::playEventSequenceEnd.
+    static void createKizunaTalk();
+
     // type-0x22 requests not yet counted: exec adds them as one (GfAchievManager::incAchiev(0x22, 1))
     static unsigned int s_countSalvageShop;
 
@@ -86,30 +114,6 @@ public:
     mm::mtl::FixedVector<unsigned short, 422> m_blades;
 };
 
-// Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions: they make no request and take
-// no this; their code sits among SCOM_ACHIEV_INC's functions in gf_req_scom and their one caller is the same dispatch
-// (fn_710000FDEC) that calls SCOM_ACHIEV_INC's achievement wrappers. What they do: while a quest is ordered
-// (GfQuestInfo::isQuestOrder), raise a local flag 8 counter by one up to 0xFF: quest 0x8ED flag 0x87C
-// (fn_7100566480) and quest 0x8F0 flag 0x87D (fn_71005664E8), both only for handle -1 or the party leader driver
-// (GfGameManager::getPartyLeaderDriver); quest 0x8F3 flag 0x87E (fn_7100566550), 0x8F6 / 0x87F (fn_7100566594),
-// 0x8F9 / 0x880 (fn_71005665D8).
-void fn_7100566480(GF_OBJ_HANDLE* handle);
-void fn_71005664E8(GF_OBJ_HANDLE* handle);
-void fn_7100566550();
-void fn_7100566594();
-void fn_71005665D8();
-// Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Free functions for the same reasons (no
-// request, no this; between SCOM_ACHIEV_INC's functions). What they do: fill a blade list with
-// GfDataBlade::getListParty and pass it to GfAchievManager::incAchievWithBlade(type, 1, list): type 0x9B
-// (fn_7100566168, caller the dispatch fn_710000FDEC) or the type given (fn_7100566424, caller
-// minigame::tora::MinigameUpdatableObject::update).
-void fn_7100566168();
-void fn_7100566424(unsigned int type);
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function for the same reasons (no
-// request, no this; between SCOM_ACHIEV_INC's functions). What it does: counts the local flags 2/1..100 that are 2,
-// adds local flag 0x20/0x141, and sets achievement total 75 to that: GfDataAchievement::setTotalCount(75, 0), then
-// addTotalCount(75, count). Caller: GfGameScene::playEventSequenceEnd.
-void fn_71005663BC();
 }  // namespace gf
 
 #endif

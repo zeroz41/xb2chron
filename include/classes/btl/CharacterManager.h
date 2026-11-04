@@ -96,7 +96,7 @@ public:
     // ChallengeBattleManager::UpdateProc call it).
     void SetupBGM(bool battleOnly, bool includeDead);
     // 2.0.0's symbols name it. What it does: sets BattleCharacter::pad_F06_1 on every dead enemy in use (IsDead(0))
-    // that does not have it yet (fn_7100025870 calls it).
+    // that does not have it yet (PreUpdate calls it).
     void NotifyChallengeNextWave();
 
     CHARACTER_SLOT m_slots[CHARACTER_NUM];

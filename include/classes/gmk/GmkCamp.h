@@ -18,9 +18,9 @@ public:
     virtual gmk::GmkType getGmkType() const;  // slot 2 (fn_71005C4118)
     virtual void create(gmk::AGmkBase::CreateInfo const&);  // slot 4 (fn_71005B94D8)
     virtual void dispose();  // slot 5 (fn_71005B9564)
-    virtual void update(float);  // slot 6 (fn_71005B95CC)
+    virtual void update(float);  // slot 6 (update)
     virtual void debugDraw() const;  // slot 7 (fn_71005B98F0)
-    virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9 (fn_71005B9928)
+    virtual void onPlayerAccessed(gf::GF_OBJ_HANDLE*);  // slot 9 (onPlayerAccessed)
     // its bdat row (4 bytes: Vector<BdatInfo>::expand fn_710062C6F4 and initGmkBdatInfo fn_710062C5C4 match)
     class BdatInfo {
     public:

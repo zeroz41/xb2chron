@@ -9,7 +9,7 @@
 #include "gf/SoundHandle.h"
 
 namespace fw { class UpdateInfo; }
-namespace gf { class GfGameVoice; class GfSetupParam; class GAME_VOICE_HANDLE; class GF_OBJ_HANDLE; enum CV_RESULT : int; }
+namespace gf { class GfGameVoice; class GfSetupParam; class GAME_VOICE_HANDLE; class GF_OBJ_HANDLE; class GF_SCOM_HANDLE; enum CV_RESULT : int; }
 namespace gf { enum GEV : int; class MapjumpCallbackInfo; class QuestCompleteParam; class QuestCompleteChildParam; }
 namespace gf { enum CV_PRIO : int; }
 
@@ -146,19 +146,18 @@ public:
     static void gevLayerPause(unsigned int layer, bool pause);
     // SCOM_FIELD_VOICE::exec stops a voice it cuts short, then asks how it ended
     static void playStop(GAME_VOICE_HANDLE* voice);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it (1.0.0's GfMenuObjMercenaryForm::update makes
-    // no such call). A member because its code sits in gf_game_voice's unit between playStop and getResult. What it
-    // does: forwards its one argument to fn_7100566E60 (gf_req_scom), which searches GfReqSmallCom's list for the
-    // entry holding that value. Callers: GfMenuObjMercenaryForm::update and seqLeaveBlade (a long kept as -1 for
-    // none), GfMenuObjMercenaryReport::update, GfMenuObjBlKizunaRing::finalize and its RingListener.
-    static void fn_71002F1F64(long voice);
+    // 2.0.0's symbols name it (1.0.0's GfMenuObjMercenaryForm::update makes no such call). What it does: forwards its
+    // one argument to SCOM_FIELD_VOICE::playStop (gf_req_scom), which searches GfReqSmallCom's list for the entry
+    // holding that handle. Callers: GfMenuObjMercenaryForm::update and seqLeaveBlade (a long kept as -1 for none),
+    // GfMenuObjMercenaryReport::update, GfMenuObjBlKizunaRing::finalize and its RingListener.
+    static void playStop(GF_SCOM_HANDLE* voice);
     // waitForOthers: the voice waits while an object of type 3 or 4 has a voice playing (3.0.1 added the
     // parameter: 1.0.0's playVoice has three)
     static GAME_VOICE_HANDLE* playVoice(const ParamObj& obj, const char* name, CV_PRIO prio, bool waitForOthers);
     static GAME_VOICE_HANDLE* playVoice(GF_OBJ_HANDLE* handle, const char* name, CV_PRIO prio);
     static GAME_VOICE_HANDLE* playVoice(unsigned int type, unsigned int id, const char* name, CV_PRIO prio);
     // 2.0.0's symbols name it. What it does: plays a voice for the object of a kind and an ID (ParamObj(type, id)) that
-    // waits while another object's voice plays (playVoice's waitForOthers true); its one caller is fn_7100569264.
+    // waits while another object's voice plays (playVoice's waitForOthers true); its one caller is createDriverForIra.
     static GAME_VOICE_HANDLE* playVoiceParty(unsigned int type, unsigned int id, const char* name, CV_PRIO prio);
     // 2.0.0's symbols name it. What it does: plays a voice for an object (playVoice(ParamObj(handle), name, prio,
     // false)), then sets waitForOthers on the slot that plays it; its one caller is createInPartyForIra.

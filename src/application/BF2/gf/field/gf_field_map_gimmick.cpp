@@ -575,7 +575,7 @@ void GfFieldJump::onFsSucceeded() {
                     msg.m_gmkId = gmk->m_createInfo.m_bdatId;
                     static_cast<fw::MessageObject*>(mover)->recieveMessage(obj, msg);
                     if (GfGameManager::isGameTypeIra()) {
-                        gmk->fn_71005A7770();
+                        gmk->onFsSucceeded();
                     }
                     return;
                 }

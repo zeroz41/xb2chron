@@ -54,7 +54,7 @@ void SirenBattleManager::Initialize() {
     }
 }
 
-void fn_71000A571C() {
+void SirenBattleManager::Destroy() {
     SirenBattleManager* manager = SirenBattleManager::get();
     manager->Finalize();
     delete manager;
@@ -86,7 +86,7 @@ float SirenBattleManager::GetShootBulletIntrevalSec(bool flag) const {
     return m_params[!flag].m_shotFrame * (1.0f / 30.0f);
 }
 
-void SirenBattleManager::fn_71000A6C68(BattleCharacter* character) {
+void SirenBattleManager::SetSirenObject(const BattleCharacter* character) {
     if (pad_1cb) {
         return;
     }
@@ -112,7 +112,7 @@ bool SirenBattleManager::IsRegisterSiren() const {
            m_sides[1].m_handle != reinterpret_cast<gf::GF_OBJ_HANDLE*>(-1);
 }
 
-void SirenBattleManager::fn_71000A6CF0(::mm::mtl::IntrusivePtr<fw::Camera>& camera) {
+void SirenBattleManager::SetGimmickCamera(::mm::mtl::IntrusivePtr<fw::Camera> camera) {
     if (m_camera) {
         fw::CameraManager::get()->m_layers[0].pop(m_camera, 0.0f);
         m_camera = nullptr;

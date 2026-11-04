@@ -14,7 +14,7 @@ public:
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
     // 2.0.0's symbols name them. Each queues the request unless obj is -1 or time is below 1e-6 (then -1); createPortal
     // sets particle 10, createPortalEvt particle 10 with the stop flag (callers: BladeChangeManager's procs,
-    // BattleCharacter; fn_71002CB9A8; GfGameScene::gevOpenPortal)
+    // BattleCharacter; updatePortalFade; GfGameScene::gevOpenPortal)
     static unsigned long create(GF_OBJ_HANDLE* obj, float time);
     static unsigned long createPortal(GF_OBJ_HANDLE* obj, float time);
     static unsigned long createPortalEvt(GF_OBJ_HANDLE* obj, float time);

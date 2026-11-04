@@ -18,7 +18,9 @@ namespace gf { struct OwnerBonus; }
 namespace fw { class UpdateInfo; }
 namespace gf { class GF_OBJ_HANDLE; class MsgObjectNotifyDamage; class GF_SE_CATEGORY_HANDLE; }
 namespace gf { class GfSetupParam; }
+// setIraBoneMount's kind (0 or 1): 2.0.0's symbols name the type; its values are not named
 namespace gf {
+enum IRA_MOUNT {};
 // which player stop a GfGameScene flag is (GfGameManager's gimmick tutorial uses 1 and 2; no names known)
 enum PLSTOP : int {};
 }
@@ -139,22 +141,22 @@ public:
     static bool isPlayerWalkAndRun();  // the controlled mover's target property is in state 0
     bool isMaskMainMenu() const;
     bool isMoverGetFieldDamage() const;
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    // 2.0.0's symbols name it. A member because its address is in
     // gf_game_scene's unit and GfGameManager::isEnableOpenMainMenu passes the scene. What it does: whether the int at
     // 0x690 is below 30; isEnableOpenMainMenu answers false while it holds.
-    bool fn_71002C4A14();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
+    bool isFullScreenMenuAfter() const;
+    // 2.0.0's symbols name it. A member because its address is in
     // gf_game_scene's unit and GfWeapon's unit's fn_71002ED96C / fn_71002ED99C call it on PtrSingleton<GfGameScene>'s
     // instance. What it does: keeps (handle, target, kind) records (0x20 bytes each from 0x6A8, count at 0x8A8);
     // with flag clear it looks for the record with that handle and kind, and it reads both objects (GfObjAcc, the
     // target's append handles by GfMountManager::getAppendHandles). kind is 0 or 1 (the two callers).
-    void fn_71002C4C0C(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag, unsigned int kind);
-// Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its address is in
-    // gf_game_scene's unit and GfGameManager's statics pass the scene. What they do: fn_71002C4B38: whether the int
-    // at 0x698 is below 2 (GfGameManager::isInvalidBattleStop); fn_71002C4BFC: whether the int at 0x68C is not 0
+    void setIraBoneMount(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag, IRA_MOUNT kind);
+// 2.0.0's symbols name it. A member because its address is in
+    // gf_game_scene's unit and GfGameManager's statics pass the scene. What they do: isOpenPreciousMenu: whether the int
+    // at 0x698 is below 2 (GfGameManager::isInvalidBattleStop); isSepiaFilter: whether the int at 0x68C is not 0
     // (GfGameManager::isSepiaFilter).
-    bool fn_71002C4B38();
-    bool fn_71002C4BFC();
+    bool isOpenPreciousMenu() const;
+    bool isSepiaFilter() const;
 // 2.0.0's symbols name it.
     void updateAfterLayer(const ::fw::UpdateInfo& info);
     // Placeholder name: new in 3.0.1. Placed here because its address follows update in gf_game_scene's unit and update
@@ -197,14 +199,14 @@ public:
     // lie in gf_game_scene's unit and GfGameManager's IGfEvent overrides gevHanaCondenser, gevOrbParam, gevAcceParam,
     // gevChangeGameDifficult, gevOpenPortal and gevOpenMainMenu (IGfEvent's slots 23, 21, 22, 5, 4 and 3, in that
     // order) forward to them on PtrSingleton<GfGameScene>'s instance, passing their arguments on. What they do:
-    // fn_71002C5200 and fn_71002C56CC hand the value to the same file function fn_71002C5208 (which, when
-    // GfGameManager::isFullScreenMenu answers true, builds "%s%s" ".wimdo" model paths); fn_71002C56D4 does the same
+    // gevHanaCondenser and gevOrbParam hand the value to the same file function fn_71002C5208 (which, when
+    // GfGameManager::isFullScreenMenu answers true, builds "%s%s" ".wimdo" model paths); gevAcceParam does the same
     // kind of work with its value; gevChangeGameDifficult calls fn_71002E0F28 on every object of GfGameObj::getList(5);
     // gevOpenPortal starts from the scene's byte at 0x6A0; gevOpenMainMenu, unless GfGameManager::isGameTypeIra answers
     // true, sets local game flag 52962 (type 1) once GfDataBlade::fn_7100231884 reaches 8003.
-    void fn_71002C5200(unsigned int value, bool flag);
-    void fn_71002C56CC(unsigned int value);
-    void fn_71002C56D4(unsigned int value);
+    void gevHanaCondenser(unsigned int value, bool flag, unsigned int slot);
+    void gevOrbParam(unsigned int value, unsigned int value1);
+    void gevAcceParam(unsigned int value, unsigned int value1);
     void gevChangeGameDifficult();
     void gevOpenPortal();
     void gevOpenMainMenu();
@@ -354,18 +356,18 @@ public:
     // updateRideRequest retries the ride while it is set (the name is not the original's)
     bool m_rideRequest;
     unsigned char pad_68A[0x2];
-    int m_value68C;  // fn_71002C4BFC answers whether it is not 0 (the name is not the original's)
-    // postUpdate counts it up to 999 each unpaused frame (0 while paused or an event fade runs); fn_71002C4A14
+    int m_value68C;  // isSepiaFilter answers whether it is not 0 (the name is not the original's)
+    // postUpdate counts it up to 999 each unpaused frame (0 while paused or an event fade runs); isFullScreenMenuAfter
     // answers whether it is below 30 (the name is not the original's)
     int m_frameCount690;
     unsigned char pad_694[0x4];
-    unsigned int m_value698;  // fn_71002C4B38 answers whether it is below 2 (the name is not the original's)
+    unsigned int m_value698;  // isOpenPreciousMenu answers whether it is below 2 (the name is not the original's)
     unsigned char pad_69C[0x4];
     // applyMapjumpForEnd moves it on to m_flag6A1 (the names are not the original's)
     bool m_flag6A0;
     bool m_flag6A1;
     unsigned char pad_6A2[0x6];
-    // fn_71002C4C0C's (handle, target, kind) records (the names are not the original's)
+    // setIraBoneMount's (handle, target, kind) records (the names are not the original's)
     struct AppendRecord {
         GF_OBJ_HANDLE* m_handle;
         GF_OBJ_HANDLE* m_target;

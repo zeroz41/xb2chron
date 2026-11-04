@@ -2759,8 +2759,8 @@ unsigned int fn_71002EC634() {
 
 unsigned int fn_71002EC674(GF_OBJ_HANDLE* handle) {
     GfGameArena* arena = mm::mtl::PtrSingleton<GfGameArena>::sys();
-    if (arena != nullptr && arena->fn_7100291D54()) {
-        return arena->fn_7100291E14(handle);
+    if (arena != nullptr && arena->isBattleNow()) {
+        return arena->getWeaponDamage(handle);
     }
     DataParamAcc acc(handle);
     return acc.getWeaponDamage(false);
@@ -2850,13 +2850,13 @@ bool fn_71002ED5B0(unsigned int enemy, unsigned int mode) {
 
 void fn_71002ED96C(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag) {
     if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
-        scene->fn_71002C4C0C(handle, target, flag, 0);
+        scene->setIraBoneMount(handle, target, flag, IRA_MOUNT(0));
     }
 }
 
 void fn_71002ED99C(GF_OBJ_HANDLE* handle, GF_OBJ_HANDLE* target, bool flag) {
     if (GfGameScene* scene = mm::mtl::PtrSingleton<GfGameScene>::sys()) {
-        scene->fn_71002C4C0C(handle, target, flag, 1);
+        scene->setIraBoneMount(handle, target, flag, IRA_MOUNT(1));
     }
 }
 

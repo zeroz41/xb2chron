@@ -186,7 +186,7 @@ void BattleGlobal::SetPause(int kind, bool pause) {
     m_pause[kind >> 3] = pause ? m_pause[kind >> 3] | (1 << (kind & 7)) : m_pause[kind >> 3] & ~(1 << (kind & 7));
 }
 
-bool BattleGlobal::fn_71000068F8() {
+bool BattleGlobal::IsPlayerAutoOperate() const {
     return pad_bit49 && pad_bit50;
 }
 
@@ -212,7 +212,7 @@ void BattleGlobal::DeleteElementalComboCamera() {
     pad_bit12 = false;
 }
 
-bool BattleGlobal::fn_710000A6CC() {
+bool BattleGlobal::IsValidAutoMode() const {
     return pad_bit49;
 }
 
@@ -408,7 +408,7 @@ int BattleGlobal::GetFutureViewResult(unsigned int id) const {
     return 0;
 }
 
-void BattleGlobal::fn_710000BAE0(int id, int result) {
+void BattleGlobal::FutureViewButtonChllengeResultProc(unsigned int id, FUTURE_VIEW_BTN_RESULT_TYPE result) {
     if (pad_5d54 != 0 && pad_5d64 == id) {
         AttackDamageData* data = findAttackData(pad_5d58);
         switch (result) {
@@ -453,7 +453,7 @@ bool BattleGlobal::IsValidAttackRange(unsigned int id) const {
     return true;
 }
 
-void BattleGlobal::fn_710000BD64(unsigned int id, int index) {
+void BattleGlobal::EndAttackSE(unsigned int id, ATTACK_ONCE_SE_TYPE index) {
     AttackDamageData* data = findAttackData(id);
     if (data != nullptr) {
         switch (index) {
@@ -467,7 +467,7 @@ void BattleGlobal::fn_710000BD64(unsigned int id, int index) {
     }
 }
 
-bool BattleGlobal::fn_710000BDD4(unsigned int id, int index) const {
+bool BattleGlobal::IsPlayAttackSE(unsigned int id, ATTACK_ONCE_SE_TYPE index) const {
     AttackDamageData* data = findAttackData(id);
     if (data != nullptr) {
         switch (index) {
@@ -568,7 +568,7 @@ void BattleGlobal::InitializeIraTalentArtsID() {
     }
 }
 
-unsigned short BattleGlobal::fn_71000053C4(int id) const {
+unsigned short BattleGlobal::GetIraTalentArtsID(unsigned int id) const {
     return pad_8374[static_cast<int>(id - 17u)];
 }
 
@@ -635,11 +635,11 @@ void BattleGlobal::ResetBGM() {
     pad_83b4 = 0xFF;
 }
 
-bool BattleGlobal::fn_710000A7FC(int index) const {
+bool BattleGlobal::IsEndTutorialCondition(BTL_TUTORIAL_COND index) const {
     return (pad_83b8[index >> 3] & (1 << (index & 7))) != 0;
 }
 
-void BattleGlobal::fn_710000AC7C(int index) {
+void BattleGlobal::ClearEndTutorialConditionFlag(BTL_TUTORIAL_COND index) {
     int byte = index >> 3;
     int bit = index & 7;
     pad_83b8[byte] &= ~(1 << bit);
@@ -681,7 +681,7 @@ void BattleGlobal::PlayErrorSE() {
     }
 }
 
-bool BattleGlobal::fn_710000C440(int index) {
+bool BattleGlobal::CheckOnceSE(SE_ONCE_ID index) const {
     int byte = index >> 3;
     int mask = 1 << (index & 7);
     unsigned char& flags = pad_83bf[byte];
@@ -711,7 +711,7 @@ void BattleGlobal::GetFutureViewArtsData(ARTS_DATA& data) const {
     DataManager::sys()->GetArtsData(static_cast<ARTS_DATA::DATA_TYPE>(pad_5d68 & 7), pad_5d68 >> 3, data);
 }
 
-const BattleGlobal::MapRev* BattleGlobal::fn_710000CE5C(int chara, bool apply) const {
+const BattleGlobal::MapRev* BattleGlobal::GetMapDriverRevDataByBdatID(int chara, bool apply) const {
     static const MapRev s_default;  // the name is not the original's
     if (!apply) {
         return &s_default;
@@ -756,7 +756,7 @@ void BattleGlobal::AddPartyPerfectAvoidNum(bool side, int add) {
     count = value < 0 ? 0 : (value > 0xFF ? 0xFF : value);
 }
 
-bool BattleGlobal::fn_710000DE34(bool side) {
+bool BattleGlobal::UsePartyPerfectAvoid(bool side) const {
     unsigned char& count = pad_83c0[!side];
     if (count == 0) {
         return false;
@@ -787,7 +787,7 @@ void BattleGlobal::SwitchPlayerAutoOperate() {
     }
 }
 
-bool BattleGlobal::fn_710000A724() {
+bool BattleGlobal::IsButtonChallengeAutoSuccess() const {
     return (pad_bit49 && pad_bit50) || pad_bit35;
 }
 

@@ -12,13 +12,13 @@ FormationChangeManager::FormationChangeManager() : m_count(0), m_serial(0) {}
 
 FormationChangeManager::~FormationChangeManager() {}
 
-void fn_710009D7B8() {
+void FormationChangeManager::Create() {
 #line 83
     FormationChangeManager* manager = new (gf::getAllocator(gf::ALLOCATOR(0)), __FILE__, __LINE__, 8) FormationChangeManager;
     manager->NotifyMapChange();
 }
 
-void fn_710009D90C() {
+void FormationChangeManager::Destroy() {
     delete FormationChangeManager::get();
 }
 
@@ -76,7 +76,7 @@ void FormationChangeManager::ForceExit(gf::GF_OBJ_HANDLE* handle) {
     }
 }
 
-FormationChangeManager::Request* FormationChangeManager::fn_710009EB1C(gf::GF_OBJ_HANDLE* handle) {
+const FormationChangeManager::Request* FormationChangeManager::GetBasePos(gf::GF_OBJ_HANDLE* handle) const {
     for (int i = 0; i < m_count; i++) {
         if (m_requests[i].m_handle[0] == handle || m_requests[i].m_handle[1] == handle) {
             return &m_requests[i];
@@ -140,8 +140,8 @@ void FormationChangeManager::SetEnableCancel(gf::GF_OBJ_HANDLE* handle) {
     }
 }
 
-bool FormationChangeManager::fn_710009ED18(gf::GF_OBJ_HANDLE* handle) {
-    Request* request = fn_710009EB1C(handle);
+bool FormationChangeManager::IsEnableCancel(gf::GF_OBJ_HANDLE* handle) const {
+    const Request* request = GetBasePos(handle);
     bool flag;
     if (request != nullptr) {
         if (request->m_flag32) {

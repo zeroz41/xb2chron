@@ -72,12 +72,12 @@ public:
     // 2.0.0's symbols name it. What it does: m_seqOther's first step (onFsSucceeded picks it over seqMapObj_init when
     // GfGameManager::isGameTypeIra, the GmkAcc is valid and the GmkMapGimmick row's effectID is set): reads the row's
     // effectID, finds that gimmick (GmkManager::findFirstGmkInstByBdatId, type 0xD; dispose() when none), plays its
-    // "mapobjeffect" effect and "mapobjSE" sound at it, then waits "mapobj_nextwait" in fn_710027B500.
+    // "mapobjeffect" effect and "mapobjSE" sound at it, then waits "mapobj_nextwait" in seqEffect_nextwait.
     void seqEffect_init(float dt);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because seqEffect_init stores it in
     // m_seqOther. What it does: seqMapObj_nextwait's wait on m_seqOther: adds dt to m_elapsedTime and, once it reaches
     // m_waitTime, clears m_seqOther and (nowaitGmkCam, field skill succeeded) solves the gimmick as the others do.
-    void fn_710027B500(float dt);
+    void seqEffect_nextwait(float dt);
 
     // (the field names below are not the original's)
     BdatInfo m_bdatInfo;
@@ -88,7 +88,7 @@ public:
     unsigned int m_lodStep;  // seqLod_waitToElapseTime runs seqLod_init again until it passes 4
     int m_lodAnim;  // GfFieldLod::isPlayAnimEnd's argument
     void (GfFieldMapGimmick::*m_seqMapObj)(float dt);  // the map object's step
-    // a third step (seqEffect_init and fn_710027B500 are its; meaning not known)
+    // a third step (seqEffect_init and seqEffect_nextwait are its; meaning not known)
     void (GfFieldMapGimmick::*m_seqOther)(float dt);
     float m_waitTime;     // the time the waits wait for
     float m_elapsedTime;  // the time waited so far

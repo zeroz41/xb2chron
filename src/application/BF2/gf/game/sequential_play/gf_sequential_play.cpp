@@ -250,7 +250,7 @@ void GfSequentialPlay::addEvent(int id, unsigned int, unsigned int, bool) {
     addCommand(GfPlayComEventWeather::create(WEATYPE(id)));
 }
 
-void GfSequentialPlay::fn_71003227B8(unsigned int id, unsigned int first, unsigned int second, const char* bgm,
+void GfSequentialPlay::addEvent(int id, unsigned int first, unsigned int second, const char* bgm,
                                      const mm::Vec3* pos, float time) {
     addCommand(GfPlayComEvent::create(id, first, second, bgm, pos, time));
 }
@@ -426,8 +426,8 @@ void GfSequentialPlay::addMenuObjCommonText(GfMenuObjCommonText::OpenKizunaParam
     addCommand(GfPlayComMenuObjCommonText::create(param));
 }
 
-void GfSequentialPlay::fn_7100322C64(const char* name, int startId) {
-    addCommand(GfPlayComScriptTutorialSeq::fn_710031E044(name, startId));
+void GfSequentialPlay::addTutorialScript(const char* name, unsigned int startId) {
+    addCommand(GfPlayComScriptTutorialSeq::create(name, startId));
 }
 
 bool GfSequentialPlay::hasCommand(PCOMTYPE type, GfPlayCom* com) {

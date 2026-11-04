@@ -35,38 +35,38 @@ void fn_7100290BAC(unsigned int value);
 // MsgUnk_1000034). Only what gf_play_command uses is declared so far (size 0x18E0, layout not recovered).
 class GfGameArena : public ::mm::mtl::PtrSingleton<GfGameArena>, public ::fw::MessageObject {
 public:
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: their code is in
+    // 2.0.0's symbols name them. Members: their code is in
     // gf_game_arena's unit and the play commands call them on PtrSingleton<GfGameArena>'s instance. What they do:
     // read the state object the pointer at +0x30 holds and answer whether its word at +8 is 9
     // (GfPlayComMapjumpForLeaveArena::update waits for it), 3 (GfPlayComWaitArenaStateField::update; also
     // fn_710028C9CC) or 8 (GfPlayComStartChallengeBattle::update).
-    bool fn_7100291CAC();
-    bool fn_7100291DA0();
-    bool fn_7100291E00();
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members: their code is in
+    bool isStateDestroy() const;
+    bool isEnableStartBattle() const;
+    bool isPlayEvent() const;
+    // 2.0.0's symbols name them. Members: their code is in
     // gf_game_arena's unit and the arena states (unit_710028EBB0) call them on the state machine's owner or on
-    // PtrSingleton<GfGameArena>'s instance. What they do: fn_7100291D68 answers isDestroyNow() || the bool at
-    // +0xB4; fn_7100291DB4 answers GfGameFlag::getLocal(1, 0xDC0D) != 0.
-    bool fn_7100291D68();
-    bool fn_7100291DB4();
-    // 2.0.0's symbols name sleep; the fn_ names are placeholders. Their code is in gf_game_arena's unit; GfGameManager
-    // (isChangeNormalHomuraForce, isDisableFieldDamage) calls fn_7100291D54 on PtrSingleton<GfGameArena>'s instance,
-    // GfPlayFactory::createStartTutorial calls fn_7100291DD8, GfArenaBattle's code calls sleep on the arena it keeps at
-    // +0x18. What they do: fn_7100291D54 answers whether the current state's ID is 5; fn_7100291DD8 answers m_msgObj's
+    // PtrSingleton<GfGameArena>'s instance. What they do: isDestroyNow answers isDestroyNow() || the bool at
+    // +0xB4; isActiveArena answers GfGameFlag::getLocal(1, 0xDC0D) != 0.
+    bool isDestroyNow() const;
+    bool isActiveArena() const;
+    // 2.0.0's symbols name them. Their code is in gf_game_arena's unit; GfGameManager
+    // (isChangeNormalHomuraForce, isDisableFieldDamage) calls isBattleNow on PtrSingleton<GfGameArena>'s instance,
+    // GfPlayFactory::createStartTutorial calls isInvalidTutorial, GfArenaBattle's code calls sleep on the arena it keeps at
+    // +0x18. What they do: isBattleNow answers whether the current state's ID is 5; isInvalidTutorial answers m_msgObj's
     // flag at +0xAD || the current state's ID is 7; sleep sleeps the calling micro thread for the given frames
     // (MicroThread::sleep(frames, true)).
-    bool fn_7100291D54();
-    bool fn_7100291DD8();
+    bool isBattleNow() const;
+    bool isInvalidTutorial() const;
     void sleep(unsigned int frames);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: fn_71002EC674 calls it on
-    // PtrSingleton<GfGameArena>'s instance while fn_7100291D54 holds. What it does: passes m_msgObj's key and the
+    // 2.0.0's symbols name it. A member: fn_71002EC674 calls it on
+    // PtrSingleton<GfGameArena>'s instance while isBattleNow holds. What it does: passes m_msgObj's key and the
     // handle to m_partySetup's fn_710028E5BC.
-    unsigned int fn_7100291E14(GF_OBJ_HANDLE* handle);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in gf_game_arena's unit
+    unsigned int getWeaponDamage(GF_OBJ_HANDLE* handle) const;
+    // 2.0.0's symbols name it. A member: its code is in gf_game_arena's unit
     // and GfGameScene::updateControlFreeEvent calls it with PtrSingleton<GfGameArena>'s instance in x0 (after testing
     // it for null), though the body reads no this. What it does: answers whether
     // PtrSingleton<GfPlayComStartChallengeBattle>'s instance exists.
-    bool fn_71002920F0();
+    bool isBusy() const;
 
     // one row of the challenge rules (the arena keeps 48, SDataGame another 48 at 0x11A8CC; fn_7100291E40 copies
     // m_rules[mode] of row id into a record, setupGame sets the flags; the names are not the original's)
@@ -101,8 +101,8 @@ public:
         RuleRow m_rows[48];
     };
 
-    // what fn_7100290D40 (message type 2) and GfArenaBattle::mapjumpForReturnField pass to fn_71003217A0 (the name is not the
-    // original's): fn_71003217A0 copies m_mapjumpId into the first word of the GfMapjumpInfo it builds
+    // what fn_7100290D40 (message type 2) and GfArenaBattle::mapjumpForReturnField pass to createMapJumpForReturnBattle (the name is not the
+    // original's): createMapJumpForReturnBattle copies m_mapjumpId into the first word of the GfMapjumpInfo it builds
     struct MapjumpParam {
         // fn_7100290D00 (out of line: GfArenaBattle::mapjumpForReturnField calls it; fn_7100290D40 inlines it)
         MapjumpParam();
@@ -124,11 +124,11 @@ public:
     // setupGame marks each of m_ids' rows of SDataGame's rule table once; update keeps the frame's update info, runs
     // the updater and m_sound, and returns GfGameFlag::getLocal(1, 0xDC0D).
     void setupGame();
-    // 2.0.0's symbols name update; the fn_ names are placeholders. fn_7100290130 and fn_7100290BAC call fn_7100291CF4
+    // 2.0.0's symbols name them. setupMenuInfoForChBtl and fn_7100290BAC call getSaveInfo
     // on PtrSingleton<GfGameArena>'s instance, GfArenaBattle::execAfterBattle calls fn_7100291D14 on its arena. What
-    // they do: fn_7100291CF4 returns SDataGame's rule table, fn_7100291D14 the rule for mode of its row id (neither
+    // they do: getSaveInfo returns SDataGame's rule table, fn_7100291D14 the rule for mode of its row id (neither
     // reads the arena).
-    RuleTable* fn_7100291CF4();
+    RuleTable* getSaveInfo() const;
     GfGameManager::BattleChallengeRecord::Rule* fn_7100291D14(unsigned int id, unsigned int mode);
     unsigned int update(const ::fw::UpdateInfo& info);
     // 2.0.0's symbols name them. The arena states call them. createMapSound loads the sound resource "dlc_se_btl_chbtl"
@@ -136,7 +136,7 @@ public:
     void createMapSound();
     void destroyMapSound();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: GfGameManager::fn_71002AC60C calls
-    // it. What it does: fills the record for the challenge id and mode (fn_7100290130, the rule from SDataGame's
+    // it. What it does: fills the record for the challenge id and mode (setupMenuInfoForChBtl, the rule from SDataGame's
     // table, the lists through fn_71002907A0 / fn_71002908DC) and sets its m_flagAEC from m_msgObj's m_result.
     void fn_7100291E40(GfGameManager::BattleChallengeRecord* record, unsigned int id, unsigned int mode);
 
@@ -161,7 +161,7 @@ public:
     ::ai::Fsm m_fsm;  // the arena states (IDs 0..9)
     MicroUpdater<GfGameArena>* m_updater;  // runs fnUpdate
     ::fw::UpdateInfo m_updateInfo;  // update keeps it; each step passes it to the states (the name is not the original's)
-    bool m_isEnd;  // fn_7100291D68 answers it (the name is not the original's)
+    bool m_isEnd;  // isDestroyNow answers it (the name is not the original's)
     unsigned char pad_B5[3];
     // the objects initialize makes (the names are not the original's): 0xCF0 bytes (a party setup helper),
     // 0xF8 (table 0x7100B52C38), 0x58, 0x20 (holds a SoundHandle)
@@ -182,7 +182,7 @@ public:
 // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A free function: its code is in
 // unit_71003214F4 (sequential play); GfGameArena::fn_7100290D40 and GfArenaBattle::mapjumpForReturnField call it with a
 // MapjumpParam (no object). What it does: builds a GfMapjumpInfo from param's m_mapjumpId and the defaults.
-void fn_71003217A0(const GfGameArena::MapjumpParam& param);
+void createMapJumpForReturnBattle(const GfGameArena::MapjumpParam& param);
 }  // namespace gf
 
 #endif

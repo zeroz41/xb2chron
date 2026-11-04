@@ -116,7 +116,7 @@ public:
     bool setSpeed(unsigned int id, float speed);
     bool startTimer(unsigned int id);
     // 2.0.0's symbols name it. What it does: hands the matrix to the caster's flushDirectMatrix when there is a caster;
-    // gf_game_scene's fn_71002C7DC0 calls it.
+    // gf_game_scene's updaterAfterLayerIraWeaponAttach calls it.
     void applyEffpointByMatrix(const mm::Mat44& mtx);
     // 2.0.0's symbols name it. What it does: clears packs, adds pad_48 when set, then every entry's pack of m_packs
     // when GfGameManager::isGameTypeIra() holds; true if any was added.

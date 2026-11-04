@@ -21,7 +21,7 @@ public:
         ::mm::mtl::IAllocator* m_allocator;
         unsigned int m_count;
     };
-    // one object's circle (fn_7100672168's)
+    // one object's circle (addObject's)
     struct RollParam {
         bool m_reverse;            // true: the angle grows (wrapping past 360), false: it shrinks (wrapping below 0)
         unsigned int m_radius;     // the distance from the centre
@@ -48,7 +48,7 @@ public:
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: works on this control's entry
     // list (caller gf::GfMenuObjHitonowa::refreshComplete). What it does: unless the list is full, gives the entry of
     // object handle the new parameters, or adds an entry for it starting at the parameters' start angle.
-    void fn_7100672168(unsigned int handle, const RollParam& param);
+    void addObject(unsigned int handle, const RollParam& param);
     // 2.0.0's symbols name it. What it does: unless the list is full, erases the first entry of object handle.
     void delObject(unsigned int handle);
     // 2.0.0's symbols name it. What it does: stores the bool at 0x68; while it is set update moves nothing.

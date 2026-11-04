@@ -15,7 +15,7 @@ public:
     explicit SCOM_OBJ_WARP_POS(SCOM_TYPE type) : SCOM(type) {}
     static void create(GF_OBJ_HANDLE* handle, const mm::Vec3& pos, const mm::Vec3& rot, bool arg);
     // 2.0.0's symbols name it. What it does: create with a ready transform (no rotation conversion); callers
-    // TitleStatePlayEvent::update, GfGameScene::playEventStartFrame and fn_71002CB810.
+    // TitleStatePlayEvent::update, GfGameScene::playEventStartFrame and updateReserverFollowForIra.
     static void create(GF_OBJ_HANDLE* handle, const fw::Transform& transform, bool arg);
     virtual bool exec(fw::UpdateInfo const&);  // slot 2
 

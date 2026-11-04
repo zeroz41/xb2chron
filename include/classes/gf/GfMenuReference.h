@@ -383,14 +383,14 @@ public:
     // dummy; caller fn_71003DC6FC (gf_menu_obj_combo_route_simple).
     static const IraBladeComboInfo* getIraBladeComboInfo();
     // openOCG / closeOCG: tail-call GfMenuObjOCG::openGear (open LAY_special of object 0x90) /
-    // closeGear (close it); caller fn_7100008554 (A48 also fn_7100009484).
+    // closeGear (close it); caller UpdateOCG (A48 also EndOCG).
     static void openOCG();
     static void closeOCG();
     // setOCGInfo: copies result into m_layerResult, clamps its numbers to 999 and its ratio to 1.0 and, when
     // the ratio rose, tail-calls GfMenuObjOCG::noticeExtend (event 0x102 to LAY_special); caller
     // btl::UIManager::UpdateMenuData.
     static void setOCGInfo(const OCGInfo& result);
-    // startOCGResult: tail-calls GfMenuObjOCG::openResult(context, pair's two words); caller fn_7100008554.
+    // startOCGResult: tail-calls GfMenuObjOCG::openResult(context, pair's two words); caller UpdateOCG.
     static void startOCGResult(GfMenuCallContext* context, const OCGResult& pair);
     // resetReferenceParam: with the singleton, zeroes the reference driver/blade ids, the team/zone/mission/shop/world
     // map ids, the challenge battle mode, the item type, and the driver and blade virtual records (resetDriverVirtual

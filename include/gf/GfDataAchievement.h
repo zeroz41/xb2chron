@@ -28,7 +28,7 @@ public:
     static bool isAddAchievementBonusCount(const AchievQuest& quest);
     // 2.0.0's symbols name it. What it does: stores value as a statistic's total: in its 8-bit local flag
     // (getAchievementTotalFlgIndex8) capped at 255, else in its 32-bit one (getAchievementTotalFlgIndex); the only
-    // caller is fn_71005663BC.
+    // caller is createKizunaTalk.
     static void setTotalCount(unsigned int type, unsigned int value);
 };
 }  // namespace gf

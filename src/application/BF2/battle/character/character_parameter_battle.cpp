@@ -41,7 +41,7 @@ inline void SetupKizunaLink(PlayerParameter& param) {
     }
 }
 
-// what slot 54 and BattleStart take from Utility::fn_7100010D3C in a challenge battle: for the character's blade
+// what slot 54 and BattleStart take from Utility::GetIraDummyBladeID in a challenge battle: for the character's blade
 // row, else for the party group's other driver (an inferred helper: the name is not the original's)
 inline unsigned int GetChallengeValue(const PlayerParameter& param) {
     unsigned int id;
@@ -56,7 +56,7 @@ inline unsigned int GetChallengeValue(const PlayerParameter& param) {
         gf::GfObjAcc acc(driver);
         id = acc.getBdatId();
     }
-    return Utility::fn_7100010D3C(id);
+    return Utility::GetIraDummyBladeID(id);
 }
 
 // sets the armor up from the party group's pouch buff while it is negative (BattleStart, CalcDamageArmorEx; an
@@ -696,7 +696,7 @@ bool EnemyParameter::IsAngry() const {
 }
 
 // slot 22's base body sits here, between EnemyParameter's own slot bodies (after 0x7100088A44's place)
-void CharacterParameter::fn_7100088B68() {}
+void CharacterParameter::SetResistantAttr(int, int, bool) {}
 
 void EnemyParameter::EndElementalAwake() {
     if (pad_bit1) {
