@@ -219,7 +219,7 @@ public:
     static void resetGameType(bool flag);
     // 2.0.0's symbols name it. What it does: tail-calls fn_710024DD88, which returns bits 16-19 of the u32 at 0x101D08
     // of GfDataManager::getDataGame(). Callers: fn_71002CBBD0 and gf_menu_obj_hitonowa's GfMenuObjHitonowa::setupGame
-    // (keeps it in a file static), initialize and fn_71004256F8.
+    // (keeps it in a file static), initialize and seqNextGet.
     static unsigned int getHitonowaLevel();
     static void build(const GfSetupParam& param);
     void initialize(const GfSetupParam& param);
@@ -333,7 +333,7 @@ public:
     // GfMenuObjUtil::isValidExpansion). 269 callers.
     static bool isGameTypeIra();
     // 2.0.0's symbols name it. What it does: tail-calls fn_7100232754 and returns its bool. Callers: GfMenuManager's
-    // layer-72 opener (openNamedList), GfMenuCharDataAdapter, GfMenuObjCommonText::fn_71003E1F60.
+    // layer-72 opener (openNamedList), GfMenuCharDataAdapter, GfMenuObjCommonText::openWithNamed.
     static bool isEnableNamedRecord();
     // 2.0.0's symbols name it. What it does: when fn_71002EDA8C answers true and PtrSingleton<GfGameScene> exists, sets
     // the scene's byte at 0x8B8 to 1. Callers: seqAutoSave and the sys plugin's autoSave (no arguments).

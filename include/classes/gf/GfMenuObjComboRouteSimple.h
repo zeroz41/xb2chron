@@ -8,7 +8,7 @@ namespace ui { struct EventData; }
 
 namespace gf {
 // table 0x7100B61408: the menu object of gf_menu_obj_combo_route_simple.cpp (new in 3.0.1; nothing names the class
-// yet). It shows the element combo route GfMenuReference::fn_71003689C0 answers (LAY_route); GfMenuManager::reciveEvent
+// yet). It shows the element combo route GfMenuReference::getIraBladeComboInfo answers (LAY_route); GfMenuManager::reciveEvent
 // creates it, and GfMenuObjComboRoute's open, close and disp call its open, close and disp (open,
 // close, disp).
 class GfMenuObjComboRouteSimple : public ::gf::GfMenuObject {
@@ -27,7 +27,7 @@ public:
     // GfMenuObjComboRoute::disp calls it.
     static void disp(bool disp);
     // 2.0.0's symbols name it. What it does: unless the object is missing or terminating, sends it event 0x100 (its
-    // listener then redraws the route); GfMenuReference::fn_7100368830 / fn_71003688E0 tail-call it when the combo
+    // listener then redraws the route); GfMenuReference::resetIraBladeCombo / updateIraBladeCombo tail-call it when the combo
     // route record changed.
     static void refresh();
 };

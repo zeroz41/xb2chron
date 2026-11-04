@@ -91,7 +91,7 @@ public:
         }
     }
 
-    // copies the words through copy_n (GfMenuReference::setElemComboRootInfo, fn_7100367ADC and fn_7100367D6C copy a
+    // copies the words through copy_n (GfMenuReference::setElemComboRootInfo, setIraCharInfo and setIraCharProperty copy a
     // record's Bitflag word apart from its other fields, after a self test and algorithm.h's overlap assert)
     Bitflag& operator=(const Bitflag& other) {
         if (this != &other) {

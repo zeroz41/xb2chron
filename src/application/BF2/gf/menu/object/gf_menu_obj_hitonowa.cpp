@@ -24,7 +24,7 @@
 
 namespace gf {
 
-unsigned int GfMenuObjHitonowa::s_gameValue;
+unsigned int GfMenuObjHitonowa::s_CurLevel;
 
 void GfMenuObjHitonowa::setBootFromEvent() {
     GfMenuTypes::Param param;
@@ -34,8 +34,8 @@ void GfMenuObjHitonowa::setBootFromEvent() {
 
 void GfMenuObjHitonowa::setFaceStream(ui::UIObjectAcc& image, unsigned int id) {
     image.resetStreamImageEx();
-    int value = 0;
-    int kind = fn_710041D2C8(id, &value);
+    unsigned int value = 0;
+    int kind = getNpcChange(id, value);
     if (kind == 1) {
         image.setStreamImage2nd();
     } else if (kind == 2) {
@@ -44,7 +44,7 @@ void GfMenuObjHitonowa::setFaceStream(ui::UIObjectAcc& image, unsigned int id) {
 }
 
 void GfMenuObjHitonowa::setupGame() {
-    s_gameValue = GfGameManager::getHitonowaLevel();
+    s_CurLevel = GfGameManager::getHitonowaLevel();
     GfMenuLocation::startNpcNavigate(0);
 }
 
@@ -52,7 +52,7 @@ void GfMenuObjHitonowa::finalize() {
     GfMenuObject::finalize();
 }
 
-unsigned int GfMenuObjHitonowa::fn_710041E870(unsigned int id) {
+unsigned int getNpcGroup(unsigned int id) {
     unsigned char* fp = GfDataBdat::getFP(0xA8);
     unsigned short cond = Bdat::getVal(fp, "Condition2", id);
     if (cond != 0 && GfGameCond::isGameCond(cond)) {
@@ -79,14 +79,14 @@ void GfMenuObjHitonowa::dispLevel() {
     param.m_setDefault = true;
     param.m_startFlags = 8;
     GfMenuObjUtil::startCtrl(level.m_handle, param, nullptr);
-    bool max = s_gameValue == 6;
+    bool max = s_CurLevel == 6;
     level.setDispChild(true, "TXT_level_num");
     ui::UIObjectAcc(level.m_handle, "TXT_level_num").setAlpha(max ? 0.0f : 1.0f);
     level.setDispChild(true, "TXT_level_max");
     ui::UIObjectAcc(level.m_handle, "TXT_level_max").setAlpha(max ? 1.0f : 0.0f);
 }
 
-// the list kinds refreshNew and fn_7100420B00 walk (lbl_71009C1D58; the name is not the original's)
+// the list kinds refreshNew and updateQuestIcon walk (lbl_71009C1D58; the name is not the original's)
 static const unsigned int s_newIconKinds[] = {1, 2, 3};
 
 void GfMenuObjHitonowa::refreshNew() {
@@ -270,7 +270,7 @@ bool GfMenuObjHitonowa::seqConfirmGet() {
 }
 
 bool GfMenuObjHitonowa::seqStartLevelMax() {
-    m_busyCtrl = fn_710041FBC8(3);
+    m_busyCtrl = openTelop(3);
     return true;
 }
 
@@ -302,7 +302,7 @@ bool GfMenuObjHitonowa::seqWaitImage() {
 }
 
 bool GfMenuObjHitonowa::seqStartLevelUp() {
-    m_busyCtrl = fn_710041FBC8(2);
+    m_busyCtrl = openTelop(2);
     return true;
 }
 
@@ -321,7 +321,7 @@ bool GfMenuObjHitonowa::seqReturnMain() {
 }
 
 bool GfMenuObjHitonowa::seqNextLost() {
-    fn_710041F0A8(0, m_ids[m_cursor]);
+    delNpc(0, m_ids[m_cursor]);
     refreshComplete();
     if (++m_cursor < m_list->getSize()) {
         m_seq.addJob(&GfMenuObjHitonowa::seqMoveLost);
@@ -341,7 +341,7 @@ bool GfMenuObjHitonowa::seqNextEntry() {
 }
 }  // namespace gf
 
-// instantiated for gf::GfMenuObjHitonowa::fn_710041F0A8 (not written yet)
+// instantiated for gf::GfMenuObjHitonowa::delNpc (not written yet)
 template mm::mtl::Vector<fw::AssetCsvb*>::iterator mm::mtl::Vector<fw::AssetCsvb*>::erase(fw::AssetCsvb**);
 
 namespace gf {

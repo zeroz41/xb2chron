@@ -60,7 +60,7 @@ public:
     void releaseLayerEx(unsigned char* bdat, unsigned int id);
     bool preloadLayer(unsigned int id);
     // 2.0.0's symbols name it. What it does: hands on to UIObjFactory::clearPreloadResource (every preloaded resource
-    // released). Its caller is GfMenuManager's fn_71003597B0.
+    // released). Its caller is GfMenuManager::setupGame.
     void clearPreload();
     void terminateObject(const char* name, unsigned char group, bool release);
     void requestObjectEvent(unsigned int handle, const EventData& event, float delay);

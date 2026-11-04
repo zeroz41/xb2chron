@@ -62,13 +62,13 @@ public:
     static unsigned int getLocatorDataNum(unsigned int kind);
     static bool getLocatorData(unsigned int kind, unsigned int index, LocatorData& data, unsigned int mapId, bool curMap);
     // 2.0.0's symbols name it. What it does: when the instance exists, stores value in m_requestId (GfMenuObjHitonowa's
-    // setupGame, initialize and fn_7100423960 pass it).
+    // setupGame, initialize and seqWaitNavi pass it).
     static void startNpcNavigate(unsigned int value);
     // 2.0.0's symbols name it. What it does: m_requestId, 0 without the instance (callers: fn_71003601DC,
-    // fn_710041D568, fn_7100421588, fn_7100423960).
+    // GfMenuObjHitonowa's initialize, MainListener::reciveEvent and seqWaitNavi).
     static unsigned int getNpcNavigateID();
     // 2.0.0's symbols name it. What it does: when the instance exists, empties every list (locators, orders, both
-    // counts). Caller: fn_71003597B0.
+    // counts). Caller: GfMenuManager::setupGame.
     static void reset();
 
     unsigned int m_requestId;  // 0x8: startNpcNavigate's value; postUpdate makes m_locator for it (the name is not the original's)

@@ -101,7 +101,7 @@ void GfMenuObjCharChange::reverse(bool flag) {
     }
 }
 
-void GfMenuObjCharChange::fn_71003C35C8(unsigned int value) {
+void GfMenuObjCharChange::updateOperation(GfMenuReference::IRA_OPERATION_BTN value) {
     if (GfMenuObjUtil::isValidExpansion(3)) {
         ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x3C));
         if (acc.m_object != nullptr) {
@@ -184,7 +184,7 @@ void GfMenuObjCharChange::updateRecast(unsigned int index) {
     }
 }
 
-void GfMenuObjCharChange::fn_71003C5164(unsigned int index) {
+void GfMenuObjCharChange::updateChainRecast(unsigned int index, bool) {
     ui::UIObjectAcc chain(m_handle, "LAY_chain");
     unsigned int count = chain.countChild("LAY_chain@%02d", 1);
     mm::mtl::FixStr<32> name;
@@ -253,7 +253,7 @@ void GfMenuObjCharChange::startBladeChange() {
     param.m_distance = 0x20;
     param.m_time = 0.25f;
     for (unsigned int i = 0; i < 2; i++) {
-        const GfMenuReference::BladeOwner* owner = GfMenuReference::getIraCharInfoFromFromID(i);
+        const GfMenuReference::IraCharInfo* owner = GfMenuReference::getIraCharInfoFromFromID(i);
         if (owner != nullptr && !GfDataDriver::isIraFront(owner->m_driver) && pad_1B0 != 0) {
             mm::mtl::FixStr<32> name;
             name.format("LAY_char2_active@%02d", i + 1);

@@ -148,8 +148,9 @@ void GfFieldGrave::create(GF_OBJ_HANDLE* handle) {
     dispose();
     m_handle = handle;
     gmk::AGmkBase* gmk = gmk::getBindedGmkInst(handle);
-    GfMenuManager::fn_7100359CD8(
-        51, gmk != nullptr ? static_cast<const gmk::GmkGrave::BdatInfo*>(gmk->m_createInfo.m_bdatInfo)->m_windowArg : 0);
+    GfMenuManager::openCommonWindowWithNamed(
+        51,
+        gmk != nullptr ? static_cast<const gmk::GmkGrave::BdatInfo*>(gmk->m_createInfo.m_bdatInfo)->m_windowArg : 0);
     m_seq = &GfFieldGrave::seqWaitToSelect;
 }
 

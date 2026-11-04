@@ -231,7 +231,7 @@ public:
     // the blade id in that slot (back slot) of the party driver's (GfMenuCharDataAdapter::PartyBladeConverter)
     static unsigned int getBladeIDFromPartySlot(unsigned int driver, int slot, bool);
     static unsigned int getBladeIDFromPartyBackSlot(unsigned int driver, int slot, bool);
-    // the blade id the driver has in that slot (GfMenuCharDataAdapter's TUnk_B5B908)
+    // the blade id the driver has in that slot (GfMenuCharDataAdapter::ReferenceBladeSetConverter)
     static unsigned int getBladeIDFromDriverSlot(unsigned int driver, int slot);
     // how many blade slots a driver has: 1, 2 once local flag 0x89FF is 1, 3 once 0x8A00 is 1 (1.0.0's
     // getBladeFromDriver calls getBladeSlotMax at the same place; 1.0.0's body is the same)

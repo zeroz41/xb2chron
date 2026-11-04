@@ -119,7 +119,7 @@ void TUnk_B61450::reciveEvent(const ui::EventData& event, unsigned int handle) {
         }
         break;
     case 0x100: {
-        const GfMenuReference::ComboRouteState* state = GfMenuReference::fn_71003689C0();
+        const GfMenuReference::IraBladeComboInfo* state = GfMenuReference::getIraBladeComboInfo();
         mm::mtl::FixStr<32> name;
         for (unsigned int i = 0; i < 3; i++) {
             unsigned short icon = state->m_values[i] + 0x9E;

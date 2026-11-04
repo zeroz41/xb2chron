@@ -11,12 +11,12 @@
 #include "classes/gf/GfMenuCharDataAdapter/ReferenceDriverConverter.h"
 #include "classes/gf/GfMenuCharDataAdapter/ReferenceBladeConverter.h"
 #include "classes/gf/GfMenuCharDataAdapter/ReferenceBladeOwnerDriverConverter.h"
-#include "classes/gf/TUnk_B5B878.h"
-#include "classes/gf/TUnk_B5B908.h"
-#include "classes/gf/TUnk_B5B938.h"
-#include "classes/gf/TUnk_B5B968.h"
-#include "classes/gf/TUnk_B5B9C8.h"
-#include "classes/gf/TUnk_B5B9F8.h"
+#include "classes/gf/GfMenuCharDataAdapter/NamedListConverter.h"
+#include "classes/gf/GfMenuCharDataAdapter/ReferenceBladeSetConverter.h"
+#include "classes/gf/GfMenuCharDataAdapter/BladeListOwnerDriverConverter.h"
+#include "classes/gf/GfMenuCharDataAdapter/BladeListSetDriverConverter.h"
+#include "classes/gf/GfMenuCharDataAdapter/IraDriverListFormConverter.h"
+#include "classes/gf/GfMenuCharDataAdapter/NpcIDListConverter.h"
 #include "classes/gf/GfGameManager.h"
 #include "gf/GfDataParty.h"
 #include "mm/mtl/FixedVector.h"
@@ -1475,7 +1475,7 @@ bool GfMenuCharDataAdapter::update_IRA_ChangeRecast(const DataParamAcc& acc) {
         return false;
     }
     if (!GfGameManager::isBattle()) {
-        const GfMenuReference::DriverGauge* gauge = GfMenuReference::getIraCharProperty(getDriverId(acc));
+        const GfMenuReference::IraCharProperty* gauge = GfMenuReference::getIraCharProperty(getDriverId(acc));
         if (gauge == nullptr) {
             return false;
         }
@@ -1493,7 +1493,7 @@ bool GfMenuCharDataAdapter::update_IRA_ChangeRecast(const DataParamAcc& acc) {
         if (acc.getObjType() != 3) {
             return false;
         }
-        const GfMenuReference::DriverGauge* gauge = GfMenuReference::getIraCharProperty(getDriverId(acc));
+        const GfMenuReference::IraCharProperty* gauge = GfMenuReference::getIraCharProperty(getDriverId(acc));
         if (gauge == nullptr) {
             return false;
         }
@@ -1787,7 +1787,8 @@ bool GfMenuCharDataAdapter::update_BL_WpnImage(const DataParamAcc& acc) {
 GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromNamedList(unsigned int handle, unsigned int kind,
                                                             const GfMenuIDList* list, int index, bool changed) {
 #line 1013
-    TUnk_B5B878* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5B878(list, index);
+    NamedListConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        NamedListConverter(list, index);
     return createFromCoverter(handle, kind, converter, changed);
 }
 
@@ -1826,21 +1827,26 @@ GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromReferenceBlade(unsigned 
 GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromReferenceBladeSet(unsigned int handle, unsigned int kind,
                                                             unsigned int index, int slot, bool changed) {
 #line 1041
-    TUnk_B5B908* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5B908(index, slot);
+    ReferenceBladeSetConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        ReferenceBladeSetConverter(index, slot);
     return createFromCoverter(handle, kind, converter, changed);
 }
 
-GfMenuCharDataAdapter* GfMenuCharDataAdapter::fn_710033A480(unsigned int handle, unsigned int kind,
-                                                            const GfMenuBladeList* list, int index, bool changed) {
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromBladeListOwnerDriver(unsigned int handle, unsigned int kind,
+                                                                             const GfMenuBladeList* list,
+                                                                             unsigned int index, bool changed) {
 #line 1055
-    TUnk_B5B938* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5B938(list, index);
+    BladeListOwnerDriverConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        BladeListOwnerDriverConverter(list, index);
     return createFromCoverter(handle, kind, converter, changed);
 }
 
-GfMenuCharDataAdapter* GfMenuCharDataAdapter::fn_710033A5D0(unsigned int handle, unsigned int kind,
-                                                            const GfMenuBladeList* list, int index, bool changed) {
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromBladeListSetDriver(unsigned int handle, unsigned int kind,
+                                                                           const GfMenuBladeList* list,
+                                                                           unsigned int index, bool changed) {
 #line 1062
-    TUnk_B5B968* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5B968(list, index);
+    BladeListSetDriverConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        BladeListSetDriverConverter(list, index);
     return createFromCoverter(handle, kind, converter, changed);
 }
 
@@ -1873,14 +1879,15 @@ GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromReferenceBladeOwnerDrive
     return createFromCoverter(handle, kind, converter, changed);
 }
 
-GfMenuCharDataAdapter* GfMenuCharDataAdapter::fn_710033A7EC(unsigned int handle, unsigned int kind,
-                                                            const GfMenuDriverList* list, unsigned int index,
+GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromIraDriverListForm(unsigned int handle, unsigned int kind,
+                                                            const GfMenuDriverList* list, int index,
                                                             unsigned int party, bool changed) {
     if (!GfMenuObjUtil::isValidExpansion(3)) {
         return nullptr;
     }
 #line 1092
-    TUnk_B5B9C8* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5B9C8(list, index, party);
+    IraDriverListFormConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        IraDriverListFormConverter(list, index, party);
     return createFromCoverter(handle, kind, converter, changed);
 }
 
@@ -1890,7 +1897,8 @@ GfMenuCharDataAdapter* GfMenuCharDataAdapter::createFromNpcIDList(unsigned int h
         return nullptr;
     }
 #line 1102
-    TUnk_B5B9F8* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5B9F8(list, index);
+    NpcIDListConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
+        NpcIDListConverter(list, index);
     return createFromCoverter(handle, kind, converter, changed);
 }
 
@@ -2121,7 +2129,7 @@ void GfMenuCharDataAdapter::EnBookListConverter::getCharData(unsigned char& objT
     }
 }
 
-void TUnk_B5B878::getCharData(unsigned char& objType, unsigned int& objId) {
+void GfMenuCharDataAdapter::NamedListConverter::getCharData(unsigned char& objType, unsigned int& objId) {
     int index = m_index;
     if (index == -1) {
         index = m_list->getIndex(true);
@@ -2147,7 +2155,7 @@ void GfMenuCharDataAdapter::ReferenceBladeConverter::getCharData(unsigned char& 
     objId = GfMenuReference::getReferenceBladeID(m_index);
 }
 
-void TUnk_B5B908::getCharData(unsigned char& objType, unsigned int& objId) {
+void GfMenuCharDataAdapter::ReferenceBladeSetConverter::getCharData(unsigned char& objType, unsigned int& objId) {
     DataParamAcc acc(3, GfMenuReference::getReferenceDriverID(m_index), static_cast<GimmickType>(0));
     if (acc.isValid()) {
         if (GfMenuObjUtil::isValidExpansion(3)) {
@@ -2165,7 +2173,7 @@ void TUnk_B5B908::getCharData(unsigned char& objType, unsigned int& objId) {
     }
 }
 
-void TUnk_B5B938::getCharData(unsigned char& objType, unsigned int& objId) {
+void GfMenuCharDataAdapter::BladeListOwnerDriverConverter::getCharData(unsigned char& objType, unsigned int& objId) {
     int index = m_index;
     if (index == -1) {
         index = m_list->getIndex(true);
@@ -2176,7 +2184,7 @@ void TUnk_B5B938::getCharData(unsigned char& objType, unsigned int& objId) {
     }
 }
 
-void TUnk_B5B968::getCharData(unsigned char& objType, unsigned int& objId) {
+void GfMenuCharDataAdapter::BladeListSetDriverConverter::getCharData(unsigned char& objType, unsigned int& objId) {
     int index = m_index;
     if (index == -1) {
         index = m_list->getIndex(true);
@@ -2192,7 +2200,7 @@ void GfMenuCharDataAdapter::ReferenceBladeOwnerDriverConverter::getCharData(unsi
     objType = 3;
     objId = 0;
     if (GfMenuObjUtil::isValidExpansion(3)) {
-        const GfMenuReference::BladeOwner* owner = GfMenuReference::getIraCharInfoFromFromID(m_blade);
+        const GfMenuReference::IraCharInfo* owner = GfMenuReference::getIraCharInfoFromFromID(m_blade);
         if (owner != nullptr) {
             objType = 3;
             objId = owner->m_driver;
@@ -2200,7 +2208,7 @@ void GfMenuCharDataAdapter::ReferenceBladeOwnerDriverConverter::getCharData(unsi
     }
 }
 
-void TUnk_B5B9C8::getCharData(unsigned char& objType, unsigned int& objId) {
+void GfMenuCharDataAdapter::IraDriverListFormConverter::getCharData(unsigned char& objType, unsigned int& objId) {
     objType = 3;
     objId = 0;
     if (GfMenuObjUtil::isValidExpansion(3)) {
@@ -2214,7 +2222,7 @@ void TUnk_B5B9C8::getCharData(unsigned char& objType, unsigned int& objId) {
     }
 }
 
-void TUnk_B5B9F8::getCharData(unsigned char& objType, unsigned int& objId) {
+void GfMenuCharDataAdapter::NpcIDListConverter::getCharData(unsigned char& objType, unsigned int& objId) {
     int index = m_index;
     if (index == -1) {
         index = m_list->getIndex(true);

@@ -438,7 +438,7 @@ bool GfMenuBattleAdapter::update_OCGTimeRatio() {
 }
 
 bool GfMenuBattleAdapter::update_OCGBonus() {
-    const GfMenuReference::LayerResult* result = GfMenuReference::getOCGInfo();
+    const GfMenuReference::OCGInfo* result = GfMenuReference::getOCGInfo();
     setNumber(static_cast<unsigned int>(m_index) < 3 ? result->m_numbers[m_index] : 0);
     return true;
 }

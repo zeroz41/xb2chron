@@ -1,7 +1,7 @@
 #include "classes/gf/GfMenuBtlchAdapter.h"
 #include "classes/gf/GfMenuBtlchAdapter/IConverter.h"
-#include "classes/gf/TUnk_B5A850.h"
-#include "classes/gf/TUnk_B5A878.h"
+#include "classes/gf/GfMenuBtlchAdapter/ListConverter.h"
+#include "classes/gf/GfMenuBtlchAdapter/ReferenceConverter.h"
 #include "classes/gf/GfMenuIDList.h"
 #include "classes/gf/GfMenuReference.h"
 #include "classes/gf/GfMenuReferenceNumber.h"
@@ -247,7 +247,7 @@ bool GfMenuBtlchAdapter::update_TimeClear(unsigned int id) {
 
 GfMenuBtlchAdapter* GfMenuBtlchAdapter::createFromCoverter(unsigned int handle, unsigned int type, IConverter* converter,
                                              bool changed) {
-    GfMenuBtlchAdapter* adapter = create(handle, type, converter->fn_7100334D68(), changed);
+    GfMenuBtlchAdapter* adapter = create(handle, type, converter->getBtlchID(), changed);
     if (adapter != nullptr) {
         adapter->m_converter = converter;
     }
@@ -257,14 +257,14 @@ GfMenuBtlchAdapter* GfMenuBtlchAdapter::createFromCoverter(unsigned int handle, 
 GfMenuBtlchAdapter* GfMenuBtlchAdapter::createFromList(unsigned int handle, unsigned int type, GfMenuIDList* list, int index,
                                         bool changed) {
 #line 173
-    IConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5A850(list, index);
+    IConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ListConverter(list, index);
     return createFromCoverter(handle, type, converter, changed);
 }
 
 GfMenuBtlchAdapter* GfMenuBtlchAdapter::createFromReference(unsigned int handle, unsigned int type,
                                         mm::mtl::IntrusivePtr<GfMenuReferenceNumber> reference, bool changed) {
 #line 182
-    IConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B5A878(reference);
+    IConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ReferenceConverter(reference);
     return createFromCoverter(handle, type, converter, changed);
 }
 
@@ -278,7 +278,7 @@ unsigned short GfMenuBtlchAdapter::getScoreType(unsigned int id) {
 
 void GfMenuBtlchAdapter::update(const fw::UpdateInfo& info) {
     if (m_converter != nullptr) {
-        unsigned int id = m_converter->fn_7100334D68();
+        unsigned int id = m_converter->getBtlchID();
         if (m_id != id) {
             m_id = id;
             setChange();

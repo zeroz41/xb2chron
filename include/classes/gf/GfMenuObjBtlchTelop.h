@@ -64,7 +64,7 @@ public:
     static bool open(GfMenuCallContext* context, const OpenParam& param);
     // 2.0.0's symbols name it. What it does: when GfMenuObjUtil::isValidExpansion(1) and
     // GfGameManager::isBattleArenaActive hold and attached object 0x88 lives, sends it the close event (0x22).
-    // fn_71003B34D0, fn_7100007D0C and fn_7100488958 call it.
+    // GfMenuObjBtlchTutorial::TutorialListener::reciveEvent, fn_7100007D0C and GfMenuObjTips::TutorialListener::reciveEvent call it.
     static void forceClose();
     unsigned char pad_24[4];
     GfMenuSequence<GfMenuObjBtlchTelop, 8> m_seq;

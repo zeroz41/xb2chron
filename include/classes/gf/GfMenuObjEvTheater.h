@@ -38,26 +38,27 @@ public:
         unsigned char m_level;
         unsigned char m_max;
     };
-    // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them (they follow GfMenuObjOption's
-    // convLevelListToOptionData / getDefaultLevel, with a 2-byte Level). Members: getDefaultLevel and convOptionDataToLevelList
-    // work on this object's m_levels / m_volumeLevel, fn_7100403DE4 (this object's listener) calls fn_7100404A08 and
-    // convOptionDataToLevelList; the unsigned int each takes (a category, as in GfMenuObjOption's) is passed on, never read.
-    // fn_7100404A08: stores levels into option: row 1 - top (Bdat::getIdTop of bdat 0x104) == 1 into the event
+    // 2.0.0's symbols name them (as GfMenuObjOption's convLevelListToOptionData / getDefaultLevel, with a 2-byte
+    // Level). Members: getDefaultLevel and convOptionDataToLevelList work on this object's m_levels / m_volumeLevel,
+    // ItemListListener::reciveEvent (0x7100403DE4, this object's listener) calls convLevelListToOptionData and
+    // convOptionDataToLevelList; the unsigned int each takes (a category, as in GfMenuObjOption's) is passed on, never
+    // read. convLevelListToOptionData (no body here yet): stores levels into option: row 1 - top (Bdat::getIdTop of
+    // bdat 0x104) == 1 into the event
     // subtitle flag, row 2 - top's level / max (at most 1) * 255 into m_volume[1], and with
     // GfMenuManager::isEnableVoiceChange row 3 - top == 2 into m_byte1E.
-    static void fn_7100404A08(unsigned int category, const mm::mtl::FixedVector<Level, 32>& levels, SDataOption& option);
+    static void convLevelListToOptionData(unsigned int category, const mm::mtl::FixedVector<Level, 32>& levels, SDataOption& option);
     // getDefaultLevel: clears levels and pushes bdat 0x104's "default_level" / "max_level" of rows s_capRows (the third
     // only with GfMenuManager::isEnableVoiceChange); with GfMenuObjUtil::isValidExpansion(3) the third's default is 2 or 1 by
     // fw::LangUtil::getLangType and the second's is m_volumeLevel scaled to max_level (max_level when it is 0xFF).
     void getDefaultLevel(unsigned int category, mm::mtl::FixedVector<Level, 32>& levels);
-    // convOptionDataToLevelList: refills m_levels with getDefaultLevel, then sets them from option (the inverse of fn_7100404A08).
+    // convOptionDataToLevelList: refills m_levels with getDefaultLevel, then sets them from option (the inverse of convLevelListToOptionData).
     void convOptionDataToLevelList(unsigned int category, const SDataOption& option);
     virtual ~GfMenuObjEvTheater();  // slot 0
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
 
-    // 2.0.0's symbols name them. fn_7100400C10 (a member: it reads this object's fields) queues each one as a delegate
+    // 2.0.0's symbols name them. setupSetting (a member: it reads this object's fields) queues each one as a delegate
     // on this object, with a parameter, in the 3-entry delegate list at 0x88; they return true. What it does: sets
     // "IMG_select_set_ev_timezone"'s image from the 3-entry table s_timezoneImages: entry m_timezone - 1 when
     // m_timezone is set, else entry `value` (and clears m_timezoneFromList); returns false without touching it while
@@ -130,12 +131,12 @@ public:
     // updateTimezone shows timezone image m_timezone - 1 when it is set (the name is not the original's)
     unsigned int m_timezone;  // 0x16C
     unsigned char pad_170[0x178 - 0x170];
-    // updateCommonParts's base icon id for "IMG_select_set_bl_face"; fn_7100400C10 sets it from a 4-entry table by
+    // updateCommonParts's base icon id for "IMG_select_set_bl_face"; setupSetting sets it from a 4-entry table by
     // the entry at 0x174 (the name is not the original's)
     unsigned int m_faceIcon;  // 0x178
     unsigned char pad_17C[0x180 - 0x17C];
     mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_number;  // 0x180: the constructor creates it (the name is not the original's)
-    // updateTimezone does nothing while it is set; fn_7100400C10 clears it (the name is not the original's)
+    // updateTimezone does nothing while it is set; setupSetting clears it (the name is not the original's)
     bool m_timezoneLocked;  // 0x188
     // updateTimezone clears it when it shows the list's timezone (the name is not the original's)
     bool m_timezoneFromList;  // 0x189

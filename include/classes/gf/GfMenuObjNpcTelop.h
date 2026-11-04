@@ -37,7 +37,7 @@ public:
     // accepts, copies param into g_npcTelopParam, sends an open event to the object's sibling LAY_dummy and starts the
     // context on it. Callers: event::UIManager::openHitonowaUI, fn_7100319DD4.
     static void open(GfMenuCallContext* context, const OpenParam& param);
-    // 2.0.0's symbols name it. What it does: returns g_npcTelopParam. Caller: gf_menu_obj_hitonowa's fn_710041D568.
+    // 2.0.0's symbols name it. What it does: returns g_npcTelopParam. Caller: gf_menu_obj_hitonowa's GfMenuObjHitonowa::initialize.
     static OpenParam* getOpenParam();
     // 2.0.0's symbols name it. What it does: returns g_npcTelopOpen (HitonowaListener sets it on the open event 0x21,
     // clears it on close 0x22).

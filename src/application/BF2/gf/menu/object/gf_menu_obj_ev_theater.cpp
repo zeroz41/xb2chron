@@ -561,7 +561,7 @@ bool GfMenuObjEvTheater::seqStartInput() {
 }
 }  // namespace gf
 
-// instantiated for gf::GfMenuObjOption::ItemListListener::reciveEvent, gf::GfMenuObjHitonowa::fn_710041F0A8, ui::UISelectObjList::delObject (not written yet)
+// instantiated for gf::GfMenuObjOption::ItemListListener::reciveEvent, gf::GfMenuObjHitonowa::delNpc, ui::UISelectObjList::delObject (not written yet)
 template mm::mtl::Vector<unsigned int>::iterator mm::mtl::Vector<unsigned int>::erase(unsigned int*);
 
 namespace gf {

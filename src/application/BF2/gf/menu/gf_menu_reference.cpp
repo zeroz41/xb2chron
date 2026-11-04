@@ -81,12 +81,12 @@ void GfMenuReference::resetBladeVirtual() {
     }
 }
 
-void GfMenuReference::fn_7100366074(const unsigned int* values) {
+void GfMenuReference::setupIraOperation(const IraOperationBtnSetting& values) {
     GfMenuReference* self = get();
     if (self) {
         for (unsigned int i = 0; i < 4; i++) {
             LayerCommand& command = self->m_layerCommand[i];
-            command.m_value = values[i];
+            command.m_value = values.m_command[i];
             command.m_flags.reset();
             command.m_flags.set(0, true);
             command.m_state = 0;
@@ -291,7 +291,7 @@ float GfMenuReference::getVisionTimeRatio() {
     return 0.0f;
 }
 
-void GfMenuReference::fn_7100367454(unsigned int value) {
+void GfMenuReference::setBattleMode(BTL_MODE value) {
     GfMenuReference* self = get();
     if (self) {
         if (self->m_bladeChangeValue != value) GfMenuObjBladeChange::refreshBattleMode();
@@ -424,12 +424,12 @@ int GfMenuReference::getBladeSetIDFromParty(unsigned int party, unsigned int slo
     return result;
 }
 
-bool GfMenuReference::fn_7100367ADC(unsigned int slot, const BladeOwner& owner) {
+bool GfMenuReference::setIraCharInfo(unsigned int slot, const IraCharInfo& owner) {
     bool changed = false;
     if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (slot < 3 && self) {
-            BladeOwner& record = self->m_bladeOwner[slot];
+            IraCharInfo& record = self->m_bladeOwner[slot];
             changed = record.m_driver != owner.m_driver || record.m_gauge.m_type != owner.m_gauge.m_type;
             record = owner;
         }
@@ -437,11 +437,11 @@ bool GfMenuReference::fn_7100367ADC(unsigned int slot, const BladeOwner& owner) 
     return changed;
 }
 
-const GfMenuReference::BladeOwner* GfMenuReference::getIraCharInfoFromFromID(unsigned int blade) {
+const GfMenuReference::IraCharInfo* GfMenuReference::getIraCharInfoFromFromID(unsigned int blade) {
     if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (self) {
-            for (const BladeOwner& owner : self->m_bladeOwner) {
+            for (const IraCharInfo& owner : self->m_bladeOwner) {
                 if (owner.m_gauge.m_type == blade) return &owner;
             }
         }
@@ -449,7 +449,7 @@ const GfMenuReference::BladeOwner* GfMenuReference::getIraCharInfoFromFromID(uns
     return nullptr;
 }
 
-const GfMenuReference::DriverGauge* GfMenuReference::getIraCharProperty(unsigned int driver) {
+const GfMenuReference::IraCharProperty* GfMenuReference::getIraCharProperty(unsigned int driver) {
     if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (self) {
@@ -472,13 +472,13 @@ void GfMenuReference::resetIraCharRecast() {
     }
 }
 
-void GfMenuReference::fn_7100367D6C(unsigned int driver, const DriverGauge& gauge) {
+void GfMenuReference::setIraCharProperty(unsigned int driver, const IraCharProperty& gauge) {
     if (!GfMenuObjUtil::isValidExpansion(3)) return;
     GfMenuReference* self = get();
     if (!self) return;
     unsigned int added = 0;
     for (unsigned int i = 0; i < 3; i++) {
-        BladeOwner& record = self->m_bladeOwner[i];
+        IraCharInfo& record = self->m_bladeOwner[i];
         if (record.m_driver == driver) {
             if (!(self->m_gaugeTypeBits & (1 << gauge.m_type)) && record.m_gauge.m_type != gauge.m_type) {
                 added = 1 << gauge.m_type;
@@ -524,7 +524,7 @@ float GfMenuReference::getIraSpecialArtsRecast() {
     return 0.0f;
 }
 
-void GfMenuReference::fn_7100368018(int index) {
+void GfMenuReference::setIraSpecialArtsLv(unsigned int index) {
     if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (self) self->m_layerIndex = index;
@@ -559,7 +559,7 @@ void GfMenuReference::setIraOperationDisp(bool flag) {
     }
 }
 
-bool GfMenuReference::fn_71003682D8(unsigned int index, unsigned int flag) {
+bool GfMenuReference::isIraOperationBtnState(IRA_OPERATION_BTN index, BTN_STATUS flag) {
     if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (index < 4 && self) return self->m_layerCommand[index].m_flags.test(flag);
@@ -583,7 +583,7 @@ bool GfMenuReference::isIraFlag(unsigned int bit) {
     return false;
 }
 
-void GfMenuReference::fn_7100368498(float ratio, unsigned int index) {
+void GfMenuReference::setIraSirenInfoGauge(unsigned int index, float ratio) {
     if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (index < 2 && self) {
@@ -665,9 +665,9 @@ const GfMenuReference::LayerGimmick* GfMenuReference::getIraChainInfo(unsigned i
     return gimmick;
 }
 
-const GfMenuReference::ComboRouteState* GfMenuReference::fn_71003689C0() {
-    static ComboRouteState s_dummy;
-    const ComboRouteState* state = &s_dummy;
+const GfMenuReference::IraBladeComboInfo* GfMenuReference::getIraBladeComboInfo() {
+    static IraBladeComboInfo s_dummy;
+    const IraBladeComboInfo* state = &s_dummy;
     if (GfMenuObjUtil::isValidExpansion(3)) {
         GfMenuReference* self = get();
         if (self) state = &self->m_comboRoute;
@@ -683,10 +683,10 @@ void GfMenuReference::closeOCG() {
     GfMenuObjOCG::closeGear();
 }
 
-void GfMenuReference::fn_7100368A4C(const LayerResult& result) {
+void GfMenuReference::setOCGInfo(const OCGInfo& result) {
     GfMenuReference* self = get();
     if (self) {
-        LayerResult& current = self->m_layerResult;
+        OCGInfo& current = self->m_layerResult;
         float ratio = current.m_ratio;
         current = result;
         if (current.m_number > 999) current.m_number = 999;
@@ -698,14 +698,14 @@ void GfMenuReference::fn_7100368A4C(const LayerResult& result) {
     }
 }
 
-const GfMenuReference::LayerResult* GfMenuReference::getOCGInfo() {
-    static LayerResult s_dummy;
+const GfMenuReference::OCGInfo* GfMenuReference::getOCGInfo() {
+    static OCGInfo s_dummy;
     GfMenuReference* self = get();
     if (self) return &self->m_layerResult;
     return &s_dummy;
 }
 
-void GfMenuReference::fn_7100368BAC(GfMenuCallContext* context, const ResultPair& pair) {
+void GfMenuReference::startOCGResult(GfMenuCallContext* context, const OCGResult& pair) {
     GfMenuObjOCG::openResult(context, pair.m_first, pair.m_second);
 }
 
@@ -869,7 +869,7 @@ unsigned int GfMenuReference::getReferenceWorldMapID() {
     return 0;
 }
 
-void GfMenuReference::fn_71003692E4(unsigned int mode) {
+void GfMenuReference::setReferenceBtlchDifficulty(GFDIFF mode) {
     GfMenuReference* self = get();
     if (self) self->m_challengeBattleMode = mode;
 }
@@ -880,7 +880,7 @@ unsigned int GfMenuReference::getReferenceBtlchDifficulty() {
     return 0;
 }
 
-void GfMenuReference::fn_710036932C(unsigned int type) {
+void GfMenuReference::setReferenceItemType(ItemType::Type type) {
     GfMenuReference* self = get();
     if (self) self->m_referenceItemType = type;
 }

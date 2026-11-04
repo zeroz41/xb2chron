@@ -27,7 +27,7 @@ public:
     void setupExcTaskListFromShop(const ::ui::UIListInfoBase::SetupParam& param, unsigned int shop);
     // 2.0.0's symbols name it. What it does: when the list is not empty, sorts it with sortDescending (flag set:
     // m_subId descending) or sortAscending (flag clear: m_subId ascending), ties by m_id ascending. Called by
-    // fn_7100382960, getEvthIDList, fn_710041E6F8 after filling a list. Same shape as GfMenuMsgList::sort.
+    // fn_7100382960, getEvthIDList, GfMenuObjHitonowa::addNpc after filling a list. Same shape as GfMenuMsgList::sort.
     void sortFromWork(bool descending);
     // 2.0.0's symbols name them. What they do: sortDescending orders by m_subId descending, sortAscending by m_subId
     // ascending, both by m_id ascending on a tie.

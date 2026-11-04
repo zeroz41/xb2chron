@@ -1,5 +1,4 @@
 #include "classes/gf/GfMenuObjTips.h"
-#include "gf/gf_menu_obj_tips.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfDataBdat.h"
 #include "classes/gf/GfGameFlag.h"
@@ -20,15 +19,15 @@
 
 namespace gf {
 
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB930)
-bool GfMenuObjTips::s_exists;
+// 2.0.0's symbols name it (lbl_7100EAB930)
+bool GfMenuObjTips::s_Open;
 
 GfMenuObjTips::GfMenuObjTips(unsigned int handle)
     : GfMenuObject(handle), m_seq(this), m_mainSeq(this), m_context(nullptr), m_reserved(nullptr), m_idList(nullptr),
       m_fromLayer(false), m_regionJP(false) {
     m_context = GfMenuCallContext::create();
     m_idList = GfMenuIDList::create();
-    s_exists = true;
+    s_Open = true;
 }
 
 GfMenuObjTips::~GfMenuObjTips() {
@@ -40,7 +39,7 @@ GfMenuObjTips::~GfMenuObjTips() {
         m_context->release();
         m_context = nullptr;
     }
-    s_exists = false;
+    s_Open = false;
 }
 
 void GfMenuObjTips::registStartTutorialID(unsigned int menuId) {
@@ -49,7 +48,7 @@ void GfMenuObjTips::registStartTutorialID(unsigned int menuId) {
     GfMenuFullScreen::registLayerParam(0x12E, param);
 }
 
-void GfMenuObjTips::fn_7100487A1C(int param) {
+void GfMenuObjTips::start(unsigned int param) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x89));
     if (acc.m_object != nullptr) {
         ui::UIObjectAcc tutorial(acc.m_handle, "LAY_tutorial");
@@ -57,7 +56,7 @@ void GfMenuObjTips::fn_7100487A1C(int param) {
     }
 }
 
-void fn_7100487A90(unsigned int id) {
+void GfMenuObjTips::unlockTips(unsigned int id) {
     unsigned char* fp = GfDataBdat::getFP(0x102);
     if (fp == nullptr || id < Bdat::getIdTop(fp)) {
         return;
@@ -70,7 +69,7 @@ void fn_7100487A90(unsigned int id) {
     GfGameFlag::setLocal(2, index, (GfGameFlag::getLocal(2, index) & 0xFFFE) | 1);
 }
 
-void fn_7100487B08(unsigned int id) {
+void GfMenuObjTips::setTipsNoView(unsigned int id) {
     unsigned char* fp = GfDataBdat::getFP(0x102);
     if (fp == nullptr || id < Bdat::getIdTop(fp)) {
         return;
@@ -111,7 +110,7 @@ void GfMenuObjTips::initialize() {
     {
         ui::UIObjectAcc tutorial(main.m_handle, "LAY_tutorial");
 #line 244
-        TUnk_B64D08* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B64D08(this);
+        TutorialListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TutorialListener(this);
         listener->m_RefCount = 1;
         ui::UIEventManager::get()->registObjectListener(tutorial.m_handle, listener);
         if (listener != nullptr) {
@@ -130,7 +129,7 @@ void GfMenuObjTips::initialize() {
         GfMenuObjUtil::createVScrollBarPlugin(list.searchChild("IMG_list_scroll_bar"), m_idList, "IMG_list_scroll_base",
                                               true);
 #line 278
-        TUnk_B64CE0* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) TUnk_B64CE0(this);
+        ListListener* listener = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) ListListener(this);
         listener->m_RefCount = 1;
         ui::UIEventManager::get()->registObjectListener(list.m_handle, listener);
         if (listener != nullptr) {
@@ -193,7 +192,7 @@ static inline bool isTipsUnread(unsigned int id) {
     return (GfGameFlag::getLocal(2, id - Bdat::getIdTop(fp) + 0xEF05) & 2) == 0;
 }
 
-void GfMenuObjTips::fn_71004881B8(int) {
+void GfMenuObjTips::refreshList(bool) {
     ui::UIObjectAcc list(m_handle, "LAY_list");
     mm::mtl::FixStr<32> name;
     unsigned char* fp = GfDataBdat::getFP(0x102);
@@ -228,7 +227,7 @@ void GfMenuObjTips::fn_71004881B8(int) {
     }
 }
 
-// TUnk_B64CE0::reciveEvent (0x710048845C) and TUnk_B64D08::reciveEvent (0x7100488958) are not here yet (see the notes)
+// ListListener::reciveEvent (0x710048845C) and TutorialListener::reciveEvent (0x7100488958) are not here yet (see the notes)
 
 bool GfMenuObjTips::isUnlockTipsID(unsigned int id) {
     unsigned char* fp = GfDataBdat::getFP(0x102);

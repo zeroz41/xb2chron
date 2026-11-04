@@ -18,13 +18,11 @@ public:
     virtual void initialize();  // slot 2
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member because its address lies in
-    // this class's unit (gf_menu_obj_named_dialog) and it sends this class's attached object (0x8A) its open event.
-    // What it does: when GfMenuObjUtil::isValidExpansion(3) holds, GfGameManager::isClearGame(), else
-    // GfGameManager::isEnableNamedRecord(); then, if object 0x8A exists and fn_71002ED4F0(row) is nonzero,
-    // GfMenuObject::sendOpenEvent(0x8A's handle, that value). GfMenuObjCommonText::fn_71003E1F60 passes its third
-    // argument (an unsigned short: gf::GfFieldGrave::create's grave row)
-    static void fn_71004451D0(unsigned short row);
+    // 2.0.0's symbols name it. What it does: when GfMenuObjUtil::isValidExpansion(3) holds,
+    // GfGameManager::isClearGame(), else GfGameManager::isEnableNamedRecord(); then, if object 0x8A exists and
+    // fn_71002ED4F0(row) is nonzero, GfMenuObject::sendOpenEvent(0x8A's handle, that value).
+    // GfMenuObjCommonText::openWithNamed passes its third argument (gf::GfFieldGrave::create's grave row)
+    static void open(unsigned int row);
     // 2.0.0's symbols name it. What it does: the same game test, then GfMenuObject::sendCloseEvent(0x8A's handle, 0)
     // when object 0x8A exists. GfMenuObjCommonText's MainListener calls it on its close event (0x22) when
     // GfMenuObjCommonText::s_isNamedDialogOpen is set

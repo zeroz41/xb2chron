@@ -15,7 +15,7 @@ GfMenuObjNamedDialog::~GfMenuObjNamedDialog() {
     }
 }
 
-// fn_71004451D0 and close (the open and close calls) and initialize (0x71004452C4) are not here yet: see the
+// open (0x71004451D0) and close (the open and close calls) and initialize (0x71004452C4) are not here yet: see the
 // report
 
 void GfMenuObjNamedDialog::finalize() {

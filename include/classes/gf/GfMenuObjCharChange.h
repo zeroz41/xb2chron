@@ -2,6 +2,7 @@
 #define CLASSES_GF_TUNK_B60E28_H
 
 #include "classes/gf/GfMenuObject.h"
+#include "classes/gf/GfMenuReference.h"
 #include "gf/GfMenuSequence.h"
 
 namespace gf { class GfMenuArtsList; }
@@ -18,38 +19,38 @@ public:
     virtual void finalize();  // slot 3
     virtual void update();  // slot 4
 
-    // 2.0.0's symbols name open, close; the fn_ names are placeholders. Each sends an event to that object while it is
-    // there (and, except reverse and fn_71003C35C8, not terminated), only while GfMenuObjUtil::isValidExpansion(3)
-    // holds: open: event 0x108; close: event 0x109 (both from GfMenuManager::gevPlayerControl); changeFormation: event
-    // 0x10A; changeBlade: event 0x10B (both from GfMenuManager::gevChangeParty and fn_7100367D6C); reverse: event 0x106
-    // with the flag as its first parameter (from setIraOperationDisp); fn_71003C35C8: event 0x107 with the value as its
-    // first parameter, to the object's child "LAY_cmd" (from GfMenuReference::postUpdate and fn_71003C56C0).
+    // 2.0.0's symbols name them. Each sends an event to that object while it is there (and, except reverse and
+    // updateOperation, not terminated), only while GfMenuObjUtil::isValidExpansion(3) holds: open: event 0x108; close:
+    // event 0x109 (both from GfMenuManager::gevPlayerControl); changeFormation: event 0x10A; changeBlade: event 0x10B
+    // (both from GfMenuManager::gevChangeParty and fn_7100367D6C); reverse: event 0x106 with the flag as its first
+    // parameter (from setIraOperationDisp); updateOperation: event 0x107 with the value as its first parameter, to the
+    // object's child "LAY_cmd" (from GfMenuReference::postUpdate and MainListener::reciveEvent).
     static void open();
     static void close();
     // 2.0.0's symbols name it. What it does: shows or hides that object while it is there and not terminated (no
-    // isValidExpansion test). Caller: fn_7100359144.
+    // isValidExpansion test). Caller: GfMenuManager::updateHudState.
     static void disp(bool disp);
     static void changeFormation();
     static void changeBlade();
     static void reverse(bool flag);
-    static void fn_71003C35C8(unsigned int value);
+    static void updateOperation(GfMenuReference::IRA_OPERATION_BTN value);
     // 2.0.0's symbols name it. What it does: sends event 0x10F with the flag as its first parameter to the object
     // attached under 0x3C while it is there and not terminated. Caller: GfMenuObjBladeChange::dispInfo (when
     // GfMenuObjUtil::isValidExpansion(3) holds).
     static void dispInfo(bool disp);
     // 2.0.0's symbols name it. What it does: shows or hides LAY_main's LAY_info and its four LAY_char2_*_elem_root@0N
-    // children, and LAY_chain's LAY_chain_info. Caller: fn_71003C56C0.
+    // children, and LAY_chain's LAY_chain_info. Caller: MainListener::reciveEvent (0x71003C56C0).
     void dispInfoLocal(bool disp);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. What it does: for chain member index (when
-    // LAY_chain has that many LAY_chain@NN), hides IMG_chain_recast@NN and colours IMG_chain_face@NN white when
-    // m_chainFlags[index] has bit 2, else shows the recast and colours the face gray. Caller: fn_71003C6EBC.
-    void fn_71003C5164(unsigned int index);
+    // 2.0.0's symbols name it (the bool is unused). What it does: for chain member index (when LAY_chain has that many
+    // LAY_chain@NN), hides IMG_chain_recast@NN and colours IMG_chain_face@NN white when m_chainFlags[index] has bit 2,
+    // else shows the recast and colours the face gray. Caller: ChainListener::reciveEvent (0x71003C6EBC).
+    void updateChainRecast(unsigned int index, bool);
     // 2.0.0's symbols name them. updateFace refreshes LAY_char2 for a bool mode (false from startFormationChange, true
     // from startBladeChange). updateRecast: for character index (0 or 1, LAY_main's IMG_char2_recast@NN there), shows
-    // the recast and colours the faces by m_charFlags[index] (caller: fn_71003C56C0). startFormationChange: refreshes
-    // with false and, unless pad_1C0, slides LAY_char2@01/@02 apart by the distance between LAY_char2's active_up and
-    // active_down rectangles. startBladeChange: refreshes with true and moves LAY_char2_active@NN/LAY_char2_reserve@NN
-    // of each blade-owning driver 0/1 (callers: fn_71003C56C0).
+    // the recast and colours the faces by m_charFlags[index] (caller: MainListener::reciveEvent). startFormationChange:
+    // refreshes with false and, unless pad_1C0, slides LAY_char2@01/@02 apart by the distance between LAY_char2's
+    // active_up and active_down rectangles. startBladeChange: refreshes with true and moves
+    // LAY_char2_active@NN/LAY_char2_reserve@NN of each blade-owning driver 0/1 (callers: MainListener::reciveEvent).
     void updateFace(bool mode);
     void updateRecast(unsigned int index);
     void startFormationChange();
@@ -64,7 +65,7 @@ public:
     // the two characters' flags (LAY_char2 @01/@02): updateRecast shows character N's recast with bit 1 clear and
     // plays its "select" animation once with bit 2 (then clears bit 2); the name is not the original's
     unsigned int m_charFlags[3];
-    // the chain's members' flags: fn_71003C5164 shows member N's recast lit with bit 2 (value-initialized with
+    // the chain's members' flags: updateChainRecast shows member N's recast lit with bit 2 (value-initialized with
     // m_charFlags: the constructor zeroes 0x190-0x1AF; the name is not the original's)
     unsigned int m_chainFlags[3];
     unsigned int pad_1A8;

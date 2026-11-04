@@ -160,7 +160,7 @@ void GfMenuObjItemList2::refreshItemList(ui::UIObjectAcc& acc, GfMenuItemList* l
             if (list->getSize() != 0) {
                 type = list->getContents(list->getIndex(false)).m_type;
             }
-            GfMenuReference::fn_710036932C(type);
+            GfMenuReference::setReferenceItemType(static_cast<ItemType::Type>(type));
         }
         unsigned int type = GfMenuReference::getReferenceItemType();
         acc.setDispChild(type == 2 || type == 3, "LAY_stock");

@@ -103,12 +103,14 @@ public:
     static bool startTutorial(unsigned int id);
     static int getTutotialStartID();  // m_titleValue, 0 without a manager (one caller, fn_710066AA7C)
     // 2.0.0's symbols name it. What it does: false without a manager; else opens the given menu id
-    // (GfMenuObjTips::fn_7100487A1C / registStartTutorialID when GfMenuObjUtil::isValidExpansion(3) holds, else
-    // GfMenuObjBtlchTutorial::fn_71003B2ABC / registStartTutorialID, creating UI layers 0x12E or 0x67/0x66 when
+    // (GfMenuObjTips::start / registStartTutorialID when GfMenuObjUtil::isValidExpansion(3) holds, else
+    // GfMenuObjBtlchTutorial::start / registStartTutorialID, creating UI layers 0x12E or 0x67/0x66 when
     // m_titleCount is 0), stores the id in m_titleCount and returns true. Caller: tl::TitleStateWarning::enter (id 10).
     static bool startBtlchTutorial(unsigned int menuId);
     static bool isOpenBtlchTutorial();  // m_titleCount != 0 (tl::TitleStateWarning::update, seqWaitTutorial)
-    static bool fn_710035A634(int index);  // m_bladeBookFlag's bit for index 0, else false (GfMenuBladeList::setupFromBook)
+    // 2.0.0's symbols name it. What it does: m_bladeBookFlag's bit for index 0, else false
+    // (GfMenuBladeList::setupFromBook)
+    static bool isResExist(unsigned int index);
     static bool hasGift();  // returns true (GfMenuObjMainMenu2's setupMainMenu and listener)
     static bool canPlayerControl();  // m_battleStateEnable (GfGamePad::eventInGameOpenSkipTravelMenu)
     static bool isEnableMinimap();  // GfMenuFlag::get1(31) == 0 (GfGamePad::eventInGameOpenSkipTravelMenu)
@@ -127,11 +129,11 @@ public:
     // 2.0.0's symbols name it. What it does: returns gf::fn_71002229C0(4) (gf_data_aoc); callers are menu objects at
     // 0x710040BF88..0x710040E1E0.
     static int getGiftNumber();
-    // with GfMenuObjUtil::isValidExpansion(3): when m_layer300Open already holds calls gf::fn_71003BBB48 (camp menu),
-    // else creates ui layer 300 and sets m_layer300Open
+    // with GfMenuObjUtil::isValidExpansion(3): when m_layer300Open already holds calls
+    // GfMenuObjCampMenu::returnFromEvent, else creates ui layer 300 and sets m_layer300Open
     static void openCampMenu();
     static bool isOpenCampMenu();  // m_layer300Open, false without a manager
-    static bool isCampSelectTalk();  // gf::fn_71003BBB38() == 1 (camp menu)
+    static bool isCampSelectTalk();  // GfMenuObjCampMenu::getSelectResult() == 1
     static void setMainmenuOpenPtForm();  // with GfMenuObjUtil::isValidExpansion(3): GfMenuObjMainMenu2::registOpenParam({0})
     static void setMainmenuOpenHitonowa();  // with GfMenuObjUtil::isValidExpansion(3): GfMenuObjMainMenu2::registOpenParam({3})
     static void setMainmenuOpenMap();
@@ -161,12 +163,11 @@ public:
     // the common (message) window: open by message id or from a full parameter set; its result once closed
     static void openCommonWindow(unsigned short id);
     static void openCommonWindow(const MenuCommonWindowParam& param);
-    // Placeholder name: new in 3.0.1 (1.0.0's GfFieldGrave::create calls openCommonWindow(unsigned short) in its
-    // place, with one argument). A static member: its unit is gf_menu_manager and it reads the singleton.
-    // What it does: when the manager exists, its byte at 0x4090 is set and m_callContext is there, it resets the
-    // call context, passes it id and arg (fn_71003E1F60) and keeps id at 0x4164. gf::GfFieldGrave::create passes
-    // 51 and the grave row's GmkGrave::BdatInfo::m_windowArg.
-    static void fn_7100359CD8(unsigned short id, unsigned short arg);
+    // 2.0.0's symbols name it (1.0.0's GfFieldGrave::create calls openCommonWindow(unsigned short) in its place, with
+    // one argument). What it does: when the manager exists, its byte at 0x4090 is set and m_callContext is there, it
+    // resets the call context, passes it id and arg (GfMenuObjCommonText::openWithNamed) and keeps id at 0x4164.
+    // gf::GfFieldGrave::create passes 51 and the grave row's GmkGrave::BdatInfo::m_windowArg.
+    static void openCommonWindowWithNamed(unsigned short id, unsigned int arg);
     static bool isOpenCommonWindow();
     static void closeCommonWindow();
     static int getCommonWindowResult();
@@ -192,7 +193,7 @@ public:
     static void initOptionDataForIra(SDataOption& option);
     // 2.0.0's symbols name it. What it does: with a manager and GfMenuObjUtil::isValidExpansion(1) true, creates ui
     // layer 103, then runs loadBchUI (layer 102), sets m_titleCount to 1 and answers true; false otherwise. Caller:
-    // fn_71003AF9CC.
+    // GfMenuObjBtlchOrder::ListListener::reciveEvent.
     static bool openBtlchTutorialList();
     // 2.0.0's symbols name it. What it does: during a map jump (GfGameManager::isMapjump) copies the atlas setup into
     // m_mapjumpAtlasInfo. Caller: GfMenuMapInfo::postUpdate, in place of GfGmkLocatorAtlas::create.
@@ -251,7 +252,8 @@ public:
     bool m_openOpeningTelop;  // 0x40FF openOpeningTelop sets it (the name is not the original's)
     bool m_hideAll;  // 0x4100 setDispAll stores !disp (the name is not the original's)
     bool m_enableQuestOpen;  // 0x4101 isEnableQuestOpen, setEnableQuestOpen
-    // 0x4102 setTheaterNonTelop stores it (GfMenuObjEvTheater::finalize), isTheaterNonTelop reads it (the name is not the original's)
+    // 0x4102 setTheaterNonTelop stores it (GfMenuObjEvTheater::finalize), isTheaterNonTelop reads it (the name is not
+    // the original's)
     bool m_evTheaterFlag;
     bool m_layer101Open;  // 0x4103 openBtlchOrder sets it after creating ui layer 101 (the name is not the original's)
     bool m_layer72Open;  // 0x4104 openNamedList sets it after creating ui layer 72 (the name is not the original's)
@@ -260,10 +262,11 @@ public:
     unsigned int m_region;  // 0x410C getRegion; the constructor sets 1 without bdat/jp.bin (the name is not the original's)
     bool m_optionFlag;  // 0x4110 isEnableVoiceChange reads it (GfMenuObjOption, flushOptionSaveData) (the name is not the original's)
     bool m_regionJP;  // 0x4111 isRegionJP
-    // 0x4112 isEnableExpBlade3 returns it unless GfGameManager::isGameTypeIra() answers true (the name is not the original's)
+    // 0x4112 isEnableExpBlade3 returns it unless GfGameManager::isGameTypeIra() answers true (the name is not the
+    // original's)
     bool m_baseGameFlag;
     unsigned char pad_4113;  // the constructor makes it 1 and clears it when GfGameManager::isGameTypeIra() holds
-    // 0x4114 fn_710035A634 reads its flag 0 (GfMenuBladeList::setupFromBook); the constructor clears the word and sets
+    // 0x4114 isResExist reads its flag 0 (GfMenuBladeList::setupFromBook); the constructor clears the word and sets
     // flag 0 when menu/image/fim_bl_142.wilay exists (the name is not the original's)
     mm::mtl::Bitflag<32> m_bladeBookFlag;
     unsigned int pad_4118;  // the constructor clears it
@@ -271,8 +274,8 @@ public:
     unsigned char pad_4120[0x44];  // the constructor clears it
     unsigned int m_latestCommonWinID;  // 0x4164 getLatestCommonWinID, openCommonWindow
     unsigned char pad_4168[0x8];
-    // 0x4170 updateLocatorAtlasCinfo copies GfMenuMapInfo::postUpdate's atlas setup here during a map jump (the name is not
-    // the original's)
+    // 0x4170 updateLocatorAtlasCinfo copies GfMenuMapInfo::postUpdate's atlas setup here during a map jump (the name is
+    // not the original's)
     GfGmkLocatorAtlas::CreateInfo m_mapjumpAtlasInfo;
     int m_titleValue;  // 0x41A0 getTutotialStartID returns it (the name is not the original's)
     int m_titleCount;  // 0x41A4 isOpenBtlchTutorial tests it against 0 (TitleStateWarning) (the name is not the original's)

@@ -13,7 +13,7 @@ public:
     // 2.0.0's symbols name it. What it does: clears s_locked (GfMenuManager::unloadBchUI calls it after terminating ui
     // layer 102; reciveEvent calls it too).
     static void enableOpen();
-    // 2.0.0's symbols name it. What it does: sets s_locked (caller fn_71003AF9CC).
+    // 2.0.0's symbols name it. What it does: sets s_locked (caller GfMenuObjBtlchOrder::ListListener::reciveEvent).
     static void disableOpen();
     // 1.0.0 symbol; 3.0.1's copy still carries a placeholder name (fn_7100456A1C), see the menu manager's renames
     static void disp(bool disp);

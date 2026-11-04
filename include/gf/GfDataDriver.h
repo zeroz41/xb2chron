@@ -67,7 +67,7 @@ public:
     // 2.0.0's symbols name it. What it does: for a DLC driver row (0x11-0x19) collects every GfBdatChrDr row of type 1
     // whose group (getChrIrGroupID) equals the driver's into the list (getChrIrdriverID's 16-bit ids) and answers
     // whether the list is non-empty; any other row: false. Callers include GfDataBlade::fn_7100237B70, getListPartyAll
-    // and GfMenuCharDataAdapter's TUnk_B5B908::getCharData.
+    // and GfMenuCharDataAdapter's ReferenceBladeSetConverter::getCharData.
     static bool getIraBack(mm::mtl::FixedVector<unsigned short, 32>& list, unsigned int driver);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it lies in GfDataBlade's
     // unit among GfDataDriver's functions and takes a driver id. What it does: finds the driver's row (DLC rows
@@ -78,7 +78,7 @@ public:
     static bool fn_7100245794(unsigned int* level, unsigned int* value, unsigned int driver);
     // 2.0.0's symbols name it. What it does: true for a driver outside the DLC rows 0x11-0x19; for those, whether
     // GfBdatChrDr::getChrIrType of the row GfBdatChrDr::getChrDrIraParam gives is 0. Caller here:
-    // gf_menu_obj_char_select_ira's fn_71003D273C (driver 0 and 1 references both set to it when true).
+    // gf_menu_obj_char_select_ira's mnu_chr_sel_ira::setReferenceChar (driver 0 and 1 references both set to it when true).
     static bool isIraFront(unsigned int driver);
     // 2.0.0's symbols name it. What it does: pushes every GfBdatChrDr row id from getChrIrStart up to (not including)
     // getChrIrEnd (getChrIrdriverID) into drivers; true when drivers is not empty.

@@ -39,7 +39,7 @@ public:
     virtual void update(const fw::UpdateInfo& info);  // slot 2
 
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. Static: the control's creator (its only
-    // caller fn_710041D568 passes a handle and a {allocator, count} pair). What it does: allocates 0x70 bytes from
+    // caller GfMenuObjHitonowa::initialize passes a handle and a {allocator, count} pair). What it does: allocates 0x70 bytes from
     // UIUtil::getProgAllocator() (ui_ctrl_roll.cpp line 46), constructs the control on handle, copies the setting,
     // gives the entry list the setting's allocator and room for count entries, empties it.
     static UICtrlRoll* fn_7100672020(unsigned int handle, const Setting& setting);

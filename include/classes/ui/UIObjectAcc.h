@@ -54,7 +54,7 @@ public:
     bool isPlayingAnimation();
     void setStreamImage2nd();
     // 2.0.0's symbols name it. What it does: when m_object is a ui::UIImageObject (RTTI isKindOf
-    // UIImageObject::m_rtti), sets bit 0x40000 of its u32 at 0x98. GfMenuObjHitonowa's setFaceStream and fn_710041E90C
+    // UIImageObject::m_rtti), sets bit 0x40000 of its u32 at 0x98. GfMenuObjHitonowa's setFaceStream and createNpcObj
     // call it.
     void setStreamImage3rd();
     // 2.0.0's symbols name it. What it does: when m_object is a ui::UIImageObject, clears bits 0x60000 of its u32 at

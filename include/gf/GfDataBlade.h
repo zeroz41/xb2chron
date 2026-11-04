@@ -93,11 +93,11 @@ public:
     static void fn_7100255238();
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits in GfDataBlade's
     // unit right after fn_7100255238 (no this). What it does: returns the first function-static list (the NPCs above
-    // 2000 with a GfBdatRsc::getRscNpcListHitonowaFlag hitonowa flag, filled by fn_7100255238); fn_710041D568 (hitonowa menu) reads it.
+    // 2000 with a GfBdatRsc::getRscNpcListHitonowaFlag hitonowa flag, filled by fn_7100255238); GfMenuObjHitonowa::initialize (hitonowa menu) reads it.
     static mm::mtl::FixedVector<unsigned short, 256>& fn_71002554E4();
     // Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them. Members for the same reason. What they do:
     // walk the second function-static list (one NPC per hitonowa flag value). fn_7100255550: total = its count, set =
-    // the entries whose flag's local value (type 2) is 1 or 3 (fn_710024DCAC, fn_710041D568 call it); fn_7100255638:
+    // the entries whose flag's local value (type 2) is 1 or 3 (fn_710024DCAC, GfMenuObjHitonowa::initialize call it); fn_7100255638:
     // the entries whose GfBdatRsc::getRscNpcListNpcMeetFlag flag is set (type 1); fn_71002556FC: the entries whose type-2 local
     // value is 1 (both called by fn_71002CAE30).
     static void fn_7100255550(int& set, int& total);
@@ -314,7 +314,7 @@ public:
     static unsigned int fn_710024D92C(unsigned int id);
     // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member for the same reason as
     // fn_710024D8C4, whose shape it has. What it does: false for ids below 2001; else bdat = GfDataBdat::getFP(435)
-    // and id = fn_710024D92C(rsc), true when that id is nonzero. Caller: fn_710041F2A0.
+    // and id = fn_710024D92C(rsc), true when that id is nonzero. Caller: GfMenuObjHitonowa::dispStatus.
     static bool fn_710024D9C4(unsigned char*& bdat, unsigned int& id, unsigned int rsc);
     // the driver's slot (0..4) the blade is set in; SCOM_CURRENT_BLADE::exec passes it to GfDataDriver::setEquipBlade
     static unsigned int getDriverSetID(unsigned int blade);

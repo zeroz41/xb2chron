@@ -98,7 +98,7 @@ void setDockPos(unsigned int handle, unsigned int target, unsigned char side, bo
 // ui::UIManager::createLayer/terminateLayer/releaseLayer call it too.
 bool isEnableExpType(unsigned int bit);
 // 2.0.0's symbols name it. What it does: stores its argument in s_uioReplaceNo, the column number makeMenuUIOFileName
-// reads MNU_UioReplace's "replace%02d" from (gf::GfMenuManager's constructor and fn_71003597B0 call it).
+// reads MNU_UioReplace's "replace%02d" from (gf::GfMenuManager's constructor and setupGame call it).
 void setResourceReplaceID(unsigned int no);
 // 2.0.0's symbols name it. What it does: stores the menu's root folder s_menuDir ("menu" until set; the
 // makeMenu*FileName paths start with it); gf::GfMenuManager's constructor calls it.

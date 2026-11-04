@@ -22,17 +22,21 @@ public:
     // 2.0.0's symbols name it. What it does: registers full-screen layer 0x12E's open parameter, the menu id its caller
     // (startBtlchTutorial) passes.
     static void registStartTutorialID(unsigned int menuId);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its unit holds only this
-    // class's functions. What it does: sends the open event with its argument to "LAY_tutorial" under attached
-    // object 0x89 (startBtlchTutorial calls it).
-    static void fn_7100487A1C(int param);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its unit holds only this
-    // class's functions and the list listener calls it on its owner. What it does: shows LAY_list's items from
+    // 2.0.0's symbols name it. What it does: sends the open event with its argument to "LAY_tutorial" under
+    // attached object 0x89 (GfMenuManager::startBtlchTutorial calls it).
+    static void start(unsigned int param);
+    // 2.0.0's symbols name it (they were free functions in gf before). What it does: for a tips id inside BDAT file
+    // 0x102's id range (from Bdat::getIdTop), sets bit 0 of local game flag 2's entry id - top + 0xEF05;
+    // ScriptPlayText's ui unlockTips passes its script argument.
+    static void unlockTips(unsigned int id);
+    // 2.0.0's symbols name it. What it does: for an id at or past BDAT file 0x102's Bdat::getIdTop, clears bit 1 of
+    // local game flag 2's entry id - top + 0xEF05 (GfGameFlag::getLocal, then setLocal with value & 0xFFFD).
+    // GfMenuManager::gevChangeScenarioFlag passes 0x92 and 0x93 for scenario flag 0x2B38.
+    static void setTipsNoView(unsigned int id);
+    // 2.0.0's symbols name it. What it does: shows LAY_list's items from
     // BDAT table 0x102 rows of m_idList's page entries, and the cursor on the selected one.
-    // Its argument: the list listener passes 0 at both calls and the body never reads it; the calls keep
-    // `mov w1, wzr`, so the original handed it to some header inline (dead-argument elimination would drop it
-    // otherwise); which one is unknown.
-    void fn_71004881B8(int);
+    // Its bool: ListListener passes false at both calls and the body never reads it.
+    void refreshList(bool);
     // 2.0.0's symbols name it. What it does: for a tips id at or past BDAT table 0x102's id top, a row whose "page" is
     // 0 answers m_regionJP, any other row bit 0 of local game flag 2's entry id - top + 0xEF05.
     bool isUnlockTipsID(unsigned int id);
@@ -40,8 +44,8 @@ public:
     // entry id - top + 0xEF05 (BDAT table 0x102's id top).
     void setViewTipsID(unsigned int id);
 
-    class TUnk_B64CE0;
-    class TUnk_B64D08;
+    class ListListener;
+    class TutorialListener;
 
     GfMenuSequence<GfMenuObjTips, 2> m_seq;      // 0x28 (the name is not the original's)
     GfMenuSequence<GfMenuObjTips, 8> m_mainSeq;  // 0xF0 (the name is not the original's)
@@ -53,25 +57,25 @@ public:
     // for page-0 rows (the name is not the original's)
     bool m_regionJP;
 
-    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAB930). True while an instance lives.
-    static bool s_exists;
+    // 2.0.0's symbols name it (lbl_7100EAB930). True while an instance lives.
+    static bool s_Open;
 };
 
-// table 0x7100B64CE0: LAY_list's listener (initialize news it)
-class GfMenuObjTips::TUnk_B64CE0 : public ::ui::UIObjectListener {
+// table 0x7100B64CE0: LAY_list's listener (initialize news it; the symbols name the table)
+class GfMenuObjTips::ListListener : public ::ui::UIObjectListener {
 public:
-    TUnk_B64CE0(GfMenuObjTips* owner) : pad_0C(), m_owner(owner) {}
-    virtual ~TUnk_B64CE0() {}  // slot 0: weak, its D1 slot is the base's destructor
+    ListListener(GfMenuObjTips* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~ListListener() {}  // slot 0: weak, its D1 slot is the base's destructor
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
     unsigned char pad_0C[0x10];  // cleared by the constructor
     GfMenuObjTips* m_owner;
 };
 
-// table 0x7100B64D08: LAY_tutorial's listener (initialize news it)
-class GfMenuObjTips::TUnk_B64D08 : public ::ui::UIObjectListener {
+// table 0x7100B64D08: LAY_tutorial's listener (initialize news it; the symbols name the table)
+class GfMenuObjTips::TutorialListener : public ::ui::UIObjectListener {
 public:
-    TUnk_B64D08(GfMenuObjTips* owner) : pad_0C(), m_owner(owner) {}
-    virtual ~TUnk_B64D08() {}  // slot 0: weak, its D1 slot is the base's destructor
+    TutorialListener(GfMenuObjTips* owner) : pad_0C(), m_owner(owner) {}
+    virtual ~TutorialListener() {}  // slot 0: weak, its D1 slot is the base's destructor
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
     unsigned char pad_0C[0x10];  // cleared by the constructor
     GfMenuObjTips* m_owner;

@@ -15,6 +15,11 @@ namespace gf {
 // an announce menu)
 class GfMenuObjAnnounce : public ::gf::GfMenuObject {
 public:
+    class MainListener;
+    class TopListener;
+    class PageListener;
+    class ScheduleListener;
+    class AlertListener;
     GfMenuObjAnnounce(unsigned int handle);
     virtual ~GfMenuObjAnnounce();  // slot 0
     virtual void initialize();  // slot 2
@@ -37,13 +42,12 @@ public:
     // 2.0.0's symbols name it. What it does: stops the control running on each LAY_schedule@%02d row of a page of
     // m_idList; the LAY_schedule listener calls it.
     void stopScheduleMove();
-    // 2.0.0's symbols name ctrlScheduleUp, ctrlScheduleDown, closeScheduleBody; the fn_ names are placeholders. What
-    // they do (the LAY_schedule listener calls them): fn_710038471C lays out the LAY_schedule@%02d rows of a page of
-    // m_idList (its argument is 0 or 1); ctrlScheduleUp and ctrlScheduleDown move the shown rows one place (towards
+    // 2.0.0's symbols name them. What they do (the LAY_schedule listener calls them): refreshSchedule lays out the
+    // LAY_schedule@%02d rows of a page of m_idList (its argument is false or true); ctrlScheduleUp and ctrlScheduleDown move the shown rows one place (towards
     // schedule_group_<n>'s layout rect, fading each to its row's alpha), count pad_308 down, clear m_mainSeq and return
     // the middle row's control slot (-1 for none); closeScheduleBody starts each row's IMG_schedule_base@%02d
     // animation, index_green when table 0x10D's "available" is 1, else index_orange.
-    void fn_710038471C(unsigned int);
+    void refreshSchedule(bool);
     int ctrlScheduleUp();
     int ctrlScheduleDown();
     void closeScheduleBody();
@@ -63,49 +67,49 @@ public:
     unsigned int pad_314;
 };
 
-// The listeners initialize registers on the object's layouts, each made for the object (m_owner). No RTTI, no 1.0.0
-// symbol; each table's destructor slot is the base's, its deleting destructor a bare operator delete.
+// The listeners initialize registers on the object's layouts, each made for the object (m_owner); 2.0.0's symbols
+// name them, nested classes. Each table's destructor slot is the base's, its deleting destructor a bare operator delete.
 // table 0x7100B5FA30: LAY_main's listener
-class TUnk_B5FA30 : public ::ui::UIObjectListener {
+class GfMenuObjAnnounce::MainListener : public ::ui::UIObjectListener {
 public:
-    TUnk_B5FA30(GfMenuObjAnnounce* owner) : pad_C(), m_owner(owner) {}
-    virtual ~TUnk_B5FA30() {}  // slot 0
+    MainListener(GfMenuObjAnnounce* owner) : pad_C(), m_owner(owner) {}
+    virtual ~MainListener() {}  // slot 0
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
     unsigned char pad_C[0x10];
     GfMenuObjAnnounce* m_owner;
 };
 // table 0x7100B5FA58: LAY_top's listener
-class TUnk_B5FA58 : public ::ui::UIObjectListener {
+class GfMenuObjAnnounce::TopListener : public ::ui::UIObjectListener {
 public:
-    TUnk_B5FA58(GfMenuObjAnnounce* owner) : pad_C(), m_owner(owner) {}
-    virtual ~TUnk_B5FA58() {}  // slot 0
+    TopListener(GfMenuObjAnnounce* owner) : pad_C(), m_owner(owner) {}
+    virtual ~TopListener() {}  // slot 0
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
     unsigned char pad_C[0x10];
     GfMenuObjAnnounce* m_owner;
 };
 // table 0x7100B5FA80: LAY_page's listener
-class TUnk_B5FA80 : public ::ui::UIObjectListener {
+class GfMenuObjAnnounce::PageListener : public ::ui::UIObjectListener {
 public:
-    TUnk_B5FA80(GfMenuObjAnnounce* owner) : pad_C(), m_owner(owner) {}
-    virtual ~TUnk_B5FA80() {}  // slot 0
+    PageListener(GfMenuObjAnnounce* owner) : pad_C(), m_owner(owner) {}
+    virtual ~PageListener() {}  // slot 0
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
     unsigned char pad_C[0x10];
     GfMenuObjAnnounce* m_owner;
 };
 // table 0x7100B5FAA8: LAY_schedule's listener
-class TUnk_B5FAA8 : public ::ui::UIObjectListener {
+class GfMenuObjAnnounce::ScheduleListener : public ::ui::UIObjectListener {
 public:
-    TUnk_B5FAA8(GfMenuObjAnnounce* owner) : pad_C(), m_owner(owner) {}
-    virtual ~TUnk_B5FAA8() {}  // slot 0
+    ScheduleListener(GfMenuObjAnnounce* owner) : pad_C(), m_owner(owner) {}
+    virtual ~ScheduleListener() {}  // slot 0
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
     unsigned char pad_C[0x10];
     GfMenuObjAnnounce* m_owner;
 };
 // table 0x7100B5FAD0: LAY_alert's listener
-class TUnk_B5FAD0 : public ::ui::UIObjectListener {
+class GfMenuObjAnnounce::AlertListener : public ::ui::UIObjectListener {
 public:
-    TUnk_B5FAD0(GfMenuObjAnnounce* owner) : pad_C(), m_owner(owner) {}
-    virtual ~TUnk_B5FAD0() {}  // slot 0
+    AlertListener(GfMenuObjAnnounce* owner) : pad_C(), m_owner(owner) {}
+    virtual ~AlertListener() {}  // slot 0
     virtual void reciveEvent(ui::EventData const&, unsigned int);  // slot 2
     unsigned char pad_C[0x10];
     GfMenuObjAnnounce* m_owner;

@@ -30,13 +30,13 @@ public:
     static void pushGroupUp();
     // 2.0.0's symbols name it. What it does: sends event 0x105 to the attached object's sibling "LAY_dr_solo" while
     // that flag is set, else to the attached object itself. Callers: BladeListener::reciveEvent,
-    // TUnk_B5FEE8::reciveEvent, fn_7100367454 and fn_71003C56C0.
+    // TUnk_B5FEE8::reciveEvent, setBattleMode and fn_71003C56C0.
     static void refreshBattleMode();
     // 2.0.0's symbols name it. What it does: sends event 0x21 (open) to the attached object's sibling "LAY_dr_solo" and
-    // sets s_soloOpen. Caller: fn_7100359144.
+    // sets s_soloOpen. Caller: GfMenuManager::updateHudState.
     static void openDrSolo();
     // 2.0.0's symbols name it. What it does: sends event 0x22 (close) to the attached object's sibling "LAY_dr_solo"
-    // and clears s_soloOpen. Caller: fn_7100359144.
+    // and clears s_soloOpen. Caller: GfMenuManager::updateHudState.
     static void closeDrSolo();
     void ctrlAwakening(bool awake);
     void ctrlHomuri(bool on);

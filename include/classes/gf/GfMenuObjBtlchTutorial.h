@@ -22,11 +22,10 @@ public:
     // 2.0.0's symbols name it. What it does: registers full-screen layer 0x67's open parameter, the menu id its caller
     // (startBtlchTutorial) passes.
     static void registStartTutorialID(unsigned int menuId);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its unit holds only this
-    // class's functions. What it does: sends the open event with its argument to "LAY_tutorial" under attached
-    // object 0x89 (startBtlchTutorial calls it).
-    static void fn_71003B2ABC(int param);
-    // 2.0.0's symbols name it. What it does: returns s_exists (set while an instance lives).
+    // 2.0.0's symbols name it. What it does: sends the open event with its argument to "LAY_tutorial" under
+    // attached object 0x89 (GfMenuManager::startBtlchTutorial calls it).
+    static void start(unsigned int param);
+    // 2.0.0's symbols name it. What it does: returns s_Open (set while an instance lives).
     static bool isOpen();
     // 2.0.0's symbols name it. What it does: returns true once the UI manager is not loading (a sequence job's shape).
     bool seqWaitLoading();
@@ -49,8 +48,8 @@ public:
     GfMenuIDList* m_idList;  // 0x390: the constructor's create, the destructor releases it
     bool m_fromLayer;  // 0x398: initialize got a full-screen layer parameter (the name is not the original's)
 
-    // Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAA1C8). True while an instance lives.
-    static bool s_exists;
+    // 2.0.0's symbols name it (lbl_7100EAA1C8). True while an instance lives.
+    static bool s_Open;
 };
 
 // table 0x7100B60890: LAY_list's listener (initialize news it)

@@ -37,7 +37,7 @@ public:
     // the two words to LAY_result and starts the call context on object 0x90; noticeExtend sends event 0x102 to
     // LAY_special. Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member as the four below
     // (it lies among this class's functions and acts on its object). What it does: shows or hides attached object 0x90
-    // when it exists (setDisp of its argument). Caller: GfMenuManager's fn_7100359144.
+    // when it exists (setDisp of its argument). Caller: GfMenuManager::updateHudState.
     static void disp(bool disp);
     static void openGear();
     static void closeGear();

@@ -73,8 +73,8 @@
 #include "gf/GfPlayFactory.h"
 #include "gf/GfReqCommand.h"
 #include "gf/ParamReturnTitle.h"
-#include "gf/gf_menu_obj_camp_menu.h"
-#include "gf/gf_menu_obj_tips.h"
+#include "classes/gf/GfMenuObjCampMenu.h"
+#include "classes/gf/GfMenuObjTips.h"
 #include "mm/Col4.h"
 #include "mm/Vec3.h"
 #include "mm/mtl/FixStr.h"
@@ -1366,13 +1366,13 @@ static int fn_710066AA7C(VMThread* pThread) {
 // ui.unlockTips
 static int fn_710066AAC0(VMThread* pThread) {
     int id = vmArgIntGet(1, vmArgPtrGet(pThread, 1));
-    gf::fn_7100487A90(id);
+    gf::GfMenuObjTips::unlockTips(id);
     return 0;
 }
 
 // ui.setCampTalkNew
 static int fn_710066AAEC(VMThread* pThread) {
-    gf::fn_71003BBCDC();
+    gf::GfMenuObjCampMenu::setCampTalkNew();
     return 0;
 }
 

@@ -21,15 +21,15 @@
 
 namespace gf {
 
-// Proposed name, not the original's: the symbols leave it unnamed (lbl_7100EAA1C8)
-bool GfMenuObjBtlchTutorial::s_exists;
+// 2.0.0's symbols name it (lbl_7100EAA1C8)
+bool GfMenuObjBtlchTutorial::s_Open;
 
 GfMenuObjBtlchTutorial::GfMenuObjBtlchTutorial(unsigned int handle)
     : GfMenuObject(handle), m_seq(this), m_mainSeq(this), m_context(nullptr), m_telopParam(), m_idList(nullptr),
       m_fromLayer(false) {
     m_context = GfMenuCallContext::create();
     m_idList = GfMenuIDList::create();
-    s_exists = true;
+    s_Open = true;
 }
 
 GfMenuObjBtlchTutorial::~GfMenuObjBtlchTutorial() {
@@ -41,7 +41,7 @@ GfMenuObjBtlchTutorial::~GfMenuObjBtlchTutorial() {
         m_context->release();
         m_context = nullptr;
     }
-    s_exists = false;
+    s_Open = false;
 }
 
 void GfMenuObjBtlchTutorial::registStartTutorialID(unsigned int menuId) {
@@ -50,7 +50,7 @@ void GfMenuObjBtlchTutorial::registStartTutorialID(unsigned int menuId) {
     GfMenuFullScreen::registLayerParam(0x67, param);
 }
 
-void GfMenuObjBtlchTutorial::fn_71003B2ABC(int param) {
+void GfMenuObjBtlchTutorial::start(unsigned int param) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x89));
     if (acc.m_object != nullptr) {
         ui::UIObjectAcc tutorial(acc.m_handle, "LAY_tutorial");
@@ -59,7 +59,7 @@ void GfMenuObjBtlchTutorial::fn_71003B2ABC(int param) {
 }
 
 bool GfMenuObjBtlchTutorial::isOpen() {
-    return s_exists;
+    return s_Open;
 }
 
 void GfMenuObjBtlchTutorial::initialize() {

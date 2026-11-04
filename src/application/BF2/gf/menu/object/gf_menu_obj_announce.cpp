@@ -94,7 +94,7 @@ bool GfMenuObjAnnounce::seqCloseImage() {
     return true;
 }
 
-void TUnk_B5FA80::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjAnnounce::PageListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:
@@ -156,7 +156,7 @@ void TUnk_B5FA80::reciveEvent(const ui::EventData& event, unsigned int handle) {
     }
 }
 
-void TUnk_B5FAA8::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjAnnounce::ScheduleListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:
@@ -170,14 +170,14 @@ void TUnk_B5FAA8::reciveEvent(const ui::EventData& event, unsigned int handle) {
                 GfMenuObject::enableInput(acc.m_handle);
                 GfMenuObjOperationInfo::add(acc.m_handle, 0, 0, 0);
             }
-            m_owner->fn_710038471C(0);
+            m_owner->refreshSchedule(false);
             GfMenuObject::resetInputSelection(acc.m_handle);
             GfMenuObject::setupInputSelection(acc.m_handle, 0, m_owner->m_idList->getSize());
         } else if (type == 2) {
             acc.setDisp(false);
         } else if (type == 3) {
             m_owner->pad_308 = 0;
-            m_owner->fn_710038471C(0);
+            m_owner->refreshSchedule(false);
         }
         break;
     }
@@ -203,7 +203,7 @@ void TUnk_B5FAA8::reciveEvent(const ui::EventData& event, unsigned int handle) {
                 m_owner->pad_308 = 0;
                 m_owner->stopScheduleMove();
                 m_owner->m_idList->setIndex(index);
-                m_owner->fn_710038471C(0);
+                m_owner->refreshSchedule(false);
             }
         }
         if (prev != -1 && index != prev) {
@@ -222,7 +222,7 @@ void TUnk_B5FAA8::reciveEvent(const ui::EventData& event, unsigned int handle) {
         break;
     case 0x21:
         m_owner->m_idList->setIndex(0);
-        m_owner->fn_710038471C(1);
+        m_owner->refreshSchedule(true);
         acc.setDisp(true);
         GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_schedule_base"), 1, 0);
         GfMenuObjUtil::setCommonFadeIn(acc.searchChild("LAY_schedule_arrow"), 1, 0);
@@ -287,7 +287,7 @@ void GfMenuObjAnnounce::stopScheduleMove() {
     }
 }
 
-void TUnk_B5FAD0::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjAnnounce::AlertListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:

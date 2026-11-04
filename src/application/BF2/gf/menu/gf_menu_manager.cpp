@@ -8,10 +8,9 @@
 #include "classes/gf/GfMenuObjDamageBuff.h"
 #include "classes/gf/GfMenuObjExpGet.h"
 #include "classes/gf/GfMenuObjHanaPartsMake.h"
-#include "gf/gf_menu_obj_tips.h"
 #include "classes/gf/GfMenuManager.h"
 #include "classes/gf/GfGameManager.h"
-#include "gf/gf_menu_obj_camp_menu.h"
+#include "classes/gf/GfMenuObjCampMenu.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
 #include "mm/mtl/Bitflag.h"
 #include "classes/gf/GfMenuManager.h"
@@ -58,13 +57,12 @@
 #include "ml/ScnRenderDrSysParmAcc.h"
 #include "gf/GfMenuObjDummyTutorial.h"
 #include "classes/gf/GfGameManager.h"
-#include "gf/gf_menu_obj_camp_menu.h"
+#include "classes/gf/GfMenuObjCampMenu.h"
 #include "classes/gf/GfMenuObjMainMenu2.h"
 #include "classes/gf/GfMenuObjDamageValue.h"
 #include "classes/gf/GfMenuObjDamageBuff.h"
 #include "classes/gf/GfMenuObjExpGet.h"
 #include "classes/gf/GfMenuObjHanaPartsMake.h"
-#include "gf/gf_menu_obj_tips.h"
 #include "classes/gf/GfMenuObjEnvironmentInfo.h"
 #include "classes/gf/GfMenuObjDropItem.h"
 #include "gf/GfDataItem.h"
@@ -306,13 +304,13 @@ void GfMenuManager::openCommonWindow(unsigned short id) {
     mgr->m_latestCommonWinID = id;
 }
 
-void GfMenuManager::fn_7100359CD8(unsigned short id, unsigned short arg) {
+void GfMenuManager::openCommonWindowWithNamed(unsigned short id, unsigned int arg) {
     GfMenuManager* mgr = get();
     if (mgr == nullptr || !mgr->m_initialized || mgr->m_callContext == nullptr) {
         return;
     }
     mgr->m_callContext->reset();
-    GfMenuObjCommonText::fn_71003E1F60(mgr->m_callContext, id, arg);
+    GfMenuObjCommonText::openWithNamed(mgr->m_callContext, id, arg);
     mgr->m_latestCommonWinID = id;
 }
 
@@ -840,7 +838,7 @@ bool GfMenuManager::startBtlchTutorial(unsigned int menuId) {
             ui::UIManager::get()->createLayer(302);
             GfMenuObjTips::registStartTutorialID(menuId);
         } else {
-            GfMenuObjTips::fn_7100487A1C(menuId);
+            GfMenuObjTips::start(menuId);
         }
     } else {
         if (mgr->m_titleCount == 0) {
@@ -848,7 +846,7 @@ bool GfMenuManager::startBtlchTutorial(unsigned int menuId) {
             loadBchUI();
             GfMenuObjBtlchTutorial::registStartTutorialID(menuId);
         } else {
-            GfMenuObjBtlchTutorial::fn_71003B2ABC(menuId);
+            GfMenuObjBtlchTutorial::start(menuId);
         }
     }
     mgr->m_titleCount = menuId;
@@ -911,7 +909,7 @@ bool GfMenuManager::openBtlchTutorialList() {
     return true;
 }
 
-bool GfMenuManager::fn_710035A634(int index) {
+bool GfMenuManager::isResExist(unsigned int index) {
     GfMenuManager* mgr = GfMenuManager::get();
     return index == 0 && mgr != nullptr && mgr->m_bladeBookFlag.test(0);
 }
@@ -1164,7 +1162,7 @@ void GfMenuManager::openCampMenu() {
         return;
     }
     if (mgr->m_layer300Open) {
-        fn_71003BBB48();
+        GfMenuObjCampMenu::returnFromEvent();
         return;
     }
     ui::UIManager::get()->createLayer(300);
@@ -1180,7 +1178,7 @@ bool GfMenuManager::isOpenCampMenu() {
 }
 
 bool GfMenuManager::isCampSelectTalk() {
-    return fn_71003BBB38() == 1;
+    return GfMenuObjCampMenu::getSelectResult() == 1;
 }
 
 void GfMenuManager::setMainmenuOpenMap() {
@@ -1251,12 +1249,12 @@ void GfMenuManager::gevChangeParty() {
         return;
     }
     unsigned int changed = 0;
-    GfMenuReference::BladeOwner owner = {0, {0xFF, 0.0f}};
+    GfMenuReference::IraCharInfo owner = {0, {0xFF, 0.0f}};
     if (unsigned int driver = GfGameParty::getDriverBdatId(0, 0)) {
         owner.m_driver = driver;
         owner.m_gauge.m_type = 0;
     }
-    if (GfMenuReference::fn_7100367ADC(0, owner)) {
+    if (GfMenuReference::setIraCharInfo(0, owner)) {
         changed |= 1;
     }
     // reset field by field (an assigned record would go through Bitflag's operator=, which the original does not call)
@@ -1268,7 +1266,7 @@ void GfMenuManager::gevChangeParty() {
         owner.m_driver = driver;
         owner.m_gauge.m_type = 1;
     }
-    changed |= GfMenuReference::fn_7100367ADC(1, owner) ? 2 : 0;
+    changed |= GfMenuReference::setIraCharInfo(1, owner) ? 2 : 0;
     owner.m_driver = 0;
     owner.m_gauge.m_type = 0xFF;
     owner.m_gauge.m_rate = 0.0f;
@@ -1277,7 +1275,7 @@ void GfMenuManager::gevChangeParty() {
         owner.m_driver = driver;
         owner.m_gauge.m_type = 2;
     }
-    bool changed2 = GfMenuReference::fn_7100367ADC(2, owner);
+    bool changed2 = GfMenuReference::setIraCharInfo(2, owner);
     if (changed == 3) {
         GfMenuObjCharChange::changeFormation();
     }

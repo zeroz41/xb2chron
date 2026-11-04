@@ -1,17 +1,17 @@
-#ifndef CLASSES_GF_TUNK_B5A850_H
-#define CLASSES_GF_TUNK_B5A850_H
+#ifndef CLASSES_GF_GFMENUBTLCHADAPTER_LISTCONVERTER_H
+#define CLASSES_GF_GFMENUBTLCHADAPTER_LISTCONVERTER_H
 
 #include "classes/gf/GfMenuBtlchAdapter/IConverter.h"
 #include "classes/gf/GfMenuIDList.h"
 
 namespace gf {
 // table 0x7100B5A850; the id a list has at an index of the page shown (-1: its selected one), 0 without a list.
-// The symbols leave the class unnamed (GfMenuBtlchAdapter::createFromList builds it). The list's class is inferred: an
+// 2.0.0's symbols name it (GfMenuBtlchAdapter::createFromList builds it). The list's class is inferred: an
 // 8-byte entry whose first word is the id, as GfMenuIDList's (nothing calls createFromList to show the real one).
-class TUnk_B5A850 : public ::gf::GfMenuBtlchAdapter::IConverter {
+class GfMenuBtlchAdapter::ListConverter : public ::gf::GfMenuBtlchAdapter::IConverter {
 public:
-    TUnk_B5A850(GfMenuIDList* list, int index) : m_list(list), m_index(index) {}
-    virtual unsigned int fn_7100334D68() {  // slot 2
+    ListConverter(GfMenuIDList* list, int index) : m_list(list), m_index(index) {}
+    virtual unsigned int getBtlchID() {  // slot 2
         if (m_list == nullptr) {
             return 0;
         }

@@ -40,15 +40,21 @@ class GfMenuCharDataAdapter : public ::gf::GfMenuAdapter, public TUnk_B5A8E8, pu
                               public TUnk_B5A930 {
 public:
     class BladeListConverter;
+    class BladeListOwnerDriverConverter;
+    class BladeListSetDriverConverter;
     class DriverListConverter;
     class EnBookListConverter;
     class EnemyListConverter;
     class GfObjConverter;
     class IConverter;
+    class IraDriverListFormConverter;
+    class NamedListConverter;
+    class NpcIDListConverter;
     class PartyBladeConverter;
     class PartyDriverConverter;
     class ReferenceBladeConverter;
     class ReferenceBladeOwnerDriverConverter;
+    class ReferenceBladeSetConverter;
     class ReferenceDriverConverter;
     struct TypeSetup {
         bool (GfMenuCharDataAdapter::*func)(const DataParamAcc&);
@@ -87,25 +93,27 @@ public:
     // an adapter on the handle for a blade list's entry at an index
     static GfMenuCharDataAdapter* createFromBladeList(unsigned int handle, unsigned int kind, const GfMenuBladeList* list,
                                                       int index, bool);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
-    // GfMenuCharDataAdapter's functions with createFromBladeList's arguments, and its code ends in create. What it
-    // does: news a 0x18-byte object (table 0x7100B5B938) holding the blade list and index (-1: the list's index),
-    // reads the entry's GfDataBlade::getCreator, creates the adapter (create(handle, kind, 3, ..)) and stores the
-    // object at the adapter's 0x70. Callers: GfMenuObjBladeRelease::initialize ("IMG_list_bl_info_dr@%02d", kind 3),
-    // GfMenuObjBladeSet2::setupBldeList, GfMenuObjMercenaryForm::initialize.
-    static GfMenuCharDataAdapter* fn_710033A480(unsigned int handle, unsigned int kind, const GfMenuBladeList* list,
-                                                int index, bool changed);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
-    // GfMenuCharDataAdapter's createFrom* (after fn_710033A480) with createFromBladeList's arguments, and its code ends
-    // in create. What it does: news a 0x18-byte TUnk_B5B968 holding the blade list and index (-1: the list's index):
-    // the entry's GfDataBlade::getSetDriver (type 3). Caller: gf_menu_obj_btlch_order's fn_71003ADE30.
-    static GfMenuCharDataAdapter* fn_710033A5D0(unsigned int handle, unsigned int kind, const GfMenuBladeList* list,
-                                                int index, bool changed);
+    // 2.0.0's symbols name it. A member: it sits among GfMenuCharDataAdapter's functions with createFromBladeList's
+    // arguments, and its code ends in create. What it does: news a 0x18-byte object (table 0x7100B5B938) holding the
+    // blade list and index (-1: the list's index), reads the entry's GfDataBlade::getCreator, creates the adapter
+    // (create(handle, kind, 3, ..)) and stores the object at the adapter's 0x70. Callers:
+    // GfMenuObjBladeRelease::initialize ("IMG_list_bl_info_dr@%02d", kind 3), GfMenuObjBladeSet2::setupBldeList,
+    // GfMenuObjMercenaryForm::initialize.
+    static GfMenuCharDataAdapter* createFromBladeListOwnerDriver(unsigned int handle, unsigned int kind,
+                                                                 const GfMenuBladeList* list, unsigned int index,
+                                                                 bool changed);
+    // 2.0.0's symbols name it. A member: it sits among GfMenuCharDataAdapter's createFrom* (after
+    // createFromBladeListOwnerDriver) with createFromBladeList's arguments, and its code ends in create. What it does:
+    // news a 0x18-byte BladeListSetDriverConverter holding the blade list and index (-1: the list's index): the entry's
+    // GfDataBlade::getSetDriver (type 3). Caller: gf_menu_obj_btlch_order's fn_71003ADE30.
+    static GfMenuCharDataAdapter* createFromBladeListSetDriver(unsigned int handle, unsigned int kind,
+                                                               const GfMenuBladeList* list, unsigned int index,
+                                                               bool changed);
     // an adapter on the handle for an enemy book list's entry at an index (its base enemy)
     static GfMenuCharDataAdapter* createFromEnBookList(unsigned int handle, unsigned int kind, const GfMenuIDList* list,
                                                        int index, bool changed);
-    // 2.0.0's symbols name it. What it does: news a 0x18-byte TUnk_B5B878 holding the ID list and index (-1: the list's
-    // index); the entry's id gives an enemy (type 5) through GfBdatChrEnArrange's getBTL_NamedListIraEnemyID or
+    // 2.0.0's symbols name it. What it does: news a 0x18-byte NamedListConverter holding the ID list and index (-1: the
+    // list's index); the entry's id gives an enemy (type 5) through GfBdatChrEnArrange's getBTL_NamedListIraEnemyID or
     // getBTL_NamedListEnemyID (GfGameManager::isGameTypeIra chooses). Callers: gf_menu_obj_named_dialog's fn_71004452C4
     // and gf_menu_obj_named_list's fn_7100445830.
     static GfMenuCharDataAdapter* createFromNamedList(unsigned int handle, unsigned int kind, const GfMenuIDList* list,
@@ -114,25 +122,27 @@ public:
                                                            bool changed);
     static GfMenuCharDataAdapter* createFromReferenceDriver(unsigned int handle, unsigned int kind, unsigned int index,
                                                             bool changed);
-    // 2.0.0's symbols name it. What it does: news a 0x10-byte TUnk_B5B908 holding a reference driver index and a slot:
-    // the blade (type 4) in that slot of the referenced driver. Callers: GfMenuObjCmnStatus::setDrPageParam,
-    // GfMenuObjPouch2::setupResult/setupPartyInfo, fn_71003D8708.
+    // 2.0.0's symbols name it. What it does: news a 0x10-byte ReferenceBladeSetConverter holding a reference driver
+    // index and a slot: the blade (type 4) in that slot of the referenced driver. Callers:
+    // GfMenuObjCmnStatus::setDrPageParam, GfMenuObjPouch2::setupResult/setupPartyInfo, fn_71003D8708.
     static GfMenuCharDataAdapter* createFromReferenceBladeSet(unsigned int handle, unsigned int kind, unsigned int index, int slot,
                                                 bool changed);
     // the driver that owns the referenced blade (3.0.1: GfMenuReference::getIraCharInfoFromFromID's record)
     static GfMenuCharDataAdapter* createFromReferenceBladeOwnerDriver(unsigned int handle, unsigned int kind,
                                                                       unsigned int blade, bool changed);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because it sits among
-    // GfMenuCharDataAdapter's createFrom* (after createFromReferenceBladeOwnerDriver) with createFromDriverList's list,
-    // and its code ends in create. What it does: nullptr unless GfMenuObjUtil::isValidExpansion(3); news a 0x18-byte
-    // TUnk_B5B9C8 holding the driver list, an index and a party: the driver (type 3) of that party
-    // (GfDataParty::getDriver) at the list's driver's party index. Caller: gf_menu_obj_party_form3's fn_71004556F8
-    // (which passes the same list to createFromDriverList).
-    static GfMenuCharDataAdapter* fn_710033A7EC(unsigned int handle, unsigned int kind, const GfMenuDriverList* list,
-                                                unsigned int index, unsigned int party, bool changed);
+    // 2.0.0's symbols name it. A member: it sits among GfMenuCharDataAdapter's createFrom* (after
+    // createFromReferenceBladeOwnerDriver) with createFromDriverList's list, and its code ends in create. What it does:
+    // nullptr unless GfMenuObjUtil::isValidExpansion(3); news a 0x18-byte IraDriverListFormConverter holding the driver
+    // list, an index and a party: the driver (type 3) of that party (GfDataParty::getDriver) at the list's driver's
+    // party index. Caller: gf_menu_obj_party_form3's fn_71004556F8 (which passes the same list to
+    // createFromDriverList).
+    static GfMenuCharDataAdapter* createFromIraDriverListForm(unsigned int handle, unsigned int kind,
+                                                              const GfMenuDriverList* list, int index,
+                                                              unsigned int party, bool changed);
     // 2.0.0's symbols name it. What it does: nullptr unless GfMenuObjUtil::isValidExpansion(3); news a 0x18-byte
-    // TUnk_B5B9F8 holding the ID list and index (-1: the list's index): the entry's id as an NPC (type 6). Callers:
-    // gf_menu_obj_hitonowa's fn_710041D568, gf_menu_obj_npc_telop's fn_71004477FC (its GfMenuIDList).
+    // NpcIDListConverter holding the ID list and index (-1: the list's index): the entry's id as an NPC (type 6).
+    // Callers: gf_menu_obj_hitonowa's GfMenuObjHitonowa::initialize, gf_menu_obj_npc_telop's fn_71004477FC (its
+    // GfMenuIDList).
     static GfMenuCharDataAdapter* createFromNpcIDList(unsigned int handle, unsigned int kind, const GfMenuIDList* list,
                                                 int index, bool changed);
     unsigned int getBL_FieldSkillIndex(const DataParamAcc& acc);

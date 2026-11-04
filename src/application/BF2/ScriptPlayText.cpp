@@ -72,7 +72,6 @@
 #include "gf/GfReqCommand.h"
 #include "gf/ParamReturnTitle.h"
 #include "gf/gf_menu_obj_camp_menu.h"
-#include "gf/gf_menu_obj_tips.h"
 #include "mm/Col4.h"
 #include "mm/Vec3.h"
 #include "mm/mtl/FixStr.h"

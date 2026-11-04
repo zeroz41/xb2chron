@@ -13,18 +13,16 @@ namespace ui { class UIObjectAcc; struct EventData; class UISelectObjList; }
 
 namespace gf {
 // table 0x7100B62AA0; the "Hitonowa" (circle of people) menu evt_ui openHitonowa opens (gf_menu_obj_hitonowa.cpp).
-// Unnamed class (TUnk_<table low address>, counted as debt): the symbols leave it unnamed (no RTTI in 3.0.1, nothing in
-// 1.0.0). Its five listeners are named the same way after their tables (registered on LAY_main, LAY_result, LAY_list,
-// LAY_image, LAY_bg).
+// 2.0.0's symbols name it and its five listeners (registered on LAY_main, LAY_result, LAY_list, LAY_image, LAY_bg).
 class GfMenuObjHitonowa : public ::gf::GfMenuObject {
 public:
-    // the listeners initialize registers on its layouts, named after the layout each is registered on (the names are
-    // not the original's): TUnk_B62AE8 LAY_main (table 0x7100B62AE8), ConfirmListener LAY_result (0x7100B62B10),
-    // TUnk_B62B38 LAY_list (0x7100B62B38), TUnk_B62B60 LAY_image (0x7100B62B60), BgListener LAY_bg (0x7100B62B88)
-    class TUnk_B62AE8;
+    // the listeners initialize registers on its layouts (2.0.0's symbols name them): MainListener LAY_main (table
+    // 0x7100B62AE8), ConfirmListener LAY_result (0x7100B62B10), ListListener LAY_list (0x7100B62B38), ImageListener
+    // LAY_image (0x7100B62B60), BgListener LAY_bg (0x7100B62B88)
+    class MainListener;
     class ConfirmListener;
-    class TUnk_B62B38;
-    class TUnk_B62B60;
+    class ListListener;
+    class ImageListener;
     class BgListener;
 
     virtual ~GfMenuObjHitonowa();  // slot 0
@@ -36,61 +34,56 @@ public:
     // 1. Caller: fn_71004488A0 (gf_menu_obj_* code).
     static void setBootFromEvent();
     // 2.0.0's symbols name it. What it does: clears the stream-image bits of image (resetStreamImageEx), asks
-    // fn_710041D2C8 about id, and sets setStreamImage2nd for 1 or setStreamImage3rd's bit for 2. Caller: fn_7100447D88.
+    // getNpcChange about id, and sets setStreamImage2nd for 1 or setStreamImage3rd's bit for 2. Caller: fn_7100447D88.
     static void setFaceStream(ui::UIObjectAcc& image, unsigned int id);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: in this unit, called only by
-    // setFaceStream. What it does (from its caller): returns 0, 1 or 2 for id, writing an int through value.
-    static int fn_710041D2C8(unsigned int id, int* value);
-    // 2.0.0's symbols name it. What it does: keeps GfGameManager::getHitonowaLevel() in s_gameValue and passes 0 to
-    // GfMenuLocation::startNpcNavigate. Caller: fn_71003597B0.
+    // 2.0.0's symbols name it. A member: in this unit, called only by setFaceStream. What it does (from its caller):
+    // returns 0, 1 or 2 for id, writing an unsigned int through value.
+    static int getNpcChange(unsigned int id, unsigned int& value);
+    // 2.0.0's symbols name it. What it does: keeps GfGameManager::getHitonowaLevel() in s_CurLevel and passes 0 to
+    // GfMenuLocation::startNpcNavigate. Caller: GfMenuManager::setupGame.
     static void setupGame();
-    // what setupGame keeps of GfGameManager::getHitonowaLevel(). Proposed name, not the original's: the symbols leave
-    // it unnamed (lbl_7100EAB87C); this unit's code reaches it through the GOT, so it is not a file static
-    static unsigned int s_gameValue;
+    // what setupGame keeps of GfGameManager::getHitonowaLevel(). 2.0.0's symbols name it (lbl_7100EAB87C); this unit's
+    // code reaches it through the GOT, so it is not a file static
+    static unsigned int s_CurLevel;
 
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in this unit, after
-    // finalize. What it does: reads BDAT table 0xA8's row id: "AreaNumber3" when its "Condition2" is set and holds
-    // (GfGameCond::isGameCond), else "AreaNumber2" when "Condition1" is set and holds, else "AreaNumber1". Callers:
-    // initialize (fn_710041D568) and fn_7100426D60.
-    static unsigned int fn_710041E870(unsigned int id);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in this unit, after
-    // refreshComplete. What it does: places list's objects on a grid of columns columns from origin, each cell
-    // width - 14 wide and height - 14 high (setPosCenter).
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: its code is in this unit and it
-    // reads this's lists; called by initialize (fn_710041D568). What it does: unless the list of kind (below 4)
-    // already holds an id of the same GfDataBlade::fn_710024DA88 group, adds id with fn_7100255848's (kind 0) or
-    // fn_71002557C8's value, sorts the list ascending (sortFromWork) and stores its size in m_refNums[kind].
-    void fn_710041E6F8(unsigned char kind, unsigned int id);
-    static void fn_710041EE6C(ui::UISelectObjList* list, const mm::Pnt<short>& origin, int width, int height,
-                              unsigned int columns);
+    // 2.0.0's symbols name it. A member: its code is in this unit and it reads this's lists; called by initialize.
+    // What it does: unless the list of kind (below 4) already holds an id of the same GfDataBlade::fn_710024DA88
+    // group, adds id with fn_7100255848's (kind 0) or fn_71002557C8's value, sorts the list ascending (sortFromWork)
+    // and stores its size in m_refNums[kind].
+    void addNpc(unsigned char kind, unsigned int id);
+    // 2.0.0's symbols name it. A member: its code is in this unit, after refreshComplete. What it does: places list's
+    // objects on a grid of columns columns from origin, each cell width - 14 wide and height - 14 high
+    // (setPosCenter).
+    static void placeObjectHitonowa(ui::UISelectObjList* list, const mm::Pnt<short>& origin, unsigned int width,
+                                    unsigned int height, unsigned int columns);
     // 2.0.0's symbols name it. What it does: shows LAY_level and fades it in (preset 3), then shows TXT_level_num and
-    // TXT_level_max, only the latter opaque when s_gameValue is 6.
+    // TXT_level_max, only the latter opaque when s_CurLevel is 6.
     void dispLevel();
-    // 2.0.0's symbols name refreshComplete; the fn_ names are placeholders. Their code is in this unit and seqNextLost
-    // passes this. What they do (not written yet): fn_710041F0A8 sets the list up for an id (its second argument 0
-    // there); refreshComplete refreshes the menu after it.
-    void fn_710041F0A8(int kind, unsigned int id);
+    // 2.0.0's symbols name them. Their code is in this unit and seqNextLost passes this. What they do (not written
+    // yet): delNpc sets the list up for an id (its first argument 0 there); refreshComplete refreshes the menu after
+    // it.
+    void delNpc(unsigned char kind, unsigned int id);
     void refreshComplete();
     // 2.0.0's symbols name it. Its code is in this unit and its callers (seqDispResult, the LAY_list listener's
-    // fn_7100423BD0) pass this. What it does (not written yet): sets up the list object handle for id (an NPC's or
-    // blade's name text, dock position, a control). Its return value is unused by seqDispResult.
+    // ListListener::reciveEvent) pass this. What it does (not written yet): sets up the list object handle for id (an
+    // NPC's or blade's name text, dock position, a control). Its return value is unused by seqDispResult.
     void dispResult(unsigned int handle, unsigned int id);
 
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member: the jobs below store what it returns
-    // in m_busyCtrl (with 3 and 2), and seqCtrlWait waits on that control. What it does: starts a control of kind
-    // and returns its slot (GfMenuObjUtil::isBusyCtrl's argument).
-    int fn_710041FBC8(int kind);
+    // 2.0.0's symbols name it. A member: the jobs below store what it returns in m_busyCtrl (with 3 and 2), and
+    // seqCtrlWait waits on that control. What it does: starts a control of kind and returns its slot
+    // (GfMenuObjUtil::isBusyCtrl's argument).
+    int openTelop(unsigned int kind);
 
-    // m_seq jobs. Placeholder names: new in 3.0.1, nothing in 1.0.0's place names them; members of this class, as
-    // their code and their callers' addJob calls show (Delegate<bool()>::memberFuncInvoker of this class).
+    // m_seq jobs. 2.0.0's symbols name them; members of this class, as their code and their callers' addJob calls
+    // show (Delegate<bool()>::memberFuncInvoker of this class).
     // 2.0.0's symbols name it. What it does: for the lists of kinds 1, 2 and 3, hides each entry's TXT_icon_new when
     // GfDataBlade::fn_710024DF88 holds for its id (alpha 0, else 1).
     void refreshNew();
-    // start control 0 (fn_7100423514) or 1 (fn_7100423700) into m_busyCtrl, then add to m_seq: wait for it, 30
-    // frames, seqCloseTelop, wait again, then fn_7100424E00 (0) or seqMoveLost (1). Reached by address from the
-    // LAY_main listener's reciveEvent (fn_7100421588).
-    bool fn_7100423514();
-    bool fn_7100423700();
+    // start control 0 (seqStartGet) or 1 (seqStartLost) into m_busyCtrl, then add to m_seq: wait for it, 30 frames,
+    // seqCloseTelop, wait again, then seqMoveGet (0) or seqMoveLost (1). Reached by address from the LAY_main
+    // listener's reciveEvent (MainListener::reciveEvent).
+    bool seqStartGet();
+    bool seqStartLost();
     // adds seqMoveEntry to m_seq
     bool seqStartEntry();
     // sends LAY_main event 0x102
@@ -127,8 +120,8 @@ public:
     bool seqWaitStreamingImgFirst();
     // fades LAY_telop out (0.2) into m_busyCtrl
     bool seqCloseTelop();
-    // m_seq's job fn_7100423514 adds last (not written yet)
-    bool fn_7100424E00();
+    // m_seq's job seqStartGet adds last (not written yet)
+    bool seqMoveGet();
     // sets up the list object at m_cursor with m_ids[m_cursor] (dispResult), enables LAY_result's input and its
     // operation info, clears m_resultDone and calls fn_7100569228
     bool seqDispResult();
@@ -137,7 +130,7 @@ public:
     bool seqConfirmGet();
     // moves m_cursor on: adds seqMoveEntry while it is inside m_list, else seqReturn
     bool seqNextEntry();
-    // sets up m_ids[m_cursor] (fn_710041F0A8 with 0, refreshComplete), then moves m_cursor on: adds seqMoveLost
+    // sets up m_ids[m_cursor] (delNpc with 0, refreshComplete), then moves m_cursor on: adds seqMoveLost
     // while it is inside m_list, else seqReturn
     bool seqNextLost();
     // m_seq's job seqNextLost adds (not written yet)
@@ -167,7 +160,7 @@ public:
     ui::UISelectObjList* m_list;
     GfMenuSequence<GfMenuObjHitonowa, 16> m_seq;
     GfMenuSequence<GfMenuObjHitonowa, 16> m_seq2;
-    // the control fn_710041FBC8 started, -1 none (the name is not the original's)
+    // the control openTelop started, -1 none (the name is not the original's)
     int m_busyCtrl;
     // the object whose animation seqAnimWait waits for, 0 none (the name is not the original's)
     unsigned int m_animObject;
@@ -175,7 +168,7 @@ public:
     // seqConfirmGet slides LAY_result out when it is set, and clears it (the name is not the original's)
     bool m_resultFadeOut;
     unsigned char pad_ED2[0x6];
-    // the counts shown for the id lists, by kind (fn_710041E6F8 stores each list's size; the name is not the
+    // the counts shown for the id lists, by kind (addNpc stores each list's size; the name is not the
     // original's)
     mm::mtl::IntrusivePtr<GfMenuReferenceNumber> m_refNums[4];
     // the voice the voice jobs play (the name is not the original's)
@@ -200,6 +193,12 @@ public:
     unsigned char pad_0C[0x10];
     GfMenuObjHitonowa* m_owner;
 };
+
+// 2.0.0's symbols name it, a free function of gf; its code is in gf_menu_obj_hitonowa.cpp, after
+// GfMenuObjHitonowa::finalize. What it does: reads BDAT table 0xA8's row id: "AreaNumber3" when its "Condition2" is
+// set and holds (GfGameCond::isGameCond), else "AreaNumber2" when "Condition1" is set and holds, else
+// "AreaNumber1". Callers: GfMenuObjHitonowa::initialize and seqInEntry.
+unsigned int getNpcGroup(unsigned int id);
 }  // namespace gf
 
 #endif

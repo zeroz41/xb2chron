@@ -41,7 +41,8 @@ GfMenuObjBtlchOrder::GfMenuObjBtlchOrder(unsigned int handle)
     }
     m_difficulty = GfMenuObjOption::fn_7100452ADC(GfGameUtilSaveData::getValidOptionData()->m_soundUi.m_keyD);
     m_difficultyCount = GfMenuObjOption::getDifficultyMax();
-    GfMenuReference::fn_71003692E4(GfMenuObjOption::getDifficultyFromIndex(m_difficulty));
+    GfMenuReference::setReferenceBtlchDifficulty(
+        static_cast<GFDIFF>(GfMenuObjOption::getDifficultyFromIndex(m_difficulty)));
     m_context = GfMenuCallContext::create();
     m_limitDrivers = GfMenuDriverList::create();
     {
@@ -124,7 +125,7 @@ void GfMenuObjBtlchOrder::refreshDifficulty() {
         ui::UIObjectAcc item(m_handle, "IMG_list_item_base@01");
         item.setMulColor(s_difficultyColors[m_difficulty]);
     }
-    GfMenuReference::fn_71003692E4(value);
+    GfMenuReference::setReferenceBtlchDifficulty(static_cast<GFDIFF>(value));
 }
 
 bool GfMenuObjBtlchOrder::seqWaitVoice() {

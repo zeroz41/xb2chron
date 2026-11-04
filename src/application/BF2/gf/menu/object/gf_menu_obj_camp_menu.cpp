@@ -71,11 +71,11 @@ GfMenuObjCampMenu::~GfMenuObjCampMenu() {
     }
 }
 
-int fn_71003BBB38() {
+int GfMenuObjCampMenu::getSelectResult() {
     return g_campMenuState;
 }
 
-void fn_71003BBB48() {
+void GfMenuObjCampMenu::returnFromEvent() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x8D));
     if (acc.m_object != nullptr) {
         GfMenuObject::sendOpenEvent(acc.searchChild("LAY_menu"), 0, 0.0f);
@@ -83,7 +83,7 @@ void fn_71003BBB48() {
     }
 }
 
-void fn_71003BBBAC() {
+void GfMenuObjCampMenu::closeShopToTalk() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x8D));
     if (acc.m_object != nullptr) {
         ui::EventData event;
@@ -93,7 +93,7 @@ void fn_71003BBBAC() {
     }
 }
 
-void fn_71003BBC1C() {
+void GfMenuObjCampMenu::enableCraftChrChange() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x8D));
     if (acc.m_object != nullptr) {
         ui::UIObjectAcc child(acc.m_handle, "LAY_chr_change");
@@ -101,7 +101,7 @@ void fn_71003BBC1C() {
     }
 }
 
-void fn_71003BBC7C() {
+void GfMenuObjCampMenu::disableCraftChrChange() {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x8D));
     if (acc.m_object != nullptr) {
         ui::UIObjectAcc child(acc.m_handle, "LAY_chr_change");
@@ -109,7 +109,7 @@ void fn_71003BBC7C() {
     }
 }
 
-void fn_71003BBCDC() {
+void GfMenuObjCampMenu::setCampTalkNew() {
     GfMenuFlag::set1(0x54, 0);
 }
 
@@ -299,12 +299,12 @@ void GfMenuObjCampMenu::CraftListener::reciveEvent(const ui::EventData& event, u
 
 void GfMenuObjCampMenu::refreshCraftInfo() {
     ui::UIObjectAcc main(m_handle, "LAY_main");
-    unsigned short info[2];
-    if (fn_71003BE7EC(m_driverList0->getContents(m_driverList0->getIndex(false)).m_driver, info)) {
-        GfMenuReference::setReferenceShopID(info[0]);
-        if (info[1] != 0) {
+    ShopInfo info;
+    if (getDriverShopInfo(m_driverList0->getContents(m_driverList0->getIndex(false)).m_driver, info)) {
+        GfMenuReference::setReferenceShopID(info.m_shopId);
+        if (info.m_summaryMsg != 0) {
             ui::UIObjectAcc text(main.m_handle, "TXT_craft_info");
-            text.setText(ui::UIStr(GfDataBdat::getFP(0x13C), info[1]));
+            text.setText(ui::UIStr(GfDataBdat::getFP(0x13C), info.m_summaryMsg));
         }
     }
 }
@@ -465,7 +465,7 @@ void GfMenuObjCampMenu::ChrChangeListener::reciveEvent(const ui::EventData& even
     case 3:
         if (event.m_param0 == 1) {
             GfMenuObjCampMenu* owner = m_owner;
-            owner->fn_71003BE490(owner->m_driverList1->getIndex(false));
+            owner->refreshChrChange(owner->m_driverList1->getIndex(false));
             GfMenuObject::enableInput(acc.m_handle);
             GfMenuObject::resetInputSelection(acc.m_handle);
             GfMenuObject::setupInputSelectionFromList(acc.m_handle, *m_owner->m_driverList1);
@@ -476,7 +476,7 @@ void GfMenuObjCampMenu::ChrChangeListener::reciveEvent(const ui::EventData& even
         if (index != -1) {
             int prev = event.m_param1;
             m_owner->m_driverList1->setIndex(index);
-            m_owner->fn_71003BE490(index);
+            m_owner->refreshChrChange(index);
             ui::EventData parent;
             parent.m_type = 0x102;
             parent.m_param0 = index;
@@ -499,7 +499,7 @@ void GfMenuObjCampMenu::ChrChangeListener::reciveEvent(const ui::EventData& even
         param.m_startFlags = 8;
         param.m_eventId = 1;
         GfMenuObjUtil::startCtrl(acc.m_handle, param, nullptr);
-        m_owner->fn_71003BE490(-1);
+        m_owner->refreshChrChange(-1);
         break;
     }
     case 0x22: {
@@ -516,15 +516,15 @@ void GfMenuObjCampMenu::ChrChangeListener::reciveEvent(const ui::EventData& even
     }
 }
 
-bool GfMenuObjCampMenu::fn_71003BE7EC(unsigned int driver, unsigned short* shop) {
+bool GfMenuObjCampMenu::getDriverShopInfo(unsigned int driver, ShopInfo& shop) {
     unsigned char* fp = GfDataBdat::getFP(0x10E);
     if (fp != nullptr) {
         for (int i = 0; i < Bdat::getIdCount(fp); i++) {
             unsigned short id = Bdat::getIdTop(fp) + i;
             if (static_cast<unsigned short>(Bdat::getVal(fp, "driver_id", id)) ==
                 driver) {
-                shop[0] = static_cast<unsigned short>(Bdat::getVal(fp, "shop_id", id));
-                shop[1] =
+                shop.m_shopId = static_cast<unsigned short>(Bdat::getVal(fp, "shop_id", id));
+                shop.m_summaryMsg =
                     static_cast<unsigned short>(Bdat::getVal(fp, "summary_msg", id));
                 return true;
             }

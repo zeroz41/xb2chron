@@ -212,7 +212,7 @@ void GfMenuObjHanaPartsMake::setupMain(ui::UIObjectAcc& acc) {
         GfMenuGameAdapter::create(stock.searchChild("IMG_stock_icon"), 0x12, true);
         GfMenuGameAdapter::create(stock.searchChild("TXT_stock_num"), 0x13, true);
         GfMenuGameAdapter::create(stock.searchChild("TXT_stock_max"), 0x14, true);
-        GfMenuReference::fn_710036932C(0);
+        GfMenuReference::setReferenceItemType(static_cast<ItemType::Type>(0));
         stock.setDisp(false);
     }
     GfMenuAdapterManager::endAddAfter();
@@ -351,7 +351,7 @@ void GfMenuObjHanaPartsMake::makeCategoryItemList(GfMenuIDList* parts, GfMenuIte
         if (s_categoryTypes[i].m_category == category) {
             unsigned int type = s_categoryTypes[i].m_type;
             updateItemList(items, static_cast<ItemType::Type>(type), mode);
-            GfMenuReference::fn_710036932C(type);
+            GfMenuReference::setReferenceItemType(static_cast<ItemType::Type>(type));
             items->sort(GfMenuObjSort::getSortID(getFirstSortTableId(category, mode), sortIndex), false);
             return;
         }

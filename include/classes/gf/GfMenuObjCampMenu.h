@@ -37,22 +37,44 @@ public:
     bool seqAutoSave();  // GfFieldTime setTime(7, 0), then GfGameManager::reqestEventAutoSave
     bool seqAutoSaveWait();  // done at once
     bool seqCloseSpecial();  // terminates m_fsLayer's UI layer
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0 names it. A static member: only this class's functions call it
-    // (0x71003BD69C, 0x71003BDF70, 0x71003BE8C4). What it does: finds the row of BDAT table 0x10E whose driver_id is
-    // driver, stores its shop_id and summary_msg in shop[0] and shop[1] and returns true; false when none.
-    static bool fn_71003BE7EC(unsigned int driver, unsigned short* shop);
-    // 2.0.0's symbols name it. What it does: true when the driver's shop (fn_71003BE7EC) is a ShopType 1 shop of BDAT
-    // 0xED whose TableID row of BDAT 0xF0 has a DefTaskSet<n> (or an AddTaskSet<n> whose AddCondition<n> holds) with an
-    // IraCraftIndex (BDAT 0xF2) whose local flag 2 (0xEE04 + index) is clear.
+    // what getDriverShopInfo answers (2.0.0's symbols name the type; the field names follow the BDAT columns it
+    // reads, they are not the original's)
+    struct ShopInfo {
+        unsigned short m_shopId;
+        unsigned short m_summaryMsg;
+    };
+    // 2.0.0's symbols name it. What it does: finds the row of BDAT table 0x10E whose driver_id is driver, stores its
+    // shop_id and summary_msg in shop and returns true; false when none. Only this class's functions call it
+    // (0x71003BD69C, 0x71003BDF70, 0x71003BE8C4).
+    static bool getDriverShopInfo(unsigned int driver, ShopInfo& shop);
+    // 2.0.0's symbols name it. What it does: true when the driver's shop (getDriverShopInfo) is a ShopType 1 shop of
+    // BDAT 0xED whose TableID row of BDAT 0xF0 has a DefTaskSet<n> (or an AddTaskSet<n> whose AddCondition<n> holds)
+    // with an IraCraftIndex (BDAT 0xF2) whose local flag 2 (0xEE04 + index) is clear.
     static bool hasNewCraft(unsigned int driver);
-    // 2.0.0's symbols name refreshNotice, seqClose, refreshCraftInfo, seqStartLevelUp, refreshShopInfo, seqWaitFSClose,
-    // seqEndSleep; the fn_ names are placeholders. Called on the owner by its listeners
+    // 2.0.0's symbols name them (they were free functions in gf before). What they do:
+    // getSelectResult returns g_campMenuState (GfMenuManager::isCampSelectTalk compares it with 1).
+    static int getSelectResult();
+    // returnFromEvent takes the attached object 0x8D (GfMenuObject::getAttachedObject), and when its ui::UIObjectAcc
+    // is valid sends an open event (0, child "LAY_menu", 0.0f) and clears g_campMenuState. Caller:
+    // GfMenuManager::openCampMenu when its layer-300 flag is already set.
+    static void returnFromEvent();
+    // closeShopToTalk: when the attached object 0x8D's ui::UIObjectAcc is valid, sends event 0x101 (parameters zero)
+    // to its child "LAY_shop" and clears g_campMenuState. Caller: GfMenuObjShop::ExcTaskListListener::reciveEvent.
+    static void closeShopToTalk();
+    // enableCraftChrChange: when the attached object 0x8D's ui::UIObjectAcc is valid, GfMenuObject::enableInput on its
+    // child "LAY_chr_change"; disableCraftChrChange the same with GfMenuObject::disableInput. Caller:
+    // GfMenuObjShop::ExcTaskListListener::reciveEvent.
+    static void enableCraftChrChange();
+    static void disableCraftChrChange();
+    // setCampTalkNew: GfMenuFlag::set1(0x54, 0); ScriptPlayText's ui setCampTalkNew calls it.
+    static void setCampTalkNew();
+    // 2.0.0's symbols name them. Called on the owner by its listeners
     void refreshNotice();  // shows LAY_menu's entries by the game flags
     bool seqClose();  // queues fade 1, its wait, (with fn_71002EDA8C) the time jobs and seqCloseSpecial
     void refreshCraftInfo();  // the cursor's driver: its shop becomes the reference shop, its summary TXT_craft_info
     bool seqStartLevelUp();  // opens full screen 5 and queues its jobs
     unsigned int refreshShopInfo();  // the cursor's driver: LAY_shop's header texts and reference; returns its shop
-    void fn_71003BE490(unsigned int index);  // shows the driver list 1 entry at index (-1: none)
+    void refreshChrChange(int index);  // shows the driver list 1 entry at index (-1: none)
     bool seqWaitFSClose();  // waits while a full-screen menu is open
     bool seqEndSleep();  // the same code as seqCloseSpecial
 

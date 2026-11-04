@@ -12,12 +12,13 @@ namespace gf { class GfMenuIDList; }
 
 namespace gf {
 // table 0x7100B5A648; gf_menu_btlch_adapter.cpp's adapter (a battle challenge's data: the callbacks read
-// GfGameManager::BattleChallengeRecord). The symbols leave the class unnamed (no RTTI; 1.0.0 has no such file:
-// its gf_menu_blade_data_adapter.cpp sat here, with another table), so the name follows the table's address; the
-// file name suggests GfMenuBtlChAdapter.
+// GfGameManager::BattleChallengeRecord). 2.0.0's symbols name it (no RTTI; 1.0.0 has no such file: its
+// gf_menu_blade_data_adapter.cpp sat here, with another table).
 class GfMenuBtlchAdapter : public ::gf::GfMenuAdapter {
 public:
     class IConverter;
+    class ListConverter;
+    class ReferenceConverter;
     // a display callback and the plugin create makes for it (the table at 0x7100B5A670, in create's type order)
     struct TypeSetup {
         bool (GfMenuBtlchAdapter::*func)(unsigned int id);
@@ -57,7 +58,7 @@ public:
     bool update_NumRecordScore(unsigned int id);
     bool update_TimeClear(unsigned int id);
     // createFromList: an adapter whose id follows a list's entry at an index of the page shown (-1: its selected one)
-    // (the TUnk_B5A850 converter); createFromReference: one whose id follows a GfMenuReferenceNumber (TUnk_B5A878).
+    // (ListConverter); createFromReference: one whose id follows a GfMenuReferenceNumber (ReferenceConverter).
     static GfMenuBtlchAdapter* createFromList(unsigned int handle, unsigned int type, GfMenuIDList* list, int index,
                                       bool changed);
     static GfMenuBtlchAdapter* createFromReference(unsigned int handle, unsigned int type,

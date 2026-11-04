@@ -40,7 +40,7 @@ inline int startHalfFadeIn(unsigned int handle, int eventId) {
 const char* const sCharFrames[] = {"character_dr", "character_bl_front", "character_bl_back"};
 }  // namespace
 
-int GfMenuObjCharSelectIra::s_state;
+int GfMenuObjCharSelectIra::s_SubMenuMode;
 
 GfMenuObjCharSelectIra::GfMenuObjCharSelectIra(unsigned int handle)
     : GfMenuObject(handle), m_driverList(nullptr), m_selectList(nullptr), m_driver(0), m_partyId(0), m_seq(this),
@@ -86,17 +86,17 @@ GfMenuObjCharSelectIra::~GfMenuObjCharSelectIra() {
         m_driverList->release();
         m_driverList = nullptr;
     }
-    s_state = 0;
+    s_SubMenuMode = 0;
 }
 
-void GfMenuObjCharSelectIra::fn_71003D1670() {
+void GfMenuObjCharSelectIra::dispOnChar(unsigned int) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x61));
     if (acc.m_object != nullptr) {
         GfMenuObject::sendOpenEvent(acc.searchChild("LAY_move"), 0, 0.0f);
     }
 }
 
-void GfMenuObjCharSelectIra::fn_71003D16C8() {
+void GfMenuObjCharSelectIra::dispOffChar(unsigned int) {
     ui::UIObjectAcc acc(GfMenuObject::getAttachedObject(0x61));
     if (acc.m_object != nullptr) {
         GfMenuObject::sendCloseEvent(acc.searchChild("LAY_move"), 0, 0.0f);
@@ -104,7 +104,7 @@ void GfMenuObjCharSelectIra::fn_71003D16C8() {
 }
 
 int GfMenuObjCharSelectIra::getSubMenuMode() {
-    return s_state;
+    return s_SubMenuMode;
 }
 
 void GfMenuObjCharSelectIra::openFromBattleBefore(unsigned int handle, unsigned short subLayer) {
@@ -149,9 +149,9 @@ void GfMenuObjCharSelectIra::update() {
     m_seq.update();
     m_seq2.update();
     unsigned int driver = 0;
-    if (s_state == 1) {
+    if (s_SubMenuMode == 1) {
         driver = GfMenuReference::getReferenceDriverID(0);
-    } else if (s_state == 2) {
+    } else if (s_SubMenuMode == 2) {
         driver = GfDataBlade::getIraDriver(GfMenuReference::getReferenceBladeID(0));
     }
     if (driver != 0 && m_shownDriver != driver) {
@@ -160,12 +160,12 @@ void GfMenuObjCharSelectIra::update() {
         event.m_type = 0x101;
         GfMenuObject::sendEvent(acc.m_handle, event, 0.0f);
         m_shownDriver = driver;
-        fn_71003D273C(driver);
+        mnu_chr_sel_ira::setReferenceChar(driver);
     }
     GfMenuObject::update();
 }
 
-void GfMenuObjCharSelectIra::fn_71003D273C(unsigned int driver) {
+void mnu_chr_sel_ira::setReferenceChar(unsigned int driver) {
     if (GfDataDriver::isIraFront(driver)) {
         GfMenuReference::setReferenceDriverID(0, driver);
         GfMenuReference::setReferenceDriverID(1, driver);
@@ -260,7 +260,7 @@ void GfMenuObjCharSelectIra::refreshSubMenu(int index) {
     unsigned char* bdat;
     unsigned int title;
     unsigned int info;
-    if (s_state == 1) {
+    if (s_SubMenuMode == 1) {
         bdat = GfDataBdat::getFP(0x182);
         title = acc.searchChild("TXT_index_dr");
         info = acc.searchChild("TXT_sub_menu_info_dr");
@@ -356,7 +356,7 @@ bool GfMenuObjCharSelectIra::seqChangeDriverList() {
             break;
         }
     }
-    fn_71003D311C(m_ids[m_driverList->getIndex(false)]);
+    refreshCharSelect(m_ids[m_driverList->getIndex(false)]);
     return true;
 }
 
@@ -410,20 +410,20 @@ void GfMenuObjCharSelectIra::resetObjControl() {
     }
 }
 
-void TUnk_B611D8::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjCharSelectIra::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     if (event.m_type == 0x104) {
-        if (GfMenuObjCharSelectIra::s_state == 1) {
+        if (GfMenuObjCharSelectIra::s_SubMenuMode == 1) {
             GfMenuObjCharSelectIra* owner = m_owner;
             unsigned int driver = GfMenuReference::getReferenceDriverID(0);
             if (owner->m_driver != driver) {
                 owner->updateTopDriver(driver);
                 owner->updateDriverList(owner->m_driver, false);
             }
-        } else if (GfMenuObjCharSelectIra::s_state == 2) {
+        } else if (GfMenuObjCharSelectIra::s_SubMenuMode == 2) {
             unsigned int blade = GfMenuReference::getReferenceBladeID(0);
             m_owner->changeBlade(GfMenuReference::getReferenceBladeID(0));
-            GfMenuObjCharSelectIra::fn_71003D273C(GfDataBlade::getIraDriver(blade));
+            mnu_chr_sel_ira::setReferenceChar(GfDataBlade::getIraDriver(blade));
         }
         GfMenuObject::sendOpenEvent(acc.searchChild("LAY_sub_menu"), 1, 0.0f);
     } else {
@@ -440,7 +440,7 @@ bool GfMenuObjCharSelectIra::seqOpenCharSelect() {
     return true;
 }
 
-void TUnk_B61228::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjCharSelectIra::StatusListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:

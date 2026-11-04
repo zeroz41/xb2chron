@@ -770,10 +770,10 @@ void GfMenuObjCommonText::DrChangeListener::reciveEvent(const ui::EventData& eve
     }
 }
 
-void GfMenuObjCommonText::fn_71003E1F60(GfMenuCallContext* context, unsigned int text, unsigned short row) {
+void GfMenuObjCommonText::openWithNamed(GfMenuCallContext* context, unsigned int text, unsigned int row) {
     open(context, text, 0);
     if (GfGameManager::isEnableNamedRecord()) {
-        GfMenuObjNamedDialog::fn_71004451D0(row);
+        GfMenuObjNamedDialog::open(row);
         s_isNamedDialogOpen = true;
     }
 }

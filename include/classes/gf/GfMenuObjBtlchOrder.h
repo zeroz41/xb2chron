@@ -25,18 +25,16 @@ public:
     virtual void update();  // slot 4
     // 2.0.0's symbols name it. What it does: shows the selected difficulty (m_difficulty): "TXT_difficulty_index" gets
     // BDAT 0x169's message for it, "IMG_list_base"/"IMG_difficulty_base" its animation, "IMG_list_item_base@01" its
-    // colour, and GfMenuReference::fn_71003692E4 gets the option value (initialize and the list listener call it).
+    // colour, and GfMenuReference::setReferenceBtlchDifficulty gets the option value (initialize and the list listener
+    // call it).
     void refreshDifficulty();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its unit holds only this
-    // class's functions. What it does: refreshes the selected challenge's detail panes (initialize and the list
-    // listener call it).
-    void fn_71003AE994();
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A member because its unit holds only this
-    // class's functions; fn_71003AE994 calls it.
-    void fn_71003AF4C8(unsigned int id);
-    // Placeholder name: new in 3.0.1, nothing in 1.0.0's place names it. A static member because its unit holds only
-    // this class's functions and it takes no instance; the list listener calls it.
-    static bool fn_71003AF654(unsigned int id);
+    // 2.0.0's symbols name it (no body here yet). What it does: refreshes the selected challenge's detail panes
+    // (initialize and the list listener call it).
+    void refresh();
+    // 2.0.0's symbols name it (no body here yet); refresh calls it.
+    void updateInputEnable(unsigned int id);
+    // 2.0.0's symbols name it (no body here yet). A static member: it takes no instance; the list listener calls it.
+    static bool canOrder(unsigned int id);
     // 2.0.0's symbols name them. What they do: seqWaitVoice waits for m_voice to end (stopping it when
     // GfMenuObjUtil::isVoiceSkip holds) and clears it; seqClose terminates the menu's layer; seqWaitTutorial waits
     // until GfMenuManager::isOpenBtlchTutorial no longer holds; seqReturn fades LAY_main's LAY_header, LAY_list and
