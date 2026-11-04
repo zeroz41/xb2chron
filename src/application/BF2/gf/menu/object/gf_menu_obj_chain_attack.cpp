@@ -11,7 +11,7 @@
 #include "classes/gf/GfMenuObjChainAttack/StartListener.h"
 #include "classes/gf/GfMenuObjArtsPalette.h"
 #include "classes/gf/GfMenuObjBladeChange.h"
-#include "classes/gf/GfMenuObjChainCount/MainListener.h"
+#include "classes/gf/GfMenuObjChainAttack/OverkillListener.h"
 #include "classes/gf/GfAllocator.h"
 #include "classes/gf/GfMenuBattleAdapter.h"
 #include "classes/gf/GfMenuGfObjAdapter.h"
@@ -153,8 +153,8 @@ void GfMenuObjChainAttack::initialize() {
         {
             ui::UIObjectAcc overkillStart(acc.m_handle, "LAY_ovk_start");
 #line 221
-            GfMenuObjChainCount::MainListener* listener =
-                new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) GfMenuObjChainCount::MainListener(this);
+            OverkillListener* listener =
+                new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8) OverkillListener(this);
             listener->m_RefCount = 1;
             ui::UIEventManager::get()->registObjectListener(overkillStart.m_handle, listener);
             if (listener != nullptr) {
@@ -721,7 +721,7 @@ void GfMenuObjChainAttack::ExtendListener::reciveEvent(const ui::EventData& even
 }
 
 
-void GfMenuObjChainCount::MainListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
+void GfMenuObjChainAttack::OverkillListener::reciveEvent(const ui::EventData& event, unsigned int handle) {
     ui::UIObjectAcc acc(handle);
     switch (event.m_type) {
     case 1:

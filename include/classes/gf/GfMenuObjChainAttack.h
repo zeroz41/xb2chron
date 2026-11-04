@@ -14,6 +14,7 @@ class GfMenuObjChainAttack : public ::gf::GfMenuObject, public ui::IUIInputSelec
 public:
     class ExtendListener;
     class FullBurstListener;
+    class OverkillListener;
     class ResultListener;
     class StartListener;
     class StatusListener;

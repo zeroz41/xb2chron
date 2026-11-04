@@ -2,7 +2,7 @@
 #include "classes/gf/GfMenuWorldMapAdapter/IConverter.h"
 #include "classes/gf/GfMenuWorldMapAdapter/ListConverter.h"
 #include "classes/gf/GfMenuWorldMapAdapter/ReferenceConverter.h"
-#include "classes/gf/GfMenuMissionAdapter/MissionListConverter.h"
+#include "classes/gf/GfMenuWorldMapAdapter/ListWorkConverter.h"
 #include "classes/gf/GfMenuAdapter.h"
 #include "classes/gf/GfMenuIDList.h"
 #include "classes/gf/GfMenuReference.h"
@@ -131,7 +131,7 @@ GfMenuWorldMapAdapter* GfMenuWorldMapAdapter::createFromListWork(unsigned int ha
     }
 #line 266
     IConverter* converter = new (getAllocator(ALLOCATOR(0)), __FILE__, __LINE__, 8)
-        GfMenuMissionAdapter::MissionListConverter(list, index, onPage);
+        ListWorkConverter(list, index, onPage);
     return createFromCoverter(handle, type, converter, changed);
 }
 

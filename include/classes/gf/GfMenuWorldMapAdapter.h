@@ -16,6 +16,7 @@ class GfMenuWorldMapAdapter : public ::gf::GfMenuAdapter {
 public:
     class IConverter;
     class ListConverter;
+    class ListWorkConverter;
     class ReferenceConverter;
     // per type create is given: what update shows, and the plugin it makes
     struct TypeSetup {
@@ -37,8 +38,8 @@ public:
                                                             IConverter* converter, bool changed);
     static GfMenuWorldMapAdapter* createFromList(unsigned int handle, unsigned int type, GfMenuIDList* list,
                                                  int index, bool onPage, bool changed);
-    // 2.0.0's symbols name it. What it does: createFromList with GfMenuMissionAdapter::MissionListConverter (table
-    // 0x7100B5E1A8) in place of ListConverter: the map is the second id (MenuID::m_subId) of the GfMenuIDList entry at
+    // 2.0.0's symbols name it. What it does: createFromList with ListWorkConverter (table 0x7100B5E1A8) in place
+    // of ListConverter: the map is the second id (MenuID::m_subId) of the GfMenuIDList entry at
     // the index (-1: the selected one; onPage: an index of the page shown), which it references. No caller in 3.0.1
     // (nothing references it).
     static GfMenuWorldMapAdapter* createFromListWork(unsigned int handle, unsigned int type, GfMenuIDList* list,

@@ -1,30 +1,29 @@
-#ifndef CLASSES_GF_GFMENUMISSIONADAPTER_MISSIONLISTCONVERTER_H
-#define CLASSES_GF_GFMENUMISSIONADAPTER_MISSIONLISTCONVERTER_H
+#ifndef CLASSES_GF_GFMENUWORLDMAPADAPTER_LISTWORKCONVERTER_H
+#define CLASSES_GF_GFMENUWORLDMAPADAPTER_LISTWORKCONVERTER_H
 
-#include "classes/gf/GfMenuMissionAdapter.h"
 #include "classes/gf/GfMenuWorldMapAdapter.h"
 #include "classes/gf/GfMenuWorldMapAdapter/IConverter.h"
 #include "classes/gf/GfMenuIDList.h"
 
 namespace gf {
-// table 0x7100B5E1A8 (in gf_menu_world_map_adapter's .data; 1.0.0's is gf_menu_mission_adapter's, over a
-// GfMenuMissionList). In 3.0.1 it is a world map adapter's converter (GfMenuWorldMapAdapter::createFromListWork makes
-// it, update calls its slot 2 through IConverter): the map (MenuID::m_subId) a GfMenuIDList has at an index (-1:
-// its selected one). Its members are inline (the world map file emits them after its own functions)
-class GfMenuMissionAdapter::MissionListConverter : public ::gf::GfMenuWorldMapAdapter::IConverter {
+// table 0x7100B5E1A8 (in gf_menu_world_map_adapter's .data); 2.0.0's symbols name it. 1.0.0 has no such class
+// (its match had named the table GfMenuMissionAdapter::MissionListConverter, which has the same slots).
+// GfMenuWorldMapAdapter::createFromListWork makes it, update calls its slot 2 through IConverter: the map
+// (MenuID::m_subId) a GfMenuIDList has at an index (-1: its selected one). Its members are inline (the world map
+// file emits them after its own functions)
+class GfMenuWorldMapAdapter::ListWorkConverter : public ::gf::GfMenuWorldMapAdapter::IConverter {
 public:
-    MissionListConverter(GfMenuIDList* list, unsigned int index, bool onPage)
+    ListWorkConverter(GfMenuIDList* list, unsigned int index, bool onPage)
         : m_list(list), m_index(index), m_onPage(onPage) {
         m_list->addRef();
     }
-    virtual ~MissionListConverter() {  // slot 0
+    virtual ~ListWorkConverter() {  // slot 0
         if (m_list != nullptr) {
             m_list->release();
             m_list = nullptr;
         }
     }
-    // slot 2 (the symbols call it getMissionId, 1.0.0's name; it overrides IConverter::getMapId): 0 past the
-    // list's end
+    // slot 2: 0 past the list's end
     virtual unsigned int getMapId() {
         if (m_index == -1) {
             return m_list->getContents(m_list->getIndex(false)).m_subId;
